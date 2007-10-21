@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.30 2007/10/21 00:55:55 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.31 2007/10/21 02:25:27 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -108,6 +108,7 @@ void ex_init(struct ex_softc *);
 void ex_start(struct ifnet *);
 void ex_stop(struct ex_softc *);
 int ex_ioctl(struct ifnet *, u_long, caddr_t);
+void ex_setmulti(struct ex_softc *);
 void ex_reset(struct ex_softc *);
 void ex_watchdog(struct ifnet *);
 int ex_get_media(struct ex_softc *);
@@ -250,8 +251,7 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
 	ifp->if_watchdog = ex_watchdog;
-	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST; /* XXX not done yet. 
-						       | IFF_MULTICAST */
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&sc->ifmedia, 0, ex_ifmedia_upd, ex_ifmedia_sts);
@@ -359,7 +359,9 @@ ex_init(struct ex_softc *sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	DODEBUG(Status, printf("OIDLE init\n"););
-	
+
+	ex_setmulti(sc);
+
 	/*
 	 * Final reset of the board, and enable operation.
 	 */
@@ -776,11 +778,16 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCADDMULTI:
-		DODEBUG(Start_End, printf("SIOCADDMULTI"););
 	case SIOCDELMULTI:
-		DODEBUG(Start_End, printf("SIOCDELMULTI"););
-		/* XXX Support not done yet. */
-		error = EINVAL;
+		error = (cmd == SIOCADDMULTI)
+			? ether_addmulti(ifr, &sc->arpcom)
+			: ether_delmulti(ifr, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				ex_init(sc);
+			error = 0;
+		}
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
@@ -796,6 +803,100 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	DODEBUG(Start_End, printf("\nex_ioctl: finish\n"););
 	return(error);
+}
+
+void
+ex_setmulti(struct ex_softc *sc)
+{
+	struct arpcom *ac = &sc->arpcom;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint16_t *addr;
+	int count, timeout, status;
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	count = 0;
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		count++;
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	if (count > 63 || ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC || ifp->if_flags & IFF_ALLMULTI) {
+		/*
+		 * Interface is in promiscuous mode, there are too many
+		 * multicast addresses for the card to handle or there
+		 * is a multicast range
+		 */
+		CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+		CSR_WRITE_1(sc, REG2, CSR_READ_1(sc, REG2) | Promisc_Mode);
+		CSR_WRITE_1(sc, REG3, CSR_READ_1(sc, REG3));
+		CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+	} else if (ifp->if_flags & IFF_MULTICAST && count > 0) {
+		/* Program multicast addresses plus our MAC address
+		 * into the filter */
+		CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+		CSR_WRITE_1(sc, REG2, CSR_READ_1(sc, REG2) | Multi_IA);
+		CSR_WRITE_1(sc, REG3, CSR_READ_1(sc, REG3));
+		CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+
+		/* Borrow space from TX buffer; this should be safe
+		 * as this is only called from ex_init */
+		
+		CSR_WRITE_2(sc, HOST_ADDR_REG, sc->tx_lower_limit);
+		CSR_WRITE_2(sc, IO_PORT_REG, MC_Setup_CMD);
+		CSR_WRITE_2(sc, IO_PORT_REG, 0);
+		CSR_WRITE_2(sc, IO_PORT_REG, 0);
+		CSR_WRITE_2(sc, IO_PORT_REG, (count + 1) * 6);
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			addr = (uint16_t*)enm->enm_addrlo;
+			CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+			CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+			CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		/* Program our MAC address as well */
+		/* XXX: Is this necessary?  The Linux driver does this
+		 * but the NetBSD driver does not */
+		addr = (uint16_t*) sc->arpcom.ac_enaddr;
+		CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+		CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+		CSR_WRITE_2(sc, IO_PORT_REG, *addr++);
+
+		CSR_READ_2(sc, IO_PORT_REG);
+		CSR_WRITE_2(sc, XMT_BAR, sc->tx_lower_limit);
+		CSR_WRITE_1(sc, CMD_REG, MC_Setup_CMD);
+
+		sc->tx_head = sc->tx_lower_limit;
+		sc->tx_tail = sc->tx_head + XMT_HEADER_LEN + (count + 1) * 6;
+
+		for (timeout = 0; timeout < 100; timeout++) {
+			DELAY(2);
+			if ((CSR_READ_1(sc, STATUS_REG) & Exec_Int) == 0)
+				continue;
+
+			status = CSR_READ_1(sc, CMD_REG);
+			CSR_WRITE_1(sc, STATUS_REG, Exec_Int);
+			break;
+		}
+
+		sc->tx_head = sc->tx_tail;
+	} else {
+		/* No multicast or promiscuous mode */
+		CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+		CSR_WRITE_1(sc, REG2, CSR_READ_1(sc, REG2) & 0xDE);
+			/* ~(Multi_IA | Promisc_Mode) */
+		CSR_WRITE_1(sc, REG3, CSR_READ_1(sc, REG3));
+		CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+	}
 }
 
 void 
