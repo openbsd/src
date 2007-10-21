@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ecadc.4,v 1.1 2007/10/20 19:23:37 kettenis Exp $
+.\"	$OpenBSD: ecadc.4,v 1.2 2007/10/21 09:33:39 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Damien Miller <djm@openbsd.org>
 .\"
@@ -14,8 +14,8 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2007 $
-.Dt ECADC 4
+.Dd $Mdocdate: October 21 2007 $
+.Dt ECADC 4 sparc64
 .Os
 .Sh NAME
 .Nm ecadc
@@ -28,7 +28,7 @@ The
 driver supports the PCF8591 I2C Analogue to Digital Converter that is
 part of the environmental monitoring subsystem found on the Sun
 Enterprise 250 and Sun Enterprise 450 systems.
-The temperature readings are made available through a
+The temperature readings are made available through the
 .Xr sysctl 8
 interface.
 .Pp
@@ -52,6 +52,6 @@ The
 driver was written by
 .An Mark Kettenis Aq kettenis@openbsd.org
 based on the
-.Xr pcdadc 4
+.Xr pcfadc 4
 driver written by
 .An Damien Miller Aq djm@openbsd.org .
