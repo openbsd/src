@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.1 2007/10/20 10:01:38 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.2 2007/10/21 17:41:06 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -792,6 +792,7 @@ finval(NODE *p)
 char *
 exname(char *p)
 {
+#if 0
 #define NCHNAM	256
         static char text[NCHNAM+1];
 	int i;
@@ -805,8 +806,8 @@ exname(char *p)
 
         text[i] = '\0';
         text[NCHNAM] = '\0';  /* truncate */
-
-        return (text);
+#endif
+        return (p);
 }
 
 /*
