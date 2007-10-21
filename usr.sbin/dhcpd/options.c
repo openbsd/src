@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.14 2007/10/19 15:52:20 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.15 2007/10/21 00:39:28 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -210,7 +210,6 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	int main_buffer_size;
 	int mainbufix, bufix;
 	int option_size;
-	int length;
 
 	/*
 	 * If the client has provided a maximum DHCP message size, use
@@ -299,9 +298,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	mainbufix = 4;
 
 	/*
-	 * If we're going to have to overload, store the overload option
-	 * at the beginning.  If we can, though, just store the whole
-	 * thing in the packet's option buffer and leave it at that.
+	 * If we can, just store the whole thing in the packet's option buffer
+	 * and leave it at that.
 	 */
 	if (option_size <= main_buffer_size - mainbufix) {
 		memcpy(&outpacket->options[mainbufix],
@@ -309,44 +307,48 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 		mainbufix += option_size;
 		if (mainbufix < main_buffer_size)
 			outpacket->options[mainbufix++] = DHO_END;
-		length = DHCP_FIXED_NON_UDP + mainbufix;
-	} else {
-		outpacket->options[mainbufix++] = DHO_DHCP_OPTION_OVERLOAD;
+		return (DHCP_FIXED_NON_UDP + mainbufix);
+	}
+
+	/*
+	 * We're going to have to overload. Store the overload option
+	 * at the beginning.
+	 */
+	outpacket->options[mainbufix++] = DHO_DHCP_OPTION_OVERLOAD;
+	outpacket->options[mainbufix++] = 1;
+	if (option_size >
+	    main_buffer_size - mainbufix + DHCP_FILE_LEN)
+		outpacket->options[mainbufix++] = 3;
+	else
 		outpacket->options[mainbufix++] = 1;
-		if (option_size >
-		    main_buffer_size - mainbufix + DHCP_FILE_LEN)
-			outpacket->options[mainbufix++] = 3;
-		else
-			outpacket->options[mainbufix++] = 1;
 
-		memcpy(&outpacket->options[mainbufix],
-		    buffer, main_buffer_size - mainbufix);
-		bufix = main_buffer_size - mainbufix;
-		length = DHCP_FIXED_NON_UDP + main_buffer_size;
-		if (overload & 1) {
-			if (option_size - bufix <= DHCP_FILE_LEN) {
-				memcpy(outpacket->file,
-				    &buffer[bufix], option_size - bufix);
-				mainbufix = option_size - bufix;
-				bufix = option_size;
-				if (mainbufix < DHCP_FILE_LEN)
-					outpacket->file[mainbufix++] = (char)DHO_END;
-			} else {
-				memcpy(outpacket->file,
-				    &buffer[bufix], DHCP_FILE_LEN);
-				bufix += DHCP_FILE_LEN;
-			}
-		}
-		if ((overload & 2) && option_size > bufix) {
-			memcpy(outpacket->sname,
+	memcpy(&outpacket->options[mainbufix],
+	    buffer, main_buffer_size - mainbufix);
+	bufix = main_buffer_size - mainbufix;
+	if (overload & 1) {
+		if (option_size - bufix <= DHCP_FILE_LEN) {
+			memcpy(outpacket->file,
 			    &buffer[bufix], option_size - bufix);
-
 			mainbufix = option_size - bufix;
-			if (mainbufix < DHCP_SNAME_LEN)
-				outpacket->sname[mainbufix++] = (char)DHO_END;
+			bufix = option_size;
+			if (mainbufix < DHCP_FILE_LEN)
+				outpacket->file[mainbufix++] = (char)DHO_END;
+		} else {
+			memcpy(outpacket->file,
+			    &buffer[bufix], DHCP_FILE_LEN);
+			bufix += DHCP_FILE_LEN;
 		}
 	}
-	return (length);
+	if ((overload & 2) && option_size > bufix) {
+		memcpy(outpacket->sname,
+		    &buffer[bufix], option_size - bufix);
+
+		mainbufix = option_size - bufix;
+		if (mainbufix < DHCP_SNAME_LEN)
+			outpacket->sname[mainbufix++] = (char)DHO_END;
+	}
+
+	return (DHCP_FIXED_NON_UDP + main_buffer_size);
 }
 
 /*
