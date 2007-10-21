@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2007/10/19 15:29:22 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.36 2007/10/21 21:00:38 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -126,7 +126,7 @@ struct timecounter tick_timecounter = {
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 
-long tick_increment;
+static long tick_increment;
 int schedintr(void *);
 
 static struct intrhand level10 = { clockintr };
@@ -884,6 +884,24 @@ eeprom_uio(uio)
 	struct uio *uio;
 {
 	return (ENODEV);
+}
+
+void
+tick_start(void)
+{
+	u_int64_t base, s;
+
+	/*
+	 * Try to make the tick interrupts as synchronously as possible on
+	 * all CPUs to avoid inaccuracies for migrating processes.  Leave out
+	 * one tick to make sure that it is not missed.
+	 */
+
+	s = intr_disable();
+	base = sparc_rdpr(tick) & TICK_TICKS;
+	base = roundup(base, tick_increment);
+	sparc_wr(tick_cmpr, base + tick_increment, 0);
+	intr_restore(s);
 }
 
 u_int

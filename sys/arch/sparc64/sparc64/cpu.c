@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2007/10/19 14:36:01 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.27 2007/10/21 21:00:38 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -425,8 +425,7 @@ cpu_hatch(void)
 	microuptime(&curcpu()->ci_schedstate.spc_runtime);
 	splx(s);
 
-	extern long tick_increment;
-	next_tick(tick_increment);
+	tick_start();
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());

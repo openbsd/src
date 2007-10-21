@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2007/10/20 16:54:49 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.51 2007/10/21 21:00:38 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -226,6 +226,7 @@ struct timeval;
 int	tickintr(void *); /* level 10 (tick) interrupt code */
 int	clockintr(void *);/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
+void	tick_start(void);
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
