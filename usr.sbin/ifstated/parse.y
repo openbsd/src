@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2007/10/16 20:01:23 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2007/10/21 08:29:34 pyr Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -687,9 +687,12 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL)
+	    (nfile->name = strdup(name)) == NULL) {
+		warn("malloc");
 		return (NULL);
+	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		warnx("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -735,7 +738,6 @@ parse_config(char *filename, int opts)
 	}
 
 	if ((file = pushfile(filename, 0)) == NULL) {
-		warn("%s", filename);
 		free(conf);
 		return (NULL);
 	}
