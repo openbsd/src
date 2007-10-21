@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.15 2007/10/21 00:39:28 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.16 2007/10/21 01:08:17 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -302,8 +302,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	 * and leave it at that.
 	 */
 	if (option_size <= main_buffer_size - mainbufix) {
-		memcpy(&outpacket->options[mainbufix],
-		    buffer, option_size);
+		memcpy(&outpacket->options[mainbufix], buffer, option_size);
 		mainbufix += option_size;
 		if (mainbufix < main_buffer_size)
 			outpacket->options[mainbufix++] = DHO_END;
@@ -316,36 +315,32 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	 */
 	outpacket->options[mainbufix++] = DHO_DHCP_OPTION_OVERLOAD;
 	outpacket->options[mainbufix++] = 1;
-	if (option_size >
-	    main_buffer_size - mainbufix + DHCP_FILE_LEN)
+	if (option_size > main_buffer_size - mainbufix + DHCP_FILE_LEN)
 		outpacket->options[mainbufix++] = 3;
 	else
 		outpacket->options[mainbufix++] = 1;
 
-	memcpy(&outpacket->options[mainbufix],
-	    buffer, main_buffer_size - mainbufix);
 	bufix = main_buffer_size - mainbufix;
+	memcpy(&outpacket->options[mainbufix], buffer, bufix);
+
 	if (overload & 1) {
-		if (option_size - bufix <= DHCP_FILE_LEN) {
-			memcpy(outpacket->file,
-			    &buffer[bufix], option_size - bufix);
-			mainbufix = option_size - bufix;
-			bufix = option_size;
+		mainbufix = option_size - bufix;
+		if (mainbufix <= DHCP_FILE_LEN) {
+			memcpy(outpacket->file, &buffer[bufix], mainbufix);
 			if (mainbufix < DHCP_FILE_LEN)
-				outpacket->file[mainbufix++] = (char)DHO_END;
+				outpacket->file[mainbufix] = (char)DHO_END;
+			bufix = option_size;
 		} else {
-			memcpy(outpacket->file,
-			    &buffer[bufix], DHCP_FILE_LEN);
+			memcpy(outpacket->file, &buffer[bufix], DHCP_FILE_LEN);
 			bufix += DHCP_FILE_LEN;
 		}
 	}
-	if ((overload & 2) && option_size > bufix) {
-		memcpy(outpacket->sname,
-		    &buffer[bufix], option_size - bufix);
 
+	if ((overload & 2) && option_size > bufix) {
 		mainbufix = option_size - bufix;
+		memcpy(outpacket->sname, &buffer[bufix], mainbufix);
 		if (mainbufix < DHCP_SNAME_LEN)
-			outpacket->sname[mainbufix++] = (char)DHO_END;
+			outpacket->sname[mainbufix] = (char)DHO_END;
 	}
 
 	return (DHCP_FIXED_NON_UDP + main_buffer_size);
