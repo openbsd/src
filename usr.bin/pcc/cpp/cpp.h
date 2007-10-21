@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.h,v 1.4 2007/10/12 21:40:49 stefan Exp $	*/
+/*	$OpenBSD: cpp.h,v 1.5 2007/10/21 18:58:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -90,33 +90,22 @@ struct initar {
 	char *str;
 };
 
-struct val {
+/*
+ * Struct used in parse tree evaluation.
+ * op is one of:
+ *	- number type (NUMBER, UNUMBER)
+ *	- zero (0) if divided by zero.
+ */
+struct nd {
+	int op;
 	union {
 		long long val;
 		unsigned long long uval;
-	} v;
-	int type;
-};
-
-struct nd {
-	union {
-		struct {
-			struct nd *left;
-			struct nd *right;
-		} t;
-		struct val v;
 	} n;
-	int op;
 };
 
-#define nd_left n.t.left
-#define nd_right n.t.right
-#define nd_val n.v.v.val
-#define nd_uval n.v.v.uval
-#define nd_type n.v.type
-
-struct nd *mknode(int, struct nd *, struct nd *);
-struct nd *mknum(struct val);
+#define nd_val n.val
+#define nd_uval n.uval
 
 struct recur;	/* not used outside cpp.c */
 int subst(struct symtab *, struct recur *);

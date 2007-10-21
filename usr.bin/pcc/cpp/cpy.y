@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpy.y,v 1.3 2007/10/12 18:14:14 stefan Exp $	*/
+/*	$OpenBSD: cpy.y,v 1.4 2007/10/21 18:58:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -62,27 +62,34 @@
  */
 
 %{
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
 #include "cpp.h"
 
 void yyerror(char *);
 int yylex(void);
-struct val eval(struct nd *);
+int setd(int l, int r);
+
+#define	EVALUNARY(tok, l, r) l.nd_val = tok r.nd_val; l.op = r.op
+#define	EVALBIN(tok, d, l, r)	\
+	d.op = setd(l.op, r.op); d.nd_val = l.nd_val tok r.nd_val
+#define	EVALUBIN(tok, d, l, r, t)				\
+	d.op = setd(l.op, r.op);				\
+	if (d.op == NUMBER) d.nd_val = l.nd_val tok r.nd_val;	\
+	else d.nd_uval = l.nd_uval tok r.nd_uval;		\
+	if (t && d.op) d.op = NUMBER
+#define	XEVALUBIN(tok, d, l, r)					\
+	if (r.nd_val) { EVALUBIN(tok, d, l, r, 0); } else d.op = 0
 %}
 
 %term stop
 %term EQ NE LE GE LS RS
-%term ANDAND OROR IDENT NUMBER
+%term ANDAND OROR IDENT NUMBER UNUMBER
 /*
  * The following terminals are not used in the yacc code.
  */
 %term STRING FPOINT WSPACE VA_ARGS CONCAT MKSTR ELLIPS
 
 %left ','
-%right '='
 %right '?' ':'
 %left OROR
 %left ANDAND
@@ -94,76 +101,99 @@ struct val eval(struct nd *);
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' '~' UMINUS
-%left '(' '.'
+%left '('
 
 %union {
-	struct val val;
-	struct nd *node;
+	struct nd node;
 }
 
-%type <val>	NUMBER
-%type <node>	term e
+%type <node>	term e NUMBER UNUMBER
 
 %%
-S:	e '\n'	{ return(eval($1).v.val != 0);}
-
+S:	e '\n'	{ 
+		if ($1.op == 0)
+			error("division by zero");
+		return $1.nd_val;
+	}
 
 e:	  e '*' e
-		{$$ = mknode('*', $1, $3);}
+		{ EVALUBIN(*, $$, $1, $3, 0); }
 	| e '/' e
-		{$$ = mknode('/', $1, $3);}
+		{ XEVALUBIN(/, $$, $1, $3); }
 	| e '%' e
-		{$$ = mknode('%', $1, $3);}
+		{ XEVALUBIN(%, $$, $1, $3); }
 	| e '+' e
-		{$$ = mknode('+', $1, $3);}
+		{ EVALBIN(+, $$, $1, $3); }
 	| e '-' e
-		{$$ = mknode('-', $1, $3);}
+		{ EVALBIN(-, $$, $1, $3); }
 	| e LS e
-		{$$ = mknode(LS, $1, $3);}
+		{ EVALBIN(<<, $$, $1, $3); }
 	| e RS e
-		{$$ = mknode(RS, $1, $3);}
+		{ EVALUBIN(>>, $$, $1, $3, 0); }
 	| e '<' e
-		{$$ = mknode('<', $1, $3);}
+		{ EVALUBIN(<, $$, $1, $3, 1); }
 	| e '>' e
-		{$$ = mknode('>', $1, $3);}
+		{ EVALUBIN(>, $$, $1, $3, 1); }
 	| e LE e
-		{$$ = mknode(LE, $1, $3);}
+		{ EVALUBIN(<=, $$, $1, $3, 1); }
 	| e GE e
-		{$$ = mknode(GE, $1, $3);}
+		{ EVALUBIN(>=, $$, $1, $3, 1); }
 	| e EQ e
-		{$$ = mknode(EQ, $1, $3);}
+		{ EVALUBIN(==, $$, $1, $3, 1); }
 	| e NE e
-		{$$ = mknode(NE, $1, $3);}
+		{ EVALUBIN(!=, $$, $1, $3, 1); }
 	| e '&' e
-		{$$ = mknode('&', $1, $3);}
+		{ EVALBIN(&, $$, $1, $3); }
 	| e '^' e
-		{$$ = mknode('^', $1, $3);}
+		{ EVALBIN(^, $$, $1, $3); }
 	| e '|' e
-		{$$ = mknode('|', $1, $3);}
-	| e ANDAND e
-		{$$ = mknode(ANDAND, $1, $3);}
-	| e OROR e
-		{$$ = mknode(OROR, $1, $3);}
+		{ EVALBIN(|, $$, $1, $3); }
+	| e ANDAND e {
+		$$ = $1;
+		if ($1.nd_val) {
+			$$.op = setd($1.op, $3.op);
+			$$.nd_val = ($3.nd_val != 0);
+		}
+		if ($$.op == UNUMBER) $$.op = NUMBER;
+	}
+	| e OROR e {
+		if ($1.nd_val != 0) {
+			$$.nd_val = ($1.nd_val != 0);
+			$$.op = $1.op;
+		} else {
+			$$.nd_val = ($3.nd_val != 0);
+			$$.op = setd($1.op, $3.op);
+		}
+		if ($$.op == UNUMBER) $$.op = NUMBER;
+	}
 	| e '?' e ':' e {
-		struct nd *n = mknode(':', $3, $5);
-		$$ = mknode('?', $1, n);}
-	| e ',' e
-		{$$ = mknode(',', $1, $3);}
+		if ($1.op == 0)
+			$$ = $1;
+		else if ($1.nd_val)
+			$$ = $3;
+		else
+			$$ = $5;
+	}
+	| e ',' e {
+		$$.op = setd($1.op, $3.op);
+		$$.nd_val = $3.nd_val;
+		if ($$.op) $$.op =  $3.op;
+	}
 	| term
 		{$$ = $1;}
 term:
 	  '-' term %prec UMINUS
-		{$$ = mknode(UMINUS, $2, NULL);}
+		{ EVALUNARY(-, $$, $2); }
 	| '+' term %prec UMINUS
 		{$$ = $2;}
 	| '!' term
-		{$$ = mknode('!', $2, NULL);}
+		{ $$.nd_val = ! $2.nd_val; $$.op = $2.op ? NUMBER : 0; }
 	| '~' term
-		{$$ = mknode('~', $2, NULL);}
+		{ EVALUNARY(~, $$, $2); }
 	| '(' e ')'
 		{$$ = $2;}
 	| NUMBER
-		{$$= mknum($1);}
+		{$$ = $1;}
 %%
 
 void
@@ -172,138 +202,16 @@ yyerror(char *err)
 	error(err);
 }
 
-struct nd *
-mknode(int op, struct nd *left, struct nd *right)
+/*
+ * Set return type of an expression.
+ */
+int
+setd(int l, int r)
 {
-	struct nd *r = malloc(sizeof(*r));
-	if (r == NULL) 
-		error("out of mem");
-
-	r->op = op;
-	r->nd_left = left;
-	r->nd_right = right;
-
-	return r;
+	if (!l || !r)
+		return 0; /* div by zero involved */
+	if (l == UNUMBER || r == UNUMBER)
+		return UNUMBER;
+	return NUMBER;
 }
 
-struct nd *
-mknum(struct val val)
-{
-	struct nd *r = malloc(sizeof(*r));
-	if (r == NULL) 
-		error("out of mem");
-
-	r->op = NUMBER;
-	r->n.v = val;
-	return r;
-}
-
-#define EVALUNARY(tok, op, t, x)				\
-	case (tok): if (t) ret.v.uval = op x.v.uval;		\
-		else ret.v.val = op x.v.val;			\
-		ret.type = t;					\
-		break;
-
-#define EVALBIN(tok, op, t, x, y, r) 				\
-	case (tok): if (t) ret.v.uval = x.v.uval op y.v.uval;	\
-		else ret.v.val = x.v.val op y.v.val;		\
-		ret.type = r;					\
-		break;
-
-struct val
-eval(struct nd *tree)
-{
-	struct val ret, l, r;
-	int t;
-
-	switch (tree->op) {
-	case NUMBER:
-		ret.type = tree->nd_type;
-		if (ret.type)
-			ret.v.uval = tree->nd_uval;
-		else
-			ret.v.val = tree->nd_val;
-		goto out;
-	case LS:
-	case RS:
-		r = eval(tree->nd_right);
-		/* FALLTHROUGH */
-	case UMINUS:
-	case '~':
-	case '!':
-		l = eval(tree->nd_left);
-		switch (tree->op) {
-			EVALBIN(LS, <<, l.type, l, r, l.type);
-			EVALBIN(RS, >>, l.type, l, r, l.type);
-			EVALUNARY(UMINUS, -, l.type, l);
-			EVALUNARY('~', ~, l.type, l);
-			EVALUNARY('!', !, 0, l);
-		}
-		goto out;
-	case '?':
-		l = eval(tree->nd_left);
-		// XXX mem leak
-		if (l.v.val)
-			ret = eval(tree->nd_right->nd_left);
-		else
-			ret = eval(tree->nd_right->nd_right);
-		goto out;
-	case OROR:
-		l = eval(tree->nd_left);
-		// XXX mem leak
-		if (l.v.val)
-			ret = l;
-		else
-			ret = eval(tree->nd_right);
-		ret.type = 0;
-		goto out;
-	case ANDAND:
-		l = eval(tree->nd_left);
-		// XXX mem leak
-		if (l.v.val)
-			ret = eval(tree->nd_right);
-		else
-			ret = l;
-		ret.type = 0;
-		goto out;
-	case ',':
-		// XXX mem leak
-		ret = eval(tree->nd_right);
-		goto out;
-	}
-
-	l = eval(tree->nd_left);
-	r = eval(tree->nd_right);
-	t = l.type || r.type;
-	if (tree->op == '/' || tree->op == '%') {
-		if ((t && r.v.uval == 0) || (!t && r.v.val == 0)) {
-			warning(tree->op == '/' ? "division by zero" :
-		                "modulus by zero");
-			if (t)
-				ret.v.uval = 0;
-			else
-				ret.v.val = 0;
-			ret.type = t;
-			goto out;
-		}
-	}
-	switch (tree->op) {
-		EVALBIN(EQ, ==, t, l, r, 0);
-		EVALBIN(NE, !=, t, l, r, 0);
-		EVALBIN('<', <, t, l, r, 0);
-		EVALBIN('>', >, t, l, r, 0);
-		EVALBIN(GE, >=, t, l, r, 0);
-		EVALBIN(LE, <=, t, l, r, 0);
-		EVALBIN('+', +, t, l, r, t);
-		EVALBIN('-', -, t, l, r, t);
-		EVALBIN('*', *, t, l, r, t);
-		EVALBIN('/', /, t, l, r, t);
-		EVALBIN('%', %, t, l, r, t);
-		EVALBIN('&', &, t, l, r, t);
-		EVALBIN('|', |, t, l, r, t);
-		EVALBIN('^', ^, t, l, r, t);
-	}
-out:
-	free(tree);
-	return ret;
-}
