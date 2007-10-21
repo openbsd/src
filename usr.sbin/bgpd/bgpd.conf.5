@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.86 2007/05/31 19:20:22 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.87 2007/10/21 21:34:14 mk Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 21 2007 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1131,6 +1131,8 @@ otherwise it will be set to
 .Ar number .
 .Em Weight
 is a local non-transitive attribute and a bgpd-specific extension.
+For prefixes with equally long paths, the prefix with the larger weight
+is selected.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
