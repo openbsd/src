@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.35 2007/05/30 06:29:17 ckuethe Exp $ */
+/* $OpenBSD: if_em.h,v 1.36 2007/10/21 03:49:54 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -112,6 +112,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
 #define EM_MIN_RXD			12
+#define EM_MAX_RXD_82543		256
 #define EM_MAX_RXD			256
 
 /*
