@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.101 2007/10/18 20:26:55 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.102 2007/10/21 15:54:55 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -306,7 +306,7 @@ buf_put(struct buf *bp)
 	if (bp->b_data != NULL)
 		KASSERT(bp->b_bufsize > 0);
 #endif
-#ifdef QUEUE_MACRO_DEBUG
+#ifdef DIAGNOSTIC
 	if (bp->b_freelist.tqe_next != NOLIST &&
 	    bp->b_freelist.tqe_next != (void *)-1)
 		panic("buf_put: still on the free list");
