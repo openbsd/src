@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2007/10/22 08:52:19 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.74 2007/10/22 12:18:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -114,7 +114,7 @@ typedef struct {
 
 %}
 
-%token	SERVICE TABLE BACKUP HOST REAL
+%token	SERVICE TABLE BACKUP HOST REAL INCLUDE
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT
@@ -134,6 +134,7 @@ typedef struct {
 %%
 
 grammar		: /* empty */
+		| grammar include '\n'
 		| grammar '\n'
 		| grammar varset '\n'
 		| grammar main '\n'
@@ -143,6 +144,20 @@ grammar		: /* empty */
 		| grammar proto '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
+
+include		: INCLUDE STRING		{
+			struct file	*nfile;
+
+			if ((nfile = pushfile($2, 0)) == NULL) {
+				yyerror("failed to include file %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			file = nfile;
+			lungetc('\n');
+		}
 
 optssl		: /*empty*/	{ $$ = 0; }
 		| SSL		{ $$ = 1; }
@@ -1205,6 +1220,7 @@ lookup(char *s)
 		{ "header",		HEADER },
 		{ "host",		HOST },
 		{ "icmp",		ICMP },
+		{ "include",		INCLUDE },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
