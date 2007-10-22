@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcidump.c,v 1.5 2007/10/22 09:26:16 jasper Exp $	*/
+
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
  *
