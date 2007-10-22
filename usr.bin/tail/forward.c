@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.22 2007/09/29 12:31:28 otto Exp $	*/
+/*	$OpenBSD: forward.c,v 1.23 2007/10/22 01:14:26 deraadt Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.22 2007/09/29 12:31:28 otto Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.23 2007/10/22 01:14:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,19 +163,18 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	kq = -1;
 kq_retry:
 	if (fflag && ((kq = kqueue()) >= 0)) {
-		ke.ident = fileno(fp);
-		ke.flags = EV_ENABLE|EV_ADD|EV_CLEAR;
-		ke.filter = EVFILT_READ;
-		ke.fflags = ke.data = 0;
-		ke.udata = NULL;
+		EV_SET(&ke, fileno(fp), EVFILT_READ,
+		    EV_ENABLE | EV_ADD | EV_CLEAR,
+		    0,
+		    0, NULL);
 		if (kevent(kq, &ke, 1, NULL, 0, NULL) < 0) {
 			close(kq);
 			kq = -1;
 		} else if (S_ISREG(sbp->st_mode)) {
-			ke.ident = fileno(fp);
-			ke.flags = EV_ENABLE|EV_ADD|EV_CLEAR;
-			ke.filter = EVFILT_VNODE;
-			ke.fflags = NOTE_DELETE | NOTE_RENAME | NOTE_TRUNCATE;
+			EV_SET(&ke, fileno(fp), EVFILT_VNODE,
+			    EV_ENABLE | EV_ADD | EV_CLEAR,
+			    NOTE_DELETE | NOTE_RENAME | NOTE_TRUNCATE,
+			    0, NULL);
 			if (kevent(kq, &ke, 1, NULL, 0, NULL) < 0) {
 				close(kq);
 				kq = -1;
