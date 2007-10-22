@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.36 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.37 2007/10/22 14:48:52 pyr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -119,6 +119,13 @@ int	 trunk_lb_input(struct trunk_softc *, struct trunk_port *,
 int	 trunk_lb_porttable(struct trunk_softc *, struct trunk_port *);
 const void *trunk_lb_gethdr(struct mbuf *, u_int, u_int, void *);
 
+/* Broadcast mode */
+int	 trunk_bcast_attach(struct trunk_softc *);
+int	 trunk_bcast_detach(struct trunk_softc *);
+int	 trunk_bcast_start(struct trunk_softc *, struct mbuf *);
+int	 trunk_bcast_input(struct trunk_softc *, struct trunk_port *,
+	    struct ether_header *, struct mbuf *);
+
 /* Trunk protocol table */
 static const struct {
 	enum trunk_proto	ti_proto;
@@ -127,6 +134,7 @@ static const struct {
 	{ TRUNK_PROTO_ROUNDROBIN,	trunk_rr_attach },
 	{ TRUNK_PROTO_FAILOVER,		trunk_fail_attach },
 	{ TRUNK_PROTO_LOADBALANCE,	trunk_lb_attach },
+	{ TRUNK_PROTO_BROADCAST,	trunk_bcast_attach },
 	{ TRUNK_PROTO_NONE,		NULL }
 };
 
@@ -1424,5 +1432,72 @@ trunk_lb_input(struct trunk_softc *tr, struct trunk_port *tp,
 	/* Just pass in the packet to our trunk device */
 	m->m_pkthdr.rcvif = ifp;
 
+	return (0);
+}
+
+/*
+ * Broadcast mode
+ */
+
+int
+trunk_bcast_attach(struct trunk_softc *tr)
+{
+	tr->tr_detach = trunk_bcast_detach;
+	tr->tr_start = trunk_bcast_start;
+	tr->tr_input = trunk_bcast_input;
+	tr->tr_init = NULL;
+	tr->tr_stop = NULL;
+	tr->tr_port_create = NULL;
+	tr->tr_port_destroy = NULL;
+	tr->tr_linkstate = NULL;
+
+	return (0);
+}
+
+int
+trunk_bcast_detach(struct trunk_softc *tr)
+{
+	return (0);
+}
+
+int
+trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m)
+{
+	int			 active_ports = 0;
+	int			 errors = 0;
+	int			 ret;
+	struct trunk_port	*tp;
+	struct mbuf		*newbuf;
+
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+		if (TRUNK_PORTACTIVE(tp)) {
+			/*
+			 * copy the mbuf everytime.
+			 */
+			newbuf = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			if (newbuf == NULL) {
+				m_free(m);
+				return (ENOBUFS);
+			}
+			active_ports++;
+			if ((ret = trunk_enqueue(tp->tp_if, newbuf)))
+				errors++;
+		}
+	}
+	m_free(m);
+	if (active_ports == 0)
+		return (ENOENT);
+	if (errors == active_ports)
+		return (ret);
+	return (0);
+}
+
+int
+trunk_bcast_input(struct trunk_softc *tr, struct trunk_port *tp,
+    struct ether_header *eh, struct mbuf *m)
+{
+	struct ifnet *ifp = &tr->tr_ac.ac_if;
+
+	m->m_pkthdr.rcvif = ifp;
 	return (0);
 }

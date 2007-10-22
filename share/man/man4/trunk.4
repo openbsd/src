@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.19 2007/05/31 19:19:52 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.20 2007/10/22 14:48:52 pyr Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 22 2007 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@ The driver currently supports the trunk protocols
 (the default),
 .Ic failover ,
 .Ic loadbalance ,
+.Ic broadcast ,
 and
 .Ic none .
 The protocols determine which ports are used for outgoing traffic
@@ -72,6 +73,9 @@ protocol header information and accepts incoming traffic from
 any active port.
 The hash includes the Ethernet source and destination address, and, if
 available, the VLAN tag, and the IP source and destination address.
+.It Ic broadcast
+Sends frames to all ports of the trunk and receives frames on any
+port of the trunk.
 .It Ic none
 This protocol is intended to do nothing: it disables any traffic without
 disabling the

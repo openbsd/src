@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.13 2007/09/06 16:22:55 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.14 2007/10/22 14:48:52 pyr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,8 @@ enum trunk_proto {
 	TRUNK_PROTO_ROUNDROBIN	= 1,		/* simple round robin */
 	TRUNK_PROTO_FAILOVER	= 2,		/* active failover */
 	TRUNK_PROTO_LOADBALANCE	= 3,		/* loadbalance */
-	TRUNK_PROTO_MAX		= 4
+	TRUNK_PROTO_BROADCAST	= 4,		/* broadcast */
+	TRUNK_PROTO_MAX		= 5
 };
 
 struct trunk_protos {
@@ -55,6 +56,7 @@ struct trunk_protos {
 	{ "roundrobin",		TRUNK_PROTO_ROUNDROBIN },		\
 	{ "failover",		TRUNK_PROTO_FAILOVER },			\
 	{ "loadbalance",	TRUNK_PROTO_LOADBALANCE },		\
+	{ "broadcast",		TRUNK_PROTO_BROADCAST },		\
 	{ "none",		TRUNK_PROTO_NONE },			\
 	{ "default",		TRUNK_PROTO_DEFAULT }			\
 }
