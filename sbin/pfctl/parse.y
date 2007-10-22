@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.530 2007/10/16 19:20:27 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.531 2007/10/22 00:40:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -504,7 +504,7 @@ ruleset		: /* empty */
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = pushfile($2, 1)) == NULL) {
+			if ((nfile = pushfile($2, 0)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -5518,7 +5518,7 @@ parse_config(char *filename, struct pfctl *xpf)
 	blockpolicy = PFRULE_DROP;
 	require_order = 1;
 
-	if ((file = pushfile(filename, 1)) == NULL) {
+	if ((file = pushfile(filename, 0)) == NULL) {
 		warn("cannot open the main config file!");
 		return (-1);
 	}
