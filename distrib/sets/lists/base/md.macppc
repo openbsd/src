@@ -2342,5 +2342,6 @@
 ./usr/sbin/apmd
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz

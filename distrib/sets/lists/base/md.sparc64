@@ -2295,4 +2295,5 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg

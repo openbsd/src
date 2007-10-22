@@ -2327,4 +2327,5 @@
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
 ./usr/mdec/boot
 ./usr/mdec/sgivol
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg

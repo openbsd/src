@@ -2314,6 +2314,7 @@
 ./usr/share/man/cat8/ospfctl.0
 ./usr/share/man/cat8/ospfd.0
 ./usr/share/man/cat8/pac.0
+./usr/share/man/cat8/pcidump.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
 ./usr/share/man/cat8/ping.0

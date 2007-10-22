@@ -2332,6 +2332,7 @@
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/memconfig
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused

@@ -2324,6 +2324,7 @@
 ./usr/sbin/apmd
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused

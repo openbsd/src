@@ -2291,6 +2291,7 @@
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/hotplugd
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused

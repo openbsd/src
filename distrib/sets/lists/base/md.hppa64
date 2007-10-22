@@ -2289,5 +2289,6 @@
 ./usr/mdec/sdboot
 ./usr/mdec/stboot
 ./usr/mdec/xxboot
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload

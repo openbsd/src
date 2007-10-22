@@ -2237,3 +2237,4 @@
 ./usr/mdec/wdboot
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
+./usr/sbin/pcidump
