@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.19 2007/10/20 17:18:32 krw Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.20 2007/10/22 16:45:20 chl Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
  *
  **************************************************************/
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
