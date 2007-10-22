@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.187 2007/10/20 18:54:42 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.188 2007/10/22 23:57:24 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -367,7 +367,7 @@ ukphy*	at mii?				# Unknown PHYs
 # sensors
 pcfiic*	at ebus?
 iic*	at pcfiic?
-alipm*	at pci? disable
+alipm*	at pci?
 iic*	at alipm?
 mbg*	at pci?				# Meinberg Funkuhren radio clocks
 
