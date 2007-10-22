@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2007/10/19 17:33:35 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2007/10/22 08:52:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1614,7 +1614,7 @@ parse_config(const char *filename, int opts)
 	conf->opts = opts;
 	conf->confpath = filename;
 
-	if ((file = pushfile(filename, 1)) == NULL) {
+	if ((file = pushfile(filename, 0)) == NULL) {
 		free(conf);
 		return (NULL);
 	}
