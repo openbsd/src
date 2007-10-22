@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.52 2007/10/22 16:53:30 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.53 2007/10/22 17:14:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -112,6 +112,7 @@ int		 relay_bufferevent_write(struct ctl_relay_event *,
 		    void *, size_t);
 int		 relay_cmp_af(struct sockaddr_storage *,
 		    struct sockaddr_storage *);
+char		*relay_load_file(const char *, off_t *);
 static __inline int
 		 relay_proto_cmp(struct protonode *, struct protonode *);
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
@@ -2425,68 +2426,62 @@ relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 	}
 }
 
+char *
+relay_load_file(const char *name, off_t *len)
+{
+	struct stat	 st;
+	off_t		 size;
+	u_int8_t	*buf = NULL;
+	int	 	 fd;
+
+	if ((fd = open(name, O_RDONLY)) == -1)
+		return (NULL);
+	if (fstat(fd, &st) != 0)
+		goto fail;
+	size = st.st_size;
+	if ((buf = (char *)calloc(1, size + 1)) == NULL)
+		goto fail;
+	if (read(fd, buf, size) != size)
+		goto fail;
+
+	close(fd);
+
+	*len = size + 1;
+	return (buf);
+
+ fail:
+	if (buf != NULL)
+		free(buf);
+	close(fd);
+	return (NULL);
+}
+
 int
 relay_load_certfiles(struct relay *rlay)
 {
-	int	 fd;
-	off_t	 len;
 	char	 certfile[PATH_MAX];
 	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
-	char	*str;
 
-	if (!(rlay->conf.flags & F_SSL))
-		return 0;
+	if ((rlay->conf.flags & F_SSL) == 0)
+		return (0);
 
 	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
-		return -1;
+		return (-1);
 
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/%s.crt", hbuf) == -1)
-		return -1;
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		return -1;
-	if ((len = lseek(fd, 0, SEEK_END)) == -1) {
-		close(fd);
-		return -1;
-	}
-	rlay->ssl_cert_len = len + 1;
-	if ((rlay->ssl_cert = calloc(1, rlay->ssl_cert_len)) == NULL) {
-		close(fd);
-		return -1;
-	}
-	if ((str = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
-	    fd, 0)) == MAP_FAILED)  {
-		close(fd);
-		return -1;
-	}
-	close(fd);
-	rlay->ssl_cert_len = len;
-	(void)strlcpy(rlay->ssl_cert, str, rlay->ssl_cert_len);
-	munmap(str, rlay->ssl_cert_len);
+		return (-1);
+	if ((rlay->ssl_cert = relay_load_file(certfile,
+	    &rlay->ssl_cert_len)) == NULL)
+		return (-1);
 	log_debug("relay_load_certfile: using certificate %s", certfile);
 
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/private/%s.key", hbuf) == -1)
 		return -1;
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		return -1;
-	if ((len = lseek(fd, 0, SEEK_END)) == -1) {
-		close(fd);
-		return -1;
-	}
-	rlay->ssl_key_len = len + 1;
-	if ((rlay->ssl_key = calloc(1, rlay->ssl_key_len)) == NULL) {
-		close(fd);
-		return -1;
-	}
-	if ((str = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
-	    fd, 0)) == MAP_FAILED) {
-		close(fd);
-		return -1;
-	}
-	close(fd);
-	(void)strlcpy(rlay->ssl_key, str, rlay->ssl_key_len);
-	munmap(str, rlay->ssl_key_len);
+	if ((rlay->ssl_key = relay_load_file(certfile,
+	    &rlay->ssl_key_len)) == NULL)
+		return (-1);
 	log_debug("relay_load_certfile: using private key %s", certfile);
 
 	return (0);
