@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.37 2007/10/22 14:48:52 pyr Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.38 2007/10/22 17:02:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1467,26 +1467,27 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m)
 	int			 errors = 0;
 	int			 ret;
 	struct trunk_port	*tp;
-	struct mbuf		*newbuf;
+	struct mbuf		*n;
 
 	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
 		if (TRUNK_PORTACTIVE(tp)) {
-			/*
-			 * copy the mbuf everytime.
-			 */
-			newbuf = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-			if (newbuf == NULL) {
-				m_free(m);
-				return (ENOBUFS);
-			}
+			if (active_ports) {
+				n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+				if (n == NULL) {
+					m_free(m);
+					return (ENOBUFS);
+				}
+			} else
+				n = m;
 			active_ports++;
-			if ((ret = trunk_enqueue(tp->tp_if, newbuf)))
+			if ((ret = trunk_enqueue(tp->tp_if, n)))
 				errors++;
 		}
 	}
-	m_free(m);
-	if (active_ports == 0)
+	if (active_ports == 0) {
+		m_free(m);
 		return (ENOENT);
+	}
 	if (errors == active_ports)
 		return (ret);
 	return (0);
