@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2007/10/18 04:32:27 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.49 2007/10/22 16:59:56 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -347,13 +347,13 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
-	 * Default to SINGLE and ASKNAME if no args or
-	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
+	 * Default to AUTOBOOT if no args or SINGLE and DFLTROOT
+	 * if this is a ramdisk kernel.
 	 */
 #ifdef RAMDISK_HOOKS
 	boothowto = RB_SINGLE | RB_DFLTROOT;
 #else
-	boothowto = RB_SINGLE | RB_ASKNAME;
+	boothowto = RB_AUTOBOOT;
 #endif /* RAMDISK_HOOKS */
 
 	dobootopts(argc, argv);
@@ -658,13 +658,41 @@ dobootopts(int argc, void *argv)
 			cp = (char *)(long)((int32_t *)argv)[i];
 		else
 			cp = ((char **)argv)[i];
-		if (cp != NULL && strncmp(cp, "OSLoadOptions=", 14) == 0) {
+		if (cp == NULL)
+			continue;
+
+		/*
+		 * Parse PROM options.
+		 */
+		if (strncmp(cp, "OSLoadOptions=", 14) == 0) {
 			if (strcmp(&cp[14], "auto") == 0)
 					boothowto &= ~(RB_SINGLE|RB_ASKNAME);
 			else if (strcmp(&cp[14], "single") == 0)
 					boothowto |= RB_SINGLE;
 			else if (strcmp(&cp[14], "debug") == 0)
 					boothowto |= RB_KDB;
+			continue;
+		}
+
+		/*
+		 * Parse kernel options.
+		 */
+		if (*cp == '-') {
+			while (*++cp != '\0')
+				switch (*cp) {
+				case 'a':
+					boothowto |= RB_ASKNAME;
+					break;
+				case 'c':
+					boothowto |= RB_CONFIG;
+					break;
+				case 'd':
+					boothowto |= RB_KDB;
+					break;
+				case 's':
+					boothowto |= RB_SINGLE;
+					break;
+				}
 		}
 	}
 
