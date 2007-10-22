@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.66 2007/10/01 15:34:48 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.67 2007/10/22 09:58:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -965,7 +965,7 @@ arc_query_firmware(struct arc_softc *sc)
 		return (1);
 	}
 
-	printf("%s: %d SATA Ports, %dMB SDRAM, FW Version: %s\n",
+	printf("%s: %d ports, %dMB SDRAM, firmware %s\n",
 	    DEVNAME(sc), letoh32(fwinfo.sata_ports),
 	    letoh32(fwinfo.sdram_size), string);
 
