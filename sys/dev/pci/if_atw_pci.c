@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.8 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.9 2007/10/22 23:00:45 fgsch Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -178,19 +178,14 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * any meanings. -dcy
 	 */
 	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state != PCI_PMCSR_STATE_D0) {
-		if (state == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf(": unable to wake up from power state D3, "
-			    "reboot required.\n");
-			return;
-		} else {
-			printf(": waking up from power state D%d\n%s",
-			    state, sc->sc_dev.dv_xname);
-		}
+	if (state == PCI_PMCSR_STATE_D3) {
+		/*
+		 * The card has lost all configuration data in
+		 * this state, so punt.
+		 */
+		printf(": unable to wake up from power state D3, "
+		    "reboot required.\n");
+		return;
 	}
 
 	/*

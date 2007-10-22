@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.16 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.17 2007/10/22 23:00:45 fgsch Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -614,17 +614,14 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode, if needed. */
 	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state != PCI_PMCSR_STATE_D0) {
-		if (state == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf(": unable to wake from power state D3\n");
-			return;
-		} else {
-			printf(": waking up from power date D%d", state);
-		}
+	if (state == PCI_PMCSR_STATE_D3) {
+		/*
+		 * The card has lost all configuration data in
+		 * this state, so punt.
+		 */
+		printf(": unable to wake up from power state D3, "
+		    "reboot required.\n");
+		return;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.6 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.7 2007/10/22 23:00:45 fgsch Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -161,18 +161,14 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	int state, ioh_valid, memh_valid;
 
 	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state != PCI_PMCSR_STATE_D0) {
-		if (state == PCI_PMCSR_STATE_D3) {
-			/*
-			 * IO and MEM are disabled. We can't enable
-			 * the card because the BARs might be invalid.
-			 */
-			printf(": unable to wake up from power state D3, "
-			    "reboot required.\n");
-			return;
-		} else {
-			printf(": waking up from power state D%d\n", state);
-		}
+	if (state == PCI_PMCSR_STATE_D3) {
+		/*
+		 * IO and MEM are disabled. We can't enable
+		 * the card because the BARs might be invalid.
+		 */
+		printf(": unable to wake up from power state D3, "
+		    "reboot required.\n");
+		return;
 	}
 
 	/*

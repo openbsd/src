@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.3 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.4 2007/10/22 23:00:45 fgsch Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -116,15 +116,10 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 
 	state = pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state != PCI_PMCSR_STATE_D0) {
-		if (state == PCI_PMCSR_STATE_D3) {
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		} else {
-			printf(": waking up from power state D%d\n%s",
-			    state, sc->sc_dev.dv_xname);
-		}
+	if (state == PCI_PMCSR_STATE_D3) {
+		printf(": unable to wake up from power state D3, "
+		    "reboot required.\n");
+		return;
 	}
 
 	/*
