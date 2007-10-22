@@ -1,0 +1,59 @@
+.\" Copyright (c) 2007 Paul de Weerd <weerd@weirdnet.nl>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 22 2007 $
+.Dt PCIDUMP 8
+.Os
+.Sh NAME
+.Nm pcidump
+.Nd Show PCI device data
+.Sh SYNOPSIS
+.Nm pcidump
+.Op Fl v
+.Op Fl d Ar pcidev
+.Op Ar dev:bus:func
+.Sh DESCRIPTION
+When invoked without arguments, the
+.Nm
+utility displays a list of all PCI devices in the system with the
+device address, vendor and productname. 
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl v
+Shows detailed information about PCI devices.
+.It Fl d
+Specify another file to use for PCI lookups.
+.It Ar dev:bus:func
+Causes
+.Nm
+to only display infromation for the device specified.
+.Sh FILES
+.Bl -tag -width /dev/pci -compact
+.It Pa /dev/pci
+Default file for PCI lookups.
+.Sh SEE ALSO
+.Xr pci 4
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was written by
+.An David Gwynne
+.Aq dlg@openbsd.org .
