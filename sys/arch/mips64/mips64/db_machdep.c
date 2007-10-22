@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.13 2007/10/10 15:53:52 art Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.14 2007/10/22 14:46:46 jsing Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -134,7 +134,7 @@ kdb_trap(type, fp)
 			db_error("Caught exception in ddb.\n");
 			/*NOTREACHED*/
 		}
-		printf("stoped on non ddb fault\n");
+		printf("stopped on non ddb fault\n");
 	}
 
 	bcopy((void *)fp, (void *)&ddb_regs, NUMSAVEREGS * sizeof(register_t));
