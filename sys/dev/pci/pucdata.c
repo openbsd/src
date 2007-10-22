@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.49 2007/10/11 17:35:57 sthen Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.50 2007/10/22 09:37:35 otto Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1189,6 +1189,16 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
 	    },
 	},
+
+	{   /* SUNIX 4036 2S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x0002 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
 
 	{   /* SUNIX 405X 4S */
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4050 },
