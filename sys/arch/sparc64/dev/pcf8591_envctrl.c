@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_envctrl.c,v 1.2 2007/10/20 20:00:10 kettenis Exp $ */
+/*	$OpenBSD: pcf8591_envctrl.c,v 1.3 2007/10/22 20:53:10 cnst Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -156,9 +156,8 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < sc->sc_nchan; i++)
-		if (!(sc->sc_channels[i].chan_sensor.flags & SENSOR_FINVALID))
-			sensor_attach(&sc->sc_sensordev, 
-			    &sc->sc_channels[i].chan_sensor);
+		sensor_attach(&sc->sc_sensordev, 
+		    &sc->sc_channels[i].chan_sensor);
 
 	if (sensor_task_register(sc, ecadc_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
@@ -197,8 +196,6 @@ ecadc_refresh(void *arg)
 	for (i = 0; i < sc->sc_nchan; i++) {
 		struct ecadc_channel *chp = &sc->sc_channels[i];
 
-		if ((chp->chan_sensor.flags & SENSOR_FINVALID) != 0)
-			continue;
 		if (chp->chan_factor == 0)
 			chp->chan_sensor.value = 273150000 + 1000000 *
 			    sc->sc_xlate[data[1 + chp->chan_num]];
