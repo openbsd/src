@@ -168,7 +168,7 @@ probe(int bus, int dev, int func)
 		}
 	}
 
-	printf("%02x:%02x:%02x: %s %s\n", bus, dev, func,
+	printf("%d:%d:%d: %s %s\n", bus, dev, func,
 	    (vendor == NULL) ? "unknown" : vendor,
 	    (product == NULL) ? "unknown" : product);
 
