@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.4 2007/10/12 21:40:49 stefan Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.5 2007/10/22 17:49:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -923,7 +923,7 @@ expmac(struct recur *rp)
 		struct recur *rp2 = rp;
 		printf("\nexpmac\n");
 		while (rp2) {
-			printf("do not expand %s\n", rp->sp->namep);
+			printf("do not expand %s\n", rp2->sp->namep);
 			rp2 = rp2->next;
 		}
 	}
@@ -1074,9 +1074,9 @@ expdef(vp, rp, gotwarn)
 	int narg, c, i, plev, snuff, instr;
 	int ellips = 0;
 
-	DPRINT(("expdef %s rp %s\n", vp, (rp ? (char *)rp->sp->namep : "")));
+	DPRINT(("expdef rp %s\n", (rp ? (char *)rp->sp->namep : "")));
 	if ((c = yylex()) != '(')
-		error("got %c, expected )", c);
+		error("got %c, expected (", c);
 	if (vp[1] == VARG) {
 		narg = *vp--;
 		ellips = 1;
