@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.10 2006/05/15 14:00:22 kettenis Exp $	*/
+/*	$OpenBSD: except.c,v 1.11 2007/10/22 21:07:10 miod Exp $	*/
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -55,42 +55,44 @@ main(int argc, char *argv[])
 	sigaction(SIGFPE, &sa, NULL);
 	signal_status = 1;
 
-	/* trip divide by zero */
-	x = one / zero;
-	assert(fpgetsticky() & FP_X_DZ);
-	fpsetsticky(0);
-
-	/* trip invalid operation */
-	x = zero / zero;
-	assert(fpgetsticky() & FP_X_INV);
-	fpsetsticky(0);
-
-	/* trip overflow */
-	x = huge * huge;
-	assert(fpgetsticky() & FP_X_OFL);
-	fpsetsticky(0);
-
-	/* trip underflow */
-	x = tiny * tiny;
-	assert(fpgetsticky() & FP_X_UFL);
-	fpsetsticky(0);
-
-	signal_status = 0;
-
 	if (strcmp(argv[1], "fltdiv") == 0) {
-		/* unmask and then trip divide by zero */
+		/* trip divide by zero */
+		x = one / zero;
+		assert(fpgetsticky() & FP_X_DZ);
+		fpsetsticky(0);
+
+		/* and now unmask to get a signal */
+		signal_status = 0;
 		fpsetmask(FP_X_DZ);
 		x = one / zero;
 	} else if (strcmp(argv[1], "fltinv") == 0) {
-		/* unmask and then trip invalid operation */
+		/* trip invalid operation */
+		x = zero / zero;
+		assert(fpgetsticky() & FP_X_INV);
+		fpsetsticky(0);
+
+		/* and now unmask to get a signal */
+		signal_status = 0;
 		fpsetmask(FP_X_INV);
 		x = zero / zero;
 	} else if (strcmp(argv[1], "fltovf") == 0) {
-		/* unmask and then trip overflow */
+		/* trip overflow */
+		x = huge * huge;
+		assert(fpgetsticky() & FP_X_OFL);
+		fpsetsticky(0);
+
+		/* and now unmask to get a signal */
+		signal_status = 0;
 		fpsetmask(FP_X_OFL);
 		x = huge * huge;
 	} else if (strcmp(argv[1], "fltund") == 0) {
-		/* unmask and then trip underflow */
+		/* trip underflow */
+		x = tiny * tiny;
+		assert(fpgetsticky() & FP_X_UFL);
+		fpsetsticky(0);
+
+		/* and now unmask to get a signal */
+		signal_status = 0;
 		fpsetmask(FP_X_UFL);
 		x = tiny * tiny;
 	} else {
