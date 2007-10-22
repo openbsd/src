@@ -1,7 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/10/22 01:26:17 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 2006/09/01 21:26:18 uwe Exp $
 
 # Makefile for landisk tags file and boot blocks
+
+S=${.CURDIR}/../..
+.include "../../kern/Make.tags.inc"
+
+SUBDIR=	stand
 
 TLANDISK=	../landisk/tags
 SLANDISK=	../landisk/landisk/*.[ch] ../landisk/include/*.h
@@ -9,8 +14,6 @@ ALANDISK=	../landisk/landisk/*.[sS]
 
 # Directories in which to place tags links
 DLANDISK=	landisk include
-
-.include "../../kern/Make.tags.inc"
 
 tags:
 	-ctags -wdtf ${TLANDISK} ${SLANDISK} ${COMM}
@@ -22,7 +25,5 @@ tags:
 links:
 	-for i in ${DLANDISK}; do \
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
-
-SUBDIR=	stand
 
 .include <bsd.subdir.mk>
