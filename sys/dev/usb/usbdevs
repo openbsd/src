@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.303 2007/10/20 01:05:46 beck Exp $
+$OpenBSD: usbdevs,v 1.304 2007/10/22 17:05:28 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1612,11 +1612,15 @@ product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
-product MICROSOFT TBEXPLORER	0x0024  Trackball Explorer
+product MICROSOFT TBEXPLORER	0x0024	Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT MN110		0x007a	10/100 Ethernet
+product MICROSOFT WLINTELLIMOUSE 0x008c	Wireless Optical IntelliMouse
+product MICROSOFT WLNOTEBOOK	0x00b9	Wireless Optical Mouse (Model 1023)
+product MICROSOFT WLNOTEBOOK2	0x00e1	Wireless Optical Mouse 3000 (Model 1056)
+product MICROSOFT WLUSBMOUSE	0x00b9	Wireless USB Mouse
 product MICROSOFT XBOX360	0x0292	XBOX 360 WLAN
 
 /* Microtech products */
