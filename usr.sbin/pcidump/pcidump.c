@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 David Gwynne <loki@animata.net>
+ * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
