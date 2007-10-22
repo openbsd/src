@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.10 2007/03/20 17:37:34 deraadt Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.11 2007/10/22 14:11:44 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -324,9 +324,23 @@ com_attach_subr(sc)
 		panic("comattach: bad fifo type");
 	}
 
-#ifdef notyet
-	com_fifo_probe(sc);
+#ifdef KGDB
+	/*
+	 * Allow kgdb to "take over" this port.  If this is
+	 * the kgdb device, it has exclusive use.
+	 */
+
+	if (iot == com_kgdb_iot && sc->sc_iobase == com_kgdb_addr &&
+	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+		SET(sc->sc_hwflags, COM_HW_KGDB);
+	}
+#endif /* KGDB */
+
+#if defined(COM_CONSOLE) || defined(KGDB)
+	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 #endif
+		com_fifo_probe(sc);
 
 	if (sc->sc_fifolen == 0) {
 		CLR(sc->sc_hwflags, COM_HW_FIFO);
@@ -340,19 +354,6 @@ com_attach_subr(sc)
 
 	sc->sc_mcr = 0;
 	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-
-#ifdef KGDB
-	/*
-	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
-	 */
-
-	if (iot == com_kgdb_iot && sc->sc_iobase == com_kgdb_addr &&
-	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
-		SET(sc->sc_hwflags, COM_HW_KGDB);
-	}
-#endif /* KGDB */
 
 #ifdef COM_CONSOLE
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
