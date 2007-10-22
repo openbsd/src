@@ -1,3 +1,3 @@
-TARGMACH= x86
+TARGMACH= i386
 
 .include <bsd.prog.mk>

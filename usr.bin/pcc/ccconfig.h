@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.2 2007/10/15 09:46:30 otto Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.3 2007/10/22 13:40:08 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,7 +39,7 @@
 #define	ENDFILES { "/usr/lib/crtend.o", NULL }
 
 #define CPPMDADDS { \
-	{ "x86", { "-D__i386__", "-D__i386", "-D__ELF__", \
+	{ "i386", { "-D__i386__", "-D__i386", "-D__ELF__", \
 		NULL } }, \
 	{ "alpha", { "-D__alpha", "-D__alpha_ev4__", "-D__alpha__", \
 		"-D__ELF__", NULL } }, \
