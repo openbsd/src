@@ -39,7 +39,8 @@ int pci_read(int, int, int, u_int32_t, u_int32_t *);
 __dead void
 usage(void)
 {
-	extern const char *__progname;
+	extern char *__progname;
+
 	fprintf(stderr, "usage: %s [-v] [-d pcidev] [dev:bus:func]\n",
 	    __progname);
 	exit(1);
