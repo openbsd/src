@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.14 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.15 2007/10/22 19:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ static const struct uipaq_type uipaq_devs[] = {
 	{{ USB_VENDOR_ASUS, USB_PRODUCT_ASUS_MYPAL_A730} , 0},
 	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0},
 	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQPOCKETPC} , 0},
+	{{ USB_VENDOR_HTC, USB_PRODUCT_HTC_SMARTPHONE }, 0},
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_2215 }, 0 },
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_568J }, 0},
 	{{ USB_VENDOR_HTC, USB_PRODUCT_HTC_PPC6700MODEM }, 0}
