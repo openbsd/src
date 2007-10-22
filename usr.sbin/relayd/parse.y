@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2007/10/22 12:18:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2007/10/22 16:53:30 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -943,6 +943,11 @@ relay		: RELAY STRING	{
 			if (rlay->conf.proto == EMPTY_ID) {
 				rlay->proto = &conf->proto_default;
 				rlay->conf.proto = conf->proto_default.id;
+			}
+			if (relay_load_certfiles(rlay) == -1) {
+				yyerror("cannot load certificates for relay %s",
+				    rlay->conf.name);
+				YYERROR;
 			}
 			conf->relaycount++;
 			SPLAY_INIT(&rlay->sessions);

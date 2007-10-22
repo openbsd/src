@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.51 2007/10/19 14:15:14 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.52 2007/10/22 16:53:30 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -91,7 +91,6 @@ void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
 
-int		 relay_ssl_ctx_init(struct relay *);
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct session *);
 void		 relay_ssl_accept(int, short, void *);
@@ -383,10 +382,6 @@ relay_privinit(void)
 			/* Use defaults */
 			break;
 		}
-
-		if ((rlay->conf.flags & F_SSL) &&
-		    relay_ssl_ctx_init(rlay) == -1)
-			fatal("relay_launch: could not open certificates");
 
 		if (rlay->conf.flags & F_UDP)
 			rlay->s = relay_udp_bind(&rlay->conf.ss,
@@ -2015,48 +2010,6 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 	imsg_event_add(ibuf);
 }
 
-int
-relay_ssl_ctx_init(struct relay *rlay)
-{
-	int	fd;
-	off_t	len;
-	char	certfile[PATH_MAX];
-	char	hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
-
-	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
-		return -1;
-
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/%s.crt", hbuf) == -1)
-		return -1;
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		return -1;
-	if ((len = lseek(fd, 0, SEEK_END)) == -1)
-		return -1;
-	if ((rlay->ssl_cert = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
-	    fd, 0)) == MAP_FAILED)
-		return -1;
-	rlay->ssl_cert_len = len;
-	close(fd);
-	log_debug("relay_ssl_ctx_init: using certificate %s", certfile);
-
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/private/%s.key", hbuf) == -1)
-		return -1;
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		return -1;
-	if ((len = lseek(fd, 0, SEEK_END)) == -1)
-		return -1;
-	if ((rlay->ssl_key = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
-	    fd, 0)) == MAP_FAILED)
-		return -1;
-	rlay->ssl_key_len = len;
-	close(fd);
-	log_debug("relay_ssl_ctx_init: using private key %s", certfile);
-
-	return (0);
-}
-
 SSL_CTX *
 relay_ssl_ctx_create(struct relay *rlay)
 {
@@ -2097,12 +2050,10 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!ssl_ctx_use_certificate_chain(ctx,
 	    rlay->ssl_cert, rlay->ssl_cert_len))
 		goto err;
-	munmap(rlay->ssl_cert, rlay->ssl_cert_len);
 
 	log_debug("relay_ssl_ctx_create: loading private key");
 	if (!ssl_ctx_use_private_key(ctx, rlay->ssl_key, rlay->ssl_key_len))
 		goto err;
-	munmap(rlay->ssl_key, rlay->ssl_key_len);
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
 
@@ -2472,6 +2423,73 @@ relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 	default:
 		return (-1);
 	}
+}
+
+int
+relay_load_certfiles(struct relay *rlay)
+{
+	int	 fd;
+	off_t	 len;
+	char	 certfile[PATH_MAX];
+	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	char	*str;
+
+	if (!(rlay->conf.flags & F_SSL))
+		return 0;
+
+	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
+		return -1;
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/%s.crt", hbuf) == -1)
+		return -1;
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		return -1;
+	if ((len = lseek(fd, 0, SEEK_END)) == -1) {
+		close(fd);
+		return -1;
+	}
+	rlay->ssl_cert_len = len + 1;
+	if ((rlay->ssl_cert = calloc(1, rlay->ssl_cert_len)) == NULL) {
+		close(fd);
+		return -1;
+	}
+	if ((str = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
+	    fd, 0)) == MAP_FAILED)  {
+		close(fd);
+		return -1;
+	}
+	close(fd);
+	rlay->ssl_cert_len = len;
+	(void)strlcpy(rlay->ssl_cert, str, rlay->ssl_cert_len);
+	munmap(str, rlay->ssl_cert_len);
+	log_debug("relay_load_certfile: using certificate %s", certfile);
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/private/%s.key", hbuf) == -1)
+		return -1;
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		return -1;
+	if ((len = lseek(fd, 0, SEEK_END)) == -1) {
+		close(fd);
+		return -1;
+	}
+	rlay->ssl_key_len = len + 1;
+	if ((rlay->ssl_key = calloc(1, rlay->ssl_key_len)) == NULL) {
+		close(fd);
+		return -1;
+	}
+	if ((str = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
+	    fd, 0)) == MAP_FAILED) {
+		close(fd);
+		return -1;
+	}
+	close(fd);
+	(void)strlcpy(rlay->ssl_key, str, rlay->ssl_key_len);
+	munmap(str, rlay->ssl_key_len);
+	log_debug("relay_load_certfile: using private key %s", certfile);
+
+	return (0);
 }
 
 static __inline int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.70 2007/10/19 14:15:14 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.71 2007/10/22 16:53:30 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -713,6 +713,7 @@ pid_t	 relay(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct session *, struct session *);
+int	 relay_load_certfiles(struct relay *);
 
 RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, session, nodes, relay_session_cmp);
