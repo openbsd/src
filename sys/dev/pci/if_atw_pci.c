@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.7 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.8 2007/10/22 03:16:35 fgsch Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -151,8 +151,7 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
-	pcireg_t reg;
-	int pmreg;
+	int state;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -178,28 +177,19 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * same place in the ADM8211, but the docs do not assign its bits
 	 * any meanings. -dcy
 	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-		case PCI_PMCSR_STATE_D3:
+	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
+	if (state != PCI_PMCSR_STATE_D0) {
+		if (state == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
 			printf(": unable to wake up from power state D3, "
-			       "reboot required.\n");
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
+			    "reboot required.\n");
 			return;
+		} else {
+			printf(": waking up from power state D%d\n%s",
+			    state, sc->sc_dev.dv_xname);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.11 2007/09/17 00:50:46 krw Exp $ */
+/* $OpenBSD: auixp.c,v 1.12 2007/10/22 03:16:35 fgsch Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -136,7 +136,6 @@ paddr_t	auixp_mappage(void *, void *, off_t, int);
 
 
 /* power management (do we support that already?) */
-int	auixp_power(struct auixp_softc *, int);
 #if 0
 void	auixp_powerhook(int, void *);
 int	auixp_suspend(struct auixp_softc *);
@@ -1284,7 +1283,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof sc->sc_audev.config);
 
 	/* power up chip */
-	auixp_power(sc, PCI_PMCSR_STATE_D0);
+	pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D0);
 
 	/* init chip */
 	if (auixp_init(sc) == -1) {
@@ -1796,28 +1795,6 @@ auixp_init(struct auixp_softc *sc)
 	 * note: we are NOT enabling interrupts yet, no codecs have been
 	 * detected yet nor is anything else set up
 	 */
-
-	return 0;
-}
-
-/*
- * TODO power saving and suspend / resume support
- */
-int
-auixp_power(struct auixp_softc *sc, int state)
-{
-	pcitag_t tag;
-	pci_chipset_tag_t pc;
-	pcireg_t data;
-	int pmcapreg;
-
-	tag = sc->sc_tag;
-	pc = sc->sc_pct;
-	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
-		data = pci_conf_read(pc, tag, pmcapreg + PCI_PMCSR);
-		if ((data & PCI_PMCSR_STATE_MASK) != state)
-			pci_conf_write(pc, tag, pmcapreg + PCI_PMCSR, state);
-	}
 
 	return 0;
 }

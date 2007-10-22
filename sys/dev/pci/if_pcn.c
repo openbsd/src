@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.15 2006/11/09 14:25:23 reyk Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.16 2007/10/22 03:16:35 fgsch Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -584,10 +584,9 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
-	pcireg_t pmode;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	int pmreg;
+	int state;
 
 	timeout_set(&sc->sc_tick_timeout, pcn_tick, sc);
 
@@ -614,22 +613,17 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Get it out of power save mode, if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
-		    PCI_PMCSR_STATE_MASK;
-		if (pmode == PCI_PMCSR_STATE_D3) {
+	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
+	if (state != PCI_PMCSR_STATE_D0) {
+		if (state == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
 			printf(": unable to wake from power state D3\n");
 			return;
-		}
-		if (pmode != PCI_PMCSR_STATE_D0) {
-			printf(": waking up from power date D%d",
-			    pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    PCI_PMCSR_STATE_D0);
+		} else {
+			printf(": waking up from power date D%d", state);
 		}
 	}
 

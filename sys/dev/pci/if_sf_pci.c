@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.2 2006/12/06 22:43:38 martin Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.3 2007/10/22 03:16:35 fgsch Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -112,29 +112,18 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
+	int state, ioh_valid, memh_valid;
 	pcireg_t reg;
-	int pmreg, ioh_valid, memh_valid;
 
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pmreg, 0)) {
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-
-		case PCI_PMCSR_STATE_D3:
+	state = pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
+	if (state != PCI_PMCSR_STATE_D0) {
+		if (state == PCI_PMCSR_STATE_D3) {
 			printf("%s: unable to wake up from power state D3\n",
 			    sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
 			return;
+		} else {
+			printf(": waking up from power state D%d\n%s",
+			    state, sc->sc_dev.dv_xname);
 		}
 	}
 
