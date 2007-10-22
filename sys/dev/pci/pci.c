@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.50 2007/05/21 22:10:45 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.51 2007/10/22 03:08:53 fgsch Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -408,6 +408,23 @@ pci_find_device(struct pci_attach_args *pa,
 			return (1);
 	}
 	return (0);
+}
+
+int
+pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
+{
+	pcireg_t reg;
+	int offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
+		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
+		if ((reg & PCI_PMCSR_STATE_MASK) != state) {
+			pci_conf_write(pc, tag, offset + PCI_PMCSR,
+			    (reg & ~PCI_PMCSR_STATE_MASK) | state);
+			return (reg & PCI_PMCSR_STATE_MASK);
+		}
+	}
+	return (state);
 }
 
 #ifndef PCI_MACHDEP_ENUMERATE_BUS

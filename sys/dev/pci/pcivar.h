@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.54 2007/08/01 21:43:03 deraadt Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.55 2007/10/22 03:08:53 fgsch Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -223,6 +223,7 @@ struct pci_matchid {
 };
 
 int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
+int pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int);
 
 /*
  * Helper functions for autoconfiguration.
