@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.22 2007/10/09 17:06:18 gilles Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.23 2007/10/22 21:42:14 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -500,6 +500,7 @@ int	maestro_trigger_input(void *, void *, void *, int, void (*)(void *),
 			       void *, struct audio_params *);
 
 int	maestro_attach_codec(void *, struct ac97_codec_if *);
+enum ac97_host_flags maestro_codec_flags(void *);
 int	maestro_read_codec(void *, u_int8_t, u_int16_t *);
 int	maestro_write_codec(void *, u_int8_t, u_int16_t);
 void	maestro_reset_codec(void *);
@@ -744,6 +745,7 @@ maestro_attach(parent, self, aux)
 		/* Attach the AC'97 */
 		sc->host_if.arg = sc;
 		sc->host_if.attach = maestro_attach_codec;
+		sc->host_if.flags = maestro_codec_flags;
 		sc->host_if.read = maestro_read_codec;
 		sc->host_if.write = maestro_write_codec;
 		sc->host_if.reset = maestro_reset_codec;
@@ -1330,6 +1332,13 @@ maestro_trigger_output(hdl, start, end, blksize, intr, arg, param)
 /* -----------------------------
  * Codec interface
  */
+
+enum ac97_host_flags
+maestro_codec_flags(self)
+	void *self;
+{
+	return AC97_HOST_DONT_READ;
+}
 
 int
 maestro_read_codec(self, regno, datap)
