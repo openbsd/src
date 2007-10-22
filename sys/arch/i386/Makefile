@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2006/07/29 12:18:44 thib Exp $
+#	$OpenBSD: Makefile,v 1.17 2007/10/22 01:26:31 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -6,9 +6,6 @@
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
-
-NOPROG=	noprog
-NOMAN=	noman
 
 SUBDIR=	stand
 
@@ -35,4 +32,4 @@ links:
 
 obj:	_SUBDIRUSE
 
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
