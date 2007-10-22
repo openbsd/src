@@ -1,3 +1,5 @@
+.\"	$OpenBSD: pcidump.8,v 1.3 2007/10/22 08:29:09 jmc Exp $
+.\"
 .\" Copyright (c) 2007 Paul de Weerd <weerd@weirdnet.nl>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -17,32 +19,38 @@
 .Os
 .Sh NAME
 .Nm pcidump
-.Nd Show PCI device data
+.Nd show PCI device data
 .Sh SYNOPSIS
 .Nm pcidump
 .Op Fl v
 .Op Fl d Ar pcidev
-.Op Ar dev:bus:func
+.Sm off
+.Op Ar dev : bus : func
+.Sm on
 .Sh DESCRIPTION
-When invoked without arguments, the
+The
 .Nm
-utility displays a list of all PCI devices in the system with the
-device address, vendor and productname. 
+utility displays the device address, vendor, and product name
+of PCI devices.
+When no arguments are given,
+information on all PCI devices in the system is shown;
+otherwise a single device may be specified by device, bus, and function:
+.Sm off
+.Ar dev : bus : func .
+.Sm on
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl d Ar pcidev
+Specify another file to use for PCI lookups.
 .It Fl v
 Shows detailed information about PCI devices.
-.It Fl d
-Specify another file to use for PCI lookups.
-.It Ar dev:bus:func
-Causes
-.Nm
-to only display information for the device specified.
+.El
 .Sh FILES
 .Bl -tag -width /dev/pci -compact
 .It Pa /dev/pci
 Default file for PCI lookups.
+.El
 .Sh SEE ALSO
 .Xr pci 4
 .Sh HISTORY
