@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.5 2007/10/01 18:51:02 otto Exp $	*/
+/*	$OpenBSD: reader.c,v 1.6 2007/10/23 13:53:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -552,7 +552,8 @@ rewrite(NODE *p, int rewrite, int cookie)
 		tfree(r);
 	if (rewrite == 0)
 		return;
-	CDEBUG(("rewrite: %p, reg %s\n", p, rnames[DECRA(p->n_reg, 0)]));
+	CDEBUG(("rewrite: %p, reg %s\n", p,
+	    p->n_reg == -1? "<none>" : rnames[DECRA(p->n_reg, 0)]));
 	p->n_rval = DECRA(p->n_reg, 0);
 }
 
