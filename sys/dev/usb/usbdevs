@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.305 2007/10/22 19:37:28 deraadt Exp $
+$OpenBSD: usbdevs,v 1.306 2007/10/23 17:03:22 mbalmer Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -494,6 +494,7 @@ vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
+vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor MOTOROLA2	0x22b8	Motorola
@@ -1562,6 +1563,9 @@ product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP BAY Hub
 product MCT USB232		0x0210	RS232
 product MCT SITECOM_USB232	0x0230	Sitecom RS232
 product MCT ML_4500		0x0302	ML-4500
+
+/* Meinberg Funkuhren products */
+product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
