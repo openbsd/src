@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.82 2007/10/19 15:31:02 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.83 2007/10/23 17:43:41 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ void	audio_rint(void *);
 void	audio_pint(void *);
 int	audio_check_params(struct audio_params *);
 
+void	audio_set_blksize(struct audio_softc *, int, int);
 void	audio_calc_blksize(struct audio_softc *, int);
 void	audio_fill_silence(struct audio_params *, u_char *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
@@ -1295,15 +1296,11 @@ audio_clear(struct audio_softc *sc)
 }
 
 void
-audio_calc_blksize(struct audio_softc *sc, int mode)
-{
+audio_set_blksize(struct audio_softc *sc, int mode, int fpb) {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params *parm;
 	struct audio_ringbuffer *rb;
-	int bs, maxbs, fs;
-
-	if (sc->sc_blkset)
-		return;
+	int bs, fs, maxbs;
 
 	if (mode == AUMODE_PLAY) {
 		parm = &sc->sc_pparams;
@@ -1314,7 +1311,7 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 	}
 
 	fs = parm->channels * parm->precision / NBBY * parm->factor;
-	bs = parm->sample_rate * audio_blk_ms / 1000 * fs;
+	bs = fpb * fs;
 	maxbs = rb->bufsize / 2;
 	if (bs > maxbs)
 		bs = (maxbs / fs) * fs;
@@ -1324,8 +1321,20 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
 	rb->blksize = bs;
 
-	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
+	DPRINTF(("audio_set_blksize: %s blksize=%d\n",
 		 mode == AUMODE_PLAY ? "play" : "record", bs));
+}
+
+void
+audio_calc_blksize(struct audio_softc *sc, int mode)
+{
+	struct audio_params *param;
+
+	if (sc->sc_blkset)
+		return;
+
+	param = (mode == AUMODE_PLAY) ? &sc->sc_pparams : &sc->sc_rparams;
+	audio_set_blksize(sc, mode, param->sample_rate * audio_blk_ms / 1000);
 }
 
 void
@@ -2566,6 +2575,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	unsigned int blks;
 	int oldpblksize, oldrblksize;
 	int rbus, pbus;
+	int fpb;
+	int fs;
 	u_int gain;
 	u_char balance;
 
@@ -2684,11 +2695,34 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	oldpblksize = sc->sc_pr.blksize;
 	oldrblksize = sc->sc_rr.blksize;
-	/* Play params can affect the record params, so recalculate blksize. */
-	if (nr || np) {
-		audio_calc_blksize(sc, AUMODE_RECORD);
-		audio_calc_blksize(sc, AUMODE_PLAY);
+	if (ai->blocksize != ~0) {
+		if (!cleared)
+			audio_clear(sc);
+		cleared = 1;
+		nr++;
+		np++;
 	}
+	if (nr) {
+		if (ai->blocksize == ~0 || ai->blocksize == 0) {
+			fpb = rp.sample_rate * audio_blk_ms / 1000;
+		} else {
+			fs = rp.channels * (rp.precision / 8) * rp.factor; 
+			fpb = ai->blocksize / fs;
+		}
+		audio_set_blksize(sc, AUMODE_RECORD, fpb);
+		sc->sc_blkset = 1;
+	}
+	if (np) {
+		if (ai->blocksize == ~0 || ai->blocksize == 0) {
+			fpb = pp.sample_rate * audio_blk_ms / 1000;
+		} else {
+			fs = pp.channels * (pp.precision / 8) * pp.factor; 
+			fpb = ai->blocksize / fs;
+		}
+		audio_set_blksize(sc, AUMODE_PLAY, fpb);
+		sc->sc_blkset = 1;
+	}
+
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr)
 	    audio_print_params("After setting record params", &sc->sc_rparams);
@@ -2757,29 +2791,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 		if (error)
 			return(error);
-	}
-
-	if (ai->blocksize != ~0) {
-		/* Block size specified explicitly. */
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		if (ai->blocksize == 0) {
-			audio_calc_blksize(sc, AUMODE_RECORD);
-			audio_calc_blksize(sc, AUMODE_PLAY);
-			sc->sc_blkset = 0;
-		} else {
-			int rbs = ai->blocksize * sc->sc_rparams.factor;
-			int pbs = ai->blocksize * sc->sc_pparams.factor;
-			if (hw->round_blocksize) {
-				rbs = hw->round_blocksize(sc->hw_hdl, rbs);
-				pbs = hw->round_blocksize(sc->hw_hdl, pbs);
-			}
-			sc->sc_rr.blksize = rbs;
-			sc->sc_pr.blksize = pbs;
-			sc->sc_blkset = 1;
-		}
 	}
 
 	if (ai->mode != ~0) {
