@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.15 2007/10/08 09:23:01 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.16 2007/10/23 07:51:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -215,6 +215,8 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		printf("unknown status\n");
 		sc->sc_status = 0;
 	} else {
+		/* We only look at selected bits in the status */
+		tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
 		if (tframe.status & MBG_FREERUN)
 			printf("free running on xtal\n");
 		else if (tframe.status & MBG_SYNC)
@@ -270,12 +272,17 @@ mbg_task(void *arg)
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
+	/* We only look at the SYNC, FREERUN, and INVALID bits in the status */
+	tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
 	if (tframe.status != sc->sc_status) {
 		if (tframe.status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
 			    sc->sc_dev.dv_xname);
 		else if (tframe.status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
+			    sc->sc_dev.dv_xname);
+		else if (tframe.status & MBG_INVALID)
+			log(LOG_INFO, "%s: clock is invalid",
 			    sc->sc_dev.dv_xname);
 		sc->sc_status = tframe.status;
 	}
@@ -322,12 +329,17 @@ mbg_task_hr(void *arg)
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
+	/* We only look at the SYNC, FREERUN, and INVALID bits in the status */
+	tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
 	if (tframe.status != sc->sc_status) {
 		if (tframe.status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
 			    sc->sc_dev.dv_xname);
 		else if (tframe.status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
+			    sc->sc_dev.dv_xname);
+		else if (tframe.status & MBG_INVALID)
+			log(LOG_INFO, "%s: clock is invalid",
 			    sc->sc_dev.dv_xname);
 		sc->sc_status = tframe.status;
 	}
