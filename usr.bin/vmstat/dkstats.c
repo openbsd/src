@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.30 2006/03/31 18:19:38 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.31 2007/10/23 07:35:58 chl Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -482,19 +482,20 @@ dkinit(int sel)
 	cur.dk_seek = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	cur.dk_rbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	cur.dk_wbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_select = calloc((size_t)cur.dk_ndrive, sizeof(int));
+	cur.dk_name = calloc((size_t)cur.dk_ndrive, sizeof(char *));
 	last.dk_time = calloc((size_t)cur.dk_ndrive, sizeof(struct timeval));
 	last.dk_rxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_wxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_seek = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_rbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_wbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_select = calloc((size_t)cur.dk_ndrive, sizeof(int));
-	cur.dk_name = calloc((size_t)cur.dk_ndrive, sizeof(char *));
 
 	if (!cur.dk_time || !cur.dk_rxfer || !cur.dk_wxfer || !cur.dk_seek ||
-	    !cur.dk_rbytes || !cur.dk_wbytes || !last.dk_time ||
-	    !last.dk_rxfer || !last.dk_wxfer || !last.dk_seek ||
-	    !cur.dk_select || !cur.dk_name)
+	    !cur.dk_rbytes || !cur.dk_wbytes || !cur.dk_select ||
+	    !cur.dk_name || !last.dk_time || !last.dk_rxfer ||
+	    !last.dk_wxfer || !last.dk_seek || !last.dk_rbytes ||
+	    !last.dk_wbytes)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */
