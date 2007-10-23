@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.78 2007/08/22 12:03:26 henning Exp $
+#	$OpenBSD: security,v 1.79 2007/10/23 11:19:58 sthen Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -732,3 +732,24 @@ for d in `df -ln | sed -n 's:^/dev/\([a-z]*[0-9]*\)[a-p].*$:\1:p' | sort -u`; do
 	fi
 	rm -f $file
 done
+
+# Backup the list of installed packages and produce diffs when it changes.
+file=/var/backups/pkglist
+CUR=$file.current
+BACK=$file.backup
+if pkg_info > $file 2>&1 ; then
+	if [ -s $CUR ] ; then
+		diff -u $CUR $file > $OUTPUT
+		if [ -s $OUTPUT ] ; then
+			echo "\n======\nInstalled package changes (-OLD  +NEW)\n======"
+			cat $OUTPUT
+			cp -p $CUR $BACK
+			cp -p $file $CUR
+			chown root:wheel $CUR $BACK
+		fi
+	else
+		cp -p $file $CUR
+		chown root:wheel $CUR
+	fi
+fi
+rm -f $file
