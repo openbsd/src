@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.6 2007/10/23 13:53:58 otto Exp $	*/
+/*	$OpenBSD: reader.c,v 1.7 2007/10/23 18:43:00 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -430,6 +430,7 @@ again:	switch (o = p->n_op) {
 			geninsn(p1->n_right, FOREFF);
 		geninsn(p1, FOREFF);
 		/* FALLTHROUGH */
+	case FLD:
 	case COMPL:
 	case UMINUS:
 	case PCONV:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: match.c,v 1.3 2007/10/23 18:43:00 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -67,8 +67,6 @@
 void prttype(int t);
 void setclass(int tmp, int class);
 int getclass(int tmp);
-
-int fldsz, fldshf;
 
 int s2debug = 0;
 
@@ -154,22 +152,8 @@ tshape(NODE *p, int shape)
 		break;
 
 	case FLD:
-		if (shape & SFLD) {
-			int sh;
-
-			if ((sh = flshape(p->n_left)) == SRNOPE)
-				return sh;
-			/* it is a FIELD shape; make side-effects */
-			/* XXX - this will not work for multi-matches */
-			o = p->n_rval;
-			fldsz = UPKFSZ(o);
-# ifdef RTOLBYTES
-			fldshf = UPKFOFF(o);
-# else
-			fldshf = SZINT - fldsz - UPKFOFF(o);
-# endif
-			return sh;
-		}
+		if (shape & SFLD)
+			return flshape(p->n_left);
 		break;
 
 	case CCODES:
@@ -264,6 +248,13 @@ ttype(TWORD t, int tword)
 	return(0);
 }
 
+#define	FLDSZ(x)	UPKFSZ(x)
+#ifdef RTOLBYTES
+#define	FLDSHF(x)	UPKFOFF(x)
+#else
+#define	FLDSHF(x)	(SZINT - FLDSZ(x) - UPKFOFF(x))
+#endif
+
 /*
  * generate code by interpreting table entry
  */
@@ -288,19 +279,19 @@ expand(NODE *p, int cookie, char *cp)
 			continue;
 
 		case 'S':  /* field size */
-			printf( "%d", fldsz );
+			printf("%d", FLDSZ(p->n_rval));
 			continue;
 
 		case 'H':  /* field shift */
-			printf( "%d", fldshf );
+			printf("%d", FLDSHF(p->n_rval));
 			continue;
 
 		case 'M':  /* field mask */
 		case 'N':  /* complement of field mask */
 			val = 1;
-			val <<= fldsz;
+			val <<= FLDSZ(p->n_rval);
 			--val;
-			val <<= fldshf;
+			val <<= FLDSHF(p->n_rval);
 			adrcon( *cp=='M' ? val : ~val );
 			continue;
 
