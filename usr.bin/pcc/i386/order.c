@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.1 2007/10/22 13:39:37 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.2 2007/10/23 14:48:36 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -183,8 +183,8 @@ nspecial(struct optab *q)
 			static struct rspecial s[] = { 
 				{ NOLEFT, ESI }, { NOLEFT, EDI }, { 0 } };
 			return s;
-		} else if ((q->ltype & (TINT|TUNSIGNED)) &&
-		    q->rtype == TLONGLONG) {
+		} else if ((q->ltype & TINT) &&
+		    q->rtype == (TLONGLONG|TULONGLONG)) {
 			static struct rspecial s[] = {
 				{ NLEFT, EAX }, { NRES, EAXEDX },
 				{ NEVER, EAX }, { NEVER, EDX }, { 0 } };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.1 2007/10/22 13:39:37 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.2 2007/10/23 14:48:36 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -241,17 +241,17 @@ struct optab table[] = {
 		0,	RLEFT,
 		"", },
 
-/* convert int to long long */
+/* convert signed int to (u)long long */
 { SCONV,	INLL,
-	SAREG,	TWORD|TPOINT,
-	SCREG,	TLONGLONG,
+	SHINT,	TSWORD,
+	SHLL,	TLL,
 		NSPECIAL|NCREG|NCSL,	RESC1,
 		"	cltd\n", },
 
-/* convert int to unsigned long long */
+/* convert unsigned int to (u)long long */
 { SCONV,	INLL,
-	SAREG|SOREG|SNAME,	TWORD|TPOINT,
-	SHLL,	TULONGLONG,
+	SHINT|SOREG|SNAME,	TUWORD|TPOINT,
+	SHLL,	TLL,
 		NCSL|NCREG,	RESC1,
 		"	movl AL,A1\n	xorl U1,U1\n", },
 
