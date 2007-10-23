@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.66 2007/10/20 02:40:54 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.67 2007/10/23 19:59:27 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -712,11 +712,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
-				play->sw_code = mulaw_to_slinear16_mts;
+				play->sw_code = mulaw_to_slinear16_le_mts;
 				break;
 			case 2:
 				play->factor = 2;
-				play->sw_code = mulaw_to_slinear16;
+				play->sw_code = mulaw_to_slinear16_le;
 				break;
 			default:
 				return (EINVAL);
@@ -728,11 +728,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = linear8_to_linear16_mts;
+					play->sw_code = linear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = linear8_to_linear16;
+					play->sw_code = linear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -760,11 +760,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_mts;
+					play->sw_code = ulinear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16;
+					play->sw_code = ulinear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -774,10 +774,10 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 2;
-					play->sw_code = change_sign16_mts;
+					play->sw_code = change_sign16_le_mts;
 					break;
 				case 2:
-					play->sw_code = change_sign16;
+					play->sw_code = change_sign16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -791,11 +791,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
-				play->sw_code = alaw_to_slinear16_mts;
+				play->sw_code = alaw_to_slinear16_le_mts;
 				break;
 			case 2:
 				play->factor = 2;
-				play->sw_code = alaw_to_slinear16;
+				play->sw_code = alaw_to_slinear16_le;
 				break;
 			default:
 				return (EINVAL);
@@ -807,11 +807,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = linear8_to_linear16_mts;
+					play->sw_code = linear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = linear8_to_linear16;
+					play->sw_code = linear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -840,11 +840,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_mts;
+					play->sw_code = ulinear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16;
+					play->sw_code = ulinear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -854,10 +854,10 @@ auich_set_params(v, setmode, usemode, play, rec)
 				switch (play->channels) {
 				case 1:
 					play->factor = 2;
-					play->sw_code = change_sign16_swap_bytes_mts;
+					play->sw_code = swap_bytes_change_sign16_le_mts;
 					break;
 				case 2:
-					play->sw_code = change_sign16_swap_bytes;
+					play->sw_code = swap_bytes_change_sign16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -887,20 +887,52 @@ auich_set_params(v, setmode, usemode, play, rec)
 		rec->sw_code = 0;
 		switch(rec->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			rec->sw_code = slinear16_to_mulaw_le;
-			rec->factor = 2;
+			switch (rec->channels) {
+			case 1:
+				rec->sw_code = slinear16_to_mulaw_le_stm;
+				rec->factor = 4;
+				break;
+			case 2:
+				rec->sw_code = slinear16_to_mulaw_le;
+				rec->factor = 2;
+				break;
+			}
 			break;
 		case AUDIO_ENCODING_ALAW:
-			rec->sw_code = slinear16_to_alaw_le;
-			rec->factor = 2;
+			switch (rec->channels) {
+			case 1:
+				rec->sw_code = slinear16_to_alaw_le_stm;
+				rec->factor = 4;
+				break;
+			case 2:
+				rec->sw_code = slinear16_to_alaw_le;
+				rec->factor = 2;
+				break;
+			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			switch (rec->precision) {
 			case 8:
-				rec->sw_code = linear16_to_linear8_le;
-				rec->factor = 2;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = linear16_to_linear8_le_stm;
+					rec->factor = 4;
+					break;
+				case 2:
+					rec->sw_code = linear16_to_linear8_le;
+					rec->factor = 2;
+					break;
+				}
 				break;
 			case 16:
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = linear16_decimator;
+					rec->factor = 2;
+					break;
+				case 2:
+					break;
+				}
 				break;
 			default:
 				return (EINVAL);
@@ -909,11 +941,27 @@ auich_set_params(v, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_LE:
 			switch (rec->precision) {
 			case 8:
-				rec->sw_code = linear16_to_ulinear8_le;
-				rec->factor = 2;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = linear16_to_ulinear8_le_stm;
+					rec->factor = 4;
+					break;
+				case 2:
+					rec->sw_code = linear16_to_ulinear8_le;
+					rec->factor = 2;
+					break;
+				}
 				break;
 			case 16:
-				rec->sw_code = change_sign16_le;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = change_sign16_le_stm;
+					rec->factor = 2;
+					break;
+				case 2:
+					rec->sw_code = change_sign16_le;
+					break;
+				}
 				break;
 			default:
 				return (EINVAL);
@@ -922,11 +970,27 @@ auich_set_params(v, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_SLINEAR_BE:
 			switch (rec->precision) {
 			case 8:
-				rec->sw_code = linear16_to_linear8_le;
-				rec->factor = 2;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = linear16_to_linear8_le_stm;
+					rec->factor = 4;
+					break;
+				case 2:
+					rec->sw_code = linear16_to_linear8_le;
+					rec->factor = 2;
+					break;
+				}
 				break;
 			case 16:
-				rec->sw_code = swap_bytes;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = swap_bytes_stm;
+					rec->factor = 2;
+					break;
+				case 2:
+					rec->sw_code = swap_bytes;
+					break;
+				}
 				break;
 			default:
 				return (EINVAL);
@@ -935,11 +999,27 @@ auich_set_params(v, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			switch (rec->precision) {
 			case 8:
-				rec->sw_code = linear16_to_ulinear8_le;
-				rec->factor = 2;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = linear16_to_ulinear8_le_stm;
+					rec->factor = 4;
+					break;
+				case 2:
+					rec->sw_code = linear16_to_ulinear8_le;
+					rec->factor = 2;
+					break;
+				}
 				break;
 			case 16:
-				rec->sw_code = change_sign16_swap_bytes_le;
+				switch (rec->channels) {
+				case 1:
+					rec->sw_code = change_sign16_swap_bytes_le_stm;
+					rec->factor = 2;
+					break;
+				case 2:
+					rec->sw_code = change_sign16_swap_bytes_le;
+					break;
+				}
 				break;
 			default:
 				return (EINVAL);
