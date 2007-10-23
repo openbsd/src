@@ -1,4 +1,4 @@
-/*	$OpenBSD: auconv.c,v 1.7 2007/07/17 08:35:33 jakemsr Exp $ */
+/*	$OpenBSD: auconv.c,v 1.8 2007/10/23 19:54:36 jakemsr Exp $ */
 /*	$NetBSD: auconv.c,v 1.3 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ noswap_bytes_mts(void *v, u_char *p, int cc)
 }
 
 /*
- * same as swap_bytes(), just expand mono to stereo
+ * same as swap_bytes(), plus expand mono to stereo
  */
 void
 swap_bytes_mts(void *v, u_char *p, int cc)
@@ -354,6 +354,40 @@ change_sign16_be_mts(void *v, u_char *p, int cc)
 }
 
 /*
+ * same as swap_bytes_change_sign16_le(), plus expand mono to stereo
+ */
+void
+swap_bytes_change_sign16_le_mts(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 2;
+	while ((cc -= 2) >= 0) {
+		q -= 4;
+		q[0] = q[2] = *--p;
+		q[1] = q[3] = (*--p) ^ 0x80;
+	}
+}
+
+/*
+ * same as swap_bytes_change_sign16_be(), plus expand mono to stereo
+ */
+void
+swap_bytes_change_sign16_be_mts(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 2;
+	while ((cc -= 2) >= 0) {
+		q -= 4;
+		q[0] = q[2] = (*--p) ^ 0x80;
+		q[1] = q[3] = *--p;
+	}
+}
+
+/*
  *  same as change_sign16_swap_bytes_le(), plus expand mono to stereo
  */
 void
@@ -369,4 +403,115 @@ void
 change_sign16_swap_bytes_be_mts(void *v, u_char *p, int cc)
 {
 	change_sign16_le_mts(v, p, cc);
+}
+
+
+void
+linear16_decimator(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[0];
+		*q++ = p[1];
+		p += 4;
+	}
+}
+
+void
+linear16_to_linear8_le_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[1];
+		p += 4;
+	}
+}
+
+void
+linear16_to_linear8_be_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[0];
+		p += 4;
+	}
+}
+
+void
+linear16_to_ulinear8_le_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[1] ^ 0x80;
+		p += 4;
+	}
+}
+
+void
+linear16_to_ulinear8_be_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[0] ^ 0x80;
+		p += 4;
+	}
+}
+
+void
+change_sign16_le_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[0];
+		*q++ = p[1] ^ 0x80;
+		p += 4;
+	}
+}
+
+void
+change_sign16_be_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[0] ^ 0x80;
+		*q++ = p[1];
+		p += 4;
+	}
+}
+
+void
+swap_bytes_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[1];
+		*q++ = p[0];
+		p += 4;
+	}
+}
+
+void
+swap_bytes_change_sign16_be_stm(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while ((cc -= 4) >= 0) {
+		*q++ = p[1] ^ 0x80;
+		*q++ = p[0];
+		p += 4;
+	}
+}
+
+void
+change_sign16_swap_bytes_le_stm(void *v, u_char *p, int cc)
+{
+	swap_bytes_change_sign16_be_stm(v, p, cc);
 }
