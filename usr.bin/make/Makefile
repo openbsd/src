@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2007/09/17 12:42:09 espie Exp $
+#	$OpenBSD: Makefile,v 1.48 2007/10/23 22:04:24 miod Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -24,10 +24,10 @@ SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
 	lstInsert.c lstMember.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
 
-CLEANFILES+=generate hashconsts.h generate.o regress.o check
+CLEANFILES+=generate generate.o regress.o check
 
 CLEANFILES+=${LIBOBJS} libohash.a
-CLEANFILES+= varhashconsts.h condhashconsts.h generate.o generate
+CLEANFILES+= varhashconsts.h condhashconsts.h nodehashconsts.h
 
 beforedepend: varhashconsts.h condhashconsts.h nodehashconsts.h
 # may need tweaking if you add variable synonyms or change the hash function
