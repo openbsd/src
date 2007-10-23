@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.6 2007/10/22 20:54:52 deraadt Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.7 2007/10/23 06:57:28 chl Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <err.h>
 
+#include <sys/ioctl.h>
 #include <sys/pciio.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
