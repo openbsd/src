@@ -1,4 +1,4 @@
-/* $OpenBSD: scp.c,v 1.160 2007/08/06 19:16:06 sobrado Exp $ */
+/* $OpenBSD: scp.c,v 1.161 2007/10/24 03:44:02 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,6 +73,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/poll.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -98,6 +99,8 @@
 #include "log.h"
 #include "misc.h"
 #include "progressmeter.h"
+
+#define COPY_BUFLEN	16384
 
 int do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout);
 
@@ -426,6 +429,43 @@ main(int argc, char **argv)
 	exit(errs != 0);
 }
 
+/*
+ * atomicio-like wrapper that also applies bandwidth limits and updates
+ * the progressmeter counter.
+ */
+static size_t
+scpio(ssize_t (*f)(int, void *, size_t), int fd, void *_p, size_t l, off_t *c)
+{
+	u_char *p = (u_char *)_p;
+	size_t offset;
+	ssize_t r;
+	struct pollfd pfd;
+
+	pfd.fd = fd;
+	pfd.events = f == read ? POLLIN : POLLOUT;
+	for (offset = 0; offset < l;) {
+		r = f(fd, p + offset, l - offset);
+		if (r == 0) {
+			errno = EPIPE;
+			return offset;
+		}
+		if (r < 0) {
+			if (errno == EINTR)
+				continue;
+			if (errno == EAGAIN) {
+				(void)poll(&pfd, 1, -1); /* Ignore errors */
+				continue;
+			}
+			return offset;
+		}
+		offset += (size_t)r;
+		*c += (off_t)r;
+		if (limit_rate)
+			bwlimit(r);
+	}
+	return offset;
+}
+
 void
 toremote(char *targ, int argc, char **argv)
 {
@@ -568,7 +608,6 @@ source(int argc, char **argv)
 	static BUF buffer;
 	BUF *bp;
 	off_t i, amt, statbytes;
-	size_t result;
 	int fd = -1, haderr, indx;
 	char *last, *name, buf[2048], encname[MAXPATHLEN];
 	int len;
@@ -630,7 +669,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 		(void) atomicio(vwrite, remout, buf, strlen(buf));
 		if (response() < 0)
 			goto next;
-		if ((bp = allocbuf(&buffer, fd, 2048)) == NULL) {
+		if ((bp = allocbuf(&buffer, fd, COPY_BUFLEN)) == NULL) {
 next:			if (fd != -1) {
 				(void) close(fd);
 				fd = -1;
@@ -639,27 +678,25 @@ next:			if (fd != -1) {
 		}
 		if (showprogress)
 			start_progress_meter(curfile, stb.st_size, &statbytes);
-		/* Keep writing after an error so that we stay sync'd up. */
+		set_nonblock(remout);
 		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
 			amt = bp->cnt;
 			if (i + amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				result = atomicio(read, fd, bp->buf, amt);
-				if (result != amt)
+				if (atomicio(read, fd, bp->buf, amt) != amt)
 					haderr = errno;
 			}
-			if (haderr)
-				(void) atomicio(vwrite, remout, bp->buf, amt);
-			else {
-				result = atomicio(vwrite, remout, bp->buf, amt);
-				if (result != amt)
-					haderr = errno;
-				statbytes += result;
+			/* Keep writing after error to retain sync */
+			if (haderr) {
+				(void)atomicio(vwrite, remout, bp->buf, amt);
+				continue;
 			}
-			if (limit_rate)
-				bwlimit(amt);
+			if (scpio(vwrite, remout, bp->buf, amt,
+			    &statbytes) != amt)
+				haderr = errno;
 		}
+		unset_nonblock(remout);
 		if (showprogress)
 			stop_progress_meter();
 
@@ -765,10 +802,10 @@ bwlimit(int amount)
 			thresh /= 2;
 			if (thresh < 2048)
 				thresh = 2048;
-		} else if (bwend.tv_usec < 100) {
+		} else if (bwend.tv_usec < 10000) {
 			thresh *= 2;
-			if (thresh > 32768)
-				thresh = 32768;
+			if (thresh > COPY_BUFLEN * 4)
+				thresh = COPY_BUFLEN * 4;
 		}
 
 		TIMEVAL_TO_TIMESPEC(&bwend, &ts);
@@ -959,7 +996,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
 		}
 		(void) atomicio(vwrite, remout, "", 1);
-		if ((bp = allocbuf(&buffer, ofd, 4096)) == NULL) {
+		if ((bp = allocbuf(&buffer, ofd, COPY_BUFLEN)) == NULL) {
 			(void) close(ofd);
 			continue;
 		}
@@ -969,25 +1006,23 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		statbytes = 0;
 		if (showprogress)
 			start_progress_meter(curfile, size, &statbytes);
-		for (count = i = 0; i < size; i += 4096) {
-			amt = 4096;
+		set_nonblock(remin);
+		for (count = i = 0; i < size; i += bp->cnt) {
+			amt = bp->cnt;
 			if (i + amt > size)
 				amt = size - i;
 			count += amt;
 			do {
-				j = atomicio(read, remin, cp, amt);
+				j = scpio(read, remin, cp, amt, &statbytes);
 				if (j == 0) {
-					run_err("%s", j ? strerror(errno) :
+					run_err("%s", j != EPIPE ?
+					    strerror(errno) :
 					    "dropped connection");
 					exit(1);
 				}
 				amt -= j;
 				cp += j;
-				statbytes += j;
 			} while (amt > 0);
-
-			if (limit_rate)
-				bwlimit(4096);
 
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
@@ -1002,6 +1037,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				cp = bp->buf;
 			}
 		}
+		unset_nonblock(remin);
 		if (showprogress)
 			stop_progress_meter();
 		if (count != 0 && wrerr == NO &&
