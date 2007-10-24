@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.8 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: auth.c,v 1.9 2007/10/24 20:52:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -69,8 +69,8 @@ auth_trailer_header_gen(struct buf *buf)
 
 /* XXX add the support for key lifetime and rollover */
 int
-auth_validate(char **buf, u_int16_t *len, struct iface *iface, struct nbr *nbr,
-    struct nbr_failed *nbr_failed, u_int32_t *crypt_seq_num)
+auth_validate(u_int8_t **buf, u_int16_t *len, struct iface *iface,
+    struct nbr *nbr, struct nbr_failed *nbr_failed, u_int32_t *crypt_seq_num)
 {
 	MD5_CTX			 hash;
 	u_int8_t		 digest[MD5_DIGEST_LENGTH];
@@ -79,8 +79,8 @@ auth_validate(char **buf, u_int16_t *len, struct iface *iface, struct nbr *nbr,
 	struct rip_auth		*auth_head;
 	struct md5_auth		*a;
 	struct auth_md		*md;
-	char			*auth_data;
-	char			*b = *buf;
+	u_int8_t		*auth_data;
+	u_int8_t		*b = *buf;
 
 	*buf += RIP_HDR_LEN;
 	*len -= RIP_HDR_LEN;

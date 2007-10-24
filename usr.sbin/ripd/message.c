@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.8 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: message.c,v 1.9 2007/10/24 20:52:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -311,7 +311,7 @@ free:
 }
 
 void
-recv_request(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
+recv_request(struct iface *i, struct nbr *nbr, u_int8_t *buf, u_int16_t len)
 {
 	struct rip_entry	*e;
 	struct rip_route	 rr;
@@ -363,7 +363,7 @@ recv_request(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
 		rr.ifindex = i->ifindex;
 
 		ripe_imsg_compose_rde(IMSG_ROUTE_REQUEST, nbr->peerid,
-		    0, (void *)&rr, sizeof(rr));
+		    0, &rr, sizeof(rr));
 
 		e++;
 	}
@@ -373,7 +373,7 @@ recv_request(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 void
-recv_response(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
+recv_response(struct iface *i, struct nbr *nbr, u_int8_t *buf, u_int16_t len)
 {
 	struct rip_route	 r;
 	struct rip_entry	*e;
@@ -423,8 +423,7 @@ recv_response(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
 		r.metric = ntohl(e->metric);
 		r.ifindex = i->ifindex;
 
-		ripe_imsg_compose_rde(IMSG_ROUTE_FEED, 0, 0, (void *)&r,
-		    sizeof(r));
+		ripe_imsg_compose_rde(IMSG_ROUTE_FEED, 0, 0, &r, sizeof(r));
 
 		e++;
 	}

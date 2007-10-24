@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.7 2007/10/18 09:47:57 claudio Exp $ */
+/*	$OpenBSD: ripe.h,v 1.8 2007/10/24 20:52:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -27,7 +27,7 @@
 #include <netinet/ip.h>
 
 TAILQ_HEAD(ctl_conns, ctl_conn) ctl_conns;
-char	*pkt_ptr;
+u_int8_t	*pkt_ptr;
 
 /* neighbor events */
 enum nbr_event {
@@ -96,8 +96,8 @@ int			 if_leave_group(struct iface *, struct in_addr *);
 struct ctl_iface	*if_to_ctl(struct iface *);
 
 /* message.c */
-void	 recv_request(struct iface *, struct nbr *, char *, u_int16_t);
-void	 recv_response(struct iface *, struct nbr *, char *, u_int16_t);
+void	 recv_request(struct iface *, struct nbr *, u_int8_t *, u_int16_t);
+void	 recv_response(struct iface *, struct nbr *, u_int8_t *, u_int16_t);
 void	 add_entry(struct packet_head *, struct rip_route *);
 void	 clear_list(struct packet_head *);
 int	 send_triggered_update(struct iface *, struct rip_route *);
@@ -117,7 +117,7 @@ void	 ripe_iface_ctl(struct ctl_conn *, unsigned int);
 void	 ripe_nbr_ctl(struct ctl_conn *);
 
 /* auth.c */
-int	 auth_validate(char **, u_int16_t *, struct iface *, struct nbr *,
+int	 auth_validate(u_int8_t **, u_int16_t *, struct iface *, struct nbr *,
 	    struct nbr_failed *, u_int32_t *);
 int	 auth_gen(struct buf *, struct iface *);
 int	 auth_add_trailer(struct buf *, struct iface *);

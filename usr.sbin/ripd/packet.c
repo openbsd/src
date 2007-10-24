@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.6 2007/03/27 20:19:04 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.7 2007/10/24 20:52:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -90,7 +90,7 @@ recv_packet(int fd, short event, void *bula)
 	struct iface		*iface;
 	struct rip_hdr		*rip_hdr;
 	struct nbr		*nbr;
-	char			*buf;
+	u_int8_t		*buf;
 	ssize_t			 r;
 	u_int16_t		 len, srcport;
 	u_int32_t		 auth_crypt_num = 0;
