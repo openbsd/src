@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_envctrl.c,v 1.4 2007/10/22 22:21:52 kettenis Exp $ */
+/*	$OpenBSD: pcf8591_envctrl.c,v 1.5 2007/10/24 20:12:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -37,6 +37,7 @@
 struct ecadc_channel {
 	u_int		chan_num;
 	struct ksensor	chan_sensor;
+	u_char		*chan_xlate;
 	int64_t		chan_factor;
 	int64_t		chan_min;
 	int64_t		chan_warn;
@@ -47,7 +48,8 @@ struct ecadc_softc {
 	struct device		sc_dev;
 	i2c_tag_t		sc_tag;
 	i2c_addr_t		sc_addr;
-	u_char			sc_xlate[256];
+	u_char			sc_ps_xlate[256];
+	u_char			sc_cpu_xlate[256];
 	u_int			sc_nchan;
 	struct ecadc_channel	sc_channels[PCF8591_CHANNELS];
 	struct ksensordev	sc_sensordev;
@@ -86,24 +88,29 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t junk[PCF8591_CHANNELS + 1];
 	struct i2c_attach_args *ia = aux;
 	struct ksensor *sensor;
-	int tlen, xlen, addr, chan, node = *(int *)ia->ia_cookie;
+	int len, addr, chan, node = *(int *)ia->ia_cookie;
 	u_int i;
 
-	if ((tlen = OF_getprop(node, "thermisters", term,
+	if ((len = OF_getprop(node, "thermisters", term,
 	    sizeof(term))) < 0) {
 		printf(": couldn't find \"thermisters\" property\n");
 		return;
 	}
 
-	if ((xlen = OF_getprop(node, "cpu-temp-factors", &sc->sc_xlate[2],
-	    sizeof(sc->sc_xlate) - 2)) < 0) {
+	if (OF_getprop(node, "cpu-temp-factors", &sc->sc_cpu_xlate[2],
+	    sizeof(sc->sc_cpu_xlate) - 2) < 0) {
 		printf(": couldn't find \"cpu-temp-factors\" property\n");
 		return;
 	}
-	sc->sc_xlate[0] = sc->sc_xlate[1] = sc->sc_xlate[2];
+	sc->sc_cpu_xlate[0] = sc->sc_cpu_xlate[1] = sc->sc_cpu_xlate[2];
+
+	/* Only the Sun Enterprise 450 has these. */
+	OF_getprop(node, "ps-temp-factors", &sc->sc_ps_xlate[2],
+	    sizeof(sc->sc_ps_xlate) - 2);
+	sc->sc_ps_xlate[0] = sc->sc_ps_xlate[1] = sc->sc_ps_xlate[2];
 
 	cp = term;
-	while (cp < term + tlen) {
+	while (cp < term + len) {
 		addr = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		chan = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		min = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
@@ -112,7 +119,7 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 		num = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		den = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		desc = cp;
-		while (*cp++);
+		while (cp < term + len && *cp++);
 
 		if (addr != (ia->ia_addr << 1))
 			continue;
@@ -124,9 +131,12 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 		sensor->type = SENSOR_TEMP;
 		strlcpy(sensor->desc, desc, sizeof(sensor->desc));
 
-		sc->sc_channels[sc->sc_nchan].chan_num = chan;
-		if (num == 1 && den == 1)
-			sc->sc_channels[sc->sc_nchan].chan_factor = 0;
+		if (strncmp(desc, "CPU", 3) == 0)
+			sc->sc_channels[sc->sc_nchan].chan_xlate =
+			    sc->sc_cpu_xlate;
+		else if (strncmp(desc, "PS", 2) == 0)
+			sc->sc_channels[sc->sc_nchan].chan_xlate =
+			    sc->sc_ps_xlate;
 		else
 			sc->sc_channels[sc->sc_nchan].chan_factor =
 			    (1000000 * num) / den;
@@ -199,9 +209,9 @@ ecadc_refresh(void *arg)
 	for (i = 0; i < sc->sc_nchan; i++) {
 		struct ecadc_channel *chp = &sc->sc_channels[i];
 
-		if (chp->chan_factor == 0)
+		if (chp->chan_xlate)
 			chp->chan_sensor.value = 273150000 + 1000000 *
-			    sc->sc_xlate[data[1 + chp->chan_num]];
+			    chp->chan_xlate[data[1 + chp->chan_num]];
 		else
 			chp->chan_sensor.value = 273150000 +
 			    chp->chan_factor * data[1 + chp->chan_num];
