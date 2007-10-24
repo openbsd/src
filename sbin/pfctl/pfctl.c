@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.270 2007/10/15 02:16:35 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.271 2007/10/24 13:07:38 wilfried Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1526,7 +1526,7 @@ pfctl_init_options(struct pfctl *pf)
 	mib[1] = HW_PHYSMEM;
 	size = sizeof(mem);
 	(void) sysctl(mib, 2, &mem, &size, NULL, 0);
-	if (mem <= 100*1024*1024)
+	if ((unsigned)mem <= 100*1024*1024)
 		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
 
 	pf->debug = PF_DEBUG_URGENT;
