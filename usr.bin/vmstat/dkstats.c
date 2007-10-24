@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.31 2007/10/23 07:35:58 chl Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.32 2007/10/24 20:15:43 chl Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -256,6 +256,15 @@ dkreadstats(void)
 				    dk_ndrive * sizeof(*last.dk_wbytes));
 				last.dk_time = realloc(last.dk_time,
 				    dk_ndrive * sizeof(*last.dk_time));
+
+				if (!cur.dk_select || !cur.dk_rxfer ||
+				    !cur.dk_wxfer || !cur.dk_seek ||
+				    !cur.dk_rbytes || !cur.dk_wbytes ||
+				    !cur.dk_time || !last.dk_rxfer ||
+				    !last.dk_wxfer || !last.dk_seek ||
+				    !last.dk_rbytes || !last.dk_wbytes ||
+				    !last.dk_time)
+					errx(1, "Memory allocation failure.");
 			} else {
 				cur.dk_select = realloc(cur.dk_select,
 				    dk_ndrive * sizeof(*cur.dk_select));
@@ -283,6 +292,15 @@ dkreadstats(void)
 				    dk_ndrive * sizeof(*last.dk_wbytes));
 				last.dk_time = realloc(last.dk_time,
 				    dk_ndrive * sizeof(*last.dk_time));
+
+				if (!cur.dk_select || !cur.dk_rxfer ||
+				    !cur.dk_wxfer || !cur.dk_seek ||
+				    !cur.dk_rbytes || !cur.dk_wbytes ||
+				    !cur.dk_time || !last.dk_rxfer ||
+				    !last.dk_wxfer || !last.dk_seek ||
+				    !last.dk_rbytes || !last.dk_wbytes ||
+				    !last.dk_time)
+					errx(1, "Memory allocation failure.");
 
 				for (i = dk_ndrive - 1, j = cur.dk_ndrive - 1;
 				     i >= 0; i--) {
