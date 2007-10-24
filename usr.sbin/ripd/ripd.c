@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.6 2007/10/20 13:26:50 pyr Exp $ */
+/*	$OpenBSD: ripd.c,v 1.7 2007/10/24 19:05:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -327,13 +327,14 @@ main_dispatch_ripe(int fd, short event, void *bula)
 	struct imsgbuf	*ibuf = bula;
 	struct imsg	 imsg;
 	ssize_t		 n;
+	int		 shut = 0;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -380,7 +381,13 @@ main_dispatch_ripe(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */  
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 /* ARGSUSED */
@@ -390,13 +397,14 @@ main_dispatch_rde(int fd, short event, void *bula)
 	struct imsgbuf	*ibuf = bula;
 	struct imsg	 imsg;
 	ssize_t		 n;
+	int		 shut = 0;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -432,7 +440,13 @@ main_dispatch_rde(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */  
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 void

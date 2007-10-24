@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.6 2007/10/24 19:05:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -143,6 +143,7 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_parent2ripe[0]);
@@ -204,7 +205,6 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 	return (0);
 }
 
-/* imesg */
 int
 ripe_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
@@ -224,16 +224,17 @@ ripe_dispatch_main(int fd, short event, void *bula)
 {
 	struct imsg	 imsg;
 	struct imsgbuf	*ibuf = bula;
-	int		 n, link_ok;
 	struct kif	*kif;
 	struct iface	*iface;
+	ssize_t		 n;
+	int		 link_ok, shut = 0;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -291,7 +292,13 @@ ripe_dispatch_main(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */  
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 /* ARGSUSED */
@@ -303,14 +310,15 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct iface		*iface;
 	struct nbr		*nbr;
-	int			 n;
+	ssize_t			 n;
+	int			 shut = 0;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -444,7 +452,13 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */  
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 void
