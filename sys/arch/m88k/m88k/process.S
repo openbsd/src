@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.18 2007/10/13 12:54:45 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.19 2007/10/24 21:02:00 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -73,30 +73,20 @@ ENTRY(cpu_switchto)
 	ld	r10,  r10, CI_CURPCB
 
 	/* restore from the current context */
-	ld	r2,  r10, PCB_FCR62
-	ld	r3,  r10, PCB_FCR63
+	ld.d	r2,  r10, PCB_FCR62
 	fstcr	r2,  fcr62
 	fstcr	r3,  fcr63
-	ld	r15, r10, PCB_R15
-	ld	r16, r10, PCB_R16
-	ld	r17, r10, PCB_R17
-	ld	r18, r10, PCB_R18
-	ld	r19, r10, PCB_R19
-	ld	r20, r10, PCB_R20
-	ld	r21, r10, PCB_R21
-	ld	r22, r10, PCB_R22
-	ld	r23, r10, PCB_R23
-	ld	r24, r10, PCB_R24
-	ld	r25, r10, PCB_R25
-	ld	r26, r10, PCB_R26
-	ld	r27, r10, PCB_R27
-	ld	r28, r10, PCB_R28
-	ld	r29, r10, PCB_R29
-	ld	r30, r10, PCB_R30	/* restore frame pointer & stack */
-	ld	r31, r10, PCB_SP
 	ld	r1,  r10, PCB_PC
+	ld.d	r14, r10, PCB_R14
+	ld.d	r16, r10, PCB_R16
+	ld.d	r18, r10, PCB_R18
+	ld.d	r20, r10, PCB_R20
+	ld.d	r22, r10, PCB_R22
+	ld.d	r24, r10, PCB_R24
+	ld.d	r26, r10, PCB_R26
+	ld.d	r28, r10, PCB_R28
 	jmp.n	r1
-	 ld	r14, r10, PCB_R14
+	 ld.d	r30, r10, PCB_R30	/* restore frame pointer & stack */
 
 /*
  * savectx(pcb)
@@ -108,30 +98,20 @@ ENTRY(savectx)
 	 */
 	st	r1,  r2,  PCB_PC		/* save return address */
 ASLOCAL(__savectx)
-	st	r14, r2,  PCB_R14
-	st	r15, r2,  PCB_R15
-	st	r16, r2,  PCB_R16
-	st	r17, r2,  PCB_R17
-	st	r18, r2,  PCB_R18
-	st	r19, r2,  PCB_R19
-	st	r20, r2,  PCB_R20
-	st	r21, r2,  PCB_R21
-	st	r22, r2,  PCB_R22
-	st	r23, r2,  PCB_R23
-	st	r24, r2,  PCB_R24
-	st	r25, r2,  PCB_R25
-	st	r26, r2,  PCB_R26
-	st	r27, r2,  PCB_R27
-	st	r28, r2,  PCB_R28
-	st	r29, r2,  PCB_R29
-	st	r30, r2,  PCB_R30	/* save frame pointer & stack pointer */
-	st	r31, r2,  PCB_SP
+	st.d	r14, r2,  PCB_R14
+	st.d	r16, r2,  PCB_R16
+	st.d	r18, r2,  PCB_R18
+	st.d	r20, r2,  PCB_R20
+	st.d	r22, r2,  PCB_R22
+	st.d	r24, r2,  PCB_R24
+	st.d	r26, r2,  PCB_R26
+	st.d	r28, r2,  PCB_R28
+	st.d	r30, r2,  PCB_R30	/* save frame pointer & stack pointer */
 
 	/*
 	 * Save FP state.
 	 */
 	fldcr	r4,  fcr62
 	fldcr	r5,  fcr63
-	st	r4,  r2, PCB_FCR62
 	jmp.n	r1
-	 st	r5,  r2, PCB_FCR63
+	 st.d	r4,  r2, PCB_FCR62
