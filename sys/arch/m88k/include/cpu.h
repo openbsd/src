@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2007/10/16 04:57:37 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.26 2007/10/24 20:53:59 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -125,13 +125,14 @@ extern struct cpu_info m88k_cpus[MAX_CPUS];
 
 #if defined(MULTIPROCESSOR)
 
-#define	curcpu() \
-({									\
-	struct cpu_info *cpuptr;					\
-									\
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (cpuptr));		\
-	cpuptr;								\
-})
+static __inline__ struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *cpuptr;
+
+	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (cpuptr));
+	return cpuptr;
+}
 
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_primary != 0)
 
