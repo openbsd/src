@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.20 2007/10/18 04:32:25 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.21 2007/10/24 20:04:26 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -135,7 +135,7 @@
 #define	CTYPE_HAS_XL3		0x0400	/* External L3 Cache present */
 
 /*
- *  Due to a flaw in RM7000 1.x processors a pipleine 'drain' is
+ *  Due to a flaw in RM7000 1.x processors a pipeline 'drain' is
  *  required after some mtc0 instructions.
  *  Ten nops in sequence does the trick.
  */
