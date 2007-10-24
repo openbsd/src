@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.7 2007/10/24 19:05:06 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.8 2007/10/24 20:23:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -72,7 +72,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -130,10 +131,15 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
+			break;
+                case 'D':
+			if (cmdline_symset(optarg) < 0)
+				log_warnx("could not parse macro definition %s",
+				    optarg);
 			break;
 		case 'f':
 			conffile = optarg;
