@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.107 2007/10/24 19:56:06 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.108 2007/10/24 20:08:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -950,7 +950,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 							continue;
 					}
 #ifdef I2C_VERBOSE
-					if (probes[i].flags & PFLAG_SENSOR)
+					if ((probes[i].flags & PFLAG_SENSOR))
 						iic_dump(self, addr, name);
 #endif /* I2C_VERBOSE */
 				} else
