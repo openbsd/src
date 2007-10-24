@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.9 2007/10/22 22:39:10 kettenis Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.10 2007/10/24 20:13:19 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -183,7 +183,6 @@ envctrl_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	ia.ia_tag = iba->iba_tag;
 	ia.ia_cookie = aux;
 
-#ifdef notyet
 	/* Power supply 1 temperature. */
 	ia.ia_addr = 0x48;
 	ia.ia_name = "ecadc";
@@ -198,7 +197,6 @@ envctrl_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	ia.ia_addr = 0x4a;
 	ia.ia_name = "ecadc";
 	config_found(self, &ia, iic_print);
-#endif
 
 	/* Ambient tempterature. */
 	ia.ia_addr = 0x4d;
