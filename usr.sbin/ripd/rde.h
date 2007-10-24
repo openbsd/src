@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.3 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: rde.h,v 1.4 2007/10/24 20:38:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -51,7 +51,7 @@ void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);
 struct rt_node	*rt_find(in_addr_t, in_addr_t);
 struct rt_node	*rt_new_kr(struct kroute *);
-struct rt_node	*rt_new_rr(struct rip_route *, int);
+struct rt_node	*rt_new_rr(struct rip_route *, u_int8_t);
 int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_complete(struct rip_route *);

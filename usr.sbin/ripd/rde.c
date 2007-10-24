@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.8 2007/10/24 19:05:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.9 2007/10/24 20:38:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -401,7 +401,7 @@ rde_check_route(struct rip_route *e)
 	struct timeval	 tv, now;
 	struct rt_node	*rn;
 	struct iface	*iface;
-	int		 metric;
+	u_int8_t	 metric;
 
 	if ((e->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET) ||
