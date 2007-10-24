@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.24 2007/10/21 09:50:22 jmc Exp $
+.\"	$OpenBSD: pctr.4,v 1.25 2007/10/24 17:56:54 mikeb Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -7,7 +7,7 @@
 .\" permitted provided that due credit is given to the author and the
 .\" OpenBSD project by leaving this copyright notice intact.
 .\"
-.Dd $Mdocdate: October 21 2007 $
+.Dd $Mdocdate: October 24 2007 $
 .Dt PCTR 4 i386
 .Os
 .Sh NAME
@@ -50,7 +50,6 @@ struct pctrst {
 	u_int pctr_fn[PCTR_NUM];
 	pctrval pctr_tsc;
 	pctrval pctr_hwc[PCTR_NUM];
-	pctrval pctr_idl;
 };
 .Ed
 .Pp
@@ -67,9 +66,6 @@ ioctls (see below).
 contains the actual value of the hardware counters.
 .Em pctr_tsc
 is a free-running, 64-bit cycle counter.
-Finally,
-.Em pctr_idl
-is a 64-bit count of idle-loop iterations.
 .Pp
 The functions of the counters can be programmed with ioctls
 .Dv PCIOCS0 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.2 2007/10/17 02:30:26 deraadt Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.3 2007/10/24 17:56:57 mikeb Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -22,7 +22,6 @@ struct pctrst {
 	u_int pctr_fn[PCTR_NUM];	/* Current settings of counters */
 	pctrval pctr_tsc;		/* Free-running 64-bit cycle counter */
 	pctrval	pctr_hwc[PCTR_NUM];	/* Values of the hardware counters */
-	pctrval pctr_idl;		/* Iterations of the idle loop */
 };
 
 /* Bit values in fn fields and PIOCS ioctl's */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.15 2007/10/17 14:54:30 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.16 2007/10/24 17:57:01 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -348,7 +348,6 @@ pctr_printvals(struct pctrst *st)
 			    pctr_fn2str(st->pctr_fn[i]));
 		if (tsc_avail)
 			printf("  tsc = %16llu\n", st->pctr_tsc);
-		printf("  idl = %16llu\n", st->pctr_idl);
 		break;
 	}
 }

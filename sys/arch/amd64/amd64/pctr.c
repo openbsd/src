@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.3 2007/10/24 06:30:21 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.4 2007/10/24 17:56:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -43,8 +43,6 @@
 #define usetsc		(cpu_feature & CPUID_TSC)
 #define usepctr		((pctr_isamd || pctr_isintel) && \
 			    ((cpu_id >> 8) & 15) >= 6)
-
-u_int64_t		pctr_idlcnt;	/* Gets incremented in locore.S */
 
 int			pctr_isamd;
 int			pctr_isintel;
@@ -153,7 +151,6 @@ pctrioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 			pctrrd(st);
 		else if (usetsc)
 			st->pctr_tsc = rdtsc();
-		st->pctr_idl = pctr_idlcnt;
 		return (0);
 	}
 	case PCIOCS0:
