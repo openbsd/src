@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.8,v 1.4 2007/05/31 19:20:28 jmc Exp $
+.\"	$OpenBSD: ripd.8,v 1.5 2007/10/24 20:28:25 claudio Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 24 2007 $
 .Dt RIPD 8
 .Os
 .Sh NAME
@@ -24,6 +24,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
+.Oo Xo
+.Fl D Ar macro Ns = Ns Ar value Oc
+.Xc
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
@@ -39,6 +42,15 @@ utility.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl D Ar macro Ns = Ns Ar value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the configuration file.
 .It Fl d
 Do not daemonize.
 If this option is specified,
