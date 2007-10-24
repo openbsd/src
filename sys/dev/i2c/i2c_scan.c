@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.105 2007/10/18 11:03:09 jsg Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.106 2007/10/24 18:32:31 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -448,11 +448,6 @@ char *
 iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
 	char *name = NULL;
-	int i;
-
-	for (i = 0; i < sizeof(ignore_addrs); i++)
-		if (ignore_addrs[i] == addr)
-			return (NULL);
 
 	skip_fc = 0;
 
@@ -924,7 +919,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 	struct iicprobelist *pl;
 	u_int8_t cmd = 0, addr;
 	char *name;
-	int i, j;
+	int i, j, k;
 
 	bzero(ignore_addrs, sizeof(ignore_addrs));
 
@@ -941,6 +936,10 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 		pl = probes[i].pl;
 		for (j = 0; pl[j].start && pl[j].end; j++) {
 			for (addr = pl[j].start; addr <= pl[j].end; addr++) {
+				for (k = 0; k < sizeof(ignore_addrs); k++)
+					if (ignore_addrs[k] == addr)
+						continue;
+
 				/* Perform RECEIVE BYTE command */
 				iic_acquire_bus(ic, 0);
 				if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
