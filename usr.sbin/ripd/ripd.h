@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.9 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: ripd.h,v 1.10 2007/10/24 20:16:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -332,7 +332,7 @@ struct ctl_rt {
 	time_t			 uptime;
 	time_t			 expire;
 	u_int32_t		 metric;
-	u_int8_t		 flags;
+	u_int16_t		 flags;
 };
 
 struct ctl_nbr {
