@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc7621.c,v 1.2 2007/09/07 23:56:33 deraadt Exp $	*/
+/*	$OpenBSD: asc7621.c,v 1.3 2007/10/24 19:00:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -146,9 +146,7 @@ adl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct adl_softc *sc = (struct adl_softc *)self;
 	struct i2c_attach_args *ia = aux;
-#if 0
 	u_int8_t cmd, data;
-#endif
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -160,17 +158,14 @@ adl_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-#if 0
 	/* Check for PECI mode */
 	cmd = ASC7621_PECI;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof(cmd), &data, sizeof(data), 0)) {
-		printf(", unable to read PECI status register\n");
-	}
-	if (data & ASC7621_PECI_MASK) {
+	(void)iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	    &cmd, sizeof(cmd), &data, sizeof(data), 0);
+	if (data & ASC7621_PECI_MASK)
 		printf(", PECI enabled\n");
-		peci_enabled = 1;
-	}
+
+#if 0
 	/* Check for legacy mode */
 	cmd = ASC7621_LEGACY;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
