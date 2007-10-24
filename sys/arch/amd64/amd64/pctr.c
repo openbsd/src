@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.2 2007/10/17 02:30:26 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.3 2007/10/24 06:30:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -86,14 +86,12 @@ pctrattach(int num)
 				 "\torq %1,%%rax\n"
 				 "\tmovq %%rax,%%cr4"
 				 :: "i" (~CR4_TSD), "i" (CR4_PCE) : "rax");
-		printf("pctr: user-level performance counters enabled\n");
 	} else if (usetsc) {
 		/* Enable RDTSC instruction from user-level. */
 		__asm __volatile("movq %%cr4,%%rax\n"
 				 "\tandq %0,%%rax\n"
 				 "\tmovq %%rax,%%cr4"
 				 :: "i" (~CR4_TSD) : "rax");
-		printf("pctr: user-level cycle counter enabled\n");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.23 2007/10/17 02:30:25 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.24 2007/10/24 06:30:25 mikeb Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -90,17 +90,13 @@ pctrattach(int num)
 				  "\torl %1,%%eax\n"
 				  "\tmovl %%eax,%%cr4"
 				  :: "i" (~CR4_TSD), "i" (CR4_PCE) : "eax");
-		printf("pctr: user-level performance counters enabled\n");
 	} else if (usetsc) {
 		/* Enable RDTSC instruction from user-level. */
 		__asm __volatile ("movl %%cr4,%%eax\n"
 				  "\tandl %0,%%eax\n"
 				  "\tmovl %%eax,%%cr4"
 				  :: "i" (~CR4_TSD) : "eax");
-		printf("pctr: user-level cycle counter enabled\n");
-	} else if (usep5ctr)
-		printf("pctr: 586-class performance counters and user-level "
-		    " cycle counter enabled\n");
+	}
 }
 
 int
