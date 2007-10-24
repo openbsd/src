@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2004/07/28 08:48:15 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.12 2007/10/24 20:19:09 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -48,9 +48,6 @@
 #endif
 
 #define	__DO_SYSCALL(x)							\
-	ld r10,r31,0;							\
-	ld r11,r31,4;							\
-	ld r12,r31,8;							\
 	or r13,r0,__SYSCALLNAME(SYS_,x);				\
 	tb0 0, r0, 128
 
