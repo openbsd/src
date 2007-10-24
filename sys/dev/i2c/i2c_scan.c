@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.108 2007/10/24 20:08:03 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.109 2007/10/24 20:15:29 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -61,13 +61,13 @@ struct iicprobelist probe_addrs_eeprom[] = {
 	{ 0, 0 }
 };
 
-char 	*iic_probe_sensor(struct device *, struct i2cbus_attach_args *, u_int8_t);
-char	*iic_probe_eeprom(struct device *, struct i2cbus_attach_args *, u_int8_t);
+char 	*iic_probe_sensor(struct device *, u_int8_t);
+char	*iic_probe_eeprom(struct device *, u_int8_t);
 
 #define PFLAG_SENSOR	1
 static struct {
 	struct iicprobelist *pl;
-	char	*(*probe)(struct device *, struct i2cbus_attach_args *, u_int8_t);
+	char	*(*probe)(struct device *, u_int8_t);
 	int	flags;
 } probes[] = {
 	{ probe_addrs_sensor, iic_probe_sensor, PFLAG_SENSOR },
@@ -445,7 +445,7 @@ iic_dump(struct device *dv, u_int8_t addr, char *name)
 #endif /* I2C_VERBOSE */
 
 char *
-iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
+iic_probe_sensor(struct device *self, u_int8_t addr)
 {
 	char *name = NULL;
 
@@ -878,8 +878,7 @@ iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t a
 }
 
 char *
-iic_probe_eeprom(struct device *self, struct i2cbus_attach_args *iba,
-    u_int8_t addr)
+iic_probe_eeprom(struct device *self, u_int8_t addr)
 {
 	int reg, csum = 0;
 	char *name = NULL;
@@ -933,8 +932,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 
 					/* Some device exists */
 					iicprobeinit(iba, addr);
-					name = (*probes[i].probe)(self,
-					    iba, addr);
+					name = (*probes[i].probe)(self, addr);
 #ifndef I2C_VERBOSE
 					if (name == NULL)
 						name = "unknown";
