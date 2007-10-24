@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.16 2007/10/23 07:51:55 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.17 2007/10/24 15:41:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -78,7 +78,10 @@ struct mbg_time_hr {
 #define MBG_LEAP		0x20	/* announcement of a leap second */
 #define MBG_IFTM		0x40	/* current time was set from host */
 #define MBG_INVALID		0x80	/* time is invalid */
- 
+
+/* status bits we are interested in */
+#define MBG_STATMASK		(MBG_FREERUN | MBG_SYNC | MBG_LEAP | MBG_IFTM)
+
 /* AMCC S5933 registers */
 #define AMCC_OMB1		0x00	/* outgoing mailbox 1 */
 #define AMCC_IMB4		0x1c	/* incoming mailbox 4 */
@@ -204,27 +207,29 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
 	    sc->sc_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
-		printf(": firmware unknown, ");
+		printf(": firmware unknown");
 	else {
 		fw_id[MBG_ID_LEN - 1] = '\0';
-		printf(": firmware %s, ", fw_id);
+		printf(": firmware %s", fw_id);
 	}
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
-		printf("unknown status\n");
+		printf(", unknown status");
 		sc->sc_status = 0;
 	} else {
-		/* We only look at selected bits in the status */
-		tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
+		tframe.status &= MBG_STATMASK;
+		if (tframe.status & MBG_SYNC)
+			printf(", synchronized");
 		if (tframe.status & MBG_FREERUN)
-			printf("free running on xtal\n");
-		else if (tframe.status & MBG_SYNC)
-			printf("synchronised\n");
-		else if (tframe.status & MBG_INVALID)
-			printf("invalid\n");
+			printf(", free running on xtal");
+		if (tframe.status & MBG_LEAP)
+			printf(", leap second");
+		if (tframe.status & MBG_IFTM)
+			printf(", time set from host");
 		sc->sc_status = tframe.status;
 	}
+	printf("\n");
 }
 
 void
@@ -272,17 +277,19 @@ mbg_task(void *arg)
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
-	/* We only look at the SYNC, FREERUN, and INVALID bits in the status */
-	tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
+	tframe.status &= MBG_STATMASK;
 	if (tframe.status != sc->sc_status) {
 		if (tframe.status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
 			    sc->sc_dev.dv_xname);
-		else if (tframe.status & MBG_FREERUN)
+		if (tframe.status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
 			    sc->sc_dev.dv_xname);
-		else if (tframe.status & MBG_INVALID)
-			log(LOG_INFO, "%s: clock is invalid",
+		if (tframe.status & MBG_LEAP)
+			log(LOG_INFO, "%s: leap second announced",
+			    sc->sc_dev.dv_xname);
+		if (tframe.status & MBG_IFTM)
+			log(LOG_INFO, "%s: time set from host",
 			    sc->sc_dev.dv_xname);
 		sc->sc_status = tframe.status;
 	}
@@ -329,8 +336,7 @@ mbg_task_hr(void *arg)
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
-	/* We only look at the SYNC, FREERUN, and INVALID bits in the status */
-	tframe.status &= (MBG_SYNC | MBG_FREERUN | MBG_INVALID);
+	tframe.status &= MBG_STATMASK;
 	if (tframe.status != sc->sc_status) {
 		if (tframe.status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
@@ -338,8 +344,11 @@ mbg_task_hr(void *arg)
 		else if (tframe.status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
 			    sc->sc_dev.dv_xname);
-		else if (tframe.status & MBG_INVALID)
-			log(LOG_INFO, "%s: clock is invalid",
+		if (tframe.status & MBG_LEAP)
+			log(LOG_INFO, "%s: leap second announced",
+			    sc->sc_dev.dv_xname);
+		if (tframe.status & MBG_IFTM)
+			log(LOG_INFO, "%s: time set from host",
 			    sc->sc_dev.dv_xname);
 		sc->sc_status = tframe.status;
 	}
