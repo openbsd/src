@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.3 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.4 2007/10/24 11:47:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -191,8 +191,8 @@ int
 rt_insert(struct rt_node *r)
 {
 	if (RB_INSERT(rt_tree, &rt, r) != NULL) {
-		log_warnx("rt_insert failed for %s/%s",
-		    inet_ntoa(r->prefix), inet_ntoa(r->netmask));
+		log_warnx("rt_insert failed for %s/%u",
+		    inet_ntoa(r->prefix), mask2prefixlen(r->netmask.s_addr));
 		free(r);
 		return (-1);
 	}
@@ -204,8 +204,8 @@ int
 rt_remove(struct rt_node *r)
 {
 	if (RB_REMOVE(rt_tree, &rt, r) == NULL) {
-		log_warnx("rt_remove failed for %s/%s",
-		    inet_ntoa(r->prefix), inet_ntoa(r->netmask));
+		log_warnx("rt_remove failed for %s/%u",
+		    inet_ntoa(r->prefix), mask2prefixlen(r->netmask.s_addr));
 		return (-1);
 	}
 
