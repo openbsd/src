@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.12 2007/10/24 20:29:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -562,7 +562,7 @@ kif_validate(int ifindex)
 struct kroute_node *
 kroute_match(in_addr_t key)
 {
-	int			 i;
+	u_int8_t		 i;
 	struct kroute_node	*kr;
 
 	/* we will never match the default route */
