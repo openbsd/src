@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2007/10/10 15:53:52 art Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2007/10/24 20:01:38 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -41,6 +41,7 @@ struct	proc
 #member	p_priority
 member	p_stat
 member	p_addr
+member	p_vmspace
 #member	P_UPTE		p_md.md_upte
 member	P_PC_CTRL	p_md.md_pc_ctrl
 member	P_PC_COUNT	p_md.md_pc_count
@@ -61,6 +62,11 @@ member	ci_curproc
 export	VM_MIN_KERNEL_ADDRESS
 export	SIGFPE
 
+struct	vmspace
+member	VMSPACE_PMAP	vm_map.pmap
+
+struct	pmap
+member	pm_tlbpid
 export	PMAP_SEGTABSIZE
 
 export	CCA_NC

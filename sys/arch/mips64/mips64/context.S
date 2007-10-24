@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.16 2007/10/18 04:32:25 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.17 2007/10/24 20:01:36 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,10 +111,9 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 
 	beqz	a0, 1f
-	nop
+	mfc0	v0, COP_0_STATUS_REG
 
 	lw	t0, cpl
-	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
 	REG_S	s2, PCB_CONTEXT+2*REGSZ(t3)
@@ -125,16 +124,15 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	REG_S	s7, PCB_CONTEXT+7*REGSZ(t3)
 	REG_S	s8, PCB_CONTEXT+9*REGSZ(t3)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(t3)
-	mfc0	t0, COP_0_STATUS_REG
 	cfc0	t1, COP_0_ICR
-	REG_S	t0, PCB_CONTEXT+11*REGSZ(t3)
+	REG_S	v0, PCB_CONTEXT+11*REGSZ(t3)
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
+	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 
 1:
 	/*
 	 * Disable interrupts
 	 */
-	mfc0	v0, COP_0_STATUS_REG	# disable interrupts
 	li	v1, ~SR_INT_ENAB
 	and	v0, v0, v1
 	mtc0	v0, COP_0_STATUS_REG
@@ -161,6 +159,11 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	 * by invalidating any tlb entries mapping the U-area and
 	 * put valid mappings in tlb entries 0 and 1.
 	 */
+
+	/* get process ASID */
+	PTR_L	t0, P_VMSPACE(s0)		# p->p_vmspace
+	PTR_L	t1, VMSPACE_PMAP(t0)		# ->vm_map.pmap
+	lw	v0, PM_TLBPID(t1)		# ->pm_tlbpid
 
 	or	v0, t3
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
