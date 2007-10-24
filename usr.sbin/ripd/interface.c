@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.4 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.5 2007/10/24 19:50:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -44,7 +44,6 @@ extern struct ripd_conf	*conf;
 
 int	 if_act_start(struct iface *);
 int	 if_act_reset(struct iface *);
-void	 if_keepalive_timer(int, short, void *);
 
 struct {
 	int			state;
