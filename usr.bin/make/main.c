@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.85 2007/09/23 09:44:39 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.86 2007/10/24 13:19:24 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ static LIST		makefiles;	/* ordered list of makefiles to read */
 static LIST		varstoprint;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 bool 		compatMake;	/* -B argument */
+static bool		forceJobs = false;
 int 		debug;		/* -d flag */
 bool 		noExecute;	/* -n flag */
 bool 		keepgoing;	/* -k flag */
@@ -193,7 +194,6 @@ static void
 MainParseArgs(int argc, char **argv)
 {
 	int c, optend;
-	int forceJobs = 0;
 
 #define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #define OPTLETTERS "BPSiknqrst"
@@ -318,12 +318,6 @@ MainParseArgs(int argc, char **argv)
 		}
 	}
 
-	/*
-	 * Be compatible if user did not specify -j and did not explicitly
-	 * turn compatibility on
-	 */
-	if (!compatMake && !forceJobs)
-		compatMake = true;
 }
 
 /*-
@@ -704,6 +698,13 @@ main(int argc, char **argv)
 	Main_ParseArgLine(getenv("MAKEFLAGS"));
 
 	MainParseArgs(argc, argv);
+
+	/*
+	 * Be compatible if user did not specify -j and did not explicitly
+	 * turn compatibility on
+	 */
+	if (!compatMake && !forceJobs)
+		compatMake = true;
 
 	/* And set up everything for sub-makes */
 	Var_AddCmdline(MAKEFLAGS);
