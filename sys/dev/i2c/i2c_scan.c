@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.106 2007/10/24 18:32:31 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.107 2007/10/24 19:56:06 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -401,7 +401,7 @@ iic_ignore_addr(u_int8_t addr)
 		}
 }
 
-#if defined(I2C_DEBUG) || defined(I2C_VERBOSE)
+#ifdef I2C_VERBOSE
 void
 iic_dump(struct device *dv, u_int8_t addr, char *name)
 {
@@ -442,7 +442,7 @@ iic_dump(struct device *dv, u_int8_t addr, char *name)
 		printf("\n");
 	}
 }
-#endif /* defined(I2C_DEBUG) || defined(I2C_VERBOSE) */
+#endif /* I2C_VERBOSE */
 
 char *
 iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -874,22 +874,7 @@ iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t a
 			skip_fc = 1;
 	}
 
-#ifdef I2C_DEBUG
-	iic_dump(self, addr, name);
-#endif /* I2C_DEBUG */
-
-#if !defined(I2C_VERBOSE) && !defined(I2C_DEBUG)
-	if (name == NULL)
-		name = "unknown";
-#endif
-
-	if (name)
-		return (name);
-
-#if defined(I2C_VERBOSE) && !defined(I2C_DEBUG)
-	iic_dump(self, addr, name);
-#endif /* defined(I2C_VERBOSE) && !defined(I2C_DEBUG) */
-	return (NULL);
+	return (name);
 }
 
 char *
@@ -950,16 +935,24 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 					iicprobeinit(iba, addr);
 					name = (*probes[i].probe)(self,
 					    iba, addr);
-
+#ifndef I2C_VERBOSE
+					if (name == NULL)
+						name = "unknown";
+#endif /* !I2C_VERBOSE */
 					if (name) {
 						memset(&ia, 0, sizeof(ia));
 						ia.ia_tag = iba->iba_tag;
 						ia.ia_addr = addr;
 						ia.ia_size = 1;
 						ia.ia_name = name;
-						(void) config_found(self,
-						    &ia, iic_print);
+						if (config_found(self,
+						    &ia, iic_print))
+							continue;
 					}
+#ifdef I2C_VERBOSE
+					if (probes[i].flags & PFLAG_SENSOR)
+						iic_dump(self, addr, name);
+#endif /* I2C_VERBOSE */
 				} else
 					iic_release_bus(ic, 0);
 			}
