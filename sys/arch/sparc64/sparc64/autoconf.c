@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.71 2007/10/17 21:23:28 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.72 2007/10/25 05:19:55 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -691,6 +691,9 @@ extern bus_space_tag_t mainbus_space_tag;
 		strlcpy(hw_vendor, platform_type, sizeof(platform_type));
 		if ((strncmp(hw_vendor, "SUNW,", 5)) == 0) {
 			p = hw_prod = hw_vendor + 5;
+			hw_vendor = "Sun";
+		} else if ((strncmp(hw_vendor, "Sun (TM) ", 9)) == 0) {
+			p = hw_prod = hw_vendor + 9;
 			hw_vendor = "Sun";
 		} else if ((p = memchr(hw_vendor, ' ', len)) != NULL) {
 			*p = '\0';
