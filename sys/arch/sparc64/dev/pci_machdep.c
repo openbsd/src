@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.30 2007/08/04 16:39:15 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.31 2007/10/25 20:00:06 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -124,38 +124,10 @@ pci_make_tag(pc, b, d, f)
 
 	tag = PCITAG_CREATE(-1, b, d, f);
 	node = pc->rootnode;
+
 	/*
-	 * First make sure we're on the right bus.  If our parent
-	 * has a bus-range property and we're not in the range,
-	 * then we're obviously on the wrong bus.  So go up one
-	 * level.
-	 */
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("curnode %x %s\n", node, name);
-	}
-#endif
-#if 0
-	while ((OF_getprop(OF_parent(node), "bus-range", (void *)&busrange,
-		sizeof(busrange)) == sizeof(busrange)) &&
-		(b < busrange[0] || b > busrange[1])) {
-		/* Out of range, go up one */
-		node = OF_parent(node);
-#ifdef DEBUG
-		if (sparc_pci_debug & SPDB_PROBE) {
-			OF_getprop(node, "name", &name, sizeof(name));
-			printf("going up to node %x %s\n", node, name);
-		}
-#endif
-	}
-#endif	
-	/*
-	 * Now traverse all peers until we find the node or we find
+	 * Traverse all peers until we find the node or we find
 	 * the right bridge. 
-	 *
-	 * XXX We go up one and down one to make sure nobody's missed.
-	 * but this should not be necessary.
 	 */
 	for (node = ((node)); node; node = OF_peer(node)) {
 
@@ -166,7 +138,6 @@ pci_make_tag(pc, b, d, f)
 		}
 #endif
 
-#if 1
 		/*
 		 * Check for PCI-PCI bridges.  If the device we want is
 		 * in the bus-range for that bridge, work our way down.
@@ -184,7 +155,7 @@ pci_make_tag(pc, b, d, f)
 			}
 #endif
 		}
-#endif
+
 		/* 
 		 * We only really need the first `reg' property. 
 		 *
