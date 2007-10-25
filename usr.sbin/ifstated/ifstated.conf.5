@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.6 2007/05/31 19:20:25 jmc Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.7 2007/10/25 06:06:26 pyr Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 25 2007 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -51,18 +51,6 @@ Set the initial state to
 .Ar state
 instead of using the first state defined.
 .It Xo
-.Ic loglevel
-.Sm off
-.Po Ic none \*(Ba
-.Ic quiet \*(Ba
-.Ic normal \*(Ba
-.Ic verbose \*(Ba
-.Ic debug Pc
-.Sm on
-.Xc
-Set the log level, with
-.Em normal
-being the default value.
 .El
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
@@ -172,10 +160,8 @@ grammar		= entry grammar | entry
 
 entry		= global_config | varset | action | state
 
-global_config	= initstate | loglevel
+global_config	= initstate
 initstate	= "init-state" string
-loglevel	= "loglevel" level
-level		= "none" | "quiet" | "normal" | "verbose" | "debug"
 
 varset		= string "=" string
 
