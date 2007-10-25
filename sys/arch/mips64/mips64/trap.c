@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2007/10/18 04:32:08 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2007/10/25 16:24:18 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -195,8 +195,6 @@ trap(trapframe)
 
 	/*
 	 * Enable hardware interrupts if they were on before the trap.
-	 * If it was off disable all (splhigh) so we don't accidently
-	 * enable it when doing a spllower().
 	 */
 	if (trapframe->sr & SR_INT_ENAB) {
 		if (type != T_BREAK) {
@@ -205,9 +203,7 @@ trap(trapframe)
 #endif
 			enableintr();
 		}
-	} else
-		splhigh();
-
+	}
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -590,11 +586,18 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		goto out;
 	    }
 
-#ifdef DDB
 	case T_BREAK:
+#ifdef DDB
 		kdb_trap(type, trapframe);
-		return;
 #endif
+		/* Reenable interrupts if necessary */
+		if (trapframe->sr & SR_INT_ENAB) {
+#ifndef IMASK_EXTERNAL
+			updateimask(trapframe->cpl);
+#endif
+			enableintr();
+		}
+		return;
 
 	case T_BREAK+T_USER:
 	    {
