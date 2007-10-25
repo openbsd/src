@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.4 2004/03/10 00:13:38 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.5 2007/10/25 06:03:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -129,15 +129,18 @@ struct ifsd_config {
 #define IFSD_OPT_VERBOSE2	0x00000002
 #define IFSD_OPT_NOACTION	0x00000004
 	int				 maxdepth;
-	u_int8_t			 loglevel;
-#define IFSD_LOG_NONE		0
-#define IFSD_LOG_QUIET		1
-#define IFSD_LOG_NORMAL		2
-#define IFSD_LOG_VERBOSE	3
-#define IFSD_LOG_DEBUG		4
 };
 
 enum	{ IFSD_EVTIMER_ADD, IFSD_EVTIMER_DEL };
 struct ifsd_config *parse_config(char *, int);
 int	cmdline_symset(char *);
 void	clear_config(struct ifsd_config *);
+
+/* log.c */
+void	log_init(int);
+void	log_warn(const char *, ...);
+void	log_warnx(const char *, ...);
+void	log_info(const char *, ...);
+void	log_debug(const char *, ...);
+__dead void fatal(const char *);
+__dead void fatalx(const char *);

@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.8 2006/11/26 11:31:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2007/10/25 06:03:31 pyr Exp $
 
 PROG=	ifstated
-SRCS=	ifstated.c parse.y
+SRCS=	ifstated.c log.c parse.y
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations -Wredundant-decls

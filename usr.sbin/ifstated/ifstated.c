@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.30 2006/11/28 19:28:16 reyk Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.31 2007/10/25 06:03:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -50,7 +50,6 @@
 struct	 ifsd_config *conf = NULL, *newconf = NULL;
 
 int	 opts = 0;
-int	 opt_debug = 0;
 int	 opt_inhibit = 0;
 char	*configfile = "/etc/ifstated.conf";
 struct event	rt_msg_ev, sighup_ev, startup_ev, sigchld_ev;
@@ -75,8 +74,6 @@ int	state_change(void);
 void	do_action(struct ifsd_action *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
-void	log_init(int);
-void	logit(int, const char *, ...);
 
 void
 usage(void)
@@ -93,11 +90,14 @@ main(int argc, char *argv[])
 {
 	struct timeval tv;
 	int ch;
+	int debug = 0;
+
+	log_init(1);
 
 	while ((ch = getopt(argc, argv, "dD:f:hniv")) != -1) {
 		switch (ch) {
 		case 'd':
-			opt_debug = 1;
+			debug = 1;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -133,13 +133,13 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (!opt_debug) {
+	if (!debug) {
 		daemon(1, 0);
 		setproctitle(NULL);
 	}
 
 	event_init();
-	log_init(opt_debug);
+	log_init(debug);
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
 	signal_add(&sigchld_ev, NULL);
@@ -163,7 +163,7 @@ startup_handler(int fd, short event, void *arg)
 		err(1, "no routing socket");
 
 	if (load_config() != 0) {
-		logit(IFSD_LOG_QUIET, "unable to load config");
+		log_warnx("unable to load config");
 		exit(1);
 	}
 
@@ -173,15 +173,15 @@ startup_handler(int fd, short event, void *arg)
 	signal_set(&sighup_ev, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_ev, NULL);
 
-	logit(IFSD_LOG_NORMAL, "started");
+	log_info("started");
 }
 
 void
 sighup_handler(int fd, short event, void *arg)
 {
-	logit(IFSD_LOG_NORMAL, "reloading config");
+	log_info("reloading config");
 	if (load_config() != 0)
-		logit(IFSD_LOG_QUIET, "unable to reload config");
+		log_warnx("unable to reload config");
 }
 
 int
@@ -198,8 +198,7 @@ load_config(void)
 	adjust_external_expressions(&conf->always);
 	eval_state(&conf->always);
 	if (conf->curstate != NULL) {
-		logit(IFSD_LOG_NORMAL,
-		    "initial state: %s", conf->curstate->name);
+		log_info("initial state: %s", conf->curstate->name);
 		conf->curstate->entered = time(NULL);
 		conf->nextstate = conf->curstate;
 		conf->curstate = NULL;
@@ -265,8 +264,7 @@ external_exec(struct ifsd_external *external, int async)
 	int s;
 
 	if (external->pid > 0) {
-		logit(IFSD_LOG_NORMAL,
-		    "previous command %s [%d] still running, killing it",
+		log_info("previous command %s [%d] still running, killing it",
 		    external->command, external->pid);
 		kill(external->pid, SIGKILL);
 		waitpid(external->pid, &s, 0);
@@ -274,10 +272,10 @@ external_exec(struct ifsd_external *external, int async)
 	}
 
 	argp[2] = external->command;
-	logit(IFSD_LOG_VERBOSE, "running %s", external->command);
+	log_debug("running %s", external->command);
 	pid = fork();
 	if (pid < 0) {
-		logit(IFSD_LOG_QUIET, "fork error");
+		log_warn("fork error");
 	} else if (pid == 0) {
 		execv("/bin/sh", argp);
 		_exit(1);
@@ -340,8 +338,7 @@ check_external_status(struct ifsd_state *state)
 		if (WIFEXITED(s))
 			status = WEXITSTATUS(s);
 		else {
-			logit(IFSD_LOG_QUIET,
-			    "%s exited abnormally", external->command);
+			log_warnx("%s exited abnormally", external->command);
 			goto loop;
 		}
 
@@ -525,8 +522,7 @@ int
 state_change(void)
 {
 	if (conf->nextstate != NULL && conf->curstate != conf->nextstate) {
-		logit(IFSD_LOG_NORMAL, "changing state to %s",
-		    conf->nextstate->name);
+		log_info("changing state to %s", conf->nextstate->name);
 		if (conf->curstate != NULL) {
 			evtimer_del(&conf->curstate->ev);
 			external_evtimer_setup(conf->curstate,
@@ -553,7 +549,7 @@ do_action(struct ifsd_action *action)
 
 	switch (action->type) {
 	case IFSD_ACTION_COMMAND:
-		logit(IFSD_LOG_NORMAL, "running %s", action->act.command);
+		log_info("running %s", action->act.command);
 		system(action->act.command);
 		break;
 	case IFSD_ACTION_CHANGESTATE:
@@ -569,8 +565,7 @@ do_action(struct ifsd_action *action)
 		}
 		break;
 	default:
-		logit(IFSD_LOG_DEBUG, "do_action: unknown action %d",
-		    action->type);
+		log_debug("do_action: unknown action %d", action->type);
 		break;
 	}
 }
@@ -697,38 +692,4 @@ remove_expression(struct ifsd_expression *expression,
 		break;
 	}
 	free(expression);
-}
-
-void
-log_init(int n_debug)
-{
-	extern char	*__progname;
-
-	if (!n_debug)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
-}
-
-void
-logit(int level, const char *fmt, ...)
-{
-	va_list	 ap;
-	char	*nfmt;
-
-	if (conf != NULL && level > conf->loglevel)
-		return;
-
-	va_start(ap, fmt);
-	if (opt_debug) {
-		/* best effort in out of mem situations */
-		if (asprintf(&nfmt, "ifstated: %s\n", fmt) != -1) {
-			vfprintf(stderr, nfmt, ap);
-			free(nfmt);
-		} else {
-			vfprintf(stderr, fmt, ap);
-			fprintf(stderr, "\n");
-		}
-	} else
-		vsyslog(LOG_NOTICE, fmt, ap);
-
-	va_end(ap);
 }

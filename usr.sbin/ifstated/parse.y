@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2007/10/21 08:29:34 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2007/10/25 06:03:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -104,7 +104,7 @@ typedef struct {
 
 %token	STATE INITSTATE
 %token	LINK UP DOWN UNKNOWN ADDED REMOVED
-%token	IF RUN SETSTATE EVERY INIT LOGLEVEL
+%token	IF RUN SETSTATE EVERY INIT
 %left	AND OR
 %left	UNARY
 %token	ERROR
@@ -155,19 +155,6 @@ varset		: STRING '=' string		{
 
 conf_main	: INITSTATE STRING		{
 			start_state = $2;
-		}
-		| LOGLEVEL STRING			{
-			if (!strcmp($2, "none"))
-				conf->loglevel = IFSD_LOG_NONE;
-			else if (!strcmp($2, "quiet"))
-				conf->loglevel = IFSD_LOG_QUIET;
-			else if (!strcmp($2, "normal"))
-				conf->loglevel = IFSD_LOG_NORMAL;
-			else if (!strcmp($2, "verbose"))
-				conf->loglevel = IFSD_LOG_VERBOSE;
-			else if (!strcmp($2, "debug"))
-				conf->loglevel = IFSD_LOG_DEBUG;
-			free($2);
 		}
 		;
 
@@ -397,7 +384,6 @@ lookup(char *s)
 		{ "init",		INIT},
 		{ "init-state",		INITSTATE},
 		{ "link",		LINK},
-		{ "loglevel",		LOGLEVEL},
 		{ "removed",		REMOVED},
 		{ "run",		RUN},
 		{ "set-state",		SETSTATE},
@@ -746,7 +732,6 @@ parse_config(char *filename, int opts)
 
 	init_state(&conf->always);
 	curaction = conf->always.always;
-	conf->loglevel = IFSD_LOG_NORMAL;
 	conf->opts = opts;
 
 	yyparse();
