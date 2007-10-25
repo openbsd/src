@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.5 2007/10/25 12:05:20 claudio Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.6 2007/10/25 16:10:12 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -86,7 +86,7 @@ When routers are connected via point to point links, the DR and BDR
 election is skipped since only two routers are connected.
 .Pp
 To limit the impact changes in the network have on the LSDB it is possible
-to segement OSPF network into areas.
+to segment an OSPF network into areas.
 Area 0.0.0.0 a.k.a. the backbone area must always be present.
 Routers can be configured as Area Border Router
 .Pq ABR ,
