@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.6 2007/09/03 15:19:55 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.7 2007/10/25 16:08:12 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -26,6 +26,7 @@
 #define HAVE_GETIFADDRS 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GLOB 1
+#define HAVE_IN6_ADDR 1
 #define HAVE_INITGROUPS 1
 #define HAVE_INNETGR 1
 #define HAVE_INTTYPES_H 1

@@ -17,7 +17,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: interfaces.h,v 1.8.2.2 2007/08/13 16:30:02 millert Exp $
+ * $Sudo: interfaces.h,v 1.8.2.3 2007/10/24 16:43:27 millert Exp $
  */
 
 #ifndef _SUDO_INTERFACES_H
@@ -30,13 +30,13 @@ struct interface {
     int family;	/* AF_INET or AF_INET6 */
     union {
 	struct in_addr ip4;
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
 	struct in6_addr ip6;
 #endif
     } addr;
     union {
 	struct in_addr ip4;
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
 	struct in6_addr ip6;
 #endif
     } netmask;

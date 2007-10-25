@@ -75,7 +75,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.5 2007/08/25 02:45:09 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.6 2007/10/24 16:43:27 millert Exp $";
 #endif /* lint */
 
 
@@ -180,13 +180,13 @@ addr_matches_if(n)
     int i;
     struct in_addr addr;
     struct interface *ifp;
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
     struct in6_addr addr6;
     int j;
 #endif
     int family;
 
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
     if (inet_pton(AF_INET6, n, &addr6) > 0) {
 	family = AF_INET6;
     } else
@@ -207,7 +207,7 @@ addr_matches_if(n)
 		    == addr.s_addr)
 		    return(TRUE);
 		break;
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
 	    case AF_INET6:
 		if (memcmp(ifp->addr.ip6.s6_addr, addr6.s6_addr,
 		    sizeof(addr6.s6_addr)) == 0)
@@ -218,7 +218,7 @@ addr_matches_if(n)
 		}
 		if (j == sizeof(addr6.s6_addr))
 		    return(TRUE);
-#endif /* AF_INET6 */
+#endif /* HAVE_IN6_ADDR */
 	}
     }
 
@@ -233,13 +233,13 @@ addr_matches_if_netmask(n, m)
     int i;
     struct in_addr addr, mask;
     struct interface *ifp;
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
     struct in6_addr addr6, mask6;
     int j;
 #endif
     int family;
 
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
     if (inet_pton(AF_INET6, n, &addr6) > 0)
 	family = AF_INET6;
     else
@@ -260,7 +260,7 @@ addr_matches_if_netmask(n, m)
 	    mask.s_addr = htonl(mask.s_addr);
 	}
     }
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
     else {
 	if (inet_pton(AF_INET6, m, &mask6) <= 0) {
 	    j = atoi(m);
@@ -274,7 +274,7 @@ addr_matches_if_netmask(n, m)
 	    }
 	}
     }
-#endif /* AF_INET6 */
+#endif /* HAVE_IN6_ADDR */
 
     for (i = 0; i < num_interfaces; i++) {
 	ifp = &interfaces[i];
@@ -284,7 +284,7 @@ addr_matches_if_netmask(n, m)
 	    case AF_INET:
 		if ((ifp->addr.ip4.s_addr & mask.s_addr) == addr.s_addr)
 		    return(TRUE);
-#ifdef AF_INET6
+#ifdef HAVE_IN6_ADDR
 	    case AF_INET6:
 		for (j = 0; j < sizeof(addr6.s6_addr); j++) {
 		    if ((ifp->addr.ip6.s6_addr[j] & mask6.s6_addr[j]) != addr6.s6_addr[j])
@@ -292,7 +292,7 @@ addr_matches_if_netmask(n, m)
 		}
 		if (j == sizeof(addr6.s6_addr))
 		    return(TRUE);
-#endif /* AF_INET6 */
+#endif /* HAVE_IN6_ADDR */
 	}
     }
 

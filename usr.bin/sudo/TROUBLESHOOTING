@@ -162,7 +162,7 @@ A) Some SVR4-derived OS's include a /usr/bin/cd command for reasons
    unfathomable.  A "cd" command is totally useless since a child process
    cannot affect the current working directory of the parent (your shell).
 
-Q) When I run sudo it says I am not alllowed to run the command as root
+Q) When I run sudo it says I am not allowed to run the command as root
    but I don't want to run it as root, I want to run it as another user.
    My sudoers file entry looks like:
     bob	ALL=(oracle) ALL

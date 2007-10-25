@@ -1975,3 +1975,15 @@ Sudo 1.6.9p5 released.
 624) inttypes.h is now included when appropriate if it is present.
 
 625) Simplified alias allocation in the parser.
+
+Sudo 1.6.9p6 released.
+
+626) Go back to using TCSAFLUSH instead of TCSADRAIN when turning
+     off echo in tgetpass().
+
+627) Fixed addition of -lutil for logincap on FreeBSD and NetBSD.
+
+628) Add configure check for struct in6_addr since some systems define
+     AF_INET6 but have no real IPv6 support.
+
+Sudo 1.6.9p7 released.

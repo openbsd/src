@@ -63,7 +63,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.4 2007/07/22 12:14:53 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.7 2007/10/09 00:06:06 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -99,10 +99,10 @@ pam_init(pw, promptp, auth)
      * will cause a crash if PAM_TTY is not set so if
      * there is no tty, set PAM_TTY to the empty string.
      */
-    if (strcmp(user_tty, "unknown") == 0)
+    if (user_ttypath == NULL)
 	(void) pam_set_item(pamh, PAM_TTY, "");
     else
-	(void) pam_set_item(pamh, PAM_TTY, user_tty);
+	(void) pam_set_item(pamh, PAM_TTY, user_ttypath);
 
     return(AUTH_SUCCESS);
 }
@@ -190,9 +190,11 @@ pam_prep_user(pw)
     /*
      * Set PAM_USER to the user we are changing *to* and
      * set PAM_RUSER to the user we are coming *from*.
+     * We set PAM_RHOST to avoid a bug in Solaris 7 and below.
      */
     (void) pam_set_item(pamh, PAM_USER, pw->pw_name);
     (void) pam_set_item(pamh, PAM_RUSER, user_name);
+    (void) pam_set_item(pamh, PAM_RHOST, user_host);
 
     /*
      * Set credentials (may include resource limits, device ownership, etc).
@@ -204,6 +206,7 @@ pam_prep_user(pw)
      */
     (void) pam_setcred(pamh, PAM_ESTABLISH_CRED);
 
+#ifndef NO_PAM_SESSION
     /*
      * To fully utilize PAM sessions we would need to keep a
      * sudo process around until the command exits.  However, we
@@ -215,6 +218,7 @@ pam_prep_user(pw)
 	return(AUTH_FAILURE);
     }
     (void) pam_close_session(pamh, 0);
+#endif
 
     if (pam_end(pamh, PAM_SUCCESS | PAM_DATA_SILENT) == PAM_SUCCESS)
 	return(AUTH_SUCCESS);

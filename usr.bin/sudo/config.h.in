@@ -171,6 +171,9 @@
 /* Define to 1 if your Kerberos is Heimdal. */
 #undef HAVE_HEIMDAL
 
+/* Define to 1 if <netinet/in.h> contains struct in6_addr. */
+#undef HAVE_IN6_ADDR
+
 /* Define to 1 if you have the `initgroups' function. */
 #undef HAVE_INITGROUPS
 

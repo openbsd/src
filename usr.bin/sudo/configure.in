@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.24 2007/10/09 00:06:05 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.27 2007/10/24 16:43:25 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1632,7 +1632,12 @@ if test "$OS" != "ultrix"; then
     fi
 fi
 if test ${with_logincap-'no'} != "no"; then
-    AC_CHECK_HEADERS(login_cap.h)
+    AC_CHECK_HEADERS(login_cap.h, [
+	case "$OS" in
+	    freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
+	    ;;
+	esac
+    ])
 fi
 if test ${with_project-'no'} != "no"; then
     AC_CHECK_HEADER(project.h, AC_DEFINE(HAVE_PROJECT_H)
@@ -1650,10 +1655,10 @@ AC_CHECK_TYPES([sigaction_t], [AC_DEFINE(HAVE_SIGACTION_T)], [], [#include <sys/
 AC_CHECK_TYPE([struct timespec], [AC_DEFINE(HAVE_TIMESPEC)], [], [#include <sys/types.h>
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
-# include <time.h>
-#else
-# include <sys/time.h>
-#endif])
+#endif
+#include <time.h>])
+AC_CHECK_TYPES([struct in6_addr], [AC_DEFINE(HAVE_IN6_ADDR)], [], [#include <sys/types.h>
+#include <netinet/in.h>])
 SUDO_TYPE_SIZE_T
 SUDO_TYPE_SSIZE_T
 SUDO_TYPE_DEV_T
@@ -2060,16 +2065,6 @@ if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
 fi
 
 dnl
-dnl Some systems put login_cap(3) in libutil
-dnl
-if test ${with_logincap-'no'} = "yes"; then
-    case "$OS" in
-	freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
-	;;
-    esac
-fi
-
-dnl
 dnl extra AFS libs and includes
 dnl
 if test ${with_AFS-'no'} = "yes"; then
@@ -2411,6 +2406,7 @@ AH_TEMPLATE(HAVE_GETPWANAM, [Define to 1 if you have the `getpwanam' function. (
 AH_TEMPLATE(HAVE_GETSPNAM, [Define to 1 if you have the `getspnam' function (SVR4-style shadow passwords)])
 AH_TEMPLATE(HAVE_GETSPWUID, [Define to 1 if you have the `getspwuid' function. (HP-UX <= 9.X shadow passwords)])
 AH_TEMPLATE(HAVE_HEIMDAL, [Define to 1 if your Kerberos is Heimdal.])
+AH_TEMPLATE(HAVE_IN6_ADDR, [Define to 1 if <netinet/in.h> contains struct in6_addr.])
 AH_TEMPLATE(HAVE_ISCOMSEC, [Define to 1 if you have the `iscomsec' function. (HP-UX >= 10.x check for shadow enabled)])
 AH_TEMPLATE(HAVE_ISSECURE, [Define to 1 if you have the `issecure' function. (SunOS 4.x check for shadow enabled)])
 AH_TEMPLATE(HAVE_KERB4, [Define to 1 if you use Kerberos IV.])
