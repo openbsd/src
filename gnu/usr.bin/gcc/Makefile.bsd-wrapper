@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.56 2007/09/03 14:40:16 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.57 2007/10/25 17:42:22 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -119,7 +119,7 @@ maninstall:
 # (pre-formatted) and also because of cpp, that we install by hand
 # elsewhere, until we get rid of that old `compatibility' script.
 
-target_path: Makefile
+target_path: config.status
 	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
 	__version=`sed -n '/^gcc_version=/s/gcc_version=//p' Makefile`; \
 	echo /usr/lib/gcc-lib/$$__target/$$__version >target_path
