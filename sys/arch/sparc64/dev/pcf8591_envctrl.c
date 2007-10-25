@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_envctrl.c,v 1.5 2007/10/24 20:12:07 kettenis Exp $ */
+/*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -126,6 +126,8 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 
 		if (num == 0 || den == 0)
 			num = den = 1;
+
+		sc->sc_channels[sc->sc_nchan].chan_num = chan;
 
 		sensor = &sc->sc_channels[sc->sc_nchan].chan_sensor;
 		sensor->type = SENSOR_TEMP;
