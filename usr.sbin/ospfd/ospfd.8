@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.19 2007/10/14 12:27:35 krw Exp $
+.\"	$OpenBSD: ospfd.8,v 1.20 2007/10/25 12:06:30 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2007 $
+.Dd $Mdocdate: October 25 2007 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -23,6 +23,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
+.Oo Xo
+.Fl D Ar macro Ns = Ns Ar value Oc
+.Xc
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
@@ -120,6 +123,15 @@ utility.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl D Ar macro Ns = Ns Ar value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the configuration file.
 .It Fl d
 Do not daemonize.
 If this option is specified,
