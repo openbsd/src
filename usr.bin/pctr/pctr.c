@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.16 2007/10/24 17:57:01 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.17 2007/10/25 16:38:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -71,13 +71,62 @@ main(int argc, char **argv)
 	int list_mode = 0, set_mode = 0;
 
 	if (pctr_cpu_creds())
-		errx(1, "pctr is only supported on i386 and amd64 "
-		    "architectures by now");
+		errx(1, "pctr is supported on i386 and amd64 "
+		    "architectures only");
 
 	while ((ch = getopt(argc, argv, "cef:iklm:s:t:uMESIA")) != -1)
 		switch (ch) {
+		case 'A':
+			if (Mflag || Eflag || Sflag || Iflag)
+				errx(1, "M, E, S, I and A are mutually "
+				    "exclusive");
+			Aflag++;
+			break;
+		case 'c':
+			cflag++;
+			break;
+		case 'E':
+		case 'I':
+		case 'M':
+		case 'S':
+			if (Aflag)
+				errx(1, "M, E, S, I and A are mutually "
+				    "exclusive");
+			switch (ch) {
+			case 'E':
+				Eflag++;
+				break;
+			case 'I':
+				Iflag++;
+				break;
+			case 'M':
+				Mflag++;
+				break;
+			case 'S':
+				Sflag++;
+				break;
+			}
+		case 'e':
+			eflag++;
+			break;
+		case 'f':
+			if (sscanf(optarg, "%x", &func) <= 0 || func < 0 ||
+			    func > PCTR_MAX_FUNCT)
+				errx(1, "invalid function number");
+			break;
+		case 'i':
+			iflag++;
+			break;
+		case 'k':
+			kflag++;
+			break;
 		case 'l':
 			list_mode++;
+			break;
+		case 'm':
+			if (sscanf(optarg, "%x", &masku) <= 0 || masku < 0 ||
+			    masku > PCTR_MAX_UMASK)
+				errx(1, "invalid unit mask number");
 			break;
 		case 's':
 			set_mode++;
@@ -86,67 +135,13 @@ main(int argc, char **argv)
 				errx(1, "counter number is %s: %s", errstr,
 				    optarg);
 			break;
-		case 'f':
-			if (sscanf(optarg, "%x", &func) <= 0 || func < 0 ||
-			    func > PCTR_MAX_FUNCT)
-				errx(1, "invalid function number");
-			break;
-		case 'm':
-			if (sscanf(optarg, "%x", &masku) <= 0 || masku < 0 ||
-			    masku > PCTR_MAX_UMASK)
-				errx(1, "invalid unit mask number");
-			break;
 		case 't':
 			thold = strtonum(optarg, 0, 0xff, &errstr);
 			if (errstr)
 				errx(1, "threshold is %s: %s", errstr, optarg);
 			break;
-		/* flags */
-		case 'c':
-			cflag++;
-			break;
-		case 'e':
-			eflag++;
-			break;
-		case 'i':
-			iflag++;
-			break;
-		case 'k':
-			kflag++;
-			break;
 		case 'u':
 			uflag++;
-			break;
-		/* MESI/A flags */
-		case 'M':
-			if (Aflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			Mflag++;
-			break;
-		case 'E':
-			if (Aflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			Eflag++;
-			break;
-		case 'S':
-			if (Aflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			Sflag++;
-			break;
-		case 'I':
-			if (Aflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			Iflag++;
-			break;
-		case 'A':
-			if (Mflag || Eflag || Sflag || Iflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			Aflag++;
 			break;
 		default:
 			usage();
@@ -507,8 +502,6 @@ pctr_set_cntr(void)
 		if (func)
 			val |= PCTR_EN;
 		break;
-	default:
-		return (EX_UNAVAILABLE);
 	}
 
 	return (pctr_write(ctr, val));
@@ -522,15 +515,15 @@ usage(void)
 
 	switch (cpu_type) {
 	case CPU_P5:
-		usg = "[-l] [-s ctr] [-cuk] [-f funct]";
+		usg = "[-cklu] [-f funct] [-s ctr]";
 		break;
 	case CPU_P6:
 	case CPU_CORE:
-		usg = "[-l] [-s ctr] [-eikuMESIA] [-f funct] [-m umask] "
+		usg = "[-AEeIiklMSu] [-f funct] [-m umask] [-s ctr] "
 		    "[-t thold]";
 		break;
 	case CPU_AMD:
-		usg = "[-l] [-s ctr] [-eiku] [-f funct] [-m umask] "
+		usg = "[-eilku] [-f funct] [-m umask] [-s ctr] "
 		    "[-t thold]";
 		break;
 	}
