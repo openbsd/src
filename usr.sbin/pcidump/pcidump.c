@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.7 2007/10/23 06:57:28 chl Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.8 2007/10/25 10:27:21 tobias Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -98,9 +98,9 @@ main(int argc, char *argv[])
 			errx(1, "\"%s\": %s", argv[0], strerror(error));
 	} else {
 		for (bus = 0; bus < 256; bus++) {
-			for (dev = 0; dev <= 32; dev++) {
+			for (dev = 0; dev < 32; dev++) {
 				nfuncs = pci_nfuncs(bus, dev);
-				for (func = 0; func <= nfuncs; func++) {
+				for (func = 0; func < nfuncs; func++) {
 					probe(bus, dev, func);
 				}
 			}
@@ -128,13 +128,13 @@ str2busdevfunc(const char *string, int *bus, int *dev, int *func)
 		return("function not specified");
 	*f++ = '\0';
 
-	*bus = strtonum(b, 0, 256, &errstr);
+	*bus = strtonum(b, 0, 255, &errstr);
 	if (errstr != NULL)
 		return (errstr);
-	*dev = strtonum(d, 0, 32, &errstr);
+	*dev = strtonum(d, 0, 31, &errstr);
 	if (errstr != NULL)
 		return (errstr);
-	*func = strtonum(f, 0, 8, &errstr);
+	*func = strtonum(f, 0, 7, &errstr);
 	if (errstr != NULL)
 		return (errstr);
 
