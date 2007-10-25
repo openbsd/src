@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.109 2007/10/24 20:15:29 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.110 2007/10/25 03:36:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -46,8 +46,7 @@ struct iicprobelist {
  * place those at other addresses, so this isn't a big loss.
  */
 struct iicprobelist probe_addrs_sensor[] = {
-	{ 0x18, 0x18 },
-	{ 0x1a, 0x1a },
+	{ 0x18, 0x1f },
 	{ 0x20, 0x2f },
 	{ 0x48, 0x4e },
 	{ 0, 0 }
