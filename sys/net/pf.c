@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.559 2007/09/18 18:45:59 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.560 2007/10/25 21:36:21 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3113,7 +3113,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    pd->lookup.gid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->prob && r->prob <= arc4random())
+		else if (r->prob && r->prob <=
+		    (arc4random() % (UINT_MAX - 1) + 1))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, &tag))
 			r = TAILQ_NEXT(r, entries);
@@ -3563,7 +3564,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		    r->flagset || r->type || r->code ||
 		    r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->prob && r->prob <= arc4random())
+		else if (r->prob && r->prob <=
+		    (arc4random() % (UINT_MAX - 1) + 1))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, &tag))
 			r = TAILQ_NEXT(r, entries);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.532 2007/10/22 16:35:33 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.533 2007/10/25 21:36:21 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -341,6 +341,7 @@ struct loadanchors {
 typedef struct {
 	union {
 		int64_t			 number;
+		double			 probability;
 		int			 i;
 		char			*string;
 		u_int			 rtableid;
@@ -437,6 +438,7 @@ typedef struct {
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
+%type	<v.probability>		probability
 %type	<v.i>			no dir af fragcache optimizer
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action nataction natpasslog scrubaction
@@ -2190,27 +2192,17 @@ filter_opt	: USER uids {
 			filter_opts.match_tag = $3;
 			filter_opts.match_tag_not = $1;
 		}
-		| PROBABILITY STRING			{
-			char	*e;
-			double	 p = strtod($2, &e);
+		| PROBABILITY probability		{
+			double	p;
 
-			if (*e == '%') {
-				p *= 0.01;
-				e++;
-			}
-			if (*e) {
-				yyerror("invalid probability: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			p = floor(p * (UINT_MAX+1.0) + 0.5);
-			if (p < 1.0 || p >= (UINT_MAX+1.0)) {
-				yyerror("invalid probability: %s", $2);
-				free($2);
+			p = floor($2 * UINT_MAX + 0.5);
+			if (p < 0.0 || p > UINT_MAX) {
+				yyerror("invalid probability: %lf", p);
 				YYERROR;
 			}
 			filter_opts.prob = (u_int32_t)p;
-			free($2);
+			if (filter_opts.prob == 0)
+				filter_opts.prob = 1;
 		}
 		| RTABLE NUMBER				{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
@@ -2220,6 +2212,28 @@ filter_opt	: USER uids {
 			filter_opts.rtableid = $2;
 		}
 		;
+
+probability	: STRING				{
+			char	*e;
+			double	 p = strtod($1, &e);
+
+			if (*e == '%') {
+				p *= 0.01;
+				e++;
+			}
+			if (*e) {
+				yyerror("invalid probability: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+			$$ = p;
+		}
+		| NUMBER				{
+			$$ = (double)$1;
+		}
+		;
+
 
 action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
