@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.17 2007/10/24 15:41:55 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.18 2007/10/25 08:24:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -119,6 +119,8 @@ int	mbg_probe(struct device *, void *, void *);
 void	mbg_attach(struct device *, struct device *, void *);
 void	mbg_task(void *);
 void	mbg_task_hr(void *);
+void	mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
+	    int64_t timedelta, u_int8_t rsignal, u_int8_t status);
 int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
@@ -232,6 +234,11 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
+/*
+ * mbg_task() reads a timestamp from cards that to not provide a high
+ * resolution timestamp.  The precsion is limited to 1/100 sec. in this
+ * case.
+ */
 void
 mbg_task(void *arg)
 {
@@ -239,8 +246,8 @@ mbg_task(void *arg)
 	struct mbg_time tframe;
 	struct clock_ymdhms ymdhms;
 	struct timespec tstamp;
+	int64_t timedelta;
 	time_t trecv;
-	int signal;
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
@@ -260,41 +267,17 @@ mbg_task(void *arg)
 	ymdhms.dt_sec = tframe.sec;
 	trecv = clock_ymdhms_to_secs(&ymdhms) - tframe.utc_off * 3600;
 
-	sc->sc_timedelta.value = (int64_t)((tstamp.tv_sec - trecv) * 100
+	timedelta = (int64_t)((tstamp.tv_sec - trecv) * 100
 	    - tframe.hundreds) * 10000000LL + tstamp.tv_nsec;
-	sc->sc_timedelta.status = SENSOR_S_OK;
-	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
-	sc->sc_timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
 
-	signal = tframe.signal - MBG_SIG_BIAS;
-	if (signal < 0)
-		signal = 0;
-	else if (signal > MBG_SIG_MAX)
-		signal = MBG_SIG_MAX;
-
-	sc->sc_signal.value = signal * 100000 / MBG_SIG_MAX;
-	sc->sc_signal.status = SENSOR_S_OK;
-	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
-	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
-
-	tframe.status &= MBG_STATMASK;
-	if (tframe.status != sc->sc_status) {
-		if (tframe.status & MBG_SYNC)
-			log(LOG_INFO, "%s: clock is synchronized",
-			    sc->sc_dev.dv_xname);
-		if (tframe.status & MBG_FREERUN)
-			log(LOG_INFO, "%s: clock is free running on xtal",
-			    sc->sc_dev.dv_xname);
-		if (tframe.status & MBG_LEAP)
-			log(LOG_INFO, "%s: leap second announced",
-			    sc->sc_dev.dv_xname);
-		if (tframe.status & MBG_IFTM)
-			log(LOG_INFO, "%s: time set from host",
-			    sc->sc_dev.dv_xname);
-		sc->sc_status = tframe.status;
-	}
+	mbg_update_sensor(sc, &tstamp, timedelta, tframe.signal,
+	    tframe.status);
 }
 
+/*
+ * mbg_task_hr() reads a timestamp from cars that do provide  high
+ * resolution timestamp.
+ */
 void
 mbg_task_hr(void *arg)
 {
@@ -302,7 +285,6 @@ mbg_task_hr(void *arg)
 	struct mbg_time_hr tframe;
 	struct timespec tstamp;
 	int64_t tlocal, trecv;
-	int signal;
 
 	if (sc->sc_read(sc, MBG_GET_TIME_HR, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
@@ -319,13 +301,23 @@ mbg_task_hr(void *arg)
 	tlocal = tstamp.tv_sec * NSECPERSEC + tstamp.tv_nsec;
 	trecv = tframe.sec * NSECPERSEC + (tframe.frac * NSECPERSEC >> 32);
 
-	sc->sc_timedelta.value = tlocal - trecv;
+	mbg_update_sensor(sc, &tstamp, tlocal - trecv, tframe.signal,
+	    tframe.status);
+}
 
+/* update the sensor value, common to all cards */
+void
+mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
+    int64_t timedelta, u_int8_t rsignal, u_int8_t status)
+{
+	int signal;
+
+	sc->sc_timedelta.value = timedelta;
 	sc->sc_timedelta.status = SENSOR_S_OK;
-	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
-	sc->sc_timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
+	sc->sc_timedelta.tv.tv_sec = tstamp->tv_sec;
+	sc->sc_timedelta.tv.tv_usec = tstamp->tv_nsec / 1000;
 
-	signal = tframe.signal - MBG_SIG_BIAS;
+	signal = rsignal - MBG_SIG_BIAS;
 	if (signal < 0)
 		signal = 0;
 	else if (signal > MBG_SIG_MAX)
@@ -336,21 +328,21 @@ mbg_task_hr(void *arg)
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
-	tframe.status &= MBG_STATMASK;
-	if (tframe.status != sc->sc_status) {
-		if (tframe.status & MBG_SYNC)
+	status &= MBG_STATMASK;
+	if (status != sc->sc_status) {
+		if (status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
 			    sc->sc_dev.dv_xname);
-		else if (tframe.status & MBG_FREERUN)
+		if (status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
 			    sc->sc_dev.dv_xname);
-		if (tframe.status & MBG_LEAP)
+		if (status & MBG_LEAP)
 			log(LOG_INFO, "%s: leap second announced",
 			    sc->sc_dev.dv_xname);
-		if (tframe.status & MBG_IFTM)
+		if (status & MBG_IFTM)
 			log(LOG_INFO, "%s: time set from host",
 			    sc->sc_dev.dv_xname);
-		sc->sc_status = tframe.status;
+		sc->sc_status = status;
 	}
 }
 
