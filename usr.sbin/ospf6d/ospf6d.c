@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.6 2007/10/20 13:26:50 pyr Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.7 2007/10/25 12:05:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -118,7 +118,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-cdnv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-cdnv] [-D macro=value] [-f file]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -138,13 +139,18 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "cdf:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
 		switch (ch) {
 		case 'c':
 			opts |= OSPFD_OPT_FORCE_DEMOTE;
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'D':
+			if (cmdline_symset(optarg) < 0)
+				log_warnx("could not parse macro definition %s",
+				    optarg);
 			break;
 		case 'f':
 			conffile = optarg;
