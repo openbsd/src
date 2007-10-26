@@ -1,4 +1,4 @@
-/*	$OpenBSD: pssreg.h,v 1.2 1997/11/07 08:07:09 niklas Exp $	*/
+/*	$OpenBSD: pssreg.h,v 1.3 2007/10/26 15:00:49 martin Exp $	*/
 /*	$NetBSD: pssreg.h,v 1.2 1995/05/08 22:02:09 brezak Exp $	*/
 
 /*
@@ -131,7 +131,7 @@
 #define CD_POL_MASK	0xFFBF
 #define CD_POL_BIT	0x0040
 
-/* Phillips amplifier controls: only via DSP */
+/* Philips amplifier controls: only via DSP */
 /* DSP commands */
 #define SET_MASTER_COMMAND	0x0010
 #define MASTER_VOLUME_LEFT	0x0000
