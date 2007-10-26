@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.4 2006/08/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.5 2007/10/26 18:18:13 moritz Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "addrtoname.h"
+#include "extract.h"
 #include "interface.h"
 #include "afnum.h"
 
@@ -202,7 +203,7 @@ lldp_print(const u_char *p, u_int len)
 	for (n = 0; n < len;) {
 		TCHECK2(*ptr, sizeof(tlv));
 
-		tlv = ntohs(*(u_int16_t *)ptr);
+		tlv = EXTRACT_16BITS(ptr);
 		type = (tlv & 0xfe00) >> 9;
 		vlen = tlv & 0x1ff;
 		n += vlen;
@@ -228,7 +229,7 @@ lldp_print(const u_char *p, u_int len)
 		case LLDP_TLV_TTL:
 			printf(", TTL: ");
 			TCHECK2(*ptr, 2);
-			printf("%ds", ntohs(*(u_int16_t *)ptr));
+			printf("%ds", EXTRACT_16BITS(ptr));
 			break;
 
 		case LLDP_TLV_PORT_DESCR:
@@ -249,10 +250,10 @@ lldp_print(const u_char *p, u_int len)
 		case LLDP_TLV_SYSTEM_CAP:
 			printf(", CAP:");
 			TCHECK2(*ptr, 4);
-			printb(" available", ntohs(*(u_int16_t *)ptr),
+			printb(" available", EXTRACT_16BITS(ptr),
 			    LLDP_CAP_BITS);
 			_ptrinc(sizeof(u_int16_t));
-			printb(" enabled", ntohs(*(u_int16_t *)ptr),
+			printb(" enabled", EXTRACT_16BITS(ptr),
 			    LLDP_CAP_BITS);
 			break;
 
