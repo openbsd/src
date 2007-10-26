@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.105 2007/09/13 22:30:51 cloder Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.106 2007/10/26 14:15:25 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.105 2007/09/13 22:30:51 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.106 2007/10/26 14:15:25 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -416,9 +416,9 @@ dovmstat(u_int interval, int reps)
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
 #define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
-		(void)printf("%7u%7u ",
+		(void)printf("%7u %7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
-		(void)printf("%5u ", rate(uvmexp.faults - ouvmexp.faults));
+		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
 		(void)printf("%3u ", rate(uvmexp.pageins - ouvmexp.pageins));
 		(void)printf("%3u %3u ",
@@ -450,16 +450,16 @@ printhdr(void)
 {
 	int i;
 
-	(void)printf(" procs   memory        page%*s", 20, "");
+	(void)printf(" procs  memory         page%*s", 20, "");
 	if (ndrives > 0)
-		(void)printf("%s %*straps         cpu\n",
+		(void)printf("%s %*straps          cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
-		   ((ndrives > 1) ? ndrives * 4 - 4 : 0), "");
+		   ((ndrives > 1) ? ndrives * 4 - 5 : 0), "");
 	else
-		(void)printf("%*s  traps          cpu\n",
+		(void)printf("%*s  traps           cpu\n",
 		   ndrives * 3, "");
 
-	(void)printf(" r b w    avm    fre   flt  re  pi  po  fr  sr ");
+	(void)printf(" r b w    avm     fre  flt  re  pi  po  fr  sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
 			(void)printf("%c%c%c ", dr_name[i][0],
