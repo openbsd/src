@@ -1,9 +1,8 @@
-#	$OpenBSD: test-exec.sh,v 1.29 2007/10/24 03:32:35 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.30 2007/10/26 05:30:01 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
 #SUDO=sudo
-ECHOE="echo -E"
 
 if [ ! -z "$TEST_SSH_PORT" ]; then
 	PORT="$TEST_SSH_PORT"
@@ -110,32 +109,32 @@ cleanup ()
 
 trace ()
 {
-	$ECHOE "trace: $@" >>$TEST_SSH_LOGFILE
+	echo "trace: $@" >>$TEST_SSH_LOGFILE
 	if [ "X$TEST_SSH_TRACE" = "Xyes" ]; then
-		$ECHOE "$@"
+		echo "$@"
 	fi
 }
 
 verbose ()
 {
-	$ECHOE "verbose: $@" >>$TEST_SSH_LOGFILE
+	echo "verbose: $@" >>$TEST_SSH_LOGFILE
 	if [ "X$TEST_SSH_QUIET" != "Xyes" ]; then
-		$ECHOE "$@"
+		echo "$@"
 	fi
 }
 
 
 fail ()
 {
-	$ECHOE "FAIL: $@" >>$TEST_SSH_LOGFILE
+	echo "FAIL: $@" >>$TEST_SSH_LOGFILE
 	RESULT=1
-	$ECHOE "$@"
+	echo "$@"
 }
 
 fatal ()
 {
-	$ECHOE "FATAL: $@" >>$TEST_SSH_LOGFILE
-	$ECHOE -n "FATAL: "
+	echo "FATAL: $@" >>$TEST_SSH_LOGFILE
+	echo -n "FATAL: "
 	fail "$@"
 	cleanup
 	exit $RESULT
