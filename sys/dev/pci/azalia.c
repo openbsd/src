@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.36 2007/10/14 18:21:54 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.37 2007/10/26 02:17:23 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2065,7 +2065,6 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 		if (r->encoding == AUDIO_ENCODING_ULAW) {	 /*XXX*/
 			r->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			r->precision = 16;
-			r->channels = 2;
 			r->sample_rate = codec->rate;
 		}
 		for (i = 0; i < codec->nformats; i++) {
@@ -2077,6 +2076,21 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 				continue;
 			break;
 		}
+		/* find a 2 channel format and emulate mono */
+		if (i == codec->nformats && r->channels == 1) {
+			r->factor = 2;
+			rswcode = linear16_decimator;
+			for (i = 0; i < codec->nformats; i++) {
+				if (r->encoding != codec->formats[i].encoding)
+					continue;
+				if (r->precision != codec->formats[i].precision)
+					continue;
+				if (codec->formats[i].channels != 2)
+					continue;
+				break;
+			}
+		}
+
 		if (i == codec->nformats) {
 			DPRINTF(("%s: can't find record format %u/%u/%u\n",
 			    __func__, r->encoding, r->precision, r->channels));
@@ -2098,7 +2112,6 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 		if (p->encoding == AUDIO_ENCODING_ULAW) {	 /*XXX*/
 			p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			p->precision = 16;
-			p->channels = 2;
 			p->sample_rate = codec->rate;
 		}
 		for (i = 0; i < codec->nformats; i++) {
@@ -2109,6 +2122,20 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			if (p->channels != codec->formats[i].channels)
 				continue;
 			break;
+		}
+		/* find a 2 channel format and emulate mono */
+		if (i == codec->nformats && p->channels == 1) {
+			p->factor = 2;
+			pswcode = noswap_bytes_mts;
+			for (i = 0; i < codec->nformats; i++) {
+				if (p->encoding != codec->formats[i].encoding)
+					continue;
+				if (p->precision != codec->formats[i].precision)
+					continue;
+				if (codec->formats[i].channels != 2)
+					continue;
+				break;
+			}
 		}
 		if (i == codec->nformats) {
 			DPRINTF(("%s: can't find playback format %u/%u/%u\n",
@@ -2328,7 +2355,13 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 		return EINVAL;
 	}
 #endif
-	ret |= param->channels - 1;
+	/* allow any number of channels in a native format */
+	if (param->sw_code == NULL)
+		ret |= param->channels - 1;
+
+	/* emulated mono uses 2 channel formats */
+	else
+		ret |= 1;
 
 	switch (param->precision) {
 	case 8:
