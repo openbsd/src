@@ -1,6 +1,6 @@
 #ifndef	_M88K_LOCK_H_
 #define	_M88K_LOCK_H_
-/*	$OpenBSD: lock.h,v 1.3 2007/05/19 16:58:43 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2007/10/27 20:35:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -44,7 +44,13 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *l)
 static __inline__ void
 __cpu_simple_lock(__cpu_simple_lock_t *l)
 {
-	__cpu_simple_lock_t old;
+	/*
+	 * The local __cpu_simple_lock_t is not declared volatile, so that
+	 * stores to it can be optimized away, since we will use a register
+	 * and only spin on it. xmem will do the right thing regardless of
+	 * the volatile qualifier.
+	 */
+	u_int old;
 
 	do {
 		old = __SIMPLELOCK_LOCKED;
@@ -56,7 +62,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *l)
 static __inline__ int
 __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 {
-	__cpu_simple_lock_t old = __SIMPLELOCK_LOCKED;
+	/*
+	 * The local __cpu_simple_lock_t is not declared volatile, so that
+	 * there are not pipeline synchronization around stores to it.
+	 * xmem will do the right thing regardless of the volatile qualifier.
+	 */
+	u_int old = __SIMPLELOCK_LOCKED;
 
 	__asm__ __volatile__
 	    ("xmem %0, %1, r0" : "+r" (old) : "r" (l));
