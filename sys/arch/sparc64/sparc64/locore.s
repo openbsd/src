@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.95 2007/10/27 17:17:23 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.96 2007/10/27 20:04:28 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3369,10 +3369,13 @@ ENTRY(ipi_save_fpstate)
 	membar	#Sync
 	sethi	%hi(FPPROC), %o0
 	ldx	[%o0 + %lo(FPPROC)], %o0
+	brz,pn	%o0, 1f
+	 nop
 	call	savefpstate
 	 ldx	[%o0 + P_FPSTATE], %o0
 	sethi	%hi(FPPROC), %o0
 	stx	%g0, [%o0 + %lo(FPPROC)]	! fpproc = NULL
+1:
 	mov	CTX_PRIMARY, %o2
 	stxa	%g7, [%o2] ASI_DMMU
 	membar	#Sync
