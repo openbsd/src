@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.151 2007/09/24 11:17:20 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.152 2007/10/27 23:08:35 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -133,8 +133,7 @@ struct carp_softc {
 	int sc_naddrs;
 	int sc_naddrs6;
 	int sc_advbase;		/* seconds */
-	int sc_init_counter;
-	u_int64_t sc_counter;
+	u_int64_t sc_replay_cookie;
 
 	/* authentication */
 #define CARP_HMAC_PAD	64
@@ -333,7 +332,7 @@ carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
 	/* fetch first half of inner hash */
 	bcopy(&sc->sc_sha1[ctx], &sha1ctx, sizeof(sha1ctx));
 
-	SHA1Update(&sha1ctx, (void *)counter, sizeof(sc->sc_counter));
+	SHA1Update(&sha1ctx, (void *)counter, sizeof(sc->sc_replay_cookie));
 	SHA1Final(md, &sha1ctx);
 
 	/* outer hash */
@@ -637,7 +636,6 @@ void
 carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 {
 	struct carp_softc *sc;
-	u_int64_t tmp_counter;
 	struct timeval sc_tv, ch_tv;
 
 	TAILQ_FOREACH(sc, &((struct carp_if *)
@@ -650,48 +648,6 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		carpstats.carps_badvhid++;
 		m_freem(m);
 		return;
-	}
-
-	/*
-	 * Check if our own advertisement was duplicated
-	 * from a non simplex interface.
-	 * XXX If there is no address on our physical interface
-	 * there is no way to distinguish our ads from the ones
-	 * another carp host might have sent us.
-	 */
-	if ((sc->sc_carpdev->if_flags & IFF_SIMPLEX) == 0) {
-		struct sockaddr sa;
-		struct ifaddr *ifa;
-
-		bzero(&sa, sizeof(sa));
-		sa.sa_family = af;
-		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
-
-		if (ifa && af == AF_INET) {
-			struct ip *ip = mtod(m, struct ip *);
-			if (ip->ip_src.s_addr ==
-			    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
-				m_freem(m);
-				return;
-			}
-		}
-#ifdef INET6
-		if (ifa && af == AF_INET6) {
-			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-			struct in6_addr in6_src, in6_found;
-
-			in6_src = ip6->ip6_src;
-			in6_found = ifatoia6(ifa)->ia_addr.sin6_addr;
-			if (IN6_IS_SCOPE_EMBED(&in6_src))
-				in6_src.s6_addr16[1] = 0;
-			if (IN6_IS_SCOPE_EMBED(&in6_found))
-				in6_found.s6_addr16[1] = 0;
-			if (IN6_ARE_ADDR_EQUAL(&in6_src, &in6_found)) {
-				m_freem(m);
-				return;
-			}
-		}
-#endif /* INET6 */
 	}
 
 	getmicrotime(&sc->sc_if.if_lastchange);
@@ -717,15 +673,17 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		return;
 	}
 
-	tmp_counter = ntohl(ch->carp_counter[0]);
-	tmp_counter = tmp_counter<<32;
-	tmp_counter += ntohl(ch->carp_counter[1]);
-
-	/* XXX Replay protection goes here */
-
-	sc->sc_init_counter = 0;
-	sc->sc_counter = tmp_counter;
-
+	if (!bcmp(&sc->sc_replay_cookie, ch->carp_counter,
+	    sizeof(ch->carp_counter))) {
+		/* Do not log duplicates from non simplex interfaces */
+		if (sc->sc_carpdev->if_flags & IFF_SIMPLEX) {
+			carpstats.carps_badauth++;
+			sc->sc_if.if_ierrors++;
+			CARP_LOG(sc, ("replay or network loop detected"));
+		}
+		m_freem(m);
+		return;
+	}
 
 	sc_tv.tv_sec = sc->sc_advbase;
 	if (carp_group_demote_count(sc) && sc->sc_advskew <  240)
@@ -841,7 +799,6 @@ carp_clone_create(ifc, unit)
 	sc->sc_advbase = CARP_DFLTINTV;
 	sc->sc_vhid = -1;	/* required setting */
 	sc->sc_advskew = 0;
-	sc->sc_init_counter = 1;
 	sc->sc_naddrs = sc->sc_naddrs6 = 0;
 #ifdef INET6
 	sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
@@ -950,16 +907,14 @@ carp_ifdetach(struct ifnet *ifp)
 int
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 {
-	if (sc->sc_init_counter) {
-		/* this could also be seconds since unix epoch */
-		sc->sc_counter = arc4random();
-		sc->sc_counter = sc->sc_counter << 32;
-		sc->sc_counter += arc4random();
-	} else
-		sc->sc_counter++;
+	if (!sc->sc_replay_cookie) {
+		sc->sc_replay_cookie = arc4random();
+		sc->sc_replay_cookie = sc->sc_replay_cookie << 32;
+		sc->sc_replay_cookie += arc4random();
+	}
 
-	ch->carp_counter[0] = htonl((sc->sc_counter>>32)&0xffffffff);
-	ch->carp_counter[1] = htonl(sc->sc_counter&0xffffffff);
+	bcopy(&sc->sc_replay_cookie, ch->carp_counter,
+	    sizeof(ch->carp_counter));
 
 	/*
 	 * For the time being, do not include the IPv6 linklayer addresses
