@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.1 2007/10/22 13:39:37 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.2 2007/10/27 14:14:14 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -90,7 +90,11 @@
 /* Default char is signed */
 #undef	CHAR_UNSIGNED
 #define	BOOL_TYPE	CHAR	/* what used to store _Bool */
+#if os_mirbsd
+#define WCHAR_TYPE	USHORT	/* ISO 10646 16-bit Unicode */
+#else
 #define	WCHAR_TYPE	INT	/* what used to store wchar_t */
+#endif
 
 /*
  * Use large-enough types.
