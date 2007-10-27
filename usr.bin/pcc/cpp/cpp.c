@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.5 2007/10/22 17:49:01 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.6 2007/10/27 12:50:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	struct symtab *nl;
 	register int ch;
 
-	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tvV")) != -1)
+	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tvV?")) != -1)
 		switch (ch) {
 		case 'C': /* Do not discard comments */
 			Cflag++;
@@ -431,7 +431,7 @@ line()
 	yytext[strlen(yytext)-1] = 0;
 	if (strlcpy((char *)lbuf, &yytext[1], SBSIZE) >= SBSIZE)
 		error("line exceeded buffer size");
-		
+
 	ifiles->fname = lbuf;
 	if (yylex() != '\n')
 		goto bad;
@@ -752,7 +752,7 @@ xerror(usch *s)
 	flbuf();
 	savch(0);
 	if (ifiles != NULL) {
-		t = sheap("%s:%d: ", ifiles->fname, ifiles->lineno);
+		t = sheap("%s:%d: error: ", ifiles->fname, ifiles->lineno);
 		write (2, t, strlen((char *)t));
 	}
 	write (2, s, strlen((char *)s));
