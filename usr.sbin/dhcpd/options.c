@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.17 2007/10/21 13:12:31 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.18 2007/10/27 14:47:38 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -49,6 +49,8 @@ int bad_options_max = 5;
 
 void	parse_options(struct packet *);
 void	parse_option_buffer(struct packet *, unsigned char *, int);
+int	store_option_fragment(unsigned char *, int, unsigned char,
+	    int, unsigned char *);
 int	store_options(unsigned char *, int, struct tree_cache **,
 	    unsigned char *, int, int, int, int);
 
@@ -305,7 +307,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 		memcpy(&outpacket->options[mainbufix], buffer, option_size);
 		mainbufix += option_size;
 		if (mainbufix < main_buffer_size)
-			outpacket->options[mainbufix++] = DHO_END;
+			outpacket->options[mainbufix++] = (char)DHO_END;
 		return (DHCP_FIXED_NON_UDP + mainbufix);
 	}
 
@@ -347,6 +349,32 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 }
 
 /*
+ * Store a <code><length><data> fragment in buffer. Return the number of
+ * characters used. Return 0 if no data could be stored.
+ */
+int
+store_option_fragment(unsigned char *buffer, int buffer_size,
+    unsigned char code, int length, unsigned char *data)
+{
+	buffer_size -= 2; /* Space for option code and option length. */
+
+	if (buffer_size < 1)
+		return (0);
+
+	if (buffer_size > 255)
+		buffer_size = 255;
+	if (length > buffer_size)
+		length = buffer_size;
+
+	buffer[0] = code;
+	buffer[1] = length;
+
+	memcpy(&buffer[2], data, length);
+
+	return (length + 2);
+}
+
+/*
  * Store all the requested options into the requested buffer.
  */
 int
@@ -354,108 +382,72 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
     unsigned char *priority_list, int priority_len, int first_cutoff,
     int second_cutoff, int terminate)
 {
-	int bufix = 0;
 	int option_stored[256];
-	int i;
-	int ix;
-	int tto;
+	int code, i, incr, ix, length, optstart;
+	int cutoff = first_cutoff;
+	int bufix = 0;
 
 	/* Zero out the stored-lengths array. */
 	memset(option_stored, 0, sizeof(option_stored));
 
 	/*
-	 * Copy out the options in the order that they appear in the
-	 * priority list...
+	 * Store options in the order they appear in the priority list.
 	 */
 	for (i = 0; i < priority_len; i++) {
 		/* Code for next option to try to store. */
-		int code = priority_list[i];
-		int optstart;
+		code = priority_list[i];
 
-		/*
-		 * Number of bytes left to store (some may already have
-		 * been stored by a previous pass).
-		 */
-		int length;
-
-		/* If no data is available for this option, skip it. */
-		if (!options[code]) {
+		if (!options[code] || option_stored[code] ||
+		    !tree_evaluate(options[code]))
 			continue;
-		}
 
-		/*
-		 * The client could ask for things that are mandatory,
-		 * in which case we should avoid storing them twice...
-		 */
-		if (option_stored[code])
-			continue;
-		option_stored[code] = 1;
-
-		/* Find the value of the option... */
-		if (!tree_evaluate(options[code]))
-			continue;
+		option_stored[code] = 1; /* XXX Even if it's not stored? */
 
 		/* We should now have a constant length for the option. */
 		length = options[code]->len;
 
-		/* Do we add a NUL? */
-		if (terminate && dhcp_options[code].format[0] == 't') {
-			length++;
-			tto = 1;
-		} else
-			tto = 0;
-
 		/* Try to store the option. */
-
-		/*
-		 * If the option's length is more than 255, we must
-		 * store it in multiple hunks.   Store 255-byte hunks
-		 * first.  However, in any case, if the option data will
-		 * cross a buffer boundary, split it across that
-		 * boundary.
-		 */
-		ix = 0;
-
 		optstart = bufix;
+		ix = 0;
 		while (length) {
-			unsigned char incr = length > 255 ? 255 : length;
+			incr = store_option_fragment(&buffer[bufix],
+			    cutoff - bufix, code, length,
+			    options[code]->value + ix);
 
-			/*
-			 * If this hunk of the buffer will cross a
-			 * boundary, only go up to the boundary in this
-			 * pass.
-			 */
-			if (bufix < first_cutoff &&
-			    bufix + incr > first_cutoff)
-				incr = first_cutoff - bufix;
-			else if (bufix < second_cutoff &&
-			    bufix + incr > second_cutoff)
-				incr = second_cutoff - bufix;
-
-			/*
-			 * If this option is going to overflow the
-			 * buffer, skip it.
-			 */
-			if (bufix + 2 + incr > buflen) {
-				bufix = optstart;
-				break;
+			if (incr > 0) {
+				bufix += incr;
+				length -= incr - 2;
+				ix += incr - 2;
+				continue;
 			}
 
-			/* Everything looks good - copy it in! */
-			buffer[bufix] = code;
-			buffer[bufix + 1] = incr;
-			if (tto && incr == length) {
-				memcpy(buffer + bufix + 2,
-				    options[code]->value + ix, incr - 1);
-				buffer[bufix + 2 + incr - 1] = 0;
-			} else
-				memcpy(buffer + bufix + 2,
-				    options[code]->value + ix, incr);
-			length -= incr;
-			ix += incr;
-			bufix += 2 + incr;
+			/*
+			 * No fragment could be stored in the space before the
+			 * cutoff. Fill the unusable space with DHO_PAD and
+			 * move cutoff for another attempt.
+			 */
+			memset(&buffer[bufix], DHO_PAD, cutoff - bufix);
+			bufix = cutoff;
+			if (cutoff < second_cutoff)
+				cutoff = second_cutoff;
+			else if (cutoff < buflen)
+				cutoff = buflen;
+			else
+				break;
+		}
+
+		if (length > 0) {
+zapfrags:
+			memset(&buffer[optstart], DHO_PAD, buflen - optstart);
+			bufix = optstart;
+		} else if (terminate && dhcp_options[code].format[0] == 't') {
+			if (bufix < cutoff)
+				buffer[bufix++] = '\0';
+			else
+				goto zapfrags;
 		}
 	}
+
 	return (bufix);
 }
 
