@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.85 2007/10/25 18:13:42 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.86 2007/10/27 08:52:47 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2169,7 +2169,7 @@ audio_rint(void *v)
 		cb->pdrops += blksize;
 		cb->outp += blksize;
 		cb->used -= blksize;
-	} else if (cb->used + blksize >= cb->usedhigh && !cb->copying) {
+	} else if (cb->used >= cb->usedhigh && !cb->copying) {
 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
 		cb->drops += blksize;
 		cb->outp += blksize;
