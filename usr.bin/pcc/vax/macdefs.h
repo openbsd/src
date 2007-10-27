@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -38,33 +38,66 @@
 # define  ARGINIT 32 
 # define  AUTOINIT 0 
 # define  SZCHAR 8
+# define  SZBOOL 8
 # define  SZINT 32
 # define  SZFLOAT 32
 # define  SZDOUBLE 64
+# define  SZLDOUBLE 64	/* XXX use longer? */
 # define  SZLONG 32
+# define  SZLONGLONG 64
 # define  SZSHORT 16
-# define SZPOINT 32
+# define SZPOINT(t) 32
 # define ALCHAR 8
+# define ALBOOL 8
 # define ALINT 32
 # define ALFLOAT 32
 # define ALDOUBLE 32
+# define ALLDOUBLE 32
 # define ALLONG 32
+# define ALLONGLONG 32
 # define ALSHORT 16
 # define ALPOINT 32
 # define ALSTRUCT 8
 # define  ALSTACK 32 
 
+/*
+ * Min/max values.
+ */
+#define MIN_CHAR        -128
+#define MAX_CHAR        127
+#define MAX_UCHAR       255
+#define MIN_SHORT       -32768
+#define MAX_SHORT       32767
+#define MAX_USHORT      65535
+#define MIN_INT         (-0x7fffffff-1)
+#define MAX_INT         0x7fffffff
+#define MAX_UNSIGNED    0xffffffff
+#define MIN_LONG        MIN_INT
+#define MAX_LONG        MAX_INT
+#define MAX_ULONG       MAX_UNSIGNED
+#define MIN_LONGLONG    0x8000000000000000LL
+#define MAX_LONGLONG    0x7fffffffffffffffLL
+#define MAX_ULONGLONG   0xffffffffffffffffULL
+
+/* Default char is signed */
+#undef  CHAR_UNSIGNED
+#define BOOL_TYPE       CHAR    /* what used to store _Bool */
+#define WCHAR_TYPE      INT     /* what used to store wchar_t */
+
 /*	size in which constants are converted */
 /*	should be long if feasable */
 
-# define CONSZ long
-# define CONFMT "%Ld"
+typedef long long CONSZ;
+typedef unsigned long long U_CONSZ;
+
+# define CONFMT "%lld"
+# define LABFMT ".L%d"
+# define STABLBL ".LL%d"
 
 /*	size in which offsets are kept
  *	should be large enough to cover address space in bits
  */
-
-# define OFFSZ long
+typedef long long OFFSZ;
 
 /* 	character set macro */
 
@@ -79,11 +112,6 @@
 
 # define MAXRVAR 11
 # define MINRVAR 6
-# define MAXREGS MAXRVAR
-
-	/* various standard pieces of code are used */
-# define STDPRTREE
-# define LABFMT "L%d"
 
 /* show stack grows negatively */
 #define BACKAUTO
@@ -130,6 +158,22 @@
 	/* floating registers */
 
 	/* there are no floating point registers on the VAX */
+	/* but there are concatenated regs */
+	/* we call them XR? */
+#define	XR0	16
+#define	XR1	17
+#define	XR2	18
+#define	XR3	19
+#define	XR4	20
+#define	XR5	21
+#define	XR6	22
+#define	XR7	23
+#define	XR8	24
+#define	XR9	25
+#define	XR10	26
+
+
+
 
 extern int fregs;
 extern int maxargs;
@@ -142,7 +186,7 @@ extern int maxargs;
 
 # define TMPREG FP
 
-# define R2REGS   /* permit double indexing */
+//# define R2REGS   /* permit double indexing */
 
 # define STOARG(p)     /* just evaluate the arguments, and be done with it... */
 # define STOFARG(p)
@@ -151,6 +195,68 @@ extern int maxargs;
 
 # define NESTCALL
 
-# define MYREADER(p) walkf(p, optim2)
-int optim2(void);
-# define special(a, b) 0
+# define MYREADER(p) myreader(p)
+
+/*
+ * Register allocator stuff.
+ * The register allocator sees this as 16 general regs (AREGs)
+ * and 11 64-bit concatenated regs. (BREGs)
+ */
+#define MAXREGS 033     /* 27 registers */
+
+#define RSTATUS \
+        SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,     \
+        SAREG|TEMPREG, SAREG|TEMPREG, SAREG|PERMREG, SAREG|PERMREG,	\
+        SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG,	\
+	0, 0, 0, 0, /* do not care about ap, fp, sp or pc */		\
+	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,		\
+	SBREG, SBREG, SBREG,
+
+#define ROVERLAP \
+	{ XR0, -1 },			\
+	{ XR0, XR1, -1 },		\
+	{ XR1, XR2, -1 },		\
+	{ XR2, XR3, -1 },		\
+	{ XR3, XR4, -1 },		\
+	{ XR4, XR5, -1 },		\
+	{ XR5, XR6, -1 },		\
+	{ XR6, XR7, -1 },		\
+	{ XR7, XR8, -1 },		\
+	{ XR8, XR9, -1 },		\
+	{ XR9, XR10, -1 },		\
+	{ XR10, -1 },			\
+	{ -1 },				\
+	{ -1 },				\
+	{ -1 },				\
+	{ -1 },				\
+	{ R0, R1, XR1, -1 },		\
+	{ R1, R2, XR0, XR2, -1 },	\
+	{ R2, R3, XR1, XR3, -1 },	\
+	{ R3, R4, XR2, XR4, -1 },	\
+	{ R4, R5, XR3, XR5, -1 },	\
+	{ R5, R6, XR4, XR6, -1 },	\
+	{ R6, R7, XR5, XR7, -1 },	\
+	{ R7, R8, XR6, XR8, -1 },	\
+	{ R8, R9, XR7, XR9, -1 },	\
+	{ R9, R10, XR8, XR10, -1 },	\
+	{ R10, R11, XR9, -1 },
+
+#define NUMCLASS        2       /* highest number of reg classes used */
+
+/* size, in registers, needed to hold thing of type t */
+#define	szty(t)	(((t) == DOUBLE || (t) == LDOUBLE || (t) == FLOAT || \
+	(t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1)
+#define FPREG	FP	/* frame pointer */
+
+#define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
+#define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
+#define ENCRA1(x)       ((x) << 6)      /* A1 */
+#define ENCRA2(x)       ((x) << 12)     /* A2 */
+#define ENCRA(x,y)      ((x) << (6+y*6))        /* encode regs in int */
+
+#define PCLASS(p)	(szty(p->n_type) == 2 ? SBREG : SAREG)
+#define RETREG(x)	(szty(x) == 2 ? XR0 : R0)
+#define GCLASS(x)	(x < XR0 ? CLASSA : CLASSB)
+int COLORMAP(int c, int *r);
+
+#define	SNCON		(MAXSPECIAL+1)	/* named constand */

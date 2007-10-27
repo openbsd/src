@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -33,10 +33,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-# include "mfile2"
+# include "pass2.h"
+
+int canaddr(NODE *);
 
 int maxargs = { -1 };
 
+#if 0
 stoasg( p, o ) register NODE *p; {
 	/* should the assignment op p be stored,
 	   given that it lies as the right operand of o
@@ -46,13 +49,16 @@ stoasg( p, o ) register NODE *p; {
 	if( o==UNARY MUL && p->left->op == REG && !isbreg(p->left->rval) ) SETSTO(p,INAREG);
  */
 	}
+#endif
 
+int
 deltest( p ) register NODE *p; {
 	/* should we delay the INCR or DECR operation p */
-	p = p->left;
-	return( p->op == REG || p->op == NAME || p->op == OREG );
+	p = p->n_left;
+	return( p->n_op == REG || p->n_op == NAME || p->n_op == OREG );
 	}
 
+#if 0
 autoincr( p ) NODE *p; {
 	register NODE *q = p->left, *r;
 
@@ -91,18 +97,22 @@ mkadrs(p) register NODE *p; {
 			}
 		}
 	}
+#endif
 
-notoff( t, r, off, cp) CONSZ off; char *cp; {
+int
+notoff(TWORD t, int r, CONSZ off, char *cp)
+{
 	/* is it legal to make an OREG or NAME entry which has an
-	/* offset of off, (from a register of r), if the
-	/* resulting thing had type t */
+	 * offset of off, (from a register of r), if the
+	 * resulting thing had type t */
 
-/*	if( r == R0 ) return( 1 );  /* NO */
+/*	if( r == R0 ) return( 1 );  / * NO */
 	return(0);  /* YES */
 	}
 
 # define max(x,y) ((x)<(y)?(y):(x))
 
+#if 0
 sucomp( p ) register NODE *p; {
 
 	/* set the su field in the node to the sethi-ullman
@@ -281,96 +291,108 @@ rallo( p, down ) NODE *p; {
 	if( ty == BITYPE ) rallo( p->right, down2 );
 
 	}
+#endif
 
-offstar( p ) register NODE *p; {
-	if( p->op == PLUS ) {
-		if( p->left->su == fregs ) {
-			order( p->left, INTAREG|INAREG );
+void
+offstar( p, s ) register NODE *p; {
+comperr("offstar");
+#if 0
+	if( p->n_op == PLUS ) {
+		if( p->n_left->n_su == fregs ) {
+			order( p->n_left, INAREG );
 			return;
-		} else if( p->right->su == fregs ) {
-			order( p->right, INTAREG|INAREG );
-			return;
-		}
-		if( p->left->op==LS && 
-		  (p->left->left->op!=REG || tlen(p->left->left)!=sizeof(int) ) ) {
-			order( p->left->left, INTAREG|INAREG );
+		} else if( p->n_right->n_su == fregs ) {
+			order( p->n_right, INAREG );
 			return;
 		}
-		if( p->right->op==LS &&
-		  (p->right->left->op!=REG || tlen(p->right->left)!=sizeof(int) ) ) {
-			order( p->right->left, INTAREG|INAREG );
+		if( p->n_left->n_op==LS && 
+		  (p->n_left->n_left->n_op!=REG || tlen(p->n_left->n_left)!=sizeof(int) ) ) {
+			order( p->n_left->n_left, INAREG );
 			return;
 		}
-		if( p->type == (PTR|CHAR) || p->type == (PTR|UCHAR) ) {
-			if( p->left->op!=REG || tlen(p->left)!=sizeof(int) ) {
-				order( p->left, INTAREG|INAREG );
+		if( p->n_right->n_op==LS &&
+		  (p->n_right->n_left->n_op!=REG || tlen(p->n_right->n_left)!=sizeof(int) ) ) {
+			order( p->n_right->n_left, INAREG );
+			return;
+		}
+		if( p->n_type == (PTR|CHAR) || p->n_type == (PTR|UCHAR) ) {
+			if( p->n_left->n_op!=REG || tlen(p->n_left)!=sizeof(int) ) {
+				order( p->n_left, INAREG );
 				return;
 			}
-			else if( p->right->op!=REG || tlen(p->right)!=sizeof(int) ) {
-				order(p->right, INTAREG|INAREG);
+			else if( p->n_right->n_op!=REG || tlen(p->n_right)!=sizeof(int) ) {
+				order(p->n_right, INAREG);
 				return;
 			}
 		}
 	}
-	if( p->op == PLUS || p->op == MINUS ){
-		if( p->right->op == ICON ){
-			p = p->left;
-			order( p , INTAREG|INAREG);
+	if( p->n_op == PLUS || p->n_op == MINUS ){
+		if( p->n_right->n_op == ICON ){
+			p = p->n_left;
+			order( p , INAREG);
 			return;
 			}
 		}
 
-	if( p->op == UNARY MUL && !canaddr(p) ) {
-		offstar( p->left );
+	if( p->n_op == UMUL && !canaddr(p) ) {
+		offstar( p->n_left, 0 );
 		return;
 	}
 
-	order( p, INTAREG|INAREG );
+	order( p, INAREG );
+#endif
 	}
 
+int
 setincr( p ) NODE *p; {
 	return( 0 );  /* for the moment, don't bother */
 	}
 
+int
 setbin( p ) register NODE *p; {
-	register ro, rt;
 
-	rt = p->right->type;
-	ro = p->right->op;
+#if 0
+	register int ro, rt;
 
-	if( canaddr( p->left ) && !canaddr( p->right ) ) { /* address rhs */
-		if( ro == UNARY MUL ) {
-			offstar( p->right->left );
+	rt = p->n_right->n_type;
+	ro = p->n_right->n_op;
+
+	if( canaddr( p->n_left ) && !canaddr( p->n_right ) ) { /* address rhs */
+		if( ro == UMUL ) {
+			offstar( p->n_right->n_left, 0 );
 			return(1);
 		} else {
-			order( p->right, INAREG|INTAREG|SOREG );
+			order( p->n_right, INAREG|SOREG );
 			return(1);
 		}
 	}
-	if( !istnode( p->left) ) { /* try putting LHS into a reg */
-/*		order( p->left, logop(p->op)?(INAREG|INBREG|INTAREG|INTBREG|SOREG):(INTAREG|INTBREG|SOREG) );*/
-		order( p->left, INAREG|INTAREG|INBREG|INTBREG|SOREG );
+	if( !istnode( p->n_left) ) { /* try putting LHS into a reg */
+/*		order( p->n_left, logop(p->n_op)?(INAREG|INBREG|INTAREG|INTBREG|SOREG):(INTAREG|INTBREG|SOREG) );*/
+		order( p->n_left, INAREG|INTAREG|INBREG|INTBREG|SOREG );
 		return(1);
 		}
 	else if( ro == UNARY MUL && rt != CHAR && rt != UCHAR ){
-		offstar( p->right->left );
+		offstar( p->n_right->n_left );
 		return(1);
 		}
 	else if( rt == CHAR || rt == UCHAR || rt == SHORT || rt == USHORT || (ro != REG &&
 			ro != NAME && ro != OREG && ro != ICON ) ){
-		order( p->right, INAREG|INBREG );
+		order( p->n_right, INAREG|INBREG );
 		return(1);
 		}
 /*
-	else if( logop(p->op) && rt==USHORT ){  /* must get rhs into register */
+	else if( logop(p->n_op) && rt==USHORT ){  / * must get rhs into register */
 /*
-		order( p->right, INAREG );
+		order( p->n_right, INAREG );
 		return( 1 );
 		}
  */
+#endif
 	return(0);
 	}
 
+#if 0
+int
 setstr( p ) register NODE *p; { /* structure assignment */
 	if( p->right->op != REG ){
 		order( p->right, INTAREG );
@@ -384,19 +406,23 @@ setstr( p ) register NODE *p; { /* structure assignment */
 		}
 	return( 0 );
 	}
+#endif
 
-setasg( p ) register NODE *p; {
+int
+setasg( p, s ) register NODE *p; {
+
+#if 0
 	/* setup for assignment operator */
 
-	if( !canaddr(p->right) ) {
-		if( p->right->op == UNARY MUL )
-			offstar(p->right->left);
+	if( !canaddr(p->n_right) ) {
+		if( p->n_right->n_op == UNARY MUL )
+			offstar(p->n_right->n_left);
 		else
-			order( p->right, INAREG|INBREG|SOREG );
+			order( p->n_right, INAREG|INBREG|SOREG );
 		return(1);
 		}
-	if( p->left->op == UNARY MUL ) {
-		offstar( p->left->left );
+	if( p->n_left->n_op == UMUL ) {
+		offstar( p->n_left->n_left );
 		return(1);
 		}
 	if( p->left->op == FLD && p->left->left->op == UNARY MUL ){
@@ -409,9 +435,20 @@ setasg( p ) register NODE *p; {
 		return(1);
 		}
 /* end of FLD patch */
+#endif
 	return(0);
 	}
 
+/* setup for unary operator */
+int
+setuni(NODE *p, int cookie)
+{
+	return 0;
+}
+
+
+#if 0
+int
 setasop( p ) register NODE *p; {
 	/* setup for =ops */
 	register rt, ro;
@@ -457,17 +494,15 @@ setasop( p ) register NODE *p; {
 		}
 	cerror( "illegal setasop" );
 	}
+#endif
 
-int crslab = 9999;  /* Honeywell */
+void
+deflab(int l)
+{
+	printf(LABFMT ":\n", l);
+}
 
-getlab(){
-	return( crslab-- );
-	}
-
-deflab( l ){
-	printf( "L%d:\n", l );
-	}
-
+#if 0
 genargs( p, ptemp ) register NODE *p, *ptemp; {
 	register NODE *pasg;
 	register align;
@@ -488,7 +523,7 @@ genargs( p, ptemp ) register NODE *p, *ptemp; {
 		size = p->stsize;
 		align = p->stalign;
 
- /*		ptemp->lval = (ptemp->lval/align)*align;  /* SETOFF for negative numbers */
+ /*		ptemp->lval = (ptemp->lval/align)*align;  / * SETOFF for negative numbers */
  		ptemp->lval = 0;	/* all moves to (sp) */
 
 		p->op = STASG;
@@ -531,3 +566,31 @@ argsize( p ) register NODE *p; {
 		return( t+4 );
 		}
 	}
+#endif
+
+/*
+ * Special handling of some instruction register allocation.
+ */
+struct rspecial *
+nspecial(struct optab *q)
+{
+	comperr("nspecial");
+	return NULL;
+}
+
+/*
+ * Set evaluation order of a binary node if it differs from default.
+ */
+int
+setorder(NODE *p)
+{
+	return 0; /* nothing differs on vax */
+}
+
+/*
+ * Do the actual conversion of offstar-found OREGs into real OREGs.
+ */
+void
+myormake(NODE *q)
+{
+}
