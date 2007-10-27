@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spdmem.4,v 1.1 2007/10/07 14:57:16 jsg Exp $
+.\"	$OpenBSD: spdmem.4,v 1.2 2007/10/27 04:16:18 jsg Exp $
 .\"
 .\" Copyright (c) 2007 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2007 $
+.Dd $Mdocdate: October 27 2007 $
 .Dt SPDMEM 4
 .Os
 .Sh NAME
@@ -22,6 +22,9 @@
 .Nd Serial Presence Detect memory
 .Sh SYNOPSIS
 .Cd "spdmem* at iic?"
+.Pp
+.Cd "# macppc"
+.Cd "spdmem* at mem?"
 .Sh DESCRIPTION
 The
 .Nm
