@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.9 2007/10/27 20:32:20 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.10 2007/10/27 20:36:17 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -212,7 +212,7 @@ invalidate_pte(pt_entry_t *pte)
 
 	oldpte = PG_NV;
 	__asm__ __volatile__
-	    ("xmem %0, %2, r0" : "=r"(oldpte) : "0"(oldpte), "r"(pte));
+	    ("xmem %0, %2, r0" : "+r"(oldpte), "+m"(*pte) : "r"(pte));
 	return oldpte;
 }
 
