@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.79 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.80 2007/10/27 22:12:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -626,7 +626,8 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
-			printf(", couldn't get ep %d\n", i);
+			printf("%s: couldn't get ep %d\n",
+			    sc->axe_dev.dv_xname, i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -643,6 +644,8 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	s = splnet();
 
+	printf("%s:", sc->axe_dev.dv_xname);
+
 	/* We need the PHYID for init dance in some cases */
 	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
 
@@ -651,12 +654,12 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->axe_flags & AX178) {
 		axe_ax88178_init(sc);
-		printf(", AX88178");
+		printf(" AX88178");
 	} else if (sc->axe_flags & AX772) {
 		axe_ax88772_init(sc);
-		printf(", AX88772");
+		printf(" AX88772");
 	} else
-		printf(", AX88172");
+		printf(" AX88172");
 
 	/*
 	 * Get station address.
