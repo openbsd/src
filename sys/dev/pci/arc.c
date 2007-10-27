@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.67 2007/10/22 09:58:05 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -221,6 +221,7 @@ struct arc_fw_bufhdr {
 #define ARC_FW_NOP		0x38	/* opcode only */
 
 #define ARC_FW_CMD_OK		0x41
+#define ARC_FW_CMD_PASS_REQD	0x4d
 
 struct arc_fw_comminfo {
 	u_int8_t		baud_rate;
@@ -1043,10 +1044,14 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 	if (error != 0)
 		return (error);
 
-	if (reply[0] != ARC_FW_CMD_OK)
+	switch (reply[0]) {
+	case ARC_FW_CMD_OK:
+		return (0);
+	case ARC_FW_CMD_PASS_REQD:
+		return (EPERM);
+	default:
 		return (EIO);
-
-	return (0);
+	}
 }
 
 int
