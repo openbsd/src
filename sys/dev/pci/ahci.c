@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.129 2007/10/01 15:34:48 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.130 2007/10/27 10:51:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -49,6 +49,8 @@ int ahcidebug = AHCI_D_VERBOSE;
 #endif
 
 #define AHCI_PCI_BAR		0x24
+#define AHCI_PCI_ATI_IXP600_MAGIC	0x40
+#define AHCI_PCI_ATI_IXP600_LOCKED	0x01
 #define AHCI_PCI_INTERFACE	0x01
 
 #define AHCI_REG_CAP		0x000 /* HBA Capabilities */
@@ -386,6 +388,7 @@ struct ahci_softc {
 
 	int			sc_flags;
 #define AHCI_F_NO_NCQ			(1<<0)
+#define AHCI_F_NO_FER			(1<<1)
 
 	u_int			sc_ncmds;
 
@@ -414,10 +417,14 @@ const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
 int			ahci_no_match(struct pci_attach_args *);
 int			ahci_vt8251_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
+int			ahci_ati_ixp600_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
-	    ahci_no_match,	ahci_vt8251_attach }
+	    ahci_no_match,	ahci_vt8251_attach },
+	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_IXP_SATA_600,
+	    NULL,		ahci_ati_ixp600_attach }
 };
 
 int			ahci_pci_match(struct device *, void *, void *);
@@ -541,6 +548,14 @@ int
 ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	sc->sc_flags |= AHCI_F_NO_NCQ;
+
+	return (0);
+}
+
+int
+ahci_ati_ixp600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	sc->sc_flags |= AHCI_F_NO_FER;
 
 	return (0);
 }
@@ -1069,7 +1084,8 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 
 	/* Turn on FRE (and ST) */
 	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
-	r |= AHCI_PREG_CMD_FRE;
+	if (!(ap->ap_sc->sc_flags & AHCI_F_NO_FER))
+		r |= AHCI_PREG_CMD_FRE;
 	if (!fre_only)
 		r |= AHCI_PREG_CMD_ST;
 	ahci_pwrite(ap, AHCI_PREG_CMD, r);
@@ -1083,9 +1099,11 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 	}
 #endif
 
-	/* Wait for FR to come on */
-	if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
-		return (2);
+	if (!(ap->ap_sc->sc_flags & AHCI_F_NO_FER)) {
+		/* Wait for FR to come on */
+		if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
+			return (2);
+	}
 
 	/* Wait for CR to come on */
 	if (!fre_only && ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR))
