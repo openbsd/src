@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2007/04/26 21:36:32 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2007/10/27 22:31:17 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -314,8 +314,12 @@ trap(struct trapframe *frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
-			if (uvm_fault(map, trunc_page(va), 0, ftype) == 0)
+			KERNEL_LOCK();
+			if (uvm_fault(map, trunc_page(va), 0, ftype) == 0) {
+				KERNEL_UNLOCK();
 				return;
+			}
+			KERNEL_UNLOCK();
 
 			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
