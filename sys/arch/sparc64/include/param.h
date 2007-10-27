@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.28 2007/09/09 14:59:37 kettenis Exp $	*/
+/*	$OpenBSD: param.h,v 1.29 2007/10/27 22:20:16 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -167,10 +167,6 @@
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
 #define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((vsize_t)(x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)

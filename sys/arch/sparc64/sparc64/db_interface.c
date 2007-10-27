@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.23 2007/05/02 18:46:07 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.24 2007/10/27 22:20:16 martin Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -792,7 +792,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 		  p->p_wchan, p->p_priority, p->p_usrpri);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
-		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
+		  (unsigned long long)ptoa(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
