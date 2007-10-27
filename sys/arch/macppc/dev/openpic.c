@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.40 2007/05/29 18:10:43 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.41 2007/10/27 22:37:03 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -650,8 +650,10 @@ ext_intr_openpic()
 			while (ih) {
 				ppc_intr_enable(1);
 
+				KERNEL_LOCK();
 				if ((*ih->ih_fun)(ih->ih_arg))
 					ih->ih_count.ec_count++;
+				KERNEL_UNLOCK();
 
 				(void)ppc_intr_disable();
 				ih = ih->ih_next;
