@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2006/05/04 19:32:21 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2007/10/27 20:31:19 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -64,24 +64,23 @@
 #include <ddb/db_output.h>	/* db_printf() */
 #include <ddb/db_interface.h>
 
-void	oimmed(int, u_int32_t, const char *, vaddr_t);
-void	ctrlregs(int, u_int32_t, const char *, vaddr_t);
-void	sindou(int, u_int32_t, const char *, vaddr_t);
-void	jump(int, u_int32_t, const char *, vaddr_t);
-void	instset(int, u_int32_t, const char *, vaddr_t);
-void	obranch(int, u_int32_t, const char *, vaddr_t);
-void	brcond(int, u_int32_t, const char *, vaddr_t);
-void	otrap(int, u_int32_t, const char *, vaddr_t);
-void	obit(int, u_int32_t, const char *, vaddr_t);
-void	bitman(int, u_int32_t, const char *, vaddr_t);
-void	immem(int, u_int32_t, const char *, vaddr_t);
-void	nimmem(int, u_int32_t, const char *, vaddr_t);
-void	lognim(int, u_int32_t, const char *, vaddr_t);
-void	onimmed(int, u_int32_t, const char *, vaddr_t);
-void	pinst(int, u_int32_t, const char *, vaddr_t);
+int	oimmed(int, u_int32_t, const char *, vaddr_t);
+int	ctrlregs(int, u_int32_t, const char *, vaddr_t);
+int	sindou(int, u_int32_t, const char *, vaddr_t);
+int	jump(int, u_int32_t, const char *, vaddr_t);
+int	instset(int, u_int32_t, const char *, vaddr_t);
+int	obranch(int, u_int32_t, const char *, vaddr_t);
+int	brcond(int, u_int32_t, const char *, vaddr_t);
+int	otrap(int, u_int32_t, const char *, vaddr_t);
+int	obit(int, u_int32_t, const char *, vaddr_t);
+int	bitman(int, u_int32_t, const char *, vaddr_t);
+int	immem(int, u_int32_t, const char *, vaddr_t);
+int	nimmem(int, u_int32_t, const char *, vaddr_t);
+int	lognim(int, u_int32_t, const char *, vaddr_t);
+int	onimmed(int, u_int32_t, const char *, vaddr_t);
+int	pinst(int, u_int32_t, const char *, vaddr_t);
 
 void	printcmp(int, u_int);
-void	printcond(u_int);
 void	symofset(u_int, u_int, vaddr_t);
 const char *cregname(int, u_int, u_int);
 
@@ -95,7 +94,7 @@ static const char *instwidth[] = {
 static const char *xinstwidth[4] = {
 	".d", "  ", ".x", ".?"
 };
-static const char *cmpname[] = {
+static const char *cmpname[0x20] = {
 	NULL,
 	NULL,
 	"eq",
@@ -113,7 +112,7 @@ static const char *cmpname[] = {
 	"he",
 	"nh"
 };
-static const char *condname[0x1f] = {
+static const char *condname[0x20] = {
 	NULL,
 	"gt",	/* 00001 */
 	"eq",	/* 00010 */
@@ -278,19 +277,6 @@ printcmp(int cpu, u_int code)
 		db_printf("%d", code);
 }
 
-/* print a condition mnemnonic */
-void
-printcond(u_int match)
-{
-	const char *cond;
-
-	cond = condname[match];
-	if (cond != NULL)
-		db_printf("%s0", cond);
-	else
-		db_printf("%d", match);
-}
-
 const char *
 cregname(int cpu, u_int sfu, u_int regno)
 {
@@ -333,7 +319,7 @@ symofset(u_int disp, u_int bit, vaddr_t iadr)
 }
 
 /* Handles immediate integer arithmetic instructions */
-void
+int
 oimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	int32_t Linst = inst & 0xffff;
@@ -353,10 +339,12 @@ oimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		break;
 	}
 	db_printf("\t\tr%d, r%d, 0x%04x", rd, rs1, Linst);
+
+	return (1);
 }
 
 /* Handles instructions dealing with control registers */
-void
+int
 ctrlregs(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t dir = (inst >> 14) & 0x03;
@@ -364,6 +352,11 @@ ctrlregs(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	u_int32_t creg = (inst >> 5) & 0x3f;
 	u_int32_t rd = (inst >> 21) & 0x1f;
 	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rs2 = (inst >> 0) & 0x1f;
+
+	/* s1 and s2 must match on {,f}{st,x}cr instructions */
+	if (rs1 != rs2 && (dir == 0x02 || dir == 0x03))
+		return (0);
 
 	db_printf("\t%s\t\t", opcode);
 
@@ -380,10 +373,12 @@ ctrlregs(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		    rd, rs1, cregname(cpu, sfu, creg));
 		break;
 	}
+
+	return (1);
 }
 
 /* Handles floating point instructions */
-void
+int
 sindou(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rs2 = inst & 0x1f;
@@ -464,9 +459,11 @@ sindou(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 			db_printf("r%d, r%d", rd, rs2);
 		break;
 	}
+
+	return (1);
 }
 
-void
+int
 jump(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rs2 = inst & 0x1f;
@@ -477,10 +474,12 @@ jump(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	else
 		db_printf("  ");
 	db_printf("\t\tr%d", rs2);
+
+	return (1);
 }
 
 /* Handles ff1, ff0, tbnd and rte instructions */
-void
+int
 instset(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rs2 = inst & 0x1f;
@@ -507,10 +506,12 @@ instset(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 			break;
 		}
 	}
+
+	return (1);
 }
 
 /* Handles unconditionnal branches */
-void
+int
 obranch(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t disp = inst & 0x3ffffff;
@@ -522,15 +523,22 @@ obranch(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		db_printf("  ");
 	db_printf("\t\t");
 	symofset(disp, 26, iadr);
+
+	return (1);
 }
 
 /* Handles branch on conditions instructions */
-void
+int
 brcond(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t match = (inst >> 21) & 0x1f;
 	u_int32_t rs = (inst >> 16) & 0x1f;
 	u_int32_t disp = inst & 0xffff;
+	int bcnd = ((inst >> 27) & 0x03) == 1;
+
+	/* skip invalid conditions if bcnd */
+	if (bcnd && condname[match] == NULL)
+		return (0);
 
 	db_printf("\t%s", opcode);
 	if ((inst & (1 << 26)) != 0)
@@ -539,33 +547,42 @@ brcond(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		db_printf("  ");
 	db_printf("\t\t");
 
-	if (((inst >> 27) & 0x03) == 1)	/* bcnd */
-		printcond(match);
+	if (bcnd)
+		db_printf("%s0", condname[match]);
 	else
 		printcmp(cpu, match);
 
 	db_printf(", r%d, ", rs);
 	symofset(disp, 16, iadr);
+
+	return (1);
 }
 
 /* Handles trap instructions */
-void
+int
 otrap(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t vecno = inst & 0x1ff;
 	u_int32_t match = (inst >> 21) & 0x1f;
 	u_int32_t rs = (inst >> 16) & 0x1f;
+	int tcnd = ((inst >> 12) & 0x0f) == 0xe;
+
+	/* skip invalid conditions if tcnd */
+	if (tcnd && condname[match] == NULL)
+		return (0);
 
 	db_printf("\t%s\t", opcode);
-	if (((inst >> 12) & 0x0f) == 0xe)	/* tcnd */
-		printcond(match);
+	if (tcnd)
+		db_printf("%s0", condname[match]);
 	else
 		printcmp(cpu, match);
 	db_printf(", r%d, 0x%x", rs, vecno);
+
+	return (1);
 }
 
 /* Handles 10 bit immediate bit field operations */
-void
+int
 obit(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rs = (inst >> 16) & 0x1f;
@@ -577,10 +594,12 @@ obit(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	if (((inst >> 10) & 0x3f) != 0x2a)	/* rot */
 		db_printf("%d", width);
 	db_printf("<%d>", offset);
+
+	return (1);
 }
 
 /* Handles triadic mode bit field instructions */
-void
+int
 bitman(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rs1 = (inst >> 16) & 0x1f;
@@ -588,10 +607,12 @@ bitman(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	u_int32_t rs2 = inst & 0x1f;
 
 	db_printf("\t%s\t\tr%d, r%d, r%d", opcode, rd, rs1, rs2);
+
+	return (1);
 }
 
 /* Handles immediate load/store/exchange instructions */
-void
+int
 immem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rd = (inst >> 21) & 0x1f;
@@ -641,10 +662,12 @@ immem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	else
 		db_printf("r%d, r%d, ", rd, rs);
 	db_printf("0x%x", inst & 0xffff);
+
+	return (1);
 }
 
 /* Handles triadic mode load/store/exchange instructions */
-void
+int
 nimmem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t scaled = (inst >> 9) & 0x01;
@@ -713,10 +736,12 @@ nimmem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		db_printf("[r%d]", rs2);
 	else
 		db_printf(", r%d", rs2);
+
+	return (1);
 }
 
 /* Handles triadic mode logical instructions */
-void
+int
 lognim(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rd = (inst >> 21) & 0x1f;
@@ -728,10 +753,12 @@ lognim(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		db_printf(".c");
 
 	db_printf("\t\tr%d, r%d, r%d", rd, rs1, rs2);
+
+	return (1);
 }
 
 /* Handles triadic mode arithmetic instructions */
-void
+int
 onimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rd = (inst >> 21) & 0x1f;
@@ -759,10 +786,12 @@ onimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	}
 
 	db_printf("\tr%d, r%d, r%d", rd, rs1, rs2);
+
+	return (1);
 }
 
 /* Handles 88110 SFU2 instructions */
-void
+int
 pinst(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
 	u_int32_t rd = (inst >> 21) & 0x1f;
@@ -806,11 +835,13 @@ pinst(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 		db_printf("\tr%d, r%d, r%d", rd, rs1, rs2);
 		break;
 	}
+
+	return (1);
 }
 
 static const struct opdesc {
 	u_int32_t mask, match;
-	void (*opfun)(int, u_int32_t, const char *, vaddr_t);
+	int (*opfun)(int, u_int32_t, const char *, vaddr_t);
 	const char *opcode;
 } opdecode_88100[] = {
 	/* ORDER IS IMPORTANT BELOW */
@@ -1025,9 +1056,11 @@ m88k_print_instruction(int cpu, u_int iadr, u_int32_t inst)
 		p = cpu != CPU_88100 ? opdecode_88110 : opdecode_88100;
 		while (p->mask != 0) {
 			if ((inst & p->mask) == p->match) {
-				(*p->opfun)(cpu, inst, p->opcode, iadr);
-				db_printf("\n");
-				return;
+				if ((*p->opfun)(cpu, inst, p->opcode, iadr)) {
+					db_printf("\n");
+					return;
+				}
+				break;
 			}
 			p++;
 		}
