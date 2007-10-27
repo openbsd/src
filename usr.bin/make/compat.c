@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.61 2007/10/14 09:02:10 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.62 2007/10/27 08:44:12 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -403,12 +403,12 @@ CompatMake(void *gnp,	/* The node to make */
 			gn->type |= OP_SILENT;
 
 		if (Job_CheckCommands(gn, Fatal)) {
-		    /* Our commands are ok, but we still have to worry
-		     * about the -t flag...	*/
-		    if (!touchFlag)
-			    run_gnode(gn);
-		    else
-			    Job_Touch(gn, gn->type & OP_SILENT);
+			/* Our commands are ok, but we still have to worry
+			 * about the -t flag...	*/
+			if (!touchFlag)
+				run_gnode(gn);
+			else
+				Job_Touch(gn, gn->type & OP_SILENT);
 		} else
 			gn->made = ERROR;
 
