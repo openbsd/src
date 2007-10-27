@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.94 2007/10/20 21:08:31 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.95 2007/10/27 17:17:23 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6019,7 +6019,6 @@ Lsw_panic_srun:
  */
 ENTRY(cpu_switchto)
 	save	%sp, -CC64FSZ, %sp
-	flushw				! We don't have anything else to run, so why not flush
 	rdpr	%pstate, %o1		! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_INTR, %pstate ! make sure we're on normal globals
 
@@ -6029,11 +6028,10 @@ ENTRY(cpu_switchto)
 	sethi	%hi(CPCB), %l6
 	ldx	[%l6 + %lo(CPCB)], %l5
 	sethi   %hi(CURPROC), %l7
-	stx	%o7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
-	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
 	/*
-	 * PHASE TWO: NEW REGISTER USAGE:
+	 * Register usage:
+	 *
 	 *	%l1 = newpcb
 	 *	%l2 = newpstate
 	 *	%l3 = p
@@ -6042,8 +6040,8 @@ ENTRY(cpu_switchto)
 	 *	%l6 = %hi(_cpcb)
 	 *	%l7 = %hi(_curproc)
 	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o2 = tmp 3
+	 *	%o1 = oldpstate
+	 *	%o2 = tmp 2
 	 *	%o3 = vm
 	 *	%o4 = sswap
 	 *	%o5 = <free>
@@ -6080,14 +6078,13 @@ ENTRY(cpu_switchto)
 	 * Not the old process.  Save the old process, if any;
 	 * then load p.
 	 */
-	flushw				! DEBUG -- make sure we don't hold on to any garbage
 	brz,pn	%l4, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
-wb1:
 	flushw				! save all register windows except this one
-	stx	%i7, [%l5 + PCB_PC]	! Save rpc
-	stx	%i6, [%l5 + PCB_SP]
+	stx	%i6, [%l5 + PCB_SP]	! cpcb->pcb_sp = sp;
+	stx	%i7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
+	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 	rdpr	%cwp, %o2		! Useless
 	stb	%o2, [%l5 + PCB_CWP]
 
@@ -6105,7 +6102,7 @@ Lsw_load:
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7
-	wrpr	%g0, 0, %otherwin	! These two instructions should be redundant
+	wrpr	%g0, 0, %otherwin
 	wrpr	%g0, 0, %canrestore
 	rdpr	%ver, %l7
 	and	%l7, CWP, %l7
