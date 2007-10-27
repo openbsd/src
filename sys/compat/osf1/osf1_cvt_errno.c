@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_cvt_errno.c,v 1.1 2000/08/04 15:47:54 ericj Exp $ */
+/* $OpenBSD: osf1_cvt_errno.c,v 1.2 2007/10/27 22:42:11 miod Exp $ */
 /* $NetBSD: osf1_cvt_errno.c,v 1.4 1999/05/01 02:16:01 cgd Exp $ */
 
 /*
@@ -31,6 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>
 
@@ -41,7 +42,7 @@
  * It is up to date as of Digital UNIX V4.0 and NetBSD 1.4.
  */
 
-const int osf1_errno_rxlist[] = {
+const int osf1_errno_rxlist[1 + ELAST] = {
     0,
     OSF1_EPERM,			/* EPERM (1) -> 1 */
     OSF1_ENOENT,		/* ENOENT (2) -> 2 */
@@ -124,7 +125,13 @@ const int osf1_errno_rxlist[] = {
     OSF1_EFTYPE,		/* EFTYPE (79) -> 79 */
     OSF1_ENOSYS,		/* EAUTH (80) has no equivalent */
     OSF1_ENOSYS,		/* ENEEDAUTH (81) has no equivalent */
-    OSF1_EIDRM,			/* EIDRM (82) -> 81 */
-    OSF1_ENOMSG,		/* ENOMSG (83) -> 80 */
-    OSF1_EOVERFLOW,		/* EOVERFLOW (84) -> 103 */
+    OSF1_ENOSYS,		/* EIPSEC (82) has no equivalent */
+    OSF1_ENOSYS,		/* ENOATTR (83) has no equivalent */
+    OSF1_EILSEQ,		/* EILSEQ (84) -> 116 */
+    OSF1_ENOSYS,		/* ENOMEDIUM (85) has no equivalent */
+    OSF1_ENOSYS,		/* EMEDIUMTYPE (86) has no equivalent */
+    OSF1_EOVERFLOW,		/* EOVERFLOW (87) -> 103 */
+    OSF1_ECANCELED,		/* ECANCELED (88) -> 94 */
+    OSF1_EIDRM,			/* EIDRM (89) -> 81 */
+    OSF1_ENOMSG			/* ENOMSG (90) -> 80 */
 };

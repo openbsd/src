@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_errno.c,v 1.3 2000/08/23 16:37:29 brad Exp $	*/
+/*	$OpenBSD: svr4_errno.c,v 1.4 2007/10/27 22:42:11 miod Exp $	*/
 /*	$NetBSD: svr4_errno.c,v 1.7 1998/10/23 04:06:00 erh Exp $	*/
 
 /*
@@ -32,10 +32,11 @@
  * Translate error codes.
  */
 
+#include <sys/errno.h>
 #include <compat/svr4/svr4_errno.h>
 
 
-int native_to_svr4_errno[] = {
+int native_to_svr4_errno[1 + ELAST] = {
 	0,
 	SVR4_EPERM,
 	SVR4_ENOENT,
@@ -118,4 +119,13 @@ int native_to_svr4_errno[] = {
 	SVR4_EFTYPE,
 	SVR4_EAUTH,
 	SVR4_ENEEDAUTH,
+	SVR4_ENOSYS,			/* EIPSEC */
+	SVR4_ENOSYS,			/* ENOATTR */
+	SVR4_EILSEQ,
+	SVR4_ENOSYS,			/* ENOMEDIUM */
+	SVR4_ENOSYS,			/* EMEDIUMTYPE */
+	SVR4_EOVERFLOW,
+	SVR4_ENOSYS,			/* ECANCELED */
+	SVR4_EIDRM,
+	SVR4_ENOMSG
 };

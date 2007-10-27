@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_error.c,v 1.3 2003/09/04 02:57:22 tedu Exp $	*/
+/*	$OpenBSD: linux_error.c,v 1.4 2007/10/27 22:42:11 miod Exp $	*/
 /*	$NetBSD: linux_error.c,v 1.2 1995/04/22 19:48:32 christos Exp $	*/
 
 /*
@@ -32,9 +32,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
 #include <compat/linux/linux_errno.h>
 
-int linux_error[] = {
+int linux_error[1 + ELAST] = {
 	0,
 	-LINUX_EPERM,
 	-LINUX_ENOENT,
@@ -119,61 +120,11 @@ int linux_error[] = {
 	-LINUX_ENOSYS,		/* not mapped (ENEEDAUTH) */
 	-LINUX_ENOSYS,		/* not mapped (EIPSEC) */
 	-LINUX_EOPNOTSUPP,	/* what is ENOATTR? */
-
-	/*
-	 * The rest of the list consists of errors that only
-	 * Linux has. They can be used to map them on to
-	 * themselves, so Linux emulating syscalls can return
-	 * these values.
-	 */
-
-	-LINUX_ENOMSG,
-	-LINUX_EIDRM,
-	-LINUX_ECHRNG,
-	-LINUX_EL2NSYNC,
-	-LINUX_EL3HLT,
-	-LINUX_EL3RST,
-	-LINUX_ELNRNG,
-	-LINUX_EUNATCH,
-	-LINUX_ENOCSI,
-	-LINUX_EL2HLT,
-	-LINUX_EBADE,
-	-LINUX_EBADR,
-	-LINUX_EXFULL,
-	-LINUX_ENOANO,
-	-LINUX_EBADRQC,
-	-LINUX_EBADSLT,
-	-LINUX_EDEADLOCK,
-	-LINUX_EBFONT,
-	-LINUX_ENOSTR,
-	-LINUX_ENODATA,
-	-LINUX_ETIME,
-	-LINUX_ENOSR,
-	-LINUX_ENONET,
-	-LINUX_ENOPKG,
-	-LINUX_ENOLINK,
-	-LINUX_EADV,
-	-LINUX_ESRMNT,
-	-LINUX_ECOMM,
-	-LINUX_EPROTO,
-	-LINUX_EMULTIHOP,
-	-LINUX_EDOTDOT,
-	-LINUX_EBADMSG,
-	-LINUX_EOVERFLOW,
-	-LINUX_ENOTUNIQ,
-	-LINUX_EBADFD,
-	-LINUX_EREMCHG,
-	-LINUX_ELIBACC,
-	-LINUX_ELIBBAD,
-	-LINUX_ELIBSCN,
-	-LINUX_ELIBMAX,
-	-LINUX_ELIBEXEC,
 	-LINUX_EILSEQ,
-	-LINUX_ERESTART,
-	-LINUX_ESTRPIPE,
-	-LINUX_EUCLEAN,
-	-LINUX_ENOTNAM,
-	-LINUX_ENAVAIL,
-	-LINUX_EISNAM,
-	-LINUX_EREMOTEIO
+	-LINUX_ENOSYS,		/* not mapped (ENOMEDIUM) */
+	-LINUX_ENOSYS,		/* not mapped (EMEDIUMTYPE) */
+	-LINUX_EOVERFLOW,
+	-LINUX_ENOSYS,		/* not mapped (ECANCELED) */
+	-LINUX_EIDRM,
+	-LINUX_ENOMSG
 };

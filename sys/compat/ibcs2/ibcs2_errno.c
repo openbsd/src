@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_errno.c,v 1.4 1997/01/23 16:12:16 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_errno.c,v 1.5 2007/10/27 22:42:10 miod Exp $	*/
 /*	$NetBSD: ibcs2_errno.c,v 1.2 1996/05/03 17:05:16 christos Exp $	*/
 
 /*
@@ -32,9 +32,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
 #include <compat/ibcs2/ibcs2_errno.h>
 
-int bsd2ibcs_errno[] = {
+int bsd2ibcs_errno[1 + ELAST] = {
 	0,			/* 0 */
 	IBCS2_EPERM,		/* 1 */
 	IBCS2_ENOENT,		/* 2 */
@@ -102,19 +103,28 @@ int bsd2ibcs_errno[] = {
 	IBCS2_EHOSTDOWN,	/* 64 */
 	IBCS2_EHOSTUNREACH,	/* 65 */
 	IBCS2_ENOTEMPTY,	/* 66 */
-	0,			/* 67 */
-	0,			/* 68 */
-	0,			/* 69 */
+	IBCS2_ENOSYS,		/* 67 unavailable? */
+	IBCS2_ENOSYS,		/* 68 unavailable? */
+	IBCS2_ENOSYS,		/* 69 unavailable? */
 	IBCS2_ESTALE,		/* 70 */
 	IBCS2_EREMOTE,		/* 71 */
-	0,			/* 72 */
-	0,			/* 73 */
-	0,			/* 74 */
-	0,			/* 75 */
-	0,			/* 76 */
+	IBCS2_ENOSYS,		/* 72 unavailable? */
+	IBCS2_ENOSYS,		/* 73 unavailable? */
+	IBCS2_ENOSYS,		/* 74 unavailable? */
+	IBCS2_ENOSYS,		/* 75 unavailable? */
+	IBCS2_ENOSYS,		/* 76 unavailable? */
 	IBCS2_ENOLCK,		/* 77 */
 	IBCS2_ENOSYS,		/* 78 */
-	0,			/* 79 */
-	0,			/* 80 */
-	0,			/* 81 */
+	IBCS2_ENOSYS,		/* 79 unavailable? */
+	IBCS2_ENOSYS,		/* 80 unavailable? */
+	IBCS2_ENOSYS,		/* 81 unavailable? */
+	IBCS2_ENOSYS,		/* 82 unavailable? */
+	IBCS2_ENOSYS,		/* 83 unavailable? */
+	IBCS2_ENOSYS,		/* 84 unavailable? */
+	IBCS2_ENOSYS,		/* 85 unavailable? */
+	IBCS2_ENOSYS,		/* 86 unavailable? */
+	IBCS2_ENOSYS,		/* 87 unavailable? */
+	IBCS2_ENOSYS,		/* 88 unavailable? */
+	IBCS2_EIDRM,		/* 89 */
+	IBCS2_ENOMSG		/* 90 */
 };
