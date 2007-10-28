@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2007/05/11 10:06:55 pedro Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2007/10/28 10:18:53 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -264,7 +264,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 
 		/* data fault on the user address? */
 		if ((frame->tf_dmt0 & DMT_DAS) == 0) {
-			type = T_DATAFLT + T_USER;
+			KERNEL_LOCK();
 			goto user_fault;
 		}
 
@@ -337,6 +337,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
+		KERNEL_PROC_LOCK(p);
 user_fault:
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
@@ -365,7 +366,6 @@ user_fault:
 
 		va = trunc_page((vaddr_t)fault_addr);
 
-		KERNEL_PROC_LOCK(p);
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
@@ -392,7 +392,10 @@ user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
-		KERNEL_PROC_UNLOCK(p);
+		if (type == T_DATAFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(p);
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -411,7 +414,15 @@ user_fault:
 		}
 
 		if (result == 0) {
-			if (type == T_DATAFLT+T_USER) {
+			if (type == T_INSTFLT + T_USER) {
+				/*
+				 * back up SXIP, SNIP,
+				 * clearing the Error bit
+				 */
+				frame->tf_sfip = frame->tf_snip & ~FIP_E;
+				frame->tf_snip = frame->tf_sxip & ~NIP_E;
+				frame->tf_ipfsr = 0;
+			} else {
 				/*
 			 	 * We could resolve the fault. Call
 			 	 * data_access_emulation to drain the data unit
@@ -421,14 +432,6 @@ user_fault:
 				data_access_emulation((unsigned *)frame);
 				frame->tf_dpfsr = 0;
 				frame->tf_dmt0 = 0;
-			} else {
-				/*
-				 * back up SXIP, SNIP,
-				 * clearing the Error bit
-				 */
-				frame->tf_sfip = frame->tf_snip & ~FIP_E;
-				frame->tf_snip = frame->tf_sxip & ~NIP_E;
-				frame->tf_ipfsr = 0;
 			}
 		} else {
 			sig = result == EACCES ? SIGBUS : SIGSEGV;
