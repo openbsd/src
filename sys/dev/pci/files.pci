@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.245 2007/09/12 12:59:55 mglocker Exp $
+#	$OpenBSD: files.pci,v 1.246 2007/10/28 13:42:31 ratchov Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -130,6 +130,11 @@ device	azalia: audio, auconv, mulaw, ac97
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
+
+# VIA Envy24 (aka ICE1712)
+device	envy: audio, auconv, mulaw
+attach	envy at pci
+file	dev/pci/envy.c			envy
 
 # Creative Labs EMU10k1 (SBLive! series and PCI512)
 device	emu: audio, auconv, mulaw, ac97

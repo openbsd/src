@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.583 2007/10/14 17:39:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.584 2007/10/28 13:42:31 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -628,6 +628,7 @@ maestro* at pci?			# ESS Maestro PCI
 esa*	at pci?				# ESS Maestro3 PCI
 yds*	at pci? flags 0x0000		# Yamaha YMF Audio
 emu*	at pci?				# SB Live!
+#envy*	at pci?				# VIA Envy24 (aka ICE1712)
 sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?			# ESS Tech ES188[78], ES888
