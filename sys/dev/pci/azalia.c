@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.37 2007/10/26 02:17:23 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.38 2007/10/28 21:32:51 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -216,6 +216,8 @@ typedef struct azalia_t {
 
 
 /* prototypes */
+uint8_t azalia_pci_read(pci_chipset_tag_t, pcitag_t, int);
+void	azalia_pci_write(pci_chipset_tag_t, pcitag_t, int, uint8_t);
 int	azalia_pci_match(struct device *, void *, void *);
 void	azalia_pci_attach(struct device *, struct device *, void *);
 int	azalia_pci_activate(struct device *, enum devact);
@@ -358,6 +360,31 @@ static const char *pin_chass[4] = {
 #define PCIID_ALI_M5461		PCI_ID_CODE0(ALI, M5461)
 #define PCIID_VIATECH_HDA	PCI_ID_CODE0(VIATECH, HDA)
 
+#define ATI_PCIE_SNOOP_REG		0x42
+#define ATI_PCIE_SNOOP_MASK		0xf8
+#define ATI_PCIE_SNOOP_ENABLE		0x02
+#define NVIDIA_PCIE_SNOOP_REG		0x4e
+#define NVIDIA_PCIE_SNOOP_MASK		0xf0
+#define NVIDIA_PCIE_SNOOP_ENABLE	0x0f
+
+uint8_t
+azalia_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
+{
+	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
+	    ((reg & 0x03) * 8) & 0xff);
+}
+
+void
+azalia_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
+{
+	pcireg_t pcival;
+
+	pcival = pci_conf_read(pc, pa, (reg & ~0x03));
+	pcival &= ~(0xff << ((reg & 0x03) * 8));
+	pcival |= (val << ((reg & 0x03) * 8));
+	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
+}
+
 int
 azalia_pci_match(struct device *parent, void *match, void *aux)
 {
@@ -378,6 +405,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	pci_intr_handle_t ih;
 	const char *intrrupt_str;
+	uint8_t reg;
 
 	sc = (azalia_t*)self;
 	pa = aux;
@@ -399,6 +427,22 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v & (~0x7));
+ 
+	/* enable PCIe snoop */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_ATI_IXP_HDA_600:
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, ATI_PCIE_SNOOP_REG);
+		reg &= ATI_PCIE_SNOOP_MASK;
+		reg |= ATI_PCIE_SNOOP_ENABLE;
+		azalia_pci_write(pa->pa_pc, pa->pa_tag, ATI_PCIE_SNOOP_REG, reg);
+		break;
+	case PCI_PRODUCT_NVIDIA_MCP51_HDA:
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, NVIDIA_PCIE_SNOOP_REG);
+		reg &= NVIDIA_PCIE_SNOOP_MASK;
+		reg |= NVIDIA_PCIE_SNOOP_ENABLE;
+		azalia_pci_write(pa->pa_pc, pa->pa_tag, NVIDIA_PCIE_SNOOP_REG, reg);
+		break;
+	}
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
