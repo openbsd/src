@@ -505,6 +505,8 @@
 ./usr/include/dev/pci/eapreg.h
 ./usr/include/dev/pci/emuxkireg.h
 ./usr/include/dev/pci/emuxkivar.h
+./usr/include/dev/pci/envyreg.h
+./usr/include/dev/pci/envyvar.h
 ./usr/include/dev/pci/esareg.h
 ./usr/include/dev/pci/esavar.h
 ./usr/include/dev/pci/esoreg.h

@@ -1053,6 +1053,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/emuxkivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/envyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/envyvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
