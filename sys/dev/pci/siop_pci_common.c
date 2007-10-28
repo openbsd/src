@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.15 2006/04/20 20:31:12 miod Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.16 2007/10/28 14:17:19 fgsch Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.25 2005/06/28 00:28:42 thorpej Exp $ */
 
 /*
@@ -221,7 +221,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 	pcireg_t memtype;
 	int memh_valid, ioh_valid;
 	bus_addr_t ioaddr, memaddr;
-	bus_size_t memsize, iosize;
+	bus_size_t iosize, memsize, ramsize;
 
 	pci_sc->sc_pp =
 	    siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
@@ -250,7 +250,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		memh_valid = (pci_mapreg_map(pa, 0x14, memtype, 0,
-		    &memt, &memh, &memaddr, NULL, 0) == 0);
+		    &memt, &memh, &memaddr, &memsize, 0) == 0);
 		break;
 	default:
 		memh_valid = 0;
@@ -274,8 +274,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(siop_sc->sc_rt, siop_sc->sc_rh, iosize);
-		return 0;
+		goto out;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	pci_sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
@@ -288,8 +287,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(siop_sc->sc_rt, siop_sc->sc_rh, iosize);
-		return 0;
+		goto out;
 	}
 
 	if (siop_sc->features & SF_CHIP_RAM) {
@@ -303,11 +301,11 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 			break;
 		default:
 			printf(": invalid memory type %d\n", memtype);
-			return 0;
+			goto out;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
-		    &siop_sc->sc_scriptaddr, &memsize, 0) == 0) {
+		    &siop_sc->sc_scriptaddr, &ramsize, 0) == 0) {
 			printf(", using %luK of on-board RAM",
 			    (u_long)memsize / 1024);
 		} else {
@@ -318,7 +316,18 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 
 	printf("\n");
 
-	return 1;
+	return (1);
+
+ out:
+	if (pci_sc->sc_ih) {
+		pci_intr_disestablish(pa->pa_pc, pci_sc->sc_ih);
+		pci_sc->sc_ih = NULL;
+	}
+	if (ioh_valid)
+		bus_space_unmap(iot, ioh, iosize);
+	if (memh_valid)
+		bus_space_unmap(memt, memh, memsize);
+	return (0);
 }
 
 void
