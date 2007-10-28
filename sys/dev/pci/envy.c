@@ -1,3 +1,4 @@
+/*	$OpenBSD: envy.c,v 1.2 2007/10/28 18:25:21 fgsch Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
