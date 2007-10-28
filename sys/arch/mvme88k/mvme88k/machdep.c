@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.194 2007/10/13 12:55:21 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.195 2007/10/28 19:42:12 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -728,6 +728,7 @@ secondary_main()
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
+	ci->ci_alive = 1;
 
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
@@ -978,6 +979,7 @@ mvme_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+	curcpu()->ci_alive = 1;
 
 #ifdef M88100
 	if (CPU_IS88100) {
