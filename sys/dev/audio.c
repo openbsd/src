@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.86 2007/10/27 08:52:47 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.87 2007/10/28 13:23:01 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ int	audio_check_params(struct audio_params *);
 
 void	audio_set_blksize(struct audio_softc *, int, int);
 void	audio_calc_blksize(struct audio_softc *, int);
-void	audio_fill_silence(struct audio_params *, u_char *, int);
+void	audio_fill_silence(struct audio_params *, u_char *, u_char *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
 void	audio_init_ringbuffer(struct audio_ringbuffer *);
@@ -1066,10 +1066,10 @@ audio_drain(struct audio_softc *sc)
 		cc = cb->blksize - (inp - cb->start) % cb->blksize;
 		if (sc->sc_pparams.sw_code) {
 			int ncc = cc / sc->sc_pparams.factor;
-			audio_fill_silence(&sc->sc_pparams, inp, ncc);
+			audio_fill_silence(&sc->sc_pparams, cb->start, inp, ncc);
 			sc->sc_pparams.sw_code(sc->hw_hdl, inp, ncc);
 		} else
-			audio_fill_silence(&sc->sc_pparams, inp, cc);
+			audio_fill_silence(&sc->sc_pparams, cb->start, inp, cc);
 		inp += cc;
 		if (inp >= cb->end)
 			inp = cb->start;
@@ -1342,10 +1342,20 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 }
 
 void
-audio_fill_silence(struct audio_params *params, u_char *p, int n)
+audio_fill_silence(struct audio_params *params, u_char *start, u_char *p, int n)
 {
+	size_t rounderr;
 	u_char auzero0, auzero1 = 0; /* initialize to please gcc */
 	int nfill = 1;
+
+	/*
+	 * p may point the middle of a sample; round it to the
+	 * beginning of the sample, so we overwrite partially written
+	 * ones.
+	 */
+	rounderr = (p - start) % (params->precision / 8);
+	p -= rounderr;
+	n += rounderr;
 
 	switch (params->encoding) {
 	case AUDIO_ENCODING_ULAW:
@@ -1403,7 +1413,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 	int k;
 	u_char zerobuf[128];
 
-	audio_fill_silence(&sc->sc_rparams, zerobuf, sizeof zerobuf);
+	audio_fill_silence(&sc->sc_rparams, zerobuf, zerobuf, sizeof zerobuf);
 
 	error = 0;
 	while (n > 0 && uio->uio_resid > 0 && !error) {
@@ -1568,10 +1578,10 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 			DPRINTFN(1, ("audio_write: fill %d\n", cc));
 			if (sc->sc_pparams.sw_code) {
 				int ncc = cc / sc->sc_pparams.factor;
-				audio_fill_silence(&sc->sc_pparams, einp, ncc);
+				audio_fill_silence(&sc->sc_pparams, cb->start, einp, ncc);
 				sc->sc_pparams.sw_code(sc->hw_hdl, einp, ncc);
 			} else
-				audio_fill_silence(&sc->sc_pparams, einp, cc);
+				audio_fill_silence(&sc->sc_pparams, cb->start, einp, cc);
 		}
 	}
 	return (error);
@@ -1859,7 +1869,7 @@ audio_mmap(dev_t dev, off_t off, int prot)
 	if (!cb->mmapped) {
 		cb->mmapped = 1;
 		if (cb == &sc->sc_pr) {
-			audio_fill_silence(&sc->sc_pparams, cb->start, cb->bufsize);
+			audio_fill_silence(&sc->sc_pparams, cb->start, cb->start, cb->bufsize);
 			s = splaudio();
 			if (!sc->sc_pbus && !sc->sc_pr.pause)
 				(void)audiostartp(sc);
@@ -1963,10 +1973,10 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 
 			if (sc->sc_pparams.sw_code) {
 				int ncc = cc / sc->sc_pparams.factor;
-				audio_fill_silence(&sc->sc_pparams, inp, ncc);
+				audio_fill_silence(&sc->sc_pparams, cb->start, inp, ncc);
 				sc->sc_pparams.sw_code(sc->hw_hdl, inp, ncc);
 			} else
-				audio_fill_silence(&sc->sc_pparams, inp, cc);
+				audio_fill_silence(&sc->sc_pparams, cb->start, inp, cc);
 
 		} else {
 			DPRINTFN(5, ("audio_pint_silence: already silent cc=%d inp=%p\n", cc, inp));
@@ -1980,10 +1990,10 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 
 		if (sc->sc_pparams.sw_code) {
 			int ncc = cc / sc->sc_pparams.factor;
-			audio_fill_silence(&sc->sc_pparams, inp, ncc);
+			audio_fill_silence(&sc->sc_pparams, cb->start, inp, ncc);
 			sc->sc_pparams.sw_code(sc->hw_hdl, inp, ncc);
 		} else
-			audio_fill_silence(&sc->sc_pparams, inp, cc);
+			audio_fill_silence(&sc->sc_pparams, cb->start, inp, cc);
 
 	}
 }
