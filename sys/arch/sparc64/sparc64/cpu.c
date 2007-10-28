@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2007/10/21 21:00:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2007/10/28 12:34:05 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -81,7 +81,6 @@ struct cpu_info *alloc_cpuinfo(int);
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[100];
 
-void cpu_reset_fpustate(void);
 void cpu_hatch(void);
 
 /* The CPU configuration driver. */
@@ -184,27 +183,6 @@ cpu_match(parent, vcf, aux)
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
-void
-cpu_reset_fpustate(void)
-{
-	struct fpstate64 *fpstate;
-	struct fpstate64 fps[2];
-
-	/* This needs to be 64-bit aligned */
-	fpstate = ALIGNFPSTATE(&fps[1]);
-	/*
-	 * Get the FSR and clear any exceptions.  If we do not unload
-	 * the queue here and it is left over from a previous crash, we
-	 * will panic in the first loadfpstate(), due to a sequence error,
-	 * so we need to dump the whole state anyway.
-	 *
-	 * If there is no FPU, trap.c will advance over all the stores,
-	 * so we initialize fs_fsr here.
-	 */
-	fpstate->fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
-	savefpstate(fpstate);
-}
-
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
@@ -238,14 +216,6 @@ cpu_attach(parent, dev, aux)
 	 * Allocate cpu_info structure if needed.
 	 */
 	ci = alloc_cpuinfo(node);
-
-	/*
-	 * Only do this on the boot cpu.  Other cpu's call
-	 * cpu_reset_fpustate() from cpu_hatch() before they
-	 * call into the idle loop.
-	 */
-	if (ci->ci_number == 0)
-		cpu_reset_fpustate();
 
 	clk = getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -417,7 +387,6 @@ cpu_hatch(void)
 {
 	int s;
 
-	cpu_reset_fpustate();
 	curcpu()->ci_flags |= CPUF_RUNNING;
 	sparc_membar(Sync);
 
