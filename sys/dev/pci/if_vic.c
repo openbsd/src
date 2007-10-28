@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.50 2007/10/23 07:15:18 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.51 2007/10/28 12:38:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -55,6 +55,15 @@
 #include <dev/pci/pcidevs.h>
 
 #define VIC_PCI_BAR		PCI_MAPREG_START /* Base Address Register */
+
+#define VIC_LANCE_SIZE		0x20
+#define VIC_MORPH_SIZE		0x04
+#define  VIC_MORPH_MASK			0xffff
+#define  VIC_MORPH_LANCE		0x2934
+#define  VIC_MORPH_VMXNET		0x4392
+#define VIC_VMXNET_SIZE		0x40
+#define VIC_LANCE_MINLEN	(VIC_LANCE_SIZE + VIC_MORPH_SIZE + \
+				    VIC_VMXNET_SIZE)
 
 #define VIC_MAGIC		0xbabe864f
 
@@ -345,8 +354,28 @@ const struct pci_matchid vic_devices[] = {
 int
 vic_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux,
-	    vic_devices, sizeof(vic_devices)/sizeof(vic_devices[0])));
+	struct pci_attach_args		*pa = aux;
+	pcireg_t			memtype;
+	bus_size_t			pcisize;
+	paddr_t				pciaddr;
+
+	switch (pa->pa_id) {
+	case PCI_ID_CODE(PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET):
+		return (1);
+
+	case PCI_ID_CODE(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI):
+		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, VIC_PCI_BAR);
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, VIC_PCI_BAR,
+		    memtype, &pciaddr, &pcisize, NULL) != 0)
+			break;
+
+		if (pcisize > VIC_LANCE_MINLEN)
+			return (2);
+
+		break;
+	}
+
+	return (0);
 }
 
 void
@@ -354,7 +383,8 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vic_softc		*sc = (struct vic_softc *)self;
 	struct pci_attach_args		*pa = aux;
-	pcireg_t			memtype;
+	bus_space_handle_t		ioh;
+	pcireg_t			r;
 	pci_intr_handle_t		ih;
 	struct ifnet			*ifp;
 
@@ -362,11 +392,58 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, VIC_PCI_BAR);
-	if (pci_mapreg_map(pa, VIC_PCI_BAR, memtype, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+	r = pci_mapreg_type(sc->sc_pc, sc->sc_tag, VIC_PCI_BAR);
+	if (pci_mapreg_map(pa, VIC_PCI_BAR, r, 0, &sc->sc_iot,
+	    &ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map system interface register\n");
 		return;
+	}
+
+	switch (pa->pa_id) {
+	case PCI_ID_CODE(PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET):
+		if (bus_space_subregion(sc->sc_iot, ioh, 0, sc->sc_ios,
+		    &sc->sc_ioh) != 0) {
+			printf(": unable to map register window\n");
+			goto unmap;
+		}
+		break;
+
+	case PCI_ID_CODE(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI):
+		if (bus_space_subregion(sc->sc_iot, ioh, 
+		    VIC_LANCE_SIZE + VIC_MORPH_SIZE, VIC_VMXNET_SIZE,
+		    &sc->sc_ioh) != 0) {
+			printf(": unable to map register window\n");
+			goto unmap;
+		}
+
+		bus_space_barrier(sc->sc_iot, ioh, VIC_LANCE_SIZE, 4,
+		    BUS_SPACE_BARRIER_READ);
+		r = bus_space_read_4(sc->sc_iot, ioh, VIC_LANCE_SIZE);
+
+		if ((r & VIC_MORPH_MASK) == VIC_MORPH_VMXNET)
+			break;
+		if ((r & VIC_MORPH_MASK) != VIC_MORPH_LANCE) {
+			printf(": unexpect morph value (0x%08x)\n", r);
+			goto unmap;
+		}
+
+		r &= ~VIC_MORPH_MASK;
+		r |= VIC_MORPH_VMXNET;
+
+		bus_space_write_4(sc->sc_iot, ioh, VIC_LANCE_SIZE, r);
+		bus_space_barrier(sc->sc_iot, ioh, VIC_LANCE_SIZE, 4,
+		    BUS_SPACE_BARRIER_WRITE);
+
+		bus_space_barrier(sc->sc_iot, ioh, VIC_LANCE_SIZE, 4,
+		    BUS_SPACE_BARRIER_READ);
+		r = bus_space_read_4(sc->sc_iot, ioh, VIC_LANCE_SIZE);
+
+		if ((r & VIC_MORPH_MASK) != VIC_MORPH_VMXNET) {
+			printf(": unable to morph vlance chip\n", r);
+			goto unmap;
+		}
+
+		break;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -435,7 +512,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	bus_space_unmap(sc->sc_iot, ioh, sc->sc_ios);
 	sc->sc_ios = 0;
 }
 
