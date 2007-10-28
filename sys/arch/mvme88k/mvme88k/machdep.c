@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.196 2007/10/28 19:45:52 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.197 2007/10/28 19:48:47 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -724,7 +724,6 @@ secondary_main()
 	int s;
 
 	cpu_configuration_print(0);
-	sched_init_cpu(ci);
 	ncpus++;
 
 	__cpu_simple_unlock(&cpu_boot_mutex);
