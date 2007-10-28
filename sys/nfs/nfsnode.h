@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.27 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.28 2007/10/28 14:03:47 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -88,13 +88,10 @@ struct nfsdmap {
 struct nfsnode {
 	LIST_ENTRY(nfsnode)	n_hash;		/* Hash chain */
 	u_quad_t		n_size;		/* Current size of file */
-	u_quad_t		n_brev;		/* Modify rev when cached */
-	u_quad_t		n_lrev;		/* Modify rev for lease */
 	struct vattr		n_vattr;	/* Vnode attribute cache */
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
 	time_t			n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
-	time_t			n_expiry;	/* Lease expiry time */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */
 	struct lockf		*n_lockf;	/* Locking record of file */
@@ -117,12 +114,12 @@ struct nfsnode {
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
 
-	off_t                    n_pushedlo;    /* 1st blk in commited range */
-	off_t                    n_pushedhi;    /* Last block in range */
-	off_t                    n_pushlo;      /* 1st block in commit range */
-	off_t                    n_pushhi;      /* Last block in range */
-	struct rwlock            n_commitlock;  /* Serialize commits */
-	int                      n_commitflags;
+	off_t			n_pushedlo;	/* 1st blk in commited range */
+	off_t			n_pushedhi;	/* Last block in range */
+	off_t			n_pushlo;	/* 1st block in commit range */
+	off_t			n_pushhi;	/* Last block in range */
+	struct rwlock		n_commitlock;	/* Serialize commits */
+	int			n_commitflags;
 };
 
 /*
