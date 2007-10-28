@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.19 2007/10/24 21:02:00 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.20 2007/10/28 10:16:20 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -54,6 +54,11 @@ ENTRY(cpu_switchto)
 	/* note that we don't need to recover r1 at this point */
 
 1:
+	ldcr	r2, PSR
+	set	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+
 	ldcr	r11, CPU
 	st	r3,  r11, CI_CURPROC			/* curproc = newproc */
 
@@ -64,6 +69,11 @@ ENTRY(cpu_switchto)
 #endif
 	ld	r2,  r3,  P_ADDR
 	st	r2,  r11, CI_CURPCB			/* curpcb = p->p_addr */
+
+	ldcr	r2, PSR
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
 
 	/* pmap_activate() the process' pmap */
 	bsr.n	_C_LABEL(pmap_activate)
