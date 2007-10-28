@@ -1,3 +1,4 @@
+/*	$OpenBSD: cmpcivar.h,v 1.5 2007/10/28 18:29:13 fgsch Exp $	*/
 /*	$NetBSD: cmpcivar.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
