@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.87 2007/10/28 13:23:01 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.88 2007/10/28 13:27:05 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1345,24 +1345,35 @@ void
 audio_fill_silence(struct audio_params *params, u_char *start, u_char *p, int n)
 {
 	size_t rounderr;
-	u_char auzero0, auzero1 = 0; /* initialize to please gcc */
-	int nfill = 1;
+	int i, samplesz, nsamples;
+	u_char auzero[4] = {0, 0, 0, 0};
 
 	/*
 	 * p may point the middle of a sample; round it to the
 	 * beginning of the sample, so we overwrite partially written
 	 * ones.
 	 */
-	rounderr = (p - start) % (params->precision / 8);
+	samplesz = params->precision / 8;
+	rounderr = (p - start) % samplesz;
 	p -= rounderr;
 	n += rounderr;
+	nsamples = n / samplesz;
 
 	switch (params->encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_BE:
+		break;
 	case AUDIO_ENCODING_ULAW:
-		auzero0 = 0x7f;
+		auzero[0] = 0x7f;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		auzero0 = 0x55;
+		auzero[0] = 0x55;
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		auzero[samplesz - 1] = 0x80; 
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		auzero[0] = 0x80;
 		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:
 	case AUDIO_ENCODING_MPEG_L1_PACKETS:
@@ -1371,38 +1382,14 @@ audio_fill_silence(struct audio_params *params, u_char *start, u_char *p, int n)
 	case AUDIO_ENCODING_MPEG_L2_PACKETS:
 	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-		auzero0 = 0;	/* fortunately this works for both 8 and 16 bits */
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (params->precision == 16) {
-			nfill = 2;
-			if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
-				auzero0 = 0;
-				auzero1 = 0x80;
-			} else {
-				auzero0 = 0x80;
-				auzero1 = 0;
-			}
-		} else
-			auzero0 = 0x80;
 		break;
 	default:
 		DPRINTF(("audio: bad encoding %d\n", params->encoding));
-		auzero0 = 0;
 		break;
 	}
-	if (nfill == 1) {
-		while (--n >= 0)
-			*p++ = auzero0; /* XXX memset */
-	} else /* nfill must be 2 */ {
-		while (n > 1) {
-			*p++ = auzero0;
-			*p++ = auzero1;
-			n -= 2;
-		}
+	while (--nsamples >= 0) {
+		for (i = 0; i < samplesz; i++) 
+			*p++ = auzero[i];
 	}
 }
 
@@ -2240,7 +2227,8 @@ audio_check_params(struct audio_params *p)
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision != 8 && p->precision != 16)
+		if (p->precision != 8 && p->precision != 16 && 
+		    p->precision != 32)
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:
@@ -2254,7 +2242,8 @@ audio_check_params(struct audio_params *p)
 		return (EINVAL);
 	}
 
-	if (p->channels < 1 || p->channels > 8)	/* sanity check # of channels */
+	/* sanity check # of channels */
+	if (p->channels < 1 || p->channels > 12)
 		return (EINVAL);
 
 	return (0);
