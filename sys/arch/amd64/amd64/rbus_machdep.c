@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.4 2007/09/12 13:56:40 chl Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.5 2007/10/28 10:25:09 martin Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 	struct extent *ex;
 
 	size = RBUS_MEM_SIZE;
-	start = min_start = max(RBUS_MEM_START, ctob(physmem));
+	start = min_start = max(RBUS_MEM_START, ptoa(physmem));
 #if NPCIBIOS > 0
 	if ((ex = pciaddr_search(PCIADDR_SEARCH_MEM, &start, size)) == NULL)
 #endif

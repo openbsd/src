@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2007/10/17 02:30:26 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2007/10/28 10:25:09 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ cpu_startup(void)
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 
-	if (physmem >= btoc(1ULL << 32)) {
+	if (physmem >= atop(1ULL << 32)) {
 		extern int amdgart_enable;
 
 		amdgart_enable = 1;
