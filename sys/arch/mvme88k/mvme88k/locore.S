@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.50 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.51 2007/10/28 19:45:52 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -309,29 +309,6 @@ GLOBAL(secondary_start)
 	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
 	stcr	r11, CPU
 
-	/*
-	 * Since there may be more than one secondary MPU, compete with them
-	 * to initialize safely.
-	 */
-	or.u	r11, r0,  hi16(_C_LABEL(cpu_mutex))
-	or	r11, r11, lo16(_C_LABEL(cpu_mutex))
-1:
-	or	r22, r0,  1
-	xmem	r22, r11, r0		/* If r22 gets 0, we have the lock... */
-	bcnd	eq0, r22, 4f		/* ...but if not, we must wait */
-2:
-	/* just watch the lock until it looks clear */
-	ld	r22, r11, r0
-	bcnd	eq0, r22, 1b
-	/* since we can be here with caches off, add a few nops to
-	   keep the bus from getting overloaded */
-	or	r2,  r0,  lo16(1000)
-3:
-	subu	r2,  r2,  1
-	bcnd	ne0, r2,  3b
-	br	1b
-4:
-	
 	/*
 	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
 	 * to call secondary_pre_main() to determine its cpu number.

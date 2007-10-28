@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.195 2007/10/28 19:42:12 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.196 2007/10/28 19:45:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -135,7 +135,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #ifdef MULTIPROCESSOR
-__cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
+__cpu_simple_lock_t cpu_boot_mutex;
 #endif
 
 /*
@@ -706,6 +706,8 @@ secondary_pre_main()
 	ci->ci_idle_pcb = (struct pcb *)uvm_km_zalloc(kernel_map, USPACE);
 	if (ci->ci_idle_pcb == NULL) {
 		printf("cpu%d: unable to allocate idle stack\n", ci->ci_cpuid);
+		__cpu_simple_unlock(&cpu_boot_mutex);
+		for (;;) ;
 	}
 }
 
@@ -724,7 +726,8 @@ secondary_main()
 	cpu_configuration_print(0);
 	sched_init_cpu(ci);
 	ncpus++;
-	__cpu_simple_unlock(&cpu_mutex);
+
+	__cpu_simple_unlock(&cpu_boot_mutex);
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
@@ -1046,10 +1049,20 @@ cpu_boot_secondary_processors()
 #endif
 		for (cpu = 0; cpu < max_cpus; cpu++) {
 			if (cpu != curcpu()->ci_cpuid) {
+				__cpu_simple_lock(&cpu_boot_mutex);
 				rc = spin_cpu(cpu, (vaddr_t)secondary_start);
-				if (rc != 0 && rc != FORKMPU_NO_MPU)
+				switch (rc) {
+				case 0:
+					__cpu_simple_lock(&cpu_boot_mutex);
+					break;
+				default:
 					printf("cpu%d: spin_cpu error %d\n",
 					    cpu, rc);
+					/* FALLTHROUGH */
+				case FORKMPU_NO_MPU:
+					break;
+				}
+				__cpu_simple_unlock(&cpu_boot_mutex);
 			}
 		}
 		break;
