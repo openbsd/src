@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.30 2007/10/14 19:34:41 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.31 2007/10/28 14:12:41 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ int nfs_request(struct vnode *, struct mbuf *, int, struct proc *,
 		     struct ucred *, struct mbuf **, struct mbuf **,
 		     caddr_t *);
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *, int,
-		u_quad_t *, struct mbuf **, struct mbuf **, caddr_t *);
+		struct mbuf **, struct mbuf **, caddr_t *);
 void nfs_timer(void *);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct proc *);
 int nfs_sndlock(int *, struct nfsreq *);

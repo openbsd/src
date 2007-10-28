@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.13 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.14 2007/10/28 14:12:41 thib Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ loop:
 			} else if (rp->rc_flag & RC_REPSTATUS) {
 				nfsstats.srvcache_nonidemdonehits++;
 				nfs_rephead(0, nd, slp, rp->rc_status,
-				   (u_quad_t *)0, repp, &mb, &bpos);
+				   repp, &mb, &bpos);
 				ret = RC_REPLY;
 			} else if (rp->rc_flag & RC_REPMBUF) {
 				nfsstats.srvcache_nonidemdonehits++;

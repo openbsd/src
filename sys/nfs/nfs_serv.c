@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.42 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.43 2007/10/28 14:12:41 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -114,7 +114,6 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	struct mbuf *mb, *mreq, *mb2;
 	struct vattr va;
 	u_long testmode, nfsmode;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -180,7 +179,6 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	int error = 0, rdonly;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -228,7 +226,6 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3), gcheck = 0;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	u_quad_t frev;
 	struct timespec guard;
 
 	fhp = &nfh.fh_generic;
@@ -361,7 +358,6 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
 	struct vattr va, dirattr;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -437,7 +433,6 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	struct uio io, *uiop = &io;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -542,7 +537,6 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	struct uio io, *uiop = &io;
 	struct vattr va;
 	off_t off;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -709,7 +703,6 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	struct uio io, *uiop = &io;
 	off_t off;
-	u_quad_t frev;
 
 	if (mrep == NULL) {
 		*mrq = NULL;
@@ -890,7 +883,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	struct mbuf *mb, *mb2, *mreq, *mrep, *md;
 	struct vnode *vp;
 	struct uio io, *uiop = &io;
-	u_quad_t frev, cur_usec;
+	u_quad_t cur_usec;
 	struct timeval tv;
 
 	*mrq = NULL;
@@ -1255,7 +1248,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	struct vnode *vp = NULL, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev, tempsize;
+	u_quad_t tempsize;
 	u_char cverf[NFSX_V3CREATEVERF];
 
 	nd.ni_cnd.cn_nameiop = 0;
@@ -1491,7 +1484,6 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	struct vnode *vp, *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
@@ -1638,7 +1630,6 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	struct vattr dirfor, diraft;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 #ifndef nolint
 	vp = (struct vnode *)0;
@@ -1725,7 +1716,6 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	struct vattr fdirfor, fdiraft, tdirfor, tdiraft;
 	nfsfh_t fnfh, tnfh;
 	fhandle_t *ffhp, *tfhp;
-	u_quad_t frev;
 	uid_t saved_uid;
 
 	ffhp = &fnfh.fh_generic;
@@ -1903,7 +1893,6 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	struct vattr dirfor, diraft, at;
 	nfsfh_t nfh, dnfh;
 	fhandle_t *fhp, *dfhp;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	dfhp = &dnfh.fh_generic;
@@ -2002,7 +1991,6 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	struct vnode *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
@@ -2143,7 +2131,6 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	struct vnode *vp, *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -2255,7 +2242,6 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	struct nameidata nd;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -2389,7 +2375,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
 	int siz, cnt, fullsiz, eofflag, rdonly, ncookies;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
-	u_quad_t frev, off, toff, verf;
+	u_quad_t off, toff, verf;
 	u_long *cookies = NULL, *cookiep;
 
 	fhp = &nfh.fh_generic;
@@ -2653,7 +2639,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	struct nfs_fattr *fp;
 	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
 	int siz, cnt, fullsiz, eofflag, rdonly, dirlen, ncookies;
-	u_quad_t frev, off, toff, verf;
+	u_quad_t off, toff, verf;
 	u_long *cookies = NULL, *cookiep;
 
 	fhp = &nfh.fh_generic;
@@ -2966,7 +2952,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	u_quad_t frev, off;
+	u_quad_t off;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -3030,7 +3016,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	struct statfs statfs;
-	u_quad_t frev, tval;
+	u_quad_t tval;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -3104,7 +3090,6 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	struct vattr at;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -3174,7 +3159,6 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	struct vattr at;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -3231,7 +3215,6 @@ nfsrv_null(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = NFSERR_RETVOID;
 	struct mbuf *mb, *mreq;
-	u_quad_t frev;
 
 	nfsm_reply(0);
 	return (0);
@@ -3252,7 +3235,6 @@ nfsrv_noop(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error;
 	struct mbuf *mb, *mreq;
-	u_quad_t frev;
 
 	if (nfsd->nd_repstat)
 		error = nfsd->nd_repstat;

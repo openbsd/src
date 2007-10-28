@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.54 2007/10/17 17:44:23 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.55 2007/10/28 14:12:41 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1044,12 +1044,11 @@ nfsmout:
  * siz arg. is used to decide if adding a cluster is worthwhile
  */
 int
-nfs_rephead(siz, nd, slp, err, frev, mrq, mbp, bposp)
+nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 	int siz;
 	struct nfsrv_descript *nd;
 	struct nfssvc_sock *slp;
 	int err;
-	u_quad_t *frev;
 	struct mbuf **mrq;
 	struct mbuf **mbp;
 	caddr_t *bposp;
