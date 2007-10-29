@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2006/07/19 13:34:52 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.43 2007/10/29 06:57:13 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -39,6 +39,7 @@ LTESTS= 	connect \
 		reexec \
 		brokenkeys \
 		cfgmatch \
+		localcommand \
 		forcecommand
 
 USER!=		id -un
