@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.26 2007/05/20 20:12:32 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.27 2007/10/29 19:58:57 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -704,7 +704,10 @@ void
 m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 {
 	u_int32_t psr;
-	int cpu = cpu_number();
+	int cpu;
+#ifdef MULTIPROCESSOR
+	u_int32_t cpumask;
+#endif
 	vaddr_t va;
 	paddr_t pa;
 	psize_t size, count;
@@ -728,6 +731,12 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		break;
 	}
 
+#ifdef MULTIPROCESSOR
+	cpumask = pmap->pm_cpus;
+#else
+	cpu = cpu_number();
+#endif
+
 	disable_interrupt(psr);
 	CMMU_LOCK;
 
@@ -735,8 +744,22 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88200_CACHE_LINE;
 
-		if (pmap_extract(pmap, va, &pa) != FALSE)
+		if (pmap_extract(pmap, va, &pa) != FALSE) {
+#ifdef MULTIPROCESSOR
+			for (cpu = 0; cpumask != 0; cpu++) {
+				if (((1 << cpu) & cpumask) == 0)
+					continue;
+				cpumask ^= 1 << cpu;
+#ifdef DIAGNOSTIC
+				if (m88k_cpus[cpu].ci_alive == 0)
+					continue;
+#endif
+				(*flusher)(cpu, pa, count);
+			}
+#else	/* MULTIPROCESSOR */
 			(*flusher)(cpu, pa, count);
+#endif	/* MULTIPROCESSOR */
+		}
 
 		va += count;
 		size -= count;
@@ -750,7 +773,7 @@ void
 m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
-	int cpu = cpu_number();
+	int cpu;
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(int, paddr_t, psize_t);
@@ -773,6 +796,10 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		break;
 	}
 
+#ifndef MULTIPROCESSOR
+	cpu = cpu_number();
+#endif
+
 	disable_interrupt(psr);
 	CMMU_LOCK;
 
@@ -780,7 +807,11 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88200_CACHE_LINE;
 
-		(*flusher)(cpu, pa, count);
+#ifdef MULTIPROCESSOR
+		for (cpu = 0; cpu < MAX_CPUS; cpu++)
+			if (m88k_cpus[cpu].ci_alive != 0)
+#endif
+				(*flusher)(cpu, pa, count);
 
 		pa += count;
 		size -= count;
