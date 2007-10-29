@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.40 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.41 2007/10/29 09:39:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1373,9 +1373,11 @@ ar5k_ar5212_fill_tx_desc(struct ath_hal *hal, struct ath_desc *desc,
 	bzero(tx_status, sizeof(struct ar5k_ar5212_tx_status));
 
 	/* Validate segment length and initialize the descriptor */
-	if ((tx_desc->tx_control_1 = (segment_length &
-	    AR5K_AR5212_DESC_TX_CTL1_BUF_LEN)) != segment_length)
+	if (segment_length & ~AR5K_AR5212_DESC_TX_CTL1_BUF_LEN)
 		return (AH_FALSE);
+	tx_desc->tx_control_1 =
+	    (tx_desc->tx_control_1 & ~AR5K_AR5212_DESC_TX_CTL1_BUF_LEN) |
+	    segment_length;
 
 	if (first_segment != AH_TRUE)
 		tx_desc->tx_control_0 &= ~AR5K_AR5212_DESC_TX_CTL0_FRAME_LEN;
