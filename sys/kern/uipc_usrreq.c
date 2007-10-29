@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.35 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.36 2007/10/29 18:36:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ restart:
 	 */
 	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
-	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
+	rights->m_len = CMSG_LEN(nfds * sizeof(int));
  out:
 	fdpunlock(p->p_fd);
 	free(fdp, M_TEMP);
