@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.96 2007/10/27 20:04:28 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.97 2007/10/29 21:27:25 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -713,8 +713,8 @@ _C_LABEL(trapbase):
 	UTRAP 0x019; UTRAP 0x01a; UTRAP 0x01b; UTRAP 0x01c; UTRAP 0x01d
 	UTRAP 0x01e; UTRAP 0x01f
 	TRAP T_FPDISABLED		! 020 = fp instr, but EF bit off in psr
-	VTRAP T_FP_IEEE_754, fp_exception		! 021 = ieee 754 exception
-	VTRAP T_FP_OTHER, fp_exception		! 022 = other fp exception
+	TRAP T_FP_IEEE_754		! 021 = ieee 754 exception
+	TRAP T_FP_OTHER			! 022 = other fp exception
 	TRAP T_TAGOF			! 023 = tag overflow
 	UCLEANWIN			! 024-027 = clean window trap
 	TRAP T_DIV0			! 028 = divide by zero
@@ -875,8 +875,8 @@ ktextfault:
 	UTRAP 0x019; UTRAP 0x01a; UTRAP 0x01b; UTRAP 0x01c; UTRAP 0x01d
 	UTRAP 0x01e; UTRAP 0x01f
 	TRAP T_FPDISABLED		! 020 = fp instr, but EF bit off in psr
-	VTRAP T_FP_IEEE_754, fp_exception		! 021 = ieee 754 exception
-	VTRAP T_FP_OTHER, fp_exception		! 022 = other fp exception
+	TRAP T_FP_IEEE_754		! 021 = ieee 754 exception
+	TRAP T_FP_OTHER			! 022 = other fp exception
 	TRAP T_TAGOF			! 023 = tag overflow
 	KCLEANWIN			! 024-027 = clean window trap
 	TRAP T_DIV0			! 028 = divide by zero
@@ -2553,29 +2553,6 @@ text_error:
 	 add	%sp, CC64FSZ + BIAS, %o0	! (argument: &tf)
 	ba	text_recover
 	 nop
-	NOTREACHED
-
-/*
- * fp_exception has to check to see if we are trying to save
- * the FP state, and if so, continue to save the FP state.
- *
- * We do not even bother checking to see if we were in kernel mode,
- * since users have no access to the special_fp_store instruction.
- *
- * This whole idea was stolen from Sprite.
- */
-/*
- * XXX I don't think this is at all revelent for V9.
- */
-fp_exception:
-	rdpr	%tpc, %g1
-	set	special_fp_store, %g4	! see if we came from the special one
-	cmp	%g1, %g4		! pc == special_fp_store?
-	bne	slowtrap		! no, go handle per usual
-	 sethi	%hi(savefpcont), %g4	! yes, "return" to the special code
-	or	%lo(savefpcont), %g4, %g4
-	wrpr	%g0, %g4, %tnpc
-	 done
 	NOTREACHED
 
 /*
@@ -8998,10 +8975,9 @@ ENTRY(clearfpstate)
 	 wrpr	%o1, 0, %pstate
 
 /*
- * savefpstate(f) struct fpstate *f;
+ * savefpstate(struct fpstate *f)
  *
- * Store the current FPU state.  The first `st %fsr' may cause a trap;
- * our trap handler knows how to recover (by `returning' to savefpcont).
+ * Store the current FPU state.
  *
  * Since the kernel may need to use the FPU and we have problems atomically
  * testing and enabling the FPU, we leave here with the FPRS_FEF bit set.
@@ -9009,37 +8985,18 @@ ENTRY(clearfpstate)
  */
  /* XXXXXXXXXX  Assume caller created a proper stack frame */
 ENTRY(savefpstate)
-!	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
 	rd	%fprs, %o5
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, PSTATE_PEF, %o1
 	wrpr	%o1, 0, %pstate
-	/* do some setup work while we wait for PSR_EF to turn on */
-	set	FSR_QNE, %o2		! QNE = 0x2000, too big for immediate
-	clr	%o3			! qsize = 0;
-special_fp_store:
-	/* This may need to be done w/rdpr/stx combo */
+
 	stx	%fsr, [%o0 + FS_FSR]	! f->fs_fsr = getfsr();
-	/*
-	 * Even if the preceding instruction did not trap, the queue
-	 * is not necessarily empty: this state save might be happening
-	 * because user code tried to store %fsr and took the FPU
-	 * from `exception pending' mode to `exception' mode.
-	 * So we still have to check the blasted QNE bit.
-	 * With any luck it will usually not be set.
-	 */
+
 	rd	%gsr, %o4		! Save %gsr
 	st	%o4, [%o0 + FS_GSR]
 
-	ldx	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
-	btst	%o2, %o4
-	add	%o0, FS_REGS, %o2
-	bnz	Lfp_storeq		!	goto storeq;
-Lfp_finish:
-	 btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
-	bnz,pn	%icc, 3f		! Check alignment
-	 st	%o3, [%o0 + FS_QSIZE]	! f->fs_qsize = qsize;
+	add	%o0, FS_REGS, %o2	! This is zero...
 	btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 1f		! Then skip it
 	 add	%o2, 128, %o2		! Skip a block
@@ -9062,103 +9019,12 @@ Lfp_finish:
 	membar	#Sync			! Finish operation so we can
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
-3:
-#ifdef DIAGNOSTIC
-	btst	7, %o2			! 32-bit aligned!?!?
-	bnz,pn	%icc, 6f
-#endif	/* DIAGNOSTIC */
-	 btst	FPRS_DL, %o5		! Lower FPU clean?
-	bz,a,pt	%icc, 4f		! Then skip it
-	 add	%o0, 128, %o0
-
-	membar	#Sync
-	std	%f0, [%o0 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
-	std	%f2, [%o0 + FS_REGS + (4*2)]
-	std	%f4, [%o0 + FS_REGS + (4*4)]
-	std	%f6, [%o0 + FS_REGS + (4*6)]
-	std	%f8, [%o0 + FS_REGS + (4*8)]
-	std	%f10, [%o0 + FS_REGS + (4*10)]
-	std	%f12, [%o0 + FS_REGS + (4*12)]
-	std	%f14, [%o0 + FS_REGS + (4*14)]
-	std	%f16, [%o0 + FS_REGS + (4*16)]
-	std	%f18, [%o0 + FS_REGS + (4*18)]
-	std	%f20, [%o0 + FS_REGS + (4*20)]
-	std	%f22, [%o0 + FS_REGS + (4*22)]
-	std	%f24, [%o0 + FS_REGS + (4*24)]
-	std	%f26, [%o0 + FS_REGS + (4*26)]
-	std	%f28, [%o0 + FS_REGS + (4*28)]
-	std	%f30, [%o0 + FS_REGS + (4*30)]
-4:
-	btst	FPRS_DU, %o5		! Upper FPU clean?
-	bz,pt	%icc, 5f		! Then skip it
-	 nop
-
-	membar	#Sync
-	std	%f32, [%o0 + FS_REGS + (4*32)]
-	std	%f34, [%o0 + FS_REGS + (4*34)]
-	std	%f36, [%o0 + FS_REGS + (4*36)]
-	std	%f38, [%o0 + FS_REGS + (4*38)]
-	std	%f40, [%o0 + FS_REGS + (4*40)]
-	std	%f42, [%o0 + FS_REGS + (4*42)]
-	std	%f44, [%o0 + FS_REGS + (4*44)]
-	std	%f46, [%o0 + FS_REGS + (4*46)]
-	std	%f48, [%o0 + FS_REGS + (4*48)]
-	std	%f50, [%o0 + FS_REGS + (4*50)]
-	std	%f52, [%o0 + FS_REGS + (4*52)]
-	std	%f54, [%o0 + FS_REGS + (4*54)]
-	std	%f56, [%o0 + FS_REGS + (4*56)]
-	std	%f58, [%o0 + FS_REGS + (4*58)]
-	std	%f60, [%o0 + FS_REGS + (4*60)]
-	std	%f62, [%o0 + FS_REGS + (4*62)]
-5:
-	membar	#Sync
-	retl
-	 wr	%g0, FPRS_FEF, %fprs		! Mark FPU clean
-
-	!!
-	!! Damn thing is *NOT* aligned on a 64-bit boundary
-	!! 
-6:
-	wr	%g0, FPRS_FEF, %fprs
-	ta	1
-	retl
-	 nop
-	
-/*
- * Store the (now known nonempty) FP queue.
- * We have to reread the fsr each time in order to get the new QNE bit.
- *
- * UltraSPARCs don't have floating point queues.
- */
-Lfp_storeq:
-	add	%o0, FS_QUEUE, %o1	! q = &f->fs_queue[0];
-1:
-	rdpr	%fq, %o4
-	stx	%o4, [%o1 + %o3]	! q[qsize++] = fsr_qfront();
-	stx	%fsr, [%o0 + FS_FSR] 	! reread fsr
-	ldx	[%o0 + FS_FSR], %o4	! if fsr & QNE, loop
-	btst	%o5, %o4
-	bnz	1b
-	 inc	8, %o3
-	b	Lfp_finish		! set qsize and finish storing fregs
-	 srl	%o3, 3, %o3		! (but first fix qsize)
-
-/*
- * The fsr store trapped.  Do it again; this time it will not trap.
- * We could just have the trap handler return to the `st %fsr', but
- * if for some reason it *does* trap, that would lock us into a tight
- * loop.  This way we panic instead.  Whoopee.
- */
-savefpcont:
-	b	special_fp_store + 4	! continue
-	 stx	%fsr, [%o0 + FS_FSR]	! but first finish the %fsr store
 
 /*
  * Load FPU state.
  */
  /* XXXXXXXXXX  Should test to see if we only need to do a partial restore */
 ENTRY(loadfpstate)
-	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
 	ld	[%o0 + FS_GSR], %o4	! Restore %gsr
 	set	PSTATE_PEF, %o2
@@ -9167,9 +9033,7 @@ ENTRY(loadfpstate)
 	wrpr	%o1, 0, %pstate
 	ldx	[%o0 + FS_FSR], %fsr	! setfsr(f->fs_fsr);
 	add	%o0, FS_REGS, %o3	! This is zero...
-	btst	BLOCK_ALIGN, %o3
-	bne,pt	%icc, 1f	! Only use block loads on aligned blocks
-	 wr	%o4, %g0, %gsr
+	wr	%o4, %g0, %gsr
 	membar	#Sync
 	ldda	[%o3] ASI_BLK_P, %f0
 	inc	BLOCK_SIZE, %o3
@@ -9181,55 +9045,6 @@ ENTRY(loadfpstate)
 	membar	#Sync			! Make sure loads are complete
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
-1:
-#ifdef DIAGNOSTIC
-	btst	7, %o3
-	bne,pn	%icc, 1f
-	 nop
-#endif	/* DIAGNOSTIC */
-	/* Unaligned -- needs to be done the long way
-	membar	#Sync
-	ldd	[%o3 + (4*0)], %f0
-	ldd	[%o3 + (4*2)], %f2
-	ldd	[%o3 + (4*4)], %f4
-	ldd	[%o3 + (4*6)], %f6
-	ldd	[%o3 + (4*8)], %f8
-	ldd	[%o3 + (4*10)], %f10
-	ldd	[%o3 + (4*12)], %f12
-	ldd	[%o3 + (4*14)], %f14
-	ldd	[%o3 + (4*16)], %f16
-	ldd	[%o3 + (4*18)], %f18
-	ldd	[%o3 + (4*20)], %f20
-	ldd	[%o3 + (4*22)], %f22
-	ldd	[%o3 + (4*24)], %f24
-	ldd	[%o3 + (4*26)], %f26
-	ldd	[%o3 + (4*28)], %f28
-	ldd	[%o3 + (4*30)], %f30
-	ldd	[%o3 + (4*32)], %f32
-	ldd	[%o3 + (4*34)], %f34
-	ldd	[%o3 + (4*36)], %f36
-	ldd	[%o3 + (4*38)], %f38
-	ldd	[%o3 + (4*40)], %f40
-	ldd	[%o3 + (4*42)], %f42
-	ldd	[%o3 + (4*44)], %f44
-	ldd	[%o3 + (4*46)], %f46
-	ldd	[%o3 + (4*48)], %f48
-	ldd	[%o3 + (4*50)], %f50
-	ldd	[%o3 + (4*52)], %f52
-	ldd	[%o3 + (4*54)], %f54
-	ldd	[%o3 + (4*56)], %f56
-	ldd	[%o3 + (4*58)], %f58
-	ldd	[%o3 + (4*60)], %f60
- 	ldd	[%o3 + (4*62)], %f62
-	membar	#Sync
-	retl
-	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
-
-1:
-	wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
-	ta	1
-	retl
-	 nop
 
 /* XXX belongs elsewhere (ctlreg.h?) */
 #define	AFSR_CECC_ERROR		0x100000	/* AFSR Correctable ECC err */
