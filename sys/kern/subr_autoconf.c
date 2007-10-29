@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.53 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.54 2007/10/29 01:05:13 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 /*
  * Autoconfiguration subroutines.
  */
-
-typedef int (*cond_predicate_t)(struct device *, void *);
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
