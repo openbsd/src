@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.3 2007/10/29 18:26:31 stefan Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -1151,7 +1151,7 @@ struct swdef {
 static void
 addcase(NODE *p)
 {
-	struct swents *w, *sw = tmpalloc(sizeof(struct swents));
+	struct swents **put, *w, *sw = tmpalloc(sizeof(struct swents));
 
 	p = optim(p);  /* change enum to ints */
 	if (p->n_op != ICON || p->n_sp != NULL) {
@@ -1164,36 +1164,17 @@ addcase(NODE *p)
 	}
 
 	sw->sval = p->n_lval;
-	plabel( sw->slab = getlab());
-	w = swpole->ents;
-	if (swpole->ents == NULL) {
-		sw->next = NULL;
-		swpole->ents = sw;
-	} else if (swpole->ents->next == NULL) {
-		if (swpole->ents->sval == sw->sval) {
-			uerror("duplicate case in switch");
-		} else if (swpole->ents->sval < sw->sval) {
-			sw->next = NULL;
-			swpole->ents->next = sw;
-		} else {
-			sw->next = swpole->ents;
-			swpole->ents = sw;
-		}
-	} else {
-		while (w->next->next != NULL && w->next->sval < sw->sval) {
-			w = w->next;
-		}
-		if (w->next->sval == sw->sval) {
-			uerror("duplicate case in switch");
-		} else if (w->next->sval > sw->sval) {
-			sw->next = w->next;
-			w->next = sw;
-		} else {
-			sw->next = NULL;
-			w->next->next = sw;
-		}
+	put = &swpole->ents;
+	for (w = swpole->ents; w != NULL && w->sval < sw->sval; w = w->next)
+		put = &w->next;
+	if (w != NULL && w->sval == sw->sval)
+		uerror("duplicate case in switch");
+	else {
+		plabel(sw->slab = getlab());
+		*put = sw;
+		sw->next = w;
+		swpole->nents++;
 	}
-	swpole->nents++;
 	tfree(p);
 }
 
