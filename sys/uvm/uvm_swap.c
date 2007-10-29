@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.73 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.74 2007/10/29 17:08:08 chl Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ swaplist_insert(sdp, newspp, priority)
 			LIST_INSERT_HEAD(&swap_priority, spp, spi_swappri);
 	} else {
 	  	/* we don't need a new priority structure, free it */
-		FREE(newspp, M_VMSWAP);
+		free(newspp, M_VMSWAP);
 	}
 
 	/*

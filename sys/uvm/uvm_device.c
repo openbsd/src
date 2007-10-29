@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.27 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.28 2007/10/29 17:08:08 chl Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -216,8 +216,7 @@ udv_attach(arg, accessprot, off, size)
 
 		simple_unlock(&udv_lock);
 		/* NOTE: we could sleep in the following malloc() */
-		MALLOC(udv, struct uvm_device *, sizeof(*udv), M_TEMP,
-		       M_WAITOK);
+		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
 		simple_lock(&udv_lock);
 
 		/*
@@ -237,7 +236,7 @@ udv_attach(arg, accessprot, off, size)
 
 		if (lcv) {
 			simple_unlock(&udv_lock);
-			FREE(udv, M_TEMP);
+			free(udv, M_TEMP);
 			continue;
 		}
 
@@ -333,7 +332,7 @@ again:
 		wakeup(udv);
 	simple_unlock(&udv_lock);
 	simple_unlock(&uobj->vmobjlock);
-	FREE(udv, M_TEMP);
+	free(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=%p", uobj,0,0,0);
 }
 

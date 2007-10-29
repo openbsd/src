@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.21 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.22 2007/10/29 17:08:08 chl Exp $	*/
 /*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -92,7 +92,7 @@ uvm_map_create(pmap, min, max, flags)
 {
 	vm_map_t result;
 
-	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
+	result = malloc(sizeof(struct vm_map), M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, min, max, flags);
 	result->pmap = pmap;
 	return(result);
@@ -206,7 +206,7 @@ uvm_map_deallocate(map)
 
 	uvm_unmap(map, map->min_offset, map->max_offset);
 	pmap_destroy(map->pmap);
-	FREE(map, M_VMMAP);
+	free(map, M_VMMAP);
 }
 
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */

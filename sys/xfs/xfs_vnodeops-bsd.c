@@ -595,8 +595,7 @@ xfs_readdir(struct vop_readdir_args * ap)
 	    ncookies++;
 	}
 
-	MALLOC(cookies, xfs_cookie_t *, ncookies * sizeof(xfs_cookie_t),
-	       M_TEMP, M_WAITOK);
+	cookies = malloc(ncookies * sizeof(xfs_cookie_t), M_TEMP, M_WAITOK);
 	for (dp = dp_start, cookiep = cookies;
 	     dp < dp_end;
 	     dp = (const struct dirent *)((const char *) dp + dp->d_reclen)) {

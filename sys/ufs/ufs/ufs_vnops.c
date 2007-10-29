@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.83 2007/09/23 20:15:07 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.84 2007/10/29 17:06:20 chl Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1412,7 +1412,7 @@ ufs_readdir(void *v)
 			auio.uio_iovcnt = 1;
 			auio.uio_segflg = UIO_SYSSPACE;
 			aiov.iov_len = count;
-			MALLOC(dirbuf, caddr_t, count, M_TEMP, M_WAITOK);
+			dirbuf = malloc(count, M_TEMP, M_WAITOK);
 			aiov.iov_base = dirbuf;
 			error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 			if (error == 0) {
@@ -1433,7 +1433,7 @@ ufs_readdir(void *v)
 				if (dp >= edp)
 					error = uiomove(dirbuf, readcnt, uio);
 			}
-			FREE(dirbuf, M_TEMP);
+			free(dirbuf, M_TEMP);
 		}
 #	else
 		error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
@@ -1465,8 +1465,7 @@ ufs_readdir(void *v)
                 }
                 lost += uio->uio_offset - off;
                 uio->uio_offset = off;
-                MALLOC(cookies, u_long *, ncookies * sizeof(u_long), M_TEMP,
-                    M_WAITOK);
+                cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
                 *ap->a_ncookies = ncookies;
                 *ap->a_cookies = cookies;
                 for (off = offstart, dp = dpstart; off < uio->uio_offset; ) {
