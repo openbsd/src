@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2007/10/24 20:53:59 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.27 2007/10/29 19:57:46 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -137,6 +137,7 @@ curcpu(void)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_primary != 0)
 
 void	cpu_boot_secondary_processors(void);
+__dead void cpu_emergency_disable(void);
 void	m88k_send_ipi(int, cpuid_t);
 void	m88k_broadcast_ipi(int);
 
