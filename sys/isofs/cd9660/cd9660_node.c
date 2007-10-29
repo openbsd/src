@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.19 2007/06/01 23:47:55 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.20 2007/10/29 13:02:19 chl Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -111,8 +111,7 @@ iso_dmap(device, inum, create)
 	if (!create)
 		return (NULL);
 
-	MALLOC(dp, struct iso_dnode *, sizeof(struct iso_dnode), M_CACHE,
-	       M_WAITOK);
+	dp = malloc(sizeof(struct iso_dnode), M_CACHE, M_WAITOK);
 	dp->i_dev = dev;
 	dp->i_number = ino;
 
@@ -138,7 +137,7 @@ iso_dunmap(device)
 				if (dq)
 					dq->d_prev = dp->d_prev;
 				*dp->d_prev = dq;
-				FREE(dp, M_CACHE);
+				free(dp, M_CACHE);
 			}
 		}
 	}
@@ -285,7 +284,7 @@ cd9660_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-	FREE(vp->v_data, M_ISOFSNODE);
+	free(vp->v_data, M_ISOFSNODE);
 	vp->v_data = NULL;
 	return (0);
 }

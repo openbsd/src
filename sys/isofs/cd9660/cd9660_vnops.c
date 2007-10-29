@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.43 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.44 2007/10/29 13:02:19 chl Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	if (ip->inode.iso_rdev == vap->va_rdev || vap->va_rdev == VNOVAL) {
 		/* same as the unmapped one, delete the mapping */
 		remque(dp);
-		FREE(dp, M_CACHE);
+		free(dp, M_CACHE);
 	} else
 		/* enter new mapping */
 		dp->d_dev = vap->va_rdev;
@@ -247,7 +247,7 @@ cd9660_getattr(v)
 		struct uio auio;
 		char *cp;
 
-		MALLOC(cp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+		cp = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		aiov.iov_base = cp;
 		aiov.iov_len = MAXPATHLEN;
 		auio.uio_iov = &aiov;
@@ -262,7 +262,7 @@ cd9660_getattr(v)
 		rdlnk.a_cred = ap->a_cred;
 		if (cd9660_readlink(&rdlnk) == 0)
 			vap->va_size = MAXPATHLEN - auio.uio_resid;
-		FREE(cp, M_TEMP);
+		free(cp, M_TEMP);
 	}
 	vap->va_flags	= 0;
 	vap->va_gen = 1;
@@ -318,8 +318,7 @@ cd9660_read(v)
 			} *ra;
 			int i;
 
-			MALLOC(ra, struct ra *, sizeof *ra,
-			    M_TEMP, M_WAITOK);
+			ra = malloc(sizeof *ra, M_TEMP, M_WAITOK);
 			for (i = 0; i < MAX_RA &&
 			    lblktosize(imp, (rablock + i)) < ip->i_size;
 			    i++) {
@@ -328,7 +327,7 @@ cd9660_read(v)
 			}
 			error = breadn(vp, lbn, size, ra->blks,
 			    ra->sizes, i, NOCRED, &bp);
-			FREE(ra, M_TEMP);
+			free(ra, M_TEMP);
 		} else
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		ci->ci_lastr = lbn;
@@ -510,7 +509,7 @@ cd9660_readdir(v)
 	imp = dp->i_mnt;
 	bmask = imp->im_bmask;
 
-	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
+	idp = malloc(sizeof(*idp), M_TEMP, M_WAITOK);
 	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
 	/*
 	 * XXX
@@ -526,8 +525,7 @@ cd9660_readdir(v)
                 * Guess the number of cookies needed.
                 */
                ncookies = uio->uio_resid / 16;
-               MALLOC(cookies, u_long *, ncookies * sizeof(u_long), M_TEMP,
-                   M_WAITOK);
+               cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
                idp->cookies = cookies;
                idp->ncookies = ncookies;
 	}
@@ -536,7 +534,7 @@ cd9660_readdir(v)
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
 	    (error = cd9660_bufatoff(dp, (off_t)idp->curroff, NULL, &bp))) {
-		FREE(idp, M_TEMP);
+		free(idp, M_TEMP);
 		return (error);
 	}
 	endsearch = dp->i_size;
@@ -660,7 +658,7 @@ cd9660_readdir(v)
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
 
-	FREE(idp, M_TEMP);
+	free(idp, M_TEMP);
 
 	return (error);
 }

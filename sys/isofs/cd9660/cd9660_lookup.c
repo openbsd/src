@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.14 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.15 2007/10/29 13:02:19 chl Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -285,14 +285,14 @@ searchloop:
 			else
 				ino = dbtob(bp->b_blkno) + entryoffsetinblock;
 			dp->i_ino = ino;
-			MALLOC(altname, char *, NAME_MAX, M_TEMP, M_WAITOK);
+			altname = malloc(NAME_MAX, M_TEMP, M_WAITOK);
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
 			if (namelen == cnp->cn_namelen
 			    && !bcmp(name,altname,namelen)) {
-				FREE(altname, M_TEMP);
+				free(altname, M_TEMP);
 				goto found;
 			}
-			FREE(altname, M_TEMP);
+			free(altname, M_TEMP);
 			ino = 0;
 			break;
 		}
