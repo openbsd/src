@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.1 2007/10/28 22:12:23 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.2 2007/10/29 11:38:27 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2007 $
+.Dd $Mdocdate: October 29 2007 $
 .Dt ENVY 4
 .Os
 .Sh NAME
 .Nm envy
-.Nd ICE1712 (aka VIA Envy24) audio device
+.Nd VIA Envy24 audio device
 .Sh SYNOPSIS
 .Cd "envy* at pci?"
 .Cd "audio* at envy?"
@@ -28,7 +28,8 @@ The
 .Nm
 driver supports sound cards based on VIA Envy24 PCI chips,
 such as the M-Audio Delta-1010LT PCI card.
-The Envy24 chip is a versatile digital PCI chip that can be attached to
+The Envy24 chip, formerly known as the ICE1712, is a versatile digital
+PCI chip that can be attached to
 up to 4x2 external analog converters and 2x2 S/PDIF transmitter/receivers.
 Currently only Asahi Kasei AK4524 codecs are supported.
 .Ss Mixer device
