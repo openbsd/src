@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.14 2007/10/28 14:12:41 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.15 2007/10/29 11:16:49 thib Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  *		pages 53-63. San Diego, February 1989.
  */
 #include <sys/param.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -49,10 +48,8 @@
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <netinet/in.h>
-#include <nfs/nfsm_subs.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
@@ -63,21 +60,19 @@ extern struct nfsstats nfsstats;
 extern int nfsv2_procid[NFS_NPROCS];
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 
-#define	NFSRCHASH(xid) \
+#define	NFSRCHASH(xid)	\
 	(&nfsrvhashtbl[((xid) + ((xid) >> 24)) & nfsrvhash])
 LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
 TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 u_long nfsrvhash;
 
-#define TRUE	1
+#define	TRUE	1
 #define	FALSE	0
 
-#define	NETFAMILY(rp) \
-		(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_UNSPEC)
+#define	NETFAMILY(rp)	\
+	(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_UNSPEC)
 
-/*
- * Static array that defines which nfs rpc's are nonidempotent
- */
+/* Array that defines which nfs rpc's are nonidempotent */
 int nonidempotent[NFS_NPROCS] = {
 	FALSE,
 	FALSE,
@@ -108,7 +103,7 @@ int nonidempotent[NFS_NPROCS] = {
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
-static int nfsv2_repstat[NFS_NPROCS] = {
+int nfsv2_repstat[NFS_NPROCS] = {
 	FALSE,
 	FALSE,
 	FALSE,
@@ -129,11 +124,9 @@ static int nfsv2_repstat[NFS_NPROCS] = {
 	FALSE,
 };
 
-/*
- * Initialize the server request cache list
- */
+/* Initialize the server request cache list */
 void
-nfsrv_initcache()
+nfsrv_initcache(void)
 {
 
 	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, M_WAITOK, &nfsrvhash);
@@ -155,10 +148,8 @@ nfsrv_initcache()
  * Update/add new request at end of lru list
  */
 int
-nfsrv_getcache(nd, slp, repp)
-	struct nfsrv_descript *nd;
-	struct nfssvc_sock *slp;
-	struct mbuf **repp;
+nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
+    struct mbuf **repp)
 {
 	struct nfsrvcache *rp;
 	struct mbuf *mb;
@@ -178,7 +169,7 @@ loop:
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
-				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+				tsleep(rp, PZERO-1, "nfsrc", 0);
 				goto loop;
 			}
 			rp->rc_flag |= RC_LOCKED;
@@ -210,7 +201,7 @@ loop:
 			rp->rc_flag &= ~RC_LOCKED;
 			if (rp->rc_flag & RC_WANTED) {
 				rp->rc_flag &= ~RC_WANTED;
-				wakeup((caddr_t)rp);
+				wakeup(rp);
 			}
 			return (ret);
 		}
@@ -224,7 +215,7 @@ loop:
 		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_flag & RC_LOCKED) != 0) {
 			rp->rc_flag |= RC_WANTED;
-			(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+			tsleep(rp, PZERO-1, "nfsrc", 0);
 			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
 		rp->rc_flag |= RC_LOCKED;
@@ -255,19 +246,15 @@ loop:
 	rp->rc_flag &= ~RC_LOCKED;
 	if (rp->rc_flag & RC_WANTED) {
 		rp->rc_flag &= ~RC_WANTED;
-		wakeup((caddr_t)rp);
+		wakeup(rp);
 	}
 	return (RC_DOIT);
 }
 
-/*
- * Update a request cache entry after the rpc has been done
- */
+/* Update a request cache entry after the rpc has been done */
 void
-nfsrv_updatecache(nd, repvalid, repmbuf)
-	struct nfsrv_descript *nd;
-	int repvalid;
-	struct mbuf *repmbuf;
+nfsrv_updatecache(struct nfsrv_descript *nd, int repvalid,
+    struct mbuf *repmbuf)
 {
 	struct nfsrvcache *rp;
 
@@ -279,7 +266,7 @@ loop:
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
-				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+				tsleep(rp, PZERO-1, "nfsrc", 0);
 				goto loop;
 			}
 			rp->rc_flag |= RC_LOCKED;
@@ -302,18 +289,16 @@ loop:
 			rp->rc_flag &= ~RC_LOCKED;
 			if (rp->rc_flag & RC_WANTED) {
 				rp->rc_flag &= ~RC_WANTED;
-				wakeup((caddr_t)rp);
+				wakeup(rp);
 			}
 			return;
 		}
 	}
 }
 
-/*
- * Clean out the cache. Called when the last nfsd terminates.
- */
+/* Clean out the cache. Called when the last nfsd terminates. */
 void
-nfsrv_cleancache()
+nfsrv_cleancache(void)
 {
 	struct nfsrvcache *rp, *nextrp;
 
