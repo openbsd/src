@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.24 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.25 2007/10/29 15:38:00 chl Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -199,8 +199,7 @@ portal_lookup(void *v)
 	if (error)
 		goto bad;
 	fvp->v_type = VREG;
-	MALLOC(fvp->v_data, void *, sizeof(struct portalnode), M_TEMP,
-	    M_WAITOK);
+	fvp->v_data = malloc(sizeof(struct portalnode), M_TEMP, M_WAITOK);
 
 	pt = VTOPORTAL(fvp);
 	/*
@@ -591,7 +590,7 @@ portal_reclaim(void *v)
 		free(pt->pt_arg, M_TEMP);
 		pt->pt_arg = 0;
 	}
-	FREE(ap->a_vp->v_data, M_TEMP);
+	free(ap->a_vp->v_data, M_TEMP);
 	ap->a_vp->v_data = 0;
 
 	return (0);

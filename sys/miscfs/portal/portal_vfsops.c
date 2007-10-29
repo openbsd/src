@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.21 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.22 2007/10/29 15:38:00 chl Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -107,8 +107,7 @@ portal_mount(struct mount *mp, const char *path, void *data, struct nameidata *n
 		FRELE(fp);
 		return (error);
 	}
-	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
-		M_TEMP, M_WAITOK);
+	rvp->v_data = malloc(sizeof(struct portalnode), M_TEMP, M_WAITOK);
 
 	fmp = (struct portalmount *) malloc(sizeof(struct portalmount),
 				 M_MISCFSMNT, M_WAITOK);

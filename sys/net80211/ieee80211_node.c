@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.29 2007/09/07 20:23:30 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.30 2007/10/29 15:40:23 chl Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -162,9 +162,9 @@ ieee80211_node_detach(struct ifnet *ifp)
 	}
 	ieee80211_free_allnodes(ic);
 	if (ic->ic_aid_bitmap != NULL)
-		FREE(ic->ic_aid_bitmap, M_DEVBUF);
+		free(ic->ic_aid_bitmap, M_DEVBUF);
 	if (ic->ic_tim_bitmap != NULL)
-		FREE(ic->ic_tim_bitmap, M_DEVBUF);
+		free(ic->ic_tim_bitmap, M_DEVBUF);
 }
 
 /*
@@ -535,7 +535,7 @@ void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
-	FREE(ni, M_80211_NODE);
+	free(ni, M_80211_NODE);
 }
 
 void

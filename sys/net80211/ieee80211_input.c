@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.71 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.72 2007/10/29 15:40:23 chl Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1093,8 +1093,8 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
 {
 	if (*ie == NULL || (*ie)[1] != frm[1]) {
 		if (*ie != NULL)
-			FREE(*ie, M_DEVBUF);
-		MALLOC(*ie, u_int8_t *, 2 + frm[1], M_DEVBUF, M_NOWAIT);
+			free(*ie, M_DEVBUF);
+		*ie = malloc(2 + frm[1], M_DEVBUF, M_NOWAIT);
 		if (*ie == NULL)
 			return ENOMEM;
 	}

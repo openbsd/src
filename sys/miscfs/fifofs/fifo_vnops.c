@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.24 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.25 2007/10/29 15:38:00 chl Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ fifo_open(void *v)
 	int error;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
-		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
+		fip = malloc(sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
 		if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0) {
 			free(fip, M_VNODE);
@@ -392,7 +392,7 @@ fifo_close(void *v)
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {
 		error1 = soclose(fip->fi_readsock);
 		error2 = soclose(fip->fi_writesock);
-		FREE(fip, M_VNODE);
+		free(fip, M_VNODE);
 		vp->v_fifoinfo = NULL;
 	}
 	return (error1 ? error1 : error2);
@@ -410,7 +410,7 @@ fifo_reclaim(void *v)
 
 	soclose(fip->fi_readsock);
 	soclose(fip->fi_writesock);
-	FREE(fip, M_VNODE);
+	free(fip, M_VNODE);
 	vp->v_fifoinfo = NULL;
 
 	return (0);

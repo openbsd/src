@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.64 2007/06/02 02:04:21 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.65 2007/10/29 15:39:01 chl Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1430,8 +1430,7 @@ msdosfs_readdir(v)
 
 	if (ap->a_ncookies) {
 		ncookies = uio->uio_resid / sizeof(struct direntry) + 3;
-		MALLOC(cookies, u_long *, ncookies * sizeof(u_long), M_TEMP,
-		       M_WAITOK);
+		cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 		*ap->a_ncookies = ncookies;
 	}
