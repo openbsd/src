@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.3 2007/10/29 16:38:55 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -213,10 +213,17 @@ clocal(p) NODE *p; {
 	return(p);
 }
 
+/*
+ * Can we take & of a NAME?
+ */
 int
-andable( p ) NODE *p; {
-	return(1);  /* all names can have & taken on them */
-	}
+andable(NODE *p)
+{
+
+	if ((p->n_type & ~BTMASK) == FTN)
+		return 1; /* functions are called by name */
+	return 0; /* Delay name reference to table, for PIC code generation */
+}
  
 void
 cendarg(){ /* at the end of the arguments of a ftn, set the automatic offset */

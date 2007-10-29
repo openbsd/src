@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 2007/10/29 16:38:55 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -103,31 +103,11 @@ struct optab  table[] = {
 		NAREG|NASL,	RESC1|RESCC,
 		"	cvtZRl	AL,A1\n", },
 
-#if 0
-{ INIT,	FOREFF,
-	SCON,	TANY,
-	SANY,	TWORD,
-		0,	RNOP,
-		"	.long	CL\n", },
-
-{ INIT,	FOREFF,
-	SCON,	TANY,
-	SANY,	TSHORT|TUSHORT,
-		0,	RNOP,
-		"	.word	CL\n", },
-
-{ INIT,	FOREFF,
-	SCON,	TANY,
-	SANY,	TCHAR|TUCHAR,
-		0,	RNOP,
-		"	.byte	CL\n", },
-#endif
-
 { GOTO,	FOREFF,
 	SCON,	TANY,
 	SANY,	TANY,
 		0,	RNOP,
-		"	jbr	LL\n", },
+		"	ZJ\n", },
 
 { GOTO,	FOREFF,
 	SAREG,	TANY,
@@ -148,6 +128,12 @@ struct optab  table[] = {
 		0,	RNULL,
 		"	subl2	ZT,sp\nZS", },
 #endif
+
+{ ADDROF,	INAREG,
+	SNAME,	TANY,
+	SAREG,	TANY,
+		NAREG,	RESC1,
+		"	movab	AL,A1\n", },
 
 { STASG,	FOREFF,
 	SNAME|SOREG,	TANY,
@@ -269,6 +255,12 @@ struct optab  table[] = {
 		NAREG|NASL,	RESC1, /* should be register 0 */
 		"	calls	$0,CL\n", },
 
+{ CALL,		INAREG|FOREFF,
+	SAREG,	TANY,
+	SANY,	TANY,
+		NAREG|NASL,	RESC1,	/* should be 0 */
+		"	calls	ZC,(AL)\n", },
+
 { UCALL,	INAREG|FOREFF,
 	SAREG,	TANY,
 	SANY,	TWORD|TCHAR|TUCHAR|TSHORT|TUSHORT|TFLOAT|TDOUBLE,
@@ -290,12 +282,6 @@ struct optab  table[] = {
 /*
  * Function arguments
  */
-{ FUNARG,	FOREFF,
-	SNCON,	TWORD|TPOINT,
-	SANY,	TWORD|TPOINT,
-		0,	RNULL,
-		"	pushab AL\n" },
-
 { FUNARG,	FOREFF,
 	SCON|SAREG|SNAME|SOREG,	TWORD|TPOINT,
 	SANY,	TWORD|TPOINT,
