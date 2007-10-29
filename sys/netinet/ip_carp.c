@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.152 2007/10/27 23:08:35 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.153 2007/10/29 16:19:23 chl Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -884,7 +884,7 @@ carpdetach(struct carp_softc *sc)
 		if (!--cif->vhif_nvrs) {
 			ifpromisc(sc->sc_carpdev, 0);
 			sc->sc_carpdev->if_carp = NULL;
-			FREE(cif, M_IFADDR);
+			free(cif, M_IFADDR);
 		}
 	}
 	sc->sc_carpdev = NULL;
@@ -1680,12 +1680,11 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			return (EINVAL);
 
 		if (ifp->if_carp == NULL) {
-			MALLOC(ncif, struct carp_if *, sizeof(*cif),
-			    M_IFADDR, M_NOWAIT);
+			ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT);
 			if (ncif == NULL)
 				return (ENOBUFS);
 			if ((error = ifpromisc(ifp, 1))) {
-				FREE(ncif, M_IFADDR);
+				free(ncif, M_IFADDR);
 				return (error);
 			}
 
@@ -1706,7 +1705,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs < 0 &&
 		    (error = carp_join_multicast(sc)) != 0) {
 			if (ncif != NULL)
-				FREE(ncif, M_IFADDR);
+				free(ncif, M_IFADDR);
 			return (error);
 		}
 
@@ -1714,7 +1713,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs6 < 0 &&
 		    (error = carp_join_multicast6(sc)) != 0) {
 			if (ncif != NULL)
-				FREE(ncif, M_IFADDR);
+				free(ncif, M_IFADDR);
 			carp_multicast_cleanup(sc);
 			return (error);
 		}
@@ -2389,8 +2388,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	 * about it.  Also, remember this multicast address so that
 	 * we can delete them on unconfigure.
 	 */
-	MALLOC(mc, struct carp_mc_entry *, sizeof(struct carp_mc_entry),
-	    M_DEVBUF, M_NOWAIT);
+	mc = malloc(sizeof(struct carp_mc_entry), M_DEVBUF, M_NOWAIT);
 	if (mc == NULL) {
 		error = ENOMEM;
 		goto alloc_failed;
@@ -2413,7 +2411,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	FREE(mc, M_DEVBUF);
+	free(mc, M_DEVBUF);
  alloc_failed:
 	(void)ether_delmulti(ifr, (struct arpcom *)&sc->sc_ac);
 
@@ -2460,7 +2458,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	if (error == 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
-		FREE(mc, M_DEVBUF);
+		free(mc, M_DEVBUF);
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&sc->sc_ac);
 	return (error);
@@ -2492,6 +2490,6 @@ carp_ether_purgemulti(struct carp_softc *sc)
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		FREE(mc, M_DEVBUF);
+		free(mc, M_DEVBUF);
 	}
 }

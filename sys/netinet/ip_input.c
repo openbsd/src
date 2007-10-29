@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.153 2007/09/10 23:05:39 thib Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.154 2007/10/29 16:19:23 chl Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -724,8 +724,7 @@ ip_reass(ipqe, fp)
 	 * If first fragment to arrive, create a reassembly queue.
 	 */
 	if (fp == 0) {
-		MALLOC(fp, struct ipq *, sizeof (struct ipq),
-		    M_FTABLE, M_NOWAIT);
+		fp = malloc(sizeof (struct ipq), M_FTABLE, M_NOWAIT);
 		if (fp == NULL)
 			goto dropfrag;
 		LIST_INSERT_HEAD(&ipq, fp, ipq_q);
@@ -862,7 +861,7 @@ insert:
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
 	/* some debugging cruft by sklower, below, will go away soon */
@@ -901,7 +900,7 @@ ip_freef(fp)
 		ip_frags--;
 	}
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 }
 
 /*

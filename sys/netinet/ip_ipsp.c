@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.169 2007/10/09 01:49:30 krw Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.170 2007/10/29 16:19:23 chl Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1024,7 +1024,7 @@ ipsp_reffree(struct ipsec_ref *ipr)
 		    ipr->ref_count, ipr, ipr->ref_len, ipr->ref_malloctype);
 #endif
 	if (--ipr->ref_count <= 0)
-		FREE(ipr, ipr->ref_malloctype);
+		free(ipr, ipr->ref_malloctype);
 }
 
 /* Mark a TDB as TDBF_SKIPCRYPTO. */

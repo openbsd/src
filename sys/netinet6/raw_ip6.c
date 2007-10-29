@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.33 2007/06/01 00:52:39 henning Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.34 2007/10/29 16:19:24 chl Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -618,8 +618,8 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 
-		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
-		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		in6p->in6p_icmp6filt = malloc(sizeof(struct icmp6_filter),
+		    M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
 			in6_pcbdetach(in6p);
 			error = ENOMEM;
@@ -649,7 +649,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 #endif
 		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt) {
-			FREE(in6p->in6p_icmp6filt, M_PCB);
+			free(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
 		}
 		in6_pcbdetach(in6p);

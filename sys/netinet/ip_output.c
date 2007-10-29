@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.189 2007/09/18 18:56:02 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.190 2007/10/29 16:19:23 chl Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1303,8 +1303,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				}
 			}
 
-			MALLOC(ipr, struct ipsec_ref *,
-			       sizeof(struct ipsec_ref) + m->m_len - 2,
+			ipr = malloc(sizeof(struct ipsec_ref) + m->m_len - 2,
 			       M_CREDENTIALS, M_NOWAIT);
 			if (ipr == NULL) {
 				error = ENOBUFS;
@@ -1323,7 +1322,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					FREE(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_srcid != NULL)
@@ -1336,7 +1335,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					FREE(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_dstid != NULL)
@@ -1347,7 +1346,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			case IP_IPSEC_LOCAL_CRED:
 				if (ipr->ref_type < IPSP_CRED_KEYNOTE ||
 				    ipr->ref_type > IPSP_CRED_X509) {
-					FREE(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_cred != NULL)
@@ -1358,7 +1357,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			case IP_IPSEC_LOCAL_AUTH:
 				if (ipr->ref_type < IPSP_AUTH_PASSPHRASE ||
 				    ipr->ref_type > IPSP_AUTH_RSA) {
-					FREE(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_auth != NULL)
