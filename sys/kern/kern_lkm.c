@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.43 2006/11/15 17:25:40 jmc Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.44 2007/10/29 14:12:19 chl Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ lkmalloc(void)
 	struct lkm_table *p, *ret = NULL;
 	int id = 0;
 
-	MALLOC(ret, struct lkm_table *, sizeof(*ret), M_DEVBUF, M_WAITOK);
+	ret = malloc(sizeof(*ret), M_DEVBUF, M_WAITOK);
 	ret->refcnt = ret->depcnt = 0;
 	ret->sym_id = -1;
 	/* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.73 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.74 2007/10/29 14:12:19 chl Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2268,7 +2268,7 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	FREE(tp, M_TTYS);
+	free(tp, M_TTYS);
 }
 
 struct itty *ttystats;

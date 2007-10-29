@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.157 2007/09/15 19:22:18 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.158 2007/10/29 14:12:19 chl Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -536,8 +536,8 @@ loop:
 	 * Common case is actually in the if statement
 	 */
 	if (vp == NULL || !(vp->v_tag == VT_NON && vp->v_type == VBLK)) {
-		MALLOC(nvp->v_specinfo, struct specinfo *,
-			sizeof(struct specinfo), M_VNODE, M_WAITOK);
+		nvp->v_specinfo = malloc(sizeof(struct specinfo), M_VNODE,
+			M_WAITOK);
 		nvp->v_rdev = nvp_rdev;
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
@@ -1059,7 +1059,7 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		FREE(vp->v_specinfo, M_VNODE);
+		free(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}
 	/*

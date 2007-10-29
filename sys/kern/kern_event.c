@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.31 2007/05/30 02:24:59 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.32 2007/10/29 14:12:19 chl Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -332,7 +332,7 @@ filt_timerattach(struct knote *kn)
 	tticks = tvtohz(&tv);
 
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
-	MALLOC(to, struct timeout *, sizeof(*to), M_KEVENT, 0);
+	to = malloc(sizeof(*to), M_KEVENT, M_WAITOK);
 	timeout_set(to, filt_timerexpire, kn);
 	timeout_add(to, tticks);
 	kn->kn_hook = to;
@@ -347,7 +347,7 @@ filt_timerdetach(struct knote *kn)
 
 	to = (struct timeout *)kn->kn_hook;
 	timeout_del(to);
-	FREE(to, M_KEVENT);
+	free(to, M_KEVENT);
 	kq_ntimeouts--;
 }
 

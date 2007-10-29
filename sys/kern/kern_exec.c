@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.103 2007/09/15 10:10:37 martin Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.104 2007/10/29 14:12:19 chl Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -334,7 +334,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			free(*tmpfap, M_EXEC);
 			tmpfap++; argc++;
 		}
-		FREE(pack.ep_fa, M_EXEC);
+		free(pack.ep_fa, M_EXEC);
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
@@ -676,7 +676,7 @@ bad:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		FREE(pack.ep_emul_arg, M_TEMP);
+		free(pack.ep_emul_arg, M_TEMP);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
@@ -705,7 +705,7 @@ exec_abort:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		FREE(pack.ep_emul_arg, M_TEMP);
+		free(pack.ep_emul_arg, M_TEMP);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
