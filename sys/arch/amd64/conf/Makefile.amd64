@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.11 2007/07/27 13:39:00 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.12 2007/10/29 22:29:13 espie Exp $
 
 # Makefile for OpenBSD
 #
@@ -167,7 +167,7 @@ depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-#	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 
 
 # depend on root or device configuration
