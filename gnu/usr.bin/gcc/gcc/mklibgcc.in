@@ -63,10 +63,10 @@ make_compile='$(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
 	  LANGUAGES="$(LANGUAGES)"'
 
 # Dependencies for libgcc2.c
-libgcc2_c_dep='$(srcdir)/libgcc2.c $(CONFIG_H) $(MACHMODE_H) longlong.h gbl-ctors.h config.status stmp-int-hdrs tsystem.h'" $LIB2ADDEHDEP"
+libgcc2_c_dep='stmp-dirs $(srcdir)/libgcc2.c $(CONFIG_H) $(MACHMODE_H) longlong.h gbl-ctors.h config.status stmp-int-hdrs tsystem.h'" $LIB2ADDEHDEP"
 
 # Dependencies for fp-bit.c
-fpbit_c_dep='config.status tsystem.h'
+fpbit_c_dep='stmp-dirs config.status tsystem.h'
 
 #
 # Build libgcc1 components.
