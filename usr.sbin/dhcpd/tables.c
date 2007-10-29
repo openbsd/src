@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.4 2007/10/28 15:19:18 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.5 2007/10/29 16:51:02 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -324,7 +324,13 @@ struct option dhcp_options[256] = {
  * Default dhcp option priority list (this is ad hoc and should not be
  * mistaken for a carefully crafted and optimized list).
  */
-unsigned char dhcp_option_default_priority_list[] = {
+
+unsigned char dhcp_option_default_priority_list[256] = {
+	DHO_DHCP_MESSAGE_TYPE,		/* Mandatory */
+	DHO_DHCP_SERVER_IDENTIFIER,	/* Mandatory */
+	DHO_DHCP_LEASE_TIME,		/* Mandatory */
+	DHO_DHCP_MESSAGE,		/* Mandatory */
+	DHO_END,			/* End of mandatory options. */
 	DHO_DHCP_REQUESTED_ADDRESS,
 	DHO_DHCP_OPTION_OVERLOAD,
 	DHO_DHCP_MAX_MESSAGE_SIZE,
@@ -383,6 +389,7 @@ unsigned char dhcp_option_default_priority_list[] = {
 	DHO_X_DISPLAY_MANAGER,
 	DHO_DHCP_PARAMETER_REQUEST_LIST,
 	DHO_DHCP_USER_CLASS_ID,
+	DHO_PAD,
 
 	/* Presently-undefined options... */
 	           62,  63,  64,  65,  66,  67,  68,  69,
@@ -406,10 +413,6 @@ unsigned char dhcp_option_default_priority_list[] = {
 	240, 241, 242, 243, 244, 245, 246, 247, 248, 249,
 	250, 251, 252, 253, 254
 };
-
-int sizeof_dhcp_option_default_priority_list =
-	sizeof(dhcp_option_default_priority_list);
-
 
 char *hardware_types[] = {
 	"unknown-0",

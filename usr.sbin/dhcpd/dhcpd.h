@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.33 2007/02/22 07:02:31 henning Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.34 2007/10/29 16:51:02 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -473,7 +473,7 @@ void	 parse_option_buffer(struct packet *, unsigned char *, int);
 int	 cons_options(struct packet *, struct dhcp_packet *, int,
 	    struct tree_cache **, int, int, int, u_int8_t *, int);
 int	 store_options(unsigned char *, int, struct tree_cache **,
-	    unsigned char *, int, int, int, int);
+	    unsigned char *, int, int, int);
 char	*pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void	 do_packet(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
@@ -670,8 +670,7 @@ unsigned char *hash_lookup(struct hash_table *, unsigned char *, int);
 
 /* tables.c */
 extern struct option dhcp_options[256];
-extern unsigned char dhcp_option_default_priority_list[];
-extern int sizeof_dhcp_option_default_priority_list;
+extern unsigned char dhcp_option_default_priority_list[256];
 extern char *hardware_types[256];
 extern struct hash_table universe_hash;
 extern struct universe dhcp_universe;
