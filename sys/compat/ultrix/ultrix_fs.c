@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.14 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.15 2007/10/30 12:09:22 gilles Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ ultrix_sys_getmnt(p, v, retval)
 		 * Only get info on mountpoints that matches the path
 		 * provided.
 		 */
-		MALLOC(path, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+		path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		if ((error = copyinstr(SCARG(uap, path), path,
 				       MAXPATHLEN, NULL)) != 0)
 			goto bad;
@@ -279,7 +279,7 @@ ultrix_sys_getmnt(p, v, retval)
 
 bad:
 	if (path)
-		FREE(path, M_TEMP);
+		free(path, M_TEMP);
 	return (error);
 }
 
