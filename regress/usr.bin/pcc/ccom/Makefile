@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2007/10/16 12:49:53 otto Exp $
+# $OpenBSD: Makefile,v 1.3 2007/10/30 07:05:37 otto Exp $
 
 CC=/usr/local/bin/cc
 
@@ -13,7 +13,7 @@ REGRESS_TARGETS=\
 
 .c:
 	@echo ${*}
-	${CC} ${.CURDIR}/${*}.c && ./a.out
+	${CC} ${.CURDIR}/${*}.c -o ${*}.out && ${*}.out
 
 shouldfail:
 	@echo ${*}
@@ -21,6 +21,6 @@ shouldfail:
 	if ${CC} ${.CURDIR}/init003.c; then false; else true; fi
 	
 clean:
-	rm -f a.out
+	rm -f *.out
 
 .include <bsd.regress.mk>
