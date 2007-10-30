@@ -1,4 +1,4 @@
-.\"	$OpenBSD: et.4,v 1.1 2007/10/30 12:32:44 jsg Exp $
+.\"	$OpenBSD: et.4,v 1.2 2007/10/30 13:22:21 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -29,12 +29,12 @@ The
 driver supports PCI Express Ethernet adapters based on the Agere/LSI
 ET1310 integrated MAC/PHY.
 .Pp
-The following 
+The following
 .Ar media
 types are supported:
 .Pp
 .Bl -tag -width autoselect -compact
-.It Cm autoselect 
+.It Cm autoselect
 Enable autoselection of the media type and options.
 .It Cm 10baseT
 Set 10Mbps operation.
@@ -42,15 +42,15 @@ Set 10Mbps operation.
 Set 100Mbps (Fast Ethernet) operation.
 .It Cm 1000baseT
 Set 1000Mbps (Gigabit Ethernet) operation (some models only).
-.E
+.El
 .Sh SEE ALSO
-.Xr arp 4
-.Xr etphy 4
-.Xr ifmedia 4
-.Xr intro 4
-.Xr netintro 4
-.Xr pci 4
-.Xr hostname.if 5
+.Xr arp 4 ,
+.Xr etphy 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
