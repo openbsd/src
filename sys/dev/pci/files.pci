@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.246 2007/10/28 13:42:31 ratchov Exp $
+#	$OpenBSD: files.pci,v 1.247 2007/10/30 12:31:06 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -614,6 +614,11 @@ file	dev/pci/if_stge.c		stge
 device	nfe: ether, ifnet, mii, ifmedia, mii_phy
 attach	nfe at pci
 file	dev/pci/if_nfe.c		nfe
+
+# Agere ET1310 Ethernet
+device	et: ether, ifnet, mii, ifmedia, mii_phy
+attach	et at pci
+file	dev/pci/if_et.c			et
 
 # AMD-76x PM and SMBus controller
 device	amdpm: i2cbus
