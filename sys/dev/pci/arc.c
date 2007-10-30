@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.70 2007/10/30 12:43:47 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.71 2007/10/30 13:22:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -875,7 +875,6 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
-	const char			*intrstr;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -892,16 +891,13 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    arc_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf(": unable to map interrupt%s%s\n",
-		    intrstr == NULL ? "" : " at ",
-		    intrstr == NULL ? "" : intrstr);
+		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s\n", pci_intr_string(pa->pa_pc, ih));
 
 	return (0);
 
