@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.110 2007/10/25 03:36:01 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.111 2007/10/30 07:10:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -430,16 +430,20 @@ iic_dump(struct device *dv, u_int8_t addr, char *name)
 			val = i;
 		}
 
-	if (cnt <= 254) {
-		printf("%s: addr 0x%x", dv->dv_xname, addr);
-		for (i = 0; i <= 0xff; i++) {
-			if (iicprobe(i) != val)
-				printf(" %02x=%02x", i, iicprobe(i));
-		}
-		if (name)
-			printf(": %s", name);
-		printf("\n");
+	if (cnt == 255)
+		return;
+
+	printf("%s: addr 0x%x", dv->dv_xname, addr);
+	for (i = 0; i <= 0xff; i++) {
+		if (iicprobe(i) != val)
+			printf(" %02x=%02x", i, iicprobe(i));
 	}
+	printf(" words", dv->dv_xname, addr);
+	for (i = 0; i < 16; i++)
+		printf(" %02x=%04x", i, iicprobew(i));
+	if (name)
+		printf(": %s", name);
+	printf("\n");
 }
 #endif /* I2C_VERBOSE */
 
