@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.90 2007/09/17 12:31:59 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.91 2007/10/30 12:12:26 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.87 2007/09/17 12:31:22 kettenis Exp 
+ *	OpenBSD: miidevs,v 1.88 2007/10/30 12:12:01 jsg Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -63,6 +63,7 @@
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
+#define	MII_OUI_AGERE	0x00a0bc	/* Agere */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_JATO	0x00e083	/* Jato Technologies */
@@ -126,6 +127,10 @@
 #define	MII_STR_AMD_79C873phy	"Am79C873 internal PHY"
 #define	MII_MODEL_AMD_79C875phy	0x0014
 #define	MII_STR_AMD_79C875phy	"Am79C875 quad PHY"
+
+/* Agere PHYs */
+#define	MII_MODEL_AGERE_ET1011	0x0004
+#define	MII_STR_AGERE_ET1011	"ET1011 10/100/1000baseT PHY"
 
 /* Altima Communications PHYs */
 #define	MII_MODEL_xxALTIMA_AC_UNKNOWN	0x0001
