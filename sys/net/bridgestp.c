@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.28 2007/10/14 12:27:35 krw Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.29 2007/10/30 09:04:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1033,8 +1033,8 @@ bstp_update_state(struct bstp_state *bs, struct bstp_port *bp)
 	if (!bs->bs_allsynced) {
 		synced = 1;
 		LIST_FOREACH(bp2, &bs->bs_bplist, bp_next) {
-			if (!(bp->bp_synced ||
-			     bp->bp_role == BSTP_ROLE_ROOT)) {
+			if (!(bp2->bp_synced ||
+			     bp2->bp_role == BSTP_ROLE_ROOT)) {
 				synced = 0;
 				break;
 			}
