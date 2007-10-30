@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.69 2007/10/30 12:32:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -469,6 +469,7 @@ void			arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
 /* real stuff for dealing with the hardware */
 int			arc_map_pci_resources(struct arc_softc *,
 			    struct pci_attach_args *);
+void			arc_unmap_pci_resources(struct arc_softc *);
 int			arc_query_firmware(struct arc_softc *);
 
 
@@ -525,12 +526,12 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (arc_query_firmware(sc) != 0) {
 		/* error message printed by arc_query_firmware */
-		return;
+		goto unmap_pci;
 	}
 
 	if (arc_alloc_ccbs(sc) != 0) {
 		/* error message printed by arc_alloc_ccbs */
-		return;
+		goto unmap_pci;
 	}
 
 	sc->sc_shutdownhook = shutdownhook_establish(arc_shutdown, sc);
@@ -571,6 +572,8 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	return;
+unmap_pci:
+	arc_unmap_pci_resources(sc);
 }
 
 int
@@ -904,6 +907,14 @@ unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
 	return (1);
+}
+
+void
+arc_unmap_pci_resources(struct arc_softc *sc)
+{
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
 }
 
 int
