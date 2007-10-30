@@ -527,6 +527,7 @@
 ./usr/include/dev/pci/if_em.h
 ./usr/include/dev/pci/if_em_hw.h
 ./usr/include/dev/pci/if_em_osdep.h
+./usr/include/dev/pci/if_etreg.h
 ./usr/include/dev/pci/if_ipwreg.h
 ./usr/include/dev/pci/if_ipwvar.h
 ./usr/include/dev/pci/if_iwireg.h

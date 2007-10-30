@@ -1003,6 +1003,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em_hw.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em_osdep.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_etreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ipwreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ipwvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_iwireg.ph
