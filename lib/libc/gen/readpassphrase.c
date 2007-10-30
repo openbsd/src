@@ -1,7 +1,7 @@
-/*	$OpenBSD: readpassphrase.c,v 1.19 2006/03/31 05:33:59 deraadt Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.20 2007/10/30 12:03:48 millert Exp $	*/
 
 /*
- * Copyright (c) 2000-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2002, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,6 +53,8 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 
 restart:
 	signo = 0;
+	nr = -1;
+	save_errno = 0;
 	/*
 	 * Read and write to /dev/tty if available.  If not, read from
 	 * stdin and write to stderr unless a tty is required.
@@ -100,26 +102,30 @@ restart:
 		oterm.c_lflag |= ECHO;
 	}
 
-	if (!(flags & RPP_STDIN))
-		(void)write(output, prompt, strlen(prompt));
-	end = buf + bufsiz - 1;
-	for (p = buf; (nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r';) {
-		if (p < end) {
-			if ((flags & RPP_SEVENBIT))
-				ch &= 0x7f;
-			if (isalpha(ch)) {
-				if ((flags & RPP_FORCELOWER))
-					ch = (char)tolower(ch);
-				if ((flags & RPP_FORCEUPPER))
-					ch = (char)toupper(ch);
+	/* No I/O if we are already backgrounded. */
+	if (signo != SIGTTOU && signo != SIGTTIN) {
+		if (!(flags & RPP_STDIN))
+			(void)write(output, prompt, strlen(prompt));
+		end = buf + bufsiz - 1;
+		p = buf;
+		while ((nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r') {
+			if (p < end) {
+				if ((flags & RPP_SEVENBIT))
+					ch &= 0x7f;
+				if (isalpha(ch)) {
+					if ((flags & RPP_FORCELOWER))
+						ch = (char)tolower(ch);
+					if ((flags & RPP_FORCEUPPER))
+						ch = (char)toupper(ch);
+				}
+				*p++ = ch;
 			}
-			*p++ = ch;
 		}
+		*p = '\0';
+		save_errno = errno;
+		if (!(term.c_lflag & ECHO))
+			(void)write(output, "\n", 1);
 	}
-	*p = '\0';
-	save_errno = errno;
-	if (!(term.c_lflag & ECHO))
-		(void)write(output, "\n", 1);
 
 	/* Restore old terminal settings and signals. */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0) {
@@ -153,7 +159,8 @@ restart:
 		}
 	}
 
-	errno = save_errno;
+	if (save_errno)
+		errno = save_errno;
 	return(nr == -1 ? NULL : buf);
 }
 
