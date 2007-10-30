@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.61 2007/02/19 14:50:20 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.62 2007/10/30 17:49:50 robert Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -218,6 +218,10 @@ XMLFILES= \
 	src/lib/expat-lite/xmlrole.h \
 	src/lib/expat-lite/xmltok.h \
 	src/lib/expat-lite/xmltok_impl.h
+
+MODCONFDIR= \
+	modules \
+	modules.sample
 
 CONFFILES= \
 	conf/httpd.conf-dist conf/httpd.conf \
@@ -734,6 +738,10 @@ cleanman:
 .endif
 
 distribution:
+	@-for i in ${MODCONFDIR}; do \
+		echo "Installing ${DESTDIR}${HTTPD_SYSCONFDIR}/$$i"; \
+		${INSTALL} -d -m 755 ${DESTDIR}${HTTPD_SYSCONFDIR}/$$i; \
+	done
 	@-for i in ${CONFFILES}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
