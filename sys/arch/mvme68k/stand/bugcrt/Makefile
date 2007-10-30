@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/04/22 16:05:38 gvf Exp $
+#	$OpenBSD: Makefile,v 1.8 2007/10/30 06:03:14 deraadt Exp $
 #
 # DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
@@ -8,14 +8,14 @@ CFLAGS=-I${.CURDIR}/../../include -I${.CURDIR}/../libbug -I${S}/lib/libsa \
 
 OBJS=bugcrt.o
 
-CLEANFILES+=a.out
+CLEANFILES+=bugcrt.out	
 
 all:	${OBJS}
 
 bugcrt.o: bugcrt.c
 	${COMPILE.c} -c $<
-	${LD} -x -r ${.TARGET}
-	mv a.out ${.TARGET}
+	${LD} -x -r ${.TARGET} -o ${.TARGET}ut
+	mv ${.TARGET}ut ${.TARGET}
 
 install:
 

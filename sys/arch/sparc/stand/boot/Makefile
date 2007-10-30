@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2003/08/11 06:35:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2007/10/30 06:03:16 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -22,12 +22,14 @@ elfclean: clean-elf.c
 	${HOSTCC} -o elfclean ${.ALLSRC}
 
 ${PROG}: ${OBJS} ${LIBS} elfclean
-	${LD} -N -Ttext ${RELOC2} --format a.out-sparc-netbsd -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ} `cc -print-libgcc-file-name` -o elf
-	./elfclean elf
-	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd elf a.out
-	@size a.out
-	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) | dd obs=512 conv=osync > ${.TARGET}
-	@rm a.out elf
+	${LD} -N -Ttext ${RELOC2} --format a.out-sparc-netbsd -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ} `cc -print-libgcc-file-name` -o ${.TARGET}.elf
+	./elfclean ${.TARGET}.elf
+	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd \
+	    ${.TARGET}.elf ${.TARGET}.aout
+	@size ${.TARGET}.aout
+	(echo -n 01 | tr 01 '\01\03'; tail +3c ${.TARGET}.aout) | \
+	    dd obs=512 conv=osync > ${.TARGET}
+	@rm ${.TARGET}.aout ${.TARGET}.elf
 
 srt0.o: srt0.S
 	${CC} ${CFLAGS} -D_LOCORE -c ${.IMPSRC}
