@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.24 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: mii.4,v 1.25 2007/10/30 12:32:44 jsg Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 30 2007 $
 .Dt MII 4
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@
 .Cd "ciphy* at mii?"
 .Cd "dcphy* at mii?"
 .Cd "eephy* at mii?"
+.Cd "etphy* at mii?"
 .Cd "exphy* at mii?"
 .Cd "gentbi* at mii?"
 .Cd "icsphy* at mii?"
@@ -111,6 +112,7 @@ program.
 .Xr ciphy 4 ,
 .Xr dcphy 4 ,
 .Xr eephy 4 ,
+.Xr etphy 4 ,
 .Xr exphy 4 ,
 .Xr gentbi 4 ,
 .Xr icsphy 4 ,
