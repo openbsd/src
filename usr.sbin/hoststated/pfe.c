@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.38 2007/10/19 14:15:14 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.39 2007/10/30 21:04:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -284,24 +284,22 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			log_debug("pfe_dispatch_imsg: state %d for host %u %s",
 			    st.up, host->conf.id, host->conf.name);
 
-			if ((st.up == HOST_UNKNOWN && !HOST_ISUP(host->up)) ||
-			    (!HOST_ISUP(st.up) && host->up == HOST_UNKNOWN)) {
-				host->up = st.up;
-				break;
-			}
-
-			if (st.up == HOST_UP) {
+			/*
+			 * Do not change the table state when the host
+			 * state switches between UNKNOWN and DOWN.
+			 */
+			if (HOST_ISUP(st.up)) {
 				table->conf.flags |= F_CHANGED;
 				table->up++;
 				host->flags |= F_ADD;
 				host->flags &= ~(F_DEL);
-				host->up = HOST_UP;
-			} else {
+			} else if (HOST_ISUP(host->up)) {
 				table->up--;
 				table->conf.flags |= F_CHANGED;
 				host->flags |= F_DEL;
 				host->flags &= ~(F_ADD);
 			}
+
 			host->up = st.up;
 			break;
 		case IMSG_SYNC:
