@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.13 2006/03/22 19:43:29 kjell Exp $	*/
+/*	$OpenBSD: tail.c,v 1.14 2007/10/31 16:29:50 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.13 2006/03/22 19:43:29 kjell Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.14 2007/10/31 16:29:50 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -301,6 +301,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: tail [-f | -r] [-b # | -c # | -n #] [file ...]\n");
+	    "usage: tail [-f | -r] "
+	    "[-b number | -c number | -n number | -number] [file ...]\n");
 	exit(1);
 }

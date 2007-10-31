@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.13 2006/10/09 00:24:36 tedu Exp $	*/
+/*	$OpenBSD: head.c,v 1.14 2007/10/31 16:29:50 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -34,7 +34,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1980, 1987 Regents of the University of California.\n\
  All rights reserved.\n";
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static const char rcsid[] = "$OpenBSD: head.c,v 1.13 2006/10/09 00:24:36 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: head.c,v 1.14 2007/10/31 16:29:50 jmc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -116,6 +116,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fputs("usage: head [-n line_count] [file ...]\n", stderr);
+	fputs("usage: head [-count | -n count] [file ...]\n", stderr);
 	exit(1);
 }
