@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.13 2007/09/09 10:17:33 kettenis Exp $	*/
+/*	$OpenBSD: emul.c,v 1.14 2007/10/31 22:46:52 kettenis Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -323,10 +323,7 @@ fixalign(p, tf)
 
 	if (op.bits.st) {
 		if (op.bits.fl) {
-			if (p == fpproc) {
-				savefpstate(p->p_md.md_fpstate);
-				fpproc = NULL;
-			}
+			fpusave_proc(p, 1);
 
 			error = readfpreg(p, code.i_op3.i_rd, &data.i[0]);
 			if (error)
@@ -533,19 +530,15 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	fs = p->p_md.md_fpstate;
 	if (fs == NULL) {
+		KERNEL_PROC_LOCK(p);
 		/* don't currently have an fpu context, get one */
 		fs = malloc(sizeof(*fs), M_SUBPROC, M_WAITOK);
 		*fs = initfpstate;
 		fs->fs_qsize = 0;
 		p->p_md.md_fpstate = fs;
-	}
-	if (fpproc != p) {
-		/* make this process the current holder of the fpu */
-		if (fpproc != NULL)
-			savefpstate(fpproc->p_md.md_fpstate);
-		fpproc = p;
-	}
-	tf->tf_tstate |= TSTATE_PEF;
+		KERNEL_PROC_UNLOCK(p);
+	} else
+		fpusave_proc(p, 1);
 
 	/* Ok, try to do the actual operation (finally) */
 	if (isload) {
@@ -553,11 +546,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 		if (err != 0 && (asi & 2) == 0)
 			goto segv;
 		if (err == 0) {
-			savefpstate(fs);
 			if (asi & 8)
 				swap_quad(buf);
 			bcopy(buf, &fs->fs_regs[freg], sizeof(buf));
-			loadfpstate(fs);
 		}
 	} else {
 		bcopy(&fs->fs_regs[freg], buf, sizeof(buf));

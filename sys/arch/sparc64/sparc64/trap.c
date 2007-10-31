@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2007/10/16 19:22:49 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2007/10/31 22:46:52 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -381,6 +381,7 @@ trap(tf, type, pc, tstate)
 	struct proc *p;
 	struct pcb *pcb;
 	int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
+	u_int64_t s;
 	int64_t n;
 	union sigval sv;
 
@@ -428,14 +429,17 @@ trap(tf, type, pc, tstate)
 				newfpproc = curproc;
 				/* force other cpus to give up this fpstate */
 				if (newfpproc->p_md.md_fpstate)
-					save_and_clear_fpstate(newfpproc);
+					fpusave_proc(newfpproc, 1);
 			}
 			if (fpproc != newfpproc) {
+				s = intr_disable();
 				if (fpproc != NULL) {
 					/* someone else had it, maybe? */
 					savefpstate(fpproc->p_md.md_fpstate);
 					fpproc = NULL;
 				}
+				intr_restore(s);
+
 				/* If we have an allocated fpstate, load it */
 				if (newfpproc->p_md.md_fpstate != 0) {
 					fpproc = newfpproc;
@@ -575,11 +579,13 @@ badtrap:
 		}
 		if (fpproc != p) {		/* we do not have it */
 			/* but maybe another CPU has it? */
-			save_and_clear_fpstate(p);
+			fpusave_proc(p, 1);
+			s = intr_disable();
 			if (fpproc != NULL)	/* someone else had it */
 				savefpstate(fpproc->p_md.md_fpstate);
 			loadfpstate(fs);
 			fpproc = p;		/* now we do have it */
+			intr_restore(s);
 			uvmexp.fpswtch++;
 		}
 		tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
@@ -671,8 +677,10 @@ badtrap:
 		 */
 		if (p != fpproc)
 			panic("fpe without being the FP user");
+		s = intr_disable();
 		savefpstate(p->p_md.md_fpstate);
 		fpproc = NULL;
+		intr_restore(s);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (type == T_FP_OTHER && p->p_md.md_fpstate->fs_qsize == 0) {
 			/*

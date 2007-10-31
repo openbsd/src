@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2007/10/20 16:54:52 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.101 2007/10/31 22:46:52 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -322,7 +322,6 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	struct trapframe64 *tf = p->p_md.md_tf;
-	struct fpstate64 *fs;
 	int64_t tstate;
 	int pstate = PSTATE_USER;
 	Elf_Ehdr *eh = pack->ep_hdr;
@@ -379,14 +378,14 @@ setregs(p, pack, stack, retval)
 	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 		((pstate)<<TSTATE_PSTATE_SHIFT) | 
 		(tf->tf_tstate & TSTATE_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if (p->p_md.md_fpstate != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		save_and_clear_fpstate(p);
-		free((void *)fs, M_SUBPROC);
+		fpusave_proc(p, 0);
+		free(p->p_md.md_fpstate, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.10 2005/12/31 23:50:39 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.11 2007/10/31 22:46:52 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -124,8 +124,7 @@ process_read_fpregs(p, regs)
 
 	/* NOTE: struct fpreg == struct fpstate */
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
-			savefpstate(p->p_md.md_fpstate);
+		fpusave_proc(p, 1);
 		statep = p->p_md.md_fpstate;
 	}
 
@@ -214,13 +213,8 @@ process_write_fpregs(p, regs)
 	if (p->p_md.md_fpstate == NULL) {
 		p->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
-	}
-
-	if (p == fpproc) {
-		/* Release the fpu. */
-		savefpstate(p->p_md.md_fpstate);
-		fpproc = NULL;
-	}
+	} else
+		fpusave_proc(p, 1);
 
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */

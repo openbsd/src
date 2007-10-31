@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2007/10/17 19:41:36 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2007/10/31 22:46:52 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -228,7 +228,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
-		save_and_clear_fpstate(p1);
+		fpusave_proc(p1, 1);
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
@@ -309,18 +309,37 @@ void	ipi_save_fpstate(void);
 void	ipi_drop_fpstate(void);
 
 void
-save_and_clear_fpstate(struct proc *p)
+fpusave_cpu(struct cpu_info *ci, int save)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
-#endif
+	struct proc *p;
 
-	if (p == fpproc) {
+	KDASSERT(ci == curcpu());
+
+	p = ci->ci_fpproc;
+	if (p == NULL)
+		return;
+
+	if (save)
 		savefpstate(p->p_md.md_fpstate);
-		fpproc = NULL;
+	else
+		clearfpstate();
+
+	ci->ci_fpproc = NULL;
+}
+
+void
+fpusave_proc(struct proc *p, int save)
+{
+	struct cpu_info *ci = curcpu();
+
+#ifdef MULTIPROCESSOR
+	if (p == ci->ci_fpproc) {
+		u_int64_t s = intr_disable();
+		fpusave_cpu(ci, save);
+		intr_restore(s);
 		return;
 	}
-#ifdef MULTIPROCESSOR
+
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		int spincount = 0;
 
@@ -328,7 +347,8 @@ save_and_clear_fpstate(struct proc *p)
 			continue;
 		if (ci->ci_fpproc != p)
 			continue;
-		sparc64_send_ipi(ci->ci_upaid, ipi_save_fpstate, 0, 0);
+		sparc64_send_ipi(ci->ci_upaid,
+		    save ? ipi_save_fpstate : ipi_drop_fpstate, 0, 0);
 		while(ci->ci_fpproc == p) {
 			spincount++;
 			if (spincount > 10000000) {
@@ -338,6 +358,9 @@ save_and_clear_fpstate(struct proc *p)
 		}
 		break;
 	}
+#else
+	if (p == ci->ci_fpproc)
+		fpusave_cpu(ci, save);
 #endif
 }
 
@@ -351,36 +374,9 @@ save_and_clear_fpstate(struct proc *p)
 void
 cpu_exit(struct proc *p)
 {
-	register struct fpstate64 *fs;
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
-	int found = 0;
-#endif
-
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
-			clearfpstate();
-			fpproc = NULL;
-#ifdef MULTIPROCESSOR
-			found = 1;
-#endif
-		}
-#ifdef MULTIPROCESSOR
-		if (!found) {
-			/* check if anyone else has this proc as fpproc */
-			for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-				if (ci == curcpu())
-					continue;
-				if (ci->ci_fpproc != p)
-					continue;
-				sparc64_send_ipi(ci->ci_upaid,
-				    ipi_drop_fpstate, 0, 0);
-				break;
-			}
-		}
-#endif
-
-		free(fs, M_SUBPROC);
+	if (p->p_md.md_fpstate != NULL) {
+		fpusave_proc(p, 0);
+		free(p->p_md.md_fpstate, M_SUBPROC);
 	}
 
 	pmap_deactivate(p);
@@ -410,7 +406,7 @@ cpu_coredump(p, vp, cred, chdr)
 	md_core.md_tf = *p->p_md.md_tf;
 	md_core.md_wcookie = p->p_addr->u_pcb.pcb_wcookie;
 	if (p->p_md.md_fpstate) {
-		save_and_clear_fpstate(p);
+		fpusave_proc(p, 1);
 		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 
