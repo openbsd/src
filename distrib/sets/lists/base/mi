@@ -4547,6 +4547,8 @@
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
+./var/www/conf/modules
+./var/www/conf/modules.sample
 ./var/www/htdocs
 ./var/www/htdocs/manual
 ./var/www/htdocs/manual/howto
