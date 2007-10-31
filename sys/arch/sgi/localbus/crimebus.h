@@ -1,4 +1,4 @@
-/*	$OpenBSD: crimebus.h,v 1.6 2007/06/21 20:17:12 miod Exp $	*/
+/*	$OpenBSD: crimebus.h,v 1.7 2007/10/31 13:59:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se).
@@ -54,9 +54,9 @@
 #define	CRIME_INT_VIDEO_IN_1	0x00000001	/* Video in 1 */
 #define	CRIME_INT_VIDEO_IN_2	0x00000002	/* Video in 2 */
 #define	CRIME_INT_VIDEO_OUT	0x00000004	/* Video out */
-#define	CRIME_INT_MACE_ETHER	0x00000008	/* Mace ethernet NIC */
+#define	CRIME_INT_MACE_ETHER	0x00000008	/* Mace Ethernet NIC */
 #define	CRIME_INT_SUPER_IO	0x00000010	/* Super I/O sub interrupt */
-#define	CRIME_INT_SUB_MISC	0x00000020	/* Misc ??? */
+#define	CRIME_INT_SUB_MISC	0x00000020	/* Miscellaneous sub interrupt */
 #define	CRIME_INT_SUB_AUDIO	0x00000040	/* Audio sub interrupt */
 #define	CRIME_INT_PCI_BRIDGE	0x00000080	/* PCI bridge errors */
 #define	CRIME_INT_PCI_SCSI_0	0x00000100	/* AIC SCSI controller 0 */
@@ -72,7 +72,7 @@
 #define	CRIME_INT_GBE_2		0x00040000	/* GBE2 (E) */
 #define	CRIME_INT_GBE_3		0x00080000	/* GBE3 (E) */
 #define	CRIME_INT_CPU_ERR	0x00100000	/* CPU Errors */
-#define	CRIME_INT_MEM_ERR	0x00200000	/* MEMORY Errors */
+#define	CRIME_INT_MEM_ERR	0x00200000	/* Memory Errors */
 #define	CRIME_INT_RE_EDGE_EMPTY	0x00400000	/* RE */
 #define	CRIME_INT_RE_EDGE_FULL	0x00800000	/* RE */
 #define	CRIME_INT_RE_EDGE_IDLE	0x01000000	/* RE */
@@ -82,7 +82,7 @@
 #define	CRIME_INT_SOFT_0	0x10000000	/* ??? */
 #define	CRIME_INT_SOFT_1	0x20000000	/* ??? */
 #define	CRIME_INT_SOFT_2	0x40000000	/* ??? */
-#define	CRIME_INT_VICE		0x80000000	/* ??? */
+#define	CRIME_INT_VICE		0x80000000	/* Video Image Compression Engine */
 
 
 /*
