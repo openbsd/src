@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.46 2007/04/14 23:04:10 grunk Exp $	*/
+/*	$OpenBSD: md5.c,v 1.47 2007/10/31 20:47:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -678,7 +678,7 @@ digest_time(struct hash_list *hl, int times)
 	char digest[MAX_DIGEST_LEN + 1];
 	double elapsed;
 	int count = TEST_BLOCK_COUNT;
-	while (--times > 0)
+	while (--times > 0 && count < INT_MAX / 10)
 		count *= 10;
 
 	TAILQ_FOREACH(hf, hl, tailq) {
