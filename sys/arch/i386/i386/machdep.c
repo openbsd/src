@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.408 2007/09/30 17:50:20 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.409 2007/10/31 15:55:44 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2388,6 +2388,8 @@ boot(int howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+
+	delay(4*1000000);	/* XXX */
 
 	/* Disable interrupts. */
 	splhigh();
