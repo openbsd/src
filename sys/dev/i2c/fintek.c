@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.6 2007/06/24 05:34:35 dlg Exp $ */
+/*	$OpenBSD: fintek.c,v 1.7 2007/10/31 20:46:17 cnst Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -160,10 +160,8 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	for (i = 0; i < F_NUM_SENSORS; i++) {
-		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
+	for (i = 0; i < F_NUM_SENSORS; i++)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
-	}
 	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc7621.c,v 1.3 2007/10/24 19:00:59 mikeb Exp $	*/
+/*	$OpenBSD: asc7621.c,v 1.4 2007/10/31 20:46:17 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -191,7 +191,6 @@ adl_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensor[i].desc, adl_worklist[i].name,
 		    sizeof(sc->sc_sensor[i].desc));
 
-		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	}
 	sensordev_install(&sc->sc_sensordev);

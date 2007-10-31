@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.7 2007/09/06 16:39:06 cnst Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.8 2007/10/31 20:46:17 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt
@@ -180,7 +180,6 @@ lmn_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensor[i].desc, lmn_worklist[i].name,
 		    sizeof(sc->sc_sensor[i].desc));
 
-		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	}
 	sensordev_install(&sc->sc_sensordev);
