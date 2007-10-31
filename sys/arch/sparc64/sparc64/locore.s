@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.99 2007/10/31 20:20:39 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.100 2007/10/31 21:29:04 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -273,18 +273,6 @@
 	.globl	_C_LABEL(data_start)
 _C_LABEL(data_start):					! Start of data segment
 #define DATA_START	_C_LABEL(data_start)
-
-/*
- * When a process exits and its u. area goes away, we set cpcb to point
- * to this `u.', leaving us with something to use for an interrupt stack,
- * and letting all the register save code have a pcb_uw to examine.
- * This is also carefully arranged (to come just before u0, so that
- * process 0's kernel stack can quietly overrun into it during bootup, if
- * we feel like doing that).
- */
-	.globl	_C_LABEL(idle_u)
-_C_LABEL(idle_u):
-	.space	USPACE
 
 /*
  * Process 0's u.
@@ -1147,7 +1135,7 @@ pmap_screwup:
 	.data
 	_ALIGN
 redzone:
-	.xword	_C_LABEL(idle_u) + REDSIZE
+	.xword	0
 redstack:
 	.space	REDSTACK
 eredstack:
