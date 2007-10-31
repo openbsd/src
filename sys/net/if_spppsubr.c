@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.58 2007/09/25 23:52:27 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.59 2007/10/31 21:13:45 mikeb Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4875,6 +4875,10 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		 * CHAP secrets back to userland anyway.
 		 */
 		bcopy(sp, &spr.defs, sizeof(struct sppp));
+		if (suser(curproc, 0) != 0) {
+			bzero(spr.defs.myauth.name, AUTHNAMELEN);
+			bzero(spr.defs.hisauth.name, AUTHNAMELEN);
+		}
 		bzero(spr.defs.myauth.secret, AUTHKEYLEN);
 		bzero(spr.defs.myauth.challenge, AUTHKEYLEN);
 		bzero(spr.defs.hisauth.secret, AUTHKEYLEN);
