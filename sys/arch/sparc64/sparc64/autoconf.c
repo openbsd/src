@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.73 2007/10/25 18:48:00 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.74 2007/10/31 22:21:43 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -497,10 +497,6 @@ bootpath_store(storep, bp)
 void
 cpu_configure()
 {
-#if 0
-	extern struct user *proc0paddr;	/* XXX see below */
-#endif
-
 	/* build the bootpath */
 	bootpath_build();
 
@@ -527,15 +523,6 @@ cpu_configure()
 
 	/* Enable device interrupts */
         setpstate(getpstate()|PSTATE_IE);
-
-#if 0
-	/*
-	 * XXX Re-zero proc0's user area, to nullify the effect of the
-	 * XXX stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 */
-	bzero(proc0paddr, sizeof(struct user));
-#endif
 
 	(void)spl0();
 	cold = 0;
