@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.97 2007/10/29 21:27:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.98 2007/10/31 20:14:33 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9098,24 +9098,6 @@ ENTRY(cecc_catch)
         CLRTT
         retry
         NOTREACHED
-
-/*
- * ienab_bis(bis) int bis;
- * ienab_bic(bic) int bic;
- *
- * Set and clear bits in the interrupt register.
- */
-
-/*
- * sun4u has separate asr's for clearing/setting the interrupt mask.
- */
-ENTRY(ienab_bis)
-	retl
-	 wr	%o0, 0, SET_SOFTINT	! SET_SOFTINT
-
-ENTRY(ienab_bic)
-	retl
-	 wr	%o0, 0, CLEAR_SOFTINT	! CLEAR_SOFTINT
 
 /*
  * send_softint(cpu, level, intrhand)
