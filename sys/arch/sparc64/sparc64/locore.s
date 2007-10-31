@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.98 2007/10/31 20:14:33 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.99 2007/10/31 20:20:39 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6439,13 +6439,6 @@ ENTRY(pseg_get)
 	 clr	%o0
 
 /*
- * In 32-bit mode:
- *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
- *			 paddr_t spare %o4:%o5);
- *
- * In 64-bit mode:
- *
  * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
  *			paddr_t spare %o3);
  *
@@ -6532,13 +6525,6 @@ ENTRY(pseg_set)
 	 mov	1, %o0
 
 /*
- * In 32-bit mode:
- *
- * extern void pseg_find(struct pmap* %o0, vaddr_t addr %o1,
- *			 paddr_t spare %o2:%o3);
- *
- * In 64-bit mode:
- *
  * extern void pseg_find(struct pmap* %o0, vaddr_t addr %o1, paddr_t spare %o2);
  *
  * Get the paddr for a particular TTE entry.  Returns the TTE's PA on success,
