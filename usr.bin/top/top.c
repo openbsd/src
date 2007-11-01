@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.58 2007/10/16 07:33:08 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.59 2007/11/01 19:25:32 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -201,7 +201,7 @@ parseargs(int ac, char **av)
 		case 's':
 			delay = strtod(optarg, &endp);
 
-			if (delay > 0 && delay <= 1000000 && *endp == '\0')
+			if (delay >= 0 && delay <= 1000000 && *endp == '\0')
 				break;
 
 			warnx("warning: delay should be a non-negative number"
