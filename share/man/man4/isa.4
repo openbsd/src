@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.54 2007/10/23 07:25:45 brad Exp $
+.\"	$OpenBSD: isa.4,v 1.55 2007/11/01 21:45:07 cnst Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 23 2007 $
+.Dd $Mdocdate: November 1 2007 $
 .Dt ISA 4
 .Os
 .Sh NAME
@@ -189,6 +189,8 @@ SoundForte RadioLink SF16-FMR2 FM radio device
 .El
 .Ss Hardware Sensors
 .Bl -tag -width 12n -offset ind -compact
+.It Xr aps 4
+ThinkPad Active Protection System hardware monitors
 .It Xr it 4
 ITE IT8705F, IT8712F, and SiS SiS950 temperature, voltage, and fan sensor
 .It Xr lm 4
@@ -200,8 +202,6 @@ VIA VT1211 LPC Super I/O
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
-.It Xr aps 4
-ThinkPad Active Protection System hardware monitors
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 I2C controller
 .It Xr lms 4
