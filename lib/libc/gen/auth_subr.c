@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.31 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.32 2007/11/01 00:55:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -887,9 +887,8 @@ auth_call(auth_session_t *as, char *path, ...)
 		_auth_spool(as, pfd[0]);
 		close(pfd[0]);
 		status = 0;
-		do {
-			pid = waitpid(pid, &status, 0);
-		} while (pid < 0 && errno == EINTR);
+		while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
+			;
 		if (pid < 0) {
 			if (errno != ECHILD) {
 				syslog(LOG_ERR, "%s: waitpid: %m", path);
