@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.8 2007/10/22 21:43:51 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.9 2007/11/01 10:49:22 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -379,7 +379,8 @@ main(int argc, char *argv[])
 	if(nc==0)
 		goto nocom;
 	if (pflag==0) {
-		tmp3 = gettmp();
+		if (!sflag)
+			tmp3 = gettmp();
 		tmp4 = gettmp();
 	}
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)	/* interrupt */
