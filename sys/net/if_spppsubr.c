@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.59 2007/10/31 21:13:45 mikeb Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.60 2007/11/01 02:47:20 deraadt Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4858,6 +4858,7 @@ HIDE int
 sppp_params(struct sppp *sp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
+	extern struct proc *curproc;
 	struct spppreq spr;
 
 	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
