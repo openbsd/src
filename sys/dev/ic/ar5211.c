@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.35 2007/10/29 09:39:35 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.36 2007/11/01 20:32:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1195,7 +1195,9 @@ ar5k_ar5211_fill_tx_desc(struct ath_hal *hal, struct ath_desc *desc,
 	if (segment_length & ~AR5K_AR5211_DESC_TX_CTL1_BUF_LEN)
 		return (AH_FALSE);
 	tx_desc->tx_control_1 =
+#if 0
 	    (tx_desc->tx_control_1 & ~AR5K_AR5211_DESC_TX_CTL1_BUF_LEN) |
+#endif
 	    segment_length;
 
 	if (first_segment != AH_TRUE)
