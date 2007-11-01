@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.30 2007/08/06 19:16:05 sobrado Exp $
+.\"	$OpenBSD: kill.1,v 1.31 2007/11/01 16:09:31 jmc Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)kill.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: November 1 2007 $
 .Dt KILL 1
 .Os
 .Sh NAME
@@ -68,9 +68,18 @@ Only the superuser may send signals to other users' processes.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl l Op Ar exit_status
-If no operand is given, list the signal names; otherwise, write
-the signal name corresponding to
+Display the name of the signal corresponding to
 .Ar exit_status .
+.Ar exit_status
+may be the exit status of a command killed by a signal
+(see the
+special
+.Xr sh 1
+parameter
+.Sq ?\& )
+or a signal number.
+.Pp
+If no operand is given, display the names of all the signals.
 .It Fl s Ar signal_name
 A symbolic signal name specifying the signal to be sent instead of the
 default
