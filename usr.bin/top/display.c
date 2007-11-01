@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.30 2007/10/16 07:33:08 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.31 2007/11/01 19:10:32 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -278,7 +278,6 @@ i_timeofday(time_t * tod)
  *  *_procstates(total, brkdn, names) - print the process summary line
  *
  *  Assumptions:  cursor is at the beginning of the line on entry
- *		  lastline is valid
  */
 void
 i_procstates(int total, int *brkdn)
@@ -376,7 +375,6 @@ i_cpustates(int64_t *ostates)
 		if (screen_length > 2 + cpu || !smart_terminal) {
 			move(2 + cpu, 0);
 			clrtoeol();
-			/* print tag and bump lastline */
 			addstrp(cpustates_tag(cpu));
 
 			while ((thisname = *names++) != NULL) {
@@ -397,9 +395,6 @@ i_cpustates(int64_t *ostates)
 
 /*
  *  *_memory(stats) - print "Memory: " followed by the memory summary string
- *
- *  Assumptions:  cursor is on "lastline"
- *                for i_memory ONLY: cursor is on the previous line
  */
 void
 i_memory(int *stats)
@@ -422,10 +417,6 @@ i_memory(int *stats)
 /*
  *  *_message() - print the next pending message line, or erase the one
  *                that is there.
- *
- *  Note that u_message is (currently) the same as i_message.
- *
- *  Assumptions:  lastline is consistent
  */
 
 /*
@@ -434,33 +425,22 @@ i_memory(int *stats)
  */
 
 static char     next_msg[MAX_COLS + 5];
-static int      msglen = 0;
-/*
- * Invariant: msglen is always the length of the message currently displayed
- * on the screen (even when next_msg doesn't contain that message).
- */
+static int      msgon = 0;
 
 void
 i_message(void)
 {
-	/*
-	while (lastline < y_message) {
-		if (fputc('\n', stdout) == EOF)
-			exit(1);
-		lastline++;
-	}
-	*/
 	move(y_message, 0);
 	if (next_msg[0] != '\0') {
 		standoutp();
 		addstrp(next_msg);
 		standendp();
 		clrtoeol();
-		msglen = strlen(next_msg);
+		msgon = TRUE;
 		next_msg[0] = '\0';
-	} else if (msglen > 0) {
+	} else if (msgon) {
 		clrtoeol();
-		msglen = 0;
+		msgon = FALSE;
 	}
 }
 
@@ -468,8 +448,6 @@ static int      header_length;
 
 /*
  *  *_header(text) - print the header for the process area
- *
- *  Assumptions:  cursor is on the previous line and lastline is consistent
  */
 
 void
@@ -495,8 +473,6 @@ i_header(char *text)
 
 /*
  *  *_process(line, thisline) - print one process line
- *
- *  Assumptions:  lastline is consistent
  */
 
 void
@@ -549,17 +525,15 @@ void
 new_message(int type, const char *msgfmt,...)
 {
 	va_list ap;
-	int i;
 
 	va_start(ap, msgfmt);
 	/* first, format the message */
 	vsnprintf(next_msg, sizeof(next_msg), msgfmt, ap);
 	va_end(ap);
 
-	if (msglen > 0) {
+	if (next_msg[0] != '\0') {
 		/* message there already -- can we clear it? */
 		/* yes -- write it and clear to end */
-		i = strlen(next_msg);
 		if ((type & MT_delayed) == 0) {
 			move(y_message, 0);
 			if (type & MT_standout)
@@ -568,24 +542,12 @@ new_message(int type, const char *msgfmt,...)
 			if (type & MT_standout)
 				standendp();
 			clrtoeol();
-			msglen = i;
+			msgon = TRUE;
 			next_msg[0] = '\0';
-		}
-	} else {
-		if ((type & MT_delayed) == 0) {
-			move(y_message, 0);
-			if (type & MT_standout)
-				standoutp();
-			addstrp(next_msg);
-			if (type & MT_standout)
-				standendp();
-			clrtoeol();
-			msglen = strlen(next_msg);
-			next_msg[0] = '\0';
+			if (smart_terminal)
+				refresh();
 		}
 	}
-	if (smart_terminal)
-		refresh();
 }
 
 void
@@ -656,9 +618,6 @@ readlinedumb(char *buffer, int size, int numeric)
 
 	/* all done -- null terminate the string */
 	*ptr = '\0';
-
-	/* account for the extra characters in the message area */
-	msglen += cnt;
 
 	/* return either inputted number or string length */
 	putr();
