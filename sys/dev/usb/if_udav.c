@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.37 2007/11/01 00:51:36 deraadt Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.38 2007/11/01 11:43:28 deraadt Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -202,10 +202,12 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
 
+	printf("%s: ", devname);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1);
 	if (err) {
-		printf(", setting config no failed\n");
+		printf("setting config no failed\n");
 		goto bad;
 	}
 
@@ -216,7 +218,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);
 	if (err) {
-		printf(", failed to get interface, err=%s\n", usbd_errstr(err));
+		printf("failed to get interface, err=%s\n", usbd_errstr(err));
 		goto bad;
 	}
 
@@ -248,7 +250,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_bulkin_no == -1 || sc->sc_bulkout_no == -1 ||
 	    sc->sc_intrin_no == -1) {
-		printf(", missing endpoint\n");
+		printf("missing endpoint\n");
 		goto bad;
 	}
 
@@ -260,13 +262,13 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	/* Get Ethernet Address */
 	err = udav_csr_read(sc, UDAV_PAR, (void *)eaddr, ETHER_ADDR_LEN);
 	if (err) {
-		printf(", read MAC address failed\n");
+		printf("read MAC address failed\n");
 		splx(s);
 		goto bad;
 	}
 
 	/* Print Ethernet Address */
-	printf(" address %s\n", ether_sprintf(eaddr));
+	printf("address %s\n", devname, ether_sprintf(eaddr));
 
         bcopy(eaddr, (char *)&sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
