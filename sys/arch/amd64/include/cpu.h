@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.31 2007/05/29 18:53:52 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.32 2007/11/01 23:30:46 mikeb Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -215,7 +215,6 @@ extern struct cpu_info cpu_info_primary;
 extern u_int32_t cpus_attached;
 
 #define curpcb		curcpu()->ci_curpcb
-#define curproc		curcpu()->ci_curproc
 
 /*
  * Arguments to hardclock, softclock and statclock
