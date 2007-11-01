@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.1 2007/10/20 10:01:38 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -89,6 +89,8 @@
 #define	BOOL_TYPE	INT	/* what used to store _Bool */
 #define	WCHAR_TYPE	INT	/* what used to store wchar_t */
 
+#define ELFABI
+
 /*
  * Use large-enough types.
  */
@@ -97,8 +99,13 @@ typedef	unsigned long long U_CONSZ;
 typedef long long OFFSZ;
 
 #define CONFMT	"%lld"		/* format for printing constants */
+#ifdef ELFABI
+#define LABFMT	".L%d"		/* format for printing labels */
+#else
 #define LABFMT	"L%d"		/* format for printing labels */
+#endif
 #define	STABLBL	"LL%d"		/* format for stab (debugging) labels */
+#define STAB_LINE_ABSOLUTE	/* S_LINE fields use absolute addresses */
 
 #define	MYP2TREE(p) myp2tree(p);
 
@@ -261,6 +268,7 @@ int COLORMAP(int c, int *r);
 
 #define	SHSTR		(MAXSPECIAL+1)	/* short struct */
 #define	SFUNCALL	(MAXSPECIAL+2)	/* struct assign after function call */
+#define SPCON		(MAXSPECIAL+3)  /* positive constant */
 
 struct stub {
 	struct { struct stub *q_forw, *q_back; } link;

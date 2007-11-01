@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.1 2007/10/20 10:01:38 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -57,13 +57,6 @@ addstub(struct stub *list, char *name)
 }
 
 void
-lineid(int l, char *fn)
-{
-	/* identify line l and file fn */
-	printf("#	line %d, file %s\n", l, fn);
-}
-
-void
 deflab(int label)
 {
 	printf(LABFMT ":\n", label);
@@ -88,11 +81,11 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 	// get return address (not required for leaf function)
 	printf("	mflr %s\n", rnames[R0]);
 	// save registers R30 and R31
-	printf("	stmw %s, -8(%s)\n", rnames[R30], rnames[R1]);
+	printf("	stmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
 	// save return address (not required for leaf function)
-	printf("	stw %s, 8(%s)\n", rnames[R0], rnames[R1]);
+	printf("	stw %s,8(%s)\n", rnames[R0], rnames[R1]);
 	// create the new stack frame
-	printf("	stwu %s, -%d(%s)\n", rnames[R1], addto, rnames[R1]);
+	printf("	stwu %s,-%d(%s)\n", rnames[R1], addto, rnames[R1]);
 
 	if (kflag) {
 		funcname = ipp->ipp_name;
@@ -200,7 +193,7 @@ eoftn(struct interpass_prolog *ipp)
 	/* return from function code */
 	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
 		if (i & 1)
-			printf("	lwz %s, %d(%s)\n",
+			printf("\tlwz %s,%d(%s)\n",
 			    rnames[j], regoff[j], rnames[FPREG]);
 			
 	}
@@ -215,11 +208,11 @@ eoftn(struct interpass_prolog *ipp)
 		printf("	ret $4\n");
 	} else {
 		// unwind stack frame
-		printf("	lwz %s,0(%s)\n", rnames[R1], rnames[R1]);
-		printf("	lwz %s,8(%s)\n", rnames[R0], rnames[R1]);
-		printf("	mtlr %s\n", rnames[R0]);
-		printf("	lmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
-		printf("	blr\n");
+		printf("\tlwz %s,0(%s)\n", rnames[R1], rnames[R1]);
+		printf("\tlwz %s,8(%s)\n", rnames[R0], rnames[R1]);
+		printf("\tmtlr %s\n", rnames[R0]);
+		printf("\tlmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
+		printf("\tblr\n");
 	}
 }
 
@@ -260,7 +253,7 @@ hopcode(int f, int o)
  * Return type size in bytes.  Used by R2REGS, arg 2 to offset().
  */
 int
-tlen(p) NODE *p;
+tlen(NODE *p)
 {
 	switch(p->n_type) {
 		case CHAR:
@@ -758,24 +751,21 @@ conput(FILE *fp, NODE *p)
 	switch (p->n_op) {
 	case ICON:
 #if 0
-		printf("XXX type = %x\n", p->n_type);
+		if (p->n_sp)
+			printf(" [class=%d,level=%d] ", p->n_sp->sclass, p->n_sp->slevel);
 #endif
-		if (p->n_sp != NULL &&
-#if 0
-		   (p->n_sp->sclass != STATIC) &&
-#endif
-		   (p->n_sp->sclass != ILABEL))
-			s = exname(p->n_name);
-		else
+		if (p->n_sp == NULL || (p->n_sp->sclass == ILABEL ||
+		   (p->n_sp->sclass == STATIC && p->n_sp->slevel > 0)))
 			s = p->n_name;
+		else
+			s = exname(p->n_name);
 			
 		if (*s != '\0') {
 			if (kflag && p->n_sp && ISFTN(p->n_sp->stype)) {
 				fprintf(fp, "%s$stub", s);
 				addstub(&stublist, s);
-			} else if (kflag && p->n_sp) {
-//				printf("sclass=%x sflags=%x\n", p->n_sp->sclass, p->n_sp->sflags);
-				if (p->n_sp && (p->n_sp->sclass != STATIC && p->n_sp->sflags != SSTRING)) {
+			} else if (kflag) {
+				if (p->n_sp && p->n_sp->sclass == EXTERN) {
 					fprintf(fp, "L%s$non_lazy_ptr", s);
 					addstub(&nlplist, s);
 				} else {
@@ -850,15 +840,19 @@ adrput(FILE *io, NODE *p)
 
 	case NAME:
 		if (p->n_name[0] != '\0') {
-			if (kflag && p->n_sp && (p->n_sp->sclass == STATIC || p->n_sp->sflags != SSTRING)) {
+			if (kflag && p->n_sp && (p->n_sp->sclass == EXTERN || p->n_sp->sclass == EXTDEF)) {
 				fprintf(io, "L%s$non_lazy_ptr", exname(p->n_name));
 				addstub(&nlplist, exname(p->n_name));
 				fprintf(io, "-L%s$pb", exname(funcname));
-			} else if (kflag) {
+			} else if (kflag && p->n_sp && p->n_sp->sclass == STATIC && p->n_sp->slevel == 0) {
 				fprintf(io, "%s", exname(p->n_name));
 				fprintf(io, "-L%s$pb", exname(funcname));
-			} else
-				fputs(exname(p->n_name), io);
+			} else if (kflag && p->n_sp && (p->n_sp->sclass == ILABEL || (p->n_sp->sclass == STATIC && p->n_sp->sclass > 0))) {
+				fprintf(io, "%s", p->n_name);
+				fprintf(io, "-L%s$pb", exname(funcname));
+			} else {
+				fputs(p->n_name, io);
+			}
 			if (p->n_lval != 0)
 				fprintf(io, "+" CONFMT, p->n_lval);
 		} else
@@ -927,7 +921,7 @@ cbgen(int o, int lab)
 {
 	if (o < EQ || o > UGT)
 		comperr("bad conditional branch: %s", opst[o]);
-	printf("	%s " LABFMT "\n", ccbranches[o-EQ], lab);
+	printf("\t%s " LABFMT "\n", ccbranches[o-EQ], lab);
 }
 
 static void
@@ -1150,6 +1144,19 @@ COLORMAP(int c, int *r)
 #endif
 }
 
+#ifdef ELFABI
+char *rnames[] = {
+	"%r0", "%r1", "%r2", "%r3","%r4","%r5", "%r6", "%r7", "%r8",
+	"%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%r16",
+	"%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23", "%r24",
+	"%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
+	/* the order is flipped, because we are big endian */
+	"%r4\0%r3\0", "%r5\0%r4\0", "%r6\0%r5\0", "%r7\0%r6\0",
+	"%r8\0%r7\0", "%r9\0%r8\0", "%r10%r9\0", "%r15%r14", "%r17%r16",
+	"%r19%r18", "%r21%r20", "%r23%r22", "%r25%r24", "%r27%r26",
+	"%r29%r28", "%r31%r30",
+};
+#else
 char *rnames[] = {
 	"r0", "r1", "r2", "r3","r4","r5", "r6", "r7", "r8",
 	"r9", "r10", "r11", "r12", "r13", "r14", "r15", "r16",
@@ -1161,6 +1168,7 @@ char *rnames[] = {
 	"r19r18", "r21r20", "r23r22", "r25r24", "r27r26",
 	"r29r28", "r31r30",
 };
+#endif
 
 /*
  * Return a class suitable for a specific type.
@@ -1209,11 +1217,10 @@ special(NODE *p, int shape)
 		if (o == STCALL || o == USTCALL)
 			return SRREG;
 		break;
-#if 0
-	case SSYMBOL:
-		if (p->n_op == NAME && !kflag)
+	case SPCON:
+		if (o == ICON && p->n_name[0] == 0 && (p->n_lval & ~0xffff) == 0)
 			return SRDIR;
-#endif
+		break;
 	}
 	return SRNOPE;
 }

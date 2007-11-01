@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.2 2007/10/21 17:41:06 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.3 2007/11/01 10:52:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -90,6 +90,10 @@ fixupfuncargs(NODE *r, int *reg)
 		/* recurse to the bottom of the tree */
 		fixupfuncargs(r->n_left, reg);
 
+		if (r->n_right->n_op == STARG) {
+			assert(0);
+		}
+
 		r->n_right = block(ASSIGN, NIL, r->n_right, 
 			    r->n_right->n_type, r->n_right->n_df,
 			    r->n_right->n_sue);
@@ -104,6 +108,17 @@ fixupfuncargs(NODE *r, int *reg)
 		}
 
 	} else {
+
+		if (r->n_op == STARG) {
+			assert(0);
+#if 0
+			copystructtostack(r->);
+			*r = *(r->n_left)
+			nfree(r->n_left);
+			return;
+#endif
+		}
+
 		NODE *l = talloc();
 		*l = *r;
 		r->n_op = ASSIGN;
@@ -157,23 +172,33 @@ clocal(NODE *p)
 		}
 #endif
 
-		if (kflag && p->n_left->n_op == NAME) {
+		if (kflag && blevel > 0 && p->n_left->n_op == NAME) {
+
+#if 0
+			printf("sclass=%d, squal=%d, slevel=%d: ", p->n_left->n_sp->sclass, p->n_left->n_sp->squal, p->n_left->n_sp->slevel);
+			tprint(stdout, p->n_left->n_type, p->n_left->n_qual);
+			printf("\n");
+#endif
 
 			TWORD t = DECREF(p->n_type);
 
 			if (!ISFTN(t)) {
 				r  = talloc();
 				*r = *p;
-
+#if 1
+				/* cast to pointer-to-char before adding offset */
 				l = block(REG, NIL, NIL, INT, p->n_df, p->n_sue);
 				l->n_lval = 0;
 				l->n_rval = R31;
 
-				p->n_op = PLUS;
+				r = block(SCONV, r, NIL, INCREF(UCHAR), p->n_df,p->n_sue);
+				r = block(PLUS, l, r, r->n_type, r->n_df, r->n_sue);
+				p->n_op = SCONV;
 				p->n_lval = 0;
-				p->n_left = l;
+				p->n_left = r;
 				p->n_rval = 0;
-				p->n_right = r;
+				p->n_right = 0;
+#endif
 			}
 
 		}
@@ -195,23 +220,21 @@ clocal(NODE *p)
 			p = stref(block(STREF, r, p, 0, 0, 0));
 			break;
 
-		case STATIC:
-			if (q->slevel == 0)
-				break;
-			p->n_lval = 0;
-			p->n_sp = q;
-			break;
-
 		case REGISTER:
 			p->n_op = REG;
 			p->n_lval = 0;
 			p->n_rval = q->soffset;
 			break;
 
+		case STATIC:
+			if (q->slevel > 0) {
+				p->n_lval = 0;
+				p->n_sp = q;
+			}
+			/* FALLTHROUGH */
 #if 1
 		default:
-			if (kflag && !ISFTN(p->n_type)) {
-
+			if (kflag && blevel > 0 && !ISFTN(p->n_type)) {
 			TWORD t = p->n_type;
 			l = block(REG, NIL, NIL, INCREF(t), p->n_df, p->n_sue);
 			l->n_lval = 0;
@@ -792,7 +815,7 @@ finval(NODE *p)
 char *
 exname(char *p)
 {
-#if 0
+#ifndef ELFABI
 #define NCHNAM	256
         static char text[NCHNAM+1];
 	int i;
@@ -806,8 +829,11 @@ exname(char *p)
 
         text[i] = '\0';
         text[NCHNAM] = '\0';  /* truncate */
+
+        return (text);
+#else
+	return (p == NULL ? "" : p);
 #endif
-        return (p);
 }
 
 /*
@@ -888,7 +914,12 @@ deflab1(int label)
 	printf(LABFMT ":\n", label);
 }
 
+#ifdef ELFABI
+static char *loctbl[] = { "text", "data", "section .rodata,",
+    "section .rodata" };
+#else
 static char *loctbl[] = { "text", "data", "section .rodata,", "cstring" };
+#endif
 
 void
 setloc1(int locc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.1 2007/10/20 10:01:38 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,7 +40,7 @@ int canaddr(NODE *);
 int
 notoff(TWORD t, int r, CONSZ off, char *cp)
 {
-//	if (cp) return 1;
+	if (cp && cp[0]) return 1;
 	return !(off < 32768 && off > -32769);  /* YES */
 }
 
@@ -67,6 +67,7 @@ offstar(NODE *p, int shape)
 			/* Converted in ormake() */
 			return;
 		}
+		/* usually for arraying indexing: */
 		if (r->n_op == LS && r->n_right->n_op == ICON &&
 		    r->n_right->n_lval == 2 && p->n_op == PLUS) {
 			if (isreg(p->n_left) == 0)
@@ -85,15 +86,40 @@ offstar(NODE *p, int shape)
 void
 myormake(NODE *q)
 {
-#if 0
-	NODE *p;
+#if 1
+	NODE *p, *r;
 #endif
 
 	if (x2debug)
 		printf("myormake(%p)\n", q);
 
-#if 0
+#if 1
 	p = q->n_left;
+	if (q->n_op != OREG && p->n_op == REG) {
+		q->n_op = OREG;
+		q->n_lval = 0;
+		q->n_rval = p->n_rval;
+		tfree(p);
+		return;
+	}
+#endif
+
+#if 1
+	/* usually for array indexing */
+        p = q->n_left;
+        if (p->n_op == PLUS && (r = p->n_right)->n_op == LS &&
+            r->n_right->n_op == ICON && r->n_right->n_lval == 2 &&
+            p->n_left->n_op == REG && r->n_left->n_op == REG) {
+		if (isreg(p->n_left) == 0)
+			(void)geninsn(p->n_left, INAREG);
+                q->n_op = OREG;
+                q->n_lval = 0;
+                q->n_rval = p->n_left->n_rval;
+                tfree(p);
+        }
+#endif
+
+#if 0
 	if ((p->n_op == PLUS || p->n_op == MINUS) && p->n_right->n_op == ICON) {
 		if (isreg(p->n_left) == 0)
 			(void)geninsn(p->n_left, INAREG);
@@ -107,6 +133,7 @@ myormake(NODE *q)
 		tfree(p);
 	}
 #endif
+	(void)geninsn(p, INAREG);
 }
 
 /*

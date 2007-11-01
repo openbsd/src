@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.1 2007/10/20 10:01:38 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -27,9 +27,15 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 
-# include "pass1.h"
+#include "pass1.h"
 #include "pass2.h"
+
+static void genswitch_simple(int num, struct swents **p, int n);
+static void genswitch_bintree(int num, struct swents **p, int n);
+static void genswitch_table(int num, struct swents **p, int n);
+static void genswitch_mrst(int num, struct swents **p, int n);
 
 /*
  * cause the alignment to become a multiple of n
@@ -323,16 +329,483 @@ fldty(struct symtab *p)
 void
 genswitch(int num, struct swents **p, int n)
 {
+	if (n == 0) {
+		if (p[0]->sval != 0)
+			branch(p[0]->sval);
+		return;
+	}
+
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		int i;
+		for (i = 1; i <= n; i++)
+			printf("%d: %llu\n", i, p[i]->sval);
+	}
+#endif
+
+	if (0)
+	genswitch_table(num, p, n);
+	if (0)
+	genswitch_bintree(num, p, n);
+	genswitch_mrst(num, p, n);
+}
+
+static void
+genswitch_simple(int num, struct swents **p, int n)
+{
 	NODE *r;
 	int i;
 
-	/* simple switch code */
 	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
 		r = tempnode(num, INT, 0, MKSUE(INT));
 		r = buildtree(NE, r, bcon(p[i]->sval));
 		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
 	}
 	if (p[0]->slab > 0)
 		branch(p[0]->slab);
+}
+
+static void bintree_rec(int num, struct swents **p, int n, int s, int e);
+
+static void
+genswitch_bintree(int num, struct swents **p, int n)
+{
+	int lab = getlab();
+
+	if (p[0]->slab == 0)
+		p[0]->slab = lab;
+
+	bintree_rec(num, p, n, 1, n);
+
+	plabel(lab);
+}
+
+static void
+bintree_rec(int num, struct swents **p, int n, int s, int e)
+{
+	NODE *r;
+	int rlabel;
+	int h;
+
+	if (s == e) {
+		r = tempnode(num, INT, 0, MKSUE(INT));
+		r = buildtree(NE, r, bcon(p[s]->sval));
+		cbranch(buildtree(NOT, r, NIL), bcon(p[s]->slab));
+		branch(p[0]->slab);
+		return;
+	}
+
+	rlabel = getlab();
+
+	h = s + (e - s) / 2;
+
+	r = tempnode(num, INT, 0, MKSUE(INT));
+	r = buildtree(GT, r, bcon(p[h]->sval));
+	cbranch(r, bcon(rlabel));
+	bintree_rec(num, p, n, s, h);
+	plabel(rlabel);
+	bintree_rec(num, p, n, h+1, e);
+}
+
+
+
+static void
+genswitch_table(int num, struct swents **p, int n)
+{
+	NODE *r, *t;
+	int tval;
+	int minval, maxval, range;
+	int deflabel, tbllabel;
+	int i, j;
+
+	minval = p[1]->sval;
+	maxval = p[n]->sval;
+
+	range = maxval - minval + 1;
+
+	if (n < 10 || range > 3 * n) {
+		/* too small or too sparse for jump table */
+		genswitch_simple(num, p, n);
+		return;
+	}
+
+	r = tempnode(num, UNSIGNED, 0, MKSUE(UNSIGNED));
+	r = buildtree(MINUS, r, bcon(minval));
+	t = tempnode(0, UNSIGNED, 0, MKSUE(UNSIGNED));
+	tval = t->n_lval;
+	r = buildtree(ASSIGN, t, r);
+	ecomp(r);
+
+	deflabel = p[0]->slab;
+	if (deflabel == 0)
+		deflabel = getlab();
+
+	t = tempnode(tval, UNSIGNED, 0, MKSUE(UNSIGNED));
+	cbranch(buildtree(GT, t, bcon(maxval-minval)), bcon(deflabel));
+
+	tbllabel = getlab();
+	struct symtab *strtbl = lookup("__switch_table", SLBLNAME|STEMP);
+	strtbl->soffset = tbllabel;
+	strtbl->sclass = ILABEL;
+	strtbl->stype = INCREF(UCHAR);
+
+	t = block(NAME, NIL, NIL, UNSIGNED, 0, MKSUE(UNSIGNED));
+	t->n_sp = strtbl;
+	t = buildtree(ADDROF, t, NIL);
+	r = tempnode(tval, UNSIGNED, 0, MKSUE(INT));
+	r = buildtree(PLUS, t, r);
+	t = tempnode(0, INCREF(UNSIGNED), 0, MKSUE(UNSIGNED));
+	r = buildtree(ASSIGN, t, r);
+	ecomp(r);
+
+	r = tempnode(t->n_lval, INCREF(UNSIGNED), 0, MKSUE(UNSIGNED));
+	r = buildtree(UMUL, r, NIL);
+	t = block(NAME, NIL, NIL, UCHAR, 0, MKSUE(UCHAR));
+	t->n_sp = strtbl;
+	t = buildtree(ADDROF, t, NIL);
+	r = buildtree(PLUS, t, r);
+	r = block(GOTO, r, NIL, 0, 0, 0);
+	ecomp(r);
+
+	plabel(tbllabel);
+	for (i = minval, j=1; i <= maxval; i++) {
+		char *entry = tmpalloc(20);
+		int lab = deflabel;
+		//printf("; minval=%d, maxval=%d, i=%d, j=%d p[j]=%lld\n", minval, maxval, i, j, p[j]->sval);
+		if (p[j]->sval == i) {
+			lab = p[j]->slab;
+			j++;
+		}
+		snprintf(entry, 20, ".long " LABFMT "-" LABFMT, lab, tbllabel);
+		send_passt(IP_ASM, entry);
+	}
+
+	if (p[0]->slab <= 0)
+		plabel(deflabel);
+}
+
+#define DPRINTF(x)	if (xdebug) printf x
+//#define DPRINTF(x)	do { } while(0)
+
+#define MIN_TABLE_SIZE	8
+
+/*
+ *  Multi-way Radix Search Tree (MRST)
+ */
+
+static void mrst_rec(int num, struct swents **p, int n, int *state, int lab);
+static unsigned long mrst_find_window(struct swents **p, int n, int *state, int lab, int *len, int *lowbit);
+void mrst_put_entry_and_recurse(int num, struct swents **p, int n, int *state, int tbllabel, int lab, unsigned long j, unsigned long tblsize, unsigned long Wmax, int lowbit);
+
+static void
+genswitch_mrst(int num, struct swents **p, int n)
+{
+	int *state;
+	int i;
+	int putlabel = 0;
+
+	if (n < 10) {
+		/* too small for MRST */
+		genswitch_simple(num, p, n);
+		return;
+	}
+
+	state = tmpalloc((n+1)*sizeof(int));
+	for (i = 0; i <= n; i++)
+		state[i] = 0;
+
+	if (p[0]->slab == 0) {
+		p[0]->slab = getlab();
+		putlabel = 1;
+	}
+
+	mrst_rec(num, p, n, state, 0);
+
+	if (putlabel)
+		plabel(p[0]->slab);
+}
+
+
+/*
+ *  Look through the cases and generate a table or
+ *  list of simple comparisons.  If generating a table,
+ *  invoke mrst_put_entry_and_recurse() to put
+ *  an entry in the table and recurse.
+ */
+static void
+mrst_rec(int num, struct swents **p, int n, int *state, int lab)
+{
+	int len, lowbit;
+	unsigned long Wmax;
+	unsigned int tblsize;
+	NODE *t;
+	NODE *r;
+	int tval;
+	int i;
+
+	DPRINTF(("mrst_rec: num=%d, n=%d, lab=%d\n", num, n, lab));
+
+	/* find best window to cover set*/
+	Wmax = mrst_find_window(p, n, state, lab, &len, &lowbit);
+	tblsize = (1 << len);
+	assert(len > 0 && tblsize > 0);
+
+	DPRINTF(("mrst_rec: Wmax=%lu, lowbit=%d, tblsize=%u\n",
+		Wmax, lowbit, tblsize));
+
+	if (lab)
+		plabel(lab);
+
+	if (tblsize <= MIN_TABLE_SIZE) {
+		DPRINTF(("msrt_rec: break the recursion\n"));
+		for (i = 1; i <= n; i++) {
+			if (state[i] == lab) {
+				t = tempnode(num, UNSIGNED, 0, MKSUE(UNSIGNED));
+				cbranch(buildtree(EQ, t, bcon(p[i]->sval)),
+				    bcon(p[i]->slab));
+			}
+		}
+		branch(p[0]->slab);
+		return;
+	}
+
+	DPRINTF(("generating table with %d elements\n", tblsize));
+
+	// AND with Wmax
+	t = tempnode(num, UNSIGNED, 0, MKSUE(UNSIGNED));
+	r = buildtree(AND, t, bcon(Wmax));
+
+	// RS lowbits
+	r = buildtree(RS, r, bcon(lowbit));
+
+	t = tempnode(0, UNSIGNED, 0, MKSUE(UNSIGNED));
+	tval = t->n_lval;
+	r = buildtree(ASSIGN, t, r);
+	ecomp(r);
+
+	int tbllabel = getlab();
+	struct symtab *strtbl = lookup("__switch_table", SLBLNAME|STEMP);
+	strtbl->soffset = tbllabel;
+	strtbl->sclass = ILABEL;
+	strtbl->stype = INCREF(UCHAR);
+
+	t = block(NAME, NIL, NIL, UNSIGNED, 0, MKSUE(UNSIGNED));
+	t->n_sp = strtbl;
+	t = buildtree(ADDROF, t, NIL);
+	r = tempnode(tval, UNSIGNED, 0, MKSUE(INT));
+	r = buildtree(PLUS, t, r);
+	t = tempnode(0, INCREF(UNSIGNED), 0, MKSUE(UNSIGNED));
+	r = buildtree(ASSIGN, t, r);
+	ecomp(r);
+
+	r = tempnode(t->n_lval, INCREF(UNSIGNED), 0, MKSUE(UNSIGNED));
+	r = buildtree(UMUL, r, NIL);
+	t = block(NAME, NIL, NIL, UCHAR, 0, MKSUE(UCHAR));
+	t->n_sp = strtbl;
+	t = buildtree(ADDROF, t, NIL);
+	r = buildtree(PLUS, t, r);
+	r = block(GOTO, r, NIL, 0, 0, 0);
+	ecomp(r);
+
+	plabel(tbllabel);
+	
+	mrst_put_entry_and_recurse(num, p, n, state, tbllabel, lab,
+		0, tblsize, Wmax, lowbit);
+}
+
+
+/*
+ * Put an entry into the table and recurse to the next entry
+ * in the table.  On the way back through the recursion, invoke
+ * mrst_rec() to check to see if we should generate another
+ * table.
+ */
+void
+mrst_put_entry_and_recurse(int num, struct swents **p, int n, int *state,
+	int tbllabel, int labval,
+	unsigned long j, unsigned long tblsize, unsigned long Wmax, int lowbit)
+{
+	int i;
+	int found = 0;
+	int lab = getlab();
+
+	/*
+	 *  Look for labels which map to this table entry.
+	 *  Mark each one in "state" that they fall inside this table.
+	 */
+	for (i = 1; i <= n; i++) {
+		unsigned int val = (p[i]->sval & Wmax) >> lowbit;
+		if (val == j && state[i] == labval) {
+			found = 1;
+			state[i] = lab;
+		}
+	}
+
+	/* couldn't find any labels?  goto the default label */
+	if (!found)
+		lab = p[0]->slab;
+
+	/* generate the table entry */
+	char *entry = tmpalloc(20);
+	snprintf(entry, 20, ".long " LABFMT "-" LABFMT, lab, tbllabel);
+	send_passt(IP_ASM, entry);
+
+	DPRINTF(("mrst_put_entry: table=%d, pos=%lu/%lu, label=%d\n",
+	    tbllabel, j, tblsize, lab));
+
+	/* go to the next table entry */
+	if (j+1 < tblsize) {
+		mrst_put_entry_and_recurse(num, p, n, state, tbllabel, labval,
+			j+1, tblsize, Wmax, lowbit);
+	}
+
+	/* if we are going to the default label, bail now */
+	if (!found)
+		return;
+
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("state: ");
+		for (i = 1; i <= n; i++)
+			printf("%d ", state[i]);
+		printf("\n");
+	}
+#endif
+
+	/* build another table */
+	mrst_rec(num, p, n, state, lab);
+}
+
+/*
+ * counts the number of entries in a table of size (1 << L) which would
+ * be used given the cases and the mask (W, lowbit).
+ */
+static unsigned int
+mrst_cardinality(struct swents **p, int n, int *state, int step, unsigned long W, int L, int lowbit)
+{
+	unsigned int count = 0;
+	int i;
+
+	if (W == 0)
+		return 0;
+
+	int *vals = (int *)calloc(1 << L, sizeof(int));
+	assert(vals);
+
+	DPRINTF(("mrst_cardinality: "));
+	for (i = 1; i <= n; i++) {
+		int idx;
+		if (state[i] != step)
+			continue;
+		idx = (p[i]->sval & W) >> lowbit;
+		DPRINTF(("%llu->%d, ", p[i]->sval, idx));
+		if (!vals[idx]) {
+			count++;
+		}
+		vals[idx] = 1;
+	}
+	DPRINTF((": found %d entries\n", count));
+	free(vals);
+
+	return count;
+}
+
+/*
+ *  Find the maximum window (table size) which would best cover
+ *  the set of labels.  Algorithm explained in:
+ *
+ *  Ulfar Erlingsson, Mukkai Krishnamoorthy and T.V. Raman.
+ *  Efficient Multiway Radix Search Trees.
+ *  Information Processing Letters 60:3 115-120 (November 1996)
+ */
+
+static unsigned long
+mrst_find_window(struct swents **p, int n, int *state, int lab, int *len, int *lowbit)
+{
+	unsigned int tblsize;
+	unsigned long W = 0;
+	unsigned long Wmax = 0;
+	unsigned long Wleft = (1 << (SZLONG-1));
+	unsigned int C = 0;
+	unsigned int Cmax = 0;
+	int L = 0;
+	int Lmax = 0;
+	int lowmax = 0;
+	int no_b = SZLONG-1;
+	unsigned long b = (1 << (SZLONG-1));
+
+	DPRINTF(("mrst_find_window: n=%d, lab=%d\n", n, lab));
+
+	for (; b > 0; b >>= 1, no_b--) {
+
+		// select the next bit
+		W |= b;
+		L += 1;
+
+		tblsize = 1 << L;
+		assert(tblsize > 0);
+
+		DPRINTF(("no_b=%d, b=0x%lx, Wleft=0x%lx, W=0x%lx, Wmax=0x%lx, L=%d, Lmax=%d, Cmax=%u, lowmax=%d, tblsize=%u\n", no_b, b, Wleft, W, Wmax, L, Lmax, Cmax, lowmax, tblsize));
+
+		C = mrst_cardinality(p, n, state, lab, W, L, no_b);
+		DPRINTF((" -> cardinality is %d\n", C));
+
+		if (2*C >= tblsize) {
+			DPRINTF(("(found good match, keep adding to table)\n"));
+			Wmax = W;
+			Lmax = L;
+			lowmax = no_b;
+			Cmax = C;
+		} else {
+			DPRINTF(("(too sparse)\n"));
+			assert((W & Wleft) != 0);
+
+			/* flip the MSB and see if we get a better match */
+			W ^= Wleft;
+			Wleft >>= 1;
+			L -= 1;
+
+			DPRINTF((" --> trying W=0x%lx and L=%d and Cmax=%u\n", W, L, Cmax));
+			C = mrst_cardinality(p, n, state, lab, W, L, no_b);
+			DPRINTF((" --> C=%u\n", C));
+			if (C > Cmax) {
+				Wmax = W;
+				Lmax = L;
+				lowmax = no_b;
+				Cmax = C;
+				DPRINTF((" --> better!\n"));
+			} else {
+				DPRINTF((" --> no better\n"));
+			}
+		}
+
+	}
+
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		int i;
+		int hibit = lowmax + Lmax;
+		printf("msrt_find_window: Wmax=0x%lx, lowbit=%d, result=", Wmax, lowmax);
+		for (i = 31; i >= 0; i--) {
+			int mask = (1 << i);
+			if (i == hibit)
+				printf("[");
+			if (Wmax & mask)
+				printf("1");
+			else
+				printf("0");
+			if (i == lowmax)
+				printf("]");
+		}
+		printf("\n");
+	}
+#endif
+
+	assert(Lmax > 0);
+	*len = Lmax;
+	*lowbit = lowmax;
+
+	DPRINTF(("msrt_find_window: returning Wmax=%lu, len=%d, lowbit=%d [tblsize=%u, entries=%u]\n", Wmax, Lmax, lowmax, tblsize, C));
+
+	return Wmax;
 }
