@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211.9,v 1.6 2007/06/16 13:17:05 damien Exp $
+.\"	$OpenBSD: ieee80211.9,v 1.7 2007/11/01 22:34:19 mglocker Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211.9,v 1.6 2007/06/16 13:17:05 damien Exp $
+.\" $Id: ieee80211.9,v 1.7 2007/11/01 22:34:19 mglocker Exp $
 .\"
-.Dd $Mdocdate: June 16 2007 $
+.Dd $Mdocdate: November 1 2007 $
 .Dt IEEE80211 9
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nm ieee80211_media_init , ieee80211_media_change , ieee80211_media_status ,
 .Nm ieee80211_watchdog ,
 .Nm ieee80211_setmode , ieee80211_chan2mode ,
-.Nm ieee80211_rate2media , ieee80211_media2rate
+.Nm ieee80211_rate2media , ieee80211_media2rate ,
+.Nm ieee80211_rate2plcp , ieee80211_plcp2rate
 .Nd core 802.11 network stack functions
 .Sh SYNOPSIS
 .In net80211/ieee80211_var.h
@@ -76,6 +77,12 @@
 .Fc
 .Ft int
 .Fn ieee80211_media2rate "int mword"
+.Ft u_int8_t
+.Fn ieee80211_rate2plcp "struct ieee80211com *ic" "int rate" \
+"enum ieee80211_phymode mode"
+.Ft int
+.Fn ieee80211_plcp2rate "struct ieee80211com *ic" "u_int8_t plcp" \
+"enum ieee80211_phymode mode"
 .Sh DESCRIPTION
 The
 .Nm ieee80211
@@ -237,6 +244,21 @@ performs the reverse of this conversion, returning the bit rate (in 0.5Mbps
 units) corresponding to an
 .Vt ifmedia
 sub-type.
+.Pp
+.\"
+The
+.Fn ieee80211_rate2plcp
+function converts the bit rate
+.Fa rate
+(measured in units of 0.5Mbps) to a
+.Vt plcp
+signal. 
+The
+.Fn ieee80211_plcp2rate
+performs the reverse of this conversion, returning the bit rate (in 0.5Mbps
+units) corresponding to a
+.Vt plcp
+signal.
 .\"
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
