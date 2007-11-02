@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1284 2007/11/02 16:11:35 henning Exp 
+ *	OpenBSD: pcidevs,v 1.1285 2007/11/02 20:06:18 mikeb Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13918,6 +13918,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET,
 	    "Virtual NIC",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_EHCI,
+	    "Virtual EHCI",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PPB,
+	    "Virtual PCI-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
