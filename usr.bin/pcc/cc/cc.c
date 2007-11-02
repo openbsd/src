@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.9 2007/11/01 10:49:22 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.10 2007/11/02 21:07:52 millert Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -684,8 +684,8 @@ setsuf(char *s, char ch)
 int
 callsys(char f[], char *v[])
 {
-	int status;
-	pid_t t;
+	int t, status = 0;
+	pid_t p;
 	char *s;
 
 	if (vflag) {
@@ -695,7 +695,7 @@ callsys(char f[], char *v[])
 		fprintf(stderr, "\n");
 	}
 
-	if ((t=fork())==0) {
+	if ((p = fork()) == 0) {
 		if (Bflag) {
 			size_t len = strlen(Bflag) + 8;
 			char *a = malloc(len);
@@ -712,20 +712,21 @@ callsys(char f[], char *v[])
 		execv(f, v);
 		if ((s = strrchr(f, '/')))
 			execvp(s+1, v);
-		printf("Can't find %s\n", f);
-		exit(100);
-	} else
-		if (t == -1) {
+		fprintf(stderr, "Can't find %s\n", f);
+		_exit(100);
+	} else {
+		if (p == -1) {
 			printf("Try again\n");
 			return(100);
 		}
-	while(t!=wait(&status));
-	if ((t=(status&0377)) != 0 && t!=14) {
-		if (t!=2)		/* interrupt */
-			errorx(8, "Fatal error in %s", f);
-		dexit(eflag);
 	}
-	return((status>>8) & 0377);
+	while (waitpid(p, &status, 0) == -1 && errno == EINTR)
+		;
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	if (WIFSIGNALED(status))
+		dexit(eflag);
+	errorx(8, "Fatal error in %s", f);
 }
 
 char *
