@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.6 2007/09/23 09:47:56 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.7 2007/11/02 17:27:24 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -196,8 +196,8 @@ struct GNode_ {
 #define OP_HAS_COMMANDS 0x08000000  /* Target has all the commands it should.
 				     * Used when parsing to catch multiple
 				     * commands for a target */
-#define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
 #define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
+#define OP_RESOLVED	0x01000000  /* We looked harder already */
 
 /*
  * OP_NOP will return true if the node with the given type was not the

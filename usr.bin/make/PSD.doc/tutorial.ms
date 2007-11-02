@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.12 2007/09/23 09:49:18 espie Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.13 2007/11/02 17:27:24 espie Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -1765,56 +1765,6 @@ SYSTEM	= <command.mk>
 #include $(SYSTEM)
 .DE
 won't work.
-.xH 2 Saving Commands
-.No
-.LP
-.Ix 0 def ...
-There may come a time when you will want to save certain commands to
-be executed when everything else is done. For instance: you're
-making several different libraries at one time and you want to create the
-members in parallel. Problem is,
-.CW ranlib
-is another one of those programs that can't be run more than once in
-the same directory at the same time (each one creates a file called
-.CW __.SYMDEF
-into which it stuffs information for the linker to use. Two of them
-running at once will overwrite each other's file and the result will
-be garbage for both parties). You might want a way to save the ranlib
-commands til the end so they can be run one after the other, thus
-keeping them from trashing each other's file. Make allows you to do
-this by inserting an ellipsis (``.\|.\|.'') as a command between
-commands to be run at once and those to be run later.
-.LP
-So for the
-.CW ranlib
-case above, you might do this:
-.Rd 5
-.DS
-lib1.a          : $(LIB1OBJS)
-        rm -f $(.TARGET)
-        ar cr $(.TARGET) $(.ALLSRC)
-        ...
-        ranlib $(.TARGET)
-
-lib2.a          : $(LIB2OBJS)
-        rm -f $(.TARGET)
-        ar cr $(.TARGET) $(.ALLSRC)
-        ...
-        ranlib $(.TARGET)
-.DE
-.Ix 0 ref variable local .TARGET
-.Ix 0 ref variable local .ALLSRC
-This would save both
-.DS
-ranlib $(.TARGET)
-.DE
-commands until the end, when they would run one after the other
-(using the correct value for the
-.CW .TARGET
-variable, of course).
-.LP
-Commands saved in this manner are only executed if Make manages to
-re-create everything without an error.
 .xH 2 Target Attributes
 .LP
 Make allows you to give attributes to targets by means of special

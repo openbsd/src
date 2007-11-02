@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.42 2007/09/17 12:01:17 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.43 2007/11/02 17:27:24 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <signal.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
@@ -72,6 +73,7 @@
 #include "timestamp.h"
 #include "engine.h"
 #include "lst.h"
+#include "targ.h"
 
 static LIST	toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by
@@ -166,12 +168,8 @@ Make_Update(GNode *cgn)	/* the child node */
 		 * the Dir_MTime occurs, thus leading us to believe that the
 		 * file is unchanged, wreaking havoc with files that depend
 		 * on this one.
-		 * XXX If we are saving commands pretend that
-		 * the target is made now. Otherwise archives with ... rules
-		 * don't work!
 		 */
-		if (noExecute || (cgn->type & OP_SAVE_CMDS) ||
-		    is_out_of_date(Dir_MTime(cgn)))
+		if (noExecute || is_out_of_date(Dir_MTime(cgn)))
 			cgn->mtime = now;
 		if (DEBUG(MAKE))
 			printf("update time: %s\n", time_to_string(cgn->mtime));
@@ -409,6 +407,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 			gn->make = true;
 			numNodes++;
 
+			look_harder_for_target(gn);
 			/*
 			 * Apply any .USE rules before looking for implicit
 			 * dependencies to make sure everything that should have

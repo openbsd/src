@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.20 2007/09/23 09:44:39 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.21 2007/11/02 17:27:24 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -60,5 +60,6 @@ extern void Job_End(void);
 #endif
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);
+extern void print_errors(void);
 
 #endif /* _JOB_H_ */

@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.2 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.3 2007/11/02 17:27:24 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -65,4 +65,14 @@ extern bool Make_OODate(GNode *);
  *	fill all dynamic variables for a node.
  */
 extern void Make_DoAllVar(GNode *);
+extern volatile sig_atomic_t got_signal;
+
+extern volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
+    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH;
+
+extern void SigHandler(int);
+extern int run_gnode(GNode *, int);
+
+extern void setup_engine(void);
+
 #endif

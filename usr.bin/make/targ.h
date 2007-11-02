@@ -1,7 +1,7 @@
 #ifndef TARG_H
 #define TARG_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.h,v 1.4 2007/09/18 08:51:23 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.5 2007/11/02 17:27:24 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -77,4 +77,6 @@ struct ohash_info;
 
 extern struct ohash_info gnode_info;
 
+extern void look_harder_for_target(GNode *);
+extern void Targ_setdirs(const char *, const char *);
 #endif

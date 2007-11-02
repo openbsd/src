@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.72 2007/09/18 09:15:04 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.73 2007/11/02 17:27:24 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <signal.h>
 #include <ohash.h>
 #include "config.h"
 #include "defines.h"

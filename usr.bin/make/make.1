@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.70 2007/07/09 14:47:29 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.71 2007/11/02 17:27:24 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 9 2007 $
+.Dd $Mdocdate: November 2 2007 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -165,6 +165,8 @@ Print the input graph after making everything, or before exiting
 on error.
 .It Ar j
 Print debugging information about running multiple shells.
+.It Ar J
+Print job tokens showing which output corresponds to what job.
 .It Ar l
 Print commands in Makefile targets regardless of whether or not they are
 prefixed by @.
@@ -1409,7 +1411,3 @@ A+=$I
 .Pp
 .Sq A
 will evaluate to a b c d after the loop, not z b c d.
-.Pp
-The
-.Ql +
-command modificator is ignored in parallel make mode.

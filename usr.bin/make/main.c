@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.86 2007/10/24 13:19:24 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.87 2007/11/02 17:27:24 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -257,6 +257,9 @@ MainParseArgs(int argc, char **argv)
 					break;
 				case 'j':
 					debug |= DEBUG_JOB;
+					break;
+				case 'J':
+					debug |= DEBUG_JOBTOKEN;
 					break;
 				case 'l':
 					debug |= DEBUG_LOUD;
@@ -678,6 +681,7 @@ main(int argc, char **argv)
 		Dir_AddDir(defaultPath, d.current);
 	Var_Set(".CURDIR", d.current);
 	Var_Set(".OBJDIR", d.object);
+	Targ_setdirs(d.current, d.object);
 
 	/*
 	 * Initialize various variables.

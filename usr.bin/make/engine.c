@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.9 2007/09/17 12:42:09 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.10 2007/11/02 17:27:24 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
@@ -51,10 +56,22 @@
 #include "lst.h"
 #include "timestamp.h"
 #include "make.h"
+#include "pathnames.h"
+#include "error.h"
+#include "str.h"
+#include "memory.h"
 
 static void MakeTimeStamp(void *, void *);
 static void MakeAddAllSrc(void *, void *);
 static int rewrite_time(const char *);
+static void setup_signal(int);
+static void setup_all_signals(void);
+static void setup_meta(void);
+static char **recheck_command_for_shell(char **);
+
+static int setup_and_run_command(char *, GNode *, int);
+static void run_command(const char *, bool);
+static void handle_compat_interrupts(GNode *);
 
 bool
 Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
@@ -381,3 +398,347 @@ Make_OODate(GNode *gn)
 	return oodate;
 }
 
+volatile sig_atomic_t got_signal;
+
+volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
+    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH;
+
+static void
+setup_signal(int sig)
+{
+	if (signal(sig, SIG_IGN) != SIG_IGN) {
+		(void)signal(sig, SigHandler);
+	}
+}
+
+void
+setup_all_signals()
+{
+	/*
+	 * Catch the four signals that POSIX specifies if they aren't ignored.
+	 * handle_signal will take care of calling JobInterrupt if appropriate.
+	 */
+	setup_signal(SIGINT);
+	setup_signal(SIGHUP);
+	setup_signal(SIGQUIT);
+	setup_signal(SIGTERM);
+	/*
+	 * There are additional signals that need to be caught and passed if
+	 * either the export system wants to be told directly of signals or if
+	 * we're giving each job its own process group (since then it won't get
+	 * signals from the terminal driver as we own the terminal)
+	 */
+#if defined(USE_PGRP)
+	setup_signal(SIGTSTP);
+	setup_signal(SIGTTOU);
+	setup_signal(SIGTTIN);
+	setup_signal(SIGWINCH);
+#endif
+}
+
+void
+SigHandler(int sig)
+{
+	switch(sig) {
+	case SIGINT:
+		got_SIGINT++;
+		got_signal = 1;
+		break;
+	case SIGHUP:
+		got_SIGHUP++;
+		got_signal = 1;
+		break;
+	case SIGQUIT:
+		got_SIGQUIT++;
+		got_signal = 1;
+		break;
+	case SIGTERM:
+		got_SIGTERM++;
+		got_signal = 1;
+		break;
+#ifdef USE_PGRP
+	case SIGTSTP:
+		got_SIGTSTP++;
+		got_signal = 1;
+		break;
+	case SIGTTOU:
+		got_SIGTTOU++;
+		got_signal = 1;
+		break;
+	case SIGTTIN:
+		got_SIGTTIN++;
+		got_signal = 1;
+		break;
+	case SIGWINCH:
+		got_SIGWINCH++;
+		got_signal = 1;
+		break;
+#endif
+	}
+}
+
+/* The following array is used to make a fast determination of which
+ * characters are interpreted specially by the shell.  If a command
+ * contains any of these characters, it is executed by the shell, not
+ * directly by us.  */
+static char	    meta[256];
+
+void
+setup_meta(void)
+{
+	char *p;
+
+	for (p = "#=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
+		meta[(unsigned char) *p] = 1;
+	/* The null character serves as a sentinel in the string.  */
+	meta[0] = 1;
+}
+
+static char **
+recheck_command_for_shell(char **av)
+{
+	char *runsh[] = {
+		"alias", "cd", "eval", "exit", "read", "set", "ulimit",
+		"unalias", "unset", "wait", "umask", NULL
+	};
+
+	char **p;
+
+	/* optimization: if exec cmd, we avoid the intermediate shell */
+	if (strcmp(av[0], "exec") == 0)
+		av++;
+
+	for (p = runsh; *p; p++)
+		if (strcmp(av[0], *p) == 0)
+			return NULL;
+
+	return av;
+}
+
+static void
+run_command(const char *cmd, bool errCheck)
+{
+	const char *p;
+	char *shargv[4];
+	char **todo;
+
+	shargv[0] = _PATH_BSHELL;
+
+	shargv[1] = errCheck ? "-ec" : "-c";
+	shargv[2] = (char *)cmd;
+	shargv[3] = NULL;
+
+	todo = shargv;
+
+
+	/* Search for meta characters in the command. If there are no meta
+	 * characters, there's no need to execute a shell to execute the
+	 * command.  */
+	for (p = cmd; !meta[(unsigned char)*p]; p++)
+		continue;
+	if (*p == '\0') {
+		char *bp;
+		char **av;
+		int argc;
+		/* No meta-characters, so probably no need to exec a shell.
+		 * Break the command into words to form an argument vector
+		 * we can execute.  */
+		av = brk_string(cmd, &argc, &bp);
+		av = recheck_command_for_shell(av);
+		if (av != NULL)
+			todo = av;
+	}
+	execvp(todo[0], todo);
+
+	if (errno == ENOENT)
+		fprintf(stderr, "%s: not found\n", todo[0]);
+	else
+		perror(todo[0]);
+	_exit(1);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * setup_and_run_command --
+ *	Execute the next command for a target. If the command returns an
+ *	error, the node's made field is set to ERROR and creation stops.
+ *
+ * Results:
+ *	0 in case of error, 1 if ok.
+ *
+ * Side Effects:
+ *	The node's 'made' field may be set to ERROR.
+ *-----------------------------------------------------------------------
+ */
+static int
+setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
+{
+	char *cmdStart;	/* Start of expanded command */
+	bool silent;	/* Don't print command */
+	bool doExecute;	/* Execute the command */
+	bool errCheck;	/* Check errors */
+	int reason;	/* Reason for child's death */
+	int status;	/* Description of child's death */
+	pid_t cpid; 	/* Child actually found */
+	pid_t stat;	/* Status of fork */
+
+	silent = gn->type & OP_SILENT;
+	errCheck = !(gn->type & OP_IGNORE);
+	doExecute = !noExecute;
+
+	cmdStart = Var_Subst(cmd, &gn->context, false);
+
+	/* How can we execute a null command ? we warn the user that the
+	 * command expanded to nothing (is this the right thing to do?).  */
+	if (*cmdStart == '\0') {
+		free(cmdStart);
+		Error("%s expands to empty string", cmd);
+		return 1;
+	} else
+		cmd = cmdStart;
+
+	for (;; cmd++) {
+		if (*cmd == '@')
+			silent = DEBUG(LOUD) ? false : true;
+		else if (*cmd == '-')
+			errCheck = false;
+		else if (*cmd == '+')
+			doExecute = true;
+		else
+			break;
+	}
+	while (isspace(*cmd))
+		cmd++;
+	/* Print the command before echoing if we're not supposed to be quiet
+	 * for this one. We also print the command if -n given.  */
+	if (!silent || noExecute) {
+		printf("%s\n", cmd);
+		fflush(stdout);
+	}
+	/* If we're not supposed to execute any commands, this is as far as
+	 * we go...  */
+	if (!doExecute)
+		return 1;
+
+	/* if we're running in parallel mode, we try not to fork the last
+	 * command, since it's exit status will be just fine... unless
+	 * errCheck is not set, in which case we must deal with the
+	 * status ourselves.
+	 */
+	if (dont_fork && errCheck)
+		run_command(cmd, errCheck);
+		/*NOTREACHED*/
+
+	/* Fork and execute the single command. If the fork fails, we abort.  */
+	switch (cpid = fork()) {
+	case -1:
+		Fatal("Could not fork");
+		/*NOTREACHED*/
+	case 0:
+		run_command(cmd, errCheck);
+		/*NOTREACHED*/
+	default:
+		break;
+	}
+	free(cmdStart);
+
+	/* The child is off and running. Now all we can do is wait...  */
+	while (1) {
+
+		while ((stat = wait(&reason)) != cpid) {
+			if (stat == -1 && errno != EINTR)
+				break;
+		}
+
+		if (got_signal)
+			break;
+
+		if (stat != -1) {
+			if (WIFSTOPPED(reason))
+				status = WSTOPSIG(reason);	/* stopped */
+			else if (WIFEXITED(reason)) {
+				status = WEXITSTATUS(reason);	/* exited */
+				if (status != 0)
+				    printf("*** Error code %d", status);
+			} else {
+				status = WTERMSIG(reason);	/* signaled */
+				printf("*** Signal %d", status);
+			}
+
+
+			if (!WIFEXITED(reason) || status != 0) {
+				if (errCheck) {
+					gn->made = ERROR;
+					if (keepgoing)
+						/* Abort the current target,
+						 * but let others continue.  */
+						printf(" (continuing)\n");
+				} else {
+					/* Continue executing commands for
+					 * this target.  If we return 0,
+					 * this will happen...  */
+					printf(" (ignored)\n");
+					status = 0;
+				}
+			}
+			return !status;
+		} else
+			Fatal("error in wait: %d", stat);
+			/*NOTREACHED*/
+	}
+	return 0;
+}
+
+static void 
+handle_compat_interrupts(GNode *gn)
+{
+	if (!Targ_Precious(gn)) {
+		char	  *file = Varq_Value(TARGET_INDEX, gn);
+
+		if (!noExecute && eunlink(file) != -1)
+			Error("*** %s removed\n", file);
+	}
+	if (got_SIGINT) {
+		signal(SIGINT, SIG_IGN);
+		signal(SIGTERM, SIG_IGN);
+		signal(SIGHUP, SIG_IGN);
+		signal(SIGQUIT, SIG_IGN);
+		got_signal = 0;
+		got_SIGINT = 0;
+		run_gnode(interrupt_node, 0);
+		exit(255);
+	}
+	exit(255);
+}
+
+int
+run_gnode(GNode *gn, int parallel)
+{
+	LstNode ln, nln;
+
+	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
+		gn->made = MADE;
+		for (ln = Lst_First(&gn->commands); ln != NULL; ln = nln) {
+			nln = Lst_Adv(ln);
+			if (setup_and_run_command(Lst_Datum(ln), gn, 
+			    parallel && nln == NULL) == 0)
+				break;
+		}
+		if (got_signal && !parallel)
+			handle_compat_interrupts(gn);
+		return gn->made;
+	} else
+		return NOSUCHNODE;
+}
+
+void
+setup_engine()
+{
+	static int already_setup = 0;
+
+	if (!already_setup) {
+		setup_meta();
+		setup_all_signals();
+		already_setup = 1;
+	}
+}

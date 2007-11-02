@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.48 2007/09/18 08:51:23 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.49 2007/11/02 17:27:24 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -442,4 +442,50 @@ Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
 	printf("\n");
 #endif
 	Suff_PrintAll();
+}
+
+static char *curdir, *objdir;
+static size_t curdir_len, objdir_len;
+
+void
+Targ_setdirs(const char *c, const char *o)
+{
+	curdir_len = strlen(c);
+	curdir = emalloc(curdir_len+2);
+	memcpy(curdir, c, curdir_len);
+	curdir[curdir_len++] = '/';
+	curdir[curdir_len] = 0;
+
+	objdir_len = strlen(o);
+	objdir = emalloc(objdir_len+2);
+	memcpy(objdir, o, objdir_len);
+	objdir[objdir_len++] = '/';
+	objdir[objdir_len] = 0;
+}
+
+void
+look_harder_for_target(GNode *gn)
+{
+	GNode *extra, *cgn;
+	LstNode ln;
+
+	if (gn->type & OP_RESOLVED)
+		return;
+	gn->type |= OP_RESOLVED;
+	if (strncmp(gn->name, objdir, objdir_len) == 0) {
+		extra = Targ_FindNode(gn->name + objdir_len, TARG_NOCREATE);
+		if (extra != NULL) {
+			if (Lst_IsEmpty(&gn->commands))
+				Lst_Concat(&gn->commands, &extra->commands);
+			for (ln = Lst_First(&extra->children); ln != NULL;
+			    ln = Lst_Adv(ln)) {
+				cgn = (GNode *)Lst_Datum(ln);
+
+				if (Lst_AddNew(&gn->children, cgn)) {
+					Lst_AtEnd(&cgn->parents, gn);
+					gn->unmade++;
+				}
+			}
+		}
+	}
 }
