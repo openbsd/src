@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.3 2007/10/08 20:18:19 miod Exp $	*/
+/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.4 2007/11/02 05:18:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -25,6 +25,7 @@
 /* XXX replace with values defined elsewhere. */
 #define DCACHE_CACHELINECOUNT	1024
 #define CACHELINESIZE		32
+#define	DCACHE_SIZE		(CACHELINESIZE * DCACHE_CACHELINECOUNT)
 
 /* cp14 register 6 */
 #define CLKCFG_T		(1<<0)	/* turbo */
@@ -195,10 +196,18 @@ ENTRY(pxa2x0_cpu_suspend)
 	/* At this point all critical registers have been saved. */
 
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 4	/* XXX does exactly what? */
+	mcr	p15, 0, r0, c7, c10, 4  /* drain write buffer */
 
 	mov     r1, #DCACHE_CACHELINECOUNT
-	ldr	r0, .Lxscale_cache_clean_addr
+	ldr	r2, .Lxscale_cache_clean_addr
+	ldr	r0, [r2]
+	/*
+	 * For an explanation of the following two instructions, refer
+	 * to the ``BUG ALERT'' section of the XSCALE_CACHE_CLEAN_PROLOGUE
+	 * macro in arch/arm/arm/cpufunc_asm_xscale.S.
+	 */
+	eor	r0, r0, #(DCACHE_SIZE)
+	str	r0, [r2]
 
 cache_flush_loop:
 	mrs	r2, cpsr
