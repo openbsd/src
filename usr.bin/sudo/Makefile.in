@@ -20,7 +20,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.246.2.17 2007/10/25 15:52:02 millert Exp $
+# $Sudo: Makefile.in,v 1.246.2.18 2007/11/02 19:15:16 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -131,7 +131,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.9p7
+VERSION = 1.6.9p8
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
             LICENSE Makefile.in PORTING README README.LDAP \

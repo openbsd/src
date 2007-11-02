@@ -69,7 +69,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.7 2007/09/13 23:06:51 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.8 2007/11/02 19:09:01 millert Exp $";
 #endif /* lint */
 
 /*
@@ -505,9 +505,8 @@ runasspec	:	/* empty */ {
 			     * then check against default runas user.
 			     */
 			    if (runas_matches == UNSPEC) {
-				runas_matches =
-				    userpw_matches(def_runas_default,
-					*user_runas, runas_pw);
+				runas_matches = userpw_matches(def_runas_default,
+				    *user_runas, runas_pw) ? TRUE : NOMATCH;
 			    }
 			}
 		|	RUNAS runaslist {

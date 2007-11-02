@@ -1987,3 +1987,9 @@ Sudo 1.6.9p6 released.
      AF_INET6 but have no real IPv6 support.
 
 Sudo 1.6.9p7 released.
+
+629) Fixed a bug where a sudoers entry with no runas user specified
+     was treated differently from a line with the default runas
+     user specified.
+
+Sudo 1.6.9p8 released.
