@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211.9,v 1.7 2007/11/01 22:34:19 mglocker Exp $
+.\"	$OpenBSD: ieee80211.9,v 1.8 2007/11/02 07:27:51 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211.9,v 1.7 2007/11/01 22:34:19 mglocker Exp $
+.\" $Id: ieee80211.9,v 1.8 2007/11/02 07:27:51 jmc Exp $
 .\"
-.Dd $Mdocdate: November 1 2007 $
+.Dd $Mdocdate: November 2 2007 $
 .Dt IEEE80211 9
 .Os
 .Sh NAME
@@ -252,11 +252,11 @@ function converts the bit rate
 .Fa rate
 (measured in units of 0.5Mbps) to a
 .Vt plcp
-signal. 
+signal.
 The
 .Fn ieee80211_plcp2rate
-performs the reverse of this conversion, returning the bit rate (in 0.5Mbps
-units) corresponding to a
+function performs the reverse of this conversion,
+returning the bit rate (in 0.5Mbps units) corresponding to a
 .Vt plcp
 signal.
 .\"
