@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1283 2007/10/29 13:26:52 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1284 2007/11/02 16:11:35 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2799,6 +2799,7 @@
 #define	PCI_PRODUCT_SIIG_2061	0x2061		/* I/O */
 #define	PCI_PRODUCT_SIIG_2062	0x2062		/* I/O */
 #define	PCI_PRODUCT_SIIG_2081	0x2081		/* I/O */
+#define	PCI_PRODUCT_SIIG_2082	0x2081		/* I/O */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
