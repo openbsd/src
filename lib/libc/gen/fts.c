@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.38 2007/01/08 09:13:38 otto Exp $	*/
+/*	$OpenBSD: fts.c,v 1.39 2007/11/02 20:32:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -202,7 +202,7 @@ int
 fts_close(FTS *sp)
 {
 	FTSENT *freep, *p;
-	int saved_errno = 0;
+	int rfd, error = 0;
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure
@@ -218,30 +218,27 @@ fts_close(FTS *sp)
 		free(p);
 	}
 
-	/* Free up child linked list, sort array, path buffer. */
+	/* Stash the original directory fd if needed. */
+	rfd = ISSET(FTS_NOCHDIR) ? -1 : sp->fts_rfd;
+
+	/* Free up child linked list, sort array, path buffer, stream ptr.*/
 	if (sp->fts_child)
 		fts_lfree(sp->fts_child);
 	if (sp->fts_array)
 		free(sp->fts_array);
 	free(sp->fts_path);
-
-	/* Return to original directory, save errno if necessary. */
-	if (!ISSET(FTS_NOCHDIR)) {
-		saved_errno = fchdir(sp->fts_rfd) ? errno : 0;
-		(void)close(sp->fts_rfd);
-	}
-
-	/* Set errno and return. */
-	if (!ISSET(FTS_NOCHDIR) && saved_errno) {
-		/* Free up the stream pointer. */
-		free(sp);
-		errno = saved_errno;
-		return (-1);
-	}
-
-	/* Free up the stream pointer. */
 	free(sp);
-	return (0);
+
+	/* Return to original directory, checking for error. */
+	if (rfd != -1) {
+		int saved_errno;
+		error = fchdir(rfd);
+		saved_errno = errno;
+		(void)close(rfd);
+		errno = saved_errno;
+	}
+
+	return (error);
 }
 
 /*
