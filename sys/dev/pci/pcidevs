@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1283 2007/10/29 13:26:52 mikeb Exp $
+$OpenBSD: pcidevs,v 1.1284 2007/11/02 16:11:35 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2794,6 +2794,7 @@ product SIIG	2060		0x2060	I/O
 product SIIG	2061		0x2061	I/O
 product SIIG	2062		0x2062	I/O
 product SIIG	2081		0x2081	I/O
+product SIIG	2082		0x2081	I/O
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810		0x0001	53c810
