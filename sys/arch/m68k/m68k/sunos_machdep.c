@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.18 2005/11/06 17:23:41 miod Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.19 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ sunos_sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
-	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize)) 
 		(void)uvm_grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

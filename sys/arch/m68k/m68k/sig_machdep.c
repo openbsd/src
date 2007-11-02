@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.18 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.19 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize)) 
 		(void)uvm_grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

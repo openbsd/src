@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.20 2005/11/06 17:23:39 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.21 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ hpux_to_bsd_uoff(off, isps, p)
 	 * so we convert off to an absolute address (if not already)
 	 * for simplicity.
 	 */
-	if (off < (int *)ctob(UPAGES))
+	if (off < (int *)ptoa(UPAGES))
 		off = (int *)((u_int)off + (u_int)p->p_addr);	/* XXX */
 
 	/*
@@ -410,7 +410,7 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+	if ((unsigned)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (unsigned)fp);
 
 #ifdef DEBUG

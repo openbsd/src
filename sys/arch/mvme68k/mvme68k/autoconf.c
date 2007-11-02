@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2007/06/15 01:19:08 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.41 2007/11/02 19:18:54 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -188,7 +188,7 @@ cpu_configure()
 	init_intrs();
 
 	extio = extent_create("extio",
-	    (u_long)extiobase, (u_long)extiobase + ctob(EIOMAPSIZE),
+	    (u_long)extiobase, (u_long)extiobase + ptoa(EIOMAPSIZE),
 	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -252,7 +252,7 @@ unmapiodev(kva, size)
 	vaddr_t va;
 
 #ifdef DEBUG
-	if (kva < extiobase || kva + size >= extiobase + ctob(EIOMAPSIZE))
+	if (kva < extiobase || kva + size >= extiobase + ptoa(EIOMAPSIZE))
 	        panic("unmapiodev: bad address");
 #endif
 

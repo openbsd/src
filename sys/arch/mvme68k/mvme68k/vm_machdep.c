@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2007/10/13 07:18:01 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.48 2007/11/02 19:18:54 martin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,8 +227,8 @@ vmapbuf(bp, siz)
 	addr = bp->b_saveaddr = bp->b_data;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
+	npf = atop(round_page(bp->b_bcount + off));
+	kva = uvm_km_valloc_wait(phys_map, ptoa(npf));
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -260,11 +260,11 @@ vunmapbuf(bp, siz)
 #endif
 
 	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
+	npf = atop(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vaddr_t)((int)addr & ~PGOFSET);
-	pmap_remove(vm_map_pmap(phys_map), kva, kva + ctob(npf));
+	pmap_remove(vm_map_pmap(phys_map), kva, kva + ptoa(npf));
 	pmap_update(vm_map_pmap(phys_map));
-	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
+	uvm_km_free_wakeup(phys_map, kva, ptoa(npf));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

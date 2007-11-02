@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ consinit()
 	 * Initialize the bus resource map.
 	 */
 	extio = extent_create("extio",
-	    (u_long)extiobase, (u_long)extiobase + ctob(eiomapsize),
+	    (u_long)extiobase, (u_long)extiobase + ptoa(eiomapsize),
 	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
 
 	/*
@@ -257,7 +257,7 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+	for (i = 0; i < atop(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
@@ -269,8 +269,8 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %u (%uMB)\n", ctob(physmem),
-	    ctob(physmem)/1024/1024);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -734,7 +734,7 @@ dumpconf(void)
 
 	/* hp300 only uses a single segment. */
 	cpu_kcore_hdr.ram_segs[0].start = lowram;
-	cpu_kcore_hdr.ram_segs[0].size = ctob(dumpsize);
+	cpu_kcore_hdr.ram_segs[0].size = ptoa(dumpsize);
 	cpu_kcore_hdr.mmutype = mmutype;
 	cpu_kcore_hdr.kernel_pa = lowram;
 	cpu_kcore_hdr.sysseg_pa = pmap_kernel()->pm_stpa;
@@ -1066,7 +1066,7 @@ parityerrorfind()
 	 * for has just occurred (longjmp above) at the current pg+o
 	 */
 	if (setjmp(&parcatch)) {
-		printf("Parity error at 0x%x\n", ctob(pg)|o);
+		printf("Parity error at 0x%x\n", ptoa(pg)|o);
 		found = 1;
 		goto done;
 	}
@@ -1079,7 +1079,7 @@ parityerrorfind()
 	 */
 	looking = 1;
 	ecacheoff();
-	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
+	for (pg = atop(lowram); pg < atop(lowram)+physmem; pg++) {
 		pmap_kenter_pa((vaddr_t)vmmap, ptoa(pg), VM_PROT_READ);
 		pmap_update(pmap_kernel());
 		ip = (int *)vmmap;

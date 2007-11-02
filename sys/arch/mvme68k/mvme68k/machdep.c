@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2007/06/06 17:15:12 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.107 2007/11/02 19:18:54 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -229,7 +229,7 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+	for (i = 0; i < atop(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufp + i * PAGE_SIZE,
 		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
@@ -240,8 +240,8 @@ cpu_startup()
 	 */
 	printf("%s", version);
 	identifycpu();
-	printf("real mem = %u (%uMB)\n", ctob(physmem),
-	    ctob(physmem) / 1024 / 1024);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -577,7 +577,7 @@ dumpconf(void)
 
 	/* mvme68k only uses a single segment. */
 	cpu_kcore_hdr.ram_segs[0].start = 0;
-	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	cpu_kcore_hdr.ram_segs[0].size = ptoa(physmem);
 	cpu_kcore_hdr.mmutype = mmutype;
 	cpu_kcore_hdr.kernel_pa = 0;
 	cpu_kcore_hdr.sysseg_pa = pmap_kernel()->pm_stpa;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2007/05/30 17:10:42 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ void	dumpconf(void);
 #define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
 #define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
+#define	IIOMAPSIZE	atop(INTIOTOP-INTIOBASE)	/* 2mb */
 
 /*
  * HP MMU

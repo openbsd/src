@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.38 2006/07/06 17:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.39 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -67,7 +67,7 @@ u_long	low[8];
 u_long	high[8];
 u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
-#define VIDMAPSIZE	btoc(vidlen)
+#define VIDMAPSIZE	atop(vidlen)
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;

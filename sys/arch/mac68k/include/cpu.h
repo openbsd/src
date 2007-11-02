@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2007/07/29 21:24:05 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ extern	unsigned long		load_addr;
 #define	NBSTOP		0xF0000000
 #define NBBASE		0xF9000000	/* NUBUS space */
 #define NBTOP		0xFF000000	/* NUBUS space */
-#define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
+#define NBMAPSIZE	atop(NBTOP-NBBASE)	/* ~ 96 megs */
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
 #define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2007/07/29 21:24:05 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2007/11/02 19:18:54 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ cpu_startup(void)
 	 * Initialize error message buffer (at end of core).
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+	for (i = 0; i < atop(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp + i * NBPG,
 		    high[numranges - 1] + i * NBPG,
 		    VM_PROT_READ|VM_PROT_WRITE,
@@ -398,8 +398,8 @@ cpu_startup(void)
 		printf("this kernel.\n\n");
 		for (delay = 0; delay < 1000000; delay++);
 	}
-	printf("real mem = %u (%uMB)\n", ctob(physmem),
-	    ctob(physmem)/1024/1024);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -705,7 +705,7 @@ dumpconf(void)
 
 	dumpsize = 0;
 	for (i = 0; h->ram_segs[i].size && i < NPHYS_RAM_SEGS; i++)
-		dumpsize += btoc(h->ram_segs[i].size);
+		dumpsize += atop(h->ram_segs[i].size);
 	dumpsize += cpu_dumpsize();
 
 	/* Always skip the first block, in case there is a label there. */
