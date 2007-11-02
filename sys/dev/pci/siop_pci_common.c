@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.16 2007/10/28 14:17:19 fgsch Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.17 2007/11/02 00:01:37 fgsch Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.25 2005/06/28 00:28:42 thorpej Exp $ */
 
 /*
@@ -307,7 +307,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
 		    &siop_sc->sc_scriptaddr, &ramsize, 0) == 0) {
 			printf(", using %luK of on-board RAM",
-			    (u_long)memsize / 1024);
+			    (u_long)ramsize / 1024);
 		} else {
 			printf(", can't map on-board RAM");
 			siop_sc->features &= ~SF_CHIP_RAM;
