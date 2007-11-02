@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.50 2007/10/22 09:37:35 otto Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.51 2007/11/02 16:13:10 henning Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -548,6 +548,32 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* SIIG Cyber 8S PCI 16C850 (20x family): 8S */
+	{   /* "SIIG Cyber 8S PCI 16C850 (20x family)", */
+	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
+		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2082	},
+	    {	0xffff, 0xffff,	0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
+	    },
+	},
+
+	/* Exsys EX-41098, second part of SIIG Cyber 8S PCI Card */
+	{   /* "Exsys EX-41098", */
+	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,
+		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2082	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
 	    },
 	},
 
