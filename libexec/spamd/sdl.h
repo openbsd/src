@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.h,v 1.5 2007/03/29 17:39:53 kjell Exp $ */
+/*	$OpenBSD: sdl.h,v 1.6 2007/11/03 19:16:07 beck Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -54,6 +54,7 @@ struct sdentry {
 
 
 extern int	sdl_add(char *, char *, char **, int);
+extern void	sdl_del(char *);
 extern struct sdlist **sdl_lookup(struct sdlist *head,
 	    int af, void * src);
 

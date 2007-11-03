@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.17 2007/09/02 15:19:20 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.18 2007/11/03 19:16:07 beck Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -162,6 +162,27 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	return (-1);
 }
 
+void
+sdl_del(char *sdname)
+{
+	int i, idx = -1;
+
+	for (i = 0; i < blu; i++) {
+		if (strcmp(blacklists[i].tag, sdname) == 0) {
+			idx = i;
+			break;
+		}
+	}
+	if (idx != -1) {
+		if (debug > 0)
+			printf("clearing list %s\n", sdname);
+		free(blacklists[idx].string);
+		free(blacklists[idx].addrs);
+		blacklists[idx].string = NULL;
+		blacklists[idx].addrs = NULL;
+		blacklists[idx].naddrs = 0;
+	}
+}
 
 /*
  * Return 1 if the addresses a (with mask m) matches address b

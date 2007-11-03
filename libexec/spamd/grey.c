@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.40 2007/08/16 04:42:16 ray Exp $	*/
+/*	$OpenBSD: grey.c,v 1.41 2007/11/03 19:16:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -126,11 +126,12 @@ configure_spamd(char **addrs, size_t count, FILE *sdc)
 {
 	size_t i;
 
-	if (count == 0)
-		return;
-	fprintf(sdc, "%s;%s;", traplist_name, traplist_msg);
-	for (i = 0; i < count; i++)
-		fprintf(sdc, "%s/32;", addrs[i]);
+	fprintf(sdc, "%s;", traplist_name);
+	if (count != 0) {
+		fprintf(sdc, "%s;", traplist_msg);
+		for (i = 0; i < count; i++)
+			fprintf(sdc, "%s/32;", addrs[i]);
+	}
 	fprintf(sdc, "\n");
 	if (fflush(sdc) == EOF)
 		syslog_r(LOG_DEBUG, &sdata, "configure_spamd: fflush failed (%m)");
