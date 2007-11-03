@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.20 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.21 2007/11/03 14:10:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1081,8 +1081,10 @@ struct zyd_notif_retry {
 	(sizeof (struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
 	 sizeof (struct zyd_rx_stat))
 #define ZYD_MIN_RXBUFSZ	ZYD_MIN_FRAGSZ
-#define ZYX_MAX_RXBUFSZ	\
-	(sizeof (struct zyd_plcphdr) + MCLBYTES + sizeof (struct zyd_rx_desc))
+#define ZYX_MAX_RXBUFSZ							\
+	((sizeof (struct zyd_plcphdr) + IEEE80211_MAX_LEN +		\
+	  sizeof (struct zyd_rx_stat)) * ZYD_MAX_RXFRAMECNT + 		\
+	 sizeof (struct zyd_rx_desc))
 
 #define ZYD_CMD_FLAG_READ	(1 << 0)
 
@@ -1187,6 +1189,8 @@ struct zyd_softc {
 	uint16_t			fw_rev;
 	uint8_t				rf_rev;
 	uint8_t				pa_rev;
+	uint8_t				fix_cr47;
+	uint8_t				fix_cr157;
 	uint8_t				pwr_cal[14];
 	uint8_t				pwr_int[14];
 	uint8_t				ofdm36_cal[14];

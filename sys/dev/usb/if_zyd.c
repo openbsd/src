@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.62 2007/10/14 08:31:55 fkr Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.63 2007/11/03 14:10:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1497,6 +1497,7 @@ zyd_hw_init(struct zyd_softc *sc)
 {
 	struct zyd_rf *rf = &sc->sc_rf;
 	const struct zyd_phy_pair *phyp;
+	uint32_t tmp;
 	int error;
 
 	/* specify that the plug and play is finished */
@@ -1521,6 +1522,10 @@ zyd_hw_init(struct zyd_softc *sc)
 		if ((error = zyd_write16(sc, phyp->reg, phyp->val)) != 0)
 			goto fail;
 	}
+	if (sc->fix_cr157) {
+		if (zyd_read32(sc, ZYD_EEPROM_PHY_REG, &tmp) == 0)
+			(void)zyd_write32(sc, ZYD_CR157, tmp >> 8);
+	}
 	zyd_unlock_phy(sc);
 
 	/* HMAC init */
@@ -1530,13 +1535,13 @@ zyd_hw_init(struct zyd_softc *sc)
 	if (sc->mac_rev == ZYD_ZD1211) {
 		zyd_write32(sc, ZYD_MAC_RETRY, 0x00000002);
 	} else {
-		zyd_write32(sc, ZYD_MAC_RETRY, 0x02020202);
+		zyd_write32(sc, ZYD_MACB_MAX_RETRY, 0x02020202);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL4, 0x007f003f);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL3, 0x007f003f);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL2, 0x003f001f);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL1, 0x001f000f);
 		zyd_write32(sc, ZYD_MACB_AIFS_CTL1, 0x00280028);
-		zyd_write32(sc, ZYD_MACB_AIFS_CTL2, 0x008C003C);
+		zyd_write32(sc, ZYD_MACB_AIFS_CTL2, 0x008C003c);
 		zyd_write32(sc, ZYD_MACB_TXOP, 0x01800824);
 	}
 
@@ -1594,8 +1599,10 @@ zyd_read_eeprom(struct zyd_softc *sc)
 	ic->ic_myaddr[5] = tmp >>  8;
 
 	(void)zyd_read32(sc, ZYD_EEPROM_POD, &tmp);
-	sc->rf_rev = tmp & 0x0f;
-	sc->pa_rev = (tmp >> 16) & 0x0f;
+	sc->rf_rev    = tmp & 0x0f;
+	sc->fix_cr47  = (tmp >> 8 ) & 0x01;
+	sc->fix_cr157 = (tmp >> 13) & 0x01;
+	sc->pa_rev    = (tmp >> 16) & 0x0f;
 
 	/* read regulatory domain (currently unused) */
 	(void)zyd_read32(sc, ZYD_EEPROM_SUBID, &tmp);
@@ -1708,6 +1715,7 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct zyd_rf *rf = &sc->sc_rf;
+	uint32_t tmp;
 	u_int chan;
 
 	chan = ieee80211_chan2ieee(ic, c);
@@ -1719,17 +1727,26 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 	(*rf->set_channel)(rf, chan);
 
 	/* update Tx power */
-	(void)zyd_write32(sc, ZYD_CR31, sc->pwr_int[chan - 1]);
-	(void)zyd_write32(sc, ZYD_CR68, sc->pwr_cal[chan - 1]);
+	(void)zyd_write16(sc, ZYD_CR31, sc->pwr_int[chan - 1]);
 
 	if (sc->mac_rev == ZYD_ZD1211B) {
-		(void)zyd_write32(sc, ZYD_CR67, sc->ofdm36_cal[chan - 1]);
-		(void)zyd_write32(sc, ZYD_CR66, sc->ofdm48_cal[chan - 1]);
-		(void)zyd_write32(sc, ZYD_CR65, sc->ofdm54_cal[chan - 1]);
+		(void)zyd_write16(sc, ZYD_CR67, sc->ofdm36_cal[chan - 1]);
+		(void)zyd_write16(sc, ZYD_CR66, sc->ofdm48_cal[chan - 1]);
+		(void)zyd_write16(sc, ZYD_CR65, sc->ofdm54_cal[chan - 1]);
 
-		(void)zyd_write32(sc, ZYD_CR69, 0x28);
-		(void)zyd_write32(sc, ZYD_CR69, 0x2a);
+		(void)zyd_write16(sc, ZYD_CR68, sc->pwr_cal[chan - 1]);
+
+		(void)zyd_write16(sc, ZYD_CR69, 0x28);
+		(void)zyd_write16(sc, ZYD_CR69, 0x2a);
 	}
+
+	if (sc->fix_cr47) {
+		/* set CCK baseband gain from EEPROM */
+		if (zyd_read32(sc, ZYD_EEPROM_PHY_REG, &tmp) == 0)
+			(void)zyd_write16(sc, ZYD_CR47, tmp & 0xff);
+	}
+
+	(void)zyd_write32(sc, ZYD_CR_CONFIG_PHILIPS, 0);
 
 	zyd_unlock_phy(sc);
 }
