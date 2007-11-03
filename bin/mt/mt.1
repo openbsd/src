@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.26 2007/11/02 15:22:38 jmc Exp $
+.\"	$OpenBSD: mt.1,v 1.27 2007/11/03 09:05:33 jmc Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 2 2007 $
+.Dd $Mdocdate: November 3 2007 $
 .Dt MT 1
 .Os
 .Sh NAME
@@ -186,21 +186,18 @@ raw magnetic tape interface
 list of SCSI2 density codes
 .El
 .Sh EXAMPLES
-.Dl $ eject /dev/rcd0c
-.Pp
 Eject the first CD device.
-This will work even if there is no CD in the drive.
+This will work even if there is no CD in the drive:
+.Pp
+.Dl $ eject /dev/rcd0c
 .Sh SEE ALSO
+.Xr cdio 1 ,
 .Xr chio 1 ,
 .Xr dd 1 ,
-.\" .Xr tap 1 ,
 .Xr ioctl 2 ,
-.Xr mtio 4 ,
-.\" .Xr tap 5 ,
-.Xr environ 7
+.Xr mtio 4
 .Sh HISTORY
 The
 .Nm
 utility appeared in
 .At v2 .
-.\" mt.1: mtio(4) missing
