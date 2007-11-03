@@ -271,7 +271,9 @@ subdir=troff
 
 
 $(TARGETS):
-	@$(MAKE) $(MDEFINES) do=$@ $(dodirs)
+	@for i in $(dodirs); do \
+		$(MAKE) $(MDEFINES) do=$@ $$i; \
+	done
 
 dot: FORCE
 	@$(MAKE) $(MDEFINES) srcdir=$(srcdir) VPATH=$(srcdir) \

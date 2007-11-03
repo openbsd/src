@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2002/03/22 15:55:54 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2007/11/03 15:13:13 espie Exp $
 
 #
 # groff config
@@ -57,7 +57,7 @@ config.status:
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
 		--mandir=${DATASUBDIR}/man ${CF}
 
-gnu_build:
+gnu_build: config.status
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} \
 		LDFLAGS="${INSTALL_STRIP} ${LDSTATIC}" \
 		prefix=${PREFIX} \
@@ -65,6 +65,7 @@ gnu_build:
 		fontdir=${FONTDIR} \
 		indexdir=${INDEXDIR} \
 		common_words_file=${COMMON_WORDS}
+	touch $@
 
 install: maninstall
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS=${LDSTATIC} \
@@ -80,6 +81,8 @@ install: maninstall
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	rm -f ${CLEANFILES}
+
+BEFOREMAN=	gnu_build
 
 depend:
 	# Nothing here so far...
