@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.92 2007/10/11 16:48:21 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.93 2007/11/03 20:33:48 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -65,6 +65,7 @@ int	acpi_foundhid(struct aml_node *, void *);
 int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprt(struct aml_node *, void *);
+int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
@@ -388,6 +389,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_mem_map handle;
 	struct acpi_rsdp *rsdp;
 	struct acpi_q *entry;
+	struct acpi_wakeq *wentry;
 	struct acpi_dsdt *p_dsdt;
 #ifndef SMALL_KERNEL
 	struct device *dev;
@@ -408,6 +410,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(": rev %d", (int)rsdp->rsdp_revision);
 
 	SIMPLEQ_INIT(&sc->sc_tables);
+	SIMPLEQ_INIT(&sc->sc_wakedevs);
 
 	sc->sc_fadt = NULL;
 	sc->sc_facs = NULL;
@@ -555,6 +558,16 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%.4s ", entry->q_table);
 	}
 	printf("\n");
+
+	/* Display wakeup devices and lowest S-state */
+	printf("%s: wakeup devices ", DEVNAME(sc));
+	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
+		printf("%.4s(S%d) ", 
+		       wentry->q_node->name,
+		       wentry->q_state);
+	}
+	printf("\n");
+
 
 #ifndef SMALL_KERNEL
 	/*
@@ -1079,6 +1092,52 @@ acpi_gpe_edge(struct acpi_softc *sc, int gpe, void *arg)
 	return (0);
 }
 
+/* Discover Devices that can wakeup the system
+ * _PRW returns a package
+ *  pkg[0] = integer (FADT gpe bit) or package (gpe block,gpe bit)
+ *  pkg[1] = lowest sleep state
+ *  pkg[2+] = power resource devices (optional)
+ *
+ * To enable wakeup devices:
+ *    Evaluate _ON method in each power resource device
+ *    Evaluate _PSW method
+ */
+int
+acpi_foundprw(struct aml_node *node, void *arg)
+{
+	struct acpi_softc *sc = arg;
+	struct acpi_wakeq *wq;
+
+	wq = (struct acpi_wakeq *)malloc(sizeof(struct acpi_wakeq), M_DEVBUF, M_NOWAIT);
+	if (wq == NULL) {
+		return 0;
+	}
+	memset(wq, 0, sizeof(struct acpi_wakeq));
+
+	wq->q_wakepkg = (struct aml_value *)malloc(sizeof(struct aml_value), M_DEVBUF, M_NOWAIT);
+	if (wq->q_wakepkg == NULL) {
+		free(wq, M_DEVBUF);
+		return 0;
+	}
+	memset(wq->q_wakepkg, 0, sizeof(struct aml_value));
+	dnprintf(10, "Found _PRW (%s)\n", node->parent->name);
+	aml_evalnode(sc, node, 0, NULL, wq->q_wakepkg);
+	wq->q_node = node->parent;
+	wq->q_gpe = -1;
+
+	/* Get GPE of wakeup device, and lowest sleep level */
+	if (wq->q_wakepkg->type == AML_OBJTYPE_PACKAGE && wq->q_wakepkg->length >= 2) {
+	  if (wq->q_wakepkg->v_package[0]->type == AML_OBJTYPE_INTEGER) {
+	    wq->q_gpe = wq->q_wakepkg->v_package[0]->v_integer;
+	  }
+	  if (wq->q_wakepkg->v_package[1]->type == AML_OBJTYPE_INTEGER) {
+	    wq->q_state = wq->q_wakepkg->v_package[1]->v_integer;
+	  }
+	}
+	SIMPLEQ_INSERT_TAIL(&sc->sc_wakedevs, wq, q_next);
+	return 0;
+}
+
 void
 acpi_init_gpes(struct acpi_softc *sc)
 {
@@ -1118,6 +1177,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 				    "edge");
 		}
 	}
+	aml_find_node(aml_root.child, "_PRW", acpi_foundprw, sc);
 	sc->sc_maxgpe = ngpe;
 }
 

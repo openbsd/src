@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.36 2007/05/31 17:49:16 gwk Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.37 2007/11/03 20:33:48 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -59,7 +59,16 @@ struct acpi_q {
 	u_int8_t		 q_data[0];
 };
 
+struct acpi_wakeq {
+	SIMPLEQ_ENTRY(acpi_wakeq)  q_next;
+	struct aml_node           *q_node;
+	struct aml_value          *q_wakepkg;
+	int                        q_gpe;
+	int                        q_state;
+};
+
 typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
+typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 
 #define ACPIREG_PM1A_STS    0x00
 #define ACPIREG_PM1A_EN	    0x01
@@ -146,6 +155,7 @@ struct acpi_softc {
 	 */
 	struct acpi_fadt	*sc_fadt;
 	acpi_qhead_t		sc_tables;
+	acpi_wakeqhead_t        sc_wakedevs;
 
 	/*
 	 * Second-level information from FADT
