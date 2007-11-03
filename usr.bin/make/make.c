@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.44 2007/11/03 10:39:22 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.45 2007/11/03 11:45:52 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -215,14 +215,10 @@ Make_Update(GNode *cgn)	/* the child node */
 
 	/* Set the .IMPSRC variables for all the implied parents
 	 * of this node.  */
-	{
-	char	*cpref = Varq_Value(PREFIX_INDEX, cgn);
-
 	for (ln = Lst_First(&cgn->iParents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = (GNode *)Lst_Datum(ln);
 		if (pgn->make)
 			Varq_Set(IMPSRC_INDEX, cname, pgn);
-	}
 	}
 
 }
