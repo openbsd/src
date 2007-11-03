@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.1.1.1 2007/11/03 15:22:54 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.2 2007/11/03 15:33:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -37,7 +37,7 @@
 #include <unistd.h>
 
 __dead void	usage(void);
-void 		coroner(int);
+void		coroner(int);
 
 volatile sig_atomic_t dying = 0;
 
@@ -60,8 +60,9 @@ main(int argc, char *argv[])
 	tcflag_t cflag = HUPCL | CS8;
 	sigset_t sigset;
 	pid_t ppid;
-	int ch, fd, ldisc, nodaemon = 0, speed = B4800, parity = 0;
-	char devname[32], *dev, *disc;
+	int ch, fd, ldisc, nodaemon = 0, parity = 0;
+	speed_t speed = B4800;
+	char devn[32], *dev, *disc;
 
 	tstamps.ts_set = tstamps.ts_clr = 0;
 
@@ -96,7 +97,7 @@ main(int argc, char *argv[])
 				parity = 1;	/* odd */
 			break;
 		case 's':
-			speed = (int)strtonum(optarg, 50, 230400, &errstr);
+			speed = (speed_t)strtonum(optarg, 50, 230400, &errstr);
 			if (errstr) {
 				if (ppid != 1)
 					errx(1,  "speed is %s: %s", errstr,
@@ -136,9 +137,9 @@ main(int argc, char *argv[])
 	disc = *argv++;
 	dev = *argv;
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
-		(void)snprintf(devname, sizeof(devname),
+		(void)snprintf(devn, sizeof(devn),
 		    "%s%s", _PATH_DEV, dev);
-		dev = devname;
+		dev = devn;
 	}
 	syslog(LOG_INFO, "attach %s on %s", disc, dev);
 	if ((fd = open(dev, O_RDWR)) < 0)
@@ -161,7 +162,7 @@ main(int argc, char *argv[])
 		cflag |= PARENB | PARODD;
 		break;
 	}
-	
+
 	tty.c_cflag = CREAD | cflag;
 	tty.c_iflag = 0;
 	tty.c_lflag = 0;
