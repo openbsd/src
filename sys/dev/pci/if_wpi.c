@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.56 2007/09/11 18:52:32 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.57 2007/11/03 13:10:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -775,9 +775,11 @@ wpi_media_change(struct ifnet *ifp)
 	if (error != ENETRESET)
 		return error;
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING)) {
+		wpi_stop(ifp, 0);
 		wpi_init(ifp);
-
+	}
 	return 0;
 }
 
@@ -790,9 +792,6 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
-
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -1912,8 +1911,10 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		    (IFF_UP | IFF_RUNNING)) {
+			wpi_stop(ifp, 0);
 			wpi_init(ifp);
+		}
 		error = 0;
 	}
 
@@ -2905,6 +2906,9 @@ wpi_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* in case we were scanning, release the scan "lock" */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

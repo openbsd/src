@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.10 2007/09/11 18:53:34 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.11 2007/11/03 13:10:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -803,9 +803,11 @@ iwn_media_change(struct ifnet *ifp)
 	if (error != ENETRESET)
 		return error;
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING)) {
+		iwn_stop(ifp, 0);
 		iwn_init(ifp);
-
+	}
 	return 0;
 }
 
@@ -817,9 +819,6 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
-
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -2033,8 +2032,10 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		    (IFF_UP | IFF_RUNNING)) {
+			iwn_stop(ifp, 0);
 			iwn_init(ifp);
+		}
 		error = 0;
 	}
 
@@ -3344,7 +3345,7 @@ iwn_post_alive(struct iwn_softc *sc)
 		IWN_WRITE(sc, IWN_MEM_WDATA, 64);
 		/* set sched. frame limit */
 		IWN_WRITE(sc, IWN_MEM_WADDR, base + IWN_QUEUE_OFFSET(qid) + 4);
-		IWN_WRITE(sc, IWN_MEM_WDATA, 10 << 16);
+		IWN_WRITE(sc, IWN_MEM_WDATA, 64 << 16);
 	}
 
 	/* enable interrupts for all 16 queues */
@@ -3576,6 +3577,9 @@ iwn_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* in case we were scanning, release the scan "lock" */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
