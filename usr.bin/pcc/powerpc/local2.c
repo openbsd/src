@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.3 2007/11/03 09:55:56 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -796,6 +796,25 @@ insput(NODE *p)
 }
 
 /*
+ * Print lower or upper name of 64-bit register.
+ */
+static void
+reg64name(int rval, int hi)
+{
+	int off = 3 * (hi != 0);
+
+#ifdef ELFABI
+	fputc('%', stdout);
+#endif
+
+	fprintf(stdout, "%c%c",
+		 rnames[rval][off],
+		 rnames[rval][off + 1]);
+	if (rnames[rval][off + 2])
+		fputc(rnames[rval][off + 2], stdout);
+}
+
+/*
  * Write out the upper address, like the upper register of a 2-register
  * reference, or the next memory location.
  */
@@ -806,11 +825,7 @@ upput(NODE *p, int size)
 	size /= SZCHAR;
 	switch (p->n_op) {
 	case REG:
-		fprintf(stdout, "%c%c",
-			 rnames[p->n_rval][3],
-			 rnames[p->n_rval][4]);
-		if (rnames[p->n_rval][5])
-			fputc(rnames[p->n_rval][5], stdout);
+		reg64name(p->n_rval, 1);
 		break;
 
 	case NAME:
@@ -875,11 +890,7 @@ adrput(FILE *io, NODE *p)
 		switch (p->n_type) {
 		case LONGLONG:
 		case ULONGLONG:
-			fprintf(stdout, "%c%c",
-				 rnames[p->n_rval][0],
-				 rnames[p->n_rval][1]);
-			if (rnames[p->n_rval][2])
-				fputc(rnames[p->n_rval][2], stdout);
+			reg64name(p->n_rval, 0);
 			break;
 		default:
 			fprintf(io, "%s", rnames[p->n_rval]);
@@ -1151,10 +1162,10 @@ char *rnames[] = {
 	"%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23", "%r24",
 	"%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
 	/* the order is flipped, because we are big endian */
-	"%r4\0%r3\0", "%r5\0%r4\0", "%r6\0%r5\0", "%r7\0%r6\0",
-	"%r8\0%r7\0", "%r9\0%r8\0", "%r10%r9\0", "%r15%r14", "%r17%r16",
-	"%r19%r18", "%r21%r20", "%r23%r22", "%r25%r24", "%r27%r26",
-	"%r29%r28", "%r31%r30",
+	"r4\0r3\0", "r5\0r4\0", "r6\0r5\0", "r7\0r6\0",
+	"r8\0r7\0", "r9\0r8\0", "r10r9\0", "r15r14", "r17r16",
+	"r19r18", "r21r20", "r23r22", "r25r24", "r27r26",
+	"r29r28", "r31r30",
 };
 #else
 char *rnames[] = {
