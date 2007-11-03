@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.103 2007/11/03 10:38:14 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.104 2007/11/03 10:41:48 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -738,7 +738,7 @@ JobExec(Job *job)
 	if ((cpid = fork()) == -1) {
 		Punt("Cannot fork");
 	} else if (cpid == 0) {
-
+		supervise_jobs = false;
 		/* standard pipe code to route stdout and stderr */
 		close(fdout[0]);
 		if (dup2(fdout[1], 1) == -1)
@@ -777,6 +777,7 @@ JobExec(Job *job)
 			exit(1);
 		}
 	} else {
+		supervise_jobs = true;
 		job->pid = cpid;
 
 		/* we set the current position in the buffers to the beginning

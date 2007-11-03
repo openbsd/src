@@ -1,7 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.h,v 1.7 2001/09/19 10:58:07 mpech Exp $ */
+/*	$OpenBSD: error.h,v 1.8 2007/11/03 10:41:48 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -57,4 +57,7 @@ extern void Finish(int);
 #define PARSE_FATAL	1
 extern void Parse_Error(int, const char *, ...);
 extern int fatal_errors;
+/* Needed for fatal errors: we have to know whether we must abort other jobs
+ * or not */
+extern bool supervise_jobs;
 #endif
