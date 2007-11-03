@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.584 2007/10/28 13:42:31 ratchov Exp $
+#	$OpenBSD: GENERIC,v 1.585 2007/11/03 05:46:35 beck Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -60,19 +60,19 @@ eisa0	at mainbus0
 pci*	at mainbus0
 
 #option		ACPIVERBOSE
-#option		ACPI_ENABLE
+option		ACPI_ENABLE
 
 acpi0		at mainbus?	disable
-#acpitimer*	at acpi?
-#acpihpet*	at acpi?
-#acpiac*	at acpi?
-#acpibat*	at acpi?
-#acpibtn*	at acpi?
-#acpicpu*	at acpi?
+acpitimer*	at acpi?	disable	
+acpihpet*	at acpi?	disable
+acpiac*		at acpi?
+acpibat*	at acpi?
+acpibtn*	at acpi?
+acpicpu*	at acpi?	disable
 #acpidock*	at acpi?
-acpiec*		at acpi?	disable
+acpiec*		at acpi?
 acpiprt*	at acpi?
-#acpitz*	at acpi?
+acpitz*		at acpi?
 
 option		PCIVERBOSE
 option		EISAVERBOSE
