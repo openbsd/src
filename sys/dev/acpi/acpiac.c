@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.18 2007/06/23 11:41:03 canacar Exp $ */
+/* $OpenBSD: acpiac.c,v 1.19 2007/11/03 22:51:21 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -129,6 +129,7 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (notify_type) {
 	case 0x00:
+	case 0x01:
 	case 0x81:
 		/*
 		 * XXX some sony vaio's use the wrong notify type
