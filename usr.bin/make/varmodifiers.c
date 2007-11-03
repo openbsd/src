@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.24 2007/09/17 09:44:20 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.25 2007/11/03 15:42:11 deraadt Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -905,7 +905,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 		break;
 	default:
 		VarREError(xrv, &pat->re, "Unexpected regex error");
-	       /* fall through */
+	       /* FALLTHROUGH */
 	case REG_NOMATCH:
 		if (*wp) {
 			MAYBE_ADD_SPACE();
