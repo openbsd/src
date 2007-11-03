@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.117 2007/10/24 17:56:58 mikeb Exp $	*/
+/*	$OpenBSD: locore.s,v 1.118 2007/11/03 03:06:21 weingart Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include "ioapic.h"
 #include "pctr.h"
 #include "ksyms.h"
+#include "acpi.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -1839,6 +1840,34 @@ ENTRY(i686_pagezero)
 
 	popl	%ebx
 	popl	%edi
+	ret
+#endif
+
+#if NACPI > 0
+ENTRY(acpi_acquire_global_lock)
+	movl	8(%esp), %ecx
+1:	movl	(%ecx), %eax
+	movl	%eax, %edx
+	andl	$~1, %edx
+	btsl	$1, %edx
+	adcl	$0, %edx
+	lock
+	cmpxchgl	%edx, (%ecx)
+	jnz	1b
+	andl	$3, %edx
+	cmpl	$3, %edx
+	sbb	%eax, %eax
+	ret
+
+ENTRY(acpi_release_global_lock)
+	movl	8(%esp), %ecx
+1:	movl	(%ecx), %eax
+	movl	%eax, %edx
+	andl	$~3, %edx
+	lock
+	cmpxchgl	%edx, (%ecx)
+	jnz	1b
+	andl	$1, %eax
 	ret
 #endif
 
