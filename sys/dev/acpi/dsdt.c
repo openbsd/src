@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.90 2007/10/08 04:15:15 krw Exp $ */
+/* $OpenBSD: dsdt.c,v 1.91 2007/11/03 17:23:25 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2203,30 +2203,33 @@ aml_parsename(struct aml_scope *scope)
 	return name;
 }
 
-/* Decode AML Length field */
+/* Decode AML Length field 
+ *  AML Length field is encoded:
+ *    byte0    byte1    byte2    byte3
+ *    00xxxxxx                             : if upper bits == 00, length = xxxxxx
+ *    01--xxxx yyyyyyyy                    : if upper bits == 01, length = yyyyyyyyxxxx
+ *    10--xxxx yyyyyyyy zzzzzzzz           : if upper bits == 10, length = zzzzzzzzyyyyyyyyxxxx
+ *    11--xxxx yyyyyyyy zzzzzzzz wwwwwwww  : if upper bits == 11, length = wwwwwwwwzzzzzzzzyyyyyyyyxxxx
+ */
 int
 aml_parselength(struct aml_scope *scope)
 {
-	int len = (*scope->pos & 0xF);
+	int len;
+	uint8_t lcode;
 
-	switch (*scope->pos >> 6) {
-	case 0x00:
-		len = scope->pos[0] & 0x3F;
-		scope->pos += 1;
-		break;
-	case 0x01:
-		len += (scope->pos[1]<<4L);
-		scope->pos += 2;
-		break;
-	case 0x02:
-		len += (scope->pos[1]<<4L) + (scope->pos[2]<<12L);
-		scope->pos += 3;
-		break;
-	case 0x03:
-		len += (scope->pos[1]<<4L) + (scope->pos[2]<<12L) +
-		    (scope->pos[3]<<20L);
-		scope->pos += 4;
-		break;
+	lcode = *(scope->pos++);
+	if (lcode <= 0x3F) {
+		return lcode;
+	}
+	
+	/* lcode >= 0x40, multibyte length, get first byte of extended length */
+	len = lcode & 0xF;
+	len += *(scope->pos++) << 4L;
+	if (lcode >= 0x80) {
+		len += *(scope->pos++) << 12L;
+	}
+	if (lcode >= 0xC0) {
+		len += *(scope->pos++) << 20L;
 	}
 	return len;
 }
