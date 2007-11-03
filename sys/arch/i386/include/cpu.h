@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.96 2007/09/07 08:37:38 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.97 2007/11/03 03:37:08 weingart Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -312,12 +312,17 @@ extern int cpu_cache_eax;
 extern int cpu_cache_ebx;
 extern int cpu_cache_ecx;
 extern int cpu_cache_edx;
+
 /* machdep.c */
 extern int cpu_apmhalt;
 extern int cpu_class;
 extern char cpu_model[];
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
+extern void (*cpu_idle_enter_fcn)(void);
+extern void (*cpu_idle_cycle_fcn)(void);
+extern void (*cpu_idle_leave_fcn)(void);
+
 /* apm.c */
 extern int cpu_apmwarn;
 

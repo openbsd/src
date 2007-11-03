@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.118 2007/11/03 03:06:21 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.119 2007/11/03 03:37:08 weingart Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1441,18 +1441,30 @@ switch_exited:
 	ret
 
 ENTRY(cpu_idle_enter)
+	movl	_C_LABEL(cpu_idle_enter_fcn),%eax
+	cmpl	$0,%eax
+	je	1f
+	jmpl	*%eax
+1:
 	ret
 
 ENTRY(cpu_idle_cycle)
-#if NAPM > 0
-	call	_C_LABEL(apm_cpu_idle)
-#else
+	movl	_C_LABEL(cpu_idle_cycle_fcn),%eax
+	cmpl	$0,%eax
+	je	1f
+	call	*%eax
+	ret
+1:
 	sti
 	hlt
-#endif
 	ret
 
 ENTRY(cpu_idle_leave)
+	movl	_C_LABEL(cpu_idle_leave_fcn),%eax
+	cmpl	$0,%eax
+	je	1f
+	jmpl	*%eax
+1:
 	ret
 
 /*

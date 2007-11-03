@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.409 2007/10/31 15:55:44 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.410 2007/11/03 03:37:08 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -177,6 +177,13 @@ extern struct proc *npxproc;
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
+
+/*
+ * switchto vectors
+ */
+void (*cpu_idle_leave_fcn)(void) = NULL;
+void (*cpu_idle_cycle_fcn)(void) = NULL;
+void (*cpu_idle_enter_fcn)(void) = NULL;
 
 /*
  * Declare these as initialized data so we can patch them.

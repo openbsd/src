@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.77 2007/10/22 17:11:14 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.78 2007/11/03 03:37:08 weingart Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -84,6 +84,7 @@ struct apm_softc {
 	struct klist sc_note;
 	int	sc_flags;
 	int	batt_life;
+	int	be_batt;
 	struct proc *sc_thread;
 	struct rwlock sc_lock;
 };
@@ -143,11 +144,8 @@ int	apm_op_inprog;
 u_int	apm_flags;
 u_char	apm_majver;
 u_char	apm_minver;
-int	apm_dobusy = 0;
-int	apm_doidle = 0;
-int	apm_bebatt = 0;
-int	apm_idle_called = 0;
 int	apm_attached = 0;
+static int	apm_slow_called = 0;
 
 struct {
 	u_int32_t entry;
@@ -181,6 +179,7 @@ const char *apm_err_translate(int code);
 void	apm_standby(void);
 void	apm_suspend(void);
 void	apm_resume(struct apm_softc *, struct apmregs *);
+void	apm_cpu_slow(void);
 
 static int __inline
 apm_get_event(struct apmregs *r)
@@ -241,7 +240,7 @@ apm_perror(const char *str, struct apmregs *regs)
 }
 
 void
-apm_power_print (struct apm_softc *sc, struct apmregs *regs)
+apm_power_print(struct apm_softc *sc, struct apmregs *regs)
 {
 #if !defined(APM_NOPRINT)
 	sc->batt_life = BATT_LIFE(regs);
@@ -305,7 +304,7 @@ apm_power_print (struct apm_softc *sc, struct apmregs *regs)
 				printf(", charging");
 			if (BATT_REM_VALID(regs)) {
 				int life = BATT_REMAINING(regs);
-				if (apm_bebatt)
+				if (sc->be_batt)
 					life = swap16(life);
 				printf(", estimated %d:%02d hours",
 				    life / 60, life % 60);
@@ -610,15 +609,30 @@ apm_set_powstate(u_int dev, u_int state)
 }
 
 void
+apm_cpu_slow(void)
+{
+	struct apmregs regs;
+	static u_int64_t call_apm_slow = 0;
+
+	if  (call_apm_slow != curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]) {
+		/* Always call BIOS halt/idle stuff */
+		bzero(&regs, sizeof(regs));
+		if (apmcall(APM_CPU_IDLE, 0, &regs) != 0) {
+#ifdef DIAGNOSTIC
+			apm_perror("set CPU slow", &regs);
+#endif
+		}
+		apm_slow_called = 1;
+		call_apm_slow = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
+	}
+}
+
+void
 apm_cpu_busy(void)
 {
 	struct apmregs regs;
 
-	if (!apm_cd.cd_ndevs)	/* No APM device, punt */
-		return;
-	if (!apm_dobusy)
-		return;
-	if (!apm_idle_called)
+	if (!apm_slow_called)
 		return;
 
 	if (apm_flags & APM_IDLE_SLOWS) {
@@ -628,7 +642,7 @@ apm_cpu_busy(void)
 			apm_perror("set CPU busy", &regs);
 #endif
 		}
-		apm_idle_called = 0;
+		apm_slow_called = 0;
 	}
 }
 
@@ -636,37 +650,27 @@ void
 apm_cpu_idle(void)
 {
 	struct apmregs regs;
-	static u_int64_t call_apm = 0;
+	static u_int64_t call_apm_idle = 0;
 
-	if (!apm_cd.cd_ndevs) {	/* No APM device, wait for next interrupt */
-		__asm __volatile("sti;hlt");
-		return;
-	}
-
-	if (!apm_doidle) {
-		__asm __volatile("sti;hlt");
-		return;
-	}
-		
 	/*
 	 * We call the bios APM_IDLE routine here only when we
 	 * have been idle for some time - otherwise we just hlt.
 	 */
 
-	if  (call_apm != curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]) {
+	if  (call_apm_idle != curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]) {
 		/* Always call BIOS halt/idle stuff */
 		bzero(&regs, sizeof(regs));
 		if (apmcall(APM_CPU_IDLE, 0, &regs) != 0) {
-#ifdef APMDEBUG
+#ifdef DIAGNOSTIC
 			apm_perror("set CPU idle", &regs);
 #endif
 		}
-		apm_idle_called = 1;
-		/* If BIOS did halt, don't do it again! */
+
+		/* If BIOS did not halt, halt now! */
 		if (apm_flags & APM_IDLE_SLOWS) {
 			__asm __volatile("sti;hlt");
 		}
-		call_apm = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
+		call_apm_idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	} else {
 		__asm __volatile("sti;hlt");
 	}
@@ -713,17 +717,11 @@ apm_set_ver(struct apm_softc *self)
 		}
 	}
 	printf(": Power Management spec V%d.%d", apm_majver, apm_minver);
-	if (apm_flags & APM_IDLE_SLOWS) {
-		DPRINTF((" (slowidle)"));
-		apm_dobusy = 1;
-		apm_doidle = 1;
-	} else {
-		apm_dobusy = 0;
-		apm_doidle = 1;
-	}
 #ifdef DIAGNOSTIC
+	if (apm_flags & APM_IDLE_SLOWS)
+		printf(" (slowidle)");
 	if (apm_flags & APM_BIOS_PM_DISABLED)
-		printf(" (BIOS mgmt disabled)");
+		printf(" (BIOS management disabled)");
 	if (apm_flags & APM_BIOS_PM_DISENGAGED)
 		printf(" (BIOS managing devices)");
 #endif
@@ -824,7 +822,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 			apm_cli = 0;
 		}
 		if (sc->sc_dev.dv_cfdata->cf_flags & APM_BEBATT)
-			apm_bebatt = 1;
+			sc->be_batt = 1;
 		apm_ep.seg = GSEL(GAPM32CODE_SEL,SEL_KPL);
 		apm_ep.entry = ap->apm_entry;
 		cbase = min(ap->apm_code32_base, ap->apm_code16_base);
@@ -875,10 +873,8 @@ apmattach(struct device *parent, struct device *self, void *aux)
 
 		if (apm_flags & APM_BIOS_PM_DISABLED)
 			apm_powmgt_enable(1);
-		/*
-		 * Engage cooperative power mgt (we get to do it)
-		 * on all devices (v1.1).
-		 */
+
+		/* Engage cooperative power management on all devices (v1.1) */
 		apm_powmgt_engage(1, APM_DEV_ALLDEVS);
 
 		bzero(&regs, sizeof(regs));
@@ -900,9 +896,26 @@ apmattach(struct device *parent, struct device *self, void *aux)
 
 		if (apm_periodic_check(sc) == -1) {
 			apm_disconnect(sc);
-			apm_dobusy = apm_doidle = 0;
+
+			/* Failed, nuke APM idle loop */
+			cpu_idle_enter_fcn = NULL;
+			cpu_idle_cycle_fcn = NULL;
+			cpu_idle_leave_fcn = NULL;
 		} else {
 			kthread_create_deferred(apm_thread_create, sc);
+
+			/* Setup APM idle loop */
+			if (apm_flags & APM_IDLE_SLOWS) {
+				cpu_idle_enter_fcn = apm_cpu_slow;
+				cpu_idle_cycle_fcn = NULL;
+				cpu_idle_leave_fcn = apm_cpu_busy;
+			} else {
+				cpu_idle_enter_fcn = NULL;
+				cpu_idle_cycle_fcn = apm_cpu_idle;
+				cpu_idle_leave_fcn = NULL;
+			}
+
+			/* All is well, let the rest of the world know */
 			apm_attached = 1;
 		}
 	} else {
@@ -920,7 +933,12 @@ apm_thread_create(void *v)
 #ifdef MULTIPROCESSOR
 	if (ncpus > 1) {
 		apm_disconnect(sc);
-		apm_dobusy = apm_doidle = 0;
+
+		/* Nuke APM idle loop */
+		cpu_idle_enter_fcn = NULL;
+		cpu_idle_cycle_fcn = NULL;
+		cpu_idle_leave_fcn = NULL;
+
 		return;
 	}
 #endif
@@ -930,7 +948,11 @@ apm_thread_create(void *v)
 		apm_disconnect(sc);
 		printf("%s: failed to create kernel thread, disabled",
 		    sc->sc_dev.dv_xname);
-		apm_dobusy = apm_doidle = 0;
+
+		/* Nuke APM idle loop */
+		cpu_idle_enter_fcn = NULL;
+		cpu_idle_cycle_fcn = NULL;
+		cpu_idle_leave_fcn = NULL;
 	}
 }
 
@@ -1112,7 +1134,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					powerp->battery_state = APM_BATT_UNKNOWN;
 				if (BATT_REM_VALID(&regs)) {
 					powerp->minutes_left = BATT_REMAINING(&regs);
-					if (apm_bebatt)
+					if (sc->be_batt)
 						powerp->minutes_left =
 						    swap16(powerp->minutes_left);
 				}
