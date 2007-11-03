@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.18 2007/11/03 17:46:41 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.19 2007/11/03 18:41:32 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -112,7 +112,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		printf(": no critical temperature defined!\n");
 		sc->sc_crt = 0;
 	} else
-		printf(": critical temperature: %d degC\n",
+		printf(": critical temperature %d degC\n",
 		    (sc->sc_crt - 2732) / 10);
 
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
