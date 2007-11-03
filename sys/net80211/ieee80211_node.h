@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.24 2007/11/01 22:34:19 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.25 2007/11/03 14:59:55 mglocker Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
-	u_int8_t		rs_plcp[IEEE80211_RATE_MAXSIZE];
 };
 
 extern const struct ieee80211_rateset ieee80211_std_rateset_11a;

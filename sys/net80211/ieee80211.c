@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.26 2007/11/01 22:34:19 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.27 2007/11/03 14:59:55 mglocker Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -594,17 +594,13 @@ ieee80211_watchdog(struct ifnet *ifp)
 }
 
 const struct ieee80211_rateset ieee80211_std_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 },
-	{ 0x0b, 0x0f, 0x0a, 0x0e, 0x09, 0x0d, 0x08, 0x0c } };
+	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 const struct ieee80211_rateset ieee80211_std_rateset_11b =
-	{ 4, { 2, 4, 11, 22 },
-	{ 0x0a, 0x14, 0x37, 0x6e } };
+	{ 4, { 2, 4, 11, 22 } };
 
 const struct ieee80211_rateset ieee80211_std_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 },
-	{ 0x0a, 0x14, 0x37, 0x6e, 0x0b, 0x0f, 0x0a, 0x0e, 0x09, 0x0d, 0x08,
-	  0x0c } };
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 /*
  * Mark the basic rates for the 11g rate table based on the
@@ -925,42 +921,4 @@ ieee80211_media2rate(int mword)
 	}
 	return 0;
 #undef N
-}
-
-/*
- * Convert bit rate (in 0.5Mbps units) to PLCP signal and vice versa.
- */
-u_int8_t
-ieee80211_rate2plcp(struct ieee80211com *ic, int rate,
-    enum ieee80211_phymode mode)
-{
-	int i;
-
-	rate &= IEEE80211_RATE_VAL;
-
-	for (i = 0; i < IEEE80211_RATE_MAXSIZE; i++) {
-		if (ic->ic_sup_rates[mode].rs_rates[i] == rate)
-			return (ic->ic_sup_rates[mode].rs_plcp[i]);
-	}
-
-	IEEE80211_DPRINTF(("%s: unsupported rate %u\n", __func__, rate));
-
-	return (0);
-}
-
-int
-ieee80211_plcp2rate(struct ieee80211com *ic, u_int8_t plcp,
-    enum ieee80211_phymode mode)
-{
-	int i;
-
-	for (i = 0; i < IEEE80211_RATE_MAXSIZE; i++) {
-		if (ic->ic_sup_rates[mode].rs_plcp[i] == plcp)
-			return (ic->ic_sup_rates[mode].rs_rates[i] &
-			    IEEE80211_RATE_VAL);
-	}
-
-	IEEE80211_DPRINTF(("%s: unsupported plcp %u\n", __func__, plcp));
-
-	return (0);
 }
