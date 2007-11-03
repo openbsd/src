@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.70 2007/08/06 16:12:25 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.71 2007/11/03 05:48:49 ckuethe Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -271,13 +271,15 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 				if ((smbios_get_string(&bios, sb->vendor,
 				    scratch, sizeof(scratch))) != NULL)
-					printf(" vendor %s", scratch);
+					printf(" vendor %s",
+					    fixstring(scratch));
 				if ((smbios_get_string(&bios, sb->version,
 				    scratch, sizeof(scratch))) != NULL)
-					printf(" version \"%s\"", scratch);
+					printf(" version \"%s\"",
+					    fixstring(scratch));
 				if ((smbios_get_string(&bios, sb->release,
 				    scratch, sizeof(scratch))) != NULL)
-					printf(" date %s", scratch);
+					printf(" date %s", fixstring(scratch));
 			}
 			smbios_info(sc->sc_dev.dv_xname);
 			break;
