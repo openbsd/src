@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.1.1.1 2007/11/03 15:22:54 mbalmer Exp $
+.\"	$OpenBSD: ldattach.8,v 1.2 2007/11/03 15:35:01 mbalmer Exp $
 .\"
 .\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -134,11 +134,11 @@ by using
 to attach the
 .Xr nmea 4
 line discipline to
-.Pa /dev/cua00 ,
+.Pa /dev/tty00 ,
 add a line of the following form to
 .Pa /etc/ttys :
 .Bd -literal -offset indent
-cua00	"/sbin/ldattach nmea"	unknown	on
+tty00	"/sbin/ldattach nmea"	unknown	on
 .Ed
 .Sh SEE ALSO
 .Xr nmea 4 ,
