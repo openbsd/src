@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.101 2007/11/02 17:27:24 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.102 2007/11/03 10:36:48 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -965,6 +965,7 @@ prepare_job(GNode *gn, int flags)
 		 */
 		if (cmdsOK) {
 			if (aborting == 0) {
+				job->node->made = MADE;
 				Make_Update(job->node);
 			}
 		}
