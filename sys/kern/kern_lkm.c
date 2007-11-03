@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.44 2007/10/29 14:12:19 chl Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.45 2007/11/03 22:23:35 mikeb Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -78,6 +78,8 @@
 #define	LKMS_LOADED		0x04
 #define	LKMS_UNLOADING		0x08
 
+struct vm_map *lkm_map = NULL;
+
 static int lkm_v = 0;
 static int lkm_state = LKMS_IDLE;
 
@@ -102,6 +104,12 @@ void
 lkminit(void)
 {
 
+	/*
+	 * If machine-dependent code hasn't initialized the lkm_map
+	 * then just use kernel_map.
+	 */
+	if (lkm_map == NULL)
+		lkm_map = kernel_map;
 	TAILQ_INIT(&lkmods);
 	lkm_v |= LKM_INIT;
 }
@@ -259,7 +267,7 @@ lkmunreserve(void)
 #endif
 
 	if (curp && curp->syms) {
-		uvm_km_free(kernel_map, (vaddr_t)curp->syms, curp->sym_size);
+		uvm_km_free(lkm_map, (vaddr_t)curp->syms, curp->sym_size);
 		curp->syms = NULL;
 	}
 
@@ -267,7 +275,7 @@ lkmunreserve(void)
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
-		uvm_km_free(kernel_map, curp->area, curp->size);
+		uvm_km_free(lkm_map, curp->area, curp->size);
 		curp->area = 0;
 	}
 	lkm_state = LKMS_IDLE;
@@ -339,14 +347,14 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		 * Get memory for module
 		 */
 		curp->size = resrvp->size;
-		curp->area = uvm_km_zalloc(kernel_map, curp->size);
+		curp->area = uvm_km_zalloc(lkm_map, curp->size);
 		curp->offset = 0;
 		resrvp->addr = curp->area;
 
 		if (cmd == LMRESERV && resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-			curp->syms = (caddr_t)uvm_km_zalloc(kernel_map,
+			curp->syms = (caddr_t)uvm_km_zalloc(lkm_map,
 							    curp->sym_size);
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms;

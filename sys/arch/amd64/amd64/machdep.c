@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2007/10/31 15:55:46 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2007/11/03 22:23:35 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -176,6 +176,12 @@ paddr_t lo32_paddr;
 
 int kbd_reset;
 
+#ifdef LKM
+vaddr_t lkm_start, lkm_end;
+static struct vm_map lkm_map_store;
+extern struct vm_map *lkm_map;
+#endif
+
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -330,6 +336,12 @@ cpu_startup(void)
 	minaddr = vm_map_min(kernel_map);
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
+
+#ifdef LKM
+	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
+	lkm_map_store.pmap = pmap_kernel();
+	lkm_map = &lkm_map_store;
+#endif
 
 	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
 	    ptoa((psize_t)uvmexp.free)/1024/1024);
@@ -1292,6 +1304,11 @@ init_x86_64(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	kern_end = KERNBASE + first_avail;
+
+#ifdef LKM
+	lkm_start = KERNTEXTOFF + first_avail;
+	lkm_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+#endif
 
 	/*
 	 * Now, load the memory clusters (which have already been
