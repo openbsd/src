@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.64 2007/11/03 11:42:41 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.65 2007/11/03 14:05:39 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ CompatMake(void *gnp,	/* The node to make */
 			if (!touchFlag)
 				run_gnode(gn, 0);
 			else
-				Job_Touch(gn, gn->type & OP_SILENT);
+				Job_Touch(gn);
 		} else
 			gn->made = ERROR;
 

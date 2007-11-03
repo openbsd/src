@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.3 2007/11/02 17:27:24 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.4 2007/11/03 14:05:39 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,11 +43,11 @@
  * 	.DEFAULT and other places if necessary.
  */
 extern bool Job_CheckCommands(GNode *, void (*abortProc)(char *, ...));
-/* Job_Touch(node, besilent);
+/* Job_Touch(node);
  *	touch the path corresponding to a node or update the corresponding
  *	archive object.
  */
-extern void Job_Touch(GNode *, bool);
+extern void Job_Touch(GNode *);
 /* Make_TimeStamp(parent, child);
  *	ensure parent is at least as recent as child.
  */

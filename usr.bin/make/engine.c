@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.11 2007/11/03 11:42:41 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.12 2007/11/03 14:05:39 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -158,7 +158,7 @@ rewrite_time(const char *name)
 }
 
 void
-Job_Touch(GNode *gn, bool silent)
+Job_Touch(GNode *gn)
 {
 	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 		/*
@@ -168,7 +168,7 @@ Job_Touch(GNode *gn, bool silent)
 		return;
 	}
 
-	if (!silent) {
+	if (!(gn->type & OP_SILENT)) {
 		(void)fprintf(stdout, "touch %s\n", gn->name);
 		(void)fflush(stdout);
 	}

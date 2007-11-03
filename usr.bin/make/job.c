@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.105 2007/11/03 11:44:30 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.106 2007/11/03 14:05:39 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -152,8 +152,6 @@ typedef struct Job_ {
     pid_t 	pid;	    /* The child's process ID */
     GNode	*node;	    /* The target the child is making */
     short	flags;	    /* Flags to control treatment of job */
-#define JOB_IGNERR	0x001	/* Ignore non-zero exits */
-#define JOB_SILENT	0x002	/* no output */
 #define JOB_SPECIAL	0x004	/* Target is a special one. */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
 #define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
@@ -490,11 +488,7 @@ JobClose(Job *job)
  *-----------------------------------------------------------------------
  * JobFinish  --
  *	Do final processing for the given job including updating
- *	parents and starting new jobs as available/necessary. Note
- *	that we pay no attention to the JOB_IGNERR flag here.
- *	This is because when we're called because of a noexecute flag
- *	or something, jstat.w_status is 0 and when called from
- *	Job_CatchChildren, the status is zeroed if it s/b ignored.
+ *	parents and starting new jobs as available/necessary. 
  *
  * Side Effects:
  *	Some nodes may be put on the toBeMade queue.
@@ -513,7 +507,7 @@ JobFinish(Job *job, int status)
 	bool	 done;
 
 	if ((WIFEXITED(status) &&
-	     WEXITSTATUS(status) != 0 && !(job->flags & JOB_IGNERR)) ||
+	     WEXITSTATUS(status) != 0 && !(job->node->type & OP_IGNORE)) ||
 	    (WIFSIGNALED(status) && WTERMSIG(status) != SIGCONT)) {
 		/*
 		 * If it exited non-zero and either we're doing things our
@@ -557,10 +551,10 @@ JobFinish(Job *job, int status)
 				banner(job, stdout);
 				(void)fprintf(stdout, "*** Error code %d%s\n",
 				    WEXITSTATUS(status),
-				    (job->flags & JOB_IGNERR) ? "(ignored)" :
-				    "");
+				    (job->node->type & OP_IGNORE) ? 
+				    "(ignored)" : "");
 
-				if (job->flags & JOB_IGNERR) {
+				if (job->node->type & OP_IGNORE) {
 					status = 0;
 				}
 			} else if (DEBUG(JOB)) {
@@ -907,12 +901,6 @@ prepare_job(GNode *gn, int flags)
 	 * are also added to the field.
 	 */
 	job->flags = flags;
-	if (Targ_Ignore(gn)) {
-		job->flags |= JOB_IGNERR;
-	}
-	if (Targ_Silent(gn)) {
-		job->flags |= JOB_SILENT;
-	}
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a chance
@@ -946,7 +934,7 @@ prepare_job(GNode *gn, int flags)
 		 * the commands, too, but don't die if they're no good -- it
 		 * does no harm to keep working up the graph.
 		 */
-		Job_Touch(gn, job->flags & JOB_SILENT);
+		Job_Touch(gn);
 		noExec = true;
 	}
 
