@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.104 2007/11/03 10:41:48 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.105 2007/11/03 11:44:30 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ static void JobRestartJobs(void);
 static void debug_printf(const char *, ...);
 static Job *prepare_job(GNode *, int);
 static void start_queued_job(Job *);
-static void token(Job *, FILE *);
+static void banner(Job *, FILE *);
 static void print_partial_buffer(struct job_pipe *, Job *, FILE *, size_t);
 static void print_partial_buffer_and_shift(struct job_pipe *, Job *, FILE *, 
     size_t);
@@ -283,10 +283,10 @@ print_errors()
 }
 
 static void
-token(Job *job, FILE *out)
+banner(Job *job, FILE *out)
 {
 	if (job->node != lastNode) {
-		if (DEBUG(JOBTOKEN)) 
+		if (DEBUG(JOBBANNER)) 
 			(void)fprintf(out, "--- %s ---\n", job->node->name);
 		lastNode = job->node;
 	}
@@ -554,7 +554,7 @@ JobFinish(Job *job, int status)
 		if (WIFEXITED(status)) {
 			debug_printf("Process %ld exited.\n", (long)job->pid);
 			if (WEXITSTATUS(status) != 0) {
-				token(job, stdout);
+				banner(job, stdout);
 				(void)fprintf(stdout, "*** Error code %d%s\n",
 				    WEXITSTATUS(status),
 				    (job->flags & JOB_IGNERR) ? "(ignored)" :
@@ -564,13 +564,13 @@ JobFinish(Job *job, int status)
 					status = 0;
 				}
 			} else if (DEBUG(JOB)) {
-				token(job, stdout);
+				banner(job, stdout);
 				(void)fprintf(stdout,
 				    "*** Completed successfully\n");
 			}
 		} else if (WIFSTOPPED(status)) {
 			debug_printf("Process %ld stopped.\n", (long)job->pid);
-			token(job, stdout);
+			banner(job, stdout);
 			(void)fprintf(stdout, "*** Stopped -- signal %d\n",
 			    WSTOPSIG(status));
 			job->flags |= JOB_RESUME;
@@ -585,7 +585,7 @@ JobFinish(Job *job, int status)
 			 * child.
 			 */
 			if (job->flags & (JOB_RESUME|JOB_RESTART)) {
-				token(job, stdout);
+				banner(job, stdout);
 				(void)fprintf(stdout, "*** Continued\n");
 			}
 			if (!(job->flags & JOB_CONTINUING)) {
@@ -616,7 +616,7 @@ JobFinish(Job *job, int status)
 			(void)fflush(stdout);
 			return;
 		} else {
-			token(job, stdout);
+			banner(job, stdout);
 			(void)fprintf(stdout, "*** Signal %d\n",
 			    WTERMSIG(status));
 		}
@@ -723,7 +723,7 @@ JobExec(Job *job)
 	 * banner with their name in it never appears). This is an attempt to
 	 * provide that feedback, even if nothing follows it.
 	 */
-	token(job, stdout);
+	banner(job, stdout);
 
 	setup_engine();
 
@@ -1023,13 +1023,13 @@ JobStart(GNode *gn,	      	/* target to create */
 /* Helper functions for JobDoOutput */
 
 
-/* output debugging token and print characters from 0 to endpos */
+/* output debugging banner and print characters from 0 to endpos */
 static void
 print_partial_buffer(struct job_pipe *p, Job *job, FILE *out, size_t endPos)
 {
 	size_t i;
 
-	token(job, out);
+	banner(job, out);
 	for (i = 0; i < endPos; i++)
 		putc(p->buffer[i], out);
 }

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.87 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.88 2007/11/03 11:44:30 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ MainParseArgs(int argc, char **argv)
 					debug |= DEBUG_JOB;
 					break;
 				case 'J':
-					debug |= DEBUG_JOBTOKEN;
+					debug |= DEBUG_JOBBANNER;
 					break;
 				case 'l':
 					debug |= DEBUG_LOUD;
