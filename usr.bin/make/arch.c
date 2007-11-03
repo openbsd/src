@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.72 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.73 2007/11/03 15:30:04 deraadt Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -170,9 +170,11 @@ struct SVR4namelist {
 	size_t fnamesize;	/* Size of the string table */
 };
 
+#ifdef SVR4ARCHIVES
 static const char *svr4list = "Archive list";
 
 static char *ArchSVR4Entry(struct SVR4namelist *, const char *, size_t, FILE *);
+#endif
 
 static struct arch_member *
 new_arch_member(struct ar_hdr *hdr, const char *name)
