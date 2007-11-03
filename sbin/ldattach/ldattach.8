@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.3 2007/11/03 15:47:48 deraadt Exp $
+.\"	$OpenBSD: ldattach.8,v 1.4 2007/11/03 16:20:33 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -113,7 +113,7 @@ line discipline.
 Specifies the name of the serial line.
 .Ar device
 should be a string of the form
-.Dq cuaXX ,
+.Dq cuaXX
 or
 .Dq /dev/cuaXX .
 .El
@@ -129,7 +129,7 @@ process.
 .Sh EXAMPLES
 To start
 .Nm
-by using
+using
 .Xr init 8
 to attach the
 .Xr nmea 4
