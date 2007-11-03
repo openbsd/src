@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.39 2007/11/02 19:01:26 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.40 2007/11/03 19:52:56 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1275,7 +1275,7 @@ azalia_codec_delete(codec_t *this)
 		free(this->formats, M_DEVBUF);
 		this->formats = NULL;
 	}
-	printf("delete_encodings...\n");
+	DPRINTF(("delete_encodings...\n"));
 	auconv_delete_encodings(this->encodings);
 	this->encodings = NULL;
 	return 0;
