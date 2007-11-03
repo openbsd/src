@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.63 2007/11/02 17:27:24 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.64 2007/11/03 11:42:41 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -127,14 +127,6 @@ CompatMake(void *gnp,	/* The node to make */
 		 * got a $?  variable. To be nice, we also define the $>
 		 * variable using Make_DoAllVar().  */
 		Make_DoAllVar(gn);
-
-		/* Alter our type to tell if errors should be ignored or things
-		 * should not be printed so CompatRunCommand knows what to do.
-		 */
-		if (Targ_Ignore(gn))
-			gn->type |= OP_IGNORE;
-		if (Targ_Silent(gn))
-			gn->type |= OP_SILENT;
 
 		if (Job_CheckCommands(gn, Fatal)) {
 			/* Our commands are ok, but we still have to worry

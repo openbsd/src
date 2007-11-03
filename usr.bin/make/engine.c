@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.11 2007/11/03 11:42:41 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -76,6 +76,14 @@ static void handle_compat_interrupts(GNode *);
 bool
 Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 {
+	/* Alter our type to tell if errors should be ignored or things
+	 * should not be printed so CompatRunCommand knows what to do.
+	 */
+	if (Targ_Ignore(gn))
+		gn->type |= OP_IGNORE;
+	if (Targ_Silent(gn))
+		gn->type |= OP_SILENT;
+
 	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
 	    (gn->type & (OP_NODEFAULT | OP_LIB)) == 0) {
 		/*
