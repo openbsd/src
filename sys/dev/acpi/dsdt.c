@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.95 2007/11/03 19:17:47 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.96 2007/11/03 21:13:48 ckuethe Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3318,6 +3318,7 @@ aml_fixup_dsdt(u_int8_t *acpi_hdr, u_int8_t *base, int len)
 /*
  * @@@: Default Object creation
  */
+static char osstring[] = "Macrosift Windogs MT";
 struct aml_defval {
 	const char		*name;
 	int			type;
@@ -3325,7 +3326,7 @@ struct aml_defval {
 	const void		*bval;
 	struct aml_value	**gval;
 } aml_defobj[] = {
-	{ "_OS_", AML_OBJTYPE_STRING, -1, "OpenBSD" },
+	{ "_OS_", AML_OBJTYPE_STRING, -1, osstring },
 	{ "_REV", AML_OBJTYPE_INTEGER, 2, NULL },
 	{ "_GL", AML_OBJTYPE_MUTEX, 1, NULL, &aml_global_lock },
 	{ "_OSI", AML_OBJTYPE_METHOD, 1, aml_callosi },
@@ -3377,6 +3378,11 @@ aml_create_defaultobjects()
 {
 	struct aml_value *tmp;
 	struct aml_defval *def;
+
+	osstring[1] = 'i';
+	osstring[6] = 'o';
+	osstring[15] = 'w';
+	osstring[18] = 'N';
 
 	for (def = aml_defobj; def->name; def++) {
 		/* Allocate object value + add to namespace */
