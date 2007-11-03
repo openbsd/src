@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.62 2007/10/30 17:49:50 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.63 2007/11/03 10:32:56 espie Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -628,6 +628,8 @@ ICONFILES= \
 
 all: 	${.OBJDIR}/config.status
 	@cd ${.OBJDIR} && ${MAKE}
+
+BEFOREMAN=${.OBJDIR}/config.status
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout 
 	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" \

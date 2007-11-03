@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.46 2006/07/12 23:00:07 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.47 2007/11/03 10:32:56 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,7 @@ maninstall:
 	@echo NOMAN is set
 .endif
 
+BEFOREMAN=config.status
 install: maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
 		infodir=/usr/share/info \

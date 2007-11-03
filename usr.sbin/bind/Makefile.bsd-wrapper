@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2005/05/16 06:32:31 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2007/11/03 10:32:56 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -86,6 +86,8 @@ install: maninstall htmlinstall
 	-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	${file} ${DESTDIR}${BINDIR}
 .endfor
+
+BEFOREMAN= config.status
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
