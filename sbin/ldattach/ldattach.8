@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.5 2007/11/03 16:59:34 deraadt Exp $
+.\"	$OpenBSD: ldattach.8,v 1.6 2007/11/03 17:18:50 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -35,13 +35,11 @@ Depending on the line discipline being attached, one or more options may be
 applied.
 .Pp
 .Nm
-can be used from the command line or in
-.Xr ttys 5
-entries to attach line disciplines at system startup time by having
+can be run from the command line or at system startup by having
 .Xr init 8
-start
-.Nm
-on the designated interface.
+read
+.Xr ttys 5
+entries to attach line disciplines.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
@@ -116,6 +114,15 @@ should be a string of the form
 .Dq cuaXX
 or
 .Dq /dev/cuaXX .
+.Pp
+.Xr cua 4
+devices should be used when
+.Nm
+is started from the command line;
+when started using
+.Xr init 8 ,
+.Xr tty 4
+devices should be used.
 .El
 .Pp
 If
@@ -145,7 +152,8 @@ tty01	"/sbin/ldattach nmea"	unknown	on
 .Xr nmea 4 ,
 .Xr sl 4 ,
 .Xr tty 4 ,
-.Xr ttys 5
+.Xr ttys 5 ,
+.Xr init 8
 .Sh HISTORY
 The
 .Nm
