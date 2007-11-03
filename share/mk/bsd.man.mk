@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.28 2004/02/08 01:19:54 espie Exp $
+#	$OpenBSD: bsd.man.mk,v 1.29 2007/11/03 10:30:40 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -115,6 +115,10 @@ maninstall:
 
 .if (defined(MANALL) || defined(PSALL)) && !defined(MANLOCALBUILD)
 all: ${MANALL} ${PSALL}
+
+BEFOREMAN?=
+${MANALL} ${PSALL}: ${BEFOREMAN}
+
 
 cleandir: cleanman
 cleanman:

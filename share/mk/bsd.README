@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.39 2005/11/23 22:11:48 jmc Exp $
+#	$OpenBSD: bsd.README,v 1.40 2007/11/03 10:30:40 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -126,6 +126,10 @@ MAN		The manual pages to be installed (use a .1 - .9 suffix).
 MLINKS		List of manual page links (using a .1 - .9 suffix).  The
 		linked-to file must come first, the linked file second,
 		and there may be multiple pairs.  The files are soft-linked.
+
+BEFOREMAN	List of extra targets that must be already built before the 
+		man target can be run. Those targets must be real files (and
+		not .PHONY targets).
 
 The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
 it exists.
