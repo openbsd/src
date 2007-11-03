@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.93 2007/11/03 17:48:10 ckuethe Exp $ */
+/* $OpenBSD: dsdt.c,v 1.94 2007/11/03 19:06:07 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1621,24 +1621,38 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		lhs->v_integer = aml_val2int(rhs);
 		break;
 	case AML_OBJTYPE_BUFFER:
+	{
+		char *buf;
+		int len;
+
 		if (lhs->node)
 			dnprintf(40, "named.buffer\n");
-		aml_freevalue(lhs);
-		if (rhs->type == AML_OBJTYPE_BUFFER)
-			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length,
-			    rhs->v_buffer);
-		else if (rhs->type == AML_OBJTYPE_INTEGER ||
-			    rhs->type == AML_OBJTYPE_STATICINT)
-			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER,
-			    sizeof(rhs->v_integer), &rhs->v_integer);
-		else if (rhs->type == AML_OBJTYPE_STRING)
-			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length+1,
-			    rhs->v_string);
-		else {
+
+		if (rhs->type == AML_OBJTYPE_BUFFER) {
+			buf = rhs->v_buffer;
+			len = rhs->length;
+		} else if (rhs->type == AML_OBJTYPE_INTEGER ||
+			   rhs->type == AML_OBJTYPE_STATICINT) {
+			buf = (char *)&rhs->v_integer;
+			len = sizeof(rhs->v_integer);
+		} else if (rhs->type == AML_OBJTYPE_STRING) {
+			len = rhs->length + 1;
+			buf = rhs->v_string;
+		} else {
 			/* aml_showvalue(rhs); */
 			aml_die("setvalue.buf : %x", aml_pc(scope->pos));
 		}
+		if (lhs->length < len)
+			len = lhs->length;
+		else
+			memset(lhs->v_buffer, 0, lhs->length);
+		memcpy(lhs->v_buffer, buf, len);
+		/* XXX ACPI v30b 17.2.5.7 says truncate string "before
+		   copying", so make sure the string is terminated */
+		if (rhs->type == AML_OBJTYPE_STRING)
+			lhs->v_buffer[lhs->length - 1] = '\0';
 		break;
+	}
 	case AML_OBJTYPE_STRING:
 		if (lhs->node)
 			dnprintf(40, "named string\n");
