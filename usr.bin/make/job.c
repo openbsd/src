@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.102 2007/11/03 10:36:48 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.103 2007/11/03 10:38:14 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -919,12 +919,6 @@ prepare_job(GNode *gn, int flags)
 	 */
 	cmdsOK = Job_CheckCommands(gn, Error);
 
-	/*
-	 * If the -n flag wasn't given, we open up OUR (not the child's)
-	 * temporary file to stuff commands in it. The thing is rd/wr so we
-	 * don't need to reopen it to feed it to the shell. If the -n flag
-	 * *was* given, we just set the file to be stdout. Cute, huh?
-	 */
 	if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
 		/*
 		 * We're serious here, but if the commands were bogus, we're
