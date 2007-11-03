@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.17 2007/03/26 12:30:48 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.18 2007/11/03 17:46:41 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -104,15 +104,15 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_getreading(sc, "_TMP")) == -1) {
-		printf(", failed to read _TMP\n");
+		printf(": failed to read _TMP\n");
 		return;
 	}
 
 	if ((sc->sc_crt = acpitz_getreading(sc, "_CRT")) == -1) {
-		printf(", no critical temperature defined!\n");
+		printf(": no critical temperature defined!\n");
 		sc->sc_crt = 0;
 	} else
-		printf(", critical temperature: %d degC\n",
+		printf(": critical temperature: %d degC\n",
 		    (sc->sc_crt - 2732) / 10);
 
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
