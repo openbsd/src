@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.91 2007/11/03 17:23:25 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.92 2007/11/03 17:33:50 ckuethe Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3312,7 +3312,7 @@ struct aml_defval {
 	const void		*bval;
 	struct aml_value	**gval;
 } aml_defobj[] = {
-	{ "_OS_", AML_OBJTYPE_STRING, -1, "OpenBSD" },
+	{ "_OS_", AML_OBJTYPE_STRING, -1, "Microsoft Windows NT\0(TM)" },
 	{ "_REV", AML_OBJTYPE_INTEGER, 2, NULL },
 	{ "_GL", AML_OBJTYPE_MUTEX, 1, NULL, &aml_global_lock },
 	{ "_OSI", AML_OBJTYPE_METHOD, 1, aml_callosi },
