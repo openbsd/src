@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.26 2007/01/28 20:28:50 gwk Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.27 2007/11/03 10:09:03 martin Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -110,22 +110,8 @@ int
 vga_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	int potential;
 
-	potential = 0;
-
-	/*
-	 * If it's prehistoric/vga or display/vga, we might match.
-	 * For the console device, this is jut a sanity check.
-	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
-		potential = 1;
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
-		potential = 1;
-
-	if (!potential)
+	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0)
 		return (0);
 
 	/* check whether it is disabled by firmware */
