@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.5 2007/10/20 18:24:11 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.6 2007/11/03 18:55:37 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -227,7 +227,7 @@ buildtree(int o, NODE *l, NODE *r)
 				l->n_dcon *= r->n_dcon; break;
 			case DIV:
 				if (r->n_dcon == 0)
-					uerror("division by 0.");
+					goto runtime;
 				else
 					l->n_dcon /= r->n_dcon;
 			}
@@ -238,7 +238,7 @@ buildtree(int o, NODE *l, NODE *r)
 			return(l);
 		}
 	}
-
+runtime:
 	/* its real; we must make a new node */
 
 	p = block(o, l, r, INT, 0, MKSUE(INT));
