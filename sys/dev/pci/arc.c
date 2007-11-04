@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.72 2007/11/04 08:16:17 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.73 2007/11/04 10:13:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -56,26 +56,6 @@ int arcdebug = 0;
 #define DPRINTF(p...)		/* p */
 #define DNPRINTF(n, p...)	/* n, p */
 #endif
-
-static const struct pci_matchid arc_devices[] = {
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1110 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1120 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1130 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1160 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1170 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1200 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1202 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1210 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1220 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1230 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1260 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1270 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1280 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1380 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1381 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1680 },
-	{ PCI_VENDOR_ARECA,	PCI_PRODUCT_ARECA_ARC1681 }
-};
 
 /* Areca boards using the Intel IOP are Revision A (RA) */
 
@@ -505,11 +485,67 @@ void			arc_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
 #endif
 
+struct arc_iop {
+	void			*a;
+};
+
+static const struct arc_iop arc_intel = {
+	NULL
+};
+
+static const struct arc_iop arc_marvell = {
+	NULL
+};
+
+struct arc_board {
+	pcireg_t		ab_vendor;
+	pcireg_t		ab_product;
+	const struct arc_iop	*ab_iop;
+};
+const struct arc_board	*arc_match_board(struct pci_attach_args *);
+
+static const struct arc_board arc_devices[] = {
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1110, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1120, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1130, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1160, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1170, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200_B, &arc_marvell },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1202, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1210, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1220, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1230, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1260, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1270, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1280, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1380, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1381, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1680, &arc_intel },
+	{ PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1681, &arc_intel }
+};
+
+const struct arc_board *
+arc_match_board(struct pci_attach_args *pa)
+{
+	const struct arc_board		*ab;
+	int				i;
+
+	for (i = 0; i < sizeof(arc_devices) / sizeof(arc_devices[0]); i++) {
+		ab = &arc_devices[i];
+
+		if (PCI_VENDOR(pa->pa_id) == ab->ab_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == ab->ab_product)
+			return (ab);
+	}
+
+	return (NULL);
+}
+
 int
 arc_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, arc_devices,
-	    sizeof(arc_devices) / sizeof(arc_devices[0])));
+	return ((arc_match_board(aux) == NULL) ? 0 : 1);
 }
 
 void
@@ -522,6 +558,11 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_talking = 0;
 	rw_init(&sc->sc_lock, "arcmsg");
+
+	if (arc_match_board(pa)->ab_iop == &arc_marvell) {
+		printf(": unsupported IOP\n");
+		return;
+	}
 
 	if (arc_map_pci_resources(sc, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
