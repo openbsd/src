@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.75 2007/08/30 04:21:14 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.76 2007/11/04 01:35:49 krw Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -643,7 +643,7 @@ define({:-OpenBSDCommonURL-:},
 		installing sets via one of the other install methods.
 
 
-	When all the selected distribution sets has been extracted, you
+	When all the selected distribution sets have been extracted, you
 	will be allowed to select which time zone your system will be
 	using, all the device nodes needed by the installed system will
 	be created for you, and the file systems will be unmounted.  For
