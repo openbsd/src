@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.130 2007/10/27 10:51:21 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.131 2007/11/04 01:38:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -555,6 +555,25 @@ ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 int
 ahci_ati_ixp600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
+	pcireg_t			magic;
+
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		magic = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    AHCI_PCI_ATI_IXP600_MAGIC);
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    AHCI_PCI_ATI_IXP600_MAGIC,
+		    magic | AHCI_PCI_ATI_IXP600_LOCKED);
+
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG,
+		    PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT |
+		    PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT |
+		    AHCI_PCI_INTERFACE << PCI_INTERFACE_SHIFT |
+		    PCI_REVISION(pa->pa_class) << PCI_REVISION_SHIFT);
+
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    AHCI_PCI_ATI_IXP600_MAGIC, magic);
+	}
+
 	sc->sc_flags |= AHCI_F_NO_FER;
 
 	return (0);
