@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.2 2007/10/27 14:14:14 ragge Exp $	*/
+/*	$OpenBSD: local2.c,v 1.3 2007/11/04 18:54:03 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -709,6 +709,8 @@ adrput(FILE *io, NODE *p)
 
 	case OREG:
 		r = p->n_rval;
+		if (p->n_name[0])
+			printf("%s%s", p->n_name, p->n_lval ? "+" : "");
 		if (p->n_lval)
 			fprintf(io, "%d", (int)p->n_lval);
 		if (R2TEST(r)) {
