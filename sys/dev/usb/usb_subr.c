@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.63 2007/10/11 18:33:15 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.64 2007/11/04 05:52:36 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1183,7 +1183,7 @@ usbd_print(void *aux, const char *pnp)
 			usbd_devinfo_free(devinfop);
 			return (QUIET);
 		}
-		printf("%s, %s", devinfop, pnp);
+		printf("%s at %s", devinfop, pnp);
 	}
 	if (uaa->port != 0)
 		printf(" port %d", uaa->port);
@@ -1192,8 +1192,8 @@ usbd_print(void *aux, const char *pnp)
 	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
 		printf(" interface %d", uaa->ifaceno);
 
-	/* Display device info string */
-	printf(" %s\n", devinfop);
+	if (!pnp)
+		printf(" %s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 	return (UNCONF);
 }
