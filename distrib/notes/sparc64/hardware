@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.125 2007/10/08 08:38:37 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.126 2007/11/04 13:38:05 mbalmer Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -776,9 +776,10 @@ Supported devices {:-include-:}:
 		    Maxim MAX6642/MAX6690 (maxtmp)
 		    Philips PCF8591 (pcfadc)
 		Meinberg Funkuhren radio clocks, including:
-		    PCI32 DCF77 time signal station receiver card
-		    PCI511 DCF77 time signal station receiver card
-		    GPS170PCI GPS receiver card
+		    GPS170PCI 3.3V/5V 6-channel GPS receiver card
+		    PCI32 5V DCF77 time signal station receiver card
+		    PCI509 5V DCF77 time signal station receiver card
+		    PCI511 3.3V/5V DCF77 time signal station receiver card
 
 
 Hardware that we do NOT currently support, but get many questions about:

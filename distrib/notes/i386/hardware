@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.252 2007/10/08 08:38:37 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.253 2007/11/04 13:38:05 mbalmer Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1402,9 +1402,10 @@ Supported hardware {:-include-:}:
 		    National Semiconductor Geode SC1100 PCI-ISA bridge GPIO
 		    AMD Elan SC520 System Controller PIO function
 		Meinberg Funkuhren radio clocks, including:
-		    PCI32 DCF77 time signal station receiver card
-		    PCI511 DCF77 time signal station receiver card
-		    GPS170PCI GPS receiver card
+		    GPS170PCI 3.3V/5V 6-channel GPS receiver card
+		    PCI32 5V DCF77 time signal station receiver card
+		    PCI509 5V DCF77 time signal station receiver card
+		    PCI511 3.3V/5V DCF77 time signal station receiver card
 	Many kinds of ISA Plug-and-Play cards
 		Nearly all SB-style audio cards
 		Nearly all joystick ports

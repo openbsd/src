@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.84 2007/10/08 08:38:37 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.85 2007/11/04 13:38:05 mbalmer Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -568,9 +568,10 @@ Supported devices {:-include-:}:
 		Hardware watchdog timer support
 			Quancom PWDOG1 (pwdog)
 		Meinberg Funkuhren radio clocks, including:
-			PCI32 DCF77 time signal station receiver card
-			PCI511 DCF77 time signal station receiver card
-			GPS170PCI GPS receiver card
+			GPS170PCI 3.3V/5V 6-channel GPS receiver card
+			PCI32 5V DCF77 time signal station receiver card
+			PCI509 5V DCF77 time signal station receiver card
+			PCI511 3.3V/5V DCF77 time signal station receiver card
 
 	Cryptography Accelerators
 		Hifn 6500 (lofn)
