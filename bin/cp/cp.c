@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.33 2007/07/26 17:15:46 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.34 2007/11/04 02:01:57 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
-#else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.33 2007/07/26 17:15:46 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Cp copies source files to target files.
@@ -231,13 +217,14 @@ main(int argc, char *argv[])
 				type = FILE_TO_FILE;
 		} else
 			type = FILE_TO_FILE;
-	} else
+	} else {
 		/*
 		 * Case (2).  Target is a directory.
 		 */
 		type = FILE_TO_DIR;
+	}
 
-	exit (copy(argv, type, fts_options));
+	exit(copy(argv, type, fts_options));
 }
 
 char *
@@ -271,9 +258,8 @@ copy(char *argv[], enum op type, int fts_options)
 	FTSENT *curr;
 	int base, nlen, rval;
 	char *p, *target_mid;
-#ifdef lint
 	base = 0;
-#endif
+
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
 		err(1, NULL);
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
