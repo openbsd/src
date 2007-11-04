@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.18 2007/10/25 08:24:55 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.19 2007/11/04 13:31:21 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -36,6 +36,13 @@ struct mbg_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	/*
+	 * I/O region used by the AMCC S5920 found on the PCI509 card
+	 * used to access the data.
+	 */
+	bus_space_tag_t		sc_iot_s5920;
+	bus_space_handle_t	sc_ioh_s5920;
 
 	struct ksensor		sc_timedelta;
 	struct ksensor		sc_signal;
@@ -80,7 +87,12 @@ struct mbg_time_hr {
 #define MBG_INVALID		0x80	/* time is invalid */
 
 /* status bits we are interested in */
-#define MBG_STATMASK		(MBG_FREERUN | MBG_SYNC | MBG_LEAP | MBG_IFTM)
+#define MBG_STATMASK		(MBG_FREERUN | MBG_SYNC | MBG_IFTM)
+
+/* AMCC S5920 registers */
+#define AMCC_DATA		0x00	/* data register, on 2nd IO region */
+#define AMCC_OMB		0x0c	/* outgoing mailbox */
+#define AMCC_IMB		0x1c	/* incoming mailbox */
 
 /* AMCC S5933 registers */
 #define AMCC_OMB1		0x00	/* outgoing mailbox 1 */
@@ -102,9 +114,18 @@ struct mbg_time_hr {
 #define MBG_GET_TIME		0x00
 #define MBG_GET_SYNC_TIME	0x02
 #define MBG_GET_TIME_HR		0x03
+#define MBG_SET_TIME		0x10
+#define MBG_GET_TZCODE		0x32
+#define MBG_SET_TZCODE		0x33
 #define MBG_GET_FW_ID_1		0x40
 #define MBG_GET_FW_ID_2		0x41
 #define MBG_GET_SERNUM		0x42
+
+/* timezone codes (for MBG_{GET|SET}_TZCODE) */
+#define MBG_TZCODE_CET_CEST	0x00
+#define MBG_TZCODE_CET		0x01
+#define MBG_TZCODE_UTC		0x02
+#define MBG_TZCODE_EET_EEST	0x03
 
 /* misc. constants */
 #define MBG_FIFO_LEN		16
@@ -121,6 +142,8 @@ void	mbg_task(void *);
 void	mbg_task_hr(void *);
 void	mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 	    int64_t timedelta, u_int8_t rsignal, u_int8_t status);
+int	mbg_read_amcc_s5920(struct mbg_softc *, int cmd, char *buf, size_t len,
+	    struct timespec *tstamp);
 int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
@@ -137,6 +160,7 @@ struct cfdriver mbg_cd = {
 const struct pci_matchid mbg_devices[] = {
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170PCI },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI509 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 }
 };
 
@@ -154,7 +178,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	struct mbg_time tframe;
 	pcireg_t memtype;
-	bus_size_t iosize;
+	bus_size_t iosize, iosize2;
 	char fw_id[MBG_ID_LEN];
 	const char *desc;
 
@@ -193,6 +217,25 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_read = mbg_read_amcc_s5933;
 		sensor_task_register(sc, mbg_task, 10);
 		break;
+	case PCI_PRODUCT_MEINBERG_PCI509:
+		/*
+		 * map the second I/O region needed in addition to the first
+		 * to get at the actual data.
+		 */
+		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+		    PCI_MAPREG_START + 0x04);
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x04, memtype, 0,
+		    &sc->sc_iot_s5920, &sc->sc_ioh_s5920, NULL, &iosize2, 0)) {
+			printf(": PCI2 %s region not found\n",
+			    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
+
+			/* unmap first mapped region as well if we fail */
+			bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+			return;
+		}
+		sc->sc_read = mbg_read_amcc_s5920;
+		sensor_task_register(sc, mbg_task, 10);
+		break;
 	case PCI_PRODUCT_MEINBERG_PCI511:
 		sc->sc_read = mbg_read_asic;
 		sensor_task_register(sc, mbg_task, 10);
@@ -223,10 +266,10 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		tframe.status &= MBG_STATMASK;
 		if (tframe.status & MBG_SYNC)
 			printf(", synchronized");
+		else
+			printf(", not synchronized");
 		if (tframe.status & MBG_FREERUN)
-			printf(", free running on xtal");
-		if (tframe.status & MBG_LEAP)
-			printf(", leap second");
+			printf(", free running");
 		if (tframe.status & MBG_IFTM)
 			printf(", time set from host");
 		sc->sc_status = tframe.status;
@@ -236,7 +279,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 
 /*
  * mbg_task() reads a timestamp from cards that to not provide a high
- * resolution timestamp.  The precsion is limited to 1/100 sec. in this
+ * resolution timestamp.  The precision is limited to 1/100 sec. in this
  * case.
  */
 void
@@ -275,7 +318,7 @@ mbg_task(void *arg)
 }
 
 /*
- * mbg_task_hr() reads a timestamp from cars that do provide  high
+ * mbg_task_hr() reads a timestamp from cards that do provide a high
  * resolution timestamp.
  */
 void
@@ -334,10 +377,7 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 			log(LOG_INFO, "%s: clock is synchronized",
 			    sc->sc_dev.dv_xname);
 		if (status & MBG_FREERUN)
-			log(LOG_INFO, "%s: clock is free running on xtal",
-			    sc->sc_dev.dv_xname);
-		if (status & MBG_LEAP)
-			log(LOG_INFO, "%s: leap second announced",
+			log(LOG_INFO, "%s: clock is free running",
 			    sc->sc_dev.dv_xname);
 		if (status & MBG_IFTM)
 			log(LOG_INFO, "%s: time set from host",
@@ -347,8 +387,63 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 }
 
 /*
+ * send a command and read back results to an AMCC S5920 based card
+ * (e.g. the PCI509 DCF77 radio clock)
+ */
+int
+mbg_read_amcc_s5920(struct mbg_softc *sc, int cmd, char *buf, size_t len,
+    struct timespec *tstamp)
+{
+	long timer, tmax;
+	size_t quot, rem;
+	u_int32_t ul;
+	int n;
+	u_int8_t status;
+
+	quot = len / 4;
+	rem = len % 4;
+
+	/* write the command, optionally taking a timestamp */
+	if (tstamp)
+		nanotime(tstamp);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMCC_OMB, cmd);
+
+	/* wait for the BUSY flag to go low (approx 70 us on i386) */
+	timer = 0;
+	tmax = cold ? 50 : hz / 10;
+	do {
+		if (cold)
+			delay(20);
+		else
+			tsleep(tstamp, 0, "mbg", 1);
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    AMCC_IMB4 + 3);
+	} while ((status & MBG_BUSY) && timer++ < tmax);
+
+	if (status & MBG_BUSY)
+		return -1;
+
+	/* read data from the device */
+	if (len) {
+		for (n = 0; n < quot; n++) {
+			*(u_int32_t *)buf = bus_space_read_4(sc->sc_iot_s5920,
+			    sc->sc_ioh_s5920, AMCC_DATA);
+			buf += sizeof(u_int32_t);
+		}
+		if (rem) {
+			ul =  bus_space_read_4(sc->sc_iot_s5920,
+			    sc->sc_ioh_s5920, AMCC_DATA);
+			for (n = 0; n < rem; n++)
+				*buf++ = *((char *)&ul + n);
+		}
+	} else
+		bus_space_read_4(sc->sc_iot_s5920, sc->sc_ioh_s5920, AMCC_DATA);
+	return 0;
+}
+
+/*
  * send a command and read back results to an AMCC S5933 based card
- * (i.e. the PCI32 DCF77 radio clock)
+ * (e.g. the PCI32 DCF77 radio clock)
  */
 int
 mbg_read_amcc_s5933(struct mbg_softc *sc, int cmd, char *buf, size_t len,
@@ -399,7 +494,7 @@ mbg_read_amcc_s5933(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 
 /*
  * send a command and read back results to an ASIC based card
- * (i.e. the PCI511 DCF77 radio clock)
+ * (e.g. the PCI511 DCF77 radio clock)
  */
 int
 mbg_read_asic(struct mbg_softc *sc, int cmd, char *buf, size_t len,
@@ -408,8 +503,8 @@ mbg_read_asic(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 	long timer, tmax;
 	size_t n;
 	u_int32_t data;
-	char *p = buf;
 	u_int16_t port;
+	char *p = buf;
 	u_int8_t status;
 	int s;
 
