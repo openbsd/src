@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.1 2007/10/22 13:39:37 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.2 2007/11/04 18:55:21 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -29,6 +29,8 @@
 
 #include "pass1.h"
 
+/*	this file contains code which is dependent on the target machine */
+
 /*
  * Check if a constant is too large for a type.
  */
@@ -56,7 +58,64 @@ toolarge(TWORD t, CONSZ con)
 	return 0;
 }
 
-/*	this file contains code which is dependent on the target machine */
+#define	IALLOC(sz)	(isinlining ? permalloc(sz) : tmpalloc(sz))
+/*
+ * Make a symtab entry for PIC use.
+ */
+static struct symtab *
+picsymtab(char *s, char *s2)
+{
+	struct symtab *sp = IALLOC(sizeof(struct symtab));
+	size_t len = strlen(s) + strlen(s2) + 1;
+	
+	sp->sname = IALLOC(len);
+	strlcpy(sp->sname, s, len);
+	strlcat(sp->sname, s2, len);
+	sp->sclass = EXTERN;
+	sp->slevel = 0;
+	return sp;
+}
+
+int gotnr; /* tempnum for GOT register */
+/*
+ * Create a reference for an extern variable.
+ */
+static NODE *
+picext(NODE *p)
+{
+	NODE *q, *r;
+
+	q = tempnode(gotnr, PTR|VOID, 0, MKSUE(VOID));
+	r = bcon(0);
+	r->n_sp = picsymtab(p->n_sp->sname, "@GOT");
+	q = buildtree(PLUS, q, r);
+	q = block(UMUL, q, 0, PTR|VOID, 0, MKSUE(VOID));
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
+	nfree(p);
+	return q;
+}
+
+/*
+ * Create a reference for a static variable.
+ */
+static NODE *
+picstatic(NODE *p)
+{
+	NODE *q, *r;
+
+	q = tempnode(gotnr, PTR|VOID, 0, MKSUE(VOID));
+	r = bcon(0);
+	if (p->n_sp->slevel > 0) {
+		char buf[32];
+		snprintf(buf, 32, LABFMT, (int)p->n_sp->soffset);
+		r->n_sp = picsymtab(buf, "@GOTOFF");
+	} else
+		r->n_sp = picsymtab(p->n_sp->sname, "@GOTOFF");
+	q = buildtree(PLUS, q, r);
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
+	nfree(p);
+	return q;
+}
 
 /* clocal() is called to do local transformations on
  * an expression tree preparitory to its being
@@ -103,10 +162,12 @@ clocal(NODE *p)
 			break;
 
 		case STATIC:
-			if (q->slevel == 0)
-				break;
-			p->n_lval = 0;
-			p->n_sp = q;
+			if (kflag == 0) {
+				if (q->slevel == 0)
+					break;
+				p->n_lval = 0;
+			} else
+				p = picstatic(p);
 			break;
 
 		case REGISTER:
@@ -115,7 +176,16 @@ clocal(NODE *p)
 			p->n_rval = q->soffset;
 			break;
 
-			}
+		case EXTERN:
+		case EXTDEF:
+			if (kflag == 0)
+				break;
+			if ((p->n_type & TMASK2) == FTN) {
+				p->n_sp = picsymtab(q->sname, "@PLT");
+			} else
+				p = picext(p);
+			break;
+		}
 		break;
 
 	case STCALL:
@@ -133,6 +203,12 @@ clocal(NODE *p)
 			*l = *r;
 			r->n_op = FUNARG; r->n_left = l; r->n_type = l->n_type;
 		}
+		if (kflag == 0)
+			break;
+		/* FALLTHROUGH */
+	case UCALL:
+	case USTCALL:
+		/* Add move node for GOT */
 		break;
 		
 	case CBRANCH:

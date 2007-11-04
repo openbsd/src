@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.1 2007/10/22 13:39:37 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.2 2007/11/04 18:55:21 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -67,9 +67,11 @@ defnam(struct symtab *p)
 void
 efcode()
 {
+	extern int gotnr;
 	NODE *p, *q;
 	int sz;
 
+	gotnr = 0;	/* new number for next fun */
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
 	/* address of return struct is in eax */
