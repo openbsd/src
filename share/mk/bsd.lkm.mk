@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.20 2005/09/15 07:12:18 espie Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.21 2007/11/04 00:06:19 mikeb Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -18,6 +18,10 @@ CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I/sys -I/sys/arch
 .endif
 .if ${WARNINGS:L} == "yes"
 CFLAGS+=	${CDIAGFLAGS}
+.endif
+
+.if ${MACHINE} == "amd64"
+CFLAGS+=	-mcmodel=kernel
 .endif
 
 LDFLAGS+= -r
@@ -86,13 +90,14 @@ realinstall:
 
 load:	${COMBINED}
 	if [ -x ${.CURDIR}/${POSTINSTALL} ]; then \
-		modload -d -o $(LKM) -e$(LKM) -p${.CURDIR}/${POSTINSTALL} $(COMBINED); \
+		modload -d -o ${LKM} -e${LKM}_lkmentry \
+		    -p${.CURDIR}/${POSTINSTALL} ${COMBINED}; \
 	else \
-		modload -d -o $(LKM) -e$(LKM) $(COMBINED); \
+		modload -d -o ${LKM} -e${LKM}_lkmentry ${COMBINED}; \
 	fi
 
 unload:
-	modunload -n $(LKM)
+	modunload -n ${LKM}
 
 install: maninstall _SUBDIRUSE
 
