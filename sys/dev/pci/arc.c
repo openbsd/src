@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.73 2007/11/04 10:13:05 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.74 2007/11/04 11:07:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -339,11 +339,13 @@ int			arc_detach(struct device *, int);
 void			arc_shutdown(void *);
 int			arc_intr(void *);
 
+struct arc_iop;
 struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);
 
 struct arc_softc {
 	struct device		sc_dev;
+	const struct arc_iop	*sc_iop;
 	struct scsi_link	sc_link;
 
 	pci_chipset_tag_t	sc_pc;
@@ -451,11 +453,15 @@ void			arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
 			    u_int32_t);
 
 /* real stuff for dealing with the hardware */
+struct arc_iop {
+	int			(*iop_query_firmware)(struct arc_softc *);
+};
+
 int			arc_map_pci_resources(struct arc_softc *,
 			    struct pci_attach_args *);
 void			arc_unmap_pci_resources(struct arc_softc *);
-int			arc_query_firmware(struct arc_softc *);
-
+int			arc_intel_query_firmware(struct arc_softc *);
+int			arc_marvell_query_firmware(struct arc_softc *);
 
 #if NBIO > 0
 /* stuff to do messaging via the doorbells */
@@ -485,16 +491,12 @@ void			arc_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
 #endif
 
-struct arc_iop {
-	void			*a;
-};
-
 static const struct arc_iop arc_intel = {
-	NULL
+	arc_intel_query_firmware
 };
 
 static const struct arc_iop arc_marvell = {
-	NULL
+	arc_marvell_query_firmware
 };
 
 struct arc_board {
@@ -559,17 +561,14 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_talking = 0;
 	rw_init(&sc->sc_lock, "arcmsg");
 
-	if (arc_match_board(pa)->ab_iop == &arc_marvell) {
-		printf(": unsupported IOP\n");
-		return;
-	}
+	sc->sc_iop = arc_match_board(pa)->ab_iop;
 
 	if (arc_map_pci_resources(sc, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
 		return;
 	}
 
-	if (arc_query_firmware(sc) != 0) {
+	if (sc->sc_iop->iop_query_firmware(sc) != 0) {
 		/* error message printed by arc_query_firmware */
 		goto unmap_pci;
 	}
@@ -959,7 +958,7 @@ arc_unmap_pci_resources(struct arc_softc *sc)
 }
 
 int
-arc_query_firmware(struct arc_softc *sc)
+arc_intel_query_firmware(struct arc_softc *sc)
 {
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
@@ -1023,6 +1022,12 @@ arc_query_firmware(struct arc_softc *sc)
 	    letoh32(fwinfo.sdram_size), string);
 
 	return (0);
+}
+
+int
+arc_marvell_query_firmware(struct arc_softc *sc)
+{
+	return (1);
 }
 
 #if NBIO > 0
