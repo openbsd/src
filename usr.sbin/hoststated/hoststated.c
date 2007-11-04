@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.46 2007/10/19 14:40:51 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.47 2007/11/04 22:09:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
 		switch (c) {
 		case 'd':
-			debug = 1;
+			debug = 2;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case 'n':
-			debug = 1;
+			debug = 2;
 			opts |= HOSTSTATED_OPT_NOACTION;
 			break;
 		case 'f':
