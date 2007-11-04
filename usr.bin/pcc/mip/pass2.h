@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.h,v 1.4 2007/10/20 18:11:51 otto Exp $	*/
+/*	$OpenBSD: pass2.h,v 1.5 2007/11/04 18:51:28 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -229,7 +229,6 @@ extern	NODE
 
 void eoftn(struct interpass_prolog *);
 void prologue(struct interpass_prolog *);
-void setlocc(int locctr);
 void e2print(NODE *p, int down, int *a, int *b);
 void myoptim(struct interpass *);
 void cbgen(int op, int label);
