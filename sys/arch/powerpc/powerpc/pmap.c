@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2007/09/15 14:28:17 krw Exp $ */
+/*	$OpenBSD: pmap.c,v 1.103 2007/11/04 13:43:39 martin Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1269,7 +1269,7 @@ pmap_avail_setup(void)
 
 	ndumpmem = 0;
 	for (mp = pmap_mem; mp->size !=0; mp++, ndumpmem++) {
-		physmem += btoc(mp->size);
+		physmem += atop(mp->size);
 		dumpmem[ndumpmem].start = atop(mp->start);
 		dumpmem[ndumpmem].end = atop(mp->start + mp->size);
 	}
@@ -1526,7 +1526,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 			pmap_ptab_cnt <<= 1;
 	} else {
 		pmap_ptab_cnt = HTABENTS_32;
-		while (HTABSIZE_32 < (ctob(physmem) >> 7))
+		while (HTABSIZE_32 < (ptoa(physmem) >> 7))
 			pmap_ptab_cnt <<= 1;
 	}
 	/*
@@ -1601,7 +1601,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 
 	if (ppc_proc_is_64b) {
 		for(i = 0; i < 0x10000; i++)
-			pmap_kenter_cache(ctob(i), ctob(i), VM_PROT_ALL,
+			pmap_kenter_cache(ptoa(i), ptoa(i), VM_PROT_ALL,
 			    PMAP_CACHE_WB);
 		asm volatile ("sync; mtsdr1 %0; isync"
 		    :: "r"((u_int)pmap_ptable64 | HTABSIZE_64));

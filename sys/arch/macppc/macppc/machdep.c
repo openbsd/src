@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.94 2007/11/04 13:43:38 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -304,31 +304,31 @@ initppc(startkernel, endkernel, args)
 	pmap_bootstrap(startkernel, endkernel);
 
 	/* now that we know physmem size, map physical memory with BATs */
-	if (physmem > btoc(0x10000000)) {
+	if (physmem > atop(0x10000000)) {
 		battable[0x1].batl = BATL(0x10000000, BAT_M);
 		battable[0x1].batu = BATU(0x10000000);
 	}
-	if (physmem > btoc(0x20000000)) {
+	if (physmem > atop(0x20000000)) {
 		battable[0x2].batl = BATL(0x20000000, BAT_M);
 		battable[0x2].batu = BATU(0x20000000);
 	}
-	if (physmem > btoc(0x30000000)) {
+	if (physmem > atop(0x30000000)) {
 		battable[0x3].batl = BATL(0x30000000, BAT_M);
 		battable[0x3].batu = BATU(0x30000000);
 	}
-	if (physmem > btoc(0x40000000)) {
+	if (physmem > atop(0x40000000)) {
 		battable[0x4].batl = BATL(0x40000000, BAT_M);
 		battable[0x4].batu = BATU(0x40000000);
 	}
-	if (physmem > btoc(0x50000000)) {
+	if (physmem > atop(0x50000000)) {
 		battable[0x5].batl = BATL(0x50000000, BAT_M);
 		battable[0x5].batu = BATU(0x50000000);
 	}
-	if (physmem > btoc(0x60000000)) {
+	if (physmem > atop(0x60000000)) {
 		battable[0x6].batl = BATL(0x60000000, BAT_M);
 		battable[0x6].batu = BATU(0x60000000);
 	}
-	if (physmem > btoc(0x70000000)) {
+	if (physmem > atop(0x70000000)) {
 		battable[0x7].batl = BATL(0x70000000, BAT_M);
 		battable[0x7].batu = BATU(0x70000000);
 	}
@@ -490,8 +490,8 @@ cpu_startup()
 
 	printf("%s", version);
 
-	printf("real mem = %u (%uMB)\n", ctob(physmem),
-	    ctob(physmem)/1024/1024);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -835,7 +835,7 @@ dumpsys()
 	error = cpu_dump();
 	for (i = 0; !error && i < ndumpmem; i++) {
 		npg = dumpmem[i].end - dumpmem[i].start;
-		maddr = ctob(dumpmem[i].start);
+		maddr = ptoa(dumpmem[i].start);
 		blkno = dumplo + btodb(maddr) + 1;
 
 		for (j = npg; j;
@@ -844,7 +844,7 @@ dumpsys()
 			/* Print out how many MBs we have to go. */
                         if (dbtob(blkno - dumplo) % (1024 * 1024) < NBPG)
                                 printf("%d ",
-                                    (ctob(dumpsize) - maddr) / (1024 * 1024));
+                                    (ptoa(dumpsize) - maddr) / (1024 * 1024));
 
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
 				VM_PROT_READ, PMAP_WIRED);

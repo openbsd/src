@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.16 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.17 2007/11/04 13:43:39 martin Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ size_memory(void)
 			break;
 		*look = save;
 	}
-	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
+	physmem = atop(trunc_page((unsigned)look)); /* in pages */
 	total_mem = trunc_page((unsigned)look);
 #ifdef USE_BUG
 	/* Initialize the off-board (non-local) memory. */
