@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.59 2007/11/01 19:25:32 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.60 2007/11/04 18:45:48 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -75,7 +75,6 @@ int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
 struct process_select ps;
 char interactive = Maybe;
-char warnings = 0;
 double delay = Default_DELAY;
 char *order_name = NULL;
 int topn = Default_TOPN;
@@ -193,9 +192,9 @@ parseargs(int ac, char **av)
 				displays = i;
 				break;
 			}
-			warnx("warning: display count should be positive "
+			new_message(MT_delayed,
+			    "warning: display count should be positive "
 			    "-- option ignored");
-			warnings++;
 			break;
 
 		case 's':
@@ -204,10 +203,10 @@ parseargs(int ac, char **av)
 			if (delay >= 0 && delay <= 1000000 && *endp == '\0')
 				break;
 
-			warnx("warning: delay should be a non-negative number"
+			new_message(MT_delayed,
+			    "warning: delay should be a non-negative number"
 			    " -- using default");
 			delay = Default_DELAY;
-			warnings++;
 			break;
 
 		case 'q':	/* be quick about it */
@@ -217,8 +216,8 @@ parseargs(int ac, char **av)
 				(void) nice(-20);
 				break;
 			}
-			warnx("warning: `-q' option can only be used by root");
-			warnings++;
+			new_message(MT_delayed,
+			    "warning: `-q' option can only be used by root");
 			break;
 
 		case 'o':	/* select sort order */
@@ -238,9 +237,9 @@ parseargs(int ac, char **av)
 	/* get count of top processes to display (if any) */
 	if (optind < ac) {
 		if ((topn = atoiwi(av[optind])) == Invalid) {
-			warnx("warning: process count should "
+			new_message(MT_delayed,
+			    "warning: process count should "
 			    "be a non-negative number -- using default");
-			warnings++;
 			topn = Infinity;
 		}
 #if Default_TOPN == Infinity
@@ -317,16 +316,18 @@ main(int argc, char *argv[])
 	if (order_name != NULL) {
 		if ((order_index = string_index(order_name,
 		    statics.order_names)) == -1) {
-			char **pp;
+			char **pp, msg[80];
 
-			warnx("'%s' is not a recognized sorting order",
+			snprintf(msg, sizeof(msg),
+			    "'%s' is not a recognized sorting order",
 			    order_name);
-			fprintf(stderr, "\tTry one of these:");
+			strlcat(msg, ". Valid are:", sizeof(msg));
 			pp = statics.order_names;
-			while (*pp != NULL)
-				fprintf(stderr, " %s", *pp++);
-			fputc('\n', stderr);
-			exit(1);
+			while (*pp != NULL) {
+				strlcat(msg, " ", sizeof(msg));
+				strlcat(msg, *pp++, sizeof(msg));
+			}
+			new_message(MT_delayed, msg);
 		}
 	}
 
@@ -340,11 +341,10 @@ main(int argc, char *argv[])
 	max_topn = display_init(&statics);
 
 	/* print warning if user requested more processes than we can display */
-	if (topn > max_topn) {
-		warnx("warning: this terminal can only display %d processes",
+	if (topn > max_topn)
+		new_message(MT_delayed,
+		    "warning: this terminal can only display %d processes",
 		    max_topn);
-		warnings++;
-	}
 	/* adjust for topn == Infinity */
 	if (topn == Infinity) {
 		/*
@@ -393,12 +393,6 @@ main(int argc, char *argv[])
 	if (smart_terminal)
 		(void) signal(SIGWINCH, sigwinch);
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-	if (warnings) {
-		fputs("....", stderr);
-		fflush(stderr);	/* why must I do this? */
-		sleep((unsigned)(3 * warnings));
-		fputc('\n', stderr);
-	}
 restart:
 
 	/*
