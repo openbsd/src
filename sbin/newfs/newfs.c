@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.69 2007/06/26 19:03:21 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.70 2007/11/05 11:37:25 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -257,7 +257,8 @@ main(int argc, char *argv[])
 					reqopt = opt = FS_OPTTIME;
 				else
 					fatal("%s: unknown optimization "
-					    "preference: use `space' or `time'.");
+					    "preference: use `space' or `time'.",
+					    optarg);
 			}
 			break;
 		case 'q':
