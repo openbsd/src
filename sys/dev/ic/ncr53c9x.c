@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.35 2007/10/15 01:37:49 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.36 2007/11/05 22:30:25 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -872,15 +872,21 @@ ncr53c9x_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
+	int s;
 
 	NCR_TRACE(("[ncr53c9x_poll] "));
 	while (count) {
 		if (NCRDMA_ISINTR(sc)) {
+			s = splbio();
 			ncr53c9x_intr(sc);
+			splx(s);
 		}
 #if alternatively
-		if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT)
+		if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) {
+			s = splbio();
 			ncr53c9x_intr(sc);
+			splx(s);
+		}
 #endif
 		if ((xs->flags & ITSDONE) != 0)
 			return (0);
@@ -1085,7 +1091,7 @@ ncr53c9x_done(sc, ecb)
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	int lun = sc_link->lun;
+	int s, lun = sc_link->lun;
 	struct ncr53c9x_linfo *li = TINFO_LUN(ti, lun);
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
@@ -1163,7 +1169,9 @@ ncr53c9x_done(sc, ecb)
 
 	ncr53c9x_free_ecb(sc, ecb, xs->flags);
 	ti->cmds++;
+	s = splbio();
 	scsi_done(xs);
+	splx(s);
 }
 
 void
