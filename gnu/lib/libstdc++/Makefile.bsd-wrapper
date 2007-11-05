@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2006/11/07 18:39:51 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2007/11/05 17:02:43 espie Exp $
 
 .include "${.CURDIR}/shlib_version"
 SHLIB_MAJOR=${major}
@@ -49,6 +49,7 @@ config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	CC="${CC}" CXX="${CXX}" CFLAGS="${CFLAGS} ${COPTS}" \
 	CXXFLAGS="${CXXFLAGS} ${COPTS}" \
+	MAKE="${MAKE}" \
 	/bin/sh ${.CURDIR}/libstdc++/configure \
 		--prefix=/usr \
 		--disable-nls \
