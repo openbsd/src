@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1287 2007/11/05 15:39:56 oga Exp $
+$OpenBSD: pcidevs,v 1.1288 2007/11/05 19:36:03 mbalmer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2595,6 +2595,7 @@ product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 product MEINBERG PCI32		0x0101	PCI32
 product MEINBERG PCI509		0x0102	PCI509
 product MEINBERG PCI511		0x0104	PCI511
+product MEINBERG PEX511		0x0105	PEX511
 product MEINBERG GPS170PCI	0x0204	GPS170PCI
 
 /* Mellanox */
