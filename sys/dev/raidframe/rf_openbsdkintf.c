@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.44 2007/11/05 16:01:02 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.45 2007/11/05 16:09:49 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -432,7 +432,6 @@ rf_autoconfig_startuphook(void *param)
 	RF_AutoConfig_t *ac_list;	/* Autoconfig list. */
 	RF_ConfigSet_t *config_sets;
 
-	printf("rf_autoconfig_startuphook\n");
 	/* 1. Locate all RAID components on the system. */
 
 #ifdef	RAIDDEBUG
