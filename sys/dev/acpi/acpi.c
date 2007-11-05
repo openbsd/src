@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.93 2007/11/03 20:33:48 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.94 2007/11/05 17:32:20 canacar Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -645,6 +645,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
+
+	acpi_attach_machdep(sc);
 
 	kthread_create_deferred(acpi_create_thread, sc);
 #endif /* SMALL_KERNEL */
@@ -1346,8 +1348,6 @@ acpi_isr_thread(void *arg)
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
 	u_int32_t gpe;
-
-	acpi_attach_machdep(sc);
 
 	/*
 	 * If we have an interrupt handler, we can get notification
