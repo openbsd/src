@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.10 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: bha.c,v 1.11 2007/11/05 17:12:41 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -1549,6 +1549,7 @@ bha_poll(sc, xs, count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1557,8 +1558,11 @@ bha_poll(sc, xs, count)
 		 * have got an interrupt?
 		 */
 		if (bus_space_read_1(iot, ioh, BHA_INTR_PORT) &
-		    BHA_INTR_ANYINTR)
+		    BHA_INTR_ANYINTR) {
+			s = splbio();
 			bha_intr(sc);
+			splx(s);
+		}
 		if (xs->flags & ITSDONE)
 			return (0);
 		delay(1000);	/* only happens in boot so ok */

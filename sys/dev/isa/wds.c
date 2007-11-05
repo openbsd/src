@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.23 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: wds.c,v 1.24 2007/11/05 17:12:41 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1355,6 +1355,7 @@ wds_poll(sc, xs, count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1362,8 +1363,11 @@ wds_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ)
+		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ) {
+			s = splbio();
 			wdsintr(sc);
+			splx(s);
+		}
 		if (xs->flags & ITSDONE)
 			return 0;
 		delay(1000);	/* only happens in boot so ok */
@@ -1383,6 +1387,7 @@ wds_ipoll(sc, scb, count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1390,8 +1395,11 @@ wds_ipoll(sc, scb, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ)
+		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ) {
+			s = splbio();
 			wdsintr(sc);
+			splx(s);
+		}
 		if (scb->flags & SCB_DONE)
 			return 0;
 		delay(1000);	/* only happens in boot so ok */

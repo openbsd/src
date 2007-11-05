@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.25 2007/05/08 16:03:20 deraadt Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.26 2007/11/05 17:12:41 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -372,14 +372,18 @@ ahb_poll(sc, xs, count)
 {				/* in msec  */
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND)
+		if (bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND) {
+			s = splbio();
 			ahbintr(sc);
+			splx(s);
+		}
 		if (xs->flags & ITSDONE)
 			return 0;
 		delay(1000);
