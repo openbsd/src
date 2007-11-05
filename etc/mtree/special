@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.76 2007/10/08 12:16:35 norby Exp $
+#	$OpenBSD: special,v 1.77 2007/11/05 23:46:12 merdely Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -17,7 +17,7 @@ mem		type=char mode=0640 uname=root gname=kmem
 
 etc		type=dir mode=0755 uname=root gname=wheel
 bgpd.conf	type=file mode=0600 uname=root gname=wheel
-chio.conf	type=file mode=0600 uname=root gname=wheel
+chio.conf	type=file mode=0644 uname=root gname=operator
 crontab		type=file mode=0600 uname=root gname=wheel optional
 csh.cshrc	type=file mode=0644 uname=root gname=wheel
 csh.login	type=file mode=0644 uname=root gname=wheel

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.254 2007/10/08 12:16:35 norby Exp $
+#	$OpenBSD: Makefile,v 1.255 2007/11/05 23:46:12 merdely Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -80,7 +80,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 ripd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 dvmrpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 chio.conf ${DESTDIR}/etc
+	${INSTALL} -c -o root -g operator -m 644 chio.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hostapd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hoststated.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ipsec.conf ${DESTDIR}/etc
