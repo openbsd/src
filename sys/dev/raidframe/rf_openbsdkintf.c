@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.43 2007/09/09 16:50:23 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.44 2007/11/05 16:01:02 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -289,6 +289,7 @@ void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
 #ifdef	RAID_AUTOCONFIG
+void rf_autoconfig_startuphook(void *);
 void rf_buildroothack(void *);
 int  rf_reasonable_label(RF_ComponentLabel_t *);
 #endif	/* RAID_AUTOCONFIG */
@@ -304,16 +305,6 @@ void rf_release_all_vps(RF_ConfigSet_t *);
 void rf_cleanup_config_set(RF_ConfigSet_t *);
 int  rf_have_enough_components(RF_ConfigSet_t *);
 int  rf_auto_config_set(RF_ConfigSet_t *, int *);
-
-#ifdef	RAID_AUTOCONFIG
-static int raidautoconfig = 0;	/*
-				 * Debugging, mostly.  Set to 0 to not
-				 * allow autoconfig to take place.
-				 * Note that this is overridden by having
-				 * RAID_AUTOCONFIG as an option in the
-				 * kernel config file.
-				 */
-#endif	/* RAID_AUTOCONFIG */
 
 int
 rf_probe(struct device *parent, void *match_, void *aux)
@@ -344,10 +335,6 @@ raidattach(int num)
 {
 	int raidID;
 	int i, rc;
-#ifdef	RAID_AUTOCONFIG
-	RF_AutoConfig_t *ac_list;	/* Autoconfig list. */
-	RF_ConfigSet_t *config_sets;
-#endif	/* RAID_AUTOCONFIG */
 
 	db1_printf(("raidattach: Asked for %d units\n", num));
 
@@ -434,38 +421,37 @@ raidattach(int num)
 	raid_cd.cd_ndevs = num;
 
 #ifdef	RAID_AUTOCONFIG
-	raidautoconfig = 1;
-
-	if (raidautoconfig) {
-		/* 1. Locate all RAID components on the system. */
-
-#ifdef	RAIDDEBUG
-		printf("Searching for raid components...\n");
-#endif	/* RAIDDEBUG */
-		ac_list = rf_find_raid_components();
-
-		/* 2. Sort them into their respective sets. */
-
-		config_sets = rf_create_auto_sets(ac_list);
-
-		/*
-		 * 3. Evaluate each set and configure the valid ones
-		 * This gets done in rf_buildroothack().
-		 */
-
-		/*
-		 * Schedule the creation of the thread to do the
-		 * "/ on RAID" stuff.
-		 */
-
-		rf_buildroothack(config_sets);
-
-	}
-#endif	/* RAID_AUTOCONFIG */
-
+	startuphook_establish(rf_autoconfig_startuphook, NULL);
+#endif	
 }
 
 #ifdef	RAID_AUTOCONFIG
+void
+rf_autoconfig_startuphook(void *param)
+{
+	RF_AutoConfig_t *ac_list;	/* Autoconfig list. */
+	RF_ConfigSet_t *config_sets;
+
+	printf("rf_autoconfig_startuphook\n");
+	/* 1. Locate all RAID components on the system. */
+
+#ifdef	RAIDDEBUG
+	printf("Searching for raid components...\n");
+#endif	/* RAIDDEBUG */
+	ac_list = rf_find_raid_components();
+
+	/* 2. Sort them into their respective sets. */
+
+	config_sets = rf_create_auto_sets(ac_list);
+
+	/*
+	 * 3. Evaluate each set and configure the valid ones
+	 * This gets done in rf_buildroothack().
+	 */
+
+	rf_buildroothack(config_sets);
+}
+
 void
 rf_buildroothack(void *arg)
 {
