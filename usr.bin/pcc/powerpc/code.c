@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.2 2007/11/01 10:52:58 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.3 2007/11/05 22:11:42 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -44,10 +44,9 @@ static void genswitch_mrst(int num, struct swents **p, int n);
 void
 defalign(int n)
 {
-	n /= SZCHAR;
-	if (n == 1)
-		return;
-	printf("	.align %d\n", n);
+	if ((n = ispow2(n / SZCHAR)) == -1)
+		cerror("defalign: n != 2^i");
+	printf("	.p2align %d\n", n);
 }
 
 /*
