@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1286 2007/11/04 13:08:04 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1287 2007/11/05 15:39:56 oga Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1896,6 +1896,7 @@
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
+#define	PCI_PRODUCT_INTEL_82452_PB	0x1225		/* 82452KX/GX PCI Host */
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* EE Pro 10 PCI */
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart */
