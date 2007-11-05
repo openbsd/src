@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.42 2007/09/08 18:56:26 otto Exp $
+.\"	$OpenBSD: intro.2,v 1.43 2007/11/05 08:21:58 jmc Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 8 2007 $
+.Dd $Mdocdate: November 5 2007 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -82,12 +82,12 @@ Not used.
 An attempt was made to perform an operation limited to processes
 with appropriate privileges or to the owner of a file or other
 resources.
-.It Er 2 ENOENT Em "No such file or directory" .
+.It Er 2 ENOENT Em "\&No such file or directory" .
 A component of a specified pathname did not exist, or the
 pathname was an empty string.
-.It Er 3 ESRCH Em "No such process" .
+.It Er 3 ESRCH Em "\&No such process" .
 No process could be found which corresponds to the given process ID.
-.It Er 4 EINTR Em "Interrupted function call" .
+.It Er 4 EINTR Em "Interrupted system call" .
 An asynchronous signal (such as
 .Dv SIGINT
 or
@@ -100,12 +100,12 @@ interrupted function call will seem to have returned the error condition.
 Some physical input or output error occurred.
 This error will not be reported until a subsequent operation on the same file
 descriptor and may be lost (over written) by any subsequent errors.
-.It Er 6 ENXIO Em "\&No such device or address" .
+.It Er 6 ENXIO Em "Device not configured" .
 Input or output on a special file referred to a device that did not
 exist, or made a request beyond the limits of the device.
 This error may also occur when, for example, a tape drive is not online or
 no disk pack is loaded on a drive.
-.It Er 7 E2BIG Em "Arg list too long" .
+.It Er 7 E2BIG Em "Argument list too long" .
 The number of bytes used for the argument and environment
 list of the new process exceeded the limit
 .Dv NCARGS
@@ -139,7 +139,7 @@ by its file access permissions.
 .It Er 14 EFAULT Em "Bad address" .
 The system detected an invalid address in attempting to
 use an argument of a call.
-.It Er 15 ENOTBLK Em "Not a block device" .
+.It Er 15 ENOTBLK Em "Block device required" .
 A block device operation was attempted on a non-block device or file.
 .It Er 16 EBUSY Em "Device busy" .
 An attempt to use a system resource which was in use at the time
@@ -149,7 +149,7 @@ An existing file was mentioned in an inappropriate context,
 for instance, as the new link name in a
 .Xr link 2
 function.
-.It Er 18 EXDEV Em "Improper link" .
+.It Er 18 EXDEV Em "Cross-device link" .
 A hard link to a file on another file system was attempted.
 .It Er 19 ENODEV Em "Operation not supported by device" .
 An attempt was made to apply an inappropriate function to a device,
@@ -196,7 +196,7 @@ call requested write access.
 The size of a file exceeded the maximum.
 (The system-wide maximum file size is 2**63 bytes.
 Each file system may impose a lower limit for files contained within it.)
-.It Er 28 ENOSPC Em "Device out of space" .
+.It Er 28 ENOSPC Em "\&No space left on device" .
 A
 .Xr write 2
 to an ordinary file, the creation of a directory or symbolic link,
@@ -224,7 +224,7 @@ for which there is no process to read the data.
 .It Er 33 EDOM Em "Numerical argument out of domain" .
 A numerical input argument was outside the defined domain of
 the mathematical function.
-.It Er 34 ERANGE Em "Result out of range" .
+.It Er 34 ERANGE Em "Result too large" .
 A result of the function was too large to fit in the
 available space (perhaps exceeded precision).
 .It Er 35 EAGAIN Em "Resource temporarily unavailable" .
@@ -284,7 +284,7 @@ addresses with
 Internet protocols.
 .It Er 48 EADDRINUSE Em "Address already in use" .
 Only one usage of each address is normally permitted.
-.It Er 49 EADDRNOTAVAIL Em "Cannot assign requested address" .
+.It Er 49 EADDRNOTAVAIL Em "Can't assign requested address" .
 Normally results from an attempt to create a socket with an
 address not on this machine.
 .It Er 50 ENETDOWN Em "Network is down" .
@@ -315,7 +315,7 @@ when already connected.
 A request to send or receive data was disallowed because
 the socket was not connected and (when sending on a datagram socket)
 no address was supplied.
-.It Er 58 ESHUTDOWN Em "Cannot send after socket shutdown" .
+.It Er 58 ESHUTDOWN Em "Can't send after socket shutdown" .
 A request to send data was disallowed because the socket
 had already been shut down with a previous
 .Xr shutdown 2
@@ -348,7 +348,7 @@ characters, or an entire path name exceeded 1023
 characters.
 .It Er 64 EHOSTDOWN Em "Host is down" .
 A socket operation failed because the destination host was down.
-.It Er 65 EHOSTUNREACH Em "No route to host" .
+.It Er 65 EHOSTUNREACH Em "\&No route to host" .
 A socket operation was attempted to an unreachable host.
 .It Er 66 ENOTEMPTY Em "Directory not empty" .
 A directory with entries other than
@@ -392,7 +392,7 @@ An
 .Tn RPC
 call was attempted for a procedure which doesn't exist
 in the remote program.
-.It Er 77 ENOLCK Em "No locks available" .
+.It Er 77 ENOLCK Em "\&No locks available" .
 A system-imposed limit on the number of simultaneous file
 locks was reached.
 .It Er 78 ENOSYS Em "Function not implemented" .
@@ -416,19 +416,19 @@ Not used in
 A UFS Extended Attribute is not found for the specified pathname.
 .It Er 84 EILSEQ Em "Illegal byte sequence" .
 An illegal sequence of bytes was used when using wide characters.
-.It Er 85 ENOMEDIUM Em "No medium found" .
+.It Er 85 ENOMEDIUM Em "\&No medium found" .
 Attempted to use a removable media device with no medium present.
 .It Er 86 EMEDIUMTYPE Em "Wrong medium type" .
 Attempted to use a removable media device with incorrect or incompatible
 medium.
-.It Er 87 EOVERFLOW Em "Conversion overflow" .
+.It Er 87 EOVERFLOW Em "Value too large to be stored in data type" .
 A numerical result of the function was too large to be stored in the
 caller provided space.
 .It Er 88 ECANCELED Em "Operation canceled" .
 The requested operation was canceled.
 .It Er 89 EIDRM Em "Identifier removed" .
 An IPC identifier was removed while the current process was waiting on it.
-.It Er 90 ENOMSG Em "No message of the desired type".
+.It Er 90 ENOMSG Em "\&No message of desired type".
 An IPC message queue does not contain a message of the desired type,
 or a message catalog does not contain the requested message.
 .El
