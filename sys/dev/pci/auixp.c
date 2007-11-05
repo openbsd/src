@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.12 2007/10/22 03:16:35 fgsch Exp $ */
+/* $OpenBSD: auixp.c,v 1.13 2007/11/05 00:17:28 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -375,11 +375,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
-				play->sw_code = mulaw_to_slinear16_mts;
+				play->sw_code = mulaw_to_slinear16_le_mts;
 				break;
 			case 2:
 				play->factor = 2;
-				play->sw_code = mulaw_to_slinear16;
+				play->sw_code = mulaw_to_slinear16_le;
 				break;
 			default:
 				return (EINVAL);
@@ -391,11 +391,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = linear8_to_linear16_mts;
+					play->sw_code = linear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = linear8_to_linear16;
+					play->sw_code = linear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -423,11 +423,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_mts;
+					play->sw_code = ulinear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16;
+					play->sw_code = ulinear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -437,10 +437,10 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 2;
-					play->sw_code = change_sign16_mts;
+					play->sw_code = change_sign16_le_mts;
 					break;
 				case 2:
-					play->sw_code = change_sign16;
+					play->sw_code = change_sign16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -454,11 +454,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
-				play->sw_code = alaw_to_slinear16_mts;
+				play->sw_code = alaw_to_slinear16_le_mts;
 				break;
 			case 2:
 				play->factor = 2;
-				play->sw_code = alaw_to_slinear16;
+				play->sw_code = alaw_to_slinear16_le;
 				break;
 			default:
 				return (EINVAL);
@@ -470,11 +470,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = linear8_to_linear16_mts;
+					play->sw_code = linear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = linear8_to_linear16;
+					play->sw_code = linear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -503,11 +503,11 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_mts;
+					play->sw_code = ulinear8_to_linear16_le_mts;
 					break;
 				case 2:
 					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16;
+					play->sw_code = ulinear8_to_linear16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -517,10 +517,10 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 				switch (play->channels) {
 				case 1:
 					play->factor = 2;
-					play->sw_code = change_sign16_swap_bytes_mts;
+					play->sw_code = swap_bytes_change_sign16_le_mts;
 					break;
 				case 2:
-					play->sw_code = change_sign16_swap_bytes;
+					play->sw_code = swap_bytes_change_sign16_le;
 					break;
 				default:
 					return (EINVAL);
@@ -552,7 +552,7 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (rec->precision == 16)
-				rec->sw_code = change_sign16;
+				rec->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			rec->sw_code = ulinear8_to_alaw;
@@ -565,7 +565,7 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (rec->precision == 16)
-				rec->sw_code = swap_bytes_change_sign16;
+				rec->sw_code = swap_bytes_change_sign16_le;
 			break;
 		default:
 			return (EINVAL);

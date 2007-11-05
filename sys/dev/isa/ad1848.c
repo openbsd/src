@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.32 2005/05/22 19:40:51 art Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.33 2007/11/05 00:17:28 jakemsr Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1040,14 +1040,14 @@ ad1848_set_params(addr, setmode, usemode, p, r)
     case AUDIO_ENCODING_ULINEAR_LE:
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_SLINEAR_LE;
-	    pswcode = rswcode = change_sign16;
+	    pswcode = rswcode = change_sign16_le;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_BE:
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_SLINEAR_LE;
-	    pswcode = swap_bytes_change_sign16;
-	    rswcode = change_sign16_swap_bytes;
+	    pswcode = swap_bytes_change_sign16_le;
+	    rswcode = change_sign16_swap_bytes_le;
 	}
 	break;
     }

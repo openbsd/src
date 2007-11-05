@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.20 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.21 2007/11/05 00:17:28 jakemsr Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -122,10 +122,6 @@ void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
 void awacs_set_rate(struct awacs_softc *, struct audio_params *);
-void awacs_mono16_to_stereo16(void *, u_char *, int);
-void awacs_swap_bytes_mono16_to_stereo16(void *, u_char *, int);
-void awacs_cvt_ulinear_mono_16_be(void *, u_char *, int);
-void awacs_cvt_ulinear_mono_16_le(void *, u_char *, int);
 
 struct cfattach awacs_ca = {
 	sizeof(struct awacs_softc), awacs_match, awacs_attach
@@ -555,43 +551,6 @@ awacs_query_encoding(void *h, struct audio_encoding *ae)
 	return (0);
 }
 
-void
-awacs_mono16_to_stereo16(void *v, u_char *p, int cc)
-{
-	int x;
-	int16_t *src, *dst;
-
-	src = (void *)(p + cc);
-	dst = (void *)(p + cc * 2);
-	while (cc > 0) {
-		x = *--src;
-		*--dst = x;
-		*--dst = x;
-		cc -= 2;
-	}
-}
-
-void
-awacs_swap_bytes_mono16_to_stereo16(void *v, u_char *p, int cc)
-{
-	swap_bytes(v, p, cc);
-	awacs_mono16_to_stereo16(v, p, cc);
-}
-
-void
-awacs_cvt_ulinear_mono_16_le(void *v, u_char *p, int cc)
-{
-	swap_bytes_change_sign16_be(v, p, cc);
-	awacs_mono16_to_stereo16(v, p, cc);
-}
-
-void
-awacs_cvt_ulinear_mono_16_be(void *v, u_char *p, int cc)
-{
-	change_sign16_be(v, p, cc);
-	awacs_mono16_to_stereo16(v, p, cc);
-}
-
 int
 awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
     struct audio_params *rec)
@@ -640,8 +599,7 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 			}
 			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
-				p->sw_code =
-				    awacs_swap_bytes_mono16_to_stereo16;
+				p->sw_code = swap_bytes_mts;
 				break;
 			}
 			return (EINVAL);
@@ -650,7 +608,7 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 				break;
 			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
-				p->sw_code = awacs_mono16_to_stereo16;
+				p->sw_code = noswap_bytes_mts;
 				break;
 			}
 			return (EINVAL);
@@ -661,7 +619,7 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 			}
 			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
-				p->sw_code = awacs_cvt_ulinear_mono_16_le;
+				p->sw_code = swap_bytes_change_sign16_be_mts;
 				break;
 			}
 			return (EINVAL);
@@ -672,7 +630,7 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 			}
 			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
-				p->sw_code = awacs_cvt_ulinear_mono_16_be;
+				p->sw_code = change_sign16_be_mts;
 				break;
 			}
 			return (EINVAL);

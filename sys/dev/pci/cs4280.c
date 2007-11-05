@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.28 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.29 2007/11/05 00:17:28 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1162,7 +1162,7 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (mode == AUMODE_RECORD) {
 				if (p->precision == 16)
-					p->sw_code = change_sign16_swap_bytes;
+					p->sw_code = change_sign16_swap_bytes_le;
 				else
 					p->sw_code = change_sign8;
 			}
@@ -1170,7 +1170,7 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (mode == AUMODE_RECORD) {
 				if (p->precision == 16)
-					p->sw_code = change_sign16;
+					p->sw_code = change_sign16_le;
 				else
 					p->sw_code = change_sign8;
 			}
@@ -1178,7 +1178,7 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16;
+				p->sw_code = mulaw_to_slinear16_le;
 			} else {
 				p->sw_code = slinear8_to_mulaw;
 			}
@@ -1186,7 +1186,7 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_slinear16;
+				p->sw_code = alaw_to_slinear16_le;
 			} else {
 				p->sw_code = slinear8_to_alaw;
 			}

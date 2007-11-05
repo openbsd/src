@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.19 2005/08/09 04:10:13 mickey Exp $       */
+/*      $OpenBSD: neo.c,v 1.20 2007/11/05 00:17:28 jakemsr Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -884,26 +884,26 @@ neo_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision == 16) {
 				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16;
+					p->sw_code = swap_bytes_change_sign16_le;
 				else
-					p->sw_code = change_sign16_swap_bytes;
+					p->sw_code = change_sign16_swap_bytes_le;
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16)
-				p->sw_code = change_sign16;
+				p->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16;
+				p->sw_code = mulaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_slinear16;
+				p->sw_code = alaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;

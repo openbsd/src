@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.9 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.10 2007/11/05 00:17:28 jakemsr Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #endif
 
 struct i2s_mode *i2s_find_mode(u_int, u_int, u_int);
-void i2s_cs16mts(void *, u_char *, int);
 
 static int gpio_read(char *);
 static void gpio_write(char *, int);
@@ -64,9 +63,6 @@ void i2s_mute_lineout(struct i2s_softc *, int);
 int i2s_cint(void *);
 u_char *i2s_gpio_map(struct i2s_softc *, char *, int *);
 void i2s_init(struct i2s_softc *, int);
-
-static void mono16_to_stereo16(void *, u_char *, int);
-static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 
 /* XXX */
 void keylargo_fcr_enable(int, u_int32_t);
@@ -271,41 +267,6 @@ i2s_query_encoding(h, ae)
 	return (err);
 }
 
-static void
-mono16_to_stereo16(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	int x;
-	int16_t *src, *dst;
-
-	src = (void *)(p + cc);
-	dst = (void *)(p + cc * 2);
-	while (cc > 0) {
-		x = *--src;
-		*--dst = x;
-		*--dst = x;
-		cc -= 2;
-	}
-}
-
-static void
-swap_bytes_mono16_to_stereo16(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	swap_bytes(v, p, cc);
-	mono16_to_stereo16(v, p, cc);
-}
-
-void
-i2s_cs16mts(void *v, u_char *p, int cc)
-{
-	mono16_to_stereo16(v, p, cc);
-	change_sign16_be(v, p, cc * 2);
-}
 
 struct i2s_mode {
 	u_int encoding;
@@ -316,11 +277,11 @@ struct i2s_mode {
 } i2s_modes[] = {
 	{ AUDIO_ENCODING_SLINEAR_LE,  8, 1, linear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_SLINEAR_LE,  8, 2, linear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_SLINEAR_LE, 16, 1, swap_bytes_mono16_to_stereo16, 2 },
+	{ AUDIO_ENCODING_SLINEAR_LE, 16, 1, swap_bytes_mts, 2 },
 	{ AUDIO_ENCODING_SLINEAR_LE, 16, 2, swap_bytes, 1 },
 	{ AUDIO_ENCODING_SLINEAR_BE,  8, 1, linear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_SLINEAR_BE,  8, 2, linear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_SLINEAR_BE, 16, 1, mono16_to_stereo16, 2 },
+	{ AUDIO_ENCODING_SLINEAR_BE, 16, 1, noswap_bytes_mts, 2 },
 	{ AUDIO_ENCODING_SLINEAR_BE, 16, 2, NULL, 1 },
 	{ AUDIO_ENCODING_ULINEAR_LE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_ULINEAR_LE,  8, 2, ulinear8_to_linear16_be, 2 },
@@ -328,7 +289,7 @@ struct i2s_mode {
 	{ AUDIO_ENCODING_ULINEAR_LE, 16, 2, swap_bytes_change_sign16_be, 1 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 2, ulinear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, i2s_cs16mts, 2 },
+	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_be_mts, 2 },
 	{ AUDIO_ENCODING_ULINEAR_BE, 16, 2, change_sign16_be, 1 }
 };
 

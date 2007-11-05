@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.21 2005/09/11 18:17:08 mickey Exp $ */
+/*      $OpenBSD: sv.c,v 1.22 2007/11/05 00:17:28 jakemsr Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -684,13 +684,13 @@ sv_set_params(addr, setmode, usemode, p, r)
         	break;
         case AUDIO_ENCODING_ULINEAR_BE:
         	if (p->precision == 16) {
-			pswcode = swap_bytes_change_sign16;
-			rswcode = change_sign16_swap_bytes;
+			pswcode = swap_bytes_change_sign16_le;
+			rswcode = change_sign16_swap_bytes_le;
 		}
 		break;
         case AUDIO_ENCODING_ULINEAR_LE:
         	if (p->precision == 16)
-			pswcode = rswcode = change_sign16;
+			pswcode = rswcode = change_sign16_le;
         	break;
         case AUDIO_ENCODING_ULAW:
         	pswcode = mulaw_to_ulinear8;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.11 2006/02/22 19:43:42 miod Exp $	*/
+/*	$OpenBSD: ess.c,v 1.12 2007/11/05 00:17:28 jakemsr Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -1247,14 +1247,14 @@ ess_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16;
+				p->sw_code = mulaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16;
+				p->sw_code = alaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;
