@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.19 2007/11/04 13:31:21 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.20 2007/11/05 19:58:29 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -161,7 +161,8 @@ const struct pci_matchid mbg_devices[] = {
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170PCI },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI509 },
-	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 }
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PEX511 }
 };
 
 int
@@ -179,11 +180,18 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	struct mbg_time tframe;
 	pcireg_t memtype;
 	bus_size_t iosize, iosize2;
-	char fw_id[MBG_ID_LEN];
+	int bar = PCI_MAPREG_START;
 	const char *desc;
+#ifdef MBG_DEBUG
+	char fw_id[MBG_ID_LEN];
+#endif
 
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
+	/* for the PEX511 use BAR2 instead of BAR0*/
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MEINBERG_PEX511)
+		bar += 0x08;
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_map(pa, bar, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &iosize, 0)) {
 		printf(": PCI %s region not found\n",
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
@@ -237,6 +245,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		sensor_task_register(sc, mbg_task, 10);
 		break;
 	case PCI_PRODUCT_MEINBERG_PCI511:
+	case PCI_PRODUCT_MEINBERG_PEX511:
 		sc->sc_read = mbg_read_asic;
 		sensor_task_register(sc, mbg_task, 10);
 		break;
@@ -248,32 +257,34 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		/* this can not normally happen, but then there is murphy */
 		panic(": unsupported product 0x%04x", PCI_PRODUCT(pa->pa_id));
 		break;
-	}	
-	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
-	    sc->sc_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
-	    NULL))
-		printf(": firmware unknown");
-	else {
-		fw_id[MBG_ID_LEN - 1] = '\0';
-		printf(": firmware %s", fw_id);
 	}
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
-		printf(", unknown status");
+		printf(": unknown status");
 		sc->sc_status = 0;
 	} else {
 		tframe.status &= MBG_STATMASK;
 		if (tframe.status & MBG_SYNC)
-			printf(", synchronized");
+			printf(": synchronized");
 		else
-			printf(", not synchronized");
+			printf(": not synchronized");
 		if (tframe.status & MBG_FREERUN)
 			printf(", free running");
 		if (tframe.status & MBG_IFTM)
 			printf(", time set from host");
 		sc->sc_status = tframe.status;
 	}
+#ifdef MBG_DEBUG
+	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
+	    sc->sc_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
+	    NULL))
+		printf(", firmware unknown");
+	else {
+		fw_id[MBG_ID_LEN - 1] = '\0';
+		printf(", firmware %s", fw_id);
+	}
+#endif
 	printf("\n");
 }
 
