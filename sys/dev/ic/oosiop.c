@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.6 2007/10/01 04:03:51 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.7 2007/11/05 00:21:36 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -803,10 +803,10 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	splx(s);
 
-	if ((xs->flags & ITSDONE) == 0)
-		return (SUCCESSFULLY_QUEUED);
-	else
+	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
+	else
+		return (SUCCESSFULLY_QUEUED);
 }
 
 void

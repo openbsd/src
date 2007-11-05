@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.30 2007/10/01 04:03:51 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.31 2007/11/05 00:21:36 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -458,10 +458,10 @@ osiop_scsicmd(xs)
 		/* start expire timer */
 		timeout_add(&xs->stimeout, (xs->timeout/1000) * hz);
 
-	if ((xs->flags & ITSDONE) == 0)
-		return (SUCCESSFULLY_QUEUED);
-	else
+	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
+	else
+		return (SUCCESSFULLY_QUEUED);
 }
 
 void
