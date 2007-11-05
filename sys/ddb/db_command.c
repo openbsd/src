@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.46 2007/09/01 11:54:03 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.47 2007/11/05 19:23:24 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -570,7 +570,7 @@ db_fncall(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_expr_t	retval;
 	db_expr_t	(*func)(db_expr_t, ...);
 	int		t;
-	char		tmpfmt[24];
+	char		tmpfmt[28];
 
 	if (!db_expression(&fn_addr)) {
 	    db_printf("Bad function\n");

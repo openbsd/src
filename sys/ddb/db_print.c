@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_print.c,v 1.11 2007/09/13 17:14:17 miod Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.12 2007/11/05 19:23:24 miod Exp $	*/
 /*	$NetBSD: db_print.c,v 1.5 1996/02/05 01:57:11 christos Exp $	*/
 
 /* 
@@ -53,7 +53,7 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	struct db_variable *regp;
 	db_expr_t	value, offset;
 	char *		name;
-	char		tmpfmt[24];
+	char		tmpfmt[28];
 
 	for (regp = db_regs; regp < db_eregs; regp++) {
 	    db_read_variable(regp, &value);

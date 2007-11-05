@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.20 2007/09/01 11:54:00 miod Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.21 2007/11/05 19:23:22 miod Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -849,7 +849,7 @@ alpha_print_instruction(iadr, i, showregs)
 	long		signed_immediate;
 	boolean_t	fstore;
 	pal_instruction	p;
-	char		tmpfmt[24];
+	char		tmpfmt[28];
 
 	regcount = 0;
 	fstore = FALSE;

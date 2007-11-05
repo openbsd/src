@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2007/09/01 11:54:02 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2007/11/05 19:23:24 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1093,7 +1093,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	repe, repne;
 	struct i_addr	address;
 	db_addr_t	loc_orig = loc;
-	char	tmpfmt[24];
+	char	tmpfmt[28];
 
 	get_value_inc(inst, loc, 1, FALSE);
 	short_addr = FALSE;
