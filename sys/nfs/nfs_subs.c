@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.65 2007/10/13 17:38:43 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.66 2007/11/05 21:18:56 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -72,12 +72,6 @@
 #include <netinet/in.h>
 
 #include <dev/rndvar.h>
-
-#ifdef __GNUC__
-#define INLINE __inline
-#else
-#define INLINE
-#endif
 
 int	nfs_attrtimeo(struct nfsnode *np);
 
@@ -1199,7 +1193,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	return (0);
 }
 
-INLINE int
+int
 nfs_attrtimeo (np)
 	struct nfsnode *np;
 {
