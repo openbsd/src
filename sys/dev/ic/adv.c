@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.17 2006/11/29 01:00:47 grange Exp $	*/
+/*	$OpenBSD: adv.c,v 1.18 2007/11/05 20:50:20 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -883,10 +883,13 @@ adv_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int             count;
 {
+	int s;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
+		s = splbio();
 		adv_intr(sc);
+		splx(s);
 		if (xs->flags & ITSDONE)
 			return (0);
 		delay(1000);	/* only happens in boot so ok */
