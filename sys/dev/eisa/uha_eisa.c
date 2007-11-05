@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.6 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.7 2007/11/05 17:54:27 krw Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -258,14 +258,18 @@ u24_poll(sc, xs, count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP)
+		if (bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) {
+			s = splbio();
 			u24_intr(sc);
+			splx(s);
+		}
 		if (xs->flags & ITSDONE)
 			return (0);
 		delay(1000);
