@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.18 2006/12/17 22:18:14 miod Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.19 2007/11/05 19:24:31 martin Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -229,29 +229,9 @@ vgafb_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	int potential;
 	static int id = 0;
-	int myid;
 
-	myid = id;
-
-	potential = 0;
-
-	/*
-	 * If it's prehistoric/vga or display/vga, we might match.
-	 * For the console device, this is jut a sanity check.
-	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
-		potential = 1;
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
-		potential = 1;
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_MISC)
-		potential = 1;
-
-	if (!potential)
+	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0)
 		return (0);
 
 	/* If it's the console, we have a winner! */

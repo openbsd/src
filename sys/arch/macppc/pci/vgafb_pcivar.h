@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pcivar.h,v 1.4 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: vgafb_pcivar.h,v 1.5 2007/11/05 19:24:31 martin Exp $	*/
 /*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
 
 /*
@@ -28,10 +28,10 @@
  * rights to redistribute these changes.
  */
 
-#define	DEVICE_IS_VGA_PCI(class, id)					\
+#define	DEVICE_IS_VGA_PCI(class)					\
 	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||	\
-	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
+	     (PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC) ||	\
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
