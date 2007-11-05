@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.67 2007/06/20 15:41:36 steven Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.68 2007/11/05 13:09:13 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: November 5 2007 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -558,6 +558,16 @@ Override use of
 .Xr ftp 1 .
 Must point to a command that understands
 .Li ${FETCH_CMD} -o - url .
+.It Ev FTP_KEEPALIVE
+Have
+.Xr ftp 1
+send a byte after every
+.Ev FTP_KEEPALIVE
+seconds,
+so that incorrectly configured network equipment won't aggressively drop it.
+See
+.Dq ftp -k
+for more information.
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
