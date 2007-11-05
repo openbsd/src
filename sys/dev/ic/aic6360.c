@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.15 2007/08/09 00:03:16 ray Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.16 2007/11/05 18:16:19 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -581,6 +581,7 @@ aic_poll(struct aic_softc *sc, struct scsi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
 	AIC_TRACE(("aic_poll  "));
 	while (count) {
@@ -588,8 +589,11 @@ aic_poll(struct aic_softc *sc, struct scsi_xfer *xs, int count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) != 0)
+		if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) != 0) {
+			s = splbio();
 			aicintr(sc);
+			splx(s);
+		}
 		if ((xs->flags & ITSDONE) != 0)
 			return 0;
 		delay(1000);
@@ -811,6 +815,7 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->target];
+	int s;
 
 	AIC_TRACE(("aic_done  "));
 
@@ -865,7 +870,9 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 
 	aic_free_acb(sc, acb, xs->flags);
 	ti->cmds++;
+	s = splbio();
 	scsi_done(xs);
+	splx(s);
 }
 
 void
