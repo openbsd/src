@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.12 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.13 2007/11/05 20:30:44 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -521,7 +521,7 @@ dpt_poll(sc, ccb)
         struct dpt_softc *sc;
         struct dpt_ccb *ccb;
 {
-	int i;
+	int i, s;
 
 #ifdef DEBUG
 	if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
@@ -532,8 +532,11 @@ dpt_poll(sc, ccb)
         	return (0);                
 
         for (i = ccb->ccb_timeout * 20; i; i--) {
-                if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0)
+                if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0) {
+			s = splbio();
                 	dpt_intr(sc);
+			splx(s);
+		}
                 if ((ccb->ccb_flg & CCB_INTR) != 0)
                 	return (0);
                 DELAY(50);
@@ -1232,7 +1235,10 @@ dpt_scsi_cmd(xs)
 			dpt_timeout(ccb);
 	} 
 	
+	s = splbio();
 	dpt_done_ccb(sc, ccb);
+	splx(s);
+
 	return (COMPLETE);
 }
 
