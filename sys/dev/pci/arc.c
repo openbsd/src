@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.74 2007/11/04 11:07:36 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.75 2007/11/05 01:18:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -108,6 +108,14 @@ int arcdebug = 0;
 #define ARC_RA_IOC_RBUF_LEN		0x0f00
 #define ARC_RA_IOC_RBUF			0x0f04
 #define  ARC_RA_IOC_RWBUF_MAXLEN	124 /* for both RBUF and WBUF */
+
+/* Areca boards using the Marvel IOP are Revision B (RB) */
+
+#define ARC_RB_DRV2IOP_DOORBELL		0x00020400
+#define ARC_RB_DRV2IOP_DOORBELL_MASK	0x00020404
+#define ARC_RB_IOP2DRV_DOORBELL		0x00020408
+#define  ARC_RB_IOP2DRV_DOORBELL_FIRMWARE_OK	(1<<31)
+#define ARC_RB_IOP2DRV_DOORBELL_MASK	0x0002040c
 
 struct arc_msg_firmware_info {
 	u_int32_t		signature;
@@ -1027,6 +1035,13 @@ arc_intel_query_firmware(struct arc_softc *sc)
 int
 arc_marvell_query_firmware(struct arc_softc *sc)
 {
+	if (arc_wait_eq(sc, ARC_RB_IOP2DRV_DOORBELL,
+	    ARC_RA_OUTB_ADDR1_FIRMWARE_OK,
+	    ARC_RA_OUTB_ADDR1_FIRMWARE_OK) != 0) {
+		printf("%s: timeout waiting for firmware ok\n", DEVNAME(sc));
+		return (1);
+	}
+
 	return (1);
 }
 
