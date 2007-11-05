@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.74 2007/09/27 08:45:19 chl Exp $ */
+/* $OpenBSD: mfi.c,v 1.75 2007/11/05 23:43:26 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -938,6 +938,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	uint32_t		blockno, blockcnt;
 	uint8_t			target = link->target;
 	uint8_t			mbox[MFI_MBOX_SIZE];
+	int			s;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
@@ -1021,7 +1022,9 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 			xs->sense.add_sense_code = 0x20; /* invalid opcode */
 			xs->error = XS_SENSE;
 			xs->flags |= ITSDONE;
+			s = splbio();
 			scsi_done(xs);
+			splx(s);
 			return (COMPLETE);
 		}
 		DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd poll complete %d\n",
@@ -1041,7 +1044,9 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
+	s = splbio();
 	scsi_done(xs);
+	splx(s);
 	return (COMPLETE);
 }
 
