@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.62 2007/06/01 05:37:14 deraadt Exp $
+.\"	$OpenBSD: mount.8,v 1.63 2007/11/05 09:06:04 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: June 1 2007 $
+.Dd $Mdocdate: November 5 2007 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -140,17 +140,17 @@ Options can be given with (or without) a
 prefix to invert their meaning.
 The options listed below specify non-default values.
 For example,
-.Sq noasync
+.Sq nosoftdep
 is the default, so
-.Sq async
-can be used to mount a file system asynchronously.
+.Sq softdep
+can be used to mount the file system using soft dependencies.
 Multiple options can be specified in a comma-separated list.
 The available options are as follows:
 .Bl -tag -width Ds
 .It async
-All
-.Tn I/O
-to the file system should be done asynchronously.
+Metadata I/O to the file system should be done asynchronously.
+By default, only regular data is read/written asynchronously.
+.Pp
 This is a
 .Em dangerous
 flag to set since it does not guarantee to keep a consistent
@@ -161,6 +161,12 @@ system crash.
 The most common use of this flag is to speed up
 .Xr restore 8
 where it can give a factor of two speed increase.
+.Pp
+The options
+.Ic async
+and
+.Ic softdep
+are mutually exclusive.
 .It force
 The same as
 .Fl f ;
@@ -201,16 +207,22 @@ Mount the file system using soft dependencies.
 Instead of metadata being written immediately, it is written in an ordered
 fashion to keep the on-disk state of the file system consistent.
 This results in significant speedups for file create/delete operations.
+.Pp
 This option will be ignored when using the
 .Fl u
 flag and a file system is already mounted read/write.
 It requires
 .Cm option FFS_SOFTUPDATES
 to be enabled in the running kernel.
+The options
+.Ic async
+and
+.Ic softdep
+are mutually exclusive.
 .It sync
-All
-.Tn I/O
-to the file system should be done synchronously.
+Regular data I/O to the file system should be done synchronously.
+By default, only metadata is read/written synchronously.
+.Pp
 .It update
 The same as
 .Fl u ;
