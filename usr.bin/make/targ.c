@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.49 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.50 2007/11/06 21:12:23 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -186,7 +186,6 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->order = 0;
 	ts_set_out_of_date(gn->mtime);
 	ts_set_out_of_date(gn->cmtime);
-	Lst_Init(&gn->iParents);
 	Lst_Init(&gn->cohorts);
 	Lst_Init(&gn->parents);
 	Lst_Init(&gn->children);
@@ -195,6 +194,7 @@ Targ_NewGNi(const char *name, const char *ename)
 	SymTable_Init(&gn->context);
 	gn->lineno = 0;
 	gn->fname = NULL;
+	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);
 	gn->suffix =	NULL;
 
@@ -215,7 +215,6 @@ TargFreeGN(void *gnp)
 	GNode *gn = (GNode *)gnp;
 
 	efree(gn->path);
-	Lst_Destroy(&gn->iParents, NOFREE);
 	Lst_Destroy(&gn->cohorts, NOFREE);
 	Lst_Destroy(&gn->parents, NOFREE);
 	Lst_Destroy(&gn->children, NOFREE);
@@ -376,17 +375,14 @@ TargPrintNode(GNode *gn, int pass)
 				printf("# unmade\n");
 			}
 		}
-		if (!Lst_IsEmpty(&gn->iParents)) {
-			printf("# implicit parents: ");
-			Lst_Every(&gn->iParents, TargPrintName);
-			fputc('\n', stdout);
-		}
 	}
 	if (!Lst_IsEmpty(&gn->parents)) {
 		printf("# parents: ");
 		Lst_Every(&gn->parents, TargPrintName);
 		fputc('\n', stdout);
 	}
+	if (gn->impliedsrc)
+		printf("# implied source: %s\n", gn->impliedsrc->name);
 
 	printf("%-16s", gn->name);
 	switch (gn->type & OP_OPMASK) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.12 2007/11/03 14:05:39 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.13 2007/11/06 21:12:23 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -287,6 +287,10 @@ Make_DoAllVar(GNode *gn)
 {
 	Lst_ForEach(&gn->children, MakeAddAllSrc, gn);
 
+	if (gn->impliedsrc)
+		Varq_Set(IMPSRC_INDEX, 
+		    Varq_Value(TARGET_INDEX, gn->impliedsrc), gn);
+			
 	if (Varq_Value(OODATE_INDEX, gn) == NULL)
 		Varq_Set(OODATE_INDEX, "", gn);
 	if (Varq_Value(ALLSRC_INDEX, gn) == NULL)

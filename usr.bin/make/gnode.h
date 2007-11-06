@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.7 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.8 2007/11/06 21:12:23 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -121,8 +121,7 @@ struct GNode_ {
     TIMESTAMP cmtime;	/* The modification time of its youngest
 			 * child */
 
-    LIST iParents;	/* Links to parents for which this is an
-			 * implied source, if any */
+    GNode *impliedsrc;
     LIST cohorts;	/* Other nodes for the :: operator */
     LIST parents;	/* Nodes that depend on this one */
     LIST children;	/* Nodes on which this one depends */

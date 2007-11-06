@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.65 2007/11/03 14:05:39 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.66 2007/11/06 21:12:23 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -99,11 +99,6 @@ CompatMake(void *gnp,	/* The node to make */
 			return;
 		}
 
-		if (Lst_Member(&gn->iParents, pgn) != NULL) {
-			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn),
-			    pgn);
-		}
-
 		/* All the children were made ok. Now cmtime contains the
 		 * modification time of the newest child, we need to find out
 		 * if we exist and when we were modified last. The criteria
@@ -189,10 +184,6 @@ CompatMake(void *gnp,	/* The node to make */
 		 * to abort.  */
 		pgn->make = false;
 	else {
-		if (Lst_Member(&gn->iParents, pgn) != NULL) {
-			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn),
-			    pgn);
-		}
 		switch (gn->made) {
 		case BEINGMADE:
 			Error("Graph cycles through %s\n", gn->name);

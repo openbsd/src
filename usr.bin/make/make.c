@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.46 2007/11/06 21:09:42 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.47 2007/11/06 21:12:23 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -137,9 +137,6 @@ MakeHandleUse(void *pgn, void *cgn)
  *	If the child wasn't made, the cmtime field of the parent will be
  *	altered if the child's mtime is big enough.
  *
- *	Finally, if the child is the implied source for the parent, the
- *	parent's IMPSRC variable is set appropriately.
- *
  *-----------------------------------------------------------------------
  */
 void
@@ -147,7 +144,7 @@ Make_Update(GNode *cgn)	/* the child node */
 {
 	GNode	*pgn;	/* the parent node */
 	char	*cname; /* the child's name */
-	LstNode	ln;	/* Element in parents and iParents lists */
+	LstNode	ln;	/* Element in parents list */
 
 	cname = Varq_Value(TARGET_INDEX, cgn);
 
@@ -214,15 +211,6 @@ Make_Update(GNode *cgn)	/* the child node */
 		if (succ->make && succ->unmade == 0 && succ->made == UNMADE)
 			(void)Lst_QueueNew(&toBeMade, succ);
 	}
-
-	/* Set the .IMPSRC variables for all the implied parents
-	 * of this node.  */
-	for (ln = Lst_First(&cgn->iParents); ln != NULL; ln = Lst_Adv(ln)) {
-		pgn = (GNode *)Lst_Datum(ln);
-		if (pgn->make)
-			Varq_Set(IMPSRC_INDEX, cname, pgn);
-	}
-
 }
 
 static bool

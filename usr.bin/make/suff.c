@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.73 2007/11/02 17:27:24 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.74 2007/11/06 21:12:23 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1280,10 +1280,9 @@ SuffApplyTransform(
 
 	if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 		/* When a :: node is used as the implied source of a node, we
-		 * have to link all its cohorts in as sources as well. Only the
-		 * initial sGn gets the target in its iParents list, however,
-		 * as that will be sufficient to get the .IMPSRC variable set
-		 * for tGn.	*/
+		 * have to link all its cohorts in as sources as well. There's
+		 * only one implied src, as that will be sufficient to get 
+		 * the .IMPSRC variable set for tGn.	*/
 		for (ln=Lst_First(&sGn->cohorts); ln != NULL; ln=Lst_Adv(ln)) {
 			gn = (GNode *)Lst_Datum(ln);
 
@@ -1326,7 +1325,7 @@ SuffApplyTransform(
 
 	/* Keep track of another parent to which this beast is transformed so
 	 * the .IMPSRC variable can be set correctly for the parent.  */
-	Lst_AtEnd(&sGn->iParents, tGn);
+	tGn->impliedsrc = sGn;
 
 	return true;
 }
