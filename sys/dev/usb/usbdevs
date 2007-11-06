@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.307 2007/11/01 00:51:36 deraadt Exp $
+$OpenBSD: usbdevs,v 1.308 2007/11/06 17:25:15 ajacoutot Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1118,6 +1118,7 @@ product EPSON 1260		0x011d	Perfection 1260
 product EPSON 1660		0x011e	Perfection 1660
 product EPSON 1670		0x011f	Perfection 1670
 product EPSON CX3650		0x080e	Stylus CX3650
+product EPSON DX3850		0x082f	Stylus DX3850 / DX4050
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial
