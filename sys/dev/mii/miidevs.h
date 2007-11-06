@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.91 2007/10/30 12:12:26 jsg Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.92 2007/11/06 20:30:59 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.88 2007/10/30 12:12:01 jsg Exp 
+ *	OpenBSD: miidevs,v 1.89 2007/11/06 20:30:06 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -227,6 +227,8 @@
 /* Enable Semiconductor PHYs (Agere) */
 #define	MII_MODEL_ENABLESEMI_LU3X31FT	0x0001
 #define	MII_STR_ENABLESEMI_LU3X31FT	"Enable LU3X31FT"
+#define	MII_MODEL_ENABLESEMI_LU3X31T2	0x0002
+#define	MII_STR_ENABLESEMI_LU3X31T2	"Enable LU3X31T2"
 #define	MII_MODEL_ENABLESEMI_88E1000S	0x0004
 #define	MII_STR_ENABLESEMI_88E1000S	"Enable 88E1000S"
 #define	MII_MODEL_ENABLESEMI_88E1000	0x0005
