@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.20 2007/10/28 10:16:20 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.21 2007/11/06 21:44:39 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -53,6 +53,12 @@ ENTRY(cpu_switchto)
 	bsr	_ASM_LABEL(__savectx)
 	/* note that we don't need to recover r1 at this point */
 
+#ifdef MULTIPROCESSOR
+	ldcr	r11, CPU
+	bsr.n	_C_LABEL(pmap_deactivate)	/* pmap_deactivate(oldproc) */
+	 ld	r2,  r11, CI_CURPROC
+#endif
+
 1:
 	ldcr	r2, PSR
 	set	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
@@ -75,8 +81,7 @@ ENTRY(cpu_switchto)
 	stcr	r2, PSR
 	FLUSH_PIPELINE
 
-	/* pmap_activate() the process' pmap */
-	bsr.n	_C_LABEL(pmap_activate)
+	bsr.n	_C_LABEL(pmap_activate)		/* pmap_activate(newproc) */
 	 or	r2, r0, r3
 
 	ldcr	r10,  CPU
