@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.28 2007/01/02 18:35:17 reyk Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.29 2007/11/06 10:22:29 chl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -3028,7 +3028,7 @@ gen_pf_ruleset(char *ruleset)
 		/* NOTREACHED */
 	}
 	if (strlen(ruleset) >= sizeof(((struct pfloghdr *)0)->ruleset)) {
-		bpf_error("ruleset names can only be %d characters",
+		bpf_error("ruleset names can only be %zu characters",
 		    sizeof(((struct pfloghdr *)0)->ruleset) - 1);
 		/* NOTREACHED */
 	}
