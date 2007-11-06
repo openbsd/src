@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.106 2007/11/03 14:05:39 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.107 2007/11/06 21:09:42 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -707,7 +707,12 @@ JobExec(Job *job)
 	int i;
 
 	if (DEBUG(JOB)) {
+		LstNode ln;
+
 		(void)fprintf(stdout, "Running %s\n", job->node->name);
+		for (ln = Lst_First(&job->node->commands); ln != NULL ; 
+		    ln = Lst_Adv(ln))
+		    	fprintf(stdout, "\t%s\n", (char *)Lst_Datum(ln));
 		(void)fflush(stdout);
 	}
 

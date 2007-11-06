@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.45 2007/11/03 11:45:52 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.46 2007/11/06 21:09:42 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -88,6 +88,8 @@ static void MakeAddChild(void *, void *);
 static void MakeHandleUse(void *, void *);
 static bool MakeStartJobs(void);
 static void MakePrintStatus(void *, void *);
+static bool try_to_make_node(GNode *);
+static void add_targets_to_make(Lst);
 
 /*-
  *-----------------------------------------------------------------------
@@ -112,7 +114,7 @@ MakeAddChild(void *to_addp, void *lp)
 static void
 MakeHandleUse(void *pgn, void *cgn)
 {
-    Make_HandleUse((GNode *)pgn, (GNode *)cgn);
+	Make_HandleUse((GNode *)pgn, (GNode *)cgn);
 }
 
 /*-
@@ -223,6 +225,68 @@ Make_Update(GNode *cgn)	/* the child node */
 
 }
 
+static bool
+try_to_make_node(GNode *gn)
+{
+	if (DEBUG(MAKE))
+		printf("Examining %s...", gn->name);
+	/*
+	 * Make sure any and all predecessors that are going to be made,
+	 * have been.
+	 */
+	if (!Lst_IsEmpty(&gn->preds)) {
+		LstNode ln;
+
+		for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)){
+			GNode	*pgn = (GNode *)Lst_Datum(ln);
+
+			if (pgn->make && pgn->made == UNMADE) {
+				if (DEBUG(MAKE))
+					printf(
+					    "predecessor %s not made yet.\n", 
+					    pgn->name);
+				break;
+			}
+		}
+		/*
+		 * If ln isn't NULL, there's a predecessor as yet
+		 * unmade, so we just drop this node on the floor. When
+		 * the node in question has been made, it will notice
+		 * this node as being ready to make but as yet unmade
+		 * and will place the node on the queue.
+		 */
+		if (ln != NULL)
+			return false;
+	}
+
+	numNodes--;
+	if (Make_OODate(gn)) {
+		if (DEBUG(MAKE))
+			printf("out-of-date\n");
+		if (queryFlag)
+			return true;
+		Make_DoAllVar(gn);
+		Job_Make(gn);
+	} else {
+		if (DEBUG(MAKE))
+			printf("up-to-date\n");
+		gn->made = UPTODATE;
+		if (gn->type & OP_JOIN) {
+			/*
+			 * Even for an up-to-date .JOIN node, we need it
+			 * to have its context variables so references
+			 * to it get the correct value for .TARGET when
+			 * building up the context variables of its
+			 * parent(s)...
+			 */
+			Make_DoAllVar(gn);
+		}
+
+		Make_Update(gn);
+	}
+	return false;
+}
+
 /*
  *-----------------------------------------------------------------------
  * MakeStartJobs --
@@ -244,61 +308,8 @@ MakeStartJobs(void)
 	GNode	*gn;
 
 	while (!Job_Full() && (gn = (GNode *)Lst_DeQueue(&toBeMade)) != NULL) {
-		if (DEBUG(MAKE))
-			printf("Examining %s...", gn->name);
-		/*
-		 * Make sure any and all predecessors that are going to be made,
-		 * have been.
-		 */
-		if (!Lst_IsEmpty(&gn->preds)) {
-			LstNode ln;
-
-			for (ln = Lst_First(&gn->preds); ln != NULL;
-			    ln = Lst_Adv(ln)){
-				GNode	*pgn = (GNode *)Lst_Datum(ln);
-
-				if (pgn->make && pgn->made == UNMADE) {
-					if (DEBUG(MAKE))
-					    printf("predecessor %s not made yet.\n", pgn->name);
-					break;
-				}
-			}
-			/*
-			 * If ln isn't NULL, there's a predecessor as yet
-			 * unmade, so we just drop this node on the floor. When
-			 * the node in question has been made, it will notice
-			 * this node as being ready to make but as yet unmade
-			 * and will place the node on the queue.
-			 */
-			if (ln != NULL)
-				continue;
-		}
-
-		numNodes--;
-		if (Make_OODate(gn)) {
-			if (DEBUG(MAKE))
-				printf("out-of-date\n");
-			if (queryFlag)
-				return true;
-			Make_DoAllVar(gn);
-			Job_Make(gn);
-		} else {
-			if (DEBUG(MAKE))
-				printf("up-to-date\n");
-			gn->made = UPTODATE;
-			if (gn->type & OP_JOIN) {
-				/*
-				 * Even for an up-to-date .JOIN node, we need it
-				 * to have its context variables so references
-				 * to it get the correct value for .TARGET when
-				 * building up the context variables of its
-				 * parent(s)...
-				 */
-				Make_DoAllVar(gn);
-			}
-
-			Make_Update(gn);
-		}
+		if (try_to_make_node(gn))
+			return true;
 	}
 	return false;
 }
@@ -355,6 +366,44 @@ MakePrintStatus(
 }
 
 
+/*
+ * Make an initial downward pass over the graph, marking nodes to be
+ * made as we go down. We call Suff_FindDeps to find where a node is and
+ * to get some children for it if it has none and also has no commands.
+ * If the node is a leaf, we stick it on the toBeMade queue to
+ * be looked at in a minute, otherwise we add its children to our queue
+ * and go on about our business.
+ */
+static void
+add_targets_to_make(Lst targs)
+{
+	LIST examine;	/* List of targets to examine */
+	GNode *gn;
+
+	Lst_Clone(&examine, targs, NOCOPY);
+	while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
+		if (!gn->make) {
+			gn->make = true;
+			numNodes++;
+
+			look_harder_for_target(gn);
+			/*
+			 * Apply any .USE rules before looking for implicit
+			 * dependencies to make sure everything that should have
+			 * commands has commands ...
+			 */
+			Lst_ForEach(&gn->children, MakeHandleUse, gn);
+			Suff_FindDeps(gn);
+
+			if (gn->unmade != 0)
+				Lst_ForEach(&gn->children, MakeAddChild,
+				    &examine);
+			else
+				Lst_EnQueue(&toBeMade, gn);
+		}
+	}
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_Run --
@@ -379,45 +428,13 @@ MakePrintStatus(
 bool
 Make_Run(Lst targs)		/* the initial list of targets */
 {
-	GNode	    *gn;	/* a temporary pointer */
-	LIST	    examine;	/* List of targets to examine */
 	int 	    errors;	/* Number of errors the Job module reports */
 
 	Static_Lst_Init(&toBeMade);
 
-	Lst_Clone(&examine, targs, NOCOPY);
 	numNodes = 0;
 
-	/*
-	 * Make an initial downward pass over the graph, marking nodes to be
-	 * made as we go down. We call Suff_FindDeps to find where a node is and
-	 * to get some children for it if it has none and also has no commands.
-	 * If the node is a leaf, we stick it on the toBeMade queue to
-	 * be looked at in a minute, otherwise we add its children to our queue
-	 * and go on about our business.
-	 */
-	while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
-		if (!gn->make) {
-			gn->make = true;
-			numNodes++;
-
-			look_harder_for_target(gn);
-			/*
-			 * Apply any .USE rules before looking for implicit
-			 * dependencies to make sure everything that should have
-			 * commands has commands ...
-			 */
-			Lst_ForEach(&gn->children, MakeHandleUse, gn);
-			Suff_FindDeps(gn);
-
-			if (gn->unmade != 0)
-				Lst_ForEach(&gn->children, MakeAddChild,
-				    &examine);
-			else
-				Lst_EnQueue(&toBeMade, gn);
-		}
-	}
-
+	add_targets_to_make(targs);
 	if (queryFlag) {
 		/*
 		 * We wouldn't do any work unless we could start some jobs in
