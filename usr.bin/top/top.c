@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.61 2007/11/04 18:51:48 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.62 2007/11/06 06:56:59 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -328,6 +328,7 @@ main(int argc, char *argv[])
 				strlcat(msg, *pp++, sizeof(msg));
 			}
 			new_message(MT_delayed, msg);
+			order_index = 0;
 		}
 	}
 
