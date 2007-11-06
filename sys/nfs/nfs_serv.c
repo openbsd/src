@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.43 2007/10/28 14:12:41 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.44 2007/11/06 19:36:44 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -194,7 +194,7 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	if (error)
 		return (0);
 	nfsm_build(fp, struct nfs_fattr *, NFSX_FATTR(nfsd->nd_flag & ND_NFSV3));
-	nfsm_srvfillattr(&va, fp);
+	nfsm_srvfattr(nfsd, &va, fp);
 nfsmout:
 	return(error);
 }
@@ -324,7 +324,7 @@ out:
 		return (0);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-		nfsm_srvfillattr(&va, fp);
+		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
 	return(error);
@@ -398,7 +398,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-		nfsm_srvfillattr(&va, fp);
+		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
 	return(error);
@@ -651,7 +651,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	} else
 		uiop->uio_resid = 0;
 	vput(vp);
-	nfsm_srvfillattr(&va, fp);
+	nfsm_srvfattr(nfsd, &va, fp);
 	tlen = len - uiop->uio_resid;
 	cnt = cnt < tlen ? cnt : tlen;
 	tlen = nfsm_rndup (cnt);
@@ -845,7 +845,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		*tl = txdr_unsigned(boottime.tv_usec);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-		nfsm_srvfillattr(&va, fp);
+		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
 	return(error);
@@ -1117,7 +1117,7 @@ loop1:
 			    *tl = txdr_unsigned(boottime.tv_usec);
 			} else {
 			    nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-			    nfsm_srvfillattr(&va, fp);
+			    nfsm_srvfattr(nfsd, &va, fp);
 			}
 		    }
 		    nfsd->nd_mreq = mreq;
@@ -1437,7 +1437,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	} else {
 		nfsm_srvfhtom(fhp, v3);
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-		nfsm_srvfillattr(&va, fp);
+		nfsm_srvfattr(nfsd, &va, fp);
 	}
 	return (0);
 nfsmout:
@@ -2200,7 +2200,7 @@ out:
 	} else {
 		nfsm_srvfhtom(fhp, v3);
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
-		nfsm_srvfillattr(&va, fp);
+		nfsm_srvfattr(nfsd, &va, fp);
 	}
 	return (0);
 nfsmout:
@@ -2844,7 +2844,7 @@ again:
 			 * the dirent entry.
 			 */
 			fp = (struct nfs_fattr *)&fl.fl_fattr;
-			nfsm_srvfillattr(vap, fp);
+			nfsm_srvfattr(nfsd, vap, fp);
 			fl.fl_fhsize = txdr_unsigned(NFSX_V3FH);
 			fl.fl_fhok = nfs_true;
 			fl.fl_postopok = nfs_true;

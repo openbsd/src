@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.20 2007/10/30 23:19:35 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.21 2007/11/06 19:36:44 thib Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -412,9 +412,6 @@
 			be = bp+mp->m_len; \
 		} \
 		tl = (u_int32_t *)bp
-
-#define	nfsm_srvfillattr(a, f) \
-		nfsm_srvfattr(nfsd, (a), (f))
 
 #define nfsm_srvwcc_data(br, b, ar, a) \
 		nfsm_srvwcc(nfsd, (br), (b), (ar), (a), &mb, &bpos)
