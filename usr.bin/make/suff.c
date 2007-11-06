@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.74 2007/11/06 21:12:23 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.75 2007/11/06 21:15:19 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1548,7 +1548,7 @@ SuffFindNormalDeps(
 
 	record_possible_suffixes(gn, &srcs, &targs);
 	/* Handle target of unknown suffix...  */
-	if (Lst_IsEmpty(&targs)) {
+	if (Lst_IsEmpty(&srcs)) {
 		if (DEBUG(SUFF))
 			printf("\tNo known suffix on %s. Using .NULL suffix\n",
 			    gn->name);
