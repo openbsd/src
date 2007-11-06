@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.11 2007/10/08 01:00:13 jakemsr Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.12 2007/11/06 04:24:39 jakemsr Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -100,18 +100,16 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct audio_bufinfo tmpab;
 	u_int u;
 	int idat, idata;
-	int retval;
+	int tempret, retval = 0, rerr = 0;
 
 	switch (com) {
 	case SNDCTL_DSP_RESET:
 		retval = ioctl(fd, AUDIO_FLUSH, 0);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		break;
 	case SNDCTL_DSP_SYNC:
 		retval = ioctl(fd, AUDIO_DRAIN, 0);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		break;
 	case SNDCTL_DSP_POST:
 		/* This call is merely advisory, and may be a nop. */
@@ -120,28 +118,33 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		rerr = errno;
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		tempret = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval >= 0) {
+			retval = tempret;
+			rerr = errno;
+		}
 		INTARG = tmpinfo.play.sample_rate;
 		break;
 	case SNDCTL_DSP_STEREO:
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG ? 2 : 1;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		rerr = errno;
+		tempret = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval >= 0) {
+			retval = tempret;
+			rerr = errno;
+		}
 		INTARG = tmpinfo.play.channels - 1;
 		break;
 	case SNDCTL_DSP_GETBLKSIZE:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		setblocksize(fd, &tmpinfo);
 		INTARG = tmpinfo.blocksize;
 		break;
@@ -197,14 +200,19 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
 		default:
-			return EINVAL;
+			retval = -1;
+			rerr = EINVAL;
+			break;
 		}
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval == -1) {
+			break;
+		} else {
+			retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+			rerr = errno;
+		}
 		/* FALLTHRU */
 	case SOUND_PCM_READ_BITS:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		switch (tmpinfo.play.encoding) {
 		case AUDIO_ENCODING_ULAW:
 			idat = AFMT_MU_LAW;
@@ -239,6 +247,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		case AUDIO_ENCODING_ADPCM:
 			idat = AFMT_IMA_ADPCM;
 			break;
+		default:
+			idat = AFMT_MU_LAW;  /* XXX default encoding */
+			break;
 		}
 		INTARG = idat;
 		break;
@@ -246,18 +257,22 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		rerr = errno;
 		/* FALLTHRU */
 	case SOUND_PCM_READ_CHANNELS:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		tempret = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval >= 0) {
+			retval = tempret;
+			rerr = errno;
+		}
 		INTARG = tmpinfo.play.channels;
 		break;
 	case SOUND_PCM_WRITE_FILTER:
 	case SOUND_PCM_READ_FILTER:
-		errno = EINVAL;
-		return -1; /* XXX unimplemented */
+		rerr = EINVAL;
+		retval = -1; /* XXX unimplemented */
+		break;
 	case SNDCTL_DSP_SUBDIVIDE:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
@@ -283,10 +298,13 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpinfo.hiwat = ((unsigned)idat >> 16) & 0x7fff;
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
 			tmpinfo.hiwat = 65536;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		rerr = errno;
+		tempret = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval >= 0) {
+			retval = tempret;
+			rerr = errno;
+		}
 		u = tmpinfo.blocksize;
 		for(idat = 0; u > 1; idat++, u >>= 1)
 			;
@@ -345,34 +363,36 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_GETOSPACE:
 		retval = ioctl(fd, AUDIO_GETPRINFO, &tmpab);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		bufinfo.fragsize = tmpab.blksize;
 		bufinfo.fragstotal = tmpab.hiwat;
 		bufinfo.bytes = tmpab.hiwat * tmpab.blksize - tmpab.seek;
-		bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
+		if (tmpab.blksize != 0)
+			bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
+		else
+			bufinfo.fragments = 0;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
 		retval = ioctl(fd, AUDIO_GETRRINFO, &tmpab);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		bufinfo.fragsize = tmpab.blksize;
 		bufinfo.fragstotal = tmpab.hiwat;
 		bufinfo.bytes = tmpab.seek;
-		bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
+		if (tmpab.blksize != 0 )
+			bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
+		else
+			bufinfo.fragments = 0;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
 		idat = 1;
 		retval = ioctl(fd, FIONBIO, &idat);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		break;
 	case SNDCTL_DSP_GETCAPS:
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
@@ -395,21 +415,21 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		} else
 			tmpinfo.record.pause = 1;
 		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		/* FALLTHRU */
 	case SNDCTL_DSP_GETTRIGGER:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		tempret = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval >= 0) {
+			retval = tempret;
+			rerr = errno;
+		}
 		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
 		       (tmpinfo.record.pause ? 0 : PCM_ENABLE_INPUT);
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETIPTR:
 		retval = ioctl(fd, AUDIO_GETIOFFS, &tmpoffs);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		cntinfo.bytes = tmpoffs.samples;
 		cntinfo.blocks = tmpoffs.deltablks;
 		cntinfo.ptr = tmpoffs.offset;
@@ -417,8 +437,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_GETOPTR:
 		retval = ioctl(fd, AUDIO_GETOOFFS, &tmpoffs);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		cntinfo.bytes = tmpoffs.samples;
 		cntinfo.blocks = tmpoffs.deltablks;
 		cntinfo.ptr = tmpoffs.offset;
@@ -427,21 +446,22 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	case SNDCTL_DSP_SETDUPLEX:
 		idat = 1;
 		retval = ioctl(fd, AUDIO_SETFD, &idat);
-		if (retval < 0)
-			return retval;
+		rerr = errno;
 		break;
 	case SNDCTL_DSP_MAPINBUF:
 	case SNDCTL_DSP_MAPOUTBUF:
 	case SNDCTL_DSP_SETSYNCRO:
 	case SNDCTL_DSP_PROFILE:
-		errno = EINVAL;
-		return -1; /* XXX unimplemented */
+		rerr = EINVAL;
+		retval = -1; /* XXX unimplemented */
+		break;
 	default:
-		errno = EINVAL;
-		return -1;
+		rerr = EINVAL;
+		retval = -1;
+		break;
 	}
-
-	return 0;
+	errno = rerr;
+	return retval;
 }
 
 
