@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.94 2007/11/05 17:32:20 canacar Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.95 2007/11/06 01:05:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -973,6 +973,142 @@ acpikqfilter(dev_t dev, struct knote *kn)
 	return (0);
 }
 
+/* Read from power management register */
+int
+acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
+{
+	bus_space_handle_t ioh;
+	bus_size_t size, __size;
+	int regval;
+
+	__size = 0;
+	/* Special cases: 1A/1B blocks can be OR'ed together */
+	switch (reg) {
+	case ACPIREG_PM1_EN:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN, offset) |
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_EN, offset));
+	case ACPIREG_PM1_STS:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS, offset) |
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_STS, offset));
+	case ACPIREG_PM1_CNT:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
+	case ACPIREG_GPE_STS:
+		__size = 1;
+		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset,
+		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_STS;
+		}
+		break;
+	case ACPIREG_GPE_EN:
+		__size = 1;
+		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n",
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_EN;
+		}
+		break;
+	}
+
+	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
+		return (0);
+
+	regval = 0;
+	ioh = sc->sc_pmregs[reg].ioh;
+	size = sc->sc_pmregs[reg].size;
+	if (__size)
+		size = __size;
+	if (size > 4)
+		size = 4;
+
+	switch (size) {
+	case 1:
+		regval = bus_space_read_1(sc->sc_iot, ioh, offset);
+		break;
+	case 2:
+		regval = bus_space_read_2(sc->sc_iot, ioh, offset);
+		break;
+	case 4:
+		regval = bus_space_read_4(sc->sc_iot, ioh, offset);
+		break;
+	}
+
+	dnprintf(30, "acpi_readpm: %s = %.4x:%.4x %x\n",
+	    sc->sc_pmregs[reg].name,
+	    sc->sc_pmregs[reg].addr, offset, regval);
+	return (regval);
+}
+
+/* Write to power management register */
+void
+acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
+{
+	bus_space_handle_t ioh;
+	bus_size_t size, __size;
+
+	__size = 0;
+	/* Special cases: 1A/1B blocks can be written with same value */
+	switch (reg) {
+	case ACPIREG_PM1_EN:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_EN, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_EN, offset, regval);
+		break;
+	case ACPIREG_PM1_STS:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_STS, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_STS, offset, regval);
+		break;
+	case ACPIREG_PM1_CNT:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, offset, regval);
+		break;
+	case ACPIREG_GPE_STS:
+		__size = 1;
+		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n",
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1, regval);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_STS;
+		}
+		break;
+	case ACPIREG_GPE_EN:
+		__size = 1;
+		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n",
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1, regval);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_EN;
+		}
+		break;
+	}
+
+	/* All special case return here */
+	if (reg >= ACPIREG_MAXREG)
+		return;
+
+	ioh = sc->sc_pmregs[reg].ioh;
+	size = sc->sc_pmregs[reg].size;
+	if (__size)
+		size = __size;
+	if (size > 4)
+		size = 4;
+	switch (size) {
+	case 1:
+		bus_space_write_1(sc->sc_iot, ioh, offset, regval);
+		break;
+	case 2:
+		bus_space_write_2(sc->sc_iot, ioh, offset, regval);
+		break;
+	case 4:
+		bus_space_write_4(sc->sc_iot, ioh, offset, regval);
+		break;
+	}
+
+	dnprintf(30, "acpi_writepm: %s = %.4x:%.4x %x\n",
+	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
+}
+
 /* move all stuff that doesn't go on the boot media in here */
 #ifndef SMALL_KERNEL
 int
@@ -1573,142 +1709,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			sc->sc_pmregs[reg].addr = addr;
 		}
 	}
-}
-
-/* Read from power management register */
-int
-acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
-{
-	bus_space_handle_t ioh;
-	bus_size_t size, __size;
-	int regval;
-
-	__size = 0;
-	/* Special cases: 1A/1B blocks can be OR'ed together */
-	switch (reg) {
-	case ACPIREG_PM1_EN:
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN, offset) |
-		    acpi_read_pmreg(sc, ACPIREG_PM1B_EN, offset));
-	case ACPIREG_PM1_STS:
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS, offset) |
-		    acpi_read_pmreg(sc, ACPIREG_PM1B_STS, offset));
-	case ACPIREG_PM1_CNT:
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
-		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
-	case ACPIREG_GPE_STS:
-		__size = 1;
-		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset,
-		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
-		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
-			reg = ACPIREG_GPE0_STS;
-		}
-		break;
-	case ACPIREG_GPE_EN:
-		__size = 1;
-		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n",
-		    offset, sc->sc_fadt->gpe0_blk_len>>1,
-		    sc->sc_fadt->gpe1_blk_len>>1);
-		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
-			reg = ACPIREG_GPE0_EN;
-		}
-		break;
-	}
-
-	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
-		return (0);
-
-	regval = 0;
-	ioh = sc->sc_pmregs[reg].ioh;
-	size = sc->sc_pmregs[reg].size;
-	if (__size)
-		size = __size;
-	if (size > 4)
-		size = 4;
-
-	switch (size) {
-	case 1:
-		regval = bus_space_read_1(sc->sc_iot, ioh, offset);
-		break;
-	case 2:
-		regval = bus_space_read_2(sc->sc_iot, ioh, offset);
-		break;
-	case 4:
-		regval = bus_space_read_4(sc->sc_iot, ioh, offset);
-		break;
-	}
-
-	dnprintf(30, "acpi_readpm: %s = %.4x:%.4x %x\n",
-	    sc->sc_pmregs[reg].name,
-	    sc->sc_pmregs[reg].addr, offset, regval);
-	return (regval);
-}
-
-/* Write to power management register */
-void
-acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
-{
-	bus_space_handle_t ioh;
-	bus_size_t size, __size;
-
-	__size = 0;
-	/* Special cases: 1A/1B blocks can be written with same value */
-	switch (reg) {
-	case ACPIREG_PM1_EN:
-		acpi_write_pmreg(sc, ACPIREG_PM1A_EN, offset, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_EN, offset, regval);
-		break;
-	case ACPIREG_PM1_STS:
-		acpi_write_pmreg(sc, ACPIREG_PM1A_STS, offset, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_STS, offset, regval);
-		break;
-	case ACPIREG_PM1_CNT:
-		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, offset, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, offset, regval);
-		break;
-	case ACPIREG_GPE_STS:
-		__size = 1;
-		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n",
-		    offset, sc->sc_fadt->gpe0_blk_len>>1,
-		    sc->sc_fadt->gpe1_blk_len>>1, regval);
-		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
-			reg = ACPIREG_GPE0_STS;
-		}
-		break;
-	case ACPIREG_GPE_EN:
-		__size = 1;
-		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n",
-		    offset, sc->sc_fadt->gpe0_blk_len>>1,
-		    sc->sc_fadt->gpe1_blk_len>>1, regval);
-		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
-			reg = ACPIREG_GPE0_EN;
-		}
-		break;
-	}
-
-	/* All special case return here */
-	if (reg >= ACPIREG_MAXREG)
-		return;
-
-	ioh = sc->sc_pmregs[reg].ioh;
-	size = sc->sc_pmregs[reg].size;
-	if (__size)
-		size = __size;
-	if (size > 4)
-		size = 4;
-	switch (size) {
-	case 1:
-		bus_space_write_1(sc->sc_iot, ioh, offset, regval);
-		break;
-	case 2:
-		bus_space_write_2(sc->sc_iot, ioh, offset, regval);
-		break;
-	case 4:
-		bus_space_write_4(sc->sc_iot, ioh, offset, regval);
-		break;
-	}
-
-	dnprintf(30, "acpi_writepm: %s = %.4x:%.4x %x\n",
-	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
 int
