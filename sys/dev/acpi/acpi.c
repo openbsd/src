@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.95 2007/11/06 01:05:28 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.96 2007/11/06 22:12:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1109,8 +1109,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
-/* move all stuff that doesn't go on the boot media in here */
-#ifndef SMALL_KERNEL
+#ifdef ACPI_ENABLE
 int
 acpi_interrupt(void *arg)
 {
@@ -1158,6 +1157,10 @@ acpi_interrupt(void *arg)
 
 	return (processed);
 }
+#endif /* ACPI_ENABLE */
+
+/* move all stuff that doesn't go on the boot media in here */
+#ifndef SMALL_KERNEL
 
 void
 acpi_enable_onegpe(struct acpi_softc *sc, int gpe, int enable)
