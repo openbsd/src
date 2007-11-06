@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.197 2007/10/28 19:48:47 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.198 2007/11/06 21:42:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -701,11 +701,12 @@ secondary_pre_main()
 	pmap_bootstrap_cpu(ci->ci_cpuid);
 
 	/*
-	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
+	 * Allocate UPAGES contiguous pages for the startup stack.
 	 */
-	ci->ci_idle_pcb = (struct pcb *)uvm_km_zalloc(kernel_map, USPACE);
-	if (ci->ci_idle_pcb == NULL) {
-		printf("cpu%d: unable to allocate idle stack\n", ci->ci_cpuid);
+	ci->ci_init_stack = uvm_km_zalloc(kernel_map, USPACE);
+	if (ci->ci_init_stack == (vaddr_t)NULL) {
+		printf("cpu%d: unable to allocate startup stack\n",
+		    ci->ci_cpuid);
 		__cpu_simple_unlock(&cpu_boot_mutex);
 		for (;;) ;
 	}

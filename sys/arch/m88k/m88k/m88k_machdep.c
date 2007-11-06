@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.25 2007/10/29 19:57:48 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.26 2007/11/06 21:42:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -275,7 +275,6 @@ void
 set_cpu_number(cpuid_t number)
 {
 	struct cpu_info *ci;
-	extern struct pcb idle_u;
 
 #ifdef MULTIPROCESSOR
 	ci = &m88k_cpus[number];
@@ -292,7 +291,6 @@ set_cpu_number(cpuid_t number)
 #endif
 	{
 		ci->ci_primary = 1;
-		ci->ci_idle_pcb = &idle_u;
 	}
 }
 

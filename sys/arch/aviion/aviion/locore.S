@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2007/11/06 21:42:55 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -339,9 +339,9 @@ GLOBAL(secondary_start)
 	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
 
 	ldcr	r2, CPU
-	ld	r3, r2, CI_IDLE_PCB
+	ld	r3, r2, CI_INIT_STACK
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	r31, r3, USIZE			/* switch to idle stack */
+	 addu	r31, r3, USIZE			/* switch to startup stack */
 
 #endif	/* MULTIPROCESSOR */
 
@@ -381,14 +381,6 @@ ASGLOBAL(intstack_end)
 	space	PAGE_SIZE	/* 4K, small, interim stack */
 ASLOCAL(slavestack_end)
 #endif
-
-/*
- * Main processor's idle pcb and stack.
- * Should be page aligned.
- */
-	.align	PAGE_SIZE
-GLOBAL(idle_u)
-	space	USIZE
 
 /*
  * Process 0's u.
