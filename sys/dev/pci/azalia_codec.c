@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.40 2007/10/14 17:56:15 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.41 2007/11/06 20:22:15 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -106,13 +106,12 @@ int	azalia_ad1984_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_ad1984_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
-int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9200_mixer_init(codec_t *);
 int	azalia_stac9200_unsol_event(codec_t *, int);
-int	azalia_stac9221_apple_mixer_init(codec_t *);
-int	azalia_stac9221_apple_init_dacgroup(codec_t *);
-int	azalia_stac9221_apple_set_port(codec_t *, mixer_ctrl_t *);
-int	azalia_stac9221_apple_get_port(codec_t *, mixer_ctrl_t *);
+int	azalia_stac9221_mixer_init(codec_t *);
+int	azalia_stac9221_init_dacgroup(codec_t *);
+int	azalia_stac9221_set_port(codec_t *, mixer_ctrl_t *);
+int	azalia_stac9221_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_apple_unsol_event(codec_t *, int);
 int	azalia_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
@@ -186,15 +185,11 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = azalia_stac9221_init_dacgroup;
-		if (this->subid == STAC9221_APPLE_ID) {
-			this->init_dacgroup =
-			    azalia_stac9221_apple_init_dacgroup;
-			this->mixer_init =
-			    azalia_stac9221_apple_mixer_init;
-			this->set_port = azalia_stac9221_apple_set_port;
-			this->get_port = azalia_stac9221_apple_get_port;
+		this->mixer_init = azalia_stac9221_mixer_init;
+		this->set_port = azalia_stac9221_set_port;
+		this->get_port = azalia_stac9221_get_port;
+		if (this->subid == STAC9221_APPLE_ID)
 			this->unsol_event = azalia_stac9221_apple_unsol_event;
-		}
 		break;
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
@@ -2453,28 +2448,6 @@ azalia_cmi9880_init_dacgroup(codec_t *this)
 }
 
 /* ----------------------------------------------------------------
- * Sigmatel STAC9221 and STAC9221D
- * ---------------------------------------------------------------- */
-
-int
-azalia_stac9221_init_dacgroup(codec_t *this)
-{
-	static const convgroupset_t dacs = {
-		-1, 3,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
-		 {1, {0x08}},	/* digital */
-		 {1, {0x1a}}}};	/* another digital? */
-	static const convgroupset_t adcs = {
-		-1, 2,
-		{{2, {0x06, 0x07}}, /* analog 4ch */
-		 {1, {0x09}}}};	/* digital */
-
-	this->dacs = dacs;
-	this->adcs = adcs;
-	return 0;
-}
-
-/* ----------------------------------------------------------------
  * Sigmatel STAC9200
  * ---------------------------------------------------------------- */
 
@@ -2599,7 +2572,7 @@ azalia_stac9200_unsol_event(codec_t *this, int tag)
 }
 
 int
-azalia_stac9221_apple_init_dacgroup(codec_t *this)
+azalia_stac9221_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 1,
@@ -2615,15 +2588,15 @@ azalia_stac9221_apple_init_dacgroup(codec_t *this)
 	return 0;
 }
 
-static const mixer_item_t stac9221_apple_mixer_items[] = {
+static const mixer_item_t stac9221_mixer_items[] = {
 	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
 	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
-#define APPLE_TARGET_MASTER -1
+#define STAC9221_TARGET_MASTER -1
 	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  4, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, APPLE_TARGET_MASTER},
+	  4, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, STAC9221_TARGET_MASTER},
 	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 3, ENUM_OFFON}, 0x02, APPLE_TARGET_MASTER},
+	  0, 3, ENUM_OFFON}, 0x02, STAC9221_TARGET_MASTER},
 
 	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x02, MI_TARGET_OUTAMP},
@@ -2647,18 +2620,18 @@ static const mixer_item_t stac9221_apple_mixer_items[] = {
 };
 
 int
-azalia_stac9221_apple_mixer_init(codec_t *this)
+azalia_stac9221_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(stac9221_apple_mixer_items) / sizeof(mixer_item_t);
+	this->nmixers = sizeof(stac9221_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, stac9221_apple_mixer_items,
+	memcpy(this->mixers, stac9221_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
@@ -2672,25 +2645,25 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* line out */
 	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* another line out */
 
-	azalia_gpio_unmute(this, 0);
-	azalia_gpio_unmute(this, 1);
-
+	if (this->subid == STAC9221_APPLE_ID) {
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
 #define APPLE_EVENT_HP         1
 #define APPLE_NID_HP           0x0a
 #define APPLE_NID_SPEAKER      0x0c
 #define APPLE_NID_LINE         0x0d
 
-	/* register hp unsolicited event */
-	this->comresp(this, APPLE_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
-	    CORB_UNSOL_ENABLE | APPLE_EVENT_HP, NULL);
+		/* register hp unsolicited event */
+		this->comresp(this, APPLE_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
+		    CORB_UNSOL_ENABLE | APPLE_EVENT_HP, NULL);
 
-        azalia_stac9221_apple_unsol_event(this, APPLE_EVENT_HP);
-
+		azalia_stac9221_apple_unsol_event(this, APPLE_EVENT_HP);
+	}
 	return 0;
 }
 
 int
-azalia_stac9221_apple_set_port(codec_t *this, mixer_ctrl_t *mc)
+azalia_stac9221_set_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 	int err;
@@ -2702,7 +2675,7 @@ azalia_stac9221_apple_set_port(codec_t *this, mixer_ctrl_t *mc)
 		return EINVAL;
 	if (mc->type == AUDIO_MIXER_CLASS)
 		return 0;
-	if (m->target == APPLE_TARGET_MASTER) {
+	if (m->target == STAC9221_TARGET_MASTER) {
 		err = azalia_generic_mixer_set(this, 0x02,
 		    MI_TARGET_OUTAMP, mc);
 		err = azalia_generic_mixer_set(this, 0x03,
@@ -2717,7 +2690,7 @@ azalia_stac9221_apple_set_port(codec_t *this, mixer_ctrl_t *mc)
 }
 
 int
-azalia_stac9221_apple_get_port(codec_t *this, mixer_ctrl_t *mc)
+azalia_stac9221_get_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 
@@ -2727,7 +2700,7 @@ azalia_stac9221_apple_get_port(codec_t *this, mixer_ctrl_t *mc)
 	mc->type = m->devinfo.type;
 	if (mc->type == AUDIO_MIXER_CLASS)
 		return 0;
-	if (m->target == APPLE_TARGET_MASTER)
+	if (m->target == STAC9221_TARGET_MASTER)
 		return azalia_generic_mixer_get(this, m->nid,
 		    MI_TARGET_OUTAMP, mc);
 	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
