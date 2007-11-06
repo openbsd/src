@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.78 2007/08/06 08:28:09 tom Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.79 2007/11/06 01:05:35 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1559,6 +1559,7 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 	struct atapi_return_args *ret;
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
+	int s;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x error 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -1571,7 +1572,9 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 		wdc_enable_intr(chp);
 	} else {
 		WDCDEBUG_PRINT(("wdc_atapi_done: scsi_done\n"), DEBUG_XFERS);
+		s = splbio();
 		scsi_done(sc_xfer);
+		splx(s);
 	}
 
 	xfer->next = NULL;
