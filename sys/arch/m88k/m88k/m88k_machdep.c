@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.26 2007/11/06 21:42:56 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.27 2007/11/06 21:48:44 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -312,18 +312,18 @@ signotify(struct proc *p)
  * Soft interrupt interface
  */
 
-unsigned int ssir;
 int netisr;
 
 void
 dosoftint()
 {
+	int *ssir = &curcpu()->ci_softintr;
 	int sir, n;
 
-	if ((sir = ssir) == 0)
+	if ((sir = *ssir) == 0)
 		return;
 
-	atomic_clearbits_int(&ssir, sir);
+	atomic_clearbits_int(ssir, sir);
 	uvmexp.softs++;
 
 	if (ISSET(sir, SIR_NET)) {

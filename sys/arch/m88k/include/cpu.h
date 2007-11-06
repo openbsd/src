@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2007/11/06 21:42:56 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.29 2007/11/06 21:48:42 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -112,6 +112,7 @@ struct cpu_info {
 #define	CI_IPI_HARDCLOCK	0x00000002
 #define	CI_IPI_STATCLOCK	0x00000004
 #define	CI_IPI_DDB		0x00000008
+	int	ci_softintr;			/* pending soft interrupts */
 };
 
 extern cpuid_t master_cpu;
@@ -201,8 +202,7 @@ struct clockframe {
 #define SIR_NET		0x01
 #define SIR_CLOCK	0x02
 
-extern unsigned int ssir;
-#define setsoftint(x)	atomic_setbits_int(&ssir, x)
+#define setsoftint(x)	atomic_setbits_int(&curcpu()->ci_softintr, x)
 #define setsoftnet()	setsoftint(SIR_NET)
 #define setsoftclock()	setsoftint(SIR_CLOCK)
 
