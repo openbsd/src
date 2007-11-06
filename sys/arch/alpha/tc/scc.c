@@ -1,4 +1,4 @@
-/* $OpenBSD: scc.c,v 1.20 2004/09/19 21:34:42 mickey Exp $ */
+/* $OpenBSD: scc.c,v 1.21 2007/11/06 18:20:05 miod Exp $ */
 /* $NetBSD: scc.c,v 1.58 2002/03/17 19:40:27 atatat Exp $ */
 
 /*
@@ -309,7 +309,7 @@ sccattach(parent, self, aux)
 #endif
 
 	/* Register the interrupt handler. */
-	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
+	ioasic_intr_establish(parent, d->iada_cookie, IPL_TTY,
 	    sccintr, (void *)sc);
 
 	/*

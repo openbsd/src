@@ -1,4 +1,4 @@
-/* $OpenBSD: tcvar.h,v 1.12 2004/06/28 02:28:43 aaron Exp $ */
+/* $OpenBSD: tcvar.h,v 1.13 2007/11/06 18:20:07 miod Exp $ */
 /* $NetBSD: tcvar.h,v 1.17 2000/06/04 19:15:15 cgd Exp $ */
 
 /*
@@ -42,26 +42,6 @@
  * Machine-dependent definitions.
  */
 #include <machine/tc_machdep.h>
-
-/*
- * In the long run, the following block will go completely away.
- * For now, the MI TC code still uses the old TC_IPL_ names
- * and not the new IPL_ names.
- */
-#if 1
-/*
- * Map the new definitions to the old.
- */
-#include <machine/intr.h>
-
-#define tc_intrlevel_t	int
-
-#define	TC_IPL_NONE	IPL_NONE
-#define	TC_IPL_BIO	IPL_BIO
-#define	TC_IPL_NET	IPL_NET
-#define	TC_IPL_TTY	IPL_TTY
-#define	TC_IPL_CLOCK	IPL_CLOCK
-#endif /* 1 */
 
 struct tc_softc {
 	struct	device sc_dv;

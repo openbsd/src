@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.8 2007/06/17 21:20:47 jasper Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.9 2007/11/06 18:20:07 miod Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -105,5 +105,5 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
 	dec_le_common_attach(&lesc->sc_am7990,
 			     (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
 
-	tc_intr_establish(parent, d->ta_cookie, TC_IPL_NET, am7990_intr, sc);
+	tc_intr_establish(parent, d->ta_cookie, IPL_NET, am7990_intr, sc);
 }

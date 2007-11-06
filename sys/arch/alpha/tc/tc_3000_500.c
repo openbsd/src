@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.13 2006/03/04 12:33:17 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.14 2007/11/06 18:20:05 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -50,7 +50,7 @@ extern int	sfb_cnattach(tc_addr_t);
 
 void	tc_3000_500_intr_setup(void);
 void	tc_3000_500_intr_establish(struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *);
+	    int, int (*)(void *), void *);
 void	tc_3000_500_intr_disestablish(struct device *, void *);
 void	tc_3000_500_iointr(void *, unsigned long);
 
@@ -141,7 +141,7 @@ void
 tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	struct device *tcadev;
 	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int level;
 	int (*func)(void *);
 {
 	u_long dev = (u_long)cookie;

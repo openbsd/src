@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.12 2006/03/04 12:33:17 miod Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.13 2007/11/06 18:20:05 miod Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -117,7 +117,7 @@ void
 tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 	struct device *tcadev;
 	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int level;
 	int (*func)(void *);
 {
 	volatile u_int32_t *imskp;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.4 2004/06/28 02:28:43 aaron Exp $ */
+/* $OpenBSD: tcds.c,v 1.5 2007/11/06 18:20:07 miod Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -206,7 +206,7 @@ tcdsattach(parent, self, aux)
 
 	sc->sc_cookie = ta->ta_cookie;
 
-	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO, tcds_intr, sc);
+	tc_intr_establish(parent, sc->sc_cookie, IPL_BIO, tcds_intr, sc);
 
 	/*
 	 * XXX
