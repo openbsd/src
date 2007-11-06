@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2007/11/06 21:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -145,7 +145,7 @@ pg_to_pvh(struct vm_page *pg)
  *	Locking primitives
  */
 
-#ifdef	MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 #define	PMAP_LOCK(pmap)		__cpu_simple_lock(&(pmap)->pm_lock)
 #define	PMAP_UNLOCK(pmap)	__cpu_simple_unlock(&(pmap)->pm_lock)
 #else
@@ -549,9 +549,6 @@ pmap_bootstrap(vaddr_t load_start)
 	paddr_t s_text, e_text, kpdt_phys;
 	unsigned int kernel_pmap_size, pdt_size;
 	int i;
-#ifndef MULTIPROCESSOR
-	cpuid_t cpu;
-#endif
 	pmap_table_t ptable;
 	extern void *etext;
 
@@ -732,30 +729,20 @@ pmap_bootstrap(vaddr_t load_start)
 	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) |
 	    CACHE_GLOBAL | CACHE_WT | APR_V;
 
-	/* Invalidate entire kernel TLB and get ready for address translation */
-#ifdef MULTIPROCESSOR
 	pmap_bootstrap_cpu(cpu_number());
-#else
-	cpu = cpu_number();
-	cmmu_flush_tlb(cpu, TRUE, 0, -1);
-	/* Load supervisor pointer to segment table. */
-	cmmu_set_sapr(cpu, kernel_pmap->pm_apr);
-#ifdef DEBUG
-	printf("cpu%d: running virtual\n", cpu);
-#endif
-	SETBIT_CPUSET(cpu, &kernel_pmap->pm_cpus);
-#endif	/* MULTIPROCESSOR */
 }
 
-#ifdef MULTIPROCESSOR
 void
 pmap_bootstrap_cpu(cpuid_t cpu)
 {
-	if (cpu != master_cpu) {
+	/* Invalidate entire kernel TLB and get ready for address translation */
+#ifdef MULTIPROCESSOR
+	if (cpu != master_cpu)
 		cmmu_initialize_cpu(cpu);
-	} else {
+	else
+#endif
 		cmmu_flush_tlb(cpu, TRUE, 0, -1);
-	}
+
 	/* Load supervisor pointer to segment table. */
 	cmmu_set_sapr(cpu, kernel_pmap->pm_apr);
 #ifdef DEBUG
@@ -763,7 +750,6 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 #endif
 	SETBIT_CPUSET(cpu, &kernel_pmap->pm_cpus);
 }
-#endif
 
 /*
  * Routine:	PMAP_INIT
@@ -1341,7 +1327,7 @@ pmap_remove_all(struct vm_page *pg)
 	 * We don't have to lock the pv list, since we have the entire pmap
 	 * system.
 	 */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 remove_all_Retry:
 #endif
 
@@ -1351,7 +1337,7 @@ remove_all_Retry:
 	 * Loop for each entry on the pv list
 	 */
 	while (pvl != NULL && (pmap = pvl->pv_pmap) != NULL) {
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 		if (!__cpu_simple_lock_try(&pmap->pm_lock))
 			goto remove_all_Retry;
 #endif
@@ -2153,7 +2139,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 
 	spl = splvm();
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 changebit_Retry:
 #endif
 	pvl = pg_to_pvh(pg);
@@ -2176,7 +2162,7 @@ changebit_Retry:
 	/* for each listed pmap, update the affected bits */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto changebit_Retry;
 		}
@@ -2254,7 +2240,7 @@ pmap_testbit(struct vm_page *pg, int bit)
 
 	spl = splvm();
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 testbit_Retry:
 #endif
 	pvl = pg_to_pvh(pg);
@@ -2284,7 +2270,7 @@ testbit_Retry:
 	/* for each listed pmap, check modified bit for given page */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto testbit_Retry;
 		}
@@ -2342,7 +2328,7 @@ pmap_unsetbit(struct vm_page *pg, int bit)
 
 	spl = splvm();
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 unsetbit_Retry:
 #endif
 	pvl = pg_to_pvh(pg);
@@ -2365,7 +2351,7 @@ unsetbit_Retry:
 	/* for each listed pmap, update the specified bit */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto unsetbit_Retry;
 		}
