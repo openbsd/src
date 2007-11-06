@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2007/10/31 22:46:52 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2007/11/06 22:20:59 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -348,7 +348,7 @@ fpusave_proc(struct proc *p, int save)
 		if (ci->ci_fpproc != p)
 			continue;
 		sparc64_send_ipi(ci->ci_upaid,
-		    save ? ipi_save_fpstate : ipi_drop_fpstate, 0, 0);
+		    save ? ipi_save_fpstate : ipi_drop_fpstate, (vaddr_t)p, 0);
 		while(ci->ci_fpproc == p) {
 			spincount++;
 			if (spincount > 10000000) {

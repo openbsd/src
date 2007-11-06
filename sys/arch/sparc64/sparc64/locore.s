@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.100 2007/10/31 21:29:04 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.101 2007/11/06 22:20:59 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3334,7 +3334,8 @@ ENTRY(ipi_save_fpstate)
 	membar	#Sync
 	sethi	%hi(FPPROC), %o0
 	ldx	[%o0 + %lo(FPPROC)], %o0
-	brz,pn	%o0, 1f
+	cmp	%o0, %g3
+	bne,pn	%xcc, 1f
 	 nop
 	call	savefpstate
 	 ldx	[%o0 + P_FPSTATE], %o0
@@ -3353,8 +3354,14 @@ ENTRY(ipi_drop_fpstate)
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
 	sethi	%hi(FPPROC), %g1
+	ldx	[%g1 + %lo(FPPROC)], %g5
+	cmp	%g5, %g3
+	bne,pn	%xcc, 1f
+	 nop
+	stx	%g0, [%g1 + %lo(FPPROC)]	! fpproc = NULL
+1:
 	ba	ret_from_intr_vector
-	 stx	%g0, [%g1 + %lo(FPPROC)]	! fpproc = NULL
+	 nop
 
 ENTRY(ipi_softint)
 	ba	ret_from_intr_vector
