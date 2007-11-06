@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.126 2007/09/16 15:54:52 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.127 2007/11/06 02:49:19 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -799,7 +799,10 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 			sc_link->quirks &= ~SDEV_NOSYNC;
 		if ((inqbuf.flags & SID_WBus16) != 0)
 			sc_link->quirks &= ~SDEV_NOWIDE;
-	}
+	} else
+		/* Older devices do not have SYNCHRONIZE CACHE capability. */
+		sc_link->quirks |= SDEV_NOSYNCCACHE;
+
 	/*
 	 * Now apply any quirks from the table.
 	 */

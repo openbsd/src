@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.137 2007/09/15 19:22:18 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.138 2007/11/06 02:49:19 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -773,11 +773,6 @@ sddone(struct scsi_xfer *xs)
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
 
-	if (sd->flags & SDF_FLUSHING) {
-		/* Flush completed, no longer dirty. */
-		sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-	}
-
 	if (xs->bp != NULL)
 		disk_unbusy(&sd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid),
 		    (xs->bp->b_flags & B_READ));
@@ -1470,36 +1465,25 @@ void
 sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsi_link *sc_link = sd->sc_link;
-	struct scsi_synchronize_cache sync_cmd;
+	struct scsi_generic cmd;
+
+	if (sc_link->quirks & SDEV_NOSYNCCACHE)
+		return;
 
 	/*
-	 * If the device is SCSI-2, issue a SYNCHRONIZE CACHE.
-	 * We issue with address 0 length 0, which should be
-	 * interpreted by the device as "all remaining blocks
-	 * starting at address 0".  We ignore ILLEGAL REQUEST
-	 * in the event that the command is not supported by
-	 * the device, and poll for completion so that we know
-	 * that the cache has actually been flushed.
-	 *
-	 * Unless, that is, the device can't handle the SYNCHRONIZE CACHE
-	 * command, as indicated by our quirks flags.
-	 *
-	 * XXX What about older devices?
+	 * Issue a SYNCHRONIZE CACHE. Address 0, length 0 means "all remaining
+	 * blocks starting at address 0". Ignore ILLEGAL REQUEST in the event
+	 * that the command is not supported by the device.
 	 */
-	if (SCSISPC(sc_link->inqdata.version) >= 2 &&
-	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
-		bzero(&sync_cmd, sizeof(sync_cmd));
-		sync_cmd.opcode = SYNCHRONIZE_CACHE;
 
-		if (scsi_scsi_cmd(sc_link,
-		    (struct scsi_generic *)&sync_cmd, sizeof(sync_cmd),
-		    NULL, 0, SDRETRIES, 100000, NULL,
-		    flags|SCSI_IGNORE_ILLEGAL_REQUEST))
-			printf("%s: WARNING: cache synchronization failed\n",
-			    sd->sc_dev.dv_xname);
-		else
-			sd->flags |= SDF_FLUSHING;
-	}
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = SYNCHRONIZE_CACHE;
+		
+	if (scsi_scsi_cmd(sc_link, &cmd, sizeof(cmd), NULL, 0, SDRETRIES,
+	    100000, NULL, flags | SCSI_IGNORE_ILLEGAL_REQUEST)) {
+		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));
+	} else
+		sd->flags &= ~SDF_DIRTY;
 }
 
 /*
