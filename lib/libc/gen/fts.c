@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.39 2007/11/02 20:32:57 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.40 2007/11/06 10:14:53 chl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -81,9 +81,8 @@ fts_open(char * const *argv, int options,
 	}
 
 	/* Allocate/initialize the stream */
-	if ((sp = malloc(sizeof(FTS))) == NULL)
+	if ((sp = calloc(1, sizeof(FTS))) == NULL)
 		return (NULL);
-	memset(sp, 0, sizeof(FTS));
 	sp->fts_compar = compar;
 	sp->fts_options = options;
 
