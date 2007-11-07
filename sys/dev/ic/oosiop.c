@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.7 2007/11/05 00:21:36 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.8 2007/11/07 00:01:02 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -725,7 +725,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	s = splbio();
 	cb = TAILQ_FIRST(&sc->sc_free_cb);
 	TAILQ_REMOVE(&sc->sc_free_cb, cb, chain);
-	splx(s);
 
 	cb->xs = xs;
 	cb->xsflags = xs->flags;
@@ -747,6 +746,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
+		splx(s);
 		return (COMPLETE);
 	}
 	bus_dmamap_sync(sc->sc_dmat, cb->cmddma, 0, xs->cmdlen,
@@ -769,6 +769,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 			bus_dmamap_unload(sc->sc_dmat, cb->cmddma);
 			scsi_done(xs);
 			TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
+			splx(s);
 			return (COMPLETE);
 		}
 		bus_dmamap_sync(sc->sc_dmat, cb->datadma,
@@ -778,9 +779,9 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	xfer->status = SCSI_OOSIOP_NOSTATUS;
 
-	oosiop_setup(sc, cb);
+	splx(s);
 
-	s = splbio();
+	oosiop_setup(sc, cb);
 
 	/*
 	 * Always initialize timeout so it does not contain trash
@@ -800,8 +801,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		/* start expire timer */
 		timeout_add(&xs->stimeout, (xs->timeout / 1000) * hz);
 	}
-
-	splx(s);
 
 	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
