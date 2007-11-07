@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.47 2007/10/31 20:47:39 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.48 2007/11/07 09:52:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -499,7 +499,7 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 int
 digest_filelist(const char *file, struct hash_function *defhash)
 {
-	int fd, found, base64, error;
+	int fd, found, base64, error, cmp;
 	size_t algorithm_max, algorithm_min;
 	const char *algorithm;
 	char *filename, *checksum, *buf, *p;
@@ -644,10 +644,10 @@ digest_filelist(const char *file, struct hash_function *defhash)
 		digest_end(hf, &context, digest, sizeof(digest), base64);
 
 		if (base64)
-			error = strncmp(checksum, digest, len);
+			cmp = strncmp(checksum, digest, len);
 		else
-			error = strcasecmp(checksum, digest);
-		if (error == 0) {
+			cmp = strcasecmp(checksum, digest);
+		if (cmp == 0) {
 			if (qflag == 0)
 				(void)printf("(%s) %s: OK\n", algorithm, filename);
 		} else {
