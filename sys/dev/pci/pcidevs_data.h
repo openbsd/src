@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1288 2007/11/05 19:36:03 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1289 2007/11/07 05:49:05 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5396,8 +5396,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SAA7116",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_PB,
-	    "82452KX/GX PCI Host",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_HB,
+	    "82452KX/GX",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
