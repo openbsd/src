@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.20 2007/11/05 19:58:29 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.21 2007/11/07 09:56:22 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -134,7 +134,7 @@ struct mbg_time_hr {
 #define MBG_SIG_BIAS		55
 #define MBG_SIG_MAX		68
 #define NSECPERSEC		1000000000LL	/* nanoseconds per second */
-#define HRDIVISOR		0x100000000LL	/ for hi-res timestamp */
+#define HRDIVISOR		0x100000000LL	/* for hi-res timestamp */
 
 int	mbg_probe(struct device *, void *, void *);
 void	mbg_attach(struct device *, struct device *, void *);
