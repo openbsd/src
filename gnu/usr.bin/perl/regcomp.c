@@ -136,6 +136,7 @@ typedef struct RExC_state_t {
     I32		seen_zerolen;
     I32		seen_evals;
     I32		utf8;
+    I32		orig_utf8;
 #if ADD_TO_REGEXEC
     char 	*starttry;		/* -Dr: where regtry was called. */
 #define RExC_starttry	(pRExC_state->starttry)
@@ -161,6 +162,7 @@ typedef struct RExC_state_t {
 #define RExC_seen_zerolen	(pRExC_state->seen_zerolen)
 #define RExC_seen_evals	(pRExC_state->seen_evals)
 #define RExC_utf8	(pRExC_state->utf8)
+#define RExC_orig_utf8 (pRExC_state->orig_utf8)
 
 #define	ISMULT1(c)	((c) == '*' || (c) == '+' || (c) == '?')
 #define	ISMULT2(s)	((*s) == '*' || (*s) == '+' || (*s) == '?' || \
@@ -1749,15 +1751,17 @@ Perl_pregcomp(pTHX_ char *exp, char *xend, PMOP *pm)
     if (exp == NULL)
 	FAIL("NULL regexp argument");
 
-    RExC_utf8 = pm->op_pmdynflags & PMdf_CMP_UTF8;
+    RExC_orig_utf8 = RExC_utf8 = pm->op_pmdynflags & PMdf_CMP_UTF8;
 
-    RExC_precomp = exp;
     DEBUG_r({
 	 if (!PL_colorset) reginitcolors();
 	 PerlIO_printf(Perl_debug_log, "%sCompiling REx%s `%s%*s%s'\n",
 		       PL_colors[4],PL_colors[5],PL_colors[0],
-		       (int)(xend - exp), RExC_precomp, PL_colors[1]);
+		       (int)(xend - exp), exp, PL_colors[1]);
     });
+
+redo_first_pass:
+    RExC_precomp = exp;
     RExC_flags = pm->op_pmflags;
     RExC_sawback = 0;
 
@@ -1783,6 +1787,17 @@ Perl_pregcomp(pTHX_ char *exp, char *xend, PMOP *pm)
 	RExC_precomp = Nullch;
 	return(NULL);
     }
+    if (RExC_utf8 && !RExC_orig_utf8) {
+    	STRLEN len = xend-exp;
+    	DEBUG_r(PerlIO_printf(Perl_debug_log,
+	   "UTF8 mismatch! Converting to utf8 for resizing and compile\n"));
+	exp = (char*)Perl_bytes_to_utf8(aTHX_ (U8*)exp, &len);
+	xend = exp + len;
+	RExC_orig_utf8 = RExC_utf8;
+	SAVEFREEPV(exp);
+	goto redo_first_pass;
+    }
+
     DEBUG_r(PerlIO_printf(Perl_debug_log, "size %"IVdf" ", (IV)RExC_size));
 
     /* Small enough for pointer-storage convention?
