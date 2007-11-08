@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.45 2007/11/07 23:40:52 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.46 2007/11/08 19:20:09 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -874,7 +874,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 {
 	struct iovec *ivp;
 	struct mbuf *mp;
-	struct nfsrv_descript *wp, *nfsd, *owp, *swp;
+	struct nfsrv_descript *wp, *nfsd, *nnfsd, *owp, *swp;
 	struct nfs_fattr *fp;
 	int i = 0;
 	struct iovec *iov;
@@ -1161,8 +1161,8 @@ loop1:
 	 * Search for a reply to return.
 	 */
 	s = splsoftclock();
-	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd != NULL;
-	    nfsd = LIST_NEXT(nfsd, nd_tq)) {
+	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd != NULL; nfsd = nnfsd) {
+		nnfsd = LIST_NEXT(nfsd, nd_tq);
 		if (nfsd->nd_mreq) {
 		    LIST_REMOVE(nfsd, nd_tq);
 		    *mrq = nfsd->nd_mreq;
