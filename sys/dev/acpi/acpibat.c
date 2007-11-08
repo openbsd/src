@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.41 2007/11/03 17:46:41 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.42 2007/11/08 20:27:20 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -312,13 +312,13 @@ acpibat_getbif(struct acpibat_softc *sc)
 	sc->sc_bif.bif_cap_granu1 = aml_val2int(res.v_package[7]);
 	sc->sc_bif.bif_cap_granu2 = aml_val2int(res.v_package[8]);
 
-	strlcpy(sc->sc_bif.bif_model, aml_strval(res.v_package[9]),
+	strlcpy(sc->sc_bif.bif_model, aml_val_to_string(res.v_package[9]),
 		sizeof(sc->sc_bif.bif_model));
-	strlcpy(sc->sc_bif.bif_serial, aml_strval(res.v_package[10]),
+	strlcpy(sc->sc_bif.bif_serial, aml_val_to_string(res.v_package[10]),
 		sizeof(sc->sc_bif.bif_serial));
-	strlcpy(sc->sc_bif.bif_type, aml_strval(res.v_package[11]),
+	strlcpy(sc->sc_bif.bif_type, aml_val_to_string(res.v_package[11]),
 		sizeof(sc->sc_bif.bif_type));
-	strlcpy(sc->sc_bif.bif_oem, aml_strval(res.v_package[12]),
+	strlcpy(sc->sc_bif.bif_oem, aml_val_to_string(res.v_package[12]),
 		sizeof(sc->sc_bif.bif_oem));
 
 	dnprintf(60, "power_unit: %u capacity: %u last_cap: %u tech: %u "

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.97 2007/11/05 03:15:22 weingart Exp $ */
+/* $OpenBSD: dsdt.c,v 1.98 2007/11/08 20:27:20 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3600,4 +3600,32 @@ void
 aml_postparse()
 {
 	aml_walknodes(&aml_root, AML_WALK_PRE, aml_fixup_node, NULL);
+}
+
+const char *
+aml_val_to_string(const struct aml_value *val)
+{
+	static char buffer[256];
+
+	int len;
+
+	switch(val->type) {
+	case AML_OBJTYPE_BUFFER:
+		len = val->length + 1;
+		if (len > sizeof(buffer))
+			len = sizeof(buffer);
+		strlcpy(buffer, val->v_buffer, len);
+		break;
+	case AML_OBJTYPE_STRING:
+		strlcpy(buffer, val->v_string, sizeof(buffer));
+		break;
+	case AML_OBJTYPE_INTEGER:
+		snprintf(buffer, sizeof(buffer), "%llx", val->v_integer);
+		break;
+	default:
+		snprintf(buffer, sizeof(buffer),
+		    "Failed to convert type %d to string!", val->type);
+	};
+
+	return (buffer);
 }
