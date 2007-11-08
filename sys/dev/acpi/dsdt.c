@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.98 2007/11/08 20:27:20 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.99 2007/11/08 22:41:48 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3186,14 +3186,14 @@ aml_parsestring(struct aml_scope *scope, int opcode, struct aml_value *res)
 		    tmpval[AML_RHS].type == AML_OBJTYPE_BUFFER) {
 			aml_resize(&tmpval[AML_LHS],
 			    tmpval[AML_LHS].length+tmpval[AML_RHS].length);
-			memcpy(&tmpval[AML_LHS].v_buffer+tmpval[AML_LHS].length,
+			memcpy(tmpval[AML_LHS].v_buffer+tmpval[AML_LHS].length,
 			    tmpval[AML_RHS].v_buffer, tmpval[AML_RHS].length);
 			aml_setvalue(scope, &tmpval[AML_DST], &tmpval[AML_LHS], 0);
 		} else if (tmpval[AML_LHS].type == AML_OBJTYPE_STRING &&
 		    tmpval[AML_RHS].type == AML_OBJTYPE_STRING) {
 			aml_resize(&tmpval[AML_LHS],
 			    tmpval[AML_LHS].length+tmpval[AML_RHS].length);
-			memcpy(&tmpval[AML_LHS].v_string+tmpval[AML_LHS].length,
+			memcpy(tmpval[AML_LHS].v_string+tmpval[AML_LHS].length,
 			    tmpval[AML_RHS].v_buffer, tmpval[AML_RHS].length);
 			aml_setvalue(scope, &tmpval[AML_DST], &tmpval[AML_LHS], 0);
 		} else {
