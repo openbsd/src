@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.225 2007/10/09 12:59:53 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.226 2007/11/08 20:37:40 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -553,7 +553,15 @@ rcs_head_get(RCSFILE *file)
 				break;
 		}
 		rcsnum_free(rootrev);
-		rcsnum_cpy(brp->rb_num, rev, 0);
+
+		if ((rdp = rcs_findrev(file, brp->rb_num)) == NULL)
+			fatal("rcs_head_get: could not find branch revision");
+		while (rdp->rd_next->rn_len != 0)
+			if ((rdp = rcs_findrev(file, rdp->rd_next)) == NULL)
+				fatal("rcs_head_get: could not find "
+				    "next branch revision");
+
+		rcsnum_cpy(rdp->rd_num, rev, 0);
 	} else {
 		rcsnum_cpy(file->rf_head, rev, 0);
 	}
