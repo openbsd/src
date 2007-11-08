@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.226 2007/11/08 20:37:40 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.227 2007/11/08 20:43:42 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3219,7 +3219,15 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 				}
 
 				if (kwtype & RCS_KW_MDOCDATE) {
-					fmt = "%B %e %Y ";
+					/*
+					 * Do not prepend ' ' for a single
+					 * digit, %e would do so and there is
+					 * no better format for strftime().
+					 */
+					if (rdp->rd_date.tm_mday < 10)
+						fmt = "%B%e %Y ";
+					else
+						fmt = "%B %e %Y ";
 
 					if (strftime(buf, sizeof(buf), fmt, &rdp->rd_date) == 0)
 						fatal("rcs_kwexp_line: strftime failure");
