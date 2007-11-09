@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.17 2005/11/17 23:56:02 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.18 2007/11/09 17:46:00 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ dmacomputeipl()
 	 * Our interrupt level must be as high as the highest
 	 * device using DMA (i.e. splbio).
 	 */
-	sc->sc_isr.isr_ipl = PSLTOIPL(hp300_bioipl);
+	sc->sc_isr.isr_ipl = PSLTOIPL(hp300_varpsl[IPL_BIO]);
 
 	sc->sc_isr.isr_func = dmaintr;
 	intr_establish(&sc->sc_isr, "dma");

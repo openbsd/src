@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.19 2007/11/09 17:32:27 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.20 2007/11/09 17:46:01 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -63,12 +63,24 @@ void	netintr(void);
  * of the vector table.
  */
 #define ISRLOC		0x18
-#define NISR		8
 
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
-u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_vmipl;
+/*
+ * Default interrupt priorities.
+ * IPL_BIO, IPL_NET, IPL_TTY and IPL_VM will be adjusted when devices attach.
+ */
+u_short	hp300_varpsl[NISR] = {
+	PSL_S | PSL_IPL0,	/* IPL_NONE */
+	PSL_S | PSL_IPL1,	/* IPL_SOFT */
+	PSL_S | PSL_IPL3,	/* IPL_BIO */
+	PSL_S | PSL_IPL3,	/* IPL_NET */
+	PSL_S | PSL_IPL3,	/* IPL_TTY */
+	PSL_S | PSL_IPL3,	/* IPL_VM */
+	PSL_S | PSL_IPL6,	/* IPL_CLOCK */
+	PSL_S | PSL_IPL7	/* IPL_HIGH */
+};
 
 void	intr_computeipl(void);
 
@@ -80,10 +92,6 @@ intr_init()
 	/* Initialize the ISR lists. */
 	for (i = 0; i < NISR; ++i)
 		LIST_INIT(&isr_list[i]);
-
-	/* Default interrupt priorities. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_vmipl =
-	    (PSL_S|PSL_IPL3);
 }
 
 /*
@@ -97,8 +105,8 @@ intr_computeipl()
 	int ipl;
 
 	/* Start with low values. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_vmipl =
-	    (PSL_S|PSL_IPL3);
+	hp300_varpsl[IPL_BIO] = hp300_varpsl[IPL_NET] =
+	    hp300_varpsl[IPL_TTY] = hp300_varpsl[IPL_VM] = PSL_S | PSL_IPL3;
 
 	for (ipl = 0; ipl < NISR; ipl++) {
 		LIST_FOREACH(isr, &isr_list[ipl], isr_link) {
@@ -108,23 +116,23 @@ intr_computeipl()
 			 */
 			switch (isr->isr_priority) {
 			case IPL_BIO:
-				if (ipl > PSLTOIPL(hp300_bioipl))
-					hp300_bioipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_varpsl[IPL_BIO]))
+					hp300_varpsl[IPL_BIO] = IPLTOPSL(ipl);
 				break;
 
 			case IPL_NET:
-				if (ipl > PSLTOIPL(hp300_netipl))
-					hp300_netipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_varpsl[IPL_NET]))
+					hp300_varpsl[IPL_NET] = IPLTOPSL(ipl);
 				break;
 
 			case IPL_TTY:
-				if (ipl > PSLTOIPL(hp300_ttyipl))
-					hp300_ttyipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_varpsl[IPL_TTY]))
+					hp300_varpsl[IPL_TTY] = IPLTOPSL(ipl);
 				break;
 
 			default:
-				printf("priority = %d\n", isr->isr_priority);
-				panic("intr_computeipl: bad priority");
+				panic("intr_computeipl: bad priority %d",
+				    isr->isr_priority);
 			}
 		}
 	}
@@ -133,14 +141,14 @@ intr_computeipl()
 	 * Enforce `bio <= net <= tty <= vm'
 	 */
 
-	if (hp300_netipl < hp300_bioipl)
-		hp300_netipl = hp300_bioipl;
+	if (hp300_varpsl[IPL_NET] < hp300_varpsl[IPL_BIO])
+		hp300_varpsl[IPL_NET] = hp300_varpsl[IPL_BIO];
 
-	if (hp300_ttyipl < hp300_netipl)
-		hp300_ttyipl = hp300_netipl;
+	if (hp300_varpsl[IPL_TTY] < hp300_varpsl[IPL_NET])
+		hp300_varpsl[IPL_TTY] = hp300_varpsl[IPL_NET];
 
-	if (hp300_vmipl < hp300_ttyipl)
-		hp300_vmipl = hp300_ttyipl;
+	if (hp300_varpsl[IPL_VM] < hp300_varpsl[IPL_TTY])
+		hp300_varpsl[IPL_VM] = hp300_varpsl[IPL_TTY];
 }
 
 void
@@ -149,12 +157,13 @@ intr_printlevels()
 
 #ifdef DEBUG
 	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, vm = 0x%x\n",
-	    hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_vmipl);
+	    hp300_varpsl[IPL_BIO], hp300_varpsl[IPL_NET],
+	    hp300_varpsl[IPL_TTY], hp300_varpsl[IPL_VM]);
 #endif
 
 	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
-	    PSLTOIPL(hp300_bioipl), PSLTOIPL(hp300_netipl),
-	    PSLTOIPL(hp300_ttyipl));
+	    PSLTOIPL(hp300_varpsl[IPL_BIO]), PSLTOIPL(hp300_varpsl[IPL_NET]),
+	    PSLTOIPL(hp300_varpsl[IPL_TTY]));
 }
 
 /*
@@ -304,19 +313,20 @@ netintr()
 void
 splassert_check(int wantipl, const char *func)
 {
-	int oldipl;
+	int oldipl, realwantipl;
 
 	__asm __volatile ("movew sr,%0" : "=&d" (oldipl));
 
+	realwantipl = PSLTOIPL(hp300_varpsl[wantipl]);
 	oldipl = PSLTOIPL(oldipl);
 
-	if (oldipl < wantipl) {
-		splassert_fail(wantipl, oldipl, func);
+	if (oldipl < realwantipl) {
+		splassert_fail(realwantipl, oldipl, func);
 		/*
 		 * If the splassert_ctl is set to not panic, raise the ipl
 		 * in a feeble attempt to reduce damage.
 		 */
-		_spl(PSL_S | IPLTOPSL(wantipl));
+		_spl(hp300_varpsl[wantipl]);
 	}
 }
 #endif
