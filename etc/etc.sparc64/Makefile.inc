@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2007/10/17 21:32:01 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2007/11/09 18:14:33 miod Exp $
 
 .ifdef DESTDIR
 snap_md: bsd bsd.mp bootblocks distrib
@@ -20,6 +20,6 @@ bsd.mp:
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
 
-.PHONY: bsd bootblocks
+.PHONY: bsd bsd.mp bootblocks
 
 .endif	# DESTDIR check
