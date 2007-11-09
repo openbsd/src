@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1289 2007/11/07 05:49:05 brad Exp $
+$OpenBSD: pcidevs,v 1.1290 2007/11/09 01:56:16 fgsch Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ vendor	NETGEAR		0x1385	Netgear
 vendor	MOXA		0x1393	Moxa
 vendor	LEVEL1		0x1394	Level 1
 vendor	HIFN		0x13a3	Hifn
+vendor	EXAR		0x13a8	Exar
 vendor	3WARE		0x13c1	3ware
 vendor	ABOCOM		0x13d1	Abocom
 vendor	SUNDANCE	0x13f0	Sundance
@@ -1572,6 +1573,11 @@ product EQUINOX SST16B		0x80C4	SST-16P
 product EQUINOX SST16C		0x80C8	SST-16P
 product EQUINOX SST4		0x8888	SST-4p
 product EQUINOX SST8		0x9090	SST-8p
+
+/* Exar products */
+product EXAR XR17C152		0x0152	XR17C152
+product EXAR XR17C154		0x0154	XR17C154
+product EXAR XR17C158		0x0158	XR17C158
 
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
