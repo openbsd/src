@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.27 2007/10/29 19:58:57 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.28 2007/11/09 22:47:21 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -423,8 +423,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		 * XXX Investigate why enabling parity at this point
 		 * doesn't work.
 		 */
-		sctr = cmmu->cmmu_regs[CMMU_SCTR] &
-		    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
+		sctr = 0;
 #ifdef MULTIPROCESSOR
 		if (max_cpus > 1)
 			sctr |= CMMU_SCTR_SE;
@@ -465,8 +464,6 @@ m8820x_shutdown()
 
 	cmmu = m8820x_cmmu;
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++, cmmu++) {
-		cmmu->cmmu_regs[CMMU_SCTR] &=
-		    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
 		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] =
 		    ((0x00000 << PG_BITS) | CACHE_INH) &
 		    ~(CACHE_WT | CACHE_GLOBAL | APR_V);
@@ -700,12 +697,21 @@ m8820x_cmmu_inval_cache(int cpu, paddr_t pa, psize_t size)
 	m8820x_cmmu_wait(cpu);
 }
 
+/*
+ * High level cache handling functions (used by bus_dma).
+ *
+ * On multiprocessor systems, since the CMMUs snoop each other, they
+ * all have a coherent view of the data. Thus, we only need to writeback
+ * on a single CMMU. However, invalidations need to be done on all CMMUs.
+ */
+
 void
 m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 {
 	u_int32_t psr;
 	int cpu;
 #ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
 	u_int32_t cpumask;
 #endif
 	vaddr_t va;
@@ -732,7 +738,7 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	}
 
 #ifdef MULTIPROCESSOR
-	cpumask = pmap->pm_cpus;
+	cpumask = pmap->pm_cpus & ~(1 << ci->ci_cpuid);
 #else
 	cpu = cpu_number();
 #endif
@@ -746,15 +752,18 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 
 		if (pmap_extract(pmap, va, &pa) != FALSE) {
 #ifdef MULTIPROCESSOR
-			for (cpu = 0; cpumask != 0; cpu++) {
-				if (((1 << cpu) & cpumask) == 0)
-					continue;
-				cpumask ^= 1 << cpu;
-#ifdef DIAGNOSTIC
-				if (m88k_cpus[cpu].ci_alive == 0)
-					continue;
-#endif
-				(*flusher)(cpu, pa, count);
+			/* writeback on a single cpu... */
+			if (flusher != m8820x_cmmu_inval_cache)
+				(*flusher)(ci->ci_cpuid, pa, count);
+
+			/* invalidate on all... */
+			if (flusher != m8820x_cmmu_sync_cache) {
+				for (cpu = 0; cpumask != 0; cpu++) {
+					if (((1 << cpu) & cpumask) == 0)
+						continue;
+					cpumask ^= 1 << cpu;
+					(*flusher)(cpu, pa, count);
+				}
 			}
 #else	/* MULTIPROCESSOR */
 			(*flusher)(cpu, pa, count);
@@ -774,6 +783,9 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
 	int cpu;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+#endif
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(int, paddr_t, psize_t);
@@ -808,10 +820,21 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		    PAGE_SIZE : MC88200_CACHE_LINE;
 
 #ifdef MULTIPROCESSOR
-		for (cpu = 0; cpu < MAX_CPUS; cpu++)
-			if (m88k_cpus[cpu].ci_alive != 0)
-#endif
+		/* writeback on a single cpu... */
+		if (flusher != m8820x_cmmu_inval_cache)
+			(*flusher)(ci->ci_cpuid, pa, count);
+
+		/* invalidate on all... */
+		if (flusher != m8820x_cmmu_sync_cache) {
+			for (cpu = 0; cpu < MAX_CPUS; cpu++) {
+				if (m88k_cpus[cpu].ci_alive == 0)
+					continue;
 				(*flusher)(cpu, pa, count);
+			}
+		}
+#else	/* MULTIPROCESSOR */
+		(*flusher)(cpu, pa, count);
+#endif	/* MULTIPROCESSOR */
 
 		pa += count;
 		size -= count;
