@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.79 2007/09/10 20:59:00 thib Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.80 2007/11/09 09:59:54 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 } while (0)
 
 daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
+struct buf *ffs_cgread(struct fs *, struct inode *, int);
 daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
 daddr_t	ffs_clusteralloc(struct inode *, int, daddr_t, int);
 ino_t	ffs_dirpref(struct inode *);
@@ -1168,6 +1169,25 @@ ffs_hashalloc(struct inode *ip, int cg, long pref, int size,
 	return (0);
 }
 
+struct buf *
+ffs_cgread(struct fs *fs, struct inode *ip, int cg)
+{
+	struct buf *bp;
+
+	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+		(int)fs->fs_cgsize, NOCRED, &bp)) {
+		brelse(bp);
+		return (NULL);
+	}
+
+	if (!cg_chkmagic((struct cg *)bp->b_data)) {
+		brelse(bp);
+		return (NULL);
+	}
+
+	return bp;
+}
+
 /*
  * Determine whether a fragment can be extended.
  *
@@ -1181,8 +1201,7 @@ ffs_fragextend(struct inode *ip, int cg, long bprev, int osize, int nsize)
 	struct cg *cgp;
 	struct buf *bp;
 	long bno;
-	int frags, bbase;
-	int i, error;
+	int i, frags, bbase;
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nffree < numfrags(fs, nsize - osize))
@@ -1193,18 +1212,11 @@ ffs_fragextend(struct inode *ip, int cg, long bprev, int osize, int nsize)
 		/* cannot extend across a block boundary */
 		return (0);
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
-		return (0);
-	}
-	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp)) {
-		brelse(bp);
-		return (0);
-	}
 
+	if (!(bp = ffs_cgread(fs, ip, cg)))
+		return (0);
+
+	cgp = (struct cg *)bp->b_data;
 	cgp->cg_ffs2_time = cgp->cg_time = time_second;
 
 	bno = dtogd(fs, bprev);
@@ -1252,21 +1264,17 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	struct cg *cgp;
 	struct buf *bp;
 	daddr_t bno, blkno;
-	int error, i, frags, allocsiz;
+	int i, frags, allocsiz;
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
 		return (0);
-	/* read cylinder group block */
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
+
+	if (!(bp = ffs_cgread(fs, ip, cg)))
 		return (0);
-	}
+
 	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp) ||
-	    (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize)) {
+	if (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize) {
 		brelse(bp);
 		return (0);
 	}
@@ -1415,12 +1423,12 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 	fs = ip->i_fs;
 	if (fs->fs_maxcluster[cg] < len)
 		return (0);
-	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
-	    NOCRED, &bp))
-		goto fail;
+
+	if (!(bp = ffs_cgread(fs, ip, cg)))
+		return (0);
+
 	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp))
-		goto fail;
+
 	/*
 	 * Check to see if a cluster of the needed size (or bigger) is
 	 * available in this cylinder group.
@@ -1514,7 +1522,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
-	int error, start, len, loc, map, i;
+	int start, len, loc, map, i;
 #ifdef FFS2
 	struct buf *ibp = NULL;
 	struct ufs2_dinode *dp2;
@@ -1529,15 +1537,11 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
 		return (0);
 
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
+	if (!(bp = ffs_cgread(fs, ip, cg)))
 		return (0);
-	}
 
 	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp) || cgp->cg_cs.cs_nifree == 0) {
+	if (cgp->cg_cs.cs_nifree == 0) {
 		brelse(bp);
 		return (0);
 	}
@@ -1682,7 +1686,7 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 	struct cg *cgp;
 	struct buf *bp;
 	daddr_t blkno;
-	int i, error, cg, blk, frags, bbase;
+	int i, cg, blk, frags, bbase;
 
 	fs = ip->i_fs;
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
@@ -1697,18 +1701,10 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 		ffs_fserr(fs, DIP(ip, uid), "bad block");
 		return;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
+	if (!(bp = ffs_cgread(fs, ip, cg)))
 		return;
-	}
-	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp)) {
-		brelse(bp);
-		return;
-	}
 
+	cgp = (struct cg *)bp->b_data;
 	cgp->cg_ffs2_time = cgp->cg_time = time_second;
 
 	bno = dtogd(fs, bno);
@@ -1805,25 +1801,18 @@ ffs_freefile(struct inode *pip, ino_t ino, mode_t mode)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
-	int error, cg;
+	int cg;
 
 	fs = pip->i_fs;
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ffs_freefile: range: dev = 0x%x, ino = %d, fs = %s",
 		    pip->i_dev, ino, fs->fs_fsmnt);
-	cg = ino_to_cg(fs, ino);
-	error = bread(pip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
-		return (error);
-	}
-	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp)) {
-		brelse(bp);
-		return (0);
-	}
 
+	cg = ino_to_cg(fs, ino);
+	if (!(bp = ffs_cgread(fs, pip, cg)))
+		return (0);
+
+	cgp = (struct cg *)bp->b_data;
 	cgp->cg_ffs2_time = cgp->cg_time = time_second;
 
 	ino %= fs->fs_ipg;
@@ -1860,7 +1849,7 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
-	int i, error, frags, free;
+	int i, frags, free;
 
 	fs = ip->i_fs;
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
@@ -1870,19 +1859,11 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 	}
 	if ((u_int)bno >= fs->fs_size)
 		panic("ffs_checkblk: bad block %d", bno);
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, dtog(fs, bno))),
-		(int)fs->fs_cgsize, NOCRED, &bp);
-	if (error) {
-		brelse(bp);
+
+	if (!(bp = ffs_cgread(fs, ip, dtog(fs, bno))))
 		return (0);
-	}
 
 	cgp = (struct cg *)bp->b_data;
-	if (!cg_chkmagic(cgp)) {
-		brelse(bp);
-		return (0);
-	}
-
 	bno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
 		free = ffs_isblock(fs, cg_blksfree(cgp), fragstoblks(fs, bno));
