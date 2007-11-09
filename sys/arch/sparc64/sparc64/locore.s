@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.101 2007/11/06 22:20:59 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.102 2007/11/09 16:15:28 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4936,8 +4936,8 @@ dlflush2a:
 
 	/* Change the trap base register */
 	set	_C_LABEL(trapbase), %l1
-	!call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
-	! mov	%l1, %o0
+	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
+	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 	wrpr	%g0, WSTATE_KERN, %wstate
 
