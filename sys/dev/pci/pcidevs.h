@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1289 2007/11/07 05:49:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1290 2007/11/09 01:56:16 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -230,6 +230,7 @@
 #define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
 #define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
+#define	PCI_VENDOR_EXAR	0x13a8		/* Exar */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
@@ -1577,6 +1578,11 @@
 #define	PCI_PRODUCT_EQUINOX_SST16C	0x80C8		/* SST-16P */
 #define	PCI_PRODUCT_EQUINOX_SST4	0x8888		/* SST-4p */
 #define	PCI_PRODUCT_EQUINOX_SST8	0x9090		/* SST-8p */
+
+/* Exar products */
+#define	PCI_PRODUCT_EXAR_XR17C152	0x0152		/* XR17C152 */
+#define	PCI_PRODUCT_EXAR_XR17C154	0x0154		/* XR17C154 */
+#define	PCI_PRODUCT_EXAR_XR17C158	0x0158		/* XR17C158 */
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */

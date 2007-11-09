@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1289 2007/11/07 05:49:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1290 2007/11/09 01:56:16 fgsch Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4278,6 +4278,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST8,
 	    "SST-8p",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C152,
+	    "XR17C152",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C154,
+	    "XR17C154",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158,
+	    "XR17C158",
 	},
 	{
 	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
@@ -14854,6 +14866,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HIFN,
 	    "Hifn",
+	},
+	{
+	    PCI_VENDOR_EXAR,
+	    "Exar",
 	},
 	{
 	    PCI_VENDOR_3WARE,
