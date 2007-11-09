@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.126 2007/11/04 13:38:05 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.127 2007/11/09 18:14:58 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -49,6 +49,10 @@ as well on faithful clones of the above Sun systems, including:
 
 If your machine is not listed above, it is very likely that OpenBSD/MACHINE
 does not work on it (yet).
+
+OpenBSD/MACHINE OSREV supports most SMP (Symmetrical MultiProcessor)
+systems.  To support SMP operation, a separate SMP kernel (bsd.mp)
+is included with the installation file sets.
 
 The minimal configuration requires 32MB of RAM and ~160MB of disk space.
 To install the entire system requires much more disk space, and to run
@@ -783,6 +787,5 @@ Supported devices {:-include-:}:
 
 
 Hardware that we do NOT currently support, but get many questions about:
-	Multiprocessor machines.
 	Floppy drive on non-SBus systems.
 	SBUS and PCI cards other than those listed above.
