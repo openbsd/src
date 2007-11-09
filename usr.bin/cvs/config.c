@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.11 2007/10/18 12:13:20 tobias Exp $	*/
+/*	$OpenBSD: config.c,v 1.12 2007/11/09 16:03:25 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/resource.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,7 +34,7 @@ cvs_parse_configfile(void)
 	size_t len;
 	struct rlimit rl;
 	const char *errstr;
-	char *p, *buf, *lbuf, *opt, *val, fpath[MAXPATHLEN];
+	char *p, *buf, *ep, *lbuf, *opt, *val, fpath[MAXPATHLEN];
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 	    current_cvsroot->cr_dir, CVS_PATH_CONFIG);
@@ -78,10 +79,14 @@ cvs_parse_configfile(void)
 				xfree(cvs_tagname);
 			cvs_tagname = xstrdup(val);
 		} else if (!strcmp(opt, "umask")) {
-			cvs_umask = (int)strtonum(val, 0, INT_MAX, &errstr);
-			if (errstr != NULL)
-				fatal("cvs_parse_configfile: %s: %s", val,
-				    errstr);
+			cvs_umask = strtol(val, &ep, 8);
+
+			if (val == ep || *ep != '\0')
+				fatal("cvs_parse_configfile: umask %s is "
+				    "invalid", val);
+			if (cvs_umask < 0 || cvs_umask > 07777)
+				fatal("cvs_parse_configfile: umask %s is "
+				    "invalid", val);
 		} else if (!strcmp(opt, "dlimit")) {
 			if (getrlimit(RLIMIT_DATA, &rl) != -1) {
 				rl.rlim_cur = (int)strtonum(val, 0, INT_MAX,
