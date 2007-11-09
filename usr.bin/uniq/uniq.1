@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.12 2007/05/31 19:20:19 jmc Exp $
+.\"	$OpenBSD: uniq.1,v 1.13 2007/11/09 20:04:03 kili Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)uniq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 9 2007 $
 .Dt UNIQ 1
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ Ignore the first
 .Ar fields
 in each input line when doing comparisons.
 A field is a string of non-blank characters separated from adjacent fields
-by blanks.
+by blanks, with blanks considered part of the following field.
 Field numbers are one based, i.e., the first field is field one.
 .It Fl s Ar chars
 Ignore the first

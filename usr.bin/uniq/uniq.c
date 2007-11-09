@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.15 2006/04/07 05:10:02 ray Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.16 2007/11/09 20:04:03 kili Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.15 2006/04/07 05:10:02 ray Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.16 2007/11/09 20:04:03 kili Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -111,11 +111,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	/* If no flags are set, default is -d -u. */
-	if (cflag) {
-		if (dflag || uflag)
-			usage();
-	} else if (!dflag && !uflag)
+	/* If neither -d nor -u are set, default is -d -u. */
+	if (!dflag && !uflag)
 		dflag = uflag = 1;
 
 	switch(argc) {
@@ -175,27 +172,26 @@ main(int argc, char *argv[])
 void
 show(FILE *ofp, char *str)
 {
-
-	if (cflag && *str)
-		(void)fprintf(ofp, "%4d %s", repeats + 1, str);
-	if ((dflag && repeats) || (uflag && !repeats))
-		(void)fprintf(ofp, "%s", str);
+	if ((dflag && repeats) || (uflag && !repeats)) {
+		if (cflag)
+			(void)fprintf(ofp, "%4d %s", repeats + 1, str);
+		else
+			(void)fprintf(ofp, "%s", str);
+	}
 }
 
 char *
 skip(char *str)
 {
-	int infield, nchars, nfields;
+	int nchars, nfields;
 
-	for (nfields = numfields, infield = 0; nfields && *str; ++str)
-		if (isspace(*str)) {
-			if (infield) {
-				infield = 0;
-				--nfields;
-			}
-		} else if (!infield)
-			infield = 1;
-	for (nchars = numchars; nchars-- && *str; ++str)
+	for (nfields = numfields; nfields && *str; nfields--) {
+		while (isblank(*str))
+			str++;
+		while (*str && !isblank(*str))
+			str++;
+	}
+	for (nchars = numchars; nchars-- && *str && *str != '\n'; ++str)
 		;
 	return (str);
 }
@@ -245,7 +241,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	
+
 	(void)fprintf(stderr,
 	    "usage: %s [-c | -d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
 	    __progname);
