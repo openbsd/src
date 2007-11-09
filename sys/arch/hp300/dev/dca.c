@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.31 2006/01/01 11:59:37 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.32 2007/11/09 17:32:25 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -235,8 +235,7 @@ dcaattach(parent, self, aux)
 	sc->sc_isr.isr_func = dcaintr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = ipl;
-	sc->sc_isr.isr_priority =
-	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF;
+	sc->sc_isr.isr_priority = IPL_TTY;
 	dio_intr_establish(&sc->sc_isr, self->dv_xname);
 
 	sc->sc_flags |= DCA_ACTIVE;

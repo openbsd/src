@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.18 2007/11/09 17:30:53 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.19 2007/11/09 17:32:27 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -118,7 +118,6 @@ intr_computeipl()
 				break;
 
 			case IPL_TTY:
-			case IPL_TTYNOBUF:
 				if (ipl > PSLTOIPL(hp300_ttyipl))
 					hp300_ttyipl = IPLTOPSL(ipl);
 				break;

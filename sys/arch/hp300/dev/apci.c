@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.29 2007/01/06 20:09:12 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.30 2007/11/09 17:32:25 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -237,8 +237,7 @@ apciattach(parent, self, aux)
 	/* Establish our interrupt handler. */
 	sc->sc_isr.isr_func = apciintr;
 	sc->sc_isr.isr_arg = sc;
-	sc->sc_isr.isr_priority =
-	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF;
+	sc->sc_isr.isr_priority = IPL_TTY;
 	frodo_intr_establish(parent, fa->fa_line, &sc->sc_isr, self->dv_xname);
 
 	/* Set soft carrier if requested by operator. */
