@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.11 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.12 2007/11/09 17:30:55 miod Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -114,24 +114,3 @@ child_return(arg)
 		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
-
-#ifdef DIAGNOSTIC
-void
-splassert_check(int wantipl, const char *func)
-{
-	int oldipl;
-
-	__asm __volatile ("movew sr,%0" : "=&d" (oldipl));
-
-	oldipl = PSLTOIPL(oldipl);
-
-	if (oldipl < wantipl) {
-		splassert_fail(wantipl, oldipl, func);
-		/*
-		 * If the splassert_ctl is set to not panic, raise the ipl
-		 * in a feeble attempt to reduce damage.
-		 */
-		_spl(PSL_S | IPLTOPSL(wantipl));
-	}
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2007/07/29 21:24:05 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2007/11/09 17:30:55 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -232,3 +232,24 @@ netintr()
 #undef  DONETISR
 	}
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	int oldipl;
+
+	__asm __volatile ("movew sr,%0" : "=&d" (oldipl));
+
+	oldipl = PSLTOIPL(oldipl);
+
+	if (oldipl < wantipl) {
+		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * If the splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		_spl(PSL_S | IPLTOPSL(wantipl));
+	}
+}
+#endif
