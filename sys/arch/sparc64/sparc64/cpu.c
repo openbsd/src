@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.28 2007/10/28 12:34:05 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.29 2007/11/09 16:13:52 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -100,7 +100,7 @@ struct cpu_info *
 alloc_cpuinfo(int node)
 {
 	paddr_t pa0, pa;
-	vaddr_t va, va0, kstack;
+	vaddr_t va, va0;
 	vsize_t sz = 8 * PAGE_SIZE;
 	int portid;
 	struct cpu_info *cpi, *ci;
@@ -133,10 +133,6 @@ alloc_cpuinfo(int node)
 
 	memset((void *)va0, 0, sz);
 
-	kstack = uvm_km_alloc (kernel_map, USPACE);
-	if (kstack == 0)
-		panic("alloc_cpuinfo: unable to allocate pcb");
-
 	/*
 	 * Initialize cpuinfo structure.
 	 *
@@ -154,11 +150,10 @@ alloc_cpuinfo(int node)
 	cpi->ci_spinup = NULL;
 #endif
 
-	cpi->ci_initstack = (void *)(kstack + USPACE);
+	cpi->ci_initstack = (void *)EINTSTACK;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = node;
-	cpi->ci_cpcb = (struct pcb *)kstack;
 
 	sched_init_cpu(cpi);
 
