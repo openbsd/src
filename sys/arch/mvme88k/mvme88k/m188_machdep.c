@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.33 2007/10/29 19:57:48 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.34 2007/11/09 22:50:48 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -155,7 +155,7 @@ void	m188_startup(void);
  */
 unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
 
-unsigned int m188_curspl[] = {0, 0, 0, 0};
+unsigned int m188_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE};
 
 /*
  * external interrupt masks per spl.
@@ -334,6 +334,7 @@ m188_raiseipl(u_int level)
 		*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;
 	}
+
 	return curspl;
 }
 
@@ -352,15 +353,15 @@ m188_send_ipi(int ipi, cpuid_t cpu)
 }
 
 /*
- * Process inter-processor interrupts. Note that interrupts are disabled
- * when this function is invoked.
+ * Process inter-processor interrupts.
  */
 void
 m188_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
 	int ipi = ci->ci_ipi;
-	int spl = m188_curspl[ci->ci_cpuid];
+	int old_spl = eframe->tf_mask;
+	int s;
 
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
@@ -369,26 +370,29 @@ m188_ipi_handler(struct trapframe *eframe)
 		 * until it is done.
 		 */
 		extern struct __mp_lock ddb_mp_lock;
+
+		s = m188_raiseipl(IPL_HIGH);			/* splhigh */
 		__mp_lock(&ddb_mp_lock);
 		__mp_unlock(&ddb_mp_lock);
+		m188_setipl(s);					/* splx */
 #endif
 	}
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
 	if (ipi & CI_IPI_HARDCLOCK) {
-		if (spl < IPL_CLOCK) {
-			m188_setipl(IPL_CLOCK);
+		if (old_spl < IPL_CLOCK) {
+			s = m188_raiseipl(IPL_CLOCK);		/* splclock */
 			hardclock((struct clockframe *)eframe);
-			m188_setipl(spl);
+			m188_setipl(s);				/* splx */
 		} else
 			ipi &= ~CI_IPI_HARDCLOCK;	/* leave it pending */
 	}
 	if (ipi & CI_IPI_STATCLOCK) {
-		if (spl < IPL_STATCLOCK) {
-			m188_setipl(IPL_STATCLOCK);
+		if (old_spl < IPL_STATCLOCK) {
+			s = m188_raiseipl(IPL_STATCLOCK);	/* splclock */
 			statclock((struct clockframe *)eframe);
-			m188_setipl(spl);
+			m188_setipl(s);				/* splx */
 		} else
 			ipi &= ~CI_IPI_STATCLOCK;	/* leave it pending */
 	}
@@ -521,17 +525,17 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		if (unmasked == 0) {
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
-		}
 
 #ifdef MULTIPROCESSOR
-		/*
-		 * Handle IPIs first.
-		 */
-		m188_ipi_handler(eframe);
+			/*
+			 * Handle IPIs first.
+			 */
+			m188_ipi_handler(eframe);
 
-		if (cur_mask == 0)
-			break;
+			if (cur_mask == 0)
+				break;
 #endif
+		}
 
 		/* generate IACK and get the vector */
 
