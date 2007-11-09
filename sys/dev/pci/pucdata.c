@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.51 2007/11/02 16:13:10 henning Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.52 2007/11/09 02:05:16 fgsch Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1387,6 +1387,58 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
 	    },
 	},
+
+	/*
+	 * Multi-Tech ISI5634PCI/4 4-port modem board.
+	 * Has a 4-channel Exar XR17C154 UART, but with bogus product ID in its
+	 * config EEPROM.
+	 */
+	{
+	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158, 0x2205, 0x2003 },
+	    {	0xffff,	0xffff,				    0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+	    },
+	},
+
+	{   /* EXAR XR17C152 Dual UART */
+	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C152,	0, 0 },
+	    {   0xffff, 0xffff, 				0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+	    },
+	},
+
+	{   /* Exar XR17C154 Quad UART */
+	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C154,	0, 0 },
+	    {   0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+	    },
+	},
+
+	{   /* Exar XR17C158 Eight Channel UART */
+	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158,	0, 0 },
+	    {   0xffff, 0xffff, 				0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0800, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
+	    },
+	},
+
 	{   /* NULL, */
 
 	    {	0,	0,		0, 0	},
