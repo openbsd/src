@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.c,v 1.28 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: syslog.c,v 1.29 2007/11/09 18:40:19 millert Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -279,8 +279,12 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 		(void)close(fd);
 	}
 
-	if (data != &sdata)
+	if (data != &sdata) {
+		/* preserve log_tag from being cleared by closelog_r() */
+		const char *ident = data->log_tag;
 		closelog_r(data);
+		data->log_tag = ident;
+	}
 }
 
 static void
