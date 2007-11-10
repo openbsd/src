@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.67 2007/10/11 18:33:13 deraadt Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.68 2007/11/10 22:58:24 deraadt Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -206,6 +206,7 @@ const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2206USB},	  PII },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB110},	  PII },
+ {{ USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LANTX},	  PII },
 };
 #define aue_lookup(v, p) ((struct aue_type *)usb_lookup(aue_devs, v, p))
 

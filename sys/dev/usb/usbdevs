@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.309 2007/11/10 17:30:26 ajacoutot Exp $
+$OpenBSD: usbdevs,v 1.310 2007/11/10 22:58:24 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -277,6 +277,7 @@ vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
 vendor JENOPTIK		0x0784  Jenoptik
+vendor LOGITEC		0x0789	Logitec
 vendor NOKIA		0x078b	Nokia
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
@@ -1520,6 +1521,9 @@ product LINKSYS2 NWU11B		0x2219	Network Everywhere NWU11B
 product LINKSYS3 WUSB11V28	0x2233	WUSB11 v2.8
 product LINKSYS3 WUSB11V30	0x2236	WUSB11 v3.0
 product LINKSYS USB10TX2	0x400b	USB10TX
+
+/* Logitec products */
+product LOGITEC	LANTX		0x0105	LAN-TX
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
