@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.585 2007/11/03 05:46:35 beck Exp $
+#	$OpenBSD: GENERIC,v 1.586 2007/11/10 13:04:42 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -266,6 +266,7 @@ zyd*	at uhub?		# Zydas ZD1211
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+umbg*	at uhub?		# Meinberg Funkuhren USB5131
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 puc*	at pci?			# PCI "universal" communication device
