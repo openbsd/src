@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.80 2007/10/01 04:03:51 krw Exp $ */
+/*	$OpenBSD: malo.c,v 1.81 2007/11/10 14:20:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -108,6 +108,7 @@ struct malo_tx_desc {
 #define MALO_RX_RING_COUNT	256
 #define MALO_TX_RING_COUNT	256
 #define MALO_MAX_SCATTER	8	/* XXX unknown, wild guess */
+#define MALO_CMD_TIMEOUT	50	/* MALO_CMD_TIMEOUT * 100us */
 
 /*
  * Firmware commands
@@ -197,6 +198,11 @@ struct malo_cmd_rate {
 	uint8_t		dataratetype;
 	uint8_t		rateindex;
 	uint8_t		aprates[14];
+} __packed;
+
+struct malo_cmd_rts {
+	uint16_t	action;
+	uint32_t	threshold;
 } __packed;
 
 struct malo_cmd_slot {
@@ -505,14 +511,14 @@ malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr)
 	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
 	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < MALO_CMD_TIMEOUT; i++) {
 		delay(100);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		if (hdr->cmd & htole16(0x8000))
 			break;
 	}
-	if (i == 10) {
+	if (i == MALO_CMD_TIMEOUT) {
 		printf("%s: timeout while waiting for cmd response!\n",
 		    sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
@@ -2234,13 +2240,17 @@ int
 malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_rts *body;
 
 	hdr->cmd = htole16(MALO_CMD_SET_RTS);
-	hdr->size = htole16(sizeof(*hdr) + sizeof(threshold));
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
 	hdr->seqnum = 1;
 	hdr->result = 0;
+	body = (struct malo_cmd_rts *)(hdr + 1);
 
-	*(uint32_t *)(hdr + 1) = htole32(threshold);
+	bzero(body, sizeof(*body));
+	body->action = htole16(1);
+	body->threshold = htole32(threshold);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
