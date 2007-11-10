@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.99 2007/11/08 22:41:48 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.100 2007/11/10 17:53:16 chl Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -421,12 +421,9 @@ _acpi_os_malloc(size_t size, const char *fn, int line)
 
 	sptr = malloc(size+sizeof(*sptr), M_DEVBUF, M_WAITOK | M_ZERO);
 	dnprintf(99, "alloc: %x %s:%d\n", sptr, fn, line);
-	if (sptr) {
-		acpi_nalloc += size;
-		sptr->size = size;
-		return &sptr[1];
-	}
-	return NULL;
+	acpi_nalloc += size;
+	sptr->size = size;
+	return &sptr[1];
 }
 
 void
