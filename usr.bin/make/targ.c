@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.51 2007/11/10 12:51:40 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.52 2007/11/10 12:56:50 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ static LIST allTargets;
 static void TargFreeGN(void *);
 #endif
 #define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
+static const char *status_to_string(GNode *);
 
 
 GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
@@ -348,6 +349,24 @@ Targ_PrintType(int type)
 		}
     }
 }
+static const char *
+status_to_string(GNode *gn)
+{
+	switch (gn->built_status) {
+	case UNMADE:
+		return "unmade";
+	case MADE:
+		return "made";
+	case UPTODATE:
+		return "up-to-date";
+	case ERROR:
+		return "error when made";
+	case ABORTED:
+		return "aborted";
+	default:
+		return "other status";
+	}
+}
 
 static void
 TargPrintNode(GNode *gn, int pass)
@@ -361,19 +380,10 @@ TargPrintNode(GNode *gn, int pass)
 			if (!is_out_of_date(gn->mtime)) {
 				printf("# last modified %s: %s\n",
 				      time_to_string(gn->mtime),
-				      (gn->built_status == UNMADE ? "unmade" :
-				       (gn->built_status == MADE ? "made" :
-					(gn->built_status == UPTODATE ? 
-					    "up-to-date" :
-					     "error when made"))));
+				      status_to_string(gn));
 			} else if (gn->built_status != UNMADE) {
 				printf("# non-existent (maybe): %s\n",
-				      (gn->built_status == MADE ? "made" :
-				       (gn->built_status == UPTODATE ? 
-					    "up-to-date" :
-					(gn->built_status == ERROR ? 
-					    "error when made" :
-					    "aborted"))));
+				    status_to_string(gn));
 			} else {
 				printf("# unmade\n");
 			}
