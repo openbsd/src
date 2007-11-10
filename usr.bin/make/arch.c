@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.73 2007/11/03 15:30:04 deraadt Exp $ */
+/*	$OpenBSD: arch.c,v 1.74 2007/11/10 12:51:40 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -922,11 +922,11 @@ Arch_MemMTime(GNode *gn)
 			} else
 				nameEnd = NULL;
 
-			if (pgn->make && nameEnd != NULL &&
+			if (pgn->must_make && nameEnd != NULL &&
 			    strncmp(nameStart, gn->name, nameEnd - nameStart)
 			    == 0 && gn->name[nameEnd-nameStart] == '\0')
 				gn->mtime = Arch_MTime(pgn);
-		} else if (pgn->make) {
+		} else if (pgn->must_make) {
 			/* Something which isn't a library depends on the
 			 * existence of this target, so it needs to exist.  */
 			ts_set_out_of_date(gn->mtime);

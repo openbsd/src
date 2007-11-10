@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.107 2007/11/06 21:09:42 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.108 2007/11/10 12:51:40 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -627,7 +627,7 @@ JobFinish(Job *job, int status)
 		/* As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
-		job->node->made = MADE;
+		job->node->built_status = MADE;
 		Make_Update(job->node);
 		free(job);
 	} else if (status != 0) {
@@ -953,7 +953,7 @@ prepare_job(GNode *gn, int flags)
 		 */
 		if (cmdsOK) {
 			if (aborting == 0) {
-				job->node->made = MADE;
+				job->node->built_status = MADE;
 				Make_Update(job->node);
 			}
 		}

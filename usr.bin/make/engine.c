@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2007/11/06 21:12:23 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.14 2007/11/10 12:51:40 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -260,11 +260,11 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 
 		Varq_Append(ALLSRC_INDEX, target, parent);
 		if (parent->type & OP_JOIN) {
-			if (child->made == MADE)
+			if (child->built_status == MADE)
 				Varq_Append(OODATE_INDEX, target, parent);
 		} else if (is_strictly_before(parent->mtime, child->mtime) ||
 		   (!is_strictly_before(child->mtime, now) &&
-		   child->made == MADE)) {
+		   child->built_status == MADE)) {
 			/*
 			 * It goes in the OODATE variable if the parent is
 			 * younger than the child or if the child has been
@@ -573,13 +573,13 @@ run_command(const char *cmd, bool errCheck)
  *-----------------------------------------------------------------------
  * setup_and_run_command --
  *	Execute the next command for a target. If the command returns an
- *	error, the node's made field is set to ERROR and creation stops.
+ *	error, the node's built_status field is set to ERROR and creation stops.
  *
  * Results:
  *	0 in case of error, 1 if ok.
  *
  * Side Effects:
- *	The node's 'made' field may be set to ERROR.
+ *	The node's 'built_status' field may be set to ERROR.
  *-----------------------------------------------------------------------
  */
 static int
@@ -680,7 +680,7 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 
 			if (!WIFEXITED(reason) || status != 0) {
 				if (errCheck) {
-					gn->made = ERROR;
+					gn->built_status = ERROR;
 					if (keepgoing)
 						/* Abort the current target,
 						 * but let others continue.  */
@@ -729,7 +729,7 @@ run_gnode(GNode *gn, int parallel)
 	LstNode ln, nln;
 
 	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
-		gn->made = MADE;
+		gn->built_status = MADE;
 		for (ln = Lst_First(&gn->commands); ln != NULL; ln = nln) {
 			nln = Lst_Adv(ln);
 			if (setup_and_run_command(Lst_Datum(ln), gn, 
@@ -738,7 +738,7 @@ run_gnode(GNode *gn, int parallel)
 		}
 		if (got_signal && !parallel)
 			handle_compat_interrupts(gn);
-		return gn->made;
+		return gn->built_status;
 	} else
 		return NOSUCHNODE;
 }

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.66 2007/11/06 21:12:23 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.67 2007/11/10 12:51:40 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -76,26 +76,26 @@ CompatMake(void *gnp,	/* The node to make */
 
 	if (pgn->type & OP_MADE) {
 		(void)Dir_MTime(gn);
-		gn->made = UPTODATE;
+		gn->built_status = UPTODATE;
 	}
 
 	if (gn->type & OP_USE) {
 		Make_HandleUse(gn, pgn);
-	} else if (gn->made == UNMADE) {
+	} else if (gn->built_status == UNMADE) {
 		/* First mark ourselves to be made, then apply whatever
 		 * transformations the suffix module thinks are necessary.
 		 * Once that's done, we can descend and make all our children.
 		 * If any of them has an error but the -k flag was given,
-		 * our 'make' field will be set false again.  This is our
+		 * our 'must_make' field will be set false again.  This is our
 		 * signal to not attempt to do anything but abort our
 		 * parent as well.  */
-		gn->make = true;
-		gn->made = BEINGMADE;
+		gn->must_make = true;
+		gn->built_status = BEINGMADE;
 		Suff_FindDeps(gn);
 		Lst_ForEach(&gn->children, CompatMake, gn);
-		if (!gn->make) {
-			gn->made = ABORTED;
-			pgn->make = false;
+		if (!gn->must_make) {
+			gn->built_status = ABORTED;
+			pgn->must_make = false;
 			return;
 		}
 
@@ -106,7 +106,7 @@ CompatMake(void *gnp,	/* The node to make */
 		if (DEBUG(MAKE))
 			printf("Examining %s...", gn->name);
 		if (!Make_OODate(gn)) {
-			gn->made = UPTODATE;
+			gn->built_status = UPTODATE;
 			if (DEBUG(MAKE))
 				printf("up-to-date.\n");
 			return;
@@ -131,15 +131,15 @@ CompatMake(void *gnp,	/* The node to make */
 			else
 				Job_Touch(gn);
 		} else
-			gn->made = ERROR;
+			gn->built_status = ERROR;
 
-		if (gn->made != ERROR) {
+		if (gn->built_status != ERROR) {
 			/* If the node was made successfully, mark it so,
 			 * update its modification time and timestamp all
 			 * its parents.
 			 * This is to keep its state from affecting that of
 			 * its parent.  */
-			gn->made = MADE;
+			gn->built_status = MADE;
 			/* This is what Make does and it's actually a good
 			 * thing, as it allows rules like
 			 *
@@ -166,7 +166,7 @@ CompatMake(void *gnp,	/* The node to make */
 				Make_TimeStamp(pgn, gn);
 			}
 		} else if (keepgoing)
-			pgn->make = false;
+			pgn->must_make = false;
 		else {
 
 			if (gn->lineno)
@@ -179,16 +179,16 @@ CompatMake(void *gnp,	/* The node to make */
 				    Var_Value(".CURDIR"));
 			exit(1);
 		}
-	} else if (gn->made == ERROR)
-		/* Already had an error when making this beastie. Tell the parent
-		 * to abort.  */
-		pgn->make = false;
+	} else if (gn->built_status == ERROR)
+		/* Already had an error when making this beastie. Tell the
+		 * parent to abort.  */
+		pgn->must_make = false;
 	else {
-		switch (gn->made) {
+		switch (gn->built_status) {
 		case BEINGMADE:
 			Error("Graph cycles through %s\n", gn->name);
-			gn->made = ERROR;
-			pgn->make = false;
+			gn->built_status = ERROR;
+			pgn->must_make = false;
 			break;
 		case MADE:
 			if ((gn->type & OP_EXEC) == 0) {
@@ -223,8 +223,8 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	}
 
 	/* For each entry in the list of targets to create, call CompatMake on
-	 * it to create the thing. CompatMake will leave the 'made' field of gn
-	 * in one of several states:
+	 * it to create the thing. CompatMake will leave the 'built_status' 
+	 * field of gn in one of several states:
 	 *	    UPTODATE	    gn was already up-to-date
 	 *	    MADE	    gn was recreated successfully
 	 *	    ERROR	    An error occurred while gn was being
@@ -236,9 +236,9 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
 		CompatMake(gn, gn);
 
-		if (gn->made == UPTODATE)
+		if (gn->built_status == UPTODATE)
 			printf("`%s' is up to date.\n", gn->name);
-		else if (gn->made == ABORTED) {
+		else if (gn->built_status == ABORTED) {
 			printf("`%s' not remade because of errors.\n",
 			    gn->name);
 			errors++;

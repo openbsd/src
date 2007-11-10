@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.50 2007/11/06 21:12:23 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.51 2007/11/10 12:51:40 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -180,8 +180,8 @@ Targ_NewGNi(const char *name, const char *ename)
 
 	gn->special = SPECIAL_NONE;
 	gn->unmade = 0;
-	gn->make = false;
-	gn->made = UNMADE;
+	gn->must_make = false;
+	gn->built_status = UNMADE;
 	gn->childMade =	false;
 	gn->order = 0;
 	ts_set_out_of_date(gn->mtime);
@@ -361,16 +361,19 @@ TargPrintNode(GNode *gn, int pass)
 			if (!is_out_of_date(gn->mtime)) {
 				printf("# last modified %s: %s\n",
 				      time_to_string(gn->mtime),
-				      (gn->made == UNMADE ? "unmade" :
-				       (gn->made == MADE ? "made" :
-					(gn->made == UPTODATE ? "up-to-date" :
+				      (gn->built_status == UNMADE ? "unmade" :
+				       (gn->built_status == MADE ? "made" :
+					(gn->built_status == UPTODATE ? 
+					    "up-to-date" :
 					     "error when made"))));
-			} else if (gn->made != UNMADE) {
+			} else if (gn->built_status != UNMADE) {
 				printf("# non-existent (maybe): %s\n",
-				      (gn->made == MADE ? "made" :
-				       (gn->made == UPTODATE ? "up-to-date" :
-					(gn->made == ERROR ? "error when made" :
-					 "aborted"))));
+				      (gn->built_status == MADE ? "made" :
+				       (gn->built_status == UPTODATE ? 
+					    "up-to-date" :
+					(gn->built_status == ERROR ? 
+					    "error when made" :
+					    "aborted"))));
 			} else {
 				printf("# unmade\n");
 			}

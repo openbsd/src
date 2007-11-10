@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.47 2007/11/06 21:12:23 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.48 2007/11/10 12:51:40 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ MakeAddChild(void *to_addp, void *lp)
 	GNode	   *to_add = (GNode *)to_addp;
 	Lst 	   l = (Lst)lp;
 
-	if (!to_add->make && !(to_add->type & OP_USE))
+	if (!to_add->must_make && !(to_add->type & OP_USE))
 		Lst_EnQueue(l, to_add);
 }
 
@@ -153,7 +153,7 @@ Make_Update(GNode *cgn)	/* the child node */
 	 * now -- some rules won't actually update the file. If the file still
 	 * doesn't exist, make its mtime now.
 	 */
-	if (cgn->made != UPTODATE) {
+	if (cgn->built_status != UPTODATE) {
 		/*
 		 * This is what Make does and it's actually a good thing, as it
 		 * allows rules like
@@ -176,11 +176,11 @@ Make_Update(GNode *cgn)	/* the child node */
 
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = (GNode *)Lst_Datum(ln);
-		if (pgn->make) {
+		if (pgn->must_make) {
 			pgn->unmade--;
 
 			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-				if (cgn->made == MADE) {
+				if (cgn->built_status == MADE) {
 					pgn->childMade = true;
 					if (is_strictly_before(pgn->cmtime,
 					    cgn->mtime))
@@ -208,7 +208,8 @@ Make_Update(GNode *cgn)	/* the child node */
 	for (ln = Lst_First(&cgn->successors); ln != NULL; ln = Lst_Adv(ln)) {
 		GNode	*succ = (GNode *)Lst_Datum(ln);
 
-		if (succ->make && succ->unmade == 0 && succ->made == UNMADE)
+		if (succ->must_make && succ->unmade == 0 
+		    && succ->built_status == UNMADE)
 			(void)Lst_QueueNew(&toBeMade, succ);
 	}
 }
@@ -228,7 +229,7 @@ try_to_make_node(GNode *gn)
 		for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)){
 			GNode	*pgn = (GNode *)Lst_Datum(ln);
 
-			if (pgn->make && pgn->made == UNMADE) {
+			if (pgn->must_make && pgn->built_status == UNMADE) {
 				if (DEBUG(MAKE))
 					printf(
 					    "predecessor %s not made yet.\n", 
@@ -258,7 +259,7 @@ try_to_make_node(GNode *gn)
 	} else {
 		if (DEBUG(MAKE))
 			printf("up-to-date\n");
-		gn->made = UPTODATE;
+		gn->built_status = UPTODATE;
 		if (gn->type & OP_JOIN) {
 			/*
 			 * Even for an up-to-date .JOIN node, we need it
@@ -322,7 +323,7 @@ MakePrintStatus(
 {
 	GNode	*gn = (GNode *)gnp;
 	bool	cycle = *(bool *)cyclep;
-	if (gn->made == UPTODATE) {
+	if (gn->built_status == UPTODATE) {
 		printf("`%s' is up to date.\n", gn->name);
 	} else if (gn->unmade != 0) {
 		if (cycle) {
@@ -337,13 +338,13 @@ MakePrintStatus(
 			 * will cause this to erroneously complain about a
 			 * being in the cycle, but this is a good approximation.
 			 */
-			if (gn->made == CYCLE) {
+			if (gn->built_status == CYCLE) {
 				Error("Graph cycles through `%s'", gn->name);
-				gn->made = ENDCYCLE;
+				gn->built_status = ENDCYCLE;
 				Lst_ForEach(&gn->children, MakePrintStatus, &t);
-				gn->made = UNMADE;
-			} else if (gn->made != ENDCYCLE) {
-				gn->made = CYCLE;
+				gn->built_status = UNMADE;
+			} else if (gn->built_status != ENDCYCLE) {
+				gn->built_status = CYCLE;
 				Lst_ForEach(&gn->children, MakePrintStatus, &t);
 			}
 		} else {
@@ -370,8 +371,8 @@ add_targets_to_make(Lst targs)
 
 	Lst_Clone(&examine, targs, NOCOPY);
 	while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
-		if (!gn->make) {
-			gn->make = true;
+		if (!gn->must_make) {
+			gn->must_make = true;
 			numNodes++;
 
 			look_harder_for_target(gn);
@@ -408,7 +409,7 @@ add_targets_to_make(Lst targs)
  *	true if work was done. false otherwise.
  *
  * Side Effects:
- *	The make field of all nodes involved in the creation of the given
+ *	The must_make field of all nodes involved in the creation of the given
  *	targets is set to 1. The toBeMade list is set to contain all the
  *	'leaves' of these subgraphs.
  *-----------------------------------------------------------------------
