@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.9 2007/11/10 12:51:40 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.10 2007/11/10 13:59:48 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -68,7 +68,7 @@ struct Suff_;
  *	   to create this target.
  */
 
-#define UNMADE		0
+#define UNKNOWN		0
 #define BEINGMADE	1
 #define MADE		2
 #define	UPTODATE	3
@@ -93,16 +93,14 @@ struct GNode_ {
 			 * made */
     char built_status;	/* Set to reflect the state of processing
 			 * on this node:
-			 *  UNMADE - Not examined yet
-			 *  BEINGMADE - Target is already being made.
-			 *	Indicates a cycle in the graph. (compat
-			 *	mode only)
+			 *  UNKNOWN - Not examined yet
+			 *  BEINGMADE - Target is currently being made.
 			 *  MADE - Was out-of-date and has been made
 			 *  UPTODATE - Was already up-to-date
 			 *  ERROR - An error occurred while it was being
 			 *	made (used only in compat mode)
 			 *  ABORTED - The target was aborted due to
-			 *	an error making an inferior (compat).
+			 *	an error making an inferior.
 			 *  CYCLE - Marked as potentially being part of
 			 *	a graph cycle. If we come back to a
 			 *	node marked this way, it is printed

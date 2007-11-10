@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.48 2007/11/10 12:51:40 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.49 2007/11/10 13:59:48 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ Make_Update(GNode *cgn)	/* the child node */
 		GNode	*succ = (GNode *)Lst_Datum(ln);
 
 		if (succ->must_make && succ->unmade == 0 
-		    && succ->built_status == UNMADE)
+		    && succ->built_status == UNKNOWN)
 			(void)Lst_QueueNew(&toBeMade, succ);
 	}
 }
@@ -229,7 +229,7 @@ try_to_make_node(GNode *gn)
 		for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)){
 			GNode	*pgn = (GNode *)Lst_Datum(ln);
 
-			if (pgn->must_make && pgn->built_status == UNMADE) {
+			if (pgn->must_make && pgn->built_status == UNKNOWN) {
 				if (DEBUG(MAKE))
 					printf(
 					    "predecessor %s not made yet.\n", 
@@ -342,7 +342,7 @@ MakePrintStatus(
 				Error("Graph cycles through `%s'", gn->name);
 				gn->built_status = ENDCYCLE;
 				Lst_ForEach(&gn->children, MakePrintStatus, &t);
-				gn->built_status = UNMADE;
+				gn->built_status = UNKNOWN;
 			} else if (gn->built_status != ENDCYCLE) {
 				gn->built_status = CYCLE;
 				Lst_ForEach(&gn->children, MakePrintStatus, &t);

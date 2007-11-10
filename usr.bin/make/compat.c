@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.67 2007/11/10 12:51:40 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.68 2007/11/10 13:59:48 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ CompatMake(void *gnp,	/* The node to make */
 
 	if (gn->type & OP_USE) {
 		Make_HandleUse(gn, pgn);
-	} else if (gn->built_status == UNMADE) {
+	} else if (gn->built_status == UNKNOWN) {
 		/* First mark ourselves to be made, then apply whatever
 		 * transformations the suffix module thinks are necessary.
 		 * Once that's done, we can descend and make all our children.
