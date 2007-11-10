@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.85 2007/11/04 13:38:05 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.86 2007/11/10 13:17:11 mbalmer Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -572,6 +572,7 @@ Supported devices {:-include-:}:
 			PCI32 5V DCF77 time signal station receiver card
 			PCI509 5V DCF77 time signal station receiver card
 			PCI511 3.3V/5V DCF77 time signal station receiver card
+			USB5131 USB attached DCF77 radio clock
 
 	Cryptography Accelerators
 		Hifn 6500 (lofn)
