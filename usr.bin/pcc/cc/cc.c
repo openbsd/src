@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.10 2007/11/02 21:07:52 millert Exp $	*/
+/*	$OpenBSD: cc.c,v 1.11 2007/11/10 22:11:22 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -85,7 +85,6 @@ int getsuf(char *);
 int main(int, char *[]);
 void error(char *, ...);
 void errorx(int, char *, ...);
-int nodup(char **, char *);
 int callsys(char [], char *[]);
 int cunlink(char *);
 void dexit(int);
@@ -341,7 +340,13 @@ main(int argc, char *argv[])
 					}
 				t = setsuf(t, 'o');
 			}
-			if (nodup(llist, t)) {
+
+			/* Check for duplicate .o files. */
+			for (j = getsuf(t) == 'o' ? 0 : nl; j < nl; j++) {
+				if (strcmp(llist[j], t) == 0)
+					break;
+			}
+			if (j == nl) {
 				llist[nl++] = t;
 				if (nl >= MAXLIB)
 					{
@@ -360,17 +365,6 @@ main(int argc, char *argv[])
 		errorx(8, "-o given with -c || -E || -S and more than one file");
 	if (outfile && clist[0] && strcmp(outfile, clist[0]) == 0)
 		errorx(8, "output file will be clobbered");
-#if 0
-	for(i=0, j=0; i<nc; i++) {
-		if((c=getsuf(clist[i]))=='c' || c=='S') {
-			j++;
-			break;
-		}
-	}
-	if (j==0 && Eflag)
-		errorx(8, "no file to be preprocessed");
-#endif
-
 	if (gflag) Oflag = 0;
 #if 0
 	if (proflag)
@@ -738,26 +732,6 @@ copy(char *as)
 		errorx(8, "no space for file names");
 
 	return p;
-}
-
-int
-nodup(char **l, char *os)
-{
-	register char *t, *s;
-	register int c;
-
-	s = os;
-	if (getsuf(s) != 'o')
-		return(1);
-	while((t = *l++)) {
-		while((c = *s++))
-			if (c != *t++)
-				break;
-		if (*t=='\0' && c=='\0')
-			return(0);
-		s = os;
-	}
-	return(1);
 }
 
 int
