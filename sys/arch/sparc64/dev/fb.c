@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.16 2006/12/03 16:41:58 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.17 2007/11/10 15:17:16 jsing Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -249,7 +249,7 @@ fbwscons_console_init(struct sunfb *sf, int row)
 		ri->ri_ccol = ri->ri_cols - 1;
 
 	/*
-	 * Take care of updating the PROM cursor position as weel if we can.
+	 * Take care of updating the PROM cursor position as well if we can.
 	 */
 	if (ri->ri_updatecursor != NULL &&
 	    (sf->sf_ccolp != NULL || sf->sf_crowp != NULL))
