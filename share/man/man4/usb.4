@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.94 2007/11/10 13:55:15 mbalmer Exp $
+.\"	$OpenBSD: usb.4,v 1.95 2007/11/10 17:22:04 mbalmer Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,6 +202,13 @@ USB MIDI devices
 .It Xr urio 4
 Diamond Multimedia Rio MP3 players
 .El
+.Ss Time receiver devices
+.Bl -tag -width 12n -offset ind -compact
+.It Xr udcf 4
+Gude ADS Expert mouseCLOCK USB timedelta sensor
+.It Xr umbg 4
+Meinberg Funkuhren USB5131 timedelta sensor
+.El
 .Ss Radio receiver devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr udsbr 4
@@ -226,10 +233,6 @@ mouse devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr uberry 4
 Research In Motion Blackberry
-.It Xr udcf 4
-Gude ADS Expert mouseCLOCK USB timedelta sensor
-.It Xr umbg 4
-Meinberg Funkuhren USB5131 timedelta sensor
 .It Xr ugen 4
 USB generic device support
 .It Xr uow 4
