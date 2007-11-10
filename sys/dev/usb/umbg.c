@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.2 2007/11/10 13:43:05 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.3 2007/11/10 14:40:09 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -103,7 +103,7 @@ struct mbg_time_hr {
 #define MBG_UTC			0x10	/* special UTC firmware is installed */
 #define MBG_LEAP		0x20	/* announcement of a leap second */
 #define MBG_IFTM		0x40	/* current time was set from host */
-#define MBG_INVALID		0x80	/* time is invalid */
+#define MBG_INVALID		0x80	/* time invalid, batt. was disconn. */
 
 /* commands */
 #define MBG_GET_TIME		0x00
@@ -189,14 +189,14 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
-		DPRINTF(("%s: failed to set configuration, err=%s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err)));
+		printf("%s: failed to set configuration, err=%s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		goto fishy;
 	}
 
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
-		DPRINTF(("%s: failed to get interface, err=%s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err)));
+		printf("%s: failed to get interface, err=%s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		goto fishy;
 	}
 
@@ -301,7 +301,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fishy:
-	DPRINTF(("umbg_attach failed\n"));
 	sc->sc_dying = 1;
 }
 
@@ -372,14 +371,10 @@ umbg_task(void *arg)
 
 	if (umbg_read(sc, MBG_GET_TIME_HR, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
-		DPRINTF(("%s: error reading hi-res time\n",
-		    sc->sc_dev.dv_xname));
 		sc->sc_signal.status = SENSOR_S_CRIT;
 		goto bail_out;
 	}
 	if (tframe.status & MBG_INVALID) {
-		DPRINTF(("%s: invalid time, battery was disconnected\n",
-		    sc->sc_dev.dv_xname));
 		sc->sc_signal.status = SENSOR_S_CRIT;
 		goto bail_out;
 	}
