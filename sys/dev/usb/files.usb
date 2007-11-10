@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.71 2007/09/08 02:15:52 jsg Exp $
+#	$OpenBSD: files.usb,v 1.72 2007/11/10 12:58:08 mbalmer Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -110,6 +110,11 @@ file	dev/usb/umass_scsi.c		umass & (scsibus | atapiscsi)
 device	udcf
 attach	udcf at uhub
 file	dev/usb/udcf.c			udcf
+
+# Meinberg USB5131 DCF77 radio clock
+device	umbg
+attach	umbg at uhub
+file	dev/usb/umbg.c			umbg
 
 # Diamond Multimedia Rio 500
 device	urio
