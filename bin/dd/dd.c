@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.15 2007/11/10 13:45:17 chl Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.15 2007/11/10 13:45:17 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,9 @@ main(int argc, char *argv[])
 static void
 setup(void)
 {
+#ifndef NO_CONV
 	u_int cnt;
+#endif
 
 	if (in.name == NULL) {
 		in.name = "stdin";
