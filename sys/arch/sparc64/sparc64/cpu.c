@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.29 2007/11/09 16:13:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.30 2007/11/10 00:22:29 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -174,8 +174,29 @@ cpu_match(parent, vcf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct cfdata *cf = (struct cfdata *)vcf;
+#ifndef MULTIPROCESSOR
+	int portid;
+#endif
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+		return (0);
+
+#ifndef MULTIPROCESSOR
+	/*
+	 * On singleprocessor kernels, only match the CPU we're
+	 * running on.
+	 */
+	portid = getpropint(ma->ma_node, "portid", -1);
+	if (portid == -1)
+		portid = getpropint(ma->ma_node, "upa-portid", -1);
+	if (portid == -1)
+		return (0);
+
+	if (portid != cpus->ci_upaid)
+		return (0);
+#endif
+
+	return (1);
 }
 
 /*
