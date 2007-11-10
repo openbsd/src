@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.1 2007/11/10 12:58:08 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.2 2007/11/10 13:43:05 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -238,8 +238,7 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_signal.type = SENSOR_PERCENT;
 	sc->sc_signal.value = 0LL;
 	sc->sc_signal.flags = 0;
-	strlcpy(sc->sc_signal.desc, "Signal",
-	    sizeof(sc->sc_signal.desc));
+	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 
 	printf("%s: ", sc->sc_dev.dv_xname);
