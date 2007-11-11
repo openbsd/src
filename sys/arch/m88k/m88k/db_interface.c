@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2007/05/19 20:33:49 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2007/11/11 21:15:34 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -623,25 +623,29 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	cpuid_t cpu;
 	struct cpu_info *ci;
+	char state[15];
 
+	db_printf(" cpu  state          curproc  curpcb   depth    ipi softintr\n");
 	CPU_INFO_FOREACH(cpu, ci) {
-		db_printf("%c%4d: ", (cpu == cpu_number()) ? '*' : ' ',
-		    CPU_INFO_UNIT(ci));
 		switch (ci->ci_ddb_state) {
 		case CI_DDB_RUNNING:
-			db_printf("running\n");
+			strlcpy(state, "running", sizeof state);
 			break;
 		case CI_DDB_ENTERDDB:
-			db_printf("entering ddb\n");
+			strlcpy(state, "entering ddb", sizeof state);
 			break;
 		case CI_DDB_INDDB:
-			db_printf("ddb\n");
+			strlcpy(state, "in ddb", sizeof state);
 			break;
 		default:
-			db_printf("? (%d)\n",
+			snprintf(state, sizeof state, "unknown (%d)",
 			    ci->ci_ddb_state);
 			break;
 		}
+		db_printf("%ccpu%1d %-14s %08x %08x %3d %08x %08x\n",
+		    (cpu == cpu_number()) ? '*' : ' ', CPU_INFO_UNIT(ci),
+		    state, ci->ci_curproc, ci->ci_curpcb, ci->ci_intrdepth,
+		    ci->ci_ipi, ci->ci_softintr);
 	}
 }
 
