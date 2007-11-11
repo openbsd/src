@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.82 2007/10/07 18:12:48 chl Exp $	*/
+/*	$OpenBSD: client.c,v 1.83 2007/11/11 09:51:49 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -725,7 +725,7 @@ cvs_client_merged(char *data)
 {
 	int fd;
 	time_t now;
-	mode_t fmode;
+	mode_t fmode, mask;
 	size_t flen;
 	CVSENTRIES *ent;
 	const char *errstr;
@@ -763,6 +763,9 @@ cvs_client_merged(char *data)
 
 	cvs_strtomode(mode, &fmode);
 	xfree(mode);
+	mask = umask(0);
+	umask(mask);
+	fmode &= ~mask;
 
 	time(&now);
 	asctime_r(gmtime(&now), timebuf);
