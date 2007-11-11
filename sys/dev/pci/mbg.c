@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.21 2007/11/07 09:56:22 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.22 2007/11/11 15:30:26 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -47,7 +47,6 @@ struct mbg_softc {
 	struct ksensor		sc_timedelta;
 	struct ksensor		sc_signal;
 	struct ksensordev	sc_sensordev;
-	u_int8_t		sc_status;
 
 	int			(*sc_read)(struct mbg_softc *, int cmd,
 				    char *buf, size_t len,
@@ -84,10 +83,7 @@ struct mbg_time_hr {
 #define MBG_UTC			0x10	/* special UTC firmware is installed */
 #define MBG_LEAP		0x20	/* announcement of a leap second */
 #define MBG_IFTM		0x40	/* current time was set from host */
-#define MBG_INVALID		0x80	/* time is invalid */
-
-/* status bits we are interested in */
-#define MBG_STATMASK		(MBG_FREERUN | MBG_SYNC | MBG_IFTM)
+#define MBG_INVALID		0x80	/* time invalid, batt. was disconn. */
 
 /* AMCC S5920 registers */
 #define AMCC_DATA		0x00	/* data register, on 2nd IO region */
@@ -141,7 +137,7 @@ void	mbg_attach(struct device *, struct device *, void *);
 void	mbg_task(void *);
 void	mbg_task_hr(void *);
 void	mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
-	    int64_t timedelta, u_int8_t rsignal, u_int8_t status);
+	    int64_t timedelta, u_int8_t rsignal, u_int16_t status);
 int	mbg_read_amcc_s5920(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
@@ -180,7 +176,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	struct mbg_time tframe;
 	pcireg_t memtype;
 	bus_size_t iosize, iosize2;
-	int bar = PCI_MAPREG_START;
+	int bar = PCI_MAPREG_START, signal;
 	const char *desc;
 #ifdef MBG_DEBUG
 	char fw_id[MBG_ID_LEN];
@@ -206,7 +202,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
-	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
 	sc->sc_timedelta.value = 0LL;
 	sc->sc_timedelta.flags = 0;
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
@@ -215,10 +210,8 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_signal.status = SENSOR_S_UNKNOWN;
 	sc->sc_signal.value = 0LL;
 	sc->sc_signal.flags = 0;
-	strlcpy(sc->sc_signal.desc, "Signal strength",
-	    sizeof(sc->sc_signal.desc));
+	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
-	sensordev_install(&sc->sc_sensordev);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEINBERG_PCI32:
@@ -262,18 +255,26 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
 		printf(": unknown status");
-		sc->sc_status = 0;
+		sc->sc_signal.status = SENSOR_S_CRIT;
 	} else {
-		tframe.status &= MBG_STATMASK;
+		sc->sc_signal.status = SENSOR_S_OK;
+		signal = tframe.signal - MBG_SIG_BIAS;
+		if (signal < 0)
+			signal = 0;
+		else if (signal > MBG_SIG_MAX)
+			signal = MBG_SIG_MAX;
+		sc->sc_signal.value = signal;
+
 		if (tframe.status & MBG_SYNC)
 			printf(": synchronized");
 		else
 			printf(": not synchronized");
-		if (tframe.status & MBG_FREERUN)
+		if (tframe.status & MBG_FREERUN) {
+			sc->sc_signal.status = SENSOR_S_WARN;
 			printf(", free running");
+		}
 		if (tframe.status & MBG_IFTM)
 			printf(", time set from host");
-		sc->sc_status = tframe.status;
 	}
 #ifdef MBG_DEBUG
 	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
@@ -286,12 +287,12 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	printf("\n");
+	sensordev_install(&sc->sc_sensordev);
 }
 
 /*
  * mbg_task() reads a timestamp from cards that to not provide a high
- * resolution timestamp.  The precision is limited to 1/100 sec. in this
- * case.
+ * resolution timestamp.  The precision is limited to 1/100 sec.
  */
 void
 mbg_task(void *arg)
@@ -305,12 +306,11 @@ mbg_task(void *arg)
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
-		log(LOG_ERR, "%s: error reading time\n", sc->sc_dev.dv_xname);
+		sc->sc_signal.status = SENSOR_S_CRIT;
 		return;
 	}
 	if (tframe.status & MBG_INVALID) {
-		log(LOG_INFO, "%s: invalid time, battery was disconnected\n",
-		    sc->sc_dev.dv_xname);
+		sc->sc_signal.status = SENSOR_S_CRIT;
 		return;
 	}
 	ymdhms.dt_year = tframe.year + 2000;
@@ -325,7 +325,7 @@ mbg_task(void *arg)
 	    - tframe.hundreds) * 10000000LL + tstamp.tv_nsec;
 
 	mbg_update_sensor(sc, &tstamp, timedelta, tframe.signal,
-	    tframe.status);
+	    (u_int16_t)tframe.status);
 }
 
 /*
@@ -342,27 +342,26 @@ mbg_task_hr(void *arg)
 
 	if (sc->sc_read(sc, MBG_GET_TIME_HR, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
-		log(LOG_ERR, "%s: error reading hi-res time\n",
-		    sc->sc_dev.dv_xname);
+		sc->sc_signal.status = SENSOR_S_CRIT;
 		return;
 	}
 	if (tframe.status & MBG_INVALID) {
-		log(LOG_INFO, "%s: invalid time, battery was disconnected\n",
-		    sc->sc_dev.dv_xname);
+		sc->sc_signal.status = SENSOR_S_CRIT;
 		return;
 	}
 
 	tlocal = tstamp.tv_sec * NSECPERSEC + tstamp.tv_nsec;
-	trecv = tframe.sec * NSECPERSEC + (tframe.frac * NSECPERSEC >> 32);
+	trecv = (letoh32(tframe.sec) - letoh32(tframe.utc_off)) * NSECPERSEC +
+	    (letoh32(tframe.frac) * NSECPERSEC >> 32);
 
 	mbg_update_sensor(sc, &tstamp, tlocal - trecv, tframe.signal,
-	    tframe.status);
+	    letoh16(tframe.status));
 }
 
 /* update the sensor value, common to all cards */
 void
 mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
-    int64_t timedelta, u_int8_t rsignal, u_int8_t status)
+    int64_t timedelta, u_int8_t rsignal, u_int16_t status)
 {
 	int signal;
 
@@ -378,23 +377,10 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 		signal = MBG_SIG_MAX;
 
 	sc->sc_signal.value = signal * 100000 / MBG_SIG_MAX;
-	sc->sc_signal.status = SENSOR_S_OK;
+	sc->sc_signal.status = status & MBG_FREERUN ?
+	    SENSOR_S_WARN : SENSOR_S_OK;
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
-
-	status &= MBG_STATMASK;
-	if (status != sc->sc_status) {
-		if (status & MBG_SYNC)
-			log(LOG_INFO, "%s: clock is synchronized",
-			    sc->sc_dev.dv_xname);
-		if (status & MBG_FREERUN)
-			log(LOG_INFO, "%s: clock is free running",
-			    sc->sc_dev.dv_xname);
-		if (status & MBG_IFTM)
-			log(LOG_INFO, "%s: time set from host",
-			    sc->sc_dev.dv_xname);
-		sc->sc_status = status;
-	}
 }
 
 /*
@@ -494,7 +480,6 @@ mbg_read_amcc_s5933(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 	for (n = 0; n < len; n++) {
 		if (bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMCC_MCSR)
 		    & 0x20) {
-			printf("%s: FIFO error\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
 		buf[n] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
