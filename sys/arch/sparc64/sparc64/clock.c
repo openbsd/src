@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.36 2007/10/21 21:00:38 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.37 2007/11/11 19:47:34 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -589,7 +589,7 @@ cpu_initclocks()
 		printf("Using %%tick -- intr in %ld cycles...",
 		    tick_increment);
 #endif
-		next_tick(tick_increment);
+		tick_start();
 #ifdef DEBUG
 		printf("done.\n");
 #endif
@@ -718,15 +718,21 @@ int
 tickintr(cap)
 	void *cap;
 {
-	int s;
+	u_int64_t base, s;
 
 	hardclock((struct clockframe *)cap);
 
-	s = splhigh();
-	/* Reset the interrupt */
-	next_tick(tick_increment);
+	/* 
+	 * Reset the interrupt.  We need to disable interrupts to
+	 * block out IPIs, otherwise a value that is in the past could
+	 * be written to the TICK_CMPR register, causing hardclock to
+	 * stop.
+	 */
+	s = intr_disable();
+	base = sparc_rdpr(tick);
+	sparc_wr(tick_cmpr, (base + tick_increment) & TICK_TICKS, 0);
 	level0.ih_count.ec_count++;
-	splx(s);
+	intr_restore(s);
 
 	return (1);
 }
@@ -900,7 +906,7 @@ tick_start(void)
 	s = intr_disable();
 	base = sparc_rdpr(tick) & TICK_TICKS;
 	base = roundup(base, tick_increment);
-	sparc_wr(tick_cmpr, base + tick_increment, 0);
+	sparc_wr(tick_cmpr, (base + tick_increment) & TICK_TICKS, 0);
 	intr_restore(s);
 }
 

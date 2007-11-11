@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.103 2007/11/10 10:46:59 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.104 2007/11/11 19:47:34 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8861,71 +8861,6 @@ Lstupid_loop:
 	 dec	%o0
 	retl
 	 nop
-
-/*
- * next_tick(long increment)
- *
- * Sets the %tick_cmpr register to fire off in `increment' machine
- * cycles in the future.  Also handles %tick wraparound.  In 32-bit
- * mode we're limited to a 32-bit increment.
- */
-	.data
-	.align	8
-tlimit:
-	.xword	0
-	.text
-ENTRY(next_tick)
-	rd	TICK_CMPR, %o2
-	rdpr	%tick, %o1
-
-	mov	1, %o3		! Mask off high bits of these registers
-	sllx	%o3, 63, %o3
-	andn	%o1, %o3, %o1
-	andn	%o2, %o3, %o2
-	cmp	%o1, %o2	! Did we wrap?  (tick < tick_cmpr)
-	bgt,pt	%icc, 1f
-	 add	%o1, 1000, %o1	! Need some slack so we don't lose intrs.
-
-	/*
-	 * Handle the unlikely case of %tick wrapping.
-	 *
-	 * This should only happen every 10 years or more.
-	 *
-	 * We need to increment the time base by the size of %tick in
-	 * microseconds.  This will require some divides and multiplies
-	 * which can take time.  So we re-read %tick.
-	 *
-	 */
-
-	/* XXXXX NOT IMPLEMENTED */
-
-
-
-1:
-	add	%o2, %o0, %o2
-	andn	%o2, %o3, %o4
-	brlz,pn	%o4, Ltick_ovflw
-	 cmp	%o2, %o1	! Has this tick passed?
-	blt,pn	%xcc, 1b	! Yes
-	 nop
-
-	retl
-	 wr	%o2, TICK_CMPR
-
-Ltick_ovflw:
-/*
- * When we get here tick_cmpr has wrapped, but we don't know if %tick
- * has wrapped.  If bit 62 is set then we have not wrapped and we can
- * use the current value of %o4 as %tick.  Otherwise we need to return
- * to our loop with %o4 as %tick_cmpr (%o2).
- */
-	srlx	%o3, 1, %o5
-	btst	%o5, %o1
-	bz,pn	%xcc, 1b
-	 mov	%o4, %o2
-	retl
-	 wr	%o2, TICK_CMPR
-
 
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.
