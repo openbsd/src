@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.141 2007/07/19 14:50:16 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.142 2007/11/11 15:48:35 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: July 19 2007 $
+.Dd $Mdocdate: November 11 2007 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -39,10 +39,10 @@
 .Sh SYNOPSIS
 .Nm sysctl
 .Op Fl n
-.Ar variable ...
+.Ar name ...
 .Nm sysctl
-.Op Fl nqw
-.Ar variable Ns = Ns Ar value ...
+.Op Fl nq
+.Ar name Ns = Ns Ar value ...
 .Nm sysctl
 .Op Fl n
 .Fl Aa
@@ -65,12 +65,6 @@ For example, to list all the machdep variables:
 .Pp
 When setting a variable,
 the MIB name should be followed by an equal sign and the new value.
-Variables are set implicitly using the
-.Ar variable Ns = Ns Ar value
-syntax, or explicitly with the
-.Fl w
-option.
-Both forms are identical.
 .Pp
 The options are as follows:
 .Bl -tag -width xxx
@@ -92,14 +86,11 @@ For example, to set the psize shell variable to the pagesize of the hardware:
 Suppress all output when setting a variable.
 This option overrides the behaviour of
 .Fl n .
-.It Fl w
-Set a variable.
-It must be followed by a
-.Ar variable Ns = Ns Ar value
-assignment.
-The
-.Fl w
-flag is optional when setting a variable.
+.It Ar name Ns = Ns Ar value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
 .El
 .Pp
 The information available from
