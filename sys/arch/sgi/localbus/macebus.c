@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.29 2007/10/14 11:18:42 jsing Exp $ */
+/*	$OpenBSD: macebus.c,v 1.30 2007/11/11 14:56:41 jsing Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -733,6 +733,9 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 	int v;
 	intrmask_t pending;
 	u_int64_t intstat, isastat, mask;
+#ifdef DIAGNOSTIC
+	static int spurious = 0;
+#endif
 
 	intstat = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT);
 	intstat &= 0xffff;
@@ -768,8 +771,27 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 		}
 	}
 
-	if (caught)
+	if (caught) {
+#ifdef DIAGNOSTIC
+		spurious = 0;
+#endif
 		return CR_INT_0;
+	}
+
+#ifdef DIAGNOSTIC
+	if (pending != 0) {
+		printf("stray interrupt, mace mask %lx stat %lx\n"
+		    "crime mask %lx stat %lx hard %lx (pending %lx caught %lx)\n",
+		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK),
+		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT),
+		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK),
+		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT),
+		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_HARD),
+		    pending, caught);
+		if (++spurious >= 10)
+			panic("too many stray interrupts");
+	}
+#endif
 
 	return 0;  /* Not found here. */
 }
