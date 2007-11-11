@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.34 2007/11/09 22:50:48 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.35 2007/11/11 13:06:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -260,7 +260,7 @@ safe_level(u_int mask, u_int curlevel)
 	int i;
 
 #ifdef MULTIPROCESSOR
-	mask &= ~IPI_MASK;
+	mask &= ~(IPI_MASK | CLOCK_IPI_MASK);
 #endif
 	for (i = curlevel; i < INT_LEVEL; i++)
 		if ((int_mask_val[i] & mask) == 0)
@@ -278,13 +278,16 @@ m188_getipl(void)
 u_int
 m188_setipl(u_int level)
 {
-	u_int curspl, mask;
+	u_int curspl, mask, psr;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	int cpu = ci->ci_cpuid;
 #else
 	int cpu = cpu_number();
 #endif
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	curspl = m188_curspl[cpu];
 
@@ -292,21 +295,15 @@ m188_setipl(u_int level)
 #ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
 		mask &= ~SLAVE_MASK;
-	mask |= IPI_BIT(cpu);
+	mask |= SWI_IPI_MASK(cpu);
+	if (level < IPL_CLOCK)
+		mask |= SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
 	*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
 
-#ifdef MULTIPROCESSOR
-	/*
-	 * If we have pending IPIs and we are lowering the spl, inflict
-	 * ourselves an IPI trap so that we have a chance to process this
-	 * now.
-	 */
-	if (level < curspl && ci->ci_ipi != 0 && ci->ci_intrdepth <= 1)
-		*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
-#endif
+	set_psr(psr);
 
 	return curspl;
 }
@@ -314,7 +311,7 @@ m188_setipl(u_int level)
 u_int
 m188_raiseipl(u_int level)
 {
-	u_int mask, curspl;
+	u_int mask, curspl, psr;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	int cpu = ci->ci_cpuid;
@@ -322,18 +319,25 @@ m188_raiseipl(u_int level)
 	int cpu = cpu_number();
 #endif
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
 	curspl = m188_curspl[cpu];
 	if (curspl < level) {
 		mask = int_mask_val[level];
 #ifdef MULTIPROCESSOR
 		if (cpu != master_cpu)
 			mask &= ~SLAVE_MASK;
-		mask |= IPI_BIT(cpu);
+		mask |= SWI_IPI_MASK(cpu);
+		if (level < IPL_CLOCK)
+			mask |= SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
 		*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;
 	}
+
+	set_psr(psr);
 
 	return curspl;
 }
@@ -349,7 +353,10 @@ m188_send_ipi(int ipi, cpuid_t cpu)
 		return;
 
 	atomic_setbits_int(&ci->ci_ipi, ipi);
-	*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
+	if (ipi & ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
+		*(volatile u_int32_t *)MVME188_SETSWI = SWI_IPI_BIT(cpu);
+	if (ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
+		*(volatile u_int32_t *)MVME188_SETSWI = SWI_CLOCK_IPI_BIT(cpu);
 }
 
 /*
@@ -360,6 +367,7 @@ m188_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
 	int ipi = ci->ci_ipi;
+	int retrig = 0;
 	int old_spl = eframe->tf_mask;
 	int s;
 
@@ -385,17 +393,28 @@ m188_ipi_handler(struct trapframe *eframe)
 			s = m188_raiseipl(IPL_CLOCK);		/* splclock */
 			hardclock((struct clockframe *)eframe);
 			m188_setipl(s);				/* splx */
-		} else
+		} else {
 			ipi &= ~CI_IPI_HARDCLOCK;	/* leave it pending */
+			retrig |= CI_IPI_HARDCLOCK;
+		}
 	}
 	if (ipi & CI_IPI_STATCLOCK) {
 		if (old_spl < IPL_STATCLOCK) {
 			s = m188_raiseipl(IPL_STATCLOCK);	/* splclock */
 			statclock((struct clockframe *)eframe);
 			m188_setipl(s);				/* splx */
-		} else
+		} else {
 			ipi &= ~CI_IPI_STATCLOCK;	/* leave it pending */
+			retrig |= CI_IPI_STATCLOCK;
+		}
 	}
+
+	/*
+	 * Retrigger the clock ipi if they could not be serviced yet.
+	 */
+	if (retrig != 0)
+		*(volatile u_int32_t *)MVME188_SETSWI =
+		    SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
 
 	atomic_clearbits_int(&ci->ci_ipi, ipi);
 }
@@ -451,7 +470,7 @@ const unsigned int obio_vec[32] = {
 void
 m188_ext_int(u_int v, struct trapframe *eframe)
 {
-#ifdef MULTIPPROCESSOR
+#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	int cpu = ci->ci_cpuid;
 #else
@@ -503,12 +522,13 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	/*
 	 * Clear IPIs immediately, so that we can re enable interrupts
 	 * before further processing. We rely on the interrupt mask to
-	 * make sure that if we get an IPI, it's really for us and
-	 * no other processor.
+	 * make sure that if we get an IPI, it's really for us and no
+	 * other processor.
 	 */
-	if (cur_mask & IPI_MASK) {
-		*(volatile u_int32_t *)MVME188_CLRSWI = cur_mask & IPI_MASK;
-		cur_mask &= ~IPI_MASK;
+	if (cur_mask & (IPI_MASK | CLOCK_IPI_MASK)) {
+		*(volatile u_int32_t *)MVME188_CLRSWI =
+		    SWI_IPI_BIT(cpu) | SWI_CLOCK_IPI_BIT(cpu);
+		cur_mask &= ~(IPI_MASK | CLOCK_IPI_MASK);
 	}
 #endif
 
