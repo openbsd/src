@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.28 2007/11/09 22:47:21 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.29 2007/11/11 13:05:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -712,7 +712,6 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	int cpu;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
-	u_int32_t cpumask;
 #endif
 	vaddr_t va;
 	paddr_t pa;
@@ -737,9 +736,7 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		break;
 	}
 
-#ifdef MULTIPROCESSOR
-	cpumask = pmap->pm_cpus & ~(1 << ci->ci_cpuid);
-#else
+#ifndef MULTIPROCESSOR
 	cpu = cpu_number();
 #endif
 
@@ -758,10 +755,9 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 
 			/* invalidate on all... */
 			if (flusher != m8820x_cmmu_sync_cache) {
-				for (cpu = 0; cpumask != 0; cpu++) {
-					if (((1 << cpu) & cpumask) == 0)
+				for (cpu = 0; cpu < MAX_CPUS; cpu++) {
+					if (m88k_cpus[cpu].ci_alive == 0)
 						continue;
-					cpumask ^= 1 << cpu;
 					(*flusher)(cpu, pa, count);
 				}
 			}
