@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.138 2007/11/06 02:49:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.139 2007/11/11 16:46:51 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1465,7 +1465,7 @@ void
 sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsi_link *sc_link = sd->sc_link;
-	struct scsi_generic cmd;
+	struct scsi_synchronize_cache cmd;
 
 	if (sc_link->quirks & SDEV_NOSYNCCACHE)
 		return;
@@ -1479,8 +1479,9 @@ sd_flush(struct sd_softc *sd, int flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = SYNCHRONIZE_CACHE;
 		
-	if (scsi_scsi_cmd(sc_link, &cmd, sizeof(cmd), NULL, 0, SDRETRIES,
-	    100000, NULL, flags | SCSI_IGNORE_ILLEGAL_REQUEST)) {
+	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)&cmd, sizeof(cmd),
+	    NULL, 0, SDRETRIES, 100000, NULL,
+	    flags | SCSI_IGNORE_ILLEGAL_REQUEST)) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));
 	} else
 		sd->flags &= ~SDF_DIRTY;
