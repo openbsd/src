@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.228 2007/11/11 09:49:47 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.229 2007/11/11 10:01:41 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,6 +174,7 @@ struct rcs_kw rcs_expkw[] =  {
 	{ "Date",	RCS_KW_DATE     },
 	{ "Header",	RCS_KW_HEADER   },
 	{ "Id",		RCS_KW_ID       },
+	{ "Locker",	RCS_KW_LOCKER	},
 	{ "Log",	RCS_KW_LOG      },
 	{ "Name",	RCS_KW_NAME     },
 	{ "RCSfile",	RCS_KW_RCSFILE  },
@@ -3263,6 +3264,10 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 				}
 
 				if (kwtype & RCS_KW_NAME)
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_kwexp_line: string truncated");
+
+				if (kwtype & RCS_KW_LOCKER)
 					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
 						fatal("rcs_kwexp_line: string truncated");
 			}
