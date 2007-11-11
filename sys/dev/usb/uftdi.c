@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.43 2007/10/11 18:33:15 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.44 2007/11/11 02:14:24 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -180,6 +180,9 @@ uftdi_match(struct device *parent, void *match, void *aux)
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_635 ||
 	     uaa->product == USB_PRODUCT_FTDI_MJS_SIRIUS_PC))
 		return (UMATCH_VENDOR_PRODUCT);
+	if (uaa->vendor == USB_VENDOR_IODATA &&
+	     uaa->product == USB_PRODUCT_IODATA_FT232R)
+		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_SIIG2 &&
 	    (uaa->product == USB_PRODUCT_SIIG2_US2308))
 		return (UMATCH_VENDOR_PRODUCT);
@@ -292,6 +295,17 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 			goto bad;
 		}
 		break;
+
+	case USB_VENDOR_IODATA:
+		switch (uaa->product) {
+		case USB_PRODUCT_IODATA_FT232R:
+			sc->sc_type = UFTDI_TYPE_8U232AM;
+			sc->sc_hdrlen = 0;
+			break;
+		default:
+			goto bad;
+		}
+		break;			
 
 	case USB_VENDOR_SIIG2:
 		switch (uaa->product) {

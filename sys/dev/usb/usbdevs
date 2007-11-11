@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.310 2007/11/10 22:58:24 deraadt Exp $
+$OpenBSD: usbdevs,v 1.311 2007/11/11 02:14:24 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1384,6 +1384,7 @@ product IODATA USBETTXS		0x0913	USB ETTX
 product IODATA USBWNB11A	0x0919	USB WN-B11
 product IODATA USBWNB11		0x0922	USB Airport WN-B11
 product IODATA ETGUS2		0x0930	ETG-US2
+product IODATA FT232R		0x093c	FT232R
 product IODATA USBRSAQ		0x0a03	RSAQ1 Serial
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
