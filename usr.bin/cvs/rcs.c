@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.227 2007/11/08 20:43:42 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.228 2007/11/11 09:49:47 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -252,7 +252,7 @@ RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
 {
 	int mode;
-	mode_t fmode;
+	mode_t fmode, mask;
 	RCSFILE *rfp;
 	va_list vap;
 	struct rcs_delta *rdp;
@@ -267,6 +267,10 @@ rcs_open(const char *path, int fd, int flags, ...)
 		va_end(vap);
 		fmode = (mode_t)mode;
 	}
+
+	mask = umask(0);
+	umask(mask);
+	fmode &= ~mask;
 
 	rfp = xcalloc(1, sizeof(*rfp));
 
