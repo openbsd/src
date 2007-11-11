@@ -102,6 +102,7 @@
 ./sbin/init
 ./sbin/ipsecctl
 ./sbin/isakmpd
+./sbin/ldattach
 ./sbin/ldconfig
 ./sbin/lmccontrol
 ./sbin/mkfifo

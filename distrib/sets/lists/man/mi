@@ -1708,6 +1708,7 @@
 ./usr/share/man/cat4/ukphy.0
 ./usr/share/man/cat4/ulpt.0
 ./usr/share/man/cat4/umass.0
+./usr/share/man/cat4/umbg.0
 ./usr/share/man/cat4/umct.0
 ./usr/share/man/cat4/umidi.0
 ./usr/share/man/cat4/umodem.0
@@ -2207,6 +2208,7 @@
 ./usr/share/man/cat8/landisk/hotplugd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/landisk/xxboot.0
+./usr/share/man/cat8/ldattach.0
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lmccontrol.0
 ./usr/share/man/cat8/locate.updatedb.0
