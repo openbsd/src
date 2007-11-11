@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.16 2007/11/09 20:04:03 kili Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.17 2007/11/11 17:50:29 kili Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.16 2007/11/09 20:04:03 kili Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.17 2007/11/11 17:50:29 kili Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -243,7 +243,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-c | -d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
+	    "usage: %s [-c] [-d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
 	    __progname);
 	exit(1);
 }
