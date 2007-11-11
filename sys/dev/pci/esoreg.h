@@ -1,5 +1,5 @@
-/*	$OpenBSD: esoreg.h,v 1.1 1999/08/04 23:38:03 niklas Exp $	*/
-/*	$NetBSD: esoreg.h,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
+/*	$OpenBSD: esoreg.h,v 1.2 2007/11/11 01:32:52 jakemsr Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.6 2004/05/25 20:59:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -138,9 +138,16 @@
 #define ESO_MIXREG_SPATLVL	0x52	/* Spatializer Level */
 #define ESO_MIXREG_LMVM		0x60	/* Left Master Volume and Mute */
 #define  ESO_MIXREG_LMVM_MUTE	0x40	 /* Mute enable */
+#define ESO_MIXREG_LHVCC	0x61	/* Left Hardware Volume Control Ctr */
 #define ESO_MIXREG_RMVM		0x62	/* Right Master Volume and Mute */
 #define  ESO_MIXREG_RMVM_MUTE	0x40	 /* Mute enable */
+#define ESO_MIXREG_RHVCC	0x63	/* Left Hardware Volume Control Ctr */
 #define ESO_MIXREG_MVCTL	0x64	/* Master Volume Control */
+#define  ESO_MIXREG_MVCTL_HVIRQM 0x02	 /* Hardware Volume Control intr mask */
+#define  ESO_MIXREG_MVCTL_MPUIRQM 0x40	 /* MPU-401 interrupt unmask */
+#define  ESO_MIXREG_MVCTL_SPLIT 0x80	 /* Split xHVCC/xMVM registers */
+#define ESO_MIXREG_CHVIR	0x66	/* Clear Hardware Volume IRQ */
+#define ESO_MIXREG_CHVIR_CHVIR	0x00	 /* Any value will do */
 #define ESO_MIXREG_RVR_MIC	0x68	/* Record mixer: Microphone */
 #define ESO_MIXREG_RVR_A2	0x69	/* Record mixer: Audio 2 */
 #define ESO_MIXREG_RVR_CD	0x6a	/* Record mixer: AuxA/CD */
@@ -170,11 +177,12 @@
 #define  ESO_MIXREG_A2C2_IRQ	0x80	 /* IRQ latch */
 #define ESO_MIXREG_PVR_A2	0x7c	/* Playback mixer: Audio 2 */
 #define ESO_MIXREG_MPM		0x7d	/* Microphone Preamp, Mono In/Out */
-#define  ESO_MIXREG_MPM_MOMASK  0x03	 /* MONO_OUT value mask */
-#define  ESO_MIXREG_MPM_MOMUTE  0x00	 /* MONO_OUT mute */
-#define  ESO_MIXREG_MPM_MOCINR  0x01	 /* MONO_OUT source CIN_R */
-#define  ESO_MIXREG_MPM_MOA2R	0x02	 /* MONO_OUT source Audio 2 Right */
-#define  ESO_MIXREG_MPM_MOREC	0x03	 /* MONO_OUT source record stage */
+#define  ESO_MIXREG_MPM_MIBYPASS 0x01	 /* MONO_IN mixer bypass */
+#define  ESO_MIXREG_MPM_MOMASK  0x06	 /* MONO_OUT value mask */
+#define  ESO_MIXREG_MPM_MOMUTE  0x00	  /* MONO_OUT mute */
+#define  ESO_MIXREG_MPM_MOCINR  0x02	  /* MONO_OUT source CIN_R */
+#define  ESO_MIXREG_MPM_MOA2R	0x04	  /* MONO_OUT source Audio 2 Right */
+#define  ESO_MIXREG_MPM_MOREC	0x06	  /* MONO_OUT source record stage */
 #define  ESO_MIXREG_MPM_PREAMP	0x08	 /* Preamp enable */
 #define  ESO_MIXREG_MPM_RESV0	0xf0	 /* Reserved, always write 0 */
 

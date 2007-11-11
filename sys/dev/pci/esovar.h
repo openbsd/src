@@ -1,8 +1,8 @@
-/*	$OpenBSD: esovar.h,v 1.3 2002/06/09 02:31:20 mickey Exp $	*/
-/*	$NetBSD: esovar.h,v 1.2 1999/08/02 17:37:43 augustss Exp $	*/
+/*	$OpenBSD: esovar.h,v 1.4 2007/11/11 01:32:52 jakemsr Exp $	*/
+/*	$NetBSD: esovar.h,v 1.5 2004/05/25 21:38:11 kleink Exp $	*/
 
 /*
- * Copyright (c) 1999 Klaus J. Klein
+ * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,42 +41,45 @@
  * Mixer identifiers
  */
 /* Identifiers that have a gain value associated with them */
-#define ESO_DAC_PLAY_VOL	0
-#define ESO_MIC_PLAY_VOL	1
-#define ESO_LINE_PLAY_VOL	2
-#define ESO_SYNTH_PLAY_VOL	3
-#define ESO_MONO_PLAY_VOL	4
-#define ESO_CD_PLAY_VOL		5	/* AuxA */
-#define ESO_AUXB_PLAY_VOL	6
+#define	ESO_DAC_PLAY_VOL	0
+#define	ESO_MIC_PLAY_VOL	1
+#define	ESO_LINE_PLAY_VOL	2
+#define	ESO_SYNTH_PLAY_VOL	3
+#define	ESO_MONO_PLAY_VOL	4
+#define	ESO_CD_PLAY_VOL		5	/* AuxA */
+#define	ESO_AUXB_PLAY_VOL	6
 
-#define ESO_MASTER_VOL		7
-#define ESO_PCSPEAKER_VOL	8
-#define ESO_SPATIALIZER		9
+#define	ESO_MASTER_VOL		7
+#define	ESO_PCSPEAKER_VOL	8
+#define	ESO_SPATIALIZER		9
 
-#define ESO_RECORD_VOL		10
-#define ESO_DAC_REC_VOL		11
-#define ESO_MIC_REC_VOL		12
-#define ESO_LINE_REC_VOL	13
-#define ESO_SYNTH_REC_VOL	14
-#define ESO_MONO_REC_VOL	15
-#define ESO_CD_REC_VOL		16
-#define ESO_AUXB_REC_VOL	17
+#define	ESO_RECORD_VOL		10
+#define	ESO_DAC_REC_VOL		11
+#define	ESO_MIC_REC_VOL		12
+#define	ESO_LINE_REC_VOL	13
+#define	ESO_SYNTH_REC_VOL	14
+#define	ESO_MONO_REC_VOL	15
+#define	ESO_CD_REC_VOL		16
+#define	ESO_AUXB_REC_VOL	17
 /* Used to keep software state */
-#define ESO_NGAINDEVS		(ESO_AUXB_REC_VOL + 1)
+#define	ESO_NGAINDEVS		(ESO_AUXB_REC_VOL + 1)
 
 /* Other, non-gain related mixer identifiers */
-#define ESO_RECORD_SOURCE	18
-#define ESO_MONOOUT_SOURCE	19
-#define ESO_RECORD_MONITOR	20
-#define ESO_MIC_PREAMP		21
-#define ESO_SPATIALIZER_ENABLE	22
+#define	ESO_RECORD_SOURCE	18
+#define	ESO_MONOOUT_SOURCE	19
+#define	ESO_MONOIN_BYPASS	20
+#define	ESO_RECORD_MONITOR	21
+#define	ESO_MIC_PREAMP		22
+#define	ESO_SPATIALIZER_ENABLE	23
+#define	ESO_MASTER_MUTE		24
 
 /* Classes of the above */
-#define ESO_INPUT_CLASS		23
-#define ESO_OUTPUT_CLASS	24
-#define ESO_MICROPHONE_CLASS	25
-#define ESO_MONITOR_CLASS	26
-#define ESO_RECORD_CLASS	27
+#define	ESO_INPUT_CLASS		25
+#define	ESO_OUTPUT_CLASS	26
+#define	ESO_MICROPHONE_CLASS	27
+#define	ESO_MONITOR_CLASS	28
+#define	ESO_RECORD_CLASS	29
+#define	ESO_MONOIN_CLASS	30
 
 
 /*
@@ -112,11 +115,13 @@ struct eso_softc {
 	/* MPU-401 device */
 	bus_space_tag_t		sc_mpu_iot;
 	bus_space_handle_t	sc_mpu_ioh;
-	struct device		*sc_mpudev;
+	struct device *		sc_mpudev;
 
+#if 0
 	/* Game device */
 	bus_space_tag_t		sc_game_iot;
 	bus_space_handle_t	sc_game_ioh;
+#endif
 
 	/* MI audio interface: play/record interrupt callbacks and arguments */
 	void			(*sc_pintr)(void *);
@@ -124,18 +129,24 @@ struct eso_softc {
 	void			(*sc_rintr)(void *);
 	void *			sc_rarg;
 
+	/* Auto-initialize DMA transfer block drain timeouts, in ticks */
+	int			sc_pdrain;
+	int			sc_rdrain;
+
 	/* Audio 2 state */
 	uint8_t			sc_a2c2;	/* Audio 2 Control 2 */
 	
 	/* Mixer state */
 	uint8_t			sc_gain[ESO_NGAINDEVS][2];
-#define ESO_LEFT		0
-#define ESO_RIGHT		1
+#define	ESO_LEFT		0
+#define	ESO_RIGHT		1
 	unsigned int		sc_recsrc;	/* record source selection */
 	unsigned int		sc_monooutsrc;	/* MONO_OUT source selection */
+	unsigned int		sc_monoinbypass;/* MONO_IN bypass enable */
 	unsigned int		sc_recmon;	/* record monitor setting */
 	unsigned int		sc_preamp;	/* microphone preamp */
 	unsigned int		sc_spatializer;	/* spatializer enable */
+	unsigned int		sc_mvmute;	/* master volume mute */
 };
 
 #endif /* !_DEV_PCI_ESOVAR_H_ */
