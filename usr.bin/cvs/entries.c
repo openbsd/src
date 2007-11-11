@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.84 2007/10/05 19:28:23 gilles Exp $	*/
+/*	$OpenBSD: entries.c,v 1.85 2007/11/11 10:06:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -208,6 +208,9 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 {
 	FILE *fp;
 	struct cvs_ent_line *l;
+	int dflag;
+
+	dflag = 1;
 
 	if (writefile) {
 		if ((fp = fopen(ep->cef_bpath, "w")) == NULL)
@@ -217,6 +220,9 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 
 	while ((l = TAILQ_FIRST(&(ep->cef_ent))) != NULL) {
 		if (writefile) {
+			if (l->buf[0] == 'D')
+				dflag = 0;
+
 			fputs(l->buf, fp);
 			fputc('\n', fp);
 		}
@@ -227,8 +233,10 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 	}
 
 	if (writefile) {
-		fputc('D', fp);
-		fputc('\n', fp);
+		if (dflag) {
+			fputc('D', fp);
+			fputc('\n', fp);
+		}
 		(void)fclose(fp);
 
 		if (rename(ep->cef_bpath, ep->cef_path) == -1)
