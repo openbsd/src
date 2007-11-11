@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.35 2007/11/11 13:06:58 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.36 2007/11/11 21:17:35 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -131,13 +131,13 @@
 #include <mvme88k/mvme88k/clockvar.h>
 
 void	m188_reset(void);
-u_int	safe_level(u_int mask, u_int curlevel);
+u_int	safe_level(u_int, u_int);
 
 void	m188_bootstrap(void);
 void	m188_ext_int(u_int, struct trapframe *);
 u_int	m188_getipl(void);
 void	m188_init_clocks(void);
-void	m188_ipi_handler(struct trapframe *);
+void	m188_ipi_handler(struct trapframe *, int *);
 vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 void	m188_send_ipi(int, cpuid_t);
@@ -260,6 +260,8 @@ safe_level(u_int mask, u_int curlevel)
 	int i;
 
 #ifdef MULTIPROCESSOR
+	if (mask & CLOCK_IPI_MASK)
+		curlevel = max(IPL_CLOCK, curlevel);
 	mask &= ~(IPI_MASK | CLOCK_IPI_MASK);
 #endif
 	for (i = curlevel; i < INT_LEVEL; i++)
@@ -363,13 +365,13 @@ m188_send_ipi(int ipi, cpuid_t cpu)
  * Process inter-processor interrupts.
  */
 void
-m188_ipi_handler(struct trapframe *eframe)
+m188_ipi_handler(struct trapframe *eframe, int *mask)
 {
 	struct cpu_info *ci = curcpu();
 	int ipi = ci->ci_ipi;
-	int retrig = 0;
-	int old_spl = eframe->tf_mask;
 	int s;
+
+	*mask &= ~IPI_MASK;
 
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
@@ -388,33 +390,23 @@ m188_ipi_handler(struct trapframe *eframe)
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
-	if (ipi & CI_IPI_HARDCLOCK) {
-		if (old_spl < IPL_CLOCK) {
-			s = m188_raiseipl(IPL_CLOCK);		/* splclock */
-			hardclock((struct clockframe *)eframe);
-			m188_setipl(s);				/* splx */
-		} else {
-			ipi &= ~CI_IPI_HARDCLOCK;	/* leave it pending */
-			retrig |= CI_IPI_HARDCLOCK;
-		}
-	}
-	if (ipi & CI_IPI_STATCLOCK) {
-		if (old_spl < IPL_STATCLOCK) {
-			s = m188_raiseipl(IPL_STATCLOCK);	/* splclock */
-			statclock((struct clockframe *)eframe);
-			m188_setipl(s);				/* splx */
-		} else {
-			ipi &= ~CI_IPI_STATCLOCK;	/* leave it pending */
-			retrig |= CI_IPI_STATCLOCK;
-		}
-	}
 
-	/*
-	 * Retrigger the clock ipi if they could not be serviced yet.
-	 */
-	if (retrig != 0)
-		*(volatile u_int32_t *)MVME188_SETSWI =
-		    SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
+	if (ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)) {
+		if (eframe->tf_mask < IPL_CLOCK) {
+			/* clear clock ipi interrupt */
+			*(volatile u_int32_t *)MVME188_CLRSWI =
+			    SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
+			*mask &= ~CLOCK_IPI_MASK;
+
+			if (ipi & CI_IPI_HARDCLOCK)
+				hardclock((struct clockframe *)eframe);
+			if (ipi & CI_IPI_STATCLOCK)
+				statclock((struct clockframe *)eframe);
+		} else {
+			/* leave them pending */
+			ipi &= ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
+		}
+	}
 
 	atomic_clearbits_int(&ci->ci_ipi, ipi);
 }
@@ -472,9 +464,9 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
-	int cpu = ci->ci_cpuid;
+	u_int cpu = ci->ci_cpuid;
 #else
-	int cpu = cpu_number();
+	u_int cpu = cpu_number();
 #endif
 	unsigned int cur_mask, ign_mask;
 	unsigned int level, old_spl;
@@ -491,11 +483,6 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	ign_mask = 0;
 	old_spl = eframe->tf_mask;
-
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-#endif
 
 	if (cur_mask == 0) {
 		/*
@@ -519,17 +506,19 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	uvmexp.intrs++;
 
 #ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
+
+#ifdef MULTIPROCESSOR
 	/*
-	 * Clear IPIs immediately, so that we can re enable interrupts
-	 * before further processing. We rely on the interrupt mask to
-	 * make sure that if we get an IPI, it's really for us and no
-	 * other processor.
+	 * Clear unmaskable IPIs immediately, so that we can reenable
+	 * interrupts before further processing. We rely on the interrupt
+	 * mask to make sure that if we get an IPI, it's really for us
+	 * and no other processor.
 	 */
-	if (cur_mask & (IPI_MASK | CLOCK_IPI_MASK)) {
-		*(volatile u_int32_t *)MVME188_CLRSWI =
-		    SWI_IPI_BIT(cpu) | SWI_CLOCK_IPI_BIT(cpu);
-		cur_mask &= ~(IPI_MASK | CLOCK_IPI_MASK);
-	}
+	if (cur_mask & IPI_MASK)
+		*(volatile u_int32_t *)MVME188_CLRSWI = SWI_IPI_BIT(cpu);
 #endif
 
 	/*
@@ -545,17 +534,18 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		if (unmasked == 0) {
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
+		}
 
 #ifdef MULTIPROCESSOR
-			/*
-			 * Handle IPIs first.
-			 */
-			m188_ipi_handler(eframe);
-
+		/*
+		 * Handle pending IPIs first.
+		 */
+		if (cur_mask & (IPI_MASK | CLOCK_IPI_MASK)) {
+			m188_ipi_handler(eframe, &cur_mask);
 			if (cur_mask == 0)
 				break;
-#endif
 		}
+#endif
 
 		/* generate IACK and get the vector */
 
@@ -662,6 +652,11 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		problems = 0;
 #endif
 
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
+
 out:
 	/*
 	 * process any remaining data access exceptions before
@@ -675,11 +670,6 @@ out:
 	 * be restored later.
 	 */
 	set_psr(get_psr() | PSR_IND);
-
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_unlock(&kernel_lock);
-#endif
 }
 
 /*
