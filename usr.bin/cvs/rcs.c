@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.229 2007/11/11 10:01:41 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.230 2007/11/11 10:14:33 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3093,6 +3093,9 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 
 	kwtype = 0;
 	kwstr = NULL;
+
+	if (mode & RCS_KWEXP_OLD)
+		return;
 
 	len = line->l_len;
 	if (len == 0)
