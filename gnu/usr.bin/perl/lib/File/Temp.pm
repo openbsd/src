@@ -61,13 +61,18 @@ Object interface:
 
   require File::Temp;
   use File::Temp ();
+  use File::Temp qw/ :seekable /;
 
-  $fh = new File::Temp($template);
+  $fh = new File::Temp();
+  $fname = $fh->filename;
+
+  $fh = new File::Temp(TEMPLATE => $template);
   $fname = $fh->filename;
 
   $tmp = new File::Temp( UNLINK => 0, SUFFIX => '.dat' );
   print $tmp "Some data\n";
   print "Filename is $tmp\n";
+  $tmp->seek( 0, SEEK_END );
 
 The following interfaces are provided for compatibility with
 existing APIs. They should not be used in new code.
@@ -128,23 +133,30 @@ that the file will not exist by the time the caller opens the filename.
 =cut
 
 # 5.6.0 gives us S_IWOTH, S_IWGRP, our and auto-vivifying filehandls
-# People would like a version on 5.005 so give them what they want :-)
-use 5.005;
+# People would like a version on 5.004 so give them what they want :-)
+use 5.004;
 use strict;
 use Carp;
 use File::Spec 0.8;
 use File::Path qw/ rmtree /;
 use Fcntl 1.03;
+use IO::Seekable; # For SEEK_*
 use Errno;
 require VMS::Stdio if $^O eq 'VMS';
+
+# pre-emptively load Carp::Heavy. If we don't when we run out of file
+# handles and attempt to call croak() we get an error message telling
+# us that Carp::Heavy won't load rather than an error telling us we
+# have run out of file handles. We either preload croak() or we
+# switch the calls to croak from _gettemp() to use die.
+require Carp::Heavy;
 
 # Need the Symbol package if we are running older perl
 require Symbol if $] < 5.006;
 
 ### For the OO interface
-use base qw/ IO::Handle /;
-use overload '""' => "STRINGIFY";
-
+use base qw/ IO::Handle IO::Seekable /;
+use overload '""' => "STRINGIFY", fallback => 1;
 
 # use 'our' on v5.6.0
 use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS $DEBUG $KEEP_ALL);
@@ -169,6 +181,9 @@ use base qw/Exporter/;
 	      mkdtemp
 	      unlink0
 	      cleanup
+	      SEEK_SET
+              SEEK_CUR
+              SEEK_END
 		};
 
 # Groups of functions for export
@@ -176,14 +191,15 @@ use base qw/Exporter/;
 %EXPORT_TAGS = (
 		'POSIX' => [qw/ tmpnam tmpfile /],
 		'mktemp' => [qw/ mktemp mkstemp mkstemps mkdtemp/],
+		'seekable' => [qw/ SEEK_SET SEEK_CUR SEEK_END /],
 	       );
 
 # add contents of these tags to @EXPORT
-Exporter::export_tags('POSIX','mktemp');
+Exporter::export_tags('POSIX','mktemp','seekable');
 
 # Version number
 
-$VERSION = '0.16';
+$VERSION = '0.18';
 
 # This is a list of characters that can be used in random filenames
 
@@ -220,7 +236,7 @@ unless ($^O eq 'MacOS') {
     no strict 'refs';
     $OPENFLAGS |= $bit if eval {
       # Make sure that redefined die handlers do not cause problems
-      # eg CGI::Carp
+      # e.g. CGI::Carp
       local $SIG{__DIE__} = sub {};
       local $SIG{__WARN__} = sub {};
       $bit = &$func();
@@ -243,7 +259,7 @@ unless ($^O eq 'MacOS') {
     no strict 'refs';
     $OPENTEMPFLAGS |= $bit if eval {
       # Make sure that redefined die handlers do not cause problems
-      # eg CGI::Carp
+      # e.g. CGI::Carp
       local $SIG{__DIE__} = sub {};
       local $SIG{__WARN__} = sub {};
       $bit = &$func();
@@ -346,7 +362,7 @@ sub _gettemp {
   # Substr starts from 0
   my $start = length($template) - 1 - $options{"suffixlen"};
 
-  # Check that we have at least MINX x X (eg 'XXXX") at the end of the string
+  # Check that we have at least MINX x X (e.g. 'XXXX") at the end of the string
   # (taking suffixlen into account). Any fewer is insecure.
 
   # Do it using substr - no reason to use a pattern match since
@@ -467,12 +483,6 @@ sub _gettemp {
       #      but may have O_NOINHERIT. This may or may not be in Fcntl.
       local $^F = 2;
 
-      # Store callers umask
-      my $umask = umask();
-
-      # Set a known umask
-      umask(066);
-
       # Attempt to open the file
       my $open_success = undef;
       if ( $^O eq 'VMS' and $options{"unlink_on_close"} && !$KEEP_ALL) {
@@ -487,15 +497,13 @@ sub _gettemp {
       }
       if ( $open_success ) {
 
-	# Reset umask
-	umask($umask) if defined $umask;
+	# in case of odd umask force rw
+	chmod(0600, $path);
 
 	# Opened successfully - return file handle and name
 	return ($fh, $path);
 
       } else {
-	# Reset umask
-	umask($umask) if defined $umask;
 
 	# Error opening file - abort with error
 	# if the reason was anything but EEXIST
@@ -509,23 +517,13 @@ sub _gettemp {
       }
     } elsif ($options{"mkdir"}) {
 
-      # Store callers umask
-      my $umask = umask();
-
-      # Set a known umask
-      umask(066);
-
       # Open the temp directory
       if (mkdir( $path, 0700)) {
-	# created okay
-	# Reset umask
-	umask($umask) if defined $umask;
+	# in case of odd umask
+	chmod(0700, $path);
 
 	return undef, $path;
       } else {
-
-	# Reset umask
-	umask($umask) if defined $umask;
 
 	# Abort with error if the reason for failure was anything
 	# except EEXIST
@@ -639,10 +637,7 @@ sub _replace_XX {
 # force a file to be readonly when written to certain temp locations
 sub _force_writable {
   my $file = shift;
-  my $umask = umask();
-  umask(066);
   chmod 0600, $file;
-  umask($umask) if defined $umask;
 }
 
 
@@ -679,11 +674,11 @@ sub _is_safe {
   return 1 if $^O eq 'VMS';  # owner delete control at file level
 
   # Check to see whether owner is neither superuser (or a system uid) nor me
-  # Use the real uid from the $< variable
+  # Use the effective uid from the $> variable
   # UID is in [4]
-  if ($info[4] > File::Temp->top_system_uid() && $info[4] != $<) {
+  if ($info[4] > File::Temp->top_system_uid() && $info[4] != $>) {
 
-    Carp::cluck(sprintf "uid=$info[4] topuid=%s \$<=$< path='$path'",
+    Carp::cluck(sprintf "uid=$info[4] topuid=%s euid=$< path='$path'",
 		File::Temp->top_system_uid());
 
     $$err_ref = "Directory owned neither by root nor the current user"
@@ -969,7 +964,9 @@ object is no longer required.
 Note that there is no method to obtain the filehandle from the
 C<File::Temp> object. The object itself acts as a filehandle. Also,
 the object is configured such that it stringifies to the name of the
-temporary file.
+temporary file, and can be compared to a filename directly. The object
+isa C<IO::Handle> and isa C<IO::Seekable> so all those methods are
+available.
 
 =over 4
 
@@ -994,6 +991,8 @@ is not supported (the file is always opened).
                         SUFFIX => '.dat');
 
 Arguments are case insensitive.
+
+Can call croak() if an error occurs.
 
 =cut
 
@@ -1189,6 +1188,8 @@ if opening the file is not required.
 
 Options can be combined as required.
 
+Will croak() if there is an error.
+
 =cut
 
 sub tempfile {
@@ -1360,6 +1361,8 @@ the rmtree() function from the L<File::Path|File::Path> module.
 Of course, if the template is not specified, the temporary directory
 will be created in tmpdir() and will also be removed at program exit.
 
+Will croak() if there is an error.
+
 =cut
 
 # '
@@ -1480,6 +1483,8 @@ The template may be any filename with some number of X's appended
 to it, for example F</tmp/temp.XXXX>. The trailing X's are replaced
 with unique alphanumeric combinations.
 
+Will croak() if there is an error.
+
 =cut
 
 
@@ -1521,6 +1526,8 @@ would generate a file similar to F<testhGji_w.dat>.
 
 Returns just the filehandle alone when called in scalar context.
 
+Will croak() if there is an error.
+
 =cut
 
 sub mkstemps {
@@ -1559,9 +1566,10 @@ X's that are replaced by the routine.
   $tmpdir_name = mkdtemp($template);
 
 Returns the name of the temporary directory created.
-Returns undef on failure.
 
 Directory must be removed by the caller.
+
+Will croak() if there is an error.
 
 =cut
 
@@ -1603,6 +1611,8 @@ that the file will not be opened by someone else.
   $unopened_file = mktemp($template);
 
 Template is the same as that required by mkstemp().
+
+Will croak() if there is an error.
 
 =cut
 
@@ -1664,6 +1674,8 @@ race conditions.
 See L<File::Spec/tmpdir> for information on the choice of temporary
 directory for a particular operating system.
 
+Will croak() if there is an error.
+
 =cut
 
 sub tmpnam {
@@ -1697,6 +1709,8 @@ exits. No access to the filename is provided.
 If the temporary file can not be created undef is returned.
 Currently this command will probably not work when the temporary
 directory is on an NFS file system.
+
+Will croak() if there is an error.
 
 =cut
 
@@ -1741,6 +1755,8 @@ Equivalent to running mktemp() with $dir/$prefixXXXXXXXX
 
 Because this function uses mktemp(), it can suffer from race conditions.
 
+Will croak() if there is an error.
+
 =cut
 
 sub tempnam {
@@ -1781,8 +1797,9 @@ same as the file whose descriptor you hold.
   unlink0($fh, $path)
      or die "Error unlinking file $path safely";
 
-Returns false on error. The filehandle is not closed since on some
-occasions this is not required.
+Returns false on error but croaks() if there is a security
+anomaly. The filehandle is not closed since on some occasions this is
+not required.
 
 On some platforms, for example Windows NT, it is not possible to
 unlink an open file (the file must be closed first). On those
@@ -1807,6 +1824,10 @@ command is expected to fail on NFS disks.
 This function is disabled if the global variable $KEEP_ALL is true
 and an unlink on open file is supported. If the unlink is to be deferred
 to the END block, the file is still registered for removal.
+
+This function should not be called if you are using the object oriented
+interface since the it will interfere with the object destructor deleting
+the file.
 
 =cut
 
@@ -1861,9 +1882,9 @@ fields returned by stat() are compared).
      or die "Error comparing handle with file";
 
 Returns false if the stat information differs or if the link count is
-greater than 1.
+greater than 1. Calls croak if there is a security anomaly.
 
-On certain platofms, eg Windows, not all the fields returned by stat()
+On certain platforms, for example Windows, not all the fields returned by stat()
 can be compared. For example, the C<dev> and C<rdev> fields seem to be
 different in Windows.  Also, it seems that the size of the file
 returned by stat() does not always agree, with C<stat(FH)> being more
@@ -1962,6 +1983,9 @@ Usually called from the object destructor when using the OO interface.
 Not exported by default.
 
 This function is disabled if the global variable $KEEP_ALL is true.
+
+Can call croak() if there is a security anomaly during the stat()
+comparison.
 
 =cut
 
@@ -2128,6 +2152,7 @@ The value is only relevant when C<safe_level> is set to MEDIUM or higher.
 
 {
   my $TopSystemUID = 10;
+  $TopSystemUID = 197108 if $^O eq 'interix'; # "Administrator"
   sub top_system_uid {
     my $self = shift;
     if (@_) {
@@ -2203,6 +2228,12 @@ to only remove those temp files created by a particular process ID. This
 means that a child will not attempt to remove temp files created by the
 parent process.
 
+If you are forking many processes in parallel that are all creating
+temporary files, you may need to reset the random number seed using
+srand(EXPR) in each child else all the children will attempt to walk
+through the same set of random file names and may well cause
+themselves to give up if they exceed the number of retry attempts.
+
 =head2 BINMODE
 
 The file returned by File::Temp will have been opened in binary mode
@@ -2222,14 +2253,14 @@ as a standard part of perl from v5.6.1.
 
 L<POSIX/tmpnam>, L<POSIX/tmpfile>, L<File::Spec>, L<File::Path>
 
-See L<IO::File> and L<File::MkTemp>, L<Apachae::TempFile> for
+See L<IO::File> and L<File::MkTemp>, L<Apache::TempFile> for
 different implementations of temporary file handling.
 
 =head1 AUTHOR
 
 Tim Jenness E<lt>tjenness@cpan.orgE<gt>
 
-Copyright (C) 1999-2005 Tim Jenness and the UK Particle Physics and
+Copyright (C) 1999-2007 Tim Jenness and the UK Particle Physics and
 Astronomy Research Council. All Rights Reserved.  This program is free
 software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
