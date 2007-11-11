@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.41 2007/10/17 03:21:16 fgsch Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.42 2007/11/11 14:03:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -596,6 +596,8 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
 
+	s = splbio();
+
 	xs->error = XS_NOERROR;
 
 	if (target >= GDT_MAX_HDRIVES || !sc->sc_hdr[target].hd_present ||
@@ -606,13 +608,10 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		 */
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
-		s = splbio();
 		scsi_done(xs);
 		splx(s);
 		return (COMPLETE);
 	}
-
-	s = splbio();
 
 	/* Don't double enqueue if we came from gdt_chain. */
 	if (xs != LIST_FIRST(&sc->sc_queue))
@@ -1105,7 +1104,6 @@ gdt_intr(void *arg)
 	struct scsi_xfer *xs;
 	int prev_cmd;
 	struct gdt_ccb *ccb;
-	int s;
 
 	GDT_DPRINTF(GDT_D_INTR, ("gdt_intr(%p) ", sc));
 
@@ -1113,13 +1111,8 @@ gdt_intr(void *arg)
 	if (gdt_polling && !gdt_from_wait)
 		return (0);
 
-	if (!gdt_polling)
-		s = splbio();
-
 	ctx.istatus = sc->sc_get_status(sc);
 	if (!ctx.istatus) {
-		if (!gdt_polling)
-			splx(s);
 		sc->sc_status = GDT_S_NO_STATUS;
 		return (0);
 	}
@@ -1178,8 +1171,6 @@ gdt_intr(void *arg)
 	sync_val = gdt_sync_event(sc, ctx.service, ctx.istatus, xs);
 
  finish:
-	if (!gdt_polling)
-		splx(s);
 
 	switch (sync_val) {
 	case 1:
@@ -1193,6 +1184,7 @@ gdt_intr(void *arg)
 
 	if (chain)
 		gdt_chain(sc);
+
 	return (1);
 }
 
@@ -1212,19 +1204,22 @@ gdtminphys(struct buf *bp)
 int
 gdt_wait(struct gdt_softc *sc, struct gdt_ccb *ccb, int timeout)
 {
-	int rv = 0;
+	int s, rslt, rv = 0;
 
 	GDT_DPRINTF(GDT_D_MISC,
 	    ("gdt_wait(%p, %p, %d) ", sc, ccb, timeout));
 
 	gdt_from_wait = 1;
 	do {
-		if (gdt_intr(sc) && sc == gdt_wait_gdt &&
+		s = splbio();
+		rslt = gdt_intr(sc);
+		splx(s);
+		if (rslt && sc == gdt_wait_gdt &&
 		    ccb->gc_cmd_index == gdt_wait_index) {
 			rv = 1;
 			break;
 		}
-		DELAY(1);
+		DELAY(1000); /* 1 millisecond */
 	} while (--timeout);
 	gdt_from_wait = 0;
 

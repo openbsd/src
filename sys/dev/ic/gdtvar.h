@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.13 2007/04/28 00:34:25 deraadt Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.14 2007/11/11 14:03:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -221,7 +221,7 @@ extern int gdt_debug;
 /* Miscellaneous constants */
 #define GDT_RETRIES		100000000	/* 100000 * 1us = 100s */
 #define GDT_TIMEOUT		100000000	/* 100000 * 1us = 100s */
-#define GDT_POLL_TIMEOUT	10000000	/* 10000 * 1us = 10s */
+#define GDT_POLL_TIMEOUT	10000		/* 10000 * 1ms = 10s */
 #define GDT_WATCH_TIMEOUT	10000		/* 10000 * 1ms = 10s */
 
 /* Context structure for interrupt services */
