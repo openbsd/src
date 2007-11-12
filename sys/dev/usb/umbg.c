@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.3 2007/11/10 14:40:09 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.4 2007/11/12 16:42:23 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -88,9 +88,9 @@ struct mbg_time {
 };
 
 struct mbg_time_hr {
-	u_int32_t		sec;		/* seconds since the epoch */
+	u_int32_t		sec;		/* always UTC */
 	u_int32_t		frac;		/* fractions of second */
-	int32_t			utc_off;	/* UTC offset in seconds */
+	int32_t			utc_off;	/* informal only, in seconds */
 	u_int16_t		status;
 	u_int8_t		signal;
 };
@@ -380,7 +380,7 @@ umbg_task(void *arg)
 	}
 
 	tlocal = tstamp.tv_sec * NSECPERSEC + tstamp.tv_nsec;
-	trecv = (letoh32(tframe.sec) - letoh32(tframe.utc_off)) * NSECPERSEC +
+	trecv = letoh32(tframe.sec) * NSECPERSEC +
 	    (letoh32(tframe.frac) * NSECPERSEC >> 32);
 
 	sc->sc_timedelta.value = tlocal - trecv;
