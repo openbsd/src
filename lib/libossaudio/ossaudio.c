@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.12 2007/11/06 04:24:39 jakemsr Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.13 2007/11/12 05:11:16 jakemsr Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
 	struct audio_bufinfo tmpab;
+	u_long ldat;
 	u_int u;
 	int idat, idata;
 	int tempret, retval = 0, rerr = 0;
@@ -447,6 +448,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		idat = 1;
 		retval = ioctl(fd, AUDIO_SETFD, &idat);
 		rerr = errno;
+		break;
+	case SNDCTL_DSP_GETODELAY:
+		retval = ioctl(fd, AUDIO_WSEEK, &ldat);
+		INTARG = (int)ldat;
 		break;
 	case SNDCTL_DSP_MAPINBUF:
 	case SNDCTL_DSP_MAPOUTBUF:

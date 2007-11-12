@@ -1,4 +1,4 @@
-/*	$OpenBSD: soundcard.h,v 1.11 2005/12/19 16:16:19 millert Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.12 2007/11/12 05:11:16 jakemsr Exp $	*/
 /*	$NetBSD: soundcard.h,v 1.11 2001/05/09 21:49:58 augustss Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@
 #define SNDCTL_DSP_SETSYNCRO		_IO  ('P', 21)
 #define SNDCTL_DSP_SETDUPLEX		_IO  ('P', 22)
 #define SNDCTL_DSP_PROFILE		_IOW ('P', 23, int)
+#define SNDCTL_DSP_GETODELAY		_IOR ('P', 24, int)
 #define	  APF_NORMAL			0
 #define	  APF_NETWORK			1
 #define   APF_CPUINTENS			2
