@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.36 2007/11/11 21:17:35 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.37 2007/11/12 19:59:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -134,10 +134,11 @@ void	m188_reset(void);
 u_int	safe_level(u_int, u_int);
 
 void	m188_bootstrap(void);
+void	m188_clock_ipi_handler(struct trapframe *);
 void	m188_ext_int(u_int, struct trapframe *);
 u_int	m188_getipl(void);
 void	m188_init_clocks(void);
-void	m188_ipi_handler(struct trapframe *, int *);
+void	m188_ipi_handler(struct trapframe *);
 vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 void	m188_send_ipi(int, cpuid_t);
@@ -350,28 +351,34 @@ void
 m188_send_ipi(int ipi, cpuid_t cpu)
 {
 	struct cpu_info *ci = &m88k_cpus[cpu];
+	u_int32_t bits = 0;
 
 	if (ci->ci_ipi & ipi)
 		return;
 
 	atomic_setbits_int(&ci->ci_ipi, ipi);
 	if (ipi & ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
-		*(volatile u_int32_t *)MVME188_SETSWI = SWI_IPI_BIT(cpu);
+		bits |= SWI_IPI_BIT(cpu);
 	if (ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
-		*(volatile u_int32_t *)MVME188_SETSWI = SWI_CLOCK_IPI_BIT(cpu);
+		bits |= SWI_CLOCK_IPI_BIT(cpu);
+	*(volatile u_int32_t *)MVME188_SETSWI = bits;
 }
 
 /*
  * Process inter-processor interrupts.
  */
+
+/*
+ * Unmaskable IPIs - those are processed with interrupts disabled,
+ * and no lock held.
+ */
 void
-m188_ipi_handler(struct trapframe *eframe, int *mask)
+m188_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
 	int ipi = ci->ci_ipi;
-	int s;
 
-	*mask &= ~IPI_MASK;
+	*(volatile u_int32_t *)MVME188_CLRSWI = SWI_IPI_BIT(ci->ci_cpuid);
 
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
@@ -381,34 +388,35 @@ m188_ipi_handler(struct trapframe *eframe, int *mask)
 		 */
 		extern struct __mp_lock ddb_mp_lock;
 
-		s = m188_raiseipl(IPL_HIGH);			/* splhigh */
 		__mp_lock(&ddb_mp_lock);
 		__mp_unlock(&ddb_mp_lock);
-		m188_setipl(s);					/* splx */
 #endif
 	}
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
 
-	if (ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)) {
-		if (eframe->tf_mask < IPL_CLOCK) {
-			/* clear clock ipi interrupt */
-			*(volatile u_int32_t *)MVME188_CLRSWI =
-			    SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
-			*mask &= ~CLOCK_IPI_MASK;
+	atomic_clearbits_int(&ci->ci_ipi, CI_IPI_DDB | CI_IPI_NOTIFY);
+}
 
-			if (ipi & CI_IPI_HARDCLOCK)
-				hardclock((struct clockframe *)eframe);
-			if (ipi & CI_IPI_STATCLOCK)
-				statclock((struct clockframe *)eframe);
-		} else {
-			/* leave them pending */
-			ipi &= ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
-		}
-	}
+/*
+ * Maskable IPIs
+ */
+void
+m188_clock_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi;
 
-	atomic_clearbits_int(&ci->ci_ipi, ipi);
+	/* clear clock ipi interrupt */
+	*(volatile u_int32_t *)MVME188_CLRSWI = SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
+
+	if (ipi & CI_IPI_HARDCLOCK)
+		hardclock((struct clockframe *)eframe);
+	if (ipi & CI_IPI_STATCLOCK)
+		statclock((struct clockframe *)eframe);
+
+	atomic_clearbits_int(&ci->ci_ipi, CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
 }
 
 #endif
@@ -506,19 +514,23 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	uvmexp.intrs++;
 
 #ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-#endif
-
-#ifdef MULTIPROCESSOR
 	/*
-	 * Clear unmaskable IPIs immediately, so that we can reenable
+	 * Handle unmaskable IPIs immediately, so that we can reenable
 	 * interrupts before further processing. We rely on the interrupt
 	 * mask to make sure that if we get an IPI, it's really for us
 	 * and no other processor.
 	 */
-	if (cur_mask & IPI_MASK)
-		*(volatile u_int32_t *)MVME188_CLRSWI = SWI_IPI_BIT(cpu);
+	if (cur_mask & IPI_MASK) {
+		m188_ipi_handler(eframe);
+		cur_mask &= ~IPI_MASK;
+		if (cur_mask == 0)
+			goto out;
+	}
+#endif
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
 #endif
 
 	/*
@@ -538,10 +550,11 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 
 #ifdef MULTIPROCESSOR
 		/*
-		 * Handle pending IPIs first.
+		 * Handle pending maskable IPIs first.
 		 */
-		if (cur_mask & (IPI_MASK | CLOCK_IPI_MASK)) {
-			m188_ipi_handler(eframe, &cur_mask);
+		if (cur_mask & CLOCK_IPI_MASK) {
+			m188_clock_ipi_handler(eframe);
+			cur_mask &= ~CLOCK_IPI_MASK;
 			if (cur_mask == 0)
 				break;
 		}
