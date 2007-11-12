@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.410 2007/11/03 03:37:08 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.411 2007/11/12 01:17:41 pascoe Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3265,7 +3265,7 @@ idt_vec_alloc(int low, int high)
 void
 idt_vec_set(int vec, void (*function)(void))
 {
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL, GICODE_SEL);
 }
 
 void
