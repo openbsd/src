@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.25 2007/05/31 17:49:16 gwk Exp $ */
+/* $OpenBSD: acpidev.h,v 1.26 2007/11/12 21:58:14 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -64,10 +64,10 @@ struct acpibat_bif {
 	u_int32_t	bif_low;
 	u_int32_t	bif_cap_granu1;
 	u_int32_t	bif_cap_granu2;
-	char	        bif_model[20];
-	char	        bif_serial[20];
-	char	        bif_type[20];
-	char	        bif_oem[20];
+	char		bif_model[20];
+	char		bif_serial[20];
+	char		bif_type[20];
+	char		bif_oem[20];
 };
 
 /*

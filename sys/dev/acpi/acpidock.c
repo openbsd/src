@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.26 2007/09/13 03:43:22 weingart Exp $ */
+/* $OpenBSD: acpidock.c,v 1.27 2007/11/12 21:58:14 deraadt Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -44,7 +44,6 @@ struct cfattach acpidock_ca = {
 struct cfdriver acpidock_cd = {
 	NULL, "acpidock", DV_DULL
 };
-
 
 int	acpidock_docklock(struct acpidock_softc *, int);
 int	acpidock_dockctl(struct acpidock_softc *, int);
@@ -112,9 +111,8 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->sc_deps_h);
 	aml_find_node(aml_root.child, "_EJD", acpidock_foundejd, sc);
 
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, 
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
-
 }
 
 int
@@ -128,7 +126,7 @@ acpidock_status(struct acpidock_softc *sc)
 		rv = 0;
 	else
 		rv = 1;
-	
+
 	sc->sc_sta = aml_val2int(&res);
 
 	sc->sc_docked = sc->sc_sta & STA_PRESENT;
@@ -246,7 +244,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		acpidock_eject(sc, sc->sc_devnode);
 
 		printf("%s: undock", DEVNAME(sc));
-		
+
 		break;
 		}
 	}
@@ -284,7 +282,6 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 		    node->parent->name, res.v_string);
 
 		/* XXX more than one dock? */
-		
 		n = malloc(sizeof(struct aml_nodelist), M_DEVBUF, M_WAITOK);
 		n->node = node->parent;
 

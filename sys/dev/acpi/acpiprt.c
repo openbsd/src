@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.19 2007/11/12 21:38:31 deraadt Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.20 2007/11/12 21:58:14 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -290,8 +290,8 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	 */
 	if (aml_evalname(sc->sc_acpi, parent, "_CRS.", 0, NULL, &res) == 0) {
 		rv = -1;
-	  	if (res.type == AML_OBJTYPE_BUFFER)
-			aml_parse_resource(res.length, res.v_buffer, 
+		if (res.type == AML_OBJTYPE_BUFFER)
+			aml_parse_resource(res.length, res.v_buffer,
 			    acpiprt_getminbus, &rv);
 		aml_freevalue(&res);
 		if (rv != -1)

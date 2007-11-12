@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.37 2007/11/03 20:33:48 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.38 2007/11/12 21:58:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -60,43 +60,42 @@ struct acpi_q {
 };
 
 struct acpi_wakeq {
-	SIMPLEQ_ENTRY(acpi_wakeq)  q_next;
-	struct aml_node           *q_node;
-	struct aml_value          *q_wakepkg;
-	int                        q_gpe;
-	int                        q_state;
+	SIMPLEQ_ENTRY(acpi_wakeq)	 q_next;
+	struct aml_node			*q_node;
+	struct aml_value		*q_wakepkg;
+	int				 q_gpe;
+	int				 q_state;
 };
 
 typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
 typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 
-#define ACPIREG_PM1A_STS    0x00
-#define ACPIREG_PM1A_EN	    0x01
-#define ACPIREG_PM1A_CNT    0x02
-#define ACPIREG_PM1B_STS    0x03
-#define ACPIREG_PM1B_EN	    0x04
-#define ACPIREG_PM1B_CNT    0x05
-#define ACPIREG_PM2_CNT	    0x06
-#define ACPIREG_PM_TMR	    0x07
-#define ACPIREG_GPE0_STS    0x08
-#define ACPIREG_GPE0_EN	    0x09
-#define ACPIREG_GPE1_STS    0x0A
-#define ACPIREG_GPE1_EN	    0x0B
-#define ACPIREG_SMICMD	    0x0C
-#define ACPIREG_MAXREG	    0x0D
+#define ACPIREG_PM1A_STS	0x00
+#define ACPIREG_PM1A_EN		0x01
+#define ACPIREG_PM1A_CNT	0x02
+#define ACPIREG_PM1B_STS	0x03
+#define ACPIREG_PM1B_EN		0x04
+#define ACPIREG_PM1B_CNT	0x05
+#define ACPIREG_PM2_CNT		0x06
+#define ACPIREG_PM_TMR		0x07
+#define ACPIREG_GPE0_STS	0x08
+#define ACPIREG_GPE0_EN		0x09
+#define ACPIREG_GPE1_STS	0x0A
+#define ACPIREG_GPE1_EN		0x0B
+#define ACPIREG_SMICMD		0x0C
+#define ACPIREG_MAXREG		0x0D
 
 /* Special registers */
-#define ACPIREG_PM1_STS	    0x0E
-#define ACPIREG_PM1_EN	    0x0F
-#define ACPIREG_PM1_CNT	    0x10
-#define ACPIREG_GPE_STS     0x11
-#define ACPIREG_GPE_EN      0x12
+#define ACPIREG_PM1_STS		0x0E
+#define ACPIREG_PM1_EN		0x0F
+#define ACPIREG_PM1_CNT		0x10
+#define ACPIREG_GPE_STS		0x11
+#define ACPIREG_GPE_EN		0x12
 
-struct acpi_parsestate
-{
-	u_int8_t           *start;
-	u_int8_t           *end;
-	u_int8_t           *pos;
+struct acpi_parsestate {
+	u_int8_t		*start;
+	u_int8_t		*end;
+	u_int8_t		*pos;
 };
 
 struct acpi_reg_map {
@@ -154,8 +153,8 @@ struct acpi_softc {
 	 * First-level ACPI tables
 	 */
 	struct acpi_fadt	*sc_fadt;
-	acpi_qhead_t		sc_tables;
-	acpi_wakeqhead_t        sc_wakedevs;
+	acpi_qhead_t		 sc_tables;
+	acpi_wakeqhead_t	 sc_wakedevs;
 
 	/*
 	 * Second-level information from FADT
@@ -181,9 +180,9 @@ struct acpi_softc {
 		int slp_typb;
 	}			sc_sleeptype[6];
 	int			sc_maxgpe;
-        int                     sc_lastgpe;
+	int			sc_lastgpe;
 
-	struct gpe_block       *gpe_table;
+	struct gpe_block	*gpe_table;
 
 	int			sc_wakeup;
 	u_int32_t		sc_gpe_sts;
@@ -249,7 +248,8 @@ void	 acpi_resume(struct acpi_softc *);
 void acpi_delay(struct acpi_softc *, int64_t);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
-int     acpi_set_gpehandler(struct acpi_softc *, int, int (*)(struct acpi_softc *, int, void *), void *, const char *);
+int	acpi_set_gpehandler(struct acpi_softc *, int,
+	    int (*)(struct acpi_softc *, int, void *), void *, const char *);
 void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
 
 int	acpiec_intr(struct acpiec_softc *);

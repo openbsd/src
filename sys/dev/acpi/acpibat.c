@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.44 2007/11/12 19:55:37 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.45 2007/11/12 21:58:13 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -272,7 +272,7 @@ acpibat_refresh(void *arg)
 			sc->sc_sens[6].status = SENSOR_S_OK;
 	}
 
-	if(sc->sc_bst.bst_voltage == BST_UNKNOWN) {
+	if (sc->sc_bst.bst_voltage == BST_UNKNOWN) {
 		sc->sc_sens[7].value = 0;
 		sc->sc_sens[7].status = SENSOR_S_UNKNOWN;
 		sc->sc_sens[7].flags = SENSOR_FUNKNOWN;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.15 2007/02/06 18:56:31 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.16 2007/11/12 21:58:14 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -477,8 +477,7 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 				name = aml_parsename(scope);
 				node = aml_searchname(scope->node, name);
 				db_aml_disline(pos, depth+off, "%s <%s>\n",
-					       aml_getname(name),
-					       aml_nodename(node));
+				    aml_getname(name), aml_nodename(node));
 
 				if (!node || !node->value ||
 				    node->value->type != AML_OBJTYPE_METHOD)
@@ -486,8 +485,8 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 
 				/* Method calls */
 				for (idx = 0;
-				     idx < AML_METHOD_ARGCOUNT(node->value->v_method.flags);
-				     idx++) {
+				    idx < AML_METHOD_ARGCOUNT(node->value->v_method.flags);
+				    idx++) {
 					scope->pos = db_aml_disasm(node, scope->pos,
 					    scope->end, 1, depth+1);
 				}
@@ -514,7 +513,7 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 					snprintf(tmpstr+idx*6, 7, "0x%.2x, ",
 					    scope->pos[idx]);
 				db_aml_disline(pos, depth+1, "ByteList <%s>\n", tmpstr);
-			        free(tmpstr, M_DEVBUF);
+				free(tmpstr, M_DEVBUF);
 				scope->pos = end;
 				break;
 			case 'F':
@@ -528,12 +527,12 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 						len = aml_parselength(scope);
 						db_aml_disline(pos, depth+1,
 						    "Reserved\t%.4x,%.4x\n",
-						     off, len);
+						    off, len);
 						break;
 					case 0x01: // attr
 						db_aml_disline(pos, depth+1,
 						    "Attr:%.2x,%.2x\n",
-						     scope->pos[1], scope->pos[2]);
+						    scope->pos[1], scope->pos[2]);
 						scope->pos += 3;
 						break;
 					default:

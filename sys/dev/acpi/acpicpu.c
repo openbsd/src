@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.30 2007/11/12 19:55:46 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.31 2007/11/12 21:58:14 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -101,9 +101,9 @@ struct acpicpu_softc {
 	 * PPC changes can occur when for example a machine is disconnected
 	 * from AC power and can no loger support the highest frequency or
 	 * voltage when driven from the battery.
-	 * Should probably be reimplemented as a list for now we assume only 
+	 * Should probably be reimplemented as a list for now we assume only
 	 * one listener */
-	void 			(*sc_notify)(struct acpicpu_pss *, int);
+	void			(*sc_notify)(struct acpicpu_pss *, int);
 };
 
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
@@ -263,7 +263,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s: ", sc->sc_devnode->name);
 	printf("\n: hdr:%x pblk:%x,%x duty:%x,%x pstate:%x (%d throttling states)\n",
 		sc->sc_acpi->sc_fadt->hdr_revision,
-		sc->sc_pblk_addr, sc->sc_pblk_len, 
+		sc->sc_pblk_addr, sc->sc_pblk_len,
 		sc->sc_duty_off, sc->sc_duty_wid,
 		sc->sc_acpi->sc_fadt->pstate_cnt,
 		CPU_MAXSTATE(sc));
@@ -325,7 +325,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* 
+	/*
 	 * Nicely enumerate what power management capabilities
 	 * ACPI CPU provides.
 	 */
@@ -334,7 +334,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_FOREACH(cx, &sc->sc_cstates, link) {
 		if (i)
 			printf(",");
-		switch(cx->type) {
+		switch (cx->type) {
 		case ACPI_STATE_C0:
 			printf(" C0");
 			break;
