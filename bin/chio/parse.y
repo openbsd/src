@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2007/10/16 20:01:23 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.11 2007/11/12 23:59:40 mpf Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -217,14 +217,6 @@ lgetc(int quotec)
 		yylval.lineno = file->lineno;
 		file->lineno++;
 	}
-	if (c == '\t' || c == ' ') {
-		/* Compress blanks to a single space. */
-		do {
-			c = getc(file->stream);
-		} while (c == '\t' || c == ' ');
-		ungetc(c, file->stream);
-		c = ' ';
-	}
 
 	while (c == EOF) {
 		if (popfile() == EOF)
@@ -280,7 +272,7 @@ yylex(void)
 	int	 token;
 
 	p = buf;
-	while ((c = lgetc(0)) == ' ')
+	while ((c = lgetc(0)) == ' ' || c == '\t')
 		; /* nothing */
 
 	yylval.lineno = file->lineno;
