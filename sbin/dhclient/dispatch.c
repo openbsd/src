@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.39 2007/02/14 23:15:01 stevesk Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.40 2007/11/12 10:14:40 dlg Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -310,16 +310,13 @@ interface_status(void)
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
-		if (errno != EINVAL) {
-			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
-
-			ifi->noifmedia = 1;
-			goto active;
-		}
 		/*
-		 * EINVAL (or ENOTTY) simply means that the interface
+		 * EINVAL or ENOTTY simply means that the interface
 		 * does not support the SIOCGIFMEDIA ioctl. We regard it alive.
 		 */
+		if (errno != EINVAL && errno != ENOTTY)
+			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
+
 		ifi->noifmedia = 1;
 		goto active;
 	}
@@ -436,8 +433,8 @@ interface_link_status(char *ifname)
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
-		/* EINVAL -> link state unknown. treat as active */
-		if (errno != EINVAL)
+		/* EINVAL/ENOTTY -> link state unknown. treat as active */
+		if (errno != EINVAL && errno != ENOTTY)
 			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
 		close(sock);
 		return (1);
