@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.42 2007/11/08 20:27:20 canacar Exp $ */
+/* $OpenBSD: acpibat.c,v 1.43 2007/11/12 04:32:37 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -80,12 +80,17 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	if ((sc->sc_bat_present = aml_val2int(&res) & STA_BATTERY) != 0) {
 		acpibat_getbif(sc);
 		acpibat_getbst(sc);
-		printf(": %s model %s serial %s type %s oem %s\n",
-		    sc->sc_devnode->parent->name,
-		    sc->sc_bif.bif_model,
-		    sc->sc_bif.bif_serial,
-		    sc->sc_bif.bif_type,
-		    sc->sc_bif.bif_oem);
+
+		printf(": %s", sc->sc_devnode->parent->name);
+		if (sc->sc_bif.bif_model[0])
+			printf(" model %s", sc->sc_bif.bif_model);
+		if (sc->sc_bif.bif_serial[0])
+			printf(" serial %s", sc->sc_bif.bif_serial);
+		if (sc->sc_bif.bif_type[0])
+			printf(" type %s", sc->sc_bif.bif_type);
+		if (sc->sc_bif.bif_oem[0])
+			printf(" oem \"%s\"", sc->sc_bif.bif_oem);
+		printf("\n");
 	} else
 		printf(": %s not present\n", sc->sc_devnode->parent->name);
 
