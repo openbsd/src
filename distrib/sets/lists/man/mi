@@ -2246,6 +2246,7 @@
 ./usr/share/man/cat8/macppc/apm.0
 ./usr/share/man/cat8/macppc/apmd.0
 ./usr/share/man/cat8/macppc/boot_macppc.0
+./usr/share/man/cat8/macppc/eeprom.0
 ./usr/share/man/cat8/macppc/fdisk.0
 ./usr/share/man/cat8/macppc/gpioctl.0
 ./usr/share/man/cat8/macppc/hotplugd.0
