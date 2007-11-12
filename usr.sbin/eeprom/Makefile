@@ -1,15 +1,16 @@
-#	$OpenBSD: Makefile,v 1.10 2007/09/04 23:28:26 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.11 2007/11/12 20:54:54 kettenis Exp $
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 PROG=	eeprom
 
 BINGRP=	kmem
 BINMODE=2555
 
-SRCS=	eehandlers.c getdate.c main.c
+SRCS=	getdate.c main.c
+SRCS+=	ophandlers.c optree.c
 
 .  if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
-SRCS+=	ophandlers.c optree.c
+SRCS+=	eehandlers.c
 .  endif
 
 CLEANFILES+=getdate.c y.tab.h
@@ -18,6 +19,6 @@ NOPROG=yes
 .endif
 
 MAN=	eeprom.8
-MANSUBDIR=sparc sparc64
+MANSUBDIR=macppc sparc sparc64
 
 .include <bsd.prog.mk>

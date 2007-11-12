@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2007/09/07 13:54:43 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2007/11/12 20:54:54 kettenis Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -49,15 +49,15 @@
 #include <limits.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
+#include <machine/eeprom.h>
+#endif
 
 #include <machine/openpromio.h>
 
-static	char *nlistf = NULL;
-#endif /* __sparc__ */
-
-#include <machine/eeprom.h>
-
 #include "defs.h"
+
+#ifdef __sparc__
+static	char *nlistf = NULL;
 
 struct	keytabent eekeytab[] = {
 	{ "hwupdate",		0x10,	ee_hwupdate },
@@ -94,6 +94,7 @@ struct	keytabent eekeytab[] = {
 	{ "password",		0,	ee_notsupp },
 	{ NULL,			0,	ee_notsupp },
 };
+#endif
 
 static	void action(char *);
 static	void dump_prom(void);
@@ -121,12 +122,8 @@ main(int argc, char *argv[])
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
-#ifdef __sparc__
 	gid_t gid;
 	char *optstring = "cf:ipvN:-";
-#else
-	char *optstring = "cf:i-";
-#endif /* __sparc__ */
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)
 		switch (ch) {
@@ -145,7 +142,7 @@ main(int argc, char *argv[])
 		case 'i':
 			ignore_checksum = 1;
 			break;
-#ifdef __sparc__
+
 		case 'p':
 			print_tree = 1;
 			break;
@@ -154,11 +151,11 @@ main(int argc, char *argv[])
 			verbose = 1;
 			break;
 
+#ifdef __sparc__
 		case 'N':
 			nlistf = optarg;
 			break;
-
-#endif /* __sparc__ */
+#endif
 
 		case '?':
 		default:
@@ -174,18 +171,20 @@ main(int argc, char *argv[])
 			err(1, "setresgid");
 	}
 	if (getcputype() != CPU_SUN4)
+#endif /* __sparc__ */
 		use_openprom = 1;
 	if (print_tree && use_openprom) {
 		op_tree();
 		exit(0);
 	}
-#endif /* __sparc__ */
 
+#ifdef __sparc__
 	if (use_openprom == 0) {
 		ee_verifychecksums();
 		if (fix_checksum || cksumfail)
 			exit(cksumfail);
 	}
+#endif
 
 	if (do_stdin) {
 		while (fgets(line, BUFSIZE, stdin) != NULL) {
@@ -210,11 +209,13 @@ main(int argc, char *argv[])
 		}
 	}
 
+#ifdef __sparc__
 	if (use_openprom == 0)
 		if (update_checksums) {
 			++writecount;
 			ee_updatechecksums();
 		}
+#endif
 
 	exit(eval + cksumfail);
 }
@@ -253,7 +254,6 @@ action(char *line)
 	if ((arg = strrchr(keyword, '=')) != NULL)
 		*arg++ = '\0';
 
-#ifdef __sparc__
 	if (use_openprom) {
 		/*
 		 * The whole point of the Openprom is that one
@@ -264,14 +264,16 @@ action(char *line)
 		if ((cp = op_handler(keyword, arg)) != NULL)
 			warnx("%s", cp);
 		return;
-	} else
-#endif /* __sparc__ */
+	}
+#ifdef __sparc__
+	  else
 		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
 			if (strcmp(ktent->kt_keyword, keyword) == 0) {
 				(*ktent->kt_handler)(ktent, arg);
 				return; 
 			}
 		}
+#endif /* __sparc__ */
 
 	warnx("unknown keyword %s", keyword);
 	++eval;
@@ -285,16 +287,17 @@ dump_prom(void)
 {
 	struct keytabent *ktent;
 
-#ifdef __sparc__
 	if (use_openprom) {
 		/*
 		 * We have a special dump routine for this.
 		 */
 		op_dump();
-	} else
-#endif /* __sparc__ */
+	}
+#ifdef __sparc__
+	  else
 		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
 			(*ktent->kt_handler)(ktent, NULL);
+#endif /* __sparc__ */
 }
 
 static void
@@ -307,7 +310,7 @@ usage(void)
 	    __progname);
 #else
 	fprintf(stderr,
-	    "usage: %s [-ci] [-f device] [field[=value] ...]\n",
+	    "usage: %s [-cipv] [-f device] [field[=value] ...]\n",
 	    __progname);
 #endif /* __sparc__ */
 	exit(1);

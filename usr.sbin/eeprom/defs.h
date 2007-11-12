@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.5 2007/09/04 23:28:26 fgsch Exp $	*/
+/*	$OpenBSD: defs.h,v 1.6 2007/11/12 20:54:54 kettenis Exp $	*/
 /*	$NetBSD: defs.h,v 1.2 1996/02/28 01:13:20 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@ struct	strvaltabent {
 	u_char	sv_val;			/* ... and the value */
 };
 
-#ifdef __sparc__
 /*
  * This is an entry in a table which describes a set of `exceptions'.
  * In other words, these are Openprom fields that we either can't
@@ -86,7 +85,6 @@ struct	extabent {
 	void	(*ex_handler)(struct extabent *, struct opiocdesc *, char *);
 					/* handler function for this entry */
 };
-#endif /* __sparc__ */
 
 /* Sun 3/4 EEPROM handlers. */
 void	ee_hwupdate(struct keytabent *, char *);
@@ -106,9 +104,7 @@ u_char	ee_checksum(u_char *, size_t);
 void	ee_updatechecksums(void);
 void	ee_verifychecksums(void);
 
-#ifdef __sparc__
-/* Sparc Openprom handlers. */
+/* OpenPROM handlers. */
 char	*op_handler(char *, char *);
 void	 op_dump(void);
 void	 op_tree(void);
-#endif /* __sparc__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.10 2007/09/04 23:28:26 fgsch Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.11 2007/11/12 20:54:54 kettenis Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #include <unistd.h>
 #include <vis.h>
 
-#include <machine/eeprom.h>
 #include <machine/openpromio.h>
 
 #include "defs.h"

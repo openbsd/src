@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.2 2007/09/09 14:19:28 fgsch Exp $	*/
+/*	$OpenBSD: optree.c,v 1.3 2007/11/12 20:54:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -26,13 +26,16 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/openpromio.h>
 #include <sys/ioctl.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <machine/openpromio.h>
+
+#include "defs.h"
 
 extern  char *path_openprom;
 
@@ -93,8 +96,8 @@ op_print(struct opiocdesc *opio, int depth)
 void
 op_nodes(int fd, int node, int depth)
 {
-	char op_buf[BUFSIZ * 4];
-	char op_name[BUFSIZ];
+	char op_buf[BUFSIZE * 8];
+	char op_name[BUFSIZE];
 	struct opiocdesc opio;
 
 	opio.op_nodeid = node;
