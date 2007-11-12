@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.13 2007/11/12 05:11:16 jakemsr Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.14 2007/11/12 05:43:59 jakemsr Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -482,7 +482,7 @@ struct audiodevinfo {
 	char names[NETBSD_MAXDEVS][MAX_AUDIO_DEV_LEN];
 	int enum2opaque[NETBSD_MAXDEVS];
         u_long devmask, recmask, stereomask;
-	u_long caps, source;
+	u_long caps, recsource;
 };
 
 static int
@@ -539,7 +539,7 @@ enum_to_mask(struct audiodevinfo *di, int enm)
 static struct audiodevinfo *
 getdevinfo(int fd)
 {
-	mixer_devinfo_t mi;
+	mixer_devinfo_t mi, cl;
 	int i, j, e;
 	static struct {
 		char *name;
@@ -585,7 +585,7 @@ getdevinfo(int fd)
 	di->devmask = 0;
 	di->recmask = 0;
 	di->stereomask = 0;
-	di->source = ~0;
+	di->recsource = ~0;
 	di->caps = 0;
 	for(i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 		di->devmap[i] = -1;
@@ -621,7 +621,13 @@ getdevinfo(int fd)
 			break;
 		if (strcmp(mi.label.name, AudioNsource) != 0)
 			continue;
-		di->source = i;
+		cl.index = mi.mixer_class;
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) < 0)
+			break;
+		if ((cl.type != AUDIO_MIXER_CLASS) ||
+		    (strcmp(cl.label.name, AudioCrecord) != 0))
+			continue;
+		di->recsource = i;
 		switch(mi.type) {
 		case AUDIO_MIXER_ENUM:
 			for(j = 0; j < mi.un.e.num_mem; j++) {
@@ -679,9 +685,9 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		strncpy(omi->name, adev.name, sizeof omi->name);
 		return 0;
 	case SOUND_MIXER_READ_RECSRC:
-		if (di->source == -1)
+		if (di->recsource == -1)
 			return EINVAL;
-		mc.dev = di->source;
+		mc.dev = di->recsource;
 		if (di->caps & SOUND_CAP_EXCL_INPUT) {
 			mc.type = AUDIO_MIXER_ENUM;
 			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
@@ -714,9 +720,9 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SOUND_MIXER_WRITE_RECSRC:
 	case SOUND_MIXER_WRITE_R_RECSRC:
-		if (di->source == -1)
+		if (di->recsource == -1)
 			return EINVAL;
-		mc.dev = di->source;
+		mc.dev = di->recsource;
 		idat = INTARG;
 		if (di->caps & SOUND_CAP_EXCL_INPUT) {
 			mc.type = AUDIO_MIXER_ENUM;
