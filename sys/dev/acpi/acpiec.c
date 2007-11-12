@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.18 2007/02/21 20:46:57 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.19 2007/11/12 21:38:31 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -282,7 +282,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node->child;
 
 	if (sc->sc_acpi->sc_ec != NULL) {
-		printf(": Only single EC is supported!\n");
+		printf(": Only single EC is supported\n");
 		return;
 	}
 
