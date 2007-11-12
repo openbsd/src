@@ -1,5 +1,5 @@
-/*	$OpenBSD: eapreg.h,v 1.1 2001/09/06 14:47:07 naddy Exp $ */
-/*	$NetBSD: eapreg.h,v 1.2 2000/04/30 21:59:58 augustss Exp $ */
+/*	$OpenBSD: eapreg.h,v 1.2 2007/11/12 05:38:23 jakemsr Exp $ */
+/*	$NetBSD: eapreg.h,v 1.10 2005/02/13 23:58:38 fredb Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@
 #define EAP_AUX_VOL		5
 #define EAP_MIC_VOL		6
 #define	EAP_RECORD_SOURCE 	7
-#define EAP_OUTPUT_SELECT	8
+#define EAP_INPUT_SOURCE	8
 #define	EAP_MIC_PREAMP		9  
 #define EAP_OUTPUT_CLASS	10
 #define EAP_RECORD_CLASS	11
