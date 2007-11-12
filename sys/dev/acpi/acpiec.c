@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.19 2007/11/12 21:38:31 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.20 2007/11/12 21:41:03 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -307,7 +307,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	    sc, "acpiec");
 #endif
 
-	printf(": %s\n", sc->sc_devnode->parent->name);
+	printf("\n");
 }
 
 void
