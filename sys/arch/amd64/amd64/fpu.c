@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.12 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.13 2007/11/12 14:47:56 millert Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ fputrap(struct trapframe *frame)
 {
 	struct proc *p = curcpu()->ci_fpcurproc;
 	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
-	u_int32_t statbits;
+	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
 	int code;
 	union sigval sv;
@@ -134,7 +134,10 @@ fputrap(struct trapframe *frame)
 
 	fxsave(sfp);
 	if (frame->tf_trapno == T_XMM) {
-	  	statbits = sfp->fp_fxsave.fx_mxcsr;
+		mxcsr = sfp->fp_fxsave.fx_mxcsr;
+	  	statbits = mxcsr;
+		mxcsr &= ~0x3f;
+		ldmxcsr(&mxcsr);
 	} else {
 		fninit();
 		fwait();
@@ -207,11 +210,6 @@ fpudna(struct cpu_info *ci)
 	if (ci->ci_fpcurproc != NULL && ci->ci_fpcurproc != p) {
 		fpusave_cpu(ci, 1);
 		uvmexp.fpswtch++;
-	} else {
-		clts();
-		fninit();
-		fwait();
-		stts();
 	}
 	splx(s);
 
@@ -237,6 +235,7 @@ fpudna(struct cpu_info *ci)
 	splx(s);
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		fninit();
 		fldcw(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw);
 		ldmxcsr(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr);
 		p->p_md.md_flags |= MDP_USEDFPU;
