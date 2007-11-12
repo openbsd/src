@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.37 2007/11/12 19:59:07 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.38 2007/11/12 21:00:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -821,11 +821,11 @@ m188_clockintr(void *eframe)
 	CIO_LOCK();
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
-	hardclock(eframe);
-
 	/* restart counter */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
 	CIO_UNLOCK();
+
+	hardclock(eframe);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -849,8 +849,6 @@ m188_statintr(void *eframe)
 	tmp = *(volatile u_int8_t *)DART_STOPC;
 	tmp = *(volatile u_int8_t *)DART_ISR;
 
-	statclock((struct clockframe *)eframe);
-
 	/*
 	 * Compute new randomized interval.  The intervals are
 	 * uniformly distributed on
@@ -868,6 +866,8 @@ m188_statintr(void *eframe)
 	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
 	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
 	tmp = *(volatile u_int8_t *)DART_STARTC;
+
+	statclock((struct clockframe *)eframe);
 
 #ifdef MULTIPROCESSOR
 	/*
