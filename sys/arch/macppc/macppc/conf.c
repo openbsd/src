@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2007/07/24 10:18:24 mk Exp $ */
+/*	$OpenBSD: conf.c,v 1.33 2007/11/12 19:23:26 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -237,6 +237,7 @@ struct cdevsw cdevsw[] = {
 	cdev_gpio_init(NGPIO,gpio),	/* 79: GPIO interface */
 	cdev_bio_init(NBIO,bio),	/* 80: ioctl tunnel */
 	cdev_bthub_init(NBTHUB,bthub),	/* 81: bthub */
+	cdev_openprom_init(1,openprom),	/* 82: /dev/openprom */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

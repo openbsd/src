@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.9 2007/10/14 17:26:59 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.10 2007/11/12 19:23:26 kettenis Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -161,6 +161,64 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 	if (args.size > 0)
 		ofbcopy(OF_buf, buf, args.size);
 	return args.size;
+}
+
+int
+OF_setprop(int handle, char *prop, const void *buf, int buflen)
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *prop;
+		void *buf;
+		int buflen;
+		int size;
+	} args = {
+		"setprop",
+		4,
+		1,
+	};
+	
+	ofw_stack();
+	if (buflen > NBPG)
+		return -1;
+	args.phandle = handle;
+	args.prop = prop;
+	ofbcopy(buf, OF_buf, buflen);
+	args.buf = OF_buf;
+	args.buflen = buflen;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.size;
+}
+
+int
+OF_nextprop(int handle, char *prop, void *nextprop)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		const char *prop;
+		char *buf;
+		int flag;
+	} args = {
+		"nextprop",
+		3,
+		1,
+	};
+
+	ofw_stack();
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = OF_buf;
+	if (openfirmware(&args) == -1)
+		return -1;
+	strlcpy(nextprop, OF_buf, 32);
+	return args.flag;
 }
 
 int
