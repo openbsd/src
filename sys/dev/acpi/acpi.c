@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.96 2007/11/06 22:12:34 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.97 2007/11/12 21:38:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -154,7 +154,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		/* read/write from I/O registers */
 		ioaddr = address;
 		if (acpi_bus_space_map(sc->sc_iot, ioaddr, len, 0, &ioh) != 0) {
-			printf("Unable to map iospace!\n");
+			printf("unable to map iospace\n");
 			return (-1);
 		}
 		for (reg = 0; reg < len; reg += access_size) {
@@ -374,7 +374,7 @@ acpi_add_device(struct aml_node *node, void *arg)
 	case AML_OBJTYPE_THERMZONE:
 		aaa.aaa_name = "acpitz";
  		break;
-        default:
+	default:
 		return 0;
 	}
 	config_found(self, &aaa, acpi_print);
@@ -419,13 +419,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_note == NULL) {
-		printf(": can't allocate memory\n");
+		printf(", can't allocate memory\n");
 		acpi_unmap(&handle);
 		return;
 	}
 
 	if (acpi_loadtables(sc, rsdp)) {
-		printf(": can't load tables\n");
+		printf(", can't load tables\n");
 		acpi_unmap(&handle);
 		return;
 	}
@@ -443,7 +443,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (sc->sc_fadt == NULL) {
-		printf(": no FADT\n");
+		printf(", no FADT\n");
 		return;
 	}
 
@@ -453,7 +453,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (!sc->sc_fadt->smi_cmd ||
 	    (!sc->sc_fadt->acpi_enable && !sc->sc_fadt->acpi_disable)) {
-		printf(": ACPI control unavailable\n");
+		printf(", ACPI control unavailable\n");
 		return;
 	}
 #endif
@@ -495,9 +495,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Perform post-parsing fixups */
 	aml_postparse();
-
-	/* Walk AML Tree */
-	/* aml_walkroot(); */
 
 #ifndef SMALL_KERNEL
 	/* Find available sleeping states */
@@ -545,7 +542,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	idx = 0;
 	do {
 		if (idx++ > ACPIEN_RETRIES) {
-			printf(": can't enable ACPI\n");
+			printf(", can't enable ACPI\n");
 			return;
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
@@ -562,9 +559,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Display wakeup devices and lowest S-state */
 	printf("%s: wakeup devices ", DEVNAME(sc));
 	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
-		printf("%.4s(S%d) ", 
-		       wentry->q_node->name,
-		       wentry->q_state);
+		printf("%.4s(S%d) ", wentry->q_node->name,
+		    wentry->q_state);
 	}
 	printf("\n");
 
@@ -1187,7 +1183,7 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 		return -EINVAL;
 
 	if (sc->gpe_table[gpe].handler != NULL) {
-		dnprintf(10, "error: GPE %.2x already enabled!\n", gpe);
+		dnprintf(10, "error: GPE %.2x already enabled\n", gpe);
 		return -EBUSY;
 	}
 
@@ -1255,7 +1251,8 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	}
 	memset(wq, 0, sizeof(struct acpi_wakeq));
 
-	wq->q_wakepkg = (struct aml_value *)malloc(sizeof(struct aml_value), M_DEVBUF, M_NOWAIT);
+	wq->q_wakepkg = (struct aml_value *)malloc(sizeof(struct aml_value),
+	    M_DEVBUF, M_NOWAIT);
 	if (wq->q_wakepkg == NULL) {
 		free(wq, M_DEVBUF);
 		return 0;
@@ -1582,8 +1579,8 @@ acpi_create_thread(void *arg)
 }
 
 int
-acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas,  bus_addr_t base, bus_size_t size, 
-		 bus_space_handle_t *pioh, bus_space_tag_t *piot)
+acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
+    bus_size_t size, bus_space_handle_t *pioh, bus_space_tag_t *piot)
 {
 	int iospace = GAS_SYSTEM_IOSPACE;
 
