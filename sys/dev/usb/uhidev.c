@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.30 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.31 2007/11/12 04:18:09 deraadt Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -149,9 +149,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 
-	printf("%s: iclass %d/%d\n", sc->sc_dev.dv_xname,
-	    id->bInterfaceClass, id->bInterfaceSubClass);
-
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0
 
@@ -252,8 +249,12 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	nrepid = uhidev_maxrepid(desc, size);
 	if (nrepid < 0)
 		return;
+	printf("%s: iclass %d/%d", sc->sc_dev.dv_xname,
+	    id->bInterfaceClass, id->bInterfaceSubClass);
 	if (nrepid > 0)
-		printf("%s: %d report ids\n", sc->sc_dev.dv_xname, nrepid);
+		printf(", %d report id%s", nrepid,
+		    nrepid > 1 ? "s" : "");
+	printf("\n");
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(struct device *),
 	    M_USBDEV, M_NOWAIT | M_ZERO);
