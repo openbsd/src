@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.22 2007/11/11 15:30:26 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.23 2007/11/12 16:40:46 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -68,9 +68,9 @@ struct mbg_time {
 };
 
 struct mbg_time_hr {
-	u_int32_t		sec;		/* seconds since the epoch */
+	u_int32_t		sec;		/* always UTC */
 	u_int32_t		frac;		/* fractions of second */
-	int32_t			utc_off;	/* UTC offset in seconds */
+	int32_t			utc_off;	/* informal only, in seconds */
 	u_int16_t		status;
 	u_int8_t		signal;
 };
@@ -351,7 +351,7 @@ mbg_task_hr(void *arg)
 	}
 
 	tlocal = tstamp.tv_sec * NSECPERSEC + tstamp.tv_nsec;
-	trecv = (letoh32(tframe.sec) - letoh32(tframe.utc_off)) * NSECPERSEC +
+	trecv = letoh32(tframe.sec) * NSECPERSEC +
 	    (letoh32(tframe.frac) * NSECPERSEC >> 32);
 
 	mbg_update_sensor(sc, &tstamp, tlocal - trecv, tframe.signal,
