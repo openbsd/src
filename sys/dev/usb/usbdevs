@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.311 2007/11/11 02:14:24 deraadt Exp $
+$OpenBSD: usbdevs,v 1.312 2007/11/12 04:10:09 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2169,23 +2169,23 @@ product SOHOWARE NUB110		0x9110	NUB110 Ethernet
 product SOLIDYEAR KEYBOARD	0x2101	Keyboard
 
 /* SONY products */
-product SONY DSC		0x0010	Sony DSC Cameras
+product SONY DSC		0x0010	DSC Cameras
 product SONY NWMS7		0x0025	Memorystick NW-MS7
 product SONY DRIVEV2		0x002b	Harddrive V2
 product SONY MSACUS1		0x002d	Memorystick MSAC-US1
 product SONY HANDYCAM		0x002e	Handycam
-product SONY MSC		0x0032	Sony MSC Memorystick
+product SONY MSC		0x0032	MSC Memorystick
 product SONY CLIE_35		0x0038	Clie v3.5
 product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Clie v4.0
 product SONY CLIE_40_MS		0x006d	Clie v4.0 Memory Stick
-product SONY CLIE_S360		0x0095	Sony Clie s360
+product SONY CLIE_S360		0x0095	Clie s360
 product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick
 product SONY CLIE_41		0x009a	Clie v4.1
-product SONY CLIE_NX60		0x00da	Sony Clie nx60
-product SONY CLIE_TJ25		0x0169	Sony Clie tj25
+product SONY CLIE_NX60		0x00da	Clie nx60
+product SONY CLIE_TJ25		0x0169	Clie tj25
 
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
