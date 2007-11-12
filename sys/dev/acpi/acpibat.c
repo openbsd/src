@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.43 2007/11/12 04:32:37 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.44 2007/11/12 19:55:37 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -222,7 +222,7 @@ acpibat_refresh(void *arg)
 	sc->sc_sens[4].status = SENSOR_S_OK;
 	sc->sc_sens[4].flags = 0;
 	if (sc->sc_bif.bif_last_capacity == BIF_UNKNOWN ||
-	    sc->sc_bst.bst_capacity == BST_UNKNOWN) { 
+	    sc->sc_bst.bst_capacity == BST_UNKNOWN) {
 		sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
 		sc->sc_sens[4].flags = SENSOR_FUNKNOWN;
 		strlcpy(sc->sc_sens[4].desc, "battery unknown",
@@ -230,7 +230,7 @@ acpibat_refresh(void *arg)
 	} else if (sc->sc_bst.bst_capacity >= sc->sc_bif.bif_last_capacity)
 		strlcpy(sc->sc_sens[4].desc, "battery full",
 		    sizeof(sc->sc_sens[4].desc));
-        else if (sc->sc_bst.bst_state & BST_DISCHARGE)
+	else if (sc->sc_bst.bst_state & BST_DISCHARGE)
 		strlcpy(sc->sc_sens[4].desc, "battery discharging",
 		    sizeof(sc->sc_sens[4].desc));
 	else if (sc->sc_bst.bst_state & BST_CHARGE)
@@ -286,7 +286,7 @@ acpibat_refresh(void *arg)
 int
 acpibat_getbif(struct acpibat_softc *sc)
 {
-	struct aml_value        res;
+	struct aml_value	res;
 	int			rv = EINVAL;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.29 2007/11/12 04:31:16 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.30 2007/11/12 19:55:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -42,35 +42,35 @@ void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
 void	acpicpu_setperf(int);
 
-#define ACPI_STATE_C0     	0x00
-#define ACPI_STATE_C1     	0x01
-#define ACPI_STATE_C2     	0x02
-#define ACPI_STATE_C3     	0x03
+#define ACPI_STATE_C0		0x00
+#define ACPI_STATE_C1		0x01
+#define ACPI_STATE_C2		0x02
+#define ACPI_STATE_C3		0x03
 
-#define FLAGS_NO_C2       	0x01
-#define FLAGS_NO_C3       	0x02
-#define FLAGS_BMCHECK     	0x04
-#define FLAGS_NOTHROTTLE  	0x08
-#define FLAGS_NOPSS       	0x10
+#define FLAGS_NO_C2		0x01
+#define FLAGS_NO_C3		0x02
+#define FLAGS_BMCHECK		0x04
+#define FLAGS_NOTHROTTLE	0x08
+#define FLAGS_NOPSS		0x10
 #define FLAGS_NOPCT		0x20
 
 #define CPU_THT_EN		(1L << 4)
-#define CPU_MAXSTATE(sc)  	(1L << (sc)->sc_duty_wid)
+#define CPU_MAXSTATE(sc)	(1L << (sc)->sc_duty_wid)
 #define CPU_STATE(sc,pct)	((pct * CPU_MAXSTATE(sc) / 100) << (sc)->sc_duty_off)
-#define CPU_STATEMASK(sc)       ((CPU_MAXSTATE(sc) - 1) << (sc)->sc_duty_off)
+#define CPU_STATEMASK(sc)	((CPU_MAXSTATE(sc) - 1) << (sc)->sc_duty_off)
 
-#define ACPI_MAX_C2_LATENCY     100
-#define ACPI_MAX_C3_LATENCY     1000
+#define ACPI_MAX_C2_LATENCY	100
+#define ACPI_MAX_C3_LATENCY	1000
 
 /* Make sure throttling bits are valid,a=addr,o=offset,w=width */
 #define valid_throttle(o,w,a) (a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
 
 struct acpi_cstate
 {
-	int      type;
-	int      latency;
-	int      power;
-	int      address;
+	int	 type;
+	int	 latency;
+	int	 power;
+	int	 address;
 
 	SLIST_ENTRY(acpi_cstate) link;
 };
@@ -166,7 +166,7 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 	struct acpi_cstate *cx;
 
 	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.8x\n",
-	       type, latency, power, address);
+	    type, latency, power, address);
 
 	switch (type) {
 	case ACPI_STATE_C2:
