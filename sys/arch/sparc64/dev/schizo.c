@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.51 2007/10/10 11:31:49 krw Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.52 2007/11/13 15:51:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -301,7 +301,7 @@ schizo_pci_error(void *vpbm)
 	printf("PCIAFSR=%lb\n", afsr, SCZ_PCIAFSR_BITS);
 	printf("PCIAFAR=%lx\n", afar);
 	printf("PCICTRL=%lb\n", ctrl, SCZ_PCICTRL_BITS);
-	printf("PCICSR=%lb\n", csr, PCI_COMMAND_STATUS_BITS);
+	printf("PCICSR=%b\n", csr, PCI_COMMAND_STATUS_BITS);
 
 	if (ctrl & SCZ_PCICTRL_MMU_ERR) {
 		u_int32_t ctrl, tfar;
