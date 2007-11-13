@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.2 2007/11/03 15:33:08 deraadt Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.3 2007/11/13 19:32:34 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -22,6 +22,7 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/limits.h>
 #include <sys/ttycom.h>
 
 #include <err.h>
@@ -57,11 +58,11 @@ main(int argc, char *argv[])
 	struct termios tty;
 	struct tstamps tstamps;
 	const char *errstr;
-	tcflag_t cflag = HUPCL | CS8;
 	sigset_t sigset;
 	pid_t ppid;
-	int ch, fd, ldisc, nodaemon = 0, parity = 0;
-	speed_t speed = B4800;
+	int ch, fd, ldisc, nodaemon = 0;
+	int  bits = 0, parity = 0, flowcl = 0, hupcl = 1;
+	speed_t speed = 0;
 	char devn[32], *dev, *disc;
 
 	tstamps.ts_set = tstamps.ts_clr = 0;
@@ -72,32 +73,25 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "7dehmos:t:")) != -1) {
 		switch (ch) {
 		case '7':
-			cflag &= ~CS8;
-			cflag |= CS7;
+			bits = 7;
 			break;
 		case 'd':
 			nodaemon = 1;
 			break;
 		case 'e':
-			if (parity != 0)
-				parity = 0;	/* -o -e */
-			else
-				parity = -1;	/* even */
+			parity = 'e';
 			break;
 		case 'h':
-			cflag |= CRTSCTS;
+			flowcl = 1;
 			break;
 		case 'm':
-			cflag &= ~HUPCL;
+			hupcl = 0;
 			break;
 		case 'o':
-			if (parity != 0)
-				parity = 0;	/* -e -o */
-			else
-				parity = 1;	/* odd */
+			parity = 'o';
 			break;
 		case 's':
-			speed = (speed_t)strtonum(optarg, 50, 230400, &errstr);
+			speed = (speed_t)strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr) {
 				if (ppid != 1)
 					errx(1,  "speed is %s: %s", errstr,
@@ -141,40 +135,59 @@ main(int argc, char *argv[])
 		    "%s%s", _PATH_DEV, dev);
 		dev = devn;
 	}
-	syslog(LOG_INFO, "attach %s on %s", disc, dev);
-	if ((fd = open(dev, O_RDWR)) < 0)
-		goto bail_out;
 
-	if (!strcmp(disc, "slip"))
+	if (!strcmp(disc, "slip")) {
+		bits = 8;		/* make sure we use 8 databits */
 		ldisc = SLIPDISC;
-	else if (!strcmp(disc, "nmea"))
+	} else if (!strcmp(disc, "nmea")) {
 		ldisc = NMEADISC;
-	else {
+		if (speed == 0)
+			speed = B4800;	/* default is 4800 baud for nmea */
+	} else {
 		syslog(LOG_ERR, "unknown line discipline %s", disc);
 		goto bail_out;
 	}
 
-	switch (parity) {
-	case -1:	/* even parity */
-		cflag |= PARENB;
-		break;
-	case 1:		/* odd parity */
-		cflag |= PARENB | PARODD;
-		break;
-	}
+	syslog(LOG_INFO, "attach %s on %s", disc, dev);
+	if ((fd = open(dev, O_RDWR)) < 0)
+		goto bail_out;
 
-	tty.c_cflag = CREAD | cflag;
-	tty.c_iflag = 0;
-	tty.c_lflag = 0;
-	tty.c_oflag = 0;
-	tty.c_cc[VMIN] = 1;
-	tty.c_cc[VTIME] = 0;
-	cfsetspeed(&tty, speed);
-	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
+	/*
+	 * Get the current line attributes, modify only values that are
+	 * either requested on the command line or that are needed by
+	 * the line discipline (e.g. nmea has a default baudrate of
+	 * 4800 instead of 9600).
+	 */
+	if (tcgetattr(fd, &tty) < 0) {
 		if (ppid != 1)
-			warnx("tcsetattr");
+			warnx("tcgetattr");
 		goto bail_out;
 	}
+
+
+	if (bits == 7) {
+		tty.c_cflag &= ~CS8;
+		tty.c_cflag |= CS7;
+	} else if (bits == 8) {
+		tty.c_cflag &= ~CS7;
+		tty.c_cflag |= CS8;
+	}
+
+	if (parity != 0)
+		tty.c_cflag |= PARENB;
+	if (parity == 'o')
+		tty.c_cflag |= PARODD;
+	else
+		tty.c_cflag &= ~PARODD;
+
+	if (flowcl)
+		tty.c_cflag |= CRTSCTS;
+
+	if (hupcl == 0)
+		tty.c_cflag &= ~HUPCL;
+
+	if (speed != 0)
+		cfsetspeed(&tty, speed);
 
 	/* setup common to all line disciplines */
 	if (ioctl(fd, TIOCSDTR, 0) < 0)
@@ -193,6 +206,20 @@ main(int argc, char *argv[])
 			goto bail_out;
 		}
 		break;
+	case SLIPDISC:
+		tty.c_iflag = 0;
+		tty.c_lflag = 0;
+		tty.c_oflag = 0;
+		tty.c_cc[VMIN] = 1;
+		tty.c_cc[VTIME] = 0;
+		break;
+	}
+
+	/* finally set the line attributes */
+	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
+		if (ppid != 1)
+			warnx("tcsetattr");
+		goto bail_out;
 	}
 
 	if (!nodaemon && daemon(0, 0))

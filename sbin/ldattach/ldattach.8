@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.6 2007/11/03 17:18:50 jmc Exp $
+.\"	$OpenBSD: ldattach.8,v 1.7 2007/11/13 19:32:34 mbalmer Exp $
 .\"
 .\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2007 $
+.Dd $Mdocdate: November 13 2007 $
 .Dt LDATTACH 8
 .Os
 .Sh NAME
@@ -49,11 +49,6 @@ Use 7 databits instead of 8.
 Do not daemonize.
 .It Fl e
 Use even parity.
-If both
-.Fl e
-and
-.Fl o
-are given, then no parity is used (the default).
 .It Fl h
 Turn on RTS/CTS flow control.
 By default, no flow control is done.
@@ -62,14 +57,11 @@ Maintain modem control signals after closing the line.
 Specifically, this disables HUPCL.
 .It Fl o
 Use odd parity.
-If both
-.Fl e
-and
-.Fl o
-are given, then no parity is used (the default).
 .It Fl s Ar baudrate
 Specifies the speed of the connection.
-If not specified, the default of 4800 baud is used.
+If not specified, the default of 9600 baud is used
+(4800 baud for 
+.Xr nmea 4 ) .
 .It Fl t Ar cond
 .Xr nmea 4
 line discipline only.
@@ -142,11 +134,11 @@ to attach the
 .Xr nmea 4
 line discipline to
 .Pa /dev/tty01
-at 4800 baud,
+at 4800 baud using a device without a carrier (DCD) line,
 add a line of the following form to
 .Pa /etc/ttys :
 .Bd -literal -offset indent
-tty01	"/sbin/ldattach nmea"	unknown	on
+tty01	"/sbin/ldattach nmea"	unknown	on softcar
 .Ed
 .Sh SEE ALSO
 .Xr nmea 4 ,
