@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.8 2007/10/18 18:59:29 jsing Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.9 2007/11/13 12:04:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -120,6 +120,7 @@
 #define	MACE_ISA_GAME_OFFS	(MACE_ISAX_OFFS+0x00030000)
 
 extern bus_space_t macebus_tag;
+extern struct machine_bus_dma_tag mace_bus_dma_tag;
 
 u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);

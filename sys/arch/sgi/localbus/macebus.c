@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.30 2007/11/11 14:56:41 jsing Exp $ */
+/*	$OpenBSD: macebus.c,v 1.31 2007/11/13 12:04:13 jsing Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -206,7 +206,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	crimebus_tag.bus_extent = extent_create("crime_space",
-	    crimebus_tag.bus_base, crimebus_tag.bus_base + 0x00400000,
+	    crimebus_tag.bus_base, crimebus_tag.bus_base + 0x03000000,
 	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	/*
