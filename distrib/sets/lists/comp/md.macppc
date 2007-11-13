@@ -183,6 +183,7 @@
 ./usr/include/macppc/loadfile_machdep.h
 ./usr/include/macppc/lock.h
 ./usr/include/macppc/mutex.h
+./usr/include/macppc/openpromio.h
 ./usr/include/macppc/param.h
 ./usr/include/macppc/pcb.h
 ./usr/include/macppc/pio.h
