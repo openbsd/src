@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.534 2007/11/12 23:59:41 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.535 2007/11/13 00:47:56 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -436,7 +436,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
-%type	<v.number>		icmptype icmp6type uid gid
+%type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
 %type	<v.probability>		probability
 %type	<v.i>			no dir af fragcache optimizer
@@ -578,7 +578,7 @@ option		: SET OPTIMIZATION STRING		{
 			}
 			free($3);
 		}
-		| SET HOSTID NUMBER {
+		| SET HOSTID number {
 			if ($3 == 0 || $3 > UINT_MAX) {
 				yyerror("hostid must be non-zero");
 				YYERROR;
@@ -2721,6 +2721,20 @@ host		: STRING			{
 			$$->next = NULL;
 			$$->tail = $$;
 			free($2);
+		}
+		;
+
+number		: NUMBER
+		| STRING		{
+			u_long	ulval;
+
+			if (atoul($1, &ulval) == -1) {
+				yyerror("%s is not a number", $1);
+				free($1);
+				YYERROR;
+			} else
+				$$ = ulval;
+			free($1);
 		}
 		;
 
