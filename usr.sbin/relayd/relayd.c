@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.47 2007/11/04 22:09:02 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.48 2007/11/13 10:35:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -473,7 +473,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 		env->services = NULL;
 	}
 
-	if (what & PURGE_RELAYS) {
+	if (what & PURGE_RELAYS && env->relays != NULL) {
 		while ((rly = TAILQ_FIRST(env->relays)) != NULL) {
 			TAILQ_REMOVE(env->relays, rly, entry);
 			while ((sess = SPLAY_ROOT(&rly->sessions)) != NULL) {
