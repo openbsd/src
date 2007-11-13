@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.18 2007/06/29 18:54:37 millert Exp $
+.\"	$OpenBSD: strtol.3,v 1.19 2007/11/13 18:30:04 tobias Exp $
 .\"
-.Dd $Mdocdate: June 29 2007 $
+.Dd $Mdocdate: November 13 2007 $
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -41,8 +41,8 @@
 .Nm strtoq ,
 .Nd "convert string value to a long, long long or intmax_t integer"
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
 .Fd #include <limits.h>
+.Fd #include <stdlib.h>
 .Ft long
 .Fn strtol "const char *nptr" "char **endptr" "int base"
 .Pp
@@ -54,8 +54,8 @@
 .Fn strtoimax "const char *nptr" "char **endptr" "int base"
 .Pp
 .Fd #include <sys/types.h>
-.Fd #include <stdlib.h>
 .Fd #include <limits.h>
+.Fd #include <stdlib.h>
 .Ft quad_t
 .Fn strtoq "const char *nptr" "char **endptr" "int base"
 .Sh DESCRIPTION
