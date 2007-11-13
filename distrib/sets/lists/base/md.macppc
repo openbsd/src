@@ -1699,6 +1699,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/mutex.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/openpromio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pio.ph
