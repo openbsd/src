@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.10 2005/04/26 15:16:20 miod Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.11 2007/11/13 13:50:10 kettenis Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>

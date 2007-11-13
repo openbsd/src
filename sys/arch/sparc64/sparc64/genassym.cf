@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.23 2007/10/16 21:44:25 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.24 2007/11/13 13:50:10 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -95,7 +95,6 @@ include <machine/pmap.h>
 include <machine/cpu.h>
 include <machine/mutex.h>
 
-include <machine/bsd_openprom.h>
 include <machine/reg.h>
 
 ifdef notyet

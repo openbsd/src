@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.12 2007/08/10 14:25:08 fgsch Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.13 2007/11/13 13:50:10 kettenis Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bsd_openprom.h>
 #include <machine/openpromio.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>

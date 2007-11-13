@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.11 2007/06/29 04:32:39 deraadt Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.12 2007/11/13 13:50:10 kettenis Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>

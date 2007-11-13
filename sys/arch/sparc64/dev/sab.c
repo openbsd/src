@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.19 2006/05/28 22:41:44 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.20 2007/11/13 13:50:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -50,7 +50,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
