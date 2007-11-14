@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.30 2007/11/08 20:27:20 canacar Exp $ */
+/* $OpenBSD: dsdt.h,v 1.31 2007/11/14 20:31:31 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -25,15 +25,15 @@ struct aml_vallist {
 };
 
 struct aml_scope {
-	struct acpi_softc  *sc;
-	uint8_t		   *pos;
-	uint8_t            *end;
-	struct aml_node    *node;
-	struct aml_vallist *tmpvals;
-	struct aml_scope   *parent;
-	struct aml_value   *locals;
-	struct aml_value   *args;
-	int                 nargs;
+	struct acpi_softc	*sc;
+	uint8_t			*pos;
+	uint8_t			*end;
+	struct aml_node		*node;
+	struct aml_vallist	*tmpvals;
+	struct aml_scope	*parent;
+	struct aml_value	*locals;
+	struct aml_value	*args;
+	int			nargs;
 };
 
 
@@ -46,11 +46,11 @@ struct aml_opcode {
 };
 
 const char		*aml_eisaid(u_int32_t);
-const char              *aml_args(int);
+const char		*aml_args(int);
 const char		*aml_mnem(int, uint8_t *);
 int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
-struct aml_node         *aml_createname(struct aml_node *, const void *,
+struct aml_node		*aml_createname(struct aml_node *, const void *,
 			    struct aml_value *);
 
 struct aml_value	*aml_allocint(uint64_t);
@@ -60,8 +60,6 @@ void			aml_freevalue(struct aml_value *);
 void			aml_notify(struct aml_node *, int);
 void			aml_notify_dev(const char *, int);
 void			aml_showvalue(struct aml_value *, int);
-void			aml_walkroot(void);
-void			aml_walktree(struct aml_node *);
 
 int			aml_find_node(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, void *), void *);
@@ -89,22 +87,22 @@ void			acpi_mutex_release(struct aml_value *);
 
 const char		*aml_nodename(struct aml_node *);
 
-#define SR_IRQ                  0x04
-#define SR_DMA                  0x05
-#define SR_STARTDEP             0x06
-#define SR_ENDDEP               0x07
-#define SR_IOPORT               0x08
-#define SR_FIXEDPORT            0x09
-#define SR_ENDTAG               0x0F
+#define SR_IRQ			0x04
+#define SR_DMA			0x05
+#define SR_STARTDEP		0x06
+#define SR_ENDDEP		0x07
+#define SR_IOPORT		0x08
+#define SR_FIXEDPORT		0x09
+#define SR_ENDTAG		0x0F
 
-#define LR_24BIT                0x81
-#define LR_GENREGISTER          0x82
-#define LR_32BIT                0x85
-#define LR_32BITFIXED           0x86
-#define LR_DWORD                0x87
-#define LR_WORD                 0x88
-#define LR_EXTIRQ               0x89
-#define LR_QWORD                0x8A
+#define LR_24BIT		0x81
+#define LR_GENREGISTER		0x82
+#define LR_32BIT		0x85
+#define LR_32BITFIXED		0x86
+#define LR_DWORD		0x87
+#define LR_WORD			0x88
+#define LR_EXTIRQ		0x89
+#define LR_QWORD		0x8A
 
 #define __amlflagbit(v,s,l)
 union acpi_resource {
@@ -166,7 +164,7 @@ union acpi_resource {
 		uint8_t  irq_count;
 		uint32_t irq[1];
 	} __packed lr_extirq;
-  	struct {
+	struct {
 		uint8_t		typecode;
 		uint16_t	length;
 		uint8_t		type;
@@ -180,7 +178,7 @@ union acpi_resource {
 		uint8_t		src_index;
 		char		src[1];
 	} __packed lr_word;
-  	struct {
+	struct {
 		uint8_t		typecode;
 		uint16_t	length;
 		uint8_t		type;
@@ -194,7 +192,7 @@ union acpi_resource {
 		uint8_t		src_index;
 		char		src[1];
 	} __packed lr_dword;
-  	struct {
+	struct {
 		uint8_t		typecode;
 		uint16_t	length;
 		uint8_t		type;
@@ -208,7 +206,7 @@ union acpi_resource {
 		uint8_t		src_index;
 		char		src[1];
 	} __packed lr_qword;
-	uint8_t          pad[64];
+	uint8_t		pad[64];
 } __packed;
 
 #define AML_CRSTYPE(x)	((x)->hdr.typecode & 0x80 ? \

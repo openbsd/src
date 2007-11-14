@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.101 2007/11/14 20:22:11 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.102 2007/11/14 20:31:31 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -293,17 +293,21 @@ int aml_pc(uint8_t *src)
 
 struct aml_scope *aml_lastscope;
 
-void _aml_die(const char *fn, int line, const char *fmt, ...)
+void
+_aml_die(const char *fn, int line, const char *fmt, ...)
 {
+#ifndef SMALL_KERNEL
 	struct aml_scope *root;
-	va_list ap;
 	int idx;
+#endif /* SMALL_KERNEL */
+	va_list ap;
 
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
 
+#ifndef SMALL_KERNEL
 	for (root = aml_lastscope; root && root->pos; root = root->parent) {
 		printf("%.4x Called: %s\n", aml_pc(root->pos),
 		    aml_nodename(root->node));
@@ -318,6 +322,7 @@ void _aml_die(const char *fn, int line, const char *fmt, ...)
 			}
 		}
 	}
+#endif /* SMALL_KERNEL */
 
 	/* XXX: don't panic */
 	panic("aml_die %s:%d", fn, line);
@@ -1156,7 +1161,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 	case AMLOP_FIELD:
 		/* This is an I/O field */
 		if (pop->type != AML_OBJTYPE_OPREGION)
-			aml_die("Not an opregion!\n");
+			aml_die("Not an opregion\n");
 
 		/* Get field access size */
 		switch (AML_FIELD_ACCESS(field->v_field.flags)) {
@@ -1208,12 +1213,12 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			    mask + 1, iobuf, mode);
 
 			/* ASSERT: res is buffer type as it was set above */
-			aml_bufcpy(res->v_buffer, 0, iobuf, 
+			aml_bufcpy(res->v_buffer, 0, iobuf,
 			    field->v_field.bitpos & mask,
 			    field->v_field.bitlen);
 
 #ifdef ACPI_DEBUG
-			dnprintf(55,"non-aligned read: %.4x:%.4x : ", 
+			dnprintf(55,"non-aligned read: %.4x:%.4x : ",
 			    field->v_field.bitpos & mask,
 			    field->v_field.bitlen);
 
@@ -1241,7 +1246,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			    iobuf2, 0, field->v_field.bitlen);
 
 #ifdef ACPI_DEBUG
-			dnprintf(55,"non-aligned write: %.4x:%.4x : ", 
+			dnprintf(55,"non-aligned write: %.4x:%.4x : ",
 			    field->v_field.bitpos & mask,
 			    field->v_field.bitlen);
 
@@ -1286,6 +1291,7 @@ struct aml_value *aml_derefvalue(struct aml_scope *, struct aml_value *, int);
 #define aml_dereftarget(s, v)	aml_derefvalue(s, v, ACPI_IOWRITE)
 #define aml_derefterm(s, v, m)	aml_derefvalue(s, v, ACPI_IOREAD)
 
+#ifndef SMALL_KERNEL
 void
 aml_showvalue(struct aml_value *val, int lvl)
 {
@@ -1368,6 +1374,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 		printf(" !!type: %x\n", val->type);
 	}
 }
+#endif /* SMALL_KERNEL */
 
 /* Perform DeRef on value. If ACPI_IOREAD, will perform buffer/IO field read */
 struct aml_value *
@@ -2159,22 +2166,6 @@ aml_walknodes(struct aml_node *node, int mode,
 		nodecb(node, arg);
 }
 
-void
-aml_walktree(struct aml_node *node)
-{
-	while (node) {
-		aml_showvalue(node->value, 0);
-		aml_walktree(node->child);
-		node = node->sibling;
-	}
-}
-
-void
-aml_walkroot(void)
-{
-	aml_walktree(aml_root.child);
-}
-
 int
 aml_find_node(struct aml_node *node, const char *name,
     int (*cbproc)(struct aml_node *, void *arg), void *arg)
@@ -2258,7 +2249,7 @@ aml_parsename(struct aml_scope *scope)
 	return name;
 }
 
-/* Decode AML Length field 
+/* Decode AML Length field
  *  AML Length field is encoded:
  *    byte0    byte1    byte2    byte3
  *    00xxxxxx                             : if upper bits == 00, length = xxxxxx
@@ -2276,7 +2267,7 @@ aml_parselength(struct aml_scope *scope)
 	if (lcode <= 0x3F) {
 		return lcode;
 	}
-	
+
 	/* lcode >= 0x40, multibyte length, get first byte of extended length */
 	len = lcode & 0xF;
 	len += *(scope->pos++) << 4L;
@@ -3436,6 +3427,7 @@ aml_create_defaultobjects()
 	}
 }
 
+#ifdef ACPI_DEBUG
 int
 aml_print_resource(union acpi_resource *crs, void *arg)
 {
@@ -3491,6 +3483,7 @@ aml_print_resource(union acpi_resource *crs, void *arg)
 	}
 	return (0);
 }
+#endif /* ACPI_DEBUG */
 
 union acpi_resource *aml_mapresource(union acpi_resource *);
 
@@ -3536,8 +3529,7 @@ aml_parse_resource(int length, uint8_t *buffer,
 
 void
 aml_foreachpkg(struct aml_value *pkg, int start,
-	       void (*fn)(struct aml_value *, void *),
-	       void *arg)
+    void (*fn)(struct aml_value *, void *), void *arg)
 {
 	int idx;
 
@@ -3616,7 +3608,7 @@ aml_val_to_string(const struct aml_value *val)
 
 	int len;
 
-	switch(val->type) {
+	switch (val->type) {
 	case AML_OBJTYPE_BUFFER:
 		len = val->length + 1;
 		if (len > sizeof(buffer))
