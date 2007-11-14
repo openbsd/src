@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.199 2007/11/14 23:12:46 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.200 2007/11/14 23:15:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1035,6 +1035,7 @@ mvme_bootstrap()
 void
 cpu_boot_secondary_processors()
 {
+	struct cpu_info *ci = curcpu();
 	cpuid_t cpu;
 	int rc;
 	extern void secondary_start(void);
@@ -1048,7 +1049,7 @@ cpu_boot_secondary_processors()
 	case BRD_197:
 #endif
 		for (cpu = 0; cpu < max_cpus; cpu++) {
-			if (cpu != curcpu()->ci_cpuid) {
+			if (cpu != ci->ci_cpuid) {
 				__cpu_simple_lock(&cpu_boot_mutex);
 				rc = spin_cpu(cpu, (vaddr_t)secondary_start);
 				switch (rc) {
@@ -1174,11 +1175,12 @@ m88k_send_ipi(int ipi, cpuid_t cpu)
 void
 m88k_broadcast_ipi(int ipi)
 {
+	struct cpu_info *us = curcpu();
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == curcpu())
+		if (ci == us)
 			continue;
 
 		if (ISSET(ci->ci_flags, CIF_ALIVE))

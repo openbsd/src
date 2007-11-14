@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.10 2007/11/14 23:12:46 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.11 2007/11/14 23:15:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -389,8 +389,9 @@ m88k_db_trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
-	if (get_psr() & PSR_IND)
-		db_printf("WARNING: entered debugger with interrupts disabled\n");
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+#endif
 
 	switch(type) {
 	case T_KDB_BREAK:
@@ -408,9 +409,9 @@ m88k_db_trap(type, frame)
 	}
 
 #ifdef MULTIPROCESSOR
-	curcpu()->ci_ddb_state = CI_DDB_ENTERDDB;
+	ci->ci_ddb_state = CI_DDB_ENTERDDB;
 	__mp_lock(&ddb_mp_lock);
-	curcpu()->ci_ddb_state = CI_DDB_INDDB;
+	ci->ci_ddb_state = CI_DDB_INDDB;
 	ddb_mp_nextcpu = (cpuid_t)-1;
 	m88k_broadcast_ipi(CI_IPI_DDB);		/* pause other processors */
 #endif
@@ -424,7 +425,7 @@ m88k_db_trap(type, frame)
 	frame->tf_regs = ddb_regs;
 
 #ifdef MULTIPROCESSOR
-	curcpu()->ci_ddb_state = CI_DDB_RUNNING;
+	ci->ci_ddb_state = CI_DDB_RUNNING;
 	__mp_release_all(&ddb_mp_lock);
 #endif
 }
