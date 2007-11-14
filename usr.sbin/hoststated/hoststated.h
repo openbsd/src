@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.71 2007/10/22 16:53:30 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.72 2007/11/14 10:59:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -584,7 +584,7 @@ struct hoststated {
 	struct event		 ev;
 	struct tablelist	*tables;
 	struct servicelist	*services;
-	struct protolist	 protos;
+	struct protolist	*protos;
 	struct relaylist	*relays;
 	u_int16_t		 prefork_relay;
 	char			 demote_group[IFNAMSIZ];

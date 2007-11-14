@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.77 2007/11/12 23:59:41 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.78 2007/11/14 10:59:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -583,7 +583,7 @@ tableoptsl	: host			{
 proto		: PROTO STRING	{
 			struct protocol *p;
 
-			TAILQ_FOREACH(p, &conf->protos, entry)
+			TAILQ_FOREACH(p, conf->protos, entry)
 				if (!strcmp(p->name, $2))
 					break;
 			if (p != NULL) {
@@ -623,7 +623,7 @@ proto		: PROTO STRING	{
 				YYERROR;
 			}
 
-			TAILQ_INSERT_HEAD(&conf->protos, proto, entry);
+			TAILQ_INSERT_HEAD(conf->protos, proto, entry);
 		}
 		;
 
@@ -1055,7 +1055,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 		| PROTO STRING {
 			struct protocol *p;
 
-			TAILQ_FOREACH(p, &conf->protos, entry)
+			TAILQ_FOREACH(p, conf->protos, entry)
 				if (!strcmp(p->name, $2))
 					break;
 			if (p == NULL) {
@@ -1589,6 +1589,7 @@ parse_config(const char *filename, int opts)
 	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
 	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
 	    (conf->relays = calloc(1, sizeof(*conf->relays))) == NULL ||
+	    (conf->protos = calloc(1, sizeof(*conf->protos))) == NULL ||
 	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL) {
 		log_warn("cannot allocate memory");
 		return (NULL);
@@ -1599,7 +1600,7 @@ parse_config(const char *filename, int opts)
 
 	TAILQ_INIT(conf->services);
 	TAILQ_INIT(conf->tables);
-	TAILQ_INIT(&conf->protos);
+	TAILQ_INIT(conf->protos);
 	TAILQ_INIT(conf->relays);
 
 	memset(&conf->empty_table, 0, sizeof(conf->empty_table));
@@ -1616,7 +1617,7 @@ parse_config(const char *filename, int opts)
 	    sizeof(conf->proto_default.name));
 	RB_INIT(&conf->proto_default.request_tree);
 	RB_INIT(&conf->proto_default.response_tree);
-	TAILQ_INSERT_TAIL(&conf->protos, &conf->proto_default, entry);
+	TAILQ_INSERT_TAIL(conf->protos, &conf->proto_default, entry);
 
 	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
 	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
@@ -1693,7 +1694,7 @@ parse_config(const char *filename, int opts)
 	}
 
 	/* Verify that every non-default protocol is used */
-	TAILQ_FOREACH(proto, &conf->protos, entry) {
+	TAILQ_FOREACH(proto, conf->protos, entry) {
 		if (!(proto->flags & F_USED)) {
 			log_warnx("unused protocol: %s", proto->name);
 		}
