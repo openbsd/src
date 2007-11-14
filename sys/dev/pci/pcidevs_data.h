@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1292 2007/11/14 02:20:49 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1293 2007/11/14 08:10:46 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2480,8 +2480,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1600 PRO (Secondary)",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_PRO,
+	    "Radeon X1950 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT,
 	    "Radeon RX1650 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_PRO_S,
+	    "Radeon X1950 Pro Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT2,
@@ -2630,6 +2638,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1,
 	    "L1",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2,
+	    "L2",
 	},
 	{
 	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
@@ -7812,6 +7824,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Yukon 88EC033",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8042,
+	    "Yukon 88E8042",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8048,
 	    "Yukon 88E8048",
 	},
@@ -7862,6 +7878,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8071,
 	    "Yukon 88E8071",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8072,
+	    "Yukon 88E8072",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_BELKIN,
