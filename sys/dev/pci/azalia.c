@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.41 2007/11/14 05:39:41 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.42 2007/11/14 22:51:37 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -223,6 +223,7 @@ void	azalia_pci_attach(struct device *, struct device *, void *);
 int	azalia_pci_activate(struct device *, enum devact);
 int	azalia_pci_detach(struct device *, int);
 int	azalia_intr(void *);
+void	azalia_print_codec(codec_t *);
 int	azalia_attach(azalia_t *);
 void	azalia_attach_intr(struct device *);
 int	azalia_init_corb(azalia_t *);
@@ -571,6 +572,22 @@ azalia_intr(void *v)
  * HDA controller functions
  * ================================================================ */
 
+void
+azalia_print_codec(codec_t *codec)
+{
+	const char *vendor;
+
+	if (codec->name == NULL) {
+		vendor = pci_findvendor(codec->vid >> 16);
+		if (vendor == NULL)
+			printf("0x%04x/0x%04x",
+			    codec->vid >> 16, codec->vid & 0xffff);
+		else
+			printf("%s/0x%04x", vendor, codec->vid & 0xffff);
+	} else
+		printf("%s", codec->name);
+}
+
 int
 azalia_attach(azalia_t *az)
 {
@@ -644,7 +661,6 @@ azalia_attach_intr(struct device *self)
 {
 	azalia_t *az;
 	int err, i, c;
-	const char *vendor;
 
 	az = (azalia_t*)self;
 
@@ -677,23 +693,15 @@ azalia_attach_intr(struct device *self)
 	/* Use the first audio codec */
 	az->codecno = c;
 
-	printf("%s:", XNAME(az));
+	printf("%s: ", XNAME(az));
 	for (i = 0; i < az->ncodecs; i++) {
-		if (az->codecs[i].name == NULL) {
-			vendor = pci_findvendor(az->codecs[i].vid >> 16);
-			if (vendor == NULL)
-				printf(" 0x%04x/0x%04x",
-				    az->codecs[i].vid >> 16,
-				    az->codecs[i].vid & 0xffff);
-			else
-				printf(" %s/0x%04x", vendor,
-				    az->codecs[i].vid & 0xffff);
-		} else
-			printf(" %s", az->codecs[i].name);
+		azalia_print_codec(&az->codecs[i]);
 		if (i < az->ncodecs - 1)
-			printf(",");
+			printf(", ");
 	}
-	printf(" codecs; using %s\n", az->codecs[az->codecno].name);
+	printf(" codecs; using ");
+	azalia_print_codec(&az->codecs[az->codecno]);
+	printf("\n");
 
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
 	    1, AUMODE_PLAY))
