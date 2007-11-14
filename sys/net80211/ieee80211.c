@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.27 2007/11/03 14:59:55 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.28 2007/11/14 11:16:27 mglocker Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -921,4 +921,75 @@ ieee80211_media2rate(int mword)
 	}
 	return 0;
 #undef N
+}
+
+/*
+ * Convert bit rate (in 0.5Mbps units) to PLCP signal and vice versa.
+ */
+int
+ieee80211_rate2plcp(int rate, enum ieee80211_phymode mode)
+{
+	rate &= IEEE80211_RATE_VAL;
+
+	if (mode == IEEE80211_MODE_11B) {
+		/* IEEE Std 802.11b-1999 page 15, subclause 18.2.3.3 */
+		switch (rate) {
+		case 2:		return 10;
+		case 4:		return 20;
+		case 11:	return 55;
+		case 22:	return 110;
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		case 44:	return 220;
+		}
+	} else if (mode == IEEE80211_MODE_11G || mode == IEEE80211_MODE_11A) {
+		/* IEEE Std 802.11a-1999 page 14, subclause 17.3.4.1 */
+		switch (rate) {
+		case 12:	return 0x0b;
+		case 18:	return 0x0f;
+		case 24:	return 0x0a;
+		case 36:	return 0x0e;
+		case 48:	return 0x09;
+		case 72:	return 0x0d;
+		case 96:	return 0x08;
+		case 108:	return 0x0c;
+		}
+        } else
+		panic("Unexpected mode %u", mode);
+
+	IEEE80211_DPRINTF(("%s: unsupported rate %u\n", __func__, rate));
+
+	return 0;
+}
+
+int
+ieee80211_plcp2rate(int plcp, enum ieee80211_phymode mode)
+{
+	if (mode == IEEE80211_MODE_11B) {
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		switch (plcp) {
+		case 10:	return 2;
+		case 20:	return 4;
+		case 55:	return 11;
+		case 110:	return 22;
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		case 220:	return 44;
+		}
+	} else if (mode == IEEE80211_MODE_11G || mode == IEEE80211_MODE_11A) {
+		/* IEEE Std 802.11a-1999 page 14, subclause 17.3.4.1 */
+		switch (plcp) {
+		case 0x0b:	return 12;
+		case 0x0f:	return 18;
+		case 0x0a:	return 24;
+		case 0x0e:	return 36;
+		case 0x09:	return 48;
+		case 0x0d:	return 72;
+		case 0x08:	return 96;
+		case 0x0c:	return 108;
+		}
+	} else
+		panic("Unexpected mode %u", mode);
+
+	IEEE80211_DPRINTF(("%s: unsupported plcp %u\n", __func__, plcp));
+
+	return 0;
 }
