@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1291 2007/11/12 04:57:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1292 2007/11/14 02:20:49 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2444,8 +2444,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1800",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600,
+	    "Radeon X1600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_M52,
 	    "Radeon Mobility X1300 M52-64",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_S,
+	    "Radeon X1600 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300PRO,
@@ -2456,20 +2464,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1300 Pro Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_M,
-	    "Radeon Mobility X1600",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO,
 	    "Radeon X1600 PRO",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO2,
-	    "Radeon X1600 PRO (Secondary)",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_M,
+	    "Radeon Mobility X1600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV530_M56,
 	    "Mobility FireGL V5250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO2,
+	    "Radeon X1600 PRO (Secondary)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT,
@@ -6886,6 +6894,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_MCH,
 	    "82G33 MCH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_PCIE,
+	    "82G33 PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD,
