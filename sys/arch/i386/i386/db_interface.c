@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.23 2006/11/29 22:40:13 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.24 2007/11/14 17:52:36 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
+#include <ddb/db_run.h>
 #include <ddb/db_var.h>
 
 #include "acpi.h"
@@ -59,7 +60,6 @@
 extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
-extern boolean_t db_cmd_loop_done;
 
 #ifdef MULTIPROCESSOR
 extern volatile int ddb_state;

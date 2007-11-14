@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.47 2007/11/05 19:23:24 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.48 2007/11/14 17:52:36 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -58,7 +58,7 @@
 /*
  * Exported global variables
  */
-boolean_t	db_cmd_loop_done;
+int		db_cmd_loop_done;
 label_t		*db_recover;
 
 /*
