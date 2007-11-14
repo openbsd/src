@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2007/11/11 21:15:34 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2007/11/14 17:54:25 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -52,6 +52,7 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_run.h>
 #include <ddb/db_sym.h>
 
 extern label_t *db_recover;
@@ -77,6 +78,7 @@ db_regs_t ddb_regs;
 #ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
 struct __mp_lock ddb_mp_lock;
+cpuid_t	ddb_mp_nextcpu = (cpuid_t)-1;
 
 void	m88k_db_cpu_cmd(db_expr_t, int, db_expr_t, char *);
 #endif
@@ -409,6 +411,7 @@ m88k_db_trap(type, frame)
 	curcpu()->ci_ddb_state = CI_DDB_ENTERDDB;
 	__mp_lock(&ddb_mp_lock);
 	curcpu()->ci_ddb_state = CI_DDB_INDDB;
+	ddb_mp_nextcpu = (cpuid_t)-1;
 	m88k_broadcast_ipi(CI_IPI_DDB);		/* pause other processors */
 #endif
 
@@ -624,6 +627,18 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	cpuid_t cpu;
 	struct cpu_info *ci;
 	char state[15];
+
+	/* switch to another processor if requested */
+	if (have_addr) {
+		cpu = (cpuid_t)addr;
+		if (cpu >= 0 && cpu < MAX_CPUS && m88k_cpus[cpu].ci_alive) {
+			ddb_mp_nextcpu = cpu;
+			db_cmd_loop_done = 1;
+		} else {
+			db_printf("cpu%d is not active\n", cpu);
+		}
+		return;
+	}
 
 	db_printf(" cpu  state          curproc  curpcb   depth    ipi softintr\n");
 	CPU_INFO_FOREACH(cpu, ci) {

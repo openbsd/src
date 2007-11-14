@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.38 2007/11/12 21:00:22 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.39 2007/11/14 17:54:25 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -127,8 +127,11 @@
 #include <machine/mvme188.h>
 
 #include <mvme88k/dev/sysconreg.h>
-
 #include <mvme88k/mvme88k/clockvar.h>
+
+#ifdef MULTIPROCESSOR
+#include <machine/db_machdep.h>
+#endif
 
 void	m188_reset(void);
 u_int	safe_level(u_int, u_int);
@@ -376,9 +379,10 @@ void
 m188_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
-	int ipi = ci->ci_ipi;
+	int ipi = ci->ci_ipi & (CI_IPI_DDB | CI_IPI_NOTIFY);
 
 	*(volatile u_int32_t *)MVME188_CLRSWI = SWI_IPI_BIT(ci->ci_cpuid);
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
 
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
@@ -390,13 +394,17 @@ m188_ipi_handler(struct trapframe *eframe)
 
 		__mp_lock(&ddb_mp_lock);
 		__mp_unlock(&ddb_mp_lock);
+
+		/*
+		 * If ddb is hoping to us, it's our turn to enter ddb now.
+		 */
+		if (ci->ci_cpuid == ddb_mp_nextcpu)
+			Debugger();
 #endif
 	}
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
-
-	atomic_clearbits_int(&ci->ci_ipi, CI_IPI_DDB | CI_IPI_NOTIFY);
 }
 
 /*
@@ -406,17 +414,16 @@ void
 m188_clock_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
-	int ipi = ci->ci_ipi;
+	int ipi = ci->ci_ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
 
 	/* clear clock ipi interrupt */
 	*(volatile u_int32_t *)MVME188_CLRSWI = SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
 
 	if (ipi & CI_IPI_HARDCLOCK)
 		hardclock((struct clockframe *)eframe);
 	if (ipi & CI_IPI_STATCLOCK)
 		statclock((struct clockframe *)eframe);
-
-	atomic_clearbits_int(&ci->ci_ipi, CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
 }
 
 #endif
