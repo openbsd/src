@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.40 2007/11/03 19:52:56 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.41 2007/11/14 05:39:41 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -579,8 +579,8 @@ azalia_attach(azalia_t *az)
 	uint16_t gcap;
 	uint16_t statests;
 
-	printf("%s: host: High Definition Audio rev. %d.%d\n",
-	    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
+	DPRINTF(("%s: host: High Definition Audio rev. %d.%d\n",
+	    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN)));
 	gcap = AZ_READ_2(az, GCAP);
 	az->nistreams = HDA_GCAP_ISS(gcap);
 	az->nostreams = HDA_GCAP_OSS(gcap);
@@ -644,6 +644,7 @@ azalia_attach_intr(struct device *self)
 {
 	azalia_t *az;
 	int err, i, c;
+	const char *vendor;
 
 	az = (azalia_t*)self;
 
@@ -669,11 +670,30 @@ azalia_attach_intr(struct device *self)
 		if (!err && c < 0)
 			c = i;
 	}
-	if (c < 0)
+	if (c < 0) {
+		printf("%s: No codecs found\n", XNAME(az));
 		goto err_exit;
+	}
 	/* Use the first audio codec */
 	az->codecno = c;
-	DPRINTF(("%s: using the #%d codec\n", XNAME(az), az->codecno));
+
+	printf("%s:", XNAME(az));
+	for (i = 0; i < az->ncodecs; i++) {
+		if (az->codecs[i].name == NULL) {
+			vendor = pci_findvendor(az->codecs[i].vid >> 16);
+			if (vendor == NULL)
+				printf(" 0x%04x/0x%04x",
+				    az->codecs[i].vid >> 16,
+				    az->codecs[i].vid & 0xffff);
+			else
+				printf(" %s/0x%04x", vendor,
+				    az->codecs[i].vid & 0xffff);
+		} else
+			printf(" %s", az->codecs[i].name);
+		if (i < az->ncodecs - 1)
+			printf(",");
+	}
+	printf(" codecs; using %s\n", az->codecs[az->codecno].name);
 
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
 	    1, AUMODE_PLAY))
@@ -1110,12 +1130,9 @@ azalia_codec_init(codec_t *this)
 {
 	uint32_t rev, id, result;
 	int err, addr, n, i;
-	const char *vendor;
 
 	this->comresp = azalia_codec_comresp;
 	addr = this->address;
-	DPRINTF(("%s: information of codec[%d] follows:\n",
-	    XNAME(this->az), addr));
 	/* codec vendor/device/revision */
 	err = this->comresp(this, CORB_NID_ROOT, CORB_GET_PARAMETER,
 	    COP_REVISION_ID, &rev);
@@ -1128,19 +1145,11 @@ azalia_codec_init(codec_t *this)
 	this->vid = id;
 	this->subid = this->az->subid;
 	azalia_codec_init_vtbl(this);
-
-	printf("%s: codec:", XNAME(this->az));
-	if (this->name == NULL) {
-		vendor = pci_findvendor(id >> 16);
-		if (vendor == NULL)
-			printf(" 0x%04x/0x%04x", id >> 16, id & 0xffff);
-		else
-			printf(" %s/0x%04x", vendor, id & 0xffff);
-	} else
-		printf(" %s", this->name);
-	printf(" (rev. %u.%u), HDA version %u.%u\n",
-	    COP_RID_REVISION(rev), COP_RID_STEPPING(rev),
-	    COP_RID_MAJ(rev), COP_RID_MIN(rev));
+	DPRINTF(("%s: codec[%d] vid 0x%8.8x, subid 0x%8.8x, rev. %u.%u,",
+	    XNAME(this->az), addr, this->vid, this->subid,
+	    COP_RID_REVISION(rev), COP_RID_STEPPING(rev)));
+	DPRINTF((" HDA version %u.%u\n",
+	    COP_RID_MAJ(rev), COP_RID_MIN(rev)));
 
 	/* identify function nodes */
 	err = this->comresp(this, CORB_NID_ROOT, CORB_GET_PARAMETER,
@@ -1149,7 +1158,8 @@ azalia_codec_init(codec_t *this)
 		return err;
 	this->nfunctions = COP_NSUBNODES(result);
 	if (COP_NSUBNODES(result) <= 0) {
-		printf("%s: No function groups\n", XNAME(this->az));
+		DPRINTF(("%s: codec[%d]: No function groups\n",
+		    XNAME(this->az), addr));
 		return -1;
 	}
 	/* iterate function nodes and find an audio function */
@@ -1166,14 +1176,11 @@ azalia_codec_init(codec_t *this)
 		if (COP_FTYPE(result) == COP_FTYPE_AUDIO) {
 			this->audiofunc = n + i;
 			break;	/* XXX multiple audio functions? */
-		} else if (COP_FTYPE(result) == COP_FTYPE_MODEM) {
-			printf("%s: codec[%d]: No support for modem function groups\n",
-			    XNAME(this->az), addr);
 		}
 	}
 	if (this->audiofunc < 0) {
-		printf("%s: codec[%d]: No audio function groups\n",
-		    XNAME(this->az), addr);
+		DPRINTF(("%s: codec[%d]: No audio function groups\n",
+		    XNAME(this->az), addr));
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.41 2007/11/06 20:22:15 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.42 2007/11/14 05:39:41 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -125,7 +125,6 @@ azalia_codec_init_vtbl(codec_t *this)
 	/**
 	 * We can refer this->vid and this->subid.
 	 */
-	DPRINTF(("%s: vid=%08x subid=%08x\n", __func__, this->vid, this->subid));
 	this->name = NULL;
 	this->init_dacgroup = azalia_generic_codec_init_dacgroup;
 	this->mixer_init = azalia_generic_mixer_init;
