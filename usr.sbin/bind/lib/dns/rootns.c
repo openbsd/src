@@ -67,7 +67,7 @@ static char root_ns[] =
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
-"L.ROOT-SERVERS.NET.     3600000 IN      A       198.32.64.12\n"
+"L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n";
 
 static isc_result_t
