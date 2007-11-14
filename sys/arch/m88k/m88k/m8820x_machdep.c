@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.29 2007/11/11 13:05:28 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.30 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -756,7 +756,8 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 			/* invalidate on all... */
 			if (flusher != m8820x_cmmu_sync_cache) {
 				for (cpu = 0; cpu < MAX_CPUS; cpu++) {
-					if (m88k_cpus[cpu].ci_alive == 0)
+					if (!ISSET(m88k_cpus[cpu].ci_flags,
+					    CIF_ALIVE))
 						continue;
 					(*flusher)(cpu, pa, count);
 				}
@@ -823,7 +824,8 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		/* invalidate on all... */
 		if (flusher != m8820x_cmmu_sync_cache) {
 			for (cpu = 0; cpu < MAX_CPUS; cpu++) {
-				if (m88k_cpus[cpu].ci_alive == 0)
+				if (!ISSET(m88k_cpus[cpu].ci_flags,
+				    CIF_ALIVE))
 					continue;
 				(*flusher)(cpu, pa, count);
 			}

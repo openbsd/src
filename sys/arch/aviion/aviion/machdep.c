@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.13 2007/11/06 21:42:55 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.14 2007/11/14 23:12:44 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -808,6 +808,7 @@ aviion_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
 	/*
 	 * Now that set_cpu_number() set us with a valid cpu_info pointer,

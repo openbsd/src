@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2007/11/14 17:54:25 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -631,7 +631,8 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	/* switch to another processor if requested */
 	if (have_addr) {
 		cpu = (cpuid_t)addr;
-		if (cpu >= 0 && cpu < MAX_CPUS && m88k_cpus[cpu].ci_alive) {
+		if (cpu >= 0 && cpu < MAX_CPUS &&
+		    ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE)) {
 			ddb_mp_nextcpu = cpu;
 			db_cmd_loop_done = 1;
 		} else {

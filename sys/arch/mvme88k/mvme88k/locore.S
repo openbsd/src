@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.52 2007/11/06 21:42:56 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.53 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -425,10 +425,10 @@ GLOBAL(proc0paddr)
 #ifdef MULTIPROCESSOR
 /* Dummy cpuinfo structure, for cpu_number() to work early. */
 ASLOCAL(dummy_cpu)
-	word	1	/* ci_alive */
-	word	0	/* ci_curproc */
-	word	0	/* ci_curpcb */
-	word	0	/* ci_cpuid */
+	word	3 /* CIF_ALIVE | CIF_PRIMARY */	/* ci_flags */
+	word	0				/* ci_curproc */
+	word	0				/* ci_curpcb */
+	word	0				/* ci_cpuid */
 #endif	/* MULTIPROCESSOR */
 
 #if defined(DDB) || NKSYMS > 0

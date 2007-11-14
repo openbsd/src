@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2007/11/06 21:48:42 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.30 2007/11/14 23:12:45 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -82,7 +82,9 @@ extern u_int max_cpus;
  */
 
 struct cpu_info {
-	u_int	ci_alive;			/* nonzero if CPU present */
+	u_int	ci_flags;
+#define	CIF_ALIVE		0x01		/* cpu initialized */
+#define	CIF_PRIMARY		0x02		/* primary cpu */
 
 	struct proc *ci_curproc;		/* current process... */
 	struct pcb *ci_curpcb;			/* ...and its pcb */
@@ -101,13 +103,13 @@ struct cpu_info {
 
 	u_long	ci_spin_locks;			/* spin locks counter */
 
-	volatile int ci_ddb_state;		/* ddb status */
+	int ci_ddb_state;			/* ddb status */
 #define	CI_DDB_RUNNING	0
 #define	CI_DDB_ENTERDDB	1
 #define	CI_DDB_INDDB	2
 #define	CI_DDB_PAUSE	3
 
-	volatile int ci_ipi;			/* pending ipis */
+	int ci_ipi;				/* pending ipis */
 #define	CI_IPI_NOTIFY		0x00000001
 #define	CI_IPI_HARDCLOCK	0x00000002
 #define	CI_IPI_STATCLOCK	0x00000004
@@ -121,7 +123,7 @@ extern struct cpu_info m88k_cpus[MAX_CPUS];
 #define	CPU_INFO_ITERATOR	cpuid_t
 #define	CPU_INFO_FOREACH(cii, ci) \
 	for ((cii) = 0; (cii) < MAX_CPUS; (cii)++) \
-		if (((ci) = &m88k_cpus[cii])->ci_alive != 0)
+		if (((ci) = &m88k_cpus[cii])->ci_flags & CIF_ALIVE)
 #define	CPU_INFO_UNIT(ci)	((ci)->ci_cpuid)
 
 #if defined(MULTIPROCESSOR)
@@ -135,7 +137,7 @@ curcpu(void)
 	return cpuptr;
 }
 
-#define	CPU_IS_PRIMARY(ci)	((ci)->ci_primary != 0)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CIF_PRIMARY)
 
 void	cpu_boot_secondary_processors(void);
 __dead void cpu_emergency_disable(void);

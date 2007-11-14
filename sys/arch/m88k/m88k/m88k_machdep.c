@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.28 2007/11/09 17:08:44 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.29 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -285,13 +285,6 @@ set_cpu_number(cpuid_t number)
 
 	__asm__ __volatile__ ("stcr %0, cr17" :: "r" (ci));
 	flush_pipeline();
-
-#ifdef MULTIPROCESSOR
-	if (number == master_cpu)
-#endif
-	{
-		ci->ci_primary = 1;
-	}
 }
 
 /*

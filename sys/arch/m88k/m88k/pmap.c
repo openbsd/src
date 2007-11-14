@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2007/11/06 21:45:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -211,10 +211,7 @@ flush_atc_entry(pmap_t pmap, vaddr_t va)
 
 	kernel = pmap == kernel_pmap;
 	while ((cpu = ff1(users)) != 32) {
-#ifdef DIAGNOSTIC
-		if (m88k_cpus[cpu].ci_alive)
-#endif
-			cmmu_flush_tlb(cpu, kernel, va, 1);
+		cmmu_flush_tlb(cpu, kernel, va, 1);
 		users ^= 1 << cpu;
 	}
 #else	/* MULTIPROCESSOR */
@@ -491,7 +488,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 			pa = ptoa(PG_PFNUM(opte));
 #ifdef MULTIPROCESSOR
 			for (cpu = 0; cpu < MAX_CPUS; cpu++)
-				if (m88k_cpus[cpu].ci_alive != 0)
+				if (ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE))
 #else
 			cpu = cpu_number();
 #endif

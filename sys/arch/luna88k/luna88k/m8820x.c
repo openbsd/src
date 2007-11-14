@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.13 2006/10/30 14:32:27 aoyama Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.14 2007/11/14 23:12:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -138,8 +138,6 @@ m8820x_setup_board_config()
 		int type;
 
  		cr = m8820x_cmmu[num << cmmu_shift].cmmu_regs;
-
-		m88k_cpus[num].ci_alive = 1;	/* This cpu installed... */
 
 		type = CMMU_TYPE(cr[CMMU_IDR]);
 		printf("CPU%d is associated to %d MC8820%c CMMUs\n",

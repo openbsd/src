@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.198 2007/11/06 21:42:56 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.199 2007/11/14 23:12:46 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -731,7 +731,7 @@ secondary_main()
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
-	ci->ci_alive = 1;
+	SET(ci->ci_flags, CIF_ALIVE);
 
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
@@ -982,7 +982,7 @@ mvme_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
-	curcpu()->ci_alive = 1;
+	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
 #ifdef M88100
 	if (CPU_IS88100) {
@@ -1167,7 +1167,7 @@ m88k_send_ipi(int ipi, cpuid_t cpu)
 	struct cpu_info *ci;
 
 	ci = &m88k_cpus[cpu];
-	if (ci->ci_alive)
+	if (ISSET(ci->ci_flags, CIF_ALIVE))
 		(*md_send_ipi)(ipi, cpu);
 }
 
@@ -1181,7 +1181,7 @@ m88k_broadcast_ipi(int ipi)
 		if (ci == curcpu())
 			continue;
 
-		if (ci->ci_alive)
+		if (ISSET(ci->ci_flags, CIF_ALIVE))
 			(*md_send_ipi)(ipi, ci->ci_cpuid);
 	}
 }
