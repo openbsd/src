@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.100 2007/11/10 17:53:16 chl Exp $ */
+/* $OpenBSD: dsdt.c,v 1.101 2007/11/14 20:22:11 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1603,9 +1603,19 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 
 int is_local(struct aml_scope *, struct aml_value *);
 
-int is_local(struct aml_scope *scope, struct aml_value *val)
+int
+is_local(struct aml_scope *scope, struct aml_value *val)
 {
-	return val->stack;
+	int idx;
+
+	if (val->stack == 0 || scope->locals == NULL)
+		return (0);
+	
+	idx = val->stack - AMLOP_LOCAL0;
+	if (idx < 0 || idx >= AML_MAX_LOCAL)
+		aml_die("Invalid stack value!");
+
+	return (val == &scope->locals[idx]);
 }
 
 /* Guts of the code: Assign one value to another.  LHS may contain a previous value */
@@ -1621,12 +1631,12 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		rhs = _aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, ival, NULL);
 	}
 
+	if (!is_local(scope, lhs))
+		lhs = aml_dereftarget(scope, lhs);
+
 	if (is_local(scope, lhs)) {
 		/* ACPI: Overwrite writing to LocalX */
 		aml_freevalue(lhs);
-	}
-	else {
-		lhs = aml_dereftarget(scope, lhs);
 	}
 
 	switch (lhs->type) {
