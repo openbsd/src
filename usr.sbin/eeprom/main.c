@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2007/11/12 20:54:54 kettenis Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2007/11/14 20:38:32 kettenis Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -44,39 +44,31 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
-#endif
+#endif /* __sparc__ && !__sparc64__ */
 
 #include <machine/openpromio.h>
 
 #include "defs.h"
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 static	char *nlistf = NULL;
 
 struct	keytabent eekeytab[] = {
 	{ "hwupdate",		0x10,	ee_hwupdate },
 	{ "memsize",		0x14,	ee_num8 },
 	{ "memtest",		0x15,	ee_num8 },
-#ifdef __sparc64__
-	{ "scrsize",		0x16,	ee_notsupp },
-#else
 	{ "scrsize",		0x16,	ee_screensize },
-#endif
 	{ "watchdog_reboot",	0x17,	ee_truefalse },
 	{ "default_boot",	0x18,	ee_truefalse },
 	{ "bootdev",		0x19,	ee_bootdev },
 	{ "kbdtype",		0x1e,	ee_kbdtype },
-#ifdef __sparc64__
-	{ "console",		0x1f,	ee_notsupp },
-#else
 	{ "console",		0x1f,	ee_constype },
-#endif
 	{ "keyclick",		0x21,	ee_truefalse },
 	{ "diagdev",		0x22,	ee_bootdev },
 	{ "diagpath",		0x28,	ee_diagpath },
@@ -94,14 +86,14 @@ struct	keytabent eekeytab[] = {
 	{ "password",		0,	ee_notsupp },
 	{ NULL,			0,	ee_notsupp },
 };
-#endif
+#endif /* __sparc__ && !__sparc64__ */
 
 static	void action(char *);
 static	void dump_prom(void);
 static	void usage(void);
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 static	int getcputype(void);
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 
 char	*path_eeprom = "/dev/eeprom";
 char	*path_openprom = "/dev/openprom";
@@ -151,11 +143,11 @@ main(int argc, char *argv[])
 			verbose = 1;
 			break;
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 		case 'N':
 			nlistf = optarg;
 			break;
-#endif
+#endif /* __sparc__ && !__sparc64__ */
 
 		case '?':
 		default:
@@ -164,27 +156,27 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	if (nlistf != NULL) {
 		gid = getgid();
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 	}
 	if (getcputype() != CPU_SUN4)
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 		use_openprom = 1;
 	if (print_tree && use_openprom) {
 		op_tree();
 		exit(0);
 	}
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	if (use_openprom == 0) {
 		ee_verifychecksums();
 		if (fix_checksum || cksumfail)
 			exit(cksumfail);
 	}
-#endif
+#endif /* __sparc__ && !__sparc64__ */
 
 	if (do_stdin) {
 		while (fgets(line, BUFSIZE, stdin) != NULL) {
@@ -209,18 +201,18 @@ main(int argc, char *argv[])
 		}
 	}
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	if (use_openprom == 0)
 		if (update_checksums) {
 			++writecount;
 			ee_updatechecksums();
 		}
-#endif
+#endif /* __sparc__ && !__sparc64__ */
 
 	exit(eval + cksumfail);
 }
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 static int
 getcputype(void)
 {
@@ -236,7 +228,7 @@ getcputype(void)
 
 	return (cputype);
 }
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 
 /*
  * Separate the keyword from the argument (if any), find the keyword in
@@ -265,7 +257,7 @@ action(char *line)
 			warnx("%s", cp);
 		return;
 	}
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	  else
 		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
 			if (strcmp(ktent->kt_keyword, keyword) == 0) {
@@ -273,7 +265,7 @@ action(char *line)
 				return; 
 			}
 		}
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 
 	warnx("unknown keyword %s", keyword);
 	++eval;
@@ -293,18 +285,18 @@ dump_prom(void)
 		 */
 		op_dump();
 	}
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	  else
 		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
 			(*ktent->kt_handler)(ktent, NULL);
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 }
 
 static void
 usage(void)
 {
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__sparc64__)
 	fprintf(stderr,
 	    "usage: %s [-cipv] [-f device] [-N system] [field[=value] ...]\n",
 	    __progname);
@@ -312,6 +304,6 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-cipv] [-f device] [field[=value] ...]\n",
 	    __progname);
-#endif /* __sparc__ */
+#endif /* __sparc__ && !__sparc64__ */
 	exit(1);
 }
