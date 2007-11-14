@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.11 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.12 2007/11/14 19:10:44 markus Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -737,6 +737,10 @@ glxsb_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 	ses = &sc->sc_sessions[sesn];
+	if (ses->ses_used == 0) {
+		err = EINVAL;
+		goto out;
+	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		switch (crd->crd_alg) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.15 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: via.c,v 1.16 2007/11/14 19:10:44 markus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -471,6 +471,10 @@ viac3_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 	ses = &sc->sc_sessions[sesn];
+	if (ses->ses_used == 0) {
+		err = EINVAL;
+		goto out;
+	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		switch (crd->crd_alg) {
