@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.49 2007/11/14 10:59:01 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.50 2007/11/14 11:01:52 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -367,6 +367,8 @@ merge_config(struct hoststated *env, struct hoststated *new_env)
 
 	env->tables = new_env->tables;
 	env->services = new_env->services;
+	env->relays = new_env->relays;
+	env->protos = new_env->protos;
 }
 
 
@@ -490,12 +492,13 @@ purge_config(struct hoststated *env, u_int8_t what)
 			free(rly);
 		}
 		free(env->relays);
+		env->relays = NULL;
 	}
 
 	if (what & PURGE_PROTOS && env->protos != NULL) {
 		while ((proto = TAILQ_FIRST(env->protos)) != NULL) {
 			TAILQ_REMOVE(env->protos, proto, entry);
-			if (proto == &env->proto_default)
+			if (strcmp(proto->name, "default") == 0)
 				continue;
 			while ((pnode = RB_ROOT(&proto->request_tree))
 			    != NULL) {
@@ -520,6 +523,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 			free(proto);
 		}
 		free(env->protos);
+		env->protos = NULL;
 	}
 }
 
