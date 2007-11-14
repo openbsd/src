@@ -5820,12 +5820,14 @@
 ./usr/share/man/cat9/ieee80211_node_detach.0
 ./usr/share/man/cat9/ieee80211_node_lateattach.0
 ./usr/share/man/cat9/ieee80211_output.0
+./usr/share/man/cat9/ieee80211_plcp2rate.0
 ./usr/share/man/cat9/ieee80211_print_essid.0
 ./usr/share/man/cat9/ieee80211_proto.0
 ./usr/share/man/cat9/ieee80211_proto_attach.0
 ./usr/share/man/cat9/ieee80211_proto_detach.0
 ./usr/share/man/cat9/ieee80211_radiotap.0
 ./usr/share/man/cat9/ieee80211_rate2media.0
+./usr/share/man/cat9/ieee80211_rate2plcp.0
 ./usr/share/man/cat9/ieee80211_recv_mgmt.0
 ./usr/share/man/cat9/ieee80211_release_node.0
 ./usr/share/man/cat9/ieee80211_rssadapt_choose.0
