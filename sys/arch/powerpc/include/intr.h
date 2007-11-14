@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.33 2007/05/19 10:20:57 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.34 2007/11/14 20:33:32 thib Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -66,57 +66,17 @@ void setsoftnet(void);
 void clearsoftnet(void);
 int  splsoftnet(void);
 
+int	splraise(int);
+int	spllower(int);
+void	splx(int);
+
+
 void do_pending_int(void);
 
 extern int imask[IPL_NUM];
 
 /* SPL asserts */
 #define	splassert(wantipl)	/* nothing */
-
-/*
- * Reorder protection in the following inline functions is
- * achived with an empty asm volatile statement. the compiler
- * will not move instructions past asm volatiles.
- */
-volatile static __inline int
-splraise(int newcpl)
-{
-	struct cpu_info *ci = curcpu();
-	int oldcpl;
-
-	__asm__ volatile("":::"memory");	/* don't reorder.... */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = oldcpl | newcpl;
-	__asm__ volatile("":::"memory");	/* don't reorder.... */
-	return(oldcpl);
-}
-
-volatile static __inline void
-splx(int newcpl)
-{
-	struct cpu_info *ci = curcpu();
-
-	__asm__ volatile("":::"memory");	/* reorder protect */
-	ci->ci_cpl = newcpl;
-	if(ci->ci_ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("":::"memory");	/* reorder protect */
-}
-
-volatile static __inline int
-spllower(int newcpl)
-{
-	struct cpu_info *ci = curcpu();
-	int oldcpl;
-
-	__asm__ volatile("":::"memory");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = newcpl;
-	if(ci->ci_ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("":::"memory");	/* reorder protect */
-	return(oldcpl);
-}
 
 #define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
 

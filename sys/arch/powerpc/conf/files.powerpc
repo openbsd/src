@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.43 2007/10/10 15:53:52 art Exp $
+#	$OpenBSD: files.powerpc,v 1.44 2007/11/14 20:33:32 thib Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
@@ -13,6 +13,7 @@ file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c
 file	arch/powerpc/powerpc/mutex.S
+file	arch/powerpc/powerpc/intr.c
 
 file	arch/powerpc/ddb/db_memrw.c			ddb
 file	arch/powerpc/ddb/db_disasm.c			ddb
