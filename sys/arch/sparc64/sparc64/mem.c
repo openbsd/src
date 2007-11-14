@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2007/09/22 16:21:32 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.11 2007/11/14 20:43:12 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 
-#include <machine/eeprom.h>
 #include <machine/conf.h>
 #include <machine/ctlreg.h>
 

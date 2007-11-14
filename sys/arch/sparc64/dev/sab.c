@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.20 2007/11/13 13:50:10 kettenis Exp $	*/
+/*	$OpenBSD: sab.c,v 1.21 2007/11/14 20:43:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -52,7 +52,6 @@
 #include <machine/openfirm.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/eeprom.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>

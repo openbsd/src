@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2007/11/11 19:47:34 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.38 2007/11/14 20:43:12 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -80,7 +80,6 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/eeprom.h>
 #include <machine/cpu.h>
 #include <machine/idprom.h>
 
@@ -878,18 +877,6 @@ resettodr()
 	sparc_clock_time_is_ok = 1;
 	if (todr_handle == 0 || todr_settime(todr_handle, &tv) != 0)
 		printf("Cannot set time in time-of-day clock\n");
-}
-
-/*
- * XXX: these may actually belong somewhere else, but since the
- * EEPROM is so closely tied to the clock on some models, perhaps
- * it needs to stay here...
- */
-int
-eeprom_uio(uio)
-	struct uio *uio;
-{
-	return (ENODEV);
 }
 
 void

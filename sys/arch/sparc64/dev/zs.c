@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.20 2007/11/13 13:50:10 kettenis Exp $	*/
+/*	$OpenBSD: zs.c,v 1.21 2007/11/14 20:43:12 kettenis Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 #include <machine/openfirm.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
 
