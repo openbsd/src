@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.48 2006/05/31 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.49 2007/11/14 19:12:36 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -543,7 +543,6 @@ crypto_invoke(struct cryptop *crp)
 			goto migrate;
 		} else {
 			crp->crp_etype = error;
-			crypto_done(crp);
 		}
 	}
 
