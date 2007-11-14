@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2007/10/28 10:18:53 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2007/11/14 22:56:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -392,10 +392,6 @@ user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
-		if (type == T_DATAFLT)
-			KERNEL_UNLOCK();
-		else
-			KERNEL_PROC_UNLOCK(p);
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -438,6 +434,10 @@ user_fault:
 			fault_type = result == EACCES ?
 			    BUS_ADRERR : SEGV_MAPERR;
 		}
+		if (type == T_DATAFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(p);
 		break;
 	case T_MISALGNFLT+T_USER:
 		/* Fix any misaligned ld.d or st.d instructions */
