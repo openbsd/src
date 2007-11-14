@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.27 2007/11/09 22:46:38 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.28 2007/11/14 22:55:50 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1515,8 +1515,8 @@ ASLOCAL(m88100_fpu_enable)
 	 * take care of any data access exceptions......
 	 */
 	or	r30,  r0,   r31		/* get a copy of the e.f. pointer */
-	ld	r2,   r31,  REG_OFF(EF_EPSR)
-	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
+	ld	r6,   r31,  REG_OFF(EF_EPSR)
+	bb1	PSR_SUPERVISOR_MODE_BIT, r6, 1f	/* if in kernel mode */
 
 	ldcr	r31,  CPU
 	ld	r31,  r31,  CI_CURPCB
@@ -1551,12 +1551,15 @@ ASLOCAL(m88100_fpu_enable)
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* turn interrupts back on */
+	/* turn interrupts back on unless they were not enabled when the
+	   trap occured */
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r6, 7f
+
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
 	FLUSH_PIPELINE
-
+7:
 	/* service any outstanding data pipeline stuff */
 	ld	r3,   r30,  REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, 8f
@@ -2363,7 +2366,7 @@ ASLOCAL(no_softint)
 	ld	r2,  r3, P_ASTPENDING
 	bcnd.n	eq0, r2, _ASM_LABEL(no_ast)
 	/*
-	 * trap(AST,...) will service ast's.
+	 * trap(T_ASTFLT,...) will service ast's.
 	 */
 	 or	r3, r0, FPTR
 	or	r2, r0, T_ASTFLT
