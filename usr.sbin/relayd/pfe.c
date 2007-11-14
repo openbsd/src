@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.39 2007/10/30 21:04:45 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.40 2007/11/14 15:25:26 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -509,6 +509,8 @@ show(struct ctl_conn *c)
 	struct host	*host;
 	struct relay	*rlay;
 
+	if (env->services == NULL)
+		goto relays;
 	TAILQ_FOREACH(service, env->services, entry) {
 		imsg_compose(&c->ibuf, IMSG_CTL_SERVICE, 0, 0, -1,
 		    service, sizeof(*service));
@@ -531,6 +533,9 @@ show(struct ctl_conn *c)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
 				    host, sizeof(*host));
 	}
+relays:
+	if (env->relays == NULL)
+		goto end;
 	TAILQ_FOREACH(rlay, env->relays, entry) {
 		rlay->stats[env->prefork_relay].id = EMPTY_ID;
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY, 0, 0, -1,
@@ -547,7 +552,7 @@ show(struct ctl_conn *c)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
 				    host, sizeof(*host));
 	}
-
+end:
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
