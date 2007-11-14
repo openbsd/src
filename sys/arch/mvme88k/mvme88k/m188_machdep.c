@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.39 2007/11/14 17:54:25 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.40 2007/11/14 23:14:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -839,8 +839,7 @@ m188_clockintr(void *eframe)
 	 * Send an IPI to all other processors, so they can get their
 	 * own ticks.
 	 */
-	if (CPU_IS_PRIMARY(curcpu()))
-		m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+	m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
 #endif
 
 	return (1);
@@ -880,8 +879,7 @@ m188_statintr(void *eframe)
 	/*
 	 * Send an IPI to all other processors as well.
 	 */
-	if (CPU_IS_PRIMARY(curcpu()))
-		m88k_broadcast_ipi(CI_IPI_STATCLOCK);
+	m88k_broadcast_ipi(CI_IPI_STATCLOCK);
 #endif
 
 	return (1);
