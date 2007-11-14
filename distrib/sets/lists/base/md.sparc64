@@ -1488,7 +1488,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/boot_flag.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bppioctl.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bsd_openprom.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bus.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/cdefs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/conf.ph
