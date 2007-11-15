@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.4 2007/11/15 03:34:46 marco Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.5 2007/11/15 03:39:49 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -205,7 +205,7 @@ struct smbios_cpu {
 	u_int8_t	cpu_core_enabled;
 	u_int8_t	cpu_thread_count;
 	u_int16_t	cpu_characteristics;
-};
+} __packed;
 
 /*
  * SMBIOS Structure Type 38 "IPMI Information"
