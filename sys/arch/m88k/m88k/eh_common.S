@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.29 2007/11/15 21:23:16 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.30 2007/11/15 21:24:14 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -264,12 +264,8 @@
  *   has been restarted.  This does not necessarly conflict with
  *   the general registers (though it can if you're not careful)
  *   and so we can use a spot later used to save a general register.
- *
- * EF_FLAGS
- *   This is just the old EF_MODE. "EF_MODE" isn't a very good name.
  */
 #define	EF_SR3		(EF_R0 + 5)
-#define	EF_FLAGS	EF_MODE
 
 	text
 	align 8
@@ -646,7 +642,7 @@ GLOBAL(reset_handler)
 	ldcr	r10, SNIP
 	st	r10, r31, REG_OFF(EF_SNIP)
 	ldcr	r10, SR1
-	st	r10, r31, REG_OFF(EF_MODE)
+	st	r10, r31, REG_OFF(EF_FLAGS)
 	ldcr	r10, SFIP
 	st	r10, r31, REG_OFF(EF_SFIP)
 	ldcr	r10, SSBR
@@ -1828,7 +1824,7 @@ GLOBAL(m88110_reset_handler)
 	st	r10, r31, REG_OFF(EF_IPAR)
 	ldcr	r10, SR1
 	br.n	2f
-	 st	r10, r31, REG_OFF(EF_MODE)
+	 st	r10, r31, REG_OFF(EF_FLAGS)
 
 1:
 	/* retrieve saved shadow registers for error_handler */
@@ -1861,7 +1857,7 @@ GLOBAL(m88110_reset_handler)
 	ld	r10, r30, REG_OFF(EF_DUAP)
 	st	r10, r31, REG_OFF(EF_DUAP)
 	ldcr	r10, SR1
-	st	r10, r31, REG_OFF(EF_MODE)
+	st	r10, r31, REG_OFF(EF_FLAGS)
 2:
 	/* shove sr2 into EF_FPLS1 */
 	ldcr	r10, SR2

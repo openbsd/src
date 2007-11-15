@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.29 2007/11/14 23:12:46 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.30 2007/11/15 21:24:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -247,8 +247,8 @@ regdump(struct trapframe *f)
 		    f->tf_fphs2, f->tf_fpls2);
 		printf("fppt %x fprh %x fprl %x fpit %x\n",
 		    f->tf_fppt, f->tf_fprh, f->tf_fprl, f->tf_fpit);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %p\n",
-		    f->tf_vector, f->tf_mask, f->tf_mode,
+		printf("vector %d mask %x flags %x scratch1 %x cpu %p\n",
+		    f->tf_vector, f->tf_mask, f->tf_flags,
 		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif
@@ -260,8 +260,8 @@ regdump(struct trapframe *f)
 		    f->tf_dsap, f->tf_duap, f->tf_dsr, f->tf_dlar, f->tf_dpar);
 		printf("isap %x iuap %x isr %x ilar %x ipar %x\n",
 		    f->tf_isap, f->tf_iuap, f->tf_isr, f->tf_ilar, f->tf_ipar);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %p\n",
-		    f->tf_vector, f->tf_mask, f->tf_mode,
+		printf("vector %d mask %x flags %x scratch1 %x cpu %p\n",
+		    f->tf_vector, f->tf_mask, f->tf_flags,
 		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif

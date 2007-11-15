@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2007/01/13 22:00:56 miod Exp $ */
+/*	$OpenBSD: frame.h,v 1.4 2007/11/15 21:24:12 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -40,7 +40,7 @@ struct trapframe {
 	struct reg	tf_regs;
 	register_t	tf_vector;	/* exception vector number */
 	register_t	tf_mask;	/* interrupt mask level */
-	register_t	tf_mode;	/* interrupt mode */
+	register_t	tf_flags;	/* exception handling flags */
 	register_t	tf_scratch1;	/* reserved for use by locore */
 	register_t	tf_ipfsr;	/* P BUS status */
 	register_t	tf_dpfsr;	/* P BUS status */

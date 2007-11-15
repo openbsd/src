@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2007/11/15 21:23:16 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2007/11/15 21:24:14 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.12 2007/11/15 21:23:16 miod Exp $
+#	$Id: genassym.cf,v 1.13 2007/11/15 21:24:14 miod Exp $
 #
 
 include <sys/param.h>
@@ -110,7 +110,7 @@ define	EF_FPRL		offsetof(struct trapframe, tf_fprl) / sizeof(int)
 define	EF_FPIT		offsetof(struct trapframe, tf_fpit) / sizeof(int)
 define	EF_VECTOR	offsetof(struct trapframe, tf_vector) / sizeof(int)
 define	EF_MASK		offsetof(struct trapframe, tf_mask) / sizeof(int)
-define	EF_MODE		offsetof(struct trapframe, tf_mode) / sizeof(int)
+define	EF_FLAGS	offsetof(struct trapframe, tf_flags) / sizeof(int)
 define	EF_RET		offsetof(struct trapframe, tf_scratch1) / sizeof(int)
 define	EF_IPFSR	offsetof(struct trapframe, tf_ipfsr) / sizeof(int)
 define	EF_DPFSR	offsetof(struct trapframe, tf_dpfsr) / sizeof(int)
