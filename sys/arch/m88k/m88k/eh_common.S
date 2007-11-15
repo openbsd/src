@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.31 2007/11/15 21:25:40 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.32 2007/11/15 21:27:22 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2345,6 +2345,11 @@ ASGLOBAL(check_ast)
 	/* ...or we were not at spl0 */
 	ld	r2, FPTR, REG_OFF(EF_MASK)
 	bcnd	ne0, r2, _ASM_LABEL(ast_done)
+
+	/* save us the setipl calls if no pending software interrupts */
+	ldcr	r3,  CPU
+	ld	r2,   r3, CI_SOFTINTR
+	bcnd	eq0,  r2, _ASM_LABEL(softint_done)
 
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_SOFTCLOCK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.30 2007/11/15 21:24:14 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.31 2007/11/15 21:27:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -310,17 +310,17 @@ int netisr;
 void
 dosoftint()
 {
-	int *ssir = &curcpu()->ci_softintr;
+	struct cpu_info *ci = curcpu();
 	int sir, n;
 
-	if ((sir = *ssir) == 0)
+	if ((sir = ci->ci_softintr) == 0)
 		return;
 
 #ifdef MULTIPROCESSOR
 	__mp_lock(&kernel_lock);
 #endif
 
-	atomic_clearbits_int(ssir, sir);
+	atomic_clearbits_int(&ci->ci_softintr, sir);
 	uvmexp.softs++;
 
 	if (ISSET(sir, SIR_NET)) {
@@ -350,13 +350,20 @@ dosoftint()
 int
 spl0()
 {
+	struct cpu_info *ci = curcpu();
 	int s;
 
-	s = setipl(IPL_SOFTCLOCK);
+	/*
+	 * Try to avoid potentially expensive setipl calls if nothing
+	 * seems to be pending.
+	 */
+	if (ci->ci_softintr != 0) {
+		s = setipl(IPL_SOFTCLOCK);
+		dosoftint();
+		setipl(IPL_NONE);
+	} else
+		s = setipl(IPL_NONE);
 
-	dosoftint();
-
-	setipl(IPL_NONE);
 	return (s);
 }
 
