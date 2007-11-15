@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.48 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.49 2007/11/15 19:11:52 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -294,7 +294,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, 2048, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, 4096, NOCRED, &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
