@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.53 2007/11/14 23:12:46 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.54 2007/11/15 21:23:16 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -210,9 +210,9 @@ ASLOCAL(main_start)
 	 */
 #endif	/* MULTIPROCESSOR */
 
-	/* Switch to interrupt stack */
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	/* Switch to startup stack */
+	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 
 #ifdef M88110
 #ifdef M88100
@@ -317,11 +317,8 @@ GLOBAL(secondary_start)
 	 */
 
 	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
-
-	ldcr	r2, CPU
-	ld	r3, r2, CI_INIT_STACK
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	r31, r3, USIZE			/* switch to startup stack */
+	 or	r31, r2, r0			/* switch to startup stack */
 
 #endif	/* MULTIPROCESSOR */
 
@@ -364,9 +361,9 @@ GLOBAL(doboot)
 	 */
 
 8:
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
+	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
 	bsr.n	_C_LABEL(_doboot)
-	 or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	 or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 	/*NOTREACHED*/
 
 /*
@@ -403,9 +400,9 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 	space	0x2000		/* 8K - 4K phys, 4K virt*/
 
 	.align	PAGE_SIZE
-ASGLOBAL(intstack)
+ASGLOBAL(initstack)
 	space	USIZE
-ASGLOBAL(intstack_end)
+ASGLOBAL(initstack_end)
 
 #ifdef MULTIPROCESSOR
 	space	PAGE_SIZE	/* 4K, small, interim stack */

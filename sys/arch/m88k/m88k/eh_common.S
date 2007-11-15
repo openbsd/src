@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.28 2007/11/14 22:55:50 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.29 2007/11/15 21:23:16 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -600,13 +600,13 @@ GLOBAL(reset_handler)
 	or	r29, r0, 0
 1:
 	or	r26, r0,  r31	/* save old stack */
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 
 #ifdef DEBUG
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_ASM_LABEL(intstack))
-	or	r27, r27, lo16(_ASM_LABEL(intstack))
+	or.u	r27, r0,  hi16(_ASM_LABEL(initstack))
+	or	r27, r27, lo16(_ASM_LABEL(initstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
@@ -1764,13 +1764,13 @@ GLOBAL(m88110_reset_handler)
 	or	r29, r0, 0
 1:
 	or	r26, r0, r31	/* save old stack */
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 
 #ifdef DEBUG
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_ASM_LABEL(intstack))
-	or	r27, r27, lo16(_ASM_LABEL(intstack))
+	or.u	r27, r0,  hi16(_ASM_LABEL(initstack))
+	or	r27, r27, lo16(_ASM_LABEL(initstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27

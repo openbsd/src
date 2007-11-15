@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 2007/11/06 21:42:56 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.16 2007/11/15 21:23:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -189,9 +189,9 @@ ASLOCAL(main_start)
 	 * Main processor specific initialization (with cpu_mutex held).
 	 */
 ASLOCAL(main_init)
-	/* Switch to interrupt stack */
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	/* Switch to startup stack */
+	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 
 	or.u	r3, r0, hi16(_C_LABEL(vector_list))
 	or	r3, r3, lo16(_C_LABEL(vector_list))
@@ -281,11 +281,8 @@ ASLOCAL(secondary_init)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
 	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
-
-	ldcr	r2, CPU
-	ld	r3, r2, CI_INIT_STACK
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	r31, r3, USIZE 		/* switch to startup stack */
+	 or	r31, r2, r0 		/* switch to startup stack */
 
 #else
 
@@ -325,9 +322,9 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 	space	0x2000		/* 8K - 4K phys, 4K virt*/
 
 	.align	PAGE_SIZE
-ASGLOBAL(intstack)
+ASGLOBAL(initstack)
 	space	USIZE
-ASGLOBAL(intstack_end)
+ASGLOBAL(initstack_end)
 
 #ifdef MULTIPROCESSOR
 	space	PAGE_SIZE	/* 4K, small, interim stack */

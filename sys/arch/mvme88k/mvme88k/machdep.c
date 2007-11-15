@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.200 2007/11/14 23:15:07 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.201 2007/11/15 21:23:16 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -102,7 +102,7 @@ void	mvme88k_vector_init(u_int32_t *, u_int32_t *);
 void	myetheraddr(u_char *);
 void	savectx(struct pcb *);
 void	secondary_main(void);
-void	secondary_pre_main(void);
+vaddr_t	secondary_pre_main(void);
 void	_doboot(void);
 
 extern void setlevel(unsigned int);
@@ -680,14 +680,15 @@ abort:
 
 /*
  * Secondary CPU early initialization routine.
- * Determine CPU number and set it, then allocate the idle pcb (and stack).
+ * Determine CPU number and set it, then allocate the startup stack.
  *
  * Running on a minimal stack here, with interrupts disabled; do nothing fancy.
  */
-void
+vaddr_t
 secondary_pre_main()
 {
 	struct cpu_info *ci;
+	vaddr_t init_stack;
 
 	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
 	ci = curcpu();
@@ -703,19 +704,21 @@ secondary_pre_main()
 	/*
 	 * Allocate UPAGES contiguous pages for the startup stack.
 	 */
-	ci->ci_init_stack = uvm_km_zalloc(kernel_map, USPACE);
-	if (ci->ci_init_stack == (vaddr_t)NULL) {
+	init_stack = uvm_km_zalloc(kernel_map, USPACE);
+	if (init_stack == (vaddr_t)NULL) {
 		printf("cpu%d: unable to allocate startup stack\n",
 		    ci->ci_cpuid);
 		__cpu_simple_unlock(&cpu_boot_mutex);
 		for (;;) ;
 	}
+
+	return (init_stack);
 }
 
 /*
  * Further secondary CPU initialization.
  *
- * We are now running on our idle stack, with proper page tables.
+ * We are now running on our startup stack, with proper page tables.
  * There is nothing to do but display some details about the CPU and its CMMUs.
  */
 void

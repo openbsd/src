@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.14 2007/11/14 23:12:44 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.15 2007/11/15 21:23:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -100,7 +100,7 @@ u_int	getipl(void);
 void	identifycpu(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
-void	secondary_pre_main(void);
+vaddr_t	secondary_pre_main(void);
 
 intrhand_t intr_handlers[NVMEINTR];
 
@@ -564,11 +564,11 @@ abort:
 
 /*
  * Secondary CPU early initialization routine.
- * Determine CPU number and set it, then allocate the idle pcb (and stack).
+ * Determine CPU number and set it, then allocate its startup stack.
  *
  * Running on a minimal stack here, with interrupts disabled; do nothing fancy.
  */
-void
+vaddr_t
 secondary_pre_main()
 {
 	struct cpu_info *ci;
@@ -587,18 +587,20 @@ secondary_pre_main()
 	/*
 	 * Allocate UPAGES contiguous pages for the startup stack.
 	 */
-	ci->ci_init_stack = uvm_km_zalloc(kernel_map, USPACE);
-	if (ci->ci_init_stack == (vaddr_t)NULL) {
+	init_stack = uvm_km_zalloc(kernel_map, USPACE);
+	if (init_stack == (vaddr_t)NULL) {
 		printf("cpu%d: unable to allocate startup stack\n",
 		    ci->ci_cpuid);
 		for (;;) ;
 	}
+
+	return (init_stack);
 }
 
 /*
  * Further secondary CPU initialization.
  *
- * We are now running on our idle stack, with proper page tables.
+ * We are now running on our startup stack, with proper page tables.
  * There is nothing to do but display some details about the CPU and its CMMUs.
  */
 void
