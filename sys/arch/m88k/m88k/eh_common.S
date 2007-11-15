@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.30 2007/11/15 21:24:14 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.31 2007/11/15 21:25:40 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2321,7 +2321,7 @@ ASLOCAL(save_frame)
 
 #define	FPTR	r14
 
-ASLOCAL(check_ast)
+ASGLOBAL(check_ast)
 	/*
 	 * Regs r1-r30 are free. r31 is pointing at the word
 	 * on the kernel stack where our pointer to the exception frame
@@ -2333,34 +2333,34 @@ ASLOCAL(check_ast)
 	 * Control is transferred here from obvious places in this file.
 	 */
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
+
 	/*
 	 * If the saved ipl is 0, then call dosoftint() to process soft
-	 * interrupts.
-	 * If returning to userland, look for ASTs.
+	 * interrupts. And if returning to userland, look for ASTs.
 	 */
-	/* do not service soft interrupts if interrupts were disabled... */
+
+	/* do not service AST and soft interrupts if interrupts were disabled */
 	ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, _ASM_LABEL(no_softint)
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, _ASM_LABEL(ast_done)
 	/* ...or we were not at spl0 */
 	ld	r2, FPTR, REG_OFF(EF_MASK)
-	bcnd	ne0, r2, _ASM_LABEL(no_softint)
+	bcnd	ne0, r2, _ASM_LABEL(ast_done)
 
-	/* do an inline spl0() */
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_SOFTCLOCK
 	bsr	_C_LABEL(dosoftint)
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_NONE
 
-ASLOCAL(no_softint)
+ASGLOBAL(softint_done)
 	/* do not service AST if not returning to user mode */
 	ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(no_ast)
+	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(ast_done)
 
 	ldcr	r2,  CPU
 	ld	r3,  r2, CI_CURPROC
 	ld	r2,  r3, P_ASTPENDING
-	bcnd.n	eq0, r2, _ASM_LABEL(no_ast)
+	bcnd.n	eq0, r2, _ASM_LABEL(ast_done)
 	/*
 	 * trap(T_ASTFLT,...) will service ast's.
 	 */
@@ -2373,13 +2373,13 @@ ASLOCAL(no_softint)
 	bb0	eq, r4, 2f
 #endif
 #if defined(M88110)
-	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(no_ast))
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(ast_done))
 #endif
 #if defined(M88110) && defined(M88100)
 2:
 #endif
 #ifdef M88100
-	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(no_ast))
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(ast_done))
 #endif
 
 /*
@@ -2418,7 +2418,7 @@ ENTRY(proc_trampoline)
 
 	/* FALLTHROUGH */
 
-ASLOCAL(no_ast)
+ASGLOBAL(ast_done)
 	/* disable interrupts */
 	ldcr	r1, PSR
 	set	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
