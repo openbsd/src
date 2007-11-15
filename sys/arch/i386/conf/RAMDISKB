@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.99 2007/11/06 22:14:54 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.100 2007/11/15 22:21:32 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -38,8 +38,7 @@ config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
-option		ACPI_ENABLE
-acpi0		at mainbus?	disable
+acpi0		at mainbus?
 #acpitimer*	at acpi?
 #acpihpet*	at acpi?
 #acpiac*	at acpi?
