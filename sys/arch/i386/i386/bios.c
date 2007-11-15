@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.71 2007/11/03 05:48:49 ckuethe Exp $	*/
+/*	$OpenBSD: bios.c,v 1.72 2007/11/15 20:02:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -145,7 +145,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	struct smbtable bios;
 	volatile u_int8_t *va;
 	char scratch[64], *str;
-	int flags;
+	int flags, ncpu = 0;
 
 	/* remember flags */
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
@@ -282,6 +282,30 @@ biosattach(struct device *parent, struct device *self, void *aux)
 					printf(" date %s", fixstring(scratch));
 			}
 			smbios_info(sc->sc_dev.dv_xname);
+
+#ifdef MULTIPROCESSOR
+			/* count cpus so that we can disable apm when cpu > 1 */
+			bzero(&bios, sizeof(bios));
+			while (smbios_find_table(SMBIOS_TYPE_PROCESSOR,&bios)) {
+				struct smbios_cpu *cpu = bios.tblhdr;
+
+				if (cpu->cpu_status & SMBIOS_CPUST_POPULATED) {
+					/*
+					 * smbios 2.5 added multi code support
+					 */
+					if (sh->majrev * 100 +
+					    sh->minrev >= 250 &&
+					    cpu->cpu_core_enabled)
+						ncpu += cpu->cpu_core_enabled;
+					else {
+						ncpu++;
+						if (cpu->cpu_id_edx & CPUID_HTT)
+							ncpu++;
+					}
+				}
+			}
+#endif /* MULTIPROCESSOR */
+
 			break;
 		}
 	}
@@ -289,7 +313,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NAPM > 0
-	if (apm) {
+	if (apm && ncpu < 2) {
 		struct bios_attach_args ba;
 #if defined(DEBUG) || defined(APMDEBUG)
 		printf("apminfo: %x, code %x[%x]/%x[%x], data %x[%x], ept %x\n",
