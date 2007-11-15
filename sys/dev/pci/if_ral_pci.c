@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.8 2006/11/18 20:44:40 grange Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.9 2007/11/15 21:15:34 damien Exp $  */
 
 /*-
- * Copyright (c) 2005, 2006
+ * Copyright (c) 2005-2007
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
+ * PCI front-end for the Ralink RT2560/RT2561/RT2661/RT2860 driver.
  */
 
 #include "bpfilter.h"
@@ -49,6 +49,7 @@
 
 #include <dev/ic/rt2560var.h>
 #include <dev/ic/rt2661var.h>
+#include <dev/ic/rt2860var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -68,12 +69,18 @@ static struct ral_opns {
 	rt2661_attach,
 	rt2661_detach,
 	rt2661_intr
+
+}, ral_rt2860_opns = {
+	rt2860_attach,
+	rt2860_detach,
+	rt2860_intr
 };
 
 struct ral_pci_softc {
 	union {
 		struct rt2560_softc	sc_rt2560;
 		struct rt2661_softc	sc_rt2661;
+		struct rt2860_softc	sc_rt2860;
 	} u;
 #define sc_sc	u.sc_rt2560
 
@@ -97,10 +104,13 @@ struct cfattach ral_pci_ca = {
 };
 
 const struct pci_matchid ral_pci_devices[] = {
-	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560  },
-	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561  },
-	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S },
-	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661  }
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560   },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561   },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S  },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661   },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2860_1 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2860_2 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2860_3 }
 };
 
 int
@@ -118,18 +128,32 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
 	pci_intr_handle_t ih;
+	pcireg_t memtype;
 	int error;
 
-	psc->sc_opns = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RALINK_RT2560) ?
-	    &ral_rt2560_opns : &ral_rt2661_opns;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_RALINK_RT2560:
+		psc->sc_opns = &ral_rt2560_opns;
+		break;
+	case PCI_PRODUCT_RALINK_RT2561:
+	case PCI_PRODUCT_RALINK_RT2561S:
+	case PCI_PRODUCT_RALINK_RT2661:
+		psc->sc_opns = &ral_rt2661_opns;
+		break;
+	case PCI_PRODUCT_RALINK_RT2860_1:
+	case PCI_PRODUCT_RALINK_RT2860_2:
+	case PCI_PRODUCT_RALINK_RT2860_3:
+		psc->sc_opns = &ral_rt2860_opns;
+		break;
+	}
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
 
 	/* map control/status registers */
-	error = pci_mapreg_map(pa, RAL_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
-	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_st, &sc->sc_sh, NULL,
-	    &psc->sc_mapsize, 0);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, RAL_PCI_BAR0);
+	error = pci_mapreg_map(pa, RAL_PCI_BAR0, memtype, 0, &sc->sc_st,
+	    &sc->sc_sh, NULL, &psc->sc_mapsize, 0);
 	if (error != 0) {
 		printf(": could not map memory space\n");
 		return;
