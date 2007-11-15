@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.11 2007/10/08 04:15:15 krw Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.12 2007/11/15 22:16:31 mikeb Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -41,6 +41,8 @@
 #ifdef __amd64__ /* XXX */
 #define mp_nintrs mp_nintr
 #endif
+
+u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 
 int acpimadt_match(struct device *, void *, void *);
 void acpimadt_attach(struct device *, struct device *, void *);
@@ -165,6 +167,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 
 			lapic_map[entry->madt_lapic.acpi_proc_id] =
 			    entry->madt_lapic.apic_id;
+			acpi_lapic_flags[entry->madt_lapic.acpi_proc_id] =
+			    entry->madt_lapic.flags;
 
 			{
 				struct cpu_attach_args caa;

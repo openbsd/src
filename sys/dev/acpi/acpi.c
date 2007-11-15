@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.98 2007/11/14 20:29:06 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.99 2007/11/15 22:16:31 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -358,6 +358,8 @@ acpi_add_device(struct aml_node *node, void *arg)
 	struct device *self = arg;
 	struct acpi_softc *sc = arg;
 	struct acpi_attach_args aaa;
+	struct aml_value res;
+	int proc_id = 0;
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_node = node;
@@ -369,6 +371,18 @@ acpi_add_device(struct aml_node *node, void *arg)
 
 	switch (node->value->type) {
 	case AML_OBJTYPE_PROCESSOR:
+		if (aml_evalnode(sc, aaa.aaa_node, 0, NULL, &res) == 0) {
+			if (res.type == AML_OBJTYPE_PROCESSOR)
+				proc_id = res.v_processor.proc_id;
+			aml_freevalue(&res);
+		}
+#ifdef MULTIPROCESSOR
+		if (proc_id && (proc_id >= LAPIC_MAP_SIZE ||
+		    (acpi_lapic_flags[proc_id] & ACPI_PROC_ENABLE) == 0))
+#else
+		if (proc_id > 1)
+#endif
+			return 0;
 		aaa.aaa_name = "acpicpu";
 		break;
 	case AML_OBJTYPE_THERMZONE:
