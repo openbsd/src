@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.5 2007/11/15 03:39:49 marco Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.6 2007/11/15 04:24:33 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -186,21 +186,22 @@ struct smbios_cpu {
 	u_int8_t	cpu_family;
 	u_int8_t	cpu_mfg;		/* string */
 	u_int64_t	cpu_id;
-	u_int8_t	cpu_version;
+	u_int8_t	cpu_version;		/* string */
 	u_int8_t	cpu_voltage;
 	u_int16_t	cpu_clock;
 	u_int16_t	cpu_max_speed;
 	u_int16_t	cpu_current_speed;
 	u_int8_t	cpu_status;
-#define SMBIOS_CPUSTATUS_POPULATED		(1<<6)
-#define SMBIOS_CPUSTATUS_STATUSMASK		(0x07)
+#define SMBIOS_CPUST_POPULATED			(1<<6)
+#define SMBIOS_CPUST_STATUSMASK			(0x07)
 	u_int8_t	cpu_upgrade;
 	u_int16_t	cpu_l1_handle;
 	u_int16_t	cpu_l2_handle;
 	u_int16_t	cpu_l3_handle;
 	u_int8_t	cpu_serial;		/* string */
-	u_int8_t	cpu_asset_tag;
-	u_int8_t	cpu_part_nr;
+	u_int8_t	cpu_asset_tag;		/* string */
+	u_int8_t	cpu_part_nr;		/* string */
+	/* following fields were added in smbios 2.5 */
 	u_int8_t	cpu_core_count;
 	u_int8_t	cpu_core_enabled;
 	u_int8_t	cpu_thread_count;
