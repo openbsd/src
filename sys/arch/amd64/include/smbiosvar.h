@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.3 2006/05/19 04:49:17 gwk Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.4 2007/11/15 03:34:46 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -175,6 +175,37 @@ struct smbios_board {
 	u_int8_t	type;		/* board type */
 	u_int8_t	noc;		/* number of contained objects */
 } __packed;
+
+/*
+ * SMBIOS Structure Type 4 "processor Information"
+ * DMTF Specification DSP0134 v2.5 Section 3.3.5 p.g. 24
+ */
+struct smbios_cpu {
+	u_int8_t	cpu_socket_designation;	/* string */
+	u_int8_t	cpu_type;
+	u_int8_t	cpu_family;
+	u_int8_t	cpu_mfg;		/* string */
+	u_int64_t	cpu_id;
+	u_int8_t	cpu_version;
+	u_int8_t	cpu_voltage;
+	u_int16_t	cpu_clock;
+	u_int16_t	cpu_max_speed;
+	u_int16_t	cpu_current_speed;
+	u_int8_t	cpu_status;
+#define SMBIOS_CPUSTATUS_POPULATED		(1<<6)
+#define SMBIOS_CPUSTATUS_STATUSMASK		(0x07)
+	u_int8_t	cpu_upgrade;
+	u_int16_t	cpu_l1_handle;
+	u_int16_t	cpu_l2_handle;
+	u_int16_t	cpu_l3_handle;
+	u_int8_t	cpu_serial;		/* string */
+	u_int8_t	cpu_asset_tag;
+	u_int8_t	cpu_part_nr;
+	u_int8_t	cpu_core_count;
+	u_int8_t	cpu_core_enabled;
+	u_int8_t	cpu_thread_count;
+	u_int16_t	cpu_characteristics;
+};
 
 /*
  * SMBIOS Structure Type 38 "IPMI Information"
