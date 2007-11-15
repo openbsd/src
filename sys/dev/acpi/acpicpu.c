@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.31 2007/11/12 21:58:14 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.32 2007/11/15 19:05:58 mikeb Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -234,7 +234,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpicpu_softc	*sc = (struct acpicpu_softc *)self;
 	struct acpi_attach_args *aa = aux;
-	struct			aml_value res;
+	struct aml_value	res;
 	int			i;
 	struct acpi_cstate	*cx;
 
@@ -329,37 +329,32 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	 * Nicely enumerate what power management capabilities
 	 * ACPI CPU provides.
 	 */
-	i = 0;
-	printf(":");
-	SLIST_FOREACH(cx, &sc->sc_cstates, link) {
-		if (i)
-			printf(",");
-		switch (cx->type) {
-		case ACPI_STATE_C0:
-			printf(" C0");
-			break;
-		case ACPI_STATE_C1:
-			printf(" C1");
-			break;
-		case ACPI_STATE_C2:
-			printf(" C2");
-			break;
-		case ACPI_STATE_C3:
-			printf(" C3");
-			break;
+	if (!SLIST_EMPTY(&sc->sc_cstates)) {
+		printf(":");
+
+		i = 0;
+		SLIST_FOREACH(cx, &sc->sc_cstates, link) {
+			if (i++)
+				printf(",");
+			switch (cx->type) {
+			case ACPI_STATE_C0:
+				printf(" C0");
+				break;
+			case ACPI_STATE_C1:
+				printf(" C1");
+				break;
+			case ACPI_STATE_C2:
+				printf(" C2");
+				break;
+			case ACPI_STATE_C3:
+				printf(" C3");
+				break;
+			}
 		}
-		i++;
 	}
-	if (!(sc->sc_flags & FLAGS_NOPSS) && !(sc->sc_flags & FLAGS_NOPCT)) {
-		if (i)
-			printf(",");
-		printf(" FVS");
-	} else if (!(sc->sc_flags & FLAGS_NOPSS)) {
-		if (i)
-			printf(",");
-		printf(" PSS");
-	}
-	printf("\n");
+
+	if (!(sc->sc_flags & (FLAGS_NOPSS | FLAGS_NOPCT | FLAGS_NOPSS)))
+		printf("%c ", SLIST_EMPTY(&sc->sc_cstates) ? ':' : ',');
 
 	/*
 	 * If acpicpu is itself providing the capability to transition
@@ -367,11 +362,14 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	 * would.
 	 */
 	if (!(sc->sc_flags & FLAGS_NOPSS) && !(sc->sc_flags & FLAGS_NOPCT)) {
-		printf("%s: ", sc->sc_dev.dv_xname);
-		for (i = 0; i < sc->sc_pss_len; i++)
-			printf("%d%s", sc->sc_pss[i].pss_core_freq,
-			    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
-	}
+		printf("FVS, ");
+		for (i = 0; i < sc->sc_pss_len - 1; i++)
+			printf("%d, ", sc->sc_pss[i].pss_core_freq);
+		printf("%d MHz", sc->sc_pss[i].pss_core_freq);
+	} else if (!(sc->sc_flags & FLAGS_NOPSS))
+		printf("PSS");
+
+	printf("\n");
 }
 
 int
