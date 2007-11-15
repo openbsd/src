@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.102 2007/11/14 20:31:31 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.103 2007/11/15 16:02:18 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3370,7 +3370,6 @@ struct aml_defval {
  * We return True for Windows to fake out nasty bad AML
  */
 char *aml_valid_osi[] = {
-	"OpenBSD",
 	"Windows 2000",
 	"Windows 2001",
 	"Windows 2001.1",
