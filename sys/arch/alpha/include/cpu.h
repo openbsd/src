@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.30 2007/05/06 19:05:11 martin Exp $ */
+/* $OpenBSD: cpu.h,v 1.31 2007/11/15 16:37:22 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -270,7 +270,7 @@ struct clockframe {
 /*
  * This isn't perfect; if the clock interrupt comes in before the
  * r/m/w cycle is complete, we won't be counted... but it's not
- * like this stastic has to be extremely accurate.
+ * like this statistic has to be extremely accurate.
  */
 #define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
 
