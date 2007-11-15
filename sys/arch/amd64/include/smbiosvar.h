@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.6 2007/11/15 04:24:33 marco Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.7 2007/11/15 17:14:00 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -185,7 +185,8 @@ struct smbios_cpu {
 	u_int8_t	cpu_type;
 	u_int8_t	cpu_family;
 	u_int8_t	cpu_mfg;		/* string */
-	u_int64_t	cpu_id;
+	u_int32_t	cpu_id_eax;
+	u_int32_t	cpu_id_edx;
 	u_int8_t	cpu_version;		/* string */
 	u_int8_t	cpu_voltage;
 	u_int16_t	cpu_clock;
