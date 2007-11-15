@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.2 2006/05/21 12:22:01 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.3 2007/11/15 21:24:44 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -57,27 +57,27 @@ ASLOCAL(pfsr_av400_double)
 	 */
 
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP2, TMP2, r0
-	extu	TMP3, TMP2, 3<16>
-	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP2, r0
-	ld	TMP2, TMP,  CI_PFSR_I1
-	ld	TMP2, TMP2, r0
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 1f
 	st	r0,   TMP2, r0
+	ld	TMP2, TMP,  CI_PFSR_I1
 1:
-	st	TMP2, r31,  REG_OFF(EF_IPFSR)
+	ld	TMP3, TMP2, r0
+	st	r0,   TMP2, r0
+	st	TMP3, r31,  REG_OFF(EF_IPFSR)
 
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP2, TMP2, r0
-	extu	TMP3, TMP2, 3<16>
-	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP2, r0
-	ld	TMP2, TMP,  CI_PFSR_D1
-	ld	TMP2, TMP2, r0
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 2f
 	st	r0,   TMP2, r0
+	ld	TMP2, TMP,  CI_PFSR_D1
 2:
+	ld	TMP3, TMP2, r0
+	st	r0,   TMP2, r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
+	 st	TMP3, r31,  REG_OFF(EF_DPFSR)
 
 ASLOCAL(pfsr_av400_straight)
 	/*
