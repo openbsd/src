@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1293 2007/11/14 08:10:46 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1294 2007/11/15 21:40:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3527,6 +3527,7 @@
 #define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 */
 #define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 */
 #define	PCI_PRODUCT_RALINK_RT2860_1	0x0601		/* RT2860 */
+#define	PCI_PRODUCT_RALINK_RT2860_1E	0x0681		/* RT2860E */
 #define	PCI_PRODUCT_RALINK_RT2860_2	0x0701		/* RT2860 */
 #define	PCI_PRODUCT_RALINK_RT2860_3	0x0801		/* RT2860 */
 
