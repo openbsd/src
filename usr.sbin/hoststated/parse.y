@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2007/11/14 15:58:04 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2007/11/15 17:02:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -583,9 +583,13 @@ tableoptsl	: host			{
 proto		: PROTO STRING	{
 			struct protocol *p;
 
-			TAILQ_FOREACH(p, conf->protos, entry)
-				if (!strcmp(p->name, $2))
-					break;
+			if (strcmp($2, "default") == 0) {
+				p = &conf->proto_default;
+			} else {
+				TAILQ_FOREACH(p, conf->protos, entry)
+					if (!strcmp(p->name, $2))
+						break;
+			}
 			if (p != NULL) {
 				yyerror("protocol %s defined twice", $2);
 				free($2);
@@ -1623,7 +1627,6 @@ parse_config(const char *filename, int opts)
 	    sizeof(conf->proto_default.name));
 	RB_INIT(&conf->proto_default.request_tree);
 	RB_INIT(&conf->proto_default.response_tree);
-	TAILQ_INSERT_TAIL(conf->protos, &conf->proto_default, entry);
 
 	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
 	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;

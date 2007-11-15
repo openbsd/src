@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.50 2007/11/14 11:01:52 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.51 2007/11/15 17:02:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -498,8 +498,6 @@ purge_config(struct hoststated *env, u_int8_t what)
 	if (what & PURGE_PROTOS && env->protos != NULL) {
 		while ((proto = TAILQ_FIRST(env->protos)) != NULL) {
 			TAILQ_REMOVE(env->protos, proto, entry);
-			if (strcmp(proto->name, "default") == 0)
-				continue;
 			while ((pnode = RB_ROOT(&proto->request_tree))
 			    != NULL) {
 				RB_REMOVE(proto_tree, &proto->request_tree,

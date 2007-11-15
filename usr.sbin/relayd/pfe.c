@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.40 2007/11/14 15:25:26 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.41 2007/11/15 17:02:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -361,8 +361,13 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			    sizeof(struct hoststated) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
 			pfe_disable_events();
-			purge_config(env, PURGE_EVERYTHING);
+			purge_config(env, PURGE_SERVICES|PURGE_TABLES);
 			merge_config(env, (struct hoststated *)imsg.data);
+			/*
+			 * no relays when reconfiguring yet.
+			 */
+			env->relays = NULL;
+			env->protos = NULL;
 
 			env->tables = calloc(1, sizeof(*env->tables));
 			env->services = calloc(1, sizeof(*env->services));
