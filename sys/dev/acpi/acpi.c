@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.99 2007/11/15 22:16:31 mikeb Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.100 2007/11/15 22:19:14 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -461,7 +461,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#ifdef ACPI_ENABLE
 	/*
 	 * Check if we are able to enable ACPI control
 	 */
@@ -470,12 +469,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(", ACPI control unavailable\n");
 		return;
 	}
-#endif
 
 	/* Create opcode hashtable */
 	aml_hashopcodes();
 
-	acpi_enabled=1;
+	acpi_enabled = 1;
 
 	/* Create Default AML objects */
 	aml_create_defaultobjects();
@@ -549,7 +547,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * This may prevent thermal control on some systems where
 	 * that actually does work
 	 */
-#ifdef ACPI_ENABLE
 	int idx;
 
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, 0, sc->sc_fadt->acpi_enable);
@@ -560,7 +557,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
-#endif
 
 	printf("\n");
 
@@ -1119,7 +1115,6 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
-#ifdef ACPI_ENABLE
 int
 acpi_interrupt(void *arg)
 {
@@ -1167,7 +1162,6 @@ acpi_interrupt(void *arg)
 
 	return (processed);
 }
-#endif /* ACPI_ENABLE */
 
 /* move all stuff that doesn't go on the boot media in here */
 #ifndef SMALL_KERNEL
@@ -1367,7 +1361,6 @@ acpi_init_pm(struct acpi_softc *sc)
 void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
-#ifdef ACPI_ENABLE
 	struct aml_value env;
 	u_int16_t rega, regb;
 	int retries;
@@ -1451,7 +1444,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	}
 
 	enable_intr();
-#endif
 }
 
 void

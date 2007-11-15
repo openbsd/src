@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.6 2007/05/29 08:22:14 gwk Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.7 2007/11/15 22:19:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -115,9 +115,9 @@ acpi_probe(struct device *parent, struct cfdata *match, struct acpi_attach_args 
 	paddr_t ebda;
 #if NAPM > 0
 	extern int apm_attached;
-	
+
 	if (apm_attached)
-		return (0);	
+		return (0);
 #endif
 #if NBIOS > 0
 	{
@@ -170,8 +170,6 @@ havebase:
 void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
-#ifdef ACPI_ENABLE
 	sc->sc_interrupt = isa_intr_establish(NULL, sc->sc_fadt->sci_int,
 	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, "acpi");
-#endif
 }
