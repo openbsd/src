@@ -1,3 +1,14 @@
+./etc/afs/README
+./etc/kerberosV/README
+./etc/kerberosV/krb5.conf.example
+./etc/kerberosV
+./etc/ppp/chatscript.sample
+./etc/ppp/options.sample
+./etc/ppp/ppp.conf.sample
+./etc/ppp/ppp.linkdown.sample
+./etc/ppp/ppp.linkup.sample
+./etc/ppp/ppp.secret.sample
+./var/www/conf/httpd.conf-dist
 ./altroot
 ./bin
 ./bin/[

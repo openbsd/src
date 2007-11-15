@@ -1,7 +1,6 @@
 ./.cshrc
 ./.profile
 ./etc/afs/CellServDB
-./etc/afs/README
 ./etc/afs/SuidCells
 ./etc/afs/ThisCell
 ./etc/afs/afsd.conf
@@ -36,9 +35,6 @@
 ./etc/ifstated.conf
 ./etc/inetd.conf
 ./etc/ipsec.conf
-./etc/kerberosV
-./etc/kerberosV/README
-./etc/kerberosV/krb5.conf.example
 ./etc/ksh.kshrc
 ./etc/localtime
 ./etc/locate.rc
@@ -90,15 +86,9 @@
 ./etc/phones
 ./etc/portal.conf
 ./etc/ppp/chap-secrets
-./etc/ppp/chatscript.sample
 ./etc/ppp/options
 ./etc/ppp/options.leaf
-./etc/ppp/options.sample
 ./etc/ppp/pap-secrets
-./etc/ppp/ppp.conf.sample
-./etc/ppp/ppp.linkdown.sample
-./etc/ppp/ppp.linkup.sample
-./etc/ppp/ppp.secret.sample
 ./etc/printcap
 ./etc/protocols
 ./etc/pwd.db
@@ -178,7 +168,6 @@
 ./var/www/conf/bgplg.foot
 ./var/www/conf/bgplg.head
 ./var/www/conf/httpd.conf
-./var/www/conf/httpd.conf-dist
 ./var/www/conf/magic
 ./var/www/conf/mime.types
 ./var/www/htdocs/apache_pb.gif
