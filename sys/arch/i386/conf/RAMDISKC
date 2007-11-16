@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.80 2007/11/15 22:21:32 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.81 2007/11/16 03:18:36 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -299,16 +299,16 @@ ath*	at pci?				# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
 #atw*	at pci?				# ADMtek ADM8211 (802.11)
 #atw*	at cardbus?			# ADMtek ADM8211 (802.11)
-#wi*	at pci?				# WaveLAN IEEE 802.11DS
-wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
+wi*	at pci?				# WaveLAN IEEE 802.11DS
+#wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #ipw*	at pci?				# Intel PRO/Wireless 2100
 #iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
 #an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 #ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
-ral*	at pci?				# Ralink RT2500/RT2501/RT2600
-ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
+#ral*	at pci?				# Ralink RT2500/RT2501/RT2600
+#ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 #rtw*	at pci?				# Realtek 8180
 #rtw*	at cardbus?			# Realtek 8180
 
