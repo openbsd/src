@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.4 2007/10/20 16:54:52 miod Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.5 2007/11/16 16:20:55 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -62,11 +62,18 @@ void	ipi_softint(void);
 void
 sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
-	int i, j;
+	int i, j, shift = 0;
 
 	KASSERT((u_int64_t)func > MAXINTNUM);
 
-	if (ldxa(0, ASR_IDSR) & IDSR_BUSY) {
+	/*
+	 * UltraSPARC-IIIi CPUs select the BUSY/NACK pair based on the
+	 * lower two bits of the target CPU ID.
+	 */
+	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) == IMPL_JALAPENO)
+		shift = (upaid & 0x3) * 2;
+
+	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift)) {
 		__asm __volatile("ta 1; nop");
 	}
 
@@ -81,7 +88,7 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		membar(Sync);
 
 		for (j = 0; j < 1000000; j++) {
-			if (ldxa(0, ASR_IDSR) & IDSR_BUSY)
+			if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
 				continue;
 			else
 				break;
@@ -91,7 +98,7 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		if (j == 1000000)
 			break;
 
-		if ((ldxa(0, ASR_IDSR) & IDSR_NACK) == 0)
+		if ((ldxa(0, ASR_IDSR) & (IDSR_NACK << shift)) == 0)
 			return;
 	}
 
