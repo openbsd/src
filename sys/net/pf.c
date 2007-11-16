@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.562 2007/11/11 23:58:43 pascoe Exp $ */
+/*	$OpenBSD: pf.c,v 1.563 2007/11/16 14:03:37 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3563,9 +3563,17 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->src.port_op || r->dst.port_op ||
-		    r->flagset || r->type || r->code ||
-		    r->os_fingerprint != PF_OSFP_ANY)
+		else if (r->os_fingerprint != PF_OSFP_ANY)
+			r = TAILQ_NEXT(r, entries);
+		else if (pd->proto == IPPROTO_UDP &&
+		    (r->src.port_op || r->dst.port_op))
+			r = TAILQ_NEXT(r, entries);
+		else if (pd->proto == IPPROTO_TCP &&
+		    (r->src.port_op || r->dst.port_op || r->flagset))
+			r = TAILQ_NEXT(r, entries);
+		else if ((pd->proto == IPPROTO_ICMP ||
+		    pd->proto == IPPROTO_ICMPV6) &&
+		    (r->type || r->code))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <=
 		    (arc4random() % (UINT_MAX - 1) + 1))
