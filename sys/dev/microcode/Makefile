@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.17 2007/04/19 15:08:17 dlg Exp $
+#	$OpenBSD: Makefile,v 1.18 2007/11/16 16:30:01 deraadt Exp $
 
 SUBDIR=	atmel bnx cirruslogic fxp kue neomagic ral rum \
-	symbol tht typhoon uyap yds zydas
+	symbol tht tusb3410 typhoon uyap yds zydas
 
 .include <bsd.subdir.mk>
