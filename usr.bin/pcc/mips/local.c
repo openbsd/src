@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.2 2007/11/16 08:34:55 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -31,33 +31,73 @@
  * Simon Olsson (simols-1@student.ltu.se) 2005.
  */
 
-# include "pass1.h"
+#include "pass1.h"
 
-/*	this file contains code which is dependent on the target machine */
+static int inbits, inval;
 
+#ifdef MIPS_BIGENDIAN
+/*
+ * If we're big endian, then all OREG loads of a type
+ * larger than the destination, must have the
+ * offset changed to point to the correct bytes in memory.
+ */
+static NODE *
+offchg(NODE *p)
+{
+	NODE *l = p->n_left;
+
+	if (p->n_op != SCONV)
+		return;
+
+	switch (l->n_type) {
+	case SHORT:
+	case USHORT:
+		if (DEUNSIGN(p->n_type) == CHAR)
+			l->n_lval += 1;
+		break;
+	case LONG:
+	case ULONG:
+	case INT:
+	case UNSIGNED:
+		if (DEUNSIGN(p->n_type) == CHAR)
+			l->n_lval += 3;
+		else if (DEUNSIGNED(p->n_type) == SHORT)
+			l->n_lval += 2;
+		break;
+	case LONGLONG:
+	case ULONGLONG:
+		if (DEUNSIGN(p->n_type) == CHAR)
+			l->n_lval += 7;
+		else if (DEUNSIGNED(p->n_type) == SHORT)
+			l->n_lval += 6;
+		else if (DEUNSIGN(p->n_type) == INT ||
+		    DEUNSIGN(p->n_type) == LONG)
+			p->n_lval += 4;
+	default:
+		comperr("offchg: unknown type");
+		break;
+	}
+
+	return p;
+}
+#endif
+
+/* this is called to do local transformations on
+ * an expression tree preparitory to its being
+ * written out in intermediate code.
+ */
 NODE *
 clocal(NODE *p)
 {
-	/* this is called to do local transformations on
-	   an expression tree preparitory to its being
-	   written out in intermediate code.
-	*/
-
-	/* the major essential job is rewriting the
-	   automatic variables and arguments in terms of
-	   REG and OREG nodes */
-	/* conversion ops which are not necessary are also clobbered here */
-	/* in addition, any special features (such as rewriting
-	   exclusive or) are easily handled here as well */
-
-	register struct symtab *q;
-	register NODE *r, *l;
-	register int o;
-	register int m, ml;
+	struct symtab *q;
+	NODE *r, *l;
+	int o;
+	int m, ml;
 	TWORD t;
 
 //printf("in:\n");
 //fwalk(p, eprint, 0);
+
 	switch( o = p->n_op ){
 
 	case NAME:
@@ -71,7 +111,7 @@ clocal(NODE *p)
 			/* fake up a structure reference */
 			r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
 			r->n_lval = 0;
-			r->n_rval = FPREG;
+			r->n_rval = FP;
 			p = stref(block(STREF, r, p, 0, 0, 0));
 			break;
 
@@ -158,6 +198,16 @@ clocal(NODE *p)
 			return l;
 		}
 
+#ifdef MIPS_BIGENDIAN
+		/*
+		 * If we're big endian, then all OREG loads of a type
+		 * larger than the destination, must have the
+		 * offset changed to point to the correct bytes in memory.
+		 */
+		if (l->n_type == OREG) 
+			p = offchg(p);
+#endif
+
 		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
 		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
 			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
@@ -171,13 +221,11 @@ clocal(NODE *p)
 			}
 		}
 
-#if 0
 		if ((p->n_type == INT || p->n_type == UNSIGNED) &&
 		    ISPTR(l->n_type)) {
 			nfree(p);
 			return l;
 		}
-#endif
 
 		o = l->n_op;
 		m = p->n_type;
@@ -260,14 +308,13 @@ clocal(NODE *p)
 		/* put return value in return reg */
 		p->n_op = ASSIGN;
 		p->n_right = p->n_left;
-		p->n_left = block(REG, NIL, NIL, p->n_type, 0,
-				  MKSUE(INT));
-		p->n_left->n_rval = RETREG;
+		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
+		p->n_left->n_rval = RETREG(p->n_type);
 		break;
 	}
+
 //printf("ut:\n");
 //fwalk(p, eprint, 0);
-
 
 	return(p);
 }
@@ -309,23 +356,20 @@ cisreg(TWORD t)
  * being added to a pointer of type t, in order to be off bits offset
  * into a structure
  * t, d, and s are the type, dimension offset, and sizeoffset
- * For pdp10, return the type-specific index number which calculation
- * is based on its size. For example, short a[3] would return 3.
  * Be careful about only handling first-level pointers, the following
  * indirections must be fullword.
  */
 NODE *
 offcon(OFFSZ off, TWORD t, union dimfun *d, struct suedef *sue)
 {
-	register NODE *p;
+	NODE *p;
 
 	if (xdebug)
 		printf("offcon: OFFSZ %lld type %x dim %p siz %d\n",
 		    off, t, d, sue->suesize);
 
-	p = bcon(0);
-	p->n_lval = off/SZCHAR;	/* Default */
-	return(p);
+	p = bcon(off/SZCHAR);
+	return p;
 }
 
 /*
@@ -370,65 +414,80 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
  * mat be associated with a label
  */
 void
-ninval(NODE *p)
+ninval(CONSZ off, int fsz, NODE *p)
 {
-	struct symtab *q;
-	TWORD t;
+        union { float f; double d; long double l; int i[3]; } u;
+        struct symtab *q;
+        TWORD t;
+#ifndef USE_GAS
+        int i;
+#endif
 
-	p = p->n_left;
-	t = p->n_type;
-	if (t > BTMASK)
-		t = INT; /* pointer */
+        t = p->n_type;
+        if (t > BTMASK)
+                t = INT; /* pointer */
 
-	switch (t) {
-	case LONGLONG:
-	case ULONGLONG:
-		inval(p->n_lval & 0xffffffff);
-		inval(p->n_lval >> 32);
-		break;
-	case INT:
-	case UNSIGNED:
-		printf("\t.long 0x%x", (int)p->n_lval);
-		if ((q = p->n_sp) != NULL) {
-			if ((q->sclass == STATIC && q->slevel > 0) ||
-			    q->sclass == ILABEL) {
-				printf("+" LABFMT, q->soffset);
-			} else
-				printf("+%s", exname(q->sname));
-		}
-		printf("\n");
-		break;
-	default:
-		cerror("ninval");
-	}
-}
+        if (p->n_op != ICON && p->n_op != FCON)
+                cerror("ninval: init node not constant");
 
-/*
- * print out an integer.
- */
-void
-inval(CONSZ word)
-{
-	word &= 0xffffffff;
-	printf("	.long 0x%llx\n", word);
-}
+        if (p->n_op == ICON && p->n_sp != NULL && DEUNSIGN(t) != INT)
+                uerror("element not constant");
 
-/* output code to initialize a floating point value */
-/* the proper alignment has been obtained */
-void
-finval(NODE *p)
-{
-	switch (p->n_type) {
-	case LDOUBLE:
-		printf("\t.tfloat\t0t%.20Le\n", p->n_dcon);
-		break;
-	case DOUBLE:
-		printf("\t.dfloat\t0d%.20e\n", (double)p->n_dcon);
-		break;
-	case FLOAT:
-		printf("\t.ffloat\t0f%.20e\n", (float)p->n_dcon);
-		break;
-	}
+        switch (t) {
+        case LONGLONG:
+        case ULONGLONG:
+#ifdef USE_GAS
+                printf("\t.dword 0x%llx\n", (long long)p->n_lval);
+#else
+                i = (p->n_lval >> 32);
+                p->n_lval &= 0xffffffff;
+                p->n_type = INT;
+                ninval(off, 32, p);
+                p->n_lval = i;
+                ninval(off+32, 32, p);
+#endif
+                break;
+        case BOOL:
+                if (p->n_lval > 1)
+                        p->n_lval = p->n_lval != 0;
+                /* FALLTHROUGH */
+        case INT:
+        case UNSIGNED:
+                printf("\t.word 0x%x", (int)p->n_lval);
+                if ((q = p->n_sp) != NULL) {
+                        if ((q->sclass == STATIC && q->slevel > 0) ||
+                            q->sclass == ILABEL) {
+                                printf("+" LABFMT, q->soffset);
+                        } else
+                                printf("+%s", exname(q->sname));
+                }
+                printf("\n");
+                break;
+        case SHORT:
+        case USHORT:
+                printf("\t.half 0x%x\n", (int)p->n_lval & 0xffff);
+                break;
+        case CHAR:
+        case UCHAR:
+                printf("\t.byte %d\n", (int)p->n_lval & 0xff);
+                break;
+        case LDOUBLE:
+                u.i[2] = 0;
+                u.l = (long double)p->n_dcon;
+                printf("\t.word\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
+                break;
+        case DOUBLE:
+                u.d = (double)p->n_dcon;
+                printf("\t.word\t0x%x\n", u.i[0]);
+                printf("\t.word\t0x%x\n", u.i[1]);
+                break;
+        case FLOAT:
+                u.f = (float)p->n_dcon;
+                printf("\t.word\t0x%x\n", u.i[0]);
+                break;
+        default:
+                cerror("ninval");
+        }
 }
 
 /* make a name look like an external name in the local machine */
@@ -504,12 +563,12 @@ lcommdec(struct symtab *q)
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
 #ifdef GCC_COMPAT
-		printf("	.lcomm %s,0%o\n", gcc_findname(q), off);
+		printf("\t.lcomm %s,0%o\n", gcc_findname(q), off);
 #else
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
+		printf("\t.lcomm %s,0%o\n", exname(q->sname), off);
 #endif
 	else
-		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
+		printf("\t.lcomm " LABFMT ",0%o\n", q->soffset, off);
 }
 
 /*
@@ -521,13 +580,68 @@ deflab1(int label)
 	printf(LABFMT ":\n", label);
 }
 
-static char *loctbl[] = { "text", "data", "section .rodata", "section .rodata" };
+static char *loctbl[] = { "text", "data", "bss", "data" };
 
 void
 setloc1(int locc)
 {
-	if (locc == lastloc)
+	//printf("setloc1(%d)\n", locc);
+	if ((locc == lastloc) || (lastloc == DATA && locc == STRNG) || (locc == STRNG || lastloc == DATA))
 		return;
 	lastloc = locc;
-	printf("	.%s\n", loctbl[locc]);
+	printf("\t.%s\n", loctbl[locc]);
+}
+
+/*
+ * Initialize a bitfield.
+ */
+void
+infld(CONSZ off, int fsz, CONSZ val)
+{
+        if (idebug)
+                printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+                    off, fsz, val, inbits);
+        val &= (1 << fsz)-1;
+        while (fsz + inbits >= SZCHAR) {
+                inval |= (val << inbits);
+                printf("\t.byte %d\n", inval & 255);
+                fsz -= (SZCHAR - inbits);
+                val >>= (SZCHAR - inbits);
+                inval = inbits = 0;
+        }
+        if (fsz) {
+                inval |= (val << inbits);
+                inbits += fsz;
+        }
+}
+
+/*
+ * set fsz bits in sequence to zero.
+ */
+void
+zbits(OFFSZ off, int fsz)
+{
+        int m;
+
+        if (idebug)
+                printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+        if ((m = (inbits % SZCHAR))) {
+                m = SZCHAR - m;
+                if (fsz < m) {
+                        inbits += fsz;
+                        return;
+                } else {
+                        fsz -= m;
+                        printf("\t.byte %d\n", inval);
+                        inval = inbits = 0;
+                }
+        }
+        if (fsz >= SZCHAR) {
+                printf("\t.zero %d\n", fsz/SZCHAR);
+                fsz -= (fsz/SZCHAR) * SZCHAR;
+        }
+        if (fsz) {
+                inval = 0;
+                inbits = fsz;
+        }
 }

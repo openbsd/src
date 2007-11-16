@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.2 2007/11/16 08:34:55 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -48,7 +48,7 @@ defalign(int n)
 	n /= SZCHAR;
 	if (n == 1)
 		return;
-	printf("	.align %d\n", n);
+	printf("\t.align %d\n", n);
 }
 
 /*
@@ -64,10 +64,13 @@ defnam(struct symtab *p)
 	c = gcc_findname(p);
 #endif
 	if (p->sclass == EXTDEF)
-		printf("	.globl %s\n", c);
+		printf("\t.globl %s\n", c);
+#ifdef USE_GAS
+	printf("\t.type %s,@object\n", c);
+	printf("\t.size %s," CONFMT "\n", c, tsize(p->stype, p->sdf, p->ssue));
+#endif
 	printf("%s:\n", c);
 }
-
 
 /*
  * code for the end of a function
@@ -76,35 +79,8 @@ defnam(struct symtab *p)
 void
 efcode()
 {
-	NODE *p, *q;
-	int sz;
-
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
-}
-
-/*
- * helper for bfcode() to put register arguments on stack.
- */
-static void
-argmove(struct symtab *s, int regno)
-{
-	NODE *p, *r;
-
-	s->sclass = PARAM;
-	s->soffset = NOOFFSET;
-
-	oalloc(s, &passedargoff);
-
-	spname = s;
-	p = buildtree(NAME, NIL, NIL);
-	r = bcon(0);
-	r->n_op = REG;
-	r->n_rval = regno;
-	r->n_type = p->n_type;
-	r->n_sue = p->n_sue;
-	r->n_df = p->n_df;
-	ecode(buildtree(ASSIGN, p, r));
 }
 
 /*
@@ -112,36 +88,56 @@ argmove(struct symtab *s, int regno)
  * indices in symtab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **sp, int cnt)
 {
-	int i, m;
+	NODE *p, *q;
+	int i, n;
 
-	/* Passed arguments start 64 bits above the framepointer. */
-	passedargoff = 64;
-	
 	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
 		/* Function returns struct, adjust arg offset */
-		for (i = 0; i < n; i++)
-			a[i]->soffset += SZPOINT(INT);
+		for (i = 0; i < cnt; i++)
+			sp[i]->soffset += SZPOINT(INT);
 	}
 
-	m = n <= 4 ? n : 4;
-	
-	for(i = 0; i < m; i++) {
-	    /*
-	    if(a[i]->stype == LONGLONG || a[i]->stype == ULONGLONG) {
-		printf("longlong\n");
-		argmove(a[i], A0+i);
+        /* recalculate the arg offset and create TEMP moves */
+        for (n = A0, i = 0; i < cnt; i++) {
+                if (n + szty(sp[i]->stype) <= A0 + MIPS_NARGREGS) {
+			if (xtemps) {
+	                        p = tempnode(0, sp[i]->stype,
+				    sp[i]->sdf, sp[i]->ssue);
+	                        spname = sp[i];
+	                        q = block(REG, NIL, NIL,
+	                            sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+	                        q->n_rval = n;
+	                        p = buildtree(ASSIGN, p, q);
+	                        sp[i]->soffset = p->n_left->n_lval;
+	                        sp[i]->sflags |= STNODE;
+			} else {
+				// sp[i]->soffset += ARGINIT;
+				spname = sp[i];
+				q = block(REG, NIL, NIL,
+				    sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+				q->n_rval = n;
+                                p = buildtree(ASSIGN, buildtree(NAME, 0, 0), q);
+			}
+                        ecomp(p);
+                } else {
+                        // sp[i]->soffset += ARGINIT;
+                        if (xtemps) {
+                                /* put stack args in temps if optimizing */
+                                spname = sp[i];
+                                p = tempnode(0, sp[i]->stype,
+                                    sp[i]->sdf, sp[i]->ssue);
+                                p = buildtree(ASSIGN, p, buildtree(NAME, 0, 0));
+                                sp[i]->soffset = p->n_left->n_lval;
+                                sp[i]->sflags |= STNODE;
+                                ecomp(p);
+                        }
+                
+                }
+                n += szty(sp[i]->stype);
+        }
 
-		if(i+1 < 4) {
-		    argmove(a[i], A0+i+1);
-		}
-		
-		i++;		
-		} else*/
-	    argmove(a[i], A0+i);
-
-	}
 }
 
 
@@ -173,7 +169,7 @@ bjobcode()
 void
 bycode(int t, int i)
 {
-	static	int	lastoctal = 0;
+	static int lastoctal = 0;
 
 	/* put byte i+1 in a string */
 
@@ -182,32 +178,26 @@ bycode(int t, int i)
 			puts("\"");
 	} else {
 		if (i == 0)
-			printf("\t.ascii \"");
-		if (t == '\\' || t == '"') {
+			printf("\t.asciiz \"");
+		if (t == 0)
+			return;
+		else if (t == '\\' || t == '"') {
 			lastoctal = 0;
 			putchar('\\');
 			putchar(t);
+		} else if (t == 012) {
+			printf("\\n");
 		} else if (t < 040 || t >= 0177) {
 			lastoctal++;
 			printf("\\%o",t);
 		} else if (lastoctal && '0' <= t && t <= '9') {
 			lastoctal = 0;
-			printf("\"\n\t.ascii \"%c", t);
+			printf("\"\n\t.asciiz \"%c", t);
 		} else {	
 			lastoctal = 0;
 			putchar(t);
 		}
 	}
-}
-
-/*
- * n integer words of zeros
- */
-void
-zecode(int n)
-{
-	printf("	.zero %d\n", n * (SZINT/SZCHAR));
-	inoff += n * SZINT;
 }
 
 /*
@@ -234,6 +224,59 @@ fldty(struct symtab *p)
  * XXX - fix genswitch.
  */
 void
-genswitch(struct swents **p, int n)
+genswitch(int num, struct swents **p, int n)
 {
+	NODE *r;
+	int i;
+
+	/* simple switch code */
+	for (i = 1; i <= n; ++i) {
+		/* already in 1 */
+		r = tempnode(num, INT, 0, MKSUE(INT));
+		r = buildtree(NE, r, bcon(p[i]->sval));
+		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
+	}
+	if (p[0]->slab > 0)
+		branch(p[0]->slab);
+}
+
+static void
+moveargs(NODE **n, int *regp)
+{
+        NODE *r = *n;
+        NODE *t;
+        int sz;
+        int regnum;
+
+        if (r->n_op == CM) {
+                moveargs(&r->n_left, regp);
+                n = &r->n_right;
+                r = r->n_right;
+        }
+
+        regnum = *regp;
+        sz = szty(r->n_type);
+
+        if (regnum + sz <= A0 + MIPS_NARGREGS) {
+                t = block(REG, NIL, NIL, r->n_type, r->n_df, r->n_sue);
+                t->n_rval = regnum;
+                t = buildtree(ASSIGN, t, r);
+        } else {
+                t = block(FUNARG, r, NIL, r->n_type, r->n_df, r->n_sue);
+        }
+
+        *n = t;
+        *regp += sz;
+}
+
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	int regnum = A0;
+	moveargs(&p->n_right, &regnum);
+	return p;
 }
