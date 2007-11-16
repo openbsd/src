@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.6 2007/02/16 04:48:48 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.7 2007/11/16 21:18:35 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -36,13 +36,7 @@ umask 022
 # emacs-style command line editing
 set -o emacs
 
-rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
-	g
-	p
-}'|sed -n -e '/^root on \([0-9a-z]*\).*/{
-	s//\/dev\/\1/
-	p
-}'`
+rootdisk=`dmesg|sed -n '/^root on /!d;${s#^root on \([^ ]*\).*#/dev/\1#;p;}'`
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
