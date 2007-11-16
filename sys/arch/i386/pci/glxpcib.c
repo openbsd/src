@@ -1,6 +1,7 @@
-/*      $OpenBSD: glxpcib.c,v 1.2 2007/10/07 18:41:07 mbalmer Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.3 2007/11/16 21:07:01 mbalmer Exp $	*/
 
 /*
+ * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2007 Michael Shalayeff
  * All rights reserved.
  *
@@ -18,18 +19,20 @@
  */
 
 /*
- * AMD CS5536 series LPC bridge also containing timer and watchdog
+ * AMD CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 #include <sys/sysctl.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
 
+#include <dev/gpio/gpiovar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -38,6 +41,7 @@
 #define	AMD5536_REV_MASK	0xff
 #define	AMD5536_TMC		0x51400050
 
+/* Multi-Functional General Purpose Timer */
 #define	MSR_LBAR_MFGPT		0x5140000d
 #define	AMD5536_MFGPT0_CMP1	0x00000000
 #define	AMD5536_MFGPT0_CMP2	0x00000002
@@ -102,12 +106,34 @@
 #define	AMD5536_MFGPT5_C2_RSTEN	0x20000000
 #define	AMD5536_MFGPT_SETUP	0x5140002b
 
+/* GPIO */
+#define	MSR_LBAR_GPIO		0x5140000c
+
+#define AMD5536_GPIO_NPINS	32
+
+#define AMD5536_GPIOH_OFFSET	0x80	/* high bank register offset */
+
+#define AMD5536_GPIO_OUT_VAL	0x00	/* output value */
+#define AMD5536_GPIO_OUT_EN	0x04	/* output enable */
+#define AMD5536_GPIO_OD_EN	0x08	/* open-drain enable */
+#define AMD5536_GPIO_PU_EN	0x18	/* pull-up enable */
+#define AMD5536_GPIO_IN_EN	0x20	/* input enable */
+#define AMD5536_GPIO_READ_BACK	0x30	/* read back value */
+
 struct glxpcib_softc {
 	struct device		sc_dev;
 
 	struct timecounter	sc_timecounter;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+#ifndef SMALL_KERNEL
+	/* GPIO interface */
+	bus_space_tag_t		sc_gpio_iot;
+	bus_space_handle_t	sc_gpio_ioh;
+	struct gpio_chipset_tag	sc_gpio_gc;
+	gpio_pin_t		sc_gpio_pins[AMD5536_GPIO_NPINS];
+#endif
 };
 
 struct cfdriver glxpcib_cd = {
@@ -127,6 +153,10 @@ void	pcibattach(struct device *parent, struct device *self, void *aux);
 u_int	glxpcib_get_timecount(struct timecounter *tc);
 #ifndef SMALL_KERNEL
 int     glxpcib_wdogctl_cb(void *, int);
+
+int	glxpcib_gpio_pin_read(void *, int);
+void	glxpcib_gpio_pin_write(void *, int, int);
+void	glxpcib_gpio_pin_ctl(void *, int, int);
 #endif
 
 const struct pci_matchid glxpcib_devices[] = {
@@ -150,7 +180,9 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	struct timecounter *tc = &sc->sc_timecounter;
 #ifndef SMALL_KERNEL
 	struct pci_attach_args *pa = aux;
-	u_int64_t wa;
+	u_int64_t wa, ga;
+	struct gpiobus_attach_args gba;
+	int i, gpio = 0;
 #endif
 
 	tc->tc_get_timecount = glxpcib_get_timecount;
@@ -166,6 +198,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	    tc->tc_frequency);
 
 #ifndef SMALL_KERNEL
+	/* Attach the watchdog timer */
 	sc->sc_iot = pa->pa_iot;
 	wa = rdmsr(MSR_LBAR_MFGPT);
 	if (wa & 0x100000000ULL &&
@@ -176,11 +209,48 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2EV |
 		    AMD5536_MFGPT_CMP2 | AMD5536_MFGPT_DIV_MASK);
 		wdog_register(sc, glxpcib_wdogctl_cb);
-
 		printf(", watchdog");
+	}
+
+	/* map GPIO I/O space */
+	sc->sc_gpio_iot = pa->pa_iot;
+	ga = rdmsr(MSR_LBAR_GPIO);
+	if (ga & 0x100000000ULL &&
+	    !bus_space_map(sc->sc_gpio_iot, ga & 0xffff, 0xff, 0,
+	    &sc->sc_gpio_ioh)) {
+		printf(", gpio");
+
+		/* initialize pin array */
+		for (i = 0; i < AMD5536_GPIO_NPINS; i++) {
+			sc->sc_gpio_pins[i].pin_num = i;
+			sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
+			    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN |
+			    GPIO_PIN_PULLUP;
+
+			/* read initial state */
+			sc->sc_gpio_pins[i].pin_state =
+			    glxpcib_gpio_pin_read(sc, i);
+		}
+
+		/* create controller tag */
+		sc->sc_gpio_gc.gp_cookie = sc;
+		sc->sc_gpio_gc.gp_pin_read = glxpcib_gpio_pin_read;
+		sc->sc_gpio_gc.gp_pin_write = glxpcib_gpio_pin_write;
+		sc->sc_gpio_gc.gp_pin_ctl = glxpcib_gpio_pin_ctl;
+
+		gba.gba_name = "gpio";
+		gba.gba_gc = &sc->sc_gpio_gc;
+		gba.gba_pins = sc->sc_gpio_pins;
+		gba.gba_npins = AMD5536_GPIO_NPINS;
+		gpio = 1;
+
 	}
 #endif
 	pcibattach(parent, self, aux);
+#ifndef SMALL_KERNEL
+	if (gpio)
+		config_found(&sc->sc_dev, &gba, gpiobus_print);
+#endif
 }
 
 u_int
@@ -212,4 +282,74 @@ glxpcib_wdogctl_cb(void *v, int period)
 
 	return (period);
 }
+
+int
+glxpcib_gpio_pin_read(void *arg, int pin)
+{
+	struct glxpcib_softc *sc = arg;
+	u_int32_t data;
+	int reg;
+
+	reg = AMD5536_GPIO_OUT_VAL;
+	if (pin > 15) {
+		pin &= 0x0f;
+		reg += AMD5536_GPIOH_OFFSET;
+	}
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+
+	return data & 1 << pin ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+}
+
+void
+glxpcib_gpio_pin_write(void *arg, int pin, int value)
+{
+	struct glxpcib_softc *sc = arg;
+	u_int32_t data;
+	int reg;
+
+	reg = AMD5536_GPIO_OUT_VAL;
+	if (pin > 15) {
+		pin &= 0x0f;
+		reg += AMD5536_GPIOH_OFFSET;
+	}
+	if (value == 1)
+		data = 1 << pin;
+	else
+		data = 1 << (pin + 16);
+
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, data);
+}
+
+void
+glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	int reg;
+
+	switch (flags) {
+	case GPIO_PIN_INPUT:
+		reg = AMD5536_GPIO_IN_EN;
+		break;
+	case GPIO_PIN_OUTPUT:
+		reg = AMD5536_GPIO_OUT_EN;
+		break;
+	case GPIO_PIN_OPENDRAIN:
+		reg = AMD5536_GPIO_OD_EN;
+		break;
+	case GPIO_PIN_PULLUP:
+		reg = AMD5536_GPIO_PU_EN;
+		break;
+	default:
+		/* flag not support by the AMD5536 GPIO */
+		return;
+	}
+
+	if (pin > 15) {
+		pin &= 0x0f;
+		reg += AMD5536_GPIOH_OFFSET;
+	}
+
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, 1 << pin);
+} 
+
 #endif
