@@ -839,6 +839,8 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rt2560var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rt2661reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rt2661var.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rt2860reg.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rt2860var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rtl80x9reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/rtl81x9reg.ph
