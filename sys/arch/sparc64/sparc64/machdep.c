@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.101 2007/10/31 22:46:52 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.102 2007/11/16 20:51:29 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -446,7 +446,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		ret = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &sparc_led_blink);
 		/*
-		 * If we were false and are now true, call start the timer.
+		 * If we were false and are now true, start the timer.
 		 */
 		if (!oldval && sparc_led_blink > oldval)
 			blink_led_timeout(NULL);
