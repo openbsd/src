@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.92 2007/09/01 18:49:28 henning Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.93 2007/11/16 19:24:07 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -182,6 +182,9 @@ tcp_usrreq(so, req, m, nam, control)
 	 * structure will point at a subsidiary (struct tcpcb).
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
+		error = so->so_error;
+		if (error == 0)
+			error = EINVAL;
 		splx(s);
 		/*
 		 * The following corrects an mbuf leak under rare
@@ -189,7 +192,7 @@ tcp_usrreq(so, req, m, nam, control)
 		 */
 		if (m && (req == PRU_SEND || req == PRU_SENDOOB))
 			m_freem(m);
-		return (EINVAL);		/* XXX */
+		return (error);
 	}
 	if (inp) {
 		tp = intotcpcb(inp);
