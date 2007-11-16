@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.8 2007/11/15 22:19:14 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.9 2007/11/16 02:45:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -153,5 +153,5 @@ void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
 	sc->sc_interrupt = isa_intr_establish(NULL, sc->sc_fadt->sci_int,
-	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, "acpi");
+	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, sc->sc_dev.dv_xname);
 }
