@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.2 2007/10/23 14:48:36 ragge Exp $	*/
+/*	$OpenBSD: order.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -284,4 +284,15 @@ int
 setorder(NODE *p)
 {
 	return 0; /* nothing differs on x86 */
+}
+
+/*
+ * set registers in calling conventions live.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[2] = { EBX, -1 };
+
+	return kflag ? &r[0] : &r[1];
 }

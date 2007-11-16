@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtabs.c,v 1.2 2007/10/20 18:24:11 otto Exp $	*/
+/*	$OpenBSD: symtabs.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -343,10 +343,11 @@ struct symtab *
 hide(struct symtab *sym)
 {
 	struct symtab *new;
+	int typ = sym->sflags & SMASK;
 
-	new = getsymtab(sym->sname, SNORMAL|STEMP);
-	new->snext = tmpsyms[SNORMAL];
-	tmpsyms[SNORMAL] = new;
+	new = getsymtab(sym->sname, typ|STEMP);
+	new->snext = tmpsyms[typ];
+	tmpsyms[typ] = new;
 #ifdef PCC_DEBUG
 	if (ddebug)
 		printf("\t%s hidden at level %d (%p -> %p)\n",

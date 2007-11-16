@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.8 2007/10/29 16:36:22 ragge Exp $	*/
+/*	$OpenBSD: reader.c,v 1.9 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -255,7 +255,8 @@ pass2_compile(struct interpass *ip)
 void
 emit(struct interpass *ip)
 {
-	NODE *p;
+	NODE *p, *r;
+	struct optab *op;
 	int o;
 
 	switch (ip->type) {
@@ -270,12 +271,21 @@ emit(struct interpass *ip)
 		switch (p->n_op) {
 		case CBRANCH:
 			/* Only emit branch insn if RESCC */
-			if (table[TBLIDX(p->n_left->n_su)].rewrite & RESCC) {
+			/* careful when an OPLOG has been elided */
+			if (p->n_left->n_su == 0 && p->n_left->n_left != NULL) {
+				op = &table[TBLIDX(p->n_left->n_left->n_su)];
+				r = p->n_left;
+			} else {
+				op = &table[TBLIDX(p->n_left->n_su)];
+				r = p;
+			}
+			if (op->rewrite & RESCC) {
 				o = p->n_left->n_op;
-				gencode(p, FORCC);
+				gencode(r, FORCC);
 				cbgen(o, p->n_right->n_lval);
-			} else
-				gencode(p, FORCC);
+			} else {
+				gencode(r, FORCC);
+			}
 			break;
 		case FORCE:
 			gencode(p->n_left, INREGS);
@@ -390,6 +400,12 @@ again:	switch (o = p->n_op) {
 	case ULT:
 	case UGE:
 	case UGT:
+		p1 = p->n_left;
+		p2 = p->n_right;
+		if (p2->n_op == ICON && p2->n_lval == 0) {
+			if (findops(p1, FORCC) == 0)
+				break;
+		}
 		rv = relops(p);
 		break;
 
@@ -449,7 +465,6 @@ again:	switch (o = p->n_op) {
 		p1 = p->n_left;
 		p2 = p->n_right;
 		p1->n_label = p2->n_lval;
-		o = p1->n_op;
 		geninsn(p1, FORCC);
 		p->n_su = 0;
 		break;
@@ -913,10 +928,10 @@ oregok(NODE *p, int sharp)
 		int i;
 		if( (r=base(ql))>=0 && (i=offset(qr, tlen(p)))>=0) {
 			makeor2(p, ql, r, i);
-			return;
+			return 1;
 		} else if((r=base(qr))>=0 && (i=offset(ql, tlen(p)))>=0) {
 			makeor2(p, qr, r, i);
-			return;
+			return 1;
 		}
 	}
 

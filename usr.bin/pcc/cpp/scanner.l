@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.5 2007/11/10 22:14:15 stefan Exp $   */
+/*	$OpenBSD: scanner.l,v 1.6 2007/11/16 09:00:12 otto Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -176,7 +176,7 @@ WS	[\t ]
 [1-9][0-9]*		{ if (slow && !YYSTATE) return IDENT; scale = 10; goto num; }
 
 0[xX]{H}+{IS}?		{	scale = 16;
-			num:	if (YYSTATE) 
+			num:	if (YYSTATE == IFR) 
 					cvtdig(scale);
 				PRTOUT(NUMBER);
 			}
@@ -519,6 +519,8 @@ cvtdig(int rad)
 		y++;
 	yylval.node.op = *y == 'u' || *y == 'U' ? UNUMBER : NUMBER;
 	yylval.node.nd_uval = rv;
+	if ((rad == 8 || rad == 16) && yylval.node.nd_val < 0)
+		yylval.node.op = UNUMBER;
 	if (yylval.node.op == NUMBER && yylval.node.nd_val < 0)
 		/* too large for signed */
 		error("Constant \"%s\" is out of range", yytext);

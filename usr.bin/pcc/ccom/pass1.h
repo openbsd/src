@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -320,6 +320,7 @@ int cdope(int);
 void myp2tree(NODE *);
 void lcommprint(void);
 void lcommdel(struct symtab *);
+NODE *funcode(NODE *);
 
 #ifdef GCC_COMPAT
 void gcc_init(void);

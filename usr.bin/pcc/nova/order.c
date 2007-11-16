@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.2 2007/11/16 09:00:13 otto Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -162,3 +162,15 @@ setorder(NODE *p)
 {
 	return 0;
 }
+/*
+ * Set registers "live" at function calls (like arguments in registers).
+ * This is for liveness analysis of registers.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[1] = { -1 }; /* Terminate with -1 */
+
+	return &r[0];
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.2 2007/11/16 09:00:13 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,24 +36,10 @@ void acon(FILE *, NODE *p);
 int argsize(NODE *p);
 void genargs(NODE *p);
 
-static int ftlab1, ftlab2;
 static int offlab;
 int offarg;
-
-void
-lineid(int l, char *fn)
-{
-	/* identify line l and file fn */
-	printf("#	line %d, file %s\n", l, fn);
-}
-
-void
-defname(char *name, int visib)
-{
-	if (visib)
-		printf("	.globl %s\n", name);
-	printf("%s:\n", name);
-}
+static int addto;
+static int regoff[16];
 
 void
 deflab(int label)
@@ -61,8 +47,52 @@ deflab(int label)
 	printf(LABFMT ":\n", label);
 }
 
-static int isoptim;
+void
+prologue(struct interpass_prolog *ipp)
+{
+	int i, j;
 
+	if (ipp->ipp_vis)
+		printf("	.globl %s\n", ipp->ipp_name);
+	printf("%s:\n", ipp->ipp_name);
+	addto = p2maxautooff;
+	if (addto >= AUTOINIT/SZCHAR)
+		addto -= AUTOINIT/SZCHAR;
+	addto /= SZINT/SZCHAR;	/* use words here */
+	printf("	push %s,%s\n",rnames[STKREG], rnames[FPREG]);
+	printf("	move %s,%s\n", rnames[FPREG],rnames[STKREG]);
+
+	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+		if (i & 1)
+			regoff[j] = addto++;
+	}
+	if (addto)
+		printf("	addi %s,0%o\n", rnames[STKREG], addto);
+	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+		if (i & 1)
+			printf("	movem %s,%d(%s)\n",
+			    rnames[j], regoff[j], rnames[STKREG]);
+	}
+}
+
+void
+eoftn(struct interpass_prolog *ipp)
+{
+	int i, j;
+
+	if (ipp->ipp_ip.ip_lbl == 0)
+		return; /* no code needs to be generated */
+	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+		if (i & 1)
+			printf("	move %s,%d(%s)\n",
+			    rnames[j], regoff[j], rnames[STKREG]);
+	}
+	printf("	move %s,%s\n", rnames[STKREG], rnames[FPREG]);
+	printf("	pop %s,%s\n", rnames[STKREG], rnames[FPREG]);
+	printf("	popj %s,\n", rnames[STKREG]);
+}
+
+#if 0
 void
 prologue(int regs, int autos)
 {
@@ -99,7 +129,6 @@ prologue(int regs, int autos)
 				printf("	addi %s,0%o\n", rnames[017], addto);
 		} else
 			offarg = 1;
-		isoptim = 1;
 	}
 }
 
@@ -151,20 +180,7 @@ eoftn(int regs, int autos, int retlab)
 	printf("	.set " LABFMT ",0%o\n", offlab, MAXRVAR-regs);
 	offarg = isoptim = 0;
 }
-
-static char *loctbl[] = { "text", "data", "data", "text", "text", "stab" };
-
-void
-setlocc(int locctr)
-{
-	static int lastloc;
-
-	if (locctr == lastloc)
-		return;
-
-	lastloc = locctr;
-	printf("	.%s\n", loctbl[locctr]);
-}
+#endif
 
 /*
  * add/sub/...
@@ -184,11 +200,8 @@ char *
 rnames[] = {  /* keyed to register number tokens */
 	"%0", "%1", "%2", "%3", "%4", "%5", "%6", "%7",
 	"%10", "%11", "%12", "%13", "%14", "%15", "%16", "%17",
-};
-
-int rstatus[] = {
-	0, STAREG, STAREG, STAREG, STAREG, STAREG, STAREG, STAREG,
-	SAREG, SAREG, SAREG, SAREG, SAREG, SAREG, 0, 0,
+	"%0", "%1", "%2", "%3", "%4", "%5", "%6", "%7",
+	"%10", "%11", "%12", "%13", "%14", "%15",
 };
 
 int
@@ -219,7 +232,7 @@ tlen(p) NODE *p;
 		default:
 			if (!ISPTR(p->n_type))
 				cerror("tlen type %d not pointer");
-			return SZPOINT/SZCHAR;
+			return SZPOINT(0)/SZCHAR;
 		}
 }
 
@@ -311,7 +324,7 @@ twollcomp(NODE *p)
 {       
 	int o = p->n_op;
 	int iscon = p->n_right->n_op == ICON;
-	int m;
+	int m = 0; /* XXX gcc */
 
 	if (o < EQ || o > GT)
 		cerror("bad long long conditional branch: %s", opst[o]);
@@ -456,8 +469,8 @@ emitshort(NODE *p)
 		if (off >= 0700000000000LL && p->n_name[0] != '\0') {
 			cerror("emitsh");
 			/* reg contains index integer */
-			if (!istreg(reg))
-				cerror("emitshort !istreg");
+//			if (!istreg(reg))
+//				cerror("emitshort !istreg");
 			printf("	adjbp %s,[ .long 0%llo+%s ]\n",
 			    rnames[reg], off, p->n_name);
 			printf("	ldb ");
@@ -620,7 +633,7 @@ printcon(NODE *p)
 	p = p->n_left;
 	if (p->n_lval >= 0700000000000LL) {
 		/* converted to pointer in clocal() */
-		conput(p);
+		conput(0, p);
 		return;
 	}
 	if (p->n_lval == 0 && p->n_name[0] == '\0') {
@@ -640,7 +653,7 @@ printcon(NODE *p)
 static void
 putcond(NODE *p)
 {               
-	char *c;
+	char *c = 0; /* XXX gcc */
 
 	switch (p->n_op) {
 	case EQ: c = "e"; break;
@@ -668,7 +681,7 @@ zzzcode(NODE *p, int c)
 
 	case 'B': /* remove from stack after subroutine call */
 		if (p->n_rval)
-			printf("	subi %%17,0%o\n", p->n_rval/SZINT);
+			printf("	subi %%17,0%o\n", p->n_qual);
 		break;
 
 	case 'C':
@@ -708,6 +721,11 @@ zzzcode(NODE *p, int c)
 				printf("[ .long %s+0%llo]",
 				    p->n_name, p->n_lval);
 		}
+		break;
+
+	case 'G': /* structure argument */
+		printf("	addl %%17,0%o\n", p->n_stsize/(SZINT/SZCHAR));
+		printf("	foo...\n");
 		break;
 
 	case 'P':
@@ -830,32 +848,7 @@ flshape(NODE *p)
 int
 shtemp(NODE *p)
 {
-	int r;
-
-	if (p->n_op == STARG )
-		p = p->n_left;
-
-	switch (p->n_op) {
-	case REG:
-		return (!istreg(p->n_rval));
-
-	case OREG:
-		r = p->n_rval;
-		if (R2TEST(r)) {
-			if (istreg(R2UPK1(r)))
-				return(0);
-			r = R2UPK2(r);
-		}
-		return (!istreg(r));
-
-	case UMUL:
-		p = p->n_left;
-		return (p->n_op != UMUL && shtemp(p));
-	}
-
-	if (optype(p->n_op) != LTYPE)
-		return(0);
-	return(1);
+	return(0);
 }
 
 int
@@ -875,6 +868,7 @@ shumul(NODE *p)
 		return(STARNM);
 #endif
 
+#if 0
 	if ((o == INCR) &&
 	    (p->n_left->n_op == REG && p->n_right->n_op == ICON) &&
 	    p->n_right->n_name[0] == '\0') {
@@ -913,7 +907,7 @@ shumul(NODE *p)
 		}
 		return( 0);
 	}
-
+#endif
 	return( 0 );
 }
 
@@ -924,7 +918,7 @@ adrcon(CONSZ val)
 }
 
 void
-conput(NODE *p)
+conput(FILE *fp, NODE *p)
 {
 	switch (p->n_op) {
 	case ICON:
@@ -1063,7 +1057,7 @@ adrput(FILE *fp, NODE *p)
 		return;
 
 	case MOVE: /* Specially generated node */
-		fputs(rnames[p->n_rall], fp);
+		fputs(rnames[p->n_reg], fp);
 		return;
 
 	default:
@@ -1180,13 +1174,19 @@ optim2(NODE *p)
 }
 
 void
-myreader(NODE *p)
+myreader(struct interpass *ipole)
 {
-	int e2print(NODE *p, int down, int *a, int *b);
-	walkf(p, optim2);
+	struct interpass *ip;
+
+	DLIST_FOREACH(ip, ipole, qelem) {
+		if (ip->type != IP_NODE)
+			continue;
+		walkf(ip->ip_node, optim2);
+	}
+
 	if (x2debug) {
 		printf("myreader final tree:\n");
-		fwalk(p, e2print, 0);
+		printip(ipole);
 	}
 }
 
@@ -1228,10 +1228,74 @@ mycanon(NODE *p)
 void
 myoptim(struct interpass *ip)
 {
-	while (ip->sqelem.sqe_next->type != IP_EPILOG)
-		ip = ip->sqelem.sqe_next;
-	if (ip->type != IP_NODE || ip->ip_node->n_op != GOTO)
-		cerror("myoptim");
-	tfree(ip->ip_node);
-	*ip = *ip->sqelem.sqe_next;
+}
+
+/*
+ * Return a class suitable for a specific type.
+ */
+int
+gclass(TWORD t)
+{
+	return (szty(t) == 2 ? CLASSB : CLASSA);
+}
+
+static int
+argsiz(NODE *p)
+{
+	TWORD t = p->n_type;
+
+	if (t == STRTY || t == UNIONTY)
+		return p->n_stsize/(SZINT/SZCHAR);
+	return szty(t);
+}
+
+/*
+ * Calculate argument sizes.
+ */
+void
+lastcall(NODE *p)
+{
+        NODE *op = p;
+        int size = 0;
+
+        p->n_qual = 0;
+        if (p->n_op != CALL && p->n_op != FORTCALL && p->n_op != STCALL)
+                return;
+        for (p = p->n_right; p->n_op == CM; p = p->n_left)
+		if (p->n_right->n_op != ASSIGN)
+                	size += argsiz(p->n_right);
+	if (p->n_op != ASSIGN)
+        	size += argsiz(p);
+        op->n_qual = size; /* XXX */
+}
+
+void
+rmove(int s, int d, TWORD t)
+{
+	printf("	%smove %s,%s\n",
+	    (s > 017 ? "d" : ""), rnames[d], rnames[s]);
+}
+
+/*
+ * For class c, find worst-case displacement of the number of
+ * registers in the array r[] indexed by class.
+ */
+int
+COLORMAP(int c, int *r)
+{
+	int num;
+
+	switch (c) {
+	case CLASSA:
+		/* there are 13 classa, so min 6 classb are needed to block */
+		num = r[CLASSB] * 2;
+		num += r[CLASSA];
+		return num < 13;
+	case CLASSB:
+		/* 7 classa may block all classb */
+		num = r[CLASSB] + r[CLASSA];
+		return num < 7;
+	}
+	comperr("COLORMAP");
+	return 0; /* XXX gcc */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.h,v 1.5 2007/11/04 18:51:28 ragge Exp $	*/
+/*	$OpenBSD: pass2.h,v 1.6 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -268,6 +268,7 @@ void lastcall(NODE *);
 void myreader(struct interpass *pole);
 int oregok(NODE *p, int sharp);
 void myormake(NODE *);
+int *livecall(NODE *);
 
 char *prcook(int);
 
@@ -296,8 +297,8 @@ int offset(NODE *p, int);
 
 extern	int lineno;
 extern	int fldshf, fldsz;
-extern	int lflag, x2debug, udebug, e2debug, odebug, mdebug;
-extern	int rdebug, radebug, t2debug, s2debug, b2debug, c2debug;
+extern	int lflag, x2debug, udebug, e2debug, odebug;
+extern	int rdebug, t2debug, s2debug, b2debug, c2debug;
 extern	int kflag;
 #ifdef FORT
 extern	int Oflag;
@@ -357,6 +358,9 @@ extern	char *opst[];	/* a vector containing names for ops */
 #define	TBREGS	0
 #endif
 #define	REGBIT(x) (1 << (x))
+#ifndef PERMTYPE
+#define	PERMTYPE(a)	(INT)
+#endif
 
 void emit(struct interpass *);
 void optimize(struct interpass *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.2 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -373,4 +373,13 @@ genswitch(struct swents **p, int n)
 	if (p[0]->slab > 0)
 		branch(p[0]->slab);
 #endif
+}
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	return p;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.6 2007/11/03 18:55:37 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.7 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -484,6 +484,8 @@ runtime:
 
 		case CALL:
 			p->n_right = r = strargs(p->n_right);
+			p = funcode(p);
+			/* FALLTHROUGH */
 		case UCALL:
 			if (!ISPTR(l->n_type))
 				uerror("illegal function");

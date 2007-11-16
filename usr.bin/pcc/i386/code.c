@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.2 2007/11/04 18:55:21 ragge Exp $	*/
+/*	$OpenBSD: code.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -97,15 +97,40 @@ efcode()
  * indices in symtab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **sp, int cnt)
 {
+	extern int gotnr;
+	NODE *n, *p;
 	int i;
 
-	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
+		/* Function returns struct, adjust arg offset */
+		for (i = 0; i < cnt; i++) 
+			sp[i]->soffset += SZPOINT(INT);
+	}
+	if (kflag) {
+		/* Put ebx in temporary */
+		n = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		n->n_rval = EBX;
+		p = tempnode(0, INT, 0, MKSUE(INT));
+		gotnr = p->n_lval;
+		ecomp(buildtree(ASSIGN, p, n));
+	}
+	if (xtemps == 0)
 		return;
-	/* Function returns struct, adjust arg offset */
-	for (i = 0; i < n; i++)
-		a[i]->soffset += SZPOINT(INT);
+
+	/* put arguments in temporaries */
+	for (i = 0; i < cnt; i++) {
+		if (sp[i]->stype == STRTY || sp[i]->stype == UNIONTY ||
+		    cisreg(sp[i]->stype) == 0)
+			continue;
+		spname = sp[i];
+		n = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+		n = buildtree(ASSIGN, n, buildtree(NAME, 0, 0));
+		sp[i]->soffset = n->n_left->n_lval;
+		sp[i]->sflags |= STNODE;
+		ecomp(n);
+	}
 }
 
 
@@ -128,6 +153,47 @@ ejobcode(int flag )
 void
 bjobcode()
 {
+}
+
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ * Returns p.
+ */
+NODE *
+funcode(NODE *p)
+{
+	extern int gotnr;
+	NODE *r, *l;
+
+	/* Fix function call arguments. On x86, just add funarg */
+	for (r = p->n_right; r->n_op == CM; r = r->n_left) {
+		if (r->n_right->n_op != STARG)
+			r->n_right = block(FUNARG, r->n_right, NIL,
+			    r->n_right->n_type, r->n_right->n_df,
+			    r->n_right->n_sue);
+	}
+	if (r->n_op != STARG) {
+		l = talloc();
+		*l = *r;
+		r->n_op = FUNARG;
+		r->n_left = l;
+		r->n_type = l->n_type;
+	}
+	if (kflag == 0)
+		return p;
+	/* Create an ASSIGN node for ebx */
+	l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+	l->n_rval = EBX;
+	l = buildtree(ASSIGN, l, tempnode(gotnr, INT, 0, MKSUE(INT)));
+	if (p->n_right->n_op != CM) {
+		p->n_right = block(CM, l, p->n_right, INT, 0, MKSUE(INT));
+	} else {
+		for (r = p->n_right; r->n_left->n_op == CM; r = r->n_left)
+			;
+		r->n_left = block(CM, l, p->n_left, INT, 0, MKSUE(INT));
+	}
+	return p;
 }
 
 /*

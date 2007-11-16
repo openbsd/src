@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
+/*	$OpenBSD: code.c,v 1.3 2007/11/16 09:00:13 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -328,3 +328,12 @@ walkheap(start, limit)
 	}
 }
 #endif
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	return p;
+}

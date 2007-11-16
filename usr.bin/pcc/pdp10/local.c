@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.2 2007/11/16 09:00:13 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -37,7 +37,7 @@ static struct symtab *newfun(char *name, TWORD type);
 #define	PTRNORMAL	1
 #define	PTRCHAR		2
 #define	PTRSHORT	3
-static int ptype(TWORD t);
+static int xptype(TWORD t);
 
 NODE *
 clocal(NODE *p)
@@ -60,6 +60,13 @@ clocal(NODE *p)
 	register int m, ml;
 	int siz;
 
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal: %p\n", p);
+		fwalk(p, eprint, 0);
+	}
+#endif
+
 	switch( o = p->n_op ){
 
 	case NAME:
@@ -69,6 +76,15 @@ clocal(NODE *p)
 		switch (q->sclass) {
 
 		case PARAM:
+			/* First 7 parameters are in registers */
+			/* XXX last may be double */
+			if (q->soffset/SZINT < 7) {
+				p->n_op = REG;
+				p->n_rval = q->soffset/SZINT;
+				break;
+			} else
+				q->soffset -= 7*SZINT;
+				
 		case AUTO:
 			/* fake up a structure reference */
 			if (q->stype == CHAR || q->stype == UCHAR ||
@@ -85,9 +101,6 @@ clocal(NODE *p)
 			if (q->slevel == 0)
 				break;
 			p->n_lval = 0;
-			p->n_sp = q;
-			if ((q->sflags & SLABEL) == 0)
-				cerror("STATIC");
 			break;
 
 		case REGISTER:
@@ -166,19 +179,19 @@ rmpc:			l->n_type = p->n_type;
 			break;
 
 		/* Remove conversions to identical pointers */
-		switch (ptype(p->n_type)) {
+		switch (xptype(p->n_type)) {
 		case PTRNORMAL:
-			if (ptype(l->n_type) == PTRNORMAL)
+			if (xptype(l->n_type) == PTRNORMAL)
 				goto rmpc;
 			break;
 
 		case PTRSHORT:
-			if (ptype(l->n_type) == PTRSHORT)
+			if (xptype(l->n_type) == PTRSHORT)
 				goto rmpc;
 			break;
 
 		case PTRCHAR:
-			if (ptype(l->n_type) == PTRCHAR)
+			if (xptype(l->n_type) == PTRCHAR)
 				goto rmpc;
 			break;
 		}
@@ -189,7 +202,7 @@ rmpc:			l->n_type = p->n_type;
 		l = p->n_left;
 
 		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
-		    btdim[p->n_type] == btdim[l->n_type]) {
+		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
 			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
 			     l->n_type != FLOAT && l->n_type != DOUBLE) {
 				nfree(p);
@@ -349,6 +362,13 @@ rmpc:			l->n_type = p->n_type;
 		oop->n_left = p;
 		return oop;
 
+	case FORCE:
+		p->n_op = ASSIGN;
+		p->n_right = p->n_left;
+		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
+		p->n_left->n_rval = RETREG(p->n_type);
+		break;
+
 	}
 
 	return(p);
@@ -439,7 +459,7 @@ cisreg(TWORD t)
 }
 
 int
-ptype(TWORD t)
+xptype(TWORD t)
 {
 	int tt = BTYPE(t);
 	int e, rv;
@@ -448,6 +468,7 @@ ptype(TWORD t)
 		cerror("not a pointer");
 
 	e = t & ~BTMASK;
+	rv = e;
 	while (e) {
 		rv = e;
 		if (DECREF(e) == 0)
@@ -609,6 +630,7 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 	ecomp(buildtree(PLUSEQ, sp, p));
 }
 
+#if 0
 static int inwd;	/* current bit offsed in word */
 static CONSZ word;	/* word being built from fields */
 
@@ -706,6 +728,7 @@ vfdzero(int n)
 		word = inwd = 0;
 	}
 }
+#endif
 
 /* make a name look like an external name in the local machine */
 char *
@@ -719,16 +742,19 @@ exname(char *p)
 /*
  * map types which are not defined on the local machine
  */
-int
+TWORD
 ctype(TWORD type)
 {
 	switch (BTYPE(type)) {
 	case LONG:
 		MODTYPE(type,INT);
 		break;
-
 	case ULONG:
 		MODTYPE(type,UNSIGNED);
+		break;
+	case LDOUBLE:
+		MODTYPE(type,DOUBLE);
+		break;
 	}
 	return (type);
 }
@@ -741,6 +767,16 @@ int
 noinit()
 {
 	return(EXTERN);
+}
+
+void
+calldec(NODE *p, NODE *q) 
+{
+}
+
+void
+extdec(struct symtab *q)
+{
 }
 
 /* make a common declaration for id, if reasonable */
@@ -768,15 +804,57 @@ lcommdec(struct symtab *q)
 		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
 }
 
-/*
- * Debugger code - ignore.
- */
-void
-prcstab(int a)
-{
-}
+static char *loctbl[] = { "text", "data", "section .rodata", "section .rodata" };
 
 void
-pfstab(char *a)
+setloc1(int locc)
 {
+	if (locc == lastloc)
+		return;
+	lastloc = locc;
+	printf("	.%s\n", loctbl[locc]);
 }
+
+/*
+ * print a (non-prog) label.
+ */
+void
+deflab1(int label)
+{
+	printf(LABFMT ":\n", label);
+}
+
+/*
+ * set fsz bits in sequence to zero.
+ */
+void
+zbits(OFFSZ off, int fsz)
+{
+	cerror("zbits");
+}
+
+/*
+ * Initialize a bitfield.
+ */
+void
+infld(CONSZ off, int fsz, CONSZ val)
+{
+//	if (idebug)
+//		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+//		    off, fsz, val, inbits);
+	cerror("infld");
+}
+
+/*
+ * print out a constant node, may be associated with a label.
+ * Do not free the node after use.
+ * off is bit offset from the beginning of the aggregate
+ * fsz is the number of bits this is referring to
+ */
+void
+ninval(CONSZ off, int fsz, NODE *p)
+{
+	cerror("ninval");
+}
+
+

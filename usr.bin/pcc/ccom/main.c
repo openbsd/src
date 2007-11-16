@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2007/10/08 14:55:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -35,11 +35,11 @@
 #include "pass2.h"
 
 int sflag, nflag, oflag, kflag;
-int lflag, odebug, rdebug, radebug, vdebug, s2debug, udebug, x2debug;
+int lflag, odebug, rdebug, s2debug, udebug, x2debug;
 #if !defined(MULTIPASS) || defined(PASST)
 int iTflag, oTflag;
 #endif
-int xdebug, mdebug, sdebug, gflag, c2debug, pdebug;
+int xdebug, sdebug, gflag, c2debug, pdebug;
 int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
 	Wimplicit_function_declaration;
 int xssaflag, xtailcallflag, xtemps, xdeljumps;
@@ -163,15 +163,12 @@ main(int argc, char *argv[])
 				case 'r': /* register alloc/graph coloring */
 					++rdebug;
 					break;
-				case 'a': ++radebug; break;
 				case 'b': /* basic block and SSA building */
 					++b2debug;
 					break;
 				case 'c': /* code printout */
 					++c2debug;
 					break;
-				case 'm': ++mdebug; break;
-				case 'v': ++vdebug; break;
 				case 't': ++t2debug; break;
 				case 's': /* shape matching */
 					++s2debug;
@@ -288,9 +285,10 @@ main(int argc, char *argv[])
 	(void) yyparse();
 	yyaccpt();
 
-	ejobcode( nerrors ? 1 : 0 );
 	if (!nerrors)
 		lcommprint();
+
+	ejobcode( nerrors ? 1 : 0 );
 
 	if (sflag)
 		prtstats();

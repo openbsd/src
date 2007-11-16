@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.2 2007/10/27 14:19:18 ragge Exp $	*/
+/*	$OpenBSD: order.c,v 1.3 2007/11/16 09:00:13 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -594,3 +594,15 @@ void
 myormake(NODE *q)
 {
 }
+/*
+ * Set registers "live" at function calls (like arguments in registers).
+ * This is for liveness analysis of registers.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[1] = { -1 }; /* Terminate with -1 */
+
+	return &r[0];
+}
+
