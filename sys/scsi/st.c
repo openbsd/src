@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.76 2007/09/16 15:54:52 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.77 2007/11/16 11:28:34 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_tape.h>
@@ -187,35 +188,35 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 
 struct st_softc {
 	struct device sc_dev;
-/*--------------------present operating parameters, flags etc.----------------*/
+
 	int flags;		/* see below                          */
 	u_int quirks;		/* quirks for the open mode           */
 	int blksize;		/* blksize we are using               */
 	u_int8_t density;	/* present density                    */
 	short mt_resid;		/* last (short) resid                 */
 	short mt_erreg;		/* last error (sense key) seen        */
-/*--------------------device/scsi parameters----------------------------------*/
+
 	struct scsi_link *sc_link;	/* our link to the adpter etc.        */
-/*--------------------parameters reported by the device ----------------------*/
+
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
 	const struct quirkdata *quirkdata;	/* if we have a rogue entry */
-/*--------------------parameters reported by the device for this media--------*/
+
 	u_int64_t numblks;		/* nominal blocks capacity            */
 	u_int32_t media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
 	u_int32_t media_density;	/* this is what it said when asked    */
 	int media_fileno;		/* relative to BOT. -1 means unknown. */
 	int media_blkno;		/* relative to BOF. -1 means unknown. */
-/*--------------------quirks for the whole drive------------------------------*/
+
 	u_int drive_quirks;	/* quirks of this drive               */
-/*--------------------How we should set up when opening each minor device----*/
+
 	struct modes modes;	/* plus more for each mode            */
 	u_int8_t  modeflags;	/* flags for the modes                */
 #define DENSITY_SET_BY_USER	0x01
 #define DENSITY_SET_BY_QUIRK	0x02
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
-/*--------------------storage for sense data returned by the drive------------*/
+
 	struct buf buf_queue;		/* the queue of pending IO operations */
 	struct timeout sc_timeout;
 };
@@ -223,6 +224,10 @@ struct st_softc {
 
 int	stmatch(struct device *, void *, void *);
 void	stattach(struct device *, struct device *, void *);
+int	stactivate(struct device *, enum devact);
+int	stdetach(struct device *, int);
+
+void	st_kill_buffers(struct st_softc *);
 void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
 void	st_loadquirks(struct st_softc *);
 int	st_mount_tape(dev_t, int);
@@ -244,7 +249,8 @@ int	st_touch_tape(struct st_softc *);
 int	st_erase(struct st_softc *, int, int);
 
 struct cfattach st_ca = {
-	sizeof(struct st_softc), stmatch, stattach
+	sizeof(struct st_softc), stmatch, stattach,
+	stdetach, stactivate
 };
 
 struct cfdriver st_cd = {
@@ -270,6 +276,7 @@ struct scsi_device st_switch = {
 				 * ~ST_WRITTEN to indicate that multiple file
 				 * marks have been written
 				 */
+#define	ST_DYING	0x40	/* dying, when deactivated */
 #define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
 #define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
 #define	ST_MOUNTED	0x0800	/* Device is presently mounted */
@@ -349,6 +356,54 @@ stattach(parent, self, aux)
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 }
 
+int
+stactivate(struct device *self, enum devact act)
+{
+	struct st_softc *st = (struct st_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+		st->flags |= ST_DYING;
+		st_kill_buffers(st);
+		break;
+	}
+
+	return (rv);
+}
+
+int
+stdetach(struct device *self, int flags)
+{
+	struct st_softc *st = (struct st_softc *)self;
+	int bmaj, cmaj, mn;
+
+	st_kill_buffers(st);
+
+	/* Locate the lowest minor number to be detached. */
+	mn = STUNIT(self->dv_unit);
+
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == sdopen) {
+			vdevgone(bmaj, mn, mn + 0, VBLK);
+			vdevgone(bmaj, mn, mn + 1, VBLK);
+			vdevgone(bmaj, mn, mn + 2, VBLK);
+			vdevgone(bmaj, mn, mn + 3, VBLK);
+		}
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == sdopen) {
+			vdevgone(cmaj, mn, mn + 0, VCHR);
+			vdevgone(cmaj, mn, mn + 1, VCHR);
+			vdevgone(cmaj, mn, mn + 2, VCHR);
+			vdevgone(cmaj, mn, mn + 3, VCHR);
+		}
+
+	return (0);
+}
+
 /*
  * Use the inquiry routine in 'scsi_base' to get drive info so we can
  * Further tailor our behaviour.
@@ -421,6 +476,10 @@ stopen(dev, flags, fmt, p)
 	st = st_cd.cd_devs[unit];
 	if (!st)
 		return (ENXIO);
+	if ((st->flags & ST_DYING)) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
 
 	sc_link = st->sc_link;
 
@@ -491,6 +550,10 @@ stclose(dev, flags, mode, p)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
+	if (st->flags & ST_DYING) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
 	switch (STMODE(dev)) {
@@ -777,6 +840,11 @@ ststrategy(bp)
 
 	SC_DEBUG(st->sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %d\n",
 	    bp->b_bcount, bp->b_blkno));
+
+	if (st->flags & ST_DYING) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
 	/*
 	 * If it's a null transfer, return immediately.
 	 */
@@ -862,6 +930,9 @@ ststart(v)
 	int flags, error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
+
+	if (st->flags & ST_DYING)
+		return;
 
 	splassert(IPL_BIO);
 
@@ -1059,6 +1130,11 @@ stioctl(dev, cmd, arg, flag, p)
 	struct mtop *mt = (struct mtop *) arg;
 	int number;
 
+	if (st->flags & ST_DYING) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
+
 	/*
 	 * Find the device that the user is talking about
 	 */
@@ -1210,7 +1286,6 @@ stioctl(dev, cmd, arg, flag, p)
 		break;
 	}
 	return error;
-/*-----------------------------*/
 try_new_value:
 	/*
 	 * Check that the mode being asked for is aggreeable to the
@@ -1825,7 +1900,7 @@ st_interpret_sense(xs)
 	 * in this case we do not allow xs->retries to be decremented
 	 * only on the "Unit Becoming Ready" case. This is because tape
 	 * drives report "Unit Becoming Ready" when loading media, etc.
-	 * and can take a long time.  Rather than having a massive timeout 
+	 * and can take a long time.  Rather than having a massive timeout
 	 * for all operations (which would cause other problems) we allow
 	 * operations to wait (but be interruptable with Ctrl-C) forever
 	 * as long as the drive is reporting that it is becoming ready.
@@ -2041,4 +2116,24 @@ stdump(dev, blkno, va, size)
 
 	/* Not implemented. */
 	return ENXIO;
+}
+
+/*
+ * Remove unprocessed buffers from queue.
+ */
+void
+st_kill_buffers(struct st_softc *st)
+{
+	struct buf *dp, *bp;
+	int s;
+
+	s = splbio();
+	for (dp = &st->buf_queue; (bp = dp->b_actf) != NULL; ) {
+		dp->b_actf = bp->b_actf;
+
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
+	splx(s);
 }
