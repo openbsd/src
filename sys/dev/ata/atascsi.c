@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.42 2007/10/01 15:34:48 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.43 2007/11/16 02:17:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -31,6 +31,8 @@
 
 #include <dev/ata/atascsi.h>
 
+#include <sys/ataio.h>
+
 struct atascsi {
 	struct device		*as_dev;
 	void			*as_cookie;
@@ -46,6 +48,8 @@ struct atascsi {
 };
 
 int		atascsi_cmd(struct scsi_xfer *);
+int		atascsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
+		    struct proc *);
 
 /* template */
 struct scsi_adapter atascsi_switch = {
@@ -53,7 +57,7 @@ struct scsi_adapter atascsi_switch = {
 	minphys,		/* scsi_minphys */
 	NULL,
 	NULL,
-	NULL			/* ioctl */
+	atascsi_ioctl		/* ioctl */
 };
 
 struct scsi_device atascsi_device = {
@@ -780,6 +784,103 @@ atascsi_stuffup(struct scsi_xfer *xs)
 	scsi_done(xs);
 	splx(s);
 	return (COMPLETE);
+}
+
+int atascsi_ioctl_cmd(struct atascsi *, struct ata_port *, atareq_t *);
+void atascsi_ioctl_done(struct ata_xfer *);
+
+int
+atascsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flags,
+    struct proc *p)
+{
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+
+	switch (cmd) {
+	case ATAIOCCOMMAND:
+		return (atascsi_ioctl_cmd(as, ap, (atareq_t *)addr));
+	default:
+		return (ENOTTY);
+	}
+}
+
+int
+atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
+{
+	struct ata_xfer		*xa;
+	struct ata_fis_h2d	*fis;
+	int			s;
+
+	s = splbio();
+	xa = ata_get_xfer(ap, 0);
+	splx(s);
+	if (xa == NULL)
+		return (ENOMEM);
+
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = atareq->command;
+	fis->features = atareq->features;
+	fis->lba_low = atareq->sec_num;
+	fis->lba_mid = atareq->cylinder;
+	fis->lba_high = atareq->cylinder >> 8;
+	fis->device = atareq->head & 0x0f;
+	fis->sector_count = atareq->sec_count;
+
+	xa->data = atareq->databuf;
+	xa->datalen = atareq->datalen;
+	xa->complete = atascsi_ioctl_done;
+	xa->timeout = atareq->timeout;
+	xa->flags = 0;
+	if (atareq->flags & ATACMD_READ)
+		xa->flags |= ATA_F_READ;
+	if (atareq->flags & ATACMD_WRITE)
+		xa->flags |= ATA_F_WRITE;
+	xa->atascsi_private = NULL;
+
+	switch (as->as_methods->ata_cmd(xa)) {
+	case ATA_COMPLETE:
+		break;
+	case ATA_QUEUED:
+		while (xa->state == ATA_S_PENDING || xa->state == ATA_S_ONCHIP)
+			tsleep(xa, PRIBIO, "atascsi", 0);
+		break;
+	case ATA_ERROR:
+		s = splbio();
+		ata_put_xfer(xa);
+		splx(s);
+		atareq->retsts = ATACMD_ERROR;
+		return (EIO);
+	default:
+		panic("atascsi_ioctl_cmd: unexpected return from ata_cmd");
+	}
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		atareq->retsts = ATACMD_OK;
+		break;
+	case ATA_S_ERROR:
+		atareq->retsts = ATACMD_ERROR;
+		break;
+	case ATA_S_TIMEOUT:
+		atareq->retsts = ATACMD_TIMEOUT;
+		break;
+	default:
+		panic("atascsi_ioctl_cmd: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	s = splbio();
+	ata_put_xfer(xa);
+	splx(s);
+
+	return (0);
+}
+
+void
+atascsi_ioctl_done(struct ata_xfer *xa)
+{
+	wakeup(xa);
 }
 
 int
