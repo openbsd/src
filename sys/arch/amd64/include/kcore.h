@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.2 2006/05/10 01:39:04 krw Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.3 2007/11/16 17:09:17 mikeb Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 2003/04/26 18:39:43 fvdl Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  * Wasabi Systems, Inc.
  */
 
-#ifndef _AMD64KCORE_H_
+#ifndef _AMD64_KCORE_H_
 #define _AMD64_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
