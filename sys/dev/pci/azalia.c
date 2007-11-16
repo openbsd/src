@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.42 2007/11/14 22:51:37 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.43 2007/11/16 20:36:25 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -693,14 +693,16 @@ azalia_attach_intr(struct device *self)
 	/* Use the first audio codec */
 	az->codecno = c;
 
-	printf("%s: ", XNAME(az));
+	printf("%s: codec[s]: ", XNAME(az));
 	for (i = 0; i < az->ncodecs; i++) {
 		azalia_print_codec(&az->codecs[i]);
 		if (i < az->ncodecs - 1)
 			printf(", ");
 	}
-	printf(" codecs; using ");
-	azalia_print_codec(&az->codecs[az->codecno]);
+	if (az->ncodecs > 1) {
+		printf(", using ");
+		azalia_print_codec(&az->codecs[az->codecno]);
+	}
 	printf("\n");
 
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
