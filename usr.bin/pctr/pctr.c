@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.17 2007/10/25 16:38:06 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.18 2007/11/16 15:03:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 #include "pctrvar.h"
@@ -53,7 +52,7 @@ static int	 ctr, func, masku, thold;
 static int	 cflag, eflag, iflag, kflag, uflag;
 static int	 Mflag, Eflag, Sflag, Iflag, Aflag;
 
-static int	 pctr_cpu_creds(void);
+static void	 pctr_cpu_creds(void);
 static char	*pctr_fn2str(u_int32_t);
 static void	 pctr_printvals(struct pctrst *);
 static int 	 pctr_read(struct pctrst *);
@@ -70,42 +69,19 @@ main(int argc, char **argv)
 	int ch = -1;
 	int list_mode = 0, set_mode = 0;
 
-	if (pctr_cpu_creds())
-		errx(1, "pctr is supported on i386 and amd64 "
-		    "architectures only");
+	pctr_cpu_creds();
 
-	while ((ch = getopt(argc, argv, "cef:iklm:s:t:uMESIA")) != -1)
+	while ((ch = getopt(argc, argv, "AcEef:IiklMm:Ss:t:u")) != -1)
 		switch (ch) {
 		case 'A':
-			if (Mflag || Eflag || Sflag || Iflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
 			Aflag++;
 			break;
 		case 'c':
 			cflag++;
 			break;
 		case 'E':
-		case 'I':
-		case 'M':
-		case 'S':
-			if (Aflag)
-				errx(1, "M, E, S, I and A are mutually "
-				    "exclusive");
-			switch (ch) {
-			case 'E':
-				Eflag++;
-				break;
-			case 'I':
-				Iflag++;
-				break;
-			case 'M':
-				Mflag++;
-				break;
-			case 'S':
-				Sflag++;
-				break;
-			}
+			Eflag++;
+			break;
 		case 'e':
 			eflag++;
 			break;
@@ -113,6 +89,9 @@ main(int argc, char **argv)
 			if (sscanf(optarg, "%x", &func) <= 0 || func < 0 ||
 			    func > PCTR_MAX_FUNCT)
 				errx(1, "invalid function number");
+			break;
+		case 'I':
+			Iflag++;
 			break;
 		case 'i':
 			iflag++;
@@ -123,10 +102,16 @@ main(int argc, char **argv)
 		case 'l':
 			list_mode++;
 			break;
+		case 'M':
+			Mflag++;
+			break;
 		case 'm':
 			if (sscanf(optarg, "%x", &masku) <= 0 || masku < 0 ||
 			    masku > PCTR_MAX_UMASK)
 				errx(1, "invalid unit mask number");
+			break;
+		case 'S':
+			Sflag++;
 			break;
 		case 's':
 			set_mode++;
@@ -150,6 +135,12 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc)
+		usage();
+
+	if (Aflag && (Mflag || Eflag || Sflag || Iflag))
+		usage();
+
 	if (list_mode)
 		pctr_list_fnct();
 	else if (set_mode) {
@@ -164,7 +155,7 @@ main(int argc, char **argv)
 	return (0);
 }
 
-static int
+static void
 pctr_cpu_creds(void)
 {
 	int atype;
@@ -186,7 +177,7 @@ pctr_cpu_creds(void)
 	else if (strcmp(arch, "amd64") == 0)
 		atype = ARCH_AMD64;
 	else
-		return (EX_UNAVAILABLE);	/* unsupported arch */
+		errx(1, "architecture %s is not supported", arch);
 
 	/* Get the CPU id */
 	mib[0] = CTL_MACHDEP;
@@ -241,7 +232,6 @@ pctr_cpu_creds(void)
 			tsc_avail = 1;
 		break;
 	}
-	return (0);
 }
 
 static __inline int
@@ -431,6 +421,8 @@ pctr_list_fnct(void)
 			printf("  (ctr0 only)");
 		else if (cfnp->flags & CFL_C1)
 			printf("  (ctr1 only)");
+		if (cfnp->flags & CFL_UM)
+			printf("  (needs unit mask)");
 		printf("\n");
 		if (cfnp->desc)
 			pctr_printdesc(cfnp->desc);
@@ -447,7 +439,8 @@ pctr_set_cntr(void)
 	switch (cpu_type) {
 	case CPU_P5:
 		if (ctr >= PCTR_INTEL_NUM)
-			return (EX_DATAERR);
+			errx(1, "only %d counters are supported",
+			    PCTR_INTEL_NUM);
 		if (cflag)
 			val |= P5CTR_C;
 		if (kflag)
@@ -463,30 +456,36 @@ pctr_set_cntr(void)
 		if (cpu_type == CPU_CORE)
 			cfnp = corefn;
 		if (ctr >= PCTR_INTEL_NUM)
-			return (EX_DATAERR);
+			errx(1, "only %d counters are supported",
+			    PCTR_INTEL_NUM);
 		if (func && (ind = pctr_ctrfn_index(cfnp, func)) < 0)
-			return (EX_DATAERR);
-		if (func && cfnp[ind].flags & CFL_SA)
+			errx(1, "function %02x is not supported", func);
+		if (func && (cfnp[ind].flags & CFL_SA))
 			val |= PCTR_UM_A;
-		if (Mflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_UM_M;
-		if (Eflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_UM_E;
-		if (Sflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_UM_S;
-		if (Iflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_UM_I;
-		if (func && (cfnp[ind].flags & CFL_MESI) &&
-		    (!Mflag || !Eflag || !Sflag || !Iflag))
-			val |= PCTR_UM_MESI;
+		if (func && (cfnp[ind].flags & CFL_MESI)) {
+			if (Mflag)
+				val |= PCTR_UM_M;
+			if (Eflag)
+				val |= PCTR_UM_E;
+			if (Sflag)
+				val |= PCTR_UM_S;
+			if (Iflag)
+				val |= PCTR_UM_I;
+			if (!Mflag || !Eflag || !Sflag || !Iflag)
+				val |= PCTR_UM_MESI;
+		}
 		if (func && (cfnp[ind].flags & CFL_ED))
 			val |= PCTR_E;
+		if (func && (cfnp[ind].flags & CFL_UM) && !masku)
+			errx(1, "function %02x needs unit mask specification",
+			    func);
 	case CPU_AMD:
 		if (cpu_type == CPU_AMD && func &&
 		    ((ind = pctr_ctrfn_index(amdfn, func)) < 0))
-			return (EX_DATAERR);
+			errx(1, "function %02x is not supported", func);
 		if (ctr >= PCTR_AMD_NUM)
-			return (EX_DATAERR);
+			errx(1, "only %d counters are supported",
+			    PCTR_AMD_NUM);
 		if (eflag)
 			val |= PCTR_E;
 		if (iflag)
@@ -529,5 +528,5 @@ usage(void)
 	}
 
 	fprintf(stderr, "%s: %s\n", __progname, usg);
-	exit(EX_USAGE);
+	exit(1);
 }
