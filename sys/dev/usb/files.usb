@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.72 2007/11/10 12:58:08 mbalmer Exp $
+#	$OpenBSD: files.usb,v 1.73 2007/11/16 16:25:31 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -241,6 +241,11 @@ file	dev/usb/umsm.c			umsm
 device	uchcom: ucombus
 attach	uchcom at uhub
 file	dev/usb/uchcom.c		uchcom
+
+# TI TUSB3410 serial
+device	uticom: ucombus
+attach	uticom at uhub
+file	dev/usb/uticom.c		uticom
 
 # Scanners
 # Generic scanner support
