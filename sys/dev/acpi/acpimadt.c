@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.13 2007/11/16 16:16:04 deraadt Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.14 2007/11/16 16:21:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -178,6 +178,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				caa.cpu_number = entry->madt_lapic.apic_id;
 				caa.cpu_func = &mp_cpu_funcs;
 #ifdef __i386__
+				/*
+				 * XXX utterly wrong.  These are the
+				 * cpu_feature/cpu_id from the BSP cpu,
+				 * now being given to another cpu.
+				 * This is bullshit.
+				 */
 				extern int cpu_id, cpu_feature;
 				caa.cpu_signature = cpu_id;
 				caa.feature_flags = cpu_feature;
