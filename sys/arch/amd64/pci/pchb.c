@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.10 2007/07/04 21:30:48 ckuethe Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.11 2007/11/16 15:31:19 mikeb Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -157,7 +157,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct timeval tv1, tv2;
 	int i, r;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
@@ -209,25 +208,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 			r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
 			    I82802_RNG_DATA);
-
-			/* benchmark the RNG */
-			microtime(&tv1);
-			for (i = 8 * 1024; i--; ) {
-				while(!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
-				    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
-					;
-				r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
-				    I82802_RNG_DATA);
-			}
-			microtime(&tv2);
-
-			timersub(&tv2, &tv1, &tv1);
-			if (tv1.tv_sec)
-				tv1.tv_usec += 1000000 * tv1.tv_sec;
-			printf(": rng active");
-			if (tv1.tv_usec != 0)
-				printf(", %dKb/sec",
-				    8 * 1000000 / tv1.tv_usec);
 
 			timeout_set(&sc->sc_rnd_to, pchb_rnd, sc);
 			sc->sc_rnd_i = 4;
