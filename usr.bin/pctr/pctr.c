@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.18 2007/11/16 15:03:31 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.19 2007/11/16 16:34:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -55,8 +55,8 @@ static int	 Mflag, Eflag, Sflag, Iflag, Aflag;
 static void	 pctr_cpu_creds(void);
 static char	*pctr_fn2str(u_int32_t);
 static void	 pctr_printvals(struct pctrst *);
-static int 	 pctr_read(struct pctrst *);
-static int 	 pctr_write(int, u_int32_t);
+static int	 pctr_read(struct pctrst *);
+static int	 pctr_write(int, u_int32_t);
 static void	 pctr_list_fnct(void);
 static int	 pctr_set_cntr(void);
 static void	 usage(void);
