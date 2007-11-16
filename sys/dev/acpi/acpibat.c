@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.45 2007/11/12 21:58:13 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.46 2007/11/16 13:58:18 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -83,7 +83,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 		printf(": %s", sc->sc_devnode->parent->name);
 		if (sc->sc_bif.bif_model[0])
-			printf(" model %s", sc->sc_bif.bif_model);
+			printf(" model \"%s\"", sc->sc_bif.bif_model);
 		if (sc->sc_bif.bif_serial[0])
 			printf(" serial %s", sc->sc_bif.bif_serial);
 		if (sc->sc_bif.bif_type[0])
