@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.1 2007/11/15 21:15:34 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.2 2007/11/16 01:35:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2644,7 +2644,7 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	txwi.txop = RT2860_TX_TXOP_HT;
 	txwi.flags = RT2860_TX_TS;
 
-	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0), &txwi, 16);
+	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0), (u_int8_t *)&txwi, 16);
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0) + 16,
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 
