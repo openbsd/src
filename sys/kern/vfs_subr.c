@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.159 2007/11/15 16:50:28 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.160 2007/11/16 13:47:27 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1638,7 +1638,7 @@ vfs_shutdown(void)
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
-	printf("\nsyncing disks... ");
+	printf("syncing disks... ");
 
 	if (panicstr == 0) {
 		/* Sync before unmount, in case we hang on something. */
