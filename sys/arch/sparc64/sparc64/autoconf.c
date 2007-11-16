@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.74 2007/10/31 22:21:43 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.75 2007/11/16 23:27:28 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -719,8 +719,11 @@ extern bus_space_tag_t mainbus_space_tag;
 			ma.ma_bustag = mainbus_space_tag;
 			ma.ma_dmatag = &mainbus_dma_tag;
 			ma.ma_node = node;
-			ma.ma_name = "cpu";
-			config_found(dev, (void *)&ma, mbprint);
+			OF_getprop(node, "name", buf, sizeof(buf));
+			if (strcmp(buf, "cpu") == 0)
+				OF_getprop(node, "compatible", buf, sizeof(buf));
+			ma.ma_name = buf;
+			config_found(dev, &ma, mbprint);
 			ncpus++;
 		}
 
@@ -750,8 +753,8 @@ extern bus_space_tag_t mainbus_space_tag;
 		int portid;
 
 		DPRINTF(ACDB_PROBE, ("Node: %x", node));
-		if ((OF_getprop(node, "device_type", buf, sizeof(buf)) > 0) &&
-			strcmp(buf, "cpu") == 0)
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
 			continue;
 		OF_getprop(node, "name", buf, sizeof(buf));
 		DPRINTF(ACDB_PROBE, (" name %s\n", buf));
@@ -819,7 +822,7 @@ extern bus_space_tag_t mainbus_space_tag;
 				printf(" no address\n");
 		}
 #endif
-		(void) config_found(dev, (void *)&ma, mbprint);
+		config_found(dev, &ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -829,7 +832,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	/* Try to attach PROM console */
 	bzero(&ma, sizeof ma);
 	ma.ma_name = "pcons";
-	(void) config_found(dev, (void *)&ma, mbprint);
+	config_found(dev, &ma, mbprint);
 }
 
 struct cfattach mainbus_ca = {

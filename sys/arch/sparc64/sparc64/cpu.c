@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2007/11/10 00:22:29 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.31 2007/11/16 23:27:28 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -62,6 +62,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/openfirm.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
 
@@ -173,12 +174,13 @@ cpu_match(parent, vcf, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	struct cfdata *cf = (struct cfdata *)vcf;
 #ifndef MULTIPROCESSOR
 	int portid;
 #endif
+	char buf[32];
 
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+	if (OF_getprop(ma->ma_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "cpu") != 0)
 		return (0);
 
 #ifndef MULTIPROCESSOR
