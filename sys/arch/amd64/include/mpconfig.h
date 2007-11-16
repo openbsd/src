@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpconfig.h,v 1.4 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: mpconfig.h,v 1.5 2007/11/16 16:16:07 deraadt Exp $	*/
 /*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
@@ -6,8 +6,8 @@
  * MP config as well.
  */
 
-#ifndef _X86_MPCONFIG_H
-#define _X86_MPCONFIG_H
+#ifndef _AMD64_MPCONFIG_H
+#define _AMD64_MPCONFIG_H
 
 /* 
  * Interrupt typess
@@ -29,8 +29,7 @@
 
 struct mpbios_int;
 
-struct mp_bus
-{
+struct mp_bus {
 	char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */
 	void (*mb_intr_print)(int);
@@ -39,8 +38,7 @@ struct mp_bus
 	u_int32_t mb_data;	/* random bus-specific datum. */
 };
 
-struct mp_intr_map
-{
+struct mp_intr_map {
 	struct mp_intr_map *next;
 	struct mp_bus *bus;
 	int bus_pin;
@@ -58,11 +56,11 @@ struct mp_intr_map
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
-extern int mp_nintr;
+extern int mp_nintrs;
 extern struct mp_bus *mp_isa_bus;
 extern struct mp_bus *mp_eisa_bus;
 extern int mp_nbus;
 #endif
 #endif
 
-#endif /* _X86_MPCONFIG_H */
+#endif /* _AMD64_MPCONFIG_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.4 2004/07/20 20:18:53 art Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.5 2007/11/16 16:16:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -54,7 +54,7 @@ db_enter_ddb()
 		ddb_state = DDB_STATE_RUNNING;
 		curcpu()->ci_ddb_paused = CI_DDB_INDDB;
 		mtx_leave(&ddb_mp_mutex);
-		for (i = 0; i < I386_MAXPROCS; i++) {
+		for (i = 0; i < MAXCPUS; i++) {
 			if (cpu_info[i] != NULL && i != cpu_number() &&
 			    cpu_info[i]->ci_ddb_paused != CI_DDB_STOPPED) {
 				cpu_info[i]->ci_ddb_paused = CI_DDB_SHOULDSTOP;
@@ -66,7 +66,7 @@ db_enter_ddb()
 
 	/* Leaving ddb completely.  Start all other CPUs and return 0 */
 	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_EXITING) {
-		for (i = 0; i < I386_MAXPROCS; i++) {
+		for (i = 0; i < MAXCPUS; i++) {
 			if (cpu_info[i] != NULL) {
 				cpu_info[i]->ci_ddb_paused = CI_DDB_RUNNING;
 			}

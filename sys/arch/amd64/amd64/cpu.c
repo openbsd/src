@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.16 2007/11/16 16:16:07 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -149,7 +149,7 @@ u_int32_t cpus_attached = 0;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
 
@@ -409,7 +409,7 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < X86_MAXPROCS; i++) {
+	for (i=0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
@@ -429,7 +429,7 @@ cpu_init_idle_pcbs(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < X86_MAXPROCS; i++) {
+	for (i=0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;

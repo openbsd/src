@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.10 2007/09/17 15:34:38 chl Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.11 2007/11/16 16:16:07 deraadt Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -640,7 +640,7 @@ mpbios_scan(struct device *self)
 
 			(u_char*)position += mp_conf[type].length;
 		}
-		mp_nintr = cur_intr;
+		mp_nintrs = cur_intr;
 
 		if (mp_verbose && mp_cth->ext_len)
 			printf("%s: MP WARNING: %d bytes of extended entries not examined\n",

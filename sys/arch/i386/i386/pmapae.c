@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.13 2007/07/20 19:48:15 mk Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.14 2007/11/16 16:16:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -530,7 +530,7 @@ extern boolean_t pmap_initialized;	/* pmap_init done yet? */
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * I386_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 

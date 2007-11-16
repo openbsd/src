@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.27 2007/11/16 16:16:06 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -137,7 +137,7 @@ void	cpu_set_tss_gates(struct cpu_info *);
  * curproc, etc. are used early.
  */
 
-struct cpu_info *cpu_info[I386_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 
 void   	cpu_hatch(void *);
 void   	cpu_boot_secondary(struct cpu_info *);
@@ -364,7 +364,7 @@ cpu_boot_secondary_processors()
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i = 0; i < I386_MAXPROCS; i++) {
+	for (i = 0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
@@ -384,7 +384,7 @@ cpu_init_idle_pcbs()
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < I386_MAXPROCS; i++) {
+	for (i=0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;

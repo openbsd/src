@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2007/11/01 23:30:46 mikeb Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2007/11/16 16:16:07 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ extern void need_resched(struct cpu_info *);
 
 #if defined(MULTIPROCESSOR)
 
-#define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
+#define MAXCPUS		32	/* bitmask; can be bumped to 64 */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
@@ -177,14 +177,14 @@ extern void need_resched(struct cpu_info *);
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-extern struct cpu_info *cpu_info[X86_MAXPROCS];
+extern struct cpu_info *cpu_info[MAXCPUS];
 
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_pcbs(void);    
 
 #else /* !MULTIPROCESSOR */
 
-#define X86_MAXPROCS		1
+#define MAXCPUS		1
 
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_primary;

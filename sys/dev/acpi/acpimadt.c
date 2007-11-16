@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.12 2007/11/15 22:16:31 mikeb Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.13 2007/11/16 16:16:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,10 +37,6 @@
 #include <machine/mpbiosvar.h>
 
 #include "ioapic.h"
-
-#ifdef __amd64__ /* XXX */
-#define mp_nintrs mp_nintr
-#endif
 
 u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 

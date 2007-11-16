@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.32 2007/11/15 19:05:58 mikeb Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.33 2007/11/16 16:16:04 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -123,11 +123,7 @@ struct cfdriver acpicpu_cd = {
 
 extern int setperf_prio;
 
-#ifdef __i386__
-struct acpicpu_softc *acpicpu_sc[I386_MAXPROCS];
-#elif __amd64__
-struct acpicpu_softc *acpicpu_sc[X86_MAXPROCS];
-#endif
+struct acpicpu_softc *acpicpu_sc[MAXCPUS];
 
 void
 acpicpu_set_throttle(struct acpicpu_softc *sc, int level)

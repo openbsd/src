@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.97 2007/11/03 03:37:08 weingart Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.98 2007/11/16 16:16:06 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -180,7 +180,7 @@ extern struct cpu_info *cpu_info_list;
 
 #ifdef MULTIPROCESSOR
 
-#define I386_MAXPROCS		32	/* because we use a bitmask */
+#define MAXCPUS			32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
@@ -203,7 +203,7 @@ curcpu(void)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-extern struct cpu_info	*cpu_info[I386_MAXPROCS];
+extern struct cpu_info	*cpu_info[MAXCPUS];
 extern u_long		 cpus_running;
 
 extern void cpu_boot_secondary_processors(void);
@@ -211,7 +211,7 @@ extern void cpu_init_idle_pcbs(void);
 
 #else /* MULTIPROCESSOR */
 
-#define I386_MAXPROCS		1
+#define MAXCPUS			1
 
 #define cpu_number()		0
 #define	curcpu()		(&cpu_info_primary)

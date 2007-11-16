@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.100 2007/11/15 22:19:14 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.101 2007/11/16 16:16:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -104,15 +104,8 @@ struct cfdriver acpi_cd = {
 struct acpi_softc *acpi_softc;
 int acpi_s5, acpi_evindex;
 
-#ifdef __i386__
 #define acpi_bus_space_map	_bus_space_map
 #define acpi_bus_space_unmap	_bus_space_unmap
-#elif defined(__amd64__)
-#define acpi_bus_space_map	_x86_memio_map
-#define acpi_bus_space_unmap	_x86_memio_unmap
-#else
-#error ACPI supported on i386/amd64 only
-#endif
 
 #define pch(x) (((x)>=' ' && (x)<='z') ? (x) : ' ')
 

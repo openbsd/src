@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2007/06/27 16:16:53 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.120 2007/11/16 16:16:06 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ struct pool pmap_pmap_pool;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * I386_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -877,8 +877,8 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
-	virtual_avail += PAGE_SIZE * I386_MAXPROCS * NPTECL;
-	pte += I386_MAXPROCS * NPTECL;
+	virtual_avail += PAGE_SIZE * MAXCPUS * NPTECL;
+	pte += MAXCPUS * NPTECL;
 #else
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			/* advance */
