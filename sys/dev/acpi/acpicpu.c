@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.33 2007/11/16 16:16:04 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.34 2007/11/16 16:55:27 mikeb Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -349,21 +349,23 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (!(sc->sc_flags & (FLAGS_NOPSS | FLAGS_NOPCT | FLAGS_NOPSS)))
+	if (!(sc->sc_flags & (FLAGS_NOPSS | FLAGS_NOPCT)) ||
+	    !(sc->sc_flags & FLAGS_NOPSS)) {
 		printf("%c ", SLIST_EMPTY(&sc->sc_cstates) ? ':' : ',');
 
-	/*
-	 * If acpicpu is itself providing the capability to transition
-	 * states, enumerate them in the fashion that est and powernow
-	 * would.
-	 */
-	if (!(sc->sc_flags & FLAGS_NOPSS) && !(sc->sc_flags & FLAGS_NOPCT)) {
-		printf("FVS, ");
-		for (i = 0; i < sc->sc_pss_len - 1; i++)
-			printf("%d, ", sc->sc_pss[i].pss_core_freq);
-		printf("%d MHz", sc->sc_pss[i].pss_core_freq);
-	} else if (!(sc->sc_flags & FLAGS_NOPSS))
-		printf("PSS");
+		/*
+		 * If acpicpu is itself providing the capability to transition
+		 * states, enumerate them in the fashion that est and powernow
+		 * would.
+		 */
+		if (!(sc->sc_flags & (FLAGS_NOPSS | FLAGS_NOPCT))) {
+			printf("FVS, ");
+			for (i = 0; i < sc->sc_pss_len - 1; i++)
+				printf("%d, ", sc->sc_pss[i].pss_core_freq);
+			printf("%d MHz", sc->sc_pss[i].pss_core_freq);
+		} else
+			printf("PSS");
+	}
 
 	printf("\n");
 }
