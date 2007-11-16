@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.153 2007/10/29 16:19:23 chl Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.154 2007/11/16 05:08:39 djm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -908,9 +908,8 @@ int
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 {
 	if (!sc->sc_replay_cookie) {
-		sc->sc_replay_cookie = arc4random();
-		sc->sc_replay_cookie = sc->sc_replay_cookie << 32;
-		sc->sc_replay_cookie += arc4random();
+		arc4random_bytes(&sc->sc_replay_cookie,
+		    sizeof(sc->sc_replay_cookie));
 	}
 
 	bcopy(&sc->sc_replay_cookie, ch->carp_counter,

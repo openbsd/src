@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.61 2007/11/01 03:35:43 deraadt Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.62 2007/11/16 05:08:39 djm Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4063,10 +4063,7 @@ sppp_chap_scr(struct sppp *sp)
 
 	/* Compute random challenge. */
 	ch = (u_int32_t *)sp->myauth.challenge;
-	ch[0] = arc4random();
-	ch[1] = arc4random();
-	ch[2] = arc4random();
-	ch[3] = arc4random();
+	arc4random_bytes(ch, sizeof(*ch) * 4);
 	clen = AUTHKEYLEN;
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq;
