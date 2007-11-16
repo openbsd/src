@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.2 2007/11/16 01:35:53 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.3 2007/11/16 21:34:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2369,6 +2369,10 @@ rt2860_init(struct ifnet *ifp)
 		rt2860_stop(ifp, 1);
 		return ETIMEDOUT;
 	}
+	
+	/* clear Host to MCU mailbox */
+	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, 0);
+	RAL_WRITE(sc, RT2860_H2M_MAILBOX, 0);
 
 	if ((error = rt2860_bbp_init(sc)) != 0) {
 		rt2860_stop(ifp, 1);
@@ -2432,7 +2436,7 @@ rt2860_init(struct ifnet *ifp)
 	/* set RTS threshold */
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);
 	tmp &= ~0xffff00;
-	tmp |= (ic->ic_rtsthreshold & 0xffff) << 8;
+	tmp |= ic->ic_rtsthreshold << 8;
 
 	/* enable Tx/Rx DMA engine */
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_TX_EN);
@@ -2644,7 +2648,8 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	txwi.txop = RT2860_TX_TXOP_HT;
 	txwi.flags = RT2860_TX_TS;
 
-	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0), (u_int8_t *)&txwi, 16);
+	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0),
+	    (u_int8_t *)&txwi, 16);
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0) + 16,
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 
