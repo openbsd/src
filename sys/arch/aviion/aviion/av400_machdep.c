@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.7 2007/11/17 05:36:21 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.8 2007/11/17 05:37:51 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -197,7 +197,7 @@ const struct board board_av400 = {
  */
 u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
-u_int av400_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
+u_int av400_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
 /*
  * external interrupt masks per spl.

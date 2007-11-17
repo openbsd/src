@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.42 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.43 2007/11/17 05:37:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -159,7 +159,7 @@ void	m188_startup(void);
  */
 u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
-u_int m188_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
+u_int m188_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
 /*
  * external interrupt masks per spl.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2007/11/17 05:37:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -136,7 +136,7 @@ u_int32_t *volatile int_mask_reg[] = {
 	(u_int32_t *)INT_ST_MASK3
 };
 
-u_int luna88k_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
+u_int luna88k_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
 u_int32_t int_set_val[INT_LEVEL] = {
 	INT_SET_LV0,
