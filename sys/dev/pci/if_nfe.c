@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.72 2007/09/12 00:42:04 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.73 2007/11/17 15:52:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -252,9 +252,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+#ifdef notyet
 	/* enable jumbo frames for adapters that support it */
 	if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->sc_flags |= NFE_USE_JUMBO;
+#endif
 
 	nfe_get_macaddr(sc, sc->sc_arpcom.ac_enaddr);
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
