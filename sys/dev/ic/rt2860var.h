@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.1 2007/11/15 21:15:34 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.2 2007/11/17 15:39:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -24,7 +24,7 @@
 #define RT2860_MAX_SCATTER	((RT2860_TX_RING_COUNT * 2) - 1)
 
 /* HW supports up to 255 STAs */
-#define RT2860_WCID_MAX	254
+#define RT2860_WCID_MAX		254
 #define RT2860_AID2WCID(aid)	((aid) & 0xff)
 
 struct rt2860_tx_data {

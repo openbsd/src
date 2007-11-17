@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.1 2007/11/15 21:15:34 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.2 2007/11/17 15:39:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -157,12 +157,28 @@
 #define RT2860_TX_STA_CNT2		0x1714
 #define RT2860_TX_STAT_FIFO		0x1718
 
+/* RX WCID search table */
 #define RT2860_WCID_ENTRY(wcid)		(0x1800 + (wcid) * 8)
+
 #define RT2860_FW_BASE			0x2000
+
+/* Pair-wise key table */
 #define RT2860_PKEY(wcid)		(0x4000 + (wcid) * 32)
+
+/* IV/EIV table */
 #define RT2860_IVEIV(wcid)		(0x6000 + (wcid) * 8)
-#define RT2860_WCID_ATTR(wcid)		(0x6800 + (wcid) * 8)
+
+/* WCID attribute table */
+#define RT2860_WCID_ATTR(wcid)		(0x6800 + (wcid) * 4)
+
+/* Shared Key Table */
 #define RT2860_SKEY(vap, kidx)		(0x6c00 + (vap) * 128 + (kidx) * 32)
+
+/* Shared Key Mode */
+#define RT2860_SKEY_MODE_0_7		0x7000
+#define RT2860_SKEY_MODE_8_15		0x7004
+#define RT2860_SKEY_MODE_16_23		0x7008
+#define RT2860_SKEY_MODE_24_31		0x700c
 
 /* Shared Memory between MCU and host */
 #define RT2860_H2M_MAILBOX		0x7010
@@ -580,6 +596,17 @@
 #define RT2860_TXQ_OK		(1 << 5)
 #define RT2860_TXQ_PID_SHIFT	1
 #define RT2860_TXQ_VLD		(1 << 0)
+
+/* possible flags for register WCID_ATTR */
+#define RT2860_MODE_NOSEC	0
+#define RT2860_MODE_WEP40	1
+#define RT2860_MODE_WEP104	2
+#define RT2860_MODE_TKIP	3
+#define RT2860_MODE_AES_CCMP	4
+#define RT2860_MODE_CKIP40	5
+#define RT2860_MODE_CKIP104	6
+#define RT2860_MODE_CKIP128	7
+#define RT2860_RX_PKEY_EN	(1 << 0)
 
 /* possible flags for register H2M_MAILBOX */
 #define RT2860_H2M_BUSY		(1 << 24)

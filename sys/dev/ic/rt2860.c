@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.4 2007/11/17 12:04:00 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.5 2007/11/17 15:39:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -126,6 +126,10 @@ void		rt2860_set_bssid(struct rt2860_softc *, const uint8_t *);
 void		rt2860_set_macaddr(struct rt2860_softc *, const uint8_t *);
 void		rt2860_updateslot(struct ieee80211com *);
 void		rt2860_updateedca(struct ieee80211com *);
+int		rt2860_set_key(struct ieee80211com *, struct ieee80211_node *,
+		    const struct ieee80211_key *);
+void		rt2860_delete_key(struct ieee80211com *,
+		    struct ieee80211_node *, int);
 int8_t		rt2860_rssi2dbm(struct rt2860_softc *, uint8_t, uint8_t);
 uint8_t		rt2860_maxrssi_chain(struct rt2860_softc *,
 		    const struct rt2860_rxwi *);
@@ -278,6 +282,8 @@ rt2860_attach(void *xsc, int id)
 	ic->ic_newassoc = rt2860_newassoc;
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
+	ic->ic_set_key = rt2860_set_key;
+	ic->ic_delete_key = rt2860_delete_key;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -1932,6 +1938,81 @@ rt2860_updateedca(struct ieee80211com *ic)
 	RAL_WRITE(sc, RT2860_WMM_TXOP1_CFG,
 	    ic->ic_edca_ac[EDCA_AC_VO].ac_txoplimit << 16 |
 	    ic->ic_edca_ac[EDCA_AC_VI].ac_txoplimit);
+}
+
+int
+rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const struct ieee80211_key *k)
+{
+	struct rt2860_softc *sc = ic->ic_softc;
+	bus_size_t base;
+	uint32_t attr;
+	uint8_t mode, wcid;
+
+	/* map net80211 ciphers to RT2860 security mode */
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_WEP40:
+		mode = RT2860_MODE_WEP40;
+		break;
+	case IEEE80211_CIPHER_WEP104:
+		mode = RT2860_MODE_WEP104;
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		mode = RT2860_MODE_TKIP;
+		break;
+	case IEEE80211_CIPHER_CCMP:
+		mode = RT2860_MODE_AES_CCMP;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (k->k_flags & IEEE80211_KEY_GROUP) {
+		/* install group key */
+		base = RT2860_SKEY(0, k->k_id);
+		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
+		RAL_WRITE_REGION_1(sc, base + 16, k->k_txmic, 8);
+		RAL_WRITE_REGION_1(sc, base + 24, k->k_rxmic, 8);
+
+		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
+		attr |= mode << (k->k_id * 4);
+		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
+
+	} else {
+		/* install pairwise key */
+		wcid = RT2860_AID2WCID(ni->ni_associd);
+		base = RT2860_PKEY(wcid);
+		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
+		RAL_WRITE_REGION_1(sc, base + 16, k->k_txmic, 8);
+		RAL_WRITE_REGION_1(sc, base + 24, k->k_rxmic, 8);
+
+		attr = RAL_READ(sc, RT2860_WCID_ATTR(wcid));
+		attr = (attr & ~0xf) | (mode << 1) | RT2860_RX_PKEY_EN;
+		RAL_WRITE(sc, RT2860_WCID_ATTR(wcid), attr);
+	}
+	return 0;
+}
+
+void
+rt2860_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni, int kid)
+{
+	struct rt2860_softc *sc = ic->ic_softc;
+	uint32_t attr;
+	uint8_t wcid;
+
+	if (ni == NULL) {
+		/* remove group key */
+		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
+		attr &= ~(0xf << (kid * 4));
+		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
+
+	} else {
+		/* remove pairwise key */
+		wcid = RT2860_AID2WCID(ni->ni_associd);
+		attr = RAL_READ(sc, RT2860_WCID_ATTR(wcid));
+		attr &= ~0xf;
+		RAL_WRITE(sc, RT2860_WCID_ATTR(wcid), attr);
+	}
 }
 
 int8_t
