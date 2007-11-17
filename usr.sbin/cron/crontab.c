@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.54 2007/10/17 20:02:33 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.55 2007/11/17 16:09:29 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.54 2007/10/17 20:02:33 deraadt Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.55 2007/11/17 16:09:29 millert Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
@@ -311,9 +311,13 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	memcpy(&mtimespec, &statbuf.st_mtimespec, sizeof(mtimespec));
+	/*
+	 * Note that timespec has higher precision than timeval so we
+	 * store mtimespec using timeval precision so we can compare later.
+	 */
 	TIMESPEC_TO_TIMEVAL(&tv[0], &statbuf.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &statbuf.st_mtimespec);
+	TIMEVAL_TO_TIMESPEC(&tv[1], &mtimespec);
 
 	/* Turn off signals. */
 	(void)signal(SIGHUP, SIG_IGN);

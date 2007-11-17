@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.13 2003/06/02 23:36:55 millert Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.14 2007/11/17 16:09:29 millert Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -119,6 +119,9 @@ copyfile(int from, int to, struct stat *sb)
 	TIMESPEC_TO_TIMEVAL(&tv[0], &sb->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &sb->st_mtimespec);
 	(void)futimes(to, tv);
+
+	/* Make tv_nsec the same precision as tv_usec so it compares OK. */
+	TIMEVAL_TO_TIMESPEC(&tv[1], &sb->st_mtimespec);
 }
 
 void
