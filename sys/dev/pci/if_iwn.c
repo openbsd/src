@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.11 2007/11/03 13:10:29 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.12 2007/11/17 18:50:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -960,6 +960,8 @@ iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int len)
 	iwn_mem_lock(sc);
 	for (; len > 0; len -= 2, addr++) {
 		IWN_WRITE(sc, IWN_EEPROM_CTL, addr << 2);
+		IWN_WRITE(sc, IWN_EEPROM_CTL,
+		    IWN_READ(sc, IWN_EEPROM_CTL) & ~IWN_EEPROM_CMD);
 
 		for (ntries = 0; ntries < 10; ntries++) {
 			if ((val = IWN_READ(sc, IWN_EEPROM_CTL)) &
