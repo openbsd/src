@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.9 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.10 2007/11/17 09:05:23 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 17 2007 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -100,6 +100,8 @@ push-pull output
 tri-state (output disabled)
 .It pu
 internal pull-up enabled
+.It pd
+internal pull-down enabled
 .El
 .Pp
 Note that not all the flags can be supported by the particular
