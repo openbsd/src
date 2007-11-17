@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.88 2007/11/03 11:44:30 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.89 2007/11/17 09:49:53 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static void setup_CURDIR_OBJDIR(struct dirs *, const char *);
 
 static void setup_VPATH(void);
 
-static void read_all_make_rules(bool, Lst, struct dirs *);
+static void read_all_make_rules(bool, bool, Lst, struct dirs *);
 static void read_makefile_list(Lst, struct dirs *);
 static int ReadMakefile(void *, void *);
 
@@ -586,7 +586,8 @@ read_makefile_list(Lst mk, struct dirs *d)
 }
 
 static void
-read_all_make_rules(bool noBuiltins, Lst makefiles, struct dirs *d)
+read_all_make_rules(bool noBuiltins, bool read_depend,
+    Lst makefiles, struct dirs *d)
 {
 	/*
 	 * Read in the built-in rules first, followed by the specified
@@ -613,8 +614,10 @@ read_all_make_rules(bool noBuiltins, Lst makefiles, struct dirs *d)
 		if (!ReadMakefile("makefile", d))
 			(void)ReadMakefile("Makefile", d);
 
-	/* Always read a .depend file, if it exists. */
-	(void)ReadMakefile(".depend", d);
+	/* read a .depend file, if it exists, and we're not building depend */
+	
+	if (read_depend)
+		(void)ReadMakefile(".depend", d);
 }
 
 
@@ -646,6 +649,7 @@ main(int argc, char **argv)
 	const char *syspath = _PATH_DEFSYSPATH;
 	char *p;
 	static struct dirs d;
+	bool read_depend = true;/* false if we don't want to read .depend */
 
 	no_fd_limits();
 	setup_CURDIR_OBJDIR(&d, machine);
@@ -725,6 +729,9 @@ main(int argc, char **argv)
 		for (ln = Lst_First(create); ln != NULL; ln = Lst_Adv(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
+			if (strcmp(name, "depend") == 0)
+				read_depend = false;
+
 			Var_Append(".TARGETS", name);
 		}
 	} else
@@ -739,7 +746,7 @@ main(int argc, char **argv)
 	if (Lst_IsEmpty(systemIncludePath))
 	    add_dirpath(systemIncludePath, syspath);
 
-	read_all_make_rules(noBuiltins, &makefiles, &d);
+	read_all_make_rules(noBuiltins, read_depend, &makefiles, &d);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS));
 
