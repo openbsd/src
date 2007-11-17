@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.17 2004/06/22 04:55:35 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.18 2007/11/17 05:36:23 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -125,48 +125,48 @@
 
 #ifndef	_LOCORE
 
-void set_icmd(unsigned value);
-void set_ictl(unsigned value);
-void set_isar(unsigned value);
-void set_isap(unsigned value);
-void set_iuap(unsigned value);
-void set_iir(unsigned value);
-void set_ibp(unsigned value);
-void set_ippu(unsigned value);
-void set_ippl(unsigned value);
-void set_isr(unsigned value);
-void set_dcmd(unsigned value);
-void set_dctl(unsigned value);
-void set_dsar(unsigned value);
-void set_dsap(unsigned value);
-void set_duap(unsigned value);
-void set_dir(unsigned value);
-void set_dbp(unsigned value);
-void set_dppu(unsigned value);
-void set_dppl(unsigned value);
-void set_dsr(unsigned value);
+void set_icmd(u_int value);
+void set_ictl(u_int value);
+void set_isar(u_int value);
+void set_isap(u_int value);
+void set_iuap(u_int value);
+void set_iir(u_int value);
+void set_ibp(u_int value);
+void set_ippu(u_int value);
+void set_ippl(u_int value);
+void set_isr(u_int value);
+void set_dcmd(u_int value);
+void set_dctl(u_int value);
+void set_dsar(u_int value);
+void set_dsap(u_int value);
+void set_duap(u_int value);
+void set_dir(u_int value);
+void set_dbp(u_int value);
+void set_dppu(u_int value);
+void set_dppl(u_int value);
+void set_dsr(u_int value);
 
 /* get routines */
-unsigned get_icmd(void);
-unsigned get_ictl(void);
-unsigned get_isar(void);
-unsigned get_isap(void);
-unsigned get_iuap(void);
-unsigned get_iir(void);
-unsigned get_ibp(void);
-unsigned get_ippu(void);
-unsigned get_ippl(void);
-unsigned get_isr(void);
-unsigned get_dcmd(void);
-unsigned get_dctl(void);
-unsigned get_dsar(void);
-unsigned get_dsap(void);
-unsigned get_duap(void);
-unsigned get_dir(void);
-unsigned get_dbp(void);
-unsigned get_dppu(void);
-unsigned get_dppl(void);
-unsigned get_dsr(void);
+u_int get_icmd(void);
+u_int get_ictl(void);
+u_int get_isar(void);
+u_int get_isap(void);
+u_int get_iuap(void);
+u_int get_iir(void);
+u_int get_ibp(void);
+u_int get_ippu(void);
+u_int get_ippl(void);
+u_int get_isr(void);
+u_int get_dcmd(void);
+u_int get_dctl(void);
+u_int get_dsar(void);
+u_int get_dsap(void);
+u_int get_duap(void);
+u_int get_dir(void);
+u_int get_dbp(void);
+u_int get_dppu(void);
+u_int get_dppl(void);
+u_int get_dsr(void);
 
 /* Cache inlines */
 
@@ -175,7 +175,7 @@ unsigned get_dsr(void);
 
 static __inline__ void mc88110_flush_data_line(paddr_t x)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE);
@@ -184,7 +184,7 @@ static __inline__ void mc88110_flush_data_line(paddr_t x)
 
 static __inline__ void mc88110_flush_data_page(paddr_t x)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG);
@@ -193,7 +193,7 @@ static __inline__ void mc88110_flush_data_page(paddr_t x)
 
 static __inline__ void mc88110_flush_data(void)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dcmd(CMMU_DCMD_FLUSH_ALL);
 	}
@@ -212,7 +212,7 @@ static __inline__ void mc88110_inval_data(void)
 
 static __inline__ void mc88110_sync_data_line(paddr_t x)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE_INV);
@@ -221,7 +221,7 @@ static __inline__ void mc88110_sync_data_line(paddr_t x)
 
 static __inline__ void mc88110_sync_data_page(paddr_t x)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG_INV);
@@ -230,7 +230,7 @@ static __inline__ void mc88110_sync_data_page(paddr_t x)
 
 static __inline__ void mc88110_sync_data(void)
 {
-	unsigned dctl = get_dctl();
+	u_int dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN) {
 		set_dcmd(CMMU_DCMD_FLUSH_ALL_INV);
 	}

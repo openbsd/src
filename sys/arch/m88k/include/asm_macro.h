@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.3 2005/12/03 16:52:16 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.4 2007/11/17 05:36:23 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -66,7 +66,7 @@ static __inline__ u_int get_psr(void)
 /*
  * Provide access from C code to the assembly instruction ff1
  */
-static __inline__ unsigned ff1(unsigned val)
+static __inline__ u_int ff1(u_int val)
 {
 	__asm__ __volatile__ ("ff1 %0, %0" : "=r" (val) : "0" (val));
 	return (val);

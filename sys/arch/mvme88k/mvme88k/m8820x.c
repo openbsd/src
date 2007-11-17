@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.48 2007/11/17 05:33:40 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.49 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -153,7 +153,7 @@ m8820x_setup_board_config()
 	 * Check CMMU type
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-		volatile unsigned *cr = m8820x_cmmu[cmmu_num].cmmu_regs;
+		volatile u_int32_t *cr = m8820x_cmmu[cmmu_num].cmmu_regs;
 		if (badaddr((vaddr_t)cr, 4) == 0) {
 			int type;
 
@@ -203,8 +203,8 @@ m8820x_setup_board_config()
 	 * discarded. Just don't do this on a 187...
 	 */
 	if (brdtyp == BRD_188) {
-		*(volatile unsigned long *)MVME188_PCNFA = 0;
-		*(volatile unsigned long *)MVME188_PCNFB = 0;
+		*(volatile u_int32_t *)MVME188_PCNFA = 0;
+		*(volatile u_int32_t *)MVME188_PCNFB = 0;
 	}
 
 	/*

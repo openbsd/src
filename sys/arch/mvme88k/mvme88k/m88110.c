@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.38 2007/02/11 12:49:38 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.39 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -79,7 +79,7 @@ void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
 void	m88110_set_sapr(cpuid_t, apr_t);
 void	m88110_set_uapr(apr_t);
-void	m88110_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
+void	m88110_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
 void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_data_page(cpuid_t, paddr_t);
@@ -297,7 +297,7 @@ m88110_set_uapr(apr_t ap)
  *	flush any tlb
  */
 void
-m88110_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
+m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 

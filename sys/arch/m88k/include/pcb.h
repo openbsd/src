@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2007/01/13 22:00:56 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.5 2007/11/17 05:36:23 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -48,29 +48,29 @@
  */
 
 struct m88100_pcb {
-	unsigned pcb_pc;	/* address to return */
-	unsigned :32;
-	unsigned pcb_r14;
-	unsigned pcb_r15;
-	unsigned pcb_r16;
-	unsigned pcb_r17;
-	unsigned pcb_r18;
-	unsigned pcb_r19;
-	unsigned pcb_r20;
-	unsigned pcb_r21;
-	unsigned pcb_r22;
-	unsigned pcb_r23;
-	unsigned pcb_r24;
-	unsigned pcb_r25;
-	unsigned pcb_r26;
-	unsigned pcb_r27;
-	unsigned pcb_r28;
-	unsigned pcb_r29;
-	unsigned pcb_r30;
-	unsigned pcb_sp; 	/* kernel stack pointer */
+	unsigned int pcb_pc;	/* address to return */
+	unsigned int :32;
+	unsigned int pcb_r14;
+	unsigned int pcb_r15;
+	unsigned int pcb_r16;
+	unsigned int pcb_r17;
+	unsigned int pcb_r18;
+	unsigned int pcb_r19;
+	unsigned int pcb_r20;
+	unsigned int pcb_r21;
+	unsigned int pcb_r22;
+	unsigned int pcb_r23;
+	unsigned int pcb_r24;
+	unsigned int pcb_r25;
+	unsigned int pcb_r26;
+	unsigned int pcb_r27;
+	unsigned int pcb_r28;
+	unsigned int pcb_r29;
+	unsigned int pcb_r30;
+	unsigned int pcb_sp; 	/* kernel stack pointer */
 	/* floating-point state */
-	unsigned pcb_fcr62;
-	unsigned pcb_fcr63;
+	unsigned int pcb_fcr62;
+	unsigned int pcb_fcr63;
 };
 
 struct pcb

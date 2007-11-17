@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.202 2007/11/17 05:32:05 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.203 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1012,7 +1012,7 @@ mvme_bootstrap()
 	printf("MVME%x boot: memory from 0x%x to 0x%x\n",
 	    brdtyp, avail_start, avail_end);
 #endif
-	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart));
+	pmap_bootstrap((vaddr_t)trunc_page((vaddr_t)&kernelstart));
 
 	/*
 	 * Tell the VM system about available physical memory.

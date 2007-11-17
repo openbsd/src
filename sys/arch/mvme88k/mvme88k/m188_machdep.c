@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.41 2007/11/17 05:32:05 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.42 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -157,14 +157,14 @@ void	m188_startup(void);
 /*
  * Copy of the interrupt enable register for each CPU.
  */
-unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
+u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int m188_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
 /*
  * external interrupt masks per spl.
  */
-const unsigned int int_mask_val[INT_LEVEL] = {
+const u_int32_t int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0,
 	MASK_LVL_1,
 	MASK_LVL_2,
@@ -189,7 +189,7 @@ const unsigned int int_mask_val[INT_LEVEL] = {
 vaddr_t
 m188_memsize()
 {
-	unsigned int pgnum;
+	u_int pgnum;
 	int32_t rmad;
 
 #define	MVME188_MAX_MEMORY	((4 * 64) / 4)	/* 4 64MB boards */
@@ -443,7 +443,7 @@ m188_clock_ipi_handler(struct trapframe *eframe)
  * Hard coded vector table for onboard devices and hardware failure
  * interrupts.
  */
-const unsigned int obio_vec[32] = {
+const u_int obio_vec[32] = {
 	0,		/* SWI0 */
 	0,		/* SWI1 */
 	0,		/* SWI2 */
@@ -490,7 +490,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 #else
 	u_int cpu = cpu_number();
 #endif
-	unsigned int cur_mask, ign_mask;
+	u_int32_t cur_mask, ign_mask;
 	u_int level, old_spl;
 	struct intrhand *intr;
 	intrhand_t *list;
@@ -703,7 +703,7 @@ out:
  * Clock routines
  */
 
-void	m188_cio_init(unsigned);
+void	m188_cio_init(u_int);
 u_int	read_cio(int);
 void	write_cio(int, u_int);
 
@@ -930,7 +930,7 @@ read_cio(int reg)
  * Only the counter/timers are used - the IO ports are un-comitted.
  */
 void
-m188_cio_init(unsigned period)
+m188_cio_init(u_int period)
 {
 	volatile int i;
 

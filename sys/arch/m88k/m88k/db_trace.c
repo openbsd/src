@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2006/05/08 14:36:09 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,7 +40,7 @@
 #include <ddb/db_interface.h>
 
 static inline
-unsigned br_dest(unsigned addr, u_int inst)
+u_int br_dest(vaddr_t addr, u_int inst)
 {
 	inst = (inst & 0x03ffffff) << 2;
 	/* check if sign extension is needed */
@@ -50,8 +50,8 @@ unsigned br_dest(unsigned addr, u_int inst)
 }
 
 int frame_is_sane(db_regs_t *regs, int);
-const char *m88k_exception_name(unsigned vector);
-unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
+const char *m88k_exception_name(u_int vector);
+u_int db_trace_get_val(vaddr_t addr, u_int *ptr);
 
 /*
  * Some macros to tell if the given text is the instruction.
@@ -125,11 +125,12 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
  * Given a word of instruction text, return some flags about that
  * instruction (flags defined above).
  */
-static unsigned
-m88k_instruction_info(unsigned instruction)
+static u_int
+m88k_instruction_info(u_int32_t instruction)
 {
 	static const struct {
-		unsigned mask, value, flags;
+		u_int32_t mask, value;
+		u_int flags;
 	} *ptr, control[] = {
 		/* runs in the same order as 2nd Ed 88100 manual Table 3-14 */
 		{ 0xf0000000U, 0x00000000U, /* xmem */     TRASHES | STORE | LOAD},
@@ -172,7 +173,7 @@ m88k_instruction_info(unsigned instruction)
 }
 
 static int
-hex_value_needs_0x(unsigned value)
+hex_value_needs_0x(u_int value)
 {
 	int c;
 	int have_a_hex_digit = 0;
@@ -253,7 +254,7 @@ out:
 }
 
 const char *
-m88k_exception_name(unsigned vector)
+m88k_exception_name(u_int vector)
 {
 	switch (vector) {
 	default:
@@ -285,8 +286,8 @@ m88k_exception_name(unsigned vector)
  * Read a word at address addr.
  * Return 1 if was able to read, 0 otherwise.
  */
-unsigned
-db_trace_get_val(vaddr_t addr, unsigned *ptr)
+u_int
+db_trace_get_val(vaddr_t addr, u_int *ptr)
 {
 	label_t db_jmpbuf;
 	label_t *prev = db_recover;
@@ -307,15 +308,15 @@ db_trace_get_val(vaddr_t addr, unsigned *ptr)
 #define	LAST_ARG_REG		9
 #define	RETURN_VAL_REG		1
 
-static unsigned global_saved_list = 0x0; /* one bit per register */
-static unsigned local_saved_list  = 0x0; /* one bit per register */
-static unsigned trashed_list      = 0x0; /* one bit per register */
-static unsigned saved_reg[32];		 /* one value per register */
+static u_int global_saved_list = 0x0; /* one bit per register */
+static u_int local_saved_list  = 0x0; /* one bit per register */
+static u_int trashed_list      = 0x0; /* one bit per register */
+static u_int saved_reg[32];		 /* one value per register */
 
 #define	reg_bit(reg)	1 << (reg)
 
 static void
-save_reg(int reg, unsigned value)
+save_reg(int reg, u_int value)
 {
 	reg &= 0x1f;
 	if (trashed_list & reg_bit(reg))
@@ -358,7 +359,7 @@ print_args(void)
 		if (!have_local_reg(reg))
 			db_printf("?");
 		else {
-			unsigned value = saved_reg_value(reg);
+			u_int value = saved_reg_value(reg);
 			db_printf("%s%x", hex_value_needs_0x(value) ?
 				  "0x" : "", value);
 		}
@@ -396,9 +397,9 @@ print_args(void)
  * wrong.
  */
 static int
-is_jump_source_ok(unsigned return_to, unsigned jump_to)
+is_jump_source_ok(vaddr_t return_to, vaddr_t jump_to)
 {
-	unsigned flags;
+	u_int flags;
 	u_int instruction;
 
 	/*
@@ -449,8 +450,8 @@ static int next_address_likely_wrong = 0;
 
 /*
  *  Stack decode -
- *	unsigned addr;    program counter
- *	unsigned *stack; IN/OUT stack pointer
+ *	vaddr_t addr;    program counter
+ *	vaddr_t *stack; IN/OUT stack pointer
  *
  * 	given an address within a function and a stack pointer,
  *	try to find the function from which this one was called
@@ -466,17 +467,17 @@ static int next_address_likely_wrong = 0;
  *	stack pointer can be adjusted.
  */
 static int
-stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
+stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 {
 	db_sym_t proc;
 	db_expr_t offset_from_proc;
-	unsigned instructions_to_search;
+	u_int instructions_to_search;
 	db_addr_t check_addr;
 	db_addr_t function_addr;    /* start of function */
-	unsigned r31 = *stack;	    /* the r31 of the function */
-	unsigned inst;		    /* text of an instruction */
-	unsigned ret_addr;	    /* address to which we return */
-	unsigned tried_to_save_r1 = 0;
+	u_int32_t r31 = *stack;	    /* the r31 of the function */
+	u_int32_t inst;		    /* text of an instruction */
+	vaddr_t ret_addr;	    /* address to which we return */
+	u_int tried_to_save_r1 = 0;
 
 	/* get what we hope will be the db_sym_t for the function name */
 	proc = db_search_symbol(addr, DB_STGY_PROC, &offset_from_proc);
@@ -568,8 +569,8 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 	for (instructions_to_search = (addr - check_addr)/sizeof(long);
 	    instructions_to_search-- > 0;
 	    check_addr += 4) {
-		u_int instruction, s1, d;
-		unsigned flags;
+		u_int32_t instruction, s1, d;
+		u_int flags;
 
 		/* read the instruction */
 		if (!db_trace_get_val(check_addr, &instruction))
@@ -584,7 +585,7 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 
 		/* if a store to something off the stack pointer, note the value */
 		if ((flags & STORE) && s1 == 31 /*stack pointer*/) {
-			unsigned value;
+			u_int value;
 			if (!have_local_reg(d)) {
 				if (d == 1)
 					tried_to_save_r1 = r31 +
@@ -648,11 +649,11 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 static void
 db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 {
-	unsigned stack;
-	unsigned depth=1;
-	unsigned where;
-	unsigned ft;
-	unsigned pair[2];
+	vaddr_t stack;
+	u_int depth=1;
+	u_int where;
+	u_int ft;
+	u_int pair[2];
 	int i;
 
 	/*
@@ -826,8 +827,8 @@ db_stack_trace_print(db_expr_t addr,
 		break;
 	case Stack:
 	    {
-		unsigned val1, val2, sxip;
-		unsigned ptr;
+		u_int val1, val2, sxip;
+		u_int ptr;
 		bzero((void *)&frame, sizeof(frame));
 #define REASONABLE_FRAME_DISTANCE 2048
 

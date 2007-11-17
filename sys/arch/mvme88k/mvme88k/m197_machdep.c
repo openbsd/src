@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.15 2007/11/17 05:32:05 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.16 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -117,7 +117,7 @@ m197_memsize()
 		*look = save;
 	}
 
-	return (trunc_page((unsigned)look));
+	return (trunc_page((vaddr_t)look));
 }
 
 void

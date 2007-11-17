@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.3 2006/11/18 22:58:28 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.4 2007/11/17 05:36:23 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -58,8 +58,8 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-void	dae_print(unsigned *);
-void	data_access_emulation(unsigned *);
+void	dae_print(u_int *);
+void	data_access_emulation(u_int *);
 
 u_int32_t do_load_word(vaddr_t, int);
 u_int16_t do_load_half(vaddr_t, int);

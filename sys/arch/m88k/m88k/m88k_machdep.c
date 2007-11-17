@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.31 2007/11/15 21:27:22 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.32 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -237,7 +237,7 @@ regdump(struct trapframe *f)
 		printf("dmt2 %x dmd2 %x dma2 %x\n",
 		    f->tf_dmt2, f->tf_dmd2, f->tf_dma2);
 		printf("fault type %d\n", (f->tf_dpfsr >> 16) & 0x7);
-		dae_print((unsigned *)f);
+		dae_print((u_int *)f);
 	}
 	if (CPU_IS88100 && longformat != 0) {
 		printf("fpsr %x fpcr %x epsr %x ssbr %x\n",

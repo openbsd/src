@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.6 2007/11/17 05:32:04 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.7 2007/11/17 05:36:21 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -195,14 +195,14 @@ const struct board board_av400 = {
  * Note that, on the AV400 design, the interrupt enable registers are
  * write-only and read back as 0xffffffff.
  */
-unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
+u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int av400_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
 /*
  * external interrupt masks per spl.
  */
-const unsigned int int_mask_val[INT_LEVEL] = {
+const u_int32_t int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0,
 	MASK_LVL_1,
 	MASK_LVL_2,
@@ -354,7 +354,7 @@ av400_raiseipl(u_int level)
  * Hard coded vector table for onboard devices and hardware failure
  * interrupts.
  */
-const unsigned int obio_vec[32] = {
+const u_int obio_vec[32] = {
 	0,		/* SWI0 */
 	0,		/* SWI1 */
 	0,
@@ -396,7 +396,7 @@ void
 av400_intr(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
-	unsigned int cur_mask, ign_mask;
+	u_int32_t cur_mask, ign_mask;
 	u_int level, old_spl;
 	struct intrhand *intr;
 	intrhand_t *list;
@@ -544,7 +544,7 @@ out:
  * Clock routines
  */
 
-void	av400_cio_init(unsigned);
+void	av400_cio_init(u_int);
 u_int	read_cio(int);
 void	write_cio(int, u_int);
 
@@ -673,7 +673,7 @@ read_cio(int reg)
  * Only the counter/timers are used - the IO ports are un-comitted.
  */
 void
-av400_cio_init(unsigned period)
+av400_cio_init(u_int period)
 {
 	volatile int i;
 

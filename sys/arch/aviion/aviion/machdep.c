@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.16 2007/11/17 05:32:04 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.17 2007/11/17 05:36:21 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -826,7 +826,7 @@ aviion_bootstrap()
 
 	/* Steal MSGBUFSIZE at the top of physical memory for msgbuf. */
 	avail_end -= round_page(MSGBUFSIZE);
-	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart));
+	pmap_bootstrap((vaddr_t)trunc_page((vaddr_t)&kernelstart));
 
 	/*
 	 * Tell the VM system about available physical memory.

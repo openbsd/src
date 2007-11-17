@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.32 2007/11/15 21:27:22 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.33 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -782,7 +782,7 @@ ASLOCAL(m88110_ignore_data_exception)
 #endif /* M88110 */
 
 /*
- * extern boolean_t badaddr(unsigned addr, unsigned len)
+ * extern boolean_t badaddr(vaddr_t addr, u_int len)
  *
  * Returns true (non-zero) if the given LEN bytes starting at ADDR are
  * not all currently accessible by the kernel.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2007/11/17 05:32:05 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -129,16 +129,16 @@ int clockintr(void *);				/* in clock.c */
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
  */
-unsigned int *volatile int_mask_reg[] = {
-	(unsigned int *)INT_ST_MASK0,
-	(unsigned int *)INT_ST_MASK1,
-	(unsigned int *)INT_ST_MASK2,
-	(unsigned int *)INT_ST_MASK3
+u_int32_t *volatile int_mask_reg[] = {
+	(u_int32_t *)INT_ST_MASK0,
+	(u_int32_t *)INT_ST_MASK1,
+	(u_int32_t *)INT_ST_MASK2,
+	(u_int32_t *)INT_ST_MASK3
 };
 
 u_int luna88k_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
-unsigned int int_set_val[INT_LEVEL] = {
+u_int32_t int_set_val[INT_LEVEL] = {
 	INT_SET_LV0,
 	INT_SET_LV1,
 	INT_SET_LV2,
@@ -152,11 +152,11 @@ unsigned int int_set_val[INT_LEVEL] = {
 /*
  * *clock_reg[CPU]
  */
-unsigned int *volatile clock_reg[] = {
-	(unsigned int *)OBIO_CLOCK0,
-	(unsigned int *)OBIO_CLOCK1,
-	(unsigned int *)OBIO_CLOCK2,
-	(unsigned int *)OBIO_CLOCK3
+u_int32_t *volatile clock_reg[] = {
+	(u_int32_t *)OBIO_CLOCK0,
+	(u_int32_t *)OBIO_CLOCK1,
+	(u_int32_t *)OBIO_CLOCK2,
+	(u_int32_t *)OBIO_CLOCK3
 };
 
 /*
@@ -327,7 +327,7 @@ size_memory()
 		*look = save;
 	}
 
-	return (trunc_page((unsigned)look));
+	return (trunc_page((vaddr_t)look));
 }
 
 int
@@ -837,7 +837,7 @@ void
 luna88k_ext_int(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
-	unsigned int cur_mask, cur_int;
+	u_int32_t cur_mask, cur_int;
 	u_int level, old_spl;
 
 	cur_mask = *int_mask_reg[cpu];
@@ -1035,7 +1035,7 @@ luna88k_bootstrap()
 	printf("LUNA88K boot: memory from 0x%x to 0x%x\n",
 	    avail_start, avail_end);
 #endif
-	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart));
+	pmap_bootstrap((vaddr_t)trunc_page((vaddr_t)&kernelstart));
 
 	/*
 	 * Tell the VM system about available physical memory.

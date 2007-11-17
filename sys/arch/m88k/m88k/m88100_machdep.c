@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.3 2007/05/20 20:12:31 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.4 2007/11/17 05:36:23 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -65,10 +65,10 @@ int data_access_emulation_debug = 0;
 #endif
 
 void
-dae_print(unsigned *eframe)
+dae_print(u_int *eframe)
 {
 	int x;
-	unsigned dmax, dmdx, dmtx;
+	u_int dmax, dmdx, dmtx;
 
 	if (!ISSET(eframe[EF_DMT0], DMT_VALID))
 		return;
@@ -97,11 +97,11 @@ dae_print(unsigned *eframe)
 }
 
 void
-data_access_emulation(unsigned *eframe)
+data_access_emulation(u_int *eframe)
 {
 	int x;
-	unsigned dmax, dmdx, dmtx;
-	unsigned v, reg;
+	u_int dmax, dmdx, dmtx;
+	u_int v, reg;
 
 	dmtx = eframe[EF_DMT0];
 	if (!ISSET(dmtx, DMT_VALID))
