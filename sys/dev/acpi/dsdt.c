@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.103 2007/11/15 16:02:18 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.104 2007/11/17 16:41:47 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3609,10 +3609,11 @@ aml_val_to_string(const struct aml_value *val)
 
 	switch (val->type) {
 	case AML_OBJTYPE_BUFFER:
-		len = val->length + 1;
-		if (len > sizeof(buffer))
-			len = sizeof(buffer);
-		strlcpy(buffer, val->v_buffer, len);
+		len = val->length;
+		if (len >= sizeof(buffer))
+			len = sizeof(buffer) - 1;
+		memcpy(buffer, val->v_buffer, len);
+		buffer[len] = 0;
 		break;
 	case AML_OBJTYPE_STRING:
 		strlcpy(buffer, val->v_string, sizeof(buffer));
