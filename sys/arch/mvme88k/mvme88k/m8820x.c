@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.47 2006/11/18 22:53:11 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.48 2007/11/17 05:33:40 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -83,12 +83,13 @@ void
 m8820x_setup_board_config()
 {
 	extern u_int32_t pfsr_save[];
-	struct m8820x_cmmu *cmmu;
-	int num, cmmu_num;
+	int num;
 	int vme188_config;
 	u_int32_t *m8820x_pfsr;
 #ifdef MVME188
 	u_int32_t whoami;
+	struct m8820x_cmmu *cmmu;
+	int cmmu_num;
 #endif
 
 	switch (brdtyp) {
@@ -272,7 +273,9 @@ m8820x_cpu_number()
 #endif
 
 #ifdef MVME187
+#ifdef MVME188
 	if (brdtyp != BRD_188)
+#endif
 		return 0;
 #endif
 
