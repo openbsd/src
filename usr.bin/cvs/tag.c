@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.57 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.58 2007/11/17 12:42:39 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -252,6 +252,8 @@ tag_add(struct cvs_file *cf)
 	if (cvs_noexec == 1)
 		return (0);
 
+	(void)rcsnum_tostr(cf->file_rcsrev, revbuf, sizeof(revbuf));
+
 	trev = rcs_sym_getrev(cf->file_rcs, tag_name);
 	if (trev != NULL) {
 		if (rcsnum_cmp(cf->file_rcsrev, trev, 0) == 0) {
@@ -277,8 +279,6 @@ tag_add(struct cvs_file *cf)
 
 	if (rcs_sym_add(cf->file_rcs, tag_name, cf->file_rcsrev) == -1) {
 		if (rcs_errno != RCS_ERR_DUPENT) {
-			(void)rcsnum_tostr(cf->file_rcsrev, revbuf,
-			    sizeof(revbuf));
 			cvs_log(LP_NOTICE,
 			    "failed to set tag %s to revision %s in %s",
 			    tag_name, revbuf, cf->file_rcs->rf_path);
