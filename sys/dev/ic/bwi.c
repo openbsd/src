@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.62 2007/10/18 05:56:15 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.63 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -89,6 +89,10 @@ int bwi_debug = 1;
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+/* XXX does not belong here */
+#define IEEE80211_OFDM_PLCP_RATE_MASK	0x0000000f
+#define IEEE80211_OFDM_PLCP_LEN_MASK	0x0001ffe0
 
 /*
  * Contention window (slots).
@@ -260,6 +264,11 @@ int		 bwi_regwin_select(struct bwi_softc *, int);
 void		 bwi_regwin_info(struct bwi_softc *, uint16_t *, uint8_t *);
 void		 bwi_led_attach(struct bwi_softc *);
 void		 bwi_led_newstate(struct bwi_softc *, enum ieee80211_state);
+uint16_t	 bwi_led_onoff(struct bwi_led *, uint16_t, int);
+void		 bwi_led_event(struct bwi_softc *, int);
+void		 bwi_led_blink_start(struct bwi_softc *, int, int);
+void		 bwi_led_blink_next(void *);
+void		 bwi_led_blink_end(void *);
 int		 bwi_bbp_attach(struct bwi_softc *);
 int		 bwi_bus_init(struct bwi_softc *, struct bwi_mac *);
 void		 bwi_get_card_flags(struct bwi_softc *);
@@ -309,9 +318,9 @@ void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
 int		 bwi_set_chan(struct bwi_softc *, uint8_t);
 void		 bwi_next_scan(void *);
-void		 bwi_rxeof(struct bwi_softc *, int);
-void		 bwi_rxeof32(struct bwi_softc *);
-void		 bwi_rxeof64(struct bwi_softc *);
+int		 bwi_rxeof(struct bwi_softc *, int);
+int		 bwi_rxeof32(struct bwi_softc *);
+int		 bwi_rxeof64(struct bwi_softc *);
 void		 bwi_reset_rx_ring32(struct bwi_softc *, uint32_t);
 void		 bwi_free_txstats32(struct bwi_softc *);
 void		 bwi_free_rx_ring32(struct bwi_softc *);
@@ -320,6 +329,8 @@ void		 bwi_free_txstats64(struct bwi_softc *);
 void		 bwi_free_rx_ring64(struct bwi_softc *);
 void		 bwi_free_tx_ring64(struct bwi_softc *, int);
 uint8_t		 bwi_rate2plcp(uint8_t); /* XXX belongs to 802.11 */
+uint8_t		 bwi_ofdm_plcp2rate(uint32_t *);
+uint8_t		 bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *);
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
 		     uint8_t);
@@ -500,6 +511,53 @@ static const struct {
 
 #undef CLKSRC
 
+#define VENDOR_LED_ACT(vendor)				\
+{							\
+	.vid = PCI_VENDOR_##vendor,			\
+	.led_act = { BWI_VENDOR_LED_ACT_##vendor }	\
+}
+
+const struct {
+	uint16_t	vid;
+	uint8_t		led_act[BWI_LED_MAX];
+} bwi_vendor_led_act[] = {
+	VENDOR_LED_ACT(COMPAQ),
+	VENDOR_LED_ACT(LINKSYS)
+};
+
+const uint8_t bwi_default_led_act[BWI_LED_MAX] =
+	{ BWI_VENDOR_LED_ACT_DEFAULT };
+
+#undef VENDOR_LED_ACT
+
+const struct {
+	int	on_dur;
+	int	off_dur;
+} bwi_led_duration[109] = {
+	{ 400, 100 }, {   0,   0 }, { 150 ,  75 }, {   0,   0 }, {  90,  45 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {  66,  34 }, {  53,   26 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {  42,  21 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {  35,   17 }, {   0,   0 }, {  32,  16 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {  21,  10 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {  16,   8 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {  11,    5 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   9,   4 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
+	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   7,   3 }
+};
+
 static const uint8_t bwi_zero_addr[IEEE80211_ADDR_LEN];
 
 
@@ -519,7 +577,7 @@ bwi_intr(void *xsc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
-	int i, txrx_error;
+	int i, txrx_error, tx = 0, rx_data = -1;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (0);
@@ -596,18 +654,40 @@ bwi_intr(void *xsc)
 		DPRINTF(1, "%s: intr noise\n", sc->sc_dev.dv_xname);
 
 	if (txrx_intr_status[0] & BWI_TXRX_INTR_RX)
-		sc->sc_rxeof(sc);
+		rx_data = sc->sc_rxeof(sc);
 
-	if (txrx_intr_status[3] & BWI_TXRX_INTR_RX)
+	if (txrx_intr_status[3] & BWI_TXRX_INTR_RX) {
 		sc->sc_txeof_status(sc);
+		tx = 1;
+	}
 
-	if (intr_status & BWI_INTR_TX_DONE)
+	if (intr_status & BWI_INTR_TX_DONE) {
 		bwi_txeof(sc);
-
-	/* TODO: LED */
+		tx = 1;
+	}
 
 	/* Re-enable interrupts */
 	bwi_enable_intrs(sc, BWI_INIT_INTRS);
+
+	if (sc->sc_blink_led != NULL && sc->sc_led_blink) {
+		int evt = BWI_LED_EVENT_NONE;
+
+		if (tx && rx_data > 0) {
+			if (sc->sc_rx_rate > sc->sc_tx_rate)
+				evt = BWI_LED_EVENT_RX;
+			else
+				evt = BWI_LED_EVENT_TX;
+		} else if (tx) {
+			evt = BWI_LED_EVENT_TX;
+		} else if (rx_data > 0) {
+			evt = BWI_LED_EVENT_RX;
+		} else if (rx_data == 0) {
+			evt = BWI_LED_EVENT_POLL;
+		}
+
+		if (evt != BWI_LED_EVENT_NONE)
+			bwi_led_event(sc, evt);
+	}
 
 	return (1);
 }
@@ -620,6 +700,10 @@ bwi_attach(struct bwi_softc *sc)
 	struct bwi_mac *mac;
 	struct bwi_phy *phy;
 	int i, error;
+
+	/* Initialize LED vars */
+	sc->sc_led_idle = (2350 * hz) / 1000;
+	sc->sc_led_blink = 1;
 
 	/* AMRR rate control */
 	sc->sc_amrr.amrr_min_success_threshold = 1;
@@ -5880,15 +5964,22 @@ bwi_regwin_info(struct bwi_softc *sc, uint16_t *type, uint8_t *rev)
 void
 bwi_led_attach(struct bwi_softc *sc)
 {
-	const static uint8_t led_default_act[BWI_LED_MAX] = {
-		BWI_LED_ACT_ACTIVE,
-		BWI_LED_ACT_2GHZ,
-		BWI_LED_ACT_5GHZ,
-		BWI_LED_ACT_OFF
-	};
-
+	const uint8_t *led_act = NULL;
 	uint16_t gpio, val[BWI_LED_MAX];
 	int i;
+
+#define N(arr) (int)(sizeof(arr) / sizeof(arr[0]))
+
+	for (i = 0; i < N(bwi_vendor_led_act); ++i) {
+		if (sc->sc_pci_subvid == bwi_vendor_led_act[i].vid) {
+			led_act = bwi_vendor_led_act[i].led_act;
+				break;
+		}
+	}
+	if (led_act == NULL)
+		led_act = bwi_default_led_act;
+
+#undef N
 
 	gpio = bwi_read_sprom(sc, BWI_SPROM_GPIO01);
 	val[0] = __SHIFTOUT(gpio, BWI_SPROM_GPIO_0);
@@ -5902,18 +5993,48 @@ bwi_led_attach(struct bwi_softc *sc)
 		struct bwi_led *led = &sc->sc_leds[i];
 
 		if (val[i] == 0xff) {
-			led->l_act = led_default_act[i];
-			if (i == 0 && sc->sc_pci_subvid == PCI_VENDOR_COMPAQ)
-				led->l_act = BWI_LED_ACT_RFEN;
+			led->l_act = led_act[i];
 		} else {
 			if (val[i] & BWI_LED_ACT_LOW)
 				led->l_flags |= BWI_LED_F_ACTLOW;
 			led->l_act = __SHIFTOUT(val[i], BWI_LED_ACT_MASK);
 		}
+		led->l_mask = (1 << i);
 
-		DPRINTF("%dth led, act %d, lowact %d\n",
+		if (led->l_act == BWI_LED_ACT_BLINK_SLOW ||
+		    led->l_act == BWI_LED_ACT_BLINK_POLL ||
+		    led->l_act == BWI_LED_ACT_BLINK) {
+		    led->l_flags |= BWI_LED_F_BLINK;
+			if (led->l_act == BWI_LED_ACT_BLINK_POLL)
+				led->l_flags |= BWI_LED_F_POLLABLE;
+			else if (led->l_act == BWI_LED_ACT_BLINK_SLOW)
+				led->l_flags |= BWI_LED_F_SLOW;
+
+			if (sc->sc_blink_led == NULL) {
+				sc->sc_blink_led = led;
+				if (led->l_flags & BWI_LED_F_SLOW)
+					BWI_LED_SLOWDOWN(sc->sc_led_idle);
+			}
+		}
+
+		DPRINTF(1, "%dth led, act %d, lowact %d\n",
 		    i, led->l_act, led->l_flags & BWI_LED_F_ACTLOW);
 	}
+	timeout_set(&sc->sc_led_blink_next_ch, bwi_led_blink_next, sc);
+	timeout_set(&sc->sc_led_blink_end_ch, bwi_led_blink_end, sc);
+}
+
+uint16_t
+bwi_led_onoff(struct bwi_led *led, uint16_t val, int on)
+{
+	if (led->l_flags & BWI_LED_F_ACTLOW)
+		on = !on;
+	if (on)
+		val |= led->l_mask;
+	else
+		val &= ~led->l_mask;
+
+	return (val);
 }
 
 void
@@ -5922,6 +6043,12 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t val;
 	int i;
+
+	if (nstate == IEEE80211_S_INIT) {
+		timeout_del(&sc->sc_led_blink_next_ch);
+		timeout_del(&sc->sc_led_blink_end_ch);
+		sc->sc_led_blinking = 0;
+	}
 
 	if ((ic->ic_if.if_flags & IFF_RUNNING) == 0)
 		return;
@@ -5932,10 +6059,12 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 		int on;
 
 		if (led->l_act == BWI_LED_ACT_UNKN ||
-		    led->l_act == BWI_LED_ACT_NULL) {
-			/* Don't touch it */
+		    led->l_act == BWI_LED_ACT_NULL)
 			continue;
-		}
+
+		if ((led->l_flags & BWI_LED_F_BLINK) &&
+			nstate != IEEE80211_S_INIT)
+			continue;
 
 		switch (led->l_act) {
 		case BWI_LED_ACT_ON:	/* Always on */
@@ -5943,8 +6072,6 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 			break;
 		case BWI_LED_ACT_OFF:	/* Always off */
 		case BWI_LED_ACT_5GHZ:	/* TODO: 11A */
-		case BWI_LED_ACT_MID:	/* Blinking ones */
-		case BWI_LED_ACT_FAST:
 			on = 0;
 			break;
 		default:
@@ -5959,23 +6086,93 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 					on = 0;
 				break;
 			default:
-				if (led->l_act == BWI_LED_ACT_RUN ||
-				    led->l_act == BWI_LED_ACT_ACTIVE)
+				if (led->l_act == BWI_LED_ACT_ASSOC)
 					on = 0;
 				break;
 			}
 			break;
 		}
 
-		if (led->l_flags & BWI_LED_F_ACTLOW)
-			on = !on;
-
-		if (on)
-			val |= (1 << i);
-		else
-			val &= ~(1 << i);
+		val = bwi_led_onoff(led, val, on);
 	}
 	CSR_WRITE_2(sc, BWI_MAC_GPIO_CTRL, val);
+}
+
+void
+bwi_led_event(struct bwi_softc *sc, int event)
+{
+	struct bwi_led *led = sc->sc_blink_led;
+	int rate;
+
+	if (event == BWI_LED_EVENT_POLL) {
+		if ((led->l_flags & BWI_LED_F_POLLABLE) == 0)
+			return;
+		if (ticks - sc->sc_led_ticks < sc->sc_led_idle)
+			return;
+	}
+
+	sc->sc_led_ticks = ticks;
+	if (sc->sc_led_blinking)
+		return;
+
+	switch (event) {
+	case BWI_LED_EVENT_RX:
+		rate = sc->sc_rx_rate;
+		break;
+	case BWI_LED_EVENT_TX:
+		rate = sc->sc_tx_rate;
+		break;
+	case BWI_LED_EVENT_POLL:
+		rate = 0;
+		break;
+	default:
+		panic("unknown LED event %d\n", event);
+		break;
+	}
+	bwi_led_blink_start(sc, bwi_led_duration[rate].on_dur,
+	    bwi_led_duration[rate].off_dur);
+}
+
+void
+bwi_led_blink_start(struct bwi_softc *sc, int on_dur, int off_dur)
+{
+	struct bwi_led *led = sc->sc_blink_led;
+	uint16_t val;
+
+	val = CSR_READ_2(sc, BWI_MAC_GPIO_CTRL);
+	val = bwi_led_onoff(led, val, 1);
+	CSR_WRITE_2(sc, BWI_MAC_GPIO_CTRL, val);
+
+	if (led->l_flags & BWI_LED_F_SLOW) {
+		BWI_LED_SLOWDOWN(on_dur);
+		BWI_LED_SLOWDOWN(off_dur);
+	}
+
+	sc->sc_led_blinking = 1;
+	sc->sc_led_blink_offdur = off_dur;
+
+	timeout_add(&sc->sc_led_blink_next_ch, on_dur);
+}
+
+void
+bwi_led_blink_next(void *xsc)
+{
+	struct bwi_softc *sc = xsc;
+	uint16_t val;
+
+	val = CSR_READ_2(sc, BWI_MAC_GPIO_CTRL);
+	val = bwi_led_onoff(sc->sc_blink_led, val, 0);
+	CSR_WRITE_2(sc, BWI_MAC_GPIO_CTRL, val);
+
+	timeout_add(&sc->sc_led_blink_end_ch, sc->sc_led_blink_offdur);
+}
+
+void
+bwi_led_blink_end(void *xsc)
+{
+	struct bwi_softc *sc = xsc;
+
+	sc->sc_led_blinking = 0;
 }
 
 int
@@ -7575,14 +7772,14 @@ bwi_next_scan(void *xsc)
 	splx(s);
 }
 
-void
+int
 bwi_rxeof(struct bwi_softc *sc, int end_idx)
 {
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int idx;
+	int idx, rx_data = 0;
 
 	idx = rbd->rbd_idx;
 	while (idx != end_idx) {
@@ -7591,9 +7788,9 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		struct ieee80211_frame *wh;
 		struct ieee80211_node *ni;
 		struct mbuf *m;
-		uint8_t plcp_signal;
+		void *plcp;
 		uint16_t flags2;
-		int buflen, wh_ofs, hdr_extra;
+		int buflen, wh_ofs, hdr_extra, type, rate;
 
 		m = rb->rb_mbuf;
 		bus_dmamap_sync(sc->sc_dmat, rb->rb_dmap, 0,
@@ -7621,11 +7818,16 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			goto next;
 		}
 
-		plcp_signal = *((uint8_t *)(hdr + 1) + hdr_extra);
+		plcp = ((uint8_t *)(hdr + 1) + hdr_extra);
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_len = m->m_pkthdr.len = buflen + sizeof(*hdr);
 		m_adj(m, sizeof(*hdr) + wh_ofs);
+
+		if (htole16(hdr->rxh_flags1) & BWI_RXH_F1_OFDM)
+			rate = bwi_ofdm_plcp2rate(plcp);
+		else
+			rate = bwi_ds_plcp2rate(plcp);
 
 #if NBPFILTER > 0
 		/* RX radio tap */
@@ -7658,11 +7860,17 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
+		type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
 		ieee80211_input(ifp, m, ni, hdr->rxh_rssi,
 		    letoh16(hdr->rxh_tsf));
 
 		ieee80211_release_node(ic, ni);
+
+		if (type == IEEE80211_FC0_TYPE_DATA) {
+			rx_data = 1;
+			sc->sc_rx_rate = rate;
+		}
 next:
 		idx = (idx + 1) % BWI_RX_NDESC;
 	}
@@ -7670,13 +7878,15 @@ next:
 	rbd->rbd_idx = idx;
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	return (rx_data);
 }
 
-void
+int
 bwi_rxeof32(struct bwi_softc *sc)
 {
 	uint32_t val, rx_ctrl;
-	int end_idx;
+	int end_idx, rx_data;
 
 	rx_ctrl = sc->sc_rx_rdata.rdata_txrx_ctrl;
 
@@ -7684,16 +7894,19 @@ bwi_rxeof32(struct bwi_softc *sc)
 	end_idx = __SHIFTOUT(val, BWI_RX32_STATUS_INDEX_MASK) /
 	    sizeof(struct bwi_desc32);
 
-	bwi_rxeof(sc, end_idx);
+	rx_data = bwi_rxeof(sc, end_idx);
 
 	CSR_WRITE_4(sc, rx_ctrl + BWI_RX32_INDEX,
 	    end_idx * sizeof(struct bwi_desc32));
+
+	return (rx_data);
 }
 
-void
+int
 bwi_rxeof64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
+	return (0);
 }
 
 void
@@ -7854,16 +8067,30 @@ bwi_rate2plcp(uint8_t rate)
 	}
 }
 
+uint8_t
+bwi_ofdm_plcp2rate(uint32_t *plcp0)
+{
+	uint32_t plcp;
+	uint8_t plcp_rate;
+
+	plcp = letoh32(*plcp0);
+	plcp_rate = __SHIFTOUT(plcp, IEEE80211_OFDM_PLCP_RATE_MASK);
+
+	return (ieee80211_plcp2rate(plcp_rate, IEEE80211_MODE_11G));
+}
+
+uint8_t
+bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *hdr)
+{
+	return (ieee80211_plcp2rate(hdr->i_signal, IEEE80211_MODE_11B));
+}
+
 void
 bwi_ofdm_plcp_header(uint32_t *plcp0, int pkt_len, uint8_t rate)
 {
-/* XXX does not belong here */
-#define IEEE80211_OFDM_PLCP_SIG_MASK	0x0000000f
-#define IEEE80211_OFDM_PLCP_LEN_MASK	0x0001ffe0
-
 	uint32_t plcp;
 
-	plcp = __SHIFTIN(bwi_rate2plcp(rate), IEEE80211_OFDM_PLCP_SIG_MASK) |
+	plcp = __SHIFTIN(bwi_rate2plcp(rate), IEEE80211_OFDM_PLCP_RATE_MASK) |
 	    __SHIFTIN(pkt_len, IEEE80211_OFDM_PLCP_LEN_MASK);
 	*plcp0 = htole32(plcp);
 }
@@ -8125,6 +8352,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		    sc->sc_dev.dv_xname, rate);
 		rate = (1 * 2); /* Force 1Mbytes/s */
 	}
+	sc->sc_tx_rate = rate;
 
 #if NBPFILTER > 0
 	/* TX radio tap */

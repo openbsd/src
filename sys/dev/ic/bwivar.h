@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.19 2007/10/18 05:56:15 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.20 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -56,6 +56,12 @@
 #define BWI_LGRETRY		4
 #define BWI_SHRETRY_FB		3
 #define BWI_LGRETRY_FB		2
+
+#define BWI_LED_EVENT_NONE	-1
+#define BWI_LED_EVENT_POLL	0
+#define BWI_LED_EVENT_TX	1
+#define BWI_LED_EVENT_RX	2
+#define BWI_LED_SLOWDOWN(dur)	(dur) = (((dur) * 3) / 2)
 
 #define CSR_READ_4(sc, reg)			\
 	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
@@ -120,6 +126,8 @@ struct bwi_rxbuf_hdr {
 	uint16_t	rxh_tsf;
 	uint8_t		rxh_pad3[14];	/* Padded to 30bytes */
 } __packed;
+
+#define BWI_RXH_F1_OFDM		(1 << 0)
 
 #define BWI_RXH_F2_TYPE2FRAME	(1 << 2)
 
@@ -259,9 +267,13 @@ struct bwi_fw_iv {
 struct bwi_led {
 	uint8_t			l_flags;	/* BWI_LED_F_ */
 	uint8_t			l_act;		/* BWI_LED_ACT_ */
+	uint8_t			l_mask;
 };
 
 #define BWI_LED_F_ACTLOW	0x1
+#define BWI_LED_F_BLINK		0x2
+#define BWI_LED_F_POLLABLE	0x4
+#define BWI_LED_F_SLOW		0x8
 
 enum bwi_clock_mode {
 	BWI_CLOCK_MODE_SLOW,
@@ -517,6 +529,15 @@ struct bwi_softc {
 	int			 sc_nmac;
 	struct bwi_mac		 sc_mac[BWI_MAC_MAX];
 
+	int			 sc_rx_rate;
+	int			 sc_tx_rate;
+
+	int			 sc_led_blinking;
+	int			 sc_led_ticks;
+	struct bwi_led		*sc_blink_led;
+	struct timeout		 sc_led_blink_next_ch;
+	struct timeout		 sc_led_blink_end_ch;
+	int			 sc_led_blink_offdur;
 	struct bwi_led		 sc_leds[BWI_LED_MAX];
  
 	enum bwi_bus_space	 sc_bus_space;
@@ -546,7 +567,7 @@ struct bwi_softc {
 
 	void			 (*sc_setup_rxdesc)
 				 (struct bwi_softc *, int, bus_addr_t, int);
-	void			 (*sc_rxeof)(struct bwi_softc *);
+	int			 (*sc_rxeof)(struct bwi_softc *);
 
 	void			 (*sc_setup_txdesc)
 				 (struct bwi_softc *, struct bwi_ring_data *,
@@ -565,6 +586,8 @@ struct bwi_softc {
 	/* Sysctl variables */
 	int			 sc_fw_version;	/* BWI_FW_VERSION[34] */
 	int			 sc_dwell_time;	/* milliseconds */
+	int			 sc_led_idle;
+	int			 sc_led_blink;
 
 #if NBPFILTER > 0
         caddr_t                  sc_drvbpf;

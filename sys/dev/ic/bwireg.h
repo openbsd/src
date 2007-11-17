@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.6 2007/10/18 05:56:15 mglocker Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -404,16 +404,34 @@
 #define BWI_LED_ACT_MASK		0x7f
 #define BWI_LED_ACT_OFF			0
 #define BWI_LED_ACT_ON			1
-#define BWI_LED_ACT_ACTIVE		2
-#define BWI_LED_ACT_RFEN		3
+#define BWI_LED_ACT_BLINK		2
+#define BWI_LED_ACT_RF_ENABLED		3
 #define BWI_LED_ACT_5GHZ		4
 #define BWI_LED_ACT_2GHZ		5
 #define BWI_LED_ACT_11G			6
-#define BWI_LED_ACT_MID			7
-#define BWI_LED_ACT_FAST		8
+#define BWI_LED_ACT_BLINK_SLOW		7
+#define BWI_LED_ACT_BLINK_POLL		8
 #define BWI_LED_ACT_UNKN		9
-#define BWI_LED_ACT_RUN			10
+#define BWI_LED_ACT_ASSOC		10
 #define BWI_LED_ACT_NULL		11
+
+#define BWI_VENDOR_LED_ACT_COMPAQ	\
+	BWI_LED_ACT_RF_ENABLED,		\
+	BWI_LED_ACT_2GHZ,		\
+	BWI_LED_ACT_5GHZ,		\
+	BWI_LED_ACT_OFF
+
+#define BWI_VENDOR_LED_ACT_LINKSYS	\
+	BWI_LED_ACT_ASSOC,		\
+	BWI_LED_ACT_2GHZ,		\
+	BWI_LED_ACT_5GHZ,		\
+	BWI_LED_ACT_OFF
+
+#define BWI_VENDOR_LED_ACT_DEFAULT	\
+	BWI_LED_ACT_BLINK,		\
+	BWI_LED_ACT_2GHZ,		\
+	BWI_LED_ACT_5GHZ,		\
+	BWI_LED_ACT_OFF
 
 /*
  * BBP IDs
