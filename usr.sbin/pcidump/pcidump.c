@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.8 2007/10/25 10:27:21 tobias Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.9 2007/11/17 18:32:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -183,6 +183,198 @@ probe(int bus, int dev, int func)
 }
 
 void
+dump_type0(int bus, int dev, int func)
+{
+	u_int32_t reg;
+	int bar;
+
+	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
+		if (pci_read(bus, dev, func, bar, &reg) != 0)
+			warn("unable to read PCI_MAPREG 0x%02x", bar);
+		printf("\t0x%04x: %08x\n", bar, reg);
+	}
+
+	if (pci_read(bus, dev, func, PCI_CARDBUS_CIS_REG, &reg) != 0)
+		warn("unable to read PCI_CARDBUS_CIS_REG");
+	printf("\t0x%04x: Cardbus CIS: %08x\n", PCI_CARDBUS_CIS_REG, reg);
+
+
+	if (pci_read(bus, dev, func, PCI_SUBSYS_ID_REG, &reg) != 0)
+		warn("unable to read PCI_SUBSYS_ID_REG");
+	printf("\t0x%04x: Subsystem Vendor ID: %04x Product ID: %04x\n",
+	    PCI_SUBSYS_ID_REG, PCI_VENDOR(reg), PCI_PRODUCT(reg));
+
+	if (pci_read(bus, dev, func, PCI_ROM_REG, &reg) != 0)
+		warn("unable to read PCI_ROM_REG");
+	printf("\t0x%04x: Expansion ROM Base Address: %08x\n",
+	    PCI_ROM_REG, reg);
+
+	if (pci_read(bus, dev, func, PCI_CAPLISTPTR_REG, &reg) != 0)
+		warn("unable to read PCI_CAPLISTPTR_REG");
+	printf("\t0x%04x: Capabilities Pointer: %02x\n",
+	    PCI_CAPLISTPTR_REG, PCI_CAPLIST_PTR(reg));
+
+	if (pci_read(bus, dev, func, 0x38, &reg) != 0)
+		warn("unable to read 0x38 (reserved)");
+	printf("\t0x%04x: %08x\n", 0x38, reg);
+
+	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
+		warn("unable to read PCI_INTERRUPT_REG");
+	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x Min Gnt: %02x"
+	    " Max Lat: %02x\n", PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
+	    PCI_INTERRUPT_LINE(reg), PCI_MIN_GNT(reg), PCI_MAX_LAT(reg));
+}
+
+void
+dump_type1(int bus, int dev, int func)
+{
+	u_int32_t reg;
+	int bar;
+
+	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_PPB_END; bar += 0x4) {
+		if (pci_read(bus, dev, func, bar, &reg) != 0)
+			warn("unable to read PCI_MAPREG 0x%02x", bar);
+		printf("\t0x%04x: %08x\n", bar, reg);
+	}
+
+	if (pci_read(bus, dev, func, PCI_PRIBUS_1, &reg) != 0)
+		warn("unable to read PCI_PRIBUS_1");
+	printf("\t0x%04x: Primary Bus: %d Secondary Bus: %d "
+	    "Subordinate Bus: %d \n\t        Secondary Latency Timer: %02x\n",
+	    PCI_PRIBUS_1, (reg >> 0) & 0xff, (reg >> 8) & 0xff,
+	    (reg >> 16) & 0xff, (reg >> 24) & 0xff);
+
+	if (pci_read(bus, dev, func, PCI_IOBASEL_1, &reg) != 0)
+		warn("unable to read PCI_IOBASEL_1");
+	printf("\t0x%04x: I/O Base: %02x I/O Limit: %02x "
+	    "Secondary Status: %04x\n", PCI_IOBASEL_1, (reg >> 0 ) & 0xff,
+	    (reg >> 8) & 0xff, (reg >> 16) & 0xffff);
+
+	if (pci_read(bus, dev, func, PCI_MEMBASE_1, &reg) != 0)
+		warn("unable to read PCI_MEMBASE_1");
+	printf("\t0x%04x: Memory Base: %04x Memory Limit: %04x\n",
+	    PCI_MEMBASE_1, (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
+
+	if (pci_read(bus, dev, func, PCI_PMBASEL_1, &reg) != 0)
+		warn("unable to read PCI_PMBASEL_1");
+	printf("\t0x%04x: Prefetch Memory Base: %04x "
+	    "Prefetch Memory Limit: %04x\n", PCI_PMBASEL_1,
+	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
+
+#undef PCI_PMBASEH_1
+#define PCI_PMBASEH_1	0x28
+	if (pci_read(bus, dev, func, PCI_PMBASEH_1, &reg) != 0)
+		warn("unable to read PCI_PMBASEH_1");
+	printf("\t0x%04x: Prefetch Memory Base Upper 32 Bits: %08x\n",
+	    PCI_PMBASEH_1, reg);
+
+#undef PCI_PMLIMITH_1
+#define PCI_PMLIMITH_1	0x2c
+	if (pci_read(bus, dev, func, PCI_PMLIMITH_1, &reg) != 0)
+		warn("unable to read PCI_PMLIMITH_1");
+	printf("\t0x%04x: Prefetch Memory Limit Upper 32 Bits: %08x\n",
+	    PCI_PMLIMITH_1, reg);
+
+#undef PCI_IOBASEH_1
+#define PCI_IOBASEH_1	0x30
+	if (pci_read(bus, dev, func, PCI_IOBASEH_1, &reg) != 0)
+		warn("unable to read PCI_IOBASEH_1");
+	printf("\t0x%04x: I/O Base Upper 16 Bits: %04x "
+	    "I/O Limit Upper 16 Bits: %04x\n", PCI_IOBASEH_1,
+	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
+
+	if (pci_read(bus, dev, func, PCI_CAPLISTPTR_REG, &reg) != 0)
+		warn("unable to read PCI_CAPLISTPTR_REG");
+	printf("\t0x%04x: Capabilities Pointer: %02x\n",
+	    PCI_CAPLISTPTR_REG, PCI_CAPLIST_PTR(reg));
+
+#define PCI_PPB_ROM_REG		0x38
+	if (pci_read(bus, dev, func, PCI_PPB_ROM_REG, &reg) != 0)
+		warn("unable to read PCI_PPB_ROM_REG");
+	printf("\t0x%04x: Expansion ROM Base Address: %08x\n",
+	    PCI_PPB_ROM_REG, reg);
+
+	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
+		warn("unable to read PCI_INTERRUPT_REG");
+	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x "
+	    "Bridge Control: %04x\n",
+	    PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
+	    PCI_INTERRUPT_LINE(reg), reg >> 16);
+}
+
+void
+dump_type2(int bus, int dev, int func)
+{
+	u_int32_t reg;
+
+	if (pci_read(bus, dev, func, PCI_MAPREG_START, &reg) != 0)
+		warn("unable to read PCI_MAPREG\n");
+	printf("\t0x%04x: Cardbus Control Registers Base Address: %08x\n",
+	    PCI_MAPREG_START, reg);
+
+	if (pci_read(bus, dev, func, PCI_CARDBUS_CAPLISTPTR_REG, &reg) != 0)
+		warn("unable to read PCI_CARDBUS_CAPLISTPTR_REG");
+	printf("\t0x%04x: Capabilities Pointer: %02x Cardbus Status: %04x\n",
+	    PCI_CARDBUS_CAPLISTPTR_REG, PCI_CAPLIST_PTR(reg), reg >> 16);
+
+	if (pci_read(bus, dev, func, PCI_PRIBUS_2, &reg) != 0)
+		warn("unable to read PCI_PRIBUS_2");
+	printf("\t0x%04x: Primary Bus: %d Cardbus Bus: %d "
+	    "Subordinate Bus: %d \n\t        Cardbus Latency Timer: %02x\n",
+	    PCI_PRIBUS_2, (reg >> 0) & 0xff, (reg >> 8) & 0xff,
+	    (reg >> 16) & 0xff, (reg >> 24) & 0xff);
+
+	if (pci_read(bus, dev, func, PCI_MEMBASE0_2, &reg) != 0)
+		warn("unable to read PCI_MEMBASE0_2\n");
+	printf("\t0x%04x: Memory Base 0: %08x\n", PCI_MEMBASE0_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_MEMLIMIT0_2, &reg) != 0)
+		warn("unable to read PCI_MEMLIMIT0_2\n");
+	printf("\t0x%04x: Memory Limit 0: %08x\n", PCI_MEMLIMIT0_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_MEMBASE1_2, &reg) != 0)
+		warn("unable to read PCI_MEMBASE1_2\n");
+	printf("\t0x%04x: Memory Base 1: %08x\n", PCI_MEMBASE1_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_MEMLIMIT1_2, &reg) != 0)
+		warn("unable to read PCI_MEMLIMIT1_2\n");
+	printf("\t0x%04x: Memory Limit 1: %08x\n", PCI_MEMLIMIT1_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_IOBASE0_2, &reg) != 0)
+		warn("unable to read PCI_IOBASE0_2\n");
+	printf("\t0x%04x: I/O Base 0: %08x\n", PCI_IOBASE0_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_IOLIMIT0_2, &reg) != 0)
+		warn("unable to read PCI_IOLIMIT0_2\n");
+	printf("\t0x%04x: I/O Limit 0: %08x\n", PCI_IOLIMIT0_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_IOBASE1_2, &reg) != 0)
+		warn("unable to read PCI_IOBASE1_2\n");
+	printf("\t0x%04x: I/O Base 1: %08x\n", PCI_IOBASE1_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_IOLIMIT1_2, &reg) != 0)
+		warn("unable to read PCI_IOLIMIT1_2\n");
+	printf("\t0x%04x: I/O Limit 1: %08x\n", PCI_IOLIMIT1_2, reg);
+
+	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
+		warn("unable to read PCI_INTERRUPT_REG");
+	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x "
+	    "Bridge Control: %04x\n",
+	    PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
+	    PCI_INTERRUPT_LINE(reg), reg >> 16);
+
+	if (pci_read(bus, dev, func, PCI_SUBVEND_2, &reg) != 0)
+		warn("unable to read PCI_SUBVEND_2");
+	printf("\t0x%04x: Subsystem Vendor ID: %04x Product ID: %04x\n",
+	    PCI_SUBVEND_2, PCI_VENDOR(reg), PCI_PRODUCT(reg));
+
+	if (pci_read(bus, dev, func, PCI_PCCARDIF_2, &reg) != 0)
+		warn("unable to read PCI_PCCARDIF_2\n");
+	printf("\t0x%04x: 16-bit Legacy Mode Base Address: %08x\n",
+	    PCI_PCCARDIF_2, reg);
+}
+
+void
 dump(int bus, int dev, int func)
 {
 	u_int32_t reg;
@@ -210,40 +402,20 @@ dump(int bus, int dev, int func)
 	    "Cache Line Size: %02x\n", PCI_BHLC_REG, PCI_BIST(reg),
 	    PCI_HDRTYPE(reg), PCI_LATTIMER(reg), PCI_CACHELINE(reg));
 
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
-		if (pci_read(bus, dev, func, bar, &reg) != 0)
-			warn("unable to read PCI_MAPREG 0x%02x", bar);
-		printf("\t0x%04x: %08x\n", bar, reg);
+	switch (PCI_HDRTYPE_TYPE(reg)) {
+	case 2:
+		dump_type2(bus, dev, func);
+		break;
+	case 1:
+		dump_type1(bus, dev, func);
+		break;
+	case 0:
+		dump_type0(bus, dev, func);
+		break;
+	default:
+		break;
 	}
 
-	if (pci_read(bus, dev, func, PCI_CARDBUS_CIS_REG, &reg) != 0)
-		warn("unable to read PCI_CARDBUS_CIS_REG");
-	printf("\t0x%04x: Cardbus CIS: %08x\n", PCI_CARDBUS_CIS_REG, reg);
-
-	if (pci_read(bus, dev, func, PCI_SUBSYS_ID_REG, &reg) != 0)
-		warn("unable to read PCI_SUBSYS_ID_REG");
-	printf("\t0x%04x: Subsystem Vendor ID: %04x Product ID: %04x\n",
-	    PCI_SUBSYS_ID_REG, PCI_VENDOR(reg), PCI_PRODUCT(reg));
-
-	if (pci_read(bus, dev, func, PCI_ROM_REG, &reg) != 0)
-		warn("unable to read PCI_ROM_REG");
-	printf("\t0x%04x: Expansion ROM Base Address: %08x\n",
-	    PCI_ROM_REG, reg);
-
-	if (pci_read(bus, dev, func, PCI_CAPLISTPTR_REG, &reg) != 0)
-		warn("unable to read PCI_CAPLISTPTR_REG");
-	printf("\t0x%04x: Capabilities Pointer: %02x\n",
-	    PCI_CAPLISTPTR_REG, PCI_CAPLIST_PTR(reg));
-
-	if (pci_read(bus, dev, func, 0x38, &reg) != 0)
-		warn("unable to read 0x38 (reserved)");
-	printf("\t0x%04x: %08x\n", 0x38, reg);
-
-	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
-		warn("unable to read PCI_INTERRUPT_REG");
-	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x Min Gnt: %02x"
-	    " Max Lat: %02x\n", PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
-	    PCI_INTERRUPT_LINE(reg), PCI_MIN_GNT(reg), PCI_MAX_LAT(reg));
 }
 
 int
