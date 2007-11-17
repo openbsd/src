@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.5 2007/11/17 11:38:14 mbalmer Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -113,9 +113,11 @@
 #define	AMD5536_GPIO_OUT_VAL	0x00	/* output value */
 #define	AMD5536_GPIO_OUT_EN	0x04	/* output enable */
 #define	AMD5536_GPIO_OD_EN	0x08	/* open-drain enable */
+#define AMD5536_GPIO_OUT_INVRT_EN 0x0c	/* invert output */
 #define	AMD5536_GPIO_PU_EN	0x18	/* pull-up enable */
 #define	AMD5536_GPIO_PD_EN	0x1c	/* pull-down enable */
 #define	AMD5536_GPIO_IN_EN	0x20	/* input enable */
+#define AMD5536_GPIO_IN_INVRT_EN 0x24	/* invert input */
 #define	AMD5536_GPIO_READ_BACK	0x30	/* read back value */
 
 struct glxpcib_softc {
@@ -223,7 +225,8 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_gpio_pins[i].pin_num = i;
 			sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
 			    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN |
-			    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+			    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN |
+			    GPIO_PIN_INVIN | GPIO_PIN_INVOUT;
 
 			/* read initial state */
 			sc->sc_gpio_pins[i].pin_state =
@@ -322,7 +325,7 @@ void
 glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct glxpcib_softc *sc = arg;
-	int n, reg[5], val[5], nreg = 0, off = 0;
+	int n, reg[7], val[7], nreg = 0, off = 0;
 
 	if (pin > 15) {
 		pin &= 0x0f;
@@ -355,6 +358,18 @@ glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	reg[nreg] = AMD5536_GPIO_PD_EN + off;
 	if (flags & GPIO_PIN_PULLDOWN)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_IN_INVRT_EN + off;
+	if (flags & GPIO_PIN_INVIN)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_OUT_INVRT_EN + off;
+	if (flags & GPIO_PIN_INVOUT)
 		val[nreg++] = 1 << pin;
 	else
 		val[nreg++] = 1 << (pin + 16);
