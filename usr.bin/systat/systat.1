@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.59 2007/11/17 09:33:53 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.60 2007/11/17 11:42:14 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -62,8 +62,7 @@ By default
 .Nm
 displays the processes getting the largest percentage of the processor
 in the lower window.
-Other displays show swap space usage, disk
-.Tn I/O
+Other displays include swap space usage, disk I/O
 statistics (a la
 .Xr iostat 8 ) ,
 virtual memory statistics (a la
@@ -299,9 +298,7 @@ Areas known to the kernel but not in use are shown as not available.
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
-device interrupts, system name translation caching, disk
-.Tn I/O
-etc.
+device interrupts, system name translation caching, disk I/O etc.
 .Pp
 The upper left quadrant of the screen shows the number
 of users logged in and the load average over the last 1, 5,
