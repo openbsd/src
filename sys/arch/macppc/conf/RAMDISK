@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.75 2007/05/28 13:13:54 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.76 2007/11/17 23:44:24 brad Exp $
 #
 # PPC GENERIC config file
 #
@@ -209,6 +209,7 @@ dc*		at cardbus?		# 21143, "tulip" clone ethernet
 fxp*		at cardbus?		# Intel PRO/100 ethernet
 xl*		at cardbus?		# 3C575/3C656 ethernet
 rl*		at cardbus?		# RealTek 81[23]9 ethernet
+re*		at cardbus?		# Realtek 8169/8169S/8110S
 wdc*		at pcmcia?
 
 wsdisplay*	at vgafb?
