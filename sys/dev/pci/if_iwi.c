@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.85 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.86 2007/11/17 19:09:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -915,6 +915,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 			panic("%s: could not load old rx mbuf",
 			    sc->sc_dev.dv_xname);
 		}
+		CSR_WRITE_4(sc, data->reg, data->map->dm_segs[0].ds_addr);
 		ifp->if_ierrors++;
 		return;
 	}
