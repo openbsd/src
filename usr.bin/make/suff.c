@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.75 2007/11/06 21:15:19 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.76 2007/11/17 16:39:45 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1391,8 +1391,8 @@ SuffFindArchiveDeps(
 	}
 
 	/* Copy variables from member node to this one.  */
-	Varq_Set(TARGET_INDEX, Varq_Value(TARGET_INDEX, mem), gn);
-	Varq_Set(PREFIX_INDEX, Varq_Value(PREFIX_INDEX, mem), gn);
+	Var(TARGET_INDEX, gn) = Var(TARGET_INDEX, mem);
+	Var(PREFIX_INDEX, gn) = Var(PREFIX_INDEX, mem);
 
 	ms = mem->suffix;
 	if (ms == NULL) {
@@ -1405,8 +1405,8 @@ SuffFindArchiveDeps(
 
 
 	/* Set the other two local variables required for this target.  */
-	Varq_Set(MEMBER_INDEX, mem->name, gn);
-	Varq_Set(ARCHIVE_INDEX, gn->name, gn);
+	Var(MEMBER_INDEX, gn) = mem->name;
+	Var(ARCHIVE_INDEX, gn) = gn->name;
 
 	if (ms != NULL) {
 		/*
@@ -1601,10 +1601,10 @@ SuffFindNormalDeps(
 	 * since it's only set to the path if the thing is only a source and
 	 * if it's only a source, it doesn't matter what we put here as far
 	 * as expanding sources is concerned, since it has none...	*/
-	Varq_Set(TARGET_INDEX, gn->name, gn);
+	Var(TARGET_INDEX, gn) = gn->name;
 
-	pref = targ != NULL ? targ->pref : gn->name;
-	Varq_Set(PREFIX_INDEX, pref, gn);
+	pref = targ != NULL ? estrdup(targ->pref) : gn->name;
+	Var(PREFIX_INDEX, gn) = pref;
 
 	/* Now we've got the important local variables set, expand any sources
 	 * that still contain variables or wildcards in their names.  */
@@ -1629,7 +1629,7 @@ sfnd_abort:
 			    &targ->suff->searchPath));
 			if (gn->path != NULL) {
 				char *ptr;
-				Varq_Set(TARGET_INDEX, gn->path, gn);
+				Var(TARGET_INDEX, gn) = estrdup(gn->path);
 
 				if (targ != NULL) {
 					/* Suffix known for the thing -- trim
@@ -1650,7 +1650,7 @@ sfnd_abort:
 					else
 						ptr = gn->path;
 
-					Varq_Set(PREFIX_INDEX, ptr, gn);
+					Var(PREFIX_INDEX, gn) = estrdup(ptr);
 
 					gn->path[savep] = savec;
 				} else {
@@ -1664,7 +1664,7 @@ sfnd_abort:
 					else
 						ptr = gn->path;
 
-					Varq_Set(PREFIX_INDEX, ptr, gn);
+					Var(PREFIX_INDEX, gn) = estrdup(ptr);
 				}
 			}
 		} else {
@@ -1740,9 +1740,9 @@ sfnd_abort:
 			 * is set the standard and System V variables.  */
 			targ->node->type |= OP_DEPS_FOUND;
 
-			Varq_Set(PREFIX_INDEX, targ->pref, targ->node);
+			Var(PREFIX_INDEX, targ->node) = estrdup(targ->pref);
 
-			Varq_Set(TARGET_INDEX, targ->node->name, targ->node);
+			Var(TARGET_INDEX, targ->node) = targ->node->name;
 		}
 	}
 
@@ -1834,14 +1834,14 @@ SuffFindDeps(GNode *gn, Lst slst)
 			Arch_FindLib(gn, &s->searchPath);
 		} else {
 			gn->suffix = NULL;
-			Varq_Set(TARGET_INDEX, gn->name, gn);
+			Var(TARGET_INDEX, gn) = gn->name;
 		}
 		/*
 		 * Because a library (-lfoo) target doesn't follow the standard
 		 * filesystem conventions, we don't set the regular variables
 		 * for the thing. .PREFIX is simply made empty...
 		 */
-		Varq_Set(PREFIX_INDEX, "", gn);
+		Var(PREFIX_INDEX, gn) = "";
 	} else
 		SuffFindNormalDeps(gn, slst);
 }

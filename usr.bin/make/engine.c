@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.15 2007/11/17 16:32:04 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.16 2007/11/17 16:39:45 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -60,9 +60,9 @@
 #include "error.h"
 #include "str.h"
 #include "memory.h"
+#include "buf.h"
 
 static void MakeTimeStamp(void *, void *);
-static void MakeAddAllSrc(void *, void *);
 static int rewrite_time(const char *);
 static void setup_signal(int);
 static void setup_all_signals(void);
@@ -102,7 +102,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 			 * attributes or sources attached to .DEFAULT itself.
 			 */
 			Make_HandleUse(DEFAULT, gn);
-			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
+			Var(IMPSRC_INDEX, gn) = Var(TARGET_INDEX, gn);
 		} else if (is_out_of_date(Dir_MTime(gn))) {
 			/*
 			 * The node wasn't the target of an operator we have no
@@ -240,16 +240,25 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	}
 }
 
-static void
-MakeAddAllSrc(void *cgnp, void *pgnp)
+void
+Make_DoAllVar(GNode *gn)
 {
-	GNode	*child = (GNode *)cgnp;
-	GNode	*parent = (GNode *)pgnp;
-	if ((child->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
-		const char *target;
+	GNode *child;
+	LstNode ln;
+	BUFFER allsrc, oodate;
+	char *target;
+	bool do_oodate;
+	int oodate_count, allsrc_count = 0;
 
+	oodate_count = 0;
+	allsrc_count = 0;
+
+	for (ln = Lst_First(&gn->children); ln != NULL; ln = Lst_Adv(ln)) {
+		child = (GNode *)Lst_Datum(ln);
+		if ((child->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) != 0)
+			continue;
 		if (OP_NOP(child->type) ||
-		    (target = Varq_Value(TARGET_INDEX, child)) == NULL) {
+		    (target = Var(TARGET_INDEX, child)) == NULL) {
 			/*
 			 * this node is only source; use the specific pathname
 			 * for it
@@ -258,46 +267,63 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 			    child->name;
 		}
 
-		Varq_Append(ALLSRC_INDEX, target, parent);
-		if (parent->type & OP_JOIN) {
+		/*
+		 * It goes in the OODATE variable if the parent is younger than
+		 * the child or if the child has been modified more recently
+		 * than the start of the make.  This is to keep make from
+		 * getting confused if something else updates the parent after
+		 * the make starts (shouldn't happen, I know, but sometimes it
+		 * does). In such a case, if we've updated the kid, the parent
+		 * is likely to have a modification time later than that of the
+		 * kid and anything that relies on the OODATE variable will be
+		 * hosed.
+		 */
+		do_oodate = false;
+		if (gn->type & OP_JOIN) {
 			if (child->built_status == MADE)
-				Varq_Append(OODATE_INDEX, target, parent);
-		} else if (is_strictly_before(parent->mtime, child->mtime) ||
+				do_oodate = true;
+		} else if (is_strictly_before(gn->mtime, child->mtime) ||
 		   (!is_strictly_before(child->mtime, now) &&
-		   child->built_status == MADE)) {
-			/*
-			 * It goes in the OODATE variable if the parent is
-			 * younger than the child or if the child has been
-			 * modified more recently than the start of the make.
-			 * This is to keep make from getting confused if
-			 * something else updates the parent after the
-			 * make starts (shouldn't happen, I know, but sometimes
-			 * it does). In such a case, if we've updated the kid,
-			 * the parent is likely to have a modification time
-			 * later than that of the kid and anything that relies
-			 * on the OODATE variable will be hosed.
-			 */
-			Varq_Append(OODATE_INDEX, target, parent);
+		   child->built_status == MADE))
+		   	do_oodate = true;
+		if (do_oodate) {
+			oodate_count++;
+			if (oodate_count == 1)
+				Var(OODATE_INDEX, gn) = target;
+			else {
+				if (oodate_count == 2) {
+					Buf_Init(&oodate, 0);
+					Buf_AddString(&oodate, 
+					    Var(OODATE_INDEX, gn));
+				}
+				Buf_AddSpace(&oodate);
+				Buf_AddString(&oodate, target);
+			}
+		}
+		allsrc_count++;
+		if (allsrc_count == 1)
+			Var(ALLSRC_INDEX, gn) = target;
+		else {
+			if (allsrc_count == 2) {
+				Buf_Init(&allsrc, 0);
+				Buf_AddString(&allsrc, 
+				    Var(ALLSRC_INDEX, gn));
+			}
+			Buf_AddSpace(&allsrc);
+			Buf_AddString(&allsrc, target);
 		}
 	}
-}
 
-void
-Make_DoAllVar(GNode *gn)
-{
-	Lst_ForEach(&gn->children, MakeAddAllSrc, gn);
+	if (allsrc_count > 1)
+		Var(ALLSRC_INDEX, gn) = Buf_Retrieve(&allsrc);
+	if (oodate_count > 1)
+		Var(OODATE_INDEX, gn) = Buf_Retrieve(&oodate);
 
 	if (gn->impliedsrc)
-		Varq_Set(IMPSRC_INDEX, 
-		    Varq_Value(TARGET_INDEX, gn->impliedsrc), gn);
+		Var(IMPSRC_INDEX, gn) = Var(TARGET_INDEX, gn->impliedsrc);
 			
-	if (Varq_Value(OODATE_INDEX, gn) == NULL)
-		Varq_Set(OODATE_INDEX, "", gn);
-	if (Varq_Value(ALLSRC_INDEX, gn) == NULL)
-		Varq_Set(ALLSRC_INDEX, "", gn);
-
 	if (gn->type & OP_JOIN)
-		Varq_Set(TARGET_INDEX, Varq_Value(ALLSRC_INDEX, gn), gn);
+		Var(TARGET_INDEX, gn) = Var(ALLSRC_INDEX, gn);
 }
 
 /* Wrapper to call Make_TimeStamp from a forEach loop.	*/
@@ -705,7 +731,7 @@ static void
 handle_compat_interrupts(GNode *gn)
 {
 	if (!Targ_Precious(gn)) {
-		char	  *file = Varq_Value(TARGET_INDEX, gn);
+		char *file = Var(TARGET_INDEX, gn);
 
 		if (!noExecute && eunlink(file) != -1)
 			Error("*** %s removed\n", file);

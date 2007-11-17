@@ -71,15 +71,9 @@ extern void Var_Deletei(const char *, const char *);
 #define OODATE_INDEX	4
 #define ALLSRC_INDEX	5
 #define IMPSRC_INDEX	6
-/* value = Varq_Value(index, node);
- *	Returns value of dynamic variable for a given node. */
-extern char *Varq_Value(int,  GNode *);
-/* Varq_Set(index, val, node);
- *	Sets value of dynamic variable for a given node. Copies val. */
-extern void Varq_Set(int, const char *, GNode *);
-/* Varq_Append(index, val, node);
- *	Appends to value of dynamic variable for a given node. */
-extern void Varq_Append(int, const char *, GNode *);
+
+#define Var(idx, gn)	((gn)->context.locals[idx])
+
 
 /* SymTable_Init(t);
  *	Inits the local symtable in a GNode. */

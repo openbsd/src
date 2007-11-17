@@ -1,7 +1,7 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: symtable.h,v 1.1 2001/05/23 12:34:50 espie Exp $ */
+/*	$OpenBSD: symtable.h,v 1.2 2007/11/17 16:39:45 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,15 +28,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct Var_;
-
 #define LOCAL_SIZE	7
 
 /* SymTable is private to var.c, but is declared here to allow for
    local declaration of context tables
  */
 struct SymTable_ {
-	struct Var_ *locals[LOCAL_SIZE];
+	char *locals[LOCAL_SIZE];
 };
 
 #endif

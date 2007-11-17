@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.49 2007/11/10 13:59:48 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.50 2007/11/17 16:39:45 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ Make_Update(GNode *cgn)	/* the child node */
 	char	*cname; /* the child's name */
 	LstNode	ln;	/* Element in parents list */
 
-	cname = Varq_Value(TARGET_INDEX, cgn);
+	cname = Var(TARGET_INDEX, cgn);
 
 	/*
 	 * If the child was actually made, see what its modification time is

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.74 2007/11/10 12:51:40 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.75 2007/11/17 16:39:45 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -872,7 +872,7 @@ ArchTouch(const char *archive, const char *member)
 void
 Arch_Touch(GNode *gn)
 {
-	ArchTouch(Varq_Value(ARCHIVE_INDEX, gn), Varq_Value(MEMBER_INDEX, gn));
+	ArchTouch(Var(ARCHIVE_INDEX, gn), Var(MEMBER_INDEX, gn));
 }
 
 /*ARGSUSED*/
@@ -891,8 +891,8 @@ Arch_TouchLib(GNode *gn UNUSED)
 TIMESTAMP
 Arch_MTime(GNode *gn)
 {
-	gn->mtime = ArchMTimeMember(Varq_Value(ARCHIVE_INDEX, gn),
-	     Varq_Value(MEMBER_INDEX, gn), true);
+	gn->mtime = ArchMTimeMember(Var(ARCHIVE_INDEX, gn),
+	     Var(MEMBER_INDEX, gn), true);
 
 	return gn->mtime;
 }
@@ -940,7 +940,7 @@ Arch_MemMTime(GNode *gn)
 void
 Arch_FindLib(GNode *gn, Lst path UNUSED)
 {
-	Varq_Set(TARGET_INDEX, gn->name, gn);
+	Var(TARGET_INDEX, gn) = gn->name;
 }
 
 /*-
