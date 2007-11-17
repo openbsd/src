@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.4 2007/11/17 09:16:51 mbalmer Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.5 2007/11/17 11:38:14 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -223,7 +223,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_gpio_pins[i].pin_num = i;
 			sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
 			    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN |
-			    GPIO_PIN_PULLUP;
+			    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
 
 			/* read initial state */
 			sc->sc_gpio_pins[i].pin_state =
@@ -322,35 +322,47 @@ void
 glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct glxpcib_softc *sc = arg;
-	int reg;
-
-	switch (flags) {
-	case GPIO_PIN_INPUT:
-		reg = AMD5536_GPIO_IN_EN;
-		break;
-	case GPIO_PIN_OUTPUT:
-		reg = AMD5536_GPIO_OUT_EN;
-		break;
-	case GPIO_PIN_OPENDRAIN:
-		reg = AMD5536_GPIO_OD_EN;
-		break;
-	case GPIO_PIN_PULLUP:
-		reg = AMD5536_GPIO_PU_EN;
-		break;
-	case GPIO_PIN_PULLDOWN:
-		reg = AMD5536_GPIO_PD_EN;
-		break;
-	default:
-		/* flag not support by the AMD5536 GPIO */
-		return;
-	}
+	int n, reg[5], val[5], nreg = 0, off = 0;
 
 	if (pin > 15) {
 		pin &= 0x0f;
-		reg += AMD5536_GPIOH_OFFSET;
+		off = AMD5536_GPIOH_OFFSET;
 	}
 
-	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, 1 << pin);
+	reg[nreg] = AMD5536_GPIO_IN_EN + off;
+	if (flags & GPIO_PIN_INPUT)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_OUT_EN + off;
+	if (flags & GPIO_PIN_OUTPUT)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_OD_EN + off;
+	if (flags & GPIO_PIN_OPENDRAIN)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_PU_EN + off;
+	if (flags & GPIO_PIN_PULLUP)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	reg[nreg] = AMD5536_GPIO_PD_EN + off;
+	if (flags & GPIO_PIN_PULLDOWN)
+		val[nreg++] = 1 << pin;
+	else
+		val[nreg++] = 1 << (pin + 16);
+
+	/* set flags */
+	for (n = 0; n < nreg; n++)
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg[n],
+		    val[n]);
 } 
 
 #endif
