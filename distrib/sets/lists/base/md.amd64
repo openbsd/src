@@ -37,6 +37,8 @@
 ./etc/firmware/rum-rt2573
 ./etc/firmware/tht
 ./etc/firmware/tht-license
+./etc/firmware/tusb3410
+./etc/firmware/tusb3410-license
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/yds
