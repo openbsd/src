@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.104 2007/11/17 16:41:47 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.105 2007/11/17 21:52:25 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -981,7 +981,7 @@ aml_setbufint(struct aml_value *dst, int bitpos, int bitlen,
     struct aml_value *src)
 {
 	if (src->type != AML_OBJTYPE_BUFFER)
-		aml_die("wrong setbufint type\n");
+		aml_die("wrong setbufint type %d\n", src->type);
 
 #if 1
 	/* Return buffer type */
@@ -1007,7 +1007,7 @@ aml_getbufint(struct aml_value *src, int bitpos, int bitlen,
     struct aml_value *dst)
 {
 	if (dst->type != AML_OBJTYPE_BUFFER)
-		aml_die("wrong getbufint type\n");
+		aml_die("wrong getbufint type %d\n", src->type);
 	switch (src->type) {
 	case AML_OBJTYPE_INTEGER:
 		if (bitlen >= aml_intlen)
