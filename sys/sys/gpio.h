@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.h,v 1.2 2007/11/17 09:05:23 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.h,v 1.3 2007/11/17 16:55:05 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -31,6 +31,8 @@
 #define GPIO_PIN_TRISTATE	0x0020	/* output disabled */
 #define GPIO_PIN_PULLUP		0x0040	/* internal pull-up enabled */
 #define GPIO_PIN_PULLDOWN	0x0080	/* internal pull-down enabled */
+#define GPIO_PIN_INVIN		0x0100	/* invert input */
+#define GPIO_PIN_INVOUT		0x0200	/* invert output */
 
 /* GPIO controller description */
 struct gpio_info {

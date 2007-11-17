@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.10 2007/11/17 10:10:26 mbalmer Exp $
+.\"	$OpenBSD: gpio.4,v 1.11 2007/11/17 16:55:05 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -135,6 +135,10 @@ output disabled
 internal pull-up enabled
 .It Dv GPIO_PIN_PULLDOWN
 internal pull-down enabled
+.It Dv GPIO_PIN_INVIN
+invert input
+.It Dv GPIO_PIN_INVOUT
+invert output
 .El
 .Pp
 Note that the
