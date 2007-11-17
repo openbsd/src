@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.14 2007/05/14 16:59:43 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.15 2007/11/17 05:32:05 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -246,21 +246,35 @@ m197_getipl(void)
 u_int
 m197_setipl(u_int level)
 {
-	u_int curspl;
+	u_int curspl, psr;
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = *(u_int8_t *)M197_IMASK & 0x07;
 	*(u_int8_t *)M197_IMASK = level;
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
+	set_psr(psr);
 	return curspl;
 }
 
 u_int
 m197_raiseipl(u_int level)
 {
-	u_int curspl;
+	u_int curspl, psr;
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = *(u_int8_t *)M197_IMASK & 0x07;
 	if (curspl < level)
 		*(u_int8_t *)M197_IMASK = level;
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
+	set_psr(psr);
 	return curspl;
 }
 

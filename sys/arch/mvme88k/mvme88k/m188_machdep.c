@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.40 2007/11/14 23:14:14 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.41 2007/11/17 05:32:05 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -159,7 +159,7 @@ void	m188_startup(void);
  */
 unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
 
-unsigned int m188_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE};
+u_int m188_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
 /*
  * external interrupt masks per spl.
@@ -256,7 +256,8 @@ m188_reset()
 }
 
 /*
- * return next safe spl to reenable interrupts.
+ * Return the next ipl >= ``curlevel'' at which we can reenable interrupts
+ * while keeping ``mask'' masked.
  */
 u_int
 safe_level(u_int mask, u_int curlevel)
@@ -306,9 +307,12 @@ m188_setipl(u_int level)
 		mask |= SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
-	*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
-
+	*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
 	set_psr(psr);
 
 	return curspl;
@@ -339,10 +343,13 @@ m188_raiseipl(u_int level)
 			mask |= SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
-		*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;
+		*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 	}
-
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
 	set_psr(psr);
 
 	return curspl;
@@ -484,7 +491,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	u_int cpu = cpu_number();
 #endif
 	unsigned int cur_mask, ign_mask;
-	unsigned int level, old_spl;
+	u_int level, old_spl;
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret, intbit;

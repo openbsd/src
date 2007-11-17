@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2007/11/15 21:23:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2007/11/17 05:32:05 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -110,13 +110,12 @@ void	cpu_boot_secondary_processors(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(void);
-u_int	getipl(void);
 void	identifycpu(void);
 void	luna88k_bootstrap(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
-void	setlevel(unsigned int);
+void	setlevel(u_int);
 
 vaddr_t size_memory(void);
 void powerdown(void);
@@ -137,7 +136,7 @@ unsigned int *volatile int_mask_reg[] = {
 	(unsigned int *)INT_ST_MASK3
 };
 
-unsigned int luna88k_curspl[] = {0, 0, 0, 0};
+u_int luna88k_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
 unsigned int int_set_val[INT_LEVEL] = {
 	INT_SET_LV0,
@@ -839,7 +838,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	unsigned int cur_mask, cur_int;
-	unsigned int level, old_spl;
+	u_int level, old_spl;
 
 	cur_mask = *int_mask_reg[cpu];
 	old_spl = luna88k_curspl[cpu];
@@ -1252,9 +1251,9 @@ nvram_by_symbol(symbol)
 }
 
 void
-setlevel(unsigned int level)
+setlevel(u_int level)
 {
-	unsigned int set_value;
+	u_int32_t set_value;
 	int cpu = cpu_number();
 
 	set_value = int_set_val[level];
@@ -1264,58 +1263,44 @@ setlevel(unsigned int level)
 		set_value &= INT_SLAVE_MASK;
 #endif
 
-	*int_mask_reg[cpu] = set_value;
 	luna88k_curspl[cpu] = level;
+	*int_mask_reg[cpu] = set_value;
+	/*
+	 * We do not flush the pipeline here, because we are invoked
+	 * with interrupts disabled, and the caller will synchronize
+	 * the pipeline when restoring the psr.
+	 */
 }
 
-u_int
+int
 getipl(void)
+{
+	return (int)luna88k_curspl[cpu_number()];
+}
+
+int
+setipl(int level)
 {
 	u_int curspl, psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = luna88k_curspl[cpu_number()];
+	setlevel((u_int)level);
 	set_psr(psr);
-	return curspl;
+	return (int)curspl;
 }
 
-unsigned
-setipl(unsigned level)
+int
+raiseipl(int level)
 {
-	unsigned int curspl, psr;
+	u_int curspl, psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = luna88k_curspl[cpu_number()];
-	setlevel(level);
-
-	/*
-	 * The flush pipeline is required to make sure the above write gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
+	if (curspl < (u_int)level)
+		setlevel((u_int)level);
 	set_psr(psr);
-	return curspl;
-}
-
-unsigned
-raiseipl(unsigned level)
-{
-	unsigned int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = luna88k_curspl[cpu_number()];
-	if (curspl < level)
-		setlevel(level);
-
-	/*
-	 * The flush pipeline is required to make sure the above write gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
-	set_psr(psr);
-	return curspl;
+	return (int)curspl;
 }

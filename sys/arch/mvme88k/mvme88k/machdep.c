@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.201 2007/11/15 21:23:16 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.202 2007/11/17 05:32:05 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -95,7 +95,6 @@ void	consinit(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
-u_int	getipl(void);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
 void	mvme88k_vector_init(u_int32_t *, u_int32_t *);
@@ -104,8 +103,6 @@ void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
 void	_doboot(void);
-
-extern void setlevel(unsigned int);
 
 extern void	m187_bootstrap(void);
 extern vaddr_t	m187_memsize(void);
@@ -1114,53 +1111,22 @@ bootcnputc(dev, c)
 		bugoutchr(c);
 }
 
-u_int
+int
 getipl(void)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = (*md_getipl)();
-	set_psr(psr);
-	return curspl;
+	return (int)(*md_getipl)();
 }
 
-unsigned
-setipl(unsigned level)
+int
+setipl(int level)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = (*md_setipl)(level);
-
-	/*
-	 * The flush pipeline is required to make sure the above change gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
-	set_psr(psr);
-	return curspl;
+	return (int)(*md_setipl)((u_int)level);
 }
 
-unsigned
-raiseipl(unsigned level)
+int
+raiseipl(int level)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = (*md_raiseipl)(level);
-
-	/*
-	 * The flush pipeline is required to make sure the above change gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
-	set_psr(psr);
-	return curspl;
+	return (int)(*md_raiseipl)((u_int)level);
 }
 
 #ifdef MULTIPROCESSOR

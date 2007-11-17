@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2007/05/16 19:37:06 thib Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2007/11/17 05:32:05 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -31,8 +31,9 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-unsigned setipl(unsigned level);
-unsigned raiseipl(unsigned level);
+int getipl(void);
+int setipl(int level);
+int raiseipl(int level);
 int spl0(void);
 
 /* SPL asserts */

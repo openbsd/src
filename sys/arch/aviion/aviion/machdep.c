@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.15 2007/11/15 21:23:14 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.16 2007/11/17 05:32:04 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -96,7 +96,6 @@ void	consinit(void);
 __dead void doboot(void);
 void	dumpconf(void);
 void	dumpsys(void);
-u_int	getipl(void);
 void	identifycpu(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
@@ -898,7 +897,7 @@ bootcnputc(dev, c)
 		scm_putc(c);
 }
 
-u_int
+int
 getipl(void)
 {
 	u_int curspl, psr;
@@ -906,16 +905,16 @@ getipl(void)
 	disable_interrupt(psr);
 	curspl = platform->getipl();
 	set_psr(psr);
-	return curspl;
+	return (int)curspl;
 }
 
-u_int
-setipl(u_int level)
+int
+setipl(int level)
 {
 	u_int curspl, psr;
 
 	disable_interrupt(psr);
-	curspl = platform->setipl(level);
+	curspl = platform->setipl((u_int)level);
 
 	/*
 	 * The flush pipeline is required to make sure the above change gets
@@ -925,16 +924,16 @@ setipl(u_int level)
 	flush_pipeline();
 
 	set_psr(psr);
-	return curspl;
+	return (int)curspl;
 }
 
-u_int
-raiseipl(u_int level)
+int
+raiseipl(int level)
 {
 	u_int curspl, psr;
 
 	disable_interrupt(psr);
-	curspl = platform->raiseipl(level);
+	curspl = platform->raiseipl((u_int)level);
 
 	/*
 	 * The flush pipeline is required to make sure the above change gets
@@ -944,7 +943,7 @@ raiseipl(u_int level)
 	flush_pipeline();
 
 	set_psr(psr);
-	return curspl;
+	return (int)curspl;
 }
 
 u_char hostaddr[6];

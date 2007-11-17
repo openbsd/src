@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.5 2007/05/12 20:02:12 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.6 2007/11/17 05:32:04 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -197,7 +197,7 @@ const struct board board_av400 = {
  */
 unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
 
-u_int av400_curspl[] = { 0, 0, 0, 0 };
+u_int av400_curspl[] = { IPL_NONE, IPL_NONE, IPL_NONE, IPL_NONE };
 
 /*
  * external interrupt masks per spl.
@@ -294,9 +294,11 @@ av400_getipl(void)
 u_int
 av400_setipl(u_int level)
 {
-	u_int32_t mask, curspl;
+	u_int32_t mask, curspl, psr;
 	u_int cpu = cpu_number();
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = av400_curspl[cpu];
 
 	mask = int_mask_val[level];
@@ -307,6 +309,11 @@ av400_setipl(u_int level)
 
 	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 	av400_curspl[cpu] = level;
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
+	set_psr(psr);
 
 	return curspl;
 }
@@ -314,9 +321,11 @@ av400_setipl(u_int level)
 u_int
 av400_raiseipl(u_int level)
 {
-	u_int32_t mask, curspl;
+	u_int32_t mask, curspl, psr;
 	u_int cpu = cpu_number();
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	curspl = av400_curspl[cpu];
 	if (curspl < level) {
 		mask = int_mask_val[level];
@@ -328,6 +337,12 @@ av400_raiseipl(u_int level)
 		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 		av400_curspl[cpu] = level;
 	}
+	/*
+	 * We do not flush the pipeline here, because interrupts are disabled,
+	 * and set_psr() will synchronize the pipeline.
+	 */
+	set_psr(psr);
+
 	return curspl;
 }
 
@@ -382,7 +397,7 @@ av400_intr(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	unsigned int cur_mask, ign_mask;
-	unsigned int level, old_spl;
+	u_int level, old_spl;
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret, intbit;
