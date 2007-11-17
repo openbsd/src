@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.215 2007/10/13 16:29:52 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.216 2007/11/17 13:55:27 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1627,7 +1627,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_MACMODE_RXDMA_ENB|BGE_MACMODE_RX_STATS_CLEAR|
 	    BGE_MACMODE_TX_STATS_CLEAR|BGE_MACMODE_RX_STATS_ENB|
 	    BGE_MACMODE_TX_STATS_ENB|BGE_MACMODE_FRMHDR_DMA_ENB|
-	    (sc->bge_flags & BGE_TBI ? BGE_PORTMODE_TBI : BGE_PORTMODE_MII));
+	    (sc->bge_flags & BGE_PHY_FIBER_TBI ? BGE_PORTMODE_TBI : BGE_PORTMODE_MII));
 
 	/* Set misc. local control, enable interrupts on attentions */
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
@@ -1705,7 +1705,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_MACSTAT_LINK_CHANGED);
 
 	/* Enable PHY auto polling (for MII/GMII only) */
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
@@ -2103,11 +2103,11 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER)	    
-		sc->bge_flags |= BGE_TBI;
+		sc->bge_flags |= BGE_PHY_FIBER_TBI;
 
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
 	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41)
-		sc->bge_flags |= BGE_TBI;
+		sc->bge_flags |= BGE_PHY_FIBER_TBI;
 
 	/* Hookup IRQ last. */
 	DPRINTFN(5, ("pci_intr_establish\n"));
@@ -2127,7 +2127,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
@@ -2351,7 +2351,7 @@ bge_reset(struct bge_softc *sc)
 	 * adjustment to insure the SERDES drive level is set
 	 * to 1.2V.
 	 */
-	if (sc->bge_flags & BGE_TBI &&
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI &&
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 		u_int32_t serdescfg;
 
@@ -2669,7 +2669,7 @@ bge_tick(void *xsc)
 	else
 		bge_stats_update(sc);
 
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		/*
 		 * Since in TBI mode auto-polling can't be used we should poll
 		 * link status manually. Here we register pending link event
@@ -3139,7 +3139,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	struct ifmedia *ifm = &sc->bge_ifmedia;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 			return (EINVAL);
 		switch(IFM_SUBTYPE(ifm->ifm_media)) {
@@ -3198,7 +3198,7 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmr->ifm_status = IFM_AVALID;
 		ifmr->ifm_active = IFM_ETHER;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
@@ -3280,7 +3280,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
-		if (sc->bge_flags & BGE_TBI) {
+		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
 			sc->bge_flowflags = 0;
 		}
@@ -3300,7 +3300,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
-		if (sc->bge_flags & BGE_TBI) {
+		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
 			    command);
 		} else {
@@ -3431,7 +3431,7 @@ bge_stop(struct bge_softc *sc)
 	 * unchanged so that things will be put back to normal when
 	 * we bring the interface back up.
 	 */
-	if (!(sc->bge_flags & BGE_TBI)) {
+	if (!(sc->bge_flags & BGE_PHY_FIBER_TBI)) {
 		mii = &sc->bge_mii;
 		itmp = ifp->if_flags;
 		ifp->if_flags |= IFF_UP;
@@ -3519,7 +3519,7 @@ bge_link_upd(struct bge_softc *sc)
 		return;
 	} 
 
-	if (sc->bge_flags & BGE_TBI) {
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			if (!sc->bge_link) {
