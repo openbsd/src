@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.9 2007/11/16 23:21:08 mbalmer Exp $
+.\"	$OpenBSD: gpio.4,v 1.10 2007/11/17 10:10:26 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,15 +14,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2007 $
+.Dd $Mdocdate: November 17 2007 $
 .Dt GPIO 4
 .Os
 .Sh NAME
 .Nm gpio
 .Nd General Purpose Input/Output
 .Sh SYNOPSIS
+.Cd "gpio* at ath?"
+.Cd "gpio* at elansc?" Pq i386
+.Cd "gpio* ar glxpcib?" Pq i386
+.Cd "gpio* at gscpcib?" Pq i386
+.Cd "gpio* at isagpio?"
 .Cd "gpio* at nsclpcsio?"
-.Cd "gpio* at gscpcib?"
+.Cd "gpio* at pcagpio?"
+.Cd "gpio* at pcaled?"
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <sys/gpio.h>
@@ -127,6 +133,8 @@ push-pull output
 output disabled
 .It Dv GPIO_PIN_PULLUP
 internal pull-up enabled
+.It Dv GPIO_PIN_PULLDOWN
+internal pull-down enabled
 .El
 .Pp
 Note that the
@@ -147,12 +155,6 @@ file.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ath 4 ,
-.Xr elansc 4 ,
-.Xr glxpcib 4,
-.Xr gscpcib 4 ,
-.Xr isagpio 4 ,
-.Xr nsclpcsio 4 ,
 .Xr gpioctl 8
 .Sh HISTORY
 The
