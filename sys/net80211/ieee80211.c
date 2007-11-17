@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.28 2007/11/14 11:16:27 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.29 2007/11/17 14:05:01 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -924,10 +924,10 @@ ieee80211_media2rate(int mword)
 }
 
 /*
- * Convert bit rate (in 0.5Mbps units) to PLCP signal and vice versa.
+ * Convert bit rate (in 0.5Mbps units) to PLCP signal (R4-R1) and vice versa.
  */
-int
-ieee80211_rate2plcp(int rate, enum ieee80211_phymode mode)
+u_int8_t
+ieee80211_rate2plcp(u_int8_t rate, enum ieee80211_phymode mode)
 {
 	rate &= IEEE80211_RATE_VAL;
 
@@ -961,8 +961,8 @@ ieee80211_rate2plcp(int rate, enum ieee80211_phymode mode)
 	return 0;
 }
 
-int
-ieee80211_plcp2rate(int plcp, enum ieee80211_phymode mode)
+u_int8_t
+ieee80211_plcp2rate(u_int8_t plcp, enum ieee80211_phymode mode)
 {
 	if (mode == IEEE80211_MODE_11B) {
 		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
@@ -993,3 +993,4 @@ ieee80211_plcp2rate(int plcp, enum ieee80211_phymode mode)
 
 	return 0;
 }
+
