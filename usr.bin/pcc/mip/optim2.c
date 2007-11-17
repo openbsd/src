@@ -1,4 +1,4 @@
-/*	$OpenBSD: optim2.c,v 1.4 2007/10/29 16:36:22 ragge Exp $	*/
+/*	$OpenBSD: optim2.c,v 1.5 2007/11/17 12:00:37 ragge Exp $	*/
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -235,9 +235,7 @@ optimize(struct interpass *ipole)
 		comperr("register error");
 #endif
 
-#ifdef MYOPTIM
 	myoptim((struct interpass *)ipp);
-#endif
 }
 
 /*

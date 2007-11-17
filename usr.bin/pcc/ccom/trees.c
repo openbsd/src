@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.7 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.8 2007/11/17 12:00:37 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2106,9 +2106,7 @@ p2tree(NODE *p)
 	struct symtab *q;
 	int ty;
 
-# ifdef MYP2TREE
-	MYP2TREE(p);  /* local action can be taken here; then return... */
-# endif
+	myp2tree(p);  /* local action can be taken here */
 
 	ty = coptype(p->n_op);
 
@@ -2175,9 +2173,7 @@ p2tree(NODE *p)
 	struct symtab *q;
 	int ty;
 
-# ifdef MYP2TREE
-	MYP2TREE(p);  /* local action can be taken here; then return... */
-# endif
+	myp2tree(p);  /* local action can be taken here */
 
 	ty = coptype(p->n_op);
 
@@ -2321,8 +2317,7 @@ send_passt(int type, ...)
 	ip->lineno = lineno;
 	switch (type) {
 	case IP_NODE:
-		if (lastloc != PROG)
-			setloc1(PROG);
+		setloc1(PROG);
 		ip->ip_node = va_arg(ap, NODE *);
 		break;
 	case IP_EPILOG:

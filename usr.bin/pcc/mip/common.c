@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.7 2007/10/20 18:11:51 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.8 2007/11/17 12:00:37 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -475,7 +475,7 @@ permalloc(int size)
 {
 	void *rv;
 
-//printf("permalloc: allocpole %p allocleft %d size %d ", allocpole, allocleft, size);
+//fprintf(stderr, "permalloc: allocpole %p allocleft %d size %d ", allocpole, allocleft, size);
 	if (size > MEMCHUNKSZ)
 		cerror("permalloc");
 	if (size <= 0)
@@ -490,7 +490,7 @@ permalloc(int size)
 	}
 	size = ROUNDUP(size);
 	rv = &allocpole[MEMCHUNKSZ-allocleft];
-//printf("rv %p\n", rv);
+//fprintf(stderr, "rv %p\n", rv);
 	allocleft -= size;
 	permallocsize += size;
 	return rv;
@@ -526,7 +526,7 @@ tmpalloc(int size)
 	}
 	if (size <= 0)
 		cerror("tmpalloc2");
-//printf("tmpalloc: tmppole %p tmpleft %d size %d ", tmppole, tmpleft, size);
+//fprintf(stderr, "tmpalloc: tmppole %p tmpleft %d size %d ", tmppole, tmpleft, size);
 	size = ROUNDUP(size);
 	if (tmpleft < size) {
 		if ((tmppole = malloc(MEMCHUNKSZ)) == NULL)
@@ -537,7 +537,7 @@ tmpalloc(int size)
 		tmplink = tmppole;
 	}
 	rv = TMPOLE;
-//printf("rv %p\n", rv);
+//fprintf(stderr,"rv %p\n", rv);
 	tmpleft -= size;
 	tmpallocsize += size;
 	return rv;

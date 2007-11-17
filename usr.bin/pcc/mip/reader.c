@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.9 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: reader.c,v 1.10 2007/11/17 12:00:37 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1004,9 +1004,7 @@ canon(p) NODE *p; {
 #ifndef FIELDOPS
 	fwalk(p, ffld, 0);	/* look for field operators */
 # endif
-#ifdef MYCANON
-	MYCANON(p);		/* your own canonicalization routine(s) */
-#endif
+	mycanon(p);		/* your own canonicalization routine(s) */
 
 }
 
