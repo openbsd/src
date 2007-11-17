@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.72 2007/08/29 20:09:30 damien Exp $
+.\" $OpenBSD: ral.4,v 1.73 2007/11/17 12:01:46 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,13 +15,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 29 2007 $
+.Dd $Mdocdate: November 17 2007 $
 .Os
 .Dt RAL 4
 .Sh NAME
 .Nm ral ,
 .Nm ural
-.Nd Ralink Technology IEEE 802.11a/b/g wireless network device
+.Nd Ralink Technology IEEE 802.11a/b/g/Draft-N wireless network device
 .Sh SYNOPSIS
 .Cd "ral* at cardbus?"
 .Cd "ral* at pci?"
@@ -29,8 +29,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI/CardBus wireless adapters based on the Ralink RT2500,
-RT2501, and RT2600 chipsets.
+driver supports PCI/PCIe/CardBus wireless adapters based on the Ralink RT2500,
+RT2501, RT2600 and RT2800 chipsets.
 The
 .Nm ural
 driver supports USB 2.0 wireless adapters based on the Ralink RT2500USB
@@ -51,8 +51,18 @@ operations.
 The RT2600 chipset consists of two integrated chips, an RT2661 MAC/BBP and an
 RT2529 radio transceiver.
 This chipset uses the MIMO (multiple-input multiple-output) technology with
-multiple antennas to extend the operating range of the adapter and to achieve
-higher throughput.
+multiple radio transceivers to extend the operating range of the adapter and
+to achieve higher throughput.
+However, the RT2600 chipset does not support any of the 802.11n features.
+.Pp
+The RT2800 chipset is the first generation of 802.11n-Draft 2.0 adapters
+from Ralink.
+It consists of two integrated chips, an RT2860 or RT2890 MAC/BBP and an
+RT2820 (2.4GHz) or RT2850 (2.4GHz/5GHz) radio transceiver.
+The RT2800 chipset supports up to two transmit paths and three receiver paths
+(aka 2T3R).
+It can achieve speeds up to 144Mbps (20MHz bandwidth) and 300Mbps (40MHz
+bandwidth.)
 .Pp
 These are the modes the
 .Nm
@@ -230,16 +240,25 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-Second generation PCI/CardBus chips require the following firmware
+The RT2501, RT2600 and RT2800 chipsets require the following firmware
 files to be loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It /etc/firmware/ral-rt2561
 .It /etc/firmware/ral-rt2561s
 .It /etc/firmware/ral-rt2661
+.It /etc/firmware/ral-rt2860
 .El
 .Pp
-RT2500 adapters do not require a firmware to operate.
+The firmware for the RT2800 chipset cannot be redistributed with the base
+system because of license restrictions.
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://damien.bergamini.free.fr/packages/openbsd/ral-firmware-1.0.tgz
+.Pp
+The RT2500 chipset does not require a firmware to operate.
 .Sh HARDWARE
 The following PCI adapters should work:
 .Bd -filled
@@ -465,7 +484,7 @@ This should not happen.
 .Xr ifconfig 8
 .Pp
 Ralink Technology:
-.Pa http://www.ralinktech.com.tw
+.Pa http://www.ralinktech.com/
 .Sh HISTORY
 The
 .Nm
@@ -473,12 +492,22 @@ driver first appeared in
 .Ox 3.7 .
 Support for the RT2501 and RT2600 chipsets was added in
 .Ox 3.9 .
+Support for the RT2800 chipset was added in
+.Ox 4.3 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
 .An Damien Bergamini Aq damien@openbsd.org .
 .Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n-Draft 2.0 capabilities offered by
+the RT2800 chipset.
+Additional work is required in
+.Xr ieee80211 9
+before thos features can be supported.
+.Pp
 Some PCI
 .Nm
 adapters seem to strictly require a system supporting PCI 2.2 or greater and
