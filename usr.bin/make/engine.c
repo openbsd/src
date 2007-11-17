@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2007/11/10 12:51:40 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.15 2007/11/17 16:32:04 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -316,7 +316,7 @@ Make_OODate(GNode *gn)
 	 * Certain types of targets needn't even be sought as their datedness
 	 * doesn't depend on their modification time...
 	 */
-	if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
+	if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_PHONY)) == 0) {
 		(void)Dir_MTime(gn);
 		if (DEBUG(MAKE)) {
 			if (!is_out_of_date(gn->mtime))
