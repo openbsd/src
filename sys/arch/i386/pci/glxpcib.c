@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.3 2007/11/16 21:07:01 mbalmer Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.4 2007/11/17 09:16:51 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -108,17 +108,15 @@
 
 /* GPIO */
 #define	MSR_LBAR_GPIO		0x5140000c
-
-#define AMD5536_GPIO_NPINS	32
-
-#define AMD5536_GPIOH_OFFSET	0x80	/* high bank register offset */
-
-#define AMD5536_GPIO_OUT_VAL	0x00	/* output value */
-#define AMD5536_GPIO_OUT_EN	0x04	/* output enable */
-#define AMD5536_GPIO_OD_EN	0x08	/* open-drain enable */
-#define AMD5536_GPIO_PU_EN	0x18	/* pull-up enable */
-#define AMD5536_GPIO_IN_EN	0x20	/* input enable */
-#define AMD5536_GPIO_READ_BACK	0x30	/* read back value */
+#define	AMD5536_GPIO_NPINS	32
+#define	AMD5536_GPIOH_OFFSET	0x80	/* high bank register offset */
+#define	AMD5536_GPIO_OUT_VAL	0x00	/* output value */
+#define	AMD5536_GPIO_OUT_EN	0x04	/* output enable */
+#define	AMD5536_GPIO_OD_EN	0x08	/* open-drain enable */
+#define	AMD5536_GPIO_PU_EN	0x18	/* pull-up enable */
+#define	AMD5536_GPIO_PD_EN	0x1c	/* pull-down enable */
+#define	AMD5536_GPIO_IN_EN	0x20	/* input enable */
+#define	AMD5536_GPIO_READ_BACK	0x30	/* read back value */
 
 struct glxpcib_softc {
 	struct device		sc_dev;
@@ -338,6 +336,9 @@ glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 		break;
 	case GPIO_PIN_PULLUP:
 		reg = AMD5536_GPIO_PU_EN;
+		break;
+	case GPIO_PIN_PULLDOWN:
+		reg = AMD5536_GPIO_PD_EN;
 		break;
 	default:
 		/* flag not support by the AMD5536 GPIO */
