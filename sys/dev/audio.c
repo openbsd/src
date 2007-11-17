@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.88 2007/10/28 13:27:05 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.89 2007/11/17 13:31:30 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -169,9 +169,35 @@ static struct portname otable[] = {
 	{ AudioNline,		AUDIO_LINE_OUT },
 	{ 0 }
 };
+struct gainpref {
+	char *class, *device;
+};
+static struct gainpref ipreftab[] = {
+	{ AudioCinputs, AudioNvolume },
+	{ AudioCinputs, AudioNinput  },
+	{ AudioCinputs, AudioNrecord },
+	{ AudioCrecord, AudioNvolume },
+	{ AudioCrecord, AudioNrecord },
+	{ NULL, NULL}
+};
+static struct gainpref opreftab[] = {
+	{ AudioCoutputs, AudioNoutput },
+	{ AudioCoutputs, AudioNdac },
+	{ AudioCinputs,  AudioNdac },
+	{ AudioCoutputs, AudioNmaster },
+	{ NULL, NULL}
+};
+static struct gainpref mpreftab[] = {
+	{ AudioCoutputs, AudioNmonitor },
+	{ AudioCmonitor, AudioNmonitor },
+	{ NULL, NULL}
+};
+
+void	au_gain_match(struct audio_softc *, struct gainpref *, 
+		mixer_devinfo_t *, mixer_devinfo_t *, int *, int *);			    
 void	au_check_ports(struct audio_softc *, struct au_mixer_ports *,
-			    mixer_devinfo_t *, int, char *, char *,
-			    struct portname *);
+		            mixer_devinfo_t *, mixer_devinfo_t *, 
+		            char *, char *, struct portname *);
 int	au_set_gain(struct audio_softc *, struct au_mixer_ports *,
 			 int, int);
 void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
@@ -236,8 +262,8 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	struct audio_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 	int error;
-	mixer_devinfo_t mi;
-	int iclass, oclass, mclass;
+	mixer_devinfo_t mi, cl;
+	int ipref, opref, mpref;
 
 	printf("\n");
 
@@ -295,7 +321,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	audio_init_ringbuffer(&sc->sc_pr);
 	audio_calcwater(sc);
 
-	iclass = oclass = mclass = -1;
+	ipref = opref = mpref = -1;
 	sc->sc_inports.index = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
@@ -310,31 +336,20 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
-		if (mi.type == AUDIO_MIXER_CLASS &&
-		    strcmp(mi.label.name, AudioCrecord) == 0)
-			iclass = mi.index;
-		if (mi.type == AUDIO_MIXER_CLASS &&
-		    strcmp(mi.label.name, AudioCmonitor) == 0)
-			mclass = mi.index;
-		if (mi.type == AUDIO_MIXER_CLASS &&
-		    strcmp(mi.label.name, AudioCoutputs) == 0)
-			oclass = mi.index;
-	}
-	for(mi.index = 0; ; mi.index++) {
-		if (hwp->query_devinfo(hdlp, &mi) != 0)
-			break;
 		if (mi.type == AUDIO_MIXER_CLASS)
 			continue;
-		au_check_ports(sc, &sc->sc_inports,  &mi, iclass,
-		    AudioNsource, AudioNrecord, itable);
-		au_check_ports(sc, &sc->sc_outports, &mi, oclass,
-		    AudioNoutput, AudioNmaster, otable);
-		if (mi.mixer_class == mclass &&
-		    (strcmp(mi.label.name, AudioNmonitor) == 0))
-			sc->sc_monitor_port = mi.index;
-		if ((sc->sc_monitor_port == -1) && (mi.mixer_class == oclass) &&
-		    (strcmp(mi.label.name, AudioNmonitor) == 0))
-			sc->sc_monitor_port = mi.index;
+		cl.index = mi.mixer_class;
+		if (hwp->query_devinfo(hdlp, &cl) != 0)
+			continue;
+
+		au_gain_match(sc, ipreftab, &cl, &mi, &sc->sc_inports.master, &ipref);
+		au_gain_match(sc, opreftab, &cl, &mi, &sc->sc_outports.master, &opref);
+		au_gain_match(sc, mpreftab, &cl, &mi, &sc->sc_monitor_port, &mpref);
+
+		au_check_ports(sc, &sc->sc_inports,  &cl, &mi,
+		    AudioCrecord, AudioNsource, itable);
+		au_check_ports(sc, &sc->sc_outports, &cl, &mi,
+		    AudioCoutputs, AudioNselect, otable);
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
 		 sc->sc_inports.allports, sc->sc_outports.allports));
@@ -411,17 +426,13 @@ au_portof(struct audio_softc *sc, char *name)
 
 void
 au_check_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
-    mixer_devinfo_t *mi, int cls, char *name, char *mname, struct portname *tbl)
+    mixer_devinfo_t *cl, mixer_devinfo_t *mi, char *cname, char *mname, 
+    struct portname *tbl)
 {
 	int i, j;
 
-	if (mi->mixer_class != cls)
-		return;
-	if (strcmp(mi->label.name, mname) == 0) {
-		ports->master = mi->index;
-		return;
-	}
-	if (strcmp(mi->label.name, name) != 0)
+	if (strcmp(cl->label.name, cname) != 0 ||
+	    strcmp(mi->label.name, mname) != 0)
 		return;
 	if (mi->type == AUDIO_MIXER_ENUM) {
 	    ports->index = mi->index;
@@ -452,6 +463,31 @@ au_check_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 		    }
 		}
 	    }
+	}
+}
+
+/*
+ * check if the given (class, device) is better
+ * than the current setting (*index), if so, set the
+ * current setting.
+ */
+void
+au_gain_match(struct audio_softc *sc, struct gainpref *tbl, 
+    mixer_devinfo_t *cls, mixer_devinfo_t *dev, int *index, int *pref) 
+{
+	int i;
+
+	for (i = *pref + 1; tbl[i].class != NULL; i++) {
+		if (strcmp(tbl[i].class, cls->label.name) == 0 &&
+		    strcmp(tbl[i].device, dev->label.name) == 0) {
+			if (*pref < i) {
+				DPRINTF(("au_gain_match: found %s.%s\n", 
+				    cls->label.name, dev->label.name));
+				*index = dev->index;
+				*pref = i;
+			}
+			break;
+		}
 	}
 }
 
