@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.58 2007/10/31 16:19:25 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.59 2007/11/17 09:33:53 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 31 2007 $
+.Dd $Mdocdate: November 17 2007 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -144,6 +144,9 @@ line typed as a command.
 While entering a command the
 current character erase, word erase, and line kill characters
 may be used.
+.It Ic q
+Exit
+.Nm .
 .El
 .Pp
 The following commands are interpreted by the
