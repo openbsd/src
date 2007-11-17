@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.34 2007/10/15 01:37:49 fgsch Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.35 2007/11/17 14:29:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1140,6 +1140,8 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 				panic("%s: could not load old rx mbuf",
 				    sc->sc_dev.dv_xname);
 			}
+			/* physical address may have changed */
+			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 			ifp->if_ierrors++;
 			goto skip;
 		}

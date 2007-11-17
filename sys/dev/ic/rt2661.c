@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.39 2007/10/15 01:37:49 fgsch Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.40 2007/11/17 14:29:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -154,7 +154,6 @@ int		rt2661_prepare_beacon(struct rt2661_softc *);
 void		rt2661_enable_tsf_sync(struct rt2661_softc *);
 int		rt2661_get_rssi(struct rt2661_softc *, uint8_t);
 void		rt2661_power(int, void *);
-void		rt2661_shutdown(void *);
 
 static const struct {
 	uint32_t	reg;
@@ -332,6 +331,7 @@ rt2661_attach(void *xsc, int id)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	}
+
 	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -361,6 +361,7 @@ rt2661_detach(void *xsc)
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
+
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
@@ -766,7 +767,6 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	enum ieee80211_state ostate;
 	struct ieee80211_node *ni;
 	uint32_t tmp;
-	int error = 0;
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->scan_to);
@@ -822,7 +822,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
-	return (error != 0) ? error : sc->sc_newstate(ic, nstate, arg);
+	return sc->sc_newstate(ic, nstate, arg);
 }
 
 /*
@@ -1063,6 +1063,8 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 				panic("%s: could not load old rx mbuf",
 				    sc->sc_dev.dv_xname);
 			}
+			/* physical address may have changed */
+			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -2660,7 +2662,8 @@ rt2661_load_microcode(struct rt2661_softc *sc, const uint8_t *ucode, int size)
 		DELAY(100);
 	}
 	if (ntries == 500) {
-		printf("timeout waiting for MCU to initialize\n");
+		printf("%s: timeout waiting for MCU to initialize\n",
+		    sc->sc_dev.dv_xname);
 		return EIO;
 	}
 	return 0;
