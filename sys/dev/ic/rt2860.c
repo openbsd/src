@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.3 2007/11/16 21:34:28 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.4 2007/11/17 12:04:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2311,7 +2311,7 @@ rt2860_init(struct ifnet *ifp)
 
 	if (!(sc->sc_flags & RT2860_FWLOADED)) {
 		if ((error = rt2860_load_microcode(sc)) != 0) {
-			printf("%s: could not load microcode\n",
+			printf("%s: could not load 8051 microcode\n",
 			    sc->sc_dev.dv_xname);
 			rt2860_stop(ifp, 1);
 			return error;
@@ -2575,7 +2575,7 @@ rt2860_load_microcode(struct rt2860_softc *sc)
 		DELAY(1000);
 	}
 	if (ntries == 1000) {
-		printf("%s: timeout waiting for microcontroller unit\n",
+		printf("%s: timeout waiting for MCU to initialize\n",
 		    sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
