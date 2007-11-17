@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.51 2007/10/22 03:08:53 fgsch Exp $	*/
+/*	$OpenBSD: pci.c,v 1.52 2007/11/17 23:20:38 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -363,9 +363,10 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(reg)) {
 	case 0:	/* standard device header */
+	case 1: /* PCI-PCI bridge header */
 		ofs = PCI_CAPLISTPTR_REG;
 		break;
-	case 2:	/* PCI-CardBus Bridge header */
+	case 2:	/* PCI-CardBus bridge header */
 		ofs = PCI_CARDBUS_CAPLISTPTR_REG;
 		break;
 	default:
