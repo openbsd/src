@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.436 2007/11/16 16:25:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.437 2007/11/17 12:20:50 damien Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -51,7 +51,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	ucom.4 uchcom.4 ucycom.4 udav.4 udcf.4 udp.4 udsbr.4 \
 	ueagle.4 uftdi.4 ugen.4 uhci.4 uhid.4 uhidev.4 uipaq.4 uk.4 ukbd.4 \
 	ukphy.4 ulpt.4 umass.4 umbg.4 umct.4 umidi.4 umodem.4 ums.4 umsm.4 \
-	unix.4 uow.4 upl.4 uplcom.4 urio.4 url.4 urlphy.4 usb.4 usbf.4 \
+	unix.4 uow.4 upl.4 uplcom.4 ural.4 urio.4 url.4 urlphy.4 usb.4 usbf.4 \
 	uscanner.4 uslcom.4 usscanner.4 uticom.4 uts.4 uvisor.4 uvscom.4 \
 	uyap.4 vga.4 vgafb.4 vge.4 viaenv.4 viapm.4 viasio.4 vic.4 \
 	vlan.4 vnd.4 vr.4 watchdog.4 wb.4 wbenv.4 wbng.4 wd.4 wdc.4 \
@@ -70,7 +70,6 @@ MLINKS+=netintro.4 networking.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=pty.4 ptm.4
-MLINKS+=ral.4 ural.4
 MLINKS+=random.4 arandom.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=scsi.4 scsibus.4

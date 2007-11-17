@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.74 2007/11/17 12:20:50 damien Exp $
+.\" $OpenBSD: ural.4,v 1.1 2007/11/17 12:20:50 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -17,46 +17,21 @@
 .\"
 .Dd $Mdocdate: November 17 2007 $
 .Os
-.Dt RAL 4
+.Dt URAL 4
 .Sh NAME
-.Nm ral
-.Nd Ralink Technology IEEE 802.11a/b/g/Draft-N wireless network device
+.Nm ural
+.Nd Ralink Technology USB IEEE 802.11a/b/g wireless network device
 .Sh SYNOPSIS
-.Cd "ral* at cardbus?"
-.Cd "ral* at pci?"
+.Cd "ural* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI/PCIe/CardBus wireless adapters based on the Ralink RT2500,
-RT2501, RT2600 and RT2800 chipsets.
+driver supports USB 2.0 wireless adapters based on the Ralink RT2500USB
+chipset.
 .Pp
-The RT2500 chipset is the first generation of 802.11b/g adapters from Ralink.
-It consists of two integrated chips, an RT2560 MAC/BBP and an RT2525 radio
+The RT2500USB chipset is the first generation of 802.11b/g adapters from Ralink.
+It consists of two integrated chips, an RT2570 MAC/BBP and an RT2526 radio
 transceiver.
-.Pp
-The RT2501 chipset is the second generation of 802.11a/b/g adapters from
-Ralink.
-It consists of two integrated chips, an RT2561 MAC/BBP and an RT2527 radio
-transceiver.
-This chipset provides support for the IEEE 802.11e standard with multiple
-hardware transmission queues and allows scatter/gather for efficient DMA
-operations.
-.Pp
-The RT2600 chipset consists of two integrated chips, an RT2661 MAC/BBP and an
-RT2529 radio transceiver.
-This chipset uses the MIMO (multiple-input multiple-output) technology with
-multiple radio transceivers to extend the operating range of the adapter and
-to achieve higher throughput.
-However, the RT2600 chipset does not support any of the 802.11n features.
-.Pp
-The RT2800 chipset is the first generation of 802.11n-Draft 2.0 adapters
-from Ralink.
-It consists of two integrated chips, an RT2860 or RT2890 MAC/BBP and an
-RT2820 (2.4GHz) or RT2850 (2.4GHz/5GHz) radio transceiver.
-The RT2800 chipset supports up to two transmit paths and three receiver paths
-(aka 2T3R).
-It can achieve speeds up to 144Mbps (20MHz bandwidth) and 300Mbps (40MHz
-bandwidth.)
 .Pp
 These are the modes the
 .Nm
@@ -233,151 +208,49 @@ or 104-bit (13 characters or 26 hexadecimal digits) keys.
 Disable WEP encryption.
 This is the default mode of operation.
 .El
-.Sh FILES
-The RT2501, RT2600 and RT2800 chipsets require the following firmware
-files to be loaded when an interface is brought up:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/ral-rt2561
-.It /etc/firmware/ral-rt2561s
-.It /etc/firmware/ral-rt2661
-.It /etc/firmware/ral-rt2860
-.El
-.Pp
-The firmware for the RT2800 chipset cannot be redistributed with the base
-system because of license restrictions.
-A prepackaged version of the firmware, designed to be used with
-.Xr pkg_add 1 ,
-can be found at:
-.Pp
-.Pa http://damien.bergamini.free.fr/packages/openbsd/ral-firmware-1.0.tgz
-.Pp
-The RT2500 chipset does not require a firmware to operate.
 .Sh HARDWARE
-The following PCI adapters should work:
+The following adapters should work:
 .Bd -filled
-A-Link WL54H.
-Amigo AWI-926W.
-AMIT WL531P.
-AOpen AOI-831.
-ASUS WL-130g.
-ASUS WIFI-G-AAY.
-Atlantis Land A02-PCI-W54.
-Belkin F5D7000 v3.
-Canyon CN-WF511.
-CNet CWP-854.
-Compex WLP54G.
-Conceptronic C54Ri.
-Corega CG-WLPCI54GL.
-Digitus DN-7006G-RA.
-Dynalink WLG25PCI.
-E-Tech WGPI02.
-Edimax EW-7128g.
-Eminent EM3037.
-Encore ENLWI-G-RLAM.
-Eusso UGL2454-VPR.
-Fiberline WL-400P.
-Foxconn WLL-3350.
-Gigabyte GN-WPKG.
-Gigabyte GN-WP01GS.
-Gigabyte GN-WI02GM.
-Gigabyte GN-WP01GM.
-Hawking HWP54GR.
-Hercules HWGPCI-54.
-iNexQ CR054g-009 (R03).
-JAHT WN-4054PCI.
-KCORP LifeStyle KLS-660.
-LevelOne WNC-0301 v2.
-Linksys WMP54G v4.
-Micronet SP906GK.
-Minitar MN54GPC-R.
-MSI MS-6834.
-MSI PC54G2.
-OvisLink EVO-W54PCI.
-PheeNet HWL-PCIG/RA.
-Pro-Nets PC80211G.
-Repotec RP-WP0854.
-SATech SN-54P.
-Signamax 065-1798.
-Sitecom WL-115.
-SparkLAN WL-660R.
-Surecom EP-9321-g.
-Surecom EP-9321-g1.
-Sweex LC700030.
-TekComm NE-9321-g.
-Tonze PC-6200C.
-Unex CR054g-R02.
-Zinwell ZWX-G361.
-Zonet ZEW1600.
-.Ed
-.Pp
-The following CardBus adapters should work:
-.Bd -filled
-A-Link WL54PC.
-Alfa AWPC036.
-Amigo AWI-914W.
-AMIT WL531C.
-ASUS WL-107G.
-Atlantis Land A02-PCM-W54.
-Belkin F5D7010 v2.
-Canyon CN-WF513.
-CC&C WL-2102.
-CNet CWC-854.
-Compex WL54.
-Conceptronic C54RC.
-Corega CG-WLCB54GL.
-Digiconnect WL591C.
-Digitus DN-7001G-RA.
-Dynalink WLG25CARDBUS.
-E-Tech WGPC02.
-E-Tech WGPC03.
-Edimax EW-7108PCg.
-Eminent EM3036.
-Encore ENPWI-G-RLAM.
-Eusso UGL2454-01R.
-Fiberline WL-400X.
-Gigabyte GN-WMKG.
-Gigabyte GN-WM01GS.
-Gigabyte GN-WM01GM.
-Hawking HWC54GR.
-Hercules HWGPCMCIA-54.
-JAHT WN-4054P(E).
-KCORP LifeStyle KLS-611.
-LevelOne WPC-0301 v2.
-Micronet SP908GK V3.
-Minitar MN54GCB-R.
-MSI CB54G2.
-MSI MS-6835.
-Pro-Nets CB80211G.
-Repotec RP-WB7108.
-SATech SN-54C.
-Sitecom WL-112.
-SparkLAN WL-611R.
-Surecom EP-9428-g.
-Sweex LC500050.
-TekComm NE-9428-g.
-Tonze PW-6200C.
-Unex MR054g-R02.
-Zinwell ZWX-G160.
-Zonet ZEW1500.
-.Ed
-.Pp
-The following Mini PCI adapters should work:
-.Bd -filled
-Amigo AWI-922W.
-Billionton MIWLGRL.
-Gigabyte GN-WIKG.
-Gigabyte GN-WI01GS.
-Gigabyte GN-WI02GM.
-MSI MP54G2.
-MSI MS-6833.
-Tonze PC-620C.
-Zinwell ZWX-G360.
+AMIT WL532U.
+ASUS WL-167g v1.
+Belkin F5D7050 v2000.
+Buffalo WLI-U2-KG54.
+Buffalo WLI-U2-KG54-AI.
+Buffalo WLI-U2-KG54-YB.
+CNet CWD-854.
+Compex WLU54G 2A1100.
+Conceptronic C54RU.
+D-Link DWL-G122 (b1).
+Dynalink WLG25USB.
+E-Tech WGUS02.
+Eminent EM3035.
+Gigabyte GN-WBKG.
+Hercules HWGUSB2-54.
+KCORP LifeStyle KLS-685.
+Linksys HU200-TS.
+Linksys WUSB54G v4.
+Linksys WUSB54GP v4.
+MSI MS-6861.
+MSI MS-6865.
+MSI MS-6869.
+Nintendo Wi-Fi USB Connector.
+Nova Tech NV-902W.
+OvisLink Evo-W54USB.
+SerComm UB801R.
+SparkLAN WL-685R.
+Sphairon UB801R.
+Surecom EP-9001-g rev 3A.
+Sweex LC100060.
+Tonze UW-6200C.
+Zaapa ZNWUSB-54.
+Zinwell ZPlus-G250.
+Zinwell ZWX-G261.
+Zonet ZEW2500P.
 .Ed
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
-example configures ral0 to join whatever network is available on boot,
+example configures ural0 to join whatever network is available on boot,
 using WEP key
 .Dq 0x1deadbeef1 ,
 channel 11, obtaining an IP address using DHCP:
@@ -393,46 +266,36 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
-Configure ral0 for WEP, using hex key
+Configure ural0 for WEP, using hex key
 .Dq 0x1deadbeef1 :
 .Bd -literal -offset indent
-# ifconfig ral0 nwkey 0x1deadbeef1
+# ifconfig ural0 nwkey 0x1deadbeef1
 .Ed
 .Pp
-Return ral0 to its default settings:
+Return ural0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig ral0 -bssid -chan media autoselect \e
+# ifconfig ural0 -bssid -chan media autoselect \e
 	nwid "" -nwkey
 .Ed
 .Pp
 Join an existing BSS network,
 .Dq my_net :
 .Bd -literal -offset indent
-# ifconfig ral0 192.168.1.1 netmask 0xffffff00 nwid my_net
+# ifconfig ural0 192.168.1.1 netmask 0xffffff00 nwid my_net
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "ral%d: error %d, could not read firmware %s"
-For some reason, the driver was unable to read the firmware image from the
-filesystem.
-The file might be missing or corrupted.
-.It "ral%d: could not load 8051 microcode"
-An error occurred while attempting to upload the microcode to the onboard 8051
-microcontroller unit.
-.It "ral%d: timeout waiting for MCU to initialize"
-The onboard 8051 microcontroller unit failed to initialize in time.
-.It "ral%d: device timeout"
+.It "ural%d: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr cardbus 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
-.Xr pci 4 ,
+.Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr hostapd 8 ,
 .Xr ifconfig 8
@@ -444,10 +307,6 @@ The
 .Nm
 driver first appeared in
 .Ox 3.7 .
-Support for the RT2501 and RT2600 chipsets was added in
-.Ox 3.9 .
-Support for the RT2800 chipset was added in
-.Ox 4.3 .
 .Sh AUTHORS
 The
 .Nm
@@ -456,15 +315,7 @@ driver was written by
 .Sh CAVEATS
 The
 .Nm
-driver does not support any of the 802.11n-Draft 2.0 capabilities offered by
-the RT2800 chipset.
-Additional work is required in
-.Xr ieee80211 9
-before thos features can be supported.
-.Pp
-Some PCI
+driver supports automatic control of the transmit speed in BSS mode only.
+Therefore the use of an
 .Nm
-adapters seem to strictly require a system supporting PCI 2.2 or greater and
-will likely not work in systems based on older revisions of the PCI
-specification.
-Check the board's PCI version before purchasing the card.
+adapter in Host AP mode is discouraged.
