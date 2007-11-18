@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihpet.c,v 1.4 2007/02/20 23:54:46 marco Exp $	*/
+/*	$OpenBSD: acpihpet.c,v 1.5 2007/11/18 17:27:50 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -90,6 +90,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_hpet *hpet = (struct acpi_hpet *)aaa->aaa_table;
 	u_int64_t period, freq;	/* timer period in femtoseconds (10^-15) */
+	u_int32_t v1, v2;
 
 	if (acpi_map_address(psc, &hpet->base_address, 0, HPET_REG_SIZE,
 	    &sc->sc_ioh, &sc->sc_iot))	{
@@ -97,8 +98,28 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* enable hpet */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, HPET_CONFIGURATION, 1);
+
+	/* make sure hpet is working */
+	v1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
+	delay(1);
+	v2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
+	if (v1 == v2) {
+		printf(": counter not incrementing\n");
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION, 0);
+		return;
+	}
+
 	period = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    HPET_CAPABILITIES + sizeof(u_int32_t));
+	if (period == 0) {
+		printf(": invalid period\n");
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION, 0);
+		return;
+	}
 	freq =  1000000000000000ull / period;
 	printf(": %lld Hz\n", freq);
 
@@ -106,7 +127,6 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	hpet_timecounter.tc_frequency = (u_int32_t)freq;
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, HPET_CONFIGURATION, 1);
 	tc_init(&hpet_timecounter);
 #endif
 }
