@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.42 2007/10/06 12:32:09 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.43 2007/11/18 18:10:13 krw Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -70,7 +70,6 @@ struct cfdriver eephy_cd = {
 	NULL, "eephy", DV_DULL
 };
 
-int	eephy_mii_phy_auto(struct mii_softc *);
 void	eephy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs eephy_funcs = {
