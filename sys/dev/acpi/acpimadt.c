@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.14 2007/11/16 16:21:05 deraadt Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.15 2007/11/18 21:52:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -293,10 +293,20 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		addr += entry->madt_lapic.length;
 	}
 
+	/*
+	 * ISA interrupts are supposed to be identity mapped unless
+	 * there is an override, in which case we will already have a
+	 * mapping for the interrupt.
+	 */
 	for (pin = 0; pin < ICU_LEN; pin++) {
-		apic = ioapic_find_bybase(pin);
-		if (apic->sc_pins[pin].ip_map != NULL)
+		/* Skip if we already have a mapping for this interrupt. */
+		for (map = mp_isa_bus->mb_intrs; map != NULL; map = map->next)
+			if (map->bus_pin == pin)
+				break;
+		if (map != NULL)
 			continue;
+
+		apic = ioapic_find_bybase(pin);
 
 		map = malloc(sizeof(*map), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (map == NULL)
