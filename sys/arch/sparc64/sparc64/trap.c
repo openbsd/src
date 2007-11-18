@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2007/10/31 22:46:52 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2007/11/18 21:16:44 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1358,9 +1358,11 @@ syscall(tf, code, pc)
 			*argp++ = *ap++;
 		
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code,
-				   callp->sy_argsize, args);
+		if (KTRPOINT(p, KTR_SYSCALL)) {
+			KERNEL_PROC_LOCK(p);
+			ktrsyscall(p, code, callp->sy_argsize, args);
+			KERNEL_PROC_UNLOCK(p);
+		}
 #endif
 		if (error)
 			goto bad;
