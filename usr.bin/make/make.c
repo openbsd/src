@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.50 2007/11/17 16:39:45 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.51 2007/11/18 09:20:25 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -234,18 +234,17 @@ try_to_make_node(GNode *gn)
 					printf(
 					    "predecessor %s not made yet.\n", 
 					    pgn->name);
-				break;
+				/*
+				 * there's a predecessor as yet unmade, so we
+				 * just drop this node on the floor. When the
+				 * node in question has been made, it will
+				 * notice this node as being ready to make but
+				 * as yet unmade and will place the node on the
+				 * queue.
+				 */
+				return false;
 			}
 		}
-		/*
-		 * If ln isn't NULL, there's a predecessor as yet
-		 * unmade, so we just drop this node on the floor. When
-		 * the node in question has been made, it will notice
-		 * this node as being ready to make but as yet unmade
-		 * and will place the node on the queue.
-		 */
-		if (ln != NULL)
-			return false;
 	}
 
 	numNodes--;
