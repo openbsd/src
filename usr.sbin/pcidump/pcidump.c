@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.9 2007/11/17 18:32:21 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.10 2007/11/18 00:33:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -35,6 +35,7 @@
 __dead void usage(void);
 int probe(int, int, int);
 void dump(int, int, int);
+void hexdump(int, int, int, int);
 const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
@@ -44,13 +45,14 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-v] [-d pcidev] [dev:bus:func]\n",
+	fprintf(stderr, "usage: %s [-v|-x|-xx] [-d pcidev] [dev:bus:func]\n",
 	    __progname);
 	exit(1);
 }
 
 int pcifd;
 int verbose = 0;
+int hex = 0;
 
 int
 main(int argc, char *argv[])
@@ -61,13 +63,16 @@ main(int argc, char *argv[])
 	const char *errstr;
 	int c, error = 0;
 
-	while ((c = getopt(argc, argv, "d:v")) != -1) {
+	while ((c = getopt(argc, argv, "d:vx")) != -1) {
 		switch (c) {
 		case 'd':
 			pcidev = optarg;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'x':
+			hex++;
 			break;
 		default:
 			usage();
@@ -76,7 +81,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc > 1 || (verbose && hex))
 		usage();
 
 	pcifd = open(pcidev, O_RDONLY, 0777);
@@ -178,6 +183,8 @@ probe(int bus, int dev, int func)
 
 	if (verbose)
 		dump(bus, dev, func);
+	if (hex > 0)
+		hexdump(bus, dev, func, hex > 1);
 
 	return (0);
 }
@@ -416,6 +423,25 @@ dump(int bus, int dev, int func)
 		break;
 	}
 
+}
+
+void
+hexdump(int bus, int dev, int func, int full)
+{
+	u_int32_t reg;
+	int i;
+
+	for (i = 0; i < (full ? 256 : 64); i += 4) {
+		if ((i % 16) == 0)
+			printf("\t0x%04x:", i);
+
+		if (pci_read(bus, dev, func, i, &reg) != 0)
+			warn("unable to read 0x%02x", i);
+		printf(" %08x", reg);
+
+		if ((i % 16) == 12)
+			printf("\n");
+	}
 }
 
 int

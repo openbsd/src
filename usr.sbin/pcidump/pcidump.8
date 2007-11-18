@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcidump.8,v 1.3 2007/10/22 08:29:09 jmc Exp $
+.\"	$OpenBSD: pcidump.8,v 1.4 2007/11/18 00:33:45 kettenis Exp $
 .\"
 .\" Copyright (c) 2007 Paul de Weerd <weerd@weirdnet.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2007 $
+.Dd $Mdocdate: November 18 2007 $
 .Dt PCIDUMP 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd show PCI device data
 .Sh SYNOPSIS
 .Nm pcidump
-.Op Fl v
+.Op Fl v | Fl x | Fl xx
 .Op Fl d Ar pcidev
 .Sm off
 .Op Ar dev : bus : func
@@ -45,6 +45,10 @@ The options are as follows:
 Specify another file to use for PCI lookups.
 .It Fl v
 Shows detailed information about PCI devices.
+.It Fl x
+Shows a hexadecimal dump of the first 64 bytes of PCI config space.
+.It Fl xx
+Shows a hexadecimal dump of the full PCI config space.
 .El
 .Sh FILES
 .Bl -tag -width /dev/pci -compact
