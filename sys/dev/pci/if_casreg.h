@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casreg.h,v 1.5 2007/04/22 12:20:42 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.6 2007/11/18 22:45:44 kettenis Exp $	*/
 
 /*
  *
@@ -206,6 +206,24 @@
 #define	CAS_RX_FIFO_DATA_HI_T0	0x408c
 #define	CAS_RX_FIFO_DATA_HI_T1	0x4090
 
+/* The following registers only exist on Cassini+. */
+#define	CAS_RX_DRING_PTR_LO2	0x4200
+#define	CAS_RX_DRING_PTR_HI2	0x4204
+#define	CAS_RX_CRING_PTR_LO2	0x4208
+#define	CAS_RX_CRING_PTR_HI2	0x420c
+#define	CAS_RX_CRING_PTR_LO3	0x4210
+#define	CAS_RX_CRING_PTR_HI3	0x4214
+#define	CAS_RX_CRING_PTR_LO4	0x4218
+#define	CAS_RX_CRING_PTR_HI4	0x421c
+#define	CAS_RX_KICK2		0x4220
+#define	CAS_RX_COMPLETION2	0x4224
+#define	CAS_RX_COMP_HEAD2	0x4228
+#define	CAS_RX_COMP_TAIL2	0x422c
+#define	CAS_RX_COMP_HEAD3	0x4230
+#define	CAS_RX_COMP_TAIL3	0x4234
+#define	CAS_RX_COMP_HEAD4	0x4238
+#define	CAS_RX_COMP_TAIL4	0x423c
+
 /* CAS_RX_CONFIG register bits. */
 #define	CAS_RX_CONFIG_RXDMA_EN	0x00000001	/* RX DMA enable */
 #define	CAS_RX_CONFIG_RXDRNG_SZ	0x0000001e	/* RX descriptor ring size */
@@ -213,9 +231,10 @@
 #define	CAS_RX_CONFIG_BATCH_DIS	0x00000200	/* desc batching disable */
 #define	CAS_RX_CONFIG_FBOFF	0x00001c00	/* first byte offset */
 
-#define CAS_RX_CONFIG_RXDRNG_SZ_SHIFT	1
-#define CAS_RX_CONFIG_RXCRNG_SZ_SHIFT	5
+#define	CAS_RX_CONFIG_RXDRNG_SZ_SHIFT	1
+#define	CAS_RX_CONFIG_RXCRNG_SZ_SHIFT	5
 #define	CAS_RX_CONFIG_FBOFF_SHFT	10
+#define	CAS_RX_CONFIG_RXDRNG2_SZ_SHIFT	16	/* Cassini+ */
 
 /* CAS_RX_PAGE_SIZE register bits. */
 #define	CAS_RX_PAGE_SIZE_SZ	0x00000003	/* Page size */
