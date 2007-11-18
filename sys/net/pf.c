@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.563 2007/11/16 14:03:37 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.564 2007/11/18 21:53:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -816,7 +816,6 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 		TAILQ_FOREACH(sp, &cur->states, next)
 			if (sp->kif == kif) {	/* collision! */
 				pf_stateins_err("tree_lan_ext", s, kif);
-				pf_detach_state(s, PF_DT_SKIP_LANEXT|PF_DT_SKIP_EXTGWY);
 				return (-1);
 			}
 		pf_detach_state(s, PF_DT_SKIP_LANEXT|PF_DT_SKIP_EXTGWY);
