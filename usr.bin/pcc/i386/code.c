@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.4 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -69,27 +69,19 @@ efcode()
 {
 	extern int gotnr;
 	NODE *p, *q;
-	int sz;
 
 	gotnr = 0;	/* new number for next fun */
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
-	/* address of return struct is in eax */
-	/* create a call to memcpy() */
-	/* will get the result in eax */
-	p = block(REG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
-	p->n_rval = EAX;
-	q = block(OREG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	/* Create struct assignment */
+	q = block(OREG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
 	q->n_rval = EBP;
 	q->n_lval = 8; /* return buffer offset */
-	p = block(CM, q, p, INT, 0, MKSUE(INT));
-	sz = (tsize(STRTY, cftnsp->sdf, cftnsp->ssue)+SZCHAR-1)/SZCHAR;
-	p = block(CM, p, bcon(sz), INT, 0, MKSUE(INT));
-	p->n_right->n_name = "";
-	p = block(CALL, bcon(0), p, CHAR+PTR, 0, MKSUE(CHAR+PTR));
-	p->n_left->n_name = "memcpy";
-	p = clocal(p);
-	send_passt(IP_NODE, p);
+	q = buildtree(UMUL, q, NIL);
+	p = block(REG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
+	p = buildtree(UMUL, p, NIL);
+	p = buildtree(ASSIGN, q, p);
+	ecomp(p);
 }
 
 /*

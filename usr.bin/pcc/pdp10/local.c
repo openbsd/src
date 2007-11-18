@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.2 2007/11/16 09:00:13 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.3 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -262,8 +262,6 @@ rmpc:			l->n_type = p->n_type;
 			case UNSIGNED:
 				l->n_lval = val & 0777777777777LL;
 				break;
-			case ENUMTY:
-			case MOETY:
 			case INT:
 				l->n_lval = val & 0777777777777LL;
 				if (val & 0400000000000LL)

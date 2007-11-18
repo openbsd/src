@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.8 2007/11/17 12:00:37 ragge Exp $	*/
+/*	$OpenBSD: trees.c,v 1.9 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -72,7 +72,6 @@
 # include <stdarg.h>
 
 static void chkpun(NODE *p);
-static int chkenum(int, int, NODE *p);
 static int opact(NODE *p);
 static int moditype(TWORD);
 static NODE *strargs(NODE *);
@@ -335,13 +334,11 @@ runtime:
 			p->n_sue = sp->ssue;
 			p->n_lval = 0;
 			p->n_sp = sp;
-			/* special case: MOETY is really an ICON... */
-			if (p->n_type == MOETY) {
-				p->n_sp = NULL;
+			if (sp->sclass == MOE) {
+				p->n_op = ICON;
 				p->n_lval = sp->soffset;
 				p->n_df = NULL;
-				p->n_type = ENUMTY;
-				p->n_op = ICON;
+				p->n_sp = NULL;
 			}
 			break;
 
@@ -759,16 +756,6 @@ chkpun(NODE *p)
 	if (BTYPE(t2) == VOID && (t1 & TMASK))
 		return;
 
-	/* check for enumerations */
-	if (t1 == ENUMTY || t2 == ENUMTY) {
-		if (clogop(p->n_op) && p->n_op != EQ && p->n_op != NE) {
-			werror("comparison of enums");
-			return;
-		}
-		if (chkenum(t1, t2, p))
-			return;
-	}
-
 	if (ISPTR(t1) || ISARY(t1))
 		q = p->n_right;
 	else
@@ -805,9 +792,6 @@ chkpun(NODE *p)
 				}
 				++d1;
 				++d2;
-			} else if (t1 == ENUMTY || t2 == ENUMTY) {
-				chkenum(t1, t2, p);
-				return;
 			} else
 				break;
 			t1 = DECREF(t1);
@@ -815,22 +799,6 @@ chkpun(NODE *p)
 		}
 		werror("illegal pointer combination");
 	}
-}
-
-static int
-chkenum(int t1, int t2, NODE *p)
-{
-	if (t1 == ENUMTY && t2 == ENUMTY) {
-		if (p->n_left->n_sue != p->n_right->n_sue)
-		werror("enumeration type clash, operator %s", copst(p->n_op));
-			return 1;
-	}
-	if ((t1 == ENUMTY && !(t2 >= CHAR && t2 <= UNSIGNED)) ||
-	    (t2 == ENUMTY && !(t1 >= CHAR && t1 <= UNSIGNED))) {
-		werror("illegal combination of enum and non-integer type");
-		return 1;
-	}
-	return 0;
 }
 
 NODE *
@@ -1024,34 +992,6 @@ convert(NODE *p, int f)
 	return(p);
 }
 
-/*
- * change enums to ints, or appropriate types
- */
-void
-econvert( p ) register NODE *p; {
-
-
-	register TWORD ty;
-
-	if( (ty=BTYPE(p->n_type)) == ENUMTY || ty == MOETY ) {
-		if (p->n_sue->suesize == SZCHAR)
-			ty = INT;
-		else if (p->n_sue->suesize == SZINT)
-			ty = INT;
-		else if (p->n_sue->suesize == SZSHORT)
-			ty = INT;
-		else if (p->n_sue->suesize == SZLONGLONG)
-			ty = LONGLONG;
-		else
-			ty = LONG;
-		ty = ctype(ty);
-		p->n_sue = MKSUE(ty);
-		MODTYPE(p->n_type,ty);
-		if (p->n_op == ICON && ty != LONG && ty != LONGLONG)
-			p->n_type = INT, p->n_sue = MKSUE(INT);
-	}
-}
-
 NODE *
 pconvert( p ) register NODE *p; {
 
@@ -1213,10 +1153,6 @@ tymatch(p)  register NODE *p; {
 		t2 = DEUNSIGN(t2);
 		}
 
-	if (t1 == ENUMTY || t1 == MOETY)
-		t1 = INT; /* XXX */
-	if (t2 == ENUMTY || t2 == MOETY)
-		t2 = INT; /* XXX */
 #if 0
 	if ((t1 == CHAR || t1 == SHORT) && o!= RETURN)
 		t1 = INT;
@@ -1295,8 +1231,6 @@ NODE *
 makety(NODE *p, TWORD t, TWORD q, union dimfun *d, struct suedef *sue)
 {
 
-	if (p->n_type == ENUMTY && p->n_op == ICON)
-		econvert(p);
 	if (t == p->n_type) {
 		p->n_df = d;
 		p->n_sue = sue;
@@ -1411,7 +1345,6 @@ icons(p) register NODE *p; {
 # define MSTR 04	/* structure */
 # define MPTR 010	/* pointer */
 # define MPTI 020	/* pointer or integer */
-# define MENU 040	/* enumeration variable or member */
 
 int
 opact(NODE *p)
@@ -1457,8 +1390,6 @@ opact(NODE *p)
 
 	case MUL:
 	case DIV:
-		if ((mt1&MDBI) && (mt2&MENU)) return( TYMATCH );
-		if ((mt2&MDBI) && (mt1&MENU)) return( TYMATCH );
 		if( mt12 & MDBI ) return( TYMATCH );
 		break;
 
@@ -1487,7 +1418,6 @@ opact(NODE *p)
 
 	case QUEST:
 	case COMOP:
-		if( mt2&MENU ) return( TYPR+NCVTR );
 		return( TYPR );
 
 	case STREF:
@@ -1509,12 +1439,6 @@ opact(NODE *p)
 		if( mt12 & MSTR ) return( LVAL+NCVT+TYPL+OTHER );
 	case CAST:
 		if( mt12 & MDBI ) return( TYPL+LVAL+TYMATCH );
-#if 0
-		else if(mt1&MENU && mt2&MDBI) return( TYPL+LVAL+TYMATCH );
-		else if(mt2&MENU && mt1&MDBI) return( TYPL+LVAL+TYMATCH );
-		else if( (mt1&MENU)||(mt2&MENU) )
-			return( LVAL+NCVT+TYPL+PTMATCH+PUN );
-#endif
 		else if( mt1 & MPTR) return( LVAL+PTMATCH+PUN );
 		else if( mt12 & MPTI ) return( TYPL+LVAL+TYMATCH+PUN );
 		break;
@@ -1570,10 +1494,6 @@ int
 moditype(TWORD ty)
 {
 	switch (ty) {
-
-	case ENUMTY:
-	case MOETY:
-		return( MENU|MINT|MDBI|MPTI );
 
 	case STRTY:
 	case UNIONTY:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: manifest.h,v 1.6 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: manifest.h,v 1.7 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -76,8 +76,8 @@
 #define	LDOUBLE		14
 #define	STRTY		15
 #define	UNIONTY		16
-#define	ENUMTY		17
-#define	MOETY		18	/* member of enum */
+/* #define	ENUMTY		17 */
+/* #define	MOETY		18 */	/* member of enum */
 #define	VOID		19
 
 #define	MAXTYPES	19	/* highest type+1 to be used by lang code */

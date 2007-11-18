@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.7 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.8 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -89,7 +89,7 @@ int reached, prolab;
 
 struct params;
 
-#define ISSTR(ty) (ty == STRTY || ty == UNIONTY || ty == ENUMTY)
+#define ISSTR(ty) (ty == STRTY || ty == UNIONTY)
 #define ISSOU(ty) (ty == STRTY || ty == UNIONTY)
 #define MKTY(p, t, d, s) r = talloc(); *r = *p; \
 	r = argcast(r, t, d, s); *p = *r; nfree(r);
@@ -204,8 +204,6 @@ defid(NODE *q, int class)
 		case STNAME:
 		case MOU:
 		case UNAME:
-		case MOE:
-		case ENAME:
 		case TYPEDEF:
 			;
 		}
@@ -254,9 +252,9 @@ defid(NODE *q, int class)
 #endif
 
 	/* check that redeclarations are to the same structure */
-	if ((temp == STRTY || temp == UNIONTY || temp == ENUMTY) &&
+	if ((temp == STRTY || temp == UNIONTY) &&
 	    p->ssue != q->n_sue &&
-	    class != STNAME && class != UNAME && class != ENAME) {
+	    class != STNAME && class != UNAME) {
 		goto mismatch;
 	}
 
@@ -334,9 +332,6 @@ defid(NODE *q, int class)
 		}
 		break;
 
-	case MOE:
-		break;
-
 	case EXTDEF:
 		switch (scl) {
 		case EXTERN:
@@ -350,7 +345,6 @@ defid(NODE *q, int class)
 
 	case STNAME:
 	case UNAME:
-	case ENAME:
 		if (scl != class)
 			break;
 		if (p->ssue->suesize == 0)
@@ -390,22 +384,26 @@ defid(NODE *q, int class)
 	p->slevel = blevel;
 	p->soffset = NOOFFSET;
 	p->suse = lineno;
-	if (class == STNAME || class == UNAME || class == ENAME) {
+	if (class == STNAME || class == UNAME) {
 		p->ssue = permalloc(sizeof(struct suedef));
 		suedefcnt++;
 		p->ssue->suesize = 0;
 		p->ssue->suelem = NULL; 
 		p->ssue->suealign = ALSTRUCT;
 	} else {
+		if (q->n_sue == NULL)
+			cerror("q->n_sue == NULL");
+		p->ssue = q->n_sue;
+#if 0
 		switch (BTYPE(type)) {
 		case STRTY:
 		case UNIONTY:
-		case ENUMTY:
 			p->ssue = q->n_sue;
 			break;
 		default:
 			p->ssue = MKSUE(BTYPE(type));
 		}
+#endif
 	}
 
 	/* copy dimensions */
@@ -464,12 +462,6 @@ defid(NODE *q, int class)
 			strucoff = 0;
 		ssave(p);
 		break;
-
-	case MOE:
-		p->soffset = strucoff++;
-		ssave(p);
-		break;
-
 	}
 
 #ifdef STABS
@@ -656,9 +648,9 @@ rstruct(char *tag, int soru)
 		q = block(NAME, NIL, NIL, 0, 0, 0);
 		q->n_sp = p;
 		q->n_type = (soru&INSTRUCT) ? STRTY :
-		    ((soru&INUNION) ? UNIONTY : ENUMTY);
+		    ((soru&INUNION) ? UNIONTY : 0);
 		defid(q, (soru&INSTRUCT) ? STNAME :
-		    ((soru&INUNION) ? UNAME : ENAME));
+		    ((soru&INUNION) ? UNAME : 0));
 		nfree(q);
 		break;
 
@@ -672,26 +664,122 @@ rstruct(char *tag, int soru)
 			break;
 		goto def;
 
-	case ENUMTY:
-		if (!(soru&(INUNION|INSTRUCT)))
-			break;
-		goto def;
-
 	}
 	q = mkty(p->stype, 0, p->ssue);
 	q->n_sue = p->ssue;
 	return q;
 }
 
+/*
+ * Declare a struct/union/enum tag.
+ * If not found, create a new tag with UNDEF type.
+ */
+static struct symtab *
+deftag(char *name, int class)
+{
+	struct symtab *sp;
+
+	sp = lookup(name, STAGNAME);
+	if (sp->ssue == NULL)
+		sp->ssue = permalloc(sizeof(struct suedef));
+	if (sp->sclass == SNULL) {
+		/* New tag */
+		sp->sclass = class;
+	} else if (sp->slevel < blevel) {
+		/* declared at different block level, hide it */
+		sp = hide(sp);
+		sp->sclass = class;
+	} else if (sp->sclass != class) {
+		/* redeclaration of tag */
+		uerror("tag %s redeclared", name);
+	}
+	return sp;
+}
+
+static int enumlow, enumhigh;
+int enummer;
+
+/*
+ * Declare a member of enum.
+ */
 void
 moedef(char *name)
 {
-	NODE *q;
+	struct symtab *sp;
 
-	q = block(NAME, NIL, NIL, MOETY, 0, 0);
-	q->n_sp = lookup(name, 0);
-	defid(q, MOE);
-	nfree(q);
+	sp = lookup(name, SNORMAL);
+	if (sp->stype == UNDEF || (sp->slevel < blevel)) {
+		if (sp->stype != UNDEF)
+			sp = hide(sp);
+		sp->stype = INT; /* always */
+		sp->ssue = MKSUE(INT);
+		sp->sclass = MOE;
+		sp->soffset = enummer;
+	} else
+		uerror("%s redeclared", name);
+	if (enummer < enumlow)
+		enumlow = enummer;
+	if (enummer > enumhigh)
+		enumhigh = enummer;
+	enummer++;
+}
+
+/*
+ * Declare an enum tag.  Complain if already defined.
+ */
+struct symtab *
+enumhd(char *name)
+{
+	struct symtab *sp;
+
+	enummer = enumlow = enumhigh = 0;
+	if (name == NULL)
+		return NULL;
+
+	sp = deftag(name, ENAME);
+	if (sp->stype != UNDEF) /* enum type already declared */
+		uerror("%s redeclared", name);
+	return sp;
+}
+
+/*
+ * finish declaration of an enum
+ */
+NODE *
+enumdcl(struct symtab *sp)
+{
+	TWORD t;
+
+#ifdef ENUMSIZE
+	t = ENUMSIZE(enumhigh, enumlow);
+#else
+	if (enumhigh <= MAX_CHAR && enumlow >= MIN_CHAR)
+		t = ctype(CHAR);
+	else if (enumhigh <= MAX_SHORT && enumlow >= MIN_SHORT)
+		t = ctype(SHORT);
+	else
+		t = ctype(INT);
+#endif
+	if (sp) {
+		sp->stype = t;
+		sp->ssue = MKSUE(t);
+	}
+	return mkty(t, 0, MKSUE(t));
+}
+
+/*
+ * Handle reference to an enum
+ */
+NODE *
+enumref(char *name)
+{
+	struct symtab *sp;
+
+	sp = lookup(name, STAGNAME);
+	if (sp->sclass != ENAME)
+		uerror("enum %s undeclared", name);
+
+	return mkty(sp->stype, 0, sp->ssue);
 }
 
 /*
@@ -728,11 +816,8 @@ bstruct(char *name, int soru)
 		q->n_type = UNIONTY;
 		if (s != NULL)
 			defid(q, UNAME);
-	} else { /* enum */
-		strunem = MOE;
-		q->n_type = ENUMTY;
-		if (s != NULL)
-			defid(q, ENAME);
+	} else {
+		cerror("bstruct");
 	}
 	r->rsym = q->n_sp;
 	r->rlparam = lparam;
@@ -767,7 +852,7 @@ dclstruct(struct rstack *r, int pa)
 	if (ddebug)
 		printf("dclstruct(%s)\n", r->rsym ? r->rsym->sname : "??");
 #endif
-	temp = (instruct&INSTRUCT)?STRTY:((instruct&INUNION)?UNIONTY:ENUMTY);
+	temp = (instruct&INSTRUCT)?STRTY:((instruct&INUNION)?UNIONTY:0);
 	instruct = r->rinstruct;
 	strunem = r->rclass;
 	al = ALSTRUCT;
@@ -793,14 +878,6 @@ dclstruct(struct rstack *r, int pa)
 
 		if (p == NULL)
 			cerror("gummy structure member");
-		if (temp == ENUMTY) {
-			if (p->soffset < low)
-				low = p->soffset;
-			if (p->soffset > high)
-				high = p->soffset;
-			p->ssue = sue;
-			continue;
-		}
 		sa = talign(p->stype, p->ssue);
 		if (p->sclass & FIELD)
 			sz = p->sclass&FLDSIZ;
@@ -826,23 +903,6 @@ dclstruct(struct rstack *r, int pa)
 	}
 	sue->suelem[i] = NULL;
 	SETOFF(strucoff, al);
-
-	if (temp == ENUMTY) {
-		TWORD ty;
-
-#ifdef ENUMSIZE
-		ty = ENUMSIZE(high,low);
-#else
-		if ((char)high == high && (char)low == low)
-			ty = ctype(CHAR);
-		else if ((short)high == high && (short)low == low)
-			ty = ctype(SHORT);
-		else
-			ty = ctype(INT);
-#endif
-		strucoff = tsize(ty, 0, MKSUE(ty));
-		sue->suealign = al = talign(ty, MKSUE(ty));
-	}
 
 	sue->suesize = strucoff;
 	sue->suealign = al;
@@ -1001,7 +1061,6 @@ talign(unsigned int ty, struct suedef *sue)
 	switch( BTYPE(ty) ){
 
 	case UNIONTY:
-	case ENUMTY:
 	case STRTY:
 		return((unsigned int)sue->suealign);
 	case BOOL:
@@ -1365,14 +1424,6 @@ falloc(struct symtab *p, int w, int new, NODE *pty)
 
 	/* this must be fixed to use the current type in alignments */
 	switch( new<0?pty->n_type:p->stype ){
-
-	case ENUMTY: {
-		struct suedef *sue;
-		sue = new < 0 ? pty->n_sue : p->ssue;
-		al = sue->suealign;
-		sz = sue->suesize;
-		break;
-	}
 
 	case CHAR:
 	case UCHAR:
@@ -1777,7 +1828,7 @@ tymerge(NODE *typ, NODE *idp)
 	idp->n_qual = DECQAL(idp->n_qual);
 
 	/* in case ctype has rewritten things */
-	if ((t = BTYPE(idp->n_type)) != STRTY && t != UNIONTY && t != ENUMTY)
+	if ((t = BTYPE(idp->n_type)) != STRTY && t != UNIONTY)
 		idp->n_sue = MKSUE(t);
 
 	if (idp->n_op != NAME) {
@@ -1816,8 +1867,7 @@ arglist(NODE *n)
 		if (w->n_right->n_op == ELLIPSIS)
 			continue;
 		ty = w->n_right->n_type;
-		if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY ||
-		    BTYPE(ty) == ENUMTY)
+		if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY)
 			num++;
 		while (ISFTN(ty) == 0 && ISARY(ty) == 0 && ty > BTMASK)
 			ty = DECREF(ty);
@@ -1826,8 +1876,7 @@ arglist(NODE *n)
 	}
 	cnt++;
 	ty = w->n_type;
-	if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY ||
-	    BTYPE(ty) == ENUMTY)
+	if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY)
 		num++;
 	while (ISFTN(ty) == 0 && ISARY(ty) == 0 && ty > BTMASK)
 		ty = DECREF(ty);
@@ -1861,8 +1910,7 @@ arglist(NODE *n)
 			ap[j]->n_type = INCREF(ap[j]->n_type);
 		ty = ap[j]->n_type;
 		al[k++].type = ty;
-		if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY ||
-		    BTYPE(ty) == ENUMTY)
+		if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY)
 			al[k++].sue = ap[j]->n_sue;
 		while (ISFTN(ty) == 0 && ISARY(ty) == 0 && ty > BTMASK)
 			ty = DECREF(ty);
@@ -2124,7 +2172,7 @@ alprint(union arglist *al, int in)
 		if (ISARY(al->type)) {
 			printf(" dim %d\n", al->df->ddim);
 		} else if (BTYPE(al->type) == STRTY ||
-		    BTYPE(al->type) == UNIONTY || BTYPE(al->type) == ENUMTY) {
+		    BTYPE(al->type) == UNIONTY) {
 			al++;
 			printf(" (size %d align %d)", al->sue->suesize,
 			    al->sue->suealign);
@@ -2311,9 +2359,6 @@ incomp:					uerror("incompatible types for arg %d",
 			} else
 				goto out;
 		}
-		if (BTYPE(arrt) == ENUMTY && BTYPE(type) == INT &&
-		    (arrt & ~BTMASK) == (type & ~BTMASK))
-			goto skip; /* XXX enumty destroyed in optim() */
 		if (BTYPE(arrt) == VOID && type > BTMASK)
 			goto skip; /* void *f = some pointer */
 		if (arrt > BTMASK && BTYPE(type) == VOID)
@@ -2546,10 +2591,6 @@ fixclass(int class, TWORD type)
 		if( !(instruct&INSTRUCT) ) uerror( "illegal MOS class" );
 		return( class );
 
-	case MOE:
-		if( instruct & (INSTRUCT|INUNION) ) uerror( "illegal MOE class" );
-		return( class );
-
 	case REGISTER:
 		if (blevel == 0)
 			uerror( "illegal register declaration" );
@@ -2576,7 +2617,6 @@ fixclass(int class, TWORD type)
 			}
 	case STNAME:
 	case UNAME:
-	case ENAME:
 	case EXTERN:
 	case STATIC:
 	case EXTDEF:

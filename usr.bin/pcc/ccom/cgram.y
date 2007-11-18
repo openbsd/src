@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.4 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.5 2007/11/18 17:39:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -153,6 +153,7 @@ static int fun_inline;	/* Reading an inline function */
 int oldstyle;	/* Current function being defined */
 int noretype;
 static struct symtab *xnf;
+extern int enummer;
 #ifdef GCC_COMPAT
 char *renname; /* for renaming of variables */
 #endif
@@ -208,8 +209,8 @@ struct savbc {
 		identifier_list arg_param_list arg_declaration arg_dcl_list
 		designator_list designator
 %type <strp>	string wstring C_STRING C_WSTRING PRAG_RENAMED
-%type <rp>	enum_head str_head
-%type <symp>	xnfdeclarator clbrace
+%type <rp>	str_head
+%type <symp>	xnfdeclarator clbrace enum_head
 
 %type <intval> C_CLASS C_STRUCT C_RELOP C_DIVOP C_SHIFTOP
 		C_ANDAND C_OROR C_STROP C_INCOP C_UNOP C_ASOP C_EQUOP
@@ -486,22 +487,20 @@ init_declarator_list:
 		|  init_declarator_list ',' { $<nodep>$ = $<nodep>0; } init_declarator
 		;
 
-enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = dclstruct($1, 0); }
-		|  C_ENUM C_NAME {  $$ = rstruct($2,0);  }
-		|  C_ENUM C_TYPENAME {  $$ = rstruct($2,0);  }
+enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = enumdcl($1); }
+		|  C_ENUM C_NAME {  $$ = enumref($2); }
 		;
 
-enum_head:	   C_ENUM {  $$ = bstruct(NULL,0); }
-		|  C_ENUM C_NAME {  $$ = bstruct($2,0); }
-		|  C_ENUM C_TYPENAME {  $$ = bstruct($2,0); }
+enum_head:	   C_ENUM { $$ = enumhd(NULL); }
+		|  C_ENUM C_NAME {  $$ = enumhd($2); }
 		;
 
 moe_list:	   moe
 		|  moe_list ',' moe
 		;
 
-moe:		   C_NAME {  moedef( $1 ); }
-		|  C_NAME '=' con_e {  strucoff = $3;  moedef( $1 ); }
+moe:		   C_NAME {  moedef($1); }
+		|  C_NAME '=' con_e { enummer = $3; moedef($1); }
 		;
 
 struct_dcl:	   str_head '{' struct_dcl_list '}' str_attr {

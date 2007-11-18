@@ -1,4 +1,4 @@
-/*	$OpenBSD: optim.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: optim.c,v 1.2 2007/11/18 17:39:55 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -92,7 +92,7 @@ optim(NODE *p)
 	int i;
 	TWORD t;
 
-	if( (t=BTYPE(p->n_type))==ENUMTY || t==MOETY ) econvert(p);
+	t = BTYPE(p->n_type);
 	if( oflag ) return(p);
 
 	ty = coptype(p->n_op);
