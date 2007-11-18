@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.46 2006/12/21 22:13:36 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.47 2007/11/18 00:36:34 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -104,9 +104,9 @@ int		hme_newbuf(struct hme_softc *, struct hme_sxd *, int);
 int		hme_encap(struct hme_softc *, struct mbuf *, int *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg(struct device *, int, int);
-static void	hme_mii_writereg(struct device *, int, int, int);
-static void	hme_mii_statchg(struct device *);
+int		hme_mii_readreg(struct device *, int, int);
+void		hme_mii_writereg(struct device *, int, int, int);
+void		hme_mii_statchg(struct device *);
 
 int		hme_mediachange(struct ifnet *);
 void		hme_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -1010,7 +1010,7 @@ hme_mifinit(sc)
 /*
  * MII interface
  */
-static int
+int
 hme_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
@@ -1068,7 +1068,7 @@ out:
 	return (v);
 }
 
-static void
+void
 hme_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
@@ -1123,7 +1123,7 @@ out:
 	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
 }
 
-static void
+void
 hme_mii_statchg(dev)
 	struct device *dev;
 {
