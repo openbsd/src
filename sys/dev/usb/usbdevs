@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.316 2007/11/17 16:15:00 damien Exp $
+$OpenBSD: usbdevs,v 1.317 2007/11/18 00:43:13 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1881,6 +1881,7 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
+product PLANEX2 GW_US54GXS	0x5303	GW-US54GXS WLAN
 product PLANEX2 GWUS54HP	0xab01	GW-US54HP
 product PLANEX3 GU1000T		0xab11	GU-1000T
 product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
