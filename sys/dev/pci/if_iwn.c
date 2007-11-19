@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.13 2007/11/19 19:34:25 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.14 2007/11/19 19:35:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2256,7 +2256,6 @@ iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_CCMP:
 		node.security = htole16(IWN_CIPHER_CCMP);
-		node.security |= htole16(k->k_id << 8);
 		memcpy(node.key, k->k_key, k->k_len);
 		break;
 	default:
