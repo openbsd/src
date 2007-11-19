@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.104 2007/11/19 19:13:11 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.105 2007/11/19 19:17:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -43,6 +43,7 @@
 #ifdef ACPI_DEBUG
 int acpi_debug = 16;
 #endif
+int acpi_enabled;
 int acpi_poll_enabled;
 int acpi_hasprocfvs;
 
@@ -470,6 +471,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(" !FACS");
 	else
 		sc->sc_facs = (struct acpi_facs *)handle.va;
+
+	acpi_enabled = 1;
 
 	/* Create opcode hashtable */
 	aml_hashopcodes();
