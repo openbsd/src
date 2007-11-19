@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.132 2007/11/05 07:06:02 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.133 2007/11/19 01:18:48 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -389,7 +389,7 @@ struct ahci_softc {
 
 	int			sc_flags;
 #define AHCI_F_NO_NCQ			(1<<0)
-#define AHCI_F_NO_FER			(1<<1)
+#define AHCI_F_IGN_FR			(1<<1)
 
 	u_int			sc_ncmds;
 
@@ -575,7 +575,7 @@ ahci_ati_ixp600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 		    AHCI_PCI_ATI_IXP600_MAGIC, magic);
 	}
 
-	sc->sc_flags |= AHCI_F_NO_FER;
+	sc->sc_flags |= AHCI_F_IGN_FR;
 
 	return (0);
 }
@@ -1107,8 +1107,7 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 
 	/* Turn on FRE (and ST) */
 	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
-	if (!(ap->ap_sc->sc_flags & AHCI_F_NO_FER))
-		r |= AHCI_PREG_CMD_FRE;
+	r |= AHCI_PREG_CMD_FRE;
 	if (!fre_only)
 		r |= AHCI_PREG_CMD_ST;
 	ahci_pwrite(ap, AHCI_PREG_CMD, r);
@@ -1122,7 +1121,7 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 	}
 #endif
 
-	if (!(ap->ap_sc->sc_flags & AHCI_F_NO_FER)) {
+	if (!(ap->ap_sc->sc_flags & AHCI_F_IGN_FR)) {
 		/* Wait for FR to come on */
 		if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
 			return (2);
