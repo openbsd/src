@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.39 2007/11/15 22:16:31 mikeb Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.40 2007/11/19 19:09:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -207,6 +207,8 @@ struct acpi_softc {
 
 	struct timeout		sc_dev_timeout;
 	int			sc_poll;
+
+	int			sc_revision;
 };
 
 #define GPE_NONE  0x00
