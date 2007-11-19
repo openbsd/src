@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.103 2007/10/17 20:01:26 hshoexer Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.104 2007/11/19 11:03:21 mpf Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,7 +76,6 @@
 
 #include "bpfilter.h"
 
-#define ENCDEBUG
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
 #else
