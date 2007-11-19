@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.2 2007/11/17 15:39:38 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.3 2007/11/19 21:26:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -26,6 +26,40 @@
 /* HW supports up to 255 STAs */
 #define RT2860_WCID_MAX		254
 #define RT2860_AID2WCID(aid)	((aid) & 0xff)
+
+struct rt2860_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_dbm_antsignal;
+	uint8_t		wr_antenna;
+	uint8_t		wr_antsignal;
+} __packed;
+
+#define RT2860_RX_RADIOTAP_PRESENT			\
+	(1 << IEEE80211_RADIOTAP_FLAGS |		\
+	 1 << IEEE80211_RADIOTAP_RATE |			\
+	 1 << IEEE80211_RADIOTAP_CHANNEL |		\
+	 1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL |	\
+	 1 << IEEE80211_RADIOTAP_ANTENNA |		\
+	 1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)
+
+struct rt2860_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
+	uint8_t		wt_hwqueue;
+} __packed;
+
+#define RT2860_TX_RADIOTAP_PRESENT			\
+	(1 << IEEE80211_RADIOTAP_FLAGS |		\
+	 1 << IEEE80211_RADIOTAP_RATE |			\
+	 1 << IEEE80211_RADIOTAP_CHANNEL |		\
+	 1 << IEEE80211_RADIOTAP_HWQUEUE)
 
 struct rt2860_tx_data {
 	struct rt2860_txwi		*txwi;
@@ -122,6 +156,23 @@ struct rt2860_softc {
 	uint32_t			txpow40mhz_5ghz[5];
 
 	struct ieee80211_amrr_node	amn[RT2860_WCID_MAX + 1];
+
+#if NBPFILTER > 0
+	caddr_t				sc_drvbpf;
+	union {
+		struct rt2860_rx_radiotap_header th;
+		uint8_t pad[64];
+	}				sc_rxtapu;
+#define sc_rxtap			sc_rxtapu.th
+	int				sc_rxtap_len;
+
+	union {
+		struct rt2860_tx_radiotap_header th;
+		uint8_t pad[64];
+	}				sc_txtapu;
+#define sc_txtap			sc_txtapu.th
+	int				sc_txtap_len;
+#endif
 };
 
 int	rt2860_attach(void *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.2 2007/11/17 15:39:38 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.3 2007/11/19 21:26:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -651,12 +651,15 @@ struct rt2860_txwi {
 #define RT2860_TX_TXOP_BACKOFF	3
 
 	uint16_t	phy;
-#define RT2860_TX_CCK		(0 << 14)
-#define RT2860_TX_OFDM		(1 << 14)
-#define RT2860_TX_HT		(2 << 14)
-#define RT2860_TX_HT_GF		(3 << 14)
-#define RT2860_TX_SGI		(1 << 8)
-#define RT2860_TX_BW		(1 << 7)
+#define RT2860_PHY_MODE		0xc000
+#define RT2860_PHY_CCK		(0 << 14)
+#define RT2860_PHY_OFDM		(1 << 14)
+#define RT2860_PHY_HT		(2 << 14)
+#define RT2860_PHY_HT_GF	(3 << 14)
+#define RT2860_PHY_SGI		(1 << 8)
+#define RT2860_PHY_BW40		(1 << 7)
+#define RT2860_PHY_MCS		0x7f
+#define RT2860_PHY_SHPRE	(1 << 3)
 
 	uint8_t		xflags;
 #define RT2860_TX_BAWINSIZE_SHIFT	2

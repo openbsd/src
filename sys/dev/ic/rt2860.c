@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.5 2007/11/17 15:39:38 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.6 2007/11/19 21:26:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -106,7 +106,7 @@ void		rt2860_tx_intr(struct rt2860_softc *, int);
 void		rt2860_rx_intr(struct rt2860_softc *);
 int		rt2860_ack_rate(struct ieee80211com *, int);
 uint16_t	rt2860_txtime(int, int, uint32_t);
-uint8_t		rt2860_rate2mcs(struct rt2860_softc *, uint8_t);
+uint8_t		rt2860_rate2mcs(uint8_t);
 int		rt2860_tx_data(struct rt2860_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
 void		rt2860_start(struct ifnet *);
@@ -289,6 +289,19 @@ rt2860_attach(void *xsc, int id)
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = rt2860_newstate;
 	ieee80211_media_init(ifp, rt2860_media_change, ieee80211_media_status);
+
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof (struct ieee80211_frame) + 64);
+
+	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(RT2860_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2860_TX_RADIOTAP_PRESENT);
+#endif
 
 	return 0;
 
@@ -716,15 +729,17 @@ void
 rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
-	uint8_t wcid;
+	uint8_t wcid = 0;
 	int i;
 
-	wcid = RT2860_AID2WCID(ni->ni_associd);
+	if (isnew && ni->ni_associd != 0) {
+		/* only interested in true associations */
+		wcid = RT2860_AID2WCID(ni->ni_associd);
 
-	/* init WCID table entry */
-	RAL_WRITE_REGION_1(sc, RT2860_WCID_ENTRY(wcid),
-	    ni->ni_macaddr, IEEE80211_ADDR_LEN);
-
+		/* init WCID table entry */
+		RAL_WRITE_REGION_1(sc, RT2860_WCID_ENTRY(wcid),
+		    ni->ni_macaddr, IEEE80211_ADDR_LEN);
+	}
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn[wcid]);
 
 	/* set rate to some reasonable initial value */
@@ -733,8 +748,8 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	     i--);
 	ni->ni_txrate = i;
 
-	DPRINTF(("new assoc addr=%s WCID=%d, initial rate=%d\n",
-	    ether_sprintf(ni->ni_macaddr), wcid,
+	DPRINTF(("new assoc isnew=%d addr=%s WCID=%d, initial rate=%d\n",
+	    isnew, ether_sprintf(ni->ni_macaddr), wcid,
 	    ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL));
 }
 
@@ -948,8 +963,13 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
 	u_int hdrlen;
-	uint8_t rssi;
+	uint8_t ant, rssi;
 	int error;
+#if NBPFILTER > 0
+	struct rt2860_rx_radiotap_header *tap = &sc->sc_rxtap;
+	struct mbuf mb;
+	uint16_t phy;
+#endif
 
 	for (;;) {
 		struct rt2860_rx_data *data = &sc->rxq.data[sc->rxq.cur];
@@ -1035,11 +1055,58 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			wh = mtod(m, struct ieee80211_frame *);
 		}
 
+		ant = rt2860_maxrssi_chain(sc, rxwi);
+		rssi = rxwi->rssi[ant];
+
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf == NULL)
+			goto skipbpf;
+
+		tap->wr_flags = 0;
+		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wr_antsignal = rssi;
+		tap->wr_antenna = ant;
+		tap->wr_dbm_antsignal = rt2860_rssi2dbm(sc, rssi, ant);
+		tap->wr_rate = 2;	/* in case it can't be found below */
+		phy = letoh16(rxwi->phy);
+		switch (phy & RT2860_PHY_MODE) {
+		case RT2860_PHY_CCK:
+			switch ((phy & RT2860_PHY_MCS) & ~RT2860_PHY_SHPRE) {
+			case 0:	tap->wr_rate =   2; break;
+			case 1:	tap->wr_rate =   4; break;
+			case 2:	tap->wr_rate =  11; break;
+			case 3:	tap->wr_rate =  22; break;
+			}
+			if (phy & RT2860_PHY_SHPRE)
+				tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+			break;
+		case RT2860_PHY_OFDM:
+			switch (phy & RT2860_PHY_MCS) {
+			case 0:	tap->wr_rate =  12; break;
+			case 1:	tap->wr_rate =  18; break;
+			case 2:	tap->wr_rate =  24; break;
+			case 3:	tap->wr_rate =  36; break;
+			case 4:	tap->wr_rate =  48; break;
+			case 5:	tap->wr_rate =  72; break;
+			case 6:	tap->wr_rate =  96; break;
+			case 7:	tap->wr_rate = 108; break;
+			}
+			break;
+		}
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_rxtap_len;
+		mb.m_next = m;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+skipbpf:
+#endif
 		/* grab a reference to the source node */
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		rssi = rxwi->rssi[rt2860_maxrssi_chain(sc, rxwi)];
 		ieee80211_input(ifp, m, ni, rssi, 0);
 
 		/* node is no longer needed */
@@ -1186,37 +1253,23 @@ rt2860_txtime(int len, int rate, uint32_t flags)
 }
 
 uint8_t
-rt2860_rate2mcs(struct rt2860_softc *sc, uint8_t rate)
+rt2860_rate2mcs(uint8_t rate)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-
-	if (!RAL_RATE_IS_OFDM(rate)) {
-		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE) {
-			switch (rate) {
-			case 2:		return 0;
-			case 4:		return 9;
-			case 11:	return 10;
-			case 22:	return 11;
-			}
-		} else {
-			switch (rate) {
-			case 2:		return 0;
-			case 4:		return 1;
-			case 11:	return 2;
-			case 22:	return 3;
-			}
-		}
-	} else {
-		switch (rate) {
-		case 12:	return 0;
-		case 18:	return 1;
-		case 24:	return 2;
-		case 36:	return 3;
-		case 48:	return 4;
-		case 72:	return 5;
-		case 96:	return 6;
-		case 108:	return 7;
-		}
+	switch (rate) {
+	/* CCK rates */
+	case 2:		return 0;
+	case 4:		return 1;
+	case 11:	return 2;
+	case 22:	return 3;
+	/* OFDM rates */
+	case 12:	return 0;
+	case 18:	return 1;
+	case 24:	return 2;
+	case 36:	return 3;
+	case 48:	return 4;
+	case 72:	return 5;
+	case 96:	return 6;
+	case 108:	return 7;
 	}
 	return 0;	/* shouldn't get there */
 }
@@ -1257,7 +1310,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	rate &= IEEE80211_RATE_VAL;
 
 	/* get MCS code from rate */
-	mcs = rt2860_rate2mcs(sc, rate);
+	mcs = rt2860_rate2mcs(rate);
 
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
@@ -1274,10 +1327,15 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
 	    RT2860_AID2WCID(ni->ni_associd) : 0xff;
 	txwi->len = htole16(m0->m_pkthdr.len);
+	if (!RAL_RATE_IS_OFDM(rate)) {
+		txwi->phy = htole16(RT2860_PHY_CCK);
+		if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+			mcs |= RT2860_PHY_SHPRE;
+	} else
+		txwi->phy = htole16(RT2860_PHY_OFDM);
+	txwi->phy |= htole16(mcs);
+	/* store MCS into driver-private field for rate control */
 	txwi->len |= htole16(mcs << RT2860_TX_PID_SHIFT);
-	txwi->phy = htole16(mcs);
-	if (RAL_RATE_IS_OFDM(rate))
-		txwi->phy |= htole16(RT2860_TX_OFDM);
 
 	/* check if RTS/CTS or CTS-to-self protection is required */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
@@ -1300,6 +1358,29 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	     (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 	    /* NOTE: beacons do not pass through tx_data() */
 		txwi->flags |= RT2860_TX_TS;
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct rt2860_tx_radiotap_header *tap = &sc->sc_txtap;
+		struct mbuf mb;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_hwqueue = qid;
+		if (mcs & RT2860_PHY_SHPRE)
+			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_nextpkt = NULL;   
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	/* copy and trim 802.11 header */
 	memcpy(&txwi->wh, wh, hdrlen);
@@ -1949,7 +2030,7 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	uint32_t attr;
 	uint8_t mode, wcid;
 
-	/* map net80211 ciphers to RT2860 security mode */
+	/* map net80211 cipher to RT2860 security mode */
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 		mode = RT2860_MODE_WEP40;
@@ -1975,9 +2056,9 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		RAL_WRITE_REGION_1(sc, base + 24, k->k_rxmic, 8);
 
 		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
+		attr &= ~(0xf << (k->k_id * 4));
 		attr |= mode << (k->k_id * 4);
 		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
-
 	} else {
 		/* install pairwise key */
 		wcid = RT2860_AID2WCID(ni->ni_associd);
@@ -2019,7 +2100,7 @@ int8_t
 rt2860_rssi2dbm(struct rt2860_softc *sc, uint8_t rssi, uint8_t rxchain)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_channel *c = ic->ic_bss->ni_chan;
+	struct ieee80211_channel *c = ic->ic_ibss_chan;
 	int delta;
 
 	if (IEEE80211_IS_CHAN_5GHZ(c)) {
@@ -2541,13 +2622,15 @@ rt2860_init(struct ifnet *ifp)
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
 	/* set Rx filter */
-	tmp =
-	    RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR | RT2860_DROP_UC_NOME |
-	    RT2860_DROP_VER_ERR | RT2860_DROP_DUPL | RT2860_DROP_CFACK |
-	    RT2860_DROP_CFEND | RT2860_DROP_ACK | RT2860_DROP_CTS |
-	    RT2860_DROP_BA | RT2860_DROP_CTRL_RSV;
-	if (ic->ic_opmode == IEEE80211_M_STA)
-		tmp |= RT2860_DROP_RTS | RT2860_DROP_PSPOLL;
+	tmp = RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR;
+	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		tmp |= RT2860_DROP_UC_NOME | RT2860_DROP_DUPL |
+		    RT2860_DROP_CTS | RT2860_DROP_BA | RT2860_DROP_ACK |
+		    RT2860_DROP_VER_ERR | RT2860_DROP_CTRL_RSV |
+		    RT2860_DROP_CFACK | RT2860_DROP_CFEND;
+		if (ic->ic_opmode == IEEE80211_M_STA)
+			tmp |= RT2860_DROP_RTS | RT2860_DROP_PSPOLL;
+	}
 	RAL_WRITE(sc, RT2860_RX_FILTR_CFG, tmp);
 
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
@@ -2595,7 +2678,7 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	/* clear shared key table */
 	RAL_SET_REGION_4(sc, RT2860_SKEY(0, 0), 0, 8 * 32);
 	/* clear shared key mode */
-	RAL_SET_REGION_4(sc, 0x7000, 0, 4);
+	RAL_SET_REGION_4(sc, RT2860_SKEY_MODE_0_7, 0, 4);
 
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2860_INT_MASK, 0);
@@ -2725,7 +2808,9 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	txwi.len = htole16(m->m_pkthdr.len);
 	/* send beacons at the lowest available rate */
 	rate = (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2;
-	txwi.phy = htole16(rt2860_rate2mcs(sc, rate));
+	txwi.phy = htole16(rt2860_rate2mcs(rate));
+	if (rate == 12)
+		txwi.phy |= htole16(RT2860_PHY_OFDM);
 	txwi.txop = RT2860_TX_TXOP_HT;
 	txwi.flags = RT2860_TX_TS;
 
@@ -2780,4 +2865,3 @@ rt2860_shutdown(void *arg)
 
 	rt2860_stop(ifp, 1);
 }
-
