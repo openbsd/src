@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.51 2007/11/15 17:02:01 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.52 2007/11/19 11:39:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,6 +48,7 @@ int		 check_child(pid_t, const char *);
 int		 send_all(struct hoststated *, enum imsg_type,
 		    void *, u_int16_t);
 void		 reconfigure(void);
+void		 purge_tree(struct proto_tree *);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
@@ -438,7 +439,6 @@ purge_config(struct hoststated *env, u_int8_t what)
 	struct service		*service;
 	struct address		*virt;
 	struct protocol		*proto;
-	struct protonode	*pnode;
 	struct relay		*rly;
 	struct session		*sess;
 
@@ -498,30 +498,27 @@ purge_config(struct hoststated *env, u_int8_t what)
 	if (what & PURGE_PROTOS && env->protos != NULL) {
 		while ((proto = TAILQ_FIRST(env->protos)) != NULL) {
 			TAILQ_REMOVE(env->protos, proto, entry);
-			while ((pnode = RB_ROOT(&proto->request_tree))
-			    != NULL) {
-				RB_REMOVE(proto_tree, &proto->request_tree,
-				    pnode);
-				if (pnode->key != NULL)
-					free(pnode->key);
-				if (pnode->value != NULL)
-					free(pnode->value);
-				free(pnode);
-			}
-			while ((pnode = RB_ROOT(&proto->response_tree))
-			    != NULL) {
-				RB_REMOVE(proto_tree, &proto->response_tree,
-				    pnode);
-				if (pnode->key != NULL)
-					free(pnode->key);
-				if (pnode->value != NULL)
-					free(pnode->value);
-				free(pnode);
-			}
+			purge_tree(&proto->request_tree);
+			purge_tree(&proto->response_tree);
 			free(proto);
 		}
 		free(env->protos);
 		env->protos = NULL;
+	}
+}
+
+void
+purge_tree(struct proto_tree *tree)
+{
+	struct protonode	*proot;
+
+	while ((proot = RB_ROOT(tree)) != NULL) {
+		RB_REMOVE(proto_tree, tree, proot);
+		if (proot->key != NULL)
+			free(proot->key);
+		if (proot->value != NULL)
+			free(proot->value);
+		free(proot);
 	}
 }
 
