@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.17 2006/02/22 15:07:12 henning Exp $ */
+/* $OpenBSD: http_config.c,v 1.18 2007/11/19 14:59:10 robert Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1291,7 +1291,8 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 	 * entries here and store 'em away. Recall we need full pathnames
 	 * for this.
 	 */
-	fprintf(stderr, "Processing config directory: %s\n", fname);
+	if (ap_configtestonly)
+		fprintf(stdout, "Processing config directory: %s\n", fname);
 	dirp = ap_popendir(p, path);
 	if (dirp == NULL) {
 	    perror("fopen");
@@ -1320,7 +1321,8 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 	     */
 	    for (current = 0; current < candidates->nelts; ++current) {
 	        fnew = &((fnames *) candidates->elts)[current];
-		fprintf(stderr, " Processing config file: %s\n", fnew->fname);
+		if (ap_configtestonly)
+			fprintf(stdout, " Processing config file: %s\n", fnew->fname);
 		ap_process_resource_config(s, fnew->fname, p, ptemp);
 	    }
 	}
