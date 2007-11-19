@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2007/11/19 14:41:05 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.82 2007/11/19 14:48:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -641,19 +641,13 @@ protoptsl	: SSL sslflags
 		| TCP '{' tcpflags_l '}'
 		| PROTO proto_type		{ proto->type = $2; }
 		| direction protonode log	{
-			struct protonode 	*pn, pk;
+			struct protonode 	*pn, *proot, pk;
 			struct proto_tree	*tree;
 
 			if ($1 == RELAY_DIR_RESPONSE)
 				tree = &proto->response_tree;
 			else
 				tree = &proto->request_tree;
-			pn = RB_FIND(proto_tree, tree, &node);
-			if (pn != NULL) {
-				yyerror("protocol node %s defined twice",
-				    node.key);
-				YYERROR;
-			}
 			if ((pn = calloc(1, sizeof (*pn))) == NULL)
 				fatal("out of memory");
 
@@ -661,6 +655,7 @@ protoptsl	: SSL sslflags
 			pn->key = node.key;
 			pn->value = node.value;
 			pn->type = node.type;
+			SIMPLEQ_INIT(&pn->head);
 			if ($1 == RELAY_DIR_RESPONSE)
 				pn->id = proto->response_nodes++;
 			else
@@ -671,7 +666,17 @@ protoptsl	: SSL sslflags
 				yyerror("too many protocol nodes defined");
 				YYERROR;
 			}
-			RB_INSERT(proto_tree, tree, pn);
+			if ((proot =
+			    RB_INSERT(proto_tree, tree, pn)) != NULL) {
+				/*
+				 * A protocol node with the same key already
+				 * exists, append it to a queue behind the
+				 * existing node.
+				 */
+				if (SIMPLEQ_EMPTY(&proot->head))
+					SIMPLEQ_NEXT(proot, entry) = pn;
+				SIMPLEQ_INSERT_TAIL(&proot->head, pn, entry);
+			}
 
 			if (node.type == NODE_TYPE_COOKIE)	
 				pk.key = "Cookie";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.52 2007/11/19 11:39:49 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.53 2007/11/19 14:48:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -510,7 +510,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 void
 purge_tree(struct proto_tree *tree)
 {
-	struct protonode	*proot;
+	struct protonode	*proot, *pn;
 
 	while ((proot = RB_ROOT(tree)) != NULL) {
 		RB_REMOVE(proto_tree, tree, proot);
@@ -518,6 +518,14 @@ purge_tree(struct proto_tree *tree)
 			free(proot->key);
 		if (proot->value != NULL)
 			free(proot->value);
+		while ((pn = SIMPLEQ_FIRST(&proot->head)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&proot->head, entry);
+			if (pn->key != NULL)
+				free(pn->key);
+			if (pn->value != NULL)
+				free(pn->value);
+			free(pn);
+		}
 		free(proot);
 	}
 }

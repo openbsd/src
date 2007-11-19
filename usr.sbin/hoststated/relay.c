@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.53 2007/10/22 17:14:10 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.54 2007/11/19 14:48:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@ void		 relay_dispatch_parent(int, short, void *);
 void		 relay_shutdown(void);
 
 void		 relay_privinit(void);
+void		 relay_nodedebug(const char *, struct protonode *);
 void		 relay_protodebug(struct relay *);
 void		 relay_init(void);
 void		 relay_launch(void);
@@ -83,8 +84,12 @@ void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
 void		 relay_error(struct bufferevent *, short, void *);
 
+
+int		 relay_resolve(struct ctl_relay_event *,
+		    struct protonode *, struct protonode *);
 int		 relay_handle_http(struct ctl_relay_event *,
-		    struct protonode *, struct protonode *, int);
+		    struct protonode *, struct protonode *,
+		    struct protonode *, int);
 void		 relay_read_http(struct bufferevent *, void *);
 void		 relay_read_httpcontent(struct bufferevent *, void *);
 void		 relay_read_httpchunks(struct bufferevent *, void *);
@@ -273,12 +278,66 @@ relay_shutdown(void)
 }
 
 void
+relay_nodedebug(const char *name, struct protonode *pn)
+{
+	fprintf(stderr, "\t\t");
+	fprintf(stderr, "%s ", name);
+
+	switch (pn->type) {
+	case NODE_TYPE_HEADER:
+		break;
+	case NODE_TYPE_URL:
+		fprintf(stderr, "url ");
+		break;
+	case NODE_TYPE_COOKIE:
+		fprintf(stderr, "cookie ");
+		break;
+	case NODE_TYPE_PATH:
+		fprintf(stderr, "path ");
+		break;
+	}
+
+	switch (pn->action) {
+	case NODE_ACTION_APPEND:
+		fprintf(stderr, "append \"%s\" to \"%s\"",
+		    pn->value, pn->key);
+		break;
+	case NODE_ACTION_CHANGE:
+		fprintf(stderr, "change \"%s\" to \"%s\"",
+		    pn->key, pn->value);
+		break;
+	case NODE_ACTION_REMOVE:
+		fprintf(stderr, "remove \"%s\"",
+		    pn->key);
+		break;
+	case NODE_ACTION_EXPECT:
+		fprintf(stderr, "expect \"%s\" from \"%s\"",
+		    pn->value, pn->key);
+		break;
+	case NODE_ACTION_FILTER:
+		fprintf(stderr, "filter \"%s\" from \"%s\"",
+		    pn->value, pn->key);
+		break;
+	case NODE_ACTION_HASH:
+		fprintf(stderr, "hash \"%s\"", pn->key);
+		break;
+	case NODE_ACTION_LOG:
+		fprintf(stderr, "log \"%s\"", pn->key);
+		break;
+	case NODE_ACTION_NONE:
+		fprintf(stderr, "none \"%s\"", pn->key);
+		break;
+	}
+	fprintf(stderr, "\n");
+}
+
+void
 relay_protodebug(struct relay *rlay)
 {
-	struct protocol *proto = rlay->proto;
-	struct protonode *pn;
-	struct proto_tree *tree;
-	const char *name;
+	struct protocol		*proto = rlay->proto;
+	struct protonode	*proot, *pn;
+	struct proto_tree	*tree;
+	const char		*name;
 
 	fprintf(stderr, "protocol %d: name %s\n", proto->id, proto->name);
 	fprintf(stderr, "\tflags: 0x%04x\n", proto->flags);
@@ -300,57 +359,9 @@ relay_protodebug(struct relay *rlay)
 	name = "request";
 	tree = &proto->request_tree;
  show:
-	RB_FOREACH(pn, proto_tree, tree) {
-		fprintf(stderr, "\t\t");
-
-		fprintf(stderr, "%s ", name);
-
-		switch (pn->type) {
-		case NODE_TYPE_HEADER:
-			break;
-		case NODE_TYPE_URL:
-			fprintf(stderr, "url ");
-			break;
-		case NODE_TYPE_COOKIE:
-			fprintf(stderr, "cookie ");
-			break;
-		case NODE_TYPE_PATH:
-			fprintf(stderr, "path ");
-			break;
-		}
-
-		switch (pn->action) {
-		case NODE_ACTION_APPEND:
-			fprintf(stderr, "append \"%s\" to \"%s\"",
-			    pn->value, pn->key);
-			break;
-		case NODE_ACTION_CHANGE:
-			fprintf(stderr, "change \"%s\" to \"%s\"",
-			    pn->key, pn->value);
-			break;
-		case NODE_ACTION_REMOVE:
-			fprintf(stderr, "remove \"%s\"",
-			    pn->key);
-			break;
-		case NODE_ACTION_EXPECT:
-			fprintf(stderr, "expect \"%s\" from \"%s\"",
-			    pn->value, pn->key);
-			break;
-		case NODE_ACTION_FILTER:
-			fprintf(stderr, "filter \"%s\" from \"%s\"",
-			    pn->value, pn->key);
-			break;
-		case NODE_ACTION_HASH:
-			fprintf(stderr, "hash \"%s\"", pn->key);
-			break;
-		case NODE_ACTION_LOG:
-			fprintf(stderr, "log \"%s\"", pn->key);
-			break;
-		case NODE_ACTION_NONE:
-			fprintf(stderr, "none \"%s\"", pn->key);
-			break;
-		}
-		fprintf(stderr, "\n");
+	RB_FOREACH(proot, proto_tree, tree) {
+		PROTONODE_FOREACH(pn, proot, entry)
+			relay_nodedebug(name, pn);
 	}
 	if (tree == &proto->request_tree) {
 		name = "response";
@@ -809,6 +820,76 @@ relay_read(struct bufferevent *bev, void *arg)
 	relay_close(con, strerror(errno));
 }
 
+int
+relay_resolve(struct ctl_relay_event *cre,
+    struct protonode *proot, struct protonode *pn)
+{
+	struct session		*con = (struct session *)cre->con;
+	char			 buf[READ_BUF_SIZE], *ptr;
+
+	switch (pn->action) {
+	case NODE_ACTION_FILTER:
+		if (!cre->nodes[pn->id])
+			return (0);
+		cre->nodes[pn->id] = 0;
+		break;
+	case NODE_ACTION_EXPECT:
+		if (proot == pn)
+			cre->nodes[proot->id]--;
+		if (cre->nodes[proot->id]) {
+			if (SIMPLEQ_NEXT(pn, entry) == NULL)
+				cre->nodes[proot->id] = 0;
+			return (0);
+		}
+		break;
+	default:
+		if (cre->nodes[pn->id]) {
+			cre->nodes[pn->id] = 0;
+			return (0);
+		}
+		break;
+	}
+	switch (pn->action) {
+	case NODE_ACTION_APPEND:
+	case NODE_ACTION_CHANGE:
+		ptr = pn->value;
+		if ((pn->flags & PNFLAG_MARK) &&
+		    cre->marked == 0)
+			break;
+		if ((pn->flags & PNFLAG_MACRO) &&
+		    (ptr = relay_expand_http(cre, pn->value,
+		    buf, sizeof(buf))) == NULL)
+			break;
+		if (relay_bufferevent_print(cre->dst, pn->key) == -1 ||
+		    relay_bufferevent_print(cre->dst, ": ") == -1 ||
+		    relay_bufferevent_print(cre->dst, ptr) == -1 ||
+		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
+			relay_close(con, "failed to modify header (done)");
+			return (-1);
+		}
+		DPRINTF("relay_resolve: add '%s: %s'",
+		    pn->key, ptr);
+		break;
+	case NODE_ACTION_EXPECT:
+		if (pn->flags & PNFLAG_MARK)
+			break;
+		DPRINTF("relay_resolve: missing '%s: %s'",
+		    pn->key, pn->value);
+		relay_close(con, "incomplete header (done)");
+		return (-1);
+	case NODE_ACTION_FILTER:
+		if (pn->flags & PNFLAG_MARK)
+			break;
+		DPRINTF("relay_resolve: filtered '%s: %s'",
+		    pn->key, pn->value);
+		relay_close(con, "rejecting header (done)");
+		return (-1);
+	default:
+		break;
+	}
+	return (0);
+}
+
 char *
 relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 {
@@ -861,8 +942,8 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 
 
 int
-relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
-    struct protonode *pk, int header)
+relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
+    struct protonode *pn, struct protonode *pk, int header)
 {
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
@@ -896,6 +977,14 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 		    pk->key, pk->value);
 		break;
 	case NODE_ACTION_EXPECT:
+		/*
+		 * A client may specify the header line for multiple times
+		 * trying to circumvent the filter.
+		 */
+		if (cre->nodes[proot->id]) {
+			relay_close(con, "repeated header line (done)");
+			return (PN_FAIL);
+		}
 		ret = PN_PASS;
 		/* FALLTHROUGH */
 	case NODE_ACTION_FILTER:
@@ -905,8 +994,10 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
 			if (pn->flags & PNFLAG_MARK)
 				cre->marked++;
-			cre->nodes[pn->id] = 1;
+			cre->nodes[proot->id] = 1;
 		}
+		if (SIMPLEQ_NEXT(pn, entry) == NULL)
+			cre->nodes[proot->id]++;
 		break;
 	case NODE_ACTION_HASH:
 		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
@@ -1080,9 +1171,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct relay		*rlay = (struct relay *)con->relay;
 	struct protocol		*proto = rlay->proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
-	struct protonode	*pn, pk, *pnv, pkv;
-	char			*line, buf[READ_BUF_SIZE], *ptr, *val;
-	int			 header = 0, ret;
+	struct protonode	*pn, pk, *proot, *pnv = NULL, pkv;
+	char			*line, *ptr, *val;
+	int			 header = 0, ret, pass = 0;
 	const char		*errstr;
 	size_t			 size;
 
@@ -1116,6 +1207,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		} else
 			pk.value = strchr(pk.key, ':');
 		if (pk.value == NULL || strlen(pk.value) < 3) {
+			if (cre->line == 1) {
+				free(line);
+				goto fail;
+			}
+				
 			DPRINTF("relay_read_http: request '%s'", line);
 			/* Append line to the output buffer */
 			if (relay_bufferevent_print(cre->dst, line) == -1 ||
@@ -1176,6 +1272,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			if (cre->args != NULL)
 				*cre->args++ = '\0';
 #ifdef DEBUG
+			char	 buf[BUFSIZ];
 			if (snprintf(buf, sizeof(buf), " \"%s\"",
 			    cre->path) == -1 ||
 			    evbuffer_add(con->log, buf, strlen(buf)) == -1) {
@@ -1197,14 +1294,17 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			DPRINTF("relay_read_http: "
 			    "lookup path '%s: %s'", pkv.key, pkv.value);
 
-			if ((pnv = RB_FIND(proto_tree,
+			if ((proot = RB_FIND(proto_tree,
 			    cre->tree, &pkv)) == NULL)
 				goto lookup;
 
-			ret = relay_handle_http(cre, pnv, &pkv, 0);
-			if (ret == PN_FAIL) {
-				free(line);
-				goto fail;
+			PROTONODE_FOREACH(pnv, proot, entry) {
+				ret = relay_handle_http(cre, proot,
+				    pnv, &pkv, 0);
+				if (ret == PN_FAIL) {
+					free(line);
+					return;
+				}
 			}
 		} else if ((cre->method == HTTP_METHOD_POST ||
 		    cre->method == HTTP_METHOD_PUT ||
@@ -1254,16 +1354,17 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					continue;
 				*pkv.value++ = '\0';
 
-				if ((pnv = RB_FIND(proto_tree,
+				if ((proot = RB_FIND(proto_tree,
 				    cre->tree, &pkv)) == NULL)
 					continue;
-				ret = relay_handle_http(cre, pnv, &pkv, 0);
-				if (ret == PN_PASS)
-					continue;
-				else if (ret == PN_FAIL) {
-					free(val);
-					free(line);
-					return;
+				PROTONODE_FOREACH(pnv, proot, entry) {
+					ret = relay_handle_http(cre, proot,
+					    pnv, &pkv, 0);
+					if (ret == PN_FAIL) {
+						free(val);
+						free(line);
+						return;
+					}
 				}
 			}
 			free(val);
@@ -1299,97 +1400,53 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				if (pkv.value[strlen(pkv.value) - 1] == '"')
 					pkv.value[strlen(pkv.value) - 1] = '\0';
 
-				if ((pnv = RB_FIND(proto_tree,
+				if ((proot = RB_FIND(proto_tree,
 				    cre->tree, &pkv)) == NULL)
 					continue;
-				ret = relay_handle_http(cre, pnv, &pkv, 0);
-				if (ret == PN_PASS)
-					continue;
-				else if (ret == PN_FAIL) {
-					free(val);
-					free(line);
-					return;
+				PROTONODE_FOREACH(pnv, proot, entry) {
+					ret = relay_handle_http(cre, proot,
+					    pnv, &pkv, 0);
+					if (ret == PN_FAIL) {
+						free(val);
+						free(line);
+						return;
+					}
 				}
 			}
 			free(val);
 		}
 
  handle:
-		ret = relay_handle_http(cre, pn, &pk, header);
-		if (ret == PN_PASS)
-			goto next;
-		free(line);
-		if (ret == PN_FAIL)
-			return;
-		continue;
+		pass = 0;
+		PROTONODE_FOREACH(pnv, pn, entry) {
+			ret = relay_handle_http(cre, pn, pnv, &pk, header);
+			if (ret == PN_PASS)
+				pass = 1;
+			else if (ret == PN_FAIL) {
+				free(line);
+				return;
+			}
+		}
 
+		if (pass) {
  next:
-		if (relay_bufferevent_print(cre->dst, pk.key) == -1 ||
-		    relay_bufferevent_print(cre->dst,
-		    header ? ": " : " ") == -1 ||
-		    relay_bufferevent_print(cre->dst, pk.value) == -1 ||
-		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
-			free(line);
-			goto fail;
+			if (relay_bufferevent_print(cre->dst, pk.key) == -1 ||
+			    relay_bufferevent_print(cre->dst,
+			    header ? ": " : " ") == -1 ||
+			    relay_bufferevent_print(cre->dst, pk.value) == -1 ||
+			    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
+				free(line);
+				goto fail;
+			}
 		}
 		free(line);
 		continue;
 	}
 	if (cre->done) {
-		RB_FOREACH(pn, proto_tree, cre->tree) {
-			switch (pn->action) {
-			case NODE_ACTION_FILTER:
-				if (!cre->nodes[pn->id])
-					continue;
-				cre->nodes[pn->id] = 0;
-				break;
-			default:
-				if (cre->nodes[pn->id]) {
-					cre->nodes[pn->id] = 0;
-					continue;
-				}
-				break;
-			}
-			switch (pn->action) {
-			case NODE_ACTION_APPEND:
-			case NODE_ACTION_CHANGE:
-				ptr = pn->value;
-				if ((pn->flags & PNFLAG_MARK) &&
-				    cre->marked == 0)
-					break;
-				if ((pn->flags & PNFLAG_MACRO) &&
-				    (ptr = relay_expand_http(cre, pn->value,
-				    buf, sizeof(buf))) == NULL)
-					break;
-				if (relay_bufferevent_print(cre->dst,
-				    pn->key) == -1 ||
-				    relay_bufferevent_print(cre->dst,
-				    ": ") == -1 ||
-				    relay_bufferevent_print(cre->dst,
-				    ptr) == -1 ||
-				    relay_bufferevent_print(cre->dst,
-				    "\r\n") == -1)
-					goto fail;
-				DPRINTF("relay_read_http: add '%s: %s'",
-				    pn->key, ptr);
-				break;
-			case NODE_ACTION_EXPECT:
-				if (pn->flags & PNFLAG_MARK)
-					break;
-				DPRINTF("relay_read_http: missing '%s: %s'",
-				    pn->key, pn->value);
-				relay_close(con, "incomplete header (done)");
-				return;
-			case NODE_ACTION_FILTER:
-				if (pn->flags & PNFLAG_MARK)
-					break;
-				DPRINTF("relay_read_http: filtered '%s: %s'",
-				    pn->key, pn->value);
-				relay_close(con, "rejecting header (done)");
-				return;
-			default:
-				break;
-			}
+		RB_FOREACH(proot, proto_tree, cre->tree) {
+			PROTONODE_FOREACH(pn, proot, entry)
+				if (relay_resolve(cre, proot, pn) != 0)
+					return;
 		}
 
 		switch (cre->method) {

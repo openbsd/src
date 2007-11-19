@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.72 2007/11/14 10:59:01 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.73 2007/11/19 14:48:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -442,16 +442,22 @@ enum noderesult {
 };
 
 struct protonode {
-	objid_t			 id;
-	char			*key;
-	enum nodeaction		 action;
-	char			*value;
-	u_int8_t		 flags;
-	enum nodetype		 type;
+	objid_t				 id;
+	char				*key;
+	enum nodeaction			 action;
+	char				*value;
+	u_int8_t			 flags;
+	enum nodetype			 type;
 
-	RB_ENTRY(protonode)	 nodes;
+	SIMPLEQ_HEAD(, protonode)	 head;
+	SIMPLEQ_ENTRY(protonode)	 entry;
+
+	RB_ENTRY(protonode)		 nodes;
 };
 RB_HEAD(proto_tree, protonode);
+
+#define PROTONODE_FOREACH(elm, root, field)				\
+	for (elm = root; elm != NULL; elm = SIMPLEQ_NEXT(elm, entry))	\
 
 enum prototype {
 	RELAY_PROTO_TCP		= 0,
