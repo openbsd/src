@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.38 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.39 2007/11/19 08:51:49 jmc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)shutdown.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 19 2007 $
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -105,8 +105,6 @@ The
 flag is passed on to
 .Xr halt 8 ,
 causing machines which support automatic power down to do so after halting.
-(Currently supported on some i386, luna88k, mac68k, macppc, sparc,
-sparc64 and zaurus platforms.)
 .It Fl r
 .Nm
 execs
