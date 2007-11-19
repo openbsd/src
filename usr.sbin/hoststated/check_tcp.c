@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.26 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.27 2007/11/19 15:20:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -145,7 +145,7 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		cte->validate_close = check_http_code;
 		break;
 	case CHECK_HTTP_DIGEST:
-		cte->validate_read = NULL;;
+		cte->validate_read = NULL;
 		cte->validate_close = check_http_digest;
 		break;
 	case CHECK_SEND_EXPECT:
@@ -237,7 +237,7 @@ tcp_read_buf(int s, short event, void *arg)
 		buf_free(cte->buf);
 		close(cte->s);
 		hce_notify_done(cte->host, "tcp_read_buf: read failed");
-		return;;
+		return;
 	case 0:
 		cte->host->up = HOST_DOWN;
 		(void)cte->validate_close(cte);
