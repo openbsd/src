@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.102 2007/11/19 18:56:41 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.103 2007/11/19 19:10:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -414,7 +414,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	rsdp = (struct acpi_rsdp *)handle.va;
-	printf(": rev %d", (int)rsdp->rsdp_revision);
+	sc->sc_revision = (int)rsdp->rsdp_revision;
+	printf(": rev %d", sc->sc_revision);
 
 	SIMPLEQ_INIT(&sc->sc_tables);
 	SIMPLEQ_INIT(&sc->sc_wakedevs);
