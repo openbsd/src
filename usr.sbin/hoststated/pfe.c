@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.41 2007/11/15 17:02:01 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.42 2007/11/19 15:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -275,7 +275,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			for (n = 0; n < env->prefork_relay; n++)
 				imsg_compose(&ibuf_relay[n],
 				    IMSG_HOST_STATUS, 0, 0, -1, &st,
-				        sizeof(st));
+				    sizeof(st));
 
 			if ((table = table_find(env, host->conf.tableid))
 			    == NULL)
@@ -803,7 +803,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 	host->flags &= ~(F_DEL);
 	host->flags &= ~(F_ADD);
 
-	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0, -1, 
+	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0, -1,
 	    &host->conf.id, sizeof (host->conf.id));
 	/* Forward to relay engine(s) */
 	for (n = 0; n < env->prefork_relay; n++)
@@ -883,7 +883,7 @@ pfe_sync(void)
 		 * clean up change flag.
 		 */
 		table->conf.flags &= ~(F_CHANGED);
-		
+
 		/*
 		 * handle demotion.
 		 */

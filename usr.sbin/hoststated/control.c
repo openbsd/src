@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.19 2007/10/19 12:08:55 pyr Exp $	*/
+/*	$OpenBSD: control.c,v 1.20 2007/11/19 15:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,7 +316,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
-			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 
+			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL,
 			    0);
 			break;
 		case IMSG_CTL_POLL:

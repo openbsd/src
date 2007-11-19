@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2007/11/19 15:20:18 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.84 2007/11/19 15:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -186,7 +186,7 @@ hostname	: /* empty */		{
 			if (asprintf(&$$, "Host: %s\r\n", $2) == -1)
 				fatal("asprintf");
 		}
-		;		
+		;
 
 proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 		| STRING			{
@@ -325,7 +325,7 @@ service		: SERVICE STRING	{
 			}
 			conf->servicecount++;
 			if (service->backup == NULL) {
-				service->conf.backup_id = 
+				service->conf.backup_id =
 				    conf->empty_table.conf.id;
 				service->backup = &conf->empty_table;
 			} else if (service->backup->conf.port !=
@@ -641,7 +641,7 @@ protoptsl	: SSL sslflags
 		| TCP '{' tcpflags_l '}'
 		| PROTO proto_type		{ proto->type = $2; }
 		| direction protonode log	{
-			struct protonode 	*pn, *proot, pk;
+			struct protonode	*pn, *proot, pk;
 			struct proto_tree	*tree;
 
 			if ($1 == RELAY_DIR_RESPONSE)
@@ -678,7 +678,7 @@ protoptsl	: SSL sslflags
 				SIMPLEQ_INSERT_TAIL(&proot->head, pn, entry);
 			}
 
-			if (node.type == NODE_TYPE_COOKIE)	
+			if (node.type == NODE_TYPE_COOKIE)
 				pk.key = "Cookie";
 			else
 				pk.key = "GET";
@@ -732,7 +732,7 @@ tcpflags_l	: tcpflags comma tcpflags_l
 		| tcpflags
 		;
 
-tcpflags	: SACK 			{ proto->tcpflags |= TCPFLAG_SACK; }
+tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| NO SACK		{ proto->tcpflags |= TCPFLAG_NSACK; }
 		| NODELAY		{ proto->tcpflags |= TCPFLAG_NODELAY; }
 		| NO NODELAY		{ proto->tcpflags |= TCPFLAG_NNODELAY; }
@@ -971,7 +971,7 @@ relayopts_l	: relayopts_l relayoptsl nl
 		;
 
 relayoptsl	: LISTEN ON STRING port optssl {
-			struct addresslist 	 al;
+			struct addresslist	 al;
 			struct address		*h;
 
 			if (rlay->conf.ss.ss_family != AF_UNSPEC) {
@@ -996,7 +996,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 		}
 		| FORWARD TO STRING port retry {
-			struct addresslist 	 al;
+			struct addresslist	 al;
 			struct address		*h;
 
 			if (rlay->conf.dstss.ss_family != AF_UNSPEC) {
@@ -1318,7 +1318,8 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
-			yyerror("reached end of file while parsing quoted string");
+			yyerror("reached end of file while parsing "
+			    "quoted string");
 			if (popfile() == EOF)
 				return (EOF);
 			return (quotec);

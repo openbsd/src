@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.54 2007/11/19 14:48:19 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.55 2007/11/19 15:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1211,7 +1211,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				free(line);
 				goto fail;
 			}
-				
+
 			DPRINTF("relay_read_http: request '%s'", line);
 			/* Append line to the output buffer */
 			if (relay_bufferevent_print(cre->dst, line) == -1 ||
@@ -1621,7 +1621,7 @@ relay_accept(int fd, short sig, void *arg)
 		cnl->proc = proc_id;
 		bcopy(&con->in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->conf.ss, &cnl->dst, sizeof(cnl->dst));
-		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl, 
+		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */
@@ -2489,7 +2489,7 @@ relay_load_file(const char *name, off_t *len)
 	struct stat	 st;
 	off_t		 size;
 	u_int8_t	*buf = NULL;
-	int	 	 fd;
+	int		 fd;
 
 	if ((fd = open(name, O_RDONLY)) == -1)
 		return (NULL);

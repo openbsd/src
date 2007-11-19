@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.53 2007/11/19 14:48:19 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.54 2007/11/19 15:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -244,12 +244,12 @@ main(int argc, char *argv[])
 	}
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL) 
+	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 
 	if (env->prefork_relay > 0) {
 		if ((ibuf_relay = calloc(env->prefork_relay,
-		    sizeof(struct imsgbuf))) == NULL) 
+		    sizeof(struct imsgbuf))) == NULL)
 			fatal(NULL);
 	}
 
@@ -338,7 +338,7 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 	if (imsg_compose(ibuf_hce, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	for (i = 0; i < env->prefork_relay; i++) {
-		if (imsg_compose(&ibuf_relay[i], type, 0, 0, -1, buf, len) 
+		if (imsg_compose(&ibuf_relay[i], type, 0, 0, -1, buf, len)
 		    == -1)
 			return (-1);
 	}
@@ -424,7 +424,7 @@ reconfigure(void)
 			imsg_compose(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0, -1,
 			    table->sendbuf, strlen(table->sendbuf) + 1);
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			imsg_compose(ibuf_hce, IMSG_RECONF_HOST, 0, 0, -1, 
+			imsg_compose(ibuf_hce, IMSG_RECONF_HOST, 0, 0, -1,
 			    &host->conf, sizeof(host->conf));
 		}
 	}

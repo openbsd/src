@@ -134,7 +134,7 @@ ssl_ctx_use_certificate_chain(SSL_CTX *ctx, char *buf, off_t len)
 	/* If we could set up our certificate, now proceed to
 	 * the CA certificates.
 	 */
-		
+
 	if (ctx->extra_certs != NULL) {
 		sk_X509_pop_free(ctx->extra_certs, X509_free);
 		ctx->extra_certs = NULL;
