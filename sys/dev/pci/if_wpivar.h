@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.14 2007/09/11 18:52:32 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.15 2007/11/19 19:34:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -73,9 +73,8 @@ struct wpi_tx_ring {
 	struct wpi_dma_info	cmd_dma;
 	struct wpi_tx_desc	*desc;
 	struct wpi_tx_cmd	*cmd;
-	struct wpi_tx_data	*data;
+	struct wpi_tx_data	data[WPI_TX_RING_COUNT];
 	int			qid;
-	int			count;
 	int			queued;
 	int			cur;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.12 2007/11/17 18:50:54 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.13 2007/11/19 19:34:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -92,7 +92,7 @@ int		iwn_alloc_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 void		iwn_reset_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 void		iwn_free_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 int		iwn_alloc_tx_ring(struct iwn_softc *, struct iwn_tx_ring *,
-		    int, int);
+		    int);
 void		iwn_reset_tx_ring(struct iwn_softc *, struct iwn_tx_ring *);
 void		iwn_free_tx_ring(struct iwn_softc *, struct iwn_tx_ring *);
 struct		ieee80211_node *iwn_node_alloc(struct ieee80211com *);
@@ -273,16 +273,13 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < IWN_NTXQUEUES; i++) {
-		struct iwn_tx_ring *txq = &sc->txq[i];
-		error = iwn_alloc_tx_ring(sc, txq, IWN_TX_RING_COUNT, i);
-		if (error != 0) {
+		if ((error = iwn_alloc_tx_ring(sc, &sc->txq[i], i)) != 0) {
 			printf(": could not allocate Tx ring %d\n", i);
 			goto fail4;
 		}
 	}
 
-	error = iwn_alloc_rx_ring(sc, &sc->rxq);
-	if (error != 0) {
+	if ((error = iwn_alloc_rx_ring(sc, &sc->rxq)) != 0) {
 		printf(": could not allocate Rx ring\n");
 		goto fail4;
 	}
@@ -660,43 +657,34 @@ iwn_free_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 }
 
 int
-iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
-    int qid)
+iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int qid)
 {
+	bus_size_t size;
 	int i, error;
 
 	ring->qid = qid;
-	ring->count = count;
 	ring->queued = 0;
 	ring->cur = 0;
 
+	size = IWN_TX_RING_COUNT * sizeof (struct iwn_tx_desc);
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, count * sizeof (struct iwn_tx_desc),
-	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
+	    (void **)&ring->desc, size, IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
+	size = IWN_TX_RING_COUNT * sizeof (struct iwn_tx_cmd);
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
-	    (void **)&ring->cmd, count * sizeof (struct iwn_tx_cmd), 4,
-	    BUS_DMA_NOWAIT);
+	    (void **)&ring->cmd, size, 4, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx cmd DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	ring->data = malloc(count * sizeof (struct iwn_tx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (ring->data == NULL) {
-		printf("%s: could not allocate tx data slots\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < IWN_TX_RING_COUNT; i++) {
 		struct iwn_tx_data *data = &ring->data[i];
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
@@ -738,7 +726,7 @@ iwn_reset_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 #endif
 	iwn_mem_unlock(sc);
 
-	for (i = 0; i < ring->count; i++) {
+	for (i = 0; i < IWN_TX_RING_COUNT; i++) {
 		struct iwn_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
@@ -760,16 +748,13 @@ iwn_free_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 	iwn_dma_contig_free(&ring->desc_dma);
 	iwn_dma_contig_free(&ring->cmd_dma);
 
-	if (ring->data != NULL) {
-		for (i = 0; i < ring->count; i++) {
-			struct iwn_tx_data *data = &ring->data[i];
+	for (i = 0; i < IWN_TX_RING_COUNT; i++) {
+		struct iwn_tx_data *data = &ring->data[i];
 
-			if (data->m != NULL) {
-				bus_dmamap_unload(sc->sc_dmat, data->map);
-				m_freem(data->m);
-			}
+		if (data->m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
 		}
-		free(ring->data, M_DEVBUF);
 	}
 }
 
@@ -1915,7 +1900,7 @@ iwn_start(struct ifnet *ifp)
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
 			/* management frames go into ring 0 */
-			if (sc->txq[0].queued >= sc->txq[0].count - 8) {
+			if (sc->txq[0].queued >= IWN_TX_RING_COUNT - 8) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -1936,7 +1921,7 @@ iwn_start(struct ifnet *ifp)
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-			if (sc->txq[0].queued >= sc->txq[0].count - 8) {
+			if (sc->txq[0].queued >= IWN_TX_RING_COUNT - 8) {
 				/* there is no place left in this ring */
 				ifp->if_flags |= IFF_OACTIVE;
 				break;

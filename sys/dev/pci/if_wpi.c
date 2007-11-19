@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.57 2007/11/03 13:10:29 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.58 2007/11/19 19:34:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -90,7 +90,7 @@ int		wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
 void		wpi_reset_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
 void		wpi_free_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
 int		wpi_alloc_tx_ring(struct wpi_softc *, struct wpi_tx_ring *,
-		    int, int);
+		    int);
 void		wpi_reset_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
 void		wpi_free_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
 struct		ieee80211_node *wpi_node_alloc(struct ieee80211com *);
@@ -250,16 +250,13 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < WPI_NTXQUEUES; i++) {
-		struct wpi_tx_ring *txq = &sc->txq[i];
-		error = wpi_alloc_tx_ring(sc, txq, WPI_TX_RING_COUNT, i);
-		if (error != 0) {
+		if ((error = wpi_alloc_tx_ring(sc, &sc->txq[i], i)) != 0) {
 			printf(": could not allocate Tx ring %d\n", i);
 			goto fail3;
 		}
 	}
 
-	error = wpi_alloc_rx_ring(sc, &sc->rxq);
-	if (error != 0) {
+	if ((error = wpi_alloc_rx_ring(sc, &sc->rxq)) != 0) {
 		printf(": could not allocate Rx ring\n");
 		goto fail3;
 	}
@@ -629,19 +626,18 @@ wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 }
 
 int
-wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
-    int qid)
+wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int qid)
 {
+	bus_size_t size;
 	int i, error;
 
 	ring->qid = qid;
-	ring->count = count;
 	ring->queued = 0;
 	ring->cur = 0;
 
+	size = WPI_TX_RING_COUNT * sizeof (struct wpi_tx_desc);
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, count * sizeof (struct wpi_tx_desc),
-	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
+	    (void **)&ring->desc, size, WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -651,24 +647,16 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
 	/* update shared page with ring's base address */
 	sc->shared->txbase[qid] = htole32(ring->desc_dma.paddr);
 
+	size = WPI_TX_RING_COUNT * sizeof (struct wpi_tx_cmd);
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
-	    (void **)&ring->cmd, count * sizeof (struct wpi_tx_cmd), 4,
-	    BUS_DMA_NOWAIT);
+	    (void **)&ring->cmd, size, 4, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx cmd DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	ring->data = malloc(count * sizeof (struct wpi_tx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (ring->data == NULL) {
-		printf("%s: could not allocate tx data slots\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < WPI_TX_RING_COUNT; i++) {
 		struct wpi_tx_data *data = &ring->data[i];
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
@@ -710,7 +698,7 @@ wpi_reset_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 #endif
 	wpi_mem_unlock(sc);
 
-	for (i = 0; i < ring->count; i++) {
+	for (i = 0; i < WPI_TX_RING_COUNT; i++) {
 		struct wpi_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
@@ -732,16 +720,13 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	wpi_dma_contig_free(&ring->desc_dma);
 	wpi_dma_contig_free(&ring->cmd_dma);
 
-	if (ring->data != NULL) {
-		for (i = 0; i < ring->count; i++) {
-			struct wpi_tx_data *data = &ring->data[i];
+	for (i = 0; i < WPI_TX_RING_COUNT; i++) {
+		struct wpi_tx_data *data = &ring->data[i];
 
-			if (data->m != NULL) {
-				bus_dmamap_unload(sc->sc_dmat, data->map);
-				m_freem(data->m);
-			}
+		if (data->m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
 		}
-		free(ring->data, M_DEVBUF);
 	}
 }
 
@@ -1792,7 +1777,7 @@ wpi_start(struct ifnet *ifp)
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
 			/* management frames go into ring 0 */
-			if (sc->txq[0].queued >= sc->txq[0].count - 8) {
+			if (sc->txq[0].queued >= WPI_TX_RING_COUNT - 8) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -1813,7 +1798,7 @@ wpi_start(struct ifnet *ifp)
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-			if (sc->txq[0].queued >= sc->txq[0].count - 8) {
+			if (sc->txq[0].queued >= WPI_TX_RING_COUNT - 8) {
 				/* there is no place left in this ring */
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
