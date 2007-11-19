@@ -1,5 +1,5 @@
 /*-
- * $OpenBSD: table.c,v 1.3 2007/11/01 10:52:58 otto Exp $
+ * $OpenBSD: table.c,v 1.4 2007/11/19 22:59:03 stefan Exp $
  *
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -60,15 +60,15 @@ struct optab table[] = {
 
 /* convert (u)char to (u)char */
 { SCONV,	INAREG,
-	INAREG,	TCHAR|TUCHAR,
-	INAREG,	TCHAR|TUCHAR,
+	SAREG,	TCHAR|TUCHAR,
+	SAREG,	TCHAR|TUCHAR,
 		0,	RLEFT,
 		COM "convert between (u)char and (u)char\n", },
 
 /* convert (u)short to (u)short */
 { SCONV,	INAREG,
-	INAREG,	TSHORT|TUSHORT,
-	INAREG,	TSHORT|TUSHORT,
+	SAREG,	TSHORT|TUSHORT,
+	SAREG,	TSHORT|TUSHORT,
 		0,	RLEFT,
 		COM "convert between (u)short and (u)short\n", },
 
@@ -92,7 +92,6 @@ struct optab table[] = {
 	SBREG,	TLONGLONG|TULONGLONG,
 		0,	RLEFT,
 		COM "convert (u)longlong to (u)longlong\n", },
-
 
 /* convert char to short */
 { SCONV,	INAREG,
@@ -121,7 +120,7 @@ struct optab table[] = {
 	SAREG,	TCHAR,
 	SAREG,	TUSHORT|TUWORD,
 		NASL|NAREG|NSPECIAL,	RESC1,
-		"	andi. A1,AL,255" COM "convert char (AL) to ushort/unsigned (A1)\n", },
+		"	extsh A1,AL" COM "convert char (AL) to ushort/unsigned (A1)\n", },
 
 /* convert uchar/ushort/uint to (u)longlong */
 { SCONV,	INBREG,
@@ -131,20 +130,12 @@ struct optab table[] = {
 		"	mr A1,AL" COM "convert uchar/ushort/uint to (u)longlong\n"
 		"	li U1,0\n", },
 
-/* convert char/short/int to ulonglong */
+/* convert char/short/int to (u)longlong */
 { SCONV,	INBREG,
 	SAREG,	TCHAR|TSHORT|TSWORD,
-	SBREG,	TULONGLONG,
+	SBREG,	TULONGLONG|TLONGLONG,
 		NBREG,		RESC1,
-		"	andi. A1,AL,255" COM "convert char/short/int to ulonglong\n"
-		"	li U1,0\n", },
-
-/* convert char/short/int to longlong */
-{ SCONV,	INBREG,
-	SAREG,	TCHAR|TSHORT|TSWORD,
-	SBREG,	TLONGLONG,
-		NBREG|NBSL,		RESC1,
-		"	mr A1,AL" COM "convert char/short/int to longlong\n"
+		"	mr A1,AL" COM "convert char/short/int to ulonglong\n"
 		"	srawi U1,AL,31\n", },
 
 /* convert (u)short to (u)char  */
@@ -155,12 +146,12 @@ struct optab table[] = {
 		"	andi. A1,AL,255" COM "convert (u)short to (u)char\n", },
 
 /* XXX is this really necessary? */
-/* convert short to int */
+/* convert short to (u)int */
 { SCONV,	INAREG,
 	SAREG,	TSHORT,
 	SAREG,	TWORD,
-		NAREG|NASL|NSPECIAL,	RESC1,
-		"	andi. A1,AL,65535" COM "convert short to int\n", },
+		NAREG|NASL,	RESC1,
+		"	extsh A1,AL" COM "convert short to int\n", },
 
 /* convert ushort to (u)int. */
 { SCONV,	INAREG,
@@ -183,6 +174,27 @@ struct optab table[] = {
 		NAREG|NASL|NSPECIAL,	RESC1,
 		"	andi. A1,AL,65535" COM "convert (u)int to (u)short\n", },
 
+/* convert (u)longlong to (u)char */
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TCHAR|TUCHAR,
+		NAREG|NSPECIAL,	RESC1,
+		"	andi. A1,AL,255" COM "(u)longlong to (u)char\n", },
+
+/* convert (u)longlong to (u)short*/
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TSHORT|TUSHORT,
+		NAREG|NSPECIAL,	RESC1,
+		"	andi. A1,AL,65535" COM "(u)longlong to (u)short\n", },
+
+/* convert (u)longlong to (u)int */
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TWORD,
+		NAREG,		RESC1,
+		"	mr A1,AL" COM "convert (u)longlong to (u)int/long\n", },
+
 /* conversions on load from memory */
 
 /* char */
@@ -200,12 +212,44 @@ struct optab table[] = {
 		NASL|NAREG|NSPECIAL,	RESC1,
 		"	lbz A1,AL" COM "convert uchar to int/long\n", },
 
-/* short, ushort */
+/* short */
 { SCONV,	INAREG,
-	SOREG,	TSHORT|TUSHORT,
+	SOREG,	TSHORT,
 	SAREG,	TWORD,
 		NASL|NAREG|NSPECIAL,	RESC1,
-		"	lha A1,AL" COM "convert (u)short to int/long\n", },
+		"	lha A1,AL" COM "convert short to int/long\n", },
+
+/* ushort */
+{ SCONV,	INAREG,
+	SOREG,	TUSHORT,
+	SAREG,	TWORD,
+		NASL|NAREG|NSPECIAL,	RESC1,
+		"	lhz A1,AL" COM "convert ushort to int/long\n", },
+
+/* (u)longlong to (u)char */
+{ SCONV,	INAREG,
+	SOREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TCHAR|TUCHAR,
+		NAREG|NSPECIAL,	RESC1,
+		"	lwz A1,AL" COM "(u)longlong to (u)char\n"
+		"	andi. A1,A1,255\n", },
+
+/* (u)longlong to (u)short */
+{ SCONV,	INAREG,
+	SOREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TSHORT|TUSHORT,
+		NAREG|NSPECIAL,	RESC1,
+		"	lwz A1,AL" COM "(u)longlong to (u)short\n"
+		"	andi. A1,A1,65535\n", },
+
+/* (u)longlong to (u)int */
+{ SCONV,	INAREG,
+	SOREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TWORD,
+		NAREG|NSPECIAL,	RESC1,
+		"	lwz A1,AL" COM "(u)longlong to (u)int\n", },
+
+/* XXX where are the other OREG conversions? endianness problems? */
 
 /*
  * Subroutine calls.
@@ -338,7 +382,7 @@ struct optab table[] = {
 	SAREG,	TWORD|TPOINT,
 	SSCON,	TANY,
 		NAREG|NASL|NSPECIAL,	RESC1|RESCC,
-		"	addi. A1,AL,-AR\n", },
+		"	addic. A1,AL,-AR\n", },
 
 { MINUS,	INBREG,
 	SBREG,	TLONGLONG|TULONGLONG,
@@ -672,8 +716,8 @@ struct optab table[] = {
 #endif
 
 { STASG,	INAREG|FOREFF,
-	SOREG|SNAME,	TANY,
-	SAREG|SOREG|SNAME,	TPTRTO|TANY,
+	SOREG,	TANY,
+	SAREG,	TPTRTO|TANY,
 		NSPECIAL,	RRIGHT,
 		"ZQ", },
 
@@ -760,16 +804,9 @@ struct optab table[] = {
 
 { UMUL,	INAREG,
 	SANY,		TANY,
-	SOREG,		TSHORT,
+	SOREG,		TSHORT|TUSHORT,
 		NAREG|NSPECIAL,	RESC1,
-		"	lhz A1,AL" COM "short load\n"
-		"	extsh A1,A1\n", },
-
-{ UMUL,	INAREG,
-	SANY,		TANY,
-	SOREG,		TUSHORT,
-		NAREG|NSPECIAL,	RESC1,
-		"	lhz A1,AL" COM "ushort load\n", },
+		"	lha A1,AL" COM "(u)short load\n", },
 
 { UMUL, INBREG,
 	SANY,		TANY,
@@ -777,6 +814,8 @@ struct optab table[] = {
 		NBREG, RESC1,
 		"	lwz A1,AL" COM "64-bit load\n"
 		"	lwz U1,UL\n", },
+
+/* XXX UMUL of SNAME and AREG !!! */
 
 /*
  * Logical/branching operators
@@ -967,14 +1006,14 @@ struct optab table[] = {
         SANY,   	TANY,
         SOREG,		TLONGLONG|TULONGLONG,
                 NBREG,  RESC1,
-                "	lwz A1,AL" COM "load long from memory\n"
+                "	lwz A1,AL" COM "load llong from memory\n"
 		"	lwz U1,UL\n", },
 
 { OPLTYPE,      INBREG,
         SANY,   	TANY,
         SNAME,		TLONGLONG|TULONGLONG,
                 NBREG,  RESC1,
-		"	lis A1," HA16(AL) COM "load long from sname\n"
+		"	lis A1," HA16(AL) COM "load llong from sname\n"
 		"	lwz A1," LO16(AL) "(A1)\n"
 		"	lis U1," HA16(UL) "\n"
 		"	lwz U1," LO16(UL) "(U1)\n", },
@@ -999,34 +1038,44 @@ struct optab table[] = {
 	SANY,		TANY,
 	SOREG,		TCHAR,
 		NAREG,	RESC1,
-		"	lbz A1,AL" COM "load char from memory\n" },
+		"	lbz A1,AL" COM "load char from memory\n"
+		"	extsb A1,A1\n", },
 
 /* load char from memory */
 { OPLTYPE,	INAREG,
 	SANY,		TANY,
-	SNAME,		TCHAR|TUCHAR,
+	SNAME,		TCHAR,
 		NAREG|NSPECIAL,	RESC1,
-		"	lis A1," HA16(AL) COM "load (u)char from sname\n"
-		"	lbz A1," LO16(AL) "(A1)\n", },
+		"	lis A1," HA16(AL) COM "load char from sname\n"
+		"	lbz A1," LO16(AL) "(A1)\n"
+		"	extsb A1,A1\n", },
 
 /* load uchar from memory */
 { OPLTYPE,	INAREG,
 	SANY,		TANY,
-	SOREG,		TCHAR|TUCHAR,
+	SOREG,		TUCHAR,
 		NAREG,	RESC1,
-		"	lbz A1,AL" COM "load (u)char from memory\n", },
+		"	lbz A1,AL" COM "load uchar from memory\n", },
 
-/* load short from memory */
+/* load uchar from memory */
+{ OPLTYPE,	INAREG,
+	SANY,		TANY,
+	SNAME,		TUCHAR,
+		NAREG|NSPECIAL,	RESC1,
+		"	lis A1," HA16(AL) COM "load uchar from sname\n"
+		"	lbz A1," LO16(AL) "(A1)\n", },
+
+/* load (u)short from memory */
 { OPLTYPE,	INAREG,
 	SANY,		TANY,
 	SOREG,		TSHORT|TUSHORT,
 		NAREG,	RESC1,
 		"	lha A1,AL" COM "load (u)short from memory\n", },
 
-/* load short from memory */
+/* load (u)short from memory */
 { OPLTYPE,	INAREG,
 	SANY,		TANY,
-	SOREG,		TSHORT|TUSHORT,
+	SNAME,		TSHORT|TUSHORT,
 		NAREG|NSPECIAL,	RESC1,
 		"	lis A1," HA16(AL) COM "load (u)short from sname\n"
 		"	lha A1," LO16(AL) "(A1)\n", },
@@ -1044,7 +1093,7 @@ struct optab table[] = {
 	SSCON,	TANY,
 		NBREG,	RESC1,
 		"	li A1,AL" COM "load 16-bit constant\n"
-		"	li U1,0\n", },
+		"	li U1,UL\n", },
 
 /* load from constant */
 { OPLTYPE,	INAREG,
@@ -1085,13 +1134,13 @@ struct optab table[] = {
 
 { UMINUS,	INAREG,
 	SAREG,	TWORD|TPOINT|TSHORT|TUSHORT|TCHAR|TUCHAR,
-	SAREG,	TWORD|TPOINT|TSHORT|TUSHORT|TCHAR|TUCHAR,
+	SANY,	TANY,
 		NAREG|NASL,	RESC1,
 		"	neg A1,AL\n", },
 
 { UMINUS,	INBREG,
 	SBREG,	TLONGLONG|TULONGLONG,
-	SBREG,	TLONGLONG|TULONGLONG,
+	SANY,	TANY,
 		NBREG|NBSL,	RESC1,
 		"	subfic A1,AL,0\n"
 		"	subfze U1,UL\n", },
