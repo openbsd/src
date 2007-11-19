@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2003/08/05 11:07:43 hin Exp $
+#	$OpenBSD: Makefile,v 1.6 2007/11/19 21:13:58 espie Exp $
 
 # To the future maintainer (if I get hit by a car or something): The structure
 # is like this (everything in src, except the makefiles), because we want
@@ -21,7 +21,7 @@ SUBDIR		+= lib libexec usr.sbin
 ## To be able to make depend in libarla we have to have ydr
 
 beforedepend:
-	cd usr.sbin/ydr && make depend && exec make
+	cd usr.sbin/ydr && ${MAKE} depend && exec ${MAKE}
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
