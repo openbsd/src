@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.101 2007/11/16 16:16:04 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.102 2007/11/19 18:56:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -402,11 +402,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct device *dev;
 	struct acpi_ac *ac;
 	struct acpi_bat *bat;
-	paddr_t facspa;
 #endif
+	paddr_t facspa;
+
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_memt = aaa->aaa_memt;
-
 
 	if (acpi_map(aaa->aaa_pbase, sizeof(struct acpi_rsdp), &handle)) {
 		printf(": can't map memory\n");
@@ -463,6 +463,19 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/*
+	 * Set up a pointer to the firmware control structure
+	 */
+	if (sc->sc_fadt->hdr_revision < 3 || sc->sc_fadt->x_firmware_ctl == 0)
+		facspa = sc->sc_fadt->firmware_ctl;
+	else
+		facspa = sc->sc_fadt->x_firmware_ctl;
+
+	if (acpi_map(facspa, sizeof(struct acpi_facs), &handle))
+		printf(" !FACS");
+	else
+		sc->sc_facs = (struct acpi_facs *)handle.va;
+
 	/* Create opcode hashtable */
 	aml_hashopcodes();
 
@@ -507,19 +520,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
-
-	/*
-	 * Set up a pointer to the firmware control structure
-	 */
-	if (sc->sc_fadt->hdr_revision < 3 || sc->sc_fadt->x_firmware_ctl == 0)
-		facspa = sc->sc_fadt->firmware_ctl;
-	else
-		facspa = sc->sc_fadt->x_firmware_ctl;
-
-	if (acpi_map(facspa, sizeof(struct acpi_facs), &handle))
-		printf(" !FACS");
-	else
-		sc->sc_facs = (struct acpi_facs *)handle.va;
 
 	/* Map Power Management registers */
 	acpi_map_pmregs(sc);
