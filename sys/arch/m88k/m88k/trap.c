@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2007/11/20 21:53:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2007/11/20 22:08:40 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -887,6 +887,7 @@ m88110_user_fault:
 					printf("Corrected userland write fault, pmap %p va %p\n",
 					    map->pmap, va);
 #endif
+					result = 0;
 				} else {
 					/* must be a real wp fault */
 #ifdef TRAPDEBUG
