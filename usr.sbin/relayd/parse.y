@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.86 2007/11/20 15:54:55 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.87 2007/11/20 17:08:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -429,6 +429,7 @@ serviceoptsl	: TABLE STRING dstport	{
 			}
 			free($2);
 		}
+		| include
 		;
 
 table		: TABLE STRING	{
@@ -603,6 +604,7 @@ tableoptsl	: host			{
 			}
 			table->conf.skip_cnt = ($2 / conf->interval.tv_sec) - 1;
 		}
+		| include
 		;
 
 proto		: PROTO STRING	{
@@ -748,6 +750,7 @@ protoptsl	: SSL sslflags
 
 			bzero(&node, sizeof(node));
 		}
+		| include
 		;
 
 direction	: /* empty */		{ $$ = RELAY_DIR_REQUEST; }
@@ -1117,6 +1120,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 		}
 		| DISABLE		{ rlay->conf.flags |= F_DISABLE; }
+		| include
 		;
 
 dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
