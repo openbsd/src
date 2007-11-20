@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.4 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.5 2007/11/20 21:46:18 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -104,12 +104,12 @@ data_access_emulation(u_int *eframe)
 	u_int v, reg;
 
 	dmtx = eframe[EF_DMT0];
-	if (!ISSET(dmtx, DMT_VALID))
+	if (!ISSET(dmtx, DMT_VALID) || ISSET(dmtx, DMT_SKIP))
 		return;
 
 	for (x = 0; x < 3; x++) {
 		dmtx = eframe[EF_DMT0 + x * 3];
-		if (!ISSET(dmtx, DMT_VALID) || ISSET(dmtx, DMT_SKIP))
+		if (!ISSET(dmtx, DMT_VALID))
 			continue;
 
 		dmdx = eframe[EF_DMD0 + x * 3];
@@ -259,7 +259,7 @@ data_access_emulation(u_int *eframe)
 			}
 		}
 	}
-	eframe[EF_DMT0] = 0;
+	eframe[EF_DMT0] |= DMT_SKIP;
 }
 
 /*
