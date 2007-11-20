@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.56 2007/11/20 09:57:49 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.57 2007/11/20 09:59:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -83,7 +83,6 @@ int		 relay_from_table(struct session *);
 void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
 void		 relay_error(struct bufferevent *, short, void *);
-
 
 int		 relay_resolve(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *);
@@ -939,7 +938,6 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 
 	return (buf);
 }
-
 
 int
 relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
