@@ -221,7 +221,7 @@ for file in $LIB2ADDEH; do
       flags="$flags -xassembler-with-cpp"
     fi
 
-    echo $out: $file
+    echo $out: stmp-dirs $file
     echo "	$gcc_compile" $flags -fexceptions -c $file -o $out
   done
   if [ "$SHLIB_LINK" ]; then
