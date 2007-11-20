@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2007/11/20 21:53:25 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2007/11/20 21:54:58 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -804,7 +804,7 @@ pmap_zero_page(struct vm_page *pg)
 	spl = splvm();
 
 	*pte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
-	    PG_M /* 88110 */ | PG_V | pa;
+	    PG_M /* 88110 */ | PG_U | PG_V | pa;
 
 	/*
 	 * We don't need the flush_atc_entry() dance, as these pages are
@@ -812,13 +812,7 @@ pmap_zero_page(struct vm_page *pg)
 	 */
 	cmmu_flush_tlb(cpu, TRUE, va, 1);
 
-	/*
-	 * The page is likely to be a non-kernel mapping, and as
-	 * such write back. Also, we might have split U/S caches!
-	 * So be sure to have the pa flushed after the filling.
-	 */
 	bzero((void *)va, PAGE_SIZE);
-	cmmu_flush_data_page(cpu, pa);
 
 	splx(spl);
 }
@@ -1690,16 +1684,24 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (wired)
 		template |= PG_W;
 
+	if (prot & VM_PROT_WRITE)
+		template |= PG_M_U;
+	else if (prot & VM_PROT_ALL)
+		template |= PG_U;
+
 	/*
 	 * If outside physical memory, disable cache on this (I/O) page.
 	 */
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH;
 
-	if (flags & VM_PROT_WRITE)
-		template |= PG_M_U;
-	else if (flags & VM_PROT_ALL)
-		template |= PG_U;
+	/*
+	 * On 88110, do not mark writable mappings as dirty unless we
+	 * know the page is dirty, or we are using the kernel pmap.
+	 */
+	if (CPU_IS88110 && pmap != kernel_pmap &&
+	    pg != NULL && (pvl->pv_flags & PG_M) == 0)
+		template &= ~PG_M;
 
 	/*
 	 * Invalidate pte temporarily to avoid being written
@@ -1717,8 +1719,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Cache attribute flags
 	 */
-	if (pvl != NULL)
-		pvl->pv_flags |= template & PG_M_U;
+	if (pvl != NULL) {
+		if (flags & VM_PROT_WRITE) {
+			if (CPU_IS88110 && pmap != kernel_pmap)
+				pvl->pv_flags |= PG_U;
+			else
+				pvl->pv_flags |= PG_M_U;
+		} else if (flags & VM_PROT_ALL)
+			pvl->pv_flags |= PG_U;
+	}
 
 	PMAP_UNLOCK(pmap);
 	splx(spl);
@@ -2049,9 +2058,9 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	spl = splvm();
 
 	*dstpte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
-	    PG_M /* 88110 */ | PG_V | dst;
+	    PG_M /* 88110 */ | PG_U | PG_V | dst;
 	*srcpte = m88k_protection(VM_PROT_READ) |
-	    PG_V | src;
+	    PG_U | PG_V | src;
 
 	/*
 	 * We don't need the flush_atc_entry() dance, as these pages are
@@ -2383,6 +2392,27 @@ done:
 boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
+#ifdef M88110
+	/*
+	 * Since on 88110 PG_M bit tracking is done in software, we can
+	 * trust the page flags without having to walk the individual
+	 * ptes in case the page flags are behind with actual usage.
+	 */
+	if (CPU_IS88110) {
+		pv_entry_t pvl;
+		boolean_t rc = FALSE;
+
+		pvl = pg_to_pvh(pg);
+		if (pvl->pv_flags & PG_M)
+			rc = TRUE;
+#ifdef PMAPDEBUG
+		if (pmap_debug & CD_TBIT)
+			printf("pmap_is_modified(%p) -> %x\n", pg, rc);
+#endif
+		return (rc);
+	}
+#endif
+
 	return pmap_testbit(pg, PG_M);
 }
 
