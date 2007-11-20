@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.57 2007/11/20 09:59:09 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.58 2007/11/20 15:10:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -825,21 +825,20 @@ relay_resolve(struct ctl_relay_event *cre,
 {
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
+	int			 id;
 
 	switch (pn->action) {
 	case NODE_ACTION_FILTER:
-		if (!cre->nodes[pn->id])
+		if (cre->nodes[proot->id] <= 1)
 			return (0);
 		cre->nodes[pn->id] = 0;
 		break;
 	case NODE_ACTION_EXPECT:
-		if (proot == pn)
-			cre->nodes[proot->id]--;
-		if (cre->nodes[proot->id]) {
-			if (SIMPLEQ_NEXT(pn, entry) == NULL)
-				cre->nodes[proot->id] = 0;
+		id = cre->nodes[proot->id];
+		if (SIMPLEQ_NEXT(pn, entry) == NULL)
+			cre->nodes[proot->id] = 0;
+		if (id > 1)
 			return (0);
-		}
 		break;
 	default:
 		if (cre->nodes[pn->id]) {
@@ -979,7 +978,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		 * A client may specify the header line for multiple times
 		 * trying to circumvent the filter.
 		 */
-		if (cre->nodes[proot->id]) {
+		if (cre->nodes[proot->id] > 1) {
 			relay_close(con, "repeated header line");
 			return (PN_FAIL);
 		}
