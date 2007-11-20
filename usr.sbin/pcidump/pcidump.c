@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.10 2007/11/18 00:33:45 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.11 2007/11/20 13:56:36 chl Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -385,7 +385,6 @@ void
 dump(int bus, int dev, int func)
 {
 	u_int32_t reg;
-	int bar;
 
 	if (pci_read(bus, dev, func, PCI_ID_REG, &reg) != 0)
 		warn("unable to read PCI_ID_REG");
