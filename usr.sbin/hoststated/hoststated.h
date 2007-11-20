@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.75 2007/11/20 15:44:21 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.76 2007/11/20 15:54:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -25,6 +25,7 @@
 #define PF_SOCKET		"/dev/pf"
 #define HOSTSTATED_USER		"_hoststated"
 #define HOSTSTATED_ANCHOR	"hoststated"
+#define HOSTSTATED_SERVERNAME	"OpenBSD hoststated"
 #define CHECK_TIMEOUT		200
 #define CHECK_INTERVAL		10
 #define EMPTY_TABLE		UINT_MAX
@@ -305,6 +306,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_LOOKUP_PATH		0x00004000
 #define F_DEMOTED		0x00008000
 #define F_UDP			0x00010000
+#define F_RETURN		0x00020000
 
 struct host_config {
 	objid_t			 id;
@@ -499,6 +501,7 @@ struct protocol {
 	int			 cache;
 	enum prototype		 type;
 	int			 lateconnect;
+	char			*style;
 
 	int			 request_nodes;
 	struct proto_tree	 request_tree;
@@ -664,6 +667,7 @@ const char *table_check(enum table_check);
 const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
+const char *print_httperror(u_int);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.58 2007/11/20 15:10:46 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.59 2007/11/20 15:54:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -83,6 +83,7 @@ int		 relay_from_table(struct session *);
 void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
 void		 relay_error(struct bufferevent *, short, void *);
+void		 relay_dump(struct ctl_relay_event *, const void *, size_t);
 
 int		 relay_resolve(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *);
@@ -94,6 +95,7 @@ void		 relay_read_httpcontent(struct bufferevent *, void *);
 void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
+void		 relay_close_http(struct session *, u_int, const char *);
 
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct session *);
@@ -692,7 +694,7 @@ relay_connected(int fd, short sig, void *arg)
 	struct bufferevent	*bev;
 
 	if (sig == EV_TIMEOUT) {
-		relay_close(con, "connect timeout");
+		relay_close_http(con, 504, "connect timeout");
 		return;
 	}
 
@@ -706,7 +708,8 @@ relay_connected(int fd, short sig, void *arg)
 			outrd = relay_read_http;
 			if ((con->out.nodes = calloc(proto->response_nodes,
 			    sizeof(u_int8_t))) == NULL) {
-				relay_close(con, "failed to allocate nodes");
+				relay_close_http(con, 500,
+				    "failed to allocate nodes");
 				return;
 			}
 		}
@@ -723,7 +726,8 @@ relay_connected(int fd, short sig, void *arg)
 	 */
 	bev = bufferevent_new(fd, outrd, outwr, relay_error, &con->out);
 	if (bev == NULL) {
-		relay_close(con, "failed to allocate output buffer event");
+		relay_close_http(con, 500,
+		    "failed to allocate output buffer event");
 		return;
 	}
 	evbuffer_free(bev->output);
@@ -796,6 +800,21 @@ relay_write(struct bufferevent *bev, void *arg)
 }
 
 void
+relay_dump(struct ctl_relay_event *cre, const void *buf, size_t len)
+{
+	/*
+	 * This function will dump the specified message directly
+	 * to the underlying session, without waiting for success
+	 * of non-blocking events etc. This is useful to print an
+	 * error message before gracefully closing the session.
+	 */
+	if (cre->ssl != NULL)
+		(void)SSL_write(cre->ssl, buf, len);
+	else
+		(void)write(cre->s, buf, len);
+}
+
+void
 relay_read(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
@@ -862,7 +881,7 @@ relay_resolve(struct ctl_relay_event *cre,
 		    relay_bufferevent_print(cre->dst, ": ") == -1 ||
 		    relay_bufferevent_print(cre->dst, ptr) == -1 ||
 		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
-			relay_close(con, "failed to modify header");
+			relay_close_http(con, 500, "failed to modify header");
 			return (-1);
 		}
 		DPRINTF("relay_resolve: add '%s: %s'",
@@ -873,14 +892,14 @@ relay_resolve(struct ctl_relay_event *cre,
 			break;
 		DPRINTF("relay_resolve: missing '%s: %s'",
 		    pn->key, pn->value);
-		relay_close(con, "incomplete header");
+		relay_close_http(con, 403, "incomplete request");
 		return (-1);
 	case NODE_ACTION_FILTER:
 		if (pn->flags & PNFLAG_MARK)
 			break;
 		DPRINTF("relay_resolve: filtered '%s: %s'",
 		    pn->key, pn->value);
-		relay_close(con, "rejecting header");
+		relay_close_http(con, 403, "rejecting request");
 		return (-1);
 	default:
 		break;
@@ -979,7 +998,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		 * trying to circumvent the filter.
 		 */
 		if (cre->nodes[proot->id] > 1) {
-			relay_close(con, "repeated header line");
+			relay_close_http(con, 400, "repeated header line");
 			return (PN_FAIL);
 		}
 		ret = PN_PASS;
@@ -1024,7 +1043,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 
 	return (ret);
  fail:
-	relay_close(con, strerror(errno));
+	relay_close_http(con, 500, strerror(errno));
 	return (PN_FAIL);
 }
 
@@ -1206,7 +1225,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (pk.value == NULL || strlen(pk.value) < 3) {
 			if (cre->line == 1) {
 				free(line);
-				goto fail;
+				relay_close_http(con, 400, "malformed");
+				return;
 			}
 
 			DPRINTF("relay_read_http: request '%s'", line);
@@ -1315,9 +1335,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 * include the line length in the content-length.
 			 */
 			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
-
 			if (errstr) {
-				relay_close(con, errstr);
+				relay_close_http(con, 500, errstr);
 				free(line);
 				return;
 			}
@@ -1483,7 +1502,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (cre->dir == RELAY_DIR_REQUEST &&
 		    proto->lateconnect && cre->dst->bev == NULL &&
 		    relay_connect(con) == -1) {
-			relay_close(con, "session failed");
+			relay_close_http(con, 502, "session failed");
 			return;
 		}
 	}
@@ -1497,7 +1516,87 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	relay_close(con, "last http read (done)");
 	return;
  fail:
-	relay_close(con, strerror(errno));
+	relay_close_http(con, 500, strerror(errno));
+}
+
+void
+relay_close_http(struct session *con, u_int code, const char *msg)
+{
+	struct relay		*rlay = (struct relay *)con->relay;
+	struct bufferevent	*bev = con->in.bev;
+	const char		*httperr = print_httperror(code), *text = "";
+	char			*httpmsg;
+	time_t			 t;
+	struct tm		*lt;
+	char			 tmbuf[32], hbuf[128];
+	const char		*style;
+
+	/* In some cases this function may be called from generic places */
+	if (rlay->proto->type != RELAY_PROTO_HTTP ||
+	    (rlay->proto->flags & F_RETURN) == 0) {
+		relay_close(con, msg);
+		return;
+	}
+
+	if (bev == NULL)
+		goto done;
+
+	/* Some system information */
+	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
+		goto done;
+
+	/* RFC 2616 "tolerates" asctime() */
+	time(&t);
+	lt = localtime(&t);
+	tmbuf[0] = '\0';
+	if (asctime_r(lt, tmbuf) != NULL)
+		tmbuf[strlen(tmbuf) - 1] = '\0';	/* skip final '\n' */
+
+	/* Do not send details of the Internal Server Error */
+	if (code != 500)
+		text = msg;
+
+	/* A CSS stylesheet allows minimal customization by the user */
+	if ((style = rlay->proto->style) == NULL)
+		style = "body { background-color: #a00000; color: white; }";
+
+	/* Generate simple HTTP+HTML error document */
+	if (asprintf(&httpmsg,
+	    "HTTP/1.x %03d %s\r\n"
+	    "Date: %s\r\n"
+	    "Server: %s\r\n"
+	    "Connection: close\r\n"
+	    "Content-Type: text/html\r\n"
+	    "\r\n"
+	    "<!DOCTYPE HTML PUBLIC "
+	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
+	    "<html>\n"
+	    "<head>\n"
+	    "<title>%03d %s</title>\n"
+	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
+	    "</head>\n"
+	    "<body>\n"
+	    "<h1>%s</h1>\n"
+	    "<p>%s</p>\n"
+	    "<hr><address>%s at %s port %d</address>\n"
+	    "</body>\n"
+	    "</html>\n",
+	    code, httperr, tmbuf, HOSTSTATED_SERVERNAME,
+	    code, httperr, style, httperr, text,
+	    HOSTSTATED_SERVERNAME, hbuf, ntohs(rlay->conf.port)) == -1)
+		goto done;
+
+	/* Dump the message without checking for success */
+	relay_dump(&con->in, httpmsg, strlen(httpmsg));
+	free(httpmsg);
+
+ done:
+	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1)
+		relay_close(con, msg);
+	else {
+		relay_close(con, httpmsg);
+		free(httpmsg);
+	}
 }
 
 void

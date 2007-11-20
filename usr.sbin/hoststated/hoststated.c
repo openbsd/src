@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.54 2007/11/19 15:31:36 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.55 2007/11/20 15:54:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -500,6 +500,8 @@ purge_config(struct hoststated *env, u_int8_t what)
 			TAILQ_REMOVE(env->protos, proto, entry);
 			purge_tree(&proto->request_tree);
 			purge_tree(&proto->response_tree);
+			if (proto->style != NULL)
+				free(proto->style);
 			free(proto);
 		}
 		free(env->protos);

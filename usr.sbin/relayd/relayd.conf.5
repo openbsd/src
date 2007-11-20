@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.55 2007/11/20 15:44:21 pyr Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.56 2007/11/20 15:54:55 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -593,6 +593,21 @@ keyword in the
 section above.
 .It Ic log Ar key
 Log the name and the value of the entity.
+.El
+.It Ic return error Op Ar option
+Return an error reponse to the client if an internal operation or the
+forward connection to the client failed.
+By default, the connection will be silently dropped.
+The effect of this option depends on the protocol, HTTP will send a
+error header and page to the client before closing the connection.
+Additional valid options are:
+.Bl -tag -width Ds
+.It Ic style Ar string
+Specify a Cascading Style Sheet (CSS) to be used for the returned
+HTTP error pages, for example:
+.Bd -literal -offset indent
+body { background: #a00000; color: white; }
+.Ed
 .El
 .It Ic tcp Ar option
 Enable or disable the specified TCP/IP options; see

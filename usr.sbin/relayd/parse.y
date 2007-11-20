@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2007/11/20 15:44:21 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2007/11/20 15:54:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 
 %token	SERVICE TABLE BACKUP HOST REAL INCLUDE
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
-%token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
+%token  TIMEOUT CODE DIGEST PORT TAG INTERFACE STYLE RETURN
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
@@ -200,6 +200,22 @@ proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 				YYERROR;
 			}
 			free($1);
+		}
+		;
+
+eflags_l	: eflags comma eflags_l
+		| eflags
+		;
+
+opteflags	: /* nothing */
+		| eflags
+		;
+
+eflags		: STYLE STRING
+		{
+			if ((proto->style = strdup($2)) == NULL)
+				fatal("out of memory");
+			free($2);
 		}
 		;
 
@@ -649,6 +665,8 @@ protoptsl	: SSL sslflags
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
 		| PROTO proto_type		{ proto->type = $2; }
+		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
+		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
 		| direction protonode log	{
 			struct protonode	*pn, *proot, pk;
 			struct proto_tree	*tree;
@@ -1236,6 +1254,7 @@ lookup(char *s)
 		{ "demote",		DEMOTE },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
+		{ "error",		ERROR },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
 		{ "filter",		FILTER },
@@ -1270,6 +1289,7 @@ lookup(char *s)
 		{ "request",		REQUEST },
 		{ "response",		RESPONSE },
 		{ "retry",		RETRY },
+		{ "return",		RETURN },
 		{ "roundrobin",		ROUNDROBIN },
 		{ "sack",		SACK },
 		{ "script",		SCRIPT },
@@ -1279,6 +1299,7 @@ lookup(char *s)
 		{ "socket",		SOCKET },
 		{ "ssl",		SSL },
 		{ "sticky-address",	STICKYADDR },
+		{ "style",		STYLE },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
 		{ "tcp",		TCP },
