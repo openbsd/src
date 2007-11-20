@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.55 2007/11/19 15:31:36 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.56 2007/11/20 09:57:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -864,7 +864,7 @@ relay_resolve(struct ctl_relay_event *cre,
 		    relay_bufferevent_print(cre->dst, ": ") == -1 ||
 		    relay_bufferevent_print(cre->dst, ptr) == -1 ||
 		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
-			relay_close(con, "failed to modify header (done)");
+			relay_close(con, "failed to modify header");
 			return (-1);
 		}
 		DPRINTF("relay_resolve: add '%s: %s'",
@@ -875,14 +875,14 @@ relay_resolve(struct ctl_relay_event *cre,
 			break;
 		DPRINTF("relay_resolve: missing '%s: %s'",
 		    pn->key, pn->value);
-		relay_close(con, "incomplete header (done)");
+		relay_close(con, "incomplete header");
 		return (-1);
 	case NODE_ACTION_FILTER:
 		if (pn->flags & PNFLAG_MARK)
 			break;
 		DPRINTF("relay_resolve: filtered '%s: %s'",
 		    pn->key, pn->value);
-		relay_close(con, "rejecting header (done)");
+		relay_close(con, "rejecting header");
 		return (-1);
 	default:
 		break;
@@ -982,7 +982,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		 * trying to circumvent the filter.
 		 */
 		if (cre->nodes[proot->id]) {
-			relay_close(con, "repeated header line (done)");
+			relay_close(con, "repeated header line");
 			return (PN_FAIL);
 		}
 		ret = PN_PASS;
@@ -1060,7 +1060,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	bufferevent_enable(bev, EV_READ);
 	return;
  done:
-	relay_close(con, "last http content read (done)");
+	relay_close(con, "last http content read");
 	return;
  fail:
 	relay_close(con, strerror(errno));
