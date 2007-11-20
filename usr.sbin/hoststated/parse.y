@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2007/11/19 15:31:36 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.85 2007/11/20 15:44:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -577,6 +577,15 @@ tableoptsl	: host			{
 		}
 		| DISABLE			{
 			table->conf.flags |= F_DISABLE;
+		}
+		| INTERVAL NUMBER		{
+			if ($2 < conf->interval.tv_sec ||
+			    $2 % conf->interval.tv_sec) {
+				yyerror("table interval must be "
+				    "divisible by global interval");
+				YYERROR;
+			}
+			table->conf.skip_cnt = ($2 / conf->interval.tv_sec) - 1;
 		}
 		;
 

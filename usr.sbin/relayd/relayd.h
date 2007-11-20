@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.74 2007/11/20 13:01:13 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.75 2007/11/20 15:44:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,6 +344,7 @@ struct table_config {
 	struct timeval		 timeout;
 	in_port_t		 port;
 	int			 retcode;
+	int			 skip_cnt;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
 	char			 exbuf[64];
@@ -354,6 +355,7 @@ struct table {
 	TAILQ_ENTRY(table)	 entry;
 	struct table_config	 conf;
 	int			 up;
+	int			 skipped;
 	struct hostlist		 hosts;
 	SSL_CTX			*ssl_ctx;
 	int			 sendbuf_len;
