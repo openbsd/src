@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.59 2007/11/20 15:54:55 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.60 2007/11/20 17:11:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -339,6 +339,7 @@ relay_protodebug(struct relay *rlay)
 	struct protonode	*proot, *pn;
 	struct proto_tree	*tree;
 	const char		*name;
+	int			 i;
 
 	fprintf(stderr, "protocol %d: name %s\n", proto->id, proto->name);
 	fprintf(stderr, "\tflags: 0x%04x\n", proto->flags);
@@ -361,8 +362,17 @@ relay_protodebug(struct relay *rlay)
 	tree = &proto->request_tree;
  show:
 	RB_FOREACH(proot, proto_tree, tree) {
-		PROTONODE_FOREACH(pn, proot, entry)
+		i = 0;
+		PROTONODE_FOREACH(pn, proot, entry) {
+#ifndef DEBUG
+			/* Limit the number of displayed lines */
+			if (++i > 100) {
+				fprintf(stderr, "\t\t...\n");
+				break;
+			}
+#endif
 			relay_nodedebug(name, pn);
+		}
 	}
 	if (tree == &proto->request_tree) {
 		name = "response";
