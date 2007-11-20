@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2007/11/20 21:48:58 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -718,7 +718,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 
 		/* data fault on the user address? */
 		if ((frame->tf_dsr & CMMU_DSR_SU) == 0) {
-			type = T_DATAFLT + T_USER;
+			KERNEL_LOCK();
 			goto m88110_user_fault;
 		}
 
@@ -812,6 +812,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
+		KERNEL_PROC_LOCK(p);
 m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
 			ftype = VM_PROT_READ;
@@ -837,7 +838,6 @@ m88110_user_fault:
 
 		va = trunc_page((vaddr_t)fault_addr);
 
-		KERNEL_PROC_LOCK(p);
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
@@ -847,7 +847,29 @@ m88110_user_fault:
 		 * Call uvm_fault() to resolve non-bus error faults
 		 * whenever possible.
 		 */
-		if (type == T_DATAFLT+T_USER) {
+		if (type == T_INSTFLT+T_USER) {
+			/* instruction faults */
+			if (frame->tf_isr &
+			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
+				/* bus error, supervisor protection */
+				result = EACCES;
+			} else
+			if (frame->tf_isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
+				/* segment or page fault */
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
+			} else {
+#ifdef TRAPDEBUG
+				printf("Unexpected Instruction fault isr %x\n",
+				    frame->tf_isr);
+#endif
+				if (type == T_DATAFLT)
+					KERNEL_UNLOCK();
+				else
+					KERNEL_PROC_UNLOCK(p);
+				panictrap(frame->tf_vector, frame);
+			}
+		} else {
 			/* data faults */
 			if (frame->tf_dsr & CMMU_DSR_BE) {
 				/* bus error */
@@ -877,7 +899,6 @@ m88110_user_fault:
 				pte = pmap_pte(vm_map_pmap(map), va);
 #ifdef DEBUG
 				if (pte == NULL) {
-					KERNEL_PROC_UNLOCK(p);
 					panic("NULL pte on write fault??");
 				}
 #endif
@@ -896,8 +917,7 @@ m88110_user_fault:
 					 * table search
 					 */
 					set_dcmd(CMMU_DCMD_INV_UATC);
-					KERNEL_PROC_UNLOCK(p);
-					return;
+					result = 0;
 				} else {
 					/* must be a real wp fault */
 #ifdef TRAPDEBUG
@@ -912,26 +932,10 @@ m88110_user_fault:
 				printf("Unexpected Data access fault dsr %x\n",
 				    frame->tf_dsr);
 #endif
-				KERNEL_PROC_UNLOCK(p);
-				panictrap(frame->tf_vector, frame);
-			}
-		} else {
-			/* instruction faults */
-			if (frame->tf_isr &
-			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
-				/* bus error, supervisor protection */
-				result = EACCES;
-			} else
-			if (frame->tf_isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
-				/* segment or page fault */
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
-				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-			} else {
-#ifdef TRAPDEBUG
-				printf("Unexpected Instruction fault isr %x\n",
-				    frame->tf_isr);
-#endif
-				KERNEL_PROC_UNLOCK(p);
+				if (type == T_DATAFLT)
+					KERNEL_UNLOCK();
+				else
+					KERNEL_PROC_UNLOCK(p);
 				panictrap(frame->tf_vector, frame);
 			}
 		}
@@ -942,7 +946,10 @@ m88110_user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
-		KERNEL_PROC_UNLOCK(p);
+		if (type == T_DATAFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(p);
 
 		/*
 		 * This could be a fault caused in copyin*()
