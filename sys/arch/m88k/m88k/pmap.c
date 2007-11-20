@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2007/11/20 21:48:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2007/11/20 21:53:25 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -172,6 +172,7 @@ void	pmap_remove_all(struct vm_page *);
 void	pmap_changebit(struct vm_page *, int, int);
 boolean_t pmap_unsetbit(struct vm_page *, int);
 boolean_t pmap_testbit(struct vm_page *, int);
+int	pmap_set_modify(pmap_t, vaddr_t);
 
 /*
  * quick PTE field checking macros
@@ -2540,3 +2541,44 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 		len -= count;
 	}
 }
+
+#ifdef M88110
+#include <machine/m88110.h>
+int
+pmap_set_modify(pmap_t pmap, vaddr_t va)
+{
+	pt_entry_t *pte;
+	paddr_t pa;
+	vm_page_t pg;
+	pv_entry_t pvl;
+
+	pte = pmap_pte(pmap, va);
+#ifdef DEBUG
+	if (pte == NULL)
+		panic("NULL pte on write fault??");
+#endif
+
+	/* Not a first write to a writable page */
+	if ((*pte & (PG_M | PG_RO)) != 0)
+		return (FALSE);
+
+	/* Mark the page as dirty */
+	*pte |= PG_M;
+	pa = *pte & PG_FRAME;
+	pg = PHYS_TO_VM_PAGE(pa);
+#ifdef DIAGNOSTIC
+	if (pg == NULL)
+		panic("Write fault to unmanaged page %p", pa);
+#endif
+
+	pvl = pg_to_pvh(pg);
+	pvl->pv_flags |= PG_M_U;
+
+	if (pmap == kernel_pmap)
+		set_dcmd(CMMU_DCMD_INV_SATC);
+	else
+		set_dcmd(CMMU_DCMD_INV_UATC);
+
+	return (TRUE);
+}
+#endif

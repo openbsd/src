@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2007/11/20 21:48:58 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2007/11/20 21:53:25 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -192,8 +192,6 @@ m88100_trap(u_int type, struct trapframe *frame)
 	u_int psr;
 #endif
 	int sig = 0;
-
-	extern struct vm_map *kernel_map;
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
@@ -592,10 +590,8 @@ m88110_trap(u_int type, struct trapframe *frame)
 	u_int psr;
 #endif
 	int sig = 0;
-	pt_entry_t *pte;
 
-	extern struct vm_map *kernel_map;
-	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
+	extern int pmap_set_modify(pmap_t, vaddr_t);
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
@@ -746,7 +742,6 @@ m88110_trap(u_int type, struct trapframe *frame)
 		map = kernel_map;
 
 		if (frame->tf_dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
-			frame->tf_dsr &= ~CMMU_DSR_WE;	/* undefined */
 			/*
 			 * On a segment or a page fault, call uvm_fault() to
 			 * resolve the fault.
@@ -759,7 +754,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 				KERNEL_UNLOCK();
 				return;
 			}
-		}
+		} else
 		if (frame->tf_dsr & CMMU_DSR_WE) {	/* write fault  */
 			/*
 			 * This could be a write protection fault or an
@@ -771,28 +766,19 @@ m88110_trap(u_int type, struct trapframe *frame)
 			 * modified and valid bits to determine if this
 			 * indeed a real write fault.  XXX smurph
 			 */
-			pte = pmap_pte(map->pmap, va);
-#ifdef DEBUG
-			if (pte == NULL) {
-				KERNEL_UNLOCK();
-				panic("NULL pte on write fault??");
-			}
-#endif
-			if (!(*pte & PG_M) && !(*pte & PG_RO)) {
-				/* Set modified bit and try the write again. */
+			if (pmap_set_modify(map->pmap, va)) {
 #ifdef TRAPDEBUG
-				printf("Corrected kernel write fault, map %x pte %x\n",
-				    map->pmap, *pte);
+				printf("Corrected kernel write fault, pmap %p va %p\n",
+				    map->pmap, va);
 #endif
-				*pte |= PG_M;
 				KERNEL_UNLOCK();
 				return;
-#if 1	/* shouldn't happen */
+#if 0	/* shouldn't happen */
 			} else {
 				/* must be a real wp fault */
 #ifdef TRAPDEBUG
-				printf("Uncorrected kernel write fault, map %x pte %x\n",
-				    map->pmap, *pte);
+				printf("Uncorrected kernel write fault, pmap %p va %p\n",
+				    map->pmap, va);
 #endif
 				if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
 					p->p_addr->u_pcb.pcb_onfault = 0;
@@ -896,33 +882,16 @@ m88110_user_fault:
 				 * modified and valid bits to determine if this
 				 * indeed a real write fault.  XXX smurph
 				 */
-				pte = pmap_pte(vm_map_pmap(map), va);
-#ifdef DEBUG
-				if (pte == NULL) {
-					panic("NULL pte on write fault??");
-				}
-#endif
-				if (!(*pte & PG_M) && !(*pte & PG_RO)) {
-					/*
-					 * Set modified bit and try the
-					 * write again.
-					 */
+				if (pmap_set_modify(map->pmap, va)) {
 #ifdef TRAPDEBUG
-					printf("Corrected userland write fault, map %x pte %x\n",
-					    map->pmap, *pte);
+					printf("Corrected userland write fault, pmap %p va %p\n",
+					    map->pmap, va);
 #endif
-					*pte |= PG_M;
-					/*
-					 * invalidate ATCs to force
-					 * table search
-					 */
-					set_dcmd(CMMU_DCMD_INV_UATC);
-					result = 0;
 				} else {
 					/* must be a real wp fault */
 #ifdef TRAPDEBUG
-					printf("Uncorrected userland write fault, map %x pte %x\n",
-					    map->pmap, *pte);
+					printf("Uncorrected userland write fault, pmap %p va %p\n",
+					    map->pmap, va);
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 					p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
