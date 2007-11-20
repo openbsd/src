@@ -1,10 +1,12 @@
-/*	$OpenBSD: uthread_vfork.c,v 1.2 1999/11/25 07:01:47 d Exp $	*/
+/*	$OpenBSD: uthread_vfork.c,v 1.3 2007/11/20 19:35:37 deraadt Exp $	*/
 #include <unistd.h>
 #ifdef _THREAD_SAFE
 
-int
+pid_t	_dofork(int vfork);
+
+pid_t
 vfork(void)
 {
-	return (fork());
+	return (_dofork(1));
 }
 #endif

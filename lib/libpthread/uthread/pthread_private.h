@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.68 2007/07/20 22:34:40 kettenis Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.69 2007/11/20 19:35:36 deraadt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1321,6 +1321,7 @@ int     _thread_sys_pipe(int *);
 int     _thread_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 off_t   _thread_sys_lseek(int, off_t, int);
 pid_t   _thread_sys_fork(void);
+pid_t   _thread_sys_vfork(void);
 pid_t   _thread_sys_tcgetpgrp(int);
 ssize_t _thread_sys_read(int, void *, size_t);
 ssize_t _thread_sys_write(int, const void *, size_t);

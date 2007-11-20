@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.17 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.18 2007/11/20 19:35:37 deraadt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -41,8 +41,16 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
+pid_t _dofork(int vfork);
+
 pid_t
 fork(void)
+{
+	return (_dofork(0));
+}
+
+pid_t
+_dofork(int vfork)
 {
 	struct pthread	*curthread = _get_curthread();
 	struct pthread_atfork *af;
@@ -65,7 +73,7 @@ fork(void)
 	}
 
 	/* Fork a new process: */
-	if ((ret = _thread_sys_fork()) != 0) {
+	if ((ret = (vfork ? _thread_sys_vfork() : _thread_sys_fork())) != 0) {
 		/* Run down atfork parent handlers. */
 		TAILQ_FOREACH(af, &_atfork_list, qe) {
 			if (af->parent != NULL)
