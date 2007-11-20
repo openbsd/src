@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.38 2007/10/22 17:02:03 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.39 2007/11/20 20:42:11 canacar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1225,8 +1225,10 @@ trunk_rr_start(struct trunk_softc *tr, struct mbuf *m)
 	struct trunk_port *tp = (struct trunk_port *)tr->tr_psc, *tp_next;
 	int error = 0;
 
-	if (tp == NULL && (tp = trunk_link_active(tr, NULL)) == NULL)
+	if (tp == NULL && (tp = trunk_link_active(tr, NULL)) == NULL) {
+		m_freem(m);
 		return (ENOENT);
+	}
 
 	/* Send mbuf */
 	if ((error = trunk_enqueue(tp->tp_if, m)) != 0)
@@ -1282,8 +1284,10 @@ trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
 	struct trunk_port *tp;
 
 	/* Use the master port if active or the next available port */
-	if ((tp = trunk_link_active(tr, tr->tr_primary)) == NULL)
+	if ((tp = trunk_link_active(tr, tr->tr_primary)) == NULL) {
+		m_freem(m);
 		return (ENOENT);
+	}
 
 	/* Send mbuf */
 	return (trunk_enqueue(tp->tp_if, m));
@@ -1408,16 +1412,20 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	int idx;
 
 	p = trunk_hashmbuf(m, lb->lb_key);
-	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS)
+	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS) {
+		m_freem(m);
 		return (EINVAL);
+	}
 	tp = lb->lb_ports[idx];
 
 	/*
 	 * Check the port's link state. This will return the next active
 	 * port if the link is down or the port is NULL.
 	 */
-	if ((tp = trunk_link_active(tr, tp)) == NULL)
+	if ((tp = trunk_link_active(tr, tp)) == NULL) {
+		m_freem(m);
 		return (ENOENT);
+	}
 
 	/* Send mbuf */
 	return (trunk_enqueue(tp->tp_if, m));
