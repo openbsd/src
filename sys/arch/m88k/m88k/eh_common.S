@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.33 2007/11/17 05:36:23 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.34 2007/11/21 19:30:09 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -432,7 +432,7 @@ GLOBAL(interrupt_handler)
 	PREP88100("interrupt", 1,,)
 	or	r2, r0, T_INT
 	or	r3, r0, r30
-	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(check_ast))
+	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
 
 /* instruction access exception handler */
 GLOBAL(instruction_access_handler)
@@ -1589,7 +1589,7 @@ GLOBAL(m88110_interrupt_handler)
 	PREP88110("interrupt", 1,)
 	or	r2, r0, T_INT
 	or	r3, r0, r30
-	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
+	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
@@ -1660,7 +1660,7 @@ GLOBAL(m88110_nonmaskable)
 	PREP88110("NMI", 11,)
 	or	r2, r0, T_NON_MASK
 	or	r3, r0, r30
-	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
+	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
 
 /* software walk data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
@@ -2365,27 +2365,10 @@ ASGLOBAL(softint_done)
 	ldcr	r2,  CPU
 	ld	r3,  r2, CI_CURPROC
 	ld	r2,  r3, P_ASTPENDING
-	bcnd.n	eq0, r2, _ASM_LABEL(ast_done)
-	/*
-	 * trap(T_ASTFLT,...) will service ast's.
-	 */
-	 or	r3, r0, FPTR
-	or	r2, r0, T_ASTFLT
-#if defined(M88110) && defined(M88100)
-	or.u	r4, r0, hi16(_C_LABEL(cputyp))
-	ld	r5, r4, lo16(_C_LABEL(cputyp))
-	cmp	r4, r5, CPU_88110
-	bb0	eq, r4, 2f
-#endif
-#if defined(M88110)
-	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(ast_done))
-#endif
-#if defined(M88110) && defined(M88100)
-2:
-#endif
-#ifdef M88100
-	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(ast_done))
-#endif
+	bcnd	eq0, r2, _ASM_LABEL(ast_done)
+
+	or	r2, r0, FPTR
+	XCALL(_C_LABEL(ast), _ASM_LABEL(ast_done))
 
 /*
  * void proc_trampoline(void (*func)(void *), void *proc)

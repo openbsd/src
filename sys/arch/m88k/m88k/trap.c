@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2007/11/20 22:08:40 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2007/11/21 19:30:09 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -173,6 +173,41 @@ panictrap(int type, struct trapframe *frame)
 	/*NOTREACHED*/
 }
 
+/*
+ * Handle external interrupts.
+ */
+void
+interrupt(u_int type, struct trapframe *frame)
+{
+	struct cpu_info *ci = curcpu();
+
+	ci->ci_intrdepth++;
+	md_interrupt_func(type, frame);
+	ci->ci_intrdepth--;
+}
+
+/*
+ * Handle asynchronous software traps.
+ */
+void
+ast(struct trapframe *frame)
+{
+	struct cpu_info *ci = curcpu();
+	struct proc *p = ci->ci_curproc;
+
+	uvmexp.softs++;
+	p->p_md.md_astpending = 0;
+	if (p->p_flag & P_OWEUPC) {
+		KERNEL_PROC_LOCK(p);
+		ADDUPROF(p);
+		KERNEL_PROC_UNLOCK(p);
+	}
+	if (ci->ci_want_resched)
+		preempt(NULL);
+
+	userret(p);
+}
+
 #ifdef M88100
 void
 m88100_trap(u_int type, struct trapframe *frame)
@@ -231,12 +266,6 @@ m88100_trap(u_int type, struct trapframe *frame)
 		printf("Unimplemented opcode!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
-	case T_INT:
-	case T_INT+T_USER:
-		curcpu()->ci_intrdepth++;
-		md_interrupt_func(T_INT, frame);
-		curcpu()->ci_intrdepth--;
-		return;
 
 	case T_MISALGNFLT:
 		printf("kernel misaligned access exception @ 0x%08x\n",
@@ -535,17 +564,6 @@ user_fault:
 		fault_type = TRAP_BRKPT;
 		break;
 
-	case T_ASTFLT+T_USER:
-		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
-		if (p->p_flag & P_OWEUPC) {
-			KERNEL_PROC_LOCK(p);
-			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(p);
-		}
-		if (curcpu()->ci_want_resched)
-			preempt(NULL);
-		break;
 	}
 
 	/*
@@ -678,18 +696,6 @@ m88110_trap(u_int type, struct trapframe *frame)
 		printf("Unimplemented opcode!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
-	case T_NON_MASK:
-	case T_NON_MASK+T_USER:
-		curcpu()->ci_intrdepth++;
-		md_interrupt_func(T_NON_MASK, frame);
-		curcpu()->ci_intrdepth--;
-		return;
-	case T_INT:
-	case T_INT+T_USER:
-		curcpu()->ci_intrdepth++;
-		md_interrupt_func(T_INT, frame);
-		curcpu()->ci_intrdepth--;
-		return;
 	case T_MISALGNFLT:
 		printf("kernel mode misaligned access exception @ 0x%08x\n",
 		    frame->tf_exip);
@@ -1028,18 +1034,6 @@ m88110_user_fault:
 		 */
 		sig = SIGTRAP;
 		fault_type = TRAP_BRKPT;
-		break;
-
-	case T_ASTFLT+T_USER:
-		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
-		if (p->p_flag & P_OWEUPC) {
-			KERNEL_PROC_LOCK(p);
-			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(p);
-		}
-		if (curcpu()->ci_want_resched)
-			preempt(NULL);
 		break;
 	}
 
