@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.389 2007/11/09 15:54:53 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.390 2007/11/21 03:58:46 ray Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 9 2007 $
+.Dd $Mdocdate: November 21 2007 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -820,7 +820,7 @@ assigned.
 .Ar Priority
 mainly controls the time packets take to get sent out, while
 .Ar bandwidth
-has primarily effects on throughput.
+primarily affects throughput.
 .Ar hfsc
 supports both link-sharing and guaranteed real-time services.
 It employs a service curve based QoS model,
