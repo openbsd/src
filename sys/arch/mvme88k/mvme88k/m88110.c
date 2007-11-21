@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.39 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.40 2007/11/21 19:42:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -454,7 +454,11 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 		m88110_cmmu_sync_inval_cache(pa, size);
 		break;
 	default:
+#if 0
 		m88110_cmmu_inval_cache(pa, size);
+#else
+		m88110_cmmu_sync_inval_cache(pa, size);
+#endif
 		break;
 	}
 }
@@ -470,7 +474,11 @@ m88110_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 		m88110_cmmu_sync_inval_cache(pa, size);
 		break;
 	default:
+#if 0
 		m88110_cmmu_inval_cache(pa, size);
+#else
+		m88110_cmmu_sync_inval_cache(pa, size);
+#endif
 		break;
 	}
 }
