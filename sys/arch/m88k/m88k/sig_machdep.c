@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.5 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.6 2007/11/21 18:52:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -224,5 +224,13 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
-	return (EJUSTRETURN);
+	/*
+	 * We really want to return to the instruction pointed to by
+	 * the sigcontext.  However, due to the way exceptions work
+	 * on 88110, returning EJUSTRETURN will cause m88110_syscall()
+	 * to skip one instruction.  We avoid this by returning
+	 * ERESTART, which will indeed cause the instruction pointed
+	 * to by exip to be run.
+	 */
+	return (CPU_IS88100 ? EJUSTRETURN : ERESTART);
 }
