@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2007/11/20 21:54:58 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2007/11/21 19:41:43 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -170,9 +170,7 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 void	pmap_remove_all(struct vm_page *);
 void	pmap_changebit(struct vm_page *, int, int);
-boolean_t pmap_unsetbit(struct vm_page *, int);
 boolean_t pmap_testbit(struct vm_page *, int);
-int	pmap_set_modify(pmap_t, vaddr_t);
 
 /*
  * quick PTE field checking macros
@@ -1684,9 +1682,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (wired)
 		template |= PG_W;
 
-	if (prot & VM_PROT_WRITE)
-		template |= PG_M_U;
-	else if (prot & VM_PROT_ALL)
+	if (prot & VM_PROT_WRITE) {
+		/*
+		 * On 88110, do not mark writable mappings as dirty unless we
+		 * know the page is dirty, or we are using the kernel pmap.
+		 */
+		if (CPU_IS88110 && pmap != kernel_pmap &&
+		    pg != NULL && (pvl->pv_flags & PG_M) == 0)
+			template |= PG_U;
+		else
+			template |= PG_M_U;
+	} else if (prot & VM_PROT_ALL)
 		template |= PG_U;
 
 	/*
@@ -1694,14 +1700,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH;
-
-	/*
-	 * On 88110, do not mark writable mappings as dirty unless we
-	 * know the page is dirty, or we are using the kernel pmap.
-	 */
-	if (CPU_IS88110 && pmap != kernel_pmap &&
-	    pg != NULL && (pvl->pv_flags & PG_M) == 0)
-		template &= ~PG_M;
 
 	/*
 	 * Invalidate pte temporarily to avoid being written
@@ -2067,16 +2065,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * bound to only one cpu.
 	 */
 	cmmu_flush_tlb(cpu, TRUE, dstva, 2);
-
-	/*
-	 * The source page is likely to be a non-kernel mapping, and as
-	 * such write back. Also, we might have split U/S caches!
-	 * So be sure to have the source pa flushed before the copy is
-	 * attempted, and the destination pa flushed afterwards.
-	 */
-	cmmu_flush_data_page(cpu, src);
 	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
-	cmmu_flush_data_page(cpu, dst);
 
 	splx(spl);
 }
@@ -2396,7 +2385,7 @@ pmap_is_modified(struct vm_page *pg)
 	/*
 	 * Since on 88110 PG_M bit tracking is done in software, we can
 	 * trust the page flags without having to walk the individual
-	 * ptes in case the page flags are behind with actual usage.
+	 * ptes in case the page flags are behind actual usage.
 	 */
 	if (CPU_IS88110) {
 		pv_entry_t pvl;
