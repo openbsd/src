@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.62 2007/11/21 14:12:04 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.63 2007/11/21 20:01:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2666,8 +2666,11 @@ relay_load_certfiles(struct relay *rlay)
 static __inline int
 relay_proto_cmp(struct protonode *a, struct protonode *b)
 {
-	return (strcasecmp(a->key, b->key) +
-	    a->type == b->type ? 0 : (a->type > b->type ? 1 : -1));
+	int ret;
+	ret = strcasecmp(a->key, b->key);
+	if (ret == 0)
+		ret = (int)a->type - b->type;
+	return (ret);
 }
 
 RB_GENERATE(proto_tree, protonode, nodes, relay_proto_cmp);
