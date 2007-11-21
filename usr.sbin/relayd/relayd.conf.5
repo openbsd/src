@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.61 2007/11/21 14:25:44 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.62 2007/11/21 20:24:28 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -595,14 +595,40 @@ set to
 .It Ic remove Ar key
 Remove the entity with the selected name.
 .It Ic expect Ar value Ic from Ar key
-Expect an entity with the specified value.
+Expect an entity
+.Ar key
+and match against
+.Ar value
+using shell globbing rules.
 If the entity is not present or the value doesn't match, the connection
 will be dropped.
+.It Xo
+.Ic expect
+.Ar key
+.Xc
+Expect an entity
+.Ar key
+with any possible value.
+This is the short form of
+.Ic expect Ar * Ic from Ar key .
 .It Ic filter Ar value Ic from Ar key
+Like the
+.Ic expect Ar .. Ic from
+directive above, but drop any connections with the specified entity
+.Ar key
+and a matching
+.Ar value .
+.It Xo
+.Ic filter
+.Ar key
+.Xc
 Like the
 .Ic expect
 directive above, but drop any connections with the specified entity
-and value.
+.Ar key
+and any possible value.
+This is the short form of
+.Ic filter Ar * Ic from Ar key .
 .It Ic hash Ar key
 Feed the value of the selected entity into the load balancing hash to
 select the target host.
@@ -807,7 +833,7 @@ protocol http_ssl {
 	header append "$REMOTE_ADDR" to "X-Forwarded-For"
 	header append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
 	header change "Keep-Alive" to "$TIMEOUT"
-	url hash "sessid"
+	query hash "sessid"
 	cookie hash "sessid"
 	path filter "*command=*" from "/cgi-bin/index.cgi"
 

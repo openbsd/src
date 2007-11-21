@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2007/11/21 20:13:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2007/11/21 20:24:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -896,6 +896,15 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
+		| nodetype EXPECT STRING mark {
+			node.action = NODE_ACTION_EXPECT;
+			node.key = strdup($3);
+			node.value = strdup("*");
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($3);
+			proto->lateconnect++;
+		}
 		| nodetype FILTER STRING FROM STRING mark	{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($5);
@@ -903,6 +912,15 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			free($5);
+			free($3);
+			proto->lateconnect++;
+		}
+		| nodetype FILTER STRING mark {
+			node.action = NODE_ACTION_FILTER;
+			node.key = strdup($3);
+			node.value = strdup("*");
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
 			free($3);
 			proto->lateconnect++;
 		}
