@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.61 2007/11/21 11:06:21 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.62 2007/11/21 14:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -281,14 +281,17 @@ relay_shutdown(void)
 void
 relay_nodedebug(const char *name, struct protonode *pn)
 {
+	if (pn->action == NODE_ACTION_NONE)
+		return;
+
 	fprintf(stderr, "\t\t");
 	fprintf(stderr, "%s ", name);
 
 	switch (pn->type) {
 	case NODE_TYPE_HEADER:
 		break;
-	case NODE_TYPE_URL:
-		fprintf(stderr, "url ");
+	case NODE_TYPE_QUERY:
+		fprintf(stderr, "query ");
 		break;
 	case NODE_TYPE_COOKIE:
 		fprintf(stderr, "cookie ");
@@ -326,7 +329,6 @@ relay_nodedebug(const char *name, struct protonode *pn)
 		fprintf(stderr, "log \"%s\"", pn->key);
 		break;
 	case NODE_ACTION_NONE:
-		fprintf(stderr, "none \"%s\"", pn->key);
 		break;
 	}
 	fprintf(stderr, "\n");
@@ -1296,7 +1298,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				cre->method = HTTP_METHOD_CONNECT;
 
 			/*
-			 * Decode the URL
+			 * Decode the path and query
 			 */
 			cre->path = strdup(pk.value);
 			if (cre->path == NULL) {
@@ -1374,7 +1376,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (cre->dir == RELAY_DIR_RESPONSE)
 			goto handle;
 
-		if (pn->flags & PNFLAG_LOOKUP_URL) {
+		if (pn->flags & PNFLAG_LOOKUP_QUERY) {
 			if (cre->path == NULL || cre->args == NULL ||
 			    strlen(cre->args) < 2 ||
 			    (val = strdup(cre->args)) == NULL)
@@ -1382,7 +1384,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			ptr = val;
 			while (ptr != NULL && strlen(ptr)) {
 				pkv.key = ptr;
-				pkv.type = NODE_TYPE_URL;
+				pkv.type = NODE_TYPE_QUERY;
 				if ((ptr = strchr(ptr, '&')) != NULL)
 					*ptr++ = '\0';
 				if ((pkv.value =

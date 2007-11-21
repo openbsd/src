@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.77 2007/11/21 13:04:42 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.78 2007/11/21 14:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -434,7 +434,7 @@ enum nodeaction {
 
 enum nodetype {
 	NODE_TYPE_HEADER	= 0,
-	NODE_TYPE_URL		= 1,
+	NODE_TYPE_QUERY		= 1,
 	NODE_TYPE_COOKIE	= 2,
 	NODE_TYPE_PATH		= 3
 };
@@ -442,7 +442,7 @@ enum nodetype {
 #define PNFLAG_MACRO		0x01
 #define PNFLAG_MARK		0x02
 #define PNFLAG_LOG		0x04
-#define PNFLAG_LOOKUP_URL	0x08
+#define PNFLAG_LOOKUP_QUERY	0x08
 #define PNFLAG_LOOKUP_COOKIE	0x10
 
 enum noderesult {

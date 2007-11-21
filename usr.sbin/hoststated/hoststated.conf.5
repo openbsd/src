@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.59 2007/11/21 13:04:42 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.60 2007/11/21 14:12:04 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -547,12 +547,26 @@ Look up the entity as a value in the URL path when using the
 protocol.
 This type is only available with the direction
 .Ic request .
-.It Ic url
-Look up the entity as a GET variable in the URL when using the
+The
+.Ar key
+will match the path of the requested URL without the hostname
+and query and the value will match the complete query,
+for example:
+.Bd -literal -offset indent
+request path filter "*" from "/index.html"
+request path filter "foo=bar*" from "/cgi-bin/t.cgi"
+.Ed
+.It Ic query
+Look up the entity as a query variable in the URL when using the
 .Ic http
 protocol.
 This type is only available with the direction
-.Ic request .
+.Ic request ,
+for example:
+.Bd -literal -offset indent
+# Will match /cgi-bin/example.pl?foo=bar&ok=yes
+request query expect "bar" from "foo"
+.Ed
 .El
 .Pp
 The following actions are available:

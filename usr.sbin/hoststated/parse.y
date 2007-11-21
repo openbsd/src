@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2007/11/21 13:04:42 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2007/11/21 14:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -121,7 +121,7 @@ typedef struct {
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
-%token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY IP
+%token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER QUERYSTR RETRY IP
 %token	ERROR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -747,8 +747,8 @@ protoptsl	: SSL sslflags
 					RB_INSERT(proto_tree, tree, pn);
 				}
 				switch (node.type) {
-				case NODE_TYPE_URL:
-					pn->flags |= PNFLAG_LOOKUP_URL;
+				case NODE_TYPE_QUERY:
+					pn->flags |= PNFLAG_LOOKUP_QUERY;
 					break;
 				case NODE_TYPE_COOKIE:
 					pn->flags |= PNFLAG_LOOKUP_COOKIE;
@@ -927,7 +927,7 @@ marked		: /* empty */
 nodetype	: HEADER			{
 			node.type = NODE_TYPE_HEADER;
 		}
-		| URL				{ node.type = NODE_TYPE_URL; }
+		| QUERYSTR			{ node.type = NODE_TYPE_QUERY; }
 		| COOKIE			{
 			node.type = NODE_TYPE_COOKIE;
 		}
@@ -1297,6 +1297,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "protocol",		PROTO },
+		{ "query",		QUERYSTR },
 		{ "real",		REAL },
 		{ "relay",		RELAY },
 		{ "remove",		REMOVE },
@@ -1320,7 +1321,6 @@ lookup(char *s)
 		{ "timeout",		TIMEOUT },
 		{ "to",			TO },
 		{ "updates",		UPDATES },
-		{ "url",		URL },
 		{ "virtual",		VIRTUAL }
 	};
 	const struct keywords	*p;
