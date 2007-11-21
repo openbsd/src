@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.78 2007/11/21 14:12:04 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.79 2007/11/21 20:13:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -338,8 +338,9 @@ enum host_status {
 #define HOST_ISUP(x)	(x == HOST_UP)
 
 enum digest_type {
-	DIGEST_SHA1		= 0,
-	DIGEST_MD5		= 1
+	DIGEST_NONE		= 0,
+	DIGEST_SHA1		= 1,
+	DIGEST_MD5		= 2
 };
 
 struct table_config {
@@ -782,6 +783,7 @@ int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_config(struct hoststated *, u_int8_t);
 void		 merge_config(struct hoststated *, struct hoststated *);
+char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

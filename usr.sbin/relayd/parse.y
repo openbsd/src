@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2007/11/21 14:12:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2007/11/21 20:13:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -108,6 +108,10 @@ typedef struct {
 		char		*string;
 		struct host	*host;
 		struct timeval	 tv;
+		struct {
+			enum digest_type	 type;
+			char			*digest;
+		}		 digest;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -130,6 +134,7 @@ typedef struct {
 %type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
 %type	<v.tv>		timeout
+%type	<v.digest>	digest
 
 %%
 
@@ -522,9 +527,7 @@ tableoptsl	: host			{
 				fatal("out of memory");
 			table->sendbuf_len = strlen(table->sendbuf);
 		}
-		| CHECK http_type STRING hostname DIGEST STRING {
-			size_t	 digest_len;
-
+		| CHECK http_type STRING hostname digest {
 			if ($2) {
 				conf->flags |= F_SSL;
 				table->conf.flags |= F_SSL;
@@ -538,22 +541,10 @@ tableoptsl	: host			{
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
 			table->sendbuf_len = strlen(table->sendbuf);
-
-			digest_len = strlcpy(table->conf.digest, $6,
+			(void)strlcpy(table->conf.digest, $5.digest,
 			    sizeof(table->conf.digest));
-			switch (digest_len) {
-			case 40:
-				table->conf.digest_type = DIGEST_SHA1;
-				break;
-			case 32:
-				table->conf.digest_type = DIGEST_MD5;
-				break;
-			default:
-				yyerror("invalid http digest");
-				free($6);
-				YYERROR;
-			}
-			free($6);
+			table->conf.digest_type = $5.type;
+			free($5.digest);
 		}
 		| CHECK SEND sendbuf EXPECT STRING optssl {
 			table->conf.check = CHECK_SEND_EXPECT;
@@ -615,6 +606,24 @@ tableoptsl	: host			{
 			table->conf.skip_cnt = ($2 / conf->interval.tv_sec) - 1;
 		}
 		| include
+		;
+
+digest		: DIGEST STRING
+		{
+			switch (strlen($2)) {
+			case 40:
+				$$.type = DIGEST_SHA1;
+				break;
+			case 32:
+				$$.type = DIGEST_MD5;
+				break;
+			default:
+				yyerror("invalid http digest");
+				free($2);
+				YYERROR;
+			}
+			$$.digest = $2;
+		}
 		;
 
 proto		: PROTO STRING	{
@@ -734,6 +743,7 @@ protoptsl	: SSL sslflags
 					pn->value = NULL;
 					pn->action = NODE_ACTION_NONE;
 					pn->type = pk.type;
+					SIMPLEQ_INIT(&pn->head);
 					if ($1 == RELAY_DIR_RESPONSE)
 						pn->id =
 						    proto->response_nodes++;
@@ -868,7 +878,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($5);
 			free($3);
 		}
-		| nodetype REMOVE STRING marked	{
+		| nodetype REMOVE STRING marked			{
 			node.action = NODE_ACTION_REMOVE;
 			node.key = strdup($3);
 			node.value = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.55 2007/11/20 15:54:55 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.56 2007/11/21 20:13:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -32,6 +32,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <sha1.h>
+#include <md5.h>
 
 #include <openssl/ssl.h>
 
@@ -891,4 +893,20 @@ translate_string(char *str)
 		reader++;
 	}
 	*writer = '\0';
+}
+
+char *
+digeststr(enum digest_type type, const u_int8_t *data, size_t len, char *buf)
+{
+	switch (type) {
+	case DIGEST_SHA1:
+		return (SHA1Data(data, len, buf));
+		break;
+	case DIGEST_MD5:
+		return (MD5Data(data, len, buf));
+		break;
+	default:
+		break;
+	}
+	return (NULL);
 }
