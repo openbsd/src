@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.42 2007/11/14 05:39:41 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.43 2007/11/21 18:48:11 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -64,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $"
 #define AzaliaNclfe	"clfe"
 #define AzaliaNside	"side"
 
+#define AD1981HD_THINKPAD	0x201017aa
+#define ALC260_FUJITSU_ID	0x132610cf
+#define ALC883_ACER_ID		0x00981025
+#define STAC9221_APPLE_ID	0x76808384
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_add_dacgroup(codec_t *, int, uint32_t);
@@ -180,7 +184,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->init_dacgroup = azalia_cmi9880_init_dacgroup;
 		this->mixer_init = azalia_cmi9880_mixer_init;
 		break;
-#define STAC9221_APPLE_ID 0x76808384
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = azalia_stac9221_init_dacgroup;
@@ -1437,7 +1440,6 @@ azalia_generic_get_port(codec_t *this, mixer_ctrl_t *mc)
  *	Front mic: 0x12
  * ---------------------------------------------------------------- */
 
-#define ALC260_FUJITSU_ID	0x132610cf
 static const mixer_item_t alc260_mixer_items[] = {
 	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
@@ -2098,7 +2100,6 @@ static const mixer_item_t alc883_mixer_items[] = {
 int
 azalia_alc883_mixer_init(codec_t *this)
 {
-#define ALC883_ACER_ID	0x00981025
 	mixer_ctrl_t mc;
 
 	this->nmixers = sizeof(alc883_mixer_items) / sizeof(mixer_item_t);
@@ -2152,7 +2153,6 @@ azalia_alc883_mixer_init(codec_t *this)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
-#define AD1981HD_THINKPAD	0x201017aa
 
 int
 azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
