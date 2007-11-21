@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.10 2007/10/27 20:36:17 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.11 2007/11/21 21:45:47 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -139,7 +139,7 @@ typedef u_int32_t	pt_entry_t;
 #define	PDT_WP(pte)	(*(pte) & PG_PROT)
 
 /*
- * Indirect descriptors (mc81110)
+ * Indirect descriptors (mc8110)
  */
 
 typedef	u_int32_t	pt_ind_entry_t;
