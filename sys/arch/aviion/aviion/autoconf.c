@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2007/06/15 01:19:06 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2007/11/21 22:05:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -164,7 +164,7 @@ cmdline_parse(void)
 	 * commandline, so we can simply use its numerical value, as a
 	 * word, to tell device types apart.
 	 */
-	bootdevtype = *(int *)bootargs;
+	bcopy(bootargs, &bootdevtype, sizeof(int));
 }
 
 void
