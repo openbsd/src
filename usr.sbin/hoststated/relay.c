@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.60 2007/11/20 17:11:50 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.61 2007/11/21 11:06:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -858,9 +858,11 @@ relay_resolve(struct ctl_relay_event *cre,
 
 	switch (pn->action) {
 	case NODE_ACTION_FILTER:
-		if (cre->nodes[proot->id] <= 1)
+		id = cre->nodes[proot->id];
+		if (SIMPLEQ_NEXT(pn, entry) == NULL)
+			cre->nodes[proot->id] = 0;
+		if (id <= 1)
 			return (0);
-		cre->nodes[pn->id] = 0;
 		break;
 	case NODE_ACTION_EXPECT:
 		id = cre->nodes[proot->id];
@@ -1011,16 +1013,25 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 			relay_close_http(con, 400, "repeated header line");
 			return (PN_FAIL);
 		}
-		ret = PN_PASS;
 		/* FALLTHROUGH */
 	case NODE_ACTION_FILTER:
 		DPRINTF("relay_handle_http: %s '%s: %s'",
 		    (pn->action == NODE_ACTION_EXPECT) ? "expect" : "filter",
 		    pn->key, pn->value);
+
+		/* Do not drop the entity */
+		ret = PN_PASS;
+
 		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
 			if (pn->flags & PNFLAG_MARK)
 				cre->marked++;
 			cre->nodes[proot->id] = 1;
+
+			/* Fail instantly */
+			if (pn->action == NODE_ACTION_FILTER) {
+				relay_close_http(con, 403, "rejecting request");
+				return (PN_FAIL);
+			}
 		}
 		if (SIMPLEQ_NEXT(pn, entry) == NULL)
 			cre->nodes[proot->id]++;
