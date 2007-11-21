@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.49 2007/07/11 07:40:11 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.50 2007/11/21 09:04:37 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2007 $
+.Dd $Mdocdate: November 21 2007 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -125,6 +125,8 @@ Requires
 .Fl c .
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
+This is the default
+if no other options are specified.
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
