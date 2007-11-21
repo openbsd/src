@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.64 2007/10/24 12:37:01 blambert Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.65 2007/11/21 15:58:22 blambert Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -92,7 +92,6 @@ void	 rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *);
 void	 rtw_txsoft_blk_init_all(struct rtw_txsoft_blk *);
 void	 rtw_txdesc_blk_init(struct rtw_txdesc_blk *);
 void	 rtw_txdescs_sync(struct rtw_txdesc_blk *, u_int, u_int, int);
-u_int	 rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
 void	 rtw_txring_fixup(struct rtw_softc *);
 void	 rtw_rxbufs_release(bus_dma_tag_t, struct rtw_rxsoft *);
 void	 rtw_rxdesc_init(struct rtw_rxdesc_blk *, struct rtw_rxsoft *, int, int);
