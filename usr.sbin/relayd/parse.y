@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2007/11/20 17:08:44 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2007/11/21 13:04:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -523,6 +523,8 @@ tableoptsl	: host			{
 			table->sendbuf_len = strlen(table->sendbuf);
 		}
 		| CHECK http_type STRING hostname DIGEST STRING {
+			size_t	 digest_len;
+
 			if ($2) {
 				conf->flags |= F_SSL;
 				table->conf.flags |= F_SSL;
@@ -536,10 +538,18 @@ tableoptsl	: host			{
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
 			table->sendbuf_len = strlen(table->sendbuf);
-			if (strlcpy(table->conf.digest, $6,
-			    sizeof(table->conf.digest)) >=
-			    sizeof(table->conf.digest)) {
-				yyerror("http digest truncated");
+
+			digest_len = strlcpy(table->conf.digest, $6,
+			    sizeof(table->conf.digest));
+			switch (digest_len) {
+			case 40:
+				table->conf.digest_type = DIGEST_SHA1;
+				break;
+			case 32:
+				table->conf.digest_type = DIGEST_MD5;
+				break;
+			default:
+				yyerror("invalid http digest");
 				free($6);
 				YYERROR;
 			}

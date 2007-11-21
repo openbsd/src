@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.58 2007/11/21 10:19:34 pyr Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.59 2007/11/21 13:04:42 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -188,8 +188,10 @@ This has the same effect as above but wraps the HTTP request in SSL.
 .Xc
 For each host in the table, verify that retrieving the URL
 .Ar path
-produces a content whose SHA1 digest is
-.Ar digest .
+produces a content whose message digest matches the defined string.
+The used algorithm is determined by the string length of the
+.Ar digest
+argument, it is either SHA1 (40 characters) or MD5 (32 characters).
 If
 .Ar hostname
 is specified, it is used as the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.76 2007/11/20 15:54:55 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.77 2007/11/21 13:04:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,6 +337,11 @@ enum host_status {
 };
 #define HOST_ISUP(x)	(x == HOST_UP)
 
+enum digest_type {
+	DIGEST_SHA1		= 0,
+	DIGEST_MD5		= 1
+};
+
 struct table_config {
 	objid_t			 id;
 	objid_t			 serviceid;
@@ -351,6 +356,7 @@ struct table_config {
 	char			 path[MAXPATHLEN];
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
+	enum digest_type	 digest_type;
 };
 
 struct table {

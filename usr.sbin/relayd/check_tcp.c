@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.27 2007/11/19 15:20:18 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.28 2007/11/21 13:04:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <fnmatch.h>
 #include <sha1.h>
+#include <md5.h>
 
 #include <openssl/ssl.h>
 
@@ -353,7 +354,7 @@ check_http_digest(struct ctl_tcp_event *cte)
 {
 	char		*head;
 	u_char		*b;
-	char		 digest[(SHA1_DIGEST_LENGTH*2)+1];
+	char		 digest[SHA1_DIGEST_STRING_LENGTH];
 	struct host	*host;
 
 	/*
@@ -373,7 +374,15 @@ check_http_digest(struct ctl_tcp_event *cte)
 		return (1);
 	}
 	head += strlen("\r\n\r\n");
-	SHA1Data(head, strlen(head), digest);
+
+	switch (cte->table->conf.digest_type) {
+	case DIGEST_SHA1:
+		SHA1Data(head, strlen(head), digest);
+		break;
+	case DIGEST_MD5:
+		MD5Data(head, strlen(head), digest);
+		break;
+	}
 
 	if (strcmp(cte->table->conf.digest, digest)) {
 		log_warnx("check_http_digest: %s failed "
