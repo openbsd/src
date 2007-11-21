@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.91 2007/11/21 20:24:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.92 2007/11/21 20:31:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -960,8 +960,8 @@ nodetype	: HEADER			{
 			node.type = NODE_TYPE_COOKIE;
 		}
 		| PATH				{
-				proto->flags |= F_LOOKUP_PATH;
-				node.type = NODE_TYPE_PATH;
+			proto->flags |= F_LOOKUP_PATH;
+			node.type = NODE_TYPE_PATH;
 		}
 		;
 
