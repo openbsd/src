@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.63 2007/11/21 20:01:45 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.64 2007/11/21 20:41:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -91,6 +91,8 @@ int		 relay_handle_http(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *,
 		    struct protonode *, int);
 void		 relay_read_http(struct bufferevent *, void *);
+int		 relay_lookup_query(struct ctl_relay_event *);
+int		 relay_lookup_cookie(struct ctl_relay_event *, const char *);
 void		 relay_read_httpcontent(struct bufferevent *, void *);
 void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
@@ -281,6 +283,8 @@ relay_shutdown(void)
 void
 relay_nodedebug(const char *name, struct protonode *pn)
 {
+	const char	*s;
+
 	if (pn->action == NODE_ACTION_NONE)
 		return;
 
@@ -315,12 +319,13 @@ relay_nodedebug(const char *name, struct protonode *pn)
 		    pn->key);
 		break;
 	case NODE_ACTION_EXPECT:
-		fprintf(stderr, "expect \"%s\" from \"%s\"",
-		    pn->value, pn->key);
-		break;
 	case NODE_ACTION_FILTER:
-		fprintf(stderr, "filter \"%s\" from \"%s\"",
-		    pn->value, pn->key);
+		s = pn->action == NODE_ACTION_EXPECT ? "expect" : "filter";
+		if (strcmp(pn->value, "*") == 0)
+			fprintf(stderr, "%s \"%s\"", s, pn->key);
+		else
+			fprintf(stderr, "%s \"%s\" from \"%s\"", s,
+			    pn->value, pn->key);
 		break;
 	case NODE_ACTION_HASH:
 		fprintf(stderr, "hash \"%s\"", pn->key);
@@ -1211,7 +1216,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct protocol		*proto = rlay->proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *proot, *pnv = NULL, pkv;
-	char			*line, *ptr, *val;
+	char			*line;
 	int			 header = 0, ret, pass = 0;
 	const char		*errstr;
 	size_t			 size;
@@ -1341,10 +1346,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			PROTONODE_FOREACH(pnv, proot, entry) {
 				ret = relay_handle_http(cre, proot,
 				    pnv, &pkv, 0);
-				if (ret == PN_FAIL) {
-					free(line);
-					return;
-				}
+				if (ret == PN_FAIL)
+					goto abort;
 			}
 		} else if ((cre->method == HTTP_METHOD_POST ||
 		    cre->method == HTTP_METHOD_PUT ||
@@ -1360,8 +1363,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
 			if (errstr) {
 				relay_close_http(con, 500, errstr);
-				free(line);
-				return;
+				goto abort;
 			}
 		}
  lookup:
@@ -1377,82 +1379,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			goto handle;
 
 		if (pn->flags & PNFLAG_LOOKUP_QUERY) {
-			if (cre->path == NULL || cre->args == NULL ||
-			    strlen(cre->args) < 2 ||
-			    (val = strdup(cre->args)) == NULL)
-				goto next;
-			ptr = val;
-			while (ptr != NULL && strlen(ptr)) {
-				pkv.key = ptr;
-				pkv.type = NODE_TYPE_QUERY;
-				if ((ptr = strchr(ptr, '&')) != NULL)
-					*ptr++ = '\0';
-				if ((pkv.value =
-				    strchr(pkv.key, '=')) == NULL ||
-				    strlen(pkv.value) < 1)
-					continue;
-				*pkv.value++ = '\0';
-
-				if ((proot = RB_FIND(proto_tree,
-				    cre->tree, &pkv)) == NULL)
-					continue;
-				PROTONODE_FOREACH(pnv, proot, entry) {
-					ret = relay_handle_http(cre, proot,
-					    pnv, &pkv, 0);
-					if (ret == PN_FAIL) {
-						free(val);
-						free(line);
-						return;
-					}
-				}
-			}
-			free(val);
+			/* Lookup the HTTP query arguments */
+			if (relay_lookup_query(cre) == PN_FAIL)
+				goto abort;
 		} else if (pn->flags & PNFLAG_LOOKUP_COOKIE) {
-			/*
-			 * Decode the HTTP cookies
-			 */
-			val = strdup(pk.value);
-			if (val == NULL)
-				goto next;
-
-			for (ptr = val; ptr != NULL && strlen(ptr);) {
-				if (*ptr == ' ')
-					*ptr++ = '\0';
-				pkv.key = ptr;
-				pkv.type = NODE_TYPE_COOKIE;
-				if ((ptr = strchr(ptr, ';')) != NULL)
-					*ptr++ = '\0';
-				/*
-				 * XXX We do not handle attributes
-				 * ($Path, $Domain, or $Port)
-				 */
-				if (*pkv.key == '$')
-					continue;
-
-				if ((pkv.value =
-				    strchr(pkv.key, '=')) == NULL ||
-				    strlen(pkv.value) < 1)
-					continue;
-				*pkv.value++ = '\0';
-				if (*pkv.value == '"')
-					*pkv.value++ = '\0';
-				if (pkv.value[strlen(pkv.value) - 1] == '"')
-					pkv.value[strlen(pkv.value) - 1] = '\0';
-
-				if ((proot = RB_FIND(proto_tree,
-				    cre->tree, &pkv)) == NULL)
-					continue;
-				PROTONODE_FOREACH(pnv, proot, entry) {
-					ret = relay_handle_http(cre, proot,
-					    pnv, &pkv, 0);
-					if (ret == PN_FAIL) {
-						free(val);
-						free(line);
-						return;
-					}
-				}
-			}
-			free(val);
+			/* Lookup the HTTP cookie */
+			if (relay_lookup_cookie(cre, pk.value) == PN_FAIL)
+				goto abort;
 		}
 
  handle:
@@ -1461,10 +1394,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			ret = relay_handle_http(cre, pn, pnv, &pk, header);
 			if (ret == PN_PASS)
 				pass = 1;
-			else if (ret == PN_FAIL) {
-				free(line);
-				return;
-			}
+			else if (ret == PN_FAIL)
+				goto abort;
 		}
 
 		if (pass) {
@@ -1479,7 +1410,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			}
 		}
 		free(line);
-		continue;
 	}
 	if (cre->done) {
 		RB_FOREACH(proot, proto_tree, cre->tree) {
@@ -1540,6 +1470,103 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	return;
  fail:
 	relay_close_http(con, 500, strerror(errno));
+	return;
+ abort:
+	free(line);
+}
+
+int
+relay_lookup_query(struct ctl_relay_event *cre)
+{
+	struct session		*con = (struct session *)cre->con;
+	struct protonode	*proot, *pnv, pkv;
+	char			*val, *ptr;
+	int			 ret;
+
+	if (cre->path == NULL || cre->args == NULL || strlen(cre->args) < 2)
+		return (PN_PASS);
+	if ((val = strdup(cre->args)) == NULL) {
+		relay_close_http(con, 500, "failed to allocate query");
+		return (PN_FAIL);
+	}
+
+	ptr = val;
+	while (ptr != NULL && strlen(ptr)) {
+		pkv.key = ptr;
+		pkv.type = NODE_TYPE_QUERY;
+		if ((ptr = strchr(ptr, '&')) != NULL)
+			*ptr++ = '\0';
+		if ((pkv.value =
+		    strchr(pkv.key, '=')) == NULL ||
+		    strlen(pkv.value) < 1)
+			continue;
+		*pkv.value++ = '\0';
+
+		if ((proot = RB_FIND(proto_tree, cre->tree, &pkv)) == NULL)
+			continue;
+		PROTONODE_FOREACH(pnv, proot, entry) {
+			ret = relay_handle_http(cre, proot,
+			    pnv, &pkv, 0);
+			if (ret == PN_FAIL)
+				goto done;
+		}
+	}
+
+	ret = PN_PASS;
+ done:
+	free(val);
+	return (ret);
+}
+
+int
+relay_lookup_cookie(struct ctl_relay_event *cre, const char *str)
+{
+	struct session		*con = (struct session *)cre->con;
+	struct protonode	*proot, *pnv, pkv;
+	char			*val, *ptr;
+	int			 ret;
+
+	if ((val = strdup(str)) == NULL) {
+		relay_close_http(con, 500, "failed to allocate cookie");
+		return (PN_FAIL);
+	}
+
+	for (ptr = val; ptr != NULL && strlen(ptr);) {
+		if (*ptr == ' ')
+			*ptr++ = '\0';
+		pkv.key = ptr;
+		pkv.type = NODE_TYPE_COOKIE;
+		if ((ptr = strchr(ptr, ';')) != NULL)
+			*ptr++ = '\0';
+		/*
+		 * XXX We do not handle attributes
+		 * ($Path, $Domain, or $Port)
+		 */
+		if (*pkv.key == '$')
+			continue;
+
+		if ((pkv.value =
+		    strchr(pkv.key, '=')) == NULL ||
+		    strlen(pkv.value) < 1)
+			continue;
+		*pkv.value++ = '\0';
+		if (*pkv.value == '"')
+			*pkv.value++ = '\0';
+		if (pkv.value[strlen(pkv.value) - 1] == '"')
+			pkv.value[strlen(pkv.value) - 1] = '\0';
+		if ((proot = RB_FIND(proto_tree, cre->tree, &pkv)) == NULL)
+			continue;
+		PROTONODE_FOREACH(pnv, proot, entry) {
+			ret = relay_handle_http(cre, proot, pnv, &pkv, 0);
+			if (ret == PN_FAIL)
+				goto done;
+		}
+	}
+
+	ret = PN_PASS;
+ done:
+	free(val);
+	return (ret);
 }
 
 void
