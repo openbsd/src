@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.41 2007/11/22 05:42:52 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.42 2007/11/22 05:47:46 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -77,12 +77,11 @@ void	m88110_setup_board_config(void);
 void	m88110_cpu_configuration_print(int);
 void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
-void	m88110_set_sapr(cpuid_t, apr_t);
+void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
 void	m88110_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
 void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void	m88110_flush_data_page(cpuid_t, paddr_t);
 void	m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 void	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void	m88110_initialize_cpu(cpuid_t);
@@ -99,7 +98,6 @@ struct cmmu_p cmmu88110 = {
 	m88110_flush_tlb,
 	m88110_flush_cache,
 	m88110_flush_inst_cache,
-	m88110_flush_data_page,
 	m88110_dma_cachectl,
 	m88110_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
@@ -241,7 +239,7 @@ m88110_cpu_number(void)
 }
 
 void
-m88110_set_sapr(cpuid_t cpu, apr_t ap)
+m88110_set_sapr(apr_t ap)
 {
 	u_int ictl, dctl;
 
@@ -365,22 +363,6 @@ m88110_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
-	set_psr(psr);
-}
-
-/*
- * flush data cache
- */
-void
-m88110_flush_data_page(cpuid_t cpu, paddr_t pa)
-{
-	u_int32_t psr;
-
-	disable_interrupt(psr);
-
-	mc88110_flush_data();
-	if (mc88410_present())
-		mc88410_flush();
 	set_psr(psr);
 }
 
