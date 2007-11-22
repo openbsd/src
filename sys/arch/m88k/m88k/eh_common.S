@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.35 2007/11/22 23:28:06 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.36 2007/11/22 23:28:52 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1876,19 +1876,6 @@ ASLOCAL(m88110_use_SR3_pcb)
 	 *   know register 0 in the pcb frame will always be zero, so we can
 	 *   use it as scratch storage.
 	 */
-#if 1
-	ldcr	TMP,  PSR
-	clr	TMP,  TMP,  1<PSR_FPU_DISABLE_BIT>	/* enable the FPU */
-	clr	TMP,  TMP,  1<PSR_SHADOW_FREEZE_BIT>	/* and shadowing */
-	stcr	TMP,  EPSR
-
-	or.u	TMP,  r0,   hi16(_C_LABEL(m88110_error_handler))
-	or	TMP,  TMP,  lo16(_C_LABEL(m88110_error_handler))
-	stcr	TMP,  EXIP
-
-	RTE
-#else
-	/* Testing!!! */
 	xcr	r30,  r30,  SR3			/* r30 = old exception frame */
 	st	r1,   r30,  GENREG_OFF(0)	/* free up r1 */
 	ld	r1,   r30,  REG_OFF(EF_EPSR)	/* get back the epsr */
@@ -1925,7 +1912,6 @@ ASLOCAL(m88110_use_SR3_pcb)
 	st	r1,   r31,  GENREG_OFF(1)	/* store r1 */
 	br.n	_ASM_LABEL(m88110_have_pcb)
 	 xcr	r30,  r30,  SR3			/* restore r30 */
-#endif
 
 ASLOCAL(m88110_pickup_stack)
 	/*
