@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.52 2007/09/13 20:34:12 jmc Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.53 2007/11/22 10:22:30 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -431,20 +431,22 @@ readfreq(void)
 	int64_t current;
 	double d;
 
-	/* if we're adjusting frequency already, don't override */
-	if (adjfreq(NULL, &current) == -1) {
-		log_warn("adjfreq failed");
+	fp = fopen(DRIFTFILE, "r");
+	if (fp == NULL) {
+		/* if the drift file has been deleted by the user, reset */
+		current = 0;
+		if (adjfreq(&current, NULL) == -1)
+			log_warn("adjfreq reset failed");
 		return;
 	}
-	if (current != 0)
-		return;
 
-	fp = fopen(DRIFTFILE, "r");
-	if (fp == NULL)
-		return;
-
-	if (fscanf(fp, "%le", &d) == 1)
-		ntpd_adjfreq(d, 0);
+	/* if we're adjusting frequency already, don't override */
+	if (adjfreq(NULL, &current) == -1)
+		log_warn("adjfreq failed");
+	else if (current == 0) {
+		if (fscanf(fp, "%le", &d) == 1)
+			ntpd_adjfreq(d, 0);
+	}
 	fclose(fp);
 }
 
