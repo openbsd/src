@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.62 2007/11/06 06:56:59 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.63 2007/11/22 11:01:04 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -431,6 +431,15 @@ restart:
 		/* update the header area */
 		i_header(header_text);
 
+		if (topn == Infinity) {
+#if Default_TOPN == Infinity
+			topn = smart_terminal ? Largest :
+			    (topn_specified ? Largest : Nominal_TOPN);
+#else
+			topn = Largest;
+#endif
+		}
+
 		if (topn > 0) {
 			/* determine number of processes to actually display */
 			/*
@@ -577,7 +586,6 @@ rundisplay(void)
 	    !(pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL))) {
 		char *errmsg;
 		ssize_t len;
-		int newval;
 
 		clear_message();
 
@@ -650,28 +658,37 @@ rundisplay(void)
 		case CMD_number2:
 			new_message(MT_standout,
 			    "Number of processes to show: ");
-			newval = readline(tempbuf, 8, Yes);
-			if (newval > -1) {
-				if (newval > max_topn) {
-					new_message(MT_standout | MT_delayed,
-					    " This terminal can only "
-					    "display %d processes.",
-					    max_topn);
-					putr();
+
+			if (readline(tempbuf, 8) > 0) {
+				char *ptr;
+				ptr = tempbuf;
+				if ((i = atoiwi(ptr)) != Invalid) {
+					if (i > max_topn) {
+						new_message(MT_standout | MT_delayed,
+						    " This terminal can only "
+						    "display %d processes.",
+						    max_topn);
+						putr();
+					} else if (i == 0)
+						display_header(No);
+					else if ((i > topn || i == -1) && topn == 0) {
+						/* redraw the header */
+						display_header(Yes);
+					}
+					topn = i;
+				} else {
+					new_message(MT_standout,
+					    "Processes should be a non-negative number");
+ 					putr();
+					no_command = Yes;
 				}
-				if (newval == 0)
-					display_header(No);
-				else if (newval > topn && topn == 0) {
-					/* redraw the header */
-					display_header(Yes);
-				}
-				topn = newval;
-			}
+			} else
+				clear_message();
 			break;
 
 		case CMD_delay:	/* new seconds delay */
 			new_message(MT_standout, "Seconds to delay: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				char *endp;
 				double newdelay = strtod(tempbuf, &endp);
 
@@ -694,17 +711,27 @@ rundisplay(void)
 			    "Displays to show (currently %s): ",
 			    displays == -1 ? "infinite" :
 			    itoa(displays));
-			if ((i = readline(tempbuf, 10, Yes)) > 0)
-				displays = i;
-			else if (i == 0)
-				quit(0);
 
-			clear_message();
+			if (readline(tempbuf, 10) > 0) {
+				char *ptr;
+				ptr = tempbuf;				
+				if ((i = atoiwi(ptr)) != Invalid) {
+					if (i == 0)
+						quit(0);
+					displays = i;
+				} else {
+					new_message(MT_standout,
+					    "Displays should be a non-negative number");
+					putr();
+					no_command = Yes;
+				}
+			} else
+				clear_message();
 			break;
 
 		case CMD_kill:	/* kill program */
 			new_message(0, "kill ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if ((errmsg = kill_procs(tempbuf)) != NULL) {
 					new_message(MT_standout, "%s", errmsg);
 					putr();
@@ -716,7 +743,7 @@ rundisplay(void)
 
 		case CMD_renice:	/* renice program */
 			new_message(0, "renice ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if ((errmsg = renice_procs(tempbuf)) != NULL) {
 					new_message(MT_standout, "%s", errmsg);
 					putr();
@@ -738,7 +765,7 @@ rundisplay(void)
 		case CMD_user:
 			new_message(MT_standout,
 			    "Username to show: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0') {
 					ps.uid = (uid_t)-1;
@@ -764,7 +791,7 @@ rundisplay(void)
 		case CMD_order:
 			new_message(MT_standout,
 			    "Order to sort: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if ((i = string_index(tempbuf,
 				    statics.order_names)) == -1) {
 					new_message(MT_standout,
@@ -780,7 +807,7 @@ rundisplay(void)
 
 		case CMD_pid:
 			new_message(MT_standout, "Process ID to show: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0') {
 					ps.pid = (pid_t)-1;
@@ -823,7 +850,7 @@ rundisplay(void)
 		case CMD_grep:
 			new_message(MT_standout,
 			    "Grep command name: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				free(ps.command);
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0')
@@ -837,7 +864,7 @@ rundisplay(void)
 
 		case CMD_hl:
 			new_message(MT_standout, "Process ID to highlight: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0) {
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0') {
 					hlpid = -1;

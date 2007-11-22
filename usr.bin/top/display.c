@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.31 2007/11/01 19:10:32 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.32 2007/11/22 11:01:04 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -74,7 +74,7 @@ static int      display_width = MAX_COLS;
 static char    *cpustates_tag(int);
 static int      string_count(char **);
 static void     summary_format(char *, size_t, int *, char **);
-static int	readlinedumb(char *, int, int);
+static int	readlinedumb(char *, int);
 
 #define lineindex(l) ((l)*display_width)
 
@@ -559,7 +559,7 @@ clear_message(void)
 
 
 static int
-readlinedumb(char *buffer, int size, int numeric)
+readlinedumb(char *buffer, int size)
 {
 	char *ptr = buffer, ch, cnt = 0, maxcnt = 0;
 	extern volatile sig_atomic_t leaveflag;
@@ -600,8 +600,7 @@ readlinedumb(char *buffer, int size, int numeric)
 			}
 		}
 		/* check for character validity and buffer overflow */
-		else if (cnt == size || (numeric && !isdigit(ch)) ||
-		    !isprint(ch)) {
+		else if (cnt == size || !isprint(ch)) {
 			/* not legal */
 			if (putchar('\7') == EOF)
 				exit(1);
@@ -621,11 +620,11 @@ readlinedumb(char *buffer, int size, int numeric)
 
 	/* return either inputted number or string length */
 	putr();
-	return (cnt == 0 ? -1 : numeric ? atoi(buffer) : cnt);
+	return (cnt == 0 ? -1 : cnt);
 }
 
 int
-readline(char *buffer, int size, int numeric)
+readline(char *buffer, int size)
 {
 	size_t cnt;
 
@@ -635,12 +634,12 @@ readline(char *buffer, int size, int numeric)
 	if (smart_terminal)
 		getnstr(buffer, size);
 	else
-		return readlinedumb(buffer, size, numeric);
+		return readlinedumb(buffer, size);
 
 	cnt = strlen(buffer);
 	if (cnt > 0 && buffer[cnt - 1] == '\n')
 		buffer[cnt - 1] = '\0';
-	return (cnt == 0 ? -1 : numeric ? atoi(buffer) : cnt);
+	return (cnt == 0 ? -1 : cnt);
 }
 
 /* internal support routines */
