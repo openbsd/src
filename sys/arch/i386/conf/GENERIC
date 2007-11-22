@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.588 2007/11/16 21:07:01 mbalmer Exp $
+#	$OpenBSD: GENERIC,v 1.589 2007/11/22 08:24:14 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,7 +46,7 @@ cpu0	at mainbus?
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
-ipmi0	at mainbus?		# IPMI
+ipmi0	at mainbus? disable	# IPMI
 esm0	at mainbus? 		# Dell Embedded Server Management
 
 isa0	at mainbus0
@@ -239,6 +239,8 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
+uticom*	at uhub?		# TI serial
+ucom*	at uticom?
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
