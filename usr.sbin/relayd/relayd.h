@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.82 2007/11/22 16:07:03 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.83 2007/11/22 16:38:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -326,8 +326,8 @@ struct host {
 	u_long			 check_cnt;
 	u_long			 up_cnt;
 	int			 retry_cnt;
-	struct ctl_tcp_event	 cte;
 	int			 idx;
+	struct ctl_tcp_event	 cte;
 };
 TAILQ_HEAD(hostlist, host);
 
@@ -358,7 +358,7 @@ struct table_config {
 	char			 path[MAXPATHLEN];
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
-	enum digest_type	 digest_type;
+	u_int8_t		 digest_type;
 };
 
 struct table {
