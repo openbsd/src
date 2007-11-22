@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.77 2007/11/16 11:28:34 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.78 2007/11/22 03:19:50 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1130,17 +1130,18 @@ stioctl(dev, cmd, arg, flag, p)
 	struct mtop *mt = (struct mtop *) arg;
 	int number;
 
-	if (st->flags & ST_DYING) {
-		device_unref(&st->sc_dev);
-		return (ENXIO);
-	}
-
 	/*
 	 * Find the device that the user is talking about
 	 */
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
 	st = st_cd.cd_devs[unit];
+
+	if (st->flags & ST_DYING) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
+
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
