@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.155 2007/11/22 01:21:40 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.156 2007/11/22 02:04:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -475,8 +475,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 					info.rti_flags = RTF_UP | RTF_HOST;
 					error = rtrequest1(RTM_ADD, &info, NULL, 0);
-					rt_missmsg(RTM_ADD, &info, info.rti_flags, NULL,
-					    error, 0);
+					rt_missmsg(RTM_ADD, &info, info.rti_flags,
+					    &sc->sc_if, error, 0);
 				}
 				if (!hr_otherif || nr_ourif || !rt) {
 					if (nr_ourif && !(rt->rt_flags &
@@ -501,8 +501,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					error = rtrequest1(RTM_ADD, &info, NULL, 0);
 					if (error == 0)
 						ifa->ifa_flags |= IFA_ROUTE;
-					rt_missmsg(RTM_ADD, &info, info.rti_flags, NULL,
-					    error, 0);
+					rt_missmsg(RTM_ADD, &info, info.rti_flags,
+					    &sc->sc_if, error, 0);
 				}
 				break;
 			case RTM_DELETE:
