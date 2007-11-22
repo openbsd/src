@@ -1,5 +1,5 @@
 /*-
- * $OpenBSD: table.c,v 1.4 2007/11/19 22:59:03 stefan Exp $
+ * $OpenBSD: table.c,v 1.5 2007/11/22 21:20:43 stefan Exp $
  *
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -491,7 +491,7 @@ struct optab table[] = {
 	SSCON,		TANY,
 		0,	RDEST,
 		"	li AL,AR\n"
-		"	li UL,0\n", },
+		"	li UL,UR\n", },
 
 /* assign constant to register */
 { ASSIGN,	FOREFF|INAREG,
