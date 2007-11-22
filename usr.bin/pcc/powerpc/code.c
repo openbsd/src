@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.4 2007/11/16 09:00:13 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.5 2007/11/22 15:06:43 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -32,10 +32,12 @@
 #include "pass1.h"
 #include "pass2.h"
 
+#if 0
 static void genswitch_simple(int num, struct swents **p, int n);
 static void genswitch_bintree(int num, struct swents **p, int n);
 static void genswitch_table(int num, struct swents **p, int n);
 static void genswitch_mrst(int num, struct swents **p, int n);
+#endif
 
 /*
  * cause the alignment to become a multiple of n
@@ -317,17 +319,14 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
- * n is the number of case statemens (length of list)
  */
-void
-genswitch(int num, struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
+	return 0;
+#if 0
 	if (n == 0) {
 		if (p[0]->sval != 0)
 			branch(p[0]->sval);
@@ -347,8 +346,10 @@ genswitch(int num, struct swents **p, int n)
 	if (0)
 	genswitch_bintree(num, p, n);
 	genswitch_mrst(num, p, n);
+#endif
 }
 
+#if 0
 static void
 genswitch_simple(int num, struct swents **p, int n)
 {
@@ -808,6 +809,8 @@ mrst_find_window(struct swents **p, int n, int *state, int lab, int *len, int *l
 
 	return Wmax;
 }
+#endif
+
 /*
  * Called with a function call with arguments as argument.
  * This is done early in buildtree() and only done once.

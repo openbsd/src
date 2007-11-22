@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.5 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.6 2007/11/22 15:06:43 stefan Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -169,7 +169,8 @@ static void swend(void);
 static void addcase(NODE *p);
 static void adddef(void);
 static void savebc(void);
-static void swstart(int);
+static void swstart(int, TWORD);
+static void genswitch(int, TWORD, struct swents **, int);
 static NODE * structref(NODE *p, int f, char *name);
 static char *mkpstr(char *str);
 static struct symtab *clbrace(NODE *);
@@ -863,23 +864,24 @@ forprefix:	  C_FOR  '('  .e  ';' .e  ';' {
 switchpart:	   C_SWITCH  '('  e  ')' {
 			NODE *p;
 			int num;
+			TWORD t;
 
 			savebc();
 			brklab = getlab();
-			if ($3->n_type != INT) {
-				/* must cast to integer */
-				p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
-				p = buildtree(CAST, p, $3);
-				$3 = p->n_right;
-				nfree(p->n_left);
-				nfree(p);
+			if (($3->n_type != BOOL && $3->n_type > ULONGLONG) ||
+			    $3->n_type < CHAR) {
+				uerror("switch expression must have integer "
+				       "type");
+				t = INT;
+			} else {
+				$3 = intprom($3);
+				t = $3->n_type;
 			}
-//			ecomp( buildtree( FORCE, $3, NIL ) );
-			p = tempnode(0, INT, 0, MKSUE(INT));
+			p = tempnode(0, t, 0, MKSUE(t));
 			num = p->n_lval;
 			ecomp(buildtree(ASSIGN, p, $3));
 			branch( $$ = getlab());
-			swstart(num);
+			swstart(num, t);
 			reached = 0;
 		}
 		;
@@ -1145,6 +1147,7 @@ struct swdef {
 	struct swents *ents;	/* Linked sorted list of case entries */
 	int nents;		/* # of entries in list */
 	int num;		/* Node value will end up in */
+	TWORD type;		/* Type of switch expression */
 } *swpole;
 
 /*
@@ -1154,6 +1157,7 @@ static void
 addcase(NODE *p)
 {
 	struct swents **put, *w, *sw = tmpalloc(sizeof(struct swents));
+	CONSZ val;
 
 	p = optim(p);  /* change enum to ints */
 	if (p->n_op != ICON || p->n_sp != NULL) {
@@ -1165,19 +1169,35 @@ addcase(NODE *p)
 		return;
 	}
 
+	val = p->n_lval;
+	p = makety(p, swpole->type, 0, 0, MKSUE(swpole->type));
+	if (p->n_op != ICON)
+		cerror("could not cast case value to type of switch "
+		       "expression");
+	if (p->n_lval != val)
+		werror("case expression truncated");
+
 	sw->sval = p->n_lval;
-	put = &swpole->ents;
-	for (w = swpole->ents; w != NULL && w->sval < sw->sval; w = w->next)
-		put = &w->next;
-	if (w != NULL && w->sval == sw->sval)
-		uerror("duplicate case in switch");
-	else {
-		plabel(sw->slab = getlab());
-		*put = sw;
-		sw->next = w;
-		swpole->nents++;
-	}
 	tfree(p);
+	put = &swpole->ents;
+	if (ISUNSIGNED(swpole->type)) {
+		for (w = swpole->ents;
+		     w != NULL && (U_CONSZ)w->sval < (U_CONSZ)sw->sval;
+		     w = w->next)
+			put = &w->next;
+	} else {
+		for (w = swpole->ents; w != NULL && w->sval < sw->sval;
+		     w = w->next)
+			put = &w->next;
+	}
+	if (w != NULL && w->sval == sw->sval) {
+		uerror("duplicate case in switch");
+		return;
+	}
+	plabel(sw->slab = getlab());
+	*put = sw;
+	sw->next = w;
+	swpole->nents++;
 }
 
 /*
@@ -1195,7 +1215,7 @@ adddef(void)
 }
 
 static void
-swstart(int num)
+swstart(int num, TWORD type)
 {
 	struct swdef *sw = tmpalloc(sizeof(struct swdef));
 
@@ -1203,6 +1223,7 @@ swstart(int num)
 	sw->ents = NULL;
 	sw->next = swpole;
 	sw->num = num;
+	sw->type = type;
 	swpole = sw;
 }
 
@@ -1225,9 +1246,43 @@ swend(void)
 		swp[i] = swpole->ents;
 		swpole->ents = swpole->ents->next;
 	}
-	genswitch(swpole->num, swp, swpole->nents);
+	genswitch(swpole->num, swpole->type, swp, swpole->nents);
 
 	swpole = swpole->next;
+}
+
+/*
+ * num: tempnode the value of the switch expression is in
+ * type: type of the switch expression
+ *
+ * p points to an array of structures, each consisting
+ * of a constant value and a label.
+ * The first is >=0 if there is a default label;
+ * its value is the label number
+ * The entries p[1] to p[n] are the nontrivial cases
+ * n is the number of case statements (length of list)
+ */
+static void
+genswitch(int num, TWORD type, struct swents **p, int n)
+{
+	NODE *r, *q;
+	int i;
+
+	if (mygenswitch(num, type, p, n))
+		return;
+
+	/* simple switch code */
+	for (i = 1; i <= n; ++i) {
+		/* already in 1 */
+		r = tempnode(num, type, 0, MKSUE(type));
+		q = block(ICON, NIL, NIL, type, 0, MKSUE(type));
+		q->n_sp = NULL;
+		q->n_lval = p[i]->sval;
+		r = buildtree(NE, r, clocal(q));
+		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
+	}
+	if (p[0]->slab > 0)
+		branch(p[0]->slab);
 }
 
 /*

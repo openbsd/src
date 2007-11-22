@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.4 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.5 2007/11/22 15:06:43 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -177,7 +177,7 @@ struct swents {			/* switch table */
 	CONSZ	sval;		/* case value */
 	int	slab;		/* associated label */
 };
-void genswitch(int, struct swents **, int);
+int mygenswitch(int, TWORD, struct swents **, int);
 
 extern	int blevel;
 extern	int instruct, got_type;
@@ -254,6 +254,7 @@ extern	NODE
 	*btsize(TWORD, union dimfun *, struct suedef *),
 	*tempnode(int, TWORD type, union dimfun *df, struct suedef *sue),
 	*doacall(NODE *f, NODE *a);
+NODE	*intprom(NODE *);
 OFFSZ	tsize(TWORD, union dimfun *, struct suedef *),
 	psize(NODE *);
 NODE *	typenode(NODE *new);

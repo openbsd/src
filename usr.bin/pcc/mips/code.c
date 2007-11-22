@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.2 2007/11/16 08:34:55 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.3 2007/11/22 15:06:43 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -216,28 +216,13 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(int num, struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
-	NODE *r;
-	int i;
-
-	/* simple switch code */
-	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
-		r = tempnode(num, INT, 0, MKSUE(INT));
-		r = buildtree(NE, r, bcon(p[i]->sval));
-		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
-	}
-	if (p[0]->slab > 0)
-		branch(p[0]->slab);
+	return 0;
 }
 
 static void
