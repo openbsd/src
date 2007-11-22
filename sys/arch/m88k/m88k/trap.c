@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2007/11/22 05:53:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2007/11/22 06:11:51 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1757,6 +1757,16 @@ double_reg_fixup(struct trapframe *frame)
 		if (regno != 31)
 			frame->tf_r[regno + 1] = value;
 	}
+
+#ifdef M88110
+	if (CPU_IS88110) {
+		/* skip the offending instruction */
+		if (frame->tf_exip & 1)
+			frame->tf_exip = frame->tf_enip;
+		else
+			frame->tf_exip += 4;
+	}
+#endif
 
 	return 0;
 }
