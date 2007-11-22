@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.11 2007/11/10 22:11:22 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.12 2007/11/22 21:47:24 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -478,9 +478,9 @@ main(int argc, char *argv[])
 			}
 		if(sflag) {
 			if (outfile)
-				assource = tmp3 = outfile;
+				tmp3 = outfile;
 			else
-				assource = tmp3 = setsuf(clist[i], 's');
+				tmp3 = setsuf(clist[i], 's');
 		}
 		av[na++] = tmp3;
 #if 0
