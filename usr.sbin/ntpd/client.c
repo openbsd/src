@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.76 2007/05/01 07:40:45 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.77 2007/11/22 10:24:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,8 @@ client_query(struct ntp_peer *p)
 	int	tos = IPTOS_LOWDELAY;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		set_next(p, scale_interval(INTERVAL_QUERY_AGGRESSIVE));
+		set_next(p, MAX(SETTIME_TIMEOUT,
+		    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
 		return (0);
 	}
 
@@ -140,8 +141,8 @@ client_query(struct ntp_peer *p)
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
 				client_nextaddr(p);
-				set_next(p,
-				    scale_interval(INTERVAL_QUERY_AGGRESSIVE));
+				set_next(p, MAX(SETTIME_TIMEOUT,
+				    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
 				return (-1);
 			} else
 				fatal("client_query connect");
