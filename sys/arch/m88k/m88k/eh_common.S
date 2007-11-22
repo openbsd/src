@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.36 2007/11/22 23:28:52 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.37 2007/11/22 23:29:27 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1978,32 +1978,34 @@ ASLOCAL(m88110_have_pcb)
 	st	TMP,  r31,  REG_OFF(EF_CPU)
 
 	/*
-	 * Save fault status registers from CMMU.
+	 * Save and clear fault status registers.
 	 */
 	ldcr	TMP,  ISR
+	bcnd.n	eq0,  TMP,  1f
+	 st	TMP,  r31,  REG_OFF(EF_ISR)
 	ldcr	TMP2, ILAR
 	ldcr	TMP3, IPAR
-	st	TMP,  r31,  REG_OFF(EF_ISR)
 	st	TMP2, r31,  REG_OFF(EF_ILAR)
 	st	TMP3, r31,  REG_OFF(EF_IPAR)
 	ldcr	TMP,  ISAP
 	ldcr	TMP2, IUAP
 	st	TMP,  r31,  REG_OFF(EF_ISAP)
 	st	TMP2, r31,  REG_OFF(EF_IUAP)
+	stcr	r0, ISR
+1:
 	ldcr	TMP,  DSR
+	bcnd.n	eq0,  TMP,  1f
+	 st	TMP,  r31,  REG_OFF(EF_DSR)
 	ldcr	TMP2, DLAR
 	ldcr	TMP3, DPAR
-	st	TMP,  r31,  REG_OFF(EF_DSR)
 	st	TMP2, r31,  REG_OFF(EF_DLAR)
 	st	TMP3, r31,  REG_OFF(EF_DPAR)
 	ldcr	TMP,  DSAP
 	ldcr	TMP2, DUAP
 	st	TMP,  r31,  REG_OFF(EF_DSAP)
 	st	TMP2, r31,  REG_OFF(EF_DUAP)
-
-	stcr	r0, ISR
 	stcr	r0, DSR
-
+1:
 	ldcr	r1,   SR2
 	jmp	r1
 
