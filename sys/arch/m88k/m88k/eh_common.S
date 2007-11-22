@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.37 2007/11/22 23:29:27 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.38 2007/11/22 23:30:11 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2162,8 +2162,8 @@ ASLOCAL(m88110_fpu_enable)
 	 * take care of any data access exceptions......
 	 */
 	or	r30,  r0,   r31		/* get a copy of the e.f. pointer */
-	ld	r2,   r31,  REG_OFF(EF_EPSR)
-	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
+	ld	r6,   r31,  REG_OFF(EF_EPSR)
+	bb1	PSR_SUPERVISOR_MODE_BIT, r6, 1f	/* if in kernel mode */
 
 	ldcr	r31,  CPU
 	ld	r31,  r31,  CI_CURPCB
@@ -2182,7 +2182,7 @@ ASLOCAL(m88110_fpu_enable)
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
 	bcnd.n	eq0,  r2,   8f
-	 ld	r14,  r30,  REG_OFF(EF_RET)	/* load return value XXX!!! */
+	 ld	r14,  r30,  REG_OFF(EF_RET)
 	cmp	r3,   r2,   1	/* is an interrupt? */
 	bb1.n	eq,   r3,   8f
 	 cmp	r3,   r2,   11	/* or NMI? */
@@ -2191,12 +2191,14 @@ ASLOCAL(m88110_fpu_enable)
 #ifdef DDB
 	 cmp	r3,   r2,   130	/* DDB break exception */
 	bb1.n	eq,   r3,   8f
-
 	 cmp	r3,   r2,   132	/* DDB entry exception */
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* turn interrupts back on */
+	/* turn interrupts back on unless they were not enabled when the
+	   trap occured */
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r6, 8f
+
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
