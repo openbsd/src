@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.23 2007/09/03 06:10:54 joel Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.24 2007/11/22 01:21:40 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -126,10 +126,12 @@ struct carpreq {
 	int		carpr_state;
 #define	CARP_STATES	"INIT", "BACKUP", "MASTER"
 #define	CARP_MAXSTATE	2
+#define	CARP_MAXNODES	32
 
 	char		carpr_carpdev[CARPDEVNAMSIZ];
-	int		carpr_vhid;
-	int		carpr_advskew;
+	u_int8_t	carpr_vhids[CARP_MAXNODES];
+	u_int8_t	carpr_advskews[CARP_MAXNODES];
+	u_int8_t	carpr_states[CARP_MAXNODES];
 	int		carpr_advbase;
 	unsigned char	carpr_key[CARP_KEY_LEN];
 };
@@ -166,5 +168,6 @@ int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
 int		 carp_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
 int		 carp_lsdrop(struct mbuf *, sa_family_t, u_int32_t *, u_int32_t *);
+void		 carp_rewrite_lladdr(struct ifnet *, u_int8_t *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_CARP_H_ */

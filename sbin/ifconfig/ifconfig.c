@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.189 2007/10/31 21:13:41 mikeb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.190 2007/11/22 01:21:40 mpf Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
 void	setcarpdev(const char *, int);
 void	unsetcarpdev(const char *, int);
+void	setcarpnodes(const char *, int);
 void	setpfsync_syncdev(const char *, int);
 void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncdev(const char *, int);
@@ -313,6 +314,7 @@ const struct	cmd {
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "carpdev",	NEXTARG,	0,		setcarpdev },
+	{ "carpnodes",	NEXTARG,	0,		setcarpnodes },
 	{ "-carpdev",	1,		0,		unsetcarpdev },
 	{ "syncdev",	NEXTARG,	0,		setpfsync_syncdev },
 	{ "-syncdev",	1,		0,		unsetpfsync_syncdev },
@@ -2889,6 +2891,7 @@ carp_status(void)
 {
 	const char *state;
 	struct carpreq carpr;
+	int i;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
@@ -2896,16 +2899,30 @@ carp_status(void)
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		return;
 
-	if (carpr.carpr_vhid > 0) {
-		if (carpr.carpr_state > CARP_MAXSTATE)
+	if (carpr.carpr_vhids[0] == 0)
+		return;
+
+	for (i = 0; carpr.carpr_vhids[i]; i++) {
+		if (carpr.carpr_states[i] > CARP_MAXSTATE)
 			state = "<UNKNOWN>";
 		else
-			state = carp_states[carpr.carpr_state];
-
-		printf("\tcarp: %s carpdev %s vhid %d advbase %d advskew %d\n",
-		    state, carpr.carpr_carpdev[0] != '\0' ?
-		    carpr.carpr_carpdev : "none", carpr.carpr_vhid,
-		    carpr.carpr_advbase, carpr.carpr_advskew);
+			state = carp_states[carpr.carpr_states[i]];
+		if (carpr.carpr_vhids[1] == 0) {
+			printf("\tcarp: %s carpdev %s vhid %d advbase %d "
+			    "advskew %d\n", state,
+			    carpr.carpr_carpdev[0] != '\0' ?
+		    	    carpr.carpr_carpdev : "none", carpr.carpr_vhids[0],
+		    	    carpr.carpr_advbase, carpr.carpr_advskews[0]);
+		} else {
+			if (i == 0) {
+				printf("\tcarp: carpdev %s advbase %d\n",
+				    carpr.carpr_carpdev[0] != '\0' ?
+				    carpr.carpr_carpdev : "none",
+				    carpr.carpr_advbase);
+			}
+			printf("\t\tstate %s vhid %d advskew %d\n", state,
+			    carpr.carpr_vhids[i], carpr.carpr_advskews[i]);
+		}
 	}
 }
 
@@ -2946,7 +2963,8 @@ setcarp_vhid(const char *val, int d)
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGVH");
 
-	carpr.carpr_vhid = vhid;
+	carpr.carpr_vhids[0] = vhid;
+	carpr.carpr_vhids[1] = 0;
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
@@ -2970,7 +2988,7 @@ setcarp_advskew(const char *val, int d)
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGVH");
 
-	carpr.carpr_advskew = advskew;
+	carpr.carpr_advskews[0] = advskew;
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
@@ -3054,6 +3072,48 @@ unsetcarpdev(const char *val, int d)
 		err(1, "SIOCGVH");
 
 	bzero((char *)&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
+void
+setcarpnodes(const char *val, int d)
+{
+	char *str;
+	int i;
+	struct carpreq carpr;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	bzero(carpr.carpr_vhids, sizeof(carpr.carpr_vhids));
+	bzero(carpr.carpr_advskews, sizeof(carpr.carpr_advskews));
+
+	str = strdup(val);
+	if (str == NULL)
+		err(1, "strdup");
+
+	for (i = 0; (str = strtok(str, ",")) != NULL; str = NULL) {
+		u_int vhid, advskew;
+		if (i > CARP_MAXNODES)
+			errx(1, "too many carp nodes");
+		if (sscanf(str, "%u:%u", &vhid, &advskew) != 2) {
+			errx(1, "non parsable arg: %s", str);
+		}
+		if (vhid >= 255)
+			errx(1, "vhid %s: value too large", vhid);
+		if (advskew >= 255)
+			errx(1, "advskew %s: value too large", advskew);
+
+		carpr.carpr_vhids[i] = vhid;
+		carpr.carpr_advskews[i] = advskew;
+		i++;
+	}
+	free(str);
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
