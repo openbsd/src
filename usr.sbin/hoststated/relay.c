@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.64 2007/11/21 20:41:40 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.65 2007/11/22 10:09:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -91,6 +91,8 @@ int		 relay_handle_http(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *,
 		    struct protonode *, int);
 void		 relay_read_http(struct bufferevent *, void *);
+int		 relay_lookup_url(struct ctl_relay_event *,
+		    const char *, enum digest_type);
 int		 relay_lookup_query(struct ctl_relay_event *);
 int		 relay_lookup_cookie(struct ctl_relay_event *, const char *);
 void		 relay_read_httpcontent(struct bufferevent *, void *);
@@ -284,6 +286,7 @@ void
 relay_nodedebug(const char *name, struct protonode *pn)
 {
 	const char	*s;
+	int		 digest;
 
 	if (pn->action == NODE_ACTION_NONE)
 		return;
@@ -303,6 +306,9 @@ relay_nodedebug(const char *name, struct protonode *pn)
 	case NODE_TYPE_PATH:
 		fprintf(stderr, "path ");
 		break;
+	case NODE_TYPE_URL:
+		fprintf(stderr, "url ");
+		break;
 	}
 
 	switch (pn->action) {
@@ -321,8 +327,10 @@ relay_nodedebug(const char *name, struct protonode *pn)
 	case NODE_ACTION_EXPECT:
 	case NODE_ACTION_FILTER:
 		s = pn->action == NODE_ACTION_EXPECT ? "expect" : "filter";
+		digest = pn->flags & PNFLAG_LOOKUP_URL_DIGEST;
 		if (strcmp(pn->value, "*") == 0)
-			fprintf(stderr, "%s \"%s\"", s, pn->key);
+			fprintf(stderr, "%s %s\"%s\"", s,
+			    digest ? "digest " : "", pn->key);
 		else
 			fprintf(stderr, "%s \"%s\" from \"%s\"", s,
 			    pn->value, pn->key);
@@ -1378,7 +1386,24 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (cre->dir == RELAY_DIR_RESPONSE)
 			goto handle;
 
-		if (pn->flags & PNFLAG_LOOKUP_QUERY) {
+		if (pn->flags & PNFLAG_LOOKUP_URL) {
+			/*
+			 * Lookup the URL of type example.com/path?args.
+			 * Either as a plain string or SHA1/MD5 digest.
+			 */
+			if ((pn->flags & PNFLAG_LOOKUP_DIGEST(0)) &&
+			    relay_lookup_url(cre, pk.value,
+			    DIGEST_NONE) == PN_FAIL)
+				goto abort;
+			if ((pn->flags & PNFLAG_LOOKUP_DIGEST(DIGEST_SHA1)) &&
+			    relay_lookup_url(cre, pk.value,
+			    DIGEST_SHA1) == PN_FAIL)
+				goto abort;
+			if ((pn->flags & PNFLAG_LOOKUP_DIGEST(DIGEST_MD5)) &&
+			    relay_lookup_url(cre, pk.value,
+			    DIGEST_MD5) == PN_FAIL)
+				goto abort;
+		} else if (pn->flags & PNFLAG_LOOKUP_QUERY) {
 			/* Lookup the HTTP query arguments */
 			if (relay_lookup_query(cre) == PN_FAIL)
 				goto abort;
@@ -1473,6 +1498,60 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	return;
  abort:
 	free(line);
+}
+
+int
+relay_lookup_url(struct ctl_relay_event *cre, const char *str,
+    enum digest_type type)
+{
+	struct session		*con = (struct session *)cre->con;
+	struct protonode	*proot, *pnv, pkv;
+	char			*val, *md = NULL;
+	int			 ret = PN_FAIL;
+
+	if (cre->path == NULL)
+		return (PN_PASS);
+
+	if (asprintf(&val, "%s%s%s%s",
+	    str, cre->path,
+	    cre->args == NULL ? "" : "?",
+	    cre->args == NULL ? "" : cre->args) == -1) {
+		relay_close_http(con, 500, "failed to allocate URL");
+		return (PN_FAIL);
+	}
+
+	switch (type) {
+	case DIGEST_SHA1:
+	case DIGEST_MD5:
+		if ((md = digeststr(type, val, strlen(val), NULL)) == NULL) {
+			relay_close_http(con, 500, "failed to allocate digest");
+			goto fail;
+		}
+		pkv.key = md;
+		break;
+	case DIGEST_NONE:
+		pkv.key = val;
+		break;
+	}
+	pkv.type = NODE_TYPE_URL;
+	pkv.value = "";
+
+	if ((proot = RB_FIND(proto_tree, cre->tree, &pkv)) == NULL)
+		goto done;
+
+	PROTONODE_FOREACH(pnv, proot, entry) {
+		ret = relay_handle_http(cre, proot, pnv, &pkv, 0);
+		if (ret == PN_FAIL)
+			goto done;
+	}
+
+ done:
+	ret = PN_PASS;
+ fail:
+	if (md != NULL)
+		free(md);
+	free(val);
+	return (ret);
 }
 
 int

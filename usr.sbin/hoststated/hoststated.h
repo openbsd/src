@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.80 2007/11/21 20:28:38 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.81 2007/11/22 10:09:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -437,7 +437,8 @@ enum nodetype {
 	NODE_TYPE_HEADER	= 0,
 	NODE_TYPE_QUERY		= 1,
 	NODE_TYPE_COOKIE	= 2,
-	NODE_TYPE_PATH		= 3
+	NODE_TYPE_PATH		= 3,
+	NODE_TYPE_URL		= 4
 };
 
 #define PNFLAG_MACRO			0x01
@@ -445,6 +446,9 @@ enum nodetype {
 #define PNFLAG_LOG			0x04
 #define PNFLAG_LOOKUP_QUERY		0x08
 #define PNFLAG_LOOKUP_COOKIE		0x10
+#define PNFLAG_LOOKUP_URL		0xe0
+#define PNFLAG_LOOKUP_URL_DIGEST	0xc0
+#define PNFLAG_LOOKUP_DIGEST(x)		(0x20 << x)
 
 enum noderesult {
 	PN_DROP			= 0,

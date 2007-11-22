@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2007/11/21 20:31:03 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.93 2007/11/22 10:09:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -123,7 +123,7 @@ typedef struct {
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE STYLE RETURN
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
-%token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
+%token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED URL
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER QUERYSTR RETRY IP
 %token	ERROR
@@ -728,6 +728,8 @@ protoptsl	: SSL sslflags
 
 			if (node.type == NODE_TYPE_COOKIE)
 				pk.key = "Cookie";
+			else if (node.type == NODE_TYPE_URL)
+				pk.key = "Host";
 			else
 				pk.key = "GET";
 			if (node.type != NODE_TYPE_HEADER) {
@@ -762,6 +764,15 @@ protoptsl	: SSL sslflags
 					break;
 				case NODE_TYPE_COOKIE:
 					pn->flags |= PNFLAG_LOOKUP_COOKIE;
+					break;
+				case NODE_TYPE_URL:
+					if (node.flags &
+					    PNFLAG_LOOKUP_URL_DIGEST)
+						pn->flags |= node.flags &
+						    PNFLAG_LOOKUP_URL_DIGEST;
+					else
+						pn->flags |=
+						    PNFLAG_LOOKUP_DIGEST(0);
 					break;
 				default:
 					break;
@@ -905,6 +916,21 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
+		| nodetype EXPECT digest mark {
+			if (node.type != NODE_TYPE_URL) {
+				yyerror("digest not supported for this type");
+				free($3.digest);
+				YYERROR;
+			}
+			node.action = NODE_ACTION_EXPECT;
+			node.key = strdup($3.digest);
+			node.flags |= PNFLAG_LOOKUP_DIGEST($3.type);
+			node.value = strdup("*");
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($3.digest);
+			proto->lateconnect++;
+		}
 		| nodetype FILTER STRING FROM STRING mark	{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($5);
@@ -922,6 +948,21 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			free($3);
+			proto->lateconnect++;
+		}
+		| nodetype FILTER digest mark {
+			if (node.type != NODE_TYPE_URL) {
+				yyerror("digest not supported for this type");
+				free($3.digest);
+				YYERROR;
+			}
+			node.action = NODE_ACTION_FILTER;
+			node.key = strdup($3.digest);
+			node.flags |= PNFLAG_LOOKUP_DIGEST($3.type);
+			node.value = strdup("*");
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($3.digest);
 			proto->lateconnect++;
 		}
 		| nodetype HASH STRING marked			{
@@ -963,6 +1004,7 @@ nodetype	: HEADER			{
 			proto->flags |= F_LOOKUP_PATH;
 			node.type = NODE_TYPE_PATH;
 		}
+		| URL				{ node.type = NODE_TYPE_URL; }
 		;
 
 sslcache	: NUMBER			{
@@ -1349,6 +1391,7 @@ lookup(char *s)
 		{ "timeout",		TIMEOUT },
 		{ "to",			TO },
 		{ "updates",		UPDATES },
+		{ "url",		URL },
 		{ "virtual",		VIRTUAL }
 	};
 	const struct keywords	*p;
