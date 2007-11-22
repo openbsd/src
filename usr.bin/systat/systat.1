@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.60 2007/11/17 11:42:14 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.61 2007/11/22 18:20:04 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: November 22 2007 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ The default interval is 5 seconds.
 .El
 .Pp
 Certain characters cause immediate action by
-.Nm systat .
+.Nm .
 These are
 .Bl -tag -width Fl
 .It Ic \&^L
@@ -136,7 +136,7 @@ being shown in
 the lower window and the refresh interval.
 .It Ic \&^Z
 Suspend
-.Nm systat .
+.Nm .
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.
@@ -159,7 +159,7 @@ Print the load average over the past 1, 5, and 15 minutes
 on the command line.
 .It Ic quit
 Exit
-.Nm systat .
+.Nm .
 (This may be abbreviated to
 .Ic q . )
 .It Ic stop
