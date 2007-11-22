@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.42 2007/11/22 05:47:46 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.43 2007/11/22 05:53:57 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -193,7 +193,13 @@ m88110_initialize_cpu(cpuid_t cpu)
 	/* clear PATCs */
 	patc_clear();
 
-	/* Do NOT enable ICTL_PREN (branch prediction) */
+	/*
+	 * 88110 errata #1:
+	 * ``Under certain conditions involving exceptions, with branch
+	 *   prediction enabled, the CPU may hang.
+	 *   Suggested fix: Clear the PREN bit of the ICTL.  This will
+	 *   disable branch prediction.''
+	 */
 	set_ictl(BATC_32M
 		 | CMMU_ICTL_DID	/* Double instruction disable */
 		 | CMMU_ICTL_MEN
@@ -201,6 +207,25 @@ m88110_initialize_cpu(cpuid_t cpu)
 		 | CMMU_ICTL_BEN
 		 | CMMU_ICTL_HTEN);
 
+	/*
+	 * 88110 errata #10 (4.2) or #2 (5.1.1):
+	 * ``Under some circumstances, the 88110 may incorrectly latch data
+	 *   as it comes from the bus.
+	 *   [...]
+	 *   It is the data matching mechanism that may give corrupt data to
+	 *   the register files.
+	 *   Suggested fix: Set the Data Matching Disable bit (bit 2) of the
+	 *   DCTL.  This bit is not documented in the user's manual. This bit
+	 *   is only present for debug purposes and its functionality should
+	 *   not be depended upon long term.''
+	 *
+	 * 88110 errata #5 (5.1.1):
+	 * ``Setting the xmem bit in the dctl register to perform st/ld
+	 *   xmems can cause the cpu to hang if a st instruction follows the
+	 *   xmem.
+	 *   Work-Around: do not set the xmem bit in dctl, or separate st
+	 *   from xmem instructions.''
+	 */
 	set_dctl(BATC_32M
                  | CMMU_DCTL_RSVD1	/* Data Matching Disable */
                  | CMMU_DCTL_MEN

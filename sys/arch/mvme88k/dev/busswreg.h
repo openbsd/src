@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.7 2005/12/11 21:31:36 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.8 2007/11/22 05:53:57 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -60,8 +60,8 @@
 #define	BS_TCTRL2	0x0063
 #define	BS_LEVEL	0x0064
 #define	BS_MASK		0x0065
-#define	BS_ISEL0	0x0066
-#define	BS_ISEL1	0x0067
+#define	BS_ISEL0	0x0066	/* do not access on 197LE!!! */
+#define	BS_ISEL1	0x0067	/* do not access on 197LE!!! */
 #define	BS_ABORT	0x0068
 #define	BS_CPINT	0x0069
 #define	BS_TINT1	0x006a

@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.2 2004/06/22 04:54:54 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.3 2007/11/22 05:53:56 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -32,15 +32,34 @@
 
 #include <machine/asm.h>
 
-/* set routines */
-	text
-	align 4096	/* sigh */
+/*
+ * 88110 errata #20 (4.2) or #4 (5.1.1):
+ * ``If a ldcr, stcr, fldcr, or fstcr instruction is located in the last
+ *   word of an instruction page, and the fetch of the next page results
+ *   in an mmu exception (invalid descriptor, tablewalk bus error,
+ *   software atc miss), the exip and enip value may be incorrectly
+ *   incremented to the second word of the page.
+ *   Suggested fix: do not allow thses instructions to occupy the last
+ *   word of a page if this can occur.''
+ *
+ * This is why the following function are not inlines in asm.h, and are
+ * aligned to 32 byte boundaries.
+ *
+ * Note that fldcr/fstcr are used in several places in userland (libc,
+ * libpthread, afs lwp) which will need alignment hints as well to
+ * avoid this. Sigh -- miod
+ */
 
+	text
+
+/* set routines */
+	align 32
 ENTRY(set_icmd)
 	FLUSH_PIPELINE
 	jmp.n	r1
 	 stcr	r2, ICMD
 
+	align 32
 ENTRY(set_ictl)
 	FLUSH_PIPELINE
 	stcr	r2, ICTL
@@ -48,47 +67,57 @@ ENTRY(set_ictl)
 	FLUSH_PIPELINE
 	jmp	r1
 
+	align 32
 ENTRY(set_isar)
 	jmp.n	r1
 	 stcr	r2, ISAR
 
+	align 32
 ENTRY(set_isap)
 	FLUSH_PIPELINE
 	NOP
 	stcr	r2, ISAP
 	jmp	r1
 
+	align 32
 ENTRY(set_iuap)
 	FLUSH_PIPELINE
 	NOP
  	stcr	r2, IUAP
 	jmp	r1
 
+	align 32
 ENTRY(set_iir)
 	jmp.n	r1
 	 stcr	r2, IIR 
 
+	align 32
 ENTRY(set_ibp)
 	jmp.n	r1
 	 stcr	r2, IBP 
 
+	align 32
 ENTRY(set_ippu)
 	jmp.n	r1
 	 stcr	r2, IPPU
 
+	align 32
 ENTRY(set_ippl)
 	jmp.n	r1
 	 stcr	r2, IPPL
 
+	align 32
 ENTRY(set_isr)
 	jmp.n	r1
 	 stcr	r2, ISR 
 
+	align 32
 ENTRY(set_dcmd)
 	FLUSH_PIPELINE
 	jmp.n	r1
 	 stcr	r2, DCMD
 
+	align 32
 ENTRY(set_dctl)
 	FLUSH_PIPELINE
 	stcr	r2, DCTL
@@ -96,11 +125,13 @@ ENTRY(set_dctl)
 	FLUSH_PIPELINE
 	jmp	r1
 
+	align 32
 ENTRY(set_dsar)
 	stcr	r2, DSAR
 	NOP
 	jmp	r1
 
+	align 32
 ENTRY(set_dsap)
 	FLUSH_PIPELINE
 	NOP
@@ -109,6 +140,7 @@ ENTRY(set_dsap)
 	NOP
 	jmp	r1
 
+	align 32
 ENTRY(set_duap)
 	FLUSH_PIPELINE
 	NOP
@@ -117,103 +149,128 @@ ENTRY(set_duap)
 	NOP
 	jmp	r1
 
+	align 32
 ENTRY(set_dir)
 	jmp.n	r1
 	 stcr	r2, DIR 
 
+	align 32
 ENTRY(set_dbp)
 	jmp.n	r1
 	 stcr	r2, DBP 
 
+	align 32
 ENTRY(set_dppu)
 	jmp.n	r1
 	 stcr	r2, DPPU
 
+	align 32
 ENTRY(set_dppl)
 	jmp.n	r1
 	 stcr	r2, DPPL
 
+	align 32
 ENTRY(set_dsr)
 	jmp.n	r1
 	 stcr	r2, DSR 
 
 /* get routines */
+	align 32
 ENTRY(get_icmd)
 	jmp.n	r1
 	 ldcr	r2, ICMD
 
+	align 32
 ENTRY(get_ictl)
 	jmp.n	r1
 	 ldcr	r2, ICTL
 
+	align 32
 ENTRY(get_isar)
 	jmp.n	r1
 	 ldcr	r2, ISAR
 
+	align 32
 ENTRY(get_isap)
 	jmp.n	r1
 	 ldcr	r2, ISAP
 
+	align 32
 ENTRY(get_iuap)
 	jmp.n	r1
  	 ldcr	r2, IUAP
 
+	align 32
 ENTRY(get_iir)
 	jmp.n	r1
 	 ldcr	r2, IIR 
 
+	align 32
 ENTRY(get_ibp)
 	jmp.n	r1
 	 ldcr	r2, IBP 
 
+	align 32
 ENTRY(get_ippu)
 	jmp.n	r1
 	 ldcr	r2, IPPU
 
+	align 32
 ENTRY(get_ippl)
 	jmp.n	r1
 	 ldcr	r2, IPPL
 
+	align 32
 ENTRY(get_isr)
 	jmp.n	r1
 	 ldcr	r2, ISR 
 
+	align 32
 ENTRY(get_dcmd)
 	jmp.n	r1
 	 ldcr	r2, DCMD
 
+	align 32
 ENTRY(get_dctl)
 	jmp.n	r1
 	 ldcr	r2, DCTL
 
+	align 32
 ENTRY(get_dsar)
 	jmp.n	r1
 	 ldcr	r2, DSAR
 
+	align 32
 ENTRY(get_dsap)
 	jmp.n	r1
 	 ldcr	r2, DSAP
 
+	align 32
 ENTRY(get_duap)
 	jmp.n	r1
 	 ldcr	r2, DUAP
 
+	align 32
 ENTRY(get_dir)
 	jmp.n	r1
 	 ldcr	r2, DIR 
 
+	align 32
 ENTRY(get_dbp)
 	jmp.n	r1
 	 ldcr	r2, DBP 
 
+	align 32
 ENTRY(get_dppu)
 	jmp.n	r1
 	 ldcr	r2, DPPU
 
+	align 32
 ENTRY(get_dppl)
 	jmp.n	r1
 	 ldcr	r2, DPPL
 
+	align 32
 ENTRY(get_dsr)
 	jmp.n	r1
 	 ldcr	r2, DSR 

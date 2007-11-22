@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2007/11/21 19:40:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2007/11/22 05:53:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -620,6 +620,35 @@ m88110_trap(u_int type, struct trapframe *frame)
 	fault_type = 0;
 	fault_code = 0;
 	fault_addr = frame->tf_exip & XIP_ADDR;
+
+#if 0
+	/*
+	 * 88110 errata #16 (4.2) or #3 (5.1.1):
+	 * ``bsr, br, bcnd, jsr and jmp instructions with the .n extension
+	 *   can cause the enip value to be incremented by 4 incorrectly
+	 *   if the instruction in the delay slot is the first word of a
+	 *   page which misses in the mmu and results in a hardware
+	 *   tablewalk which encounters an exception or an invalid
+	 *   descriptor.  The exip value in this case will point to the
+	 *   first word of the page, and the D bit will be set.
+	 *
+	 *   Note: if the instruction is a jsr.n r1, r1 will be overwritten
+	 *   with erroneous data.  Therefore, no recovery is possible. Do
+	 *   not allow this instruction to occupy the last word of a page.
+	 *
+	 *   Suggested fix: recover in general by backing up the exip by 4
+	 *   and clearing the delay bit before an rte when the lower 3 hex
+	 *   digits of the exip are 001.''
+	 *
+	 * (the font in the errata document I have does not make it clear
+	 *  whether the jsr.n problem applies to all registers or only
+	 *  r1 -- miod)
+	 */
+	if ((frame->tf_exip & 0x00000fff) == 0x00000001) {
+		panic("mc88110 errata #16, exip %p enip %p",
+		    frame->tf_exip, frame->tf_enip);
+	}
+#endif
 
 	switch (type) {
 	default:

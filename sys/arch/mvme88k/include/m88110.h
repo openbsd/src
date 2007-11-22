@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.18 2007/11/17 05:36:23 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.19 2007/11/22 05:53:57 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -172,6 +172,17 @@ u_int get_dsr(void);
 
 #define line_addr(x)	(paddr_t)((x) & ~CLINE_MASK)
 #define page_addr(x)	(paddr_t)((x) & ~PAGE_MASK)
+
+/*
+ * 88110 general information #22:
+ * ``Issuing a command to flush and invalidate the data cache while the
+ *   dcache is disabled (CEN = 0 in dctl) will cause problems.  Do not
+ *   flush a disabled data cache.  In general, there is no reason to
+ *   perform this operation with the cache disabled, since it may be
+ *   incoherent with the proper state of memory.  Before 5.0 the flush
+ *   command was treated like a nop when the cache was disabled.  This
+ *   is no longer the case.''
+ */
 
 static __inline__ void mc88110_flush_data_line(paddr_t x)
 {
