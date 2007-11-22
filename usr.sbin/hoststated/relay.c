@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.65 2007/11/22 10:09:53 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.66 2007/11/22 16:07:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -463,6 +463,7 @@ relay_init(void)
 				if (rlay->dstnhosts >= RELAY_MAXHOSTS)
 					fatal("relay_init: "
 					    "too many hosts in table");
+				host->idx = rlay->dstnhosts;
 				rlay->dsthost[rlay->dstnhosts++] = host;
 			}
 			log_info("adding %d hosts from table %s%s",
@@ -1903,7 +1904,7 @@ relay_from_table(struct session *con)
 	case RELAY_DSTMODE_ROUNDROBIN:
 		if ((int)rlay->dstkey >= rlay->dstnhosts)
 			rlay->dstkey = 0;
-		idx = (int)rlay->dstkey++;
+		idx = (int)rlay->dstkey;
 		break;
 	case RELAY_DSTMODE_LOADBALANCE:
 		p = relay_hash_addr(&con->in.ss, p);
@@ -1933,6 +1934,8 @@ relay_from_table(struct session *con)
 	fatalx("relay_from_table: no active hosts, desynchronized");
 
  found:
+	if (rlay->conf.dstmode == RELAY_DSTMODE_ROUNDROBIN)
+		rlay->dstkey = host->idx + 1;
 	con->retry = host->conf.retry;
 	con->out.port = table->conf.port;
 	bcopy(&host->conf.ss, &con->out.ss, sizeof(con->out.ss));

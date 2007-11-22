@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.81 2007/11/22 10:09:53 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.82 2007/11/22 16:07:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -327,6 +327,7 @@ struct host {
 	u_long			 up_cnt;
 	int			 retry_cnt;
 	struct ctl_tcp_event	 cte;
+	int			 idx;
 };
 TAILQ_HEAD(hostlist, host);
 
