@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.34 2007/11/21 19:30:09 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.35 2007/11/22 23:28:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -270,63 +270,6 @@
 	text
 	align 8
 
-#ifdef M88110
-#define SAVE_CTX \
-	stcr	r31, SRX			; \
-	or.u	r31, r0,  hi16(_ASM_LABEL(save_frame))	; \
-	or	r31, r31, lo16(_ASM_LABEL(save_frame))	; \
-	/* save old R31 and other R registers */; \
-	st.d	r0 , r31, GENREG_OFF(0)		; \
-	st.d	r2 , r31, GENREG_OFF(2)		; \
-	st.d	r4 , r31, GENREG_OFF(4)		; \
-	st.d	r6 , r31, GENREG_OFF(6)		; \
-	st.d	r8 , r31, GENREG_OFF(8)		; \
-	st.d	r10, r31, GENREG_OFF(10)	; \
-	st.d	r12, r31, GENREG_OFF(12)	; \
-	st.d	r14, r31, GENREG_OFF(14)	; \
-	st.d	r16, r31, GENREG_OFF(16)	; \
-	st.d	r18, r31, GENREG_OFF(18)	; \
-	st.d	r20, r31, GENREG_OFF(20)	; \
-	st.d	r22, r31, GENREG_OFF(22)	; \
-	st.d	r24, r31, GENREG_OFF(24)	; \
-	st.d	r26, r31, GENREG_OFF(26)	; \
-	st.d	r28, r31, GENREG_OFF(28)	; \
-	st	r30, r31, GENREG_OFF(30)	; \
-	ldcr	r1,  SRX			; \
-	st	r1,  r31, GENREG_OFF(31)	; \
-	ldcr	r1,  EPSR			; \
-	ldcr	r2,  EXIP			; \
-	ldcr	r3,  ENIP			; \
-	st	r1,  r31, REG_OFF(EF_EPSR)	; \
-	st	r2,  r31, REG_OFF(EF_EXIP)	; \
-	st	r3,  r31, REG_OFF(EF_ENIP)	; \
-	ldcr	r1,  DSR			; \
-	ldcr	r2,  DLAR			; \
-	ldcr	r3,  DPAR			; \
-	st	r1,  r31, REG_OFF(EF_DSR)	; \
-	st	r2,  r31, REG_OFF(EF_DLAR)	; \
-	st	r3,  r31, REG_OFF(EF_DPAR)	; \
-	ldcr	r1,  ISR			; \
-	ldcr	r2,  ILAR			; \
-	ldcr	r3,  IPAR			; \
-	st	r1,  r31, REG_OFF(EF_ISR)	; \
-	st	r2,  r31, REG_OFF(EF_ILAR)	; \
-	st	r3,  r31, REG_OFF(EF_IPAR)	; \
-	ldcr	r1, DSAP			; \
-	ldcr	r2, DUAP			; \
-	st	r1,  r31, REG_OFF(EF_DSAP)	; \
-	st	r2,  r31, REG_OFF(EF_DUAP)	; \
-	ldcr	r1, ISAP			; \
-	ldcr	r2, IUAP			; \
-	st	r1,  r31, REG_OFF(EF_ISAP)	; \
-	st	r2,  r31, REG_OFF(EF_IUAP)	; \
-	/* Restore r1, r2, r3, and r31 */	; \
-	ld	r1 , r31, GENREG_OFF(1)		; \
-	ld	r2 , r31, GENREG_OFF(2)		; \
-	ld	r3 , r31, GENREG_OFF(3)		; \
-	ld	r31, r31, GENREG_OFF(31)	;
-#endif
-
 /*
  *
  * #define PREP881x0(NAME, NUM, SSBR_STUFF, FLAG_CHECK)
@@ -385,7 +328,6 @@
 
 #ifdef M88110
 #define PREP88110(NAME, NUM, FLAG_PRECHECK) \
-	SAVE_CTX					  \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					  \
 	/* the bsr later clobbers r1, so save now */	; \
@@ -1800,11 +1742,9 @@ GLOBAL(m88110_reset_handler)
 
 	/* vector is put in SRO (either 0 or 10 at this point) */
 	st	r29, r31, REG_OFF(EF_VECTOR)
-	cmp	r29, r29, 0	/* is it the reset exception? */
-	bb1.n	ne,  r29, 1f	/* if not, skip */
 
 	/* save shadow registers (are OLD if error_handler, though) */
-	 ldcr	r10, EPSR
+	ldcr	r10, EPSR
 	st	r10, r31, REG_OFF(EF_EPSR)
 	ldcr	r10, EXIP
 	st	r10, r31, REG_OFF(EF_EXIP)
@@ -1823,42 +1763,8 @@ GLOBAL(m88110_reset_handler)
 	ldcr	r10, IPAR
 	st	r10, r31, REG_OFF(EF_IPAR)
 	ldcr	r10, SR1
-	br.n	2f
-	 st	r10, r31, REG_OFF(EF_FLAGS)
-
-1:
-	/* retrieve saved shadow registers for error_handler */
-	or.u	r30, r0,  hi16(_ASM_LABEL(save_frame))
-	or	r30, r30, lo16(_ASM_LABEL(save_frame))
-	ld	r10, r30, REG_OFF(EF_EPSR)
-	st	r10, r31, REG_OFF(EF_EPSR)
-	ld	r10, r30, REG_OFF(EF_EXIP)
-	st	r10, r31, REG_OFF(EF_EXIP)
-	ld	r10, r30, REG_OFF(EF_ENIP)
-	st	r10, r31, REG_OFF(EF_ENIP)
-	ld	r10, r30, REG_OFF(EF_DSR)
-	st	r10, r31, REG_OFF(EF_DSR)
-	ld	r10, r30, REG_OFF(EF_DLAR)
-	st	r10, r31, REG_OFF(EF_DLAR)
-	ld	r10, r30, REG_OFF(EF_DPAR)
-	st	r10, r31, REG_OFF(EF_DPAR)
-	ld	r10, r30, REG_OFF(EF_ISR)
-	st	r10, r31, REG_OFF(EF_ISR)
-	ld	r10, r30, REG_OFF(EF_ILAR)
-	st	r10, r31, REG_OFF(EF_ILAR)
-	ld	r10, r30, REG_OFF(EF_IPAR)
-	st	r10, r31, REG_OFF(EF_IPAR)
-	ld	r10, r30, REG_OFF(EF_ISAP)
-	st	r10, r31, REG_OFF(EF_ISAP)
-	ld	r10, r30, REG_OFF(EF_DSAP)
-	st	r10, r31, REG_OFF(EF_DSAP)
-	ld	r10, r30, REG_OFF(EF_IUAP)
-	st	r10, r31, REG_OFF(EF_IUAP)
-	ld	r10, r30, REG_OFF(EF_DUAP)
-	st	r10, r31, REG_OFF(EF_DUAP)
-	ldcr	r10, SR1
 	st	r10, r31, REG_OFF(EF_FLAGS)
-2:
+
 	/* shove sr2 into EF_FPLS1 */
 	ldcr	r10, SR2
 	st	r10, r31, REG_OFF(EF_FPLS1)
@@ -2310,11 +2216,6 @@ ASLOCAL(m88110_fpu_enable)
 
 8:
 	jmp	r14		/* loaded above */
-
-	data
-	.align 8		/* needs align 8 for ld.d/st.d */
-ASLOCAL(save_frame)
-	space SIZEOF_EF
 #endif	/* M88110 */
 
 	text
