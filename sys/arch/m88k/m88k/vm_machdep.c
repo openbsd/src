@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2007/10/16 04:57:39 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2007/11/22 05:46:38 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -199,22 +199,7 @@ vmapbuf(bp, len)
 	len = round_page(off + len);
 	pmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 
-	/*
-	 * You may ask: Why phys_map? kernel_map should be OK - after all,
-	 * we are mapping user va to kernel va or remapping some
-	 * kernel va to another kernel va. The answer is TLB flushing
-	 * when the address gets a new mapping.
-	 */
-
 	ova = kva = uvm_km_valloc_wait(phys_map, len);
-
-	/*
-	 * Flush the TLB for the range [kva, kva + off]. Strictly speaking,
-	 * we should do this in vunmapbuf(), but we do it lazily here, when
-	 * new pages get mapped in.
-	 */
-
-	cmmu_flush_tlb(cpu_number(), 1, kva, btoc(len));
 
 	bp->b_data = (caddr_t)(kva + off);
 	for (pg = atop(len); pg != 0; pg--) {
