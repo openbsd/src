@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.19 2007/11/22 05:53:57 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.20 2007/11/22 23:31:55 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -256,6 +256,16 @@ static __inline__ void mc88110_inval_inst_line(paddr_t x)
 static __inline__ void mc88110_inval_inst(void)
 {
 	set_icmd(CMMU_ICMD_INV_ITIC);
+}
+
+/* skip one instruction */
+static __inline__ void
+m88110_skip_insn(struct trapframe *frame)
+{
+	if (frame->tf_exip & 1)
+		frame->tf_exip = frame->tf_enip;
+	else
+		frame->tf_exip += 4;
 }
 
 #endif	/* _LOCORE */

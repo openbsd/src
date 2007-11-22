@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2007/11/22 23:30:48 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2007/11/22 23:31:51 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -729,11 +729,8 @@ m88110_trap(u_int type, struct trapframe *frame)
 		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
 		set_psr(psr);
-		/* skip one instruction */
-		if (frame->tf_exip & 1)
-			frame->tf_exip = frame->tf_enip;
-		else
-			frame->tf_exip += 4;
+		/* skip trap instruction */
+		m88110_skip_insn(frame);
 		splx(s);
 		return;
 #if 0
@@ -1004,6 +1001,10 @@ m88110_user_fault:
 		/* Fix any misaligned ld.d or st.d instructions */
 		sig = double_reg_fixup(frame);
 		fault_type = BUS_ADRALN;
+		if (sig == 0) {
+			/* skip recovered instruction */
+			m88110_skip_insn(frame);
+		}
 		break;
 	case T_PRIVINFLT+T_USER:
 	case T_ILLFLT+T_USER:
@@ -1019,17 +1020,25 @@ m88110_user_fault:
 		break;
 	case T_BNDFLT+T_USER:
 		sig = SIGFPE;
+		/* skip trap instruction */
+		m88110_skip_insn(frame);
 		break;
 	case T_ZERODIV+T_USER:
 		sig = SIGFPE;
 		fault_type = FPE_INTDIV;
+		/* skip trap instruction */
+		m88110_skip_insn(frame);
 		break;
 	case T_OVFFLT+T_USER:
 		sig = SIGFPE;
 		fault_type = FPE_INTOVF;
+		/* skip trap instruction */
+		m88110_skip_insn(frame);
 		break;
 	case T_FPEPFLT+T_USER:
 		sig = SIGFPE;
+		/* skip trap instruction */
+		m88110_skip_insn(frame);
 		break;
 	case T_SIGSYS+T_USER:
 		sig = SIGSYS;
@@ -1385,10 +1394,8 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		tf->tf_r[3] = rval[1];
 		tf->tf_epsr &= ~PSR_C;
 		/* skip two instructions */
-		if (tf->tf_exip & 1)
-			tf->tf_exip = tf->tf_enip + 4;
-		else
-			tf->tf_exip += 4 + 4;
+		m88110_skip_insn(tf);
+		m88110_skip_insn(tf);
 		break;
 	case ERESTART:
 		/*
@@ -1401,10 +1408,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	case EJUSTRETURN:
 		tf->tf_epsr &= ~PSR_C;
 		/* skip one instruction */
-		if (tf->tf_exip & 1)
-			tf->tf_exip = tf->tf_enip;
-		else
-			tf->tf_exip += 4;
+		m88110_skip_insn(tf);
 		break;
 	default:
 bad:
@@ -1413,10 +1417,7 @@ bad:
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
 		/* skip one instruction */
-		if (tf->tf_exip & 1)
-			tf->tf_exip = tf->tf_enip;
-		else
-			tf->tf_exip += 4;
+		m88110_skip_insn(tf);
 		break;
 	}
 
@@ -1461,10 +1462,8 @@ child_return(arg)
 #ifdef M88110
 	if (CPU_IS88110) {
 		/* skip two instructions */
-		if (tf->tf_exip & 1)
-			tf->tf_exip = tf->tf_enip + 4;
-		else
-			tf->tf_exip += 4 + 4;
+		m88110_skip_insn(tf);
+		m88110_skip_insn(tf);
 	}
 #endif
 
@@ -1787,16 +1786,6 @@ double_reg_fixup(struct trapframe *frame)
 			frame->tf_r[regno + 1] = value;
 	}
 
-#ifdef M88110
-	if (CPU_IS88110) {
-		/* skip the offending instruction */
-		if (frame->tf_exip & 1)
-			frame->tf_exip = frame->tf_enip;
-		else
-			frame->tf_exip += 4;
-	}
-#endif
-
 	return 0;
 }
 
@@ -1835,10 +1824,7 @@ cache_flush(struct trapframe *tf)
 		tf->tf_sfip = tf->tf_sfip & ~FIP_E;
 	} else {
 		/* skip instruction */
-		if (tf->tf_exip & 1)
-			tf->tf_exip = tf->tf_enip;
-		else
-			tf->tf_exip += 4;
+		m88110_skip_insn(tf);
 	}
 
 	userret(p);
