@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.64 2007/05/28 17:26:33 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.65 2007/11/22 11:37:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,6 +316,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 			    inet_ntoa(ina));
 		}
 	}
+	if (p->demote_group[0])
+		printf("%s\tdemote %s\n", c, p->demote_group);
 	if (p->if_depend[0])
 		printf("%s\tdepend on \"%s\"\n", c, p->if_depend);
 
