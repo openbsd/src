@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.16 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.17 2007/11/22 23:33:42 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/m88410.h>
 #include <machine/mvme197.h>
 
 #include <mvme88k/dev/busswreg.h>
@@ -282,9 +283,14 @@ void
 m197_bootstrap()
 {
 	extern struct cmmu_p cmmu88110;
+	extern struct cmmu_p cmmu88410;
 	extern void set_tcfp(void);
 
-	cmmu = &cmmu88110;
+	if (mc88410_present())
+		cmmu = &cmmu88410;	/* 197SP/197DP */
+	else
+		cmmu = &cmmu88110;	/* 197LE */
+
 	md_interrupt_func_ptr = m197_ext_int;
 	md_getipl = m197_getipl;
 	md_setipl = m197_setipl;
