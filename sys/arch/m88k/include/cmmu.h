@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.17 2007/02/11 12:49:35 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.18 2007/11/22 05:42:48 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -32,25 +32,6 @@
  * Prototypes and stuff for cmmu.c.
  */
 #if defined(_KERNEL) && !defined(_LOCORE)
-
-#ifdef MULTIPROCESSOR
-/*
- * This lock protects the cmmu SAR and SCR's; other ports
- * can be accessed without locking it.
- *
- * May be used from "db_interface.c".
- */
-extern __cpu_simple_lock_t cmmu_cpu_lock;
-
-#define CMMU_LOCK   __cpu_simple_lock(&cmmu_cpu_lock)
-#define CMMU_UNLOCK __cpu_simple_unlock(&cmmu_cpu_lock)
-
-#else
-
-#define	CMMU_LOCK	do { /* nothing */ } while (0)
-#define	CMMU_UNLOCK	do { /* nothing */ } while (0)
-
-#endif	/* MULTIPROCESSOR */
 
 /* machine dependent cmmu function pointer structure */
 struct cmmu_p {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.30 2007/11/14 23:12:46 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.31 2007/11/22 05:42:50 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -125,6 +125,19 @@ struct cmmu_p cmmu8820x = {
 	m8820x_initialize_cpu,
 #endif
 };
+
+#ifdef MULTIPROCESSOR
+/*
+ * This lock protects the cmmu SAR and SCR's; other ports
+ * can be accessed without locking it.
+ */
+__cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
+#define CMMU_LOCK   __cpu_simple_lock(&cmmu_cpu_lock)
+#define CMMU_UNLOCK __cpu_simple_unlock(&cmmu_cpu_lock)
+#else
+#define	CMMU_LOCK	do { /* nothing */ } while (0)
+#define	CMMU_UNLOCK	do { /* nothing */ } while (0)
+#endif	/* MULTIPROCESSOR */
 
 /*
  * Systems with more than 2 CMMUs per CPU use programmable split schemes.

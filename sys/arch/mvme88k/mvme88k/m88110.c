@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.40 2007/11/21 19:42:36 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.41 2007/11/22 05:42:52 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -245,8 +245,6 @@ m88110_set_sapr(cpuid_t cpu, apr_t ap)
 {
 	u_int ictl, dctl;
 
-	CMMU_LOCK;
-
 	set_icmd(CMMU_ICMD_INV_SATC);
 	set_dcmd(CMMU_DCMD_INV_SATC);
 
@@ -270,14 +268,11 @@ m88110_set_sapr(cpuid_t cpu, apr_t ap)
 	/* restore MMU settings */
 	set_ictl(ictl);
 	set_dctl(dctl);
-
-	CMMU_UNLOCK;
 }
 
 void
 m88110_set_uapr(apr_t ap)
 {
-	CMMU_LOCK;
 	set_iuap(ap);
 	set_duap(ap);
 
@@ -286,7 +281,6 @@ m88110_set_uapr(apr_t ap)
 
 	/* We need to at least invalidate the TIC, as it is va-addressed */
 	mc88110_inval_inst();
-	CMMU_UNLOCK;
 }
 
 /*
@@ -301,9 +295,9 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
-	CMMU_LOCK;
 	if (kernel) {
 		set_icmd(CMMU_ICMD_INV_SATC);
 		set_dcmd(CMMU_DCMD_INV_SATC);
@@ -311,7 +305,6 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 		set_icmd(CMMU_ICMD_INV_UATC);
 		set_dcmd(CMMU_DCMD_INV_UATC);
 	}
-	CMMU_UNLOCK;
 
 	set_psr(psr);
 }
@@ -350,7 +343,8 @@ m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
@@ -367,7 +361,8 @@ m88110_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	set_psr(psr);
@@ -397,7 +392,8 @@ m88110_cmmu_sync_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
@@ -411,7 +407,8 @@ m88110_cmmu_sync_inval_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	mc88110_sync_data();
 	if (mc88410_present())
@@ -424,7 +421,8 @@ m88110_cmmu_inval_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	mc88110_inval_data();
