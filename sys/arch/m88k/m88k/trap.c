@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2007/11/22 06:11:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2007/11/22 23:30:48 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -613,15 +613,10 @@ m88110_trap(u_int type, struct trapframe *frame)
 	if ((p = curproc) == NULL)
 		p = &proc0;
 
-	if (USERMODE(frame->tf_epsr)) {
-		type += T_USER;
-		p->p_md.md_tf = frame;	/* for ptrace/signals */
-	}
 	fault_type = 0;
 	fault_code = 0;
 	fault_addr = frame->tf_exip & XIP_ADDR;
 
-#if 0
 	/*
 	 * 88110 errata #16 (4.2) or #3 (5.1.1):
 	 * ``bsr, br, bcnd, jsr and jmp instructions with the .n extension
@@ -644,11 +639,44 @@ m88110_trap(u_int type, struct trapframe *frame)
 	 *  whether the jsr.n problem applies to all registers or only
 	 *  r1 -- miod)
 	 */
-	if ((frame->tf_exip & 0x00000fff) == 0x00000001) {
-		panic("mc88110 errata #16, exip %p enip %p",
-		    frame->tf_exip, frame->tf_enip);
+	if ((frame->tf_exip & 0x00000fff) == 0x00000001 &&
+	    (type == T_DATAFLT || type == T_INSTFLT)) {
+		u_int instr;
+
+		/*
+		 * Note that we have initialized fault_addr above, so that
+		 * signals provide the correct address if necessary.
+		 */
+		frame->tf_exip = (frame->tf_exip & ~1) - 4;
+
+		/*
+		 * Check the instruction at the (backed up) exip.
+		 * If it is a jsr.n, abort.
+		 */
+		if (USERMODE(frame->tf_epsr)) {
+			instr = *(u_int *)frame->tf_exip;
+			if ((instr & 0xffffffe0) == 0xf400cc00)
+				panic("mc88110 errata #16, exip %p enip %p",
+				    (frame->tf_exip + 4) | 1, frame->tf_enip);
+		} else {
+			/* copyin here should not fail */
+			if (copyin((const void *)frame->tf_exip, &instr,
+			    sizeof instr) == 0 &&
+			    (instr & 0xffffffe0) == 0xf400cc00) {
+				uprintf("mc88110 errata #16, exip %p enip %p",
+				    (frame->tf_exip + 4) | 1, frame->tf_enip);
+				sig = SIGILL;
+			}
+		}
 	}
-#endif
+
+	if (USERMODE(frame->tf_epsr)) {
+		type += T_USER;
+		p->p_md.md_tf = frame;	/* for ptrace/signals */
+	}
+
+	if (sig != 0)
+		goto deliver;
 
 	switch (type) {
 	default:
@@ -1071,6 +1099,7 @@ m88110_user_fault:
 		return;
 
 	if (sig) {
+deliver:
 		sv.sival_int = fault_addr;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, fault_code, fault_type, sv);
