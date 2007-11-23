@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.47 2006/10/12 16:35:51 grange Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.48 2007/11/23 19:46:16 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -346,6 +346,10 @@ pccbb_shutdown(void *arg)
 	pcireg_t command;
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
+
+	/* Nothing for us to do if we didn't map any registers. */
+	if ((sc->sc_flags & CBB_MEMHMAPPED) == 0)
+		return;
 
 	/* turn off power */
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
