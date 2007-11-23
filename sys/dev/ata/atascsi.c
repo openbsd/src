@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.46 2007/11/23 16:01:47 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.47 2007/11/23 18:21:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,7 @@ struct scsi_device atascsi_device = {
 };
 
 int		atascsi_probe(struct atascsi *, int);
+void		atascsi_unprobe(struct atascsi *, int);
 
 struct ata_xfer *ata_setup_identify(struct ata_port *, int);
 void		ata_free_identify(struct ata_xfer *);
@@ -144,8 +145,20 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 }
 
 int
-atascsi_detach(struct atascsi *as)
+atascsi_detach(struct atascsi *as, int flags)
 {
+	int				rv;
+	int				i;
+
+	rv = config_detach((struct device *)as->as_scsibus, flags);
+	if (rv != 0)
+		return (rv);
+
+	for (i = 0; i < as->as_link.adapter_buswidth; i++)
+		atascsi_unprobe(as, i);
+
+	free(as, M_DEVBUF);
+
 	return (0);
 }
 
@@ -199,6 +212,22 @@ atascsi_probe(struct atascsi *as, int port)
 	ata_exec(as, xa);
 
 	return (0);
+}
+
+void
+atascsi_unprobe(struct atascsi *as, int port)
+{
+	struct ata_port		*ap;
+
+	if (port > as->as_link.adapter_buswidth)
+		return;
+
+	ap = as->as_ports[port];
+	if (ap == NULL)
+		return;
+
+	free(ap, M_DEVBUF);
+	as->as_ports[port] = NULL;
 }
 
 struct ata_xfer *

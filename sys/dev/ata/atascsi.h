@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.25 2007/04/12 13:08:34 jsg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.26 2007/11/23 18:21:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -308,7 +308,7 @@ struct atascsi_attach_args {
 };
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
-int		atascsi_detach(struct atascsi *);
+int		atascsi_detach(struct atascsi *, int);
 
 int		atascsi_probe_dev(struct atascsi *, int);
 int		atascsi_detach_dev(struct atascsi *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.35 2007/10/09 05:43:37 ray Exp $ */
+/*	$OpenBSD: sili.c,v 1.36 2007/11/23 18:21:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -205,6 +205,17 @@ sili_attach(struct sili_softc *sc)
 int
 sili_detach(struct sili_softc *sc, int flags)
 {
+	int				rv;
+
+	if (sc->sc_atascsi != NULL) {
+		rv = atascsi_detach(sc->sc_atascsi, flags);
+		if (rv != 0)
+			return (rv);
+	}
+
+	if (sc->sc_ports != NULL)
+		sili_ports_free(sc);
+
 	return (0);
 }
 
