@@ -47,7 +47,7 @@
 #ifdef USB_DEBUG
 static int	uticomdebug = 0;
 
-#define DPRINTFN(n, x)	do { if (uticomdebug > (n)) kprintf x; } while (0)
+#define DPRINTFN(n, x)	do { if (uticomdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)
 #endif
