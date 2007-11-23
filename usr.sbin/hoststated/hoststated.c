@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.56 2007/11/21 20:13:20 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.57 2007/11/23 09:22:18 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -80,7 +80,7 @@ main_sig_handler(int sig, short event, void *arg)
 		die = 1;
 		/* FALLTHROUGH */
 	case SIGCHLD:
-		if (check_child(pfe_pid, "pf udpate engine")) {
+		if (check_child(pfe_pid, "pf update engine")) {
 			pfe_pid = 0;
 			die  = 1;
 		}
