@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.414 2007/11/15 21:15:34 damien Exp $
+#	$OpenBSD: files,v 1.415 2007/11/23 10:25:15 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -447,7 +447,7 @@ pseudo-device rd: disk
 file	dev/ramdisk.c			rd needs-flag
 
 pseudo-device pty: tty
-
+pseudo-device nmea: tty
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
@@ -680,6 +680,7 @@ file kern/sysv_shm.c			sysvshm
 file kern/tty.c
 file kern/tty_conf.c
 file kern/tty_pty.c			pty			needs-count
+file kern/tty_nmea.c			nmea			needs-flag
 file kern/tty_subr.c
 file kern/tty_tty.c
 file kern/uipc_domain.c
@@ -961,7 +962,3 @@ file net/pfkey.c			key | ipsec | tcp_signature
 file net/pfkeyv2.c			key | ipsec | tcp_signature
 file net/pfkeyv2_parsemessage.c		key | ipsec | tcp_signature
 file net/pfkeyv2_convert.c		key | ipsec | tcp_signature
-
-# NMEA0183 support
-pseudo-device nmea: tty
-file	kern/tty_nmea.c			nmea needs-flag
