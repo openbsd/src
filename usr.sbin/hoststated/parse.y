@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2007/11/22 10:09:53 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2007/11/23 09:39:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -121,7 +121,7 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL INCLUDE
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE STYLE RETURN
-%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT
+%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT WITH
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED URL
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
@@ -130,7 +130,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname
-%type	<v.number>	port http_type loglevel sslcache optssl dstport
+%type	<v.number>	port http_type loglevel sslcache optssl dstport mark
 %type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -897,7 +897,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 				fatal("out of memory");
 			free($3);
 		}
-		| nodetype EXPECT STRING FROM STRING mark	{
+		| nodetype EXPECT STRING FROM STRING marked	{
 			node.action = NODE_ACTION_EXPECT;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -907,7 +907,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype EXPECT STRING mark {
+		| nodetype EXPECT STRING marked			{
 			node.action = NODE_ACTION_EXPECT;
 			node.key = strdup($3);
 			node.value = strdup("*");
@@ -916,7 +916,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype EXPECT digest mark {
+		| nodetype EXPECT digest marked			{
 			if (node.type != NODE_TYPE_URL) {
 				yyerror("digest not supported for this type");
 				free($3.digest);
@@ -931,7 +931,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3.digest);
 			proto->lateconnect++;
 		}
-		| nodetype FILTER STRING FROM STRING mark	{
+		| nodetype FILTER STRING FROM STRING marked	{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -941,7 +941,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype FILTER STRING mark {
+		| nodetype FILTER STRING marked			{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($3);
 			node.value = strdup("*");
@@ -950,7 +950,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype FILTER digest mark {
+		| nodetype FILTER digest marked			{
 			if (node.type != NODE_TYPE_URL) {
 				yyerror("digest not supported for this type");
 				free($3.digest);
@@ -983,14 +983,38 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 				fatal("out of memory");
 			free($3);
 		}
-		;
-
-mark		: /* empty */
-		| MARK				{ node.flags |= PNFLAG_MARK; }
+		| nodetype MARK STRING FROM STRING WITH mark	{
+			node.action = NODE_ACTION_MARK;
+			node.key = strdup($5);
+			node.value = strdup($3);
+			node.mark = $7;
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($3);
+			free($5);
+		}
+		| nodetype MARK STRING WITH mark		{
+			node.action = NODE_ACTION_MARK;
+			node.key = strdup($3);
+			node.value = strdup("*");
+			node.mark = $5;
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($3);
+		}
 		;
 
 marked		: /* empty */
-		| MARKED			{ node.flags |= PNFLAG_MARK; }
+		| MARKED mark			{ node.mark = $2; }
+		;
+
+mark		: NUMBER					{
+			if ($1 <= 0 || $1 >= (int)USHRT_MAX) {
+				yyerror("invalid mark: %d", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
 		;
 
 nodetype	: HEADER			{
@@ -1392,7 +1416,8 @@ lookup(char *s)
 		{ "to",			TO },
 		{ "updates",		UPDATES },
 		{ "url",		URL },
-		{ "virtual",		VIRTUAL }
+		{ "virtual",		VIRTUAL },
+		{ "with",		WITH }
 	};
 	const struct keywords	*p;
 

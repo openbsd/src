@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.83 2007/11/22 16:38:25 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.84 2007/11/23 09:39:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -241,7 +241,6 @@ struct ctl_relay_event {
 	char			*args;
 	char			*version;
 
-	int			 marked;
 	int			 line;
 	size_t			 toread;
 	int			 chunked;
@@ -415,6 +414,7 @@ struct session {
 	struct timeval			 tv_last;
 	int				 done;
 	int				 retry;
+	u_int16_t			 mark;
 	struct evbuffer			*log;
 	void				*relay;
 	struct ctl_natlook		*cnl;
@@ -431,7 +431,8 @@ enum nodeaction {
 	NODE_ACTION_EXPECT	= 4,
 	NODE_ACTION_FILTER	= 5,
 	NODE_ACTION_HASH	= 6,
-	NODE_ACTION_LOG		= 7
+	NODE_ACTION_LOG		= 7,
+	NODE_ACTION_MARK	= 8
 };
 
 enum nodetype {
@@ -464,6 +465,7 @@ struct protonode {
 	char				*value;
 	u_int8_t			 flags;
 	enum nodetype			 type;
+	u_int16_t			 mark;
 
 	SIMPLEQ_HEAD(, protonode)	 head;
 	SIMPLEQ_ENTRY(protonode)	 entry;

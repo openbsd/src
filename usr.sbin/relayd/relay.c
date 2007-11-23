@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.66 2007/11/22 16:07:03 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.67 2007/11/23 09:39:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -340,6 +340,13 @@ relay_nodedebug(const char *name, struct protonode *pn)
 		break;
 	case NODE_ACTION_LOG:
 		fprintf(stderr, "log \"%s\"", pn->key);
+		break;
+	case NODE_ACTION_MARK:
+		if (strcmp(pn->value, "*") == 0)
+			fprintf(stderr, "mark \"%s\"", pn->key);
+		else
+			fprintf(stderr, "mark \"%s\" from \"%s\"",
+			    pn->value, pn->key);
 		break;
 	case NODE_ACTION_NONE:
 		break;
@@ -872,6 +879,9 @@ relay_resolve(struct ctl_relay_event *cre,
 	char			 buf[READ_BUF_SIZE], *ptr;
 	int			 id;
 
+	if (pn->mark && (pn->mark != con->mark))
+		return (0);
+
 	switch (pn->action) {
 	case NODE_ACTION_FILTER:
 		id = cre->nodes[proot->id];
@@ -898,9 +908,6 @@ relay_resolve(struct ctl_relay_event *cre,
 	case NODE_ACTION_APPEND:
 	case NODE_ACTION_CHANGE:
 		ptr = pn->value;
-		if ((pn->flags & PNFLAG_MARK) &&
-		    cre->marked == 0)
-			break;
 		if ((pn->flags & PNFLAG_MACRO) &&
 		    (ptr = relay_expand_http(cre, pn->value,
 		    buf, sizeof(buf))) == NULL)
@@ -916,15 +923,11 @@ relay_resolve(struct ctl_relay_event *cre,
 		    pn->key, ptr);
 		break;
 	case NODE_ACTION_EXPECT:
-		if (pn->flags & PNFLAG_MARK)
-			break;
 		DPRINTF("relay_resolve: missing '%s: %s'",
 		    pn->key, pn->value);
 		relay_close_http(con, 403, "incomplete request");
 		return (-1);
 	case NODE_ACTION_FILTER:
-		if (pn->flags & PNFLAG_MARK)
-			break;
 		DPRINTF("relay_resolve: filtered '%s: %s'",
 		    pn->key, pn->value);
 		relay_close_http(con, 403, "rejecting request");
@@ -991,11 +994,27 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 {
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
-	int			 ret = PN_DROP;
+	int			 ret = PN_DROP, mark = 0;
+	struct protonode	*next;
+
+	/* Check if this action depends on a marked session */
+	if (pn->mark != 0)
+		mark = pn->mark == con->mark ? 1 : -1;
+
+	switch (pn->action) {
+	case NODE_ACTION_EXPECT:
+	case NODE_ACTION_FILTER:
+	case NODE_ACTION_MARK:
+		break;
+	default:
+		if (mark == -1)
+			return (PN_PASS);
+		break;
+	}
 
 	switch (pn->action) {
 	case NODE_ACTION_APPEND:
-		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
+		if (!header)
 			return (PN_PASS);
 		ptr = pn->value;
 		if ((pn->flags & PNFLAG_MACRO) &&
@@ -1015,7 +1034,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		break;
 	case NODE_ACTION_CHANGE:
 	case NODE_ACTION_REMOVE:
-		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
+		if (!header)
 			return (PN_PASS);
 		DPRINTF("relay_handle_http: change/remove '%s: %s'",
 		    pk->key, pk->value);
@@ -1038,9 +1057,8 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		/* Do not drop the entity */
 		ret = PN_PASS;
 
-		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
-			if (pn->flags & PNFLAG_MARK)
-				cre->marked++;
+		if (mark != -1 &&
+		    fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
 			cre->nodes[proot->id] = 1;
 
 			/* Fail instantly */
@@ -1049,28 +1067,32 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 				return (PN_FAIL);
 			}
 		}
-		if (SIMPLEQ_NEXT(pn, entry) == NULL)
+		next = SIMPLEQ_NEXT(pn, entry);
+		if (next == NULL || next->action != pn->action)
 			cre->nodes[proot->id]++;
 		break;
 	case NODE_ACTION_HASH:
-		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (PN_PASS);
 		DPRINTF("relay_handle_http: hash '%s: %s'",
 		    pn->key, pk->value);
 		con->outkey = hash32_str(pk->value, con->outkey);
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_LOG:
-		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (PN_PASS);
 		DPRINTF("relay_handle_http: log '%s: %s'",
 		    pn->key, pk->value);
+		ret = PN_PASS;
+		break;
+	case NODE_ACTION_MARK:
+		DPRINTF("relay_handle_http: mark '%s: %s'",
+		    pn->key, pk->value);
+		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0)
+			con->mark = pn->mark;
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_NONE:
 		return (PN_PASS);
 	}
-	if (pn->flags & PNFLAG_LOG) {
+	if (mark != -1 && pn->flags & PNFLAG_LOG) {
 		bzero(buf, sizeof(buf));
 		if (snprintf(buf, sizeof(buf), " [%s: %s]",
 		    pk->key, pk->value) == -1 ||
@@ -1474,7 +1496,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			goto fail;
 		cre->line = 0;
 		cre->method = 0;
-		cre->marked = 0;
 		cre->done = 0;
 		cre->chunked = 0;
 
@@ -2069,9 +2090,9 @@ relay_close(struct session *con, const char *msg)
 		if (EVBUFFER_LENGTH(con->log) &&
 		    evbuffer_add_printf(con->log, "\r\n") != -1)
 			ptr = evbuffer_readline(con->log);
-		log_info("relay %s, session %d (%d active), %s -> %s:%d, "
+		log_info("relay %s, session %d (%d active), %d, %s -> %s:%d, "
 		    "%s%s%s", rlay->conf.name, con->id, relay_sessions,
-		    ibuf, obuf, ntohs(con->out.port), msg,
+		    con->mark, ibuf, obuf, ntohs(con->out.port), msg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
 		if (ptr != NULL)
 			free(ptr);
