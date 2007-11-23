@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.37 2007/11/23 15:43:02 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.38 2007/11/23 19:21:40 deraadt Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -453,7 +453,9 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+#endif
 	timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
