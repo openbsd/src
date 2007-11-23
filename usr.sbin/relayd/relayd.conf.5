@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.64 2007/11/23 09:39:42 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.65 2007/11/23 09:45:33 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,7 +54,7 @@ Protocols are predefined protocol handlers and settings for relays.
 Within the sections,
 a host
 .Ar address
-can be either specified by IPv4 address, IPv6 address, or DNS host name.
+can be either specified by IPv4 address, IPv6 address, or DNS hostname.
 A
 .Ar port
 can be either specified by number or by name.
@@ -246,7 +246,7 @@ keyword is present,
 the transaction will occur in an SSL tunnel.
 .It Ic check script Ar path
 Execute an external program to check the host state.
-The program will be executed for each host by specifing the host name
+The program will be executed for each host by specifing the hostname
 on the command line:
 .Bd -literal -offset indent
 /usr/local/bin/checkload.pl front-www1.private.example.com
@@ -573,8 +573,8 @@ for example:
 request query expect "bar" from "foo"
 .Ed
 .It Ic url
-Look up the entity as an URL suffix/prefix expression consisting of a
-host name or suffix and a path name or prefix when using the
+Look up the entity as a URL suffix/prefix expression consisting of a
+hostname or suffix and a path name or prefix when using the
 .Ic http
 protocol.
 This type is only available with the direction
