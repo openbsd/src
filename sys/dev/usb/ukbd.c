@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.36 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.37 2007/11/23 15:43:02 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -453,8 +453,8 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-	timeout_set(&sc->sc_rawrepeat_ch, NULL, NULL);
-	timeout_set(&sc->sc_delay, NULL, NULL);
+	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+	timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -583,8 +583,6 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * We avoid this bug by holding off decoding for 20 ms.
 		 */
 		sc->sc_data = *ud;
-		timeout_del(&sc->sc_delay);
-		timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 		timeout_add(&sc->sc_delay, hz / 50);
 #ifdef DDB
 	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
@@ -595,8 +593,6 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * loses bigtime.
 		 */
 		sc->sc_data = *ud;
-		timeout_del(&sc->sc_delay);
-		timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 		timeout_add(&sc->sc_delay, 1);
 #endif
 	} else {
@@ -733,8 +729,6 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		timeout_del(&sc->sc_rawrepeat_ch);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			timeout_del(&sc->sc_rawrepeat_ch);
-			timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
 			timeout_add(&sc->sc_rawrepeat_ch,
 			    hz * REP_DELAY1 / 1000);
 		}
@@ -788,8 +782,6 @@ ukbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout_del(&sc->sc_rawrepeat_ch);
-	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
 	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
 }
 #endif

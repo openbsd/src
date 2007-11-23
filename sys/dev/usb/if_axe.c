@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.80 2007/10/27 22:12:41 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.81 2007/11/23 15:43:02 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -723,7 +723,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->axe_stat_ch, NULL, NULL);
+	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
 
 	sc->axe_attached = 1;
 	splx(s);
@@ -1120,8 +1120,6 @@ axe_tick_task(void *xsc)
 			   axe_start(ifp);
 	}
 
-	timeout_del(&sc->axe_stat_ch);
-	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
 	timeout_add(&sc->axe_stat_ch, hz);
 
 	splx(s);
@@ -1321,8 +1319,6 @@ axe_init(void *xsc)
 
 	splx(s);
 
-	timeout_del(&sc->axe_stat_ch);
-	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
 	timeout_add(&sc->axe_stat_ch, hz);
 	return;
 }

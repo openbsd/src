@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.68 2007/11/10 22:58:24 deraadt Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.69 2007/11/23 15:43:02 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -830,7 +830,7 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->aue_stat_ch, NULL, NULL);
+	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
 
 	sc->aue_attached = 1;
 	sc->sc_sdhook = shutdownhook_establish(aue_shutdown, sc);
@@ -1245,8 +1245,6 @@ aue_tick_task(void *xsc)
 			aue_start(ifp);
 	}
 
-	timeout_del(&sc->aue_stat_ch);
-	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
 	timeout_add(&sc->aue_stat_ch, hz);
 
 	splx(s);
@@ -1417,8 +1415,6 @@ aue_init(void *xsc)
 
 	splx(s);
 
-	timeout_del(&sc->aue_stat_ch);
-	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
 	timeout_add(&sc->aue_stat_ch, hz);
 }
 

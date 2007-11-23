@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.47 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.48 2007/11/23 15:43:02 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -537,7 +537,7 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->cue_stat_ch, NULL, NULL);
+	timeout_set(&sc->cue_stat_ch, cue_tick, sc);
 
 	sc->cue_attached = 1;
 	splx(s);
@@ -1056,8 +1056,6 @@ cue_init(void *xsc)
 
 	splx(s);
 
-	timeout_del(&sc->cue_stat_ch);
-	timeout_set(&sc->cue_stat_ch, cue_tick, sc);
 	timeout_add(&sc->cue_stat_ch, hz);
 }
 

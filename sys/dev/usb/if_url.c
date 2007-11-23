@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.49 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.50 2007/11/23 15:43:02 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -310,7 +310,7 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->sc_stat_ch, NULL, NULL);
+	timeout_set(&sc->sc_stat_ch, url_tick, sc);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -574,8 +574,6 @@ url_init(struct ifnet *ifp)
 
 	splx(s);
 
-	timeout_del(&sc->sc_stat_ch);
-	timeout_set(&sc->sc_stat_ch, url_tick, sc);
 	timeout_add(&sc->sc_stat_ch, hz);
 
 	return (0);
@@ -1383,8 +1381,6 @@ url_tick_task(void *xsc)
 			   url_start(ifp);
 	}
 
-	timeout_del(&sc->sc_stat_ch);
-	timeout_set(&sc->sc_stat_ch, url_tick, sc);
 	timeout_add(&sc->sc_stat_ch, hz);
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.39 2007/11/01 17:10:34 deraadt Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.40 2007/11/23 15:43:02 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -305,7 +305,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->sc_stat_ch, NULL, NULL);
+	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -683,8 +683,6 @@ udav_init(struct ifnet *ifp)
 
 	splx(s);
 
-	timeout_del(&sc->sc_stat_ch);
-	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
 	timeout_add(&sc->sc_stat_ch, hz);
 
 	return (0);
@@ -1499,8 +1497,6 @@ udav_tick_task(void *xsc)
 			   udav_start(ifp);
 	}
 
-	timeout_del(&sc->sc_stat_ch);
-	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
 	timeout_add(&sc->sc_stat_ch, hz);
 
 	splx(s);

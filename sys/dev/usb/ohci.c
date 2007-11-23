@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.84 2007/06/15 11:41:48 mbalmer Exp $ */
+/*	$OpenBSD: ohci.c,v 1.85 2007/11/23 15:43:02 mbalmer Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -865,7 +865,7 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 
-	timeout_set(&sc->sc_tmo_rhsc, NULL, NULL);
+	timeout_set(&sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
 	/* Finally, turn on interrupts. */
 	DPRINTFN(1,("ohci_init: enabling\n"));
@@ -1188,8 +1188,6 @@ ohci_intr1(ohci_softc_t *sc)
 			     sc->sc_bus.bdev.dv_xname));
 
 		/* Do not allow RHSC interrupts > 1 per second */
-                timeout_del(&sc->sc_tmo_rhsc);
-                timeout_set(&sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
                 timeout_add(&sc->sc_tmo_rhsc, hz);
 		eintrs &= ~OHCI_RHSC;
 	}
