@@ -1,7 +1,7 @@
-/*	$OpenBSD: udcf.c,v 1.39 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: udcf.c,v 1.40 2007/11/23 12:16:17 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,6 @@ struct udcf_softc {
 	struct usb_task		sc_bv_task;
 	struct usb_task		sc_mg_task;
 	struct usb_task		sc_sl_task;
-	struct usb_task		sc_it_task;
 	struct usb_task		sc_ct_task;
 
 	usb_device_request_t	sc_req;
@@ -130,7 +129,6 @@ void	udcf_ct_intr(void *);
 void	udcf_bv_probe(void *);
 void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
-void	udcf_it_probe(void *);
 void	udcf_ct_probe(void *);
 
 int udcf_match(struct device *, void *, void *); 
@@ -265,7 +263,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc);
 	usb_init_task(&sc->sc_mg_task, udcf_mg_probe, sc);
 	usb_init_task(&sc->sc_sl_task, udcf_sl_probe, sc);
-	usb_init_task(&sc->sc_it_task, udcf_it_probe, sc);
 	usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc);
 
 	timeout_set(&sc->sc_to, udcf_intr, sc);
@@ -341,7 +338,6 @@ udcf_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_bv_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_mg_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_sl_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_it_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_ct_task);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
@@ -379,14 +375,6 @@ udcf_sl_intr(void *xsc)
 {
 	struct udcf_softc *sc = xsc;
 	usb_add_task(sc->sc_udev, &sc->sc_sl_task);
-}
-
-/* degrade the sensor */
-void
-udcf_it_intr(void *xsc)
-{
-	struct udcf_softc *sc = xsc;
-	usb_add_task(sc->sc_udev, &sc->sc_it_task);
 }
 
 /* detect the clock type (DCF77 or HBG) */
@@ -651,16 +639,14 @@ udcf_sl_probe(void *xsc)
 	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
 }
 
-/* invalidate timedelta */
+/* invalidate timedelta (called in an interrupt context) */
 void
-udcf_it_probe(void *xsc)
+udcf_it_intr(void *xsc)
 {
 	struct udcf_softc *sc = xsc;
 
 	if (sc->sc_dying)
 		return;
-
-	DPRINTF(("\ndegrading sensor state\n"));
 
 	if (sc->sc_sensor.status == SENSOR_S_OK) {
 		sc->sc_sensor.status = SENSOR_S_WARN;
