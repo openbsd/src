@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.4 2007/11/12 16:42:23 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.5 2007/11/23 12:22:23 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -64,7 +64,6 @@ struct umbg_softc {
 	struct usb_task		sc_task;
 
 	struct timeout		sc_it_to;	/* invalidate sensor */
-	struct usb_task		sc_it_task;
 
 	usb_device_request_t	sc_req;
 
@@ -135,7 +134,6 @@ static int t_wait, t_trust;
 
 void umbg_intr(void *);
 void umbg_it_intr(void *);
-void umbg_it_probe(void *);
 
 int umbg_match(struct device *, void *, void *); 
 void umbg_attach(struct device *, struct device *, void *); 
@@ -286,7 +284,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	usb_init_task(&sc->sc_task, umbg_task, sc);
 	timeout_set(&sc->sc_to, umbg_intr, sc);
 
-	usb_init_task(&sc->sc_it_task, umbg_it_probe, sc);
 	timeout_set(&sc->sc_it_to, umbg_it_intr, sc);
 
 	/* convert timevals to hz */
@@ -339,13 +336,11 @@ umbg_detach(struct device *self, int flags)
 	}
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_it_task);
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 	return 0;
 }
 
@@ -449,23 +444,13 @@ umbg_read(struct umbg_softc *sc, u_int8_t cmd, char *buf, size_t len,
 	return 0;
 }
 
-/* degrade the sensor */
 void
 umbg_it_intr(void *xsc)
-{
-	struct umbg_softc *sc = xsc;
-	usb_add_task(sc->sc_udev, &sc->sc_it_task);
-}
-
-void
-umbg_it_probe(void *xsc)
 {
 	struct umbg_softc *sc = xsc;
 
 	if (sc->sc_dying)
 		return;
-
-	DPRINTF(("\ndegrading sensor state\n"));
 
 	if (sc->sc_timedelta.status == SENSOR_S_OK) {
 		sc->sc_timedelta.status = SENSOR_S_WARN;
