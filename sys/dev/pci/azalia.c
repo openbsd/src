@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.43 2007/11/16 20:36:25 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.44 2007/11/23 18:34:00 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2294,6 +2294,8 @@ azalia_set_port(void *v, mixer_ctrl_t *mc)
 
 	az = v;
 	co = &az->codecs[az->codecno];
+	if (mc->dev < 0 || mc->dev > co->nmixers)
+		return EINVAL;
 	return co->set_port(co, mc);
 }
 
@@ -2305,6 +2307,8 @@ azalia_get_port(void *v, mixer_ctrl_t *mc)
 
 	az = v;
 	co = &az->codecs[az->codecno];
+	if (mc->dev < 0 || mc->dev > co->nmixers)
+		return EINVAL;
 	return co->get_port(co, mc);
 }
 
@@ -2316,7 +2320,7 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 
 	az = v;
 	co = &az->codecs[az->codecno];
-	if (mdev->index >= co->nmixers)
+	if (mdev->index < 0 || mdev->index >= co->nmixers)
 		return ENXIO;
 	*mdev = co->mixers[mdev->index].devinfo;
 	return 0;
