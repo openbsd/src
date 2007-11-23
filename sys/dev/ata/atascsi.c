@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.43 2007/11/16 02:17:27 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.44 2007/11/23 12:56:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -464,7 +464,7 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 		bzero(&inq, sizeof(inq));
 
 		inq.device = T_DIRECT;
-		inq.version = 2;
+		inq.version = 0x05; /* SPC-3 */
 		inq.response_format = 2;
 		inq.additional_length = 32;
 		bcopy("ATA     ", inq.vendor, sizeof(inq.vendor));
