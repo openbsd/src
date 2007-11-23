@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.7 2007/04/07 05:59:49 dlg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.8 2007/11/23 18:18:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -48,7 +48,9 @@ struct sili_pci_softc {
 };
 
 struct cfattach sili_pci_ca = {
-	sizeof(struct sili_pci_softc), sili_pci_match, sili_pci_attach,
+	sizeof(struct sili_pci_softc),
+	sili_pci_match,
+	sili_pci_attach,
 	sili_pci_detach
 };
 
