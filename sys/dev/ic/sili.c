@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.36 2007/11/23 18:21:55 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.37 2007/11/23 18:26:03 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -391,8 +391,9 @@ sili_intr(void *arg)
 	u_int32_t			is;
 	int				port;
 
+	/* If the card has gone away, this will return 0xffffffff. */
 	is = sili_read(sc, SILI_REG_GIS);
-	if (is == 0)
+	if (is == 0 || is == 0xffffffff)
 		return (0);
 	sili_write(sc, SILI_REG_GIS, is);
 	DPRINTF(SILI_D_INTR, "sili_intr, GIS: %08x\n", is);
