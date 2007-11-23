@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.44 2007/11/23 12:56:31 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.45 2007/11/23 15:14:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ int		atascsi_disk_cmd(struct scsi_xfer *);
 void		atascsi_disk_cmd_done(struct ata_xfer *);
 int		atascsi_disk_inq(struct scsi_xfer *);
 void		atascsi_disk_inq_done(struct ata_xfer *);
+void		atascsi_disk_serial_done(struct ata_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_capacity_done(struct ata_xfer *);
 int		atascsi_disk_sync(struct scsi_xfer *);
@@ -432,12 +433,26 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa;
+	struct scsi_inquiry	*inq;
+	void			(*complete)(struct ata_xfer *);
+
+	inq = (struct scsi_inquiry *)xs->cmd;
+	if (ISSET(inq->flags, SI_EVPD)) {
+		switch (inq->pagecode) {
+		case SI_PG_SERIAL:
+			complete = atascsi_disk_serial_done;
+			break;
+		default:
+			return (atascsi_stuffup(xs));
+		}
+	} else
+		complete = atascsi_disk_inq_done;
 
 	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
 	if (xa == NULL)
 		return (NO_CCB);
 
-	xa->complete = atascsi_disk_inq_done;
+	xa->complete = complete;
 	xa->timeout = xs->timeout;
 	xa->atascsi_private = xs;
 	if (xs->flags & SCSI_POLL)
@@ -527,6 +542,44 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 			}
 		}
 	}
+}
+
+void
+atascsi_disk_serial_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct ata_identify	id;
+	struct scsi_inquiry_vpd	vpd;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		ata_complete_identify(xa, &id);
+
+		bzero(&vpd, sizeof(vpd));
+
+		vpd.device = T_DIRECT;
+		vpd.page_code = SI_PG_SERIAL;
+		vpd.page_length = sizeof(id.serial);
+		bcopy(id.serial, vpd.serial, sizeof(id.serial));
+
+		bcopy(&vpd, xs->data, MIN(sizeof(vpd), xs->datalen));
+		xs->error = XS_NOERROR;
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		ata_free_identify(xa);
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		break;
+
+	default:
+		panic("atascsi_disk_serial_done: unexpected xa state (%d)",
+		    xa->state);
+	}
+
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
 }
 
 int
