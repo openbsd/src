@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.54 2007/10/29 01:05:13 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.55 2007/11/23 18:21:43 kettenis Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ config_pending_decr(void)
 int
 config_detach_children(struct device *parent, int flags)
 {
-	struct device *dev, *next_dev, *prev_dev;
+	struct device *dev, *next_dev;
 	int rv = 0;
 
 	/*
@@ -728,15 +728,13 @@ config_detach_children(struct device *parent, int flags)
 	 * we are about to detach, so it would disappear.
 	 * Just play it safe and restart from the parent.
 	 */
-	for (prev_dev = NULL, dev = TAILQ_LAST(&alldevs, devicelist);
+	for (dev = TAILQ_LAST(&alldevs, devicelist);
 	    dev != NULL; dev = next_dev) {
 		if (dev->dv_parent == parent) {
 			if ((rv = config_detach(dev, flags)) != 0)
 				return (rv);
-			next_dev = prev_dev ? prev_dev : TAILQ_LAST(&alldevs,
-			    devicelist);
+			next_dev = TAILQ_LAST(&alldevs, devicelist);
 		} else {
-			prev_dev = dev;
 			next_dev = TAILQ_PREV(dev, devicelist, dv_list);
 		}
 	}
