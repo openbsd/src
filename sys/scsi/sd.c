@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.139 2007/11/11 16:46:51 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.140 2007/11/23 14:44:59 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -981,6 +981,8 @@ sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
 	if (scsi_inquire_vpd(sd->sc_link, &vpd, sizeof(vpd),
 	    SI_PG_SERIAL, 0) == 0)
 		scsi_strvis(di->serial, vpd.serial, sizeof(vpd.serial));
+	else
+		strlcpy(di->serial, "(unknown)", sizeof(vpd.serial));
 
 	return (0);
 }
