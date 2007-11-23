@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.5 2007/11/23 12:22:23 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.6 2007/11/23 16:34:47 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -185,6 +185,29 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 #ifdef UMBG_DEBUG
 	char fw_id[MBG_ID_LEN];
 #endif
+	sc->sc_udev = dev;
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
+	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
+	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
+	sc->sc_timedelta.value = 0LL;
+	sc->sc_timedelta.flags = 0;
+	strlcpy(sc->sc_timedelta.desc, "USB5131",
+	    sizeof(sc->sc_timedelta.desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
+
+	sc->sc_signal.type = SENSOR_PERCENT;
+	sc->sc_signal.value = 0LL;
+	sc->sc_signal.flags = 0;
+	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
+	sensordev_install(&sc->sc_sensordev);
+
+	usb_init_task(&sc->sc_task, umbg_task, sc);
+	timeout_set(&sc->sc_to, umbg_intr, sc);
+	timeout_set(&sc->sc_it_to, umbg_it_intr, sc);
 
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
 		printf("%s: failed to set configuration, err=%s\n",
@@ -203,7 +226,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	ed = usbd_interface2endpoint_descriptor(iface, 1);
 	sc->sc_bulkout_no = ed->bEndpointAddress;
 
-	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
@@ -221,23 +243,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 		    usbd_errstr(err));
 		goto fishy;
 	}
-
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensordev.xname));
-
-	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
-	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
-	sc->sc_timedelta.value = 0LL;
-	sc->sc_timedelta.flags = 0;
-	strlcpy(sc->sc_timedelta.desc, "USB5131",
-	    sizeof(sc->sc_timedelta.desc));
-	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
-
-	sc->sc_signal.type = SENSOR_PERCENT;
-	sc->sc_signal.value = 0LL;
-	sc->sc_signal.flags = 0;
-	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
-	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	if (umbg_read(sc, MBG_GET_TIME, (char *)&tframe,
@@ -276,15 +281,8 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	printf("\n");
 
-	sensordev_install(&sc->sc_sensordev);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    &sc->sc_dev);
-
-	usb_init_task(&sc->sc_task, umbg_task, sc);
-	timeout_set(&sc->sc_to, umbg_intr, sc);
-
-	timeout_set(&sc->sc_it_to, umbg_it_intr, sc);
 
 	/* convert timevals to hz */
 	t.tv_sec = 5L;
