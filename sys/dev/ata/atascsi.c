@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.45 2007/11/23 15:14:11 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.46 2007/11/23 16:01:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -862,6 +862,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 {
 	struct ata_xfer		*xa;
 	struct ata_fis_h2d	*fis;
+	void			*buf;
 	int			s;
 
 	s = splbio();
@@ -880,15 +881,19 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	fis->device = atareq->head & 0x0f;
 	fis->sector_count = atareq->sec_count;
 
-	xa->data = atareq->databuf;
+	buf = malloc(atareq->datalen, M_TEMP, M_WAITOK);
+
+	xa->data = buf;
 	xa->datalen = atareq->datalen;
 	xa->complete = atascsi_ioctl_done;
 	xa->timeout = atareq->timeout;
 	xa->flags = 0;
 	if (atareq->flags & ATACMD_READ)
 		xa->flags |= ATA_F_READ;
-	if (atareq->flags & ATACMD_WRITE)
+	if (atareq->flags & ATACMD_WRITE) {
 		xa->flags |= ATA_F_WRITE;
+		copyin(atareq->databuf, buf, atareq->datalen);
+	}
 	xa->atascsi_private = NULL;
 
 	switch (as->as_methods->ata_cmd(xa)) {
@@ -899,6 +904,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 			tsleep(xa, PRIBIO, "atascsi", 0);
 		break;
 	case ATA_ERROR:
+		free(buf, M_TEMP);
 		s = splbio();
 		ata_put_xfer(xa);
 		splx(s);
@@ -911,6 +917,8 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	switch (xa->state) {
 	case ATA_S_COMPLETE:
 		atareq->retsts = ATACMD_OK;
+		if (atareq->flags & ATACMD_READ)
+			copyout(buf, atareq->databuf, atareq->datalen);
 		break;
 	case ATA_S_ERROR:
 		atareq->retsts = ATACMD_ERROR;
@@ -922,6 +930,8 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 		panic("atascsi_ioctl_cmd: unexpected ata_xfer state (%d)",
 		    xa->state);
 	}
+
+	free(buf, M_TEMP);
 
 	s = splbio();
 	ata_put_xfer(xa);
