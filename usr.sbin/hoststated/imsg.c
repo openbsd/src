@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.8 2007/07/24 12:42:32 pyr Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.9 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,12 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
-#include <sys/param.h>
+
 #include <net/if.h>
+
 #include <errno.h>
 #include <event.h>
 #include <stdlib.h>

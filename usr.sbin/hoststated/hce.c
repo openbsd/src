@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.35 2007/11/21 09:54:39 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.36 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,17 +16,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
+#include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <net/if.h>
+
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>

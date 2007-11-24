@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.69 2007/11/24 16:13:50 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.70 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -16,10 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/mman.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -27,11 +25,11 @@
 #include <sys/tree.h>
 #include <sys/hash.h>
 
+#include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
 #include <arpa/inet.h>
 
 #include <errno.h>

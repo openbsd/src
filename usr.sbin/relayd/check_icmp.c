@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.20 2007/10/09 05:38:58 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.21 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,14 +19,15 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/param.h>
+
+#include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
-#include <net/if.h>
 #include <arpa/inet.h>
+
 #include <limits.h>
 #include <event.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.58 2007/11/24 16:13:50 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.59 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,11 +19,12 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/wait.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

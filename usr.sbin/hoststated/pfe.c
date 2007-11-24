@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.42 2007/11/19 15:31:36 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.43 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,13 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
 #include <net/if.h>
+
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>

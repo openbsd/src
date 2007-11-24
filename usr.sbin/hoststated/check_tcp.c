@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.29 2007/11/21 20:13:20 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.30 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,13 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 
-#include <netinet/in.h>
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <limits.h>
 #include <event.h>

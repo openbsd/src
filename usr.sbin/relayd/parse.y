@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2007/11/23 09:39:42 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.95 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,8 +27,9 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
-#include <netinet/in.h>
+
 #include <net/if.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 

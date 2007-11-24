@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.1 2007/09/10 11:59:22 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.2 2007/11/24 17:07:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -16,9 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -26,11 +25,11 @@
 #include <sys/tree.h>
 #include <sys/hash.h>
 
+#include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
 #include <arpa/inet.h>
 
 #include <errno.h>
