@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2007/11/22 05:47:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 2007/11/24 11:13:56 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -714,6 +714,10 @@ pmap_bootstrap(vaddr_t load_start)
 
 	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) |
 	    CACHE_GLOBAL | CACHE_WT | APR_V;
+#if !defined(MULTIPROCESSOR) && defined(M88110)
+	if (CPU_IS88110)
+		kernel_pmap->pm_apr &= ~CACHE_GLOBAL;
+#endif
 
 	pmap_bootstrap_cpu(cpu_number());
 }
@@ -854,6 +858,10 @@ pmap_create(void)
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
 	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
+#if !defined(MULTIPROCESSOR) && defined(M88110)
+	if (CPU_IS88110)
+		pmap->pm_apr &= ~CACHE_GLOBAL;
+#endif
 
 #ifdef PMAPDEBUG
 	if (pmap_debug & CD_CREAT)
