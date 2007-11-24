@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.203 2007/11/15 22:21:31 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.204 2007/11/24 11:32:28 reyk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -237,7 +237,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga0		at isa?
 vga*		at pci?
-#option		PCIAGP
+option		PCIAGP
 wsdisplay*	at vga?
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
