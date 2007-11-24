@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.17 2007/10/24 20:01:36 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.18 2007/11/24 19:39:20 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -95,6 +95,7 @@ LEAF(cpu_idle_leave, 0)
 END(cpu_idle_leave)
 
 LEAF(cpu_idle_cycle, 0)
+	wait
 	j	ra
 	nop
 END(cpu_idle_cycle)

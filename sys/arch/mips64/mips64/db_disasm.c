@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2007/07/05 04:37:30 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2007/11/24 19:39:20 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.7 2007/07/05 04:37:30 miod Exp $
+ *      $Id: db_disasm.c,v 1.8 2007/11/24 19:39:20 miod Exp $
  */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ static char *c0_opname[64] = {
 	"tlbp",  "c0op11","c0op12","c0op13","c0op14","c0op15","c0op16","c0op17",
 	"rfe",   "c0op21","c0op22","c0op23","c0op24","c0op25","c0op26","c0op27",
 	"eret","c0op31","c0op32","c0op33","c0op34","c0op35","c0op36","c0op37",
-	"c0op40","c0op41","c0op42","c0op43","c0op44","c0op45","c0op46","c0op47",
+	"wait","c0op41","c0op42","c0op43","c0op44","c0op45","c0op46","c0op47",
 	"c0op50","c0op51","c0op52","c0op53","c0op54","c0op55","c0op56","c0op57",
 	"c0op60","c0op61","c0op62","c0op63","c0op64","c0op65","c0op66","c0op67",
 	"c0op70","c0op71","c0op72","c0op73","c0op74","c0op75","c0op77","c0op77",
