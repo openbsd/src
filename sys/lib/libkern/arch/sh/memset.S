@@ -28,10 +28,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memset.S,v 1.1 2005/12/20 19:28:50 christos Exp $")
-#endif
-
 #define	REG_PTR				r0
 #define	REG_TMP1			r1
 

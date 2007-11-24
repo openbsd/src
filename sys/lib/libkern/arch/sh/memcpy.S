@@ -29,10 +29,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memcpy.S,v 1.2 2006/04/22 23:53:47 uwe Exp $")
-#endif
-
 #if !defined(MEMCOPY) && !defined(MEMMOVE) && !defined(BCOPY)
 #define MEMCOPY
 #endif

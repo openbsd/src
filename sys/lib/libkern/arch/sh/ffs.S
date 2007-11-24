@@ -38,10 +38,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:50 christos Exp $")
-#endif
-
 /*
  * ffs - find first bit set
  *
