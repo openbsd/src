@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.48 2007/07/18 13:34:23 mcbride Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.49 2007/11/24 14:58:44 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -568,6 +568,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (argc != 0)
+		usage();
 
 	if (doperf == PERF_NONE)
 		doperf = PERF_MANUAL;
