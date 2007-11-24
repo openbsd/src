@@ -1,6 +1,6 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.32 2007/11/22 05:47:46 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.33 2007/11/24 11:12:55 miod Exp $	*/
 /*
- * Copyright (c) 2004, Miodrag Vallat.
+ * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -741,8 +741,7 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		if (pmap_extract(pmap, va, &pa) != FALSE) {
 #ifdef MULTIPROCESSOR
 			/* writeback on a single cpu... */
-			if (flusher != m8820x_cmmu_inval_cache)
-				(*flusher)(ci->ci_cpuid, pa, count);
+			(*flusher)(ci->ci_cpuid, pa, count);
 
 			/* invalidate on all... */
 			if (flusher != m8820x_cmmu_sync_cache) {
@@ -750,7 +749,9 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 					if (!ISSET(m88k_cpus[cpu].ci_flags,
 					    CIF_ALIVE))
 						continue;
-					(*flusher)(cpu, pa, count);
+					if (cpu == ci->ci_cpuid)
+						continue;
+					m8820x_cmmu_inval_cache(cpu, pa, count);
 				}
 			}
 #else	/* MULTIPROCESSOR */
@@ -809,8 +810,7 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 
 #ifdef MULTIPROCESSOR
 		/* writeback on a single cpu... */
-		if (flusher != m8820x_cmmu_inval_cache)
-			(*flusher)(ci->ci_cpuid, pa, count);
+		(*flusher)(ci->ci_cpuid, pa, count);
 
 		/* invalidate on all... */
 		if (flusher != m8820x_cmmu_sync_cache) {
@@ -818,7 +818,9 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 				if (!ISSET(m88k_cpus[cpu].ci_flags,
 				    CIF_ALIVE))
 					continue;
-				(*flusher)(cpu, pa, count);
+				if (cpu == ci->ci_cpuid)
+					continue;
+				m8820x_cmmu_inval_cache(cpu, pa, count);
 			}
 		}
 #else	/* MULTIPROCESSOR */
