@@ -47,7 +47,12 @@ top_builddir =	@BIND9_TOP_BUILDDIR@
 ### Makefile may define:
 ###	TARGETS
 
-all: subdirs ${TARGETS}
+all: subdirs
+	@exec ${MAKE} ${TARGETS} dummy-target
+
+dummy-target:
+
+.PHONY: dummy-target
 
 ###
 ### Subdirectories
