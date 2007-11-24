@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.156 2007/11/24 12:59:28 jmc Exp $ */
+/*	$OpenBSD: kroute.c,v 1.157 2007/11/24 17:01:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2170,6 +2170,8 @@ fetchifs(int ifindex)
 	lim = buf + len;
 	for (next = buf; next < lim; next += ifm.ifm_msglen) {
 		memcpy(&ifm, next, sizeof(ifm));
+		if (ifm.ifm_version != RTM_VERSION)
+			continue;
 		if (ifm.ifm_type != RTM_IFINFO)
 			continue;
 
