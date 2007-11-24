@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.59 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.60 2007/11/24 20:58:26 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1368,7 +1368,7 @@ Lm68881rdone:
  */
 	.balign	8			| align to half-line boundary
 
-ALTENTRY(_delay, _delay)
+ALTENTRY(_delay, delay)
 ENTRY(delay)
 	movl	sp@(4),d0		| get microseconds to delay
 	cmpl	#0x40000,d0		| is it a "large" delay?

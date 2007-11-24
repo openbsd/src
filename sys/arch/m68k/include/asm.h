@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2007/11/24 20:58:26 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.13 1997/04/24 22:49:39 thorpej Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  * to use it would be a desirable change.
  */
 #ifdef PROF
-#define ALTENTRY(name, rname)	ENTRY(name); jra rname+12
+#define ALTENTRY(name, rname)	ENTRY(name); jra _C_LABEL(rname)+12
 #else
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif

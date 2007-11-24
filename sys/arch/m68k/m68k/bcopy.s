@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.s,v 1.2 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: bcopy.s,v 1.3 2007/11/24 20:58:26 deraadt Exp $	*/
 /*	$NetBSD: bcopy.s,v 1.1 1997/03/17 19:44:33 gwr Exp $	*/
 
 /*-
@@ -50,14 +50,14 @@
  *
  * Works for counts up to 128K.
  */
-ALTENTRY(memmove, _memcpy)
+ALTENTRY(memmove, memcpy)
 ENTRY(memcpy)
 	movl	sp@(12),d0		| get count
 	jeq	Lbccpyexit		| if zero, return
 	movl	sp@(8), a0		| src address
 	movl	sp@(4), a1		| dest address
 	jra	Lbcdocopy		| jump into bcopy
-ALTENTRY(ovbcopy, _bcopy)
+ALTENTRY(ovbcopy, bcopy)
 ENTRY(bcopy)
 	movl	sp@(12),d0		| get count
 	jeq	Lbccpyexit		| if zero, return
