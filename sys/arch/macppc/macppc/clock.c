@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2007/04/13 18:48:38 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2007/11/24 15:24:54 mbalmer Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -59,6 +59,12 @@ static volatile u_int64_t lasttb;
 static struct timecounter tb_timecounter = {
 	tb_get_timecount, NULL, 0x7fffffff, 0, "tb", 0, NULL
 };
+
+/* calibrate the timecounter frequency for the listed models */
+static const char *calibrate_tc_models[] = {
+	"PowerMac10,1"
+};
+extern char *hw_prod;
 
 time_read_t  *time_read;
 time_write_t *time_write;
@@ -276,6 +282,37 @@ cpu_initclocks()
 	int r;
 	int minint;
 	u_int64_t nextevent;
+	u_int32_t first_tb, second_tb;
+	time_t first_sec, sec;
+	int calibrate = 0, n;
+
+	/* check if we should calibrate the timecounter frequency */
+	for (n = 0; n < sizeof(calibrate_tc_models) /
+	    sizeof(calibrate_tc_models[0]); n++) {
+		if (!strcmp(calibrate_tc_models[n], hw_prod)) {
+			calibrate = 1;
+			break;
+		}
+	}
+
+	/* if a RTC is available, calibrate the timecounter frequency */
+	if (calibrate && time_read != NULL) {
+		time_read(&first_sec);
+		do {
+			first_tb = ppc_mftbl();
+			time_read(&sec);
+		} while (sec == first_sec);
+		first_sec = sec;
+		do {
+			second_tb = ppc_mftbl();
+			time_read(&sec);
+		} while (sec == first_sec);
+		ticks_per_sec = second_tb - first_tb;
+#ifdef DEBUG
+		printf("tb: using measured timecounter frequency of %ld Hz\n",
+		    ticks_per_sec);
+#endif
+	}
 
 	intrstate = ppc_intr_disable();
 
@@ -291,7 +328,6 @@ cpu_initclocks()
 		statvar >>= 1;
 
 	statmin = statint - (statvar >> 1);
-
 
 	lasttb = ppc_mftb();
 	nexttimerevent = lasttb + ticks_per_intr;
