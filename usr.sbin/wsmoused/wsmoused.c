@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.22 2007/09/18 20:19:20 otto Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.23 2007/11/24 16:28:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -453,6 +453,7 @@ wsmoused(void)
 				   the X server release it */
 
 				struct wscons_event sleeping;
+				unsigned int tries;
 
 				/* restore mouse resolution to default value */
 				res = WSMOUSE_RES_DEFAULT;
@@ -467,13 +468,31 @@ wsmoused(void)
 				ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED,
 				    &sleeping);
 
-				/* waiting for availability of mouse device */
-				sleep(1);
+				/*
+				 * Since the X server could still be running
+				 * (e.g. when switching from the graphics
+				 * screen to a virtual text console), it might
+				 * not have freed the device yet.
+				 *
+				 * Try to open the device until it succeeds.
+				 */
+				tries = 0;
+				for (;;) {
+					if ((mouse.mfd = open(mouse.portname,
+					    O_RDONLY | O_NONBLOCK, 0)) != -1)
+						break;
 
-				if ((mouse.mfd = open(mouse.portname,
-				    O_RDONLY | O_NONBLOCK, 0)) == -1)
-					logerr(1, "unable to open %s",
-					    mouse.portname);
+					if (tries < 10) {
+						tries++;
+						sleep(1);
+					} else {
+						logerr(1, "unable to open %s, "
+						    "will retry in 10 seconds",
+						    mouse.portname);
+						sleep(10);
+					}
+				}
+
 				mouse_init();
 			}
 		} else {
