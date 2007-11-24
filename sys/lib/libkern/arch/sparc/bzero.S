@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.4 2007/11/24 19:47:05 deraadt Exp $	*/
 /*	$NetBSD: bzero.S,v 1.2 1994/10/26 06:39:54 cgd Exp $	*/
 
 /*
@@ -35,13 +35,6 @@
  *
  * Header: bzero.s,v 1.1 92/06/25 12:52:46 torek Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$OpenBSD: bzero.S,v 1.3 2003/06/02 23:28:09 millert Exp $"
-#endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
