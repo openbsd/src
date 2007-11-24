@@ -1,5 +1,5 @@
 /*-
- * $OpenBSD: table.c,v 1.8 2007/11/24 13:38:06 stefan Exp $
+ * $OpenBSD: table.c,v 1.9 2007/11/24 14:08:06 stefan Exp $
  *
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -120,7 +120,7 @@ struct optab table[] = {
 	SAREG,	TCHAR,
 	SAREG,	TUSHORT|TUWORD,
 		NASL|NAREG|NSPECIAL,	RESC1,
-		"	extsh A1,AL" COM "convert char (AL) to ushort/unsigned (A1)\n", },
+		"	extsb A1,AL" COM "convert char (AL) to ushort/unsigned (A1)\n", },
 
 /* convert uchar/ushort/uint to (u)longlong */
 { SCONV,	INBREG,
