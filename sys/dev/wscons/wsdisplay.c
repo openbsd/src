@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.81 2007/07/25 23:11:52 art Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.82 2007/11/24 16:45:59 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1836,7 +1836,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	    (sc->sc_scr[no]->scr_flags & SCR_GRAPHICS)) {
 		/* switching from a text console to a graphic console */
 	
-		/* remote a potential wsmoused(8) selection */
+		/* remove a potential wsmoused(8) selection */
 		mouse_remove(sc);
 		wsmoused_release(sc);
 	}
