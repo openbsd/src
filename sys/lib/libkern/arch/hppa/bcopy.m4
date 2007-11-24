@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.16 2007/05/14 19:54:21 martin Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.17 2007/11/24 19:42:00 deraadt Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -194,12 +194,6 @@ L($1, done)
 '
 ifelse(NAME, `bcopy',
 `
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "versionmacro"
-	.align	4
-#endif
-
 LEAF_ENTRY(memcpy)
 ALTENTRY(memmove)
 	copy	arg0, t1

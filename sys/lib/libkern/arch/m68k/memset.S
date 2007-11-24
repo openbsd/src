@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.2 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: memset.S,v 1.3 2007/11/24 19:38:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,11 +34,6 @@
  */
 
 #include "DEFS.h"
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: memset.S,v 1.2 2003/06/02 23:28:08 millert Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * This is probably not the best we can do, but it is still much
