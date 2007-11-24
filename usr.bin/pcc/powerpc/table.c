@@ -1,5 +1,5 @@
 /*-
- * $OpenBSD: table.c,v 1.6 2007/11/24 00:44:59 stefan Exp $
+ * $OpenBSD: table.c,v 1.7 2007/11/24 09:27:02 stefan Exp $
  *
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -351,7 +351,7 @@ struct optab table[] = {
 	SSCON,	TANY,
 		NBREG|NBSL,	RESC1,
 		"	addic A1,AL,AR" COM "64-bit addition of constant\n"
-		"	addze U1,UL", },
+		"	addze U1,UL\n", },
 
 { PLUS,		INAREG,
 	SAREG,	TWORD|TPOINT,
@@ -651,7 +651,7 @@ struct optab table[] = {
 	SNAME,		TCHAR|TUCHAR,
 	SAREG,		TCHAR|TUCHAR,
 		NAREG|NSPECIAL,	RDEST,
-		"	lis A1," HA16(AL)
+		"	lis A1," HA16(AL) "\n"
 		"	stb AR," LO16(AL) "(A1)\n", },
 
 /* assign register to memory */
@@ -1155,7 +1155,7 @@ struct optab table[] = {
 	SBREG,	TLONGLONG|TULONGLONG,
 	SANY,	TANY,
 		NBREG|NBSL,	RESC1,
-		"	not A1,AL"
+		"	not A1,AL\n"
 		"	not U1,UL\n", },
 
 /*
