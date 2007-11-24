@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.155 2007/10/04 11:43:19 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.156 2007/11/24 12:59:28 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1988,7 +1988,7 @@ fetchtable(u_int rtableid, int connected_only)
 	mib[6] = rtableid;
 
 	if (sysctl(mib, 7, NULL, &len, NULL, 0) == -1) {
-		if (rtableid != 0 && errno == EINVAL)	/* table nonexistant */
+		if (rtableid != 0 && errno == EINVAL)	/* table nonexistent */
 			return (0);
 		log_warn("sysctl");
 		return (-1);

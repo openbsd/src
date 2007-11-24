@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.80 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.81 2007/11/24 12:59:28 jmc Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1187,7 +1187,7 @@ tcp_setpersist(struct tcpcb *tp)
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		panic("tcp_output REXMT");
 	/*
-	 * Start/restart persistance timer.
+	 * Start/restart persistence timer.
 	 */
 	if (t < tp->t_rttmin)
 		t = tp->t_rttmin;

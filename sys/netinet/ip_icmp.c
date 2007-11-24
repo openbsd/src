@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.76 2007/06/11 11:29:35 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.77 2007/11/24 12:59:28 jmc Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
 
-	/* move PF_GENERATED to new packet, if existant XXX preserve more? */
+	/* move PF_GENERATED to new packet, if existent XXX preserve more? */
 	if (n->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 

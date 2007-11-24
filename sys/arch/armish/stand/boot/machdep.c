@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2006/07/30 20:46:30 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2007/11/24 12:59:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -67,7 +67,7 @@ machdep(void)
 	 * however when it reads the device register, it does
 	 * not check if a bus fault occurs on the access.
 	 * Since the bootloader doesn't handle faults, this
-	 * crashes the bootloader if it reads a non-existant
+	 * crashes the bootloader if it reads a non-existent
 	 * device.
 	 * The tag computation comes from arm/xscale/i80321_pci.c
 	 * i80321_pci_conf_setup()

@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.21 2007/05/26 00:36:03 krw Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.22 2007/11/24 12:59:28 jmc Exp $ */
 /*-
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.128 2005/01/06 01:42:26 imp Exp $
  */
 
-VERSION = "$Id: aic7xxx.seq,v 1.21 2007/05/26 00:36:03 krw Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.22 2007/11/24 12:59:28 jmc Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -757,7 +757,7 @@ idle_loop:
 
 	/*
 	 * We fetch a "cacheline aligned" and sized amount of data
-	 * so we don't end up referencing a non-existant page.
+	 * so we don't end up referencing a non-existent page.
 	 * Cacheline aligned is in quotes because the kernel will
 	 * set the prefetch amount to a reasonable level if the
 	 * cacheline size is unknown.

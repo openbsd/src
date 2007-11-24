@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.14 2007/11/24 12:59:28 jmc Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.14 2007/11/24 12:59:28 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ parse(void)
 	/* If there is a sequence (NOUN | OBJECT) AND EVERYTHING
 	 * then move all the EVERYTHINGs to the beginning, since that's where
 	 * they're expected.  We can't get rid of the NOUNs and OBJECTs in
-	 * case they aren't in EVERYTHING (i.e. not here or nonexistant).
+	 * case they aren't in EVERYTHING (i.e. not here or nonexistent).
 	 */
 	flag = 1;
 	while (flag) {

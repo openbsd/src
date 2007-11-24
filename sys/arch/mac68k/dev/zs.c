@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.24 2007/10/22 14:46:46 jsing Exp $	*/
+/*	$OpenBSD: zs.c,v 1.25 2007/11/24 12:59:28 jmc Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ zs_set_speed(cs, bps)
 	 */
 	for (i=0; i < xcs->cs_clock_count; i++) {
 		if (xcs->cs_clocks[i].clk <= 0)
-			continue;	/* skip non-existant or bad clocks */
+			continue;	/* skip non-existent or bad clocks */
 		if (xcs->cs_clocks[i].flags & ZSC_BRG) {
 			/* check out BRG at /16 */
 			tc1 = BPS_TO_TCONST(xcs->cs_clocks[i].clk >> 4, bps);

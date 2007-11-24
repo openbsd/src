@@ -77,7 +77,7 @@
 #define	A_EXTRA			0200
 
 
-/* Line editting characters */
+/* Line editing characters */
 
 #define	EC_BACKSPACE	1
 #define	EC_LINEKILL	2

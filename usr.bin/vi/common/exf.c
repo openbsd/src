@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.23 2006/06/18 20:41:24 jasper Exp $	*/
+/*	$OpenBSD: exf.c,v 1.24 2007/11/24 12:59:28 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -369,9 +369,9 @@ file_init(sp, frp, rcv_name, flags)
          * vi, unless the -R command-line option was specified or the program
          * was executed as "view".  (Well, to be truthful, if the letter 'w'
          * occurred anywhere in the program name, but let's not get into that.)
-	 * So, the persistant readonly state has to be stored in the screen
+	 * So, the persistent readonly state has to be stored in the screen
 	 * structure, and the edit option value toggles with the contents of
-	 * the edit buffer.  If the persistant readonly flag is set, set the
+	 * the edit buffer.  If the persistent readonly flag is set, set the
 	 * readonly edit option.
 	 *
 	 * Otherwise, try and figure out if a file is readonly.  This is a

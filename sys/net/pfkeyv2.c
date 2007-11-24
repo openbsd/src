@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.117 2007/09/13 21:00:14 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.118 2007/11/24 12:59:28 jmc Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1569,7 +1569,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				goto ret;
 			}
 
-			/* If we were asked to delete something non-existant, error. */
+			/* If we were asked to delete something non-existent, error. */
 			splx(s);
 			rval = ESRCH;
 			break;

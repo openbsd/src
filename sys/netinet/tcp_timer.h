@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.10 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.11 2007/11/24 12:59:28 jmc Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #define	TCPT_NTIMERS	4
 
 #define	TCPT_REXMT	0		/* retransmit */
-#define	TCPT_PERSIST	1		/* retransmit persistance */
+#define	TCPT_PERSIST	1		/* retransmit persistence */
 #define	TCPT_KEEP	2		/* keep alive */
 #define	TCPT_2MSL	3		/* 2*msl quiet time timer */
 
@@ -90,7 +90,7 @@
 						   if 0, no idea yet */
 #define	TCPTV_SRTTDFLT	(  3*PR_SLOWHZ)		/* assumed RTT if no info */
 
-#define	TCPTV_PERSMIN	(  5*PR_SLOWHZ)		/* retransmit persistance */
+#define	TCPTV_PERSMIN	(  5*PR_SLOWHZ)		/* retransmit persistence */
 #define	TCPTV_PERSMAX	( 60*PR_SLOWHZ)		/* maximum persist interval */
 
 #define	TCPTV_KEEP_INIT	( 75*PR_SLOWHZ)		/* initial connect keep alive */

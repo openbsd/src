@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.seq,v 1.8 2007/05/26 00:36:03 krw Exp $	*/
+/*	$OpenBSD: aic79xx.seq,v 1.9 2007/11/24 12:59:28 jmc Exp $	*/
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.17 2004/08/04 17:55:34 gibbs Exp $
  */
 
-VERSION = "$Id: aic79xx.seq,v 1.8 2007/05/26 00:36:03 krw Exp $"
+VERSION = "$Id: aic79xx.seq,v 1.9 2007/11/24 12:59:28 jmc Exp $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -1522,7 +1522,7 @@ idle_sgfetch_okay:
 idle_sgfetch_start:
 	/*
 	 * We fetch a "cacheline aligned" and sized amount of data
-	 * so we don't end up referencing a non-existant page.
+	 * so we don't end up referencing a non-existent page.
 	 * Cacheline aligned is in quotes because the kernel will
 	 * set the prefetch amount to a reasonable level if the
 	 * cacheline size is unknown.
