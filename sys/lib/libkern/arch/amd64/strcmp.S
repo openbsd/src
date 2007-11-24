@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.1 2001/06/19 00:22:47 fvdl Exp $")
-#endif
-
 /*
  * NOTE: I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the

@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.1 2001/06/19 00:22:46 fvdl Exp $")
-#endif
-
 ENTRY(ffs)
 	bsfl	%edi,%eax
 	jz	L1	 		/* ZF is set if all bits are 0 */

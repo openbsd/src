@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bzero.S,v 1.1 2001/06/19 00:22:45 fvdl Exp $")
-#endif
-
 ENTRY(bzero)
 	movq	%rsi,%rdx
 

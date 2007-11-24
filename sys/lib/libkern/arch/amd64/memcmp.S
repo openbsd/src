@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcmp.S,v 1.1 2001/06/19 00:22:46 fvdl Exp $")
-#endif
-
 ENTRY(memcmp)
 	cld				/* set compare direction forward */
 	movq	%rdx,%rcx		/* compare by longs */

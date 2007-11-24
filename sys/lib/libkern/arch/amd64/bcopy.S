@@ -35,10 +35,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.1 2001/06/19 00:22:45 fvdl Exp $")
-#endif
-
 	/*
 	 * (ov)bcopy (src,dst,cnt)
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800

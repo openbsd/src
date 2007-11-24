@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.1 2001/06/19 00:22:47 fvdl Exp $")
-#endif
-
 ENTRY(strlen)
 	cld				/* set search forward */
 	xorl	%eax,%eax		/* set search for null terminator */

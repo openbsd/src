@@ -1,9 +1,5 @@
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcmp.S,v 1.1 2001/06/19 00:22:45 fvdl Exp $")
-#endif
-
 ENTRY(bcmp)
 	xorl	%eax,%eax		/* clear return value */
 	cld				/* set compare direction forward */

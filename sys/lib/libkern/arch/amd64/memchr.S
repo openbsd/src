@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.1 2001/06/19 00:22:46 fvdl Exp $")
-#endif
-
 ENTRY(memchr)
 	movb	%sil,%al		/* set character to search for */
 	movq	%rdx,%rcx		/* set length of search */

@@ -6,10 +6,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.1 2001/06/19 00:22:46 fvdl Exp $")
-#endif
-
 ENTRY(memset)
 	movq	%rsi,%rax
 	movq	%rdx,%rcx
