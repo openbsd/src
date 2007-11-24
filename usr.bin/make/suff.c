@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.76 2007/11/17 16:39:45 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.77 2007/11/24 15:41:01 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ static int SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
 static Src *SuffFindThem(Lst, Lst);
 static Src *SuffFindCmds(Src *, Lst);
-static void SuffExpandChildren(void *, void *);
+static void SuffExpandChildren(LstNode, GNode *);
 static void SuffExpandVarChildren(LstNode, GNode *, GNode *);
 static void SuffExpandWildChildren(LstNode, GNode *, GNode *);
 static bool SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
@@ -1138,7 +1138,8 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 			Lst_Append(&pgn->children, after, gn);
 			after = Lst_Adv(after);
 			Lst_AtEnd(&gn->parents, pgn);
-			pgn->unmade++;
+			if (!has_been_built(gn))
+				pgn->unmade++;
 		}
 	}
 	/* Free the result.  */
@@ -1192,7 +1193,8 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 			Lst_Append(&pgn->children, after, gn);
 			after = Lst_Adv(after);
 			Lst_AtEnd(&gn->parents, pgn);
-			pgn->unmade++;
+			if (!has_been_built(gn))
+				pgn->unmade++;
 		}
 	}
 
@@ -1213,16 +1215,10 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
  *-----------------------------------------------------------------------
  */
 static void
-SuffExpandChildren(
-    void	*cgnp,		/* Child to examine */
-    void	*pgnp)		/* Parent node being processed */
+SuffExpandChildren(LstNode ln, /* LstNode of child, so we can replace it */
+    GNode *pgn)
 {
-	GNode	*cgn = (GNode *)cgnp;
-	GNode	*pgn = (GNode *)pgnp;
-	LstNode	ln;
-	/* New nodes effectively take the place of the child, so we place them
-	 * after the child.  */
-	ln = Lst_Member(&pgn->children, cgn);
+	GNode	*cgn = (GNode *)Lst_Datum(ln);
 
 	/* First do variable expansion -- this takes precedence over wildcard
 	 * expansion. If the result contains wildcards, they'll be gotten to
@@ -1240,6 +1236,17 @@ SuffExpandChildren(
 	 * keep it from being processed.  */
 	pgn->unmade--;
 	Lst_Remove(&pgn->children, ln);
+}
+
+void
+expand_children_from(GNode *parent, LstNode from)
+{
+	LstNode np, ln;
+
+	for (ln = from; ln != NULL; ln = np) {
+		np = Lst_Adv(ln);
+		SuffExpandChildren(ln, parent);
+	}
 }
 
 /*-
@@ -1267,7 +1274,6 @@ SuffApplyTransform(
     Suff	*s)	/* Source suffix */
 {
 	LstNode	ln;	/* General node */
-	LstNode	np;	    /* Next node for loop */
 	char	*tname; /* Name of transformation rule */
 	GNode	*gn;	/* Node for same */
 
@@ -1275,7 +1281,8 @@ SuffApplyTransform(
 		/* Not already linked, so form the proper links between the
 		 * target and source.  */
 		Lst_AtEnd(&sGn->parents, tGn);
-		tGn->unmade++;
+		if (!has_been_built(sGn))
+			tGn->unmade++;
 	}
 
 	if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
@@ -1290,7 +1297,8 @@ SuffApplyTransform(
 				/* Not already linked, so form the proper links
 				 * between the target and source.  */
 				Lst_AtEnd(&gn->parents, tGn);
-				tGn->unmade++;
+				if (!has_been_built(gn))
+					tGn->unmade++;
 			}
 		}
 	}
@@ -1318,10 +1326,7 @@ SuffApplyTransform(
 	Make_HandleUse(gn, tGn);
 
 	/* Deal with wildcards and variables in any acquired sources.  */
-	for (ln = Lst_Succ(ln); ln != NULL; ln = np) {
-		np = Lst_Adv(ln);
-		SuffExpandChildren(Lst_Datum(ln), tGn);
-	}
+	expand_children_from(tGn, Lst_Succ(ln));
 
 	/* Keep track of another parent to which this beast is transformed so
 	 * the .IMPSRC variable can be set correctly for the parent.  */
@@ -1387,7 +1392,8 @@ SuffFindArchiveDeps(
 	/* Create the link between the two nodes right off. */
 	if (Lst_AddNew(&gn->children, mem)) {
 		Lst_AtEnd(&mem->parents, gn);
-		gn->unmade++;
+		if (!has_been_built(mem))
+			gn->unmade++;
 	}
 
 	/* Copy variables from member node to this one.  */
@@ -1513,8 +1519,6 @@ SuffFindNormalDeps(
     GNode	*gn,	    /* Node for which to find sources */
     Lst 	slst)
 {
-	LstNode	np;
-	LstNode ln;
 	LIST srcs;	/* List of sources at which to look */
 	LIST targs;	/* List of targets to which things can be
 			 * transformed. They all have the same file,
@@ -1608,10 +1612,7 @@ SuffFindNormalDeps(
 
 	/* Now we've got the important local variables set, expand any sources
 	 * that still contain variables or wildcards in their names.  */
-	for (ln = Lst_First(&gn->children); ln != NULL; ln = np) {
-		np = Lst_Adv(ln);
-		SuffExpandChildren(Lst_Datum(ln), gn);
-	}
+	expand_all_children(gn);
 
 	if (targ == NULL) {
 		if (DEBUG(SUFF))

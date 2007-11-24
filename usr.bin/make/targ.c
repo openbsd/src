@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.53 2007/11/10 13:59:48 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.54 2007/11/24 15:41:01 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ static LIST allTargets;
 static void TargFreeGN(void *);
 #endif
 #define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
-static const char *status_to_string(GNode *);
 
 
 GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
@@ -349,7 +348,7 @@ Targ_PrintType(int type)
 		}
     }
 }
-static const char *
+const char *
 status_to_string(GNode *gn)
 {
 	switch (gn->built_status) {

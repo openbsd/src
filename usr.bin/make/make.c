@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.51 2007/11/18 09:20:25 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.52 2007/11/24 15:41:01 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -60,6 +60,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stddef.h>
+#include <string.h>
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
@@ -80,9 +83,7 @@ static LIST	toBeMade;	/* The current fringe of the graph. These
 				 * MakeOODate. It is added to by
 				 * Make_Update and subtracted from by
 				 * MakeStartJobs */
-static int	numNodes;	/* Number of nodes to be processed. If this
-				 * is non-zero when Job_Empty() returns
-				 * true, there's a cycle in the graph */
+static struct ohash targets;	/* stuff we must build */
 
 static void MakeAddChild(void *, void *);
 static void MakeHandleUse(void *, void *);
@@ -91,30 +92,46 @@ static void MakePrintStatus(void *, void *);
 static bool try_to_make_node(GNode *);
 static void add_targets_to_make(Lst);
 
-/*-
- *-----------------------------------------------------------------------
- * MakeAddChild  --
- *	Function used by Make_Run to add a child to the list l.
- *	It will only add the child if its make field is false.
- *
- * Side Effects:
- *	The given list is extended
- *-----------------------------------------------------------------------
- */
-static void
-MakeAddChild(void *to_addp, void *lp)
-{
-	GNode	   *to_add = (GNode *)to_addp;
-	Lst 	   l = (Lst)lp;
+static bool has_unmade_predecessor(GNode *);
+static void requeue_successors(GNode *);
 
-	if (!to_add->must_make && !(to_add->type & OP_USE))
-		Lst_EnQueue(l, to_add);
+static bool
+has_unmade_predecessor(GNode *gn)
+{
+	LstNode ln;
+
+	if (Lst_IsEmpty(&gn->preds))
+		return false;
+
+
+	for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)) {
+		GNode	*pgn = (GNode *)Lst_Datum(ln);
+
+		if (pgn->must_make && pgn->built_status == UNKNOWN) {
+			if (DEBUG(MAKE))
+				printf("predecessor %s not made yet.\n", 
+				    pgn->name);
+			return true;
+		}
+	}
+	return false;
 }
 
 static void
-MakeHandleUse(void *pgn, void *cgn)
+requeue_successors(GNode *gn)
 {
-	Make_HandleUse((GNode *)pgn, (GNode *)cgn);
+	LstNode ln;
+	/* Deal with successor nodes. If any is marked for making and has an
+	 * unmade count of 0, has not been made and isn't in the examination
+	 * queue, it means we need to place it in the queue as it restrained
+	 * itself before.	*/
+	for (ln = Lst_First(&gn->successors); ln != NULL; ln = Lst_Adv(ln)) {
+		GNode	*succ = (GNode *)Lst_Datum(ln);
+
+		if (succ->must_make && succ->unmade == 0 
+		    && succ->built_status == UNKNOWN)
+			(void)Lst_QueueNew(&toBeMade, succ);
+	}
 }
 
 /*-
@@ -178,6 +195,9 @@ Make_Update(GNode *cgn)	/* the child node */
 		pgn = (GNode *)Lst_Datum(ln);
 		if (pgn->must_make) {
 			pgn->unmade--;
+			if (DEBUG(MAKE))
+				printf("%s--=%d ", 
+				    pgn->name, pgn->unmade);
 
 			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 				if (cgn->built_status == MADE) {
@@ -195,23 +215,17 @@ Make_Update(GNode *cgn)	/* the child node */
 				 * predecessors will be dealt with in
 				 * MakeStartJobs.
 				 */
+				if (DEBUG(MAKE))
+					printf("QUEUING ");
 				Lst_EnQueue(&toBeMade, pgn);
 			} else if (pgn->unmade < 0) {
-				Error("Graph cycles through %s", pgn->name);
+				Error("Child %s discovered graph cycles through %s", cgn->name, pgn->name);
 			}
 		}
 	}
-	/* Deal with successor nodes. If any is marked for making and has an
-	 * unmade count of 0, has not been made and isn't in the examination
-	 * queue, it means we need to place it in the queue as it restrained
-	 * itself before.	*/
-	for (ln = Lst_First(&cgn->successors); ln != NULL; ln = Lst_Adv(ln)) {
-		GNode	*succ = (GNode *)Lst_Datum(ln);
-
-		if (succ->must_make && succ->unmade == 0 
-		    && succ->built_status == UNKNOWN)
-			(void)Lst_QueueNew(&toBeMade, succ);
-	}
+	if (DEBUG(MAKE))
+		printf("\n");
+	requeue_successors(cgn);
 }
 
 static bool
@@ -219,35 +233,32 @@ try_to_make_node(GNode *gn)
 {
 	if (DEBUG(MAKE))
 		printf("Examining %s...", gn->name);
-	/*
-	 * Make sure any and all predecessors that are going to be made,
-	 * have been.
-	 */
-	if (!Lst_IsEmpty(&gn->preds)) {
-		LstNode ln;
-
-		for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)){
-			GNode	*pgn = (GNode *)Lst_Datum(ln);
-
-			if (pgn->must_make && pgn->built_status == UNKNOWN) {
-				if (DEBUG(MAKE))
-					printf(
-					    "predecessor %s not made yet.\n", 
-					    pgn->name);
-				/*
-				 * there's a predecessor as yet unmade, so we
-				 * just drop this node on the floor. When the
-				 * node in question has been made, it will
-				 * notice this node as being ready to make but
-				 * as yet unmade and will place the node on the
-				 * queue.
-				 */
-				return false;
-			}
-		}
+		
+	if (gn->unmade != 0) {
+		if (DEBUG(MAKE))
+			printf(" Requeuing (%d)\n", gn->unmade);
+		add_targets_to_make(&gn->children);
+		Lst_EnQueue(&toBeMade, gn);
+		return false;
+	}
+	if (has_been_built(gn)) {
+		if (DEBUG(MAKE))
+			printf(" already made\n");
+			return false;
+	}
+	if (has_unmade_predecessor(gn)) {
+		if (DEBUG(MAKE))
+			printf(" Dropping for now\n");
+		return false;
 	}
 
-	numNodes--;
+	Suff_FindDeps(gn);
+	if (gn->unmade != 0) {
+		if (DEBUG(MAKE))
+			printf(" Requeuing (after deps: %d)\n", gn->unmade);
+		add_targets_to_make(&gn->children);
+		return false;
+	}
 	if (Make_OODate(gn)) {
 		if (DEBUG(MAKE))
 			printf("out-of-date\n");
@@ -354,40 +365,63 @@ MakePrintStatus(
 }
 
 
-/*
- * Make an initial downward pass over the graph, marking nodes to be
- * made as we go down. We call Suff_FindDeps to find where a node is and
- * to get some children for it if it has none and also has no commands.
- * If the node is a leaf, we stick it on the toBeMade queue to
- * be looked at in a minute, otherwise we add its children to our queue
- * and go on about our business.
+static void
+MakeAddChild(void *to_addp, void *lp)
+{
+	GNode *gn = (GNode *)to_addp;
+
+	if (!gn->must_make && !(gn->type & OP_USE))
+		Lst_EnQueue((Lst)lp, gn);
+}
+
+static void
+MakeHandleUse(void *pgn, void *cgn)
+{
+	Make_HandleUse((GNode *)pgn, (GNode *)cgn);
+}
+
+/* Add stuff to the toBeMade queue. we try to sort things so that stuff 
+ * that can be done directly is done right away.  This won't be perfect,
+ * since some dependencies are only discovered later (e.g., SuffFindDeps).
  */
 static void
-add_targets_to_make(Lst targs)
+add_targets_to_make(Lst todo)
 {
-	LIST examine;	/* List of targets to examine */
 	GNode *gn;
+	LIST examine;
+	unsigned int slot;
 
-	Lst_Clone(&examine, targs, NOCOPY);
+	Lst_Clone(&examine, todo, NOCOPY);
+
 	while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
-		if (!gn->must_make) {
-			gn->must_make = true;
-			numNodes++;
+		if (gn->must_make) 	/* already known */
+			continue;
+		gn->must_make = true;
 
-			look_harder_for_target(gn);
-			/*
-			 * Apply any .USE rules before looking for implicit
-			 * dependencies to make sure everything that should have
-			 * commands has commands ...
-			 */
-			Lst_ForEach(&gn->children, MakeHandleUse, gn);
-			Suff_FindDeps(gn);
+		slot = ohash_qlookup(&targets, gn->name);
+		if (!ohash_find(&targets, slot))
+			ohash_insert(&targets, slot, gn);
 
-			if (gn->unmade != 0)
-				Lst_ForEach(&gn->children, MakeAddChild,
-				    &examine);
-			else
-				Lst_EnQueue(&toBeMade, gn);
+
+		look_harder_for_target(gn);
+		/*
+		 * Apply any .USE rules before looking for implicit
+		 * dependencies to make sure everything that should have
+		 * commands has commands ...
+		 */
+		Lst_ForEach(&gn->children, MakeHandleUse, gn);
+		expand_all_children(gn);
+
+		if (gn->unmade != 0) {
+			if (DEBUG(MAKE))
+				printf("%s: not queuing (%d unmade children)\n",
+				    gn->name, gn->unmade);
+			Lst_ForEach(&gn->children, MakeAddChild,
+			    &examine);
+		} else {
+			if (DEBUG(MAKE))
+				printf("%s: queuing\n", gn->name);
+			Lst_EnQueue(&toBeMade, gn);
 		}
 	}
 }
@@ -416,11 +450,13 @@ add_targets_to_make(Lst targs)
 bool
 Make_Run(Lst targs)		/* the initial list of targets */
 {
-	int 	    errors;	/* Number of errors the Job module reports */
+	int errors;	/* Number of errors the Job module reports */
+	GNode *gn;
+	unsigned int i;
+	bool cycle;
 
 	Static_Lst_Init(&toBeMade);
-
-	numNodes = 0;
+	ohash_init(&targets, 10, &gnode_info);
 
 	add_targets_to_make(targs);
 	if (queryFlag) {
@@ -458,13 +494,24 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	}
 
 	errors = Job_Finish();
+	cycle = false;
 
+	for (gn = ohash_first(&targets, &i); gn != NULL; 
+	    gn = ohash_next(&targets, &i)) {
+	    	if (has_been_built(gn))
+			continue;
+		cycle = true;
+		errors++;
+	    	printf("Error: target %s unaccounted for (%s)\n", 
+		    gn->name, status_to_string(gn));
+	}
 	/*
 	 * Print the final status of each target. E.g. if it wasn't made
 	 * because some inferior reported an error.
 	 */
-	errors = errors == 0 && numNodes != 0;
-	Lst_ForEach(targs, MakePrintStatus, &errors);
+	Lst_ForEach(targs, MakePrintStatus, &cycle);
+	if (errors)
+		Fatal("Errors while building");
 
 	return true;
 }

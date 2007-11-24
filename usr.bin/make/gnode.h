@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.10 2007/11/10 13:59:48 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.11 2007/11/24 15:41:01 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -138,6 +138,7 @@ struct GNode_ {
     char name[1];	/* The target's name */
 };
 
+#define has_been_built(gn)	((gn)->built_status == MADE || (gn)->built_status == UPTODATE)
 /*
  * The OP_ constants are used when parsing a dependency line as a way of
  * communicating to other parts of the program the way in which a target
