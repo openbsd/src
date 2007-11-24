@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2007/10/26 19:45:22 espie Exp $
+#	$OpenBSD: Makefile,v 1.57 2007/11/24 15:43:08 espie Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -189,7 +189,7 @@ MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 
 GENERATED= init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
 	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
-CLEANFILES+= ${GENERATED}
+CLEANFILES+= ${GENERATED} stamp_namebuild
 
 .if make(install)
 SUBDIR+= doc
@@ -235,11 +235,14 @@ comp_captab.c: make_hash ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/tic.h ${.CURDIR}/te
 lib_keyname.c: ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/curses.h ${.CURDIR}/term.h  ${.CURDIR}/tinfo/keys.list ${.CURDIR}/base/MKkeyname.awk
 	${AWK} -f ${.CURDIR}/base/MKkeyname.awk ${.CURDIR}/tinfo/keys.list > ${.TARGET}
 
-names.c codes.c: ${.CURDIR}/tinfo/MKnames.awk
+names.c codes.c: stamp_namebuild
+
+stamp_namebuild: ${.CURDIR}/tinfo/MKnames.awk
 	${AWK} -f ${.CURDIR}/tinfo/MKnames.awk ${.CURDIR}/Caps
 	cat namehdr boolnames boolfnames numnames numfnames strnames strfnames nameftr > names.c
 	cat namehdr boolcodes numcodes strcodes codeftr > codes.c
 	-rm -f namehdr nameftr codeftr boolnames boolfnames boolcodes numnames numfnames numcodes strnames strfnames strcodes
+	touch $@
 
 unctrl.c: ${.CURDIR}/base/MKunctrl.awk
 	echo | ${AWK} -f ${.CURDIR}/base/MKunctrl.awk > ${.TARGET}
