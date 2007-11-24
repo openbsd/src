@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.66 2007/11/24 16:13:50 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.67 2007/11/24 19:00:44 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -588,7 +588,8 @@ request url filter "example.com/test.cgi?val=1"
 .Xr hoststated 8
 will match the full URL and different possible suffix/prefix
 combinations by stripping subdomains and path components (up to 5
-levels), and the query string. For example, the following
+levels), and the query string.
+For example, the following
 lookups will be done for
 .Ar http://www.example.com:81/1/2/3/4/5.html?query=yes :
 .Bd -literal -offset indent
