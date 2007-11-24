@@ -1,5 +1,5 @@
 /*-
- * $OpenBSD: table.c,v 1.5 2007/11/22 21:20:43 stefan Exp $
+ * $OpenBSD: table.c,v 1.6 2007/11/24 00:44:59 stefan Exp $
  *
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -165,7 +165,7 @@ struct optab table[] = {
 	SAREG,	TWORD,
 	SAREG,	TCHAR|TUCHAR,
 		NAREG|NASL|NSPECIAL,	RESC1,
-		"	andi. A1,AL,255" COM "convert (u)int to (u)char", },
+		"	andi. A1,AL,255" COM "convert (u)int to (u)char\n", },
 
 /* convert (u)int to (u)short */
 { SCONV,	INAREG,
