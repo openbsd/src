@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.17 2007/11/22 23:33:42 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.18 2007/11/24 14:17:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -285,10 +285,24 @@ m197_bootstrap()
 	extern struct cmmu_p cmmu88110;
 	extern struct cmmu_p cmmu88410;
 	extern void set_tcfp(void);
+	u_int16_t cpu;
 
-	if (mc88410_present())
+	if (mc88410_present()) {
 		cmmu = &cmmu88410;	/* 197SP/197DP */
-	else
+
+		/*
+		 * Make sure all interrupts (levels 1 to 7) get routed
+		 * to the boot cpu.
+		 *
+		 * We only need to write to one ISEL registers, this will
+		 * set the correct value in the other one, since we set
+		 * all the active bits.
+		 */
+		cpu = *(volatile u_int16_t *)(BS_BASE + BS_GCSR) &
+		    BS_GCSR_CPUID;
+		*(volatile u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) =
+		    0xfe;
+	} else
 		cmmu = &cmmu88110;	/* 197LE */
 
 	md_interrupt_func_ptr = m197_ext_int;
