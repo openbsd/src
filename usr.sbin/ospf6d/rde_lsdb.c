@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.5 2007/10/16 21:58:17 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.6 2007/11/24 16:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -287,8 +287,8 @@ lsa_router_check(struct lsa *lsa, u_int16_t len)
 int
 lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 {
-	struct lsa	*dummy;
 #if 0
+	struct lsa	*dummy;
 	struct iface	*iface;
 
 	if (nbr->self)
@@ -304,7 +304,6 @@ lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 
 	return (0);
 self:
-#endif
 	if (v == NULL) {
 		/*
 		 * LSA is no longer announced, remove by premature aging.
@@ -333,6 +332,8 @@ self:
 	v->lsa->hdr.seq_num = new->hdr.seq_num;
 	lsa_refresh(v);
 	return (1);
+#endif
+	return (0);
 }
 
 int
