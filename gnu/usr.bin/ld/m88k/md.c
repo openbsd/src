@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.4 2002/07/19 19:28:12 marc Exp $*/
+/* *	$OpenBSD: md.c,v 1.5 2007/11/24 14:14:30 miod Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -295,7 +295,7 @@ md_midcompat(struct exec *hp)
 void
 md_swapin_exec_hdr(struct exec *h)
 {
-	int skip = 1;
+	int skip = 0;
 
 	if (!N_BADMAG(*h))
 		skip = 1;
@@ -306,8 +306,8 @@ md_swapin_exec_hdr(struct exec *h)
 void
 md_swapout_exec_hdr(struct exec *h)
 {
-	/* NetBSD: Always leave magic alone -- unless on little endian*/
-	int skip = 1;
+	int skip = 0;
+
 #if 0
 	if (N_GETMAGIC(*h) == OMAGIC)
 		skip = 0;
