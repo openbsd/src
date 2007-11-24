@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.70 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.71 2007/11/24 17:43:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1613,6 +1613,8 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *str,
 		if (dots > (RELAY_MAXLOOKUPLEVELS - 2))
 			break;
 	}
+	if (dots == -1)
+		dots = 0;
 	hi[dots] = ph;
 
 	if ((pp = strdup(cre->path)) == NULL) {
