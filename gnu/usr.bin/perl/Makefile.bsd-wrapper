@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.71 2006/11/09 21:31:12 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.72 2007/11/24 16:03:37 espie Exp $
 #
 # Build wrapper for Perl 5.8.6
 #
@@ -9,6 +9,7 @@
 # There is no point in building a profiled libperl that is never used.
 NOPROFILE=
 
+TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 # To build a threaded perl, uncomment this.  Not stable on all platforms...
 #THREADED_PERL=true
 
@@ -29,530 +30,7 @@ CFLAGS+= -pthread
 # with the one installed with X11.
 LNDIR=		/usr/bin/lndir
 
-# If we are cross-compiling, we use the native pod2man.
-# Otherwise, we use the pod2man (and libperl) we just
-# built since we don't know what's in the tree.
-TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
-.if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
-POD2MAN=	/usr/bin/pod2man
-.else
-POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
-		${.OBJDIR}/pod/pod2man
-.endif
 H2PH=		/usr/bin/h2ph
-
-MANLOCALBUILD=	yes
-
-MANALL=
-_quick1=
-_quick3p=
-MANSRCALL=
-
-.for page sect file in \
-    a2p 1 			x2p/a2p.pod \
-    c2ph 1			utils/c2ph \
-    cpan 1			lib/CPAN/bin/cpan \
-    dprofpp 1 			utils/dprofpp \
-    enc2xs 1			ext/Encode/bin/enc2xs \
-    find2perl 1			x2p/find2perl \
-    h2ph 1			utils/h2ph \
-    h2xs 1			utils/h2xs \
-    libnetcfg 1			utils/libnetcfg.PL \
-    perl 1			pod/perl.pod \
-    perl5004delta 1		pod/perl5004delta.pod \
-    perl5005delta 1		pod/perl5005delta.pod \
-    perl561delta 1		pod/perl561delta.pod \
-    perl56delta 1		pod/perl56delta.pod \
-    perl570delta 1		pod/perl570delta.pod \
-    perl571delta 1		pod/perl571delta.pod \
-    perl572delta 1		pod/perl572delta.pod \
-    perl573delta 1		pod/perl573delta.pod \
-    perl58delta 1		pod/perl58delta.pod \
-    perl581delta 1		pod/perl581delta.pod \
-    perl582delta 1		pod/perl582delta.pod \
-    perl583delta 1		pod/perl583delta.pod \
-    perl584delta 1		pod/perl584delta.pod \
-    perl585delta 1		pod/perl585delta.pod \
-    perl586delta 1		pod/perl586delta.pod \
-    perl587delta 1		pod/perl587delta.pod \
-    perl588delta 1		pod/perl588delta.pod \
-    perlapi 1			pod/perlapi.pod \
-    perlapio 1			pod/perlapio.pod \
-    perlartistic 1		pod/perlartistic.pod \
-    perlbook 1			pod/perlbook.pod \
-    perlboot 1			pod/perlboot.pod \
-    perlbot 1			pod/perlbot.pod \
-    perlbug 1			utils/perlbug \
-    perlcall 1			pod/perlcall.pod \
-    perlcc 1			utils/perlcc \
-    perlcheat 1			pod/perlcheat.pod \
-    perlclib 1			pod/perlclib.pod \
-    perlcn 1			README.cn \
-    perlcompile 1		pod/perlcompile.pod \
-    perldata 1			pod/perldata.pod \
-    perldbmfilter 1		pod/perldbmfilter.pod \
-    perldebguts 1		pod/perldebguts.pod \
-    perldebtut 1		pod/perldebtut.pod \
-    perldebug 1			pod/perldebug.pod \
-    perldiag 1			pod/perldiag.pod \
-    perldoc 1			pod/perldoc.pod \
-    perldsc 1			pod/perldsc.pod \
-    perlembed 1			pod/perlembed.pod \
-    perlfaq 1			pod/perlfaq.pod \
-    perlfaq1 1			pod/perlfaq1.pod \
-    perlfaq2 1			pod/perlfaq2.pod \
-    perlfaq3 1			pod/perlfaq3.pod \
-    perlfaq4 1			pod/perlfaq4.pod \
-    perlfaq5 1			pod/perlfaq5.pod \
-    perlfaq6 1			pod/perlfaq6.pod \
-    perlfaq7 1			pod/perlfaq7.pod \
-    perlfaq8 1			pod/perlfaq8.pod \
-    perlfaq9 1			pod/perlfaq9.pod \
-    perlfilter 1		pod/perlfilter.pod \
-    perlfork 1			pod/perlfork.pod \
-    perlform 1			pod/perlform.pod \
-    perlfunc 1			pod/perlfunc.pod \
-    perlglossary 1		pod/perlglossary.pod \
-    perlgpl 1			pod/perlgpl.pod \
-    perlguts 1			pod/perlguts.pod \
-    perlhack 1			pod/perlhack.pod \
-    perlhist 1			pod/perlhist.pod \
-    perlintern 1		pod/perlintern.pod \
-    perlintro 1			pod/perlintro.pod \
-    perliol 1			pod/perliol.pod \
-    perlipc 1			pod/perlipc.pod \
-    perlivp 1			utils/perlivp.PL \
-    perljp 1			README.jp \
-    perlko 1			README.ko \
-    perllexwarn 1		pod/perllexwarn.pod \
-    perllocale 1		pod/perllocale.pod \
-    perllol 1			pod/perllol.pod \
-    perlmod 1			pod/perlmod.pod \
-    perlmodinstall 1		pod/perlmodinstall.pod \
-    perlmodlib 1		pod/perlmodlib.pod \
-    perlmodstyle 1		pod/perlmodstyle.pod \
-    perlnewmod 1		pod/perlnewmod.pod \
-    perlnumber 1		pod/perlnumber.pod \
-    perlobj 1			pod/perlobj.pod \
-    perlop 1			pod/perlop.pod \
-    perlopentut 1		pod/perlopentut.pod \
-    perlothrtut 1		pod/perlothrtut.pod \
-    perlpacktut 1		pod/perlpacktut.pod \
-    perlpod 1			pod/perlpod.pod \
-    perlpodspec 1		pod/perlpodspec.pod \
-    perlport 1			pod/perlport.pod \
-    perlre 1			pod/perlre.pod \
-    perlref 1			pod/perlref.pod \
-    perlreftut 1		pod/perlreftut.pod \
-    perlrequick	1		pod/perlrequick.pod \
-    perlreref 1			pod/perlreref.pod \
-    perlretut 1			pod/perlretut.pod \
-    perlrun 1			pod/perlrun.pod \
-    perlsec 1			pod/perlsec.pod \
-    perlstyle 1			pod/perlstyle.pod \
-    perlsub 1			pod/perlsub.pod \
-    perlsyn 1			pod/perlsyn.pod \
-    perlthrtut 1		pod/perlthrtut.pod \
-    perltie 1			pod/perltie.pod \
-    perltoc 1			pod/perltoc.pod \
-    perltodo 1			pod/perltodo.pod \
-    perltooc 1			pod/perltooc.pod \
-    perltoot 1			pod/perltoot.pod \
-    perltrap 1			pod/perltrap.pod \
-    perltw 1			README.tw \
-    perlunicode 1		pod/perlunicode.pod \
-    perluniintro 1		pod/perluniintro.pod \
-    perlutil 1			pod/perlutil.pod \
-    perlvar 1			pod/perlvar.pod \
-    perlxs 1			pod/perlxs.pod \
-    perlxstut 1			pod/perlxstut.pod \
-    piconv 1			ext/Encode/bin/piconv \
-    pl2pm 1			utils/pl2pm \
-    pod2html 1			pod/pod2html \
-    pod2latex 1			pod/pod2latex.PL \
-    pod2man 1			pod/pod2man \
-    pod2text 1			pod/pod2text \
-    pod2usage 1			pod/pod2usage \
-    podchecker 1		pod/podchecker \
-    podselect 1			pod/podselect \
-    prove 1			lib/Test/Harness/bin/prove \
-    s2p	1			x2p/s2p \
-    splain 1			utils/splain \
-    xsubpp 1			lib/ExtUtils/xsubpp \
-    AnyDBM_File	3p		lib/AnyDBM_File.pm \
-    Attribute::Handlers 3p	lib/Attribute/Handlers.pm \
-    AutoLoader 3p		lib/AutoLoader.pm \
-    AutoSplit 3p		lib/AutoSplit.pm \
-    B 3p			ext/B/B.pm \
-    B::Asmdata 3p		ext/B/B/Asmdata.pm \
-    B::Assembler 3p		ext/B/B/Assembler.pm \
-    B::Bblock 3p		ext/B/B/Bblock.pm \
-    B::Bytecode 3p		ext/B/B/Bytecode.pm \
-    B::C 3p			ext/B/B/C.pm \
-    B::CC 3p			ext/B/B/CC.pm \
-    B::Concise 3p		ext/B/B/Concise.pm \
-    B::Debug 3p			ext/B/B/Debug.pm \
-    B::Deparse 3p		ext/B/B/Deparse.pm \
-    B::Disassembler 3p		ext/B/B/Disassembler.pm \
-    B::Lint 3p			ext/B/B/Lint.pm \
-    B::Showlex 3p		ext/B/B/Showlex.pm \
-    B::Stackobj 3p		ext/B/B/Stackobj.pm \
-    B::Stash 3p			ext/B/B/Stash.pm \
-    B::Terse 3p			ext/B/B/Terse.pm \
-    B::Xref 3p			ext/B/B/Xref.pm \
-    Benchmark 3p		lib/Benchmark.pm \
-    ByteLoader 3p		ext/ByteLoader/ByteLoader.pm \
-    CGI 3p			lib/CGI.pm \
-    CGI::Apache 3p		lib/CGI/Apache.pm \
-    CGI::Carp 3p		lib/CGI/Carp.pm \
-    CGI::Cookie 3p		lib/CGI/Cookie.pm \
-    CGI::Fast 3p		lib/CGI/Fast.pm \
-    CGI::Pretty 3p		lib/CGI/Pretty.pm \
-    CGI::Push 3p		lib/CGI/Push.pm \
-    CGI::Switch 3p		lib/CGI/Switch.pm \
-    CGI::Util 3p		lib/CGI/Util.pm \
-    CPAN 3p			lib/CPAN.pm \
-    CPAN::FirstTime 3p		lib/CPAN/FirstTime.pm \
-    CPAN::Nox 3p		lib/CPAN/Nox.pm \
-    Carp 3p			lib/Carp.pm \
-    Carp::Heavy 3p		lib/Carp/Heavy.pm \
-    Class::ISA 3p		lib/Class/ISA.pm \
-    Class::Struct 3p		lib/Class/Struct.pm \
-    Config 3p			lib/Config.pod \
-    Cwd 3p			lib/Cwd.pm \
-    DB 3p			lib/DB.pm \
-    DB_File 3p			ext/DB_File/DB_File.pm \
-    DBM_Filter 3p		lib/DBM_Filter.pm \
-    DBM_Filter::compress 3p	lib/DBM_Filter/compress.pm \
-    DBM_Filter::encode 3p	lib/DBM_Filter/encode.pm \
-    DBM_Filter::int32 3p	lib/DBM_Filter/int32.pm \
-    DBM_Filter::null 3p		lib/DBM_Filter/null.pm \
-    DBM_Filter::utf8 3p		lib/DBM_Filter/utf8.pm \
-    Data::Dumper 3p		ext/Data/Dumper/Dumper.pm \
-    Devel::DProf 3p		ext/Devel/DProf/DProf.pm \
-    Devel::PPPort 3p		ext/Devel/PPPort/PPPort.pm \
-    Devel::Peek 3p		ext/Devel/Peek/Peek.pm \
-    Devel::SelfStubber 3p	lib/Devel/SelfStubber.pm \
-    Digest 3p			lib/Digest.pm \
-    Digest::base 3p		lib/Digest/base.pm \
-    Digest::file 3p		lib/Digest/file.pm \
-    Digest::MD5 3p		ext/Digest/MD5/MD5.pm \
-    DirHandle 3p		lib/DirHandle.pm \
-    Dumpvalue 3p		lib/Dumpvalue.pm \
-    DynaLoader 3p		ext/DynaLoader/XSLoader_pm.PL \
-    Encode 3p			ext/Encode/Encode.pm \
-    Encode::Alias 3p		ext/Encode/lib/Encode/Alias.pm \
-    Encode::Byte 3p		ext/Encode/Byte/Byte.pm \
-    Encode::CJKConstants 3p	ext/Encode/lib/Encode/CJKConstants.pm \
-    Encode::CN 3p		ext/Encode/CN/CN.pm \
-    Encode::CN::HZ 3p		ext/Encode/lib/Encode/CN/HZ.pm \
-    Encode::Config 3p		ext/Encode/lib/Encode/Config.pm \
-    Encode::EBCDIC 3p		ext/Encode/EBCDIC/EBCDIC.pm \
-    Encode::Encoder 3p		ext/Encode/lib/Encode/Encoder.pm \
-    Encode::Encoding 3p		ext/Encode/lib/Encode/Encoding.pm \
-    Encode::Guess 3p		ext/Encode/lib/Encode/Guess.pm \
-    Encode::JP 3p		ext/Encode/JP/JP.pm \
-    Encode::JP::H2Z 3p		ext/Encode/lib/Encode/JP/H2Z.pm \
-    Encode::JP::JIS7 3p		ext/Encode/lib/Encode/JP/JIS7.pm \
-    Encode::KR 3p		ext/Encode/KR/KR.pm \
-    Encode::KR::2022_KR 3p	ext/Encode/lib/Encode/KR/2022_KR.pm \
-    Encode::MIME::Header 3p	ext/Encode/lib/Encode/MIME/Header.pm \
-    Encode::PerlIO 3p		ext/Encode/lib/Encode/PerlIO.pod \
-    Encode::Supported 3p	ext/Encode/lib/Encode/Supported.pod \
-    Encode::Symbol 3p		ext/Encode/Symbol/Symbol.pm \
-    Encode::TW 3p		ext/Encode/TW/TW.pm \
-    Encode::Unicode 3p		ext/Encode/Unicode/Unicode.pm \
-    Encode::Unicode::UTF7 3p	ext/Encode/lib/Encode/Unicode/UTF7.pm \
-    English 3p			lib/English.pm \
-    Env 3p			lib/Env.pm \
-    Errno 3p			ext/Errno/Errno_pm.PL \
-    Exporter 3p			lib/Exporter.pm \
-    Exporter::Heavy 3p		lib/Exporter/Heavy.pm \
-    ExtUtils::Command 3p	lib/ExtUtils/Command.pm \
-    ExtUtils::Command::MM 3p	lib/ExtUtils/Command/MM.pm \
-    ExtUtils::Constant 3p	lib/ExtUtils/Constant.pm \
-    ExtUtils::Constant::Base 3p	lib/ExtUtils/Constant/Base.pm \
-    ExtUtils::Constant::Utils 3p	lib/ExtUtils/Constant/Utils.pm \
-    ExtUtils::Constant::XS 3p	lib/ExtUtils/Constant/XS.pm \
-    ExtUtils::Embed 3p		lib/ExtUtils/Embed.pm \
-    ExtUtils::Install 3p	lib/ExtUtils/Install.pm \
-    ExtUtils::Installed 3p	lib/ExtUtils/Installed.pm \
-    ExtUtils::Liblist 3p	lib/ExtUtils/Liblist.pm \
-    ExtUtils::MM 3p		lib/ExtUtils/MM.pm \
-    ExtUtils::MM_AIX 3p		lib/ExtUtils/MM_AIX.pm \
-    ExtUtils::MM_Any 3p		lib/ExtUtils/MM_Any.pm \
-    ExtUtils::MM_BeOS 3p	lib/ExtUtils/MM_BeOS.pm \
-    ExtUtils::MM_Cygwin 3p	lib/ExtUtils/MM_Cygwin.pm \
-    ExtUtils::MM_DOS 3p		lib/ExtUtils/MM_DOS.pm \
-    ExtUtils::MM_MacOS 3p	lib/ExtUtils/MM_MacOS.pm \
-    ExtUtils::MM_NW5 3p		lib/ExtUtils/MM_NW5.pm \
-    ExtUtils::MM_OS2 3p		lib/ExtUtils/MM_OS2.pm \
-    ExtUtils::MM_QNX 3p		lib/ExtUtils/MM_QNX.pm \
-    ExtUtils::MM_UWIN 3p	lib/ExtUtils/MM_UWIN.pm \
-    ExtUtils::MM_Unix 3p	lib/ExtUtils/MM_Unix.pm \
-    ExtUtils::MM_VMS 3p		lib/ExtUtils/MM_VMS.pm \
-    ExtUtils::MM_VOS 3p		lib/ExtUtils/MM_VOS.pm \
-    ExtUtils::MM_Win32 3p	lib/ExtUtils/MM_Win32.pm \
-    ExtUtils::MM_Win95 3p	lib/ExtUtils/MM_Win95.pm \
-    ExtUtils::MY 3p		lib/ExtUtils/MY.pm \
-    ExtUtils::MakeMaker 3p	lib/ExtUtils/MakeMaker.pm \
-    ExtUtils::MakeMaker::Config 3p	lib/ExtUtils/MakeMaker/Config.pm \
-    ExtUtils::MakeMaker::FAQ 3p	lib/ExtUtils/MakeMaker/FAQ.pod \
-    ExtUtils::MakeMaker::Tutorial 3p	lib/ExtUtils/MakeMaker/Tutorial.pod \
-    ExtUtils::MakeMaker::bytes 3p	lib/ExtUtils/MakeMaker/bytes.pm \
-    ExtUtils::MakeMaker::vmsish 3p	lib/ExtUtils/MakeMaker/vmsish.pm \
-    ExtUtils::Manifest 3p	lib/ExtUtils/Manifest.pm \
-    ExtUtils::Miniperl 3p	lib/ExtUtils/Miniperl.pm \
-    ExtUtils::Mkbootstrap 3p	lib/ExtUtils/Mkbootstrap.pm \
-    ExtUtils::Mksymlists 3p	lib/ExtUtils/Mksymlists.pm \
-    ExtUtils::Packlist 3p	lib/ExtUtils/Packlist.pm \
-    ExtUtils::testlib 3p	lib/ExtUtils/testlib.pm \
-    Fatal 3p			lib/Fatal.pm \
-    Fcntl 3p			lib/Fcntl.pm \
-    File::Basename 3p		lib/File/Basename.pm \
-    File::CheckTree 3p		lib/File/CheckTree.pm \
-    File::Compare 3p		lib/File/Compare.pm \
-    File::Copy 3p		lib/File/Copy.pm \
-    File::DosGlob 3p		lib/File/DosGlob.pm \
-    File::Find 3p		lib/File/Find.pm \
-    File::Glob 3p		lib/File/Glob.pm \
-    File::Path 3p		lib/File/Path.pm \
-    File::Spec 3p		lib/File/Spec.pm \
-    File::Spec::Cygwin 3p	lib/File/Spec/Cygwin.pm \
-    File::Spec::Epoc 3p		lib/File/Spec/Epoc.pm \
-    File::Spec::Functions 3p	lib/File/Spec/Functions.pm \
-    File::Spec::Mac 3p		lib/File/Spec/Mac.pm \
-    File::Spec::OS2 3p		lib/File/Spec/OS2.pm \
-    File::Spec::Unix 3p		lib/File/Spec/Unix.pm \
-    File::Spec::VMS 3p		lib/File/Spec/VMS.pm \
-    File::Spec::Win32 3p	lib/File/Spec/Win32.pm \
-    File::Temp 3p		lib/File/Temp.pm \
-    File::stat 3p		lib/File/stat.pm \
-    FileCache 3p		lib/FileCache.pm \
-    FileHandle 3p		lib/FileHandle.pm \
-    Filter::Simple 3p		lib/Filter/Simple.pm \
-    Filter::Util::Call 3p	ext/Filter/Util/Call/Call.pm \
-    FindBin 3p			lib/FindBin.pm \
-    Getopt::Long 3p		lib/Getopt/Long.pm \
-    Getopt::Std 3p		lib/Getopt/Std.pm \
-    Hash::Util 3p		lib/Hash/Util.pm \
-    I18N::Collate 3p		lib/I18N/Collate.pm \
-    I18N::LangTags 3p		lib/I18N/LangTags.pm \
-    I18N::LangTags::Detect 3p	lib/I18N/LangTags/Detect.pm \
-    I18N::LangTags::List 3p	lib/I18N/LangTags/List.pm \
-    I18N::Langinfo 3p		ext/I18N/Langinfo/Langinfo.pm \
-    IO 3p			lib/IO.pm \
-    IO::Dir 3p			lib/IO/Dir.pm \
-    IO::File 3p			lib/IO/File.pm \
-    IO::Handle 3p		lib/IO/Handle.pm \
-    IO::Pipe 3p			lib/IO/Pipe.pm \
-    IO::Poll 3p			lib/IO/Poll.pm \
-    IO::Seekable 3p		lib/IO/Seekable.pm \
-    IO::Select 3p		lib/IO/Select.pm \
-    IO::Socket 3p		lib/IO/Socket.pm \
-    IO::Socket::INET 3p		lib/IO/Socket/INET.pm \
-    IO::Socket::UNIX 3p		lib/IO/Socket/UNIX.pm \
-    IPC::Msg 3p			lib/IPC/Msg.pm \
-    IPC::Open2 3p		lib/IPC/Open2.pm \
-    IPC::Open3 3p		lib/IPC/Open3.pm \
-    IPC::Semaphore 3p		lib/IPC/Semaphore.pm \
-    IPC::SysV 3p		lib/IPC/SysV.pm \
-    List::Util 3p		ext/List/Util/lib/List/Util.pm \
-    Locale::Constants 3p	lib/Locale/Constants.pod \
-    Locale::Country 3p		lib/Locale/Country.pod \
-    Locale::Currency 3p		lib/Locale/Currency.pod \
-    Locale::Language 3p		lib/Locale/Language.pod \
-    Locale::Maketext 3p		lib/Locale/Maketext.pod \
-    Locale::Maketext::TPJ13 3p	lib/Locale/Maketext/TPJ13.pod \
-    Locale::Script 3p		lib/Locale/Script.pod \
-    MIME::Base64 3p		ext/MIME/Base64/Base64.pm \
-    MIME::QuotedPrint 3p	ext/MIME/Base64/QuotedPrint.pm \
-    Math::BigFloat 3p		lib/Math/BigFloat.pm \
-    Math::BigInt 3p		lib/Math/BigInt.pm \
-    Math::BigInt::Calc 3p	lib/Math/BigInt/Calc.pm \
-    Math::BigInt::CalcEmu 3p	lib/Math/BigInt/CalcEmu.pm \
-    Math::BigRat 3p		lib/Math/BigRat.pm \
-    Math::Complex 3p		lib/Math/Complex.pm \
-    Math::Trig 3p		lib/Math/Trig.pm \
-    Memoize 3p			lib/Memoize.pm \
-    Memoize::AnyDBM_File 3p	lib/Memoize/AnyDBM_File.pm \
-    Memoize::Expire 3p		lib/Memoize/Expire.pm \
-    Memoize::ExpireFile 3p	lib/Memoize/ExpireFile.pm \
-    Memoize::ExpireTest 3p	lib/Memoize/ExpireTest.pm \
-    Memoize::NDBM_File 3p	lib/Memoize/NDBM_File.pm \
-    Memoize::SDBM_File 3p	lib/Memoize/SDBM_File.pm \
-    Memoize::Storable 3p	lib/Memoize/Storable.pm \
-    NDBM_File 3p		lib/NDBM_File.pm \
-    NEXT 3p			lib/NEXT.pm \
-    Net::Cmd 3p			lib/Net/Cmd.pm \
-    Net::Config 3p		lib/Net/Config.pm \
-    Net::Domain 3p		lib/Net/Domain.pm \
-    Net::FTP 3p			lib/Net/FTP.pm \
-    Net::NNTP 3p		lib/Net/NNTP.pm \
-    Net::Netrc 3p		lib/Net/Netrc.pm \
-    Net::POP3 3p		lib/Net/POP3.pm \
-    Net::Ping 3p		lib/Net/Ping.pm \
-    Net::SMTP 3p		lib/Net/SMTP.pm \
-    Net::Time 3p		lib/Net/Time.pm \
-    Net::hostent 3p		lib/Net/hostent.pm \
-    Net::libnetFAQ 3p		lib/Net/libnetFAQ.pod \
-    Net::netent 3p		lib/Net/netent.pm \
-    Net::protoent 3p		lib/Net/protoent.pm \
-    Net::servent 3p		lib/Net/servent.pm \
-    O 3p			lib/O.pm \
-    ODBM_File 3p		lib/ODBM_File.pm \
-    Opcode 3p			lib/Opcode.pm \
-    POSIX 3p			lib/POSIX.pod \
-    PerlIO 3p			lib/PerlIO.pm \
-    PerlIO::encoding 3p		ext/PerlIO/encoding/encoding.pm \
-    PerlIO::scalar 3p		ext/PerlIO/scalar/scalar.pm \
-    PerlIO::via 3p		ext/PerlIO/via/via.pm \
-    PerlIO::via::QuotedPrint 3p	lib/PerlIO/via/QuotedPrint.pm \
-    Pod::Checker 3p		lib/Pod/Checker.pm \
-    Pod::Find 3p		lib/Pod/Find.pm \
-    Pod::Html 3p		lib/Pod/Html.pm \
-    Pod::InputObjects 3p	lib/Pod/InputObjects.pm \
-    Pod::LaTeX 3p		lib/Pod/LaTeX.pm \
-    Pod::Man 3p			lib/Pod/Man.pm \
-    Pod::ParseLink 3p		lib/Pod/ParseLink.pm \
-    Pod::ParseUtils 3p		lib/Pod/ParseUtils.pm \
-    Pod::Parser 3p		lib/Pod/Parser.pm \
-    Pod::Perldoc::ToChecker 3p	lib/Pod/Perldoc/ToChecker.pm \
-    Pod::Perldoc::ToMan 3p	lib/Pod/Perldoc/ToMan.pm \
-    Pod::Perldoc::ToNroff 3p	lib/Pod/Perldoc/ToNroff.pm \
-    Pod::Perldoc::ToPod 3p	lib/Pod/Perldoc/ToPod.pm \
-    Pod::Perldoc::ToRtf 3p	lib/Pod/Perldoc/ToRtf.pm \
-    Pod::Perldoc::ToText 3p	lib/Pod/Perldoc/ToText.pm \
-    Pod::Perldoc::ToTk 3p	lib/Pod/Perldoc/ToTk.pm \
-    Pod::Perldoc::ToXml 3p	lib/Pod/Perldoc/ToXml.pm \
-    Pod::PlainText 3p		lib/Pod/PlainText.pm \
-    Pod::Plainer 3p		lib/Pod/Plainer.pm \
-    Pod::Select 3p		lib/Pod/Select.pm \
-    Pod::Text 3p		lib/Pod/Text.pm \
-    Pod::Text::Color 3p		lib/Pod/Text/Color.pm \
-    Pod::Text::Overstrike 3p	lib/Pod/Text/Overstrike.pm \
-    Pod::Text::Termcap 3p	lib/Pod/Text/Termcap.pm \
-    Pod::Usage 3p		lib/Pod/Usage.pm \
-    SDBM_File 3p		lib/SDBM_File.pm \
-    Safe 3p			lib/Safe.pm \
-    Scalar::Util 3p		ext/List/Util/lib/Scalar/Util.pm \
-    Search::Dict 3p		lib/Search/Dict.pm \
-    SelectSaver 3p		lib/SelectSaver.pm \
-    SelfLoader 3p		lib/SelfLoader.pm \
-    Shell 3p			lib/Shell.pm \
-    Socket 3p			lib/Socket.pm \
-    Storable 3p			ext/Storable/Storable.pm \
-    Switch 3p			lib/Switch.pm \
-    Symbol 3p			lib/Symbol.pm \
-    Sys::Hostname 3p		lib/Sys/Hostname.pm \
-    Sys::Syslog 3p		lib/Sys/Syslog.pm \
-    Term::ANSIColor 3p		lib/Term/ANSIColor.pm \
-    Term::Cap 3p		lib/Term/Cap.pm \
-    Term::Complete 3p		lib/Term/Complete.pm \
-    Term::ReadLine 3p		lib/Term/ReadLine.pm \
-    Test 3p			lib/Test.pm \
-    Test::Builder 3p		lib/Test/Builder.pm \
-    Test::Builder::Module 3p	lib/Test/Builder/Module.pm \
-    Test::Builder::Tester 3p	lib/Test/Builder/Tester.pm \
-    Test::Builder::Tester::Color 3p	lib/Test/Builder/Tester/Color.pm \
-    Test::Harness 3p		lib/Test/Harness.pm \
-    Test::Harness::Assert 3p	lib/Test/Harness/Assert.pm \
-    Test::Harness::Iterator 3p	lib/Test/Harness/Iterator.pm \
-    Test::Harness::Point 3p	lib/Test/Harness/Point.pm \
-    Test::Harness::Straps 3p	lib/Test/Harness/Straps.pm \
-    Test::Harness::TAP 3p	lib/Test/Harness/TAP.pod \
-    Test::More 3p		lib/Test/More.pm \
-    Test::Simple 3p		lib/Test/Simple.pm \
-    Test::Tutorial 3p		lib/Test/Tutorial.pod \
-    Text::Abbrev 3p		lib/Text/Abbrev.pm \
-    Text::Balanced 3p		lib/Text/Balanced.pm \
-    Text::ParseWords 3p		lib/Text/ParseWords.pm \
-    Text::Soundex 3p		lib/Text/Soundex.pm \
-    Text::Tabs 3p		lib/Text/Tabs.pm \
-    Text::Wrap 3p		lib/Text/Wrap.pm \
-    Thread 3p			lib/Thread.pm \
-    Thread::Queue 3p		lib/Thread/Queue.pm \
-    Thread::Semaphore 3p	lib/Thread/Semaphore.pm \
-    Tie::Array 3p		lib/Tie/Array.pm \
-    Tie::File 3p		lib/Tie/File.pm \
-    Tie::Handle 3p		lib/Tie/Handle.pm \
-    Tie::Hash 3p		lib/Tie/Hash.pm \
-    Tie::Memoize 3p		lib/Tie/Memoize.pm \
-    Tie::RefHash 3p		lib/Tie/RefHash.pm \
-    Tie::Scalar 3p		lib/Tie/Scalar.pm \
-    Tie::SubstrHash 3p		lib/Tie/SubstrHash.pm \
-    Time::HiRes 3p		ext/Time/HiRes/HiRes.pm \
-    Time::Local 3p		lib/Time/Local.pm \
-    Time::gmtime 3p		lib/Time/gmtime.pm \
-    Time::localtime 3p		lib/Time/localtime.pm \
-    Time::tm 3p			lib/Time/tm.pm \
-    UNIVERSAL 3p		lib/UNIVERSAL.pm \
-    Unicode::Collate 3p		lib/Unicode/Collate.pm \
-    Unicode::Normalize 3p	ext/Unicode/Normalize/Normalize.pm \
-    Unicode::UCD 3p		lib/Unicode/UCD.pm \
-    User::grent 3p		lib/User/grent.pm \
-    User::pwent 3p		lib/User/pwent.pm \
-    XS::APItest 3p		ext/XS/APItest/APItest.pm \
-    XS::Typemap 3p		ext/XS/Typemap/Typemap.pm \
-    XSLoader 3p			lib/XSLoader.pm \
-    attributes 3p		lib/attributes.pm \
-    attrs 3p			lib/attrs.pm \
-    autouse 3p			lib/autouse.pm \
-    base 3p			lib/base.pm \
-    bigint 3p			lib/bigint.pm \
-    bignum 3p			lib/bignum.pm \
-    bigrat 3p			lib/bigrat.pm \
-    blib 3p			lib/blib.pm \
-    bytes 3p			lib/bytes.pm \
-    charnames 3p		lib/charnames.pm \
-    constant 3p			lib/constant.pm \
-    diagnostics 3p		lib/diagnostics.pm \
-    encoding 3p			ext/Encode/encoding.pm \
-    fields 3p			lib/fields.pm \
-    filetest 3p			lib/filetest.pm \
-    if 3p			lib/if.pm \
-    integer 3p			lib/integer.pm \
-    less 3p			lib/less.pm \
-    lib 3p			lib/lib.pm \
-    locale 3p			lib/locale.pm \
-    open 3p			lib/open.pm \
-    ops 3p			lib/ops.pm \
-    overload 3p			lib/overload.pm \
-    re 3p			lib/re.pm \
-    sigtrap 3p			lib/sigtrap.pm \
-    sort 3p			lib/sort.pm \
-    strict 3p			lib/strict.pm \
-    subs 3p			lib/subs.pm \
-    threads 3p			ext/threads/threads.pm \
-    threads::shared 3p		ext/threads/shared/shared.pm \
-    utf8 3p			lib/utf8.pm \
-    vars 3p			lib/vars.pm \
-    vmsish 3p			lib/vmsish.pm \
-    warnings 3p			lib/warnings.pm \
-    warnings::register 3p	lib/warnings/register.pm
-.  ifndef NOMAN
-MANALL+= ${page}.cat${sect}
-MANSRCALL+= ${page}.${sect}
-MANSRC_COOKIE=stamp-mansrc.build
-_quick${sect}+=${file} ${page}.${sect}
-.    ifdef MANPS
-PSALL+= ${page}.ps${sect}
-.    endif
-.  else
-MANSRC_COOKIE=
-.  endif
-
-
-${page}.${sect}: ${file}
-	${POD2MAN} --section=${sect} --official ${.ALLSRC} $@
-.endfor
-
-mansrc.build:
-.for sect in 1 3p
-.  if !empty(_quick${sect})
-	cd ${.OBJDIR} && ${POD2MAN} --section=${sect} --official ${_quick${sect}}
-.  endif
-.endfor
 
 LIB=	perl
 
@@ -572,27 +50,29 @@ MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
 		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
 		File::Basename.3p fileparse.3p
 
-# NOTE: config.sh *must* be first
-GENERATED=	config.sh config.h cflags makeaperl makedepend makedir \
+GEN_AFTER= 	config.h cflags makeaperl makedepend makedir \
 		myconfig writemain Makefile Policy.sh pod/Makefile \
 		x2p/Makefile x2p/cflags
+
+GENERATED=	config.sh ${GEN_AFTER}
+
+${GEN_AFTER}: config.sh
 
 CLEANFILES=	config.sh Policy.sh ${MANALL} ${PSALL} ${MANSRCALL} stamp-mansrc.build
 
 .if !exists(${.OBJDIR}/config.over)
 ${.OBJDIR}/config.over: ${.CURDIR}/config.over
-	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.bsd-wrapper1 ${.CURDIR}
 .endif
 
-stamp-mansrc.build:
-	@cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper mansrc.build
-	@touch $@
+all:	perl.build man.build
 
-all:	perl.build ${MANSRC_COOKIE} man.build
 
-man.build: ${MANALL} ${PSALL}
+man.build: perl.build
+	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 $@
 
-beforedepend:	config.sh config.h
+beforedepend:	config.sh config.h Makefile makedepend x2p/Makefile writemain
+	cd ${.OBJDIR} && exec ${MAKE} depend
 
 perl.build:	perl.lib
 	cd ${.OBJDIR} && exec ${MAKE}
@@ -601,32 +81,14 @@ config.sh:	${.OBJDIR}/config.over
 	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	    exec /bin/sh Configure ${CONFIGURE_ARGS}
 
+Makefile cflags makeaperl makedepend makedir myconfig writemain:	
+	cd ${.OBJDIR} && exec /bin/sh $@.SH
+
 Policy.sh:
 	cd ${.OBJDIR} && exec /bin/sh Policy_sh.SH
 
-Makefile:
-	cd ${.OBJDIR} && exec /bin/sh Makefile.SH
-
-cflags:
-	cd ${.OBJDIR} && exec /bin/sh cflags.SH
-
-config.h:
+config.h: 
 	cd ${.OBJDIR} && exec /bin/sh config_h.SH
-
-makeaperl:
-	cd ${.OBJDIR} && exec /bin/sh makeaperl.SH
-
-makedepend:
-	cd ${.OBJDIR} && exec /bin/sh makedepend.SH
-
-makedir:
-	cd ${.OBJDIR} && exec /bin/sh makedir.SH
-
-myconfig:
-	cd ${.OBJDIR} && exec /bin/sh myconfig.SH
-
-writemain:
-	cd ${.OBJDIR} && exec /bin/sh writemain.SH
 
 pod/Makefile:
 	cd ${.OBJDIR}/pod && exec /bin/sh Makefile.SH
@@ -673,6 +135,7 @@ cleandir:
 	    test -e Makefile && ${MAKE} distclean; \
 	    rm -f ${CLEANFILES}; \
 	fi
+	@cd ${.CURDIR} && ${MAKE} -f Makefile.bsd-wrapper1 cleandir
 
 .include <bsd.lib.mk>
 
