@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.68 2007/11/24 13:39:24 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.69 2007/11/24 16:13:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -91,6 +91,8 @@ int		 relay_handle_http(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *,
 		    struct protonode *, int);
 void		 relay_read_http(struct bufferevent *, void *);
+static int	_relay_lookup_url(struct ctl_relay_event *, char *, char *,
+		    char *, enum digest_type);
 int		 relay_lookup_url(struct ctl_relay_event *,
 		    const char *, enum digest_type);
 int		 relay_lookup_query(struct ctl_relay_event *);
@@ -383,18 +385,22 @@ relay_protodebug(struct relay *rlay)
 	name = "request";
 	tree = &proto->request_tree;
  show:
+	i = 0;
 	RB_FOREACH(proot, proto_tree, tree) {
-		i = 0;
 		PROTONODE_FOREACH(pn, proot, entry) {
 #ifndef DEBUG
-			/* Limit the number of displayed lines */
-			if (++i > 100) {
-				fprintf(stderr, "\t\t...\n");
+			if (++i > 100)
 				break;
-			}
 #endif
 			relay_nodedebug(name, pn);
 		}
+#ifndef DEBUG
+		/* Limit the number of displayed lines */
+		if (++i > 100) {
+			fprintf(stderr, "\t\t...\n");
+			break;
+		}
+#endif
 	}
 	if (tree == &proto->request_tree) {
 		name = "response";
@@ -1522,25 +1528,24 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	free(line);
 }
 
-int
-relay_lookup_url(struct ctl_relay_event *cre, const char *str,
-    enum digest_type type)
+static int
+_relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
+    char *query, enum digest_type type)
 {
 	struct session		*con = (struct session *)cre->con;
 	struct protonode	*proot, *pnv, pkv;
 	char			*val, *md = NULL;
 	int			 ret = PN_FAIL;
 
-	if (cre->path == NULL)
-		return (PN_PASS);
-
 	if (asprintf(&val, "%s%s%s%s",
-	    str, cre->path,
-	    cre->args == NULL ? "" : "?",
-	    cre->args == NULL ? "" : cre->args) == -1) {
+	    host, path,
+	    query == NULL ? "" : "?",
+	    query == NULL ? "" : query) == -1) {
 		relay_close_http(con, 500, "failed to allocate URL");
 		return (PN_FAIL);
 	}
+
+	DPRINTF("_relay_lookup_url: %s", val);
 
 	switch (type) {
 	case DIGEST_SHA1:
@@ -1573,6 +1578,82 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *str,
 	if (md != NULL)
 		free(md);
 	free(val);
+	return (ret);
+}
+
+int
+relay_lookup_url(struct ctl_relay_event *cre, const char *str,
+    enum digest_type type)
+{
+	struct session	*con = (struct session *)cre->con;
+	int		 i, j, dots;
+	char		*hi[RELAY_MAXLOOKUPLEVELS], *p, *pp, *c, ch;
+	char		 ph[MAXHOSTNAMELEN];
+	int		 ret;
+
+	if (cre->path == NULL)
+		return (PN_PASS);
+
+	/*
+	 * This is an URL lookup algorithm inspired by
+	 * http://code.google.com/apis/safebrowsing/
+	 *     developers_guide.html#PerformingLookups
+	 */
+
+	DPRINTF("relay_lookup_url: host: '%s', path: '%s', query: '%s'",
+	    str, cre->path, cre->args == NULL ? "" : cre->args);
+
+	if (canonicalize_host(str, ph, sizeof(ph)) == NULL) {
+		relay_close_http(con, 400, "invalid host name");
+		return (PN_FAIL);
+	}
+
+	bzero(hi, sizeof(hi));
+	for (dots = -1, i = strlen(ph) - 1; i > 0; i--) {
+		if (ph[i] == '.' && ++dots)
+			hi[dots - 1] = &ph[i + 1];
+		if (dots > (RELAY_MAXLOOKUPLEVELS - 2))
+			break;
+	}
+	hi[dots] = ph;
+
+	if ((pp = strdup(cre->path)) == NULL) {
+		relay_close_http(con, 500, "failed to allocate path");
+		return (PN_FAIL);
+	}
+	for (i = (RELAY_MAXLOOKUPLEVELS - 1); i >= 0; i--) {
+		if (hi[i] == NULL)
+			continue;
+
+		/* 1. complete path with query */
+		if (cre->args != NULL)
+			if ((ret = _relay_lookup_url(cre, hi[i],
+			    pp, cre->args, type)) != PN_PASS)
+				goto done;
+
+		/* 2. complete path without query */
+		if ((ret = _relay_lookup_url(cre, hi[i],
+		    pp, NULL, type)) != PN_PASS)
+			goto done;
+
+		/* 3. traverse path */
+		for (j = 0, p = strchr(pp, '/');
+		    p != NULL; p = strchr(p, '/'), j++) {
+			if (j > (RELAY_MAXLOOKUPLEVELS - 2) || ++p == '\0')
+				break;
+			c = &pp[p - pp];
+			ch = *c;
+			*c = '\0';
+			if ((ret = _relay_lookup_url(cre, hi[i],
+			    pp, NULL, type)) != PN_PASS)
+				goto done;
+			*c = ch;
+		}
+	}
+
+	ret = PN_PASS;
+ done:
+	free(pp);
 	return (ret);
 }
 

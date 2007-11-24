@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.57 2007/11/23 09:22:18 sthen Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.58 2007/11/24 16:13:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,6 +22,8 @@
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -909,4 +911,24 @@ digeststr(enum digest_type type, const u_int8_t *data, size_t len, char *buf)
 		break;
 	}
 	return (NULL);
+}
+
+const char *
+canonicalize_host(const char *host, char *name, size_t len)
+{
+	struct sockaddr_in	 sin4;
+	struct sockaddr_in6	 sin6;
+
+	if (inet_pton(AF_INET, host, &sin4) == 1)
+		return (inet_ntop(AF_INET, &sin4, name, len));
+	if (inet_pton(AF_INET6, host, &sin6) == 1)
+		return (inet_ntop(AF_INET6, &sin6, name, len));
+
+	/* XXX canonicalize a FQDN... */
+	if (strlcpy(name, host, len) >= len) {
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	return (name);
 }

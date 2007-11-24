@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.84 2007/11/23 09:39:42 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.85 2007/11/24 16:13:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,7 @@
 #define RELAY_MAXHOSTS		32
 #define RELAY_STATINTERVAL	60
 #define RELAY_BACKLOG		10
+#define RELAY_MAXLOOKUPLEVELS	5
 
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
@@ -791,6 +792,7 @@ void		 translate_string(char *);
 void		 purge_config(struct hoststated *, u_int8_t);
 void		 merge_config(struct hoststated *, struct hoststated *);
 char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
+const char	*canonicalize_host(const char *, char *, size_t);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

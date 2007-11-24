@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.65 2007/11/23 09:45:33 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.66 2007/11/24 16:13:50 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2007 $
+.Dd $Mdocdate: November 24 2007 $
 .Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
@@ -574,7 +574,7 @@ request query expect "bar" from "foo"
 .Ed
 .It Ic url
 Look up the entity as a URL suffix/prefix expression consisting of a
-hostname or suffix and a path name or prefix when using the
+hostname without port or suffix and a path name or prefix when using the
 .Ic http
 protocol.
 This type is only available with the direction
@@ -583,6 +583,27 @@ for example:
 .Bd -literal -offset indent
 request url filter "example.com/index.html"
 request url filter "example.com/test.cgi?val=1"
+.Ed
+.Pp
+.Xr hoststated 8
+will match the full URL and different possible suffix/prefix
+combinations by stripping subdomains and path components (up to 5
+levels), and the query string. For example, the following
+lookups will be done for
+.Ar http://www.example.com:81/1/2/3/4/5.html?query=yes :
+.Bd -literal -offset indent
+www.example.com/1/2/3/4/5.html?query=yes
+www.example.com/1/2/3/4/5.html
+www.example.com/
+www.example.com/1/
+www.example.com/1/2/
+www.example.com/1/2/3/
+example.com/1/2/3/4/5.html?query=yes
+example.com/1/2/3/4/5.html
+example.com/
+example.com/1/
+example.com/1/2/
+example.com/1/2/3/
 .Ed
 .El
 .Pp
