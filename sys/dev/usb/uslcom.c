@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.16 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.17 2007/11/24 10:52:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -346,32 +346,17 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	usb_device_request_t req;
 	int data;
 
-	switch (t->c_ospeed) {
-	case 600:
-	case 1200:
-	case 1800:
-	case 2400:
-	case 4800:
-	case 9600:
-	case 19200:
-	case 38400:
-	case 57600:
-	case 115200:
-	case 230400:
-	case 460800:
-	case 921600:
-		req.bmRequestType = USLCOM_WRITE;
-		req.bRequest = USLCOM_BAUD_RATE;
-		USETW(req.wValue, USLCOM_BAUD_REF / t->c_ospeed);
-		USETW(req.wIndex, portno);
-		USETW(req.wLength, 0);
-		err = usbd_do_request(sc->sc_udev, &req, NULL);
-		if (err)
-			return (EIO);
-		break;
-	default:
+	if (t->c_ospeed <= 0 || t->c_ospeed > 921600)
 		return (EINVAL);
-	}
+
+	req.bmRequestType = USLCOM_WRITE;
+	req.bRequest = USLCOM_BAUD_RATE;
+	USETW(req.wValue, USLCOM_BAUD_REF / t->c_ospeed);
+	USETW(req.wIndex, portno);
+	USETW(req.wLength, 0);
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (err)
+		return (EIO);
 
 	if (ISSET(t->c_cflag, CSTOPB))
 		data = USLCOM_STOP_BITS_2;
