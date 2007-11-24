@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.5 2007/10/11 21:25:37 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.6 2007/11/24 16:35:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -466,10 +466,10 @@ start:
 
 	log_debug("if_act_elect: interface %s old dr %s new dr %s, "
 	    "old bdr %s new bdr %s", iface->name,
-	    iface->dr ? inet_ntop(AF_INET, &iface->dr->addr, b1, sizeof(b1)) :
-	    "none", dr ? inet_ntop(AF_INET, &dr->addr, b2, sizeof(b2)) : "none",
-	    iface->bdr ? inet_ntop(AF_INET, &iface->bdr->addr, b3, sizeof(b3)) :
-	    "none", bdr ? inet_ntop(AF_INET, &bdr->addr, b4, sizeof(b4)) :
+	    iface->dr ? inet_ntop(AF_INET, &iface->dr->id, b1, sizeof(b1)) :
+	    "none", dr ? inet_ntop(AF_INET, &dr->id, b2, sizeof(b2)) : "none",
+	    iface->bdr ? inet_ntop(AF_INET, &iface->bdr->id, b3, sizeof(b3)) :
+	    "none", bdr ? inet_ntop(AF_INET, &bdr->id, b4, sizeof(b4)) :
 	    "none");
 
 	/*
