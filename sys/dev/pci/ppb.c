@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.19 2007/05/21 22:10:45 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.20 2007/11/24 21:33:58 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/workq.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -46,6 +48,9 @@ struct ppb_softc {
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
+	struct device *sc_psc;
+	int sc_cap_off;
+	struct timeout sc_to;
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -59,6 +64,11 @@ struct cfdriver ppb_cd = {
 	NULL, "ppb", DV_DULL
 };
 
+int	ppb_intr(void *);
+void	ppb_hotplug_insert(void *, void *);
+void	ppb_hotplug_insert_finish(void *);
+void	ppb_hotplug_rescan(void *, void *);
+void	ppb_hotplug_remove(void *, void *);
 int	ppbprint(void *, const char *pnp);
 
 int
@@ -91,10 +101,9 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
-	pcireg_t busdata;
+	pci_intr_handle_t ih;
+	pcireg_t busdata, reg;
 	int pin;
-
-	printf("\n");
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
@@ -102,8 +111,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
-		printf("%s: not configured by system firmware\n",
-		    self->dv_xname);
+		printf(": not configured by system firmware\n");
 		return;
 	}
 
@@ -124,6 +132,27 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		panic("ppbattach: bus in tag (%d) != bus in reg (%d)",
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
+
+	/* Check for PCI Express capabilities and setup hotplug support. */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
+		if (pci_intr_map(pa, &ih) == 0 &&
+		    pci_intr_establish(pc, ih, IPL_TTY, ppb_intr, sc,
+		    self->dv_xname)) {
+			printf(": %s", pci_intr_string(pc, ih));
+
+			/* Enable hotplug interrupt. */
+			reg = pci_conf_read(pc, pa->pa_tag,
+			    sc->sc_cap_off + PCI_PCIE_SLCSR);
+			reg |= (PCI_PCIE_SLCSR_HPE | PCI_PCIE_SLCSR_PDE);
+			pci_conf_write(pc, pa->pa_tag,
+			    sc->sc_cap_off + PCI_PCIE_SLCSR, reg);
+
+			timeout_set(&sc->sc_to, ppb_hotplug_insert_finish, sc);
+		}
+	}
+
+	printf("\n");
 
 	/*
 	 * Attach the PCI bus that hangs off of it.
@@ -146,7 +175,74 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 
-	config_found(self, &pba, ppbprint);
+	sc->sc_psc = config_found(self, &pba, ppbprint);
+}
+
+int
+ppb_intr(void *arg)
+{
+	struct ppb_softc *sc = arg;
+	pcireg_t reg;
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    sc->sc_cap_off + PCI_PCIE_SLCSR);
+	if (reg & PCI_PCIE_SLCSR_PDC) {
+		if (reg & PCI_PCIE_SLCSR_PDS)
+			workq_add_task(NULL, 0, ppb_hotplug_insert, sc, NULL);
+		else
+			workq_add_task(NULL, 0, ppb_hotplug_remove, sc, NULL);
+
+		/* Clear interrupts. */
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    sc->sc_cap_off + PCI_PCIE_SLCSR, reg);
+		return (1);
+	}
+
+	return (0);
+}
+
+#ifdef PCI_MACHDEP_ENUMERATE_BUS
+#define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
+#else
+extern int pci_enumerate_bus(struct pci_softc *,
+    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+#endif
+
+void
+ppb_hotplug_insert(void *arg1, void *arg2)
+{
+	struct ppb_softc *sc = arg1;
+
+	/* XXX Powerup the card. */
+
+	/* XXX Turn on LEDs. */
+
+	/* Wait a second for things to settle. */
+	timeout_add(&sc->sc_to, 1 * hz);
+}
+
+void
+ppb_hotplug_insert_finish(void *arg)
+{
+	workq_add_task(NULL, 0, ppb_hotplug_rescan, arg, NULL);
+}
+
+void
+ppb_hotplug_rescan(void *arg1, void *arg2)
+{
+	struct ppb_softc *sc = arg1;
+
+	if (sc->sc_psc)
+		pci_enumerate_bus((struct pci_softc *)sc->sc_psc, NULL, NULL);
+}
+
+void
+ppb_hotplug_remove(void *arg1, void *arg2)
+{
+	struct ppb_softc *sc = arg1;
+
+	if (sc->sc_psc)
+		config_detach_children(sc->sc_psc, DETACH_FORCE);
 }
 
 int
