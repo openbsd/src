@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.44 2007/11/22 23:33:42 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.45 2007/11/24 17:27:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -517,7 +517,7 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	void (*flusher)(paddr_t, psize_t);
 
 	va = trunc_cache_line(_va);
-	size = round_cache_line(_va + size) - va;
+	size = round_cache_line(_va + _size) - va;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -541,7 +541,8 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	mc88110_inval_inst();
+	if (op != DMA_CACHE_SYNC)
+		mc88110_inval_inst();
 	while (size != 0) {
 		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88110_CACHE_LINE;
@@ -568,7 +569,7 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	void (*ext_flusher)(void);
 
 	va = trunc_cache_line(_va);
-	size = round_cache_line(_va + size) - va;
+	size = round_cache_line(_va + _size) - va;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -597,7 +598,8 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	mc88110_inval_inst();
+	if (op != DMA_CACHE_SYNC)
+		mc88110_inval_inst();
 	while (size != 0) {
 		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88110_CACHE_LINE;
@@ -624,7 +626,7 @@ m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	void (*flusher)(paddr_t, psize_t);
 
 	pa = trunc_cache_line(_pa);
-	size = round_cache_line(_pa + size) - pa;
+	size = round_cache_line(_pa + _size) - pa;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -648,7 +650,8 @@ m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	mc88110_inval_inst();
+	if (op != DMA_CACHE_SYNC)
+		mc88110_inval_inst();
 	while (size != 0) {
 		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88110_CACHE_LINE;
@@ -672,7 +675,7 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	void (*ext_flusher)(void);
 
 	pa = trunc_cache_line(_pa);
-	size = round_cache_line(_pa + size) - pa;
+	size = round_cache_line(_pa + _size) - pa;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -701,7 +704,8 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	mc88110_inval_inst();
+	if (op != DMA_CACHE_SYNC)
+		mc88110_inval_inst();
 	while (size != 0) {
 		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88110_CACHE_LINE;
