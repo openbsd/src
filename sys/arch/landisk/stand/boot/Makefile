@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2006/11/12 19:37:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2007/11/25 18:25:32 deraadt Exp $
 
 PROG=	boot
 SRCS=	srt0.S conf.c devs.c getsecs.c scifcons.c delay.c
@@ -17,6 +17,9 @@ CFLAGS+=-m4-nofpu
 .PATH:  ${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
 
+.PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
+SRCS+=	strlen.c strlcpy.c
+
 SAREL=
 SA_ZLIB=
 USE_LOADFILE=
@@ -25,11 +28,6 @@ SRCS+=	ctime.c strtol.c
 .include "${S}/lib/libsa/Makefile.inc"
 DPADD+= $(SALIB)
 LDADD+= $(SALIB)
-
-KERN_AS?=	library
-.include "${S}/lib/libkern/Makefile.inc"
-DPADD+= $(KERNLIB)
-LDADD+= $(KERNLIB)
 
 Z_AS?=	library
 .include "${S}/lib/libz/Makefile.inc"

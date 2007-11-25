@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
 /*	$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $	*/
 
 /*
@@ -35,13 +35,6 @@
  *
  * Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $"
-#endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 

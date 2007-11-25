@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
@@ -35,13 +35,6 @@
  *
  * Header: _setjmp.s,v 1.1 91/07/06 16:45:53 torek Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: _setjmp.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $"
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * C library -- _setjmp, _longjmp

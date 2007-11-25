@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.11 2006/07/12 17:31:23 miod Exp $
+#	$OpenBSD: files.arm,v 1.12 2007/11/25 18:25:27 deraadt Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # Floating point emulator
@@ -107,3 +107,29 @@ file	arch/arm/arm/bcopy_page.S
 #file	arch/arm/arm/linux_sigcode.S		compat_linux
 #file	arch/arm/arm/linux_syscall.c		compat_linux
 #file	arch/arm/arm/linux_trap.c		compat_linux
+
+# machine-dependent libkern components
+file	lib/libkern/arch/arm/divsi3.S
+file	lib/libkern/arch/arm/memcpy.S
+file	lib/libkern/arch/arm/memmove.S
+
+# quad support is neccessary for 32 bit architectures
+file	lib/libkern/adddi3.c
+file	lib/libkern/anddi3.c
+file	lib/libkern/ashldi3.c
+file	lib/libkern/ashrdi3.c
+file	lib/libkern/cmpdi2.c
+file	lib/libkern/divdi3.c
+file	lib/libkern/iordi3.c
+file	lib/libkern/lshldi3.c
+file	lib/libkern/lshrdi3.c
+file	lib/libkern/moddi3.c
+file	lib/libkern/muldi3.c
+file	lib/libkern/negdi2.c
+file	lib/libkern/notdi2.c
+file	lib/libkern/qdivrem.c
+file	lib/libkern/subdi3.c
+file	lib/libkern/ucmpdi2.c
+file	lib/libkern/udivdi3.c
+file	lib/libkern/umoddi3.c
+file	lib/libkern/xordi3.c

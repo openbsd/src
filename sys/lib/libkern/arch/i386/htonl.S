@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.4 2007/11/25 18:25:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,8 +36,10 @@
 
 #include <machine/asm.h>
 
-/* netorder = htonl(hostorder) */
+/* netorder = htonl(hostorder) AND hostorder = ntohl(netorder) */
+ENTRY(ntohl)
 ENTRY(htonl)
+ENTRY(swap32)
 	movl	4(%esp),%eax
 	rorw	$8,%ax
 	roll	$16,%eax

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.16 2005/12/03 19:01:13 miod Exp $
+#	$OpenBSD: files.m88k,v 1.17 2007/11/25 18:25:28 deraadt Exp $
 
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
@@ -21,3 +21,24 @@ file	arch/m88k/m88k/trap.c
 file	arch/m88k/m88k/vectors_88100.S			m88100
 file	arch/m88k/m88k/vectors_88110.S			m88110
 file	arch/m88k/m88k/vm_machdep.c
+
+# quad support is neccessary for 32 bit architectures
+file	lib/libkern/adddi3.c
+file	lib/libkern/anddi3.c
+file	lib/libkern/ashldi3.c
+file	lib/libkern/ashrdi3.c
+file	lib/libkern/cmpdi2.c
+file	lib/libkern/divdi3.c
+file	lib/libkern/iordi3.c
+file	lib/libkern/lshldi3.c
+file	lib/libkern/lshrdi3.c
+file	lib/libkern/moddi3.c
+file	lib/libkern/muldi3.c
+file	lib/libkern/negdi2.c
+file	lib/libkern/notdi2.c
+file	lib/libkern/qdivrem.c
+file	lib/libkern/subdi3.c
+file	lib/libkern/ucmpdi2.c
+file	lib/libkern/udivdi3.c
+file	lib/libkern/umoddi3.c
+file	lib/libkern/xordi3.c

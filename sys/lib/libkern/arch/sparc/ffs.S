@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2007/11/24 19:43:36 deraadt Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.5 2007/11/25 18:25:36 deraadt Exp $	*/
 /*	$NetBSD: ffs.S,v 1.2 1994/10/26 06:39:57 cgd Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include "DEFS.h"
 
+#ifndef _KERNEL
 /*
  * ffs returns the number of the rightmost bit set in its argument,
  * i.e., the lowest value such that (x & (ffs(x) - 1)) is nonzero.
@@ -105,3 +106,4 @@ ffstab:
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* d0-df */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* e0-ef */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* f0-ff */
+#endif

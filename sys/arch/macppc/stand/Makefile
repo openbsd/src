@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2005/07/20 19:40:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/11/25 18:25:32 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 SUBDIR=	ofwboot boot.mac mbr tbxidata
@@ -13,12 +13,11 @@ USE_LOADFILE=yes
 .include "Makefile.inc"
 .include "$S/lib/libz/Makefile.inc"
 .include "$S/lib/libsa/Makefile.inc"
-.include "$S/lib/libkern/Makefile.inc"
 
-all:	${ZLIB} ${SALIB} ${KERNLIB} _SUBDIRUSE
+all:	${ZLIB} ${SALIB} _SUBDIRUSE
 
 libdep:
-	@echo ${.OBJDIR}/${SALIB} ${ZLIB} ${KERNLIB}
+	@echo ${.OBJDIR}/${SALIB} ${ZLIB}
 
 
 ${PROG}:	

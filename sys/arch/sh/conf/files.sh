@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sh,v 1.2 2007/05/01 18:59:40 miod Exp $
+#	$OpenBSD: files.sh,v 1.3 2007/11/25 18:25:29 deraadt Exp $
 #	$NetBSD: files.sh3,v 1.32 2005/12/11 12:18:58 christos Exp $
 
 file	arch/sh/sh/cache.c
@@ -30,3 +30,29 @@ file	arch/sh/sh/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 
 file	dev/cninit.c
+
+# quad support is neccessary for 32 bit architectures
+file	lib/libkern/adddi3.c
+file	lib/libkern/anddi3.c
+file	lib/libkern/ashldi3.c
+file	lib/libkern/ashrdi3.c
+file	lib/libkern/cmpdi2.c
+file	lib/libkern/divdi3.c
+file	lib/libkern/iordi3.c
+file	lib/libkern/lshldi3.c
+file	lib/libkern/lshrdi3.c
+file	lib/libkern/moddi3.c
+file	lib/libkern/muldi3.c
+file	lib/libkern/negdi2.c
+file	lib/libkern/notdi2.c
+file	lib/libkern/qdivrem.c
+file	lib/libkern/subdi3.c
+file	lib/libkern/ucmpdi2.c
+file	lib/libkern/udivdi3.c
+file	lib/libkern/umoddi3.c
+file	lib/libkern/xordi3.c
+
+file	lib/libkern/arch/sh/movstr_i4.S
+file	lib/libkern/arch/sh/sdivsi3.S
+file	lib/libkern/arch/sh/udivsi3.S
+

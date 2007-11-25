@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.417 2007/11/25 15:36:27 deraadt Exp $
+#	$OpenBSD: files,v 1.418 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -988,3 +988,41 @@ file compat/common/tty_43.c		!small_kernel
 file compat/common/uipc_syscalls_43.c	!small_kernel
 file compat/common/vfs_syscalls_43.c	!small_kernel
 file compat/common/vm_43.c		!small_kernel
+
+# libkern MI components
+file lib/libkern/mcount.c		gprof
+file lib/libkern/getsn.c
+file lib/libkern/arch/${MACHINE_ARCH}/random.S | lib/libkern/random.c
+file lib/libkern/arch/${MACHINE_ARCH}/srandom.S | lib/libkern/srandom.c
+file lib/libkern/arch/${MACHINE_ARCH}/strchr.S | lib/libkern/strchr.c
+file lib/libkern/arch/${MACHINE_ARCH}/strrchr.S | lib/libkern/strrchr.c
+file lib/libkern/arch/${MACHINE_ARCH}/__main.S | lib/libkern/__main.c
+file lib/libkern/arch/${MACHINE_ARCH}/imax.S | lib/libkern/imax.c
+file lib/libkern/arch/${MACHINE_ARCH}/imin.S | lib/libkern/imin.c
+file lib/libkern/arch/${MACHINE_ARCH}/lmax.S | lib/libkern/lmax.c
+file lib/libkern/arch/${MACHINE_ARCH}/lmin.S | lib/libkern/lmin.c
+file lib/libkern/arch/${MACHINE_ARCH}/max.S | lib/libkern/max.c
+file lib/libkern/arch/${MACHINE_ARCH}/min.S | lib/libkern/min.c
+file lib/libkern/arch/${MACHINE_ARCH}/ulmax.S | lib/libkern/ulmax.c
+file lib/libkern/arch/${MACHINE_ARCH}/ulmin.S | lib/libkern/ulmin.c
+file lib/libkern/arch/${MACHINE_ARCH}/memchr.S | lib/libkern/memchr.c
+file lib/libkern/arch/${MACHINE_ARCH}/memcmp.S | lib/libkern/memcmp.c
+file lib/libkern/arch/${MACHINE_ARCH}/bcmp.S | lib/libkern/bcmp.c
+file lib/libkern/arch/${MACHINE_ARCH}/bzero.S | lib/libkern/bzero.c
+file lib/libkern/arch/${MACHINE_ARCH}/bcopy.S | lib/libkern/bcopy.c
+file lib/libkern/arch/${MACHINE_ARCH}/ovbcopy.S | lib/libkern/ovbcopy.c
+file lib/libkern/arch/${MACHINE_ARCH}/memcpy.S | lib/libkern/memcpy.c
+file lib/libkern/arch/${MACHINE_ARCH}/memmove.S | lib/libkern/memmove.c
+file lib/libkern/arch/${MACHINE_ARCH}/ffs.S | lib/libkern/ffs.c
+file lib/libkern/arch/${MACHINE_ARCH}/memset.S | lib/libkern/memset.c
+file lib/libkern/arch/${MACHINE_ARCH}/strcmp.S | lib/libkern/strcmp.c
+file lib/libkern/arch/${MACHINE_ARCH}/strlcat.S | lib/libkern/strlcat.c
+file lib/libkern/arch/${MACHINE_ARCH}/strlcpy.S | lib/libkern/strlcpy.c
+file lib/libkern/arch/${MACHINE_ARCH}/strlen.S | lib/libkern/strlen.c
+file lib/libkern/arch/${MACHINE_ARCH}/strncmp.S | lib/libkern/strncmp.c
+file lib/libkern/arch/${MACHINE_ARCH}/strncpy.S | lib/libkern/strncpy.c
+file lib/libkern/arch/${MACHINE_ARCH}/scanc.S | lib/libkern/scanc.c
+file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
+file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
+file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
+file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c

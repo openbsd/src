@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.43 2007/06/01 22:01:52 maja Exp $
+#	$OpenBSD: files.vax,v 1.44 2007/11/25 18:25:29 deraadt Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -415,3 +415,24 @@ include	"compat/vax1k/files.vax1k"
 #arch/vax/if/if_pcl.c		optional pcl device-driver
 #arch/vax/if/if_vv.c		optional vv device-driver
 #arch/vax/if/raw_hy.c		optional hy device-driver
+
+# quad support is neccessary for 32 bit architectures
+file	lib/libkern/adddi3.c
+file	lib/libkern/anddi3.c
+file	lib/libkern/ashldi3.c
+file	lib/libkern/ashrdi3.c
+file	lib/libkern/cmpdi2.c
+file	lib/libkern/divdi3.c
+file	lib/libkern/iordi3.c
+file	lib/libkern/lshldi3.c
+file	lib/libkern/lshrdi3.c
+file	lib/libkern/moddi3.c
+file	lib/libkern/muldi3.c
+file	lib/libkern/negdi2.c
+file	lib/libkern/notdi2.c
+file	lib/libkern/qdivrem.c
+file	lib/libkern/subdi3.c
+file	lib/libkern/ucmpdi2.c
+file	lib/libkern/udivdi3.c
+file	lib/libkern/umoddi3.c
+file	lib/libkern/xordi3.c

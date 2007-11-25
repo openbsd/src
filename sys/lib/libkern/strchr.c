@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.c,v 1.3 2004/05/06 01:12:05 deraadt Exp $	*/
+/*	$OpenBSD: strchr.c,v 1.4 2007/11/25 18:25:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Daniel Hartmeier
@@ -30,10 +30,6 @@
  *
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strchr.c,v 1.3 2004/05/06 01:12:05 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/types.h>
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
@@ -51,17 +47,4 @@ strchr(const char *s, int c)
 		s++;
 	}
 	return (NULL);
-}
-
-char *
-strrchr(const char *s, int c)
-{
-	char *t = NULL;
-
-	while (*s) {
-		if (*s == c)
-			t = (char *)s;
-		s++;
-	}
-	return (t);
 }

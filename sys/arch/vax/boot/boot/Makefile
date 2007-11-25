@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2005/07/30 16:36:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
@@ -32,12 +32,7 @@ CFLAGS+=-I${S}/lib/libsa
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=	${ZLIB}
 
-#KERN_AS=library
-#.include "${S}/lib/libkern/Makefile.inc"
-#LIBKERN=${KERNLIB}
-
-# Only need these from libkern
-.PATH:	${S}/lib/libkern
+.PATH:	${S}/lib/libkern/arch/vax ${S}/lib/libkern
 SRCS+= moddi3.c negdi2.c
 
 .if ${MACHINE} == "vax"
@@ -56,9 +51,9 @@ CLEANFILES+= machine ${MACHINE_ARCH}
 START=nisse
 #.endif
 
-${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym -Llib/sa -L. ${OBJS} \
-	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	    ${LIBSA} ${LIBZ} ${LIBSA}
 	/usr/sbin/mopa.out ${PROG}.sym ${PROG}.mop
 	/bin/cp ${PROG}.sym ${PROG}
 	/usr/bin/strip ${PROG}

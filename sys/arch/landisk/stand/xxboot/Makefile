@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2006/11/08 20:03:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/11/25 18:25:32 deraadt Exp $
 
 MAN=	xxboot.8
 
@@ -27,10 +27,8 @@ SAREL=
 DPADD+= $(SALIB)
 LDADD+= $(SALIB)
 
-KERN_AS?=	library
-.include "${S}/lib/libkern/Makefile.inc"
-DPADD+= $(KERNLIB)
-LDADD+= $(KERNLIB)
+.PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
+SRCS+=	strlen.c
 
 LIBGCC!=${CC} -print-libgcc-file-name
 LDADD+= $(LIBGCC)

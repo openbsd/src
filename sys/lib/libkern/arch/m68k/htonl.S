@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.4 2007/11/25 18:25:35 deraadt Exp $	*/
 /*	$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:27 cgd Exp $	*/
 
 /*-
@@ -34,18 +34,12 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-#ifdef notdef
-	.asciz "@(#)htonl.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$OpenBSD: htonl.S,v 1.3 2003/06/02 23:28:08 millert Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 /* netorder = htonl(hostorder) */
 
 #include "DEFS.h"
 
+ALTENTRY(ntohl, _htonl)
+ALTENTRY(bswap32, _htonl)
 ENTRY(htonl)
 	movl	sp@(4),d0
 	rts

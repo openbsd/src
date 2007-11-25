@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2006/07/04 21:43:53 martin Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 2002/02/24 01:04:25 matt Exp $
 
 S=	${.CURDIR}/../../../../
@@ -29,10 +29,6 @@ SA_AS=	library
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
 
-#KERN_AS=library
-#.include "${S}/lib/libkern/Makefile.inc"
-#LIBKERN=${KERNLIB}
-
 .if ${MACHINE} == "vax"
 .PHONY: machine-links
 beforedepend: machine-links
@@ -43,9 +39,8 @@ machine-links:
 CLEANFILES+= machine ${MACHINE_ARCH} ${PROG}.out
 .endif
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
-	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
+${PROG}: ${OBJS} ${LIBSA}
+	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA}
 	/usr/bin/strip ${PROG}.out
 	/usr/bin/size ${PROG}.out
 	/bin/dd if=${PROG}.out of=${PROG} bs=32 skip=1

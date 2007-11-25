@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2007/06/13 02:17:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/11/25 18:25:32 deraadt Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 S=      ${.CURDIR}/../../../..
@@ -19,6 +19,9 @@ LDFLAGS=	-X -Ttext ${RELOC} -e $(ENTRY) -T ${.CURDIR}/elf32_powerpc_merge.x -Bst
 
 .PATH:          ${S}/stand/boot
 .PATH:          ${S}/lib/libsa
+
+.PATH:		${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
+SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c ashrdi3.c
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DCONSPEED=57600

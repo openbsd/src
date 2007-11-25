@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2006/10/30 18:28:57 jmc Exp $
+#	$OpenBSD: Makefile,v 1.8 2007/11/25 18:25:33 deraadt Exp $
 
 MAN=	boot.8
 MANSUBDIR=zaurus
@@ -28,7 +28,7 @@ SRCS+=	close.c closeall.c cons.c ctime.c disklabel.c dkcksum.c fstat.c \
 	lseek.c memcmp.c memcpy.c memset.c open.c printf.c read.c \
 	readdir.c snprintf.c stat.c strerror.c strtol.c ufs.c
 
-# libkern
+.PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c write.c \
 	ashrdi3.c divsi3.S
 
@@ -38,8 +38,6 @@ SRCS+=	alloc.c cmd.c devopen.c diskprobe.c exec.c exit.c loadfile.c \
 
 .PATH:	${S}/stand/boot
 .PATH:	${S}/lib/libsa
-.PATH:	${S}/lib/libkern
-.PATH:	${S}/lib/libkern/arch/arm
 
 .else
 NOPROG=

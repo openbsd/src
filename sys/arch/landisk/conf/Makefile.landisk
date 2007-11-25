@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.5 2007/11/25 11:23:33 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.6 2007/11/25 18:25:28 deraadt Exp $
 #
 # Makefile for OpenBSD/landisk
 #
@@ -56,14 +56,6 @@ HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
-### find out what to use for libkern
-.include "$S/lib/libkern/Makefile.inc"
-.ifndef PROF
-LIBKERN=	${KERNLIB}
-.else
-LIBKERN=	${KERNLIB_PROF}
-.endif
-
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -93,7 +85,7 @@ NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
@@ -126,6 +118,9 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${NORMAL_C_C}
+
+mcount.o: $S/lib/libkern/mcount.c Makefile
+	${NORMAL_C_NOP}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -179,7 +174,6 @@ assym.h machdep.o: Makefile
 
 # depend on CPU configuration
 locore.o machdep.o: Makefile
-
 
 locore.o: ${LANDISK}/landisk/locore.S assym.h
 	${NORMAL_S}

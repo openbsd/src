@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2007/10/17 20:45:27 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.11 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -12,8 +12,12 @@ WARNS=		0
 
 PROG?=		ofwboot
 NOMAN=		ja, man!
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+
 .PATH:		${S}/arch/sparc64/sparc64
+SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+
+.PATH:		${S}/lib/libkern/arch/sparc64 ${S}/lib/libkern
+SRCS+=		strlcpy.c strcmp.c strlcat.c strlen.c
 
 CWARNFLAGS+=	-Wno-main
 AFLAGS+=	-Wa,-Av9a
@@ -54,9 +58,9 @@ CPPFLAGS+=	-DSPARC_BOOT_NFS
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 .endif
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
 	${LD} -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} -L${LIBSADIR} ${LIBSA} -L${LIBKERNDIR} ${LIBKERN} \
+	    ${OBJS} -L${LIBSADIR} ${LIBSA} \
 	    -L${LIBZDIR} ${LIBZ}
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2005/12/30 02:03:49 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/02/01 22:33:01 mycroft Exp $
 
 BINDIR=	/usr/mdec
@@ -15,19 +15,6 @@ RELOC2!=	perl -e 'printf "0x%x", ${RELOC_TEST} + 0x40000'
 CFLAGS+=	-fno-stack-protector
 
 DEFS=		-DSTANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
-
-### Figure out what to use for libkern
-LIBKERNDIR=		${.CURDIR}/../libkern
-
-.if exists(${LIBKERNDIR}/obj.${MACHINE})
-LIBKERNOBJDIR=		${LIBKERNDIR}/obj.${MACHINE}
-.elif exists(${LIBKERNDIR}/obj)
-LIBKERNOBJDIR=		${LIBKERNDIR}/obj
-.else
-LIBKERNOBJDIR=		${LIBKERNDIR}
-.endif
-
-LIBKERN=		${LIBKERNOBJDIR}/libkern.a
 
 ### Figure out what to use for libsa
 LIBSADIR=		${.CURDIR}/../libsa

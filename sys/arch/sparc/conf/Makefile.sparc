@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.40 2007/11/25 11:23:33 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.41 2007/11/25 18:25:29 deraadt Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -62,14 +62,6 @@ HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
-### find out what to use for libkern
-.include "$S/lib/libkern/Makefile.inc"
-.ifndef PROF
-LIBKERN=	${KERNLIB}
-.else
-LIBKERN=	${KERNLIB_PROF}
-.endif
-
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -97,7 +89,7 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
@@ -128,6 +120,9 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${NORMAL_C_C}
+
+mcount.o: $S/lib/libkern/mcount.c Makefile
+	${NORMAL_C_NOP}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -185,7 +180,6 @@ machdep.o: Makefile
 bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
 ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
 machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
-
 
 locore.o: ${SPARC}/sparc/locore.s assym.h
 	${NORMAL_S}

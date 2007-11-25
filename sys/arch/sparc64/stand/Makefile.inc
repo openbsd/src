@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2005/12/30 02:03:49 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2007/11/25 18:25:33 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -21,19 +21,6 @@ CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
 .endif
 
 
-
-### Figure out what to use for libkern
-LIBKERNDIR=             ${.CURDIR}/../libkern
-
-.if exists(${LIBKERNDIR}/obj.${MACHINE})
-LIBKERNOBJDIR=          ${LIBKERNDIR}/obj.${MACHINE}
-.elif exists(${LIBKERNDIR}/obj)
-LIBKERNOBJDIR=          ${LIBKERNDIR}/obj
-.else 
-LIBKERNOBJDIR=          ${LIBKERNDIR}
-.endif
-
-LIBKERN=                ${LIBKERNOBJDIR}/libkern.a
 
 ### Figure out what to use for libsa
 LIBSADIR=               ${.CURDIR}/../libsa

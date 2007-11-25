@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: htons.S,v 1.4 2007/11/25 18:25:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,8 +36,10 @@
 
 #include <machine/asm.h>
 
-/* netorder = htons(hostorder) */
+/* netorder = htons(hostorder) AND hostorder = ntohs(netorder) */
 ENTRY(htons)
+ENTRY(ntohs)
+ENTRY(swap16)
 	movzwl	4(%esp),%eax
 	rorw	$8,%ax
 	ret

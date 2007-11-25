@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2006/02/15 12:40:50 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2007/11/25 18:25:30 deraadt Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -20,6 +20,9 @@ HEADERSIZE_PROG = headersize
 
 CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
+.PATH:  ${S}/lib/libkern/arch/alpha ${S}/lib/libkern
+SRCS+=  bzero.c __divqu.S strlen.S __remqu.S
+
 DEFNS= -DPRIMARY_BOOTBLOCK -DALPHA_BOOT_ELF -DSUN_BOOTPARAMS
 
 AFLAGS += -DASSEMBLER ${DEFNS}
@@ -40,12 +43,6 @@ lint:
 
 .include <bsd.prog.mk>
 
-### find out what to use for libkern
-KERN_AS=	library
-KERNDST=	${.CURDIR}/../libkern/${__objdir}
-.include "${.CURDIR}/../libkern/Makefile.inc"
-LIBKERN=	${KERNLIB}
-
 ### find out what to use for libz
 Z_AS=		library
 ZDST=		${.CURDIR}/../libz/${__objdir}
@@ -60,9 +57,9 @@ SA_ZLIB=	yes
 .include "${.CURDIR}/../libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA}
 	size ${PROG}.sym

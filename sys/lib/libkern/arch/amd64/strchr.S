@@ -1,4 +1,21 @@
-/*	$NetBSD: strchr.S,v 1.1 2001/06/19 00:22:47 fvdl Exp $	*/
+/*
+ * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Public domain.
+ * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
+ */
 
-#define STRCHR
-#include "index.S"
+#include <machine/asm.h>
+
+ENTRY(strchr)
+	movq	%rdi,%rax
+	movb	%sil,%cl
+L1:
+	movb	(%rax),%dl
+	cmpb	%dl,%cl			/* found char? */
+	je 	L2
+	incq	%rax
+	testb	%dl,%dl			/* null terminator? */
+	jnz	L1
+	xorq	%rax,%rax
+L2:
+	ret

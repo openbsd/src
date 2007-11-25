@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2005/08/10 16:58:42 todd Exp $
+#	$OpenBSD: Makefile,v 1.9 2007/11/25 18:25:29 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -16,6 +16,9 @@ BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 HEADERSIZE_PROG = headersize
 
 CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${PROG}.trunc ${HEADERSIZE_PROG}
+
+.PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libkern
+SRCS+=	bzero.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK
 DEFNS+= -DALPHA_BOOT_ELF
@@ -40,13 +43,6 @@ lint:
 
 .include <bsd.prog.mk>
 
-### find out what to use for libkern
-KERN_AS=	library
-KERNDST=	${.CURDIR}/../libkern/${__objdir}
-.include "${.CURDIR}/../libkern/Makefile.inc"
-LIBKERN=	${KERNLIB}
-
-${PROG}.sym: ${OBJS} ${LIBKERN}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
-	    ${LIBKERN}
+${PROG}.sym: ${OBJS}
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS}
 	size ${PROG}.sym

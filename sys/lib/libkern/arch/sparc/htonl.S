@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
 /*	$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:58 cgd Exp $	*/
 
 /*
@@ -36,17 +36,12 @@
  * Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$OpenBSD: htonl.S,v 1.3 2003/06/02 23:28:09 millert Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 /* netorder = htonl(hostorder) */
 
 #include "DEFS.h"
 
+_ENTRY(bswap32)
+_ENTRY(ntohl)
 ENTRY(htonl)
 	retl
 	 nop

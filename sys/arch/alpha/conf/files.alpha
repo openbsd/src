@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.82 2007/06/08 22:57:42 jasper Exp $
+#	$OpenBSD: files.alpha,v 1.83 2007/11/25 18:25:25 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -355,3 +355,14 @@ include "dev/bluetooth/files.bluetooth"
 # Machine-independent 1-Wire drivers
 #
 include "dev/onewire/files.onewire"
+
+# Machine-dependent libkern components
+file	lib/libkern/softfloat.c
+file	lib/libkern/arch/alpha/__divl.S
+file	lib/libkern/arch/alpha/__divlu.S
+file	lib/libkern/arch/alpha/__divq.S
+file	lib/libkern/arch/alpha/__divqu.S
+file	lib/libkern/arch/alpha/__reml.S
+file	lib/libkern/arch/alpha/__remlu.S
+file	lib/libkern/arch/alpha/__remq.S
+file	lib/libkern/arch/alpha/__remqu.S

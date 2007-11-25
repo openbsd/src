@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
 /*	$NetBSD: strlen.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
@@ -35,13 +35,6 @@
  *
  * Header: strlen.s,v 1.1 92/06/25 12:52:47 torek Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)strlen.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: strlen.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $"
-#endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 

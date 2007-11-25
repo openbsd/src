@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.169 2007/11/25 17:11:12 oga Exp $
+#	$OpenBSD: files.i386,v 1.170 2007/11/25 18:25:28 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -446,3 +446,24 @@ file	arch/i386/i386/esm.c			esm needs-flag
 include "dev/vesa/files.vesa"
 
 #include "dev/rasops/files.rasops"
+
+# quad support is neccessary for 32 bit architectures
+file lib/libkern/adddi3.c
+file lib/libkern/anddi3.c
+file lib/libkern/ashldi3.c
+file lib/libkern/ashrdi3.c
+file lib/libkern/cmpdi2.c
+file lib/libkern/divdi3.c
+file lib/libkern/iordi3.c
+file lib/libkern/lshldi3.c
+file lib/libkern/lshrdi3.c
+file lib/libkern/moddi3.c
+file lib/libkern/muldi3.c
+file lib/libkern/negdi2.c
+file lib/libkern/notdi2.c
+file lib/libkern/qdivrem.c
+file lib/libkern/subdi3.c
+file lib/libkern/ucmpdi2.c
+file lib/libkern/udivdi3.c
+file lib/libkern/umoddi3.c
+file lib/libkern/xordi3.c
