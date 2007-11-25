@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.9 2007/11/25 09:11:12 jsg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.10 2007/11/25 15:42:15 tedu Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -24,6 +24,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/conf.h>
+#include <machine/acpiapm.h>
 #include <i386/isa/isa_machdep.h>
 
 #include <dev/isa/isareg.h>
@@ -173,5 +175,9 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	extern void (*cpuresetfn)(void);
 	sc->sc_interrupt = isa_intr_establish(NULL, sc->sc_fadt->sci_int,
 	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, sc->sc_dev.dv_xname);
+	acpiapm_open = acpiopen;
+	acpiapm_close = acpiclose;
+	acpiapm_ioctl = acpiioctl;
+	acpiapm_kqfilter = acpikqfilter;
 	cpuresetfn = acpi_reset;
 }

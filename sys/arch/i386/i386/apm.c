@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.78 2007/11/03 03:37:08 weingart Exp $	*/
+/*	$OpenBSD: apm.c,v 1.79 2007/11/25 15:42:15 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -66,6 +66,7 @@
 #include <i386/isa/nvram.h>
 #include <dev/isa/isavar.h>
 
+#include <machine/acpiapm.h>
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 
@@ -916,6 +917,10 @@ apmattach(struct device *parent, struct device *self, void *aux)
 			}
 
 			/* All is well, let the rest of the world know */
+			acpiapm_open = apmopen;
+			acpiapm_close = apmclose;
+			acpiapm_ioctl = apmioctl;
+			acpiapm_kqfilter = apmkqfilter;
 			apm_attached = 1;
 		}
 	} else {

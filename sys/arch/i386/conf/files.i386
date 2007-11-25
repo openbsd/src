@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.167 2007/11/16 21:07:01 mbalmer Exp $
+#	$OpenBSD: files.i386,v 1.168 2007/11/25 15:42:15 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -299,6 +299,8 @@ device	apm
 attach	apm at bios
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
+
+file	arch/i386/i386/acpiapm.c
 
 # Intel SMP specification 1.4
 define	mpbios

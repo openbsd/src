@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.12 2005/12/31 21:22:34 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.13 2007/11/25 15:42:15 tedu Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -49,13 +49,7 @@ cdev_decl(fd);
 cdev_decl(pc);
 
 
-#define	cdev_apm_init(c,n) {\
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
-
-#define	cdev_acpi_init(c,n) {\
+#define	cdev_acpiapm_init(c,n) {\
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
@@ -77,6 +71,8 @@ cdev_decl(bios);
 cdev_decl(acpi);
 
 cdev_decl(apm);
+
+cdev_decl(acpiapm);
 
 #define pctrpoll seltrue
 cdev_decl(pctr);

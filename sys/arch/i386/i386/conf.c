@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.119 2007/09/18 18:13:06 mk Exp $	*/
+/*	$OpenBSD: conf.c,v 1.120 2007/11/25 15:42:15 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -151,8 +151,6 @@ cdev_decl(mcd);
 #include "sequencer.h"
 cdev_decl(music);
 #include "joy.h"
-#include "acpi.h"
-#include "apm.h"
 #include "bthub.h"
 #include "pctr.h"
 #include "bios.h"
@@ -224,7 +222,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
-	cdev_apm_init(NAPM,apm),	/* 21: Advanced Power Management */
+	cdev_acpiapm_init(1,acpiapm),	/* 21: Power Management stuff */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
@@ -307,7 +305,7 @@ struct cdevsw	cdevsw[] =
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
 	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
-	cdev_acpi_init(NACPI,acpi),	/* 85: ACPI */
+	cdev_notdef(),			/* 85: ACPI (deprecated) */
 	cdev_bthub_init(NBTHUB,bthub),	/* 86: bthub */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
