@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.60 2007/08/01 21:34:01 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.61 2007/11/25 15:55:42 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 1 2007 $
+.Dd $Mdocdate: November 25 2007 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -59,6 +59,19 @@ place of the original (MBR) boot block.
 .Pp
 Some other architectures (like the zaurus), consider sector 0 of the disk
 to contain the MBR partition table, but do not use the MBR bootcode at all.
+.Pp
+Upon the first access to a disk, the partition information is fetched,
+typically in
+.Xr disklabel 5
+format.
+The location of the disklabel can vary from architecture to architecture,
+but if one is not found the existance of a MBR partition table will create
+a spoofed prototypical disklabel which can be viewed using
+.Xr disklabel 8 .
+This spoofing mechanism is useful for permitting partition access for
+devices which one would not normally want to place a true
+.Xr disklabel 5
+sector on.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
