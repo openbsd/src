@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.1 2007/10/30 12:31:07 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.2 2007/11/25 11:45:14 claudio Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1813,7 +1813,6 @@ int
 et_encap(struct et_softc *sc, struct mbuf **m0)
 {
 	struct mbuf *m = *m0;
-	bus_dma_segment_t segs[ET_NSEG_MAX];
 	struct et_txdesc_ring *tx_ring = &sc->sc_tx_ring;
 	struct et_txbuf_data *tbd = &sc->sc_tx_data;
 	struct et_txdesc *td;
@@ -1905,9 +1904,10 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 
 		idx = (first_idx + i) % ET_TX_NDESC;
 		td = &tx_ring->tr_desc[idx];
-		td->td_addr_hi = ET_ADDR_HI(segs[i].ds_addr);
-		td->td_addr_lo = ET_ADDR_LO(segs[i].ds_addr);
-		td->td_ctrl1 = __SHIFTIN(segs[i].ds_len, ET_TDCTRL1_LEN);
+		td->td_addr_hi = ET_ADDR_HI(map->dm_segs[i].ds_addr);
+		td->td_addr_lo = ET_ADDR_LO(map->dm_segs[i].ds_addr);
+		td->td_ctrl1 =
+		    __SHIFTIN(map->dm_segs[i].ds_len, ET_TDCTRL1_LEN);
 
 		if (i == map->dm_nsegs - 1) {	/* Last frag */
 			td->td_ctrl2 = last_td_ctrl2;
