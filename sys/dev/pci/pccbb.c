@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.49 2007/11/25 12:18:34 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.50 2007/11/25 18:57:50 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -572,11 +572,18 @@ pccbb_pci_callback(self)
 		sc->sc_flags |= CBB_MEMHMAPPED;
 	}
 
-	/* bus bridge initialization */
-	pccbb_chipinit(sc);
-
 	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
 	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
+
+	/* check for dead device? */
+	if (bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT) == 0xffffffff &&
+	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK) == 0xffffffff) {
+		printf("%s: controller is missing\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* bus bridge initialization */
+	pccbb_chipinit(sc);
 
 	/* clear data structure for child device interrupt handlers */
 	sc->sc_pil = NULL;
