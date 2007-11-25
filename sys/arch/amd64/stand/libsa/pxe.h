@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.h,v 1.2 2004/09/20 17:51:07 miod Exp $ */
+/*	$OpenBSD: pxe.h,v 1.3 2007/11/25 20:00:03 martynas Exp $ */
 /*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ typedef struct {
 	ADDR32_t	ProtocolIni;	/* Phys addr of a copy of the
 					   driver module */
 	uint8_t		reserved[8];
-} __attribute__((__packed__)) t_PXENV_UNDI_INITALIZE;
+} __attribute__((__packed__)) t_PXENV_UNDI_INITIALIZE;
 
 
 #define	MAXNUM_MCADDR		8
