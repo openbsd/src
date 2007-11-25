@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.411 2007/11/12 01:17:41 pascoe Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.412 2007/11/25 10:50:13 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -931,6 +931,51 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"686 class"		/* Default */
 			},
 			NULL
+		},
+		/* Family 7 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 8 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 9 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family A */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family B */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family C */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family D */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family E */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family F */
+		{
+			/* Extended processor family - Transmeta Efficeon */
+			CPUCLASS_686,
+			{
+				0, 0, "TM8000", "TM8000",
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				"TM8000"	/* Default */
+			},
+			tm86_cpu_setup
 		} }
 	},
 	{
@@ -1493,7 +1538,7 @@ intel686_p4_cpu_setup(struct cpu_info *ci)
 void
 tm86_cpu_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL) && defined(I586_CPU)
+#if !defined(SMALL_KERNEL) && (defined(I586_CPU) || defined(I686_CPU))
 	longrun_init();
 #endif
 }
