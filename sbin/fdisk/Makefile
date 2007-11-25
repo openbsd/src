@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.35 2007/08/01 21:34:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2007/11/25 15:56:28 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -25,10 +25,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.if (${MACHINE} == "alpha") || (${MACHINE} == "amd64") || \
-    (${MACHINE} == "armish") || (${MACHINE} == "i386") || \
-    (${MACHINE} == "landisk") || (${MACHINE} == "macppc") || \
-    (${MACHINE} == "zaurus")
 PROG=	fdisk
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
@@ -49,11 +45,6 @@ manual.c:	fdisk.cat8
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .endif
 
-.else
-NOPROG=yes
-.endif
-
 MAN=	fdisk.8
-MANSUBDIR=alpha amd64 armish i386 landisk macppc zaurus
 
 .include <bsd.prog.mk>
