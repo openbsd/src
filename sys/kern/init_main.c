@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.146 2007/10/16 23:41:42 fgsch Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.147 2007/11/25 15:56:17 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ void	start_init(void *);
 void	start_cleaner(void *);
 void	start_update(void *);
 void	start_reaper(void *);
-void	start_crypto(void *);
+void	init_crypto(void);
 void	init_exec(void);
 void	kqueue_init(void);
 void	workq_init(void);
@@ -508,8 +508,7 @@ main(void *framep)
 
 #ifdef CRYPTO
 	/* Create the crypto kernel thread. */
-	if (kthread_create(start_crypto, NULL, NULL, "crypto"))
-		panic("crypto thread");
+	init_crypto();
 #endif /* CRYPTO */
 
 	microtime(&rtv);
@@ -722,12 +721,3 @@ start_reaper(void *arg)
 	reaper();
 	/* NOTREACHED */
 }
-
-#ifdef CRYPTO
-void
-start_crypto(void *arg)
-{
-	crypto_thread();
-	/* NOTREACHED */
-}
-#endif /* CRYPTO */

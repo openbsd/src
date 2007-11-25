@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.49 2007/11/14 19:12:36 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.50 2007/11/25 15:56:16 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -25,7 +25,11 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/workq.h>
+
 #include <crypto/cryptodev.h>
+
+void init_crypto(void);
 
 struct cryptocap *crypto_drivers = NULL;
 int crypto_drivers_num = 0;
@@ -34,11 +38,7 @@ struct pool cryptop_pool;
 struct pool cryptodesc_pool;
 int crypto_pool_initialized = 0;
 
-struct cryptop *crp_req_queue = NULL;
-struct cryptop **crp_req_queue_tail = NULL;
-
-struct cryptkop *krp_req_queue = NULL;
-struct cryptkop **krp_req_queue_tail = NULL;
+struct workq *crypto_workq;
 
 /*
  * Create a new session.
@@ -419,16 +419,9 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_drivers[hid].cc_queued++;
 
 	crp->crp_next = NULL;
-	if (crp_req_queue == NULL) {
-		crp_req_queue = crp;
-		crp_req_queue_tail = &(crp->crp_next);
-		splx(s);
-		wakeup(&crp_req_queue); /* Shared wait channel. */
-	} else {
-		*crp_req_queue_tail = crp;
-		crp_req_queue_tail = &(crp->crp_next);
-		splx(s);
-	}
+	workq_add_task(crypto_workq, WQ_DIRECTOK, (workq_fn)crypto_invoke, crp, NULL);
+
+	splx(s);
 	return 0;
 }
 
@@ -440,16 +433,9 @@ crypto_kdispatch(struct cryptkop *krp)
 	s = splvm();
 
 	krp->krp_next = NULL;
-	if (krp_req_queue == NULL) {
-		krp_req_queue = krp;
-		krp_req_queue_tail = &(krp->krp_next);
-		splx(s);
-		wakeup(&crp_req_queue); /* Shared wait channel. */
-	} else {
-		*krp_req_queue_tail = krp;
-		krp_req_queue_tail = &(krp->krp_next);
-		splx(s);
-	}
+	workq_add_task(crypto_workq, WQ_DIRECTOK, (workq_fn)crypto_kinvoke, krp, NULL);
+
+	splx(s);
 	return 0;
 }
 
@@ -628,37 +614,10 @@ crypto_getreq(int num)
 	return crp;
 }
 
-/*
- * Crypto thread, runs as a kernel thread to process crypto requests.
- */
 void
-crypto_thread(void)
+init_crypto()
 {
-	struct cryptop *crp;
-	struct cryptkop *krp;
-	int s;
-
-	s = splvm();
-
-	for (;;) {
-		crp = crp_req_queue;
-		krp = krp_req_queue;
-		if (crp == NULL && krp == NULL) {
-			(void)tsleep(&crp_req_queue, PLOCK, "crypto_wait", 0);
-			continue;
-		}
-
-		if (crp) {
-			/* Remove from the queue. */
-			crp_req_queue = crp->crp_next;
-			crypto_invoke(crp);
-		}
-		if (krp) {
-			/* Remove from the queue. */
-			krp_req_queue = krp->krp_next;
-			crypto_kinvoke(krp);
-		}
-	}
+	crypto_workq = workq_create("crypto", 1);
 }
 
 /*
