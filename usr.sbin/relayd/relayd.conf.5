@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.67 2007/11/24 19:00:44 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.68 2007/11/25 20:02:02 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2007 $
+.Dd $Mdocdate: November 25 2007 $
 .Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
@@ -574,7 +574,8 @@ request query expect "bar" from "foo"
 .Ed
 .It Ic url
 Look up the entity as a URL suffix/prefix expression consisting of a
-hostname without port or suffix and a path name or prefix when using the
+canonicalized hostname without port or suffix and a path name or
+prefix when using the
 .Ic http
 protocol.
 This type is only available with the direction
