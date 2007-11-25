@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.48 2007/11/23 19:46:16 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.49 2007/11/25 12:18:34 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -554,6 +554,7 @@ pccbb_pci_callback(self)
 	struct pcmciabus_attach_args paa;
 	struct cardslot_attach_args caa;
 	struct cardslot_softc *csc;
+	u_int32_t sockstat;
 
 	if (!(sc->sc_flags & CBB_MEMHMAPPED)) {
 		/* The socket registers aren't mapped correctly. */
@@ -583,13 +584,9 @@ pccbb_pci_callback(self)
 
 	powerhook_establish(pccbb_powerhook, sc);
 
-	{
-		u_int32_t sockstat =
-		    bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
-		if (0 == (sockstat & CB_SOCKET_STAT_CD)) {
-			sc->sc_flags |= CBB_CARDEXIST;
-		}
-	}
+	sockstat = bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
+	if ((sockstat & CB_SOCKET_STAT_CD) == 0)
+		sc->sc_flags |= CBB_CARDEXIST;
 
 	/*
 	 * attach cardbus
