@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.7 2007/11/25 15:58:29 tedu Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.8 2007/11/25 17:40:12 jmc Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -73,7 +73,7 @@ The
 argument specifies creation and runtime characteristics of the task.
 The possible flags are:
 .Pp
-.Bl -tag -offset indent -width WQ_WAITOKXXX -compact
+.Bl -tag -offset indent -width WQ_DIRECTOKXXX -compact
 .It Dv WQ_WAITOK
 Wait for resources to become available.
 If resources are not available and this flag is not set then
@@ -81,7 +81,9 @@ If resources are not available and this flag is not set then
 will return
 .Dv ENOMEM .
 .It Dv WQ_DIRECTOK
-If the workq argument is NULL, process the request immediately instead of
+If the workq argument is
+.Dv NULL ,
+process the request immediately instead of
 queueing until threads are ready.
 .El
 .Pp

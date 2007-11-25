@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.61 2007/11/25 15:55:42 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.62 2007/11/25 17:38:13 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -60,18 +60,18 @@ place of the original (MBR) boot block.
 Some other architectures (like the zaurus), consider sector 0 of the disk
 to contain the MBR partition table, but do not use the MBR bootcode at all.
 .Pp
-Upon the first access to a disk, the partition information is fetched,
+Upon first access to a disk, the partition information is retrieved,
 typically in
 .Xr disklabel 5
 format.
 The location of the disklabel can vary from architecture to architecture,
-but if one is not found the existance of a MBR partition table will create
+but if one is not found the existence of an MBR partition table will create
 a spoofed prototypical disklabel which can be viewed using
 .Xr disklabel 8 .
 This spoofing mechanism is useful for permitting partition access for
-devices which one would not normally want to place a true
+devices which would not normally have a
 .Xr disklabel 5
-sector on.
+sector.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -94,7 +94,7 @@ has passed to the kernel.
 .It Fl e
 Use the interactive edit of
 .Nm
-to modify a MBR partition table.
+to modify an MBR partition table.
 The editor permits configuration of the MBR partition, as well as
 extended MBR partitions.
 See
