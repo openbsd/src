@@ -1,4 +1,4 @@
-/*	$OpenBSD: etphy.c,v 1.1 2007/10/30 12:31:06 jsg Exp $	*/
+/*	$OpenBSD: etphy.c,v 1.2 2007/11/25 20:28:06 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -157,9 +157,7 @@ etphy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
-	mii->mii_instance++;
-
-	etphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT) {
@@ -168,9 +166,7 @@ etphy_attach(struct device *parent, struct device *self, void *aux)
 		sc->mii_extcapabilities &= ~EXTSR_1000THDX;
 	}
 
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) != 0 ||
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) != 0)
-		mii_phy_add_media(sc);
+	mii_phy_add_media(sc);
 }
 
 int
@@ -237,7 +233,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	}
 
 	/* Update the media status. */
-	etphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
@@ -329,4 +325,6 @@ etphy_status(struct mii_softc *sc)
 
 	if (sr & ETPHY_SR_FDX)
 		mii->mii_media_active |= IFM_FDX;
+	else
+		mii->mii_media_active |= IFM_HDX;
 }
