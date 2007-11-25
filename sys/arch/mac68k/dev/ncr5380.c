@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.31 2007/04/24 16:48:43 miod Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.32 2007/11/25 16:40:03 jmc Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -607,7 +607,7 @@ main_exit:
  * This interrupt can only be triggered when running in non-polled DMA
  * mode. When DMA is not active, it will be silently ignored, it is usually
  * too late because the EOP interrupt of the controller happens just a tiny
- * bit earlier. It might become usefull when scatter/gather is implemented,
+ * bit earlier. It might become useful when scatter/gather is implemented,
  * because in that case only part of the DATAIN/DATAOUT transfer is taken
  * out of a single buffer.
  */

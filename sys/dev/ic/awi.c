@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.23 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: awi.c,v 1.24 2007/11/25 16:40:04 jmc Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -1510,7 +1510,7 @@ awi_init_hw(sc)
 	awi_intr_unlock(sc);
 	am79c930_gcr_setbits(&sc->sc_chip, AM79C930_GCR_ENECINT);
 
-	/* issueing interface test command */
+	/* issuing interface test command */
 	error = awi_cmd(sc, AWI_CMD_NOP);
 	if (error) {
 		printf("%s: failed to complete selftest", sc->sc_dev.dv_xname);

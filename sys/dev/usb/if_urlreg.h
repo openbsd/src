@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.11 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.12 2007/11/25 16:40:03 jmc Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -140,7 +140,7 @@ struct url_cdata {
 	struct url_chain	url_tx_chain[URL_TX_LIST_CNT];
 	struct url_chain	url_rx_chain[URL_TX_LIST_CNT];
 #if 0
-	/* XXX: Intrrupt Endpoint is not yet supported! */
+	/* XXX: Interrupt Endpoint is not yet supported! */
 	struct url_intrpkg	url_ibuf;
 #endif
 	int			url_tx_prod;

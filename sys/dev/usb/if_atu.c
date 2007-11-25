@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.89 2007/10/11 18:33:13 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.90 2007/11/25 16:40:03 jmc Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -717,7 +717,7 @@ atu_initial_config(struct atu_softc *sc)
 	/*
 	 * TODO:
 	 * read reg domain MIB_PHY @ 0x17 (1 byte), (reply = 0x30)
-	 * we should do something usefull with this info. right now it's just
+	 * we should do something useful with this info. right now it's just
 	 * ignored
 	 */
 	err = atu_get_mib(sc, MIB_PHY__REG_DOMAIN, &reg_domain);

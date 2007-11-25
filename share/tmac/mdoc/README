@@ -1,4 +1,4 @@
-.\"	$OpenBSD: README,v 1.4 2003/11/08 19:17:28 jmc Exp $
+.\"	$OpenBSD: README,v 1.5 2007/11/25 16:40:04 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -123,9 +123,9 @@ Site specific string and register names (for doc-{common,nroff,ditroff})
 .\" NS Ex register (site) Width Needed for Example Indent
 .\" NS Fa register (site) Width Needed for Function Argument
 .\" NS Fl register (site) Width Needed for Flag
-.\" NS Fc register (site) Funtion Quote Close Value
+.\" NS Fc register (site) Function Quote Close Value
 .\" NS Fn register (site) Width Needed for Function
-.\" NS Fo register (site) Funtion Quote Open Width
+.\" NS Fo register (site) Function Quote Open Width
 .\" NS Hl register (site) Hypehnated List Macro Value (sub bullet list)
 .\" NS I1, I2, I3 register (site) Indent values
 .\" NS Ic register (site) Width neeeded for Interactive Command Name

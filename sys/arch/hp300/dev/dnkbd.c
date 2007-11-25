@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.15 2007/04/10 22:37:14 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.16 2007/11/25 16:40:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -556,7 +556,7 @@ dnkbd_input(struct dnkbd_softc *sc, int dat)
 			 * Identify the keyboard again. This will switch it to
 			 * raw mode again. If this fails, we'll consider the
 			 * keyboard as unplugged (to ignore further events until
-			 * a successfull reset).
+			 * a successful reset).
 			 */
 			if (dnkbd_probe(sc) == 0) {
 				/*

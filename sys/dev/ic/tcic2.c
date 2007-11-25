@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.7 2005/11/23 11:39:37 mickey Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.8 2007/11/25 16:40:04 jmc Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -665,7 +665,7 @@ tcic_intr_socket(h)
 		if (delta & TCIC_SSTAT_CD) {
 			if (sstat & TCIC_SSTAT_CD) {
 				if (!(h->flags & TCIC_FLAG_CARDP)) {
-					DPRINTF(("%s: enqueing INSERTION event\n",
+					DPRINTF(("%s: enqueuing INSERTION event\n",
 					    h->sc->dev.dv_xname));
 					tcic_queue_event(h, TCIC_EVENT_INSERTION);
 				}
@@ -676,7 +676,7 @@ tcic_intr_socket(h)
 					    h->sc->dev.dv_xname));
 					tcic_deactivate_card(h);
 
-					DPRINTF(("%s: enqueing REMOVAL event\n",
+					DPRINTF(("%s: enqueuing REMOVAL event\n",
 					    h->sc->dev.dv_xname));
 					tcic_queue_event(h, TCIC_EVENT_REMOVAL);
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.41 2007/10/20 22:44:00 fgsch Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.42 2007/11/25 16:40:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1633,7 +1633,7 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 		/*
 		 * Although the driver does not care about the
 		 * 'Selection in Progress' status bit, the busy
-		 * LED does.  SELINGO is only cleared by a sucessfull
+		 * LED does.  SELINGO is only cleared by a successfull
 		 * selection, so we must manually clear it to insure
 		 * the LED turns off just incase no future successful
 		 * selections occur (e.g. no devices on the bus).

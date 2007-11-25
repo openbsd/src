@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.8 2007/09/03 00:38:34 krw Exp $	*/
+/*	$OpenBSD: board.h,v 1.9 2007/11/25 16:40:04 jmc Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -104,7 +104,7 @@
 #define INT_ST_MASK1	U(0x65000004) 	/* interrupt status register CPU 1 */
 #define INT_ST_MASK2	U(0x65000008) 	/* interrupt status register CPU 2 */
 #define INT_ST_MASK3	U(0x6500000C) 	/* interrupt status register CPU 3 */
-#define  INT_LEVEL	           8	/* # of intrrupt level + 1 */
+#define  INT_LEVEL	           8	/* # of interrupt level + 1 */
 #define  INT_SET_LV7	U(0x00000000) 	/* disable interrupts */
 #define  INT_SET_LV6	U(0x00000000) 	/* enable level 7 */
 #define  INT_SET_LV5	U(0x80000000) 	/* enable level 7-6 */

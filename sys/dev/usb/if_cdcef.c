@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.19 2007/11/13 01:15:43 dlg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.20 2007/11/25 16:40:03 jmc Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -157,7 +157,7 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	/* Fill in the fields needed by the parent device. */
 	sc->sc_dev.methods = &cdcef_methods;
 
-	/* timeout to start delayed tranfers */
+	/* timeout to start delayed transfers */
 	timeout_set(&sc->start_to, cdcef_start_timeout, sc);
 
 	/*

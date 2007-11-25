@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_dagdegwr.c,v 1.6 2006/07/09 22:10:05 mk Exp $	*/
+/*	$OpenBSD: rf_dagdegwr.c,v 1.7 2007/11/25 16:40:04 jmc Exp $	*/
 /*	$NetBSD: rf_dagdegwr.c,v 1.5 2000/01/07 03:40:57 oster Exp $	*/
 
 /*
@@ -843,7 +843,7 @@ rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	rf_InitNode(recoveryNode, rf_wait, RF_FALSE, recovFunc,
 	    rf_NullNodeUndoFunc, NULL,
-	    nWriteNodes,		/* succesors */
+	    nWriteNodes,		/* successors */
 	    nReadNodes,			/* preds */
 	    nReadNodes + nWudNodes + 3,	/* params */
 	    2 * nPQNodes,		/* results */

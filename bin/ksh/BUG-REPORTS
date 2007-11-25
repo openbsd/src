@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.16 2005/11/15 07:02:33 miod Exp $
+$OpenBSD: BUG-REPORTS,v 1.17 2007/11/25 16:40:04 jmc Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -1064,7 +1064,7 @@ x pdksh 5.2.8, NeXT machines (reported by Kai Wong): clock_t, which lives
   [fixed in 5.2.9: configure now checks in sys/time.h]
 
 x pdksh 5.2.3, - (reported by Mike Jetzer): in vi, <ESC>= on word with ~
-  but no /, beeps (or prints final path comonent?).
+  but no /, beeps (or prints final path component?).
   [see Mail.9:66]
   [fixed in 5.2.9: fixed edit.c(add_glob) so no * is appended to ~username]
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2007/11/22 23:31:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2007/11/25 16:40:04 jmc Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1578,7 +1578,7 @@ ss_branch_taken(u_int inst, vaddr_t pc, struct reg *regs)
 	default:	/* system call */
 		/*
 		 * The regular (pc + 4) breakpoint will match the error
-		 * return. Successfull system calls return at (pc + 8),
+		 * return. Successful system calls return at (pc + 8),
 		 * so we'll set up a branch breakpoint there.
 		 */
 		return (pc + 8);

@@ -88,7 +88,7 @@ xfs_mount_common_sys(struct mount *mp,
 	mp->mnt_flag & MNT_DELEXPORT) {
 
 	NNPFSDEB(XDEBVFOPS, 
-	       ("xfs_mount: ignoreing MNT_UPDATE or MNT_DELEXPORT\n"));
+	       ("xfs_mount: ignoring MNT_UPDATE or MNT_DELEXPORT\n"));
 	return 0;
     }
 #endif

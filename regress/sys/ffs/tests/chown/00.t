@@ -127,7 +127,7 @@ expect 0 -u 65534 -g 65533,65532 chown ${n0} -1 -1
 expect 06555,65534,65533 lstat ${n0} mode,uid,gid
 expect 0 rmdir ${n0}
 
-# successfull chown(2) call (except uid and gid equal to -1) updates ctime.
+# successful chown(2) call (except uid and gid equal to -1) updates ctime.
 # 109
 expect 0 create ${n0} 0644
 ctime1=`${FSTEST} stat ${n0} ctime`

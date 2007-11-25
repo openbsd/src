@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.72 2007/11/15 20:02:33 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.73 2007/11/25 16:40:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -703,7 +703,7 @@ bios_getdiskinfo(dev_t dev)
 /*
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
- * is sucessfully located and zero otherwise. Callers should take care
+ * is successfully located and zero otherwise. Callers should take care
  * to initialize the cookie field of the smbtable structure to zero before
  * the first invocation of this function.
  * Multiple tables of the same type can be located by repeatedly calling
@@ -722,7 +722,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	/*
 	 * The cookie field of the smtable structure is used to locate
 	 * multiple instances of a table of an arbitrary type. Following the
-	 * sucessful location of a table, the type is encoded as bits 0:7 of
+	 * successful location of a table, the type is encoded as bits 0:7 of
 	 * the cookie value, the offset in terms of the number of structures
 	 * preceding that referenced by the handle is encoded in bits 15:31.
 	 */

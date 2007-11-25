@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.16 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.17 2007/11/25 16:40:04 jmc Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 	/*
 	 * Tell the user what type of interrupts we're using.
-	 * usefull for debugging irq problems
+	 * useful for debugging irq problems
 	 */
 	printf( "%s: Using %s Interrupts\n", ahc_name(ahc),
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");

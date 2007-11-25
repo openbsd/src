@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2007/07/18 20:03:50 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2007/11/25 16:40:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -434,7 +434,7 @@ extern int want_resched;	/* resched() was called */
 #define	MIPS_VR5400	0x54	/* NEC Vr5400 CPU		ISA IV+ */
 
 /*
- * MIPS FPU types. Only soft, rest is teh same as cpu type.
+ * MIPS FPU types. Only soft, rest is the same as cpu type.
  */
 #define	MIPS_SOFT	0x00	/* Software emulation		ISA I   */
 

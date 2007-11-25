@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_dagdegrd.c,v 1.6 2006/07/09 22:10:05 mk Exp $	*/
+/*	$OpenBSD: rf_dagdegrd.c,v 1.7 2007/11/25 16:40:04 jmc Exp $	*/
 /*	$NetBSD: rf_dagdegrd.c,v 1.5 2000/01/07 03:40:57 oster Exp $	*/
 
 /*
@@ -1230,7 +1230,7 @@ rf_DoubleDegRead(
 	 */
 	rf_InitNode(recoveryNode, rf_wait, RF_FALSE, recovFunc,
 	    rf_NullNodeUndoFunc, NULL,
-	    1,				/* succesors */
+	    1,				/* successors */
 	    nReadNodes,			/* preds */
 	    nReadNodes + 2,		/* params */
 	    asmap->numDataFailed,	/* results */
