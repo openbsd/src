@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.32 2007/11/25 17:20:21 oga Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.33 2007/11/25 22:37:28 deraadt Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.21 2007/11/25 17:11:11 oga Exp 
+.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.22 2007/11/25 22:33:09 reyk Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -203,7 +203,9 @@ Scanners, see
 .Pp
 .Sy Special purpose devices
 .Bl -tag -width tenletters -compact
-agp_dev
+.It Ar agp*
+AGP bridge, see
+.Xr agp 4 .
 .It Ar apm
 Power Management Interface, see
 .Xr apm 4 .
