@@ -267,7 +267,7 @@ LIB_EXT = $_a
 OBJ_EXT = $_o
 PATH_SEP = $p_
 
-FIRSTMAKEFILE = #$firstmakefile
+FIRSTMAKEFILE = $firstmakefile
 
 # Any special object files needed by this architecture, e.g. os2/os2.obj
 ARCHOBJS = $archobjs
