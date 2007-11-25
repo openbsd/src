@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.9 2006/06/26 21:11:11 dlg Exp $
+dnl	$OpenBSD: prep,v 1.10 2007/11/25 17:44:47 jasper Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -47,6 +47,9 @@ Setting the environment:
 
     Its default value is ``sash'', which is IRIX' standalone
     shell and loader. Set it to ``boot'', the OpenBSD boot loader.
+
+    Also, by default it tries to boot a kernel named ``/unix''. To
+    make it boot OpenBSD, set ``OSLoadFilename'' to ``/bsd''.
 
 Disk numbering
 
