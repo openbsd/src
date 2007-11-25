@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.38 2007/07/23 23:21:25 todd Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.40 2007/11/25 17:11:11 oga Exp 
 #	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -69,6 +69,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
+#	agp*	AGP bridge
 #	apm	Power management device
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -389,6 +390,11 @@ apm*)
 	M apmctl	c 21 8 644
 	;;
 
+agp*)
+	M agp$U c 87 $U
+	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"
+	;;
+
 uscanner*)
 	M uscanner$U c 77 $U 660
 	;;
@@ -575,9 +581,9 @@ local)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 nvram gpio0 gpio1 gpio2 bktr0 ccd0
-	R ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
-	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R agp0 bthub0 bthub1 bthub2 nvram gpio0 gpio1 gpio2 bktr0
+	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
 	R ss1 ch0 hotplug ptm gpr0 local wscons pci0 pci1 pci2 pci3
