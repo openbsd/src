@@ -69,7 +69,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
-agp_dev
+#	agp*	AGP bridge
 #	apm	Power Management Interface
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
