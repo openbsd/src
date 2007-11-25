@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.87 2007/06/23 19:19:49 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.88 2007/11/25 22:28:54 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -88,6 +88,7 @@
 struct buf;
 struct scsi_xfer;
 struct scsi_link;
+struct scsibus_softc;
 
 /*
  * Temporary hack
@@ -175,6 +176,7 @@ struct scsi_link {
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
+	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.127 2007/11/06 02:49:19 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.128 2007/11/25 22:28:54 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	if (!cold)
 		scsi_autoconf = 0;
 
+	sc_link_proto->bus = sb;
 	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
 	if (sb->adapter_link->adapter_buswidth == 0)
