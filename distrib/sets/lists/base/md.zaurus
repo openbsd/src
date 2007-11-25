@@ -23,7 +23,6 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
 ./etc/firmware/zd1211b
-./sbin/fdisk
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/apache/modules/libproxy.so

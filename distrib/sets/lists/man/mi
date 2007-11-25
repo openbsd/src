@@ -2024,7 +2024,6 @@
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot_alpha.0
-./usr/share/man/cat8/alpha/fdisk.0
 ./usr/share/man/cat8/alpha/hotplugd.0
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/kbd.0
@@ -2042,7 +2041,6 @@
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/cdboot.0
-./usr/share/man/cat8/amd64/fdisk.0
 ./usr/share/man/cat8/amd64/hotplugd.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
@@ -2057,7 +2055,6 @@
 ./usr/share/man/cat8/apxs.0
 ./usr/share/man/cat8/armish
 ./usr/share/man/cat8/armish/MAKEDEV.0
-./usr/share/man/cat8/armish/fdisk.0
 ./usr/share/man/cat8/armish/hotplugd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
@@ -2116,6 +2113,7 @@
 ./usr/share/man/cat8/editmap.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/faithd.0
+./usr/share/man/cat8/fdisk.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
 ./usr/share/man/cat8/fsck_ext2fs.0
@@ -2170,7 +2168,6 @@
 ./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/cdboot.0
-./usr/share/man/cat8/i386/fdisk.0
 ./usr/share/man/cat8/i386/gpioctl.0
 ./usr/share/man/cat8/i386/hotplugd.0
 ./usr/share/man/cat8/i386/installboot.0
@@ -2206,7 +2203,6 @@
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/landisk
 ./usr/share/man/cat8/landisk/MAKEDEV.0
-./usr/share/man/cat8/landisk/fdisk.0
 ./usr/share/man/cat8/landisk/hotplugd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/landisk/xxboot.0
@@ -2249,7 +2245,6 @@
 ./usr/share/man/cat8/macppc/apmd.0
 ./usr/share/man/cat8/macppc/boot_macppc.0
 ./usr/share/man/cat8/macppc/eeprom.0
-./usr/share/man/cat8/macppc/fdisk.0
 ./usr/share/man/cat8/macppc/gpioctl.0
 ./usr/share/man/cat8/macppc/hotplugd.0
 ./usr/share/man/cat8/macppc/kbd.0
@@ -2518,7 +2513,6 @@
 ./usr/share/man/cat8/zaurus/apmd.0
 ./usr/share/man/cat8/zaurus/boot.0
 ./usr/share/man/cat8/zaurus/boot_zaurus.0
-./usr/share/man/cat8/zaurus/fdisk.0
 ./usr/share/man/cat8/zaurus/hotplugd.0
 ./usr/share/man/cat8/zaurus/kbd.0
 ./usr/share/man/cat8/zaurus/wsconscfg.0
