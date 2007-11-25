@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.1 2007/08/04 16:46:03 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.c,v 1.2 2007/11/25 00:38:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -88,4 +88,33 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 	}
 
 	return &rbus_null;
+}
+
+void
+pccbb_attach_hook(struct device *parent, struct device *self,
+    struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	int node = PCITAG_NODE(pa->pa_tag);
+	int bus, busrange[2];
+	pcireg_t bir;
+
+	bir = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
+	if (((bir >> 8) & 0xff) != 0)
+		return;
+
+	if (OF_getprop(OF_parent(node), "bus-range", &busrange,
+	    sizeof(busrange)) != sizeof(busrange))
+		return;
+
+	bus = busrange[1] + 1;
+	while (bus < 256 && pc->busnode[bus])
+		bus++;
+	if (bus == 256)
+		return;
+	pc->busnode[bus] = node;
+
+	bir &= ~0x0000ff00;
+	bir |= (bus << 8);
+	pci_conf_write(pc, pa->pa_tag, PCI_BUSNUM, bir);
 }

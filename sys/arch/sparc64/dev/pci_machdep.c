@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.31 2007/10/25 20:00:06 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.32 2007/11/25 00:38:49 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -111,6 +111,9 @@ pci_make_tag(pc, b, d, f)
 	char name[80];
 	bzero(name, sizeof(name));
 #endif
+
+	if (pc->busnode[b])
+		return PCITAG_CREATE(0, b, d, f);
 
 	/* 
 	 * Hunt for the node that corresponds to this device 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.1 2007/08/04 16:46:03 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.2 2007/11/25 00:38:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -31,5 +31,8 @@ rbus_tag_t rbus_pccbb_parent_mem(struct device *, struct pci_attach_args *);
 		*addrp = (t)->sparc_bus_addr((t), (t), (h)); \
 		bus_space_unmap((t), (h), (size)); \
 	} while (0)
+
+void pccbb_attach_hook(struct device *, struct device *,
+	struct pci_attach_args *);
 
 #endif /* _SPARC64_RBUS_MACHDEP_H_ */
