@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.59 2007/11/14 10:00:47 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.60 2007/11/25 00:27:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -133,10 +133,12 @@
 
 int mskc_probe(struct device *, void *, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
+int mskc_detach(struct device *, int);
 void mskc_reset(struct sk_softc *);
 void mskc_shutdown(void *);
 int msk_probe(struct device *, void *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
+int msk_detach(struct device *, int);
 void msk_reset(struct sk_if_softc *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
@@ -977,7 +979,7 @@ msk_reset(struct sk_if_softc *sc_if)
 void
 msk_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *) self;
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)self;
 	struct sk_softc *sc = (struct sk_softc *)parent;
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
@@ -1113,7 +1115,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(mskc_shutdown, sc);
+	sc_if->sk_sdhook = shutdownhook_establish(mskc_shutdown, sc);
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
@@ -1126,6 +1128,41 @@ fail_1:
 	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
+}
+
+int
+msk_detach(struct device *self, int flags)
+{
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)self;
+	struct sk_softc *sc = sc_if->sk_softc;
+	struct ifnet *ifp= &sc_if->arpcom.ac_if;
+
+	if (sc->sk_if[sc_if->sk_port] == NULL)
+		return (0);
+
+	timeout_del(&sc_if->sk_tick_ch);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
+		mii_detach(&sc_if->sk_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc_if->sk_mii.mii_media, IFM_INST_ANY);
+
+	if (sc_if->sk_sdhook != NULL)
+		shutdownhook_disestablish(sc_if->sk_sdhook);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
+	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc_if->sk_rdata,
+	    sizeof(struct msk_ring_data));
+	bus_dmamem_free(sc->sc_dmatag,
+	    &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+	sc->sk_if[sc_if->sk_port] = NULL;
+
+	return (0);
 }
 
 int
@@ -1155,12 +1192,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t command, memtype;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_size_t size;
 	u_int8_t hw, pmd;
 	char *revstr = NULL;
 	caddr_t kva;
-	bus_dma_segment_t seg;
-	int rseg;
 
 	DPRINTFN(2, ("begin mskc_attach\n"));
 
@@ -1202,9 +1236,8 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, SK_PCI_LOMEM,
-				   memtype, 0, &sc->sk_btag, &sc->sk_bhandle,
-				   NULL, &size, 0) == 0)
+		if (pci_mapreg_map(pa, SK_PCI_LOMEM, memtype, 0, &sc->sk_btag,
+		    &sc->sk_bhandle, NULL, &sc->sk_bsize, 0) == 0)
 			break;
 	default:
 		printf(": can't map mem space\n");
@@ -1239,15 +1272,17 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto fail_1;
 	}
+	sc->sk_pc = pc;
 
 	if (bus_dmamem_alloc(sc->sc_dmatag,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc), PAGE_SIZE,
+	    0, &sc->sk_status_seg, 1, &sc->sk_status_nseg, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc status buffers\n");
 		goto fail_2;
 	}
 
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+	if (bus_dmamem_map(sc->sc_dmatag,
+	    &sc->sk_status_seg, sc->sk_status_nseg,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
 	    &kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%lu bytes)\n",
@@ -1387,14 +1422,45 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 fail_5:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
 fail_4:
-	bus_dmamem_unmap(sc->sc_dmatag, kva, 
+	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sk_status_ring,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 fail_3:
-	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmatag,
+	    &sc->sk_status_seg, sc->sk_status_nseg);
+	sc->sk_status_nseg = 0;
 fail_2:
-	pci_intr_disestablish(pc, sc->sk_intrhand);
+	pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+	sc->sk_intrhand = NULL;
 fail_1:
-	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
+	sc->sk_bsize = 0;
+}
+
+int
+mskc_detach(struct device *self, int flags)
+{
+	struct sk_softc *sc = (struct sk_softc *)self;
+	int rv;
+
+	rv = config_detach_children(self, flags);
+	if (rv != 0)
+		return (rv);
+
+	if (sc->sk_status_nseg > 0) {
+		bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
+		bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sk_status_ring,
+		    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+		bus_dmamem_free(sc->sc_dmatag,
+		    &sc->sk_status_seg, sc->sk_status_nseg);
+	}
+
+	if (sc->sk_intrhand)
+		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+
+	if (sc->sk_bsize > 0)
+		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
+
+	return(0);
 }
 
 int
@@ -2142,7 +2208,7 @@ msk_stop(struct sk_if_softc *sc_if)
 }
 
 struct cfattach mskc_ca = {
-	sizeof(struct sk_softc), mskc_probe, mskc_attach,
+	sizeof(struct sk_softc), mskc_probe, mskc_attach, mskc_detach
 };
 
 struct cfdriver mskc_cd = {
@@ -2150,7 +2216,7 @@ struct cfdriver mskc_cd = {
 };
 
 struct cfattach msk_ca = {
-	sizeof(struct sk_if_softc), msk_probe, msk_attach,
+	sizeof(struct sk_if_softc), msk_probe, msk_attach, msk_detach
 };
 
 struct cfdriver msk_cd = {
