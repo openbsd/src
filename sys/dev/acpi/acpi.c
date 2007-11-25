@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.105 2007/11/19 19:17:30 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.106 2007/11/25 09:11:12 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1150,6 +1150,36 @@ acpi_interrupt(void *arg)
 	}
 
 	return (processed);
+}
+
+void
+acpi_reset(void)
+{
+	struct acpi_fadt	*fadt;
+	u_int32_t		 reset_as, reset_len;
+	u_int32_t		 value;
+
+	fadt = acpi_softc->sc_fadt;
+
+	/* FADT_RESET_REG_SUP is not properly set in some implementations */
+	if (acpi_softc->sc_revision <= 1 || fadt->reset_reg.address == 0)
+		return;
+
+	value = fadt->reset_value;
+
+	reset_as = fadt->reset_reg.register_bit_width / 8;
+	if (reset_as == 0)
+		reset_as = 1;
+
+	reset_len = fadt->reset_reg.access_size;
+	if (reset_len == 0)
+		reset_len = reset_as;
+
+	acpi_gasio(acpi_softc, ACPI_IOWRITE,
+	    fadt->reset_reg.address_space_id,
+	    fadt->reset_reg.address, reset_as, reset_len, &value);
+
+	delay(100000);
 }
 
 /* move all stuff that doesn't go on the boot media in here */

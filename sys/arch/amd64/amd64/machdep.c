@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2007/11/03 22:23:35 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.66 2007/11/25 09:11:12 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -255,6 +255,7 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
 void	init_x86_64(paddr_t);
+void	(*cpuresetfn)(void);
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
@@ -1606,6 +1607,9 @@ cpu_reset(void)
 {
 
 	disable_intr();
+
+	if (cpuresetfn)
+		(*cpuresetfn)();
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
