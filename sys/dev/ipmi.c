@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.61 2007/11/01 19:24:46 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.62 2007/11/25 23:37:01 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1128,23 +1128,23 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_RESERVE_SDR,
 	    0, NULL)) {
 		printf("%s: reserve send fails\n", DEVNAME(sc));
-		return (-1);
+		return (1);
 	}
 	if (ipmi_recvcmd(sc, sizeof(resid), &len, &resid)) {
 		printf("%s: reserve recv fails\n", DEVNAME(sc));
-		return (-1);
+		return (1);
 	}
 	/* Get SDR Header */
 	if (get_sdr_partial(sc, recid, resid, 0, sizeof shdr, &shdr, nxtrec)) {
 		printf("%s: get header fails\n", DEVNAME(sc));
-		return (-1);
+		return (1);
 	}
 	/* Allocate space for entire SDR Length of SDR in header does not
 	 * include header length */
 	sdrlen = sizeof(shdr) + shdr.record_length;
 	psdr = malloc(sdrlen, M_DEVBUF, M_NOWAIT|M_CANFAIL);
 	if (psdr == NULL)
-		return -1;
+		return (1);
 
 	memcpy(psdr, &shdr, sizeof(shdr));
 
@@ -1157,7 +1157,8 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 		if (get_sdr_partial(sc, recid, resid, offset, len,
 		    psdr + offset, NULL)) {
 			printf(": get chunk: %d,%d fails\n", offset, len);
-			return (-1);
+			free(psdr, M_DEVBUF);
+			return (1);
 		}
 	}
 
@@ -1610,7 +1611,9 @@ ipmi_poll_thread(void *arg)
 	}
 
 	/* initialize sensor list for thread */
-	if (!SLIST_EMPTY(&ipmi_sensor_list))
+	if (SLIST_EMPTY(&ipmi_sensor_list))
+		goto done;
+	else
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
 	while (thread->running) {
@@ -1619,7 +1622,6 @@ ipmi_poll_thread(void *arg)
 	}
 
 done:
-	free(thread, M_DEVBUF);
 	kthread_exit(0);
 }
 
