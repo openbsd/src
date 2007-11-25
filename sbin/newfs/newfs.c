@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.71 2007/11/25 15:13:57 tedu Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.72 2007/11/25 22:09:35 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	char *cp = NULL, *s1, *s2, *special, *opstring;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
-	char *pop, node[MAXPATHLEN];
+	char *pop = NULL;
 	pid_t pid, res;
 	struct statfs sf;
 	struct stat mountpoint;
@@ -170,8 +170,6 @@ main(int argc, char *argv[])
 	char **saveargv = argv;
 	int ffsflag = 1;
 	const char *errstr;
-	
-	pop = NULL;
 
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
@@ -302,9 +300,6 @@ main(int argc, char *argv[])
 	}
 
 	special = argv[0];
-	if (realpath(argv[1], node) == NULL)
-		err(1, "realpath %s", argv[1]);
-
 	if (!mfs) {
 		char execname[MAXPATHLEN], name[MAXPATHLEN];
 
@@ -474,8 +469,8 @@ havelabel:
 	}
 #ifdef MFS
 	if (mfs) {
-		if (stat(node, &mountpoint) < 0)
-			err(ECANCELED, "stat %s", node);
+		if (stat(argv[1], &mountpoint) < 0)
+			err(88, "stat %s", argv[1]);
 		mfsuid = mountpoint.st_uid;
 		mfsgid = mountpoint.st_gid;
 		mfsmode = mountpoint.st_mode & ALLPERMS;
@@ -524,28 +519,28 @@ havelabel:
 				 * can mount a filesystem which hides our
 				 * ramdisk before we see the success.
 				 */
-				if (statfs(node, &sf) < 0)
-					err(ECANCELED, "statfs %s", node);
+				if (statfs(argv[1], &sf) < 0)
+					err(88, "statfs %s", argv[1]);
 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
-				    !strncmp(sf.f_mntonname, node,
+				    !strncmp(sf.f_mntonname, argv[1],
 					     MNAMELEN) &&
 				    !strcmp(sf.f_fstypename, "mfs")) {
 					if (pop != NULL)
-						copy(pop, node, &args);
+						copy(pop, argv[1], &args);
 					exit(0);
 				}
 				res = waitpid(pid, &status, WNOHANG);
 				if (res == -1)
-					err(EDEADLK, "waitpid");
+					err(11, "waitpid");
 				if (res != pid)
 					continue;
 				if (WIFEXITED(status)) {
 					if (WEXITSTATUS(status) == 0)
 						exit(0);
-					errx(1, "%s: mount: %s", node,
+					errx(1, "%s: mount: %s", argv[1],
 					     strerror(WEXITSTATUS(status)));
 				} else
-					errx(EDEADLK, "abnormal termination");
+					errx(11, "abnormal termination");
 			}
 			/* NOTREACHED */
 		}
@@ -559,7 +554,7 @@ havelabel:
 		args.fspec = mountfromname;
 		if (mntflags & MNT_RDONLY && pop != NULL)
 			mntflags &= ~MNT_RDONLY;
-		if (mount(MOUNT_MFS, node, mntflags, &args) < 0)
+		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
 			exit(errno); /* parent prints message */
 	}
 #endif
