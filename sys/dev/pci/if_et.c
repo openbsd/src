@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.3 2007/11/25 12:24:00 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.4 2007/11/25 17:41:00 claudio Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -150,7 +150,7 @@ void	et_tick(void *);
 
 static int	et_rx_intr_npkts = 32;
 static int	et_rx_intr_delay = 20;		/* x10 usec */
-static int	et_tx_intr_nsegs = 126;
+static int	et_tx_intr_nsegs = 1;
 static uint32_t	et_timer = 1000 * 1000 * 1000;	/* nanosec */
 
 struct et_bsize {
