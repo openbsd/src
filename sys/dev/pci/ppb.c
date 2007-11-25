@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.21 2007/11/25 10:52:09 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.22 2007/11/25 16:42:21 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ struct cfdriver ppb_cd = {
 int	ppb_intr(void *);
 void	ppb_hotplug_insert(void *, void *);
 void	ppb_hotplug_insert_finish(void *);
+int	ppb_hotplug_fixup(struct pci_attach_args *);
 void	ppb_hotplug_rescan(void *, void *);
 void	ppb_hotplug_remove(void *, void *);
 int	ppbprint(void *, const char *pnp);
@@ -227,13 +228,117 @@ ppb_hotplug_insert_finish(void *arg)
 	workq_add_task(NULL, 0, ppb_hotplug_rescan, arg, NULL);
 }
 
+int
+ppb_hotplug_fixup(struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcitag_t bridgetag = *pa->pa_bridgetag;
+	pcireg_t bhlcr, blr, type, intr;
+	int reg, line;
+	bus_addr_t base, io_base, io_limit, mem_base, mem_limit;
+	bus_size_t size, io_size, mem_size;
+
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(bhlcr) != 0)
+		return (0);
+
+	/*
+	 * The code below assumes that the address ranges on our
+	 * parent PCI Express bridge are really available and don't
+	 * overlap with other devices in the system.
+	 */
+
+	/* Figure out the I/O address range of the bridge. */
+	blr = pci_conf_read(pc, bridgetag, PPB_REG_IOSTATUS);
+	io_base = (blr & 0x000000f0) << 8;
+	io_limit = (blr & 0x000f000) | 0x00000fff;
+	if (io_limit > io_base)
+		io_size = (io_limit - io_base + 1);
+	else
+		io_size = 0;
+
+	/* Figure out the memory mapped I/O address range of the bridge. */
+	blr = pci_conf_read(pc, bridgetag, PPB_REG_MEM);
+	mem_base = (blr & 0x0000fff0) << 16;
+	mem_limit = (blr & 0xffff0000) | 0x000fffff;
+	if (mem_limit > mem_base)
+		mem_size = (mem_limit - mem_base + 1);
+	else
+		mem_size = 0;
+
+	/* Assign resources to the Base Address Registers. */
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+
+		if (base != 0)
+			continue;
+
+		switch (type) {
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+			base = roundup(mem_base, size);
+			size += base - mem_base;
+			if (size > mem_size)
+				continue;
+			pci_conf_write(pc, tag, reg, base);
+			mem_base += size;
+			mem_size -= size;
+			break;
+		case PCI_MAPREG_TYPE_IO:
+			base = roundup(io_base, size);
+			size += base - io_base;
+			if (size > io_size)
+				continue;
+			pci_conf_write(pc, tag, reg, base);
+			io_base += size;
+			io_size -= size;
+			break;
+		default:
+			break;
+		}
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
+	}
+
+	/*
+	 * Fill in the interrupt line for platforms that need it.
+	 *
+	 * XXX We assume that the interrupt line matches the line used
+	 * by the PCI Express bridge.  This may not be true.
+	 */
+	if (pa->pa_intrpin != PCI_INTERRUPT_PIN_NONE && pa->pa_intrline == 0) {
+		/* Get the interrupt line from our parent. */
+		intr = pci_conf_read(pc, bridgetag, PCI_INTERRUPT_REG);
+		line = PCI_INTERRUPT_LINE(intr);
+
+		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
+		intr |= line << PCI_INTERRUPT_LINE_SHIFT;
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+	}
+
+	return (0);
+}
+
 void
 ppb_hotplug_rescan(void *arg1, void *arg2)
 {
 	struct ppb_softc *sc = arg1;
+	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
-	if (sc->sc_psc)
-		pci_enumerate_bus((struct pci_softc *)sc->sc_psc, NULL, NULL);
+	if (psc) {
+		/* Assign resources. */
+		pci_enumerate_bus(psc, ppb_hotplug_fixup, NULL);
+
+		/* Attach devices. */
+		pci_enumerate_bus(psc, NULL, NULL);
+	}
 }
 
 void
