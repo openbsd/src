@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.589 2007/11/22 08:24:14 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.590 2007/11/25 12:00:46 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -550,6 +550,7 @@ thtc*	at pci?				# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
+et*	at pci?				# Agere/LSI ET1310
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
@@ -609,6 +610,7 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
+etphy*	at mii?				# Agere/LSI ET1011 TruePHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6	# Personal Sound System
