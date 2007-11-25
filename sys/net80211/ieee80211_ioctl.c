@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.19 2007/07/18 18:10:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.20 2007/11/25 16:47:44 brad Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -539,7 +539,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENETRESET;
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 	return error;
