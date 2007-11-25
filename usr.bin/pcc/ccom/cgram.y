@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.6 2007/11/22 15:06:43 stefan Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.7 2007/11/25 10:27:35 stefan Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -562,6 +562,10 @@ struct_declarator: declarator {
 		|  ':' con_e {
 			if (!(instruct&INSTRUCT))
 				uerror( "field outside of structure" );
+			if ($2 < 0 || $2 >= FIELD) {
+				uerror("illegal field size");
+				$2 = 1;
+			}
 			falloc(NULL, $2, -1, $<nodep>0);
 		}
 		|  declarator ':' con_e {
