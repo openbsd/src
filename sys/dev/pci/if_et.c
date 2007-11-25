@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.2 2007/11/25 11:45:14 claudio Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.3 2007/11/25 12:24:00 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1775,16 +1775,23 @@ et_rxeof(struct et_softc *sc)
 		    rb->rb_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		if (rbd->rbd_newbuf(rbd, buf_idx, 0) == 0) {
-			m->m_pkthdr.len = m->m_len = buflen;
-			m->m_pkthdr.rcvif = ifp;
+			if (buflen < ETHER_CRC_LEN) {
+				m_freem(m);
+				ifp->if_ierrors++;
+			} else {
+				m->m_pkthdr.len = m->m_len = buflen -
+				    ETHER_CRC_LEN;
+				m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				if (ifp->if_bpf != NULL)
+					bpf_mtap(ifp->if_bpf, m,
+					    BPF_DIRECTION_IN);
 #endif
 
-			ifp->if_ipackets++;
-			ether_input_mbuf(ifp, m);
+				ifp->if_ipackets++;
+				ether_input_mbuf(ifp, m);
+			}
 		} else {
 			ifp->if_ierrors++;
 		}
