@@ -1,4 +1,4 @@
-.\" $OpenBSD: agp.4,v 1.1 2007/11/25 17:11:11 oga Exp $
+.\" $OpenBSD: agp.4,v 1.2 2007/11/25 20:46:51 jmc Exp $
 .\" Copyright (c) Owain Ainsworth <oga@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -22,8 +22,8 @@
 .Cd "agp* at pchb?"
 .Sh DESCRIPTION
 The
-.Nm 
-driver provides support from programming the AGP GART through
+.Nm
+driver provides support for programming the AGP GART through
 .Xr ioctl 2 .
 This support is used by the X server on some architectures.
 .Pp
@@ -127,7 +127,7 @@ typedef struct _agp_unbind {
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width /dev/agpgart -compact
+.Bl -tag -width "/dev/agpgartXXX" -compact
 .It Pa /dev/agp?
 AGP GART device special files.
 .It Pa /dev/agpgart
