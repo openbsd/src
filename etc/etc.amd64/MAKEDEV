@@ -69,7 +69,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
-#	acpi	Advanced Configuration and Power Interface
+#	apm	Power Management Interface
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bthub*	Bluetooth Hubs
@@ -379,8 +379,9 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-acpi*)
-	M acpi	c 83 0 644
+apm*)
+	M apm	c 83 0 644
+	M apmctl	c 83 8 644
 	;;
 
 uscanner*)
@@ -578,7 +579,7 @@ all)
 	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
 	R radio0 music0 speaker audio0 uk0 random joy0 joy1 lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1
-	R ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 acpi crypto pf pctr
+	R ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm crypto pf pctr
 	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd mcd0
 	;;

@@ -70,7 +70,6 @@
 #	uscanner*	Scanners
 # Special purpose devices:
 #	apm	Power management device
-#	acpi	Advanced Configuration and Power Interface
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
@@ -385,10 +384,6 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-acpi*)
-	M acpi	c 85 0 644
-	;;
-
 apm*)
 	M apm	c 21 0 644
 	M apmctl	c 21 8 644
@@ -590,7 +585,7 @@ all)
 	R rmidi6 rmidi7 tuner0 radio0 music0 speaker audio0 uk0 random
 	R joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01
 	R tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
-	R acpi apm crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1
+	R apm crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1
 	R raid2 raid3 std st0 st1 fd mcd0
 	;;
 
