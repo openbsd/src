@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.21 2006/12/06 05:05:16 ray Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.22 2007/11/25 08:26:59 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,61 @@ srcpath(struct files *fi)
 {
 #if 1
 	/* Always have source, don't support object dirs for kernel builds. */
-	return (fi->fi_path);
+	struct nvlist *nv, *nv1;
+	char *source;
+
+	/* Search path list for files we will want to use */
+	if (fi->fi_nvpath->nv_next == NULL) {
+		nv = fi->fi_nvpath;
+		goto onlyone;
+	}
+
+	for (nv = fi->fi_nvpath; nv; nv = nv->nv_next) {
+		char *s, *e;
+
+		s = strchr(nv->nv_name, '$');
+		if (s) {
+			char *expand;
+
+			/* Search for a ${name} to expand */
+			if (s[1] != '{')
+				error("{");
+			e = strchr(s + 2, '}');
+			if (!e)
+				error("}");
+			if (strncmp(s + 2, "MACHINE_ARCH",
+			    strlen("MACHINE_ARCH")) != 0)
+				error("variable %*.*s not supported",
+				    e - s - 2, e - s - 2, s + 2);
+			asprintf(&expand, "%*.*s%s%s",
+			    s - nv->nv_name, s - nv->nv_name, nv->nv_name,
+			    machinearch ? machinearch : machine, e + 1);
+			source = sourcepath(expand);
+			free(expand);
+		} else
+			source = sourcepath(nv->nv_name);
+		if (access(source, R_OK) == 0)
+			break;
+		free(source);
+	}
+	if (nv == NULL)
+		nv = fi->fi_nvpath;
+
+	/*
+	 * Now that we know which path is right, delete all the
+	 * other filenames to skip the access() checks next time
+	 */
+	while ((nv1 = fi->fi_nvpath)) {
+		nv1 = nv1->nv_next;
+		if (fi->fi_nvpath != nv)
+			nvfree(fi->fi_nvpath);
+		fi->fi_nvpath = nv1;
+	}
+	fi->fi_nvpath = nv;
+	nv->nv_next = NULL;
+onlyone:
+	return (nv->nv_name);
+
 #else
 	static char buf[MAXPATHLEN];
 

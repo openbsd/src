@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.14 2006/04/27 18:09:52 espie Exp $	*/
+/*	$OpenBSD: files.c,v 1.15 2007/11/25 08:26:59 deraadt Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -84,11 +84,12 @@ initfiles(void)
 }
 
 void
-addfile(const char *path, struct nvlist *optx, int flags, const char *rule, 
+addfile(struct nvlist *nvpath, struct nvlist *optx, int flags, const char *rule,
     const char *lintrule)
 {
 	struct files *fi;
-	const char *dotp, *tail;
+	const char *dotp, *dotp1, *tail, *path, *tail1 = NULL;
+	struct nvlist *nv;
 	size_t baselen;
 	int needc, needf;
 	char base[200];
@@ -105,17 +106,33 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule,
 		goto bad;
 	}
 
-	/* find last part of pathname, and same without trailing suffix */
-	tail = strrchr(path, '/');
-	if (tail == NULL)
-		tail = path;
-	else
-		tail++;
-	dotp = strrchr(tail, '.');
-	if (dotp == NULL || dotp[1] == 0 ||
-	    (baselen = dotp - tail) >= sizeof(base)) {
-		error("invalid pathname `%s'", path);
-		goto bad;
+	for (nv = nvpath; nv; nv = nv->nv_next) {
+		path = nv->nv_name;
+
+		/* find last part of pathname, and same without trailing suffix */
+		tail = strrchr(path, '/');
+		if (tail == NULL)
+			tail = path;
+		else
+			tail++;
+		dotp = strrchr(tail, '.');
+		if (dotp == NULL || dotp[1] == 0 ||
+		    (baselen = dotp - tail) >= sizeof(base)) {
+			error("invalid pathname `%s'", path);
+			goto bad;
+		}
+
+		/*
+		 * Ensure all tailnames are identical, because .o
+		 * filenames must be identical too.
+		 */
+		if (tail1 && 
+		    (dotp - tail != dotp1 - tail1 ||
+		    strncmp(tail1, tail, dotp - tail)))
+			error("different production from %s %s",
+			    nvpath->nv_name, tail);
+		tail1 = tail;
+		dotp1 = dotp;
 	}
 
 	/*
@@ -137,8 +154,7 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule,
 	fi->fi_srcfile = yyfile;
 	fi->fi_srcline = currentline();
 	fi->fi_flags = flags;
-	fi->fi_path = path;
-	fi->fi_tail = tail;
+	fi->fi_nvpath = nvpath;
 	fi->fi_base = intern(base);
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
@@ -258,7 +274,7 @@ fixfiles(void)
 			 * If the new file comes from a different source,
 			 * allow the new one to override the old one.
 			 */
-			if (fi->fi_path != ofi->fi_path) {
+			if (fi->fi_nvpath != ofi->fi_nvpath) {
 				if (ht_replace(basetab, fi->fi_base, fi) != 1)
 					panic("fixfiles ht_replace(%s)",
 					    fi->fi_base);
@@ -267,10 +283,10 @@ fixfiles(void)
 			} else {
 				xerror(fi->fi_srcfile, fi->fi_srcline,
 				    "object file collision on %s.o, from %s",
-				    fi->fi_base, fi->fi_path);
+				    fi->fi_base, fi->fi_nvpath->nv_name);
 				xerror(ofi->fi_srcfile, ofi->fi_srcline,
 				    "here is the previous file: %s",
-				    ofi->fi_path);
+				    ofi->fi_nvpath->nv_name);
 				err = 1;
 			}
 		}

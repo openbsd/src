@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.22 2006/04/27 18:09:52 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.23 2007/11/25 08:26:59 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -225,8 +225,7 @@ struct files {
 	u_short	fi_srcline;	/* and the line number */
 	u_char	fi_flags;	/* as below */
 	char	fi_lastc;	/* last char from path */
-	const char *fi_path;	/* full file path */
-	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
+	struct nvlist *fi_nvpath; /* list of paths */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
 	struct  nvlist *fi_optx;/* options expression */
 	struct  nvlist *fi_optf;/* flattened version of above, if needed */
@@ -320,7 +319,7 @@ void	initfiles(void);
 void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
-void	addfile(const char *, struct nvlist *, int, const char *, const char *);
+void	addfile(struct nvlist *, struct nvlist *, int, const char *, const char *);
 void	addobject(const char *, struct nvlist *, int);
 
 /* hash.c */

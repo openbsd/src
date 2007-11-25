@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.19 2006/04/27 18:09:52 espie Exp $	*/
+/*	$OpenBSD: gram.y,v 1.20 2007/11/25 08:26:59 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ static	void	check_maxpart(void);
 %left '|'
 %left '&'
 
+%type	<list>	pathnames
 %type	<list>	fopts fexpr fatom
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
@@ -166,11 +167,15 @@ machine_spec:
 dev_eof:
 	ENDFILE				{ enddefs(); checkfiles(); };
 
+pathnames:
+	PATHNAME			{ $$ = new_nsi($1, NULL, 0); } |
+	pathnames '|' PATHNAME		{ ($$ = $1)->nv_next = new_nsi($3, NULL, 0); };
+
 /*
  * Various nonterminals shared between the grammars.
  */
 file:
-	XFILE PATHNAME fopts fflgs rule	lintrule { addfile($2, $3, $4, $5, $6); };
+	XFILE pathnames fopts fflgs rule lintrule { addfile($2, $3, $4, $5, $6); };
 
 object:
 	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
