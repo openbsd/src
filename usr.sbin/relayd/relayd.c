@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.59 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.60 2007/11/25 20:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -34,6 +34,7 @@
 #include <event.h>
 #include <signal.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <pwd.h>
 #include <sha1.h>
 #include <md5.h>
@@ -919,17 +920,50 @@ canonicalize_host(const char *host, char *name, size_t len)
 {
 	struct sockaddr_in	 sin4;
 	struct sockaddr_in6	 sin6;
+	u_int			 i, j;
+	size_t			 plen;
+	char			 c;
 
+	if (len < 2)
+		goto fail;
+
+	/*
+	 * Canonicalize an IPv4/6 address
+	 */
 	if (inet_pton(AF_INET, host, &sin4) == 1)
 		return (inet_ntop(AF_INET, &sin4, name, len));
 	if (inet_pton(AF_INET6, host, &sin6) == 1)
 		return (inet_ntop(AF_INET6, &sin6, name, len));
 
-	/* XXX canonicalize a FQDN... */
-	if (strlcpy(name, host, len) >= len) {
-		errno = EINVAL;
-		return (NULL);
+	/*
+	 * Canonicalize a hostname
+	 */
+
+	/* 1. remove repeated dots and convert upper case to lower case */	
+	plen = strlen(host);
+	bzero(name, len);
+	for (i = j = 0; i < plen; i++) {
+		if (j >= (len - 1))
+			goto fail;
+		c = tolower(host[i]);
+		if ((c == '.') && (j == 0 || name[j - 1] == '.'))
+			continue;
+		name[j++] = c;
 	}
 
+	/* 2. remove trailing dots */
+	for (i = j; i > 0; i--) {
+		if (name[i - 1] != '.')
+			break;
+		name[i - 1] = '\0';
+		j--;
+	}
+	if (j <= 0)
+		goto fail;
+
 	return (name);
+
+ fail:
+	errno = EINVAL;
+	return (NULL);
 }
