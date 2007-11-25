@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.3 2007/11/03 09:55:56 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.4 2007/11/25 12:54:09 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -51,8 +51,10 @@ addstub(struct stub *list, char *name)
 			return;
 	}
 
-	s = malloc(sizeof(struct stub));
-	s->name = strdup(name);
+	if ((s = malloc(sizeof(struct stub))) == NULL)
+		cerror("addstub: malloc");
+	if ((s->name = strdup(name)) == NULL)
+		cerror("addstub: strdup");
 	DLIST_INSERT_BEFORE(list, s, link);
 }
 
