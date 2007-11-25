@@ -13,6 +13,11 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 
 MANLOCALBUILD=	yes
 
+MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
+		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
+		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
+		File::Basename.3p fileparse.3p
+
 MANALL=
 _quick1=
 _quick3p=

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.72 2007/11/24 16:03:37 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.73 2007/11/25 18:09:57 deraadt Exp $
 #
 # Build wrapper for Perl 5.8.6
 #
@@ -44,11 +44,6 @@ CPPFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 STRIPFLAGS='-s'
 .endif
-
-MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
-		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
-		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
-		File::Basename.3p fileparse.3p
 
 GEN_AFTER= 	config.h cflags makeaperl makedepend makedir \
 		myconfig writemain Makefile Policy.sh pod/Makefile \
