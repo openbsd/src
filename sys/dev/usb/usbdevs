@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.318 2007/11/21 17:31:27 robert Exp $
+$OpenBSD: usbdevs,v 1.319 2007/11/25 22:26:55 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -924,6 +924,7 @@ product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
 /* CMOTECH CDMA Technologies products */
 product CMOTECH CM5100P		0x5523	CM-5100P EVDO
 product CMOTECH CCU550		0x5533	CCU-550 EVDO
+product CMOTECH CNU550pro	0x5543	CNU-550pro EVDO
 
 /* Conceptronic products */
 product CONCEPTRONIC C11U	0x7100	C11U
