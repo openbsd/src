@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.44 2007/11/23 18:34:00 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.45 2007/11/25 18:13:40 martynas Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -410,7 +410,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa;
 	pcireg_t v;
 	pci_intr_handle_t ih;
-	const char *intrrupt_str;
+	const char *interrupt_str;
 	uint8_t reg;
 
 	sc = (azalia_t*)self;
@@ -456,17 +456,17 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->pc = pa->pa_pc;
-	intrrupt_str = pci_intr_string(pa->pa_pc, ih);
+	interrupt_str = pci_intr_string(pa->pa_pc, ih);
 	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr,
 	    sc, sc->dev.dv_xname);
 	if (sc->ih == NULL) {
 		printf(": can't establish interrupt");
-		if (intrrupt_str != NULL)
-			printf(" at %s", intrrupt_str);
+		if (interrupt_str != NULL)
+			printf(" at %s", interrupt_str);
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrrupt_str);
+	printf(": %s\n", interrupt_str);
 
 	sc->pciid = pa->pa_id;
 
