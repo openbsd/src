@@ -25,7 +25,7 @@
 
 /*
  * Derived from sys/dev/ic/pckbc.c under the following terms:
- * $OpenBSD: mkbc.c,v 1.1 2007/10/18 18:59:29 jsing Exp $ 
+ * $OpenBSD: mkbc.c,v 1.2 2007/11/25 11:58:41 jsing Exp $ 
  * $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -272,6 +272,8 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	t->t_cmdbyte = 0;
 	t->t_sc = (struct pckbc_softc *)msc;
 	sc->id = t;
+
+	timeout_set(&t->t_cleanup, mkbc_cleanup, t);
 
 	/* Establish interrupt handler. */
 	msc->sc_irq = ca->ca_intr;
