@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.20 2007/02/14 01:12:16 jsg Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.21 2007/11/25 19:11:42 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -873,6 +873,10 @@ wsemul_sun_resetop(cookie, op)
 		    edp->bkgdattr);
 		edp->ccol = edp->crow = 0;
 		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
+		break;
+	case WSEMUL_CLEARCURSOR:
+		(*edp->emulops->cursor)(edp->emulcookie, 0,
+		    edp->crow, edp->ccol);
 		break;
 	default:
 		break;

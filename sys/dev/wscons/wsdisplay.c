@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.82 2007/11/24 16:45:59 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.83 2007/11/25 19:11:42 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1133,6 +1133,10 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			 */
 			wsmoused_release(sc);
 #endif
+
+			/* clear cursor */
+			(*scr->scr_dconf->wsemul->reset)
+			    (scr->scr_dconf->wsemulcookie, WSEMUL_CLEARCURSOR);
 
 #ifdef BURNER_SUPPORT
 			/* disable the burner while X is running */

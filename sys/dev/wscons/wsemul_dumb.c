@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.4 2007/03/07 06:23:04 miod Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.5 2007/11/25 19:11:42 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,6 +264,10 @@ wsemul_dumb_resetop(cookie, op)
 					   edp->defattr);
 		edp->ccol = edp->crow = 0;
 		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
+		break;
+	case WSEMUL_CLEARCURSOR:
+		(*edp->emulops->cursor)(edp->emulcookie, 0,
+		    edp->crow, edp->ccol);
 		break;
 	default:
 		break;
