@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.4 2007/02/18 19:19:02 gwk Exp $ */
+/* $OpenBSD: vesafb.c,v 1.5 2007/11/25 16:43:39 jmc Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -100,7 +100,7 @@ vesafb_get_ddc_version(struct vga_pci_softc *sc)
 	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED)
 		return 0;
 
-	return VBECALL_SUCESS(tf.tf_eax);
+	return VBECALL_SUCCESS(tf.tf_eax);
 }
 
 
@@ -131,7 +131,7 @@ vesafb_get_ddc_info(struct vga_pci_softc *sc, struct edid *info)
 
 	memcpy(info, buf, sizeof(struct edid));
 	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
-	return VBECALL_SUCESS(tf.tf_eax);
+	return VBECALL_SUCCESS(tf.tf_eax);
 }
 
 int

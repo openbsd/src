@@ -27,12 +27,12 @@
 #define KVM86_CALL_TASKVA		0x2000
 
 /* Information contained in AH following a VBE function call */
-/* Low byte determins call support */
+/* Low byte determines call support */
 #define VBECALL_SUPPORT(v) 		(v & 0xff)
 #define VBECALL_SUPPORTED		0x4f
 
-/* High byte determins call sucess */
-#define VBECALL_SUCESS(v)		(v >> 8 & 0xFF)
+/* High byte determines call success */
+#define VBECALL_SUCCESS(v)		(v >> 8 & 0xFF)
 #define VBECALL_SUCCEDED		0x00
 #define VBECALL_FAILED			0x01
 #define VBECALL_MISMATCH		0x02 /* BIOS SUPPORTS HW DOES NOT */
