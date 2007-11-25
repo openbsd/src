@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.20 2007/10/20 08:33:37 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.21 2007/11/25 20:19:02 miod Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -182,7 +182,6 @@ struct spdmem_softc {
 int		 spdmem_match(struct device *, void *, void *);
 void		 spdmem_attach(struct device *, struct device *, void *);
 uint8_t		 spdmem_read(struct spdmem_softc *, uint8_t);
-void		 spdmem_hexdump(struct spdmem_softc *, int, int);
 void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
@@ -538,24 +537,4 @@ spdmem_read(struct spdmem_softc *sc, uint8_t reg)
 	iic_release_bus(sc->sc_tag, 0);
 
 	return val;
-}
-
-void
-spdmem_hexdump(struct spdmem_softc *sc, int start, int size)
-{
-	int i;
-	
-	uint8_t data[size];
-
-	for (i = 0; i < size;  i++) {
-		data[i] = spdmem_read(sc, i);
-	}
-
-	for (i = 0; i < size ; i += 16) {
-		int j;
-		printf("\n0x%02x:", start + i);
-		for (j = 0; j < 16; j++)
-			printf(" %02x", ((uint8_t *)data)[i + j]);
-	}
-	printf("\n");
 }
