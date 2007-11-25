@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.42 2007/02/20 14:01:15 jmc Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.43 2007/11/25 19:21:37 mikeb Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -68,6 +68,8 @@ char *out = NULL;
 int symtab = 1;
 int Sflag;
 
+extern char *__progname;
+
 static	void	cleanup(void);
 
 /* prelink the module */
@@ -76,7 +78,7 @@ prelink(const char *kernel, const char *entry, const char *outfile,
     const void *address, const char *object)
 {
 	char cmdbuf[1024];
-	int error = 0;
+	int fd;
 
 	linkcmd(cmdbuf, sizeof(cmdbuf),
 	    kernel, entry, outfile, address, object);
@@ -84,32 +86,21 @@ prelink(const char *kernel, const char *entry, const char *outfile,
 	if (debug)
 		fprintf(stderr, "%s\n", cmdbuf);
 
-	switch (system(cmdbuf)) {
-	case 0:				/* SUCCESS! */
-		break;
-	case 1:				/* uninformitive error */
-		/*
-		 * Someone needs to fix the return values from the NetBSD
-		 * ld program -- it's totally uninformative.
-		 *
-		 * No such file		(4 on SunOS)
-		 * Can't write output	(2 on SunOS)
-		 * Undefined symbol	(1 on SunOS)
-		 * etc.
-		 */
-	case 127:			/* can't load shell */
-	case 32512:
-	default:
-		error = 1;
-		break;
-	}
-	return error;
+	if ((fd = open(kernel, O_RDONLY)) == -1)
+		errx(1, "can't open %s\n%s: please specify alternative kernel "
+		    "executable with -A option", kernel, __progname);
+	else
+		close(fd);
+		
+	if (system(cmdbuf) != 0)
+		return (1);
+
+	return (0);
 }
 
 static void
 usage(void)
 {
-	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-dnSsv] [-A kernel] [-e entry]\n",
 	    __progname);
@@ -235,7 +226,7 @@ int
 main(int argc, char *argv[])
 {
 	int strtablen, c, noready = 0, old = 0;
-	const char *kname = _PATH_UNIX;
+	const char *kname = _PATH_KSYMS;
 	char *entry = DFLT_ENTRY;
 	char *post = NULL;
 	char *modobj;
