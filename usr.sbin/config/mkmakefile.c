@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.22 2007/11/25 08:26:59 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.23 2007/11/25 20:10:40 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ srcpath(struct files *fi)
 #if 1
 	/* Always have source, don't support object dirs for kernel builds. */
 	struct nvlist *nv, *nv1;
+	const char *var;
 	char *source;
 
 	/* Search path list for files we will want to use */
@@ -167,6 +168,7 @@ srcpath(struct files *fi)
 		s = strchr(nv->nv_name, '$');
 		if (s) {
 			char *expand;
+			size_t len;
 
 			/* Search for a ${name} to expand */
 			if (s[1] != '{')
@@ -174,13 +176,21 @@ srcpath(struct files *fi)
 			e = strchr(s + 2, '}');
 			if (!e)
 				error("}");
-			if (strncmp(s + 2, "MACHINE_ARCH",
-			    strlen("MACHINE_ARCH")) != 0)
+
+			len = e - s - 2;
+			if (strlen("MACHINE_ARCH") == len &&
+			    bcmp(s + 2, "MACHINE_ARCH", len) == 0)
+				var = machinearch ? machinearch : machine;
+			else if (strlen("MACHINE") == len &&
+			    bcmp(s + 2, "MACHINE", len) == 0)
+				var = machine;
+			else
 				error("variable %*.*s not supported",
 				    e - s - 2, e - s - 2, s + 2);
+
 			asprintf(&expand, "%*.*s%s%s",
 			    s - nv->nv_name, s - nv->nv_name, nv->nv_name,
-			    machinearch ? machinearch : machine, e + 1);
+			    var, e + 1);
 			source = sourcepath(expand);
 			free(expand);
 		} else
