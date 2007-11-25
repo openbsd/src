@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.2 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.3 2007/11/25 17:11:12 oga Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -35,16 +35,6 @@
 #include <dev/pci/agpvar.h>
 
 #include <machine/cpufunc.h>
-
-const struct agp_product agp_products[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IV, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945G_IGD_1, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_IGD, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_IGD_1, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_IGD_1, agp_i810_attach },
-	{ 0, 0, NULL }
-};
 
 void
 agp_flush_cache(void)

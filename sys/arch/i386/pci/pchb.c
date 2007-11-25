@@ -1,5 +1,5 @@
-/*	$OpenBSD: pchb.c,v 1.57 2007/11/16 15:31:19 mikeb Exp $	*/
-/*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.58 2007/11/25 17:11:12 oga Exp $ */
+/*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -27,7 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,6 +73,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
 
 #include <dev/rndvar.h>
 
@@ -130,6 +133,7 @@ int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
 int	pchb_print(void *, const char *);
+int	agpbus_print(void *, const char *);
 
 struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach
@@ -180,35 +184,27 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct pcibus_attach_args pba;
+	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int neednl = 1;
-	int i, r;
+	int doattach, has_agp, i, r;
+
+	doattach = 0;
+	has_agp = 0;
 
 	/*
-	 * Print out a description, and configure certain chipsets which
-	 * have auxiliary PCI buses.
+	 * configure certain chipsets which have auxiliary PCI buses.
 	 */
 
 	switch (PCI_VENDOR(pa->pa_id)) {
-#ifdef PCIAGP
-	case PCI_VENDOR_ALI:
-	case PCI_VENDOR_SIS:
-	case PCI_VENDOR_VIATECH:
-		pciagp_set_pchb(pa);
-		break;
-#endif
 	case PCI_VENDOR_AMD:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-#ifdef PCIAGP
 		case PCI_PRODUCT_AMD_SC751_SC:
 		case PCI_PRODUCT_AMD_762_PCHB:
-			pciagp_set_pchb(pa);
+			has_agp =1; /* XXX is this detected otherwise */
 			break;
-#endif
 		case PCI_PRODUCT_AMD_AMD64_HT:
-			neednl = 0;
 			printf("\n");
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
 				pchb_amd64ht_attach(self, pa, i);
@@ -227,23 +223,20 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		 * This host bridge has a second PCI bus.
 		 * Configure it.
 		 */
-		neednl = 0;
-		pba.pba_busname = "pci";
-		pba.pba_iot = pa->pa_iot;
-		pba.pba_memt = pa->pa_memt;
-		pba.pba_dmat = pa->pa_dmat;
-		pba.pba_domain = pa->pa_domain;
-		pba.pba_bus = bdnum;
+		pbnum = bdnum;
 		pba.pba_bridgetag = NULL;
-		pba.pba_pc = pa->pa_pc;
-		printf("\n");
-		config_found(self, &pba, pchb_print);
+		doattach = 1;
 		break;
 	case PCI_VENDOR_INTEL:
-#ifdef PCIAGP
-		pciagp_set_pchb(pa);
-#endif
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82452_HB:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+			pbnum = PCISET_INTEL_BRIDGE_NUMBER(bcreg);
+			if (pbnum != 0xff) {
+				pbnum++;
+				doattach = 1;
+			}
+			break;
 		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
 		case PCI_PRODUCT_INTEL_82443BX_NOAGP:   /* 82443BX Host-PCI (no AGP) */
 			/*
@@ -274,22 +267,23 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				break;
 			case PCISET_INTEL_TYPE_AUX:
 				printf(": Auxiliary PB (bus %d)", pbnum);
-				neednl = 0;
 
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
 				 */
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_domain = pa->pa_domain;
-				pba.pba_bus = pbnum;
-				pba.pba_pc = pa->pa_pc;
-				printf("\n");
-				config_found(self, &pba, pchb_print);
+				doattach = 1;
 				break;
+			}
+			break;
+		case PCI_PRODUCT_INTEL_CDC:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82424_CPU_BCTL_REG);
+			if (bcreg & I82424_BCTL_CPUPCI_POSTEN) {
+				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    I82424_CPU_BCTL_REG, bcreg);
+				printf(": disabled CPU-PCI write posting");
 			}
 			break;
 		case PCI_PRODUCT_INTEL_82454NX:
@@ -317,27 +311,47 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				break;
 			}
 			if (pbnum != 0) {
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_domain = pa->pa_domain;
-				pba.pba_bus = pbnum;
-				pba.pba_pc = pa->pa_pc;
-				printf("\n");
-				config_found(self, &pba, pchb_print);
+				doattach = 1;
 			}
 			break;
-		case PCI_PRODUCT_INTEL_CDC:
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    I82424_CPU_BCTL_REG);
-			if (bcreg & I82424_BCTL_CPUPCI_POSTEN) {
-				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
-				pci_conf_write(pa->pa_pc, pa->pa_tag,
-				    I82424_CPU_BCTL_REG, bcreg);
-				printf(": disabled CPU-PCI write posting");
-			}
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82830MP_IO_1:
+		case PCI_PRODUCT_INTEL_82845G:
+		case PCI_PRODUCT_INTEL_82852GM_HPB:
+		case PCI_PRODUCT_INTEL_82865_IO_1:
+		case PCI_PRODUCT_INTEL_82915G_HB:
+		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82945GP_MCH:
+		case PCI_PRODUCT_INTEL_82945GM_MCH:
+		case PCI_PRODUCT_INTEL_82Q963_HB:
+		case PCI_PRODUCT_INTEL_82965_MCH:
+			/*
+			 * The host bridge is either in GFX mode (internal
+			 * graphics) or in AGP mode. In GFX mode, we pretend
+			 * to have AGP because the graphics memory access
+			 * is very similar and the AGP GATT code will
+			 * deal with this. In the latter case, the
+			 * pci_get_capability(PCI_CAP_AGP) test below will
+			 * fire, so we do no harm by already setting the flag.
+			 */
+			has_agp = 1;
 			break;
+		}
+		break;
+		default:
+			break;
+	}
+
+	/*
+	 * Now set up RNG.  this isn't in previous switch since only
+	 * some of the rng devices need special attention for AGP
+	 */
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82810_MCH:
 		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
 		case PCI_PRODUCT_INTEL_82810E_MCH:
@@ -388,8 +402,36 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 	}
-	if (neednl)
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
 		printf("\n");
+		apa.apa_busname = "agp";
+		apa.apa_pci_args = *pa;
+		config_found(self, &apa, agpbus_print);
+		printf("\n");
+	}
+
+	if (doattach) {
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_domain = pa->pa_domain;
+		pba.pba_bus = pbnum;
+		pba.pba_bridgetag = NULL;
+		pba.pba_pc = pa->pa_pc;
+		printf("\n");
+		config_found(self, &pba, pchb_print);
+		pba.pba_bridgetag = NULL;
+		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
+		config_found(self, &pba, pchb_print);
+	}
 }
 
 int
@@ -400,6 +442,14 @@ pchb_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
+}
+
+int
+agpbus_print(void *vaa, const char *pnp)
+{
+	if (pnp)
+		printf("agp at %s", pnp);
 	return (UNCONF);
 }
 

@@ -1,0 +1,149 @@
+.\" $OpenBSD: agp.4,v 1.1 2007/11/25 17:11:11 oga Exp $
+.\" Copyright (c) Owain Ainsworth <oga@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: November 25 2007 $
+.Dt AGP 4
+.Os
+.Sh NAME
+.Nm agp
+.Nd accelerated graphics port driver
+.Sh SYNOPSIS
+.Cd "agp* at pchb?"
+.Sh DESCRIPTION
+The
+.Nm 
+driver provides support from programming the AGP GART through
+.Xr ioctl 2 .
+This support is used by the X server on some architectures.
+.Pp
+The following
+.Xr ioctl 2
+operations can be performed on
+.Pa /dev/agp* ,
+and are defined in
+.Aq Pa sys/agpio.h :
+.Bl -tag -width indent
+.It Dv AGPIOC_INFO
+Returns information about the AGP subsystem.
+The result is a pointer to the following structure:
+.Bd -literal
+typedef struct _agp_info {
+	agp_version version;  /* version of driver (unused)   */
+	u_int32_t bridge_id;  /* bridge vendor/device         */
+	u_int32_t agp_mode;   /* mode info of bridge          */
+	off_t aper_base;      /* base of aperture             */
+	size_t aper_size;     /* size of aperture             */
+	size_t pg_total;      /* max pages (swap + system)    */
+	size_t pg_system;     /* max pages (system)           */
+	size_t pg_used;       /* current pages used           */
+} agp_info;
+.Ed
+.It Dv AGPIOC_ACQUIRE
+Acquire control of the AGP chipset for use by this client.
+Returns
+.Er EBUSY
+if the AGP chipset is already acquired by another client.
+.It Dv AGPIOC_RELEASE
+Release control of the AGP chipset.
+This does not unbind or free any allocated memory, which is the
+responsibility of the client to handle if necessary.
+.It Dv AGPIOC_SETUP
+Enable the AGP hardware with the relevant mode.
+This
+.Xr ioctl 2
+takes the following structure:
+.Bd -literal
+typedef struct _agp_setup {
+	u_int32_t agp_mode;   /* mode info of bridge */
+} agp_setup;
+.Ed
+.Pp
+The mode bits are defined in
+.Aq Pa sys/agpio.h .
+.It Dv AGPIOC_ALLOCATE
+Allocate physical memory suitable for mapping into the AGP aperture.
+This
+.Xr ioctl 2
+takes the following structure:
+.Bd -literal
+typedef struct _agp_allocate {
+	int key;              /* tag of allocation            */
+	size_t pg_count;      /* number of pages              */
+	u_int32_t type;       /* 0 == normal, other devspec   */
+	u_int32_t physical;   /* device specific (some devices
+			       * need a phys address of the
+			       * actual page behind the gatt
+			       * table)                       */
+} agp_allocate;
+.Ed
+.Pp
+It returns a handle to the allocated memory.
+.It Dv AGPIOC_DEALLOCATE
+Free the previously allocated memory associated with the
+handle passed.
+.It Dv AGPIOC_BIND
+Bind the allocated memory at a given offset with the AGP
+aperture.
+Returns
+.Er EINVAL
+if the memory is already bound or the offset is not at an
+AGP page boundary.
+This
+.Xr ioctl 2
+takes the following structure:
+.Bd -literal
+typedef struct _agp_bind {
+	int key;         /* tag of allocation            */
+	off_t pg_start;  /* starting page to populate    */
+} agp_bind;
+.Ed
+.Pp
+The tag of allocation is the handle returned by
+.Dv AGPIOC_ALLOCATE .
+.It Dv AGPIOC_UNBIND
+Unbind memory from the AGP aperture.
+Returns
+.Er EINVAL
+if the memory is not bound.
+This
+.Xr ioctl 2
+takes the following structure:
+.Bd -literal
+typedef struct _agp_unbind {
+	int key;                /* tag of allocation         */
+	u_int32_t priority;     /* priority for paging out   */
+} agp_unbind;
+.Ed
+.El
+.Sh FILES
+.Bl -tag -width /dev/agpgart -compact
+.It Pa /dev/agp?
+AGP GART device special files.
+.It Pa /dev/agpgart
+AGP GART device special file.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr pci 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 4.1 .
+It was adopted in
+.Nx 1.6 .
+The driver was then ported in parts to
+.Ox ,
+and fully integrated in
+.Ox 4.3 .

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.590 2007/11/25 12:00:46 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.591 2007/11/25 17:11:12 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -90,6 +90,7 @@ gpio*	at gscpcib?
 glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 gpio*	at glxpcib?
 
+agp*	at pchb?		# AGP bridges
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller
 gpio*	at elansc?
@@ -300,7 +301,6 @@ pckbd*		at pckbc?	# PC keyboard
 pms*		at pckbc?	# PS/2 mouse for wsmouse
 pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 vga0		at isa?
-option		PCIAGP
 vga*		at pci?
 pcdisplay0	at isa?		# CGA, MDA, EGA, HGA
 wsdisplay*	at vga?

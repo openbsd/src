@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.11 2007/11/16 15:31:19 mikeb Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.12 2007/11/25 17:11:12 oga Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -73,6 +73,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/agpvar.h>
+
 #include <dev/rndvar.h>
 
 #include <dev/ic/i82802reg.h>
@@ -128,6 +130,7 @@ int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
 int	pchb_print(void *, const char *);
+int	agpbus_print(void *, const char *);
 void	pchb_rnd(void *);
 void	pchb_amd64ht_attach (struct device *, struct pci_attach_args *, int);
 
@@ -157,7 +160,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	int i, r;
+	struct agpbus_attach_args apa;
+	int has_agp, i, r;
+
+	has_agp = 0;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
@@ -169,9 +175,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	case PCI_VENDOR_INTEL:
-#ifdef PCIAGP
-		pciagp_set_pchb(pa);
-#endif
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82925X_HB:
@@ -217,6 +220,20 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	printf("\n");
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		printf("\n");
+		apa.apa_busname = "agp";
+		apa.apa_pci_args = *pa;
+		config_found(self, &apa, agpbus_print);
+		printf("\n");
+	}
 }
 
 int
@@ -227,6 +244,14 @@ pchb_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
+}
+
+int
+agpbus_print(void *vaa, const char *pnp)
+{
+	if (pnp)
+		printf("agp at %s", pnp);
 	return (UNCONF);
 }
 

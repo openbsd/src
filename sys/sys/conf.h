@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.83 2007/07/23 13:30:21 mk Exp $	*/
+/*	$OpenBSD: conf.h,v 1.84 2007/11/25 17:11:12 oga Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -489,6 +489,12 @@ void	randomattach(void);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
+
+#define       cdev_agp_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	dev_init(c,n,mmap) }
 
 #endif
 

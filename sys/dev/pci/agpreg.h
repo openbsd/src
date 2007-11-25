@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.7 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.8 2007/11/25 17:11:12 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -52,18 +52,56 @@
 /*
  * Config offsets for Intel AGP chipsets.
  */
+/* i845/855PM */
+#define	AGP_I845_AGPMISC	0x51
+#define AGPMISC_AAGN		(1U << 1)  /* Aperture AccessEN */
+
+/* i840/850/850E */
+#define AGP_I840_MCHCFG		0x50
+#define MCHCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+
+/* i82443LX/BX/GX */
 #define AGP_INTEL_NBXCFG	0x50
 #define AGP_INTEL_STS		0x90
+#define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessDIS */
+#define NBXCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+
+/* Error Status for i8XX Chipset */
+#define	AGP_INTEL_I8XX_ERRSTS	0xc8
+
+/* Common register */
+#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
+#define AGP_INTEL_AGPCMD	0xa8
+#define AGPCMD_SBA		(1U << 9)
+#define AGPCMD_AGPEN		(1U << 8)
+#define AGPCMD_FWEN		(1U << 4)
+#define AGPCMD_RATE_1X		(1U << 1)
+#define AGPCMD_RATE_2X		(1U << 2)
+#define AGPCMD_RATE_4X		(1U << 3)
+
 #define AGP_INTEL_AGPCTRL	0xb0
+#define AGPCTRL_AGPRSE		(1U << 13) /* AGPRSE (82443 only)*/
+#define AGPCTRL_GTLB		(1U << 7)  /* GTLB EN */
+
 #define AGP_INTEL_APSIZE	0xb4
+#define APSIZE_MASK		0x3f
+
 #define AGP_INTEL_ATTBASE	0xb8
 
 /*
- * Config offsets for VIA AGP chipsets.
+ * Config offsets for VIA AGP 2.x chipsets.
  */
 #define AGP_VIA_GARTCTRL	0x80
 #define AGP_VIA_APSIZE		0x84
 #define AGP_VIA_ATTBASE		0x88
+
+/*
+ * Config offsets for VIA AGP 3.0 chipsets.
+ */
+#define AGP3_VIA_GARTCTRL	0x90
+#define AGP3_VIA_APSIZE		0x94
+#define AGP3_VIA_ATTBASE	0x98
+#define AGP_VIA_AGPSEL		0xfd
 
 /*
  * Config offsets for SiS AGP chipsets.

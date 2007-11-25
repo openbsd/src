@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.27 2007/11/03 10:09:03 martin Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.28 2007/11/25 17:11:12 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -149,9 +149,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	reg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
-#ifdef PCIAGP
-	agp_attach(parent, self, aux);
-#endif
 #ifdef VESAFB
 	if (vesabios_softc != NULL && vesabios_softc->sc_nmodes > 0) {
 		sc->sc_textmode = vesafb_get_mode(sc);
@@ -179,11 +176,7 @@ vga_pci_mmap(void *v, off_t off, int prot)
 		return atop(sc->sc_base + off);
 	}
 #endif
-#ifdef PCIAGP
-	return agp_mmap(v, off, prot);
-#else
 	return -1;
-#endif
 }
 
 int
@@ -269,18 +262,6 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 		break;
 
 #endif
-#ifdef PCIAGP
-	case AGPIOC_INFO:
-	case AGPIOC_ACQUIRE:
-	case AGPIOC_RELEASE:
-	case AGPIOC_SETUP:
-	case AGPIOC_ALLOCATE:
-	case AGPIOC_DEALLOCATE:
-	case AGPIOC_BIND:
-	case AGPIOC_UNBIND:
-		error = agp_ioctl(v, cmd, addr, flag, pb);
-		break;
-#endif
 	default:
 		error = ENOTTY;
 	}
@@ -292,8 +273,5 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 void
 vga_pci_close(void *v)
 {
-#ifdef PCIAGP
-	agp_close(v);
-#endif
 }
 #endif

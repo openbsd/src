@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.6 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.7 2007/11/25 17:11:12 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #define _PCI_AGPVAR_H_
 
 #include <sys/lock.h>
-#include <dev/pci/vga_pcivar.h>
 
 /* #define	AGP_DEBUG */
 #ifdef AGP_DEBUG
@@ -44,19 +43,69 @@
 
 #define AGPUNIT(x)	minor(x)
 
+struct agpbus_attach_args {
+        char    *apa_busname; 
+        struct pci_attach_args apa_pci_args;
+};
+
+enum agp_acquire_state {
+	AGP_ACQUIRE_FREE,
+	AGP_ACQUIRE_USER,
+	AGP_ACQUIRE_KERNEL
+};
+
+/*
+ * Data structure to describe an AGP memory allocation.
+ */
+TAILQ_HEAD(agp_memory_list, agp_memory);
+struct agp_memory {
+	TAILQ_ENTRY(agp_memory) am_link;	/* wiring for the tailq */
+	int		am_id;			/* unique id for block */
+	vsize_t		am_size;		/* number of bytes allocated */
+	int		am_type;		/* chipset specific type */
+	off_t		am_offset;		/* page offset if bound */
+	int		am_is_bound;		/* non-zero if bound */
+	bus_addr_t	am_physical;
+	caddr_t		am_virtual;
+	bus_dmamap_t	am_dmamap;
+	int		am_nseg;
+	bus_dma_segment_t *am_dmaseg;
+};
+
+/*
+ * This structure is used to query the state of the AGP system.
+ */
+struct agp_info {
+	u_int32_t       ai_mode;
+	bus_addr_t      ai_aperture_base;
+	bus_size_t      ai_aperture_size;
+	vsize_t         ai_memory_allowed;
+	vsize_t         ai_memory_used;
+	u_int32_t       ai_devid;
+};
+
+struct agp_memory_info {
+        vsize_t         ami_size;       /* size in bytes */
+        bus_addr_t      ami_physical;   /* bogus hack for i810 */
+        off_t           ami_offset;     /* page offset if bound */
+        int             ami_is_bound;   /* non-zero if bound */
+};
+
+struct agp_softc;
+
 struct agp_methods {
-	u_int32_t (*get_aperture)(struct vga_pci_softc *);
-	int	(*set_aperture)(struct vga_pci_softc *, u_int32_t);
-	int	(*bind_page)(struct vga_pci_softc *, off_t, bus_addr_t);
-	int	(*unbind_page)(struct vga_pci_softc *, off_t);
-	void	(*flush_tlb)(struct vga_pci_softc *);
-	int	(*enable)(struct vga_pci_softc *, u_int32_t mode);
+	u_int32_t (*get_aperture)(struct agp_softc *);
+	int	(*set_aperture)(struct agp_softc *, u_int32_t);
+	int	(*bind_page)(struct agp_softc *, off_t, bus_addr_t);
+	int	(*unbind_page)(struct agp_softc *, off_t);
+	void	(*flush_tlb)(struct agp_softc *);
+	int	(*enable)(struct agp_softc *, u_int32_t mode);
 	struct agp_memory *
-		(*alloc_memory)(struct vga_pci_softc *, int, vsize_t);
-	int	(*free_memory)(struct vga_pci_softc *, struct agp_memory *);
-	int	(*bind_memory)(struct vga_pci_softc *, struct agp_memory *,
+		(*alloc_memory)(struct agp_softc *, int, vsize_t);
+	int	(*free_memory)(struct agp_softc *, struct agp_memory *);
+	int	(*bind_memory)(struct agp_softc *, struct agp_memory *,
 		    off_t);
-	int	(*unbind_memory)(struct vga_pci_softc *, struct agp_memory *);
+	int	(*unbind_memory)(struct agp_softc *, struct agp_memory *);
 };
 
 #define AGP_GET_APERTURE(sc)	 ((sc)->sc_methods->get_aperture(sc))
@@ -73,6 +122,32 @@ struct agp_methods {
 /*
  * All chipset drivers must have this at the start of their softc.
  */
+struct agp_softc {
+	struct device sc_dev;
+
+	bus_space_tag_t sc_bt, sc_memt;
+	bus_space_handle_t sc_bh;
+	bus_addr_t sc_apaddr;
+	bus_size_t sc_apsize;
+	bus_dma_tag_t sc_dmat;
+	struct lock sc_lock;		/* lock for access to GATT */
+	pcitag_t sc_pcitag;		/* PCI tag, in case we need it. */
+	pcireg_t sc_id;
+	pci_chipset_tag_t sc_pc;
+
+	struct agp_methods *sc_methods;
+	void	*sc_chipc;		/* chipset-dependent state */
+
+	int sc_opened;
+	int sc_capoff;			
+	int sc_apflags;
+	int sc_nextid;	/* next memory block id */
+
+	u_int32_t		sc_maxmem;	/* allocation upper bound */
+	u_int32_t		sc_allocated;	/* amount allocated */
+	enum agp_acquire_state	sc_state;
+	struct agp_memory_list	sc_memory;	/* list of allocated memory */
+};
 
 struct agp_gatt {
 	u_int32_t	ag_entries;
@@ -84,42 +159,119 @@ struct agp_gatt {
 };
 
 
+struct agp_product {
+	int	ap_vendor;
+	int	ap_product;
+	int	(*ap_attach)(struct agp_softc *,
+		     struct pci_attach_args *);
+};
+/* MD-defined */
+extern const struct agp_product agp_products[];
+
+void agp_attach(struct device *, struct device *, void *);
+paddr_t agpmmap(void *, off_t, int);
+int agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int agpopen(dev_t, int, int, struct proc *);
+int agpclose(dev_t, int, int , struct proc *);
 /*
  * Functions private to the AGP code.
  */
 
 int	agp_find_caps(pci_chipset_tag_t, pcitag_t);
-int	agp_map_aperture(struct vga_pci_softc *, u_int32_t, u_int32_t);
+int
+agp_map_aperture(struct pci_attach_args *, struct agp_softc *,
+	    u_int32_t, u_int32_t);
 struct agp_gatt *
-	agp_alloc_gatt(struct vga_pci_softc *);
-void	agp_free_gatt(struct vga_pci_softc *, struct agp_gatt *);
+	agp_alloc_gatt(struct agp_softc *);
+void	agp_free_gatt(struct agp_softc *, struct agp_gatt *);
 void	agp_flush_cache(void);
-int	agp_generic_attach(struct vga_pci_softc *);
-int	agp_generic_detach(struct vga_pci_softc *);
-int	agp_generic_enable(struct vga_pci_softc *, u_int32_t);
+int	agp_generic_attach(struct agp_softc *);
+int	agp_generic_detach(struct agp_softc *);
+int	agp_generic_enable(struct agp_softc *, u_int32_t);
 struct agp_memory *
-	agp_generic_alloc_memory(struct vga_pci_softc *, int, vsize_t size);
-int	agp_generic_free_memory(struct vga_pci_softc *, struct agp_memory *);
-int	agp_generic_bind_memory(struct vga_pci_softc *, struct agp_memory *,
+	agp_generic_alloc_memory(struct agp_softc *, int, vsize_t size);
+int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
+int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
 	    off_t);
-int	agp_generic_unbind_memory(struct vga_pci_softc *, struct agp_memory *);
+int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-int	agp_ali_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
-int	agp_amd_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
-int	agp_i810_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
-int	agp_intel_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
-int	agp_via_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
-int	agp_sis_attach(struct vga_pci_softc *, struct pci_attach_args *,
-	    struct pci_attach_args *);
+int	agp_ali_attach(struct agp_softc *, struct pci_attach_args *);
+int	agp_amd_attach(struct agp_softc *, struct pci_attach_args *);
+int	agp_i810_attach(struct agp_softc *, struct pci_attach_args *);
+int	agp_intel_attach(struct agp_softc *, struct pci_attach_args *);
+int	agp_via_attach(struct agp_softc *, struct pci_attach_args *);
+int	agp_sis_attach(struct agp_softc *, struct pci_attach_args *);
 
 int	agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *,
 	    caddr_t *, bus_addr_t *, bus_dma_segment_t *, int, int *);
 void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
 	    caddr_t, bus_dma_segment_t *, int nseg) ;
+
+
+/*
+ * Kernel API
+ */
+/*
+ * Find the AGP device and return it.
+ */
+void *agp_find_device(int);
+
+/*
+ * Return the current owner of the AGP chipset.
+ */
+enum agp_acquire_state agp_state(void *);
+
+/*
+ * Query the state of the AGP system.
+ */
+void agp_get_info(void *, struct agp_info *);
+
+/*
+ * Acquire the AGP chipset for use by the kernel. Returns EBUSY if the
+ * AGP chipset is already acquired by another user.
+ */
+int agp_acquire(void *);
+
+/*
+ * Release the AGP chipset.
+ */
+int agp_release(void *);
+
+/*
+ * Enable the agp hardware with the relavent mode. The mode bits are
+ * defined in <dev/pci/agpreg.h>
+ */
+int agp_enable(void *, u_int32_t);
+
+/*
+ * Allocate physical memory suitable for mapping into the AGP
+ * aperture.  The value returned is an opaque handle which can be
+ * passed to agp_bind(), agp_unbind() or agp_deallocate().
+ */
+void *agp_alloc_memory(void *, int, vsize_t);
+
+/*
+ * Free memory which was allocated with agp_allocate().
+ */
+void agp_free_memory(void *, void *);
+
+/*
+ * Bind memory allocated with agp_allocate() at a given offset within
+ * the AGP aperture. Returns EINVAL if the memory is already bound or
+ * the offset is not at an AGP page boundary.
+ */
+int agp_bind_memory(void *, void *, off_t);
+
+/*
+ * Unbind memory from the AGP aperture. Returns EINVAL if the memory
+ * is not bound.
+ */
+int agp_unbind_memory(void *, void *);
+
+/*
+ * Retrieve information about a memory block allocated with
+ * agp_alloc_memory().
+ */
+void agp_memory_info(void *, void *, struct agp_memory_info *);
 
 #endif /* !_PCI_AGPVAR_H_ */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.168 2007/11/25 15:42:15 tedu Exp $
+#	$OpenBSD: files.i386,v 1.169 2007/11/25 17:11:12 oga Exp $
 #
 # new style config file for i386 architecture
 #
@@ -96,19 +96,15 @@ file	arch/i386/i386/mainbus.c	mainbus
 #
 
 include "../../../dev/pci/files.pci"
+include "../../../dev/pci/files.agp"
 file	arch/i386/pci/pci_machdep.c		pci
-file	arch/i386/pci/agp_machdep.c		pciagp
-file	dev/pci/agp_ali.c			pciagp
-file	dev/pci/agp_amd.c			pciagp
-file	dev/pci/agp_i810.c			pciagp
-file	dev/pci/agp_intel.c			pciagp
-file	dev/pci/agp_sis.c			pciagp
-file	dev/pci/agp_via.c			pciagp
+file	arch/i386/pci/agp_machdep.c		agp
 file	arch/i386/pci/pciide_machdep.c		pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus
+device  pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
+              agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
 

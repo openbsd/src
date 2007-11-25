@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.184 2007/07/21 20:22:03 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.185 2007/11/25 17:11:11 oga Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 21 2007 $
+.Dd $Mdocdate: November 25 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -640,16 +640,6 @@ It's used by the
 server on some architectures.
 See
 .Xr pci 4
-for details.
-.It Cd option PCIAGP
-Enables
-.Xr ioctl 2
-access to the AGP GART on the supported chipsets.
-It's used by the
-.Xr Xorg 1
-server on some architectures.
-See
-.Xr vga 4
 for details.
 .It Cd option MULTIPROCESSOR
 On those architectures that have it, this enables multiprocessor support.

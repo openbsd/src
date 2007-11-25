@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.88 2007/09/18 08:13:49 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.89 2007/11/25 17:11:12 oga Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -179,7 +179,9 @@
 
 #define	M_BTHIDEV	143	/* Bluetooth HID */
 
-#define	M_LAST		144	/* Must be last type + 1 */
+#define M_AGP		144	/* AGP Memory */
+
+#define	M_LAST		145	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -311,6 +313,7 @@
 	"UDF file entry",	/* 141 M_UDFFENTRY */ \
 	"UDF file id",	/* 142 M_UDFFID */ \
 	"Bluetooth HID",	/* 143 M_BTHIDEV */ \
+	"AGP Memory",	/* 144 M_AGP */ \
 }
 
 struct kmemstats {

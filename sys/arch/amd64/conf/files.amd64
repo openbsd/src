@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.36 2007/10/10 15:53:51 art Exp $
+#	$OpenBSD: files.amd64,v 1.37 2007/11/25 17:11:12 oga Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -102,8 +102,12 @@ file	arch/amd64/pci/pciide_machdep.c		pciide
 
 include	"dev/puc/files.puc"
 
+# AGP
+include "dev/pci/files.agp"
+file	arch/amd64/pci/agp_machdep.c		agp
+
 # PCI Host bridge chipsets
-device	pchb: pcibus
+device	pchb: pcibus, agpbus, agp_i810
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
 
@@ -222,6 +226,3 @@ major	{cd = 6}
 major	{rd = 17}
 major	{wd = 0}
 major	{fd = 2}
-
-file	arch/amd64/pci/agp_machdep.c		pciagp
-file	dev/pci/agp_i810.c			pciagp
