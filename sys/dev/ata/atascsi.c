@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.47 2007/11/23 18:21:55 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.48 2007/11/26 15:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -50,6 +50,8 @@ struct atascsi {
 int		atascsi_cmd(struct scsi_xfer *);
 int		atascsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
+int		atascsi_probe(struct scsi_link *);
+void		atascsi_free(struct scsi_link *);
 
 /* template */
 struct scsi_adapter atascsi_switch = {
@@ -57,15 +59,14 @@ struct scsi_adapter atascsi_switch = {
 	minphys,		/* scsi_minphys */
 	NULL,
 	NULL,
-	atascsi_ioctl		/* ioctl */
+	atascsi_ioctl,		/* ioctl */
+	atascsi_probe,		/* dev_probe */
+	atascsi_free		/* dev_free */
 };
 
 struct scsi_device atascsi_device = {
 	NULL, NULL, NULL, NULL
 };
-
-int		atascsi_probe(struct atascsi *, int);
-void		atascsi_unprobe(struct atascsi *, int);
 
 struct ata_xfer *ata_setup_identify(struct ata_port *, int);
 void		ata_free_identify(struct ata_xfer *);
@@ -103,7 +104,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 {
 	struct scsibus_attach_args	saa;
 	struct atascsi			*as;
-	int				i;
 
 	as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK | M_ZERO);
 
@@ -130,10 +130,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_ports = malloc(sizeof(struct ata_port *) * aaa->aaa_nports,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
-	/* fill in the port array with the type of devices there */
-	for (i = 0; i < as->as_link.adapter_buswidth; i++)
-		atascsi_probe(as, i);
-
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
 
@@ -148,14 +144,10 @@ int
 atascsi_detach(struct atascsi *as, int flags)
 {
 	int				rv;
-	int				i;
 
 	rv = config_detach((struct device *)as->as_scsibus, flags);
 	if (rv != 0)
 		return (rv);
-
-	for (i = 0; i < as->as_link.adapter_buswidth; i++)
-		atascsi_unprobe(as, i);
 
 	free(as, M_DEVBUF);
 
@@ -163,12 +155,19 @@ atascsi_detach(struct atascsi *as, int flags)
 }
 
 int
-atascsi_probe(struct atascsi *as, int port)
+atascsi_probe(struct scsi_link *link)
 {
+	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap;
 	struct ata_xfer		*xa;
-	int			type, s;
+	int			port, type;
+	int			s;
 
+	/* revisit this when we do port multipliers */
+	if (link->lun > 0)
+		return (ENXIO);
+
+	port = link->target;
 	if (port > as->as_link.adapter_buswidth)
 		return (ENXIO);
 
@@ -215,10 +214,16 @@ atascsi_probe(struct atascsi *as, int port)
 }
 
 void
-atascsi_unprobe(struct atascsi *as, int port)
+atascsi_free(struct scsi_link *link)
 {
+	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap;
+	int			port;
 
+	if (link->lun > 0)
+		return;
+
+	port = link->target;
 	if (port > as->as_link.adapter_buswidth)
 		return;
 
@@ -228,6 +233,8 @@ atascsi_unprobe(struct atascsi *as, int port)
 
 	free(ap, M_DEVBUF);
 	as->as_ports[port] = NULL;
+
+	as->as_methods->free(as->as_cookie, port);
 }
 
 struct ata_xfer *

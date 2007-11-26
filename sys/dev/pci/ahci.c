@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.133 2007/11/19 01:18:48 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.134 2007/11/26 15:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -508,12 +508,14 @@ int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
 
 /* provide methods for atascsi to call */
 int			ahci_ata_probe(void *, int);
+void			ahci_ata_free(void *, int);
 struct ata_xfer *	ahci_ata_get_xfer(void *, int);
 void			ahci_ata_put_xfer(struct ata_xfer *);
 int			ahci_ata_cmd(struct ata_xfer *);
 
 struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
+	ahci_ata_free,
 	ahci_ata_get_xfer,
 	ahci_ata_cmd
 };
@@ -2193,6 +2195,12 @@ ahci_ata_probe(void *xsc, int port)
 		return (ATA_PORT_T_ATAPI);
 	else
 		return (ATA_PORT_T_DISK);
+}
+
+void
+ahci_ata_free(void *xsc, int port)
+{
+
 }
 
 struct ata_xfer *

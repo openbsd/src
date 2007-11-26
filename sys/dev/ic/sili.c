@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.37 2007/11/23 18:26:03 kettenis Exp $ */
+/*	$OpenBSD: sili.c,v 1.38 2007/11/26 15:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -159,12 +159,14 @@ u_int32_t		sili_port_intr(struct sili_port *, int);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
+void			sili_ata_free(void *, int);
 struct ata_xfer		*sili_ata_get_xfer(void *, int);
 void			sili_ata_put_xfer(struct ata_xfer *);
 int			sili_ata_cmd(struct ata_xfer *);
 
 struct atascsi_methods sili_atascsi_methods = {
 	sili_ata_probe,
+	sili_ata_free,
 	sili_ata_get_xfer,
 	sili_ata_cmd
 };
@@ -792,6 +794,18 @@ sili_ata_probe(void *xsc, int port)
 	    SILI_PREG_IE_CMDCOMP);
 
 	return (port_type);
+}
+
+void
+sili_ata_free(void *xsc, int port)
+{
+	struct sili_softc		*sc = xsc;
+	struct sili_port		*sp = &sc->sc_ports[port];
+
+	if (sp->sp_ccbs != NULL)
+		sili_ccb_free(sp);
+
+	/* XXX we should do more here */
 }
 
 int

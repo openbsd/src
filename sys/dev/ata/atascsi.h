@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.26 2007/11/23 18:21:55 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.27 2007/11/26 15:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -291,6 +291,7 @@ struct ata_xfer {
 
 struct atascsi_methods {
 	int			(*probe)(void *, int);
+	void			(*free)(void *, int);
 	struct ata_xfer *	(*ata_get_xfer)(void *, int );
 	int			(*ata_cmd)(struct ata_xfer *);
 };
