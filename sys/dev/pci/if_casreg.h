@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casreg.h,v 1.6 2007/11/18 22:45:44 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.7 2007/11/26 15:24:35 kettenis Exp $	*/
 
 /*
  *
@@ -461,6 +461,7 @@
 #define	CAS_MII_SLINK_CONTROL	0x9054		/* Serial link control */
 #define	CAS_MII_OUTPUT_SELECT	0x9058
 #define	CAS_MII_SLINK_STATUS	0x905c		/* serial link status */
+#define	CAS_MII_PACKET_COUNT	0x9060
 
 /* CAS_MII_CONTROL bits */
 #define	CAS_MII_CONTROL_RESET	0x00008000
