@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.8 2006/08/28 03:22:37 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.9 2007/11/26 19:13:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -424,8 +424,8 @@ struct ciss_cmd {
 #define	CISS_CDB_IN	0x80
 #define	CISS_CDB_OUT	0x40
 	u_int16_t	tmo;	/* 16: timeout in seconds */
-#define	CISS_MAX_CDB	12
-	u_int8_t	cdb[16];/* 18 */
+#define	CISS_MAX_CDB	16
+	u_int8_t	cdb[CISS_MAX_CDB]; /* 18 */
 
 	u_int64_t	err_pa;	/* 28: pa(struct ciss_error *) */
 	u_int32_t	err_len;/* 30 */
