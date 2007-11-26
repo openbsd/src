@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.156 2007/11/22 02:04:14 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.157 2007/11/26 17:26:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -884,11 +884,9 @@ carp_new_vhost(struct carp_softc *sc, int vhid, int advskew)
 {
 	struct carp_vhost_entry *vhe, *vhe0;
 
-	MALLOC(vhe, struct carp_vhost_entry *, sizeof(*vhe),
-	    M_DEVBUF, M_NOWAIT);
+	vhe = malloc(sizeof(*vhe), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (vhe == NULL)
 		return (ENOMEM);
-	bzero(vhe, sizeof(*vhe));
 
 	vhe->parent_sc = sc;
 	vhe->vhid = vhid;
