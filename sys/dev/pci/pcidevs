@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1297 2007/11/25 17:29:59 krw Exp $
+$OpenBSD: pcidevs,v 1.1298 2007/11/26 21:17:42 marco Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1468,6 +1468,7 @@ product DELL PERC_3DI_3_SUB	0x0106	PERC 3/Di
 product DELL PERC_3DI_3_SUB2	0x011b	PERC 3/Di
 product DELL PERC_3DI_3_SUB3	0x0121	PERC 3/Di
 product DELL PERC5		0x0015	PERC 5
+product DELL PERC6		0x0060	PERC 6
 
 /* Delta Electronics products */
 product DELTA RHINEII		0x1320	RhineII
