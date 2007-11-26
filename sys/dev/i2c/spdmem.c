@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.21 2007/11/25 20:19:02 miod Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.22 2007/11/26 15:30:53 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -124,6 +124,15 @@
 #define SPDMEM_SDR_CAS2			(1 << 1)
 #define SPDMEM_SDR_CAS3			(1 << 2)
 
+/* Rambus Direct DRAM */
+#define SPDMEM_RDR_ROWS_COLS		0x00
+#define SPDMEM_RDR_MODULE_TYPE		0x00
+
+#define SPDMEM_RDR_TYPE_RIMM		1
+#define SPDMEM_RDR_TYPE_SORIMM		2
+#define SPDMEM_RDR_TYPE_EMBED		3
+#define SPDMEM_RDR_TYPE_RIMM32		4
+
 /* Dual Data Rate SDRAM */
 #define SPDMEM_DDR_ROWS			0x00
 #define SPDMEM_DDR_COLS			0x01
@@ -159,9 +168,6 @@ static const uint8_t ddr2_cycle_tenths[] = {
 	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
 };
 
-/* Direct Rambus DRAM */
-#define SPDMEM_RDR_ROWS_COLS		0x00
-
 struct spdmem {
 	uint8_t sm_len;
 	uint8_t sm_size;
@@ -183,6 +189,7 @@ int		 spdmem_match(struct device *, void *, void *);
 void		 spdmem_attach(struct device *, struct device *, void *);
 uint8_t		 spdmem_read(struct spdmem_softc *, uint8_t);
 void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
+void		 spdmem_rdr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
 
@@ -323,6 +330,25 @@ spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf("CL2");
 	else if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS3)
 		printf("CL3");
+}
+
+void
+spdmem_rdr_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	switch(s->sm_data[SPDMEM_RDR_MODULE_TYPE]) {
+	case SPDMEM_RDR_TYPE_RIMM:
+		printf("RIMM");
+		break;
+	case SPDMEM_RDR_TYPE_SORIMM:
+		printf("SO-RIMM");
+		break;
+	case SPDMEM_RDR_TYPE_EMBED:
+		printf("Embedded Rambus");
+		break;
+	case SPDMEM_RDR_TYPE_RIMM32:
+		printf("RIMM32");
+		break;
+	}
 }
 
 void
@@ -500,7 +526,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	 * Decode and print SPD contents
 	 */
 	if (s->sm_len < 4)
-		printf(" no decode method for Rambus memory");
+		spdmem_rdr_decode(sc, s);
 	else {
 		switch(s->sm_type) {
 		case SPDMEM_MEMTYPE_EDO:
