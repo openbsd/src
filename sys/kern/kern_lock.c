@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.30 2007/05/31 22:07:53 thib Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.31 2007/11/26 15:23:26 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -114,25 +114,6 @@ do {									\
 		wakeup((void *)(lkp));					\
 	}								\
 } while (/*CONSTCOND*/0)
-
-#if defined(LOCKDEBUG) /* { */
-#if defined(MULTIPROCESSOR) /* { */
-struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
-
-#define	SPINLOCK_LIST_LOCK()						\
-	__cpu_simple_lock(&spinlock_list_slock.lock_data)
-
-#define	SPINLOCK_LIST_UNLOCK()						\
-	__cpu_simple_unlock(&spinlock_list_slock.lock_data)
-#else
-#define	SPINLOCK_LIST_LOCK()	/* nothing */
-
-#define	SPINLOCK_LIST_UNLOCK()	/* nothing */
-#endif /* MULTIPROCESSOR */ /* } */
-
-TAILQ_HEAD(, lock) spinlock_list =
-    TAILQ_HEAD_INITIALIZER(spinlock_list);
-#endif /* LOCKDEBUG */ /* } */
 
 #define	HAVEIT(lkp)							\
 do {									\
