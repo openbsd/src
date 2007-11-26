@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.17 2007/07/09 16:39:48 dim Exp $ */
+/*	$OpenBSD: file.h,v 1.18 2007/11/26 09:28:34 martynas Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.17 2007/07/09 16:39:48 dim Exp $
+ * @(#)$Id: file.h,v 1.18 2007/11/26 09:28:34 martynas Exp $
  */
 
 #ifndef __file_h__
@@ -83,7 +83,7 @@
 struct magic {
 	/* Word 1 */
 	uint16_t cont_level;	/* level of ">" */
-	uint8_t nospflag;	/* supress space character */
+	uint8_t nospflag;	/* suppress space character */
 	uint8_t flag;
 #define INDIR	1		/* if '>(...)' appears,  */
 #define	UNSIGNED 2		/* comparison is unsigned */

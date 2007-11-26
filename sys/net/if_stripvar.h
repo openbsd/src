@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stripvar.h,v 1.8 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_stripvar.h,v 1.9 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: if_stripvar.h,v 1.2.4.1 1996/08/05 20:37:51 jtc Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
@@ -51,7 +51,7 @@ struct st_softc {
 
 /* visible flags */
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
-#define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
+#define	SC_NOICMP	IFF_LINK1	/* suppress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.39 2007/11/20 20:42:11 canacar Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.40 2007/11/26 09:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1308,7 +1308,7 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 	if (tr->tr_primary->tp_link_state == LINK_STATE_DOWN) {
 		tmp_tp = trunk_link_active(tr, NULL);
 		/*
-		 * If tmp_tp is null, we've recieved a packet when all
+		 * If tmp_tp is null, we've received a packet when all
 		 * our links are down. Weird, but process it anyways.
 		 */
 		if ((tmp_tp == NULL || tmp_tp == tp)) {

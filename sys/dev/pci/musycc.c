@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.17 2007/10/01 15:34:48 krw Exp $ */
+/*	$OpenBSD: musycc.c,v 1.18 2007/11/26 09:28:33 martynas Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -309,7 +309,7 @@ musycc_alloc_group(struct musycc_group *mg)
 	/* add all descriptors to the freelist */
 	for (j = 0; j < MUSYCC_DMA_CNT; j++) {
 		dd = &mg->mg_dma_pool[j];
-		/* initalize, same as for spare maps */
+		/* initialize, same as for spare maps */
 		if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_SIZE,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dd->map)) {
 			musycc_free_group(mg);

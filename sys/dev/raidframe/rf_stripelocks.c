@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_stripelocks.c,v 1.5 2002/12/16 07:01:05 tdeval Exp $	*/
+/*	$OpenBSD: rf_stripelocks.c,v 1.6 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: rf_stripelocks.c,v 1.5 2000/01/08 23:45:05 oster Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 
 	if (rf_stripeLockDebug) {
 		if (stripeID == -1)
-			Dprintf1("[%d] Lock acquisition supressed"
+			Dprintf1("[%d] Lock acquisition suppressed"
 			    " (stripeID == -1).\n", tid);
 		else {
 			Dprintf8("[%d] Trying to acquire stripe lock table"
@@ -410,7 +410,7 @@ rf_ReleaseStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 
 	if (rf_stripeLockDebug) {
 		if (stripeID == -1)
-			Dprintf1("[%d] Lock release supressed"
+			Dprintf1("[%d] Lock release suppressed"
 			    " (stripeID == -1).\n", tid);
 		else {
 			Dprintf8("[%d] Releasing stripe lock on stripe ID %ld,"

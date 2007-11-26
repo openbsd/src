@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.55 2007/09/02 15:19:08 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.56 2007/11/26 09:28:33 martynas Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -737,7 +737,7 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	/* Initalize libevent but without kqueue because of systrace fd */
+	/* Initialize libevent but without kqueue because of systrace fd */
 	setenv("EVENT_NOKQUEUE", "yes", 0);
 	event_init();
 

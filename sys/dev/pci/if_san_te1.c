@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.9 2005/07/07 20:58:50 canacar Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.10 2007/11/26 09:28:33 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -2026,7 +2026,7 @@ sdla_te_gettimeslot(void* pcard)
 	unsigned long	ts_map = card->fe_te.te_cfg.active_ch;
  
 	if (IS_T1(&card->fe_te.te_cfg)) {
-		/* See explaination before. */
+		/* See explanation before. */
 		ts_map = ts_map << 1;
 	}
 	return ts_map;

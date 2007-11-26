@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.63 2007/11/21 19:52:04 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.64 2007/11/26 09:28:33 martynas Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4016,7 +4016,7 @@ sppp_chap_tlu(struct sppp *sp)
 		if ((sp->hisauth.flags & AUTHFLAG_NORECHALLENGE) == 0)
 			addlog("next re-challenge in %d seconds\n", i);
 		else
-			addlog("re-challenging supressed\n");
+			addlog("re-challenging suppressed\n");
 	}
 
 	x = splnet();
@@ -4545,7 +4545,7 @@ sppp_keepalive(void *dummy)
 				/* And now prepare LCP to reestablish the link, if configured to do so. */
 				sppp_cp_change_state(&lcp, sp, STATE_STOPPED);
 
-				/* Close connection imediatly, completition of this
+				/* Close connection immediately, completition of this
 				 * will summon the magic needed to reestablish it. */
 				sp->pp_tlf(sp);
 				continue;

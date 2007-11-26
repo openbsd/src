@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.70 2007/10/02 07:22:18 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.71 2007/11/26 09:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -988,7 +988,7 @@ vr_intr(void *arg)
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
 
-	/* Supress unwanted interrupts. */
+	/* Suppress unwanted interrupts. */
 	if (!(ifp->if_flags & IFF_UP)) {
 		vr_stop(sc);
 		return 0;

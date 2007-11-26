@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.47 2006/12/15 06:16:49 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.48 2007/11/26 09:28:34 martynas Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.47 2006/12/15 06:16:49 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.48 2007/11/26 09:28:34 martynas Exp $";
 #endif
 
 #include <stdio.h>
@@ -148,7 +148,7 @@ struct	rip6 *ripbuf;	/* packet buffer for sending */
  * One of the major drawbacks of the linear linked list is the difficulty
  * of representing the relationship between a couple of routes.  This may
  * be a significant problem when we have to support route aggregation with
- * supressing the specifices covered by the aggregate.
+ * suppressing the specifics covered by the aggregate.
  */
 
 struct	riprt {

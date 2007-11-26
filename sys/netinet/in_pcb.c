@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.90 2007/09/01 18:49:28 henning Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.91 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;
 int ipport_hilastauto = IPPORT_HILASTAUTO;
 
 struct pool inpcb_pool;
-int inpcb_pool_initalized = 0;
+int inpcb_pool_initialized = 0;
 
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + \
@@ -191,10 +191,10 @@ in_pcballoc(so, v)
 	struct inpcb *inp;
 	int s;
 
-	if (inpcb_pool_initalized == 0) {
+	if (inpcb_pool_initialized == 0) {
 		pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0,
 		    "inpcbpl", NULL);
-		inpcb_pool_initalized = 1;
+		inpcb_pool_initialized = 1;
 	}
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)

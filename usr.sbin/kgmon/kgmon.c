@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.13 2007/05/04 04:06:06 ray Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.14 2007/11/26 09:28:34 martynas Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.13 2007/05/04 04:06:06 ray Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.14 2007/11/26 09:28:34 martynas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -215,11 +215,11 @@ kern_readonly(int mode)
 	if (pflag && mode == GMON_PROF_ON)
 		(void)fprintf(stderr, "data may be inconsistent\n");
 	if (rflag)
-		(void)fprintf(stderr, "-r supressed\n");
+		(void)fprintf(stderr, "-r suppressed\n");
 	if (bflag)
-		(void)fprintf(stderr, "-b supressed\n");
+		(void)fprintf(stderr, "-b suppressed\n");
 	if (hflag)
-		(void)fprintf(stderr, "-h supressed\n");
+		(void)fprintf(stderr, "-h suppressed\n");
 	rflag = bflag = hflag = 0;
 }
 

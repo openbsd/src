@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.20 2007/05/21 10:30:10 reyk Exp $ */
+/* $OpenBSD: if_bce.c,v 1.21 2007/11/26 09:28:33 martynas Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -977,7 +977,7 @@ bce_init(struct ifnet *ifp)
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXADDR,
 	    sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000);		/* MAGIC */
 
-	/* Initalize receive descriptors */
+	/* Initialize receive descriptors */
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] == NULL) {
 			if ((error = bce_add_rxbuf(sc, i)) != 0) {

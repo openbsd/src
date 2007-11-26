@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.12 2006/03/25 22:41:43 djm Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.13 2007/11/26 09:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -844,7 +844,7 @@ mtd_intr(void *xsc)
 	u_int32_t status;
 	int claimed = 0;
 
-	/* Supress unwanted interrupts */
+	/* Suppress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_RUNNING)) {
 		if (CSR_READ_4(MTD_ISR) & ISR_INTRS)
 			mtd_stop(ifp);

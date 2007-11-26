@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.h,v 1.7 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: deflate.h,v 1.8 2007/11/26 09:28:33 martynas Exp $	*/
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2004 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -188,7 +188,7 @@ typedef struct internal_state {
     int nice_match; /* Stop searching when current match exceeds this */
 
                 /* used by trees.c: */
-    /* Didn't use ct_data typedef below to supress compiler warning */
+    /* Didn't use ct_data typedef below to suppress compiler warning */
     struct ct_data_s dyn_ltree[HEAP_SIZE];   /* literal and length tree */
     struct ct_data_s dyn_dtree[2*D_CODES+1]; /* distance tree */
     struct ct_data_s bl_tree[2*BL_CODES+1];  /* Huffman tree for bit lengths */

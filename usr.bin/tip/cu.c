@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.22 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: cu.c,v 1.23 2007/11/26 09:28:34 martynas Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.22 2007/05/15 19:42:05 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.23 2007/11/26 09:28:34 martynas Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -97,7 +97,7 @@ getopt:
 		case 'l':
 			if (DV != NULL) {
 				fprintf(stderr,
-				    "%s: cannot specificy multiple -l options\n",
+				    "%s: cannot specify multiple -l options\n",
 				    __progname);
 				exit(3);
 			}

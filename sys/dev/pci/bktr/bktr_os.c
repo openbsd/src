@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.27 2007/06/18 07:31:14 jakemsr Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.28 2007/11/26 09:28:34 martynas Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -359,7 +359,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 	bktr = bktr_cd.cd_devs[unit];
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return(ENXIO);	
 
 	switch (FUNCTION(dev)) {

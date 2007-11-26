@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.56 2006/10/25 02:37:50 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.57 2007/11/26 09:28:33 martynas Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1513,7 +1513,7 @@ nge_intr(arg)
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
 
-	/* Supress unwanted interrupts */
+	/* Suppress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_UP)) {
 		nge_stop(sc);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.79 2007/10/14 11:36:52 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.80 2007/11/26 09:28:33 martynas Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1238,7 +1238,7 @@ acx_txerr(struct acx_softc *sc, uint8_t err)
 		stats->err_abort++;
 		break;
 	case DESC_ERR_PARAM:
-		printf("wrong paramters in descriptor\n");
+		printf("wrong parameters in descriptor\n");
 		stats->err_param++;
 		break;
 	case DESC_ERR_NO_WEPKEY:

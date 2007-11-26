@@ -19,7 +19,7 @@
  */
 
 /*
- * Supress a warning w/ gcc on Digital UN*X.
+ * Suppress a warning w/ gcc on Digital UN*X.
  * The system headers should really do this....
  */
 #if defined(__osf__) && !defined(__cplusplus)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.32 2007/10/24 20:15:43 chl Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.33 2007/11/26 09:28:34 martynas Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -556,7 +556,7 @@ dkinit(int sel)
 #endif /* !defined(NOKVM) */
 	}
 
-	/* Never do this initalization again. */
+	/* Never do this initialization again. */
 	once = 1;
 	return(1);
 }

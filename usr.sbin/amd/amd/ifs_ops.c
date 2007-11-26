@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ifs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: ifs_ops.c,v 1.3 2003/06/02 23:36:51 millert Exp $
+ *	$Id: ifs_ops.c,v 1.4 2007/11/26 09:28:34 martynas Exp $
  */
 
 #include "am.h"
@@ -86,7 +86,7 @@ ifs_inherit(mntfs *mf)
 {
 	/*
 	 * Take the linked mount point and
-	 * propogate.
+	 * propagate.
 	 */
 	mntfs *mf_link = (mntfs *) mf->mf_private;
 	if (mf_link == 0) {

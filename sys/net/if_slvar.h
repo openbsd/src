@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.12 2003/12/07 15:41:27 markus Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.13 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ struct ifslstatsreq {
 
 /* visible flags */
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
-#define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
+#define	SC_NOICMP	IFF_LINK1	/* suppress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 /*

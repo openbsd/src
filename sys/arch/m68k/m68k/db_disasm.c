@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -2426,7 +2426,7 @@ get_modregstr_moto(dbuf, bit, mod, sz, dd)
 			addstr(dbuf,"(pc)");
 			break;
 		} else if (reg == 4) {
-			/* uses ``sz'' to figure imediate data. */
+			/* uses ``sz'' to figure immediate data. */
 			if (sz == SIZE_BYTE) {
 				addchar('#');
 				prints(dbuf,
@@ -2632,7 +2632,7 @@ get_modregstr_mit(dbuf, bit, mod, sz, dd)
 			addchar(')');
 			break;
 		} else if (reg == 4) {
-			/* uses ``sz'' to figure imediate data. */
+			/* uses ``sz'' to figure immediate data. */
 			if (sz == SIZE_BYTE) {
 				addchar('#');
 				prints(dbuf,
@@ -2734,7 +2734,7 @@ get_modregstr_mit(dbuf, bit, mod, sz, dd)
 			    bd == 3 ? SIZE_LONG :
 			    SIZE_BYTE);
 			if (od && !ISBITSET(ext,6) && !ISBITSET(ext,2)) 
-				/* Pre-indexed and not supressing index */
+				/* Pre-indexed and not suppressing index */
 				addchar(',');
 			else if (od && ISBITSET(ext,2)) {
 				/* Post-indexed */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-skip.c,v 1.2 1996/07/13 11:01:29 mickey Exp $	*/
+/*	$OpenBSD: print-skip.c,v 1.3 2007/11/26 09:28:34 martynas Exp $	*/
 
 /*
  * Copyright (c) 1995 Sun Microsystems, Inc.
@@ -904,7 +904,7 @@ void esp_print(register const u_char *bp, register int length,
 	    return;
         }
 
-        printf("SKIP-ESP: Initalization Vector\t");
+        printf("SKIP-ESP: Initialization Vector\t");
 	if (len) {
 	    for (i = 0; i < len; i++) {
 		    printf("%02x ", (unsigned char) *p++);

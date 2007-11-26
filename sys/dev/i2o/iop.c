@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.32 2007/10/17 15:08:45 deraadt Exp $	*/
+/*	$OpenBSD: iop.c,v 1.33 2007/11/26 09:28:33 martynas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -936,7 +936,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 }
 
 /*
- * Initalize and populate the IOP's outbound FIFO.
+ * Initialize and populate the IOP's outbound FIFO.
  */
 int
 iop_ofifo_init(struct iop_softc *sc)

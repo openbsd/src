@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.17 2007/02/21 03:53:32 ray Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.18 2007/11/26 09:28:34 martynas Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -139,7 +139,7 @@ usage(void)
 	printf("\t[-t steps_per_track] device_name\n");
 	printf("Options:\n");
 	printf("\t-n\tdon't verify floppy after formatting\n");
-	printf("\t-q\tsupress any normal output, don't ask for confirmation\n");
+	printf("\t-q\tsuppress any normal output, don't ask for confirmation\n");
 	printf("\t-v\tdon't format, verify only\n");
 	printf("\tdevname\tthe full name of floppy device or in short form fd0, fd1\n");
 	printf("Obscure options:\n");

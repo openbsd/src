@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.10 2006/03/25 19:06:35 espie Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.11 2007/11/26 09:28:34 martynas Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.10 2006/03/25 19:06:35 espie Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.11 2007/11/26 09:28:34 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ doarcs()
     doflags();
 	/*
 	 *	starting from the topological bottom,
-	 *	propogate children times up to parents.
+	 *	propagate children times up to parents.
 	 */
     dotime();
 	/*

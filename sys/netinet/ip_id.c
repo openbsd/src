@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.14 2007/05/27 19:59:11 dlg Exp $ */
+/* $OpenBSD: ip_id.c,v 1.15 2007/11/26 09:28:33 martynas Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -106,7 +106,7 @@ pmod(u_int16_t gen, u_int16_t expo, u_int16_t mod)
 }
 
 /*
- * Initalizes the seed and chooses a suitable generator. Also toggles
+ * Initializes the seed and chooses a suitable generator. Also toggles
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *

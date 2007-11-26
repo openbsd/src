@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.29 2007/10/30 09:04:47 henning Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.30 2007/11/26 09:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -154,7 +154,7 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/net/bridgestp.c,v 1.25 2006/11/03 03
 #define	BSTP_MSGTYPE_RSTP	0x02		/* Rapid STP */
 #define	BSTP_MSGTYPE_TCN	0x80		/* Topology chg notification */
 
-#define	BSTP_INFO_RECIEVED	1
+#define	BSTP_INFO_RECEIVED	1
 #define	BSTP_INFO_MINE		2
 #define	BSTP_INFO_AGED		3
 #define	BSTP_INFO_DISABLED	4
@@ -736,7 +736,7 @@ bstp_received_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 			bp->bp_rcvdtca = 1;
 
 		if (bp->bp_agree &&
-		    !bstp_pdu_bettersame(bp, BSTP_INFO_RECIEVED))
+		    !bstp_pdu_bettersame(bp, BSTP_INFO_RECEIVED))
 			bp->bp_agree = 0;
 
 		/* copy the received priority and timers to the port */
@@ -751,7 +751,7 @@ bstp_received_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 		/* set expiry for the new info */
 		bstp_set_timer_msgage(bp);
 
-		bp->bp_infois = BSTP_INFO_RECIEVED;
+		bp->bp_infois = BSTP_INFO_RECEIVED;
 		bstp_assign_roles(bs);
 		break;
 
@@ -847,8 +847,8 @@ bstp_pdu_rcvtype(struct bstp_port *bp, struct bstp_config_unit *cu)
 int
 bstp_pdu_bettersame(struct bstp_port *bp, int newinfo)
 {
-	if (newinfo == BSTP_INFO_RECIEVED &&
-	    bp->bp_infois == BSTP_INFO_RECIEVED &&
+	if (newinfo == BSTP_INFO_RECEIVED &&
+	    bp->bp_infois == BSTP_INFO_RECEIVED &&
 	    bstp_info_cmp(&bp->bp_port_pv, &bp->bp_msg_cu.cu_pv) >= INFO_SAME)
 		return (1);
 
@@ -918,9 +918,9 @@ bstp_assign_roles(struct bstp_state *bs)
 	bs->bs_root_htime = bs->bs_bridge_htime;
 	bs->bs_root_port = NULL;
 
-	/* check if any recieved info supersedes us */
+	/* check if any received info supersedes us */
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
-		if (bp->bp_infois != BSTP_INFO_RECIEVED)
+		if (bp->bp_infois != BSTP_INFO_RECEIVED)
 			continue;
 
 		pv = bp->bp_port_pv;
@@ -983,7 +983,7 @@ bstp_assign_roles(struct bstp_state *bs)
 				bstp_update_info(bp);
 			break;
 
-		case BSTP_INFO_RECIEVED:
+		case BSTP_INFO_RECEIVED:
 			if (bp == rbp) {
 				/*
 				 * root priority is derived from this
@@ -1815,7 +1815,7 @@ bstp_hello_timer_expiry(struct bstp_state *bs, struct bstp_port *bp)
 void
 bstp_message_age_expiry(struct bstp_state *bs, struct bstp_port *bp)
 {
-	if (bp->bp_infois == BSTP_INFO_RECIEVED) {
+	if (bp->bp_infois == BSTP_INFO_RECEIVED) {
 		bp->bp_infois = BSTP_INFO_AGED;
 		bstp_assign_roles(bs);
 		DPRINTF("aged info on %s\n", bp->bp_ifp->if_xname);
