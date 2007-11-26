@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.48 2007/11/26 15:59:53 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.49 2007/11/26 20:13:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -152,6 +152,18 @@ atascsi_detach(struct atascsi *as, int flags)
 	free(as, M_DEVBUF);
 
 	return (0);
+}
+
+int
+atascsi_probe_dev(struct atascsi *as, int port)
+{
+	return (scsi_probe_target(as->as_scsibus, port));
+}
+
+int
+atascsi_detach_dev(struct atascsi *as, int port, int flags)
+{
+	return (scsi_detach_target(as->as_scsibus, port, flags));
 }
 
 int
