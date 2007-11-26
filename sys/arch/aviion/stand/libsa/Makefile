@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/05/16 22:48:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/11/26 10:01:42 deraadt Exp $
 
 LIB=sa
 
@@ -8,7 +8,6 @@ NOPROFILE=noprofile
 # Logically src/sys
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
-DIR_KERN=$S/lib/libkern
 
 SRC_net= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
 	 rarp.c bootparam.c 
@@ -20,13 +19,14 @@ SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	lseek.c open.c nullfs.c read.c fstat.c \
 	ufs.c cread.c
 
-SRC_kern= ashrdi3.c bzero.c
+.PATH:	${S}/lib/libkern/arch/m88k ${S}/lib/libkern
+SRCS+=	ashrdi3.c bzero.c
 
 SRC_aviion= exec_aout.c
 
 SRC_here= clock.c parse_args.c
 
-SRCS= ${SRC_net} ${SRC_sa} ${SRC_aviion} ${SRC_here} ${SRC_kern}
+SRCS+= ${SRC_net} ${SRC_sa} ${SRC_aviion} ${SRC_here}
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG

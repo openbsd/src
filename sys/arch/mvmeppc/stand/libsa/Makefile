@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2004/01/25 14:51:46 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/11/26 10:01:42 deraadt Exp $
 
 LIB=sa
 
@@ -7,12 +7,11 @@ NOPROFILE=noprofile
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
-DIR_SA=$S/lib/libsa
-DIR_KERN=$S/lib/libkern
 
 SRC_net= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
 	 rarp.c bootparam.c 
 
+.PATH:	${S}/lib/libsa
 SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
 	strlcpy.c strlcat.c snprintf.c \
@@ -20,6 +19,7 @@ SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	lseek.c open.c nullfs.c read.c fstat.c \
 	ufs.c cread.c loadfile.c
 
+.PATH:	${S}/lib/libkern/arch/m88k ${S}/lib/libkern
 SRC_kern= ashrdi3.c bzero.c
 
 SRC_mvme= exec_mvme.c
@@ -37,8 +37,6 @@ DEFS= -D__INTERNAL_LIBSA_CREAD
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 COPTS= #-fno-defer-pop
 CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL} -O2
-
-.PATH:  ${DIR_SA} ${DIR_KERN} 
 
 all: libsa.a
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2006/08/17 06:31:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2007/11/26 10:01:42 deraadt Exp $
 
 PROG=	uboot
 
@@ -16,7 +16,7 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 
 SRCS=	srt0.S uboot.c tgets.c netio.c clock.c conf.c prf.c
 
-LIBS=	${LIBCOMMON} ${LIBSAZ} ${LIBZ} ${LIBKERN}
+LIBS=	${LIBCOMMON} ${LIBSAZ} ${LIBZ}
 
 CLEANFILES+=	uboot.lif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2006/08/17 06:31:08 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2007/11/26 10:01:42 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -30,19 +30,6 @@ COMMONOBJDIR=		${COMMONDIR}
 .endif
 
 LIBCOMMON=		${COMMONOBJDIR}/libcommon.a
-
-### Figure out what to use for libkern
-LIBKERNDIR=		${.CURDIR}/../libkern
-
-.if exists(${LIBKERNDIR}/obj.${MACHINE})
-LIBKERNOBJDIR=		${LIBKERNDIR}/obj.${MACHINE}
-.elif exists(${LIBKERNDIR}/obj)
-LIBKERNOBJDIR=		${LIBKERNDIR}/obj
-.else
-LIBKERNOBJDIR=		${LIBKERNDIR}
-.endif
-
-LIBKERN=		${LIBKERNOBJDIR}/libkern.a
 
 ### Figure out what to use for libsa
 LIBSADIR=		${.CURDIR}/../libsa
