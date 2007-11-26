@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.59 2007/11/26 10:35:42 reyk Exp $ */
+/*	$OpenBSD: pchb.c,v 1.60 2007/11/26 15:35:17 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ struct cfdriver pchb_cd = {
 };
 
 void pchb_rnd(void *v);
-void	pchb_amd64ht_attach (struct device *, struct pci_attach_args *, int);
+void	pchb_amd64ht_attach(struct device *, struct pci_attach_args *, int);
 
 const struct pci_matchid via_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR },
@@ -199,19 +199,20 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
+		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_AMD_SC751_SC:
 		case PCI_PRODUCT_AMD_762_PCHB:
-			has_agp =1; /* XXX is this detected otherwise */
+			has_agp = 1; /* XXX is this detected otherwise */
 			break;
 		case PCI_PRODUCT_AMD_AMD64_HT:
-			printf("\n");
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
 				pchb_amd64ht_attach(self, pa, i);
 			break;
 		}
 		break;
 	case PCI_VENDOR_RCC:
+		printf("\n");
 		bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 		if (bdnum >= (sizeof(rcc_bus_visited) * 8) ||
 		    (rcc_bus_visited & (1 << bdnum)))
@@ -341,9 +342,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			has_agp = 1;
 			break;
 		}
+		printf("\n");
 		break;
-		default:
-			break;
+	default:
+		printf("\n");
+		break;
 	}
 
 	/*
@@ -411,11 +414,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 			       NULL, NULL) != 0) {
-		printf("\n");
 		apa.apa_busname = "agp";
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbus_print);
-		printf("\n");
 	}
 
 	if (doattach) {
@@ -427,7 +428,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_bus = pbnum;
 		pba.pba_bridgetag = NULL;
 		pba.pba_pc = pa->pa_pc;
-		printf("\n");
 		config_found(self, &pba, pchb_print);
 		pba.pba_bridgetag = NULL;
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
@@ -483,7 +483,7 @@ pchb_rnd(void *v)
 }
 
 void
-pchb_amd64ht_attach (struct device *self, struct pci_attach_args *pa, int i)
+pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 {
 	struct pcibus_attach_args pba;
 	pcireg_t type, bus;

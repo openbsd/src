@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.4 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.5 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -83,14 +83,14 @@ agp_ali_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT);
 	if (asc == NULL) {
-		printf(": failed to allocate softc\n");
+		printf("failed to allocate softc\n");
 		return (ENOMEM);
 	}
 	sc->sc_chipc = asc;
 	sc->sc_methods = &agp_ali_methods;
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
-		printf(": failed to map aperture\n");
+		printf("failed to map aperture\n");
 		free(asc, M_AGP);
 		return (ENXIO);
 	}
@@ -108,7 +108,7 @@ agp_ali_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": failed to set aperture\n");
+			printf("failed to set aperture\n");
 			return (ENOMEM);
 		}
 	}

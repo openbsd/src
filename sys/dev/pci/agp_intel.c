@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.6 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.7 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -112,24 +112,21 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT | M_ZERO);
 	if (isc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		printf("can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
 
 	sc->sc_methods = &agp_intel_methods;
 	sc->sc_chipc = isc;
 
-	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0) {
-		printf(": using generic initialization for Intel AGP\n");
-		printf("agp");
+	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0)
 		isc->chiptype = CHIP_INTEL;
-	}
 
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->sc_capoff,
 	    NULL);
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
-		printf(": can't map aperture\n");
+		printf("can't map aperture\n");
 		free(isc, M_AGP);
 		sc->sc_chipc = NULL;
 		return (ENXIO);
@@ -177,7 +174,7 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": failed to set aperture\n");
+			printf("failed to set aperture\n");
 			return (ENOMEM);
 		}
 	}

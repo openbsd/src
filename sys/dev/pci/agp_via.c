@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.5 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.6 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ agp_via_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT | M_ZERO);
 	if (asc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		printf("can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
 	sc->sc_chipc = asc;
@@ -103,18 +103,18 @@ agp_via_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
 		if ((agpsel & (1 << 1)) == 0) {
 			asc->regs = via_v3_regs;
-			printf(" (v3)");
+			printf("v3, ");
 		} else {
 			asc->regs = via_v2_regs;
-			printf(" (v2 compat mode)");
+			printf("v2 compat mode, ");
 		}
 	} else {
 		asc->regs = via_v2_regs;
-		printf(" (v2)");
+		printf("v2, ");
 	}
 
 	if (agp_map_aperture(pa ,sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
-		printf(": can't map aperture\n");
+		printf("can't map aperture\n");
 		free(asc, M_AGP);
 		return (ENXIO);
 	}
@@ -132,7 +132,7 @@ agp_via_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": can't set aperture size\n");
+			printf("can't set aperture size\n");
 			return (ENOMEM);
 		}
 	}

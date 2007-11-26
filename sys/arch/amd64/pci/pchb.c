@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.13 2007/11/26 10:35:42 reyk Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.14 2007/11/26 15:35:17 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -192,6 +192,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
+		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_AMD_AMD64_HT:
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
@@ -200,6 +201,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	case PCI_VENDOR_INTEL:
+		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82925X_HB:
@@ -244,7 +246,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	}
-	printf("\n");
 
 	/*
 	 * If we haven't detected AGP yet (via a product ID),
@@ -253,11 +254,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 			       NULL, NULL) != 0) {
-		printf("\n");
 		apa.apa_busname = "agp";
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbus_print);
-		printf("\n");
 	}
 }
 

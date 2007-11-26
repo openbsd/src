@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.9 2007/11/26 10:35:42 reyk Exp $ */
+/* $OpenBSD: agp.c,v 1.10 2007/11/26 15:35:15 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -177,14 +177,14 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 		pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
 		    &sc->sc_capoff, NULL);
 
+		printf(": ");
 		ret = (*ap->ap_attach)(sc, pa);
 		if (ret == 0)
-			printf(": aperture at 0x%lx, size 0x%lx",
+			printf("aperture at 0x%lx, size 0x%lx\n",
 			    (u_long)sc->sc_apaddr,
 			    (u_long)AGP_GET_APERTURE(sc));
 		else {
 			sc->sc_chipc = NULL;
-			printf(": AGP GART");
 		}
 	}
 }

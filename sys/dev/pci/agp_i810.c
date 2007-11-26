@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.20 2007/11/26 10:35:42 reyk Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.21 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -169,7 +169,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT | M_ZERO);
 	if (isc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		printf("can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
 	sc->sc_chipc = isc;
@@ -186,7 +186,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 			return (agp_intel_attach(sc, pa));
 		}
 #endif
-		printf(": can't find internal VGA device config space\n");
+		printf("can't find internal VGA device config space\n");
 		free(isc, M_AGP);
 		return (ENOENT);
 	}
@@ -246,7 +246,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	error = agp_map_aperture(&isc->vga_pa, sc, gmaddr, memtype);
 	if (error != 0) {
-		printf(": can't map aperture\n");
+		printf("can't map aperture\n");
 		free(isc, M_AGP);
 		return (error);
 	}
@@ -254,7 +254,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	error = pci_mapreg_map(&isc->vga_pa, mmaddr, memtype, 0,
 	    &isc->bst, &isc->bsh, NULL, &isc->bsz, 0);
 	if (error != 0) {
-		printf(": can't map mmadr registers\n");
+		printf("can't map mmadr registers\n");
 		agp_generic_detach(sc);
 		return (error);
 	}
@@ -263,7 +263,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_GTTADR, memtype,
 		    0, &isc->gtt_bst, &isc->gtt_bsh, NULL, NULL, 0);
 		if (error != 0) {
-			printf(": can't map gatt registers\n");
+			printf("can't map gatt registers\n");
 			agp_generic_detach(sc);
 			return (error);
 		}
@@ -323,8 +323,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 			break;
 		default:
 			isc->stolen = 0;
-			printf(
-			    ": unknown memory configuration, disabling\n");
+			printf("unknown memory configuration, disabling\n");
 			agp_generic_detach(sc);
 			return (EINVAL);
 		}
@@ -376,7 +375,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 			}
 			break;
 		default:
-			printf(": bad chiptype\n");
+			printf("bad chiptype\n");
 			agp_generic_detach(sc);
 			return (EINVAL);
                }
@@ -413,8 +412,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 			break;
 		default:
 			isc->stolen = 0;
-			printf(
-			    ": unknown memory configuration, disabling\n");
+			printf("unknown memory configuration, disabling\n");
 			agp_generic_detach(sc);
 			return (EINVAL);
 		}

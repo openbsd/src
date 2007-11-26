@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.5 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.6 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 
@@ -164,7 +164,7 @@ agp_amd_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT | M_ZERO);
 	if (asc == NULL) {
-		printf(": can't allocate softc\n");
+		printf("can't allocate softc\n");
 		/* agp_generic_detach(sc) */
 		return (ENOMEM);
 	}
@@ -172,13 +172,13 @@ agp_amd_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS,
 	     PCI_MAPREG_TYPE_MEM, 0, &asc->iot, &asc->ioh, NULL, NULL, 0);
 	if (error != 0) {
-		printf(": can't map AGP registers\n");
+		printf("can't map AGP registers\n");
 		agp_generic_detach(sc);
 		return (error);
 	}
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
-		printf(": can't map aperture\n");
+		printf("can't map aperture\n");
 		agp_generic_detach(sc);
 		free(asc, M_AGP);
 		return (ENXIO);

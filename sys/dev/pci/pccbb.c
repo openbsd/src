@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.52 2007/11/25 22:35:21 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.53 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -218,6 +219,19 @@ static struct cardbus_functions pccbb_funcs = {
 	pccbb_conf_read,
 	pccbb_conf_write,
 };
+
+/*
+ * delay_ms() is wait in milliseconds.  It should be used instead
+ * of delay() if you want to wait more than 1 ms.
+ */
+static inline void
+delay_ms(int millis, void *param)
+{
+	if (cold)
+		delay(millis * 1000);
+	else
+		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
+}
 
 int
 pcicbbmatch(parent, match, aux)
@@ -970,7 +984,7 @@ pccbbintr(arg)
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
 		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
-		if (CB_SOCKET_STAT_CD == (sockstate & CB_SOCKET_STAT_CD)) {
+		if ((sockstate & CB_SOCKET_STAT_CD) != 0) {
 			/* A card should be removed. */
 			if (sc->sc_flags & CBB_CARDEXIST) {
 				DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname,
@@ -997,7 +1011,7 @@ pccbbintr(arg)
 					    CARDSLOT_EVENT_REMOVAL_CB);
 				}
 			}
-		} else if (0x00 == (sockstate & CB_SOCKET_STAT_CD) &&
+		} else if ((sockstate & CB_SOCKET_STAT_CD) == 0 &&
 		    /*
 		     * The pccbbintr may called from powerdown hook when
 		     * the system resumed, to detect the card
@@ -1438,20 +1452,19 @@ cb_reset(sc)
 	 * Reset Assert at least 20 ms
 	 * Some machines request longer duration.
 	 */
-	int reset_duration =
-	    (sc->sc_chipset == CB_RX5C47X ? 400 * 1000 : 40 * 1000);
+	int reset_duration = (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
 	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-	delay(reset_duration);
+	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
 		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-		delay(reset_duration);
+		delay_ms(reset_duration, sc);
 	}
 	/* No card found on the slot. Keep Reset. */
 	return 1;
@@ -2164,7 +2177,7 @@ pccbb_pcmcia_socket_enable(pch)
 		DPRINTF(("3V card\n"));
 		voltage = CARDBUS_VCC_3V | CARDBUS_VPP_VCC;
 	} else {
-		printf("?V card, 0x%x\n", spsr);	/* XXX */
+		DPRINTF(("?V card, 0x%x\n", spsr));	/* XXX */
 		return;
 	}
 
@@ -2188,11 +2201,14 @@ pccbb_pcmcia_socket_enable(pch)
 	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
 	Pcic_write(ph, PCIC_INTR, intr);
 
-	/* power up the socket and output enable */
+	/* Power up the socket. */
 	power = Pcic_read(ph, PCIC_PWRCTL);
-	power |= PCIC_PWRCTL_OE;
-	Pcic_write(ph, PCIC_PWRCTL, power);
+	Pcic_write(ph, PCIC_PWRCTL, (power & ~PCIC_PWRCTL_OE));
 	pccbb_power(sc, voltage);
+
+	/* Now output enable */
+	power = Pcic_read(ph, PCIC_PWRCTL);
+	Pcic_write(ph, PCIC_PWRCTL, power | PCIC_PWRCTL_OE);
 
 	/*
 	 * hold RESET at least 10us.

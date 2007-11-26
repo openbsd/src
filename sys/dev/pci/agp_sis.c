@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.4 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.5 2007/11/26 15:35:15 deraadt Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -82,14 +82,14 @@ agp_sis_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	ssc = malloc(sizeof *ssc, M_AGP, M_NOWAIT);
 	if (ssc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		printf("can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
 	sc->sc_methods = &agp_sis_methods;
 	sc->sc_chipc = ssc;
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
-		printf(": can't map aperture\n");
+		printf("can't map aperture\n");
 		free(ssc, M_AGP);
 		return (ENXIO);
 	}
@@ -107,7 +107,7 @@ agp_sis_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": failed to set aperture\n");
+			printf("failed to set aperture\n");
 			return (ENOMEM);
 		}
 	}
