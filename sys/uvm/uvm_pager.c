@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.43 2007/06/06 17:15:14 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.44 2007/11/26 22:49:08 miod Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -790,13 +790,14 @@ uvm_aio_aiodone(bp)
 	struct buf *bp;
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
-	struct vm_page *pg, *pgs[npages];
+	struct vm_page *pg, *pgs[MAXPHYS >> PAGE_SHIFT];
 	struct uvm_object *uobj;
 	int i, error;
 	boolean_t write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "bp %p", bp, 0,0,0);
 
+	KASSERT(npages <= MAXPHYS >> PAGE_SHIFT);
 	splassert(IPL_BIO);
 
 	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
