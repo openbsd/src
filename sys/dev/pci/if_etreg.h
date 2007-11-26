@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etreg.h,v 1.1 2007/10/30 12:31:07 jsg Exp $	*/
+/*	$OpenBSD: if_etreg.h,v 1.2 2007/11/26 10:39:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -507,6 +507,7 @@ struct et_softc {
 
 	struct et_txdesc_ring	sc_tx_ring;
 	struct et_txstatus_data	sc_tx_status;
+	struct timeout		sc_txtick;
 
 	bus_dmamap_t		sc_mbuf_tmp_dmap;
 	struct et_rxbuf_data	sc_rx_data[ET_RX_NRING];

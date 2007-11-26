@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.4 2007/11/25 17:41:00 claudio Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.5 2007/11/26 10:39:55 claudio Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -110,6 +110,7 @@ void	et_enable_intrs(struct et_softc *, uint32_t);
 void	et_disable_intrs(struct et_softc *);
 void	et_rxeof(struct et_softc *);
 void	et_txeof(struct et_softc *);
+void	et_txtick(void *);
 
 int	et_dma_alloc(struct et_softc *);
 void	et_dma_free(struct et_softc *);
@@ -150,7 +151,7 @@ void	et_tick(void *);
 
 static int	et_rx_intr_npkts = 32;
 static int	et_rx_intr_delay = 20;		/* x10 usec */
-static int	et_tx_intr_nsegs = 1;
+static int	et_tx_intr_nsegs = 128;
 static uint32_t	et_timer = 1000 * 1000 * 1000;	/* nanosec */
 
 struct et_bsize {
@@ -291,6 +292,7 @@ et_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->sc_tick, et_tick, sc);
+	timeout_set(&sc->sc_txtick, et_txtick, sc);
 }
 
 int
@@ -469,6 +471,7 @@ et_stop(struct et_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_txtick);
 
 	et_stop_rxdma(sc);
 	et_stop_txdma(sc);
@@ -1137,8 +1140,10 @@ et_start(struct ifnet *ifp)
 #endif
 	}
 
-	if (trans)
+	if (trans) {
+		timeout_add(&sc->sc_txtick, hz);
 		ifp->if_timer = 5;
+	}
 }
 
 void
@@ -1999,12 +2004,25 @@ et_txeof(struct et_softc *sc)
 		tbd->tbd_used--;
 	}
 
-	if (tbd->tbd_used == 0)
+	if (tbd->tbd_used == 0) {
+		timeout_del(&sc->sc_txtick);
 		ifp->if_timer = 0;
+	}
 	if (tbd->tbd_used + ET_NSEG_SPARE <= ET_TX_NDESC)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 	ifp->if_start(ifp);
+}
+
+void
+et_txtick(void *xsc)
+{
+	struct et_softc *sc = xsc;
+	int s;
+
+	s = splnet();
+	et_txeof(sc);
+	splx(s);
 }
 
 void
