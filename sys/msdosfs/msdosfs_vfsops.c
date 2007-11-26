@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.49 2007/11/15 19:11:52 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.50 2007/11/26 00:30:44 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -324,7 +324,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	/* Determine the number of DEV_BSIZE blocks in a MSDOSFS sector */
 	pmp->pm_BlkPerSec = pmp->pm_BytesPerSec / DEV_BSIZE;
 
-    	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 63) {
+    	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 64) {
 		error = EFTYPE;
 		goto error_exit;
 	}
