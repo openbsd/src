@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.1 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.2 2007/11/26 17:15:29 art Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -175,7 +175,7 @@ sched_init_runqueues(void)
 		TAILQ_INIT(&sched_qs[i]);
 
 #ifdef MULTIPROCESSOR
-	SIMPLE_LOCK_INIT(&sched_lock);
+	__mp_lock_init(&sched_lock);
 #endif
 }
 

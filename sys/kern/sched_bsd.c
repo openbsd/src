@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.14 2007/10/11 10:34:08 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.15 2007/11/26 17:15:29 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -57,7 +57,9 @@
 int	lbolt;			/* once a second sleep address */
 int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
 
-struct SIMPLELOCK sched_lock;
+#ifdef MULTIPROCESSOR
+struct __mp_lock sched_lock;
+#endif
 
 void scheduler_start(void);
 
