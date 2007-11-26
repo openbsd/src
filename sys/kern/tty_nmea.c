@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.22 2007/09/07 15:00:20 art Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.23 2007/11/26 19:14:38 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -41,10 +41,16 @@ int	nmeaclose(struct tty *, int);
 int	nmeainput(int, struct tty *);
 void	nmeaattach(int);
 
-#define NMEAMAX	82
-#define MAXFLDS	32
+#define NMEAMAX		82
+#define MAXFLDS		32
+#ifdef NMEA_DEBUG
+#define TRUSTTIME	30
+#else
+#define TRUSTTIME	(10 * 60)	/* 10 minutes */
+#endif
 
 int nmea_count;	/* this is wrong, it should really be a SLIST */
+static int t_trust;
 
 struct nmea {
 	char			cbuf[NMEAMAX];	/* receive buffer */
@@ -52,6 +58,7 @@ struct nmea {
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last '$' seen */
+	struct timeout		nmea_tout;	/* invalidate sensor */
 	int64_t			gap;		/* gap between two sentences */
 #ifdef NMEA_DEBUG
 	int			gapno;
@@ -71,6 +78,9 @@ void	nmea_gprmc(struct nmea *, struct tty *, char *fld[], int fldcnt);
 int	nmea_date_to_nano(char *s, int64_t *nano);
 int	nmea_time_to_nano(char *s, int64_t *nano);
 
+/* degrade the timedelta sensor */
+void	nmea_timeout(void *);
+
 void
 nmeaattach(int dummy)
 {
@@ -81,18 +91,19 @@ nmeaopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;
 	struct nmea *np;
+	struct timeval t;
 	int error;
 
 	if (tp->t_line == NMEADISC)
 		return ENODEV;
 	if ((error = suser(p, 0)) != 0)
 		return error;
-	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK|M_ZERO);
+	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK | M_ZERO);
 	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "nmea%d",
 	    nmea_count++);
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
-	np->time.flags = SENSOR_FINVALID;
+	np->time.value = 0LL;
 	sensor_attach(&np->timedev, &np->time);
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
@@ -101,8 +112,15 @@ nmeaopen(dev_t dev, struct tty *tp)
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
-	} else
+	} else {
 		sensordev_install(&np->timedev);
+		timeout_set(&np->nmea_tout, nmea_timeout, np);
+
+		/* convert timevals to hz */
+		t.tv_sec = TRUSTTIME;
+		t.tv_usec = 0;
+		t_trust = tvtohz(&t);
+	}
 	return error;
 }
 
@@ -112,6 +130,7 @@ nmeaclose(struct tty *tp, int flags)
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
 	tp->t_line = TTYDISC;	/* switch back to termios */
+	timeout_del(&np->nmea_tout);
 	sensordev_deinstall(&np->timedev);
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
@@ -119,7 +138,7 @@ nmeaclose(struct tty *tp, int flags)
 	return linesw[TTYDISC].l_close(tp, flags);
 }
 
-/* collect NMEA sentence from tty */
+/* Collect NMEA sentences from the tty. */
 int
 nmeainput(int c, struct tty *tp)
 {
@@ -192,7 +211,7 @@ nmeainput(int c, struct tty *tp)
 	return linesw[TTYDISC].l_rint(c, tp);
 }
 
-/* Scan the NMEA sentence just received */
+/* Scan the NMEA sentence just received. */
 void
 nmea_scan(struct nmea *np, struct tty *tp)
 {
@@ -252,7 +271,7 @@ nmea_scan(struct nmea *np, struct tty *tp)
 		nmea_gprmc(np, tp, fld, fldcnt);
 }
 
-/* Decode the recommended minimum specific GPS/TRANSIT data */
+/* Decode the recommended minimum specific GPS/TRANSIT data. */
 void
 nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 {
@@ -278,6 +297,10 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	np->last = nmea_now;
 	np->gap = 0LL;
 #ifdef NMEA_DEBUG
+	if (np->time.status == SENSOR_S_UNKNOWN) {
+		np->time.status = SENSOR_S_OK;
+		timeout_add(&np->nmea_tout, t_trust);
+	}
 	np->gapno = 0;
 	if (nmeadebug > 0) {
 		linesw[TTYDISC].l_rint('[', tp);
@@ -290,13 +313,10 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	    np->ts.tv_nsec - nmea_now;
 	np->time.tv.tv_sec = np->ts.tv_sec;
 	np->time.tv.tv_usec = np->ts.tv_nsec / 1000L;
-	if (np->time.status == SENSOR_S_UNKNOWN) {
-		np->time.status = SENSOR_S_OK;
-		np->time.flags &= ~SENSOR_FINVALID;
-		if (fldcnt != 13)
-			strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
-	}
-	if (fldcnt == 13 && *fld[12] != np->mode) {
+
+	if (fldcnt != 13)
+		strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
+	else if (fldcnt == 13 && *fld[12] != np->mode) {
 		np->mode = *fld[12];
 		switch (np->mode) {
 		case 'S':
@@ -325,15 +345,20 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
 		}
 	}
+
 	switch (*fld[2]) {
-	case 'A':
+	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
+		timeout_add(&np->nmea_tout, t_trust);
 		break;
-	case 'V':
-		np->time.status = SENSOR_S_WARN;
-		break;
+	case 'V':	/*
+			 * The GPS indicates a warning status, do not add to
+			 * the timeout, if the condition persist, the sensor
+			 * will be degraded.
+			 */
+			/* FALLTHROUGH */
 	default:
-		DPRINTF(("gprmc: unknown warning indication\n"));
+		break;
 	}
 
 	/*
@@ -424,4 +449,24 @@ nmea_time_to_nano(char *s, int64_t *nano)
 
 	*nano = secs * 1000000000LL + (int64_t)frac * (1000000000 / div);
 	return 0;
+}
+
+/*
+ * Degrade the sensor state if we received no NMEA sentences for more than
+ * TRUSTTIME seconds.
+ */
+void
+nmea_timeout(void *xnp)
+{
+	struct nmea *np = xnp;
+
+	if (np->time.status == SENSOR_S_OK) {
+		np->time.status = SENSOR_S_WARN;
+		/*
+		 * further degrade in TRUSTTIME seconds if no new valid NMEA
+		 * sentences are received.
+		 */
+		timeout_add(&np->nmea_tout, t_trust);
+	} else
+		np->time.status = SENSOR_S_CRIT;
 }
