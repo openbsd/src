@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.32 2007/06/06 23:06:02 deraadt Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.33 2007/11/26 13:49:26 tedu Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -122,8 +122,8 @@ struct sr_raid1 {
 	u_int32_t		sr1_counter;
 };
 
-/* RAID C */
-#define SR_RAIDC_NOWU		16
+/* RAID CRYPTO */
+#define SR_RAIDCRYPTO_NOWU		16
 struct sr_raidc {
 	u_int64_t		src_sid;
 	char			src_key[64];
@@ -253,7 +253,7 @@ struct sr_discipline {
 #define	SR_MD_RAID1		1
 #define	SR_MD_RAID5		2
 #define	SR_MD_CACHE		3
-#define	SR_MD_RAIDC		4
+#define	SR_MD_RAIDCRYPTO	4
 	char			sd_name[10];	/* human readable dis name */
 	u_int8_t		sd_scsibus;	/* scsibus discipline uses */
 	struct scsi_link	sd_link;	/* link to midlayer */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.85 2007/11/16 05:08:39 djm Exp $ */
+/* $OpenBSD: softraid.c,v 1.86 2007/11/26 13:49:26 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -817,10 +817,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 			break;
 #if 0
-		case 'c':
+		case 'C':
 			if (no_chunk != 1)
 				goto unwind;
-			strlcpy(sd->sd_name, "RAID C", sizeof(sd->sd_name));
+			strlcpy(sd->sd_name, "RAID CRYPTO", sizeof(sd->sd_name));
 			break;
 #endif
 		default:
@@ -906,11 +906,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_set_vol_state = sr_raid_set_vol_state;
 		break;
 #ifdef CRYPTO
-	case 'c':
+	case 'C':
 		/* fill out discipline members */
-		sd->sd_type = SR_MD_RAIDC;
+		sd->sd_type = SR_MD_RAIDCRYPTO;
 		sd->sd_max_ccb_per_wu = no_chunk;
-		sd->sd_max_wu = SR_RAIDC_NOWU;
+		sd->sd_max_wu = SR_RAIDCRYPTO_NOWU;
 
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_raidc_alloc_resources;
