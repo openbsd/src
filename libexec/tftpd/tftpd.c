@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.56 2007/04/04 18:31:03 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.57 2007/11/26 18:39:06 jolan Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.56 2007/04/04 18:31:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.57 2007/11/26 18:39:06 jolan Exp $";
 #endif /* not lint */
 
 /*
@@ -87,6 +87,7 @@ int		sendfile(struct formats *);
 int		recvfile(struct formats *);
 void		nak(int);
 void		oack(int);
+static char	*getip(struct sockaddr *);
 
 FILE			 *file;
 extern char		 *__progname;
@@ -101,6 +102,7 @@ int			  ndirs;
 char 			**dirs;
 int			  secure;
 int			  cancreate;
+int			  logging;
 unsigned int		  segment_size = SEGSIZE;
 unsigned int		  packet_size = SEGSIZE + 4;
 int			  has_options = 0;
@@ -153,7 +155,7 @@ struct errmsg {
 __dead void
 usage(void)
 {
-	syslog(LOG_ERR, "usage: %s [-cs] [directory ...]", __progname);
+	syslog(LOG_ERR, "usage: %s [-cls] [directory ...]", __progname);
 	exit(1);
 }
 
@@ -172,10 +174,13 @@ main(int argc, char *argv[])
 
 	openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "cs")) != -1) {
+	while ((c = getopt(argc, argv, "cls")) != -1) {
 		switch (c) {
 		case 'c':
 			cancreate = 1;
+			break;
+		case 'l':
+			logging = 1;
 			break;
 		case 's':
 			secure = 1;
@@ -497,21 +502,24 @@ option_fail:
 
 	(void)strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
 	ecode = (*pf->f_validate)(filename, opcode);
+	if (logging)
+		syslog(LOG_INFO, "%s: %s request for '%s'",
+		    getip((struct sockaddr *)&from),
+		    opcode == WRQ ? "write" : "read",
+		    nicebuf);
 	if (has_options)
 		oack(opcode);
 	if (ecode) {
-		syslog(LOG_INFO, "denied %s access to '%s'",
+		syslog(LOG_INFO, "%s: denied %s access to '%s'",
+		    getip((struct sockaddr *)&from),
 		    opcode == WRQ ? "write" : "read", nicebuf);
 		nak(ecode);
 		exit(1);
 	}
-	if (opcode == WRQ) {
-		syslog(LOG_DEBUG, "receiving file '%s'", nicebuf);
+	if (opcode == WRQ)
 		(*pf->f_recv)(pf);
-	} else {
-		syslog(LOG_DEBUG, "sending file '%s'", nicebuf);
+	else
 		(*pf->f_send)(pf);
-	}
 	exit(0);
 }
 
@@ -926,4 +934,14 @@ oack(int opcode)
 			break;
 		error = 1;	/* FALLTHROUGH */
 	}
+}
+
+static char *
+getip(struct sockaddr *sa)
+{
+	static char hbuf[NI_MAXHOST];
+
+	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
+		strlcpy(hbuf, "0.0.0.0", sizeof(hbuf));
+	return(hbuf);
 }
