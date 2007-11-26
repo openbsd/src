@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.17 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: popen.c,v 1.18 2007/11/26 19:26:46 kurt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,13 +41,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include "thread_private.h"
 
 static struct pid {
 	struct pid *next;
 	FILE *fp;
 	pid_t pid;
-} *pidlist; 
-	
+} *pidlist;
+
+static void *pidlist_lock = NULL;
+
 FILE *
 popen(const char *program, const char *type)
 {
@@ -69,8 +72,10 @@ popen(const char *program, const char *type)
 		return (NULL);
 	}
 
+	_MUTEX_LOCK(&pidlist_lock);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
+		_MUTEX_UNLOCK(&pidlist_lock);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
 		free(cur);
@@ -111,6 +116,7 @@ popen(const char *program, const char *type)
 		/* NOTREACHED */
 	    }
 	}
+	_MUTEX_UNLOCK(&pidlist_lock);
 
 	/* Parent; assume fdopen can't fail. */
 	if (*type == 'r') {
@@ -124,8 +130,10 @@ popen(const char *program, const char *type)
 	/* Link into list of file descriptors. */
 	cur->fp = iop;
 	cur->pid =  pid;
+	_MUTEX_LOCK(&pidlist_lock);
 	cur->next = pidlist;
 	pidlist = cur;
+	_MUTEX_UNLOCK(&pidlist_lock);
 
 	return (iop);
 }
@@ -143,12 +151,22 @@ pclose(FILE *iop)
 	pid_t pid;
 
 	/* Find the appropriate file pointer. */
+	_MUTEX_LOCK(&pidlist_lock);
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
 		if (cur->fp == iop)
 			break;
 
-	if (cur == NULL)
+	if (cur == NULL) {
+		_MUTEX_UNLOCK(&pidlist_lock);
 		return (-1);
+	}
+
+	/* Remove the entry from the linked list. */
+	if (last == NULL)
+		pidlist = cur->next;
+	else
+		last->next = cur->next;
+	_MUTEX_UNLOCK(&pidlist_lock);
 
 	(void)fclose(iop);
 
@@ -156,12 +174,7 @@ pclose(FILE *iop)
 		pid = waitpid(cur->pid, &pstat, 0);
 	} while (pid == -1 && errno == EINTR);
 
-	/* Remove the entry from the linked list. */
-	if (last == NULL)
-		pidlist = cur->next;
-	else
-		last->next = cur->next;
 	free(cur);
-		
+
 	return (pid == -1 ? -1 : pstat);
 }
