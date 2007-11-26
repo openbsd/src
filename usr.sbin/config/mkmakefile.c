@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.23 2007/11/25 20:10:40 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.24 2007/11/26 17:24:24 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -150,8 +150,6 @@ bad:
 static const char *
 srcpath(struct files *fi)
 {
-#if 1
-	/* Always have source, don't support object dirs for kernel builds. */
 	struct nvlist *nv, *nv1;
 	const char *var;
 	char *source;
@@ -216,19 +214,6 @@ srcpath(struct files *fi)
 	nv->nv_next = NULL;
 onlyone:
 	return (nv->nv_name);
-
-#else
-	static char buf[MAXPATHLEN];
-
-	if (have_source || (fi->fi_flags & FI_ALWAYSSRC) != 0)
-		return (fi->fi_path);
-	if (objpath == NULL) {
-		error("obj-directory not set");
-		return (NULL);
-	}
-	(void)snprintf(buf, sizeof buf, "%s/%s.o", objpath, fi->fi_base);
-	return (buf);
-#endif
 }
 
 static int
