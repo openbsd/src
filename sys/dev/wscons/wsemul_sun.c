@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.21 2007/11/25 19:11:42 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.22 2007/11/26 16:56:42 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -59,7 +59,7 @@ void	*wsemul_sun_cnattach(const struct wsscreen_descr *, void *,
 void	*wsemul_sun_attach(int, const struct wsscreen_descr *,
     void *, int, int, void *, long);
 void	wsemul_sun_output(void *, const u_char *, u_int, int);
-int	wsemul_sun_translate(void *, keysym_t, char **);
+int	wsemul_sun_translate(void *, keysym_t, const char **);
 void	wsemul_sun_detach(void *, u_int *, u_int *);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
 
@@ -738,7 +738,7 @@ wsemul_sun_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
 	return (0);
 }
 
-static char *sun_fkeys[] = {
+static const char *sun_fkeys[] = {
 	"\033[224z",	/* F1 */
 	"\033[225z",
 	"\033[226z",
@@ -753,7 +753,7 @@ static char *sun_fkeys[] = {
 	"\033[235z",	/* F12 */
 };
 
-static char *sun_lkeys[] = {
+static const char *sun_lkeys[] = {
 	"\033[207z",	/* KS_Help */
 	NULL,		/* KS_Execute */
 	"\033[200z",	/* KS_Find */
@@ -772,7 +772,7 @@ int
 wsemul_sun_translate(cookie, in, out)
 	void *cookie;
 	keysym_t in;
-	char **out;
+	const char **out;
 {
 	static char c;
 

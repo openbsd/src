@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.8 2007/11/25 19:11:43 miod Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.9 2007/11/26 16:56:42 miod Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -50,7 +50,7 @@ struct wsemul_ops {
 				int, int, void *, long);
 	void	(*output)(void *cookie, const u_char *data, u_int count,
 			       int);
-	int	(*translate)(void *, keysym_t, char **);
+	int	(*translate)(void *, keysym_t, const char **);
 	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
 	void    (*reset)(void *, enum wsemul_resetops);
 };
