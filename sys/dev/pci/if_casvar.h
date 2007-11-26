@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casvar.h,v 1.4 2007/04/15 16:31:30 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.5 2007/11/26 17:15:32 kettenis Exp $	*/
 
 /*
  *
@@ -98,11 +98,14 @@ struct cas_control_data {
 	 * The receive descriptors.
 	 */
 	struct cas_desc ccd_rxdescs[CAS_NRXDESC];
+	char ccd_unused[CAS_PAGE_SIZE - CAS_NRXDESC * 16];
+	struct cas_desc ccd_rxdescs2[CAS_NRXDESC];
 };
 
 #define	CAS_CDOFF(x)		offsetof(struct cas_control_data, x)
 #define	CAS_CDTXOFF(x)		CAS_CDOFF(ccd_txdescs[(x)])
 #define	CAS_CDRXOFF(x)		CAS_CDOFF(ccd_rxdescs[(x)])
+#define	CAS_CDRXOFF2(x)		CAS_CDOFF(ccd_rxdescs2[(x)])
 #define	CAS_CDRXCOFF(x)		CAS_CDOFF(ccd_rxcomps[(x)])
 
 /*
@@ -152,6 +155,7 @@ struct cas_softc {
 	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 
 	struct cas_rxsoft sc_rxsoft[CAS_NRXDESC];
+	struct cas_rxsoft sc_rxsoft2[CAS_NRXDESC];
 
 	/*
 	 * Control data structures.
@@ -159,38 +163,30 @@ struct cas_softc {
 	struct cas_control_data *sc_control_data;
 #define	sc_txdescs	sc_control_data->ccd_txdescs
 #define	sc_rxdescs	sc_control_data->ccd_rxdescs
+#define	sc_rxdescs2	sc_control_data->ccd_rxdescs2
 #define	sc_rxcomps	sc_control_data->ccd_rxcomps
 
 	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
 	int			sc_rxfifosize;
 	int			sc_rxdptr;
 
-	/* ========== */
+	int			sc_rev;
 	int			sc_inited;
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
 };
 
+/*
+ * This maccro determines whether we have a Cassini+.
+ */
+#define	CAS_PLUS(sc)	(sc->sc_rev > 0x10)
+
 #define	CAS_DMA_READ(v)		letoh64(v)
 #define	CAS_DMA_WRITE(v)	htole64(v)
 
-/*
- * This macro returns the current media entry for *non-MII* media.
- */
-#define	CAS_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
-
-/*
- * This macro determines if a change to media-related OPMODE bits requires
- * a chip reset.
- */
-#define	CAS_MEDIA_NEEDSRESET(sc, newbits)				\
-	(((sc)->sc_opmode & OPMODE_MEDIA_BITS) !=			\
-	 ((newbits) & OPMODE_MEDIA_BITS))
-
 #define	CAS_CDTXADDR(sc, x)	((sc)->sc_cddma + CAS_CDTXOFF((x)))
 #define	CAS_CDRXADDR(sc, x)	((sc)->sc_cddma + CAS_CDRXOFF((x)))
+#define	CAS_CDRXADDR2(sc, x)	((sc)->sc_cddma + CAS_CDRXOFF2((x)))
 #define	CAS_CDRXCADDR(sc, x)	((sc)->sc_cddma + CAS_CDRXCOFF((x)))
 
 #define	CAS_CDTXSYNC(sc, x, n, ops)					\

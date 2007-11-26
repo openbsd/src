@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.11 2007/11/26 15:55:59 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.12 2007/11/26 17:15:32 kettenis Exp $	*/
 
 /*
  *
@@ -32,6 +32,14 @@
 
 /*
  * Driver for Sun Cassini ethernet controllers.
+ *
+ * There are basically two variants of this chip: Cassini and
+ * Cassini+.  We can distinguish between the two by revision: 0x10 and
+ * up are Cassini+.  The most important difference is that Cassini+
+ * has a second RX descriptor ring.  Cassini+ will not work without
+ * configuring that second ring.  However, since we don't use it we
+ * don't actually fill the descriptors, and only hand off the first
+ * four to the chip.
  */
 
 #include "bpfilter.h"
@@ -304,6 +312,7 @@ cas_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size;
 	int gotenaddr = 0;
 
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
 	sc->sc_dmatag = pa->pa_dmat;
 
 #define PCI_CAS_BASEADDR	0x10
@@ -411,6 +420,8 @@ cas_config(struct cas_softc *sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
+
+	bzero(sc->sc_control_data, sizeof(struct cas_control_data));
 
 	/*
 	 * Create the receive buffer DMA maps.
@@ -927,7 +938,6 @@ cas_cringsize(int sz)
 int
 cas_init(struct ifnet *ifp)
 {
-
 	struct cas_softc *sc = (struct cas_softc *)ifp->if_softc;
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
@@ -981,6 +991,14 @@ cas_init(struct ifnet *ifp)
 	    (((uint64_t)CAS_CDRXCADDR(sc,0)) >> 32));
 	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO, CAS_CDRXCADDR(sc, 0));
 
+	if (CAS_PLUS(sc)) {
+		KASSERT((CAS_CDRXADDR2(sc, 0) & 0x1fff) == 0);
+		bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI2,
+		    (((uint64_t)CAS_CDRXADDR2(sc,0)) >> 32));
+		bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO2,
+		    CAS_CDRXADDR2(sc, 0));
+	}
+
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, h, CAS_INTMASK,
 		      ~(CAS_INTR_TX_INTME|CAS_INTR_TX_EMPTY|
@@ -1007,6 +1025,8 @@ cas_init(struct ifnet *ifp)
 
 	/* Encode Receive Descriptor ring size */
 	v = cas_ringsize(CAS_NRXDESC) << CAS_RX_CONFIG_RXDRNG_SZ_SHIFT;
+	if (CAS_PLUS(sc))
+		v |= cas_ringsize(32) << CAS_RX_CONFIG_RXDRNG2_SZ_SHIFT;
 
 	/* Encode Receive Completion ring size */
 	v |= cas_cringsize(CAS_NRXCOMP) << CAS_RX_CONFIG_RXCRNG_SZ_SHIFT;
@@ -1036,6 +1056,8 @@ cas_init(struct ifnet *ifp)
 
 	/* step 15.  Give the receiver a swift kick */
 	bus_space_write_4(t, h, CAS_RX_KICK, CAS_NRXDESC-4);
+	if (CAS_PLUS(sc))
+		bus_space_write_4(t, h, CAS_RX_KICK2, 4);
 
 	/* Start the one second timer. */
 	timeout_add(&sc->sc_tick_ch, hz);
