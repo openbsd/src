@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/10/30 18:28:57 jmc Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/11/26 08:36:49 deraadt Exp $
 
 MAN=	boot.8
 MANSUBDIR=hppa64
@@ -8,7 +8,15 @@ CLEANFILES+=	boot.gdb boot.map boot.lif
 
 .if ${MACHINE} == "hppa64"
 PROG=	boot
-SRCS=	srt0.S exec.c boot.c cmd.c vars.c bootarg.c conf.c
+SRCS=	srt0.S exec.c conf.c
+
+.PATH:	${S}/stand/boot
+SRCS+=	bootarg.c boot.c vars.c cmd.c 
+
+.PATH:	${S}/lib/libkern/arch/hppa ${S}/lib/libkern
+SRCS+=	milli.S ashrdi3.c memcmp.c memcpy.c memset.c muldi3.c \
+	strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c
+
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
@@ -22,10 +30,8 @@ LINKS=	${BINDIR}/boot.lif ${BINDIR}/sdboot \
 	${BINDIR}/boot.lif ${BINDIR}/stboot \
 	${BINDIR}/boot.lif ${BINDIR}/xxboot
 
-LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
-DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
-
-.PATH:	${S}/stand/boot
+LDADD=	${LIBSA} ${LIBZ}
+DPADD=	${LIBSA} ${LIBZ}
 
 all:	boot.lif
 

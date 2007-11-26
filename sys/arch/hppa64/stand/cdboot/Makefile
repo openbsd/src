@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/01 10:40:48 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/11/26 08:36:49 deraadt Exp $
 
 NOMAN=	no man
 S	=${.CURDIR}/../../../..
@@ -7,7 +7,18 @@ CLEANFILES+=	cdboot.gdb cdboot.map
 .if ${MACHINE} == "hppa64"
 
 PROG=	cdboot
-SRCS=	srt0.S cdboot.c pdc.c itecons.c dev_hppa64.c dk.c
+
+.PATH: ${.CURDIR}/../boot
+SRCS+= srt0.S
+
+SRCS=  srt0.S cdboot.c
+
+.PATH: ${.CURDIR}/../libsa
+SRCS+= pdc.c itecons.c dev_hppa64.c dk.c
+
+.PATH: ${S}/lib/libkern/arch/hppa ${S}/lib/libkern
+SRCS+= milli.S strlen.c strlcpy.c
+
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map cdboot.map
@@ -20,12 +31,8 @@ CRTEND=
 SAREL=
 USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
-DPADD+= $(SALIB) $(LIBKERN)
-LDADD+=	$(SALIB) $(LIBKERN)
-
-.PATH:	${S}/stand/boot
-.PATH:	${.CURDIR}/../boot
-.PATH:	${.CURDIR}/../libsa
+DPADD+= $(SALIB)
+LDADD+=	$(SALIB)
 
 all:	${PROG}
 
