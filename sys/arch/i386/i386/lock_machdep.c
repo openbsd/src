@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.7 2007/11/26 17:15:29 art Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.8 2007/11/26 19:00:56 art Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -114,6 +114,7 @@ rw_cas_486(volatile unsigned long *p, unsigned long o, unsigned long n)
 	return (i486_atomic_cas_int((u_int *)p, o, n) != o);
 }
 
+#ifdef MULTIPROCESSOR
  void
 __mp_lock_init(struct __mp_lock *lock)
 {
@@ -254,3 +255,4 @@ __mp_lock_held(struct __mp_lock *mpl) {
 	return mpl->mpl_cpu == curcpu();
 }
 
+#endif
