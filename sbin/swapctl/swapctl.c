@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.16 2007/07/17 18:26:05 jmc Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.17 2007/11/26 13:36:33 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -170,12 +170,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* Did the user specify a command? */
-	if (command == 0)
-		usage();
-
 	argv += optind;
 	argc -= optind;
+
+	/* Did the user specify a command? */
+	if (command == 0) {
+		if (argc == 0)
+			SET_COMMAND(CMD_l);
+		else
+			usage();
+	}
 
 	switch (argc) {
 	case 0:
@@ -442,6 +446,6 @@ usage(void)
 	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
 	fprintf(stderr, "       %s -c -p priority path\n", __progname);
 	fprintf(stderr, "       %s -d path\n", __progname);
-	fprintf(stderr, "       %s -l | -s [-k]\n", __progname);
+	fprintf(stderr, "       %s [[-l] | -s] [-k]\n", __progname);
 	exit(1);
 }

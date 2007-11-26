@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.25 2007/09/27 21:55:54 sobrado Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.26 2007/11/26 13:36:34 deraadt Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -282,7 +282,6 @@ main(int argc, char **argv)
 		case 't':
 			tflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -290,6 +289,9 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0 && tflag == 0)
+		aflag++;
+		
 	if ((fd = open(file, O_RDWR)) == -1)
 		if ((fd = open(file, O_RDONLY)) == -1)
 			err(1, "%s", file);
@@ -400,7 +402,7 @@ usage(void)
 	extern char *__progname;	/* from crt0.o */
 
 	fprintf(stderr,
-	    "usage: %s [-nv] [-f file] -a\n"
+	    "usage: %s [-anv] [-f file]\n"
 	    "       %s [-nv] [-f file] name ...\n"
 	    "       %s [-qt] [-f file] name ...\n"
 	    "       %s [-q] [-f file] name=value ...\n",

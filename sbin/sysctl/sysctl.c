@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.150 2007/11/11 15:48:35 jmc Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.151 2007/11/26 13:36:33 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.150 2007/11/11 15:48:35 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.151 2007/11/26 13:36:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,15 +252,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && (Aflag || aflag)) {
+	if (argc == 0 || (Aflag || aflag)) {
 		debuginit();
 		vfsinit();
 		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
 		return (0);
 	}
-	if (argc == 0)
-		usage();
 	for (; *argv != NULL; ++argv)
 		parse(*argv, 1);
 	return (0);
@@ -2427,6 +2425,6 @@ usage(void)
 
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n",
 	    "sysctl [-n] name ...", "sysctl [-nq] name=value ...",
-	    "sysctl [-n] -Aa");
+	    "sysctl [-Aan]");
 	exit(1);
 }

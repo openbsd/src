@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.15 2007/09/27 21:55:54 sobrado Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.16 2007/11/26 13:36:34 deraadt Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ usage(void)
 	extern char *__progname;		/* from crt0.o */
 
 	fprintf(stderr,
-	    "usage: %s [-n] [-f file] -a\n"
+	    "usage: %s [-an] [-f file]\n"
 	    "       %s [-n] [-f file] name ...\n"
 	    "       %s [-n] [-f file] name=value ...\n",
 	    __progname, __progname, __progname);
@@ -364,6 +364,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc == 0)
+		aflag++;
 
 	if ((fd = open(file, O_RDWR)) < 0) {
 		if ((fd = open(file, O_RDONLY)) < 0)

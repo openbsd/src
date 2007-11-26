@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.19 2007/05/21 07:54:17 jmc Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.20 2007/11/26 13:36:33 deraadt Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -82,7 +82,7 @@ usage(char *msg)
 		fprintf(stderr, "%s: %s\n", __progname, msg);
 
 	fprintf(stderr,
-	    "usage: %s [-n] -a\n"
+	    "usage: %s [-an]\n"
 	    "       %s [-n] [-f file] name ...\n"
 	    "       %s [-n] [-f file] name=value ...\n"
 	    "       %s [-n] [-f file] name+=value ...\n",
@@ -124,6 +124,8 @@ main(int argc, char *argv[])
 
 	if (argc > 0 && aflag != 0)
 		usage("excess arguments after -a");
+	if (argc == 0)
+		aflag = 1;
 
 	if (aflag != 0) {
 		for (sw = typesw; sw->name; sw++) {
