@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.14 2007/01/31 14:38:54 mickey Exp $ */
+/* $OpenBSD: pckbc.c,v 1.15 2007/11/26 22:45:27 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -359,6 +359,12 @@ pckbc_attach(sc)
 	}
 	bus_space_write_1(iot, ioh_d, 0, 0x5a);	/* a random value */
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
+#if 0
+	/*
+	 * The following code is necessary to find the aux port on the
+	 * oqo-1 machine.  However if confuses old (non-ps/2) keyboard
+	 * controllers.
+	 */
 	if (res == -1) {
 		/* Read of aux echo timed out, try again */
 		if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXWRITE))
@@ -371,6 +377,7 @@ pckbc_attach(sc)
 		printf("kbc: aux echo: %x\n", res);
 #endif
 	}
+#endif
 	if (res != -1) {
 		/*
 		 * In most cases, the 0x5a gets echoed.
