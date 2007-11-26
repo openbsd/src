@@ -1272,6 +1272,12 @@ int warn_inline;
 
 int warn_aggregate_return;
 
+/* Nonzero means warn about any automatic declaration whose size is not
+   constant.  */
+
+int warn_variable_decl;
+
+
 /* Likewise for -W.  */
 
 lang_independent_options W_options[] =
@@ -1292,7 +1298,9 @@ lang_independent_options W_options[] =
   {"stack-protector", &warn_stack_protector, 1,
    "Warn when disabling stack protector for some reason"},
   {"trampolines", &warn_trampolines, 1,
-   "Warn when trampolines are emitted"}
+   "Warn when trampolines are emitted"},
+  {"variable-decl", &warn_variable_decl, 1,
+   "Warn about variable-sized declarations"}
 };
 
 /* Output files for assembler code (real compiler output)

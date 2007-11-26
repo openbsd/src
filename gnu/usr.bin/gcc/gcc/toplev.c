@@ -1535,6 +1535,11 @@ int warn_deprecated_decl = 1;
 
 int warn_strict_aliasing;
 
+/* Nonzero means warn about any automatic declaration whose size is not
+   constant.  */
+
+int warn_variable_decl;
+
 /* Likewise for -W.  */
 
 static const lang_independent_options W_options[] =
@@ -1587,6 +1592,8 @@ static const lang_independent_options W_options[] =
    N_("Warn when disabling stack protector for some reason")},
   {"trampolines", &warn_trampolines, 1,
    N_("Warn when trampolines are emitted")},
+  {"variable-decl", &warn_variable_decl, 1,
+   N_("Warn about variable-sized declarations")},
 };
 
 void

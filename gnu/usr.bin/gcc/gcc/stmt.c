@@ -3996,6 +3996,9 @@ expand_decl (decl)
     {
       rtx address, size, x;
 
+      if (warn_variable_decl)
+	warning ("variable-sized declaration");
+
       /* Record the stack pointer on entry to block, if have
 	 not already done so.  */
       do_pending_stack_adjust ();

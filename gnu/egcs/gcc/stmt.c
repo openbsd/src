@@ -3598,6 +3598,9 @@ expand_decl (decl)
     {
       rtx address, size;
 
+      if (warn_variable_decl)
+	warning ("variable-sized declaration");
+
       /* Record the stack pointer on entry to block, if have
 	 not already done so.  */
       if (thisblock->data.block.stack_level == 0)

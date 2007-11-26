@@ -195,6 +195,11 @@ extern int warn_deprecated_decl;
 
 extern int warn_strict_aliasing;
 
+/* Nonzero means warn about any automatic declaration whose size is not
+   constant.  */
+
+extern int warn_variable_decl;
+
 /* Nonzero if generating code to do profiling.  */
 
 extern int profile_flag;
