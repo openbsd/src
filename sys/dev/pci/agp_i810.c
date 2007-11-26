@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.18 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.19 2007/11/26 00:04:38 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -791,7 +791,9 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	regval = 0;
 
 	if (mem->am_type == 2) {
-		WRITEGTT(offset, mem->am_physical);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
+			WRITEGTT(offset + i, (mem->am_physical + i));
+		}
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
 		return (0);
@@ -816,7 +818,9 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	u_int32_t i;
 
 	if (mem->am_type == 2) {
-		WRITEGTT(mem->am_offset, 0);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
+			WRITEGTT(mem->am_offset + i, 0);
+		}
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
 		return (0);
