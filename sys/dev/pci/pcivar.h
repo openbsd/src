@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.55 2007/10/22 03:08:53 fgsch Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.56 2007/11/26 13:20:28 jsg Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -224,6 +224,12 @@ struct pci_matchid {
 
 int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
 int pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int);
+
+/*
+ * Vital Product Data (PCI 2.2)
+ */
+int pci_vpd_read(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
+int pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 
 /*
  * Helper functions for autoconfiguration.

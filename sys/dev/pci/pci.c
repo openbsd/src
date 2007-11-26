@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.52 2007/11/17 23:20:38 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.53 2007/11/26 13:20:28 jsg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -481,6 +481,83 @@ pci_enumerate_bus(struct pci_softc *sc,
 	return (0);
 }
 #endif /* PCI_MACHDEP_ENUMERATE_BUS */
+
+/*
+ * Vital Product Data (PCI 2.2)
+ */
+
+int
+pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
+    pcireg_t *data)
+{
+	uint32_t reg;
+	int ofs, i, j;
+
+	KASSERT(data != NULL);
+	KASSERT((offset + count) < 0x7fff);
+
+	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
+		return (1);
+
+	for (i = 0; i < count; offset += sizeof(*data), i++) {
+		reg &= 0x0000ffff;
+		reg &= ~PCI_VPD_OPFLAG;
+		reg |= PCI_VPD_ADDRESS(offset);
+		pci_conf_write(pc, tag, ofs, reg);
+
+		/*
+		 * PCI 2.2 does not specify how long we should poll
+		 * for completion nor whether the operation can fail.
+		 */
+		j = 0;
+		do {
+			if (j++ == 20)
+				return (1);
+			delay(4);
+			reg = pci_conf_read(pc, tag, ofs);
+		} while ((reg & PCI_VPD_OPFLAG) == 0);
+		data[i] = pci_conf_read(pc, tag, PCI_VPD_DATAREG(ofs));
+	}
+
+	return (0);
+}
+
+int
+pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
+    pcireg_t *data)
+{
+	pcireg_t reg;
+	int ofs, i, j;
+
+	KASSERT(data != NULL);
+	KASSERT((offset + count) < 0x7fff);
+
+	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
+		return (1);
+
+	for (i = 0; i < count; offset += sizeof(*data), i++) {
+		pci_conf_write(pc, tag, PCI_VPD_DATAREG(ofs), data[i]);
+
+		reg &= 0x0000ffff;
+		reg |= PCI_VPD_OPFLAG;
+		reg |= PCI_VPD_ADDRESS(offset);
+		pci_conf_write(pc, tag, ofs, reg);
+
+		/*
+		 * PCI 2.2 does not specify how long we should poll
+		 * for completion nor whether the operation can fail.
+		 */
+		j = 0;
+		do {
+			if (j++ == 20)
+				return (1);
+			delay(1);
+			reg = pci_conf_read(pc, tag, ofs);
+		} while (reg & PCI_VPD_OPFLAG);
+	}
+
+	return (0);
+}
 
 int
 pci_matchbyid(struct pci_attach_args *pa, const struct pci_matchid *ids,

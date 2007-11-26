@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.33 2007/11/25 01:36:48 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.34 2007/11/26 13:20:28 jsg Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -484,6 +484,16 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAP_SECURE		0x0f
 #define PCI_CAP_PCIEXPRESS     	0x10
 #define PCI_CAP_MSIX		0x11
+
+/*
+ * Vital Product Data; access via capability pointer (PCI rev 2.2).
+ */
+#define	PCI_VPD_ADDRESS_MASK	0x7fff
+#define	PCI_VPD_ADDRESS_SHIFT	16
+#define	PCI_VPD_ADDRESS(ofs)	\
+	(((ofs) & PCI_VPD_ADDRESS_MASK) << PCI_VPD_ADDRESS_SHIFT)
+#define	PCI_VPD_DATAREG(ofs)	((ofs) + 4)
+#define	PCI_VPD_OPFLAG		0x80000000
 
 /*
  * Power Management Control Status Register; access via capability pointer.
