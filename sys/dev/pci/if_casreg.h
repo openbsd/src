@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casreg.h,v 1.7 2007/11/26 15:24:35 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.8 2007/11/26 15:55:59 kettenis Exp $	*/
 
 /*
  *
@@ -113,6 +113,7 @@
 #define	CAS_RESET_TX		0x000000001	/* Reset TX half */
 #define	CAS_RESET_RX		0x000000002	/* Reset RX half */
 #define	CAS_RESET_RSTOUT	0x000000004	/* Force PCI RSTOUT# */
+#define	CAS_RESET_BLOCK_PCS	0x00000008	/* Block PCS reset */
 
 /* TX DMA registers */
 #define	CAS_TX_CONFIG		0x2004

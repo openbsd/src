@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.10 2007/11/26 15:36:22 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.11 2007/11/26 15:55:59 kettenis Exp $	*/
 
 /*
  *
@@ -523,10 +523,6 @@ cas_config(struct cas_softc *sc)
 		    CAS_MII_DATAPATH_MODE, CAS_MII_DATAPATH_SERDES);
 
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-		    CAS_MII_SLINK_CONTROL,
-		    CAS_MII_SLINK_LOOPBACK|CAS_MII_SLINK_EN_SYNC_D);
-
-		bus_space_write_4(sc->sc_memt, sc->sc_memh,
 		     CAS_MII_CONFIG, CAS_MII_CONFIG_ENABLE);
 
 		mii->mii_readreg = cas_pcs_readreg;
@@ -672,7 +668,8 @@ cas_reset(struct cas_softc *sc)
 	cas_reset_tx(sc);
 
 	/* Do a full reset */
-	bus_space_write_4(t, h, CAS_RESET, CAS_RESET_RX|CAS_RESET_TX);
+	bus_space_write_4(t, h, CAS_RESET,
+	    CAS_RESET_RX | CAS_RESET_TX | CAS_RESET_BLOCK_PCS);
 	if (!cas_bitwait(sc, h, CAS_RESET, CAS_RESET_RX | CAS_RESET_TX, 0))
 		printf("%s: cannot reset device\n", sc->sc_dev.dv_xname);
 	splx(s);
