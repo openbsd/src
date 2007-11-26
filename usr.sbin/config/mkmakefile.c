@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.25 2007/11/26 17:25:59 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.26 2007/11/26 19:49:46 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -141,6 +141,51 @@ bad:
 	return (1);
 }
 
+char *
+expandname(const char *_nam)
+{
+	char *ret = NULL, *nam, *n, *s, *e, *expand;
+	const char *var = NULL;
+
+	if ((nam = n = strdup(_nam)) == NULL)
+		errx(1, "out of memory");
+
+	while (*n) {
+		/* Search for a ${name} to expand */
+		if ((s = strchr(n, '$')) == NULL) {
+			if (ret == NULL)
+				break;
+			if (asprintf(&expand, "%s%s", ret, n) == -1)
+				errx(1, "out of memory");
+			free(ret);
+			ret = expand;
+			break;
+		}
+		*s++ = '\0';
+		if (*s != '{')
+			error("{");
+		e = strchr(++s, '}');
+		if (!e)
+			error("}");
+		*e = '\0';
+
+		if (strcmp(s, "MACHINE_ARCH") == 0)
+			var = machinearch ? machinearch : machine;
+		else if (strcmp(s, "MACHINE") == 0)
+			var = machine;
+		else
+			error("variable `%s' not supported", s);
+
+		if (asprintf(&expand, "%s%s", ret ? ret : nam, var) == -1)
+			errx(1, "out of memory");
+		free(ret);
+		ret = expand;
+		n = e + 1;
+	}
+	free(nam);
+	return (ret);
+}
+
 /*
  * Return (possibly in a static buffer) the name of the `source' for a
  * file.  If we have `options source', or if the file is marked `always
@@ -153,7 +198,6 @@ srcpath(struct files *fi)
 	/* Always have source, don't support object dirs for kernel builds. */
 	struct nvlist *nv, *nv1;
 	char *expand, *source;
-	const char *var;
 
 	/* Search path list for files we will want to use */
 	if (fi->fi_nvpath->nv_next == NULL) {
@@ -162,53 +206,23 @@ srcpath(struct files *fi)
 	}
 
 	for (nv = fi->fi_nvpath; nv; nv = nv->nv_next) {
-		char *s, *e;
-
-		expand = NULL;
-		s = strchr(nv->nv_name, '$');
-		if (s) {
-			size_t len;
-
-			/* Search for a ${name} to expand */
-			if (s[1] != '{')
-				error("{");
-			e = strchr(s + 2, '}');
-			if (!e)
-				error("}");
-
-			len = e - s - 2;
-			if (strlen("MACHINE_ARCH") == len &&
-			    bcmp(s + 2, "MACHINE_ARCH", len) == 0)
-				var = machinearch ? machinearch : machine;
-			else if (strlen("MACHINE") == len &&
-			    bcmp(s + 2, "MACHINE", len) == 0)
-				var = machine;
-			else
-				error("variable %*.*s not supported",
-				    e - s - 2, e - s - 2, s + 2);
-
-			asprintf(&expand, "%*.*s%s%s",
-			    s - nv->nv_name, s - nv->nv_name, nv->nv_name,
-			    var, e + 1);
-			source = sourcepath(expand);
-		} else
-			source = sourcepath(nv->nv_name);
+		expand = expandname(nv->nv_name);
+		source = sourcepath(expand ? expand : nv->nv_name);
 		if (access(source, R_OK) == 0) {
-			/* poolalloc() prevents freeing old nv_name */
+			/* XXX poolalloc() prevents freeing old nv_name */
 			if (expand)
 				nv->nv_name = intern(expand);
 			break;
 		}
-		if (expand)
-			free(expand);
+		free(expand);
 		free(source);
 	}
 	if (nv == NULL)
 		nv = fi->fi_nvpath;
 
 	/*
-	 * Now that we know which path is right, delete all the
-	 * other filenames to skip the access() checks next time
+	 * Now that we know which path is selected, delete all the
+	 * other paths to skip the access() checks next time.
 	 */
 	while ((nv1 = fi->fi_nvpath)) {
 		nv1 = nv1->nv_next;
