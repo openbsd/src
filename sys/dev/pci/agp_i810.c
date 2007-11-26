@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.19 2007/11/26 00:04:38 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.20 2007/11/26 10:35:42 reyk Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -150,6 +150,8 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82Q963_IGD_2:
 	case PCI_PRODUCT_INTEL_82965_IGD_1:
 	case PCI_PRODUCT_INTEL_82965_IGD_2:
+	case PCI_PRODUCT_INTEL_82965GM_IGD_1:
+	case PCI_PRODUCT_INTEL_82965GM_IGD_2:
 		return (1);
 	}
 
@@ -219,6 +221,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82Q963_IGD_1:	
 	case PCI_PRODUCT_INTEL_82Q963_IGD_2:
 	case PCI_PRODUCT_INTEL_82965GM_IGD_1:
+	case PCI_PRODUCT_INTEL_82965GM_IGD_2:
 		isc->chiptype = CHIP_I965;
 		break;
 	}

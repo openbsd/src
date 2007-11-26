@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.58 2007/11/25 17:11:12 oga Exp $ */
+/*	$OpenBSD: pchb.c,v 1.59 2007/11/26 10:35:42 reyk Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -328,6 +328,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82945GM_MCH:
 		case PCI_PRODUCT_INTEL_82Q963_HB:
 		case PCI_PRODUCT_INTEL_82965_MCH:
+		case PCI_PRODUCT_INTEL_82965GM_MCH:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend
