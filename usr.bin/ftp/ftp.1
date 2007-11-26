@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.62 2007/11/05 13:10:59 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.63 2007/11/26 12:39:00 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: November 5 2007 $
+.Dd $Mdocdate: November 26 2007 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd ARPANET file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl 46AadEegimnptVv
+.Op Fl 46AaCdEegimnptVv
 .Op Fl c Ar cookie
 .Op Fl k Ar seconds
 .Op Fl P Ar port
@@ -110,6 +110,8 @@ to very old servers that do not implement passive mode properly.
 Causes
 .Nm
 to bypass the normal login procedure and use an anonymous login instead.
+.It Fl C
+Continue file transfer.
 .It Fl c Ar cookie
 Load a Netscape-like cookiejar file
 for HTTP and HTTPS transfers.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2007/09/05 08:04:49 moritz Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2007/11/26 12:39:00 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.66 2007/09/05 08:04:49 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.67 2007/11/26 12:39:00 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -121,6 +121,7 @@ main(volatile int argc, char *argv[])
 	el = NULL;
 	hist = NULL;
 	cookiefile = NULL;
+	resume = 0;
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
@@ -181,7 +182,7 @@ main(volatile int argc, char *argv[])
 	cookiefile = getenv("http_cookies");
 #endif
 
-	while ((ch = getopt(argc, argv, "46Aac:dEegik:mno:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AaCc:dEegik:mno:pP:r:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -196,6 +197,12 @@ main(volatile int argc, char *argv[])
 
 		case 'a':
 			anonftp = 1;
+			break;
+
+		case 'C':
+#ifndef SMALL
+			resume = 1;
+#endif
 			break;
 
 		case 'c':
@@ -757,7 +764,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-46AadEegimnptVv] [-c cookie] [-k seconds] "
+	    "usage: %s [-46AaCdEegimnptVv] [-c cookie] [-k seconds] "
 	    "[-P port] [-r seconds]\n"
 	    "           [host [port]]\n"
 	    "       %s [-o output] ftp://[user:password@]host[:port]/file[/]\n"

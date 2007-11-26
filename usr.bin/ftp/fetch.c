@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.74 2007/06/13 13:52:26 pyr Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.75 2007/11/26 12:39:00 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.74 2007/06/13 13:52:26 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.75 2007/11/26 12:39:00 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -184,6 +184,13 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	else
 		savefile = basename(path);
 
+#ifndef SMALL
+	if (resume && (strcmp(savefile, "-") == 0)) {
+		warnx("can't append to stdout");
+		goto cleanup_url_get;
+	}
+#endif
+
 	if (EMPTYSTRING(savefile)) {
 		if (isftpurl)
 			goto noftpautologin;
@@ -259,14 +266,33 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 
 		/* Open the output file.  */
 		if (strcmp(savefile, "-") != 0) {
-			out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC,
-			    0666);
+#ifndef SMALL
+			if (resume)
+				out = open(savefile, O_APPEND | O_WRONLY);
+			else
+#endif
+				out = open(savefile, O_CREAT | O_WRONLY |
+					O_TRUNC, 0666);
 			if (out < 0) {
 				warn("Can't open %s", savefile);
 				goto cleanup_url_get;
 			}
 		} else
 			out = fileno(stdout);
+
+#ifndef SMALL
+		if (resume) {
+			if (fstat(out, &st) == -1) {
+				warn("Can't fstat %s", savefile);
+				goto cleanup_url_get;
+			}
+			if (lseek(s, st.st_size, SEEK_SET) == -1) {
+				warn("Can't lseek %s", path);
+				goto cleanup_url_get;
+			}
+			restart_point = st.st_size;
+		}
+#endif
 
 		/* Trap signals */
 		oldintr = NULL;
@@ -467,7 +493,11 @@ again:
 			    path, buf ? buf : "", HTTP_USER_AGENT);
 
 	} else {
-		ftp_printf(fin, ssl, "GET /%s HTTP/1.0\r\nHost: ", path);
+		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", path,
+#ifndef SMALL
+			resume ? "HTTP/1.1" :
+#endif
+			"HTTP/1.0");
 		if (strchr(host, ':')) {
 			char *h, *p;
 
@@ -493,6 +523,21 @@ again:
 #ifndef SMALL
 		if (port && strcmp(port, (ishttpsurl ? "443" : "80")) != 0)
 			ftp_printf(fin, ssl, ":%s", port);
+		if (resume) {
+			int ret;
+			struct stat stbuf;
+
+			ret = stat(savefile, &stbuf);
+			if (ret < 0) {
+				if (verbose)
+					fprintf(ttyout, "\n");
+				warn("Can't open %s", savefile);
+				goto cleanup_url_get;
+			}
+			restart_point = stbuf.st_size;
+			ftp_printf(fin, ssl, "\r\nRange: bytes=%lld-",
+				(long long)restart_point);
+		}
 #else
 		if (port && strcmp(port, "80") != 0)
 			ftp_printf(fin, ssl, ":%s", port);
@@ -530,7 +575,7 @@ again:
 		cp++;
 
 	strlcpy(ststr, cp, sizeof(ststr));
-	status = strtonum(ststr, 200, 307, &errstr);
+	status = strtonum(ststr, 200, 416, &errstr);
 	if (errstr) {
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -538,7 +583,10 @@ again:
 
 	switch (status) {
 	case 200:	/* OK */
+#ifndef SMALL
+	case 206:	/* Partial Content */
 		break;
+#endif
 	case 301:	/* Moved Permanently */
 	case 302:	/* Found */
 	case 303:	/* See Other */
@@ -549,6 +597,11 @@ again:
 			goto cleanup_url_get;
 		}
 		break;
+#ifndef SMALL
+	case 416:	/* Requested Range Not Satisfiable */
+		warnx("File is already fully retrieved.");
+		goto cleanup_url_get;
+#endif
 	default:
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -581,6 +634,10 @@ again:
 			filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				goto improper;
+#ifndef SMALL
+			if (resume)
+				filesize += restart_point;
+#endif
 #define LOCATION "Location: "
 		} else if (isredirect &&
 		    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
@@ -601,7 +658,13 @@ again:
 
 	/* Open the output file.  */
 	if (strcmp(savefile, "-") != 0) {
-		out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+#ifndef SMALL
+		if (resume)
+			out = open(savefile, O_APPEND | O_WRONLY);
+		else
+#endif
+			out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC,
+				0666);
 		if (out < 0) {
 			warn("Can't open %s", savefile);
 			goto cleanup_url_get;
@@ -659,7 +722,11 @@ again:
 		goto cleanup_url_get;
 	}
 	progressmeter(1);
-	if (filesize != -1 && len == 0 && bytes != filesize) {
+	if (
+#ifndef SMALL
+		!resume &&
+#endif
+		filesize != -1 && len == 0 && bytes != filesize) {
 		if (verbose)
 			fputs("Read short file.\n", ttyout);
 		goto cleanup_url_get;
@@ -1002,7 +1069,12 @@ bad_ftp_url:
 				xargv[3] = NULL;
 				xargc++;
 			}
-			get(xargc, xargv);
+#ifndef SMALL
+			if (resume)
+				reget(xargc, xargv);
+			else
+#endif
+				get(xargc, xargv);
 		}
 
 		if ((code / 100) != COMPLETE)
