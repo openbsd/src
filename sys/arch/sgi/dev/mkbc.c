@@ -25,7 +25,7 @@
 
 /*
  * Derived from sys/dev/ic/pckbc.c under the following terms:
- * $OpenBSD: mkbc.c,v 1.2 2007/11/25 11:58:41 jsing Exp $ 
+ * $OpenBSD: mkbc.c,v 1.3 2007/11/26 10:05:52 jsing Exp $ 
  * $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -138,17 +138,17 @@ struct pckbc_slotdata {
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
-void mkbc_start(struct pckbc_internal *, pckbc_slot_t);
-int mkbc_attach_slot(struct mkbc_softc *, pckbc_slot_t);
-void mkbc_init_slotdata(struct pckbc_slotdata *);
-int mkbc_submatch(struct device *, void *, void *);
-int mkbcprint(void *, const char *);
-int mkbcintr(void *);
-void mkbc_cleanqueue(struct pckbc_slotdata *);
-void mkbc_cleanup(void *self);
-int mkbc_cmdresponse(struct pckbc_internal *t, pckbc_slot_t slot, u_char data);
-int mkbc_poll_read(bus_space_tag_t, bus_space_handle_t);
-int mkbc_poll_write(bus_space_tag_t, bus_space_handle_t, int);
+void	mkbc_start(struct pckbc_internal *, pckbc_slot_t);
+int	mkbc_attach_slot(struct mkbc_softc *, pckbc_slot_t);
+void	mkbc_init_slotdata(struct pckbc_slotdata *);
+int	mkbc_submatch(struct device *, void *, void *);
+int	mkbcprint(void *, const char *);
+int	mkbcintr(void *);
+void	mkbc_cleanqueue(struct pckbc_slotdata *);
+void	mkbc_cleanup(void *self);
+int	mkbc_cmdresponse(struct pckbc_internal *t, pckbc_slot_t slot, u_char data);
+int	mkbc_poll_read(bus_space_tag_t, bus_space_handle_t);
+int	mkbc_poll_write(bus_space_tag_t, bus_space_handle_t, int);
 
 int
 mkbc_match(struct device *parent, void *cf, void *aux)
@@ -209,7 +209,7 @@ mkbc_attach_slot(struct mkbc_softc *msc, pckbc_slot_t slot)
 	if (!t->t_slotdata[slot]) {
 
 		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
-					     M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT);
 
 		if (t->t_slotdata[slot] == NULL) {
 			printf("Failed to allocate slot data!\n");
@@ -219,8 +219,7 @@ mkbc_attach_slot(struct mkbc_softc *msc, pckbc_slot_t slot)
 
 		/* Map subregion of bus space for this "slot". */
 		if (bus_space_subregion(msc->iot, msc->ioh, 
-					MKBC_PORTSIZE * slot, 
-					MKBC_PORTSIZE, &ioh)) {
+		    MKBC_PORTSIZE * slot, MKBC_PORTSIZE, &ioh)) {
 			printf("Unable to map slot subregion!\n");
 			return 0;
 		}
@@ -228,19 +227,19 @@ mkbc_attach_slot(struct mkbc_softc *msc, pckbc_slot_t slot)
 
 		/* Initialise controller. */
 		bus_space_write_8(msc->iot, ioh, MKBC_CONTROL,
-			MKBC_CONTROL_TX_CLOCK_DISABLE | MKBC_CONTROL_RESET);
+		    MKBC_CONTROL_TX_CLOCK_DISABLE | MKBC_CONTROL_RESET);
 		delay(100); /* 100us */
 
 		/* Enable controller. */
 		bus_space_write_8(t->t_iot, ioh, MKBC_CONTROL,
-			MKBC_CONTROL_RX_CLOCK_ENABLE | MKBC_CONTROL_TX_ENABLE);
+		    MKBC_CONTROL_RX_CLOCK_ENABLE | MKBC_CONTROL_TX_ENABLE);
 
 	}
 
 	pa.pa_tag = t;
 	pa.pa_slot = slot;
 	found = (config_found_sm((struct device *)msc, &pa,
-				 mkbcprint, mkbc_submatch) != NULL);
+	    mkbcprint, mkbc_submatch) != NULL);
 
 	return (found);
 }
@@ -254,11 +253,13 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	struct pckbc_internal *t;
 	void *rv = NULL;
 
+	printf(": ");
+
 	/* Setup bus space mapping. */
 	msc->iot = ca->ca_iot;
 	if (bus_space_map(msc->iot, ca->ca_baseaddr, MKBC_PORTSIZE * 2, 0, 
 	    &msc->ioh)) {
-		printf(": unable to map bus space!\n");
+		printf("unable to map bus space!\n");
 		return;
 	}
 
@@ -278,12 +279,11 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish interrupt handler. */
 	msc->sc_irq = ca->ca_intr;
 	rv = macebus_intr_establish(NULL, msc->sc_irq, IST_EDGE,
-		IPL_TTY, mkbcintr, msc, sc->sc_dv.dv_xname);
-	if (rv == NULL) {
-		printf(": unable to establish interrupt\n");
-	} else {
-		printf(": using irq %d\n", msc->sc_irq);
-	}
+	    IPL_TTY, mkbcintr, msc, sc->sc_dv.dv_xname);
+	if (rv == NULL)
+		printf("unable to establish interrupt\n");
+	else
+		printf("using irq %d\n", msc->sc_irq);
 
 	/*
 	 * Attach "slots" - technically these are separate controllers
@@ -294,7 +294,6 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	mkbc_attach_slot(msc, PCKBC_AUX_SLOT);
 
 	return;
-
 }
 
 int
@@ -377,13 +376,11 @@ mkbcintr(void *vsc)
 	}
 
 	return (served);
-
 }
 
 int
 mkbc_poll_write(bus_space_tag_t iot, bus_space_handle_t ioh, int val)
 {
-
 	int timeout = 10000;
 	u_int64_t stat;
 
@@ -391,19 +388,17 @@ mkbc_poll_write(bus_space_tag_t iot, bus_space_handle_t ioh, int val)
 	while (timeout--) {
 		stat = bus_space_read_8(iot, ioh, MKBC_STATUS);
 		if (stat & MKBC_STATUS_TX_EMPTY) {
-		    bus_space_write_8(iot, ioh, MKBC_TX_PORT, val & 0xff);
-		    return 0;
+			bus_space_write_8(iot, ioh, MKBC_TX_PORT, val & 0xff);
+			return 0;
 		}
 		delay(50);
 	}
 	return -1;
-
 }
 
 int
 mkbc_poll_read(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-
 	int timeout = 10000;
 	u_int64_t stat, val;
 
@@ -411,13 +406,12 @@ mkbc_poll_read(bus_space_tag_t iot, bus_space_handle_t ioh)
 	while (timeout--) {
 		stat = bus_space_read_8(iot, ioh, MKBC_STATUS);
 		if (stat & MKBC_STATUS_RX_FULL) {
-		    val = bus_space_read_8(iot, ioh, MKBC_RX_PORT);
-		    return val & 0xff;
+			val = bus_space_read_8(iot, ioh, MKBC_RX_PORT);
+			return val & 0xff;
 		}
 		delay(50);
 	}
 	return -1;
-
 }
 
 /*
@@ -426,7 +420,7 @@ mkbc_poll_read(bus_space_tag_t iot, bus_space_handle_t ioh)
  */
 static void
 mkbc_poll_cmd(struct pckbc_internal *t, pckbc_slot_t slot, 
-	      struct pckbc_devcmd *cmd)
+    struct pckbc_devcmd *cmd)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh = t->t_slotdata[slot]->ioh;
@@ -644,7 +638,7 @@ restart:
 }
 
 /*
- * Interfaces to act like a pckbc(4).
+ * Interfaces to act like pckbc(4).
  */
 
 int
@@ -694,7 +688,7 @@ pckbc_flush(pckbc_tag_t self, pckbc_slot_t slot)
  */
 int
 pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len, 
-		  int responselen, int sync, u_char *respbuf)
+    int responselen, int sync, u_char *respbuf)
 {
 	struct pckbc_internal *t = self;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -765,8 +759,8 @@ pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 
 	c = mkbc_poll_read(t->t_iot, q->ioh);
 	if (c != -1 && q && CMD_IN_QUEUE(q)) {
-		/* we jumped into a running command - try to
-		 deliver the response */
+		/* We jumped into a running command - try to deliver the 
+		   response */
 		if (mkbc_cmdresponse(t, slot, c))
 			return (-1);
 	}
@@ -775,7 +769,7 @@ pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 
 void
 pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
-		       void *arg, char *name)
+    void *arg, char *name)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
@@ -814,7 +808,6 @@ pckbc_slot_enable(pckbc_tag_t self, pckbc_slot_t slot, int on)
 			MKBC_CONTROL_RX_CLOCK_ENABLE | MKBC_CONTROL_TX_ENABLE);
 
 	}
-
 }
 
 void
