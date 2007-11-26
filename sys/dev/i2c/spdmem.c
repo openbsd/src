@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.22 2007/11/26 15:30:53 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.23 2007/11/26 17:40:56 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -67,6 +67,9 @@
 #define	SPDMEM_MEMTYPE_DDRSDRAM		0x07
 #define	SPDMEM_MEMTYPE_DDR2SDRAM	0x08
 
+#define SPDMEM_MEMTYPE_DIRECT_RAMBUS	0x01
+#define SPDMEM_MEMTYPE_RAMBUS		0x11
+
 /* possible values for the supply voltage */
 #define	SPDMEM_VOLTAGE_TTL_5V		0x00
 #define	SPDMEM_VOLTAGE_TTL_LV		0x01
@@ -125,8 +128,9 @@
 #define SPDMEM_SDR_CAS3			(1 << 2)
 
 /* Rambus Direct DRAM */
-#define SPDMEM_RDR_ROWS_COLS		0x00
 #define SPDMEM_RDR_MODULE_TYPE		0x00
+#define SPDMEM_RDR_ROWS_COLS		0x01
+#define SPDMEM_RDR_BANK			0x02
 
 #define SPDMEM_RDR_TYPE_RIMM		1
 #define SPDMEM_RDR_TYPE_SORIMM		2
@@ -335,6 +339,21 @@ spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 void
 spdmem_rdr_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
+	int rimm_size;
+	uint8_t row_bits, col_bits, bank_bits;
+
+	row_bits = s->sm_data[SPDMEM_RDR_ROWS_COLS] >> 4;
+	col_bits = s->sm_data[SPDMEM_RDR_ROWS_COLS] & 0x0f;
+	bank_bits = s->sm_data[SPDMEM_RDR_BANK] & 0x07;
+
+	/* subtracting 13 here is a cheaper way of dividing by 8k later */
+	rimm_size = 1 << (row_bits + col_bits + bank_bits - 13);
+
+	if (rimm_size < 1024)
+		printf(" %dMB ", rimm_size);
+	else
+		printf(" %dGB ", rimm_size / 1024);
+
 	switch(s->sm_data[SPDMEM_RDR_MODULE_TYPE]) {
 	case SPDMEM_RDR_TYPE_RIMM:
 		printf("RIMM");
@@ -525,9 +544,12 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Decode and print SPD contents
 	 */
-	if (s->sm_len < 4)
-		spdmem_rdr_decode(sc, s);
-	else {
+	if (s->sm_len < 4) {
+		if (s->sm_type == SPDMEM_MEMTYPE_DIRECT_RAMBUS)
+			spdmem_rdr_decode(sc, s);
+		else
+			printf(" no decode method for Rambus memory");
+	} else {
 		switch(s->sm_type) {
 		case SPDMEM_MEMTYPE_EDO:
 		case SPDMEM_MEMTYPE_SDRAM:
