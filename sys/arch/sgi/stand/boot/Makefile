@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2007/11/25 18:25:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/11/26 10:26:02 deraadt Exp $
 
 
 PROG=		boot
@@ -21,7 +21,7 @@ CLEANFILES+= machine mips64
 .PATH:		${S}/lib/libkern/arch/mips64 ${S}/lib/libkern
 SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c ashrdi3.c
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir) && !make(obj)
+.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 	@([ -h mips64 ] || ln -s ${.CURDIR}/../../../mips64/include mips64)

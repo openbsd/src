@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2007/11/26 10:26:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -53,7 +53,7 @@ CPPFLAGS+=	-DSPARC_BOOT_UFS
 CPPFLAGS+=	-DSPARC_BOOT_NFS
 #CPPFLAGS+=	-DSPARC_BOOT_HSFS
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir) && !make(obj)
+.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 .endif

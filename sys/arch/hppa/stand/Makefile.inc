@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2007/11/26 10:01:42 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2007/11/26 10:26:02 deraadt Exp $
 
 CFLAGS=${DEBUG} -Os -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
@@ -16,7 +16,7 @@ HEAP_LIMIT=0x7f8000
 CLEANFILES+=	machine
 DEBUGLIBS=	no
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir) && !make(obj) && !(defined(PROG) && ${PROG} == "mkboot")
+.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj) && !(defined(PROG) && ${PROG} == "mkboot")
 .BEGIN:
 	@([ -h machine ] || ln -s $(S)/arch/hppa/include machine)
 .endif
