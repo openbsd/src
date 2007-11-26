@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile,v 1.14 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2007/11/26 08:40:09 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
-
-.PATH:	${.CURDIR}/../common
 
 PROG=	boot
 
@@ -9,8 +7,10 @@ NOMAN=	noman
 INSTALL_STRIP=
 S=	${.CURDIR}/../../../..
 
-SRCS=	srt0.S boot.c conf.c dvma.c net.c netif_sun.c promdev.c version.c
-SRCS+=	loadfile.c
+.PATH:	${.CURDIR}/../common
+SRCS=	srt0.S conf.c dvma.c net.c netif_sun.c promdev.c version.c
+
+SRCS+=	boot.c loadfile.c
 
 .PATH:	${S}/lib/libkern/arch/sparc ${S}/lib/libkern
 SRCS+=	bzero.S strlen.c mul.S umul.S strcmp.S sdiv.S urem.S udiv.S rem.S
@@ -26,7 +26,8 @@ elfclean: clean-elf.c
 	${HOSTCC} -o elfclean ${.ALLSRC}
 
 ${PROG}: ${OBJS} ${LIBS} elfclean
-	${LD} -N -Ttext ${RELOC2} --format a.out-sparc-netbsd -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ} `cc -print-libgcc-file-name` -o ${.TARGET}.elf
+	${LD} -N -Ttext ${RELOC2} --format a.out-sparc-netbsd -e start ${OBJS} \
+	    ${LIBSA} ${LIBZ} `cc -print-libgcc-file-name` -o ${.TARGET}.elf
 	./elfclean ${.TARGET}.elf
 	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd \
 	    ${.TARGET}.elf ${.TARGET}.aout
