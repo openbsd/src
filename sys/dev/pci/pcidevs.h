@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1297 2007/11/25 17:29:59 krw Exp 
+ *	OpenBSD: pcidevs,v 1.1298 2007/11/26 21:17:42 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1473,6 +1473,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC5	0x0015		/* PERC 5 */
+#define	PCI_PRODUCT_DELL_PERC6	0x0060		/* PERC 6 */
 
 /* Delta Electronics products */
 #define	PCI_PRODUCT_DELTA_RHINEII	0x1320		/* RhineII */
