@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.14 2007/11/26 15:35:17 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.15 2007/11/26 19:52:09 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -61,7 +61,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -121,26 +120,27 @@ struct pchb_softc {
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 
-	int sc_rnd_i;
-	u_int32_t sc_rnd_ax;
-	struct timeout sc_rnd_to;
+	/* rng stuff */
+	int sc_rng_ax;
+	int sc_rng_i;
+	struct timeout sc_rng_to;
 };
 
 int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
-int	pchb_print(void *, const char *);
-int	agpbus_print(void *, const char *);
-void	pchb_rnd(void *);
-void	pchb_amd64ht_attach (struct device *, struct pci_attach_args *, int);
-
 struct cfattach pchb_ca = {
-	sizeof(struct pchb_softc), pchbmatch, pchbattach,
+	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 
 struct cfdriver pchb_cd = {
 	NULL, "pchb", DV_DULL
 };
+
+int	pchb_print(void *, const char *);
+int	agpbus_print(void *, const char *);
+void	pchb_rnd(void *);
+void	pchb_amd64ht_attach(struct device *, struct pci_attach_args *, int);
 
 int
 pchbmatch(struct device *parent, void *match, void *aux)
@@ -148,9 +148,8 @@ pchbmatch(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
 		return (1);
-	}
 
 	return (0);
 }
@@ -161,9 +160,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct agpbus_attach_args apa;
-	int has_agp, i, r;
-
-	has_agp = 0;
+	int has_agp = 0, i, r;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
@@ -209,15 +206,13 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82955X_HB:
 			sc->sc_bt = pa->pa_memt;
 			if (bus_space_map(sc->sc_bt, I82802_IOBASE,
-			    I82802_IOSIZE, 0, &sc->sc_bh)) {
+			    I82802_IOSIZE, 0, &sc->sc_bh))
 				break;
-			}
 
 			/* probe and init rng */
 			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
-			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT)) {
+			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT))
 				break;
-			}
 
 			/* enable RNG */
 			bus_space_write_1(sc->sc_bt, sc->sc_bh,
@@ -227,20 +222,19 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 			/* see if we can read anything */
 			for (i = 1000; i-- &&
-			    !(bus_space_read_1(sc->sc_bt,sc->sc_bh,
-			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV);)
+			    !(bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV); )
 				DELAY(10);
 
 			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
-			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV)) {
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
 				break;
-			}
 
 			r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
 			    I82802_RNG_DATA);
 
-			timeout_set(&sc->sc_rnd_to, pchb_rnd, sc);
-			sc->sc_rnd_i = 4;
+			timeout_set(&sc->sc_rng_to, pchb_rnd, sc);
+			sc->sc_rng_i = 4;
 			pchb_rnd(sc);
 			break;
 		}
@@ -253,7 +247,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
-			       NULL, NULL) != 0) {
+	    NULL, NULL) != 0) {
 		apa.apa_busname = "agp";
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbus_print);
@@ -277,6 +271,34 @@ agpbus_print(void *vaa, const char *pnp)
 	if (pnp)
 		printf("agp at %s", pnp);
 	return (UNCONF);
+}
+
+/*
+ * Should do FIPS testing as per:
+ *	http://csrc.nist.gov/publications/fips/fips140-1/fips1401.pdf
+ */
+void
+pchb_rnd(void *v)
+{
+	struct pchb_softc *sc = v;
+
+	/*
+	 * Don't wait for data to be ready. If it's not there, we'll check
+	 * next time.
+	 */
+	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_RNGST) &
+	    I82802_RNG_RNGST_DATAV)) {
+
+		sc->sc_rng_ax = (sc->sc_rng_ax << 8) |
+		    bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_DATA);
+
+		if (!sc->sc_rng_i--) {
+			sc->sc_rng_i = 4;
+			add_true_randomness(sc->sc_rng_ax);
+		}
+	}
+
+	timeout_add(&sc->sc_rng_to, 1);
 }
 
 void
@@ -304,32 +326,4 @@ pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
-}
-
-/*
- * Should do FIPS testing as per:
- *	http://csrc.nist.gov/publications/fips/fips140-1/fips1401.pdf
- */
-void
-pchb_rnd(void *v)
-{
-	struct pchb_softc *sc = v;
-
-	/*
-	 * Don't wait for data to be ready. If it's not there, we'll check
-	 * next time.
-	 */
-	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_RNGST) &
-	    I82802_RNG_RNGST_DATAV)) {
-
-		sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) |
-		    bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_DATA);
-
-		if (!sc->sc_rnd_i--) {
-			sc->sc_rnd_i = 4;
-			add_true_randomness(sc->sc_rnd_ax);
-		}
-	}
-
-	timeout_add(&sc->sc_rnd_to, 1);
 }

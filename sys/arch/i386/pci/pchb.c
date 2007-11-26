@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.60 2007/11/26 15:35:17 deraadt Exp $ */
+/*	$OpenBSD: pchb.c,v 1.61 2007/11/26 19:52:09 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 
 #include <machine/bus.h>
@@ -74,7 +73,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
 #include <dev/rndvar.h>
@@ -120,20 +118,17 @@
 struct pchb_softc {
 	struct device sc_dev;
 
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
+	bus_space_tag_t sc_bt;
+	bus_space_handle_t sc_bh;
 
 	/* rng stuff */
-	int ax;
-	int i;
-	struct timeout sc_tmo;
+	int sc_rng_ax;
+	int sc_rng_i;
+	struct timeout sc_rng_to;
 };
 
 int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
-
-int	pchb_print(void *, const char *);
-int	agpbus_print(void *, const char *);
 
 struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach
@@ -143,25 +138,28 @@ struct cfdriver pchb_cd = {
 	NULL, "pchb", DV_DULL
 };
 
-void pchb_rnd(void *v);
+int	pchb_print(void *, const char *);
+int	agpbus_print(void *, const char *);
+void	pchb_rnd(void *);
 void	pchb_amd64ht_attach(struct device *, struct pci_attach_args *, int);
-
-const struct pci_matchid via_devices[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596B_PM },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB }
-};
 
 int
 pchbmatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
+#ifdef __i386__
 	/* XXX work around broken via82x866 chipsets */
+	const struct pci_matchid via_devices[] = {
+		{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR },
+		{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596 },
+		{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596B_PM },
+		{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB }
+	};
 	if (pci_matchbyid(pa, via_devices,
 	    sizeof(via_devices) / sizeof(via_devices[0])))
 		return (0);
+#endif /* __i386__ */
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
@@ -188,10 +186,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach, has_agp, i, r;
-
-	doattach = 0;
-	has_agp = 0;
+	int doattach = 0, has_agp = 0, i, r;
 
 	/*
 	 * configure certain chipsets which have auxiliary PCI buses.
@@ -371,38 +366,38 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82945GP_MCH:
 		case PCI_PRODUCT_INTEL_82955X_HB:
-			sc->bt = pa->pa_memt;
-			if (bus_space_map(sc->bt, I82802_IOBASE, I82802_IOSIZE,
-			    0, &sc->bh))
+			sc->sc_bt = pa->pa_memt;
+			if (bus_space_map(sc->sc_bt, I82802_IOBASE,
+			    I82802_IOSIZE, 0, &sc->sc_bh))
 				break;
 
 			/* probe and init rng */
-			if (!(bus_space_read_1(sc->bt, sc->bh,
+			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
 			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT))
 				break;
 
 			/* enable RNG */
-			bus_space_write_1(sc->bt, sc->bh, I82802_RNG_HWST,
-			    bus_space_read_1(sc->bt, sc->bh, I82802_RNG_HWST) |
-			    I82802_RNG_HWST_ENABLE);
+			bus_space_write_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_HWST,
+			    bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_HWST) | I82802_RNG_HWST_ENABLE);
 
 			/* see if we can read anything */
 			for (i = 1000; i-- &&
-			    !(bus_space_read_1(sc->bt,sc->bh,I82802_RNG_RNGST)&
-			      I82802_RNG_RNGST_DATAV);
-			    DELAY(10));
+			    !(bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV); )
+				DELAY(10);
 
-			if (!(bus_space_read_1(sc->bt, sc->bh,
+			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
 			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
 				break;
 
-			r = bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
+			r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_DATA);
 
-			timeout_set(&sc->sc_tmo, pchb_rnd, sc);
-			sc->i = 4;
+			timeout_set(&sc->sc_rng_to, pchb_rnd, sc);
+			sc->sc_rng_i = 4;
 			pchb_rnd(sc);
-			break;
-		default:
 			break;
 		}
 	}
@@ -413,7 +408,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
-			       NULL, NULL) != 0) {
+	    NULL, NULL) != 0) {
 		apa.apa_busname = "agp";
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbus_print);
@@ -467,19 +462,19 @@ pchb_rnd(void *v)
 	 * Don't wait for data to be ready. If it's not there, we'll check
 	 * next time.
 	 */
-	if ((bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
+	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_RNGST) &
 	    I82802_RNG_RNGST_DATAV)) {
 
-		sc->ax = (sc->ax << 8) |
-		    bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
+		sc->sc_rng_ax = (sc->sc_rng_ax << 8) |
+		    bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_DATA);
 
-		if (!sc->i--) {
-			sc->i = 4;
-			add_true_randomness(sc->ax);
+		if (!sc->sc_rng_i--) {
+			sc->sc_rng_i = 4;
+			add_true_randomness(sc->sc_rng_ax);
 		}
 	}
 
-	timeout_add(&sc->sc_tmo, 1);
+	timeout_add(&sc->sc_rng_to, 1);
 }
 
 void
