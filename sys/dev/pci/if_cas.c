@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.9 2007/10/06 14:50:22 jsg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.10 2007/11/26 15:36:22 kettenis Exp $	*/
 
 /*
  *
@@ -1584,6 +1584,7 @@ cas_pcs_writereg(struct device *self, int phy, int reg, int val)
 	struct cas_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t pcs = sc->sc_memh;
+	int reset = 0;
 
 #ifdef CAS_DEBUG
 	if (sc->sc_debug)
@@ -1594,8 +1595,12 @@ cas_pcs_writereg(struct device *self, int phy, int reg, int val)
 	if (phy != CAS_PHYAD_EXTERNAL)
 		return;
 
+	if (reg == MII_ANAR)
+		bus_space_write_4(t, pcs, CAS_MII_CONFIG, 0);
+
 	switch (reg) {
 	case MII_BMCR:
+		reset = (val & CAS_MII_CONTROL_RESET);
 		reg = CAS_MII_CONTROL;
 		break;
 	case MII_BMSR:
@@ -1613,12 +1618,12 @@ cas_pcs_writereg(struct device *self, int phy, int reg, int val)
 
 	bus_space_write_4(t, pcs, reg, val);
 
-	if (reg == CAS_MII_ANAR) {
-		bus_space_write_4(t, pcs, CAS_MII_SLINK_CONTROL,
-		    CAS_MII_SLINK_LOOPBACK|CAS_MII_SLINK_EN_SYNC_D);
+	if (reset)
+		cas_bitwait(sc, pcs, CAS_MII_CONTROL, CAS_MII_CONTROL_RESET, 0);
+
+	if (reg == CAS_MII_ANAR || reset)
 		bus_space_write_4(t, pcs, CAS_MII_CONFIG,
 		    CAS_MII_CONFIG_ENABLE);
-	}
 }
 
 int
