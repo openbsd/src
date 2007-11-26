@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.23 2007/11/12 16:40:46 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.24 2007/11/26 19:44:43 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -47,7 +47,9 @@ struct mbg_softc {
 	struct ksensor		sc_timedelta;
 	struct ksensor		sc_signal;
 	struct ksensordev	sc_sensordev;
-
+	struct timeout		sc_timeout;	/* invalidate sensor */
+	int			sc_trust;	/* trust time in ticks */
+	
 	int			(*sc_read)(struct mbg_softc *, int cmd,
 				    char *buf, size_t len,
 				    struct timespec *tstamp);
@@ -144,6 +146,7 @@ int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
+void	mbg_timeout(void *);
 
 struct cfattach mbg_ca = {
 	sizeof(struct mbg_softc), mbg_probe, mbg_attach
@@ -174,13 +177,16 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	struct mbg_softc *sc = (struct mbg_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	struct mbg_time tframe;
+	struct timeval tv_trust;
 	pcireg_t memtype;
 	bus_size_t iosize, iosize2;
-	int bar = PCI_MAPREG_START, signal;
+	int bar = PCI_MAPREG_START, signal, t_trust;
 	const char *desc;
 #ifdef MBG_DEBUG
 	char fw_id[MBG_ID_LEN];
 #endif
+
+	timeout_set(&sc->sc_timeout, mbg_timeout, sc);
 
 	/* for the PEX511 use BAR2 instead of BAR0*/
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MEINBERG_PEX511)
@@ -202,6 +208,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
+	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
 	sc->sc_timedelta.value = 0LL;
 	sc->sc_timedelta.flags = 0;
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
@@ -212,6 +219,8 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_signal.flags = 0;
 	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
+
+	t_trust = 12 * 60 * 60;		/* twelve hours */
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEINBERG_PCI32:
@@ -243,6 +252,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		sensor_task_register(sc, mbg_task, 10);
 		break;
 	case PCI_PRODUCT_MEINBERG_GPS170PCI:
+		t_trust = 4 * 24 * 60 * 60;	/* four days */
 		sc->sc_read = mbg_read_asic;
 		sensor_task_register(sc, mbg_task_hr, 1);
 		break;
@@ -251,6 +261,10 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		panic(": unsupported product 0x%04x", PCI_PRODUCT(pa->pa_id));
 		break;
 	}
+
+	tv_trust.tv_sec = t_trust;
+	tv_trust.tv_usec = 0L;
+	sc->sc_trust = tvtohz(&tv_trust);
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
@@ -288,6 +302,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	printf("\n");
 	sensordev_install(&sc->sc_sensordev);
+	timeout_add(&sc->sc_timeout, sc->sc_trust);
 }
 
 /*
@@ -366,7 +381,6 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 	int signal;
 
 	sc->sc_timedelta.value = timedelta;
-	sc->sc_timedelta.status = SENSOR_S_OK;
 	sc->sc_timedelta.tv.tv_sec = tstamp->tv_sec;
 	sc->sc_timedelta.tv.tv_usec = tstamp->tv_nsec / 1000;
 
@@ -381,6 +395,10 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 	    SENSOR_S_WARN : SENSOR_S_OK;
 	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
+	if (!(status & MBG_FREERUN)) {
+		sc->sc_timedelta.status = SENSOR_S_OK;
+		timeout_add(&sc->sc_timeout, sc->sc_trust);
+	}
 }
 
 /*
@@ -544,4 +562,24 @@ mbg_read_asic(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 		}
 	}
 	return 0;
+}
+
+/*
+ * Degrade the sensor state if we are feerunning for more than
+ * TRUSTTIME seconds.
+ */
+void
+mbg_timeout(void *xsc)
+{
+	struct mbg_softc *sc = xsc;
+
+	if (sc->sc_timedelta.status == SENSOR_S_OK) {
+		sc->sc_timedelta.status = SENSOR_S_WARN;
+		/*
+		 * further degrade in TRUSTTIME seconds if no new valid NMEA
+		 * sentences are received.
+		 */
+		timeout_add(&sc->sc_timeout, sc->sc_trust);
+	} else
+		sc->sc_timedelta.status = SENSOR_S_CRIT;
 }
