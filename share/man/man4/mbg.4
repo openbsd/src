@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbg.4,v 1.11 2007/11/11 18:19:05 jmc Exp $
+.\"	$OpenBSD: mbg.4,v 1.12 2007/11/26 23:05:28 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2007 $
+.Dd $Mdocdate: November 26 2007 $
 .Dt MBG 4
 .Os
 .Sh NAME
@@ -49,6 +49,28 @@ Currently, the following cards are supported by
 .It PEX511
 PCI Express DCF77 time signal station receiver card
 .El
+.Pp
+The quality of the timedelta is reported as the sensor status:
+.Bl -tag -width "CRITICALXX" -offset indent
+.It UNKNOWN
+No valid time information has been received yet.
+.It OK
+The time information is valid and the timedelta is safe to use for
+applications like
+.Xr ntpd 8 .
+.It WARN
+The time information is still valid, but no new time information has been
+decoded for twelve hours (four days in the case of a GPS170PCI card) due to
+a reception or parity error.
+The timedelta should be used with care.
+.It CRITICAL
+No valid time information has been received for more than twelve hours (or
+four days in the case of a GPS170PCI card) since the sensor state degraded
+from OK to WARN.
+This is an indication that hardware should be checked to see if it is still
+functional.
+.El
+
 .Pp
 A second sensor provides the relative signal quality as a percentage.
 The status of this sensor is used to report the status of the device itself:
