@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_parse.c,v 1.4 2006/10/31 01:15:13 millert Exp $	*/
+/*	$OpenBSD: aml_parse.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_parse.c,v 1.4 2006/10/31 01:15:13 millert Exp $
+ *	$Id: aml_parse.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 
@@ -1310,9 +1310,10 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 	union	aml_object *srcobj;
 	union	aml_object *obj;
 	union	aml_object *srcbuf;
-	static int	widthtbl[4] = {32, 16, 8, 1};
-	const char	*opname[4] = {"CreateDWordField", "CreateWordField",
-				      "CreateByteField", "CreateBitField"};
+	static int	widthtbl[6] = {32, 16, 8, 1, -1, 64};
+	const char	*opname[6] = {"CreateDWordField", "CreateWordField",
+				      "CreateByteField", "CreateBitField",
+				      NULL, "CreateQWordField"};
 
 	aname = &env->tempname;
 	ret = &env->tempobject;
@@ -1970,6 +1971,7 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 	case 0x8b:
 	case 0x8c:
 	case 0x8d:
+	case 0x8f:
 		/* CreateDWordFieldOp */
 		widthindex = *(env->dp - 1) - 0x8a;
 		AML_DEBUGPRINT("%s(", opname[widthindex]);

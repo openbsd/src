@@ -1,4 +1,4 @@
-/*	$OpenBSD: asl_dump.c,v 1.4 2007/09/22 19:42:19 otto Exp $	*/
+/*	$OpenBSD: asl_dump.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asl_dump.c,v 1.4 2007/09/22 19:42:19 otto Exp $
+ *	$Id: asl_dump.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.5 2001/10/23 14:53:58 takawata Exp $
  */
 
@@ -1233,6 +1233,16 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		break;
 	case 0x8e:		/* ObjectTypeOp */
 		printf("ObjectType(");
+		asl_dump_termobj(&dp, indent);
+		printf(")");
+		break;
+	case 0x8f:		/* CreateQWordFieldOp */
+		printf("CreateQWordField(");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		ASL_CREATE_LOCALNAMEOBJ(dp);
 		asl_dump_termobj(&dp, indent);
 		printf(")");
 		break;
