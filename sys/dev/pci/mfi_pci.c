@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.12 2007/11/26 21:20:55 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -62,6 +62,16 @@ struct	mfi_pci_device {
 	  PCI_VENDOR_DELL,	0x1f01,		"Dell PERC 5/e",	0 },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
 	  PCI_VENDOR_DELL,	0x1f02,		"Dell PERC 5/i",	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
+	  PCI_VENDOR_DELL,	0x1f0a,		"Dell PERC 6/e",	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
+	  PCI_VENDOR_DELL,	0x1f0b,		"Dell PERC 6/i",	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
+	  PCI_VENDOR_DELL,	0x1f0d,		"Dell CERC 6/i",	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
+	  PCI_VENDOR_DELL,	0x1f0c,		"Dell PERC 6/i integrated", 0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
+	  PCI_VENDOR_DELL,	0x1f11,		"Dell CERC 6/i integrated", 0 },
 	{ 0 }
 };
 
