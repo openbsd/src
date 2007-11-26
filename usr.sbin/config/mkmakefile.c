@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.24 2007/11/26 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.25 2007/11/26 17:25:59 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -150,9 +150,10 @@ bad:
 static const char *
 srcpath(struct files *fi)
 {
+	/* Always have source, don't support object dirs for kernel builds. */
 	struct nvlist *nv, *nv1;
+	char *expand, *source;
 	const char *var;
-	char *source;
 
 	/* Search path list for files we will want to use */
 	if (fi->fi_nvpath->nv_next == NULL) {
@@ -163,9 +164,9 @@ srcpath(struct files *fi)
 	for (nv = fi->fi_nvpath; nv; nv = nv->nv_next) {
 		char *s, *e;
 
+		expand = NULL;
 		s = strchr(nv->nv_name, '$');
 		if (s) {
-			char *expand;
 			size_t len;
 
 			/* Search for a ${name} to expand */
@@ -190,11 +191,16 @@ srcpath(struct files *fi)
 			    s - nv->nv_name, s - nv->nv_name, nv->nv_name,
 			    var, e + 1);
 			source = sourcepath(expand);
-			free(expand);
 		} else
 			source = sourcepath(nv->nv_name);
-		if (access(source, R_OK) == 0)
+		if (access(source, R_OK) == 0) {
+			/* poolalloc() prevents freeing old nv_name */
+			if (expand)
+				nv->nv_name = intern(expand);
 			break;
+		}
+		if (expand)
+			free(expand);
 		free(source);
 	}
 	if (nv == NULL)
