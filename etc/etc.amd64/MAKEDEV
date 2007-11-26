@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.22 2007/11/25 22:33:09 reyk Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.23 2007/11/26 10:35:42 reyk Exp 
 #	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -386,7 +386,7 @@ apm*)
 	;;
 
 agp*)
-	M agp$U c 87 $U
+	M agp$U c 86 $U
 	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"
 	;;
 
