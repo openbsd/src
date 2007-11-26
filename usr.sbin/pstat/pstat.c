@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.66 2007/09/03 14:26:54 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.67 2007/11/26 18:32:33 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.66 2007/09/03 14:26:54 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.67 2007/11/26 18:32:33 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static char *rcsid = "$OpenBSD: pstat.c,v 1.66 2007/09/03 14:26:54 deraadt Exp $
 #include <string.h>
 #include <unistd.h>
 
-struct nlist nl[] = {
+struct nlist vnodenl[] = {
 #define	FNL_NFILE	0		/* sysctl */
 	{"_nfiles"},
 #define FNL_MAXFILE	1		/* sysctl */
@@ -92,8 +92,10 @@ struct nlist nl[] = {
 	{"_ttylist"},
 #define	V_MOUNTLIST	5		/* no sysctl */
 	{ "_mountlist" },
-	{ "" }
+	{ NULL }
 };
+
+struct nlist *globalnl;
 
 int	usenumflag;
 int	totalflag;
@@ -106,7 +108,7 @@ kvm_t	*kd = NULL;
 #define	KGET(idx, var)							\
 	KGET1(idx, &var, sizeof(var), SVAR(var))
 #define	KGET1(idx, p, s, msg)						\
-	KGET2(nl[idx].n_value, p, s, msg)
+	KGET2(globalnl[idx].n_value, p, s, msg)
 #define	KGET2(addr, p, s, msg)						\
 	if (kvm_read(kd, (u_long)(addr), p, s) != s)			\
 		warnx("cannot read %s: %s", msg, kvm_geterr(kd))
@@ -203,7 +205,7 @@ main(int argc, char *argv[])
 			err(1, "setresgid");
 
 	if (vnodeflag)
-		if (kvm_nlist(kd, nl) == -1)
+		if (kvm_nlist(kd, vnodenl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
 	if (!(fileflag | vnodeflag | ttyflag | swapflag | totalflag))
@@ -226,6 +228,8 @@ vnodemode(void)
 	struct vnode *vp;
 	struct mount *maddr, *mp = NULL;
 	int numvnodes;
+
+	globalnl = vnodenl;
 
 	e_vnodebase = loadvnodes(&numvnodes);
 	if (totalflag) {
