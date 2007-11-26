@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.85 2007/11/24 16:13:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.86 2007/11/26 09:38:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -467,6 +467,7 @@ struct protonode {
 	u_int8_t			 flags;
 	enum nodetype			 type;
 	u_int16_t			 mark;
+	u_int16_t			 label;
 
 	SIMPLEQ_HEAD(, protonode)	 head;
 	SIMPLEQ_ENTRY(protonode)	 entry;
@@ -800,3 +801,10 @@ void	 carp_demote_shutdown(void);
 int	 carp_demote_get(char *);
 int	 carp_demote_set(char *, int);
 int	 carp_demote_reset(char *, int);
+
+/* name2id.c */
+u_int16_t	 pn_name2id(const char *);
+const char	*pn_id2name(u_int16_t);
+void		 pn_unref(u_int16_t);
+void		 pn_ref(u_int16_t);
+

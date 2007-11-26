@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.96 2007/11/26 09:38:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -93,6 +93,7 @@ static struct table	*table = NULL;
 static struct relay	*rlay = NULL;
 static struct protocol	*proto = NULL;
 static struct protonode	 node;
+static u_int16_t	 label = 0;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -121,7 +122,7 @@ typedef struct {
 
 %token	SERVICE TABLE BACKUP HOST REAL INCLUDE
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
-%token  TIMEOUT CODE DIGEST PORT TAG INTERFACE STYLE RETURN
+%token  TIMEOUT CODE DIGEST PORT TAG INTERFACE STYLE RETURN LABEL
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT WITH
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED URL
@@ -689,6 +690,17 @@ protoptsl	: SSL sslflags
 		| PROTO proto_type		{ proto->type = $2; }
 		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
 		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
+		| LABEL STRING			{
+			label = pn_name2id($2);
+			free($2);
+			if (label == 0) {
+				yyerror("invalid protocol action label");
+				YYERROR;
+			}
+		}
+		| NO LABEL			{
+			label = 0;
+		}
 		| direction protonode log	{
 			struct protonode	*pn, *proot, pk;
 			struct proto_tree	*tree;
@@ -704,6 +716,7 @@ protoptsl	: SSL sslflags
 			pn->key = node.key;
 			pn->value = node.value;
 			pn->type = node.type;
+			pn->label = label;
 			SIMPLEQ_INIT(&pn->head);
 			if ($1 == RELAY_DIR_RESPONSE)
 				pn->id = proto->response_nodes++;
@@ -1377,6 +1390,7 @@ lookup(char *s)
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
+		{ "label",		LABEL },
 		{ "listen",		LISTEN },
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },

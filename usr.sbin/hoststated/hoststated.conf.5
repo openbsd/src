@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.68 2007/11/25 20:02:02 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.69 2007/11/26 09:38:25 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2007 $
+.Dd $Mdocdate: November 26 2007 $
 .Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
@@ -706,6 +706,20 @@ action does not accept the
 .Ic marked
 option (see above).
 .El
+.It Ic label Ar string
+Add a label to subsequently added actions.
+The label will be printed as part of the error message if the
+.Ic return error
+option is set and may contain HTML tags, for example:
+.Bd -literal -offset indent
+label "<a href='http://example.com/advisory.pl?id=7359'>\e
+	Advisory provided by example.com</a>"
+url filter digest 5c1e03f58f8ce0b457474ffb371fd1ef
+url filter digest 80c1a7b8337462093ef8359c57b4d56a
+no label
+.Ed
+.It Ic no label
+Do not set a label for subsequently added actions, this is the default.
 .It Ic return error Op Ar option
 Return an error reponse to the client if an internal operation or the
 forward connection to the client failed.

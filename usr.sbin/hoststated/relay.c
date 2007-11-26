@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.71 2007/11/24 17:43:47 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.72 2007/11/26 09:38:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -99,7 +99,8 @@ void		 relay_read_httpcontent(struct bufferevent *, void *);
 void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
-void		 relay_close_http(struct session *, u_int, const char *);
+void		 relay_close_http(struct session *, u_int, const char *,
+		    u_int16_t);
 
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct session *);
@@ -731,7 +732,7 @@ relay_connected(int fd, short sig, void *arg)
 	struct bufferevent	*bev;
 
 	if (sig == EV_TIMEOUT) {
-		relay_close_http(con, 504, "connect timeout");
+		relay_close_http(con, 504, "connect timeout", 0);
 		return;
 	}
 
@@ -746,7 +747,7 @@ relay_connected(int fd, short sig, void *arg)
 			if ((con->out.nodes = calloc(proto->response_nodes,
 			    sizeof(u_int8_t))) == NULL) {
 				relay_close_http(con, 500,
-				    "failed to allocate nodes");
+				    "failed to allocate nodes", 0);
 				return;
 			}
 		}
@@ -764,7 +765,7 @@ relay_connected(int fd, short sig, void *arg)
 	bev = bufferevent_new(fd, outrd, outwr, relay_error, &con->out);
 	if (bev == NULL) {
 		relay_close_http(con, 500,
-		    "failed to allocate output buffer event");
+		    "failed to allocate output buffer event", 0);
 		return;
 	}
 	evbuffer_free(bev->output);
@@ -920,7 +921,8 @@ relay_resolve(struct ctl_relay_event *cre,
 		    relay_bufferevent_print(cre->dst, ": ") == -1 ||
 		    relay_bufferevent_print(cre->dst, ptr) == -1 ||
 		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
-			relay_close_http(con, 500, "failed to modify header");
+			relay_close_http(con, 500,
+			    "failed to modify header", 0);
 			return (-1);
 		}
 		DPRINTF("relay_resolve: add '%s: %s'",
@@ -929,12 +931,12 @@ relay_resolve(struct ctl_relay_event *cre,
 	case NODE_ACTION_EXPECT:
 		DPRINTF("relay_resolve: missing '%s: %s'",
 		    pn->key, pn->value);
-		relay_close_http(con, 403, "incomplete request");
+		relay_close_http(con, 403, "incomplete request", pn->label);
 		return (-1);
 	case NODE_ACTION_FILTER:
 		DPRINTF("relay_resolve: filtered '%s: %s'",
 		    pn->key, pn->value);
-		relay_close_http(con, 403, "rejecting request");
+		relay_close_http(con, 403, "rejecting request", pn->label);
 		return (-1);
 	default:
 		break;
@@ -1049,7 +1051,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		 * trying to circumvent the filter.
 		 */
 		if (cre->nodes[proot->id] > 1) {
-			relay_close_http(con, 400, "repeated header line");
+			relay_close_http(con, 400, "repeated header line", 0);
 			return (PN_FAIL);
 		}
 		/* FALLTHROUGH */
@@ -1067,7 +1069,8 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 
 			/* Fail instantly */
 			if (pn->action == NODE_ACTION_FILTER) {
-				relay_close_http(con, 403, "rejecting request");
+				relay_close_http(con, 403,
+				    "rejecting request", pn->label);
 				return (PN_FAIL);
 			}
 		}
@@ -1106,7 +1109,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 
 	return (ret);
  fail:
-	relay_close_http(con, 500, strerror(errno));
+	relay_close_http(con, 500, strerror(errno), 0);
 	return (PN_FAIL);
 }
 
@@ -1288,7 +1291,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (pk.value == NULL || strlen(pk.value) < 3) {
 			if (cre->line == 1) {
 				free(line);
-				relay_close_http(con, 400, "malformed");
+				relay_close_http(con, 400, "malformed", 0);
 				return;
 			}
 
@@ -1397,7 +1400,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 */
 			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
 			if (errstr) {
-				relay_close_http(con, 500, errstr);
+				relay_close_http(con, 500, errstr, 0);
 				goto abort;
 			}
 		}
@@ -1506,7 +1509,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (cre->dir == RELAY_DIR_REQUEST &&
 		    proto->lateconnect && cre->dst->bev == NULL &&
 		    relay_connect(con) == -1) {
-			relay_close_http(con, 502, "session failed");
+			relay_close_http(con, 502, "session failed", 0);
 			return;
 		}
 	}
@@ -1520,7 +1523,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	relay_close(con, "last http read (done)");
 	return;
  fail:
-	relay_close_http(con, 500, strerror(errno));
+	relay_close_http(con, 500, strerror(errno), 0);
 	return;
  abort:
 	free(line);
@@ -1539,7 +1542,7 @@ _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
 	    host, path,
 	    query == NULL ? "" : "?",
 	    query == NULL ? "" : query) == -1) {
-		relay_close_http(con, 500, "failed to allocate URL");
+		relay_close_http(con, 500, "failed to allocate URL", 0);
 		return (PN_FAIL);
 	}
 
@@ -1549,7 +1552,8 @@ _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
 	case DIGEST_SHA1:
 	case DIGEST_MD5:
 		if ((md = digeststr(type, val, strlen(val), NULL)) == NULL) {
-			relay_close_http(con, 500, "failed to allocate digest");
+			relay_close_http(con, 500,
+			    "failed to allocate digest", 0);
 			goto fail;
 		}
 		pkv.key = md;
@@ -1602,7 +1606,7 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *str,
 	    str, cre->path, cre->args == NULL ? "" : cre->args);
 
 	if (canonicalize_host(str, ph, sizeof(ph)) == NULL) {
-		relay_close_http(con, 400, "invalid host name");
+		relay_close_http(con, 400, "invalid host name", 0);
 		return (PN_FAIL);
 	}
 
@@ -1618,7 +1622,7 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *str,
 	hi[dots] = ph;
 
 	if ((pp = strdup(cre->path)) == NULL) {
-		relay_close_http(con, 500, "failed to allocate path");
+		relay_close_http(con, 500, "failed to allocate path", 0);
 		return (PN_FAIL);
 	}
 	for (i = (RELAY_MAXLOOKUPLEVELS - 1); i >= 0; i--) {
@@ -1668,7 +1672,7 @@ relay_lookup_query(struct ctl_relay_event *cre)
 	if (cre->path == NULL || cre->args == NULL || strlen(cre->args) < 2)
 		return (PN_PASS);
 	if ((val = strdup(cre->args)) == NULL) {
-		relay_close_http(con, 500, "failed to allocate query");
+		relay_close_http(con, 500, "failed to allocate query", 0);
 		return (PN_FAIL);
 	}
 
@@ -1709,7 +1713,7 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str)
 	int			 ret;
 
 	if ((val = strdup(str)) == NULL) {
-		relay_close_http(con, 500, "failed to allocate cookie");
+		relay_close_http(con, 500, "failed to allocate cookie", 0);
 		return (PN_FAIL);
 	}
 
@@ -1752,7 +1756,8 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str)
 }
 
 void
-relay_close_http(struct session *con, u_int code, const char *msg)
+relay_close_http(struct session *con, u_int code, const char *msg,
+    u_int16_t labelid)
 {
 	struct relay		*rlay = (struct relay *)con->relay;
 	struct bufferevent	*bev = con->in.bev;
@@ -1761,7 +1766,7 @@ relay_close_http(struct session *con, u_int code, const char *msg)
 	time_t			 t;
 	struct tm		*lt;
 	char			 tmbuf[32], hbuf[128];
-	const char		*style;
+	const char		*style, *label = NULL;
 
 	/* In some cases this function may be called from generic places */
 	if (rlay->proto->type != RELAY_PROTO_HTTP ||
@@ -1787,6 +1792,8 @@ relay_close_http(struct session *con, u_int code, const char *msg)
 	/* Do not send details of the Internal Server Error */
 	if (code != 500)
 		text = msg;
+	if (labelid != 0)
+		label = pn_id2name(labelid);
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	if ((style = rlay->proto->style) == NULL)
@@ -1809,12 +1816,14 @@ relay_close_http(struct session *con, u_int code, const char *msg)
 	    "</head>\n"
 	    "<body>\n"
 	    "<h1>%s</h1>\n"
-	    "<p>%s</p>\n"
+	    "<div id='m'>%s</div>\n"
+	    "<div id='l'>%s</div>\n"
 	    "<hr><address>%s at %s port %d</address>\n"
 	    "</body>\n"
 	    "</html>\n",
 	    code, httperr, tmbuf, HOSTSTATED_SERVERNAME,
 	    code, httperr, style, httperr, text,
+	    label == NULL ? "" : label,
 	    HOSTSTATED_SERVERNAME, hbuf, ntohs(rlay->conf.port)) == -1)
 		goto done;
 
