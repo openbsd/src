@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.74 2007/11/26 08:13:48 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.75 2007/11/26 08:18:51 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4719,7 +4719,7 @@ ENTRY(qzero)
 	nop
 
 /*
- * memcpy (which internally contains the non-overlapping bcopy code)
+ * kernel bcopy/memcpy
  * Assumes regions do not overlap; has no useful return value.
  *
  * Must not use %g7 (see copyin/copyout above).
@@ -4735,6 +4735,7 @@ ENTRY(memcpy)
 	mov	%o0, %o3
 	mov	%o1, %o0
 	mov	%o3, %o1
+ENTRY(bcopy)
 	cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge,a	Lbcopy_fancy	! if >= this many, go be fancy.
@@ -4900,10 +4901,9 @@ Lbcopy_done:
 	retl
 	stb	%o4,[%o1]
 /*
- * bcopy(src, dst, len): regions may overlap, of course.
+ * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
  */
-ALTENTRY(ovbcopy)
-ENTRY(bcopy)
+ENTRY(ovbcopy)
 	cmp	%o0, %o1	! src < dst?
 	bgeu	Lbcopy_start	! no, go copy forwards as via bcopy
 	cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
