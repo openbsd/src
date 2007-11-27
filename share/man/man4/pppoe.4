@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.18 2007/11/27 12:33:29 claudio Exp $
+.\"	$OpenBSD: pppoe.4,v 1.19 2007/11/27 18:00:42 claudio Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -192,6 +192,13 @@ However,
 machines connecting on a private LAN will still have their MTUs set to 1500,
 causing conflict.
 .Pp
+While
+.Xr pppoe 8
+has an internal option,
+.Dq mssfixup ,
+which is enabled by default and takes care of this,
+.Nm
+users have to rely on other methods.
 Using a packet filter,
 the
 Maximum Segment Size (MSS)
