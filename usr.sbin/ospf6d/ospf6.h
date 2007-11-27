@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.7 2007/10/16 21:58:17 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.8 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -162,6 +162,18 @@ struct ls_upd_hdr {
 #define LSA_TYPE_INTRA_A_PREFIX	0x2009
 #define	LSA_TYPE_EXTERNAL	0x4005
 
+#define LSA_TYPE_FLAG_U		0x8000
+#define LSA_TYPE_FLAG_S2	0x4000
+#define LSA_TYPE_FLAG_S1	0x2000
+#define LSA_TYPE_SCOPE_MASK	0x6000
+
+#define LSA_IS_SCOPE_LLOCAL(x)	\
+    (((x) & LSA_TYPE_SCOPE_MASK) == 0)
+#define LSA_IS_SCOPE_AREA(x)	\
+    (((x) & LSA_TYPE_SCOPE_MASK) == LSA_TYPE_FLAG_S1)
+#define LSA_IS_SCOPE_AS(x)	\
+    (((x) & LSA_TYPE_SCOPE_MASK) == LSA_TYPE_FLAG_S2)
+
 #define LINK_TYPE_POINTTOPOINT	1
 #define LINK_TYPE_TRANSIT_NET	2
 #define LINK_TYPE_RESERVED	3
@@ -175,6 +187,13 @@ struct ls_upd_hdr {
 #define OSPF_RTR_E		0x02
 #define OSPF_RTR_V		0x04
 #define OSPF_RTR_W		0x08
+
+struct lsa_prefix {
+	struct in6_addr		prefix;
+	u_int16_t		metric;
+	u_int8_t		prefixlen;
+	u_int8_t		options;
+};
 
 struct lsa_rtr {
 	u_int32_t		opts;	/* 8bit flags + 24bits options */
@@ -198,9 +217,15 @@ struct lsa_net_link {
 	u_int32_t		att_rtr;
 };
 
-struct lsa_sum {
-	u_int32_t		mask;
+struct lsa_prefix_sum {
 	u_int32_t		metric;		/* only lower 24 bit */
+	/* + one prefix */
+};
+
+struct lsa_rtr_sum {
+	u_int32_t		options;	/* lower 24bit options */
+	u_int32_t		metric;		/* only lower 24 bit */
+	u_int32_t		dest_rtr_id;
 };
 
 struct lsa_asext {
@@ -208,6 +233,21 @@ struct lsa_asext {
 	u_int32_t		metric;		/* lower 24 bit plus E bit */
 	u_int32_t		fw_addr;
 	u_int32_t		ext_tag;
+};
+
+struct lsa_link {
+	u_int32_t		options;	/* rtr pri & 24bit options */
+	struct in6_addr		lladdr;
+	u_int32_t		numprefix;
+	/* + numprefix prefix */
+};
+
+struct lsa_intra_prefix {
+	u_int16_t		numprefix;
+	u_int16_t		ref_type;
+	u_int32_t		ref_lsid;
+	u_int32_t		ref_adv_rtr;
+	/* + numprefix prefix */
 };
 
 struct lsa_hdr {
@@ -227,8 +267,11 @@ struct lsa {
 	union {
 		struct lsa_rtr		rtr;
 		struct lsa_net		net;
-		struct lsa_sum		sum;
+		struct lsa_prefix_sum	pref_sum;
+		struct lsa_rtr_sum	rtr_sum;
 		struct lsa_asext	asext;
+		struct lsa_link		link;
+		struct lsa_intra_prefix pref_intra;
 	}			data;
 };
 

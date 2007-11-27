@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.6 2007/11/24 16:42:58 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.7 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -29,10 +29,12 @@
 
 struct vertex	*vertex_get(struct lsa *, struct rde_nbr *);
 
-int		 lsa_router_check(struct lsa *, u_int16_t);
+int		 lsa_link_check(struct lsa *, u_int16_t);
+int		 lsa_intra_a_pref_check(struct lsa *, u_int16_t);
 void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
 int		 lsa_equal(struct lsa *, struct lsa *);
+int		 lsa_get_prefix(void *, u_int16_t, struct lsa_prefix *);
 
 RB_GENERATE(lsa_tree, vertex, entry, lsa_compare)
 
@@ -187,34 +189,59 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 
 	switch (ntohs(lsa->hdr.type)) {
 	case LSA_TYPE_LINK:
-		/* XXX */
+		if (!lsa_link_check(lsa, len))
+			return (0);
 		break;
 	case LSA_TYPE_ROUTER:
-		if (!lsa_router_check(lsa, len))
+		if (len < sizeof(lsa->hdr) + sizeof(struct lsa_rtr)) {
+			log_warnx("lsa_check: bad LSA rtr packet");
 			return (0);
+		}
+		len -= sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
+		if (len % sizeof(struct lsa_rtr_link)) {
+			log_warnx("lsa_check: bad LSA rtr packet");
+			return (0);
+		}
 		break;
 	case LSA_TYPE_NETWORK:
 		if ((len % sizeof(u_int32_t)) ||
 		    len < sizeof(lsa->hdr) + sizeof(u_int32_t)) {
-			log_warnx("lsa_check: bad LSA network packet");
 			return (0);
 		}
 		break;
 	case LSA_TYPE_INTER_A_PREFIX:
-	case LSA_TYPE_INTER_A_ROUTER:
-		if ((len % sizeof(u_int32_t)) ||
-		    len < sizeof(lsa->hdr) + sizeof(lsa->data.sum)) {
-			log_warnx("lsa_check: bad LSA summary packet");
+		if (len < sizeof(lsa->hdr) + sizeof(lsa->data.pref_sum)) {
+			log_warnx("lsa_check: bad LSA prefix summary packet");
 			return (0);
 		}
-		metric = ntohl(lsa->data.sum.metric);
+		metric = ntohl(lsa->data.pref_sum.metric);
+		if (metric & ~LSA_METRIC_MASK) {
+			log_warnx("lsa_check: bad LSA summary metric");
+			return (0);
+		}
+		if (lsa_get_prefix(((char *)lsa) + sizeof(lsa->hdr) +
+		    sizeof(lsa->data.pref_sum),
+		    len - sizeof(lsa->hdr) + sizeof(lsa->data.pref_sum),
+		    NULL) == -1) {
+			log_warnx("lsa_check: "
+			    "invalid LSA prefix summary packet");
+			return (0);
+		}
+		break;
+	case LSA_TYPE_INTER_A_ROUTER:
+		if (len < sizeof(lsa->hdr) + sizeof(lsa->data.rtr_sum)) {
+			log_warnx("lsa_check: bad LSA router summary packet");
+			return (0);
+		}
+		metric = ntohl(lsa->data.rtr_sum.metric);
 		if (metric & ~LSA_METRIC_MASK) {
 			log_warnx("lsa_check: bad LSA summary metric");
 			return (0);
 		}
 		break;
 	case LSA_TYPE_INTRA_A_PREFIX:
-		/* XXX */
+		if (!lsa_intra_a_pref_check(lsa, len))
+			return (0);
 		break;
 	case LSA_TYPE_EXTERNAL:
 		if ((len % (3 * sizeof(u_int32_t))) ||
@@ -232,7 +259,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		break;
 	default:
-		log_warnx("lsa_check: unknown type %u", ntohs(lsa->hdr.type));
+		log_warnx("lsa_check: unknown type %x", ntohs(lsa->hdr.type));
 		return (0);
 	}
 
@@ -253,34 +280,67 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 }
 
 int
-lsa_router_check(struct lsa *lsa, u_int16_t len)
+lsa_link_check(struct lsa *lsa, u_int16_t len)
 {
-	struct lsa_rtr_link	*rtr_link;
 	char			*buf = (char *)lsa;
-	u_int16_t		 i, off, nlinks;
+	struct lsa_link		*llink;
+	u_int32_t		 i, off, npref;
+	int			 rv;
 
-	off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
+	llink = (struct lsa_link *)(buf + sizeof(lsa->hdr));
+	off = sizeof(lsa->hdr) + sizeof(struct lsa_link);
 	if (off > len) {
-		log_warnx("lsa_check: invalid LSA router packet");
+		log_warnx("lsa_link_check: invalid LSA link packet, "
+		    "short header");
 		return (0);
 	}
 
-	nlinks = (len - off) / 16;		/* XXX way to go ? */
+	len -= off;
+	npref = ntohl(llink->numprefix);
 
-	for (i = 0; i < nlinks; i++) {
-		rtr_link = (struct lsa_rtr_link *)(buf + off);
-		off += sizeof(struct lsa_rtr_link);
-
-		if (off > len) {
-			log_warnx("lsa_check: invalid LSA router packet");
+	for (i = 0; i < npref; i++) {
+		rv = lsa_get_prefix(buf + off, len, NULL);
+		if (rv == -1) {
+			log_warnx("lsa_link_check: invalid LSA link packet");
 			return (0);
 		}
+		off += rv;
+		len -= rv;
 	}
 
-	if (i != nlinks) {
-		log_warnx("lsa_check: invalid LSA router packet");
+	return (1);
+}
+
+int
+lsa_intra_a_pref_check(struct lsa *lsa, u_int16_t len)
+{
+	char			*buf = (char *)lsa;
+	struct lsa_intra_prefix	*iap;
+	u_int32_t		 i, off, npref;
+	int			 rv;
+
+	iap = (struct lsa_intra_prefix *)(buf + sizeof(lsa->hdr));
+	off = sizeof(lsa->hdr) + sizeof(struct lsa_intra_prefix);
+	if (off > len) {
+		log_warnx("lsa_intra_a_pref_check: "
+		    "invalid LSA intra area prefix packet, short header");
 		return (0);
 	}
+
+	len -= off;
+	npref = ntohl(iap->numprefix);
+
+	for (i = 0; i < npref; i++) {
+		rv = lsa_get_prefix(buf + off, len, NULL);
+		if (rv == -1) {
+			log_warnx("lsa_intra_a_pref_check: "
+			    "invalid LSA intra area prefix packet");
+			return (0);
+		}
+		off += rv;
+		len -= rv;
+	}
+
 	return (1);
 }
 
@@ -343,10 +403,14 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
 
-	if (ntohs(lsa->hdr.type) == LSA_TYPE_EXTERNAL)
+	if (LSA_IS_SCOPE_AS(ntohs(lsa->hdr.type)))
 		tree = &asext_tree;
-	else
+	else if (LSA_IS_SCOPE_AREA(ntohs(lsa->hdr.type)))
 		tree = &nbr->area->lsa_tree;
+	else if (LSA_IS_SCOPE_LLOCAL(ntohs(lsa->hdr.type)))
+		tree = &nbr->iface->lsa_tree;
+	else
+		fatalx("unknown scope type");
 
 	new = vertex_get(lsa, nbr);
 	old = RB_INSERT(lsa_tree, tree, new);
@@ -516,12 +580,13 @@ lsa_snap(struct area *area, u_int32_t peerid)
 			if (v->deleted)
 				continue;
 			lsa_age(v);
-			if (ntohs(v->lsa->hdr.age) >= MAX_AGE)
+			if (ntohs(v->lsa->hdr.age) >= MAX_AGE) {
 				rde_imsg_compose_ospfe(IMSG_LS_UPD, peerid,
 				    0, &v->lsa->hdr, ntohs(v->lsa->hdr.len));
-			else
+			} else {
 				rde_imsg_compose_ospfe(IMSG_DB_SNAPSHOT, peerid,
 				    0, &v->lsa->hdr, sizeof(struct lsa_hdr));
+			}
 		}
 		if (tree != &area->lsa_tree)
 			break;
@@ -738,5 +803,38 @@ lsa_equal(struct lsa *a, struct lsa *b)
 		return (0);
 
 	return (1);
+}
+
+int
+lsa_get_prefix(void *buf, u_int16_t len, struct lsa_prefix *p)
+{
+	u_int32_t	*buf32 = buf;
+	u_int32_t	*addr = NULL;
+	u_int8_t	 prefixlen;
+
+	if (len < sizeof(u_int32_t))
+		return (-1);
+
+	prefixlen = ntohl(*buf32) >> 24;
+
+	if (p) {
+		bzero(p, sizeof(*p));
+		p->prefixlen = prefixlen;
+		p->options = (ntohl(*buf32) >> 16) & 0xff;
+		p->metric = *buf32 & 0xffff;
+		addr = (u_int32_t *)&p->prefix;
+	}
+	buf32++;
+	len -= sizeof(u_int32_t);
+
+	for (; ((prefixlen + 31) / 32) > 0; prefixlen -= 32) {
+		if (len < sizeof(u_int32_t))
+			return (-1);
+		if (addr)
+			*addr++ = *buf32++;
+		len -= sizeof(u_int32_t);
+	}
+
+	return (len);
 }
 

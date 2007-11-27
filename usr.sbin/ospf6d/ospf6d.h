@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.9 2007/10/16 08:41:56 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.10 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -313,6 +313,8 @@ struct iface {
 
 	LIST_HEAD(, nbr)	 nbr_list;
 	struct lsa_head		 ls_ack_list;
+
+	struct lsa_tree		 lsa_tree;	/* LSA with link local scope */
 
 	char			 name[IF_NAMESIZE];
 	char			 demote_group[IFNAMSIZ];

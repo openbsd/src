@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.3 2007/10/16 12:05:52 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.4 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -67,7 +67,9 @@ struct rde_nbr {
 	struct in_addr			 area_id;
 	TAILQ_HEAD(, rde_req_entry)	 req_list;
 	struct area			*area;
+	struct iface			*iface;
 	u_int32_t			 peerid;	/* unique ID in DB */
+	unsigned int			 ifindex;
 	int				 state;
 	int				 self;
 };

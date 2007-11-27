@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.5 2007/10/13 13:21:56 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.6 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -343,6 +343,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 
 			LIST_INIT(&niface->nbr_list);
 			TAILQ_INIT(&niface->ls_ack_list);
+			RB_INIT(&niface->lsa_tree);
 
 			niface->area = narea;
 			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);

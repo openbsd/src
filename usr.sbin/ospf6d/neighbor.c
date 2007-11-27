@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.3 2007/10/11 20:20:44 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.4 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -314,6 +314,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area->id.s_addr;
+	rn.ifindex = nbr->iface->ifindex;
 	rn.state = nbr->state;
 	rn.self = self;
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,

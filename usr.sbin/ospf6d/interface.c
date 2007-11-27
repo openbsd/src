@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.6 2007/11/24 16:35:16 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.7 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -167,6 +167,7 @@ if_new(struct kif *kif, struct kif_addr *ka)
 
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->ls_ack_list);
+	RB_INIT(&iface->lsa_tree);
 
 	if (kif == NULL) {
 		iface->type = IF_TYPE_VIRTUALLINK;

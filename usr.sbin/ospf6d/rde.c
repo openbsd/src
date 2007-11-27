@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.7 2007/10/17 07:16:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.8 2007/11/27 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -675,6 +675,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 			LIST_INIT(&niface->nbr_list);
 			TAILQ_INIT(&niface->ls_ack_list);
+			RB_INIT(&niface->lsa_tree);
 
 			niface->area = narea;
 			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
@@ -865,11 +866,19 @@ rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
 	struct rde_nbr_head	*head;
 	struct rde_nbr		*nbr;
 	struct area		*area;
+	struct iface		*iface;
 
 	if (rde_nbr_find(peerid))
 		return (NULL);
 	if ((area = area_find(rdeconf, new->area_id)) == NULL)
 		fatalx("rde_nbr_new: unknown area");
+
+	LIST_FOREACH(iface, &area->iface_list, entry) {
+		if (iface->ifindex == new->ifindex)
+			break;
+	}
+	if (iface == NULL)
+		fatalx("rde_nbr_new: unknown interface");
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("rde_nbr_new");
@@ -877,6 +886,7 @@ rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
 	memcpy(nbr, new, sizeof(*nbr));
 	nbr->peerid = peerid;
 	nbr->area = area;
+	nbr->iface = iface;
 
 	TAILQ_INIT(&nbr->req_list);
 
