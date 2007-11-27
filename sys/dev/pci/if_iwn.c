@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.14 2007/11/19 19:35:43 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.15 2007/11/27 19:45:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -482,9 +482,9 @@ iwn_free_shared(struct iwn_softc *sc)
 int
 iwn_alloc_kw(struct iwn_softc *sc)
 {
-	/* must be aligned on a 16-byte boundary */
+	/* must be aligned on a 4KB boundary */
 	return iwn_dma_contig_alloc(sc->sc_dmat, &sc->kw_dma, NULL,
-	    PAGE_SIZE, 16, BUS_DMA_NOWAIT);
+	    PAGE_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT);
 }
 
 void
@@ -1871,10 +1871,13 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 	sc->shared->len[ring->qid][ring->cur] =
 	    htole16(hdrlen + m0->m_pkthdr.len + 8);
-
+	if (ring->cur < IWN_TX_WINDOW) {
+		sc->shared->len[ring->qid][ring->cur + IWN_TX_RING_COUNT] =
+		    htole16(hdrlen + m0->m_pkthdr.len + 8);
+	}
 	ring->queued++;
 
-	/* kick ring */
+	/* kick Tx ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
 	IWN_WRITE(sc, IWN_TX_WIDX, ring->qid << 8 | ring->cur);
 
@@ -2197,6 +2200,10 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	IWN_SET_DESC_NSEGS(desc, 1);
 	IWN_SET_DESC_SEG(desc, 0, paddr, 4 + size);
 	sc->shared->len[ring->qid][ring->cur] = htole16(8);
+	if (ring->cur < IWN_TX_WINDOW) {
+		sc->shared->len[ring->qid][ring->cur + IWN_TX_RING_COUNT] =
+		    htole16(8);
+	}
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -3180,6 +3187,10 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	IWN_SET_DESC_SEG(desc, 0, data->map->dm_segs[0].ds_addr,
 	    data->map->dm_segs[0].ds_len);
 	sc->shared->len[ring->qid][ring->cur] = htole16(8);
+	if (ring->cur < IWN_TX_WINDOW) {
+		sc->shared->len[ring->qid][ring->cur + IWN_TX_RING_COUNT] =
+		    htole16(8);
+	}
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;

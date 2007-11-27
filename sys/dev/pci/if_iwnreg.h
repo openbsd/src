@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.7 2007/11/17 18:50:54 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.8 2007/11/27 19:45:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -24,9 +24,9 @@
 #define IWN_NTXCHAINS		2
 
 /*
- * Rings must be aligned on a 16K boundary.
+ * Rings must be aligned on a 256-byte boundary.
  */
-#define IWN_RING_DMA_ALIGN	0x4000
+#define IWN_RING_DMA_ALIGN	256
 
 /* maximum scatter/gather */
 #define IWN_MAX_SCATTER	20
@@ -180,6 +180,7 @@
 #define IWN_ENA_L1	(1 << 1)
 
 
+#define IWN_TX_WINDOW	64
 struct iwn_shared {
 	uint16_t	len[512][IWN_NTXQUEUES];	/* 16KB total */
 	uint16_t	closed_count;
