@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.94 2007/09/26 13:05:52 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.95 2007/11/27 16:38:50 tedu Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -386,25 +386,15 @@ do {									\
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
-#define	_M_LEADINGSPACE(m)						\
-	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :	\
-	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :	\
-	 (m)->m_data - (m)->m_dat)
-
-#define	M_LEADINGSPACE(m)	\
-	(M_READONLY((m)) ? 0 : _M_LEADINGSPACE((m)))
+int m_leadingspace(struct mbuf *);
+#define	M_LEADINGSPACE(m) m_leadingspace(m)
 
 /*
  * Compute the amount of space available
  * after the end of data in an mbuf.
  */
-#define	_M_TRAILINGSPACE(m)						\
-	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf +			\
-	    (m)->m_ext.ext_size - ((m)->m_data + (m)->m_len) :		\
-	    &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len))
-
-#define	M_TRAILINGSPACE(m)	\
-	(M_READONLY((m)) ? 0 : _M_TRAILINGSPACE((m)))
+int m_trailingspace(struct mbuf *);
+#define	M_TRAILINGSPACE(m) m_trailingspace(m)
 
 /*
  * Arrange to prepend space of size plen to mbuf m.
