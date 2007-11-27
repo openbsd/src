@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.74 2007/10/29 17:08:08 chl Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.75 2007/11/27 18:01:02 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -660,11 +660,7 @@ sys_swapctl(p, v, retval)
 	 * to grab the uvm.swap_data_lock because we may fault&sleep during 
 	 * copyout() and we don't want to be holding that lock then!
 	 */
-	if (SCARG(uap, cmd) == SWAP_STATS
-#if defined(COMPAT_13)
-	    || SCARG(uap, cmd) == SWAP_OSTATS
-#endif
-	    ) {
+	if (SCARG(uap, cmd) == SWAP_STATS) {
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
@@ -680,23 +676,14 @@ sys_swapctl(p, v, retval)
 				    sizeof(struct swapent));
 
 				/* now copy out the path if necessary */
-#if defined(COMPAT_13)
-				if (error == 0 && SCARG(uap, cmd) == SWAP_STATS)
-#else
 				if (error == 0)
-#endif
 					error = copyout(sdp->swd_path,
 					    &sep->se_path, sdp->swd_pathlen);
 
 				if (error)
 					goto out;
 				count++;
-#if defined(COMPAT_13)
-				if (SCARG(uap, cmd) == SWAP_OSTATS)
-					((struct oswapent *)sep)++;
-				else
-#endif
-					sep++;
+				sep++;
 			}
 		}
 
