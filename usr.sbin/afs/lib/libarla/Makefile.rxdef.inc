@@ -21,7 +21,8 @@ YDRFLAGS	= -I${.CURDIR}
 stamp_$f: $f.xg
 		$(YDR) $(YDRFLAGS) ${AFSSRC}/rxdef/$f.xg
 		touch $@
+
 $f.cs.c $f.cs.h $f.ss.c $f.ss.h $f.ydr.c $f.h: stamp_$f
 
-CLEANFILES+=$f.cs.c $f.cs.h $f.ss.c $f.ss.h $f.ydr.c $f.h $stamp_$f
+CLEANFILES+=$f.cs.c $f.cs.h $f.ss.c $f.ss.h $f.ydr.c $f.h stamp_$f
 .endfor
