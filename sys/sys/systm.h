@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.72 2007/06/01 19:25:08 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.73 2007/11/27 18:04:01 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -110,8 +110,13 @@ typedef int	sy_call_t(struct proc *, void *, register_t *);
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
+	int	sy_flags;
 	sy_call_t *sy_call;	/* implementing function */
 } sysent[];
+
+#define SY_MPSAFE		0x01
+#define SY_NOLOCK		0x02
+
 #if	_BYTE_ORDER == _BIG_ENDIAN
 #define SCARG(p, k)	((p)->k.be.datum)	/* get arg from args pointer */
 #elif	_BYTE_ORDER == _LITTLE_ENDIAN
