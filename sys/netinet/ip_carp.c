@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.157 2007/11/26 17:26:25 chl Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.158 2007/11/27 11:34:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2236,8 +2236,13 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 #ifdef INET
 		case AF_INET:
 			sc->sc_if.if_flags |= IFF_UP;
-			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
-			    sizeof(struct sockaddr));
+			/*
+			 * emulate arp_ifinit() without doing a gratious arp
+			 * request so that the routes are setup correctly.
+			 */
+			ifa->ifa_rtrequest = arp_rtrequest;
+			ifa->ifa_flags |= RTF_CLONING;
+
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;
 #endif /* INET */
