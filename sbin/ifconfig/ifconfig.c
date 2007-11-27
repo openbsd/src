@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.190 2007/11/22 01:21:40 mpf Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.191 2007/11/27 13:15:42 chl Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3105,9 +3105,9 @@ setcarpnodes(const char *val, int d)
 			errx(1, "non parsable arg: %s", str);
 		}
 		if (vhid >= 255)
-			errx(1, "vhid %s: value too large", vhid);
+			errx(1, "vhid %u: value too large", vhid);
 		if (advskew >= 255)
-			errx(1, "advskew %s: value too large", advskew);
+			errx(1, "advskew %u: value too large", advskew);
 
 		carpr.carpr_vhids[i] = vhid;
 		carpr.carpr_advskews[i] = advskew;
