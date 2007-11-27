@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.26 2007/11/26 19:49:46 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.27 2007/11/27 14:56:31 chl Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
