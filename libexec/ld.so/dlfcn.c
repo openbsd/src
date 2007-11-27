@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.76 2007/05/29 04:47:17 jason Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.77 2007/11/27 18:56:32 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -573,20 +573,22 @@ obj_from_addr(const void *addr)
 	elf_object_t *dynobj;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdr;
+	int phdrc;
 	Elf_Addr start;
-	Elf_Addr end;
-	u_int32_t symoffset;
-	const Elf_Sym *sym;
 	int i;
 
 	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
-		ehdr = (Elf_Ehdr *)dynobj->load_addr;
-		if (ehdr == NULL)
+		if (dynobj->load_addr != NULL) {
+			ehdr = (Elf_Ehdr *)dynobj->load_addr;
+			phdr = (Elf_Phdr *)((char *)dynobj->load_addr + ehdr->e_phoff);
+			phdrc = ehdr->e_phnum;
+		} else if (dynobj->phdrp != NULL) {
+			phdr = dynobj->phdrp;
+			phdrc = dynobj->phdrc;
+		} else
 			continue;
 
-		phdr = (Elf_Phdr *)((char *)dynobj->load_addr + ehdr->e_phoff);
-
-		for (i = 0; i < ehdr->e_phnum; i++) {
+		for (i = 0; i < phdrc; i++) {
 			switch (phdr[i].p_type) {
 			case PT_LOAD:
 				start = phdr[i].p_vaddr + dynobj->load_addr;
@@ -600,31 +602,7 @@ obj_from_addr(const void *addr)
 		}
 	}
 
-	/* find the lowest & highest symbol address in the main exe */
-	start = -1;
-	end = 0;
-
-	for (symoffset = 0; symoffset < _dl_objects->nchains; symoffset++) {
-		sym = _dl_objects->dyn.symtab + symoffset;
-
-		/*
-		 * For skip the symbol if st_shndx is either SHN_UNDEF or
-		 * SHN_COMMON.
-		 */
-		if (sym->st_shndx == SHN_UNDEF || sym->st_shndx == SHN_COMMON)
-			continue;
-
-		if (sym->st_value < start)
-			start = sym->st_value;
-
-		if (sym->st_value > end)
-			end = sym->st_value;
-	}
-
-	if (end && (Elf_Addr) addr >= start && (Elf_Addr) addr <= end)
-		return _dl_objects;
-	else
-		return NULL;
+	return NULL;
 }
 
 int
