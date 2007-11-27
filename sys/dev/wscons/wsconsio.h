@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.46 2007/09/01 17:06:26 xsa Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.47 2007/11/27 14:13:39 jsing Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -299,6 +299,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_TVRX	51	/* HP TurboVRX */
 #define		WSDISPLAY_TYPE_CFXGA	52	/* CF VoyagerVGA */
 #define		WSDISPLAY_TYPE_LCSPX	53	/* DEC LCSPX (VS4000) */
+#define		WSDISPLAY_TYPE_GBE	54	/* SGI GBE frame buffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
