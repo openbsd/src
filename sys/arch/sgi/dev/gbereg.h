@@ -1,3 +1,5 @@
+/*	$OpenBSD: gbereg.h,v 1.2 2007/11/27 16:08:06 jasper Exp $ */
+
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
  *
