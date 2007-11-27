@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.23 2007/11/26 19:14:38 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.24 2007/11/27 10:06:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -242,6 +242,10 @@ nmea_scan(struct nmea *np, struct tty *tp)
 		}
 	}
 
+	/* we only look at the GPRMC message */
+	if (strcmp(fld[0], "GPRMC"))
+		return;
+
 	/* if we have a checksum, verify it */
 	if (cs != NULL) {
 		msgcksum = 0;
@@ -265,10 +269,7 @@ nmea_scan(struct nmea *np, struct tty *tp)
 			return;
 		}
 	}
-
-	/* check message type */
-	if (!strcmp(fld[0], "GPRMC"))
-		nmea_gprmc(np, tp, fld, fldcnt);
+	nmea_gprmc(np, tp, fld, fldcnt);
 }
 
 /* Decode the recommended minimum specific GPS/TRANSIT data. */
