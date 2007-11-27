@@ -1,4 +1,4 @@
-.\"     $OpenBSD: gbe.4,v 1.2 2007/11/27 16:05:19 jasper Exp $
+.\"     $OpenBSD: gbe.4,v 1.3 2007/11/27 17:49:19 jmc Exp $
 .\"
 .\" Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 27 2007 $
-.Dt GBE 4 sgi 
+.Dt GBE 4 sgi
 .Os
 .Sh NAME
 .Nm gbe
@@ -25,10 +25,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the on-board Graphics Back End (GBE) frame 
+driver provides support for the on-board Graphics Back End (GBE) frame
 buffer found in SGI
 .Tn O2
-machines. Console support is provided by the
+machines.
+Console support is provided by the
 .Xr wscons 4
 console framework.
 .Sh SEE ALSO
@@ -47,5 +48,5 @@ driver was written by
 .An Joel Sing .
 .Sh BUGS
 Hardware initialization must currently be performed by the ARCS firmware.
-The resolution configured by the firmware will be used, with a fixed 
+The resolution configured by the firmware will be used, with a fixed
 color depth of 32 bits.
