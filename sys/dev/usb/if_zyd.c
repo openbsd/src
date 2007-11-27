@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.64 2007/11/18 00:43:13 brad Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.65 2007/11/27 20:30:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -210,8 +210,9 @@ int		zyd_rf_attach(struct zyd_softc *, uint8_t);
 const char	*zyd_rf_name(uint8_t);
 int		zyd_hw_init(struct zyd_softc *);
 int		zyd_read_eeprom(struct zyd_softc *);
-int		zyd_set_macaddr(struct zyd_softc *, const uint8_t *);
-int		zyd_set_bssid(struct zyd_softc *, const uint8_t *);
+void		zyd_set_multi(struct zyd_softc *);
+void		zyd_set_macaddr(struct zyd_softc *, const uint8_t *);
+void		zyd_set_bssid(struct zyd_softc *, const uint8_t *);
 int		zyd_switch_radio(struct zyd_softc *, int);
 void		zyd_set_led(struct zyd_softc *, int, int);
 int		zyd_set_rxfilter(struct zyd_softc *);
@@ -1635,7 +1636,43 @@ zyd_read_eeprom(struct zyd_softc *sc)
 	return 0;
 }
 
-int
+void
+zyd_set_multi(struct zyd_softc *sc)
+{
+	struct arpcom *ac = &sc->sc_ic.ic_ac;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t lo, hi;
+	uint8_t bit;
+
+	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+		lo = hi = 0xffffffff;
+		goto done;
+	}
+	lo = hi = 0;
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			lo = hi = 0xffffffff;
+			goto done;
+		}
+		bit = enm->enm_addrlo[5] >> 2;
+		if (bit < 32)
+			lo |= 1 << bit;
+		else
+			hi |= 1 << (bit - 32);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+done:
+	hi |= 1 << 31;	/* make sure the broadcast bit is set */
+	zyd_write32(sc, ZYD_MAC_GHTBL, lo);
+	zyd_write32(sc, ZYD_MAC_GHTBH, hi);
+}
+
+void
 zyd_set_macaddr(struct zyd_softc *sc, const uint8_t *addr)
 {
 	uint32_t tmp;
@@ -1645,11 +1682,9 @@ zyd_set_macaddr(struct zyd_softc *sc, const uint8_t *addr)
 
 	tmp = addr[5] << 8 | addr[4];
 	(void)zyd_write32(sc, ZYD_MAC_MACADRH, tmp);
-
-	return 0;
 }
 
-int
+void
 zyd_set_bssid(struct zyd_softc *sc, const uint8_t *addr)
 {
 	uint32_t tmp;
@@ -1659,8 +1694,6 @@ zyd_set_bssid(struct zyd_softc *sc, const uint8_t *addr)
 
 	tmp = addr[5] << 8 | addr[4];
 	(void)zyd_write32(sc, ZYD_MAC_BSSADRH, tmp);
-
-	return 0;
 }
 
 int
@@ -2292,12 +2325,24 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				zyd_init(ifp);
+			/*
+			 * If only the PROMISC or ALLMULTI flag changes, then
+			 * don't do a full re-init of the chip, just update
+			 * the Rx filter.
+			 */
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->sc_if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+				zyd_set_multi(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					zyd_init(ifp);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				zyd_stop(ifp, 1);
 		}
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCADDMULTI:
@@ -2306,8 +2351,11 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &ic->ic_ac) :
 		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				zyd_set_multi(sc);
 			error = 0;
+		}
 		break;
 
 	case SIOCS80211CHANNEL:
@@ -2351,9 +2399,7 @@ zyd_init(struct ifnet *ifp)
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	DPRINTF(("setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
-	error = zyd_set_macaddr(sc, ic->ic_myaddr);
-	if (error != 0)
-		return error;
+	zyd_set_macaddr(sc, ic->ic_myaddr);
 
 	/* we'll do software WEP decryption for now */
 	DPRINTF(("setting encryption type\n"));

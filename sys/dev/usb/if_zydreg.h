@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.21 2007/11/03 14:10:37 damien Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.22 2007/11/27 20:30:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1173,6 +1173,7 @@ struct zyd_softc {
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;
+	int				sc_if_flags;
 	int				attached;
 
 	struct timeout			scan_to;
