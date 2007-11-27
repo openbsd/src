@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.79 2007/11/22 03:57:07 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.80 2007/11/27 16:22:14 martynas Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 int
 stclose(dev_t dev, int flags, int mode, struct proc *p)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.55 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.56 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -395,7 +395,7 @@ fdconf(fdc)
 	/* No result phase for the NE7CMD_CFG command */
 
 	if ((fdc->sc_flags & FDC_82077) != 0) {
-		/* Lock configuration accross soft resets. */
+		/* Lock configuration across soft resets. */
 		if (fdc_wrfifo(fdc, NE7CMD_LOCK | CFG_LOCK) != 0 ||
 		    fdcresult(fdc) != 1) {
 #ifdef FD_DEBUG

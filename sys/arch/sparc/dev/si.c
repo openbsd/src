@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.27 2007/07/01 19:05:37 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.28 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@
  * reselection failing on Sun Shoebox-type configurations where
  * there are multiple non-SCSI devices behind Emulex or Adaptec
  * bridges.  These devices pre-date the SCSI-I spec, and might not
- * bahve the way the 5380 code expects.  For this reason, only
+ * behave the way the 5380 code expects.  For this reason, only
  * DMA is enabled by default in this driver.
  *
  *	Jason R. Thorpe <thorpej@NetBSD.ORG>

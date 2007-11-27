@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 2007/06/24 14:58:12 tom Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ get_alt_bootdev(char *dev, size_t devsz, char *line, size_t linesz)
 	int len;
 	/*
 	 * if the kernel image specified contains a ':' it is
-	 * [device]:[kernel], so seperate the two fields.
+	 * [device]:[kernel], so separate the two fields.
 	 */
 	p = strrchr(line, ':');
 	if (p == NULL)

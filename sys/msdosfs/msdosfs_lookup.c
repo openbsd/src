@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.19 2007/06/02 02:04:21 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.20 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -981,7 +981,7 @@ removede(pdep, dep)
 		offset += sizeof(struct direntry);
 		while (1) {
 			/*
-			 * We are a bit agressive here in that we delete any Win95
+			 * We are a bit aggressive here in that we delete any Win95
 			 * entries preceding this entry, not just the ones we "own".
 			 * Since these presumably aren't valid anyway,
 			 * there should be no harm.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.80 2006/12/24 01:20:53 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.81 2007/11/27 16:22:14 martynas Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -237,7 +237,7 @@ fbackupfile(const char *fn)
 /*
  * Convert "fn" to a canonicalized absolute filename, replacing
  * a leading ~/ with the user's home dir, following symlinks, and
- * and remove all occurences of /./ and /../
+ * and remove all occurrences of /./ and /../
  */
 char *
 adjustname(const char *fn, int slashslash)

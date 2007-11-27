@@ -666,7 +666,7 @@ char *
     /* paste values together */
     for (p = v; p && *p; p++) {
 	if (p != v && sep != NULL)
-	    ncat(&b, &sz, sep);	/* append seperator */
+	    ncat(&b, &sz, sep);	/* append separator */
 	ncat(&b, &sz, *p);	/* append value */
     }
 

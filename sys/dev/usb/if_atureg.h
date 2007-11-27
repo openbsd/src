@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.30 2007/06/09 11:06:53 mbalmer Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.31 2007/11/27 16:22:13 martynas Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -442,7 +442,7 @@ struct atu_tx_hdr {
 #define NR(x)		(void *)((long)x)
 
 /*
- * The linux driver uses seperate routines for every mib request they do
+ * The linux driver uses separate routines for every mib request they do
  * (eg. set_radio / set_preamble / set_frag / etc etc )
  * We just define a list of types, sizes and offsets and use those
  */

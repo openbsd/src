@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.25 2006/04/22 19:26:05 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.26 2007/11/27 16:22:14 martynas Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -514,7 +514,7 @@ impl_localtime(int fd)
 
 	must_read(fd, &t, sizeof(time_t));
 
-	/* this must be done seperately, since they apparently use the
+	/* this must be done separately, since they apparently use the
 	 * same local buffer */
 	if ((lt = localtime(&t)) == NULL)
 		errx(1, "localtime()");

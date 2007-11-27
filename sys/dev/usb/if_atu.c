@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.90 2007/11/25 16:40:03 jmc Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.91 2007/11/27 16:22:13 martynas Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -876,7 +876,7 @@ atu_internal_firmware(void *arg)
 	 * Uploading firmware is done with the DFU (Device Firmware Upgrade)
 	 * interface. See "Universal Serial Bus - Device Class Specification
 	 * for Device Firmware Upgrade" pdf for details of the protocol.
-	 * Maybe this could be moved to a seperate 'firmware driver' once more
+	 * Maybe this could be moved to a separate 'firmware driver' once more
 	 * device drivers need it... For now we'll just do it here.
 	 *
 	 * Just for your information, the Atmel's DFU descriptor looks like

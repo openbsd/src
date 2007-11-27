@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.78 2007/08/03 06:43:12 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.79 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, 0);
-		/* m is allready freed */
+		/* m is already freed */
 		return;
 	}
 

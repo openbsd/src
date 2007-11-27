@@ -27,7 +27,7 @@ __unused static const char rcsid[] = "$Sudo: memrchr.c,v 1.1.2.2 2007/06/19 21:0
 
 /*
  * Reverse memchr()
- * Find the last occurence of 'c' in the buffer 's' of size 'n'.
+ * Find the last occurrence of 'c' in the buffer 's' of size 'n'.
  */
 VOID *
 memrchr(s, c, n)

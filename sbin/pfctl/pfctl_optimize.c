@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.13 2006/10/31 14:17:45 mcbride Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.14 2007/11/27 16:22:13 martynas Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -395,7 +395,7 @@ optimize_superblock(struct pfctl *pf, struct superblock *block)
 	 *     out rules.
 	 */
 
-	/* shortcut.  there will be alot of 1-rule superblocks */
+	/* shortcut.  there will be a lot of 1-rule superblocks */
 	if (!TAILQ_NEXT(TAILQ_FIRST(&block->sb_rules), por_entry))
 		return (0);
 
@@ -1417,7 +1417,7 @@ superblock_inclusive(struct superblock *block, struct pf_opt_rule *por)
 		return (0);
 
 	/*
-	 * Have to handle interface groups seperately.  Consider the following
+	 * Have to handle interface groups separately.  Consider the following
 	 * rules:
 	 *	block on EXTIFS to any port 22
 	 *	pass  on em0 to any port 22

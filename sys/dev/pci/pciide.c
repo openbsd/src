@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.275 2007/10/17 22:11:52 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.276 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2221,7 +2221,7 @@ piix_timing_debug(struct pciide_softc *sc)
 		    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM)),
 		    DEBUG_PROBE);
 		if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
-			WDCDEBUG_PRINT((", udamreg 0x%x",
+			WDCDEBUG_PRINT((", udmareg 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG)),
 			    DEBUG_PROBE);
 		}

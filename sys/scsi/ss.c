@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.59 2007/09/16 01:30:24 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.60 2007/11/27 16:22:14 martynas Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ bad:
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 int
 ssclose(dev, flag, mode, p)

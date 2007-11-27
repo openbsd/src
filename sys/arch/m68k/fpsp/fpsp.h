@@ -1,4 +1,4 @@
-*	$OpenBSD: fpsp.h,v 1.2 1996/05/29 21:05:28 niklas Exp $
+*	$OpenBSD: fpsp.h,v 1.3 2007/11/27 16:22:13 martynas Exp $
 *	$NetBSD: fpsp.h,v 1.2 1994/10/26 07:49:04 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -187,7 +187,7 @@ WBTEMP_GRS	equ	LV-40		;alias wbtemp guard, round, sticky
 guard_bit	equ	1		;guard bit is bit number 1
 round_bit	equ	0		;round bit is bit number 0
 stag_mask	equ	$E0		;upper 3 bits are source tag type
-denorm_bit	equ	7		;bit determins if denorm or unnorm
+denorm_bit	equ	7		;bit determines if denorm or unnorm
 etemp15_bit	equ	4		;etemp exponent bit #15
 wbtemp66_bit	equ	2		;wbtemp mantissa bit #66
 wbtemp1_bit	equ	1		;wbtemp mantissa bit #1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memrchr.c,v 1.1 2007/09/03 14:36:40 millert Exp $	*/
+/*	$OpenBSD: memrchr.c,v 1.2 2007/11/27 16:22:12 martynas Exp $	*/
 
 /*
  * Copyright (c) 2007 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,7 +20,7 @@
 
 /*
  * Reverse memchr()
- * Find the last occurence of 'c' in the buffer 's' of size 'n'.
+ * Find the last occurrence of 'c' in the buffer 's' of size 'n'.
  */
 void *
 memrchr(const void *s, int c, size_t n)

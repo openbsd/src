@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.34 2007/06/01 18:54:27 pedro Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.35 2007/11/27 16:22:14 martynas Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ fail:
 	 * dependencies so that we do not leave them dangling. We have to sync
 	 * it at the end so that the softdep code does not find any untracked
 	 * changes. Although this is really slow, running out of disk space is
-	 * not expected to be a common occurence. The error return from fsync
+	 * not expected to be a common occurrence. The error return from fsync
 	 * is ignored as we already have an error to return to the user.
 	 */
 	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);
@@ -804,7 +804,7 @@ fail:
 	 * dependencies so that we do not leave them dangling. We have to sync
 	 * it at the end so that the softdep code does not find any untracked
 	 * changes. Although this is really slow, running out of disk space is
-	 * not expected to be a common occurence. The error return from fsync
+	 * not expected to be a common occurrence. The error return from fsync
 	 * is ignored as we already have an error to return to the user.
 	 */
 	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);

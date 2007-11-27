@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.79 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.80 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.79 2007/11/25 16:40:04 jmc Exp $
+ * $Id: aic7xxx.c,v 1.80 2007/11/27 16:22:13 martynas Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1224,7 +1224,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		/*
 		 * Although the driver does not care about the
 		 * 'Selection in Progress' status bit, the busy
-		 * LED does.  SELINGO is only cleared by a successfull
+		 * LED does.  SELINGO is only cleared by a successful
 		 * selection, so we must manually clear it to insure
 		 * the LED turns off just incase no future successful
 		 * selections occur (e.g. no devices on the bus).
@@ -4305,7 +4305,7 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	ahc->next_queued_scb = ahc_get_scb(ahc);
 
 	/*
-	 * Note that we were successfull
+	 * Note that we were successful
 	 */
 	return (0); 
 

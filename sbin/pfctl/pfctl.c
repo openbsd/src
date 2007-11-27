@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.271 2007/10/24 13:07:38 wilfried Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.272 2007/11/27 16:22:13 martynas Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1549,7 +1549,7 @@ pfctl_load_options(struct pfctl *pf)
 	}
 
 	/*
-	 * If we've set the limit, but havn't explicitly set adaptive
+	 * If we've set the limit, but haven't explicitly set adaptive
 	 * timeouts, do it now with a start of 60% and end of 120%.
 	 */
 	if (pf->limit_set[PF_LIMIT_STATES] &&

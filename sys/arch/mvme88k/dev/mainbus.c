@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.22 2007/02/11 12:41:29 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.23 2007/11/27 16:22:13 martynas Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -151,7 +151,7 @@ mapiodev(paddr_t addr, int _size)
 		if (bs_obio_end == 0 || epa <= bs_obio_end)
 			return ((vaddr_t)addr);
 		else if (addr <= bs_obio_end)
-			/* accross obio and non-obio, not supported */
+			/* across obio and non-obio, not supported */
 			return NULL;
 	}
 
@@ -211,7 +211,7 @@ unmapiodev(vaddr_t va, int _size)
 		if (bs_obio_end == 0 || eva <= bs_obio_end)
 			return;
 		else if (va <= bs_obio_end)
-			/* accross obio and non-obio, not supported */
+			/* across obio and non-obio, not supported */
 			return;
 	}
 

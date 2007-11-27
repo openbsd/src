@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.8 2003/06/02 23:36:51 millert Exp $	*/
+/*	$OpenBSD: map.c,v 1.9 2007/11/27 16:22:14 martynas Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: map.c,v 1.8 2003/06/02 23:36:51 millert Exp $";
+static char *rcsid = "$OpenBSD: map.c,v 1.9 2007/11/27 16:22:14 martynas Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -310,7 +310,7 @@ mk_fattr(am_node *mp, int vntype)
 void
 init_map(am_node *mp, char *dir)
 {
-	/* mp->am_mapno initalised by exported_ap_alloc */
+	/* mp->am_mapno initialized by exported_ap_alloc */
 	mp->am_mnt = new_mntfs();
 	mp->am_name = strdup(dir);
 	mp->am_path = strdup(dir);

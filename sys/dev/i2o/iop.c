@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.33 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.34 2007/11/27 16:22:13 martynas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		SLIST_INSERT_HEAD(&sc->sc_im_freelist, im, im_chain);
 	}
 
-	/* Initalise the IOP's outbound FIFO. */
+	/* Initialize the IOP's outbound FIFO. */
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init outbound FIFO\n",
 		    sc->sc_dv.dv_xname);

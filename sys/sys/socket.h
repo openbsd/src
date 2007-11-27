@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.54 2007/09/24 22:03:02 henning Exp $	*/
+/*	$OpenBSD: socket.h,v 1.55 2007/11/27 16:22:14 martynas Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ struct sockaddr {
  * For maximum portability, userland programmer would need to
  * (1) make the code never touch ss_len portion (cast it into sockaddr and
  * touch sa_len), or (2) add "-Dss_len=__ss_len" into CFLAGS to unify all
- * occurences (including header file) to __ss_len.
+ * occurrences (including header file) to __ss_len.
  */
 struct sockaddr_storage {
 	u_int8_t	ss_len;		/* total length */
