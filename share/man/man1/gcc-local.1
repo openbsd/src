@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.16 2007/11/26 22:47:22 miod Exp $
+.\" $OpenBSD: gcc-local.1,v 1.17 2007/11/27 15:18:00 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 26 2007 $
+.Dd $Mdocdate: November 27 2007 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -232,16 +232,16 @@ On
 supports two extra warning options:
 .Bl -item
 .It
-.Fl Wstack-larger-than-N
+.Fl Wstack-larger-than- Ns Va N
 will report functions using more than
 .Va N
 bytes of stack space for their local variables.
 Stack space used for other purposes (such as register window saving,
-callee-saved registers, outbound arguments storage, etc.)\&
+callee-saved registers, or outbound arguments storage)
 is not taken into account for this check.
 .It
 .Fl Wvariable-decl
-will report automatic variable declarations whose size can not be
+will report automatic variable declarations whose size cannot be
 determined at compile-time.
 .El
 .El
