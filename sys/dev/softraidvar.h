@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.33 2007/11/26 13:49:26 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.34 2007/11/27 16:37:05 tedu Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef SOFTRAIDVAR_H
+#define SOFTRAIDVAR_H
 
 #include <dev/biovar.h>
 
@@ -124,7 +127,7 @@ struct sr_raid1 {
 
 /* RAID CRYPTO */
 #define SR_RAIDCRYPTO_NOWU		16
-struct sr_raidc {
+struct sr_crypto {
 	u_int64_t		src_sid;
 	char			src_key[64];
 };
@@ -185,7 +188,7 @@ struct sr_opt_meta {
 #define SR_OPT_INVALID		0x00
 #define SR_OPT_CRYPTO		0x01
 	union {
-		struct sr_raidc	smm_crypto;
+		struct sr_crypto	smm_crypto;
 	}			som_meta;
 };
 
@@ -260,7 +263,7 @@ struct sr_discipline {
 
 	union {
 	    struct sr_raid1	mdd_raid1;
-	    struct sr_raidc	mdd_raidc;
+	    struct sr_crypto	mdd_crypto;
 	}			sd_dis_specific;/* dis specific members */
 #define mds			sd_dis_specific
 
@@ -336,3 +339,37 @@ struct sr_softc {
 #define SR_MAXSCSIBUS		256
 	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
 };
+
+/* work units & ccbs */
+int			sr_alloc_ccb(struct sr_discipline *);
+void			sr_free_ccb(struct sr_discipline *);
+struct sr_ccb		*sr_get_ccb(struct sr_discipline *);
+void			sr_put_ccb(struct sr_ccb *);
+int			sr_alloc_wu(struct sr_discipline *);
+void			sr_free_wu(struct sr_discipline *);
+struct sr_workunit	*sr_get_wu(struct sr_discipline *);
+void			sr_put_wu(struct sr_workunit *);
+
+/* discipline functions */
+int			sr_raid_inquiry(struct sr_workunit *);
+int			sr_raid_read_cap(struct sr_workunit *);
+int			sr_raid_tur(struct sr_workunit *);
+int			sr_raid_request_sense( struct sr_workunit *);
+int			sr_raid_start_stop(struct sr_workunit *);
+int			sr_raid_sync(struct sr_workunit *);
+void			sr_raid_set_chunk_state(struct sr_discipline *,
+			    int, int);
+void			sr_raid_set_vol_state(struct sr_discipline *);
+void			sr_raid_startwu(struct sr_workunit *);
+
+/* crypto discipline */
+struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
+void *			sr_crypto_putcryptop(struct cryptop *);
+int			sr_crypto_alloc_resources(struct sr_discipline *);
+int			sr_crypto_free_resources(struct sr_discipline *);
+int			sr_crypto_rw(struct sr_workunit *);
+int			sr_crypto_rw2(struct cryptop *);
+void			sr_crypto_intr(struct buf *);
+int			sr_crypto_intr2(struct cryptop *);
+
+#endif
