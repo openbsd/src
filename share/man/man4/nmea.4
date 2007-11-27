@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.18 2007/11/26 23:05:28 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.19 2007/11/27 15:22:49 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2007 $
+.Dd $Mdocdate: November 27 2007 $
 .Dt NMEA 4
 .Os
 .Sh NAME
@@ -64,8 +64,8 @@ The time information is valid.
 The timedelta is safe to use for applications like
 .Xr ntpd 8 .
 .It WARN
-The attached GPS receiver indicated a warning condition for at least the
-last ten minutes.
+The attached GPS receiver has been indicating a warning condition
+for at least the last ten minutes.
 The timedelta should be used with care.
 .It CRITICAL
 tty timestamping has been turned on but there is no PPS signal present or the
