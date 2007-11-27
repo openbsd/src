@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.228 2007/09/16 15:20:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.229 2007/11/27 01:13:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,7 +59,7 @@ void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
-int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
+void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
 void		 rde_dump_rib_as(struct prefix *, struct rde_aspath *,pid_t,
 		     int);
@@ -806,10 +806,7 @@ rde_update_dispatch(struct imsg *imsg)
 				goto done;
 			}
 
-		if (rde_reflector(peer, asp) != 1) {
-			error = 0;
-			goto done;
-		}
+		rde_reflector(peer, asp);
 	}
 
 	p = imsg->data;
@@ -920,10 +917,8 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2 + attrpath_len;
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
-	if (peer->conf.ebgp && !aspath_loopfree(asp->aspath, conf->as)) {
-		error = 0;
-		goto done;
-	}
+	if (peer->conf.ebgp && !aspath_loopfree(asp->aspath, conf->as))
+		asp->flags |= F_ATTR_LOOP;
 
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
@@ -1621,7 +1616,7 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 /*
  * route reflector helper function
  */
-int
+void
 rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 {
 	struct attr	*a;
@@ -1631,9 +1626,11 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
-		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0)
+		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0) {
 			/* this is coming from myself */
-			return (0);
+			asp->flags |= F_ATTR_LOOP;
+			return;
+		}
 	} else if (conf->flags & BGPD_FLAG_REFLECTOR) {
 		if (peer->conf.ebgp == 0)
 			id = htonl(peer->remote_bgpid);
@@ -1651,8 +1648,10 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 			    len += sizeof(conf->clusterid))
 				/* check if coming from my cluster */
 				if (memcmp(&conf->clusterid, a->data + len,
-				    sizeof(conf->clusterid)) == 0)
-					return (0);
+				    sizeof(conf->clusterid)) == 0) {
+					asp->flags |= F_ATTR_LOOP;
+					return;
+				}
 
 			/* prepend own clusterid by replacing attribute */
 			len = a->len + sizeof(conf->clusterid);
@@ -1671,7 +1670,6 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 		    &conf->clusterid, sizeof(conf->clusterid)) == -1)
 			fatalx("attr_optadd failed but impossible");
 	}
-	return (1);
 }
 
 /*
@@ -1719,8 +1717,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_RIB_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_RIB_ANNOUNCE;
-	if (asp->nexthop == NULL || asp->nexthop->state == NEXTHOP_REACH)
+	if (asp->nexthop != NULL && asp->nexthop->state == NEXTHOP_REACH)
 		rib.flags |= F_RIB_ELIGIBLE;
+	if (asp->flags & F_ATTR_LOOP)
+		rib.flags &= ~F_RIB_ELIGIBLE;
 	rib.aspath_len = aspath_length(asp->aspath);
 
 	if ((wbuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_RIB, 0, pid,

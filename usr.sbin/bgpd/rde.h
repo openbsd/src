@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.100 2007/06/01 04:17:30 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.101 2007/11/27 01:13:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -154,6 +154,7 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_ATTR_MP_REACH		0x00040
 #define	F_ATTR_MP_UNREACH	0x00080
 #define	F_ATTR_AS4BYTE_NEW	0x00100	/* NEW_ASPATH or NEW_AGGREGATOR */
+#define	F_ATTR_LOOP		0x00200 /* path would cause a route loop */
 #define	F_PREFIX_ANNOUNCED	0x01000
 #define	F_NEXTHOP_REJECT	0x02000
 #define	F_NEXTHOP_BLACKHOLE	0x04000

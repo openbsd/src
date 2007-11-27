@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.60 2007/05/31 04:27:00 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.61 2007/11/27 01:13:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -269,6 +269,9 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	if (peer == p->aspath->peer)
 		/* Do not send routes back to sender */
 		return (0);
+
+	if (p->aspath->flags & F_ATTR_LOOP)
+		fatalx("try to send out a looped path");
 
 	pt_getaddr(p->prefix, &addr);
 	switch (addr.af) {
