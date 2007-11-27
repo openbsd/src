@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2007/11/26 08:40:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2007/11/27 21:52:30 martin Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 PROG=	boot
@@ -13,7 +13,7 @@ SRCS=	srt0.S conf.c dvma.c net.c netif_sun.c promdev.c version.c
 SRCS+=	boot.c loadfile.c
 
 .PATH:	${S}/lib/libkern/arch/sparc ${S}/lib/libkern
-SRCS+=	bzero.S strlen.c mul.S umul.S strcmp.S sdiv.S urem.S udiv.S rem.S
+SRCS+=	bzero.S strlen.c mul.S umul.S strcmp.c sdiv.S urem.S udiv.S rem.S
 
 CFLAGS=	-O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
 	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS} \
