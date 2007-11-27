@@ -1,4 +1,4 @@
-.\" $OpenBSD: ural.4,v 1.2 2007/11/17 12:25:49 damien Exp $
+.\" $OpenBSD: ural.4,v 1.3 2007/11/27 20:35:21 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: November 27 2007 $
 .Os
 .Dt URAL 4
 .Sh NAME
 .Nm ural
-.Nd Ralink Technology USB IEEE 802.11a/b/g wireless network device
+.Nd Ralink Technology USB IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
 .Cd "ural* at uhub? port ?"
 .Sh DESCRIPTION
@@ -118,21 +118,21 @@ Set 802.11b DS 5.5Mbps operation.
 .It Cm DS11
 Set 802.11b DS 11Mbps operation.
 .It Cm OFDM6
-Set 802.11a/g OFDM 6Mbps operation.
+Set 802.11g OFDM 6Mbps operation.
 .It Cm OFDM9
-Set 802.11a/g OFDM 9Mbps operation.
+Set 802.11g OFDM 9Mbps operation.
 .It Cm OFDM12
-Set 802.11a/g OFDM 12Mbps operation.
+Set 802.11g OFDM 12Mbps operation.
 .It Cm OFDM18
-Set 802.11a/g OFDM 18Mbps operation.
+Set 802.11g OFDM 18Mbps operation.
 .It Cm OFDM24
-Set 802.11a/g OFDM 24Mbps operation.
+Set 802.11g OFDM 24Mbps operation.
 .It Cm OFDM36
-Set 802.11a/g OFDM 36Mbps operation.
+Set 802.11g OFDM 36Mbps operation.
 .It Cm OFDM48
-Set 802.11a/g OFDM 48Mbps operation.
+Set 802.11g OFDM 48Mbps operation.
 .It Cm OFDM54
-Set 802.11a/g OFDM 54Mbps operation.
+Set 802.11g OFDM 54Mbps operation.
 .El
 .It Cm mediaopt Ar opts
 The
@@ -156,8 +156,6 @@ The
 driver supports the following modes:
 .Pp
 .Bl -tag -width 11b -compact
-.It Cm 11a
-Force 802.11a operation.
 .It Cm 11b
 Force 802.11b operation.
 .It Cm 11g
