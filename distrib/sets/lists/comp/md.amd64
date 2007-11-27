@@ -45,6 +45,7 @@
 ./usr/include/amd64/mpbiosreg.h
 ./usr/include/amd64/mpbiosvar.h
 ./usr/include/amd64/mpconfig.h
+./usr/include/amd64/mplock.h
 ./usr/include/amd64/mtrr.h
 ./usr/include/amd64/mutex.h
 ./usr/include/amd64/param.h
