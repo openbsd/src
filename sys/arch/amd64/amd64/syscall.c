@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.9 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.10 2007/11/27 18:09:37 art Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ syscall(struct trapframe frame)
 	int nsys;
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
+	int nolock;
 
 	uvmexp.syscalls++;
 	p = curproc;
@@ -132,24 +133,39 @@ syscall(struct trapframe frame)
 		}
 	}
 
-	KERNEL_PROC_LOCK(p);
+	nolock = (callp->sy_flags & SY_NOLOCK);
+
+	if (!nolock)
+		KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, argp);
+	KERNEL_PROC_UNLOCK(p);
 #endif
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		if (nolock)
+			KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, callp->sy_argsize, argp);
+		if (nolock)
+			KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 
 	rval[0] = 0;
 	rval[1] = frame.tf_rdx;
 #if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		if (nolock)
+			KERNEL_PROC_LOCK(p);
 		error = systrace_redirect(code, p, argp, rval);
-	else
+		if (nolock)
+			KERNEL_PROC_UNLOCK(p);
+	} else
 #endif
 		error = (*callp->sy_call)(p, argp, rval);
-	KERNEL_PROC_UNLOCK(p);
+	if (!nolock)
+		KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
