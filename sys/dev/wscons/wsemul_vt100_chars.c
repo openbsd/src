@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_chars.c,v 1.5 2007/01/07 13:31:36 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_chars.c,v 1.6 2007/11/27 16:37:27 miod Exp $ */
 /* $NetBSD: wsemul_vt100_chars.c,v 1.4 1999/02/20 18:20:02 drochner Exp $ */
 
 /*
@@ -75,8 +75,7 @@ static const u_int16_t dectech2uni[128] = {
 };
 
 void
-vt100_initchartables(edp)
-	struct wsemul_vt100_emuldata *edp;
+vt100_initchartables(struct wsemul_vt100_emuldata *edp)
 {
 	int i;
 
@@ -129,7 +128,7 @@ static const struct {
 	/* norwegian /danish */
 	{{0x0023, 0x0040, 0x00c6, 0x00d8, 0x00c5, 0x005e,
 	0x005f, 0x0060, 0x00e6, 0x00f8, 0x00e5, 0x007e}},
-	/* portugese */
+	/* portuguese */
 	{{0x0023, 0x0040, 0x00c3, 0x00c7, 0x00d5, 0x005e,
 	0x005f, 0x0060, 0x00e3, 0x00e7, 0x00f5, 0x007e}},
 	/* spanish */
@@ -144,9 +143,7 @@ static const struct {
 };
 
 int
-vt100_setnrc(edp, nrc)
-	struct wsemul_vt100_emuldata *edp;
-	int nrc;
+vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 {
 	int i;
 

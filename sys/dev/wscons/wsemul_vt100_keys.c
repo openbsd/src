@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_keys.c,v 1.3 2007/11/26 16:56:42 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_keys.c,v 1.4 2007/11/27 16:37:27 miod Exp $ */
 /* $NetBSD: wsemul_vt100_keys.c,v 1.3 1999/04/22 20:06:02 mycroft Exp $ */
 
 /*
@@ -79,10 +79,7 @@ static const char *vt100_numpad[] = {
 };
 
 int
-wsemul_vt100_translate(cookie, in, out)
-	void *cookie;
-	keysym_t in;
-	const char **out;
+wsemul_vt100_translate(void *cookie, keysym_t in, const char **out)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
 	static char c;

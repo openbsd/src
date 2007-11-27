@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.6 2007/11/26 16:56:42 miod Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.7 2007/11/27 16:37:27 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -220,7 +220,7 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			    edp->nrows - n, n, edp->defattr);
 			edp->crow -= n - 1;
 			break;
-		}	
+		}
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
