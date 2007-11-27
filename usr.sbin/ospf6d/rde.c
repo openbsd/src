@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.8 2007/11/27 11:29:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.9 2007/11/27 12:23:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,6 +42,7 @@ void		 rde_sig_handler(int sig, short, void *);
 void		 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
 void		 rde_dispatch_parent(int, short, void *);
+void		 rde_dump_area(struct area *, int, pid_t);
 
 void		 rde_send_summary(pid_t);
 void		 rde_send_summary_area(struct area *, pid_t);
@@ -309,7 +310,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				memcpy(&lsa_hdr, buf, sizeof(lsa_hdr));
 				buf += sizeof(lsa_hdr);
 
-				v = lsa_find(nbr->area, lsa_hdr.type,
+				v = lsa_find(nbr->iface, lsa_hdr.type,
 				    lsa_hdr.ls_id, lsa_hdr.adv_rtr);
 				if (v == NULL)
 					db_hdr = NULL;
@@ -346,7 +347,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				memcpy(&req_hdr, buf, sizeof(req_hdr));
 				buf += sizeof(req_hdr);
 
-				if ((v = lsa_find(nbr->area,
+				if ((v = lsa_find(nbr->iface,
 				    ntohl(req_hdr.type), req_hdr.ls_id,
 				    req_hdr.adv_rtr)) == NULL) {
 					imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
@@ -378,7 +379,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 			}
 
-			v = lsa_find(nbr->area, lsa->hdr.type, lsa->hdr.ls_id,
+			v = lsa_find(nbr->iface, lsa->hdr.type, lsa->hdr.ls_id,
 				    lsa->hdr.adv_rtr);
 			if (v == NULL)
 				db_hdr = NULL;
@@ -472,7 +473,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (rde_nbr_loading(nbr->area))
 				break;
 
-			v = lsa_find(nbr->area, lsa_hdr.type, lsa_hdr.ls_id,
+			v = lsa_find(nbr->iface, lsa_hdr.type, lsa_hdr.ls_id,
 				    lsa_hdr.adv_rtr);
 			if (v == NULL)
 				db_hdr = NULL;
@@ -499,10 +500,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			}
 			if (imsg.hdr.len == IMSG_HEADER_SIZE) {
 				LIST_FOREACH(area, &rdeconf->area_list, entry) {
-					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, area,
-					    sizeof(*area));
-					lsa_dump(&area->lsa_tree, imsg.hdr.type,
+					rde_dump_area(area, imsg.hdr.type,
 					    imsg.hdr.pid);
 				}
 				lsa_dump(&asext_tree, imsg.hdr.type,
@@ -510,10 +508,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			} else {
 				memcpy(&aid, imsg.data, sizeof(aid));
 				if ((area = area_find(rdeconf, aid)) != NULL) {
-					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, area,
-					    sizeof(*area));
-					lsa_dump(&area->lsa_tree, imsg.hdr.type,
+					rde_dump_area(area, imsg.hdr.type,
 					    imsg.hdr.pid);
 					if (!area->stub)
 						lsa_dump(&asext_tree,
@@ -699,6 +694,25 @@ rde_dispatch_parent(int fd, short event, void *bula)
 		event_del(&ibuf->ev);
 		event_loopexit(NULL);
 	}
+}
+
+void
+rde_dump_area(struct area *area, int imsg_type, pid_t pid)
+{
+	struct iface	*iface;
+
+	/* dump header */
+	imsg_compose(ibuf_ospfe, IMSG_CTL_AREA, 0, pid, area, sizeof(*area));
+
+	/* dump link local lsa */
+	LIST_FOREACH(iface, &area->iface_list, entry) {
+		imsg_compose(ibuf_ospfe, IMSG_CTL_IFACE,
+		    0, pid, iface, sizeof(*iface));
+		lsa_dump(&iface->lsa_tree, imsg_type, pid);
+	}
+
+	/* dump area lsa */
+	lsa_dump(&area->lsa_tree, imsg_type, pid);
 }
 
 u_int32_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.7 2007/11/27 11:29:34 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.8 2007/11/27 12:23:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -157,7 +157,6 @@ lsa_newer(struct lsa_hdr *a, struct lsa_hdr *b)
 int
 lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 {
-	struct area	*area = nbr->area;
 	u_int32_t	 metric;
 
 	if (len < sizeof(lsa->hdr)) {
@@ -255,7 +254,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		}
 		/* AS-external-LSA are silently discarded in stub areas */
-		if (area->stub)
+		if (nbr->area->stub)
 			return (0);
 		break;
 	default:
@@ -264,9 +263,9 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 	}
 
 	/* MaxAge handling */
-	if (lsa->hdr.age == htons(MAX_AGE) && !nbr->self && lsa_find(area,
+	if (lsa->hdr.age == htons(MAX_AGE) && !nbr->self && lsa_find(nbr->iface,
 	    lsa->hdr.type, lsa->hdr.ls_id, lsa->hdr.adv_rtr) == NULL &&
-	    !rde_nbr_loading(area)) {
+	    !rde_nbr_loading(nbr->area)) {
 		/*
 		 * if no neighbor in state Exchange or Loading
 		 * ack LSA but don't add it. Needs to be a direct ack.
@@ -462,7 +461,7 @@ lsa_del(struct rde_nbr *nbr, struct lsa_hdr *lsa)
 	struct vertex	*v;
 	struct timeval	 tv;
 
-	v = lsa_find(nbr->area, lsa->type, lsa->ls_id, lsa->adv_rtr);
+	v = lsa_find(nbr->iface, lsa->type, lsa->ls_id, lsa->adv_rtr);
 	if (v == NULL)
 		return;
 
@@ -504,7 +503,8 @@ lsa_age(struct vertex *v)
 }
 
 struct vertex *
-lsa_find(struct area *area, u_int16_t type, u_int32_t ls_id, u_int32_t adv_rtr)
+lsa_find(struct iface *iface, u_int16_t type, u_int32_t ls_id,
+    u_int32_t adv_rtr)
 {
 	struct vertex	 key;
 	struct vertex	*v;
@@ -514,10 +514,14 @@ lsa_find(struct area *area, u_int16_t type, u_int32_t ls_id, u_int32_t adv_rtr)
 	key.adv_rtr = ntohl(adv_rtr);
 	key.type = ntohs(type);
 
-	if (type == LSA_TYPE_EXTERNAL)
+	if (LSA_IS_SCOPE_AS(key.type))
 		tree = &asext_tree;
+	else if (LSA_IS_SCOPE_AREA(key.type))
+		tree = &iface->area->lsa_tree;
+	else if (LSA_IS_SCOPE_LLOCAL(key.type))
+		tree = &iface->lsa_tree;
 	else
-		tree = &area->lsa_tree;
+		fatalx("unknown scope type");
 
 	v = RB_FIND(lsa_tree, tree, &key);
 

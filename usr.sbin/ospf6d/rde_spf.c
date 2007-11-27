@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.4 2007/10/16 21:36:19 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.5 2007/11/27 12:23:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -64,7 +64,8 @@ spf_calc(struct area *area)
 	cand_list_clr();
 
 	/* initialize SPF tree */
-	if ((v = spf_root = lsa_find(area, LSA_TYPE_ROUTER, rde_router_id(),
+	if ((v = spf_root = lsa_find(LIST_FIRST(&area->iface_list), /* XXX */
+	    LSA_TYPE_ROUTER, rde_router_id(),
 	    rde_router_id())) == NULL)
 		/* empty area because no interface is active */
 		return;
@@ -102,7 +103,8 @@ spf_calc(struct area *area)
 			case LSA_TYPE_NETWORK:
 				net_link = get_net_link(v, i);
 				/* find router LSA */
-				w = lsa_find(area, LSA_TYPE_ROUTER,
+				w = lsa_find(LIST_FIRST(&area->iface_list), /* XXX */
+				    LSA_TYPE_ROUTER,
 				    net_link->att_rtr, net_link->att_rtr);
 				break;
 			default:

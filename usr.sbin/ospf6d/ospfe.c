@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.6 2007/11/27 11:29:34 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.7 2007/11/27 12:23:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -621,6 +621,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				}
 			break;
 		case IMSG_CTL_AREA:
+		case IMSG_CTL_IFACE:
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_DATABASE:
 		case IMSG_CTL_SHOW_DB_EXT:
