@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.61 2007/11/26 19:52:09 deraadt Exp $ */
+/*	$OpenBSD: pchb.c,v 1.62 2007/11/27 15:40:56 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -168,14 +168,6 @@ pchbmatch(struct device *parent, void *match, void *aux)
 	return (0);
 }
 
-/*
- * The variable below is a bit vector representing the Serverworks
- * busses that have already been attached.  Bit 0 represents bus 0 and
- * so forth.  The initial value is 1 because we never actually want to
- * attach bus 0 since bus 0 is the mainbus.
- */
-u_int32_t rcc_bus_visited = 1;
-
 void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
@@ -186,51 +178,62 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach = 0, has_agp = 0, i, r;
-
-	/*
-	 * configure certain chipsets which have auxiliary PCI buses.
-	 */
+	int has_agp = 0, i, r;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
 		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
+#ifdef __i386__
 		case PCI_PRODUCT_AMD_SC751_SC:
 		case PCI_PRODUCT_AMD_762_PCHB:
 			has_agp = 1; /* XXX is this detected otherwise */
 			break;
+#endif /* __i386__ */
 		case PCI_PRODUCT_AMD_AMD64_HT:
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
 				pchb_amd64ht_attach(self, pa, i);
 			break;
 		}
 		break;
+#ifdef __i386__
 	case PCI_VENDOR_RCC:
-		printf("\n");
-		bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
-		if (bdnum >= (sizeof(rcc_bus_visited) * 8) ||
-		    (rcc_bus_visited & (1 << bdnum)))
-			break;
+		{
+			/*
+			 * The variable below is a bit vector representing the
+			 * Serverworks busses that have already been attached.
+			 * Bit 0 represents bus 0 and so forth.  The initial
+			 * value is 1 because we never actually want to
+			 * attach bus 0 since bus 0 is the mainbus.
+			 */
+			static u_int32_t rcc_bus_visited = 1;
 
-		rcc_bus_visited |= 1 << bdnum;
+			printf("\n");
+			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
+			if (bdnum >= (sizeof(rcc_bus_visited) * 8) ||
+			    (rcc_bus_visited & (1 << bdnum)))
+				break;
 
-		/*
-		 * This host bridge has a second PCI bus.
-		 * Configure it.
-		 */
-		pbnum = bdnum;
-		pba.pba_bridgetag = NULL;
-		doattach = 1;
-		break;
+			rcc_bus_visited |= 1 << bdnum;
+
+			/*
+			 * This host bridge has a second PCI bus.
+			 * Configure it.
+			 */
+			pbnum = bdnum;
+			pba.pba_bridgetag = NULL;
+			goto doattach;
+		}
+#endif
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+#ifdef __i386__
 		case PCI_PRODUCT_INTEL_82452_HB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
 			pbnum = PCISET_INTEL_BRIDGE_NUMBER(bcreg);
 			if (pbnum != 0xff) {
 				pbnum++;
-				doattach = 1;
+				goto doattach;
 			}
 			break;
 		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
@@ -263,13 +266,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				break;
 			case PCISET_INTEL_TYPE_AUX:
 				printf(": Auxiliary PB (bus %d)", pbnum);
-
-				/*
-				 * This host bridge has a second PCI bus.
-				 * Configure it.
-				 */
-				doattach = 1;
-				break;
+				goto doattach;
 			}
 			break;
 		case PCI_PRODUCT_INTEL_CDC:
@@ -306,65 +303,58 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				pbnum = (bcreg & 0x000000ff) + 1;
 				break;
 			}
-			if (pbnum != 0) {
-				doattach = 1;
-			}
+			if (pbnum != 0)
+				goto doattach;
 			break;
-		case PCI_PRODUCT_INTEL_82810_MCH:
-		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
-		case PCI_PRODUCT_INTEL_82810E_MCH:
-		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+#endif /* __i386__ */
+
+		/*
+		 * As for Intel AGP, the host bridge is either in GFX mode
+		 * (internal graphics) or in AGP mode. In GFX mode, we pretend
+		 * to have AGP because the graphics memory access is very
+		 * similar and the AGP GATT code will deal with this. In the
+		 * latter case, the pci_get_capability(PCI_CAP_AGP) test below
+		 * will fire, so we do no harm by already setting the flag.
+		 */
+
+		/* AGP only */
+#ifdef __i386__
 		case PCI_PRODUCT_INTEL_82830MP_IO_1:
 		case PCI_PRODUCT_INTEL_82845G:
 		case PCI_PRODUCT_INTEL_82852GM_HPB:
 		case PCI_PRODUCT_INTEL_82865_IO_1:
-		case PCI_PRODUCT_INTEL_82915G_HB:
+#endif /* __i386__ */
 		case PCI_PRODUCT_INTEL_82915GM_HB:
-		case PCI_PRODUCT_INTEL_82945GP_MCH:
 		case PCI_PRODUCT_INTEL_82945GM_MCH:
-		case PCI_PRODUCT_INTEL_82Q963_HB:
-		case PCI_PRODUCT_INTEL_82965_MCH:
 		case PCI_PRODUCT_INTEL_82965GM_MCH:
-			/*
-			 * The host bridge is either in GFX mode (internal
-			 * graphics) or in AGP mode. In GFX mode, we pretend
-			 * to have AGP because the graphics memory access
-			 * is very similar and the AGP GATT code will
-			 * deal with this. In the latter case, the
-			 * pci_get_capability(PCI_CAP_AGP) test below will
-			 * fire, so we do no harm by already setting the flag.
-			 */
+		case PCI_PRODUCT_INTEL_82965_MCH:
+		case PCI_PRODUCT_INTEL_82Q963_HB:
 			has_agp = 1;
 			break;
-		}
-		printf("\n");
-		break;
-	default:
-		printf("\n");
-		break;
-	}
 
-	/*
-	 * Now set up RNG.  this isn't in previous switch since only
-	 * some of the rng devices need special attention for AGP
-	 */
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82810_MCH:
-		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		/* AGP + RNG */
+#ifdef __i386__
 		case PCI_PRODUCT_INTEL_82810E_MCH:
-		case PCI_PRODUCT_INTEL_82815_DC100_HUB:
-		case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810_MCH:
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+#endif /* __i386__ */
+		case PCI_PRODUCT_INTEL_82915G_HB:
+		case PCI_PRODUCT_INTEL_82945GP_MCH:
+			has_agp = 1;
+			/* FALLTHROUGH */
+
+		/* RNG only */
+#ifdef __i386__
+		case PCI_PRODUCT_INTEL_82815_DC100_HUB:
 		case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
+		case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
 		case PCI_PRODUCT_INTEL_82820_MCH:
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82850_HB:
 		case PCI_PRODUCT_INTEL_82860_HB:
-		case PCI_PRODUCT_INTEL_82915G_HB:
+#endif /* __i386__ */
 		case PCI_PRODUCT_INTEL_82925X_HB:
-		case PCI_PRODUCT_INTEL_82945GP_MCH:
 		case PCI_PRODUCT_INTEL_82955X_HB:
 			sc->sc_bt = pa->pa_memt;
 			if (bus_space_map(sc->sc_bt, I82802_IOBASE,
@@ -400,6 +390,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			pchb_rnd(sc);
 			break;
 		}
+		printf("\n");
+		break;
+	default:
+		printf("\n");
+		break;
 	}
 
 	/*
@@ -413,21 +408,22 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbus_print);
 	}
-
-	if (doattach) {
-		pba.pba_busname = "pci";
-		pba.pba_iot = pa->pa_iot;
-		pba.pba_memt = pa->pa_memt;
-		pba.pba_dmat = pa->pa_dmat;
-		pba.pba_domain = pa->pa_domain;
-		pba.pba_bus = pbnum;
-		pba.pba_bridgetag = NULL;
-		pba.pba_pc = pa->pa_pc;
-		config_found(self, &pba, pchb_print);
-		pba.pba_bridgetag = NULL;
-		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
-		config_found(self, &pba, pchb_print);
-	}
+#ifdef __i386__
+	return;
+doattach:
+	pba.pba_busname = "pci";
+	pba.pba_iot = pa->pa_iot;
+	pba.pba_memt = pa->pa_memt;
+	pba.pba_dmat = pa->pa_dmat;
+	pba.pba_domain = pa->pa_domain;
+	pba.pba_bus = pbnum;
+	pba.pba_bridgetag = NULL;
+	pba.pba_pc = pa->pa_pc;
+	config_found(self, &pba, pchb_print);
+	pba.pba_bridgetag = NULL;
+	memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
+	config_found(self, &pba, pchb_print);
+#endif /* __i386__ */
 }
 
 int
@@ -497,8 +493,12 @@ pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
+#ifdef __i386__
 		pba.pba_domain = pa->pa_domain;
+#else
 		pba.pba_bus = AMD64HT_LDT_SEC_BUS_NUM(bus);
+#endif
+		pba.pba_bridgetag = NULL;
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}

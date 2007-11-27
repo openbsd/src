@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.15 2007/11/26 19:52:09 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.16 2007/11/27 15:40:56 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -78,17 +78,6 @@
 
 #include <dev/ic/i82802reg.h>
 
-#define PCISET_BRIDGETYPE_MASK	0x3
-#define PCISET_TYPE_COMPAT	0x1
-#define PCISET_TYPE_AUX		0x2
-
-#define PCISET_BUSCONFIG_REG	0x48
-#define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
-#define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
-
-/* XXX should be in dev/ic/i82443reg.h */
-#define	I82443BX_SDRAMC_REG	0x76
-
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
 #define I82424_PCI_BCTL_REG		0x54
@@ -163,31 +152,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	int has_agp = 0, i, r;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82915G_HB:
-		case PCI_PRODUCT_INTEL_82915GM_HB:
-		case PCI_PRODUCT_INTEL_82945GP_MCH:
-		case PCI_PRODUCT_INTEL_82945GM_MCH:
-		case PCI_PRODUCT_INTEL_82Q963_HB:
-		case PCI_PRODUCT_INTEL_82965_MCH:
-		case PCI_PRODUCT_INTEL_82965GM_MCH:
-			/*
-			 * The host bridge is either in GFX mode (internal
-			 * graphics) or in AGP mode. In GFX mode, we pretend
-			 * to have AGP because the graphics memory access
-			 * is very similar and the AGP GATT code will
-			 * deal with this. In the latter case, the
-			 * pci_get_capability(PCI_CAP_AGP) test below will
-			 * fire, so we do no harm by already setting the flag.
-			 */
-			has_agp = 1;
-			break;
-		}
-		break;
-	}
-
-	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
 		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -198,11 +162,33 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	case PCI_VENDOR_INTEL:
-		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
+
+		/*
+		 * As for Intel AGP, the host bridge is either in GFX mode
+		 * (internal graphics) or in AGP mode. In GFX mode, we pretend
+		 * to have AGP because the graphics memory access is very
+		 * similar and the AGP GATT code will deal with this. In the
+		 * latter case, the pci_get_capability(PCI_CAP_AGP) test below
+		 * will fire, so we do no harm by already setting the flag.
+		 */
+
+		/* AGP only */
+		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82945GM_MCH:
+		case PCI_PRODUCT_INTEL_82965GM_MCH:
+		case PCI_PRODUCT_INTEL_82965_MCH:
+		case PCI_PRODUCT_INTEL_82Q963_HB:
+			has_agp = 1;
+			break;
+
+		/* AGP + RNG */
 		case PCI_PRODUCT_INTEL_82915G_HB:
-		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82945GP_MCH:
+			has_agp = 1;
+			/* FALLTHROUGH */
+
+		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82955X_HB:
 			sc->sc_bt = pa->pa_memt;
 			if (bus_space_map(sc->sc_bt, I82802_IOBASE,
@@ -238,6 +224,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			pchb_rnd(sc);
 			break;
 		}
+		printf("\n");
+		break;
+	default:
+		printf("\n");
 		break;
 	}
 
