@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2007/11/26 23:50:03 art Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2007/11/27 15:55:29 art Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -119,7 +119,8 @@ __mp_unlock(struct __mp_lock *mpl)
 }
 
 int
-__mp_release_all(struct __mp_lock *mpl) {
+__mp_release_all(struct __mp_lock *mpl)
+{
 	int rv = mpl->mpl_count - 1;
 	long rf = read_rflags();
 
@@ -139,7 +140,8 @@ __mp_release_all(struct __mp_lock *mpl) {
 }
 
 int
-__mp_release_all_but_one(struct __mp_lock *mpl) {
+__mp_release_all_but_one(struct __mp_lock *mpl)
+{
 	int rv = mpl->mpl_count - 2;
 
 #ifdef MP_LOCKDEBUG
@@ -155,13 +157,15 @@ __mp_release_all_but_one(struct __mp_lock *mpl) {
 }
 
 void
-__mp_acquire_count(struct __mp_lock *mpl, int count) {
+__mp_acquire_count(struct __mp_lock *mpl, int count)
+{
 	while (count--)
 		__mp_lock(mpl);
 }
 
 int
-__mp_lock_held(struct __mp_lock *mpl) {
+__mp_lock_held(struct __mp_lock *mpl)
+{
 	return mpl->mpl_cpu == curcpu();
 }
 
