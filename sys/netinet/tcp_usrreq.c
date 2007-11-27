@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.93 2007/11/16 19:24:07 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.94 2007/11/27 17:23:23 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -333,12 +333,7 @@ tcp_usrreq(so, req, m, nam, control)
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
-#ifdef TCP_COMPAT_42
-		tp->iss = tcp_iss;
-		tcp_iss += TCP_ISSINCR/2;
-#else  /* TCP_COMPAT_42 */
 		tcp_set_iss_tsm(tp);
-#endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 #if defined(TCP_SACK)
 		tp->snd_last = tp->snd_una;

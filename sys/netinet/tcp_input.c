@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.209 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.210 2007/11/27 17:23:23 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4069,12 +4069,7 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi, issp)
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;
 
-#ifdef TCP_COMPAT_42
-	tcp_iss += TCP_ISSINCR/2;
-	sc->sc_iss = tcp_iss;
-#else
 	sc->sc_iss = issp ? *issp : arc4random();
-#endif
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_adv(m->m_flags & M_PKTHDR ?
 	    m->m_pkthdr.rcvif : NULL, sc->sc_src.sa.sa_family);

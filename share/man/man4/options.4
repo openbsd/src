@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.185 2007/11/25 17:11:11 oga Exp $
+.\"	$OpenBSD: options.4,v 1.186 2007/11/27 17:23:23 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 25 2007 $
+.Dd $Mdocdate: November 27 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -697,28 +697,6 @@ Include kernel support for the AppleTalk family of protocols.
 This suite of supporting code is sometimes called
 .Em netatalk
 support.
-.It Cd option TCP_COMPAT_42
-Use of this option is
-.Em extremely
-discouraged, so it should not be enabled.
-If any other machines on the network require enabling this, it's
-recommended that
-.Em they
-be disconnected from the network.
-.Pp
-TCP bug compatibility with
-.Bx 4.2 .
-In
-.Bx 4.2 ,
-TCP sequence numbers
-were 32-bit signed values.
-Modern implementations of TCP use unsigned values.
-This option clamps the initial sequence number to start in
-the range 2^31 rather than the full unsigned range of 2^32.
-Also, under
-.Bx 4.2 ,
-keepalive packets must contain at least one byte or else
-the remote end will not respond.
 .It Cd option TCP_SACK
 Turns on selective acknowledgements.
 Additional information about

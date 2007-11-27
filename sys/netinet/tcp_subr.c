@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.100 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.101 2007/11/27 17:23:23 deraadt Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -351,11 +351,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
 			return;
-#ifdef TCP_COMPAT_42
-		tlen = 1;
-#else
 		tlen = 0;
-#endif
 		m->m_data += max_linkhdr;
 		switch (af) {
 #ifdef INET6
