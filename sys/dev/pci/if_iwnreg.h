@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.8 2007/11/27 19:45:44 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -182,7 +182,7 @@
 
 #define IWN_TX_WINDOW	64
 struct iwn_shared {
-	uint16_t	len[512][IWN_NTXQUEUES];	/* 16KB total */
+	uint16_t	len[IWN_NTXQUEUES][512];	/* 16KB total */
 	uint16_t	closed_count;
 	uint16_t	closed_rx_count;
 	uint16_t	finished_count;
