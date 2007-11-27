@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.191 2007/11/27 13:15:42 chl Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.192 2007/11/27 16:21:02 chl Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2908,8 +2908,8 @@ carp_status(void)
 		else
 			state = carp_states[carpr.carpr_states[i]];
 		if (carpr.carpr_vhids[1] == 0) {
-			printf("\tcarp: %s carpdev %s vhid %d advbase %d "
-			    "advskew %d\n", state,
+			printf("\tcarp: %s carpdev %s vhid %u advbase %d "
+			    "advskew %u\n", state,
 			    carpr.carpr_carpdev[0] != '\0' ?
 		    	    carpr.carpr_carpdev : "none", carpr.carpr_vhids[0],
 		    	    carpr.carpr_advbase, carpr.carpr_advskews[0]);
@@ -2920,7 +2920,7 @@ carp_status(void)
 				    carpr.carpr_carpdev : "none",
 				    carpr.carpr_advbase);
 			}
-			printf("\t\tstate %s vhid %d advskew %d\n", state,
+			printf("\t\tstate %s vhid %u advskew %u\n", state,
 			    carpr.carpr_vhids[i], carpr.carpr_advskews[i]);
 		}
 	}
