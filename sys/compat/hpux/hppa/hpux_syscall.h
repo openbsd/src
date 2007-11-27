@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_syscall.h,v 1.8 2004/09/19 22:04:49 mickey Exp $	*/
+/*	$OpenBSD: hpux_syscall.h,v 1.9 2007/11/27 23:14:23 art Exp $	*/
 
 /*
  * System call numbers.
