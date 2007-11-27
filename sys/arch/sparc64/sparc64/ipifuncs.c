@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.5 2007/11/16 16:20:55 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.6 2007/11/27 19:00:26 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -79,7 +79,7 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 
 	/* Schedule an interrupt. */
 	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
-		int s = intr_disable();
+		u_int64_t s = intr_disable();
 
 		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, (u_int64_t)func);
 		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, arg0);
