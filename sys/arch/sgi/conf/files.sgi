@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.14 2007/10/18 18:59:29 jsing Exp $
+#	$OpenBSD: files.sgi,v 1.15 2007/11/27 15:31:00 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -83,6 +83,11 @@ device	clock
 attach	clock at macebus with clock_macebus
 attach	clock at xbowmux with clock_xbowmux
 file	arch/sgi/sgi/clock_md.c			clock
+
+# GBE framebuffer
+device	gbe: wsemuldisplaydev, rasops8, rasops16, rasops32
+attach	gbe at mainbus
+file	arch/sgi/dev/gbe.c			gbe
 
 # 16[45]50-based "com" ports on localbus
 attach	com at xbowmux with com_xbow

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2007/10/18 18:59:29 jsing Exp $
+#	$OpenBSD: GENERIC,v 1.23 2007/11/27 15:31:00 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,6 +46,9 @@ cpu*		at mainbus0
 #### Main local buses
 #crimebus0	at mainbus0
 macebus0	at mainbus0	# MACE controller localbus.
+
+# GBE Framebuffer
+gbe0		at mainbus0 disable
 
 # Localbus devices
 clock0		at macebus0
@@ -110,6 +113,7 @@ audio*		at emu?
 #### WS console
 #wsdisplay*	at vga?
 #wskbd*		at ukbd? mux 1
+wsdisplay*	at gbe?
 
 #### Keyboard and Mouse
 pckbd*		at mkbc?
