@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.63 2007/11/22 11:01:04 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.64 2007/11/27 13:19:16 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -671,7 +671,8 @@ rundisplay(void)
 						putr();
 					} else if (i == 0)
 						display_header(No);
-					else if ((i > topn || i == -1) && topn == 0) {
+					else if ((i > topn || i == Infinity) 
+					    && topn == 0) {
 						/* redraw the header */
 						display_header(Yes);
 					}
