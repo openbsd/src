@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -599,7 +599,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	long	i;
 	long	numrela;
-	long	fails = 0;
+	int	fails = 0;
 	Elf_Addr loff;
 	Elf_RelA *rels;
 	struct load_list *llist;
@@ -763,9 +763,10 @@ resolve_failed:
  *	This is done by calling _dl_md_reloc on DT_JUMPREL for DL_BIND_NOW,
  *	otherwise the lazy binding plt initialization is performed.
  */
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
+	int	fails = 0;
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	Elf_Addr ooff;
 	const Elf_Sym *this;
@@ -776,7 +777,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	lazy = 0;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return;
+		return (0);
 
 	object->got_addr = NULL;
 	object->got_size = 0;
@@ -804,7 +805,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->plt_start = NULL;
 
 	if (!lazy) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
@@ -824,6 +825,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
+
+	return (fails);
 }
 
 Elf_Addr

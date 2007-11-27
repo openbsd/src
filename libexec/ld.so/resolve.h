@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.54 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.55 2007/11/27 16:42:15 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -160,8 +160,8 @@ elf_object_t *_dl_lookup_object(const char *objname);
 elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);
 
-int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
-void _dl_md_reloc_got(elf_object_t *object, int lazy);
+int _dl_md_reloc(elf_object_t *object, int rel, int relsz);
+int _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, const Elf_Sym **this,
     int flags, const Elf_Sym *ref_sym, elf_object_t *object,

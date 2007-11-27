@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2006/12/21 02:44:55 krw Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -168,7 +168,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
  *	symbol table. By not doing so, we can't use pointers to
  *	external functions and use them in comparisons...
  */
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	int	i, n;
@@ -180,7 +180,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const char *strt;
 
 	if (object->status & STAT_GOT_DONE)
-		return;
+		return (0);
 
 	lazy = 0;	/* XXX Fix ld before enabling lazy */
 	loff = object->load_offs;
@@ -270,4 +270,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
+
+	return (0);
 }

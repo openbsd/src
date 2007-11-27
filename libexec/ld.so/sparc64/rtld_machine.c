@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.39 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.40 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -205,7 +205,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	long	i;
 	long	numrela;
-	long	fails = 0;
+	int	fails = 0;
 	Elf_Addr loff;
 	Elf_RelA *relas;
 	struct load_list *llist;
@@ -680,9 +680,10 @@ void _dl_bind_start_1(long, long);
 /*
  *	Relocate the Global Offset Table (GOT).
  */
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
+	int	fails = 0;
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	Elf_Word *entry = (Elf_Word *)pltgot;
 	Elf_Addr ooff;
@@ -690,7 +691,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const Elf_Sym *this;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return;
+		return (0);
 
 	object->got_addr = NULL;
 	object->got_size = 0;
@@ -740,7 +741,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	if (!lazy) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		_dl_install_plt(&entry[0], (Elf_Addr)&_dl_bind_start_0);
 		_dl_install_plt(&entry[8], (Elf_Addr)&_dl_bind_start_1);
@@ -753,4 +754,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
+
+	return (fails);
 }

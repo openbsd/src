@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2007/05/05 15:21:21 drahn Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.14 2007/11/27 16:42:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -285,16 +285,16 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	return (fails);
 }
 
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	Elf_RelA *rela;
 	Elf_Addr  ooff;
-	int	i, numrela;
+	int	i, numrela, fails = 0;
 	const Elf_Sym *this;
 
 	if (object->dyn.pltrel != DT_RELA)
-		return;
+		return (0);
 
 	lazy = 0;	/* force busy binding */
 
@@ -321,7 +321,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	if (!lazy) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		rela = (Elf_RelA *)(object->dyn.jmprel);
 		numrela = object->dyn.pltrelsz / sizeof(Elf_RelA);
@@ -343,6 +343,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->got_size != 0)
 		_dl_mprotect((void *)object->got_start, object->got_size,
 		    GOT_PERMS);
+
+	return (fails);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.111 2007/04/03 14:33:07 jason Exp $ */
+/*	$OpenBSD: loader.c,v 1.112 2007/11/27 16:42:15 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -801,7 +801,7 @@ _dl_rtld(elf_object_t *object)
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	prebind_symcache(object, SYM_PLT);
-	_dl_md_reloc_got(object, !(_dl_bindnow ||
+	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & RTLD_NOW));
 
 	if (_dl_symcache != NULL) {

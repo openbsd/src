@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.43 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.44 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -427,22 +427,23 @@ _dl_printf(" found other symbol at %x size %d\n",
  *	This is done by calling _dl_md_reloc on DT_JMPREL for DL_BIND_NOW,
  *	otherwise the lazy binding plt initialization is performed.
  */
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	Elf_Addr *pltresolve;
 	Elf_Addr *first_rela;
 	Elf_RelA *relas;
 	Elf_Addr  plt_addr;
+	int	i;
 	int	numrela;
-	int i;
+	int	fails = 0;
 	int index;
 	Elf32_Addr *r_addr;
 	Elf_Addr ooff;
 	const Elf_Sym *this;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return;
+		return (0);
 
 	object->got_addr = NULL;
 	object->got_size = 0;
@@ -492,7 +493,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	if (!lazy) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		first_rela = (Elf32_Addr *)
 		    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
@@ -530,6 +531,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
+
+	return (fails);
 }
 
 Elf_Addr

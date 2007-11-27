@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -173,7 +173,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
 	long	i;
 	long	numrel;
-	long	fails = 0;
+	int	fails = 0;
 	Elf_Addr loff;
 	Elf_RelA *rels;
 	struct load_list *llist;
@@ -382,10 +382,11 @@ _dl_bind(elf_object_t *object, int index)
 	return(newval);
 }
 
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	extern void _dl_bind_start(void);	/* XXX */
+	int	fails = 0;
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	int i, num;
 	Elf_RelA *rel;
@@ -393,13 +394,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const Elf_Sym *this;
 
 	if (pltgot == NULL)
-		return; /* it is possible to have no PLT/GOT relocations */
+		return (0); /* it is possible to have no PLT/GOT relocations */
 
 	pltgot[1] = (Elf_Addr)object;
 	pltgot[2] = (Elf_Addr)&_dl_bind_start;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return;
+		return (0);
 
 	object->got_addr = NULL;
 	object->got_size = 0;
@@ -424,7 +425,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	if (!lazy) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
@@ -440,4 +441,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
+
+	return (fails);
 }

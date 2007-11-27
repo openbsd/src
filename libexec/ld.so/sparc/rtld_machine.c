@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2007/11/27 16:42:19 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -179,7 +179,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	long	i;
 	long	numrela;
-	long	fails = 0;
+	int	fails = 0;
 	Elf_Addr loff;
 	Elf_RelA *relas;
 	struct load_list *llist;
@@ -360,9 +360,10 @@ _dl_bind(elf_object_t *object, int reloff)
 	return (value);
 }
 
-void
+int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
+	int	fails = 0;
 	Elf_Addr *pltgot;
 	extern void _dl_bind_start(void);	/* XXX */
 	Elf_Addr ooff;
@@ -446,7 +447,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
-		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	}
 
 	if (object->got_size != 0)
@@ -455,6 +456,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
+
+	return (fails);
 }
 
 
