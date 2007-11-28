@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.9 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: apm.4,v 1.10 2007/11/28 13:12:29 tedu Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 28 2007 $
 .Dt APM 4 zaurus
 .Os
 .Sh NAME
@@ -247,19 +247,6 @@ An attempt to open the file when in use will fail, returning
 .Xr apmd 8 ,
 .Xr halt 8 ,
 .Xr sysctl 8
-.Sh HISTORY
-The
-.Nm
-driver source code contains these copyrights:
-.Pp
-.Bl -item -compact
-.It
-.Li Copyright (c) 1995 John T. Kohl.  All rights reserved.
-.It
-.Li Copyright (C) 1994 by HOSOKAWA Tatsumi <hosokawa@mt.cs.keio.ac.jp>
-.El
-.Pp
-\&...and has been hacked on by many others since.
 .Sh BUGS
 Power events are not supported.
 .Pp
