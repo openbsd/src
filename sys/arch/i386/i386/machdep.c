@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.412 2007/11/25 10:50:13 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.413 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ paddr_t avail_end;
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 int p4_model;
 int p3_early;
 void (*update_cpuspeed)(void) = NULL;
@@ -1079,7 +1079,6 @@ const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 void
 winchip_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I586_CPU)
 
 	switch ((ci->ci_signature >> 4) & 15) { /* model */
 	case 4: /* WinChip C6 */
@@ -1089,10 +1088,9 @@ winchip_cpu_setup(struct cpu_info *ci)
 		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
-#endif
 }
 
-#if defined(I686_CPU) && !defined(SMALL_KERNEL)
+#if !defined(SMALL_KERNEL)
 void
 cyrix3_setperf_setup(struct cpu_info *ci)
 {
@@ -1104,12 +1102,10 @@ cyrix3_setperf_setup(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname);
 	}
 }
-#endif
 
 void
 cyrix3_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I686_CPU)
 	int model = (ci->ci_signature >> 4) & 15;
 	int step = ci->ci_signature & 15;
 
@@ -1237,7 +1233,6 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		printf("\n");
 		break;
 	}
-#endif
 }
 
 void
@@ -1276,7 +1271,6 @@ cyrix6x86_cpu_setup(struct cpu_info *ci)
 void
 natsem6x86_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
 	extern int clock_broken_latch;
 	int model = (ci->ci_signature >> 4) & 15;
 
@@ -1287,22 +1281,19 @@ natsem6x86_cpu_setup(struct cpu_info *ci)
 		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
-#endif
 }
 
 void
 intel586_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I586_CPU)
 	if (!cpu_f00f_bug) {
 		fix_f00f();
 		printf("%s: F00F bug workaround installed\n",
 		    ci->ci_dev.dv_xname);
 	}
-#endif
 }
 
-#if !defined(SMALL_KERNEL) && defined(I586_CPU)
+#if !defined(SMALL_KERNEL)
 void
 amd_family5_setperf_setup(struct cpu_info *ci)
 {
@@ -1332,14 +1323,14 @@ amd_family5_setup(struct cpu_info *ci)
 		break;
 	case 12:
 	case 13:
-#if !defined(SMALL_KERNEL) && defined(I586_CPU)
+#if !defined(SMALL_KERNEL)
 		setperf_setup = amd_family5_setperf_setup;
 #endif
 		break;
 	}
 }
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 void
 amd_family6_setperf_setup(struct cpu_info *ci)
 {
@@ -1354,12 +1345,12 @@ amd_family6_setperf_setup(struct cpu_info *ci)
 		break;
 	}
 }
-#endif /* !SMALL_KERNEL && I686_CPU */
+#endif
 
 void
 amd_family6_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	int family = (ci->ci_signature >> 8) & 15;
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);
@@ -1378,7 +1369,7 @@ amd_family6_setup(struct cpu_info *ci)
 #endif
 }
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 /*
  * Temperature read on the CPU is relative to the maximum
  * temperature supported by the CPU, Tj(Max).
@@ -1436,7 +1427,7 @@ intel686_cpusensors_setup(struct cpu_info *ci)
 }
 #endif
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 void
 intel686_setperf_setup(struct cpu_info *ci)
 {
@@ -1459,7 +1450,7 @@ void
 intel686_common_cpu_setup(struct cpu_info *ci)
 {
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	setperf_setup = intel686_setperf_setup;
 	cpusensors_setup = intel686_cpusensors_setup;
 	{
@@ -1487,7 +1478,7 @@ intel686_cpu_setup(struct cpu_info *ci)
 	int step = ci->ci_signature & 15;
 	u_quad_t msr119;
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	p3_get_bus_clock(ci);
 #endif
 
@@ -1514,7 +1505,7 @@ intel686_cpu_setup(struct cpu_info *ci)
 		ci->ci_level = 2;
 	}
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	p3_early = (model == 8 && step == 1) ? 1 : 0;
 	update_cpuspeed = p3_update_cpuspeed;
 #endif
@@ -1523,13 +1514,13 @@ intel686_cpu_setup(struct cpu_info *ci)
 void
 intel686_p4_cpu_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	p4_get_bus_clock(ci);
 #endif
 
 	intel686_common_cpu_setup(ci);
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL)
 	p4_model = (ci->ci_signature >> 4) & 15;
 	update_cpuspeed = p4_update_cpuspeed;
 #endif
@@ -1538,7 +1529,7 @@ intel686_p4_cpu_setup(struct cpu_info *ci)
 void
 tm86_cpu_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL) && (defined(I586_CPU) || defined(I686_CPU))
+#if !defined(SMALL_KERNEL)
 	longrun_init();
 #endif
 }
@@ -1778,7 +1769,6 @@ identifycpu(struct cpu_info *ci)
 		printf("%s: %s", cpu_device, cpu_model);
 	}
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	if (ci->ci_feature_flags && (ci->ci_feature_flags & CPUID_TSC)) {
 		/* Has TSC */
 		calibrate_cyclecounter();
@@ -1799,7 +1789,6 @@ identifycpu(struct cpu_info *ci)
 			}
 		}
 	}
-#endif
 	if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
 		printf("\n");
 
@@ -1838,49 +1827,15 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 #ifndef SMALL_KERNEL
-#if defined(I586_CPU) || defined(I686_CPU)
 	if (cpuspeed != 0 && cpu_cpuspeed == NULL)
 		cpu_cpuspeed = pentium_cpuspeed;
-#endif
 #endif
 
 	cpu_class = class;
 
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-	switch (cpu_class) {
-#if !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
-#error No CPU classes configured.
-#endif
-#ifndef I686_CPU
-	case CPUCLASS_686:
-		printf("NOTICE: this kernel does not support Pentium Pro CPU class\n");
-#ifdef I586_CPU
-		printf("NOTICE: lowering CPU class to i586\n");
-		cpu_class = CPUCLASS_586;
-		break;
-#endif
-#endif
-#ifndef I586_CPU
-	case CPUCLASS_586:
-		printf("NOTICE: this kernel does not support Pentium CPU class\n");
-#ifdef I486_CPU
-		printf("NOTICE: lowering CPU class to i486\n");
+	if (cpu_class == CPUCLASS_386) {
+		printf("WARNING: 386 (possibly unknown?) cpu class, assuming 486\n");
 		cpu_class = CPUCLASS_486;
-		break;
-#endif
-#endif
-#ifndef I486_CPU
-	case CPUCLASS_486:
-		printf("NOTICE: this kernel does not support i486 CPU class\n");
-#endif
-	case CPUCLASS_386:
-		printf("NOTICE: this kernel does not support i386 CPU class\n");
-		panic("no appropriate CPU class available");
-	default:
-		break;
 	}
 
 	ci->cpu_class = class;
@@ -1903,7 +1858,6 @@ identifycpu(struct cpu_info *ci)
 	 */
 	lcr0(rcr0() | CR0_WP);
 
-#if defined(I686_CPU)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
@@ -1925,7 +1879,6 @@ identifycpu(struct cpu_info *ci)
 	} else
 		i386_use_fxsave = 0;
 
-#endif /* I686_CPU */
 }
 
 char *
@@ -1948,7 +1901,6 @@ tm86_cpu_name(int model)
 }
 
 #ifndef SMALL_KERNEL
-#ifdef I686_CPU
 void
 cyrix3_get_bus_clock(struct cpu_info *ci)
 {
@@ -2153,16 +2105,13 @@ p3_update_cpuspeed(void)
 
 	cpuspeed = (bus_clock * mult) / 1000;
 }
-#endif	/* I686_CPU */
 
-#if defined(I586_CPU) || defined(I686_CPU)
 int
 pentium_cpuspeed(int *freq)
 {
 	*freq = cpuspeed;
 	return (0);
 }
-#endif
 #endif	/* !SMALL_KERNEL */
 
 #ifdef COMPAT_IBCS2
@@ -2215,9 +2164,7 @@ void
 sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
-#ifdef I686_CPU
 	extern char sigcode, sigcode_xmm;
-#endif
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
@@ -2315,10 +2262,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#ifdef I686_CPU
 	if (i386_use_fxsave)
 		tf->tf_eip += &sigcode_xmm - &sigcode;
-#endif
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
@@ -2806,7 +2751,6 @@ extern int IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
     IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align), IDTVEC(syscall), IDTVEC(mchk),
     IDTVEC(osyscall), IDTVEC(simd);
 
-#if defined(I586_CPU)
 extern int IDTVEC(f00f_redirect);
 
 int cpu_f00f_bug = 0;
@@ -2842,7 +2786,6 @@ fix_f00f(void)
 	/* Tell the rest of the world */
 	cpu_f00f_bug = 1;
 }
-#endif
 
 #ifdef MULTIPROCESSOR
 void

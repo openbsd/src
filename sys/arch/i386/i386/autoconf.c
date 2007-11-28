@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.75 2007/06/01 19:25:10 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.76 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -84,7 +84,6 @@
 extern dev_t bootdev;
 
 /* Support for VIA C3 RNG */
-#ifdef I686_CPU
 extern struct timeout viac3_rnd_tmo;
 extern int	viac3_rnd_present;
 void		viac3_rnd(void *);
@@ -92,7 +91,6 @@ void		viac3_rnd(void *);
 #ifdef CRYPTO
 void		viac3_crypto_setup(void);
 extern int	i386_has_xcrypt;
-#endif /* CRYPTO */
 #endif
 
 /*
@@ -146,7 +144,6 @@ cpu_configure(void)
 	 */
 	cold = 0;
 
-#ifdef I686_CPU
 	/*
 	 * At this point the RNG is running, and if FSXR is set we can
 	 * use it.  Here we setup a periodic timeout to collect the data.
@@ -161,7 +158,6 @@ cpu_configure(void)
 	 */
 	if (i386_has_xcrypt)
 		viac3_crypto_setup();
-#endif /* CRYPTO */
 #endif
 }
 

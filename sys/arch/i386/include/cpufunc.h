@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.13 2007/02/17 17:38:37 tom Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.14 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -172,13 +172,11 @@ tlbflushg(void)
 	 * pre-P6-family processors.
 	 */
 
-#if defined(I686_CPU)
 	if (cpu_feature & CPUID_PGE) {
 		u_int cr4 = rcr4();
 		lcr4(cr4 & ~CR4_PGE);
 		lcr4(cr4);
 	} else
-#endif
 		tlbflush();
 }
 
@@ -271,9 +269,7 @@ breakpoint(void)
 	__asm __volatile("int $3");
 }
 
-#ifdef I686_CPU
 void amd64_errata(struct cpu_info *);
-#endif
 
 #endif /* _KERNEL */
 #endif /* !_I386_CPUFUNC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.42 2006/10/18 19:48:32 tom Exp $	*/
+/*	$OpenBSD: npx.c,v 1.43 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -134,22 +134,18 @@ extern int i386_fpu_present;
 extern int i386_fpu_exception;
 extern int i386_fpu_fdivbug;
 
-#ifdef I686_CPU
 #define        fxsave(addr)            __asm("fxsave %0" : "=m" (*addr))
 #define        fxrstor(addr)           __asm("fxrstor %0" : : "m" (*addr))
-#endif /* I686_CPU */
 
 static __inline void
 fpu_save(union savefpu *addr)
 {
 
-#ifdef I686_CPU
 	if (i386_use_fxsave) {
 		fxsave(&addr->sv_xmm);
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
 		fninit();
 	} else
-#endif /* I686_CPU */
 		fnsave(&addr->sv_87);
 }
 
@@ -161,9 +157,7 @@ npxdna_notset(struct cpu_info *ci)
 
 int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
 int    npxdna_s87(struct cpu_info *);
-#ifdef I686_CPU
 int    npxdna_xmm(struct cpu_info *);
-#endif /* I686_CPU */
 void   npxexit(void);
 
 /*
@@ -393,11 +387,9 @@ npxattach(struct device *parent, struct device *self, void *aux)
 	npxinit(&cpu_info_primary);
 	i386_fpu_present = 1;
 
-#ifdef I686_CPU
 	if (i386_use_fxsave)
 		npxdna_func = npxdna_xmm;
 	else
-#endif /* I686_CPU */
 		npxdna_func = npxdna_s87;
 }
 
@@ -577,7 +569,6 @@ x86fpflags_to_siginfo(u_int32_t flags)
  * XXX It is unclear if the code below is correct in the multiprocessor
  * XXX case.  Check the NetBSD sources once again to be sure.
  */
-#ifdef I686_CPU
 int
 npxdna_xmm(struct cpu_info *ci)
 {
@@ -654,7 +645,6 @@ npxdna_xmm(struct cpu_info *ci)
 
 	return (1);
 }
-#endif /* I686_CPU */
 
 int
 npxdna_s87(struct cpu_info *ci)

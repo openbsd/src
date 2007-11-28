@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.170 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.171 2007/11/28 17:05:09 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -18,22 +18,22 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/db_magic.s	ddb
 file	arch/i386/i386/disksubr.c	disk
-file	arch/i386/i386/est.c		!small_kernel & i686_cpu
+file	arch/i386/i386/est.c		!small_kernel
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/via.c		i686_cpu
-file	arch/i386/i386/amd64errata.c	i686_cpu
+file	arch/i386/i386/via.c
+file	arch/i386/i386/amd64errata.c
 file	arch/i386/i386/kgdb_machdep.c	kgdb
-file	arch/i386/i386/longrun.c	!small_kernel & i586_cpu
+file	arch/i386/i386/longrun.c	!small_kernel
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
-file	arch/i386/i386/p4tcc.c		!small_kernel & i686_cpu
+file	arch/i386/i386/p4tcc.c		!small_kernel
 file	arch/i386/i386/pmap.c
-file	arch/i386/i386/powernow.c	!small_kernel & i586_cpu
-file	arch/i386/i386/powernow-k7.c	!small_kernel & i686_cpu
-file	arch/i386/i386/powernow-k8.c	!small_kernel & i686_cpu
+file	arch/i386/i386/powernow.c	!small_kernel
+file	arch/i386/i386/powernow-k7.c	!small_kernel
+file	arch/i386/i386/powernow-k8.c	!small_kernel
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/random.s

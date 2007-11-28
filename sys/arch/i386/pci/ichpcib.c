@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.21 2007/10/17 22:13:56 brad Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.22 2007/11/28 17:05:09 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -294,10 +294,8 @@ ichss_setperf(int level)
 		bus_space_write_1(sc->sc_pm_iot, sc->sc_pm_ioh, ICH_PM_CNTL,
 		    cntl);
 
-#ifdef I686_CPU
 		if (update_cpuspeed != NULL)
 			update_cpuspeed();
-#endif
 	}
 	splx(s);
 }

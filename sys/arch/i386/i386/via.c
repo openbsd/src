@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.16 2007/11/14 19:10:44 markus Exp $	*/
+/*	$OpenBSD: via.c,v 1.17 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -508,7 +508,6 @@ out:
 
 #endif /* CRYPTO */
 
-#if defined(I686_CPU)
 /*
  * Note, the VIA C3 Nehemiah provides 4 internal 8-byte buffers, which
  * store random data, and can be accessed a lot quicker than waiting
@@ -567,5 +566,3 @@ viac3_rnd(void *v)
 
 	timeout_add(tmo, (hz > 100) ? (hz / 100) : 1);
 }
-
-#endif /* defined(I686_CPU) */

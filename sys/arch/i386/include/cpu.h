@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.98 2007/11/16 16:16:06 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.99 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -263,12 +263,10 @@ struct timeval;
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
 
-#if defined(I586_CPU) || defined(I686_CPU)
 /*
  * High resolution clock support (Pentium only)
  */
 void	calibrate_cyclecounter(void);
-#endif
 
 /*
  * pull in #defines for kinds of processors
@@ -326,9 +324,7 @@ extern void (*cpu_idle_leave_fcn)(void);
 /* apm.c */
 extern int cpu_apmwarn;
 
-#if defined(I586_CPU) || defined(I686_CPU)
 extern int cpuspeed;
-#endif
 
 #if !defined(SMALL_KERNEL)
 #define BUS66  6667
@@ -341,11 +337,9 @@ extern int cpuspeed;
 extern int bus_clock;
 #endif
 
-#ifdef I586_CPU
 /* F00F bug fix stuff for pentium cpu */
 extern int cpu_f00f_bug;
 void fix_f00f(void);
-#endif
 
 /* dkcsum.c */
 void	dkcsumattach(void);
@@ -383,30 +377,19 @@ void	i8254_inittimecounter(void);
 void	i8254_inittimecounter_simple(void);
 
 
+#if !defined(SMALL_KERNEL)
 /* est.c */
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	est_init(const char *, int);
 void	est_setperf(int);
-#endif
-
 /* longrun.c */
-#if !defined(SMALL_KERNEL) && defined(I586_CPU)
 void	longrun_init(void);
 void	longrun_setperf(int);
-#endif
-
 /* p4tcc.c */
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	p4tcc_init(int, int);
 void	p4tcc_setperf(int);
-#endif
-
-#if !defined(SMALL_KERNEL) && defined(I586_CPU)
 /* powernow.c */
 void	k6_powernow_init(void);
 void	k6_powernow_setperf(int);
-#endif
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 /* powernow-k7.c */
 void	k7_powernow_init(void);
 void	k7_powernow_setperf(int);

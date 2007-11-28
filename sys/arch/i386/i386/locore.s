@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.120 2007/11/05 21:46:13 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.121 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1559,7 +1559,6 @@ IDTVEC(stk)
 	TRAP(T_STKFLT)
 IDTVEC(prot)
 	TRAP(T_PROTFLT)
-#ifdef I586_CPU
 IDTVEC(f00f_redirect)
 	pushl	$T_PAGEFLT
 	INTRENTRY
@@ -1571,7 +1570,6 @@ IDTVEC(f00f_redirect)
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
-#endif
 IDTVEC(page)
 	TRAP(T_PAGEFLT)
 IDTVEC(rsvd)
@@ -1744,11 +1742,8 @@ ENTRY(bzero)
 	rep				/* zero until word aligned */
 	stosb
 
-#if defined(I486_CPU)
-#if defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_486,_C_LABEL(cpu_class)
 	jne	8f
-#endif
 
 	movl	%edx,%ecx
 	shrl	$6,%ecx
@@ -1773,7 +1768,6 @@ ENTRY(bzero)
 	addl	$64,%edi
 	decl	%ecx
 	jnz	1b
-#endif
 
 8:	movl	%edx,%ecx		/* zero by words */
 	shrl	$2,%ecx
@@ -1788,7 +1782,7 @@ ENTRY(bzero)
 	popl	%edi
 	ret
 
-#if defined(I686_CPU) && !defined(SMALL_KERNEL)
+#if !defined(SMALL_KERNEL)
 ENTRY(sse2_pagezero)
 	pushl	%ebx
 	movl	8(%esp),%ecx

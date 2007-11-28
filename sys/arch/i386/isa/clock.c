@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.40 2007/08/01 13:18:18 martin Exp $	*/
+/*	$OpenBSD: clock.c,v 1.41 2007/11/28 17:05:09 tedu Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -119,12 +119,8 @@ void	rtcdrain(void *);
 u_int mc146818_read(void *, u_int);
 void mc146818_write(void *, u_int, u_int);
 
-#if defined(I586_CPU) || defined(I686_CPU)
 int cpuspeed;
-#endif
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 int clock_broken_latch;
-#endif
 
 /* Timecounter on the i8254 */
 uint32_t i8254_lastcount;
@@ -254,7 +250,6 @@ int
 gettick(void)
 {
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	if (clock_broken_latch) {
 		int v1, v2, v3;
 		int w1, w2, w3;
@@ -306,9 +301,7 @@ gettick(void)
 				return (v2);
 		}
 		return (v3);
-	} else
-#endif
-	{
+	} else {
 		u_char lo, hi;
 		u_long ef;
 
@@ -385,7 +378,6 @@ i8254_delay(int n)
 	}
 }
 
-#if defined(I586_CPU) || defined(I686_CPU)
 void
 calibrate_cyclecounter(void)
 {
@@ -396,7 +388,6 @@ calibrate_cyclecounter(void)
 	__asm __volatile("rdtsc" : "=A" (count));
 	cpuspeed = ((count - last_count) + 999999) / 1000000;
 }
-#endif
 
 void
 i8254_initclocks(void)

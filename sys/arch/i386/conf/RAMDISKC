@@ -1,13 +1,9 @@
-#	$OpenBSD: RAMDISKC,v 1.81 2007/11/16 03:18:36 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.82 2007/11/28 17:05:09 tedu Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
 option		SCSITERSE
 option		APM_NOPRINT
-
-option		I486_CPU	# CPU classes; at least one is REQUIRED
-option		I586_CPU
-option		I686_CPU
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE
