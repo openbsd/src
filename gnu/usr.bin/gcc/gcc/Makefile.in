@@ -1676,7 +1676,10 @@ ifcvt.o : ifcvt.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(REGS_H) toplev.h \
    output.h except.h $(TM_P_H) real.h
 params.o : params.c $(CONFIG_H) $(SYSTEM_H) $(PARAMS_H) toplev.h
 hooks.o: hooks.c $(CONFIG_H) $(SYSTEM_H) $(HOOKS_H)
-protector.o: protector.c $(CONFIG_H)
+protector.o: protector.c $(CONFIG_H) insn-config.h flags.h $(RTL_H) \
+	$(TREE_H) $(EXPR_H) $(REGS_H) $(RECOG_H) $(INSN_ATTR_H) \
+	$(C_TREE_H) real.h output.h except.h
+
 
 $(out_object_file): $(out_file) $(CONFIG_H) $(TREE_H) $(GGC_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h real.h insn-config.h conditions.h \
