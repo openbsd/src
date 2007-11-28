@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.101 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.102 2007/11/28 20:07:36 oga Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout. */
 #include <sys/event.h>			/* For struct klist */
+#include <sys/mutex.h>			/* For struct mutex */
 #include <machine/atomic.h>
 
 #define curproc curcpu()->ci_curproc
@@ -454,6 +455,7 @@ int	sleep_finish_signal(struct sleep_state *);
 void	sleep_queue_init(void);
 
 int	tsleep(void *, int, const char *, int);
+int	msleep(void *, struct mutex *, int,  const char*, int);
 #define ltsleep(c, p, w, t, l) tsleep(c, p, w, t)
 
 #if defined(MULTIPROCESSOR)

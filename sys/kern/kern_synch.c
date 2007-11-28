@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.81 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.82 2007/11/28 20:07:36 oga Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -128,6 +128,43 @@ tsleep(void *ident, int priority, const char *wmesg, int timo)
 	sleep_finish(&sls, 1);
 	error1 = sleep_finish_timeout(&sls);
 	error = sleep_finish_signal(&sls);
+
+	/* Signal errors are higher priority than timeouts. */
+	if (error == 0 && error1 != 0)
+		error = error1;
+
+	return (error);
+}
+
+/*
+ * Same as tsleep, but if we have a mutex provided, then once we've 
+ * entered the sleep queue we drop the mutex. After sleeping we re-lock.
+ */
+int
+msleep(void *ident, struct mutex *mtx,  int priority, const char *wmesg, int timo)
+{
+	struct sleep_state sls;
+	int error, error1;
+
+	sleep_setup(&sls, ident, priority, wmesg);
+	sleep_setup_timeout(&sls, timo);
+	sleep_setup_signal(&sls, priority);
+
+	if (mtx) {
+		/* XXX - We need to make sure that the mutex doesn't
+		 * unblock splsched. This can be made a bit more 
+		 * correct when the sched_lock is a mutex.
+		 */
+		MUTEX_OLDIPL(mtx) = splsched();
+		mtx_leave(mtx);
+	}
+
+	sleep_finish(&sls, 1);
+	error1 = sleep_finish_timeout(&sls);
+	error = sleep_finish_signal(&sls);
+
+	if (mtx && (priority & PNORELOCK) == 0)
+		mtx_enter(mtx);
 
 	/* Signal errors are higher priority than timeouts. */
 	if (error == 0 && error1 != 0)
