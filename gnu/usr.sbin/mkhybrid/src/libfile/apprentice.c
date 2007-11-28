@@ -42,7 +42,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.1 2000/10/10 20:40:36 beck Exp $";
+	"@(#)$Id: apprentice.c,v 1.2 2007/11/28 18:20:39 chl Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -97,12 +97,13 @@ int check;			/* non-zero? checking-only run. */
 	if (check)	/* print silly verbose header for USG compat. */
 		(void) printf("%s\n", hdr);
 
-	for (lineno = 1;fgets(line, BUFSIZ, f) != NULL; lineno++) {
+	for (lineno = 1;fgets(line, sizeof(line), f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
 			continue;
-		if (strlen(line) <= (unsigned)1) /* null line, garbage, etc */
+		/* delete newline */
+		line[strcspn(line, "\n")] = '\0';
+		if (line[0] == '\0')
 			continue;
-		line[strlen(line)-1] = '\0'; /* delete newline */
 		if (parse(line, &nmagic, check) != 0)
 			errs = 1;
 	}
