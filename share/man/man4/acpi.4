@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.24 2007/11/16 02:14:48 deraadt Exp $
+.\"	$OpenBSD: acpi.4,v 1.25 2007/11/28 12:58:30 tedu Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2007 $
+.Dd $Mdocdate: November 28 2007 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -35,6 +35,11 @@ If the configuration option
 .Dq Dv ACPIVERBOSE
 is set, information about all detected ACPI devices will be displayed
 on boot.
+Userland may access
+.Nm
+by using the
+.Xr apm 4
+device.
 .Pp
 The following devices can attach to
 .Nm :
@@ -64,6 +69,7 @@ ACPI power management timer
 ACPI thermal zone
 .El
 .Sh SEE ALSO
+.Xr apm 4
 .Xr intro 4
 .Sh HISTORY
 The
