@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.592 2007/11/28 17:05:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.593 2007/11/28 23:37:34 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -750,3 +750,14 @@ pseudo-device	hotplug		1	# devices hot plugging
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
 pseudo-device	crypto		1
+
+# DRM: direct rendering modules
+#option        DRM_DEBUG
+#inteldrm*       at vga?    # Intel i915, i945 DRM driver
+#machdrm*     at vga?    # mach64 (3D Rage Pro, Rage) DRM driver
+#mgadrm*        at vga?    # Matrox G[24]00, G[45]50 DRM driver
+#ragedrm*       at vga?    # ATI Rage 128 DRM driver
+#radeondrm*     at vga?    # ATI Radeon DRM driver
+#savagedrm*     at vga?    # S3 Savage DRM driver
+#sisdrm*        at vga?    # SiS DRM driver
+#tdfxdrm*       at vga?    # 3dfx (voodoo) DRM driver

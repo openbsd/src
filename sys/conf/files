@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.420 2007/11/27 17:21:52 tedu Exp $
+#	$OpenBSD: files,v 1.421 2007/11/28 23:37:34 oga Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -93,8 +93,12 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 define	mk48txx
 file	dev/ic/mk48txx.c		mk48txx
 
+# DRM - Direct Rendering Manager: /dev/drm
+define drm {}
+include "dev/pci/drm/files.drm"
+
 # VGA graphics
-device	vga: wsemuldisplaydev, pcdisplayops
+device	vga: wsemuldisplaydev, pcdisplayops, drm
 file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
 file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
 

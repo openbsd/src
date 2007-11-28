@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.28 2007/11/25 17:11:12 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.29 2007/11/28 23:37:34 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -93,9 +93,12 @@
 #include <dev/vesa/vesabiosvar.h>
 #endif
 
+#include "drmbase.h"
+
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
+int vga_drm_print(void *, const char *);
 
 #ifdef VESAFB
 int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
@@ -161,6 +164,18 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
+
+#if NDRMBASE > 0
+	config_found(self, aux, vga_drm_print);
+#endif
+}
+
+int
+vga_drm_print(void *aux, const char *pnp)
+{
+       if (pnp)
+               printf("direct rendering for %s", pnp);
+       return (UNSUPP);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.121 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: conf.c,v 1.122 2007/11/28 23:37:34 oga Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -176,6 +176,8 @@ cdev_decl(cztty);
 cdev_decl(nvram);
 #include "agp.h"
 cdev_decl(agp);
+#include "drmbase.h"
+cdev_decl(drm);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -310,6 +312,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 85: ACPI (deprecated) */
 	cdev_bthub_init(NBTHUB,bthub),	/* 86: bthub */
 	cdev_agp_init(NAGP,agp),	/* 87: agp */
+	cdev_drm_init(NDRMBASE,drm)	/* 88: drm */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

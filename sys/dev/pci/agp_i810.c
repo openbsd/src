@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.22 2007/11/28 16:25:58 chl Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.23 2007/11/28 23:37:34 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -164,6 +164,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	bus_addr_t mmaddr, gmaddr;
+	bus_size_t mmaddrsize;
 	int error;
 	u_int memtype = 0;
 
@@ -251,6 +252,8 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		return (error);
 	}
 
+	pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+	    mmaddr, memtype, NULL, &mmaddrsize, NULL);
 	error = pci_mapreg_map(&isc->vga_pa, mmaddr, memtype, 0,
 	    &isc->bst, &isc->bsh, NULL, &isc->bsz, 0);
 	if (error != 0) {
@@ -435,6 +438,12 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
+
+	/*
+	 * another device (the drm) may need to access this area.
+	 * we don't need to access it again so unmap.
+	 */
+	 bus_space_unmap(isc->bst, isc->bsh, mmaddrsize);
 
 	return (0);
 }
