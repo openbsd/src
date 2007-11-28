@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pstat.8,v 1.36 2007/11/28 15:49:11 jmc Exp $
+.\"	$OpenBSD: pstat.8,v 1.37 2007/11/28 16:33:43 deraadt Exp $
 .\"	$NetBSD: pstat.8,v 1.9.4.1 1996/06/02 09:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -42,6 +42,7 @@
 .Op Fl d Ar format
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Ar symbols
 .Sh DESCRIPTION
 .Nm
 displays open file entry, swap space utilization,
@@ -58,12 +59,14 @@ is specified.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d Ar format
-Print the values of symbols using the specified format.
+Print the values of
+.Ar symbols
+using the specified format.
 .Ar format
 is a
-.Xr printf 3
-format, without the leading percent.
-Symbol names are read from the remaining command line arguments.
+.Xr printf 3 Ns -style
+format, without the leading percent or precision specifiers.
+Symbol named are read from the remaining command line arguments.
 Addresses may also be specified in hex.
 .It Fl f
 Print the open file table with these headings:

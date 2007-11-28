@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.68 2007/11/28 11:37:41 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.69 2007/11/28 16:33:43 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.68 2007/11/28 11:37:41 tedu Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.69 2007/11/28 16:33:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,9 +144,8 @@ void	vnodemode(void);
 int
 main(int argc, char *argv[])
 {
-	int fileflag = 0, swapflag = 0, ttyflag = 0, vnodeflag = 0;
+	int fileflag = 0, swapflag = 0, ttyflag = 0, vnodeflag = 0, ch;
 	char buf[_POSIX2_LINE_MAX];
-	int ch;
 	const char *dformat = NULL;
 	extern char *optarg;
 	extern int optind;
@@ -196,6 +195,10 @@ main(int argc, char *argv[])
 
 	if (dformat && getuid())
 		errx(1, "Only root can use -k");
+
+	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
+		usage();
+
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
@@ -214,15 +217,46 @@ main(int argc, char *argv[])
 			err(1, "setresgid");
 	if (dformat) {
 		struct nlist *nl;
-		int longformat = 0, stringformat = 0;
-		char format[5];
-		if (*dformat == 'p' || *dformat == 'l')
+		int longformat = 0, stringformat = 0, error = 0, n;
+		char format[10], buf[1024];
+		
+		n = strlen(dformat);
+		if (n == 0)
+			errx(1, "illegal format");
+
+		/*
+		 * Support p, c, s, and {l, ll, h, hh, j, t, }[diouxX]
+		 */
+		if (strcmp(dformat, "p") == 0)
 			longformat = sizeof(long) == 8;
-		if (dformat[0] == 'l' && dformat[1] == 'l')
-			longformat = 1;
+		else if (strcmp(dformat, "c") == 0)
+			;
+		else if (strcmp(dformat, "s") == 0)
+			stringformat = 1;
+		else if (strchr("diouxX", dformat[n - 1])) {
+			char *ptable[] = { "l", "ll", "h", "hh", "j", "t", "" };
+			int i;
+
+			for (i = 0; i < sizeof(ptable)/sizeof(ptable[0]); i++) {
+				if (strlen(ptable[i]) == n - 1 &&
+				    strncmp(ptable[i], dformat,
+				    strlen(ptable[i])) == 0)
+					break;
+			}
+			if (i == sizeof(ptable)/sizeof(ptable[0]))
+				errx(1, "illegal format");
+
+			if (*dformat == 'l')
+				longformat = sizeof(long) == 8;
+			if (dformat[0] == 'l' && dformat[1] == 'l')
+				longformat = 1;
+		} else
+			errx(1, "illegal format");
+
 		if (*dformat == 's') {
 			stringformat = 1;
-			snprintf(format, sizeof(format), "%%.8s");
+			snprintf(format, sizeof(format), "%%.%zus",
+			    sizeof buf);
 		} else
 			snprintf(format, sizeof(format), "%%%s", dformat);
 
@@ -237,28 +271,39 @@ main(int argc, char *argv[])
 		kvm_nlist(kd, nl);
 		globalnl = nl;
 		for (i = 0; i < argc; i++) {
+			long long v;
+
 			printf("%s ", argv[i]);
 			if (!nl[i].n_value && argv[i][0] == '0') {
 				nl[i].n_value = strtoul(argv[i], NULL, 16);
 				nl[i].n_type = N_DATA;
 			}
-			if (!nl[i].n_value)
+			if (!nl[i].n_value) {
 				printf("not found\n");
-			else {
-				long long v;
-				printf("at %p: ", nl[i].n_value);
-				if (nl[i].n_type == N_DATA) {
-					KGET1(i, &v, sizeof(v), argv[i]);
-					if (stringformat)
-						printf(format, &v);
-					else if (longformat)
-						printf(format, v);
-					else
-						printf(format, (int)v);
-				}
-				printf("\n");
+				error++;
+				continue;
 			}
+
+			printf("at %p: ", (void *)nl[i].n_value);
+			if (nl[i].n_type == N_DATA) {
+				if (stringformat) {
+					KGET1(i, &buf, sizeof(buf), argv[i]);
+					buf[sizeof(buf) - 1] = '\0';
+				} else
+					KGET1(i, &v, sizeof(v), argv[i]);
+				if (stringformat)
+					printf(format, &buf);
+				else if (longformat)
+					printf(format, v);
+				else
+					printf(format, (int)v);
+			}
+			printf("\n");
 		}
+		for (i = 0; i < argc; i++)
+			free(nl[i].n_name);
+		free(nl);
+		exit(error);
 	}
 
 	if (vnodeflag)
@@ -1143,6 +1188,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: pstat [-fknsTtv] [-d format] [-M core] [-N system]\n");
+	    "usage: pstat [-fknsTtv] [-d format] [-M core] [-N system] [symbols ...]\n");
 	exit(1);
 }
