@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.12 2007/09/03 22:15:40 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.13 2007/11/28 20:05:30 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -507,28 +507,6 @@
  * Apparently the definition of bypass ASIs is that they all use the 
  * D$ so we need to flush the D$ to make sure we don't get data pollution.
  */
-
-extern __inline u_int32_t sparc_cas(u_int32_t *, u_int32_t, u_int32_t);
-extern __inline u_int32_t
-sparc_cas(u_int32_t *rs1, u_int32_t rs2, u_int32_t rd)
-{
-	__asm __volatile("casa [%1] ASI_PRIMARY, %2, %0"
-	    : "+r" (rd)
-	    : "r" (rs1), "r" (rs2)
-	    : "memory" );
-	return (rd);
-}
-
-extern __inline u_int64_t sparc_casx(u_int64_t *, u_int64_t, u_int64_t);
-extern __inline u_int64_t
-sparc_casx(u_int64_t *rs1, u_int64_t rs2, u_int64_t rd)
-{
-	__asm __volatile("casxa [%1] ASI_PRIMARY, %3, %0"
-	    : "+r" (rd)
-	    : "r" (rs1), "r" (rs2)
-	    : "memory" );
-	return (rd);
-}
 
 #define sparc_membar(mask) do {                                         \
         if (mask)                                                       \
