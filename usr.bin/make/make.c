@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.53 2007/11/26 22:48:18 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.54 2007/11/28 09:40:08 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
 #include "config.h"
@@ -94,6 +95,33 @@ static void add_targets_to_make(Lst);
 
 static bool has_unmade_predecessor(GNode *);
 static void requeue_successors(GNode *);
+static void random_setup(void);
+
+static bool randomize_queue;
+long random_delay = 0;
+
+static void
+random_setup()
+{
+	randomize_queue = Var_Definedi("RANDOM_ORDER", NULL);
+
+	if (Var_Definedi("RANDOM_DELAY", NULL))
+		random_delay = strtonum(Var_Value("RANDOM_DELAY"), 0, 1000, 
+		    NULL) * 1000000;
+
+	if (randomize_queue || random_delay) {
+		unsigned int random_seed;
+		char *t;
+		
+		t = Var_Value("RANDOM_SEED");
+		if (t != NULL)
+			random_seed = strtonum(t, 0, UINT_MAX, NULL);
+		else
+			random_seed = time(NULL);
+		fprintf(stderr, "RANDOM_SEED=%u\n", random_seed);
+		srandom(random_seed);
+	}
+}
 
 static bool
 has_unmade_predecessor(GNode *gn)
@@ -193,8 +221,8 @@ Make_Update(GNode *cgn)	/* the child node */
 
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = (GNode *)Lst_Datum(ln);
-		pgn->unmade--;
 		if (pgn->must_make) {
+			pgn->unmade--;
 			if (DEBUG(MAKE))
 				printf("%s--=%d ", 
 				    pgn->name, pgn->unmade);
@@ -217,7 +245,7 @@ Make_Update(GNode *cgn)	/* the child node */
 				 */
 				if (DEBUG(MAKE))
 					printf("QUEUING ");
-				Lst_EnQueue(&toBeMade, pgn);
+				Lst_Push(&toBeMade, pgn);
 			} else if (pgn->unmade < 0) {
 				Error("Child %s discovered graph cycles through %s", cgn->name, pgn->name);
 			}
@@ -238,7 +266,7 @@ try_to_make_node(GNode *gn)
 		if (DEBUG(MAKE))
 			printf(" Requeuing (%d)\n", gn->unmade);
 		add_targets_to_make(&gn->children);
-		Lst_EnQueue(&toBeMade, gn);
+		Lst_Push(&toBeMade, gn);
 		return false;
 	}
 	if (has_been_built(gn)) {
@@ -306,7 +334,7 @@ MakeStartJobs(void)
 {
 	GNode	*gn;
 
-	while (!Job_Full() && (gn = (GNode *)Lst_DeQueue(&toBeMade)) != NULL) {
+	while (!Job_Full() && (gn = (GNode *)Lst_Pop(&toBeMade)) != NULL) {
 		if (try_to_make_node(gn))
 			return true;
 	}
@@ -371,7 +399,7 @@ MakeAddChild(void *to_addp, void *lp)
 	GNode *gn = (GNode *)to_addp;
 
 	if (!gn->must_make && !(gn->type & OP_USE))
-		Lst_EnQueue((Lst)lp, gn);
+		Lst_Push((Lst)lp, gn);
 }
 
 static void
@@ -393,7 +421,7 @@ add_targets_to_make(Lst todo)
 
 	Lst_Clone(&examine, todo, NOCOPY);
 
-	while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
+	while ((gn = (GNode *)Lst_Pop(&examine)) != NULL) {
 		if (gn->must_make) 	/* already known */
 			continue;
 		gn->must_make = true;
@@ -421,7 +449,7 @@ add_targets_to_make(Lst todo)
 		} else {
 			if (DEBUG(MAKE))
 				printf("%s: queuing\n", gn->name);
-			Lst_EnQueue(&toBeMade, gn);
+			Lst_Push(&toBeMade, gn);
 		}
 	}
 }
@@ -456,7 +484,10 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	bool cycle;
 
 	Static_Lst_Init(&toBeMade);
+	/* wild guess at initial sizes */
 	ohash_init(&targets, 10, &gnode_info);
+	if (DEBUG(PARALLEL))
+		random_setup();
 
 	add_targets_to_make(targs);
 	if (queryFlag) {
