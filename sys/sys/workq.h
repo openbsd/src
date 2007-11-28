@@ -1,4 +1,4 @@
-/*	$OpenBSD: workq.h,v 1.3 2007/11/25 15:56:17 tedu Exp $ */
+/*	$OpenBSD: workq.h,v 1.4 2007/11/28 13:54:07 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@ struct workq;
 
 #define WQ_WAITOK	(1<<0)
 #define WQ_MPSAFE	(1<<1)
-#define WQ_DIRECTOK	(1<<2)
 
 typedef void (*workq_fn)(void *, void *);
 struct workq	*workq_create(const char * /* name */, int /* nthreads */);

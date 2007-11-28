@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.4 2007/11/25 15:56:17 tedu Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.5 2007/11/28 13:54:07 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -128,10 +128,6 @@ workq_add_task(struct workq *wq, int flags, workq_fn func,
 	int			s;
 
 	if (wq == NULL) {
-		if (flags & WQ_DIRECTOK) {
-			func(a1, a2);
-			return 0;
-		}
 		wq = &workq_syswq;
 	}
 	
