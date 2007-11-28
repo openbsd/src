@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.54 2007/11/24 15:41:01 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.55 2007/11/28 09:39:01 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -477,7 +477,7 @@ look_harder_for_target(GNode *gn)
 	GNode *extra, *cgn;
 	LstNode ln;
 
-	if (gn->type & OP_RESOLVED)
+	if (gn->type & (OP_RESOLVED|OP_PHONY))
 		return;
 	gn->type |= OP_RESOLVED;
 	if (strncmp(gn->name, objdir, objdir_len) == 0) {
