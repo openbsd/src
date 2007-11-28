@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.69 2007/11/28 16:33:43 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.70 2007/11/28 17:02:56 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.69 2007/11/28 16:33:43 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.70 2007/11/28 17:02:56 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (dformat && getuid())
-		errx(1, "Only root can use -k");
+		errx(1, "Only root can use -d");
 
 	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
 		usage();
@@ -218,6 +218,7 @@ main(int argc, char *argv[])
 	if (dformat) {
 		struct nlist *nl;
 		int longformat = 0, stringformat = 0, error = 0, n;
+		int mask = ~0;
 		char format[10], buf[1024];
 		
 		n = strlen(dformat);
@@ -225,31 +226,37 @@ main(int argc, char *argv[])
 			errx(1, "illegal format");
 
 		/*
-		 * Support p, c, s, and {l, ll, h, hh, j, t, }[diouxX]
+		 * Support p, c, s, and {l, ll, h, hh, j, t, z, }[diouxX]
 		 */
 		if (strcmp(dformat, "p") == 0)
 			longformat = sizeof(long) == 8;
 		else if (strcmp(dformat, "c") == 0)
-			;
+			mask = 0xff;
 		else if (strcmp(dformat, "s") == 0)
 			stringformat = 1;
 		else if (strchr("diouxX", dformat[n - 1])) {
-			char *ptable[] = { "l", "ll", "h", "hh", "j", "t", "" };
+			char *ptbl[]= {"l", "ll", "h", "hh", "j", "t", "z", ""};
 			int i;
 
-			for (i = 0; i < sizeof(ptable)/sizeof(ptable[0]); i++) {
-				if (strlen(ptable[i]) == n - 1 &&
-				    strncmp(ptable[i], dformat,
-				    strlen(ptable[i])) == 0)
+			char *mod;
+			for (i = 0; i < sizeof(ptbl)/sizeof(ptbl[0]); i++) {
+				mod = ptbl[i];
+				if (strlen(mod) == n - 1 &&
+				    strncmp(mod, dformat, strlen(mod)) == 0)
 					break;
 			}
-			if (i == sizeof(ptable)/sizeof(ptable[0]))
+			if (i == sizeof(ptbl)/sizeof(ptbl[0])
+			    && dformat[1] != '\0')
 				errx(1, "illegal format");
-
-			if (*dformat == 'l')
-				longformat = sizeof(long) == 8;
-			if (dformat[0] == 'l' && dformat[1] == 'l')
+			if (strcmp(mod, "l") == 0)
+				longformat = sizeof(long) == sizeof(long long);
+			else if (strcmp(mod, "h") == 0)
+				mask = 0xffff;
+			else if (strcmp(mod, "hh") == 0)
+				mask = 0xff;
+			else
 				longformat = 1;
+
 		} else
 			errx(1, "illegal format");
 
@@ -296,7 +303,7 @@ main(int argc, char *argv[])
 				else if (longformat)
 					printf(format, v);
 				else
-					printf(format, (int)v);
+					printf(format, ((int)v) & mask);
 			}
 			printf("\n");
 		}
