@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_vm.c,v 1.4 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: compat_vm.c,v 1.5 2007/11/28 13:10:28 deraadt Exp $	*/
 /*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
 
 /*
@@ -52,22 +52,4 @@ compat_25_sys_swapon(p, v, retval)
 	SCARG(&ua, arg) = (void *)SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(p, &ua, retval));
-}
-
-int
-compat_25_sys_omsync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_msync_args ua;
-	struct compat_25_sys_omsync_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-	} */ *uap = v;
-
-	SCARG(&ua, addr) = SCARG(uap, addr);
-	SCARG(&ua, len) = SCARG(uap, len);
-	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
-	return (sys_msync(p, &ua, retval));
 }
