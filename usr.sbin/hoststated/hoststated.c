@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.60 2007/11/25 20:01:10 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.61 2007/11/28 11:37:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -532,6 +532,8 @@ purge_tree(struct proto_tree *tree)
 				free(pn->key);
 			if (pn->value != NULL)
 				free(pn->value);
+			if (pn->label != 0)
+				pn_unref(pn->label);
 			free(pn);
 		}
 		free(proot);
