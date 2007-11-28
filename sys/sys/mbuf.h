@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.95 2007/11/27 16:38:50 tedu Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.96 2007/11/28 14:04:26 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -386,14 +386,12 @@ do {									\
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
-int m_leadingspace(struct mbuf *);
 #define	M_LEADINGSPACE(m) m_leadingspace(m)
 
 /*
  * Compute the amount of space available
  * after the end of data in an mbuf.
  */
-int m_trailingspace(struct mbuf *);
 #define	M_TRAILINGSPACE(m) m_trailingspace(m)
 
 /*
@@ -469,6 +467,8 @@ struct	mbuf *m_pullup2(struct mbuf *, int);
 struct	mbuf *m_split(struct mbuf *, int, int);
 struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
+int	m_leadingspace(struct mbuf *);
+int	m_trailingspace(struct mbuf *);
 void	m_clget(struct mbuf *, int);
 void	m_adj(struct mbuf *, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
