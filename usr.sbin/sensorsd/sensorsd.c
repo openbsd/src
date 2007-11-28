@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.34 2007/08/14 17:10:02 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.35 2007/11/28 17:03:59 tedu Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-c check] [-r report]\n", __progname);
 	exit(1);
 }
 
@@ -109,11 +109,24 @@ main(int argc, char *argv[])
 	time_t		 next_report, last_report = 0, next_check;
 	int		 mib[3], dev;
 	int		 sleeptime, sensor_cnt = 0, ch;
+	int		 check_period = CHECK_PERIOD;
+	int		 report_period = REPORT_PERIOD;
+	const char	*errstr;
 
-	while ((ch = getopt(argc, argv, "d")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dr:")) != -1) {
 		switch (ch) {
+		case 'c':
+			check_period = strtonum(optarg, 1, 600, &errstr);
+			if (errstr)
+				errx(1, "check %s", errstr);
+			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'r':
+			report_period = strtonum(optarg, 1, 600, &errstr);
+			if (errstr)
+				errx(1, "report %s", errstr);
 			break;
 		default:
 			usage();
@@ -163,12 +176,12 @@ main(int argc, char *argv[])
 		}
 		if (next_check <= time(NULL)) {
 			check();
-			next_check = time(NULL) + CHECK_PERIOD;
+			next_check = time(NULL) + check_period;
 		}
 		if (next_report <= time(NULL)) {
 			report(last_report);
 			last_report = next_report;
-			next_report = time(NULL) + REPORT_PERIOD;
+			next_report = time(NULL) + report_period;
 		}
 		if (next_report < next_check)
 			sleeptime = next_report - time(NULL);
