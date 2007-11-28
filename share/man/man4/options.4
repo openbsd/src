@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.186 2007/11/27 17:23:23 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.187 2007/11/28 12:27:48 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 27 2007 $
+.Dd $Mdocdate: November 28 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -54,56 +54,6 @@ options are passed to the compile process as
 flags to the C compiler.
 .Ss Compatibility Options
 .Bl -ohang
-.It Cd option COMPAT_23
-Enables compatibility with
-.Ox 2.3 .
-This makes it possible to run binaries that use old versions of the
-.Xr msgctl 2 ,
-.Xr shmctl 2
-and
-.Xr semctl 2
-system calls which changed semantics in
-.Ox 2.4 .
-.It Cd option COMPAT_25
-Enables compatibility with
-.Ox 2.5 .
-This makes it possible to run binaries that use old versions of the
-.Xr statfs 2 ,
-.Xr fstatfs 2
-and
-.Xr getfsstat 2
-system calls which were replaced in
-.Ox 2.6
-when
-.Li struct stat
-was expanded.
-.It Cd option COMPAT_35
-Enables compatibility with
-.Ox 3.5 .
-This makes it possible to run binaries that use old versions of the
-.Xr semop 2
-and
-.Xr shmget 2
-system calls which were replaced in
-.Ox 3.6
-when their arguments were changed to match
-.St -p1003.1-2004 ,
-as well as binaries that use old versions of the
-.Xr fhstat 2 ,
-.Xr fstat 2 ,
-.Xr lstat 2 ,
-.Xr msgctl 2 ,
-.Xr semctl 2 ,
-.Xr shmctl 2
-and
-.Xr stat 2
-system calls which were replaced in
-.Ox 3.6
-when types
-.Li mode_t
-and
-.Li nlink_t
-were extended to 32 bits.
 .It Cd option COMPAT_43
 Use of this option is discouraged.
 It enables compatibility with
