@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.10 2007/11/26 15:35:15 deraadt Exp $ */
+/* $OpenBSD: agp.c,v 1.11 2007/11/28 16:25:58 chl Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -474,8 +474,6 @@ agp_generic_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	}
 
 	mem = malloc(sizeof *mem, M_AGP, M_WAITOK | M_ZERO);
-	if (mem == NULL)
-		return (NULL);
 
 	if (bus_dmamap_create(sc->sc_dmat, size, size / PAGE_SIZE + 1,
 	    size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
@@ -540,12 +538,6 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 	nseg = (mem->am_size + PAGE_SIZE - 1) / PAGE_SIZE;
 	segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
-	if (segs == NULL) {
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-		AGP_DPF("malloc segs (%u) failed\n",
-		    nseg * sizeof *segs);
-		return (ENOMEM);
-	}
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
 	    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK)) != 0) {
 		free(segs, M_AGP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.21 2007/11/26 15:35:15 deraadt Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.22 2007/11/28 16:25:58 chl Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -717,10 +717,6 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 		 */
 		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_AGP,
 		    M_WAITOK);
-		if (mem->am_dmaseg == NULL) {
-			free(mem, M_AGP);
-			return (NULL);
-		}
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size, 0,
 		    &mem->am_dmamap, &mem->am_virtual, &mem->am_physical,
 		    mem->am_dmaseg, 1, &mem->am_nseg)) != 0) {
