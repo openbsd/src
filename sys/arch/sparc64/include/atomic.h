@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2007/11/27 23:29:57 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2007/11/28 12:31:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -23,9 +23,9 @@
 static __inline unsigned int
 sparc64_cas(volatile unsigned int *uip, unsigned int expect, unsigned int new)
 {
-	__asm __volatile("casa [%2] %3, %4, %0"
+	__asm __volatile("cas [%2], %3, %0"
 	    : "+r" (new), "=m" (*uip)
-	    : "r" (uip), "n" (ASI_N), "r" (expect), "m" (*uip));
+	    : "r" (uip), "r" (expect), "m" (*uip));
 
 	return (new);
 }
@@ -34,9 +34,9 @@ static __inline unsigned long
 sparc64_casx(volatile unsigned long *uip, unsigned long expect,
     unsigned long new)
 {
-	__asm __volatile("casxa [%2] %3, %4, %0"
+	__asm __volatile("casx [%2], %3, %0"
 	    : "+r" (new), "=m" (*uip)
-	    : "r" (uip), "n" (ASI_N), "r" (expect), "m" (*uip));
+	    : "r" (uip), "r" (expect), "m" (*uip));
 
 	return (new);
 }
