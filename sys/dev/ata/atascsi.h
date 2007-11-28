@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.28 2007/11/26 20:13:53 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.29 2007/11/28 18:16:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -234,6 +234,7 @@ struct ata_log_page_10h {
  */
 
 struct ata_port {
+	struct ata_identify	ap_identify;
 	struct atascsi		*ap_as;
 	int			ap_port;
 	int			ap_type;
@@ -251,7 +252,7 @@ struct ata_xfer {
 	u_int8_t		*packetcmd;
 	u_int8_t		tag;
 
-	u_int8_t		*data;
+	void			*data;
 	size_t			datalen;
 	size_t			resid;
 
