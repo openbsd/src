@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.136 2007/11/14 11:16:27 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.137 2007/11/28 23:24:07 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -273,7 +273,7 @@ MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensor_task_register.9 \
 	sensor_attach.9 sensor_task_unregister.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
-MLINKS+=tsleep.9 wakeup.9
+MLINKS+=tsleep.9 wakeup.9 tsleep.9 msleep.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splhigh.9 spl.9 spllowersoftclock.9 \
 	spl.9 splnet.9 spl.9 splsched.9 spl.9 splserial.9 spl.9 splsoftclock.9 \
