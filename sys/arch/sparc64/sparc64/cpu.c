@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2007/11/16 23:27:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2007/11/28 19:07:48 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -188,9 +188,11 @@ cpu_match(parent, vcf, aux)
 	 * On singleprocessor kernels, only match the CPU we're
 	 * running on.
 	 */
-	portid = getpropint(ma->ma_node, "portid", -1);
+	portid = getpropint(ma->ma_node, "upa-portid", -1);
 	if (portid == -1)
-		portid = getpropint(ma->ma_node, "upa-portid", -1);
+		portid = getpropint(ma->ma_node, "portid", -1);
+	if (portid == -1)
+		portid = getpropint(ma->ma_node, "cpuid", -1);
 	if (portid == -1)
 		return (0);
 
