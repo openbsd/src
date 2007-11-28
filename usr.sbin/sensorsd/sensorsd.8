@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.17 2007/11/28 17:03:59 tedu Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.18 2007/11/28 19:20:05 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -59,15 +59,15 @@ This file is reloaded upon receiving
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl c Ar check
+Check sensors every
+.Ar check
+seconds.
 .It Fl d
 Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground.
-.It Fl c Ar check
-Check sensors every
-.Ar check
-seconds.
 .It Fl r Ar report
 Report changes in sensor status every
 .Ar report
