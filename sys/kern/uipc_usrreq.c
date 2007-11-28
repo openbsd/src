@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.36 2007/10/29 18:36:00 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.37 2007/11/28 16:56:46 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ unp_attach(struct socket *so)
 		return (ENOBUFS);
 	unp->unp_socket = so;
 	so->so_pcb = unp;
-	nanotime(&unp->unp_ctime);
+	getnanotime(&unp->unp_ctime);
 	return (0);
 }
 

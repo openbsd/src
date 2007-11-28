@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.143 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.144 2007/11/28 16:56:46 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1937,7 +1937,7 @@ sys_utimes(struct proc *p, void *v, register_t *retval)
 
 	VATTR_NULL(&vattr);
 	if (SCARG(uap, tptr) == NULL) {
-		microtime(&tv[0]);
+		getmicrotime(&tv[0]);
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
@@ -1988,7 +1988,7 @@ sys_futimes(struct proc *p, void *v, register_t *retval)
 
 	VATTR_NULL(&vattr);
 	if (SCARG(uap, tptr) == NULL) {
-		microtime(&tv[0]);
+		getmicrotime(&tv[0]);
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
