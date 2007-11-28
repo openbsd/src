@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.135 2007/11/28 13:47:09 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.136 2007/11/28 16:01:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2217,8 +2217,6 @@ ahci_ata_get_xfer(void *aaa_cookie, int port)
 	struct ahci_port		*ap = sc->sc_ports[port];
 	struct ahci_ccb			*ccb;
 
-	splassert(IPL_BIO);
-
 	ccb = ahci_get_ccb(ap);
 	if (ccb == NULL) {
 		DPRINTF(AHCI_D_XFER, "%s: ahci_ata_get_xfer: NULL ccb\n",
@@ -2236,8 +2234,6 @@ void
 ahci_ata_put_xfer(struct ata_xfer *xa)
 {
 	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
-
-	splassert(IPL_BIO);
 
 	DPRINTF(AHCI_D_XFER, "ahci_ata_put_xfer slot %d\n", ccb->ccb_slot);
 
