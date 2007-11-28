@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2007/10/27 22:20:16 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2007/11/28 19:37:23 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2964,12 +2964,6 @@ pmap_page_protect(pg, prot)
 				pv->pv_va |= PV_REF;
 			if (data & (TLB_MODIFY))
 				pv->pv_va |= PV_MOD;
-			if (data & TLB_TSB_LOCK) {
-#ifdef DIAGNOSTIC
-				printf("pmap_page_protect: Removing wired page pm %p va %p\n",
-				       (void *)(u_long)pv->pv_pmap, (void *)(u_long)pv->pv_va);
-#endif			
-			}
 			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
 				Debugger();
