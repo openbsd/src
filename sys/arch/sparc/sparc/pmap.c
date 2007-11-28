@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.146 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.147 2007/11/28 16:33:20 martin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -818,7 +818,7 @@ pmap_page_upload(first_pa)
 	 */
 	physmem = 0;
 	for (n = 0; n < npmemarr; n++)
-		physmem += btoc(pmemarr[n].len);
+		physmem += atop(pmemarr[n].len);
 
 	for (n = 0; n < npmemarr; n++) {
 		start = (first_pa > pmemarr[n].addr) ? first_pa :
@@ -6394,7 +6394,7 @@ pmap_dumpsize()
 	if (CPU_ISSUN4OR4C)
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
-	return (btoc(sz));
+	return (atop(sz));
 }
 
 /*
@@ -6444,7 +6444,7 @@ pmap_dumpmmu(dump, blkno)
 	/* Fill in MI segment header */
 	ksegp = (kcore_seg_t *)bp;
 	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	ksegp->c_size = ctob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+	ksegp->c_size = ptoa(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));

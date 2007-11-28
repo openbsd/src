@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.50 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.51 2007/11/28 16:33:20 martin Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -165,7 +165,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 	off = va & PAGE_MASK;
 	va &= ~PAGE_MASK;
 	len = round_page(len + off);
-	npf = btoc(len);
+	npf = atop(len);
 
 	s = splhigh();
 	if (space & M_SPACE_D24)

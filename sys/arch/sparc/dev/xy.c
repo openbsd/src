@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.39 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.40 2007/11/28 16:33:20 martin Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ xydump(dev, blkno, va, size)
 	/* outline: globals: "dumplo" == sector number of partition to start
 	 * dump at (convert to physical sector with partition table)
 	 * "dumpsize" == size of dump in clicks "physmem" == size of physical
-	 * memory (clicks, ctob() to get bytes) (normal case: dumpsize ==
+	 * memory (clicks, ptoa() to get bytes) (normal case: dumpsize ==
 	 * physmem)
 	 *
 	 * dump a copy of physical memory to the dump device starting at sector
