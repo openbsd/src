@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.49 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.50 2007/11/28 18:25:10 tedu Exp $
 
 # Makefile for OpenBSD
 #
@@ -49,6 +49,12 @@ CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0xD0200120 -e start -N --warn-common
 STRIPFLAGS=	-g -X -x
+
+.if ${MACHINE} == "amd64"
+CFLAGS+=-m32
+AFLAGS+=-m32
+LINKFLAGS+=-melf_i386_obsd
+.endif
 
 HOSTCC= ${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
