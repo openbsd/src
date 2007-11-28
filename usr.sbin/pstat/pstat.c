@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.67 2007/11/26 18:32:33 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.68 2007/11/28 11:37:41 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.67 2007/11/26 18:32:33 tedu Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.68 2007/11/28 11:37:41 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,12 +147,19 @@ main(int argc, char *argv[])
 	int fileflag = 0, swapflag = 0, ttyflag = 0, vnodeflag = 0;
 	char buf[_POSIX2_LINE_MAX];
 	int ch;
+	const char *dformat = NULL;
 	extern char *optarg;
 	extern int optind;
 	gid_t gid;
+	int i;
 
-	while ((ch = getopt(argc, argv, "TM:N:fiknstv")) != -1)
+	while ((ch = getopt(argc, argv, "d:TM:N:fiknstv")) != -1)
 		switch (ch) {
+		case 'd':
+			dformat = optarg;
+			if (*dformat == '%')
+				usage();
+			break;
 		case 'f':
 			fileflag = 1;
 			break;
@@ -187,6 +194,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (dformat && getuid())
+		errx(1, "Only root can use -k");
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
@@ -196,19 +205,67 @@ main(int argc, char *argv[])
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 
-	if (vnodeflag)
+	if (vnodeflag || dformat)
 		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
 			errx(1, "kvm_openfiles: %s", buf);
 
 	if (nlistf == NULL && memf == NULL)
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
+	if (dformat) {
+		struct nlist *nl;
+		int longformat = 0, stringformat = 0;
+		char format[5];
+		if (*dformat == 'p' || *dformat == 'l')
+			longformat = sizeof(long) == 8;
+		if (dformat[0] == 'l' && dformat[1] == 'l')
+			longformat = 1;
+		if (*dformat == 's') {
+			stringformat = 1;
+			snprintf(format, sizeof(format), "%%.8s");
+		} else
+			snprintf(format, sizeof(format), "%%%s", dformat);
+
+		nl = calloc(argc + 1, sizeof *nl);
+		if (!nl)
+			err(1, "calloc nl: ");
+		for (i = 0; i < argc; i++) {
+			if (asprintf(&nl[i].n_name, "_%s",
+			    argv[i]) == -1)
+				warn("asprintf");
+		}
+		kvm_nlist(kd, nl);
+		globalnl = nl;
+		for (i = 0; i < argc; i++) {
+			printf("%s ", argv[i]);
+			if (!nl[i].n_value && argv[i][0] == '0') {
+				nl[i].n_value = strtoul(argv[i], NULL, 16);
+				nl[i].n_type = N_DATA;
+			}
+			if (!nl[i].n_value)
+				printf("not found\n");
+			else {
+				long long v;
+				printf("at %p: ", nl[i].n_value);
+				if (nl[i].n_type == N_DATA) {
+					KGET1(i, &v, sizeof(v), argv[i]);
+					if (stringformat)
+						printf(format, &v);
+					else if (longformat)
+						printf(format, v);
+					else
+						printf(format, (int)v);
+				}
+				printf("\n");
+			}
+		}
+	}
 
 	if (vnodeflag)
 		if (kvm_nlist(kd, vnodenl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
-	if (!(fileflag | vnodeflag | ttyflag | swapflag | totalflag))
+	if (!(fileflag | vnodeflag | ttyflag | swapflag | totalflag || dformat))
 		usage();
 	if (fileflag || totalflag)
 		filemode();
@@ -1086,6 +1143,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: pstat [-fknsTtv] [-M core] [-N system]\n");
+	    "usage: pstat [-fknsTtv] [-d format] [-M core] [-N system]\n");
 	exit(1);
 }
