@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.29 2007/07/27 09:16:09 mbalmer Exp $ */
+/*	$OpenBSD: usb.h,v 1.30 2007/11/28 16:50:22 robert Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -395,6 +395,7 @@ typedef struct {
 #define  UDPROTO_HSHUBMTT	0x02
 #define UDCLASS_DIAGNOSTIC	0xdc
 #define UDCLASS_WIRELESS	0xe0
+#define UDCLASS_VIDEO		0xef
 #define  UDSUBCLASS_RF		0x01
 #define   UDPROTO_BLUETOOTH	0x01
 #define UDCLASS_VENDOR		0xff
@@ -470,6 +471,11 @@ typedef struct {
 /*#define UICLASS_FIRM_UPD	0x0c*/
 
 #define UICLASS_SECURITY	0x0d
+
+#define UICLASS_VIDEO		0x0e
+#define  UISUBCLASS_VIDEOCONTROL		1
+#define  UISUBCLASS_VIDEOSTREAM			2
+#define  UISUBCLASS_VIDEO_IF_COLLECTION		3 
 
 #define UICLASS_DIAGNOSTIC	0xdc
 
