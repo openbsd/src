@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.63 2007/11/26 12:39:00 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.64 2007/11/28 06:41:12 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: November 26 2007 $
+.Dd $Mdocdate: November 28 2007 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -111,7 +111,14 @@ Causes
 .Nm
 to bypass the normal login procedure and use an anonymous login instead.
 .It Fl C
-Continue file transfer.
+Continue a previously interrupted FTP transfer.
+.Nm
+will continue transferring from an offset equal to the length of
+.Ar file .
+Resuming HTTP(S) transfers are only supported
+if the remote server supports the
+.Dq Range
+header.
 .It Fl c Ar cookie
 Load a Netscape-like cookiejar file
 for HTTP and HTTPS transfers.
