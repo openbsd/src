@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.16 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.17 2007/11/28 10:24:38 chl Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,6 @@ static char current_locale_string[_LC_LAST * 33];
 
 static char	*currentlocale(void);
 static void revert_to_default(int);
-static int force_locale_enable(int);
 static int load_locale_sub(int, const char *, int);
 static char	*loadlocale(int);
 static const char *__get_locale_env(int);
@@ -212,14 +211,6 @@ revert_to_default(int category)
 	case LC_TIME:
 		break;
 	}
-}
-
-static int
-force_locale_enable(int category)
-{
-	revert_to_default(category);
-
-	return 0;
 }
 
 static int
