@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.8 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.9 2007/11/28 18:26:11 todd Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -138,7 +138,7 @@ owtemp_update(void *arg)
 {
 	struct owtemp_softc *sc = arg;
 	u_int8_t data[9];
-	u_int16_t temp;
+	int16_t temp;
 	int count_perc, count_remain, val;
 
 	rw_enter_write(&sc->sc_lock);
