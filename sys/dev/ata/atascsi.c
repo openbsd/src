@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.49 2007/11/26 20:13:53 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.50 2007/11/28 13:47:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -173,7 +173,6 @@ atascsi_probe(struct scsi_link *link)
 	struct ata_port		*ap;
 	struct ata_xfer		*xa;
 	int			port, type;
-	int			s;
 
 	/* revisit this when we do port multipliers */
 	if (link->lun > 0)
@@ -202,9 +201,7 @@ atascsi_probe(struct scsi_link *link)
 
 	as->as_ports[port] = ap;
 
-	s = splbio();
 	xa = ata_get_xfer(ap, 1);
-	splx(s);
 	if (xa == NULL)
 		return (EBUSY);
 
@@ -253,21 +250,16 @@ struct ata_xfer *
 ata_setup_identify(struct ata_port *ap, int nosleep)
 {
 	struct ata_xfer		*xa;
-	int			s;
 
-	s = splbio();
 	xa = ata_get_xfer(ap, nosleep);
-	splx(s);
 	if (xa == NULL)
 		return (NULL);
 
 	xa->data = malloc(512, M_TEMP, nosleep ? (M_NOWAIT | M_ZERO) :
 	    (M_WAITOK | M_ZERO));
 	if (xa->data == NULL) {
-		s = splbio();
 		xa->state = ATA_S_ERROR;
 		ata_put_xfer(xa);
-		splx(s);
 		return (NULL);
 	}
 	xa->datalen = 512;
@@ -338,7 +330,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	struct scsi_link	*link = xs->sc_link;
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
-	int			s, flags = 0;
+	int			flags = 0;
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
 	struct ata_xfer		*xa;
@@ -375,9 +367,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		return (atascsi_stuffup(xs));
 	}
 
-	s = splbio();
 	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
-	splx(s);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -637,11 +627,8 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa;
-	int			s;
 
-	s = splbio();
 	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
-	splx(s);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -790,13 +777,10 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	struct scsi_link	*link = xs->sc_link;
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
-	int			s;
 	struct ata_xfer		*xa;
 	struct ata_fis_h2d	*fis;
 
-	s = splbio();
 	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
-	splx(s);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -911,11 +895,8 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	struct ata_xfer		*xa;
 	struct ata_fis_h2d	*fis;
 	void			*buf;
-	int			s;
 
-	s = splbio();
 	xa = ata_get_xfer(ap, 0);
-	splx(s);
 	if (xa == NULL)
 		return (ENOMEM);
 
@@ -953,9 +934,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 		break;
 	case ATA_ERROR:
 		free(buf, M_TEMP);
-		s = splbio();
 		ata_put_xfer(xa);
-		splx(s);
 		atareq->retsts = ATACMD_ERROR;
 		return (EIO);
 	default:
@@ -981,9 +960,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 
 	free(buf, M_TEMP);
 
-	s = splbio();
 	ata_put_xfer(xa);
-	splx(s);
 
 	return (0);
 }

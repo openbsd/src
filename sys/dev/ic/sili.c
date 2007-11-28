@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.38 2007/11/26 15:59:53 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.39 2007/11/28 13:47:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 
 #include <machine/bus.h>
 
@@ -80,6 +81,7 @@ struct sili_port {
 	struct sili_dmamem	*sp_scratch;
 
 	TAILQ_HEAD(, sili_ccb)	sp_free_ccbs;
+	struct mutex		sp_free_ccb_mtx;
 
 	volatile u_int32_t	sp_active;
 	TAILQ_HEAD(, sili_ccb)	sp_active_ccbs;
@@ -470,6 +472,7 @@ sili_ccb_alloc(struct sili_port *sp)
 	int				i;
 
 	TAILQ_INIT(&sp->sp_free_ccbs);
+	mtx_init(&sp->sp_free_ccb_mtx, IPL_BIO);
 	TAILQ_INIT(&sp->sp_active_ccbs);
 	TAILQ_INIT(&sp->sp_deferred_ccbs);
 
@@ -534,12 +537,14 @@ sili_get_ccb(struct sili_port *sp)
 {
 	struct sili_ccb			*ccb;
 
+	mtx_enter(&sp->sp_free_ccb_mtx);
 	ccb = TAILQ_FIRST(&sp->sp_free_ccbs);
 	if (ccb != NULL) {
 		KASSERT(ccb->ccb_xa.state == ATA_S_PUT);
 		TAILQ_REMOVE(&sp->sp_free_ccbs, ccb, ccb_entry);
 		ccb->ccb_xa.state = ATA_S_SETUP;
 	}
+	mtx_leave(&sp->sp_free_ccb_mtx);
 
 	return (ccb);
 }
@@ -560,7 +565,9 @@ sili_put_ccb(struct sili_ccb *ccb)
 #endif
 
 	ccb->ccb_xa.state = ATA_S_PUT;
+	mtx_enter(&sp->sp_free_ccb_mtx);
 	TAILQ_INSERT_TAIL(&sp->sp_free_ccbs, ccb, ccb_entry);
+	mtx_leave(&sp->sp_free_ccb_mtx);
 }
 
 struct sili_dmamem *

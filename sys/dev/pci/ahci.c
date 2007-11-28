@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.134 2007/11/26 15:59:53 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.135 2007/11/28 13:47:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 #include <machine/bus.h>
 
@@ -354,6 +355,7 @@ struct ahci_port {
 
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_pending;
+	struct mutex		ap_ccb_mtx;
 
 	u_int32_t		ap_state;
 #define AP_S_NORMAL			0
@@ -890,6 +892,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 #endif
 	TAILQ_INIT(&ap->ap_ccb_free);
 	TAILQ_INIT(&ap->ap_ccb_pending);
+	mtx_init(&ap->ap_ccb_mtx, IPL_BIO);
 
 	/* Disable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, 0);
@@ -1873,12 +1876,14 @@ ahci_get_ccb(struct ahci_port *ap)
 {
 	struct ahci_ccb			*ccb;
 
+	mtx_enter(&ap->ap_ccb_mtx);
 	ccb = TAILQ_FIRST(&ap->ap_ccb_free);
 	if (ccb != NULL) {
 		KASSERT(ccb->ccb_xa.state == ATA_S_PUT);
 		TAILQ_REMOVE(&ap->ap_ccb_free, ccb, ccb_entry);
 		ccb->ccb_xa.state = ATA_S_SETUP;
 	}
+	mtx_leave(&ap->ap_ccb_mtx);
 
 	return (ccb);
 }
@@ -1899,7 +1904,9 @@ ahci_put_ccb(struct ahci_ccb *ccb)
 #endif
 
 	ccb->ccb_xa.state = ATA_S_PUT;
+	mtx_enter(&ap->ap_ccb_mtx);
 	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
+	mtx_leave(&ap->ap_ccb_mtx);
 }
 
 struct ahci_ccb *
