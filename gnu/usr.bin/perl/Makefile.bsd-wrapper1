@@ -532,7 +532,7 @@ stamp-mansrc.build:
 	@cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 	@touch $@
 
-man.build: ${MANSRC_COOKIE} ${MANALL} ${PSALL}
+man.build: ${MANSRC_COOKIE} .WAIT ${MANALL} ${PSALL}
 .PHONY: man.build mansrc.build
 
 cleandir:
