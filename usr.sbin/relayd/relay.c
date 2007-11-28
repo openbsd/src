@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.72 2007/11/26 09:38:25 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.73 2007/11/28 14:41:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -418,7 +418,7 @@ relay_privinit(void)
 		ssl_init(env);
 
 	TAILQ_FOREACH(rlay, env->relays, entry) {
-		log_debug("relay_init: adding relay %s", rlay->conf.name);
+		log_debug("relay_privinit: adding relay %s", rlay->conf.name);
 
 		if (debug)
 			relay_protodebug(rlay);
@@ -440,7 +440,7 @@ relay_privinit(void)
 			rlay->s = relay_socket_listen(&rlay->conf.ss,
 			    rlay->conf.port, rlay->proto);
 		if (rlay->s == -1)
-			fatal("relay_launch: failed to listen");
+			fatal("relay_privinit: failed to listen");
 	}
 }
 
