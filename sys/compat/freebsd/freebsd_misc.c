@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.10 2007/04/05 15:33:42 tedu Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.11 2007/11/28 13:47:02 deraadt Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/dirent.h>
 #include <sys/filedesc.h>
@@ -178,4 +179,46 @@ freebsd_sys_mmap(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	SCARG(uap, flags) &= ~FBSD_MAP_NOCORE;
 	return (sys_mmap(p, uap, retval));
+}
+
+struct outsname {
+	char	sysname[32];
+	char	nodename[32];
+	char	release[32];
+	char	version[32];
+	char	machine[32];
+};
+
+/* ARGSUSED */
+int
+compat_freebsd_sys_uname(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_freebsd_sys_uname_args /* {
+		syscallarg(struct outsname *) name;
+	} */ *uap = v;
+	struct outsname outsname;
+	const char *cp;
+	char *dp, *ep;
+
+	strlcpy(outsname.sysname, ostype, sizeof(outsname.sysname));
+	strlcpy(outsname.nodename, hostname, sizeof(outsname.nodename));
+	strlcpy(outsname.release, osrelease, sizeof(outsname.release));
+	dp = outsname.version;
+	ep = &outsname.version[sizeof(outsname.version) - 1];
+	for (cp = version; *cp && *cp != '('; cp++)
+		;
+	for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+		*dp++ = *cp;
+	for (; *cp && *cp != '#'; cp++)
+		;
+	for (; *cp && *cp != ':' && dp < ep; cp++)
+		*dp++ = *cp;
+	*dp = '\0';
+	strlcpy(outsname.machine, MACHINE, sizeof(outsname.machine));
+
+	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
+			sizeof(struct outsname)));
 }

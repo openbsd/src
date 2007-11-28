@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.31 2007/04/05 15:33:42 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.32 2007/11/28 13:47:02 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -308,7 +308,7 @@
 			    int len); }
 163	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
 			    int len); }
-164	NOARGS		{ int compat_09_sys_uname(struct outsname *name); }
+164	STD		{ int compat_freebsd_sys_uname(struct outsname *name); }
 165	NOARGS		{ int sys_sysarch(int op, char *parms); }
 166	STD		{ int freebsd_sys_rtprio(int function, pid_t pid, \
 			    struct freebsd_rtprio *rtp); }
