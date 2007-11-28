@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.42 2007/01/30 03:57:29 ray Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.43 2007/11/28 19:06:19 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -446,7 +446,12 @@ reswitch:	switch (ch) {
 			goto rflag;
 #endif
 		case 'h':
-			flags |= SHORTINT;
+			if (*fmt == 'h') {
+				fmt++;
+				flags |= CHARINT;
+			} else {
+				flags |= SHORTINT;
+			}
 			goto rflag;
 		case 'j':
 			flags |= MAXINT;
@@ -855,6 +860,8 @@ finish:
 #define T_MAXINT	22
 #define T_MAXUINT	23
 #define TP_MAXINT	24
+#define T_CHAR		25
+#define T_U_CHAR	26
 
 /*
  * Find all arguments when a positional parameter is encountered.  Returns a
@@ -897,7 +904,8 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	    ((flags&SIZEINT) ? ADDTYPE(T_SSIZEINT) : \
 	    ((flags&LLONGINT) ? ADDTYPE(T_LLONG) : \
 	    ((flags&LONGINT) ? ADDTYPE(T_LONG) : \
-	    ((flags&SHORTINT) ? ADDTYPE(T_SHORT) : ADDTYPE(T_INT)))))))
+	    ((flags&SHORTINT) ? ADDTYPE(T_SHORT) : \
+	    ((flags&CHARINT) ? ADDTYPE(T_CHAR) : ADDTYPE(T_INT))))))))
 
 #define	ADDUARG() \
         ((flags&MAXINT) ? ADDTYPE(T_MAXUINT) : \
@@ -905,7 +913,8 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	    ((flags&SIZEINT) ? ADDTYPE(T_SIZEINT) : \
 	    ((flags&LLONGINT) ? ADDTYPE(T_U_LLONG) : \
 	    ((flags&LONGINT) ? ADDTYPE(T_U_LONG) : \
-	    ((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : ADDTYPE(T_U_INT)))))))
+	    ((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : \
+	    ((flags&CHARINT) ? ADDTYPE(T_U_CHAR) : ADDTYPE(T_U_INT))))))))
 
 	/*
 	 * Add * arguments to the type array.
@@ -1100,19 +1109,15 @@ done:
 		va_copy((*argtable)[n], ap);
 		switch (typetable[n]) {
 		case T_UNUSED:
-			(void) va_arg(ap, int);
-			break;
+		case T_CHAR:
+		case T_U_CHAR:
 		case T_SHORT:
-			(void) va_arg(ap, int);
-			break;
 		case T_U_SHORT:
+		case T_INT:
 			(void) va_arg(ap, int);
 			break;
 		case TP_SHORT:
 			(void) va_arg(ap, short *);
-			break;
-		case T_INT:
-			(void) va_arg(ap, int);
 			break;
 		case T_U_INT:
 			(void) va_arg(ap, unsigned int);
