@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.35 2007/11/24 12:57:18 mpf Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.36 2007/11/28 19:31:31 millert Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -55,9 +55,6 @@
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-caddr_t	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
-u_long	mfs_rootsize;	/* size of mini-root in bytes */
-
 static	int mfs_minor;	/* used for building internal dev_t */
 
 extern int (**mfs_vnodeop_p)(void *);
@@ -80,77 +77,6 @@ const struct vfsops mfs_vfsops = {
 	ffs_sysctl,
 	mfs_checkexp
 };
-
-/*
- * Called by main() when mfs is going to be mounted as root.
- */
-
-int
-mfs_mountroot(void)
-{
-	struct fs *fs;
-	struct mount *mp;
-	struct proc *p = curproc;
-	struct ufsmount *ump;
-	struct mfsnode *mfsp;
-	int error;
-
-	if ((error = bdevvp(swapdev, &swapdev_vp)) ||
-	    (error = bdevvp(rootdev, &rootvp))) {
-		printf("mfs_mountroot: can't setup bdevvp's");
-		return (error);
-	}
-	if ((error = vfs_rootmountalloc("mfs", "mfs_root", &mp)) != 0)
-		return (error);
-	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
-	rootvp->v_data = mfsp;
-	rootvp->v_op = mfs_vnodeop_p;
-	rootvp->v_tag = VT_MFS;
-	mfsp->mfs_baseoff = mfs_rootbase;
-	mfsp->mfs_size = mfs_rootsize;
-	mfsp->mfs_vnode = rootvp;
-	mfsp->mfs_pid = p->p_pid;
-	mfsp->mfs_buflist = (struct buf *)0;
-	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
-		mp->mnt_vfc->vfc_refcount--;
-		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
-		free(mfsp, M_MFSNODE);
-		return (error);
-	}
-
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	ump = VFSTOUFS(mp);
-	fs = ump->um_fs;
-	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp);
-	inittodr((time_t)0);
-
-	return (0);
-}
-
-/*
- * This is called early in boot to set the base address and size
- * of the mini-root.
- */
-int
-mfs_initminiroot(caddr_t base)
-{
-	struct fs *fs = (struct fs *)(base + SBOFF);
-	extern int (*mountroot)(void);
-
-	/* check for valid super block */
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs))
-		return (0);
-	mountroot = mfs_mountroot;
-	mfs_rootbase = base;
-	mfs_rootsize = fs->fs_fsize * fs->fs_size;
-	rootdev = makedev(255, mfs_minor);
-	mfs_minor++;
-	return (mfs_rootsize);
-}
 
 /*
  * VFS Operations.

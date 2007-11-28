@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.33 2007/06/01 05:37:14 deraadt Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.34 2007/11/28 19:31:31 millert Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ static struct vfsconf vfsconflist[] = {
 
         /* Memory-based Filesystem */
 #ifdef MFS
-        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, mfs_mountroot, NULL },
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL, NULL },
 #endif
 
 #ifdef EXT2FS

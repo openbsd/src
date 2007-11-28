@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.12 2006/03/28 13:18:17 pedro Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.13 2007/11/28 19:31:31 millert Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -44,8 +44,6 @@ struct mbuf;
 
 __BEGIN_DECLS
 /* mfs_vfsops.c */
-int mfs_mountroot(void);
-int mfs_initminiroot(caddr_t);
 int mfs_mount(struct mount *, const char *, void *, struct nameidata *,
     struct proc *);
 int mfs_start(struct mount *, int, struct proc *);

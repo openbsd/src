@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.28 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.29 2007/11/28 19:31:31 millert Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -140,25 +140,12 @@ mfs_strategy(void *v)
 	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;
-	int s;
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
 
 	mfsp = VTOMFS(vp);
-	/* check for mini-root access */
-	if (mfsp->mfs_pid == 0) {
-		caddr_t base;
-
-		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
-		if (bp->b_flags & B_READ)
-			bcopy(base, bp->b_data, bp->b_bcount);
-		else
-			bcopy(bp->b_data, base, bp->b_bcount);
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	} else if (p !=  NULL && mfsp->mfs_pid == p->p_pid) {
+	if (p != NULL && mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
 		bp->b_actf = mfsp->mfs_buflist;
