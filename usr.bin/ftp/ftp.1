@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.64 2007/11/28 06:41:12 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.65 2007/11/28 16:21:25 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -38,13 +38,13 @@
 .Nd ARPANET file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl 46AaCdEegimnptVv
-.Op Fl c Ar cookie
+.Op Fl 46AadEegimnptVv
 .Op Fl k Ar seconds
 .Op Fl P Ar port
 .Op Fl r Ar seconds
 .Op Ar host Op Ar port
 .Nm ftp
+.Op Fl C
 .Op Fl o Ar output
 .Sm off
 .No ftp:// Oo Ar user : password No @
@@ -53,18 +53,23 @@
 .Oc
 .Sm on
 .Nm ftp
+.Op Fl C
+.Op Fl c Ar cookie
 .Op Fl o Ar output
 .Sm off
 .No http:// Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
 .Nm ftp
+.Op Fl C
+.Op Fl c Ar cookie
 .Op Fl o Ar output
 .Sm off
 .No https:// Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
 .Nm ftp
+.Op Fl C
 .Op Fl o Ar output
 .Sm off
 .Ar host : No / Ar file Oo /
@@ -111,10 +116,11 @@ Causes
 .Nm
 to bypass the normal login procedure and use an anonymous login instead.
 .It Fl C
-Continue a previously interrupted FTP transfer.
+Continue a previously interrupted file transfer.
 .Nm
 will continue transferring from an offset equal to the length of
 .Ar file .
+.Pp
 Resuming HTTP(S) transfers are only supported
 if the remote server supports the
 .Dq Range

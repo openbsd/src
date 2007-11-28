@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2007/11/26 12:39:00 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.68 2007/11/28 16:21:25 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.67 2007/11/26 12:39:00 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.68 2007/11/28 16:21:25 jmc Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -764,15 +764,17 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-46AaCdEegimnptVv] [-c cookie] [-k seconds] "
-	    "[-P port] [-r seconds]\n"
-	    "           [host [port]]\n"
-	    "       %s [-o output] ftp://[user:password@]host[:port]/file[/]\n"
-	    "       %s [-o output] http://host[:port]/file\n"
+	    "usage: %s [-46AadEegimnptVv] [-k seconds] "
+	    "[-P port] [-r seconds] [host [port]]\n"
+	    "       %s [-C] [-o output] "
+	    "ftp://[user:password@]host[:port]/file[/]\n"
+	    "       %s [-C] [-c cookie] [-o output] "
+	    "http://host[:port]/file\n"
 #ifndef SMALL
-	    "       %s [-o output] https://host[:port]/file\n"
+	    "       %s [-C] [-c cookie] [-o output] "
+	    "https://host[:port]/file\n"
 #endif
-	    "       %s [-o output] host:[/path/]file[/]\n",
+	    "       %s [-C] [-o output] host:[/path/]file[/]\n",
 #ifndef SMALL
 	    __progname, __progname, __progname, __progname, __progname);
 #else
