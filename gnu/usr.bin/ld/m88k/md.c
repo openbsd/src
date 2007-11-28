@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.5 2007/11/24 14:14:30 miod Exp $*/
+/* *	$OpenBSD: md.c,v 1.6 2007/11/28 12:04:25 miod Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -320,66 +320,36 @@ md_swapout_exec_hdr(struct exec *h)
 void
 md_swapin_reloc(struct relocation_info_m88k *r, int n)
 {
-	struct r_relocation_info_m88k r_r;
-	int *rev_int;
+	unsigned int bits;
 
-	if (sizeof (struct relocation_info_m88k) != sizeof (struct r_relocation_info_m88k)){
-		fprintf(stderr, "fatal: relocation entry swapin\n");
-		exit(23);
-	}
 	for (; n; n--, r++) {
-
-		memcpy(&r_r,r,sizeof (struct relocation_info_m88k));
-		r->r_address = md_swap_long(r_r.r_address);
-		r->r_addend = md_swap_long(r_r.r_addend);
-		rev_int = (((int *)(&r_r)) +1);
-		*rev_int = md_swap_long(*rev_int);
-
-
-		r->r_symbolnum = r_r.r_symbolnum;
-		r->r_extern = r_r.r_extern;
-		r->r_type = r_r.r_type;
-		switch(r->r_type){
-		case RELOC_LO16:
-		case RELOC_HI16:
-			r->r_baserel =1;
-			break;
-		case RELOC_PC16:
-		case RELOC_PC26:
-			r->r_pcrel =1;
-			r->r_baserel =1;
-			break;
-		case RELOC_32:
-			r->r_jmptable =1;
-			break;
-		case RELOC_IW16:
-			break;
-		}
-#if 0
-printf("%08x: %5x %4x %4x\n",
-	r->r_address,
-	r->r_symbolnum,
-	r->r_extern,
-	r->r_type);
-#endif
+		r->r_address = md_swap_long(r->r_address);
+		bits = md_swap_long(((int *)r)[1]);
+		r->r_symbolnum = (bits >> 8) & 0x00ffffff;
+		r->r_extern = (bits >> 7) & 1;
+		r->r_baserel = (bits >> 6) & 1;
+		r->r_pcrel = (bits >> 5) & 1;
+		r->r_jmptable = (bits >> 4) & 1;
+		r->r_type = (bits >> 0) & 0x0f;
+		r->r_addend = md_swap_long(r->r_addend);
 	}
 }
 
 void
 md_swapout_reloc(struct relocation_info_m88k *r, int n)
 {
-	int *rev_int;
-	struct r_relocation_info_m88k r_r;
+	unsigned int bits;
 
 	for (; n; n--, r++) {
-		r_r.r_address = md_swap_long(r->r_address);
-		r_r.r_addend = md_swap_long(r->r_addend);
-		r_r.r_symbolnum = r->r_symbolnum;
-		r_r.r_extern = r->r_extern;
-		r_r.r_type = r->r_type;
-		rev_int = (((int *)(&r_r)) +1);
-		*rev_int = md_swap_long(*rev_int);
-		memcpy(r,&r_r,sizeof (struct relocation_info_m88k));
+		r->r_address = md_swap_long(r->r_address);
+		bits = (r->r_symbolnum & 0x00ffffff) << 8;
+		bits |= (r->r_extern & 1) << 7;
+		bits |= (r->r_baserel & 1) << 6;
+		bits |= (r->r_pcrel & 1) << 5;
+		bits |= (r->r_jmptable & 1) << 4;
+		bits |= (r->r_type & 0x0f) << 0;
+		((int *)r)[1] = md_swap_long(bits);
+		r->r_addend = md_swap_long(r->r_addend);
 	}
 }
 
