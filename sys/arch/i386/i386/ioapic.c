@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.14 2007/02/22 19:46:16 marco Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.15 2007/11/28 19:13:51 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -477,10 +477,7 @@ void
 apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 {
 	struct ioapic_pin *pp = &sc->sc_pins[pin];
-	int ovector = 0;
-	int nvector = 0;
-
-	ovector = pp->ip_vector;
+	int nvector, ovector = pp->ip_vector;
 	
 	if (maxlevel == 0) {
 		/* no vector needed. */
@@ -525,7 +522,7 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 	}
 	apic_intrhand[pp->ip_vector] = pp->ip_handler;
 
-	if (ovector) {
+	if (ovector && ovector != pp->ip_vector) {
 		/*
 		 * XXX should defer this until we're sure the old vector
 		 * doesn't have a pending interrupt on any processor.
