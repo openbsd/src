@@ -1018,7 +1018,9 @@ gdb.z:gdb.1
 # source file and doesn't care about rebuilding or just wants to save the
 # time it takes for make to check that all is up to date.
 # install-only is intended to address that need.
-install: all install-only
+install: all
+	@exec ${MAKE} install-only
+
 install-only: $(CONFIG_INSTALL)
 	transformed_name=`t='$(program_transform_name)'; \
 			  echo gdb | sed -e "$$t"` ; \
