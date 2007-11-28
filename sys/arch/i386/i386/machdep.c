@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.413 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.414 2007/11/28 17:17:18 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1102,6 +1102,7 @@ cyrix3_setperf_setup(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname);
 	}
 }
+#endif
 
 void
 cyrix3_cpu_setup(struct cpu_info *ci)
