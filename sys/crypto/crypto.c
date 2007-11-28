@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.50 2007/11/25 15:56:16 tedu Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.51 2007/11/28 13:52:23 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -417,25 +417,29 @@ crypto_dispatch(struct cryptop *crp)
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
 	if (hid < crypto_drivers_num)
 		crypto_drivers[hid].cc_queued++;
-
-	crp->crp_next = NULL;
-	workq_add_task(crypto_workq, WQ_DIRECTOK, (workq_fn)crypto_invoke, crp, NULL);
-
 	splx(s);
+
+	if (crypto_workq) {
+		workq_add_task(crypto_workq, 0,
+		    (workq_fn)crypto_invoke, crp, NULL);
+	} else {
+		crypto_invoke(crp);
+	}
+
 	return 0;
 }
 
 int
 crypto_kdispatch(struct cryptkop *krp)
 {
-	int s;
-	
-	s = splvm();
 
-	krp->krp_next = NULL;
-	workq_add_task(crypto_workq, WQ_DIRECTOK, (workq_fn)crypto_kinvoke, krp, NULL);
+	if (crypto_workq) {
+		workq_add_task(crypto_workq, 0,
+		    (workq_fn)crypto_kinvoke, krp, NULL);
+	} else {
+		crypto_kinvoke(krp);
+	}
 
-	splx(s);
 	return 0;
 }
 
@@ -448,11 +452,13 @@ crypto_kinvoke(struct cryptkop *krp)
 	extern int cryptodevallowsoft;
 	u_int32_t hid;
 	int error;
+	int s;
 
 	/* Sanity checks. */
 	if (krp == NULL || krp->krp_callback == NULL)
 		return (EINVAL);
 
+	s = splvm();
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
 		    cryptodevallowsoft == 0)
@@ -468,6 +474,7 @@ crypto_kinvoke(struct cryptkop *krp)
 	if (hid == crypto_drivers_num) {
 		krp->krp_status = ENODEV;
 		crypto_kdone(krp);
+		splx(s);
 		return (0);
 	}
 
@@ -480,6 +487,7 @@ crypto_kinvoke(struct cryptkop *krp)
 		krp->krp_status = error;
 		crypto_kdone(krp);
 	}
+	splx(s);
 	return (0);
 }
 
@@ -493,14 +501,17 @@ crypto_invoke(struct cryptop *crp)
 	u_int64_t nid;
 	u_int32_t hid;
 	int error;
+	int s;
 
 	/* Sanity checks. */
 	if (crp == NULL || crp->crp_callback == NULL)
 		return EINVAL;
 
+	s = splvm();
 	if (crp->crp_desc == NULL || crypto_drivers == NULL) {
 		crp->crp_etype = EINVAL;
 		crypto_done(crp);
+		splx(s);
 		return 0;
 	}
 
@@ -532,6 +543,7 @@ crypto_invoke(struct cryptop *crp)
 		}
 	}
 
+	splx(s);
 	return 0;
 
  migrate:
@@ -544,6 +556,7 @@ crypto_invoke(struct cryptop *crp)
 
 	crp->crp_etype = EAGAIN;
 	crypto_done(crp);
+	splx(s);
 	return 0;
 }
 
