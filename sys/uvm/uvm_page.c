@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.61 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.62 2007/11/29 00:26:41 tedu Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -241,7 +241,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	TAILQ_INIT(&uvm.page_inactive_swp);
 	TAILQ_INIT(&uvm.page_inactive_obj);
 	simple_lock_init(&uvm.pageqlock);
-	simple_lock_init(&uvm.fpageqlock);
+	mtx_init(&uvm.fpageqlock, IPL_VM);
 
 	/*
 	 * init the <obj,offset> => <page> hash table.  for now

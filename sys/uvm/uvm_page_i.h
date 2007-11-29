@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.17 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.18 2007/11/29 00:26:42 tedu Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
@@ -91,11 +91,8 @@
 PAGE_INLINE int
 uvm_lock_fpageq(void)
 {
-	int s;
-
-	s = splvm();
-	simple_lock(&uvm.fpageqlock);
-	return (s);
+	mtx_enter(&uvm.fpageqlock);
+	return (0);
 }
 
 /*
@@ -109,8 +106,7 @@ PAGE_INLINE void
 uvm_unlock_fpageq(int s)
 {
 
-	simple_unlock(&uvm.fpageqlock);
-	splx(s);
+	mtx_leave(&uvm.fpageqlock);
 }
 
 /*
