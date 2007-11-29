@@ -1031,6 +1031,7 @@
 ./usr/share/man/cat4/alpha/tsp.0
 ./usr/share/man/cat4/amd64
 ./usr/share/man/cat4/amd64/amdpcib.0
+./usr/share/man/cat4/amd64/apm.0
 ./usr/share/man/cat4/amd64/autoconf.0
 ./usr/share/man/cat4/amd64/bios.0
 ./usr/share/man/cat4/amd64/cpu.0
@@ -1519,6 +1520,7 @@
 ./usr/share/man/cat4/sgi/intro.0
 ./usr/share/man/cat4/sgi/macebus.0
 ./usr/share/man/cat4/sgi/macepcibr.0
+./usr/share/man/cat4/sgi/mainbus.0
 ./usr/share/man/cat4/sgi/mavb.0
 ./usr/share/man/cat4/sgi/mec.0
 ./usr/share/man/cat4/sgi/mkbc.0
@@ -2537,6 +2539,7 @@
 ./usr/share/man/cat9/luna88k
 ./usr/share/man/cat9/mac68k
 ./usr/share/man/cat9/macppc
+./usr/share/man/cat9/msleep.0
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
