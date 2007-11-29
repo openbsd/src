@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.187 2007/11/28 12:27:48 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.188 2007/11/29 11:29:01 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,12 +34,12 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
 .Nm options
-.Nd miscellaneous kernel configuration options
+.Nd kernel configuration options
 .Sh SYNOPSIS
 .Cd option ...
 .Sh DESCRIPTION
@@ -52,7 +52,7 @@ for information on how to configure and build kernels.
 options are passed to the compile process as
 .Fl D
 flags to the C compiler.
-.Ss Compatibility Options
+.Sh COMPATIBILITY OPTIONS
 .Bl -ohang
 .It Cd option COMPAT_43
 Use of this option is discouraged.
@@ -165,35 +165,13 @@ See
 .Xr compat_svr4 8 .
 .It Cd option COMPAT_ULTRIX
 On those architectures that support it, this enables binary
-compatibility with
-.Tn Ultrix
-applications built for the same architecture.
+compatibility with Ultrix applications built for the same architecture.
 This option is available on the vax architecture.
 See
 .Xr compat_ultrix 8 .
 .El
-.Ss Debugging Options
+.Sh DEBUGGING OPTIONS
 .Bl -ohang
-.It Cd option DDB
-Compiles in a kernel debugger for diagnosing kernel problems.
-See
-.Xr ddb 4
-for details.
-.Em Note:
-not available on all architectures.
-.It Cd option DDB_SAFE_CONSOLE
-Allows a break into the kernel debugger during boot.
-Useful when debugging problems that can cause init(8) to fail.
-.It Cd option KGDB
-Compiles in a remote kernel debugger stub for diagnosing kernel problems
-using the
-.Dq remote target
-feature of gdb.
-See
-.Xr kgdb 7
-for details.
-.Em Note:
-not available on all architectures.
 .It Cd makeoptions DEBUG="-g"
 The
 .Fl g
@@ -211,6 +189,27 @@ as an argument (no core file) and then use the
 .Xr gdb 1
 command
 .Dq target kvm COREFILE .
+.It Cd makeoptions PROF="-pg"
+The
+.Fl pg
+flag causes the kernel to be compiled with support for profiling.
+The
+.Cm option GPROF
+is required for the kernel compile to succeed.
+.It Cd option ACCOUNTING
+Adds support for the
+.Xr acct 2
+system call.
+.It Cd option DDB
+Compiles in a kernel debugger for diagnosing kernel problems.
+See
+.Xr ddb 4
+for details.
+.Em Note:
+not available on all architectures.
+.It Cd option DDB_SAFE_CONSOLE
+Allows a break into the kernel debugger during boot.
+Useful when debugging problems that can cause init(8) to fail.
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),
@@ -231,36 +230,30 @@ which may decrease system performance.
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
-.It Cd option SMALL_KERNEL
-Removes some features and some optimizations from the kernel to reduce the
-size of the resulting kernel binary.
-This option is used on some installation media and should not be used
-for general purpose kernels.
-.It Cd option NO_PROPOLICE
-Do not compile the kernel with the ProPolice stack protection.
-See
-.Xr gcc-local 1
-for more information about ProPolice.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
-.It Cd makeoptions PROF="-pg"
-The
-.Fl pg
-flag causes the kernel to be compiled with support for profiling.
-The
-.Cm option GPROF
-is required for the kernel compile to succeed.
-.It Cd option ACCOUNTING
-Adds support for the
-.Xr acct 2
-system call.
+.It Cd option KGDB
+Compiles in a remote kernel debugger stub for diagnosing kernel problems
+using the
+.Dq remote target
+feature of gdb.
+See
+.Xr kgdb 7
+for details.
+.Em Note:
+not available on all architectures.
 .It Cd option KTRACE
 Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.
 See
 .Xr ktrace 1
 for details.
+.It Cd option NO_PROPOLICE
+Do not compile the kernel with the ProPolice stack protection.
+See
+.Xr gcc-local 1
+for more information about ProPolice.
 .It Cd option PTRACE
 Adds hooks for the process tracing facility, allowing a process to
 control and observe another process.
@@ -272,21 +265,26 @@ Be verbose on what RAIDframe does.
 See
 .Xr raid 4
 for details.
+.It Cd option SMALL_KERNEL
+Removes some features and some optimizations from the kernel to reduce the
+size of the resulting kernel binary.
+This option is used on some installation media and should not be used
+for general purpose kernels.
 .It Cd option VFSDEBUG
 Turns on debugging for the Virtual File System interface.
 See
 .Xr vfs 9
 for details.
 .El
-.Ss File Systems
+.Sh FILE SYSTEMS
 .Bl -ohang
-.It Cd option FFS
-Includes code implementing the Berkeley Fast File System
-.Em ( FFS ) .
-Most machines need this if they are not running diskless.
-.It Cd option FFS2
-Includes code implementing the enhanced Fast File System
-.Em ( FFS2 ) .
+.It Cd option CD9660
+Includes code for the ISO 9660 + Rock Ridge file system, which is the
+standard file system used on many CD-ROMs.
+It also supports Joliet extensions.
+See
+.Xr mount_cd9660 8
+for details.
 .It Cd option EXT2FS
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
@@ -308,6 +306,13 @@ ext2fs filesystem created on an i386 or other little-endian machine.
 See
 .Xr mount_ext2fs 8
 for details.
+.It Cd option FFS
+Includes code implementing the Berkeley Fast File System
+.Em ( FFS ) .
+Most machines need this if they are not running diskless.
+.It Cd option FFS2
+Includes code implementing the enhanced Fast File System
+.Em ( FFS2 ) .
 .It Cd option MFS
 Include the memory file system
 .Em ( MFS ) .
@@ -319,6 +324,15 @@ or similar mount points.
 See
 .Xr mount_mfs 8
 for details.
+.It Cd option MSDOSFS
+Includes support for the MS-DOS FAT file system.
+The kernel also implements the Windows 95
+extensions which permit the use of longer, mixed-case file names.
+See
+.Xr mount_msdos 8
+and
+.Xr fsck_msdos 8
+for details.
 .It Cd option NFSCLIENT
 Include the client side of the
 .Em NFS
@@ -329,30 +343,6 @@ is kernel based, several user level daemons are needed for it to work.
 See
 .Xr mount_nfs 8
 for details on NFS.
-.It Cd option CD9660
-Includes code for the ISO 9660 + Rock Ridge file system, which is the
-standard file system used on many CD-ROMs.
-It also supports Joliet extensions.
-See
-.Xr mount_cd9660 8
-for details.
-.It Cd option UDF
-Includes code for the UDF file systems typically found on DVD discs.
-See
-.Xr mount_udf 8
-for details.
-.It Cd option MSDOSFS
-Includes support for the
-.Tn MS-DOS
-FAT file system.
-The kernel also implements the
-.Tn Windows 95
-extensions which permit the use of longer, mixed-case file names.
-See
-.Xr mount_msdos 8
-and
-.Xr fsck_msdos 8
-for details.
 .It Cd option NTFS
 Includes support for reading NTFS file systems.
 Experimental and read only.
@@ -380,6 +370,11 @@ files in the procfs namespace.
 See
 .Xr mount_procfs 8
 for details.
+.It Cd option UDF
+Includes code for the UDF file systems typically found on DVD discs.
+See
+.Xr mount_udf 8
+for details.
 .It Cd option XFS
 Includes the kernel support for the AFS-compatible Arla filesystem.
 Since the xfs interface is simple and generic it can be used for other
@@ -388,8 +383,21 @@ See
 .Xr mount_xfs 8
 for details.
 .El
-.Ss File System Options
+.Sh FILE SYSTEM OPTIONS
 .Bl -ohang
+.It Cd option BUFCACHEPERCENT= Ns Ar integer
+Percentage of RAM to use as a file system buffer.
+It defaults to 5.
+.It Cd option EXT2FS_SYSTEM_FLAGS
+This option changes the behavior of the APPEND and IMMUTABLE flags
+for a file on an
+.Em EXT2FS
+filesystem.
+Without this option, the superuser or owner of the file can set and clear them.
+With this option, only the superuser can set them, and they can't be cleared
+if the securelevel is greater than 0.
+See also
+.Xr chflags 1 .
 .It Cd option FFS_SOFTUPDATES
 Enables a scheme that uses partial ordering of buffer cache operations
 to allow metadata updates in FFS to happen asynchronously, increasing write
@@ -410,9 +418,12 @@ Attempts to use this option with these CPUs will cause a kernel hang or panic
 after a short period of use as the kernel will quickly run out of memory.
 This is not related to the amount of physical memory present in the machine --
 it is a limitation of the CPU architecture itself.
-.It Cd option BUFCACHEPERCENT=integer
-Percentage of RAM to use as a file system buffer.
-It defaults to 5.
+.It Cd option FIFO
+Adds support for
+.At V
+style FIFOs (i.e.,
+.Dq named pipes ) .
+This option is recommended in almost all cases as many programs use these.
 .It Cd option NFSSERVER
 Include the server side of the
 .Em NFS
@@ -441,39 +452,12 @@ file systems, although
 .Xr rpc.rquotad 8
 permits them to be accessed over
 .Em NFS .
-.It Cd option FIFO
-Adds support for
-.At V
-style FIFOs (i.e.,
-.Dq named pipes ) .
-This option is recommended in almost all cases as many programs use these.
-.It Cd option EXT2FS_SYSTEM_FLAGS
-This option changes the behavior of the APPEND and IMMUTABLE flags
-for a file on an
-.Em EXT2FS
-filesystem.
-Without this option, the superuser or owner of the file can set and clear them.
-With this option, only the superuser can set them, and they can't be cleared
-if the securelevel is greater than 0.
-See also
-.Xr chflags 1 .
 .It Cd option UFS_DIRHASH
 This option enables using an in memory hash table to speed lookups
 in large directories.
 .El
-.Ss Miscellaneous Options
+.Sh MISCELLANEOUS OPTIONS
 .Bl -ohang
-.It Cd option PCIVERBOSE
-Makes the boot process more verbose for PCI peripherals
-(vendor names and other information is printed, etc.).
-.It Cd option EISAVERBOSE
-Makes the boot process more verbose for EISA peripherals.
-.It Cd option PCMCIAVERBOSE
-Makes the boot process more verbose for PCMCIA peripherals.
-.It Cd option MACOBIOVERBOSE
-Makes the boot process more verbose for OBIO peripherals on the
-.Va macppc
-architecture.
 .It Cd option APERTURE
 Provide in-kernel support for controlling VGA framebuffer mapping
 and PCI configuration registers by user-processes
@@ -486,13 +470,24 @@ This option is supported on the
 and
 .Va sparc64
 architectures.
-.It Cd option LKM
-Enables support for loadable kernel modules.
-See
-.Xr lkm 4
-for details.
-.Em Note:
-This option is not yet available on all architectures.
+.It Cd option BOOT_CONFIG
+Adds support for the
+.Fl c
+boot option (User Kernel Config).
+Allows modification of kernel settings (e.g., device parameters) before
+booting the system.
+.It Cd option CCDNBUF= Ns Ar integer
+The
+.Xr ccd 4
+device driver uses
+.Dq component buffers
+to distribute I/O requests to the components of a concatenated disk.
+It keeps a freelist of buffer
+headers in order to reduce use of the kernel memory allocator.
+.Em CCDNBUF
+is the number of buffer headers allocated on the freelist for
+each component buffer.
+It defaults to 8.
 .It Cd option CRYPTO
 Enables support for the kernel cryptographic framework.
 See
@@ -500,6 +495,8 @@ See
 for details.
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
+.It Cd option EISAVERBOSE
+Makes the boot process more verbose for EISA peripherals.
 .It Cd option INSECURE
 Hardwires the kernel security level at \-1.
 This means that the system always runs in securelevel 0 mode, even when
@@ -517,18 +514,6 @@ See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
-.It Cd option CCDNBUF=integer
-The
-.Xr ccd 4
-device driver uses
-.Dq component buffers
-to distribute I/O requests to the components of a concatenated disk.
-It keeps a freelist of buffer
-headers in order to reduce use of the kernel memory allocator.
-.Em CCDNBUF
-is the number of buffer headers allocated on the freelist for
-each component buffer.
-It defaults to 8.
 .It Cd option KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,
@@ -552,12 +537,24 @@ driver, and much of the networking code.
 Note that this option is silently turned on by the
 .Em DEBUG
 option.
-.It Cd option BOOT_CONFIG
-Adds support for the
-.Fl c
-boot option (User Kernel Config).
-Allows modification of kernel settings (e.g., device parameters) before
-booting the system.
+.It Cd option LKM
+Enables support for loadable kernel modules.
+See
+.Xr lkm 4
+for details.
+.Em Note:
+This option is not yet available on all architectures.
+.It Cd option MACOBIOVERBOSE
+Makes the boot process more verbose for OBIO peripherals on the
+.Va macppc
+architecture.
+.It Cd option MULTIPROCESSOR
+On those architectures that have it, this enables multiprocessor support.
+.It Cd option PCIVERBOSE
+Makes the boot process more verbose for PCI peripherals
+(vendor names and other information is printed, etc.).
+.It Cd option PCMCIAVERBOSE
+Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option RAID_AUTOCONFIG
 Adds support for auto-configuring the RAIDframe devices during the kernel
 initialization.
@@ -565,6 +562,28 @@ See
 .Xr raid 4
 and
 .Xr raidctl 8
+for details.
+.It Cd option USER_LDT
+Enable userland manipulation of per-process
+Local Descriptor Table (LDT) entries;
+see
+.Xr i386_set_ldt 2
+and the
+.Va machdep.userldt
+.Xr sysctl 8 .
+This option is supported on the
+.Va i386
+architecture.
+.It Cd option USER_PCICONF
+Enables the user level access to the PCI bus configuration space
+through ioctls on the
+.Pa /dev/pci
+device.
+It's used by the
+.Xr Xorg 1
+server on some architectures.
+See
+.Xr pci 4
 for details.
 .It Cd option UVM_SWAP_ENCRYPT
 Enables kernel support for encrypting pages that are written out to
@@ -580,139 +599,9 @@ See
 and
 .Xr sysctl 3
 for details.
-.It Cd option USER_PCICONF
-Enables the user level access to the PCI bus configuration space
-through ioctls on the
-.Pa /dev/pci
-device.
-It's used by the
-.Xr Xorg 1
-server on some architectures.
-See
-.Xr pci 4
-for details.
-.It Cd option MULTIPROCESSOR
-On those architectures that have it, this enables multiprocessor support.
-.It Cd option USER_LDT
-Enable userland manipulation of per-process
-Local Descriptor Table (LDT) entries;
-see
-.Xr i386_set_ldt 2
-and the
-.Va machdep.userldt
-.Xr sysctl 8 .
-This option is supported on the
-.Va i386
-architecture.
 .El
-.Ss Networking Options
+.Sh NETWORKING OPTIONS
 .Bl -ohang
-.It Cd option MROUTING
-Includes support for IP multicast routers.
-.Em INET
-should be set along with this.
-Multicast routing is controlled by the
-.Xr mrouted 8
-daemon.
-.It Cd option INET
-Includes support for the TCP/IP protocol stack.
-This option is currently required.
-See
-.Xr inet 4
-for details.
-.It Cd option INET6
-Includes support for the
-.Tn IPv6
-protocol stack.
-See
-.Xr inet6 4
-for details.
-Unlike
-.Em INET ,
-.Em INET6
-enables multicast routing code as well.
-This option requires
-.Em INET
-at this moment, but it should not.
-.It Cd option ND6_DEBUG
-The option sets the default value of
-.Em net.inet6.icmp6.nd6_debug
-to 1,
-for debugging IPv6 neighbor discovery protocol handling.
-See
-.Xr sysctl 3
-for details.
-.It Cd option NETATALK
-Include kernel support for the AppleTalk family of protocols.
-This suite of supporting code is sometimes called
-.Em netatalk
-support.
-.It Cd option TCP_SACK
-Turns on selective acknowledgements.
-Additional information about
-segments already received can be transmitted back to the sender,
-thus indicating segments that have been lost and allowing for
-a swifter recovery.
-Both communication endpoints need to support
-.Em SACK .
-The fallback behaviour is NewReno fast recovery phase, which allows
-one lost segment to be recovered per round trip time.
-When more than one segment has been dropped per window, the transmission can
-continue without waiting for a retransmission timeout.
-.It Cd option TCP_FACK
-Turns on forward acknowledgements allowing a more precise estimate of
-outstanding data during the fast recovery phase by using
-.Em SACK
-information.
-This option can only be used together with
-.Em TCP_SACK .
-.It Cd option TCP_ECN
-Turns on Explicit Congestion Notification (RFC 3168).
-.Em ECN
-allows intermediate routers to use the Congestion Experienced
-codepoint in the IP header as an indication of congestion, and allows
-TCP to adjust the transmission rate using this signal.
-Both communication endpoints negotiate enabling
-.Em ECN
-functionality at the TCP connection establishment.
-.It Cd option TCP_SIGNATURE
-Turns on support for the TCP MD5 Signature option (RFC 2385).
-This is used by
-Internet backbone routers to provide per-packet authentication for the TCP
-packets used to communicate BGP routing information.
-You will also need a
-routing daemon that supports this option in order to actually use it.
-.It Cd option PPP_BSDCOMP
-Enables BSD compressor for PPP connections.
-.It Cd option PPP_DEFLATE
-For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
-for deflate compression/decompression.
-.It Cd option IPSEC
-This option enables IP security protocol support.
-See
-.Xr ipsec 4
-for more details.
-.It Cd option ENCDEBUG
-This option enables debugging information to be conditionally logged
-in case IPSEC encounters errors.
-The option
-.Em IPSEC
-is required along with this option.
-Debug logging can be turned on/off through the use of the
-.Em net.inet.ip.encdebug
-sysctl variable.
-If
-.Em net.ipsec.encap.encdebug
-is 1, debug logging is on.
-See
-.Xr sysctl 8
-and
-.Xr sysctl 3
-for details.
-.It Cd option KEY
-Enables PFKEYv2 (RFC 2367) support.
-While not IP specific, this option is usually used in conjunction with option
-.Em IPSEC .
 .It Cd option ALTQ
 Enables ALTQ (Alternate Queuing).
 See
@@ -732,6 +621,12 @@ in
 See
 .Xr altq 9
 for details on ALTQ.
+.It Cd option ALTQ_NOPCC
+Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
+PCC on alpha) to measure time in ALTQ.
+This option should be defined for a non-Pentium i386 CPU which does not
+have TSC, SMP (per-CPU counters are not in sync), or power management
+which affects processor cycle counter.
 .It Cd option ALTQ_RIO
 Enables ALTQ's RIO (RED with In/Out) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
@@ -742,23 +637,190 @@ Inside the network, IN packets receive preferential treatment by
 the RIO dropper.
 ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
 PHB of DiffServ (RFC 2597).
-.It Cd option ALTQ_NOPCC
-Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
-PCC on alpha) to measure time in ALTQ.
-This option should be defined for a non-Pentium i386 CPU which does not
-have TSC, SMP (per-CPU counters are not in sync), or power management
-which affects processor cycle counter.
+.It Cd option ENCDEBUG
+This option enables debugging information to be conditionally logged
+in case IPSEC encounters errors.
+The option
+.Em IPSEC
+is required along with this option.
+Debug logging can be turned on/off through the use of the
+.Em net.inet.ip.encdebug
+sysctl variable.
+If
+.Em net.ipsec.encap.encdebug
+is 1, debug logging is on.
+See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details.
+.It Cd option INET
+Includes support for the TCP/IP protocol stack.
+This option is currently required.
+See
+.Xr inet 4
+for details.
+.It Cd option INET6
+Includes support for the IPv6 protocol stack.
+See
+.Xr inet6 4
+for details.
+Unlike
+.Em INET ,
+.Em INET6
+enables multicast routing code as well.
+This option requires
+.Em INET
+at this moment, but it should not.
+.It Cd option IPSEC
+This option enables IP security protocol support.
+See
+.Xr ipsec 4
+for more details.
+.It Cd option KEY
+Enables PFKEYv2 (RFC 2367) support.
+While not IP specific, this option is usually used in conjunction with option
+.Em IPSEC .
+.It Cd option MROUTING
+Includes support for IP multicast routers.
+.Em INET
+should be set along with this.
+Multicast routing is controlled by the
+.Xr mrouted 8
+daemon.
+.It Cd option ND6_DEBUG
+The option sets the default value of
+.Em net.inet6.icmp6.nd6_debug
+to 1,
+for debugging IPv6 neighbor discovery protocol handling.
+See
+.Xr sysctl 3
+for details.
+.It Cd option NETATALK
+Include kernel support for the AppleTalk family of protocols.
+This suite of supporting code is sometimes called
+.Em netatalk
+support.
+.It Cd option PPP_BSDCOMP
+Enables BSD compressor for PPP connections.
+.It Cd option PPP_DEFLATE
+For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
+for deflate compression/decompression.
+.It Cd option TCP_ECN
+Turns on Explicit Congestion Notification (RFC 3168).
+.Em ECN
+allows intermediate routers to use the Congestion Experienced
+codepoint in the IP header as an indication of congestion, and allows
+TCP to adjust the transmission rate using this signal.
+Both communication endpoints negotiate enabling
+.Em ECN
+functionality at the TCP connection establishment.
+.It Cd option TCP_FACK
+Turns on forward acknowledgements allowing a more precise estimate of
+outstanding data during the fast recovery phase by using
+.Em SACK
+information.
+This option can only be used together with
+.Em TCP_SACK .
+.It Cd option TCP_SACK
+Turns on selective acknowledgements.
+Additional information about
+segments already received can be transmitted back to the sender,
+thus indicating segments that have been lost and allowing for
+a swifter recovery.
+Both communication endpoints need to support
+.Em SACK .
+The fallback behaviour is NewReno fast recovery phase, which allows
+one lost segment to be recovered per round trip time.
+When more than one segment has been dropped per window, the transmission can
+continue without waiting for a retransmission timeout.
+.It Cd option TCP_SIGNATURE
+Turns on support for the TCP MD5 Signature option (RFC 2385).
+This is used by
+Internet backbone routers to provide per-packet authentication for the TCP
+packets used to communicate BGP routing information.
+You will also need a
+routing daemon that supports this option in order to actually use it.
 .El
-.Ss SCSI Subsystem Options
+.Sh OPERATION RELATED OPTIONS
+.Bl -ohang -compact
+.It Cd option APM_NOPRINT
+This option is supported on the i386 architecture.
+When enabled, kernel messages regarding the status of the automatic power
+management system (APM) are suppressed.
+APM status can still be obtained using
+.Xr apm 8
+and/or
+.Xr apmd 8 .
+.Pp
+.It Cd option BUFPAGES= Ns Ar value
+.It Cd option NBUF= Ns Ar value
+These options set the number of pages available for the buffer cache.
+Their default value is a machine dependent value, often calculated as
+between 5% and 10% of total available RAM.
+.Pp
+.It Cd option DST= Ns Ar value
+If
+.Ar value
+is non-zero, indicates that the hardware realtime clock device
+is one hour ahead of the offset given in
+.Sq TIMEZONE ,
+due to Daylight Saving Time (DST).
+If
+.Ar value
+is zero, the hardware realtime clock device is not in Daylight Saving Time.
+.Pp
+.It Cd option NKMEMPAGES= Ns Ar value
+.It Cd option NKMEMPAGES_MAX= Ns Ar value
+.It Cd option NKMEMPAGES_MIN= Ns Ar value
+Size of kernel malloc area in PAGE_SIZE-sized logical pages.
+This area is covered by the kernel submap
+.Em kmem_map .
+The kernel attempts to auto-size this map based on the amount of
+physical memory in the system.
+Platform-specific code may place bounds on this computed size,
+which may be viewed with the
+.Xr sysctl 8
+variable
+.Em vm.nkmempages .
+See
+.Pa /usr/include/machine/param.h
+for the default upper and lower bounds.
+The related options
+.Sq NKMEMPAGES_MIN
+and
+.Sq NKMEMPAGES_MAX
+allow the bounds to be overridden in the kernel configuration file.
+These options are provided in the event the computed value is
+insufficient resulting in an
+.Dq out of space in kmem_map
+panic.
+.Pp
+.It Cd option \&"TIMEZONE= Ns Ar value Ns Cm \&"
+.Ar value
+indicates the time zone offset of the hardware realtime clock device,
+in minutes,
+from UTC.
+It is useful when the hardware realtime clock device is configured
+with local time,
+when dual-booting
+.Ox
+with other operating systems on a single machine.
+For instance, if the hardware realtime clock is set to Tokyo time,
+.Ar value
+should be
+.Li \&-540
+as Tokyo local time is 9 hours ahead of UTC.
+Double quotes are needed when specifying a negative
+.Ar value .
+.El
+.Sh SCSI SUBSYSTEM OPTIONS
 .Bl -ohang
-.It Cd option SCSI_DELAY=value
+.It Cd option SCSI_DELAY= Ns Ar value
 Delay for
 .Ar value
 seconds before starting to probe the first SCSI bus.
 This can be used if a SCSI device needs extra time to get ready.
-.It Cd option SCSITERSE
-Terser SCSI error messages.
-This omits the table for decoding ASC/ASCQ info, saving about 30KB.
 .It Cd option SCSIDEBUG
 Enable printing of SCSI subsystem debugging info to the console.
 Each of
@@ -770,8 +832,12 @@ and
 must have non-zero values for any debugging info to be printed.
 Only
 .Em SCSIDEBUG_LEVEL
+.It Cd option SCSIDEBUG_BUSES= Ns Ar value
+Define which SCSI buses will print debug info.
+Each bit enables debugging info for the corresponding bus.
+e.g. a value of 0x1 enables debug info for bus 0.
 has a default value that is non-zero.
-.It Cd option SCSIDEBUG_LEVEL=value
+.It Cd option SCSIDEBUG_LEVEL= Ns Ar value
 Define which of the four levels of debugging info are printed.
 Each bit enables a level, and multiple levels are specified by setting multiple
 bits.
@@ -785,19 +851,48 @@ bits.
 If
 .Em SCSIDEBUG_LEVEL
 is undefined, a value of 0x0030 (SDEV_DB1|SDEV_DB2) is used.
-.It Cd option SCSIDEBUG_BUSES=value
-Define which SCSI buses will print debug info.
-Each bit enables debugging info for the corresponding bus.
-e.g. a value of 0x1 enables debug info for bus 0.
-.It Cd option SCSIDEBUG_TARGETS=value
-Define which SCSI targets will print debug info.
-Each bit enables debugging info for the corresponding target.
-.It Cd option SCSIDEBUG_LUNS=value
+.It Cd option SCSIDEBUG_LUNS= Ns Ar value
 Define which SCSI luns will print debug info.
 Each bit enables debugging info for the corresponding lun.
+.It Cd option SCSIDEBUG_TARGETS= Ns Ar value
+Define which SCSI targets will print debug info.
+Each bit enables debugging info for the corresponding target.
+.It Cd option SCSITERSE
+Terser SCSI error messages.
+This omits the table for decoding ASC/ASCQ info, saving about 30KB.
 .El
-.Ss System V IPC Options
+.Sh SYSTEM V IPC OPTIONS
 .Bl -ohang
+.It Cd option SEMMNI= Ns Ar value
+Number of semaphore identifiers (also called semaphore handles
+and semaphore sets) available in the system.
+Default value is 10.
+The kernel allocates memory for the control structures at startup,
+so arbitrarily large values should be avoided.
+.It Cd option SEMMNS= Ns Ar value
+Maximum number of semaphores in all sets in the system.
+Default value is 60.
+.It Cd option SEMMNU= Ns Ar value
+Maximum number of semaphore undo structures in the system.
+Default value is 30.
+.It Cd option SEMUME= Ns Ar value
+Maximum number of per-process undo operation entries in the
+system.
+Semaphore undo operations are invoked by the kernel when
+.Xr semop 2
+is called with the SEM_UNDO flag and the process holding
+the semaphores terminates unexpectedly.
+Default value is 10.
+.It Cd option SHMMAXPGS= Ns Ar value
+Sets the maximum number of
+.At V
+style shared memory pages that are available through the
+.Xr shmget 2
+system call.
+Default value is 1024 on most architectures.
+See
+.Pa /usr/include/machine/vmparam.h
+for the default.
 .It Cd option SYSVMSG
 Includes support for
 .At V
@@ -824,160 +919,12 @@ See
 .Xr shmctl 2 ,
 .Xr shmdt 2 ,
 .Xr shmget 2 .
-.It Cd option SHMMAXPGS=value
-Sets the maximum number of
-.At V
-style shared memory pages that are available through the
-.Xr shmget 2
-system call.
-Default value is 1024 on most architectures.
-See
-.Pa /usr/include/machine/vmparam.h
-for the default.
-.It Cd option SEMMNI=value
-Number of semaphore identifiers (also called semaphore handles
-and semaphore sets) available in the system.
-Default value is 10.
-The kernel allocates memory for the control structures at startup,
-so arbitrarily large values should be avoided.
-.It Cd option SEMMNS=value
-Maximum number of semaphores in all sets in the system.
-Default value is 60.
-.It Cd option SEMMNU=value
-Maximum number of semaphore undo structures in the system.
-Default value is 30.
-.It Cd option SEMUME=value
-Maximum number of per-process undo operation entries in the
-system.
-Semaphore undo operations are invoked by the kernel when
-.Xr semop 2
-is called with the SEM_UNDO flag and the process holding
-the semaphores terminates unexpectedly.
-Default value is 10.
 .El
-.Ss Operation Related Options
-.Pp
-.Bl -ohang -compact
-.It Cd option NKMEMPAGES=value
-.It Cd option NKMEMPAGES_MIN=value
-.It Cd option NKMEMPAGES_MAX=value
-Size of kernel malloc area in PAGE_SIZE-sized logical pages.
-This area is covered by the kernel submap
-.Em kmem_map .
-The kernel attempts to auto-size this map based on the amount of
-physical memory in the system.
-Platform-specific code may place bounds on this computed size,
-which may be viewed with the
-.Xr sysctl 8
-variable
-.Em vm.nkmempages .
-See
-.Pa /usr/include/machine/param.h
-for the default upper and lower bounds.
-The related options
-.Sq NKMEMPAGES_MIN
-and
-.Sq NKMEMPAGES_MAX
-allow the bounds to be overridden in the kernel configuration file.
-These options are provided in the event the computed value is
-insufficient resulting in an
-.Dq out of space in kmem_map
-panic.
-.Pp
-.It Cd option NBUF=value
-.It Cd option BUFPAGES=value
-These options set the number of pages available for the buffer cache.
-Their default value is a machine dependent value, often calculated as
-between 5% and 10% of total available RAM.
-.Pp
-.It Cd option APM_NOPRINT
-This option is supported on the i386 architecture.
-When enabled, kernel messages regarding the status of the automatic power
-management system
-.Tn ( APM )
-are suppressed.
-.Tn APM
-status can still be obtained using
-.Xr apm 8
-and/or
-.Xr apmd 8 .
-.Pp
-.It Cd option \&"TIMEZONE=value\&"
-.Ar value
-indicates the time zone offset of the hardware realtime clock device,
-in minutes,
-from UTC.
-It is useful when the hardware realtime clock device is configured
-with local time,
-when dual-booting
-.Ox
-with other operating systems on a single machine.
-For instance, if the hardware realtime clock is set to Tokyo time,
-.Ar value
-should be
-.Li \&-540
-as Tokyo local time is 9 hours ahead of UTC.
-Double quotes are needed when specifying a negative
-.Ar value .
-.Pp
-.It Cd option DST=value
-If
-.Ar value
-is non-zero, indicates that the hardware realtime clock device
-is one hour ahead of the offset given in
-.Sq TIMEZONE ,
-due to Daylight Saving Time (DST).
-If
-.Ar value
-is zero, the hardware realtime clock device is not in Daylight Saving Time.
-.El
-.\" The following requests should be uncommented and used where appropriate.
-.\" .Sh FILES
-.\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr gcc-local 1 ,
-.Xr gdb 1 ,
-.Xr ktrace 1 ,
-.Xr quota 1 ,
-.Xr gettimeofday 2 ,
-.Xr i386_iopl 2 ,
-.Xr msgctl 2 ,
-.Xr msgget 2 ,
-.Xr msgrcv 2 ,
-.Xr msgsnd 2 ,
-.Xr ptrace 2 ,
-.Xr semctl 2 ,
-.Xr semget 2 ,
-.Xr semop 2 ,
-.Xr shmat 2 ,
-.Xr shmctl 2 ,
-.Xr shmdt 2 ,
-.Xr shmget 2 ,
-.Xr sysctl 3 ,
-.Xr ddb 4 ,
-.Xr inet 4 ,
-.Xr ipsec 4 ,
-.Xr lkm 4 ,
-.Xr pci 4 ,
-.Xr xf86 4 ,
-.Xr X 7 ,
-.Xr apm 8 ,
-.Xr apmd 8 ,
+.Xr intro 4 ,
+.Xr files.conf 5 ,
 .Xr config 8 ,
-.Xr edquota 8 ,
-.Xr init 8 ,
-.Xr mount_cd9660 8 ,
-.Xr mount_mfs 8 ,
-.Xr mount_msdos 8 ,
-.Xr mount_nfs 8 ,
-.Xr mount_portal 8 ,
-.Xr mount_procfs 8 ,
-.Xr mount_udf 8 ,
-.Xr mrouted 8 ,
-.Xr quotaon 8 ,
-.Xr rpc.rquotad 8 ,
-.Xr sysctl 8 ,
-.Xr altq 9
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
