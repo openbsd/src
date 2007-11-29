@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.11 2007/11/16 16:16:07 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.12 2007/11/29 10:53:54 deraadt Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -73,7 +73,6 @@ struct evcount clk_count;
 struct evcount ipi_count;
 
 void		lapic_delay(int);
-void		lapic_microtime(struct timeval *);
 static u_int32_t lapic_gettick(void);
 void		lapic_clockintr(void *, struct intrframe);
 void	 	lapic_map(paddr_t);
@@ -353,7 +352,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		/*
 		 * Compute fixed-point ratios between cycles and
 		 * microseconds to avoid having to do any division
-		 * in lapic_delay and lapic_microtime.
+		 * in lapic_delay.
 		 */
 
 		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;

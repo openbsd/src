@@ -1,4 +1,4 @@
-/*	$OpenBSD: joyreg.h,v 1.4 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: joyreg.h,v 1.5 2007/11/29 10:53:54 deraadt Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -43,8 +43,7 @@
  */
 
 /*
- * The formulae below only work if u is ``not too large''.  See also
- * the discussion in microtime.s
+ * The formulae below only work if u is ``not too large''.
  */
 #define USEC2TICKS(u) 	(((u) * 19549) >> 14)
 #define TICKS2USEC(u) 	(((u) * 3433) >> 12)
