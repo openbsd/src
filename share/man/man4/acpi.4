@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.26 2007/11/28 15:54:59 jmc Exp $
+.\"	$OpenBSD: acpi.4,v 1.27 2007/11/29 11:35:35 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -67,6 +67,19 @@ ACPI PCI routing table configuration
 ACPI power management timer
 .It Xr acpitz 4
 ACPI thermal zone
+.El
+.Sh FILES
+.Bl -tag -width "/dev/apmctlXXX"
+.It /dev/apm
+Power management data device.
+May only be opened read-only.
+May be opened by multiple concurrent users.
+.It /dev/apmctl
+Power management control device.
+May be opened read-write or write-only.
+May only be opened by one user at a time.
+An attempt to open the file when in use will fail, returning
+.Er EBUSY .
 .El
 .Sh SEE ALSO
 .Xr apm 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.28 2007/11/28 13:06:57 tedu Exp $
+.\"	$OpenBSD: apm.4,v 1.29 2007/11/29 11:35:35 jmc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt APM 4 i386
 .Os
 .Sh NAME
@@ -261,15 +261,13 @@ to 1 using
 The variable can be set at boot time in
 .Xr sysctl.conf 5 .
 .Sh FILES
-.Bl -tag -width /dev/apmctl -compact
-.It Pa /dev/apm
-.Tn APM
-data device.
+.Bl -tag -width "/dev/apmctlXXX"
+.It /dev/apm
+Power management data device.
 May only be opened read-only.
 May be opened by multiple concurrent users.
-.It Pa /dev/apmctl
-.Tn APM
-control device.
+.It /dev/apmctl
+Power management control device.
 May be opened read-write or write-only.
 May only be opened by one user at a time.
 An attempt to open the file when in use will fail, returning
