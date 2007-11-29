@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.64 2007/11/27 13:19:16 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.65 2007/11/29 10:06:30 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -664,22 +664,24 @@ rundisplay(void)
 				ptr = tempbuf;
 				if ((i = atoiwi(ptr)) != Invalid) {
 					if (i > max_topn) {
-						new_message(MT_standout | MT_delayed,
+						new_message(MT_standout |
+						    MT_delayed,
 						    " This terminal can only "
 						    "display %d processes.",
 						    max_topn);
 						putr();
-					} else if (i == 0)
-						display_header(No);
-					else if ((i > topn || i == Infinity) 
+					}
+					if ((i > topn || i == Infinity)
 					    && topn == 0) {
 						/* redraw the header */
 						display_header(Yes);
-					}
+					} else if (i == 0)
+						display_header(No);
 					topn = i;
 				} else {
 					new_message(MT_standout,
-					    "Processes should be a non-negative number");
+					    "Processes should be a "
+					    "non-negative number");
  					putr();
 					no_command = Yes;
 				}
