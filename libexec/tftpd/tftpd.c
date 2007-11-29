@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.58 2007/11/27 14:44:48 chl Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.59 2007/11/29 11:38:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.58 2007/11/27 14:44:48 chl Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.59 2007/11/29 11:38:46 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -156,7 +156,8 @@ struct errmsg {
 __dead void
 usage(void)
 {
-	syslog(LOG_ERR, "usage: %s [-cls] [directory ...]", __progname);
+	syslog(LOG_ERR, "usage: %s [-cl] [directory ...]", __progname);
+	syslog(LOG_ERR, "usage: %s [-cl] -s directory", __progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.24 2007/11/27 15:13:08 jmc Exp $
+.\"   $OpenBSD: tftpd.8,v 1.25 2007/11/29 11:38:46 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.24 2007/11/27 15:13:08 jmc Exp $
+.\"	$OpenBSD: tftpd.8,v 1.25 2007/11/29 11:38:46 jmc Exp $
 .\"
-.Dd $Mdocdate: November 27 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -40,10 +40,11 @@
 Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm tftpd
+.Op Fl cl
 .Op Ar directory ...
 .Nm tftpd
-.Op Fl cls
-.Op Ar directory
+.Op Fl cl
+.Fl s Ar directory
 .Sh DESCRIPTION
 .Nm
 is a server which supports the
@@ -92,29 +93,21 @@ names are prefixed by one of the given directories.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
-If the
-.Fl c
-flag is used,
-.Nm
-will allow new files to be created; otherwise uploaded files must already
-exist.
-Files are created with default permissions allowing anyone to read
-or write to them.
+Allow new files to be created;
+otherwise uploaded files must already exist.
+Files are created with default permissions
+allowing anyone to read or write to them.
 .It Fl l
-If the
-.Fl l
-flag is used, the client IP, type of request, and filename are logged using
+Log the client IP, type of request, and filename using
 .Xr syslog 3
 with a facility of
 .Dv LOG_INFO .
-.It Fl s
-When using the
-.Fl s
-flag with a directory name,
-.Nm
-will
+.It Fl s Ar directory
 .Xr chroot 2
-on startup; therefore the remote host is not expected to pass the directory
+to
+.Ar directory
+on startup;
+the remote host is not expected to pass the directory
 as part of the file name to transfer.
 This option is intended primarily for
 compatibility with SunOS boot ROMs which do not include a directory name.
