@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.13 2007/11/28 16:06:10 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.14 2007/11/29 12:32:36 jsing Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt INTRO 4 sgi
 .Os
 .Sh NAME
@@ -95,18 +95,6 @@ The following systems are supported:
 .It O2
 IP32
 .Pq Dq Moosehead
-.\" .It Indy
-.\" IP24
-.\" .Pq Dq Guinness
-.\" .It Indigo 2
-.\" IP22
-.\" .Pq Dq Fullhouse
-.\" .It Indigo R4k
-.\" IP20
-.\" .Pq Dq Blackjack
-.\" .It Indigo R3k
-.\" IP12
-.\" .Pq Dq Hollywood
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -116,17 +104,19 @@ Not all supported devices are listed.
 .Pp
 .Bl -tag -width 10n -offset 3n -compact
 .It Xr ahc 4
-Adaptec PCI SCSI host adapter driver
+Adaptec VL/EISA/PCI SCSI interface
 .It Xr com 4
 serial communications interface
 .It Xr gbe 4
 SGI Graphics Back End (GBE) Frame Buffer
 .It Xr macebus 4
-O2 main bus controller
+Multimedia, Audio and Communications Engine I/O ASIC
+.It Xr mainbus 4
+SGI main processor bus device
 .It Xr mavb 4
-Moosehead A/V Board audio driver
+Moosehead A/V Board audio device
 .It Xr mec 4
-O2 on-board MAC110 Ethernet
+MAC-110 10/100 Ethernet device
 .El
 .Pp
 A further list of available devices is contained within the pages
@@ -142,11 +132,6 @@ introduction to PCI bus support
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
-.\" .Xr crime 4 ,
-.\" .Xr gio 4 ,
-.\" .Xr hpc 4 ,
-.\" .Xr imc 4 ,
-.\" .Xr pic 4 ,
 .Xr config 8
 .Sh HISTORY
 This
