@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.2 2007/11/28 23:24:07 art Exp $
+.\"	$OpenBSD: tsleep.9,v 1.3 2007/11/29 11:33:05 jmc Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: November 29 2007 $
 .Dt TSLEEP 9
 .Os
 .Sh NAME
@@ -55,14 +55,16 @@
 .Sh DESCRIPTION
 These functions implement voluntary context switching.
 .Fn tsleep
-is used throughout the kernel whenever processing in the current context
-can not continue for any of the following reasons:
+and
+.Fn msleep
+are used throughout the kernel whenever processing in the current context
+cannot continue for any of the following reasons:
 .Bl -bullet -offset indent
 .It
 The current process needs to await the results of a pending I/O operation.
 .It
 The current process needs resources
-.Pq e.g., memory
+.Pq e.g. memory
 which are temporarily unavailable.
 .It
 The current process wants access to data structures which are locked by
@@ -77,11 +79,6 @@ Typically, an awakened process will -- after it has acquired a context
 again -- retry the action that blocked its operation to see if the
 .Dq blocking
 condition has cleared.
-.Pp
-The
-.Va bpendsleep
-label can be used as a break-point to debug a process coming back from
-.Fn tsleep .
 .Pp
 The
 .Fn tsleep
@@ -134,15 +131,17 @@ The
 .Fn msleep
 function behaves just like
 .Fn tsleep ,
-but takes an additional
-.Fa mtx
-argument which is a mutex that will be unlocked when the process is safely
+but takes an additional argument:
+.Bl -tag -width priority
+.It Fa mtx
+A mutex that will be unlocked when the process is safely
 on the sleep queue.
 The mutex will be relocked at the end of tsleep unless the
 .Dv PNORELOCK
 flag is set in the
 .Fa priority
 argument.
+.El
 .Pp
 The
 .Fn wakeup
@@ -163,11 +162,11 @@ only one of them will succeed in acquiring the lock when it is released.
 All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
 .Fn tsleep
-returns 0 if it returns as a result of a
+and
+.Fn msleep
+return 0 if they return as a result of a
 .Fn wakeup .
-If a
-.Fn tsleep
-returns as a result of a signal, the return value is
+If they return as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
 .Dv SA_RESTART
@@ -176,9 +175,7 @@ property
 and
 .Er EINTR
 otherwise.
-If
-.Fn tsleep
-returns as a result of a timeout, the return value is
+If they return as a result of a timeout, the return value is
 .Er EWOULDBLOCK .
 .Sh CODE REFERENCES
 These functions are implemented in the file
