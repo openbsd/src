@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.62 2007/11/27 15:40:56 deraadt Exp $ */
+/*	$OpenBSD: pchb.c,v 1.63 2007/11/29 11:12:57 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -179,6 +179,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	u_char bdnum, pbnum;
 	pcitag_t tag;
 	int has_agp = 0, i, r;
+	int doattach = 0;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
@@ -222,7 +223,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			 */
 			pbnum = bdnum;
 			pba.pba_bridgetag = NULL;
-			goto doattach;
+			doattach = 1;
+			break;
 		}
 #endif
 	case PCI_VENDOR_INTEL:
@@ -233,7 +235,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			pbnum = PCISET_INTEL_BRIDGE_NUMBER(bcreg);
 			if (pbnum != 0xff) {
 				pbnum++;
-				goto doattach;
+				doattach = 1;
 			}
 			break;
 		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
@@ -266,7 +268,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				break;
 			case PCISET_INTEL_TYPE_AUX:
 				printf(": Auxiliary PB (bus %d)", pbnum);
-				goto doattach;
+				doattach = 1;
 			}
 			break;
 		case PCI_PRODUCT_INTEL_CDC:
@@ -304,7 +306,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				break;
 			}
 			if (pbnum != 0)
-				goto doattach;
+				doattach = 1;
 			break;
 #endif /* __i386__ */
 
@@ -409,8 +411,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &apa, agpbus_print);
 	}
 #ifdef __i386__
-	return;
-doattach:
+	if (doattach == 0)
+		return;
+
 	pba.pba_busname = "pci";
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
