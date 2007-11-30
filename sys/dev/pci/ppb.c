@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.23 2007/11/30 15:54:12 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.24 2007/11/30 16:21:38 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ struct ppb_softc {
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
+	void *sc_intrhand;
 	struct device *sc_psc;
 	int sc_cap_off;
 	struct timeout sc_to;
@@ -99,7 +100,7 @@ ppbmatch(struct device *parent, void *match, void *aux)
 void
 ppbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ppb_softc *sc = (void *) self;
+	struct ppb_softc *sc = (struct ppb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
@@ -132,9 +133,11 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
-		if (pci_intr_map(pa, &ih) == 0 &&
-		    pci_intr_establish(pc, ih, IPL_TTY, ppb_intr, sc,
-		    self->dv_xname)) {
+		if (pci_intr_map(pa, &ih) == 0)
+			sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_TTY,
+			    ppb_intr, sc, self->dv_xname);
+
+		if (sc->sc_intrhand) {
 			printf(": %s", pci_intr_string(pc, ih));
 
 			/* Enable hotplug interrupt. */
@@ -183,6 +186,11 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 int
 ppbdetach(struct device *self, int flags)
 {
+	struct ppb_softc *sc = (struct ppb_softc *)self;
+
+	if (sc->sc_intrhand)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
+
 	return config_detach_children(self, flags);
 }
 
