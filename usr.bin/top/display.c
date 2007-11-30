@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.32 2007/11/22 11:01:04 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.33 2007/11/30 10:39:01 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -105,9 +105,7 @@ int y_procs;
 extern int ncpu;
 int Header_lines;
 
-static enum {
-	OFF, ON, ERASE
-} header_status = ON;
+int header_status = Yes;
 
 static int
 empty(void)
@@ -444,8 +442,6 @@ i_message(void)
 	}
 }
 
-static int      header_length;
-
 /*
  *  *_header(text) - print the header for the process area
  */
@@ -453,8 +449,7 @@ static int      header_length;
 void
 i_header(char *text)
 {
-	header_length = strlen(text);
-	if (header_status == ON && (screen_length > y_header
+	if (header_status == Yes && (screen_length > y_header
               || !smart_terminal)) {
 		if (!smart_terminal) {
 			putn();
@@ -466,8 +461,6 @@ i_header(char *text)
 			clrtoeol();
 			addstrp(text);
 		}
-	} else if (header_status == ERASE) {
-		header_status = OFF;
 	}
 }
 
@@ -512,13 +505,9 @@ u_endscreen(void)
 }
 
 void
-display_header(int t)
+display_header(int status)
 {
-	if (t) {
-		header_status = ON;
-	} else if (header_status == ON) {
-		header_status = ERASE;
-	}
+	header_status = status;
 }
 
 void
