@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.15 2007/11/27 19:45:44 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.16 2007/11/30 19:19:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2844,19 +2844,19 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.which = IWN_SENSITIVITY_WORKTBL;
 	/* OFDM modulation */
-	cmd.corr_ofdm_x1     = letoh16(calib->corr_ofdm_x1);
-	cmd.corr_ofdm_mrc_x1 = letoh16(calib->corr_ofdm_mrc_x1);
-	cmd.corr_ofdm_x4     = letoh16(calib->corr_ofdm_x4);
-	cmd.corr_ofdm_mrc_x4 = letoh16(calib->corr_ofdm_mrc_x4);
-	cmd.energy_ofdm      = letoh16(100);
-	cmd.energy_ofdm_th   = letoh16(62);
+	cmd.corr_ofdm_x1     = htole16(calib->corr_ofdm_x1);
+	cmd.corr_ofdm_mrc_x1 = htole16(calib->corr_ofdm_mrc_x1);
+	cmd.corr_ofdm_x4     = htole16(calib->corr_ofdm_x4);
+	cmd.corr_ofdm_mrc_x4 = htole16(calib->corr_ofdm_mrc_x4);
+	cmd.energy_ofdm      = htole16(100);
+	cmd.energy_ofdm_th   = htole16(62);
 	/* CCK modulation */
-	cmd.corr_cck_x4      = letoh16(calib->corr_cck_x4);
-	cmd.corr_cck_mrc_x4  = letoh16(calib->corr_cck_mrc_x4);
-	cmd.energy_cck       = letoh16(calib->energy_cck);
+	cmd.corr_cck_x4      = htole16(calib->corr_cck_x4);
+	cmd.corr_cck_mrc_x4  = htole16(calib->corr_cck_mrc_x4);
+	cmd.energy_cck       = htole16(calib->energy_cck);
 	/* Barker modulation: use default values */
-	cmd.corr_barker      = letoh16(190);
-	cmd.corr_barker_mrc  = letoh16(390);
+	cmd.corr_barker      = htole16(190);
+	cmd.corr_barker_mrc  = htole16(390);
 
 	DPRINTFN(2, ("setting sensitivity %d/%d/%d/%d/%d/%d/%d\n",
 	    calib->corr_ofdm_x1, calib->corr_ofdm_mrc_x1, calib->corr_ofdm_x4,
