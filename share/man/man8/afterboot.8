@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.119 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.120 2007/11/30 09:49:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 30 2007 $
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -439,6 +439,13 @@ Run
 .Xr newaliases 8
 after changes.
 .Ss Sendmail
+The default mail agent on
+.Ox
+is
+.Xr sendmail 8 .
+Details on how to configure an alternative mailer are documented in
+.Xr mailer.conf 5 .
+.Pp
 .Ox
 ships with a default
 .Pa /etc/mail/localhost.cf
