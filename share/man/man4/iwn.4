@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.4 2007/09/07 14:00:46 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.5 2007/11/30 19:12:09 damien Exp $
 .\"
 .\" Copyright (c) 2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2007 $
+.Dd $Mdocdate: November 30 2007 $
 .Os
 .Dt IWN 4
 .Sh NAME
@@ -166,7 +166,7 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-The driver needs at least version 4.44.1.18 of the following firmware file,
+The driver needs at least version 4.44.1.20 of the following firmware file,
 which is loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -186,7 +186,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal
-http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-4.44.1.18.tgz
+http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-4.44.1.20.tgz
 .Ed
 .Sh EXAMPLES
 The following
