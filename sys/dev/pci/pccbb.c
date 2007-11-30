@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.54 2007/11/30 08:12:00 miod Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.55 2007/11/30 13:43:35 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -589,21 +589,6 @@ pccbb_pci_callback(self)
 
 	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
 	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
-
-	/* check for dead device? */
-	switch (PCI_VENDOR(sc->sc_id)) {
-	case PCI_VENDOR_TI:
-		break;
-	default:
-		if (bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT) ==
-		    0xffffffff && bus_space_read_4(base_memt, base_memh,
-		    CB_SOCKET_MASK) == 0xffffffff) {
-			printf("%s: controller is missing\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		break;
-	}
 
 	/* bus bridge initialization */
 	pccbb_chipinit(sc);
