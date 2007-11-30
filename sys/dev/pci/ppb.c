@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.22 2007/11/25 16:42:21 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.23 2007/11/30 15:54:12 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -55,9 +55,10 @@ struct ppb_softc {
 
 int	ppbmatch(struct device *, void *, void *);
 void	ppbattach(struct device *, struct device *, void *);
+int	ppbdetach(struct device *self, int flags);
 
 struct cfattach ppb_ca = {
-	sizeof(struct ppb_softc), ppbmatch, ppbattach
+	sizeof(struct ppb_softc), ppbmatch, ppbattach, ppbdetach
 };
 
 struct cfdriver ppb_cd = {
@@ -177,6 +178,12 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_intrtag = pa->pa_intrtag;
 
 	sc->sc_psc = config_found(self, &pba, ppbprint);
+}
+
+int
+ppbdetach(struct device *self, int flags)
+{
+	return config_detach_children(self, flags);
 }
 
 int
