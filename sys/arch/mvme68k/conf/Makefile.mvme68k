@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.30 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.31 2007/11/30 07:52:06 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -63,6 +63,7 @@ HOSTED_CFLAGS=	${CFLAGS}
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 

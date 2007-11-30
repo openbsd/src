@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.41 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.42 2007/11/30 07:52:06 miod Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -67,6 +67,7 @@ HOSTED_CFLAGS=	${CFLAGS}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 

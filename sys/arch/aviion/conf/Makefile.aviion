@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.5 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: Makefile.aviion,v 1.6 2007/11/30 07:52:06 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -63,6 +63,7 @@ HOSTED_CFLAGS?=	${CFLAGS}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.18 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.19 2007/11/30 07:52:06 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -61,6 +61,7 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp \
 		-mno-abicalls ${ABI} -D_LOCORE
 STRIPFLAGS=	-g -X -x
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<

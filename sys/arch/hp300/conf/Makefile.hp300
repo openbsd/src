@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.42 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.43 2007/11/30 07:52:06 miod Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -98,6 +98,7 @@ CPPFLAGS+=	-DM68K_MMU_MOTOROLA
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 

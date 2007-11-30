@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.42 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.43 2007/11/30 07:52:06 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -61,6 +61,7 @@ HOSTED_CFLAGS?=	${CFLAGS}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
