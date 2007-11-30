@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2007/07/29 21:24:05 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.18 2007/11/30 08:19:43 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -58,8 +58,10 @@ extern u_short	mac68k_statclockipl;
 #define	IPL_SOFTNET	1
 #define	IPL_SOFTCLOCK	1
 #define	IPL_BIO		2
+#define	IPL_AUDIO	PSLTOIPL(mac68k_audioipl)
 #define	IPL_NET		PSLTOIPL(mac68k_netipl)
 #define	IPL_TTY		PSLTOIPL(mac68k_ttyipl)
+#define	IPL_VM		PSLTOIPL(mac68k_vmipl)
 #define	IPL_CLOCK	PSLTOIPL(mac68k_clockipl)
 #define	IPL_STATCLOCK	PSLTOIPL(mac68k_statclockipl)
 #define	IPL_HIGH	7
