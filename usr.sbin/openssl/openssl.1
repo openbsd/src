@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.59 2007/05/31 19:20:26 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.60 2007/12/01 11:05:25 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 1 2007 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -580,6 +580,14 @@ displays the long name.
 Example:
 .Pp
 .Dl \&"1.2.3.4	shortname	A long name\&"
+.Sh ASN1 EXAMPLES
+Parse a file:
+.Pp
+.Dl $ openssl asn1parse -in file.pem
+.Pp
+Parse a DER file:
+.Pp
+.Dl $ openssl asn1parse -inform DER -in file.der
 .Sh ASN1PARSE BUGS
 There should be options to change the format of output lines.
 The output of some ASN.1 types is not well handled
@@ -930,6 +938,10 @@ values for certain extensions such as
 .It Ar crl_extensions
 The same as
 .Fl crlexts .
+.It Ar crlnumber
+A text file containing the next CRL number to use in hex.
+The CRL number will be inserted in the CRLs only if this file exists.
+If this file is present, it must contain a valid CRL number.
 .It Ar database
 The text database file to use.
 Mandatory.
@@ -1051,6 +1063,17 @@ or an EGD socket (see
 A text file containing the next serial number to use in hex.
 Mandatory.
 This file must be present and contain a valid serial number.
+.It Ar unique_subject
+If the value
+.Ar yes
+is given, the valid certificate entries in the
+database must have unique subjects.
+If the value
+.Ar no
+is given,
+several valid certificate entries may have the exact same subject.
+The default value is
+.Ar yes .
 .It Ar x509_extensions
 The same as
 .Fl extensions .
@@ -1210,8 +1233,7 @@ and if corrupted it can be difficult to fix.
 It is theoretically possible to rebuild the index file from all the
 issued certificates and a current CRL; however there is no option to do this.
 .Pp
-V2 CRL features like delta CRL support and CRL numbers are not currently
-supported.
+V2 CRL features like delta CRLs are not currently supported.
 .Pp
 Although several requests can be input and handled at once, it is only
 possible to include one SPKAC or self-signed certificate.
@@ -1420,7 +1442,7 @@ The following is a list of all permitted cipher strings and their meanings.
 .It Ar DEFAULT
 The default cipher list.
 This is determined at compile time and is normally
-.Ar ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH .
+.Ar ALL:!ADH:+RC4:@STRENGTH .
 This must be the first
 .Ar cipher string
 specified.
@@ -1599,10 +1621,10 @@ TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
 TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
 
-TLS_DH_DSS_WITH_AES_128_CBC_SHA         DH-DSS-AES128-SHA
-TLS_DH_DSS_WITH_AES_256_CBC_SHA         DH-DSS-AES256-SHA
-TLS_DH_RSA_WITH_AES_128_CBC_SHA         DH-RSA-AES128-SHA
-TLS_DH_RSA_WITH_AES_256_CBC_SHA         DH-RSA-AES256-SHA
+TLS_DH_DSS_WITH_AES_128_CBC_SHA         Not implemented.
+TLS_DH_DSS_WITH_AES_256_CBC_SHA         Not implemented.
+TLS_DH_RSA_WITH_AES_128_CBC_SHA         Not implemented.
+TLS_DH_RSA_WITH_AES_256_CBC_SHA         Not implemented.
 
 TLS_DHE_DSS_WITH_AES_128_CBC_SHA        DHE-DSS-AES128-SHA
 TLS_DHE_DSS_WITH_AES_256_CBC_SHA        DHE-DSS-AES256-SHA
@@ -2614,61 +2636,50 @@ Blowfish and RC5 algorithms use a 128-bit key.
 .Sh ENC SUPPORTED CIPHERS
 .Bd -unfilled -offset indent
 aes-128-cbc        128-bit AES in CBC mode
-aes128             Alias for aes-128-cbc
-aes-128-cfb        128-bit AES in CFB mode
 aes-128-ecb        128-bit AES in ECB mode
-aes-128-ofb        128-bit AES in OFB mode
 
 aes-192-cbc        192-bit AES in CBC mode
-aes192             Alias for aes-192-cbc
-aes-192-cfb        192-bit AES in CFB mode
 aes-192-ecb        192-bit AES in ECB mode
-aes-192-ofb        192-bit AES in OFB mode
 
 aes-256-cbc        256-bit AES in CBC mode
-aes256             Alias for aes-256-cbc
-aes-256-cfb        256-bit AES in CFB mode
 aes-256-ecb        256-bit AES in ECB mode
-aes-256-ofb        256-bit AES in OFB mode
 
 base64             Base 64
 
-bf-cbc             Blowfish in CBC mode
 bf                 Alias for bf-cbc
-blowfish           Alias for bf-cbc
+bf-cbc             Blowfish in CBC mode
 bf-cfb             Blowfish in CFB mode
 bf-ecb             Blowfish in ECB mode
 bf-ofb             Blowfish in OFB mode
 
-cast-cbc           CAST in CBC mode
 cast               Alias for cast-cbc
+cast-cbc           CAST in CBC mode
 cast5-cbc          CAST5 in CBC mode
 cast5-cfb          CAST5 in CFB mode
 cast5-ecb          CAST5 in ECB mode
 cast5-ofb          CAST5 in OFB mode
 
-des-cbc            DES in CBC mode
 des                Alias for des-cbc
+des-cbc            DES in CBC mode
 des-cfb            DES in CBC mode
 des-ecb            DES in ECB mode
 des-ofb            DES in OFB mode
 
-des-ede-cbc        Two key triple DES EDE in CBC mode
 des-ede            Two key triple DES EDE in ECB mode
+des-ede-cbc        Two key triple DES EDE in CBC mode
 des-ede-cfb        Two key triple DES EDE in CFB mode
 des-ede-ofb        Two key triple DES EDE in OFB mode
 
-des-ede3-cbc       Three key triple DES EDE in CBC mode
-des-ede3           Three key triple DES EDE in ECB mode
 des3               Alias for des-ede3-cbc
+des-ede3           Three key triple DES EDE in ECB mode
+des-ede3-cbc       Three key triple DES EDE in CBC mode
 des-ede3-cfb       Three key triple DES EDE CFB mode
 des-ede3-ofb       Three key triple DES EDE in OFB mode
 
-desx-cbc           DESX algorithm
 desx               Alias for desx-cbc
 
-rc2-cbc            128-bit RC2 in CBC mode
 rc2                Alias for rc2-cbc
+rc2-cbc            128-bit RC2 in CBC mode
 rc2-cfb            128-bit RC2 in CFB mode
 rc2-ecb            128-bit RC2 in ECB mode
 rc2-ofb            128-bit RC2 in OFB mode
@@ -5659,6 +5670,9 @@ on the command line is no guarantee that the certificate works.
 If there are problems verifying a server certificate, the
 .Fl showcerts
 option can be used to show the whole chain.
+.Pp
+Compression methods are only supported for
+.Fl tls1 .
 .Sh S_CLIENT BUGS
 Because this program has a lot of options and also because some of
 the techniques used are rather old, the C source of
@@ -7858,7 +7872,7 @@ Escape characters with the MSB set; that is, with ASCII values larger than
 A multiline format.
 It is equivalent to
 .Ar esc_ctrl , esc_msb , sep_multiline ,
-.Ar spc_eq , lname ,
+.Ar space_eq , lname ,
 and
 .Ar align .
 .It Ar no_type
@@ -7888,7 +7902,7 @@ A oneline format which is more readable than
 It is equivalent to specifying the
 .Ar esc_2253 , esc_ctrl , esc_msb , utf8 ,
 .Ar dump_nostr , dump_der , use_quote , sep_comma_plus_spc ,
-.Ar spc_eq ,
+.Ar space_eq ,
 and
 .Ar sname
 options.
@@ -7917,7 +7931,7 @@ Show the type of the ASN1 character string.
 The type precedes the field contents.
 For example
 .Qq BMPSTRING: Hello World .
-.It Ar spc_eq
+.It Ar space_eq
 Places spaces round the
 .Sq =
 character which follows the field name.
@@ -8025,7 +8039,7 @@ Display the certificate subject name in oneline form on a terminal
 supporting UTF8:
 .Bd -literal -offset indent
 $ openssl x509 -in cert.pem -noout -subject \e
-	-nameopt oneline,esc_msb
+	-nameopt oneline,-esc_msb
 .Ed
 .Pp
 Display the certificate MD5 fingerprint:
