@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.55 2007/11/28 09:41:03 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.56 2007/12/01 15:14:34 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -78,12 +78,18 @@
 #include "engine.h"
 #include "lst.h"
 #include "targ.h"
+#include "garray.h"
+#include "memory.h"
 
-static LIST	toBeMade;	/* The current fringe of the graph. These
-				 * are nodes which await examination by
-				 * MakeOODate. It is added to by
-				 * Make_Update and subtracted from by
-				 * MakeStartJobs */
+/* what gets added each time. Kept as one static array so that it doesn't
+ * get resized every time.
+ */
+static struct growableArray examine;
+/* The current fringe of the graph. These are nodes which await examination by
+ * MakeOODate. It is added to by Make_Update and subtracted from by
+ * MakeStartJobs */
+static struct growableArray toBeMade;	
+
 static struct ohash targets;	/* stuff we must build */
 
 static void MakeAddChild(void *, void *);
@@ -99,6 +105,12 @@ static void random_setup(void);
 
 static bool randomize_queue;
 long random_delay = 0;
+
+bool 
+no_jobs_left()
+{
+	return Array_IsEmpty(&toBeMade);
+}
 
 static void
 random_setup()
@@ -120,6 +132,25 @@ random_setup()
 			random_seed = time(NULL);
 		fprintf(stderr, "RANDOM_SEED=%u\n", random_seed);
 		srandom(random_seed);
+	}
+}
+
+static void
+randomize_garray(struct growableArray *g)
+{
+	/* This is a fairly standard algorithm to randomize an array. */
+	unsigned int i, v;
+	GNode *e;
+
+	for (i = g->n; i > 0; i--) {
+		v = random() % i;
+		if (v == i-1)
+			continue;
+		else {
+			e = g->a[i-1];
+			g->a[i-1] = g->a[v];
+			g->a[v] = e;
+		}
 	}
 }
 
@@ -158,7 +189,7 @@ requeue_successors(GNode *gn)
 
 		if (succ->must_make && succ->unmade == 0 
 		    && succ->built_status == UNKNOWN)
-			(void)Lst_QueueNew(&toBeMade, succ);
+			Array_PushNew(&toBeMade, succ);
 	}
 }
 
@@ -245,7 +276,7 @@ Make_Update(GNode *cgn)	/* the child node */
 				 */
 				if (DEBUG(MAKE))
 					printf("QUEUING ");
-				Lst_Push(&toBeMade, pgn);
+				Array_Push(&toBeMade, pgn);
 			} else if (pgn->unmade < 0) {
 				Error("Child %s discovered graph cycles through %s", cgn->name, pgn->name);
 			}
@@ -266,7 +297,7 @@ try_to_make_node(GNode *gn)
 		if (DEBUG(MAKE))
 			printf(" Requeuing (%d)\n", gn->unmade);
 		add_targets_to_make(&gn->children);
-		Lst_Push(&toBeMade, gn);
+		Array_Push(&toBeMade, gn);
 		return false;
 	}
 	if (has_been_built(gn)) {
@@ -334,7 +365,7 @@ MakeStartJobs(void)
 {
 	GNode	*gn;
 
-	while (!Job_Full() && (gn = (GNode *)Lst_Pop(&toBeMade)) != NULL) {
+	while (!Job_Full() && (gn = Array_Pop(&toBeMade)) != NULL) {
 		if (try_to_make_node(gn))
 			return true;
 	}
@@ -394,12 +425,12 @@ MakePrintStatus(
 
 
 static void
-MakeAddChild(void *to_addp, void *lp)
+MakeAddChild(void *to_addp, void *ap)
 {
 	GNode *gn = (GNode *)to_addp;
 
 	if (!gn->must_make && !(gn->type & OP_USE))
-		Lst_Push((Lst)lp, gn);
+		Array_Push((struct growableArray *)ap, gn);
 }
 
 static void
@@ -416,12 +447,12 @@ static void
 add_targets_to_make(Lst todo)
 {
 	GNode *gn;
-	LIST examine;
+
 	unsigned int slot;
 
-	Lst_Clone(&examine, todo, NOCOPY);
+	AppendList2Array(todo, &examine);
 
-	while ((gn = (GNode *)Lst_Pop(&examine)) != NULL) {
+	while ((gn = Array_Pop(&examine)) != NULL) {
 		if (gn->must_make) 	/* already known */
 			continue;
 		gn->must_make = true;
@@ -449,9 +480,11 @@ add_targets_to_make(Lst todo)
 		} else {
 			if (DEBUG(MAKE))
 				printf("%s: queuing\n", gn->name);
-			Lst_Push(&toBeMade, gn);
+			Array_Push(&toBeMade, gn);
 		}
 	}
+	if (randomize_queue)
+		randomize_garray(&toBeMade);
 }
 
 /*-
@@ -483,8 +516,9 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	unsigned int i;
 	bool cycle;
 
-	Static_Lst_Init(&toBeMade);
 	/* wild guess at initial sizes */
+	Array_Init(&toBeMade, 500);
+	Array_Init(&examine, 150);
 	ohash_init(&targets, 10, &gnode_info);
 	if (DEBUG(PARALLEL))
 		random_setup();

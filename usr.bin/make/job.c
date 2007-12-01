@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.109 2007/11/28 09:40:08 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.110 2007/12/01 15:14:34 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -764,7 +764,8 @@ JobExec(Job *job)
 #endif /* USE_PGRP */
 
 		if (random_delay)
-			usleep(random() % random_delay);
+			if (!(nJobs == 1 && no_jobs_left()))
+				usleep(random() % random_delay);
 
 		/* most cases won't return, but will exit directly */
 		result = run_gnode(job->node, 1);

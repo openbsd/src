@@ -2,7 +2,7 @@
 #define _MAKE_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.h,v 1.35 2007/11/28 09:40:08 espie Exp $ */
+/*	$OpenBSD: make.h,v 1.36 2007/12/01 15:14:34 espie Exp $ */
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -44,5 +44,6 @@
 extern void Make_Update(GNode *);
 extern bool Make_Run(Lst);
 extern long random_delay;
+extern bool no_jobs_left(void);
 
 #endif /* _MAKE_H_ */

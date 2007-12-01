@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.75 2007/11/28 09:40:08 espie Exp $
+.\"	$OpenBSD: make.1,v 1.76 2007/12/01 15:14:34 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: December 1 2007 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -175,14 +175,15 @@ Also known as loud behavior.
 Print debugging information about making targets, including modification
 dates.
 .It Ar p
-Help finding concurrency issues for parallel make by adding some randomization.
+Help finding concurrency issues for parallel make by adding some 
+randomization.
 If
 .Va RANDOM_ORDER
 is defined,
 targets will be shuffled before being built.
 If
 .Va RANDOM_DELAY
-is defined, 
+is defined,
 .Nm
 will wait between 0 and ${RANDOM_DELAY} seconds at the start of each job.
 A given random seed can be forced by setting
