@@ -173,14 +173,14 @@ TABLES= \
  $(CHRTR)utf8_uni.h \
  $(CHRTR)viscii_uni.h
 
-$(TABLES):
+$(TABLES): do_chartrans_stuff
 	-cd chrtrans && $(MAKE) tables
 
 UCdomap$o : UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c \
 	UCdomap.h $(CMN)UCMap.h $(TABLES) $(top_srcdir)/userdefs.h
 
-chrtrans/makeuctb$x:
-	cd chrtrans; make makeuctb$x
+chrtrans/makeuctb$x: do_chartrans_stuff
+	-cd chrtrans && ${MAKE} makeuctb$x
 
 UCAux$o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
 LYCookie$o : $(top_srcdir)/userdefs.h
