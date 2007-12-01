@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.63 2007/11/29 11:12:57 deraadt Exp $ */
+/*	$OpenBSD: pchb.c,v 1.64 2007/12/01 15:16:45 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -422,9 +422,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = pbnum;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pa->pa_pc;
-	config_found(self, &pba, pchb_print);
-	pba.pba_bridgetag = NULL;
-	memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 	config_found(self, &pba, pchb_print);
 #endif /* __i386__ */
 }
