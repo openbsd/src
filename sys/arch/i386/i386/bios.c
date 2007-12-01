@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.73 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: bios.c,v 1.74 2007/12/01 19:08:42 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -145,7 +145,10 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	struct smbtable bios;
 	volatile u_int8_t *va;
 	char scratch[64], *str;
-	int flags, ncpu = 0;
+	int flags;
+#if NAPM > 0 || defined(MULTIPROCESSOR)
+	int ncpu = 0;
+#endif
 
 	/* remember flags */
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
