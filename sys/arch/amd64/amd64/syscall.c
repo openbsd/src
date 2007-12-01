@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.10 2007/11/27 18:09:37 art Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.11 2007/12/01 16:20:07 art Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -138,9 +138,11 @@ syscall(struct trapframe frame)
 	if (!nolock)
 		KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
-	KERNEL_PROC_LOCK(p);
+	if (nolock)
+		KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, argp);
-	KERNEL_PROC_UNLOCK(p);
+	if (nolock)
+		KERNEL_PROC_UNLOCK(p);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
