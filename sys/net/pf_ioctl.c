@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.187 2007/12/02 11:36:39 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.188 2007/12/02 11:39:45 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -918,6 +918,9 @@ pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
 	s->anchor.ptr = NULL;
 	s->rt_kif = NULL;
 	s->creation = time_second;
+	s->expire = time_second;
+	if (sp->expire > 0)
+		s->expire -= pf_default_rule.timeout[sp->timeout] - sp->expire;
 	s->pfsync_time = 0;
 	s->packets[0] = s->packets[1] = 0;
 	s->bytes[0] = s->bytes[1] = 0;
