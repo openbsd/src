@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.c,v 1.2 2006/05/07 17:44:28 miod Exp $	*/
+/*	$OpenBSD: m88410.c,v 1.3 2007/12/02 21:25:01 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -38,10 +38,32 @@
 
 #include <mvme88k/dev/busswreg.h>
 
-#define XCC_NOP		"0x00"
-#define XCC_FLUSH_PAGE	"0x01"
-#define XCC_FLUSH_ALL	"0x02"
-#define XCC_INVAL_ALL	"0x03"
+/*
+ * MVME197-specific 88410 operation.
+ *
+ * 88410 commands are sent by writing a 64-bit word to a specific address.
+ * Since the 88410 is not normally mapped and shares its address range
+ * with the flash memory, it is necessary to program the busswitch chip
+ * before the 88410 command can be sent.
+ */
+
+/*
+ * Flush physical page number (specified in the low 20 bits of the
+ * address.
+ */
+#define XCC_FLUSH_PAGE	0x01
+/*
+ * Flush the whole cache.
+ */
+#define XCC_FLUSH_ALL	0x02
+/*
+ * Invalidate the whole cache.
+ */
+#define XCC_INVAL_ALL	0x03
+
+/*
+ * Base address of the 88410 when mapped.
+ */
 #define XCC_ADDR	0xff800000
 
 void
@@ -69,9 +91,9 @@ mc88410_flush_page(paddr_t physaddr)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, " XCC_FLUSH_PAGE ";"
-	    "or   r3, r0, r0;"
-	    "st.d r2, %0, 0" : : "r" (xccaddr) : "r2", "r3");
+	    "or   r2, r0, %0\n\t"
+	    "or   r3, r0, r0\n\t"
+	    "st.d r2, %1, 0" : : "i" (XCC_FLUSH_PAGE), "r" (xccaddr) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -101,9 +123,9 @@ mc88410_flush(void)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, " XCC_FLUSH_ALL ";"
-	    "or   r3, r0, r0;"
-	    "st.d r2, %0, 0" : : "r" (XCC_ADDR) : "r2", "r3");
+	    "or   r2, r0, %0\n\t"
+	    "or   r3, r0, r0\n\t"
+	    "st.d r2, %1, 0" : : "i" (XCC_FLUSH_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -131,9 +153,9 @@ mc88410_inval(void)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, " XCC_INVAL_ALL ";"
-	    "or   r3, r0, r0;"
-	    "st.d r2, %0, 0" : : "r" (XCC_ADDR) : "r2", "r3");
+	    "or   r2, r0, %0\n\t"
+	    "or   r3, r0, r0\n\t"
+	    "st.d r2, %1, 0" : : "i" (XCC_INVAL_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/*
 	 * The 88410 will not let the 88110 access it until the
