@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.55 2007/11/05 00:17:28 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.56 2007/12/02 14:59:31 robert Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1518,7 +1518,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
 	    asid->bDescriptorSubtype != AS_GENERAL)
 		return (USBD_INVAL);
-	DPRINTF(("uaudio_process_as: asid: bTerminakLink=%d wFormatTag=%d\n",
+	DPRINTF(("uaudio_process_as: asid: bTerminalLink=%d wFormatTag=%d\n",
 		 asid->bTerminalLink, UGETW(asid->wFormatTag)));
 	offs += asid->bLength;
 	if (offs > size)
