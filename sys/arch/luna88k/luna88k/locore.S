@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2007/11/15 21:23:15 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2007/12/02 21:28:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -250,7 +250,7 @@ ASLOCAL(main_init)
 	 */
 	ldcr	r10, CPU
 	ld	r31, r10, CI_CURPCB
-	addu	r31, r31, USIZE
+	addu	r31, r31, USPACE
 
 	/* call main() - no arguments although main() still defines one */
 	bsr	_C_LABEL(main)
@@ -323,7 +323,7 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 
 	.align	PAGE_SIZE
 ASGLOBAL(initstack)
-	space	USIZE
+	space	USPACE
 ASGLOBAL(initstack_end)
 
 #ifdef MULTIPROCESSOR
@@ -337,7 +337,7 @@ ASLOCAL(slavestack_end)
  */
 	.align	PAGE_SIZE
 ASLOCAL(u0)
-	space	USIZE
+	space	USPACE
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 

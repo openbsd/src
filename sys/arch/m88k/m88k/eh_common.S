@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.39 2007/12/02 21:27:02 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.40 2007/12/02 21:28:40 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -938,7 +938,7 @@ ASLOCAL(m88100_use_SR3_pcb)
 	 * r30) */
 	ldcr	r1,   CPU
 	ld	r1,   r1,   CI_CURPCB
-	addu	r1,   r1,   USIZE - SIZEOF_EF
+	addu	r1,   r1,   USPACE - SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
 	st	r30,  r1,   REG_OFF(EF_SR3)	/* store old SR3 (pcb) */
@@ -1459,7 +1459,7 @@ ASLOCAL(m88100_fpu_enable)
 
 	ldcr	r31,  CPU
 	ld	r31,  r31,  CI_CURPCB
-	addu	r31,  r31,  USIZE	/* point at proper end */
+	addu	r31,  r31,  USPACE	/* point at proper end */
 1:
 
 	/*
@@ -2089,7 +2089,7 @@ ASLOCAL(m88110_shadow_enable)
 
 	ldcr	r31,  CPU
 	ld	r31,  r31,  CI_CURPCB
-	addu	r31,  r31,  USIZE		/* point at proper end */
+	addu	r31,  r31,  USPACE		/* point at proper end */
 1:
 
 	/*

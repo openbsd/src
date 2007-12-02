@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2007/11/15 21:27:22 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2007/12/02 21:28:40 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.14 2007/11/15 21:27:22 miod Exp $
+#	$Id: genassym.cf,v 1.15 2007/12/02 21:28:40 miod Exp $
 #
 
 include <sys/param.h>
@@ -66,12 +66,6 @@ member	ci_pfsr_d0
 member	ci_pfsr_d1
 member	ci_want_resched
 member	ci_softintr
-
-# general constants
-export	UPAGES
-# We export USPACE under another name to allow C code to include "assym.h".
-#export	USPACE
-define	USIZE			USPACE
 
 # pcb fields
 struct	pcb
