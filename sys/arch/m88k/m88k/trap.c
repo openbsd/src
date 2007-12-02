@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2007/12/02 21:33:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2007/12/02 21:34:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1134,13 +1134,12 @@ m88100_syscall(register_t code, struct trapframe *tf)
 {
 	int i, nsys, nap;
 	struct sysent *callp;
-	struct proc *p;
+	struct proc *p = curproc;
 	int error;
 	register_t args[8], rval[2], *ap;
+	int nolock;
 
 	uvmexp.syscalls++;
-
-	p = curproc;
 
 	callp = p->p_emul->e_sysent;
 	nsys  = p->p_emul->e_nsysent;
@@ -1190,13 +1189,22 @@ m88100_syscall(register_t code, struct trapframe *tf)
 
 	if (error != 0)
 		goto bad;
-	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
+	KERNEL_PROC_UNLOCK(p);
 #endif
+	nolock = (callp->sy_flags & SY_NOLOCK);
+	if (!nolock)
+		KERNEL_PROC_LOCK(p);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		if (nolock)
+			KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, callp->sy_argsize, args);
+		if (nolock)
+			KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
@@ -1235,7 +1243,8 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	 *    any pointers.
 	 */
 
-	KERNEL_PROC_UNLOCK(p);
+	if (!nolock)
+		KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
@@ -1285,13 +1294,12 @@ m88110_syscall(register_t code, struct trapframe *tf)
 {
 	int i, nsys, nap;
 	struct sysent *callp;
-	struct proc *p;
+	struct proc *p = curproc;
 	int error;
 	register_t args[8], rval[2], *ap;
+	int nolock;
 
 	uvmexp.syscalls++;
-
-	p = curproc;
 
 	callp = p->p_emul->e_sysent;
 	nsys  = p->p_emul->e_nsysent;
@@ -1341,13 +1349,22 @@ m88110_syscall(register_t code, struct trapframe *tf)
 
 	if (error != 0)
 		goto bad;
-	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
+	KERNEL_PROC_UNLOCK(p);
 #endif
+	nolock = (callp->sy_flags & SY_NOLOCK);
+	if (!nolock)
+		KERNEL_PROC_LOCK(p);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		if (nolock)
+			KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, callp->sy_argsize, args);
+		if (nolock)
+			KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
@@ -1382,7 +1399,8 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	 *    exip += 4
 	 */
 
-	KERNEL_PROC_UNLOCK(p);
+	if (!nolock)
+		KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
@@ -1787,14 +1805,11 @@ double_reg_fixup(struct trapframe *frame)
 void
 cache_flush(struct trapframe *tf)
 {
-	struct proc *p;
+	struct proc *p = curproc;
 	struct pmap *pmap;
 	paddr_t pa;
 	vaddr_t va;
 	vsize_t len, count;
-
-	if ((p = curproc) == NULL)
-		p = &proc0;
 
 	p->p_md.md_tf = tf;
 
