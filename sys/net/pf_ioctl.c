@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.190 2007/12/02 11:53:06 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.191 2007/12/02 11:56:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1964,6 +1964,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pool_put(&pf_altq_pl, altq);
 				break;
 			}
+			altq->altq_disc = NULL;
 			TAILQ_FOREACH(a, pf_altqs_inactive, entries) {
 				if (strncmp(a->ifname, altq->ifname,
 				    IFNAMSIZ) == 0 && a->qname[0] == 0) {
