@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.189 2007/12/02 11:42:05 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.190 2007/12/02 11:53:06 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1650,7 +1650,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		bzero(s, sizeof(struct pf_state));
 		if ((sk = pf_alloc_state_key(s)) == NULL) {
-			pool_put(pf_state_pl, s);
+			pool_put(&pf_state_pl, s);
 			error = ENOMEM;
 			break;
 		}
@@ -1665,7 +1665,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_insert_state(kif, s)) {
 			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 			pool_put(&pf_state_pl, s);
-			pool_put(&pf_state_key_pl, sk);
 			error = ENOMEM;
 		}
 		break;
