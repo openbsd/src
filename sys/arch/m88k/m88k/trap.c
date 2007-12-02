@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2007/12/02 21:33:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -634,13 +634,8 @@ m88110_trap(u_int type, struct trapframe *frame)
 	 *   Suggested fix: recover in general by backing up the exip by 4
 	 *   and clearing the delay bit before an rte when the lower 3 hex
 	 *   digits of the exip are 001.''
-	 *
-	 * (the font in the errata document I have does not make it clear
-	 *  whether the jsr.n problem applies to all registers or only
-	 *  r1 -- miod)
 	 */
-	if ((frame->tf_exip & 0x00000fff) == 0x00000001 &&
-	    (type == T_DATAFLT || type == T_INSTFLT)) {
+	if ((frame->tf_exip & PAGE_MASK) == 0x00000001 && type == T_INSTFLT) {
 		u_int instr;
 
 		/*
@@ -655,14 +650,14 @@ m88110_trap(u_int type, struct trapframe *frame)
 		 */
 		if (USERMODE(frame->tf_epsr)) {
 			instr = *(u_int *)frame->tf_exip;
-			if ((instr & 0xffffffe0) == 0xf400cc00)
+			if (instr == 0xf400cc01)
 				panic("mc88110 errata #16, exip %p enip %p",
 				    (frame->tf_exip + 4) | 1, frame->tf_enip);
 		} else {
 			/* copyin here should not fail */
 			if (copyin((const void *)frame->tf_exip, &instr,
 			    sizeof instr) == 0 &&
-			    (instr & 0xffffffe0) == 0xf400cc00) {
+			    instr == 0xf400cc01) {
 				uprintf("mc88110 errata #16, exip %p enip %p",
 				    (frame->tf_exip + 4) | 1, frame->tf_enip);
 				sig = SIGILL;
