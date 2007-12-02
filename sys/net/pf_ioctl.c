@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.191 2007/12/02 11:56:29 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.192 2007/12/02 12:00:20 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1665,8 +1665,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_insert_state(kif, s)) {
 			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 			pool_put(&pf_state_pl, s);
-			error = ENOMEM;
+			error = EEXIST;
+			break;
 		}
+		pf_default_rule.states++;
 		break;
 	}
 
