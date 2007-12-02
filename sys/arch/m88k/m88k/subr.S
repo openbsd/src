@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.14 2006/11/18 22:48:44 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.15 2007/12/02 21:22:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -32,6 +32,7 @@
 
 #include <sys/errno.h>
 
+#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/trap.h>
 
@@ -1017,6 +1018,7 @@ ASLOCAL(kr_strat)
 	word	_ASM_LABEL(kr_byte_copy)
 	word	_ASM_LABEL(kr_3byte_word_copy)
 
+#ifdef DDB
 /*
  * non-local goto
  *	int setjmp(label_t *);
@@ -1067,6 +1069,7 @@ ENTRY(longjmp)
 	ld	r31,r2,18*4
 	jmp.n	r1
 	 or	r2,r0,1
+#endif
 
 /*
  * Signal trampoline code.
@@ -1090,3 +1093,51 @@ GLOBAL(sigcode)			/* r31 points to sigframe */
 	NOP
 	NOP
 GLOBAL(esigcode)
+
+/*
+ * Helper functions for pmap_copy_page() and pmap_zero_page().
+ */
+/*
+ * void copypage(vaddr_t src, vaddr_t dst);
+ *
+ * This copies PAGE_SIZE bytes from src to dst in 32 byte chunks.
+ */
+GLOBAL(copypage)
+	addu	r12, r2, PAGE_SIZE
+1:
+	ld.d	r4,  r2, 0x00
+	ld.d	r6,  r2, 0x08
+	st.d	r4,  r3, 0x00
+	ld.d	r8,  r2, 0x10
+	st.d	r6,  r3, 0x08
+	ld.d	r10, r2, 0x18
+	st.d	r8,  r3, 0x10
+	addu	r2,  r2, 0x20
+	st.d	r10, r3, 0x18
+	cmp	r4,  r2, r12
+	bb1.n	ne,  r4, 1b
+	 addu	r3,  r3, 0x20
+	jmp	r1
+
+/*
+ * void zeropage(vaddr_t dst);
+ *
+ * This zeroes PAGE_SIZE bytes from src to dst in 64 byte chunks.
+ */
+GLOBAL(zeropage)
+	addu	r12, r2, PAGE_SIZE
+	or	r3,  r1, r0
+	or	r1,  r0, r0
+1:
+	st.d	r0,  r2, 0x00
+	st.d	r0,  r2, 0x08
+	st.d	r0,  r2, 0x10
+	st.d	r0,  r2, 0x18
+	st.d	r0,  r2, 0x20
+	st.d	r0,  r2, 0x28
+	st.d	r0,  r2, 0x30
+	st.d	r0,  r2, 0x38
+	addu	r2,  r2, 0x40
+	cmp	r4,  r2, r12
+	bb1	ne,  r4, 1b
+	jmp	r3
