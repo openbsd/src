@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2006/05/08 14:03:34 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2007/12/02 21:24:21 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -81,6 +81,7 @@
 #ifdef _KERNEL
 
 #ifdef _LOCORE
+
 /*
  * Control register symbolic names
  */
@@ -89,65 +90,64 @@
 #define	PSR	cr1
 #define	EPSR	cr2
 #define	SSBR	cr3
-#define	SXIP	cr4
-#define	SNIP	cr5
-#define	SFIP	cr6
+#define	SXIP	cr4		/* 88100 */
+#define	EXIP	cr4		/* 88110 */
+#define	SNIP	cr5		/* 88100 */
+#define	ENIP	cr5		/* 88110 */
+#define	SFIP	cr6		/* 88100 */
 #define	VBR	cr7
-#define	DMT0	cr8
-#define	DMD0	cr9
-#define	DMA0	cr10
-#define	DMT1	cr11
-#define	DMD1	cr12
-#define	DMA1	cr13
-#define	DMT2	cr14
-#define	DMD2	cr15
-#define	DMA2	cr16
+#define	DMT0	cr8		/* 88100 */
+#define	DMD0	cr9		/* 88100 */
+#define	DMA0	cr10		/* 88100 */
+#define	DMT1	cr11		/* 88100 */
+#define	DMD1	cr12		/* 88100 */
+#define	DMA1	cr13		/* 88100 */
+#define	DMT2	cr14		/* 88100 */
+#define	DMD2	cr15		/* 88100 */
+#define	DMA2	cr16		/* 88100 */
+#define	SRX	cr16		/* 88110 */
 #define	SR0	cr17
 #define	SR1	cr18
 #define	SR2	cr19
 #define	SR3	cr20
-
-/* MVME197 only */
-#define	SRX	cr16
-#define	EXIP	cr4
-#define	ENIP	cr5
-#define	ICMD	cr25
-#define	ICTL	cr26
-#define	ISAR	cr27
-#define	ISAP	cr28
-#define	IUAP	cr29
-#define	IIR	cr30
-#define	IBP	cr31
-#define	IPPU	cr32
-#define	IPPL	cr33
-#define	ISR	cr34
-#define	ILAR	cr35
-#define	IPAR	cr36
-#define	DCMD	cr40
-#define	DCTL	cr41
-#define	DSAR	cr42
-#define	DSAP	cr43
-#define	DUAP	cr44
-#define	DIR	cr45
-#define	DBP	cr46
-#define	DPPU	cr47
-#define	DPPL	cr48
-#define	DSR	cr49
-#define	DLAR	cr50
-#define	DPAR	cr51
-/* end MVME197 only */
+#define	ICMD	cr25		/* 88110 */
+#define	ICTL	cr26		/* 88110 */
+#define	ISAR	cr27		/* 88110 */
+#define	ISAP	cr28		/* 88110 */
+#define	IUAP	cr29		/* 88110 */
+#define	IIR	cr30		/* 88110 */
+#define	IBP	cr31		/* 88110 */
+#define	IPPU	cr32		/* 88110 */
+#define	IPPL	cr33		/* 88110 */
+#define	ISR	cr34		/* 88110 */
+#define	ILAR	cr35		/* 88110 */
+#define	IPAR	cr36		/* 88110 */
+#define	DCMD	cr40		/* 88110 */
+#define	DCTL	cr41		/* 88110 */
+#define	DSAR	cr42		/* 88110 */
+#define	DSAP	cr43		/* 88110 */
+#define	DUAP	cr44		/* 88110 */
+#define	DIR	cr45		/* 88110 */
+#define	DBP	cr46		/* 88110 */
+#define	DPPU	cr47		/* 88110 */
+#define	DPPL	cr48		/* 88110 */
+#define	DSR	cr49		/* 88110 */
+#define	DLAR	cr50		/* 88110 */
+#define	DPAR	cr51		/* 88110 */
 
 #define	FPECR	fcr0
-#define	FPHS1	fcr1
-#define	FPLS1	fcr2
-#define	FPHS2	fcr3
-#define	FPLS2	fcr4
-#define	FPPT	fcr5
-#define	FPRH	fcr6
-#define	FPRL	fcr7
-#define	FPIT	fcr8
+#define	FPHS1	fcr1		/* 88100 */
+#define	FPLS1	fcr2		/* 88100 */
+#define	FPHS2	fcr3		/* 88100 */
+#define	FPLS2	fcr4		/* 88100 */
+#define	FPPT	fcr5		/* 88100 */
+#define	FPRH	fcr6		/* 88100 */
+#define	FPRL	fcr7		/* 88100 */
+#define	FPIT	fcr8		/* 88100 */
 #define	FPSR	fcr62
 #define	FPCR	fcr63
+
+#define	CPU	SR0
 
 /*
  * At various times, there is the need to clear the pipeline (i.e.
@@ -156,42 +156,25 @@
  * will never actually take the trap).
  */
 #define	FLUSH_PIPELINE		tb1	0, r0, 0
+
 #define	NOP			or	r0, r0, r0
-#define RTE			NOP ; rte
+#define RTE			NOP; rte
 
 /*
- * Info about the PSR
+ * PSR bits
  */
 #define	PSR_SHADOW_FREEZE_BIT		0
 #define	PSR_INTERRUPT_DISABLE_BIT	1
 #define	PSR_FPU_DISABLE_BIT		3
+#define	PSR_GRAPHICS_DISABLE_BIT	4	/* SFU2 - MC88110 */
+#define	PSR_SERIALIZE_BIT		25	/* MC88110 */
+#define	PSR_CARRY_BIT			28
+#define	PSR_SERIAL_MODE_BIT		29	/* MC88110 */
 #define	PSR_BIG_ENDIAN_MODE		30
 #define	PSR_SUPERVISOR_MODE_BIT		31
-/*
- * mc88110 PSR bit definitions (MVME197)
- */
-#define PSR_GRAPHICS_DISABLE_BIT	4
-#define PSR_SERIAL_MODE_BIT		29
-#define PSR_CARRY_BIT			28
-#define PSR_SERIALIZE_BIT		25
-
-#define	VECTOR(x) \
-	word	_C_LABEL(x)
-
-#define	CPU	SR0
-
-#endif	/* _LOCORE */
-
-#define	FLUSH_PIPELINE_STRING	"tb1	0, r0, 0"
 
 /*
- * Status bits for an SXIP/SNIP/SFIP address.
- */
-#define	RTE_VALID_BIT		1
-#define	RTE_ERROR_BIT		0
-
-/*
- * Info about DMT0/DMT1/DMT2
+ * DMT0/DMT1/DMT2 bits
  */
 #define	DMT_VALID_BIT		0
 #define	DMT_WRITE_BIT		1
@@ -201,6 +184,17 @@
 #define	DMT_DREG_OFFSET		7
 #define	DMT_DREG_WIDTH		5
 
+/*
+ * Status bits for an SXIP/SNIP/SFIP address.
+ */
+#define	RTE_VALID_BIT		1
+#define	RTE_ERROR_BIT		0
+
+#define	VECTOR(x) \
+	word	_C_LABEL(x)
+
+#endif	/* _LOCORE */
+
 #endif	/* _KERNEL */
 
-#endif /* __M88K_ASM_H__ */
+#endif	/* __M88K_ASM_H__ */
