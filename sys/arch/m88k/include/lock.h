@@ -1,6 +1,6 @@
 #ifndef	_M88K_LOCK_H_
 #define	_M88K_LOCK_H_
-/*	$OpenBSD: lock.h,v 1.5 2007/10/27 20:36:17 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.6 2007/12/02 21:21:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -80,5 +80,10 @@ __cpu_simple_unlock(__cpu_simple_lock_t *l)
 {
 	*l = __SIMPLELOCK_UNLOCKED;
 }
+
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+int	rw_cas_m88k(volatile unsigned long *, unsigned long, unsigned long);
+#define	rw_cas rw_cas_m88k
+#endif
 
 #endif	/* _M88K_LOCK_H_ */

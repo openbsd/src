@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.34 2007/11/22 05:42:50 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.35 2007/12/02 21:21:30 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -500,6 +500,37 @@ cpu_emergency_disable()
 
 	for (;;) ;
 	/* NOTREACHED */
+}
+
+/*
+ * Emulate a compare-and-swap instruction for rwlocks, by using a
+ * __cpu_simple_lock as a critical section.
+ *
+ * Since we are only competing against other processors for rwlocks,
+ * it is not necessary in this case to disable interrupts to prevent
+ * reentrancy on the same processor.
+ *
+ * Updates need to be done with xmem to ensure they are atomic.
+ */
+
+__cpu_simple_lock_t rw_cas_spinlock = __SIMPLELOCK_UNLOCKED;
+
+int
+rw_cas_m88k(volatile unsigned long *p, unsigned long o, unsigned long n)
+{
+	int rc = 0;
+
+	__cpu_simple_lock(&rw_cas_spinlock);
+
+	if (*p != o)
+		rc = 1;
+	/* atomic *p = n; */
+	__asm__ __volatile__
+	    ("xmem %0, %2, r0" : "+r"(n), "+m"(*p) : "r"(p));
+
+	__cpu_simple_unlock(&rw_cas_spinlock);
+
+	return (rc);
 }
 
 #endif	/* MULTIPROCESSOR */
