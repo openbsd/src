@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.21 2007/11/22 23:33:41 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.22 2007/12/02 21:32:44 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -98,55 +98,35 @@
 
 #ifndef	_LOCORE
 
-void set_icmd(u_int value);
-void set_ictl(u_int value);
-void set_isar(u_int value);
-void set_isap(u_int value);
-void set_iuap(u_int value);
-void set_iir(u_int value);
-void set_ibp(u_int value);
-void set_ippu(u_int value);
-void set_ippl(u_int value);
-void set_isr(u_int value);
-void set_dcmd(u_int value);
-void set_dctl(u_int value);
-void set_dsar(u_int value);
-void set_dsap(u_int value);
-void set_duap(u_int value);
-void set_dir(u_int value);
-void set_dbp(u_int value);
-void set_dppu(u_int value);
-void set_dppl(u_int value);
-void set_dsr(u_int value);
+void	set_icmd(u_int value);
+void	set_ictl(u_int value);
+void	set_isar(u_int value);
+void	set_isap(u_int value);
+void	set_iuap(u_int value);
+void	set_iir(u_int value);
+void	set_ibp(u_int value);
+void	set_ippu(u_int value);
+void	set_ippl(u_int value);
+void	set_isr(u_int value);
+void	set_dcmd(u_int value);
+void	set_dctl(u_int value);
+void	set_dsar(u_int value);
+void	set_dsap(u_int value);
+void	set_duap(u_int value);
+void	set_dir(u_int value);
+void	set_dbp(u_int value);
+void	set_dppu(u_int value);
+void	set_dppl(u_int value);
+void	set_dsr(u_int value);
 
-/* get routines */
-u_int get_icmd(void);
-u_int get_ictl(void);
-u_int get_isar(void);
-u_int get_isap(void);
-u_int get_iuap(void);
-u_int get_iir(void);
-u_int get_ibp(void);
-u_int get_ippu(void);
-u_int get_ippl(void);
-u_int get_isr(void);
-u_int get_dcmd(void);
-u_int get_dctl(void);
-u_int get_dsar(void);
-u_int get_dsap(void);
-u_int get_duap(void);
-u_int get_dir(void);
-u_int get_dbp(void);
-u_int get_dppu(void);
-u_int get_dppl(void);
-u_int get_dsr(void);
+u_int	get_ictl(void);
+u_int	get_dctl(void);
 
 /*
  * The following inlines expect their address to be line-aligned for line
  * operations, and page aligned for page operations.
  */
 
-/*
 static __inline__ void
 mc88110_flush_data_line(paddr_t x)
 {
@@ -160,7 +140,6 @@ mc88110_flush_data_page(paddr_t x)
 	set_dsar(x);
 	set_dcmd(CMMU_DCMD_FLUSH_PG);
 }
-*/
 
 static __inline__ void
 mc88110_flush_data(void)

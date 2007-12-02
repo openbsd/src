@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.3 2007/11/22 05:53:56 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.4 2007/12/02 21:32:41 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -39,7 +39,7 @@
  *   in an mmu exception (invalid descriptor, tablewalk bus error,
  *   software atc miss), the exip and enip value may be incorrectly
  *   incremented to the second word of the page.
- *   Suggested fix: do not allow thses instructions to occupy the last
+ *   Suggested fix: do not allow these instructions to occupy the last
  *   word of a page if this can occur.''
  *
  * This is why the following function are not inlines in asm.h, and are
@@ -176,101 +176,11 @@ ENTRY(set_dsr)
 
 /* get routines */
 	align 32
-ENTRY(get_icmd)
-	jmp.n	r1
-	 ldcr	r2, ICMD
-
-	align 32
 ENTRY(get_ictl)
 	jmp.n	r1
 	 ldcr	r2, ICTL
 
 	align 32
-ENTRY(get_isar)
-	jmp.n	r1
-	 ldcr	r2, ISAR
-
-	align 32
-ENTRY(get_isap)
-	jmp.n	r1
-	 ldcr	r2, ISAP
-
-	align 32
-ENTRY(get_iuap)
-	jmp.n	r1
- 	 ldcr	r2, IUAP
-
-	align 32
-ENTRY(get_iir)
-	jmp.n	r1
-	 ldcr	r2, IIR 
-
-	align 32
-ENTRY(get_ibp)
-	jmp.n	r1
-	 ldcr	r2, IBP 
-
-	align 32
-ENTRY(get_ippu)
-	jmp.n	r1
-	 ldcr	r2, IPPU
-
-	align 32
-ENTRY(get_ippl)
-	jmp.n	r1
-	 ldcr	r2, IPPL
-
-	align 32
-ENTRY(get_isr)
-	jmp.n	r1
-	 ldcr	r2, ISR 
-
-	align 32
-ENTRY(get_dcmd)
-	jmp.n	r1
-	 ldcr	r2, DCMD
-
-	align 32
 ENTRY(get_dctl)
 	jmp.n	r1
 	 ldcr	r2, DCTL
-
-	align 32
-ENTRY(get_dsar)
-	jmp.n	r1
-	 ldcr	r2, DSAR
-
-	align 32
-ENTRY(get_dsap)
-	jmp.n	r1
-	 ldcr	r2, DSAP
-
-	align 32
-ENTRY(get_duap)
-	jmp.n	r1
-	 ldcr	r2, DUAP
-
-	align 32
-ENTRY(get_dir)
-	jmp.n	r1
-	 ldcr	r2, DIR 
-
-	align 32
-ENTRY(get_dbp)
-	jmp.n	r1
-	 ldcr	r2, DBP 
-
-	align 32
-ENTRY(get_dppu)
-	jmp.n	r1
-	 ldcr	r2, DPPU
-
-	align 32
-ENTRY(get_dppl)
-	jmp.n	r1
-	 ldcr	r2, DPPL
-
-	align 32
-ENTRY(get_dsr)
-	jmp.n	r1
-	 ldcr	r2, DSR 
