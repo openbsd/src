@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.17 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: files.m88k,v 1.18 2007/12/02 21:20:17 miod Exp $
 
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
@@ -11,6 +11,7 @@ file	arch/m88k/m88k/m88110_fp.S			m88110
 file	arch/m88k/m88k/m88110_mmu.S			m88110
 file	arch/m88k/m88k/m8820x_machdep.c			m88100
 file	arch/m88k/m88k/m88k_machdep.c
+file	arch/m88k/m88k/mplock.c				multiprocessor
 file	arch/m88k/m88k/mutex.S
 file	arch/m88k/m88k/pmap.c
 file	arch/m88k/m88k/process.S
