@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.35 2007/12/02 21:21:30 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.36 2007/12/02 21:23:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -387,10 +387,16 @@ spl0()
 #define BRANCH(FROM, TO) \
 	(EMPTY_BR | ((vaddr_t)(TO) - (vaddr_t)(FROM)) >> 2)
 
-#define SET_VECTOR(NUM, VALUE) \
+#define SET_VECTOR_88100(NUM, VALUE) \
 	do { \
 		vbr[NUM].word_one = NO_OP; \
 		vbr[NUM].word_two = BRANCH(&vbr[NUM].word_two, VALUE); \
+	} while (0)
+
+#define SET_VECTOR_88110(NUM, VALUE) \
+	do { \
+		vbr[NUM].word_one = BRANCH(&vbr[NUM].word_one, VALUE); \
+		vbr[NUM].word_two = NO_OP; \
 	} while (0)
 
 /*
@@ -414,9 +420,6 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 	u_int num;
 	u_int32_t vec;
 
-	for (num = 0; (vec = vector_init_list[num]) != 0; num++)
-		SET_VECTOR(num, vec);
-
 	switch (cputyp) {
 	default:
 #ifdef M88110
@@ -428,13 +431,21 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		extern void m88110_stepbpt(void);
 		extern void m88110_userbpt(void);
 
-		for (; num < 512; num++)
-			SET_VECTOR(num, m88110_sigsys);
+		for (num = 0; (vec = vector_init_list[num]) != 0; num++)
+			SET_VECTOR_88110(num, vec);
 
-		SET_VECTOR(450, m88110_syscall_handler);
-		SET_VECTOR(451, m88110_cache_flush_handler);
-		SET_VECTOR(504, m88110_stepbpt);
-		SET_VECTOR(511, m88110_userbpt);
+		for (; num < 512; num++)
+			SET_VECTOR_88110(num, m88110_sigsys);
+
+		SET_VECTOR_88110(450, m88110_syscall_handler);
+		SET_VECTOR_88110(451, m88110_cache_flush_handler);
+		/*
+		 * GCC will by default produce explicit trap 503
+		 * for division by zero
+		 */
+		SET_VECTOR_88110(503, vector_init_list[8]);
+		SET_VECTOR_88110(504, m88110_stepbpt);
+		SET_VECTOR_88110(511, m88110_userbpt);
 	    }
 		break;
 #endif
@@ -447,20 +458,25 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		extern void stepbpt(void);
 		extern void userbpt(void);
 
-		for (; num < 512; num++)
-			SET_VECTOR(num, sigsys);
+		for (num = 0; (vec = vector_init_list[num]) != 0; num++)
+			SET_VECTOR_88100(num, vec);
 
-		SET_VECTOR(450, syscall_handler);
-		SET_VECTOR(451, cache_flush_handler);
-		SET_VECTOR(504, stepbpt);
-		SET_VECTOR(511, userbpt);
+		for (; num < 512; num++)
+			SET_VECTOR_88100(num, sigsys);
+
+		SET_VECTOR_88100(450, syscall_handler);
+		SET_VECTOR_88100(451, cache_flush_handler);
+		/*
+		 * GCC will by default produce explicit trap 503
+		 * for division by zero
+		 */
+		SET_VECTOR_88100(503, vector_init_list[8]);
+		SET_VECTOR_88100(504, stepbpt);
+		SET_VECTOR_88100(511, userbpt);
 	    }
 		break;
 #endif
 	}
-
-	/* GCC will by default produce explicit trap 503 for division by zero */
-	SET_VECTOR(503, vector_init_list[8]);
 }
 
 #ifdef MULTIPROCESSOR
