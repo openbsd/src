@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.5 2007/11/20 21:46:18 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.6 2007/12/02 21:17:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,8 +26,6 @@
  * rights to redistribute these changes.
  */
 
-#include "assym.h"	/* EF_xxx */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -46,10 +44,22 @@ const struct {
 	unsigned char    offset;
 	unsigned char    size;
 } dmt_en_info[16] = {
-	{0, 0}, {3, DMT_BYTE}, {2, DMT_BYTE}, {2, DMT_HALF},
-	{1, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
-	{0, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
-	{0, DMT_HALF}, {0, 0}, {0, 0}, {0, DMT_WORD}
+	{0, 0},
+	{3, DMT_BYTE},
+	{2, DMT_BYTE},
+	{2, DMT_HALF},
+	{1, DMT_BYTE},
+	{0, 0},
+	{0, 0},
+	{0, 0},
+	{0, DMT_BYTE},
+	{0, 0},
+	{0, 0},
+	{0, 0},
+	{0, DMT_HALF},
+	{0, 0},
+	{0, 0},
+	{0, DMT_WORD}
 };
 
 #ifdef DATA_DEBUG
@@ -64,56 +74,69 @@ int data_access_emulation_debug = 0;
 #define DAE_DEBUG(stuff)
 #endif
 
-void
-dae_print(u_int *eframe)
-{
-	int x;
-	u_int dmax, dmdx, dmtx;
+void	dae_print_one(u_int, u_int, u_int, u_int);
+void	dae_process(struct trapframe *, u_int, u_int, u_int, u_int);
 
-	if (!ISSET(eframe[EF_DMT0], DMT_VALID))
+void
+dae_print(u_int *f)
+{
+	struct trapframe *eframe = (void *)f;
+
+	if (!ISSET(eframe->tf_dmt0, DMT_VALID))
 		return;
 
-	for (x = 0; x < 3; x++) {
-		dmtx = eframe[EF_DMT0 + x * 3];
-		if (!ISSET(dmtx, DMT_VALID))
-			continue;
-
-		dmdx = eframe[EF_DMD0 + x * 3];
-		dmax = eframe[EF_DMA0 + x * 3];
-
-		if (ISSET(dmtx, DMT_WRITE))
-			printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
-			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
-			    DMT_ENBITS(dmtx),
-			    dmtx & DMT_DOUB1 ? "double": "not double",
-			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
-		else
-			printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
-			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
-			    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
-			    dmtx & DMT_DOUB1 ? "double": "not double",
-			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
-	}
+	dae_print_one(0, eframe->tf_dma0, eframe->tf_dmd0, eframe->tf_dmt0);
+	dae_print_one(1, eframe->tf_dma1, eframe->tf_dmd1, eframe->tf_dmt1);
+	dae_print_one(2, eframe->tf_dma2, eframe->tf_dmd2, eframe->tf_dmt2);
 }
 
 void
-data_access_emulation(u_int *eframe)
+dae_print_one(u_int x, u_int dmax, u_int dmdx, u_int dmtx)
 {
-	int x;
-	u_int dmax, dmdx, dmtx;
-	u_int v, reg;
-
-	dmtx = eframe[EF_DMT0];
-	if (!ISSET(dmtx, DMT_VALID) || ISSET(dmtx, DMT_SKIP))
+	if (!ISSET(dmtx, DMT_VALID))
 		return;
 
-	for (x = 0; x < 3; x++) {
-		dmtx = eframe[EF_DMT0 + x * 3];
-		if (!ISSET(dmtx, DMT_VALID))
-			continue;
+	if (ISSET(dmtx, DMT_WRITE))
+		printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
+		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
+		    DMT_ENBITS(dmtx),
+		    dmtx & DMT_DOUB1 ? "double": "not double",
+		    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
+	else
+		printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
+		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
+		    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
+		    dmtx & DMT_DOUB1 ? "double": "not double",
+		    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
+}
 
-		dmdx = eframe[EF_DMD0 + x * 3];
-		dmax = eframe[EF_DMA0 + x * 3];
+void
+data_access_emulation(u_int *f)
+{
+	struct trapframe *eframe = (void *)f;
+
+	if (!ISSET(eframe->tf_dmt0, DMT_VALID) ||
+	    ISSET(eframe->tf_dmt0, DMT_SKIP))
+		return;
+
+	dae_process(eframe, 0,
+	    eframe->tf_dma0, eframe->tf_dmd0, eframe->tf_dmt0);
+	dae_process(eframe, 1,
+	    eframe->tf_dma1, eframe->tf_dmd1, eframe->tf_dmt1);
+	dae_process(eframe, 2,
+	    eframe->tf_dma2, eframe->tf_dmd2, eframe->tf_dmt2);
+
+	eframe->tf_dmt0 |= DMT_SKIP;
+}
+
+void
+dae_process(struct trapframe *eframe, u_int x,
+    u_int dmax, u_int dmdx, u_int dmtx)
+{
+	u_int v, reg;
+
+	if (!ISSET(dmtx, DMT_VALID))
+		return;
 
       DAE_DEBUG(
 		if (ISSET(dmtx, DMT_WRITE))
@@ -130,136 +153,126 @@ data_access_emulation(u_int *eframe)
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem")
 	);
 
-		dmax += dmt_en_info[DMT_ENBITS(dmtx)].offset;
-		reg = DMT_DREGBITS(dmtx);
+	dmax += dmt_en_info[DMT_ENBITS(dmtx)].offset;
+	reg = DMT_DREGBITS(dmtx);
 
-		if (!ISSET(dmtx, DMT_LOCKBAR)) {
-			/* the fault is not during an XMEM */
+	if (!ISSET(dmtx, DMT_LOCKBAR)) {
+		/* the fault is not during an XMEM */
 
-			if (x == 2 && ISSET(dmtx, DMT_DOUB1)) {
-				/* pipeline 2 (earliest stage) for a double */
+		if (x == 2 && ISSET(dmtx, DMT_DOUB1)) {
+			/* pipeline 2 (earliest stage) for a double */
 
-				if (ISSET(dmtx, DMT_WRITE)) {
-					/*
-					 * STORE DOUBLE WILL BE REINITIATED
-					 * BY rte
-					 */
-				} else {
-					/* EMULATE ld.d INSTRUCTION */
-					v = do_load_word(dmax, dmtx & DMT_DAS);
-					if (reg != 0)
-						eframe[EF_R0 + reg] = v;
-					v = do_load_word(dmax ^ 4,
-					    dmtx & DMT_DAS);
-					if (reg != 31)
-						eframe[EF_R0 + reg + 1] = v;
-				}
+			if (ISSET(dmtx, DMT_WRITE)) {
+				/*
+				 * STORE DOUBLE WILL BE REINITIATED BY rte
+				 */
 			} else {
-				/* not pipeline #2 with a double */
-				if (dmtx & DMT_WRITE) {
-					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
-					case DMT_BYTE:
-					DAE_DEBUG(
-						printf("[byte %x -> [%x(%c)]\n",
-						    dmdx & 0xff, dmax,
-						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
-					);
-						do_store_byte(dmax, dmdx,
-						    dmtx & DMT_DAS);
-						break;
-					case DMT_HALF:
-					DAE_DEBUG(
-						printf("[half %x -> [%x(%c)]\n",
-						    dmdx & 0xffff, dmax,
-						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
-					);
-						do_store_half(dmax, dmdx,
-						    dmtx & DMT_DAS);
-						break;
-					case DMT_WORD:
-					DAE_DEBUG(
-						printf("[word %x -> [%x(%c)]\n",
-						    dmdx, dmax,
-						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
-					);
-						do_store_word(dmax, dmdx,
-						    dmtx & DMT_DAS);
-						break;
-					}
-				} else {
-					/* else it's a read */
-					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
-					case DMT_BYTE:
-						v = do_load_byte(dmax,
-						    dmtx & DMT_DAS);
-						if (!ISSET(dmtx, DMT_SIGNED))
-							v &= 0x000000ff;
-						break;
-					case DMT_HALF:
-						v = do_load_half(dmax,
-						    dmtx & DMT_DAS);
-						if (!ISSET(dmtx, DMT_SIGNED))
-							v &= 0x0000ffff;
-						break;
-					case DMT_WORD:
-						v = do_load_word(dmax,
-						    dmtx & DMT_DAS);
-						break;
-					}
-					DAE_DEBUG(
-						if (reg == 0)
-							printf("[no write to r0 done]\n");
-						else
-							printf("[r%d <- %x]\n", reg, v);
-					);
-					if (reg != 0)
-						eframe[EF_R0 + reg] = v;
-				}
+				/* EMULATE ld.d INSTRUCTION */
+				v = do_load_word(dmax, dmtx & DMT_DAS);
+				if (reg != 0)
+					eframe->tf_r[reg] = v;
+				v = do_load_word(dmax ^ 4, dmtx & DMT_DAS);
+				if (reg != 31)
+					eframe->tf_r[reg + 1] = v;
 			}
 		} else {
-			/* if lockbar is set... it's part of an XMEM */
-			/*
-			 * According to Motorola's "General Information",
-			 * the DMT_DOUB1 bit is never set in this case, as it
-			 * should be.
-			 * If lockbar is set (as it is if we're here) and if
-			 * the write is not set, then it's the same as if DOUB1
-			 * was set...
-			 */
-			if (!ISSET(dmtx, DMT_WRITE)) {
-				if (x != 2) {
-					/* RERUN xmem WITH DMD(x+1) */
-					x++;
-					dmdx = eframe[EF_DMD0 + x * 3];
-				} else {
-					/* RERUN xmem WITH DMD2 */
-				}
-
-				if (dmt_en_info[DMT_ENBITS(dmtx)].size ==
-				    DMT_WORD) {
-					v = do_xmem_word(dmax, dmdx,
+			/* not pipeline #2 with a double */
+			if (dmtx & DMT_WRITE) {
+				switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+				case DMT_BYTE:
+				DAE_DEBUG(
+					printf("[byte %x -> [%x(%c)]\n",
+					    dmdx & 0xff, dmax,
+					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+				);
+					do_store_byte(dmax, dmdx,
 					    dmtx & DMT_DAS);
-				} else {
-					v = do_xmem_byte(dmax, dmdx,
+					break;
+				case DMT_HALF:
+				DAE_DEBUG(
+					printf("[half %x -> [%x(%c)]\n",
+					    dmdx & 0xffff, dmax,
+					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+				);
+					do_store_half(dmax, dmdx,
 					    dmtx & DMT_DAS);
+					break;
+				case DMT_WORD:
+				DAE_DEBUG(
+					printf("[word %x -> [%x(%c)]\n",
+					    dmdx, dmax,
+					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+				);
+					do_store_word(dmax, dmdx,
+					    dmtx & DMT_DAS);
+					break;
 				}
-				if (reg != 0)
-					eframe[EF_R0 + reg] = v;
 			} else {
-				if (x == 0) {
-					if (reg != 0)
-						eframe[EF_R0 + reg] = dmdx;
-					eframe[EF_SFIP] = eframe[EF_SNIP];
-					eframe[EF_SNIP] = eframe[EF_SXIP];
-					eframe[EF_SXIP] = 0;
-					/* xmem RERUN ON rte */
-					eframe[EF_DMT0] = 0;
-					return;
+				/* else it's a read */
+				switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+				case DMT_BYTE:
+					v = do_load_byte(dmax, dmtx & DMT_DAS);
+					if (!ISSET(dmtx, DMT_SIGNED))
+						v &= 0x000000ff;
+					break;
+				case DMT_HALF:
+					v = do_load_half(dmax, dmtx & DMT_DAS);
+					if (!ISSET(dmtx, DMT_SIGNED))
+						v &= 0x0000ffff;
+					break;
+				case DMT_WORD:
+					v = do_load_word(dmax, dmtx & DMT_DAS);
+					break;
 				}
+				DAE_DEBUG(
+					if (reg == 0)
+						printf("[no write to r0 done]\n");
+					else
+						printf("[r%d <- %x]\n", reg, v);
+				);
+				if (reg != 0)
+					eframe->tf_r[reg] = v;
+			}
+		}
+	} else {
+		/* if lockbar is set... it's part of an XMEM */
+		/*
+		 * According to Motorola's "General Information",
+		 * the DMT_DOUB1 bit is never set in this case, as it
+		 * should be.
+		 * If lockbar is set (as it is if we're here) and if
+		 * the write is not set, then it's the same as if DOUB1
+		 * was set...
+		 */
+		if (!ISSET(dmtx, DMT_WRITE)) {
+			if (x != 2) {
+				/* RERUN xmem WITH DMD(x+1) */
+				dmdx =
+				    x == 0 ? eframe->tf_dmd1 : eframe->tf_dmd2;
+			} else {
+				/* RERUN xmem WITH DMD2 */
+			}
+
+			if (dmt_en_info[DMT_ENBITS(dmtx)].size == DMT_WORD) {
+				v = do_xmem_word(dmax, dmdx, dmtx & DMT_DAS);
+			} else {
+				v = do_xmem_byte(dmax, dmdx, dmtx & DMT_DAS);
+			}
+			if (reg != 0)
+				eframe->tf_r[reg] = v;
+		} else {
+			if (x == 0) {
+				if (reg != 0)
+					eframe->tf_r[reg] = dmdx;
+				eframe->tf_sfip = eframe->tf_snip;
+				eframe->tf_snip = eframe->tf_sxip;
+				eframe->tf_sxip = 0;
+				/* xmem RERUN ON rte */
+				eframe->tf_dmt0 = 0;
+				return;
 			}
 		}
 	}
-	eframe[EF_DMT0] |= DMT_SKIP;
 }
 
 /*
