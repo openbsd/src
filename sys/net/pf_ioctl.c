@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.192 2007/12/02 12:00:20 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.193 2007/12/02 12:08:04 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1633,7 +1633,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCADDSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
-		struct pfsync_state 	*sp = (struct pfsync_state *)ps->state;
+		struct pfsync_state 	*sp = &ps->state;
 		struct pf_state		*s;
 		struct pf_state_key	*sk;
 		struct pfi_kif		*kif;
@@ -1675,21 +1675,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pf_state		*s;
-		u_int32_t		 nr;
+		struct pf_state_cmp	 id_key;
 
-		nr = 0;
-		RB_FOREACH(s, pf_state_tree_id, &tree_id) {
-			if (nr >= ps->nr)
-				break;
-			nr++;
-		}
+		bcopy(ps->state.id, &id_key.id, sizeof(id_key.id));
+		id_key.creatorid = ps->state.creatorid;
+
+		s = pf_find_state_byid(&id_key);
 		if (s == NULL) {
-			error = EBUSY;
+			error = ENOENT;
 			break;
 		}
 
-		pf_state_export((struct pfsync_state *)ps->state,
-		    s->state_key, s);
+		pf_state_export(&ps->state, s->state_key, s);
 		break;
 	}
 
