@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.186 2007/09/27 22:24:05 mpf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.187 2007/12/02 11:36:39 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -910,7 +910,6 @@ pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
 	/* copy to state */
 	memcpy(&s->id, &sp->id, sizeof(sp->id));
 	s->creatorid = sp->creatorid;
-	strlcpy(sp->ifname, s->kif->pfik_name, sizeof(sp->ifname));
 	pf_state_peer_from_pfsync(&sp->src, &s->src);
 	pf_state_peer_from_pfsync(&sp->dst, &s->dst);
 
@@ -1684,7 +1683,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		pf_state_export((struct pfsync_state *)&ps->state,
+		pf_state_export((struct pfsync_state *)ps->state,
 		    s->state_key, s);
 		break;
 	}
