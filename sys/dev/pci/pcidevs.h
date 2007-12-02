@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1298 2007/11/26 21:17:42 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1299 2007/12/02 23:16:49 krw Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -914,6 +914,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_9800XT	0x4e4a		/* Radeon 9800 XT */
 #define	PCI_PRODUCT_ATI_R350	0x4e48		/* Radeon 9800 Pro */
 #define	PCI_PRODUCT_ATI_RV350	0x4e50		/* Radeon Mobility M10 NP */
+#define	PCI_PRODUCT_ATI_RV350_WS	0x4e54		/* Radeon Mobility M10 NT */
 #define	PCI_PRODUCT_ATI_R300_S	0x4e64		/* Radeon 9500/9700 Sec */
 #define	PCI_PRODUCT_ATI_R350_S	0x4e68		/* Radeon 9800 Pro Sec */
 #define	PCI_PRODUCT_ATI_RAGE128_PD	0x5044		/* Rage 128 Pro PD */

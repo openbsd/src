@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1298 2007/11/26 21:17:42 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1299 2007/12/02 23:16:49 krw Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2090,6 +2090,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350,
 	    "Radeon Mobility M10 NP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350_WS,
+	    "Radeon Mobility M10 NT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300_S,
