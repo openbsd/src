@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.45 2007/11/24 17:27:38 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.46 2007/12/02 22:17:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -29,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -178,7 +177,7 @@ m88410_setup_board_config(void)
 
 /*
  * Should only be called after the calling cpus knows its cpu
- * number and master/slave status . Should be called first
+ * number and master/slave status. Should be called first
  * by the master, before the slaves are started.
  */
 void
@@ -206,6 +205,7 @@ void
 m88410_cpu_configuration_print(int master)
 {
 	m88110_cpu_configuration_print(master);
+	/* XXX how to get its size? */
 	printf("cpu%d: external M88410 cache controller\n", cpu_number());
 }
 
@@ -225,9 +225,13 @@ m88110_init(void)
 cpuid_t
 m88410_init(void)
 {
+	u_int dctl;
 	cpuid_t cpu;
 
 	cpu = m88110_init();
+	dctl = get_dctl();
+	dctl |= CMMU_DCTL_SEN;
+	set_dctl(dctl);
 	mc88410_inval();	/* clear external data cache */
 	return (cpu);
 }
@@ -245,6 +249,7 @@ m88110_cpu_number(void)
 void
 m88110_initialize_cpu(cpuid_t cpu)
 {
+	u_int ictl, dctl;
 	int i;
 
 	/* clear BATCs */
@@ -265,12 +270,7 @@ m88110_initialize_cpu(cpuid_t cpu)
 	 *   Suggested fix: Clear the PREN bit of the ICTL.  This will
 	 *   disable branch prediction.''
 	 */
-	set_ictl(BATC_512K
-		 | CMMU_ICTL_DID	/* Double instruction disable */
-		 | CMMU_ICTL_MEN
-		 | CMMU_ICTL_CEN
-		 | CMMU_ICTL_BEN
-		 | CMMU_ICTL_HTEN);
+	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
 
 	/*
 	 * 88110 errata #10 (4.2) or #2 (5.1.1):
@@ -291,18 +291,14 @@ m88110_initialize_cpu(cpuid_t cpu)
 	 *   Work-Around: do not set the xmem bit in dctl, or separate st
 	 *   from xmem instructions.''
 	 */
-	set_dctl(BATC_512K
-		 | CMMU_DCTL_RSVD1	/* Data Matching Disable */
-		 | CMMU_DCTL_MEN
-		 | CMMU_DCTL_CEN
-		 | CMMU_DCTL_SEN
-		 | CMMU_DCTL_ADS
-		 | CMMU_DCTL_HTEN);
+	dctl = BATC_512K | CMMU_DCTL_CEN | CMMU_DCTL_ADS;
+	dctl |= CMMU_DCTL_RSVD1; /* Data Matching Disable */
 
 	mc88110_inval_inst();		/* clear instruction cache & TIC */
 	mc88110_inval_data();		/* clear data cache */
 
-	set_dcmd(CMMU_DCMD_INV_SATC);	/* invalidate ATCs */
+	set_ictl(ictl);
+	set_dctl(dctl);
 
 	set_isr(0);
 	set_dsr(0);
@@ -327,10 +323,6 @@ m88110_set_sapr(apr_t ap)
 	ictl = get_ictl();
 	dctl = get_dctl();
 
-	/* disable translation */
-	set_ictl(ictl & ~CMMU_ICTL_MEN);
-	set_dctl(dctl & ~CMMU_DCTL_MEN);
-
 	set_isap(ap);
 	set_dsap(ap);
 
@@ -341,7 +333,9 @@ m88110_set_sapr(apr_t ap)
 	set_dcmd(CMMU_DCMD_INV_UATC);
 	set_dcmd(CMMU_DCMD_INV_SATC);
 
-	/* restore MMU settings */
+	/* Enable translation */
+	ictl |= CMMU_ICTL_MEN | CMMU_ICTL_HTEN;
+	dctl |= CMMU_DCTL_MEN | CMMU_DCTL_HTEN;
 	set_ictl(ictl);
 	set_dctl(dctl);
 }
@@ -389,9 +383,6 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  *	Functions that invalidate caches.
  */
 
-#define	trunc_cache_line(a)	((a) & ~(MC88110_CACHE_LINE - 1))
-#define	round_cache_line(a)	trunc_cache_line((a) + MC88110_CACHE_LINE - 1)
-
 /*
  * 88110 general information #22:
  * ``Issuing a command to flush and invalidate the data cache while the
@@ -402,6 +393,9 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  *   command was treated like a nop when the cache was disabled.  This
  *   is no longer the case.''
  */
+
+#define	trunc_cache_line(a)	((a) & ~(MC88110_CACHE_LINE - 1))
+#define	round_cache_line(a)	trunc_cache_line((a) + MC88110_CACHE_LINE - 1)
 
 /*
  * Flush both Instruction and Data caches
@@ -472,8 +466,10 @@ m88410_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 void
 m88110_cmmu_sync_cache(paddr_t pa, psize_t size)
 {
-	/* flush all data to avoid errata invalidate */
-	mc88110_flush_data();
+	if (size <= MC88110_CACHE_LINE)
+		mc88110_flush_data_line(pa);
+	else
+		mc88110_flush_data_page(pa);
 }
 
 void
@@ -497,8 +493,8 @@ m88110_cmmu_inval_cache(paddr_t pa, psize_t size)
 		mc88110_inval_data_page(pa);
 
 	 * ... but there is no mc88110_inval_data_page(). Callers know
-	 * this and turn invalidates into syncs for areas larger than
-	 * a page.
+	 * this and turn invalidates into syncs with invalidate for page
+	 * or larger areas.
 	 */
 	mc88110_inval_data_line(pa);
 }
@@ -522,7 +518,6 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	switch (op) {
 	case DMA_CACHE_SYNC:
 		flusher = m88110_cmmu_sync_cache;
-		size = MC88110_CACHE_LINE;	/* leave loop after one call */
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
@@ -575,7 +570,6 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	case DMA_CACHE_SYNC:
 		flusher = m88110_cmmu_sync_cache;
 		ext_flusher = mc88410_flush;
-		size = MC88110_CACHE_LINE;	/* leave loop after one call */
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
@@ -631,7 +625,6 @@ m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	switch (op) {
 	case DMA_CACHE_SYNC:
 		flusher = m88110_cmmu_sync_cache;
-		size = MC88110_CACHE_LINE;	/* leave loop after one call */
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
@@ -681,7 +674,6 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	case DMA_CACHE_SYNC:
 		flusher = m88110_cmmu_sync_cache;
 		ext_flusher = mc88410_flush;
-		size = MC88110_CACHE_LINE;	/* leave loop after one call */
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
