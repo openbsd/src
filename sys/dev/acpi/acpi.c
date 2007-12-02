@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.107 2007/11/27 18:45:45 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.108 2007/12/02 20:44:33 fgsch Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -549,16 +549,16 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	printf("%s: tables ", DEVNAME(sc));
+	printf("%s: tables", DEVNAME(sc));
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-		printf("%.4s ", entry->q_table);
+		printf(" %.4s ", entry->q_table);
 	}
 	printf("\n");
 
 	/* Display wakeup devices and lowest S-state */
-	printf("%s: wakeup devices ", DEVNAME(sc));
+	printf("%s: wakeup devices", DEVNAME(sc));
 	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
-		printf("%.4s(S%d) ", wentry->q_node->name,
+		printf(" %.4s(S%d) ", wentry->q_node->name,
 		    wentry->q_state);
 	}
 	printf("\n");
