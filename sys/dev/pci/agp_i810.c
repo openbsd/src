@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.23 2007/11/28 23:37:34 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.24 2007/12/02 14:44:20 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -55,22 +55,9 @@
 #define READ1(off)	bus_space_read_1(isc->bst, isc->bsh, off)
 #define READ4(off)	bus_space_read_4(isc->bst, isc->bsh, off)
 #define WRITE4(off,v)	bus_space_write_4(isc->bst, isc->bsh, off, v)
-#define WRITEGTT(off,v)							\
-	do {								\
-		if (isc->chiptype == CHIP_I915) {			\
-			bus_space_write_4(isc->gtt_bst, isc->gtt_bsh,	\
-			    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,	\
-			    (v) ? ((v)|1) : 0);				\
-		} else if (isc->chiptype == CHIP_I965) {		\
-			WRITE4(AGP_I965_GTT +				\
-			    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,	\
-			    (v) ? ((v) | 1) : 0);			\
-		} else {						\
-			WRITE4(AGP_I810_GTT +				\
-			    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,	\
-			    (v) ? ((v) | 1) : 0);			\
-		}							\
-	} while (0)
+
+#define WRITEGTT(off,v)	bus_space_write_4(isc->gtt_bst, isc->gtt_bsh, off, v)
+#define WRITE_GATT(off,v)	agp_i810_write_gatt(isc, off, v)
 
 
 enum {
@@ -109,6 +96,7 @@ int	agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 int	agp_i810_bind_memory(struct agp_softc *, struct agp_memory *,
 	    off_t);
 int	agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
+void	agp_i810_write_gatt(struct agp_i810_softc *, bus_size_t, u_int32_t);
 
 struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -642,7 +630,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 		}
 	}
 
-	WRITEGTT(offset, physical);
+	WRITE_GATT(offset, physical);
 	return (0);
 }
 
@@ -663,7 +651,7 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
 		}
 	}
 
-	WRITEGTT(offset, 0);
+	WRITE_GATT(offset, 0);
 	return (0);
 }
 
@@ -798,7 +786,7 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
-			WRITEGTT(offset + i, (mem->am_physical + i));
+			WRITE_GATT(offset + i, (mem->am_physical + i));
 		}
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
@@ -812,7 +800,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		return (EINVAL);
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		WRITEGTT(offset, i);
+		WRITE4(AGP_I810_GTT +
+		    (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4, i | 3);
 	mem->am_is_bound = 1;
 	return (0);
 }
@@ -825,7 +814,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
-			WRITEGTT(mem->am_offset + i, 0);
+			WRITE_GATT(mem->am_offset + i, 0);
 		}
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
@@ -839,7 +828,25 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 		return (EINVAL);
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		WRITEGTT(i,0);
+		WRITE4(AGP_I810_GTT + (i >> AGP_PAGE_SHIFT) * 4, 0);
 	mem->am_is_bound = 0;
 	return (0);
+}
+
+void
+agp_i810_write_gatt(struct agp_i810_softc *isc, bus_size_t off, u_int32_t v)
+{
+	u_int32_t d;
+
+	d = v | 1;
+
+	if (isc->chiptype == CHIP_I915)
+		WRITEGTT((u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, v ? d : 0);
+	else if (isc->chiptype == CHIP_I965) {
+		d |= (v & 0x0000000f00000000ULL) >> 28;
+		WRITE4(AGP_I965_GTT +
+		    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, v ? d : 0);
+	} else
+		WRITE4(AGP_I810_GTT +
+		    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, v ? d : 0);
 }
