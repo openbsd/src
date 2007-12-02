@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.105 2007/11/17 21:52:25 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.106 2007/12/02 22:24:54 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -191,7 +191,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_RETURN,		"Return",	"t",	aml_parseref },
 	{ AMLOP_FATAL,		"Fatal",	"bdi",	aml_parsemisc2 },
 	{ AMLOP_NOP,		"Nop",		"",	aml_parsesimple },
-	{ AMLOP_BREAKPOINT,	"BreakPoint",	"" },
+	{ AMLOP_BREAKPOINT,	"BreakPoint",	"",     aml_parsesimple },
 
 	/* Arithmetic operations */
 	{ AMLOP_INCREMENT,	"Increment",	"t",	aml_parsemath },
