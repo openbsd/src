@@ -1,4 +1,4 @@
-/*	$OpenBSD: asl_dump.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $	*/
+/*	$OpenBSD: asl_dump.c,v 1.6 2007/12/02 22:23:04 jordan Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asl_dump.c,v 1.5 2007/11/26 19:57:05 kettenis Exp $
+ *	$Id: asl_dump.c,v 1.6 2007/12/02 22:23:04 jordan Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.5 2001/10/23 14:53:58 takawata Exp $
  */
 
@@ -300,10 +300,14 @@ asl_dump_defmethod(u_int8_t **dpp, int indent)
 	u_int8_t	flags;
 	u_int32_t	pkglength;
 	struct	aml_name *oname;
+	int		swi;
 
 	dp = *dpp;
 	start = dp;
 	pkglength = asl_dump_pkglength(&dp);
+
+	swi = scope_within_method;
+	scope_within_method = 0;
 
 	printf("Method(");
 	ASL_ENTER_SCOPE(dp, oname);
@@ -319,7 +323,7 @@ asl_dump_defmethod(u_int8_t **dpp, int indent)
 	end = start + pkglength;
 	scope_within_method = 1;
 	asl_dump_objectlist(&dp, end, indent + 1);
-	scope_within_method = 0;
+	scope_within_method = swi;
 	print_indent(indent);
 	printf("}");
 
