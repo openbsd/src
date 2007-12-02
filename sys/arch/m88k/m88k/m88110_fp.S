@@ -1,106 +1,239 @@
-/* $OpenBSD: m88110_fp.S,v 1.2 2004/08/09 20:52:11 miod Exp $	*/
-/*
- * Copyright (c) 1999 Steve Murphree, Jr.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/* Floating point trouble routines */
-/*
- * August 1, 1999
- * smurph@OpenBSD.org
- *
- * Additions to support MVME197 (mc88110) mmu routines.
- */
+/*	$OpenBSD: m88110_fp.S,v 1.3 2007/12/02 21:32:08 miod Exp $	*/
 
 /*
- * This is cheesy.  I'm using the TCFP features of the mc88110
- * because it was easy.  It is not 100% IEEE.  But it may be
- * close enough.  We shall see...  XXXsmurph
- * Err... TCFP == "Time Critical Floating Point"
+ * Copyright (c) 2007, Miodrag Vallat.
  *
- * The only two SFU1 exceptions that can occure in TCFP mode are:
- * 1) Unimplemented Floating Point Instruction
- * 2) Floating Point Privilege Violation
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "assym.h"
-#include <machine/trap.h>
-#include <machine/asm.h>
 
-ASENTRY(m88110_Xfp_precise)
-	or	r29, r3, r0     /*  r29 is now the E.F. */
+#include <machine/asm.h>
+#include <machine/trap.h>
+
+/* FPECR bits */
+#define	FIOV_BIT	7
+#define	FUNIMP_BIT	6
+#define	FPRV_BIT	5
+#define	FROP_BIT	4
+#define	FDVZ_BIT	3
+#define	FUNF_BIT	2
+#define	FOVF_BIT	1
+#define	FINX_BIT	0
+
+/* FPSR and FPCR exception bits */
+#define	EFINV_BIT	4
+#define	EFDVZ_BIT	3
+#define	EFUNF_BIT	2
+#define	EFOVF_BIT	1
+#define	EFINX_BIT	0
+
+ASENTRY(m88110_fpu_exception)
+	/*
+	 * On entry, r30 point to the exception frame.
+	 * Save our guts so that we can call other functions.
+	 */
 	subu	r31, r31, 16
 	st	r1,  r31, 0
-	st	r29, r31, 4
-
-	ld	r2, r29, EF_FPSR * 4
-	ld	r3, r29, EF_FPCR * 4
-	ld	r4, r29, EF_FPECR * 4
+	st	r30, r31, 4
 
 	/*
-	 * Load into r1 the return address for the 0 handlers.  Looking
-	 * at FPECR, branch to the appropriate 0 handler.  However,
-	 * if none of the 0 bits are enabled, then a floating point
-	 * instruction was issued with the floating point unit disabled.  This
-	 * will cause an unimplemented opcode 0.
+	 * We never saved the floating point exception and control
+	 * registers. Do it now, and then decide what kind of exception
+	 * we've got.
+	 * Note that we can access the control registers even if the
+	 * FPU is disabled.
+	 */
+	fldcr	r2,  FPECR
+	fldcr	r3,  FPSR
+	fldcr	r4,  FPCR
+	st	r2,  r30, EF_FPECR * 4
+	st	r3,  r30, EF_FPSR * 4
+	st	r4,  r30, EF_FPCR * 4
+
+	/*
+	 * Check for floating point unimplemented bit first, as other
+	 * bits are undefined if this bit is set.
+	 */
+	bb1	FUNIMP_BIT, r2, _ASM_LABEL(m88110_funimp)
+
+	/*
+	 * Check for the other exceptions.
+	 *
+	 * FOVF and FUNF need to be checked before FINX.
+	 */
+	bb1	FIOV_BIT, r2, _ASM_LABEL(m88110_fiov)
+	bb1	FPRV_BIT, r2, _ASM_LABEL(m88110_fprv)
+	bb1	FROP_BIT, r2, _ASM_LABEL(m88110_frop)
+	bb1	FDVZ_BIT, r2, _ASM_LABEL(m88110_fdvz)
+	bb1	FUNF_BIT, r2, _ASM_LABEL(m88110_funf)
+	bb1	FOVF_BIT, r2, _ASM_LABEL(m88110_fovf)
+	bb1	FINX_BIT, r2, _ASM_LABEL(m88110_finx)
+
+	/*
+	 * If control goes here, we got a floating point exception,
+	 * but no cause bit is set. This shouldn't happen; if it does,
+	 * just fall through the unimplemented instruction code.
 	 */
 
-   	bb0	6,r4, 2f   	/* branch to m88110_FPunimp if bit set */
-     	br	_ASM_LABEL(m88110_FPuimp)
-2:  	bb0	5,r4, 3f 	/* branch to m88110_FPpriviol if bit set */
-	br	_ASM_LABEL(m88110_FPpriviol)
-3:
-	or.u	r4, r4, 0xffff
+ASLOCAL(m88110_funimp)
+	/*
+	 * Check if the fpu was enabled.
+	 */
+	ld	r5, r30, EF_EPSR * 4
+	/* FPE_FLTINV */
+	bb1	PSR_FPU_DISABLE_BIT, r5, _ASM_LABEL(m88110_fpeflt)
 
-ASLOCAL(m88110_FPuimp)
-	subu	r31,r31,16		/* allocate stack */
-	st	r1,r31,4		/* save return address */
-	st	r3,r31,0		/* save exception frame */
-	or	r2,r0,T_FPEPFLT		/* load trap type */
-	bsr.n	_C_LABEL(m88110_trap)	/* trap */
-	 or	r3, r29, r0
-	ld	r1,r31,4		/* recover return address */
- 	jmp.n	r1
-	 addu	r31,r31,16		/* deallocate stack */
+	/*
+	 * We should check the faulting instruction here.
+	 * This can be:
+	 * - fsqrt (unimplemented)
+	 * - any valid fp instruction operating on an odd register pair
+	 * - any bogus fp instruction.
+	 */
 
-ASLOCAL(m88110_FPpriviol)
-	subu	r31,r31,16		/* allocate stack */
-	st	r1,r31,4		/* save return address */
-	st	r3,r31,0		/* save exception frame */
-	or	r2,r0,T_PRIVINFLT	/* load trap type */
-	bsr.n	_C_LABEL(m88110_trap)	/* trap */
-	 or	r3, r29, r0
-	ld	r1,r31,4		/* recover return address */
- 	jmp.n	r1
-	 addu	r31,r31,16		/* deallocate stack */
+	/* XXX TBD */
 
-ENTRY(set_tcfp)
-	or.u	r2, r0, hi16(0x200000)
-	or	r2, r2, lo16(0x200000)
+	br	_ASM_LABEL(m88110_fpeflt)
+
+/*
+ * Floating-point integer overflow.
+ *
+ * Register it in the status register, and if this exception is allowed
+ * in the control register, send a trap.
+ */
+ASLOCAL(m88110_fiov)
+	set	r3,  r3,  1<EFINV_BIT>
+	fstcr	r3,  FPSR
+
+	/* FPE_FLTSUB */
+	bb1	EFINV_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
 	jmp.n	r1
-	 fstcr	r2, fcr0
+	 addu	r31, r31, 16
+
+/*
+ * Floating-point privilege violation.
+ *
+ * This exception is caused by fldcr, fstcr or fxcr with either a
+ * non-existing register (fcr1-fcr61), or fcr0 from userland.
+ */ 
+ASLOCAL(m88110_fprv)
+	/* ILL_PRVREG */
+	or	r2, r0, T_PRIVINFLT
+	bsr.n	_C_LABEL(m88110_trap)
+	 or	r3, r0, r30
+
+	ld	r1,  r31, 0
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+/*
+ * Floating-point reserved operand.
+ */
+ASLOCAL(m88110_frop)
+	set	r3,  r3,  1<EFINV_BIT>
+	fstcr	r3,  FPSR
+
+	/* XXX TBD lots of analysis to do here... */
+
+	/* FPE_FLTINV */
+	bb1	EFINV_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	/* XXX TBD ... and then decide on a value... */
+
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+/*
+ * Floating-point divide by zero.
+ *
+ * Register it in the status register, and if this exception is allowed
+ * in the control register, send a trap.
+ */
+ASLOCAL(m88110_fdvz)
+	set	r3,  r3,  1<EFDVZ_BIT>
+	fstcr	r3,  FPSR
+
+	/* FPE_INTDIV */
+	bb1	EFDVZ_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+/*
+ * Floating-point underflow.
+ */
+ASLOCAL(m88110_funf)
+	set	r3,  r3,  1<EFUNF_BIT>
+	set	r3,  r3,  1<EFINX_BIT>
+	fstcr	r3,  FPSR
+
+	/* FPE_FLTUND */
+	bb1	EFUNF_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	/* FPE_FLTRES */
+	bb1	EFINX_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	/* XXX TBD check rounding mode, check destination register, write
+	   default value to it/them. */
+
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+
+/*
+ * Floating-point overflow.
+ */
+ASLOCAL(m88110_fovf)
+	set	r3,  r3,  1<EFOVF_BIT>
+	set	r3,  r3,  1<EFINX_BIT>
+	fstcr	r3,  FPSR
+
+	/* FPE_FLTOVF */
+	bb1	EFOVF_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	/* FPE_FLTRES */
+	bb1	EFINX_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	/* XXX TBD check rounding mode, check destination register, write
+	   default value to it/them. */
+
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+/*
+ * Floating-point inexact.
+ *
+ * Register it in the status register, and if this exception is allowed
+ * in the control register, send a trap.
+ */
+ASLOCAL(m88110_finx)
+	set	r3,  r3,  1<EFINX_BIT>
+	fstcr	r3,  FPSR
+
+	/* FPE_FLTRES */
+	bb1	EFINX_BIT, r4, _ASM_LABEL(m88110_fpeflt)
+
+	jmp.n	r1
+	 addu	r31, r31, 16
+
+ASLOCAL(m88110_fpeflt)
+	or	r2, r0, T_FPEPFLT
+	bsr.n	_C_LABEL(m88110_trap)
+	 or	r3, r0, r30
+
+	ld	r1,  r31, 0
+	jmp.n	r1
+	 addu	r31, r31, 16
