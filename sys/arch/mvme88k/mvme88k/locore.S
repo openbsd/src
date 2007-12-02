@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.55 2007/12/02 21:28:40 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.56 2007/12/02 21:33:23 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -346,9 +346,22 @@ GLOBAL(doboot)
 	 set	r4, r4, 1<23>		/* set SYSRST bit - bit 23 */
 	st	r4, r3, 0x0060		/* and store it back  */
 1:
-	ld	r4, r3, 0x0104		/* try local reset, then */
+	/*
+	 * MVME197LE Errata #7:
+	 * ``When asserting the RST bit in the VMEchip2 GCSR, the pulse
+	 *   generated is too short for the BusSwitch1 to recognize
+	 *   properly.''
+	 */
+#ifdef MVME197
+	or.u	r2, r0, hi16(0x20000)
+#endif
+	ld	r4, r3, 0x0104		/* try local reset, then... */
 	set	r4, r4, 1<7>
 	st	r4, r3, 0x0104
+#ifdef MVME197
+	bcnd.n	ne0,r2, 1b		/* ...for a while */
+	 subu	r2, r2, 1
+#endif
 
 	/*
 	 * We will be here if the reset above failed. In this case,
