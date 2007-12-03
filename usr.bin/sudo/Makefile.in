@@ -20,7 +20,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.246.2.18 2007/11/02 19:15:16 millert Exp $
+# $Sudo: Makefile.in,v 1.246.2.20 2007/12/03 10:34:32 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -43,7 +43,7 @@ INSTALL = $(SHELL) $(srcdir)/install-sh -c
 # Libraries
 LIBS = @LIBS@
 NET_LIBS = @NET_LIBS@
-SUDO_LIBS = @SUDO_LIBS@ @AFS_LIBS@ $(LIBS) $(NET_LIBS)
+SUDO_LIBS = @SUDO_LIBS@ @AFS_LIBS@ @GETGROUPS_LIB@ $(LIBS) $(NET_LIBS)
 
 # C preprocessor flags
 CPPFLAGS = -I. -I$(srcdir) @CPPFLAGS@
@@ -131,7 +131,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.9p8
+VERSION = 1.6.9p9
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
             LICENSE Makefile.in PORTING README README.LDAP \

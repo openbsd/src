@@ -52,6 +52,15 @@
 # include <security/pam_appl.h>
 #endif
 
+#ifdef HAVE_DGETTEXT
+# include <libintl.h>
+# if defined(__LINUX_PAM__)
+#  define PAM_TEXT_DOMAIN	"Linux-PAM"
+# elif defined(__sun__)
+#  define PAM_TEXT_DOMAIN	"SUNW_OST_SYSOSPAM"
+# endif
+#endif
+
 #include "sudo.h"
 #include "sudo_auth.h"
 
@@ -63,7 +72,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.7 2007/10/09 00:06:06 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.9 2007/12/02 17:13:52 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -239,14 +248,19 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 {
     struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
-    const char *p = def_prompt;
+    const char *prompt;
     char *pass;
-    int n, flags;
+    int n, flags, std_prompt;
     extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
 	return(PAM_CONV_ERR);
     zero_bytes(*response, num_msg * sizeof(struct pam_response));
+
+    /* Is the sudo prompt standard? (If so, we'l just use PAM's) */
+    std_prompt =  strncmp(def_prompt, "Password:", 9) == 0 &&
+	(def_prompt[9] == '\0' ||
+	(def_prompt[9] == ' ' && def_prompt[10] == '\0'));
 
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
 	flags = tgetpass_flags;
@@ -254,12 +268,21 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 	    case PAM_PROMPT_ECHO_ON:
 		SET(flags, TGP_ECHO);
 	    case PAM_PROMPT_ECHO_OFF:
+		prompt = def_prompt;
 		/* Only override PAM prompt if it matches /^Password: ?/ */
-		if (strncmp(pm->msg, "Password:", 9) || (pm->msg[9] != '\0'
-		    && (pm->msg[9] != ' ' || pm->msg[10] != '\0')))
-		    p = pm->msg;
+#if defined(PAM_TEXT_DOMAIN) && defined(HAVE_DGETTEXT)
+		if (!def_passprompt_override && (std_prompt ||
+		    (strcmp(pm->msg, dgettext(PAM_TEXT_DOMAIN, "Password: ")) &&
+		    strcmp(pm->msg, dgettext(PAM_TEXT_DOMAIN, "Password:")))))
+		    prompt = pm->msg;
+#else
+		if (!def_passprompt_override && (std_prompt ||
+		    strncmp(pm->msg, "Password:", 9) || (pm->msg[9] != '\0'
+		    && (pm->msg[9] != ' ' || pm->msg[10] != '\0'))))
+		    prompt = pm->msg;
+#endif
 		/* Read the password. */
-		pass = tgetpass(p, def_passwd_timeout * 60, flags);
+		pass = tgetpass(prompt, def_passwd_timeout * 60, flags);
 		if (pass == NULL) {
 		    /* We got ^C instead of a password; abort quickly. */
 		    nil_pw = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.7 2007/10/25 16:08:12 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 2007/12/03 15:09:47 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -85,6 +85,7 @@
 #define DONT_LEAK_PATH_INFO 1
 #define EDITOR _PATH_VI
 #define ENV_EDITOR 1
+#define GETGROUPS_T gid_t
 #define INCORRECT_PASSWORD "Sorry, try again."
 #define LOGFAC "authpriv"
 #define LOGGING SLOG_SYSLOG

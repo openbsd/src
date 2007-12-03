@@ -57,7 +57,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.30.2.4 2007/07/06 14:16:22 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.30.2.7 2007/11/27 23:41:23 millert Exp $";
 #endif /* lint */
 
 #ifdef __TANDEM
@@ -70,6 +70,10 @@ __unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.30.2.4 2007/07/06 1
  * Prototypes
  */
 static void runas_setup		__P((void));
+static void runas_setgroups	__P((void));
+static void restore_groups	__P((void));
+
+static int current_perm = -1;
 
 #ifdef HAVE_SETRESUID
 /*
@@ -82,11 +86,16 @@ void
 set_perms(perm)
     int perm;
 {
+    if (perm == current_perm)
+	return;
+
     switch (perm) {
 	case PERM_ROOT:
 				if (setresuid(ROOT_UID, ROOT_UID, ROOT_UID))
 				    errx(1, "setresuid(ROOT_UID, ROOT_UID, ROOT_UID) failed, your operating system may have a broken setresuid() function\nTry running configure with --disable-setresuid");
 				(void) setresgid(-1, user_gid, -1);
+				if (current_perm == PERM_RUNAS)
+				    restore_groups();
 			      	break;
 
 	case PERM_USER:
@@ -103,6 +112,7 @@ set_perms(perm)
 			      	break;
 				
 	case PERM_RUNAS:
+				runas_setgroups();
 				(void) setresgid(-1, runas_pw->pw_gid, -1);
 				if (setresuid(-1, runas_pw->pw_uid, -1))
 				    err(1, "unable to change to runas uid");
@@ -142,6 +152,8 @@ set_perms(perm)
 				    err(1, "setresuid(ROOT_UID, timestamp_uid, ROOT_UID)");
 			      	break;
     }
+
+    current_perm = perm;
 }
 
 #else
@@ -157,6 +169,9 @@ void
 set_perms(perm)
     int perm;
 {
+    if (perm == current_perm)
+	return;
+
     switch (perm) {
 	case PERM_ROOT:
 				if (setreuid(-1, ROOT_UID))
@@ -164,6 +179,8 @@ set_perms(perm)
 				if (setuid(ROOT_UID))
 				    err(1, "setuid(ROOT_UID)");
 				(void) setregid(-1, user_gid);
+				if (current_perm == PERM_RUNAS)
+				    restore_groups();
 			      	break;
 
 	case PERM_USER:
@@ -180,6 +197,7 @@ set_perms(perm)
 			      	break;
 				
 	case PERM_RUNAS:
+				runas_setgroups();
 				(void) setregid(-1, runas_pw->pw_gid);
 				if (setreuid(-1, runas_pw->pw_uid))
 				    err(1, "unable to change to runas uid");
@@ -218,6 +236,8 @@ set_perms(perm)
 				    err(1, "setreuid(ROOT_UID, timestamp_uid)");
 			      	break;
     }
+
+    current_perm = perm;
 }
 
 # else /* !HAVE_SETRESUID && !HAVE_SETREUID */
@@ -231,6 +251,9 @@ void
 set_perms(perm)
     int perm;
 {
+    if (perm == current_perm)
+	return;
+
     /*
      * Since we only have setuid() and seteuid() and semantics
      * for these calls differ on various systems, we set
@@ -245,6 +268,8 @@ set_perms(perm)
 	case PERM_ROOT:
 				/* uid set above */
 				(void) setegid(user_gid);
+				if (current_perm == PERM_RUNAS)
+				    restore_groups();
 			      	break;
 
 	case PERM_USER:
@@ -261,6 +286,7 @@ set_perms(perm)
 			      	break;
 				
 	case PERM_RUNAS:
+				runas_setgroups();
 				(void) setegid(runas_pw->pw_gid);
 				if (seteuid(runas_pw->pw_uid))
 				    err(1, "unable to change to runas uid");
@@ -297,6 +323,8 @@ set_perms(perm)
 				    err(1, "seteuid(timestamp_uid)");
 			      	break;
     }
+
+    current_perm = perm;
 }
 
 # else /* !HAVE_SETRESUID && !HAVE_SETREUID && !HAVE_SETEUID */
@@ -310,11 +338,15 @@ void
 set_perms(perm)
     int perm;
 {
+    if (perm == current_perm)
+	return;
 
     switch (perm) {
 	case PERM_ROOT:
 				if (setuid(ROOT_UID))
 					err(1, "setuid(ROOT_UID)");
+				if (current_perm == PERM_RUNAS)
+				    restore_groups();
 				break;
 
 	case PERM_FULL_USER:
@@ -336,10 +368,64 @@ set_perms(perm)
 				/* Unsupported since we can't set euid. */
 				break;
     }
+
+    current_perm = perm;
 }
 #  endif /* HAVE_SETEUID */
 # endif /* HAVE_SETREUID */
 #endif /* HAVE_SETRESUID */
+
+#ifdef HAVE_INITGROUPS
+static void
+runas_setgroups()
+{
+    static int ngroups = -1;
+    static GETGROUPS_T *groups;
+    struct passwd *pw;
+
+    if (def_preserve_groups)
+	return;
+
+    /*
+     * Use stashed copy of runas groups if available, else initgroups and stash.
+     */
+    if (ngroups == -1) {
+	pw = runas_pw ? runas_pw : sudo_user.pw;
+	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
+	    log_error(USE_ERRNO|MSG_ONLY, "can't set runas group vector");
+	if ((ngroups = getgroups(0, NULL)) < 0)
+	    log_error(USE_ERRNO|MSG_ONLY, "can't get runas ngroups");
+	groups = emalloc2(ngroups, sizeof(GETGROUPS_T));
+	if (getgroups(ngroups, groups) < 0)
+	    log_error(USE_ERRNO|MSG_ONLY, "can't get runas group vector");
+    } else {
+	if (setgroups(ngroups, groups) < 0)
+	    log_error(USE_ERRNO|MSG_ONLY, "can't set runas group vector");
+    }
+}
+
+static void
+restore_groups()
+{
+    if (setgroups(user_ngroups, user_groups) < 0)
+	log_error(USE_ERRNO|MSG_ONLY, "can't reset user group vector");
+}
+
+#else
+
+static void
+runas_setgroups()
+{
+    /* STUB */
+}
+
+static void
+restore_groups()
+{
+    /* STUB */
+}
+
+#endif /* HAVE_INITGROUPS */
 
 static void
 runas_setup()
@@ -357,10 +443,7 @@ runas_setup()
 #ifdef HAVE_LOGIN_CAP_H
 	if (def_use_loginclass) {
 	    /*
-             * We don't have setusercontext() set the user since we
-             * may only want to set the effective uid.  Depending on
-             * sudoers and/or command line arguments we may not want
-             * setusercontext() to call initgroups().
+             * We only use setusercontext() set the nice value and rlimits.
 	     */
 	    flags = LOGIN_SETRESOURCES|LOGIN_SETPRIORITY;
 	    if (!def_preserve_groups)
@@ -373,19 +456,13 @@ runas_setup()
 		else
 		    warn("unable to set user context");
 	    }
-	} else
-#endif /* HAVE_LOGIN_CAP_H */
-	{
-	    if (setgid(runas_pw->pw_gid))
-		warn("cannot set gid to runas gid");
-#ifdef HAVE_INITGROUPS
-	    /*
-	     * Initialize group vector unless asked not to.
-	     */
-	    if (!def_preserve_groups &&
-		initgroups(*user_runas, runas_pw->pw_gid) < 0)
-		warn("cannot set group vector");
-#endif /* HAVE_INITGROUPS */
 	}
+#endif /* HAVE_LOGIN_CAP_H */
+	if (setgid(runas_pw->pw_gid))
+	    warn("cannot set gid to runas gid");
+	/*
+	 * Initialize group vector unless asked not to.
+	 */
+	runas_setgroups();
     }
 }

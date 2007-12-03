@@ -211,6 +211,10 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"Default password prompt: %s",
 	NULL,
     }, {
+	"passprompt_override", T_FLAG,
+	"If set, passprompt will override system prompt in all cases.",
+	NULL,
+    }, {
 	"runas_default", T_STR,
 	"Default user to run commands as: %s",
 	NULL,

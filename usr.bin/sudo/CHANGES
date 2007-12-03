@@ -1993,3 +1993,16 @@ Sudo 1.6.9p7 released.
      user specified.
 
 Sudo 1.6.9p8 released.
+
+630) The ALL command in sudoers now implies SETENV permissions.
+
+631) The command search is now performed using the target user's
+     auxiliary group vector too.
+
+632) When determining if the PAM prompt is the default "Password: ",
+     compare the localized version if possible.
+
+633) Added passprompt_override flag to sudoers to cause sudo's prompt
+     to be used in all cases.  Also set when the -p flag is used.
+
+Sudo 1.6.9p9 released.

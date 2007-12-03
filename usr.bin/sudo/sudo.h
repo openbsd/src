@@ -17,7 +17,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.209.2.11 2007/09/13 23:06:51 millert Exp $
+ * $Sudo: sudo.h,v 1.209.2.13 2007/11/27 23:41:23 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -51,7 +51,7 @@ struct sudo_user {
     char *cmnd_safe;
     char *class_name;
     int ngroups;
-    gid_t *groups;
+    GETGROUPS_T *groups;
     struct list_member *env_vars;
 };
 
@@ -78,6 +78,8 @@ struct sudo_user {
 #define TRUE                     1
 #undef FALSE
 #define FALSE                    0
+#undef IMPLIED
+#define IMPLIED                  2
 #undef NOMATCH
 #define NOMATCH                 -1
 #undef UNSPEC

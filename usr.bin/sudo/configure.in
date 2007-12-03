@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.27 2007/10/24 16:43:25 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.30 2007/12/02 00:35:20 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -24,6 +24,7 @@ AC_SUBST(LIBS)
 AC_SUBST(SUDO_LIBS)
 AC_SUBST(NET_LIBS)
 AC_SUBST(AFS_LIBS)
+AC_SUBST(GETGROUPS_LIB)
 AC_SUBST(OSDEFS)
 AC_SUBST(AUTH_OBJS)
 AC_SUBST(MANTYPE)
@@ -1677,6 +1678,7 @@ esac
 dnl
 dnl Function checks
 dnl
+AC_FUNC_GETGROUPS
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
 	       setlocale getaddrinfo)
@@ -1833,6 +1835,13 @@ if test ${with_pam-"no"} != "no"; then
 			    AC_MSG_WARN([Ignoring unknown argument to --enable-pam-session: $enableval])
 			    ;;
 	    esac], AC_MSG_RESULT(yes))
+	case $host in
+	    *-*-linux*|*-*-solaris*)
+		    AC_CHECK_FUNCS(dgettext, [],
+			[AC_CHECK_LIB(intl, dgettext, [LIBS="${LIBS} -lintl"]
+			[AC_DEFINE(HAVE_DGETTEXT)])])
+		    ;;
+	esac
     fi
 fi
 
@@ -2395,6 +2404,7 @@ AH_TEMPLATE(HAVE_BSD_AUTH_H, [Define to 1 if you use BSD authentication.])
 AH_TEMPLATE(HAVE_DCE, [Define to 1 if you use OSF DCE.])
 AH_TEMPLATE(HAVE_DD_FD, [Define to 1 if your `DIR' contains dd_fd.])
 AH_TEMPLATE(HAVE_DIRFD, [Define to 1 if you have the `dirfd' function or macro.])
+AH_TEMPLATE(HAVE_DGETTEXT, [Define to 1 if you have the `dgettext' function.])
 AH_TEMPLATE(HAVE_DISPCRYPT, [Define to 1 if you have the `dispcrypt' function.])
 AH_TEMPLATE(HAVE_EXTENDED_GLOB, [Define to 1 if your glob.h defines the GLOB_BRACE and GLOB_TILDE flags.])
 AH_TEMPLATE(HAVE_FCNTL_CLOSEM, [Define to 1 if your system has the F_CLOSEM fcntl.])

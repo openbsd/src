@@ -19,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.95.2.20 2007/08/27 19:52:28 millert Exp $
+$Sudo: sudoers.pod,v 1.95.2.22 2007/12/02 17:13:52 millert Exp $
 =pod
 
 =head1 NAME
@@ -336,7 +336,9 @@ basis.  Note that if C<SETENV> has been set for a command, any
 environment variables set on the command line way are not subject
 to the restrictions imposed by I<env_check>, I<env_delete>, or
 I<env_keep>.  As such, only trusted users should be allowed to set
-variables in this manner.
+variables in this manner.  If the command matched is B<ALL>, the
+C<SETENV> tag is implied for that command; this default may
+be overridden by use of the C<UNSETENV> tag.
 
 =head2 Wildcards
 
@@ -576,6 +578,13 @@ to.  The disadvantage is that if the executable is simply not in
 the user's C<PATH>, B<sudo> will tell the user that they are not
 allowed to run it, which can be confusing.  This flag is I<@path_info@>
 by default.
+
+=item passprompt_override
+
+The password prompt specified by I<passprompt> will normally only
+be used if the passwod prompt provided by systems such as PAM matches
+the string "Password:".  If I<passprompt_override> is set, I<passprompt>
+will always be used.  This flag is I<off> by default.
 
 =item preserve_groups
 

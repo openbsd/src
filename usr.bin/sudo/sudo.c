@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.31 2007/09/13 23:06:51 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.33 2007/12/02 17:13:52 millert Exp $";
 #endif /* lint */
 
 /*
@@ -596,7 +596,7 @@ init_vars(sudo_mode, envp)
 
 #ifdef HAVE_GETGROUPS
     if ((user_ngroups = getgroups(0, NULL)) > 0) {
-	user_groups = emalloc2(user_ngroups, MAX(sizeof(gid_t), sizeof(int)));
+	user_groups = emalloc2(user_ngroups, sizeof(GETGROUPS_T));
 	if (getgroups(user_ngroups, user_groups) < 0)
 	    log_error(USE_ERRNO|MSG_ONLY, "can't get group vector");
     } else
@@ -740,6 +740,7 @@ parse_args(argc, argv)
 			usage(1);
 
 		    user_prompt = NewArgv[1];
+		    def_passprompt_override = TRUE;
 
 		    NewArgc--;
 		    NewArgv++;

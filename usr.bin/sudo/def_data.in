@@ -149,6 +149,9 @@ exempt_group
 passprompt
 	T_STR
 	"Default password prompt: %s"
+passprompt_override
+	T_FLAG
+	"If set, passprompt will override system prompt in all cases."
 runas_default
 	T_STR
 	"Default user to run commands as: %s"

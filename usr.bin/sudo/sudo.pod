@@ -19,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.70.2.18 2007/08/13 16:23:31 millert Exp $
+$Sudo: sudo.pod,v 1.70.2.19 2007/11/21 19:26:10 millert Exp $
 =pod
 
 =head1 NAME
@@ -301,9 +301,9 @@ on the command line in the form of B<VAR>=I<value>, e.g.
 B<LD_LIBRARY_PATH>=I</usr/local/pkg/lib>.  Variables passed on the
 command line are subject to the same restrictions as normal environment
 variables with one important exception.  If the I<setenv> option
-is set in I<sudoers> or the command to be run has the C<SETENV> tag
-set the user may set variables that would overwise be forbidden.
-See L<sudoers(5)> for more information.
+is set in I<sudoers>, the command to be run has the C<SETENV> tag
+set or the command matched is C<ALL>, the user may set variables
+that would overwise be forbidden.  See L<sudoers(5)> for more information.
 
 =head1 RETURN VALUES
 

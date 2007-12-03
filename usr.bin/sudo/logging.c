@@ -60,7 +60,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.12 2007/08/08 20:07:45 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.13 2007/11/25 13:07:38 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -370,9 +370,8 @@ log_error(flags, fmt, va_alist)
     va_start(ap);
 #endif
 
-    /* Become root if we are not already to avoid user control */
-    if (geteuid() != 0)
-	set_perms(PERM_ROOT);
+    /* Become root if we are not already to avoid user interference */
+    set_perms(PERM_ROOT);
 
     /* Expand printf-style format + args. */
     evasprintf(&message, fmt, ap);

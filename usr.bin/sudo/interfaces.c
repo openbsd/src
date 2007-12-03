@@ -89,7 +89,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.72.2.7 2007/10/24 16:43:26 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.72.2.8 2007/11/27 17:06:53 millert Exp $";
 #endif /* lint */
 
 
