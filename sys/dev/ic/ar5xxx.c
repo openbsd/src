@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.46 2007/10/13 01:54:22 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.47 2007/12/03 19:14:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1565,10 +1565,11 @@ ar5k_ar5111_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 	}
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_2GHZ) {
-		if (channel->c_channel_flags & IEEE80211_CHAN_B)
-			ee_mode = AR5K_EEPROM_MODE_11B;
-		else
+		if ((channel->c_channel_flags & IEEE80211_CHAN_G) ==
+		    IEEE80211_CHAN_G)
 			ee_mode = AR5K_EEPROM_MODE_11G;
+		else
+			ee_mode = AR5K_EEPROM_MODE_11B;
 		obdb = 0;
 
 		if (!ar5k_rfregs_op(rf, hal->ah_offset[0],
@@ -1669,10 +1670,11 @@ ar5k_ar5112_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 	}
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_2GHZ) {
-		if (channel->c_channel_flags & IEEE80211_CHAN_B)
-			ee_mode = AR5K_EEPROM_MODE_11B;
-		else
+		if ((channel->c_channel_flags & IEEE80211_CHAN_G) ==
+		    IEEE80211_CHAN_G)
 			ee_mode = AR5K_EEPROM_MODE_11G;
+		else
+			ee_mode = AR5K_EEPROM_MODE_11B;
 		obdb = 0;
 
 		if (!ar5k_rfregs_op(rf, hal->ah_offset[6],
