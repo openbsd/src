@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2007/12/04 05:37:40 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2007/12/04 05:42:48 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1749,13 +1749,13 @@ double_reg_fixup(struct trapframe *frame)
 		store = 1;
 		break;
 	default:
-		switch (instr & 0xfc000000) {
-		case 0x10000000:	/* ld.d rD, rS, imm16 */
+		switch (instr >> 26) {
+		case 0x10000000 >> 26:	/* ld.d rD, rS, imm16 */
 			addr = (instr & 0x0000ffff) +
 			    frame->tf_r[(instr >> 16) & 0x1f];
 			store = 0;
 			break;
-		case 0x20000000:	/* st.d rD, rS, imm16 */
+		case 0x20000000 >> 26:	/* st.d rD, rS, imm16 */
 			addr = (instr & 0x0000ffff) +
 			    frame->tf_r[(instr >> 16) & 0x1f];
 			store = 1;
@@ -1776,13 +1776,16 @@ double_reg_fixup(struct trapframe *frame)
 		/*
 		 * Two word stores.
 		 */
-		value = frame->tf_r[regno++];
-		if (copyout(&value, (void *)addr, sizeof(u_int32_t)) != 0)
-			return SIGSEGV;
-		if (regno == 32)
+		if (regno == 0)
 			value = 0;
 		else
 			value = frame->tf_r[regno];
+		if (copyout(&value, (void *)addr, sizeof(u_int32_t)) != 0)
+			return SIGSEGV;
+		if (regno == 31)
+			value = 0;
+		else
+			value = frame->tf_r[regno + 1];
 		if (copyout(&value, (void *)(addr + 4), sizeof(u_int32_t)) != 0)
 			return SIGSEGV;
 	} else {
