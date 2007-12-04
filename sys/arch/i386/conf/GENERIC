@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.593 2007/11/28 23:37:34 oga Exp $
+#	$OpenBSD: GENERIC,v 1.594 2007/12/04 23:39:51 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -236,8 +236,8 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
-uticom*	at uhub?		# TI serial
-ucom*	at uticom?
+#uticom* at uhub?		# TI serial
+#ucom*	at uticom?
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
