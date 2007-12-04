@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.7 2006/04/27 20:21:19 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.8 2007/12/04 23:45:52 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -57,5 +57,9 @@
 #define M197_IMASK	0xfff00065	/* interrupt mask level */
 #define M197_ISRC	0xfff0006f	/* interrupt SRC */
 #define M197_IACK	0xfff00100	/* interrupt ACK base */
+
+#ifdef _KERNEL
+void	m197_send_complex_ipi(int, cpuid_t, u_int32_t, u_int32_t);
+#endif
 
 #endif	/* __MACHINE_MVME197_H__ */

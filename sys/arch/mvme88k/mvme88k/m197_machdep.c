@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.19 2007/12/02 21:32:10 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.20 2007/12/04 23:45:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,11 +62,18 @@
 #include <mvme88k/dev/busswreg.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
+#ifdef MULTIPROCESSOR
+#include <machine/db_machdep.h>
+#endif
+
 void	m197_bootstrap(void);
+void	m197_clock_ipi_handler(struct trapframe *);
 void	m197_ext_int(u_int, struct trapframe *);
 u_int	m197_getipl(void);
+void	m197_ipi_handler(struct trapframe *);
 vaddr_t	m197_memsize(void);
 u_int	m197_raiseipl(u_int);
+void	m197_send_ipi(int, cpuid_t);
 u_int	m197_setipl(u_int);
 void	m197_startup(void);
 
@@ -154,23 +161,17 @@ m197_startup()
 void
 m197_ext_int(u_int v, struct trapframe *eframe)
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+#endif
+	u_int32_t psr;
 	int level;
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret;
 	vaddr_t ivec;
 	u_int8_t vec;
-
-	if (v == T_NON_MASK) {
-		/* This is the abort switch */
-		level = IPL_NMI;
-		vec = BS_ABORTVEC;
-	} else {
-		level = *(u_int8_t *)M197_ILEVEL & 0x07;
-		/* generate IACK and get the vector */
-		ivec = M197_IACK + (level << 2) + 0x03;
-		vec = *(volatile u_int8_t *)ivec;
-	}
+	u_int8_t abort;
 
 #ifdef MULTIPROCESSOR
 	if (eframe->tf_mask < IPL_SCHED)
@@ -179,26 +180,62 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 
 	uvmexp.intrs++;
 
-	if (v != T_NON_MASK || cold == 0) {
-		/* block interrupts at level or lower */
-		m197_setipl(level);
-		flush_pipeline();
-		set_psr(get_psr() & ~PSR_IND);
-	}
+	if (v == T_NON_MASK) {
+		/*
+		 * Non-maskable interrupts are either the abort switch (on
+		 * cpu0 only) or IPIs (on any cpu). We check for IPI first.
+		 */
+#ifdef MULTIPROCESSOR
+		if ((*(volatile u_int8_t *)(BS_BASE + BS_CPINT)) & BS_CPI_INT)
+			m197_ipi_handler(eframe);
+#endif
 
-	list = &intr_handlers[vec];
-	if (SLIST_EMPTY(list)) {
-		printf("Spurious interrupt (level %x and vec %x)\n",
-		       level, vec);
-	} else {
-#ifdef DEBUG
-		intr = SLIST_FIRST(list);
-		if (intr->ih_ipl != level) {
-			panic("Handler ipl %x not the same as level %x. "
-			    "vec = 0x%x",
-			    intr->ih_ipl, level, vec);
+		abort = *(u_int8_t *)(BS_BASE + BS_ABORT);
+		if (abort & BS_ABORT_INT) {
+			*(u_int8_t *)(BS_BASE + BS_ABORT) =
+			    abort | BS_ABORT_ICLR;
+			nmihand(eframe);
+		}
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * If we have pending hardware IPIs and the current
+		 * level allows them to be processed, do them now.
+		 */
+		if (eframe->tf_mask < IPL_SCHED &&
+		    ISSET(ci->ci_ipi,
+		      CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)) {
+			psr = get_psr();
+			set_psr(psr & ~PSR_IND);
+			m197_clock_ipi_handler(eframe);
+			set_psr(psr);
 		}
 #endif
+	} else {
+		level = *(u_int8_t *)M197_ILEVEL & 0x07;
+		/* generate IACK and get the vector */
+		ivec = M197_IACK + (level << 2) + 0x03;
+		vec = *(volatile u_int8_t *)ivec;
+
+		/* block interrupts at level or lower */
+		m197_setipl(level);
+		psr = get_psr();
+		set_psr(psr & ~PSR_IND);
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * If we have pending hardware IPIs and the current
+		 * level allows them to be processed, do them now.
+		 */
+		if (eframe->tf_mask < IPL_SCHED &&
+		    ISSET(ci->ci_ipi, CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
+			m197_clock_ipi_handler(eframe);
+#endif
+
+		list = &intr_handlers[vec];
+		if (SLIST_EMPTY(list))
+			printf("Spurious interrupt (level %x and vec %x)\n",
+			    level, vec);
 
 		/*
 		 * Walk through all interrupt handlers in the chain for the
@@ -222,14 +259,12 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 			printf("Unclaimed interrupt (level %x and vec %x)\n",
 			    level, vec);
 		}
-	}
 
-	if (v != T_NON_MASK || cold == 0) {
 		/*
 		 * Disable interrupts before returning to assembler,
 		 * the spl will be restored later.
 		 */
-		set_psr(get_psr() | PSR_IND);
+		set_psr(psr | PSR_IND);
 	}
 
 #ifdef MULTIPROCESSOR
@@ -297,10 +332,8 @@ m197_bootstrap()
 		 * set the correct value in the other one, since we set
 		 * all the active bits.
 		 */
-		cpu = *(volatile u_int16_t *)(BS_BASE + BS_GCSR) &
-		    BS_GCSR_CPUID;
-		*(volatile u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) =
-		    0xfe;
+		cpu = *(u_int16_t *)(BS_BASE + BS_GCSR) & BS_GCSR_CPUID;
+		*(u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) = 0xfe;
 	} else
 		cmmu = &cmmu88110;	/* 197LE */
 
@@ -309,4 +342,161 @@ m197_bootstrap()
 	md_setipl = m197_setipl;
 	md_raiseipl = m197_raiseipl;
 	md_init_clocks = m1x7_init_clocks;
+#ifdef MULTIPROCESSOR
+	md_send_ipi = m197_send_ipi;
+#endif
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+m197_send_ipi(int ipi, cpuid_t cpu)
+{
+	struct cpu_info *ci = &m88k_cpus[cpu];
+
+	if (ci->ci_ipi & ipi)
+		return;
+
+	if (ci->ci_ddb_state == CI_DDB_PAUSE)
+		return;				/* XXX skirting deadlock */
+
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+
+	/*
+	 * If the other processor doesn't have an IPI pending, send one,
+	 * keeping IPIs enabled for us.
+	 */
+	if ((*(volatile u_int8_t *)(BS_BASE + BS_CPINT) & BS_CPI_STAT) == 0)
+		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) =
+		    BS_CPI_SCPI | BS_CPI_IEN;
+}
+
+void
+m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
+{
+	struct cpu_info *ci = &m88k_cpus[cpu];
+	int wait = 0;
+
+	if ((ci->ci_flags & CIF_ALIVE) == 0)
+		return;				/* XXX not ready yet */
+
+	if (ci->ci_ddb_state == CI_DDB_PAUSE)
+		return;				/* XXX skirting deadlock */
+
+	/*
+	 * Wait for the other processor to be ready to accept an IPI.
+	 */
+	for (wait = 10000000; wait != 0; wait--) {
+		if (!ISSET(*(volatile u_int8_t *)(BS_BASE + BS_CPINT),
+		    BS_CPI_STAT))
+			break;
+	}
+	if (wait == 0)
+		panic("couldn't send complex ipi %x to cpu %d", ipi, cpu);
+
+	/*
+	 * In addition to the ipi bit itself, we need to set up ipi arguments.
+	 * Note that we do not need to protect against another processor
+	 * trying to send another complex IPI, since we know there are only
+	 * two processors on the board.
+	 */
+	ci->ci_ipi_arg1 = arg1;
+	ci->ci_ipi_arg2 = arg2;
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+
+	/*
+	 * Send an IPI, keeping our IPIs enabled.
+	 */
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_SCPI | BS_CPI_IEN;
+}
+
+void
+m197_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi & ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
+	u_int32_t arg1, arg2;
+
+	if (ipi != 0)
+		atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	/*
+	 * Complex IPIs (with extra arguments). There can only be one
+	 * pending at the same time, sending processor will wait for us
+	 * to have processed the current one before sending a new one.
+	 */
+	if (ipi &
+	    (CI_IPI_TLB_FLUSH | CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH)) {
+		arg1 = ci->ci_ipi_arg1;
+		arg2 = ci->ci_ipi_arg2;
+		if (ipi & CI_IPI_TLB_FLUSH) {
+			cmmu_flush_tlb(ci->ci_cpuid, arg1, arg2, 0);
+		}
+		else if (ipi & CI_IPI_CACHE_FLUSH) {
+			cmmu_flush_cache(ci->ci_cpuid, arg1, arg2);
+		}
+		else if (ipi & CI_IPI_ICACHE_FLUSH) {
+			cmmu_flush_inst_cache(ci->ci_cpuid, arg1, arg2);
+		}
+	}
+
+	/*
+	 * Regular, simple, IPIs. We can have as many bits set as possible.
+	 */
+	if (ipi & CI_IPI_DDB) {
+#ifdef DDB
+		/*
+		 * Another processor has entered DDB. Spin on the ddb lock
+		 * until it is done.
+		 */
+		extern struct __mp_lock ddb_mp_lock;
+
+		ci->ci_ddb_state = CI_DDB_PAUSE;
+
+		__mp_lock(&ddb_mp_lock);
+		__mp_unlock(&ddb_mp_lock);
+
+		ci->ci_ddb_state = CI_DDB_RUNNING;
+
+		/*
+		 * If ddb is hoping to us, it's our turn to enter ddb now.
+		 */
+		if (ci->ci_cpuid == ddb_mp_nextcpu)
+			Debugger();
+#endif
+	}
+	if (ipi & CI_IPI_NOTIFY) {
+		/* nothing to do */
+	}
+
+	/*
+	 * Acknowledge IPIs.
+	 */
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
+}
+
+/*
+ * Maskable IPIs.
+ *
+ * These IPIs are received as non maskable, but are only processed if
+ * the current spl permits it; so they are checked again on return from
+ * regular interrupts to process them as soon as possible.
+ */
+void
+m197_clock_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
+	int s;
+
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	s = splclock();
+	if (ipi & CI_IPI_HARDCLOCK)
+		hardclock((struct clockframe *)eframe);
+	if (ipi & CI_IPI_STATCLOCK)
+		statclock((struct clockframe *)eframe);
+	splx(s);
+}
+
+#endif

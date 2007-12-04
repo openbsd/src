@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.47 2007/12/04 05:41:48 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.48 2007/12/04 23:45:53 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -70,6 +70,9 @@
 #include <machine/psl.h>
 
 #include <mvme88k/dev/busswreg.h>
+#ifdef MULTIPROCESSOR
+#include <machine/mvme197.h>
+#endif
 
 cpuid_t	m88110_init(void);
 cpuid_t	m88410_init(void);
@@ -233,6 +236,14 @@ m88410_init(void)
 	dctl |= CMMU_DCTL_SEN;
 	set_dctl(dctl);
 	mc88410_inval();	/* clear external data cache */
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Mark us as allowing IPIs now.
+	 */
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
+#endif
+
 	return (cpu);
 }
 
@@ -364,6 +375,14 @@ void
 m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+
+	if (cpu != ci->ci_cpuid) {
+		m197_send_complex_ipi(CI_IPI_TLB_FLUSH, cpu, kernel, vaddr);
+		return;
+	}
+#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
@@ -420,6 +439,14 @@ void
 m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+
+	if (cpu != ci->ci_cpuid) {
+		m197_send_complex_ipi(CI_IPI_CACHE_FLUSH, cpu, pa, size);
+		return;
+	}
+#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
@@ -449,6 +476,14 @@ void
 m88410_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+
+	if (cpu != ci->ci_cpuid) {
+		m197_send_complex_ipi(CI_IPI_ICACHE_FLUSH, cpu, pa, size);
+		return;
+	}
+#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);

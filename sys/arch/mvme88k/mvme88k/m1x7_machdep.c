@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.5 2007/05/14 16:57:43 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.6 2007/12/04 23:45:53 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -159,6 +159,14 @@ m1x7_clockintr(void *eframe)
 
 	hardclock(eframe);
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * Send an IPI to all other processors, so they can get their
+	 * own ticks.
+	 */
+	m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+#endif
+
 	return (1);
 }
 
@@ -168,8 +176,6 @@ m1x7_statintr(void *eframe)
 	u_long newint, r, var;
 
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2ICR) = STAT_RESET;
-
-	statclock((struct clockframe *)eframe);
 
 	/*
 	 * Compute new randomized interval.  The intervals are uniformly
@@ -189,5 +195,15 @@ m1x7_statintr(void *eframe)
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2ICR) = STAT_RESET;
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC;
+
+	statclock((struct clockframe *)eframe);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Send an IPI to all other processors as well.
+	 */
+	m88k_broadcast_ipi(CI_IPI_STATCLOCK);
+#endif
+
 	return (1);
 }

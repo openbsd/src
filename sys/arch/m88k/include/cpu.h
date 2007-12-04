@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.31 2007/11/15 21:23:16 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.32 2007/12/04 23:45:51 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #define __M88K_CPU_H__
 
 /*
- * CTL_MACHDEP definitinos.
+ * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV	1	/* dev_t: console terminal device */
 #define	CPU_MAXID	2	/* number of valid machdep ids */
@@ -90,7 +90,7 @@ struct cpu_info {
 	struct pcb *ci_curpcb;			/* ...and its pcb */
 
 	u_int	ci_cpuid;			/* cpu number */
-	u_int	ci_primary;			/* set if master cpu */
+
 	u_int	ci_pfsr_i0, ci_pfsr_i1;		/* instruction... */
 	u_int	ci_pfsr_d0, ci_pfsr_d1;		/* ... and data CMMU PFSRs */
 
@@ -101,18 +101,28 @@ struct cpu_info {
 
 	u_long	ci_spin_locks;			/* spin locks counter */
 
-	int ci_ddb_state;			/* ddb status */
+	int	ci_ddb_state;			/* ddb status */
 #define	CI_DDB_RUNNING	0
 #define	CI_DDB_ENTERDDB	1
 #define	CI_DDB_INDDB	2
 #define	CI_DDB_PAUSE	3
 
-	int ci_ipi;				/* pending ipis */
+	int	ci_softintr;			/* pending soft interrupts */
+
+#ifdef MULTIPROCESSOR
+
+	int	ci_ipi;				/* pending ipis */
 #define	CI_IPI_NOTIFY		0x00000001
 #define	CI_IPI_HARDCLOCK	0x00000002
 #define	CI_IPI_STATCLOCK	0x00000004
 #define	CI_IPI_DDB		0x00000008
-	int	ci_softintr;			/* pending soft interrupts */
+
+#define	CI_IPI_TLB_FLUSH	0x00000010
+#define	CI_IPI_CACHE_FLUSH	0x00000020
+#define	CI_IPI_ICACHE_FLUSH	0x00000040
+	u_int32_t	ci_ipi_arg1;
+	u_int32_t	ci_ipi_arg2;
+#endif
 };
 
 extern cpuid_t master_cpu;

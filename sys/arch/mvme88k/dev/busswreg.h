@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.8 2007/11/22 05:53:57 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.9 2007/12/04 23:45:52 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -191,16 +191,18 @@
 #define BS_VBASE_SRC_EXT	0x4	/* external interrupt */
 #define BS_VBASE_SRC_SPUR	0x7	/* spurious interrupt */
 
-/* We lock off BusSwitch vectors at 0x40 */
-#define BS_VECBASE	0x40
+/*
+ * BusSwitch wired interrupt vectors
+ */
+
+#define BS_VECBASE	0x40		/* vector base */
 #define BS_NVEC		0x10
 
-/* Bottom 4 bits of the vector returned during IACK cycle */
-#define BS_TMR1IRQ	0x01	/* lowest */
-#define BS_TMR2IRQ	0x02
-#define BS_ABORTIRQ	0x03
-
-/* Define the Abort vector */
-#define BS_ABORTVEC  	(BS_VECBASE | BS_ABORTIRQ)
+#define BS_TMR1IRQ	0x00		/* timer1 */
+#define BS_TMR2IRQ	0x01		/* timer2 */
+#define	BS_WPEIRQ	0x02		/* write post error */
+#define	BS_PALIRQ	0x03		/* processor address log interrupt */
+#define	BS_EXTIRQ	0x04		/* external interrupt */
+#define	BS_SPURIRQ	0x07		/* spurious interrupt */
 
 #endif	/* BUSSWREG_H */
