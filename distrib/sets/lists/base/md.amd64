@@ -643,7 +643,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_types.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/acpiapm.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apicvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apmvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/asm.ph
