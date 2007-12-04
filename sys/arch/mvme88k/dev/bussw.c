@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.17 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.18 2007/12/04 05:40:14 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -120,7 +120,7 @@ bussw_attach(parent, self, args)
 
 	busswintr_establish(BS_ABORTIRQ, &sc->sc_abih, "abort");
 	bus_space_write_1(sc->sc_iot, ioh, BS_ABORT,
-	    bus_space_read_4(sc->sc_iot, ioh, BS_ABORT) | BS_ABORT_IEN);
+	    bus_space_read_1(sc->sc_iot, ioh, BS_ABORT) | BS_ABORT_IEN);
 
 	printf(": rev %x\n",
 	    bus_space_read_1(sc->sc_iot, ioh, BS_CHIPREV));
