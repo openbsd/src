@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.64 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.65 2007/12/04 19:49:52 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1994,7 +1994,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->state[IDX_LCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_LCP] = 0;
 	sp->lcp.protos = 0;
-	sp->lcp.mru = sp->lcp.their_mru = PP_MTU;
+	sp->lcp.mru = sp->lcp.their_mru = sp->pp_if.if_mtu;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2030,7 +2030,7 @@ sppp_lcp_up(struct sppp *sp)
  	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
  	sp->lcp.magic = 0;
  	sp->lcp.protos = 0;
- 	sp->lcp.mru = sp->lcp.their_mru = PP_MTU;
+ 	sp->lcp.mru = sp->lcp.their_mru = sp->pp_if.if_mtu;
 
 	getmicrouptime(&tv);
 	sp->pp_last_receive = sp->pp_last_activity = tv.tv_sec;
@@ -2453,8 +2453,10 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				u_int mru = p[2] * 256 + p[3];
 				if (debug)
 					addlog("%d ", mru);
-				if (mru < PP_MTU || mru > PP_MAX_MRU)
-					mru = PP_MTU;
+				if (mru < PP_MIN_MRU)
+					mru = PP_MIN_MRU;
+				if (mru > PP_MAX_MRU)
+					mru = PP_MAX_MRU;
 				sp->lcp.mru = mru;
 				sp->lcp.opts |= (1 << LCP_OPT_MRU);
 			}

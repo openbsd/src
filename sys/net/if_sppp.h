@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.12 2007/09/05 21:01:49 canacar Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.13 2007/12/04 19:49:52 claudio Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -169,7 +169,8 @@ struct sppp {
                                    around PPP frames (i.e. the serial
                                    HDLC like encapsulation, RFC1662) */
 
-#define PP_MTU          1500    /* default/minimal MRU */
+#define PP_MIN_MRU	IP_MSS	/* minimal MRU */
+#define PP_MTU		1500	/* default MTU */
 #define PP_MAX_MRU	2048	/* maximal MRU we want to negotiate */
 
 /*
