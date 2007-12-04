@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.31 2007/03/23 21:06:05 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.32 2007/12/04 22:36:39 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -50,7 +50,6 @@ struct cpu_info {
 	struct pmap *ci_curpm;
 	struct proc *ci_fpuproc;
 	struct proc *ci_vecproc;
-	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
 	volatile int ci_astpending;

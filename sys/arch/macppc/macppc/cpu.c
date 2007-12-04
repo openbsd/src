@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2007/10/10 15:53:52 art Exp $ */
+/*	$OpenBSD: cpu.c,v 1.45 2007/12/04 22:36:39 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -554,14 +554,13 @@ struct cpu_hatch_data {
 };
 
 volatile struct cpu_hatch_data *cpu_hatch_data;
-volatile int cpu_hatch_stack;
+volatile void *cpu_hatch_stack;
 
 int
 cpu_spinup(struct device *self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	int i;
-	struct pcb *pcb;
 	struct pglist mlist;
 	struct vm_page *m;
 	int error;
@@ -570,10 +569,9 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	u_char *reset_cpu;
 
         /*
-         * Allocate some contiguous pages for the idle PCB and stack
+         * Allocate some contiguous pages for the interrupt stack
          * from the lowest 256MB (because bat0 always maps it va == pa).
          */
-        size += USPACE;
         size += INTSTK;
         size += 4096;   /* SPILLSTK */
 
@@ -588,16 +586,8 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	cp = (char *)VM_PAGE_TO_PHYS(m);
 	bzero(cp, size);
 
-        pcb = (struct pcb *)cp;
-        ci->ci_idle_pcb = pcb;
-        ci->ci_intstk = cp + USPACE + INTSTK;
-
-        /*
-         * Initialize the idle stack pointer, reserving space for an
-         * (empty) trapframe (XXX is the trapframe really necessary?)
-         */
-        pcb->pcb_sp = (paddr_t)pcb + USPACE - sizeof(struct trapframe);
-	cpu_hatch_stack = ci->ci_idle_pcb->pcb_sp;
+	ci->ci_intstk = cp + INTSTK;
+	cpu_hatch_stack = ci->ci_intstk - sizeof(struct trapframe);
 
 	h->ci = ci;
 	h->running = 0;

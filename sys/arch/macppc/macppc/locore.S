@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.34 2007/10/10 15:56:20 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.35 2007/12/04 22:36:39 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -110,8 +110,6 @@ start:
 	mtsprg	0,%r9
 	addi	%r8,%r8,INTSTK
 	stw	%r8,CI_INTSTK(%r9)
-	stw	%r8,CI_IDLE_PCB(%r9)
-	addi	%r8,%r8,USPACE		/* space for idle_u */
 	li	%r0,-1
 	stw	%r0,CI_INTRDEPTH(%r9)
 	lis	%r9,_C_LABEL(proc0paddr)@ha
