@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2007/12/02 21:28:38 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 2007/12/04 23:43:54 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -281,8 +281,12 @@ ASLOCAL(secondary_init)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
 	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
+
+	ldcr	r1, CPU
+	st	r2,  r1, CI_CURPCB	/* save stack as curpcb for traps */
+
 	bsr.n	_C_LABEL(secondary_main)
-	 or	r31, r2, r0 		/* switch to startup stack */
+	 addu	r31, r2, USPACE			/* switch to startup stack */
 
 #else
 

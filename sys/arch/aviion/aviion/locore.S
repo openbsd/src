@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2007/12/02 21:28:35 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2007/12/04 23:43:52 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -337,8 +337,12 @@ GLOBAL(secondary_start)
 	 */
 
 	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
+
+	ldcr	r1, CPU
+	st	r2,  r1, CI_CURPCB	/* save stack as curpcb for traps */
+
 	bsr.n	_C_LABEL(secondary_main)
-	 or	r31, r2, r0			/* switch to startup stack */
+	 addu	r31, r2, USPACE			/* switch to startup stack */
 
 #endif	/* MULTIPROCESSOR */
 
