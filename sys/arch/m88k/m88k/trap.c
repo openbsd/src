@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2007/12/02 21:34:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2007/12/04 05:36:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -648,7 +648,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 		 * Check the instruction at the (backed up) exip.
 		 * If it is a jsr.n, abort.
 		 */
-		if (USERMODE(frame->tf_epsr)) {
+		if (!USERMODE(frame->tf_epsr)) {
 			instr = *(u_int *)frame->tf_exip;
 			if (instr == 0xf400cc01)
 				panic("mc88110 errata #16, exip %p enip %p",
