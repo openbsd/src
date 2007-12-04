@@ -90,7 +90,7 @@
 #endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.14 2007/10/24 16:43:27 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.15 2007/12/04 15:26:40 millert Exp $";
 #endif /* lint */
 
 /*
@@ -202,7 +202,7 @@ sudoers_lookup(pwflag)
 		    return(VALIDATE_OK |
 			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
 			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
-			(setenv_ok == TRUE ? FLAG_SETENV : 0));
+			(setenv_ok >= TRUE ? FLAG_SETENV : 0));
 		} else if ((runas_matches == TRUE && cmnd_matches == FALSE) ||
 		    (runas_matches == FALSE && cmnd_matches == TRUE)) {
 		    /*
@@ -212,7 +212,7 @@ sudoers_lookup(pwflag)
 		    return(VALIDATE_NOT_OK |
 			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
 			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
-			(setenv_ok == TRUE ? FLAG_SETENV : 0));
+			(setenv_ok >= TRUE ? FLAG_SETENV : 0));
 		}
 	    }
 	    top--;
