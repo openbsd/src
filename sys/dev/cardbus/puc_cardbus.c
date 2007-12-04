@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc_cardbus.c,v 1.2 2006/10/12 16:35:52 grange Exp $	*/
+/*	$OpenBSD: puc_cardbus.c,v 1.3 2007/12/04 21:49:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -158,30 +158,39 @@ puc_cardbus_intr_establish(struct puc_attach_args *paa, int type,
     int (*func)(void *), void *arg, char *name)
 {
 	struct puc_cardbus_softc *sc = paa->puc;
+	struct puc_softc *psc = &sc->sc_psc;
 	struct cardbus_devfunc *ct = sc->ct;
 
-	return (cardbus_intr_establish(ct->ct_cc, ct->ct_cf, sc->intrline,
-	    type, func, arg, name));
+	psc->sc_ports[paa->port].intrhand =
+	    cardbus_intr_establish(ct->ct_cc, ct->ct_cf, sc->intrline,
+		type, func, arg, name);
+
+	return (psc->sc_ports[paa->port].intrhand);
 }
 
 int
 puc_cardbus_detach(struct device *self, int flags)
 {
-	struct puc_cardbus_softc *csc = (struct puc_cardbus_softc *)self;
-	struct puc_softc *sc = &csc->sc_psc;
-	struct cardbus_devfunc *ct = csc->ct;
+	struct puc_cardbus_softc *sc = (struct puc_cardbus_softc *)self;
+	struct puc_softc *psc = &sc->sc_psc;
+	struct cardbus_devfunc *ct = sc->ct;
 	int i, rv;
 
-	for (i = PUC_MAX_PORTS; i--; )
-		if (sc->sc_ports[i].dev)
-			if ((rv = config_detach(sc->sc_ports[i].dev, flags)))
+	for (i = PUC_MAX_PORTS; i--; ) {
+		if (psc->sc_ports[i].intrhand)
+			cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
+			    psc->sc_ports[i].intrhand);
+		if (psc->sc_ports[i].dev)
+			if ((rv = config_detach(psc->sc_ports[i].dev, flags)))
 				return (rv);
+	}
 
 	for (i = PUC_NBARS; i--; )
-		if (sc->sc_bar_mappings[i].mapped)
-			Cardbus_mapreg_unmap(ct, sc->sc_bar_mappings[i].type,
-			    sc->sc_bar_mappings[i].t, sc->sc_bar_mappings[i].h,
-			    sc->sc_bar_mappings[i].s);
+		if (psc->sc_bar_mappings[i].mapped)
+			Cardbus_mapreg_unmap(ct, psc->sc_bar_mappings[i].type,
+			    psc->sc_bar_mappings[i].t,
+			    psc->sc_bar_mappings[i].h,
+			    psc->sc_bar_mappings[i].s);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.5 2006/07/31 11:06:33 mickey Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.6 2007/12/04 21:49:35 kettenis Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ struct puc_attach_args {
 	const char *(*intr_string)(struct puc_attach_args *);
 	void *(*intr_establish)(struct puc_attach_args *, int, int (*)(void *),
 	    void *, char *);
+	void (*intr_disestablish)(struct puc_attach_args *, void *);
 };
 
 extern const struct puc_device_description puc_devices[];
@@ -107,8 +108,7 @@ struct puc_softc {
 	struct {
 		struct device   *dev;
 		/* filled in by port attachments */
-		int	(*ihand)(void *);
-		void	*ihandarg;
+		void	*intrhand;
 	} sc_ports[PUC_MAX_PORTS];
 };
 

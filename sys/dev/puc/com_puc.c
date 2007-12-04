@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.14 2006/11/05 17:18:14 martin Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.15 2007/12/04 21:49:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -133,13 +133,5 @@ com_puc_attach(parent, self, aux)
 int
 com_puc_detach(struct device *self, int flags)
 {
-	/* struct com_softc *sc = (void *)self; */
-	int error;
-
-	if ((error = com_detach(self, flags)) != 0)
-		return (error);
-
-	/* cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih); */
-
-	return (0);
+	return com_detach(self, flags);
 }

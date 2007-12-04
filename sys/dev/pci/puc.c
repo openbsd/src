@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.12 2007/04/26 01:31:05 gwk Exp $	*/
+/*	$OpenBSD: puc.c,v 1.13 2007/12/04 21:49:35 kettenis Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -72,12 +72,14 @@ struct puc_pci_softc {
 
 int	puc_pci_match(struct device *, void *, void *);
 void	puc_pci_attach(struct device *, struct device *, void *);
+int	puc_pci_detach(struct device *, int);
 const char *puc_pci_intr_string(struct puc_attach_args *);
 void	*puc_pci_intr_establish(struct puc_attach_args *, int,
     int (*)(void *), void *, char *);
 
 struct cfattach puc_pci_ca = {
-	sizeof(struct puc_pci_softc), puc_pci_match, puc_pci_attach
+	sizeof(struct puc_pci_softc), puc_pci_match,
+	puc_pci_attach, puc_pci_detach
 };
 
 struct cfdriver puc_cd = {
@@ -128,8 +130,12 @@ puc_pci_intr_establish(struct puc_attach_args *paa, int type,
     int (*func)(void *), void *arg, char *name)
 {
 	struct puc_pci_softc *sc = paa->puc;
+	struct puc_softc *psc = &sc->sc_psc;
+	
+	psc->sc_ports[paa->port].intrhand =
+	    pci_intr_establish(sc->pc, sc->ih, type, func, arg, name);
 
-	return (pci_intr_establish(sc->pc, sc->ih, type, func, arg, name));
+	return (psc->sc_ports[paa->port].intrhand);
 }
 
 void
@@ -289,6 +295,31 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 		sc->sc_ports[i].dev = config_found_sm(&sc->sc_dev, paa,
 		    puc_print, puc_submatch);
 	}
+}
+
+int
+puc_pci_detach(struct device *self, int flags)
+{
+	struct puc_pci_softc *sc = (struct puc_pci_softc *)self;
+	struct puc_softc *psc = &sc->sc_psc;
+	int i, rv;
+
+	for (i = PUC_MAX_PORTS; i--; ) {
+		if (psc->sc_ports[i].intrhand)
+			pci_intr_disestablish(sc->pc,
+			    psc->sc_ports[i].intrhand);
+		if (psc->sc_ports[i].dev)
+			if ((rv = config_detach(psc->sc_ports[i].dev, flags)))
+				return (rv);
+	}
+
+	for (i = PUC_NBARS; i--; )
+		if (psc->sc_bar_mappings[i].mapped)
+			bus_space_unmap(psc->sc_bar_mappings[i].t,
+			    psc->sc_bar_mappings[i].h,
+			    psc->sc_bar_mappings[i].s);
+
+	return (0);
 }
 
 int
