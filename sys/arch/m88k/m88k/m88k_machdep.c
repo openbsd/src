@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.36 2007/12/02 21:23:18 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.37 2007/12/04 05:39:42 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -154,37 +154,38 @@ setregs(p, pack, stack, retval)
 	/*
 	 * We want to start executing at pack->ep_entry. The way to
 	 * do this is force the processor to fetch from ep_entry.
+	 *
 	 * However, since we will return throug m{88100,88110}_syscall(),
 	 * we need to setup registers so that the success return, when
 	 * ``incrementing'' the instruction pointers, will cause the
 	 * binary to start at the expected address.
+	 *
+	 * This relies on the fact that binaries start with
+	 *
+	 *	br.n	1f
+	 *	 or	r2, r0, r30
+	 * 1:
+	 *
+	 * So the first two instructions can be skipped.
 	 */
 #ifdef M88110
 	if (CPU_IS88110) {
 		/*
-		 * Delay slot in exip, so we'll start at enip + 4.
-		 * This relies on the fact that binaries start with
-		 *
-		 *	br.n	1f
-		 *	 first instruction
-		 * 1:	second instruction
-		 *
-		 * So by pretending exip is a delay slot, m88110_syscall()
-		 * will resume at enip + 4... which really is the first
-		 * instruction we want to run.
+		 * m88110_syscall() will resume at exip + 8... which
+		 * really is the first instruction we want to run.
 		 */
-		tf->tf_exip = (pack->ep_entry & XIP_ADDR) | 1;
-		tf->tf_enip = pack->ep_entry & XIP_ADDR;
+		tf->tf_exip = pack->ep_entry & XIP_ADDR;
 	}
 #endif
 #ifdef M88100
 	if (CPU_IS88100) {
-		/* we'll start at sfip / sfip + 4 */
-		tf->tf_snip = pack->ep_entry & NIP_ADDR;
-		tf->tf_sfip = (pack->ep_entry & FIP_ADDR) | FIP_V;
+		/*
+		 * m88100_syscall() will resume at sfip / sfip + 4.
+		 */
+		tf->tf_sfip = ((pack->ep_entry + 8) & FIP_ADDR) | FIP_V;
 	}
 #endif
-	tf->tf_r[2] = stack;
+	tf->tf_r[2] = retval[0] = stack;
 	tf->tf_r[31] = stack;
 	retval[1] = 0;
 }
