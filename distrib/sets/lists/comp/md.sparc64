@@ -184,6 +184,7 @@
 ./usr/include/sparc64/limits.h
 ./usr/include/sparc64/loadfile_machdep.h
 ./usr/include/sparc64/lock.h
+./usr/include/sparc64/mplock.h
 ./usr/include/sparc64/mutex.h
 ./usr/include/sparc64/openfirm.h
 ./usr/include/sparc64/openpromio.h
