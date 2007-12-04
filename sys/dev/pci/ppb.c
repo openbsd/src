@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.24 2007/11/30 16:21:38 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.25 2007/12/04 17:33:13 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -70,6 +70,8 @@ int	ppb_intr(void *);
 void	ppb_hotplug_insert(void *, void *);
 void	ppb_hotplug_insert_finish(void *);
 int	ppb_hotplug_fixup(struct pci_attach_args *);
+int	ppb_hotplug_fixup_type0(pci_chipset_tag_t, pcitag_t, pcitag_t);
+int	ppb_hotplug_fixup_type1(pci_chipset_tag_t, pcitag_t, pcitag_t);
 void	ppb_hotplug_rescan(void *, void *);
 void	ppb_hotplug_remove(void *, void *);
 int	ppbprint(void *, const char *pnp);
@@ -246,17 +248,28 @@ ppb_hotplug_insert_finish(void *arg)
 int
 ppb_hotplug_fixup(struct pci_attach_args *pa)
 {
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	pcitag_t bridgetag = *pa->pa_bridgetag;
-	pcireg_t bhlcr, blr, type, intr;
+	pcireg_t bhlcr;
+
+	bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+	case 0:
+		return ppb_hotplug_fixup_type0(pa->pa_pc,
+		    pa->pa_tag, *pa->pa_bridgetag);
+	case 1:
+		return ppb_hotplug_fixup_type1(pa->pa_pc,
+		    pa->pa_tag, *pa->pa_bridgetag);
+	default:
+		return (0);
+	}
+}
+
+int
+ppb_hotplug_fixup_type0(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
+{
+	pcireg_t blr, type, intr;
 	int reg, line;
 	bus_addr_t base, io_base, io_limit, mem_base, mem_limit;
 	bus_size_t size, io_size, mem_size;
-
-	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-	if (PCI_HDRTYPE_TYPE(bhlcr) != 0)
-		return (0);
 
 	/*
 	 * The code below assumes that the address ranges on our
@@ -327,7 +340,9 @@ ppb_hotplug_fixup(struct pci_attach_args *pa)
 	 * XXX We assume that the interrupt line matches the line used
 	 * by the PCI Express bridge.  This may not be true.
 	 */
-	if (pa->pa_intrpin != PCI_INTERRUPT_PIN_NONE && pa->pa_intrline == 0) {
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	if (PCI_INTERRUPT_PIN(intr) != PCI_INTERRUPT_PIN_NONE &&
+	    PCI_INTERRUPT_LINE(intr) == 0) {
 		/* Get the interrupt line from our parent. */
 		intr = pci_conf_read(pc, bridgetag, PCI_INTERRUPT_REG);
 		line = PCI_INTERRUPT_LINE(intr);
@@ -336,6 +351,49 @@ ppb_hotplug_fixup(struct pci_attach_args *pa)
 		intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
 		intr |= line << PCI_INTERRUPT_LINE_SHIFT;
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+	}
+
+	return (0);
+}
+
+int
+ppb_hotplug_fixup_type1(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
+{
+	pcireg_t bhlcr, bir, csr, val;
+	int bus, dev, reg;
+
+	bir = pci_conf_read(pc, bridgetag, PPB_REG_BUSINFO);
+	if (PPB_BUSINFO_SUBORDINATE(bir) <= PPB_BUSINFO_SECONDARY(bir))
+		return (0);
+
+	bus = PPB_BUSINFO_SECONDARY(bir);
+	bir = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+	bir &= (0xff << 24);
+	bir |= bus++;
+	bir |= (bus << 8);
+	bir |= (bus << 16);
+	pci_conf_write(pc, tag, PPB_REG_BUSINFO, bir);
+
+	for (reg = PPB_REG_IOSTATUS; reg < PPB_REG_BRIDGECONTROL; reg += 4) {
+		val = pci_conf_read(pc, bridgetag, reg);
+		pci_conf_write(pc, tag, reg, val);
+	}
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	csr |= PCI_COMMAND_INVALIDATE_ENABLE;
+	csr |= PCI_COMMAND_SERR_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	for (dev = 0; dev < pci_bus_maxdevs(pc, bus); dev++) {
+		tag = pci_make_tag(pc, bus, dev, 0);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) != 0)
+			continue;
+
+		ppb_hotplug_fixup_type0(pc, tag, bridgetag);
 	}
 
 	return (0);
