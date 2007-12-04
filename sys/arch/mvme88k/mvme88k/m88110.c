@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.46 2007/12/02 22:17:36 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.47 2007/12/04 05:41:48 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -350,7 +350,7 @@ m88110_set_uapr(apr_t ap)
 	set_dcmd(CMMU_DCMD_INV_UATC);
 
 	/* We need to at least invalidate the TIC, as it is va-addressed */
-	mc88110_inval_inst();
+	set_icmd(CMMU_ICMD_INV_TIC);
 }
 
 /*
@@ -410,7 +410,6 @@ m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
-	/* flush all data to avoid errata invalidate */
 	if (get_dctl() & CMMU_DCTL_CEN)
 		mc88110_flush_data();
 
@@ -427,8 +426,9 @@ m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 	mc88110_inval_inst();
 	/* flush all data to avoid errata invalidate */
-	if (get_dctl() & CMMU_DCTL_CEN)
+	if (get_dctl() & CMMU_DCTL_CEN) {
 		mc88110_flush_data();
+	}
 	mc88410_flush();
 
 	set_psr(psr);
@@ -568,8 +568,10 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
+#if 0
 		flusher = m88110_cmmu_sync_cache;
 		ext_flusher = mc88410_flush;
+#endif
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
@@ -592,21 +594,32 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	if (op != DMA_CACHE_SYNC)
-		mc88110_inval_inst();
-	while (size != 0) {
-		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88110_CACHE_LINE;
-
-		if (pmap_extract(pmap, va, &pa) != FALSE) {
-			(*flusher)(pa, count);
+	if (op == DMA_CACHE_SYNC) {
+		va = trunc_page(_va);
+		size = round_page(_va + _size) - va;
+		while (size != 0) {
+			if (pmap_extract(pmap, va, &pa) != FALSE) {
+				m88110_cmmu_sync_cache(pa, PAGE_SIZE);
+				mc88410_flush_page(pa);
+			}
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
 		}
+	} else {
+		mc88110_inval_inst();
+		while (size != 0) {
+			count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
+			    PAGE_SIZE : MC88110_CACHE_LINE;
 
-		va += count;
-		size -= count;
+			if (pmap_extract(pmap, va, &pa) != FALSE) {
+				(*flusher)(pa, count);
+			}
+
+			va += count;
+			size -= count;
+		}
+		(*ext_flusher)();
 	}
-
-	(*ext_flusher)();
 
 	set_psr(psr);
 }
@@ -672,8 +685,10 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
+#if 0
 		flusher = m88110_cmmu_sync_cache;
 		ext_flusher = mc88410_flush;
+#endif
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
@@ -696,19 +711,28 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 		size = 0;
 
-	if (op != DMA_CACHE_SYNC)
+	if (op == DMA_CACHE_SYNC) {
+		pa = trunc_page(_pa);
+		size = round_page(_pa + _size) - pa;
+		while (size != 0) {
+			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
+			mc88410_flush_page(pa);
+			pa += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
+	} else {
 		mc88110_inval_inst();
-	while (size != 0) {
-		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88110_CACHE_LINE;
+		while (size != 0) {
+			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
+			    PAGE_SIZE : MC88110_CACHE_LINE;
 
-		(*flusher)(pa, count);
+			(*flusher)(pa, count);
 
-		pa += count;
-		size -= count;
+			pa += count;
+			size -= count;
+		}
+		(*ext_flusher)();
 	}
-
-	(*ext_flusher)();
 
 	set_psr(psr);
 }
