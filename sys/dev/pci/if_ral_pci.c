@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.10 2007/11/15 21:40:47 deraadt Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.11 2007/12/04 22:26:54 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -186,9 +186,19 @@ ral_pci_detach(struct device *self, int flags)
 {
 	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
 	struct rt2560_softc *sc = &psc->sc_sc;
+	int error;
 
-	(*psc->sc_opns->detach)(sc);
-	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	error = (*psc->sc_opns->detach)(sc);
+	if (error != 0)
+		return error;
+
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
+
+	if (psc->sc_mapsize > 0)
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->sc_mapsize);
 
 	return 0;
 }

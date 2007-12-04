@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.6 2007/11/19 21:26:19 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.7 2007/12/04 22:26:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1140,6 +1140,8 @@ rt2860_intr(void *arg)
 	uint32_t r;
 
 	r = RAL_READ(sc, RT2860_INT_STATUS);
+	if (r == 0xffffffff)
+		return 0;	/* device likely went away */
 	if (r == 0)
 		return 0;	/* not for us */
 
