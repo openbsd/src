@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.53 2007/11/22 10:22:30 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.54 2007/12/04 11:06:49 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,7 @@ sighdlr(int sig)
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
+	case SIGQUIT:
 		quit = 1;
 		break;
 	case SIGCHLD:
@@ -162,6 +163,7 @@ main(int argc, char *argv[])
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGINT, sighdlr);
+	signal(SIGQUIT, sighdlr);
 	signal(SIGHUP, sighdlr);
 
 	close(pipe_chld[1]);
