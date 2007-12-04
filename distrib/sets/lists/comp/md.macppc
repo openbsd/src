@@ -182,6 +182,7 @@
 ./usr/include/macppc/limits.h
 ./usr/include/macppc/loadfile_machdep.h
 ./usr/include/macppc/lock.h
+./usr/include/macppc/mplock.h
 ./usr/include/macppc/mutex.h
 ./usr/include/macppc/openpromio.h
 ./usr/include/macppc/param.h
