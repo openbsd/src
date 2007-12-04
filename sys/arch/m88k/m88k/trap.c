@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2007/12/04 05:36:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2007/12/04 05:37:40 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1697,14 +1697,15 @@ splassert_check(int wantipl, const char *func)
 {
 	int oldipl;
 
-	/*
-	 * This will raise the spl if too low,
-	 * in a feeble attempt to reduce further damage.
-	 */
-	oldipl = raiseipl(wantipl);
+	oldipl = getipl();
 
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * This will raise the spl,
+		 * in a feeble attempt to reduce further damage.
+		 */
+		(void)raiseipl(wantipl);
 	}
 }
 #endif
