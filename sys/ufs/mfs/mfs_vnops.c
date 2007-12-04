@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.29 2007/11/28 19:31:31 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.30 2007/12/04 19:32:13 otto Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ mfs_strategy(void *v)
 
 	mfsp = VTOMFS(vp);
 	if (p != NULL && mfsp->mfs_pid == p->p_pid) {
-		mfs_doio(bp, mfsp->mfs_baseoff);
+		mfs_doio(mfsp, bp);
 	} else {
 		bp->b_actf = mfsp->mfs_buflist;
 		mfsp->mfs_buflist = bp;
@@ -161,11 +161,16 @@ mfs_strategy(void *v)
  * Trivial on the HP since buffer has already been mapped into KVA space.
  */
 void
-mfs_doio(struct buf *bp, caddr_t base)
+mfs_doio(struct mfsnode *mfsp, struct buf *bp)
 {
+	caddr_t base;
+	long offset = bp->b_blkno << DEV_BSHIFT;
 	int s;
 
-	base += (bp->b_blkno << DEV_BSHIFT);
+	if (bp->b_bcount > mfsp->mfs_size - offset)
+		bp->b_bcount = mfsp->mfs_size - offset;
+
+	base = mfsp->mfs_baseoff + offset;
 	if (bp->b_flags & B_READ)
 		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
 	else
@@ -215,7 +220,7 @@ mfs_close(void *v)
 	 */
 	while ((bp = mfsp->mfs_buflist) != NULL) {
 		mfsp->mfs_buflist = bp->b_actf;
-		mfs_doio(bp, mfsp->mfs_baseoff);
+		mfs_doio(mfsp, bp);
 		wakeup((caddr_t)bp);
 	}
 	/*

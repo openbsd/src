@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.13 2007/11/28 19:31:31 millert Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.14 2007/12/04 19:32:13 otto Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@ struct ucred;
 struct vnode;
 struct vfsconf;
 struct mbuf;
+struct mfsnode;
 
 __BEGIN_DECLS
 /* mfs_vfsops.c */
@@ -55,7 +56,7 @@ int mfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
 int mfs_open(void *);
 int mfs_ioctl(void *);
 int mfs_strategy(void *);
-void mfs_doio(struct buf *, caddr_t);
+void mfs_doio(struct mfsnode *, struct buf *);
 int mfs_bmap(void *);
 int mfs_close(void *);
 int mfs_inactive(void *);
