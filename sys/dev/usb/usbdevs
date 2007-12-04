@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.319 2007/11/25 22:26:55 deraadt Exp $
+$OpenBSD: usbdevs,v 1.320 2007/12/04 23:44:55 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -816,6 +816,7 @@ product BALTECH CARDREADER	0x9999	Card reader
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
 product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
 product BELKIN FBT001V		0x0081	Bluetooth
+product BELKIN F8T003V		0x0083	Bluetooth
 product BELKIN FBT003V		0x0084	Bluetooth
 product BELKIN F5U103		0x0103	F5U103 Serial
 product BELKIN F5U109		0x0109	F5U109 Serial
