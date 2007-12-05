@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2007/11/24 16:02:04 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2007/12/05 09:59:38 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,17 +15,11 @@ SRCS+=elf.c
 .else
 SRCS+=aout.c
 .endif
+
 .if defined(PROG)
 beforedepend:
 	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.h machine.h
 	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.c machine.c
-
-machine.c:
-	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.c machine.c
-
-machine.h:
-	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.h machine.h
-
 .endif # defined (PROG)
 
 beforeinstall:
