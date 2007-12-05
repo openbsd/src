@@ -1,3 +1,3 @@
-/*	$OpenBSD: mutex.h,v 1.1 2007/05/15 05:26:45 miod Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.2 2007/12/05 16:08:06 deraadt Exp $	*/
 /* public domain */
-#include <arm/xscale/pxa2x0_mutex.h>
+#include <arm/mutex.h>
