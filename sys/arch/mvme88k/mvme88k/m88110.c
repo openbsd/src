@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.48 2007/12/04 23:45:53 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.49 2007/12/05 22:10:42 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -95,6 +95,7 @@ void	m88410_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 void	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void	m88410_dma_cachectl_pa(paddr_t, psize_t, int);
 void	m88110_initialize_cpu(cpuid_t);
+void	m88410_initialize_cpu(cpuid_t);
 
 /*
  * This is the function table for the MC88110 built-in CMMUs without
@@ -136,7 +137,7 @@ struct cmmu_p cmmu88410 = {
 	m88410_dma_cachectl,
 	m88410_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
-	m88110_initialize_cpu,
+	m88410_initialize_cpu,
 #endif
 };
 
@@ -228,22 +229,10 @@ m88110_init(void)
 cpuid_t
 m88410_init(void)
 {
-	u_int dctl;
 	cpuid_t cpu;
 
-	cpu = m88110_init();
-	dctl = get_dctl();
-	dctl |= CMMU_DCTL_SEN;
-	set_dctl(dctl);
-	mc88410_inval();	/* clear external data cache */
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Mark us as allowing IPIs now.
-	 */
-	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
-#endif
-
+	cpu = m88110_cpu_number();
+	m88410_initialize_cpu(cpu);
 	return (cpu);
 }
 
@@ -313,6 +302,25 @@ m88110_initialize_cpu(cpuid_t cpu)
 
 	set_isr(0);
 	set_dsr(0);
+}
+
+void
+m88410_initialize_cpu(cpuid_t cpu)
+{
+	u_int dctl;
+
+	m88110_initialize_cpu(cpu);
+	dctl = get_dctl();
+	dctl |= CMMU_DCTL_SEN;
+	set_dctl(dctl);
+	mc88410_inval();	/* clear external data cache */
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Mark us as allowing IPIs now.
+	 */
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
+#endif
 }
 
 /*
@@ -626,12 +634,11 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
-	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-		size = 0;
-
 	if (op == DMA_CACHE_SYNC) {
 		va = trunc_page(_va);
 		size = round_page(_va + _size) - va;
+		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
+			size = 0;
 		while (size != 0) {
 			if (pmap_extract(pmap, va, &pa) != FALSE) {
 				m88110_cmmu_sync_cache(pa, PAGE_SIZE);
@@ -641,6 +648,8 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 			size -= PAGE_SIZE;
 		}
 	} else {
+		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
+			size = 0;
 		mc88110_inval_inst();
 		while (size != 0) {
 			count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
@@ -743,12 +752,11 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
-	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-		size = 0;
-
 	if (op == DMA_CACHE_SYNC) {
 		pa = trunc_page(_pa);
 		size = round_page(_pa + _size) - pa;
+		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
+			size = 0;
 		while (size != 0) {
 			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
 			mc88410_flush_page(pa);
@@ -756,6 +764,8 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 			size -= PAGE_SIZE;
 		}
 	} else {
+		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
+			size = 0;
 		mc88110_inval_inst();
 		while (size != 0) {
 			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
