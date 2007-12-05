@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.1 2007/12/05 09:22:44 reyk Exp $
+# $OpenBSD: README,v 1.2 2007/12/05 16:03:42 reyk Exp $
 
 SNMP daemon
 -----------
@@ -19,7 +19,7 @@ DESIGN
 	It uses a new ASN.1/BER implementation to parse and create the SNMP
 	messages. It is a simple implementation which does what we need.
 
-	I may change the layout a to look a bit more like RFC 2271. But
+	I may change the layout to look a bit more like RFC 2271. But
 	the proposed design in RFC 2271 is a bad joke; it uses too many
 	subsystems with the requirement to communicate with ASN.1/BER
 	messages.
