@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.2 2007/12/05 16:07:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -201,6 +201,11 @@
 #define MIB_SFLOW			MIB_ENTERPRISES, 14706
 #define MIB_MSYS			MIB_ENTERPRISES, 18623
 #define MIB_VANTRONIX			MIB_ENTERPRISES, 26766
+
+/*
+ * XXX I'm still waiting for the reply from IANA to get an OpenBSD PEN.
+ * XXX It is OK for now to use a sub-id of the .vantronix PEN.
+ */
 #define MIB_OPENBSD			MIB_VANTRONIX, 42
 #define MIB_SYSOID_DEFAULT		MIB_OPENBSD, 2, 1
 
