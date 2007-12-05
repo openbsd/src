@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2007/10/27 20:36:17 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2007/12/05 22:09:13 miod Exp $	*/
 
 /* Public Domain */
 
@@ -7,30 +7,46 @@
 
 #if defined(_KERNEL)
 
+#include <machine/asm_macro.h>
+#include <machine/lock.h>
+#include <machine/psl.h>
+
+#ifdef MULTIPROCESSOR
+extern __cpu_simple_lock_t __atomic_lock;
+#endif
+
 static __inline void
 atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 {
-	unsigned int old, new;
+	u_int psr;
 
-	do {
-		old = *uip;
-		new = old | v;
-		__asm__ __volatile__
-		    ("xmem %0, %2, r0" : "+r"(new), "+m"(*uip) : "r"(uip));
-	} while (old != new);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock(&__atomic_lock);
+#endif
+	*uip |= v;
+#ifdef MULTIPROCESSOR
+	__cpu_simple_unlock(&__atomic_lock);
+#endif
+	set_psr(psr);
 }
 
 static __inline void
 atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 {
-	unsigned int old, new;
+	u_int psr;
 
-	do {
-		old = *uip;
-		new = old & ~v;
-		__asm__ __volatile__
-		    ("xmem %0, %2, r0" : "+r"(new), "+m"(*uip) : "r"(uip));
-	} while (old != new);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock(&__atomic_lock);
+#endif
+	*uip &= ~v;
+#ifdef MULTIPROCESSOR
+	__cpu_simple_unlock(&__atomic_lock);
+#endif
+	set_psr(psr);
 }
 
 #endif /* defined(_KERNEL) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.37 2007/12/04 05:39:42 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.38 2007/12/05 22:09:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -93,6 +93,7 @@ void	vector_init(m88k_exception_vector_area *, u_int32_t *);
 
 #ifdef MULTIPROCESSOR
 cpuid_t	master_cpu;
+__cpu_simple_lock_t __atomic_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 struct cpu_info m88k_cpus[MAX_CPUS];
@@ -512,6 +513,7 @@ cpu_emergency_disable()
 		SCHED_UNLOCK(s);
 	}
 
+	CLR(ci->ci_flags, CIF_ALIVE);
 	set_psr(get_psr() | PSR_IND);
 	splhigh();
 
@@ -541,9 +543,7 @@ rw_cas_m88k(volatile unsigned long *p, unsigned long o, unsigned long n)
 
 	if (*p != o)
 		rc = 1;
-	/* atomic *p = n; */
-	__asm__ __volatile__
-	    ("xmem %0, %2, r0" : "+r"(n), "+m"(*p) : "r"(p));
+	*p = n;
 
 	__cpu_simple_unlock(&rw_cas_spinlock);
 
