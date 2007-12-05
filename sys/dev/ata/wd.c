@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.67 2007/11/26 23:59:01 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.68 2007/12/05 23:11:34 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -327,13 +327,32 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
 
 	/* use read look ahead if supported */
-	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_AHEAD)
-		wdccommand(chp, drive, SET_FEATURES, 0, 0, 0, 0,
-		    WDSF_READAHEAD_EN);
+	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_AHEAD) {
+		bzero(&wdc_c, sizeof(struct wdc_command));
+		wdc_c.r_command = SET_FEATURES;
+		wdc_c.r_precomp = WDSF_READAHEAD_EN;
+		wdc_c.timeout = 1000;
+		wdc_c.flags = at_poll;
+
+		if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+			printf("%s: enable look ahead command didn't "
+			    "complete\n", wd->sc_dev.dv_xname);
+		}
+	}
+
 	/* use write cache if supported */
-	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_CACHE)
-		wdccommand(chp, drive, SET_FEATURES, 0, 0, 0, 0,
-		    WDSF_EN_WR_CACHE);
+	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_CACHE) {
+		bzero(&wdc_c, sizeof(struct wdc_command));
+		wdc_c.r_command = SET_FEATURES;
+		wdc_c.r_precomp = WDSF_EN_WR_CACHE;
+		wdc_c.timeout = 1000;
+		wdc_c.flags = at_poll;
+	
+		if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+			printf("%s: enable write cache command didn't "
+			    "complete\n", wd->sc_dev.dv_xname);
+		}
+	}
 
 	/*
 	 * FREEZE LOCK the drive so malicous users can't lock it on us.
