@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.109 2007/12/02 22:18:06 fgsch Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.110 2007/12/05 16:14:14 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -39,6 +39,10 @@
 #include <dev/acpi/dsdt.h>
 
 #include <machine/apmvar.h>
+#define APMUNIT(dev)	(minor(dev)&0xf0)
+#define APMDEV(dev)	(minor(dev)&0x0f)
+#define APMDEV_NORMAL	0
+#define APMDEV_CTL	8
 
 #ifdef ACPI_DEBUG
 int acpi_debug = 16;
@@ -809,10 +813,27 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct acpi_softc *sc;
 	int error = 0;
 
-	if (!acpi_cd.cd_ndevs || minor(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[minor(dev)]))
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
+	switch (APMDEV(dev)) {
+	case APMDEV_CTL:
+		if (!(flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
+		break;
+	case APMDEV_NORMAL:
+		if (!(flag & FREAD) || (flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
+		break;
+	default:
+		error = ENXIO;
+		break;
+	}
 	return (error);
 }
 
@@ -820,12 +841,20 @@ int
 acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct acpi_softc *sc;
+	int error = 0;
 
-	if (!acpi_cd.cd_ndevs || minor(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[minor(dev)]))
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
-
-	return (0);
+	switch (APMDEV(dev)) {
+	case APMDEV_CTL:
+	case APMDEV_NORMAL:
+		break;
+	default:
+		error = ENXIO;
+		break;
+	}
+	return (error);
 }
 
 int
@@ -840,8 +869,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int bats;
 	unsigned int remaining, rem, minutes, rate;
 
-	if (!acpi_cd.cd_ndevs || minor(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[minor(dev)]))
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
 	ACPI_LOCK(sc);
@@ -947,8 +976,8 @@ acpikqfilter(dev_t dev, struct knote *kn)
 {
 	struct acpi_softc *sc;
 
-	if (!acpi_cd.cd_ndevs || minor(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[minor(dev)]))
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
 	switch (kn->kn_filter) {
