@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2007/11/28 19:37:23 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2007/12/05 19:43:15 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -109,11 +109,9 @@ pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
 #if 1
 extern int64_t pseg_get(struct pmap*, vaddr_t addr);
 extern int pseg_set(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
-extern paddr_t pseg_find(struct pmap*, vaddr_t addr, paddr_t spare);
 #else
 static int64_t pseg_get(struct pmap*, vaddr_t addr);
 static int pseg_set(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
-static paddr_t pseg_find(struct pmap*, vaddr_t addr, paddr_t spare);
 
 static int64_t pseg_get(struct pmap* pm, vaddr_t addr) {
 	paddr_t *pdir, *ptbl;
@@ -145,27 +143,6 @@ static int pseg_set(struct pmap* pm, vaddr_t addr, int64_t tte, paddr_t spare) {
 	stxa_sync(&ptbl[va_to_pte(addr)], ASI_PHYS_CACHED, tte);
 	return (0);
 }
-
-static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
-	int i, j, k, s;
-	paddr_t *pdir, *ptbl;
-
-	if (!(pdir = (paddr_t *)ldda(&pm->pm_segs[va_to_seg(addr)],
-	    ASI_PHYS_CACHED))) {
-		if (!spare) return (1);
-		stxa_sync(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
-		pdir = spare;
-		spare = NULL;
-	}
-	if (!(ptbl = (paddr_t *)ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED))) {
-		if (!spare) return (1);
-		stxa_sync(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
-		ptbl = spare;
-		spare = NULL;
-	}
-	return (paddr_t)(&ptbl[va_to_pte(addr)]);
-}
-
 
 #endif
 

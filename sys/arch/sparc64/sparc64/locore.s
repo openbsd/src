@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.104 2007/11/11 19:47:34 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.105 2007/12/05 19:43:15 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5993,7 +5993,6 @@ ENTRY(pmap_copy_phys)
  *
  */
 ENTRY(pseg_get)
-!	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	ldx	[%o0 + PM_PHYS], %o2			! pmap->pm_segs
 
 	srax	%o1, HOLESHIFT, %o3			! Check for valid address
@@ -6027,25 +6026,10 @@ ENTRY(pseg_get)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o0
 	DLFLUSH2 %o3
 	brgez,pn %o0, 1f				! Entry invalid?  Punt
-	 btst	1, %sp
-	bz,pn	%icc, 0f				! 64-bit mode?
 	 nop
-	retl						! Yes, return full value
+	retl
 	 nop
-0:
-#if 1
-	srl	%o0, 0, %o1
-	retl						! No, generate a %o0:%o1 double
-	 srlx	%o0, 32, %o0
-#else	/* 1 */
-	DLFLUSH %o2,%o3
-	ldda	[%o2] ASI_PHYS_CACHED, %o0
-	DLFLUSH2 %o3
-	retl						! No, generate a %o0:%o1 double
-	 nop
-#endif	/* 1 */
 1:
-	clr	%o1
 	retl
 	 clr	%o0
 
@@ -6131,93 +6115,6 @@ ENTRY(pseg_set)
 	mov	2, %o0					! spare unused?
 	retl
 	 movrz	%o3, %g0, %o0				! No. return 0
-1:
-	retl
-	 mov	1, %o0
-
-/*
- * extern void pseg_find(struct pmap* %o0, vaddr_t addr %o1, paddr_t spare %o2);
- *
- * Get the paddr for a particular TTE entry.  Returns the TTE's PA on success,
- * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
- * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
- *  Allocate a page, pass the phys addr in as the spare, and try again.
- * If spare is not NULL it is assumed to be the address of a zeroed physical
- * page that can be used to generate a directory table or page table if needed.
- *
- */
-ENTRY(pseg_find)
-	!!
-	!! However we managed to get here we now have:
-	!!
-	!! %o0 = *pmap
-	!! %o1 = addr
-	!! %o2 = spare
-	!!
-	srax	%o1, HOLESHIFT, %o4			! Check for valid address
-	brz,pt	%o4, 0f					! Should be zero or -1
-	 inc	%o4					! Make -1 -> 0
-	brz,pt	%o4, 0f
-	 nop
-#ifdef DEBUG
-	ta	1					! Break into debugger
-#endif	/* DEBUG */
-	mov	-1, %o0					! Error -- in hole!
-	retl
-	 mov	-1, %o1
-0:
-	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
-	srlx	%o1, STSHIFT, %o5
-	and	%o5, STMASK, %o5
-	sll	%o5, 3, %o5
-	add	%o4, %o5, %o4
-2:
-	DLFLUSH %o4,%o3
-	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
-	DLFLUSH2 %o3
-
-	brnz,a,pt	%o5, 0f				! Null pointer?
-	 mov	%o5, %o4
-	brz,pn	%o2, 1f					! Have a spare?
-	 mov	%o2, %o5
-	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 2b					! Something changed?
-	DLFLUSH %o4, %o5
-	mov	%o2, %o4
-	clr	%o2					! Mark spare as used
-0:
-	srlx	%o1, PDSHIFT, %o5
-	and	%o5, PDMASK, %o5
-	sll	%o5, 3, %o5
-	add	%o4, %o5, %o4
-2:
-	DLFLUSH %o4,%o3
-	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
-	DLFLUSH2 %o3
-
-	brnz,a,pt	%o5, 0f				! Null pointer?
-	 mov	%o5, %o4
-	brz,pn	%o2, 1f					! Have a spare?
-	 mov	%o2, %o5
-	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 2b					! Something changed?
-	DLFLUSH %o4, %o4
-	mov	%o2, %o4
-	clr	%o2					! Mark spare as used
-0:
-	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
-	btst	1, %sp
-	and	%o5, PTMASK, %o5
-	sll	%o5, 3, %o5
-	bz,pn	%icc, 0f				! 64-bit mode?
-	 add	%o5, %o4, %o0
-	retl
-	 clr	%o0
-0:
-	srl	%o0, 0, %o1
-	retl						! No, generate a %o0:%o1 double
-	 srlx	%o0, 32, %o0
-
 1:
 	retl
 	 mov	1, %o0
