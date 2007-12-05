@@ -1,0 +1,233 @@
+.\" $OpenBSD: ber.3,v 1.1 2007/12/05 09:22:44 reyk Exp $
+.\"
+.\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 5 2007 $
+.Dt BER 3
+.Os
+.Sh NAME
+.Nm ber_get_element ,
+.Nm ber_set_header ,
+.Nm ber_link_elements ,
+.Nm ber_unlink_elements ,
+.Nm ber_replace_elements ,
+.Nm ber_add_sequence ,
+.Nm ber_add_set ,
+.Nm ber_add_integer ,
+.Nm ber_get_integer ,
+.Nm ber_add_boolean ,
+.Nm ber_get_boolean ,
+.Nm ber_add_string ,
+.Nm ber_get_string ,
+.Nm ber_add_nstring ,
+.Nm ber_add_bitstring ,
+.Nm ber_get_nstring ,
+.Nm ber_get_bitstring ,
+.Nm ber_add_null ,
+.Nm ber_get_null ,
+.Nm ber_add_eoc ,
+.Nm ber_get_eoc ,
+.Nm ber_add_oid ,
+.Nm ber_add_oidstring ,
+.Nm ber_get_oid ,
+.Nm ber_oid2ber ,
+.Nm ber_string2oid ,
+.Nm ber_printf_elements ,
+.Nm ber_scanf_elements ,
+.Nm ber_get_writebuf ,
+.Nm ber_write_elements ,
+.Nm ber_set_readbuf ,
+.Nm ber_read_elements ,
+.Nm ber_free_elements ,
+.Nm ber_calc_len ,
+.Nm ber_set_application ,
+.Nd Parse ASN.1 with Basic Encoding Rules.
+.Sh SYNOPSIS
+.Fd #include <ber.h>
+.Ft "struct ber_element *"
+.Fn "ber_get_element" "unsigned long encoding"
+.Ft "void"
+.Fn "ber_set_header" "struct ber_element *elm" "int class" "unsigned long type"
+.Ft "void"
+.Fn "ber_link_elements" "struct ber_element *prev" "struct ber_element *elm"
+.Ft "struct ber_element *"
+.Fn "ber_unlink_elements" "struct ber_element *prev"
+.Ft "void"
+.Fn "ber_replace_elements" "struct ber_element *prev" "struct ber_element *elm"
+.Ft "struct ber_element *"
+.Fn "ber_add_sequence" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_set" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_integer" "struct ber_element *prev" "long long val"
+.Ft "int"
+.Fn "ber_get_integer" "struct ber_element *root" "long long *val"
+.Ft "struct ber_element *"
+.Fn "ber_add_boolean" "struct ber_element *prev" "int bool"
+.Ft "int"
+.Fn "ber_get_boolean" "struct ber_element *root" "int *bool"
+.Ft "struct ber_element *"
+.Fn "ber_add_string" "struct ber_element *prev" "char *string"
+.Ft "struct ber_element *"
+.Fn "ber_add_nstring" "struct ber_element *prev" "char *string" "size_t size"
+.Ft "int"
+.Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
+.Ft "int"
+.Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Ft "struct ber_element *"
+.Fn "ber_add_bitstring" "struct ber_element *prev" "void *buf" "size_t size"
+.Ft "int"
+.Fn "ber_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Ft "struct ber_element *"
+.Fn "ber_add_null" "struct ber_element *prev"
+.Ft "int"
+.Fn "ber_get_null" "struct ber_element *root"
+.Ft "struct ber_element *"
+.Fn "ber_add_eoc" "struct ber_element *prev"
+.Ft "int"
+.Fn "ber_get_eoc" "struct ber_element *root"
+.Ft "struct ber_element *"
+.Fn "ber_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
+.Ft "struct ber_element *"
+.Fn "ber_add_oidstring" "struct ber_element *prev" "const char *string"
+.Ft "int"
+.Fn "ber_get_oid" "struct ber_element *root" "struct ber_oid *oid"
+.Ft "size_t"
+.Fn "ber_oid2ber" "struct ber_oid *oid" "u_int8_t *buf" "size_t size"
+.Ft "int"
+.Fn "ber_string2oid" "const char *string" "struct ber_oid *oid"
+.Ft "struct ber_element *"
+.Fn "ber_printf_elements" "struct ber_element *prev" "char *format" "..."
+.Ft "int"
+.Fn "ber_scanf_elements" "struct ber_element *root" "char *format" "..."
+.Ft "ssize_t"
+.Fn "ber_get_writebuf" "struct ber *ber" "void **buf"
+.Ft "int"
+.Fn "ber_write_elements" "struct ber *ber" "struct ber_element *root"
+.Ft "void"
+.Fn "ber_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
+.Ft "struct"
+.Fn "ber_element *ber_read_elements" "struct ber *ber" "struct ber_element *root"
+.Ft "void"
+.Fn "ber_free_elements" "struct ber_element *root"
+.Ft "size_t"
+.Fn "ber_calc_len" "struct ber_element *root"
+.Ft "void"
+.Fn "ber_set_application" "struct ber *ber" "unsigned long (*cb)(struct ber_element *)"
+.Sh DESCRIPTION
+The
+.Nm ber
+API provides a mechanism to read and write ASN.1 streams and buffers
+using the
+.Ic Basic Encoding Rules .
+.Sh BER ELEMENTS
+.Fn ber_get_element ,
+.Fn ber_set_header ,
+.Fn ber_link_elements ,
+.Fn ber_unlink_elements ,
+.Fn ber_replace_elements ,
+.Fn ber_calc_len
+.Pp
+
+.Sh BER TYPES
+.Fn ber_add_sequence ,
+.Fn ber_add_set ,
+.Fn ber_add_integer ,
+.Fn ber_get_integer ,
+.Fn ber_add_boolean ,
+.Fn ber_get_boolean ,
+.Fn ber_add_string ,
+.Fn ber_get_string ,
+.Fn ber_add_nstring ,
+.Fn ber_add_bitstring ,
+.Fn ber_get_nstring ,
+.Fn ber_get_bitstring ,
+.Fn ber_add_null ,
+.Fn ber_get_null ,
+.Fn ber_add_eoc ,
+.Fn ber_get_eoc
+
+.Sh OBJECT IDS
+Object Identifiers are commonly used in ASN.1-bases protocols.
+These functions provide an interface to parse OIDs.
+For internal representation of OIDs, the following structure
+.Ft struct ber_oid
+is beeing used:
+.Bd -literal
+#define BER_MIN_OID_LEN		2
+#define BER_MAX_OID_LEN		128
+
+struct ber_oid {
+	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];
+	size_t		bo_n;
+};
+.Ed
+.Pp
+.Fn ber_add_oid ,
+.Fn ber_add_oidstring ,
+.Fn ber_get_oid ,
+.Fn ber_oid2ber ,
+.Fn ber_string2oid
+.Pp
+
+.Sh FORMAT STRINGS
+.Fn ber_printf_elements ,
+.Fn ber_scanf_elements
+.Pp
+
+.Sh I/O OPERATIONS
+.Fn ber_get_writebuf ,
+.Fn ber_write_elements ,
+.Fn ber_set_readbuf ,
+.Fn ber_read_elements ,
+.Fn ber_free_elements ,
+.Fn ber_set_application
+.Pp
+
+.Sh RETURN VALUES
+Upon successful completion
+.Fn ber_get_integer ,
+.Fn ber_get_boolean ,
+.Fn ber_get_string ,
+.Fn ber_get_nstring ,
+.Fn ber_get_bitstring ,
+.Fn ber_get_null ,
+.Fn ber_get_eoc ,
+.Fn ber_get_oid ,
+.Fn ber_string2oid ,
+.Fn ber_scanf_elements ,
+and
+.Fn ber_write_elements
+return 0.
+Otherwise, \-1 is returned and the global variable errno is
+set to indicate the error.
+.Sh SEE ALSO
+.Xr socket 2
+.Sh HISTORY
+The
+.Nm ber
+manpage first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Nm ber
+library was written by 
+.An Claudio Jeker Aq claudio@openbsd.org ,
+.An Marc Balmer Aq marc@openbsd.org
+and
+.An Reyk Floeter Aq reyk@openbsd.org .
+.Sh BUGS
+The code is buggy and incomplete.
+This manpage is a stub.

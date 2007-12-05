@@ -1,0 +1,93 @@
+.\" $OpenBSD: snmpd.8,v 1.1 2007/12/05 09:22:44 reyk Exp $
+.\"
+.\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 5 2007 $
+.Dt SNMPD 8
+.Os
+.Sh NAME
+.Nm snmpd
+.Nd Simple Network Management Protocol Daemon
+.Sh SYNOPSIS
+.Nm snmpd
+.Op Fl dv
+.Oo Xo
+.Fl D Ar macro Ns = Ns Ar value Oc
+.Xc
+.Op Fl f Ar file
+.Sh DESCRIPTION
+.Nm
+is a daemon which implement the SNMP protocol.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D Ar macro Ns = Ns Ar value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the configuration file.
+.It Fl d
+Do not daemonize and log to
+.Em stderr .
+.It Fl f Ar file
+Use
+.Ar file
+as the configuration file, instead of the default
+.Pa /etc/snmpd.conf .
+.It Fl v
+Produce more verbose output.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/snmpd.confXXX" -compact
+.It Pa /etc/snmpd.conf
+default
+.Nm
+configuration file
+.El
+.Sh SEE ALSO
+.Xr snmpd.conf 5 ,
+.Rs
+.%R RFC 1157
+.%T A Simple Network Management Protocol (SNMP)
+.%D May 1990
+.Re
+.Rs
+.%R http://www.ibr.cs.tu-bs.de/projects/snmpv3/
+.%T SNMP Version 3 (SNMPv3)
+.%D March 2002
+.Re
+.Rs
+.%R RFC 3410
+.%T Introduction and Applicability Statements for Internet Standard Management Framework
+.%D December 2002
+.Re
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Reyk Floeter Aq reyk@vantronix.net .
+.Sh CAVEATS
+The
+.Nm
+does not fully work yet.

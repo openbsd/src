@@ -1,0 +1,83 @@
+.\" $OpenBSD: snmpd.conf.5,v 1.1 2007/12/05 09:22:44 reyk Exp $
+.\"
+.\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 5 2007 $
+.Dt SNMPD.CONF 5
+.Os
+.Sh NAME
+.Nm snmpd.conf
+.Nd configuration file for the SNMP daemon
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the
+.Xr snmpd 8
+daemon.
+.Sh SECTIONS
+The
+.Nm
+file is divided into n main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global runtime settings for
+.Xr snmpd 8 .
+.El
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/snmpd.conf.local"
+.Ed
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic foo ,
+.Ic bar ,
+or
+.Ic baz ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+var="blah"
+foo $var
+.Ed
+.Sh FILES
+.Bl -tag -width "/etc/snmpd.conf" -compact
+.It Pa /etc/snmpd.conf
+Default location of the configuration file.
+.El
+.Sh SEE ALSO
+.Xr snmpd 8
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Xr snmpd 8
+program was written by
+.An Reyk Floeter Aq reyk@vantronix.net .
