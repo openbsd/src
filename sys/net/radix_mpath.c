@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.8 2007/12/04 19:43:04 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.9 2007/12/05 01:18:52 krw Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -92,23 +92,23 @@ rn_mpath_count(struct radix_node *rn)
 struct rtentry *
 rt_mpath_matchgate(struct rtentry *rt, struct sockaddr *gate)
 {
-	struct radix_node *rn = (struct radix_node *)rt;
+	struct radix_node *rn;
 
-	/*
-	 * if gate is set it must be compared, if not set the route must be
-	 * a non-multipath one.
-	 */
-	if (!gate && !rn_mpath_next(rn))
+	if (!rn_mpath_next((struct radix_node *)rt))
 		return rt;
+
 	if (!gate)
 		return NULL;
-
+	/* beyond here, we use rn as the master copy */
+	rn = (struct radix_node *)rt;
 	do {
 		rt = (struct rtentry *)rn;
 		if (rt->rt_gateway->sa_len == gate->sa_len &&
 		    !memcmp(rt->rt_gateway, gate, gate->sa_len))
 			break;
 	} while ((rn = rn_mpath_next(rn)) != NULL);
+	if (!rn)
+		return NULL;
 
 	return (struct rtentry *)rn;
 }
