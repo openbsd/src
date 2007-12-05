@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.47 2007/05/29 09:53:59 sobrado Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.48 2007/12/05 21:15:46 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -218,6 +218,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, (u_long)is->is_dvmaend + 1,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	mtx_init(&is->is_mtx, IPL_HIGH);
 
 	/*
 	 * Set the TSB size.  The relevant bits were moved to the TSB
@@ -289,6 +290,7 @@ strbuf_reset(struct strbuf_ctl *sb)
 		if (pmap_extract(pmap_kernel(),
 		    (vaddr_t)sb->sb_flush, &sb->sb_flushpa) == FALSE)
 			sb->sb_flush = NULL;
+		mtx_init(&sb->sb_mtx, IPL_HIGH);
 	}
 }
 
@@ -482,6 +484,8 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 	}
 #endif
 
+	mtx_enter(&sb->sb_mtx);
+
 	/*
 	 * Streaming buffer flushes:
 	 * 
@@ -534,6 +538,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 			if (flush) {
 				DPRINTF(IDB_IOMMU,
 				    ("iommu_strbuf_flush_done: flushed\n"));
+				mtx_leave(&sb->sb_mtx);
 				return (0);
 			}
 		}
@@ -638,7 +643,6 @@ int
 iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
     void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
-	int s;
 	int err = 0;
 	bus_size_t sgsize;
 	u_long dvmaddr, sgstart, sgend;
@@ -723,6 +727,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
 
+	mtx_enter(&is->is_mtx);
 	if (flags & BUS_DMA_24BIT) {
 		sgstart = MAX(is->is_dvmamap->ex_start, 0xff000000);
 		sgend = MIN(is->is_dvmamap->ex_end, 0xffffffff);
@@ -735,11 +740,10 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up into little pieces ourselves.
 	 */
-	s = splhigh();
 	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
 	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
 	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
-	splx(s);
+	mtx_leave(&is->is_mtx);
 
 #ifdef DEBUG
 	if (err || (dvmaddr == (bus_addr_t)-1))	{ 
@@ -848,7 +852,7 @@ int
 iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
-	int i, s;
+	int i;
 	int left;
 	int err = 0;
 	bus_size_t sgsize;
@@ -936,6 +940,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
 
+	mtx_enter(&is->is_mtx);
 	if (flags & BUS_DMA_24BIT) {
 		sgstart = MAX(is->is_dvmamap->ex_start, 0xff000000);
 		sgend = MIN(is->is_dvmamap->ex_end, 0xffffffff);
@@ -948,11 +953,10 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up into little pieces ourselves.
 	 */
-	s = splhigh();
 	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
 	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
 	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
-	splx(s);
+	mtx_leave(&is->is_mtx);
 
 	if (err != 0)
 		return (err);
@@ -1275,7 +1279,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 	struct iommu_map_state *ims = map->_dm_cookie;
 	bus_addr_t dvmaddr = map->_dm_dvmastart;
 	bus_size_t sgsize = map->_dm_dvmasize;
-	int error, s;
+	int error;
 
 #ifdef DEBUG
 	if (ims == NULL)
@@ -1298,6 +1302,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 #endif
 		return;
 	}
+	/* XXX is this not supposed to be debug-only code by now? */
 	iommu_dvmamap_validate_map(t, is, map);
 
 	if (iommudebug & IDB_PRINT_MAP)
@@ -1316,12 +1321,12 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-	s = splhigh();
+	mtx_enter(&is->is_mtx);
 	error = extent_free(is->is_dvmamap, dvmaddr, 
 		sgsize, EX_NOWAIT);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
-	splx(s);
+	mtx_leave(&is->is_mtx);
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", sgsize);
 }

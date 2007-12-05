@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.10 2007/05/29 09:53:59 sobrado Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.11 2007/12/05 21:15:46 deraadt Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 #include <sys/tree.h>
 #endif
 
+#include <sys/mutex.h>
+
 /*
  * per-Streaming Buffer state
  */
@@ -49,8 +51,11 @@ struct strbuf_ctl {
 	 * flush areas are not used other than as a boolean flag to indicate
 	 * the presence of a working and enabled STC.  For inconsistency's
 	 * sake, the "sb" pointers of iommu_state are sometimes used for the
-	 * same purpose.  This should be consolidated.
+	 * same purpose.  This should be consolidated.  DEFINATELY, since
+	 * mutex operations must happen at this level.
 	 */
+	struct mutex		sb_mtx;		/* one flush at a time */
+
 	paddr_t			sb_flushpa;	/* to flush streaming buffers */
 	volatile int64_t	*sb_flush;
 };
@@ -102,6 +107,7 @@ struct iommu_state {
 	u_int			is_dvmabase;
 	u_int			is_dvmaend;
 	int64_t			is_cr;		/* Control register value */
+	struct mutex		is_mtx;
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
