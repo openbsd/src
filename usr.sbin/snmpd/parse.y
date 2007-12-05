@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2007/12/05 22:57:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -479,7 +479,7 @@ yylex(void)
 
 top:
 	p = buf;
-	while ((c = lgetc(0)) == ' ')
+	while ((c = lgetc(0)) == ' ' || c == '\t')
 		; /* nothing */
 
 	yylval.lineno = file->lineno;
