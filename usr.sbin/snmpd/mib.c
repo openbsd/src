@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -25,6 +25,7 @@
 #include <sys/tree.h>
 #include <sys/utsname.h>
 #include <sys/sysctl.h>
+#include <sys/sensors.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -129,7 +130,8 @@ static struct oid base_mib[] = {
 	{ MIB(LINKDOWN), "linkDown" },
 	{ MIB(LINKUP), "linkUp" },
 	{ MIB(AUTHFAILURE), "authenticationFailure" },
-	{ MIB(EGPNEIGHBORLOSS), "egpNeighborLoss" }
+	{ MIB(EGPNEIGHBORLOSS), "egpNeighborLoss" },
+	{ MIBEND }
 };
 
 int
@@ -412,7 +414,8 @@ static struct oid if_mib[] = {
 	{ MIB(IFOUTDISCARDS), "ifOutDiscards", OID_TRD,	mib_iftable },
 	{ MIB(IFOUTERRORS), "ifOutErrors", OID_TRD,	mib_iftable },
 	{ MIB(IFOUTQLEN), "ifOutQLen", OID_TRD,		mib_iftable },
-	{ MIB(IFSPECIFIC), "ifSpecific", OID_TRD,	mib_iftable }
+	{ MIB(IFSPECIFIC), "ifSpecific", OID_TRD,	mib_iftable },
+	{ MIBEND }
 };
 
 int
@@ -818,19 +821,226 @@ static struct oid enterprise_mib[] = {
 	{ MIB(SFLOW), "sFlow" },
 	{ MIB(MSYS), "microSystems" },
 	{ MIB(VANTRONIX), "vantronix" },
-	{ MIB(OPENBSD), "openBSD" }
+	{ MIB(OPENBSD), "openBSD" },
+	{ MIBEND }
 };
+
+/*
+ * Defined in OPENBSD-SENSORS-MIB.txt
+ * (http://packetmischief.ca/openbsd/snmp/)
+ */
+
+int	 mib_sensornum(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_sensors(struct oid *, struct ber_oid *, struct ber_element **);
+char	*mib_sensorunit(struct sensor *);
+char	*mib_sensorvalue(struct sensor *);
+
+static struct oid openbsd_mib[] = {
+	{ MIB(SENSORMIBOBJECTS), "sensorMIBObjects", OID_MIB },
+	{ MIB(SENSORS), "sensors" },
+	{ MIB(SENSORNUMBER), "sensorNumber", OID_RD,	mib_sensornum },
+	{ MIB(SENSORTABLE), "sensorTable" },
+	{ MIB(SENSORENTRY), "sensorEntry" },
+	{ MIB(SENSORINDEX), "sensorIndex", OID_TRD,	mib_sensors },
+	{ MIB(SENSORDESCR), "sensorDescr", OID_TRD,	mib_sensors },
+	{ MIB(SENSORTYPE), "sensorType", OID_TRD,	mib_sensors },
+	{ MIB(SENSORDEVICE), "sensorDevice", OID_TRD,	mib_sensors },
+	{ MIB(SENSORVALUE), "sensorValue", OID_TRD,	mib_sensors },
+	{ MIB(SENSORUNITS), "sensorUnits", OID_TRD,	mib_sensors },
+	{ MIB(SENSORSTATUS), "sensorStatus", OID_TRD,	mib_sensors },
+	{ MIBEND }
+};
+
+int
+mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct sensordev	 sensordev;
+	size_t			 len = sizeof(sensordev);
+	int			 mib[3], i, c;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_SENSORS;
+
+	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
+		mib[2] = i;
+		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
+			if (errno != ENOENT)
+				return(-1);
+			continue;	
+		}
+		c += sensordev.sensors_count;
+	}
+
+	*elm = ber_add_integer(*elm, c);
+	return (0);
+}
+
+int
+mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct sensordev	 sensordev;
+	size_t			 len = sizeof(sensordev);
+	struct sensor		 sensor;
+	size_t			 slen = sizeof(sensor);
+	int			 mib[5], i, c, j, k;
+	u_int32_t		 idx = 0, n;
+	char			*s;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_SENSORENTRY];
+ 
+	mib[0] = CTL_HW;
+	mib[1] = HW_SENSORS;
+
+	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
+		mib[2] = i;
+		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
+			if (errno != ENOENT)
+				return(-1);
+			continue;	
+		}
+		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
+			mib[3] = j;
+			for (k = 0; k < sensordev.maxnumt[j]; k++, n++) {
+				mib[4] = k;
+				if (sysctl(mib, 5, &sensor,
+				    &slen, NULL, 0) == -1) {
+					if (errno != ENOENT)
+						return (-1);
+					continue;	
+				}
+				if (n == idx)
+					goto found;
+			}
+		}
+	}
+	return (1);
+
+ found:
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_SENSOR]) {
+	case 1:
+		ber = ber_add_integer(ber, (int32_t)n);
+		break;
+	case 2:
+		if ((s = strdup(sensor.desc)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
+		break;
+	case 3:
+		ber = ber_add_integer(ber, sensor.type);
+		break;
+	case 4:
+		if ((s = strdup(sensordev.xname)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
+		break;
+	case 5:
+		if ((s = mib_sensorvalue(&sensor)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
+		break;
+	case 6:
+		if ((s = mib_sensorunit(&sensor)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
+		break;
+	case 7:
+		ber = ber_add_integer(ber, sensor.status);
+		break;
+	}
+
+	return (0);
+}
+
+#define SENSOR_DRIVE_STATES	(SENSOR_DRIVE_PFAIL + 1)
+static const char * const sensor_drive_s[SENSOR_DRIVE_STATES] = {
+	NULL, "empty", "ready", "powerup", "online", "idle", "active",
+	"rebuild", "powerdown", "fail", "pfail"
+};
+
+static const char * const sensor_unit_s[SENSOR_MAX_TYPES + 1] = {
+	"degC",	"RPM", "V DC", "V AC", "Ohm", "W", "A", "Wh", "Ah",
+	"", "", "%", "lx", "", "sec", ""
+};
+
+char *
+mib_sensorunit(struct sensor *s)
+{
+	u_int	 idx;
+	idx = s->type > SENSOR_MAX_TYPES ?
+	    SENSOR_MAX_TYPES : s->type;
+	return (strdup(sensor_unit_s[idx]));
+}
+
+char *
+mib_sensorvalue(struct sensor *s)
+{
+	char	*v;
+	int	 ret = -1;
+
+	switch (s->type) {
+	case SENSOR_TEMP:
+		ret = asprintf(&v, "%.2f",
+		    (s->value - 273150000) / 1000000.0);
+		break;
+	case SENSOR_VOLTS_DC:
+	case SENSOR_VOLTS_AC:
+	case SENSOR_AMPS:
+	case SENSOR_WATTHOUR:
+	case SENSOR_AMPHOUR:
+	case SENSOR_LUX:
+		ret = asprintf(&v, "%.2f", s->value / 1000000.0);
+		break;
+	case SENSOR_INDICATOR:
+		ret = asprintf(&v, "%s", s->value ? "on" : "off");
+		break;
+	case SENSOR_PERCENT:
+		ret = asprintf(&v, "%.2f%%", s->value / 1000.0);
+		break;
+	case SENSOR_TIMEDELTA:
+		ret = asprintf(&v, "%.6f", s->value / 1000000000.0);
+		break;
+	case SENSOR_DRIVE:
+		if (s->value > 0 && s->value < SENSOR_DRIVE_STATES) {
+			ret = asprintf(&v, "%s", sensor_drive_s[s->value]);
+			break;
+		}
+		/* FALLTHROUGH */
+	case SENSOR_FANRPM:
+	case SENSOR_INTEGER:
+	default:
+		ret = asprintf(&v, "%lld", s->value);
+		break;
+	}
+
+	if (ret == -1)
+		return (NULL);
+	return (v);
+}
+
+/*
+ * Import all MIBs
+ */
 
 void
 mib_init(void)
 {
 	/* SNMPv2-MIB */
-	mps_mibtree(base_mib, sizeof(base_mib) / sizeof(base_mib[0]));
+	mps_mibtree(base_mib);
 
 	/* IF-MIB */
-	mps_mibtree(if_mib, sizeof(if_mib) / sizeof(if_mib[0]));
+	mps_mibtree(if_mib);
 
 	/* some http://www.iana.org/assignments/enterprise-numbers */
-	mps_mibtree(enterprise_mib,
-	    sizeof(enterprise_mib) / sizeof(enterprise_mib[0]));
+	mps_mibtree(enterprise_mib);
+
+	/* OPENBSD-MIB */
+	mps_mibtree(openbsd_mib);
 }

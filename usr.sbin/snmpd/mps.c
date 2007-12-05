@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -377,12 +377,12 @@ mps_insert(struct oid *oid)
 }
 
 void
-mps_mibtree(struct oid *oids, size_t n)
+mps_mibtree(struct oid *oids)
 {
 	struct oid	*oid;
 	size_t		 i;
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; oids[i].o_name != NULL; i++) {
 		oid = &oids[i];
 		mps_oidlen(&oid->o_id);
 		if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)

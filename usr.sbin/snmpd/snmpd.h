@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -236,6 +236,7 @@ struct oid {
 
 #define OID(_mib...)		{ { _mib } }
 #define MIB(_mib...)		{ { MIB_##_mib } }
+#define MIBEND			{ { 0 } }, NULL
 
 /*
  * daemon structures
@@ -381,7 +382,7 @@ pid_t		 snmpe(struct snmpd *, int [2]);
 int		 mps_init(void);
 u_long		 mps_getticks(void);
 long		 mps_oid_cmp(struct oid *, struct oid *);
-void		 mps_mibtree(struct oid *, size_t);
+void		 mps_mibtree(struct oid *);
 struct oid	*mps_foreach(struct oid *, u_int);
 void		 mps_oidlen(struct ber_oid *);
 char		*mps_oidstring(struct ber_oid *, char *, size_t);
