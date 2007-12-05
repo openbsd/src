@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.41 2007/12/02 21:32:08 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.42 2007/12/05 22:12:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2273,11 +2273,10 @@ ASGLOBAL(ast_done)
 
 	/* reload the control regs*/
 #if defined(M88100) && defined(M88110)
-	or.u	r1, r0, hi16(_C_LABEL(cputyp))
-	ld	r30, r1, lo16(_C_LABEL(cputyp))
-	cmp	r1, r30, CPU_88110
-	bb1	ne, r1, _ASM_LABEL(m88100_user_rte)
-	br	_ASM_LABEL(m88110_user_rte)
+	ldcr	r1, PID
+	extu	r30, r1, 8<8>
+	bcnd	ne0, r30, _ASM_LABEL(m88110_user_rte)
+	/* FALLTHROUGH */
 #endif
 
 #ifdef M88100

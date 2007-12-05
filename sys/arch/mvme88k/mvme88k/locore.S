@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.57 2007/12/04 23:43:54 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.58 2007/12/05 22:12:30 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -124,16 +124,8 @@ ASLOCAL(main_start)
 
 	/* set cputyp */
 	ldcr	r1,  PID
-	extu	r2,  r1, 8<8>
-	bcnd.n	eq0, r2, 1f
-	 or.u	r13, r0,  hi16(_C_LABEL(cputyp))
-	or.u	r8,  r0,  hi16(CPU_88110)
-	br.n	2f
-	 or	r8,  r8,  lo16(CPU_88110)
-1:
-	or.u	r8,  r0,  hi16(CPU_88100)
-	or	r8,  r8,  lo16(CPU_88100)
-2:
+	extu	r8,  r1, 8<8>
+	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
 	st	r8,  r13, lo16(_C_LABEL(cputyp))
 
 	/*
@@ -168,7 +160,7 @@ ASLOCAL(main_start)
 	 *	jfriedl@omron.co.jp
 	 */
 
-	cmp	r2, r8, CPU_88110	/* r8 contains cputyp */
+	cmp	r2, r8, CPU_88110
 	bb1	eq, r2, 1f	/* if it's a 'mc88110, skip SSBR */
 	stcr	r0, SSBR	/* clear this for later */
 1:
@@ -216,7 +208,7 @@ ASLOCAL(main_start)
 
 #ifdef M88110
 #ifdef M88100
-	cmp	r2, r8, CPU_88110 /* r8 contains cputyp */
+	cmp	r2, r8, CPU_88110
 	bb1	ne, r2, 1f	/* if it's a 'mc88110, use different vectors */
 #endif
 	or.u	r3, r0, hi16(_C_LABEL(m88110_vector_list))
@@ -243,22 +235,11 @@ ASLOCAL(main_start)
 	 * ...and we can switch to the u area stack now.
 	 */
 	ldcr	r10, CPU
-	ld	r31, r10, CI_CURPCB
+	ld	r2,  r10, CI_CURPCB
 
 	/* call main() - no arguments although main() still defines one */
 	bsr.n	_C_LABEL(main)
-	 addu	r31, r31, USPACE
-
-	or.u	r2, r0, hi16(_ASM_LABEL(main_panic))
-	bsr.n	_C_LABEL(panic)
-	 or	r2, r2, lo16(_ASM_LABEL(main_panic))
-
-	data
-	.align	4
-ASLOCAL(main_panic)
-	string	"main() returned\0"
-	text
-	.align	8
+	 addu	r31, r2, USPACE
 
 #ifdef MULTIPROCESSOR
 
@@ -271,8 +252,8 @@ GLOBAL(secondary_start)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
-	ld	r8,  r13, lo16(_C_LABEL(cputyp))
+	ldcr	r1, PID
+	extu	r8,  r1, 8<8>
 
 	cmp	r2, r8, CPU_88110
 	bb1	eq, r2, 1f
