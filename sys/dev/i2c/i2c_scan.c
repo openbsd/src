@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.111 2007/10/30 07:10:34 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.112 2007/12/05 16:35:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -577,6 +577,9 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 		break;
 	case 0x5c:		/* SMSC */
 		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    (iicprobe(0x3f) == 0x69))
+			name = "sch5027";
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    (iicprobe(0x3f) & 0xf0) == 0x60)
 			name = "emc6d100";   /* emc6d101, emc6d102, emc6d103 */
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
