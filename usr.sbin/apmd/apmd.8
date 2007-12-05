@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.36 2007/05/31 19:20:22 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.37 2007/12/05 16:47:09 jmc Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,12 +26,12 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 5 2007 $
 .Dt APMD 8
 .Os
 .Sh NAME
 .Nm apmd
-.Nd Advanced Power Management monitor daemon
+.Nd Advanced Power Management daemon
 .Sh SYNOPSIS
 .Nm apmd
 .Op Fl AaCdeHLmps
@@ -40,10 +40,12 @@
 .Op Fl t Ar seconds
 .Sh DESCRIPTION
 .Nm
-monitors the advanced power management (APM) pseudo-device, acting on
-signaled events and upon user requests as sent by the
+monitors the advanced power management device,
+.Xr apm 4 ,
+acting on signaled events and upon user requests as sent by the
 .Xr apm 8
 program.
+.Pp
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
 .Nm
