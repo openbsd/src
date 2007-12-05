@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.35 2007/11/28 17:03:59 tedu Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.36 2007/12/05 17:28:06 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -366,7 +366,8 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 				as = ", UNKNOWN";
 				break;
 			}
-			syslog(LOG_ALERT, "%s.%s%d: %s%s",
+			syslog(limit->astatus == SENSOR_S_OK ? LOG_INFO :
+			    LOG_ALERT, "%s.%s%d: %s%s",
 			    sdlim->dxname, sensor_type_s[limit->type],
 			    limit->numt,
 			    print_sensor(limit->type, limit->last_val), as);
@@ -392,7 +393,8 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 				    print_sensor(limit->type, limit->last_val));
 				break;
 			}
-			syslog(LOG_ALERT, "%s.%s%d: %s",
+			syslog(limit->ustatus == SENSORSD_S_WITHIN ? LOG_INFO :
+			    LOG_ALERT, "%s.%s%d: %s",
 			    sdlim->dxname, sensor_type_s[limit->type],
 			    limit->numt, us);
 		}
