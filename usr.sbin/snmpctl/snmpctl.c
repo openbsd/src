@@ -1,4 +1,4 @@
-/*	$Id: snmpctl.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$Id: snmpctl.c,v 1.2 2007/12/05 16:02:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -73,7 +73,7 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that hoststatectl does not need libevent */
+/* dummy function so that snmpctl does not need libevent */
 void
 imsg_event_add(struct imsgbuf *i)
 {
