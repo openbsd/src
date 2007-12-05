@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.1 2007/12/05 09:22:44 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.2 2007/12/05 23:29:19 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -756,7 +756,7 @@ ber_calc_len(struct ber_element *root)
 	size_t s;
 	size_t size = 2;	/* minimum 1 byte head and 1 byte size */
 
-	/* calculate the real lenght of a sequence or set */
+	/* calculate the real length of a sequence or set */
 	if (root->be_sub && (root->be_encoding == BER_TYPE_SEQUENCE ||
 	    root->be_encoding == BER_TYPE_SET))
 		root->be_len = ber_calc_len(root->be_sub);
@@ -923,7 +923,7 @@ get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 }
 
 /*
- * extract lenght of a ber object -- if length is unknown a length of -1 is
+ * extract length of a ber object -- if length is unknown a length of -1 is
  * returned.
  */
 static ssize_t
@@ -1119,7 +1119,7 @@ ber_getc(struct ber *b, u_char *c)
 {
 	ssize_t r;
 	/*
-	 * XXX calling read here is wrong in many ways. The most obivous one
+	 * XXX calling read here is wrong in many ways. The most obvious one
 	 * being that we will block till data arrives.
 	 * But for now it is _good enough_ *gulp*
 	 */
@@ -1139,7 +1139,7 @@ ber_read(struct ber *ber, void *buf, unsigned long len)
 	ssize_t	r, remain = len;
 
 	/*
-	 * XXX calling read here is wrong in many ways. The most obivous one
+	 * XXX calling read here is wrong in many ways. The most obvious one
 	 * being that we will block till data arrives.
 	 * But for now it is _good enough_ *gulp*
 	 */
