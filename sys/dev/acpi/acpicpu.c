@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.35 2007/12/03 00:25:24 fgsch Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.36 2007/12/05 21:42:14 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -540,6 +540,15 @@ acpicpu_setperf(int level) {
 	if (level < 0 || level > 100) {
 		dnprintf(10, "%s: acpicpu setperf illegal percentage\n",
 		    sc->sc_devnode->name);
+		return;
+	}
+
+	/*
+	 * XXX this should be handled more gracefully and it needs to also do
+	 * the duty cycle method instead of pss exclusively
+	 */
+	if (sc->sc_pss_len == 0) {
+		dnprintf(10, "%s: acpicpu no _PSS\n", sc->sc_devnode->name);
 		return;
 	}
 
