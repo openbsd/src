@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.11 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.12 2007/12/05 23:02:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -175,6 +175,7 @@ ssl_connect(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		hce_notify_done(cte->host, "ssl_connect: timeout");
+		ssl_cleanup(cte);
 		return;
 	}
 
