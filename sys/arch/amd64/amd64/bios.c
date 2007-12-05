@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.14 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: bios.c,v 1.15 2007/12/05 19:17:14 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -31,6 +31,13 @@
 
 #include <dev/isa/isareg.h>
 #include <amd64/include/isa_machdep.h>
+#include <dev/pci/pcivar.h>
+
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+
+#include "acpi.h"
+#include "pci.h"
 
 struct bios_softc {
 	struct device sc_dev;
@@ -39,6 +46,7 @@ struct bios_softc {
 void smbios_info(char *);
 int bios_match(struct device *, void *, void *);
 void bios_attach(struct device *, struct device *, void *);
+int bios_print(void *, const char *);
 char *fixstring(char *);
 
 struct cfattach bios_ca = {
@@ -68,7 +76,7 @@ bios_match(struct device *parent, void *match , void *aux)
 	struct bios_attach_args *bia = aux;
 
 	/* only one */
-	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
+	if (bios_cd.cd_ndevs || strcmp(bia->ba_name, bios_cd.cd_name))
 		return 0;
 	return 1;
 }
@@ -146,6 +154,22 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	printf("\n");
+
+#if NACPI > 0
+#if NPCI > 0
+	if (pci_mode != 0)
+#endif
+	{
+		struct bios_attach_args ba;
+
+		memset(&ba, 0, sizeof(ba));
+		ba.ba_name = "acpi";
+		ba.ba_iot = X86_BUS_SPACE_IO;
+		ba.ba_memt = X86_BUS_SPACE_MEM;
+
+		config_found(self, &ba, bios_print);
+	}
+#endif
 }
 
 /*
@@ -382,4 +406,15 @@ smbios_info(char * str)
 			}
 		}
 	}
+}
+
+int
+bios_print(void *aux, const char *pnp)
+{
+        struct bios_attach_args *ba = aux;
+
+        if (pnp)
+                printf("%s at %s",
+                    ba->ba_name, pnp);
+        return (UNCONF);
 }

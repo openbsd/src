@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 2007/11/16 16:16:07 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.14 2007/12/05 19:17:14 deraadt Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -52,10 +52,8 @@
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 
-#if NACPI > 0
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#endif
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
@@ -84,9 +82,6 @@ union mainbus_attach_args {
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
 	struct apic_attach_args aaa_caa;
-#if NACPI > 0
-	struct acpi_attach_args mba_aaa;
-#endif
 #if NIPMI > 0
 	struct ipmi_attach_args mba_iaa;
 #endif
@@ -160,24 +155,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NBIOS > 0
 	{
-		mba.mba_bios.bios_dev = "bios";
-		mba.mba_bios.bios_iot = X86_BUS_SPACE_IO;
-		mba.mba_bios.bios_memt = X86_BUS_SPACE_MEM;
+		mba.mba_bios.ba_name = "bios";
+		mba.mba_bios.ba_iot = X86_BUS_SPACE_IO;
+		mba.mba_bios.ba_memt = X86_BUS_SPACE_MEM;
 		config_found(self, &mba.mba_bios, mainbus_print);
-	}
-#endif
-
-#if NACPI > 0
-#if NPCI > 0
-	if (pci_mode != 0)
-#endif
-	{
-		memset(&mba.mba_aaa, 0, sizeof(mba.mba_aaa));
-		mba.mba_aaa.aaa_name = "acpi";
-		mba.mba_aaa.aaa_iot = X86_BUS_SPACE_IO;
-		mba.mba_aaa.aaa_memt = X86_BUS_SPACE_MEM;
-
-		config_found(self, &mba.mba_aaa, mainbus_print);
 	}
 #endif
 

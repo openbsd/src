@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.110 2007/12/05 16:14:14 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.111 2007/12/05 19:17:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -334,14 +334,14 @@ acpi_foundprt(struct aml_node *node, void *arg)
 int
 acpi_match(struct device *parent, void *match, void *aux)
 {
-	struct acpi_attach_args	*aaa = aux;
+	struct bios_attach_args	*ba = aux;
 	struct cfdata		*cf = match;
 
 	/* sanity */
-	if (strcmp(aaa->aaa_name, cf->cf_driver->cd_name))
+	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
 		return (0);
 
-	if (!acpi_probe(parent, cf, aaa))
+	if (!acpi_probe(parent, cf, ba))
 		return (0);
 
 	return (1);
@@ -395,7 +395,7 @@ acpi_add_device(struct aml_node *node, void *arg)
 void
 acpi_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpi_attach_args *aaa = aux;
+	struct bios_attach_args *ba = aux;
 	struct acpi_softc *sc = (struct acpi_softc *)self;
 	struct acpi_mem_map handle;
 	struct acpi_rsdp *rsdp;
@@ -409,10 +409,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	paddr_t facspa;
 
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_memt = aaa->aaa_memt;
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_memt = ba->ba_memt;
 
-	if (acpi_map(aaa->aaa_pbase, sizeof(struct acpi_rsdp), &handle)) {
+	if (acpi_map(ba->ba_acpipbase, sizeof(struct acpi_rsdp), &handle)) {
 		printf(": can't map memory\n");
 		return;
 	}

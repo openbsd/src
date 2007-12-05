@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.10 2007/11/25 15:42:15 tedu Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.11 2007/12/05 19:17:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -110,7 +110,7 @@ acpi_scan(struct acpi_mem_map *handle, paddr_t pa, size_t len)
 }
 
 int
-acpi_probe(struct device *parent, struct cfdata *match, struct acpi_attach_args *aaa)
+acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args *ba)
 {
 	struct acpi_mem_map handle;
 	u_int8_t *ptr;
@@ -163,7 +163,7 @@ acpi_probe(struct device *parent, struct cfdata *match, struct acpi_attach_args 
 	return (0);
 
 havebase:
-	aaa->aaa_pbase = ptr - handle.va + handle.pa;
+	ba->ba_acpipbase = ptr - handle.va + handle.pa;
 	acpi_unmap(&handle);
 
 	return (1);
@@ -173,6 +173,7 @@ void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
 	extern void (*cpuresetfn)(void);
+
 	sc->sc_interrupt = isa_intr_establish(NULL, sc->sc_fadt->sci_int,
 	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, sc->sc_dev.dv_xname);
 	acpiapm_open = acpiopen;

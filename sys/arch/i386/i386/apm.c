@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.79 2007/11/25 15:42:15 tedu Exp $	*/
+/*	$OpenBSD: apm.c,v 1.80 2007/12/05 19:17:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -750,11 +750,11 @@ int
 apmprobe(struct device *parent, void *match, void *aux)
 {
 	struct bios_attach_args *ba = aux;
-	bios_apminfo_t *ap = ba->bios_apmp;
+	bios_apminfo_t *ap = ba->ba_apmp;
 	bus_space_handle_t ch, dh;
 
-	if (apm_cd.cd_ndevs || strcmp(ba->bios_dev, "apm") ||
-	    !(ba->bios_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
+	if (apm_cd.cd_ndevs || strcmp(ba->ba_name, "apm") ||
+	    !(ba->ba_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
 		DPRINTF(("%s: %x\n", ba->bios_dev, ba->bios_apmp->apm_detail));
 		return 0;
 	}
@@ -772,19 +772,19 @@ apmprobe(struct device *parent, void *match, void *aux)
 	     ap->apm_data_base + ap->apm_data_len > IOM_BEGIN))
 		return 0;
 
-	if (bus_space_map(ba->bios_memt, ap->apm_code32_base,
+	if (bus_space_map(ba->ba_memt, ap->apm_code32_base,
 	    ap->apm_code_len, 1, &ch) != 0) {
 		DPRINTF(("apm0: can't map code\n"));
 		return 0;
 	}
-	bus_space_unmap(ba->bios_memt, ch, ap->apm_code_len);
+	bus_space_unmap(ba->ba_memt, ch, ap->apm_code_len);
 
-	if (bus_space_map(ba->bios_memt, ap->apm_data_base,
+	if (bus_space_map(ba->ba_memt, ap->apm_data_base,
 	    ap->apm_data_len, 1, &dh) != 0) {
 		DPRINTF(("apm0: can't map data\n"));
 		return 0;
 	}
-	bus_space_unmap(ba->bios_memt, dh, ap->apm_data_len);
+	bus_space_unmap(ba->ba_memt, dh, ap->apm_data_len);
 	return 1;
 }
 
@@ -792,7 +792,7 @@ void
 apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct bios_attach_args *ba = aux;
-	bios_apminfo_t *ap = ba->bios_apmp;
+	bios_apminfo_t *ap = ba->ba_apmp;
 	struct apm_softc *sc = (void *)self;
 	struct apmregs regs;
 	u_int cbase, clen, l;
@@ -836,7 +836,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 			l = max(ap->apm_data_base + ap->apm_data_len + 1,
 				cbase + clen + 1) -
 			    min(ap->apm_data_base, cbase);
-			bus_space_map(ba->bios_memt,
+			bus_space_map(ba->ba_memt,
 				min(ap->apm_data_base, cbase),
 				l, 1, &dh);
 			ch16 = dh;
@@ -846,8 +846,8 @@ apmattach(struct device *parent, struct device *self, void *aux)
 				dh += ap->apm_data_base - cbase;
 		} else {
 
-			bus_space_map(ba->bios_memt, cbase, clen + 1, 1, &ch16);
-			bus_space_map(ba->bios_memt, ap->apm_data_base,
+			bus_space_map(ba->ba_memt, cbase, clen + 1, 1, &ch16);
+			bus_space_map(ba->ba_memt, ap->apm_data_base,
 			    ap->apm_data_len + 1, 1, &dh);
 		}
 		ch32 = ch16;

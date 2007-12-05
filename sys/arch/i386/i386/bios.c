@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.74 2007/12/01 19:08:42 miod Exp $	*/
+/*	$OpenBSD: bios.c,v 1.75 2007/12/05 19:17:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -57,7 +57,13 @@
 #include <dev/isa/isareg.h>
 #include <i386/isa/isa_machdep.h>
 
+#include <dev/pci/pcivar.h>
+
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+
 #include "apm.h"
+#include "acpi.h"
 #include "pcibios.h"
 #include "pci.h"
 
@@ -125,7 +131,7 @@ biosprobe(struct device *parent, void *match, void *aux)
 	    bootapiver, BOOTARG_APIVER, bootargp, bootargc);
 #endif
 	/* there could be only one */
-	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
+	if (bios_cd.cd_ndevs || strcmp(bia->ba_name, bios_cd.cd_name))
 		return 0;
 
 	if (!(bootapiver & BAPIV_VECTOR) || bootargp == NULL)
@@ -318,6 +324,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 #if NAPM > 0
 	if (apm && ncpu < 2) {
 		struct bios_attach_args ba;
+
 #if defined(DEBUG) || defined(APMDEBUG)
 		printf("apminfo: %x, code %x[%x]/%x[%x], data %x[%x], ept %x\n",
 		    apm->apm_detail,
@@ -325,22 +332,40 @@ biosattach(struct device *parent, struct device *self, void *aux)
 		    apm->apm_code16_base, apm->apm_code16_len,
 		    apm->apm_data_base, apm->apm_data_len, apm->apm_entry);
 #endif
-		ba.bios_dev = "apm";
-		ba.bios_func = 0x15;
-		ba.bios_memt = bia->bios_memt;
-		ba.bios_iot = bia->bios_iot;
-		ba.bios_apmp = apm;
+		ba.ba_name = "apm";
+		ba.ba_func = 0x15;
+		ba.ba_memt = bia->ba_memt;
+		ba.ba_iot = bia->ba_iot;
+		ba.ba_apmp = apm;
 		config_found(self, &ba, bios_print);
 	}
 #endif
+
+#if NACPI > 0
+#if NPCI > 0
+	if (pci_mode_detect() != 0)
+#endif
+	{
+		struct bios_attach_args ba;
+
+		memset(&ba, 0, sizeof(ba));
+		ba.ba_name = "acpi";
+		ba.ba_func = 0x00;		/* XXX ? */
+		ba.ba_iot = I386_BUS_SPACE_IO;
+		ba.ba_memt = I386_BUS_SPACE_MEM;
+		if (config_found(self, &ba, bios_print))
+			flags |= BIOSF_PCIBIOS;
+	}
+#endif
+
 #if NPCI > 0 && NPCIBIOS > 0
 	if (!(flags & BIOSF_PCIBIOS)) {
 		struct bios_attach_args ba;
 
-		ba.bios_dev = "pcibios";
-		ba.bios_func = 0x1A;
-		ba.bios_memt = bia->bios_memt;
-		ba.bios_iot = bia->bios_iot;
+		ba.ba_name = "pcibios";
+		ba.ba_func = 0x1A;
+		ba.ba_memt = bia->ba_memt;
+		ba.ba_iot = bia->ba_iot;
 		config_found(self, &ba, bios_print);
 	}
 #endif
@@ -498,7 +523,7 @@ bios_print(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("%s at %s function 0x%x",
-		    ba->bios_dev, pnp, ba->bios_func);
+		    ba->ba_name, pnp, ba->ba_func);
 	return (UNCONF);
 }
 

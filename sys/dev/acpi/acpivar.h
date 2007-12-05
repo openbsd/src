@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.41 2007/11/25 09:11:12 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.42 2007/12/05 19:17:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -20,6 +20,7 @@
 
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
+#include <machine/biosvar.h>
 
 /* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
@@ -46,7 +47,6 @@ struct acpi_attach_args {
 	bus_space_tag_t	 aaa_iot;
 	bus_space_tag_t	 aaa_memt;
 	void		*aaa_table;
-	paddr_t		 aaa_pbase; /* Physical base address of ACPI tables */
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
 };
@@ -241,7 +241,7 @@ int	 acpi_map_address(struct acpi_softc *, struct acpi_gas *, bus_addr_t, bus_si
 
 int	 acpi_map(paddr_t, size_t, struct acpi_mem_map *);
 void	 acpi_unmap(struct acpi_mem_map *);
-int	 acpi_probe(struct device *, struct cfdata *, struct acpi_attach_args *);
+int	 acpi_probe(struct device *, struct cfdata *, struct bios_attach_args *);
 u_int	 acpi_checksum(const void *, size_t);
 void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);

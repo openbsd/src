@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.42 2007/11/15 22:21:31 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.43 2007/12/05 19:17:14 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -32,8 +32,9 @@ option		MINIROOTSIZE=4480
 config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
+bios0	at mainbus?
 
-acpi0		at mainbus?
+acpi0		at bios?
 #acpitimer*	at acpi?
 #acpihpet*	at acpi?
 #acpiac*	at acpi?

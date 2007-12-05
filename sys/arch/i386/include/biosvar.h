@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.48 2006/05/20 22:36:33 deraadt Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.49 2007/12/05 19:17:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -225,17 +225,19 @@ extern volatile struct BIOS_regs {
 #include <machine/bus.h>
 
 struct bios_attach_args {
-	char *bios_dev;
-	u_int bios_func;
-	bus_space_tag_t bios_iot;
-	bus_space_tag_t bios_memt;
+	char		*ba_name;
+	u_int		ba_func;
+	bus_space_tag_t	ba_iot;
+	bus_space_tag_t	ba_memt;
 	union {
-		void *_p;
-		bios_apminfo_t *_bios_apmp;
+		void		*_p;
+		bios_apminfo_t	*_ba_apmp;
+		paddr_t		_ba_acpipbase;
 	} _;
 };
 
-#define	bios_apmp	_._bios_apmp
+#define	ba_apmp		_._ba_apmp
+#define ba_acpipbase	_._ba_acpipbase
 
 struct consdev;
 struct proc;
