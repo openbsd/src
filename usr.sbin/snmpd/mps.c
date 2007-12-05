@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.3 2007/12/05 22:54:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -298,7 +298,7 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	struct oid		 a, b;
 
 	/*
-	 * This function is beeing used to iterate through elements
+	 * This function is being used to iterate through elements
 	 * in a SMI "table". It is called by the mps_getnext() handler.
 	 * For example, if the input is sysORIndex, it will return
 	 * sysORIndex.1. If the inpurt is sysORIndex.2, it will return
