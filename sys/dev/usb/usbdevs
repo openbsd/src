@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.320 2007/12/04 23:44:55 deraadt Exp $
+$OpenBSD: usbdevs,v 1.321 2007/12/05 17:11:47 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1151,7 +1151,8 @@ product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
 product FTDI MJS_SIRIUS_PC	0xca81	MJS Sirius To PC Interface
 product FTDI DCF		0xe88a	Expert mouseCLOCK USB II
-product FTDI HBG		0xe88c	Expert mouseCLOCK UBS II HBG
+product FTDI MSF		0xe88b	Expert mouseCLOCK USB II MSF
+product FTDI HBG		0xe88c	Expert mouseCLOCK USB II HBG
 product FTDI SERIAL_232BM	0xee18	FT232BM Serial
 product FTDI MHAM_KW		0xeee8	KW
 product FTDI MHAM_YS		0xeee9	YS
