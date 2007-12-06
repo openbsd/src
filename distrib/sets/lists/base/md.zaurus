@@ -20,6 +20,8 @@
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
+./etc/firmware/tusb3410
+./etc/firmware/tusb3410-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
 ./etc/firmware/zd1211b
