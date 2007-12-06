@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.30 2007/12/04 19:32:13 otto Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.31 2007/12/06 21:49:37 otto Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ mfs_strategy(void *v)
 	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;
+	int s;
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
@@ -148,8 +149,10 @@ mfs_strategy(void *v)
 	if (p != NULL && mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(mfsp, bp);
 	} else {
+		s = splbio();
 		bp->b_actf = mfsp->mfs_buflist;
 		mfsp->mfs_buflist = bp;
+		splx(s);
 		wakeup((caddr_t)vp);
 	}
 	return (0);
