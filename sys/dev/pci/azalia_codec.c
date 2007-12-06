@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.44 2007/11/24 18:43:38 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.45 2007/12/06 19:58:48 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $"
 #define AzaliaNclfe	"clfe"
 #define AzaliaNside	"side"
 
-#define AD1981HD_THINKPAD	0x201017aa
 #define ALC260_FUJITSU_ID	0x132610cf
 #define ALC883_ACER_ID		0x00981025
 #define STAC9221_APPLE_ID	0x76808384
@@ -102,8 +101,6 @@ int	azalia_alc882_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc882_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc883_init_dacgroup(codec_t *);
 int	azalia_alc883_mixer_init(codec_t *);
-int	azalia_ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
-int	azalia_ad1981hd_mixer_init(codec_t *);
 int	azalia_ad1984_init_dacgroup(codec_t *);
 int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_ad1984_set_port(codec_t *, mixer_ctrl_t *);
@@ -160,12 +157,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = azalia_alc883_mixer_init;
 		this->get_port = azalia_alc882_get_port;
 		this->set_port = azalia_alc882_set_port;
-		break;
-	case 0x11d41981:
-		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
-		this->name = "Analog Devices AD1981HD";
-		this->init_widget = azalia_ad1981hd_init_widget;
-		this->mixer_init = azalia_ad1981hd_mixer_init;
 		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
@@ -2146,68 +2137,6 @@ azalia_alc883_mixer_init(codec_t *this)
 	mc.un.ord = 0;		/* unmute */
 	azalia_generic_mixer_set(this, 0x23, MI_TARGET_INAMP(1), &mc);
 	azalia_generic_mixer_set(this, 0x22, MI_TARGET_INAMP(2), &mc);
-	return 0;
-}
-
-
-/* ----------------------------------------------------------------
- * Analog Devices AD1981HD
- * ---------------------------------------------------------------- */
-
-
-int
-azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
-{
-	switch (nid) {
-	case 0x05:
-		strlcpy(w->name, AudioNline "out", sizeof(w->name));
-		break;
-	case 0x06:
-		strlcpy(w->name, "hp", sizeof(w->name));
-		break;
-	case 0x07:
-		strlcpy(w->name, AudioNmono, sizeof(w->name));
-		break;
-	case 0x08:
-		strlcpy(w->name, AudioNmicrophone, sizeof(w->name));
-		break;
-	case 0x09:
-		strlcpy(w->name, AudioNline "in", sizeof(w->name));
-		break;
-	case 0x0d:
-		strlcpy(w->name, "beep", sizeof(w->name));
-		break;
-	case 0x17:
-		strlcpy(w->name, AudioNaux, sizeof(w->name));
-		break;
-	case 0x18:
-		strlcpy(w->name, AudioNmicrophone "2", sizeof(w->name));
-		break;
-	case 0x19:
-		strlcpy(w->name, AudioNcd, sizeof(w->name));
-		break;
-	case 0x1d:
-		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
-		break;
-	}
-	return 0;
-}
-
-int
-azalia_ad1981hd_mixer_init(codec_t *this)
-{
-	mixer_ctrl_t mc;
-	int err;
-
-	err = azalia_generic_mixer_init(this);
-	if (err)
-		return err;
-	if (this->subid == AD1981HD_THINKPAD) {
-		mc.dev = -1;
-		mc.type = AUDIO_MIXER_ENUM;
-		mc.un.ord = 1;
-		azalia_generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
-	}
 	return 0;
 }
 
