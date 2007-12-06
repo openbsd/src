@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.29 2007/11/28 18:16:08 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.30 2007/12/06 12:19:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,14 @@ struct atascsi;
 #define ATA_C_FLUSH_CACHE	0xe7
 #define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
 #define ATA_C_IDENTIFY		0xec
+#define ATA_C_SET_FEATURES	0xef
 #define ATA_C_SEC_FREEZE_LOCK	0xf5
+
+/*
+ * ATA SET FEATURES subcommands
+ */
+#define ATA_SF_WRITECACHE_EN	0x02
+#define ATA_SF_LOOKAHEAD_EN	0xaa
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
@@ -121,6 +128,12 @@ struct ata_identify {
 	u_int16_t	padding4[48];	/* 207 */
 	u_int16_t	integrity;	/* 255 */
 } __packed;
+
+/*
+ * IDENTIFY DEVICE data
+ */
+#define ATA_IDENTIFY_WRITECACHE		(1 << 5)
+#define ATA_IDENTIFY_LOOKAHEAD		(1 << 6)
 
 /*
  * Frame Information Structures

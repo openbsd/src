@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.51 2007/11/28 18:16:07 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.52 2007/12/06 12:19:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -214,6 +214,34 @@ atascsi_probe(struct scsi_link *link)
 	ata_fix_identify(&ap->ap_identify);
 
 	as->as_ports[port] = ap;
+
+	/* Enable write cache if supported */
+	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_WRITECACHE) {
+		xa = ata_get_xfer(ap, 1);
+		if (xa == NULL)
+			panic("no free xfers on a new port");
+		xa->fis->command = ATA_C_SET_FEATURES;
+		xa->fis->features = ATA_SF_WRITECACHE_EN;
+		xa->fis->flags = ATA_H2D_FLAGS_CMD;
+		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
+		xa->complete = ata_put_xfer;
+		xa->timeout = 1000;
+		ata_exec(as, xa); /* we dont care if this works or not */
+	}
+
+	/* Enable read lookahead if supported */
+	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_LOOKAHEAD) {
+		xa = ata_get_xfer(ap, 1);
+		if (xa == NULL)
+			panic("no free xfers on a new port");
+		xa->fis->command = ATA_C_SET_FEATURES;
+		xa->fis->features = ATA_SF_LOOKAHEAD_EN;
+		xa->fis->flags = ATA_H2D_FLAGS_CMD;
+		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
+		xa->complete = ata_put_xfer;
+		xa->timeout = 1000;
+		ata_exec(as, xa); /* we dont care if this works or not */
+	}
 
 	/*
 	 * FREEZE LOCK the device so malicous users can't lock it on us.
