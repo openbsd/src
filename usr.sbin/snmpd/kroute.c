@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.2 2007/12/06 04:10:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1080,8 +1080,8 @@ rtlabel_name2id(const char *name)
 	return (0);
 }
 
-const char
-*rtlabel_id2name(u_int16_t id)
+const char *
+rtlabel_id2name(u_int16_t id)
 {
 	return ("");
 }
