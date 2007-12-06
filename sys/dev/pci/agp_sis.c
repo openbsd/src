@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.5 2007/11/26 15:35:15 deraadt Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.6 2007/12/06 22:49:39 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -53,11 +53,11 @@ struct agp_sis_softc {
 	struct agp_gatt *gatt;
 };
 
-static u_int32_t agp_sis_get_aperture(struct agp_softc *);
-static int agp_sis_set_aperture(struct agp_softc *, u_int32_t);
-static int agp_sis_bind_page(struct agp_softc *, off_t, bus_addr_t);
-static int agp_sis_unbind_page(struct agp_softc *, off_t);
-static void agp_sis_flush_tlb(struct agp_softc *);
+u_int32_t agp_sis_get_aperture(struct agp_softc *);
+int agp_sis_set_aperture(struct agp_softc *, u_int32_t);
+int agp_sis_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int agp_sis_unbind_page(struct agp_softc *, off_t);
+void agp_sis_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_sis_methods = {
 	agp_sis_get_aperture,
@@ -126,7 +126,7 @@ agp_sis_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 }
 
 #if 0
-static int
+int
 agp_sis_detach(struct agp_softc *sc)
 {
 	struct agp_sis_softc *ssc = sc->sc_chipc;
@@ -150,7 +150,7 @@ agp_sis_detach(struct agp_softc *sc)
 }
 #endif
 
-static u_int32_t
+u_int32_t
 agp_sis_get_aperture(struct agp_softc *sc)
 {
 	int gws;
@@ -163,7 +163,7 @@ agp_sis_get_aperture(struct agp_softc *sc)
 	return ((4 * 1024 * 1024) << gws);
 }
 
-static int
+int
 agp_sis_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	int gws;
@@ -188,7 +188,7 @@ agp_sis_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	return (0);
 }
 
-static int
+int
 agp_sis_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 {
 	struct agp_sis_softc *ssc = sc->sc_chipc;
@@ -200,7 +200,7 @@ agp_sis_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	return (0);
 }
 
-static int
+int
 agp_sis_unbind_page(struct agp_softc *sc, off_t offset)
 {
 	struct agp_sis_softc *ssc = sc->sc_chipc;
@@ -212,7 +212,7 @@ agp_sis_unbind_page(struct agp_softc *sc, off_t offset)
 	return (0);
 }
 
-static void
+void
 agp_sis_flush_tlb(struct agp_softc *sc)
 {
 	pcireg_t reg;

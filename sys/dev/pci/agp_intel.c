@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.7 2007/11/26 15:35:15 deraadt Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.8 2007/12/06 22:49:39 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -64,11 +64,12 @@ struct agp_intel_softc {
 };
 
 
-static u_int32_t agp_intel_get_aperture(struct agp_softc *);
-static int agp_intel_set_aperture(struct agp_softc *, u_int32_t);
-static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
-static int agp_intel_unbind_page(struct agp_softc *, off_t);
-static void agp_intel_flush_tlb(struct agp_softc *);
+int agp_intel_vgamatch(struct pci_attach_args *);
+u_int32_t agp_intel_get_aperture(struct agp_softc *);
+int agp_intel_set_aperture(struct agp_softc *, u_int32_t);
+int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int agp_intel_unbind_page(struct agp_softc *, off_t);
+void agp_intel_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -83,7 +84,7 @@ struct agp_methods agp_intel_methods = {
 	agp_generic_unbind_memory,
 };
 
-static int
+int
 agp_intel_vgamatch(struct pci_attach_args *pa)
 {
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -250,7 +251,7 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 }
 
 #if 0
-static int
+int
 agp_intel_detach(struct agp_softc *sc)
 {
 	int error;
@@ -274,7 +275,7 @@ agp_intel_detach(struct agp_softc *sc)
 }
 #endif
 
-static u_int32_t
+u_int32_t
 agp_intel_get_aperture(struct agp_softc *sc)
 {
 	struct agp_intel_softc *isc = sc->sc_chipc;
@@ -293,7 +294,7 @@ agp_intel_get_aperture(struct agp_softc *sc)
 	return ((((apsize ^ isc->aperture_mask) << 22) | ((1 << 22) - 1)) + 1);
 }
 
-static int
+int
 agp_intel_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	struct agp_intel_softc *isc = sc->sc_chipc;
@@ -316,7 +317,7 @@ agp_intel_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	return (0);
 }
 
-static int
+int
 agp_intel_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 {
 	struct agp_intel_softc *isc = sc->sc_chipc;
@@ -328,7 +329,7 @@ agp_intel_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	return (0);
 }
 
-static int
+int
 agp_intel_unbind_page(struct agp_softc *sc, off_t offset)
 {
 	struct agp_intel_softc *isc = sc->sc_chipc;
@@ -340,7 +341,7 @@ agp_intel_unbind_page(struct agp_softc *sc, off_t offset)
 	return (0);
 }
 
-static void
+void
 agp_intel_flush_tlb(struct agp_softc *sc)
 {
 	struct agp_intel_softc *isc = sc->sc_chipc;

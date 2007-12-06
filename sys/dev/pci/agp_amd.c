@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.6 2007/11/26 15:35:15 deraadt Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.7 2007/12/06 22:49:39 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 
@@ -74,11 +74,12 @@ struct agp_amd_softc {
 	bus_space_tag_t iot;
 };
 
-static u_int32_t agp_amd_get_aperture(struct agp_softc *);
-static int agp_amd_set_aperture(struct agp_softc *, u_int32_t);
-static int agp_amd_bind_page(struct agp_softc *, off_t, bus_addr_t);
-static int agp_amd_unbind_page(struct agp_softc *, off_t);
-static void agp_amd_flush_tlb(struct agp_softc *);
+u_int32_t agp_amd_get_aperture(struct agp_softc *);
+struct agp_amd_gatt * agp_amd_alloc_gatt(struct agp_softc *);
+int agp_amd_set_aperture(struct agp_softc *, u_int32_t);
+int agp_amd_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int agp_amd_unbind_page(struct agp_softc *, off_t);
+void agp_amd_flush_tlb(struct agp_softc *);
 
 
 struct agp_methods agp_amd_methods = {
@@ -95,7 +96,7 @@ struct agp_methods agp_amd_methods = {
 };
 
 
-static struct agp_amd_gatt *
+struct agp_amd_gatt *
 agp_amd_alloc_gatt(struct agp_softc *sc)
 {
 	u_int32_t apsize = AGP_GET_APERTURE(sc);
@@ -144,7 +145,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 }
 
 #if 0
-static void
+void
 agp_amd_free_gatt(struct agp_softc *sc, struct agp_amd_gatt *gatt)
 {
 	agp_free_dmamem(sc->sc_dmat, gatt->ag_size,
@@ -220,7 +221,7 @@ agp_amd_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 }
 
 #if 0
-static int
+int
 agp_amd_detach(struct agp_softc *sc)
 {
 	pcireg_t reg;
@@ -249,7 +250,7 @@ agp_amd_detach(struct agp_softc *sc)
 }
 #endif
 
-static u_int32_t
+u_int32_t
 agp_amd_get_aperture(struct agp_softc *sc)
 {
 	int vas;
@@ -263,7 +264,7 @@ agp_amd_get_aperture(struct agp_softc *sc)
 	return ((32 * 1024 * 1024) << vas);
 }
 
-static int
+int
 agp_amd_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	int vas;
@@ -287,7 +288,7 @@ agp_amd_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	return (0);
 }
 
-static int
+int
 agp_amd_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 {
 	struct agp_amd_softc *asc = sc->sc_chipc;
@@ -299,7 +300,7 @@ agp_amd_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	return (0);
 }
 
-static int
+int
 agp_amd_unbind_page(struct agp_softc *sc, off_t offset)
 {
 	struct agp_amd_softc *asc = sc->sc_chipc;
@@ -311,7 +312,7 @@ agp_amd_unbind_page(struct agp_softc *sc, off_t offset)
 	return (0);
 }
 
-static void
+void
 agp_amd_flush_tlb(struct agp_softc *sc)
 {
 	struct agp_amd_softc *asc = sc->sc_chipc;

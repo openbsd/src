@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.6 2007/11/26 15:35:15 deraadt Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.7 2007/12/06 22:49:39 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -48,11 +48,11 @@
 
 #include <machine/bus.h>
 
-static u_int32_t agp_via_get_aperture(struct agp_softc *);
-static int agp_via_set_aperture(struct agp_softc *, u_int32_t);
-static int agp_via_bind_page(struct agp_softc *, off_t, bus_addr_t);
-static int agp_via_unbind_page(struct agp_softc *, off_t);
-static void agp_via_flush_tlb(struct agp_softc *);
+u_int32_t agp_via_get_aperture(struct agp_softc *);
+int agp_via_set_aperture(struct agp_softc *, u_int32_t);
+int agp_via_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int agp_via_unbind_page(struct agp_softc *, off_t);
+void agp_via_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_via_methods = {
 	agp_via_get_aperture,
@@ -161,7 +161,7 @@ agp_via_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 }
 
 #if 0
-static int
+int
 agp_via_detach(struct agp_softc *sc)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;
@@ -180,7 +180,7 @@ agp_via_detach(struct agp_softc *sc)
 }
 #endif
 
-static u_int32_t
+u_int32_t
 agp_via_get_aperture(struct agp_softc *sc)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;
@@ -199,7 +199,7 @@ agp_via_get_aperture(struct agp_softc *sc)
 	return ((((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1);
 }
 
-static int
+int
 agp_via_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;
@@ -225,7 +225,7 @@ agp_via_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	return (0);
 }
 
-static int
+int
 agp_via_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;
@@ -237,7 +237,7 @@ agp_via_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	return (0);
 }
 
-static int
+int
 agp_via_unbind_page(struct agp_softc *sc, off_t offset)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;
@@ -249,7 +249,7 @@ agp_via_unbind_page(struct agp_softc *sc, off_t offset)
 	return (0);
 }
 
-static void
+void
 agp_via_flush_tlb(struct agp_softc *sc)
 {
 	struct agp_via_softc *asc = sc->sc_chipc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.7 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.8 2007/12/06 22:49:39 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ struct agp_product {
 extern const struct agp_product agp_products[];
 
 void agp_attach(struct device *, struct device *, void *);
+int agp_probe(struct device *, void *, void *);
 paddr_t agpmmap(void *, off_t, int);
 int agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int agpopen(dev_t, int, int, struct proc *);

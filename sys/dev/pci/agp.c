@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.11 2007/11/28 16:25:58 chl Exp $ */
+/* $OpenBSD: agp.c,v 1.12 2007/12/06 22:49:39 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -58,14 +58,14 @@
 struct agp_memory *agp_find_memory(struct agp_softc *sc, int id);
 const struct agp_product *agp_lookup(struct pci_attach_args *pa);
 /* userland ioctl functions */
-static int agp_info_user(void *, agp_info *);
-static int agp_setup_user(void *, agp_setup *);
-static int agp_allocate_user(void *, agp_allocate *);
-static int agp_deallocate_user(void *, int);
-static int agp_bind_user(void *, agp_bind *);
-static int agp_unbind_user(void *, agp_unbind *);
-static int agp_acquire_helper(void *dev, enum agp_acquire_state state);
-static int agp_release_helper(void *dev, enum agp_acquire_state state);
+int agp_info_user(void *, agp_info *);
+int agp_setup_user(void *, agp_setup *);
+int agp_allocate_user(void *, agp_allocate *);
+int agp_deallocate_user(void *, int);
+int agp_bind_user(void *, agp_bind *);
+int agp_unbind_user(void *, agp_unbind *);
+int agp_acquire_helper(void *dev, enum agp_acquire_state state);
+int agp_release_helper(void *dev, enum agp_acquire_state state);
 
 const struct agp_product agp_products[] = {
 #if NAGP_ALI > 0
@@ -111,7 +111,7 @@ const struct agp_product agp_products[] = {
 };
 
 
-static int
+int
 agp_probe(struct device *parent, void *match, void *aux)
 {
 	struct agpbus_attach_args *aaa = aux;
@@ -726,7 +726,7 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 
 /* Helper functions used in both user and kernel APIs */
 
-static int
+int
 agp_acquire_helper(void *dev, enum agp_acquire_state state)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
@@ -738,7 +738,7 @@ agp_acquire_helper(void *dev, enum agp_acquire_state state)
 	return (0);
 }
 
-static int
+int
 agp_release_helper(void *dev, enum agp_acquire_state state)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
@@ -767,7 +767,7 @@ agp_release_helper(void *dev, enum agp_acquire_state state)
 
 /* Implementation of the userland ioctl API */
 
-static int
+int
 agp_info_user(void *dev, agp_info *info)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
@@ -791,14 +791,14 @@ agp_info_user(void *dev, agp_info *info)
 	return (0);
 }
 
-static int
+int
 agp_setup_user(void *dev, agp_setup *setup)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
 	return (AGP_ENABLE(sc, setup->agp_mode));
 }
 
-static int
+int
 agp_allocate_user(void *dev, agp_allocate *alloc)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
@@ -817,7 +817,7 @@ agp_allocate_user(void *dev, agp_allocate *alloc)
 		return (ENOMEM);
 }
 
-static int
+int
 agp_deallocate_user(void *dev, int id)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
@@ -829,7 +829,7 @@ agp_deallocate_user(void *dev, int id)
 		return (ENOENT);
 }
 
-static int
+int
 agp_bind_user(void *dev, agp_bind *bind)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
@@ -842,7 +842,7 @@ agp_bind_user(void *dev, agp_bind *bind)
 }
 
 
-static int
+int
 agp_unbind_user(void *dev, agp_unbind *unbind)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
