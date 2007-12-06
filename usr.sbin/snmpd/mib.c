@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.3 2007/12/06 09:08:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -464,6 +464,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	size_t			 len;
 	int			 ifq;
 	int			 mib[5];
+	char			*s;
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_IFENTRY];
@@ -484,7 +485,10 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * but we just use the interface name (like ifName).
 		 * The interface name includes the driver name on OpenBSD.
 		 */
-		ber = ber_add_string(ber, kif->if_name);
+		if ((s = strdup(kif->if_name)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
 		break;
 	case 3:
 		if (kif->if_type >= 0xf0) {
@@ -620,6 +624,7 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	u_int32_t		 idx = 0;
 	struct kif		*kif;
 	int			 i = 0;
+	char			*s;
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_IFXENTRY];
@@ -632,7 +637,10 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	switch (o->bo_id[OIDIDX_IFX]) {
 	case 1:
-		ber = ber_add_string(ber, kif->if_name);
+		if ((s = strdup(kif->if_name)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
 		break;
 	case 2:
 		ber = ber_add_integer(ber, (u_int32_t)kif->if_imcasts);
@@ -702,7 +710,10 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, i);
 		break;
 	case 18:
-		ber = ber_add_string(ber, kif->if_descr);
+		if ((s = strdup(kif->if_descr)) == NULL)
+			return (-1);
+		ber = ber_add_string(ber, s);
+		ber->be_free = 1;
 		break;
 	case 19:
 		ber = ber_add_integer(ber, 0);
