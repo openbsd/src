@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.13 2007/12/07 14:48:50 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.14 2007/12/07 17:35:22 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -58,14 +58,14 @@
 struct agp_memory *agp_find_memory(struct agp_softc *sc, int id);
 const struct agp_product *agp_lookup(struct pci_attach_args *pa);
 /* userland ioctl functions */
-int agp_info_user(void *, agp_info *);
-int agp_setup_user(void *, agp_setup *);
-int agp_allocate_user(void *, agp_allocate *);
-int agp_deallocate_user(void *, int);
-int agp_bind_user(void *, agp_bind *);
-int agp_unbind_user(void *, agp_unbind *);
-int agp_acquire_helper(void *dev, enum agp_acquire_state state);
-int agp_release_helper(void *dev, enum agp_acquire_state state);
+int	agp_info_user(void *, agp_info *);
+int	agp_setup_user(void *, agp_setup *);
+int	agp_allocate_user(void *, agp_allocate *);
+int	agp_deallocate_user(void *, int);
+int	agp_bind_user(void *, agp_bind *);
+int	agp_unbind_user(void *, agp_unbind *);
+int	agp_acquire_helper(void *dev, enum agp_acquire_state state);
+int	agp_release_helper(void *dev, enum agp_acquire_state state);
 
 const struct agp_product agp_products[] = {
 #if NAGP_ALI > 0
@@ -217,7 +217,8 @@ agpmmap(void *v, off_t off, int prot)
 	return (-1);
 }
 
-int agpopen(dev_t dev , int oflags, int devtype, struct proc * p)
+int
+agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
         struct agp_softc *sc = (struct agp_softc *)device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -412,7 +413,7 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 	int rq, sba, fw, rate, capoff;
 	
 	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
-	     &capoff, NULL) == 0) {
+	    &capoff, NULL) == 0) {
 		printf("agp_generic_enable: not an AGP capable device\n");
 		return (-1);
 	}
@@ -431,18 +432,18 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 
 	/* Set SBA if all three can deal with SBA */
 	sba = (AGP_MODE_GET_SBA(tstatus)
-	       & AGP_MODE_GET_SBA(mstatus)
-	       & AGP_MODE_GET_SBA(mode));
+	    & AGP_MODE_GET_SBA(mstatus)
+	    & AGP_MODE_GET_SBA(mode));
 
 	/* Similar for FW */
 	fw = (AGP_MODE_GET_FW(tstatus)
-	       & AGP_MODE_GET_FW(mstatus)
-	       & AGP_MODE_GET_FW(mode));
+	    & AGP_MODE_GET_FW(mstatus)
+	    & AGP_MODE_GET_FW(mode));
 
 	/* Figure out the max rate */
 	rate = (AGP_MODE_GET_RATE(tstatus)
-		& AGP_MODE_GET_RATE(mstatus)
-		& AGP_MODE_GET_RATE(mode));
+	    & AGP_MODE_GET_RATE(mstatus)
+	    & AGP_MODE_GET_RATE(mode));
 	if (rate & AGP_MODE_RATE_4x)
 		rate = AGP_MODE_RATE_4x;
 	else if (rate & AGP_MODE_RATE_2x)
@@ -523,7 +524,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	    || (offset & (AGP_PAGE_SIZE - 1)) != 0
 	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
 		printf("AGP: binding memory at bad offset %#lx\n",
-			      (unsigned long) offset);
+		    (unsigned long) offset);
 		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
 	}
@@ -579,11 +580,11 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		 * entries.
 		 */
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
-		     j += AGP_PAGE_SIZE) {
+		    j += AGP_PAGE_SIZE) {
 			pa = seg->ds_addr + j;
 			AGP_DPF("binding offset %#lx to pa %#lx\n",
-				(unsigned long)(offset + done + j),
-				(unsigned long)pa);
+			    (unsigned long)(offset + done + j),
+			    (unsigned long)pa);
 			error = AGP_BIND_PAGE(sc, offset + done + j, pa);
 			if (error) {
 				/*
@@ -595,9 +596,9 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 				bus_dmamap_unload(sc->sc_dmat, mem->am_dmamap);
 				bus_dmamem_unmap(sc->sc_dmat, mem->am_virtual,
-						 mem->am_size);
+				    mem->am_size);
 				bus_dmamem_free(sc->sc_dmat, mem->am_dmaseg,
-						mem->am_nseg);
+				    mem->am_nseg);
 				free(mem->am_dmaseg, M_AGP);
 				rw_exit_write(&sc->sc_lock);
 				AGP_DPF("AGP_BIND_PAGE failed %d\n", error);
@@ -666,29 +667,29 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 int
 agp_alloc_dmamem(bus_dma_tag_t tag, size_t size, int flags,
-		 bus_dmamap_t *mapp, caddr_t *vaddr, bus_addr_t *baddr,
-		 bus_dma_segment_t *seg, int nseg, int *rseg)
+    bus_dmamap_t *mapp, caddr_t *vaddr, bus_addr_t *baddr,
+    bus_dma_segment_t *seg, int nseg, int *rseg)
 
 {
 	int error, level = 0;
 
 	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-			seg, nseg, rseg, BUS_DMA_NOWAIT)) != 0)
+	    seg, nseg, rseg, BUS_DMA_NOWAIT)) != 0)
 		goto out;
 	level++;
 
 	if ((error = bus_dmamem_map(tag, seg, *rseg, size, vaddr,
-			BUS_DMA_NOWAIT | flags)) != 0)
+	    BUS_DMA_NOWAIT | flags)) != 0)
 		goto out;
 	level++;
 
 	if ((error = bus_dmamap_create(tag, size, *rseg, size, 0,
-			BUS_DMA_NOWAIT, mapp)) != 0)
+	    BUS_DMA_NOWAIT, mapp)) != 0)
 		goto out;
 	level++;
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
-			BUS_DMA_NOWAIT)) != 0)
+	    BUS_DMA_NOWAIT)) != 0)
 		goto out;
 
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
@@ -714,7 +715,7 @@ out:
 
 void
 agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
-		caddr_t vaddr, bus_dma_segment_t *seg, int nseg)
+    caddr_t vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);
@@ -794,6 +795,7 @@ int
 agp_setup_user(void *dev, agp_setup *setup)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
+
 	return (AGP_ENABLE(sc, setup->agp_mode));
 }
 
@@ -874,7 +876,7 @@ agp_get_info(void *dev, struct agp_info *info)
 	struct agp_softc *sc = (struct agp_softc *)dev;
 
         info->ai_mode = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-		    sc->sc_capoff + AGP_STATUS);
+	    sc->sc_capoff + AGP_STATUS);
 	info->ai_aperture_base = sc->sc_apaddr;
 	info->ai_aperture_size = sc->sc_apsize;
         info->ai_memory_allowed = sc->sc_maxmem;
@@ -885,6 +887,7 @@ int
 agp_acquire(void *dev)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
+
         return (agp_acquire_helper(sc, AGP_ACQUIRE_KERNEL));
 }
 
@@ -892,6 +895,7 @@ int
 agp_release(void *dev)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
+
         return (agp_release_helper(sc, AGP_ACQUIRE_KERNEL));
 }
 
@@ -899,38 +903,48 @@ int
 agp_enable(void *dev, u_int32_t mode)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
+
         return (AGP_ENABLE(sc, mode));
 }
 
-void *agp_alloc_memory(void *dev, int type, vsize_t bytes)
+void *
+agp_alloc_memory(void *dev, int type, vsize_t bytes)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
+
         return  ((void *) AGP_ALLOC_MEMORY(sc, type, bytes));
 }
 
-void agp_free_memory(void *dev, void *handle)
+void
+agp_free_memory(void *dev, void *handle)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
         struct agp_memory *mem = (struct agp_memory *) handle;
+
         AGP_FREE_MEMORY(sc, mem);
 }
 
-int agp_bind_memory(void *dev, void *handle, off_t offset)
+int
+agp_bind_memory(void *dev, void *handle, off_t offset)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
 	struct agp_memory *mem = (struct agp_memory *) handle;
+
 	return (AGP_BIND_MEMORY(sc, mem, offset));
 }
 
-int agp_unbind_memory(void *dev, void *handle)
+int
+agp_unbind_memory(void *dev, void *handle)
 {
 	struct agp_softc *sc = (struct agp_softc *) dev;
         struct agp_memory *mem = (struct agp_memory *) handle;
+
         return (AGP_UNBIND_MEMORY(sc, mem));
 }
 
-void agp_memory_info(void *dev, void *handle, struct
-                     agp_memory_info *mi)
+void
+agp_memory_info(void *dev, void *handle, struct
+    agp_memory_info *mi)
 {
         struct agp_memory *mem = (struct agp_memory *) handle;
 

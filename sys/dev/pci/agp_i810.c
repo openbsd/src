@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.25 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.26 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -69,16 +69,17 @@ enum {
 };
 
 struct agp_i810_softc {
-	u_int32_t initial_aperture;	/* aperture size at startup */
-	struct agp_gatt *gatt;
-	int chiptype;			/* i810-like or i830 */
-	u_int32_t dcache_size;		/* i810 only */
-	u_int32_t stolen;		/* number of i830/845 gtt entries
+	u_int32_t	initial_aperture;/* aperture size at startup */
+	struct agp_gatt
+			*gatt;
+	int		chiptype;	/* i810-like or i830 */
+	u_int32_t	dcache_size;	/* i810 only */
+	u_int32_t	stolen;		/* number of i830/845 gtt entries
 					   for stolen memory */
-	bus_space_tag_t bst;		/* bus_space tag */
+	bus_space_tag_t	bst;		/* bus_space tag */
 	bus_space_handle_t bsh;		/* bus_space handle */
-	bus_size_t bsz;			/* bus_space size */
-	bus_space_tag_t gtt_bst;	/* GATT bus_space tag */
+	bus_size_t	bsz;			/* bus_space size */
+	bus_space_tag_t	gtt_bst;	/* GATT bus_space tag */
 	bus_space_handle_t gtt_bsh;	/* GATT bus_space handle */
 	struct pci_attach_args vga_pa;
 };
@@ -90,8 +91,7 @@ int	agp_i810_bind_page(struct agp_softc *, off_t, bus_addr_t);
 int	agp_i810_unbind_page(struct agp_softc *, off_t);
 void	agp_i810_flush_tlb(struct agp_softc *);
 int	agp_i810_enable(struct agp_softc *, u_int32_t mode);
-struct agp_memory *
-	agp_i810_alloc_memory(struct agp_softc *, int, vsize_t);
+struct agp_memory * agp_i810_alloc_memory(struct agp_softc *, int, vsize_t);
 int	agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 int	agp_i810_bind_memory(struct agp_softc *, struct agp_memory *,
 	    off_t);

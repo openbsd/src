@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.8 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.9 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -35,97 +35,97 @@
 /*
  * Offsets for various AGP configuration registers.
  */
-#define AGP_APBASE		0x10
+#define AGP_APBASE			0x10
 
 /*
  * Offsets from the AGP Capability pointer.
  */
-#define AGP_CAPID		0x02
+#define AGP_CAPID			0x02
 #define AGP_CAPID_GET_MAJOR(x)		(((x) & 0x00f00000U) >> 20)
 #define AGP_CAPID_GET_MINOR(x)		(((x) & 0x000f0000U) >> 16)
 #define AGP_CAPID_GET_NEXT_PTR(x)	(((x) & 0x0000ff00U) >> 8)
 #define AGP_CAPID_GET_CAP_ID(x)		(((x) & 0x000000ffU) >> 0)
 
-#define AGP_STATUS		0x4
-#define AGP_COMMAND		0x8
+#define AGP_STATUS			0x4
+#define AGP_COMMAND			0x8
 
 /*
  * Config offsets for Intel AGP chipsets.
  */
 /* i845/855PM */
-#define	AGP_I845_AGPMISC	0x51
-#define AGPMISC_AAGN		(1U << 1)  /* Aperture AccessEN */
+#define	AGP_I845_AGPMISC		0x51
+#define AGPMISC_AAGN			(1U << 1)  /* Aperture AccessEN */
 
 /* i840/850/850E */
-#define AGP_I840_MCHCFG		0x50
-#define MCHCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+#define AGP_I840_MCHCFG			0x50
+#define MCHCFG_AAGN			(1U << 9)  /* Aperture AccessEN */
 
 /* i82443LX/BX/GX */
-#define AGP_INTEL_NBXCFG	0x50
-#define AGP_INTEL_STS		0x90
-#define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessDIS */
-#define NBXCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+#define AGP_INTEL_NBXCFG		0x50
+#define AGP_INTEL_STS			0x90
+#define NBXCFG_APAE			(1U << 10) /* AGPtoPCI AccessDIS */
+#define NBXCFG_AAGN			(1U << 9)  /* Aperture AccessEN */
 
 /* Error Status for i8XX Chipset */
-#define	AGP_INTEL_I8XX_ERRSTS	0xc8
+#define	AGP_INTEL_I8XX_ERRSTS		0xc8
 
 /* Common register */
-#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
-#define AGP_INTEL_AGPCMD	0xa8
-#define AGPCMD_SBA		(1U << 9)
-#define AGPCMD_AGPEN		(1U << 8)
-#define AGPCMD_FWEN		(1U << 4)
-#define AGPCMD_RATE_1X		(1U << 1)
-#define AGPCMD_RATE_2X		(1U << 2)
-#define AGPCMD_RATE_4X		(1U << 3)
+#define	AGP_INTEL_ERRSTS		0x91	/* Not i8XX */
+#define AGP_INTEL_AGPCMD		0xa8
+#define AGPCMD_SBA			(1U << 9)
+#define AGPCMD_AGPEN			(1U << 8)
+#define AGPCMD_FWEN			(1U << 4)
+#define AGPCMD_RATE_1X			(1U << 1)
+#define AGPCMD_RATE_2X			(1U << 2)
+#define AGPCMD_RATE_4X			(1U << 3)
 
-#define AGP_INTEL_AGPCTRL	0xb0
-#define AGPCTRL_AGPRSE		(1U << 13) /* AGPRSE (82443 only)*/
-#define AGPCTRL_GTLB		(1U << 7)  /* GTLB EN */
+#define AGP_INTEL_AGPCTRL		0xb0
+#define AGPCTRL_AGPRSE			(1U << 13) /* AGPRSE (82443 only)*/
+#define AGPCTRL_GTLB			(1U << 7)  /* GTLB EN */
 
-#define AGP_INTEL_APSIZE	0xb4
-#define APSIZE_MASK		0x3f
+#define AGP_INTEL_APSIZE		0xb4
+#define APSIZE_MASK			0x3f
 
-#define AGP_INTEL_ATTBASE	0xb8
+#define AGP_INTEL_ATTBASE		0xb8
 
 /*
  * Config offsets for VIA AGP 2.x chipsets.
  */
-#define AGP_VIA_GARTCTRL	0x80
-#define AGP_VIA_APSIZE		0x84
-#define AGP_VIA_ATTBASE		0x88
+#define AGP_VIA_GARTCTRL		0x80
+#define AGP_VIA_APSIZE			0x84
+#define AGP_VIA_ATTBASE			0x88
 
 /*
  * Config offsets for VIA AGP 3.0 chipsets.
  */
-#define AGP3_VIA_GARTCTRL	0x90
-#define AGP3_VIA_APSIZE		0x94
-#define AGP3_VIA_ATTBASE	0x98
-#define AGP_VIA_AGPSEL		0xfd
+#define AGP3_VIA_GARTCTRL		0x90
+#define AGP3_VIA_APSIZE			0x94
+#define AGP3_VIA_ATTBASE		0x98
+#define AGP_VIA_AGPSEL			0xfd
 
 /*
  * Config offsets for SiS AGP chipsets.
  */
-#define AGP_SIS_ATTBASE		0x90
-#define AGP_SIS_WINCTRL		0x94
-#define AGP_SIS_TLBCTRL		0x97
-#define AGP_SIS_TLBFLUSH	0x98
+#define AGP_SIS_ATTBASE			0x90
+#define AGP_SIS_WINCTRL			0x94
+#define AGP_SIS_TLBCTRL			0x97
+#define AGP_SIS_TLBFLUSH		0x98
 
 /*
  * Config offsets for Ali AGP chipsets.
  */
-#define AGP_ALI_AGPCTRL		0xb8
-#define AGP_ALI_ATTBASE		0xbc
-#define AGP_ALI_TLBCTRL		0xc0
+#define AGP_ALI_AGPCTRL			0xb8
+#define AGP_ALI_ATTBASE			0xbc
+#define AGP_ALI_TLBCTRL			0xc0
 
 /*
  * Config offsets for the AMD 751 chipset.
  */
-#define AGP_AMD751_REGISTERS	0x14
-#define AGP_AMD751_APCTRL	0xac
-#define AGP_AMD751_MODECTRL	0xb0
+#define AGP_AMD751_REGISTERS		0x14
+#define AGP_AMD751_APCTRL		0xac
+#define AGP_AMD751_MODECTRL		0xb0
 #define AGP_AMD751_MODECTRL_SYNEN	0x80
-#define AGP_AMD751_MODECTRL2	0xb2
+#define AGP_AMD751_MODECTRL2		0xb2
 #define AGP_AMD751_MODECTRL2_G1LM	0x01
 #define AGP_AMD751_MODECTRL2_GPDCE	0x02
 #define AGP_AMD751_MODECTRL2_NGSE	0x08
@@ -133,13 +133,13 @@
 /*
  * Memory mapped register offsets for AMD 751 chipset.
  */
-#define AGP_AMD751_CAPS		0x00
+#define AGP_AMD751_CAPS			0x00
 #define AGP_AMD751_CAPS_EHI		0x0800
 #define AGP_AMD751_CAPS_P2P		0x0400
 #define AGP_AMD751_CAPS_MPC		0x0200
 #define AGP_AMD751_CAPS_VBE		0x0100
 #define AGP_AMD751_CAPS_REV		0x00ff
-#define AGP_AMD751_STATUS	0x02
+#define AGP_AMD751_STATUS		0x02
 #define AGP_AMD751_STATUS_P2PS		0x0800
 #define AGP_AMD751_STATUS_GCS		0x0400
 #define AGP_AMD751_STATUS_MPS		0x0200
@@ -147,20 +147,20 @@
 #define AGP_AMD751_STATUS_P2PE		0x0008
 #define AGP_AMD751_STATUS_GCE		0x0004
 #define AGP_AMD751_STATUS_VBEE		0x0001
-#define AGP_AMD751_ATTBASE	0x04
-#define AGP_AMD751_TLBCTRL	0x0c
+#define AGP_AMD751_ATTBASE		0x04
+#define AGP_AMD751_TLBCTRL		0x0c
 
 /*
  * Config registers for i810 device 0
  */
-#define AGP_I810_SMRAM		0x70
+#define AGP_I810_SMRAM			0x70
 #define AGP_I810_SMRAM_GMS		0xc0
 #define AGP_I810_SMRAM_GMS_DISABLED	0x00
 #define AGP_I810_SMRAM_GMS_ENABLED_0	0x40
 #define AGP_I810_SMRAM_GMS_ENABLED_512	0x80
 #define AGP_I810_SMRAM_GMS_ENABLED_1024 0xc0
-#define AGP_I810_MISCC		0x72
-#define AGP_I810_MISCC_WINSIZE		      0x0001
+#define AGP_I810_MISCC			0x72
+#define AGP_I810_MISCC_WINSIZE	 	0x0001
 #define AGP_I810_MISCC_WINSIZE_64	0x0000
 #define AGP_I810_MISCC_WINSIZE_32	0x0001
 #define AGP_I810_MISCC_PLCK		0x0008
@@ -170,18 +170,18 @@
 #define AGP_I810_MISCC_WPTC_NOLIMIT	0x0000
 #define AGP_I810_MISCC_WPTC_62		0x0010
 #define AGP_I810_MISCC_WPTC_50		0x0020
-#define AGP_I810_MISCC_WPTC_37		      0x0030
+#define AGP_I810_MISCC_WPTC_37		0x0030
 #define AGP_I810_MISCC_RPTC		0x00c0
 #define AGP_I810_MISCC_RPTC_NOLIMIT	0x0000
 #define AGP_I810_MISCC_RPTC_62		0x0040
-#define AGP_I810_MISCC_RPTC_50		0x0080
+#define AGP_I810_MISCC_RPTC_50		0x0080 
 #define AGP_I810_MISCC_RPTC_37		0x00c0
 
 /*
  * Config registers for i810 device 1
  */
-#define AGP_I810_GMADR		0x10
-#define AGP_I810_MMADR		0x14
+#define AGP_I810_GMADR			0x10
+#define AGP_I810_MMADR			0x14
 
 /*
  * Memory mapped register offsets for i810 chipset.

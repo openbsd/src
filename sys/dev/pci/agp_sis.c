@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.6 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.7 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -54,10 +54,10 @@ struct agp_sis_softc {
 };
 
 u_int32_t agp_sis_get_aperture(struct agp_softc *);
-int agp_sis_set_aperture(struct agp_softc *, u_int32_t);
-int agp_sis_bind_page(struct agp_softc *, off_t, bus_addr_t);
-int agp_sis_unbind_page(struct agp_softc *, off_t);
-void agp_sis_flush_tlb(struct agp_softc *);
+int	agp_sis_set_aperture(struct agp_softc *, u_int32_t);
+int	agp_sis_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int	agp_sis_unbind_page(struct agp_softc *, off_t);
+void	agp_sis_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_sis_methods = {
 	agp_sis_get_aperture,

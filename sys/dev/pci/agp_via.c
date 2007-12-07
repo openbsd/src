@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.7 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.8 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -49,10 +49,10 @@
 #include <machine/bus.h>
 
 u_int32_t agp_via_get_aperture(struct agp_softc *);
-int agp_via_set_aperture(struct agp_softc *, u_int32_t);
-int agp_via_bind_page(struct agp_softc *, off_t, bus_addr_t);
-int agp_via_unbind_page(struct agp_softc *, off_t);
-void agp_via_flush_tlb(struct agp_softc *);
+int	agp_via_set_aperture(struct agp_softc *, u_int32_t);
+int	agp_via_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int	agp_via_unbind_page(struct agp_softc *, off_t);
+void	agp_via_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_via_methods = {
 	agp_via_get_aperture,
@@ -141,20 +141,20 @@ agp_via_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	if (asc->regs == via_v2_regs) {
 		/* Install the gatt. */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_ATTBASE],
-				 gatt->ag_physical | 3);
+		    gatt->ag_physical | 3);
 		/* Enable the aperture. */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_GARTCTRL],
-				 0x0000000f);
+		    0x0000000f);
 	} else {
 		pcireg_t gartctrl;
 		/* Install the gatt. */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_ATTBASE],
-				 gatt->ag_physical);
+		    gatt->ag_physical);
 		/* Enable the aperture. */
 		gartctrl = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				 asc->regs[REG_ATTBASE]);
+		    asc->regs[REG_ATTBASE]);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_GARTCTRL],
-				 gartctrl | (3 << 7));
+		    gartctrl | (3 << 7));
 	}
 
 	return (0);
@@ -257,15 +257,15 @@ agp_via_flush_tlb(struct agp_softc *sc)
 
 	if (asc->regs == via_v2_regs) {
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, asc->regs[REG_GARTCTRL],
-				0x8f);
+		    0x8f);
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, asc->regs[REG_GARTCTRL],
-				0x0f);
+		    0x0f);
 	} else {
 		gartctrl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-					 asc->regs[REG_GARTCTRL]);
+		    asc->regs[REG_GARTCTRL]);
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, asc->regs[REG_GARTCTRL],
-			       gartctrl & ~(1 << 7));
+		    gartctrl & ~(1 << 7));
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, asc->regs[REG_GARTCTRL],
-			       gartctrl);
+		    gartctrl);
 	}
 }

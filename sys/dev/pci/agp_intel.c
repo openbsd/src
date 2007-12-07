@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.8 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.9 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -64,12 +64,12 @@ struct agp_intel_softc {
 };
 
 
-int agp_intel_vgamatch(struct pci_attach_args *);
+int	agp_intel_vgamatch(struct pci_attach_args *);
 u_int32_t agp_intel_get_aperture(struct agp_softc *);
-int agp_intel_set_aperture(struct agp_softc *, u_int32_t);
-int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
-int agp_intel_unbind_page(struct agp_softc *, off_t);
-void agp_intel_flush_tlb(struct agp_softc *);
+int	agp_intel_set_aperture(struct agp_softc *, u_int32_t);
+int	agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int	agp_intel_unbind_page(struct agp_softc *, off_t);
+void	agp_intel_flush_tlb(struct agp_softc *);
 
 struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -201,50 +201,44 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	switch (isc->chiptype) {
 	case CHIP_I845:
 	case CHIP_I865:
-		{
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I840_MCHCFG);
 		reg |= MCHCFG_AAGN;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_I840_MCHCFG, reg);
 		break;
-		}
 	case CHIP_I840:
 	case CHIP_I850:
-		{
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCMD);
 		reg |= AGPCMD_AGPEN;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCMD,
-			reg);
+		    reg);
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I840_MCHCFG);
 		reg |= MCHCFG_AAGN;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_I840_MCHCFG,
-			reg);
+		    reg);
 		break;
-		}
 	default:
-		{
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_NBXCFG);
 		reg &= ~NBXCFG_APAE;
 		reg |=  NBXCFG_AAGN;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_NBXCFG, reg);
-		}
 	}
 
 	/* Clear Error status */
 	switch (isc->chiptype) {
 	case CHIP_I840:
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-			AGP_INTEL_I8XX_ERRSTS, 0xc000);
+		    AGP_INTEL_I8XX_ERRSTS, 0xc000);
 		break;
 	case CHIP_I845:
 	case CHIP_I850:
 	case CHIP_I865:
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-			AGP_INTEL_I8XX_ERRSTS, 0x00ff);
+		    AGP_INTEL_I8XX_ERRSTS, 0x00ff);
 		break;
 
 	default:
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-			AGP_INTEL_ERRSTS, 0x70);
+		    AGP_INTEL_ERRSTS, 0x70);
 	}
 
 	return (0);
@@ -309,7 +303,7 @@ agp_intel_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	 * Double check for sanity.
 	 */
 	if ((((apsize ^ isc->aperture_mask) << 22) |
-			((1 << 22) - 1)) + 1 != aperture)
+	    ((1 << 22) - 1)) + 1 != aperture)
 		return (EINVAL);
 
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_APSIZE, apsize);
@@ -353,21 +347,17 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	case CHIP_I845:
 	case CHIP_I840:
 	case CHIP_I443:
-		{
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL);
 		reg &= ~AGPCTRL_GTLB;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
-			reg);
+		    reg);
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
-			reg | AGPCTRL_GTLB);
+		    reg | AGPCTRL_GTLB);
 		break;
-		}
 	default: /* XXX */
-		{
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
-			0x2200);
+		    0x2200);
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
-			0x2280);
-		}
+		    0x2280);
 	}
 }

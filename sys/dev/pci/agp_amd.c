@@ -1,6 +1,5 @@
-/*	$OpenBSD: agp_amd.c,v 1.7 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.8 2007/12/07 17:35:22 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
-
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -76,10 +75,10 @@ struct agp_amd_softc {
 
 u_int32_t agp_amd_get_aperture(struct agp_softc *);
 struct agp_amd_gatt * agp_amd_alloc_gatt(struct agp_softc *);
-int agp_amd_set_aperture(struct agp_softc *, u_int32_t);
-int agp_amd_bind_page(struct agp_softc *, off_t, bus_addr_t);
-int agp_amd_unbind_page(struct agp_softc *, off_t);
-void agp_amd_flush_tlb(struct agp_softc *);
+int	agp_amd_set_aperture(struct agp_softc *, u_int32_t);
+int	agp_amd_bind_page(struct agp_softc *, off_t, bus_addr_t);
+int	agp_amd_unbind_page(struct agp_softc *, off_t);
+void	agp_amd_flush_tlb(struct agp_softc *);
 
 
 struct agp_methods agp_amd_methods = {
@@ -131,7 +130,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 	 * Map the pages of the GATT into the page directory.
 	 */
 	npages = ((entries * sizeof(u_int32_t) + AGP_PAGE_SIZE - 1)
-		  >> AGP_PAGE_SHIFT);
+	    >> AGP_PAGE_SHIFT);
 
 	for (i = 0; i < npages; i++)
 		gatt->ag_vdir[i] = (gatt->ag_physical + i * AGP_PAGE_SIZE) | 1;
