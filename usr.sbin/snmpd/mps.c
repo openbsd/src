@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.4 2007/12/05 23:29:19 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.5 2007/12/07 10:14:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -293,8 +293,7 @@ mps_set(struct ber_oid *o, void *p, long long len)
 struct ber_oid *
 mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 {
-	u_int32_t		 col, idx = 1;
-	size_t			 id, subid;
+	u_int32_t		 col, idx = 1, id, subid;
 	struct oid		 a, b;
 
 	/*
