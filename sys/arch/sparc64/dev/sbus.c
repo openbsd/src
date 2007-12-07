@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.29 2007/10/08 17:48:06 krw Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.30 2007/12/07 00:34:20 deraadt Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -137,7 +137,7 @@ int sbus_debug = 0;
 #endif
 
 bus_space_tag_t sbus_alloc_bustag(struct sbus_softc *, int);
-bus_dma_tag_t sbus_alloc_dmatag(struct sbus_softc *, bus_dma_tag_t);
+bus_dma_tag_t sbus_alloc_dma_tag(struct sbus_softc *, bus_dma_tag_t);
 int sbus_get_intr(struct sbus_softc *, int,
     struct sbus_intr **, int *, int);
 int sbus_overtemp(void *);
@@ -271,7 +271,7 @@ sbus_xbox_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_master = sbus->sc_master;
 
 	sc->sc_bustag = xa->xa_bustag;
-	sc->sc_dmatag = sbus_alloc_dmatag(sc, xa->xa_dmatag);
+	sc->sc_dmatag = sbus_alloc_dma_tag(sc, xa->xa_dmatag);
 
 	/*
 	 * Parent has already done the address translation computations.
@@ -384,7 +384,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 			panic("sbus iommu: can't toss first dvma page");
 	}
 
-	sc->sc_dmatag = sbus_alloc_dmatag(sc, ma->ma_dmatag);
+	sc->sc_dmatag = sbus_alloc_dma_tag(sc, ma->ma_dmatag);
 
 	sbus_attach_common(sc, node, 0);
 }
@@ -792,7 +792,7 @@ sbus_alloc_bustag(struct sbus_softc *sc, int indirect)
 
 
 bus_dma_tag_t
-sbus_alloc_dmatag(struct sbus_softc *sc, bus_dma_tag_t psdt)
+sbus_alloc_dma_tag(struct sbus_softc *sc, bus_dma_tag_t psdt)
 {
 	bus_dma_tag_t sdt;
 
