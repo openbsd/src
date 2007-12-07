@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.21 2007/10/15 06:59:32 otto Exp $
+.\" $OpenBSD: ntpd.8,v 1.22 2007/12/07 20:05:32 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2007 $
+.Dd $Mdocdate: December 7 2007 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -54,6 +54,12 @@ be started with the
 option, all calls to
 .Xr adjtime 2
 will be logged.
+.Pp
+After the local clock is synchronized,
+.Nm
+adjusts the clock frequency using the
+.Xr adjfreq 2
+system call to compensate for systematic drift.
 .Pp
 .Nm
 is usually started at boot time, and can be enabled by
