@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.2 2007/12/07 09:18:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -725,7 +725,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	socklen_t		 slen;
 	ssize_t			 len;
 	struct ber		 ber;
-	struct ber_element	*req = NULL, *resp = NULL;
+	struct ber_element	*req = NULL, *resp = NULL, *b, *c;
 	struct snmp_message	 msg;
 
 	slen = sizeof(ss);
@@ -777,11 +777,23 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 
 	/* Create new SNMP packet */
 	resp = ber_add_sequence(NULL);
+#ifdef notyet
 	ber_printf_elements(resp, "is{tiii{e}}.",
 	    msg.sm_version, msg.sm_community,
 	    BER_CLASS_CONTEXT, SNMP_T_GETRESP,
 	    msg.sm_request, msg.sm_error, msg.sm_errorindex,
 	    msg.sm_varbindresp);
+#else
+	b = ber_add_integer(resp, msg.sm_version);
+	b = ber_add_string(b, msg.sm_community);
+	c = b = ber_add_sequence(b);
+	ber_set_header(b, BER_CLASS_CONTEXT, SNMP_T_GETRESP);
+	c = ber_add_integer(c, msg.sm_request);
+	c = ber_add_integer(c, msg.sm_error);
+	c = ber_add_integer(c, msg.sm_errorindex);
+	c = ber_add_sequence(c);
+	ber_link_elements(c, msg.sm_varbindresp);
+#endif
 
 #ifdef DEBUG
 	snmpe_debug_elements(resp);
