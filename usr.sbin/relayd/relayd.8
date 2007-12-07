@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.10 2007/09/28 18:08:00 pyr Exp $
+.\"	$OpenBSD: relayd.8,v 1.11 2007/12/07 17:19:42 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2007 $
-.Dt HOSTSTATED 8
+.Dd $Mdocdate: December 7 2007 $
+.Dt RELAYD 8
 .Os
 .Sh NAME
-.Nm hoststated
-.Nd Host Status daemon
+.Nm relayd
+.Nd Relay daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
@@ -29,7 +29,7 @@
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
-is a host status daemon for server load-balancing.
+is a relaying daemon for server load-balancing.
 It monitors groups of hosts for availability,
 which is determined by checking for a specific service
 common to a host group.
@@ -49,7 +49,7 @@ to properly set up
 rules, the following line is required in the NAT section of
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
-rdr-anchor "hoststated/*"
+rdr-anchor "relayd/*"
 .Ed
 .Pp
 Layer 7 load-balancing happens at the application level and is
@@ -86,9 +86,9 @@ will be mapped to a
 table containing only hosts which are up.
 .Pp
 All these entities can be configured in
-.Xr hoststated.conf 5
+.Xr relayd.conf 5
 and
-.Xr hoststatectl 8
+.Xr relayctl 8
 can be used to alter or report the status of each entity.
 .Pp
 The options are as follows:
@@ -111,7 +111,7 @@ will run in the foreground and log to
 .It Fl f Ar file
 Specify an alternative configuration file.
 The default is
-.Pa /etc/hoststated.conf .
+.Pa /etc/relayd.conf .
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
@@ -119,18 +119,18 @@ Only check the configuration file for validity.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/hoststated.sockXX" -compact
-.It /etc/hoststated.conf
+.Bl -tag -width "/var/run/relayd.sockXX" -compact
+.It /etc/relayd.conf
 Default
 .Nm
 configuration file.
-.It /var/run/hoststated.sock
+.It /var/run/relayd.sock
 Unix-domain socket used for communication with
-.Xr hoststatectl 8 .
+.Xr relayctl 8 .
 .El
 .Sh SEE ALSO
-.Xr hoststated.conf 5 ,
-.Xr hoststatectl 8
+.Xr relayd.conf 5 ,
+.Xr relayctl 8
 .Sh HISTORY
 The
 .Nm
