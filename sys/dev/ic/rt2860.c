@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.8 2007/12/07 19:37:04 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.9 2007/12/07 21:23:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -122,6 +122,7 @@ void		rt2860_set_basicrates(struct rt2860_softc *);
 void		rt2860_select_chan_group(struct rt2860_softc *, int);
 void		rt2860_set_chan(struct rt2860_softc *,
 		    struct ieee80211_channel *);
+void		rt2860_set_leds(struct rt2860_softc *, uint16_t);
 void		rt2860_set_bssid(struct rt2860_softc *, const uint8_t *);
 void		rt2860_set_macaddr(struct rt2860_softc *, const uint8_t *);
 void		rt2860_updateslot(struct ieee80211com *);
@@ -764,6 +765,11 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->amrr_to);
 
+	if (ostate == IEEE80211_S_RUN) {
+		/* light down link LED */
+		rt2860_set_leds(sc, RT2860_LED_RADIO);
+	}
+
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		if (ostate == IEEE80211_S_RUN) {
@@ -809,6 +815,11 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			rt2860_enable_tsf_sync(sc);
 			timeout_add(&sc->amrr_to, hz / 2);
 		}
+
+		/* light up link LED */
+		rt2860_set_leds(sc, RT2860_LED_RADIO |
+		    (IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan) ?
+		     RT2860_LED_LINK_2GHZ : RT2860_LED_LINK_5GHZ));
 		break;
 	}
 
@@ -1696,7 +1707,7 @@ rt2860_mcu_bbp_write(struct rt2860_softc *sc, uint8_t reg, uint8_t val)
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, RT2860_BBP_RW_PARALLEL |
 	    RT2860_BBP_CSR_KICK | reg << 8 | val);
 
-	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
 	DELAY(1000);
 }
 
@@ -1720,7 +1731,7 @@ rt2860_mcu_bbp_read(struct rt2860_softc *sc, uint8_t reg)
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, RT2860_BBP_RW_PARALLEL |
 	    RT2860_BBP_CSR_KICK | RT2860_BBP_CSR_READ | reg << 8);
 
-	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
 	DELAY(1000);
 
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -1946,6 +1957,13 @@ rt2860_set_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	rt2860_select_chan_group(sc, group);
 
 	DELAY(1000);
+}
+
+void
+rt2860_set_leds(struct rt2860_softc *sc, uint16_t which)
+{
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LEDS,
+	    which | (sc->leds & 0x7f));
 }
 
 void
@@ -2216,6 +2234,26 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 		DPRINTF(("BBP%d=0x%02x\n", sc->bbp[i].reg, sc->bbp[i].val));
 	}
 
+	/* read RF frequency offset from EEPROM */
+	val = rt2860_eeprom_read(sc, RT2860_EEPROM_FREQ_LEDS);
+	sc->freq = ((val & 0xff) != 0xff) ? val & 0xff : 0;
+	DPRINTF(("EEPROM freq offset %d\n", sc->freq & 0xff));
+
+	/* read LEDs operating mode */
+	if ((sc->leds = val >> 8) != 0xff) {
+		sc->led[0] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED1);
+		sc->led[1] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED2);
+		sc->led[2] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED3);
+	} else {
+		/* broken EEPROM, use default settings */
+		sc->leds = 0x01;
+		sc->led[0] = 0x5555;
+		sc->led[1] = 0x2221;
+		sc->led[2] = 0xa9f8;
+	}
+	DPRINTF(("EEPROM LED mode=0x%02x, LEDs=0x%04x/0x%04x/0x%04x\n",
+	    sc->leds, sc->led[0], sc->led[1], sc->led[2]));
+
 	/* read RF information */
 	val = rt2860_eeprom_read(sc, RT2860_EEPROM_ANTENNA);
 	if (val == 0xffff) {
@@ -2361,11 +2399,6 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	/* check that ref value is correct, otherwise disable calibration */
 	if (sc->tssi_5ghz[4] == 0xff)
 		sc->calib_5ghz = 0;
-
-	/* read RF frequency offset from EEPROM */
-	val = rt2860_eeprom_read(sc, RT2860_EEPROM_FREQ);
-	sc->freq = ((val & 0xff) != 0xff) ? val & 0xff : 0;
-	DPRINTF(("EEPROM freq offset %d\n", sc->freq & 0xff));
 
 	/* read RSSI offsets and LNA gains from EEPROM */
 	val = rt2860_eeprom_read(sc, RT2860_EEPROM_RSSI1_2GHZ);
@@ -2591,6 +2624,11 @@ rt2860_init(struct ifnet *ifp)
 		rt2860_mcu_bbp_write(sc, sc->bbp[i].reg, sc->bbp[i].val);
 	}
 
+	/* send LEDs operating mode to microcontroller */
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED1, sc->led[0]);
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED2, sc->led[1]);
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED3, sc->led[2]);
+
 	/* disable non-existing Rx chains */
 	bbp3 = rt2860_mcu_bbp_read(sc, 3);
 	bbp3 &= ~(1 << 3 | 1 << 4);
@@ -2629,6 +2667,9 @@ rt2860_init(struct ifnet *ifp)
 	tmp |= RT2860_TX_WB_DDONE | RT2860_RX_DMA_EN | RT2860_TX_DMA_EN |
 	    RT2860_WPDMA_BT_SIZE64 << RT2860_WPDMA_BT_SIZE_SHIFT;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
+
+	/* light up radio LED */
+	rt2860_set_leds(sc, RT2860_LED_RADIO);
 
 	/* set Rx filter */
 	tmp = RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR;
@@ -2675,6 +2716,9 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
+
+	/* light down all LEDs */
+	rt2860_set_leds(sc, 0);
 
 	/* clear RX WCID search table */
 	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(0), 0, 512);

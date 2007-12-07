@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.4 2007/12/07 19:37:04 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.5 2007/12/07 21:23:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -262,6 +262,13 @@
 #define RT2860_MCU_RESET	(1 <<  0)
 
 /* possible values for register HOST_CMD */
+#define RT2860_MCU_CMD_SLEEP	0x30
+#define RT2860_MCU_CMD_WAKEUP	0x31
+#define RT2860_MCU_CMD_LEDS	0x50
+#define RT2860_MCU_CMD_LED_RSSI	0x51
+#define RT2860_MCU_CMD_LED1	0x52
+#define RT2860_MCU_CMD_LED2	0x53
+#define RT2860_MCU_CMD_LED3	0x54
 #define RT2860_MCU_CMD_BBP	0x80
 
 /* possible flags for register PBF_CFG */
@@ -613,6 +620,12 @@
 #define RT2860_TOKEN_NO_INTR	0xff
 
 
+/* possible flags for MCU command RT2860_MCU_CMD_LEDS */
+#define RT2860_LED_RADIO	(1 << 13)
+#define RT2860_LED_LINK_2GHZ	(1 << 14)
+#define RT2860_LED_LINK_5GHZ	(1 << 15)
+
+
 /* TX descriptor */
 struct rt2860_txd {
 	uint32_t	sdp0;		/* Segment Data Pointer 0 */
@@ -743,7 +756,10 @@ struct rt2860_rxwi {
 #define RT2860_EEPROM_ANTENNA		0x1a
 #define RT2860_EEPROM_CONFIG		0x1b
 #define RT2860_EEPROM_COUNTRY		0x1c
-#define RT2860_EEPROM_FREQ		0x1d
+#define RT2860_EEPROM_FREQ_LEDS		0x1d
+#define RT2860_EEPROM_LED1		0x1e
+#define RT2860_EEPROM_LED2		0x1f
+#define RT2860_EEPROM_LED3		0x20
 #define RT2860_EEPROM_LNA		0x22
 #define RT2860_EEPROM_RSSI1_2GHZ	0x23
 #define RT2860_EEPROM_RSSI2_2GHZ	0x24
