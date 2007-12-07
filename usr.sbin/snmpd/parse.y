@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2007/12/05 22:57:02 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2007/12/07 10:22:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -297,17 +297,6 @@ oid		: STRING				{
 			free($1);
 			$$ = sysoid;
 		}
-		;
-
-comma		: ','
-		| /* empty */
-		;
-
-optnl		: '\n' optnl
-		|
-		;
-
-nl		: '\n' optnl
 		;
 
 %%
