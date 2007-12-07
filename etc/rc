@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.307 2007/11/11 16:12:11 jmc Exp $
+#	$OpenBSD: rc,v 1.308 2007/12/07 17:13:35 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -588,8 +588,8 @@ if [ X"${ifstated_flags}" != X"NO" ]; then
 	echo -n ' ifstated';		ifstated $ifstated_flags
 fi
 
-if [ X"${hoststated_flags}" != X"NO" ]; then
-	echo -n ' hoststated';		/usr/sbin/hoststated $hoststated_flags
+if [ X"${relayd_flags}" != X"NO" ]; then
+	echo -n ' relayd';		/usr/sbin/relayd $relayd_flags
 fi
 
 if [ X"${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
