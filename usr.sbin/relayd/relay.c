@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.74 2007/11/28 16:25:12 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.75 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 void		 relay_sig_handler(int sig, short, void *);
 void		 relay_statistics(int, short, void *);
@@ -133,7 +133,7 @@ extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 volatile sig_atomic_t relay_sessions;
 objid_t relay_conid;
 
-static struct hoststated	*env = NULL;
+static struct relayd		*env = NULL;
 struct imsgbuf			*ibuf_pfe;
 struct imsgbuf			*ibuf_main;
 int				 proc_id;
@@ -155,7 +155,7 @@ relay_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
+relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
     int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
@@ -180,7 +180,7 @@ relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	/* Need root privileges for relay initialization */
 	relay_privinit();
 
-	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
+	if ((pw = getpwnam(RELAYD_USER)) == NULL)
 		fatal("relay: getpwnam");
 
 #ifndef DEBUG
@@ -194,7 +194,7 @@ relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 #endif
 
 	setproctitle("socket relay engine");
-	hoststated_process = PROC_RELAY;
+	relayd_process = PROC_RELAY;
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
@@ -1835,10 +1835,10 @@ relay_close_http(struct session *con, u_int code, const char *msg,
 	    "<hr><address>%s at %s port %d</address>\n"
 	    "</body>\n"
 	    "</html>\n",
-	    code, httperr, tmbuf, HOSTSTATED_SERVERNAME,
+	    code, httperr, tmbuf, RELAYD_SERVERNAME,
 	    code, httperr, style, httperr, text,
 	    label == NULL ? "" : label,
-	    HOSTSTATED_SERVERNAME, hbuf, ntohs(rlay->conf.port)) == -1)
+	    RELAYD_SERVERNAME, hbuf, ntohs(rlay->conf.port)) == -1)
 		goto done;
 
 	/* Dump the message without checking for success */
@@ -2186,7 +2186,7 @@ relay_close(struct session *con, const char *msg)
 	if (con->out.bev != NULL)
 		bufferevent_disable(con->out.bev, EV_READ|EV_WRITE);
 
-	if (env->opts & HOSTSTATED_OPT_LOGUPDATE) {
+	if (env->opts & RELAYD_OPT_LOGUPDATE) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
 		(void)print_host(&con->in.ss, ibuf, sizeof(ibuf));

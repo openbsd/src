@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.8 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.9 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);

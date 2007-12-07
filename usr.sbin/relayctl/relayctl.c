@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.27 2007/11/24 17:09:12 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.28 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -40,7 +40,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 #include "parser.h"
 
 __dead void	 usage(void);
@@ -92,7 +92,7 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that hoststatectl does not need libevent */
+/* dummy function so that relayctl does not need libevent */
 void
 imsg_event_add(struct imsgbuf *i)
 {
@@ -113,13 +113,13 @@ main(int argc, char *argv[])
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
 		exit(1);
 
-	/* connect to hoststated control socket */
+	/* connect to relayd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, HOSTSTATED_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, RELAYD_SOCKET, sizeof(sun.sun_path));
  reconnect:
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		/* Keep retrying if running in monitor mode */
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 			usleep(100);
 			goto reconnect;
 		}
-		err(1, "connect: %s", HOSTSTATED_SOCKET);
+		err(1, "connect: %s", RELAYD_SOCKET);
 	}
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)

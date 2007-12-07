@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.30 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.31 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,7 +35,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 void	tcp_write(int, short, void *);
 void	tcp_host_up(int, struct ctl_tcp_event *);

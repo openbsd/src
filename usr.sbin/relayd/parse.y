@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2007/11/26 09:38:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,7 +47,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -80,7 +80,7 @@ struct sym {
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
-struct hoststated	*conf = NULL;
+struct relayd		*conf = NULL;
 static int		 errors = 0;
 objid_t			 last_service_id = 0;
 objid_t			 last_table_id = 0;
@@ -304,8 +304,8 @@ main		: INTERVAL NUMBER	{
 		}
 		;
 
-loglevel	: UPDATES		{ $$ = HOSTSTATED_OPT_LOGUPDATE; }
-		| ALL			{ $$ = HOSTSTATED_OPT_LOGALL; }
+loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
+		| ALL			{ $$ = RELAYD_OPT_LOGALL; }
 		;
 
 service		: SERVICE STRING	{
@@ -1746,7 +1746,7 @@ popfile(void)
 	return (EOF);
 }
 
-struct hoststated *
+struct relayd *
 parse_config(const char *filename, int opts)
 {
 	struct sym	*sym, *next;
@@ -1815,7 +1815,7 @@ parse_config(const char *filename, int opts)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->opts & HOSTSTATED_OPT_VERBOSE) && !sym->used)
+		if ((conf->opts & RELAYD_OPT_VERBOSE) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.21 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.22 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 #define	CONTROL_BACKLOG	5
 
@@ -59,33 +59,33 @@ control_init(void)
 	}
 
 	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, HOSTSTATED_SOCKET,
+	if (strlcpy(sun.sun_path, RELAYD_SOCKET,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
-		log_warn("control_init: %s name too long", HOSTSTATED_SOCKET);
+		log_warn("control_init: %s name too long", RELAYD_SOCKET);
 		close(fd);
 		return (-1);
 	}
 
-	if (unlink(HOSTSTATED_SOCKET) == -1)
+	if (unlink(RELAYD_SOCKET) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", HOSTSTATED_SOCKET);
+			log_warn("control_init: unlink %s", RELAYD_SOCKET);
 			close(fd);
 			return (-1);
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", HOSTSTATED_SOCKET);
+		log_warn("control_init: bind: %s", RELAYD_SOCKET);
 		close(fd);
 		(void)umask(old_umask);
 		return (-1);
 	}
 	(void)umask(old_umask);
 
-	if (chmod(HOSTSTATED_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(RELAYD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init: chmod");
 		close(fd);
-		(void)unlink(HOSTSTATED_SOCKET);
+		(void)unlink(RELAYD_SOCKET);
 		return (-1);
 	}
 
@@ -96,7 +96,7 @@ control_init(void)
 }
 
 int
-control_listen(struct hoststated *env, struct imsgbuf *i_main,
+control_listen(struct relayd *env, struct imsgbuf *i_main,
     struct imsgbuf *i_hce)
 {
 
@@ -118,7 +118,7 @@ control_listen(struct hoststated *env, struct imsgbuf *i_main,
 void
 control_cleanup(void)
 {
-	(void)unlink(HOSTSTATED_SOCKET);
+	(void)unlink(RELAYD_SOCKET);
 }
 
 /* ARGSUSED */
@@ -129,7 +129,7 @@ control_accept(int listenfd, short event, void *arg)
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
-	struct hoststated	*env = arg;
+	struct relayd		*env = arg;
 
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
@@ -191,7 +191,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	struct ctl_id		 id;
 	int			 n;
-	struct hoststated	*env = arg;
+	struct relayd		*env = arg;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("control_dispatch_imsg: fd %d: not found", fd);
@@ -336,7 +336,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			 * we unconditionnaly return a CTL_OK imsg because
 			 * we have no choice.
 			 *
-			 * so in this case, the reply hoststatectl gets means
+			 * so in this case, the reply relayctl gets means
 			 * that the reload command has been set,
 			 * it doesn't say wether the command succeeded or not.
 			 */

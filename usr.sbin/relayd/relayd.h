@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.86 2007/11/26 09:38:25 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.87 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -20,12 +20,12 @@
 
 #include <sys/tree.h>
 
-#define CONF_FILE		"/etc/hoststated.conf"
-#define HOSTSTATED_SOCKET	"/var/run/hoststated.sock"
+#define CONF_FILE		"/etc/relayd.conf"
+#define RELAYD_SOCKET		"/var/run/relayd.sock"
 #define PF_SOCKET		"/dev/pf"
-#define HOSTSTATED_USER		"_hoststated"
-#define HOSTSTATED_ANCHOR	"hoststated"
-#define HOSTSTATED_SERVERNAME	"OpenBSD hoststated"
+#define RELAYD_USER		"_relayd"
+#define RELAYD_ANCHOR		"relayd"
+#define RELAYD_SERVERNAME	"OpenBSD relayd"
 #define CHECK_TIMEOUT		200
 #define CHECK_INTERVAL		10
 #define EMPTY_TABLE		UINT_MAX
@@ -100,7 +100,7 @@ struct imsgbuf {
 
 enum imsg_type {
 	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to hoststatectl requests */
+	IMSG_CTL_OK,		/* answer to relayctl requests */
 	IMSG_CTL_FAIL,
 	IMSG_CTL_END,
 	IMSG_CTL_SERVICE,
@@ -111,7 +111,7 @@ enum imsg_type {
 	IMSG_CTL_TABLE_CHANGED,
 	IMSG_CTL_PULL_RULESET,
 	IMSG_CTL_PUSH_RULESET,
-	IMSG_CTL_SHOW_SUM,	/* hoststatectl requests */
+	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
 	IMSG_CTL_SERVICE_ENABLE,
 	IMSG_CTL_SERVICE_DISABLE,
 	IMSG_CTL_TABLE_ENABLE,
@@ -187,7 +187,7 @@ struct ctl_demote {
 };
 
 struct ctl_icmp_event {
-	struct hoststated	*env;
+	struct relayd		*env;
 	int			 s;
 	int			 af;
 	int			 last_up;
@@ -593,9 +593,9 @@ enum {
 	PROC_PFE,
 	PROC_HCE,
 	PROC_RELAY
-} hoststated_process;
+} relayd_process;
 
-struct hoststated {
+struct relayd {
 	u_int8_t		 opts;
 	u_int32_t		 flags;
 	const char		*confpath;
@@ -628,11 +628,11 @@ struct hoststated {
 	struct ctl_icmp_event	 icmp6_recv;
 };
 
-#define HOSTSTATED_OPT_VERBOSE		0x01
-#define HOSTSTATED_OPT_NOACTION		0x04
-#define HOSTSTATED_OPT_LOGUPDATE	0x08
-#define HOSTSTATED_OPT_LOGNOTIFY	0x10
-#define HOSTSTATED_OPT_LOGALL		0x18
+#define RELAYD_OPT_VERBOSE		0x01
+#define RELAYD_OPT_NOACTION		0x04
+#define RELAYD_OPT_LOGUPDATE		0x08
+#define RELAYD_OPT_LOGNOTIFY		0x10
+#define RELAYD_OPT_LOGALL		0x18
 
 /* initially control.h */
 struct {
@@ -656,7 +656,7 @@ TAILQ_HEAD(ctl_connlist, ctl_conn);
 
 /* control.c */
 int	control_init(void);
-int	control_listen(struct hoststated *, struct imsgbuf *, struct imsgbuf *);
+int	control_listen(struct relayd *, struct imsgbuf *, struct imsgbuf *);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
 void	control_imsg_forward(struct imsg *);
@@ -667,8 +667,8 @@ void    session_socket_blockmode(int, enum blockmodes);
 extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
-struct hoststated	*parse_config(const char *, int);
-int			 cmdline_symset(char *);
+struct relayd	*parse_config(const char *, int);
+int		 cmdline_symset(char *);
 
 /* log.c */
 void	log_init(int);
@@ -711,7 +711,7 @@ void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 int	 imsg_get_fd(struct imsgbuf *);
 
 /* pfe.c */
-pid_t	 pfe(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 show(struct ctl_conn *);
 void	 show_sessions(struct ctl_conn *);
@@ -723,21 +723,21 @@ int	 disable_table(struct ctl_conn *, struct ctl_id *);
 int	 disable_host(struct ctl_conn *, struct ctl_id *);
 
 /* pfe_filter.c */
-void	 init_filter(struct hoststated *);
-void	 init_tables(struct hoststated *);
-void	 flush_table(struct hoststated *, struct service *);
-void	 sync_table(struct hoststated *, struct service *, struct table *);
-void	 sync_ruleset(struct hoststated *, struct service *, int);
-void	 flush_rulesets(struct hoststated *);
-int	 natlook(struct hoststated *, struct ctl_natlook *);
+void	 init_filter(struct relayd *);
+void	 init_tables(struct relayd *);
+void	 flush_table(struct relayd *, struct service *);
+void	 sync_table(struct relayd *, struct service *, struct table *);
+void	 sync_ruleset(struct relayd *, struct service *, int);
+void	 flush_rulesets(struct relayd *);
+int	 natlook(struct relayd *, struct ctl_natlook *);
 
 /* hce.c */
-pid_t	 hce(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+pid_t	 hce(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 hce_notify_done(struct host *, const char *);
 
 /* relay.c */
-pid_t	 relay(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+pid_t	 relay(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct session *, struct session *);
@@ -747,51 +747,51 @@ RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, session, nodes, relay_session_cmp);
 
 /* relay_udp.c */
-void	 relay_udp_privinit(struct hoststated *, struct relay *);
+void	 relay_udp_privinit(struct relayd *, struct relay *);
 int	 relay_udp_bind(struct sockaddr_storage *, in_port_t,
 	    struct protocol *);
 void	 relay_udp_server(int, short, void *);
 
 /* check_icmp.c */
-void	 icmp_init(struct hoststated *);
-void	 schedule_icmp(struct hoststated *, struct host *);
-void	 check_icmp(struct hoststated *, struct timeval *);
+void	 icmp_init(struct relayd *);
+void	 schedule_icmp(struct relayd *, struct host *);
+void	 check_icmp(struct relayd *, struct timeval *);
 
 /* check_tcp.c */
 void	 check_tcp(struct ctl_tcp_event *);
 
 /* check_script.c */
 void	 check_script(struct host *);
-void	 script_done(struct hoststated *, struct ctl_script *);
-int	 script_exec(struct hoststated *, struct ctl_script *);
+void	 script_done(struct relayd *, struct ctl_script *);
+int	 script_exec(struct relayd *, struct ctl_script *);
 
 /* ssl.c */
-void	 ssl_init(struct hoststated *);
+void	 ssl_init(struct relayd *);
 void	 ssl_transaction(struct ctl_tcp_event *);
-SSL_CTX	*ssl_ctx_create(struct hoststated *);
+SSL_CTX	*ssl_ctx_create(struct relayd *);
 void	 ssl_error(const char *, const char *);
 
 /* ssl_privsep.c */
 int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 
-/* hoststated.c */
-struct host	*host_find(struct hoststated *, objid_t);
-struct table	*table_find(struct hoststated *, objid_t);
-struct service	*service_find(struct hoststated *, objid_t);
-struct host	*host_findbyname(struct hoststated *, const char *);
-struct table	*table_findbyname(struct hoststated *, const char *);
-struct service	*service_findbyname(struct hoststated *, const char *);
+/* relayd.c */
+struct host	*host_find(struct relayd *, objid_t);
+struct table	*table_find(struct relayd *, objid_t);
+struct service	*service_find(struct relayd *, objid_t);
+struct host	*host_findbyname(struct relayd *, const char *);
+struct table	*table_findbyname(struct relayd *, const char *);
+struct service	*service_findbyname(struct relayd *, const char *);
 void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
-struct relay	*relay_find(struct hoststated *, objid_t);
-struct session	*session_find(struct hoststated *, objid_t);
-struct relay	*relay_findbyname(struct hoststated *, const char *);
+struct relay	*relay_find(struct relayd *, objid_t);
+struct session	*session_find(struct relayd *, objid_t);
+struct relay	*relay_findbyname(struct relayd *, const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
-void		 purge_config(struct hoststated *, u_int8_t);
-void		 merge_config(struct hoststated *, struct hoststated *);
+void		 purge_config(struct relayd *, u_int8_t);
+void		 merge_config(struct relayd *, struct relayd *);
 char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
 const char	*canonicalize_host(const char *, char *, size_t);
 

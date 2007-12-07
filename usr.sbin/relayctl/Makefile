@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.2 2007/01/09 00:45:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/12/07 17:17:01 reyk Exp $
 
-.PATH:		${.CURDIR}/../hoststated
+.PATH:		${.CURDIR}/../relayd
 
-PROG=		hoststatectl
-SRCS=		buffer.c imsg.c log.c hoststatectl.c parser.c
+PROG=		relayctl
+SRCS=		buffer.c imsg.c log.c relayctl.c parser.c
 
-MAN=		hoststatectl.8
+MAN=		relayctl.8
 
-CFLAGS+=	-Wall -Werror -I${.CURDIR} -I${.CURDIR}/../hoststated
+CFLAGS+=	-Wall -Werror -I${.CURDIR} -I${.CURDIR}/../relayd
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual

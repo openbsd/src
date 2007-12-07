@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.21 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.22 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -37,9 +37,9 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
-void	icmp_setup(struct hoststated *, struct ctl_icmp_event *, int);
+void	icmp_setup(struct relayd *, struct ctl_icmp_event *, int);
 void	check_icmp_add(struct ctl_icmp_event *, int, struct timeval *,
 	    void (*)(int, short, void *));
 int	icmp_checks_done(struct ctl_icmp_event *);
@@ -49,7 +49,7 @@ void	recv_icmp(int, short, void *);
 int	in_cksum(u_short *, int);
 
 void
-icmp_setup(struct hoststated *env, struct ctl_icmp_event *cie, int af)
+icmp_setup(struct relayd *env, struct ctl_icmp_event *cie, int af)
 {
 	int proto = IPPROTO_ICMP;
 
@@ -63,7 +63,7 @@ icmp_setup(struct hoststated *env, struct ctl_icmp_event *cie, int af)
 }
 
 void
-icmp_init(struct hoststated *env)
+icmp_init(struct relayd *env)
 {
 	icmp_setup(env, &env->icmp_send, AF_INET);
 	icmp_setup(env, &env->icmp_recv, AF_INET);
@@ -73,7 +73,7 @@ icmp_init(struct hoststated *env)
 }
 
 void
-schedule_icmp(struct hoststated *env, struct host *host)
+schedule_icmp(struct relayd *env, struct host *host)
 {
 	host->last_up = host->up;
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
@@ -101,7 +101,7 @@ check_icmp_add(struct ctl_icmp_event *cie, int flags, struct timeval *start,
 }
 
 void
-check_icmp(struct hoststated *env, struct timeval *tv)
+check_icmp(struct relayd *env, struct timeval *tv)
 {
 	if (env->has_icmp) {
 		check_icmp_add(&env->icmp_recv, EV_READ, tv, recv_icmp);

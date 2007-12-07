@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.2 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.3 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 extern volatile sig_atomic_t relay_sessions;
 extern objid_t relay_conid;
@@ -61,7 +61,7 @@ extern int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
 extern int	 relay_cmp_af(struct sockaddr_storage *,
 		    struct sockaddr_storage *);
 
-struct hoststated *env = NULL;
+struct relayd *env = NULL;
 
 int		 relay_udp_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
@@ -76,7 +76,7 @@ void		 relay_dns_response(struct session *, u_int8_t *, size_t);
 int		 relay_dns_cmp(struct session *, struct session *);
 
 void
-relay_udp_privinit(struct hoststated *x_env, struct relay *rlay)
+relay_udp_privinit(struct relayd *x_env, struct relay *rlay)
 {
 	struct protocol		*proto = rlay->proto;
 

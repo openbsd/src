@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.36 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.37 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,7 +39,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 __dead void hce_shutdown(void);
 void	hce_sig_handler(int sig, short, void *);
@@ -49,7 +49,7 @@ void	hce_launch_checks(int, short, void *);
 void	hce_setup_events(void);
 void	hce_disable_events(void);
 
-static struct hoststated *env = NULL;
+static struct relayd *env = NULL;
 struct imsgbuf		*ibuf_pfe;
 struct imsgbuf		*ibuf_main;
 int			 pipe_pfe;
@@ -70,7 +70,7 @@ hce_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
+hce(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
     int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
@@ -92,7 +92,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	env = x_env;
 	purge_config(env, PURGE_SERVICES|PURGE_RELAYS|PURGE_PROTOS);
 
-	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
+	if ((pw = getpwnam(RELAYD_USER)) == NULL)
 		fatal("hce: getpwnam");
 
 #ifndef DEBUG
@@ -105,7 +105,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 #endif
 
 	setproctitle("host check engine");
-	hoststated_process = PROC_HCE;
+	relayd_process = PROC_HCE;
 
 	/* this is needed for icmp tests */
 	icmp_init(env);
@@ -299,9 +299,9 @@ hce_notify_done(struct host *host, const char *msg)
 
 	imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, -1, &st, sizeof(st));
 	if (host->up != host->last_up)
-		logopt = HOSTSTATED_OPT_LOGUPDATE;
+		logopt = RELAYD_OPT_LOGUPDATE;
 	else
-		logopt = HOSTSTATED_OPT_LOGNOTIFY;
+		logopt = RELAYD_OPT_LOGNOTIFY;
 
 	if (gettimeofday(&tv_now, NULL))
 		fatal("hce_notify_done: gettimeofday");
@@ -469,11 +469,11 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 		case IMSG_RECONF:
 			log_debug("hce: reloading configuration");
 			if (imsg.hdr.len !=
-			    sizeof(struct hoststated) + IMSG_HEADER_SIZE)
+			    sizeof(struct relayd) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
 			hce_disable_events();
 			purge_config(env, PURGE_TABLES);
-			merge_config(env, (struct hoststated *)imsg.data);
+			merge_config(env, (struct relayd *)imsg.data);
 
 			env->tables = calloc(1, sizeof(*env->tables));
 			if (env->tables == NULL)

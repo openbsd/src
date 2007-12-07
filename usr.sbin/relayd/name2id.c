@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.1 2007/11/26 09:38:25 reyk Exp $	*/
+/*	$OpenBSD: name2id.c,v 1.2 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 #define	IDVAL_MAX	50000
 

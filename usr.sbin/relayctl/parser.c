@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.16 2007/11/24 17:09:12 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.17 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,7 +36,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 #include "parser.h"
 

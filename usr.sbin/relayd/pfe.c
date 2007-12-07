@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.43 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.44 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,7 +33,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 void	pfe_sig_handler(int sig, short, void *);
 void	pfe_shutdown(void);
@@ -45,7 +45,7 @@ void	pfe_dispatch_relay(int, short, void *);
 
 void	pfe_sync(void);
 
-static struct hoststated	*env = NULL;
+static struct relayd	*env = NULL;
 
 struct imsgbuf	*ibuf_main;
 struct imsgbuf	*ibuf_hce;
@@ -64,7 +64,7 @@ pfe_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
+pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
     int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
@@ -93,7 +93,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	init_filter(env);
 	init_tables(env);
 
-	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
+	if ((pw = getpwnam(RELAYD_USER)) == NULL)
 		fatal("pfe: getpwnam");
 
 #ifndef DEBUG
@@ -106,7 +106,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 #endif
 
 	setproctitle("pf update engine");
-	hoststated_process = PROC_PFE;
+	relayd_process = PROC_PFE;
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
@@ -358,11 +358,11 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 		case IMSG_RECONF:
 			log_debug("pfe: reloading configuration");
 			if (imsg.hdr.len !=
-			    sizeof(struct hoststated) + IMSG_HEADER_SIZE)
+			    sizeof(struct relayd) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
 			pfe_disable_events();
 			purge_config(env, PURGE_SERVICES|PURGE_TABLES);
-			merge_config(env, (struct hoststated *)imsg.data);
+			merge_config(env, (struct relayd *)imsg.data);
 			/*
 			 * no relays when reconfiguring yet.
 			 */

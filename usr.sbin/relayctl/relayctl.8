@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.14 2007/11/21 09:55:21 pyr Exp $
+.\" $OpenBSD: relayctl.8,v 1.15 2007/12/07 17:17:01 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,11 +14,11 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2007 $
-.Dt HOSTSTATECTL 8
+.Dd $Mdocdate: December 7 2007 $
+.Dt RELAYCTL 8
 .Os
 .Sh NAME
-.Nm hoststatectl
+.Nm relayctl
 .Nd control the Host Status daemon
 .Sh SYNOPSIS
 .Nm
@@ -28,7 +28,7 @@
 The
 .Nm
 program controls the
-.Xr hoststated 8
+.Xr relayd 8
 daemon.
 .Pp
 The following commands are available:
@@ -80,13 +80,13 @@ Start doing checks for all hosts that aren't individually disabled
 again.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/hoststated.sockXX" -compact
-.It /var/run/hoststated.sock
+.Bl -tag -width "/var/run/relayd.sockXX" -compact
+.It /var/run/relayd.sock
 Unix-domain socket used for communication with
-.Xr hoststated 8 .
+.Xr relayd 8 .
 .El
 .Sh SEE ALSO
-.Xr hoststated 8
+.Xr relayd 8
 .Sh HISTORY
 The
 .Nm

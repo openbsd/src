@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.19 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.20 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,7 +36,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 struct pfdata {
 	int			 dev;
@@ -45,12 +45,12 @@ struct pfdata {
 	struct pfioc_trans_e	 pfte;
 };
 
-int	 transaction_init(struct hoststated *, const char *);
-int	 transaction_commit(struct hoststated *);
-void	 kill_tables(struct hoststated *);
+int	 transaction_init(struct relayd *, const char *);
+int	 transaction_commit(struct relayd *);
+void	 kill_tables(struct relayd *);
 
 void
-init_filter(struct hoststated *env)
+init_filter(struct relayd *env)
 {
 	struct pf_status	status;
 
@@ -66,7 +66,7 @@ init_filter(struct hoststated *env)
 }
 
 void
-init_tables(struct hoststated *env)
+init_tables(struct relayd *env)
 {
 	int			 i;
 	struct service		*service;
@@ -78,7 +78,7 @@ init_tables(struct hoststated *env)
 	i = 0;
 
 	TAILQ_FOREACH(service, env->services, entry) {
-		if (strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
+		if (strlcpy(tables[i].pfrt_anchor, RELAYD_ANCHOR "/",
 		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (strlcat(tables[i].pfrt_anchor, service->conf.name,
@@ -121,13 +121,13 @@ init_tables(struct hoststated *env)
 }
 
 void
-kill_tables(struct hoststated *env) {
+kill_tables(struct relayd *env) {
 	struct pfioc_table	 io;
 	struct service		*service;
 
 	memset(&io, 0, sizeof(io));
 	TAILQ_FOREACH(service, env->services, entry) {
-		if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+		if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
@@ -144,7 +144,7 @@ kill_tables(struct hoststated *env) {
 }
 
 void
-sync_table(struct hoststated *env, struct service *service, struct table *table)
+sync_table(struct relayd *env, struct service *service, struct table *table)
 {
 	int			 i;
 	struct pfioc_table	 io;
@@ -169,7 +169,7 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 	io.pfrio_size = table->up;
 	io.pfrio_size2 = 0;
 	io.pfrio_buffer = addlist;
-	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+	if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
@@ -224,12 +224,12 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 }
 
 void
-flush_table(struct hoststated *env, struct service *service)
+flush_table(struct relayd *env, struct service *service)
 {
 	struct pfioc_table	io;
 
 	memset(&io, 0, sizeof(io));
-	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+	if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
@@ -249,7 +249,7 @@ flush_table(struct hoststated *env, struct service *service)
 }
 
 int
-transaction_init(struct hoststated *env, const char *anchor)
+transaction_init(struct relayd *env, const char *anchor)
 {
 	env->pf->pft.size = 1;
 	env->pf->pft.esize = sizeof env->pf->pfte;
@@ -265,7 +265,7 @@ transaction_init(struct hoststated *env, const char *anchor)
 }
 
 int
-transaction_commit(struct hoststated *env)
+transaction_commit(struct relayd *env)
 {
 	if (ioctl(env->pf->dev, DIOCXCOMMIT, &env->pf->pft) == -1)
 		return (-1);
@@ -273,7 +273,7 @@ transaction_commit(struct hoststated *env)
 }
 
 void
-sync_ruleset(struct hoststated *env, struct service *service, int enable)
+sync_ruleset(struct relayd *env, struct service *service, int enable)
 {
 	struct pfioc_rule	 rio;
 	struct pfioc_pooladdr	 pio;
@@ -283,7 +283,7 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 
 	bzero(anchor, sizeof(anchor));
-	if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
+	if (strlcpy(anchor, RELAYD_ANCHOR "/", sizeof(anchor)) >=
 	    PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (strlcat(anchor, service->conf.name, sizeof(anchor)) >=
@@ -371,14 +371,14 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 }
 
 void
-flush_rulesets(struct hoststated *env)
+flush_rulesets(struct relayd *env)
 {
 	struct service	*service;
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
 	kill_tables(env);
 	TAILQ_FOREACH(service, env->services, entry) {
-		if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
+		if (strlcpy(anchor, RELAYD_ANCHOR "/", sizeof(anchor)) >=
 		    PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (strlcat(anchor, service->conf.name, sizeof(anchor)) >=
@@ -387,15 +387,15 @@ flush_rulesets(struct hoststated *env)
 		if (transaction_init(env, anchor) == -1 ||
 		    transaction_commit(env) == -1)
 			log_warn("flush_rulesets: transaction for %s/ failed",
-			    HOSTSTATED_ANCHOR);
+			    RELAYD_ANCHOR);
 	}
-	if (strlcpy(anchor, HOSTSTATED_ANCHOR, sizeof(anchor)) >=
+	if (strlcpy(anchor, RELAYD_ANCHOR, sizeof(anchor)) >=
 	    PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (transaction_init(env, anchor) == -1 ||
 	    transaction_commit(env) == -1)
 		log_warn("flush_rulesets: transaction for %s failed",
-		    HOSTSTATED_ANCHOR);
+		    RELAYD_ANCHOR);
 	log_debug("flush_rulesets: flushed rules");
 	return;
 
@@ -404,7 +404,7 @@ flush_rulesets(struct hoststated *env)
 }
 
 int
-natlook(struct hoststated *env, struct ctl_natlook *cnl)
+natlook(struct relayd *env, struct ctl_natlook *cnl)
 {
 	struct pfioc_natlook	 pnl;
 	struct sockaddr_in	*in, *out;

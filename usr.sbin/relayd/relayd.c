@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.61 2007/11/28 11:37:59 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.62 2007/12/07 17:17:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -41,17 +41,17 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 __dead void	 usage(void);
 
 void		 main_sig_handler(int, short, void *);
-void		 main_shutdown(struct hoststated *);
+void		 main_shutdown(struct relayd *);
 void		 main_dispatch_pfe(int, short, void *);
 void		 main_dispatch_hce(int, short, void *);
 void		 main_dispatch_relay(int, short, void *);
 int		 check_child(pid_t, const char *);
-int		 send_all(struct hoststated *, enum imsg_type,
+int		 send_all(struct relayd *, enum imsg_type,
 		    void *, u_int16_t);
 void		 reconfigure(void);
 void		 purge_tree(struct proto_tree *);
@@ -62,7 +62,7 @@ int		 pipe_pfe2hce[2];
 int		 pipe_parent2relay[RELAY_MAXPROC][2];
 int		 pipe_pfe2relay[RELAY_MAXPROC][2];
 
-struct hoststated	*hoststated_env;
+struct relayd	*relayd_env;
 
 struct imsgbuf	*ibuf_pfe;
 struct imsgbuf	*ibuf_hce;
@@ -75,7 +75,7 @@ pid_t		 relay_pid = 0;
 void
 main_sig_handler(int sig, short event, void *arg)
 {
-	struct hoststated	*env = arg;
+	struct relayd		*env = arg;
 	int			 die = 0;
 
 	switch (sig) {
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 	int			 c;
 	int			 debug;
 	u_int32_t		 opts;
-	struct hoststated	*env;
+	struct relayd		*env;
 	const char		*conffile;
 	struct event		 ev_sigint;
 	struct event		 ev_sigterm;
@@ -149,13 +149,13 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			debug = 2;
-			opts |= HOSTSTATED_OPT_NOACTION;
+			opts |= RELAYD_OPT_NOACTION;
 			break;
 		case 'f':
 			conffile = optarg;
 			break;
 		case 'v':
-			opts |= HOSTSTATED_OPT_VERBOSE;
+			opts |= RELAYD_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -164,20 +164,20 @@ main(int argc, char *argv[])
 
 	if ((env = parse_config(conffile, opts)) == NULL)
 		exit(1);
-	hoststated_env = env;
+	relayd_env = env;
 
-	if (env->opts & HOSTSTATED_OPT_NOACTION) {
+	if (env->opts & RELAYD_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
 	if (debug)
-		env->opts |= HOSTSTATED_OPT_LOGUPDATE;
+		env->opts |= RELAYD_OPT_LOGUPDATE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if (getpwnam(HOSTSTATED_USER) == NULL)
-		errx(1, "unknown user %s", HOSTSTATED_USER);
+	if (getpwnam(RELAYD_USER) == NULL)
+		errx(1, "unknown user %s", RELAYD_USER);
 
 	log_init(debug);
 
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
 }
 
 void
-main_shutdown(struct hoststated *env)
+main_shutdown(struct relayd *env)
 {
 	pid_t	pid;
 
@@ -335,7 +335,7 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
+send_all(struct relayd *env, enum imsg_type type, void *buf, u_int16_t len)
 {
 	int		 i;
 
@@ -352,7 +352,7 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 }
 
 void
-merge_config(struct hoststated *env, struct hoststated *new_env)
+merge_config(struct relayd *env, struct relayd *new_env)
 {
 	env->opts = new_env->opts;
 	env->flags = new_env->flags;
@@ -382,8 +382,8 @@ merge_config(struct hoststated *env, struct hoststated *new_env)
 void
 reconfigure(void)
 {
-	struct hoststated	*env = hoststated_env;
-	struct hoststated	*new_env;
+	struct relayd		*env = relayd_env;
+	struct relayd		*new_env;
 	struct service		*service;
 	struct address		*virt;
 	struct table            *table;
@@ -438,7 +438,7 @@ reconfigure(void)
 }
 
 void
-purge_config(struct hoststated *env, u_int8_t what)
+purge_config(struct relayd *env, u_int8_t what)
 {
 	struct table		*table;
 	struct host		*host;
@@ -619,9 +619,9 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct ctl_script	 scr;
-	struct hoststated	*env;
+	struct relayd		*env;
 
-	env = hoststated_env;
+	env = relayd_env;
 	ibuf = ptr;
 	switch (event) {
 	case EV_READ:
@@ -716,7 +716,7 @@ main_dispatch_relay(int fd, short event, void * ptr)
 }
 
 struct host *
-host_find(struct hoststated *env, objid_t id)
+host_find(struct relayd *env, objid_t id)
 {
 	struct table	*table;
 	struct host	*host;
@@ -729,7 +729,7 @@ host_find(struct hoststated *env, objid_t id)
 }
 
 struct table *
-table_find(struct hoststated *env, objid_t id)
+table_find(struct relayd *env, objid_t id)
 {
 	struct table	*table;
 
@@ -740,7 +740,7 @@ table_find(struct hoststated *env, objid_t id)
 }
 
 struct service *
-service_find(struct hoststated *env, objid_t id)
+service_find(struct relayd *env, objid_t id)
 {
 	struct service	*service;
 
@@ -751,7 +751,7 @@ service_find(struct hoststated *env, objid_t id)
 }
 
 struct relay *
-relay_find(struct hoststated *env, objid_t id)
+relay_find(struct relayd *env, objid_t id)
 {
 	struct relay	*rlay;
 
@@ -762,7 +762,7 @@ relay_find(struct hoststated *env, objid_t id)
 }
 
 struct session *
-session_find(struct hoststated *env, objid_t id)
+session_find(struct relayd *env, objid_t id)
 {
 	struct relay		*rlay;
 	struct session		*con;
@@ -775,7 +775,7 @@ session_find(struct hoststated *env, objid_t id)
 }
 
 struct host *
-host_findbyname(struct hoststated *env, const char *name)
+host_findbyname(struct relayd *env, const char *name)
 {
 	struct table	*table;
 	struct host	*host;
@@ -788,7 +788,7 @@ host_findbyname(struct hoststated *env, const char *name)
 }
 
 struct table *
-table_findbyname(struct hoststated *env, const char *name)
+table_findbyname(struct relayd *env, const char *name)
 {
 	struct table	*table;
 
@@ -799,7 +799,7 @@ table_findbyname(struct hoststated *env, const char *name)
 }
 
 struct service *
-service_findbyname(struct hoststated *env, const char *name)
+service_findbyname(struct relayd *env, const char *name)
 {
 	struct service	*service;
 
@@ -810,7 +810,7 @@ service_findbyname(struct hoststated *env, const char *name)
 }
 
 struct relay *
-relay_findbyname(struct hoststated *env, const char *name)
+relay_findbyname(struct relayd *env, const char *name)
 {
 	struct relay	*rlay;
 

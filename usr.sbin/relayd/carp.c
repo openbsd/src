@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.4 2007/11/24 17:07:28 reyk Exp $ */
+/*	$OpenBSD: carp.c,v 1.5 2007/12/07 17:17:00 reyk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 struct carpgroup {
 	TAILQ_ENTRY(carpgroup)	 entry;

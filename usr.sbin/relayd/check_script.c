@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.4 2007/11/24 17:07:28 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.5 2007/12/07 17:17:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,7 @@
 
 #include <openssl/ssl.h>
 
-#include "hoststated.h"
+#include "relayd.h"
 
 void	 script_sig_alarm(int);
 
@@ -55,7 +55,7 @@ check_script(struct host *host)
 }
 
 void
-script_done(struct hoststated *env, struct ctl_script *scr)
+script_done(struct relayd *env, struct ctl_script *scr)
 {
 	struct host		*host;
 
@@ -85,7 +85,7 @@ script_sig_alarm(int sig)
 }
 
 int
-script_exec(struct hoststated *env, struct ctl_script *scr)
+script_exec(struct relayd *env, struct ctl_script *scr)
 {
 	int			 status = 0, ret = 0;
 	sig_t			 save_quit, save_int, save_chld;
@@ -118,7 +118,7 @@ script_exec(struct hoststated *env, struct ctl_script *scr)
 		signal(SIGINT, SIG_DFL);
 		signal(SIGCHLD, SIG_DFL);
 
-		if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
+		if ((pw = getpwnam(RELAYD_USER)) == NULL)
 			fatal("script_exec: getpwnam");
 		if (chdir("/") == -1)
 			fatal("script_exec: chdir(\"/\")");
