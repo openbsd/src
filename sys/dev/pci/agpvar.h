@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.8 2007/12/06 22:49:39 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.9 2007/12/07 14:48:50 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 #ifndef _PCI_AGPVAR_H_
 #define _PCI_AGPVAR_H_
 
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 /* #define	AGP_DEBUG */
 #ifdef AGP_DEBUG
@@ -130,7 +130,7 @@ struct agp_softc {
 	bus_addr_t sc_apaddr;
 	bus_size_t sc_apsize;
 	bus_dma_tag_t sc_dmat;
-	struct lock sc_lock;		/* lock for access to GATT */
+	struct rwlock sc_lock;		/* lock for access to GATT */
 	pcitag_t sc_pcitag;		/* PCI tag, in case we need it. */
 	pcireg_t sc_id;
 	pci_chipset_tag_t sc_pc;

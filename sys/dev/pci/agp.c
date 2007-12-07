@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.12 2007/12/06 22:49:39 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.13 2007/12/07 14:48:50 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -165,7 +165,7 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 		 * agp_generic_bind_memory() since that function can sleep.
 		 */
 
-		lockinit(&sc->sc_lock, PZERO|PCATCH, "agplk", 0, 0);
+		rw_init(&sc->sc_lock, "agplk");
 
 		TAILQ_INIT(&sc->sc_memory);
 
@@ -400,7 +400,6 @@ agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt)
 int
 agp_generic_detach(struct agp_softc *sc)
 {
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 	agp_flush_cache();
 	return (0);
 }
@@ -512,11 +511,11 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	off_t i, k;
 	int nseg, error;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	if (mem->am_is_bound) {
 		printf("AGP: memory already bound\n");
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
 	}
 
@@ -525,7 +524,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
 		printf("AGP: binding memory at bad offset %#lx\n",
 			      (unsigned long) offset);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
 	}
 
@@ -541,7 +540,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
 	    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK)) != 0) {
 		free(segs, M_AGP);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		AGP_DPF("bus_dmamem_alloc failed %d\n", error);
 		return (error);
 	}
@@ -549,7 +548,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	    mem->am_size, &mem->am_virtual, BUS_DMA_WAITOK)) != 0) {
 		bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
 		free(segs, M_AGP);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		AGP_DPF("bus_dmamem_map failed %d\n", error);
 		return (error);
 	}
@@ -560,7 +559,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		    mem->am_size);
 		bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
 		free(segs, M_AGP);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		AGP_DPF("bus_dmamap_load failed %d\n", error);
 		return (error);
 	}
@@ -600,7 +599,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 				bus_dmamem_free(sc->sc_dmat, mem->am_dmaseg,
 						mem->am_nseg);
 				free(mem->am_dmaseg, M_AGP);
-				lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+				rw_exit_write(&sc->sc_lock);
 				AGP_DPF("AGP_BIND_PAGE failed %d\n", error);
 				return (error);
 			}
@@ -622,7 +621,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	mem->am_offset = offset;
 	mem->am_is_bound = 1;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 
 	return (0);
 }
@@ -632,11 +631,11 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 {
 	int i;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	if (!mem->am_is_bound) {
 		printf("AGP: memory is not bound\n");
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
 	}
 
@@ -660,7 +659,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	mem->am_offset = 0;
 	mem->am_is_bound = 0;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 
 	return (0);
 }
