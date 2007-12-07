@@ -30,7 +30,7 @@
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
-./etc/hoststated.conf
+./etc/relayd.conf
 ./etc/hotplug
 ./etc/ifstated.conf
 ./etc/inetd.conf
