@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.321 2007/12/05 17:11:47 sthen Exp $
+$OpenBSD: usbdevs,v 1.322 2007/12/07 05:05:02 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1894,6 +1894,7 @@ product PLANEX2 GWUS54SG	0xc002	GW-US54SG
 product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 product PLANEX2 GWUS54GD	0xed01	GW-US54GD
 product PLANEX2 GWUSMM		0xed02	GW-USMM
+product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	DSP-400 Headset
@@ -2468,6 +2469,7 @@ product ZYDAS ZD1211B		0x1215	ZD1211B
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N
+product ZYXEL G200V2		0x3407	G-200 v2
 product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
 product ZYXEL AG225H		0x3409	AG-225H
 product ZYXEL M202		0x340a	M-202
