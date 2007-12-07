@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.3 2007/12/07 09:50:51 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.4 2007/12/07 10:08:40 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1018,7 +1018,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	case BER_TYPE_BOOLEAN:
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
-		if (len > (u_int)sizeof(long long))
+		if (len > (ssize_t)sizeof(long long))
 			return -1;
 		for (i = 0; i < len; i++) {
 			if (ber_getc(ber, &c) != 1)
