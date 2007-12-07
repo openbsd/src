@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.7 2007/12/04 22:26:55 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.8 2007/12/07 19:37:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1178,9 +1178,11 @@ rt2860_intr(void *arg)
 	if (r & RT2860_TX_DONE_INT0)
 		rt2860_tx_intr(sc, 0);
 
-	if (r & RT2860_MAC_INT_1)
-		/* TBD pre-TBTT */;
-
+	if (r & RT2860_MAC_INT_1) {	/* Pre-TBTT */
+		if ((sc->sc_flags & RT2860_UPD_BEACON) &&
+		    rt2860_setup_beacon(sc) == 0)
+			sc->sc_flags &= ~RT2860_UPD_BEACON;
+	}
 	if (r & RT2860_MAC_INT_0)
 		/* TBD TBTT */;
 
@@ -1835,6 +1837,7 @@ void
 rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 {
 	uint32_t tmp;
+	uint8_t bbp66;
 
 	rt2860_mcu_bbp_write(sc, 62, 0x37 - sc->lna[group]);
 	rt2860_mcu_bbp_write(sc, 63, 0x37 - sc->lna[group]);
@@ -1864,7 +1867,8 @@ rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 	}
 	RAL_WRITE(sc, RT2860_TX_PIN_CFG, tmp);
 
-	rt2860_mcu_bbp_write(sc, 66, 0x2e + sc->lna[group]);
+	bbp66 = (group == 0) ? 0x2e + sc->lna[0] : 0x4c;
+	rt2860_mcu_bbp_write(sc, 66, bbp66);
 }
 
 void
@@ -1967,6 +1971,9 @@ rt2860_updateslot(struct ieee80211com *ic)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
 	uint32_t tmp;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		sc->sc_flags |= RT2860_UPD_BEACON;
 
 	tmp = RAL_READ(sc, RT2860_BKOFF_SLOT_CFG);
 	tmp &= ~0xff;
@@ -2698,6 +2705,8 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	for (qid = 0; qid < 6; qid++)
 		rt2860_reset_tx_ring(sc, &sc->txq[qid]);
 	rt2860_reset_rx_ring(sc, &sc->rxq);
+
+	sc->sc_flags &= ~RT2860_UPD_BEACON;
 
 	/* for CardBus, power down the socket */
 	if (disable && sc->sc_disable != NULL) {
