@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.2 2007/12/05 23:29:19 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.3 2007/12/07 09:50:51 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -488,6 +488,10 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 		case 'b':
 			d = va_arg(ap, int);
 			ber = ber_add_boolean(ber, d);
+			break;
+		case 'd':
+			d = va_arg(ap, int);
+			ber = ber_add_integer(ber, d);
 			break;
 		case 'e':
 			e = va_arg(ap, struct ber_element *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.2 2007/12/05 22:52:50 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.3 2007/12/07 09:50:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -243,7 +243,7 @@ struct oid {
  */
 
 struct snmp_message {
-	u_int8_t		 sm_version;
+	u_int			 sm_version;
 	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
 	u_int			 sm_context;
 
