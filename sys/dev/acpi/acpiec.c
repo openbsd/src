@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.20 2007/11/12 21:41:03 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.21 2007/12/07 19:06:02 fgsch Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -489,23 +489,16 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 int
 acpiec_reg(struct acpiec_softc *sc)
 {
-	struct aml_value	arg[2];
-	struct aml_node		*root;
+	struct aml_value arg[2];
 
 	memset(&arg, 0, sizeof(arg));
-
 	arg[0].type = AML_OBJTYPE_INTEGER;
 	arg[0].v_integer = REG_TYPE_EC;
 	arg[1].type = AML_OBJTYPE_INTEGER;
 	arg[1].v_integer = 1;
 
-	root = aml_searchname(sc->sc_devnode, "_REG");
-	if (root == NULL) {
-		dnprintf(10, "%s: no _REG method\n", DEVNAME(sc));
-		return (1);
-	}
-
-	if (aml_evalnode(sc->sc_acpi, root, 2, arg, NULL) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_REG", 2,
+	    arg, NULL) != 0) {
 		dnprintf(10, "%s: eval method _REG failed\n", DEVNAME(sc));
 		return (1);
 	}

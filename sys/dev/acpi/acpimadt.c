@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.16 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.17 2007/12/07 19:06:02 fgsch Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -123,7 +123,6 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_madt *madt = (struct acpi_madt *)aaa->aaa_table;
 	caddr_t addr = (caddr_t)(madt + 1);
-	struct aml_node *node;
 	struct aml_value arg;
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
@@ -137,13 +136,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Tell the BIOS we will be using APIC mode. */
-	node = aml_searchname(NULL, "\\_PIC");
-	if (node == 0)
-		return;
 	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = 1;
-	aml_evalnode(acpi_sc, node, 1, &arg, NULL);
+
+	if (aml_evalname(acpi_sc, NULL, "\\_PIC", 1, &arg, NULL) != 0)
+		return;
 
 	mp_busses = acpimadt_busses;
 	mp_isa_bus = &acpimadt_isa_bus;
