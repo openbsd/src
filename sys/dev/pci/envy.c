@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.2 2007/10/28 18:25:21 fgsch Exp $	*/
+/*	$OpenBSD: envy.c,v 1.3 2007/12/08 09:59:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -843,6 +843,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 
 	dev->prev = dev->next = AUDIO_MIXER_LAST;
 	if (dev->index < ENVY_MIX_OUTSRC) {
+		dev->type = AUDIO_MIXER_CLASS;
 		dev->mixer_class = dev->index - ENVY_MIX_CLASSIN;
 		strlcpy(dev->label.name, 
 		    classes[dev->index - ENVY_MIX_CLASSIN], MAX_AUDIO_DEV_LEN);
