@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2007/12/08 17:07:08 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.99 2007/12/08 17:14:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -197,7 +197,8 @@ hostname	: /* empty */		{
 		}
 		;
 
-proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
+proto_type	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
+		| TCP				{ $$ = RELAY_PROTO_TCP; }
 		| STRING			{
 			if (strcmp("http", $1) == 0) {
 				$$ = RELAY_PROTO_HTTP;
