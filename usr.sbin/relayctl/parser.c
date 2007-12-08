@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.17 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.18 2007/12/08 20:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,7 +71,7 @@ static const struct token t_main[] = {
 	{KEYWORD,	"poll",		POLL,		NULL},
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
-	{KEYWORD,	"service",	NONE,		t_service},
+	{KEYWORD,	"redirect",	NONE,		t_service},
 	{KEYWORD,	"table",	NONE,		t_table},
 	{KEYWORD,	"host",		NONE,		t_host},
 	{ENDTOKEN,	"",		NONE,		NULL}
@@ -246,7 +246,7 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
 		case SERVICEID:
-			fprintf(stderr, "  <serviceid>\n");
+			fprintf(stderr, "  <redirectid>\n");
 			break;
 		case TABLEID:
 			fprintf(stderr, "  <tableid>\n");

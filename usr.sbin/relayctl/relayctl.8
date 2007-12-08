@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.17 2007/12/08 17:07:09 reyk Exp $
+.\" $OpenBSD: relayctl.8,v 1.18 2007/12/08 20:11:48 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -46,19 +46,19 @@ pf engine.
 Schedule an immediate check of all hosts.
 .It Cm reload
 Reload the configuration file.
-.It Cm service disable Op Ar name | id
-Disable a service.
+.It Cm redirect disable Op Ar name | id
+Disable a redirection.
 If it has
 .Xr pf 4
 redirection rules installed, remove them.
-Mark the service's main table and \(en
+Mark the redirection's main table and \(en
 if applicable \(en backup table disabled as well.
-.It Cm service enable Op Ar name | id
-Enable a service.
-Mark the service's main table and \(en if applicable \(en backup
+.It Cm redirect enable Op Ar name | id
+Enable a redirection.
+Mark the redirection's main table and \(en if applicable \(en backup
 table enabled as well.
 .It Cm show hosts
-Show detailed status of hosts, tables, and services.
+Show detailed status of hosts, tables, and redirections.
 .It Cm show relays
 Show detailed status of relays including the current and average
 access statistics.
@@ -66,11 +66,11 @@ The statistics will be updated every minute.
 .It Cm show sessions
 Dump the complete list of running relay sessions.
 .It Cm show summary
-Display a list of all relays, services, tables, and hosts.
+Display a list of all relays, redirections, tables, and hosts.
 .It Cm table disable Op Ar name | id
 Disable a table.
 Consider all hosts disabled.
-If it is a main table of a service which has a non-empty backup table,
+If it is a main table of a redirection which has a non-empty backup table,
 swap the contents of the
 .Xr pf 4
 table with those of the backup table.

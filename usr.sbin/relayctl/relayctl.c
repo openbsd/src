@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.28 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.29 2007/12/08 20:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -145,8 +145,8 @@ main(int argc, char *argv[])
 	case SHOW_HOSTS:
 	case SHOW_RELAYS:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
-		printf("Type\t%4s\t%-24s\t%-7s\tStatus\n",
-		    "Id", "Name", "Avlblty");
+		printf("%-4s\t%-8s\t%-24s\t%-7s\tStatus\n",
+		    "Id", "Type", "Name", "Avlblty");
 		break;
 	case SHOW_SESSIONS:
 		imsg_compose(ibuf, IMSG_CTL_SESSION, 0, 0, -1, NULL, 0);
@@ -318,28 +318,28 @@ show_summary_msg(struct imsg *imsg, int type)
 		if (type == SHOW_RELAYS)
 			break;
 		service = imsg->data;
-		printf("service\t%4u\t%-24s\t%-7s\t%s\n",
-		    service->conf.id, service->conf.name, "",
+		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
+		    service->conf.id, "redirect", service->conf.name, "",
 		    print_service_status(service->conf.flags));
 		break;
 	case IMSG_CTL_TABLE:
 		if (type == SHOW_RELAYS)
 			break;
 		table = imsg->data;
-		printf("table\t%4u\t%-24s\t%-7s\t%s\n",
-		    table->conf.id, table->conf.name, "",
+		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
+		    table->conf.id, "table", table->conf.name, "",
 		    print_table_status(table->up, table->conf.flags));
 		break;
 	case IMSG_CTL_HOST:
 		if (type == SHOW_RELAYS)
 			break;
 		host = imsg->data;
-		printf("host\t%4u\t%-24s\t%-7s\t%s\n",
-		    host->conf.id, host->conf.name,
+		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
+		    host->conf.id, "host", host->conf.name,
 		    print_availability(host->check_cnt, host->up_cnt),
 		    print_host_status(host->up, host->flags));
 		if (type == SHOW_HOSTS && host->check_cnt) {
-			printf("\t%4s\ttotal: %lu/%lu checks",
+			printf("\t%8s\ttotal: %lu/%lu checks",
 			    "", host->up_cnt, host->check_cnt);
 			if (host->retry_cnt)
 				printf(", %d retries", host->retry_cnt);
@@ -350,8 +350,8 @@ show_summary_msg(struct imsg *imsg, int type)
 		if (type == SHOW_HOSTS)
 			break;
 		rlay = imsg->data;
-		printf("relay\t%4u\t%-24s\t%-7s\t%s\n",
-		    rlay->conf.id, rlay->conf.name, "",
+		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
+		    rlay->conf.id, "relay", rlay->conf.name, "",
 		    print_relay_status(rlay->conf.flags));
 		break;
 	case IMSG_CTL_STATISTICS:
@@ -371,9 +371,9 @@ show_summary_msg(struct imsg *imsg, int type)
 		}
 		if (crs.cnt == 0)
 			break;
-		printf("\t%4s\ttotal: %lu sessions\n"
-		    "\t%4s\tlast: %lu/%us %lu/h %lu/d sessions\n"
-		    "\t%4s\taverage: %lu/%us %lu/h %lu/d sessions\n",
+		printf("\t%8s\ttotal: %lu sessions\n"
+		    "\t%8s\tlast: %lu/%us %lu/h %lu/d sessions\n"
+		    "\t%8s\taverage: %lu/%us %lu/h %lu/d sessions\n",
 		    "", crs.cnt,
 		    "", crs.last, crs.interval,
 		    crs.last_hour, crs.last_day,
