@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.18 2007/12/08 20:11:48 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.19 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -45,7 +45,7 @@ enum token_type {
 	ENDTOKEN,
 	HOSTID,
 	TABLEID,
-	SERVICEID,
+	RDRID,
 	KEYWORD
 };
 
@@ -58,10 +58,10 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_show[];
-static const struct token t_service[];
+static const struct token t_rdr[];
 static const struct token t_table[];
 static const struct token t_host[];
-static const struct token t_service_id[];
+static const struct token t_rdr_id[];
 static const struct token t_table_id[];
 static const struct token t_host_id[];
 
@@ -71,7 +71,7 @@ static const struct token t_main[] = {
 	{KEYWORD,	"poll",		POLL,		NULL},
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
-	{KEYWORD,	"redirect",	NONE,		t_service},
+	{KEYWORD,	"redirect",	NONE,		t_rdr},
 	{KEYWORD,	"table",	NONE,		t_table},
 	{KEYWORD,	"host",		NONE,		t_host},
 	{ENDTOKEN,	"",		NONE,		NULL}
@@ -85,10 +85,10 @@ static const struct token t_show[] = {
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_service[] = {
+static const struct token t_rdr[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
-	{KEYWORD,	"disable",	SERV_DISABLE,	t_service_id},
-	{KEYWORD,	"enable",	SERV_ENABLE,	t_service_id},
+	{KEYWORD,	"disable",	RDR_DISABLE,	t_rdr_id},
+	{KEYWORD,	"enable",	RDR_ENABLE,	t_rdr_id},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -106,8 +106,8 @@ static const struct token t_host[] = {
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_service_id[] = {
-	{SERVICEID,	"",		NONE,		NULL},
+static const struct token t_rdr_id[] = {
+	{RDRID,		"",		NONE,		NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -203,7 +203,7 @@ match_token(const char *word, const struct token table[])
 			t = &table[i];
 			match++;
 			break;
-		case SERVICEID:
+		case RDRID:
 			if (word == NULL)
 				break;
 			res.id.id = strtonum(word, 0, UINT_MAX, &errstr);
@@ -245,7 +245,7 @@ show_valid_args(const struct token table[])
 		case KEYWORD:
 			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
-		case SERVICEID:
+		case RDRID:
 			fprintf(stderr, "  <redirectid>\n");
 			break;
 		case TABLEID:

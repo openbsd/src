@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.22 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.23 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -232,11 +232,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_SESSION:
 			show_sessions(c);
 			break;
-		case IMSG_CTL_SERVICE_DISABLE:
+		case IMSG_CTL_RDR_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (disable_service(c, &id))
+			if (disable_rdr(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
@@ -246,11 +246,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    NULL, 0);
 			}
 			break;
-		case IMSG_CTL_SERVICE_ENABLE:
+		case IMSG_CTL_RDR_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (enable_service(c, &id))
+			if (enable_rdr(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {

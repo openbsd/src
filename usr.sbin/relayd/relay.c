@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.76 2007/12/08 17:07:09 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.77 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -175,7 +175,7 @@ relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	}
 
 	env = x_env;
-	purge_config(env, PURGE_SERVICES);
+	purge_config(env, PURGE_RDRS);
 
 	/* Need root privileges for relay initialization */
 	relay_privinit();

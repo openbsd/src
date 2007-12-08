@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.7 2007/10/19 12:08:55 pyr Exp $	*/
+/*	$OpenBSD: parser.h,v 1.8 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,8 +22,8 @@ enum actions {
 	SHOW_HOSTS,
 	SHOW_RELAYS,
 	SHOW_SESSIONS,
-	SERV_DISABLE,
-	SERV_ENABLE,
+	RDR_DISABLE,
+	RDR_ENABLE,
 	TABLE_DISABLE,
 	TABLE_ENABLE,
 	HOST_DISABLE,

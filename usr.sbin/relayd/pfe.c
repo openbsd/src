@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.44 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.45 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -322,7 +322,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 	struct imsg	 imsg;
 	ssize_t		 n;
 
-	static struct service	*service = NULL;
+	static struct rdr	*rdr = NULL;
 	static struct table	*table = NULL;
 	struct host		*host;
 	struct address		*virt;
@@ -361,7 +361,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			    sizeof(struct relayd) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
 			pfe_disable_events();
-			purge_config(env, PURGE_SERVICES|PURGE_TABLES);
+			purge_config(env, PURGE_RDRS|PURGE_TABLES);
 			merge_config(env, (struct relayd *)imsg.data);
 			/*
 			 * no relays when reconfiguring yet.
@@ -370,12 +370,12 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			env->protos = NULL;
 
 			env->tables = calloc(1, sizeof(*env->tables));
-			env->services = calloc(1, sizeof(*env->services));
-			if (env->tables == NULL || env->services == NULL)
+			env->rdrs = calloc(1, sizeof(*env->rdrs));
+			if (env->tables == NULL || env->rdrs == NULL)
 				fatal(NULL);
 
 			TAILQ_INIT(env->tables);
-			TAILQ_INIT(env->services);
+			TAILQ_INIT(env->rdrs);
 			break;
 		case IMSG_RECONF_TABLE:
 			if ((table = calloc(1, sizeof(*table))) == NULL)
@@ -391,33 +391,33 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			host->tablename = table->conf.name;
 			TAILQ_INSERT_TAIL(&table->hosts, host, entry);
 			break;
-		case IMSG_RECONF_SERVICE:
-			if ((service = calloc(1, sizeof(*service))) == NULL)
+		case IMSG_RECONF_RDR:
+			if ((rdr = calloc(1, sizeof(*rdr))) == NULL)
 				fatal(NULL);
-			memcpy(&service->conf, imsg.data,
-			    sizeof(service->conf));
-			service->table = table_find(env,
-			     service->conf.table_id);
-			if (service->conf.backup_id == EMPTY_TABLE)
-				service->backup = &env->empty_table;
+			memcpy(&rdr->conf, imsg.data,
+			    sizeof(rdr->conf));
+			rdr->table = table_find(env,
+			     rdr->conf.table_id);
+			if (rdr->conf.backup_id == EMPTY_TABLE)
+				rdr->backup = &env->empty_table;
 			else
-				service->backup = table_find(env,
-				    service->conf.backup_id);
-			if (service->table == NULL || service->backup == NULL)
+				rdr->backup = table_find(env,
+				    rdr->conf.backup_id);
+			if (rdr->table == NULL || rdr->backup == NULL)
 				fatal("pfe_dispatch_parent:"
 				    " corrupted configuration");
-			log_debug("pfe_dispatch_parent: service->table: %s",
-			    service->table->conf.name);
-			log_debug("pfe_dispatch_parent: service->backup: %s",
-			    service->backup->conf.name);
-			TAILQ_INIT(&service->virts);
-			TAILQ_INSERT_TAIL(env->services, service, entry);
+			log_debug("pfe_dispatch_parent: rdr->table: %s",
+			    rdr->table->conf.name);
+			log_debug("pfe_dispatch_parent: rdr->backup: %s",
+			    rdr->backup->conf.name);
+			TAILQ_INIT(&rdr->virts);
+			TAILQ_INSERT_TAIL(env->rdrs, rdr, entry);
 			break;
 		case IMSG_RECONF_VIRT:
 			if ((virt = calloc(1, sizeof(*virt))) == NULL)
 				fatal(NULL);
 			memcpy(virt, imsg.data, sizeof(*virt));
-			TAILQ_INSERT_TAIL(&service->virts, virt, entry);
+			TAILQ_INSERT_TAIL(&rdr->virts, virt, entry);
 			break;
 		case IMSG_RECONF_END:
 			log_warnx("pfe: configuration reloaded");
@@ -510,31 +510,31 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 void
 show(struct ctl_conn *c)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 	struct host	*host;
 	struct relay	*rlay;
 
-	if (env->services == NULL)
+	if (env->rdrs == NULL)
 		goto relays;
-	TAILQ_FOREACH(service, env->services, entry) {
-		imsg_compose(&c->ibuf, IMSG_CTL_SERVICE, 0, 0, -1,
-		    service, sizeof(*service));
-		if (service->conf.flags & F_DISABLE)
+	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+		imsg_compose(&c->ibuf, IMSG_CTL_RDR, 0, 0, -1,
+		    rdr, sizeof(*rdr));
+		if (rdr->conf.flags & F_DISABLE)
 			continue;
 
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
-		    service->table, sizeof(*service->table));
-		if (!(service->table->conf.flags & F_DISABLE))
-			TAILQ_FOREACH(host, &service->table->hosts, entry)
+		    rdr->table, sizeof(*rdr->table));
+		if (!(rdr->table->conf.flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rdr->table->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
 				    host, sizeof(*host));
 
-		if (service->backup->conf.id == EMPTY_TABLE)
+		if (rdr->backup->conf.id == EMPTY_TABLE)
 			continue;
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
-		    service->backup, sizeof(*service->backup));
-		if (!(service->backup->conf.flags & F_DISABLE))
-			TAILQ_FOREACH(host, &service->backup->hosts, entry)
+		    rdr->backup, sizeof(*rdr->backup));
+		if (!(rdr->backup->conf.flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rdr->backup->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
 				    host, sizeof(*host));
 	}
@@ -615,61 +615,61 @@ show_sessions(struct ctl_conn *c)
 }
 
 int
-disable_service(struct ctl_conn *c, struct ctl_id *id)
+disable_rdr(struct ctl_conn *c, struct ctl_id *id)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 
 	if (id->id == EMPTY_ID)
-		service = service_findbyname(env, id->name);
+		rdr = rdr_findbyname(env, id->name);
 	else
-		service = service_find(env, id->id);
-	if (service == NULL)
+		rdr = rdr_find(env, id->id);
+	if (rdr == NULL)
 		return (-1);
-	id->id = service->conf.id;
+	id->id = rdr->conf.id;
 
-	if (service->conf.flags & F_DISABLE)
+	if (rdr->conf.flags & F_DISABLE)
 		return (0);
 
-	service->conf.flags |= F_DISABLE;
-	service->conf.flags &= ~(F_ADD);
-	service->conf.flags |= F_DEL;
-	service->table->conf.flags |= F_DISABLE;
-	log_debug("disable_service: disabled service %d", service->conf.id);
+	rdr->conf.flags |= F_DISABLE;
+	rdr->conf.flags &= ~(F_ADD);
+	rdr->conf.flags |= F_DEL;
+	rdr->table->conf.flags |= F_DISABLE;
+	log_debug("disable_rdr: disabled rdr %d", rdr->conf.id);
 	pfe_sync();
 	return (0);
 }
 
 int
-enable_service(struct ctl_conn *c, struct ctl_id *id)
+enable_rdr(struct ctl_conn *c, struct ctl_id *id)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 	struct ctl_id	 eid;
 
 	if (id->id == EMPTY_ID)
-		service = service_findbyname(env, id->name);
+		rdr = rdr_findbyname(env, id->name);
 	else
-		service = service_find(env, id->id);
-	if (service == NULL)
+		rdr = rdr_find(env, id->id);
+	if (rdr == NULL)
 		return (-1);
-	id->id = service->conf.id;
+	id->id = rdr->conf.id;
 
-	if (!(service->conf.flags & F_DISABLE))
+	if (!(rdr->conf.flags & F_DISABLE))
 		return (0);
 
-	service->conf.flags &= ~(F_DISABLE);
-	service->conf.flags &= ~(F_DEL);
-	service->conf.flags |= F_ADD;
-	log_debug("enable_service: enabled service %d", service->conf.id);
+	rdr->conf.flags &= ~(F_DISABLE);
+	rdr->conf.flags &= ~(F_DEL);
+	rdr->conf.flags |= F_ADD;
+	log_debug("enable_rdr: enabled rdr %d", rdr->conf.id);
 
 	bzero(&eid, sizeof(eid));
 
 	/* XXX: we're syncing twice */
-	eid.id = service->table->conf.id;
+	eid.id = rdr->table->conf.id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
-	if (service->backup->conf.id == EMPTY_ID)
+	if (rdr->backup->conf.id == EMPTY_ID)
 		return (0);
-	eid.id = service->backup->conf.id;
+	eid.id = rdr->backup->conf.id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
 	return (0);
@@ -679,7 +679,7 @@ int
 disable_table(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct table	*table;
-	struct service	*service;
+	struct rdr	*rdr;
 	struct host	*host;
 
 	if (id->id == EMPTY_ID)
@@ -689,7 +689,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 	if (table == NULL)
 		return (-1);
 	id->id = table->conf.id;
-	if ((service = service_find(env, table->conf.serviceid)) == NULL)
+	if ((rdr = rdr_find(env, table->conf.rdrid)) == NULL)
 		fatalx("disable_table: desynchronised");
 
 	if (table->conf.flags & F_DISABLE)
@@ -708,7 +708,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 int
 enable_table(struct ctl_conn *c, struct ctl_id *id)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 	struct table	*table;
 	struct host	*host;
 
@@ -720,7 +720,7 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		return (-1);
 	id->id = table->conf.id;
 
-	if ((service = service_find(env, table->conf.serviceid)) == NULL)
+	if ((rdr = rdr_find(env, table->conf.rdrid)) == NULL)
 		fatalx("enable_table: desynchronised");
 
 	if (!(table->conf.flags & F_DISABLE))
@@ -818,7 +818,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 void
 pfe_sync(void)
 {
-	struct service		*service;
+	struct rdr		*rdr;
 	struct table		*active;
 	struct table		*table;
 	struct ctl_id		 id;
@@ -827,53 +827,53 @@ pfe_sync(void)
 
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
-	TAILQ_FOREACH(service, env->services, entry) {
-		service->conf.flags &= ~(F_BACKUP);
-		service->conf.flags &= ~(F_DOWN);
+	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+		rdr->conf.flags &= ~(F_BACKUP);
+		rdr->conf.flags &= ~(F_DOWN);
 
-		if (service->conf.flags & F_DISABLE ||
-		    (service->table->up == 0 && service->backup->up == 0)) {
-			service->conf.flags |= F_DOWN;
+		if (rdr->conf.flags & F_DISABLE ||
+		    (rdr->table->up == 0 && rdr->backup->up == 0)) {
+			rdr->conf.flags |= F_DOWN;
 			active = NULL;
-		} else if (service->table->up == 0 && service->backup->up > 0) {
-			service->conf.flags |= F_BACKUP;
-			active = service->backup;
+		} else if (rdr->table->up == 0 && rdr->backup->up > 0) {
+			rdr->conf.flags |= F_BACKUP;
+			active = rdr->backup;
 			active->conf.flags |=
-			    service->table->conf.flags & F_CHANGED;
+			    rdr->table->conf.flags & F_CHANGED;
 			active->conf.flags |=
-			    service->backup->conf.flags & F_CHANGED;
+			    rdr->backup->conf.flags & F_CHANGED;
 		} else
-			active = service->table;
+			active = rdr->table;
 
 		if (active != NULL && active->conf.flags & F_CHANGED) {
 			id.id = active->conf.id;
 			imsg.hdr.type = IMSG_CTL_TABLE_CHANGED;
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
-			sync_table(env, service, active);
+			sync_table(env, rdr, active);
 			control_imsg_forward(&imsg);
 		}
 
-		if (service->conf.flags & F_DOWN) {
-			if (service->conf.flags & F_ACTIVE_RULESET) {
-				flush_table(env, service);
+		if (rdr->conf.flags & F_DOWN) {
+			if (rdr->conf.flags & F_ACTIVE_RULESET) {
+				flush_table(env, rdr);
 				log_debug("pfe_sync: disabling ruleset");
-				service->conf.flags &= ~(F_ACTIVE_RULESET);
-				id.id = service->conf.id;
+				rdr->conf.flags &= ~(F_ACTIVE_RULESET);
+				id.id = rdr->conf.id;
 				imsg.hdr.type = IMSG_CTL_PULL_RULESET;
 				imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 				imsg.data = &id;
-				sync_ruleset(env, service, 0);
+				sync_ruleset(env, rdr, 0);
 				control_imsg_forward(&imsg);
 			}
-		} else if (!(service->conf.flags & F_ACTIVE_RULESET)) {
+		} else if (!(rdr->conf.flags & F_ACTIVE_RULESET)) {
 			log_debug("pfe_sync: enabling ruleset");
-			service->conf.flags |= F_ACTIVE_RULESET;
-			id.id = service->conf.id;
+			rdr->conf.flags |= F_ACTIVE_RULESET;
+			id.id = rdr->conf.id;
 			imsg.hdr.type = IMSG_CTL_PUSH_RULESET;
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
-			sync_ruleset(env, service, 1);
+			sync_ruleset(env, rdr, 1);
 			control_imsg_forward(&imsg);
 		}
 	}

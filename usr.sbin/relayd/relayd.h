@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.88 2007/12/08 17:07:09 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.89 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -51,7 +51,7 @@
 #define ICMP_BUF_SIZE		64
 
 #define PURGE_TABLES		0x01
-#define PURGE_SERVICES		0x02
+#define PURGE_RDRS		0x02
 #define PURGE_RELAYS		0x04
 #define PURGE_PROTOS		0x08
 #define PURGE_EVERYTHING	0xff
@@ -103,7 +103,7 @@ enum imsg_type {
 	IMSG_CTL_OK,		/* answer to relayctl requests */
 	IMSG_CTL_FAIL,
 	IMSG_CTL_END,
-	IMSG_CTL_SERVICE,
+	IMSG_CTL_RDR,
 	IMSG_CTL_TABLE,
 	IMSG_CTL_HOST,
 	IMSG_CTL_RELAY,
@@ -112,8 +112,8 @@ enum imsg_type {
 	IMSG_CTL_PULL_RULESET,
 	IMSG_CTL_PUSH_RULESET,
 	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
-	IMSG_CTL_SERVICE_ENABLE,
-	IMSG_CTL_SERVICE_DISABLE,
+	IMSG_CTL_RDR_ENABLE,
+	IMSG_CTL_RDR_DISABLE,
 	IMSG_CTL_TABLE_ENABLE,
 	IMSG_CTL_TABLE_DISABLE,
 	IMSG_CTL_HOST_ENABLE,
@@ -123,8 +123,8 @@ enum imsg_type {
 	IMSG_CTL_POLL,
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_STATISTICS,
-	IMSG_SERVICE_ENABLE,	/* notifies from pfe to hce */
-	IMSG_SERVICE_DISABLE,
+	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
+	IMSG_RDR_DISABLE,
 	IMSG_TABLE_ENABLE,
 	IMSG_TABLE_DISABLE,
 	IMSG_HOST_ENABLE,
@@ -138,7 +138,7 @@ enum imsg_type {
 	IMSG_RECONF_TABLE,
 	IMSG_RECONF_SENDBUF,
 	IMSG_RECONF_HOST,
-	IMSG_RECONF_SERVICE,
+	IMSG_RECONF_RDR,
 	IMSG_RECONF_VIRT,
 	IMSG_RECONF_PROTO,
 	IMSG_RECONF_REQUEST_TREE,
@@ -346,7 +346,7 @@ enum digest_type {
 
 struct table_config {
 	objid_t			 id;
-	objid_t			 serviceid;
+	objid_t			 rdrid;
 	u_int32_t		 flags;
 	int			 check;
 	char			 demote_group[IFNAMSIZ];
@@ -383,7 +383,7 @@ enum table_check {
 	CHECK_SCRIPT		= 6
 };
 
-struct service_config {
+struct rdr_config {
 	objid_t			 id;
 	u_int32_t		 flags;
 	in_port_t		 port;
@@ -393,14 +393,14 @@ struct service_config {
 	char			 tag[TAG_NAME_SIZE];
 };
 
-struct service {
-	TAILQ_ENTRY(service)	 entry;
-	struct service_config	 conf;
+struct rdr {
+	TAILQ_ENTRY(rdr)	 entry;
+	struct rdr_config	 conf;
 	struct addresslist	 virts;
 	struct table		*table;
 	struct table		*backup; /* use this if no host up */
 };
-TAILQ_HEAD(servicelist, service);
+TAILQ_HEAD(rdrlist, rdr);
 
 struct session {
 	objid_t				 id;
@@ -600,7 +600,7 @@ struct relayd {
 	const char		*confpath;
 	struct pfdata		*pf;
 	int			 tablecount;
-	int			 servicecount;
+	int			 rdrcount;
 	int			 protocount;
 	int			 relaycount;
 	struct timeval		 interval;
@@ -609,7 +609,7 @@ struct relayd {
 	struct protocol		 proto_default;
 	struct event		 ev;
 	struct tablelist	*tables;
-	struct servicelist	*services;
+	struct rdrlist		*rdrs;
 	struct protolist	*protos;
 	struct relaylist	*relays;
 	u_int16_t		 prefork_relay;
@@ -714,19 +714,19 @@ pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 show(struct ctl_conn *);
 void	 show_sessions(struct ctl_conn *);
-int	 enable_service(struct ctl_conn *, struct ctl_id *);
+int	 enable_rdr(struct ctl_conn *, struct ctl_id *);
 int	 enable_table(struct ctl_conn *, struct ctl_id *);
 int	 enable_host(struct ctl_conn *, struct ctl_id *);
-int	 disable_service(struct ctl_conn *, struct ctl_id *);
+int	 disable_rdr(struct ctl_conn *, struct ctl_id *);
 int	 disable_table(struct ctl_conn *, struct ctl_id *);
 int	 disable_host(struct ctl_conn *, struct ctl_id *);
 
 /* pfe_filter.c */
 void	 init_filter(struct relayd *);
 void	 init_tables(struct relayd *);
-void	 flush_table(struct relayd *, struct service *);
-void	 sync_table(struct relayd *, struct service *, struct table *);
-void	 sync_ruleset(struct relayd *, struct service *, int);
+void	 flush_table(struct relayd *, struct rdr *);
+void	 sync_table(struct relayd *, struct rdr *, struct table *);
+void	 sync_ruleset(struct relayd *, struct rdr *, int);
 void	 flush_rulesets(struct relayd *);
 int	 natlook(struct relayd *, struct ctl_natlook *);
 
@@ -777,11 +777,11 @@ int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 /* relayd.c */
 struct host	*host_find(struct relayd *, objid_t);
 struct table	*table_find(struct relayd *, objid_t);
-struct service	*service_find(struct relayd *, objid_t);
+struct rdr	*rdr_find(struct relayd *, objid_t);
 struct host	*host_findbyname(struct relayd *, const char *);
 struct table	*table_findbyname(struct relayd *, const char *);
 struct table	*table_findbyconf(struct relayd *, struct table *);
-struct service	*service_findbyname(struct relayd *, const char *);
+struct rdr	*rdr_findbyname(struct relayd *, const char *);
 void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);

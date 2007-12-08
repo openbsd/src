@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2007/12/08 17:14:26 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.100 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -82,13 +82,13 @@ char		*symget(const char *);
 
 struct relayd		*conf = NULL;
 static int		 errors = 0;
-objid_t			 last_service_id = 0;
+objid_t			 last_rdr_id = 0;
 objid_t			 last_table_id = 0;
 objid_t			 last_host_id = 0;
 objid_t			 last_relay_id = 0;
 objid_t			 last_proto_id = 0;
 
-static struct service	*service = NULL;
+static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
 static struct relay	*rlay = NULL;
 static struct protocol	*proto = NULL;
@@ -147,7 +147,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar varset '\n'
 		| grammar main '\n'
-		| grammar service '\n'
+		| grammar rdr '\n'
 		| grammar tabledef '\n'
 		| grammar relay '\n'
 		| grammar proto '\n'
@@ -311,10 +311,10 @@ loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 		| ALL			{ $$ = RELAYD_OPT_LOGALL; }
 		;
 
-service		: REDIRECT STRING	{
-			struct service *srv;
+rdr		: REDIRECT STRING	{
+			struct rdr *srv;
 
-			TAILQ_FOREACH(srv, conf->services, entry)
+			TAILQ_FOREACH(srv, conf->rdrs, entry)
 				if (!strcmp(srv->conf.name, $2))
 					break;
 			if (srv != NULL) {
@@ -332,70 +332,70 @@ service		: REDIRECT STRING	{
 				YYERROR;
 			}
 			free($2);
-			srv->conf.id = last_service_id++;
-			if (last_service_id == INT_MAX) {
+			srv->conf.id = last_rdr_id++;
+			if (last_rdr_id == INT_MAX) {
 				yyerror("too many redirections defined");
 				YYERROR;
 			}
-			service = srv;
-		} '{' optnl serviceopts_l '}'	{
-			if (service->table == NULL) {
+			rdr = srv;
+		} '{' optnl rdropts_l '}'	{
+			if (rdr->table == NULL) {
 				yyerror("redirection %s has no table",
-				    service->conf.name);
+				    rdr->conf.name);
 				YYERROR;
 			}
-			if (TAILQ_EMPTY(&service->virts)) {
+			if (TAILQ_EMPTY(&rdr->virts)) {
 				yyerror("redirection %s has no virtual ip",
-				    service->conf.name);
+				    rdr->conf.name);
 				YYERROR;
 			}
-			conf->servicecount++;
-			if (service->backup == NULL) {
-				service->conf.backup_id =
+			conf->rdrcount++;
+			if (rdr->backup == NULL) {
+				rdr->conf.backup_id =
 				    conf->empty_table.conf.id;
-				service->backup = &conf->empty_table;
-			} else if (service->backup->conf.port !=
-			    service->table->conf.port) {
+				rdr->backup = &conf->empty_table;
+			} else if (rdr->backup->conf.port !=
+			    rdr->table->conf.port) {
 				yyerror("redirection %s uses two different "
 				    "ports for its table and backup table",
-				    service->conf.name);
+				    rdr->conf.name);
 				YYERROR;
 			}
-			if (!(service->conf.flags & F_DISABLE))
-				service->conf.flags |= F_ADD;
-			TAILQ_INSERT_HEAD(conf->services, service, entry);
+			if (!(rdr->conf.flags & F_DISABLE))
+				rdr->conf.flags |= F_ADD;
+			TAILQ_INSERT_HEAD(conf->rdrs, rdr, entry);
 			tableport = 0;
-			service = NULL;
+			rdr = NULL;
 		}
 		;
 
-serviceopts_l	: serviceopts_l serviceoptsl nl
-		| serviceoptsl optnl
+rdropts_l	: rdropts_l rdroptsl nl
+		| rdroptsl optnl
 		;
 
-serviceoptsl	: FORWARD TO tablespec		{
+rdroptsl	: FORWARD TO tablespec		{
 			if ($3->conf.check == CHECK_NOCHECK) {
 				yyerror("table %s has no check", $3->conf.name);
 				purge_table(conf->tables, $3);
 				YYERROR;
 			}
-			if (service->backup) {
+			if (rdr->backup) {
 				yyerror("only one backup table is allowed");
 				purge_table(conf->tables, $3);
 				YYERROR;
 			}
-			if (service->table) {
-				service->backup = $3;
-				service->conf.backup_id = $3->conf.id;
+			if (rdr->table) {
+				rdr->backup = $3;
+				rdr->conf.backup_id = $3->conf.id;
 			} else {
-				service->table = $3;
-				service->conf.table_id = $3->conf.id;
+				rdr->table = $3;
+				rdr->conf.table_id = $3->conf.id;
 			}
-			$3->conf.serviceid = service->conf.id;
+			$3->conf.rdrid = rdr->conf.id;
 			$3->conf.flags |= F_USED;
 		}
 		| LISTEN ON STRING port interface {
-			if (host($3, &service->virts,
+			if (host($3, &rdr->virts,
 				 SRV_MAX_VIRTS, $4, $5) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
 				free($3);
@@ -404,16 +404,16 @@ serviceoptsl	: FORWARD TO tablespec		{
 			}
 			free($3);
 			free($5);
-			if (service->conf.port == 0)
-				service->conf.port = $4;
-			tableport = service->conf.port;
+			if (rdr->conf.port == 0)
+				rdr->conf.port = $4;
+			tableport = rdr->conf.port;
 		}
-		| DISABLE		{ service->conf.flags |= F_DISABLE; }
-		| STICKYADDR		{ service->conf.flags |= F_STICKY; }
+		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
+		| STICKYADDR		{ rdr->conf.flags |= F_STICKY; }
 		| TAG STRING {
-			if (strlcpy(service->conf.tag, $2,
-			    sizeof(service->conf.tag)) >=
-			    sizeof(service->conf.tag)) {
+			if (strlcpy(rdr->conf.tag, $2,
+			    sizeof(rdr->conf.tag)) >=
+			    sizeof(rdr->conf.tag)) {
 				yyerror("redirection tag name truncated");
 				free($2);
 				YYERROR;
@@ -547,7 +547,7 @@ tableopts	: CHECK tablecheck
 			switch ($2) {
 			case RELAY_DSTMODE_LOADBALANCE:
 			case RELAY_DSTMODE_HASH:
-				if (service != NULL) {
+				if (rdr != NULL) {
 					yyerror("mode not supported "
 					    "for redirections");
 					YYERROR;
@@ -1127,7 +1127,7 @@ relay		: RELAY STRING	{
 			if ((rlay->conf.flags & F_NATLOOK) == 0 &&
 			    rlay->conf.dstss.ss_family == AF_UNSPEC &&
 			    rlay->conf.dsttable == EMPTY_ID) {
-				yyerror("relay %s has no target, service, "
+				yyerror("relay %s has no target, rdr, "
 				    "or table", rlay->conf.name);
 				YYERROR;
 			}
@@ -1757,21 +1757,21 @@ parse_config(const char *filename, int opts)
 	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
 	    (conf->relays = calloc(1, sizeof(*conf->relays))) == NULL ||
 	    (conf->protos = calloc(1, sizeof(*conf->protos))) == NULL ||
-	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL) {
+	    (conf->rdrs = calloc(1, sizeof(*conf->rdrs))) == NULL) {
 		log_warn("cannot allocate memory");
 		return (NULL);
 	}
 
 	errors = 0;
-	last_host_id = last_table_id = last_service_id = last_proto_id =
+	last_host_id = last_table_id = last_rdr_id = last_proto_id =
 	    last_relay_id = 0;
 
-	service = NULL;
+	rdr = NULL;
 	table = NULL;
 	rlay = NULL;
 	proto = NULL;
 
-	TAILQ_INIT(conf->services);
+	TAILQ_INIT(conf->rdrs);
 	TAILQ_INIT(conf->tables);
 	TAILQ_INIT(conf->protos);
 	TAILQ_INIT(conf->relays);
@@ -1826,7 +1826,7 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(conf->services) && TAILQ_EMPTY(conf->relays)) {
+	if (TAILQ_EMPTY(conf->rdrs) && TAILQ_EMPTY(conf->relays)) {
 		log_warnx("no redirections, nothing to do");
 		errors++;
 	}

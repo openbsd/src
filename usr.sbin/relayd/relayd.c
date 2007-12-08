@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.63 2007/12/08 17:07:09 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.64 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -358,7 +358,7 @@ merge_config(struct relayd *env, struct relayd *new_env)
 	env->flags = new_env->flags;
 	env->confpath = new_env->confpath;
 	env->tablecount = new_env->tablecount;
-	env->servicecount = new_env->servicecount;
+	env->rdrcount = new_env->rdrcount;
 	env->protocount = new_env->protocount;
 	env->relaycount = new_env->relaycount;
 
@@ -373,7 +373,7 @@ merge_config(struct relayd *env, struct relayd *new_env)
 	    sizeof(env->demote_group));
 
 	env->tables = new_env->tables;
-	env->services = new_env->services;
+	env->rdrs = new_env->rdrs;
 	env->relays = new_env->relays;
 	env->protos = new_env->protos;
 }
@@ -384,7 +384,7 @@ reconfigure(void)
 {
 	struct relayd		*env = relayd_env;
 	struct relayd		*new_env;
-	struct service		*service;
+	struct rdr		*rdr;
 	struct address		*virt;
 	struct table            *table;
 	struct host             *host;
@@ -410,10 +410,10 @@ reconfigure(void)
 			    &host->conf, sizeof(host->conf));
 		}
 	}
-	TAILQ_FOREACH(service, env->services, entry) {
-		imsg_compose(ibuf_pfe, IMSG_RECONF_SERVICE, 0, 0, -1,
-		    &service->conf, sizeof(service->conf));
-		TAILQ_FOREACH(virt, &service->virts, entry)
+	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+		imsg_compose(ibuf_pfe, IMSG_RECONF_RDR, 0, 0, -1,
+		    &rdr->conf, sizeof(rdr->conf));
+		TAILQ_FOREACH(virt, &rdr->virts, entry)
 			imsg_compose(ibuf_pfe, IMSG_RECONF_VIRT, 0, 0, -1,
 				virt, sizeof(*virt));
 	}
@@ -441,7 +441,7 @@ void
 purge_config(struct relayd *env, u_int8_t what)
 {
 	struct table		*table;
-	struct service		*service;
+	struct rdr		*rdr;
 	struct address		*virt;
 	struct protocol		*proto;
 	struct relay		*rly;
@@ -454,17 +454,17 @@ purge_config(struct relayd *env, u_int8_t what)
 		env->tables = NULL;
 	}
 
-	if (what & PURGE_SERVICES && env->services != NULL) {
-		while ((service = TAILQ_FIRST(env->services)) != NULL) {
-			TAILQ_REMOVE(env->services, service, entry);
-			while ((virt = TAILQ_FIRST(&service->virts)) != NULL) {
-				TAILQ_REMOVE(&service->virts, virt, entry);
+	if (what & PURGE_RDRS && env->rdrs != NULL) {
+		while ((rdr = TAILQ_FIRST(env->rdrs)) != NULL) {
+			TAILQ_REMOVE(env->rdrs, rdr, entry);
+			while ((virt = TAILQ_FIRST(&rdr->virts)) != NULL) {
+				TAILQ_REMOVE(&rdr->virts, virt, entry);
 				free(virt);
 			}
-			free(service);
+			free(rdr);
 		}
-		free(env->services);
-		env->services = NULL;
+		free(env->rdrs);
+		env->rdrs = NULL;
 	}
 
 	if (what & PURGE_RELAYS && env->relays != NULL) {
@@ -744,14 +744,14 @@ table_find(struct relayd *env, objid_t id)
 	return (NULL);
 }
 
-struct service *
-service_find(struct relayd *env, objid_t id)
+struct rdr *
+rdr_find(struct relayd *env, objid_t id)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 
-	TAILQ_FOREACH(service, env->services, entry)
-		if (service->conf.id == id)
-			return (service);
+	TAILQ_FOREACH(rdr, env->rdrs, entry)
+		if (rdr->conf.id == id)
+			return (rdr);
 	return (NULL);
 }
 
@@ -810,12 +810,12 @@ table_findbyconf(struct relayd *env, struct table *tb)
 	struct table_config	 a, b;
 
 	bcopy(&tb->conf, &a, sizeof(a));
-	a.id = a.serviceid = 0;
+	a.id = a.rdrid = 0;
 	a.flags &= ~(F_USED|F_BACKUP);
 
 	TAILQ_FOREACH(table, env->tables, entry) {
 		bcopy(&table->conf, &b, sizeof(b));
-		b.id = b.serviceid = 0;
+		b.id = b.rdrid = 0;
 		b.flags &= ~(F_USED|F_BACKUP);
 
 		/*
@@ -831,14 +831,14 @@ table_findbyconf(struct relayd *env, struct table *tb)
 	return (NULL);
 }
 
-struct service *
-service_findbyname(struct relayd *env, const char *name)
+struct rdr *
+rdr_findbyname(struct relayd *env, const char *name)
 {
-	struct service	*service;
+	struct rdr	*rdr;
 
-	TAILQ_FOREACH(service, env->services, entry)
-		if (strcmp(service->conf.name, name) == 0)
-			return (service);
+	TAILQ_FOREACH(rdr, env->rdrs, entry)
+		if (strcmp(rdr->conf.name, name) == 0)
+			return (rdr);
 	return (NULL);
 }
 

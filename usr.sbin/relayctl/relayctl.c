@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.29 2007/12/08 20:11:48 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.30 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,7 +47,7 @@ __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *, int);
 int		 show_session_msg(struct imsg *);
 int		 show_command_output(struct imsg *);
-char		*print_service_status(int);
+char		*print_rdr_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
 char		*print_relay_status(int);
@@ -65,8 +65,8 @@ int		 monitor(struct imsg *);
 
 struct imsgname imsgs[] = {
 	{ IMSG_HOST_STATUS,		"host_status",	monitor_host_status },
-	{ IMSG_CTL_SERVICE_DISABLE,	"ctl_disable_service",	monitor_id },
-	{ IMSG_CTL_SERVICE_ENABLE,	"ctl_service_enable",	monitor_id },
+	{ IMSG_CTL_RDR_DISABLE,		"ctl_rdr_disable",	monitor_id },
+	{ IMSG_CTL_RDR_ENABLE,		"ctl_rdr_enable",	monitor_id },
 	{ IMSG_CTL_TABLE_DISABLE,	"ctl_table_disable",	monitor_id },
 	{ IMSG_CTL_TABLE_ENABLE,	"ctl_table_enable",	monitor_id },
 	{ IMSG_CTL_HOST_DISABLE,	"ctl_host_disable",	monitor_id },
@@ -151,12 +151,12 @@ main(int argc, char *argv[])
 	case SHOW_SESSIONS:
 		imsg_compose(ibuf, IMSG_CTL_SESSION, 0, 0, -1, NULL, 0);
 		break;
-	case SERV_ENABLE:
-		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0, -1,
+	case RDR_ENABLE:
+		imsg_compose(ibuf, IMSG_CTL_RDR_ENABLE, 0, 0, -1,
 		    &res->id, sizeof(res->id));
 		break;
-	case SERV_DISABLE:
-		imsg_compose(ibuf, IMSG_CTL_SERVICE_DISABLE, 0, 0, -1,
+	case RDR_DISABLE:
+		imsg_compose(ibuf, IMSG_CTL_RDR_DISABLE, 0, 0, -1,
 		    &res->id, sizeof(res->id));
 		break;
 	case TABLE_ENABLE:
@@ -213,8 +213,8 @@ main(int argc, char *argv[])
 			case SHOW_SESSIONS:
 				done = show_session_msg(&imsg);
 				break;
-			case SERV_DISABLE:
-			case SERV_ENABLE:
+			case RDR_DISABLE:
+			case RDR_ENABLE:
 			case TABLE_DISABLE:
 			case TABLE_ENABLE:
 			case HOST_DISABLE:
@@ -306,7 +306,7 @@ monitor(struct imsg *imsg)
 int
 show_summary_msg(struct imsg *imsg, int type)
 {
-	struct service		*service;
+	struct rdr		*rdr;
 	struct table		*table;
 	struct host		*host;
 	struct relay		*rlay;
@@ -314,13 +314,13 @@ show_summary_msg(struct imsg *imsg, int type)
 	int			 i;
 
 	switch (imsg->hdr.type) {
-	case IMSG_CTL_SERVICE:
+	case IMSG_CTL_RDR:
 		if (type == SHOW_RELAYS)
 			break;
-		service = imsg->data;
+		rdr = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
-		    service->conf.id, "redirect", service->conf.name, "",
-		    print_service_status(service->conf.flags));
+		    rdr->conf.id, "redirect", rdr->conf.name, "",
+		    print_rdr_status(rdr->conf.flags));
 		break;
 	case IMSG_CTL_TABLE:
 		if (type == SHOW_RELAYS)
@@ -442,7 +442,7 @@ show_command_output(struct imsg *imsg)
 }
 
 char *
-print_service_status(int flags)
+print_rdr_status(int flags)
 {
 	if (flags & F_DISABLE) {
 		return ("disabled");

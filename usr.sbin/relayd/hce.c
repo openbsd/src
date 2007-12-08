@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.37 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.38 2007/12/08 20:36:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -90,7 +90,7 @@ hce(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	}
 
 	env = x_env;
-	purge_config(env, PURGE_SERVICES|PURGE_RELAYS|PURGE_PROTOS);
+	purge_config(env, PURGE_RDRS|PURGE_RELAYS|PURGE_PROTOS);
 
 	if ((pw = getpwnam(RELAYD_USER)) == NULL)
 		fatal("hce: getpwnam");
