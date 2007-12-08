@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.13 2007/12/08 18:00:13 pyr Exp $
+.\"	$OpenBSD: relayd.8,v 1.14 2007/12/08 18:58:34 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -37,7 +37,7 @@ When availability is confirmed, Layer 3 and/or Layer 7
 load-balancing services are set up by
 .Nm .
 .Pp
-Layer 3 load-balancing happens at the packet level; to configure
+Layer 3 redirection happens at the packet level; to configure
 it,
 .Nm
 communicates with
@@ -52,7 +52,7 @@ rules, the following line is required in the NAT section of
 rdr-anchor "relayd/*"
 .Ed
 .Pp
-Layer 7 load-balancing happens at the application level and is
+Layer 7 relaying happens at the application level and is
 handled by
 .Nm
 itself.
