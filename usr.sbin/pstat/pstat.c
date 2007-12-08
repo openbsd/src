@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.70 2007/11/28 17:02:56 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.71 2007/12/08 18:23:24 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.70 2007/11/28 17:02:56 tedu Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.71 2007/12/08 18:23:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,8 +156,6 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'd':
 			dformat = optarg;
-			if (*dformat == '%')
-				usage();
 			break;
 		case 'f':
 			fileflag = 1;
