@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.14 2007/12/08 18:58:34 reyk Exp $
+.\"	$OpenBSD: relayd.8,v 1.15 2007/12/08 19:10:33 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -29,12 +29,15 @@
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
-is a relaying daemon for server load-balancing.
-It monitors groups of hosts for availability,
-which is determined by checking for a specific service
-common to a host group.
-When availability is confirmed, Layer 3 and/or Layer 7
-load-balancing services are set up by
+is a daemon to relay and dynamically redirect incoming connections to
+a target host.
+Its main purposes are to run as a load-balancer, application layer
+gateway, or transparent proxy.
+The daemon is able to monitor groups of hosts for availability, which
+is determined by checking for a specific service common to a host
+group.
+When availability is confirmed,
+Layer 3 and/or Layer 7 forwarding services are set up by
 .Nm .
 .Pp
 Layer 3 redirection happens at the packet level; to configure
@@ -56,6 +59,8 @@ Layer 7 relaying happens at the application level and is
 handled by
 .Nm
 itself.
+Various application level filtering and protocol-specific
+load-balancing options are available for relays.
 .Pp
 .Nm
 works in terms of the following
