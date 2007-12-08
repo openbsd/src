@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2007/12/04 05:42:48 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2007/12/08 18:39:50 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -59,18 +59,19 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #ifdef M88100
-#include <machine/m88100.h>		/* DMT_xxx */
-#include <machine/m8820x.h>		/* CMMU_PFSR_xxx */
+#include <machine/m88100.h>
+#include <machine/m8820x.h>
 #endif
 #ifdef M88110
 #include <machine/m88110.h>
 #endif
-#include <machine/pcb.h>		/* FIP_E, etc. */
-#include <machine/psl.h>		/* FIP_E, etc. */
+#include <machine/fpu.h>
+#include <machine/pcb.h>
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 #include <machine/db_machdep.h>
@@ -236,7 +237,7 @@ m88100_trap(u_int type, struct trapframe *frame)
 		type += T_USER;
 		p->p_md.md_tf = frame;	/* for ptrace/signals */
 	}
-	fault_type = 0;
+	fault_type = SI_NOINFO;
 	fault_code = 0;
 	fault_addr = frame->tf_sxip & XIP_ADDR;
 
@@ -573,7 +574,7 @@ user_fault:
 		return;
 
 	if (sig) {
-		sv.sival_int = fault_addr;
+		sv.sival_ptr = (void *)fault_addr;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, fault_code, fault_type, sv);
 		KERNEL_PROC_UNLOCK(p);
@@ -613,7 +614,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 	if ((p = curproc) == NULL)
 		p = &proc0;
 
-	fault_type = 0;
+	fault_type = SI_NOINFO;
 	fault_code = 0;
 	fault_addr = frame->tf_exip & XIP_ADDR;
 
@@ -728,16 +729,6 @@ m88110_trap(u_int type, struct trapframe *frame)
 		m88110_skip_insn(frame);
 		splx(s);
 		return;
-#if 0
-	case T_ILLFLT:
-		s = splhigh();
-		set_psr((psr = get_psr()) & ~PSR_IND);
-		ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
-		       "error fault", (db_regs_t*)frame);
-		set_psr(psr);
-		splx(s);
-		return;
-#endif /* 0 */
 #endif /* DDB */
 	case T_ILLFLT:
 		printf("Unimplemented opcode!\n");
@@ -1002,6 +993,8 @@ m88110_user_fault:
 		}
 		break;
 	case T_PRIVINFLT+T_USER:
+		fault_type = ILL_PRVREG;
+		/* FALLTHROUGH */
 	case T_ILLFLT+T_USER:
 #ifndef DDB
 	case T_KDB_BREAK:
@@ -1032,6 +1025,29 @@ m88110_user_fault:
 		break;
 	case T_FPEPFLT+T_USER:
 		sig = SIGFPE;
+
+		if (frame->tf_fpecr & FPECR_FUNIMP) {
+			if (frame->tf_epsr & PSR_SFD1)
+				fault_type = FPE_FLTINV;
+		} else if (frame->tf_fpecr & FPECR_FIOV)
+			fault_type = FPE_FLTSUB;
+		else if (frame->tf_fpecr & FPECR_FROP)
+			fault_type = FPE_FLTINV;
+		else if (frame->tf_fpecr & FPECR_FDVZ)
+			fault_type = FPE_INTDIV;
+		else if (frame->tf_fpecr & FPECR_FUNF) {
+			if (frame->tf_fpsr & FPSR_EFUNF)
+				fault_type = FPE_FLTUND;
+			else if (frame->tf_fpsr & FPSR_EFINX)
+				fault_type = FPE_FLTRES;
+		} else if (frame->tf_fpecr & FPECR_FOVF) {
+			if (frame->tf_fpsr & FPSR_EFOVF)
+				fault_type = FPE_FLTOVF;
+			else if (frame->tf_fpsr & FPSR_EFINX)
+				fault_type = FPE_FLTRES;
+		} else if (frame->tf_fpecr & FPECR_FINX)
+			fault_type = FPE_FLTRES;
+
 		/* skip trap instruction */
 		m88110_skip_insn(frame);
 		break;
@@ -1104,7 +1120,7 @@ m88110_user_fault:
 
 	if (sig) {
 deliver:
-		sv.sival_int = fault_addr;
+		sv.sival_ptr = (void *)fault_addr;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, fault_code, fault_type, sv);
 		KERNEL_PROC_UNLOCK(p);
