@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.63 2007/06/26 19:11:28 espie Exp $
+# $OpenBSD: pkg_info,v 1.64 2007/12/08 15:54:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -50,6 +50,7 @@ sub dump_file
 	print $item->fullname, "\n";
 }
 
+package OpenBSD::PackingElement::FileObject;
 sub hunt_file
 {
 	my ($item, $h, $pkgname, $l) = @_;
