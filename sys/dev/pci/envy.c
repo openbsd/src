@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.3 2007/12/08 09:59:33 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.4 2007/12/08 10:01:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -61,7 +61,7 @@ int envy_lineout_getsrc(struct envy_softc *, int);
 void envy_lineout_setsrc(struct envy_softc *, int, int);
 int envy_spdout_getsrc(struct envy_softc *, int);
 void envy_spdout_setsrc(struct envy_softc *, int, int);
-void envy_mon_getvol(struct envy_softc *, int, int *, int *);
+void envy_mon_getvol(struct envy_softc *, int, int, int *);
 void envy_mon_setvol(struct envy_softc *, int, int, int);
 
 int envy_open(void *, int);
@@ -460,23 +460,22 @@ envy_spdout_setsrc(struct envy_softc *sc, int out, int src) {
 }
 
 void
-envy_mon_getvol(struct envy_softc *sc, int idx, int *l, int *r) {
+envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val) {
 	int reg;
 
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
-	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA);
-	*l = 0x7f - ((reg) & 0x7f);
-	*r = 0x7f - ((reg >> 8) & 0x7f);
+	reg = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA + ch);
+	*val = 0x7f - ((reg) & 0x7f);
 }
 
 void
-envy_mon_setvol(struct envy_softc *sc, int idx, int l, int r) {
+envy_mon_setvol(struct envy_softc *sc, int idx, int ch, int val) {
 	int reg;
 
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
-	reg = (0x7f - l) | ((0x7f - r) << 8);
-	DPRINTF("%s: mon=%d <- %d,%d\n", DEVNAME(sc), reg, l, r);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA, reg);
+	reg = 0x7f - val;
+	DPRINTF("%s: mon=%d/%d <- %d\n", DEVNAME(sc), reg, ch, val);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA + ch, reg);
 }
 
 int
@@ -876,7 +875,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		dev->type = AUDIO_MIXER_VALUE;
 		dev->mixer_class = ENVY_MIX_CLASSMON;
 		dev->un.v.delta = 2;
-		dev->un.v.num_channels = 2;
+		dev->un.v.num_channels = 1;
 		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, 
 			 "%s%d", out < 10 ? "play" : "rec", out % 10);
 		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
@@ -889,7 +888,7 @@ int
 envy_get_port(void *self, struct mixer_ctrl *ctl)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int out, l, r;
+	int out, val;
 
 	if (ctl->dev < ENVY_MIX_OUTSRC) {
 		return EINVAL;
@@ -906,10 +905,9 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	}
 	if (ctl->dev <  ENVY_MIX_INVAL) {
 		out = ctl->dev - ENVY_MIX_MONITOR;
-		envy_mon_getvol(sc, out, &l, &r);
-		ctl->un.value.num_channels = 2;
-		ctl->un.value.level[0] = 2 * l;
-		ctl->un.value.level[1] = 2 * r;
+		envy_mon_getvol(sc, out / 2, out % 2, &val);
+		ctl->un.value.num_channels = 1;
+		ctl->un.value.level[0] = 2 * val;
 		return 0;
 	}
 	return ENXIO;
@@ -919,7 +917,7 @@ int
 envy_set_port(void *self, struct mixer_ctrl *ctl)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int out, maxsrc, l, r;
+	int out, maxsrc, val;
 
 	if (ctl->dev < ENVY_MIX_OUTSRC) {
 		return EINVAL;
@@ -941,12 +939,11 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	}
 	if (ctl->dev <  ENVY_MIX_INVAL) {
 		out = ctl->dev - ENVY_MIX_MONITOR;
-		if (ctl->un.value.num_channels != 2) {
+		if (ctl->un.value.num_channels != 1) {
 			return EINVAL;
 		}
-		l = ctl->un.value.level[0] / 2;
-		r = ctl->un.value.level[1] / 2;
-		envy_mon_setvol(sc, out, l, r);
+		val = ctl->un.value.level[0] / 2;
+		envy_mon_setvol(sc, out / 2, out % 2, val);
 		return 0;
 	}
 	return ENXIO;
