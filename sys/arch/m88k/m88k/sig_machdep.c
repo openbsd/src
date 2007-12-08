@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.6 2007/11/21 18:52:52 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.7 2007/12/08 18:38:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -159,7 +159,9 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 */
 	tf->tf_r[1] = p->p_sigcode;		/* return to sigcode */
 	tf->tf_r[2] = sig;			/* first arg is signo */
-	tf->tf_r[3] = (vaddr_t)&fp->sf_si;	/* second arg is siginfo */
+	tf->tf_r[3] = psp->ps_siginfo & sigmask(sig) ? (vaddr_t)&fp->sf_si : 0;
+	tf->tf_r[4] = (vaddr_t)&fp->sf_sc;
+	tf->tf_r[31] = (vaddr_t)fp;
 	addr = (vaddr_t)catcher;		/* and resume in the handler */
 #ifdef M88100
 	if (CPU_IS88100) {
@@ -172,7 +174,6 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 		tf->tf_exip = (addr & XIP_ADDR);
 	}
 #endif
-	tf->tf_r[31] = (vaddr_t)fp;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
