@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.75 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.76 2007/12/08 17:07:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -494,7 +494,7 @@ relay_init(void)
 			}
 			log_info("adding %d hosts from table %s%s",
 			    rlay->dstnhosts, rlay->dsttable->conf.name,
-			    rlay->conf.dstcheck ? "" : " (no check)");
+			    rlay->dsttable->conf.check ? "" : " (no check)");
 		}
 	}
 
@@ -2020,7 +2020,7 @@ relay_from_table(struct session *con)
 	u_int32_t		 p = con->outkey;
 	int			 idx = 0;
 
-	if (rlay->conf.dstcheck && !table->up) {
+	if (table->conf.check && !table->up) {
 		log_debug("relay_from_table: no active hosts");
 		return (-1);
 	}
@@ -2045,13 +2045,13 @@ relay_from_table(struct session *con)
 	    host->conf.name, p, idx);
 	while (host != NULL) {
 		DPRINTF("relay_from_table: host %s", host->conf.name);
-		if (!rlay->conf.dstcheck || host->up == HOST_UP)
+		if (!table->conf.check || host->up == HOST_UP)
 			goto found;
 		host = TAILQ_NEXT(host, entry);
 	}
-	TAILQ_FOREACH(host, &rlay->dsttable->hosts, entry) {
+	TAILQ_FOREACH(host, &table->hosts, entry) {
 		DPRINTF("relay_from_table: next host %s", host->conf.name);
-		if (!rlay->conf.dstcheck || host->up == HOST_UP)
+		if (!table->conf.check || host->up == HOST_UP)
 			goto found;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.87 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.88 2007/12/08 17:07:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -542,7 +542,6 @@ struct relay_config {
 	in_port_t		 port;
 	in_port_t		 dstport;
 	int			 dstmode;
-	int			 dstcheck;
 	int			 dstretry;
 	objid_t			 dsttable;
 	struct sockaddr_storage	 ss;
@@ -586,7 +585,7 @@ enum dstmode {
 	RELAY_DSTMODE_ROUNDROBIN	= 1,
 	RELAY_DSTMODE_HASH		= 2
 };
-#define RELAY_DSTMODE_DEFAULT		RELAY_DSTMODE_LOADBALANCE
+#define RELAY_DSTMODE_DEFAULT		RELAY_DSTMODE_ROUNDROBIN
 
 enum {
 	PROC_MAIN,
@@ -781,6 +780,7 @@ struct table	*table_find(struct relayd *, objid_t);
 struct service	*service_find(struct relayd *, objid_t);
 struct host	*host_findbyname(struct relayd *, const char *);
 struct table	*table_findbyname(struct relayd *, const char *);
+struct table	*table_findbyconf(struct relayd *, struct table *);
 struct service	*service_findbyname(struct relayd *, const char *);
 void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
@@ -791,6 +791,7 @@ struct relay	*relay_findbyname(struct relayd *, const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_config(struct relayd *, u_int8_t);
+void		 purge_table(struct tablelist *, struct table *);
 void		 merge_config(struct relayd *, struct relayd *);
 char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
 const char	*canonicalize_host(const char *, char *, size_t);

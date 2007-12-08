@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.11 2007/12/07 17:19:42 deraadt Exp $
+.\"	$OpenBSD: relayd.8,v 1.12 2007/12/08 17:07:09 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2007 $
+.Dd $Mdocdate: December 8 2007 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
@@ -134,8 +134,14 @@ Unix-domain socket used for communication with
 .Sh HISTORY
 The
 .Nm
-program first appeared in
+program, formerly known as
+.Ic hoststated ,
+first appeared in
 .Ox 4.1 .
+It was renamed to
+.Nm
+in
+.Ox 4.3 .
 .Sh AUTHORS
 .An -nosplit
 The

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.62 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.63 2007/12/08 17:07:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -441,7 +441,6 @@ void
 purge_config(struct relayd *env, u_int8_t what)
 {
 	struct table		*table;
-	struct host		*host;
 	struct service		*service;
 	struct address		*virt;
 	struct protocol		*proto;
@@ -449,21 +448,8 @@ purge_config(struct relayd *env, u_int8_t what)
 	struct session		*sess;
 
 	if (what & PURGE_TABLES && env->tables != NULL) {
-		while ((table = TAILQ_FIRST(env->tables)) != NULL) {
-
-			while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
-				TAILQ_REMOVE(&table->hosts, host, entry);
-				free(host);
-			}
-			if (table->sendbuf != NULL)
-				free(table->sendbuf);
-			if (table->conf.flags & F_SSL)
-				SSL_CTX_free(table->ssl_ctx);
-
-			TAILQ_REMOVE(env->tables, table, entry);
-
-			free(table);
-		}
+		while ((table = TAILQ_FIRST(env->tables)) != NULL)
+			purge_table(env->tables, table);
 		free(env->tables);
 		env->tables = NULL;
 	}
@@ -538,6 +524,25 @@ purge_tree(struct proto_tree *tree)
 		}
 		free(proot);
 	}
+}
+
+void
+purge_table(struct tablelist *head, struct table *table)
+{
+	struct host		*host;
+
+	while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
+		TAILQ_REMOVE(&table->hosts, host, entry);
+		free(host);
+	}
+	if (table->sendbuf != NULL)
+		free(table->sendbuf);
+	if (table->conf.flags & F_SSL)
+		SSL_CTX_free(table->ssl_ctx);
+
+	if (head != NULL)
+		TAILQ_REMOVE(head, table, entry);
+	free(table);
 }
 
 void
@@ -795,6 +800,34 @@ table_findbyname(struct relayd *env, const char *name)
 	TAILQ_FOREACH(table, env->tables, entry)
 		if (strcmp(table->conf.name, name) == 0)
 			return (table);
+	return (NULL);
+}
+
+struct table *
+table_findbyconf(struct relayd *env, struct table *tb)
+{
+	struct table		*table;
+	struct table_config	 a, b;
+
+	bcopy(&tb->conf, &a, sizeof(a));
+	a.id = a.serviceid = 0;
+	a.flags &= ~(F_USED|F_BACKUP);
+
+	TAILQ_FOREACH(table, env->tables, entry) {
+		bcopy(&table->conf, &b, sizeof(b));
+		b.id = b.serviceid = 0;
+		b.flags &= ~(F_USED|F_BACKUP);
+
+		/*
+		 * Compare two tables and return the existing table if
+		 * the configuration seems to be the same.
+		 */
+		if (bcmp(&a, &b, sizeof(b)) == 0 &&
+		    ((tb->sendbuf == NULL && table->sendbuf == NULL) ||
+		    (tb->sendbuf != NULL && table->sendbuf != NULL &&
+		    strcmp(tb->sendbuf, table->sendbuf) == 0)))
+			return (table);
+	}
 	return (NULL);
 }
 

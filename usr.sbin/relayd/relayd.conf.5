@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.71 2007/12/07 17:28:05 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.72 2007/12/08 17:07:09 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2007 $
+.Dd $Mdocdate: December 8 2007 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -36,17 +36,19 @@ configuration file.
 Global settings for
 .Xr relayd 8 .
 .It Sy Tables
-Table definitions describe the content of a
+Table definitions describe a list of hosts like
 .Xr pf 4
-table and the method used for checking the health of the hosts
-they contain.
-.It Sy Services
-Services will be translated to
+tables.
+They are used for relay and redirection target selection with the
+described options and health checking on the host they contain.
+.It Sy Redirections
+Redirections will be translated to
 .Xr pf 4
-rdr rules if their table or backup table have content.
+rdr rules for stateful forwarding to a target host from a
+health-checked table on layer 3.
 .It Sy Relays
-Relays allow layer 7 load balancing, SSL acceleration, and
-general purpose TCP proxying.
+Relays allow application layer load balancing, SSL acceleration, and
+general purpose TCP proxying on layer 7.
 .It Sy Protocols
 Protocols are predefined protocol handlers and settings for relays.
 .El
@@ -80,7 +82,7 @@ Macro names must start with a letter, and may contain letters, digits,
 and underscores.
 Macro names may not be reserved words (for example,
 .Ic table ,
-.Ic service ,
+.Ic relay ,
 or
 .Ic timeout ) .
 Macros are not expanded inside quotes.
@@ -89,12 +91,9 @@ For example:
 .Bd -literal -offset indent
 www1="10.0.0.1"
 www2="10.0.0.2"
-table webhosts {
-	check tcp
-	timeout 300
-	real port 80
-	host $www1
-	host $www2
+table \*(Ltwebhosts\*(Gt {
+	$www1
+	$www2
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
@@ -156,10 +155,59 @@ The default interval is 200 milliseconds and it must not exceed the
 global interval.
 .El
 .Sh TABLES
-Tables are used to group a set of hosts that can be checked using the same
-method.
-Only one health-checking method can be used per table.
-Table specific configuration directives are described below.
+Tables are used to group a set of hosts as the target for redirections
+or relays, they will be mapped to a
+.Xr pf 4
+table for redirections.
+Tables may be defined with the following attribute:
+.Bl -tag -width disable
+.It Ic disable
+Start the table disabled \(en no hosts will be checked in this table.
+The table can be later enabled through
+.Xr relayctl 8 .
+.Pp
+.El
+Each table must contain at least one host, multiple hosts are
+separated by newline, comma, or whitespace.
+Host entries may be defined with the following attribute:
+.Bl -tag -width retry
+.It Ic retry Ar number
+The optional retry option adds a tolerance for failed host checks,
+the check will be retried for
+.Ar number
+more times before setting the host state to down.
+If this table is used by a relay, it will also specify the number of
+retries for outgoing connection attempts.
+.El
+.Pp
+For example,
+.Bd -literal -offset indent
+table \*(Ltservice\*(Gt { 192.168.1.1, 192.168.1.2, 192.168.2.3 }
+table \*(Ltbackup\*(Gt disable { 10.1.5.1 retry 2 }
+
+redirect "www" {
+	listen on www.example.com port 80
+	forward to \*(Ltservice\*(Gt check http "/" code 200 
+	forward to \*(Ltbackup\*(Gt check http "/" code 200 
+}
+.Ed
+.Pp
+Tables are used by the
+.Ic forward to
+directives in redirections or relays with a set of general options,
+health-checking rules, and timings,
+see the
+.Sx REDIRECTIONS
+and
+.Sx RELAYS
+sections for more information about the forward context.
+Table specific configuration directives are described below,
+multiple options can be appended to the
+.Ic forward to
+directives, separated by whitespaces.
+.Pp
+The following options will configure the health-checking method for
+the table, it is mandatory for redirections:
 .Bl -tag -width Ds
 .It Xo
 .Ic check http Ar path
@@ -263,6 +311,10 @@ milliseconds.
 Perform a complete SSL handshake with each host to check their availability.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
+.El
+.Pp
+The following general table options are available:
+.Bl -tag -width Ds
 .It Ic demote Ar group
 Enable the per-table
 .Xr carp 4
@@ -274,107 +326,128 @@ see the
 .Ic group
 keyword in
 .Xr ifconfig 8 .
-.It Ic disable
-Start the table disabled \(en no hosts will be checked in this table.
-The table can be later enabled through
-.Xr relayctl 8 .
-.It Xo
-.Ic host Ar address
-.Op Ic retry Ar number
-.Xc
-Add the host whose address is
-.Ar address
-to the list of hosts to be checked in this table.
-Each table needs at least one host.
-The optional retry option adds a tolerance for failed host checks,
-the check will be retried for
-.Ar number
-more times before setting the host state to down.
 .It Ic interval Ar number
 Override the global interval and specify one for this table.
 It must be a multiple of the global interval.
-.It Ic real port Ar port
-When using the TCP or HTTP checking methods, use this
-.Ar port
-to connect to hosts.
-If this parameter is not specified,
-.Xr relayd 8
-will create a template table which inherits the port from the
-referencing service or relay.
-Main and backup tables need to have the same real port.
 .It Ic timeout Ar number
 Set the timeout in milliseconds for each host that is checked using
 TCP as the transport.
 This will override the global timeout, which is 200 milliseconds by default.
 .El
-.Sh SERVICES
-Services represent a
+.Pp
+The following options will set the scheduling algoritm to select a
+host from the specified table:
+.Bl -tag -width Ds
+.It Ic mode roundrobin
+Distributes the outgoing connections using a round-robin scheduler
+through all active hosts.
+This is the default mode and will be used if no option has been specified,
+it is supported by redirections and relays.
+.It Ic mode loadbalance
+Balances the outgoing connections across the active hosts based on the
+hashed name of the table, the source and destination addresses,
+and the corresponding ports.
+This mode is only supported by relays.
+.It Ic mode hash
+Like the
+.Ic loadbalance
+mode, but without including the source and destination addresses and
+ports.
+Additional input can be fed into the hash by looking at HTTP
+headers and GET variables; see the
+.Sx PROTOCOLS
+section below.
+This mode is only supported by relays.
+.El
+.Sh REDIRECTIONS
+Redirections represent a
 .Xr pf 4
 rdr rule.
-They are used to specify which addresses will be redirected
-to the hosts in the specified tables.
-The configuration directives that are valid in this context are described
-below.
+They are used for stateful redirections to the hosts in the specified
+tables,
+.Xr pf 4
+will rewrite the target IP-addresses and ports of the incoming
+connections, operating on layer 3.
+The configuration directives that are valid in the
+.Ic redirect
+context are described below:
 .Bl -tag -width Ds
-.It Ic backup table Ar name
-Specify the table to switch to when all hosts in the main table
-are seen as down or disabled.
 .It Ic disable
 Set the service initially disabled.
 It can be later enabled through
 .Xr relayctl 8 .
+.It Xo
+.Ic forward to
+.Aq Ar table
+.Op Ic port Ar number
+.Ar options...
+.Xc
+Specify the tables of target hosts to be used, see the
+.Sx TABLES
+section above for information about the table options.
+If the
+.Ic port
+option is not specified, the port from the
+.Ic listen on
+directive will be used.
+This directive can be specified twice, the second entry will be used
+as the backup table if all hosts in the main table are down.
+At least one entry for the main table is mandatory.
+.It Xo
+.Ic listen on Ar address Ic port Ar port
+.Op Ic interface Ar name
+.Xc
+Specify an
+.Ar address
+and a
+.Ar port
+to listen on.
+.Xr pf 4
+will redirect incoming connections for the specified target to the
+hosts in the main or backup table.
+The rdr rule can be optionally restricted to a given interface name.
 .It Ic sticky-address
 This has the same effect than specifying sticky-address
 for a rdr rule in
 .Xr pf.conf 5 .
 It will ensure that multiple connections from the same source are
 mapped to the same redirection address.
-.It Xo
-.Ic table Ar name Op Ic port Ar port
-.Xc
-Specify the main table to be used.
-Optionally supply a port which will
-override the real port specification in the table.
-This is mandatory.
 .It Ic tag Ar name
 Automatically tag packets passing through the
 .Xr pf 4
 rdr rule with the name supplied.
 This allows simpler filter rules.
-.It Ic virtual host Ar address Ic port Ar port
-Specify an
-.Ar address
-and a
-.Ar port
-that will be used to redirect requests
-to the hosts in the main or backup table.
-Optionally an interface name can be given as follows,
-to specify which interface the rdr rule will be enabled on:
-.Bd -literal -offset indent
-interface ``ifname''
-.Ed
 .El
 .Sh RELAYS
-Relays will forward TCP traffic between a client and a target server.
-In contrast to IP forwarding and redirection in the network stack, a
-relay will accept incoming TCP connections from remote clients as a
+Relays will forward traffic between a client and a target server.
+In contrast to redirections and IP forwarding in the network stack, a
+relay will accept incoming connections from remote clients as a
 server, open an outgoing connection to a target host, and forward
-any traffic between the target host and the remote client.
-A relay is also called an application layer or layer 7 proxy.
+any traffic between the target host and the remote client,
+operating on layer 7.
+A relay is also called an application layer gateway or layer 7 proxy.
 .Pp
 The main purpose of a relay is to provide advanced load balancing
 functionality based on specified protocol characteristics, such as
 HTTP headers, to provide SSL acceleration functionality and to allow
 basic handling of the underlying application protocol.
 .Pp
-The relay configuration directives are described below.
+The
+.Ic relay
+configuration directives are described below:
 .Bl -tag -width Ds
 .It Xo
-.Ic listen on Ar address Ic port Ar port
+.Ic listen on Ar address
+.Op Ic port Ar port
 .Op Ic ssl
 .Xc
 Specify the address and port for the relay to listen on.
 The relay will accept incoming connections to the specified address.
+If the
+.Ic port
+option is not specified, the port from the
+.Ic listen on
+directive will be used.
 .Pp
 If the
 .Ic ssl
@@ -391,56 +464,34 @@ See
 .Xr ssl 8
 for details about SSL server certificates.
 .It Xo
-.Ic forward to Ar address Ic port Ar port
+.Ic forward to
+.Ar address
+.Op Ic port Ar port
 .Op Ic retry Ar number
 .Xc
 Specify the address and port of the target host to connect to.
-.It Xo
-.Ic service Ar name
-.Op Ic retry Ar number
-.Xc
-Use the first virtual IP address and port from the specified service
-as the target host to connect to.
-This is exclusive to the
-.Ic forward to
-and
-.Ic table
-directives.
-.It Xo
-.Ic table Ar name Ar mode
-.Op Ic no check
-.Xc
-Get the target host from the specified table.
-The following modes are available to select a host from the specified
-table:
-.Pp
-.Bl -tag -width loadbalance -offset indent -compact
-.It Ic roundrobin
-Distributes the outgoing connections using a round-robin scheduler
-through all active hosts.
-.It Ic loadbalance
-Balances the outgoing connections across the active hosts based on the
-hashed name of the table, the source and destination addresses,
-and the corresponding ports.
-.It Ic hash
-Like the
-.Ic loadbalance
-mode, but without including the source and destination addresses and
-ports.
-Additional input can be fed into the hash by looking at HTTP
-headers and GET variables; see the
-.Sx PROTOCOLS
-section below.
-.El
+If the
+.Ic port
+option is not specified, the port from the
+.Ic listen on
+directive will be used.
 .Pp
 The optional host retry option will be used as a tolerance for failed
 host connections; the connection will be retried for
 .Ar number
 more times.
-See the
-.Sx TABLES
-section for details about host entries.
 .It Xo
+.Ic forward to
+.Aq Ar table
+.Op Ic port Ar port
+.Ar options...
+.Xc
+Like the previous directive, but connect to a host from the specified
+table, see the
+.Sx TABLES
+section above for information about the table options.
+.It Xo
+.Ic forward to
 .Ic nat lookup
 .Op Ic retry Ar number
 .Xc
@@ -451,13 +502,10 @@ rule in
 to a relay listening on localhost, this directive will
 look up the real destination address of the intended target host,
 allowing the relay to be run as a transparent proxy.
-If either the
-.Ic forward to ,
-.Ic service ,
-or
-.Ic table
-directive is present, it will be used as a backup if the NAT lookup
-failed.
+If an additional
+.Ic forward to
+directive to a specified address or table is present,
+it will be used as a backup if the NAT lookup failed.
 .It Ic timeout Ar seconds
 Specify the timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
@@ -475,17 +523,13 @@ Protocols are templates defining actions and settings for relays.
 They allow setting generic TCP options, SSL settings, and actions
 specific to the selected application layer protocol.
 .Pp
-The protocol configuration directives are described below.
+The protocol directive is available for a number of different
+application layer protocols:
 .Bl -tag -width Ds
-.It Ic protocol Ar type
-Enable special handling of the specified application layer protocol.
-The supported TCP protocols are:
-.Pp
-.Bl -tag -width http -offset indent -compact
-.It Ic http
+.It Ic http protocol
 Handle the Hypertext Transfer Protocol
 (HTTP or "HTTPS" if encapsulated in a SSL tunnel).
-.It Ic tcp
+.It Ic tcp protocol
 Generic handler for TCP-based protocols.
 .El
 .Pp
@@ -496,14 +540,17 @@ stateless datagram-based protocol which has to look into the
 application layer protocol to find any possible state information.
 The supported UDP protocols are:
 .Pp
-.Bl -tag -width http -offset indent -compact
-.It Ic dns
+.Bl -tag -width Ds
+.It Ic dns protocol
 Domain Name System (DNS) protocol.
 The request IDs in the DNS header will be used to match the state.
 .Xr relayd 8
 will replace these IDs with random values to compensate for
 predictable values generated by some hosts.
 .El
+.Pp
+The available configuration directives are described below:
+.Bl -tag -width Ds
 .It Xo
 .Op Ar direction
 .Op Ar type
@@ -712,8 +759,8 @@ The label will be printed as part of the error message if the
 .Ic return error
 option is set and may contain HTML tags, for example:
 .Bd -literal -offset indent
-label "<a href='http://example.com/advisory.pl?id=7359'>\e
-	Advisory provided by example.com</a>"
+label "\*(Lta href='http://example.com/advisory.pl?id=7359'\*(Gt\e
+	Advisory provided by example.com\*(Lt/a\*(Gt"
 url filter digest 5c1e03f58f8ce0b457474ffb371fd1ef
 url filter digest 80c1a7b8337462093ef8359c57b4d56a
 no label
@@ -867,31 +914,18 @@ www4=front-www4.private.example.com
 
 interval 5
 
-table phphosts {
-	timeout 300
-	real port 8080
-	check http "/" digest "630aa3c2f..."
-	host $www1
-	host $www2
-	host $www3
-	host $www4
-}
+table \*(Ltphphosts\*(Gt { $www1, $www2, $www3, $www4 }
+table \*(Ltsorryhost\*(Gt disable { sorryhost.private.example.com }
 
-table sorryhost {
-	check icmp
-	disable
-	timeout 300
-	real port 8080
-	host sorryhost.private.example.com
-}
+redirect "www" {
+	listen on www.example.com port 8080 interface trunk0
+	listen on www6.example.com port 80 interface trunk0
 
-service www {
-	virtual host www.example.com port 8080 interface trunk0
-	virtual host www6.example.com port 80 interface trunk0
+	tag REDIRECTED
 
-	tag RELAYD
-	table phphosts
-	backup table sorryhost
+	forward to \*(Ltphphosts\*(Gt port 8080 timeout 300 \e
+		check http "/" digest "630aa3c2f..."
+	forward to \*(Ltsorryhost\*(Gt port 8080 timeout 300 check icmp
 }
 .Ed
 .Pp
@@ -899,7 +933,7 @@ The following configuration would add a relay to forward
 secure HTTPS connections to a pool of HTTP webservers
 using the
 .Ic loadbalance
-protocol (SSL acceleration and layer 7 load balancing).
+mode (SSL acceleration and layer 7 load balancing).
 The HTTP protocol definition will add two HTTP headers containing
 address information of the client and the server, set the
 .Dq Keep-Alive
@@ -908,8 +942,7 @@ and include the
 .Dq sessid
 variable in the hash to calculate the target host:
 .Bd -literal -offset indent
-protocol http_ssl {
-	protocol http
+http protocol "http_ssl" {
 	header append "$REMOTE_ADDR" to "X-Forwarded-For"
 	header append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
 	header change "Keep-Alive" to "$TIMEOUT"
@@ -920,10 +953,10 @@ protocol http_ssl {
 	ssl { sslv2, ciphers "MEDIUM:HIGH" }
 }
 
-relay sslaccel {
-        listen on www.example.com port 443 ssl
-        protocol http_ssl
-        table phphosts loadbalance
+relay "sslaccel" {
+	listen on www.example.com port 443 ssl
+	protocol "http_ssl"
+	forward to \*(Ltphphosts\*(Gt port 8080 mode loadbalance check tcp
 }
 .Ed
 .Pp
@@ -936,13 +969,13 @@ option will allow a
 SSH session without delays between keystrokes or displayed output on
 the terminal:
 .Bd -literal -offset indent
-protocol myssh {
+tcp protocol "myssh" {
         tcp { nodelay, socket buffer 65536 }
 }
 
-relay sshforward {
-	protocol myssh
+relay "sshforward" {
         listen on www.example.com port 2222
+	protocol "myssh"
 	forward to shell.example.com port 22
 }
 .Ed
@@ -953,8 +986,14 @@ relay sshforward {
 .Sh HISTORY
 The
 .Nm
-file format first appeared in
+file format, formerly known as
+.Ic hoststated.conf ,
+first appeared in
 .Ox 4.1 .
+It was renamed to
+.Nm
+in
+.Ox 4.3 .
 .Sh AUTHORS
 .An -nosplit
 The
