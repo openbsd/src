@@ -70,7 +70,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (strlen(dirname) + 3 > sizeof(dir->dirname))
 		/* XXXDCL ? */
 		return (ISC_R_NOSPACE);
-	strcpy(dir->dirname, dirname);
+	strlcpy(dir->dirname, dirname, sizeof(dir->dirname));
 
 	/*
 	 * Append path separator, if needed, and "*".

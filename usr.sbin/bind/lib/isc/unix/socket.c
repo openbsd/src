@@ -3127,7 +3127,7 @@ isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 
 	REQUIRE(sockaddr->type.sa.sa_family == AF_UNIX);
 	INSIST(strlen(sockaddr->type.sunix.sun_path) < sizeof(path));
-	strcpy(path, sockaddr->type.sunix.sun_path);
+	strlcpy(path, sockaddr->type.sunix.sun_path, sizeof(path));
 
 #ifdef NEED_SECURE_DIRECTORY
 	slash = strrchr(path, '/');
@@ -3135,9 +3135,9 @@ isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 		if (slash != path)
 			*slash = '\0';
 		else
-			strcpy(path, "/");
+			strlcpy(path, "/", sizeof(path));
 	} else
-		strcpy(path, ".");
+		strlcpy(path, ".", sizeof(path));
 #endif
 	
 	if (chmod(path, perm) < 0) {

@@ -308,7 +308,7 @@ isc_netaddr_frompath(isc_netaddr_t *netaddr, const char *path) {
 
         memset(netaddr, 0, sizeof(*netaddr));
         netaddr->family = AF_UNIX;
-        strcpy(netaddr->type.un, path);
+        strlcpy(netaddr->type.un, path, sizeof(netaddr->type.un));
         netaddr->zone = 0;
         return (ISC_R_SUCCESS);
 #else 

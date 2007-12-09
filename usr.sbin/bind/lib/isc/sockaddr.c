@@ -493,7 +493,7 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	sockaddr->type.sunix.sun_len =
 			(unsigned char)sizeof(sockaddr->type.sunix);
 #endif
-	strcpy(sockaddr->type.sunix.sun_path, path);
+	strlcpy(sockaddr->type.sunix.sun_path, path, sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
 #else
 	UNUSED(sockaddr);
