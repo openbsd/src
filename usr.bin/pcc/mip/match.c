@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.5 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: match.c,v 1.6 2007/12/09 18:42:42 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -415,6 +415,8 @@ swmatch(NODE *p, int shape, int w)
 {
 	int rv = 0;
 
+	F2DEBUG(("swmatch: p=%p, shape=%s, w=%s\n", p, prcook(shape), srtyp[w]));
+
 	switch (w) {
 	case LREG:
 		rv = geninsn(p, shape);
@@ -484,13 +486,16 @@ chcheck(NODE *p, int shape, int rew)
  *	p - node (for this leg)
  *	shape - given shape for this leg
  *	cookie - cookie given for parent node
- *	rv - switch key for traversing down
+ *	rew - 
+ *	go - switch key for traversing down
  *	returns register class.
  */
 static int
 shswitch(int sh, NODE *p, int shape, int cookie, int rew, int go)
 {
 	int lsh;
+
+	F2DEBUG(("shswitch: p=%p, shape=%s, cookie=%s, rew=0x%x, go=%s\n", p, prcook(shape), prcook(cookie), rew, srtyp[go]));
 
 	switch (go) {
 	case SRDIR: /* direct match, just clear su */
@@ -502,9 +507,9 @@ shswitch(int sh, NODE *p, int shape, int cookie, int rew, int go)
 		break;
 
 	case SRREG: /* call geninsn() to get value into register */
-		lsh = shape & INREGS;
+		lsh = shape & (FORCC | INREGS);
 		if (rew && cookie != FOREFF)
-			lsh &= (cookie & INREGS);
+			lsh &= (cookie & (FORCC | INREGS));
 		lsh = swmatch(p, lsh, LREG);
 		if (rew)
 			sh = lsh;
@@ -541,6 +546,9 @@ findops(NODE *p, int cookie)
 		q = &table[ixp[i]];
 
 		F2DEBUG(("findop: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if (ttype(l->n_type, q->ltype) == 0 ||
 		    ttype(r->n_type, q->rtype) == 0)
 			continue; /* Types must be correct */
@@ -556,7 +564,8 @@ findops(NODE *p, int cookie)
 		F2DEBUG(("findop lshape %d\n", shl));
 		F2WALK(l);
 
-		if ((shr = chcheck(r, q->rshape, q->rewrite & RRIGHT))== SRNOPE)			continue;
+		if ((shr = chcheck(r, q->rshape, q->rewrite & RRIGHT)) == SRNOPE)
+			continue;
 
 		F2DEBUG(("findop rshape %d\n", shr));
 		F2WALK(r);
@@ -589,7 +598,7 @@ findops(NODE *p, int cookie)
 	    qq->rewrite & RRIGHT, gor);
 
 	if (sh == -1) {
-		if (cookie == FOREFF)
+		if (cookie == FOREFF || cookie == FORCC)
 			sh = 0;
 		else
 			sh = ffs(cookie & qq->visit & INREGS)-1;
@@ -638,6 +647,9 @@ relops(NODE *p)
 		q = &table[ixp[i]];
 
 		F2DEBUG(("relops: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if (ttype(l->n_type, q->ltype) == 0 ||
 		    ttype(r->n_type, q->rtype) == 0)
 			continue; /* Types must be correct */
@@ -677,7 +689,7 @@ relops(NODE *p)
 	(void)shswitch(-1, p->n_right, q->rshape, FORCC,
 	    q->rewrite & RRIGHT, gor);
 	
-	F2DEBUG(("findops: node %p\n", p));
+	F2DEBUG(("relops: node %p\n", p));
 	p->n_su = MKIDX(idx, 0);
 	SCLASS(p->n_su, CLASSA); /* XXX */
 	return 0;
@@ -718,7 +730,10 @@ findasg(NODE *p, int cookie)
 	for (i = 0; ixp[i] >= 0; i++) {
 		q = &table[ixp[i]];
 
-		F2DEBUG(("asgop: ixp %d\n", ixp[i]));
+		F2DEBUG(("findasg: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if (ttype(l->n_type, q->ltype) == 0 ||
 		    ttype(r->n_type, q->rtype) == 0)
 			continue; /* Types must be correct */
@@ -726,20 +741,20 @@ findasg(NODE *p, int cookie)
 		if ((cookie & q->visit) == 0)
 			continue; /* must get a result */
 
-		F2DEBUG(("asgop got types\n"));
+		F2DEBUG(("findasg got types\n"));
 		if ((shl = tshape(l, q->lshape)) == SRNOPE)
 			continue;
 
 		if (shl == SRREG)
 			continue;
 
-		F2DEBUG(("asgop lshape %d\n", shl));
+		F2DEBUG(("findasg lshape %d\n", shl));
 		F2WALK(l);
 
-		if ((shr = chcheck(r, q->rshape, q->rewrite & RRIGHT))== SRNOPE)
+		if ((shr = chcheck(r, q->rshape, q->rewrite & RRIGHT)) == SRNOPE)
 			continue;
 
-		F2DEBUG(("asgop rshape %d\n", shr));
+		F2DEBUG(("findasg rshape %d\n", shr));
 		F2WALK(r);
 		if (q->needs & REWRITE)
 			break;	/* Done here */
@@ -803,6 +818,9 @@ findumul(NODE *p, int cookie)
 		q = &table[ixp[i]];
 
 		F2DEBUG(("findumul: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if ((q->visit & cookie) == 0)
 			continue; /* wrong registers */
 
@@ -865,6 +883,9 @@ findleaf(NODE *p, int cookie)
 		q = &table[ixp[i]];
 
 		F2DEBUG(("findleaf: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if ((q->visit & cookie) == 0)
 			continue; /* wrong registers */
 
@@ -926,6 +947,9 @@ finduni(NODE *p, int cookie)
 		q = &table[ixp[i]];
 
 		F2DEBUG(("finduni: ixp %d\n", ixp[i]));
+		if (!acceptable(q))		/* target-dependent filter */
+			continue;
+
 		if (ttype(l->n_type, q->ltype) == 0)
 			continue; /* Type must be correct */
 
