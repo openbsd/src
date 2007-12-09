@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2007/12/09 18:49:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -453,7 +453,12 @@ nsetval(CONSZ off, int fsz, NODE *p)
 static void
 setscl(struct symtab *sp)
 {
-	setloc1((sp->squal << TSHIFT) & CON ? RDATA : DATA);
+	int ro = DATA;
+
+	if (BTYPE(sp->stype) == sp->stype && sp->squal == (CON >> TSHIFT))
+		ro = RDATA;
+	/* XXX - readonly pointers */
+	setloc1(ro);
 	defalign(talign(sp->stype, sp->ssue));
 	if (sp->sclass == EXTDEF ||
 	    (sp->sclass == STATIC && sp->slevel == 0)) {
@@ -490,9 +495,11 @@ scalinit(NODE *p)
 
 	p = optim(p);
 
+#ifdef notdef /* leave to the target to decide if useable */
 	if (csym->sclass != AUTO && p->n_op != ICON &&
 	    p->n_op != FCON && p->n_op != NAME)
 		cerror("scalinit not leaf");
+#endif
 
 	/* Out of elements? */
 	if (pstk == NULL) {
@@ -673,7 +680,7 @@ endinit(void)
 					infld(il->off, fsz, il->n->n_lval);
 				} else
 					ninval(il->off, fsz, il->n);
-				nfree(il->n);
+				tfree(il->n);
 			}
 			lastoff = ll->begsz + il->off + fsz;
 		}
@@ -833,7 +840,7 @@ strcvt(NODE *p)
 			i = (unsigned char)s[-1];
 		asginit(bcon(i));
 	} 
-	nfree(p);
+	tfree(p);
 }
 
 /*
@@ -946,10 +953,7 @@ simpleinit(struct symtab *sp, NODE *p)
 		spname = sp;
 		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
 		setscl(sp);
-		if (p->n_right->n_op != ICON && p->n_right->n_op != FCON)
-			uerror("initializer element is not a constant");
-		else
-			ninval(0, p->n_right->n_sue->suesize, p->n_right);
+		ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
 		break;
 
