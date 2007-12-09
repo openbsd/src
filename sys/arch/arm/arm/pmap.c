@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2007/12/09 00:24:04 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -263,7 +263,6 @@ union pmap_cache_state *pmap_cache_state;
  * in pmap_create().
  */
 static struct pool pmap_pmap_pool;
-static struct pool_cache pmap_pmap_cache;
 static LIST_HEAD(, pmap) pmap_pmaps;
 
 /*
@@ -282,7 +281,6 @@ struct pool_allocator pmap_bootstrap_pv_allocator = {
  * allocated. (196 bytes)
  */
 static struct pool pmap_l2dtable_pool;
-static struct pool_cache pmap_l2dtable_cache;
 static vaddr_t pmap_kernel_l2dtable_kva;
 
 /*
@@ -291,7 +289,6 @@ static vaddr_t pmap_kernel_l2dtable_kva;
  * when they're allocated. (1KB)
  */
 static struct pool pmap_l2ptp_pool;
-static struct pool_cache pmap_l2ptp_cache;
 static vaddr_t pmap_kernel_l2ptp_kva;
 static paddr_t pmap_kernel_l2ptp_phys;
 
@@ -420,9 +417,9 @@ struct l2_dtable {
  * L2 allocation.
  */
 #define	pmap_alloc_l2_dtable()		\
-	    pool_cache_get(&pmap_l2dtable_cache, PR_NOWAIT)
+	    pool_get(&pmap_l2dtable_pool, PR_NOWAIT)
 #define	pmap_free_l2_dtable(l2)		\
-	    pool_cache_put(&pmap_l2dtable_cache, (l2))
+	    pool_put(&pmap_l2dtable_pool, (l2))
 /*
 #define POOL_CACHE_PADDR
 */
@@ -436,7 +433,7 @@ pmap_alloc_l2_ptp(paddr_t *pap)
 {
 	pt_entry_t *pted;
 
-	pted = pool_cache_get(&pmap_l2ptp_cache, PR_NOWAIT);
+	pted = pool_get(&pmap_l2ptp_pool, PR_NOWAIT);
 	(void)pmap_extract(pmap_kernel(), (vaddr_t)pted, pap);
 	return pted;
 }
@@ -1012,7 +1009,7 @@ pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
 #ifdef  POOL_CACHE_PADDR
 	pool_cache_put_paddr(&pmap_l2ptp_cache, (void *)l2, pa);
 #else
-	pool_cache_put(&pmap_l2ptp_cache, (void *)l2);
+	pool_put(&pmap_l2ptp_pool, (void *)l2);
 #endif
 }
 
@@ -1888,7 +1885,7 @@ pmap_create(void)
 {
 	pmap_t pm;
 
-	pm = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
+	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_refs = 1;
@@ -3220,7 +3217,7 @@ pmap_destroy(pmap_t pm)
 	pmap_free_l1(pm);
 
 	/* return the pmap to the pool */
-	pool_cache_put(&pmap_pmap_cache, pm);
+	pool_put(&pmap_pmap_pool, pm);
 }
 
 
@@ -3959,8 +3956,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr);
-	pool_cache_init(&pmap_pmap_cache, &pmap_pmap_pool,
-	    pmap_pmap_ctor, NULL, NULL);
+	pool_set_ctordtor(&pmap_pmap_pool, pmap_pmap_ctor, NULL, NULL);
 	LIST_INIT(&pmap_pmaps);
 	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
 
@@ -3975,16 +3971,15 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 */
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
 	    "l2dtblpl", NULL);
-	pool_cache_init(&pmap_l2dtable_cache, &pmap_l2dtable_pool,
-	    pmap_l2dtable_ctor, NULL, NULL);
+	 pool_set_ctordtor(&pmap_l2dtable_pool, pmap_l2dtable_ctor, NULL,
+	     NULL);
 
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, 0, L2_TABLE_SIZE_REAL,
 	    0, "l2ptppl", NULL);
-	pool_cache_init(&pmap_l2ptp_cache, &pmap_l2ptp_pool,
-	    pmap_l2ptp_ctor, NULL, NULL);
+	pool_set_ctordtor(&pmap_l2ptp_pool, pmap_l2ptp_ctor, NULL, NULL);
 
 	cpu_dcache_wbinv_all();
 }

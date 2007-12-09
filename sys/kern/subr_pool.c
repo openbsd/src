@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.55 2007/08/16 15:18:54 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.56 2007/12/09 00:24:04 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -44,20 +44,12 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 
 #include <uvm/uvm.h>
 
-/*
- * XXX - for now.
- */
-#ifdef LOCKDEBUG
-#define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
-#define simple_lock_only_held(lkp, str) do { /* nothing */ } while (0)
-#endif
 
 /*
  * Pool resource management utility.
@@ -76,10 +68,7 @@
 TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
-static struct pool phpool;
-
-/* This spin lock protects both pool_head */
-struct simplelock pool_head_slock;
+struct pool phpool;
 
 struct pool_item_header {
 	/* Page headers */
@@ -114,183 +103,26 @@ struct pool_item {
  */
 unsigned int pool_serial;
 
-/*
- * Pool cache management.
- *
- * Pool caches provide a way for constructed objects to be cached by the
- * pool subsystem.  This can lead to performance improvements by avoiding
- * needless object construction/destruction; it is deferred until absolutely
- * necessary.
- *
- * Caches are grouped into cache groups.  Each cache group references
- * up to 16 constructed objects.  When a cache allocates an object
- * from the pool, it calls the object's constructor and places it into
- * a cache group.  When a cache group frees an object back to the pool,
- * it first calls the object's destructor.  This allows the object to
- * persist in constructed form while freed to the cache.
- *
- * Multiple caches may exist for each pool.  This allows a single
- * object type to have multiple constructed forms.  The pool references
- * each cache, so that when a pool is drained by the pagedaemon, it can
- * drain each individual cache as well.  Each time a cache is drained,
- * the most idle cache group is freed to the pool in its entirety.
- *
- * Pool caches are layed on top of pools.  By layering them, we can avoid
- * the complexity of cache management for pools which would not benefit
- * from it.
- */
-
-/* The cache group pool. */
-static struct pool pcgpool;
-
-/* The pool cache group. */
-#define	PCG_NOBJECTS		16
-struct pool_cache_group {
-	TAILQ_ENTRY(pool_cache_group)
-		pcg_list;	/* link in the pool cache's group list */
-	u_int	pcg_avail;	/* # available objects */
-				/* pointers to the objects */
-	void	*pcg_objects[PCG_NOBJECTS];
-};
-
-void	pool_cache_reclaim(struct pool_cache *);
-void	pool_cache_do_invalidate(struct pool_cache *, int,
-    void (*)(struct pool *, void *));
-
-int	pool_catchup(struct pool *);
-void	pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
-void	pool_update_curpage(struct pool *);
-void	pool_do_put(struct pool *, void *);
-void	pr_rmpage(struct pool *, struct pool_item_header *,
-    struct pool_pagelist *);
+int	 pool_catchup(struct pool *);
+void	 pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
+void	 pool_update_curpage(struct pool *);
+void	*pool_do_get(struct pool *, int);
+void	 pool_do_put(struct pool *, void *);
+void	 pr_rmpage(struct pool *, struct pool_item_header *,
+	    struct pool_pagelist *);
 int	pool_chk_page(struct pool *, const char *, struct pool_item_header *);
+struct pool_item_header *pool_alloc_item_header(struct pool *, caddr_t , int);
 
 void	*pool_allocator_alloc(struct pool *, int);
-void	pool_allocator_free(struct pool *, void *);
+void	 pool_allocator_free(struct pool *, void *);
 
 #ifdef DDB
-void pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...));
-void pool_print1(struct pool *, const char *, int (*)(const char *, ...));
+void	 pool_print_pagelist(struct pool_pagelist *,
+	    int (*)(const char *, ...));
+void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...));
 #endif
 
-
-/*
- * Pool log entry. An array of these is allocated in pool_init().
- */
-struct pool_log {
-	const char	*pl_file;
-	long		pl_line;
-	int		pl_action;
-#define	PRLOG_GET	1
-#define	PRLOG_PUT	2
-	void		*pl_addr;
-};
-
-/* Number of entries in pool log buffers */
-#ifndef POOL_LOGSIZE
-#define	POOL_LOGSIZE	10
-#endif
-
-int pool_logsize = POOL_LOGSIZE;
-
-#ifdef POOL_DIAGNOSTIC
-static __inline void
-pr_log(struct pool *pp, void *v, int action, const char *file, long line)
-{
-	int n = pp->pr_curlogentry;
-	struct pool_log *pl;
-
-	if ((pp->pr_roflags & PR_LOGGING) == 0)
-		return;
-
-	/*
-	 * Fill in the current entry. Wrap around and overwrite
-	 * the oldest entry if necessary.
-	 */
-	pl = &pp->pr_log[n];
-	pl->pl_file = file;
-	pl->pl_line = line;
-	pl->pl_action = action;
-	pl->pl_addr = v;
-	if (++n >= pp->pr_logsize)
-		n = 0;
-	pp->pr_curlogentry = n;
-}
-
-static void
-pr_printlog(struct pool *pp, struct pool_item *pi,
-    int (*pr)(const char *, ...))
-{
-	int i = pp->pr_logsize;
-	int n = pp->pr_curlogentry;
-
-	if ((pp->pr_roflags & PR_LOGGING) == 0)
-		return;
-
-	/*
-	 * Print all entries in this pool's log.
-	 */
-	while (i-- > 0) {
-		struct pool_log *pl = &pp->pr_log[n];
-		if (pl->pl_action != 0) {
-			if (pi == NULL || pi == pl->pl_addr) {
-				(*pr)("\tlog entry %d:\n", i);
-				(*pr)("\t\taction = %s, addr = %p\n",
-				    pl->pl_action == PRLOG_GET ? "get" : "put",
-				    pl->pl_addr);
-				(*pr)("\t\tfile: %s at line %lu\n",
-				    pl->pl_file, pl->pl_line);
-			}
-		}
-		if (++n >= pp->pr_logsize)
-			n = 0;
-	}
-}
-
-static __inline void
-pr_enter(struct pool *pp, const char *file, long line)
-{
-
-	if (__predict_false(pp->pr_entered_file != NULL)) {
-		printf("pool %s: reentrancy at file %s line %ld\n",
-		    pp->pr_wchan, file, line);
-		printf("         previous entry at file %s line %ld\n",
-		    pp->pr_entered_file, pp->pr_entered_line);
-		panic("pr_enter");
-	}
-
-	pp->pr_entered_file = file;
-	pp->pr_entered_line = line;
-}
-
-static __inline void
-pr_leave(struct pool *pp)
-{
-
-	if (__predict_false(pp->pr_entered_file == NULL)) {
-		printf("pool %s not entered?\n", pp->pr_wchan);
-		panic("pr_leave");
-	}
-
-	pp->pr_entered_file = NULL;
-	pp->pr_entered_line = 0;
-}
-
-static __inline void
-pr_enter_check(struct pool *pp, int (*pr)(const char *, ...))
-{
-
-	if (pp->pr_entered_file != NULL)
-		(*pr)("\n\tcurrently entered from file %s line %ld\n",
-		    pp->pr_entered_file, pp->pr_entered_line);
-}
-#else
-#define	pr_log(pp, v, action, file, line)
-#define	pr_printlog(pp, pi, pr)
-#define	pr_enter(pp, file, line)
-#define	pr_leave(pp)
-#define	pr_enter_check(pp, pr)
-#endif /* POOL_DIAGNOSTIC */
+#define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
 
 static __inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
@@ -329,7 +161,6 @@ void
 pr_rmpage(struct pool *pp, struct pool_item_header *ph,
      struct pool_pagelist *pq)
 {
-	int s;
 
 	/*
 	 * If the page was idle, decrement the idle page count.
@@ -350,16 +181,14 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	 * Unlink a page from the pool and release it (or queue it for release).
 	 */
 	LIST_REMOVE(ph, ph_pagelist);
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
+		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 	if (pq) {
 		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 	} else {
 		pool_allocator_free(pp, ph->ph_page);
-		if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
-			SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
-			s = splhigh();
+		if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 			pool_put(&phpool, ph);
-			splx(s);
-		}
 	}
 	pp->pr_npages--;
 	pp->pr_npagefree++;
@@ -379,14 +208,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 {
 	int off, slack;
 
-#ifdef POOL_DIAGNOSTIC
-	/*
-	 * Always log if POOL_DIAGNOSTIC is defined.
-	 */
-	if (pool_logsize != 0)
-		flags |= PR_LOGGING;
-#endif
-
 #ifdef MALLOC_DEBUG
 	if ((flags & PR_DEBUG) && (ioff != 0 || align != 0))
 		flags &= ~PR_DEBUG;
@@ -396,16 +217,10 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 */
 	if (palloc == NULL)
 		palloc = &pool_allocator_nointr;
-	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
-		if (palloc->pa_pagesz == 0)
-			palloc->pa_pagesz = PAGE_SIZE;
-
-		TAILQ_INIT(&palloc->pa_list);
-
-		simple_lock_init(&palloc->pa_slock);
+	if (palloc->pa_pagesz == 0) {
+		palloc->pa_pagesz = PAGE_SIZE;
 		palloc->pa_pagemask = ~(palloc->pa_pagesz - 1);
 		palloc->pa_pageshift = ffs(palloc->pa_pagesz) - 1;
-		palloc->pa_flags |= PA_INITIALIZED;
 	}
 
 	if (align == 0)
@@ -427,7 +242,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	LIST_INIT(&pp->pr_emptypages);
 	LIST_INIT(&pp->pr_fullpages);
 	LIST_INIT(&pp->pr_partpages);
-	TAILQ_INIT(&pp->pr_cachelist);
 	pp->pr_curpage = NULL;
 	pp->pr_npages = 0;
 	pp->pr_minitems = 0;
@@ -497,56 +311,25 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hiwat = 0;
 	pp->pr_nidle = 0;
 
-#ifdef POOL_DIAGNOSTIC
-	if (flags & PR_LOGGING) {
-		if (kmem_map == NULL ||
-		    (pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
-		     M_TEMP, M_NOWAIT)) == NULL)
-			pp->pr_roflags &= ~PR_LOGGING;
-		pp->pr_curlogentry = 0;
-		pp->pr_logsize = pool_logsize;
-	}
-#endif
-
-	pp->pr_entered_file = NULL;
-	pp->pr_entered_line = 0;
-
-	simple_lock_init(&pp->pr_slock);
-
 	pp->pr_ipl = -1;
+	mtx_init(&pp->pr_mtx, IPL_NONE);
 
-	/*
-	 * Initialize private page header pool and cache magazine pool if we
-	 * haven't done so yet.
-	 * XXX LOCKING.
-	 */
 	if (phpool.pr_size == 0) {
 		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0,
 		    0, "phpool", NULL);
-		pool_init(&pcgpool, sizeof(struct pool_cache_group), 0, 0,
-		    0, "pcgpool", NULL);
+		pool_setipl(&phpool, IPL_HIGH);
 	}
 
-	simple_lock_init(&pool_head_slock);
-
 	/* Insert this into the list of all pools. */
-	simple_lock(&pool_head_slock);
 	TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
-	simple_unlock(&pool_head_slock);
-
-	/* Insert into the list of pools using this allocator. */
-	simple_lock(&palloc->pa_slock);
-	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
-	simple_unlock(&palloc->pa_slock);
 }
 
-#ifdef DIAGNOSTIC
 void
 pool_setipl(struct pool *pp, int ipl)
 {
 	pp->pr_ipl = ipl;
+	mtx_init(&pp->pr_mtx, ipl);
 }
-#endif
 
 /*
  * Decommission a pool resource.
@@ -555,23 +338,10 @@ void
 pool_destroy(struct pool *pp)
 {
 	struct pool_item_header *ph;
-	struct pool_cache *pc;
-
-	/* Locking order: pool_allocator -> pool */
-	simple_lock(&pp->pr_alloc->pa_slock);
-	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
-	simple_unlock(&pp->pr_alloc->pa_slock);
-
-	/* Destroy all caches for this pool. */
-	while ((pc = TAILQ_FIRST(&pp->pr_cachelist)) != NULL)
-		pool_cache_destroy(pc);
 
 #ifdef DIAGNOSTIC
-	if (pp->pr_nout != 0) {
-		pr_printlog(pp, NULL, printf);
-		panic("pool_destroy: pool busy: still out: %u",
-		    pp->pr_nout);
-	}
+	if (pp->pr_nout != 0)
+		panic("pool_destroy: pool busy: still out: %u", pp->pr_nout);
 #endif
 
 	/* Remove all pages */
@@ -581,30 +351,18 @@ pool_destroy(struct pool *pp)
 	KASSERT(LIST_EMPTY(&pp->pr_partpages));
 
 	/* Remove from global pool list */
-	simple_lock(&pool_head_slock);
 	TAILQ_REMOVE(&pool_head, pp, pr_poollist);
-	simple_unlock(&pool_head_slock);
-
-#ifdef POOL_DIAGNOSTIC
-	if ((pp->pr_roflags & PR_LOGGING) != 0)
-		free(pp->pr_log, M_TEMP);
-#endif
 }
 
-static struct pool_item_header *
+struct pool_item_header *
 pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 {
 	struct pool_item_header *ph;
-	int s;
-
-	LOCK_ASSERT(simple_lock_held(&pp->pr_slock) == 0);
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		ph = (struct pool_item_header *) (storage + pp->pr_phoffset);
+		ph = (struct pool_item_header *)(storage + pp->pr_phoffset);
 	else {
-		s = splhigh();
 		ph = pool_get(&phpool, flags);
-		splx(s);
 	}
 
 	return (ph);
@@ -614,11 +372,26 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
  * Grab an item from the pool; must be called at appropriate spl level
  */
 void *
-#ifdef POOL_DIAGNOSTIC
-_pool_get(struct pool *pp, int flags, const char *file, long line)
-#else
 pool_get(struct pool *pp, int flags)
-#endif
+{
+	void *v;
+
+	mtx_enter(&pp->pr_mtx);
+	v = pool_do_get(pp, flags);
+	mtx_leave(&pp->pr_mtx);
+	if (v && pp->pr_ctor && pp->pr_ctor(pp->pr_arg, v, flags)) {
+		mtx_enter(&pp->pr_mtx);
+		pool_do_put(pp, v);
+		mtx_leave(&pp->pr_mtx);
+		v = NULL;
+	}
+	if (v)
+		pp->pr_nget++;
+	return (v);
+}
+
+void *
+pool_do_get(struct pool *pp, int flags)
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
@@ -629,14 +402,6 @@ pool_get(struct pool *pp, int flags)
 		splassert(IPL_NONE);
 	if (pp->pr_ipl != -1)
 		splassert(pp->pr_ipl);
-	if (__predict_false(curproc == NULL && /* doing_shutdown == 0 && XXX*/
-			    (flags & PR_WAITOK) != 0))
-		panic("pool_get: %s:must have NOWAIT", pp->pr_wchan);
-
-#ifdef LOCKDEBUG
-	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
-#endif
 #endif /* DIAGNOSTIC */
 
 #ifdef MALLOC_DEBUG
@@ -650,21 +415,15 @@ pool_get(struct pool *pp, int flags)
 	}
 #endif
 
-	simple_lock(&pp->pr_slock);
-	pr_enter(pp, file, line);
-
- startover:
+startover:
 	/*
 	 * Check to see if we've reached the hard limit.  If we have,
 	 * and we can wait, then wait until an item has been returned to
 	 * the pool.
 	 */
 #ifdef DIAGNOSTIC
-	if (__predict_false(pp->pr_nout > pp->pr_hardlimit)) {
-		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		panic("pool_get: %s: crossed hard limit", pp->pr_wchan);
-	}
+	if (__predict_false(pp->pr_nout > pp->pr_hardlimit))
+		panic("pool_do_get: %s: crossed hard limit", pp->pr_wchan);
 #endif
 	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
@@ -673,9 +432,7 @@ pool_get(struct pool *pp, int flags)
 			 * it be?
 			 */
 			pp->pr_flags |= PR_WANTED;
-			pr_leave(pp);
-			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
-			pr_enter(pp, file, line);
+			pool_sleep(pp);
 			goto startover;
 		}
 
@@ -688,9 +445,6 @@ pool_get(struct pool *pp, int flags)
 			log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
 
 		pp->pr_nfail++;
-
-		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
 		return (NULL);
 	}
 
@@ -703,43 +457,25 @@ pool_get(struct pool *pp, int flags)
 	if ((ph = pp->pr_curpage) == NULL) {
 #ifdef DIAGNOSTIC
 		if (pp->pr_nitems != 0) {
-			simple_unlock(&pp->pr_slock);
-			printf("pool_get: %s: curpage NULL, nitems %u\n",
+			printf("pool_do_get: %s: curpage NULL, nitems %u\n",
 			    pp->pr_wchan, pp->pr_nitems);
-			panic("pool_get: nitems inconsistent");
+			panic("pool_do_get: nitems inconsistent");
 		}
 #endif
 
 		/*
 		 * Call the back-end page allocator for more memory.
-		 * Release the pool lock, as the back-end page allocator
-		 * may block.
 		 */
-		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
 		v = pool_allocator_alloc(pp, flags);
 		if (__predict_true(v != NULL))
 			ph = pool_alloc_item_header(pp, v, flags);
-		simple_lock(&pp->pr_slock);
-		pr_enter(pp, file, line);
 
 		if (__predict_false(v == NULL || ph == NULL)) {
 			if (v != NULL)
 				pool_allocator_free(pp, v);
 
-			/*
-			 * We were unable to allocate a page or item
-			 * header, but we released the lock during
-			 * allocation, so perhaps items were freed
-			 * back to the pool.  Check for this case.
-			 */
-			if (pp->pr_curpage != NULL)
-				goto startover;
-
 			if ((flags & PR_WAITOK) == 0) {
 				pp->pr_nfail++;
-				pr_leave(pp);
-				simple_unlock(&pp->pr_slock);
 				return (NULL);
 			}
 
@@ -750,10 +486,7 @@ pool_get(struct pool *pp, int flags)
 			 * try again?
 			 */
 			pp->pr_flags |= PR_WANTED;
-			/* PA_WANTED is already set on the allocator. */
-			pr_leave(pp);
-			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
-			pr_enter(pp, file, line);
+			pool_sleep(pp);
 			goto startover;
 		}
 
@@ -765,28 +498,19 @@ pool_get(struct pool *pp, int flags)
 		goto startover;
 	}
 	if (__predict_false((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)) {
-		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		panic("pool_get: %s: page empty", pp->pr_wchan);
+		panic("pool_do_get: %s: page empty", pp->pr_wchan);
 	}
 #ifdef DIAGNOSTIC
 	if (__predict_false(pp->pr_nitems == 0)) {
-		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		printf("pool_get: %s: items on itemlist, nitems %u\n",
+		printf("pool_do_get: %s: items on itemlist, nitems %u\n",
 		    pp->pr_wchan, pp->pr_nitems);
-		panic("pool_get: nitems inconsistent");
+		panic("pool_do_get: nitems inconsistent");
 	}
-#endif
-
-#ifdef POOL_DIAGNOSTIC
-	pr_log(pp, v, PRLOG_GET, file, line);
 #endif
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
-		pr_printlog(pp, pi, printf);
-		panic("pool_get(%s): free list modified: magic=%x; page %p;"
+		panic("pool_do_get(%s): free list modified: magic=%x; page %p;"
 		       " item addr %p",
 			pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
 	}
@@ -801,7 +525,7 @@ pool_get(struct pool *pp, int flags)
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
 		if (__predict_false(pp->pr_nidle == 0))
-			panic("pool_get: nidle inconsistent");
+			panic("pool_do_get: nidle inconsistent");
 #endif
 		pp->pr_nidle--;
 
@@ -816,9 +540,7 @@ pool_get(struct pool *pp, int flags)
 	if (TAILQ_EMPTY(&ph->ph_itemlist)) {
 #ifdef DIAGNOSTIC
 		if (__predict_false(ph->ph_nmissing != pp->pr_itemsperpage)) {
-			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			panic("pool_get: %s: nmissing inconsistent",
+			panic("pool_do_get: %s: nmissing inconsistent",
 			    pp->pr_wchan);
 		}
 #endif
@@ -831,8 +553,6 @@ pool_get(struct pool *pp, int flags)
 		pool_update_curpage(pp);
 	}
 
-	pp->pr_nget++;
-
 	/*
 	 * If we have a low water mark and we are now below that low
 	 * water mark, add more items to the pool.
@@ -844,14 +564,25 @@ pool_get(struct pool *pp, int flags)
 		 * a caller's assumptions about interrupt protection, etc.
 		 */
 	}
-
-	pr_leave(pp);
-	simple_unlock(&pp->pr_slock);
 	return (v);
 }
 
 /*
- * Internal version of pool_put().  Pool is already locked/entered.
+ * Return resource to the pool; must be called at appropriate spl level
+ */
+void
+pool_put(struct pool *pp, void *v)
+{
+	if (pp->pr_dtor)
+		pp->pr_dtor(pp->pr_arg, v);
+	mtx_enter(&pp->pr_mtx);
+	pool_do_put(pp, v);
+	mtx_leave(&pp->pr_mtx);
+	pp->pr_nput++;
+}
+
+/*
+ * Internal version of pool_put().
  */
 void
 pool_do_put(struct pool *pp, void *v)
@@ -867,8 +598,6 @@ pool_do_put(struct pool *pp, void *v)
 	}
 #endif
 
-	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
-
 	page = (caddr_t)((vaddr_t)v & pp->pr_alloc->pa_pagemask);
 
 #ifdef DIAGNOSTIC
@@ -878,21 +607,13 @@ pool_do_put(struct pool *pp, void *v)
 	if (__predict_false(pp->pr_nout == 0)) {
 		printf("pool %s: putting with none out\n",
 		    pp->pr_wchan);
-		panic("pool_put");
+		panic("pool_do_put");
 	}
 #endif
 
 	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
-		pr_printlog(pp, NULL, printf);
-		panic("pool_put: %s: page header missing", pp->pr_wchan);
+		panic("pool_do_put: %s: page header missing", pp->pr_wchan);
 	}
-
-#ifdef LOCKDEBUG
-	/*
-	 * Check if we're freeing a locked simple lock.
-	 */
-	simple_lock_freecheck((caddr_t)pi, ((caddr_t)pi) + pp->pr_size);
-#endif
 
 	/*
 	 * Return to item list.
@@ -912,7 +633,6 @@ pool_do_put(struct pool *pp, void *v)
 
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
-	pp->pr_nput++;
 	pp->pr_nitems++;
 	pp->pr_nout--;
 
@@ -941,8 +661,7 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_nidle > pp->pr_maxpages ||
-		    (pp->pr_alloc->pa_flags & PA_WANT) != 0) {
+		if (pp->pr_nidle > pp->pr_maxpages) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
@@ -965,42 +684,6 @@ pool_do_put(struct pool *pp, void *v)
 }
 
 /*
- * Return resource to the pool; must be called at appropriate spl level
- */
-#ifdef POOL_DIAGNOSTIC
-void
-_pool_put(struct pool *pp, void *v, const char *file, long line)
-{
-
-	simple_lock(&pp->pr_slock);
-	pr_enter(pp, file, line);
-
-	pr_log(pp, v, PRLOG_PUT, file, line);
-
-	pool_do_put(pp, v);
-
-	pr_leave(pp);
-	simple_unlock(&pp->pr_slock);
-}
-#undef pool_put
-#endif /* POOL_DIAGNOSTIC */
-
-void
-pool_put(struct pool *pp, void *v)
-{
-
-	simple_lock(&pp->pr_slock);
-
-	pool_do_put(pp, v);
-
-	simple_unlock(&pp->pr_slock);
-}
-
-#ifdef POOL_DIAGNOSTIC
-#define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
-#endif
-
-/*
  * Add N items to the pool.
  */
 int
@@ -1010,17 +693,13 @@ pool_prime(struct pool *pp, int n)
 	caddr_t cp;
 	int newpages;
 
-	simple_lock(&pp->pr_slock);
-
+	mtx_enter(&pp->pr_mtx);
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		simple_unlock(&pp->pr_slock);
 		cp = pool_allocator_alloc(pp, PR_NOWAIT);
 		if (__predict_true(cp != NULL))
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		simple_lock(&pp->pr_slock);
-
 		if (__predict_false(cp == NULL || ph == NULL)) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
@@ -1035,7 +714,7 @@ pool_prime(struct pool *pp, int n)
 	if (pp->pr_minpages >= pp->pr_maxpages)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
 
-	simple_unlock(&pp->pr_slock);
+	mtx_leave(&pp->pr_mtx);
 	return (0);
 }
 
@@ -1116,10 +795,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
  * Used by pool_get() when nitems drops below the low water mark.  This
  * is used to catch up pr_nitems with the low water mark.
  *
- * Note 1, we never wait for memory here, we let the caller decide what to do.
- *
- * Note 2, we must be called with the pool already locked, and we return
- * with it locked.
+ * Note we never wait for memory here, we let the caller decide what to do.
  */
 int
 pool_catchup(struct pool *pp)
@@ -1131,15 +807,10 @@ pool_catchup(struct pool *pp)
 	while (POOL_NEEDS_CATCHUP(pp)) {
 		/*
 		 * Call the page back-end allocator for more memory.
-		 *
-		 * XXX: We never wait, so should we bother unlocking
-		 * the pool descriptor?
 		 */
-		simple_unlock(&pp->pr_slock);
 		cp = pool_allocator_alloc(pp, PR_NOWAIT);
 		if (__predict_true(cp != NULL))
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		simple_lock(&pp->pr_slock);
 		if (__predict_false(cp == NULL || ph == NULL)) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
@@ -1167,13 +838,12 @@ void
 pool_setlowat(struct pool *pp, int n)
 {
 
-	simple_lock(&pp->pr_slock);
-
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
+	mtx_enter(&pp->pr_mtx);
 	/* Make sure we're caught up with the newly-set low water mark. */
 	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
 		/*
@@ -1182,21 +852,16 @@ pool_setlowat(struct pool *pp, int n)
 		 * a caller's assumptions about interrupt protection, etc.
 		 */
 	}
-
-	simple_unlock(&pp->pr_slock);
+	mtx_leave(&pp->pr_mtx);
 }
 
 void
 pool_sethiwat(struct pool *pp, int n)
 {
 
-	simple_lock(&pp->pr_slock);
-
 	pp->pr_maxpages = (n == 0)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
-
-	simple_unlock(&pp->pr_slock);
 }
 
 int
@@ -1218,48 +883,38 @@ pool_sethardlimit(struct pool *pp, unsigned n, const char *warnmess, int ratecap
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
 	/*
-	 * In-line version of pool_sethiwat(), because we don't want to
-	 * release the lock.
+	 * In-line version of pool_sethiwat().
 	 */
 	pp->pr_maxpages = (n == 0 || n == UINT_MAX)
 		? n
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
- done:
-	simple_unlock(&pp->pr_slock);
-
+done:
 	return (error);
 }
 
+void
+pool_set_ctordtor(struct pool *pp, int (*ctor)(void *, void *, int),
+    void (*dtor)(void *, void *), void *arg)
+{
+	pp->pr_ctor = ctor;
+	pp->pr_dtor = dtor;
+	pp->pr_arg = arg;
+}
 /*
  * Release all complete pages that have not been used recently.
  *
  * Returns non-zero if any pages have been reclaimed.
  */
 int
-#ifdef POOL_DIAGNOSTIC
-_pool_reclaim(struct pool *pp, const char *file, long line)
-#else
 pool_reclaim(struct pool *pp)
-#endif
 {
 	struct pool_item_header *ph, *phnext;
-	struct pool_cache *pc;
 	struct pool_pagelist pq;
-	int s;
-
-	if (simple_lock_try(&pp->pr_slock) == 0)
-		return (0);
-	pr_enter(pp, file, line);
 
 	LIST_INIT(&pq);
 
-	/*
-	 * Reclaim items from the pool's caches.
-	 */
-	TAILQ_FOREACH(pc, &pp->pr_cachelist, pc_poollist)
-		pool_cache_reclaim(pc);
-
+	mtx_enter(&pp->pr_mtx);
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
 
@@ -1279,21 +934,16 @@ pool_reclaim(struct pool *pp)
 
 		pr_rmpage(pp, ph, &pq);
 	}
+	mtx_leave(&pp->pr_mtx);
 
-	pr_leave(pp);
-	simple_unlock(&pp->pr_slock);
 	if (LIST_EMPTY(&pq))
 		return (0);
 	while ((ph = LIST_FIRST(&pq)) != NULL) {
 		LIST_REMOVE(ph, ph_pagelist);
 		pool_allocator_free(pp, ph->ph_page);
-		if (pp->pr_roflags & PR_PHINPAGE) {
+		if (pp->pr_roflags & PR_PHINPAGE)
 			continue;
-		}
-		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
-		s = splhigh();
 		pool_put(&phpool, ph);
-		splx(s);
 	}
 
 	return (1);
@@ -1310,18 +960,7 @@ pool_reclaim(struct pool *pp)
 void
 pool_printit(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 {
-	int s;
-
-	s = splvm();
-	if (simple_lock_try(&pp->pr_slock) == 0) {
-		pr("pool %s is locked; try again later\n",
-		    pp->pr_wchan);
-		splx(s);
-		return;
-	}
 	pool_print1(pp, modif, pr);
-	simple_unlock(&pp->pr_slock);
-	splx(s);
 }
 
 void
@@ -1350,18 +989,12 @@ void
 pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
-	struct pool_cache *pc;
-	struct pool_cache_group *pcg;
-	int i, print_log = 0, print_pagelist = 0, print_cache = 0;
+	int print_pagelist = 0;
 	char c;
 
 	while ((c = *modif++) != '\0') {
-		if (c == 'l')
-			print_log = 1;
 		if (c == 'p')
 			print_pagelist = 1;
-		if (c == 'c')
-			print_cache = 1;
 		modif++;
 	}
 
@@ -1380,7 +1013,7 @@ pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 	    pp->pr_npagealloc, pp->pr_npagefree, pp->pr_hiwat, pp->pr_nidle);
 
 	if (print_pagelist == 0)
-		goto skip_pagelist;
+		return;
 
 	if ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
 		(*pr)("\n\tempty page list:\n");
@@ -1396,35 +1029,6 @@ pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 		(*pr)("\tno current page\n");
 	else
 		(*pr)("\tcurpage %p\n", pp->pr_curpage->ph_page);
-
-skip_pagelist:
-	if (print_log == 0)
-		goto skip_log;
-
-	(*pr)("\n");
-	if ((pp->pr_roflags & PR_LOGGING) == 0)
-		(*pr)("\tno log\n");
-	else
-		pr_printlog(pp, NULL, pr);
-
-skip_log:
-	if (print_cache == 0)
-		goto skip_cache;
-
-	TAILQ_FOREACH(pc, &pp->pr_cachelist, pc_poollist) {
-		(*pr)("\tcache %p: allocfrom %p freeto %p\n", pc,
-		    pc->pc_allocfrom, pc->pc_freeto);
-		(*pr)("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
-		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
-		TAILQ_FOREACH(pcg, &pc->pc_grouplist, pcg_list) {
-			(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);
-			for (i = 0; i < PCG_NOBJECTS; i++)
-				(*pr)("\t\t\t%p\n", pcg->pcg_objects[i]);
-		}
-	}
-
-skip_cache:
-	pr_enter_check(pp, pr);
 }
 
 void
@@ -1556,7 +1160,6 @@ pool_chk(struct pool *pp, const char *label)
 	struct pool_item_header *ph;
 	int r = 0;
 
-	simple_lock(&pp->pr_slock);
 	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
 		r = pool_chk_page(pp, label, ph);
 		if (r) {
@@ -1577,292 +1180,9 @@ pool_chk(struct pool *pp, const char *label)
 	}
 
 out:
-	simple_unlock(&pp->pr_slock);
 	return (r);
 }
 #endif
-
-/*
- * pool_cache_init:
- *
- *	Initialize a pool cache.
- *
- *	NOTE: If the pool must be protected from interrupts, we expect
- *	to be called at the appropriate interrupt priority level.
- */
-void
-pool_cache_init(struct pool_cache *pc, struct pool *pp,
-    int (*ctor)(void *, void *, int),
-    void (*dtor)(void *, void *),
-    void *arg)
-{
-
-	TAILQ_INIT(&pc->pc_grouplist);
-	simple_lock_init(&pc->pc_slock);
-
-	pc->pc_allocfrom = NULL;
-	pc->pc_freeto = NULL;
-	pc->pc_pool = pp;
-
-	pc->pc_ctor = ctor;
-	pc->pc_dtor = dtor;
-	pc->pc_arg  = arg;
-
-	pc->pc_hits   = 0;
-	pc->pc_misses = 0;
-
-	pc->pc_ngroups = 0;
-
-	pc->pc_nitems = 0;
-
-	simple_lock(&pp->pr_slock);
-	TAILQ_INSERT_TAIL(&pp->pr_cachelist, pc, pc_poollist);
-	simple_unlock(&pp->pr_slock);
-}
-
-/*
- * pool_cache_destroy:
- *
- *	Destroy a pool cache.
- */
-void
-pool_cache_destroy(struct pool_cache *pc)
-{
-	struct pool *pp = pc->pc_pool;
-
-	/* First, invalidate the entire cache. */
-	pool_cache_invalidate(pc);
-
-	/* ...and remove it from the pool's cache list. */
-	simple_lock(&pp->pr_slock);
-	TAILQ_REMOVE(&pp->pr_cachelist, pc, pc_poollist);
-	simple_unlock(&pp->pr_slock);
-}
-
-static __inline void *
-pcg_get(struct pool_cache_group *pcg)
-{
-	void *object;
-	u_int idx;
-
-	KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
-	KASSERT(pcg->pcg_avail != 0);
-	idx = --pcg->pcg_avail;
-
-	KASSERT(pcg->pcg_objects[idx] != NULL);
-	object = pcg->pcg_objects[idx];
-	pcg->pcg_objects[idx] = NULL;
-
-	return (object);
-}
-
-static __inline void
-pcg_put(struct pool_cache_group *pcg, void *object)
-{
-	u_int idx;
-
-	KASSERT(pcg->pcg_avail < PCG_NOBJECTS);
-	idx = pcg->pcg_avail++;
-
-	KASSERT(pcg->pcg_objects[idx] == NULL);
-	pcg->pcg_objects[idx] = object;
-}
-
-/*
- * pool_cache_get:
- *
- *	Get an object from a pool cache.
- */
-void *
-pool_cache_get(struct pool_cache *pc, int flags)
-{
-	struct pool_cache_group *pcg;
-	void *object;
-
-#ifdef LOCKDEBUG
-	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_cache_get(PR_WAITOK)");
-#endif
-
-	simple_lock(&pc->pc_slock);
-
-	if ((pcg = pc->pc_allocfrom) == NULL) {
-		TAILQ_FOREACH(pcg, &pc->pc_grouplist, pcg_list) {
-			if (pcg->pcg_avail != 0) {
-				pc->pc_allocfrom = pcg;
-				goto have_group;
-			}
-		}
-
-		/*
-		 * No groups with any available objects.  Allocate
-		 * a new object, construct it, and return it to
-		 * the caller.  We will allocate a group, if necessary,
-		 * when the object is freed back to the cache.
-		 */
-		pc->pc_misses++;
-		simple_unlock(&pc->pc_slock);
-		object = pool_get(pc->pc_pool, flags);
-		if (object != NULL && pc->pc_ctor != NULL) {
-			if ((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0) {
-				pool_put(pc->pc_pool, object);
-				return (NULL);
-			}
-		}
-		return (object);
-	}
-
- have_group:
-	pc->pc_hits++;
-	pc->pc_nitems--;
-	object = pcg_get(pcg);
-
-	if (pcg->pcg_avail == 0)
-		pc->pc_allocfrom = NULL;
-
-	simple_unlock(&pc->pc_slock);
-
-	return (object);
-}
-
-/*
- * pool_cache_put:
- *
- *	Put an object back to the pool cache.
- */
-void
-pool_cache_put(struct pool_cache *pc, void *object)
-{
-	struct pool_cache_group *pcg;
-	int s;
-
-	simple_lock(&pc->pc_slock);
-
-	if ((pcg = pc->pc_freeto) == NULL) {
-		TAILQ_FOREACH(pcg, &pc->pc_grouplist, pcg_list) {
-			if (pcg->pcg_avail != PCG_NOBJECTS) {
-				pc->pc_freeto = pcg;
-				goto have_group;
-			}
-		}
-
-		/*
-		 * No empty groups to free the object to.  Attempt to
-		 * allocate one.
-		 */
-		simple_unlock(&pc->pc_slock);
-		s = splvm();
-		pcg = pool_get(&pcgpool, PR_NOWAIT);
-		splx(s);
-		if (pcg != NULL) {
-			memset(pcg, 0, sizeof(*pcg));
-			simple_lock(&pc->pc_slock);
-			pc->pc_ngroups++;
-			TAILQ_INSERT_TAIL(&pc->pc_grouplist, pcg, pcg_list);
-			if (pc->pc_freeto == NULL)
-				pc->pc_freeto = pcg;
-			goto have_group;
-		}
-
-		/*
-		 * Unable to allocate a cache group; destruct the object
-		 * and free it back to the pool.
-		 */
-		pool_cache_destruct_object(pc, object);
-		return;
-	}
-
- have_group:
-	pc->pc_nitems++;
-	pcg_put(pcg, object);
-
-	if (pcg->pcg_avail == PCG_NOBJECTS)
-		pc->pc_freeto = NULL;
-
-	simple_unlock(&pc->pc_slock);
-}
-
-/*
- * pool_cache_destruct_object:
- *
- *	Force destruction of an object and its release back into
- *	the pool.
- */
-void
-pool_cache_destruct_object(struct pool_cache *pc, void *object)
-{
-
-	if (pc->pc_dtor != NULL)
-		(*pc->pc_dtor)(pc->pc_arg, object);
-	pool_put(pc->pc_pool, object);
-}
-
-/*
- * pool_cache_do_invalidate:
- *
- *	This internal function implements pool_cache_invalidate() and
- *	pool_cache_reclaim().
- */
-void
-pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
-    void (*putit)(struct pool *, void *))
-{
-	struct pool_cache_group *pcg, *npcg;
-	void *object;
-	int s;
-
-	for (pcg = TAILQ_FIRST(&pc->pc_grouplist); pcg != NULL;
-	     pcg = npcg) {
-		npcg = TAILQ_NEXT(pcg, pcg_list);
-		while (pcg->pcg_avail != 0) {
-			pc->pc_nitems--;
-			object = pcg_get(pcg);
-			if (pcg->pcg_avail == 0 && pc->pc_allocfrom == pcg)
-				pc->pc_allocfrom = NULL;
-			if (pc->pc_dtor != NULL)
-				(*pc->pc_dtor)(pc->pc_arg, object);
-			(*putit)(pc->pc_pool, object);
-		}
-		if (free_groups) {
-			pc->pc_ngroups--;
-			TAILQ_REMOVE(&pc->pc_grouplist, pcg, pcg_list);
-			if (pc->pc_freeto == pcg)
-				pc->pc_freeto = NULL;
-			s = splvm();
-			pool_put(&pcgpool, pcg);
-			splx(s);
-		}
-	}
-}
-
-/*
- * pool_cache_invalidate:
- *
- *	Invalidate a pool cache (destruct and release all of the
- *	cached objects).
- */
-void
-pool_cache_invalidate(struct pool_cache *pc)
-{
-
-	simple_lock(&pc->pc_slock);
-	pool_cache_do_invalidate(pc, 0, pool_put);
-	simple_unlock(&pc->pc_slock);
-}
-
-/*
- * pool_cache_reclaim:
- *
- *	Reclaim a pool cache for pool_reclaim().
- */
-void
-pool_cache_reclaim(struct pool_cache *pc)
-{
-
-	simple_lock(&pc->pc_slock);
-	pool_cache_do_invalidate(pc, 1, pool_do_put);
-	simple_unlock(&pc->pc_slock);
-}
 
 /*
  * We have three different sysctls.
@@ -1900,7 +1220,6 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 	}
 
 	s = splvm();
-	simple_lock(&pool_head_slock);
 
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		npools++;
@@ -1910,7 +1229,6 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		}
 	}
 
-	simple_unlock(&pool_head_slock);
 	splx(s);
 
 	if (*name != KERN_POOL_NPOOLS && foundpool == NULL)
@@ -1978,29 +1296,8 @@ void
 pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
-	int s;
 
 	(*pa->pa_free)(pp, v);
-
-	s = splvm();
-	simple_lock(&pa->pa_slock);
-	if ((pa->pa_flags & PA_WANT) == 0) {
-		simple_unlock(&pa->pa_slock);
-		splx(s);
-		return;
-	}
-
-	TAILQ_FOREACH(pp, &pa->pa_list, pr_alloc_list) {
-		simple_lock(&pp->pr_slock);
-		if ((pp->pr_flags & PR_WANTED) != 0) {
-			pp->pr_flags &= ~PR_WANTED;
-			wakeup(pp);
-		}
-		simple_unlock(&pp->pr_slock);
-	}
-	pa->pa_flags &= ~PA_WANT;
-	simple_unlock(&pa->pa_slock);
-	splx(s);
 }
 
 void *

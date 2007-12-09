@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.53 2007/09/03 17:29:58 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.54 2007/12/09 00:24:04 tedu Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -260,7 +260,6 @@ TAILQ_HEAD(, pmap) pmap_all_pmaps;
  */
 struct pool pmap_pmap_pool;
 struct pool pmap_l1pt_pool;
-struct pool_cache pmap_l1pt_cache;
 struct pool pmap_asn_pool;
 struct pool pmap_asngen_pool;
 struct pool pmap_pv_pool;
@@ -903,8 +902,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	    &pool_allocator_nointr);
 	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
 	    &pmap_l1pt_allocator);
-	pool_cache_init(&pmap_l1pt_cache, &pmap_l1pt_pool, pmap_l1pt_ctor,
-	    NULL, NULL);
+	pool_set_ctordtor(&pmap_l1pt_pool, pmap_l1pt_ctor, NULL, NULL);
 	pool_init(&pmap_asn_pool, pmap_ncpuids * sizeof(u_int), 0, 0, 0,
 	    "pmasnpl", &pool_allocator_nointr);
 	pool_init(&pmap_asngen_pool, pmap_ncpuids * sizeof(u_long), 0, 0, 0,
@@ -3418,8 +3416,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		va += ALPHA_L2SEG_SIZE;
 	}
 
+#if 0
 	/* Invalidate the L1 PT cache. */
 	pool_cache_invalidate(&pmap_l1pt_cache);
+#endif
 
 	virtual_end = va;
 
@@ -3455,7 +3455,7 @@ pmap_lev1map_create(pmap_t pmap, cpuid_t cpu_id)
 
 	simple_lock(&pmap_growkernel_slock);
 
-	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
+	l1pt = pool_get(&pmap_l1pt_pool, PR_NOWAIT);
 	if (l1pt == NULL) {
 		simple_unlock(&pmap_growkernel_slock);
 		return (ENOMEM);
@@ -3523,7 +3523,7 @@ pmap_lev1map_destroy(pmap_t pmap, cpuid_t cpu_id)
 	/*
 	 * Free the old level 1 page table page.
 	 */
-	pool_cache_put(&pmap_l1pt_cache, l1pt);
+	pool_put(&pmap_l1pt_pool, l1pt);
 }
 
 /*

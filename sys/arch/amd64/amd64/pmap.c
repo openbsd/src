@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2007/11/03 22:23:35 mikeb Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 2007/12/09 00:24:04 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -280,11 +280,10 @@ struct pool pmap_pmap_pool;
 TAILQ_HEAD(pg_to_free, vm_page);
 
 /*
- * pool and cache that PDPs are allocated from
+ * pool that PDPs are allocated from
  */
 
 struct pool pmap_pdp_pool;
-struct pool_cache pmap_pdp_cache;
 u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
@@ -719,13 +718,13 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	pool_sethiwat(&pmap_pv_pool, 32 * 1024);
 
 	/*
-	 * initialize the PDE pool and cache.
+	 * initialize the PDE pool.
 	 */
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
 		  &pool_allocator_nointr);
-	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, NULL, NULL);
+	pool_set_ctordtor(&pmap_pdp_pool, pmap_pdp_ctor, NULL, NULL);
+
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1074,10 +1073,10 @@ pmap_create(void)
 
 try_again:
 	gen = pmap_pdp_cache_generation;
-	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
+	pmap->pm_pdir = pool_get(&pmap_pdp_pool, PR_WAITOK);
 
 	if (gen != pmap_pdp_cache_generation) {
-		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+		pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 		goto try_again;
 	}
 
@@ -1135,7 +1134,7 @@ pmap_destroy(struct pmap *pmap)
 	 * APTE space because we do that in pmap_unmap_ptes().
 	 */
 	/* XXX: need to flush it out of other processor's APTE space? */
-	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
+	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -2393,7 +2392,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		}
 
 		/* Invalidate the PDP cache. */
+#if 0  
 		pool_cache_invalidate(&pmap_pdp_cache);
+#endif
 		pmap_pdp_cache_generation++;
 	}
 	pmap_maxkvaddr = maxkvaddr;
