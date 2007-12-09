@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.27 2007/12/09 00:09:22 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.28 2007/12/09 18:21:14 kettenis Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -762,7 +762,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	 * Until the issue is solved, simply restore it.
 	 */
 
-#if 0
 	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
 	if (regval != (isc->gatt->ag_physical | 1)) {
 #if DEBUG
@@ -772,8 +771,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
 		    isc->gatt->ag_physical | 1);
 	}
-#endif 
-	regval = 0;
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
