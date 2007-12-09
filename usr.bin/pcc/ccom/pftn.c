@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.8 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.9 2007/12/09 18:47:07 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -748,6 +748,7 @@ enumhd(char *name)
 NODE *
 enumdcl(struct symtab *sp)
 {
+	NODE *p;
 	TWORD t;
 
 #ifdef ENUMSIZE
@@ -764,7 +765,9 @@ enumdcl(struct symtab *sp)
 		sp->stype = t;
 		sp->ssue = MKSUE(t);
 	}
-	return mkty(t, 0, MKSUE(t));
+	p = mkty(t, 0, MKSUE(t));
+	p->n_sp = sp;
+	return p;
 }
 
 /*
@@ -774,12 +777,15 @@ NODE *
 enumref(char *name)
 {
 	struct symtab *sp;
+	NODE *p;
 
 	sp = lookup(name, STAGNAME);
 	if (sp->sclass != ENAME)
 		uerror("enum %s undeclared", name);
 
-	return mkty(sp->stype, 0, sp->ssue);
+	p = mkty(sp->stype, 0, sp->ssue);
+	p->n_sp = sp;
+	return p;
 }
 
 /*
@@ -1169,7 +1175,7 @@ wstrend(char *str)
 	}
 	p->n_df->ddim = (i+1) * ((MKSUE(WCHAR_TYPE))->suesize/SZCHAR);
 	p->n_sp = sp;
-	return(p);
+	return(clocal(p));
 }
 
 /*
@@ -1218,7 +1224,7 @@ strend(char *str)
 	}
 	p->n_df->ddim = i+1;
 	p->n_sp = s;
-	return(p);
+	return(clocal(p));
 }
 
 /*
@@ -1598,162 +1604,135 @@ lcommprint(void)
 }
 
 /*
- * Merges a type tree into one type. Returns one type node with merged types
- * and class stored in the su field. Frees all other nodes.
- * XXX - classes in typedefs?
+ * Merge given types to a single node.
+ * Any type can end up here.
+ * p is the old node, q is the old (if any).
+ * CLASS is AUTO, EXTERN, REGISTER, STATIC or TYPEDEF.
+ * QUALIFIER is VOL or CON
+ * TYPE is CHAR, SHORT, INT, LONG, SIGNED, UNSIGNED, VOID, BOOL, FLOAT,
+ * 	DOUBLE, STRTY, UNIONTY.
  */
 NODE *
 typenode(NODE *p)
 {
-	NODE *l, *sp = NULL;
-	int class = 0, adj, noun, sign;
-	TWORD qual = 0;
+	NODE *q, *saved;
+	TWORD type;
+	int class, qual;
+	int sig, uns;
 
-	adj = INT;	/* INT, LONG or SHORT */
-	noun = UNDEF;	/* INT, CHAR or FLOAT */
-	sign = 0;	/* 0, SIGNED or UNSIGNED */
+	type = class = qual = sig = uns = 0;
+	saved = NIL;
 
-	/* Remove initial QUALIFIERs */
-	if (p && p->n_op == QUALIFIER) {
-		qual = p->n_type;
-		l = p->n_left;
-		nfree(p);
-		p = l;
-	}
-
-	/* Handle initial classes special */
-	if (p && p->n_op == CLASS) {
-		class = p->n_type;
-		l = p->n_left;
-		nfree(p);
-		p = l;
-	}
-
-	/* Remove more QUALIFIERs */
-	if (p && p->n_op == QUALIFIER) {
-		qual |= p->n_type;
-		l = p->n_left;
-		nfree(p);
-		p = l;
-	}
-
-ag:	if (p && p->n_op == TYPE) {
-		if (p->n_left == NIL) {
-#ifdef CHAR_UNSIGNED
-			if (p->n_type == CHAR)
-				p->n_type = UCHAR;
-#endif
-			if (p->n_type == SIGNED)
-				p->n_type = INT;
-uni:			p->n_lval = class;
-			p->n_qual = qual >> TSHIFT;
-			return p;
-		} else if (p->n_left->n_op == QUALIFIER) {
-			qual |= p->n_left->n_type;
-			l = p->n_left;
-			p->n_left = l->n_left;
-			nfree(l);
-			goto ag;
-		} else if (ISSTR(p->n_type)) {
-			/* Save node; needed for return */
-			sp = p;
-			p = p->n_left;
-		}
-	}
-
-	while (p != NIL) { 
-		if (p->n_op == QUALIFIER) {
-			qual |= p->n_type;
-			goto next;
-		}
-		if (p->n_op == CLASS) {
-			if (class != 0)
-				uerror("too many storage classes");
-			class = p->n_type;
-			goto next;
-		}
-		if (p->n_op != TYPE)
-			cerror("typenode got notype %d", p->n_op);
-		switch (p->n_type) {
-		case UCHAR:
-		case USHORT: /* may come from typedef */
-			if (sign != 0 || adj != INT)
-				goto bad;
-			noun = p->n_type;
-			break;
-		case SIGNED:
-		case UNSIGNED:
-			if (sign != 0)
-				goto bad;
-			sign = p->n_type;
-			break;
-		case LONG:
-			if (adj == LONG) {
-				adj = LONGLONG;
-				break;
-			}
-			/* FALLTHROUGH */
-		case SHORT:
-			if (adj != INT)
-				goto bad;
-			adj = p->n_type;
-			break;
-		case INT:
-		case CHAR:
-		case FLOAT:
-		case DOUBLE:
-			if (noun != UNDEF)
-				goto bad;
-			noun = p->n_type;
-			break;
-		case VOID:
-			if (noun != UNDEF || adj != INT)
-				goto bad;
-			adj = noun = VOID;
-			break;
-		case STRTY:
-		case UNIONTY:
-			break;
-		default:
-			goto bad;
-		}
-	next:
-		l = p->n_left;
-		nfree(p);
-		p = l;
-	}
-
-	if (sp) {
-		p = sp;
-		goto uni;
-	}
-
-#ifdef CHAR_UNSIGNED
-	if (noun == CHAR && sign == 0)
-		sign = UNSIGNED;
-#endif
-	if (noun == UNDEF) {
-		noun = INT;
-	} else if (noun == FLOAT) {
-		if (sign != 0 || adj == SHORT)
-			goto bad;
-		noun = (adj == LONG ? DOUBLE : FLOAT);
-	} else if (noun == DOUBLE) {
-		if (sign != 0 || adj == SHORT)
-			goto bad;
-		noun = (adj == LONG ? LDOUBLE : DOUBLE);
-	} else if (noun == CHAR && adj != INT)
-		goto bad;
-
-	if (adj != INT && (noun != DOUBLE && noun != LDOUBLE))
-		noun = adj;
-	if (sign == UNSIGNED)
-		noun += (UNSIGNED-INT);
-
-	p = block(TYPE, NIL, NIL, noun, 0, 0);
-	p->n_qual = qual >> TSHIFT;
 	if (strunem != 0)
 		class = strunem;
+
+	for (q = p; p; p = p->n_left) {
+		switch (p->n_op) {
+		case CLASS:
+			if (class)
+				goto bad; /* max 1 class */
+			class = p->n_type;
+			break;
+
+		case QUALIFIER:
+			qual |= p->n_type >> TSHIFT;
+			break;
+
+		case TYPE:
+			if (p->n_sp != NULL || ISSOU(p->n_type)) {
+				/* typedef, enum or struct/union */
+				if (saved || type)
+					goto bad;
+				saved = p;
+				break;
+			} else if ((p->n_type == SIGNED && uns) ||
+			    (p->n_type == UNSIGNED && sig))
+				goto bad;
+
+			switch (p->n_type) {
+			case BOOL:
+			case CHAR:
+			case FLOAT:
+			case VOID:
+				if (type)
+					goto bad;
+				type = p->n_type;
+				break;
+			case DOUBLE:
+				if (type == 0)
+					type = DOUBLE;
+				else if (type == LONG)
+					type = LDOUBLE;
+				else
+					goto bad;
+				break;
+			case SHORT:
+				if (type == 0 || type == INT)
+					type = SHORT;
+				else
+					goto bad;
+				break;
+			case INT:
+				if (type == SHORT || type == LONG ||
+				    type == LONGLONG)
+					break;
+				else if (type == 0)
+					type = INT;
+				else
+					goto bad;
+				break;
+			case LONG:
+				if (type == 0)
+					type = LONG;
+				else if (type == INT)
+					break;
+				else if (type == LONG)
+					type = LONGLONG;
+				else if (type == DOUBLE)
+					type = LDOUBLE;
+				else
+					goto bad;
+				break;
+			case SIGNED:
+				if (sig || uns)
+					goto bad;
+				sig = 1;
+				break;
+			case UNSIGNED:
+				if (sig || uns)
+					goto bad;
+				uns = 1;
+				break;
+			default:
+				cerror("typenode");
+			}
+		}
+	}
+	if (saved && type)
+		goto bad;
+	if (sig || uns) {
+		if (type == 0)
+			type = sig ? INT : UNSIGNED;
+		if (type > ULONGLONG)
+			goto bad;
+		if (uns)
+			type = ENUNSIGN(type);
+	}
+#ifdef CHAR_UNSIGNED
+	if (type == CHAR && sig == 0)
+		type = UCHAR;
+#endif
+
+	/* free the chain */
+	while (q) {
+		p = q->n_left;
+		if (q != saved)
+			nfree(q);
+		q = p;
+	}
+
+	p = (saved ? saved : block(TYPE, NIL, NIL, type, 0, 0));
+	p->n_qual = qual;
 	p->n_lval = class;
 	return p;
 
@@ -1800,7 +1779,7 @@ tymerge(NODE *typ, NODE *idp)
 #endif
 
 	idp->n_type = typ->n_type;
-	idp->n_qual = (typ->n_qual << TSHIFT) | idp->n_qual; /* XXX ??? */
+	idp->n_qual = typ->n_qual;
 
 	tylkp = &tylnk;
 	tylkp->next = NULL;
@@ -1825,7 +1804,7 @@ tymerge(NODE *typ, NODE *idp)
 	/* now idp is a single node: fix up type */
 
 	idp->n_type = ctype(idp->n_type);
-	idp->n_qual = DECQAL(idp->n_qual);
+//	idp->n_qual = DECQAL(idp->n_qual);
 
 	/* in case ctype has rewritten things */
 	if ((t = BTYPE(idp->n_type)) != STRTY && t != UNIONTY)
