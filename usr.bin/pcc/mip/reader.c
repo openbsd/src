@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.10 2007/11/17 12:00:37 ragge Exp $	*/
+/*	$OpenBSD: reader.c,v 1.11 2007/12/09 18:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -402,7 +402,8 @@ again:	switch (o = p->n_op) {
 	case UGT:
 		p1 = p->n_left;
 		p2 = p->n_right;
-		if (p2->n_op == ICON && p2->n_lval == 0) {
+		if (p2->n_op == ICON && p2->n_lval == 0 &&
+		    optype(p1->n_op) == BITYPE) {
 			if (findops(p1, FORCC) == 0)
 				break;
 		}
@@ -632,6 +633,10 @@ gencode(NODE *p, int cookie)
 		int lr = rspecial(q, NLEFT);
 
 		if (rr >= 0) {
+#ifdef PCC_DEBUG
+			if (optype(p->n_op) != BITYPE)
+				comperr("gencode: rspecial borked");
+#endif
 			if (r->n_op != REG)
 				comperr("gencode: rop != REG");
 			if (rr != r->n_rval)
