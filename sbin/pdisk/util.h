@@ -52,7 +52,6 @@
 /*
  * Forward declarations
  */
-void clear_memory(void *dataPtr, unsigned long size);
 int istrncmp(const char *x, const char *y, long len);
 const char *get_version_string(void);
 

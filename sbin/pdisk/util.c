@@ -65,19 +65,6 @@
 /*
  * Routines
  */
-void
-clear_memory(void *dataPtr, unsigned long size)
-{
-    char           *ptr;
-
-    ptr = (char *) dataPtr;
-    while (size > 0) {
-	*ptr++ = 0;
-	--size;
-    }
-}
-
-
 /* Ascii case-insensitive string comparison */
 int
 istrncmp(const char *x, const char *y, long len)

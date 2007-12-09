@@ -127,13 +127,7 @@ long allocate_media_kind(void);
 MEDIA new_media(long size);
 void delete_media(MEDIA m);
 
-/* those whose use media object iterators need these routines */
-void reset_media_iterator(MEDIA_ITERATOR m);
-char *step_media_iterator(MEDIA_ITERATOR m);
-void delete_media_iterator(MEDIA_ITERATOR m);
-
 /* those who define media object iterators need these routines also */
 MEDIA_ITERATOR new_media_iterator(long size);
-void private_delete_media_iterator(MEDIA_ITERATOR m);
 
 #endif /* __media__ */

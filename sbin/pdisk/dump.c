@@ -376,42 +376,6 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 
 
 void
-list_all_disks()
-{
-    MEDIA_ITERATOR iter;
-    MEDIA m;
-    DPME * data;
-    char *name;
-    long mark;
-
-    data = (DPME *) malloc(PBLOCK_SIZE);
-    if (data == NULL) {
-	error(errno, "can't allocate memory for try buffer");
-	return;
-    }
-
-    for (iter = first_media_kind(&mark); iter != 0; iter = next_media_kind(&mark)) {
-
-    	while ((name = step_media_iterator(iter)) != 0) {
-
-	    if ((m = open_pathname_as_media(name, O_RDONLY)) == 0) {
-		error(errno, "can't open file '%s'", name);
-	    } else {
-		close_media(m);
-
-		dump(name);
-	    }
-	    free(name);
-	}
-
-	delete_media_iterator(iter);
-    }
-
-    free(data);
-}
-
-
-void
 show_data_structures(partition_map_header *map)
 {
     Block0 *zp;

@@ -66,7 +66,6 @@ void dump_block(unsigned char *addr, int len);
 void dump_partition_map(partition_map_header *map, int disk_order);
 void full_dump_partition_entry(partition_map_header *, int);
 void full_dump_block_zero(partition_map_header *map);
-void list_all_disks(void);
 void show_data_structures(partition_map_header *map);
 
 #endif /* __dump__ */

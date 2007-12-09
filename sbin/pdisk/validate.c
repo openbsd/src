@@ -93,7 +93,6 @@ range_list *new_range_list_item(enum range_state state, int valid, u32 low, u32 
 void initialize_list(range_list **list);
 void add_range(range_list **list, u32 base, u32 len, int allocate);
 void print_range_list(range_list *list);
-void delete_list(range_list *list);
 void coalesce_list(range_list *list);
 
 
@@ -171,20 +170,6 @@ initialize_list(range_list **list)
 
     item = new_range_list_item(kUnallocated, 0, 0, 0xFFFFFFFF);
     *list = item;
-}
-
-
-void
-delete_list(range_list *list)
-{
-    range_list *item;
-    range_list *cur;
-
-    for (cur = list; cur != 0; ) {
-	item = cur;
-	cur = cur->next;
-	free(item);
-    }
 }
 
 

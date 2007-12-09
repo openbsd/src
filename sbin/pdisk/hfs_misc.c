@@ -154,24 +154,12 @@ struct HFSPlusVolumeHeader {
 //
 // Forward declarations
 //
-u32 embeded_offset(struct mdb_record *mdb, u32 sector);
 int read_partition_block(partition_map *entry, unsigned long num, char *buf);
 
 
 //
 // Routines
 //
-u32
-embedded_offset(struct mdb_record *mdb, u32 sector)
-{
-    u32 e_offset;
-
-    e_offset = mdb->drAlBlSt + mdb->drEmbedExtent.xdrStABN * (mdb->drAlBlkSiz / 512);
-
-    return e_offset + sector;
-}
-
-
 char *
 get_HFS_name(partition_map *entry, int *kind)
 {
