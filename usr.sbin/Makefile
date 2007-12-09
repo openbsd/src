@@ -1,21 +1,23 @@
-#	$OpenBSD: Makefile,v 1.137 2007/12/07 17:27:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.138 2007/12/09 21:19:18 reyk Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	authpf bgpctl bgpd bind chroot config cron dev_mkdb \
 	dhcpd dhcrelay dvmrpctl dvmrpd edquota eeprom faithd fdformat \
-	ftp-proxy gpioctl hostapd relayd relayctl hotplugd \
-	httpd ifstated inetd iostat kgmon kvm_mkdb lpr mailwrapper \
-	map-mbone memconfig mopd mrinfo mrouted mtrace mtree ndp \
-	netgroup_mkdb ntpd openssl ospfctl ospfd pcidump pkg_add popa3d \
-	portmap ppp pppd pppoe procmap pstat pwd_mkdb quot quotaon \
-	rarpd rbootd rdate rdconfig repquota rip6query ripctl ripd \
-	rmt route6d rpc.bootparamd rpc.lockd rtadvd rtsold rwhod sa \
-	sasyncd sensorsd sliplogin slstats spamdb spray syslogc syslogd \
-	tcpdrop tcpdump timed tokenadm tokeninit traceroute traceroute6 \
-	trpt usbdevs user vipw watchdogd wsconscfg wsfontload \
+	ftp-proxy gpioctl hostapd hotplugd httpd ifstated inetd iostat \
+	kgmon kvm_mkdb lpr mailwrapper map-mbone memconfig mopd mrinfo \
+	mrouted mtrace mtree ndp netgroup_mkdb ntpd openssl ospfctl ospfd \
+	pcidump pkg_add popa3d portmap ppp pppd pppoe procmap pstat pwd_mkdb \
+	quot quotaon rarpd rbootd rdate rdconfig relayctl relayd repquota \
+	rip6query ripctl ripd rmt route6d rpc.bootparamd rpc.lockd rtadvd \
+	rtsold rwhod sa sasyncd sensorsd sliplogin slstats spamdb spray \
+	syslogc syslogd tcpdrop tcpdump timed tokenadm tokeninit traceroute \
+	traceroute6 trpt usbdevs user vipw watchdogd wsconscfg wsfontload \
 	wsmoused zdump zic ztsscale
+
+foo:
+	@echo $(SUBDIR)
 
 .if (${AFS:L} == "yes")
 SUBDIR+=afs
