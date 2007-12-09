@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.7 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.8 2007/12/09 14:02:56 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -295,10 +295,10 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 	/* We can't have a single-digit rcs number. */
 	if (nump->rn_len == 0) {
+		nump->rn_len++;
 		nump->rn_id = xrealloc(nump->rn_id,
 		    nump->rn_len + 1, sizeof(*(nump->rn_id)));
-		nump->rn_id[nump->rn_len + 1] = 0;
-		nump->rn_len++;
+		nump->rn_id[nump->rn_len] = 0;
 	}
 
 	nump->rn_len++;
