@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: journal.c,v 1.77.2.1.10.13 2005/11/03 23:08:41 marka Exp $ */
+/* $ISC: journal.c,v 1.86.18.12 2007/09/07 05:21:41 marka Exp $ */
 
 #include <config.h>
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <isc/file.h>
 #include <isc/mem.h>
@@ -40,7 +41,44 @@
 #include <dns/result.h>
 #include <dns/soa.h>
 
-/*
+/*! \file 
+ * \brief Journalling.
+ *
+ * A journal file consists of
+ *
+ *   \li A fixed-size header of type journal_rawheader_t.
+ *
+ *   \li The index.  This is an unordered array of index entries
+ *     of type journal_rawpos_t giving the locations
+ *     of some arbitrary subset of the journal's addressable
+ *     transactions.  The index entries are used as hints to
+ *     speed up the process of locating a transaction with a given
+ *     serial number.  Unused index entries have an "offset"
+ *     field of zero.  The size of the index can vary between
+ *     journal files, but does not change during the lifetime
+ *     of a file.  The size can be zero.
+ *
+ *   \li The journal data.  This  consists of one or more transactions.
+ *     Each transaction begins with a transaction header of type
+ *     journal_rawxhdr_t.  The transaction header is followed by a
+ *     sequence of RRs, similar in structure to an IXFR difference
+ *     sequence (RFC1995).  That is, the pre-transaction SOA,
+ *     zero or more other deleted RRs, the post-transaction SOA,
+ *     and zero or more other added RRs.  Unlike in IXFR, each RR
+ *     is prefixed with a 32-bit length.
+ *
+ *     The journal data part grows as new transactions are
+ *     appended to the file.  Only those transactions
+ *     whose serial number is current-(2^31-1) to current
+ *     are considered "addressable" and may be pointed
+ *     to from the header or index.  They may be preceded
+ *     by old transactions that are no longer addressable,
+ *     and they may be followed by transactions that were
+ *     appended to the journal but never committed by updating
+ *     the "end" position in the header.  The latter will
+ *     be overwritten when new transactions are added.
+ */
+/*%
  * When true, accept IXFR difference sequences where the
  * SOA serial number does not change (BIND 8 sends such
  * sequences).
@@ -58,7 +96,7 @@ static isc_boolean_t bind8_compat = ISC_TRUE; /* XXX config */
 #define JOURNAL_DEBUG_LOGARGS(n) \
 	JOURNAL_COMMON_LOGARGS, ISC_LOG_DEBUG(n)
 
-/*
+/*%
  * It would be non-sensical (or at least obtuse) to use FAIL() with an
  * ISC_R_SUCCESS code, but the test is there to keep the Solaris compiler
  * from complaining about "end-of-loop code not reached".
@@ -134,55 +172,16 @@ dns_db_createsoatuple(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 	return (result);
 }
 
-/**************************************************************************/
-/*
- * Journalling.
- */
+/* Journalling */
 
-/*
- * A journal file consists of
- *
- *   - A fixed-size header of type journal_rawheader_t.
- *
- *   - The index.  This is an unordered array of index entries
- *     of type journal_rawpos_t giving the locations
- *     of some arbitrary subset of the journal's addressable
- *     transactions.  The index entries are used as hints to
- *     speed up the process of locating a transaction with a given
- *     serial number.  Unused index entries have an "offset"
- *     field of zero.  The size of the index can vary between
- *     journal files, but does not change during the lifetime
- *     of a file.  The size can be zero.
- *
- *   - The journal data.  This  consists of one or more transactions.
- *     Each transaction begins with a transaction header of type
- *     journal_rawxhdr_t.  The transaction header is followed by a
- *     sequence of RRs, similar in structure to an IXFR difference
- *     sequence (RFC1995).  That is, the pre-transaction SOA,
- *     zero or more other deleted RRs, the post-transaction SOA,
- *     and zero or more other added RRs.  Unlike in IXFR, each RR
- *     is prefixed with a 32-bit length.
- *
- *     The journal data part grows as new transactions are
- *     appended to the file.  Only those transactions
- *     whose serial number is current-(2^31-1) to current
- *     are considered "addressable" and may be pointed
- *     to from the header or index.  They may be preceded
- *     by old transactions that are no longer addressable,
- *     and they may be followed by transactions that were
- *     appended to the journal but never committed by updating
- *     the "end" position in the header.  The latter will
- *     be overwritten when new transactions are added.
- */
-
-/*
+/*%
  * On-disk representation of a "pointer" to a journal entry.
  * These are used in the journal header to locate the beginning
  * and end of the journal, and in the journal index to locate
  * other transactions.
  */
 typedef struct {
-	unsigned char	serial[4];  /* SOA serial before update. */
+	unsigned char	serial[4];  /*%< SOA serial before update. */
 	/*
 	 * XXXRTH  Should offset be 8 bytes?
 	 * XXXDCL ... probably, since isc_offset_t is 8 bytes on many OSs.
@@ -190,54 +189,54 @@ typedef struct {
 	 *            platforms as long as we are using fseek() rather
 	 *            than lseek().
 	 */
-	unsigned char	offset[4];  /* Offset from beginning of file. */
+	unsigned char	offset[4];  /*%< Offset from beginning of file. */
 } journal_rawpos_t;
 
-/*
- * The on-disk representation of the journal header.
- * All numbers are stored in big-endian order.
- */
 
-/*
+/*%
  * The header is of a fixed size, with some spare room for future
  * extensions.
  */
 #define JOURNAL_HEADER_SIZE 64 /* Bytes. */
 
+/*%
+ * The on-disk representation of the journal header.
+ * All numbers are stored in big-endian order.
+ */
 typedef union {
 	struct {
-		/* File format version ID. */
+		/*% File format version ID. */
 		unsigned char 		format[16];
-		/* Position of the first addressable transaction */
+		/*% Position of the first addressable transaction */
 		journal_rawpos_t 	begin;
-		/* Position of the next (yet nonexistent) transaction. */
+		/*% Position of the next (yet nonexistent) transaction. */
 		journal_rawpos_t 	end;
-		/* Number of index entries following the header. */
+		/*% Number of index entries following the header. */
 		unsigned char 		index_size[4];
 	} h;
 	/* Pad the header to a fixed size. */
 	unsigned char pad[JOURNAL_HEADER_SIZE];
 } journal_rawheader_t;
 
-/*
+/*%
  * The on-disk representation of the transaction header.
  * There is one of these at the beginning of each transaction.
  */
 typedef struct {
-	unsigned char	size[4]; 	/* In bytes, excluding header. */
-	unsigned char	serial0[4];	/* SOA serial before update. */
-	unsigned char	serial1[4];	/* SOA serial after update. */
+	unsigned char	size[4]; 	/*%< In bytes, excluding header. */
+	unsigned char	serial0[4];	/*%< SOA serial before update. */
+	unsigned char	serial1[4];	/*%< SOA serial after update. */
 } journal_rawxhdr_t;
 
-/*
+/*%
  * The on-disk representation of the RR header.
  * There is one of these at the beginning of each RR.
  */
 typedef struct {
-	unsigned char	size[4]; 	/* In bytes, excluding header. */
+	unsigned char	size[4]; 	/*%< In bytes, excluding header. */
 } journal_rawrrhdr_t;
 
-/*
+/*%
  * The in-core representation of the journal header.
  */
 typedef struct {
@@ -255,7 +254,7 @@ typedef struct {
 	isc_uint32_t	index_size;
 } journal_header_t;
 
-/*
+/*%
  * The in-core representation of the transaction header.
  */
 
@@ -265,7 +264,7 @@ typedef struct {
 	isc_uint32_t	serial1;
 } journal_xhdr_t;
 
-/*
+/*%
  * The in-core representation of the RR header.
  */
 typedef struct {
@@ -273,7 +272,7 @@ typedef struct {
 } journal_rrhdr_t;
 
 
-/*
+/*%
  * Initial contents to store in the header of a newly created
  * journal file.
  *
@@ -297,40 +296,38 @@ typedef enum {
 } journal_state_t;
 
 struct dns_journal {
-	unsigned int		magic;		/* JOUR */
-	isc_mem_t		*mctx;		/* Memory context */
+	unsigned int		magic;		/*%< JOUR */
+	isc_mem_t		*mctx;		/*%< Memory context */
 	journal_state_t		state;
-	const char 		*filename;	/* Journal file name */
-	FILE *			fp;		/* File handle */
-	isc_offset_t		offset;		/* Current file offset */
-	journal_header_t 	header;		/* In-core journal header */
-	unsigned char		*rawindex;	/* In-core buffer for journal
-						   index in on-disk format */
-	journal_pos_t		*index;		/* In-core journal index */
+	const char 		*filename;	/*%< Journal file name */
+	FILE *			fp;		/*%< File handle */
+	isc_offset_t		offset;		/*%< Current file offset */
+	journal_header_t 	header;		/*%< In-core journal header */
+	unsigned char		*rawindex;	/*%< In-core buffer for journal index in on-disk format */
+	journal_pos_t		*index;		/*%< In-core journal index */
 
-	/* Current transaction state (when writing). */
+	/*% Current transaction state (when writing). */
 	struct {
-		unsigned int	n_soa;		/* Number of SOAs seen */
-		journal_pos_t	pos[2];		/* Begin/end position */
+		unsigned int	n_soa;		/*%< Number of SOAs seen */
+		journal_pos_t	pos[2];		/*%< Begin/end position */
 	} x;
 
-	/* Iteration state (when reading). */
+	/*% Iteration state (when reading). */
 	struct {
 		/* These define the part of the journal we iterate over. */
-		journal_pos_t bpos;		/* Position before first, */
-		journal_pos_t epos;		/* and after last
-						   transaction */
+		journal_pos_t bpos;		/*%< Position before first, */
+		journal_pos_t epos;		/*%< and after last transaction */
 		/* The rest is iterator state. */
-		isc_uint32_t current_serial;	/* Current SOA serial */
-		isc_buffer_t source;		/* Data from disk */
-		isc_buffer_t target;		/* Data from _fromwire check */
-		dns_decompress_t dctx;		/* Dummy decompression ctx */
-		dns_name_t name;		/* Current domain name */
-		dns_rdata_t rdata;		/* Current rdata */
-		isc_uint32_t ttl;		/* Current TTL */
-		unsigned int xsize;		/* Size of transaction data */
-		unsigned int xpos;		/* Current position in it */
-		isc_result_t result;		/* Result of last call */
+		isc_uint32_t current_serial;	/*%< Current SOA serial */
+		isc_buffer_t source;		/*%< Data from disk */
+		isc_buffer_t target;		/*%< Data from _fromwire check */
+		dns_decompress_t dctx;		/*%< Dummy decompression ctx */
+		dns_name_t name;		/*%< Current domain name */
+		dns_rdata_t rdata;		/*%< Current rdata */
+		isc_uint32_t ttl;		/*%< Current TTL */
+		unsigned int xsize;		/*%< Size of transaction data */
+		unsigned int xpos;		/*%< Current position in it */
+		isc_result_t result;		/*%< Result of last call */
 	} it;
 };
 
@@ -674,7 +671,23 @@ journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 isc_result_t
 dns_journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 		 dns_journal_t **journalp) {
-	return (journal_open(mctx, filename, write, write, journalp));
+	isc_result_t result;
+	int namelen;
+	char backup[1024];
+	
+	result = journal_open(mctx, filename, write, write, journalp);
+	if (result == ISC_R_NOTFOUND) {
+		namelen = strlen(filename);
+		if (namelen > 4 && strcmp(filename + namelen - 4, ".jnl") == 0)
+			namelen -= 4;
+
+		result = isc_string_printf(backup, sizeof(backup), "%.*s.jbk",
+					   namelen, filename);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+		result = journal_open(mctx, backup, write, write, journalp);
+	}
+	return (result);
 }
 
 /*
@@ -1616,6 +1629,8 @@ read_one_rr(dns_journal_t *j) {
 	/*
 	 * Parse the rdata.
 	 */
+	if (isc_buffer_remaininglength(&j->it.source) != rdlen)
+		FAIL(DNS_R_FORMERR);
 	isc_buffer_setactive(&j->it.source, rdlen);
 	dns_rdata_reset(&j->it.rdata);
 	CHECK(dns_rdata_fromwire(&j->it.rdata, rdclass,
@@ -1931,15 +1946,39 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	journal_pos_t best_guess;
 	journal_pos_t current_pos;
 	dns_journal_t *j = NULL;
+	dns_journal_t *new = NULL;
 	journal_rawheader_t rawheader;
 	unsigned int copy_length;
-	unsigned int len;
+	int namelen;
 	char *buf = NULL;
 	unsigned int size = 0;
 	isc_result_t result;
 	unsigned int indexend;
+	char newname[1024];
+	char backup[1024];
+	isc_boolean_t is_backup = ISC_FALSE;
 
-	CHECK(journal_open(mctx, filename, ISC_TRUE, ISC_FALSE, &j));
+	namelen = strlen(filename);
+	if (namelen > 4 && strcmp(filename + namelen - 4, ".jnl") == 0)
+		namelen -= 4;
+
+	result = isc_string_printf(newname, sizeof(newname), "%.*s.jnw",
+				   namelen, filename);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = isc_string_printf(backup, sizeof(backup), "%.*s.jbk",
+				   namelen, filename);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = journal_open(mctx, filename, ISC_FALSE, ISC_FALSE, &j);
+	if (result == ISC_R_NOTFOUND) {
+		is_backup = ISC_TRUE;
+		result = journal_open(mctx, backup, ISC_FALSE, ISC_FALSE, &j);
+	}
+	if (result != ISC_R_SUCCESS)
+		return (result);
 
 	if (JOURNAL_EMPTY(&j->header)) {
 		dns_journal_destroy(&j);
@@ -1967,6 +2006,8 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 		dns_journal_destroy(&j);
 		return (ISC_R_SUCCESS);
 	}
+
+	CHECK(journal_open(mctx, newname, ISC_TRUE, ISC_TRUE, &new));
 	
 	/*
 	 * Remove overhead so space test below can succeed.
@@ -2007,46 +2048,11 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 		CHECK(journal_next(j, &best_guess));
 
 	/*
-	 * Enough space to proceed?
+	 * We should now be roughly half target_size provided
+	 * we did not reach 'serial'.  If not we will just copy
+	 * all uncommitted deltas regardless of the size.
 	 */
-	if ((isc_uint32_t) (j->header.end.offset - best_guess.offset) >
-	     (isc_uint32_t) (best_guess.offset - indexend)) {
-		dns_journal_destroy(&j);
-		return (ISC_R_NOSPACE);
-	}
-
 	copy_length = j->header.end.offset - best_guess.offset;
-
-	/*
-	 * Invalidate entire index, will be rebuilt at end.
-	 */
-	for (i = 0; i < j->header.index_size; i++) {
-		if (POS_VALID(j->index[i]))
-			POS_INVALIDATE(j->index[i]);
-	}
-
-	/*
-	 * Convert the index into on-disk format and write
-	 * it to disk.
-	 */
-	CHECK(index_to_disk(j));
-	CHECK(journal_fsync(j));
-
-	/*
-	 * Update the journal header.
-	 */
-	if (copy_length == 0) {
-		j->header.begin.serial = 0;
-		j->header.end.serial = 0;
-		j->header.begin.offset = 0;
-		j->header.end.offset = 0;
-	} else {
-		j->header.begin = best_guess;
-	}
-	journal_header_encode(&j->header, &rawheader);
-	CHECK(journal_seek(j, 0));
-	CHECK(journal_write(j, &rawheader, sizeof(rawheader)));
-	CHECK(journal_fsync(j));
 
 	if (copy_length != 0) {
 		/*
@@ -2061,56 +2067,90 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 			goto failure;
 		}
 	
+		CHECK(journal_seek(j, best_guess.offset));
+		CHECK(journal_seek(new, indexend));
 		for (i = 0; i < copy_length; i += size) {
-			len = (copy_length - i) > size ? size :
+			unsigned int len = (copy_length - i) > size ? size :
 							 (copy_length - i);
-			CHECK(journal_seek(j, best_guess.offset + i));
 			CHECK(journal_read(j, buf, len));
-			CHECK(journal_seek(j, indexend + i));
-			CHECK(journal_write(j, buf, len));
+			CHECK(journal_write(new, buf, len));
 		}
 
-		CHECK(journal_fsync(j));
+		CHECK(journal_fsync(new));
 
 		/*
 		 * Compute new header.
 		 */
-		j->header.begin.offset = indexend;
-		j->header.end.offset = indexend + copy_length;
+		new->header.begin.serial = best_guess.serial;
+		new->header.begin.offset = indexend;
+		new->header.end.serial = j->header.end.serial;
+		new->header.end.offset = indexend + copy_length;
+
 		/*
 		 * Update the journal header.
 		 */
-		journal_header_encode(&j->header, &rawheader);
-		CHECK(journal_seek(j, 0));
-		CHECK(journal_write(j, &rawheader, sizeof(rawheader)));
-		CHECK(journal_fsync(j));
+		journal_header_encode(&new->header, &rawheader);
+		CHECK(journal_seek(new, 0));
+		CHECK(journal_write(new, &rawheader, sizeof(rawheader)));
+		CHECK(journal_fsync(new));
 
 		/*
 		 * Build new index.
 		 */
-		current_pos = j->header.begin;
-		while (current_pos.serial != j->header.end.serial) {
-			index_add(j, &current_pos);
-			CHECK(journal_next(j, &current_pos));
+		current_pos = new->header.begin;
+		while (current_pos.serial != new->header.end.serial) {
+			index_add(new, &current_pos);
+			CHECK(journal_next(new, &current_pos));
 		}
 
 		/*
 		 * Write index.
 		 */
-		CHECK(index_to_disk(j));
-		CHECK(journal_fsync(j));
+		CHECK(index_to_disk(new));
+		CHECK(journal_fsync(new));
 
-		indexend = j->header.end.offset;
+		indexend = new->header.end.offset;
 	}
+	dns_journal_destroy(&new);
+
+	/*
+	 * With a UFS file system this should just succeed and be atomic.
+	 * Any IXFR outs will just continue and the old journal will be
+	 * removed on final close.
+	 *
+	 * With MSDOS / NTFS we need to do a two stage rename triggered
+	 * bu EEXISTS.  Hopefully all IXFR's that were active at the last
+	 * rename are now complete.
+	 */
+	if (rename(newname, filename) == -1) {
+		if (errno == EACCES && !is_backup) {
+			result = isc_file_remove(backup);
+			if (result != ISC_R_SUCCESS &&
+			    result != ISC_R_FILENOTFOUND)
+				goto failure;
+			if (rename(filename, backup) == -1)
+				goto maperrno;
+			if (rename(newname, filename) == -1)
+				goto maperrno;
+			(void)isc_file_remove(backup);
+		} else {
+ maperrno:
+			result = ISC_R_FAILURE;
+			goto failure;
+		}
+	}
+		
 	dns_journal_destroy(&j);
-	(void)isc_file_truncate(filename, (isc_offset_t)indexend);
 	result = ISC_R_SUCCESS;
 
  failure:
+	(void)isc_file_remove(newname);
 	if (buf != NULL)
 		isc_mem_put(mctx, buf, size);
 	if (j != NULL)
 		dns_journal_destroy(&j);
+	if (new != NULL)
+		dns_journal_destroy(&new);
 	return (result);
 }
 

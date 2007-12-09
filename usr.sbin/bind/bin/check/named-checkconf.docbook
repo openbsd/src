@@ -1,11 +1,11 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.0//EN"
-               "http://www.oasis-open.org/docbook/xml/4.0/docbookx.dtd"
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002  Internet Software Consortium.
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -18,9 +18,8 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: named-checkconf.docbook,v 1.3.2.1.8.7 2005/05/12 21:35:56 sra Exp $ -->
-
-<refentry>
+<!-- $ISC: named-checkconf.docbook,v 1.8.18.10 2007/08/28 07:19:55 tbox Exp $ -->
+<refentry id="man.named-checkconf">
   <refentryinfo>
     <date>June 14, 2000</date>
   </refentryinfo>
@@ -35,6 +34,7 @@
     <copyright>
       <year>2004</year>
       <year>2005</year>
+      <year>2007</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -63,9 +63,9 @@
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para>
-        <command>named-checkconf</command> checks the syntax, but not
-	the semantics, of a named configuration file.
+    <para><command>named-checkconf</command>
+      checks the syntax, but not the semantics, of a named
+      configuration file.
     </para>
   </refsect1>
 
@@ -75,52 +75,53 @@
     <variablelist>
       <varlistentry>
         <term>-t <replaceable class="parameter">directory</replaceable></term>
-	<listitem>
-	  <para>
-	      chroot to <filename>directory</filename> so that include
-	      directives in the configuration file are processed as if
-	      run by a similarly chrooted named.
-	  </para>
-	</listitem>
+        <listitem>
+          <para>
+            Chroot to <filename>directory</filename> so that
+            include
+            directives in the configuration file are processed as if
+            run by a similarly chrooted named.
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>-v</term>
-	<listitem>
-	  <para>
-	      Print the version of the <command>named-checkconf</command>
-	      program and exit.
-	  </para>
-	</listitem>
+        <listitem>
+          <para>
+            Print the version of the <command>named-checkconf</command>
+            program and exit.
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>-z</term>
-	<listitem>
-	  <para>
-	      Perform a check load the master zonefiles found in
-	      <filename>named.conf</filename>.
-	  </para>
-	</listitem>
+        <listitem>
+          <para>
+	    Perform a test load of all master zones found in
+	    <filename>named.conf</filename>.
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>-j</term>
-	<listitem>
-	  <para>
-	      When loading a zonefile read the journal if it exists.
-	  </para>
-	</listitem>
+        <listitem>
+          <para>
+            When loading a zonefile read the journal if it exists.
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>filename</term>
-	<listitem>
-	  <para>
-	       The name of the configuration file to be checked.  If not
-	       specified, it defaults to <filename>/etc/named.conf</filename>.
-	  </para>
-	</listitem>
+        <listitem>
+          <para>
+            The name of the configuration file to be checked.  If not
+            specified, it defaults to <filename>/etc/named.conf</filename>.
+          </para>
+        </listitem>
       </varlistentry>
 
     </variablelist>
@@ -129,18 +130,19 @@
 
   <refsect1>
     <title>RETURN VALUES</title>
-    <para>
-        <command>named-checkconf</command> returns an exit status of 1 if
-	errors were detected and 0 otherwise.
+    <para><command>named-checkconf</command>
+      returns an exit status of 1 if
+      errors were detected and 0 otherwise.
     </para>
   </refsect1>
 
   <refsect1>
     <title>SEE ALSO</title>
-    <para>
+    <para><citerefentry>
+        <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
       <citerefentry>
-        <refentrytitle>named</refentrytitle>
-	<manvolnum>8</manvolnum>
+        <refentrytitle>named-checkzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
     </para>
@@ -148,16 +150,12 @@
 
   <refsect1>
     <title>AUTHOR</title>
-    <para>
-        <corpauthor>Internet Systems Consortium</corpauthor>
+    <para><corpauthor>Internet Systems Consortium</corpauthor>
     </para>
   </refsect1>
 
-</refentry>
-
-<!--
+</refentry><!--
  - Local variables:
  - mode: sgml
  - End:
 -->
-

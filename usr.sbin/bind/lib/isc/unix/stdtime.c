@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: stdtime.c,v 1.11.2.1.10.5 2005/06/09 23:54:31 marka Exp $ */
+/* $ISC: stdtime.c,v 1.14.18.3 2005/06/08 02:07:57 marka Exp $ */
+
+/*! \file */
 
 #include <config.h>
 

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,27 +15,32 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: ifiter_getifaddrs.c,v 1.2.68.3 2004/03/06 08:14:59 marka Exp $ */
+/* $ISC: ifiter_getifaddrs.c,v 1.4.18.5 2007/08/28 07:20:06 tbox Exp $ */
 
-/*
+/*! \file
+ * \brief
  * Obtain the list of network interfaces using the getifaddrs(3) library.
  */
 
 #include <ifaddrs.h>
 
+/*% Iterator Magic */
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'G')
+/*% Valid Iterator */
 #define VALID_IFITER(t)		ISC_MAGIC_VALID(t, IFITER_MAGIC)
 
+/*% Iterator structure */
 struct isc_interfaceiter {
-	unsigned int		magic;		/* Magic number. */
+	unsigned int		magic;		/*%< Magic number. */
 	isc_mem_t		*mctx;
-	void			*buf;		/* (unused) */
-	unsigned int		bufsize;	/* (always 0) */
-	struct ifaddrs		*ifaddrs;	/* List of ifaddrs */
-	struct ifaddrs		*pos;		/* Ptr to current ifaddr */
-	isc_interface_t		current;	/* Current interface data. */
-	isc_result_t		result;		/* Last result code. */
+	void			*buf;		/*%< (unused) */
+	unsigned int		bufsize;	/*%< (always 0) */
+	struct ifaddrs		*ifaddrs;	/*%< List of ifaddrs */
+	struct ifaddrs		*pos;		/*%< Ptr to current ifaddr */
+	isc_interface_t		current;	/*%< Current interface data. */
+	isc_result_t		result;		/*%< Last result code. */
 };
+
 
 isc_result_t
 isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
@@ -106,7 +111,9 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	INSIST(ifa != NULL);
 	INSIST(ifa->ifa_name != NULL);
-	INSIST(ifa->ifa_addr != NULL);
+
+	if (ifa->ifa_addr == NULL)
+		return (ISC_R_IGNORE);
 
 	family = ifa->ifa_addr->sa_family;
 	if (family != AF_INET && family != AF_INET6)

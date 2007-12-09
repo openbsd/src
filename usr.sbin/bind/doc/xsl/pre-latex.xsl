@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: pre-latex.xsl,v 1.2.10.3 2005/09/15 02:28:26 marka Exp $ -->
+<!-- $ISC: pre-latex.xsl,v 1.2.2.3 2005/09/15 02:28:05 marka Exp $ -->
 
 <!--
   - Whack &mdash; into something that won't choke LaTeX.

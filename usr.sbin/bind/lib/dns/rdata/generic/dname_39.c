@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dname_39.c,v 1.34.206.2 2004/03/06 08:14:04 marka Exp $ */
+/* $ISC: dname_39.c,v 1.36 2004/03/05 05:10:10 marka Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 

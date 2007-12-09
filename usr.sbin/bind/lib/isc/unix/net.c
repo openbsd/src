@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: net.c,v 1.22.2.2.10.9 2005/03/17 03:58:33 marka Exp $ */
+/* $ISC: net.c,v 1.29.18.6 2007/09/13 23:46:26 tbox Exp $ */
 
 #include <config.h>
 
@@ -30,19 +30,29 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-#if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRANY)
+#if defined(ISC_PLATFORM_HAVEIPV6)
+# if defined(ISC_PLATFORM_NEEDIN6ADDRANY)
 const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
-#endif
+# endif
 
-#if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)
+# if defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)
 const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
-#endif
+# endif
+
+# if defined(WANT_IPV6)
+static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
+# endif
+
+# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
+# endif
+#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 static isc_once_t 	once = ISC_ONCE_INIT;
-static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
-static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
+
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
+static isc_result_t	unix_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6pktinfo_result = ISC_R_NOTFOUND;
 
@@ -137,6 +147,9 @@ initialize_action(void) {
 #endif
 #endif
 #endif
+#ifdef ISC_PLATFORM_HAVESYSUNH
+	unix_result = try_proto(PF_UNIX);
+#endif
 }
 
 static void
@@ -154,6 +167,12 @@ isc_result_t
 isc_net_probeipv6(void) {
 	initialize();
 	return (ipv6_result);
+}
+
+isc_result_t
+isc_net_probeunix(void) {
+	initialize();
+	return (unix_result);
 }
 
 #ifdef ISC_PLATFORM_HAVEIPV6
@@ -235,7 +254,7 @@ initialize_ipv6only(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
-#endif /* IPV6_V6ONLY */
+#endif /* WANT_IPV6 */
 
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 static void
@@ -291,7 +310,7 @@ initialize_ipv6pktinfo(void) {
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
-#endif /* WANT_IPV6 */
+#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {

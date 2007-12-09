@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: latex-fixup.pl,v 1.2.10.1 2005/05/12 21:36:08 sra Exp $
+# $ISC: latex-fixup.pl,v 1.2.2.2 2005/07/19 05:55:47 marka Exp $
 
 # Sadly, the final stages of generating a presentable PDF file always
 # seem to require some manual tweaking.  Doesn't seem to matter what
@@ -31,12 +31,16 @@
 
 while (<>) {
 
-    # At the moment, the only tweak we have is fixup for a db2latex
-    # oops.  LaTeX2e does not like having tables with duplicate names.
-    # Perhaps the dblatex project will fix this someday, but we can
-    # get by with just deleting the offending LaTeX commands for now.
+    # Fix a db2latex oops.  LaTeX2e does not like having tables with
+    # duplicate names.  Perhaps the dblatex project will fix this
+    # someday, but we can get by with just deleting the offending
+    # LaTeX commands for now.
 
     s/\\addtocounter\{table\}\{-1\}//g;
+
+    # Line break in the middle of quoting one period looks weird.
+
+    s/{\\texttt{{\.\\dbz{}}}}/\\mbox{{\\texttt{{\.\\dbz{}}}}}/;
 
     # Add any further tweaking here.
 
