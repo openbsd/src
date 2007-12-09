@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.10 2007/11/22 15:06:43 stefan Exp $	*/
+/*	$OpenBSD: trees.c,v 1.11 2007/12/09 18:45:07 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -460,6 +460,7 @@ runtime:
 				sue = r->n_sue;
 
 				l = block(STASG, l, r, t, d, sue);
+				l = clocal(l);
 
 				if( o == RETURN ){
 					nfree(p);
