@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.53 2007/12/09 01:05:09 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.54 2007/12/09 01:30:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -83,7 +83,7 @@ int		atascsi_disk_sense(struct scsi_xfer *);
 int		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
 
-int		atascsi_stuffup(struct scsi_xfer *);
+int		atascsi_done(struct scsi_xfer *, int);
 
 int		ata_running = 0;
 
@@ -319,7 +319,7 @@ atascsi_cmd(struct scsi_xfer *xs)
 	struct ata_port		*ap = as->as_ports[link->target];
 
 	if (ap == NULL)
-		return (atascsi_stuffup(xs));
+		return (atascsi_done(xs, XS_DRIVER_STUFFUP));
 
 	switch (ap->ap_type) {
 	case ATA_PORT_T_DISK:
@@ -329,7 +329,7 @@ atascsi_cmd(struct scsi_xfer *xs)
 
 	case ATA_PORT_T_NONE:
 	default:
-		return (atascsi_stuffup(xs));
+		return (atascsi_done(xs, XS_DRIVER_STUFFUP));
 	}
 }
 
@@ -370,10 +370,10 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	case TEST_UNIT_READY:
 	case START_STOP:
 	case PREVENT_ALLOW:
-		return (COMPLETE);
+		return (atascsi_done(xs, XS_NOERROR));
 
 	default:
-		return (atascsi_stuffup(xs));
+		return (atascsi_done(xs, XS_DRIVER_STUFFUP));
 	}
 
 	xa = ata_get_xfer(ap);
@@ -477,7 +477,7 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		case SI_PG_SERIAL:
 			return (atascsi_disk_serial(xs));
 		default:
-			return (atascsi_stuffup(xs));
+			return (atascsi_done(xs, XS_DRIVER_STUFFUP));
 		}
 	}
 
@@ -491,7 +491,7 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	struct atascsi          *as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct scsi_inquiry_data inq;
-	int			s;
+	int			rv;
 
 	bzero(&inq, sizeof(inq));
 
@@ -505,14 +505,10 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
-	xs->error = XS_NOERROR;
-	xs->flags |= ITSDONE;
-	s = splbio();
-	scsi_done(xs);
-	splx(s);
+	rv = atascsi_done(xs, XS_NOERROR);
 
 	if (ap->ap_features & ATA_PORT_F_PROBED)
-		return (COMPLETE);
+		return (rv);
 
 	ap->ap_features = ATA_PORT_F_PROBED;
 
@@ -548,7 +544,7 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 		}
 	}
 
-	return (COMPLETE);
+	return (rv);
 }
 
 int
@@ -558,7 +554,6 @@ atascsi_disk_serial(struct scsi_xfer *xs)
 	struct atascsi          *as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct scsi_inquiry_vpd	vpd;
-	int			s;
 
 	bzero(&vpd, sizeof(vpd));
 
@@ -569,13 +564,8 @@ atascsi_disk_serial(struct scsi_xfer *xs)
 	    sizeof(ap->ap_identify.serial));
 
 	bcopy(&vpd, xs->data, MIN(sizeof(vpd), xs->datalen));
-	xs->error = XS_NOERROR;
-	xs->flags |= ITSDONE;
-	s = splbio();
-	scsi_done(xs);
-	splx(s);
 
-	return (COMPLETE);
+	return (atascsi_done(xs, XS_NOERROR));
 }
 
 int
@@ -645,7 +635,6 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
         struct scsi_read_cap_data rcd;
         u_int64_t		capacity;
 	int			i;
-	int			s;
 
 	bzero(&rcd, sizeof(rcd));
 	if (letoh16(id->cmdset83) & 0x0400) {
@@ -667,33 +656,21 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 	_lto4b(512, rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
-	xs->error = XS_NOERROR;
-	xs->flags |= ITSDONE;
-	s = splbio();
-	scsi_done(xs);
-	splx(s);
 
-	return (COMPLETE);
+	return (atascsi_done(xs, XS_NOERROR));
 }
 
 int
 atascsi_disk_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data	*sd = (struct scsi_sense_data *)xs->data;
-	int			s;
 
 	bzero(xs->data, xs->datalen);
 	/* check datalen > sizeof(struct scsi_sense_data)? */
 	sd->error_code = 0x70; /* XXX magic */
 	sd->flags = SKEY_NO_SENSE;
 
-	xs->error = XS_NOERROR;
-	xs->flags |= ITSDONE;
-
-	s = splbio();
-	scsi_done(xs);
-	splx(s);
-	return (COMPLETE);
+	return (atascsi_done(xs, XS_NOERROR));
 }
 
 int
@@ -783,11 +760,11 @@ atascsi_atapi_cmd_done(struct ata_xfer *xa)
 }
 
 int
-atascsi_stuffup(struct scsi_xfer *xs)
+atascsi_done(struct scsi_xfer *xs, int error)
 {
 	int			s;
 
-	xs->error = XS_DRIVER_STUFFUP;
+	xs->error = error;
 	xs->flags |= ITSDONE;
 
 	s = splbio();
