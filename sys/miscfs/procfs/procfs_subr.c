@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.27 2007/06/22 09:38:53 jasper Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.28 2007/12/09 21:34:32 hshoexer Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ loop:
 		goto out;
 	vp = *vpp;
 
-	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
+	pfs = malloc(sizeof(*pfs), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
 
 	pfs->pfs_pid = pid;
@@ -186,7 +186,7 @@ procfs_freevp(struct vnode *vp)
 	struct pfsnode *pfs = VTOPFS(vp);
 
 	TAILQ_REMOVE(&pfshead, pfs, list);
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 	return (0);
 }
