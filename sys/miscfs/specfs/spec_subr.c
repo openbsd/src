@@ -1,7 +1,7 @@
-/*	$OpenBSD: spec_subr.c,v 1.2 2006/06/02 20:49:08 pedro Exp $	*/
+/*	$OpenBSD: spec_subr.c,v 1.3 2007/12/09 20:54:01 jmc Exp $	*/
 
 /*
- * Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
+ * Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
  * Copyright (c) 2006 Thordur Bjornsson <thib@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

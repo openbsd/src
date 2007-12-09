@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.29 2007/10/29 13:02:20 chl Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.30 2007/12/09 20:54:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -29,7 +29,7 @@
  */
 
 /*
- * Ported to OpenBSD by Pedro Martelletto <pedro@openbsd.org> in February 2005.
+ * Ported to OpenBSD by Pedro Martelletto in February 2005.
  */
 
 #include <sys/param.h>

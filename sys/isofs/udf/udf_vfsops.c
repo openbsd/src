@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.25 2007/10/06 02:18:38 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.26 2007/12/09 20:54:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -29,7 +29,7 @@
  */
 
 /*
- * Ported to OpenBSD by Pedro Martelletto <pedro@openbsd.org> in February 2005.
+ * Ported to OpenBSD by Pedro Martelletto in February 2005.
  */
 
 /*

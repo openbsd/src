@@ -1,7 +1,7 @@
-/*	$OpenBSD: pt_tcp.c,v 1.12 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.13 2007/12/09 20:54:01 jmc Exp $	*/
 
 /*
- * Copyright (c) 2004 Pedro Martelletto <pedro@openbsd.org>
+ * Copyright (c) 2004 Pedro Martelletto <pedro@ambientworks.net>
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any

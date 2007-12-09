@@ -1,7 +1,7 @@
-/*	$OpenBSD: udf_extern.h,v 1.7 2006/07/11 16:24:09 pedro Exp $	*/
+/*	$OpenBSD: udf_extern.h,v 1.8 2007/12/09 20:54:01 jmc Exp $	*/
 
 /*
- * Written by Pedro Martelletto <pedro@openbsd.org> in February 2005.
+ * Written by Pedro Martelletto <pedro@ambientworks.net> in February 2005.
  * Public domain.
  */
 
