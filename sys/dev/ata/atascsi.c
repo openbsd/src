@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.52 2007/12/06 12:19:01 jsg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.53 2007/12/09 01:05:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -89,7 +89,7 @@ int		ata_running = 0;
 
 int		ata_exec(struct atascsi *, struct ata_xfer *);
 
-struct ata_xfer	*ata_get_xfer(struct ata_port *, int);
+struct ata_xfer	*ata_get_xfer(struct ata_port *);
 void		ata_put_xfer(struct ata_xfer *);
 
 struct atascsi *
@@ -195,7 +195,7 @@ atascsi_probe(struct scsi_link *link)
 	ap->ap_type = type;
 
 	/* fetch the device info */
-	xa = ata_get_xfer(ap, 1);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		panic("no free xfers on a new port");
 	xa->data = &ap->ap_identify;
@@ -217,7 +217,7 @@ atascsi_probe(struct scsi_link *link)
 
 	/* Enable write cache if supported */
 	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_WRITECACHE) {
-		xa = ata_get_xfer(ap, 1);
+		xa = ata_get_xfer(ap);
 		if (xa == NULL)
 			panic("no free xfers on a new port");
 		xa->fis->command = ATA_C_SET_FEATURES;
@@ -231,7 +231,7 @@ atascsi_probe(struct scsi_link *link)
 
 	/* Enable read lookahead if supported */
 	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_LOOKAHEAD) {
-		xa = ata_get_xfer(ap, 1);
+		xa = ata_get_xfer(ap);
 		if (xa == NULL)
 			panic("no free xfers on a new port");
 		xa->fis->command = ATA_C_SET_FEATURES;
@@ -250,7 +250,7 @@ atascsi_probe(struct scsi_link *link)
 	 * checking if the device sends a command abort to tell us it doesn't
 	 * support it
 	 */
-	xa = ata_get_xfer(ap, 1);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		panic("no free xfers on a new port");
 	xa->fis->command = ATA_C_SEC_FREEZE_LOCK;
@@ -376,7 +376,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		return (atascsi_stuffup(xs));
 	}
 
-	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -540,7 +540,7 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 		while (host_ncqdepth--) {
 			struct ata_xfer *xa;
 
-			xa = ata_get_xfer(ap, 1);
+			xa = ata_get_xfer(ap);
 			if (xa->tag < ap->ap_ncqdepth) {
 				xa->state = ATA_S_COMPLETE;
 				ata_put_xfer(xa);
@@ -586,7 +586,7 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa;
 
-	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -705,7 +705,7 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	struct ata_xfer		*xa;
 	struct ata_fis_h2d	*fis;
 
-	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		return (NO_CCB);
 
@@ -821,7 +821,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	struct ata_fis_h2d	*fis;
 	void			*buf;
 
-	xa = ata_get_xfer(ap, 0);
+	xa = ata_get_xfer(ap);
 	if (xa == NULL)
 		return (ENOMEM);
 
@@ -914,7 +914,7 @@ ata_exec(struct atascsi *as, struct ata_xfer *xa)
 }
 
 struct ata_xfer *
-ata_get_xfer(struct ata_port *ap, int nosleep /* XXX unused */)
+ata_get_xfer(struct ata_port *ap)
 {
 	struct atascsi		*as = ap->ap_as;
 	struct ata_xfer		*xa;
