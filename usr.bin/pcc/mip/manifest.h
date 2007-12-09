@@ -1,4 +1,4 @@
-/*	$OpenBSD: manifest.h,v 1.7 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: manifest.h,v 1.8 2007/12/09 18:37:48 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -291,9 +291,6 @@ void send_passt(int type, ...);
 /*
  * External declarations, typedefs and the like
  */
-char	*hash(char *s);
-char	*savestr(char *cp);
-char	*tstr(char *cp);
 
 /* memory management stuff */
 void *permalloc(int size);
@@ -301,6 +298,9 @@ void *tmpcalloc(int size);
 void *tmpalloc(int size);
 void tmpfree(void);
 char *newstring(char *, int len);
+
+/* command-line processing */
+void mflags(char *);
 
 void tprint(FILE *, TWORD, TWORD);
 
