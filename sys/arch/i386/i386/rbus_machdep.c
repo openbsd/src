@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.20 2007/09/12 13:56:40 chl Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.21 2007/12/09 16:53:36 kettenis Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -126,4 +126,10 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 	}
 
 	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
+}
+
+void
+pccbb_attach_hook(struct device *parent, struct device *self,
+    struct pci_attach_args *pa)
+{
 }
