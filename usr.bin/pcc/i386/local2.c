@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.4 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.5 2007/12/09 18:54:39 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -64,6 +64,28 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 			    rnames[j], regoff[j], rnames[FPREG]);
 	if (kflag == 0)
 		return;
+	/* if ebx are not saved to stack, it must be moved into another reg */
+	/* check and emit the move before GOT stuff */
+	if ((ipp->ipp_regs & (1 << EBX)) == 0) {
+		struct interpass *ip = (struct interpass *)ipp;
+
+		ip = DLIST_PREV(ip, qelem);
+		ip = DLIST_PREV(ip, qelem);
+		ip = DLIST_PREV(ip, qelem);
+		if (ip->type != IP_NODE || ip->ip_node->n_op != ASSIGN ||
+		    ip->ip_node->n_left->n_op != REG)
+			comperr("prtprolog pic error");
+		ip = (struct interpass *)ipp;
+		ip = DLIST_NEXT(ip, qelem);
+		if (ip->type != IP_NODE || ip->ip_node->n_op != ASSIGN ||
+		    ip->ip_node->n_left->n_op != REG)
+			comperr("prtprolog pic error2");
+		printf("	movl %s,%s\n",
+		    rnames[ip->ip_node->n_right->n_rval],
+		    rnames[ip->ip_node->n_left->n_rval]);
+		tfree(ip->ip_node);
+		DLIST_REMOVE(ip, qelem);
+	}
 	printf("	call .LW%d\n", ++lwnr);
 	printf(".LW%d:\n", lwnr);
 	printf("	popl %%ebx\n");
@@ -728,6 +750,18 @@ adrput(FILE *io, NODE *p)
 			fprintf(io, "(%s)", rnames[p->n_rval]);
 		return;
 	case ICON:
+#ifdef PCC_DEBUG
+		/* Sanitycheck for PIC, to catch adressable constants */
+		if (kflag && p->n_name[0]) {
+			static int foo;
+
+			if (foo++ == 0) {
+				printf("\nfailing...\n");
+				fwalk(p, e2print, 0);
+				comperr("pass2 conput");
+			}
+		}
+#endif
 		/* addressable value of the constant */
 		fputc('$', io);
 		conput(io, p);
@@ -1028,6 +1062,8 @@ lastcall(NODE *p)
 	for (p = p->n_right; p->n_op == CM; p = p->n_left)
 		size += argsiz(p->n_right);
 	size += argsiz(p);
+	if (kflag)
+		size -= 4;
 	op->n_qual = size; /* XXX */
 }
 
@@ -1063,4 +1099,12 @@ special(NODE *p, int shape)
 		return SRDIR;
 	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }
