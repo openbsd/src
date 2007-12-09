@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.4 2007/05/31 19:20:00 jmc Exp $
+.\" $OpenBSD: mutex.9,v 1.5 2007/12/09 00:58:28 tedu Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 9 2007 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -42,9 +42,10 @@ The
 .Fn mtx_init
 function is used to initiate the mutex pointed to by
 .Fa mtxp .
-When acquired, the mutex will cause the processor interrupt level to be changed
+When acquired, the mutex will cause the processor interrupt level to be raised
 to
-.Fa wantipl .
+.Fa wantipl 
+if necessary.
 .Pp
 The
 .Fn mtx_enter
