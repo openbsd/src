@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.13 2007/10/06 02:18:39 krw Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.14 2007/12/09 21:28:53 hshoexer Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -823,9 +823,9 @@ ntfs_frele(
 	dprintf(("ntfs_frele: deallocating fnode\n"));
 	LIST_REMOVE(fp,f_fnlist);
 	if (fp->f_flag & FN_AATTRNAME)
-		FREE(fp->f_attrname, M_TEMP);
+		free(fp->f_attrname, M_TEMP);
 	if (fp->f_dirblbuf)
-		FREE(fp->f_dirblbuf, M_NTFSDIR);
+		free(fp->f_dirblbuf, M_NTFSDIR);
 	free(fp, M_NTFSFNODE);
 	ntfs_ntrele(ip);
 }
@@ -997,8 +997,7 @@ ntfs_ntlookupfile(
 			 * and this is subnode, dive */
 			if (fullscan && res != 0) {
 			    if (iep->ie_flag & NTFS_IEFLAG_SUBNODE) {
-				MALLOC(tctx, struct ntfs_lookup_ctx *,
-					sizeof(struct ntfs_lookup_ctx),
+				tctx = malloc(sizeof(struct ntfs_lookup_ctx),
 					M_TEMP, M_WAITOK);
 				tctx->aoff	= aoff + iep->reclen;
 				tctx->rdsize	= rdsize;
@@ -1033,7 +1032,7 @@ ntfs_ntlookupfile(
 
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
-				FREE(attrname, M_TEMP);
+				free(attrname, M_TEMP);
 				attrname = NULL;
 			}
 
@@ -1126,7 +1125,7 @@ ntfs_ntlookupfile(
 
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			FREE(tctx, M_TEMP);
+			free(tctx, M_TEMP);
 		} else {
 			dprintf(("ntfs_ntlookupfile: nowhere to dive :-(\n"));
 			error = ENOENT;
@@ -1148,12 +1147,12 @@ ntfs_ntlookupfile(
 
 fail:
 	if (attrname)
-		FREE(attrname, M_TEMP);
+		free(attrname, M_TEMP);
 	if (lookup_ctx) {
 		while(lookup_ctx) {
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			FREE(tctx, M_TEMP);
+			free(tctx, M_TEMP);
 		}
 	}
 	ntfs_ntvattrrele(vap);
@@ -1364,7 +1363,7 @@ fail:
 	if (iavap)
 		ntfs_ntvattrrele(iavap);
 	if (bmp)
-		FREE(bmp, M_TEMP);
+		free(bmp, M_TEMP);
 #ifndef __OpenBSD__
 	ntfs_ntput(ip);
 #else
@@ -1861,10 +1860,10 @@ ntfs_readattr(
 		ddprintf(("ntfs_ntreadattr: compression: %d\n",
 			 vap->va_compressalg));
 
-		MALLOC(cup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
-		       M_NTFSDECOMP, M_WAITOK);
-		MALLOC(uup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
-		       M_NTFSDECOMP, M_WAITOK);
+		cup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL), M_NTFSDECOMP,
+		    M_WAITOK);
+		uup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL), M_NTFSDECOMP,
+		    M_WAITOK);
 
 		cn = (ntfs_btocn(roff)) & (~(NTFS_COMPUNIT_CL - 1));
 		off = roff - ntfs_cntob(cn);
@@ -1908,8 +1907,8 @@ ntfs_readattr(
 			cn += NTFS_COMPUNIT_CL;
 		}
 
-		FREE(uup, M_NTFSDECOMP);
-		FREE(cup, M_NTFSDECOMP);
+		free(uup, M_NTFSDECOMP);
+		free(cup, M_NTFSDECOMP);
 	} else
 		error = ntfs_readattr_plain(ntmp, ip, attrnum, attrname,
 					     roff, rsize, rdata, &init, uio);
@@ -2096,8 +2095,8 @@ ntfs_toupper_use(mp, ntmp, p)
 	 * XXX for now, just the first 256 entries are used anyway,
 	 * so don't bother reading more
 	 */
-	MALLOC(ntfs_toupper_tab, wchar *, 256 * 256 * sizeof(wchar),
-		M_NTFSRDATA, M_WAITOK);
+	ntfs_toupper_tab = malloc(256 * 256 * sizeof(wchar), M_NTFSRDATA,
+	    M_WAITOK);
 
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
 		goto out;
@@ -2129,7 +2128,7 @@ ntfs_toupper_unuse(p)
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
-		FREE(ntfs_toupper_tab, M_NTFSRDATA);
+		free(ntfs_toupper_tab, M_NTFSRDATA);
 		ntfs_toupper_tab = NULL;
 	}
 #ifdef DIAGNOSTIC

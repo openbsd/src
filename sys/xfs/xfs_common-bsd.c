@@ -57,7 +57,7 @@ xfs_alloc(u_int size, xfs_malloc_type type)
     NNPFSDEB(XDEBMEM, ("xfs_alloc: xfs_allocs - xfs_frees %d\n", 
 		     xfs_allocs - xfs_frees));
 
-    MALLOC(ret, void *, size, type, M_WAITOK);
+    ret = malloc(size, type, M_WAITOK);
     return ret;
 }
 
@@ -65,7 +65,7 @@ void
 xfs_free(void *ptr, u_int size, xfs_malloc_type type)
 {
     xfs_frees++;
-    FREE(ptr, type);
+    free(ptr, type);
 }
 
 #endif /* NNPFS_DEBUG */

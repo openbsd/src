@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.11 2007/06/01 23:52:38 deraadt Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.12 2007/12/09 21:28:53 hshoexer Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ ntfs_readdir(ap)
 
 	off = uio->uio_offset;
 
-	MALLOC(cde, struct dirent *, sizeof(struct dirent), M_TEMP, M_WAITOK);
+	cde = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 
 	/* Simulate . in every dir except ROOT */
 	if (ip->i_number != NTFS_ROOTINO
@@ -686,7 +686,7 @@ ntfs_readdir(ap)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;
 */
     out:
-	FREE(cde, M_TEMP);
+	free(cde, M_TEMP);
 	return (error);
 }
 
