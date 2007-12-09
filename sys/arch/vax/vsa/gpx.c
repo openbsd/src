@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.16 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.17 2007/12/09 21:53:01 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -235,9 +235,10 @@ int
 gpx_match(struct device *parent, void *vcf, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
-	struct adder *adder;
+	volatile struct adder *adder;
 	vaddr_t tmp;
 	u_int depth;
+	u_short status;
 	extern struct consdev wsdisplay_cons;
 	extern int oldvsbus;
 
@@ -259,6 +260,17 @@ gpx_match(struct device *parent, void *vcf, void *aux)
 			return (0);
 		break;
 	}
+
+	/* Check for hardware */
+	adder = (volatile struct adder *)
+	    vax_map_physmem(va->va_paddr + GPX_ADDER_OFFSET, 1);
+	if (adder == NULL)
+		return (0);
+	adder->status = 0;
+	status = adder->status;
+	vax_unmap_physmem((vaddr_t)adder, 1);
+	if (status == offsetof(struct adder, status))
+		return (0);
 
 	/* Check for a recognized color depth */
 	tmp = vax_map_physmem(va->va_paddr + GPX_READBACK_OFFSET, 1);
@@ -1223,6 +1235,7 @@ int
 gpxcnprobe()
 {
 	extern vaddr_t virtual_avail;
+	volatile struct adder *adder;
 	vaddr_t tmp;
 	int depth;
 
@@ -1235,6 +1248,14 @@ gpxcnprobe()
 
 		if ((vax_confdata & KA420_CFG_VIDOPT) == 0)
 			break; /* no color option */
+
+		/* Check for hardware */
+		tmp = virtual_avail;
+		ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_ADDER_OFFSET), 1);
+		adder = (struct adder *)tmp;
+		adder->status = 0;
+		if (adder->status == offsetof(struct adder, status))
+			return (0);
 
 		/* Check for a recognized color depth */
 		tmp = virtual_avail;
