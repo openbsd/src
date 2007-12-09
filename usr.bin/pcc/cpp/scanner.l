@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.6 2007/11/16 09:00:12 otto Exp $   */
+/*	$OpenBSD: scanner.l,v 1.7 2007/12/09 21:11:42 ragge Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -108,6 +108,9 @@ int yylex_destroy  (void);
 #define unput(ch) unch(ch)
 #endif
 #define PRTOUT(x) if (YYSTATE || slow) return x; if (!flslvl) putstr((usch *)yytext);
+/* protection against recursion in #include */
+#define MAX_INCLEVEL	100
+static int inclevel;
 %}
 
 D	[0-9]
@@ -398,25 +401,30 @@ prinit(struct initar *it, struct includ *ic)
 /*
  * A new file included.
  * If ifiles == NULL, this is the first file and already opened (stdin).
- * Return 0 on success, -1 on failure to open file.
+ * Return 0 on success, -1 if file to be included is not found.
  */
 int
 pushfile(usch *file)
 {
 	extern struct initar *initar;
 	struct includ ibuf;
-	struct includ *old;
 	struct includ *ic;
 	int c, otrulvl;
 
 	ic = &ibuf;
-	old = ifiles;
+	ic->next = ifiles;
 
 	slow = 0;
 	if (file != NULL) {
-		if ((ic->infil = open((char *)file, O_RDONLY)) < 0)
+		if ((ic->infil = open((char *)file, O_RDONLY)) < 0) {
+			if (errno != ENOENT)
+				error("Cannot open '%s'. %s", file,
+						strerror(errno));
 			return -1;
+		}
 		ic->orgfn = ic->fname = file;
+		if (++inclevel > MAX_INCLEVEL)
+			error("Limit for nested includes exceeded");
 	} else {
 		ic->infil = 0;
 		ic->orgfn = ic->fname = (usch *)"<stdin>";
@@ -443,8 +451,9 @@ pushfile(usch *file)
 	if (otrulvl != trulvl || flslvl)
 		error("unterminated conditional");
 
-	ifiles = old;
+	ifiles = ic->next;
 	close(ic->infil);
+	inclevel--;
 	return 0;
 }
 
@@ -575,10 +584,12 @@ chknl(void)
 {
 	int t;
 
+	slow = 1;
 	while ((t = yylex()) == WSPACE)
 		;
 	if (t != '\n')
-		error("newline expected, got %d", t);
+		error("newline expected, got \"%s\"", yytext);
+	slow = 0;
 }
 
 static void
