@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.17 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: via.c,v 1.18 2007/12/09 21:30:24 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -311,7 +311,7 @@ viac3_crypto_freesession(u_int64_t tid)
 			bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
-		FREE(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA);
 	}
 
 	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));

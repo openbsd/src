@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.12 2007/11/14 19:10:44 markus Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.13 2007/12/09 21:30:24 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -486,7 +486,7 @@ glxsb_crypto_freesession(uint64_t tid)
 			bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
-		FREE(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA);
 	}
 	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);
