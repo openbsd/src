@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.72 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.73 2007/12/09 21:24:58 hshoexer Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -907,11 +907,9 @@ in6_update_ifa(ifp, ifra, ia)
 		 * RA, it is called under an interrupt context.  So, we should
 		 * call malloc with M_NOWAIT.
 		 */
-		ia = (struct in6_ifaddr *) malloc(sizeof(*ia), M_IFADDR,
-		    M_NOWAIT);
+		ia = malloc(sizeof(*ia), M_IFADDR, M_NOWAIT | M_ZERO);
 		if (ia == NULL)
 			return (ENOBUFS);
-		bzero((caddr_t)ia, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
@@ -1742,9 +1740,8 @@ in6_createmkludge(ifp)
 			return;
 	}
 
-	mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK);
+	mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK | M_ZERO);
 
-	bzero(mk, sizeof(*mk));
 	LIST_INIT(&mk->mk_head);
 	mk->mk_ifp = ifp;
 	LIST_INSERT_HEAD(&in6_mk, mk, mk_entry);
@@ -2621,17 +2618,13 @@ in6_domifattach(ifp)
 {
 	struct in6_ifextra *ext;
 
-	ext = (struct in6_ifextra *)malloc(sizeof(*ext), M_IFADDR, M_WAITOK);
-	bzero(ext, sizeof(*ext));
+	ext = malloc(sizeof(*ext), M_IFADDR, M_WAITOK | M_ZERO);
 
-	ext->in6_ifstat = (struct in6_ifstat *)malloc(sizeof(struct in6_ifstat),
-	    M_IFADDR, M_WAITOK);
-	bzero(ext->in6_ifstat, sizeof(*ext->in6_ifstat));
+	ext->in6_ifstat = malloc(sizeof(*ext->in6_ifstat), M_IFADDR,
+	    M_WAITOK | M_ZERO);
 
-	ext->icmp6_ifstat =
-	    (struct icmp6_ifstat *)malloc(sizeof(struct icmp6_ifstat),
-	    M_IFADDR, M_WAITOK);
-	bzero(ext->icmp6_ifstat, sizeof(*ext->icmp6_ifstat));
+	ext->icmp6_ifstat = malloc(sizeof(*ext->icmp6_ifstat), M_IFADDR,
+	    M_WAITOK | M_ZERO);
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
 	return ext;
