@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.h,v 1.6 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: pass2.h,v 1.7 2007/12/09 18:38:49 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -232,13 +232,9 @@ void prologue(struct interpass_prolog *);
 void e2print(NODE *p, int down, int *a, int *b);
 void myoptim(struct interpass *);
 void cbgen(int op, int label);
-struct optab *nxtmatch(struct optab *);
-int chkmatch(NODE *, int, int, int);
 int match(NODE *p, int cookie);
-int nmatch(NODE *p, int what);
-#ifndef special
+int acceptable(struct optab *);
 int special(NODE *, int);
-#endif
 int setasg(NODE *, int);
 int setuni(NODE *, int);
 int sucomp(NODE *);
