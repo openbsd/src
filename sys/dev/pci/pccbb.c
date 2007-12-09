@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.55 2007/11/30 13:43:35 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.56 2007/12/09 17:25:24 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -456,12 +456,10 @@ pccbbattach(parent, self, aux)
 	 * mode.
 	 */
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
-#if notyet
 	if (((busreg >> 8) & 0xff) == 0) {
 		printf(": CardBus support disabled because of unconfigured bus number\n");
 		flags |= PCCBB_PCMCIA_16BITONLY;
 	}
-#endif
 
 	/* pccbb_machdep.c end */
 
