@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2007/09/22 16:21:32 krw Exp $ */
+/*	$OpenBSD: mem.c,v 1.5 2007/12/09 13:14:53 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
 
 #include <uvm/uvm_extern.h>
 
-caddr_t zeropage;
+caddr_t zpage;
 extern vaddr_t last_addr;
 
 /*ARGSUSED*/
@@ -155,11 +155,11 @@ mmrw(dev, uio, flags)
 				 * and EFAULT for writes.
 				 */
 				if (uio->uio_rw == UIO_READ) {
-					if (zeropage == NULL)
-						zeropage = malloc(PAGE_SIZE,
+					if (zpage == NULL)
+						zpage = malloc(PAGE_SIZE,
 						    M_TEMP, M_WAITOK | M_ZERO);
 					c = min(c, NBPG - (int)v);
-					v = (vaddr_t)zeropage;
+					v = (vaddr_t)zpage;
 				} else
 #endif
 					return (EFAULT);
@@ -181,11 +181,11 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL)
-				zeropage = malloc(PAGE_SIZE, M_TEMP,
+			if (zpage == NULL)
+				zpage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(zpage, c, uio);
 			continue;
 
 		default:
