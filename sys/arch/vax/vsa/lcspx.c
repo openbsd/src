@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.12 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.13 2007/12/09 21:54:00 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -58,6 +58,7 @@
 #include <machine/scb.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
+#include <machine/ka420.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -69,6 +70,10 @@
 
 #include <dev/ic/bt463reg.h>	/* actually it's a 459 here... */
 
+#define	GPXADDR			0x3c000000	/* XXX */
+#define	GPX_ADDER_OFFSET	0x0000		/* XXX */
+#include <vax/qbus/qdreg.h>			/* XXX */
+
 #define	LCSPX_REG_ADDR		0x39302000	/* registers */
 #define	LCSPX_REG_SIZE		    0x2000
 #define	LCSPX_REG1_ADDR		0x39b00000	/* more registers */
@@ -76,16 +81,13 @@
 #define	LCSPX_RAMDAC_INTERLEAVE	0x00004000
 #define	LCSPX_FB_ADDR		0x38000000	/* frame buffer */
 
-#define	LCSPX_WIDTH	1280
-#define	LCSPX_HEIGHT	1024
-#define	LCSPX_FBSIZE	(LCSPX_WIDTH * LCSPX_HEIGHT)
-
 void	lcspx_attach(struct device *, struct device *, void *);
 int	lcspx_vsbus_match(struct device *, void *, void *);
 int	lcspx_vxtbus_match(struct device *, void *, void *);
 
 struct	lcspx_screen {
 	struct rasops_info ss_ri;
+	u_int		ss_fbsize;
 	caddr_t		ss_addr;		/* frame buffer address */
 	volatile u_int8_t *ss_ramdac[4];
 	vaddr_t		ss_reg;
@@ -157,17 +159,56 @@ int	lcspx_putcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
 static __inline__
 void	lcspx_ramdac_wraddr(struct lcspx_screen *, u_int);
 void	lcspx_resetcmap(struct lcspx_screen *);
-int	lcspx_setup_screen(struct lcspx_screen *);
+int	lcspx_setup_screen(struct lcspx_screen *, u_int, u_int);
 
 int
 lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 {
+	extern int oldvsbus;
 	struct vsbus_softc *sc = (void *)parent;
 	struct vsbus_attach_args *va = aux;
+	volatile struct adder *adder;
+	u_short status;
 
 	switch (vax_boardtype) {
 	default:
 		return (0);
+
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		if (va->va_paddr != LCSPX_REG_ADDR)
+			return (0);
+
+		/* not present on microvaxes */
+		if ((vax_confdata & KA420_CFG_MULTU) != 0)
+			return (0);
+
+		if ((vax_confdata & KA420_CFG_VIDOPT) == 0)
+			return (0);
+
+		/*
+		 * We can not check for video memory at the SPX address,
+		 * because if no SPX board is installed, the probe will
+		 * just hang.
+		 * Instead, check for a GPX board and skip probe if the
+		 * video option really is a GPX.
+		 */
+		adder = (volatile struct adder *)
+		    vax_map_physmem(GPXADDR + GPX_ADDER_OFFSET, 1);
+		if (adder == NULL)
+			return (0);
+		adder->status = 0;
+		status = adder->status;
+		vax_unmap_physmem((vaddr_t)adder, 1);
+		if (status != offsetof(struct adder, status))
+			return (0);
+
+		/* XXX do not attach if not console... yet */
+		if ((vax_confdata & KA420_CFG_L3CON) != 0)
+			return (0);
+
+		break;
 
 	case VAX_BTYP_49:
 		if (va->va_paddr != LCSPX_REG_ADDR)
@@ -180,7 +221,7 @@ lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 	}
 
 	sc->sc_mask = 0x04;	/* XXX - should be generated */
-	scb_fake(0x120, 0x15);
+	scb_fake(0x120, oldvsbus ? 0x14 : 0x15);
 	return (20);
 }
 
@@ -219,13 +260,25 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	struct lcspx_screen *ss;
 	struct wsemuldisplaydev_attach_args aa;
 	int i, console;
+	vaddr_t reg1;
+	u_int32_t magic;
+	u_int width, height;
 	extern struct consdev wsdisplay_cons;
 
 	if (cn_tab == &wsdisplay_cons) {
-		if (vax_boardtype == VAX_BTYP_49)
+		switch (vax_boardtype) {
+		case VAX_BTYP_410:
+		case VAX_BTYP_420:
+		case VAX_BTYP_43:
+			console = (vax_confdata & KA420_CFG_L3CON) == 0;
+			break;
+		case VAX_BTYP_49:
 			console = (vax_confdata & 8) == 0;
-		else /* VXT2000 */
+			break;
+		default: /* VXT2000 */
 			console = (vax_confdata & 2) != 0;
+			break;
+		}
 	} else
 		console = 0;
 	if (console) {
@@ -238,18 +291,42 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
-		ss->ss_addr = (caddr_t)vax_map_physmem(LCSPX_FB_ADDR,
-		    LCSPX_FBSIZE / VAX_NBPG);
-		if (ss->ss_addr == NULL) {
-			printf(": can not map frame buffer\n");
-			goto fail1;
+		switch (vax_boardtype) {
+		case VAX_BTYP_410:
+		case VAX_BTYP_420:
+		case VAX_BTYP_43:
+			/*
+			 * See ``EVIL KLUGE ALERT!'' comments in
+			 * lcspxcninit() at the end of this file
+			 * for meaningless details.
+			 */
+			reg1 = vax_map_physmem(LCSPX_REG1_ADDR, 1);
+			if (reg1 == 0L) {
+				printf(": can not map registers\n");
+				goto fail1;
+			}
+			magic = *(u_int32_t *)(reg1 + 0x11c);
+			vax_unmap_physmem(reg1, 1);
+
+			if (magic & 0x80) {
+				width = 1280;
+				height = 1024;
+			} else {
+				width = 1024;
+				height = 864;
+			}
+			break;
+		default:
+			width = 1280;
+			height = 1024;
+			break;
 		}
 
 		ss->ss_reg = vax_map_physmem(LCSPX_REG_ADDR,
 		    LCSPX_REG_SIZE / VAX_NBPG);
 		if (ss->ss_reg == 0L) {
 			printf(": can not map registers\n");
-			goto fail2;
+			goto fail1;
 		}
 
 		for (i = 0; i < 4; i++) {
@@ -257,18 +334,27 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 			    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
 			if (ss->ss_ramdac[i] == NULL) {
 				printf(": can not map RAMDAC registers\n");
-				goto fail3;
+				goto fail2;
 			}
 		}
 
-		if (lcspx_setup_screen(ss) != 0) {
+		ss->ss_fbsize = width * height;
+		ss->ss_addr = (caddr_t)vax_map_physmem(LCSPX_FB_ADDR,
+		    ss->ss_fbsize / VAX_NBPG);
+		if (ss->ss_addr == NULL) {
+			printf(": can not map frame buffer\n");
+			goto fail3;
+		}
+
+		if (lcspx_setup_screen(ss, width, height) != 0) {
 			printf(": initialization failed\n");
 			goto fail3;
 		}
 	}
 	sc->sc_scr = ss;
 
-	printf("\n%s: 1280x1024x8 frame buffer\n", self->dv_xname);
+	printf("\n%s: %dx%dx8 frame buffer\n", self->dv_xname,
+	    ss->ss_ri.ri_width, ss->ss_ri.ri_height);
 
 	aa.console = console;
 	aa.scrdata = &lcspx_screenlist;
@@ -280,12 +366,12 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fail3:
+	vax_unmap_physmem((vaddr_t)ss->ss_addr, ss->ss_fbsize / VAX_NBPG);
+fail2:
 	for (i = 0; i < 4; i++)
 		if (ss->ss_ramdac[i] != NULL)
 			vax_unmap_physmem((vaddr_t)ss->ss_ramdac[i], 1);
 	vax_unmap_physmem(ss->ss_reg, LCSPX_REG_SIZE / VAX_NBPG);
-fail2:
-	vax_unmap_physmem((vaddr_t)ss->ss_addr, LCSPX_FBSIZE / VAX_NBPG);
 fail1:
 	free(ss, M_DEVBUF);
 }
@@ -302,15 +388,15 @@ lcspx_ramdac_wraddr(struct lcspx_screen *ss, u_int addr)
  * pick a font, initialize a rasops structure, setup the accessops callbacks.)
  */
 int
-lcspx_setup_screen(struct lcspx_screen *ss)
+lcspx_setup_screen(struct lcspx_screen *ss, u_int width, u_int height)
 {
 	struct rasops_info *ri = &ss->ss_ri;
 
 	bzero(ri, sizeof(*ri));
 	ri->ri_depth = 8;
-	ri->ri_width = LCSPX_WIDTH;
-	ri->ri_height = LCSPX_HEIGHT;
-	ri->ri_stride = LCSPX_WIDTH;
+	ri->ri_width = width;
+	ri->ri_height = height;
+	ri->ri_stride = width;
 	ri->ri_flg = RI_CLEAR | RI_CENTER;
 	ri->ri_bits = (void *)ss->ss_addr;
 	ri->ri_hw = ss;
@@ -358,8 +444,8 @@ lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = LCSPX_HEIGHT;
-		wdf->width = LCSPX_WIDTH;
+		wdf->height = ss->ss_ri.ri_height;
+		wdf->width = ss->ss_ri.ri_width;
 		wdf->depth = 8;
 		wdf->cmsize = 256;
 		break;
@@ -396,7 +482,10 @@ lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 lcspx_mmap(void *v, off_t offset, int prot)
 {
-	if (offset >= LCSPX_FBSIZE || offset < 0)
+	struct lcspx_softc *sc = v;
+	struct lcspx_screen *ss = sc->sc_scr;
+
+	if (offset >= ss->ss_fbsize || offset < 0)
 		return (-1);
 
 	return (LCSPX_FB_ADDR + offset) >> PGSHIFT;
@@ -539,15 +628,44 @@ int
 lcspxcnprobe()
 {
 	extern vaddr_t virtual_avail;
+	volatile struct adder *adder;
 	volatile u_int8_t *ch;
 
 	switch (vax_boardtype) {
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		if ((vax_confdata & KA420_CFG_L3CON) != 0)
+			break; /* doesn't use graphics console */
+
+		/* not present on microvaxes */
+		if ((vax_confdata & KA420_CFG_MULTU) != 0)
+			break;
+
+		if ((vax_confdata & KA420_CFG_VIDOPT) == 0)
+			break;
+
+		/*
+		 * We can not check for video memory at the SPX address,
+		 * because if no SPX board is installed, the probe will
+		 * just hang.
+		 * Instead, check for a GPX board and skip probe if the
+		 * video option really is a GPX.
+		 */
+		ioaccess(virtual_avail, GPXADDR + GPX_ADDER_OFFSET, 1);
+		adder = (volatile struct adder *)virtual_avail;
+		adder->status = 0;
+		if (adder->status != offsetof(struct adder, status))
+			break;
+
+		return (1);
+
 	case VAX_BTYP_49:
 		if ((vax_confdata & 8) != 0)
 			break; /* doesn't use graphics console */
 
 		if ((vax_confdata & 0x12) != 0x02)
-			return (0);
+			break;
 
 		return (1);
 
@@ -587,12 +705,52 @@ lcspxcninit()
 	struct lcspx_screen *ss = &lcspx_consscr;
 	extern vaddr_t virtual_avail;
 	int i;
+	u_int width, height;
+	vaddr_t reg1;
+	u_int32_t magic;
 	long defattr;
 	struct rasops_info *ri;
 
+	switch (vax_boardtype) {
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		/*
+		 * XXX EVIL KLUGE ALERT!
+		 *
+		 * The spx jumper settings do not show up in vax_confdata.
+		 * I don't know which spx register sports their values,
+		 * but I have noticed that, after the ROM has initialized
+		 * the board, bit 0x80 at 39b0011c will reflect the
+		 * resolution setting.
+		 *
+		 * This register is not read-only, so one could DEPOSIT
+		 * a bogus value in it from the console before starting
+		 * OpenBSD.  If you do this, you deserve to be bitten
+		 * if things go wrong.
+		 */
+		reg1 = virtual_avail;
+		ioaccess(reg1, LCSPX_REG1_ADDR, 1);
+		magic = *(u_int32_t *)(reg1 + 0x11c);
+
+		if (magic & 0x80) {
+			width = 1280;
+			height = 1024;
+		} else {
+			width = 1024;
+			height = 864;
+		}
+		break;
+	default:
+		width = 1280;
+		height = 1024;
+		break;
+	}
+
+	ss->ss_fbsize = width * height;
 	ss->ss_addr = (caddr_t)virtual_avail;
-	virtual_avail += LCSPX_FBSIZE;
-	ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR, LCSPX_FBSIZE / VAX_NBPG);
+	virtual_avail += ss->ss_fbsize;
+	ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR, ss->ss_fbsize / VAX_NBPG);
 
 	ss->ss_reg = virtual_avail;
 	virtual_avail += LCSPX_REG_SIZE;
@@ -608,7 +766,7 @@ lcspxcninit()
 	virtual_avail = round_page(virtual_avail);
 
 	/* this had better not fail as we can't recover there */
-	if (lcspx_setup_screen(ss) != 0)
+	if (lcspx_setup_screen(ss, width, height) != 0)
 		panic(__func__);
 
 	ri = &ss->ss_ri;
