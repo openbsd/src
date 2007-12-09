@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.5 2006/05/03 18:12:52 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.6 2007/12/09 19:57:50 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -257,8 +257,7 @@ db_clear_single_step(regs)
 {
 #ifdef M88110
 	if (CPU_IS88110) {
-		/* do not remove PSR_SER as we don't enable OoO */
-		regs->epsr &= ~PSR_TRACE;
+		regs->epsr &= ~(PSR_TRACE | PSR_SER);
 	}
 #endif
 #ifdef M88100

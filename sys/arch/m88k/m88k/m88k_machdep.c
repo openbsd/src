@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.38 2007/12/05 22:09:14 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.39 2007/12/09 19:57:50 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -136,10 +136,6 @@ setregs(p, pack, stack, retval)
 		 * graphics unit, fp enabled
 		 */
 		tf->tf_epsr = PSR_SRM | PSR_SFD;
-		/*
-		 * XXX disable OoO for now...
-		 */
-		tf->tf_epsr |= PSR_SER;
 	}
 #endif
 #ifdef M88100

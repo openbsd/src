@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.58 2007/12/05 22:12:30 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.59 2007/12/09 19:57:51 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -169,16 +169,7 @@ ASLOCAL(main_start)
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-	/*
-	 * XXX On 88110 processors, force serial instruction execution for now.
-	 * Situation where OoO would break will be hopefully taken care of in
-	 * the near future -- miod
-	 */
-#if 0
 	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-#else
-	set	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-#endif
 	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
 	FLUSH_PIPELINE
@@ -264,16 +255,7 @@ GLOBAL(secondary_start)
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-	/*
-	 * XXX On 88110 processors, force serial instruction execution for now.
-	 * Situation where OoO would break will be hopefully taken care of in
-	 * the near future -- miod
-	 */
-#if 0
 	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-#else
-	set	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-#endif
 	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
 	FLUSH_PIPELINE
