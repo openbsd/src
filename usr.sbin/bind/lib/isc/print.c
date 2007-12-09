@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: print.c,v 1.22.2.3.2.4 2006/04/17 18:27:20 explorer Exp $ */
+/* $ISC: print.c,v 1.27.18.3 2006/04/17 18:27:33 explorer Exp $ */
 
 /*! \file */
 

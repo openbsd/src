@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sdb.c,v 1.35.12.8 2004/07/22 04:01:58 marka Exp $ */
+/* $ISC: sdb.c,v 1.45.18.13 2007/08/28 07:20:05 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -99,7 +101,7 @@ typedef struct sdb_rdatasetiter {
 
 #define SDB_MAGIC		ISC_MAGIC('S', 'D', 'B', '-')
 
-/*
+/*%
  * Note that "impmagic" is not the first four bytes of the struct, so
  * ISC_MAGIC_VALID cannot be used.
  */
@@ -110,7 +112,7 @@ typedef struct sdb_rdatasetiter {
 #define VALID_SDBLOOKUP(sdbl)	ISC_MAGIC_VALID(sdbl, SDBLOOKUP_MAGIC)
 #define VALID_SDBNODE(sdbn)	VALID_SDBLOOKUP(sdbn)
 
-/* These values are taken from RFC 1537 */
+/* These values are taken from RFC1537 */
 #define SDB_DEFAULT_REFRESH	(60 * 60 * 8)
 #define SDB_DEFAULT_RETRY	(60 * 60 * 2)
 #define SDB_DEFAULT_EXPIRE	(60 * 60 * 24 * 7)
@@ -119,6 +121,10 @@ typedef struct sdb_rdatasetiter {
 /* This is a reasonable value */
 #define SDB_DEFAULT_TTL		(60 * 60 * 24)
 
+#ifdef __COVERITY__
+#define MAYBE_LOCK(sdb) LOCK(&sdb->implementation->driverlock)
+#define MAYBE_UNLOCK(sdb) UNLOCK(&sdb->implementation->driverlock)
+#else
 #define MAYBE_LOCK(sdb)							\
 	do {								\
 		unsigned int flags = sdb->implementation->flags;	\
@@ -132,6 +138,7 @@ typedef struct sdb_rdatasetiter {
 		if ((flags & DNS_SDBFLAG_THREADSAFE) == 0)		\
 			UNLOCK(&sdb->implementation->driverlock);	\
 	} while (0)
+#endif
 
 static int dummy;
 
@@ -225,12 +232,8 @@ dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
 	imp->mctx = NULL;
 	isc_mem_attach(mctx, &imp->mctx);
 	result = isc_mutex_init(&imp->driverlock);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_mctx;
-	}
 
 	imp->dbimp = NULL;
 	result = dns_db_register(drivername, dns_sdb_create, imp, mctx,
@@ -269,10 +272,11 @@ dns_sdb_unregister(dns_sdbimplementation_t **sdbimp) {
 static inline unsigned int
 initial_size(unsigned int len) {
 	unsigned int size;
-	for (size = 64; size < (64 * 1024); size *= 2)
+
+	for (size = 1024; size < (64 * 1024); size *= 2)
 		if (len < size)
 			return (size);
-	return (64 * 1024);
+	return (65535);
 }
 
 isc_result_t
@@ -383,6 +387,8 @@ dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 		if (result != ISC_R_SUCCESS)
 			goto failure;
 
+		if (size >= 65535)
+			size = 65535;
 		p = isc_mem_get(mctx, size);
 		if (p == NULL) {
 			result = ISC_R_NOMEMORY;
@@ -398,6 +404,11 @@ dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 		if (result != ISC_R_NOSPACE)
 			break;
 
+		/*
+		 * Is the RR too big?
+		 */
+		if (size >= 65535)
+			break;
 		isc_mem_put(mctx, p, size);
 		p = NULL;
 		size *= 2;
@@ -599,10 +610,12 @@ endload(dns_db_t *db, dns_dbload_t **dbloadp) {
 }
 
 static isc_result_t
-dump(dns_db_t *db, dns_dbversion_t *version, const char *filename) {
+dump(dns_db_t *db, dns_dbversion_t *version, const char *filename,
+     dns_masterformat_t masterformat) {
 	UNUSED(db);
 	UNUSED(version);
 	UNUSED(filename);
+	UNUSED(masterformat);
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
@@ -664,11 +677,8 @@ createnode(dns_sdb_t *sdb, dns_sdbnode_t **nodep) {
 	node->name = NULL;
 	result = isc_mutex_init(&node->lock);
 	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
 		isc_mem_put(sdb->common.mctx, node, sizeof(dns_sdbnode_t));
-		return (ISC_R_UNEXPECTED);
+		return (result);
 	}
 	dns_rdatacallbacks_init(&node->callbacks);
 	node->references = 1;
@@ -930,7 +940,8 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 
 		xresult = dns_name_copy(xname, foundname, NULL);
 		if (xresult != ISC_R_SUCCESS) {
-			destroynode(node);
+			if (node != NULL)
+				destroynode(node);
 			if (dns_rdataset_isassociated(rdataset))
 				dns_rdataset_disassociate(rdataset);
 			return (DNS_R_BADDB);
@@ -1234,7 +1245,8 @@ static dns_dbmethods_t sdb_methods = {
 	nodecount,
 	ispersistent,
 	overmem,
-	settask
+	settask,
+	NULL
 };
 
 static isc_result_t
@@ -1270,13 +1282,8 @@ dns_sdb_create(isc_mem_t *mctx, dns_name_t *origin, dns_dbtype_t type,
 	isc_mem_attach(mctx, &sdb->common.mctx);
 
 	result = isc_mutex_init(&sdb->lock);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
-		result = ISC_R_UNEXPECTED;
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_mctx;
-	}
 
 	result = dns_name_dupwithoffsets(origin, mctx, &sdb->common.origin);
 	if (result != ISC_R_SUCCESS)
@@ -1361,7 +1368,10 @@ static dns_rdatasetmethods_t methods = {
 	rdataset_clone,
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
-	isc__rdatalist_getnoqname
+	isc__rdatalist_getnoqname,
+	NULL,
+	NULL,
+	NULL
 };
 
 static void

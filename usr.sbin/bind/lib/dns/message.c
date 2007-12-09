@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: message.c,v 1.194.2.10.2.24 2006/02/28 06:32:54 marka Exp $ */
+/* $ISC: message.c,v 1.222.18.14 2007/08/28 07:20:04 tbox Exp $ */
+
+/*! \file */
 
 /***
  *** Imports
@@ -63,7 +65,7 @@
 #define VALID_PSEUDOSECTION(s)	(((s) >= DNS_PSEUDOSECTION_ANY) \
 				 && ((s) < DNS_PSEUDOSECTION_MAX))
 
-/*
+/*%
  * This is the size of each individual scratchpad buffer, and the numbers
  * of various block allocations used within the server.
  * XXXMLG These should come from a config setting.
@@ -75,7 +77,7 @@
 #define RDATALIST_COUNT		  8
 #define RDATASET_COUNT		 RDATALIST_COUNT
 
-/*
+/*%
  * Text representation of the different items, for message_totext
  * functions.
  */
@@ -133,7 +135,7 @@ static const char *rcodetext[] = {
 };
 
 
-/*
+/*%
  * "helper" type, which consists of a block of some type, and is linkable.
  * For it to work, sizeof(dns_msgblock_t) must be a multiple of the pointer
  * size, or the allocated elements will not be alligned correctly.
@@ -1306,6 +1308,11 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			rdata->type = rdtype;
 			rdata->flags = DNS_RDATA_UPDATE;
 			result = ISC_R_SUCCESS;
+		} else if (rdclass == dns_rdataclass_none &&
+			   msg->opcode == dns_opcode_update &&
+			   sectionid == DNS_SECTION_UPDATE) {
+			result = getrdata(source, msg, dctx, msg->rdclass,
+					  rdtype, rdatalen, rdata);
 		} else
 			result = getrdata(source, msg, dctx, rdclass,
 					  rdtype, rdatalen, rdata);
@@ -1441,7 +1448,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		/*
 		 * Minimize TTLs.
 		 *
-		 * Section 5.2 of RFC 2181 says we should drop
+		 * Section 5.2 of RFC2181 says we should drop
 		 * nonauthoritative rrsets where the TTLs differ, but we
 		 * currently treat them the as if they were authoritative and
 		 * minimize them.
@@ -2282,6 +2289,18 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
 	ISC_LIST_APPEND(msg->sections[section], name, link);
 }
 
+void
+dns_message_removename(dns_message_t *msg, dns_name_t *name,
+		       dns_section_t section)
+{
+	REQUIRE(msg != NULL);
+	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
+	REQUIRE(name != NULL);
+	REQUIRE(VALID_NAMED_SECTION(section));
+
+	ISC_LIST_UNLINK(msg->sections[section], name, link);
+}
+
 isc_result_t
 dns_message_gettempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(DNS_MESSAGE_VALID(msg));
@@ -2993,8 +3012,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 		ADD_STRING(target, ";; ");
 		if (msg->opcode != dns_opcode_update) {
 			ADD_STRING(target, sectiontext[section]);
-		}
-		else {
+		} else {
 			ADD_STRING(target, updsectiontext[section]);
 		}
 		ADD_STRING(target, " SECTION:\n");
@@ -3116,7 +3134,12 @@ dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
 		ADD_STRING(target, ";; ->>HEADER<<- opcode: ");
 		ADD_STRING(target, opcodetext[msg->opcode]);
 		ADD_STRING(target, ", status: ");
-		ADD_STRING(target, rcodetext[msg->rcode]);
+		if (msg->rcode < (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+			ADD_STRING(target, rcodetext[msg->rcode]);
+		} else {
+			snprintf(buf, sizeof(buf), "%4u", msg->rcode);
+			ADD_STRING(target, buf);
+		}
 		ADD_STRING(target, ", id: ");
 		snprintf(buf, sizeof(buf), "%6u", msg->id);
 		ADD_STRING(target, buf);

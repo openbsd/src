@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: print.c,v 1.2.4.7 2005/10/14 01:38:51 marka Exp $ */
+/* $ISC: print.c,v 1.2.2.7 2005/10/14 01:28:30 marka Exp $ */
 
 #include <config.h>
 

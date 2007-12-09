@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: main.c,v 1.119.2.3.2.25 2006/11/10 18:51:06 marka Exp $ */
+/* $ISC: main.c,v 1.136.18.17 2006/11/10 18:51:14 marka Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -71,6 +73,13 @@
  * Include header files for database drivers here.
  */
 /* #include "xxdb.h" */
+
+/*
+ * Include DLZ drivers if appropriate.
+ */
+#ifdef DLZ
+#include <dlz/dlz_drivers.h>
+#endif
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -227,7 +236,7 @@ lwresd_usage(void) {
 		"              [-f|-g] [-n number_of_cpus] [-p port] "
 		"[-P listen-port] [-s]\n"
 		"              [-t chrootdir] [-u username] [-i pidfile]\n"
-		"              [-m {usage|trace|record}]\n");
+		"              [-m {usage|trace|record|size|mctx}]\n");
 }
 
 static void
@@ -240,7 +249,7 @@ usage(void) {
 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 		"[-f|-g] [-n number_of_cpus]\n"
 		"             [-p port] [-s] [-t chrootdir] [-u username] [-i pidfile]\n"
-		"             [-m {usage|trace|record}]\n");
+		"             [-m {usage|trace|record|size|mctx}]\n");
 }
 
 static void
@@ -308,6 +317,8 @@ static struct flag_def {
 	{ "trace",  ISC_MEM_DEBUGTRACE },
 	{ "record", ISC_MEM_DEBUGRECORD },
 	{ "usage", ISC_MEM_DEBUGUSAGE },
+	{ "size", ISC_MEM_DEBUGSIZE },
+	{ "mctx", ISC_MEM_DEBUGCTX },
 	{ NULL, 0 }
 };
 
@@ -688,6 +699,16 @@ setup(void) {
 	 */
 	/* xxdb_init(); */
 
+#ifdef DLZ
+	/*
+	 * Registyer any DLZ drivers.
+	 */
+	result = dlz_drivers_init();
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("dlz_drivers_init() failed: %s",
+				   isc_result_totext(result));
+#endif
+
 	ns_server_create(ns_g_mctx, &ns_g_server);
 }
 
@@ -703,6 +724,15 @@ cleanup(void) {
 	 * Add calls to unregister sdb drivers here.
 	 */
 	/* xxdb_clear(); */
+
+#ifdef DLZ
+	/*
+	 * Unregister any DLZ drivers.
+	 */
+	dlz_drivers_clear();
+#endif
+
+	dns_name_destroy();
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "exiting");
@@ -895,6 +925,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 	isc_mem_destroy(&ns_g_mctx);
+	isc_mem_checkdestroyed(stderr);
 
 	ns_main_setmemstats(NULL);
 

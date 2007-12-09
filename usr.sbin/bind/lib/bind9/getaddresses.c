@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: getaddresses.c,v 1.13.126.8 2005/10/14 02:13:06 marka Exp $ */
+/* $ISC: getaddresses.c,v 1.15.18.5 2005/10/14 01:28:24 marka Exp $ */
+
+/*! \file */
 
 #include <config.h>
 #include <string.h>

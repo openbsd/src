@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: tsig_250.c,v 1.52.2.1.2.8 2005/03/20 22:34:01 marka Exp $ */
+/* $ISC: tsig_250.c,v 1.59.18.2 2005/03/20 22:34:32 marka Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
