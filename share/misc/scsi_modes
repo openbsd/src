@@ -1,4 +1,4 @@
-#	$OpenBSD: scsi_modes,v 1.3 2001/02/03 08:22:44 niklas Exp $
+#	$OpenBSD: scsi_modes,v 1.4 2007/12/09 21:26:19 dlg Exp $
 
 # SCSI mode page data base.
 
@@ -93,6 +93,16 @@
 	{Minimum Pre-fetch} i2
 	{Maximum Pre-fetch} i2
 	{Maximum Pre-fetch Ceiling} i2
+	{FSW} t1
+	{LBCSS} t1
+	{DRA} t1
+	{Vendor-specific} t2
+	{Reserved} *t2
+	{NV_DIS} t1
+	{Number of Cache Segments} i1
+	{Cache Segment Size} i2
+	{Reserved} *i1
+	{Obsolete} *i2
 }
 
 # Flexible disk page:
