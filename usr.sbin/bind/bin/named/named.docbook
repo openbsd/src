@@ -60,6 +60,7 @@
       <arg><option>-d <replaceable class="parameter">debug-level</replaceable></option></arg>
       <arg><option>-f</option></arg>
       <arg><option>-g</option></arg>
+      <arg><option>-i <replaceable class="parameter">pid-file</replaceable></option></arg>
       <arg><option>-m <replaceable class="parameter">flag</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">#cpus</replaceable></option></arg>
       <arg><option>-p <replaceable class="parameter">port</replaceable></option></arg>
@@ -80,10 +81,14 @@
     </para>
     <para>
       When invoked without arguments, <command>named</command>
-      will
+      will fork into two processes for privilege separation,
+      <function>chroot(2)</function> to <option>/var/named</option>, 
       read the default configuration file
-      <filename>/etc/named.conf</filename>, read any initial
-      data, and listen for queries.
+      <filename>/var/named/etc/named.conf</filename>,
+      read any initial data, and listen for queries. The
+      privileged process will communicate with the child and
+      <function>bind(2)</function> to privileged
+      ports on its behalf.  See CAVEATS section below.
     </para>
   </refsect1>
 
@@ -171,6 +176,17 @@
 	    <replaceable class="parameter">mctx</replaceable>.
 	    These correspond to the ISC_MEM_DEBUGXXXX flags described in
 	    <filename>&lt;isc/mem.h&gt;</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">pid-file</replaceable></term>
+        <listitem>
+          <para>
+	    Specifies the file taht contains the process ID of
+	    <command>named</command>.  The default is
+	    <filename>/var/run/named.pid</filename>.
           </para>
         </listitem>
       </varlistentry>
@@ -334,6 +350,19 @@
       to describe in detail here.  A complete description is provided
       in the
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>CAVEATS</title>
+    <para>
+      <command>named</command> runs privilege separated for binding
+      the privileged ports after an interface or address
+      change.  The privileged process will only allow
+      <command>named</command> to <function>bind(2)</function> to
+      default ports.  Make sure you use unprivileged (>1024) ports if
+      you change any of the default ports in <command>named</command>'s
+      configuration or on the command-line.
     </para>
   </refsect1>
 
