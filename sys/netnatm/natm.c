@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.c,v 1.8 2007/09/12 18:45:14 mk Exp $	*/
+/*	$OpenBSD: natm.c,v 1.9 2007/12/09 21:36:40 hshoexer Exp $	*/
 
 /*
  *
@@ -368,7 +368,7 @@ next:
   if (npcb->npcb_flags & NPCB_DRAIN) {
     m_freem(m);
     if (npcb->npcb_inq == 0)
-      FREE(npcb, M_PCB);			/* done! */
+      free(npcb, M_PCB);			/* done! */
     goto next;
   }
 
