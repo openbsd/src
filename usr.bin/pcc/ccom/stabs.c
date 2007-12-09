@@ -1,4 +1,4 @@
-/*	$OpenBSD: stabs.c,v 1.3 2007/10/31 19:39:52 otto Exp $	*/
+/*	$OpenBSD: stabs.c,v 1.4 2007/12/09 18:51:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,7 +39,6 @@
 #ifdef STABS
 
 #include <sys/types.h>
-#include <stab.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -50,6 +49,19 @@
 #ifndef STABLBL
 #error macdefs.h must define STABLBL
 #endif
+
+/* defines taken from BSD <stab.h> */
+#define N_GSYM          0x20    /* global symbol */
+#define N_FUN           0x24    /* procedure name */
+#define N_LCSYM         0x28    /* bss segment variable */
+#define N_RSYM          0x40    /* register variable */
+#define N_SLINE         0x44    /* text segment line number */
+#define N_SO            0x64    /* main source file name */
+#define N_LSYM          0x80    /* stack variable */
+#define N_SOL           0x84    /* included source file name */
+#define N_PSYM          0xa0    /* parameter variable */
+#define N_LBRAC         0xc0    /* left bracket */
+#define N_RBRAC         0xe0    /* right bracket */
 
 /*
  * Local type mapping
