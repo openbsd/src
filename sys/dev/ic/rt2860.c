@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.9 2007/12/07 21:23:14 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.10 2007/12/09 19:55:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -714,7 +714,28 @@ rt2860_updatestats(void *arg)
 {
 	struct rt2860_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t tmp;
 	int s;
+
+	/*
+	 * In IBSS or HostAP modes (when we're sending beacons), the
+	 * hardware can run into a deadlock and start sending CTS-to-self
+	 * frames in a loop if RTS/CTS protection is enabled.
+	 * Fortunately, we can detect when such a situation occurs and
+	 * reset the MAC.
+	 */
+	if (ic->ic_curmode != IEEE80211_M_STA) {
+		/* check if we're in a deadlock situation.. */
+		tmp = RAL_READ(sc, RT2860_DEBUG);
+		if ((tmp & (1 << 29)) && (tmp & (1 << 7 | 1 << 5))) {
+			/* ..and reset MAC/BBP for a while.. */
+			DPRINTF(("CTS-to-self deadlock occured\n"));
+			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_SRST);
+			DELAY(1);
+			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
+			    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
+		}
+	}
 
 	s = splnet();
 	if (ic->ic_opmode == IEEE80211_M_STA)
@@ -766,7 +787,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	timeout_del(&sc->amrr_to);
 
 	if (ostate == IEEE80211_S_RUN) {
-		/* light down link LED */
+		/* turn link LED off */
 		rt2860_set_leds(sc, RT2860_LED_RADIO);
 	}
 
@@ -816,7 +837,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			timeout_add(&sc->amrr_to, hz / 2);
 		}
 
-		/* light up link LED */
+		/* turn link LED on */
 		rt2860_set_leds(sc, RT2860_LED_RADIO |
 		    (IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan) ?
 		     RT2860_LED_LINK_2GHZ : RT2860_LED_LINK_5GHZ));
@@ -890,7 +911,7 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct ieee80211_amrr_node *amn;
 	uint32_t stat;
-	uint8_t wcid;
+	uint8_t wcid, mcs, pid;
 
 	/* drain Tx status FIFO (maxsize = 16) */
 	while ((stat = RAL_READ(sc, RT2860_TX_STAT_FIFO)) & RT2860_TXQ_VLD) {
@@ -908,10 +929,13 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 		if (stat & RT2860_TXQ_OK) {
 			/*
 			 * Check if there were retries, ie if the Tx success
-			 * rate is different from the requested rate.
+			 * rate is different from the requested rate.  Note
+			 * that it works only because we do not allow rate
+			 * fallback from OFDM to CCK.
 			 */
-			if (((stat >> RT2860_TXQ_RATE_SHIFT) & 0x7f) !=
-			    ((stat >> RT2860_TXQ_PID_SHIFT) & 0xf))
+			mcs = (stat >> RT2860_TXQ_MCS_SHIFT) & 0x7f;
+			pid = (stat >> RT2860_TXQ_PID_SHIFT) & 0xf;
+			if (mcs + 1 != pid)
 				amn->amn_retrycnt++;
 		} else {
 			amn->amn_retrycnt++;
@@ -1303,7 +1327,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
 	uint16_t dur;
-	uint8_t type, qsel, mcs;
+	uint8_t type, qsel, mcs, pid;
 	int nsegs, ntxds, rate, error;
 
 	/* the data pool contains at least one element, pick the first */
@@ -1349,8 +1373,16 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	} else
 		txwi->phy = htole16(RT2860_PHY_OFDM);
 	txwi->phy |= htole16(mcs);
-	/* store MCS into driver-private field for rate control */
-	txwi->len |= htole16(mcs << RT2860_TX_PID_SHIFT);
+
+	/*
+	 * We store the MCS into the PacketID field.  The PacketID field is
+	 * latched into TX_STAT_FIFO when Tx completes so that we know at
+	 * which rate the frame was transmitted.  We add 1 to the MCS code
+	 * because 0 is a valid MCS code but setting the PacketID field to
+	 * 0 means that we will get no results in TX_STAT_FIFO.
+	 */
+	pid = (mcs + 1) & 0xf;
+	txwi->len |= htole16(pid << RT2860_TX_PID_SHIFT);
 
 	/* check if RTS/CTS or CTS-to-self protection is required */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
@@ -2239,8 +2271,8 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	sc->freq = ((val & 0xff) != 0xff) ? val & 0xff : 0;
 	DPRINTF(("EEPROM freq offset %d\n", sc->freq & 0xff));
 
-	/* read LEDs operating mode */
 	if ((sc->leds = val >> 8) != 0xff) {
+		/* read LEDs operating mode */
 		sc->led[0] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED1);
 		sc->led[1] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED2);
 		sc->led[2] = rt2860_eeprom_read(sc, RT2860_EEPROM_LED3);
@@ -2642,6 +2674,9 @@ rt2860_init(struct ifnet *ifp)
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	rt2860_set_chan(sc, ic->ic_ibss_chan);
 
+	/* XXX not clear what the following 8051 command does.. */
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BOOT, 0);
+
 	/* set RTS threshold */
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);
 	tmp &= ~0xffff00;
@@ -2668,7 +2703,7 @@ rt2860_init(struct ifnet *ifp)
 	    RT2860_WPDMA_BT_SIZE64 << RT2860_WPDMA_BT_SIZE_SHIFT;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
-	/* light up radio LED */
+	/* turn radio LED on */
 	rt2860_set_leds(sc, RT2860_LED_RADIO);
 
 	/* set Rx filter */
@@ -2711,14 +2746,14 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	uint32_t tmp;
 	int qid;
 
+	if (ifp->if_flags & IFF_RUNNING)
+		rt2860_set_leds(sc, 0);	/* turn all LEDs off */
+
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
-
-	/* light down all LEDs */
-	rt2860_set_leds(sc, 0);
 
 	/* clear RX WCID search table */
 	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(0), 0, 512);

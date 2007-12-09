@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.5 2007/12/07 21:23:14 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.6 2007/12/09 19:55:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -77,6 +77,9 @@
 #define RT2860_RF_CSR_CFG1		0x1024
 #define RT2860_RF_CSR_CFG2		0x1028
 #define RT2860_LED_CFG			0x102c
+
+/* undocumented registers */
+#define RT2860_DEBUG			0x10f4
 
 /* MAC Timing control registers */
 #define RT2860_XIFS_TIME_CFG		0x1100
@@ -269,6 +272,7 @@
 #define RT2860_MCU_CMD_LED1	0x52
 #define RT2860_MCU_CMD_LED2	0x53
 #define RT2860_MCU_CMD_LED3	0x54
+#define RT2860_MCU_CMD_BOOT	0x72
 #define RT2860_MCU_CMD_BBP	0x80
 
 /* possible flags for register PBF_CFG */
@@ -596,7 +600,7 @@
 #define RT2860_PER_RX_RST_EN		(1 <<  0)
 
 /* possible flags for register TX_STAT_FIFO */
-#define RT2860_TXQ_RATE_SHIFT	16
+#define RT2860_TXQ_MCS_SHIFT	16
 #define RT2860_TXQ_WCID_SHIFT	8
 #define RT2860_TXQ_ACKREQ	(1 << 7)
 #define RT2860_TXQ_AGG		(1 << 6)
