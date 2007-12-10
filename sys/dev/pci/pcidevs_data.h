@@ -9508,7 +9508,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 7300 LE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORE7300GO,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7200GS,
+	    "GeForce 7200 GS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7300GO,
 	    "GeForce 7300 Go",
 	},
 	{
