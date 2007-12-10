@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pgt.4,v 1.24 2007/10/13 18:54:12 mglocker Exp $
+.\"	$OpenBSD: pgt.4,v 1.25 2007/12/10 10:32:54 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 13 2007 $
+.Dd $Mdocdate: December 10 2007 $
 .Os
 .Dt PGT 4
 .Sh NAME
@@ -178,6 +178,37 @@ Force 802.11b operation.
 .It Cm 11g
 Force 802.11g operation.
 .El
+.It Cm nwflag Ar flag
+Set a specified flag for the wireless network interface.
+The flag name can be either
+.Ql hidenwid
+or
+.Ql nobridge .
+The
+.Ql hidenwid
+flag will hide the network ID (ESSID) in beacon frames when operating
+in Host AP mode.
+It will also prevent responses to probe requests with an unspecified
+network ID.
+The
+.Ql nobridge
+flag will disable the direct bridging of frames between associated
+nodes when operating in Host AP mode.
+Setting this flag will block and filter direct inter-station
+communications.
+.Pp
+Note that the
+.Ql hidenwid
+and
+.Ql nobridge
+options do not provide any security.
+The hidden network ID will be sent in clear text by associating
+stations and can be easily discovered with tools like
+.Xr tcpdump 8
+and
+.Xr hostapd 8 .
+.It Fl nwflag Ar flag
+Remove a specified flag for the wireless network interface.
 .It Cm nwid Ar id
 Set the network ID.
 The

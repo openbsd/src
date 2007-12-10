@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.38 2007/11/17 10:19:20 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.39 2007/12/10 10:32:54 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: December 10 2007 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -223,6 +223,37 @@ Force 802.11b operation.
 .It Cm 11g
 Force 802.11g operation.
 .El
+.It Cm nwflag Ar flag
+Set a specified flag for the wireless network interface.
+The flag name can be either
+.Ql hidenwid
+or
+.Ql nobridge .
+The
+.Ql hidenwid
+flag will hide the network ID (ESSID) in beacon frames when operating
+in Host AP mode.
+It will also prevent responses to probe requests with an unspecified
+network ID.
+The
+.Ql nobridge
+flag will disable the direct bridging of frames between associated
+nodes when operating in Host AP mode.
+Setting this flag will block and filter direct inter-station
+communications.
+.Pp
+Note that the
+.Ql hidenwid
+and
+.Ql nobridge
+options do not provide any security.
+The hidden network ID will be sent in clear text by associating
+stations and can be easily discovered with tools like
+.Xr tcpdump 8
+and
+.Xr hostapd 8 .
+.It Fl nwflag Ar flag
+Remove a specified flag for the wireless network interface.
 .It Cm nwid Ar id
 Set the network ID.
 The

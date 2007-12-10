@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.29 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: rtw.4,v 1.30 2007/12/10 10:32:54 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 10 2007 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -130,6 +130,37 @@ Select monitor mode.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the driver and return it to the
 default mode of operation (BSS).
+.It Cm nwflag Ar flag
+Set a specified flag for the wireless network interface.
+The flag name can be either
+.Ql hidenwid
+or
+.Ql nobridge .
+The
+.Ql hidenwid
+flag will hide the network ID (ESSID) in beacon frames when operating
+in Host AP mode.
+It will also prevent responses to probe requests with an unspecified
+network ID.
+The
+.Ql nobridge
+flag will disable the direct bridging of frames between associated
+nodes when operating in Host AP mode.
+Setting this flag will block and filter direct inter-station
+communications.
+.Pp
+Note that the
+.Ql hidenwid
+and
+.Ql nobridge
+options do not provide any security.
+The hidden network ID will be sent in clear text by associating
+stations and can be easily discovered with tools like
+.Xr tcpdump 8
+and
+.Xr hostapd 8 .
+.It Fl nwflag Ar flag
+Remove a specified flag for the wireless network interface.
 .It Cm nwid Ar id
 Set the network ID.
 The
