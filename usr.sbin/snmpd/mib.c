@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.3 2007/12/06 09:08:05 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.4 2007/12/10 23:23:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1036,6 +1036,77 @@ mib_sensorvalue(struct sensor *s)
 	return (v);
 }
 
+int mib_ipforwarding(struct oid *, struct ber_oid *, struct ber_element **);
+int mib_ipdefaultttl(struct oid *, struct ber_oid *, struct ber_element **);
+
+static struct oid ip_mib[] = {
+	{ MIB(IPMIB), "ipMIB", OID_MIB },
+	{ MIB(IPFORWARDING), "ipForwarding", OID_RD, mib_ipforwarding },
+	{ MIB(IPDEFAULTTTL), "ipDefaultTTL", OID_RD, mib_ipdefaultttl },
+	{ MIB(IPINRECEIVES), "ipInReceives" },
+	{ MIB(IPINHDRERRORS), "ipInHdrErrors" },
+	{ MIB(IPINADDRERRORS), "ipInAddrErrors" },
+	{ MIB(IPFORWDATAGRAMS), "ipForwDatagrams" },
+	{ MIB(IPINUNKNOWNPROTOS), "ipInUnknownProtos" },
+	{ MIB(IPINDISCARDS), "ipInDiscards" },
+	{ MIB(IPINDELIVERS), "ipInDelivers" },
+	{ MIB(IPOUTREQUESTS), "ipOutRequests" },
+	{ MIB(IPOUTDISCARDS), "ipOutDiscards" },
+	{ MIB(IPOUTNOROUTES), "ipOutNoRoutes" },
+	{ MIB(IPREASMTIMEOUT), "ipReasmTimeout" },
+	{ MIB(IPREASMREQDS), "ipReasmReqds" },
+	{ MIB(IPREASMOKS), "ipReasmOKs" },
+	{ MIB(IPREASMFAILS), "ipReasmFails" },
+	{ MIB(IPFRAGOKS), "ipFragOKs" },
+	{ MIB(IPFRAGFAILS), "ipFragFails" },
+	{ MIB(IPFRAGCREATES), "ipFragCreate" },
+	{ MIBEND }
+};
+
+int
+mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int	mib[4];
+	int	v;
+	size_t	len;
+	
+	mib[0] = CTL_NET;
+	mib[1] = AF_INET;
+	mib[2] = IPPROTO_IP;
+	mib[3] = IPCTL_FORWARDING;
+
+	len = sizeof(v);
+
+	if (sysctl(mib, 4, &v, &len, NULL, 0) == -1)
+		return(-1);
+	
+	*elm = ber_add_integer(*elm, v);
+
+	return (0);
+}
+
+int
+mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int	mib[4];
+	int	v;
+	size_t	len;
+	
+	mib[0] = CTL_NET;
+	mib[1] = AF_INET;
+	mib[2] = IPPROTO_IP;
+	mib[3] = IPCTL_DEFTTL;
+
+	len = sizeof(v);
+
+	if (sysctl(mib, 4, &v, &len, NULL, 0) == -1)
+		return(-1);
+
+	*elm = ber_add_integer(*elm, v);
+
+	return (0);
+}
+
 /*
  * Import all MIBs
  */
@@ -1048,6 +1119,9 @@ mib_init(void)
 
 	/* IF-MIB */
 	mps_mibtree(if_mib);
+
+	/* IP-MIB */
+	mps_mibtree(ip_mib);
 
 	/* some http://www.iana.org/assignments/enterprise-numbers */
 	mps_mibtree(enterprise_mib);
