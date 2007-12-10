@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.9 2006/01/22 00:39:59 miod Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.10 2007/12/10 17:36:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -149,9 +149,11 @@ dkcsumattach(void)
 			picked = hit || (bdi->flags & BDI_PICKED);
 			if (!picked)
 				hit = bdi;
+#ifdef DEBUG
 			printf("dkcsum: %s matches BIOS drive %#x%s\n",
 			    dv->dv_xname, bdi->bios_number,
 			    (picked ? " IGNORED" : ""));
+#endif
 		}
 
 		/*
