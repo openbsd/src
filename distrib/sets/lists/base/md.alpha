@@ -46,6 +46,7 @@
 ./etc/firmware/zd1211b
 ./sbin/iopctl
 ./sbin/kbd
+./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so
