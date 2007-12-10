@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.29 2007/12/10 21:51:01 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.30 2007/12/10 21:54:51 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -692,8 +692,6 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	}
 
 	mem = malloc(sizeof *mem, M_AGP, M_WAITOK | M_ZERO);
-	if (mem == NULL)
-		return (NULL);
 	mem->am_id = sc->sc_nextid++;
 	mem->am_size = size;
 	mem->am_type = type;
