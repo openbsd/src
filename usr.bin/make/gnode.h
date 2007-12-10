@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.11 2007/11/24 15:41:01 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.12 2007/12/10 17:44:06 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -130,8 +130,6 @@ struct GNode_ {
     unsigned long lineno;/* First line number of commands.  */
     const char *fname;	/* File name of commands.  */
     LIST commands;	/* Creation commands */
-    LstNode current;	/* Current command, for job */
-
     struct Suff_ *suffix;/* Suffix for the node (determined by
 			 * Suff_FindDeps and opaque to everyone
 			 * but the Suff module) */
