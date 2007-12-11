@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.56 2007/12/09 00:24:04 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.57 2007/12/11 15:04:01 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1288,8 +1288,16 @@ struct pool_allocator pool_allocator_nointr = {
 void *
 pool_allocator_alloc(struct pool *pp, int flags)
 {
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	void *v;
 
-	return (pp->pr_alloc->pa_alloc(pp, flags));
+	if (waitok)
+		mtx_leave(&pp->pr_mtx);
+	v = pp->pr_alloc->pa_alloc(pp, flags);
+	if (waitok)
+		mtx_enter(&pp->pr_mtx);
+
+	return (v);
 }
 
 void
