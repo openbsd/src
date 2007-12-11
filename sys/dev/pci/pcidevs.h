@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1301 2007/12/11 01:53:02 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1302 2007/12/11 08:09:40 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3315,7 +3315,6 @@
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_10	0x0abd		/* MCP79 AHCI */
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_11	0x0abe		/* MCP79 AHCI */
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_12	0x0abf		/* MCP79 AHCI */
-#define	PCI_PRODUCT_NVIDIA_MCP79_SMB	0x0abg		/* MCP79 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP79_HDA_1	0x0ac0		/* MCP79 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_MCP79_HDA_2	0x0ac1		/* MCP79 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_MCP79_HDA_3	0x0ac2		/* MCP79 HD Audio */
