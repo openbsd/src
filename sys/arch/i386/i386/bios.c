@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.75 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.76 2007/12/11 17:53:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -100,9 +100,7 @@ struct smbios_entry smbios_entry;
 #ifdef MULTIPROCESSOR
 void		*bios_smpinfo;
 #endif
-#ifdef NFSCLIENT
 bios_bootmac_t	*bios_bootmac;
-#endif
 
 void		smbios_info(char*);
 
@@ -498,11 +496,9 @@ bios_getopt()
 			break;
 #endif
 
-#ifdef NFSCLIENT
 		case BOOTARG_BOOTMAC:
 			bios_bootmac = (bios_bootmac_t *)q->ba_arg;
 			break;
-#endif
 
 		default:
 #ifdef BIOS_DEBUG
