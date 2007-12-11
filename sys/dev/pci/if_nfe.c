@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.74 2007/12/05 08:30:33 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.75 2007/12/11 23:08:09 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -478,7 +478,7 @@ nfe_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint32_t r;
 
-	if ((r = NFE_READ(sc, NFE_IRQ_STATUS)) == 0)
+	if ((r = NFE_READ(sc, NFE_IRQ_STATUS) & NFE_IRQ_WANTED) == 0)
 		return 0;	/* not for us */
 	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
 
