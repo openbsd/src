@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.57 2007/12/11 15:04:01 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.58 2007/12/11 15:04:58 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -868,8 +868,6 @@ int
 pool_sethardlimit(struct pool *pp, unsigned n, const char *warnmess, int ratecap)
 {
 	int error = 0;
-
-	simple_lock(&pp->pr_slock);
 
 	if (n < pp->pr_nout) {
 		error = EINVAL;
