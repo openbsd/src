@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.43 2007/07/25 11:50:47 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.44 2007/12/11 20:14:45 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ void	net80211_ifstats(char *);
 
 void	tcp_dump(u_long);
 
-void	mbpr(u_long, u_long, u_long);
+void	mbpr(void);
 
 void	hostpr(u_long, u_long);
 void	impstats(u_long, u_long);

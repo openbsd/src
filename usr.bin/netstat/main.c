@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.69 2007/10/20 18:08:57 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.70 2007/12/11 20:14:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.69 2007/10/20 18:08:57 sobrado Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.70 2007/12/11 20:14:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,91 +67,85 @@ static char *rcsid = "$OpenBSD: main.c,v 1.69 2007/10/20 18:08:57 sobrado Exp $"
 #include "netstat.h"
 
 struct nlist nl[] = {
-#define N_MBSTAT	0
-	{ "_mbstat" },
-#define N_IPSTAT	1
+#define N_IPSTAT	0
 	{ "_ipstat" },
-#define N_TCBTABLE	2
+#define N_TCBTABLE	1
 	{ "_tcbtable" },
-#define N_TCPSTAT	3
+#define N_TCPSTAT	2
 	{ "_tcpstat" },
-#define N_UDBTABLE	4
+#define N_UDBTABLE	3
 	{ "_udbtable" },
-#define N_UDPSTAT	5
+#define N_UDPSTAT	4
 	{ "_udpstat" },
-#define N_IFNET		6
+#define N_IFNET		5
 	{ "_ifnet" },
-#define N_ICMPSTAT	7
+#define N_ICMPSTAT	6
 	{ "_icmpstat" },
-#define N_RTSTAT	8
+#define N_RTSTAT	7
 	{ "_rtstat" },
-#define N_UNIXSW	9
+#define N_UNIXSW	8
 	{ "_unixsw" },
-#define N_RTREE		10
+#define N_RTREE		9
 	{ "_rt_tables"},
-#define N_FILE		11
+#define N_FILE		10
 	{ "_file" },
-#define N_IGMPSTAT	12
+#define N_IGMPSTAT	11
 	{ "_igmpstat" },
-#define N_MRTPROTO	13
+#define N_MRTPROTO	12
 	{ "_ip_mrtproto" },
-#define N_MRTSTAT	14
+#define N_MRTSTAT	13
 	{ "_mrtstat" },
-#define N_MFCHASHTBL	15
+#define N_MFCHASHTBL	14
 	{ "_mfchashtbl" },
-#define N_MFCHASH	16
+#define N_MFCHASH	15
 	{ "_mfchash" },
-#define N_VIFTABLE	17
+#define N_VIFTABLE	16
 	{ "_viftable" },
-#define N_AHSTAT	18
+#define N_AHSTAT	17
 	{ "_ahstat"},
-#define N_ESPSTAT	19
+#define N_ESPSTAT	18
 	{ "_espstat"},
-#define N_IP4STAT	20
+#define N_IP4STAT	19
 	{ "_ipipstat"},
-#define N_DDPSTAT	21
+#define N_DDPSTAT	20
 	{ "_ddpstat"},
-#define N_DDPCB		22
+#define N_DDPCB		21
 	{ "_ddpcb"},
-#define N_ETHERIPSTAT	23
+#define N_ETHERIPSTAT	22
 	{ "_etheripstat"},
-#define N_IP6STAT	24
+#define N_IP6STAT	23
 	{ "_ip6stat" },
-#define N_ICMP6STAT	25
+#define N_ICMP6STAT	24
 	{ "_icmp6stat" },
-#define N_PIM6STAT	26
+#define N_PIM6STAT	25
 	{ "_pim6stat" },
-#define N_MRT6PROTO	27
+#define N_MRT6PROTO	26
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	28
+#define N_MRT6STAT	27
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	29
+#define N_MF6CTABLE	28
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	30
+#define N_MIF6TABLE	29
 	{ "_mif6table" },
-#define N_MBPOOL	31
-	{ "_mbpool" },
-#define N_MCLPOOL	32
-	{ "_mclpool" },
-#define N_IPCOMPSTAT	33
+#define N_IPCOMPSTAT	30
 	{ "_ipcompstat" },
-#define N_RIP6STAT	34
+#define N_RIP6STAT	31
 	{ "_rip6stat" },
-#define N_CARPSTAT	35
+#define N_CARPSTAT	32
 	{ "_carpstats" },
-#define N_RAWIPTABLE	36
+#define N_RAWIPTABLE	33
 	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	37
+#define N_RAWIP6TABLE	34
 	{ "_rawin6pcbtable" },
-#define N_PFSYNCSTAT	38
+#define N_PFSYNCSTAT	35
 	{ "_pfsyncstats" },
-#define N_PIMSTAT	39
+#define N_PIMSTAT	36
 	{ "_pimstat" },
-#define N_AF2RTAFIDX	40
+#define N_AF2RTAFIDX	37
 	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	41
+#define N_RTBLIDMAX	38
 	{ "_rtbl_id_max" },
-#define N_RTMASK	42
+#define N_RTMASK	39
 	{ "_mask_rnhead" },
 	{ ""}
 };
@@ -445,8 +439,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	if (mflag) {
-		mbpr(nl[N_MBSTAT].n_value, nl[N_MBPOOL].n_value,
-		    nl[N_MCLPOOL].n_value);
+		mbpr();
 		exit(0);
 	}
 	if (pflag) {
@@ -493,8 +486,7 @@ main(int argc, char *argv[])
 				mrt6_stats(nl[N_MRT6PROTO].n_value,
 				    nl[N_MRT6STAT].n_value);
 #endif
-		}
-		else {
+		} else {
 			if (af == AF_INET || af == AF_UNSPEC)
 				mroutepr(nl[N_MRTPROTO].n_value,
 				    nl[N_MFCHASHTBL].n_value,

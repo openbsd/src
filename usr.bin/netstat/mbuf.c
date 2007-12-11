@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.24 2005/12/21 01:40:24 millert Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.25 2007/12/11 20:14:45 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.24 2005/12/21 01:40:24 millert Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.25 2007/12/11 20:14:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ bool seen[256];			/* "have we seen this type yet?" */
  * Print mbuf statistics.
  */
 void
-mbpr(u_long mbaddr, u_long mbpooladdr, u_long mclpooladdr)
+mbpr(void)
 {
 	int totmem, totused, totmbufs, totpct;
 	int i, mib[4], npools, flag = 0;
