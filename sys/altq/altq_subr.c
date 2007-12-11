@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.23 2007/12/10 23:12:56 mikeb Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.24 2007/12/11 00:30:14 mikeb Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -692,14 +692,6 @@ write_dsfield(m, pktattr, dsfield)
 }
 
 
-/*
- * high resolution clock support taking advantage of a machine dependent
- * high resolution time counter (e.g., timestamp counter of intel pentium).
- * we assume
- *  - 64-bit-long monotonically-increasing counter
- *  - frequency range is 100M-4GHz (CPU speed)
- */
-/* if pcc is not available or disabled, emulate 256MHz using microtime() */
 #define	MACHCLK_SHIFT	8
 
 u_int32_t machclk_tc = 0;
