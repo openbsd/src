@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.34 2007/10/10 12:46:44 kettenis Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.35 2007/12/11 02:36:02 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -82,7 +82,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -105,11 +104,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_types.h>
-#include <net/if_vlan_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -780,10 +774,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 				IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
-#ifdef VGE_VLAN
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
-
 	/* Set interface name */
 	strlcpy(ifp->if_xname, sc->vge_dev.dv_xname, IFNAMSIZ);
 
@@ -1296,13 +1286,6 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct mbuf		*mnew = NULL;
 	int			error, frag;
 	u_int32_t		vge_flags;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	vge_flags = 0;
 
@@ -1390,16 +1373,6 @@ repack:
 	sc->vge_ldata.vge_tx_mbuf[idx] = m_head;
 	sc->vge_ldata.vge_tx_free--;
 	sc->vge_ldata.vge_tx_list[idx].vge_sts |= htole32(VGE_TDSTS_OWN);
-
-	/*
-	 * Set up hardware VLAN tagging.
-	 */
-#if NVLAN > 0
-	if (ifv != NULL) {
-		sc->vge_ldata.vge_tx_list[idx].vge_ctl |=
-		    htole32(htons(ifv->ifv_tag) | VGE_TDCTL_VTAG);
-	}
-#endif
 
 	idx++;
 	if (mnew == NULL) {
@@ -1523,12 +1496,9 @@ vge_init(struct ifnet *ifp)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		CSR_WRITE_1(sc, VGE_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
-	/*
-	 * Set receive FIFO threshold. Also allow transmission and
-	 * reception of VLAN tagged frames.
-	 */
-	CSR_CLRBIT_1(sc, VGE_RXCFG, VGE_RXCFG_FIFO_THR|VGE_RXCFG_VTAGOPT);
-	CSR_SETBIT_1(sc, VGE_RXCFG, VGE_RXFIFOTHR_128BYTES|VGE_VTAG_OPT2);
+	/* Set receive FIFO threshold */
+	CSR_CLRBIT_1(sc, VGE_RXCFG, VGE_RXCFG_FIFO_THR);
+	CSR_SETBIT_1(sc, VGE_RXCFG, VGE_RXFIFOTHR_128BYTES);
 
 	/* Set DMA burst length */
 	CSR_CLRBIT_1(sc, VGE_DMACFG0, VGE_DMACFG0_BURSTLEN);
