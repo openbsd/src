@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.64 2007/08/03 22:49:07 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.65 2007/12/11 15:05:45 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -783,6 +783,7 @@ uvm_km_putpage(void *v)
  * not zero filled.
  */
 
+struct mutex uvm_km_mtx;
 int uvm_km_pages_lowat; /* allocate more when reserve drops below this */
 int uvm_km_pages_free; /* number of pages currently on free list */
 struct km_page {
@@ -804,6 +805,7 @@ uvm_km_page_init(void)
 	struct km_page *page;
 	int i;
 
+	mtx_init(&uvm_km_mtx, IPL_VM);
 	if (!uvm_km_pages_lowat) {
 		/* based on physmem, calculate a good value here */
 		uvm_km_pages_lowat = physmem / 256;
@@ -843,7 +845,7 @@ void
 uvm_km_thread(void *arg)
 {
 	struct km_page *head, *tail, *page;
-	int i, s, want;
+	int i, want;
 
 	for (i = want = 16; ; ) {
 		if (i < want || uvm_km_pages_free >= uvm_km_pages_lowat)
@@ -858,11 +860,11 @@ uvm_km_thread(void *arg)
 			head = page;
 		}
 		if (head != NULL) {
-			s = splvm();
+			mtx_enter(&uvm_km_mtx);
 			tail->next = uvm_km_pages_head;
 			uvm_km_pages_head = head;
 			uvm_km_pages_free += i;
-			splx(s);
+			mtx_leave(&uvm_km_mtx);
 		}
 		if (uvm_km_pages_free)
 			wakeup(&uvm_km_pages_free);
@@ -878,9 +880,8 @@ void *
 uvm_km_getpage(boolean_t waitok)
 {
 	struct km_page *page = NULL;
-	int s;
 
-	s = splvm();
+	mtx_enter(&uvm_km_mtx);
 	for (;;) {
 		page = uvm_km_pages_head;
 		if (page) {
@@ -890,9 +891,9 @@ uvm_km_getpage(boolean_t waitok)
 		}
 		if (!waitok)
 			break;
-		tsleep(&uvm_km_pages_free, PVM, "getpage", 0);
+		msleep(&uvm_km_pages_free, &uvm_km_mtx, PVM, "getpage", 0);
 	}
-	splx(s);
+	mtx_leave(&uvm_km_mtx);
 	if (uvm_km_pages_free < uvm_km_pages_lowat)
 		wakeup(&uvm_km_pages_head);
 	return (page);
@@ -902,12 +903,11 @@ void
 uvm_km_putpage(void *v)
 {
 	struct km_page *page = v;
-	int s;
 
-	s = splvm();
+	mtx_enter(&uvm_km_mtx);
 	page->next = uvm_km_pages_head;
 	uvm_km_pages_head = page;
 	uvm_km_pages_free++;
-	splx(s);
+	mtx_leave(&uvm_km_mtx);
 }
 #endif
