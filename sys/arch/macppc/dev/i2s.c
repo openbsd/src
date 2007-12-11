@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.10 2007/11/05 00:17:28 jakemsr Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.11 2007/12/11 09:11:54 jakemsr Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -790,16 +790,10 @@ i2s_set_rate(sc, rate)
 	/* sanify */
 	if (rate > 48000)
 		rate = 48000;
-	else if (rate < 8000)
-		rate = 8000;
+	else if (rate < 44100)
+		rate = 44100;
 
 	switch (rate) {
-	case 8000:
-		clksrc = 18432000;		/* 18MHz */
-		reg = CLKSRC_18MHz;
-		mclk_fs = 256;
-		break;
-
 	case 44100:
 		clksrc = 45158400;		/* 45MHz */
 		reg = CLKSRC_45MHz;
