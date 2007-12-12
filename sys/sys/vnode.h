@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.88 2007/06/14 20:36:34 otto Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.89 2007/12/12 16:24:49 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -270,36 +270,12 @@ extern	int rushjob;			/* # of slots syncer should run ASAP */
 #define VDESC_VPP_WILLRELE      0x00020000
 
 /*
- * VDESC_NO_OFFSET is used to identify the end of the offset list
- * and in places where no such field exists.
- */
-#define VDESC_NO_OFFSET -1
-
-/*
  * This structure describes the vnode operation taking place.
  */
 struct vnodeop_desc {
 	int	vdesc_offset;		/* offset in vector--first for speed */
-	char    *vdesc_name;		/* a readable name for debugging */
+	char	*vdesc_name;		/* a readable name for debugging */
 	int	vdesc_flags;		/* VDESC_* flags */
-
-	/*
-	 * These ops are used by bypass routines to map and locate arguments.
-	 * Creds and procs are not needed in bypass routines, but sometimes
-	 * they are useful to (for example) transport layers.
-	 * Nameidata is useful because it has a cred in it.
-	 */
-	int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
-	int	vdesc_vpp_offset;	/* return vpp location */
-	int	vdesc_cred_offset;	/* cred location, if any */
-	int	vdesc_proc_offset;	/* proc location, if any */
-	int	vdesc_componentname_offset; /* if any */
-	/*
-	 * Finally, we've got a list of private data (about each operation)
-	 * for each transport layer.  (Support to manage this list is not
-	 * yet part of BSD.)
-	 */
-	caddr_t	*vdesc_transports;
 };
 
 #ifdef _KERNEL
@@ -307,21 +283,6 @@ struct vnodeop_desc {
  * A list of all the operation descs.
  */
 extern struct vnodeop_desc *vnodeop_descs[];
-
-
-/*
- * This macro is very helpful in defining those offsets in the vdesc struct.
- *
- * This is stolen from X11R4.  I ingored all the fancy stuff for
- * Crays, so if you decide to port this to such a serious machine,
- * you might want to consult Intrisics.h's XtOffset{,Of,To}.
- */
-#define VOPARG_OFFSET(p_type,field) \
-	((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
-#define VOPARG_OFFSETOF(s_type,field) \
-	VOPARG_OFFSET(s_type*,field)
-#define VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
-	((S_TYPE)(((char *)(STRUCT_P))+(S_OFFSET)))
 
 
 /*

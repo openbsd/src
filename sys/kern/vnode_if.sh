@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp $'
+SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.16 2007/12/12 16:24:49 thib Exp $'
 # SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
@@ -239,40 +239,12 @@ struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
-	NULL,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 '
 
 # Body stuff
 sed -e "$sed_prep" $src | $awk '
-function do_offset(typematch) {
-	for (i=0; i<argc; i++) {
-		if (argtype[i] == typematch) {
-			printf("\tVOPARG_OFFSETOF(struct %s_args, a_%s),\n",
-				name, argname[i]);
-			return i;
-		};
-	};
-	print "\tVDESC_NO_OFFSET,";
-	return -1;
-}
-
 function doit() {
-	# Define offsets array
-	printf("\nint %s_vp_offsets[] = {\n", name);
-	for (i=0; i<argc; i++) {
-		if (argtype[i] == "struct vnode *") {
-			printf ("\tVOPARG_OFFSETOF(struct %s_args,a_%s),\n",
-				name, argname[i]);
-		}
-	}
-	print "\tVDESC_NO_OFFSET";
-	print "};";
 	# Define F_desc
 	printf("struct vnodeop_desc %s_desc = {\n", name);
 	# offset
@@ -299,19 +271,7 @@ function doit() {
 			vpnum++;
 		}
 	}
-	print ",";
-	# vp offsets
-	printf ("\t%s_vp_offsets,\n", name);
-	# vpp (if any)
-	do_offset("struct vnode **");
-	# cred (if any)
-	do_offset("struct ucred *");
-	# proc (if any)
-	do_offset("struct proc *");
-	# componentname
-	do_offset("struct componentname *");
-	# transport layer information
-	printf ("\tNULL,\n};\n");
+	printf (",\n};\n");
 
 	# Define inline function.
 	printf("\nint %s(", toupper(name));
