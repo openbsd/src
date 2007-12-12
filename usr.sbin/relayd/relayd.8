@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.15 2007/12/08 19:10:33 reyk Exp $
+.\"	$OpenBSD: relayd.8,v 1.16 2007/12/12 14:55:12 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2007 $
+.Dd $Mdocdate: December 12 2007 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
 .Nm relayd
-.Nd Relay daemon
+.Nd relay daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
@@ -37,7 +37,7 @@ The daemon is able to monitor groups of hosts for availability, which
 is determined by checking for a specific service common to a host
 group.
 When availability is confirmed,
-Layer 3 and/or Layer 7 forwarding services are set up by
+Layer 3 and/or layer 7 forwarding services are set up by
 .Nm .
 .Pp
 Layer 3 redirection happens at the packet level; to configure
@@ -68,15 +68,15 @@ works in terms of the following
 relays, protocols, redirections, and tables.
 A
 .Em relay
-represents a Layer 7 load-balancing instance.
+represents a layer 7 load-balancing instance.
 Each instance translates to a listening TCP or UDP port.
 A
 .Em protocol
-defines which actions, if any, must be taken on the
+defines which actions, if any, are taken on the
 packet payload as data crosses a relay.
 A
 .Em redirection
-represents a Layer 3 load-balancing instance.
+represents a layer 3 load-balancing instance.
 Each instance translates to a
 .Xr pf 4
 rdr rule being added.
@@ -85,16 +85,16 @@ A
 represents a group of hosts which can be checked for
 availability using the same method.
 Each table contains at least one host.
-If a table is used in a Layer 3 load-balancing instance, it
+If a table is used in a layer 3 load-balancing instance, it
 will be mapped to a
 .Xr pf 4
-table containing only hosts which are up.
+table containing only those hosts which are up.
 .Pp
 All these entities can be configured in
-.Xr relayd.conf 5
+.Xr relayd.conf 5 ,
 and
 .Xr relayctl 8
-can be used to alter or report the status of each entity.
+can be used to alter or report on the status of each entity.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -126,9 +126,7 @@ Produce more verbose output.
 .Sh FILES
 .Bl -tag -width "/var/run/relayd.sockXX" -compact
 .It /etc/relayd.conf
-Default
-.Nm
-configuration file.
+Default configuration file.
 .It /var/run/relayd.sock
 Unix-domain socket used for communication with
 .Xr relayctl 8 .

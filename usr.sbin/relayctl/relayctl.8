@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.18 2007/12/08 20:11:48 reyk Exp $
+.\" $OpenBSD: relayctl.8,v 1.19 2007/12/12 14:55:12 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2007 $
+.Dd $Mdocdate: December 12 2007 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
 .Nm relayctl
-.Nd control the Relay daemon
+.Nd control the relay daemon
 .Sh SYNOPSIS
 .Nm
 .Ar command
@@ -41,22 +41,23 @@ Enable the host.
 Start checking its health again.
 .It Cm monitor
 Continuously report any changes in the host checking engine and the
-pf engine.
+.Xr pf 4
+engine.
 .It Cm poll
 Schedule an immediate check of all hosts.
-.It Cm reload
-Reload the configuration file.
 .It Cm redirect disable Op Ar name | id
 Disable a redirection.
 If it has
 .Xr pf 4
 redirection rules installed, remove them.
 Mark the redirection's main table and \(en
-if applicable \(en backup table disabled as well.
+if applicable \(en disable the backup table as well.
 .It Cm redirect enable Op Ar name | id
 Enable a redirection.
-Mark the redirection's main table and \(en if applicable \(en backup
-table enabled as well.
+Mark the redirection's main table and \(en if applicable \(en enable
+the backup table as well.
+.It Cm reload
+Reload the configuration file.
 .It Cm show hosts
 Show detailed status of hosts, tables, and redirections.
 .It Cm show relays
