@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.8 2007/11/17 05:37:51 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.9 2007/12/12 20:36:24 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -202,15 +202,15 @@ u_int av400_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 /*
  * external interrupt masks per spl.
  */
-const u_int32_t int_mask_val[INT_LEVEL] = {
-	MASK_LVL_0,
-	MASK_LVL_1,
-	MASK_LVL_2,
-	MASK_LVL_3,
-	MASK_LVL_4,
-	MASK_LVL_5,
-	MASK_LVL_6,
-	MASK_LVL_7
+u_int32_t int_mask_val[INT_LEVEL] = {
+	MASK_LVL_0 & ~IRQ_CIOI,
+	MASK_LVL_1 & ~IRQ_CIOI,
+	MASK_LVL_2 & ~IRQ_CIOI,
+	MASK_LVL_3 & ~IRQ_CIOI,
+	MASK_LVL_4 & ~IRQ_CIOI,
+	MASK_LVL_5 & ~IRQ_CIOI,
+	MASK_LVL_6 & ~IRQ_CIOI,
+	MASK_LVL_7 & ~IRQ_CIOI
 };
 
 /*
@@ -586,6 +586,7 @@ int statmin;			/* statclock interval - 1/2*variance */
 void
 av400_init_clocks(void)
 {
+	int s;
 
 	simple_lock_init(&av400_cio_lock);
 
@@ -606,6 +607,10 @@ av400_init_clocks(void)
 	clock_ih.ih_wantframe = 1;
 	clock_ih.ih_ipl = IPL_CLOCK;
 	sysconintr_establish(SYSCV_TIMER2, &clock_ih, "clock");
+
+	/* unmask CIOI interrupt */
+	for (s = IPL_NONE; s < IPL_CLOCK; s++)
+		int_mask_val[s] |= IRQ_CIOI;
 }
 
 int
