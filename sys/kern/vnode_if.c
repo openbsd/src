@@ -5,7 +5,7 @@
  * Created from the file:
  *	OpenBSD: vnode_if.src,v 1.32 2007/01/16 17:52:18 thib Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp 
+ *	OpenBSD: vnode_if.sh,v 1.16 2007/12/12 16:24:49 thib Exp 
  */
 
 /*
@@ -45,29 +45,12 @@ struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
-	NULL,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
-
-int vop_islocked_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_islocked_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_islocked_desc = {
 	0,
 	"vop_islocked",
 	0,
-	vop_islocked_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_ISLOCKED(struct vnode *vp)
@@ -77,21 +60,10 @@ int VOP_ISLOCKED(struct vnode *vp)
 	a.a_vp = vp;
 	return (VCALL(vp, VOFFSET(vop_islocked), &a));
 }
-
-int vop_lookup_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_lookup_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_lookup_desc = {
 	0,
 	"vop_lookup",
 	0,
-	vop_lookup_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_lookup_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_lookup_args, a_cnp),
-	NULL,
 };
 
 int VOP_LOOKUP(struct vnode *dvp, struct vnode **vpp, 
@@ -104,21 +76,10 @@ int VOP_LOOKUP(struct vnode *dvp, struct vnode **vpp,
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_lookup), &a));
 }
-
-int vop_create_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_create_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_create_desc = {
 	0,
 	"vop_create",
 	0 | VDESC_VP0_WILLPUT,
-	vop_create_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_create_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_create_args, a_cnp),
-	NULL,
 };
 
 int VOP_CREATE(struct vnode *dvp, struct vnode **vpp, 
@@ -136,21 +97,10 @@ int VOP_CREATE(struct vnode *dvp, struct vnode **vpp,
 	a.a_vap = vap;
 	return (VCALL(dvp, VOFFSET(vop_create), &a));
 }
-
-int vop_mknod_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_mknod_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_mknod_desc = {
 	0,
 	"vop_mknod",
 	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
-	vop_mknod_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_mknod_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_mknod_args, a_cnp),
-	NULL,
 };
 
 int VOP_MKNOD(struct vnode *dvp, struct vnode **vpp, 
@@ -168,21 +118,10 @@ int VOP_MKNOD(struct vnode *dvp, struct vnode **vpp,
 	a.a_vap = vap;
 	return (VCALL(dvp, VOFFSET(vop_mknod), &a));
 }
-
-int vop_open_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_open_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_open_desc = {
 	0,
 	"vop_open",
 	0,
-	vop_open_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_open_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_open_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_OPEN(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
@@ -195,21 +134,10 @@ int VOP_OPEN(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_open), &a));
 }
-
-int vop_close_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_close_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_close_desc = {
 	0,
 	"vop_close",
 	0,
-	vop_close_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_close_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_close_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_CLOSE(struct vnode *vp, int fflag, struct ucred *cred, struct proc *p)
@@ -226,21 +154,10 @@ int VOP_CLOSE(struct vnode *vp, int fflag, struct ucred *cred, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_close), &a));
 }
-
-int vop_access_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_access_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_access_desc = {
 	0,
 	"vop_access",
 	0,
-	vop_access_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_access_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_access_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_ACCESS(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
@@ -257,21 +174,10 @@ int VOP_ACCESS(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_access), &a));
 }
-
-int vop_getattr_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_getattr_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_getattr_desc = {
 	0,
 	"vop_getattr",
 	0,
-	vop_getattr_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_getattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_getattr_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_GETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred, 
@@ -285,21 +191,10 @@ int VOP_GETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_getattr), &a));
 }
-
-int vop_setattr_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_setattr_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_setattr_desc = {
 	0,
 	"vop_setattr",
 	0,
-	vop_setattr_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_setattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_setattr_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_SETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred, 
@@ -317,21 +212,10 @@ int VOP_SETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_setattr), &a));
 }
-
-int vop_read_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_read_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_read_desc = {
 	0,
 	"vop_read",
 	0,
-	vop_read_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_read_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_READ(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
@@ -348,21 +232,10 @@ int VOP_READ(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 	a.a_cred = cred;
 	return (VCALL(vp, VOFFSET(vop_read), &a));
 }
-
-int vop_write_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_write_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_write_desc = {
 	0,
 	"vop_write",
 	0,
-	vop_write_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_write_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_WRITE(struct vnode *vp, struct uio *uio, int ioflag, 
@@ -380,21 +253,10 @@ int VOP_WRITE(struct vnode *vp, struct uio *uio, int ioflag,
 	a.a_cred = cred;
 	return (VCALL(vp, VOFFSET(vop_write), &a));
 }
-
-int vop_ioctl_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_ioctl_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_ioctl_desc = {
 	0,
 	"vop_ioctl",
 	0,
-	vop_ioctl_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_ioctl_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_ioctl_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_IOCTL(struct vnode *vp, u_long command, void *data, int fflag, 
@@ -410,21 +272,10 @@ int VOP_IOCTL(struct vnode *vp, u_long command, void *data, int fflag,
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
 }
-
-int vop_poll_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_poll_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_poll_desc = {
 	0,
 	"vop_poll",
 	0,
-	vop_poll_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_poll_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_POLL(struct vnode *vp, int events, struct proc *p)
@@ -436,21 +287,10 @@ int VOP_POLL(struct vnode *vp, int events, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
 }
-
-int vop_kqfilter_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_kqfilter_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_kqfilter_desc = {
 	0,
 	"vop_kqfilter",
 	0,
-	vop_kqfilter_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_KQFILTER(struct vnode *vp, struct knote *kn)
@@ -461,21 +301,10 @@ int VOP_KQFILTER(struct vnode *vp, struct knote *kn)
 	a.a_kn = kn;
 	return (VCALL(vp, VOFFSET(vop_kqfilter), &a));
 }
-
-int vop_revoke_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_revoke_desc = {
 	0,
 	"vop_revoke",
 	0,
-	vop_revoke_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_REVOKE(struct vnode *vp, int flags)
@@ -486,21 +315,10 @@ int VOP_REVOKE(struct vnode *vp, int flags)
 	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_revoke), &a));
 }
-
-int vop_fsync_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_fsync_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_fsync_desc = {
 	0,
 	"vop_fsync",
 	0,
-	vop_fsync_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_fsync_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_fsync_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor, 
@@ -518,22 +336,10 @@ int VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor,
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
-
-int vop_remove_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_remove_args,a_dvp),
-	VOPARG_OFFSETOF(struct vop_remove_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_remove_desc = {
 	0,
 	"vop_remove",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
-	vop_remove_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_remove_args, a_cnp),
-	NULL,
 };
 
 int VOP_REMOVE(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
@@ -553,22 +359,10 @@ int VOP_REMOVE(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_remove), &a));
 }
-
-int vop_link_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_link_args,a_dvp),
-	VOPARG_OFFSETOF(struct vop_link_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_link_desc = {
 	0,
 	"vop_link",
 	0 | VDESC_VP0_WILLPUT,
-	vop_link_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_link_args, a_cnp),
-	NULL,
 };
 
 int VOP_LINK(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
@@ -584,24 +378,10 @@ int VOP_LINK(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_link), &a));
 }
-
-int vop_rename_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_rename_args,a_fdvp),
-	VOPARG_OFFSETOF(struct vop_rename_args,a_fvp),
-	VOPARG_OFFSETOF(struct vop_rename_args,a_tdvp),
-	VOPARG_OFFSETOF(struct vop_rename_args,a_tvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_rename_desc = {
 	0,
 	"vop_rename",
 	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLRELE,
-	vop_rename_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_rename_args, a_fcnp),
-	NULL,
 };
 
 int VOP_RENAME(struct vnode *fdvp, struct vnode *fvp, 
@@ -622,21 +402,10 @@ int VOP_RENAME(struct vnode *fdvp, struct vnode *fvp,
 	a.a_tcnp = tcnp;
 	return (VCALL(fdvp, VOFFSET(vop_rename), &a));
 }
-
-int vop_mkdir_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_mkdir_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_mkdir_desc = {
 	0,
 	"vop_mkdir",
 	0 | VDESC_VP0_WILLPUT,
-	vop_mkdir_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_mkdir_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_mkdir_args, a_cnp),
-	NULL,
 };
 
 int VOP_MKDIR(struct vnode *dvp, struct vnode **vpp, 
@@ -654,22 +423,10 @@ int VOP_MKDIR(struct vnode *dvp, struct vnode **vpp,
 	a.a_vap = vap;
 	return (VCALL(dvp, VOFFSET(vop_mkdir), &a));
 }
-
-int vop_rmdir_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_rmdir_args,a_dvp),
-	VOPARG_OFFSETOF(struct vop_rmdir_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_rmdir_desc = {
 	0,
 	"vop_rmdir",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
-	vop_rmdir_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_rmdir_args, a_cnp),
-	NULL,
 };
 
 int VOP_RMDIR(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
@@ -689,21 +446,10 @@ int VOP_RMDIR(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_rmdir), &a));
 }
-
-int vop_symlink_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_symlink_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_symlink_desc = {
 	0,
 	"vop_symlink",
 	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
-	vop_symlink_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_symlink_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_symlink_args, a_cnp),
-	NULL,
 };
 
 int VOP_SYMLINK(struct vnode *dvp, struct vnode **vpp, 
@@ -722,21 +468,10 @@ int VOP_SYMLINK(struct vnode *dvp, struct vnode **vpp,
 	a.a_target = target;
 	return (VCALL(dvp, VOFFSET(vop_symlink), &a));
 }
-
-int vop_readdir_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_readdir_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_readdir_desc = {
 	0,
 	"vop_readdir",
 	0,
-	vop_readdir_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_readdir_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_READDIR(struct vnode *vp, struct uio *uio, struct ucred *cred, 
@@ -756,21 +491,10 @@ int VOP_READDIR(struct vnode *vp, struct uio *uio, struct ucred *cred,
 	a.a_cookies = cookies;
 	return (VCALL(vp, VOFFSET(vop_readdir), &a));
 }
-
-int vop_readlink_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_readlink_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_readlink_desc = {
 	0,
 	"vop_readlink",
 	0,
-	vop_readlink_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_readlink_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_READLINK(struct vnode *vp, struct uio *uio, struct ucred *cred)
@@ -786,21 +510,10 @@ int VOP_READLINK(struct vnode *vp, struct uio *uio, struct ucred *cred)
 	a.a_cred = cred;
 	return (VCALL(vp, VOFFSET(vop_readlink), &a));
 }
-
-int vop_abortop_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_abortop_args,a_dvp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_abortop_desc = {
 	0,
 	"vop_abortop",
 	0,
-	vop_abortop_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_abortop_args, a_cnp),
-	NULL,
 };
 
 int VOP_ABORTOP(struct vnode *dvp, struct componentname *cnp)
@@ -811,21 +524,10 @@ int VOP_ABORTOP(struct vnode *dvp, struct componentname *cnp)
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_abortop), &a));
 }
-
-int vop_inactive_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_inactive_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_inactive_desc = {
 	0,
 	"vop_inactive",
 	0 | VDESC_VP0_WILLUNLOCK,
-	vop_inactive_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_inactive_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_INACTIVE(struct vnode *vp, struct proc *p)
@@ -840,21 +542,10 @@ int VOP_INACTIVE(struct vnode *vp, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
-
-int vop_reclaim_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_reclaim_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_reclaim_desc = {
 	0,
 	"vop_reclaim",
 	0,
-	vop_reclaim_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_reclaim_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_RECLAIM(struct vnode *vp, struct proc *p)
@@ -865,21 +556,10 @@ int VOP_RECLAIM(struct vnode *vp, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
-
-int vop_lock_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_lock_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_lock_desc = {
 	0,
 	"vop_lock",
 	0,
-	vop_lock_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_lock_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
@@ -891,21 +571,10 @@ int VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_lock), &a));
 }
-
-int vop_unlock_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_unlock_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_unlock_desc = {
 	0,
 	"vop_unlock",
 	0,
-	vop_unlock_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_unlock_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_UNLOCK(struct vnode *vp, int flags, struct proc *p)
@@ -917,21 +586,10 @@ int VOP_UNLOCK(struct vnode *vp, int flags, struct proc *p)
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_unlock), &a));
 }
-
-int vop_bmap_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_bmap_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_bmap_desc = {
 	0,
 	"vop_bmap",
 	0,
-	vop_bmap_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_bmap_args, a_vpp),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_BMAP(struct vnode *vp, daddr64_t bn, struct vnode **vpp, 
@@ -950,21 +608,10 @@ int VOP_BMAP(struct vnode *vp, daddr64_t bn, struct vnode **vpp,
 	a.a_runp = runp;
 	return (VCALL(vp, VOFFSET(vop_bmap), &a));
 }
-
-int vop_print_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_print_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_print_desc = {
 	0,
 	"vop_print",
 	0,
-	vop_print_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_PRINT(struct vnode *vp)
@@ -974,21 +621,10 @@ int VOP_PRINT(struct vnode *vp)
 	a.a_vp = vp;
 	return (VCALL(vp, VOFFSET(vop_print), &a));
 }
-
-int vop_pathconf_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_pathconf_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_pathconf_desc = {
 	0,
 	"vop_pathconf",
 	0,
-	vop_pathconf_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_PATHCONF(struct vnode *vp, int name, register_t *retval)
@@ -1004,21 +640,10 @@ int VOP_PATHCONF(struct vnode *vp, int name, register_t *retval)
 	a.a_retval = retval;
 	return (VCALL(vp, VOFFSET(vop_pathconf), &a));
 }
-
-int vop_advlock_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_advlock_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_advlock_desc = {
 	0,
 	"vop_advlock",
 	0,
-	vop_advlock_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
@@ -1032,21 +657,10 @@ int VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_advlock), &a));
 }
-
-int vop_reallocblks_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_reallocblks_desc = {
 	0,
 	"vop_reallocblks",
 	0,
-	vop_reallocblks_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_REALLOCBLKS(struct vnode *vp, struct cluster_save *buflist)
@@ -1063,20 +677,10 @@ int VOP_REALLOCBLKS(struct vnode *vp, struct cluster_save *buflist)
 }
 
 /* Special cases: */
-
-int vop_strategy_vp_offsets[] = {
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_strategy_desc = {
 	0,
 	"vop_strategy",
 	0,
-	vop_strategy_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_STRATEGY(struct buf *bp)
@@ -1086,20 +690,10 @@ int VOP_STRATEGY(struct buf *bp)
 	a.a_bp = bp;
 	return (VCALL(bp->b_vp, VOFFSET(vop_strategy), &a));
 }
-
-int vop_bwrite_vp_offsets[] = {
-	VDESC_NO_OFFSET
-};
 struct vnodeop_desc vop_bwrite_desc = {
 	0,
 	"vop_bwrite",
 	0,
-	vop_bwrite_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
 };
 
 int VOP_BWRITE(struct buf *bp)
