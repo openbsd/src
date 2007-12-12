@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.20 2007/12/06 17:23:19 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.21 2007/12/12 16:56:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -42,10 +42,10 @@
 #define ADT7460_TACH3H		0x2d
 #define ADT7460_TACH4L		0x2e
 #define ADT7460_TACH4H		0x2f
-#define ADT7460_TACH5L		0xa8
-#define ADT7460_TACH5H		0xa9
-#define ADT7460_TACH6L		0xaa
-#define ADT7460_TACH6H		0xab
+#define ADT7460_TACH5L		0xa9
+#define ADT7460_TACH5H		0xaa
+#define ADT7460_TACH6L		0xab
+#define ADT7460_TACH6H		0xac
 #define ADT7460_REVISION	0x3f
 #define ADT7460_CONFIG		0x40
 #define ADT7460_CONFIG_Vcc	0x80
@@ -88,7 +88,7 @@ struct adt_chip {
 	{ "emc6w201",	{ 2500, 2250, 3300, 5000, 12000,    0,    0 },	6201,	   0 },
 	{ "lm96000",	{ 2500, 2250, 3300, 5000, 12000,    0,    0 },	96000,	   0 },
 	{ "sch5017",	{ 5000, 2250, 3300, 5000, 12000,    0,    0 },	5017,	   0 },
-	{ "sch5027",	{ 1500, 2250, 3300, 5000, 12000, 3300, 3300 },	5027,	   0 }
+	{ "sch5027",	{ 5000, 2250, 3300, 5000, 12000, 3300, 3300 },	5027,	   0 }
 };
 
 struct {
@@ -213,7 +213,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+5VTR",
 		    sizeof(sc->sc_sensor[ADT_2_5V].desc));
 	if (sc->chip->type == 5027)
-		strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+1.5V",
+		strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+5V",
 		    sizeof(sc->sc_sensor[ADT_2_5V].desc));
 
 	sc->sc_sensor[ADT_VCCP].type = SENSOR_VOLTS_DC;
@@ -323,11 +323,6 @@ adt_refresh(void *arg)
 				sc->sc_sensor[i].value =
 				    (int8_t)data * 1000000 + 273150000;
 			break;
-		case ADT_TACH5:
-		case ADT_TACH6:
-			if (sc->chip->type != 5027)
-				goto nonexistant; /* only 5027 has these fans? */
-			/* FALLTHROUGH */
 		case ADT_TACH1:
 		case ADT_TACH2:
 		case ADT_TACH3:
@@ -345,7 +340,25 @@ adt_refresh(void *arg)
 			else
 				sc->sc_sensor[i].value = (90000 * 60) / fan;
 			break;
-		nonexistant:
+		case ADT_TACH5:
+		case ADT_TACH6:
+			if (sc->chip->type != 5027) {
+				sc->sc_sensor[i].flags |= SENSOR_FINVALID;
+				break;	/* only 5027 has these fans? */
+			}
+			cmd = worklist[i].cmd + 1; /* TACHnH follows TACHnL */
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data2, sizeof data2, 0)) {
+				sc->sc_sensor[i].flags |= SENSOR_FINVALID;
+				continue;
+			}
+
+			fan = data + (data2 << 8);
+			if (fan == 0 || fan == 0xffff)
+				sc->sc_sensor[i].flags |= SENSOR_FINVALID;
+			else
+				sc->sc_sensor[i].value = fan * 60;
+			break;
 		default:
 			sc->sc_sensor[i].flags |= SENSOR_FINVALID;
 			break;
