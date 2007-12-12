@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.1.1.1 2006/05/09 18:13:32 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.2 2007/12/12 20:37:31 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -43,6 +43,7 @@
 #include <machine/av400.h>
 #include <aviion/dev/sysconreg.h>
 #include <aviion/dev/dartreg.h>
+#define	SPKRDIS	0x10	/* disable speaker on OP3 */
 #include <aviion/dev/dartvar.h>
 
 #ifdef	DDB
@@ -175,9 +176,7 @@ dart_common_attach(struct dartsoftc *sc)
 	dart_write(sc, DART_ACR, BDSET2 | CCLK16 | IPDCDIB | IPDCDIA);
 #endif
 	dart_write(sc, DART_IMR, sc->sc_sv_reg->sv_imr);
-#if 0
-	dart_write(sc, DART_OPCR, OPSET);
-#endif
+	dart_write(sc, DART_OPCR, OPSET | SPKRDIS);
 #if 0
 	dart_write(sc, DART_IVR, SYSCON_VECT + SYSCV_SCC);
 #endif
