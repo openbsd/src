@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2007/12/08 18:39:50 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2007/12/12 20:35:37 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1849,13 +1849,18 @@ cache_flush(struct trapframe *tf)
 		len -= count;
 	}
 
+#ifdef M88100
 	if (CPU_IS88100) {
 		tf->tf_snip = tf->tf_snip & ~NIP_E;
 		tf->tf_sfip = tf->tf_sfip & ~FIP_E;
-	} else {
+	}
+#endif
+#ifdef M88110
+	if (CPU_IS88110) {
 		/* skip instruction */
 		m88110_skip_insn(tf);
 	}
+#endif
 
 	userret(p);
 }
