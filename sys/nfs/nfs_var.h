@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.31 2007/10/28 14:12:41 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.32 2007/12/13 18:32:55 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -252,6 +252,7 @@ int nfs_getattrcache(struct vnode *, struct vattr *);
 int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
 		   struct proc *, int);
+void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int, caddr_t *);
 void nfsm_adj(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct mbuf **, char **);

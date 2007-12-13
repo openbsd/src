@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.67 2007/11/28 19:27:43 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.68 2007/12/13 18:32:55 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1919,4 +1919,80 @@ nfsrv_setcred(incred, outcred)
 	for (i = 0; i < incred->cr_ngroups; i++)
 		outcred->cr_groups[i] = incred->cr_groups[i];
 	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
+}
+
+/*
+ * If full is true, set all fields, otherwise just set mode and time fields
+ */
+void
+nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full, caddr_t *bposp)
+{
+	struct mbuf *mb, *mb2;
+	u_int32_t *tl;
+	caddr_t bpos;
+
+	mb = *mp;
+	bpos = *bposp;
+
+	if (a->va_mode != (mode_t)VNOVAL) {
+		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		*tl++ = nfs_true;
+		*tl = txdr_unsigned(a->va_mode);
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = nfs_false;
+	}
+	if (full && a->va_uid != (uid_t)VNOVAL) {
+		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		*tl++ = nfs_true;
+		*tl = txdr_unsigned(a->va_uid);
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = nfs_false;
+	}
+	if (full && a->va_gid != (gid_t)VNOVAL) {
+		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		*tl++ = nfs_true;
+		*tl = txdr_unsigned((a)->va_gid);
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = nfs_false;
+	}
+	if (full && a->va_size != VNOVAL) {
+		nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+		*tl++ = nfs_true;
+		txdr_hyper(a->va_size, tl);
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = nfs_false;
+	}
+	if (a->va_atime.tv_sec != VNOVAL) {
+		if (a->va_atime.tv_sec != time_second) {
+			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
+			txdr_nfsv3time(&a->va_atime, tl);
+		} else {
+			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
+		}
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
+	}
+	if (a->va_mtime.tv_sec != VNOVAL) {
+		if (a->va_mtime.tv_sec != time_second) {
+			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
+			txdr_nfsv3time(&a->va_mtime, tl);
+		} else {
+			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
+		}
+	} else {
+		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
+	}
+
+	*bposp = bpos;
+	*mp = mb;
 }
