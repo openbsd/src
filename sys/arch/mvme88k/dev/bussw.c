@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.19 2007/12/04 23:45:52 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.20 2007/12/13 18:50:10 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -93,6 +93,7 @@ bussw_attach(parent, self, args)
 	struct confargs *ca = args;
 	struct bussw_softc *sc = (struct bussw_softc *)self;
 	bus_space_handle_t ioh;
+	int i;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, BS_SIZE, 0, &ioh) != 0) {
 		printf(": can't map registers!\n");
@@ -108,6 +109,11 @@ bussw_attach(parent, self, args)
 	/* enable external interrupts */
 	bus_space_write_2(sc->sc_iot, ioh, BS_GCSR,
 	    bus_space_read_2(sc->sc_iot, ioh, BS_GCSR) | BS_GCSR_XIPL);
+
+	/* disable write posting */
+	for (i = 0; i < 4; i++)
+		bus_space_write_1(sc->sc_iot, ioh, BS_PAR + i,
+		    bus_space_read_1(sc->sc_iot, ioh, BS_PAR + i) & ~BS_PAR_WPEN);
 
 	/* enable abort switch */
 	bus_space_write_1(sc->sc_iot, ioh, BS_ABORT,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.9 2007/12/04 23:45:52 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.10 2007/12/13 18:50:10 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -98,6 +98,10 @@
 #define BS_GCSR_TDPR	0x2000	/* Test Dual Processor Registers */
 #define BS_GCSR_TBB	0x4000	/* Test Bus Busy */
 #define BS_GCSR_POR	0x8000	/* Power On Reset */
+
+/* Processor Attribute Registers bit definitions */
+#define BS_PAR_DEN	0x01	/* Decode Enable */
+#define BS_PAR_WPEN	0x02	/* Write Post Enable */
 
 /* System Attribute Registers bit definitions */
 #define BS_SAR_DEN	0x01	/* Decode Enable */
