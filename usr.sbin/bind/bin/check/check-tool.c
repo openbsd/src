@@ -123,7 +123,7 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 	 * Turn off search.
 	 */
 	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+		strlcat(namebuf, ".", sizeof(namebuf));
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 	
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -295,7 +295,7 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	 * Turn off search.
 	 */
 	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+		strlcat(namebuf, ".", sizeof(namebuf));
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 	
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -368,7 +368,7 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	 * Turn off search.
 	 */
 	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+		strlcat(namebuf, ".", sizeof(namebuf));
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 	
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);

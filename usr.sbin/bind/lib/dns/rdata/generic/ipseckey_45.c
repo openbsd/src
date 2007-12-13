@@ -144,7 +144,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -152,7 +152,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	gateway = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", gateway);
+	snprintf(buf, sizeof(buf), "%u ", gateway);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -160,7 +160,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*

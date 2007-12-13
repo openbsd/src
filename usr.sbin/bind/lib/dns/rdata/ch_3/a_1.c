@@ -87,7 +87,7 @@ totext_ch_a(ARGS_TOTEXT) {
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	sprintf(buf, "%o", addr); /* note octal */
+	snprintf(buf, sizeof(buf), "%o", addr); /* note octal */
 	RETERR(str_totext(" ", target));
 	return (str_totext(buf, target));
 }
