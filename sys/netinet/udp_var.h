@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.16 2004/02/17 12:07:45 markus Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.17 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -77,7 +77,8 @@ struct	udpstat {
 #define	UDPCTL_BADDYNAMIC	2 /* return bad dynamic port bitmap */
 #define UDPCTL_RECVSPACE	3 /* receive buffer space */
 #define UDPCTL_SENDSPACE	4 /* send buffer space */
-#define UDPCTL_MAXID		5
+#define UDPCTL_STATS		5 /* UDP statistics */
+#define UDPCTL_MAXID		6
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -85,6 +86,7 @@ struct	udpstat {
 	{ "baddynamic", CTLTYPE_STRUCT }, \
 	{ "recvspace",  CTLTYPE_INT }, \
 	{ "sendspace",  CTLTYPE_INT }, \
+	{ "stats",	CTLTYPE_STRUCT } \
 }
 
 #define UDPCTL_VARS { \
@@ -93,6 +95,7 @@ struct	udpstat {
 	NULL, \
 	&udp_recvspace, \
 	&udp_sendspace, \
+	NULL \
 }
 
 #ifdef _KERNEL

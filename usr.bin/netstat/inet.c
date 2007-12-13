@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.101 2007/09/03 06:10:54 joel Exp $	*/
+/*	$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.101 2007/09/03 06:10:54 joel Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Exp $";
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.101 2007/09/03 06:10:54 joel Ex
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -245,12 +246,20 @@ void
 tcp_stats(u_long off, char *name)
 {
 	struct tcpstat tcpstat;
+	size_t len;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_TCP, TCPCTL_STATS };
 
 	if (off == 0)
 		return;
-	printf("%s:\n", name);
-	kread(off, &tcpstat, sizeof (tcpstat));
 
+	len = sizeof(tcpstat);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &tcpstat, &len, NULL, 0) == -1) {
+		warn(name);
+		return;
+	}
+
+	printf("%s:\n", name);
 #define	p(f, m) if (tcpstat.f || sflag <= 1) \
 	printf(m, tcpstat.f, plural(tcpstat.f))
 #define	p1(f, m) if (tcpstat.f || sflag <= 1) \
@@ -371,10 +380,19 @@ udp_stats(u_long off, char *name)
 {
 	struct udpstat udpstat;
 	u_long delivered;
+	size_t len;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_UDP, UDPCTL_STATS };
 
 	if (off == 0)
 		return;
-	kread(off, &udpstat, sizeof (udpstat));
+
+	len = sizeof(udpstat);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &udpstat, &len, NULL, 0) == -1) {
+		warn(name);
+		return;
+	}
+
 	printf("%s:\n", name);
 #define	p(f, m) if (udpstat.f || sflag <= 1) \
 	printf(m, udpstat.f, plural(udpstat.f))
@@ -411,12 +429,20 @@ void
 ip_stats(u_long off, char *name)
 {
 	struct ipstat ipstat;
+	size_t len;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
 
 	if (off == 0)
 		return;
-	kread(off, &ipstat, sizeof (ipstat));
-	printf("%s:\n", name);
 
+	len = sizeof(ipstat);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1) {
+		warn(name);
+		return;
+	}
+
+	printf("%s:\n", name);
 #define	p(f, m) if (ipstat.f || sflag <= 1) \
 	printf(m, ipstat.f, plural(ipstat.f))
 #define	p1(f, m) if (ipstat.f || sflag <= 1) \
@@ -510,12 +536,20 @@ icmp_stats(u_long off, char *name)
 {
 	struct icmpstat icmpstat;
 	int i, first;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
+	size_t len;
 
 	if (off == 0)
 		return;
-	kread(off, &icmpstat, sizeof (icmpstat));
-	printf("%s:\n", name);
 
+	len = sizeof(icmpstat);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &icmpstat, &len, NULL, 0) == -1) {
+		warn(name);
+		return;
+	}
+
+	printf("%s:\n", name);
 #define	p(f, m) if (icmpstat.f || sflag <= 1) \
 	printf(m, icmpstat.f, plural(icmpstat.f))
 

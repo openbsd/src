@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.74 2007/09/18 18:56:02 markus Exp $	*/
+/*	$OpenBSD: in.h,v 1.75 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -482,7 +482,8 @@ struct ip_mreq {
 #define	IPCTL_IFQUEUE		30
 #define	IPCTL_MFORWARDING	31
 #define	IPCTL_MULTIPATH		32
-#define	IPCTL_MAXID		33
+#define	IPCTL_STATS		33	/* IP statistics */
+#define	IPCTL_MAXID		34
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -517,7 +518,8 @@ struct ip_mreq {
 	{ "ipsec-comp-alg", CTLTYPE_STRING }, \
 	{ "ifq", CTLTYPE_NODE }, \
 	{ "mforwarding", CTLTYPE_INT }, \
-	{ "multipath", CTLTYPE_INT } \
+	{ "multipath", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT } \
 }
 #define	IPCTL_VARS { \
 	NULL, \
@@ -552,7 +554,8 @@ struct ip_mreq {
 	NULL, \
 	NULL, \
 	&ipmforwarding, \
-	&ipmultipath \
+	&ipmultipath, \
+	NULL \
 }
 
 /* INET6 stuff */

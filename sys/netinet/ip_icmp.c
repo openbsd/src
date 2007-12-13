@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.77 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.78 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -842,6 +842,11 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 		break;
 	}
+	case ICMPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &icmpstat, sizeof(icmpstat)));
 	default:
 		if (name[0] < ICMPCTL_MAXID)
 			return (sysctl_int_arr(icmpctl_vars, name, namelen,

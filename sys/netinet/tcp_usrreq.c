@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.94 2007/11/27 17:23:23 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.95 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -954,6 +954,13 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		}
 		return (0);
 #endif
+
+	case TCPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &tcpstat, sizeof(tcpstat)));
+
 	default:
 		if (name[0] < TCPCTL_MAXID)
 			return (sysctl_int_arr(tcpctl_vars, name, namelen,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.12 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.13 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -64,7 +64,8 @@ struct	icmpstat {
 #define	ICMPCTL_REDIRACCEPT	4	/* Accept redirects from routers */
 #define	ICMPCTL_REDIRTIMEOUT	5	/* Remove routes added via redirects */
 #define	ICMPCTL_TSTAMPREPL	6	/* allow replies to timestamp requests */
-#define ICMPCTL_MAXID		7
+#define ICMPCTL_STATS		7	/* ICMP statistics */
+#define ICMPCTL_MAXID		8
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -74,6 +75,7 @@ struct	icmpstat {
 	{ "rediraccept", CTLTYPE_INT }, \
 	{ "redirtimeout", CTLTYPE_INT }, \
 	{ "tstamprepl", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT } \
 }
 
 #define ICMPCTL_VARS { \
@@ -84,6 +86,7 @@ struct	icmpstat {
 	&icmp_rediraccept, \
 	NULL, \
 	&icmptstamprepl, \
+	NULL \
 }
 
 #ifdef _KERNEL

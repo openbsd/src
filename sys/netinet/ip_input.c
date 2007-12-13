@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.154 2007/10/29 16:19:23 chl Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.155 2007/12/13 20:00:53 reyk Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1622,6 +1622,11 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IFQUEUE:
 	        return (sysctl_ifq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
+	case IPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ipstat, sizeof(ipstat)));
 	default:
 		if (name[0] < IPCTL_MAXID)
 			return (sysctl_int_arr(ipctl_vars, name, namelen,
