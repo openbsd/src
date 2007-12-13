@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.152 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.152 2007/12/13 20:00:53 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk Exp $";
 #endif
 #endif /* not lint */
 
@@ -514,24 +514,22 @@ parse(char *string, int flags)
 		break;
 
 	case CTL_NET:
-		if (mib[1] == PF_INET &&
-		    ((mib[2] == IPPROTO_IP && mib[3] == IPCTL_STATS) ||
-		    (mib[2] == IPPROTO_TCP && mib[3] == TCPCTL_STATS) ||
-		    (mib[2] == IPPROTO_UDP && mib[3] == UDPCTL_STATS) ||
-		    (mib[2] == IPPROTO_ICMP && mib[3] == ICMPCTL_STATS))) {
-			if (flags == 0)
-				return;
-			warnx("use netstat to view %s information",
-			    string);
-			return;
-		}
-
 		if (mib[1] == PF_INET) {
 			len = sysctl_inet(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 
-			if ((mib[2] == IPPROTO_TCP &&
+			if ((mib[2] == IPPROTO_IP && mib[3] == IPCTL_STATS) ||
+			    (mib[2] == IPPROTO_TCP && mib[3] == TCPCTL_STATS) ||
+			    (mib[2] == IPPROTO_UDP && mib[3] == UDPCTL_STATS) ||
+			    (mib[2] == IPPROTO_ICMP &&
+			    mib[3] == ICMPCTL_STATS)) {
+				if (flags == 0)
+					return;
+				warnx("use netstat to view %s information",
+				    string);
+				return;
+			} else if ((mib[2] == IPPROTO_TCP &&
 			    mib[3] == TCPCTL_BADDYNAMIC) ||
 			    (mib[2] == IPPROTO_UDP &&
 			    mib[3] == UDPCTL_BADDYNAMIC)) {
