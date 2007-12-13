@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.4 2006/05/21 12:22:01 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.5 2007/12/13 18:51:01 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, Miodrag Vallat.
  *
@@ -36,17 +36,22 @@
 #include <machine/m8820x.h>
 #include <machine/prom.h>
 
+extern	u_int32_t pfsr_av400_straight[];
+extern	u_int32_t pfsr_av400_double[];
+
 /*
  * This routine sets up the CPU/CMMU configuration.
  */
 void
 m8820x_setup_board_config()
 {
+	extern u_int32_t pfsr_save[];
 	struct m8820x_cmmu *cmmu;
 	struct scm_cpuconfig scc;
 	int type, cpu_num, cmmu_num;
 	volatile u_int *cr;
 	u_int32_t whoami;
+	u_int32_t *m8820x_pfsr;
 
 	/*
 	 * First, find if any CPU0 CMMU is a 88204. If so, we can
@@ -164,7 +169,13 @@ knowledge:
 	}
 
 	max_cpus = scc.cpucount;
-	cmmu_shift = scc.igang == 1 ? 1 : 2;
+	if (scc.igang == 1) {
+		cmmu_shift = 1;
+		m8820x_pfsr = pfsr_av400_straight;
+	} else {
+		cmmu_shift = 2;
+		m8820x_pfsr = pfsr_av400_double;
+	}
 	max_cmmus = max_cpus << scc.igang;
 
 	/*
@@ -203,6 +214,14 @@ knowledge:
 			}
 		}
 	}
+
+	/*
+	 * Patch the exception handling code to invoke the correct pfsr
+	 * analysis chunk.
+	 */
+	pfsr_save[0] = 0xc4000000 |
+	    (((vaddr_t)m8820x_pfsr + 4 - (vaddr_t)pfsr_save) >> 2);
+	pfsr_save[1] = m8820x_pfsr[0];
 }
 
 /*

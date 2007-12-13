@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.17 2007/11/17 05:36:21 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.18 2007/12/13 18:51:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -76,6 +76,9 @@
 #include <machine/prom.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#ifdef M88100
+#include <machine/m88100.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -241,7 +244,8 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -286,7 +290,8 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %ld (%d pages)\n", ptoa(uvmexp.free), uvmexp.free);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -428,7 +433,7 @@ dumpconf(void)
 
 	/* aviion only uses a single segment. */
 	cpu_kcore_hdr.ram_segs[0].start = 0;
-	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	cpu_kcore_hdr.ram_segs[0].size = ptoa(physmem);
 	cpu_kcore_hdr.cputype = cputyp;
 
 	/*
@@ -811,6 +816,12 @@ aviion_bootstrap()
 	set_cpu_number(master_cpu);
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
+#ifdef M88100
+	if (CPU_IS88100) {
+		m88100_apply_patches();
+	}
+#endif
+
 	/*
 	 * Now that set_cpu_number() set us with a valid cpu_info pointer,
 	 * we need to initialize p_addr and curpcb before autoconf, for the
@@ -900,50 +911,19 @@ bootcnputc(dev, c)
 int
 getipl(void)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = platform->getipl();
-	set_psr(psr);
-	return (int)curspl;
+	return (int)platform->getipl();
 }
 
 int
 setipl(int level)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = platform->setipl((u_int)level);
-
-	/*
-	 * The flush pipeline is required to make sure the above change gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
-	set_psr(psr);
-	return (int)curspl;
+	return (int)platform->setipl((u_int)level);
 }
 
 int
 raiseipl(int level)
 {
-	u_int curspl, psr;
-
-	disable_interrupt(psr);
-	curspl = platform->raiseipl((u_int)level);
-
-	/*
-	 * The flush pipeline is required to make sure the above change gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection.
-	 */
-	flush_pipeline();
-
-	set_psr(psr);
-	return (int)curspl;
+	return (int)platform->raiseipl((u_int)level);
 }
 
 u_char hostaddr[6];

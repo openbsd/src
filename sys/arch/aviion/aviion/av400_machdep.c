@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.9 2007/12/12 20:36:24 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.10 2007/12/13 18:51:01 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -271,7 +271,8 @@ av400_bootstrap()
 }
 
 /*
- * return next safe spl to reenable interrupts.
+ * Return the next ipl >= ``curlevel'' at which we can reenable interrupts
+ * while keeping ``mask'' masked.
  */
 u_int
 safe_level(u_int mask, u_int curlevel)
@@ -307,8 +308,8 @@ av400_setipl(u_int level)
 		mask &= ~SLAVE_MASK;
 #endif
 
-	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 	av400_curspl[cpu] = level;
+	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
 	 * and set_psr() will synchronize the pipeline.
@@ -334,8 +335,8 @@ av400_raiseipl(u_int level)
 			mask &= ~SLAVE_MASK;
 #endif
 
-		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 		av400_curspl[cpu] = level;
+		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 	}
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
@@ -432,15 +433,9 @@ av400_intr(u_int v, struct trapframe *eframe)
 	 */
 	do {
 		level = safe_level(cur_mask, old_spl);
-		setipl(level);
+		av400_setipl(level);
 
-		/*
-		 * Do not enable interrupts yet if we know, from cur_mask,
-		 * that we have not cleared enough conditions yet.
-		 * For now, only the timer interrupt requires its condition
-		 * to be cleared before interrupts are enabled.
-		 */
-		if (unmasked == 0 /* && (cur_mask & whatever) == 0 */) {
+		if (unmasked == 0) {
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
 		}
@@ -619,11 +614,11 @@ av400_clockintr(void *eframe)
 	CIO_LOCK;
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
-	hardclock(eframe);
-
 	/* restart counter */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
 	CIO_UNLOCK;
+
+	hardclock(eframe);
 
 	return (1);
 }
