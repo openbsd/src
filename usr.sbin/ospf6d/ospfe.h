@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.8 2007/10/13 13:21:56 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.9 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -119,7 +119,7 @@ u_int32_t	 ospfe_router_id(void);
 void		 ospfe_fib_update(int);
 void		 ospfe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ospfe_nbr_ctl(struct ctl_conn *);
-void		 orig_rtr_lsa(struct area *);
+void		 orig_rtr_lsa(struct iface *);
 void		 orig_net_lsa(struct iface *);
 void		 ospfe_demote_area(struct area *, int);
 void		 ospfe_demote_iface(struct iface *, int);
@@ -127,9 +127,8 @@ void		 ospfe_demote_iface(struct iface *, int);
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);
 
-struct iface	*if_new(struct kif *, struct kif_addr *);
 void		 if_del(struct iface *);
-void		 if_init(struct ospfd_conf *, struct iface *);
+void		 if_start(struct ospfd_conf *, struct iface *);
 
 int		 if_act_start(struct iface *);
 int		 if_act_elect(struct iface *);

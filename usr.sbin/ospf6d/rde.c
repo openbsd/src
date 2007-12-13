@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.9 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.10 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -561,7 +561,7 @@ void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
 	static struct area	*narea;
-	struct iface		*niface;
+	struct iface		*niface, *iface;
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct rroute		 rr;
@@ -571,6 +571,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct rt_node		*rn;
 	ssize_t			 n;
 	int			 shut = 0;
+	unsigned int		 ifindex;
 
 	switch (event) {
 	case EV_READ:
@@ -643,6 +644,31 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0,
 				    0, &kr, sizeof(kr));
 			break;
+		case IMSG_IFADD:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->nbr_list);
+			TAILQ_INIT(&niface->ls_ack_list);
+			RB_INIT(&niface->lsa_tree);
+
+			narea = area_find(rdeconf, niface->area_id);
+			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			break;
+		case IMSG_IFDELETE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(ifindex))
+				fatalx("IFINFO imsg with wrong len");
+
+			memcpy(&ifindex, imsg.data, sizeof(ifindex));
+			iface = if_find(ifindex);
+			if (iface == NULL)
+				fatalx("interface lost in ospfe");
+
+			LIST_REMOVE(iface, entry);
+			if_del(iface);
+			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
 			    NULL)
@@ -662,19 +688,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			RB_INIT(&narea->lsa_tree);
 
 			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
-			break;
-		case IMSG_RECONF_IFACE:
-			if ((niface = malloc(sizeof(struct iface))) == NULL)
-				fatal(NULL);
-			memcpy(niface, imsg.data, sizeof(struct iface));
-
-			LIST_INIT(&niface->nbr_list);
-			TAILQ_INIT(&niface->ls_ack_list);
-			RB_INIT(&niface->lsa_tree);
-
-			niface->area = narea;
-			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
-
 			break;
 		case IMSG_RECONF_END:
 			merge_config(rdeconf, nconf);

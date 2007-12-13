@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.8 2007/10/16 09:00:50 norby Exp $ */
+/*	$OpenBSD: hello.c,v 1.9 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,7 @@ send_hello(struct iface *iface)
 	hello.iface_id = iface->ifindex;
 	hello.rtr_priority = iface->priority;
 
-	opts = ntohl(area_ospf_options(iface->area));
+	opts = ntohl(area_ospf_options(area_find(oeconf, iface->area_id)));
 	hello.opts1 = (opts >> 16) & 0xff;
 	hello.opts2 = (opts >> 8) & 0xff;
 	hello.opts3 = opts & 0xff;
@@ -123,6 +123,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 {
 	struct hello_hdr	 hello;
 	struct nbr		*nbr = NULL, *dr;
+	struct area		*area;
 	u_int32_t		 nbr_id;
 	int			 nbr_change = 0;
 
@@ -150,8 +151,11 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		return;
 	}
 
-	if ((hello.opts3 & OSPF_OPTION_E && iface->area->stub) ||		/* XXX */
-	    ((hello.opts3 & OSPF_OPTION_E) == 0 && !iface->area->stub)) {	/* XXX */
+	if ((area = area_find(oeconf, iface->area_id)) == NULL)
+		fatalx("interface lost area");
+
+	if ((hello.opts3 & OSPF_OPTION_E && area->stub) ||		/* XXX */
+	    ((hello.opts3 & OSPF_OPTION_E) == 0 && !area->stub)) {	/* XXX */
 		log_warnx("recv_hello: ExternalRoutingCapability mismatch, "
 		    "interface %s", iface->name);
 		return;

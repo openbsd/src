@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2007/10/16 21:31:37 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -53,7 +53,7 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 	ospf_hdr.type = type;
 	ospf_hdr.rtr_id = ospfe_router_id();
 	if (iface->type != IF_TYPE_VIRTUALLINK)
-		ospf_hdr.area_id = iface->area->id.s_addr;
+		ospf_hdr.area_id = iface->area_id.s_addr;
 	ospf_hdr.instance = DEFAULT_INSTANCE_ID;
 	ospf_hdr.zero = 0;		/* must be zero */
 
@@ -259,7 +259,7 @@ ospf_hdr_sanity_check(struct ospf_hdr *ospf_hdr, u_int16_t len,
 	}
 
 	if (iface->type != IF_TYPE_VIRTUALLINK) {
-		if (ospf_hdr->area_id != iface->area->id.s_addr) {
+		if (ospf_hdr->area_id != iface->area_id.s_addr) {
 			id.s_addr = ospf_hdr->area_id;
 			log_debug("recv_packet: invalid area ID %s, "
 			    "interface %s", inet_ntoa(id), iface->name);
@@ -305,12 +305,12 @@ find_iface(struct ospfd_conf *xconf, unsigned int ifindex, struct in6_addr *src)
 			switch (iface->type) {
 			case IF_TYPE_VIRTUALLINK:
 				if (IN6_ARE_ADDR_EQUAL(src, &iface->dst) &&
-				    !iface->passive)
+				    !(iface->cflags & F_IFACE_PASSIVE))
 					return (iface);
 				break;
 			default:
 				if (ifindex == iface->ifindex &&
-				    !iface->passive)
+				    !(iface->cflags & F_IFACE_PASSIVE))
 					match = iface;
 				break;
 			}

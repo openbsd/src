@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.11 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.12 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -118,12 +118,13 @@ enum imsg_type {
 	IMSG_CTL_IFACE,
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE_ADDR,
-	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_KROUTE_GET,
 	IMSG_IFINFO,
+	IMSG_IFADD,
+	IMSG_IFDELETE,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NEIGHBOR_CHANGE,
@@ -143,7 +144,6 @@ enum imsg_type {
 	IMSG_ABR_DOWN,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_AREA,
-	IMSG_RECONF_IFACE,
 	IMSG_RECONF_END,
 	IMSG_DEMOTE
 };
@@ -303,16 +303,26 @@ enum rib_type {
 	RIB_EXT
 };
 
+struct iface_addr {
+	TAILQ_ENTRY(iface_addr)	 entry;
+	struct in6_addr		 addr;
+	struct in6_addr		 dstbrd;
+	u_int8_t		 prefixlen;
+	u_int8_t		 redistribute;
+};
+
 /* lsa list used in RDE and OE */
 TAILQ_HEAD(lsa_head, lsa_entry);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;
+	TAILQ_ENTRY(iface)	 list;
 	struct event		 hello_timer;
 	struct event		 wait_timer;
 	struct event		 lsack_tx_timer;
 
 	LIST_HEAD(, nbr)	 nbr_list;
+	TAILQ_HEAD(, iface_addr) ifa_list;
 	struct lsa_head		 ls_ack_list;
 
 	struct lsa_tree		 lsa_tree;	/* LSA with link local scope */
@@ -322,10 +332,10 @@ struct iface {
 	struct in6_addr		 addr;
 	struct in6_addr		 dst;
 	struct in_addr		 abr_id;
+	struct in_addr		 area_id;
 	struct nbr		*dr;	/* designated router */
 	struct nbr		*bdr;	/* backup designated router */
 	struct nbr		*self;
-	struct area		*area;
 
 	u_int64_t		 baudrate;
 	u_int32_t		 ls_ack_cnt;
@@ -344,7 +354,11 @@ struct iface {
 	u_int8_t		 media_type;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
-	u_int8_t		 passive;
+	u_int8_t		 nh_reachable;
+	u_int8_t		 cflags;
+#define F_IFACE_PASSIVE		0x01
+#define F_IFACE_CONFIGURED	0x02
+#define F_IFACE_AVAIL		0x04
 };
 
 /* ospf_conf */
@@ -409,24 +423,6 @@ struct rroute {
 	u_int32_t	metric;
 };
 
-struct kif_addr {
-	TAILQ_ENTRY(kif_addr)	 entry;
-	struct in6_addr		 addr;
-	struct in6_addr		 mask;
-	struct in6_addr		 dstbrd;
-};
-
-struct kif {
-	char			 ifname[IF_NAMESIZE];
-	u_long			 baudrate;
-	int			 flags;
-	int			 mtu;
-	u_short			 ifindex;
-	u_int8_t		 media_type;
-	u_int8_t		 link_state;
-	u_int8_t		 nh_reachable;	/* for nexthop verification */
-};
-
 /* name2id */
 struct n2id_label {
 	TAILQ_ENTRY(n2id_label)	 entry;
@@ -452,7 +448,7 @@ struct ctl_iface {
 	struct in6_addr		 bdr_addr;
 	time_t			 hello_timer;
 	time_t			 uptime;
-	u_int32_t		 baudrate;
+	u_int64_t		 baudrate;
 	u_int32_t		 dead_interval;
 	unsigned int		 ifindex;
 	int			 state;
@@ -569,6 +565,14 @@ int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 
+/* interface.c */
+int		 if_init(void);
+struct iface	*if_find(unsigned int);
+struct iface	*if_findname(char *);
+struct iface	*if_new(u_short, char *);
+void		 if_update(struct iface *, int, int, u_int8_t, u_int8_t,
+		    u_int64_t);
+
 /* in_cksum.c */
 u_int16_t	 in_cksum(void *, size_t);
 
@@ -576,7 +580,6 @@ u_int16_t	 in_cksum(void *, size_t);
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
-int		 kif_init(void);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
@@ -585,13 +588,13 @@ void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
-void		 kr_ifinfo(char *, pid_t);
-struct kif	*kif_findname(char *, struct kif_addr **);
 void		 kr_reload(void);
 
 u_int8_t	 mask2prefixlen(struct sockaddr_in6 *);
 struct in6_addr	*prefixlen2mask(u_int8_t);
 void		inet6applymask(struct in6_addr *, const struct in6_addr *, int);
+
+int		fetchifs(u_short);
 
 /* log.h */
 const char	*nbr_state_name(int);

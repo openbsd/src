@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.7 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.8 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@
 void		 ospfe_sig_handler(int, short, void *);
 void		 ospfe_shutdown(void);
 void		 orig_rtr_lsa_all(struct area *);
+void		 orig_rtr_lsa_area(struct area *);
 struct iface	*find_vlink(struct abr_rtr *);
 
 struct ospfd_conf	*oeconf = NULL, *nconf;
@@ -181,13 +182,8 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		ospfe_demote_area(area, 0);
-		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if_init(xconf, iface);
-			if (if_fsm(iface, IF_EVT_UP)) {
-				log_debug("error starting interface %s",
-				    iface->name);
-			}
-		}
+		LIST_FOREACH(iface, &area->iface_list, entry)
+			if_start(xconf, iface);
 	}
 
 	event_dispatch();
@@ -253,10 +249,9 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	static struct iface	*niface;
 	struct imsg	 imsg;
 	struct imsgbuf  *ibuf = bula;
-	struct area	*area = NULL;
-	struct iface	*iface = NULL;
-	struct kif	*kif;
-	int		 n, link_ok, stub_changed, shut = 0;
+	struct iface	*iface, *ifp;
+	int		 n, stub_changed, shut = 0;
+	unsigned int	 ifindex;
 
 	switch (event) {
 	case EV_READ:
@@ -283,38 +278,49 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_IFINFO:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct kif))
+			    sizeof(struct iface))
 				fatalx("IFINFO imsg with wrong len");
-			kif = imsg.data;
-			link_ok = (kif->flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(kif->link_state) ||
-			    (kif->link_state == LINK_STATE_UNKNOWN &&
-			    kif->media_type != IFT_CARP));
+			ifp = imsg.data;
 
-			LIST_FOREACH(area, &oeconf->area_list, entry) {
-				LIST_FOREACH(iface, &area->iface_list, entry) {
-					if (kif->ifindex == iface->ifindex &&
-					    iface->type !=
-					    IF_TYPE_VIRTUALLINK) {
-						iface->flags = kif->flags;
-						iface->linkstate =
-						    kif->link_state;
+			iface = if_find(ifp->ifindex);
+			if (iface == NULL)
+				fatalx("interface lost in ospfe");
+			iface->flags = ifp->flags;
+			iface->linkstate = ifp->linkstate;
+			iface->nh_reachable = ifp->nh_reachable;
 
-						if (link_ok) {
-							if_fsm(iface,
-							    IF_EVT_UP);
-							log_warnx("interface %s"
-							    " up", iface->name);
-						} else {
-							if_fsm(iface,
-							    IF_EVT_DOWN);
-							log_warnx("interface %s"
-							    " down",
-							    iface->name);
-						}
-					}
-				}
+			if (iface->nh_reachable) {
+				if_fsm(iface, IF_EVT_UP);
+				log_warnx("interface %s up", iface->name);
+			} else {
+				if_fsm(iface, IF_EVT_DOWN);
+				log_warnx("interface %s down", iface->name);
 			}
+			break;
+		case IMSG_IFADD:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->nbr_list);
+			TAILQ_INIT(&niface->ls_ack_list);
+			RB_INIT(&niface->lsa_tree);
+
+			narea = area_find(oeconf, niface->area_id);
+			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			break;
+		case IMSG_IFDELETE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(ifindex))
+				fatalx("IFINFO imsg with wrong len");
+
+			memcpy(&ifindex, imsg.data, sizeof(ifindex));
+			iface = if_find(ifindex);
+			if (iface == NULL)
+				fatalx("interface lost in ospfe");
+
+			LIST_REMOVE(iface, entry);
+			if_del(iface);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
@@ -336,18 +342,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 
 			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
 			break;
-		case IMSG_RECONF_IFACE:
-			if ((niface = malloc(sizeof(struct iface))) == NULL)
-				fatal(NULL);
-			memcpy(niface, imsg.data, sizeof(struct iface));
-
-			LIST_INIT(&niface->nbr_list);
-			TAILQ_INIT(&niface->ls_ack_list);
-			RB_INIT(&niface->lsa_tree);
-
-			niface->area = narea;
-			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
-			break;
 		case IMSG_RECONF_END:
 			if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER) !=
 			    (nconf->flags & OSPFD_FLAG_STUB_ROUTER))
@@ -361,7 +355,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
-		case IMSG_CTL_IFINFO:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
@@ -494,7 +487,9 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				 * flood on all area interfaces on
 				 * area 0.0.0.0 include also virtual links.
 				 */
-				area = nbr->iface->area;
+				if ((area = area_find(oeconf,
+				    nbr->iface->area_id)) == NULL)
+					fatalx("interface lost area");
 				LIST_FOREACH(iface, &area->iface_list, entry) {
 					noack += lsa_flood(iface, nbr,
 					    &lsa_hdr, imsg.data);
@@ -662,7 +657,7 @@ find_vlink(struct abr_rtr *ar)
 			if (iface->abr_id.s_addr == ar->abr_id.s_addr &&
 			    iface->type == IF_TYPE_VIRTUALLINK &&
 //XXX			    iface->area->id.s_addr == ar->area.s_addr) {
-			    iface->area->id.s_addr == ar->area.s_addr) {
+			    iface->area_id.s_addr == ar->area.s_addr) {
 //XXX				iface->dst.s_addr = ar->dst_ip.s_addr;
 				iface->dst = ar->dst_ip;
 //XXX				iface->addr.s_addr = ar->addr.s_addr;
@@ -686,11 +681,21 @@ orig_rtr_lsa_all(struct area *area)
 	 */
 	LIST_FOREACH(a, &oeconf->area_list, entry)
 		if (a != area)
-			orig_rtr_lsa(a);
+			orig_rtr_lsa_area(a);
 }
 
 void
-orig_rtr_lsa(struct area *area)
+orig_rtr_lsa(struct iface *iface)
+{
+	struct area	*area;
+
+	if ((area = area_find(oeconf, iface->area_id)) == NULL)
+		fatalx("interface lost area");
+	orig_rtr_lsa_area(area);
+}
+
+void
+orig_rtr_lsa_area(struct area *area)
 {
 #if 0 /* XXX needs work */
 	struct lsa_hdr		 lsa_hdr;

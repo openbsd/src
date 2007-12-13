@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2007/11/12 23:59:41 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -101,7 +101,6 @@ struct config_defaults	 ifacedefs;
 struct config_defaults	*defs;
 
 struct area	*conf_get_area(struct in_addr);
-struct iface	*conf_get_if(struct kif *, struct kif_addr *);
 
 typedef struct {
 	union {
@@ -436,24 +435,18 @@ areaoptsl	: interface
 		;
 
 interface	: INTERFACE STRING	{
-			struct kif	*kif;
-			struct kif_addr	*ka = NULL;
-
-			if ((kif = kif_findname($2, &ka)) == NULL) {
+			if ((iface = if_findname($2)) == NULL) {
 				yyerror("unknown interface %s", $2);
 				free($2);
 				YYERROR;
 			}
-			if (ka == NULL) {
+			if (IN6_IS_ADDR_UNSPECIFIED(&iface->addr)) {
 				yyerror("unnumbered interface %s", $2);
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			iface = conf_get_if(kif, ka);
-			if (iface == NULL)
-				YYERROR;
-			iface->area = area;
+			iface->area_id.s_addr = area->id.s_addr;
 			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
 
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
@@ -465,6 +458,7 @@ interface	: INTERFACE STRING	{
 			iface->rxmt_interval = defs->rxmt_interval;
 			iface->metric = defs->metric;
 			iface->priority = defs->priority;
+			iface->cflags |= F_IFACE_CONFIGURED;
 			iface = NULL;
 			/* interface is always part of an area */
 			defs = &areadefs;
@@ -480,7 +474,7 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		| interfaceoptsl optnl
 		;
 
-interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
+interfaceoptsl	: PASSIVE		{ iface->cflags |= F_IFACE_PASSIVE; }
 		| DEMOTE STRING		{
 			if (strlcpy(iface->demote_group, $2,
 			    sizeof(iface->demote_group)) >=
@@ -1018,26 +1012,6 @@ conf_get_area(struct in_addr id)
 	a->id.s_addr = id.s_addr;
 
 	return (a);
-}
-
-struct iface *
-conf_get_if(struct kif *kif, struct kif_addr *ka)
-{
-	struct area	*a;
-	struct iface	*i;
-
-	LIST_FOREACH(a, &conf->area_list, entry)
-		LIST_FOREACH(i, &a->iface_list, entry)
-			if (i->ifindex == kif->ifindex /*&& XXX
-			    i->addr.s_addr == ka->addr.s_addr*/) {
-				yyerror("interface %s already configured",
-				    kif->ifname);
-				return (NULL);
-			}
-
-	i = if_new(kif, ka);
-
-	return (i);
 }
 
 void

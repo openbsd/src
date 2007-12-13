@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.3 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -112,7 +112,7 @@ print_iface(struct iface *iface)
 	printf("\t\thello-interval %d\n", iface->hello_interval);
 	printf("\t\tmetric %d\n", iface->metric);
 
-	if (iface->passive)
+	if (iface->cflags & F_IFACE_PASSIVE)
 		printf("\t\tpassive\n");
 	if (*iface->demote_group)
 		printf("\t\tdemote %s\n", iface->demote_group);

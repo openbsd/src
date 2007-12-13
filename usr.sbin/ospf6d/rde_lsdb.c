@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.8 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.9 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -37,6 +37,8 @@ int		 lsa_equal(struct lsa *, struct lsa *);
 int		 lsa_get_prefix(void *, u_int16_t, struct lsa_prefix *);
 
 RB_GENERATE(lsa_tree, vertex, entry, lsa_compare)
+
+extern struct ospfd_conf	*rdeconf;
 
 void
 lsa_init(struct lsa_tree *t)
@@ -516,9 +518,13 @@ lsa_find(struct iface *iface, u_int16_t type, u_int32_t ls_id,
 
 	if (LSA_IS_SCOPE_AS(key.type))
 		tree = &asext_tree;
-	else if (LSA_IS_SCOPE_AREA(key.type))
-		tree = &iface->area->lsa_tree;
-	else if (LSA_IS_SCOPE_LLOCAL(key.type))
+	else if (LSA_IS_SCOPE_AREA(key.type)) {
+		struct area	*area;
+
+		if ((area = area_find(rdeconf, iface->area_id)) == NULL)
+			fatalx("interface lost area");
+		tree = &area->lsa_tree;
+	} else if (LSA_IS_SCOPE_LLOCAL(key.type))
 		tree = &iface->lsa_tree;
 	else
 		fatalx("unknown scope type");

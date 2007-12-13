@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.7 2007/10/25 12:05:20 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.8 2007/12/13 08:54:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -127,7 +127,6 @@ int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
-	struct area		*a;
 	int			 ch, opts = 0;
 	int			 debug = 0;
 	int			 ipforwarding;
@@ -184,8 +183,8 @@ main(int argc, char *argv[])
 		opts |= OSPFD_OPT_STUB_ROUTER;
 	}
 
-	/* fetch interfaces early */
-	kif_init();
+	/* prepare and fetch interfaces early */
+	if_init();
 
 	/* parse config file */
 	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
@@ -275,12 +274,6 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
-
-	/* remove unneded stuff from config */
-	while ((a = LIST_FIRST(&ospfd_conf->area_list)) != NULL) {
-		LIST_REMOVE(a, entry);
-		area_del(a);
-	}
 
 	/* redistribute default */
 	ospf_redistribute_default(IMSG_NETWORK_ADD);
@@ -393,14 +386,6 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
 			kr_show_route(&imsg);
-			break;
-		case IMSG_CTL_IFINFO:
-			if (imsg.hdr.len == IMSG_HEADER_SIZE)
-				kr_ifinfo(NULL, imsg.hdr.pid);
-			else if (imsg.hdr.len == IMSG_HEADER_SIZE + IFNAMSIZ)
-				kr_ifinfo(imsg.data, imsg.hdr.pid);
-			else
-				log_warnx("IFINFO request with wrong len");
 			break;
 		case IMSG_DEMOTE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(dmsg))
@@ -581,7 +566,6 @@ int
 ospf_reload(void)
 {
 	struct area		*area;
-	struct iface		*iface;
 	struct ospfd_conf	*xconf;
 
 	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
@@ -591,19 +575,16 @@ ospf_reload(void)
 	if (ospf_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
 		return (-1);
 
-	/* send interfaces */
+	/* send areas, interfaces happen out of band */
 	LIST_FOREACH(area, &xconf->area_list, entry) {
 		if (ospf_sendboth(IMSG_RECONF_AREA, area, sizeof(*area)) == -1)
 			return (-1);
-
-		LIST_FOREACH(iface, &area->iface_list, entry)
-			if (ospf_sendboth(IMSG_RECONF_IFACE, iface,
-			    sizeof(*iface)) == -1)
-				return (-1);
 	}
 
 	if (ospf_sendboth(IMSG_RECONF_END, NULL, 0) == -1)
 		return (-1);
+
+	/* XXX send newly available interfaces to the childs */
 
 	merge_config(ospfd_conf, xconf);
 	/* update redistribute lists */
@@ -669,14 +650,8 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			if (ospfd_process == PROC_OSPF_ENGINE) {
 				/* start interfaces */
 				ospfe_demote_area(xa, 0);
-				LIST_FOREACH(iface, &xa->iface_list, entry) {
-					if_init(conf, iface);
-					if (if_fsm(iface, IF_EVT_UP)) {
-						log_debug("error starting "
-						    "interface %s",
-						    iface->name);
-					}
-				}
+				LIST_FOREACH(iface, &xa->iface_list, entry)
+					if_start(conf, iface);
 			}
 			/* no need to merge interfaces */
 			continue;
@@ -701,17 +676,12 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			LIST_FOREACH(iface, &a->iface_list, entry) {
 				if (iface->state == IF_STA_NEW) {
 					iface->state = IF_STA_DOWN;
-					if_init(conf, iface);
-					if (if_fsm(iface, IF_EVT_UP)) {
-						log_debug("error starting "
-						    "interface %s",
-						    iface->name);
-					}
+					if_start(conf, iface);
 				}
 			}
 			if (a->dirty) {
 				a->dirty = 0;
-				orig_rtr_lsa(a);
+				orig_rtr_lsa(LIST_FIRST(&a->iface_list));
 			}
 		}
 	}
@@ -757,7 +727,6 @@ merge_interfaces(struct area *a, struct area *xa)
 			    xi->name);
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&a->iface_list, xi, entry);
-			xi->area = a;
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				xi->state = IF_STA_NEW;
 			continue;
@@ -782,6 +751,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		i->media_type = xi->media_type; /* needed? */
 		i->linkstate = xi->linkstate; /* needed? */
 
+#if 0 /* XXX needs some kind of love */
 		if (i->passive != xi->passive) {
 			/* need to restart interface to cope with this change */
 			if (ospfd_process == PROC_OSPF_ENGINE)
@@ -790,6 +760,7 @@ merge_interfaces(struct area *a, struct area *xa)
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_UP);
 		}
+#endif
 	}
 	return (dirty);
 }
