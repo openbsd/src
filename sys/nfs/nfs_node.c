@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.36 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.37 2007/12/13 22:32:55 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -202,7 +202,6 @@ nfs_reclaim(v)
 	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsdmap *dp, *dp2;
 
 #ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
@@ -212,27 +211,13 @@ nfs_reclaim(v)
 	if (np->n_hash.le_prev != NULL)
 		LIST_REMOVE(np, n_hash);
 
-	/*
-	 * Free up any directory cookie structures and
-	 * large file handle structures that might be associated with
-	 * this nfs node.
-	 */
-	if (vp->v_type == VDIR) {
-		dp = LIST_FIRST(&np->n_cookies);
-		while (dp) {
-			dp2 = dp;
-			dp = LIST_NEXT(dp, ndm_list);
-			free(dp2, M_NFSDIROFF);
-		}
-	}
-	if (np->n_fhsize > NFS_SMALLFH) {
+	if (np->n_fhsize > NFS_SMALLFH)
 		free(np->n_fhp, M_NFSBIGFH);
-	}
 
 	if (np->n_rcred)
 		crfree(np->n_rcred);
 	if (np->n_wcred)
-		crfree(np->n_wcred);	
+		crfree(np->n_wcred);
 	cache_purge(vp);
 	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = NULL;
