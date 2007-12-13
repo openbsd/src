@@ -808,7 +808,7 @@ zone_freedbargs(dns_zone_t *zone) {
 
 isc_result_t
 dns_zone_getdbtype(dns_zone_t *zone, char ***argv, isc_mem_t *mctx) {
-	size_t size = 0;
+	size_t size = 0, remaining_size, l;
 	unsigned int i;
 	isc_result_t result = ISC_R_SUCCESS;
 	void *mem;
@@ -826,10 +826,13 @@ dns_zone_getdbtype(dns_zone_t *zone, char ***argv, isc_mem_t *mctx) {
 		tmp = mem;
 		tmp2 = mem;
 		tmp2 += (zone->db_argc + 1) * sizeof(char *);
+		remaining_size = size - (zone->db_argc + 1) * sizeof(char *);
 		for (i = 0; i < zone->db_argc; i++) {
 			*tmp++ = tmp2;
-			strcpy(tmp2, zone->db_argv[i]);
-			tmp2 += strlen(tmp2) + 1;
+			strlcpy(tmp2, zone->db_argv[i], remaining_size);
+			l = strlen(tmp2) + 1;
+			tmp2 += l;
+			remaining_size -= l;
 		}
 		*tmp = NULL;
 	} else
