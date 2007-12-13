@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.11 2007/11/27 12:24:55 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.12 2007/12/13 08:57:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -64,11 +64,9 @@ const char	*print_ospf_rtr_flags(u_int8_t);
 int		 show_rib_detail_msg(struct imsg *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
-void		 show_interface_head(void);
 const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
 void		 print_baudrate(u_int64_t);
-int		 show_fib_interface_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
@@ -189,14 +187,6 @@ main(int argc, char *argv[])
 			    &res->addr, sizeof(res->addr));
 		show_fib_head();
 		break;
-	case SHOW_FIB_IFACE:
-		if (*res->ifname)
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0,
-			    res->ifname, sizeof(res->ifname));
-		else
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, NULL, 0);
-		show_interface_head();
-		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
@@ -269,9 +259,6 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_FIB:
 				done = show_fib_msg(&imsg);
-				break;
-			case SHOW_FIB_IFACE:
-				done = show_fib_interface_msg(&imsg);
 				break;
 			case NONE:
 			case FIB:
@@ -385,12 +372,18 @@ show_interface_detail_msg(struct imsg *imsg)
 		printf("\n");
 		printf("Interface %s, line protocol is %s\n",
 		    iface->name, print_link(iface->flags));
-		printf("  Internet address %s ",
-		    log_in6addr(&iface->addr));
-		printf("Area %s\n", inet_ntoa(iface->area));
-		printf("  Linkstate %s\n",
+		printf("  Internet address %s Area %s\n",
+		    log_in6addr(&iface->addr), inet_ntoa(iface->area));
+		printf("  Link type %s, state %s",
+		    get_media_descr(get_ifms_type(iface->mediatype)),
 		    get_linkstate(get_ifms_type(iface->mediatype),
 		    iface->linkstate));
+		if (iface->linkstate != LINK_STATE_DOWN &&
+		    iface->baudrate > 0) {
+		    printf(", ");
+		    print_baudrate(iface->baudrate);
+		}
+		printf("\n");
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
@@ -1176,13 +1169,6 @@ show_fib_msg(struct imsg *imsg)
 	return (0);
 }
 
-void
-show_interface_head(void)
-{
-	printf("%-15s%-15s%s\n", "Interface", "Flags",
-	    "Link state");
-}
-
 const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 const struct ifmedia_status_description
 		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
@@ -1234,54 +1220,4 @@ print_baudrate(u_int64_t baudrate)
 		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
 		printf("%llu Bit/s", baudrate);
-}
-
-int
-show_fib_interface_msg(struct imsg *imsg)
-{
-	struct kif	*k;
-	int		 ifms_type;
-
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_IFINFO:
-		k = imsg->data;
-		printf("%-15s", k->ifname);
-		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
-		switch (k->media_type) {
-		case IFT_ETHER:
-			ifms_type = IFM_ETHER;
-			break;
-		case IFT_FDDI:
-			ifms_type = IFM_FDDI;
-			break;
-		case IFT_CARP:
-			ifms_type = IFM_CARP;
-			break;
-		default:
-			ifms_type = 0;
-			break;
-		}
-
-		if (ifms_type)
-			printf("%s, %s", get_media_descr(ifms_type),
-			    get_linkstate(ifms_type, k->link_state));
-		else if (k->link_state == LINK_STATE_UNKNOWN)
-			printf("unknown");
-		else
-			printf("link state %u", k->link_state);
-
-		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
-			printf(", ");
-			print_baudrate(k->baudrate);
-		}
-		printf("\n");
-		break;
-	case IMSG_CTL_END:
-		printf("\n");
-		return (1);
-	default:
-		break;
-	}
-
-	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2007/10/16 08:43:44 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2007/12/13 08:57:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -122,7 +122,6 @@ static const struct token t_show_rib[] = {
 
 static const struct token t_show_fib[] = {
 	{NOTOKEN,	"",		NONE,			NULL},
-	{KEYWORD,	"interface",	SHOW_FIB_IFACE,		t_show_iface},
 	{FLAG,		"connected",	F_CONNECTED,		t_show_fib},
 	{FLAG,		"static",	F_STATIC,		t_show_fib},
 	{FLAG,		"ospf",		F_OSPFD_INSERTED,	t_show_fib},
