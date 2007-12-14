@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.34 2007/09/10 18:49:44 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -32,6 +32,8 @@
 #include <machine/pte.h>
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_object.h>
+
+#ifdef	_KERNEL
 
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
@@ -69,8 +71,6 @@ struct vp_entry {
 	u_int	vp_tlbpage;
 	u_int	vp_ptr;
 };
-
-#ifdef	_KERNEL
 
 extern void gateway_page(void);
 extern struct pmap kernel_pmap_store;

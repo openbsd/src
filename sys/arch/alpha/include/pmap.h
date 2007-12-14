@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.22 2007/09/10 18:49:44 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.23 2007/12/14 18:32:20 deraadt Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -82,6 +82,8 @@
 
 #include <machine/pte.h>
 
+#ifdef _KERNEL
+
 /*
  * Machine-dependent virtual memory state.
  *
@@ -160,8 +162,6 @@ struct pv_head {
 	"l2pt",								\
 	"l3pt",								\
 }
-
-#ifdef _KERNEL
 
 #ifndef _LKM
 #if defined(NEW_SCC_DRIVER)

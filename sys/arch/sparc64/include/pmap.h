@@ -107,6 +107,8 @@ extern struct page_size_map page_size_map[];
 #define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
 #define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
 
+#ifdef	_KERNEL
+
 struct pmap {
 	int pm_ctx;		/* Current context */
 	int pm_refs;		/* ref count */
@@ -152,7 +154,6 @@ typedef	struct pmap *pmap_t;
  */
 #define PMAP_IOENC(io)	0
 
-#ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
