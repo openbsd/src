@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.31 2007/11/13 12:04:13 jsing Exp $ */
+/*	$OpenBSD: macebus.c,v 1.32 2007/12/14 10:07:12 jsing Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -27,8 +27,8 @@
  */
 
 /*
- *  This is a combined macebus/crimebus driver. It handles
- *  configuration of all devices on the processor bus.
+ * This is a combined macebus/crimebus driver. It handles configuration of all
+ * devices on the processor bus.
  */
 
 #include <sys/param.h>
@@ -53,19 +53,19 @@
 #include <machine/intr.h>
 #include <machine/atomic.h>
 
-#include <sgi/localbus/macebus.h>
 #include <sgi/localbus/crimebus.h>
+#include <sgi/localbus/macebus.h>
 
-int macebusmatch(struct device *, void *, void *);
-void macebusattach(struct device *, struct device *, void *);
-int macebusprint(void *, const char *);
-int macebusscan(struct device *, void *, void *);
+int	macebusmatch(struct device *, void *, void *);
+void	macebusattach(struct device *, struct device *, void *);
+int	macebusprint(void *, const char *);
+int	macebusscan(struct device *, void *, void *);
 
-void *macebus_intr_establish(void *, u_long, int, int,
-			int (*)(void *), void *, char *);
-void macebus_intr_disestablish(void *, void *);
-void macebus_intr_makemasks(void);
-void macebus_do_pending_int(int);
+void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
+	    void *, char *);
+void	macebus_intr_disestablish(void *, void *);
+void	macebus_intr_makemasks(void);
+void	macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
 intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
 
@@ -372,8 +372,10 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	bpa = t->bus_base + offs;
 
 	/* Handle special mapping separately. */
-	if (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
-	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)) {
+	if ((bpa >= (MACEBUS_BASE + MACE_IO_OFFS) &&
+	    (bpa + size) < (MACEBUS_BASE + MACE_IO_OFFS + MACE_IO_SIZE))
+	    || (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))) {
 		*bshp = PHYS_TO_XKPHYS(bpa, CCA_NC);
 		return 0;
 	}
@@ -407,9 +409,12 @@ mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 
 	if (IS_XKPHYS(bsh)) {
 		paddr = XKPHYS_TO_PHYS(bsh);
-		if (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+		if ((paddr >= (MACEBUS_BASE + MACE_IO_OFFS) &&
 		    (paddr + size) <=
-		    (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))
+		    (MACEBUS_BASE + MACE_IO_OFFS + MACE_IO_SIZE))
+		    || (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+		    (paddr + size) <=
+		    (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)))
 			return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.9 2007/11/13 12:04:13 jsing Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.10 2007/12/14 10:07:12 jsing Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -44,6 +44,7 @@
 #define	MACE_VIN2_OFFS		0x00180000
 #define	MACE_VOUT_OFFS		0x00200000
 #define	MACE_IO_OFFS		0x00300000
+#define	MACE_IO_SIZE		0x00050000
 #define	MACE_ISAX_OFFS		0x00380000
 #define	MACE_ISAX_SIZE		0x00020000
 
@@ -109,7 +110,6 @@
 #define	MACE_ISA_INT_PARALLEL	0x000f0000	/* Parallel port */
 #define	MACE_ISA_INT_SERIAL_1	0x03f00000	/* Serial port 1 */
 #define	MACE_ISA_INT_SERIAL_2	0xfc000000	/* Serial port 2 */
-
 
 /* ISA Peripherals */
 #define	MACE_ISA_EPP_OFFS	(MACE_ISAX_OFFS+0x00000000)
