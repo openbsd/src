@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.22 2006/09/20 21:28:09 ray Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.23 2007/12/14 14:23:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -74,6 +74,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <login_cap.h>
 #include <netdb.h>
@@ -119,6 +120,7 @@ int sockfd;
 int timeout;
 in_addr_t alt_server;
 in_addr_t auth_server;
+in_port_t radius_port;
 
 typedef struct {
 	u_char	code;
@@ -146,7 +148,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 {
 	static char _pwstate[1024];
 	u_char req_id;
-	char *userstyle, *passwd, *pwstate;
+	char *userstyle, *passwd, *pwstate, *rad_service;
 	int auth_port;
 	char vector[AUTH_VECTOR_LEN+1], *p, *v;
 	int i;
@@ -155,6 +157,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	struct servent *svp;
 	struct sockaddr_in sin;
 	struct sigaction sa;
+	const char *errstr;
 
 	memset(_pwstate, 0, sizeof(_pwstate));
 	pwstate = password ? challenge : _pwstate;
@@ -166,8 +169,10 @@ raddauth(char *username, char *class, char *style, char *challenge,
 		return (1);
 	}
 
+	rad_service = login_getcapstr(lc, "radius-port", "radius", "radius");
 	timeout = login_getcapnum(lc, "radius-timeout", 2, 2);
 	retries = login_getcapnum(lc, "radius-retries", 6, 6);
+
 	if (timeout < 1)
 		timeout = 1;
 	if (retries < 2)
@@ -209,11 +214,18 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	}
 
 	/* get port number */
-	svp = getservbyname ("radius", "udp");
-	if (svp == NULL) {
-		*emsg = "No such service: radius/udp";
-		return (1);
-	}
+	radius_port = strtonum(rad_service, 1, UINT16_MAX, &errstr);
+	if (errstr) {
+		svp = getservbyname(rad_service, "udp");
+		if (svp == NULL) {
+			snprintf(_pwstate, sizeof(_pwstate),
+			    "No such service: %s/udp", rad_service);
+			*emsg = _pwstate;
+			return (1);
+		}
+		radius_port = svp->s_port;
+	} else
+		radius_port = htons(radius_port);
 
 	/* get the secret from the servers file */
 	getsecret();
@@ -229,7 +241,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = svp->s_port;
+	sin.sin_port = radius_port;
 
 	req_id = (u_char) arc4random();
 	auth_port = ttyslot();
@@ -330,7 +342,6 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 {
 	auth_hdr_t auth;
 	int i, len, secretlen, total_length, p;
-	struct servent *rad_port;
 	struct sockaddr_in sin;
 	u_char md5buf[MAXSECRETLEN+AUTH_VECTOR_LEN], digest[AUTH_VECTOR_LEN],
 	    pass_buf[AUTH_PASS_LEN], *pw, *ptr;
@@ -416,15 +427,10 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 
 	auth.length = htons(total_length);
 
-	/* get radius port number */
-	rad_port = getservbyname("radius", "udp");
-	if (rad_port == NULL)
-		errx(1, "no such service: radius/udp");
-
 	memset(&sin, 0, sizeof (sin));
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = auth_server;
-	sin.sin_port = rad_port->s_port;
+	sin.sin_port = radius_port;
 	if (sendto(sockfd, &auth, total_length, 0, (struct sockaddr *)&sin,
 	    sizeof(sin)) == -1)
 		err(1, NULL);
