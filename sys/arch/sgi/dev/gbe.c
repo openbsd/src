@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.2 2007/11/27 16:08:06 jasper Exp $ */
+/*	$OpenBSD: gbe.c,v 1.3 2007/12/14 16:03:10 jsing Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -141,17 +141,15 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	uint16_t *tm;
 	uint32_t val;
+	long attr;
 	int i;
-#ifdef notyet
-	char *cp;
-#endif
 
 	printf(": ");
 
 	/* GBE isn't strictly on the crimebus, but use this for now... */
 	gsc->iot = &crimebus_tag;
 	gsc->dmat = &mace_bus_dma_tag;
-	gsc->console = 0; /* XXX for now! */
+	gsc->console = 0;
 	gsc->screens = 0;
 
 	/* 
@@ -318,7 +316,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 		printf("timeout disabling dot clock!\n");
 
 	/* Reset DMA fifo. */
-        val = bus_space_read_4(gsc->iot, gsc->ioh, GBE_FB_SIZE_TILE);
+	val = bus_space_read_4(gsc->iot, gsc->ioh, GBE_FB_SIZE_TILE);
 	val &= ~(1 << GBE_FB_SIZE_TILE_FIFO_RESET_SHIFT);
 	bus_space_write_4(gsc->iot, gsc->ioh, GBE_FB_SIZE_TILE, 
 	    val | (1 << GBE_FB_SIZE_TILE_FIFO_RESET_SHIFT));
@@ -376,14 +374,6 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	printf("rev %u, %iMB, %dx%d at %d bits\n", gsc->rev, gsc->fb_size >> 20,
 	    gsc->width, gsc->height, gsc->depth);
 
-#ifdef notyet
-	cp = Bios_GetEnvironmentVariable("ConsoleOut");
-        if (cp != NULL && strncmp(cp, "video", 5) == 0) {
-		wsdisplay_cnattach(&gbe_stdscreen, &gsc->ri, 0, 0, /*defattr*/ 0);
-		gsc->console = 1;
-        }
-#endif
-
 	/*
 	 * Setup default screen and attach wsdisplay.
 	 */
@@ -394,6 +384,13 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	gbe_stdscreen.fontwidth = gsc->ri.ri_font->fontwidth;
 	gbe_stdscreen.fontheight = gsc->ri.ri_font->fontheight;
 	gbe_stdscreen.capabilities = gsc->ri.ri_caps;
+
+	/* Attach as console if necessary. */
+	if (strncmp(bios_console, "video", 5) == 0) {
+		gsc->ri.ri_ops.alloc_attr(&gsc->ri, 0, 0, 0, &attr);
+		wsdisplay_cnattach(&gbe_stdscreen, &gsc->ri, 0, 0, attr);
+		gsc->console = 1;
+	}
 
 	waa.console = gsc->console;
 	waa.scrdata = &gbe_screenlist;
