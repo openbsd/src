@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.16 2006/05/27 19:16:37 claudio Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.17 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -58,6 +59,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "netstat.h"
 
 static void print_bw_meter(struct bw_meter *bw_meter, int *banner_printed);
@@ -83,35 +85,31 @@ pktscale(u_long n)
 }
 
 void
-mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
+mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 {
 	u_int mrtproto;
 	LIST_HEAD(, mfc) *mfchashtbl;
 	u_long mfchash;
-	struct vif viftable[MAXVIFS];
+	struct vif viftable[MAXVIFS], *v;
 	struct mfc *mfcp, mfc;
-	struct vif *v;
 	vifi_t vifi;
-	int i;
-	int banner_printed;
-	int saved_nflag;
-	int numvifs;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
+	size_t len = sizeof(int);
+	int i, banner_printed = 0, saved_nflag, numvifs = 0;
 	int nmfc;		/* No. of cache entries */
 
-	if (mrpaddr == 0) {
-		printf("ip_mrtproto: symbol not in namelist\n");
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &mrtproto, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn("mroute");
 		return;
 	}
-
-	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	case 0:
 		printf("no multicast routing compiled into this system\n");
 		return;
-
 	case IGMP_DVMRP:
 		break;
-
 	default:
 		printf("multicast routing protocol %u, unknown\n", mrtproto);
 		return;
@@ -134,8 +132,6 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 	nflag = 1;
 
 	kread(vifaddr, &viftable, sizeof(viftable));
-	banner_printed = 0;
-	numvifs = 0;
 
 	for (vifi = 0, v = viftable; vifi < MAXVIFS; ++vifi, ++v) {
 		if (v->v_lcl_addr.s_addr == 0)
@@ -157,7 +153,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 		    v->v_pkt_in, v->v_pkt_out);
 	}
 	if (!banner_printed)
-		printf("\nVirtual Interface Table is empty\n");
+		printf("Virtual Interface Table is empty\n");
 
 	kread(mfchashtbladdr, &mfchashtbl, sizeof(mfchashtbl));
 	kread(mfchashaddr, &mfchash, sizeof(mfchash));
@@ -213,7 +209,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 			}
 		}
 	if (!banner_printed)
-		printf("\nMulticast Forwarding Cache is empty\n");
+		printf("Multicast Forwarding Cache is empty\n");
 	else
 		printf("\nTotal no. of entries in cache: %d\n", nmfc);
 
@@ -299,17 +295,20 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 }
 
 void
-mrt_stats(u_long mrpaddr, u_long mstaddr)
+mrt_stats(void)
 {
 	u_int mrtproto;
 	struct mrtstat mrtstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
+	int mib2[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTSTATS };
+	size_t len = sizeof(int);
 
-	if (mrpaddr == 0) {
-		printf("ip_mrtproto: symbol not in namelist\n");
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &mrtproto, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn("mroute");
 		return;
 	}
-
-	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	case 0:
 		printf("no multicast routing compiled into this system\n");
@@ -323,12 +322,14 @@ mrt_stats(u_long mrpaddr, u_long mstaddr)
 		return;
 	}
 
-	if (mstaddr == 0) {
-		printf("mrtstat: symbol not in namelist\n");
+	len = sizeof(mrtstat);
+	if (sysctl(mib2, sizeof(mib2) / sizeof(mib2[0]),
+	    &mrtstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn("mroute");
 		return;
 	}
 
-	kread(mstaddr, &mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
 	printf("\t%lu datagram%s with no route for origin\n",
 	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));

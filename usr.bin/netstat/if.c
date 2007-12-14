@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.53 2007/09/11 16:14:41 mk Exp $	*/
+/*	$OpenBSD: if.c,v 1.54 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.53 2007/09/11 16:14:41 mk Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.54 2007/12/14 18:35:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,7 @@ intpr(int interval, u_long ifnetaddr)
 	union {
 		struct ifaddr ifa;
 		struct in_ifaddr in;
-#ifdef INET6
 		struct in6_ifaddr in6;
-#endif
 	} ifaddr;
 	u_int64_t total;
 	u_long ifaddraddr;
@@ -120,9 +118,7 @@ intpr(int interval, u_long ifnetaddr)
 	ifaddraddr = 0;
 	while (ifnetaddr || ifaddraddr) {
 		struct sockaddr_in *sin;
-#ifdef INET6
 		struct sockaddr_in6 *sin6;
-#endif
 		char *cp;
 		int n, m;
 
@@ -212,7 +208,6 @@ intpr(int interval, u_long ifnetaddr)
 					}
 				}
 				break;
-#ifdef INET6
 			case AF_INET6:
 				sin6 = (struct sockaddr_in6 *)sa;
 #ifdef __KAME__
@@ -270,7 +265,6 @@ intpr(int interval, u_long ifnetaddr)
 					}
 				}
 				break;
-#endif
 			case AF_APPLETALK:
 				printf("atlk:%-12s",atalk_print(sa,0x10) );
 				printf("%-12s ",atalk_print(sa,0x0b) );

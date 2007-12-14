@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.70 2007/12/11 20:14:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.71 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.70 2007/12/11 20:14:45 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.71 2007/12/14 18:35:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,163 +67,90 @@ static char *rcsid = "$OpenBSD: main.c,v 1.70 2007/12/11 20:14:45 deraadt Exp $"
 #include "netstat.h"
 
 struct nlist nl[] = {
-#define N_IPSTAT	0
-	{ "_ipstat" },
-#define N_TCBTABLE	1
+#define N_TCBTABLE	0
 	{ "_tcbtable" },
-#define N_TCPSTAT	2
-	{ "_tcpstat" },
-#define N_UDBTABLE	3
+#define N_UDBTABLE	1
 	{ "_udbtable" },
-#define N_UDPSTAT	4
-	{ "_udpstat" },
-#define N_IFNET		5
-	{ "_ifnet" },
-#define N_ICMPSTAT	6
-	{ "_icmpstat" },
-#define N_RTSTAT	7
-	{ "_rtstat" },
-#define N_UNIXSW	8
-	{ "_unixsw" },
-#define N_RTREE		9
-	{ "_rt_tables"},
-#define N_FILE		10
-	{ "_file" },
-#define N_IGMPSTAT	11
-	{ "_igmpstat" },
-#define N_MRTPROTO	12
-	{ "_ip_mrtproto" },
-#define N_MRTSTAT	13
-	{ "_mrtstat" },
-#define N_MFCHASHTBL	14
-	{ "_mfchashtbl" },
-#define N_MFCHASH	15
-	{ "_mfchash" },
-#define N_VIFTABLE	16
-	{ "_viftable" },
-#define N_AHSTAT	17
-	{ "_ahstat"},
-#define N_ESPSTAT	18
-	{ "_espstat"},
-#define N_IP4STAT	19
-	{ "_ipipstat"},
-#define N_DDPSTAT	20
-	{ "_ddpstat"},
-#define N_DDPCB		21
+#define N_DDPCB		2
 	{ "_ddpcb"},
-#define N_ETHERIPSTAT	22
-	{ "_etheripstat"},
-#define N_IP6STAT	23
-	{ "_ip6stat" },
-#define N_ICMP6STAT	24
-	{ "_icmp6stat" },
-#define N_PIM6STAT	25
-	{ "_pim6stat" },
-#define N_MRT6PROTO	26
-	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	27
-	{ "_mrt6stat" },
-#define N_MF6CTABLE	28
+#define N_IFNET		3
+	{ "_ifnet" },
+#define N_UNIXSW	4
+	{ "_unixsw" },
+
+#define N_MFCHASHTBL	5
+	{ "_mfchashtbl" },
+#define N_MFCHASH	6
+	{ "_mfchash" },
+#define N_VIFTABLE	7
+	{ "_viftable" },
+
+#define N_MF6CTABLE	8
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	29
+#define N_MIF6TABLE	9
 	{ "_mif6table" },
-#define N_IPCOMPSTAT	30
-	{ "_ipcompstat" },
-#define N_RIP6STAT	31
-	{ "_rip6stat" },
-#define N_CARPSTAT	32
-	{ "_carpstats" },
-#define N_RAWIPTABLE	33
-	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	34
-	{ "_rawin6pcbtable" },
-#define N_PFSYNCSTAT	35
-	{ "_pfsyncstats" },
-#define N_PIMSTAT	36
-	{ "_pimstat" },
-#define N_AF2RTAFIDX	37
-	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	38
-	{ "_rtbl_id_max" },
-#define N_RTMASK	39
+
+#define N_RTREE		10
+	{ "_rt_tables"},
+#define N_RTMASK	11
 	{ "_mask_rnhead" },
+#define N_AF2RTAFIDX	12
+	{ "_af2rtafidx" },
+#define N_RTBLIDMAX	13
+	{ "_rtbl_id_max" },
+
+#define N_RAWIPTABLE	14
+	{ "_rawcbtable" },
+#define N_RAWIP6TABLE	15
+	{ "_rawin6pcbtable" },
+
+#define N_RTSTAT	16
+	{ "_rtstat" },
+
 	{ ""}
 };
 
 struct protox {
 	u_char	pr_index;			/* index into nlist of cb head */
-	u_char	pr_sindex;			/* index into nlist of stat block */
-	u_char	pr_wanted;			/* 1 if wanted, 0 otherwise */
 	void	(*pr_cblocks)(u_long, char *);	/* control blocks printing routine */
-	void	(*pr_stats)(u_long, char *);	/* statistics printing routine */
+	void	(*pr_stats)(char *);		/* statistics printing routine */
 	void	(*pr_dump)(u_long);		/* pcb printing routine */
 	char	*pr_name;			/* well-known name */
 } protox[] = {
-	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
-	  tcp_stats,	tcp_dump,	"tcp" },
-	{ N_UDBTABLE,	N_UDPSTAT,	1,	protopr,
-	  udp_stats,	0,		"udp" },
-	{ N_RAWIPTABLE,	N_IPSTAT,	1,	protopr,
-	  ip_stats,	0,		"ip" },
-	{ -1,		N_ICMPSTAT,	1,	0,
-	  icmp_stats,	0,		"icmp" },
-	{ -1,		N_IGMPSTAT,	1,	0,
-	  igmp_stats,	0,		"igmp" },
-	{ -1,		N_AHSTAT,	1,	0,
-	  ah_stats,	0,		"ah" },
-	{ -1,		N_ESPSTAT,	1,	0,
-	  esp_stats,	0,		"esp" },
-	{ -1,		N_IP4STAT,	1,	0,
-	  ipip_stats,	0,		"ipencap" },
-	{ -1,		N_ETHERIPSTAT,	1,	0,
-	  etherip_stats,0,		"etherip" },
-	{ -1,		N_IPCOMPSTAT,	1,	0,
-	  ipcomp_stats,	0,		"ipcomp" },
-	{ -1,		N_CARPSTAT,	1,	0,
-	  carp_stats,	0,		"carp" },
-	{ -1,		N_PFSYNCSTAT,	1,	0,
-	  pfsync_stats,	0,		"pfsync" },
-	{ -1,		N_PIMSTAT,	1,	0,
-	  pim_stats,	0,		"pim" },
-	{ -1,		-1,		0,	0,
-	  0,		0,		0 }
+	{ N_TCBTABLE,	protopr,	tcp_stats,	tcp_dump,	"tcp" },
+	{ N_UDBTABLE,	protopr,	udp_stats,	NULL,		"udp" },
+	{ N_RAWIPTABLE,	protopr,	ip_stats,	NULL,		"ip" },
+	{ -1,		NULL,		icmp_stats,	NULL,		"icmp" },
+	{ -1,		NULL,		igmp_stats,	NULL,		"igmp" },
+	{ -1,		NULL,		ah_stats,	NULL,		"ah" },
+	{ -1,		NULL,		esp_stats,	NULL,		"esp" },
+	{ -1,		NULL,		ipip_stats,	NULL,		"ipencap" },
+	{ -1,		NULL,		etherip_stats,	NULL,		"etherip" },
+	{ -1,		NULL,		ipcomp_stats,	NULL,		"ipcomp" },
+	{ -1,		NULL,		carp_stats,	NULL,		"carp" },
+	{ -1,		NULL,		pfsync_stats,	NULL,		"pfsync" },
+	{ -1,		NULL,		pim_stats,	NULL,		"pim" },
+	{ -1,		NULL,		NULL,		NULL,		NULL }
 };
 
-#ifdef INET6
 struct protox ip6protox[] = {
-	{ N_TCBTABLE,	N_TCPSTAT,	1,	ip6protopr,
-	  0,		tcp_dump,	"tcp" },
-	{ N_UDBTABLE,	N_UDPSTAT,	1,	ip6protopr,
-	  0,		0,		"udp" },
-	{ N_RAWIP6TABLE,N_IP6STAT,	1,	ip6protopr,
-	  ip6_stats,	0,		"ip6" },
-	{ -1,		N_ICMP6STAT,	1,	0,
-	  icmp6_stats,	0,		"icmp6" },
-	{ -1,		N_PIM6STAT,	1,	0,
-	  pim6_stats,	0,		"pim6" },
-	{ -1,		N_RIP6STAT,	1,	0,
-	  rip6_stats,	0,		"rip6" },
-	{ -1,		-1,		0,	0,
-	  0,		0,		0 }
+	{ N_TCBTABLE,	ip6protopr,	NULL,		tcp_dump,	"tcp" },
+	{ N_UDBTABLE,	ip6protopr,	NULL,		NULL,		"udp" },
+	{ N_RAWIP6TABLE,ip6protopr,	ip6_stats,	NULL,		"ip6" },
+	{ -1,		NULL,		icmp6_stats,	NULL,		"icmp6" },
+	{ -1,		NULL,		pim6_stats,	NULL,		"pim6" },
+	{ -1,		NULL,		rip6_stats,	NULL,		"rip6" },
+	{ -1,		NULL,		NULL,		NULL,		NULL }
 };
-#endif
 
 struct protox atalkprotox[] = {
-	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
-	  ddp_stats,	0,		"ddp" },
-	{ -1,		-1,		0,	0,
-	  0,		0,		0 }
+	{ N_DDPCB,	atalkprotopr,	ddp_stats,	NULL,		"ddp" },
+	{ -1,		NULL,		NULL,		NULL,		NULL }
 };
 
-#ifndef INET6
-struct protox *protoprotox[] = {
-	protox, atalkprotox, NULL
-};
-#else
 struct protox *protoprotox[] = {
 	protox, ip6protox, atalkprotox, NULL
 };
-#endif
 
 static void printproto(struct protox *, char *);
 static void usage(void);
@@ -463,7 +390,7 @@ main(int argc, char *argv[])
 	 */
 	sethostent(1);
 	setnetent(1);
-	
+
 	if (iflag) {
 		intpr(interval, nl[N_IFNET].n_value);
 		exit(0);
@@ -479,25 +406,17 @@ main(int argc, char *argv[])
 	if (gflag) {
 		if (sflag) {
 			if (af == AF_INET || af == AF_UNSPEC)
-				mrt_stats(nl[N_MRTPROTO].n_value,
-				    nl[N_MRTSTAT].n_value);
-#ifdef INET6
+				mrt_stats();
 			if (af == AF_INET6 || af == AF_UNSPEC)
-				mrt6_stats(nl[N_MRT6PROTO].n_value,
-				    nl[N_MRT6STAT].n_value);
-#endif
+				mrt6_stats();
 		} else {
 			if (af == AF_INET || af == AF_UNSPEC)
-				mroutepr(nl[N_MRTPROTO].n_value,
-				    nl[N_MFCHASHTBL].n_value,
+				mroutepr(nl[N_MFCHASHTBL].n_value,
 				    nl[N_MFCHASH].n_value,
 				    nl[N_VIFTABLE].n_value);
-#ifdef INET6
 			if (af == AF_INET6 || af == AF_UNSPEC)
-				mroute6pr(nl[N_MRT6PROTO].n_value,
-				    nl[N_MF6CTABLE].n_value,
+				mroute6pr(nl[N_MF6CTABLE].n_value,
 				    nl[N_MIF6TABLE].n_value);
-#endif
 		}
 		exit(0);
 	}
@@ -509,17 +428,15 @@ main(int argc, char *argv[])
 			for (tp = protox; tp->pr_name; tp++)
 				if (strcmp(tp->pr_name, p->p_name) == 0)
 					break;
-			if (tp->pr_name == 0 || tp->pr_wanted == 0)
+			if (tp->pr_name == 0)
 				continue;
 			printproto(tp, p->p_name);
 		}
 		endprotoent();
 	}
-#ifdef INET6
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
-#endif
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
@@ -536,19 +453,16 @@ main(int argc, char *argv[])
 static void
 printproto(struct protox *tp, char *name)
 {
-	void (*pr)(u_long, char *);
-	u_char i;
-
 	if (sflag) {
-		pr = tp->pr_stats;
-		i = tp->pr_sindex;
+		if (tp->pr_stats != NULL)
+			(*tp->pr_stats)(name);
 	} else {
-		pr = tp->pr_cblocks;
-		i = tp->pr_index;
+		u_char i = tp->pr_index;
+		if (tp->pr_cblocks != NULL &&
+		    i < sizeof(nl) / sizeof(nl[0]) &&
+		    (nl[i].n_value || af != AF_UNSPEC))
+			(*tp->pr_cblocks)(nl[i].n_value, name);
 	}
-	if (pr != NULL && i < sizeof(nl) / sizeof(nl[0]) &&
-	    (nl[i].n_value || af != AF_UNSPEC))
-		(*pr)(nl[i].n_value, name);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.44 2007/12/11 20:14:45 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.45 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -70,23 +70,22 @@ char	*plural(int);
 char	*plurales(int);
 
 void	protopr(u_long, char *);
-#ifdef INET6
 void	ip6protopr(u_long, char *);
-#endif
-void	tcp_stats(u_long, char *);
-void	udp_stats(u_long, char *);
-void	ip_stats(u_long, char *);
-void	icmp_stats(u_long, char *);
-void	igmp_stats(u_long, char *);
-void	pim_stats(u_long, char *);
-void	ah_stats(u_long, char *);
-void	esp_stats(u_long, char *);
-void	ipip_stats(u_long, char *);
-void	carp_stats (u_long, char *);
-void	pfsync_stats (u_long, char *);
-void	etherip_stats(u_long, char *);
+void	tcp_stats(char *);
+void	udp_stats(char *);
+void	ip_stats(char *);
+void	icmp_stats(char *);
+void	igmp_stats(char *);
+void	pim_stats(char *);
+void	ah_stats(char *);
+void	esp_stats(char *);
+void	ipip_stats(char *);
+void	carp_stats (char *);
+void	pfsync_stats (char *);
+void	etherip_stats(char *);
+void	ipcomp_stats(char *);
+
 void	protopr(u_long, char *);
-void	ipcomp_stats(u_long, char *);
 
 void	net80211_ifstats(char *);
 
@@ -102,21 +101,19 @@ void	pr_rthdr(int, int);
 void	pr_encaphdr(void);
 void	pr_family(int);
 
-#ifdef INET6
 struct in6_addr;
 struct sockaddr_in6;
 void	ip6protopr(u_long, char *);
-void	ip6_stats(u_long, char *);
+void	ip6_stats(char *);
 void	ip6_ifstats(char *);
-void	icmp6_stats(u_long, char *);
+void	icmp6_stats(char *);
 void	icmp6_ifstats(char *);
-void	pim6_stats(u_long, char *);
-void	rip6_stats(u_long, char *);
-void	mroute6pr(u_long, u_long, u_long);
-void	mrt6_stats(u_long, u_long);
+void	pim6_stats(char *);
+void	rip6_stats(char *);
+void	mroute6pr(u_long, u_long);
+void	mrt6_stats(void);
 char	*routename6(struct sockaddr_in6 *);
 char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
-#endif /*INET6*/
 
 void	p_rttables(int, u_int);
 void	p_flags(int, char *);
@@ -130,27 +127,15 @@ char	*netname4(in_addr_t, in_addr_t);
 void	routepr(u_long, u_long, u_long, u_long);
 
 void	nsprotopr(u_long, char *);
-void	spp_stats(u_long, char *);
-void	idp_stats(u_long, char *);
-void	nserr_stats(u_long, char *);
 
 void	intpr(int, u_long);
 
 void	unixpr(u_long);
 
-void	esis_stats(u_long, char *);
-void	clnp_stats(u_long, char *);
-void	cltp_stats(u_long, char *);
-void	iso_protopr(u_long, char *);
-void	iso_protopr1(u_long, int);
-void	tp_protopr(u_long, char *);
-void	tp_inproto(u_long);
-void	tp_stats(u_long, char *);
-
-void	mroutepr(u_long, u_long, u_long, u_long);
-void	mrt_stats(u_long, u_long);
+void	mroutepr(u_long, u_long, u_long);
+void	mrt_stats(void);
 
 void	atalkprotopr(u_long, char *);
-void	ddp_stats(u_long, char *);
+void	ddp_stats(char *);
 char	*atalk_print(const struct sockaddr *, int);
 char	*atalk_print2(const struct sockaddr *, const struct sockaddr *, int);

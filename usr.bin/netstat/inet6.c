@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.34 2007/09/11 18:16:48 henning Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.35 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.34 2007/09/11 18:16:48 henning Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.35 2007/12/14 18:35:46 deraadt Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -70,9 +71,8 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include "netstat.h"
-
-#ifdef INET6
 
 struct	socket sockb;
 
@@ -342,19 +342,23 @@ static	char *ip6nh[] = {
  * Dump IP6 statistics structure.
  */
 void
-ip6_stats(u_long off, char *name)
+ip6_stats(char *name)
 {
 	struct ip6stat ip6stat;
 	int first, i;
 	struct protoent *ep;
 	const char *n;
+	int mib[] = { CTL_NET, AF_INET6, IPPROTO_IPV6, IPV6CTL_STATS };
+	size_t len = sizeof(ip6stat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ip6stat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
+	}
 
-	kread(off, &ip6stat, sizeof (ip6stat));
 	printf("%s:\n", name);
-
 #define	p(f, m) if (ip6stat.f || sflag <= 1) \
 	printf(m, (unsigned long long)ip6stat.f, plural(ip6stat.f))
 #define	p1(f, m) if (ip6stat.f || sflag <= 1) \
@@ -821,16 +825,21 @@ static	char *icmp6names[] = {
  * Dump ICMPv6 statistics.
  */
 void
-icmp6_stats(u_long off, char *name)
+icmp6_stats(char *name)
 {
 	struct icmp6stat icmp6stat;
 	int i, first;
+	int mib[] = { CTL_NET, AF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_STATS };
+	size_t len = sizeof(icmp6stat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &icmp6stat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &icmp6stat, sizeof (icmp6stat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
 	printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
 #define p_5(f, m) if (icmp6stat.f || sflag <= 1) \
@@ -962,15 +971,20 @@ icmp6_ifstats(char *ifname)
  * Dump PIM statistics structure.
  */
 void
-pim6_stats(u_long off, char *name)
+pim6_stats(char *name)
 {
 	struct pim6stat pim6stat;
+	int mib[] = { CTL_NET, AF_INET6, IPPROTO_PIM, PIM6CTL_STATS };
+	size_t len = sizeof(pim6stat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &pim6stat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &pim6stat, sizeof(pim6stat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define	p(f, m) if (pim6stat.f || sflag <= 1) \
 	printf(m, (unsigned long long)pim6stat.f, plural(pim6stat.f))
 
@@ -988,14 +1002,20 @@ pim6_stats(u_long off, char *name)
  * Dump raw ip6 statistics structure.
  */
 void
-rip6_stats(u_long off, char *name)
+rip6_stats(char *name)
 {
 	struct rip6stat rip6stat;
 	u_int64_t delivered;
+	int mib[] = { CTL_NET, AF_INET6, IPPROTO_RAW, RIPV6CTL_STATS };
+	size_t len = sizeof(rip6stat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &rip6stat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &rip6stat, sizeof(rip6stat));
+	}
+
 	printf("%s:\n", name);
 
 #define	p(f, m) if (rip6stat.f || sflag <= 1) \
@@ -1183,5 +1203,3 @@ tcp6_dump(u_long pcbaddr)
 	    tcp6cb.ts_recent, tcp6cb.ts_recent_age, tcp6cb.last_ack_sent);
 }
 #endif
-
-#endif /*INET6*/

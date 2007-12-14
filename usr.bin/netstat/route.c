@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.75 2007/09/05 20:29:05 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.76 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.75 2007/09/05 20:29:05 claudio Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.76 2007/12/14 18:35:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ rt_stats(int usesysctl, u_long off)
 	struct rtstat rtstat;
 	int mib[6];
 	size_t size;
- 
+
 	if (usesysctl) {
 		mib[0] = CTL_NET;
 		mib[1] = PF_ROUTE;
@@ -362,10 +362,7 @@ encap_print(struct rtentry *rt)
 {
 	struct sockaddr_encap sen1, sen2, sen3;
 	struct ipsec_policy ipo;
-
-#ifdef INET6
 	struct sockaddr_in6 s61, s62;
-#endif /* INET6 */
 
 	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
 	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
@@ -379,7 +376,6 @@ encap_print(struct rtentry *rt)
 		    ntohs(sen1.sen_dport), sen1.sen_proto);
 	}
 
-#ifdef INET6
 	if (sen1.sen_type == SENT_IP6) {
 		bzero(&s61, sizeof(s61));
 		bzero(&s62, sizeof(s62));
@@ -441,7 +437,6 @@ encap_print(struct rtentry *rt)
 		printf("%-42s %-5u %-5u ", netname6(&s61, &s62),
 		    ntohs(sen1.sen_ip6_dport), sen1.sen_ip6_proto);
 	}
-#endif /* INET6 */
 
 	if (sen3.sen_type == SENT_IPSP) {
 		char hostn[NI_MAXHOST];

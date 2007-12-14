@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: inet.c,v 1.103 2007/12/14 18:35:46 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.103 2007/12/14 18:35:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,10 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Ex
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 
+#include <rpc/rpc.h>
+#include <rpc/pmap_prot.h>
+#include <rpc/pmap_clnt.h>
+
 #include <arpa/inet.h>
 #include <limits.h>
 #include <netdb.h>
@@ -84,11 +88,8 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.102 2007/12/13 20:00:53 reyk Ex
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "netstat.h"
-
-#include <rpc/rpc.h>
-#include <rpc/pmap_prot.h>
-#include <rpc/pmap_clnt.h>
 
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
@@ -98,10 +99,8 @@ static void protopr0(u_long, char *, int);
 
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, char *, int);
-#ifdef INET6
 char	*inet6name(struct in6_addr *);
 void	inet6print(struct in6_addr *, int, char *, int);
-#endif
 
 /*
  * Print a summary of connections related to an Internet
@@ -115,13 +114,11 @@ protopr(u_long off, char *name)
 	protopr0(off, name, AF_INET);
 }
 
-#ifdef INET6
 void
 ip6protopr(u_long off, char *name)
 {
 	protopr0(off, name, AF_INET6);
 }
-#endif
 
 static void
 protopr0(u_long off, char *name, int af)
@@ -196,25 +193,20 @@ protopr0(u_long off, char *name, int af)
 			else
 				printf("%*p ", PLEN, prev);
 		}
-#ifdef INET6
 		if (inpcb.inp_flags & INP_IPV6 && !israw) {
 			strlcpy(namebuf, name0, sizeof namebuf);
 			strlcat(namebuf, "6", sizeof namebuf);
 			name = namebuf;
 		} else
 			name = name0;
-#endif
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		    sockb.so_snd.sb_cc);
-#ifdef INET6
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
 			    name, 1);
 			inet6print(&inpcb.inp_faddr6, (int)inpcb.inp_fport,
 			    name, 0);
-		} else
-#endif
-		{
+		} else {
 			inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport,
 			    name, 1);
 			inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport,
@@ -227,11 +219,10 @@ protopr0(u_long off, char *name, int af)
 				printf(" %s", tcpstates[tcpcb.t_state]);
 		} else if (israw) {
 			u_int8_t proto;
-#ifdef INET6
+
 			if (inpcb.inp_flags & INP_IPV6)
 				proto = inpcb.inp_ipv6.ip6_nxt;
 			else
-#endif
 				proto = inpcb.inp_ip.ip_p;
 			printf(" %u", proto);
 		}
@@ -243,19 +234,16 @@ protopr0(u_long off, char *name, int af)
  * Dump TCP statistics structure.
  */
 void
-tcp_stats(u_long off, char *name)
+tcp_stats(char *name)
 {
 	struct tcpstat tcpstat;
-	size_t len;
 	int mib[] = { CTL_NET, AF_INET, IPPROTO_TCP, TCPCTL_STATS };
+	size_t len = sizeof(tcpstat);
 
-	if (off == 0)
-		return;
-
-	len = sizeof(tcpstat);
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &tcpstat, &len, NULL, 0) == -1) {
-		warn(name);
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
 	}
 
@@ -376,20 +364,17 @@ tcp_stats(u_long off, char *name)
  * Dump UDP statistics structure.
  */
 void
-udp_stats(u_long off, char *name)
+udp_stats(char *name)
 {
 	struct udpstat udpstat;
 	u_long delivered;
-	size_t len;
 	int mib[] = { CTL_NET, AF_INET, IPPROTO_UDP, UDPCTL_STATS };
+	size_t len = sizeof(udpstat);
 
-	if (off == 0)
-		return;
-
-	len = sizeof(udpstat);
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &udpstat, &len, NULL, 0) == -1) {
-		warn(name);
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
 	}
 
@@ -426,19 +411,16 @@ udp_stats(u_long off, char *name)
  * Dump IP statistics structure.
  */
 void
-ip_stats(u_long off, char *name)
+ip_stats(char *name)
 {
 	struct ipstat ipstat;
-	size_t len;
 	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	size_t len = sizeof(ipstat);;
 
-	if (off == 0)
-		return;
-
-	len = sizeof(ipstat);
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ipstat, &len, NULL, 0) == -1) {
-		warn(name);
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
 	}
 
@@ -532,20 +514,17 @@ static	char *icmpnames[ICMP_MAXTYPE + 1] = {
  * Dump ICMP statistics.
  */
 void
-icmp_stats(u_long off, char *name)
+icmp_stats(char *name)
 {
 	struct icmpstat icmpstat;
 	int i, first;
 	int mib[] = { CTL_NET, AF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
-	size_t len;
+	size_t len = sizeof(icmpstat);
 
-	if (off == 0)
-		return;
-
-	len = sizeof(icmpstat);
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &icmpstat, &len, NULL, 0) == -1) {
-		warn(name);
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
 	}
 
@@ -592,15 +571,20 @@ icmp_stats(u_long off, char *name)
  * Dump IGMP statistics structure.
  */
 void
-igmp_stats(u_long off, char *name)
+igmp_stats(char *name)
 {
 	struct igmpstat igmpstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IGMP, IGMPCTL_STATS };
+	size_t len = sizeof(igmpstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &igmpstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &igmpstat, sizeof (igmpstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define	p(f, m) if (igmpstat.f || sflag <= 1) \
 	printf(m, igmpstat.f, plural(igmpstat.f))
 #define	py(f, m) if (igmpstat.f || sflag <= 1) \
@@ -623,19 +607,20 @@ igmp_stats(u_long off, char *name)
  * Dump PIM statistics structure.
  */
 void
-pim_stats(u_long off, char *name)
+pim_stats(char *name)
 {
 	struct pimstat pimstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_PIM, PIMCTL_STATS };
+	size_t len = sizeof(pimstat);
 
-	if (off == 0)
-		return;
-	if (kread(off, &pimstat, sizeof (pimstat)) != 0) {
-		/* XXX: PIM is probably not enabled in the kernel */
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &pimstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
 	}
 
 	printf("%s:\n", name);
-
 #define	p(f, m) if (pimstat.f || sflag <= 1) \
 	printf(m, pimstat.f, plural(pimstat.f))
 #define	py(f, m) if (pimstat.f || sflag <= 1) \
@@ -816,15 +801,20 @@ inetname(struct in_addr *inp)
  * Dump AH statistics structure.
  */
 void
-ah_stats(u_long off, char *name)
+ah_stats(char *name)
 {
 	struct ahstat ahstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_AH, AHCTL_STATS };
+	size_t len = sizeof(ahstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ahstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &ahstat, sizeof (ahstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (ahstat.f || sflag <= 1) \
 	printf(m, ahstat.f, plural(ahstat.f))
 #define p1(f, m) if (ahstat.f || sflag <= 1) \
@@ -857,15 +847,20 @@ ah_stats(u_long off, char *name)
  * Dump etherip statistics structure.
  */
 void
-etherip_stats(u_long off, char *name)
+etherip_stats(char *name)
 {
 	struct etheripstat etheripstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_ETHERIP, ETHERIPCTL_STATS };
+	size_t len = sizeof(etheripstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &etheripstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &etheripstat, sizeof (etheripstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (etheripstat.f || sflag <= 1) \
 	printf(m, etheripstat.f, plural(etheripstat.f))
 
@@ -885,15 +880,20 @@ etherip_stats(u_long off, char *name)
  * Dump ESP statistics structure.
  */
 void
-esp_stats(u_long off, char *name)
+esp_stats(char *name)
 {
 	struct espstat espstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_ESP, ESPCTL_STATS };
+	size_t len = sizeof(espstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &espstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &espstat, sizeof (espstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (espstat.f || sflag <= 1) \
 	printf(m, espstat.f, plural(espstat.f))
 
@@ -927,15 +927,20 @@ esp_stats(u_long off, char *name)
  * Dump IP-in-IP statistics structure.
  */
 void
-ipip_stats(u_long off, char *name)
+ipip_stats(char *name)
 {
 	struct ipipstat ipipstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IPIP, IPIPCTL_STATS };
+	size_t len = sizeof(ipipstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipipstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &ipipstat, sizeof (ipipstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (ipipstat.f || sflag <= 1) \
 	printf(m, ipipstat.f, plural(ipipstat.f))
 
@@ -956,15 +961,20 @@ ipip_stats(u_long off, char *name)
  * Dump CARP statistics structure.
  */
 void
-carp_stats(u_long off, char *name)
+carp_stats(char *name)
 {
 	struct carpstats carpstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_CARP, CARPCTL_STATS };
+	size_t len = sizeof(carpstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &carpstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &carpstat, sizeof(carpstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (carpstat.f || sflag <= 1) \
 	printf(m, carpstat.f, plural(carpstat.f))
 #define p2(f, m) if (carpstat.f || sflag <= 1) \
@@ -993,15 +1003,20 @@ carp_stats(u_long off, char *name)
  * Dump pfsync statistics structure.
  */
 void
-pfsync_stats(u_long off, char *name)
+pfsync_stats(char *name)
 {
 	struct pfsyncstats pfsyncstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC, PFSYNCCTL_STATS };
+	size_t len = sizeof(pfsyncstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &pfsyncstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &pfsyncstat, sizeof(pfsyncstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (pfsyncstat.f || sflag <= 1) \
 	printf(m, pfsyncstat.f, plural(pfsyncstat.f))
 #define p2(f, m) if (pfsyncstat.f || sflag <= 1) \
@@ -1031,15 +1046,20 @@ pfsync_stats(u_long off, char *name)
  * Dump IPCOMP statistics structure.
  */
 void
-ipcomp_stats(u_long off, char *name)
+ipcomp_stats(char *name)
 {
 	struct ipcompstat ipcompstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_IPCOMP, IPCOMPCTL_STATS };
+	size_t len = sizeof(ipcompstat);
 
-	if (off == 0)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipcompstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
 		return;
-	kread(off, &ipcompstat, sizeof (ipcompstat));
-	printf("%s:\n", name);
+	}
 
+	printf("%s:\n", name);
 #define p(f, m) if (ipcompstat.f || sflag <= 1) \
 	printf(m, ipcompstat.f, plural(ipcompstat.f))
 

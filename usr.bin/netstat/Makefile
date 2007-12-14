@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2007/06/04 12:20:24 henning Exp $
+#	$OpenBSD: Makefile,v 1.19 2007/12/14 18:35:46 deraadt Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c inet6.c main.c mbuf.c mroute.c route.c \
@@ -7,10 +7,5 @@ BINGRP=	kmem
 BINMODE=2555
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
-INET6?=	yes
-
-.if (${INET6} != "no")
-CPPFLAGS+=	-DINET6
-.endif
 
 .include <bsd.prog.mk>
