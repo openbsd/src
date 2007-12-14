@@ -1,9 +1,10 @@
 #
-#	$OpenBSD: ttys,v 1.1 2004/08/06 21:58:22 pefo Exp $
+#	$OpenBSD: ttys,v 1.2 2007/12/14 16:16:28 jsing Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty std.9600"	unknown	off secure
+ttyC0	"/usr/libexec/getty Pc"		vt220	on  secure
 tty00	"/usr/libexec/getty std.9600"	unknown	on  secure
 tty01	"/usr/libexec/getty std.9600"	unknown	off secure
 tty02	"/usr/libexec/getty std.9600"	unknown	off secure

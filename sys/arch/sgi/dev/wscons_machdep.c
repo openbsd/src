@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2007/11/13 12:01:45 jsing Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2007/12/14 16:16:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -36,15 +36,23 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <mips64/arcbios.h>
+
+#include <sgi/dev/mkbcreg.h>
+#include <sgi/localbus/macebus.h>
+
 #include <dev/cons.h>
+#include <dev/ic/pckbcvar.h>
+#include <dev/usb/ukbdvar.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsconsio.h>
+
+#include "mkbc.h"
 
 #include "wsdisplay.h"
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
 #endif
-#include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/usb/ukbdvar.h>
 
 cons_decl(ws);
 
@@ -53,19 +61,25 @@ wscnprobe(struct consdev *cp)
 {
 	int maj;
 
-	/* locate the major number */
+	/* Locate the major number. */
 	for (maj = 0; maj < nchrdev; maj++) {
 		if (cdevsw[maj].d_open == wsdisplayopen)
 			break;
 	}
 
 	if (maj == nchrdev) {
-		/* we are not in cdevsw[], give up */
+		/* We are not in cdevsw[], give up. */
 		panic("wsdisplay is not in cdevsw[]");
 	}
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
+
+	/* Attach as console if necessary. */
+	if (strncmp(bios_console, "video", 5) == 0) {
+		cp->cn_pri = CN_REMOTE;
+	} else {
+		cp->cn_pri = CN_INTERNAL;
+	}
 }
 
 void
@@ -78,6 +92,10 @@ static int initted;
 
 	initted = 1;
 
+#if NMKBC > 0
+	if (!mkbc_cnattach(&macebus_tag, 0x00320000, PCKBC_KBD_SLOT))
+		return;
+#endif
 #if notyet
 	ukbd_cnattach();
 #endif

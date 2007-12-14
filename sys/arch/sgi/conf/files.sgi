@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.15 2007/11/27 15:31:00 jsing Exp $
+#	$OpenBSD: files.sgi,v 1.16 2007/12/14 16:16:28 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -112,14 +112,14 @@ file	arch/sgi/dev/mavb.c			mavb
 include	"dev/pckbc/files.pckbc"
 device	mkbc: pckbcslot
 attach	mkbc at macebus
-file	arch/sgi/dev/mkbc.c			mkbc
+file	arch/sgi/dev/mkbc.c			mkbc	needs-flag
 
 # Raster operations
 include	"dev/rasops/files.rasops"
 include	"dev/wsfont/files.wsfont"
 
 #
-#  wscons console
+# wscons console
 #
 include	"dev/wscons/files.wscons"
 
