@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.6 2007/12/09 19:55:51 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.7 2007/12/14 21:28:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -545,15 +545,11 @@
 #define RT2860_TXOP_ALLOW_MM20		(1 << 22)
 #define RT2860_TXOP_ALLOW_OFDM		(1 << 21)
 #define RT2860_TXOP_ALLOW_CCK		(1 << 20)
-#define RT2860_PROT_NAV_SHIFT		18
-#define RT2860_PROT_NAV_NONE		0
-#define RT2860_PROT_NAV_SHORT		1
-#define RT2860_PROT_NAV_LONG		2
-#define RT2860_PROT_CTRL_SHIFT		16
-#define RT2860_PROT_CTRL_NONE		0
-#define RT2860_PROT_CTRL_RTS_CTS	1
-#define RT2860_PROT_CTRL_CTS		2
-#define RT2860_PROT_RATE_SHIFT		0
+#define RT2860_TXOP_ALLOW_ALL		(0x3f << 20)
+#define RT2860_PROT_NAV_SHORT		(1 << 18)
+#define RT2860_PROT_NAV_LONG		(2 << 18)
+#define RT2860_PROT_CTRL_RTS_CTS	(1 << 16)
+#define RT2860_PROT_CTRL_CTS		(2 << 16)
 
 /* possible flags for registers EXP_{CTS,ACK}_TIME */
 #define RT2860_EXP_OFDM_TIME_SHIFT	16

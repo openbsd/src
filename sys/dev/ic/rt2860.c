@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.10 2007/12/09 19:55:51 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.11 2007/12/14 21:28:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -67,8 +67,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define RAL_DEBUG
-
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2860_debug >= (n)) printf x; } while (0)
@@ -126,6 +124,7 @@ void		rt2860_set_leds(struct rt2860_softc *, uint16_t);
 void		rt2860_set_bssid(struct rt2860_softc *, const uint8_t *);
 void		rt2860_set_macaddr(struct rt2860_softc *, const uint8_t *);
 void		rt2860_updateslot(struct ieee80211com *);
+void		rt2860_updateprot(struct ieee80211com *);
 void		rt2860_updateedca(struct ieee80211com *);
 int		rt2860_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    const struct ieee80211_key *);
@@ -718,18 +717,17 @@ rt2860_updatestats(void *arg)
 	int s;
 
 	/*
-	 * In IBSS or HostAP modes (when we're sending beacons), the
-	 * hardware can run into a deadlock and start sending CTS-to-self
-	 * frames in a loop if RTS/CTS protection is enabled.
-	 * Fortunately, we can detect when such a situation occurs and
-	 * reset the MAC.
+	 * In IBSS or HostAP modes (when the hardware sends beacons), the
+	 * MAC can run into a livelock and start sending CTS-to-self frames
+	 * like crazy if protection is enabled.  Fortunately, we can detect
+	 * when such a situation occurs and reset the MAC.
 	 */
 	if (ic->ic_curmode != IEEE80211_M_STA) {
-		/* check if we're in a deadlock situation.. */
+		/* check if we're in a livelock situation.. */
 		tmp = RAL_READ(sc, RT2860_DEBUG);
 		if ((tmp & (1 << 29)) && (tmp & (1 << 7 | 1 << 5))) {
 			/* ..and reset MAC/BBP for a while.. */
-			DPRINTF(("CTS-to-self deadlock occured\n"));
+			DPRINTF(("CTS-to-self livelock detected\n"));
 			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_SRST);
 			DELAY(1);
 			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
@@ -1213,13 +1211,19 @@ rt2860_intr(void *arg)
 	if (r & RT2860_TX_DONE_INT0)
 		rt2860_tx_intr(sc, 0);
 
-	if (r & RT2860_MAC_INT_1) {	/* Pre-TBTT */
+	if (r & RT2860_MAC_INT_1) {	/* pre-TBTT */
 		if ((sc->sc_flags & RT2860_UPD_BEACON) &&
 		    rt2860_setup_beacon(sc) == 0)
 			sc->sc_flags &= ~RT2860_UPD_BEACON;
 	}
-	if (r & RT2860_MAC_INT_0)
-		/* TBD TBTT */;
+	if (r & RT2860_MAC_INT_0) {	/* TBTT */
+		struct ieee80211com *ic = &sc->sc_ic;
+		/* check if protection mode has changed */
+		if ((sc->sc_ic_flags ^ ic->ic_flags) & IEEE80211_F_USEPROT) {
+			rt2860_updateprot(ic);
+			sc->sc_ic_flags = ic->ic_flags;
+		}
+	}
 
 	if (r & RT2860_MAC_INT_3)
 		/* TBD wakeup */;
@@ -1375,11 +1379,11 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	txwi->phy |= htole16(mcs);
 
 	/*
-	 * We store the MCS into the PacketID field.  The PacketID field is
-	 * latched into TX_STAT_FIFO when Tx completes so that we know at
-	 * which rate the frame was transmitted.  We add 1 to the MCS code
-	 * because 0 is a valid MCS code but setting the PacketID field to
-	 * 0 means that we will get no results in TX_STAT_FIFO.
+	 * We store the MCS code into the driver-private PacketID field.
+	 * The PacketID is latched into TX_STAT_FIFO when Tx completes so
+	 * that we know at which initial rate the frame was transmitted.
+	 * We add 1 to the MCS code because setting the PacketID field to
+	 * 0 means that we don't want feedback in TX_STAT_FIFO.
 	 */
 	pid = (mcs + 1) & 0xf;
 	txwi->len |= htole16(pid << RT2860_TX_PID_SHIFT);
@@ -2031,15 +2035,27 @@ rt2860_updateslot(struct ieee80211com *ic)
 	RAL_WRITE(sc, RT2860_BKOFF_SLOT_CFG, tmp);
 }
 
-#if 0
 void
 rt2860_updateprot(struct ieee80211com *ic)
 {
-	/* set RTS rate and enable CTS-to-self protection if needed */
-	RAL_WRITE(sc, RT2860_CCK_PROT_CFG, );
-	RAL_WRITE(sc, RT2860_OFDM_PROT_CFG, );
+	struct rt2860_softc *sc = ic->ic_softc;
+	uint32_t tmp;
+
+	tmp = RT2860_RTSTH_EN | RT2860_PROT_NAV_SHORT | RT2860_TXOP_ALLOW_ALL;
+	/* setup protection frame rate (MCS code) */
+	tmp |= (ic->ic_curmode == IEEE80211_MODE_11A) ? 0 : 3;
+
+	/* CCK frames don't require protection */
+	RAL_WRITE(sc, RT2860_CCK_PROT_CFG, tmp);
+
+	if (ic->ic_flags & IEEE80211_F_USEPROT) {
+		if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
+			tmp |= RT2860_PROT_CTRL_RTS_CTS;
+		else if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
+			tmp |= RT2860_PROT_CTRL_CTS;
+	}
+	RAL_WRITE(sc, RT2860_OFDM_PROT_CFG, tmp);
 }
-#endif
 
 void
 rt2860_updateedca(struct ieee80211com *ic)
@@ -2681,6 +2697,10 @@ rt2860_init(struct ifnet *ifp)
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);
 	tmp &= ~0xffff00;
 	tmp |= ic->ic_rtsthreshold << 8;
+
+	/* setup initial protection mode */
+	sc->sc_ic_flags = ic->ic_flags;
+	rt2860_updateprot(ic);
 
 	/* enable Tx/Rx DMA engine */
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_TX_EN);

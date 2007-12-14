@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.5 2007/12/07 21:23:14 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.6 2007/12/14 21:28:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -118,6 +118,8 @@ struct rt2860_softc {
 #define RT2860_ENABLED		(1 << 0)
 #define RT2860_FWLOADED		(1 << 1)
 #define RT2860_UPD_BEACON	(1 << 2)
+
+	uint32_t			sc_ic_flags;
 
 	struct rt2860_tx_ring		txq[6];
 	struct rt2860_rx_ring		rxq;
