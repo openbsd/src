@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.154 2007/12/14 18:34:26 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.154 2007/12/14 18:34:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/icmp_var.h>
+#include <netinet/igmp_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
@@ -81,6 +82,9 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.153 2007/12/13 20:29:03 reyk
 #include <netinet/ip_gre.h>
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_carp.h>
+
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -519,11 +523,19 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 
-			if ((mib[2] == IPPROTO_IP && mib[3] == IPCTL_STATS) ||
+			if ((mib[2] == IPPROTO_IP && mib[3] == IPCTL_MRTSTATS) ||
+			    (mib[2] == IPPROTO_IP && mib[3] == IPCTL_STATS) ||
 			    (mib[2] == IPPROTO_TCP && mib[3] == TCPCTL_STATS) ||
 			    (mib[2] == IPPROTO_UDP && mib[3] == UDPCTL_STATS) ||
-			    (mib[2] == IPPROTO_ICMP &&
-			    mib[3] == ICMPCTL_STATS)) {
+			    (mib[2] == IPPROTO_ESP && mib[3] == ESPCTL_STATS) ||
+			    (mib[2] == IPPROTO_AH && mib[3] == AHCTL_STATS) ||
+			    (mib[2] == IPPROTO_IGMP && mib[3] == IGMPCTL_STATS) ||
+			    (mib[2] == IPPROTO_ETHERIP && mib[3] == ETHERIPCTL_STATS) ||
+			    (mib[2] == IPPROTO_IPIP && mib[3] == IPIPCTL_STATS) ||
+			    (mib[2] == IPPROTO_IPCOMP && mib[3] == IPCOMPCTL_STATS) ||
+			    (mib[2] == IPPROTO_ICMP && mib[3] == ICMPCTL_STATS) ||
+			    (mib[2] == IPPROTO_CARP && mib[3] == CARPCTL_STATS) ||
+			    (mib[2] == IPPROTO_PFSYNC && mib[3] == PFSYNCCTL_STATS)) {
 				if (flags == 0)
 					return;
 				warnx("use netstat to view %s information",
@@ -548,6 +560,13 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 
+			if ((mib[2] == IPPROTO_PIM && mib[3] == PIM6CTL_STATS)) {
+				if (flags == 0)
+					return;
+				warnx("use netstat to view %s information",
+				    string);
+				return;
+			}
 			break;
 		}
 #endif
@@ -1274,6 +1293,7 @@ sysctl_swpenc(char *string, char **bufpp, int mib[], int flags, int *typep)
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
+struct ctlname igmpname[] = IGMPCTL_NAMES;
 struct ctlname ipipname[] = IPIPCTL_NAMES;
 struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
@@ -1284,13 +1304,14 @@ struct ctlname grename[] = GRECTL_NAMES;
 struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct ctlname ipcompname[] = IPCOMPCTL_NAMES;
 struct ctlname carpname[] = CARPCTL_NAMES;
+struct ctlname pfsyncname[] = PFSYNCCTL_NAMES;
 struct ctlname bpfname[] = CTL_NET_BPF_NAMES;
 struct ctlname ifqname[] = CTL_IFQ_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
 	{ icmpname, ICMPCTL_MAXID },	/* icmp */
-	{ 0, 0 },			/* igmp */
+	{ igmpname, IGMPCTL_MAXID },	/* igmp */
 	{ 0, 0 },			/* ggmp */
 	{ ipipname, IPIPCTL_MAXID },	/* ipencap */
 	{ 0, 0 },
@@ -1335,7 +1356,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ grename, GRECTL_MAXID }, /* GRE */
+	{ grename, GRECTL_MAXID },	/* gre */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ espname, ESPCTL_MAXID },	/* esp */
@@ -1401,6 +1422,143 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ carpname, CARPCTL_MAXID },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ pfsyncname, PFSYNCCTL_MAXID },
 };
 struct list bpflist = { bpfname, NET_BPF_MAXID };
 struct list ifqlist = { ifqname, IFQCTL_MAXID };
