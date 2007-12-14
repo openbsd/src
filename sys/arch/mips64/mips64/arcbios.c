@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.10 2007/10/18 04:32:25 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.11 2007/12/14 10:13:17 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -41,10 +41,12 @@
 
 int bios_is_32bit = 1;
 /*
- * If we can not get the onboard ethernet address to override this bogus
+ * If we cannot get the onboard Ethernet address to override this bogus
  * value, ether_ifattach() will pick a valid address.
  */
 char bios_enaddr[20] = "ff:ff:ff:ff:ff:ff";
+
+char bios_console[10];			/* Primary console. */
 
 extern int	physmem;		/* Total physical memory size */
 extern int	rsvdmem;		/* Total reserved memory size */

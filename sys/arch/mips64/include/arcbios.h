@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.7 2007/04/26 17:02:38 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.8 2007/12/14 10:13:17 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -371,6 +371,7 @@ typedef struct arc_param_blk_64
 
 extern int bios_is_32bit;
 extern char bios_enaddr[20];
+extern char bios_console[10];
 
 int  bios_getchar(void);
 void bios_putchar(char);
@@ -380,7 +381,7 @@ void bios_ident(void);
 void bios_display_info(int *, int *, int *, int *);
 
 /*
- *  Direct ARC-Bios calls.
+ * Direct ARC-BIOS calls.
  */
 int Bios_Load(char *, u_int32_t, u_int32_t, u_int32_t *);
 int Bios_Invoke(uint32_t, uint32_t, uint32_t, char **, char **);
@@ -417,5 +418,4 @@ int Bios_SetFileInformation(u_int32_t, u_int32_t, u_int32_t);
 void Bios_FlushAllCaches(void);
 int Bios_TestUnicodeCharacter(u_int32_t, u_int16_t);
 arc_dsp_stat_t *Bios_GetDisplayStatus(u_int32_t);
-
 

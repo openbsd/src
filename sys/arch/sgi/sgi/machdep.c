@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2007/12/07 13:07:44 jsing Exp $ */
+/*	$OpenBSD: machdep.c,v 1.51 2007/12/14 10:13:17 jsing Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -343,6 +343,13 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		Bios_Halt();
 		while(1);
 	}
+
+	/*
+	 * Read and store console type.
+	 */
+	cp = Bios_GetEnvironmentVariable("ConsoleOut");
+	if (cp != NULL && *cp != '\0')
+		strlcpy(bios_console, cp, sizeof bios_console);
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -696,8 +703,7 @@ dobootopts(int argc, void *argv)
 	}
 
 	/* Catch serial consoles on O2s. */
-	cp = Bios_GetEnvironmentVariable("ConsoleOut");
-	if (cp != NULL && strncmp(cp, "serial", 6) == 0)
+	if (strncmp(bios_console, "serial", 6) == 0)
 		boothowto |= RB_SERCONS;
 }
 
