@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.155 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.156 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -61,6 +61,10 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
+#endif
+
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
 #endif
 
 #ifdef IPSEC
@@ -1571,6 +1575,10 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	int error;
+#ifdef MROUTING
+	extern int ip_mrtproto;
+	extern struct mrtstat mrtstat;
+#endif
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
@@ -1627,6 +1635,21 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			return (EPERM);
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &ipstat, sizeof(ipstat)));
+	case IPCTL_MRTSTATS:
+#ifdef MROUTING
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &mrtstat, sizeof(mrtstat)));
+#else
+		return (EOPNOTSUPP);
+#endif
+	case IPCTL_MRTPROTO:
+#ifdef MROUTING
+		return (sysctl_rdint(oldp, oldlenp, newp, ip_mrtproto));
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		if (name[0] < IPCTL_MAXID)
 			return (sysctl_int_arr(ipctl_vars, name, namelen,

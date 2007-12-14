@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.34 2007/10/29 16:19:24 chl Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.35 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -840,4 +841,24 @@ rip6_usrreq(so, req, m, nam, control, p)
 	if (m != NULL)
 		m_freem(m);
 	return (error);
+}
+
+int
+rip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return ENOTDIR;
+
+	switch (name[0]) {
+	case RIPV6CTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &rip6stat, sizeof(rip6stat)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

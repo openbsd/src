@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.31 2007/05/31 04:11:42 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.32 2007/12/14 18:33:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -85,6 +85,17 @@ struct pfsync_state_bus {
 #define PFSYNC_BUS_END		2
 	u_int8_t		pad[7];
 } __packed;
+
+/*
+ * Names for PFSYNC sysctl objects
+ */
+#define	PFSYNCCTL_STATS		1	/* PFSYNC stats */
+#define	PFSYNCCTL_MAXID		2
+
+#define	PFSYNCCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
+}
 
 #ifdef _KERNEL
 
@@ -255,6 +266,8 @@ struct pfsyncreq {
 void pfsync_input(struct mbuf *, ...);
 int pfsync_clear_states(u_int32_t, char *);
 int pfsync_pack_state(u_int8_t, struct pf_state *, int);
+int pfsync_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
+
 #define pfsync_insert_state(st)	do {				\
 	if ((st->rule.ptr->rule_flag & PFRULE_NOSYNC) ||	\
 	    (st->state_key->proto == IPPROTO_PFSYNC))			\

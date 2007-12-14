@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.46 2007/06/06 09:58:12 henning Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.47 2007/12/14 18:33:40 deraadt Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -229,13 +229,13 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
+  igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,		igmp_sysctl
 },
 #ifdef PIM
 { SOCK_RAW,	&inetdomain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,
+  0,		0,		0,		0,		pim_sysctl
 },
 #endif /* PIM */
 #ifdef IPSEC
@@ -283,7 +283,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_PFSYNC,	PR_ATOMIC|PR_ADDR,
   pfsync_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,
+  0,		0,		0,		0,		pfsync_sysctl
 },
 #endif /* NPFSYNC > 0 */
 /* raw wildcard */

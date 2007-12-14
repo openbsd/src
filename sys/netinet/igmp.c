@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.25 2007/12/13 20:47:57 millert Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.26 2007/12/14 18:33:40 deraadt Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -95,6 +96,8 @@
 #include <sys/stdarg.h>
 
 #define IP_MULTICASTOPTS	0
+
+int *igmpctl_vars[IGMPCTL_MAXID] = IGMPCTL_VARS;
 
 int		igmp_timers_are_running;
 static struct router_info *rti_head;
@@ -622,4 +625,30 @@ igmp_sendpkt(inm, type, addr)
 	    &imo, (void *)NULL);
 
 	++igmpstat.igps_snd_reports;
+}
+
+/*
+ * Sysctl for igmp variables.
+ */
+int
+igmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IGMPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &igmpstat, sizeof(igmpstat)));
+	default:
+		if (name[0] < IGMPCTL_MAXID)
+			return (sysctl_int_arr(igmpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

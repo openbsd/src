@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.6 2004/02/17 12:07:45 markus Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.7 2007/12/14 18:33:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -68,16 +68,19 @@ struct ipcomp {
  * Names for IPCOMP sysctl objects
  */
 #define IPCOMPCTL_ENABLE	1	/* Enable COMP processing */
-#define IPCOMPCTL_MAXID		2
+#define IPCOMPCTL_STATS		2	/* COMP stats */
+#define IPCOMPCTL_MAXID		3
 
 #define IPCOMPCTL_NAMES { \
 	{ 0, 0 }, \
-	{ "enable", CTLTYPE_INT}, \
+	{ "enable", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 #define IPCOMPCTL_VARS { \
 	NULL, \
 	&ipcomp_enable, \
+	NULL \
 }
 
 #ifdef _KERNEL

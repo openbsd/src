@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.24 2007/11/22 01:21:40 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.25 2007/12/14 18:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -143,7 +143,8 @@ struct carpreq {
 #define	CARPCTL_PREEMPT		2	/* high-pri backup preemption mode */
 #define	CARPCTL_LOG		3	/* log bad packets */
 #define	CARPCTL_ARPBALANCE	4	/* balance arp responses */
-#define	CARPCTL_MAXID		5
+#define	CARPCTL_STATS		5	/* CARP stats */
+#define	CARPCTL_MAXID		6
 
 #define	CARPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -151,6 +152,7 @@ struct carpreq {
 	{ "preempt", CTLTYPE_INT }, \
 	{ "log", CTLTYPE_INT }, \
 	{ "arpbalance", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

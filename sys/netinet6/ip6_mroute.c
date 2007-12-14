@@ -99,6 +99,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1906,4 +1907,28 @@ pim6_input(mp, offp, proto)
   pim6_input_to_daemon:
 	rip6_input(&m, offp, proto);
 	return (IPPROTO_DONE);
+}
+
+/*
+ * Sysctl for pim6 variables.
+ */
+int
+pim6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case PIM6CTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &pim6stat, sizeof(pim6stat)));
+
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

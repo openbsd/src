@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.79 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.80 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -105,6 +105,10 @@
 #include "faith.h"
 #include "gif.h"
 #include "bpfilter.h"
+
+#ifdef MROUTING
+#include <netinet6/ip6_mroute.h>
+#endif
 
 #if NPF > 0
 #include <net/pfvar.h>
@@ -1470,6 +1474,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+#ifdef MROUTING
+	extern int ip6_mrtproto;
+	extern struct mrt6stat mrt6stat;
+#endif
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
@@ -1479,6 +1488,26 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_V6ONLY:
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
+	case IPV6CTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ip6stat, sizeof(ip6stat)));
+	case IPV6CTL_MRTSTATS:
+#ifdef MROUTING
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &mrt6stat, sizeof(mrt6stat)));
+#else
+		return (EOPNOTSUPP);
+#endif
+	case IPV6CTL_MRTPROTO:
+#ifdef MROUTING
+		return sysctl_rdint(oldp, oldlenp, newp, ip6_mrtproto);
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		if (name[0] < IPV6CTL_MAXID)
 			return (sysctl_int_arr(ipv6ctl_vars, name, namelen,

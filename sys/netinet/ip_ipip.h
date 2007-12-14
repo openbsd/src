@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.h,v 1.5 2002/06/09 16:26:10 itojun Exp $ */
+/*	$OpenBSD: ip_ipip.h,v 1.6 2007/12/14 18:33:41 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -64,11 +64,13 @@ struct ipipstat
  * Names for IPIP sysctl objects
  */
 #define	IPIPCTL_ALLOW	1		/* accept incoming IP4 packets */
-#define IPIPCTL_MAXID	2
+#define	IPIPCTL_STATS	2		/* IPIP stats */
+#define	IPIPCTL_MAXID	3
 
 #define IPIPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "allow", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

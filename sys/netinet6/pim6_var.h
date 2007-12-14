@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6_var.h,v 1.8 2006/07/06 02:56:58 brad Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.9 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -54,16 +54,18 @@ struct pim6stat {
 #if (defined(KERNEL)) || (defined(_KERNEL))
 extern struct pim6stat pim6stat;
 int pim6_input(struct mbuf **, int *, int);
+int pim6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #endif /* KERNEL */
 
 /*
- * Names for PIM sysctl objects
+ * Names for PIM6 sysctl objects
  */
-#define PIM6CTL_STATS		1	/* statistics (read-only) */
+#define PIM6CTL_STATS		1	/* PIM6 stats */
 #define PIM6CTL_MAXID		2
 
 #define PIM6CTL_NAMES { \
 	{ 0, 0 }, \
-	{ 0, 0 }, \
+	{ "stats", CTLTYPE_NODE }, \
 }
+
 #endif /* _NETINET6_PIM6_VAR_H_ */

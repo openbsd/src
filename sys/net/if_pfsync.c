@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.87 2007/09/18 18:56:02 markus Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.88 2007/12/14 18:33:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -36,6 +36,7 @@
 #include <sys/ioctl.h>
 #include <sys/timeout.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -1756,3 +1757,22 @@ pfsync_update_tdb(struct tdb *tdb, int output)
 	return (ret);
 }
 #endif
+
+int
+pfsync_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case PFSYNCCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &pfsyncstats, sizeof(pfsyncstats)));
+	default:
+		return (ENOPROTOOPT);
+	}
+}

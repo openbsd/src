@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.52 2007/05/03 15:47:47 claudio Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.53 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
-  0,		0,		0,		0,
+  0,		0,		0,		0,		rip6_sysctl
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC|PR_ADDR,
   icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
@@ -219,7 +219,7 @@ struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
-  0,		0,		0,		0,
+  0,		0,		0,		0,		pim6_sysctl
 },
 #endif
 #if NCARP > 0

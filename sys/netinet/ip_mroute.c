@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.48 2007/05/22 09:51:13 michele Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.49 2007/12/14 18:33:41 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
@@ -3405,4 +3406,30 @@ pim_input_to_daemon:
 
 	return;
 }
+
+/*
+ * Sysctl for pim variables.
+ */
+int
+pim_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case PIMCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &pimstat, sizeof(pimstat)));
+
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
+}
+
+
 #endif /* PIM */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.10 2007/10/06 02:18:38 krw Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.11 2007/12/14 18:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -586,4 +586,28 @@ ddp_init()
 {
     atintrq1.ifq_maxlen = IFQ_MAXLEN;
     atintrq2.ifq_maxlen = IFQ_MAXLEN;
+}
+
+/*
+ * Sysctl for ddp variables.
+ */
+int
+ddp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case DDPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ddpstat, sizeof(ddpstat)));
+
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.50 2007/02/20 19:37:40 claudio Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.51 2007/12/14 18:33:41 deraadt Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -425,6 +425,11 @@ etherip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case ETHERIPCTL_ALLOW:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &etherip_allow));
+	case ETHERIPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &etheripstat, sizeof(etheripstat)));
 	default:
 		return (ENOPROTOOPT);
 	}

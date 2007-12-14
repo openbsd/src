@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.40 2004/02/17 12:07:45 markus Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.41 2007/12/14 18:33:41 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -72,13 +72,15 @@ struct espstat
 #define	ESPCTL_ENABLE		1	/* Enable ESP processing */
 #define	ESPCTL_UDPENCAP_ENABLE	2	/* Enable ESP over UDP */
 #define	ESPCTL_UDPENCAP_PORT	3	/* UDP port for encapsulation */
-#define ESPCTL_MAXID		4
+#define	ESPCTL_STATS		4	/* ESP Stats */
+#define ESPCTL_MAXID		5
 
 #define ESPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "enable", CTLTYPE_INT }, \
 	{ "udpencap", CTLTYPE_INT }, \
 	{ "udpencap_port", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 #define ESPCTL_VARS { \
@@ -86,6 +88,7 @@ struct espstat
 	&esp_enable, \
 	&udpencap_enable, \
 	&udpencap_port, \
+	NULL \
 }
 
 #ifdef _KERNEL

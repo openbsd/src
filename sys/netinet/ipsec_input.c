@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.84 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.85 2007/12/14 18:33:41 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -644,30 +644,66 @@ int
 esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	if (name[0] < ESPCTL_MAXID)
-		return (sysctl_int_arr(espctl_vars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	return (ENOPROTOOPT);
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case ESPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &espstat, sizeof(espstat)));
+	default:
+		if (name[0] < ESPCTL_MAXID)
+			return (sysctl_int_arr(espctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+	}
 }
 
 int
 ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	if (name[0] < AHCTL_MAXID)
-		return (sysctl_int_arr(ahctl_vars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	return (ENOPROTOOPT);
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case AHCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ahstat, sizeof(ahstat)));
+	default:
+		if (name[0] < AHCTL_MAXID)
+			return (sysctl_int_arr(ahctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+	}
 }
 
 int
 ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	if (name[0] < IPCOMPCTL_MAXID)
-		return (sysctl_int_arr(ipcompctl_vars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	return (ENOPROTOOPT);
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IPCOMPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ipcompstat, sizeof(ipcompstat)));
+	default:
+		if (name[0] < IPCOMPCTL_MAXID)
+			return (sysctl_int_arr(ipcompctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+	}
 }
 
 #ifdef INET

@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_proto.c,v 1.1 1997/07/23 03:39:52 denny Exp $	*/
+/*	$OpenBSD: at_proto.c,v 1.2 2007/12/14 18:33:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
  * All Rights Reserved.
@@ -82,6 +82,7 @@
 #include <netinet/if_ether.h>
 
 #include <netatalk/at.h>
+#include <netatalk/ddp_var.h>
 #include <netatalk/at_extern.h>
 
 struct protosw		atalksw[] = {
@@ -100,7 +101,7 @@ struct protosw		atalksw[] = {
 	/* socket-protocol interface. */
 	ddp_usrreq,
 	/* utility routines. */
-	ddp_init,	0,		0,		0,
+	ddp_init,	0,		0,		0,	ddp_sysctl
     },
 };
 

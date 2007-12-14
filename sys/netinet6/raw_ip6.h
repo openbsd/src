@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.h,v 1.2 2006/07/06 02:56:58 brad Exp $	*/
+/*	$OpenBSD: raw_ip6.h,v 1.3 2007/12/14 18:33:42 deraadt Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -46,6 +46,17 @@ struct rip6stat {
 
 	u_int64_t rip6s_opackets;	/* total output packets */
 };
+
+/*
+ * Names for RIP6 sysctl objects
+ */
+#define RIPV6CTL_STATS		1	/* RIP6 stats */
+#define RIPV6CTL_MAXID		2
+
+#define RIPM6CTL_NAMES { \
+	{ 0, 0 }, \
+	{ "stats", CTLTYPE_NODE }, \
+}
 
 #ifdef _KERNEL
 extern struct rip6stat rip6stat;
