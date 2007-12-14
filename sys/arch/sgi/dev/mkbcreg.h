@@ -1,5 +1,7 @@
+/*	$OpenBSD: mkbcreg.h,v 1.2 2007/12/14 16:09:23 jsing Exp $  */
+
 /*
- * Copyright (c) 2006-2007, Joel Sing
+ * Copyright (c) 2006, 2007, Joel Sing
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <dev/ic/pckbcvar.h>
 
 /*
  * MACE PS/2 controller register definitions.
@@ -47,3 +51,4 @@
 #define MKBC_CONTROL_RX_CLOCK_ENABLE	0x10
 #define MKBC_CONTROL_RESET		0x20
 
+int	mkbc_cnattach(bus_space_tag_t, bus_addr_t, pckbc_slot_t);
