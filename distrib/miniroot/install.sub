@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.421 2007/08/02 03:23:37 david Exp $
+#	$OpenBSD: install.sub,v 1.422 2007/12/14 08:30:11 otto Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1536,7 +1536,7 @@ questions() {
 		    >>/mnt/etc/rc.conf.local
 	fi
 
-	ask "NTP server? (or 'none' or 'default')" none
+	ask "NTP server? (host, 'none' or 'default')" none
 	if [[ $resp != none ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
