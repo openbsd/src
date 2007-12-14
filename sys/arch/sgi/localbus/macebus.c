@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.32 2007/12/14 10:07:12 jsing Exp $ */
+/*	$OpenBSD: macebus.c,v 1.33 2007/12/14 16:34:29 jsing Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -72,7 +72,7 @@ intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
 bus_addr_t macebus_pa_to_device(paddr_t);
 paddr_t	macebus_device_to_pa(bus_addr_t);
 
-int maceticks;		/* Time tracker for special events */
+int maceticks;		/* Time tracker for special events. */
 
 struct cfattach macebus_ca = {
 	sizeof(struct device), macebusmatch, macebusattach
@@ -130,7 +130,7 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 };
 
 /*
- *  Match bus only to targets which have this bus.
+ * Match bus only to targets which have this bus.
  */
 int
 macebusmatch(struct device *parent, void *match, void *aux)
@@ -199,7 +199,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	u_int64_t mask;
 
 	/*
-	 *  Create an extent for the localbus control registers.
+	 * Create an extent for the localbus control registers.
 	 */
 	macebus_tag.bus_extent = extent_create("mace_space",
 	    macebus_tag.bus_base, macebus_tag.bus_base + 0x00400000,
@@ -210,7 +210,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	/*
-	 *  Map and set up CRIME control registers.
+	 * Map and setup CRIME control registers.
 	 */
 	if (bus_space_map(&crimebus_tag, 0x00000000, 0x400, 0, &crime_h)) {
 		printf(": cannot map CRIME control registers\n");
@@ -233,7 +233,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 
 
 	/*
-	 *  Map and set up MACE ISA control registers.
+	 * Map and setup MACE ISA control registers.
 	 */
 	if (bus_space_map(&macebus_tag, MACE_ISA_OFFS, 0x400, 0, &mace_h)) {
 		printf("UH-OH! Can't map MACE ISA control registers!\n");
@@ -246,7 +246,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT, 0);
 
 	/*
-	 *  Now attach all devices to macebus in proper order.
+	 * Now attach all devices to macebus in the proper order.
 	 */
 	memset(&lba, 0, sizeof(lba));
 	memset(&lbus, 0, sizeof(lbus));
@@ -258,8 +258,8 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	lba.ca_dmat = &mace_bus_dma_tag;
 
 	/*
-	 *  On O2 systems all interrupts are handled by the
-	 *  macebus interrupt handler. Register all except clock.
+	 * On O2 systems all interrupts are handled by the macebus interrupt
+	 * handler. Register all except clock.
 	 */
 	switch (sys_config.system_type) {
 	case SGI_O2:
@@ -301,7 +301,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 
 
 /*
- *  Bus access primitives. These are really ugly...
+ * Bus access primitives. These are really ugly...
  */
 
 u_int8_t
@@ -463,7 +463,7 @@ macebus_device_to_pa(bus_addr_t addr)
 }
 
 /*
- *  Macebus interrupt handler driver.
+ * Macebus interrupt handler driver.
  */
 
 intrmask_t mace_intem = 0x0;
@@ -475,11 +475,10 @@ static int fakeintr(void *);
 static int fakeintr(void *a) {return 0;}
 
 /*
- *  Establish an interrupt handler called from the dispatcher.
- *  The interrupt function established should return zero if
- *  there was nothing to serve (no int) and non zero when an
- *  interrupt was serviced.
- *  Interrupts are numbered from 1 and up where 1 maps to HW int 0.
+ * Establish an interrupt handler called from the dispatcher.
+ * The interrupt function established should return zero if there was nothing
+ * to serve (no int) and non-zero when an interrupt was serviced.
+ * Interrupts are numbered from 1 and up where 1 maps to HW int 0.
  */
 void *
 macebus_intr_establish(void *icp, u_long irq, int type, int level,
@@ -565,7 +564,7 @@ macebus_intr_disestablish(void *p1, void *p2)
 }
 
 /*
- *  Regenerate interrupt masks to reflect reality.
+ * Regenerate interrupt masks to reflect reality.
  */
 void
 macebus_intr_makemasks(void)
@@ -728,7 +727,7 @@ macebus_do_pending_int(int newcpl)
 }
 
 /*
- *  Process interrupts. The parameter pending has non-masked interrupts.
+ * Process interrupts. The parameter pending has non-masked interrupts.
  */
 intrmask_t
 macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
@@ -803,7 +802,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 
 
 /*
- *  Macebus auxilary functions run each clock interrupt.
+ * Macebus auxilary functions run each clock interrupt.
  */
 intrmask_t
 macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
