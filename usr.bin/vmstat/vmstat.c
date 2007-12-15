@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.106 2007/10/26 14:15:25 sobrado Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.107 2007/12/15 03:43:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.106 2007/10/26 14:15:25 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.107 2007/12/15 03:43:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,10 +92,7 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
-	{ "" },
-};
-
-struct nlist namelist2[] = {
+#define X_KMPAGESFREE	8		/* sysctl */
 	{ "_uvm_km_pages_free" },
 	{ "" },
 };
@@ -128,7 +125,6 @@ void	dopool(void);
 void	dosum(void);
 void	dovmstat(u_int, int);
 void	kread(int, void *, size_t);
-int	kreado(struct nlist *, void *, size_t);
 void	usage(void);
 void	dotimes(void);
 void	doforkst(void);
@@ -216,9 +212,7 @@ main(int argc, char *argv[])
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-#if notyet
 	if (nlistf != NULL || memf != NULL) {
-#endif
 		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 		if (kd == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
@@ -243,10 +237,8 @@ main(int argc, char *argv[])
 			} else
 				errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 		}
-#ifdef notyet
 	} else if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
-#endif /* notyet */
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
@@ -1065,8 +1057,18 @@ dopool_sysctl(void)
 
 	inuse /= 1024;
 	total /= 1024;
-	if (!kreado(namelist2, &kmfp, sizeof(kmfp)))
-		total += kmfp * (getpagesize() / 1024);
+	if (nlistf == NULL && memf == NULL) {
+		int mib[] = { CTL_VM, VM_KMPAGESFREE };
+		size_t size = sizeof(kmfp);
+
+		if (sysctl(mib, 2, &kmfp, &size, NULL, 0) < 0) {
+			warn("could not read uvm.kmpagesfree");
+			return;
+		}
+	} else {
+		kread(X_KMPAGESFREE, &kmfp, sizeof(kmfp));
+	}
+	total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
@@ -1111,8 +1113,8 @@ dopool_kvm(void)
 
 	inuse /= 1024;
 	total /= 1024;
-	if (!kreado(namelist2, &kmfp, sizeof(kmfp)))
-		total += kmfp * (getpagesize() / 1024);
+	kread(X_KMPAGESFREE, &kmfp, sizeof(kmfp));
+	total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
@@ -1137,26 +1139,6 @@ kread(int nlx, void *addr, size_t size)
 			++sym;
 		errx(1, "%s: %s", sym, kvm_geterr(kd));
 	}
-}
-
-/*
- * kreado reads something from the kernel, given its nlist index.
- */
-int
-kreado(struct nlist *nl, void *addr, size_t size)
-{
-	int c;
-
-	if ((c = kvm_nlist(kd, nl)) != 0)
-		return (c);
-
-	if (nl->n_type == 0 || nl->n_value == 0)
-		return (-1);
-
-	if (kvm_read(kd, nl->n_value, addr, size) != size)
-		return (-1);
-
-	return (0);
 }
 
 void
