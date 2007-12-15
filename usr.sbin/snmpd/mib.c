@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.9 2007/12/15 02:53:22 gilles Exp $	*/
+/*	$OpenBSD: mib.c,v 1.10 2007/12/15 03:02:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1069,10 +1069,10 @@ static struct oid ip_mib[] = {
 	{ MIB(IPINADDRERRORS), "ipInAddrErrors", OID_RD, mib_ipinaddrerrors },
 	{ MIB(IPFORWDATAGRAMS), "ipForwDatagrams", OID_RD, mib_ipforwdatagrams },
 	{ MIB(IPINUNKNOWNPROTOS), "ipInUnknownProtos", OID_RD, mib_ipinunknownprotos },
-	{ MIB(IPINDISCARDS), "ipInDiscards", OID_RD, mib_ipindiscards },
+	{ MIB(IPINDISCARDS), "ipInDiscards" },
 	{ MIB(IPINDELIVERS), "ipInDelivers", OID_RD, mib_ipindelivers },
 	{ MIB(IPOUTREQUESTS), "ipOutRequests", OID_RD, mib_ipoutrequests },
-	{ MIB(IPOUTDISCARDS), "ipOutDiscards" },
+	{ MIB(IPOUTDISCARDS), "ipOutDiscards", OID_RD, mib_ipoutdiscards },
 	{ MIB(IPOUTNOROUTES), "ipOutNoRoutes", OID_RD, mib_ipoutnoroutes },
 	{ MIB(IPREASMTIMEOUT), "ipReasmTimeout", OID_RD, mib_ipreasmtimeout },
 	{ MIB(IPREASMREQDS), "ipReasmReqds", OID_RD, mib_ipreasmreqds },
@@ -1227,16 +1227,6 @@ mib_ipinunknownprotos(struct oid *oid, struct ber_oid *o, struct ber_element **e
 int
 mib_ipindiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	u_int32_t	counter;
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	counter = ipstat.ips_odropped;
-	*elm = ber_add_integer(*elm, counter);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
 	return (0);
 }
 
@@ -1271,6 +1261,16 @@ mib_ipoutrequests(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipoutdiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
+	u_int32_t	counter;
+	struct ipstat	ipstat;
+
+	if (mib_ipstat(&ipstat) == -1)
+		return (-1);
+
+	counter = ipstat.ips_odropped;
+	*elm = ber_add_integer(*elm, counter);
+	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+
 	return (0);
 }
 
