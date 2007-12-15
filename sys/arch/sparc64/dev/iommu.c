@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.48 2007/12/05 21:15:46 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.49 2007/12/15 18:08:07 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -815,11 +815,9 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		}
 	}
 
-#ifdef DIAGNOSTIC
-	iommu_dvmamap_validate_map(t, is, map);
-#endif
-
 #ifdef DEBUG
+	iommu_dvmamap_validate_map(t, is, map);
+
 	if (err)
 		printf("**** iommu_dvmamap_load failed with error %d\n",
 		    err);
@@ -999,7 +997,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	if (err)
 		iommu_iomap_unload_map(is, ims);
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/* The map should be valid even if the load failed */
 	if (iommu_dvmamap_validate_map(t, is, map)) {
 		printf("load size %lld/0x%llx\n", size, size);
@@ -1034,9 +1032,6 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			err = 1;
 	}
 
-#endif
-
-#ifdef DEBUG
 	if (err)
 		printf("**** iommu_dvmamap_load_raw failed with error %d\n",
 		    err);
@@ -1302,7 +1297,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 #endif
 		return;
 	}
-	/* XXX is this not supposed to be debug-only code by now? */
+
 	iommu_dvmamap_validate_map(t, is, map);
 
 	if (iommudebug & IDB_PRINT_MAP)
@@ -1331,6 +1326,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 		printf("warning: %qd of DVMA space lost\n", sgsize);
 }
 
+#ifdef DEBUG
 /*
  * Perform internal consistency checking on a dvmamap.
  */
@@ -1393,6 +1389,7 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 
 	return (err);
 }
+#endif /* DEBUG */
 
 void
 iommu_dvmamap_print_map(bus_dma_tag_t t, struct iommu_state *is,
