@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.17 2006/05/02 21:43:08 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.18 2007/12/15 19:35:50 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -8,10 +8,10 @@
 #include <machine/bugio.h>
 #include <machine/prom.h>
 
-register_t ossr0, ossr1, ossr2, ossr3;
+register_t ossr3;
 register_t bugsr3;
 
-unsigned long bugvec[2], sysbugvec[2];
+unsigned long bugvec[32], sysbugvec[32];
 
 void bug_vector(void);
 void sysbug_vector(void);
@@ -36,42 +36,37 @@ void
 bug_vector()
 {
 	unsigned long *vbr;
+	int i;
 
 	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
-	vbr[2 * MVMEPROM_VECTOR + 0] = bugvec[0];
-	vbr[2 * MVMEPROM_VECTOR + 1] = bugvec[1];
+	for (i = 0; i < 32; i++)
+		vbr[2 * MVMEPROM_VECTOR + i] = bugvec[i];
 }
 
 void
 sysbug_vector()
 {
 	unsigned long *vbr;
+	int i;
 
 	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
-	vbr[2 * MVMEPROM_VECTOR + 0] = sysbugvec[0];
-	vbr[2 * MVMEPROM_VECTOR + 1] = sysbugvec[1];
+	for (i = 0; i < 32; i++)
+		vbr[2 * MVMEPROM_VECTOR + i] = sysbugvec[i];
 }
 
 #define	BUGCTXT()							\
 {									\
 	BUG_LOCK();							\
-	disable_interrupt(psr);			/* paranoia */		\
+	psr = get_psr();						\
+	set_psr(psr | PSR_IND);			/* paranoia */		\
 	bug_vector();							\
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (ossr0));		\
-	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (ossr1));		\
-	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (ossr2));		\
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (ossr3));		\
-									\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(bugsr3));		\
 }
 
 #define	OSCTXT()							\
 {									\
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));		\
-									\
-	__asm__ __volatile__ ("stcr %0, cr17" :: "r"(ossr0));		\
-	__asm__ __volatile__ ("stcr %0, cr18" :: "r"(ossr1));		\
-	__asm__ __volatile__ ("stcr %0, cr19" :: "r"(ossr2));		\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(ossr3));		\
 	sysbug_vector();						\
 	set_psr(psr);							\

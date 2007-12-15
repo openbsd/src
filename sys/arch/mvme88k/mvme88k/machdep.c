@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.203 2007/11/17 05:36:23 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.204 2007/12/15 19:35:54 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -895,16 +895,17 @@ void
 mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
 {
 	extern void vector_init(u_int32_t *, u_int32_t *);	/* gross */
+	int i;
 
 	/* Save BUG vector */
-	bugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
-	bugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
+	for (i = 0; i < 16 * 2; i++)
+		bugvec[i] = vbr[MVMEPROM_VECTOR * 2 + i];
 
 	vector_init(vbr, vectors);
 
 	/* Save new BUG vector */
-	sysbugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
-	sysbugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
+	for (i = 0; i < 16 * 2; i++)
+		sysbugvec[i] = vbr[MVMEPROM_VECTOR * 2 + i];
 }
 
 /*
