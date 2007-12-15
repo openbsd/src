@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.21 2007/12/15 21:28:07 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -49,8 +49,8 @@ Bootable tapes can be booted with the following command at the prompt:
     187-Bug> BO xx yy
 
 Where `xx' is the SCSI controller number (00 for the built-in SCSI
-controller on MVME187), and `yy' is the encoding for the SCSI device ID,
-which varies between controllers.
+controller on MVME187 and MVME197), and `yy' is the encoding for the SCSI
+device ID, which varies between controllers.
 
 Recent BUG can list the available disk and tape controllers, using the
 "IOT;H" command:
@@ -65,7 +65,7 @@ In this example, the built-in controller, as well as an external MVME328
 controller, are available.
 
 The encoding for the drive ID is as follows:
-- MVME187 built-in controller and MVME327 SCSI controller:
+- MVME187 and MVME197 built-in controller and MVME327 SCSI controller:
     'yy' is ten times the device ID.
 - MVME328 SCSI controller:
     'yy' is eight times the device ID, written in hexadecimal
@@ -89,9 +89,9 @@ are provided: one for Sun-compatible diskless setup (bootparams and NFS
 root), and a simpler version limited to TFTP support.
 
 The Sun-compatible network bootloader currently only supports the MVME187
-on-board interface, and will not be able to boot from any other Ethernet
-controller. The tftp bootloader does not have this limitation and will boot
-from any BUG-supported Ethernet controller.
+and MVME197 on-board interface, and will not be able to boot from any other
+Ethernet controller. The tftp bootloader does not have this limitation and
+will boot from any BUG-supported Ethernet controller.
 
 If you plan to use the Sun-compatible bootloader, "netboot", it will be
 necessary to set up a complete diskless client configuration on a server. If

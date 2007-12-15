@@ -1,9 +1,11 @@
-dnl	$OpenBSD: hardware,v 1.10 2007/11/09 18:15:21 miod Exp $
+dnl	$OpenBSD: hardware,v 1.11 2007/12/15 21:28:07 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
 	- MVME187 (Single board computer with 88100 processor)
 	- MVME188 (HYPERmodule-based systems with up to 4 88100 processors)
+	- MVME197LE (Single board computer with 88110 processor)
+	- MVME197SP/DP (Single board computer with up to two 88110 processors)
 
 Besides various Motorola complete systems (M8120, MVME187-based series
 900, etc), OpenBSD/MACHINE also runs on the MVME187-based Triton Dolphin
@@ -11,7 +13,8 @@ System 100.
 
 OpenBSD/MACHINE OSREV supports MVME188 SMP (Symmetrical MultiProcessor)
 systems.  To support SMP operation, a separate SMP kernel (bsd.mp)
-is included with the installation file sets.
+is included with the installation file sets. SMP is not yet supported on
+MVME197DP systems.
 
 The minimal configuration requires 16MB of RAM and ~250MB of disk space.
 To install the entire system requires much more disk space, and to
@@ -34,7 +37,7 @@ Supported HYPERmodules: (for MVME188 systems)
 
 Supported devices:
 
-MVME187 on-board devices:
+MVME187 and MVME197 on-board devices:
 	Cirrus Logic CD2401 serial ports, tty00-tty03/tty07(M8120) (cl)
 	Intel 82596CA Ethernet (ie)
 	NCR53c710 SCSI Controller (ssh)
