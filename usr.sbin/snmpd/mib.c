@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.6 2007/12/15 02:14:30 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.7 2007/12/15 02:20:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -464,7 +464,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	long long		 i;
 	size_t			 len;
 	int			 ifq;
-	int			 mib[5];
+	int			 mib[] = { CTL_NET, AF_INET, IPPROTO_IP, 0, 0 };
 	char			*s;
 
 	/* Get and verify the current row index */
@@ -575,13 +575,11 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 19:
-		mib[0] = CTL_NET;
-		mib[1] = AF_INET;
-		mib[2] = IPPROTO_IP;
 		mib[3] = IPCTL_IFQUEUE;
 		mib[4] = IFQCTL_DROPS;
 		len = sizeof(ifq);
-		if (sysctl(mib, 5, &ifq, &len, 0, 0) == -1) {
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		    &ifq, &len, 0, 0) == -1) {
 			log_info("mib_iftable: %s: invalid ifq: %s",
 			    kif->if_name, strerror(errno));
 			return (-1);
@@ -594,13 +592,11 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 21:
-		mib[0] = CTL_NET;
-		mib[1] = AF_INET;
-		mib[2] = IPPROTO_IP;
 		mib[3] = IPCTL_IFQUEUE;
 		mib[4] = IFQCTL_LEN;
 		len = sizeof(ifq);
-		if (sysctl(mib, 5, &ifq, &len, 0, 0) == -1) {
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		    &ifq, &len, 0, 0) == -1) {
 			log_info("mib_iftable: %s: invalid ifq: %s",
 			    kif->if_name, strerror(errno));
 			return (-1);
@@ -868,14 +864,13 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct sensordev	 sensordev;
 	size_t			 len = sizeof(sensordev);
-	int			 mib[3], i, c;
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_SENSORS;
+	int			 mib[] = { CTL_HW, HW_SENSORS, 0 };
+	int			 i, c;
 
 	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return(-1);
 			continue;	
@@ -895,7 +890,8 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	size_t			 len = sizeof(sensordev);
 	struct sensor		 sensor;
 	size_t			 slen = sizeof(sensor);
-	int			 mib[5], i, c, j, k;
+	int			 mib[] = { CTL_HW, HW_SENSORS, 0, 0, 0 };
+	int			 i, c, j, k;
 	u_int32_t		 idx = 0, n;
 	char			*s;
 
@@ -907,7 +903,8 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return(-1);
 			continue;	
@@ -916,8 +913,8 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 			mib[3] = j;
 			for (k = 0; k < sensordev.maxnumt[j]; k++, n++) {
 				mib[4] = k;
-				if (sysctl(mib, 5, &sensor,
-				    &slen, NULL, 0) == -1) {
+				if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+				    &sensor, &slen, NULL, 0) == -1) {
 					if (errno != ENOENT)
 						return (-1);
 					continue;	
