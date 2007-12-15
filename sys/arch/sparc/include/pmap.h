@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.42 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.43 2007/12/15 17:24:07 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -127,6 +127,22 @@
 #define NKREG	((int)((-(unsigned)VM_MIN_KERNEL_ADDRESS) / NBPRG))	/* 8 */
 #define NUREG	(256 - NKREG)					      /* 248 */
 
+struct regmap {
+	struct segmap	*rg_segmap;	/* point to NSGPRG PMEGs */
+	int		*rg_seg_ptps; 	/* SRMMU-edible segment tables (NULL
+					 * indicates invalid region (4m) */
+	smeg_t		rg_smeg;	/* the MMU region number (4c) */
+	u_char		rg_nsegmap;	/* number of valid PMEGS */
+};
+
+struct segmap {
+	int	*sg_pte;		/* points to NPTESG PTEs */
+	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
+	u_char	sg_npte;		/* number of valid PTEs per seg */
+};
+
+#ifdef _KERNEL
+
 TAILQ_HEAD(mmuhd,mmuentry);
 
 /*
@@ -155,20 +171,6 @@ struct pmap {
 	int		pm_gap_end;	/* no valid mapping until here */
 
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-};
-
-struct regmap {
-	struct segmap	*rg_segmap;	/* point to NSGPRG PMEGs */
-	int		*rg_seg_ptps; 	/* SRMMU-edible segment tables (NULL
-					 * indicates invalid region (4m) */
-	smeg_t		rg_smeg;	/* the MMU region number (4c) */
-	u_char		rg_nsegmap;	/* number of valid PMEGS */
-};
-
-struct segmap {
-	int	*sg_pte;		/* points to NPTESG PTEs */
-	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
-	u_char	sg_npte;		/* number of valid PTEs per seg */
 };
 
 typedef struct pmap *pmap_t;
@@ -213,8 +215,6 @@ struct kvm_cpustate {
 	struct segmap	kvm_segmap_store[NKREG*NSEGRG];	/* [4,4c] */
 }/*not yet used*/;
 #endif
-
-#ifdef _KERNEL
 
 #define PMAP_NULL	((pmap_t)0)
 

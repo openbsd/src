@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.28 2007/04/22 10:05:51 miod Exp $     */
+/*      $OpenBSD: pmap.h,v 1.29 2007/12/15 17:24:07 deraadt Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -42,6 +42,8 @@
 
 #ifndef PMAP_H
 #define PMAP_H
+
+#ifdef _KERNEL
 
 #include <machine/pte.h>
 #include <machine/mtpr.h>
@@ -95,8 +97,6 @@ struct pv_entry {
 #define MAPPHYS(ptr, count, perm)				\
 	(paddr_t)ptr = avail_start + KERNBASE;			\
 	avail_start += (count) * VAX_NBPG;
-
-#ifdef	_KERNEL
 
 extern	struct pmap kernel_pmap_store;
 
