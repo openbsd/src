@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.22 2007/12/15 19:37:41 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.23 2007/12/15 21:19:48 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -81,50 +81,41 @@ vaddr_t flashva;
 
 /*
  * Figure out how much real memory is available.
- * Start looking from the megabyte after the end of the kernel data,
- * until we find non-memory.
+ *
+ * This relies on the fact that the BUG will configure the BusSwitch
+ * system translation decoders to allow access to the whole memory
+ * from address zero.
+ *
+ * If the BUG is not configured correctly wrt to the real amount of
+ * memory in the system, this will return incorrect values, but we do
+ * not care if you can't configure your system correctly.
  */
 vaddr_t
 m197_memsize()
 {
-	unsigned int *volatile look;
-	unsigned int *max;
-	extern char *end;
-#define PATTERN   0x5a5a5a5a
-#define STRIDE    (4*1024) 	/* 4k at a time */
-#define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
-	/*
-	 * count it up.
-	 */
-#define	MAXPHYSMEM	0x30000000	/* 768MB */
-	max = (void *)MAXPHYSMEM;
-	for (look = (void *)Roundup(end, STRIDE); look < max;
-	    look = (int *)((unsigned)look + STRIDE)) {
-		unsigned save;
+	int i;
+	u_int8_t sar;
+	u_int16_t ssar, sear;
 
-		/* if can't access, we've reached the end */
-		if (badaddr((vaddr_t)look, 4)) {
-#if defined(DEBUG)
-			printf("%x\n", look);
-#endif
-			look = (int *)((int)look - STRIDE);
-			break;
-		}
+	for (i = 0; i < 4; i++) {
+		sar = *(u_int8_t *)(BS_BASE + BS_SAR + i);
+		if (!ISSET(sar, BS_SAR_DEN))
+			continue;
 
-		/*
-		 * If we write a value, we expect to read the same value back.
-		 * We'll do this twice, the 2nd time with the opposite bit
-		 * pattern from the first, to make sure we check all bits.
-		 */
-		save = *look;
-		if (*look = PATTERN, *look != PATTERN)
-			break;
-		if (*look = ~PATTERN, *look != ~PATTERN)
-			break;
-		*look = save;
+		ssar = *(u_int16_t *)(BS_BASE + BS_SSAR1 + i * 4);
+		sear = *(u_int16_t *)(BS_BASE + BS_SEAR1 + i * 4);
+
+		if (ssar != 0)
+			continue;
+
+		return ((sear + 1) << 16);
 	}
 
-	return (trunc_page((vaddr_t)look));
+	/*
+	 * If no decoder was enabled, how could we run so far?
+	 * Return a ``safe'' 32MB.
+	 */
+	return (32 * 1024 * 1024);
 }
 
 void
