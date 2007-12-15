@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.204 2007/12/15 19:35:54 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.205 2007/12/15 19:37:41 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -255,10 +255,8 @@ getcpuspeed(struct mvmeprom_brdid *brdid)
 #endif
 #ifdef MVME197
 	case BRD_197:
-		if (speed == 40 || speed == 50)
-			return speed;
-		speed = 50;
-		break;
+		/* we already computed the speed in m197_bootstrap() */
+		return cpuspeed;
 #endif
 	}
 

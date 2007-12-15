@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.51 2007/12/15 19:34:35 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.52 2007/12/15 19:37:41 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -249,6 +249,7 @@ m88110_cpu_number(void)
 void
 m88110_initialize_cpu(cpuid_t cpu)
 {
+	extern int cpuspeed;
 	u_int ictl, dctl;
 	int i;
 
@@ -271,6 +272,23 @@ m88110_initialize_cpu(cpuid_t cpu)
 	 *   disable branch prediction.''
 	 */
 	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
+
+	/*
+	 * 40MHz MVME197LE boards need to run with their instruction cache
+	 * disabled, otherwise they get random bus errors and the kernel
+	 * eventually freezes. Unfortunately this makes them perform at
+	 * about the speed of a fictitious 25MHz board with I$ enabled.
+	 *
+	 * This happens with version 4 and version 5 processors (reporting
+	 * themselves as version 0xb and 0xf in dmesg) and BusSwitch
+	 * revision 1. However, 50MHz boards with the same BusSwitch
+	 * revision work nicely.
+	 *
+	 * (There is probably a better way to work around this problem,
+	 *  but I am not aware of it -- miod)
+	 */
+	if (cpuspeed == 40)
+		ictl &= ~CMMU_ICTL_CEN;
 
 	/*
 	 * 88110 errata #10 (4.2) or #2 (5.1.1):

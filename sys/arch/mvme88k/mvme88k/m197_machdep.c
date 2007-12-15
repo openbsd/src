@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.21 2007/12/15 19:34:35 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.22 2007/12/15 19:37:41 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -318,6 +318,7 @@ m197_bootstrap()
 {
 	extern struct cmmu_p cmmu88110;
 	extern struct cmmu_p cmmu88410;
+	extern int cpuspeed;
 	u_int16_t cpu;
 
 	if (mc88410_present()) {
@@ -335,6 +336,12 @@ m197_bootstrap()
 		*(u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) = 0xfe;
 	} else
 		cmmu = &cmmu88110;	/* 197LE */
+
+	/*
+	 * Find out the processor speed, from the BusSwitch prescaler
+	 * adjust register.
+	 */
+	cpuspeed = 256 - *(volatile u_int8_t *)(BS_BASE + BS_PADJUST);
 
 	md_interrupt_func_ptr = m197_ext_int;
 	md_getipl = m197_getipl;
