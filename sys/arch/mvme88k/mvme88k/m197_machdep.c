@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.20 2007/12/04 23:45:53 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.21 2007/12/15 19:34:35 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -73,7 +73,6 @@ u_int	m197_getipl(void);
 void	m197_ipi_handler(struct trapframe *);
 vaddr_t	m197_memsize(void);
 u_int	m197_raiseipl(u_int);
-void	m197_send_ipi(int, cpuid_t);
 u_int	m197_setipl(u_int);
 void	m197_startup(void);
 
@@ -426,13 +425,11 @@ m197_ipi_handler(struct trapframe *eframe)
 	 * to have processed the current one before sending a new one.
 	 */
 	if (ipi &
-	    (CI_IPI_TLB_FLUSH | CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH)) {
+	    (CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH)) {
 		arg1 = ci->ci_ipi_arg1;
 		arg2 = ci->ci_ipi_arg2;
-		if (ipi & CI_IPI_TLB_FLUSH) {
-			cmmu_flush_tlb(ci->ci_cpuid, arg1, arg2, 0);
-		}
-		else if (ipi & CI_IPI_CACHE_FLUSH) {
+
+		if (ipi & CI_IPI_CACHE_FLUSH) {
 			cmmu_flush_cache(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_ICACHE_FLUSH) {
@@ -443,6 +440,12 @@ m197_ipi_handler(struct trapframe *eframe)
 	/*
 	 * Regular, simple, IPIs. We can have as many bits set as possible.
 	 */
+	if (ipi & CI_IPI_TLB_FLUSH_KERNEL) {
+		cmmu_flush_tlb(ci->ci_cpuid, 1, 0, 0);
+	}
+	if (ipi & CI_IPI_TLB_FLUSH_USER) {
+		cmmu_flush_tlb(ci->ci_cpuid, 0, 0, 0);
+	}
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
 		/*

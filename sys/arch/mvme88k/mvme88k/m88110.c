@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.50 2007/12/15 19:33:35 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.51 2007/12/15 19:34:35 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -389,7 +389,8 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 	struct cpu_info *ci = curcpu();
 
 	if (cpu != ci->ci_cpuid) {
-		m197_send_complex_ipi(CI_IPI_TLB_FLUSH, cpu, kernel, vaddr);
+		m197_send_ipi(kernel ?
+		    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER, cpu);
 		return;
 	}
 #endif

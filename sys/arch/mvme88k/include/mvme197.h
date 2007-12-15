@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.8 2007/12/04 23:45:52 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.9 2007/12/15 19:34:35 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -60,6 +60,7 @@
 
 #ifdef _KERNEL
 void	m197_send_complex_ipi(int, cpuid_t, u_int32_t, u_int32_t);
+void	m197_send_ipi(int, cpuid_t);
 #endif
 
 #endif	/* __MACHINE_MVME197_H__ */

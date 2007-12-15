@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2007/12/04 23:45:51 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.33 2007/12/15 19:34:33 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -116,10 +116,11 @@ struct cpu_info {
 #define	CI_IPI_HARDCLOCK	0x00000002
 #define	CI_IPI_STATCLOCK	0x00000004
 #define	CI_IPI_DDB		0x00000008
+#define	CI_IPI_TLB_FLUSH_KERNEL	0x00000010
+#define	CI_IPI_TLB_FLUSH_USER	0x00000020
 
-#define	CI_IPI_TLB_FLUSH	0x00000010
-#define	CI_IPI_CACHE_FLUSH	0x00000020
-#define	CI_IPI_ICACHE_FLUSH	0x00000040
+#define	CI_IPI_CACHE_FLUSH	0x00000040
+#define	CI_IPI_ICACHE_FLUSH	0x00000080
 	u_int32_t	ci_ipi_arg1;
 	u_int32_t	ci_ipi_arg2;
 #endif
