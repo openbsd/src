@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.5 2007/12/14 10:20:17 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.6 2007/12/15 04:15:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -168,6 +168,7 @@
 
 /* IP-MIB */
 #define MIB_IPMIB			MIB_MIB_2, 4
+#define OIDIDX_IP			7
 #define MIB_IPFORWARDING		MIB_IPMIB, 1
 #define MIB_IPDEFAULTTTL		MIB_IPMIB, 2
 #define MIB_IPINRECEIVES		MIB_IPMIB, 3

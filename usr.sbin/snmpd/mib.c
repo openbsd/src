@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.10 2007/12/15 03:02:59 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.11 2007/12/15 04:15:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1036,27 +1036,16 @@ mib_sensorvalue(struct sensor *s)
 	return (v);
 }
 
-int mib_ipstat(struct ipstat *);
+int mib_getipstat(struct ipstat *);
+int mib_ipstat(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipforwarding(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipdefaultttl(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipinreceives(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipinhdrerrors(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipinaddrerrors(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipforwdatagrams(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipinunknownprotos(struct oid *, struct ber_oid *,
-    struct ber_element **);
+int mib_ipinhdrerrs(struct oid *, struct ber_oid *, struct ber_element **);
+int mib_ipinaddrerrs(struct oid *, struct ber_oid *, struct ber_element **);
+int mib_ipforwdgrams(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipindiscards(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipindelivers(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipoutrequests(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipoutdiscards(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipoutnoroutes(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipreasmtimeout(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipreasmreqds(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipreasmoks(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipreasmfails(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipfragoks(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipfragfails(struct oid *, struct ber_oid *, struct ber_element **);
-int mib_ipfragcreate(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_iproutingdiscards(struct oid *, struct ber_oid *,
     struct ber_element **);
 
@@ -1064,23 +1053,23 @@ static struct oid ip_mib[] = {
 	{ MIB(IPMIB), "ipMIB", OID_MIB },
 	{ MIB(IPFORWARDING), "ipForwarding", OID_RD, mib_ipforwarding },
 	{ MIB(IPDEFAULTTTL), "ipDefaultTTL", OID_RD, mib_ipdefaultttl },
-	{ MIB(IPINRECEIVES), "ipInReceives", OID_RD, mib_ipinreceives },
-	{ MIB(IPINHDRERRORS), "ipInHdrErrors", OID_RD, mib_ipinhdrerrors },
-	{ MIB(IPINADDRERRORS), "ipInAddrErrors", OID_RD, mib_ipinaddrerrors },
-	{ MIB(IPFORWDATAGRAMS), "ipForwDatagrams", OID_RD, mib_ipforwdatagrams },
-	{ MIB(IPINUNKNOWNPROTOS), "ipInUnknownProtos", OID_RD, mib_ipinunknownprotos },
+	{ MIB(IPINRECEIVES), "ipInReceives", OID_RD, mib_ipstat },
+	{ MIB(IPINHDRERRORS), "ipInHdrErrors", OID_RD, mib_ipinhdrerrs },
+	{ MIB(IPINADDRERRORS), "ipInAddrErrors", OID_RD, mib_ipinaddrerrs },
+	{ MIB(IPFORWDATAGRAMS), "ipForwDatagrams", OID_RD, mib_ipforwdgrams },
+	{ MIB(IPINUNKNOWNPROTOS), "ipInUnknownProtos", OID_RD, mib_ipstat },
 	{ MIB(IPINDISCARDS), "ipInDiscards" },
-	{ MIB(IPINDELIVERS), "ipInDelivers", OID_RD, mib_ipindelivers },
-	{ MIB(IPOUTREQUESTS), "ipOutRequests", OID_RD, mib_ipoutrequests },
-	{ MIB(IPOUTDISCARDS), "ipOutDiscards", OID_RD, mib_ipoutdiscards },
-	{ MIB(IPOUTNOROUTES), "ipOutNoRoutes", OID_RD, mib_ipoutnoroutes },
-	{ MIB(IPREASMTIMEOUT), "ipReasmTimeout", OID_RD, mib_ipreasmtimeout },
-	{ MIB(IPREASMREQDS), "ipReasmReqds", OID_RD, mib_ipreasmreqds },
-	{ MIB(IPREASMOKS), "ipReasmOKs", OID_RD, mib_ipreasmoks },
+	{ MIB(IPINDELIVERS), "ipInDelivers", OID_RD, mib_ipstat },
+	{ MIB(IPOUTREQUESTS), "ipOutRequests", OID_RD, mib_ipstat },
+	{ MIB(IPOUTDISCARDS), "ipOutDiscards", OID_RD, mib_ipstat },
+	{ MIB(IPOUTNOROUTES), "ipOutNoRoutes", OID_RD, mib_ipstat },
+	{ MIB(IPREASMTIMEOUT), "ipReasmTimeout", OID_RD, mps_getint, NULL, IPFRAGTTL },
+	{ MIB(IPREASMREQDS), "ipReasmReqds", OID_RD, mib_ipstat },
+	{ MIB(IPREASMOKS), "ipReasmOKs", OID_RD, mib_ipstat },
 	{ MIB(IPREASMFAILS), "ipReasmFails", OID_RD, mib_ipreasmfails },
-	{ MIB(IPFRAGOKS), "ipFragOKs", OID_RD, mib_ipfragoks },
+	{ MIB(IPFRAGOKS), "ipFragOKs", OID_RD, mib_ipstat },
 	{ MIB(IPFRAGFAILS), "ipFragFails", OID_RD, mib_ipfragfails },
-	{ MIB(IPFRAGCREATES), "ipFragCreate", OID_RD, mib_ipfragcreate },
+	{ MIB(IPFRAGCREATES), "ipFragCreate", OID_RD, mib_ipstat },
 	{ MIB(IPROUTINGDISCARDS), "ipRoutingDiscards" },
 	{ MIB(IPADDRTABLE), "ipAddrTable" },
 	{ MIB(IPADDRENTRY), "ipAddrEntry" },
@@ -1098,16 +1087,6 @@ static struct oid ip_mib[] = {
 	{ MIB(IPNETTOMEDIATYPE), "ipNetToMediaType" },
 	{ MIBEND }
 };
-
-int
-mib_ipstat(struct ipstat *ipstat)
-{
-	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
-	size_t		len = sizeof(*ipstat);
-
-	return (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    ipstat, &len, NULL, 0));
-}
 
 int
 mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
@@ -1142,26 +1121,59 @@ mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mib_ipinreceives(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+mib_getipstat(struct ipstat *ipstat)
 {
-	struct ipstat	ipstat;
+	int	 mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	size_t	 len = sizeof(*ipstat);
 
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_total);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
+	return (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    ipstat, &len, NULL, 0));
 }
 
 int
-mib_ipinhdrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+mib_ipstat(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ipstat		 ipstat;
+	long long		 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_long		*m_ptr;
+	}			 mapping[] = {
+		{ 3, &ipstat.ips_total },
+		{ 7, &ipstat.ips_noproto },
+		{ 9, &ipstat.ips_delivered },
+		{ 10, &ipstat.ips_localout },
+		{ 11, &ipstat.ips_odropped },
+		{ 12, &ipstat.ips_noroute },
+		{ 14, &ipstat.ips_fragments },
+		{ 15, &ipstat.ips_reassembled },
+		{ 17, &ipstat.ips_fragmented },
+		{ 19, &ipstat.ips_ofragments }
+	};
+
+	if (mib_getipstat(&ipstat) == -1)
+		return (-1);
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_IP] == mapping[i].m_id) {
+			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+			ber_set_header(*elm,
+			    BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+			return (0);
+		}
+	}
+
+	return (-1);
+}
+
+int
+mib_ipinhdrerrs(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t	errors;
 	struct ipstat	ipstat;
 
-	if (mib_ipstat(&ipstat) == -1)
+	if (mib_getipstat(&ipstat) == -1)
 		return (-1);
 
 	errors = ipstat.ips_badsum + ipstat.ips_badvers +
@@ -1177,12 +1189,12 @@ mib_ipinhdrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mib_ipinaddrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+mib_ipinaddrerrs(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t	errors;
 	struct ipstat	ipstat;
 
-	if (mib_ipstat(&ipstat) == -1)
+	if (mib_getipstat(&ipstat) == -1)
 		return (-1);
 
 	errors = ipstat.ips_cantforward + ipstat.ips_badaddr;
@@ -1194,31 +1206,17 @@ mib_ipinaddrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mib_ipforwdatagrams(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+mib_ipforwdgrams(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t	counter;
 	struct ipstat	ipstat;
 
-	if (mib_ipstat(&ipstat) == -1)
+	if (mib_getipstat(&ipstat) == -1)
 		return (-1);
 
 	counter = ipstat.ips_forward + ipstat.ips_redirectsent;
 
 	*elm = ber_add_integer(*elm, counter);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipinunknownprotos(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_noproto);
 	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 
 	return (0);
@@ -1231,105 +1229,12 @@ mib_ipindiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mib_ipindelivers(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_delivered);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipoutrequests(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_localout);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipoutdiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	u_int32_t	counter;
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	counter = ipstat.ips_odropped;
-	*elm = ber_add_integer(*elm, counter);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipoutnoroutes(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_noroute);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipreasmtimeout(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	*elm = ber_add_integer(*elm, IPFRAGTTL);
-	return (0);
-}
-
-int
-mib_ipreasmreqds(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_fragments);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipreasmoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_reassembled);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
 mib_ipreasmfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t	counter;
 	struct ipstat	ipstat;
 
-	if (mib_ipstat(&ipstat) == -1)
+	if (mib_getipstat(&ipstat) == -1)
 		return (-1);
 
 	counter = ipstat.ips_fragdropped + ipstat.ips_fragtimeout;
@@ -1341,44 +1246,16 @@ mib_ipreasmfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mib_ipfragoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_fragmented);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
 mib_ipfragfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t	counter;
 	struct ipstat	ipstat;
 
-	if (mib_ipstat(&ipstat) == -1)
+	if (mib_getipstat(&ipstat) == -1)
 		return (-1);
 
 	counter = ipstat.ips_badfrags + ipstat.ips_cantfrag;
 	*elm = ber_add_integer(*elm, counter);
-	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-
-	return (0);
-}
-
-int
-mib_ipfragcreate(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ipstat	ipstat;
-
-	if (mib_ipstat(&ipstat) == -1)
-		return (-1);
-
-	*elm = ber_add_integer(*elm, ipstat.ips_ofragments);
 	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 
 	return (0);

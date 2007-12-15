@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.3 2007/12/07 09:50:51 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.4 2007/12/15 04:15:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -204,8 +204,8 @@ struct oid {
 	int			(*o_set)(struct oid *, struct ber_oid *,
 				    struct ber_element **);
 
-	void			*o_data;
 	long long		 o_val;
+	void			*o_data;
 
 	RB_ENTRY(oid)		 o_element;
 };
