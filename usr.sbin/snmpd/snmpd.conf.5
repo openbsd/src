@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.1 2007/12/05 09:22:44 reyk Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.2 2007/12/15 05:26:05 reyk Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 5 2007 $
+.Dd $Mdocdate: December 15 2007 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@ daemon.
 .Sh SECTIONS
 The
 .Nm
-file is divided into n main sections.
+file is divided into 3 main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -36,6 +36,8 @@ configuration file.
 .It Sy Global Configuration
 Global runtime settings for
 .Xr snmpd 8 .
+.It Sy OID Configuration
+Custom configuration of SNMP object identifiers and values.
 .El
 .Pp
 Comments can be put anywhere in the file using a hash mark
@@ -53,17 +55,118 @@ Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
 Macro names may not be reserved words (for example,
-.Ic foo ,
-.Ic bar ,
+.Ic community ,
+.Ic system ,
 or
-.Ic baz ) .
+.Ic oid ) .
 Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-var="blah"
-foo $var
+ext_addr="192.168.0.1"
+listen on $ext_addr
 .Ed
+.Sh GLOBAL CONFIGURATION
+The following options can be set globally:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic listen on Ar address
+Specify the local address
+.Nm
+should listen on for incoming SNMP messages.
+.Pp
+.It Ic read-only community Ar string
+Specify the name of the read-only community.
+The default value is
+.Ar public .
+.Pp
+.It Ic read-write community Ar string
+Specify the name of the read-write community.
+The default value is
+.Ar private .
+.\".Pp
+.\".It Ic trap community Ar string
+.\"Specify the name of the trap community.
+.\"The default value is
+.\".Ar public .
+.Pp
+.It Ic system contact Ar string
+Specify the name or description of the system contact, typically a
+name or an e-mail address.
+The default value is
+.Ar root@hostname
+using the hostname of the local machine.
+.Pp
+.It Ic system description Ar string
+Specify a description of the local system.
+The default value is the operating system identification as printed by the
+.Xr uname 1
+command using the
+.Ar -a
+flag:
+.Bd -literal -offset indent
+OpenBSD myhost.example.com 4.2 GENERIC#595 i386
+.Ed
+.Pp
+.It Ic system location Ar string
+Specify the string describing the location of the local system,
+typically a physical location.
+The default value is an empty string.
+.Pp
+.It Ic system name Ar string
+Specify the name of the local system, typically a fully-qualified
+domain name.
+The default value is the hostname of the local system.
+.Pp
+.It Ic system oid Ar oid-string
+Specify the authoritative identification of the local system.
+The default value is
+.Ar 1.3.6.1.4.1.30155.23.1
+.Pq iso.org.dod.internet.private.enterprises.openbsd.23.1
+indentifying a common OpenBSD system.
+.Pp
+.It Ic system services Ar number
+Specify a magic value which indicates the set of services that the local
+system may provide.
+Refer to the
+.Ar sysServices
+description in the SNMP MIB for details.
+.\"XXX describe the complicated services alg here
+.Pp
+.El
+.Sh OID CONFIGURATION
+It is possible to specify user-defined OIDs in the configuration file:
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic oid Ar oid-string
+.Ic name Ar name
+.Op Ic read-only \*(Ba\ read-write
+.Op Ar type
+.Ar value
+.Xc
+Return the specified value to the client for this OID, the
+.Ic read-write
+option may allow the client to override it,
+and the type is is either
+.Ic string
+or
+.Ic integer .
+.Sh EXAMPLES
+The following example will tell
+.Nm
+to listen on localhost, override the default system OID, set the
+magic services value and some custom OID values:
+.Pp
+.Bd -literal -offset indent
+listen on 127.0.0.1
+
+system oid 1.3.6.1.4.1.30155.23.2
+system services 74
+
+oid 1.3.6.1.4.1.30155.42.1 name myName read-only string "humppa"
+oid 1.3.6.1.4.1.30155.42.2 name myStatus read-only integer 1
+.El
 .Sh FILES
 .Bl -tag -width "/etc/snmpd.conf" -compact
 .It Pa /etc/snmpd.conf
