@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.8 2007/12/15 02:37:58 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.9 2007/12/15 02:53:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -30,6 +30,8 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
 
@@ -1289,6 +1291,7 @@ mib_ipoutnoroutes(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipreasmtimeout(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
+	*elm = ber_add_integer(*elm, IPFRAGTTL);
 	return (0);
 }
 
