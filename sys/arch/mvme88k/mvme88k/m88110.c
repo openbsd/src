@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.49 2007/12/05 22:10:42 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.50 2007/12/15 19:33:35 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -313,7 +313,9 @@ m88410_initialize_cpu(cpuid_t cpu)
 	dctl = get_dctl();
 	dctl |= CMMU_DCTL_SEN;
 	set_dctl(dctl);
+	CMMU_LOCK;
 	mc88410_inval();	/* clear external data cache */
+	CMMU_UNLOCK;
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -464,7 +466,9 @@ m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	if (get_dctl() & CMMU_DCTL_CEN) {
 		mc88110_flush_data();
 	}
+	CMMU_LOCK;
 	mc88410_flush();
+	CMMU_UNLOCK;
 
 	set_psr(psr);
 }
@@ -497,7 +501,9 @@ m88410_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
+	CMMU_LOCK;
 	mc88410_flush();
+	CMMU_UNLOCK;
 
 	set_psr(psr);
 }
@@ -639,6 +645,7 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		size = round_page(_va + _size) - va;
 		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 			size = 0;
+		CMMU_LOCK;
 		while (size != 0) {
 			if (pmap_extract(pmap, va, &pa) != FALSE) {
 				m88110_cmmu_sync_cache(pa, PAGE_SIZE);
@@ -647,6 +654,7 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 			va += PAGE_SIZE;
 			size -= PAGE_SIZE;
 		}
+		CMMU_UNLOCK;
 	} else {
 		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 			size = 0;
@@ -662,7 +670,9 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 			va += count;
 			size -= count;
 		}
+		CMMU_LOCK;
 		(*ext_flusher)();
+		CMMU_UNLOCK;
 	}
 
 	set_psr(psr);
@@ -757,12 +767,14 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		size = round_page(_pa + _size) - pa;
 		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 			size = 0;
+		CMMU_LOCK;
 		while (size != 0) {
 			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
 			mc88410_flush_page(pa);
 			pa += PAGE_SIZE;
 			size -= PAGE_SIZE;
 		}
+		CMMU_UNLOCK;
 	} else {
 		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
 			size = 0;
@@ -776,7 +788,9 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 			pa += count;
 			size -= count;
 		}
+		CMMU_LOCK;
 		(*ext_flusher)();
+		CMMU_UNLOCK;
 	}
 
 	set_psr(psr);

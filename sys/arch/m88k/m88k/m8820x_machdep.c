@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.34 2007/12/05 22:09:55 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.35 2007/12/15 19:33:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -123,19 +123,6 @@ struct cmmu_p cmmu8820x = {
 	m8820x_initialize_cpu,
 #endif
 };
-
-#ifdef MULTIPROCESSOR
-/*
- * This lock protects the cmmu SAR and SCR's; other ports
- * can be accessed without locking it.
- */
-__cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
-#define CMMU_LOCK   __cpu_simple_lock(&cmmu_cpu_lock)
-#define CMMU_UNLOCK __cpu_simple_unlock(&cmmu_cpu_lock)
-#else
-#define	CMMU_LOCK	do { /* nothing */ } while (0)
-#define	CMMU_UNLOCK	do { /* nothing */ } while (0)
-#endif	/* MULTIPROCESSOR */
 
 /*
  * Systems with more than 2 CMMUs per CPU use programmable split schemes.
@@ -501,7 +488,8 @@ m8820x_set_uapr(apr_t ap)
 	u_int32_t psr;
 	int cpu = cpu_number();
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	m8820x_cmmu_set_reg(CMMU_UAPR, ap, 0, cpu, 0);
@@ -522,7 +510,8 @@ m8820x_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	/*
@@ -584,7 +573,8 @@ m8820x_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	size = round_cache_line(pa + size) - trunc_cache_line(pa);
 	pa = trunc_cache_line(pa);
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	while (size != 0) {
@@ -619,7 +609,8 @@ m8820x_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	size = round_cache_line(pa + size) - trunc_cache_line(pa);
 	pa = trunc_cache_line(pa);
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	while (size != 0) {
@@ -731,7 +722,8 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	cpu = cpu_number();
 #endif
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	pa = 0;
@@ -805,7 +797,8 @@ m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	cpu = cpu_number();
 #endif
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
 	while (size != 0) {

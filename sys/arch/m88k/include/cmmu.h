@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.19 2007/11/22 05:47:45 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.20 2007/12/15 19:33:32 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -53,6 +53,21 @@ struct cmmu_p {
 };
 
 extern struct cmmu_p *cmmu;
+
+#ifdef MULTIPROCESSOR
+/*
+ * On 8820x-based systems, this lock protects the CMMU SAR and SCR registers;
+ * other registers may be accessed without locking it.
+ * On 88410-based systems, this lock protects accesses to the BusSwitch GCSR
+ * register, which masks or unmasks the 88410 control addresses.
+ */
+extern __cpu_simple_lock_t cmmu_cpu_lock;
+#define CMMU_LOCK   __cpu_simple_lock(&cmmu_cpu_lock)
+#define CMMU_UNLOCK __cpu_simple_unlock(&cmmu_cpu_lock)
+#else
+#define	CMMU_LOCK	do { /* nothing */ } while (0)
+#define	CMMU_UNLOCK	do { /* nothing */ } while (0)
+#endif	/* MULTIPROCESSOR */
 
 #define cmmu_init			(cmmu->init)
 #define setup_board_config		(cmmu->setup_board_config)

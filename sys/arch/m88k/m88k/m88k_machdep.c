@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.39 2007/12/09 19:57:50 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.40 2007/12/15 19:33:34 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -94,6 +94,7 @@ void	vector_init(m88k_exception_vector_area *, u_int32_t *);
 #ifdef MULTIPROCESSOR
 cpuid_t	master_cpu;
 __cpu_simple_lock_t __atomic_lock = __SIMPLELOCK_UNLOCKED;
+__cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 struct cpu_info m88k_cpus[MAX_CPUS];
