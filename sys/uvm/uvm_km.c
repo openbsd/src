@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.65 2007/12/11 15:05:45 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.66 2007/12/15 03:42:57 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -744,6 +744,8 @@ uvm_km_free_poolpage1(struct vm_map *map, vaddr_t addr)
 #endif /* __HAVE_PMAP_DIRECT */
 }
 
+int uvm_km_pages_free; /* number of pages currently on free list */
+
 #if defined(__HAVE_PMAP_DIRECT)
 /*
  * uvm_km_page allocator, __HAVE_PMAP_DIRECT arch
@@ -785,7 +787,6 @@ uvm_km_putpage(void *v)
 
 struct mutex uvm_km_mtx;
 int uvm_km_pages_lowat; /* allocate more when reserve drops below this */
-int uvm_km_pages_free; /* number of pages currently on free list */
 struct km_page {
 	struct km_page *next;
 } *uvm_km_pages_head;
