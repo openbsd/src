@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.11 2007/12/15 04:15:12 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.12 2007/12/15 06:26:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -867,11 +867,12 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	struct sensordev	 sensordev;
 	size_t			 len = sizeof(sensordev);
 	int			 mib[] = { CTL_HW, HW_SENSORS, 0 };
+	size_t			 miblen = sizeof(mib) / sizeof(mib[0]);
 	int			 i, c;
 
 	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		if (sysctl(mib, miblen,
 		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return (-1);
@@ -899,23 +900,20 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_SENSORENTRY];
- 
-	mib[0] = CTL_HW;
-	mib[1] = HW_SENSORS;
 
 	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		if (sysctl(mib, 3,
 		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
-				return(-1);
+				return (-1);
 			continue;	
 		}
 		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
 			mib[3] = j;
 			for (k = 0; k < sensordev.maxnumt[j]; k++, n++) {
 				mib[4] = k;
-				if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+				if (sysctl(mib, 5,
 				    &sensor, &slen, NULL, 0) == -1) {
 					if (errno != ENOENT)
 						return (-1);

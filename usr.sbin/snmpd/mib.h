@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.6 2007/12/15 04:15:12 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.7 2007/12/15 06:26:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -247,8 +247,8 @@
 #define MIB_SENSORNUMBER		MIB_SENSORS, 1
 #define MIB_SENSORTABLE			MIB_SENSORS, 2
 #define MIB_SENSORENTRY			MIB_SENSORTABLE, 1
-#define OIDIDX_SENSOR			12
-#define OIDIDX_SENSORENTRY		13
+#define OIDIDX_SENSOR			11
+#define OIDIDX_SENSORENTRY		12
 #define MIB_SENSORINDEX			MIB_SENSORENTRY, 1
 #define MIB_SENSORDESCR			MIB_SENSORENTRY, 2
 #define MIB_SENSORTYPE			MIB_SENSORENTRY, 3
