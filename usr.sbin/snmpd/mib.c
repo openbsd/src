@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.5 2007/12/15 02:02:45 gilles Exp $	*/
+/*	$OpenBSD: mib.c,v 1.6 2007/12/15 02:14:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1106,18 +1106,12 @@ static struct oid ip_mib[] = {
 int
 mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
+	int	mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_FORWARDING };
 	int	v;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_FORWARDING;
+	size_t	len = sizeof(v);
 
-	len = sizeof(v);
-
-	if (sysctl(mib, 4, &v, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &v, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, v);
@@ -1128,18 +1122,12 @@ mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
+	int	mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int	v;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_DEFTTL;
+	size_t	len = sizeof(v);
 
-	len = sizeof(v);
-
-	if (sysctl(mib, 4, &v, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &v, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, v);
@@ -1150,18 +1138,12 @@ mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipinreceives(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, ipstat.ips_total);
@@ -1173,19 +1155,13 @@ mib_ipinreceives(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipinhdrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t errors;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	errors;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	errors = ipstat.ips_badsum + ipstat.ips_badvers +
@@ -1203,19 +1179,13 @@ mib_ipinhdrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipinaddrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t errors;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	errors;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	errors = ipstat.ips_cantforward + ipstat.ips_badaddr;
@@ -1230,19 +1200,13 @@ mib_ipinaddrerrors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipforwdatagrams(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t counter;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	counter;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	counter = ipstat.ips_forward + ipstat.ips_redirectsent;
@@ -1256,18 +1220,12 @@ mib_ipforwdatagrams(struct oid *oid, struct ber_oid *o, struct ber_element **elm
 int
 mib_ipinunknownprotos(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, ipstat.ips_noproto);
@@ -1279,19 +1237,13 @@ mib_ipinunknownprotos(struct oid *oid, struct ber_oid *o, struct ber_element **e
 int
 mib_ipindiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t counter;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	counter;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	counter = ipstat.ips_odropped;
@@ -1304,18 +1256,12 @@ mib_ipindiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipindelivers(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_delivered);
@@ -1327,18 +1273,12 @@ mib_ipindelivers(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipoutrequests(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_localout);
@@ -1356,18 +1296,12 @@ mib_ipoutdiscards(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipoutnoroutes(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_noroute);
@@ -1385,18 +1319,12 @@ mib_ipreasmtimeout(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipreasmreqds(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_fragments);
@@ -1408,18 +1336,12 @@ mib_ipreasmreqds(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipreasmoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_reassembled);
@@ -1431,19 +1353,13 @@ mib_ipreasmoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipreasmfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t counter;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	counter;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	counter = ipstat.ips_fragdropped + ipstat.ips_fragtimeout;
@@ -1457,18 +1373,12 @@ mib_ipreasmfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipfragoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_fragmented);
@@ -1480,19 +1390,13 @@ mib_ipfragoks(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipfragfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	u_int32_t counter;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
+	u_int32_t	counter;
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 
 	counter = ipstat.ips_badfrags + ipstat.ips_cantfrag;
@@ -1505,18 +1409,12 @@ mib_ipfragfails(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipfragcreate(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[4];
-	struct ipstat ipstat;
-	size_t	len;
-	
-	mib[0] = CTL_NET;
-	mib[1] = AF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_STATS;
+	int		mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	struct ipstat	ipstat;
+	size_t		len = sizeof(ipstat);
 
-	len = sizeof(ipstat);
-
-	if (sysctl(mib, 4, &ipstat, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ipstat, &len, NULL, 0) == -1)
 		return (-1);
 	
 	*elm = ber_add_integer(*elm, ipstat.ips_ofragments);
