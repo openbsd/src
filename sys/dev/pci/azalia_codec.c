@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.45 2007/12/06 19:58:48 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.46 2007/12/16 18:48:19 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -529,9 +529,7 @@ azalia_generic_mixer_init(codec_t *this)
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s.mute", w->name);
 				d->type = AUDIO_MIXER_ENUM;
-				if (w->type == COP_AWTYPE_PIN_COMPLEX)
-					d->mixer_class = AZ_CLASS_OUTPUT;
-				else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+				if (w->type == COP_AWTYPE_AUDIO_INPUT)
 					d->mixer_class = AZ_CLASS_RECORD;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
@@ -553,9 +551,7 @@ azalia_generic_mixer_init(codec_t *this)
 					    "%s.%s.mute", w->name,
 					    this->w[w->connections[j]].name);
 					d->type = AUDIO_MIXER_ENUM;
-					if (w->type == COP_AWTYPE_PIN_COMPLEX)
-						d->mixer_class = AZ_CLASS_OUTPUT;
-					else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+					if (w->type == COP_AWTYPE_AUDIO_INPUT)
 						d->mixer_class = AZ_CLASS_RECORD;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
@@ -581,9 +577,7 @@ azalia_generic_mixer_init(codec_t *this)
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s", w->name);
 				d->type = AUDIO_MIXER_VALUE;
-				if (w->type == COP_AWTYPE_PIN_COMPLEX)
-					d->mixer_class = AZ_CLASS_OUTPUT;
-				else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+				if (w->type == COP_AWTYPE_AUDIO_INPUT)
 					d->mixer_class = AZ_CLASS_RECORD;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
@@ -608,9 +602,7 @@ azalia_generic_mixer_init(codec_t *this)
 					    "%s.%s", w->name,
 					    this->w[w->connections[j]].name);
 					d->type = AUDIO_MIXER_VALUE;
-					if (w->type == COP_AWTYPE_PIN_COMPLEX)
-						d->mixer_class = AZ_CLASS_OUTPUT;
-					else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+					if (w->type == COP_AWTYPE_AUDIO_INPUT)
 						d->mixer_class = AZ_CLASS_RECORD;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
