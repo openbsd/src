@@ -37,14 +37,16 @@
 
 #define DEBUG_SCATTER 0
 
-void drm_sg_cleanup(drm_sg_mem_t *entry)
+void
+drm_sg_cleanup(drm_sg_mem_t *entry)
 {
 	free((void *)entry->handle, M_DRM);
 	free(entry->busaddr, M_DRM);
 	free(entry, M_DRM);
 }
 
-int drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
+int
+drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
 {
 	drm_sg_mem_t *entry;
 	unsigned long pages;
@@ -97,7 +99,8 @@ int drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
 	return 0;
 }
 
-int drm_sg_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_sg_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_scatter_gather_t *request = data;
 	int ret;
@@ -108,7 +111,8 @@ int drm_sg_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv
 	return ret;
 }
 
-int drm_sg_free(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_sg_free(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_scatter_gather_t *request = data;
 	drm_sg_mem_t *entry;

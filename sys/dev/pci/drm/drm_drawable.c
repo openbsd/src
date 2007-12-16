@@ -35,6 +35,9 @@
 
 #include "drmP.h"
 
+int	drm_drawable_compare(struct bsd_drm_drawable_info *,
+	    struct bsd_drm_drawable_info *);
+
 #ifdef __OpenBSD__
 RB_PROTOTYPE(drawable_tree, bsd_drm_drawable_info, tree,
     drm_drawable_compare);
@@ -46,7 +49,7 @@ struct bsd_drm_drawable_info {
 	RB_ENTRY(bsd_drm_drawable_info) tree;
 };
 
-static int
+int
 drm_drawable_compare(struct bsd_drm_drawable_info *a,
     struct bsd_drm_drawable_info *b)
 {
@@ -79,7 +82,8 @@ drm_get_drawable_info(drm_device_t *dev, int handle)
 	return NULL;
 }
 
-int drm_adddraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_adddraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_draw_t *draw = data;
 	struct bsd_drm_drawable_info *info;
@@ -104,7 +108,8 @@ int drm_adddraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_rmdraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_rmdraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_draw_t *draw = (drm_draw_t *)data;
 	struct drm_drawable_info *info;
@@ -127,7 +132,8 @@ int drm_rmdraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	}
 }
 
-int drm_update_draw(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_update_draw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_drawable_info *info;
 	struct drm_update_draw *update = (struct drm_update_draw *)data;

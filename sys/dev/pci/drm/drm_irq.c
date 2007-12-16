@@ -35,15 +35,14 @@
 #include "drmP.h"
 #include "drm.h"
 
+irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
+
 #if 0
-#ifdef __Freebsd__
-static void drm_locked_task(void *context, int pending __unused);
-#else
-static void drm_locked_task(void *context, int  pending);
-#endif
+void drm_locked_task(void *context, int pending __unused);
 #endif /* 0 */
 
-int drm_irq_by_busid(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_irq_by_busid(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_irq_busid_t *irq = data;
 
@@ -91,7 +90,7 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 #endif
 
 #ifdef __OpenBSD__
-static irqreturn_t
+irqreturn_t
 drm_irq_handler_wrap(DRM_IRQ_ARGS)
 {
 	irqreturn_t ret;
@@ -105,7 +104,8 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 }
 #endif
 
-int drm_irq_install(drm_device_t *dev)
+int
+drm_irq_install(drm_device_t *dev)
 {
 	int retcode;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -158,9 +158,6 @@ int drm_irq_install(drm_device_t *dev)
 	if (retcode != 0)
 		goto err;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#if defined(__OpenBSD__)
-#define aprint_normal printf
-#endif
 	if (pci_intr_map(&dev->pa, &ih) != 0) {
 		retcode = ENOENT;
 		goto err;
@@ -205,7 +202,8 @@ err:
 	return retcode;
 }
 
-int drm_irq_uninstall(drm_device_t *dev)
+int
+drm_irq_uninstall(drm_device_t *dev)
 {
 #ifdef __FreeBSD__
 	int irqrid;
@@ -237,7 +235,8 @@ int drm_irq_uninstall(drm_device_t *dev)
 	return 0;
 }
 
-int drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_control_t *ctl = data;
 	int err;
@@ -265,7 +264,8 @@ int drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	}
 }
 
-int drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_wait_vblank_t *vblwait = data;
 	struct timeval now;
@@ -314,12 +314,14 @@ int drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return ret;
 }
 
-void drm_vbl_send_signals(drm_device_t *dev)
+void
+drm_vbl_send_signals(drm_device_t *dev)
 {
 }
 
 #if 0 /* disabled */
-void drm_vbl_send_signals( drm_device_t *dev )
+void
+drm_vbl_send_signals( drm_device_t *dev )
 {
 	drm_vbl_sig_t *vbl_sig;
 	unsigned int vbl_seq = atomic_read( &dev->vbl_received );
@@ -343,11 +345,8 @@ void drm_vbl_send_signals( drm_device_t *dev )
 #endif
 
 #if 0 /* disabled while it's unused anywhere */
-#ifdef __FreeBSD__
-static void drm_locked_task(void *context, int pending __unused)
-#else
-static void drm_locked_task(void *context, int pending)
-#endif
+void
+drm_locked_task(void *context, int pending __unused)
 {
 	drm_device_t *dev = context;
 
@@ -397,6 +396,6 @@ drm_locked_tasklet(drm_device_t *dev, void (*tasklet)(void* dev, void*))
 	taskqueue_enqueue(taskqueue_swi, &dev->locked_task);
 #else
 	workq_add_task(NULL, WQ_WAITOK, dev->locked_task_call,
-		     dev, NULL);
+	    dev, NULL);
 #endif
 }

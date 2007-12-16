@@ -57,7 +57,8 @@ struct drm_sysctl_info {
 	char		       name[2];
 };
 
-int drm_sysctl_init(drm_device_t *dev)
+int
+drm_sysctl_init(drm_device_t *dev)
 {
 #ifndef __OpenBSD__
 	struct drm_sysctl_info *info;
@@ -142,7 +143,8 @@ int drm_sysctl_init(drm_device_t *dev)
 	return 0;
 }
 
-int drm_sysctl_cleanup(drm_device_t *dev)
+int
+drm_sysctl_cleanup(drm_device_t *dev)
 {
 	int error=0;
 #ifdef __FreeBSD__
@@ -184,7 +186,8 @@ do {								\
 		goto done;					\
 } while (0)
 
-static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
+static int
+drm_name_info DRM_SYSCTL_HANDLER_ARGS
 {
 #ifndef __OpenBSD__
 #ifdef __FreeBSD__
@@ -226,7 +229,8 @@ done:
 	return 0;
 }
 
-static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
+static int
+drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 {
 #ifndef __OpenBSD__
 #ifdef __FreeBSD__
@@ -298,7 +302,8 @@ done:
 	return 0;
 }
 
-static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
+static int
+drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 {
 #ifndef __OpenBSD__
 #ifdef __FreeBSD__
@@ -367,7 +372,8 @@ done:
 return 0;
 }
 
-static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
+static int
+drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 {
 #ifndef __OpenBSD__
 #ifdef __FreeBSD__

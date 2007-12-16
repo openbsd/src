@@ -35,6 +35,8 @@
 #include "radeon_drv.h"
 #include "drm_pciids.h"
 
+void	radeon_configure(drm_device_t *);
+
 int radeon_no_wb;
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
@@ -42,7 +44,8 @@ static drm_pci_id_list_t radeon_pciidlist[] = {
 	radeon_PCI_IDS
 };
 
-static void radeon_configure(drm_device_t *dev)
+void
+radeon_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_radeon_buf_priv_t);
 	dev->driver.load		= radeon_driver_load;
@@ -120,7 +123,10 @@ MODULE_DEPEND(radeon, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	radeondrm_probe(struct device *, void *, void *);
+void	radeondrm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 radeondrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -130,7 +136,7 @@ radeondrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, radeon_pciidlist);
 }
 
-static void
+void
 radeondrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

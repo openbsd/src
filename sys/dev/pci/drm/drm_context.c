@@ -38,7 +38,8 @@
  * Context bitmap support
  */
 
-void drm_ctxbitmap_free(drm_device_t *dev, int ctx_handle)
+void
+drm_ctxbitmap_free(drm_device_t *dev, int ctx_handle)
 {
 	if (ctx_handle < 0 || ctx_handle >= DRM_MAX_CTXBITMAP || 
 	    dev->ctx_bitmap == NULL) {
@@ -54,7 +55,8 @@ void drm_ctxbitmap_free(drm_device_t *dev, int ctx_handle)
 	return;
 }
 
-int drm_ctxbitmap_next(drm_device_t *dev)
+int
+drm_ctxbitmap_next(drm_device_t *dev)
 {
 	int bit;
 
@@ -79,11 +81,6 @@ int drm_ctxbitmap_next(drm_device_t *dev)
 			drm_local_map_t **ctx_sareas;
 
 #if defined(__OpenBSD__)
-	 		/* 
-			 * ugly. this means that we reallocate for every time the context
-		 	 * is increased past the point. since this is a malloc+memcpy this
-			 * be fairly slow.
-			 */
 			 ctx_sareas = drm_realloc(dev->context_sareas,
 			    old_context * sizeof(*dev->context_sareas),
 			    dev->max_context * sizeof(*dev->context_sareas), M_DRM);
@@ -115,7 +112,8 @@ int drm_ctxbitmap_next(drm_device_t *dev)
 	return bit;
 }
 
-int drm_ctxbitmap_init(drm_device_t *dev)
+int
+drm_ctxbitmap_init(drm_device_t *dev)
 {
 	int i;
    	int temp;
@@ -138,7 +136,8 @@ int drm_ctxbitmap_init(drm_device_t *dev)
 	return 0;
 }
 
-void drm_ctxbitmap_cleanup(drm_device_t *dev)
+void
+drm_ctxbitmap_cleanup(drm_device_t *dev)
 {
 	DRM_LOCK();
 	if (dev->context_sareas != NULL)
@@ -151,7 +150,8 @@ void drm_ctxbitmap_cleanup(drm_device_t *dev)
  * Per Context SAREA Support
  */
 
-int drm_getsareactx( drm_device_t *dev, void *data, struct drm_file *file_priv )
+int
+drm_getsareactx( drm_device_t *dev, void *data, struct drm_file *file_priv )
 {
 	drm_ctx_priv_map_t *request = data;
 	drm_local_map_t *map;
@@ -171,7 +171,8 @@ int drm_getsareactx( drm_device_t *dev, void *data, struct drm_file *file_priv )
 	return 0;
 }
 
-int drm_setsareactx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_setsareactx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_priv_map_t *request = data;
 	drm_local_map_t *map = NULL;
@@ -198,7 +199,8 @@ bad:
  * The actual DRM context handling routines
  */
 
-int drm_context_switch(drm_device_t *dev, int old, int new)
+int
+drm_context_switch(drm_device_t *dev, int old, int new)
 {
         if ( test_and_set_bit( 0, &dev->context_flag ) ) {
                 DRM_ERROR( "Reentering -- FIXME\n" );
@@ -215,7 +217,8 @@ int drm_context_switch(drm_device_t *dev, int old, int new)
         return 0;
 }
 
-int drm_context_switch_complete(drm_device_t *dev, int new)
+int
+drm_context_switch_complete(drm_device_t *dev, int new)
 {
         dev->last_context = new;  /* PRE/POST: This is the _only_ writer. */
 
@@ -231,7 +234,8 @@ int drm_context_switch_complete(drm_device_t *dev, int new)
         return 0;
 }
 
-int drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_res_t *res = data;
 	drm_ctx_t ctx;
@@ -242,7 +246,7 @@ int drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 		for ( i = 0 ; i < DRM_RESERVED_CONTEXTS ; i++ ) {
 			ctx.handle = i;
 			if ( DRM_COPY_TO_USER( &res->contexts[i],
-					   &ctx, sizeof(ctx) ) )
+			    &ctx, sizeof(ctx) ) )
 				return EFAULT;
 		}
 	}
@@ -251,19 +255,20 @@ int drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_addctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_addctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
 	ctx->handle = drm_ctxbitmap_next(dev);
 	if ( ctx->handle == DRM_KERNEL_CONTEXT ) {
-				/* Skip kernel's context and get a new one. */
+		/* Skip kernel's context and get a new one. */
 		ctx->handle = drm_ctxbitmap_next(dev);
 	}
 	DRM_DEBUG( "%d\n", ctx->handle );
 	if ( ctx->handle == -1 ) {
 		DRM_DEBUG( "Not enough free contexts.\n" );
-				/* Should this return -EBUSY instead? */
+		/* Should this return -EBUSY instead? */
 		return ENOMEM;
 	}
 
@@ -276,13 +281,15 @@ int drm_addctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_modctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_modctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	/* This does nothing */
 	return 0;
 }
 
-int drm_getctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_getctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -292,7 +299,8 @@ int drm_getctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_switchctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_switchctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -300,7 +308,8 @@ int drm_switchctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return drm_context_switch(dev, dev->last_context, ctx->handle);
 }
 
-int drm_newctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_newctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -310,7 +319,8 @@ int drm_newctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_rmctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_rmctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 

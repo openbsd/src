@@ -37,6 +37,9 @@
 #include "mga_drv.h"
 #include "drm_pciids.h"
 
+int	mga_driver_device_is_agp(drm_device_t * );
+void	mga_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {
 	mga_PCI_IDS
@@ -59,7 +62,8 @@ static drm_pci_id_list_t mga_pciidlist[] = {
  * This function needs to be filled in!  The implementation in
  * linux-core/mga_drv.c shows what needs to be done.
  */
-static int mga_driver_device_is_agp(drm_device_t * dev)
+int
+mga_driver_device_is_agp(drm_device_t * dev)
 {
 #ifdef __FreeBSD__
 	device_t bus;
@@ -87,7 +91,8 @@ static int mga_driver_device_is_agp(drm_device_t * dev)
 
 }
 
-static void mga_configure(drm_device_t *dev)
+void
+mga_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_mga_buf_priv_t);
 	dev->driver.load		= mga_driver_load;
@@ -164,7 +169,9 @@ MODULE_DEPEND(mga, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	mgadrm_probe(struct device *, void *, void *);
+void	mgadrm_attach(struct device *, struct device *, void *);
+int
 #if defined(__OpenBSD__)
 mgadrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -174,7 +181,7 @@ mgadrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, mga_pciidlist);
 }
 
-static void
+void
 mgadrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

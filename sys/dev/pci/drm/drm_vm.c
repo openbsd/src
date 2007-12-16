@@ -29,12 +29,15 @@
 #include "drm.h"
 
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-int drm_mmap(struct cdev *kdev, vm_offset_t offset, vm_paddr_t *paddr,
+int
+drm_mmap(struct cdev *kdev, vm_offset_t offset, vm_paddr_t *paddr,
     int prot)
 #elif defined(__FreeBSD__)
-int drm_mmap(dev_t kdev, vm_offset_t offset, int prot)
+int
+drm_mmap(dev_t kdev, vm_offset_t offset, int prot)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
+paddr_t
+drm_mmap(dev_t kdev, off_t offset, int prot)
 #endif
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);
@@ -81,13 +84,15 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		}
 	}
 
-				/* A sequential search of a linked list is
-				   fine here because: 1) there will only be
-				   about 5-10 entries in the list and, 2) a
-				   DRI client only has to do this mapping
-				   once, so it doesn't have to be optimized
-				   for performance, even if the list was a
-				   bit longer. */
+	/*
+	 * A sequential search of a linked list is
+ 	 * fine here because: 1) there will only be
+	 * about 5-10 entries in the list and, 2) a
+	 * DRI client only has to do this mapping
+	 * once, so it doesn't have to be optimized
+	 * for performance, even if the list was a
+	 * bit longer.
+	 */
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (offset >= map->offset && offset < map->offset + map->size)

@@ -278,6 +278,7 @@ extern drm_device_t *drm_units[];
 #define aprint_error printf
 #define aprint_normal printf
 #define printk printf
+#define __unused /* nothing */
 /*
  * cdev_decl() doesn't like underscore separated names.
  * doing this here is easier that ifdefing each of them.
@@ -292,7 +293,7 @@ extern drm_device_t *drm_units[];
 #endif /* __NetBSD__ */
 #endif /* __NetBSD__ || __OpenBSD__ */
 #define DRM_SPINLOCK_IRQSAVE(l, irqflags) do {		\
-	DRM_SPINLOCK(l);					\
+	DRM_SPINLOCK(l);				\
 	(void)irqflags;					\
 } while (0)
 #define DRM_SPINUNLOCK_IRQRESTORE(u, irqflags) DRM_SPINUNLOCK(u)
@@ -320,9 +321,9 @@ enum {
 #elif defined(__NetBSD__)
 #define drm_get_device_from_kdev(_kdev) device_lookup(&drm_cd, minor(_kdev))
 #elif defined(__OpenBSD__)
-#define drm_get_device_from_kdev(_kdev) 			\
-      (drm_device_t *)(minor(kdev) < DRM_MAXUNITS) ?	\
-		       drm_units[minor(kdev)] : NULL
+#define drm_get_device_from_kdev(_kdev) 		\
+	(minor(kdev) < DRM_MAXUNITS) ?			\
+	    drm_units[minor(kdev)] : NULL
 #endif
 
 #ifdef __FreeBSD__

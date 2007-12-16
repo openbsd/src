@@ -37,10 +37,17 @@
 
 #include "drmP.h"
 
+int	drm_alloc_resource(drm_device_t *, int);
+void	drm_cleanup_buf_error(drm_device_t *, drm_buf_entry_t *);
+int	drm_do_addbufs_agp(drm_device_t *, drm_buf_desc_t *);
+int	drm_do_addbufs_pci(drm_device_t *, drm_buf_desc_t *);
+int	drm_do_addbufs_sg(drm_device_t *, drm_buf_desc_t *);
+
 /*
  * Compute order.  Can be made faster.
  */
-int drm_order(unsigned long size)
+int
+drm_order(unsigned long size)
 {
 	int order;
 	unsigned long tmp;
@@ -57,7 +64,8 @@ int drm_order(unsigned long size)
  * drm_get_resource_*.  Note that they are not RF_ACTIVE, so there's no virtual
  * address for accessing them.  Cleaned up at unload.
  */
-static int drm_alloc_resource(drm_device_t *dev, int resource)
+int
+drm_alloc_resource(drm_device_t *dev, int resource)
 {
 #ifdef __OpenBSD__
 #define PCIR_BAR(x)     (PCI_MAPS + (x) * 4)
@@ -92,13 +100,13 @@ static int drm_alloc_resource(drm_device_t *dev, int resource)
 	}
 	dev->pcir[resource]->maptype = 
 		pci_mapreg_type(dev->pa.pa_pc, dev->pa.pa_tag, 
-			dev->pcirid[resource]);
+		    dev->pcirid[resource]);
 	if(pci_mapreg_info(dev->pa.pa_pc, dev->pa.pa_tag,
-			dev->pcirid[resource],
-			dev->pcir[resource]->maptype,
-			&(dev->pcir[resource]->base),
-			&(dev->pcir[resource]->size),
-			&(dev->pcir[resource]->flags))) {
+	    dev->pcirid[resource],
+	    dev->pcir[resource]->maptype,
+	    &(dev->pcir[resource]->base),
+	    &(dev->pcir[resource]->size),
+	    &(dev->pcir[resource]->flags))) {
 		dev->pcir[resource]->base = 0;
 		dev->pcir[resource]->size = 0;
 	}
@@ -111,7 +119,8 @@ static int drm_alloc_resource(drm_device_t *dev, int resource)
 }
 
 
-unsigned long drm_get_resource_start(drm_device_t *dev, unsigned int resource)
+unsigned long
+drm_get_resource_start(drm_device_t *dev, unsigned int resource)
 {
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
@@ -123,7 +132,8 @@ unsigned long drm_get_resource_start(drm_device_t *dev, unsigned int resource)
 #endif
 }
 
-unsigned long drm_get_resource_len(drm_device_t *dev, unsigned int resource)
+unsigned long
+drm_get_resource_len(drm_device_t *dev, unsigned int resource)
 {
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
@@ -135,13 +145,12 @@ unsigned long drm_get_resource_len(drm_device_t *dev, unsigned int resource)
 #endif
 }
 
-int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
+int
+drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
     drm_map_type_t type, drm_map_flags_t flags, drm_local_map_t **map_ptr)
 {
 	drm_local_map_t *map;
 	int align;
-	/*drm_agp_mem_t *entry;
-	int valid;*/
 
 	/* Only allow shared memory to be removable since we only keep enough
 	 * book keeping information about shared memory to allow for removal
@@ -216,7 +225,7 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 	case _DRM_SHM:
 		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
 		DRM_DEBUG( "%lu %d %p\n",
-			   map->size, drm_order(map->size), map->handle );
+		    map->size, drm_order(map->size), map->handle );
 		if ( !map->handle ) {
 			free(map, M_DRM);
 			DRM_LOCK();
@@ -314,7 +323,8 @@ done:
 	return 0;
 }
 
-int drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_map_t *request = data;
 	drm_local_map_t *map;
@@ -347,7 +357,8 @@ int drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
+void
+drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 {
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
@@ -399,7 +410,8 @@ void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
  * isn't in use.
  */
 
-int drm_rmmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_rmmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_local_map_t *map;
 	drm_map_t *request = data;
@@ -425,7 +437,8 @@ int drm_rmmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 
-static void drm_cleanup_buf_error(drm_device_t *dev, drm_buf_entry_t *entry)
+void
+drm_cleanup_buf_error(drm_device_t *dev, drm_buf_entry_t *entry)
 {
 	int i;
 
@@ -448,12 +461,11 @@ static void drm_cleanup_buf_error(drm_device_t *dev, drm_buf_entry_t *entry)
 	}
 }
 
-static int drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_entry_t *entry;
-	/*drm_agp_mem_t *agp_entry;
-	int valid*/
 	drm_buf_t *buf;
 	unsigned long offset;
 	unsigned long agp_offset;
@@ -472,7 +484,7 @@ static int drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	size = 1 << order;
 
 	alignment  = (request->flags & _DRM_PAGE_ALIGN)
-		? round_page(size) : size;
+	    ? round_page(size) : size;
 	page_order = order - PAGE_SHIFT > 0 ? order - PAGE_SHIFT : 0;
 	total = PAGE_SIZE << page_order;
 
@@ -523,18 +535,18 @@ static int drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	offset = 0;
 
 	while ( entry->buf_count < count ) {
-		buf          = &entry->buflist[entry->buf_count];
-		buf->idx     = dma->buf_count + entry->buf_count;
-		buf->total   = alignment;
-		buf->order   = order;
-		buf->used    = 0;
+		buf = &entry->buflist[entry->buf_count];
+		buf->idx = dma->buf_count + entry->buf_count;
+		buf->total = alignment;
+		buf->order = order;
+		buf->used = 0;
 
-		buf->offset  = (dma->byte_count + offset);
+		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
 		buf->address = (void *)(agp_offset + offset);
-		buf->next    = NULL;
+		buf->next = NULL;
 		buf->pending = 0;
-		buf->file_priv    = NULL;
+		buf->file_priv = NULL;
 
 		buf->dev_priv_size = dev->driver.buf_priv_size;
 		buf->dev_private = malloc(buf->dev_priv_size, M_DRM,
@@ -555,7 +567,6 @@ static int drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 
 #if defined(__OpenBSD__)
 	/* OpenBSD lacks realloc in kernel */
-	/* XXX overflow */
 	temp_buflist = drm_realloc(dma->buflist,
 	    dma->buf_count * sizeof(*dma->buflist),
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM );
@@ -589,7 +600,8 @@ static int drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	return 0;
 }
 
-static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	int count;
@@ -612,10 +624,10 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 	size = 1 << order;
 
 	DRM_DEBUG( "count=%d, size=%d (%d), order=%d\n",
-		   request->count, request->size, size, order );
+	    request->count, request->size, size, order );
 
 	alignment = (request->flags & _DRM_PAGE_ALIGN)
-		? round_page(size) : size;
+	    ? round_page(size) : size;
 	page_order = order - PAGE_SHIFT > 0 ? order - PAGE_SHIFT : 0;
 	total = PAGE_SIZE << page_order;
 
@@ -647,7 +659,7 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 	    sizeof(*dma->pagelist));
 
 	DRM_DEBUG( "pagelist: %d entries\n",
-		   dma->page_count + (count << page_order) );
+	    dma->page_count + (count << page_order) );
 
 	entry->buf_size	= size;
 	entry->page_order = page_order;
@@ -669,14 +681,14 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 		entry->seglist[entry->seg_count++] = dmah;
 		for ( i = 0 ; i < (1 << page_order) ; i++ ) {
 			DRM_DEBUG( "page %d @ %p\n",
-				   dma->page_count + page_count,
-				   (char *)dmah->vaddr + PAGE_SIZE * i );
+			    dma->page_count + page_count,
+			    (char *)dmah->vaddr + PAGE_SIZE * i );
 			temp_pagelist[dma->page_count + page_count++] = 
 			    (long)dmah->vaddr + PAGE_SIZE * i;
 		}
 		for ( offset = 0 ;
-		      offset + size <= total && entry->buf_count < count ;
-		      offset += alignment, ++entry->buf_count ) {
+		    offset + size <= total && entry->buf_count < count ;
+		    offset += alignment, ++entry->buf_count ) {
 			buf	     = &entry->buflist[entry->buf_count];
 			buf->idx     = dma->buf_count + entry->buf_count;
 			buf->total   = alignment;
@@ -702,7 +714,7 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 			}
 
 			DRM_DEBUG( "buffer %d @ %p\n",
-				   entry->buf_count, buf->address );
+			    entry->buf_count, buf->address );
 		}
 		byte_count += PAGE_SIZE << page_order;
 	}
@@ -746,7 +758,8 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 
 }
 
-static int drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_entry_t *entry;
@@ -768,7 +781,7 @@ static int drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 	size = 1 << order;
 
 	alignment  = (request->flags & _DRM_PAGE_ALIGN)
-		? round_page(size) : size;
+	    ? round_page(size) : size;
 	page_order = order - PAGE_SHIFT > 0 ? order - PAGE_SHIFT : 0;
 	total = PAGE_SIZE << page_order;
 
@@ -796,18 +809,18 @@ static int drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 	offset = 0;
 
 	while ( entry->buf_count < count ) {
-		buf          = &entry->buflist[entry->buf_count];
-		buf->idx     = dma->buf_count + entry->buf_count;
-		buf->total   = alignment;
-		buf->order   = order;
-		buf->used    = 0;
+		buf = &entry->buflist[entry->buf_count];
+		buf->idx = dma->buf_count + entry->buf_count;
+		buf->total = alignment;
+		buf->order = order;
+		buf->used = 0;
 
-		buf->offset  = (dma->byte_count + offset);
+		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
 		buf->address = (void *)(agp_offset + offset + dev->sg->handle);
-		buf->next    = NULL;
+		buf->next = NULL;
 		buf->pending = 0;
-		buf->file_priv    = NULL;
+		buf->file_priv = NULL;
 
 		buf->dev_priv_size = dev->driver.buf_priv_size;
 		buf->dev_private = malloc(buf->dev_priv_size, M_DRM,
@@ -820,7 +833,7 @@ static int drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 		}
 
 		DRM_DEBUG( "buffer %d @ %p\n",
-			   entry->buf_count, buf->address );
+		    entry->buf_count, buf->address );
 
 		offset += alignment;
 		entry->buf_count++;
@@ -863,7 +876,8 @@ static int drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 	return 0;
 }
 
-int drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -898,7 +912,8 @@ int drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	return ret;
 }
 
-int drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -938,7 +953,8 @@ int drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 	return ret;
 }
 
-int drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
+int
+drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -978,7 +994,8 @@ int drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 	return ret;
 }
 
-int drm_addbufs_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_addbufs_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_buf_desc_t *request = data;
 	int err;
@@ -993,7 +1010,8 @@ int drm_addbufs_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return err;
 }
 
-int drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_info_t *request = data;
@@ -1028,11 +1046,11 @@ int drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 				}
 
 				DRM_DEBUG( "%d %d %d %d %d\n",
-					   i,
-					   dma->bufs[i].buf_count,
-					   dma->bufs[i].buf_size,
-					   dma->bufs[i].freelist.low_mark,
-					   dma->bufs[i].freelist.high_mark );
+				    i,
+				    dma->bufs[i].buf_count,
+				    dma->bufs[i].buf_size,
+				    dma->bufs[i].freelist.low_mark,
+				    dma->bufs[i].freelist.high_mark );
 				++count;
 			}
 		}
@@ -1042,14 +1060,15 @@ int drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return retcode;
 }
 
-int drm_markbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_markbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_desc_t *request = data;
 	int order;
 
 	DRM_DEBUG( "%d, %d, %d\n",
-		   request->size, request->low_mark, request->high_mark );
+	    request->size, request->low_mark, request->high_mark );
 	
 
 	order = drm_order(request->size);	
@@ -1072,7 +1091,8 @@ int drm_markbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_free_t *request = data;
@@ -1091,14 +1111,14 @@ int drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 		}
 		if ( idx < 0 || idx >= dma->buf_count ) {
 			DRM_ERROR( "Index %d (of %d max)\n",
-				   idx, dma->buf_count - 1 );
+			    idx, dma->buf_count - 1 );
 			retcode = EINVAL;
 			break;
 		}
 		buf = dma->buflist[idx];
 		if ( buf->file_priv != file_priv ) {
 			DRM_ERROR("Process %d freeing buffer not owned\n",
-				   DRM_CURRENTPID);
+			    DRM_CURRENTPID);
 			retcode = EINVAL;
 			break;
 		}
@@ -1109,7 +1129,8 @@ int drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return retcode;
 }
 
-int drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	int retcode = 0;
@@ -1134,9 +1155,8 @@ int drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	int i;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-/* makedev( ,dev->unit) */
 	if (!vfinddev(dev->kdev, VCHR, &vn))
-		return 0;	/* FIXME: Shouldn't this be EINVAL or something? */
+		return EINVAL;
 #endif /* __NetBSD__ || __OpenBSD__ */
 
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500000

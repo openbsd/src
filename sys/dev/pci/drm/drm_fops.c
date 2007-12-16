@@ -36,7 +36,8 @@
 
 #include "drmP.h"
 
-drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
+drm_file_t *
+drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 {
 	uid_t uid = DRM_UID(p);
 	pid_t pid = DRM_PID(p);
@@ -52,13 +53,14 @@ drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 }
 
 /* drm_open_helper is called whenever a process opens /dev/drm. */
-int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
- 		    drm_device_t *dev)
+int
+drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
+    drm_device_t *dev)
 {
-	int	     m = minor(kdev);
 	drm_file_t   *priv;
-	int retcode;
+	int m, retcode;
 
+	m = minor(kdev);
 	if (flags & O_EXCL)
 		return EBUSY; /* No exclusive opens */
 	dev->flags = flags;
@@ -75,15 +77,15 @@ int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 			DRM_UNLOCK();
 			return ENOMEM;
 		}
-		priv->uid		= DRM_UID(p);
-		priv->pid		= DRM_PID(p);
+		priv->uid = DRM_UID(p);
+		priv->pid = DRM_PID(p);
 
-		priv->refs		= 1;
-		priv->minor		= m;
-		priv->ioctl_count 	= 0;
+		priv->refs = 1;
+		priv->minor = m;
+		priv->ioctl_count = 0;
 
 		/* for compatibility root is always authenticated */
-		priv->authenticated	= DRM_SUSER(p);
+		priv->authenticated = DRM_SUSER(p);
 
 		if (dev->driver.open) {
 			/* shared code returns -errno */
@@ -111,12 +113,14 @@ int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 /* The drm_read and drm_poll are stubs to prevent spurious errors
  * on older X Servers (4.3.0 and earlier) */
 
-int drm_read(DRM_CDEV kdev, struct uio *uio, int ioflag)
+int
+drm_read(DRM_CDEV kdev, struct uio *uio, int ioflag)
 {
 	return 0;
 }
 
-int drm_poll(DRM_CDEV kdev, int events, DRM_STRUCTPROC *p)
+int
+drm_poll(DRM_CDEV kdev, int events, DRM_STRUCTPROC *p)
 {
 	return 0;
 }

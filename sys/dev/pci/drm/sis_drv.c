@@ -31,12 +31,15 @@
 #include "sis_drv.h"
 #include "drm_pciids.h"
 
+void	sis_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t sis_pciidlist[] = {
 	sis_PCI_IDS
 };
 
-static void sis_configure(drm_device_t *dev)
+void
+sis_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 	dev->driver.context_ctor	= sis_init_context;
@@ -98,7 +101,10 @@ MODULE_DEPEND(sisdrm, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	sisdrm_probe(struct device *, void *, void *);
+void	sisdrm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 sisdrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -108,7 +114,7 @@ sisdrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, sis_pciidlist);
 }
 
-static void
+void
 sisdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

@@ -39,12 +39,15 @@
 #include "mach64_drv.h"
 #include "drm_pciids.h"
 
+void	mach64_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mach64_pciidlist[] = {
 	mach64_PCI_IDS
 };
 
-static void mach64_configure(drm_device_t *dev)
+void
+mach64_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 	dev->driver.lastclose		= mach64_driver_lastclose;
@@ -114,7 +117,11 @@ DRIVER_MODULE(mach64, pci, mach64_driver, drm_devclass, 0, 0);
 MODULE_DEPEND(mach64, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-static int
+
+int	mach64drm_probe(struct device *, void *, void *);
+void	mach64drm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 mach64drm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -124,7 +131,7 @@ mach64drm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, mach64_pciidlist);
 }
 
-static void
+void
 mach64drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

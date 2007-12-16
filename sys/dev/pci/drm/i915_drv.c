@@ -35,12 +35,15 @@
 #include "i915_drv.h"
 #include "drm_pciids.h"
 
+void	i915_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t i915_pciidlist[] = {
 	i915_PCI_IDS
 };
 
-static void i915_configure(drm_device_t *dev)
+void
+i915_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1;	/* No dev_priv */
 	dev->driver.load		= i915_driver_load;
@@ -116,7 +119,10 @@ MODULE_DEPEND(i915, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	i915drm_probe(struct device *, void *, void *);
+void	i915drm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 i915drm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -127,7 +133,7 @@ i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, i915_pciidlist);
 }
 
-static void
+void
 i915drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

@@ -36,12 +36,15 @@
 #include "drmP.h"
 #include "drm_pciids.h"
 
+void	tdfx_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
 	tdfx_PCI_IDS
 };
 
-static void tdfx_configure(drm_device_t *dev)
+void
+tdfx_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 
@@ -99,7 +102,10 @@ MODULE_DEPEND(tdfx, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	tdfxdrm_probe(struct device *, void *, void *);
+void	tdfxdrm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 tdfxdrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -109,7 +115,7 @@ tdfxdrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, tdfx_pciidlist);
 }
 
-static void
+void
 tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

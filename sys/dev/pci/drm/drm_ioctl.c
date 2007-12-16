@@ -35,13 +35,16 @@
 
 #include "drmP.h"
 
+int	drm_set_busid(drm_device_t *);
+
 /*
  * Beginning in revision 1.1 of the DRM interface, getunique will return
  * a unique in the form pci:oooo:bb:dd.f (o=domain, b=bus, d=device, f=function)
  * before setunique has been called.  The format for the bus-specific part of
  * the unique is not defined for any other bus.
  */
-int drm_getunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_getunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_unique_t	 *u = data;
 
@@ -57,7 +60,8 @@ int drm_getunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
 /* Deprecated in DRM version 1.1, and will return EBUSY when setversion has
  * requested version 1.1 or greater.
  */
-int drm_setunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_setunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_unique_t *u = data;
 	int domain, bus, slot, func, ret;
@@ -117,7 +121,7 @@ int drm_setunique(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 
-static int
+int
 drm_set_busid(drm_device_t *dev)
 {
 
@@ -143,7 +147,8 @@ drm_set_busid(drm_device_t *dev)
 	return 0;
 }
 
-int drm_getmap(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_getmap(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_map_t    *map = data;
 	drm_local_map_t    *mapinlist;
@@ -161,11 +166,11 @@ int drm_getmap(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	TAILQ_FOREACH(mapinlist, &dev->maplist, link) {
 		if (i==idx) {
 			map->offset = mapinlist->offset;
-			map->size   = mapinlist->size;
-			map->type   = mapinlist->type;
-			map->flags  = mapinlist->flags;
+			map->size = mapinlist->size;
+			map->type = mapinlist->type;
+			map->flags = mapinlist->flags;
 			map->handle = mapinlist->handle;
-			map->mtrr   = mapinlist->mtrr;
+			map->mtrr = mapinlist->mtrr;
 			break;
 		}
 		i++;
@@ -179,7 +184,8 @@ int drm_getmap(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_getclient(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_getclient(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_client_t *client = data;
 	drm_file_t   *pt;
@@ -191,11 +197,11 @@ int drm_getclient(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	TAILQ_FOREACH(pt, &dev->files, link) {
 		if (i==idx)
 		{
-			client->auth  = pt->authenticated;
-			client->pid   = pt->pid;
-			client->uid   = pt->uid;
+			client->auth = pt->authenticated;
+			client->pid = pt->pid;
+			client->uid = pt->uid;
 			client->magic = pt->magic;
-			client->iocs  = pt->ioctl_count;
+			client->iocs = pt->ioctl_count;
 			DRM_UNLOCK();
 			return 0;
 		}
@@ -206,10 +212,11 @@ int drm_getclient(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return EINVAL;
 }
 
-int drm_getstats(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_getstats(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
-	drm_stats_t  *stats = data;
-	int          i;
+	drm_stats_t *stats = data;
+	int i;
 
 	memset(stats, 0, sizeof(drm_stats_t));
 	
@@ -218,8 +225,8 @@ int drm_getstats(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	for (i = 0; i < dev->counters; i++) {
 		if (dev->types[i] == _DRM_STAT_LOCK)
 			stats->data[i].value
-				= (dev->lock.hw_lock
-				   ? dev->lock.hw_lock->lock : 0);
+			    = (dev->lock.hw_lock
+			    ? dev->lock.hw_lock->lock : 0);
 		else 
 			stats->data[i].value = atomic_read(&dev->counts[i]);
 		stats->data[i].type  = dev->types[i];
@@ -235,7 +242,8 @@ int drm_getstats(drm_device_t *dev, void *data, struct drm_file *file_priv)
 #define DRM_IF_MAJOR	1
 #define DRM_IF_MINOR	2
 
-int drm_setversion(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_setversion(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_set_version_t *sv = data;
 	drm_set_version_t ver;
@@ -279,7 +287,8 @@ int drm_setversion(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 
-int drm_noop(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_noop(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	DRM_DEBUG("\n");
 	return 0;

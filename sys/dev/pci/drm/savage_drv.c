@@ -32,12 +32,15 @@
 #include "savage_drv.h"
 #include "drm_pciids.h"
 
+void	savage_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {
 	savage_PCI_IDS
 };
 
-static void savage_configure(drm_device_t *dev)
+void
+savage_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_savage_buf_priv_t);
 	dev->driver.load		= savage_driver_load;
@@ -105,7 +108,10 @@ MODULE_DEPEND(savage, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	savagedrm_probe(struct device *, void *, void *);
+void	savagedrm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 savagedrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -115,7 +121,7 @@ savagedrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, savage_pciidlist);
 }
 
-static void
+void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;

@@ -49,27 +49,28 @@
 
 #include "drmP.h"
 
-int drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
+int
+drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
 {
 	unsigned int old, new;
 
 	do {
 		old = *lock;
 		if (old & _DRM_LOCK_HELD) new = old | _DRM_LOCK_CONT;
-		else			  new = context | _DRM_LOCK_HELD;
+		else new = context | _DRM_LOCK_HELD;
 	} while (!atomic_cmpset_int(lock, old, new));
 
 	if (_DRM_LOCKING_CONTEXT(old) == context) {
 		if (old & _DRM_LOCK_HELD) {
 			if (context != DRM_KERNEL_CONTEXT) {
 				DRM_ERROR("%d holds heavyweight lock\n",
-					  context);
+				    context);
 			}
 			return 0;
 		}
 	}
 	if (new == (context | _DRM_LOCK_HELD)) {
-				/* Have lock */
+		/* Have lock */
 		return 1;
 	}
 	return 0;
@@ -77,8 +78,9 @@ int drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
 
 /* This takes a lock forcibly and hands it to context.	Should ONLY be used
    inside *_unlock to give lock to kernel before calling *_dma_schedule. */
-int drm_lock_transfer(drm_device_t *dev,
-		       __volatile__ unsigned int *lock, unsigned int context)
+int
+drm_lock_transfer(drm_device_t *dev, __volatile__ unsigned int *lock,
+    unsigned int context)
 {
 	unsigned int old, new;
 
@@ -91,8 +93,9 @@ int drm_lock_transfer(drm_device_t *dev,
 	return 1;
 }
 
-int drm_lock_free(drm_device_t *dev,
-		   __volatile__ unsigned int *lock, unsigned int context)
+int
+drm_lock_free(drm_device_t *dev, __volatile__ unsigned int *lock,
+    unsigned int context)
 {
 	unsigned int old, new;
 
@@ -111,7 +114,8 @@ int drm_lock_free(drm_device_t *dev,
 	return 0;
 }
 
-int drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
         drm_lock_t *lock = data;
         int ret = 0;
@@ -159,7 +163,8 @@ int drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_unlock(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_unlock(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_lock_t *lock = data;
 

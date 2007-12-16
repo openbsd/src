@@ -34,12 +34,15 @@
 #include "via_drv.h"
 #include "drm_pciids.h"
 
+void	via_configure(drm_device_t *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t via_pciidlist[] = {
 	viadrv_PCI_IDS
 };
 
-static void via_configure(drm_device_t *dev)
+void
+via_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1;
 	dev->driver.load		= via_driver_load;
@@ -107,7 +110,10 @@ MODULE_DEPEND(via, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
-static int
+int	viadrm_probe(struct device *, void *, void *);
+void	viadrm_attach(struct device *, struct device *, void *);
+
+int
 #if defined(__OpenBSD__)
 viadrm_probe(struct device *parent, void *match, void *aux)
 #else
@@ -117,7 +123,7 @@ viadrm_probe(struct device *parent, struct cfdata *match, void *aux)
 	return drm_probe((struct pci_attach_args *)aux, via_pciidlist);
 }
 
-static void
+void
 viadrm_attach(struct device *parent, struct device *self, void *opaque)
 {
 	struct pci_attach_args *pa = opaque;

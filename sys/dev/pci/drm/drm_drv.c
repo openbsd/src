@@ -47,10 +47,12 @@ int drm_debug_flag = 1;
 int drm_debug_flag = 0;
 #endif
 
-static int drm_load(drm_device_t *dev);
-static void drm_unload(drm_device_t *dev);
-static drm_pci_id_list_t *drm_find_description(int vendor, int device,
-    drm_pci_id_list_t *idlist);
+int	 drm_load(drm_device_t *);
+void	 drm_unload(drm_device_t *);
+drm_pci_id_list_t *drm_find_description(int , int ,
+	    drm_pci_id_list_t *);
+int	 drm_firstopen(drm_device_t *);
+int	 drm_lastclose(drm_device_t *);
 
 #ifdef __FreeBSD__
 #define DRIVER_SOFTC(unit) \
@@ -153,7 +155,8 @@ static struct cdevsw drm_cdevsw = {
 #endif
 };
 
-int drm_probe(device_t dev, drm_pci_id_list_t *idlist)
+int
+drm_probe(device_t dev, drm_pci_id_list_t *idlist)
 {
 	drm_pci_id_list_t *id_entry;
 	int vendor, device;
@@ -180,7 +183,8 @@ int drm_probe(device_t dev, drm_pci_id_list_t *idlist)
 	return ENXIO;
 }
 
-int drm_attach(device_t nbdev, drm_pci_id_list_t *idlist)
+int
+drm_attach(device_t nbdev, drm_pci_id_list_t *idlist)
 {
 	drm_device_t *dev;
 	drm_pci_id_list_t *id_entry;
@@ -215,7 +219,8 @@ int drm_attach(device_t nbdev, drm_pci_id_list_t *idlist)
 	return drm_load(dev);
 }
 
-int drm_detach(device_t dev)
+int
+drm_detach(device_t dev)
 {
 	drm_unload(device_get_softc(dev));
 	return 0;
@@ -243,70 +248,14 @@ static struct cdevsw drm_cdevsw = {
 	nokqfilter,
 	D_TTY
 };
-#if __NetBSD_Version__ >= 106080000
-MOD_DEV("drm", DRIVER_NAME, NULL, -1, &drm_cdevsw, CDEV_MAJOR);
-#else
-MOD_DEV("drm", LM_DT_CHAR, CDEV_MAJOR, &drm_cdevsw);
-#endif
-
-int drm_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
-static int drm_lkmhandle(struct lkm_table *lkmtp, int cmd);
-
-int drm_modprobe(void);
-void drm_attach(struct device *, struct pci_attach_args *,
-                drm_pci_id_list_t *);
-
-int drm_lkmentry(struct lkm_table *lkmtp, int cmd, int ver) {
-	DISPATCH(lkmtp, cmd, ver, drm_lkmhandle, drm_lkmhandle, drm_lkmhandle);
-}
-
-static int drm_lkmhandle(struct lkm_table *lkmtp, int cmd)
-{
-	int error = 0;
-
-	switch(cmd) {
-	case LKM_E_LOAD:
-		if (lkmexists(lkmtp))
-			return EEXIST;
-
-		if(drm_modprobe())
-			return 0;
-
-		return 1;
-
-	case LKM_E_UNLOAD:
-		if (drm_refcnt > 0)
-			return (EBUSY);
-		break;
-	case LKM_E_STAT:
-		break;
-
-	default:
-		error = EIO;
-		break;
-	}
-	
-	return error;
-}
-
-int drm_modprobe(void)
-{
-	struct pci_attach_args pa;
-	int error;
-
-	error = pci_find_device(&pa, drm_probe, idlist);
-	if (error != 0)
-		drm_attach(&pa, 0);
-
-	return error;
-}
 #endif
 
 drm_device_t *drm_units[DRM_MAXUNITS];
 
 static int init_units = 1;
 
-int drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
+int
+drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 {
 	int unit;
 	drm_pci_id_list_t *id_entry;
@@ -325,8 +274,9 @@ int drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	return 0;
 }
 
-void drm_attach(struct device *kdev, struct pci_attach_args *pa,
-                drm_pci_id_list_t *idlist)
+void
+drm_attach(struct device *kdev, struct pci_attach_args *pa,
+    drm_pci_id_list_t *idlist)
 {
 	int unit;
 	drm_device_t *dev;
@@ -341,7 +291,6 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 
         for(unit=0; unit<DRM_MAXUNITS; unit++)
 		if(drm_units[unit] == NULL) break;
-		/* This should not happen, since drm_probe made sure there was room */
 	if(unit == DRM_MAXUNITS) return;
 
 	dev = drm_units[unit] = (drm_device_t*)kdev;
@@ -366,13 +315,15 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	drm_load(dev);
 }
 
-int drm_detach(struct device *self, int flags)
+int
+drm_detach(struct device *self, int flags)
 {
 	drm_unload((drm_device_t *)self);
 	return 0;
 }
 
-int drm_activate(struct device *self, enum devact act)
+int
+drm_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -387,8 +338,8 @@ int drm_activate(struct device *self, enum devact act)
 }
 #endif /* __NetBSD__ || __OpenBSD__ */
 
-drm_pci_id_list_t *drm_find_description(int vendor, int device,
-    drm_pci_id_list_t *idlist)
+drm_pci_id_list_t *
+drm_find_description(int vendor, int device, drm_pci_id_list_t *idlist)
 {
 	int i = 0;
 	
@@ -401,7 +352,8 @@ drm_pci_id_list_t *drm_find_description(int vendor, int device,
 	return NULL;
 }
 
-static int drm_firstopen(drm_device_t *dev)
+int
+drm_firstopen(drm_device_t *dev)
 {
 	drm_local_map_t *map;
 	int i;
@@ -410,7 +362,7 @@ static int drm_firstopen(drm_device_t *dev)
 
 	/* prebuild the SAREA */
 	i = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
-		       _DRM_CONTAINS_LOCK, &map);
+	    _DRM_CONTAINS_LOCK, &map);
 	if (i != 0)
 		return i;
 
@@ -425,13 +377,13 @@ static int drm_firstopen(drm_device_t *dev)
 			return i;
 	}
 
-	dev->counters  = 6;
-	dev->types[0]  = _DRM_STAT_LOCK;
-	dev->types[1]  = _DRM_STAT_OPENS;
-	dev->types[2]  = _DRM_STAT_CLOSES;
-	dev->types[3]  = _DRM_STAT_IOCTLS;
-	dev->types[4]  = _DRM_STAT_LOCKS;
-	dev->types[5]  = _DRM_STAT_UNLOCKS;
+	dev->counters = 6;
+	dev->types[0] = _DRM_STAT_LOCK;
+	dev->types[1] = _DRM_STAT_OPENS;
+	dev->types[2] = _DRM_STAT_CLOSES;
+	dev->types[3] = _DRM_STAT_IOCTLS;
+	dev->types[4] = _DRM_STAT_LOCKS;
+	dev->types[5] = _DRM_STAT_UNLOCKS;
 
 	for ( i = 0 ; i < DRM_ARRAY_SIZE(dev->counts) ; i++ )
 		atomic_set( &dev->counts[i], 0 );
@@ -458,7 +410,8 @@ static int drm_firstopen(drm_device_t *dev)
 	return 0;
 }
 
-static int drm_lastclose(drm_device_t *dev)
+int
+drm_lastclose(drm_device_t *dev)
 {
 	drm_magic_entry_t *pt, *next;
 	drm_local_map_t *map;
@@ -537,7 +490,8 @@ static int drm_lastclose(drm_device_t *dev)
 	return 0;
 }
 
-static int drm_load(drm_device_t *dev)
+int
+drm_load(drm_device_t *dev)
 {
 	int retcode;
 
@@ -616,11 +570,11 @@ static int drm_load(drm_device_t *dev)
 	}
 #endif
 	DRM_INFO("Initialized %s %d.%d.%d %s\n",
-	  	dev->driver.name,
-	  	dev->driver.major,
-	  	dev->driver.minor,
-	  	dev->driver.patchlevel,
-	  	dev->driver.date);
+	    dev->driver.name,
+	    dev->driver.major,
+	    dev->driver.minor,
+	    dev->driver.patchlevel,
+	    dev->driver.date);
 
 	return 0;
 
@@ -636,7 +590,8 @@ error:
 	return retcode;
 }
 
-static void drm_unload(drm_device_t *dev)
+void
+drm_unload(drm_device_t *dev)
 {
 	int i;
 
@@ -683,8 +638,8 @@ static void drm_unload(drm_device_t *dev)
 		if (dev->pcir[i]->mapped)
 		{
 			bus_space_unmap(dev->pa.pa_memt,
-					dev->pcir[i]->bsh,
-					dev->pcir[i]->size);
+			    dev->pcir[i]->bsh,
+			    dev->pcir[i]->size);
 			dev->pcir[i]->mapped = 0;
 		}
 		free(dev->pcir[i], M_DRM);
@@ -710,7 +665,8 @@ static void drm_unload(drm_device_t *dev)
 }
 
 
-int drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_version_t *version = data;
 	int len;
@@ -735,7 +691,8 @@ int drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+int
+drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = NULL;
 	int retcode = 0;
@@ -763,7 +720,8 @@ int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 	return retcode;
 }
 
-int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+int
+drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);
 	drm_file_t *file_priv;
@@ -793,17 +751,17 @@ int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 
 #ifdef __FreeBSD__
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
-		   DRM_CURRENTPID, (long)dev->device, dev->open_count );
+	    DRM_CURRENTPID, (long)dev->device, dev->open_count );
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
-		   DRM_CURRENTPID, (long)&dev->device, dev->open_count);
+	    DRM_CURRENTPID, (long)&dev->device, dev->open_count);
 #endif
 
 	if (dev->lock.hw_lock && _DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)
 	    && dev->lock.file_priv == file_priv) {
 		DRM_DEBUG("Process %d dead, freeing lock for context %d\n",
-			  DRM_CURRENTPID,
-			  _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock));
+		    DRM_CURRENTPID,
+		    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock));
 		if (dev->driver.reclaim_buffers_locked != NULL)
 			dev->driver.reclaim_buffers_locked(dev, file_priv);
 
@@ -879,7 +837,8 @@ done:
 
 /* drm_ioctl is called whenever a process performs an ioctl on /dev/drm.
  */
-int drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
+int
+drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
     DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);
@@ -994,7 +953,8 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags,
 	return retcode;
 }
 
-drm_local_map_t *drm_getsarea(drm_device_t *dev)
+drm_local_map_t *
+drm_getsarea(drm_device_t *dev)
 {
 	drm_local_map_t *map;
 

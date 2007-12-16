@@ -38,7 +38,8 @@
 
 #include "drmP.h"
 
-int drm_dma_setup(drm_device_t *dev)
+int
+drm_dma_setup(drm_device_t *dev)
 {
 
 	dev->dma = malloc(sizeof(*dev->dma), M_DRM, M_NOWAIT | M_ZERO);
@@ -50,22 +51,23 @@ int drm_dma_setup(drm_device_t *dev)
 	return 0;
 }
 
-void drm_dma_takedown(drm_device_t *dev)
+void
+drm_dma_takedown(drm_device_t *dev)
 {
-	drm_device_dma_t  *dma = dev->dma;
-	int		  i, j;
+	drm_device_dma_t *dma = dev->dma;
+	int i, j;
 
 	if (dma == NULL)
 		return;
 
-				/* Clear dma buffers */
+	/* Clear dma buffers */
 	for (i = 0; i <= DRM_MAX_ORDER; i++) {
 		if (dma->bufs[i].seg_count) {
 			DRM_DEBUG("order %d: buf_count = %d,"
-				  " seg_count = %d\n",
-				  i,
-				  dma->bufs[i].buf_count,
-				  dma->bufs[i].seg_count);
+			    " seg_count = %d\n",
+			    i,
+			    dma->bufs[i].buf_count,
+			    dma->bufs[i].seg_count);
 			for (j = 0; j < dma->bufs[i].seg_count; j++) {
 				drm_pci_free(dev, dma->bufs[i].seglist[j]);
 			}
@@ -94,19 +96,21 @@ void drm_dma_takedown(drm_device_t *dev)
 }
 
 
-void drm_free_buffer(drm_device_t *dev, drm_buf_t *buf)
+void
+drm_free_buffer(drm_device_t *dev, drm_buf_t *buf)
 {
 	if (!buf) return;
 
-	buf->pending  = 0;
+	buf->pending = 0;
 	buf->file_priv= NULL;
-	buf->used     = 0;
+	buf->used = 0;
 }
 
-void drm_reclaim_buffers(drm_device_t *dev, struct drm_file *file_priv)
+void
+drm_reclaim_buffers(drm_device_t *dev, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
-	int		 i;
+	int i;
 
 	if (!dma) return;
 	for (i = 0; i < dma->buf_count; i++) {
@@ -127,7 +131,8 @@ void drm_reclaim_buffers(drm_device_t *dev, struct drm_file *file_priv)
 }
 
 /* Call into the driver-specific DMA handler */
-int drm_dma(drm_device_t *dev, void *data, struct drm_file *file_priv)
+int
+drm_dma(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 
 	if (dev->driver.dma_ioctl) {
