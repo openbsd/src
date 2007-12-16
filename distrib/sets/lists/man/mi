@@ -1721,6 +1721,7 @@
 ./usr/share/man/cat4/umsm.0
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat4/uow.0
+./usr/share/man/cat4/upgt.0
 ./usr/share/man/cat4/upl.0
 ./usr/share/man/cat4/uplcom.0
 ./usr/share/man/cat4/ural.0
@@ -1886,7 +1887,6 @@
 ./usr/share/man/cat5/hosts.equiv.0
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
-./usr/share/man/cat5/relayd.conf.0
 ./usr/share/man/cat5/hp300
 ./usr/share/man/cat5/hppa
 ./usr/share/man/cat5/hppa/boot.conf.0
@@ -1942,6 +1942,7 @@
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
+./usr/share/man/cat5/relayd.conf.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/resolv.conf.tail.0
@@ -2138,8 +2139,6 @@
 ./usr/share/man/cat8/growfs.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hostapd.0
-./usr/share/man/cat8/relayctl.0
-./usr/share/man/cat8/relayd.0
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
@@ -2354,6 +2353,8 @@
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
+./usr/share/man/cat8/relayctl.0
+./usr/share/man/cat8/relayd.0
 ./usr/share/man/cat8/release.0
 ./usr/share/man/cat8/renice.0
 ./usr/share/man/cat8/repquota.0

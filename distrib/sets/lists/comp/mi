@@ -826,6 +826,7 @@
 ./usr/include/dev/usb/if_uathreg.h
 ./usr/include/dev/usb/if_uathvar.h
 ./usr/include/dev/usb/if_udavreg.h
+./usr/include/dev/usb/if_upgtvar.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/if_zydreg.h

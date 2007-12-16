@@ -1820,8 +1820,6 @@
 ./usr/sbin/groupmod
 ./usr/sbin/host
 ./usr/sbin/hostapd
-./usr/sbin/relayctl
-./usr/sbin/relayd
 ./usr/sbin/httpd
 ./usr/sbin/ifstated
 ./usr/sbin/inetd
@@ -1889,6 +1887,8 @@
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
 ./usr/sbin/rdconfig
+./usr/sbin/relayctl
+./usr/sbin/relayd
 ./usr/sbin/repquota
 ./usr/sbin/revnetgroup
 ./usr/sbin/rip6query

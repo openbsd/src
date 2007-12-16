@@ -30,7 +30,6 @@
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
-./etc/relayd.conf
 ./etc/hotplug
 ./etc/ifstated.conf
 ./etc/inetd.conf
@@ -98,6 +97,7 @@
 ./etc/rc.local
 ./etc/rc.securelevel
 ./etc/rc.shutdown
+./etc/relayd.conf
 ./etc/remote
 ./etc/ripd.conf
 ./etc/rmt
