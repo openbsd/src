@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.8 2007/09/17 20:29:47 miod Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.9 2007/12/16 13:46:36 kettenis Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ cardslotattach(struct device *parent, struct device *self, void *aux)
 	struct cbslot_attach_args *cba = caa->caa_cb_attach;
 	struct pcmciabus_attach_args *pa = caa->caa_16_attach;
 
-	struct cardbus_softc *csc;
-	struct pcmcia_softc *psc;
+	struct cardbus_softc *csc = NULL;
+	struct pcmcia_softc *psc = NULL;
 
 	sc->sc_slot = sc->sc_dev.dv_unit;
 	sc->sc_cb_softc = NULL;
