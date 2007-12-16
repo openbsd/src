@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.13 2007/12/09 18:34:11 ragge Exp $	*/
+/*	$OpenBSD: regs.c,v 1.14 2007/12/16 19:24:03 ragge Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -899,16 +899,24 @@ insnwalk(NODE *p)
 #if 1
 		static int ncl[] = { 0, NASL, NBSL, NCSL, NDSL };
 		static int ncr[] = { 0, NASR, NBSR, NCSR, NDSR };
-		
+		int j;
+
 		/* edges are already added */
-		if ((r = &p->n_regw[1+i])->r_class == -1)
+		if ((r = &p->n_regw[1+i])->r_class == -1) {
 			r = p->n_regw;
-		else
+		} else {
+			AddEdge(r, p->n_regw);
 			addalledges(r);
+		}
 		if (optype(o) != LTYPE && (q->needs & ncl[CLASS(r)]) == 0)
 			addedge_r(p->n_left, r);
 		if (optype(o) == BITYPE && (q->needs & ncr[CLASS(r)]) == 0)
 			addedge_r(p->n_right, r);
+		for (j = i + 1; j < n; j++) {
+			if (p->n_regw[j+1].r_class == -1)
+				continue;
+			AddEdge(r, &p->n_regw[j+1]);
+		}
 #else
 		if ((r = &p->n_regw[1+i])->r_class == -1)
 			continue;
