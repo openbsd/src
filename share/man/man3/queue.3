@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.43 2007/05/31 19:19:48 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.44 2007/12/16 13:23:57 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 16 2007 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -196,6 +196,7 @@
 .Fn TAILQ_END "TAILQ_HEAD *head"
 .Ft "struct TYPE *"
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME NAME"
+.Ft "struct TYPE *"
 .Fn TAILQ_PREV "struct TYPE *listelm" "HEADNAME NAME" "TAILQ_ENTRY NAME"
 .Ft "bool"
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
