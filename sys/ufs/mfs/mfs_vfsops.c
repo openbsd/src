@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.38 2007/12/06 21:49:37 otto Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.39 2007/12/16 21:21:25 otto Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -174,11 +174,11 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 	struct buf *bp;
 	int sleepreturn = 0, s;
 
-	while (mfsp->mfs_buflist != (struct buf *)-1) {
+	while (1) {
 		while (1) {
 			s = splbio();
 			bp = mfsp->mfs_buflist;
-			if (bp == NULL) {
+			if (bp == NULL || bp == (struct buf *)-1) {
 				splx(s);
 				break;
 			}
@@ -187,6 +187,8 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 			mfs_doio(mfsp, bp);
 			wakeup((caddr_t)bp);
 		}
+		if (bp == (struct buf *)-1)
+			break;
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, clear the signal (it has been "processed"),

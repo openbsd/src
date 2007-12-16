@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.31 2007/12/06 21:49:37 otto Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.32 2007/12/16 21:21:25 otto Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -216,13 +216,20 @@ mfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
-	int error;
+	int error, s;
 
 	/*
 	 * Finish any pending I/O requests.
 	 */
-	while ((bp = mfsp->mfs_buflist) != NULL) {
+	while (1) {
+		s = splbio();
+		bp = mfsp->mfs_buflist;
+		if (bp == NULL) {
+			splx(s);
+			break;
+		}
 		mfsp->mfs_buflist = bp->b_actf;
+		splx(s);
 		mfs_doio(mfsp, bp);
 		wakeup((caddr_t)bp);
 	}
