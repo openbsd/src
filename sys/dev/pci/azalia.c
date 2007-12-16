@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.45 2007/11/25 18:13:40 martynas Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.46 2007/12/16 18:46:43 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1609,13 +1609,24 @@ azalia_widget_label_widgets(codec_t *codec)
 		w = &codec->w[i];
 		if (w->type == COP_AWTYPE_PIN_COMPLEX) {
 			pins[w->d.pin.device]++;
-			if (pins[w->d.pin.device] > 1)
-				snprintf(w->name, sizeof(w->name), "%s%d",
-				    pin_devices[w->d.pin.device],
-				    pins[w->d.pin.device]);
-			else
-				snprintf(w->name, sizeof(w->name), "%s",
-				    pin_devices[w->d.pin.device]);
+			if (w->d.pin.device == CORB_CD_LINEIN) {
+				pins[CORB_CD_LINEOUT]++;
+				if (pins[CORB_CD_LINEOUT] > 1)
+					snprintf(w->name, sizeof(w->name), "%s%d",
+					    pin_devices[CORB_CD_LINEOUT],
+					    pins[CORB_CD_LINEOUT]);
+				else
+					snprintf(w->name, sizeof(w->name), "%s",
+					    pin_devices[CORB_CD_LINEOUT]);
+			} else {
+				if (pins[w->d.pin.device] > 1)
+					snprintf(w->name, sizeof(w->name), "%s%d",
+					    pin_devices[w->d.pin.device],
+					    pins[w->d.pin.device]);
+				else
+					snprintf(w->name, sizeof(w->name), "%s",
+					    pin_devices[w->d.pin.device]);
+			}
 		} else {
 			types[w->type]++;
 			if (types[w->type] > 1)
