@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 2007/11/16 20:51:29 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.103 2007/12/16 12:43:54 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1122,9 +1122,9 @@ _bus_dmamap_load(t, t0, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_addr = 0UL;
 	map->dm_segs[i].ds_len = 0;
-	while (sgsize > 0 && i < map->_dm_segcnt) {
+	while (sgsize > 0) {
 		paddr_t pa;
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
@@ -1138,11 +1138,13 @@ _bus_dmamap_load(t, t0, map, buf, buflen, p, flags)
 			map->dm_segs[i].ds_len += NBPG;
 			continue;
 		}
-		map->dm_segs[++i].ds_addr = pa;
+		if (++i > map->_dm_segcnt)
+			return (EFBIG);
+		map->dm_segs[i].ds_addr = pa;
 		map->dm_segs[i].ds_len = NBPG;
 	}
 	/* Is this what the above comment calls "one segment"? */
-	map->dm_nsegs = i;
+	map->dm_nsegs = i + 1;
 
 	/* Mapping is bus dependent */
 	return (0);
@@ -1404,7 +1406,7 @@ _bus_dmamem_alloc(t, t0, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = NULL; /* UPA does not map things */
+	segs[0].ds_addr = 0UL; /* UPA does not map things */
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
