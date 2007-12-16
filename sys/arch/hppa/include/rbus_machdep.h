@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.2 2005/05/24 19:39:50 martin Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.3 2007/12/16 14:34:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -45,5 +45,7 @@ struct pci_attach_args;
 
 #define rbus_pccbb_parent_mem(d, p) (*(p)->pa_pc->pc_alloc_parent)((d), (p), 0)
 #define rbus_pccbb_parent_io(d, p)  (*(p)->pa_pc->pc_alloc_parent)((d), (p), 1)
+
+#define pccbb_attach_hook(parent, self, pa)	/* nothing */
 
 #endif /* _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_ */
