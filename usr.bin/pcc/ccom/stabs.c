@@ -1,4 +1,4 @@
-/*	$OpenBSD: stabs.c,v 1.4 2007/12/09 18:51:12 ragge Exp $	*/
+/*	$OpenBSD: stabs.c,v 1.5 2007/12/16 19:20:45 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -313,6 +313,7 @@ stabs_newsym(struct symtab *s)
 {
 	char *sname;
 	char ostr[MAXPSTR];
+	int suesize;
 
 	if (ISFTN(s->stype))
 		return; /* functions are handled separate */
@@ -326,32 +327,37 @@ stabs_newsym(struct symtab *s)
 #ifdef GCC_COMPAT
 	sname = gcc_findname(s);
 #endif
+	suesize = BIT2BYTE(s->ssue->suesize);
+	if (suesize > 32767)
+		suesize = 32767;
+	else if (suesize < -32768)
+		suesize = -32768;
 
 	printtype(s, ostr, sizeof(ostr));
 	switch (s->sclass) {
 	case PARAM:
 		cprint(savestabs, ".stabs \"%s:p%s\",%d,0,%d,%d", sname, ostr,
-		    N_PSYM, BIT2BYTE(s->ssue->suesize), BIT2BYTE(s->soffset));
+		    N_PSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case AUTO:
 		cprint(savestabs, ".stabs \"%s:%s\",%d,0,%d,%d", sname, ostr,
-		    N_LSYM, BIT2BYTE(s->ssue->suesize), BIT2BYTE(s->soffset));
+		    N_LSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case STATIC:
 		if (blevel)
 			cprint(savestabs, ".stabs \"%s:V%s\",%d,0,%d," LABFMT, sname, ostr,
-			    N_LCSYM, BIT2BYTE(s->ssue->suesize), s->soffset);
+			    N_LCSYM, suesize, s->soffset);
 		else
 			cprint(savestabs, ".stabs \"%s:S%s\",%d,0,%d,%s", sname, ostr,
-			    N_LCSYM, BIT2BYTE(s->ssue->suesize), exname(sname));
+			    N_LCSYM, suesize, exname(sname));
 		break;
 
 	case EXTERN:
 	case EXTDEF:
 		cprint(savestabs, ".stabs \"%s:G%s\",%d,0,%d,0", sname, ostr,
-		    N_GSYM, BIT2BYTE(s->ssue->suesize));
+		    N_GSYM, suesize);
 		break;
 
 	case REGISTER:
