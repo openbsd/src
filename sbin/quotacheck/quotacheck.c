@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.23 2007/07/11 13:40:24 millert Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.24 2007/12/16 21:22:53 otto Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.23 2007/07/11 13:40:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.24 2007/12/16 21:22:53 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -291,8 +291,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 			bread(sblock_try[i], (char *)&sblock, (long)SBLOCKSIZE);
 			if ((sblock.fs_magic == FS_UFS1_MAGIC ||
 			     (sblock.fs_magic == FS_UFS2_MAGIC &&
-			      sblock.fs_sblockloc ==
-				  numfrags(&sblock, sblock_try[i]))) &&
+			      sblock.fs_sblockloc == sblock_try[i])) &&
 			    sblock.fs_bsize <= MAXBSIZE &&
 			    sblock.fs_bsize >= sizeof(struct fs))
 				break;
