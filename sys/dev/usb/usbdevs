@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.324 2007/12/07 18:11:11 deraadt Exp $
+$OpenBSD: usbdevs,v 1.325 2007/12/16 09:05:53 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2209,6 +2209,7 @@ product SMC2 2020HUB		0x2020	Hub
 product SMC2 2504HUB		0x2504	Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
+product SMC 2862WG		0xee13	EZ Connect 54Mbps
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	NUB100 Ethernet
