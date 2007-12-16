@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.256 2007/12/07 17:13:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.257 2007/12/16 21:34:56 jakob Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -169,14 +169,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/var/named/etc/named.conf; \
 		${INSTALL} -c -o root -g named -m 640 named-*.conf \
 		    ${DESTDIR}/var/named/etc; \
-		${INSTALL} -c -o root -g wheel -m 644 db.localhost \
-		    ${DESTDIR}/var/named/standard/localhost; \
-		${INSTALL} -c -o root -g wheel -m 644 db.loopback \
-		    ${DESTDIR}/var/named/standard/loopback; \
-		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
-		    ${DESTDIR}/var/named/standard/loopback6.arpa; \
 		${INSTALL} -c -o root -g wheel -m 644 root.hint \
-		    ${DESTDIR}/var/named/standard; \
+		    ${DESTDIR}/var/named/etc; \
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt

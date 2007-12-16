@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.187 2007/08/01 21:23:26 miod Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.188 2007/12/16 21:34:56 jakob Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2563,11 +2563,6 @@ master
 # ./var/named/slave
 slave		uname=root gname=named mode=0775
 # ./var/named/slave
-..
-
-# ./var/named/standard
-standard
-# ./var/named/standard
 ..
 
 # ./var/named/tmp
