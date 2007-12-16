@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.66 2007/11/09 11:32:57 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.67 2007/12/16 20:57:17 otto Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -614,6 +614,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 	/* avoid division by zero */
 	if (lp->d_secpercyl == 0)
 		goto bad;
+
+	if (bp->b_blkno < 0 || sz < 0)
+		panic("bounds_check_with_label %lld %lld\n", bp->b_blkno, sz);
 
 	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
