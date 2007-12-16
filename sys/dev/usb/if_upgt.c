@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.1 2007/12/16 09:05:53 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.2 2007/12/16 18:19:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -63,6 +63,10 @@
  * Driver for the USB PrismGT devices.
  *
  * For now just USB 2.0 devices with the GW3887 chipset are supported.
+ *
+ * Parts of this driver has been influenced by reading the p54u driver
+ * written by Jean-Baptiste Note <jean-baptiste.note@m4x.org> and
+ * Sebastien Bourdeauducq <lekernel@prism54.org>.
  */
 
 #ifdef UPGT_DEBUG
