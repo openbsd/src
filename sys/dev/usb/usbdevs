@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.325 2007/12/16 09:05:53 mglocker Exp $
+$OpenBSD: usbdevs,v 1.326 2007/12/17 18:36:57 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -177,6 +177,7 @@ vendor WACOM		0x056a	WACOM
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom
+vendor XYRATEX		0x0572	Xyratex
 vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
@@ -340,6 +341,7 @@ vendor AUTHENTEC	0x08ff	AuthenTec
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
+vendor GLOBESPAN	0x0915	Globespan
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor GARMIN		0x091e	Garmin International
 vendor GOHUBS		0x0921	GoHubs
@@ -581,6 +583,7 @@ product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
 product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SMCWUSBG		0x4505	SMCWUSB-G
+product	ACCTON PRISM_GT		0x4521	PrismGT USB 2.0 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
 product ACCTON RT2870_2		0x6618	RT2870
 product ACCTON RT2870_3		0x7522	RT2870
@@ -943,6 +946,7 @@ product CMOTECH CCU550		0x5533	CCU-550 EVDO
 product CMOTECH CNU550pro	0x5543	CNU-550pro EVDO
 
 /* Conceptronic products */
+product	CONCEPTRONIC PRISM_GT	0x3762	PrismGT USB 2.0 WLAN
 product CONCEPTRONIC C11U	0x7100	C11U
 product CONCEPTRONIC WL210	0x7110	WL-210
 product CONCEPTRONIC AR5523_1	0x7801	AR5523
@@ -1018,7 +1022,9 @@ product DAVICOM WK668		0x0668	HenTong WK-668
 product DELL AXIM		0x4005	Axim X51v
 product DELL BC02		0x8000	Bluetooth
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+product	DELL PRISM_GT		0x8102	PrismGT USB 2.0 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth
+product	DELL PRISM_GT		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
 
 /* DeLorme products */
@@ -1240,6 +1246,10 @@ product GLOBALSUN AR5523_1_NF	0x7802	AR5523
 product GLOBALSUN AR5523_2	0x7811	AR5523
 product GLOBALSUN AR5523_2_NF	0x7812	AR5523
 
+/* Globespan products */
+product	GLOBESPAN PRISM_GT	0x2000	PrismGT USB 2.0 WLAN
+product	GLOBESPAN PRISM_GT	0x2002	PrismGT USB 2.0 WLAN
+
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
 
@@ -1402,6 +1412,7 @@ product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL TESTBOARD		0x9890	82930 test board
 
 /* Intersil products */
+product	INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* Interpid Control Systems products */
@@ -1781,6 +1792,7 @@ product NETGEAR2 MA101		0x4100	MA101
 product NETGEAR2 MA101B		0x4102	MA101 Rev B
 product NETGEAR MA111NA		0x4110  802.11b
 product NETGEAR MA111V2		0x4230  802.11b V2
+product	NETGEAR WG111V2_NF	0x4240	PrismGT USB 2.0 WLAN
 product NETGEAR3 WG111T		0x4250	WG111T
 product NETGEAR3 WG111T_NF	0x4251	WG111T
 product NETGEAR WG111U		0x4300	WG111U
@@ -2464,6 +2476,7 @@ product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
 
 /* Wistron NeWeb products */
+product	WISTRONNEWEB UR045G	0x0427	PrismGT USB 2.0 WLAN
 product WISTRONNEWEB UR055G	0x0711	UR055G
 product WISTRONNEWEB AR5523_1	0x0826	AR5523
 product WISTRONNEWEB AR5523_1_NF	0x0827	AR5523
@@ -2473,6 +2486,10 @@ product WISTRONNEWEB AR5523_2_NF	0x0829	AR5523
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	Imaging Device
 product XIRLINK PCCAM		0x8080	IBM PC Camera
+
+/* Xyratex products */
+product	XYRATEX PRISM_GT	0x2000	PrismGT USB 2.0 WLAN
+product	XYRATEX	PRISM_GT	0x2002	PrismGT USB 2.0 WLAN
 
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
@@ -2493,6 +2510,7 @@ product YANO U640MO		0x0101	U640MO-03
 product ZCOM M4Y750		0x0001	M4Y-750
 product ZCOM XI725		0x0002	XI-725/726
 product ZCOM XI735		0x0005	XI-735
+product	ZCOM XG703A 		0x0008	PrismGT USB 2.0 WLAN
 product ZCOM ZD1211		0x0011	ZD1211
 product ZCOM AR5523		0x0012	AR5523
 product ZCOM AR5523_NF		0x0013	AR5523
