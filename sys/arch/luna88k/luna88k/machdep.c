@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2007/11/17 05:37:53 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2007/12/17 05:23:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -756,8 +756,6 @@ abort:
 	}
 }
 
-#ifdef MULTIPROCESSOR
-
 /*
  * Release the cpu_mutex; secondary processors will now have their
  * chance to initialize.
@@ -767,6 +765,8 @@ cpu_boot_secondary_processors()
 {
 	__cpu_simple_unlock(&cpu_mutex);
 }
+
+#ifdef MULTIPROCESSOR
 
 /*
  * Secondary CPU early initialization routine.
@@ -1057,7 +1057,7 @@ luna88k_bootstrap()
 		if (cpu == master_cpu)
 			continue;
 		m8820x_initialize_cpu(cpu);
-		cmmu_set_sapr(cpu, kernel_pmap->pm_apr);
+		cmmu_set_sapr(kernel_pmap->pm_apr);
 	}
 	/* Release the cpu_mutex */
 	cpu_boot_secondary_processors();
