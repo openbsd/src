@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.326 2007/12/17 18:36:57 mglocker Exp $
+$OpenBSD: usbdevs,v 1.327 2007/12/17 18:51:12 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1022,9 +1022,9 @@ product DAVICOM WK668		0x0668	HenTong WK-668
 product DELL AXIM		0x4005	Axim X51v
 product DELL BC02		0x8000	Bluetooth
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
-product	DELL PRISM_GT		0x8102	PrismGT USB 2.0 WLAN
+product	DELL PRISM_GT_1		0x8102	PrismGT USB 2.0 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth
-product	DELL PRISM_GT		0x8104	PrismGT USB 2.0 WLAN
+product	DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
 
 /* DeLorme products */
@@ -1247,8 +1247,8 @@ product GLOBALSUN AR5523_2	0x7811	AR5523
 product GLOBALSUN AR5523_2_NF	0x7812	AR5523
 
 /* Globespan products */
-product	GLOBESPAN PRISM_GT	0x2000	PrismGT USB 2.0 WLAN
-product	GLOBESPAN PRISM_GT	0x2002	PrismGT USB 2.0 WLAN
+product	GLOBESPAN PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
+product	GLOBESPAN PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
@@ -1792,7 +1792,7 @@ product NETGEAR2 MA101		0x4100	MA101
 product NETGEAR2 MA101B		0x4102	MA101 Rev B
 product NETGEAR MA111NA		0x4110  802.11b
 product NETGEAR MA111V2		0x4230  802.11b V2
-product	NETGEAR WG111V2_NF	0x4240	PrismGT USB 2.0 WLAN
+product	NETGEAR WG111V2_2	0x4240	PrismGT USB 2.0 WLAN
 product NETGEAR3 WG111T		0x4250	WG111T
 product NETGEAR3 WG111T_NF	0x4251	WG111T
 product NETGEAR WG111U		0x4300	WG111U
@@ -2488,8 +2488,8 @@ product XIRLINK IMAGING		0x800d	Imaging Device
 product XIRLINK PCCAM		0x8080	IBM PC Camera
 
 /* Xyratex products */
-product	XYRATEX PRISM_GT	0x2000	PrismGT USB 2.0 WLAN
-product	XYRATEX	PRISM_GT	0x2002	PrismGT USB 2.0 WLAN
+product	XYRATEX PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
+product	XYRATEX	PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
