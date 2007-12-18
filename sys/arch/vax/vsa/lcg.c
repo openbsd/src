@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.11 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.12 2007/12/18 19:39:27 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -158,32 +158,39 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 	struct vsbus_softc *sc = (void *)parent;
 	struct vsbus_attach_args *va = aux;
 	vaddr_t cfgreg;
-	int depth, missing;
+	int depth;
+#ifdef PARANOIA
+	int missing;
 	volatile u_int8_t *ch;
+#endif
+
+	if (va->va_paddr != LCG_REG_ADDR)
+		return (0);
 
 	switch (vax_boardtype) {
 	default:
 		return (0);
 
 	case VAX_BTYP_46:
-	case VAX_BTYP_48:
-		if (va->va_paddr != LCG_REG_ADDR)
+		if ((vax_confdata & 0x40) == 0)
 			return (0);
-
+		break;
+	case VAX_BTYP_48:
+		/* KA48 can't boot without the frame buffer board */
 		break;
 	}
 
 	/*
-	 * Check the configuration register.
-	 * This is done to sort out empty frame buffer slots, since the video
-	 * memory test sometimes passes!
+	 * Check the configuration register. The frame buffer might not be
+	 * an lcg board.
 	 */
 	cfgreg = vax_map_physmem(LCG_CONFIG_ADDR, 1);
 	depth = lcg_probe_screen(*(volatile u_int32_t *)cfgreg, NULL, NULL);
 	vax_unmap_physmem(cfgreg, 1);
-	if (depth < 0)	/* no frame buffer */
+	if (depth < 0)	/* no lcg frame buffer */
 		return (0);
 
+#ifdef PARANOIA
 	/*
 	 * Check for video memory.
 	 * We can not use badaddr() on these models.
@@ -201,6 +208,7 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 	vax_unmap_physmem((vaddr_t)ch, 1);
 	if (missing != 0)
 		return (0);
+#endif
 
 	sc->sc_mask = 0x04;	/* XXX - should be generated */
 	scb_fake(0x120, 0x15);
@@ -706,10 +714,15 @@ lcgcnprobe()
 	extern vaddr_t virtual_avail;
 	u_int32_t cfg;
 	vaddr_t tmp;
+#ifdef PARANOIA
 	volatile u_int8_t *ch;
+#endif
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_46:
+		if ((vax_confdata & 0x40) == 0)
+			break;	/* no frame buffer */
+		/* FALLTHROUGH */
 	case VAX_BTYP_48:
 		if ((vax_confdata & 0x100) != 0)
 			break; /* doesn't use graphics console */
@@ -720,8 +733,9 @@ lcgcnprobe()
 		    (tmp + (LCG_CONFIG_ADDR & VAX_PGOFSET));
 
 		if (lcg_probe_screen(cfg, NULL, NULL) <= 0)
-			break;	/* unsupported configuration */
+			break;	/* no lcg or unsupported configuration */
 
+#ifdef PARANOIA
 		/*
 		 * Check for video memory.
 		 * We can not use badaddr() on these models.
@@ -734,6 +748,7 @@ lcgcnprobe()
 		*ch = 0x00;
 		if ((*ch & 0x01) != 0)
 			break;
+#endif
 
 		return (1);
 
