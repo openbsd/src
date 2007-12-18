@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.207 2007/12/05 19:17:14 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.208 2007/12/18 21:17:54 form Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -71,9 +71,9 @@ lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
 
-it0	at isa? port 0x290	# IT8705F, IT8712F and SiS970 hardware
-it1	at isa? port 0xc00	# monitors
-it2	at isa? port 0xd00
+it0	at isa?			# ITE IT8705F, IT8712F, IT8716F, IT8718F,
+				# IT8726F and SiS SiS950 monitors and
+				# watchdog timer
 				
 viaenv*	at pci?			# VIA VT82C686A hardware monitor
 #viasio* at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O

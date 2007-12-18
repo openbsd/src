@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.99 2007/07/04 17:10:30 henning Exp $
+#	$OpenBSD: files.isa,v 1.100 2007/12/18 21:17:54 form Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -350,7 +350,8 @@ device	gscsio: i2cbus
 attach	gscsio at isa
 file	dev/isa/gscsio.c		gscsio
 
-# IT8705F, IT8712F and SiS970 hardware monitors
+# ITE IT8705F, IT8712F, IT8716F, IT8718F, IT8726F and SiS SiS970 hardware
+# monitors and watchdog timers
 device	it
 attach	it at isa
 file	dev/isa/it.c			it
