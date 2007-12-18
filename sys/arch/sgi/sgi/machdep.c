@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2007/12/14 10:13:17 jsing Exp $ */
+/*	$OpenBSD: machdep.c,v 1.52 2007/12/18 08:29:02 jasper Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -126,6 +126,7 @@ struct	user *proc0paddr;
 struct	user *curprocpaddr;
 int	console_ok;		/* Set when console initialized. */
 int	bootdriveoffs = 0;
+int	kbd_reset;
 
 int32_t *environment;
 struct sys_rec sys_config;
@@ -818,6 +819,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return ENOTDIR;		/* Overloaded */
 
 	switch (name[0]) {
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
 	default:
 		return EOPNOTSUPP;
 	}

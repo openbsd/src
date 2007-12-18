@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2007/12/18 08:29:02 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -400,11 +400,13 @@ extern int want_resched;	/* resched() was called */
  * CTL_MACHDEP definitions.
  */
 #define	CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_KBDRESET		2	/* keyboard reset */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "allowaperture", CTLTYPE_INT }, \
+#define CTL_MACHDEP_NAMES {			\
+	{ 0, 0 },				\
+	{ "allowaperture", CTLTYPE_INT },	\
+	{ "kbdreset", CTLTYPE_INT },		\
 }
 
 /*
