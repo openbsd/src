@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.2 2007/12/18 08:48:22 jasper Exp $	*/
+/*	$OpenBSD: power.c,v 1.3 2007/12/18 09:42:00 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -80,22 +80,22 @@ power_attach(struct device *parent, struct device *self, void *aux)
 	struct power_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	int sc_irq;
+	extern bus_space_handle_t clock_h;
+	extern bus_space_handle_t mace_h;
 	void *rv = NULL;
-
-	printf(": ");
 
 	sc->sc_st = ca->ca_iot;
 	sc_irq = ca->ca_intr;
 
+	printf(": ");
+
 	/* Map subregion to clock address space. */
-	extern bus_space_handle_t clock_h;
 	if (bus_space_subregion(sc->sc_st, clock_h, 0, 0x50, &sc->sc_sh)) {
 		printf("failed to map clock address space!\n");
 		return;
 	}
 
 	/* Map subregion to ISA control registers. */
-	extern bus_space_handle_t mace_h;
 	if (bus_space_subregion(sc->sc_st, mace_h, 0, 0x80, &sc->sc_isash)) {
 		printf("failed to map ISA control registers!\n");
 		return;
