@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockvar.h,v 1.3 2005/01/31 21:25:20 grange Exp $	*/
+/*	$OpenBSD: clockvar.h,v 1.4 2007/12/18 08:07:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,5 +73,8 @@ struct clock_softc {
 	bus_space_handle_t sc_clk_h;
 	void	*ih;
 };
+
+/* XXX Handle to clock address space. */
+bus_space_handle_t clock_h;
 
 void md_clk_attach(struct device *, struct device *, void *);

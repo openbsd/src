@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.8 2005/01/31 21:25:21 grange Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.9 2007/12/18 08:07:54 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -82,6 +82,14 @@ md_clk_attach(parent, self, aux)
 		    &sc->sc_clk_h))
 			printf("UH!? Can't map clock device!\n");
 		printf(": TOD with DS1687,");
+
+		/*
+		 * XXX Expose the clock address space so that it can be used
+		 * outside of clock(4). This is rather inelegant, however it
+		 * will have to do for now...
+		 */
+		clock_h = sc->sc_clk_h;
+
 		break;
 
 	case SGI_O200:
