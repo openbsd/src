@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.110 2007/06/30 11:38:38 espie Exp $
+# $OpenBSD: pkg_delete,v 1.111 2007/12/18 10:58:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -105,7 +105,7 @@ if ($opt_B eq '') {
 
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
-lock_db($opt_n);
+lock_db($opt_n) unless $state->{forced}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.64 2007/12/08 15:54:45 espie Exp $
+# $OpenBSD: pkg_info,v 1.65 2007/12/18 10:58:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -340,16 +340,17 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacDdfIiKkLMPpqRrSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacDdfIiKkLMPpqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
+my %forced;
 my $locked;
 try { 
-	getopts('cDdfhIikKLmpPQ:qRrsSUve:E:Ml:aAt',
+	getopts('cDdfF:hIikKLmpPQ:qRrsSUve:E:Ml:aAt',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
 			    my @list;
-			    lock_db(1, $opt_q);
+			    lock_db(1, $opt_q) unless $forced{nolock};
 			    $locked = 1;
 			    if ($pat =~ m/\//o) {
 				    @list = find_by_path($pat);
@@ -362,6 +363,11 @@ try {
 			    }
 			    push(@ARGV, @list);
 			    $terse = 1;
+		    },
+	     'F' => sub { 
+			    for my $o (split /\,/o, shift) { 
+				    $forced{$o} = 1;
+			    }
 		    },
 	     'h' => sub {	Usage(); },
 	     'E' =>
@@ -376,7 +382,7 @@ try {
 	Usage($_);
 };
 
-lock_db(1, $opt_q) unless $locked;
+lock_db(1, $opt_q) unless $locked or $forced{nolock};
 
 if ($opt_D) {
 	$opt_M = 1;
