@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.16 2007/11/27 15:40:56 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.17 2007/12/18 22:48:14 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -311,6 +311,7 @@ pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_domain = pa->pa_domain;
 		pba.pba_bus = AMD64HT_LDT_SEC_BUS_NUM(bus);
 		pba.pba_bridgetag = NULL;
 		pba.pba_pc = pa->pa_pc;
