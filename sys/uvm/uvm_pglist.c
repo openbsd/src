@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.20 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.21 2007/12/18 11:05:52 thib Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ uvm_pglistalloc_simple(psize_t size, paddr_t low, paddr_t high,
 	psize_t try;
 	int psi;
 	struct vm_page *pg;
-	int s, todo, idx, pgflidx, error, free_list;
+	int todo, idx, pgflidx, error, free_list;
 	UVMHIST_FUNC("uvm_pglistalloc_simple"); UVMHIST_CALLED(pghist);
 #ifdef DEBUG
 	vm_page_t tp;
@@ -86,7 +86,7 @@ uvm_pglistalloc_simple(psize_t size, paddr_t low, paddr_t high,
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -144,7 +144,7 @@ out:
 		wakeup(&uvm.pagedaemon);
 	}
 
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 
 	if (error)
 		uvm_pglistfree(rlist);
@@ -181,7 +181,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
-	int s, tryidx, idx, pgflidx, end, error, free_list;
+	int tryidx, idx, pgflidx, end, error, free_list;
 	vm_page_t m;
 	u_long pagemask;
 #ifdef DEBUG
@@ -220,7 +220,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -334,7 +334,7 @@ out:
 		wakeup(&uvm.pagedaemon);
 	}
 
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 
 	return (error);
 }
@@ -349,13 +349,12 @@ void
 uvm_pglistfree(struct pglist *list)
 {
 	struct vm_page *m;
-	int s;
 	UVMHIST_FUNC("uvm_pglistfree"); UVMHIST_CALLED(pghist);
 
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 
 	while ((m = TAILQ_FIRST(list)) != NULL) {
 		KASSERT((m->pg_flags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
@@ -381,5 +380,5 @@ uvm_pglistfree(struct pglist *list)
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
 
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 }

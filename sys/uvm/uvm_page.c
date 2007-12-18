@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.62 2007/11/29 00:26:41 tedu Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.63 2007/12/18 11:05:52 thib Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -905,7 +905,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct vm_anon *anon;
 	int strat, free_list;
 {
-	int lcv, try1, try2, s, zeroit = 0;
+	int lcv, try1, try2, zeroit = 0;
 	struct vm_page *pg;
 	struct pglist *freeq;
 	struct pgfreelist *pgfl;
@@ -914,7 +914,8 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
-	s = uvm_lock_fpageq();
+
+	uvm_lock_fpageq();
 
 	/*
 	 * check to see if we need to generate some free pages waking
@@ -1032,7 +1033,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		}
 	}
 
-	uvm_unlock_fpageq(s);		/* unlock free page queue */
+	uvm_unlock_fpageq();		/* unlock free page queue */
 
 	pg->offset = off;
 	pg->uobject = obj;
@@ -1069,7 +1070,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	return(pg);
 
  fail:
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 	UVMHIST_LOG(pghist, "failed!", 0, 0, 0, 0);
 	return (NULL);
 }
@@ -1123,7 +1124,6 @@ uvm_pagerealloc(pg, newobj, newoff)
 void
 uvm_pagefree(struct vm_page *pg)
 {
-	int s;
 	int saved_loan_count = pg->loan_count;
 	UVMHIST_FUNC("uvm_pagefree"); UVMHIST_CALLED(pghist);
 
@@ -1222,7 +1222,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	atomic_clearbits_int(&pg->pg_flags, PG_ZERO);
 
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 	TAILQ_INSERT_TAIL(&uvm.page_free[
 	    uvm_page_lookup_freelist(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
 	atomic_clearbits_int(&pg->pg_flags, PQ_MASK);
@@ -1237,7 +1237,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 		uvm.page_idle_zero = vm_page_zero_enable;
 
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 }
 
 /*
@@ -1336,15 +1336,15 @@ uvm_pageidlezero()
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
-	int free_list, s;
+	int free_list;
 	UVMHIST_FUNC("uvm_pageidlezero"); UVMHIST_CALLED(pghist);
 
 	do {
-		s = uvm_lock_fpageq();
+		uvm_lock_fpageq();
 
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
 			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq(s);
+			uvm_unlock_fpageq();
 			return;
 		}
 
@@ -1361,13 +1361,13 @@ uvm_pageidlezero()
 			 * until we know we have non-zero'd pages free.
 			 */
 			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq(s);
+			uvm_unlock_fpageq();
 			return;
 		}
 
 		TAILQ_REMOVE(&pgfl->pgfl_queues[PGFL_UNKNOWN], pg, pageq);
 		uvmexp.free--;
-		uvm_unlock_fpageq(s);
+		uvm_unlock_fpageq();
 
 #ifdef PMAP_PAGEIDLEZERO
 		if (PMAP_PAGEIDLEZERO(pg) == FALSE) {
@@ -1377,12 +1377,12 @@ uvm_pageidlezero()
 			 * probably because there is a process now
 			 * ready to run.
 			 */
-			s = uvm_lock_fpageq();
+			uvm_lock_fpageq();
 			TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_UNKNOWN],
 			    pg, pageq);
 			uvmexp.free++;
 			uvmexp.zeroaborts++;
-			uvm_unlock_fpageq(s);
+			uvm_unlock_fpageq();
 			return;
 		}
 #else
@@ -1394,10 +1394,10 @@ uvm_pageidlezero()
 #endif
 		atomic_setbits_int(&pg->pg_flags, PG_ZERO);
 
-		s = uvm_lock_fpageq();
+		uvm_lock_fpageq();
 		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);
 		uvmexp.free++;
 		uvmexp.zeropages++;
-		uvm_unlock_fpageq(s);
+		uvm_unlock_fpageq();
 	} while (sched_is_idle());
 }

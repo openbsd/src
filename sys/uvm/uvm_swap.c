@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.75 2007/11/27 18:01:02 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.76 2007/12/18 11:05:52 thib Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -354,18 +354,18 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 boolean_t
 uvm_swap_allocpages(struct vm_page **pps, int npages)
 {
-	int i, s;
+	int i;
 	int minus, reserve;
 	boolean_t fail;
 
 	/* Estimate if we will succeed */
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 
 	minus = uvmexp.free - npages;
 	reserve = uvmexp.reserve_kernel;
 	fail = uvmexp.free - npages < uvmexp.reserve_kernel;
 
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 
 	if (fail)
 		return FALSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.33 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.34 2007/12/18 11:05:52 thib Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -337,9 +337,9 @@ uvm_aiodone_daemon(void *arg)
 			bp = nbp;
 		}
 		if (free <= uvmexp.reserve_kernel) {
-			s = uvm_lock_fpageq();
+			uvm_lock_fpageq();
 			wakeup(&uvm.pagedaemon);
-			uvm_unlock_fpageq(s);
+			uvm_unlock_fpageq();
 		} else {
 			simple_lock(&uvm.pagedaemon_lock);
 			wakeup(&uvmexp.free);
@@ -365,7 +365,7 @@ uvmpd_scan_inactive(pglst)
 	struct pglist *pglst;
 {
 	boolean_t retval = FALSE;	/* assume we haven't hit target */
-	int s, free, result;
+	int free, result;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
@@ -415,9 +415,9 @@ uvmpd_scan_inactive(pglst)
 			 * our target
 			 */
 
-			s = uvm_lock_fpageq();
+			uvm_lock_fpageq();
 			free = uvmexp.free;
-			uvm_unlock_fpageq(s);
+			uvm_unlock_fpageq();
 
 			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
@@ -957,7 +957,7 @@ uvmpd_scan_inactive(pglst)
 void
 uvmpd_scan()
 {
-	int s, free, inactive_shortage, swap_shortage, pages_freed;
+	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	boolean_t got_it;
@@ -969,9 +969,9 @@ uvmpd_scan()
 	/*
 	 * get current "free" page count
 	 */
-	s = uvm_lock_fpageq();
+	uvm_lock_fpageq();
 	free = uvmexp.free;
-	uvm_unlock_fpageq(s);
+	uvm_unlock_fpageq();
 
 #ifndef __SWAP_BROKEN
 	/*

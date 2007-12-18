@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.25 2007/04/18 18:51:37 art Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.26 2007/12/18 11:05:52 thib Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -302,6 +302,8 @@ static int vm_physseg_find(paddr_t, int *);
 
 #define uvm_lock_pageq()	simple_lock(&uvm.pageqlock)
 #define uvm_unlock_pageq()	simple_unlock(&uvm.pageqlock)
+#define uvm_lock_fpageq()	mtx_enter(&uvm.fpageqlock);
+#define uvm_unlock_fpageq()	mtx_leave(&uvm.fpageqlock);
 
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
