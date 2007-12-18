@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.1 2007/12/18 08:29:02 jasper Exp $	*/
+/*	$OpenBSD: power.c,v 1.2 2007/12/18 08:48:22 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -35,7 +35,7 @@
 #include <sgi/localbus/macebus.h>
 
 /*
- * Powerbutton driver for the SGI O2
+ * Power button driver for the SGI O2
  */
 
 #define	DS1687_EXT_CTRL		0x4a
@@ -67,7 +67,7 @@ power_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
-	/* Powerbutton only on SGI_O2, for now that is */
+	/* Power button only on SGI_O2, for now that is */
 	if (ca->ca_sys == SGI_O2)
 		return (1);
 
@@ -134,9 +134,9 @@ power_intr(void *arg)
 			psignal(initproc, SIGUSR2);
 		}
 
-		return(1);
+		return (1);
 	}
 
-	return(0);
+	return (0);
 }
 
