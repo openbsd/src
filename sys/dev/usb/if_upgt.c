@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.5 2007/12/19 22:37:01 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.6 2007/12/19 22:43:59 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1390,11 +1390,9 @@ upgt_start(struct ifnet *ifp)
 void
 upgt_watchdog(struct ifnet *ifp)
 {
-	struct upgt_softc *sc;
+	struct upgt_softc *sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
-
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	printf("%s: watchdog timeout!\n", sc->sc_dev.dv_xname);
 
 	/* TODO: what shall we do on TX timeout? */
 
