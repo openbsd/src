@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.10 2007/12/13 18:51:01 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.11 2007/12/19 21:53:36 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -219,17 +219,20 @@ u_int32_t int_mask_val[INT_LEVEL] = {
 vaddr_t
 av400_memsize()
 {
-	vaddr_t memsize;
+	vaddr_t memsize0, memsize1;
 
-	memsize = scm_memsize(1);
+	memsize0 = scm_memsize(0);
+	memsize1 = scm_memsize(1);
 
 	/*
 	 * What we got is the ``top of memory'', i.e. the largest addressable
 	 * word address, ending in 0xffc. Round up to a multiple of a page.
 	 */
-	memsize = round_page(memsize);
+	memsize0 = round_page(memsize0);
+	memsize1 = round_page(memsize1);
 
-	return (memsize);
+	physmem = atop(memsize0);
+	return (memsize1);
 }
 
 void

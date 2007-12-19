@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.18 2007/12/13 18:51:01 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.19 2007/12/19 21:53:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -809,7 +809,6 @@ aviion_bootstrap()
 	first_addr = round_page(first_addr);
 
 	last_addr = platform->memsize();
-	physmem = btoc(last_addr);
 
 	setup_board_config();
 	master_cpu = cmmu_init();
