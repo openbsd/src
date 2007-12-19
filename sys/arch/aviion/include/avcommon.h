@@ -1,4 +1,4 @@
-/*	$OpenBSD: avcommon.h,v 1.2 2006/05/21 22:43:54 miod Exp $	*/
+/*	$OpenBSD: avcommon.h,v 1.3 2007/12/19 21:52:47 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -181,5 +181,7 @@
 #define CIO_IE			0xc0	/* CTC Interrupt enable (set) */
 #define CIO_CIP			0x20	/* CTC Clear interrupt pending */
 #define CIO_IP			0x20	/* CTC Interrupt pending */
+
+#define CONSOLE_DART_BASE	0xfff82000
 
 #endif	/* __MACHINE_AVCOMMON_H__ */

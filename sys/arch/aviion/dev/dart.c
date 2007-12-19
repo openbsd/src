@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.2 2007/12/12 20:37:31 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.3 2007/12/19 21:52:46 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -40,8 +40,7 @@
 
 #include <dev/cons.h>
 
-#include <machine/av400.h>
-#include <aviion/dev/sysconreg.h>
+#include <machine/avcommon.h>
 #include <aviion/dev/dartreg.h>
 #define	SPKRDIS	0x10	/* disable speaker on OP3 */
 #include <aviion/dev/dartvar.h>
@@ -177,9 +176,6 @@ dart_common_attach(struct dartsoftc *sc)
 #endif
 	dart_write(sc, DART_IMR, sc->sc_sv_reg->sv_imr);
 	dart_write(sc, DART_OPCR, OPSET | SPKRDIS);
-#if 0
-	dart_write(sc, DART_IVR, SYSCON_VECT + SYSCV_SCC);
-#endif
 
 	sc->sc_dart[A_PORT].tty = sc->sc_dart[B_PORT].tty = NULL;
 	sc->sc_dart[A_PORT].dart_swflags = sc->sc_dart[B_PORT].dart_swflags = 0;
@@ -195,7 +191,7 @@ const struct dart_s {
 	int dspeed;
 } dart_speeds[] = {
 	{ B0,		0	},	/* 0 baud, special HUP condition */
-        { B50,		NOBAUD	},	/* 50 baud, not implemented */
+	{ B50,		NOBAUD	},	/* 50 baud, not implemented */
 	{ B75,		BD75	},	/* 75 baud */
 	{ B110,		BD110	},	/* 110 baud */
 	{ B134,		BD134	},	/* 134.5 baud */
@@ -869,9 +865,9 @@ dartintr(void *arg)
 #define	dart_cnwrite(reg, val)	dart_write(sc, (reg), (val))
 #else
 #define	dart_cnread(reg) \
-	*(volatile u_int8_t *)(DART_BASE + 3 + ((reg) << 2))
+	*(volatile u_int8_t *)(CONSOLE_DART_BASE + 3 + ((reg) << 2))
 #define	dart_cnwrite(reg, val) \
-	*(volatile u_int8_t *)(DART_BASE + 3 + ((reg) << 2)) = (val)
+	*(volatile u_int8_t *)(CONSOLE_DART_BASE + 3 + ((reg) << 2)) = (val)
 #endif
 
 void
@@ -879,7 +875,7 @@ dartcnprobe(struct consdev *cp)
 {
 	int maj;
 
-	if (badaddr(DART_BASE, 4) != 0)
+	if (badaddr(CONSOLE_DART_BASE, 4) != 0)
 		return;
 
 #ifdef USE_PROM_CONSOLE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.3 2006/05/21 12:22:03 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.4 2007/12/19 21:52:47 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -173,8 +173,6 @@
 #define MASK_LVL_5		(LVL7 | LVL6)
 #define MASK_LVL_6		(LVL7)
 #define MASK_LVL_7		(IRQ_ABORT)
-
-#define DART_BASE		0xfff82000
 
 /*
  * CMMU addresses

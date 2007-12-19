@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart_syscon.c,v 1.1.1.1 2006/05/09 18:13:37 miod Exp $	*/
+/*	$OpenBSD: dart_syscon.c,v 1.2 2007/12/19 21:52:46 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -31,7 +31,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <machine/av400.h>
+#include <machine/avcommon.h>
 
 #include <aviion/dev/sysconreg.h>
 #include <aviion/dev/dartvar.h>
@@ -82,7 +82,7 @@ dart_syscon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_ioh = ioh;
 
-	if (ca->ca_paddr == DART_BASE) {
+	if (ca->ca_paddr == CONSOLE_DART_BASE) {
 		vec = SYSCV_SCC;
 		sc->sc_console = 1;	/* XXX for now */
 		printf(": console");
