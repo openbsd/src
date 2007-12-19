@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.2 2006/05/21 12:22:02 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.3 2007/12/19 21:51:29 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include <uvm/uvm.h>
 
 #include <net/if.h>
 
@@ -117,35 +119,79 @@ le_syscon_rdcsr(sc, port)
 
 int
 le_syscon_match(parent, cf, aux)
-        struct device *parent;
-        void *cf, *aux;
+	struct device *parent;
+	void *cf, *aux;
 {
-        return (1);
+	if (avtyp != AV_400)
+		return (0);
+
+	return (1);
 }
 
 void
 le_syscon_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
-        struct confargs *ca = aux;
-	extern void *etherbuf;
-	extern size_t etherlen;
+	struct confargs *ca = aux;
+	u_int etherpages;
+	struct pglist pglist;
+	vm_page_t pg;
+	int rc;
+	paddr_t pa;
+	vaddr_t va;
 
-	if (etherbuf == NULL) {
-		printf(": no available memory, kernel is too large\n");
+	/*
+	 * Allocate contiguous pages in the first 16MB to use as buffers.
+	 */
+	if (physmem >= atop(32 * 1024 * 1024))
+		etherpages = 64;
+	else if (physmem >= atop(16 * 1024 * 1024))
+		etherpages = 32;
+	else
+		etherpages = 16;
+	for (;;) {
+		TAILQ_INIT(&pglist);
+		rc = uvm_pglistalloc(ptoa(etherpages), 0, 1 << 24,
+		    0, 0, &pglist, 1, 0);
+		if (rc == 0)
+			break;
+
+		etherpages >>= 1;
+		if (etherpages == 2) {
+			printf(": no available memory, kernel is too large\n");
+			return;
+		}
+	}
+
+	va = uvm_km_valloc(kernel_map, ptoa(etherpages));
+	if (va == NULL) {
+		printf(": could not map descriptor memory\n");
+		uvm_pglistfree(&pglist);
 		return;
 	}
 
-        lesc->sc_r1 = (struct av_lereg *)ca->ca_paddr;
+	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 
-        sc->sc_mem = (void *)etherbuf;
-	etherbuf = NULL;
-        sc->sc_conf3 = LE_C3_BSWP;
-        sc->sc_addr = (u_long)sc->sc_mem & 0x00ffffff;
-        sc->sc_memsize = etherlen;
+	sc->sc_mem = (void *)va;
+	sc->sc_addr = (u_long)pa & 0x00ffffff;
+	sc->sc_memsize = ptoa(etherpages);
+
+	TAILQ_FOREACH(pg, &pglist, pageq) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    UVM_PROT_RW, UVM_PROT_RW | PMAP_WIRED);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+	pmap_cache_ctrl(pmap_kernel(), (vaddr_t)sc->sc_mem,
+	    (vaddr_t)sc->sc_mem + sc->sc_memsize, CACHE_INH);
+	pmap_update(pmap_kernel());
+
+	lesc->sc_r1 = (struct av_lereg *)ca->ca_paddr;
+
+	sc->sc_conf3 = LE_C3_BSWP;
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 

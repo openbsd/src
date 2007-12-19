@@ -1,4 +1,4 @@
-#	$OpenBSD: files.aviion,v 1.3 2007/03/01 21:44:02 miod Exp $
+#	$OpenBSD: files.aviion,v 1.4 2007/12/19 21:51:29 miod Exp $
 #
 maxpartitions 16
 
@@ -69,7 +69,6 @@ file	arch/aviion/aviion/av5000_machdep.c		av5000
 file	arch/aviion/aviion/av6280_machdep.c		av6280
 file	arch/aviion/aviion/m8820x.c			m88100
 file	arch/aviion/aviion/mem.c
-file	arch/aviion/aviion/pmap_bootstrap.c
 file	arch/aviion/aviion/pmap_table.c
 file	arch/aviion/aviion/prom.c
 file	arch/aviion/dev/mainbus.c
