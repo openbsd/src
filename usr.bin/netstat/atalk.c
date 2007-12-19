@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.15 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.16 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
-#else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.15 2007/12/14 18:35:46 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

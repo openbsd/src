@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.103 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.104 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
-#else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.103 2007/12/14 18:35:46 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

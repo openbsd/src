@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $	*/
+/*	$OpenBSD: unix.c,v 1.13 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
-#else
-static char *rcsid = "$OpenBSD: unix.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Display protocol blocks in the unix domain.

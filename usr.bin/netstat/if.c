@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.54 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.55 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
-#else
-static char *rcsid = "$OpenBSD: if.c,v 1.54 2007/12/14 18:35:46 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/protosw.h>

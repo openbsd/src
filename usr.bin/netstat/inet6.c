@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.35 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.36 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -28,16 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
-#else
-/*__RCSID("$OpenBSD: inet6.c,v 1.35 2007/12/14 18:35:46 deraadt Exp $");*/
-/*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

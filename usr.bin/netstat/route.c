@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.76 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.77 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
-#else
-static char *rcsid = "$OpenBSD: route.c,v 1.76 2007/12/14 18:35:46 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/protosw.h>

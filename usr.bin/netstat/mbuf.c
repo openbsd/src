@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.25 2007/12/11 20:14:45 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.26 2007/12/19 01:47:00 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
-#else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.25 2007/12/11 20:14:45 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/protosw.h>
