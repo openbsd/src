@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.30 2007/12/10 21:54:51 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.31 2007/12/19 11:25:16 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -238,6 +238,10 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		free(isc, M_AGP);
 		return (error);
 	}
+
+	if (isc->chiptype == CHIP_I965) 
+		memtype = pci_mapreg_type(isc->vga_pa.pa_pc,
+		    isc->vga_pa.pa_tag, mmaddr);
 
 	error = pci_mapreg_map(&isc->vga_pa, mmaddr, memtype, 0,
 	    &isc->bst, &isc->bsh, NULL, &isc->bsz, 0);
