@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.57 2007/12/14 20:55:08 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.58 2007/12/19 21:34:10 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -451,24 +451,14 @@ pccbbattach(parent, self, aux)
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
 
-	/*
-	 * When bus number isn't set correctly, give up using 32-bit CardBus
-	 * mode.
-	 */
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
-#if notyet
-	if (((busreg >> 8) & 0xff) == 0) {
-		printf(": CardBus support disabled because of unconfigured bus number\n");
-		flags |= PCCBB_PCMCIA_16BITONLY;
-	}
-#endif
 
 	/* pccbb_machdep.c end */
 
 #if defined CBB_DEBUG
 	{
 		static char *intrname[5] = { "NON", "A", "B", "C", "D" };
-		printf(": intrpin %s, intrtag %d\n",
+		printf(": intrpin %s, line %d\n",
 		    intrname[pa->pa_intrpin], pa->pa_intrline);
 	}
 #endif
@@ -511,7 +501,18 @@ pccbbattach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
+
+	/*
+	 * When bus number isn't set correctly, give up using 32-bit CardBus
+	 * mode.
+	 */
+	if (((busreg >> 8) & 0xff) == 0) {
+		printf(", CardBus support disabled");
+		sc->sc_pcmcia_flags |= PCCBB_PCMCIA_16BITONLY;
+	}
+
+	printf("\n");
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
