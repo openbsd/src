@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.1 2007/11/16 08:36:23 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -34,14 +34,21 @@
 # include <string.h>
 
 void acon(NODE *p);
-int argsize(NODE *p);
+void prtprolog(struct interpass_prolog *, int);
+int countargs(NODE *p, int *);
+void fixcalls(NODE *p);
 
 static int stkpos;
+int p2calls;
 
 static const int rl[] =
-  { R1, R5, R7, R9, R11, R13, R15, R17, T4, T2, ARG3, ARG1, RET1 };
+  { R0, R1, R1, R1, R1, R1, R31, R31, R31, R31,
+    R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18,
+    T1, T4, T3, T2, ARG3, ARG1, RET1 };
 static const int rh[] =
-  { R31, R4, R6, R8, R10, R12, R14, R16, T3, T1, ARG2, ARG0, RET0 };
+  { R0, R31, T4, T3, T2, T1, T4, T3, T2, T1,
+    R18, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17,
+    T4, T3, T2, T1, ARG2, ARG0, RET0 };
 
 void
 deflab(int label)
@@ -56,27 +63,42 @@ static TWORD ftype;
  * Print out the prolog assembler.
  * addto and regoff are already calculated.
  */
-static void
+void
 prtprolog(struct interpass_prolog *ipp, int addto)
 {
 	int i;
 
-	printf("\tcopy\t%%r3,%%r1\n"
-	    "\tcopy\t%%sp,%%r3\n"
-	    "\tstw,ma\t%%r1,%d(%%sp)\n", addto);
+	/* if this functions calls nothing -- no frame is needed */
+	if (p2calls || p2maxautooff > 4) {
+		printf("\tcopy\t%%r3,%%r1\n\tcopy\t%%sp,%%r3\n");
+		if (addto < 0x2000)
+			printf("\tstw,ma\t%%r1,%d(%%sp)\n", addto);
+		else if (addto < 0x802000)
+			printf("\tstw,ma\t%%r1,8192(%%sp)\n"
+			    "\taddil\t%d-8192,%%sp\n"
+			    "\tcopy\t%%r1,%%sp\n", addto);
+		else
+			comperr("too much local allocation");
+		if (p2calls)
+			printf("\tstw\t%%rp,-20(%%r3)\n");
+	}
+
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i)) {
 			if (i <= R31)
-				printf("\tstw\t%s,%d(%s)\n",
-				    rnames[i], regoff[i], rnames[FPREG]);
-			else if (i < RETD0)
-				printf("\tstw\t%s,%d(%s)\n\tstw\t%s,%d(%s)\n",
-				    rnames[rl[i - RD0]], regoff[i] + 0, rnames[FPREG],
-				    rnames[rh[i - RD0]], regoff[i] + 4, rnames[FPREG]);
+				printf("\tstw\t%s,%d(%%sp)\n",
+				    rnames[i], regoff[i]);
+			else if (i <= RETD0)
+				printf("\tstw\t%s,%d(%%sp)\n"
+				    "\tstw\t%s,%d(%%sp)\n",
+				    rnames[rl[i - RD0]], regoff[i] + 0,
+				    rnames[rh[i - RD0]], regoff[i] + 4);
 			else if (i <= FR31)
-				;
+				printf("\tfstws\t%s,%d(%%sp)\n",
+				    rnames[i], regoff[i]);
 			else
-				;
+				printf("\tfstds\t%s,%d(%%sp)\n",
+				    rnames[i], regoff[i]);
 		}
 }
 
@@ -89,12 +111,20 @@ offcalc(struct interpass_prolog *ipp)
 	int i, addto;
 
 	addto = 32;
+	if (p2calls) {
+		i = p2calls - 1;
+		/* round up to 4 args */
+		if (i < 4)
+			i = 4;
+		addto += i * 4;
+	}
+
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i)) {
 			regoff[i] = addto;
 			addto += SZINT/SZCHAR;
 		}
-	addto += p2maxautooff;
+	addto += 4 + p2maxautooff;
 	return (addto + 63) & ~63;
 }
 
@@ -128,13 +158,34 @@ eoftn(struct interpass_prolog *ipp)
 
 	/* return from function code */
 	for (i = 0; i < MAXREGS; i++)
-		if (TESTBIT(ipp->ipp_regs, i))
-			printf("\tldw\t%d(%s),%s\n",
-			    regoff[i], rnames[FPREG], rnames[i]);
+		if (TESTBIT(ipp->ipp_regs, i)) {
+			if (i <= R31)
+				printf("\tldw\t%d(%%sp),%s\n",
+				    regoff[i], rnames[i]);
+			else if (i <= RETD0)
+				printf("\tldw\t%d(%%sp),%s\n"
+				    "\tldw\t%d(%%sp),%s\n",
+				    regoff[i] + 0, rnames[rl[i - RD0]],
+				    regoff[i] + 4, rnames[rh[i - RD0]]);
+			else if (i <= FR31)
+				printf("\tfldws\t%d(%%sp),%s\n",
+				    regoff[i], rnames[i]);
+			else
+				printf("\tfldds\t%d(%%sp),%s\n",
+				    regoff[i], rnames[i]);
+		}
 
-	/* TODO restore sp,rp */
-	printf("\tbv\t%%r0(%%rp)\n\tnop\n"
-	    "\t.exit\n\t.procend\n\t.size\t%s, .-%s\n",
+	if (p2calls || p2maxautooff > 4) {
+		if (p2calls)
+			printf("\tldw\t-20(%%r3),%%rp\n");
+		printf("\tcopy\t%%r3,%%r1\n"
+		    "\tldw\t(%%r3),%%r3\n"
+		    "\tbv\t%%r0(%%rp)\n"
+		    "\tcopy\t%%r1,%%sp\n");
+	} else
+		printf("\tbv\t%%r0(%%rp)\n\tnop\n");
+
+	printf("\t.exit\n\t.procend\n\t.size\t%s, .-%s\n",
 	    ipp->ipp_name, ipp->ipp_name);
 }
 
@@ -176,17 +227,17 @@ hopcode(int f, int o)
 	case LT:
 		str = "<=";
 		break;
-	case GE:
-		str = ">";
-		break;
-	case GT:
-		str = ">=";
-		break;
 	case ULE:
 		str = "<<";
 		break;
 	case ULT:
 		str = "<<=";
+		break;
+	case GE:
+		str = ">=";
+		break;
+	case GT:
+		str = ">";
 		break;
 	case UGE:
 		str = ">>";
@@ -256,6 +307,52 @@ argsiz(NODE *p)
 	return 0;
 }
 
+/*
+ * Emit code to compare two longlong numbers.
+ */
+static void
+twollcomp(NODE *p)
+{
+	int o = p->n_op;
+	int s = getlab();
+	int e = p->n_label;
+	int cb1, cb2;
+
+	if (o >= ULE)
+		o -= (ULE-LE);
+	switch (o) {
+	case NE:
+		cb1 = 0;
+		cb2 = NE;
+		break;
+	case EQ:
+		cb1 = NE;
+		cb2 = 0;
+		break;
+	case LE:
+	case LT:
+		cb1 = GT;
+		cb2 = LT;
+		break;
+	case GE:
+	case GT:
+		cb1 = LT;
+		cb2 = GT;
+		break;
+	
+	default:
+		cb1 = cb2 = 0; /* XXX gcc */
+	}
+	if (p->n_op >= ULE)
+		cb1 += 4, cb2 += 4;
+	expand(p, 0, "	cmpl UR,UL\n");
+	if (cb1) cbgen(cb1, s);
+	if (cb2) cbgen(cb2, e);
+	expand(p, 0, "	cmpl AR,AL\n");
+	cbgen(p->n_op, e);
+	deflab(s);
+}
+
 void
 zzzcode(NODE *p, int c)
 {
@@ -264,18 +361,18 @@ zzzcode(NODE *p, int c)
 	switch (c) {
 
 	case 'C':	/* after-call fixup */
-		n = p->n_qual;
-		if (n)
-			printf("\tldo\t-%d(%%sp),%%sp\n", n);
+		n = p->n_qual;	/* args */
 		break;
 
 	case 'P':	/* returning struct-call setup */
-		n = p->n_qual;
-		if (n)
-			printf("\tldo\t%d(%%sp),%%sp\n", n);
+		n = p->n_qual;	/* args */
 		break;
 
-	case 'F':	/* output extr/dep offset/len parts for bitfields */
+	case 'D':	/* Long long comparision */
+		twollcomp(p);
+		break;
+
+	case 'F':	/* struct as an arg */
 
 	default:
 		comperr("zzzcode %c", c);
@@ -472,15 +569,42 @@ cbgen(int o, int lab)
 {
 }
 
-static void
+int
+countargs(NODE *p, int *n)
+{
+	int sz;
+	
+	if (p->n_op == CM) {
+		countargs(p->n_left, n);
+		countargs(p->n_right, n);
+		return *n;
+	}
+
+	sz = argsiz(p) / 4;
+	if (*n % (sz > 4? 4 : sz))
+		(*n)++; /* XXX */
+
+	return *n += sz;
+}
+
+void
 fixcalls(NODE *p)
 {
+	int n, o;
+
 	/* Prepare for struct return by allocating bounce space on stack */
-	switch (p->n_op) {
+	switch (o = p->n_op) {
 	case STCALL:
 	case USTCALL:
-		if (p->n_stsize+p2autooff > stkpos)
-			stkpos = p->n_stsize+p2autooff;
+		if (p->n_stsize + p2autooff > stkpos)
+			stkpos = p->n_stsize + p2autooff;
+		/* FALLTHROGH */
+	case CALL:
+	case UCALL:
+		n = 0;
+		n = 1 + countargs(p->n_right, &n);
+		if (n > p2calls)
+			p2calls = n;
 		break;
 	}
 }
@@ -492,9 +616,15 @@ myreader(struct interpass *ipole)
 
 	stkpos = p2autooff;
 	DLIST_FOREACH(ip, ipole, qelem) {
-		if (ip->type != IP_NODE)
-			continue;
-		walkf(ip->ip_node, fixcalls);
+		switch (ip->type) {
+		case IP_PROLOG:
+			p2calls = 0;
+			break;
+
+		case IP_NODE:
+			walkf(ip->ip_node, fixcalls);
+			break;
+		}
 	}
 	if (stkpos > p2autooff)
 		p2autooff = stkpos;
@@ -537,7 +667,7 @@ mycanon(NODE *p)
 }
 
 void
-myoptim(struct interpass *ip)
+myoptim(struct interpass *ipole)
 {
 }
 
@@ -554,13 +684,6 @@ rmove(int s, int d, TWORD t)
 		dl = rl[d-RD0];
 		dh = rh[d-RD0];
 
-		/* sanity checks, remove when satisfied */
-		if (memcmp(rnames[s], rnames[sl]+1, 3) != 0 ||
-		    memcmp(rnames[s]+3, rnames[sh]+1, 3) != 0)
-			comperr("rmove source error");
-		if (memcmp(rnames[d], rnames[dl]+1, 3) != 0 ||
-		    memcmp(rnames[d]+3, rnames[dh]+1, 3) != 0)
-			comperr("rmove dest error");
 #define	SW(x,y) { int i = x; x = y; y = i; }
 		if (sl == dh || sh == dl) {
 			/* Swap if moving to itself */
@@ -615,12 +738,14 @@ COLORMAP(int c, int *r)
 }
 
 const char * const rnames[MAXREGS] = {
-	"%r1", "%rp", "%r3", "%r4", "%r5", "%r6", "%r7", "%r8", "%r9",
+	"%r0", "%r1", "%rp", "%r3", "%r4", "%r5", "%r6", "%r7", "%r8", "%r9",
 	"%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%r16", "%r17", "%r18",
 	"%t4", "%t3", "%t2", "%t1", "%arg3", "%arg2", "%arg1", "%arg0", "%dp",
 	"%ret0", "%ret1", "%sp", "%r31",
 	"%rd0", "%rd1", "%rd2", "%rd3", "%rd4", "%rd5", "%rd6", "%rd7",
-	"%td2", "%td1", "%ad1", "%ad0", "%retd0",
+	"%rd8", "%rd9", "%rd10", "%rd11", "%rd12", "%rd13", "%rd14", "%rd15",
+	"%rd16", "%rd17", "%rd18", "%rd19", "%rd20", "%rd21", "%rd22", "%rd23",
+	"%rd24", "%td4", "%td3", "%td2", "%td1", "%ad1", "%ad0", "%retd0",
 	"%fr0", "%fr4", "%fr5", "%fr6", "%fr7", "%fr8", "%fr9", "%fr10",
 	"%fr11", "%fr12", "%fr13", "%fr14", "%fr15", "%fr16", "%fr17", "%fr18",
 	"%fr19", "%fr20", "%fr21", "%fr22", "%fr23", "%fr24", "%fr25", "%fr26",
@@ -629,9 +754,9 @@ const char * const rnames[MAXREGS] = {
 	"%fr7l", "%fr7r", "%fr8l", "%fr8r", "%fr9l", "%fr9r",
 	"%fr10l", "%fr10r", "%fr11l", "%fr11r", "%fr12l", "%fr12r",
 	"%fr13l", "%fr13r", "%fr14l", "%fr14r", "%fr15l", "%fr15r",
-	"%fr16l", "%fr16r", "%fr17l", "%fr17r",
+	"%fr16l", "%fr16r", "%fr17l", "%fr17r", "%fr18l", "%fr18r",
 #ifdef __hppa64__
-	"%fr18l", "%fr18r", "%fr19l", "%fr19r",
+	"%fr19l", "%fr19r",
 	"%fr20l", "%fr20r", "%fr21l", "%fr21r", "%fr22l", "%fr22r",
 	"%fr23l", "%fr23r", "%fr24l", "%fr24r", "%fr25l", "%fr25r",
 	"%fr26l", "%fr26r", "%fr27l", "%fr27r", "%fr28l", "%fr28r",
@@ -690,6 +815,11 @@ special(NODE *p, int shape)
 		if (o == STCALL || o == USTCALL)
 			return SRREG;
 		break;
+	case SPIMM:
+		if (o != ICON || p->n_name[0] ||
+		    p->n_lval < -31 || p->n_lval >= 32)
+			break;
+		return SRDIR;
 	case SPICON:
 		if (o != ICON || p->n_name[0] ||
 		    p->n_lval < -1024 || p->n_lval >= 1024)
@@ -706,4 +836,12 @@ special(NODE *p, int shape)
 		return SRDIR;
 	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.1 2007/11/16 08:36:23 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -101,8 +101,6 @@ typedef long long OFFSZ;
 #undef	BACKAUTO	/* stack grows upwards */
 #undef	BACKTEMP	/* stack grows upwards */
 
-#define	MYP2TREE(p)	myp2tree(p)
-
 #define	FIELDOPS	/* have bit field ops */
 #define	LTORBYTES	/* big endian */
 
@@ -114,154 +112,174 @@ typedef long long OFFSZ;
 #define	STOFARG(p)
 #define	STOSTARG(p)
 
-#define	szty(t)	(((t) == DOUBLE || (t) == FLOAT || \
-        (t) == LONGLONG || (t) == ULONGLONG) ? 2 : (t) == LDOUBLE ? 2 : 1)
+#define	szty(t)	(((t) == DOUBLE || (t) == LONGLONG || (t) == ULONGLONG) ? 2 : \
+	    (t) == LDOUBLE ? 2 : 1)
 
-#define	R1	0
-#define	RP	1
-#define	FP	2
-#define	R4	3
-#define	R5	4
-#define	R6	5
-#define	R7	6
-#define	R8	7
-#define	R9	8
-#define	R10	9
-#define	R11	10
-#define	R12	11
-#define	R13	12
-#define	R14	13
-#define	R15	14
-#define	R16	15
-#define	R17	16
-#define	R18	17
-#define	T4	18
-#define	T3	19
-#define	T2	20
-#define	T1	21
-#define	ARG3	22
-#define	ARG2	23
-#define	ARG1	24
-#define	ARG0	25
-#define	DP	26
-#define	RET0	27
-#define	RET1	28
-#define	SP	29
-#define	R31	30
+#define	R0	0
+#define	R1	1
+#define	RP	2
+#define	FP	3
+#define	R4	4
+#define	R5	5
+#define	R6	6
+#define	R7	7
+#define	R8	8
+#define	R9	9
+#define	R10	10
+#define	R11	11
+#define	R12	12
+#define	R13	13
+#define	R14	14
+#define	R15	15
+#define	R16	16
+#define	R17	17
+#define	R18	18
+#define	T4	19
+#define	T3	20
+#define	T2	21
+#define	T1	22
+#define	ARG3	23
+#define	ARG2	24
+#define	ARG1	25
+#define	ARG0	26
+#define	DP	27
+#define	RET0	28
+#define	RET1	29
+#define	SP	30
+#define	R31	31
 
 /* double regs overlay */
-#define	RD0	31	/* r1:r31 */
-#define	RD1	32	/* r5:r4 */
-#define	RD2	33	/* r7:r6 */
-#define	RD3	34	/* r9:r8 */
-#define	RD4	35	/* r11:r10 */
-#define	RD5	36	/* r13:r12 */
-#define	RD6	37	/* r15:r14 */
-#define	RD7	38	/* r17:r16 */
-#define	TD2	39	/* t4:t3 */
-#define	TD1	40	/* t2:t1 */
-#define	AD2	41	/* arg3:arg2 */
-#define	AD1	42	/* arg1:arg0 */
-#define	RETD0	43	/* ret1:ret0 */
+#define	RD0	32	/* r0:r0 */
+#define	RD1	33	/* r1:r31 */
+#define	RD2	34	/* r1:t4 */
+#define	RD3	35	/* r1:t3 */
+#define	RD4	36	/* r1:t2 */
+#define	RD5	37	/* r1:t1 */
+#define	RD6	38	/* r31:t4 */
+#define	RD7	39	/* r31:t3 */
+#define	RD8	40	/* r31:t2 */
+#define	RD9	41	/* r31:t1 */
+#define	RD10	42	/* r4:r18 */
+#define	RD11	43	/* r5:r4 */
+#define	RD12	44	/* r6:r5 */
+#define	RD13	45	/* r7:r6 */
+#define	RD14	46	/* r8:r7 */
+#define	RD15	47	/* r9:r8 */
+#define	RD16	48	/* r10:r9 */
+#define	RD17	49	/* r11:r10 */
+#define	RD18	50	/* r12:r11 */
+#define	RD19	51	/* r13:r12 */
+#define	RD20	52	/* r14:r13 */
+#define	RD21	53	/* r15:r14 */
+#define	RD22	54	/* r16:r15 */
+#define	RD23	55	/* r17:r16 */
+#define	RD24	56	/* r18:r17 */
+#define	TD4	57	/* t1:t4 */
+#define	TD3	58	/* t4:t3 */
+#define	TD2	59	/* t3:t2 */
+#define	TD1	60	/* t2:t1 */
+#define	AD2	61	/* arg3:arg2 */
+#define	AD1	62	/* arg1:arg0 */
+#define	RETD0	63	/* ret1:ret0 */
 
 /* FPU regs */
-#define	FR0	44
-#define	FR4	45
-#define	FR5	46
-#define	FR6	47
-#define	FR7	48
-#define	FR8	49
-#define	FR9	50
-#define	FR10	51
-#define	FR11	52
-#define	FR12	53
-#define	FR13	54
-#define	FR14	55
-#define	FR15	56
-#define	FR16	57
-#define	FR17	58
-#define	FR18	59
-#define	FR19	60
-#define	FR20	61
-#define	FR21	62
-#define	FR22	63
-#define	FR23	64
-#define	FR24	65
-#define	FR25	66
-#define	FR26	67
-#define	FR27	68
-#define	FR28	69
-#define	FR29	70
-#define	FR30	71
-#define	FR31	72
+#define	FR0	64
+#define	FR4	65
+#define	FR5	66
+#define	FR6	67
+#define	FR7	68
+#define	FR8	69
+#define	FR9	70
+#define	FR10	71
+#define	FR11	72
+#define	FR12	73
+#define	FR13	74
+#define	FR14	75
+#define	FR15	76
+#define	FR16	77
+#define	FR17	78
+#define	FR18	79
+#define	FR19	80
+#define	FR20	81
+#define	FR21	82
+#define	FR22	83
+#define	FR23	84
+#define	FR24	85
+#define	FR25	86
+#define	FR26	87
+#define	FR27	88
+#define	FR28	89
+#define	FR29	90
+#define	FR30	91
+#define	FR31	92
 
-#define	FR0L	73
-#define	FR0R	74
-#define	FR4L	75
-#define	FR4R	76
-#define	FR5L	77
-#define	FR5R	78
-#define	FR6L	79
-#define	FR6R	80
-#define	FR7L	81
-#define	FR7R	82
-#define	FR8L	83
-#define	FR8R	84
-#define	FR9L	85
-#define	FR9R	86
-#define	FR10L	87
-#define	FR10R	88
-#define	FR11L	89
-#define	FR11R	90
-#define	FR12L	91
-#define	FR12R	92
-#define	FR13L	93
-#define	FR13R	94
-#define	FR14L	95
-#define	FR14R	96
-#define	FR15L	97
-#define	FR15R	98
-#define	FR16L	99
-#define	FR16R	100
-#define	FR17L	101
-#define	FR17R	102
+#define	FR0L	93
+#define	FR0R	94
+#define	FR4L	95
+#define	FR4R	96
+#define	FR5L	97
+#define	FR5R	98
+#define	FR6L	99
+#define	FR6R	100
+#define	FR7L	101
+#define	FR7R	102
+#define	FR8L	103
+#define	FR8R	104
+#define	FR9L	105
+#define	FR9R	106
+#define	FR10L	107
+#define	FR10R	108
+#define	FR11L	109
+#define	FR11R	110
+#define	FR12L	111
+#define	FR12R	112
+#define	FR13L	113
+#define	FR13R	114
+#define	FR14L	115
+#define	FR14R	116
+#define	FR15L	117
+#define	FR15R	118
+#define	FR16L	119
+#define	FR16R	120
+#define	FR17L	121
+#define	FR17R	122
+#define	FR18L	123
+#define	FR18R	124
 #ifdef __hppa64__
-#define	FR18L	103
-#define	FR18R	104
-#define	FR19L	105
-#define	FR19R	106
-#define	FR20L	107
-#define	FR20R	108
-#define	FR21L	109
-#define	FR21R	110
-#define	FR22L	111
-#define	FR22R	112
-#define	FR23L	113
-#define	FR23R	114
-#define	FR24L	115
-#define	FR24R	116
-#define	FR25L	117
-#define	FR25R	118
-#define	FR26L	119
-#define	FR26R	120
-#define	FR27L	121
-#define	FR27R	122
-#define	FR28L	123
-#define	FR28R	124
-#define	FR29L	125
-#define	FR29R	126
-#define	FR30L	127
-#define	FR30R	128
-#define	FR31L	129
-#define	FR31R	130
+#define	FR19L	125
+#define	FR19R	126
+#define	FR20L	127
+#define	FR20R	128
+#define	FR21L	129
+#define	FR21R	130
+#define	FR22L	131
+#define	FR22R	132
+#define	FR23L	133
+#define	FR23R	134
+#define	FR24L	135
+#define	FR24R	136
+#define	FR25L	137
+#define	FR25R	138
+#define	FR26L	139
+#define	FR26R	140
+#define	FR27L	141
+#define	FR27R	142
+#define	FR28L	143
+#define	FR28R	144
+#define	FR29L	145
+#define	FR29R	146
+#define	FR30L	147
+#define	FR30R	148
+#define	FR31L	149
+#define	FR31R	150
 
-#define	MAXREGS	131
+#define	MAXREGS	151
 #else
-#define	MAXREGS	103
+#define	MAXREGS	125
 #endif
 
 #define	RSTATUS \
-	SAREG|TEMPREG, 0, 0, SAREG|PERMREG, SAREG|PERMREG, \
+	0, SAREG|TEMPREG, 0, 0, SAREG|PERMREG, SAREG|PERMREG,		\
 	SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG,	\
 	SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG,	\
 	SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG,	\
@@ -270,8 +288,11 @@ typedef long long OFFSZ;
 	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, 	\
 	0, SAREG|TEMPREG, SAREG|TEMPREG, 0, SAREG|TEMPREG,		\
 	/* double overlays */						\
+	0,								\
+	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,		\
+	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,		\
+	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,		\
 	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,		\
-	SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,			\
 	/* double-precision floats */					\
 	0,								\
 	SDREG|TEMPREG, SDREG|TEMPREG, SDREG|TEMPREG, SDREG|TEMPREG,	\
@@ -283,43 +304,75 @@ typedef long long OFFSZ;
 	SDREG|TEMPREG, SDREG|TEMPREG, SDREG|TEMPREG, SDREG|TEMPREG,	\
 	SDREG|TEMPREG, SDREG|TEMPREG,					\
 	/* single-precision floats */					\
-	0, 0, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
+	0, 0,								\
 	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
 	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
-	SCREG, SCREG, SCREG, SCREG, SCREG,
+	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
+	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,
 #ifdef __hppa64__
-	SCREG, SCREG, SCREG,		\
+	SCREG, SCREG,		\
 	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
 	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,		\
-	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,
+	SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG, SCREG,
 #endif
 
 #define	ROVERLAP \
-	{ RD0, -1 }, { -1 }, { -1 },	\
-	{ RD1, -1 }, { RD1, -1 },	\
-	{ RD2, -1 }, { RD2, -1 },	\
-	{ RD3, -1 }, { RD3, -1 },	\
-	{ RD4, -1 }, { RD4, -1 },	\
-	{ RD5, -1 }, { RD5, -1 },	\
-	{ RD6, -1 }, { RD6, -1 },	\
-	{ RD7, -1 }, { RD7, -1 },	\
 	{ -1 },				\
-	{ TD2, -1 }, { TD2, -1 },	\
-	{ TD1, -1 }, { TD1, -1 },	\
+	{ RD1, RD2, RD3, RD4, RD5, -1 },\
+	{ -1 }, { -1 },			\
+	{ RD10, RD11, -1 },		\
+	{ RD11, RD12, -1 },		\
+	{ RD12, RD13, -1 },		\
+	{ RD13, RD14, -1 },		\
+	{ RD14, RD15, -1 },		\
+	{ RD15, RD16, -1 },		\
+	{ RD16, RD17, -1 },		\
+	{ RD17, RD18, -1 },		\
+	{ RD18, RD19, -1 },		\
+	{ RD19, RD20, -1 },		\
+	{ RD20, RD21, -1 },		\
+	{ RD21, RD22, -1 },		\
+	{ RD22, RD23, -1 },		\
+	{ RD23, RD24, -1 },		\
+	{ RD24, RD10, -1 },		\
+	{ TD1, TD4, -1 },		\
+	{ TD3, TD2, -1 },		\
+	{ TD1, TD2, -1 },		\
+	{ TD1, TD4, -1 },		\
 	{ AD2, -1 }, { AD2, -1 },	\
 	{ AD1, -1 }, { AD1, -1 },	\
 	{ -1 },				\
 	{ RETD0, -1 }, { RETD0, -1 },	\
-	{ -1 }, { RD0, -1 },		\
+	{ -1 },				\
+	{ RD1, RD5, RD6, RD7, RD8, -1 },\
+	{ -1 },				\
 	{ R1, R31, -1 },		\
-	{ R4, R5, -1 },			\
-	{ R6, R7, -1 },			\
-	{ R8, R9, -1 },			\
-	{ R10, R11, -1 },		\
-	{ R12, R13, -1 },		\
+	{ R1, T4, -1 },			\
+	{ R1, T3, -1 },			\
+	{ R1, T2, -1 },			\
+	{ R1, T1, -1 },			\
+	{ R31, T4, -1 },		\
+	{ R31, T3, -1 },		\
+	{ R31, T2, -1 },		\
+	{ R31, T1, -1 },		\
+	{ R4, R18, -1 },		\
+	{ R5, R4, -1 },			\
+	{ R6, R5, -1 },			\
+	{ R7, R6, -1 },			\
+	{ R8, R7, -1 },			\
+	{ R9, R8, -1 },			\
+	{ R10, R9, -1 },		\
+	{ R11, R10, -1 },		\
+	{ R12, R11, -1 },		\
+	{ R13, R12, -1 },		\
 	{ R14, R15, -1 },		\
-	{ R16, R17, -1 },		\
+	{ R15, R14, -1 },		\
+	{ R16, R15, -1 },		\
+	{ R17, R16, -1 },		\
+	{ R18, R17, -1 },		\
+	{ T1, T4, -1 },			\
 	{ T4, T3, -1 },			\
+	{ T3, T2, -1 },			\
 	{ T2, T1, -1 },			\
 	{ ARG3, ARG2, -1 },		\
 	{ ARG1, ARG0, -1 },		\
@@ -339,7 +392,7 @@ typedef long long OFFSZ;
 	{ FR15L, FR15R, -1 },		\
 	{ FR16L, FR16R, -1 },		\
 	{ FR17L, FR17R, -1 },		\
-	{ -1 },				\
+	{ FR18L, FR18R, -1 },		\
 	{ -1 },				\
 	{ -1 },				\
 	{ -1 },				\
@@ -367,9 +420,9 @@ typedef long long OFFSZ;
 	{ FR14, -1 }, { FR14, -1 },	\
 	{ FR15, -1 }, { FR15, -1 },	\
 	{ FR16, -1 }, { FR16, -1 },	\
-	{ FR17, -1 }, { FR17, -1 },
+	{ FR17, -1 }, { FR17, -1 },	\
+	{ FR18, -1 }, { FR18, -1 },
 #ifdef __hppa64__
-	{ FR18, -1 }, { FR18, -1 },	\
 	{ FR19, -1 }, { FR19, -1 },	\
 	{ FR20, -1 }, { FR20, -1 },	\
 	{ FR21, -1 }, { FR21, -1 },	\
@@ -393,9 +446,8 @@ typedef long long OFFSZ;
 #define	NUMCLASS	4	/* highest number of reg classes used */
 
 int COLORMAP(int c, int *r);
-TOWRD gtype(int);
-#define	PERMTYPE(x) ((x) < 31? INT : ((x) < 44? LONGLONG : ((x) < 73? LDOUBLE : FLOAT)))
-#define	GCLASS(x) ((x) < 31? CLASSA : ((x) < 44? CLASSB : ((x) < 73? CLASSD : CLASSC)))
+#define	PERMTYPE(x) ((x) < 32? INT : ((x) < 64? LONGLONG : ((x) < 93? LDOUBLE : FLOAT)))
+#define	GCLASS(x) ((x) < 32? CLASSA : ((x) < 64? CLASSB : ((x) < 93? CLASSD : CLASSC)))
 #define	DECRA(x,y)	(((x) >> (y*8)) & 255)	/* decode encoded regs */
 #define	ENCRD(x)	(x)			/* Encode dest reg in n_reg */
 #define	ENCRA1(x)	((x) << 8)		/* A1 */
@@ -415,4 +467,5 @@ TOWRD gtype(int);
 #define	SFUNCALL	(MAXSPECIAL+1)	/* struct assign after function call */
 #define	SPCON		(MAXSPECIAL+2)	/* smaller constant */
 #define	SPICON		(MAXSPECIAL+3)	/* even smaller constant */
-#define	SPNAME		(MAXSPECIAL+4)	/* ext symbol reference load/store */
+#define	SPIMM		(MAXSPECIAL+4)	/* immidiate const for depi/comib */
+#define	SPNAME		(MAXSPECIAL+5)	/* ext symbol reference load/store */

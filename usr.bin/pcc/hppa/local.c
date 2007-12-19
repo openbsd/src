@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.2 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.3 2007/12/19 20:19:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -48,10 +48,10 @@
 NODE *
 clocal(NODE *p)
 {
-
 	register struct symtab *q;
 	register NODE *r, *l, *s;
 	register int o, m, rn;
+	char *ch, name[16];
 	TWORD t;
 
 #ifdef PCC_DEBUG
@@ -60,7 +60,7 @@ clocal(NODE *p)
 		fwalk(p, eprint, 0);
 	}
 #endif
-	switch( o = p->n_op ){
+	switch (o = p->n_op) {
 
 	case NAME:
 		if ((q = p->n_sp) == NULL)
@@ -76,11 +76,11 @@ clocal(NODE *p)
 				r->n_lval = 0;
 				switch (p->n_type) {
 				case FLOAT:
-					/* TODO */
+					r->n_rval = FR7L - rn;
 					break;
 				case DOUBLE:
 				case LDOUBLE:
-					/* TODO */
+					r->n_rval = FR6 - rn;
 					break;
 				case LONGLONG:
 				case ULONGLONG:
@@ -122,7 +122,7 @@ clocal(NODE *p)
 			r->n_lval = 0;
 			p = block(UMUL,
 			    block(PLUS, l, r, INT, 0, 0),
-			    NIL, p->n_type, p->n_df, MKSUE(p->n_type));
+			    NIL, p->n_type, p->n_df, p->n_sue);
 			break;
 		}
 		break;
@@ -131,38 +131,18 @@ clocal(NODE *p)
 		if (!ISFTN(p->n_left->n_type))
 			break;
 
-		t = p->n_type;
-		l = p->n_left;
-		nfree(p);
-		p = l;
 		l = block(REG, NIL, NIL, INT, 0, 0);
 		l->n_lval = 0;
 		l->n_rval = R1;
-		l = block(ASSIGN, l, p, INT, 0, 0);
+		l = block(ASSIGN, l, p->n_left, INT, 0, 0);
 		r = block(ICON, NIL, NIL, INT, 0, 0);
-		r->n_sp = p->n_sp;
+		r->n_sp = p->n_left->n_sp;
 		r->n_lval = 0;
-		p = block(PLUS, l, r, t, 0, 0);
+		l = block(PLUS, l, r, p->n_type, p->n_df, p->n_sue);
+		nfree(p);
+		p = l;
 		break;
 
-	case STCALL:
-	case CALL:
-		/* Fix function call arguments. On x86, just add funarg */
-		for (r = p->n_right; r->n_op == CM; r = r->n_left) {
-			if (r->n_right->n_op != STARG &&
-			    r->n_right->n_op != FUNARG)
-				/* TODO put first four into regs */
-				r->n_right = block(FUNARG, r->n_right, NIL, 
-				    r->n_right->n_type, r->n_right->n_df,
-				    r->n_right->n_sue);
-		}
-		if (r->n_op != STARG && r->n_op != FUNARG) {
-			l = talloc();
-			*l = *r;
-			r->n_op = FUNARG; r->n_left = l; r->n_type = l->n_type;
-		}
-		break;
-		
 	case CBRANCH:
 		l = p->n_left;
 
@@ -375,9 +355,25 @@ clocal(NODE *p)
 		break;
 
 	case ASSIGN:
+		r = p->n_right;
+		l = p->n_left;
+
+		/* rewrite ICON#0 into %r0 */
+		if (r->n_op == ICON && r->n_lval == 0 &&
+		    (l->n_op == REG || l->n_op == OREG)) {
+			r->n_op = REG;
+			r->n_rval = R0;
+		}
+
+		/* rewrite FCON#0 into %fr0 */
+		if (r->n_op == FCON && r->n_lval == 0 && l->n_op == REG) {
+			r->n_op = REG;
+			r->n_rval = r->n_type == FLOAT? FR0L : FR0;
+		}
+
 		if (p->n_left->n_op != FLD)
 			break;
-		l = p->n_left;
+
 		r = tempnode(0, l->n_type, l->n_df, l->n_sue);
 		p = block(COMOP,
 		    block(ASSIGN, r, l->n_left, l->n_type, l->n_df, l->n_sue),
@@ -389,6 +385,40 @@ clocal(NODE *p)
 		l->n_left = tcopy(r);
 		break;
 	}
+
+	/* second pass - rewrite long ops */
+	switch (o) {
+	case DIV:
+	case MOD:
+	case MUL:
+	case RS:
+	case LS:
+		if (!(p->n_type == LONGLONG || p->n_type == ULONGLONG) ||
+		    !((o == DIV || o == MOD || o == MUL) &&
+		      p->n_type < FLOAT))
+			break;
+		if (o == DIV && p->n_type == ULONGLONG) ch = "udiv";
+		else if (o == DIV) ch = "div";
+		else if (o == MUL) ch = "mul";
+		else if (o == MOD && p->n_type == ULONGLONG) ch = "umod";
+		else if (o == MOD) ch = "mod";
+		else if (o == RS && p->n_type == ULONGLONG) ch = "lshr";
+		else if (o == RS) ch = "ashr";
+		else if (o == LS) ch = "ashl";
+		else break;
+		snprintf(name, sizeof(name), "__%sdi3", ch);
+		p->n_right = block(CM, p->n_left, p->n_right, 0, 0, 0);
+		p->n_left = block(ADDROF,
+		    block(NAME, NIL, NIL, FTN, 0, MKSUE(INT)), NIL,
+		    PTR|FTN, 0, MKSUE(INT));
+		p->n_left->n_left->n_sp = lookup(addname(name), 0);
+		defid(p->n_left->n_left, EXTERN);
+		p->n_left = clocal(p->n_left);
+		p->n_op = CALL;
+		funcode(p);
+		break;
+	}
+
 #ifdef PCC_DEBUG
 	if (xdebug) {
 		printf("clocal end: %p\n", p);
@@ -416,11 +446,12 @@ andable(NODE *p)
 void
 cendarg()
 {
+	/* TODO can use to generate sp/rp tree ops? */
 	autooff = AUTOINIT;
 }
 
 /*
- * Return 1 if a variable of type type is OK to put in register.
+ * Return 1 if a variable of type "t" is OK to put in register.
  */
 int
 cisreg(TWORD t)
@@ -514,14 +545,14 @@ instring(char *str)
 	char *s;
 
 	/* be kind to assemblers and avoid long strings */
-	printf("\t.ascii \"");
+	printf("\t.ascii\t\"");
 	for (s = str; *s != 0; ) {
 		if (*s++ == '\\') {
 			(void)esccon(&s);
 		}
 		if (s - str > 64) {
 			fwrite(str, 1, s - str, stdout);
-			printf("\"\n\t.ascii \"");
+			printf("\"\n\t.ascii\t\"");
 			str = s;
 		}
 	}
@@ -643,6 +674,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 		/* FALLTHROUGH */
 	case CHAR:
 	case UCHAR:
+		/* TODO make the upper layer give an .asciz */
 		printf("\t.byte %d\n", (int)p->n_lval & 0xff);
 		break;
 	case LDOUBLE:

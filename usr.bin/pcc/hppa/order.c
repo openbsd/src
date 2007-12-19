@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.1 2007/11/16 08:36:23 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -108,18 +108,6 @@ shumul(NODE *p)
 }
 
 /*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
-}
-
-/*
  * Rewrite operations on binary operators (like +, -, etc...).
  * Called as a result of table lookup.
  */
@@ -201,3 +189,11 @@ livecall(NODE *p)
 	return &r[0];
 }
 
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
+}
