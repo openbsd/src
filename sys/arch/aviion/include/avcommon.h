@@ -1,4 +1,4 @@
-/*	$OpenBSD: avcommon.h,v 1.3 2007/12/19 21:52:47 miod Exp $	*/
+/*	$OpenBSD: avcommon.h,v 1.4 2007/12/19 22:05:06 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,7 +62,6 @@
 
 #define	AV_IST		0xfff84040 	/* interrupt status register */
 
-#define INT_LEVEL	        8		/* # of interrupt level + 1 */
 #define ISR_GET_CURRENT_MASK(cpu) \
 	(*(volatile u_int *)AV_IST & int_mask_reg[cpu])
 
@@ -183,5 +182,17 @@
 #define CIO_IP			0x20	/* CTC Interrupt pending */
 
 #define CONSOLE_DART_BASE	0xfff82000
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+
+#include <machine/intr.h>
+
+/*
+ * Interrupt masks, one per IPL level.
+ */
+extern u_int32_t int_mask_val[NIPLS];
+extern u_int32_t ext_int_mask_val[NIPLS];
+
+#endif
 
 #endif	/* __MACHINE_AVCOMMON_H__ */

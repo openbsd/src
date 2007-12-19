@@ -1,6 +1,6 @@
-/*	$OpenBSD: vme.c,v 1.3 2006/05/21 12:22:02 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.4 2007/12/19 22:05:06 miod Exp $	*/
 /*
- * Copyright (c) 2006, Miodrag Vallat.
+ * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 
+#include <machine/board.h>
 #include <machine/bus.h>
 #include <machine/conf.h>
 
@@ -45,8 +46,7 @@
 #include <aviion/dev/vmevar.h>
 
 #include <machine/avcommon.h>
-#include <machine/av400.h>
-#include <aviion/dev/sysconreg.h>
+#include <machine/av400.h>	/* XXX */
 
 struct vmesoftc {
 	struct device	sc_dev;
@@ -60,11 +60,11 @@ int	vmematch(struct device *, void *, void *);
 void	vmeattach(struct device *, struct device *, void *);
 
 struct cfattach vme_ca = {
-        sizeof(struct vmesoftc), vmematch, vmeattach
+	sizeof(struct vmesoftc), vmematch, vmeattach
 };
 
 struct cfdriver vme_cd = {
-        NULL, "vme", DV_DULL
+	NULL, "vme", DV_DULL
 };
 
 int	vme16_map(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
@@ -83,13 +83,11 @@ void	vme_unmap(struct extent *, vme_addr_t, vaddr_t, bus_size_t);
 int	vmeprint(void *, const char *);
 int	vmescan(struct device *, void *, void *);
 
-u_int	vmevecbase;
-
 int
 vmematch(struct device *parent, void *vcf, void *aux)
 {
 	/* XXX no VME on AV100/AV200/AV300, though */
-	return (1);
+	return (vme_cd.cd_ndevs == 0);
 }
 
 void
@@ -97,8 +95,15 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	u_int32_t ucsr;
+	int i;
 
 	printf("\n");
+
+	/*
+	 * Set up interrupt handlers.
+	 */
+	for (i = 0; i < NVMEINTR; i++)
+		SLIST_INIT(&vmeintr_handlers[i]);
 
 	/*
 	 * Initialize extents
@@ -109,8 +114,6 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	sc->sc_ext_a32 = extent_create("vme a32", 0, 1 << (32 - PAGE_SHIFT),
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
-
-	vmevecbase = 0x80;  /* Hard coded */
 
 	/*
 	 * Force a reasonable timeout for VME data transfers.
@@ -188,46 +191,150 @@ vmeprint(void *aux, const char *pnp)
  * Interrupt related code
  */
 
-/* allocate interrupt vectors */
+intrhand_t vmeintr_handlers[NVMEINTR];
+
 int
-vmeintr_allocate(u_int count, int flags, u_int *array)
+vmeintr_allocate(u_int count, int flags, int ipl, u_int *array)
 {
 	u_int vec, v;
+	struct intrhand *ih;
 
-	if ((flags & VMEINTR_CONTIGUOUS) == 0) {
-		for (vec = vmevecbase; vec <= NVMEINTR - count; vec++) {
-			if (SLIST_EMPTY(&intr_handlers[vec])) {
-				*array++ = vec;
-				if (--count == 0)
-					return (0);
-			}
-		}
-	} else {
-		for (vec = vmevecbase; vec <= NVMEINTR - count; vec++) {
-			/* do we have count contiguous unassigned vectors? */
+	if (count > 1 && ISSET(flags, VMEINTR_CONTIGUOUS)) {
+		/*
+		 * Try to find a range of count unused vectors first.
+		 * If there isn't, it is not possible to provide exclusive
+		 * contiguous vectors.
+		 */
+		for (vec = 0; vec <= NVMEINTR - count; vec++) {
 			for (v = count; v != 0; v--)
-				if (!SLIST_EMPTY(&intr_handlers[vec + v - 1]))
+				if (!SLIST_EMPTY(&vmeintr_handlers[vec + v - 1]))
 					break;
 
 			if (v == 0) {
-				*array = vec;
+				for (v = 0; v < count; v++)
+					*array++ = vec++;
 				return (0);
 			}
 		}
+		if (ISSET(flags, VMEINTR_EXCLUSIVE))
+			return (EPERM);
+
+		/*
+		 * Try to find a range of count contiguous vectors,
+		 * sharing the level we intend to register at. If there
+		 * isn't, it is not possible to provide shared contiguous
+		 * vectors.
+		 */
+		for (vec = 0; vec <= NVMEINTR - count; vec++) {
+			for (v = count; v != 0; v--) {
+				ih = SLIST_FIRST(&vmeintr_handlers[vec + v - 1]);
+				if (ih == NULL)
+					continue;
+				if (ih->ih_ipl != ipl ||
+				    ISSET(ih->ih_flags, INTR_EXCLUSIVE))
+					break;
+			}
+
+			if (v == 0) {
+				for (v = 0; v < count; v++)
+					*array++ = vec++;
+				return (0);
+			}
+		}
+		return (EPERM);
 	}
 
+	/*
+	 * Pick as many unused vectors as possible.
+	 */
+	for (vec = 0; vec < NVMEINTR; vec++) {
+		if (SLIST_EMPTY(&vmeintr_handlers[vec])) {
+			*array++ = vec;
+			if (--count == 0)
+				return (0);
+		}
+	}
+
+	/*
+	 * There are not enough free vectors, so we'll have to share.
+	 */
+	for (vec = 0; vec < NVMEINTR; vec++) {
+		ih = SLIST_FIRST(&vmeintr_handlers[vec]);
+		if (ih->ih_ipl == ipl && !ISSET(ih->ih_flags, INTR_EXCLUSIVE)) {
+			*array++ = vec;
+			if (--count == 0)
+				return (0);
+		}
+	}
+
+	/*
+	 * There are not enough vectors to share.
+	 */
 	return (EPERM);
 }
 
-/* enable and establish interrupt */
 int
 vmeintr_establish(u_int vec, struct intrhand *ih, const char *name)
 {
+	struct intrhand *intr;
+	intrhand_t *list;
+
+	list = &vmeintr_handlers[vec];
+	intr = SLIST_FIRST(list);
+	if (intr != NULL) {
+		if (intr->ih_ipl != ih->ih_ipl) {
+#ifdef DIAGNOSTIC
+			printf("%s: can't use ipl %d for vector %x,"
+			    " it uses ipl %d\n",
+			    __func__, ih->ih_ipl, vec, intr->ih_ipl);
+#endif
+			return (EINVAL);
+		}
+		if (ISSET(intr->ih_flags, INTR_EXCLUSIVE) ||
+		    ISSET(ih->ih_flags, INTR_EXCLUSIVE))  {
+#ifdef DIAGNOSTIC
+			printf("%s: can't share vector %x\n", __func__, vec);
+#endif
+			return (EINVAL);
+		}
+	}
+
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
+	    &evcount_intr);
+	SLIST_INSERT_HEAD(list, ih, ih_link);
+
 	/*
-	 * No need to enable the VME interrupt source in the interrupt
-	 * controller, as they are enabled by default.
+	 * Enable VME interrupt source for this level.
 	 */
-	return intr_establish(vec, ih, name);
+	intsrc_enable(INTSRC_VME + (ih->ih_ipl - 1), ih->ih_ipl);
+
+	return (0);
+}
+
+void
+vmeintr_disestablish(u_int vec, struct intrhand *ih)
+{
+	struct intrhand *intr;
+	intrhand_t *list;
+
+	list = &vmeintr_handlers[vec];
+	evcount_detach(&ih->ih_count);
+	SLIST_REMOVE(list, ih, intrhand, ih_link);
+
+	if (!SLIST_EMPTY(list))
+		return;
+
+	/*
+	 * Walk the interrupts table to check if this level needs
+	 * to be disabled.
+	 */
+	for (vec = 0; vec < NVMEINTR; vec++) {
+		intr = SLIST_FIRST(&vmeintr_handlers[vec]);
+		if (intr != NULL && intr->ih_ipl == ih->ih_ipl)
+			break;
+	}
+	if (vec == NVMEINTR)
+		intsrc_disable(INTSRC_VME + (ih->ih_ipl - 1));
 }
 
 /*
@@ -279,7 +386,6 @@ vme_map(struct extent *ext, paddr_t paddr, bus_addr_t addr, bus_size_t size,
 	psize_t len;
 	vaddr_t ova, va;
 	u_int pg;
-	extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 
 	pa = trunc_page(paddr);
 	len = round_page(paddr + size) - pa;
@@ -299,7 +405,7 @@ vme_map(struct extent *ext, paddr_t paddr, bus_addr_t addr, bus_size_t size,
 
 	*ret = (bus_space_handle_t)va;
 
-	for (pg = atop(len); pg !=0; pg--) {
+	for (pg = atop(len); pg != 0; pg--) {
 		pmap_kenter_pa(va, pa, UVM_PROT_RW);
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;

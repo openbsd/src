@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.2 2006/05/20 12:04:54 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.3 2007/12/19 22:05:06 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -40,31 +40,26 @@
 #ifndef	_AVIION_CPU_H_
 #define	_AVIION_CPU_H_
 
-#include <sys/evcount.h>
 #include <m88k/cpu.h>
 
 #ifdef _KERNEL
 
+#include <sys/evcount.h>
+
+/*
+ * Generic interrupt handler structure. Handlers may be chained.
+ */
 struct intrhand {
 	SLIST_ENTRY(intrhand) ih_link;
 	int	(*ih_fn)(void *);
 	void	*ih_arg;
 	int	ih_ipl;
-	int	ih_wantframe;
+	int	ih_flags;
+#define	INTR_WANTFRAME	0x01
+#define	INTR_EXCLUSIVE	0x02
 	struct evcount ih_count;
 };
-
-int	intr_establish(int, struct intrhand *, const char *);
-
-/*
- * There are 256 possible vectors on a aviion platform (including
- * onboard and VME vectors. Use intr_establish() to register a
- * handler for the given vector. vector number is used to index
- * into the intr_handlers[] table.
- */
-#define	NVMEINTR	256
 typedef SLIST_HEAD(, intrhand) intrhand_t;
-extern intrhand_t intr_handlers[NVMEINTR];
 
 void	doboot(void);
 void	nmihand(void *);

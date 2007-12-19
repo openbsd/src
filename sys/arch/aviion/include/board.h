@@ -1,6 +1,6 @@
-/*	$OpenBSD: board.h,v 1.2 2006/05/21 12:22:03 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.3 2007/12/19 22:05:06 miod Exp $	*/
 /*
- * Copyright (c) 2006, Miodrag Vallat
+ * Copyright (c) 2006, 2007, Miodrag Vallat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,8 @@ struct board {
 	u_int (*setipl)(u_int);
 	u_int (*raiseipl)(u_int);
 
+	u_int64_t (*intsrc)(int);
+
 	pmap_table_t ptable;
 };
 
@@ -57,14 +59,38 @@ void	av##b##_intr(u_int, struct trapframe *); \
 void	av##b##_init_clocks(void); \
 u_int	av##b##_getipl(void); \
 u_int	av##b##_setipl(u_int); \
-u_int	av##b##_raiseipl(u_int);
+u_int	av##b##_raiseipl(u_int); \
+u_int64_t av##b##_intsrc(int);
 
 DECLARE_BOARD(400);
 DECLARE_BOARD(530);
 DECLARE_BOARD(5000);
 DECLARE_BOARD(6280);
 
+/*
+ * Logical values for interrupt sources.
+ * When adding new sources, keep INTSRC_VME as the last item - syscon
+ * depends on this.
+ */
+
+#define	INTSRC_ABORT		1	/* abort button */
+#define	INTSRC_ACFAIL		2	/* AC failure */
+#define	INTSRC_SYSFAIL		3	/* system failure */
+#define	INTSRC_CIO		4	/* Z8536 */
+#define	INTSRC_DUART1		5	/* console MC68692 */
+#define	INTSRC_DUART2		6	/* secondary MC68692 */
+#define	INTSRC_ETHERNET1	7	/* first on-board Ethernet */
+#define	INTSRC_ETHERNET2	8	/* second on-board Ethernet */
+#define	INTSRC_SCSI1		9	/* first on-board SCSI controller */
+#define	INTSRC_SCSI2		10	/* second on-board SCSI controller */
+#define	INTSRC_VME		11	/* seven VME interrupt levels */
+
+void	intsrc_enable(u_int, int);
+void	intsrc_disable(u_int);
+
 extern const struct board *platform;/* just to have people confuse both names */
+
+void cio_init_clocks(void);
 
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_BOARD_H_ */

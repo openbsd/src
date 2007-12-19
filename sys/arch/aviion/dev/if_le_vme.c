@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vme.c,v 1.1.1.1 2006/05/09 18:24:32 miod Exp $	*/
+/*	$OpenBSD: if_le_vme.c,v 1.2 2007/12/19 22:05:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -305,11 +305,12 @@ le_vme_attach(parent, self, aux)
 	/*
 	 * Allocate an interrupt vector.
 	 */
-	if (vmeintr_allocate(1, VMEINTR_ANY, &lesc->sc_vec) != 0) {
+	lesc->sc_ipl = vaa->vaa_ipl == 0 ? IPL_NET : vaa->vaa_ipl;
+	if (vmeintr_allocate(1, VMEINTR_ANY | VMEINTR_SHARED, lesc->sc_ipl,
+	    &lesc->sc_vec) != 0) {
 		printf(": no more interrupts!\n");
 		return;
 	}
-	lesc->sc_ipl = vaa->vaa_ipl == 0 ? IPL_NET : vaa->vaa_ipl;
 
 	/*
 	 * Map the dual-ported memory.
@@ -367,7 +368,7 @@ le_vme_attach(parent, self, aux)
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = le_vme_intr;
 	lesc->sc_ih.ih_arg = sc;
-	lesc->sc_ih.ih_wantframe = 0;
+	lesc->sc_ih.ih_flags = 0;
 	lesc->sc_ih.ih_ipl = lesc->sc_ipl;
 	vmeintr_establish(lesc->sc_vec, &lesc->sc_ih, self->dv_xname);
 

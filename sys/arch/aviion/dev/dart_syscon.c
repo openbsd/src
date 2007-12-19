@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart_syscon.c,v 1.2 2007/12/19 21:52:46 miod Exp $	*/
+/*	$OpenBSD: dart_syscon.c,v 1.3 2007/12/19 22:05:06 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -29,11 +29,11 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 
 #include <machine/avcommon.h>
-
-#include <aviion/dev/sysconreg.h>
+#include <aviion/dev/sysconvar.h>
 #include <aviion/dev/dartvar.h>
 
 int	dart_syscon_match(struct device *parent, void *self, void *aux);
@@ -70,7 +70,7 @@ dart_syscon_attach(struct device *parent, struct device *self, void *aux)
 	struct dartsoftc *sc = (struct dartsoftc *)self;
 	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
-	u_int vec;
+	u_int intsrc;
 
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_TTY;
@@ -83,21 +83,21 @@ dart_syscon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 
 	if (ca->ca_paddr == CONSOLE_DART_BASE) {
-		vec = SYSCV_SCC;
+		intsrc = INTSRC_DUART1;
 		sc->sc_console = 1;	/* XXX for now */
 		printf(": console");
 	} else {
-		vec = SYSCV_SCC2;
+		intsrc = INTSRC_DUART2;
 		sc->sc_console = 0;
 	}
 
 	/* enable interrupts */
 	sc->sc_ih.ih_fn = dartintr;
 	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_wantframe = 0;
+	sc->sc_ih.ih_flags = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sysconintr_establish(vec, &sc->sc_ih, self->dv_xname);
+	sysconintr_establish(intsrc, &sc->sc_ih, self->dv_xname);
 
 	dart_common_attach(sc);
 }

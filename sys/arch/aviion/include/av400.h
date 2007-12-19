@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.4 2007/12/19 21:52:47 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.5 2007/12/19 22:05:06 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -134,45 +134,6 @@
 	"\30IRQ7\27KBD\26CIOI\25SF\24IRQ6\23PPI\22DI1\21DI2" \
 	"\20ECI\17IRQ5\16DTC\15IRQ4\14DWP\13IRQ3\12DVB" \
 	"\7IRQ2\6SCI\5IRQ1\2SWI1\1SWI0"
-
-/* groups by function */
-
-/* hardware irq bits */
-#define HW_FAILURE_MASK		(IRQ_ABORT | IRQ_ACF | IRQ_ARBTO | IRQ_SF | \
-				 IRQ_PAR)
-/* software irq bits */
-#define SOFT_INTERRUPT_MASK	(IRQ_SWI1 | IRQ_SWI0)
-/* VME irq bits */
-#define VME_INTERRUPT_MASK	(IRQ_VME7 | IRQ_VME6 | IRQ_VME5 | IRQ_VME4 | \
-				 IRQ_VME3 | IRQ_VME2 | IRQ_VME1)
-/* on-board irq bits */
-#define OBIO_INTERRUPT_MASK	(IRQ_ZBUF | IRQ_VID | IRQ_KBD | IRQ_CIOI | \
-				 IRQ_PPI | IRQ_DI1 | IRQ_DI2 | IRQ_ECI | \
-				 IRQ_DTC | IRQ_DWP | IRQ_DVB | IRQ_SCI)
-
-/* groups by interrupt levels */
-/* we do not enable and define levels yet for: ZBUF, VID, KBD, PPI, SCI, DMA */
-
-#define LVL7			(IRQ_ABORT | IRQ_ACF | IRQ_VME7 | IRQ_SF)
-#define LVL6			(IRQ_VME6)
-#define LVL5			(IRQ_VME5 | IRQ_CIOI)
-#define LVL4			(IRQ_VME4)
-#define LVL3			(IRQ_VME3 | IRQ_DI1 | IRQ_DI2)
-#define LVL2			(IRQ_VME2) /* | IRQ_SCI */
-#define LVL1			(IRQ_VME1 | IRQ_ECI )
-#define LVL0			(0x0)
-
-/* interrupts we want to process on the master CPU only */
-#define SLAVE_MASK		(HW_FAILURE_MASK | OBIO_INTERRUPT_MASK)
-
-#define MASK_LVL_0		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2 | LVL1)
-#define MASK_LVL_1		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2)
-#define MASK_LVL_2		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3)
-#define MASK_LVL_3		(LVL7 | LVL6 | LVL5 | LVL4)
-#define MASK_LVL_4		(LVL7 | LVL6 | LVL5)
-#define MASK_LVL_5		(LVL7 | LVL6)
-#define MASK_LVL_6		(LVL7)
-#define MASK_LVL_7		(IRQ_ABORT)
 
 /*
  * CMMU addresses

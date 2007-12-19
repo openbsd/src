@@ -1,12 +1,10 @@
-#	$OpenBSD: files.aviion,v 1.4 2007/12/19 21:51:29 miod Exp $
+#	$OpenBSD: files.aviion,v 1.5 2007/12/19 22:05:06 miod Exp $
 #
 maxpartitions 16
 
 device	mainbus {[addr = -1]}
 attach	mainbus at root
-
-device	ile: ether, ifnet, ifmedia
-file	arch/aviion/dev/if_ile.c			ile
+file	arch/aviion/dev/mainbus.c
 
 #
 # On-board devices
@@ -27,6 +25,9 @@ file	arch/aviion/dev/dart_syscon.c			dart_syscon
 
 attach	le at syscon with le_syscon
 file	arch/aviion/dev/if_le_syscon.c			le_syscon
+
+device	ile: ether, ifnet, ifmedia
+file	arch/aviion/dev/if_ile.c			ile
 
 attach	ile at syscon with ile_syscon
 file	arch/aviion/dev/if_ile_syscon.c			ile_syscon
@@ -67,8 +68,9 @@ file	arch/aviion/aviion/av400_machdep.c		av400
 file	arch/aviion/aviion/av530_machdep.c		av530
 file	arch/aviion/aviion/av5000_machdep.c		av5000
 file	arch/aviion/aviion/av6280_machdep.c		av6280
+file	arch/aviion/aviion/cio_clock.c			av400 | av530 |
+							av5000 | av6280
 file	arch/aviion/aviion/m8820x.c			m88100
 file	arch/aviion/aviion/mem.c
 file	arch/aviion/aviion/pmap_table.c
 file	arch/aviion/aviion/prom.c
-file	arch/aviion/dev/mainbus.c

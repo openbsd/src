@@ -1,4 +1,20 @@
-/* $OpenBSD: machdep.c,v 1.19 2007/12/19 21:53:36 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2007/12/19 22:05:04 miod Exp $	*/
+/*
+ * Copyright (c) 2007 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -65,11 +81,14 @@
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/device.h>
 
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
 #include <machine/autoconf.h>
+#include <machine/avcommon.h>
 #include <machine/board.h>
+#include <machine/bus.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
@@ -79,6 +98,8 @@
 #ifdef M88100
 #include <machine/m88100.h>
 #endif
+
+#include <aviion/dev/vmevar.h>
 
 #include <dev/cons.h>
 
@@ -103,8 +124,6 @@ void	identifycpu(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
-
-intrhand_t intr_handlers[NVMEINTR];
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -144,9 +163,11 @@ char bootargs[256];				/* local copy */
 u_int bootdev, bootunit, bootpart;		/* set in locore.S */
 
 int cputyp;					/* set in locore.S */
-int cpuspeed = 20;				/* safe guess */
 int avtyp;
 const struct board *platform;
+
+/* multiplication factor for delay() */
+u_int	aviion_delay_const = 33;
 
 vaddr_t first_addr;
 vaddr_t last_addr;
@@ -155,6 +176,12 @@ vaddr_t avail_start, avail_end;
 vaddr_t virtual_avail, virtual_end;
 
 extern struct user *proc0paddr;
+
+/*
+ * Interrupt masks, one per IPL level.
+ */
+u_int32_t int_mask_val[NIPLS];
+u_int32_t ext_int_mask_val[NIPLS];
 
 /*
  * This is to fake out the console routines, while booting.
@@ -197,11 +224,6 @@ consinit()
 void
 identifycpu()
 {
-#if 0
-	/* XXX FILL ME */
-	cpuspeed = getcpuspeed(&brdid);
-#endif
-
 	strlcpy(cpu_model, platform->descr, sizeof cpu_model);
 }
 
@@ -297,12 +319,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up interrupt handlers.
-	 */
-	for (i = 0; i < NVMEINTR; i++)
-		SLIST_INIT(&intr_handlers[i]);
 
 	/*
 	 * Configure the system.
@@ -630,42 +646,6 @@ secondary_main()
 
 #endif	/* MULTIPROCESSOR */
 
-/*
- * Try to insert ihand in the list of handlers for vector vec.
- */
-int
-intr_establish(int vec, struct intrhand *ihand, const char *name)
-{
-	struct intrhand *intr;
-	intrhand_t *list;
-
-	if (vec < 0 || vec >= NVMEINTR) {
-#ifdef DIAGNOSTIC
-		printf("intr_establish: vec (0x%x) not between 0x00 and 0xff\n",
-		      vec);
-#endif /* DIAGNOSTIC */
-		return (EINVAL);
-	}
-
-	list = &intr_handlers[vec];
-	if (!SLIST_EMPTY(list)) {
-		intr = SLIST_FIRST(list);
-		if (intr->ih_ipl != ihand->ih_ipl) {
-#ifdef DIAGNOSTIC
-			printf("intr_establish: there are other handlers with "
-			    "vec (0x%x) at ipl %x, but you want it at %x\n",
-			    vec, intr->ih_ipl, ihand->ih_ipl);
-#endif /* DIAGNOSTIC */
-			return (EINVAL);
-		}
-	}
-
-	evcount_attach(&ihand->ih_count, name, (void *)&ihand->ih_ipl,
-	    &evcount_intr);
-	SLIST_INSERT_HEAD(list, ihand, ih_link);
-	return (0);
-}
-
 void
 nmihand(void *frame)
 {
@@ -923,6 +903,44 @@ int
 raiseipl(int level)
 {
 	return (int)platform->raiseipl((u_int)level);
+}
+
+void
+intsrc_enable(u_int intsrc, int ipl)
+{
+	u_int32_t psr;
+	u_int64_t intmask = platform->intsrc(intsrc);
+	int i;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = IPL_NONE; i < ipl; i++) {
+		int_mask_val[i] |= (u_int32_t)intmask;
+		ext_int_mask_val[i] |= (u_int32_t)(intmask >> 32);
+	}
+	setipl(getipl());
+
+	set_psr(psr);
+}
+
+void
+intsrc_disable(u_int intsrc)
+{
+	u_int32_t psr;
+	u_int64_t intmask = platform->intsrc(intsrc);
+	int i;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = 0; i < NIPLS; i++) {
+		int_mask_val[i] &= ~((u_int32_t)intmask);
+		ext_int_mask_val[i] &= ~((u_int32_t)(intmask >> 32));
+	}
+	setipl(getipl());
+
+	set_psr(psr);
 }
 
 u_char hostaddr[6];

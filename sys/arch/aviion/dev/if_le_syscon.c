@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.3 2007/12/19 21:51:29 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.4 2007/12/19 22:05:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,9 +55,10 @@
 #include <net/if_media.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 
-#include <aviion/dev/sysconreg.h>
+#include <aviion/dev/sysconvar.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
@@ -210,8 +211,8 @@ le_syscon_attach(parent, self, aux)
 
 	lesc->sc_ih.ih_fn = am7990_intr;
 	lesc->sc_ih.ih_arg = sc;
-	lesc->sc_ih.ih_wantframe = 0;
+	lesc->sc_ih.ih_flags = 0;
 	lesc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sysconintr_establish(SYSCV_LE, &lesc->sc_ih, self->dv_xname);
+	sysconintr_establish(INTSRC_ETHERNET1, &lesc->sc_ih, self->dv_xname);
 }
