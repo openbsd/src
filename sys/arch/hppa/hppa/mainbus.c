@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.67 2007/10/02 00:59:12 krw Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.68 2007/12/19 19:10:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1080,11 +1080,11 @@ mbattach(parent, self, aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	switch (cpu_hvers) {
-#if 0
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
 	case HPPA_BOARD_HP839:
 	case HPPA_BOARD_HP859:
+#if 0
 	case HPPA_BOARD_HP770_J200:
 	case HPPA_BOARD_HP770_J210:
 	case HPPA_BOARD_HP770_J210XC:
