@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.73 2007/12/19 08:49:23 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -89,9 +89,6 @@ struct nlist nl[] = {
 	{ "_rawcbtable" },
 #define N_RAWIP6TABLE	15
 	{ "_rawin6pcbtable" },
-
-#define N_RTSTAT	16
-	{ "_rtstat" },
 
 	{ ""}
 };
@@ -305,16 +302,7 @@ main(int argc, char *argv[])
 	if (nlistf != NULL || memf != NULL || Pflag)
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
-	if (nlistf == NULL && memf == NULL && rflag && !Aflag) {
-		/* printing the routing table no longer needs kvm */
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-		if (sflag)
-			rt_stats(1, 0);
-		else
-			p_rttables(af, tableid);
-		exit(0);
-	}
+
 	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 	    buf)) == NULL) {
 		fprintf(stderr, "%s: kvm_open: %s\n", __progname, buf);
@@ -383,10 +371,12 @@ main(int argc, char *argv[])
 	}
 	if (rflag) {
 		if (sflag)
-			rt_stats(0, nl[N_RTSTAT].n_value);
-		else
+			rt_stats();
+		else if (Aflag || nlistf != NULL || memf != NULL)
 			routepr(nl[N_RTREE].n_value, nl[N_RTMASK].n_value,
 			    nl[N_AF2RTAFIDX].n_value, nl[N_RTBLIDMAX].n_value);
+		else
+			p_rttables(af, tableid);
 		exit(0);
 	}
 	if (gflag) {

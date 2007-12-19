@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.77 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.78 2007/12/19 08:49:23 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -311,30 +311,24 @@ p_krtentry(struct rtentry *rt)
  * Print routing statistics
  */
 void
-rt_stats(int usesysctl, u_long off)
+rt_stats(void)
 {
 	struct rtstat rtstat;
 	int mib[6];
 	size_t size;
 
-	if (usesysctl) {
-		mib[0] = CTL_NET;
-		mib[1] = PF_ROUTE;
-		mib[2] = 0;
-		mib[3] = 0;
-		mib[4] = NET_RT_STATS;
-		mib[5] = 0;
-		size = sizeof (rtstat);
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_STATS;
+	mib[5] = 0;
+	size = sizeof (rtstat);
 
-		if (sysctl(mib, 6, &rtstat, &size, NULL, 0) < 0) {
-			perror("sysctl of routing table statistics");
-			exit(1);
-		}
-	} else if (off == 0) {
-		printf("rtstat: symbol not in namelist\n");
-		return;
-	} else
-		kread(off, &rtstat, sizeof (rtstat));
+	if (sysctl(mib, 6, &rtstat, &size, NULL, 0) < 0) {
+		perror("sysctl of routing table statistics");
+		exit(1);
+	}
 
 	printf("routing:\n");
 	printf("\t%u bad routing redirect%s\n",

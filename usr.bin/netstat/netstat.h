@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.45 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.46 2007/12/19 08:49:23 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void	mbpr(void);
 void	hostpr(u_long, u_long);
 void	impstats(u_long, u_long);
 
-void	rt_stats(int, u_long);
+void	rt_stats(void);
 void	pr_rthdr(int, int);
 void	pr_encaphdr(void);
 void	pr_family(int);
