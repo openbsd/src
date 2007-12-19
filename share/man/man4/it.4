@@ -1,4 +1,4 @@
-.\"	$OpenBSD: it.4,v 1.11 2007/12/19 09:20:43 jmc Exp $
+.\"	$OpenBSD: it.4,v 1.12 2007/12/19 10:32:38 form Exp $
 .\"
 .\" Copyright (c) 2007 Oleg Safiullin <form@pdp-11.org.ru>
 .\" All rights reserved.
@@ -63,12 +63,11 @@ Most supported devices possess 15 sensors:
 .It Li "volt7" Ta "uV DC" Ta "+5VSB"
 .It Li "volt8" Ta "uV DC" Ta "VBAT"
 .El
-.Pp
-For some devices, sensors' names and numbers will be different.
 .Sh SEE ALSO
 .Xr watchdog 4 ,
 .Xr sensorsd 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr watchdogd 8
 .Sh HISTORY
 The
 .Nm
@@ -86,3 +85,6 @@ and completely rewritten for
 .Ox 4.3
 by
 .An Oleg Safiullin Aq form@pdp-11.org.ru .
+.Sh BUGS
+Watchdog timer functionality is not supported for ITE IT8705
+or SiS SiS950 chips.
