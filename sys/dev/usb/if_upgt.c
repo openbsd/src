@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.4 2007/12/17 19:01:41 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.5 2007/12/19 22:37:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1322,8 +1322,6 @@ upgt_start(struct ifnet *ifp)
 
 	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
-
 	for (i = 0; i < UPGT_TX_COUNT; i++) {
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
@@ -1339,7 +1337,7 @@ upgt_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 			if ((data_tx->addr = upgt_mem_alloc(sc)) == 0) {
-				printf("%s: no free memory!\n",
+				printf("%s: no free prism memory!\n",
 				    sc->sc_dev.dv_xname);
 				return;
 			}
@@ -1368,7 +1366,7 @@ upgt_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 			if ((data_tx->addr = upgt_mem_alloc(sc)) == 0) {
-				printf("%s: no free memory!\n",
+				printf("%s: no free prism memory!\n",
 				    sc->sc_dev.dv_xname);
 				return;
 			}
@@ -1384,6 +1382,7 @@ upgt_start(struct ifnet *ifp)
 		/* process the TX queue in process context */
 		ifp->if_timer = 5;
 		ifp->if_flags |= IFF_OACTIVE;
+		usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
 		usb_add_task(sc->sc_udev, &sc->sc_task_tx);
 	}
 }
@@ -1417,8 +1416,10 @@ upgt_tx_task(void *arg)
 	for (i = 0; i < UPGT_TX_COUNT; i++) {
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
-		if (data_tx->m == NULL)
+		if (data_tx->m == NULL) {
+			DPRINTF(2, "%d: m is NULL\n", i);
 			continue;
+		}
 
 		m = data_tx->m;
 		addr = data_tx->addr + UPGT_MEMSIZE_FRAME_HEAD;
@@ -1452,8 +1453,6 @@ upgt_tx_task(void *arg)
 		/*
 		 * Transmit the second URB containing the TX data itself.
 		 */
-		bzero(data_tx->buf, MCLBYTES);
-
 		txdesc = (struct upgt_lmac_tx_desc *)data_tx->buf;
 
 		/* XXX differ between data and mgmt frames? */
@@ -1508,6 +1507,7 @@ upgt_tx_task(void *arg)
 
 		/* we do not need the mbuf anymore */
 		m_freem(m);
+		data_tx->m = NULL;
 
 		DPRINTF(2, "%s: TX sent: len=%d\n", sc->sc_dev.dv_xname, len);
 	}
@@ -1529,10 +1529,10 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
 		if (data_tx->addr == letoh32(desc->header2.reqid)) {
+			upgt_mem_free(sc, data_tx->addr);
 			ieee80211_release_node(ic, data_tx->ni);
 			data_tx->ni = NULL;
 			data_tx->m = NULL;
-			upgt_mem_free(sc, data_tx->addr);
 			data_tx->addr = 0;
 
 			sc->tx_queued--;
@@ -1544,8 +1544,6 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			    letoh16(desc->status),
 			    letoh16(desc->rssi));
 			DPRINTF(2, "seq=%d\n", letoh16(desc->seq));
-
-			break;
 		}
 	}
 
