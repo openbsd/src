@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.20 2007/12/20 20:15:43 reyk Exp $
+.\" $OpenBSD: relayctl.8,v 1.21 2007/12/20 20:22:11 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -64,6 +64,10 @@ Show detailed status of hosts and tables.
 Show detailed status of redirections including the current and average
 access statistics.
 The statistics will be updated every minute.
+Redirections using the
+.Ic sticky-address
+option will count the number of sticky states,
+not the total number of redirected connections.
 .It Cm show relays
 Show detailed status of relays including the current and average
 access statistics.
