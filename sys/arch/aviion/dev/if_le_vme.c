@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vme.c,v 1.2 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: if_le_vme.c,v 1.3 2007/12/20 21:16:19 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -311,6 +311,7 @@ le_vme_attach(parent, self, aux)
 		printf(": no more interrupts!\n");
 		return;
 	}
+	printf(" vec %x", lesc->sc_vec);
 
 	/*
 	 * Map the dual-ported memory.
