@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.165 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.166 2007/12/20 02:53:02 brad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -713,7 +713,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = suser(curproc, 0);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

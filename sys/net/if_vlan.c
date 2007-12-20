@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.71 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.72 2007/12/20 02:53:02 brad Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -649,7 +649,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    vlan_ether_delmulti(ifv, ifr) : EINVAL;
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 	return error;
 }

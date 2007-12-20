@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.18 2007/09/19 08:45:54 brad Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.19 2007/12/20 02:53:02 brad Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -339,7 +339,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	}
 
 	default:
-		return (EINVAL);
+		return (ENOTTY);
 	}
 
 	return (error);

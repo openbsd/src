@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.46 2007/05/26 17:13:30 jason Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.47 2007/12/20 02:53:02 brad Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -152,7 +152,7 @@ encioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 	default:
-		return (EINVAL);
+		return (ENOTTY);
 	}
 
 	return 0;

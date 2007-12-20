@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.90 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.91 2007/12/20 02:53:02 brad Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -515,7 +515,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    ifp->if_flags & IFF_LINK0 ? TUN_LAYER2 : 0);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 	splx(s);
 	return (error);

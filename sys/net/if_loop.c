@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.42 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.43 2007/12/20 02:53:02 brad Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ loioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 	return (error);
 }

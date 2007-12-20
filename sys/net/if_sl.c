@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.34 2007/10/13 14:21:01 fgsch Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.35 2007/12/20 02:53:02 brad Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -977,7 +977,7 @@ slioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 	splx(s);
 	return (error);

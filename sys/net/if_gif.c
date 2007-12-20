@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.46 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.47 2007/12/20 02:53:02 brad Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ gif_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
  bad:
