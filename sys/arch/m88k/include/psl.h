@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 2005/09/25 22:41:12 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.5 2007/12/20 21:17:51 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -46,8 +46,6 @@
 #ifndef __M88K_PSL_H__
 #define __M88K_PSL_H__
 
-#ifdef _KERNEL
-
 /*
  * 881x0 control registers
  */
@@ -90,7 +88,5 @@
 #define XIP_V		0x00000002	/* valid */
 #define XIP_E		0x00000001	/* exception */
 #define XIP_ADDR	0xfffffffc	/* address mask */
-
-#endif	/* _KERNEL */
 
 #endif /* __M88K_PSL_H__ */
