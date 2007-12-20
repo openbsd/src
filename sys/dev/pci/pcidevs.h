@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1303 2007/12/20 02:16:27 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1304 2007/12/20 02:34:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1004,6 +1004,7 @@
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RADEON_X1800	0x7109		/* Radeon X1800 */
 #define	PCI_PRODUCT_ATI_RADEON_X1600	0x7140		/* Radeon X1600 */
+#define	PCI_PRODUCT_ATI_RADEON_X1400	0x7145		/* Radeon Mobility X1400 */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_M52	0x7149		/* Radeon Mobility X1300 M52-64 */
 #define	PCI_PRODUCT_ATI_RADEON_X1600_S	0x7160		/* Radeon X1600 Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X1300PRO	0x7183		/* Radeon X1300 Pro */
