@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.58 2007/12/19 21:34:10 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.59 2007/12/20 13:59:27 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -393,9 +393,7 @@ pccbbattach(parent, self, aux)
 	bus_addr_t sockbase;
 	int flags;
 
-#ifdef __HAVE_PCCBB_ATTACH_HOOK
 	pccbb_attach_hook(parent, self, pa);
-#endif
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 	sc->sc_id = pa->pa_id;
