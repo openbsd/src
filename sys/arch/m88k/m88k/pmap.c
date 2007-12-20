@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2007/12/02 21:22:19 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2007/12/20 21:15:51 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2078,6 +2078,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * bound to only one cpu.
 	 */
 	cmmu_flush_tlb(cpu, TRUE, dstva, 2);
+	cmmu_flush_cache(cpu, src, PAGE_SIZE);
 	copypage(srcva, dstva);
 
 	splx(spl);
