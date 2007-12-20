@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.327 2007/12/17 18:51:12 mglocker Exp $
+$OpenBSD: usbdevs,v 1.328 2007/12/20 00:13:26 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2152,6 +2152,7 @@ product SIERRA MC8755_2		0x6802	MC8755
 product SIERRA MC8765		0x6803	MC8765
 product SIERRA MC8755		0x6804	MC8755 HSDPA
 product SIERRA MC8775		0x6812	MC8775 HSDPA
+product SIERRA MC8755_3	0x6813	MC8755 HSDPA
 product SIERRA AIRCARD_875	0x6820	Aircard 875 HSDPA
 
 /* Sigmatel products */
