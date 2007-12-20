@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.5 2007/12/02 21:24:21 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.6 2007/12/20 21:19:34 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -34,8 +34,6 @@
  * Anyone can include.
  */
 
-#include <machine/asm.h>
-
 /*
  * Flush the data pipeline.
  */
@@ -60,8 +58,6 @@ static __inline__ u_int get_psr(void)
 	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (psr));
 	return (psr);
 }
-
-#define	disable_interrupt(psr)	set_psr(((psr) = get_psr()) | PSR_IND)
 
 /*
  * Provide access from C code to the assembly instruction ff1

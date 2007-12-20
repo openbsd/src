@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.2 2006/05/20 11:57:02 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.3 2007/12/20 21:19:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat.
@@ -74,7 +74,8 @@ scm_cpuconfig(struct scm_cpuconfig *scc)
 	SCM_DECL;
 	int ret;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (scc));
@@ -93,7 +94,8 @@ scm_cpuid()
 	SCM_DECL;
 	u_int ret;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_CPUID);
@@ -111,7 +113,8 @@ scm_getc(void)
 	SCM_DECL;
 	u_int ret;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_CHAR);
@@ -129,7 +132,8 @@ scm_getenaddr(u_char *ea)
 	SCM_DECL;
 	char *addr;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_COMMID);
@@ -146,7 +150,8 @@ scm_halt()
 {
 	SCM_DECL;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_HALT);
@@ -162,7 +167,8 @@ scm_memsize(int which)
 	SCM_DECL;
 	u_int msize;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (which));
@@ -184,7 +190,8 @@ scm_printf(const char *msg)
 {
 	SCM_DECL;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (msg));
@@ -200,7 +207,8 @@ scm_promver()
 	SCM_DECL;
 	u_int ret;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_REVNUM);
@@ -217,7 +225,8 @@ scm_putc(int c)
 {
 	SCM_DECL;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (c));
@@ -232,7 +241,8 @@ scm_putcrlf()
 {
 	SCM_DECL;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_OCRLF);
@@ -246,7 +256,8 @@ scm_reboot(const char *cmdline)
 {
 	SCM_DECL;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (cmdline));
@@ -263,7 +274,8 @@ scm_sysid()
 	SCM_DECL;
 	u_int ret;
 
-	disable_interrupt(psr);
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_SYSID);
