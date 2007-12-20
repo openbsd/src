@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.89 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.90 2007/12/20 20:15:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -122,7 +122,8 @@ enum imsg_type {
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_POLL,
 	IMSG_CTL_NOTIFY,
-	IMSG_CTL_STATISTICS,
+	IMSG_CTL_RDR_STATS,
+	IMSG_CTL_RELAY_STATS,
 	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
 	IMSG_RDR_DISABLE,
 	IMSG_TABLE_ENABLE,
@@ -271,14 +272,14 @@ struct ctl_stats {
 	int			 proc;
 
 	u_int			 interval;
-	u_long			 cnt;
-	u_long			 tick;
-	u_long			 avg;
-	u_long			 last;
-	u_long			 avg_hour;
-	u_long			 last_hour;
-	u_long			 avg_day;
-	u_long			 last_day;
+	u_int64_t		 cnt;
+	u_int32_t		 tick;
+	u_int32_t		 avg;
+	u_int32_t		 last;
+	u_int32_t		 avg_hour;
+	u_int32_t		 last_hour;
+	u_int32_t		 avg_day;
+	u_int32_t		 last_day;
 };
 
 struct address {
@@ -399,6 +400,7 @@ struct rdr {
 	struct addresslist	 virts;
 	struct table		*table;
 	struct table		*backup; /* use this if no host up */
+	struct ctl_stats	 stats;
 };
 TAILQ_HEAD(rdrlist, rdr);
 
@@ -729,6 +731,8 @@ void	 sync_table(struct relayd *, struct rdr *, struct table *);
 void	 sync_ruleset(struct relayd *, struct rdr *, int);
 void	 flush_rulesets(struct relayd *);
 int	 natlook(struct relayd *, struct ctl_natlook *);
+u_int64_t
+	 check_table(struct relayd *, struct rdr *, struct table *);
 
 /* hce.c */
 pid_t	 hce(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],

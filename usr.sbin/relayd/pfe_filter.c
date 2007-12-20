@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.21 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.22 2007/12/20 20:15:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -240,7 +240,9 @@ flush_table(struct relayd *env, struct rdr *rdr)
 	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
 	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
-		fatal("flush_table: cannot flush table");
+		fatal("flush_table: cannot flush table addresses");
+	if (ioctl(env->pf->dev, DIOCRCLRTSTATS, &io) == -1)
+		fatal("flush_table: cannot flush table stats");
 	log_debug("flush_table: flushed table %s", rdr->conf.name);
 	return;
 
@@ -474,5 +476,39 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	cnl->rsport = pnl.rsport;
 	cnl->rdport = pnl.rdport;
 
+	return (0);
+}
+
+u_int64_t
+check_table(struct relayd *env, struct rdr *rdr, struct table *table)
+{
+	struct pfioc_table	 io;
+	struct pfr_tstats	 tstats;
+
+	if (table == NULL)
+		return (0);
+
+	bzero(&io, sizeof(io));
+	io.pfrio_esize = sizeof(struct pfr_tstats);
+	io.pfrio_size = 1;
+	io.pfrio_buffer = &tstats;
+	if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcat(io.pfrio_table.pfrt_anchor, rdr->conf.name,
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcpy(io.pfrio_table.pfrt_name, rdr->conf.name,
+	    sizeof(io.pfrio_table.pfrt_name)) >=
+	    sizeof(io.pfrio_table.pfrt_name))
+		goto toolong;
+
+	if (ioctl(env->pf->dev, DIOCRGETTSTATS, &io) == -1)
+		fatal("sync_table: cannot get table stats");
+
+	return (tstats.pfrts_match);
+
+ toolong:
+	fatal("check_table: name too long");
 	return (0);
 }

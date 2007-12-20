@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.30 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.31 2007/12/20 20:15:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -51,6 +51,7 @@ char		*print_rdr_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
 char		*print_relay_status(int);
+void		 print_statistics(struct ctl_stats[RELAY_MAXPROC + 1]);
 
 struct imsgname {
 	int type;
@@ -143,6 +144,7 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW_SUM:
 	case SHOW_HOSTS:
+	case SHOW_RDRS:
 	case SHOW_RELAYS:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
 		printf("%-4s\t%-8s\t%-24s\t%-7s\tStatus\n",
@@ -207,6 +209,7 @@ main(int argc, char *argv[])
 			switch (res->action) {
 			case SHOW_SUM:
 			case SHOW_HOSTS:
+			case SHOW_RDRS:
 			case SHOW_RELAYS:
 				done = show_summary_msg(&imsg, res->action);
 				break;
@@ -310,12 +313,11 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct table		*table;
 	struct host		*host;
 	struct relay		*rlay;
-	struct ctl_stats	 stats[RELAY_MAXPROC], crs;
-	int			 i;
+	struct ctl_stats	 stats[RELAY_MAXPROC];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RDR:
-		if (type == SHOW_RELAYS)
+		if (type == SHOW_HOSTS || type == SHOW_RELAYS)
 			break;
 		rdr = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -323,7 +325,7 @@ show_summary_msg(struct imsg *imsg, int type)
 		    print_rdr_status(rdr->conf.flags));
 		break;
 	case IMSG_CTL_TABLE:
-		if (type == SHOW_RELAYS)
+		if (type == SHOW_RELAYS || type == SHOW_RDRS)
 			break;
 		table = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -331,7 +333,7 @@ show_summary_msg(struct imsg *imsg, int type)
 		    print_table_status(table->up, table->conf.flags));
 		break;
 	case IMSG_CTL_HOST:
-		if (type == SHOW_RELAYS)
+		if (type == SHOW_RELAYS || type == SHOW_RDRS)
 			break;
 		host = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -347,38 +349,25 @@ show_summary_msg(struct imsg *imsg, int type)
 		}
 		break;
 	case IMSG_CTL_RELAY:
-		if (type == SHOW_HOSTS)
+		if (type == SHOW_HOSTS || type == SHOW_RDRS)
 			break;
 		rlay = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
 		    rlay->conf.id, "relay", rlay->conf.name, "",
 		    print_relay_status(rlay->conf.flags));
 		break;
-	case IMSG_CTL_STATISTICS:
+	case IMSG_CTL_RDR_STATS:
+		if (type != SHOW_RDRS)
+			break;
+		bcopy(imsg->data, &stats[0], sizeof(stats[0]));
+		stats[1].id = EMPTY_ID;
+		print_statistics(stats);
+		break;
+	case IMSG_CTL_RELAY_STATS:
 		if (type != SHOW_RELAYS)
 			break;
 		bcopy(imsg->data, &stats, sizeof(stats));
-		bzero(&crs, sizeof(crs));
-		crs.interval = stats[0].interval;
-		for (i = 0; stats[i].id != EMPTY_ID; i++) {
-			crs.cnt += stats[i].cnt;
-			crs.last += stats[i].last;
-			crs.avg += stats[i].avg;
-			crs.last_hour += stats[i].last_hour;
-			crs.avg_hour += stats[i].avg_hour;
-			crs.last_day += stats[i].last_day;
-			crs.avg_day += stats[i].avg_day;
-		}
-		if (crs.cnt == 0)
-			break;
-		printf("\t%8s\ttotal: %lu sessions\n"
-		    "\t%8s\tlast: %lu/%us %lu/h %lu/d sessions\n"
-		    "\t%8s\taverage: %lu/%us %lu/h %lu/d sessions\n",
-		    "", crs.cnt,
-		    "", crs.last, crs.interval,
-		    crs.last_hour, crs.last_day,
-		    "", crs.avg, crs.interval,
-		    crs.avg_hour, crs.avg_day);
+		print_statistics(stats);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -497,3 +486,31 @@ print_relay_status(int flags)
 		return ("active");
 }
 
+void
+print_statistics(struct ctl_stats stats[RELAY_MAXPROC + 1])
+{
+	struct ctl_stats	 crs;
+	int			 i;
+
+	bzero(&crs, sizeof(crs));
+	crs.interval = stats[0].interval;
+	for (i = 0; stats[i].id != EMPTY_ID; i++) {
+		crs.cnt += stats[i].cnt;
+		crs.last += stats[i].last;
+		crs.avg += stats[i].avg;
+		crs.last_hour += stats[i].last_hour;
+		crs.avg_hour += stats[i].avg_hour;
+		crs.last_day += stats[i].last_day;
+		crs.avg_day += stats[i].avg_day;
+	}
+	if (crs.cnt == 0)
+		return;
+	printf("\t%8s\ttotal: %llu sessions\n"
+	    "\t%8s\tlast: %u/%us %u/h %u/d sessions\n"
+	    "\t%8s\taverage: %u/%us %u/h %u/d sessions\n",
+	    "", crs.cnt,
+	    "", crs.last, crs.interval,
+	    crs.last_hour, crs.last_day,
+	    "", crs.avg, crs.interval,
+	    crs.avg_hour, crs.avg_day);
+}

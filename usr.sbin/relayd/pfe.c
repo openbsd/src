@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.45 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.46 2007/12/20 20:15:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -42,8 +42,8 @@ void	pfe_disable_events(void);
 void	pfe_dispatch_imsg(int, short, void *);
 void	pfe_dispatch_parent(int, short, void *);
 void	pfe_dispatch_relay(int, short, void *);
-
 void	pfe_sync(void);
+void	pfe_statistics(int, short, void *);
 
 static struct relayd	*env = NULL;
 
@@ -181,6 +181,7 @@ pfe_setup_events(void)
 {
 	int		 i;
 	struct imsgbuf	*ibuf;
+	struct timeval	 tv;
 
 	ibuf_hce->events = EV_READ;
 	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
@@ -195,6 +196,11 @@ pfe_setup_events(void)
 		    ibuf->handler, ibuf);
 		event_add(&ibuf->ev, NULL);
 	}
+
+	/* Schedule statistics timer */
+	evtimer_set(&env->statev, pfe_statistics, NULL);
+	bcopy(&env->statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->statev, &tv);
 }
 
 void
@@ -206,6 +212,8 @@ pfe_disable_events(void)
 
 	for (i = 0; i < env->prefork_relay; i++)
 		event_del(&ibuf_relay[i].ev);
+
+	event_del(&env->statev);
 }
 
 void
@@ -522,6 +530,9 @@ show(struct ctl_conn *c)
 		if (rdr->conf.flags & F_DISABLE)
 			continue;
 
+		imsg_compose(&c->ibuf, IMSG_CTL_RDR_STATS, 0, 0, -1,
+		    &rdr->stats, sizeof(rdr->stats));
+
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
 		    rdr->table, sizeof(*rdr->table));
 		if (!(rdr->table->conf.flags & F_DISABLE))
@@ -545,7 +556,7 @@ relays:
 		rlay->stats[env->prefork_relay].id = EMPTY_ID;
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY, 0, 0, -1,
 		    rlay, sizeof(*rlay));
-		imsg_compose(&c->ibuf, IMSG_CTL_STATISTICS, 0, 0, -1,
+		imsg_compose(&c->ibuf, IMSG_CTL_RELAY_STATS, 0, 0, -1,
 		    &rlay->stats, sizeof(rlay->stats));
 
 		if (rlay->dsttable == NULL)
@@ -907,4 +918,54 @@ pfe_sync(void)
 		imsg_compose(ibuf_main, IMSG_DEMOTE, 0, 0, -1,
 		    &demote, sizeof(demote));
 	}
+}
+
+void
+pfe_statistics(int fd, short events, void *arg)
+{
+	struct rdr		*rdr;
+	struct ctl_stats	*cur;
+	struct timeval		 tv, tv_now;
+	int			 resethour, resetday;
+	u_long			 cnt;
+
+	timerclear(&tv);
+	if (gettimeofday(&tv_now, NULL))
+		fatal("pfe_statistics: gettimeofday");
+
+	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+		cnt = check_table(env, rdr, rdr->table);
+		if (rdr->conf.backup_id != EMPTY_TABLE)
+			cnt += check_table(env, rdr, rdr->backup);
+
+		resethour = resetday = 0;
+
+		cur = &rdr->stats;
+		cur->last = cnt > cur->cnt ? cnt - cur->cnt : 0;
+
+		cur->cnt = cnt;
+		cur->tick++;
+		cur->avg = (cur->last + cur->avg) / 2;
+		cur->last_hour += cur->last;
+		if ((cur->tick % (3600 / env->statinterval.tv_sec)) == 0) {
+			cur->avg_hour = (cur->last_hour + cur->avg_hour) / 2;
+			resethour++;
+		}
+		cur->last_day += cur->last;
+		if ((cur->tick % (86400 / env->statinterval.tv_sec)) == 0) {
+			cur->avg_day = (cur->last_day + cur->avg_day) / 2;
+			resethour++;
+		}
+		if (resethour)
+			cur->last_hour = 0;
+		if (resetday)
+			cur->last_day = 0;
+
+		rdr->stats.interval = env->statinterval.tv_sec;
+	}
+
+	/* Schedule statistics timer */
+	evtimer_set(&env->statev, pfe_statistics, NULL);
+	bcopy(&env->statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->statev, &tv);
 }

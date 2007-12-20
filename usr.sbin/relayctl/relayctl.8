@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.19 2007/12/12 14:55:12 jmc Exp $
+.\" $OpenBSD: relayctl.8,v 1.20 2007/12/20 20:15:43 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2007 $
+.Dd $Mdocdate: December 20 2007 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -59,7 +59,11 @@ the backup table as well.
 .It Cm reload
 Reload the configuration file.
 .It Cm show hosts
-Show detailed status of hosts, tables, and redirections.
+Show detailed status of hosts and tables.
+.It Cm show redirects
+Show detailed status of redirections including the current and average
+access statistics.
+The statistics will be updated every minute.
 .It Cm show relays
 Show detailed status of relays including the current and average
 access statistics.
