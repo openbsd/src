@@ -1,4 +1,4 @@
-; $Openbsd$
+; $OpenBSD: root.hint,v 1.5 2007/12/20 11:12:26 jakob Exp $
 ;
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
