@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.128 2007/10/15 02:16:35 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.129 2007/12/20 17:08:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_neighbor_timers(struct peer *);
-void		 print_timer(const char *, time_t, u_int);
+void		 print_timer(const char *, struct peer *, enum Timer, u_int);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 void		 show_fib_head(void);
@@ -681,22 +681,22 @@ print_neighbor_msgstats(struct peer *p)
 void
 print_neighbor_timers(struct peer *p)
 {
-	print_timer("IdleHoldTimer:", p->IdleHoldTimer, p->IdleHoldTime);
-	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer,
+	print_timer("IdleHoldTimer:", p, Timer_IdleHold, p->IdleHoldTime);
+	print_timer("ConnectRetryTimer:", p, Timer_ConnectRetry,
 	    INTERVAL_CONNECTRETRY);
-	print_timer("HoldTimer:", p->HoldTimer, (u_int)p->holdtime);
-	print_timer("KeepaliveTimer:", p->KeepaliveTimer, (u_int)p->holdtime/3);
+	print_timer("HoldTimer:", p, Timer_Hold, (u_int)p->holdtime);
+	print_timer("KeepaliveTimer:", p, Timer_Keepalive, (u_int)p->holdtime/3);
 }
 
 void
-print_timer(const char *name, time_t val, u_int interval)
+print_timer(const char *name, struct peer *p, enum Timer timer, u_int interval)
 {
-	int	d;
+	time_t	d;
+	int	running = timer_running(p, timer, &d);
 
-	d = val - time(NULL);
 	printf("  %-20s ", name);
 
-	if (val == 0)
+	if (running == 0)
 		printf("%-20s", "not running");
 	else if (d <= 0)
 		printf("%-20s", "due");

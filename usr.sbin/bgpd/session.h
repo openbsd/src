@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.92 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.93 2007/12/20 17:08:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -204,6 +204,15 @@ struct peer {
 
 struct peer	*peers;
 
+enum Timer {
+	Timer_None,
+	Timer_ConnectRetry,
+	Timer_Keepalive,
+	Timer_Hold,
+	Timer_IdleHold,
+	Timer_IdleHoldReset
+};
+
 /* session.c */
 void		 session_socket_blockmode(int, enum blockmodes);
 pid_t		 session_main(struct bgpd_config *, struct peer *,
@@ -259,3 +268,10 @@ int	 carp_demote_init(char *, int);
 void	 carp_demote_shutdown(void);
 int	 carp_demote_get(char *);
 int	 carp_demote_set(char *, int);
+
+/* timer.c */
+time_t		*timer_get(struct peer *, enum Timer);
+int		 timer_due(struct peer *, enum Timer);
+int		 timer_running(struct peer *, enum Timer, time_t *);
+void		 timer_set(struct peer *, enum Timer, u_int);
+void		 timer_stop(struct peer *, enum Timer);
