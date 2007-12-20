@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.6 2007/12/19 22:43:59 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.7 2007/12/20 20:38:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -68,6 +68,8 @@
  * written by Jean-Baptiste Note <jean-baptiste.note@m4x.org> and
  * Sebastien Bourdeauducq <lekernel@prism54.org>.
  */
+
+#define UPGT_DEBUG
 
 #ifdef UPGT_DEBUG
 int upgt_debug = 2;
@@ -1415,7 +1417,8 @@ upgt_tx_task(void *arg)
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
 		if (data_tx->m == NULL) {
-			DPRINTF(2, "%d: m is NULL\n", i);
+			DPRINTF(2, "%s: %d: m is NULL\n",
+			    sc->sc_dev.dv_xname, i);
 			continue;
 		}
 
@@ -1446,7 +1449,8 @@ upgt_tx_task(void *arg)
 			return;
 		}
 
-		DPRINTF(2, "%s: TX memaddr sent\n", sc->sc_dev.dv_xname);
+		DPRINTF(2, "%s: TX memaddr sent (0x%08x)\n",
+		    sc->sc_dev.dv_xname, data_tx->addr);
 
 		/*
 		 * Transmit the second URB containing the TX data itself.
@@ -1496,6 +1500,13 @@ upgt_tx_task(void *arg)
 		    data_tx->buf + sizeof(struct upgt_lmac_tx_desc));
 
 		len = sizeof(struct upgt_lmac_tx_desc) + m->m_pkthdr.len;
+
+		/* we do not need the mbuf anymore */
+		m_freem(m);
+		data_tx->m = NULL;
+
+		DPRINTF(2, "%s: TX start data sending\n", sc->sc_dev.dv_xname);
+
 		if (upgt_bulk_xmit(sc, data_tx, sc->sc_tx_pipeh, &len, 0)
 		    != 0) {
 			printf("%s: could not transmit TX data URB!\n",
@@ -1503,11 +1514,8 @@ upgt_tx_task(void *arg)
 			return;
 		}
 
-		/* we do not need the mbuf anymore */
-		m_freem(m);
-		data_tx->m = NULL;
-
-		DPRINTF(2, "%s: TX sent: len=%d\n", sc->sc_dev.dv_xname, len);
+		DPRINTF(2, "%s: TX sent (%d bytes)\n",
+		    sc->sc_dev.dv_xname, len);
 	}
 }
 
@@ -1530,7 +1538,6 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			upgt_mem_free(sc, data_tx->addr);
 			ieee80211_release_node(ic, data_tx->ni);
 			data_tx->ni = NULL;
-			data_tx->m = NULL;
 			data_tx->addr = 0;
 
 			sc->tx_queued--;
@@ -1542,6 +1549,7 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			    letoh16(desc->status),
 			    letoh16(desc->rssi));
 			DPRINTF(2, "seq=%d\n", letoh16(desc->seq));
+			break;
 		}
 	}
 
