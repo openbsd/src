@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2007/12/05 22:12:32 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2007/12/20 21:14:06 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -347,8 +347,9 @@ GLOBAL(secondary_start)
  * (originally from Mach 2.5) 
  */
 GLOBAL(delay)
-	or.u	r3, r0, hi16(_cpuspeed)
-	ld	r3, r3, lo16(_cpuspeed)
+	bcnd	eq0, r2, 2f
+	or.u	r3, r0, hi16(_C_LABEL(aviion_delay_const))
+	ld	r3, r3, lo16(_C_LABEL(aviion_delay_const))
 	mul	r4, r2, r3
 	subu	r4, r4, 4	/* overhead of these instructions */
 
@@ -356,7 +357,7 @@ GLOBAL(delay)
 1: 
 	bcnd.n	gt0, r4, 1b
 	 subu	r4, r4, 2	/* two cycles per iteration */
-
+2:
 	jmp	r1
 
 /*****************************************************************************/
