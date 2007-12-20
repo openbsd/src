@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.71 2007/09/01 18:49:27 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.72 2007/12/20 20:07:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2122,8 +2122,10 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 
 _next_block:
 	ke = pfr_kentry_byidx(kt, idx, af);
-	if (ke == NULL)
+	if (ke == NULL) {
+		kt->pfrkt_nomatch++;
 		return (1);
+	}
 	pfr_prepare_network(&pfr_mask, af, ke->pfrke_net);
 	*raddr = SUNION2PF(&ke->pfrke_sa, af);
 	*rmask = SUNION2PF(&pfr_mask, af);
@@ -2146,6 +2148,7 @@ _next_block:
 		/* this is a single IP address - no possible nested block */
 		PF_ACPY(counter, addr, af);
 		*pidx = idx;
+		kt->pfrkt_match++;
 		return (0);
 	}
 	for (;;) {
@@ -2161,6 +2164,7 @@ _next_block:
 			/* lookup return the same block - perfect */
 			PF_ACPY(counter, addr, af);
 			*pidx = idx;
+			kt->pfrkt_match++;
 			return (0);
 		}
 
