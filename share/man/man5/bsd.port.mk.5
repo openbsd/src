@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.203 2007/12/21 16:53:05 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.204 2007/12/21 19:24:50 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -773,7 +773,7 @@ Set to name of script invoked by
 target, if appropriate.
 Should be either an absolute path, or relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
-Set by default to --enable-shared or --disable-shared, depending on whether 
+Set by default to --enable-shared or --disable-shared, depending on whether
 the architecture supports shared libraries.
 Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries
 and whose configure script supports these options.
