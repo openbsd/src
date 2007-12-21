@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2007/10/29 06:57:13 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.44 2007/12/21 04:13:53 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -42,6 +42,10 @@ LTESTS= 	connect \
 		localcommand \
 		forcecommand
 
+INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex
+#INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
+
+
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ssh_config sshd_config.orig ssh_proxy sshd_config sshd_proxy \
@@ -50,8 +54,6 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ls.copy banner.in banner.out empty.in \
 		scp-ssh-wrapper.exe ssh_proxy_envpass remote_pid \
 		sshd_proxy_bak rsa_ssh2_cr.prv rsa_ssh2_crnl.prv
-
-#LTESTS+=	ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
@@ -91,10 +93,24 @@ t7: t7.out
 	ssh-keygen -lf t7.out > /dev/null
 	ssh-keygen -Bf t7.out > /dev/null
 
-.for t in ${LTESTS}
-REGRESS_TARGETS+=t-${t}
+.for t in ${LTESTS} ${INTEROP_TESTS}
 t-${t}:
 	env SUDO=${SUDO} sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
 .endfor
+
+.for t in ${LTESTS}
+REGRESS_TARGETS+=t-${t}
+.endfor
+
+.for t in ${INTEROP_TESTS}
+INTEROP_TARGETS+=t-${t}
+.endfor
+
+# Not run by default
+interop: ${INTEROP_TARGETS}
+
+clean:
+	rm -f ${CLEANFILES}
+	rm -rf .putty
 
 .include <bsd.regress.mk>
