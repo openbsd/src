@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.202 2007/08/28 11:25:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.203 2007/12/21 16:53:05 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2007 $
+.Dd $Mdocdate: December 21 2007 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -242,6 +242,15 @@ actually uses
 .Ev do-install
 and
 .Ev post-install .
+Override
+.Ev pre-install ,
+.Ev do-install ,
+or
+.Ev post-install
+to change behavior.
+Do not touch
+.Ev pre-fake
+unless you really know what you are doing.
 Described in a separate section below.
 .It Ar fetch
 Fetch the distribution files and patchfiles, using ${FETCH_CMD}.
@@ -593,6 +602,7 @@ If autoconf must be run manually,
 can be used to specify what packages to depend upon.
 .It Ev BASE_PKGPATH
 Full pkgpath to the current port, taking flavors into account.
+Read-only.
 .It Ev BATCH
 User-settings.
 Set to
@@ -644,6 +654,7 @@ into account.
 Mostly useful to write dependencies for subpackages like this:
 .Li "LIB_DEPENDS-foo=::${BUILD_PKGPATH}"
 and avoid starting to build a package with some other flavor combination.
+Read-only.
 .It Ev BULK
 User settings.
 If set to
@@ -760,10 +771,10 @@ GNU-style configure adds a lot more variables.
 Set to name of script invoked by
 .Ar configure
 target, if appropriate.
-Should be relative to ${WRKSRC}.
+Should be either an absolute path, or relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
-Set to --enable-shared or --disable-shared, depending on whether the
-architecture supports shared libraries.
+Set by default to --enable-shared or --disable-shared, depending on whether 
+the architecture supports shared libraries.
 Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries
 and whose configure script supports these options.
 .It Ev CONFIGURE_STYLE
