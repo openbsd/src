@@ -2006,3 +2006,12 @@ Sudo 1.6.9p8 released.
      to be used in all cases.  Also set when the -p flag is used.
 
 Sudo 1.6.9p9 released.
+
+634) Moved LDAP options into a table for simplified parsing/setting.
+
+635) Fixed a problem with how some LDAP options were being applied.
+
+636) Added support for connecting directly to LDAP servers via SSL
+     in addition to the existing start_tls support.
+
+Sudo 1.6.9p10 released.

@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.30 2007/12/02 00:35:20 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.34 2007/12/19 19:29:29 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -909,7 +909,7 @@ AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]       enable LDAP support],
 esac])
 AC_ARG_WITH(ldap-conf-file, [  --with-ldap-conf-file   path to LDAP configuration file],
 [AC_DEFINE_UNQUOTED(_PATH_LDAP_CONF, "$with_ldap_conf_file", [Path to the ldap.conf file])])
-AC_ARG_WITH(ldap-secret-file, [  --with-ldap-secret-file path to LDAP secret pasdword file],
+AC_ARG_WITH(ldap-secret-file, [  --with-ldap-secret-file path to LDAP secret password file],
 [AC_DEFINE_UNQUOTED(_PATH_LDAP_SECRET, "$with_ldap_secret_file", [Path to the ldap.secret file])])
 
 AC_ARG_WITH(pc-insults, [  --with-pc-insults       replace politically incorrect insults with less offensive ones],
@@ -2064,7 +2064,7 @@ if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
 	], [
 	    AC_MSG_RESULT(no)
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
-	
+	    AC_CHECK_LIB(krb5support, main, [SUDO_LIBS="${SUDO_LIBS} -lkrb5support,"])
     ])
     AUTH_OBJS="$AUTH_OBJS kerb5.o"
     _LIBS="$LIBS"
@@ -2284,7 +2284,7 @@ if test ${with_ldap-'no'} != "no"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_LBER_H)])
 
-    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s)
+    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init)
 
     SUDO_LIBS="${SUDO_LIBS}${LDAP_LIBS}"
     LIBS="$_LIBS"

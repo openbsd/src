@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.33 2007/12/02 17:13:52 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.34 2007/12/13 14:12:49 millert Exp $";
 #endif /* lint */
 
 /*
@@ -730,8 +730,10 @@ parse_args(argc, argv)
 
     while (NewArgc > 0) {
 	if (NewArgv[0][0] == '-') {
-	    if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0')
+	    if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0') {
 		warnx("please use single character options");
+		usage(1);
+	    }
 
 	    switch (NewArgv[0][1]) {
 		case 'p':

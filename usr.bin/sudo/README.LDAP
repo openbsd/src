@@ -124,7 +124,8 @@ For OpenLDAP, simply copy schema.OpenLDAP to the schema directory
 restart slapd.  For other LDAP servers, provide this to your LDAP
 Administrator.  Make sure to index the attribute 'sudoUser'.
 
-For the SunONE or iPlanet LDAP server, use the schema.iPlanet file.
+For netscape-derived LDAP servers such as SunONE, iPlanet or Fedora
+Directory, use the schema.iPlanet file.
 
 Importing /etc/sudoers to LDAP
 ==============================
@@ -160,7 +161,17 @@ Example sudoers Entries in LDAP
 ===============================
 The equivalent of a sudoer in LDAP is a 'sudoRole'.  It contains sudoUser(s),
 sudoHost, sudoCommand and optional sudoOption(s) and sudoRunAs(s).
-<put an example here>
+
+The following example allows users in group wheel to run any
+command on any host through sudo:
+
+dn: cn=%wheel,ou=SUDOers,dc=example,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: %wheel
+sudoUser: %wheel
+sudoHost: ALL
+sudoCommand: ALL
 
 Managing LDAP entries
 =====================
@@ -180,7 +191,12 @@ I recommend using any of the following LDAP browsers to administer your SUDOers.
 	http://www.mcs.anl.gov/~gawor/ldap
 	http://ldapmanager.com
 
-  There are dozens of others, some open source, some free, some not.
+  * Apache Directory Studio - Open Source - an Eclipse-based LDAP
+    development platform.  Includes an LDAP browser, and LDIF editor,
+    a schema editor and more.
+    http://directory.apache.org/studio
+
+  There are dozens of others, some Open Source, some free, some not.
 
 
 Configure your /etc/ldap.conf
@@ -188,18 +204,19 @@ Configure your /etc/ldap.conf
 The /etc/ldap.conf file is meant to be shared between sudo, pam_ldap, nss_ldap
 and other ldap applications and modules.  IBM Secureway unfortunately uses
 the same filename but has a different syntax.  If you need to rename where
-this file is stored, recompile SUDO with the -DLDAP_CONFIG compile option.
+this file is stored, re-run configure with the --with-ldap-conf-file=filename
+option.
 
 Make sure you sudoers_base matches exactly with the location you specified
 when you imported the sudoers.  Below is an example /etc/ldap.conf
 
-  # Either specify a uri or host & port
+  # Either specify a URI or host and port.
+  # If neither is specified sudo will default to localhost port 389.
   #host          ldapserver
   #port          389
   #
-  # URI will override host & port settings
-  # but only works with LDAP SDK's that support
-  # ldap_initialize() such as OpenLDAP
+  # URI will override host & port settings but only works with LDAP
+  # SDK's that support ldap_initialize() such as OpenLDAP.
   uri            ldap://ldapserver
   #uri            ldaps://secureldapserver
   #
@@ -214,21 +231,27 @@ when you imported the sudoers.  Below is an example /etc/ldap.conf
   #bindpw        <password>
   #rootbinddn    <who to search as, uses /etc/ldap.passwd for bindpw>
   #
-  # LDAP Protocol Version defaults to 3
+  # LDAP protocol version, defaults to 3
   #ldap_version 3
   #
+  # Define if you want to use an encrypted LDAP connection.
+  # Typically, you must also set the port to 636 (ldaps).
+  #ssl on
+  #
   # Define if you want to use port 389 and switch to
-  # encryption before the bind credentials are sent
+  # encryption before the bind credentials are sent.
+  # Only supported by LDAP servers that support the start_tls
+  # extension such as OpenLDAP.
   #ssl start_tls
   #
-  # Additional TLS options follow that allow tweaking
-  # of the SSL/TLS connection
+  # Additional TLS options follow that allow tweaking of the
+  # SSL/TLS connection.  Only supported when using OpenLDAP.
   #
   #tls_checkpeer yes # verify server SSL certificate
   #tls_checkpeer no  # ignore server SSL certificate
   #
   # If you enable tls_checkpeer, specify either tls_cacertfile
-  # or tls_cacertdir.
+  # or tls_cacertdir.  Only supported when using OpenLDAP.
   #
   #tls_cacertfile /etc/certs/trusted_signers.pem
   #tls_cacertdir  /etc/certs
@@ -236,11 +259,13 @@ when you imported the sudoers.  Below is an example /etc/ldap.conf
   # For systems that don't have /dev/random
   # use this along with PRNGD or EGD.pl to seed the
   # random number pool to generate cryptographic session keys.
+  # Only supported when using OpenLDAP.
   #
   #tls_randfile /etc/egd-pool
   #
   # You may restrict which ciphers are used.  Consult your SSL
   # documentation for which options go here.
+  # Only supported when using OpenLDAP.
   #
   #tls_ciphers <cipher-list>
   #
@@ -251,9 +276,16 @@ when you imported the sudoers.  Below is an example /etc/ldap.conf
   #   * Do not password protect the key file.
   #   * Ensure the keyfile is only readable by root.
   #
+  # For OpenLDAP:
   #tls_cert /etc/certs/client_cert.pem
   #tls_key  /etc/certs/client_key.pem
   #
+  # For SunONE or iPlanet LDAP, the file specified by tls_cert may
+  # contain CA certs and/or the client's cert.  If the client's
+  # cert is included, tls_key should be specified as well.
+  # For backward compatibility, sslpath may be used in place of tls_cert.
+  #tls_cert /var/ldap/cert7.db
+  #tls_key /var/ldap/key3.db
 
 Debugging your LDAP configuration
 =================================
@@ -321,12 +353,3 @@ seem.  If you desperately want this to be changed, contact Aaron Spangler
   # rather, matches all hosts including web01
   sudoHost: ALL
   sudoHost: !web01
-
-
-Configure your /etc/nsswitch.conf
-=================================
-At the time of this writing, sudo does not consult nsswitch.conf for the
-search order.  But if it did, it would look like this:
-This might be implemented in the future.  For now just skip this step.
-
-  sudoers: files ldap

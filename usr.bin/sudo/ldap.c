@@ -65,7 +65,7 @@
 #include "parse.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.20 2007/11/27 17:06:54 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.28 2007/12/19 19:29:32 millert Exp $";
 #endif /* lint */
 
 #ifndef LINE_MAX
@@ -76,20 +76,33 @@ __unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.20 2007/11/27 17:06
 # define LDAP_OPT_SUCCESS LDAP_SUCCESS
 #endif
 
-#if defined(LDAP_X_OPT_CONNECT_TIMEOUT) && !defined(LDAP_OPT_X_CONNECT_TIMEOUT)
-#define LDAP_OPT_X_CONNECT_TIMEOUT	LDAP_OPT_X_CONNECT_TIMEOUT
-#endif
-
 #define	DPRINTF(args, level)	if (ldap_conf.debug >= level) warnx args
+
+#define CONF_BOOL	0
+#define CONF_INT	1
+#define CONF_STR	2
+
+#define SUDO_LDAP_SSL		1
+#define SUDO_LDAP_STARTTLS	2
+
+struct ldap_config_table {
+    const char *conf_str;	/* config file string */
+    short type;			/* CONF_BOOL, CONF_INT, CONF_STR */
+    short connected;		/* connection-specific value? */
+    int opt_val;		/* LDAP_OPT_* (or -1 for sudo internal) */
+    void *valp;			/* pointer into ldap_conf */
+};
 
 /* ldap configuration structure */
 struct ldap_config {
     int port;
     int version;
     int debug;
+    int ldap_debug;
     int tls_checkpeer;
     int timelimit;
     int bind_timelimit;
+    int ssl_mode;
     char *host;
     char *uri;
     char *binddn;
@@ -104,6 +117,67 @@ struct ldap_config {
     char *tls_certfile;
     char *tls_keyfile;
 } ldap_conf;
+
+struct ldap_config_table ldap_conf_table[] = {
+    { "sudoers_debug", CONF_INT, FALSE, -1, &ldap_conf.debug },
+    { "host", CONF_STR, FALSE, -1, &ldap_conf.host },
+    { "port", CONF_INT, FALSE, -1, &ldap_conf.port },
+    { "ssl", CONF_STR, FALSE, -1, &ldap_conf.ssl },
+    { "sslpath", CONF_STR, FALSE, -1, &ldap_conf.tls_certfile },
+    { "uri", CONF_STR, FALSE, -1, &ldap_conf.uri },
+#ifdef LDAP_OPT_DEBUG_LEVEL
+    { "debug", CONF_INT, FALSE, LDAP_OPT_DEBUG_LEVEL, &ldap_conf.ldap_debug },
+#endif
+#ifdef LDAP_OPT_PROTOCOL_VERSION
+    { "ldap_version", CONF_INT, TRUE, LDAP_OPT_PROTOCOL_VERSION,
+	&ldap_conf.version },
+#endif
+#ifdef LDAP_OPT_X_TLS_REQUIRE_CERT
+    { "tls_checkpeer", CONF_BOOL, FALSE, LDAP_OPT_X_TLS_REQUIRE_CERT,
+	&ldap_conf.tls_checkpeer },
+#endif
+#ifdef LDAP_OPT_X_TLS_CACERTFILE
+    { "tls_cacertfile", CONF_STR, FALSE, LDAP_OPT_X_TLS_CACERTFILE,
+	&ldap_conf.tls_cacertfile },
+#endif
+#ifdef LDAP_OPT_X_TLS_CACERTDIR
+    { "tls_cacertdir", CONF_STR, FALSE, LDAP_OPT_X_TLS_CACERTDIR,
+	&ldap_conf.tls_cacertdir },
+#endif
+#ifdef LDAP_OPT_X_TLS_RANDOM_FILE
+    { "tls_randfile", CONF_STR, FALSE, LDAP_OPT_X_TLS_RANDOM_FILE,
+	&ldap_conf.tls_random_file },
+#endif
+#ifdef LDAP_OPT_X_TLS_CIPHER_SUITE
+    { "tls_ciphers", CONF_STR, FALSE, LDAP_OPT_X_TLS_CIPHER_SUITE,
+	&ldap_conf.tls_cipher_suite },
+#endif
+#ifdef LDAP_OPT_X_TLS_CERTFILE
+    { "tls_cert", CONF_STR, FALSE, LDAP_OPT_X_TLS_CERTFILE,
+	&ldap_conf.tls_certfile },
+#else
+    { "tls_cert", CONF_STR, FALSE, -1, &ldap_conf.tls_certfile },
+#endif
+#ifdef LDAP_OPT_X_TLS_KEYFILE
+    { "tls_key", CONF_STR, FALSE, LDAP_OPT_X_TLS_KEYFILE,
+	&ldap_conf.tls_keyfile },
+#else
+    { "tls_key", CONF_STR, FALSE, -1, &ldap_conf.tls_keyfile },
+#endif
+#ifdef LDAP_OPT_NETWORK_TIMEOUT
+    { "bind_timelimit", CONF_INT, TRUE, -1 /* needs timeval, set manually */,
+	&ldap_conf.bind_timelimit },
+#elif defined(LDAP_X_OPT_CONNECT_TIMEOUT)
+    { "bind_timelimit", CONF_INT, TRUE, LDAP_X_OPT_CONNECT_TIMEOUT,
+	&ldap_conf.bind_timelimit },
+#endif
+    { "timelimit", CONF_INT, TRUE, LDAP_OPT_TIMELIMIT, &ldap_conf.timelimit },
+    { "binddn", CONF_STR, FALSE, -1, &ldap_conf.binddn },
+    { "bindpw", CONF_STR, FALSE, -1, &ldap_conf.bindpw },
+    { "rootbinddn", CONF_STR, FALSE, -1, &ldap_conf.rootbinddn },
+    { "sudoers_base", CONF_STR, FALSE, -1, &ldap_conf.base },
+    { NULL }
+};
 
 static void sudo_ldap_update_defaults __P((LDAP *));
 static void sudo_ldap_close __P((LDAP *));
@@ -495,16 +569,18 @@ sudo_ldap_read_config()
 {
     FILE *f;
     char buf[LINE_MAX], *c, *keyword, *value;
+    struct ldap_config_table *cur;
 
     /* defaults */
     ldap_conf.version = 3;
-    ldap_conf.port = 389;
+    ldap_conf.port = -1;
     ldap_conf.tls_checkpeer = -1;
     ldap_conf.timelimit = -1;
     ldap_conf.bind_timelimit = -1;
 
     if ((f = fopen(_PATH_LDAP_CONF, "r")) == NULL)
 	return(FALSE);
+
     while (fgets(buf, sizeof(buf), f)) {
 	/* ignore text after comment character */
 	if ((c = strchr(buf, '#')) != NULL)
@@ -535,68 +611,29 @@ sudo_ldap_read_config()
 	while (--c > value && isspace((unsigned char) *c))
 	    *c = '\0';
 
-	/* The following macros make the code much more readable */
-
-#define MATCH_S(x,y) if (!strcasecmp(keyword,x)) \
-    { efree(y); y=estrdup(value); }
-#define MATCH_I(x,y) if (!strcasecmp(keyword,x)) { y=atoi(value); }
-#define MATCH_B(x,y) if (!strcasecmp(keyword,x)) { y=_atobool(value); }
-
-	/*
-	 * Parse values using a continues chain of if else if else if else if
-	 * else ...
-	 */
-	MATCH_S("host", ldap_conf.host)
-	    else
-	MATCH_I("port", ldap_conf.port)
-	    else
-	MATCH_S("ssl", ldap_conf.ssl)
-	    else
-	MATCH_B("tls_checkpeer", ldap_conf.tls_checkpeer)
-	    else
-	MATCH_S("tls_cacertfile", ldap_conf.tls_cacertfile)
-	    else
-	MATCH_S("tls_cacertdir", ldap_conf.tls_cacertdir)
-	    else
-	MATCH_S("tls_randfile", ldap_conf.tls_random_file)
-	    else
-	MATCH_S("tls_ciphers", ldap_conf.tls_cipher_suite)
-	    else
-	MATCH_S("tls_cert", ldap_conf.tls_certfile)
-	    else
-	MATCH_S("tls_key", ldap_conf.tls_keyfile)
-	    else
-	MATCH_I("ldap_version", ldap_conf.version)
-	    else
-	MATCH_I("bind_timelimit", ldap_conf.bind_timelimit)
-	    else
-	MATCH_I("timelimit", ldap_conf.timelimit)
-	    else
-	MATCH_S("uri", ldap_conf.uri)
-	    else
-	MATCH_S("binddn", ldap_conf.binddn)
-	    else
-	MATCH_S("bindpw", ldap_conf.bindpw)
-	    else
-	MATCH_S("rootbinddn", ldap_conf.rootbinddn)
-	    else
-	MATCH_S("sudoers_base", ldap_conf.base)
-	    else
-	MATCH_I("sudoers_debug", ldap_conf.debug)
-	    else {
-
-	    /*
-	     * The keyword was unrecognized.  Since this config file is
-	     * shared by multiple programs, it is appropriate to silently
-	     * ignore options this program does not understand
-	     */
+	/* Look up keyword in config table. */
+	for (cur = ldap_conf_table; cur->conf_str != NULL; cur++) {
+	    if (strcasecmp(keyword, cur->conf_str) == 0) {
+		switch (cur->type) {
+		case CONF_BOOL:
+		    *(int *)(cur->valp) = _atobool(value);
+		    break;
+		case CONF_INT:
+		    *(int *)(cur->valp) = atoi(value);
+		    break;
+		case CONF_STR:
+		    efree(*(char **)(cur->valp));
+		    *(char **)(cur->valp) = estrdup(value);
+		    break;
+		}
+		break;
+	    }
 	}
-
     }
     fclose(f);
 
     if (!ldap_conf.host)
-	ldap_conf.host = estrdup("localhost");
+	ldap_conf.host = "localhost";
 
     if (ldap_conf.bind_timelimit > 0)
 	ldap_conf.bind_timelimit *= 1000;	/* convert to ms */
@@ -622,16 +659,46 @@ sudo_ldap_read_config()
 	    ldap_conf.binddn : "(anonymous)");
 	fprintf(stderr, "bindpw       %s\n", ldap_conf.bindpw ?
 	    ldap_conf.bindpw : "(anonymous)");
-	fprintf(stderr, "bind_timelimit  %d\n", ldap_conf.bind_timelimit);
-	fprintf(stderr, "timelimit    %d\n", ldap_conf.timelimit);
-#ifdef HAVE_LDAP_START_TLS_S
+	if (ldap_conf.bind_timelimit > 0)
+	    fprintf(stderr, "bind_timelimit  %d\n", ldap_conf.bind_timelimit);
+	if (ldap_conf.timelimit > 0)
+	    fprintf(stderr, "timelimit    %d\n", ldap_conf.timelimit);
 	fprintf(stderr, "ssl          %s\n", ldap_conf.ssl ?
 	    ldap_conf.ssl : "(no)");
-#endif
+	if (ldap_conf.tls_checkpeer != -1)
+	    fprintf(stderr, "tls_checkpeer    %s\n", ldap_conf.tls_checkpeer ?
+		"(yes)" : "(no)");
+	if (ldap_conf.tls_cacertfile != NULL)
+	    fprintf(stderr, "tls_cacertfile   %s\n", ldap_conf.tls_cacertfile);
+	if (ldap_conf.tls_cacertdir != NULL)
+	    fprintf(stderr, "tls_cacertdir    %s\n", ldap_conf.tls_cacertdir);
+	if (ldap_conf.tls_random_file != NULL)
+	    fprintf(stderr, "tls_random_file  %s\n", ldap_conf.tls_random_file);
+	if (ldap_conf.tls_cipher_suite != NULL)
+	    fprintf(stderr, "tls_cipher_suite %s\n", ldap_conf.tls_cipher_suite);
+	if (ldap_conf.tls_certfile != NULL)
+	    fprintf(stderr, "tls_certfile     %s\n", ldap_conf.tls_certfile);
+	if (ldap_conf.tls_keyfile != NULL)
+	    fprintf(stderr, "tls_keyfile      %s\n", ldap_conf.tls_keyfile);
 	fprintf(stderr, "===================\n");
     }
     if (!ldap_conf.base)
 	return(FALSE);		/* if no base is defined, ignore LDAP */
+
+    /*
+     * Interpret SSL option
+     */
+    if (ldap_conf.ssl != NULL) {
+	    if (strcasecmp(ldap_conf.ssl, "start_tls") == 0)
+		ldap_conf.ssl_mode = SUDO_LDAP_STARTTLS;
+	    else if (_atobool(ldap_conf.ssl))
+		ldap_conf.ssl_mode = SUDO_LDAP_SSL;
+    }
+
+    /* Use port 389 for plaintext LDAP and port 636 for SSL LDAP */
+    if (ldap_conf.port < 0)
+	ldap_conf.port =
+	    ldap_conf.ssl_mode == SUDO_LDAP_SSL ? LDAPS_PORT : LDAP_PORT;
 
     /* If rootbinddn set, read in /etc/ldap.secret if it exists. */
     if (ldap_conf.rootbinddn) {
@@ -746,33 +813,92 @@ sudo_ldap_list_matches()
 	printf("%s", sudo_ldap_cm_list);
 }
 
-/* macros to set option, error on failure plus consistent debugging */
-#define SET_OPTS(opt, val) do { \
-    if (ldap_conf.val != NULL) { \
-	if (ldap_conf.debug > 1) \
-	    fprintf(stderr, \
-		"ldap_set_option(LDAP_OPT_%s, \"%s\")\n", #opt, ldap_conf.val);\
-	rc = ldap_set_option(ld, LDAP_OPT_ ## opt, ldap_conf.val); \
-	if (rc != LDAP_OPT_SUCCESS) { \
-	    fprintf(stderr,"ldap_set_option(LDAP_OPT_%s, \"%s\")=%d: %s\n", \
-		#opt, ldap_conf.val, rc, ldap_err2string(rc)); \
-	    return(NULL); \
-	} \
-    } \
-} while(0)
-#define SET_OPTI(opt, val) do { \
-    if (ldap_conf.val >= 0) { \
-	if (ldap_conf.debug > 1) \
-	    fprintf(stderr, \
-		"ldap_set_option(LDAP_OPT_%s, %d)\n", #opt, ldap_conf.val); \
-	rc = ldap_set_option(ld, LDAP_OPT_ ## opt, &ldap_conf.val); \
-	if (rc != LDAP_OPT_SUCCESS) { \
-	    fprintf(stderr,"ldap_set_option(LDAP_OPT_%s, %d)=%d: %s\n", \
-		#opt, ldap_conf.val, rc, ldap_err2string(rc)); \
-	    return(NULL); \
-	} \
-    } \
-} while(0)
+/*
+ * Set LDAP options based on the config table.
+ */
+int
+sudo_ldap_set_options(ld)
+    LDAP *ld;
+{
+    struct ldap_config_table *cur;
+    int rc;
+
+    /* Set ber options */
+#ifdef LBER_OPT_DEBUG_LEVEL
+    if (ldap_conf.ldap_debug)
+	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &ldap_conf.ldap_debug);
+#endif
+
+    /* Set simple LDAP options */
+    for (cur = ldap_conf_table; cur->conf_str != NULL; cur++) {
+	LDAP *conn;
+	int ival;
+	char *sval;
+
+	if (cur->opt_val == -1)
+	    continue;
+
+	conn = cur->connected ? ld : NULL;
+	switch (cur->type) {
+	case CONF_BOOL:
+	case CONF_INT:
+	    ival = *(int *)(cur->valp);
+	    if (ival >= 0) {
+		rc = ldap_set_option(conn, cur->opt_val, &ival);
+		if (rc != LDAP_OPT_SUCCESS) {
+		    warnx("ldap_set_option: %s -> %d: %s",
+			cur->conf_str, ival, ldap_err2string(rc));
+		    return(-1);
+		}
+		DPRINTF(("ldap_set_option: %s -> %d", cur->conf_str, ival), 1);
+	    }
+	    break;
+	case CONF_STR:
+	    sval = *(char **)(cur->valp);
+	    if (sval != NULL) {
+		rc = ldap_set_option(conn, cur->opt_val, sval);
+		if (rc != LDAP_OPT_SUCCESS) {
+		    warnx("ldap_set_option: %s -> %s: %s",
+			cur->conf_str, sval, ldap_err2string(rc));
+		    return(-1);
+		}
+		DPRINTF(("ldap_set_option: %s -> %s", cur->conf_str, sval), 1);
+	    }
+	    break;
+	}
+    }
+
+#ifdef LDAP_OPT_NETWORK_TIMEOUT
+    /* Convert bind_timelimit to a timeval */
+    if (ldap_conf.bind_timelimit > 0) {
+	struct timeval tv;
+	tv.tv_sec = ldap_conf.bind_timelimit / 1000;
+	tv.tv_usec = 0;
+	rc = ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &tv);
+	if (rc != LDAP_OPT_SUCCESS) {
+	    warnx("ldap_set_option(NETWORK_TIMEOUT, %ld): %s",
+		(long)tv.tv_sec, ldap_err2string(rc));
+	    return(-1);
+	}
+	DPRINTF(("ldap_set_option(LDAP_OPT_NETWORK_TIMEOUT, %ld)\n",
+	    (long)tv.tv_sec), 1);
+    }
+#endif
+
+#if defined(LDAP_OPT_X_TLS) && !defined(HAVE_LDAPSSL_INIT)
+    if (ldap_conf.ssl_mode == SUDO_LDAP_SSL) {
+	int val = LDAP_OPT_X_TLS_HARD;
+	rc = ldap_set_option(ld, LDAP_OPT_X_TLS, &val);
+	if (rc != LDAP_SUCCESS) {
+	    warnx("ldap_set_option(LDAP_OPT_X_TLS, LDAP_OPT_X_TLS_HARD): %s",
+		ldap_err2string(rc));
+	    return(-1);
+	}
+
+    }
+#endif
+    return(0);
+}
 
 /*
  * Open a connection to the LDAP server.
@@ -786,108 +912,72 @@ sudo_ldap_open()
     if (!sudo_ldap_read_config())
 	return(NULL);
 
-    /* attempt to setup ssl options */
-#ifdef LDAP_OPT_X_TLS_CACERTFILE
-    SET_OPTS(X_TLS_CACERTFILE, tls_cacertfile);
-#endif /* LDAP_OPT_X_TLS_CACERTFILE */
-
-#ifdef LDAP_OPT_X_TLS_CACERTDIR
-    SET_OPTS(X_TLS_CACERTDIR, tls_cacertdir);
-#endif /* LDAP_OPT_X_TLS_CACERTDIR */
-
-#ifdef LDAP_OPT_X_TLS_CERTFILE
-    SET_OPTS(X_TLS_CERTFILE, tls_certfile);
-#endif /* LDAP_OPT_X_TLS_CERTFILE */
-
-#ifdef LDAP_OPT_X_TLS_KEYFILE
-    SET_OPTS(X_TLS_KEYFILE, tls_keyfile);
-#endif /* LDAP_OPT_X_TLS_KEYFILE */
-
-#ifdef LDAP_OPT_X_TLS_CIPHER_SUITE
-    SET_OPTS(X_TLS_CIPHER_SUITE, tls_cipher_suite);
-#endif /* LDAP_OPT_X_TLS_CIPHER_SUITE */
-
-#ifdef LDAP_OPT_X_TLS_RANDOM_FILE
-    SET_OPTS(X_TLS_RANDOM_FILE, tls_random_file);
-#endif /* LDAP_OPT_X_TLS_RANDOM_FILE */
-
-#ifdef LDAP_OPT_X_TLS_REQUIRE_CERT
-    /* check the server certificate? */
-    SET_OPTI(X_TLS_REQUIRE_CERT, tls_checkpeer);
-#endif /* LDAP_OPT_X_TLS_REQUIRE_CERT */
-
-    /* set timelimit options */
-    SET_OPTI(TIMELIMIT, timelimit);
-
-#ifdef LDAP_OPT_NETWORK_TIMEOUT
-    if (ldap_conf.bind_timelimit > 0) {
-	struct timeval tv;
-	tv.tv_sec = ldap_conf.bind_timelimit / 1000;
-	tv.tv_usec = 0;
-	if (ldap_conf.debug > 1)
-	    fprintf(stderr, "ldap_set_option(LDAP_OPT_NETWORK_TIMEOUT, %ld)\n",
-	    tv.tv_sec);
-	rc = ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &tv);
-	if (rc != LDAP_OPT_SUCCESS) {
-	    fprintf(stderr,"ldap_set_option(NETWORK_TIMEOUT, %ld)=%d: %s\n",
-	    tv.tv_sec, rc, ldap_err2string(rc));
+#ifdef HAVE_LDAPSSL_INIT
+    if (ldap_conf.ssl_mode == SUDO_LDAP_SSL) {
+	DPRINTF(("ldapssl_clientauth_init(%s, %s)",
+	    ldap_conf.tls_certfile ? ldap_conf.tls_certfile : "NULL",
+	    ldap_conf.tls_keyfile ? ldap_conf.tls_keyfile : "NULL"), 2);
+	rc = ldapssl_clientauth_init(ldap_conf.tls_certfile, NULL,
+	    ldap_conf.tls_keyfile != NULL, ldap_conf.tls_keyfile, NULL);
+	if (rc != LDAP_SUCCESS) {
+	    warnx("unable to initialize SSL cert and key db: %s",
+		ldapssl_err2string(rc));
 	    return(NULL);
 	}
     }
-#endif
+#endif /* HAVE_LDAPSSL_INIT */
 
-    /* attempt connect */
+    /* Connect to LDAP server */
 #ifdef HAVE_LDAP_INITIALIZE
     if (ldap_conf.uri) {
-
-	DPRINTF(("ldap_initialize(ld,%s)", ldap_conf.uri), 2);
-
+	DPRINTF(("ldap_initialize(ld, %s)", ldap_conf.uri), 2);
 	rc = ldap_initialize(&ld, ldap_conf.uri);
-	if (rc) {
-	    fprintf(stderr, "ldap_initialize()=%d : %s\n",
-		rc, ldap_err2string(rc));
+	if (rc != LDAP_SUCCESS) {
+	    warnx("unable to initialize LDAP: %s", ldap_err2string(rc));
 	    return(NULL);
 	}
     } else
 #endif /* HAVE_LDAP_INITIALIZE */
-    if (ldap_conf.host) {
-
-	DPRINTF(("ldap_init(%s,%d)", ldap_conf.host, ldap_conf.port), 2);
-
-	if ((ld = ldap_init(ldap_conf.host, ldap_conf.port)) == NULL) {
-	    fprintf(stderr, "ldap_init(): errno=%d : %s\n",
-		errno, strerror(errno));
+    {
+#ifdef HAVE_LDAPSSL_INIT
+	DPRINTF(("ldapssl_init(%s, %d, %d)", ldap_conf.host, ldap_conf.port,
+	    ldap_conf.ssl_mode == SUDO_LDAP_SSL), 2);
+	ld = ldapssl_init(ldap_conf.host, ldap_conf.port,
+	    ldap_conf.ssl_mode == SUDO_LDAP_SSL);
+#else
+	DPRINTF(("ldap_init(%s, %d)", ldap_conf.host, ldap_conf.port), 2);
+	ld = ldap_init(ldap_conf.host, ldap_conf.port);
+#endif /* HAVE_LDAPSSL_INIT */
+	if (ld == NULL) {
+	    warn("unable to initialize LDAP");
 	    return(NULL);
 	}
     }
-#ifdef LDAP_OPT_PROTOCOL_VERSION
 
-    /* Set the LDAP Protocol version */
-    SET_OPTI(PROTOCOL_VERSION, version);
+    /* Set LDAP options */
+    if (sudo_ldap_set_options(ld) < 0)
+	return(NULL);
 
-#endif /* LDAP_OPT_PROTOCOL_VERSION */
-
+    if (ldap_conf.ssl_mode == SUDO_LDAP_STARTTLS) {
 #ifdef HAVE_LDAP_START_TLS_S
-    /* Turn on TLS */
-    if (ldap_conf.ssl && !strcasecmp(ldap_conf.ssl, "start_tls")) {
 	rc = ldap_start_tls_s(ld, NULL, NULL);
 	if (rc != LDAP_SUCCESS) {
-	    fprintf(stderr, "ldap_start_tls_s(): %d: %s\n", rc,
-		ldap_err2string(rc));
+	    warnx("ldap_start_tls_s(): %s", ldap_err2string(rc));
 	    ldap_unbind(ld);
 	    return(NULL);
 	}
 	DPRINTF(("ldap_start_tls_s() ok"), 1);
-    }
+#else
+	warnx("start_tls specified but LDAP libs do not support ldap_start_tls_s()");
 #endif /* HAVE_LDAP_START_TLS_S */
+    }
 
     /* Actually connect */
     if ((rc = ldap_simple_bind_s(ld, ldap_conf.binddn, ldap_conf.bindpw))) {
-	fprintf(stderr, "ldap_simple_bind_s()=%d : %s\n",
-	    rc, ldap_err2string(rc));
+	warnx("ldap_simple_bind_s: %s", ldap_err2string(rc));
 	return(NULL);
     }
-    DPRINTF(("ldap_bind() ok"), 1);
+    DPRINTF(("ldap_simple_bind_s() ok"), 1);
 
     return(ld);
 }
@@ -901,7 +991,7 @@ sudo_ldap_update_defaults(ld)
 
     rc = ldap_search_s(ld, ldap_conf.base, LDAP_SCOPE_SUBTREE,
 	"cn=defaults", NULL, 0, &result);
-    if (!rc && (entry = ldap_first_entry(ld, result))) {
+    if (rc == LDAP_SUCCESS && (entry = ldap_first_entry(ld, result))) {
 	DPRINTF(("found:%s", ldap_get_dn(ld, entry)), 1);
 	sudo_ldap_parse_options(ld, entry);
     } else
@@ -952,7 +1042,7 @@ sudo_ldap_check(pwflag)
 	DPRINTF(("ldap search '%s'", filt), 1);
 	rc = ldap_search_s(ld, ldap_conf.base, LDAP_SCOPE_SUBTREE, filt,
 	    NULL, 0, &result);
-	if (rc)
+	if (rc != LDAP_SUCCESS)
 	    DPRINTF(("nothing found for '%s'", filt), 1);
 	efree(filt);
 

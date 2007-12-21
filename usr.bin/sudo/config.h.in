@@ -224,6 +224,9 @@
 /* Define to 1 if you have the `ldap_start_tls_s' function. */
 #undef HAVE_LDAP_START_TLS_S
 
+/* Define to 1 if you have the `ldapssl_init' function. */
+#undef HAVE_LDAPSSL_INIT
+
 /* Define to 1 if you have the `lockf' function. */
 #undef HAVE_LOCKF
 
