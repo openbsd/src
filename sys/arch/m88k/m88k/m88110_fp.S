@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.S,v 1.4 2007/12/08 18:39:50 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.S,v 1.5 2007/12/21 23:56:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -58,9 +58,9 @@ ASENTRY(m88110_fpu_exception)
 	fldcr	r2,  FPECR
 	fldcr	r3,  FPSR
 	fldcr	r4,  FPCR
-	st	r2,  r30, EF_FPECR * 4
-	st	r3,  r30, EF_FPSR * 4
-	st	r4,  r30, EF_FPCR * 4
+	st	r2,  r30, EF_FPECR
+	st	r3,  r30, EF_FPSR
+	st	r4,  r30, EF_FPCR
 
 	/*
 	 * Check for floating point unimplemented bit first, as other
@@ -91,7 +91,7 @@ ASLOCAL(m88110_funimp)
 	/*
 	 * Check if the fpu was enabled.
 	 */
-	ld	r5, r30, EF_EPSR * 4
+	ld	r5, r30, EF_EPSR
 	/* FPE_FLTINV */
 	bb1	PSR_FPU_DISABLE_BIT, r5, _ASM_LABEL(m88110_fpeflt)
 
@@ -126,7 +126,7 @@ ASLOCAL(m88110_funimp)
 
 #ifdef notyet
 	/* Fetch the offending instruction */
-	ld	r6,  r30, EF_EXIP * 4
+	ld	r6,  r30, EF_EXIP
 	ld.usr	r2,  r6,  r0
 
 	/*
@@ -355,7 +355,7 @@ ASLOCAL(m88110_fpeflt)
 	/*
 	 * Do not call trap() if the exception comes from kernel mode.
 	 */
-	ld	r5, r30, EF_EPSR * 4
+	ld	r5, r30, EF_EPSR
 	bb1	PSR_SUPERVISOR_MODE_BIT, r5, _ASM_LABEL(m88110_fp_return)
 
 	or	r2, r0, T_FPEPFLT

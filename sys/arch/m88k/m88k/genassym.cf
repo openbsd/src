@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2007/12/02 21:28:40 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2007/12/21 23:56:54 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.15 2007/12/02 21:28:40 miod Exp $
+#	$Id: genassym.cf,v 1.16 2007/12/21 23:56:54 miod Exp $
 #
 
 include <sys/param.h>
@@ -70,62 +70,59 @@ member	ci_softintr
 # pcb fields
 struct	pcb
 member	pcb_onfault
-member	PCB_USER_STATE		user_state
+member	PCB_USER_STATE	user_state
 
 # system calls
 export	SYS_exit
 export	SYS_sigreturn
 
-# trapframe element indexes
-define	EF_R0		offsetof(struct trapframe, tf_r[0]) / sizeof(int)
-define	EF_FPSR		offsetof(struct trapframe, tf_fpsr) / sizeof(int)
-define	EF_FPCR		offsetof(struct trapframe, tf_fpcr) / sizeof(int)
-define	EF_EPSR		offsetof(struct trapframe, tf_epsr) / sizeof(int)
-define	EF_SXIP		offsetof(struct trapframe, tf_sxip) / sizeof(int)
-define	EF_SFIP		offsetof(struct trapframe, tf_sfip) / sizeof(int)
-define	EF_SNIP		offsetof(struct trapframe, tf_snip) / sizeof(int)
-define	EF_SSBR		offsetof(struct trapframe, tf_ssbr) / sizeof(int)
-define	EF_DMT0		offsetof(struct trapframe, tf_dmt0) / sizeof(int)
-define	EF_DMD0		offsetof(struct trapframe, tf_dmd0) / sizeof(int)
-define	EF_DMA0		offsetof(struct trapframe, tf_dma0) / sizeof(int)
-define	EF_DMT1		offsetof(struct trapframe, tf_dmt1) / sizeof(int)
-define	EF_DMD1		offsetof(struct trapframe, tf_dmd1) / sizeof(int)
-define	EF_DMA1		offsetof(struct trapframe, tf_dma1) / sizeof(int)
-define	EF_DMT2		offsetof(struct trapframe, tf_dmt2) / sizeof(int)
-define	EF_DMD2		offsetof(struct trapframe, tf_dmd2) / sizeof(int)
-define	EF_DMA2		offsetof(struct trapframe, tf_dma2) / sizeof(int)
-define	EF_FPECR	offsetof(struct trapframe, tf_fpecr) / sizeof(int)
-define	EF_FPHS1	offsetof(struct trapframe, tf_fphs1) / sizeof(int)
-define	EF_FPLS1	offsetof(struct trapframe, tf_fpls1) / sizeof(int)
-define	EF_FPHS2	offsetof(struct trapframe, tf_fphs2) / sizeof(int)
-define	EF_FPLS2	offsetof(struct trapframe, tf_fpls2) / sizeof(int)
-define	EF_FPPT		offsetof(struct trapframe, tf_fppt) / sizeof(int)
-define	EF_FPRH		offsetof(struct trapframe, tf_fprh) / sizeof(int)
-define	EF_FPRL		offsetof(struct trapframe, tf_fprl) / sizeof(int)
-define	EF_FPIT		offsetof(struct trapframe, tf_fpit) / sizeof(int)
-define	EF_VECTOR	offsetof(struct trapframe, tf_vector) / sizeof(int)
-define	EF_MASK		offsetof(struct trapframe, tf_mask) / sizeof(int)
-define	EF_FLAGS	offsetof(struct trapframe, tf_flags) / sizeof(int)
-define	EF_RET		offsetof(struct trapframe, tf_scratch1) / sizeof(int)
-define	EF_IPFSR	offsetof(struct trapframe, tf_ipfsr) / sizeof(int)
-define	EF_DPFSR	offsetof(struct trapframe, tf_dpfsr) / sizeof(int)
-define	EF_CPU		offsetof(struct trapframe, tf_cpu) / sizeof(int)
-
-# m88110 trapframe element indexes
-define	EF_EXIP		offsetof(struct trapframe, tf_exip) / sizeof(int)
-define	EF_ENIP		offsetof(struct trapframe, tf_enip) / sizeof(int)
-define	EF_DSR		offsetof(struct trapframe, tf_dsr) / sizeof(int)
-define	EF_DLAR		offsetof(struct trapframe, tf_dlar) / sizeof(int)
-define	EF_DPAR		offsetof(struct trapframe, tf_dpar) / sizeof(int)
-define	EF_ISR		offsetof(struct trapframe, tf_isr) / sizeof(int)
-define	EF_ILAR		offsetof(struct trapframe, tf_ilar) / sizeof(int)
-define	EF_IPAR		offsetof(struct trapframe, tf_ipar) / sizeof(int)
-define	EF_ISAP		offsetof(struct trapframe, tf_isap) / sizeof(int)
-define	EF_DSAP		offsetof(struct trapframe, tf_dsap) / sizeof(int)
-define	EF_IUAP		offsetof(struct trapframe, tf_iuap) / sizeof(int)
-define	EF_DUAP		offsetof(struct trapframe, tf_duap) / sizeof(int)
-
-define	SIZEOF_EF	sizeof(struct trapframe)
+# exception frame
+struct	trapframe
+member	EF_R0		tf_r[0]
+member	EF_FPSR		tf_fpsr
+member	EF_FPCR		tf_fpcr
+member	EF_EPSR		tf_epsr
+member	EF_SXIP		tf_sxip
+member	EF_SFIP		tf_sfip
+member	EF_SNIP		tf_snip
+member	EF_SSBR		tf_ssbr
+member	EF_DMT0		tf_dmt0
+member	EF_DMD0		tf_dmd0
+member	EF_DMA0		tf_dma0
+member	EF_DMT1		tf_dmt1
+member	EF_DMD1		tf_dmd1
+member	EF_DMA1		tf_dma1
+member	EF_DMT2		tf_dmt2
+member	EF_DMD2		tf_dmd2
+member	EF_DMA2		tf_dma2
+member	EF_FPECR	tf_fpecr
+member	EF_FPHS1	tf_fphs1
+member	EF_FPLS1	tf_fpls1
+member	EF_FPHS2	tf_fphs2
+member	EF_FPLS2	tf_fpls2
+member	EF_FPPT		tf_fppt
+member	EF_FPRH		tf_fprh
+member	EF_FPRL		tf_fprl
+member	EF_FPIT		tf_fpit
+member	EF_VECTOR	tf_vector
+member	EF_MASK		tf_mask
+member	EF_FLAGS	tf_flags
+member	EF_RET		tf_scratch1
+member	EF_IPFSR	tf_ipfsr
+member	EF_DPFSR	tf_dpfsr
+member	EF_CPU		tf_cpu
+member	EF_EXIP		tf_exip
+member	EF_ENIP		tf_enip
+member	EF_DSR		tf_dsr
+member	EF_DLAR		tf_dlar
+member	EF_DPAR		tf_dpar
+member	EF_ISR		tf_isr
+member	EF_ILAR		tf_ilar
+member	EF_IPAR		tf_ipar
+member	EF_ISAP		tf_isap
+member	EF_DSAP		tf_dsap
+member	EF_IUAP		tf_iuap
+member	EF_DUAP		tf_duap
 
 # more (machine-dependent) pcb fields
 struct	m88100_pcb

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.4 2007/12/13 18:51:01 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.5 2007/12/21 23:56:53 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -54,7 +54,7 @@ ENTRY(pfsr_av400_double)
 1:
 	ld	TMP3, TMP2, r0
 	st	r0,   TMP2, r0
-	st	TMP3, r31,  REG_OFF(EF_IPFSR)
+	st	TMP3, r31,  EF_IPFSR
 
 	ld	TMP2, TMP,  CI_PFSR_D0
 	ld	TMP3, TMP2, r0
@@ -66,7 +66,7 @@ ENTRY(pfsr_av400_double)
 	ld	TMP3, TMP2, r0
 	st	r0,   TMP2, r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  REG_OFF(EF_DPFSR)
+	 st	TMP3, r31,  EF_DPFSR
 
 ENTRY(pfsr_av400_straight)
 	/*
@@ -75,8 +75,8 @@ ENTRY(pfsr_av400_straight)
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
 	ld	TMP3, TMP2, r0
-	st	TMP3, r31,  REG_OFF(EF_IPFSR)
+	st	TMP3, r31,  EF_IPFSR
 	ld	TMP2, TMP,  CI_PFSR_D0
 	ld	TMP3, TMP2, r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  REG_OFF(EF_DPFSR)
+	 st	TMP3, r31,  EF_DPFSR

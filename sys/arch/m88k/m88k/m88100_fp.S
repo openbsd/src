@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.4 2004/08/09 20:52:11 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.5 2007/12/21 23:56:54 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -77,14 +77,14 @@ ASENTRY(m88100_Xfp_precise)
 	st	r1,  r31, 8
 	st	r29, r31, 12
 
-	ld	r2, r29, EF_FPSR * 4
-	ld	r3, r29, EF_FPCR * 4
-	ld	r4, r29, EF_FPECR * 4
-	ld	r5, r29, EF_FPHS1 * 4
-	ld	r6, r29, EF_FPLS1 * 4
-	ld	r7, r29, EF_FPHS2 * 4
-	ld	r8, r29, EF_FPLS2 * 4
-	ld	r9, r29, EF_FPPT * 4
+	ld	r2, r29, EF_FPSR
+	ld	r3, r29, EF_FPCR
+	ld	r4, r29, EF_FPECR
+	ld	r5, r29, EF_FPHS1
+	ld	r6, r29, EF_FPLS1
+	ld	r7, r29, EF_FPHS2
+	ld	r8, r29, EF_FPLS2
+	ld	r9, r29, EF_FPPT
 
 
 	/*
@@ -153,7 +153,7 @@ ASLOCAL(wrapup)
 	fstcr	r3, FPCR	/* write revised value of FPCR */
 
 	/* result writeback routine */
-	addu	r3, r29, EF_R0 * 4
+	addu	r3, r29, EF_R0
 	extu	r2, r9, 5<0>		/* get 5 bits of destination register */
 	bb0	5, r9, writesingle	/* branch if destination is single */
 
@@ -2304,12 +2304,12 @@ ASENTRY(Xfp_imprecise)
 	st	r1,  r31, 4
 	st	r29, r31, 8
 
-	ld	r2 , r29, EF_FPSR  * 4
-	ld	r3 , r29, EF_FPCR  * 4
-	ld	r4 , r29, EF_FPECR * 4
-	ld	r10, r29, EF_FPRH  * 4
-	ld	r11, r29, EF_FPRL  * 4
-	ld	r12, r29, EF_FPIT  * 4
+	ld	r2 , r29, EF_FPSR
+	ld	r3 , r29, EF_FPCR
+	ld	r4 , r29, EF_FPECR
+	ld	r10, r29, EF_FPRH
+	ld	r11, r29, EF_FPRL
+	ld	r12, r29, EF_FPIT
 
 /* Load into r1 the return address for the exception handlers. Looking */
 /* at FPECR, branch to the appropriate exception handler. */
@@ -2344,7 +2344,7 @@ fpui_wrapup:
 	/* write back the results */
 	extu	r2, r12, 5<0>
 	bb0.n	destsize, r12, Iwritesingle
-	 addu	r3, r29, EF_R0 * 4
+	 addu	r3, r29, EF_R0
 	st	r10, r3 [r2]
 	addu	r2, r2, 1
 	clr	r2, r2, 27<5>
