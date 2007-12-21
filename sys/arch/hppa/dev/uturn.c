@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.3 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.4 2007/12/21 16:19:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -92,6 +92,7 @@ uturnattach(parent, self, aux)
 	struct confargs *ca = aux, nca;
 	struct uturn_softc *sc = (struct uturn_softc *)self;
 	bus_space_handle_t ioh;
+	hppa_hpa_t hpa;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
 		printf(": can't map IO space\n");
@@ -109,4 +110,17 @@ uturnattach(parent, self, aux)
 	nca = *ca;	/* clone from us */
 	nca.ca_hpamask = HPPA_IOBEGIN;
 	pdc_scanbus(self, &nca, MAXMODBUS, 0);
+
+	/* XXX On some machines, PDC doesn't tell us about all devices. */
+	switch (cpu_hvers) {
+	case HPPA_BOARD_HP809:
+	case HPPA_BOARD_HP819:
+	case HPPA_BOARD_HP839:
+	case HPPA_BOARD_HP859:
+		hpa = ((struct iomod *)ioh)->io_io_low << 16;
+		pdc_scanbus(self, &nca, MAXMODBUS, hpa);
+		break;
+	default:
+		break;
+	}
 }
