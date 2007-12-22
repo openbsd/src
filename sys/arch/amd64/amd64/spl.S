@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.5 2006/05/10 12:36:39 krw Exp $	*/
+/*	$OpenBSD: spl.S,v 1.6 2007/12/22 23:04:10 tedu Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ _C_LABEL(splx):
  * splipi() and defers it, lands in here via splx(), and handles
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
- * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
 	_PROF_PROLOGUE
