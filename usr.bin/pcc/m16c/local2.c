@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.2 2007/12/22 12:48:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -35,13 +35,6 @@ int argsize(NODE *p);
 void genargs(NODE *p);
 
 static int ftlab1, ftlab2;
-
-void
-lineid(int l, char *fn)
-{
-	/* identify line l and file fn */
-	printf("#	line %d, file %s\n", l, fn);
-}
 
 void
 deflab(int label)
@@ -469,6 +462,16 @@ cbgen(int o, int lab)
 	printf("	%s " LABFMT "\n", ccbranches[o-EQ], lab);
 }
 
+void
+mycanon(NODE *p)
+{
+}
+
+void
+myoptim(struct interpass *ip)
+{
+}
+
 #if 0
 void
 mygenregs(NODE *p)
@@ -636,4 +639,12 @@ lastcall(NODE *p)
         for (p = p->n_right; p->n_op == CM; p = p->n_left)
                 sizen += argsiz(p->n_right);
         sizen += argsiz(p);
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

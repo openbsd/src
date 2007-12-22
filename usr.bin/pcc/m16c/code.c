@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.3 2007/11/22 15:06:43 stefan Exp $	*/
+/*	$OpenBSD: code.c,v 1.4 2007/12/22 12:48:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -317,16 +317,6 @@ bycode(int t, int i)
 			putchar(t);
 		}
 	}
-}
-
-/*
- * n integer words of zeros
- */
-void
-zecode(int n)
-{
-	printf("	.zero %d\n", n * (SZINT/SZCHAR));
-	inoff += n * SZINT;
 }
 
 /*
