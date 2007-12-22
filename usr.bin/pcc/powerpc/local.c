@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.4 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.5 2007/12/22 14:05:04 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -163,7 +163,6 @@ clocal(NODE *p)
 #endif
 	switch (o = p->n_op) {
 
-#if 1
 	case ADDROF:
 #ifdef PCC_DEBUG
 		if (xdebug) {
@@ -183,9 +182,18 @@ clocal(NODE *p)
 			TWORD t = DECREF(p->n_type);
 
 			if (!ISFTN(t)) {
+
+				int isextern = (p->n_sp && p->n_sp->sclass == EXTERN);
+				int off = 0;
+
+				if (isextern) {
+					off = p->n_lval;
+					p->n_lval = 0;
+				}
+
 				r  = talloc();
 				*r = *p;
-#if 1
+
 				/* cast to pointer-to-char before adding offset */
 				l = block(REG, NIL, NIL, INT, p->n_df, p->n_sue);
 				l->n_lval = 0;
@@ -193,17 +201,19 @@ clocal(NODE *p)
 
 				r = block(SCONV, r, NIL, INCREF(UCHAR), p->n_df,p->n_sue);
 				r = block(PLUS, l, r, r->n_type, r->n_df, r->n_sue);
+
+				if (off)
+					r = block(PLUS, r, bcon(off), r->n_type, r->n_df, r->n_sue);
+
 				p->n_op = SCONV;
 				p->n_lval = 0;
 				p->n_left = r;
 				p->n_rval = 0;
 				p->n_right = 0;
-#endif
 			}
 
 		}
 		break;
-#endif
 
 	case NAME:
 		if ((q = p->n_sp) == NULL)
@@ -232,60 +242,70 @@ clocal(NODE *p)
 				p->n_sp = q;
 			}
 			/* FALLTHROUGH */
-#if 1
 		default:
 			if (kflag && blevel > 0 && !ISFTN(p->n_type)) {
-			TWORD t = p->n_type;
-			l = block(REG, NIL, NIL, INCREF(t), p->n_df, p->n_sue);
-			l->n_lval = 0;
-			l->n_rval = R31;
+				TWORD t = p->n_type;
+				int isextern = p->n_sp->sclass == EXTERN;
+				int off = 0;
 
-			p->n_op = ICON;
-			p->n_type = INCREF(p->n_type);
+				if (isextern)
+					t = INCREF(t);
 
-			p = block(PLUS, l, p, INCREF(t), p->n_df, p->n_sue);
-			p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
+				l = block(REG, NIL, NIL, INCREF(t), p->n_df, p->n_sue);
+				l->n_lval = 0;
+				l->n_rval = R31;
+
+				p->n_op = ICON;
+				p->n_type = INCREF(t);
+				if (isextern) {
+					off = p->n_lval;
+					p->n_lval = 0;
+				}
+
+				p = block(PLUS, l, p, INCREF(t), p->n_df, p->n_sue);
+
+				if (isextern) {
+					p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
+					if (off)
+						p = block(PLUS, p, bcon(off), t, p->n_df, p->n_sue);
+					t = DECREF(t);
+				}
+				p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
 			}
-#endif
-
 		}
 		break;
 
 	case STCALL:
 	case CALL:
-		{
 
-		/* break nested CALLs */
 		breaknestedcalls(p);
 
 		/* Fix function call arguments. */
 		/* move everything into the registers */
-		/* XXX have to save the old values of R3-R10 on the stack
-			(but only once per function */
 		{
 		int reg = R3;
 		fixupfuncargs(p->n_right, &reg);
 		}
+		/* FALLTHOUGH */
 
 #if 0
-		for (r = p->n_right; r->n_op == CM; r = r->n_left) {
-			if (r->n_right->n_op != STARG &&
-			    r->n_right->n_op != FUNARG) {
-				printf("HERE\n");
-				r->n_right = block(FUNARG, r->n_right, NIL, 
-				    r->n_right->n_type, r->n_right->n_df,
-				    r->n_right->n_sue);
-				}
-		}
-		if (r->n_op != STARG && r->n_op != FUNARG) {
-			printf("HERE2\n");
-			l = talloc();
-			*l = *r;
-			r->n_op = FUNARG; r->n_left = l; r->n_type = l->n_type;
+	case UCALL:
+
+		/* check if it's an indirect call and offset with R30 */
+		if (p->n_left->n_op == REG) {
+			l = block(REG, NIL, NIL, INT, p->n_df, MKSUE(INT));
+			l->n_lval = 0;
+			l->n_rval = R31;
+			p->n_left = block(PLUS, p->n_left, l, p->n_type, p->n_df, p->n_sue);
 		}
 #endif
+
+#if 0
+		r = tempnode(0, p->n_type, p->n_df, p->n_sue);
+		ecomp(buildtree(ASSIGN, r, p));
+		return r;
+#endif
 		break;
-		}
 		
 	case CBRANCH:
 		l = p->n_left;
@@ -471,7 +491,7 @@ clocal(NODE *p)
 		p->n_right = p->n_left;
 		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
 		p->n_left->n_rval = p->n_left->n_type == BOOL ? 
-		    RETREG(CHAR) : RETREG(p->n_type);
+		    RETREG(BOOL_TYPE) : RETREG(p->n_type);
 		break;
 
 	case LS:
@@ -665,7 +685,7 @@ zbits(OFFSZ off, int fsz)
 		}
 	}
 	if (fsz >= SZCHAR) {
-		printf("\t.zero %d\n", fsz/SZCHAR);
+		printf("\t.space %d\n", fsz/SZCHAR);
 		fsz -= (fsz/SZCHAR) * SZCHAR;
 	}
 	if (fsz) {

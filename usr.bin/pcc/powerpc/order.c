@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.3 2007/11/16 09:00:13 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.4 2007/12/22 14:05:04 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -93,7 +93,7 @@ myormake(NODE *q)
 	if (x2debug)
 		printf("myormake(%p)\n", q);
 
-#if 1
+#if 1	/* XXX remove this and add UMUL(SAREG) to table.c !!! */
 	p = q->n_left;
 	if (q->n_op != OREG && p->n_op == REG) {
 		q->n_op = OREG;
@@ -151,18 +151,6 @@ shumul(NODE *p)
 }
 
 /*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
-}
-
-/*
  * Rewrite operations on binary operators (like +, -, etc...).
  * Called as a result of table lookup.
  */
@@ -203,6 +191,17 @@ nspecial(struct optab *q)
 		printf("nspecial: op=%d, visit=0x%x: %s", q->op, q->visit, q->cstring);
 
 	switch (q->op) {
+
+	case STASG:
+		{
+			static struct rspecial s[] = {
+				{ NEVER, R3 },
+				{ NRIGHT, R4 },
+				{ NEVER, R5 },
+				{ 0 } };
+			return s;
+		}
+		break;
 
 	case OPLTYPE:
 		{
@@ -258,7 +257,7 @@ nspecial(struct optab *q)
 		break;
 	}
 
-	comperr("nspecial entry %d", q - table);
+	comperr("nspecial entry %d: %s", q - table, q->cstring);
 	return 0; /* XXX gcc */
 }
 
@@ -277,8 +276,16 @@ setorder(NODE *p)
 int *
 livecall(NODE *p)
 {
-	static int r[1] = { -1 }; /* Terminate with -1 */
+	static int r[] = { R3, R4, R5, R6, R7, R8, R9, R10, -1 };
 
 	return &r[0];
 }
 
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
+}

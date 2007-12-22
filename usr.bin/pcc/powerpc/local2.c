@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.4 2007/11/25 12:54:09 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.5 2007/12/22 14:05:04 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -324,10 +324,10 @@ twollcomp(NODE *p)
 	}
 	if (p->n_op >= ULE)
 		cb1 += 4, cb2 += 4;
-	expand(p, 0, "	cmpl UR,UL\n");
+	expand(p, 0, "\tcmplw UR,UL		# compare 64-bit values (upper)\n");
 	if (cb1) cbgen(cb1, s);
 	if (cb2) cbgen(cb2, e);
-	expand(p, 0, "	cmpl AR,AL\n");
+	expand(p, 0, "\tcmplw AR,AL		# (and lower)\n");
 	cbgen(p->n_op, e);
 	deflab(s);
 }
@@ -505,6 +505,7 @@ zzzcode(NODE *p, int c)
 	int pr, lr, s;
 	char *ch;
 #endif
+	char inst[50];
 
 	switch (c) {
 #if 0
@@ -601,66 +602,28 @@ zzzcode(NODE *p, int c)
 		break;
 #endif
 
-#if 0
 	case 'Q': /* emit struct assign */
-		/* XXX - optimize for small structs */
-		printf("\tpushl $%d\n", p->n_stsize);
-		expand(p, INAREG, "\tpushl AR\n");
-		expand(p, INAREG, "\tleal AL,%eax\n\tpushl %eax\n");
-		printf("\tcall memcpy\n");
-		printf("\taddl $12,%%esp\n");
-		break;
-#endif
+		if (p->n_stsize == 4) {
+			int sz = sizeof inst;
 
-#if 0
-	case 'S': /* emit eventual move after cast from longlong */
-		pr = DECRA(p->n_reg, 0);
-		lr = p->n_left->n_rval;
-		switch (p->n_type) {
-		case CHAR:
-		case UCHAR:
-			if (rnames[pr][2] == 'l' && rnames[lr][2] == 'x' &&
-			    rnames[pr][1] == rnames[lr][1])
-				break;
-			if (rnames[lr][2] == 'x') {
-				printf("\tmovb %%%cl,%s\n",
-				    rnames[lr][1], rnames[pr]);
-				break;
-			}
-			/* Must go via stack */
-			s = BITOOR(freetemp(1));
-			printf("\tmovl %%e%ci,%d(%%ebp)\n", rnames[lr][1], s);
-			printf("\tmovb %d(%%ebp),%s\n", s, rnames[pr]);
-//			comperr("SCONV1 %s->%s", rnames[lr], rnames[pr]);
-			break;
-
-		case SHORT:
-		case USHORT:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			printf("\tmovw %%%c%c,%%%s\n",
-			    rnames[lr][1], rnames[lr][2], rnames[pr]+2);
-			break;
-		case INT:
-		case UNSIGNED:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			printf("\tmovl %%e%c%c,%s\n",
-				    rnames[lr][1], rnames[lr][2], rnames[pr]);
-			break;
-
-		default:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			comperr("SCONV2 %s->%s", rnames[lr], rnames[pr]);
-			break;
+			snprintf(inst, sz, "\tlwz %s,0(AR)\n", rnames[R5]);
+			expand(p, INAREG, inst);
+			snprintf(inst, sz, "\tstw %s,AL\n", rnames[R5]);
+			expand(p, INAREG, inst);
+			return;
 		}
-		break;
 
-#endif
+		if ((p->n_stsize & ~0xffff) != 0) {
+			printf("\tlis %s,%d\n", rnames[R5], p->n_stsize & 0xffff);
+			printf("\taddis %s,%s,%d\n", rnames[R5], rnames[R5], (p->n_stsize >> 16) & 0xffff);
+		} else {
+			printf("\tli %s,%d\n", rnames[R5], p->n_stsize);
+		}
+		printf("\taddi %s,%s,%lld\n", rnames[R3], rnames[p->n_left->n_rval], p->n_left->n_lval);
+		printf("\tbl %s%s\n", exname("memcpy"),
+		    kflag ? "$stub" : "");
+		addstub(&stublist, exname("memcpy"));
+		break;
 
 	default:
 		comperr("zzzcode %c", c);
@@ -764,8 +727,12 @@ conput(FILE *fp, NODE *p)
 			
 		if (*s != '\0') {
 			if (kflag && p->n_sp && ISFTN(p->n_sp->stype)) {
-				fprintf(fp, "%s$stub", s);
-				addstub(&stublist, s);
+				if (p->n_sp && p->n_sp->sclass == EXTERN) {
+					fprintf(fp, "%s$stub", s);
+					addstub(&stublist, s);
+				} else {
+					fprintf(fp, "%s", s);
+				}
 			} else if (kflag) {
 				if (p->n_sp && p->n_sp->sclass == EXTERN) {
 					fprintf(fp, "L%s$non_lazy_ptr", s);
@@ -1055,62 +1022,44 @@ myoptim(struct interpass *ip)
 #endif
 }
 
-#if 0
-static char rl[] =
-  { EAX, EAX, EAX, EAX, EAX, EDX, EDX, EDX, EDX, ECX, ECX, ECX, EBX, EBX, ESI };
-static char rh[] =
-  { EDX, ECX, EBX, ESI, EDI, ECX, EBX, ESI, EDI, EBX, ESI, EDI, ESI, EDI, EDI };
-#endif
-
+/*
+ * Move data between registers.  While basic registers aren't a problem,
+ * we have to handle the special case of overlapping composite registers.
+ * It might just be easier to modify the register allocator so that
+ * moves between overlapping registers isn't possible.
+ */
 void
 rmove(int s, int d, TWORD t)
 {
-#if 0
-	int sl, sh, dl, dh;
-
 	switch (t) {
 	case LONGLONG:
 	case ULONGLONG:
-#if 1
-		sl = rl[s-EAXEDX];
-		sh = rh[s-EAXEDX];
-		dl = rl[d-EAXEDX];
-		dh = rh[d-EAXEDX];
-
-		/* sanity checks, remove when satisfied */
-		if (memcmp(rnames[s], rnames[sl]+1, 3) != 0 ||
-		    memcmp(rnames[s]+3, rnames[sh]+1, 3) != 0)
-			comperr("rmove source error");
-		if (memcmp(rnames[d], rnames[dl]+1, 3) != 0 ||
-		    memcmp(rnames[d]+3, rnames[dh]+1, 3) != 0)
-			comperr("rmove dest error");
-#define	SW(x,y) { int i = x; x = y; y = i; }
-		if (sl == dh || sh == dl) {
-			/* Swap if moving to itself */
-			SW(sl, sh);
-			SW(dl, dh);
+		if (s == d+1) {
+			/* dh = sl, copy low word first */
+			printf("\tmr ");
+			reg64name(d,0);
+			printf(",");
+			reg64name(s,0);
+			printf("\n");
+			printf("\tmr ");
+			reg64name(d,1);
+			printf(",");
+			reg64name(s,1);
+			printf("\n");
+		} else {
+			/* copy high word first */
+			printf("\tmr ");
+			reg64name(d,1);
+			printf(",");
+			reg64name(s,1);
+			printf("\n");
+			printf("\tmr ");
+			reg64name(d,0);
+			printf(",");
+			reg64name(s,0);
+			printf("\n");
 		}
-		if (sl != dl)
-			printf("	movl %s,%s\n", rnames[sl], rnames[dl]);
-		if (sh != dh)
-			printf("	movl %s,%s\n", rnames[sh], rnames[dh]);
-#else
-		if (memcmp(rnames[s], rnames[d], 3) != 0)
-			printf("	movl %%%c%c%c,%%%c%c%c\n",
-			    rnames[s][0],rnames[s][1],rnames[s][2],
-			    rnames[d][0],rnames[d][1],rnames[d][2]);
-		if (memcmp(&rnames[s][3], &rnames[d][3], 3) != 0)
-			printf("	movl %%%c%c%c,%%%c%c%c\n",
-			    rnames[s][3],rnames[s][4],rnames[s][5],
-			    rnames[d][3],rnames[d][4],rnames[d][5]);
-#endif
 		break;
-	case CHAR:
-	case UCHAR:
-		printf("	movb %s,%s\n", rnames[s], rnames[d]);
-		break;
-	case FLOAT:
-	case DOUBLE:
 	case LDOUBLE:
 #ifdef notdef
 		/* a=b()*c(); will generate this */
@@ -1118,43 +1067,37 @@ rmove(int s, int d, TWORD t)
 #endif
 		break;
 	default:
-		printf("	movl %s,%s\n", rnames[s], rnames[d]);
+		printf("\tmr %s,%s\n", rnames[d], rnames[s]);
 	}
-#endif
 }
 
 /*
  * For class c, find worst-case displacement of the number of
  * registers in the array r[] indexed by class.
+ *
+ * On PowerPC, we have:
+ *
+ * 32 32-bit registers (2 reserved)
+ * 16 64-bit pseudo registers
+ * 32 floating-point registers
  */
 int
 COLORMAP(int c, int *r)
 {
-	return 1;
-#if 0
-	int num;
+	int num = 0;
 
 	switch (c) {
 	case CLASSA:
-		num = r[CLASSB] > 4 ? 4 : r[CLASSB];
-		num += 2*r[CLASSC];
 		num += r[CLASSA];
-		return num < 6;
+		num += 2*r[CLASSB];
+		return num < 30;
 	case CLASSB:
-		num = r[CLASSA];
-		num += 2*r[CLASSC];
-		num += r[CLASSB];
-		return num < 4;
-	case CLASSC:
-		num = r[CLASSA];
-		num += r[CLASSB] > 4 ? 4 : r[CLASSB];
-		num += 2*r[CLASSC];
-		return num < 5;
-	case CLASSD:
-		return r[CLASSD] < DREGCNT;
+		num += 2*r[CLASSB];
+		num += r[CLASSA];
+		return num < 16;
 	}
+	assert(0);
 	return 0; /* XXX gcc */
-#endif
 }
 
 #ifdef ELFABI
@@ -1236,4 +1179,12 @@ special(NODE *p, int shape)
 		break;
 	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }
