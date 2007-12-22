@@ -1,4 +1,4 @@
-/*      $OpenBSD: local2.c,v 1.1 2007/11/25 18:45:06 otto Exp $    */
+/*      $OpenBSD: local2.c,v 1.2 2007/12/22 12:38:56 stefan Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -951,4 +951,12 @@ int
 special(NODE *p, int shape)
 {
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

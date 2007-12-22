@@ -1,4 +1,4 @@
-/*      $OpenBSD: order.c,v 1.1 2007/11/25 18:45:06 otto Exp $    */
+/*      $OpenBSD: order.c,v 1.2 2007/12/22 12:38:56 stefan Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -290,4 +290,13 @@ livecall(NODE *p)
 	num = (num > 4 ? 4 : num);
 
         return &r[4 - num];
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }
