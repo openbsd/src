@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.47 2007/09/02 15:19:07 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.48 2007/12/22 17:37:36 chl Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.47 2007/09/02 15:19:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.48 2007/12/22 17:37:36 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 
 		(void) printf ("%-*.*s %*d %10ld %11d %5.0f%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
-			strlen(blockstr),
+			(int)strlen(blockstr),
 			fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 			fsbtoblk(used, sfsp->f_bsize, blocksize),
 			fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize),
