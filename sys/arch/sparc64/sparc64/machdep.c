@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2007/12/16 12:43:54 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.104 2007/12/22 15:14:58 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -136,6 +136,9 @@ int     _bus_dmamap_load_uio(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
             struct uio *, int);
 int     _bus_dmamap_load_raw(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
             bus_dma_segment_t *, int, bus_size_t, int);
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, bus_addr_t *, int *, int);
+
 void    _bus_dmamap_unload(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
 void    _bus_dmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
 	    bus_addr_t, bus_size_t, int);
@@ -1103,51 +1106,26 @@ _bus_dmamap_load(t, t0, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	bus_size_t sgsize;
-	vaddr_t vaddr = (vaddr_t)buf;
-	int i;
+	bus_addr_t lastaddr;
+	int seg, error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-		return (EFBIG);
+		return (EINVAL);
 
-	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-
-	/*
-	 * We always use just one segment.
-	 */
-	map->dm_mapsize = buflen;
-	i = 0;
-	map->dm_segs[i].ds_addr = 0UL;
-	map->dm_segs[i].ds_len = 0;
-	while (sgsize > 0) {
-		paddr_t pa;
-
-		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		sgsize -= NBPG;
-		vaddr += NBPG;
-		if (map->dm_segs[i].ds_len == 0)
-			map->dm_segs[i].ds_addr = pa;
-		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-		    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
-			/* Hey, waddyaknow, they're contiguous */
-			map->dm_segs[i].ds_len += NBPG;
-			continue;
-		}
-		if (++i > map->_dm_segcnt)
-			return (EFBIG);
-		map->dm_segs[i].ds_addr = pa;
-		map->dm_segs[i].ds_len = NBPG;
+	seg = 0;
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	    &lastaddr, &seg, 1);
+	if (error == 0) {
+		map->dm_mapsize = buflen;
+		map->dm_nsegs = seg + 1;
 	}
-	/* Is this what the above comment calls "one segment"? */
-	map->dm_nsegs = i + 1;
-
-	/* Mapping is bus dependent */
-	return (0);
+	return (error);
 }
 
 /*
@@ -1323,6 +1301,87 @@ _bus_dmamap_load_raw(t, t0, map, segs, nsegs, size, flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
+}
+
+int
+_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, bus_addr_t *lastaddrp,
+    int *segp, int first)
+{
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	vaddr_t vaddr = (vaddr_t)buf;
+	int seg;
+	pmap_t pmap;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	lastaddr = *lastaddrp;
+	bmask  = ~(map->_dm_boundary - 1);
+
+	for (seg = *segp; buflen > 0 ; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				if (++seg >= map->_dm_segcnt)
+					break;
+				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+	return (0);
 }
 
 /*
