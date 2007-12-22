@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.2 2007/11/16 09:00:13 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.3 2007/12/22 13:13:06 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -79,18 +79,6 @@ offstar(NODE *p, int shape)
 		}
 	}
 	geninsn(p, INAREG);
-}
-
-/*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
 }
 
 /*
@@ -222,4 +210,13 @@ livecall(NODE *p)
 		*s++ = p->n_right->n_left->n_rval;
 	*s = -1;
 	return s;
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.2 2007/12/22 13:13:27 stefan Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -119,8 +119,6 @@ typedef long OFFSZ;
 #define BACKAUTO 		/* stack grows negatively for automatics */
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 
-#define	MYP2TREE(p) myp2tree(p);
-
 #undef	FIELDOPS		/* no bit-field instructions */
 #define	RTOLBYTES		/* bytes are numbered right to left */
 
@@ -189,7 +187,3 @@ int COLORMAP(int c, int *r);
 /* XXX - to die */
 #define FPREG	28	/* frame pointer */
 #define STKREG	29	/* stack pointer */
-
-#define MYREADER(p) myreader(p)
-#define MYCANON(p) mycanon(p)
-#define	MYOPTIM
