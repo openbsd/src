@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2007/12/20 21:14:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2007/12/22 17:14:39 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -91,50 +91,8 @@ ASGLOBAL(start)
 	 * Startup code common to all processors.
 	 */
 ASLOCAL(main_start)
-	/*
-	 * CPU Initialization
-	 *
-	 * Every CPU starts from here..
-	 * (well, from 'start' above, which just jumps here).
-	 *
-	 * I use r11 and r22 here 'cause they're easy to not
-	 * get mixed up -- r10, for example, looks too similar
-	 * to r0 when not being careful....
-	 *
-	 * Ensure that the PSR is as we like:
-	 *	supervisor mode
-	 *	big-endian byte ordering
-	 *	concurrent operation allowed
-	 *	carry bit clear (I don't think we really care about this)
-	 *	FPU enabled
-	 *	misaligned access raises an exception
-	 *	interrupts disabled
-	 *	shadow registers frozen
-	 *
-	 * The manual says not to disable interrupts and freeze shadowing
-	 * at the same time because interrupts are not actually disabled
-	 * until after the next instruction. Well, if an interrupt
-	 * occurs now, we're in deep trouble anyway, so I'm going to do
-	 * the two together.
-	 *
-	 * Upon a reset (or poweron, I guess), the PSR indicates:
-	 *   supervisor mode
-	 *   interrupts, shadowing, FPU, misaligned exception: all disabled
-	 *
-	 * We'll just construct our own turning on what we want.
-	 *
-	 *	jfriedl@omron.co.jp
-	 */
+	bsr	_ASM_LABEL(setup_psr)
 
-	stcr	r0, SSBR	/* clear this for later */
-	stcr	r0, SR1		/* clear the CPU flags */
-
-	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
-	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-
-	stcr	r11, PSR
-	FLUSH_PIPELINE
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
 
@@ -307,8 +265,8 @@ ASLOCAL(secondary_init)
 
 GLOBAL(delay)
 	bcnd	eq0, r2, 2f
-	or.u	r3, r0, hi16(_C_LABEL(cpuseed))
-	ld	r3, r3, lo16(_C_LABEL(cpuseed))
+	or.u	r3, r0, hi16(_C_LABEL(cpuspeed))
+	ld	r3, r3, lo16(_C_LABEL(cpuspeed))
 	mul	r4, r2, r3
 	subu	r4, r4, 4	/* overhead of these instructions */
 

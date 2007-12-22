@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.15 2007/12/02 21:22:19 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.16 2007/12/22 17:14:39 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -34,6 +34,7 @@
 
 #include <machine/param.h>
 #include <machine/asm.h>
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 #ifdef	M88100
@@ -1076,7 +1077,7 @@ ENTRY(longjmp)
  * The kernel arranges for the handler to be invoked directly, and return
  * here.
  */
-GLOBAL(sigcode)			/* r31 points to sigframe */
+ENTRY(sigcode)			/* r31 points to sigframe */
 	ld	r2,  r31, 0	/* pick sigcontext* */
 	or	r13, r0,  SYS_sigreturn
 	tb0	0,   r0,  128	/* syscall trap, calling sigreturn */
@@ -1102,7 +1103,7 @@ GLOBAL(esigcode)
  *
  * This copies PAGE_SIZE bytes from src to dst in 32 byte chunks.
  */
-GLOBAL(copypage)
+ENTRY(copypage)
 	addu	r12, r2, PAGE_SIZE
 1:
 	ld.d	r4,  r2, 0x00
@@ -1124,7 +1125,7 @@ GLOBAL(copypage)
  *
  * This zeroes PAGE_SIZE bytes from src to dst in 64 byte chunks.
  */
-GLOBAL(zeropage)
+ENTRY(zeropage)
 	addu	r12, r2, PAGE_SIZE
 	or	r3,  r1, r0
 	or	r1,  r0, r0
@@ -1141,3 +1142,49 @@ GLOBAL(zeropage)
 	cmp	r4,  r2, r12
 	bb1	ne,  r4, 1b
 	jmp	r3
+
+/*
+ * PSR initialization code, invoked from locore on every processor startup.
+ */
+ASENTRY(setup_psr)
+	ldcr	r2,  PID
+	extu	r3,  r2, 8<8>
+
+	/*
+	 * Ensure that the PSR is as we like:
+	 *	supervisor mode
+	 *	big-endian byte ordering
+	 *	concurrent operation allowed
+	 *	carry bit clear (I don't think we really care about this)
+	 *	FPU enabled
+	 *	misaligned access raises an exception
+	 *	interrupts disabled
+	 *	shadow registers frozen
+	 *
+	 * The manual says not to disable interrupts and freeze shadowing
+	 * at the same time because interrupts are not actually disabled
+	 * until after the next instruction. Well, if an interrupt
+	 * occurs now, we're in deep trouble anyway, so I'm going to do
+	 * the two together.
+	 *
+	 * Upon a reset (or poweron, I guess), the PSR indicates:
+	 *   supervisor mode
+	 *   interrupts, shadowing, FPU, misaligned exception: all disabled
+	 *
+	 * We'll just construct our own turning on what we want.
+	 *
+	 *	jfriedl@omron.co.jp
+	 */
+
+	cmp	r4, r3, CPU_88110
+	bb1	eq, r4, 1f	/* if it's a mc88110, skip SSBR */
+	stcr	r0, SSBR	/* clear this for later */
+1:
+	stcr	r0, SR1		/* clear the CPU flags */
+
+	or.u	r2, r0, hi16(KERNEL_PSR)
+	or	r2, r2, lo16(KERNEL_PSR)
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+
+	jmp	r1

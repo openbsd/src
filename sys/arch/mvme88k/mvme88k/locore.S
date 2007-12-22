@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.60 2007/12/20 21:14:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.61 2007/12/22 17:14:39 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -128,51 +128,8 @@ ASLOCAL(main_start)
 	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
 	st	r8,  r13, lo16(_C_LABEL(cputyp))
 
-	/*
-	 * CPU Initialization
-	 *
-	 * I use r11 and r22 here because they're easy to not
-	 * get mixed up -- r10, for example, looks too similar
-	 * to r0 when not being careful....
-	 *
-	 * Ensure that the PSR is as we like:
-	 *	supervisor mode
-	 *	big-endian byte ordering
-	 *	concurrent operation allowed
-	 *	carry bit clear (I don't think we really care about this)
-	 *	FPU enabled
-	 *	misaligned access raises an exception
-	 *	interrupts disabled
-	 *	shadow registers frozen
-	 *
-	 * The manual says not to disable interrupts and freeze shadowing
-	 * at the same time because interrupts are not actually disabled
-	 * until after the next instruction. Well, if an interrupt
-	 * occurs now, we're in deep trouble anyway, so I'm going to do
-	 * the two together.
-	 *
-	 * Upon a reset (or poweron, I guess), the PSR indicates:
-	 *   supervisor mode
-	 *   interrupts, shadowing, FPU, misaligned exception: all disabled
-	 *
-	 * We'll just construct our own turning on what we want.
-	 *
-	 *	jfriedl@omron.co.jp
-	 */
+	bsr	_ASM_LABEL(setup_psr)
 
-	cmp	r2, r8, CPU_88110
-	bb1	eq, r2, 1f	/* if it's a 'mc88110, skip SSBR */
-	stcr	r0, SSBR	/* clear this for later */
-1:
-	stcr	r0, SR1		/* clear the CPU flags */
-
-	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
-	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-	set	r11, r11, 1<PSR_SERIALIZE_BIT>
-	stcr	r11, PSR
-	FLUSH_PIPELINE
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
 
@@ -243,22 +200,8 @@ GLOBAL(secondary_start)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	ldcr	r1, PID
-	extu	r8,  r1, 8<8>
+	bsr	_ASM_LABEL(setup_psr)
 
-	cmp	r2, r8, CPU_88110
-	bb1	eq, r2, 1f
-	stcr	r0, SSBR
-1:
-	stcr	r0, SR1
-
-	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
-	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
-	set	r11, r11, 1<PSR_SERIALIZE_BIT>
-	stcr	r11, PSR
-	FLUSH_PIPELINE
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
 
