@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.43 2007/12/21 23:56:54 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.44 2007/12/22 19:38:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1415,11 +1415,7 @@ ASLOCAL(m88100_fpu_enable)
 	st	r26,  r31,  GENREG_OFF(26)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
-
-	/* get and save IPL */
-	bsr.n	_C_LABEL(getipl)
-	 st	r29,  r31,  GENREG_OFF(29)
-	st	r2, r31, EF_MASK
+	st	r29,  r31,  GENREG_OFF(29)
 
 	/*
 	 * SR1: free
@@ -1460,6 +1456,10 @@ ASLOCAL(m88100_fpu_enable)
 	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  USPACE	/* point at proper end */
 1:
+
+	/* get and save IPL */
+	bsr	_C_LABEL(getipl)
+	st	r2, r30, EF_MASK
 
 	/*
 	 * here - r30 holds a pointer to the exception frame.
@@ -2047,11 +2047,7 @@ ASLOCAL(m88110_shadow_enable)
 	st	r26,  r31,  GENREG_OFF(26)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
-
-	/* get and save IPL */
-	bsr.n	_C_LABEL(getipl)
-	 st	r29,  r31,  GENREG_OFF(29)
-	st	r2, r31, EF_MASK
+	st	r29,  r31,  GENREG_OFF(29)
 
 	/*
 	 * SR1: free
@@ -2089,6 +2085,10 @@ ASLOCAL(m88110_shadow_enable)
 	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  USPACE		/* point at proper end */
 1:
+
+	/* get and save IPL */
+	bsr	_C_LABEL(getipl)
+	st	r2, r30, EF_MASK
 
 	/*
 	 * here - r30 holds a pointer to the exception frame.
