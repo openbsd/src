@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.11 2007/12/09 18:45:07 ragge Exp $	*/
+/*	$OpenBSD: trees.c,v 1.12 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1296,20 +1296,21 @@ block(int o, NODE *l, NODE *r, TWORD t, union dimfun *d, struct suedef *sue)
 	return(p);
 	}
 
-int
-icons(p) register NODE *p; {
+/*
+ * Return the constant value from an ICON.
+ */
+CONSZ
+icons(NODE *p)
+{
 	/* if p is an integer constant, return its value */
-	int val;
+	CONSZ val;
 
-	if( p->n_op != ICON ){
+	if (p->n_op != ICON || p->n_sp != NULL) {
 		uerror( "constant expected");
 		val = 1;
-		}
-	else {
+	} else
 		val = p->n_lval;
-		if( val != p->n_lval ) uerror( "constant too big for cross-compiler" );
-		}
-	tfree( p );
+	tfree(p);
 	return(val);
 }
 

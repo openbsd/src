@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.4 2007/12/16 19:27:33 ragge Exp $	*/
+/*	$OpenBSD: table.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -930,20 +930,40 @@ struct optab table[] = {
 { ASSIGN,	FOREFF|INBREG,
 	SFLD,		TCHAR|TUCHAR,
 	SBREG|SCON,	TCHAR|TUCHAR,
-		NBREG,	RDEST,
-		"ZE", },
+		NAREG|NBREG,	RDEST,
+		"	movb AR,A2\n"
+		"	movzbl A2,A1\n"
+		"	andl $N,AL\n"
+		"	sall $H,A1\n"
+		"	andl $M,A1\n"
+		"	orl A1,AL\n"
+		"F	movb AR,AD\n"
+		"FZE", },
 
 { ASSIGN,	FOREFF|INAREG,
-	SFLD,		TANY,
-	SAREG,	TANY,
+	SFLD,		TSHORT|TUSHORT,
+	SAREG|SCON,	TSHORT|TUSHORT,
 		NAREG,	RDEST,
-		"ZE", },
+		"	movw AR,A1\n"
+		"	movzwl A1,ZN\n"
+		"	andl $N,AL\n"
+		"	sall $H,ZN\n"
+		"	andl $M,ZN\n"
+		"	orl ZN,AL\n"
+		"F	movw AR,AD\n"
+		"FZE", },
 
-{ ASSIGN,	FOREFF,
-	SFLD,		TANY,
-	SAREG|SNAME|SOREG|SCON,	TANY,
-		NAREG,	0,
-		"ZE", },
+{ ASSIGN,	FOREFF|INAREG,
+	SFLD,		TWORD,
+	SAREG|SNAME|SOREG|SCON,	TWORD,
+		NAREG,	RDEST,
+		"	movl AR,A1\n"
+		"	andl $N,AL\n"
+		"	sall $H,A1\n"
+		"	andl $M,A1\n"
+		"	orl A1,AL\n"
+		"F	movl AR,AD\n"
+		"FZE", },
 
 { ASSIGN,	INDREG|FOREFF,
 	SHFL,	TFLOAT|TDOUBLE|TLDOUBLE,

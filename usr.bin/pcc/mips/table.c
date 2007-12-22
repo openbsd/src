@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.3 2007/12/22 14:12:26 stefan Exp $	*/
+/*	$OpenBSD: table.c,v 1.4 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -41,10 +41,6 @@
 
 #include "pass2.h"
 
-#define TLL TLONGLONG|TULONGLONG
-#define ANYSIGNED TINT|TLONG|TSHORT|TCHAR
-#define ANYUSIGNED TUNSIGNED|TULONG|TUSHORT|TUCHAR
-#define ANYFIXED ANYSIGNED|ANYUSIGNED
 #define TUWORD TUNSIGNED|TULONG
 #define TSWORD TINT|TLONG
 #define TWORD TUWORD|TSWORD
@@ -53,45 +49,55 @@ struct optab table[] = {
 /* First entry must be an empty entry */
 { -1, FOREFF, SANY, TANY, SANY, TANY, 0, 0, "", },
 
+/* PCONVs are usually not necessary */
+{ PCONV,	INAREG,
+	SAREG,	TWORD|TPOINT,
+	SAREG,	TWORD|TPOINT,
+		0,	RLEFT,
+		"	# convert between word and pointer", },
+
 /*
  * Conversions of integral<->integral types
  */
 
-/* convert char to (u)short */
 { SCONV,	INAREG,
 	SOREG,  TCHAR,
-	SAREG,	TWORD|TSHORT|TUSHORT,
+	SAREG,	TSWORD|TSHORT,
 		NAREG,	RESC1,
-		"	lb A1,AL	# convert oreg char to (u)short/word\n"
+		"	lb A1,AL	# convert oreg char to short/int\n"
 		"	nop\n", },
 
-/* convert uchar to (u)short */
+{ SCONV, 	INAREG,
+	SOREG,	TCHAR,
+	SAREG,	TUWORD|TUSHORT|TUCHAR,
+		NAREG,	RESC1,
+		"	lbu A1,AL	# conver oreg char to uchar/ushort/uint\n"
+		"	nop\n", },
+
 { SCONV,	INAREG,
 	SOREG,  TUCHAR,
 	SAREG,	TWORD|TSHORT|TUSHORT,
 		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg uchar to (u)short\n"
+		"	lbu A1,AL	# convert oreg uchar to (u)short/(u)int\n"
 		"	nop\n", },
 
-/* convert char to (u)long long - big endian*/
 { SCONV,	INBREG,
 	SOREG,	TCHAR,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG,
 		NBREG,	RESC1,
-      		"	lb U1,AL	# convert oreg char to (u)longlong\n"
+      		"	lb A1,AL	# convert oreg char to longlong\n"
       		"	nop\n"
-      		"	sra A1,U1,31\n"
-      		"	sub A1,$zero,A1\n", },
+      		"	sra U1,A1,31\n", },
 
-/* convert uchar to (u)long long */
+/* chor -> ulonglong handled later */
+
 { SCONV,	INBREG,
 	SOREG,	TUCHAR,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
-		"	lbu U1,AL	# convert oreg uchar to (u)longlong\n"
-      		"	move A1,$zero\n", },
+		"	lbu A1,AL	# convert oreg uchar to (u)longlong\n"
+      		"	move U1,$zero\n", },
 
-/* convert (u)short to char */
 { SCONV,	INAREG,
 	SOREG,	TSHORT|TUSHORT,
 	SAREG,	TCHAR,
@@ -99,7 +105,6 @@ struct optab table[] = {
 		"	lb A1,AL	# convert oreg (u)short to char (endianness problem?)\n"
 		"	nop\n", },
 
-/* convert (u)short to uchar */
 { SCONV,	INAREG,
 	SOREG,	TSHORT|TUSHORT,
 	SAREG,  TUCHAR,
@@ -107,15 +112,20 @@ struct optab table[] = {
 		"	lbu A1,AL	# convert oreg (u)short to uchar (endianness problem?)\n"
 		"	nop\n", },
 
-/* convert short to (u)long */
 { SCONV,	INAREG,
 	SOREG,	TSHORT,
-	SAREG,	TWORD,
+	SAREG,	TSWORD,
 		NAREG,	RESC1,
-		"	lh A1,AL	# convert oreg short to (u)int\n"
+		"	lh A1,AL	# convert oreg short to int\n"
 		"	nop\n", },
 
-/* convert ushort to (u)long */
+{ SCONV,	INAREG,
+	SOREG,	TSHORT,
+	SAREG,	TUWORD,
+		NAREG,	RESC1,
+		"	lhu A1,AL	# convert oreg short to uint\n"
+		"	nop\n", },
+
 { SCONV,	INAREG,
 	SOREG,	TUSHORT,
 	SAREG,	TWORD,
@@ -123,25 +133,29 @@ struct optab table[] = {
 		"	lhu A1,AL	# convert oreg ushort to (u)int\n"
 		"	nop\n", },
 
-/* convert short to (u)long long */
 { SCONV,	INBREG,
 	SOREG,	TSHORT,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG,
 		NBREG,	RESC1,
-      		"	lh U1,AL	# convert oreg short to (u)longlong\n"
+      		"	lh A1,AL	# convert oreg short to longlong\n"
       		"	nop\n"
-      		"	sra A1,U1,31\n"
-      		"	sub A1,$zero,A1\n", },
+      		"	sra U1,A1,31\n", },
 
-/* convert ushort to (u)long long */
+{ SCONV,	INBREG,
+	SOREG,	TSHORT,
+	SBREG,	TULONGLONG,
+		NBREG,	RESC1,
+      		"	lhu A1,AL	# convert oreg short to ulonglong\n"
+      		"	nop\n"
+		"	move U1,$zero\n", },
+
 { SCONV,	INBREG,
 	SOREG,	TUSHORT,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
-		"	lhu U1,AL	# convert oreg (u)short to (u)longlong\n"
-      		"	move A1,$zero\n", },
+		"	lhu A1,AL	# convert oreg ushort to (u)longlong\n"
+      		"	move U1,$zero\n", },
 
-/* convert (u)long to char */
 { SCONV,	INAREG,
 	SOREG,	TWORD,
 	SAREG,	TCHAR,
@@ -149,7 +163,6 @@ struct optab table[] = {
 		"	lb A1,AL	# convert oreg word to char (endianness problem here?)\n"
 		"	nop\n", },
 
-/* convert (u)long to uchar */
 { SCONV,	INAREG,
 	SOREG,	TWORD,
 	SAREG,	TUCHAR,
@@ -157,7 +170,6 @@ struct optab table[] = {
 		"	lbu A1,AL	# convert oreg word to uchar (endianness problem here?)\n"
 		"	nop\n", },
     
-/* convert (u)long to short */
 { SCONV,	INAREG,
 	SOREG,	TWORD,
 	SAREG,	TSHORT,
@@ -173,100 +185,265 @@ struct optab table[] = {
 		"	lhu A1,AL	# convert oreg word to ushort (endianness problem here?)\n"
 		"	nop\n", },
 
-/* convert long to (u)long long */
 { SCONV,	INBREG,
 	SOREG,	TSWORD,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
       		"	lw A1,AL	# convert oreg int/long to (u)llong (endianness problem here?)\n"
       		"	nop\n"
-      		"	sra U1,A1,31\n"
-      		"	sub U1,$zero,U1\n", },
+      		"	sra U1,A1,31\n" },
 
-/* convert ulong to (u)long long */
 { SCONV,	INBREG,
 	SOREG,	TUWORD,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
 		"	lw A1,AL	# convert oreg (u)int to (u)llong (endianness problem here?)\n"
       		"	move U1,$zero\n", },
 
-/* convert (u)long long to char */
 { SCONV,	INAREG,
-	SOREG,	TLL,
+	SOREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TCHAR,
 		NAREG,	RESC1,
 		"	lb A1,AL	# convert oreg (u)llong to char	(endianness problem here?)\n"
 		"	nop\n", },
 
-/* convert (u)long long to uchar */
 { SCONV,	INAREG,
-	SOREG,	TLL,
+	SOREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TUCHAR,
 		NAREG,	RESC1,
 		"	lbu A1,AL	# convert oreg (u)llong to uchar (endianness problem?)\n"
 		"	nop\n", },
     
-/* convert (u)long long to short */
 { SCONV,	INAREG,
-	SOREG,	TLL,
+	SOREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TSHORT,
 		NAREG,	RESC1,
 		"	lh A1,AL	# convert oreg (u)llong to short (endianness problem?)\n"
 		"	nop\n", },
 
-/* convert (u)long long to ushort */
 { SCONV,	INAREG,
-	SOREG,	TLL,
+	SOREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TUSHORT,
 		NAREG,	RESC1,
 		"	lhu A1,AL	# convert oreg (u)llong to ushort (endianness problem here?)\n"
 		"	nop\n", },
 
-/* convert (u)long long to long */
 { SCONV,	INAREG,
-	SOREG,	TLL,
-	SAREG,	TSWORD,
+	SOREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TWORD,
 		NAREG,	RESC1,
-      		"	lw U1,AL	# convert oreg (u)llong to short (endianness problem here?)\n"
+      		"	lw A1,AL	# convert oreg (u)llong to (u)int (endianness problem here?)\n"
 		"	nop\n", },
 
-/* convert (u)long long to ulong */
-{ SCONV,	INAREG,
-	SOREG,	TLL,
-	SAREG,	TUWORD,
-		NAREG,	RESC1,
-      		"	lw U1,AL	# convert oreg (u)longlong to uint (endianness problem here?)\n"
-		"	nop\n", },
+/*
+ * Conversions of integral types (register-register)
+ *
+ * For each deunsigned type, they look something like this:
+ *
+ * signed -> bigger signed      - nothing to do
+ * signed -> bigger unsigned    - clear the top bits (of source type)
+ *
+ * signed -> smaller signed     - sign-extend the bits (to dest type)
+ * signed -> smaller unsigned   - clear the top bits (of dest type)
+ * unsigned -> smaller signed   - sign-extend top bits (to dest type)
+ * unsigned -> smaller unsigned - clear the top bits (of dest type)
+ *
+ * unsigned -> bigger           - nothing to do
+ */
 
-/* Register to register conversion with long long */
+{ SCONV,	INAREG,
+	SAREG,	TPOINT|TWORD,
+	SAREG,	TPOINT|TWORD,
+		0,	RLEFT,
+		"	# convert int to int\n", },
 
 { SCONV,	INBREG,
-	SBREG,	TLL,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TLONGLONG|TULONGLONG,
 		0,	RLEFT,
 		"	# convert (u)longlong to (u)longlong", },
 
-{ SCONV,	INBREG,
-	SAREG,	TPOINT|TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
-	SBREG,	TLL,
-		NBREG,	RESC1,
-		"	move A1,AL	# convert (u)int/(u)short/(u)char to (u)longlong\n"
-		"	sra A1,AL,31\n", },
-
 { SCONV,	INAREG,
-	SBREG,	TLL,
-	SAREG,	TPOINT|TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
-		NAREG,	RESC1,
-		"	move A1,AL\n", },
-
-/* For register to register conversion with bit length <= 32, do nothing */
-/* XXX This doesn't seem correct.  USHORT->TCHAR must be sign extended */
-{ SCONV,	INAREG,
-	SAREG,	TPOINT|TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
-	SAREG,	TPOINT|TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
+	SAREG,	TCHAR,
+	SAREG,	TSWORD|TSHORT,
 		0,	RLEFT,
-		"	# convert reg to reg\n", },
+		"	# convert char to short/int\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TCHAR,
+	SAREG,	TUWORD|TUSHORT|TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,255	# convert char to uchar/ushort/uint\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUCHAR,
+	SAREG,	TCHAR,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,24	# convert uchar to char\n"
+		"	sra A1,A1,24\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUCHAR,
+	SAREG,	TWORD|TSHORT|TUSHORT,
+		0,	RLEFT,
+		"	# convert uchar to (u)short/(u)int\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSHORT,
+	SAREG,	TCHAR,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,24	# convert short to char\n"
+		"	sra A1,A1,24\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSHORT,
+	SAREG,	TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,255	# convert short to uchar\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSHORT,
+	SAREG,	TUWORD|TUSHORT,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,65535	# convert short to ushort\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSHORT,
+	SAREG,	TSWORD,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,16	# convert short to ushort\n"
+		"	sra A1,A1,16\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUSHORT,
+	SAREG,	TCHAR,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,24	# convert short to char\n"
+		"	sra A1,A1,24\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUSHORT,
+	SAREG,	TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,255	# convert ushort to char\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUSHORT,
+	SAREG,	TSHORT,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,16	# convert short to ushort\n"
+		"	sra A1,A1,16\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUSHORT,
+	SAREG,	TWORD,
+		0,	RDEST,
+		"	# convert ushort to (u)int\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSWORD,
+	SAREG,	TCHAR,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,8	# convert int to char\n"
+		"	sra A1,A1,8\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSWORD,
+	SAREG,	TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,255	# convert int to uchar\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSWORD,
+	SAREG,	TSHORT,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,16	# convert int to short\n"
+		"	sra A1,A1,16\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TSWORD,
+	SAREG,	TUSHORT,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,65535	# convert int to ushort\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUWORD,
+	SAREG,	TCHAR,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,24	# convert int to char\n"
+		"	sra A1,A1,24\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUWORD,
+	SAREG,	TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,255	# convert int to uchar\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUWORD,
+	SAREG,	TSHORT,
+		NAREG|NASL,	RESC1,
+		"	sll A1,AL,16	# convert int to short\n"
+		"	sra A1,A1,16\n", },
+
+{ SCONV,	INAREG,
+	SAREG,	TUWORD,
+	SAREG,	TUSHORT,
+		NAREG|NASL,	RESC1,
+		"	andi A1,AL,65535	# convert int to ushort\n", },
+
+{ SCONV,	INBREG,
+	SAREG,	TSWORD|TSHORT|TCHAR,
+	SBREG,	TLONGLONG,
+		NBREG,	RESC1,
+		"	move A1,AL	# convert int/short/char to longlong\n"
+		"	sra U1,AL,31\n", },
+
+{ SCONV,	INBREG,
+	SAREG,	TSWORD|TSHORT|TCHAR,
+	SBREG,	TULONGLONG,
+		NBREG,	RESC1,
+		"	move A1,AL	# convert int/short/char to ulonglong\n"
+		"	move U1,$zero\n", },
+
+{ SCONV,	INBREG,
+	SAREG,	TWORD|TUSHORT|TSHORT|TUCHAR|TCHAR,
+	SBREG,	TLONGLONG|TULONGLONG,
+		NBREG,	RESC1,
+		"	move A1,AL	# convert (u)int/(u)short/(u)char to ulonglong\n"
+		"	move U1,$zero\n", },
+
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TWORD,
+		NAREG,	RESC1,
+		"	move A1,AL	# convert (u)longlong to int\n", },
+
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TSHORT,
+		NAREG,	RESC1,
+		"	sll A1,AL,16	# convert (u)longlong to short\n"
+		"	sra A1,AL,16\n", },
+
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TCHAR,
+		NAREG,	RESC1,
+		"	sll A1,AL,24	# convert (u)longlong to char\n"
+		"	sra A1,AL,24\n", },
+
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TUSHORT,
+		NAREG,	RESC1,
+		"	andi A1,AL,65535	# convert (u)longlong to ushort\n", },
+
+{ SCONV,	INAREG,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SAREG,	TUCHAR,
+		NAREG,	RESC1,
+		"	andi A1,AL,255	# convert (u)longlong to uchar\n", },
 
 { SCONV,	INCREG,
 	SCREG,	TFLOAT,
@@ -343,26 +520,26 @@ struct optab table[] = {
 		"	# convert between double and ldouble\n", },
 
 { SCONV,	INCREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SCREG,	TFLOAT,
 		NSPECIAL|NCREG,	RESC1,
 		"ZF", },
 
 { SCONV,	INCREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SCREG,	TDOUBLE|TLDOUBLE,
 		NSPECIAL|NCREG,	RESC1,
 		"ZF", },
 
 { SCONV,	INBREG,
 	SCREG,	TDOUBLE|TLDOUBLE,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NSPECIAL|NBREG,		RESC1,
 		"ZF", },
 
 { SCONV,	INBREG,
 	SCREG,	TFLOAT,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NSPECIAL|NBREG,		RESC1,
 		"ZF", },
 
@@ -389,10 +566,9 @@ struct optab table[] = {
 		"	nop\n"
 		"	nop\n", },
 
-
 { MUL,	INBREG,
-	SBREG,	TLL,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TLONGLONG|TULONGLONG,
 		2*NBREG,	RESC1,
 		"	multu AL,AR\n"
 		"	mfhi U1\n"
@@ -420,7 +596,6 @@ struct optab table[] = {
 		NCREG,	RESC1, 
 		"	mul.d	A1,AL,AR	# double-floating-point multiply\n", },
 
-
 { DIV,	INAREG,
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
@@ -441,8 +616,8 @@ struct optab table[] = {
 		"	nop\n", },
 
 { DIV, INBREG,
-	SBREG,		TLL,
-	SBREG,		TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NSPECIAL|NBREG,	RESC1,
 		"ZE", },
 
@@ -478,8 +653,8 @@ struct optab table[] = {
 		"	nop\n", },
 
 { MOD,  INBREG,
-        SBREG,  TLL,
-        SBREG,  TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TLONGLONG|TULONGLONG,
                 NSPECIAL|NBREG,  RESC1,
                 "ZE", },
     
@@ -499,26 +674,26 @@ struct optab table[] = {
 { PLUS,	INAREG,
 	SAREG,	TSWORD|TSHORT|TCHAR,
 	SAREG,	TSWORD|TSHORT|TCHAR,
-		NBREG|NAREG,	RESC1,
+		NAREG|NASL,	RESC1,
       		"	add A1,AL,AR\n", },
 
 { PLUS,	INAREG,
-	SAREG,	TUWORD|TUSHORT|TUCHAR,
-	SAREG,	TUWORD|TUSHORT|TUCHAR,
-		NBREG|NAREG,	RESC1,
-      		"	addu A1,AL,AR\n", },
-
-{ PLUS,	INAREG,
 	SAREG,	TSWORD|TSHORT|TCHAR,
-	SSCON,	TANY,
+	SSCON,	TWORD,
 		NAREG|NASL,	RESC1,
 		"	addi A1,AL,AR\n", },
 
 { PLUS,	INAREG,
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
-	SSCON,	TANY,
+	SSCON,	TWORD,
 		NAREG|NASL,	RESC1,
 		"	addiu A1,AL,AR\n", },
+
+{ PLUS,	INAREG,
+	SAREG,	TUWORD|TUSHORT|TUCHAR,
+	SAREG,	TUWORD|TUSHORT|TUCHAR,
+		NAREG|NASL,	RESC1,
+      		"	addu A1,AL,AR\n", },
 
 { PLUS,	INCREG,
 	SCREG,	TFLOAT,
@@ -544,13 +719,13 @@ struct optab table[] = {
 { MINUS,	INAREG,
 	SAREG,	TSWORD|TSHORT|TCHAR,
 	SAREG,	TSWORD|TSHORT|TCHAR,
-		NBREG|NAREG,	RESC1,
+		NAREG|NASL,	RESC1,
       		"	sub A1,AL,AR\n", },
 
 { MINUS,	INAREG,
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
-		NBREG|NAREG,	RESC1,
+		NAREG|NASL,	RESC1,
       		"	subu A1,AL,AR\n", },
 
 { MINUS,	INAREG,
@@ -578,7 +753,7 @@ struct optab table[] = {
 		"	neg A1,AL\n", },
 
 { UMINUS,	INBREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SANY,	TANY,
 		NBREG|NAREG|NBSL,	RESC1,
 		"	subu A1,$zero,AL\n"
@@ -601,8 +776,8 @@ struct optab table[] = {
 /* Simple 'op rd, rs, rt' or 'op rt, rs, imm' operations */
 
 { OPSIMP,	INBREG,
-	SBREG,	TLL,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TLONGLONG|TULONGLONG,
 		NBREG|NBSR|NBSL,	RESC1,
       		"	O A1,AL,AR\n"
       		"	O U1,UL,UR\n", },
@@ -636,13 +811,19 @@ struct optab table[] = {
 		"	srl A1,AL,AR	# shift right by constant\n", },
 
 { LS,	INAREG,
-	SAREG,	TWORD|TUSHORT|TSHORT|TCHAR|TUCHAR,
+	SAREG,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 	SCON,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NAREG|NASL,	RESC1,
 		"	sll A1,AL,AR	# shift left by constant\n", },
     
 { RS,	INAREG,
+	SAREG,	TSWORD|TSHORT|TCHAR,
 	SAREG,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	srav A1,AL,AR	# shift right by register\n", },
+
+{ RS,	INAREG,
+	SAREG,	TUWORD|TUSHORT|TUCHAR,
 	SAREG,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NAREG|NASL,	RESC1,
 		"	srlv A1,AL,AR	# shift right by register\n", },
@@ -654,25 +835,25 @@ struct optab table[] = {
 		"	sllv A1,AL,AR	# shift left by register\n", },	
 
 { RS,	INBREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SCON,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NBREG,	RESC1,
 		"ZO", },
 
 { LS,	INBREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SCON,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NBREG,	RESC1,
 		"ZO", },
 
 { RS,	INBREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NSPECIAL|NBREG,	RESC1,
 		"ZE", },
 
 { LS,	INBREG,
-	SBREG,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
 	SAREG,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 		NSPECIAL|NBREG,	RESC1,
 		"ZE", },
@@ -685,14 +866,14 @@ struct optab table[] = {
         SAREG,  TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
         SANY,   TANY,
                 NAREG|NASL,   RESC1,
-                "	nor A1,AL	# complement\n", },
+                "	nor A1,$zero,AL	# complement\n", },
     
 { COMPL,        INBREG,
-        SBREG,  TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
         SANY,   TANY,
                 NBREG|NBSL,   RESC1,
-                "	nor A1,AL	# complement\n"
-                "	nor U1,UL\n", },
+                "	nor A1,$zero,AL	# complement\n"
+                "	nor U1,$zero,UL\n", },
     
 /*
  * The next rules takes care of assignments. "=".
@@ -720,8 +901,8 @@ struct optab table[] = {
 		"	nop\n", },	
 
 { ASSIGN,	FOREFF|INBREG,
-	SOREG|SNAME,	TLL,
-	SBREG,		TLL,
+	SOREG|SNAME,	TLONGLONG|TULONGLONG,
+	SBREG,		TLONGLONG|TULONGLONG,
 		0,	RDEST,
       		"	sw UR,UL		# store (u)longlong\n"
 		"	nop\n"
@@ -729,8 +910,8 @@ struct optab table[] = {
 		"	nop\n", },
 
 { ASSIGN,	FOREFF|INBREG,
-	SBREG,	TLL,
-	SBREG,	TLL,
+	SBREG,		TLONGLONG|TULONGLONG,
+	SBREG,		TLONGLONG|TULONGLONG,
 		0,	RDEST,
       		"	move UL,UR		# register move\n"
       		"	move AL,AR\n", },
@@ -757,14 +938,14 @@ struct optab table[] = {
 	SNAME|SOREG,	TFLOAT,
 	SCREG,		TFLOAT,
 		0,	RDEST,
-		"	s.s AR,AL		# store floating-point reg to sname\n"
+		"	s.s AR,AL		# store floating-point reg to oreg/sname\n"
 		"	nop\n", },
 
 { ASSIGN,	FOREFF|INCREG,
 	SNAME|SOREG,	TDOUBLE|TLDOUBLE,
 	SCREG,		TDOUBLE|TLDOUBLE,
 		0,	RDEST,
-		"	s.d AR,AL		# store double floating-point reg to sname\n"
+		"	s.d AR,AL		# store double floating-point reg to oreg/sname\n"
 		"	nop\n", },
 
 { ASSIGN,	FOREFF|INAREG,
@@ -772,15 +953,18 @@ struct optab table[] = {
 	SOREG|SNAME,	TANY,
 		3*NAREG,	RDEST,
 		"	lw A1,AR		# bit-field assignment\n"
-		"	li A3,ML\n"
+		"	li A3,M\n"
 		"	lw A2,AL\n"
-		"	sll A1,A1,HL\n"
+		"	sll A1,A1,H\n"
 		"	and A1,A1,A3\n"
-		"	nor A3,A3\n"
+		"	nor A3,$zero,A3\n"
 		"	and A2,A2,A3\n"
 		"	or A2,A2,A1\n"
 		"	sw A2,AL\n"
-		"	nop\n", },
+		"F	lw AD,AR\n"
+		"F	nop\n"
+		"F	sll AD,AD,32-S\n"
+		"F	sra AD,AD,32-S\n", },
 
 /* XXX we can optimise this away */
 { ASSIGN,	FOREFF|INAREG,
@@ -789,14 +973,16 @@ struct optab table[] = {
 		3*NAREG,	RDEST,
 		"	li A1,AR		# bit-field assignment\n"
 		"	lw A2,AL\n"
-		"	li A3,ML\n"
-		"	sll A1,A1,HL\n"
+		"	li A3,M\n"
+		"	sll A1,A1,H\n"
 		"	and A1,A1,A3\n"
-		"	nor A3,A3\n"
+		"	nor A3,$zero,A3\n"
 		"	and A2,A2,A3\n"
 		"	or A2,A2,A1\n"
 		"	sw A2,AL\n"
-		"	nop\n", },
+		"F	li AD,AR\n"
+		"F	sll AD,AD,32-S\n"
+		"F	sra AD,AD,32-S\n", },
 
 { ASSIGN,	FOREFF|INAREG,
 	SFLD,		TANY,
@@ -804,33 +990,16 @@ struct optab table[] = {
 		3*NAREG,	RDEST,
 		"	move A1,AR		# bit-field assignment\n"
 		"	lw A2,AL\n"
-		"	li A3,ML\n"
-		"	sll A1,A1,HL\n"
+		"	li A3,M\n"
+		"	sll A1,A1,H\n"
 		"	and A1,A1,A3\n"
-		"	nor A3,A3\n"
+		"	nor A3,$zero,A3\n"
 		"	and A2,A2,A3\n"
 		"	or A2,A2,A1\n"
 		"	sw A2,AL\n"
-		"	nop\n", },
-
-{ ASSIGN,	FOREFF|INAREG,
-	SFLD,		TANY,
-	SFLD,		TANY,
-		2*NAREG,	RDEST,
-		"	lw A1,AR		# bit-field copy\n"
-		"	li A3,MR\n"
-		"	and A1,A1,A3\n"
-		"	sll A1,A1,32-SR-HR\n"
-		"	sra A1,A1,32-SR\n"
-		"	lw A2,AL\n"
-		"	li A3,ML\n"
-		"	sll A1,A1,HL\n"
-		"	and A1,A1,A3\n"
-		"	nor A3,A3\n"
-		"	and A2,A2,A3\n"
-		"	or A2,A2,A1\n"
-		"	sw A2,AL\n"
-		"	nop\n", } ,
+		"F	move AR,AD\n"
+		"F	sll AD,AD,32-S\n"
+		"F	sra AD,AD,32-S\n", },
 
 { STASG,        INAREG|FOREFF,
         SOREG|SNAME,	TANY,
@@ -873,15 +1042,15 @@ struct optab table[] = {
 
 { OPLOG,	FORCC,
         SAREG,		TWORD|TPOINT|TSHORT|TUSHORT|TCHAR|TUCHAR,
-        SCON,		TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
+        SSCON,		TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
                 NAREG|NASL,     RESCC,
 		"	sub A1,AL,AR\n"
                 "	O A1,LC\n"
 		"	nop\n", },
 
 { OPLOG,	FORCC,
-	SBREG,		TLL,
-	SBREG,		TLL,
+	SBREG,		TLONGLONG|TULONGLONG,
+	SBREG,		TLONGLONG|TULONGLONG,
 		NAREG,	RESCC,
 		"ZD", },
 
@@ -932,7 +1101,7 @@ struct optab table[] = {
 
 { OPLTYPE,	INBREG,
 	SANY,		TANY,
-	SOREG|SNAME,	TLL,
+	SOREG|SNAME,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
 		"	lw U1,UL	# load (u)longlong to reg\n"
 		"	nop\n"
@@ -947,22 +1116,15 @@ struct optab table[] = {
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,
-	SCON,	TANY,
-		NAREG,	RESC1,
-		"	li A1,AL	# load constant to reg\n", },
-
-{ OPLTYPE,	INAREG,
-	SANY,	TANY,
 	SZERO,	TANY,
 		NAREG,	RESC1,
 		"	move A1,$zero	# load 0 to reg\n", },
 
-{ OPLTYPE,	INBREG,
+{ OPLTYPE,	INAREG,
 	SANY,	TANY,
 	SCON,	TANY,
-		NBREG,	RESC1,
-		"	li A1,AL	# load constant to reg\n"
-		"	li U1,UL\n", },
+		NAREG,	RESC1,
+		"	li A1,AL	# load constant to reg\n", },
 
 { OPLTYPE,	INBREG,
 	SANY,	TANY,
@@ -970,6 +1132,13 @@ struct optab table[] = {
 		NBREG,	RESC1,
 		"	move A1,$zero	# load 0 to reg\n"
 		"	move U1,$zero\n", },
+
+{ OPLTYPE,	INBREG,
+	SANY,	TANY,
+	SCON,	TANY,
+		NBREG,	RESC1,
+		"	li A1,AL	# load constant to reg\n"
+		"	li U1,UL\n", },
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,
@@ -1241,8 +1410,8 @@ struct optab table[] = {
 		"	#nop\n", },
 
 { FUNARG,	FOREFF,
-	SBREG,	TLL,
-	SANY,	TLL,
+	SBREG,	TLONGLONG|TULONGLONG,
+	SANY,	TLONGLONG|TULONGLONG,
 		0,	0,
 		"	addi $sp,$sp,-8		# save function arg to stack (endian problem here?\n"
 		"	sw UL,4($sp)\n"
@@ -1296,12 +1465,12 @@ struct optab table[] = {
 		"	nop\n", },
 
 { UMUL,	INBREG,
-	SANY,	TLL,
-	SOREG,	TLL,
+	SANY,	TLONGLONG|TULONGLONG,
+	SOREG,	TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
 		"	lw A1,AL		# (u)longlong load - endian problem here?\n"
 		"	nop\n"
-		"	lw U1,AL\n"
+		"	lw U1,UL\n"
 		"	nop\n", },
 
 { UMUL,	INCREG,
@@ -1318,6 +1487,7 @@ struct optab table[] = {
 		"	l.d A1,AL		# float load\n"
 		"	nop\n", },
 
+#if 0
 { UMUL,	INCREG,
 	SANY,	TDOUBLE|TLDOUBLE,
 	SAREG,	TPOINT,
@@ -1350,15 +1520,15 @@ struct optab table[] = {
 		"	nop\n", },
 
 { UMUL, INBREG,
-	SANY,	TLL,
-	SNAME,	TLL,
+	SANY,	TLONGLONG|TULONGLONG,
+	SNAME,	TLONGLONG|TULONGLONG,
 		NBREG|NAREG,	RESC1,
 		"	la A2,AL		# sname (u)long long load - endian problems here?\n"
 		"	lw A1,(A1)\n"
 		"	nop\n"
 		"	lw U1,4(A1)\n"
 		"	nop\n", },
-		
+#endif
 
 { UMUL, INAREG,
 	SANY,	TPOINT|TWORD,
@@ -1367,28 +1537,30 @@ struct optab table[] = {
         	"	lw A1,(AL)		# word load\n"
 		"	nop\n", },
 
+#if 0
 { UMUL, INAREG,
 	SANY,	TSHORT|TUSHORT,
-	SAREG,	TSHORT|TUSHORT,
+	SAREG,	TPTRTO|TSHORT|TUSHORT,
     		NAREG,     RESC1,
         	"	lh A1,(AL)		# (u)short load\n"
 		"	nop\n", },
 
 { UMUL, INAREG,
 	SANY,	TCHAR|TUCHAR,
-	SAREG,	TCHAR|TUCHAR,
+	SAREG,	TPTRTO|TCHAR|TUCHAR,
     		NAREG|NASL,     RESC1,
         	"	lb A1,(AL)		# (u)char load\n"
 		"	nop\n", },
 
 { UMUL, INBREG,
-	SANY,	TLL,
-	SCREG,	TLL,
+	SANY,	TLONGLONG|TULONGLONG,
+	SAREG,	TPTRTO|TLONGLONG|TULONGLONG,
 		NBREG,	RESC1,
 		"	lw A1,(AL)		# (u)long long load - endianness problems?\n"
 		"	nop\n"
 		"	lw U1,4(AL)"
 		"	nop\n", },
+#endif
 
 #define DF(x) FORREW,SANY,TANY,SANY,TANY,REWRITE,x,""
 

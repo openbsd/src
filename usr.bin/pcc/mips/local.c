@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.4 2007/12/22 14:12:26 stefan Exp $	*/
+/*	$OpenBSD: local.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -260,6 +260,9 @@ clocal(NODE *p)
 
 			if (!ISPTR(m)) /* Pointers don't need to be conv'd */
 			    switch (m) {
+			case BOOL:
+				l->n_lval = l->n_lval != 0;
+				break;
 			case CHAR:
 				l->n_lval = (char)val;
 				break;
@@ -404,31 +407,23 @@ void
 spalloc(NODE *t, NODE *p, OFFSZ off)
 {
 	NODE *sp;
+	int nbytes = off / SZCHAR;
 
-	if ((off % SZINT) == 0)
-		p =  buildtree(MUL, p, bcon(off/SZINT));
-	else if ((off % SZSHORT) == 0) {
-		p = buildtree(MUL, p, bcon(off/SZSHORT));
-		p = buildtree(PLUS, p, bcon(1));
-		p = buildtree(RS, p, bcon(1));
-	} else if ((off % SZCHAR) == 0) {
-		p = buildtree(MUL, p, bcon(off/SZCHAR));
-		p = buildtree(PLUS, p, bcon(3));
-		p = buildtree(RS, p, bcon(2));
-	} else
-		cerror("roundsp");
-
-	/* save the address of sp */
-	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
-	sp->n_rval = SP;
-	t->n_type = sp->n_type;
-	ecomp(buildtree(ASSIGN, t, sp)); /* Emit! */
+	p = buildtree(MUL, p, bcon(nbytes));
+	p = buildtree(PLUS, p, bcon(7));
+	p = buildtree(AND, p, bcon(~7));
 
 	/* subtract the size from sp */
 	sp = block(REG, NIL, NIL, p->n_type, 0, 0);
 	sp->n_lval = 0;
 	sp->n_rval = SP;
 	ecomp(buildtree(MINUSEQ, sp, p));
+
+	/* save the address of sp */
+	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
+	sp->n_rval = SP;
+	t->n_type = sp->n_type;
+	ecomp(buildtree(ASSIGN, t, sp)); /* Emit! */
 }
 
 /*
@@ -438,7 +433,7 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 void
 ninval(CONSZ off, int fsz, NODE *p)
 {
-        union { float f; double d; long double l; int i[3]; } u;
+        union { float f; double d; int i[2]; } u;
         struct symtab *q;
         TWORD t;
 #ifndef USE_GAS
@@ -459,7 +454,7 @@ ninval(CONSZ off, int fsz, NODE *p)
         case LONGLONG:
         case ULONGLONG:
 #ifdef USE_GAS
-                printf("\t.dword 0x%llx\n", (long long)p->n_lval);
+                printf("\t.dword %lld\n", (long long)p->n_lval);
 #else
                 i = p->n_lval >> 32;
                 j = p->n_lval & 0xffffffff;
@@ -483,7 +478,7 @@ ninval(CONSZ off, int fsz, NODE *p)
                 /* FALLTHROUGH */
         case INT:
         case UNSIGNED:
-                printf("\t.word 0x%x", (int)p->n_lval);
+                printf("\t.word " CONFMT, (CONSZ)p->n_lval);
                 if ((q = p->n_sp) != NULL) {
                         if ((q->sclass == STATIC && q->slevel > 0) ||
                             q->sclass == ILABEL) {
@@ -495,7 +490,7 @@ ninval(CONSZ off, int fsz, NODE *p)
                 break;
         case SHORT:
         case USHORT:
-                printf("\t.half 0x%x\n", (int)p->n_lval & 0xffff);
+                printf("\t.half %d\n", (int)p->n_lval & 0xffff);
                 break;
         case CHAR:
         case UCHAR:
@@ -505,11 +500,11 @@ ninval(CONSZ off, int fsz, NODE *p)
         case DOUBLE:
                 u.d = (double)p->n_dcon;
 		if (bigendian) {
-	                printf("\t.word\t0x%x\n", u.i[0]);
-			printf("\t.word\t0x%x\n", u.i[1]);
+	                printf("\t.word\t%d\n", u.i[0]);
+			printf("\t.word\t%d\n", u.i[1]);
 		} else {
-			printf("\t.word\t0x%x\n", u.i[1]);
-	                printf("\t.word\t0x%x\n", u.i[0]);
+			printf("\t.word\t%d\n", u.i[1]);
+	                printf("\t.word\t%d\n", u.i[0]);
 		}
                 break;
         case FLOAT:
@@ -617,11 +612,18 @@ static char *loctbl[] = { "text", "data", "rdata", "rdata" };
 void
 setloc1(int locc)
 {
-	if ((locc == lastloc) || (lastloc == DATA && locc == STRNG) ||
-	    (locc == STRNG && lastloc == DATA))
+	if (locc == lastloc && locc != STRNG)
 		return;
-	lastloc = locc;
-	printf("\t.%s\n", loctbl[locc]);
+	if (locc == DATA && lastloc == STRNG)
+		return;
+
+	if (locc != lastloc) {
+		lastloc = locc;
+		printf("\t.%s\n", loctbl[locc]);
+	}
+
+	if (locc == STRNG)
+		printf("\t.align 2\n");
 }
 
 /*

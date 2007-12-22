@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.3 2007/12/22 14:12:26 stefan Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.4 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -69,7 +69,7 @@
 #define ALCHAR		8
 #define ALBOOL		32
 #define ALINT		32
-#define ALFLOAT		64
+#define ALFLOAT		32
 #define ALDOUBLE	64
 #define ALLDOUBLE	64
 #define ALLONG		32

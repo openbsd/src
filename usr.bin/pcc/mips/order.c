@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.3 2007/12/22 14:12:26 stefan Exp $	*/
+/*	$OpenBSD: order.c,v 1.4 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,7 +40,10 @@
 int
 notoff(TWORD t, int r, CONSZ off, char *cp)
 {
-	if (off > 65535) return 1;
+	/*
+	 * although the hardware doesn't permit offsets greater
+	 * than +/- 32K, the assembler fixes it for us.
+	 */
 	return 0;		/* YES */
 }
 

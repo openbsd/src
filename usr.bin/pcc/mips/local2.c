@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.3 2007/12/22 14:12:26 stefan Exp $	 */
+/*	$OpenBSD: local2.c,v 1.4 2007/12/22 22:56:31 stefan Exp $	 */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@ int bigendian = 0;
 
 int nargregs = MIPS_O32_NARGREGS;
 
-static int argsiz(NODE * p);
+static int argsiz(NODE *p);
 
 void
 deflab(int label)
@@ -112,6 +112,21 @@ prologue(struct interpass_prolog * ipp)
 	printf("\tsw %s,4(%s)\n", rnames[RA], rnames[SP]);
 	printf("\tsw %s,(%s)\n", rnames[FP], rnames[SP]);
 	printf("\tmove %s,%s\n", rnames[FP], rnames[SP]);
+
+#ifdef notyet
+	/* profiling */
+	if (pflag) {
+		printf("\t.set noat\n");
+		printf("\tmove %s,%s\t# save current return address\n",
+		    rnames[AT], rnames[RA]);
+		printf("\tsubu %s,%s,8\t# _mcount pops 2 words from stack\n",
+		    rnames[SP], rnames[SP]);
+		printf("\tjal %s\n", exname("_mcount"));
+		printf("\tnop\n");
+		printf("\t.set at\n");
+	}
+#endif
+
 	if (addto)
 		printf("\tsubu %s,%s,%d\n", rnames[SP], rnames[SP], addto);
 
@@ -119,6 +134,7 @@ prologue(struct interpass_prolog * ipp)
 		if (i & 1)
 			fprintf(stdout, "\tsw %s,-%d(%s) # save permanent\n",
 				rnames[j], regoff[j], rnames[FP]);
+
 }
 
 void
@@ -367,7 +383,7 @@ shiftop(NODE *p)
 			expand(p, INBREG, "\tsrl U1,UL,AR\n");
 	} else if (p->n_op == RS && r->n_op == ICON && r->n_lval < 64) {
 		if (ty == LONGLONG) {
-			expand(p, INBREG, "\tli U1,-1\t# 64-bit right-shift\n");
+			expand(p, INBREG, "\tsra U1,UL,31\t# 64-bit right-shift\n");
 			expand(p, INBREG, "\tsra A1,UL,");
 		}else {
 			expand(p, INBREG, "\tli U1,0\t# 64-bit right-shift\n");
@@ -377,6 +393,8 @@ shiftop(NODE *p)
 	} else if (p->n_op == LS && r->n_op == ICON) {
 		expand(p, INBREG, "\tli A1,0\t# 64-bit right-shift\n");
 		expand(p, INBREG, "\tli U1,0\n");
+	} else {
+		comperr("shiftop");
 	}
 }
 
@@ -719,6 +737,33 @@ int
 rewfld(NODE * p)
 {
 	return (1);
+}
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+        CONSZ val;
+
+        if (p->n_op == ASSIGN)
+                p = p->n_left;
+        switch (**cp) {
+        case 'S':
+                printf("%d", UPKFSZ(p->n_rval));
+                break;
+        case 'H':
+                printf("%d", UPKFOFF(p->n_rval));
+                break;
+        case 'M':
+        case 'N':
+                val = 1 << UPKFSZ(p->n_rval);
+                --val;
+                val <<= UPKFOFF(p->n_rval);
+                printf("0x%llx", (**cp == 'M' ? val : ~val)  & 0xffffffff);
+                break;
+        default:
+                comperr("fldexpand");
+        }
+        return 1;
 }
 
 /*
@@ -1106,11 +1151,8 @@ gclass(TWORD t)
  * Calculate argument sizes.
  */
 void
-lastcall(NODE * p)
+lastcall(NODE *p)
 {
-	NODE *op = p;
-	int size = 0;
-
 #ifdef PCC_DEBUG
 	if (x2debug)
 		printf("lastcall:\n");
@@ -1119,26 +1161,36 @@ lastcall(NODE * p)
 	p->n_qual = 0;
 	if (p->n_op != CALL && p->n_op != FORTCALL && p->n_op != STCALL)
 		return;
-	for (p = p->n_right; p->n_op == CM; p = p->n_left)
-		size += argsiz(p->n_right);
-	size += argsiz(p);
-	op->n_qual = size;	/* XXX */
+	p->n_qual = argsiz(p->n_right); /* XXX */
 }
 
-static int
-argsiz(NODE * p)
+int
+argsiz(NODE *p)
 {
-	TWORD t = p->n_type;
+	TWORD t;
+	int size = 0;
+	int sz;
 
+	if (p->n_op == CM) {
+		size = argsiz(p->n_left);
+		p = p->n_right;
+	}
+
+	t = p->n_type;
 	if (t < LONGLONG || t == FLOAT || t > BTMASK)
-		return 4;
-	if (t == LONGLONG || t == ULONGLONG ||
-	    t == DOUBLE || t == LDOUBLE)
-		return 8;
-	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize;
-	comperr("argsiz");
-	return 0;
+		sz = 4;
+	else if (DEUNSIGN(LONGLONG) || t == DOUBLE || t == LDOUBLE)
+		sz = 8;
+	else if (t == STRTY || t == UNIONTY)
+		sz = p->n_stsize;
+
+	if (p->n_type == STRTY || p->n_type == UNIONTY || sz == 4)
+		return (size + sz);
+
+	if ((size < 4*nargregs) && (sz == 8) && ((size & 7) != 0))
+		sz += 4;
+
+	return (size + sz);
 }
 
 /*

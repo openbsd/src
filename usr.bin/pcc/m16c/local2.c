@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.2 2007/12/22 12:48:52 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.3 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -308,6 +308,12 @@ canaddr(NODE *p)
 	    (o==UMUL && shumul(p->n_left) == SRDIR))
 		return(1);
 	return(0);
+}
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
 }
 
 /*

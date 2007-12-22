@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.4 2007/12/22 14:12:26 stefan Exp $	*/
+/*	$OpenBSD: code.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -42,10 +42,10 @@
 void
 defalign(int n)
 {
-	n /= SZCHAR;
-	if (n == 1)
-		return;
-	printf("\t.align %d\n", n);
+	n = ispow2(n / SZCHAR);
+	if (n == -1)
+		cerror("defalign: n != 2^i");
+	printf("\t.p2align %d\n", n);
 }
 
 /*
@@ -179,39 +179,36 @@ param_64bit(struct symtab *sym, int *regp, int dotemps)
 	int reg = *regp;
 	NODE *p, *q;
 	int navail;
-	int sz;
 
 	/* alignment */
 	++reg;
 	reg &= ~1;
 
 	navail = nargregs - (reg - A0);
-	sz = szty(sym->stype);
 
-	if (sz > navail) {
+	if (navail < 2) {
 		/* would have appeared half in registers/half
 		 * on the stack, but alignment ensures it
 		 * appears on the stack */
 		if (dotemps)
 			putintemp(sym);
-	} else {
-		q = block(REG, NIL, NIL,
-		    sym->stype, sym->sdf, sym->ssue);
-		q->n_rval = A0A1 + (reg - A0);
-		if (dotemps) {
-			p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
-			sym->soffset = p->n_lval;
-			sym->sflags |= STNODE;
-		} else {
-			spname = sym;
-			p = buildtree(NAME, 0, 0);
-		}
-		p = buildtree(ASSIGN, p, q);
-		ecomp(p);
-		reg += 2;
+		*regp = reg;
+		return;
 	}
 
-	*regp = reg;
+	q = block(REG, NIL, NIL, sym->stype, sym->sdf, sym->ssue);
+	q->n_rval = A0A1 + (reg - A0);
+	if (dotemps) {
+		p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
+		sym->soffset = p->n_lval;
+		sym->sflags |= STNODE;
+	} else {
+		spname = sym;
+		p = buildtree(NAME, 0, 0);
+	}
+	p = buildtree(ASSIGN, p, q);
+	ecomp(p);
+	*regp = reg + 2;
 }
 
 /* setup a 32-bit param on the stack
@@ -233,6 +230,85 @@ param_32bit(struct symtab *sym, int *regp, int dotemps)
 	}
 	p = buildtree(ASSIGN, p, q);
 	ecomp(p);
+}
+
+/*
+ * XXX This is a hack.  We cannot have (l)doubles in more than one
+ * register class.  So we bounce them in and out of temps to
+ * move them in and out of the right registers.
+ */
+static void
+param_double(struct symtab *sym, int *regp, int dotemps)
+{
+	int reg = *regp;
+	NODE *p, *q, *t;
+	int navail;
+	int tmpnr;
+
+	/* alignment */
+	++reg;
+	reg &= ~1;
+
+	navail = nargregs - (reg - A0);
+
+	if (navail < 2) {
+		/* would have appeared half in registers/half
+		 * on the stack, but alignment ensures it
+		 * appears on the stack */
+		if (dotemps)
+			putintemp(sym);
+		*regp = reg;
+		return;
+	}
+
+	t = tempnode(0, LONGLONG, 0, MKSUE(LONGLONG));
+	tmpnr = t->n_lval;
+	q = block(REG, NIL, NIL, LONGLONG, 0, MKSUE(LONGLONG));
+	q->n_rval = A0A1 + (reg - A0);
+	p = buildtree(ASSIGN, t, q);
+	ecomp(p);
+
+	if (dotemps) {
+		sym->soffset = tmpnr;
+		sym->sflags |= STNODE;
+	} else {
+		q = tempnode(tmpnr, sym->stype, sym->sdf, sym->ssue);
+		spname = sym;
+		p = buildtree(NAME, 0, 0);
+		p = buildtree(ASSIGN, p, q);
+		ecomp(p);
+	}
+	*regp = reg + 2;
+}
+
+/*
+ * XXX This is a hack.  We cannot have floats in more than one
+ * register class.  So we bounce them in and out of temps to
+ * move them in and out of the right registers.
+ */
+static void
+param_float(struct symtab *sym, int *regp, int dotemps)
+{
+	NODE *p, *q, *t;
+	int tmpnr;
+
+	t = tempnode(0, INT, 0, MKSUE(INT));
+	tmpnr = t->n_lval;
+	q = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+	q->n_rval = (*regp)++;
+	p = buildtree(ASSIGN, t, q);
+	ecomp(p);
+
+	if (dotemps) {
+		sym->soffset = tmpnr;
+		sym->sflags |= STNODE;
+	} else {
+		q = tempnode(tmpnr, sym->stype, sym->sdf, sym->ssue);
+		spname = sym;
+		p = buildtree(NAME, 0, 0);
+		p = buildtree(ASSIGN, p, q);
+		ecomp(p);
+	}
 }
 
 /*
@@ -277,9 +353,12 @@ bfcode(struct symtab **sp, int cnt)
 			putintemp(sp[i]);
 		else if (sp[i]->stype == STRTY || sp[i]->stype == UNIONTY)
 			param_struct(sp[i], &reg);
-		else if (sp[i]->stype == DOUBLE || sp[i]->stype == LDOUBLE ||
-		     DEUNSIGN(sp[i]->stype) == LONGLONG)
+		else if (DEUNSIGN(sp[i]->stype) == LONGLONG)
 			param_64bit(sp[i], &reg, xtemps && !saveallargs);
+		else if (sp[i]->stype == DOUBLE || sp[i]->stype == LDOUBLE)
+			param_double(sp[i], &reg, xtemps && !saveallargs);
+		else if (sp[i]->stype == FLOAT)
+			param_float(sp[i], &reg, xtemps && !saveallargs);
 		else
 			param_32bit(sp[i], &reg, xtemps && !saveallargs);
 	}
@@ -340,16 +419,18 @@ bycode(int t, int i)
 
 	if (t < 0) {
 		if (i != 0)
-			puts("\"");
+			puts("\\000\"");
 	} else {
 		if (i == 0)
-			printf("\t.asciiz \"");
+			printf("\t.ascii \"");
 		if (t == 0)
 			return;
 		else if (t == '\\' || t == '"') {
 			lastoctal = 0;
 			putchar('\\');
 			putchar(t);
+		} else if (t == 011) {
+			printf("\\t");
 		} else if (t == 012) {
 			printf("\\n");
 		} else if (t < 040 || t >= 0177) {
@@ -357,7 +438,7 @@ bycode(int t, int i)
 			printf("\\%o",t);
 		} else if (lastoctal && '0' <= t && t <= '9') {
 			lastoctal = 0;
-			printf("\"\n\t.asciiz \"%c", t);
+			printf("\"\n\t.ascii \"%c", t);
 		} else {	
 			lastoctal = 0;
 			putchar(t);
@@ -397,25 +478,34 @@ static NODE *
 movearg_struct(NODE *p, NODE *parent, int *regp)
 {
 	int reg = *regp;
-	NODE *q, *t, *r;
+	NODE *l, *q, *t, *r;
+	int tmpnr;
 	int navail;
 	int off;
 	int num;
         int sz;
+	int ty;
 	int i;
 
 	navail = nargregs - (reg - A0);
 	sz = tsize(p->n_type, p->n_df, p->n_sue) / SZINT;
 	num = sz > navail ? navail : sz;
 
-	if (p != parent)
+	l = p->n_left;
+	nfree(p);
+	ty = l->n_type;
+	t = tempnode(0, l->n_type, l->n_df, l->n_sue);
+	tmpnr = t->n_lval;
+	l = buildtree(ASSIGN, t, l);
+
+	if (p != parent) {
 		q = parent->n_left;
-	else
+	} else
 		q = NULL;
 
 	/* copy structure into registers */
 	for (i = 0; i < num; i++) {
-		t = tcopy(p->n_left);
+		t = tempnode(tmpnr, ty, 0, MKSUE(PTR+ty));
 		t = block(SCONV, t, NIL, PTR+INT, 0, MKSUE(PTR+INT));
 		t = block(PLUS, t, bcon(4*i), PTR+INT, 0, MKSUE(PTR+INT));
 		t = buildtree(UMUL, t, NIL);
@@ -426,12 +516,12 @@ movearg_struct(NODE *p, NODE *parent, int *regp)
                	r = buildtree(ASSIGN, r, t);
 		if (q == NULL)
 			q = r;
-		else
+		else 
 			q = block(CM, q, r, INT, 0, MKSUE(INT));
 	}
 	off = ARGINIT/SZINT + nargregs;
 	for (i = num; i < sz; i++) {
-		t = tcopy(p->n_left);
+		t = tempnode(tmpnr, ty, 0, MKSUE(PTR+ty));
 		t = block(SCONV, t, NIL, PTR+INT, 0, MKSUE(PTR+INT));
 		t = block(PLUS, t, bcon(4*i), PTR+INT, 0, MKSUE(PTR+INT));
 		t = buildtree(UMUL, t, NIL);
@@ -447,13 +537,12 @@ movearg_struct(NODE *p, NODE *parent, int *regp)
 		else
 			q = block(CM, q, r, INT, 0, MKSUE(INT));
 	}
-	tfree(p);
 
 	if (parent->n_op == CM) {
-		parent->n_left = q->n_left;
-		t = q;
-		q = q->n_right;
-		nfree(t);
+		parent->n_left = q;
+		q = l;
+	} else {
+		q = block(CM, q, l, INT, 0, MKSUE(INT));
 	}
 
 	*regp = reg;
@@ -467,16 +556,23 @@ movearg_64bit(NODE *p, int *regp)
 {
 	int reg = *regp;
 	NODE *q;
+	int lastarg;
 
 	/* alignment */
 	++reg;
 	reg &= ~1;
 
+	lastarg = A0 + nargregs - 1;
+	if (reg > lastarg) {
+		*regp = reg;
+		return block(FUNARG, p, NIL, p->n_type, p->n_df, p->n_sue);
+	}
+
 	q = block(REG, NIL, NIL, p->n_type, p->n_df, p->n_sue);
-	q->n_rval = A0A1 + (reg++ - A0);
+	q->n_rval = A0A1 + (reg - A0);
 	q = buildtree(ASSIGN, q, p);
 
-	*regp = reg;
+	*regp = reg + 2;
 	return q;
 }
 
@@ -519,11 +615,37 @@ moveargs(NODE *p, int *regp)
 		*rp = block(FUNARG, r, NIL, r->n_type, r->n_df, r->n_sue);
 	else if (r->n_op == STARG) {
 		*rp = movearg_struct(r, p, regp);
-	} else if (DEUNSIGN(r->n_type) == LONGLONG || r->n_type == DOUBLE ||
-	    r->n_type == LDOUBLE)
+	} else if (DEUNSIGN(r->n_type) == LONGLONG) {
 		*rp = movearg_64bit(r, regp);
-	else
+	} else if (r->n_type == DOUBLE || r->n_type == LDOUBLE) {
+		/* XXX bounce in and out of temporary to change to longlong */
+		NODE *t1 = tempnode(0, LONGLONG, 0, MKSUE(LONGLONG));
+		int tmpnr = t1->n_lval;
+		NODE *t2 = tempnode(tmpnr, r->n_type, r->n_df, r->n_sue);
+		t1 =  movearg_64bit(t1, regp);
+		r = block(ASSIGN, t2, r, r->n_type, r->n_df, r->n_sue);
+		if (p->n_op == CM) {
+			p->n_left = buildtree(CM, p->n_left, t1);
+			p->n_right = r;
+		} else {
+			p = buildtree(CM, t1, r);
+		}
+	} else if (r->n_type == FLOAT) {
+		/* XXX bounce in and out of temporary to change to int */
+		NODE *t1 = tempnode(0, INT, 0, MKSUE(INT));
+		int tmpnr = t1->n_lval;
+		NODE *t2 = tempnode(tmpnr, r->n_type, r->n_df, r->n_sue);
+		t1 =  movearg_32bit(t1, regp);
+		r = block(ASSIGN, t2, r, r->n_type, r->n_df, r->n_sue);
+		if (p->n_op == CM) {
+			p->n_left = buildtree(CM, p->n_left, t1);
+			p->n_right = r;
+		} else {
+			p = buildtree(CM, t1, r);
+		}
+	} else {
 		*rp = movearg_32bit(r, regp);
+	}
 
 	return p;
 }

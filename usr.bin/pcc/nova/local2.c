@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.2 2007/12/22 13:13:27 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.3 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -162,6 +162,12 @@ tlen(p) NODE *p;
 		}
 }
 #endif
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
+}
 
 #if 0
 /*

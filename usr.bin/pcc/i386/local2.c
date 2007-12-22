@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.5 2007/12/09 18:54:39 ragge Exp $	*/
+/*	$OpenBSD: local2.c,v 1.6 2007/12/22 22:56:31 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -272,58 +272,64 @@ twollcomp(NODE *p)
 	deflab(s);
 }
 
-/*
- * Assign to a bitfield.
- * Clumsy at least, but what to do?
- */
-static void
-bfasg(NODE *p)
+int
+fldexpand(NODE *p, int cookie, char **cp)
 {
-	NODE *fn = p->n_left;
-	int shift = UPKFOFF(fn->n_rval);
-	int fsz = UPKFSZ(fn->n_rval);
-	int andval, tch = 0;
+	CONSZ val;
 
-	/* get instruction size */
-	switch (p->n_type) {
-	case CHAR: case UCHAR: tch = 'b'; break;
-	case SHORT: case USHORT: tch = 'w'; break;
-	case INT: case UNSIGNED: tch = 'l'; break;
-	default: comperr("bfasg");
+	if (p->n_op == ASSIGN)
+		p = p->n_left;
+	switch (**cp) {
+	case 'S':
+		printf("%d", UPKFSZ(p->n_rval));
+		break;
+	case 'H':
+		printf("%d", UPKFOFF(p->n_rval));
+		break;
+	case 'M':
+	case 'N':
+		val = 1 << UPKFSZ(p->n_rval);
+		--val;
+		val <<= UPKFOFF(p->n_rval);
+		printf("0x%llx", (**cp == 'M' ? val : ~val)  & 0xffffffff);
+		break;
+	default:
+		comperr("fldexpand");
+	}
+	return 1;
+}
+
+static void
+bfext(NODE *p)
+{
+	int ch = 0, sz = 0;
+
+	if (ISUNSIGNED(p->n_right->n_type))
+		return;
+	switch (p->n_right->n_type) {
+	case CHAR:
+		ch = 'b';
+		sz = 8;
+		break;
+	case SHORT:
+		ch = 'w';
+		sz = 16;
+		break;
+	case INT:
+	case LONG:
+		ch = 'l';
+		sz = 32;
+		break;
+	default:
+		comperr("bfext");
 	}
 
-	/* put src into a temporary reg */
-	fprintf(stdout, "	mov%c ", tch);
-	adrput(stdout, getlr(p, 'R'));
-	fprintf(stdout, ",");
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
-
-	/* AND away the bits from dest */
-	andval = ~(((1 << fsz) - 1) << shift);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
-	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
-
-	/* AND away unwanted bits from src */
-	andval = ((1 << fsz) - 1);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
-
-	/* SHIFT left src number of bits */
-	if (shift) {
-		fprintf(stdout, "	sal%c $%d,", tch, shift);
-		adrput(stdout, getlr(p, '1'));
-		fprintf(stdout, "\n");
-	}
-
-	/* OR in src to dest */
-	fprintf(stdout, "	or%c ", tch);
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, ",");
-	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
+	sz -= UPKFSZ(p->n_left->n_rval);
+	printf("\tshl%c $%d,", ch, sz);
+	adrput(stdout, getlr(p, 'D'));
+	printf("\n\tsar%c $%d,", ch, sz);
+	adrput(stdout, getlr(p, 'D'));
+	printf("\n");
 }
 
 /*
@@ -461,8 +467,8 @@ zzzcode(NODE *p, int c)
 		twollcomp(p);
 		break;
 
-	case 'E': /* Assign to bitfield */
-		bfasg(p);
+	case 'E': /* Perform bitfield sign-extension */
+		bfext(p);
 		break;
 
 	case 'F': /* Structure argument */

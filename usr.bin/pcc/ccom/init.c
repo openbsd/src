@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2007/12/09 18:49:06 ragge Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -455,7 +455,9 @@ setscl(struct symtab *sp)
 {
 	int ro = DATA;
 
-	if (BTYPE(sp->stype) == sp->stype && sp->squal == (CON >> TSHIFT))
+	if (BTYPE(sp->stype) == sp->stype && sp->squal & (CON >> TSHIFT))
+		ro = RDATA;
+	else if (ISPTR(sp->stype) && ISCON(sp->squal))
 		ro = RDATA;
 	/* XXX - readonly pointers */
 	setloc1(ro);
@@ -813,7 +815,7 @@ desinit(NODE *p)
 	mkstack(p);	/* Setup for assignment */
 
 	/* pop one step if SOU, ilbrace will push */
-	if (op == NAME)
+	if (op == NAME || op == LB)
 		pstk = pstk->in_prev;
 
 #ifdef PCC_DEBUG

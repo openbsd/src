@@ -1,4 +1,4 @@
-/*      $OpenBSD: local2.c,v 1.2 2007/12/22 12:38:56 stefan Exp $    */
+/*      $OpenBSD: local2.c,v 1.3 2007/12/22 22:56:31 stefan Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -167,6 +167,12 @@ twollcomp(NODE *p)
 	expand(p, 0, "\tcmp AR,AL\t@ (and lower)\n");
 	cbgen(p->n_op, e);
 	deflab(s);
+}
+
+int
+fldexpand(NODE *P, int cookie, char **cp)
+{
+	return 0;
 }
 
 #if 0
