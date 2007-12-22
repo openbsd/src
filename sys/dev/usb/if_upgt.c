@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.7 2007/12/20 20:38:31 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.8 2007/12/22 11:16:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1203,6 +1203,9 @@ upgt_stop(struct upgt_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
+	/* do not accept any frames if the device is down */
+	upgt_set_macfilter(sc, IEEE80211_S_INIT);
+
 	/* device down */
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1741,6 +1744,12 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 	filter->header2.flags = 0;
 
 	switch (state) {
+	case IEEE80211_S_INIT:
+		DPRINTF(1, "%s: set MAC filter to INIT\n",
+		    sc->sc_dev.dv_xname);
+
+		filter->type = htole16(UPGT_FILTER_TYPE_RESET);
+		break;
 	case IEEE80211_S_SCAN:
 		DPRINTF(1, "%s: set MAC filter to SCAN (bssid %s)\n",
 		    sc->sc_dev.dv_xname, ether_sprintf(broadcast));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.1 2007/12/16 09:05:53 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.2 2007/12/22 11:16:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -239,6 +239,7 @@ struct upgt_lmac_eeprom {
 #define UPGT_FILTER_TYPE_IBSS		0x0002
 #define UPGT_FILTER_TYPE_HOSTAP		0x0004
 #define UPGT_FILTER_TYPE_MONITOR	0x0010
+#define UPGT_FILTER_TYPE_RESET		0x0020
 #define UPGT_FILTER_UNKNOWN2_STA	0x0000015f
 #define UPGT_FILTER_UNKNOWN5_V2		0x0620
 #define UPGT_FILTER_UNKNOWN6_STA	0x01f4
