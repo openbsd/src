@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.52 2007/12/15 19:37:41 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.53 2007/12/22 17:13:53 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -252,6 +252,7 @@ m88110_initialize_cpu(cpuid_t cpu)
 	extern int cpuspeed;
 	u_int ictl, dctl;
 	int i;
+	int procvers = (get_cpu_pid() & PID_VN) >> VN_SHIFT;
 
 	/* clear BATCs */
 	for (i = 0; i < 8; i++) {
@@ -264,13 +265,6 @@ m88110_initialize_cpu(cpuid_t cpu)
 	/* clear PATCs */
 	patc_clear();
 
-	/*
-	 * 88110 errata #1:
-	 * ``Under certain conditions involving exceptions, with branch
-	 *   prediction enabled, the CPU may hang.
-	 *   Suggested fix: Clear the PREN bit of the ICTL.  This will
-	 *   disable branch prediction.''
-	 */
 	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
 
 	/*
@@ -311,6 +305,36 @@ m88110_initialize_cpu(cpuid_t cpu)
 	 */
 	dctl = BATC_512K | CMMU_DCTL_CEN | CMMU_DCTL_ADS;
 	dctl |= CMMU_DCTL_RSVD1; /* Data Matching Disable */
+
+	/*
+	 * 88110 rev 4.2 errata #1:
+	 * ``Under certain conditions involving exceptions, with branch
+	 *   prediction enabled, the CPU may hang.
+	 *   Suggested fix: Clear the PREN bit of the ICTL.  This will
+	 *   disable branch prediction.''
+	 *
+	 * ...but this errata becomes...
+	 *
+	 * 88110 rev 5.1 errata #1:
+	 * ``Under certain conditions involving exceptions, with branch
+	 *   prediction enabled and decoupled loads/stores enabled, load
+	 *   instructions may complete incorrectly or stores may execute
+	 *   to the wrong. address.
+	 *   Suggested fix: Clear the PREN bit of the ICTL or the DEN bit
+	 *   of the DCTL.''
+	 *
+	 * So since branch prediction appears to give better performance
+	 * than data cache decoupling, and it is not known whether the
+	 * problem has been understood better and thus the conditions
+	 * narrowed on 5.1, or changes between 4.2 and 5.1 only restrict
+	 * the conditions on which it may occur, we'll enable branch
+	 * prediction on 5.1 processors and data cache decoupling on
+	 * earlier versions.
+	 */
+	if (procvers >= 0xf)	/* > 0xb ? */
+		ictl |= CMMU_ICTL_PREN;
+	else
+		dctl |= CMMU_DCTL_DEN;
 
 	mc88110_inval_inst();		/* clear instruction cache & TIC */
 	mc88110_inval_data();		/* clear data cache */
