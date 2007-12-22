@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.3 2007/11/18 17:39:55 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.4 2007/12/22 14:12:26 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -31,56 +31,10 @@
  * Simon Olsson (simols-1@student.ltu.se) 2005.
  */
 
+#include <assert.h>
 #include "pass1.h"
 
 static int inbits, inval;
-
-#ifdef MIPS_BIGENDIAN
-/*
- * If we're big endian, then all OREG loads of a type
- * larger than the destination, must have the
- * offset changed to point to the correct bytes in memory.
- */
-static NODE *
-offchg(NODE *p)
-{
-	NODE *l = p->n_left;
-
-	if (p->n_op != SCONV)
-		return;
-
-	switch (l->n_type) {
-	case SHORT:
-	case USHORT:
-		if (DEUNSIGN(p->n_type) == CHAR)
-			l->n_lval += 1;
-		break;
-	case LONG:
-	case ULONG:
-	case INT:
-	case UNSIGNED:
-		if (DEUNSIGN(p->n_type) == CHAR)
-			l->n_lval += 3;
-		else if (DEUNSIGNED(p->n_type) == SHORT)
-			l->n_lval += 2;
-		break;
-	case LONGLONG:
-	case ULONGLONG:
-		if (DEUNSIGN(p->n_type) == CHAR)
-			l->n_lval += 7;
-		else if (DEUNSIGNED(p->n_type) == SHORT)
-			l->n_lval += 6;
-		else if (DEUNSIGN(p->n_type) == INT ||
-		    DEUNSIGN(p->n_type) == LONG)
-			p->n_lval += 4;
-	default:
-		comperr("offchg: unknown type");
-		break;
-	}
-
-	return p;
-}
-#endif
 
 /* this is called to do local transformations on
  * an expression tree preparitory to its being
@@ -92,13 +46,45 @@ clocal(NODE *p)
 	struct symtab *q;
 	NODE *r, *l;
 	int o;
-	int m, ml;
-	TWORD t;
+	int m;
+	TWORD ty;
+	int tmpnr, isptrvoid = 0;
 
-//printf("in:\n");
-//fwalk(p, eprint, 0);
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal in: %p\n", p);
+		fwalk(p, eprint, 0);
+	}
+#endif
 
-	switch( o = p->n_op ){
+	switch (o = p->n_op) {
+
+	case UCALL:
+	case CALL:
+	case STCALL:
+	case USTCALL:
+		if (p->n_type == VOID)
+			break;
+		/*
+		 * if the function returns void*, ecode() invokes
+		 * delvoid() to convert it to uchar*.
+		 * We just let this happen on the ASSIGN to the temp,
+		 * and cast the pointer back to void* on access
+		 * from the temp.
+		 */
+		if (p->n_type == PTR+VOID)
+			isptrvoid = 1;
+		r = tempnode(0, p->n_type, p->n_df, p->n_sue);
+		tmpnr = r->n_lval;
+		r = block(ASSIGN, r, p, p->n_type, p->n_df, p->n_sue);
+
+		p = tempnode(tmpnr, r->n_type, r->n_df, r->n_sue);
+		if (isptrvoid) {
+			p = block(PCONV, p, NIL, PTR+VOID,
+			    p->n_df, MKSUE(PTR+VOID));
+		}
+		p = buildtree(COMOP, r, p);
+		break;
 
 	case NAME:
 		if ((q = p->n_sp) == NULL)
@@ -128,7 +114,7 @@ clocal(NODE *p)
 			p->n_rval = q->soffset;
 			break;
 
-			}
+		}
 		break;
 
 	case FUNARG:
@@ -156,11 +142,11 @@ clocal(NODE *p)
 				if (r->n_type >= FLOAT && r->n_type <= LDOUBLE)
 					break;
 				/* Type must be correct */
-				t = r->n_type;
+				ty = r->n_type;
 				nfree(l->n_left);
 				l->n_left = r;
-				l->n_type = t;
-				l->n_right->n_type = t;
+				l->n_type = ty;
+				l->n_right->n_type = ty;
 			}
 #if 0
 			  else if (l->n_right->n_op == SCONV &&
@@ -177,12 +163,32 @@ clocal(NODE *p)
 		break;
 
 	case PCONV:
-		ml = p->n_left->n_type;
+		/* Remove redundant PCONV's. Be careful */
 		l = p->n_left;
-		if ((ml == CHAR || ml == UCHAR || ml == SHORT || ml == USHORT)
-		    && l->n_op != ICON)
+		if (l->n_op == ICON) {
+			l->n_lval = (unsigned)l->n_lval;
+			goto delp;
+		}
+		if (l->n_type < INT || DEUNSIGN(l->n_type) == LONGLONG) {
+			/* float etc? */
+			p->n_left = block(SCONV, l, NIL,
+			    UNSIGNED, 0, MKSUE(UNSIGNED));
 			break;
-		l->n_type = p->n_type;
+		}
+		/* if left is SCONV, cannot remove */
+		if (l->n_op == SCONV)
+			break;
+
+		/* avoid ADDROF TEMP */
+		if (l->n_op == ADDROF && l->n_left->n_op == TEMP)
+			break;
+
+		/* if conversion to another pointer type, just remove */
+		if (p->n_type > BTMASK && l->n_type > BTMASK)
+			goto delp;
+		break;
+
+	delp:	l->n_type = p->n_type;
 		l->n_qual = p->n_qual;
 		l->n_df = p->n_df;
 		l->n_sue = p->n_sue;
@@ -195,37 +201,56 @@ clocal(NODE *p)
 
 		if (p->n_type == l->n_type) {
 			nfree(p);
-			return l;
+			p = l;
+			break;
 		}
-
-#ifdef MIPS_BIGENDIAN
-		/*
-		 * If we're big endian, then all OREG loads of a type
-		 * larger than the destination, must have the
-		 * offset changed to point to the correct bytes in memory.
-		 */
-		if (l->n_type == OREG) 
-			p = offchg(p);
-#endif
 
 		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
 		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
 			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
 			    l->n_type != FLOAT && l->n_type != DOUBLE &&
 			    l->n_type != LDOUBLE && p->n_type != LDOUBLE) {
-				if (l->n_op == NAME || l->n_op == UMUL) {
+				if (l->n_op == NAME || l->n_op == UMUL ||
+				    l->n_op == TEMP) {
 					l->n_type = p->n_type;
 					nfree(p);
-					return l;
+					p = l;
+					break;
 				}
 			}
 		}
 
-		if ((p->n_type == INT || p->n_type == UNSIGNED) &&
-		    ISPTR(l->n_type)) {
+		if (DEUNSIGN(p->n_type) == INT && DEUNSIGN(l->n_type) == INT &&
+		    coptype(l->n_op) == BITYPE) {
+			l->n_type = p->n_type;
 			nfree(p);
-			return l;
+			p = l;
 		}
+
+		if (DEUNSIGN(p->n_type) == SHORT &&
+		    DEUNSIGN(l->n_type) == SHORT) {
+			nfree(p);
+			p = l;
+		}
+
+		/* convert float/double to int before to (u)char/(u)short */
+		if ((DEUNSIGN(p->n_type) == CHAR ||
+		    DEUNSIGN(p->n_type) == SHORT) &&
+                    (l->n_type == FLOAT || l->n_type == DOUBLE ||
+		    l->n_type == LDOUBLE)) {
+			p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_sue);
+			p->n_left->n_type = INT;
+			break;
+                }
+
+		/* convert (u)char/(u)short to int before float/double */
+		if  ((p->n_type == FLOAT || p->n_type == DOUBLE ||
+		    p->n_type == LDOUBLE) && (DEUNSIGN(l->n_type) == CHAR ||
+		    DEUNSIGN(l->n_type) == SHORT)) {
+			p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_sue);
+			p->n_left->n_type = INT;
+			break;
+                }
 
 		o = l->n_op;
 		m = p->n_type;
@@ -274,11 +299,6 @@ clocal(NODE *p)
 			}
 			l->n_type = m;
 			nfree(p);
-			return l;
-		}
-		if (DEUNSIGN(p->n_type) == SHORT &&
-		    DEUNSIGN(l->n_type) == SHORT) {
-			nfree(p);
 			p = l;
 		}
 		break;
@@ -300,7 +320,8 @@ clocal(NODE *p)
 	case PVCONV:
                 if( p->n_right->n_op != ICON ) cerror( "bad conversion", 0);
                 nfree(p);
-                return(buildtree(o==PMCONV?MUL:DIV, p->n_left, p->n_right));
+                p = buildtree(o==PMCONV?MUL:DIV, p->n_left, p->n_right);
+		break;
 
 	case FORCE:
 		/* put return value in return reg */
@@ -311,8 +332,12 @@ clocal(NODE *p)
 		break;
 	}
 
-//printf("ut:\n");
-//fwalk(p, eprint, 0);
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal out: %p\n", p);
+		fwalk(p, eprint, 0);
+	}
+#endif
 
 	return(p);
 }
@@ -395,16 +420,15 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 
 	/* save the address of sp */
 	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
-	sp->n_lval = 0;
-	sp->n_rval = STKREG;
+	sp->n_rval = SP;
 	t->n_type = sp->n_type;
 	ecomp(buildtree(ASSIGN, t, sp)); /* Emit! */
 
-	/* add the size to sp */
+	/* subtract the size from sp */
 	sp = block(REG, NIL, NIL, p->n_type, 0, 0);
 	sp->n_lval = 0;
-	sp->n_rval = STKREG;
-	ecomp(buildtree(PLUSEQ, sp, p));
+	sp->n_rval = SP;
+	ecomp(buildtree(MINUSEQ, sp, p));
 }
 
 /*
@@ -418,7 +442,7 @@ ninval(CONSZ off, int fsz, NODE *p)
         struct symtab *q;
         TWORD t;
 #ifndef USE_GAS
-        int i;
+        int i, j;
 #endif
 
         t = p->n_type;
@@ -437,12 +461,20 @@ ninval(CONSZ off, int fsz, NODE *p)
 #ifdef USE_GAS
                 printf("\t.dword 0x%llx\n", (long long)p->n_lval);
 #else
-                i = (p->n_lval >> 32);
-                p->n_lval &= 0xffffffff;
+                i = p->n_lval >> 32;
+                j = p->n_lval & 0xffffffff;
                 p->n_type = INT;
-                ninval(off, 32, p);
-                p->n_lval = i;
-                ninval(off+32, 32, p);
+		if (bigendian) {
+			p->n_lval = j;
+	                ninval(off, 32, p);
+			p->n_lval = i;
+			ninval(off+32, 32, p);
+		} else {
+			p->n_lval = i;
+	                ninval(off, 32, p);
+			p->n_lval = j;
+			ninval(off+32, 32, p);
+		}
 #endif
                 break;
         case BOOL:
@@ -470,14 +502,15 @@ ninval(CONSZ off, int fsz, NODE *p)
                 printf("\t.byte %d\n", (int)p->n_lval & 0xff);
                 break;
         case LDOUBLE:
-                u.i[2] = 0;
-                u.l = (long double)p->n_dcon;
-                printf("\t.word\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
-                break;
         case DOUBLE:
                 u.d = (double)p->n_dcon;
-                printf("\t.word\t0x%x\n", u.i[0]);
-                printf("\t.word\t0x%x\n", u.i[1]);
+		if (bigendian) {
+	                printf("\t.word\t0x%x\n", u.i[0]);
+			printf("\t.word\t0x%x\n", u.i[1]);
+		} else {
+			printf("\t.word\t0x%x\n", u.i[1]);
+	                printf("\t.word\t0x%x\n", u.i[0]);
+		}
                 break;
         case FLOAT:
                 u.f = (float)p->n_dcon;
@@ -545,9 +578,9 @@ commdec(struct symtab *q)
 	off = (off+(SZCHAR-1))/SZCHAR;
 
 #ifdef GCC_COMPAT
-	printf("	.comm %s,0%o\n", gcc_findname(q), off);
+	printf("	.comm %s,%d\n", gcc_findname(q), off);
 #else
-	printf("	.comm %s,0%o\n", exname(q->sname), off);
+	printf("	.comm %s,%d\n", exname(q->sname), off);
 #endif
 }
 
@@ -561,12 +594,12 @@ lcommdec(struct symtab *q)
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
 #ifdef GCC_COMPAT
-		printf("\t.lcomm %s,0%o\n", gcc_findname(q), off);
+		printf("\t.lcomm %s,%d\n", gcc_findname(q), off);
 #else
-		printf("\t.lcomm %s,0%o\n", exname(q->sname), off);
+		printf("\t.lcomm %s,%d\n", exname(q->sname), off);
 #endif
 	else
-		printf("\t.lcomm " LABFMT ",0%o\n", q->soffset, off);
+		printf("\t.lcomm " LABFMT ",%d\n", q->soffset, off);
 }
 
 /*
@@ -578,13 +611,14 @@ deflab1(int label)
 	printf(LABFMT ":\n", label);
 }
 
-static char *loctbl[] = { "text", "data", "bss", "data" };
+/* ro-text, rw-data, ro-data, ro-strings */
+static char *loctbl[] = { "text", "data", "rdata", "rdata" };
 
 void
 setloc1(int locc)
 {
-	//printf("setloc1(%d)\n", locc);
-	if ((locc == lastloc) || (lastloc == DATA && locc == STRNG) || (locc == STRNG || lastloc == DATA))
+	if ((locc == lastloc) || (lastloc == DATA && locc == STRNG) ||
+	    (locc == STRNG && lastloc == DATA))
 		return;
 	lastloc = locc;
 	printf("\t.%s\n", loctbl[locc]);
@@ -642,4 +676,146 @@ zbits(OFFSZ off, int fsz)
                 inval = 0;
                 inbits = fsz;
         }
+}
+
+/*
+ * va_start(ap, last) implementation.
+ *
+ * f is the NAME node for this builtin function.
+ * a is the argument list containing:
+ *	   CM
+ *	ap   last
+ *
+ * It turns out that this is easy on MIPS.  Just write the
+ * argument registers to the stack in va_arg_start() and
+ * use the traditional method of walking the stackframe.
+ */
+NODE *
+mips_builtin_stdarg_start(NODE *f, NODE *a)
+{
+	NODE *p, *q;
+	int sz = 1;
+	int i;
+
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type))
+		goto bad;
+
+	/*
+	 * look at the offset of the last org to calculate the
+	 * number of remain registers that need to be written
+	 * to the stack.
+	 */
+	if (xtemps) {
+		for (i = 0; i < nargregs; i++) {
+			q = block(REG, NIL, NIL, PTR+INT, 0, MKSUE(INT));
+			q->n_rval = A0 + i;
+			p = block(REG, NIL, NIL, PTR+INT, 0, MKSUE(INT));
+			p->n_rval = SP;
+			p = block(PLUS, p, bcon(ARGINIT+i), PTR+INT, 0, MKSUE(INT));
+			p = buildtree(UMUL, p, NIL);
+			p = buildtree(ASSIGN, p, q);
+			ecomp(p);
+		}
+	}
+
+	/* must first deal with argument size; use int size */
+	p = a->n_right;
+	if (p->n_type < INT) {
+		/* round up to word */
+		sz = SZINT / tsize(p->n_type, p->n_df, p->n_sue);
+	}
+
+	/*
+	 * Once again, if xtemps, the register is written to a
+	 * temp.  We cannot take the address of the temp and
+	 * walk from there.
+	 *
+	 * No solution at the moment...
+	 */
+	assert(!xtemps);
+
+	p = buildtree(ADDROF, p, NIL);	/* address of last arg */
+	p = optim(buildtree(PLUS, p, bcon(sz)));
+	q = block(NAME, NIL, NIL, PTR+VOID, 0, 0);
+	q = buildtree(CAST, q, p);
+	p = q->n_right;
+	nfree(q->n_left);
+	nfree(q);
+	p = buildtree(ASSIGN, a->n_left, p);
+	tfree(f);
+	nfree(a);
+
+	return p;
+
+bad:
+	uerror("bad argument to __builtin_stdarg_start");
+	return bcon(0);
+}
+
+NODE *
+mips_builtin_va_arg(NODE *f, NODE *a)
+{
+	NODE *p, *q, *r;
+	int sz, tmpnr;
+
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type) || a->n_right->n_op != TYPE)
+		goto bad;
+
+	/* create a copy to a temp node */
+	p = tcopy(a->n_left);
+	q = tempnode(0, p->n_type, p->n_df, p->n_sue);
+	tmpnr = q->n_lval;
+	p = buildtree(ASSIGN, q, p);
+
+	r = a->n_right;
+	sz = tsize(r->n_type, r->n_df, r->n_sue) / SZCHAR;
+	if (sz < SZINT/SZCHAR) {
+		werror("%s%s promoted to int when passed through ...",
+			r->n_type & 1 ? "unsigned " : "",
+			DEUNSIGN(r->n_type) == SHORT ? "short" : "char");
+		sz = SZINT/SZCHAR;
+	}
+	q = buildtree(PLUSEQ, a->n_left, bcon(sz));
+	q = buildtree(COMOP, p, q);
+
+	nfree(a->n_right);
+	nfree(a);
+	nfree(f); 
+
+	p = tempnode(tmpnr, INCREF(r->n_type), r->n_df, r->n_sue);
+	p = buildtree(UMUL, p, NIL);
+	p = buildtree(COMOP, q, p);
+
+	return p;
+
+bad:
+	uerror("bad argument to __builtin_va_arg");
+	return bcon(0);
+}
+
+NODE *
+mips_builtin_va_end(NODE *f, NODE *a)
+{
+	tfree(f);
+	tfree(a);
+	return bcon(0);
+}
+
+NODE *
+mips_builtin_va_copy(NODE *f, NODE *a)
+{
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM)
+		goto bad;
+	tfree(f);
+	f = buildtree(ASSIGN, a->n_left, a->n_right);
+	nfree(a);
+	return f;
+
+bad:
+	uerror("bad argument to __buildtin_va_copy");
+	return bcon(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.2 2007/11/16 08:34:55 otto Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.3 2007/12/22 14:12:26 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 #define makecc(val,i)	lastcon = (lastcon<<8)|((val<<24)>>24);
 
-#define ARGINIT		(12*8)	/* # bits above fp where arguments start */
+#define ARGINIT		(16*8)	/* # bits above fp where arguments start */
 #define AUTOINIT	(0)	/* # bits below fp where automatics start */
 
 /*
@@ -57,7 +57,7 @@
 #define SZINT		32
 #define SZFLOAT		32
 #define SZDOUBLE	64
-#define SZLDOUBLE	128
+#define SZLDOUBLE	64
 #define SZLONG		32
 #define SZSHORT		16
 #define SZLONGLONG	64
@@ -69,15 +69,15 @@
 #define ALCHAR		8
 #define ALBOOL		32
 #define ALINT		32
-#define ALFLOAT		32
-#define ALDOUBLE	32
-#define ALLDOUBLE	32
+#define ALFLOAT		64
+#define ALDOUBLE	64
+#define ALLDOUBLE	64
 #define ALLONG		32
-#define ALLONGLONG	32
+#define ALLONGLONG	64
 #define ALSHORT		16
 #define ALPOINT		32
 #define ALSTRUCT	32
-#define ALSTACK		32 
+#define ALSTACK		64 
 
 /*
  * Min/max values.
@@ -99,7 +99,6 @@
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
 
 #undef	CHAR_UNSIGNED
-#define TARGET_STDARGS
 #define BOOL_TYPE	INT
 #define WCHAR_TYPE	INT
 
@@ -146,11 +145,11 @@ typedef long long OFFSZ;
 #define A1	5
 #define A2	6
 #define A3	7
-#if defined(MIPS_N32) || defined(MIPS_N64)
 #define A4	8
 #define A5	9
 #define A6	10
 #define A7	11
+#if defined(MIPS_N32) || defined(MIPS_N64)
 #define T0	12
 #define T1	13
 #define	T2	14
@@ -160,11 +159,11 @@ typedef long long OFFSZ;
 #define	T1	9
 #define	T2	10
 #define	T3	11
+#endif
 #define	T4	12
 #define	T5	13
 #define	T6	14
 #define	T7	15
-#endif
 #define S0	16
 #define S1	17
 #define S2	18
@@ -186,15 +185,9 @@ typedef long long OFFSZ;
 #define A0A1	33
 #define A1A2	34
 #define A2A3	35
-#if defined(MIPS_N32) || defined(MIPS_N64)
-#define A3A4	36
-#define A4A5	37
-#define A5A6	38
-#define A6A7	39
-#define T0T1	41
-#define T1T2	42
-#define T2T3	43
-#else
+
+/* we just use o32 naming here, but it works ok for n32/n64 */
+#define A3T0	36
 #define T0T1	37
 #define T1T2	38
 #define T2T3	39
@@ -202,32 +195,45 @@ typedef long long OFFSZ;
 #define T4T5	41
 #define T5T6	42
 #define T6T7	43
-#endif
-#define T8T9	44
-#define S0S1	45
-#define S1S2	46
-#define S2S3	47
-#define S3S4	48
-#define S4S5	49
-#define S5S6	50
-#define S6S7	51
+#define T7T8	44
 
-#define F0	52
-#define F1	53
+#define T8T9	45
+#define S0S1	46
+#define S1S2	47
+#define S2S3	48
+#define S3S4	49
+#define S4S5	50
+#define S5S6	51
+#define S6S7	52
+
+#define F0	53
 #define F2	54
+#define F4	55
+#define F6	56
+#define F8	57
+#define F10	58
+#define F12	59
+#define F14	60
+#define F16	61
+#define F18	62
+#define F20	63
+/* and the rest for later */
+#define F22	64
+#define F24	65
+#define F26	66
+#define F28	67
+#define F30	68
 
-#define MAXREGS 55
+#define MAXREGS 64
 #define NUMCLASS 3
 
-#define RETREG(x)	((x) == ULONGLONG || (x) == LONGLONG ? V0V1 : V0)
+#define RETREG(x)	(DEUNSIGN(x) == LONGLONG ? V0V1 : \
+			    (x) == DOUBLE || (x) == LDOUBLE || (x) == FLOAT ? \
+			    F0 : V0)
 #define FPREG	FP	/* frame pointer */
-#define STKREG	SP
 
-#if defined(MIPS_N32) || defined(MIPS_N64)
-#define MIPS_NARGREGS	8
-#else
-#define MIPS_NARGREGS	4
-#endif
+#define MIPS_N32_NARGREGS	8
+#define MIPS_O32_NARGREGS	4
 
 #define RSTATUS \
 	0, 0,								\
@@ -243,65 +249,70 @@ typedef long long OFFSZ;
 	\
 	SBREG|TEMPREG,							\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,			\
- 	SBREG|TEMPREG, /* only available on n32/n64 */			\
+ 	SBREG|TEMPREG,							\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,			\
-	SBREG|TEMPREG, /* only available on o32 */			\
-	SBREG|TEMPREG,							\
-	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,			\
+	SBREG|TEMPREG, SBREG|TEMPREG,					\
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG, SBREG, SBREG, SBREG,					\
 	SBREG, SBREG, SBREG, 						\
-	SCREG, SCREG, SCREG
+	SCREG, SCREG, SCREG, SCREG,					\
+	SCREG, SCREG, SCREG, SCREG,					\
+	SCREG, SCREG, SCREG, 						\
 
 #define ROVERLAP \
-	{ -1 }, { -1 },							\
-	{ V0V1, -1 }, { V0V1, -1 },					\
-	{ A0A1, -1 },							\
-	{ A0A1, A1A2, -1 },						\
-	{ A1A2, A2A3, -1 },						\
-	{ A2A3, -1 },							\
+	{ -1 },				/* $zero */			\
+	{ -1 },				/* $at */			\
+	{ V0V1, -1 },			/* $v0 */			\
+	{ V0V1, -1 },			/* $v1 */			\
+	{ A0A1, -1 },			/* $a0 */			\
+	{ A0A1, A1A2, -1 },		/* $a1 */			\
+	{ A1A2, A2A3, -1 },		/* $a2 */			\
+	{ A2A3, A3T0, -1 },		/* $a3 */			\
+	{ A3T0, T0T1, -1 },		/* $t0 */			\
+	{ T0T1, T1T2, -1 },		/* $t1 */			\
+	{ T1T2, T2T3, -1 },		/* $t2 */			\
+	{ T2T3, T3T4, -1 },		/* $t3 */			\
+	{ T3T4, T4T5, -1 },		/* $t4 */			\
+	{ T4T5, T5T6, -1 },		/* $t5 */			\
+	{ T6T7, T7T8, -1 },		/* $t6 */			\
+	{ T7T8, T8T9, -1 },		/* $t7 */			\
 	\
-	{ T0T1, -1 },							\
-	{ T0T1, T1T2, -1 },						\
-	{ T1T2, T2T3, -1 },						\
-	{ T2T3, T3T4, -1 },						\
-	{ T3T4, T4T5, -1 },						\
-	{ T4T5, T5T6, -1 },						\
-	{ T5T6, T6T7, -1 },						\
-	{ T6T7, -1 },							\
+	{ S0S1, -1 },			/* $s0 */			\
+	{ S0S1, S1S2, -1 },		/* $s1 */			\
+	{ S1S2, S2S3, -1 },		/* $s2 */			\
+	{ S2S3, S3S4, -1 },		/* $s3 */			\
+	{ S3S4, S4S5, -1 },		/* $s4 */			\
+	{ S4S5, S5S6, -1 },		/* $s5 */			\
+	{ S5S6, S6S7, -1 },		/* $s6 */			\
+	{ S6S7, -1 },			/* $s7 */			\
 	\
-	{ S0S1, -1 },							\
-	{ S0S1, S1S2, -1 },						\
-	{ S1S2, S2S3, -1 },						\
-	{ S2S3, S3S4, -1 },						\
-	{ S3S4, S4S5, -1 },						\
-	{ S4S5, S5S6, -1 },						\
-	{ S5S6, S6S7, -1 },						\
-	{ S6S7, -1 },							\
+	{ T7T8, T8T9, -1 },		/* $t8 */			\
+	{ T8T9, -1 },			/* $t9 */			\
 	\
-	{ T8T9, -1 },							\
-	{ T8T9, -1 },							\
+	{ -1 },				/* $k0 */			\
+	{ -1 },				/* $k1 */			\
+	{ -1 },				/* $gp */			\
+	{ -1 },				/* $sp */			\
+	{ -1 },				/* $fp */			\
+	{ -1 },				/* $ra */			\
 	\
-	{ -1 }, { -1 },							\
-	{ -1 }, { -1 }, { -1 }, { -1 },					\
+	{ V0, V1, -1 },			/* $v0:$v1 */			\
 	\
-	{ V0, V1, -1 },							\
+	{ A0, A1, A1A2, -1 },		/* $a0:$a1 */			\
+	{ A1, A2, A0A1, A2A3, -1 },	/* $a1:$a2 */			\
+	{ A2, A3, A1A2, A3T0, -1 },	/* $a2:$a3 */			\
+	{ A3, T0, A2A3, T0T1, -1 },	/* $a3:$t0 */			\
+	{ T0, T1, A3T0, T1T2, -1 },	/* $t0:$t1 */			\
+	{ T1, T2, T0T1, T2T3, -1 },	/* $t1:$t2 */			\
+	{ T2, T3, T1T2, T3T4, -1 },	/* $t2:$t3 */			\
+	{ T3, T4, T2T3, T4T5, -1 },	/* $t3:$t4 */			\
+	{ T4, T5, T3T4, T5T6, -1 },	/* $t4:$t5 */			\
+	{ T5, T6, T4T5, T6T7, -1 },	/* $t5:$t6 */			\
+	{ T6, T7, T5T6, T7T8, -1 },	/* $t6:$t7 */			\
+	{ T7, T8, T6T7, T8T9, -1 },	/* $t7:$t8 */			\
+	{ T8, T9, T7T8, -1 },		/* $t8:$t9 */			\
 	\
-	{ A0, A1, -1 },							\
-	{ A1, A2, -1 },							\
-	{ A2, A3, -1 },							\
-	\
-	{ -1 }, /* only useful on n32/n64 */				\
-	{ T0, T1, T1T2, -1 },						\
-	{ T1, T2, T0T1, T2T3, -1 },					\
-	{ T2, T3, T1T2, T3T4, -1 },					\
-	{ T3, T4, T2T3, T4T5, -1 }, /* only useful on o32 */		\
-	{ T4, T5, T3T4, T5T6, -1 },					\
-	{ T5, T6, T4T5, T6T7, -1 },					\
-	{ T6, T7, T5T6, -1 },						\
-	\
-	{ T8, T9, -1 },							\
-	\
-	{ S0, S1, S1S2, -1 },						\
+	{ S0, S1, S1S2, -1 },		/* $s0:$s1 */			\
 	{ S1, S2, S0S1, S2S3, -1 },					\
 	{ S2, S3, S1S2, S3S4, -1 },					\
 	{ S3, S4, S2S3, S4S5, -1 },					\
@@ -309,15 +320,32 @@ typedef long long OFFSZ;
 	{ S5, S6, S4S5, S6S7, -1 },					\
 	{ S6, S7, S5S6, -1 },						\
 	\
-	{ -1 },								\
-	{ -1 },								\
-	{ -1 },
-
+	{ -1 }, { -1 }, { -1 }, { -1 },					\
+	{ -1 }, { -1 }, { -1 }, { -1 },					\
+	{ -1 }, { -1 }, { -1 }, 					\
 
 #define GCLASS(x)	(x < 32 ? CLASSA : (x < 52 ? CLASSB : CLASSC))
-#define PCLASS(p) (p->n_type == LONGLONG || p->n_type == ULONGLONG ? SBREG : \
-                  (p->n_type >= FLOAT && p->n_type <= LDOUBLE ? SCREG : SAREG))
+#define PCLASS(p)	(1 << gclass((p)->n_type))
 #define DECRA(x,y)	(((x) >> (y*6)) & 63)   /* decode encoded regs */
 #define ENCRA(x,y)	((x) << (6+y*6))        /* encode regs in int */
+#define ENCRD(x)	(x)			/* Encode dest reg in n_reg */
 
 int COLORMAP(int c, int *r);
+
+extern int bigendian;
+extern int nargregs;
+
+#define SPCON           (MAXSPECIAL+1)  /* positive constant */
+
+#define TARGET_STDARGS
+#define TARGET_BUILTINS						\
+	{ "__builtin_stdarg_start", mips_builtin_stdarg_start },	\
+	{ "__builtin_va_arg", mips_builtin_va_arg },		\
+	{ "__builtin_va_end", mips_builtin_va_end },		\
+	{ "__builtin_va_copy", mips_builtin_va_copy },
+
+struct node;
+struct node *mips_builtin_stdarg_start(struct node *f, struct node *a);
+struct node *mips_builtin_va_arg(struct node *f, struct node *a);
+struct node *mips_builtin_va_end(struct node *f, struct node *a);
+struct node *mips_builtin_va_copy(struct node *f, struct node *a);
