@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.100 2007/10/15 06:59:31 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.101 2007/12/22 18:26:21 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ ntp_sighdlr(int sig)
 }
 
 pid_t
-ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
+ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 {
 	int			 a, b, nfds, i, j, idx_peers, timeout;
 	int			 hotplugfd, nullfd;
@@ -74,7 +74,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
-	struct passwd		*pw;
 	struct servent		*se;
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
@@ -103,9 +102,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	}
 	if ((se = getservbyname("ntp", "udp")) == NULL)
 		fatal("getservbyname");
-
-	if ((pw = getpwnam(NTPD_USER)) == NULL)
-		fatal("getpwnam");
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);

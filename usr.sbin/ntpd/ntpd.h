@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.88 2007/10/15 06:59:32 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.89 2007/12/22 18:26:21 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,6 +26,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <stdarg.h>
 
 #include "ntp.h"
@@ -262,7 +263,7 @@ int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
 
 /* ntp.c */
-pid_t	 ntp_main(int[2], struct ntpd_conf *);
+pid_t	 ntp_main(int[2], struct ntpd_conf *, struct passwd *);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_host_dns(char *, u_int32_t);

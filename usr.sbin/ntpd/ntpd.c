@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.55 2007/12/04 14:52:54 fgsch Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.56 2007/12/22 18:26:21 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -88,6 +88,7 @@ main(int argc, char *argv[])
 	const char		*conffile;
 	int			 ch, nfds, timeout = INFTIM;
 	int			 pipe_chld[2];
+	struct passwd		*pw;
 
 	conffile = CONFFILE;
 
@@ -135,7 +136,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (getpwnam(NTPD_USER) == NULL) {
+	if ((pw = getpwnam(NTPD_USER)) == NULL) {
 		fprintf(stderr, "ntpd: unknown user %s\n", NTPD_USER);
 		exit(1);
 	}
@@ -155,7 +156,7 @@ main(int argc, char *argv[])
 
 	signal(SIGCHLD, sighdlr);
 	/* fork child process */
-	chld_pid = ntp_main(pipe_chld, &lconf);
+	chld_pid = ntp_main(pipe_chld, &lconf, pw);
 
 	setproctitle("[priv]");
 	readfreq();
