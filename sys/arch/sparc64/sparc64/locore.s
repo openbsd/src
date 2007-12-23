@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.105 2007/12/05 19:43:15 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.106 2007/12/23 15:33:41 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -497,9 +497,9 @@ _C_LABEL(cold):
 	.endm
 
 	.macro IMMU_MISS n
-	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
+	ldxa	[%g0] ASI_IMMU_8KPTR, %g2!	Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	!	Load IMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!Load TSB tag:data into %g4:%g5
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4!Load TSB tag:data into %g4
 	brgez,pn %g5, instr_miss	!	Entry invalid?  Punt
 	 cmp	%g1, %g4		!	Compare TLB tags
 	bne,pn %xcc, instr_miss		!	Got right tag?
@@ -515,30 +515,12 @@ _C_LABEL(cold):
 	.macro DMMU_MISS n
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!	Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1	!	Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	! Load TSB tag:data into %g4:%g5
-	brgez,pn %g5, data_miss		!	Entry invalid?  Punt	XXX should be 2f
-	 xor	%g1, %g4, %g4		!	Compare TLB tags
-	brnz,pn	%g4, data_miss		!	Got right tag?
-	 nop
-	CLRTT \n
-	stxa	%g5, [%g0] ASI_DMMU_DATA_IN!	Enter new mapping
-	retry				!	Try new mapping
-1:
-	sir
-	TA32
-	.endm
-
-!! this can be just DMMU_MISS -- the only difference
-!! between that & this is instruction ordering and #if 0 code -mdw
-	.macro DMMU_MISS_2
-	ldxa	[%g0] ASI_DMMU_8KPTR, %g2 !	Load DMMU 8K TSB pointer
-	ldxa	[%g0] ASI_DMMU, %g1	!	Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	! Load TSB tag:data into %g4:%g5
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4!Load TSB tag:data into %g4
 	brgez,pn %g5, data_miss		!	Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!	Compare TLB tags
 	brnz,pn	%g4, data_miss		!	Got right tag?
 	 nop
-	CLRTT 10
+	CLRTT \n
 	stxa	%g5, [%g0] ASI_DMMU_DATA_IN!	Enter new mapping
 	retry				!	Try new mapping
 1:
@@ -908,7 +890,7 @@ kdatafault:
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	IMMU_MISS 9
 kfast_DMMU_miss:			! 068 = fast data access MMU miss
-	DMMU_MISS_2
+	DMMU_MISS 10
 kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	DMMU_PROT kdprot
 	UTRAP 0x070			! Implementation dependent traps
