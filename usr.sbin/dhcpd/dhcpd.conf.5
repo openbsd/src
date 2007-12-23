@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.6 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.7 2007/12/23 21:54:35 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 23 2007 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -684,6 +684,12 @@ Each
 .Ar address
 should be either an IP address or a domain name which resolves to one
 or more IP addresses.
+.Pp
+Clients with fixed addresses are not assigned DHCP leases,
+and may therefore not be used with the
+.Fl ACL
+table options of
+.Xr dhcpd 8 .
 .Pp
 The
 .Ic dynamic-bootp-lease-cutoff
