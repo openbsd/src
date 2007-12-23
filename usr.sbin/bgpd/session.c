@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.278 2007/12/23 16:42:45 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.279 2007/12/23 18:56:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -183,7 +183,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	int			 nfds, timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	pid_t			 pid;
-	time_t			 nextaction;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
 	u_int			 new_cnt;
@@ -396,18 +395,18 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		pfd[PFD_SOCK_RCTL].fd = rcsock;
 		pfd[PFD_SOCK_RCTL].events = POLLIN;
 
-		nextaction = time(NULL) + 240;	/* loop every 240s at least */
 		i = PFD_LISTENERS_START;
-
 		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 			pfd[i].fd = la->fd;
 			pfd[i].events = POLLIN;
 			i++;
 		}
-
 		idx_listeners = i;
+		timeout = 240;	/* loop every 240s at least */
 
 		for (p = peers; p != NULL; p = p->next) {
+			time_t	nextaction;
+
 			/* check timers */
 			if (timer_due(p, Timer_Hold))
 				bgp_fsm(p, EVNT_TIMER_HOLDTIME);
@@ -430,29 +429,19 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 					    p->IdleHoldTime);
 			}
 
-			/* XXX set nextaction to the first expiring timer */
-			if (p->ConnectRetryTimer &&
-			    p->ConnectRetryTimer < nextaction)
-				nextaction = p->ConnectRetryTimer;
-			if (p->HoldTimer && p->HoldTimer < nextaction)
-				nextaction = p->HoldTimer;
-			if (p->KeepaliveTimer && p->KeepaliveTimer < nextaction)
-				nextaction = p->KeepaliveTimer;
-			if (p->IdleHoldTimer && p->IdleHoldTimer < nextaction)
-				nextaction = p->IdleHoldTimer;
-			if (p->IdleHoldResetTimer &&
-			    p->IdleHoldResetTimer < nextaction)
-				nextaction = p->IdleHoldResetTimer;
+			if ((nextaction = timer_nextduein(p)) != -1 &&
+			    nextaction < timeout)
+				timeout = nextaction;
 
 			/* XXX carp demotion */
 			if (p->demoted && p->state == STATE_ESTABLISHED) {
 				if (time(NULL) - p->stats.last_updown >=
 				    INTERVAL_HOLD_DEMOTED)
 					session_demote(p, -1);
-				if (p->stats.last_updown +
-				    INTERVAL_HOLD_DEMOTED < nextaction)
-					nextaction = p->stats.last_updown +
-					    INTERVAL_HOLD_DEMOTED;
+				if (p->stats.last_updown + INTERVAL_HOLD_DEMOTED
+				    - time(NULL) < timeout)
+					timeout = p->stats.last_updown +
+					    INTERVAL_HOLD_DEMOTED - time(NULL);
 			}
 
 			/* are we waiting for a write? */
@@ -489,7 +478,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			i++;
 		}
 
-		timeout = nextaction - time(NULL);
 		if (timeout < 0)
 			timeout = 0;
 		if ((nfds = poll(pfd, i, timeout * 1000)) == -1)

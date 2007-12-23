@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.3 2007/12/23 18:26:13 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.4 2007/12/23 18:56:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,20 @@ timer_due(struct peer *p, enum Timer timer)
 	if (t != NULL && *t > 0 && *t <= time(NULL))
 		return (1);
 	return (0);
+}
+
+time_t
+timer_nextduein(struct peer *p)
+{
+	u_int	i;
+	time_t	d, r = -1;
+
+	for (i = 1; i < Timer_Max; i++)
+		if (timer_running(p, i, &d))
+			if (r == -1 || d < r)
+				r = d;
+
+	return (r);
 }
 
 int
