@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.56 2007/12/22 18:26:21 stevesk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.57 2007/12/23 22:40:00 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ int		ntpd_adjtime(double);
 void		ntpd_adjfreq(double, int);
 void		ntpd_settime(double);
 void		readfreq(void);
-void		writefreq(double);
+int		writefreq(double);
 
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -375,6 +375,7 @@ void
 ntpd_adjfreq(double relfreq, int wrlog)
 {
 	int64_t curfreq;
+	int r;
 
 	if (adjfreq(NULL, &curfreq) == -1) {
 		log_warn("adjfreq failed");
@@ -386,13 +387,14 @@ ntpd_adjfreq(double relfreq, int wrlog)
 	 * that unit before adding. We log values in part per million.
 	 */
 	curfreq += relfreq * 1e9 * (1LL << 32);
+	r = writefreq(curfreq / 1e9 / (1LL << 32));
 	if (wrlog)
-		log_info("adjusting clock frequency by %f to %fppm",
-		    relfreq * 1e6, curfreq / 1e3 / (1LL << 32));
+		log_info("adjusting clock frequency by %f to %fppm%s",
+		    relfreq * 1e6, curfreq / 1e3 / (1LL << 32),
+		    r ? "" : " (no drift file)");
 
 	if (adjfreq(&curfreq, NULL) == -1)
 		log_warn("adjfreq failed");
-	writefreq(curfreq / 1e9 / (1LL << 32));
 }
 
 void
@@ -451,18 +453,31 @@ readfreq(void)
 	fclose(fp);
 }
 
-void
+int
 writefreq(double d)
 {
 	int r;
 	FILE *fp;
+	static int warnonce = 1;
 
 	fp = fopen(DRIFTFILE, "w");
-	if (fp == NULL)
-		return;
+	if (fp == NULL) {
+		if (warnonce) {
+			log_warn("can't open %s", DRIFTFILE);
+			warnonce = 0;
+		}
+		return 0;
+	}
 
 	fprintf(fp, "%e\n", d);
 	r = ferror(fp);
-	if (fclose(fp) != 0 || r != 0)
+	if (fclose(fp) != 0 || r != 0) {
+		if (warnonce) {
+			log_warnx("can't write %s", DRIFTFILE);
+			warnonce = 0;
+		}
 		unlink(DRIFTFILE);
+		return 0;
+	}
+	return 1;
 }
