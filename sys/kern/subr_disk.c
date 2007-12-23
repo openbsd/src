@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.67 2007/12/16 20:57:17 otto Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.68 2007/12/23 01:59:58 dlg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -712,6 +712,7 @@ int
 disk_construct(struct disk *diskp, char *lockname)
 {
 	rw_init(&diskp->dk_lock, lockname);
+	mtx_init(&diskp->dk_mtx, IPL_BIO);
 	
 	diskp->dk_flags |= DKF_CONSTRUCTED;
 	    
@@ -784,9 +785,10 @@ disk_busy(struct disk *diskp)
 	 * XXX We'd like to use something as accurate as microtime(),
 	 * but that doesn't depend on the system TOD clock.
 	 */
-	if (diskp->dk_busy++ == 0) {
+	mtx_enter(&diskp->dk_mtx);
+	if (diskp->dk_busy++ == 0)
 		microuptime(&diskp->dk_timestamp);
-	}
+	mtx_leave(&diskp->dk_mtx);
 }
 
 /*
@@ -797,6 +799,8 @@ void
 disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 	struct timeval dv_time, diff_time;
+
+	mtx_enter(&diskp->dk_mtx);
 
 	if (diskp->dk_busy-- == 0)
 		printf("disk_unbusy: %s: dk_busy < 0\n", diskp->dk_name);
@@ -817,6 +821,8 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 		}
 	} else
 		diskp->dk_seek++;
+
+	mtx_leave(&diskp->dk_mtx);
 
 	add_disk_randomness(bcount ^ diff_time.tv_usec);
 }
