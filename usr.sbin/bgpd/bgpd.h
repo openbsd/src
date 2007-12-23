@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.220 2007/10/13 16:35:19 deraadt Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.221 2007/12/23 18:26:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -346,6 +346,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_NETWORK6,
 	IMSG_CTL_SHOW_RIB_MEM,
 	IMSG_CTL_SHOW_TERSE,
+	IMSG_CTL_SHOW_TIMER,
 	IMSG_REFRESH,
 	IMSG_IFINFO,
 	IMSG_DEMOTE
@@ -479,6 +480,7 @@ struct ctl_show_nexthop {
 struct ctl_neighbor {
 	struct bgpd_addr	addr;
 	char			descr[PEER_DESCR_LEN];
+	int			show_timers;
 };
 
 struct kroute_label {

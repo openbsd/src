@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.129 2007/12/20 17:08:48 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.130 2007/12/23 18:26:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -53,8 +53,7 @@ int		 show_neighbor_terse(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
-void		 print_neighbor_timers(struct peer *);
-void		 print_timer(const char *, struct peer *, enum Timer, u_int);
+void		 print_timer(const char *, time_t);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 void		 show_fib_head(void);
@@ -196,6 +195,7 @@ main(int argc, char *argv[])
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
 	case SHOW_NEIGHBOR_TERSE:
+		neighbor.show_timers = (res->action == SHOW_NEIGHBOR_TIMERS);
 		if (res->peeraddr.af || res->peerdesc[0])
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &neighbor, sizeof(neighbor));
@@ -518,6 +518,7 @@ int
 show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
+	struct ctl_timer	*t;
 	struct in_addr		 ina;
 	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV], *s;
 
@@ -582,14 +583,9 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 				printf("    4-byte AS numbers\n");
 		}
 		printf("\n");
-		switch (nv) {
-		case NV_DEFAULT:
-			print_neighbor_msgstats(p);
+		if (nv == NV_TIMERS)
 			break;
-		case NV_TIMERS:
-			print_neighbor_timers(p);
-			break;
-		}
+		print_neighbor_msgstats(p);
 		printf("\n");
 		if (p->state == STATE_IDLE) {
 			static const char	*errstr;
@@ -620,6 +616,11 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			    pbuf);
 			printf("\n");
 		}
+		break;
+	case IMSG_CTL_SHOW_TIMER:
+		t = imsg->data;
+		if (t->type > 0 && t->type < Timer_Max)
+			print_timer(timernames[t->type], t->val);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -679,31 +680,14 @@ print_neighbor_msgstats(struct peer *p)
 }
 
 void
-print_neighbor_timers(struct peer *p)
+print_timer(const char *name, timer_t d)
 {
-	print_timer("IdleHoldTimer:", p, Timer_IdleHold, p->IdleHoldTime);
-	print_timer("ConnectRetryTimer:", p, Timer_ConnectRetry,
-	    INTERVAL_CONNECTRETRY);
-	print_timer("HoldTimer:", p, Timer_Hold, (u_int)p->holdtime);
-	print_timer("KeepaliveTimer:", p, Timer_Keepalive, (u_int)p->holdtime/3);
-}
-
-void
-print_timer(const char *name, struct peer *p, enum Timer timer, u_int interval)
-{
-	time_t	d;
-	int	running = timer_running(p, timer, &d);
-
 	printf("  %-20s ", name);
 
-	if (running == 0)
-		printf("%-20s", "not running");
-	else if (d <= 0)
-		printf("%-20s", "due");
+	if (d <= 0)
+		printf("%-20s\n", "due");
 	else
-		printf("due in %-13s", fmt_timeframe_core(d));
-
-	printf("Interval: %5us\n", interval);
+		printf("due in %-13s\n", fmt_timeframe_core(d));
 }
 
 #define TF_BUFS	8

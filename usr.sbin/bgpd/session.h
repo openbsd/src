@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.93 2007/12/20 17:08:48 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.94 2007/12/23 18:26:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,13 @@ enum Timer {
 	Timer_Keepalive,
 	Timer_Hold,
 	Timer_IdleHold,
-	Timer_IdleHoldReset
+	Timer_IdleHoldReset,
+	Timer_Max
+};
+
+struct ctl_timer {
+	enum Timer	type;
+	time_t		val;
 };
 
 /* session.c */

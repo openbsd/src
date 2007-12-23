@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.2 2007/12/23 16:40:43 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.3 2007/12/23 18:26:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,8 @@ timer_get(struct peer *p, enum Timer timer)
 		return (&p->IdleHoldTimer);
 	case Timer_IdleHoldReset:
 		return (&p->IdleHoldResetTimer);
+	case Timer_Max:
+		fatal("timer_get called with Timer_Max");
 	}
 
 	fatal("King Bula lost in time");
