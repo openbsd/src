@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.125 2007/09/02 15:19:23 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.126 2007/12/23 16:15:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.125 2007/09/02 15:19:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.126 2007/12/23 16:15:21 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -673,7 +673,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 			    "Warning, need %llu sectors but there are only %llu "
 			    "free.  Setting size to %llu.\n", DL_GETPSIZE(pp), *freep,
 			    *freep);
-			pp->p_fstype = *freep;
+			DL_SETPSIZE(pp, *freep);
 			*freep = 0;
 		} else
 			*freep -= DL_GETPSIZE(pp);		/* have enough space */
