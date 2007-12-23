@@ -1,4 +1,4 @@
-/*	$OpenBSD: itvar.h,v 1.6 2007/12/20 12:02:14 form Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.7 2007/12/23 17:44:07 form Exp $	*/
 
 /*
  * Copyright (c) 2007 Oleg Safiullin <form@pdp-11.org.ru>
@@ -34,11 +34,12 @@
 #define IT_EC_NUMSENSORS	15
 #define IT_EC_VREF		4096
 
-#define IO_IT1			0x2e
-#define IO_IT2			0x4e
+#define IO_IT			0x2e
 
 #define IT_IO_ADDR		0x00
 #define IT_IO_DATA		0x01
+
+#define IT_VEND_ITE		0x90
 
 #define IT_ID_8705		0x8705
 #define IT_ID_8712		0x8712
@@ -66,6 +67,7 @@
 #define IT_EC_FANEXTBASE	0x18
 #define IT_EC_VOLTBASE		0x20
 #define IT_EC_TEMPBASE		0x29
+#define IT_EC_VENDID		0x58
 
 #define IT_WDT_LDN		0x07
 
@@ -80,7 +82,6 @@ struct it_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	int			sc_iobase;
 	u_int16_t		sc_chipid;
 	u_int8_t		sc_chiprev;
 
