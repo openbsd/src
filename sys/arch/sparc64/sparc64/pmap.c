@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2007/12/05 19:43:15 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2007/12/23 21:43:30 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2321,12 +2321,12 @@ pmap_dumpmmu(dump, blkno)
 	/* Describe the locked text segment */
 	kcpu->ktextbase = (u_int64_t)ktext;
 	kcpu->ktextp = (u_int64_t)ktextp;
-	kcpu->ktextsz = (u_int64_t)ektextp - ktextp;
+	kcpu->ktextsz = (u_int64_t)(roundup(ektextp, 4*MEG) - ktextp);
 
 	/* Describe locked data segment */
 	kcpu->kdatabase = (u_int64_t)kdata;
 	kcpu->kdatap = (u_int64_t)kdatap;
-	kcpu->kdatasz = (u_int64_t)ekdatap - kdatap;
+	kcpu->kdatasz = (u_int64_t)(roundup(ekdatap, 4*MEG) - kdatap);
 
 	/* Now the memsegs */
 	kcpu->nmemseg = memsize;
