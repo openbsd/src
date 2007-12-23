@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.89 2007/12/22 18:26:21 stevesk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.90 2007/12/23 18:39:50 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,9 +36,6 @@
 #define DRIFTFILE	"/var/db/ntpd.drift"
 
 #define	READ_BUF_SIZE		8192
-
-#define	NTPD_OPT_VERBOSE	0x0001
-#define	NTPD_OPT_VERBOSE2	0x0002
 
 #define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
 #define	INTERVAL_QUERY_PATHETIC		60
