@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.44 2007/12/16 13:23:57 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.45 2007/12/24 10:30:27 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: December 16 2007 $
+.Dd $Mdocdate: December 24 2007 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@
 .Fn SLIST_NEXT "struct TYPE *listelm" "SLIST_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn SLIST_END "SLIST_HEAD *head"
-.Ft "bool"
+.Ft int
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Fn SLIST_FOREACH_PREVPTR "VARNAME" "VARNAMEP" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
@@ -149,7 +149,7 @@
 .Fn LIST_NEXT "struct TYPE *listelm" "LIST_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn LIST_END "LIST_HEAD *head"
-.Ft "bool"
+.Ft int
 .Fn LIST_EMPTY "LIST_HEAD *head"
 .Fn LIST_FOREACH "VARNAME" "LIST_HEAD *head" "LIST_ENTRY NAME"
 .Ft void
@@ -174,6 +174,8 @@
 .Fn SIMPLEQ_NEXT "struct TYPE *listelm" "SIMPLEQ_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn SIMPLEQ_END "SIMPLEQ_HEAD *head"
+.Ft int
+.Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
 .Ft void
 .Fn SIMPLEQ_INIT "SIMPLEQ_HEAD *head"
 .Ft void
@@ -198,7 +200,7 @@
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME NAME"
 .Ft "struct TYPE *"
 .Fn TAILQ_PREV "struct TYPE *listelm" "HEADNAME NAME" "TAILQ_ENTRY NAME"
-.Ft "bool"
+.Ft int
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
 .Fn TAILQ_FOREACH "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
 .Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME"
@@ -228,7 +230,7 @@
 .Fn CIRCLEQ_NEXT "struct TYPE *listelm" "CIRCLEQ_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn CIRCLEQ_PREV "struct TYPE *listelm" "CIRCLEQ_ENTRY NAME"
-.Ft "bool"
+.Ft int
 .Fn CIRCLEQ_EMPTY "CIRCLEQ_HEAD *head"
 .Fn CIRCLEQ_FOREACH "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
 .Fn CIRCLEQ_FOREACH_REVERSE "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
