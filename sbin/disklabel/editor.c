@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.126 2007/12/23 16:15:21 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.127 2007/12/24 14:46:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.126 2007/12/23 16:15:21 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.127 2007/12/24 14:46:54 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -752,19 +752,7 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 	if (p[0] == '*') {
-		for (c = 0; c < lp->d_npartitions; c++) {
-			if (c == RAW_PART)
-				continue;
-
-			/* Update free sector count. */
-			if (lp->d_partitions[c].p_fstype != FS_UNUSED &&
-			    lp->d_partitions[c].p_fstype != FS_BOOT &&
-			    DL_GETPSIZE(&lp->d_partitions[c]) != 0)
-				*freep += DL_GETPSIZE(&lp->d_partitions[c]);
-
-			(void)memset(&lp->d_partitions[c], 0,
-			    sizeof(lp->d_partitions[c]));
-		}
+		zero_partitions(lp, freep);
 		return;
 	}
 	c = p[0] - 'a';
