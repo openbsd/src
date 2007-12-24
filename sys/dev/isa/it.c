@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.26 2007/12/23 17:44:07 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.27 2007/12/24 14:07:47 form Exp $	*/
 
 /*
  * Copyright (c) 2007 Oleg Safiullin <form@pdp-11.org.ru>
@@ -118,13 +118,16 @@ it_match(struct device *parent, void *match, void *aux)
 		return (0);
 	}
 
-	/* check for ITE vendor ID */
+	/* get vendor id */
 	bus_space_write_1(ia->ia_iot, ioh, IT_EC_ADDR, IT_EC_VENDID);
-	if (bus_space_read_1(ia->ia_iot, ioh, IT_EC_DATA) != IT_VEND_ITE)
-		return (0);
+	cr = bus_space_read_1(ia->ia_iot, ioh, IT_EC_DATA);
 
 	/* unmap EC i/o space */
 	bus_space_unmap(ia->ia_iot, ioh, 8);
+
+	/* check for ITE vendor ID */
+	if (cr != IT_VEND_ITE)
+		return (0);
 
 	/* map i/o space */
 	if (bus_space_map(ia->ia_iot, IO_IT, 2, 0, &ioh) != 0) {
