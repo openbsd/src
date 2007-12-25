@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.2 2007/12/25 01:12:36 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.3 2007/12/25 13:36:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -346,6 +346,7 @@ fpu_emulate(struct trapframe *frame, u_int32_t insn)
 	case 0x09:	/* int */
 do_int:
 		fpu_explode(&fe, &fe.fe_f1, t2, rs2);
+		fp = &fe.fe_f1;
 		td = FTYPE_INT;
 		break;
 	case 0x0a:	/* nint */
