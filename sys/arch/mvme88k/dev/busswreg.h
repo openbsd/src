@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.10 2007/12/13 18:50:10 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.11 2007/12/25 20:23:02 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -113,16 +113,12 @@
 #define BS_BTIMER_PBT64		0x01	/* Processor Bus Timout, 64 usec */
 #define BS_BTIMER_PBT256	0x02	/* Processor Bus Timout, 256 usec */
 #define BS_BTIMER_PBTD		0x03	/* Processor Bus Timout, disable */
-#define BS_BTIMER_SBT8		(0x00 << 2)	/* System Bus Timout, 8 usec */
-#define BS_BTIMER_SBT64		(0x01 << 2)	/* System Bus Timout, 64 usec */
-#define BS_BTIMER_SBT256	(0x02 << 2)	/* System Bus Timout, 256 usec */
-#define BS_BTIMER_SBTD		(0x03 << 2)	/* System Bus Timout, disable */
-
-/* Prescaler Adjust values */
-#define BS_PADJUST_50	0xce	/* 50 MHz clock */
-#define BS_PADJUST_40	0xd8	/* 40 MHz clock */
-#define BS_PADJUST_33	0xdf	/* 33 MHz clock */
-#define BS_PADJUST_25	0xe7	/* 25 MHz clock */
+#define	BS_BTIMER_PBT_MASK	0x03
+#define BS_BTIMER_SBT8		0x00	/* System Bus Timout, 8 usec */
+#define BS_BTIMER_SBT64		0x04	/* System Bus Timout, 64 usec */
+#define BS_BTIMER_SBT256	0x08	/* System Bus Timout, 256 usec */
+#define BS_BTIMER_SBTD		0x0c	/* System Bus Timout, disable */
+#define	BS_BTIMER_SBT_MASK	0x0c
 
 /* ROM Control Register bit definitions */
 #define BS_ROMCR_WEN0	0x0100

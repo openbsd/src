@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.53 2007/12/22 17:13:53 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.54 2007/12/25 20:23:04 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -249,8 +249,10 @@ m88110_cpu_number(void)
 void
 m88110_initialize_cpu(cpuid_t cpu)
 {
-	extern int cpuspeed;
 	u_int ictl, dctl;
+#ifndef MULTIPROCESSOR
+	u_int8_t btimer;
+#endif
 	int i;
 	int procvers = (get_cpu_pid() & PID_VN) >> VN_SHIFT;
 
@@ -265,24 +267,21 @@ m88110_initialize_cpu(cpuid_t cpu)
 	/* clear PATCs */
 	patc_clear();
 
-	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
-
+#ifndef MULTIPROCESSOR
 	/*
-	 * 40MHz MVME197LE boards need to run with their instruction cache
-	 * disabled, otherwise they get random bus errors and the kernel
-	 * eventually freezes. Unfortunately this makes them perform at
-	 * about the speed of a fictitious 25MHz board with I$ enabled.
-	 *
-	 * This happens with version 4 and version 5 processors (reporting
-	 * themselves as version 0xb and 0xf in dmesg) and BusSwitch
-	 * revision 1. However, 50MHz boards with the same BusSwitch
-	 * revision work nicely.
-	 *
-	 * (There is probably a better way to work around this problem,
-	 *  but I am not aware of it -- miod)
+	 * Kernels running without snooping enabled (i.e. without
+	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
+	 * bus timeout limits, or the instruction cache might not be able
+	 * to fill or answer fast enough.  This is especially critical on
+	 * 40MHz boards, while some 50MHz boards can run without this
+	 * timeout change... but better be safe than sorry.
 	 */
-	if (cpuspeed == 40)
-		ictl &= ~CMMU_ICTL_CEN;
+	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
+	btimer = (btimer & ~BS_BTIMER_PBT_MASK) | BS_BTIMER_PBT64;
+	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer;
+#endif
+
+	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
 
 	/*
 	 * 88110 errata #10 (4.2) or #2 (5.1.1):
