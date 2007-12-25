@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.10 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.11 2007/12/25 14:00:45 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1734,6 +1734,8 @@ typenode(NODE *p)
 	p = (saved ? saved : block(TYPE, NIL, NIL, type, 0, 0));
 	p->n_qual = qual;
 	p->n_lval = class;
+	if (BTYPE(p->n_type) == UNDEF)
+		MODTYPE(p->n_type, INT);
 	return p;
 
 bad:	uerror("illegal type combination");
