@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.1 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.2 2007/12/25 01:12:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -256,20 +256,20 @@ fpu_emulate(struct trapframe *frame, u_int32_t insn)
 	case 0x05:	/* fadd */
 	case 0x06:	/* fsub */
 	case 0x0e:	/* fdiv */
-		if ((t1 != FTYPE_SNG || t1 != FTYPE_DBL) ||
-		    (t2 != FTYPE_SNG || t2 != FTYPE_DBL) ||
-		    (td != FTYPE_SNG || td != FTYPE_DBL))
+		if ((t1 != FTYPE_SNG && t1 != FTYPE_DBL) ||
+		    (t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
+		    (td != FTYPE_SNG && td != FTYPE_DBL))
 		break;
 	case 0x04:	/* flt */
 		if (t1 != 0x00)	/* flt on XRF */
 			return (SIGILL);
-		if (td != FTYPE_SNG || td != FTYPE_DBL ||
+		if ((td != FTYPE_SNG && td != FTYPE_DBL) ||
 		    t2 != 0x00 || rs1 != 0)
 			return (SIGILL);
 		break;
 	case 0x07:	/* fcmp, fcmpu */
-		if ((t1 != FTYPE_SNG || t1 != FTYPE_DBL) ||
-		    (t2 != FTYPE_SNG || t2 != FTYPE_DBL))
+		if ((t1 != FTYPE_SNG && t1 != FTYPE_DBL) ||
+		    (t2 != FTYPE_SNG && t2 != FTYPE_DBL))
 			return (SIGILL);
 		if (td != 0x00 /* fcmp */ && td != 0x01 /* fcmpu */)
 			return (SIGILL);
@@ -277,14 +277,14 @@ fpu_emulate(struct trapframe *frame, u_int32_t insn)
 	case 0x09:	/* int */
 	case 0x0a:	/* nint */
 	case 0x0b:	/* trnc */
-		if (t2 != FTYPE_SNG || t2 != FTYPE_DBL ||
+		if ((t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
 		    t1 != 0x00 || td != 0x00 || rs1 != 0)
 			return (SIGILL);
 		break;
 	case 0x01:	/* fcvt */
 	case 0x0f:	/* fsqrt */
-		if ((t2 != FTYPE_SNG || t2 != FTYPE_DBL) ||
-		    (td != FTYPE_SNG || td != FTYPE_DBL) ||
+		if ((t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
+		    (td != FTYPE_SNG && td != FTYPE_DBL) ||
 		    t1 != 0x00 || rs1 != 0)
 			return (SIGILL);
 		break;
