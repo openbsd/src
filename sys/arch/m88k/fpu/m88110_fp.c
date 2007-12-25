@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.3 2007/12/25 13:36:07 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.4 2007/12/25 15:45:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -259,6 +259,7 @@ fpu_emulate(struct trapframe *frame, u_int32_t insn)
 		if ((t1 != FTYPE_SNG && t1 != FTYPE_DBL) ||
 		    (t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
 		    (td != FTYPE_SNG && td != FTYPE_DBL))
+			return (SIGILL);
 		break;
 	case 0x04:	/* flt */
 		if (t1 != 0x00)	/* flt on XRF */
@@ -282,6 +283,9 @@ fpu_emulate(struct trapframe *frame, u_int32_t insn)
 			return (SIGILL);
 		break;
 	case 0x01:	/* fcvt */
+		if (t2 == td)
+			return (SIGILL);
+		/* FALLTHROUGH */
 	case 0x0f:	/* fsqrt */
 		if ((t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
 		    (td != FTYPE_SNG && td != FTYPE_DBL) ||
