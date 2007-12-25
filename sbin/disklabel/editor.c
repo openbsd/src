@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.127 2007/12/24 14:46:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.128 2007/12/25 17:26:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.127 2007/12/24 14:46:54 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.128 2007/12/25 17:26:49 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -602,14 +602,15 @@ editor_name(struct disklabel *lp, char **mp, char *p)
 		return;
 	}
 	partno = p[0] - 'a';
-	pp = &lp->d_partitions[partno];
 	if (partno < 0 || partno >= lp->d_npartitions) {
 		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
 		    'a' + lp->d_npartitions - 1);
 		return;
-	} else if (partno >= lp->d_npartitions ||
-	    (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0)) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
+	}
+	pp = &lp->d_partitions[partno];
+
+	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
+		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
 		return;
 	}
 
@@ -644,17 +645,19 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 	partno = p[0] - 'a';
-	pp = &lp->d_partitions[partno];
-	origpart = lp->d_partitions[partno];
 	if (partno < 0 || partno >= lp->d_npartitions) {
 		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
 		    'a' + lp->d_npartitions - 1);
 		return;
-	} else if (partno >= lp->d_npartitions ||
-	    (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0)) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
+	}
+	pp = &lp->d_partitions[partno];
+
+	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
+		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
 		return;
 	}
+
+	origpart = *pp;
 
 	/* Get filesystem type */
 	if (get_fstype(lp, partno) != 0) {
@@ -740,6 +743,7 @@ getoff2:
 void
 editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 {
+	struct partition *pp;
 	int c;
 
 	if (p == NULL) {
@@ -760,11 +764,15 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
 		    'a' + lp->d_npartitions - 1);
 		return;
-	} else if (lp->d_partitions[c].p_fstype == FS_UNUSED &&
-	    DL_GETPSIZE(&lp->d_partitions[c]) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + c);
+	}
+	pp = &lp->d_partitions[c];
+
+	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
+		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
 		return;
-	} else if (c == RAW_PART) {
+	}
+
+	if (c == RAW_PART) {
 		fputs(
 "You may not delete the 'c' partition.  The 'c' partition must exist and\n"
 "should span the entire disk.  By default it is of type 'unused' and so\n"
@@ -859,9 +867,9 @@ next_offset(struct disklabel *lp, u_int64_t *sizep)
 void
 editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 {
-	int partno;
-	u_int64_t newsize;
 	struct partition *pp;
+	u_int64_t newsize;
+	int partno;
 
 	if (p == NULL) {
 		p = getstring("partition to change size",
@@ -876,15 +884,16 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
 		    'a' + lp->d_npartitions - 1);
 		return;
-	} else if (partno >= lp->d_npartitions ||
-	    DL_GETPSIZE(&lp->d_partitions[partno]) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
-		return;
 	}
 	pp = &lp->d_partitions[partno];
 
+	if (DL_GETPSIZE(pp) == 0) {
+		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
+		return;
+	}
+
 	printf("Partition %c is currently %llu sectors in size (%llu free).\n",
-	    partno + 'a', DL_GETPSIZE(pp), *freep);
+	    p[0], DL_GETPSIZE(pp), *freep);
 	/* XXX - make maxsize lp->d_secperunit if FS_UNUSED/FS_BOOT? */
 	newsize = getuint(lp, partno, "new size", "Size of the partition.  "
 	    "You may also say +/- amount for a relative change.",
