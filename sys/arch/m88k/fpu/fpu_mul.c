@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_mul.c,v 1.1 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: fpu_mul.c,v 1.2 2007/12/25 15:47:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 
+#include <machine/fpu.h>
 #include <machine/frame.h>
 
 #include <m88k/fpu/fpu_arith.h>
@@ -122,6 +123,7 @@ fpu_mul(struct fpemu *fe)
 	ORDER(x, y);
 	if (ISNAN(y)) {
 		y->fp_sign ^= x->fp_sign;
+		fe->fe_fpsr |= FPSR_EFINV;
 		return (y);
 	}
 	if (ISINF(y)) {

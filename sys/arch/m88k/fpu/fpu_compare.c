@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_compare.c,v 1.1 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: fpu_compare.c,v 1.2 2007/12/25 15:47:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -100,13 +100,13 @@ fpu_compare(struct fpemu *fe, int fcmpu)
 
 	/* fcmpu shall only raise an exception for signalling NaNs */
 	if (ISNAN(a)) {
-		if (fcmpu || (a->fp_mant[0] & FP_QUIETBIT) != 0)
+		if (!fcmpu || (a->fp_mant[0] & FP_QUIETBIT) != 0)
 			fe->fe_fpsr |= FPSR_EFINV;
 		cc = CC_UN;
 		goto done;
 	}
 	if (ISNAN(b)) {
-		if (fcmpu || (b->fp_mant[0] & FP_QUIETBIT) != 0)
+		if (!fcmpu || (b->fp_mant[0] & FP_QUIETBIT) != 0)
 			fe->fe_fpsr |= FPSR_EFINV;
 		cc = CC_UN;
 		goto done;

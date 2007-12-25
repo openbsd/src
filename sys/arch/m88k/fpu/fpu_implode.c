@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.1 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.2 2007/12/25 15:47:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,8 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 	 * right to introduce leading zeroes.  Rounding then acts
 	 * differently for normals and subnormals: the largest subnormal
 	 * may round to the smallest normal (1.0 x 2^minexp), or may
-	 * remain subnormal.  In the latter case, signal an underflow.
+	 * remain subnormal.  In the latter case, signal an underflow
+	 * if the result was inexact.
 	 *
 	 * Rounding a normal, on the other hand, always produces another
 	 * normal (although either way the result might be too big for
@@ -284,7 +285,8 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
 		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
 			return (sign | SNG_EXP(1) | 0);
-		fe->fe_fpsr |= FPSR_EFUNF;
+		if (fe->fe_fpsr & FPSR_EFINX)
+			fe->fe_fpsr |= FPSR_EFUNF;
 		return (sign | SNG_EXP(0) | fp->fp_mant[3]);
 	}
 	/* -FP_NG for g,r; -1 for implied 1; -SNG_FRACBITS for fraction */
@@ -342,7 +344,8 @@ zero:		res[1] = 0;
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
-		fe->fe_fpsr |= FPSR_EFUNF;
+		if (fe->fe_fpsr & FPSR_EFINX)
+			fe->fe_fpsr |= FPSR_EFUNF;
 		exp = 0;
 		goto done;
 	}
@@ -399,8 +402,7 @@ zero:		res[1] = res[2] = res[3] = 0;
 			res[1] = res[2] = res[3] = 0;
 			return (sign | EXT_EXP(1) | 0);
 		}
-		if ((fe->fe_fpsr & FPSR_EFINX) ||
-		    (fe->fe_fpcr & FPSR_EFUNF))
+		if (fe->fe_fpsr & FPSR_EFINX)
 			fe->fe_fpsr |= FPSR_EFUNF;
 		exp = 0;
 		goto done;
