@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.18 2007/12/02 21:20:17 miod Exp $
+#	$OpenBSD: files.m88k,v 1.19 2007/12/25 00:29:46 miod Exp $
 
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
@@ -7,7 +7,6 @@ file	arch/m88k/m88k/db_trace.c			ddb
 file	arch/m88k/m88k/in_cksum.c			inet
 file	arch/m88k/m88k/m88100_fp.S			m88100
 file	arch/m88k/m88k/m88100_machdep.c			m88100
-file	arch/m88k/m88k/m88110_fp.S			m88110
 file	arch/m88k/m88k/m88110_mmu.S			m88110
 file	arch/m88k/m88k/m8820x_machdep.c			m88100
 file	arch/m88k/m88k/m88k_machdep.c
@@ -22,6 +21,17 @@ file	arch/m88k/m88k/trap.c
 file	arch/m88k/m88k/vectors_88100.S			m88100
 file	arch/m88k/m88k/vectors_88110.S			m88110
 file	arch/m88k/m88k/vm_machdep.c
+
+# floating-point support code for 88110
+file	arch/m88k/fpu/fpu_add.c				m88110
+file	arch/m88k/fpu/fpu_compare.c			m88110
+file	arch/m88k/fpu/fpu_div.c				m88110
+file	arch/m88k/fpu/fpu_explode.c			m88110
+file	arch/m88k/fpu/fpu_implode.c			m88110
+file	arch/m88k/fpu/fpu_mul.c				m88110
+file	arch/m88k/fpu/fpu_sqrt.c			m88110
+file	arch/m88k/fpu/fpu_subr.c			m88110
+file	arch/m88k/fpu/m88110_fp.c			m88110
 
 # quad support is neccessary for 32 bit architectures
 file	lib/libkern/adddi3.c

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.44 2007/12/22 19:38:33 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.45 2007/12/25 00:29:49 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1594,7 +1594,9 @@ GLOBAL(m88110_overflow_handler)
 /* Floating-point precise handler */
 GLOBAL(m88110_fpu_handler)
 	PREP88110("FPU", 114,)
-	XCALL(_ASM_LABEL(m88110_fpu_exception), _ASM_LABEL(check_ast))
+	or	r2, r0, T_FPEPFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)

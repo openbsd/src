@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.5 2007/11/21 19:30:08 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.6 2007/12/25 00:29:49 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -71,6 +71,8 @@ void	m88100_syscall(register_t, struct trapframe *);
 void	m88100_trap(u_int, struct trapframe *);
 void	m88110_syscall(register_t, struct trapframe *);
 void	m88110_trap(u_int, struct trapframe *);
+
+void	m88110_fpu_exception(struct trapframe *);
 
 #endif /* _LOCORE */
 

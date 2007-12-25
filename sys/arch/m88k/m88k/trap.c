@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2007/12/12 20:35:37 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2007/12/25 00:29:49 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -676,34 +676,25 @@ m88110_trap(u_int type, struct trapframe *frame)
 
 	switch (type) {
 	default:
+lose:
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
 
+#ifdef DEBUG
 	case T_110_DRM+T_USER:
 	case T_110_DRM:
-#ifdef DEBUG
 		printf("DMMU read miss: Hardware Table Searches should be enabled!\n");
-#endif
-		panictrap(frame->tf_vector, frame);
-		break;
-		/*NOTREACHED*/
+		goto lose;
 	case T_110_DWM+T_USER:
 	case T_110_DWM:
-#ifdef DEBUG
 		printf("DMMU write miss: Hardware Table Searches should be enabled!\n");
-#endif
-		panictrap(frame->tf_vector, frame);
-		break;
-		/*NOTREACHED*/
+		goto lose;
 	case T_110_IAM+T_USER:
 	case T_110_IAM:
-#ifdef DEBUG
 		printf("IMMU miss: Hardware Table Searches should be enabled!\n");
+		goto lose;
 #endif
-		panictrap(frame->tf_vector, frame);
-		break;
-		/*NOTREACHED*/
 
 #ifdef DDB
 	case T_KDB_TRACE:
@@ -732,14 +723,11 @@ m88110_trap(u_int type, struct trapframe *frame)
 #endif /* DDB */
 	case T_ILLFLT:
 		printf("Unimplemented opcode!\n");
-		panictrap(frame->tf_vector, frame);
-		break;
+		goto lose;
 	case T_MISALGNFLT:
 		printf("kernel mode misaligned access exception @ 0x%08x\n",
 		    frame->tf_exip);
-		panictrap(frame->tf_vector, frame);
-		break;
-		/*NOTREACHED*/
+		goto lose;
 
 	case T_INSTFLT:
 		/* kernel mode instruction access fault.
@@ -749,9 +737,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 		printf("Kernel Instruction fault exip %x isr %x ilar %x\n",
 		    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
 #endif
-		panictrap(frame->tf_vector, frame);
-		break;
-		/*NOTREACHED*/
+		goto lose;
 
 	case T_DATAFLT:
 		/* kernel mode data fault */
@@ -836,8 +822,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 			}
 		}
 		KERNEL_UNLOCK();
-		panictrap(frame->tf_vector, frame);
-		/* NOTREACHED */
+		goto lose;
 	case T_INSTFLT+T_USER:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
@@ -990,6 +975,7 @@ m88110_user_fault:
 		if (sig == 0) {
 			/* skip recovered instruction */
 			m88110_skip_insn(frame);
+			goto userexit;
 		}
 		break;
 	case T_PRIVINFLT+T_USER:
@@ -1024,33 +1010,8 @@ m88110_user_fault:
 		m88110_skip_insn(frame);
 		break;
 	case T_FPEPFLT+T_USER:
-		sig = SIGFPE;
-
-		if (frame->tf_fpecr & FPECR_FUNIMP) {
-			if (frame->tf_epsr & PSR_SFD1)
-				fault_type = FPE_FLTINV;
-		} else if (frame->tf_fpecr & FPECR_FIOV)
-			fault_type = FPE_FLTSUB;
-		else if (frame->tf_fpecr & FPECR_FROP)
-			fault_type = FPE_FLTINV;
-		else if (frame->tf_fpecr & FPECR_FDVZ)
-			fault_type = FPE_INTDIV;
-		else if (frame->tf_fpecr & FPECR_FUNF) {
-			if (frame->tf_fpsr & FPSR_EFUNF)
-				fault_type = FPE_FLTUND;
-			else if (frame->tf_fpsr & FPSR_EFINX)
-				fault_type = FPE_FLTRES;
-		} else if (frame->tf_fpecr & FPECR_FOVF) {
-			if (frame->tf_fpsr & FPSR_EFOVF)
-				fault_type = FPE_FLTOVF;
-			else if (frame->tf_fpsr & FPSR_EFINX)
-				fault_type = FPE_FLTRES;
-		} else if (frame->tf_fpecr & FPECR_FINX)
-			fault_type = FPE_FLTRES;
-
-		/* skip trap instruction */
-		m88110_skip_insn(frame);
-		break;
+		m88110_fpu_exception(frame);
+		goto userexit;
 	case T_SIGSYS+T_USER:
 		sig = SIGSYS;
 		break;
@@ -1126,6 +1087,7 @@ deliver:
 		KERNEL_PROC_UNLOCK(p);
 	}
 
+userexit:
 	userret(p);
 }
 #endif /* M88110 */
