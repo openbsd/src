@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2007/11/21 19:40:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2007/12/25 00:48:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -16,6 +16,8 @@
 #define _M88K_PMAP_H_
 
 #include <machine/mmu.h>
+
+#ifdef	_KERNEL
 
 /*
  * PMAP structure
@@ -44,8 +46,6 @@ struct pmap {
 
 typedef struct pmap *pmap_t;
 typedef struct pv_entry *pv_entry_t;
-
-#ifdef	_KERNEL
 
 extern	pmap_t		kernel_pmap;
 extern	struct pmap	kernel_pmap_store;
