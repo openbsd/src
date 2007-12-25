@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.54 2007/12/25 20:23:04 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.55 2007/12/25 21:10:56 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,6 +62,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/bugio.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/lock.h>
@@ -173,7 +174,20 @@ void
 m88410_setup_board_config(void)
 {
 #ifdef MULTIPROCESSOR
-	max_cpus = 2;
+	struct mvmeprom_brdid brdid;
+
+	/*
+	 * MVME197SP are 01-W3815B03, while MVME197DP are 01-W3815B04.
+	 * If the CNFG memory has been lost and the board is a 197SP,
+	 * we'll just fail to spin up the non-existing second processor.
+	 */
+	bzero(&brdid, sizeof(brdid));
+	bugbrdid(&brdid);
+	if (bcmp(brdid.pwa, "01-W3815B03", 11) == 0)
+		max_cpus = 1;
+	else
+		max_cpus = 2;
+	/* XXX what about 01-W3977B QP boards??? */
 #else
 	max_cpus = 1;
 #endif
