@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.23 2007/12/15 21:19:48 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.24 2007/12/25 21:13:11 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,6 +52,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/bugio.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -96,6 +97,30 @@ m197_memsize()
 	int i;
 	u_int8_t sar;
 	u_int16_t ssar, sear;
+	struct mvmeprom_brdid brdid;
+
+	/*
+	 * MVME197LE 01-W3869B0[12][EF] boards shipped with a broken DCAM2
+	 * chip, which can only address 32MB of memory. Unfortunately, 02[EF]
+	 * were fitted with 64MB...
+	 * Note that we can't decide on letter < F since this would match
+	 * post-Z boards (AA, AB, etc).
+	 *
+	 * If the CNFG memory has been lost, you're on your own...
+	 */
+	bzero(&brdid, sizeof(brdid));
+	bugbrdid(&brdid);
+	if (bcmp(brdid.pwa, "01-W3869B02", 11) == 0) {
+		if (brdid.pwa[11] == 'E' || brdid.pwa[11] == 'F')
+			return (32 * 1024 * 1024);
+	}
+
+	/*
+	 * If we had to constrain memory access on boards with
+	 * bogus DCAM, don't look into the decoders.
+	 */
+	if (physmem != 0)
+		return (ptoa(physmem));
 
 	for (i = 0; i < 4; i++) {
 		sar = *(u_int8_t *)(BS_BASE + BS_SAR + i);
