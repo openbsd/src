@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2007/11/18 21:16:44 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2007/12/26 17:40:59 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -362,9 +362,9 @@ static __inline void share_fpu(p, tf)
 	struct proc *p;
 	struct trapframe64 *tf;
 {
-	if (!(tf->tf_tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) &&
-	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fpproc != p)
-		tf->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+	if (!(tf->tf_tstate & TSTATE_PRIV) &&
+	    (tf->tf_tstate & TSTATE_PEF) && fpproc != p)
+		tf->tf_tstate &= ~TSTATE_PEF;
 }
 
 /*
@@ -1187,7 +1187,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 
 	/* Now munch on protections... */
 	access_type = VM_PROT_EXECUTE;
-	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
