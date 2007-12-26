@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_arith.h,v 1.1 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: fpu_arith.h,v 1.2 2007/12/26 18:27:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,6 @@
 	asm volatile("subu.cio %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
 
 #define	FPU_GET_CARRY(r) asm volatile("addu.ci %0,r0,r0" : "=r"(r))
-#define	FPU_SET_CARRY(v) asm volatile("subu.co r0,r0,%0" :: "r"(v))
+#define	FPU_SET_CARRY(v) asm volatile("subu.co r0,r0,%0" :: "r"(!v))
 
 #define	FPU_SHL1_BY_ADD	/* shift left 1 faster by ADDC than (a<<1)|(b>>31) */
