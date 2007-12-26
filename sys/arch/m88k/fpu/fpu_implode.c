@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.2 2007/12/25 15:47:16 miod Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.3 2007/12/26 18:29:33 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -186,14 +186,12 @@ toinf(struct fpemu *fe, int sign)
 
 /*
  * fpn -> int (int value returned as return value).
- *
- * XXX This conversion always rounds towards zero.
  */
 u_int
 fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 {
 	u_int i;
-	int sign, exp;
+	int sign, exp, sticky, rd;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -206,8 +204,8 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 		 * If exp >= 2^32, overflow.  Otherwise shift value right
 		 * into last mantissa word (this will not exceed 0xffffffff),
 		 * shifting any guard and round bits out into the sticky
-		 * bit.  Then ``round'' towards zero, i.e., just set an
-		 * inexact exception if sticky is set (see round()).
+		 * bit.
+		 * Then round according to the rounding mode.
 		 * If the result is > 0x80000000, or is positive and equals
 		 * 0x80000000, overflow; otherwise the last fraction word
 		 * is the result.
@@ -215,9 +213,15 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 		if ((exp = fp->fp_exp) >= 32)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+		if ((sticky = fpu_shr(fp, FP_NMANT - 1 - exp)) != 0)
 			fe->fe_fpsr |= FPSR_EFINX;
 		i = fp->fp_mant[3];
+		rd = (fe->fe_fpcr >> FPCR_RD_SHIFT) & FPCR_RD_MASK;
+		if ((rd == FP_RN && sticky != 0) ||
+		    (rd == FP_RM && sign != 0) || (rd == FP_RP && sign == 0)) {
+			/* round up */
+			i++;
+		}
 		if (i >= ((u_int)0x80000000 + sign))
 			break;
 		return (sign ? -i : i);
@@ -225,7 +229,8 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 	default:		/* Inf, qNaN, sNaN */
 		break;
 	}
-	/* overflow: replace any inexact exception with invalid */
+
+	/* Inf or NaN: replace any inexact exception with invalid */
 	fe->fe_fpsr = (fe->fe_fpsr & ~FPSR_EFINX) | FPSR_EFINV;
 	return (0x7fffffff + sign);
 }
