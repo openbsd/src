@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_compare.c,v 1.2 2007/12/25 15:47:16 miod Exp $	*/
+/*	$OpenBSD: fpu_compare.c,v 1.3 2007/12/26 18:27:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -180,12 +180,12 @@ done:
 
 	/*
 	 * Complete condition code mask.
-	 * XXX Range bits (ob, in, ib and ou) are not handled yet.
 	 */
+
 	if (cc & CC_UN)
 		cc |= CC_UE | CC_UG | CC_ULE | CC_UL | CC_UGE;
 	if (cc & CC_EQ)
-		cc |= CC_LE | CC_GE | CC_IB | CC_OB | CC_UE;
+		cc |= CC_LE | CC_GE | CC_UE;
 	if (cc & CC_GT)
 		cc |= CC_GE;
 	if (cc & CC_LT)
@@ -202,6 +202,42 @@ done:
 		cc |= CC_UL;
 	if (cc & CC_GE)
 		cc |= CC_UGE;
+
+	/*
+	 * Fill the interval bits.
+	 * s1 (here `a') is compared to the interval [0, s2 (here `b')].
+	 */
+	if (!(cc & CC_UN)) {
+		/* s1 and s2 are either Zero, numbers or Inf */
+		if (ISZERO(a) || (cc & CC_EQ)) {
+			/* if s1 and s2 are equal, s1 is on boundary */
+			cc |= CC_IB | CC_OB;
+		} else if (b->fp_sign == 0) {
+			/* s2 is positive, the interval is [0, s2] */
+			if (cc & CC_GT) {
+				/* 0 <= s2 < s1 -> out of interval */
+				cc |= CC_OU | CC_OB;
+			} else if (a->fp_sign == 0) {
+				/* 0 < s1 < s2 -> in interval */
+				cc |= CC_IB | CC_IN;
+			} else {
+				/* s1 < 0 <= s2 */
+				cc |= CC_OU | CC_OB;
+			}
+		} else {
+			/* s2 is negative, the interval is [s2, 0] */
+			if (cc & CC_LT) {
+				/* s1 < s2 <= 0 */
+				cc |= CC_OU | CC_OB;
+			} else if (a->fp_sign != 0) {
+				/* s2 < s1 < 0 */
+				cc |= CC_IB | CC_IN;
+			} else {
+				/* s2 < 0 < s1 */
+				cc |= CC_OU | CC_OB;
+			}
+		}
+	}
 
 	return (cc);
 }
