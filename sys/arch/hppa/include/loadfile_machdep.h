@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.3 2005/05/10 11:29:55 mickey Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.4 2007/12/26 18:52:59 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,11 @@
 #define	_HPPA_LOADFILE_MACHDEP_H_
 
 #define	BOOT_ELF
+#define	BOOT_ELF32
+#define	BOOT_ELF64
+
+/* Keep a default ELFSIZE */
+#define	ELFSIZE 32
 
 #define	LOAD_KERNEL	LOAD_ALL
 #define	COUNT_KERNEL	COUNT_ALL
