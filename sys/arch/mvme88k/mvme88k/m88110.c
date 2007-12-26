@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.55 2007/12/25 21:10:56 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.56 2007/12/26 22:21:41 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -177,13 +177,13 @@ m88410_setup_board_config(void)
 	struct mvmeprom_brdid brdid;
 
 	/*
-	 * MVME197SP are 01-W3815B03, while MVME197DP are 01-W3815B04.
+	 * MVME197SP are 01-W3815B04, while MVME197DP are 01-W3815B03.
 	 * If the CNFG memory has been lost and the board is a 197SP,
 	 * we'll just fail to spin up the non-existing second processor.
 	 */
 	bzero(&brdid, sizeof(brdid));
 	bugbrdid(&brdid);
-	if (bcmp(brdid.pwa, "01-W3815B03", 11) == 0)
+	if (bcmp(brdid.pwa, "01-W3815B04", 11) == 0)
 		max_cpus = 1;
 	else
 		max_cpus = 2;
@@ -264,9 +264,6 @@ void
 m88110_initialize_cpu(cpuid_t cpu)
 {
 	u_int ictl, dctl;
-#ifndef MULTIPROCESSOR
-	u_int8_t btimer;
-#endif
 	int i;
 	int procvers = (get_cpu_pid() & PID_VN) >> VN_SHIFT;
 
@@ -280,20 +277,6 @@ m88110_initialize_cpu(cpuid_t cpu)
 
 	/* clear PATCs */
 	patc_clear();
-
-#ifndef MULTIPROCESSOR
-	/*
-	 * Kernels running without snooping enabled (i.e. without
-	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
-	 * bus timeout limits, or the instruction cache might not be able
-	 * to fill or answer fast enough.  This is especially critical on
-	 * 40MHz boards, while some 50MHz boards can run without this
-	 * timeout change... but better be safe than sorry.
-	 */
-	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
-	btimer = (btimer & ~BS_BTIMER_PBT_MASK) | BS_BTIMER_PBT64;
-	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer;
-#endif
 
 	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
 

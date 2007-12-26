@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.40 2007/12/15 19:33:34 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.41 2007/12/26 22:21:39 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -133,10 +133,10 @@ setregs(p, pack, stack, retval)
 #ifdef M88110
 	if (CPU_IS88110) {
 		/*
-		 * user mode, serialize mem, interrupts enabled,
+		 * user mode, interrupts enabled,
 		 * graphics unit, fp enabled
 		 */
-		tf->tf_epsr = PSR_SRM | PSR_SFD;
+		tf->tf_epsr = PSR_SFD;
 	}
 #endif
 #ifdef M88100

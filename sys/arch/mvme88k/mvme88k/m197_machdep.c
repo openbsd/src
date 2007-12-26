@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.24 2007/12/25 21:13:11 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.25 2007/12/26 22:21:41 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -336,6 +336,9 @@ m197_bootstrap()
 	extern struct cmmu_p cmmu88410;
 	extern int cpuspeed;
 	u_int16_t cpu;
+#ifndef MULTIPROCESSOR
+	u_int8_t btimer, pbt;
+#endif
 
 	if (mc88410_present()) {
 		cmmu = &cmmu88410;	/* 197SP/197DP */
@@ -358,6 +361,33 @@ m197_bootstrap()
 	 * adjust register.
 	 */
 	cpuspeed = 256 - *(volatile u_int8_t *)(BS_BASE + BS_PADJUST);
+
+#ifndef MULTIPROCESSOR
+	/*
+	 * Kernels running without snooping enabled (i.e. without
+	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
+	 * bus timeout limits, or the instruction cache might not be able
+	 * to fill or answer fast enough.
+	 *
+	 * Do this as soon as possible (i.e. now...), since this is
+	 * especially critical on 40MHz boards, while some 50MHz boards can
+	 * run without this timeout change... but better be safe than sorry.
+	 */
+	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
+	pbt = btimer & BS_BTIMER_PBT_MASK;
+	btimer = (btimer & ~BS_BTIMER_PBT_MASK);
+	
+	/* PBT256 only be necessary for busswitch rev1? */
+	if (cpuspeed < 50) {
+		if (pbt < BS_BTIMER_PBT256)
+			pbt = BS_BTIMER_PBT256;
+	} else {
+		if (pbt < BS_BTIMER_PBT64)
+			pbt = BS_BTIMER_PBT64;
+	}
+
+	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer | pbt;
+#endif
 
 	md_interrupt_func_ptr = m197_ext_int;
 	md_getipl = m197_getipl;
@@ -384,20 +414,14 @@ m197_send_ipi(int ipi, cpuid_t cpu)
 
 	atomic_setbits_int(&ci->ci_ipi, ipi);
 
-	/*
-	 * If the other processor doesn't have an IPI pending, send one,
-	 * keeping IPIs enabled for us.
-	 */
-	if ((*(volatile u_int8_t *)(BS_BASE + BS_CPINT) & BS_CPI_STAT) == 0)
-		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) =
-		    BS_CPI_SCPI | BS_CPI_IEN;
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_SCPI | BS_CPI_IEN;
 }
 
 void
 m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 {
 	struct cpu_info *ci = &m88k_cpus[cpu];
-	int wait = 0;
+	int wait;
 
 	if ((ci->ci_flags & CIF_ALIVE) == 0)
 		return;				/* XXX not ready yet */
@@ -408,7 +432,7 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 	/*
 	 * Wait for the other processor to be ready to accept an IPI.
 	 */
-	for (wait = 10000000; wait != 0; wait--) {
+	for (wait = 1000000; wait != 0; wait--) {
 		if (!ISSET(*(volatile u_int8_t *)(BS_BASE + BS_CPINT),
 		    BS_CPI_STAT))
 			break;
