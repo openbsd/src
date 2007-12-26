@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.56 2007/12/26 22:21:41 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.57 2007/12/26 22:22:45 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -460,6 +460,9 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  *   incoherent with the proper state of memory.  Before 5.0 the flush
  *   command was treated like a nop when the cache was disabled.  This
  *   is no longer the case.''
+ *
+ * Since we always enable the data cache, and no cmmu cache operation
+ * will occur before we do, it is not necessary to pay attention to this.
  */
 
 #define	trunc_cache_line(a)	((a) & ~(MC88110_CACHE_LINE - 1))
@@ -478,8 +481,7 @@ m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
-	if (get_dctl() & CMMU_DCTL_CEN)
-		mc88110_flush_data();
+	mc88110_flush_data();
 
 	set_psr(psr);
 }
@@ -502,9 +504,7 @@ m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 	mc88110_inval_inst();
 	/* flush all data to avoid errata invalidate */
-	if (get_dctl() & CMMU_DCTL_CEN) {
-		mc88110_flush_data();
-	}
+	mc88110_flush_data();
 	CMMU_LOCK;
 	mc88410_flush();
 	CMMU_UNLOCK;
@@ -621,9 +621,6 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
-	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-		size = 0;
-
 	if (op != DMA_CACHE_SYNC)
 		mc88110_inval_inst();
 	while (size != 0) {
@@ -682,8 +679,6 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 	if (op == DMA_CACHE_SYNC) {
 		va = trunc_page(_va);
 		size = round_page(_va + _size) - va;
-		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-			size = 0;
 		CMMU_LOCK;
 		while (size != 0) {
 			if (pmap_extract(pmap, va, &pa) != FALSE) {
@@ -695,8 +690,6 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 		}
 		CMMU_UNLOCK;
 	} else {
-		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-			size = 0;
 		mc88110_inval_inst();
 		while (size != 0) {
 			count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
@@ -745,9 +738,6 @@ m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
-
-	if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-		size = 0;
 
 	if (op != DMA_CACHE_SYNC)
 		mc88110_inval_inst();
@@ -804,8 +794,6 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 	if (op == DMA_CACHE_SYNC) {
 		pa = trunc_page(_pa);
 		size = round_page(_pa + _size) - pa;
-		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-			size = 0;
 		CMMU_LOCK;
 		while (size != 0) {
 			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
@@ -815,8 +803,6 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 		}
 		CMMU_UNLOCK;
 	} else {
-		if (!ISSET(get_dctl(), CMMU_DCTL_CEN))
-			size = 0;
 		mc88110_inval_inst();
 		while (size != 0) {
 			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
