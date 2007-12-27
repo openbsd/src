@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.3 2007/12/18 09:42:00 jasper Exp $	*/
+/*	$OpenBSD: power.c,v 1.4 2007/12/27 03:00:51 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -25,6 +25,8 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 
+#include <dev/ic/ds1687reg.h>
+
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
@@ -37,9 +39,6 @@
 /*
  * Power button driver for the SGI O2
  */
-
-#define	DS1687_EXT_CTRL		0x4a
-#define	DS1687_KICKSTART	0x01
 
 struct power_softc {
 	struct device		sc_dev;
