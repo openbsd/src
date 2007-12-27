@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.25 2007/12/26 22:21:41 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.26 2007/12/27 23:20:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -114,13 +114,6 @@ m197_memsize()
 		if (brdid.pwa[11] == 'E' || brdid.pwa[11] == 'F')
 			return (32 * 1024 * 1024);
 	}
-
-	/*
-	 * If we had to constrain memory access on boards with
-	 * bogus DCAM, don't look into the decoders.
-	 */
-	if (physmem != 0)
-		return (ptoa(physmem));
 
 	for (i = 0; i < 4; i++) {
 		sar = *(u_int8_t *)(BS_BASE + BS_SAR + i);
