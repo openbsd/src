@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.36 2007/12/05 21:42:14 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.37 2007/12/27 01:18:50 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -63,7 +63,7 @@ void	acpicpu_setperf(int);
 #define ACPI_MAX_C3_LATENCY	1000
 
 /* Make sure throttling bits are valid,a=addr,o=offset,w=width */
-#define valid_throttle(o,w,a) (a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
+#define valid_throttle(o,w,a)	(a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
 
 struct acpi_cstate
 {
@@ -97,12 +97,14 @@ struct acpicpu_softc {
 	struct acpicpu_pss	*sc_pss;
 
 	struct acpicpu_pct	sc_pct;
-	/* XXX: _PPC Change listener
+	/*
+	 * XXX: _PPC Change listener
 	 * PPC changes can occur when for example a machine is disconnected
 	 * from AC power and can no loger support the highest frequency or
 	 * voltage when driven from the battery.
 	 * Should probably be reimplemented as a list for now we assume only
-	 * one listener */
+	 * one listener
+	 */
 	void			(*sc_notify)(struct acpicpu_pss *, int);
 };
 
@@ -110,7 +112,8 @@ void    acpicpu_set_throttle(struct acpicpu_softc *, int);
 void    acpicpu_add_cstatepkg(struct aml_value *, void *);
 int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
-struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int, int);
+struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int,
+    int);
 struct acpi_cstate *acpicpu_find_cstate(struct acpicpu_softc *, int);
 
 struct cfattach acpicpu_ca = {
@@ -147,19 +150,19 @@ acpicpu_set_throttle(struct acpicpu_softc *sc, int level)
 struct acpi_cstate *
 acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
 {
-	struct acpi_cstate *cx;
+	struct acpi_cstate	*cx;
 
 	SLIST_FOREACH(cx, &sc->sc_cstates, link)
 		if (cx->type == type)
 			return cx;
-	return NULL;
+	return (NULL);
 }
 
 struct acpi_cstate *
-acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
-		   int latency, int power, int address)
+acpicpu_add_cstate(struct acpicpu_softc *sc, int type, int latency, int power,
+    int address)
 {
-	struct acpi_cstate *cx;
+	struct acpi_cstate	*cx;
 
 	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.8x\n",
 	    type, latency, power, address);
@@ -186,27 +189,27 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 
 	SLIST_INSERT_HEAD(&sc->sc_cstates, cx, link);
 
-	return cx;
+	return (cx);
  bad:
 	dprintf("acpicpu%d: C%d not supported", sc->sc_cpu, type);
-	return NULL;
+	return (NULL);
 }
 
 /* Found a _CST object, add new cstate for each entry */
 void
 acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 {
-	struct acpicpu_softc *sc = arg;
+	struct acpicpu_softc	*sc = arg;
 
 #ifdef ACPI_DEBUG
 	aml_showvalue(val, 0);
 #endif
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length != 4)
 		return;
+
 	acpicpu_add_cstate(sc, val->v_package[1]->v_integer,
-			   val->v_package[2]->v_integer,
-			   val->v_package[3]->v_integer,
-			   -1);
+	    val->v_package[2]->v_integer,
+	    val->v_package[3]->v_integer, -1);
 }
 
 
@@ -254,7 +257,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
 	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr))
 		sc->sc_flags |= FLAGS_NOTHROTTLE;
-
 #ifdef ACPI_DEBUG
 	printf(": %s: ", sc->sc_devnode->name);
 	printf("\n: hdr:%x pblk:%x,%x duty:%x,%x pstate:%x (%d throttling states)\n",
@@ -266,28 +268,27 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Get C-States from _CST or FADT */
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res) == 0) {
+	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res)) {
 		aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
 		aml_freevalue(&res);
 	}
 	else {
-		/* Some systems don't export a full PBLK, reduce functionality */
+		/* Some systems don't export a full PBLK reduce functionality */
 		if (sc->sc_pblk_len < 5)
 			sc->sc_flags |= FLAGS_NO_C2;
 		if (sc->sc_pblk_len < 6)
 			sc->sc_flags |= FLAGS_NO_C3;
 		acpicpu_add_cstate(sc, ACPI_STATE_C2,
-				   sc->sc_acpi->sc_fadt->p_lvl2_lat, -1,
-				   sc->sc_pblk_addr + 4);
+		    sc->sc_acpi->sc_fadt->p_lvl2_lat, -1,
+		    sc->sc_pblk_addr + 4);
 		acpicpu_add_cstate(sc, ACPI_STATE_C3,
-				   sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
-				   sc->sc_pblk_addr + 5);
+		    sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
+		    sc->sc_pblk_addr + 5);
 	}
 	if (acpicpu_getpss(sc)) {
 		/* XXX not the right test but has to do for now */
 		sc->sc_flags |= FLAGS_NOPSS;
 	} else {
-
 #ifdef ACPI_DEBUG
 		for (i = 0; i < sc->sc_pss_len; i++) {
 			dnprintf(20, "%d %d %d %d %d %d\n",
@@ -300,7 +301,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 		dnprintf(20, "\n");
 #endif
-		/* XXX this needs to be moved to probe routine */
 		if (acpicpu_getpct(sc))
 			sc->sc_flags |= FLAGS_NOPCT;
 		else {
@@ -314,6 +314,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
 			if (setperf_prio < 30) {
+				printf("acpi does throttle\n");
 				cpu_setperf = acpicpu_setperf;
 				setperf_prio = 30;
 				acpi_hasprocfvs = 1;
@@ -377,7 +378,6 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	int			rv = 1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res)) {
-		dnprintf(20, "%s: no _PPC\n", DEVNAME(sc));
 		dnprintf(10, "%s: no _PPC\n", DEVNAME(sc));
 		return (1);
 	}
@@ -475,20 +475,24 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 }
 
 int
-acpicpu_fetch_pss(struct acpicpu_pss **pss) {
-	/*XXX: According to the ACPI spec in an SMP system all processors
+acpicpu_fetch_pss(struct acpicpu_pss **pss)
+{
+	struct acpicpu_softc	*sc;
+
+	/*
+	 * XXX: According to the ACPI spec in an SMP system all processors
 	 * are supposed to support the same states. For now we prey
 	 * the bios ensures this...
+	 * XXX part deux: this needs to account for _PPC as well
+	 * when AC is removed the nr of _PSS entries can go down
 	 */
-	struct acpicpu_softc *sc;
 
 	sc = acpicpu_sc[0];
-	if (!sc) {
+	if (!sc)
 		return 0;
-	}
 	*pss = sc->sc_pss;
 
-	return sc->sc_pss_len;
+	return (sc->sc_pss_len);
 }
 
 int
@@ -525,7 +529,8 @@ acpicpu_set_notify(void (*func)(struct acpicpu_pss *, int)) {
 }
 
 void
-acpicpu_setperf(int level) {
+acpicpu_setperf(int level)
+{
 	struct acpicpu_softc	*sc;
 	struct acpicpu_pss	*pss = NULL;
 	int			idx;
@@ -595,7 +600,7 @@ acpicpu_setperf(int level) {
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
 	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_len,
 	    &status);
-	dnprintf(20, "status: %u <- %u\n", status, pss->pss_status);
+	dnprintf(20, "1 status: %u <- %u\n", status, pss->pss_status);
 
 	/* Are we already at the requested frequency? */
 	if (status == pss->pss_status)
@@ -611,7 +616,7 @@ acpicpu_setperf(int level) {
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
 	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_as,
 	    &status);
-	dnprintf(20, "3 status: %d\n", status);
+	dnprintf(20, "2 status: %d\n", status);
 
 	/* Did the transition succeed? */
 	 if (status == pss->pss_status)
