@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.91 2007/12/27 02:27:09 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.92 2007/12/27 02:29:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -816,7 +816,8 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-		    sc->sc_max_sgl_len, MAXPHYS, 0, 0,
+		    sc->sc_max_sgl_len, MAXPHYS, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
