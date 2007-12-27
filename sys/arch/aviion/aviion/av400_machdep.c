@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.12 2007/12/19 22:05:04 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.13 2007/12/27 23:19:12 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -441,8 +441,7 @@ av400_intr(u_int v, struct trapframe *eframe)
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	ign_mask = 0;
-	old_spl = av400_curspl[cpu];
-	eframe->tf_mask = old_spl;
+	old_spl = eframe->tf_mask;
 
 	if (cur_mask == 0) {
 		/*
@@ -499,7 +498,6 @@ av400_intr(u_int v, struct trapframe *eframe)
 
 		if (SLIST_EMPTY(list)) {
 			warn = 1;
-			ign_mask |= 1 << intbit;
 		} else {
 			/*
 			 * Walk through all interrupt handlers in the chain
@@ -528,13 +526,13 @@ av400_intr(u_int v, struct trapframe *eframe)
 				printf("%s: %s VME interrupt, "
 				    "level %d, vec 0x%x, mask 0x%b\n",
 				    __func__,
-				    warn > 1 ? "spurious" : "unclaimed",
+				    warn == 1 ? "spurious" : "unclaimed",
 				    level, vec, cur_mask, IST_STRING);
 			else
 				printf("%s: %s interrupt, "
 				    "level %d, bit %d, mask 0x%b\n",
 				    __func__,
-				    warn > 1 ? "spurious" : "unclaimed",
+				    warn == 1 ? "spurious" : "unclaimed",
 				    level, intbit, cur_mask, IST_STRING);
 		}
 	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask) != 0);
