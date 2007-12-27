@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.9 2004/02/23 08:21:53 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.10 2007/12/27 17:56:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 	p = NULL;
 	func = &noexec;
 	size = TESTSZ;
-	while ((ch = getopt(argc, argv, "TDBHSmps")) != -1) {
+	while ((ch = getopt(argc, argv, "TDBHSmps:")) != -1) {
 		if (p == NULL) {
 			switch (ch) {
 			case 'T':
