@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.9 2007/12/18 08:07:54 jsing Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.10 2007/12/27 02:59:13 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,6 +31,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <dev/ic/ds1687reg.h>
+
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
@@ -50,19 +52,16 @@ extern int clock_started;
 struct cfattach clock_macebus_ca = {
         sizeof(struct clock_softc), clockmatch, clockattach
 };
+
 struct cfattach clock_xbowmux_ca = {
         sizeof(struct clock_softc), clockmatch, clockattach
 };
-
 
 void	ds1687_get(struct clock_softc *, time_t, struct tod_time *);
 void	ds1687_set(struct clock_softc *, struct tod_time *);
 
 void
-md_clk_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+md_clk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct clock_softc *sc = (struct clock_softc *)self;
 	struct confargs *ca;
@@ -107,68 +106,71 @@ md_clk_attach(parent, self, aux)
 
 
 /*
- *  Dallas clock driver.
+ * Dallas clock driver.
  */
 void
-ds1687_get(sc, base, ct)
-	struct clock_softc *sc;
-	time_t base;
-	struct tod_time *ct;
+ds1687_get(struct clock_softc *sc, time_t base, struct tod_time *ct)
 {
 	bus_space_tag_t clk_t = sc->sc_clk_t;
 	bus_space_handle_t clk_h = sc->sc_clk_h;
-	int tmp12, century;
+	int ctrl, century;
 
-	/* Select bank 1 */
-	tmp12 = bus_space_read_1(clk_t, clk_h, 12);
-	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+	/* Select bank 1. */
+	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
 
-	/* Wait for no update in progress */
-	while (bus_space_read_1(clk_t, clk_h, 12) & 0x80)
-		/* Do nothing */;
+	/* Select data mode 0 (BCD). */
+	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl & ~DS1687_DM_1);
 
-	ct->sec = FROMBCD(bus_space_read_1(clk_t, clk_h, 0));
-	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, 2));
-	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, 4));
-	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, 7));
-	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, 8));
-	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, 9));
-	century = FROMBCD(bus_space_read_1(clk_t, clk_h, 72));
+	/* Wait for no update in progress. */
+	while (bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A) & DS1687_UIP)
+		/* Do nothing. */;
 
-	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+	/* Read the RTC. */
+	ct->sec = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_SEC));
+	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_MIN));
+	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_HOUR));
+	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_DAY));
+	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_MONTH));
+	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_YEAR));
+	century = FROMBCD(bus_space_read_1(clk_t, clk_h, DS1687_CENTURY));
 
 	ct->year += 100 * (century - 19);
 }
 
 void
-ds1687_set(sc, ct)
-	struct clock_softc *sc;
-	struct tod_time *ct;
+ds1687_set(struct clock_softc *sc, struct tod_time *ct)
 {
 	bus_space_tag_t clk_t = sc->sc_clk_t;
 	bus_space_handle_t clk_h = sc->sc_clk_h;
-	int year, century, tmp12, tmp13;
+	int year, century, ctrl;
 
 	century = ct->year / 100 + 19;
 	year = ct->year % 100;
 
-	/* Select bank 1 */
-	tmp12 = bus_space_read_1(clk_t, clk_h, 12);
-	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+	/* Select bank 1. */
+	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
 
-	/* Stop update */
-	tmp13 = bus_space_read_1(clk_t, clk_h, 13);
-	bus_space_write_1(clk_t, clk_h, 13, tmp13 | 0x80);
+	/* Select data mode 0 (BCD). */
+	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl & ~DS1687_DM_1);
 
-	bus_space_write_1(clk_t, clk_h, 0, TOBCD(ct->sec));
-	bus_space_write_1(clk_t, clk_h, 2, TOBCD(ct->min));
-	bus_space_write_1(clk_t, clk_h, 4, TOBCD(ct->hour));
-	bus_space_write_1(clk_t, clk_h, 6, TOBCD(ct->dow));
-	bus_space_write_1(clk_t, clk_h, 7, TOBCD(ct->day));
-	bus_space_write_1(clk_t, clk_h, 8, TOBCD(ct->mon));
-	bus_space_write_1(clk_t, clk_h, 9, TOBCD(year));
-	bus_space_write_1(clk_t, clk_h, 72, TOBCD(century));
+	/* Prevent updates. */
+	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl | DS1687_SET_CLOCK);
 
-	bus_space_write_1(clk_t, clk_h, 12, tmp12);
-	bus_space_write_1(clk_t, clk_h, 13, tmp13);
+	/* Update the RTC. */
+	bus_space_write_1(clk_t, clk_h, DS1687_SEC, TOBCD(ct->sec));
+	bus_space_write_1(clk_t, clk_h, DS1687_MIN, TOBCD(ct->min));
+	bus_space_write_1(clk_t, clk_h, DS1687_HOUR, TOBCD(ct->hour));
+	bus_space_write_1(clk_t, clk_h, DS1687_DOW, TOBCD(ct->dow));
+	bus_space_write_1(clk_t, clk_h, DS1687_DAY, TOBCD(ct->day));
+	bus_space_write_1(clk_t, clk_h, DS1687_MONTH, TOBCD(ct->mon));
+	bus_space_write_1(clk_t, clk_h, DS1687_YEAR, TOBCD(year));
+	bus_space_write_1(clk_t, clk_h, DS1687_CENTURY, TOBCD(century));
+
+	/* Enable updates. */
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl);
 }
