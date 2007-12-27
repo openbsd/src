@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.65 2006/11/23 01:35:11 ray Exp $ */
+/* $OpenBSD: misc.c,v 1.66 2007/12/27 14:22:08 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -35,6 +35,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -111,6 +112,14 @@ unset_nonblock(int fd)
 		return (-1);
 	}
 	return (0);
+}
+
+const char *
+ssh_gai_strerror(int gaierr)
+{
+        if (gaierr == EAI_SYSTEM)
+                return strerror(errno);
+        return gai_strerror(gaierr);
 }
 
 /* disable nagle on socket */
