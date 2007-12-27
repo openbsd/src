@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.89 2007/09/12 13:42:49 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.90 2007/12/27 02:24:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -58,9 +58,16 @@ void			mpi_scsi_cmd_done(struct mpi_ccb *);
 void			mpi_minphys(struct buf *bp);
 int			mpi_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
 			    int, struct proc *);
+int			mpi_scsi_dev_probe(struct scsi_link *);
 
 struct scsi_adapter mpi_switch = {
-	mpi_scsi_cmd, mpi_minphys, NULL, NULL, mpi_scsi_ioctl
+	mpi_scsi_cmd,
+	mpi_minphys,
+	NULL,
+	NULL,
+	mpi_scsi_ioctl,
+	mpi_scsi_dev_probe,
+	NULL /* mpi_scsi_dev_free */
 };
 
 struct scsi_device mpi_dev = {
@@ -816,7 +823,8 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-		    sc->sc_max_sgl_len, MAXPHYS, 0, 0,
+		    sc->sc_max_sgl_len, MAXPHYS, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
@@ -1327,6 +1335,46 @@ int
 mpi_scsi_ioctl(struct scsi_link *a, u_long b, caddr_t c, int d, struct proc *e)
 {
 	return (ENOTTY);
+}
+
+int
+mpi_scsi_dev_probe(struct scsi_link *link)
+{
+	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_fc_device_pg0	page;
+	u_int32_t			addr;
+
+	if (sc->sc_porttype != MPI_PORTFACTS_PORTTYPE_FC)
+		return (0);
+
+	addr = link->target | MPI_PAGE_ADDRESS_FC_BTID;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV, 0, addr,
+	    &hdr) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_get_raid unable to fetch header"
+		    "for IOC page 2\n", DEVNAME(sc));
+		return (EIO);
+	}
+
+#if 0
+	if (hdr.page_length * 4 != sizeof(page)) {
+		return (EIO);
+	}
+#endif
+
+	if (mpi_cfg_page(sc, addr, &hdr, 1, &page, sizeof(page)) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_bio_fc_device: unable to fetch "
+		    "config page\n", DEVNAME(sc));
+		return (EIO);
+	}
+
+	/* DPRINTFs for page */
+
+	link->node_wwn = letoh64(page.wwnn);
+	link->port_wwn = letoh64(page.wwpn);
+
+	return (0);
 }
 
 u_int32_t
