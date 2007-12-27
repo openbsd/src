@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.3 2007/04/13 05:55:03 otto Exp $	*/
+/*	$OpenBSD: sync.c,v 1.4 2007/12/27 10:50:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -273,7 +273,8 @@ sync_recv(void)
 
 	/* Ignore invalid or truncated packets */
 	hdr = (struct spam_synchdr *)buf;
-	if (hdr->sh_version != SPAM_SYNC_VERSION ||
+	if (len < sizeof(struct spam_synchdr) ||
+	    hdr->sh_version != SPAM_SYNC_VERSION ||
 	    hdr->sh_af != AF_INET ||
 	    len < ntohs(hdr->sh_length))
 		goto trunc;
