@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.77 2007/11/22 10:24:25 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.78 2007/12/27 01:46:50 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,7 +80,7 @@ client_addr_init(struct ntp_peer *p)
 			p->state = STATE_DNS_DONE;
 			break;
 		default:
-			fatal("king bula sez: wrong AF in client_addr_init");
+			fatalx("king bula sez: wrong AF in client_addr_init");
 			/* not reached */
 		}
 	}

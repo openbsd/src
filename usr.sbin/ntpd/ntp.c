@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.101 2007/12/22 18:26:21 stevesk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.102 2007/12/27 01:46:50 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -110,7 +110,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 	if (stat(pw->pw_dir, &stb) == -1)
 		fatal("stat");
 	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
-		fatal("bad privsep dir permissions");
+		fatalx("bad privsep dir permissions");
 	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
