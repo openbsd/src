@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.38 2007/12/27 19:04:06 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.39 2007/12/27 22:32:37 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -94,16 +94,9 @@ struct acpicpu_softc {
 	struct aml_node		*sc_devnode;
 
 	int			sc_pss_len;
-	int			sc_ppc;
-	int			sc_level;
 	struct acpicpu_pss	*sc_pss;
 
 	struct acpicpu_pct	sc_pct;
-	/* save compensation for pct access for lying bios' */
-	u_int32_t		sc_pct_stat_as;
-	u_int32_t		sc_pct_ctrl_as;
-	u_int32_t		sc_pct_stat_len;
-	u_int32_t		sc_pct_ctrl_len;
 	/*
 	 * XXX: _PPC Change listener
 	 * PPC changes can occur when for example a machine is disconnected
@@ -117,7 +110,6 @@ struct acpicpu_softc {
 
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
 void    acpicpu_add_cstatepkg(struct aml_value *, void *);
-int	acpicpu_getppc(struct acpicpu_softc *);
 int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
 struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int,
@@ -244,7 +236,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	struct aml_value	res;
 	int			i;
 	struct acpi_cstate	*cx;
-	u_int32_t		status = 0;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -295,6 +286,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_pblk_addr + 5);
 	}
 	if (acpicpu_getpss(sc)) {
+		/* XXX not the right test but has to do for now */
 		sc->sc_flags |= FLAGS_NOPSS;
 	} else {
 #ifdef ACPI_DEBUG
@@ -309,14 +301,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 		dnprintf(20, "\n");
 #endif
-		if (sc->sc_pss_len == 0) {
-			/* this should never happen */
-			printf("%s: invalid _PSS length\n");
-			sc->sc_flags |= FLAGS_NOPSS;
-			goto bypass;
-		}
-
-		acpicpu_getppc(sc);
 		if (acpicpu_getpct(sc))
 			sc->sc_flags |= FLAGS_NOPCT;
 		else {
@@ -329,22 +313,15 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			aml_register_notify(sc->sc_devnode, NULL,
 			    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
-			acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
-			    sc->sc_pct.pct_status.grd_gas.address_space_id,
-			    sc->sc_pct.pct_status.grd_gas.address,
-			    sc->sc_pct_stat_as, sc->sc_pct_stat_as, &status);
-			sc->sc_level = (100 / sc->sc_pss_len) *
-			    (sc->sc_pss_len - status);
-			dnprintf(20, "%s: cpu index %d, percentage %d\n",
-			    DEVNAME(sc), status, sc->sc_level);
 			if (setperf_prio < 30) {
+				printf("acpi does throttle\n");
 				cpu_setperf = acpicpu_setperf;
 				setperf_prio = 30;
 				acpi_hasprocfvs = 1;
 			}
 		}
 	}
-bypass:
+
 	/*
 	 * Nicely enumerate what power management capabilities
 	 * ACPI CPU provides.
@@ -395,29 +372,18 @@ bypass:
 }
 
 int
-acpicpu_getppc(struct acpicpu_softc *sc)
+acpicpu_getpct(struct acpicpu_softc *sc)
 {
 	struct aml_value	res;
-
-	sc->sc_ppc = 0;
+	int			rv = 1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _PPC\n", DEVNAME(sc));
 		return (1);
 	}
 
-	sc->sc_ppc = aml_val2int(&res);
-	dnprintf(10, "%s: _PPC: %d\n", DEVNAME(sc), sc->sc_ppc);
+	dnprintf(10, "_PPC: %d\n", aml_val2int(&res));
 	aml_freevalue(&res);
-
-	return (0);
-}
-
-int
-acpicpu_getpct(struct acpicpu_softc *sc)
-{
-	struct aml_value	res;
-	int			rv = 1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PCT", 0, NULL, &res)) {
 		dnprintf(20, "%s: no _PCT\n", DEVNAME(sc));
@@ -463,21 +429,6 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sc->sc_pct.pct_status.grd_gas.register_bit_offset,
 	    sc->sc_pct.pct_status.grd_gas.access_size,
 	    sc->sc_pct.pct_status.grd_gas.address);
-
-	/* if not set assume single 32 bit access */
-	sc->sc_pct_stat_as = sc->sc_pct.pct_status.grd_gas.register_bit_width
-	    / 8;
-	if (sc->sc_pct_stat_as == 0)
-		sc->sc_pct_stat_as = 4;
-	sc->sc_pct_ctrl_as = sc->sc_pct.pct_ctrl.grd_gas.register_bit_width / 8;
-	if (sc->sc_pct_ctrl_as == 0)
-		sc->sc_pct_ctrl_as = 4;
-	sc->sc_pct_stat_len = sc->sc_pct.pct_status.grd_gas.access_size;
-	if (sc->sc_pct_stat_len == 0)
-		sc->sc_pct_stat_len = sc->sc_pct_stat_as;
-	sc->sc_pct_ctrl_len = sc->sc_pct.pct_ctrl.grd_gas.access_size;
-	if (sc->sc_pct_ctrl_len == 0)
-		sc->sc_pct_ctrl_len = sc->sc_pct_ctrl_as;
 
 	rv = 0;
 ffh:
@@ -554,9 +505,10 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (notify_type) {
 	case 0x80:	/* _PPC changed, retrieve new values */
-		acpicpu_getppc(sc);
-		/* reset performance to current percentage */
-		acpicpu_setperf(sc->sc_level);
+		acpicpu_getpct(sc);
+		acpicpu_getpss(sc);
+		if (sc->sc_notify)
+			sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
 		break;
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
@@ -581,7 +533,8 @@ acpicpu_setperf(int level)
 {
 	struct acpicpu_softc	*sc;
 	struct acpicpu_pss	*pss = NULL;
-	int			idx, len;
+	int			idx;
+	u_int32_t		stat_as, ctrl_as, stat_len, ctrl_len;
 	u_int32_t		status = 0;
 
 	sc = acpicpu_sc[cpu_number()];
@@ -599,44 +552,54 @@ acpicpu_setperf(int level)
 	 * XXX this should be handled more gracefully and it needs to also do
 	 * the duty cycle method instead of pss exclusively
 	 */
-	if (sc->sc_flags & FLAGS_NOPSS) {
+	if (sc->sc_pss_len == 0) {
 		dnprintf(10, "%s: acpicpu no _PSS\n", sc->sc_devnode->name);
 		return;
 	}
 
-	if (sc->sc_ppc)
-		len = sc->sc_ppc;
-	else
-		len = sc->sc_pss_len;
-	idx = (len - 1) - (level / (100 / len));
+	idx = (sc->sc_pss_len - 1) - (level / (100 / sc->sc_pss_len));
 	if (idx < 0)
-		idx = 0;
+		idx = 0; /* compensate */
+	if (idx > sc->sc_pss_len) {
+		/* XXX should never happen */
+		printf("%s: acpicpu setperf index out of range\n",
+		    sc->sc_devnode->name);
+		return;
+	}
 
-	if (sc->sc_ppc)
-		idx += sc->sc_pss_len - sc->sc_ppc;
-
-	if (idx > sc->sc_pss_len)
-		idx = sc->sc_pss_len - 1;
-
-	dnprintf(10, "%s: acpicpu setperf index %d pss_len %d ppc %d\n",
-	    sc->sc_devnode->name, idx, sc->sc_pss_len, sc->sc_ppc);
+	dnprintf(10, "%s: acpicpu setperf index %d\n",
+	    sc->sc_devnode->name, idx);
 
 	pss = &sc->sc_pss[idx];
+
+	/* if not set assume single 32 bit access */
+	stat_as = sc->sc_pct.pct_status.grd_gas.register_bit_width / 8;
+	if (stat_as == 0)
+		stat_as = 4;
+	ctrl_as = sc->sc_pct.pct_ctrl.grd_gas.register_bit_width / 8;
+	if (ctrl_as == 0)
+		ctrl_as = 4;
+	stat_len = sc->sc_pct.pct_status.grd_gas.access_size;
+	if (stat_len == 0)
+		stat_len = stat_as;
+	ctrl_len = sc->sc_pct.pct_ctrl.grd_gas.access_size;
+	if (ctrl_len == 0)
+		ctrl_len = ctrl_as;
 
 #ifdef ACPI_DEBUG
 	/* keep this for now since we will need this for debug in the field */
 	printf("0 status: %x %llx %u %u ctrl: %x %llx %u %u\n",
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
 	    sc->sc_pct.pct_status.grd_gas.address,
-	    sc->sc_pct_stat_as, sc->sc_pct_stat_len,
+	    stat_as, stat_len,
 	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
 	    sc->sc_pct.pct_ctrl.grd_gas.address,
-	    sc->sc_pct_ctrl_as, sc->sc_pct_ctrl_len);
+	    ctrl_as, ctrl_len);
 #endif
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
-	    sc->sc_pct.pct_status.grd_gas.address, sc->sc_pct_stat_as,
-	    sc->sc_pct_stat_len, &status);
+	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_len,
+	    &status);
 	dnprintf(20, "1 status: %u <- %u\n", status, pss->pss_status);
 
 	/* Are we already at the requested frequency? */
@@ -645,21 +608,20 @@ acpicpu_setperf(int level)
 
 	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
 	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	    sc->sc_pct.pct_ctrl.grd_gas.address, sc->sc_pct_ctrl_as,
-	    sc->sc_pct_ctrl_len, &pss->pss_ctrl);
+	    sc->sc_pct.pct_ctrl.grd_gas.address, ctrl_as, ctrl_len,
+	    &pss->pss_ctrl);
 	dnprintf(20, "pss_ctrl: %x\n", pss->pss_ctrl);
 
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
-	    sc->sc_pct.pct_status.grd_gas.address, sc->sc_pct_stat_as,
-	    sc->sc_pct_stat_as, &status);
+	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_as,
+	    &status);
 	dnprintf(20, "2 status: %d\n", status);
 
 	/* Did the transition succeed? */
-	 if (status == pss->pss_status) {
+	 if (status == pss->pss_status)
 		cpuspeed = pss->pss_core_freq;
-		sc->sc_level = level;
-	} else
+	else
 		printf("%s: acpicpu setperf failed to alter frequency\n",
 		    sc->sc_devnode->name);
 }
