@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.46 2007/11/08 19:20:09 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.47 2007/12/27 00:08:33 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2416,15 +2416,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		toff = fxdr_unsigned(u_quad_t, *tl++);
 	}
-	off = toff;
-	cnt = fxdr_unsigned(int, *tl);
-	siz = ((cnt + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (siz > xfer)
-		siz = xfer;
-	if (cnt > xfer)
-		cnt = xfer;
-	fullsiz = siz;
+
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
 	if (error) {
@@ -2432,16 +2424,8 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	if (v3) {
-		error = getret = VOP_GETATTR(vp, &at, cred, procp);
-#ifdef NFS3_STRICTVERF
-		/*
-		 * XXX This check is too strict for Solaris 2.5 clients.
-		 */
-		if (!error && toff && verf != at.va_filerev)
-			error = NFSERR_BAD_COOKIE;
-#endif
-	}
+
+	error = getret = VOP_GETATTR(vp, &at, cred, procp);
 	if (!error)
 		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
 	if (error) {
@@ -2450,6 +2434,16 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
+
+	off = toff;
+	cnt = fxdr_unsigned(int, *tl);
+	siz = ((cnt + at.va_blocksize - 1) & ~(at.va_blocksize - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
+	if (siz > xfer)
+		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
+	fullsiz = siz;
 	VOP_UNLOCK(vp, 0, procp);
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
@@ -2675,16 +2669,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	tl += 2;
 	verf = fxdr_hyper(tl);
 	tl += 2;
-	siz = fxdr_unsigned(int, *tl++);
-	cnt = fxdr_unsigned(int, *tl);
-	off = toff;
-	siz = ((siz + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (siz > xfer)
-		siz = xfer;
-	if (cnt > xfer)
-		cnt = xfer;
-	fullsiz = siz;
+
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
 	if (error) {
@@ -2692,25 +2677,28 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
+
 	error = getret = VOP_GETATTR(vp, &at, cred, procp);
-#ifdef NFS3_STRICTVERF
-	/*
-	 * XXX This check is too strict for Solaris 2.5 clients.
-	 */
-	if (!error && toff && verf != at.va_filerev)
-		error = NFSERR_BAD_COOKIE;
-#endif
-	if (!error) {
+	if (!error)
 		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
-	}
 	if (error) {
 		vput(vp);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	VOP_UNLOCK(vp, 0, procp);
 
+	siz = fxdr_unsigned(int, *tl++);
+	cnt = fxdr_unsigned(int, *tl);
+	off = toff;
+	siz = ((siz + at.va_blocksize - 1) & ~(at.va_blocksize - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
+	if (siz > xfer)
+		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
+	fullsiz = siz;
+	VOP_UNLOCK(vp, 0, procp);
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
