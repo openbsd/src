@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.35 2007/09/15 19:22:18 bluhm Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.36 2007/12/27 13:59:12 thib Exp $  */
 
 /*
  * Portions of this code are:
@@ -189,6 +189,16 @@ vop_generic_kqfilter(void *v)
 	}
 
 	return (0);
+}
+
+/* Trivial lookup routine that always fails. */
+int
+vop_generic_lookup(void *v)
+{
+	struct vop_lookup_args	*ap = v;
+
+	*ap->a_vpp = NULL;
+	return (ENOTDIR);
 }
 
 void

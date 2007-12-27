@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.18 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.19 2007/12/27 13:59:12 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 int	dead_badop(void *);
 int	dead_ebadf(void *);
 
-int	dead_lookup(void *);
 #define dead_create	dead_badop
 #define dead_mknod	dead_badop
 int	dead_open(void *);
@@ -88,7 +87,7 @@ int (**dead_vnodeop_p)(void *);
 
 struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, dead_lookup },	/* lookup */
+	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, dead_create },	/* create */
 	{ &vop_mknod_desc, dead_mknod },	/* mknod */
 	{ &vop_open_desc, dead_open },		/* open */
@@ -125,19 +124,6 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 };
 struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };
-
-/*
- * Trivial lookup routine that always fails.
- */
-/* ARGSUSED */
-int
-dead_lookup(void *v)
-{
-	struct vop_lookup_args *ap = v;
-
-	*ap->a_vpp = NULL;
-	return (ENOTDIR);
-}
 
 /*
  * Open always fails as if device did not exist.

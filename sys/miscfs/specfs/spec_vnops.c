@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.43 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.44 2007/12/27 13:59:12 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct vnode *speclisth[SPECHSZ];
 int (**spec_vnodeop_p)(void *);
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, spec_lookup },		/* lookup */
+	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
@@ -104,18 +104,6 @@ spec_vnoperate(void *v)
 	struct vop_generic_args *ap = v;
 
 	return (VOCALL(spec_vnodeop_p, ap->a_desc->vdesc_offset, ap));
-}
-
-/*
- * Trivial lookup routine that always fails.
- */
-int
-spec_lookup(void *v)
-{
-	struct vop_lookup_args *ap = v;
-
-	*ap->a_vpp = NULL;
-	return (ENOTDIR);
 }
 
 /*

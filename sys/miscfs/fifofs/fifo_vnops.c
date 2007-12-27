@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.25 2007/10/29 15:38:00 chl Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.26 2007/12/27 13:59:12 thib Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct fifoinfo {
 int (**fifo_vnodeop_p)(void *);
 struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
+	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
 	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
 	{ &vop_open_desc, fifo_open },			/* open */
@@ -122,19 +122,6 @@ struct filterops fiforead_filtops =
 	{ 1, NULL, filt_fifordetach, filt_fiforead };
 struct filterops fifowrite_filtops =
 	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
-
-/*
- * Trivial lookup routine that always fails.
- */
-/* ARGSUSED */
-int
-fifo_lookup(void *v)
-{
-	struct vop_lookup_args *ap = v;
-	
-	*ap->a_vpp = NULL;
-	return (ENOTDIR);
-}
 
 /*
  * Open called to set up a new instance of a fifo or
