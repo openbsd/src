@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.27 2006/11/18 12:04:57 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.28 2007/12/27 23:17:53 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include <machine/cpu.h>
 
 #include <machine/mvme188.h>
-#include <mvme88k/dev/sysconreg.h>
+#include <mvme88k/dev/sysconvar.h>
 
 struct sysconsoftc {
 	struct device	sc_dev;
@@ -46,9 +46,6 @@ struct sysconsoftc {
 	struct intrhand sc_abih;	/* `abort' switch */
 	struct intrhand sc_acih;	/* `ac fail' */
 	struct intrhand sc_sfih;	/* `sys fail' */
-#if 0
-	struct intrhand sc_m188ih;	/* `m188 interrupt' */
-#endif
 };
 
 void	sysconattach(struct device *, struct device *, void *);
@@ -59,7 +56,6 @@ int	syscon_scan(struct device *, void *, void *);
 int	sysconabort(void *);
 int	sysconacfail(void *);
 int	sysconsysfail(void *);
-int	sysconm188(void *);
 
 struct cfattach syscon_ca = {
 	sizeof(struct sysconsoftc), sysconmatch, sysconattach
@@ -70,74 +66,34 @@ struct cfdriver syscon_cd = {
 };
 
 int
-sysconmatch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+sysconmatch(struct device *parent, void *cf, void *args)
 {
 	/* Don't match if wrong cpu */
 	if (brdtyp != BRD_188)
 		return (0);
 
-	return (1);
-}
-
-int
-syscon_print(args, bus)
-	void *args;
-	const char *bus;
-{
-	struct confargs *ca = args;
-
-	if (ca->ca_offset != -1)
-		printf(" offset 0x%x", ca->ca_offset);
-	if (ca->ca_ipl > 0)
-		printf(" ipl %d", ca->ca_ipl);
-	return (UNCONF);
-}
-
-int
-syscon_scan(parent, child, args)
-	struct device *parent;
-	void *child, *args;
-{
-	struct cfdata *cf = child;
-	struct confargs oca, *ca = args;
-
-	bzero(&oca, sizeof oca);
-	oca.ca_iot = ca->ca_iot;
-	oca.ca_dmat = ca->ca_dmat;
-	oca.ca_offset = cf->cf_loc[0];
-	oca.ca_ipl = cf->cf_loc[1];
-	if (oca.ca_offset != -1) {
-		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
-	} else {
-		oca.ca_paddr = -1;
-	}
-	oca.ca_bustype = BUS_SYSCON;
-	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
-		return (0);
-	config_attach(parent, cf, &oca, syscon_print);
-	return (1);
+	return (syscon_cd.cd_ndevs == 0);
 }
 
 void
-sysconattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+sysconattach(struct device *parent, struct device *self, void *args)
 {
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
+	int i;
 
 	printf("\n");
+
+	/*
+	 * Set up interrupt handlers.
+	 */
+	for (i = 0; i < INTSRC_VME; i++)
+		SLIST_INIT(&sysconintr_handlers[i]);
 
 	/*
 	 * Clear SYSFAIL if lit.
 	 */
 	*(volatile u_int32_t *)MVME188_UCSR |= UCSR_DRVSFBIT;
 
-	/*
-	 * pseudo driver, abort interrupt handler
-	 */
 	sc->sc_abih.ih_fn = sysconabort;
 	sc->sc_abih.ih_arg = 0;
 	sc->sc_abih.ih_wantframe = 1;
@@ -153,37 +109,147 @@ sysconattach(parent, self, args)
 	sc->sc_sfih.ih_wantframe = 1;
 	sc->sc_sfih.ih_ipl = IPL_ABORT;
 
-#if 0
-	sc->sc_m188ih.ih_fn = sysconm188;
-	sc->sc_m188ih.ih_arg = 0;
-	sc->sc_m188ih.ih_wantframe = 1;
-	sc->sc_m188ih.ih_ipl = IPL_ABORT;
-#endif
-
-	sysconintr_establish(SYSCV_ABRT, &sc->sc_abih, "abort");
-	sysconintr_establish(SYSCV_ACF, &sc->sc_acih, "acfail");
-	sysconintr_establish(SYSCV_SYSF, &sc->sc_sfih, "sysfail");
-#if 0
-	intr_establish(M188_IVEC, &sc->sc_m188ih, self->dv_xname);
-#endif
+	sysconintr_establish(INTSRC_ABORT, &sc->sc_abih, "abort");
+	sysconintr_establish(INTSRC_ACFAIL, &sc->sc_acih, "acfail");
+	sysconintr_establish(INTSRC_SYSFAIL, &sc->sc_sfih, "sysfail");
 
 	config_search(syscon_scan, self, args);
 }
 
 int
-sysconintr_establish(int vec, struct intrhand *ih, const char *name)
+syscon_scan(struct device *parent, void *child, void *args)
 {
-#ifdef DIAGNOSTIC
-	if (vec < 0 || vec >= SYSCON_NVEC)
-		panic("sysconintr_establish: illegal vector 0x%x", vec);
-#endif
+	struct cfdata *cf = child;
+	struct confargs oca, *ca = args;
 
-	return intr_establish(SYSCON_VECT + vec, ih, name);
+	bzero(&oca, sizeof oca);
+	oca.ca_iot = ca->ca_iot;
+	oca.ca_dmat = ca->ca_dmat;
+	oca.ca_offset = cf->cf_loc[0];
+	oca.ca_ipl = cf->cf_loc[1];
+	if (oca.ca_offset != -1)
+		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
+	else
+		oca.ca_paddr = -1;
+	oca.ca_bustype = BUS_SYSCON;
+	oca.ca_name = cf->cf_driver->cd_name;
+
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
+		return (0);
+
+	config_attach(parent, cf, &oca, syscon_print);
+	return (1);
 }
 
 int
-sysconabort(eframe)
-	void *eframe;
+syscon_print(void *args, const char *bus)
+{
+	struct confargs *ca = args;
+
+	if (ca->ca_offset != -1)
+		printf(" offset 0x%x", ca->ca_offset);
+	if (ca->ca_ipl > 0)
+		printf(" ipl %d", ca->ca_ipl);
+	return (UNCONF);
+}
+
+/*
+ * Interrupt related code
+ */
+
+intrhand_t sysconintr_handlers[INTSRC_VME];
+
+int
+sysconintr_establish(u_int intsrc, struct intrhand *ih, const char *name)
+{
+	intrhand_t *list;
+
+	list = &sysconintr_handlers[intsrc];
+	if (!SLIST_EMPTY(list)) {
+#ifdef DIAGNOSTIC
+		printf("%s: interrupt source %u already registered\n",
+		    __func__, intsrc);
+#endif
+		return (EINVAL);
+	}
+
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
+	    &evcount_intr);
+	SLIST_INSERT_HEAD(list, ih, ih_link);
+
+	syscon_intsrc_enable(intsrc, ih->ih_ipl);
+
+	return (0);
+}
+
+void
+sysconintr_disestablish(u_int intsrc, struct intrhand *ih)
+{
+	intrhand_t *list;
+
+	list = &sysconintr_handlers[intsrc];
+	evcount_detach(&ih->ih_count);
+	SLIST_REMOVE(list, ih, intrhand, ih_link);
+
+	syscon_intsrc_disable(intsrc);
+}
+
+/* Interrupt masks per logical interrupt source */
+const u_int32_t syscon_intsrc[] = {
+	0,
+	IRQ_ABORT,
+	IRQ_ACF,
+	IRQ_SF,
+	IRQ_CIOI,
+	IRQ_DTI,
+	IRQ_DI,
+	IRQ_VME1,
+	IRQ_VME2,
+	IRQ_VME3,
+	IRQ_VME4,
+	IRQ_VME5,
+	IRQ_VME6,
+	IRQ_VME7
+};
+
+void
+syscon_intsrc_enable(u_int intsrc, int ipl)
+{
+	u_int32_t psr;
+	u_int32_t intmask = syscon_intsrc[intsrc];
+	int i;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = IPL_NONE; i < ipl; i++)
+		int_mask_val[i] |= intmask;
+
+	setipl(getipl());
+
+	set_psr(psr);
+}
+
+void
+syscon_intsrc_disable(u_int intsrc)
+{
+	u_int32_t psr;
+	u_int32_t intmask = syscon_intsrc[intsrc];
+	int i;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = 0; i < NIPLS; i++)
+		int_mask_val[i] &= ~intmask;
+
+	setipl(getipl());
+
+	set_psr(psr);
+}
+
+int
+sysconabort(void *eframe)
 {
 	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_ABORT;
 	nmihand(eframe);
@@ -191,8 +257,7 @@ sysconabort(eframe)
 }
 
 int
-sysconsysfail(eframe)
-	void *eframe;
+sysconsysfail(void *eframe)
 {
 	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_SYSFAIL;
 	printf("WARNING: SYSFAIL* ASSERTED\n");
@@ -200,21 +265,9 @@ sysconsysfail(eframe)
 }
 
 int
-sysconacfail(eframe)
-	void *eframe;
+sysconacfail(void *eframe)
 {
 	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_ACFAIL;
 	printf("WARNING: ACFAIL* ASSERTED\n");
 	return (1);
 }
-
-#if 0
-int
-sysconm188(eframe)
-	void *eframe;
-{
-	/* shouldn't happen! */
-	printf("MVME188: self-inflicted interrupt\n");
-	return (1);
-}
-#endif

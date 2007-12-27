@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2006/03/13 19:43:21 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.19 2007/12/27 23:17:55 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -49,6 +49,8 @@
 #define IPL_HIGH	6
 #define IPL_NMI		7
 #define IPL_ABORT	7
+
+#define	NIPLS		8
 
 #include <m88k/intr.h>
 

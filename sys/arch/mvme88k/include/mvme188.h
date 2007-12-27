@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.31 2007/11/11 13:06:57 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.32 2007/12/27 23:17:55 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -146,43 +146,10 @@
 	"\17IRQ5\15IRQ4\13IRQ3\11LMI" \
 	"\10SIGLPI\7IRQ2\5IRQ1\4SWI3\3SWI2\2SWI1\1SWI0"
 
-/* groups by function */
-
-/* hardware irq bits */
-#define HW_FAILURE_MASK		(IRQ_ABORT | IRQ_ACF | IRQ_ARBTO | IRQ_SF)
 /* IPI bits (see below) */
-#define CLOCK_IPI_MASK		(IRQ_SWI7 | IRQ_SWI6 | IRQ_SWI5 | IRQ_SWI4)
-#define IPI_MASK		(IRQ_SWI3 | IRQ_SWI2 | IRQ_SWI1 | IRQ_SWI0)
-/* VME irq bits */
-#define VME_INTERRUPT_MASK	(IRQ_VME7 | IRQ_VME6 | IRQ_VME5 | IRQ_VME4 | \
-				 IRQ_VME3 | IRQ_VME2 | IRQ_VME1)
-/* on-board irq bits */
-#define OBIO_INTERRUPT_MASK	(IRQ_DTI | IRQ_CIOI | IRQ_DI | IRQ_SIGHPI | \
-				 IRQ_LMI | IRQ_SIGLPI)
+#define	CLOCK_IPI_MASK		(IRQ_SWI7 | IRQ_SWI6 | IRQ_SWI5 | IRQ_SWI4)
+#define	IPI_MASK		(IRQ_SWI3 | IRQ_SWI2 | IRQ_SWI1 | IRQ_SWI0)
 
-/* groups by interrupt levels */
-
-#define LVL7			(IRQ_ABORT | IRQ_ACF /* | IRQ_VME7 */ | IRQ_SF)
-#define LVL6			(IRQ_VME6)
-#define LVL5			(IRQ_VME5 | IRQ_DTI | IRQ_CIOI)
-#define LVL4			(IRQ_VME4)
-#define LVL3			(IRQ_VME3 | IRQ_DI)
-#define LVL2			(IRQ_VME2)
-#define LVL1			(IRQ_VME1)
-
-/* interrupts we want to process on the master CPU only */
-#define SLAVE_MASK (HW_FAILURE_MASK | OBIO_INTERRUPT_MASK | VME_INTERRUPT_MASK)
-
-#define MASK_LVL_0		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2 | LVL1)
-#define MASK_LVL_1		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2)
-#define MASK_LVL_2		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3)
-#define MASK_LVL_3		(LVL7 | LVL6 | LVL5 | LVL4)
-#define MASK_LVL_4		(LVL7 | LVL6 | LVL5)
-#define MASK_LVL_5		(LVL7 | LVL6)
-#define MASK_LVL_6		(LVL7)
-#define MASK_LVL_7		(IRQ_ABORT)
-
-#define INT_LEVEL	        8		/* # of interrupt level + 1 */
 #define ISR_GET_CURRENT_MASK(cpu) \
 	(*(volatile u_int *)MVME188_IST & int_mask_reg[cpu])
 
@@ -304,6 +271,8 @@
 extern u_int32_t pfsr_save_188_straight[];
 extern u_int32_t pfsr_save_188_double[];
 extern u_int32_t pfsr_save_188_quad[];
+
+extern u_int32_t int_mask_val[NIPLS];
 #endif
 
 #endif	/* __MACHINE_MVME188_H__ */

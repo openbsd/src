@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.49 2007/05/19 20:35:20 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.50 2007/12/27 23:17:53 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -40,7 +40,7 @@
 #include <dev/cons.h>
 
 #include <machine/mvme188.h>
-#include <mvme88k/dev/sysconreg.h>
+#include <mvme88k/dev/sysconvar.h>
 #include <mvme88k/dev/dartreg.h>
 
 #ifdef	DDB
@@ -220,7 +220,6 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	dart_write(sc, DART_ACR, BDSET2 | CCLK16 | IPDCDIB | IPDCDIA);
 	dart_write(sc, DART_IMR, sc->sc_sv_reg.sv_imr);
 	dart_write(sc, DART_OPCR, OPSET);
-	dart_write(sc, DART_IVR, SYSCON_VECT + SYSCV_SCC);
 
 	/* enable interrupts */
 	sc->sc_ih.ih_fn = dartintr;
@@ -228,7 +227,7 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sysconintr_establish(SYSCV_SCC, &sc->sc_ih, self->dv_xname);
+	sysconintr_establish(INTSRC_DUART, &sc->sc_ih, self->dv_xname);
 	printf("\n");
 }
 

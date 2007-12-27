@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.47 2007/11/17 05:33:38 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.48 2007/12/27 23:17:53 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -44,7 +44,7 @@
 #include <mvme88k/dev/vme.h>
 #if NSYSCON > 0
 #include <machine/mvme188.h>
-#include <mvme88k/dev/sysconreg.h>
+#include <mvme88k/dev/sysconvar.h>
 #endif
 
 int	vmematch(struct device *, void *, void *);
@@ -54,7 +54,6 @@ void	vme2chip_init(struct vmesoftc *);
 void	vmesyscon_init(struct vmesoftc *);
 u_long	vme2chip_map(u_long, int);
 int	vme2abort(void *);
-int	sysconabort(void *);
 int	vmeprint(void *, const char *);
 
 int vmebustype;
@@ -192,7 +191,7 @@ vmeprint(args, bus)
 	printf(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_ipl > 0)
 		printf(" ipl %d", ca->ca_ipl);
-	if (ca->ca_vec > 0)
+	if (ca->ca_vec >= 0)
 		printf(" vec 0x%x", ca->ca_vec);
 	return (UNCONF);
 }
@@ -275,7 +274,7 @@ vmeattach(parent, self, args)
 	{
 		u_int8_t sconc;
 
-		vmevecbase = 0x60;  /* Hard coded for MVME188 */
+		vmevecbase = 0;	/* all vectors available */
 		sconc = *(volatile u_int8_t *)MVME188_GLOBAL1;
 		if (ISSET(sconc, M188_SYSCON))
 			printf(": system controller");

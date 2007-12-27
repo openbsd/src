@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.43 2007/11/17 05:37:53 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.44 2007/12/27 23:17:55 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -126,7 +126,7 @@
 #include <machine/m88100.h>
 #include <machine/mvme188.h>
 
-#include <mvme88k/dev/sysconreg.h>
+#include <mvme88k/dev/sysconvar.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
 #ifdef MULTIPROCESSOR
@@ -162,18 +162,16 @@ u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 u_int m188_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
 /*
- * external interrupt masks per spl.
+ * Interrupt masks, one per IPL level.
  */
-const u_int32_t int_mask_val[INT_LEVEL] = {
-	MASK_LVL_0,
-	MASK_LVL_1,
-	MASK_LVL_2,
-	MASK_LVL_3,
-	MASK_LVL_4,
-	MASK_LVL_5,
-	MASK_LVL_6,
-	MASK_LVL_7
-};
+u_int32_t int_mask_val[NIPLS];
+
+#ifdef MULTIPROCESSOR
+/*
+ * Interrupts allowed on secondary processors.
+ */
+#define	SLAVE_MASK	0
+#endif
 
 /*
  * Figure out how much memory is available, by querying the MBus registers.
@@ -226,9 +224,6 @@ m188_bootstrap()
 
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)MVME188_IENALL = 0;
-
-	/* supply a vector base for m188ih */
-	*(volatile u_int8_t *)MVME188_VIRQV = M188_IVEC;
 }
 
 void
@@ -269,11 +264,11 @@ safe_level(u_int mask, u_int curlevel)
 		curlevel = max(IPL_CLOCK, curlevel);
 	mask &= ~(IPI_MASK | CLOCK_IPI_MASK);
 #endif
-	for (i = curlevel; i < INT_LEVEL; i++)
+	for (i = curlevel; i < NIPLS; i++)
 		if ((int_mask_val[i] & mask) == 0)
 			return (i);
 
-	return (INT_LEVEL - 1);
+	return (NIPLS - 1);
 }
 
 u_int
@@ -301,7 +296,7 @@ m188_setipl(u_int level)
 	mask = int_mask_val[level];
 #ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
-		mask &= ~SLAVE_MASK;
+		mask &= SLAVE_MASK;
 	mask |= SWI_IPI_MASK(cpu);
 	if (level < IPL_CLOCK)
 		mask |= SWI_CLOCK_IPI_MASK(cpu);
@@ -337,7 +332,7 @@ m188_raiseipl(u_int level)
 		mask = int_mask_val[level];
 #ifdef MULTIPROCESSOR
 		if (cpu != master_cpu)
-			mask &= ~SLAVE_MASK;
+			mask &= SLAVE_MASK;
 		mask |= SWI_IPI_MASK(cpu);
 		if (level < IPL_CLOCK)
 			mask |= SWI_CLOCK_IPI_MASK(cpu);
@@ -436,47 +431,46 @@ m188_clock_ipi_handler(struct trapframe *eframe)
 #endif
 
 /*
- * Device interrupt handler for MVME188
- */
-
-/*
- * Hard coded vector table for onboard devices and hardware failure
- * interrupts.
+ * Provide the interrupt source for a give interrupt status bit.
  */
 const u_int obio_vec[32] = {
 	0,		/* SWI0 */
 	0,		/* SWI1 */
 	0,		/* SWI2 */
 	0,		/* SWI3 */
-	0,		/* VME1 */
+	INTSRC_VME,	/* VME1 */
 	0,
-	0,		/* VME2 */
-	0,		/* SIGLPI */	/* no vector, but always masked */
-	0,		/* LMI */	/* no vector, but always masked */
+	INTSRC_VME,	/* VME2 */
+	0,		/* SIGLPI */
+	0,		/* LMI */
 	0,
-	0,		/* VME3 */
+	INTSRC_VME,	/* VME3 */
 	0,
-	0,		/* VME4 */
+	INTSRC_VME,	/* VME4 */
 	0,
-	0,		/* VME5 */
+	INTSRC_VME,	/* VME5 */
 	0,
-	0,		/* SIGHPI */	/* no vector, but always masked */
-	SYSCV_SCC,	/* DI */
+	0,		/* SIGHPI */
+	INTSRC_DUART,	/* DI */
 	0,
-	0,		/* VME6 */
-	SYSCV_SYSF,	/* SF */
-	SYSCV_TIMER2,	/* CIOI */
+	INTSRC_VME,	/* VME6 */
+	INTSRC_SYSFAIL,	/* SF */
+	INTSRC_CIO,	/* CIOI */
 	0,
-	0,		/* VME7 */
+	INTSRC_VME,	/* VME7 */
 	0,		/* SWI4 */
 	0,		/* SWI5 */
 	0,		/* SWI6 */
 	0,		/* SWI7 */
-	SYSCV_TIMER1,	/* DTI */
-	0,		/* ARBTO */	/* no vector, but always masked */
-	SYSCV_ACF,	/* ACF */
-	SYSCV_ABRT	/* ABORT */
+	INTSRC_DTIMER,	/* DTI */
+	0,		/* ARBTO */
+	INTSRC_ACFAIL,	/* ACF */
+	INTSRC_ABORT	/* ABORT */
 };
+
+/*
+ * Device interrupt handler for MVME188
+ */
 
 #define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
 #define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
@@ -496,8 +490,9 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	intrhand_t *list;
 	int ret, intbit;
 	vaddr_t ivec;
-	u_int vec;
+	u_int intsrc, vec;
 	int unmasked = 0;
+	int warn;
 #ifdef DIAGNOSTIC
 	static int problems = 0;
 #endif
@@ -574,76 +569,43 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		}
 #endif
 
-		/* generate IACK and get the vector */
-
+		/* find the first bit set in the current mask */
+		warn = 0;
 		intbit = ff1(cur_mask);
-		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
-			vec = obio_vec[intbit];
-			if (vec == 0) {
-				panic("unknown onboard interrupt: mask = 0x%b",
-				    1 << intbit, IST_STRING);
-			}
-			vec += SYSCON_VECT;
-		} else if (HW_FAILURE_MASK & (1 << intbit)) {
-			vec = obio_vec[intbit];
-			if (vec == 0) {
-				panic("unknown hardware failure: mask = 0x%b",
-				    1 << intbit, IST_STRING);
-			}
-			vec += SYSCON_VECT;
-		} else if (VME_INTERRUPT_MASK & (1 << intbit)) {
+		intsrc = obio_vec[intbit];
+
+		if (intsrc == 0)
+			panic("%s: unexpected interrupt source (bit %d), "
+			    "level %d, mask 0x%b",
+			    __func__, intbit, level, cur_mask, IST_STRING);
+
+		if (intsrc == INTSRC_VME) {
 			ivec = MVME188_VIRQLV + (level << 2);
 			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
 				/*
-				 * This could be a self-inflicted interrupt.
-				 * Except that we never write to VIRQV, so
-				 * such things do not happen.
-
-				u_int src = 0x07 &
-				    *(volatile u_int32_t *)MVME188_VIRQLV;
-				if (src == 0)
-					vec = 0xff &
-					    *(volatile u_int32_t *)MVME188_VIRQV;
-				else
-
+				 * If only one VME interrupt is registered
+				 * with this IPL, we can reasonably safely
+				 * assume that this is our vector.
 				 */
-				{
-					/*
-					 * If only one VME interrupt is
-					 * registered with this IPL,
-					 * we can reasonably safely
-					 * assume that this is our vector.
-					 */
-					vec = vmevec_hints[level];
-					if (vec == (u_int)-1) {
-						printf("%s: timeout getting VME"
-						    " interrupt vector, "
-						    "level %d, mask 0x%b\n",
-						    __func__, level,
-						   cur_mask, IST_STRING); 
-						ign_mask |=  1 << intbit;
-						continue;
-					}
+				vec = vmevec_hints[level];
+				if (vec == (u_int)-1) {
+					printf("%s: timeout getting VME "
+					    "interrupt vector, "
+					    "level %d, mask 0x%b\n",
+					    __func__, level,
+					   cur_mask, IST_STRING); 
+					ign_mask |=  1 << intbit;
+					continue;
 				}
 			}
-			if (vec == 0) {
-				panic("%s: invalid VME interrupt vector, "
-				    "level %d, mask 0x%b",
-				    __func__, level, cur_mask, IST_STRING);
-			}
+			list = &intr_handlers[vec];
 		} else {
-			panic("%s: unexpected interrupt source, "
-			    "level %d, mask 0x%b",
-			    __func__, level, cur_mask, IST_STRING);
+			list = &sysconintr_handlers[intsrc];
 		}
 
-		list = &intr_handlers[vec];
 		if (SLIST_EMPTY(list)) {
-			printf("%s: spurious interrupt, "
-			    "level %d, vec 0x%x, mask 0x%b\n",
-			    __func__, level, vec, cur_mask, IST_STRING);
-			ign_mask |=  1 << intbit;
+			warn = 1;
 		} else {
 			/*
 			 * Walk through all interrupt handlers in the chain
@@ -661,13 +623,25 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 					break;
 				}
 			}
-			if (ret == 0) {
-				printf("%s: unclaimed interrupt, "
+			if (ret == 0)
+				warn = 2;
+		}
+
+		if (warn != 0) {
+			ign_mask |= 1 << intbit;
+
+			if (intsrc == INTSRC_VME)
+				printf("%s: %s VME interrupt, "
 				    "level %d, vec 0x%x, mask 0x%b\n",
-				    __func__, level, vec, cur_mask, IST_STRING);
-				ign_mask |=  1 << intbit;
-				continue;
-			}
+				    __func__,
+				    warn == 1 ? "spurious" : "unclaimed",
+				    level, vec, cur_mask, IST_STRING);
+			else
+				printf("%s: %s interrupt, "
+				    "level %d, bit %d, mask 0x%b\n",
+				    __func__,
+				    warn == 1 ? "spurious" : "unclaimed",
+				    level, intbit, cur_mask, IST_STRING);
 		}
 	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask) != 0);
 
@@ -708,7 +682,13 @@ u_int	read_cio(int);
 void	write_cio(int, u_int);
 
 int	m188_clockintr(void *);
+int	m188_calibrateintr(void *);
 int	m188_statintr(void *);
+
+volatile int	m188_calibrate_phase = 0;
+
+/* multiplication factor for delay() */
+u_int	m188_delay_const = 25;		/* no MVME188 is faster than 25MHz */
 
 #if defined(MULTIPROCESSOR) && 0
 #include <machine/lock.h>
@@ -769,6 +749,11 @@ m188_init_clocks(void)
 {
 	volatile u_int8_t imr;
 	int statint, minint;
+	u_int iter, divisor;
+	u_int32_t psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
 
 	CIO_LOCK_INIT();
 
@@ -803,8 +788,6 @@ m188_init_clocks(void)
 
 	/* clear the counter/timer output OP3 while we program the DART */
 	*(volatile u_int8_t *)DART_OPCR = 0x00;
-	/* set interrupt vec */
-	*(volatile u_int8_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
 	/* do the stop counter/timer command */
 	imr = *(volatile u_int8_t *)DART_STOPC;
 	/* set counter/timer to counter mode, PCLK/16 */
@@ -816,17 +799,57 @@ m188_init_clocks(void)
 	/* give the start counter/timer command */
 	imr = *(volatile u_int8_t *)DART_STARTC;
 
-	clock_ih.ih_fn = m188_clockintr;
-	clock_ih.ih_arg = 0;
-	clock_ih.ih_wantframe = 1;
-	clock_ih.ih_ipl = IPL_CLOCK;
-	sysconintr_establish(SYSCV_TIMER2, &clock_ih, "clock");
-
 	statclock_ih.ih_fn = m188_statintr;
 	statclock_ih.ih_arg = 0;
 	statclock_ih.ih_wantframe = 1;
 	statclock_ih.ih_ipl = IPL_STATCLOCK;
-	sysconintr_establish(SYSCV_TIMER1, &statclock_ih, "stat");
+	sysconintr_establish(INTSRC_DTIMER, &statclock_ih, "stat");
+
+	/*
+	 * Calibrate delay const.
+	 */
+	clock_ih.ih_fn = m188_calibrateintr;
+	clock_ih.ih_arg = 0;
+	clock_ih.ih_wantframe = 1;
+	clock_ih.ih_ipl = IPL_CLOCK;
+	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+
+	m188_delay_const = 1;
+	set_psr(psr);
+	while (m188_calibrate_phase == 0)
+		;
+
+	iter = 0;
+	while (m188_calibrate_phase == 1) {
+		delay(10000);
+		iter++;
+	}
+
+	divisor = 1000000 / 10000;
+	m188_delay_const = (iter * hz + divisor - 1) / divisor;
+
+	set_psr(psr | PSR_IND);
+
+	sysconintr_disestablish(INTSRC_CIO, &clock_ih);
+	clock_ih.ih_fn = m188_clockintr;
+	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+
+	set_psr(psr);
+}
+
+int
+m188_calibrateintr(void *eframe)
+{
+	CIO_LOCK();
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
+
+	/* restart counter */
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	CIO_UNLOCK();
+
+	m188_calibrate_phase++;
+
+	return (1);
 }
 
 int

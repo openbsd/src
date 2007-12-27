@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.205 2007/12/15 19:37:41 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.206 2007/12/27 23:17:55 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -76,6 +76,9 @@
 #include <machine/reg.h>
 #ifdef M88100
 #include <machine/m88100.h>
+#endif
+#ifdef MVME188
+#include <mvme88k/dev/sysconvar.h>
 #endif
 
 #include <dev/cons.h>
@@ -768,38 +771,39 @@ intr_findvec(int start, int end, int skip)
 }
 
 /*
- * Try to insert ihand in the list of handlers for vector vec.
+ * Try to insert ih in the list of handlers for vector vec.
  */
 int
-intr_establish(int vec, struct intrhand *ihand, const char *name)
+intr_establish(int vec, struct intrhand *ih, const char *name)
 {
 	struct intrhand *intr;
 	intrhand_t *list;
 
-	if (vec < 0 || vec >= NVMEINTR) {
-#ifdef DIAGNOSTIC
-		panic("intr_establish: vec (0x%x) not between 0x00 and 0xff",
-		      vec);
-#endif /* DIAGNOSTIC */
-		return (EINVAL);
-	}
-
 	list = &intr_handlers[vec];
 	if (!SLIST_EMPTY(list)) {
 		intr = SLIST_FIRST(list);
-		if (intr->ih_ipl != ihand->ih_ipl) {
+		if (intr->ih_ipl != ih->ih_ipl) {
 #ifdef DIAGNOSTIC
 			panic("intr_establish: there are other handlers with "
 			    "vec (0x%x) at ipl %x, but you want it at %x",
-			    vec, intr->ih_ipl, ihand->ih_ipl);
+			    vec, intr->ih_ipl, ih->ih_ipl);
 #endif /* DIAGNOSTIC */
 			return (EINVAL);
 		}
 	}
 
-	evcount_attach(&ihand->ih_count, name, (void *)&ihand->ih_ipl,
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
 	    &evcount_intr);
-	SLIST_INSERT_HEAD(list, ihand, ih_link);
+	SLIST_INSERT_HEAD(list, ih, ih_link);
+
+#ifdef MVME188
+	/*
+	 * Enable VME interrupt source for this level.
+	 */
+	if (brdtyp == BRD_188)
+		syscon_intsrc_enable(INTSRC_VME + (ih->ih_ipl - 1), ih->ih_ipl);
+#endif
+
 	return (0);
 }
 
