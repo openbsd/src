@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.9 2007/05/09 17:42:19 deraadt Exp $
+ * $OpenBSD: kern_tc.c,v 1.10 2007/12/27 19:05:22 otto Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -567,11 +567,11 @@ ntp_update_second(int64_t *adjust, time_t *sec)
 	if (adjtimedelta.tv_sec > 0)
 		adj.tv_usec = 5000;
 	else if (adjtimedelta.tv_sec == 0)
-		adj.tv_usec = MIN(500, adjtimedelta.tv_usec);
+		adj.tv_usec = MIN(5000, adjtimedelta.tv_usec);
 	else if (adjtimedelta.tv_sec < -1)
 		adj.tv_usec = -5000;
 	else if (adjtimedelta.tv_sec == -1)
-		adj.tv_usec = MAX(-500, adjtimedelta.tv_usec - 1000000);
+		adj.tv_usec = MAX(-5000, adjtimedelta.tv_usec - 1000000);
 	timersub(&adjtimedelta, &adj, &adjtimedelta);
 	*adjust = ((int64_t)adj.tv_usec * 1000) << 32;
 	*adjust += timecounter->tc_freq_adj;
