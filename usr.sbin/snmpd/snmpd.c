@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.2 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	int			 noaction = 0;
 	const char		*conffile = CONF_FILE;
 
-	mps_init();
+	smi_init();
 
 	log_init(1);	/* log to stderr until daemonized */
 

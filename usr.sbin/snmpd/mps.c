@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.6 2007/12/28 16:27:51 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.7 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -46,31 +46,10 @@
 #include "snmpd.h"
 #include "mib.h"
 
-RB_HEAD(oidtree, oid);
-RB_PROTOTYPE(oidtree, oid, o_element, mps_oid_cmp);
-
 extern struct snmpd *env;
-struct oidtree mps_oidtree;
 
 struct ber_oid *
 	 mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
-
-u_long
-mps_getticks(void)
-{
-	struct timeval	 now, run;
-	u_long		 ticks;
-
-	gettimeofday(&now, NULL);
-	if (timercmp(&now, &env->sc_starttime, <=))
-		return (0);
-	timersub(&now, &env->sc_starttime, &run);
-	ticks = run.tv_sec * 100;
-	if (run.tv_usec)
-		ticks += run.tv_usec / 10000;
-
-	return (ticks);
-}
 
 int
 mps_getstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
@@ -131,54 +110,17 @@ mps_getts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	return (0);
 }
 
-void
-mps_oidlen(struct ber_oid *o)
-{
-	size_t	 i;
-	for (i = 0; i < BER_MAX_OID_LEN && o->bo_id[i] != 0; i++);
-	o->bo_n = i;
-}
-
-char *
-mps_oidstring(struct ber_oid *o, char *buf, size_t len)
-{
-	char		 str[256];
-	struct oid	*value, key;
-	size_t		 i, lookup = 1;
-
-	bzero(buf, len);
-	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	key.o_flags |= OID_TABLE;	/* do not match wildcards */
-
-	if (env->sc_flags & SNMPD_F_NONAMES)
-		lookup = 0;
-
-	for (i = 0; i < o->bo_n; i++) {
-		key.o_oidlen = i + 1;
-		if (lookup &&
-		    (value = RB_FIND(oidtree, &mps_oidtree, &key)) != NULL)
-			snprintf(str, sizeof(str), "%s", value->o_name);
-		else
-			snprintf(str, sizeof(str), "%d", key.o_oid[i]);
-		strlcat(buf, str, len);
-		if (i < (o->bo_n - 1))
-			strlcat(buf, ".", len);
-	}
-
-	return (buf);
-}
-
 struct ber_element *
 mps_getreq(struct ber_element *root, struct ber_oid *o)
 {
 	struct ber_element	*elm = root;
 	struct oid		 key, *value;
 
-	mps_oidlen(o);
+	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &mps_oidtree, &key);
+	value = smi_find(&key);
 	if (value == NULL)
 		return (NULL);
 	if (OID_NOTSET(value))
@@ -199,11 +141,11 @@ mps_setreq(struct ber_element *ber, struct ber_oid *o)
 {
 	struct oid		 key, *value;
 
-	mps_oidlen(o);
+	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (-1);
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &mps_oidtree, &key);
+	value = smi_find(&key);
 	if (value == NULL)
 		return (-1);
 	if ((value->o_flags & OID_WR) == 0 ||
@@ -221,11 +163,11 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 	int			 ret;
 	struct ber_oid		 no;
 
-	mps_oidlen(o);
+	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &mps_oidtree, &key);
+	value = smi_find(&key);
 	if (value == NULL)
 		return (NULL);
 	if (value->o_flags & OID_TABLE) {
@@ -244,7 +186,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 		}
 	}
 	for (next = value; next != NULL;) {
-		next = RB_NEXT(oidtree, &mps_oidtree, next);
+		next = smi_next(next);
 		if (next == NULL)
 			break;
 		if (!OID_NOTSET(next) && next->o_get != NULL)
@@ -275,11 +217,11 @@ mps_set(struct ber_oid *o, void *p, long long len)
 {
 	struct oid		 key, *value;
 
-	mps_oidlen(o);
+	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (-1);
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &mps_oidtree, &key);
+	value = smi_find(&key);
 	if (value == NULL)
 		return (-1);
 	if (value->o_data != NULL)
@@ -320,7 +262,7 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 		bcopy(&oid->o_id, &b.o_id, sizeof(struct ber_oid));
 		b.o_oidlen--;
 		b.o_flags |= OID_TABLE;
-		if (mps_oid_cmp(&a, &b) == 0) {
+		if (smi_oid_cmp(&a, &b) == 0) {
 			col = oid->o_oid[id];
 			if (col > o->bo_id[id])
 				idx = 1;
@@ -336,122 +278,7 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	if (!no->bo_id[subid])
 		no->bo_id[subid]++;
 
-	mps_oidlen(no);
+	smi_oidlen(no);
 
 	return (no);
 }
-
-void
-mps_delete(struct oid *oid)
-{
-	struct oid	 key, *value;
-
-	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
-	if ((value = RB_FIND(oidtree, &mps_oidtree, &key)) != NULL &&
-	    value == oid)
-		RB_REMOVE(oidtree, &mps_oidtree, value);
-
-	if (oid->o_data != NULL)
-		free(oid->o_data);
-	if (oid->o_flags & OID_DYNAMIC) {
-		free(oid->o_name);
-		free(oid);
-	}
-}
-
-void
-mps_insert(struct oid *oid)
-{
-	struct oid		 key, *value;
-
-	if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
-		fatalx("mps_insert: invalid MIB table");
-
-	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &mps_oidtree, &key);
-	if (value != NULL)
-		mps_delete(value);
-
-	RB_INSERT(oidtree, &mps_oidtree, oid);
-}
-
-void
-mps_mibtree(struct oid *oids)
-{
-	struct oid	*oid, *decl;
-	size_t		 i;
-
-	for (i = 0; oids[i].o_oid[0] != 0; i++) {
-		oid = &oids[i];
-		mps_oidlen(&oid->o_id);
-		if (oid->o_name != NULL) {
-			if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
-				fatalx("mps_mibtree: invalid MIB table");
-			RB_INSERT(oidtree, &mps_oidtree, oid);
-			continue;
-		}
-		decl = RB_FIND(oidtree, &mps_oidtree, oid);
-		if (decl == NULL)
-			fatalx("mps_mibtree: undeclared MIB");
-		decl->o_flags = oid->o_flags;
-		decl->o_get = oid->o_get;
-		decl->o_set = oid->o_set;
-		decl->o_val = oid->o_val;
-		decl->o_data = oid->o_data;
-	}
-}
-
-int
-mps_init(void)
-{
-	RB_INIT(&mps_oidtree);
-	mib_init();
-	return (0);
-}
-
-struct oid *
-mps_foreach(struct oid *oid, u_int flags)
-{
-	/*
-	 * Traverse the tree of MIBs with the option to check
-	 * for specific OID flags.
-	 */
-	if (oid == NULL) {
-		oid = RB_MIN(oidtree, &mps_oidtree);
-		if (oid == NULL)
-			return (NULL);
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-	for (;;) {
-		oid = RB_NEXT(oidtree, &mps_oidtree, oid);
-		if (oid == NULL)
-			break;
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-
-	return (oid);
-}
-
-long
-mps_oid_cmp(struct oid *a, struct oid *b)
-{
-	size_t	 i;
-
-	for (i = 0; i < MIN(a->o_oidlen, b->o_oidlen); i++)
-		if (a->o_oid[i] != b->o_oid[i])
-			return (a->o_oid[i] - b->o_oid[i]);
-
-	/*
-	 * Return success if the matched object is a table
-	 * (it will match any sub-elements)
-	 */
-	if ((b->o_flags & OID_TABLE) &&
-	    (a->o_flags & OID_TABLE) == 0)
-		return (0);
-
-	return (a->o_oidlen - b->o_oidlen);
-}
-
-RB_GENERATE(oidtree, oid, o_element, mps_oid_cmp);

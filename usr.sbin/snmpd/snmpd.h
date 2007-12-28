@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.6 2007/12/28 16:27:51 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.7 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -380,21 +380,12 @@ struct kif	*kr_getnextif(u_short);
 pid_t		 snmpe(struct snmpd *, int [2]);
 
 /* mps.c */
-int		 mps_init(void);
-u_long		 mps_getticks(void);
-long		 mps_oid_cmp(struct oid *, struct oid *);
-void		 mps_mibtree(struct oid *);
-struct oid	*mps_foreach(struct oid *, u_int);
-void		 mps_oidlen(struct ber_oid *);
-char		*mps_oidstring(struct ber_oid *, char *, size_t);
 struct ber_element *
 		 mps_getreq(struct ber_element *, struct ber_oid *);
 struct ber_element *
 		 mps_getnextreq(struct ber_element *, struct ber_oid *);
 int		 mps_setreq(struct ber_element *, struct ber_oid *);
 int		 mps_set(struct ber_oid *, void *, long long);
-void		 mps_delete(struct oid *);
-void		 mps_insert(struct oid *);
 int		 mps_getstr(struct oid *, struct ber_oid *,
 		    struct ber_element **);
 int		 mps_setstr(struct oid *, struct ber_oid *,
@@ -405,5 +396,18 @@ int		 mps_setint(struct oid *, struct ber_oid *,
 		    struct ber_element **);
 int		 mps_getts(struct oid *, struct ber_oid *,
 		    struct ber_element **);
+
+/* smi.c */
+int		 smi_init(void);
+u_long		 smi_getticks(void);
+void		 smi_mibtree(struct oid *);
+struct oid	*smi_find(struct oid *);
+struct oid	*smi_next(struct oid *);
+struct oid	*smi_foreach(struct oid *, u_int);
+void		 smi_oidlen(struct ber_oid *);
+char		*smi_oidstring(struct ber_oid *, char *, size_t);
+void		 smi_delete(struct oid *);
+void		 smi_insert(struct oid *);
+long		 smi_oid_cmp(struct oid *, struct oid *);
 
 #endif /* _SNMPD_H */

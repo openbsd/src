@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.3 2007/12/28 15:33:37 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.4 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -404,7 +404,7 @@ kif_insert(u_short if_index)
 		fatalx("kif_insert: RB_INSERT");
 
 	kr_state.ks_nkif++;
-	kr_state.ks_iflastchange = mps_getticks();
+	kr_state.ks_iflastchange = smi_getticks();
 
 	return (kif);
 }
@@ -426,7 +426,7 @@ kif_remove(struct kif_node *kif)
 	free(kif);
 
 	kr_state.ks_nkif--;
-	kr_state.ks_iflastchange = mps_getticks();
+	kr_state.ks_iflastchange = smi_getticks();
 
 	return (0);
 }
@@ -439,7 +439,7 @@ kif_clear(void)
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
 		kif_remove(kif);
 	kr_state.ks_nkif = 0;
-	kr_state.ks_iflastchange = mps_getticks();
+	kr_state.ks_iflastchange = smi_getticks();
 }
 
 struct kif *
@@ -456,7 +456,7 @@ kif_update(u_short if_index, int flags, struct if_data *ifd,
 
 	kif->k.if_flags = flags;
 	bcopy(ifd, &kif->k.if_data, sizeof(struct if_data));
-	kif->k.if_ticks = mps_getticks();
+	kif->k.if_ticks = smi_getticks();
 
 	if (sdl && sdl->sdl_family == AF_LINK) {
 		if (sdl->sdl_nlen >= sizeof(kif->k.if_name))
@@ -983,7 +983,7 @@ dispatch_rtmsg(int fd, short event, void *arg)
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 				kr->r.if_index = if_index;
-				kr->r.ticks = mps_getticks();
+				kr->r.ticks = smi_getticks();
 
 				rtlabel_unref(kr->r.rtlabel);
 				kr->r.rtlabel = 0;
@@ -1009,7 +1009,7 @@ add:
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 				kr->r.if_index = if_index;
-				kr->r.ticks = mps_getticks();
+				kr->r.ticks = smi_getticks();
 
 				if ((label = (struct sockaddr_rtlabel *)
 				    rti_info[RTAX_LABEL]) != NULL) {

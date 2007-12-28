@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2007/12/28 15:33:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -240,7 +240,7 @@ mib		: OBJECTID oid NAME STRING optwrite objtype	{
 				YYERROR;
 			}
 
-			mps_oidlen($2);
+			smi_oidlen($2);
 			bcopy($2, &oid->o_id, sizeof(struct ber_oid));
 			free($2);
 			oid->o_name = $4;
@@ -260,7 +260,7 @@ mib		: OBJECTID oid NAME STRING optwrite objtype	{
 			if ($5)
 				oid->o_flags |= OID_WR;
 
-			mps_insert(oid);
+			smi_insert(oid);
 		}
 		;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.4 2007/12/27 20:39:32 maja Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.5 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -117,9 +117,9 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 #endif
 
 #ifdef DEBUG
-	for (oid = NULL; (oid = mps_foreach(oid, 0)) != NULL;) {
+	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
 		char	 buf[BUFSIZ];
-		mps_oidstring(&oid->o_id, buf, sizeof(buf));
+		smi_oidstring(&oid->o_id, buf, sizeof(buf));
 		log_debug("oid %s", buf);
 	}
 #endif
@@ -437,7 +437,7 @@ snmpe_debug_elements(struct ber_element *root)
 			break;
 		}
 		fprintf(stderr, "oid %s",
-		    mps_oidstring(&o, str, sizeof(str)));
+		    smi_oidstring(&o, str, sizeof(str)));
 		fprintf(stderr, "\n");
 		break;
 	case BER_TYPE_OCTETSTRING:
@@ -631,7 +631,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 				    o.bo_n > BER_MAX_OID_LEN)
 					goto varfail;
 				log_debug("snmpe_parse: %s: oid %s", host,
-				    mps_oidstring(&o, buf, sizeof(buf)));
+				    smi_oidstring(&o, buf, sizeof(buf)));
 				break;
 			case 1:
 				c = d = NULL;

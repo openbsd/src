@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.14 2007/12/28 16:27:51 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.15 2007/12/28 16:59:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -136,11 +136,11 @@ mib_getsys(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	case 2:
 		if (so == NULL)
 			so = &sysoid;
-		mps_oidlen(so);
+		smi_oidlen(so);
 		*elm = ber_add_oid(*elm, so);
 		break;
 	case 3:
-		ticks = mps_getticks();
+		ticks = smi_getticks();
 		*elm = ber_add_integer(*elm, ticks);
 		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
 		break;
@@ -186,7 +186,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Count MIB root OIDs in the tree */
 	for (next = NULL;
-	    (next = mps_foreach(next, OID_MIB)) != NULL; nmib++);
+	    (next = smi_foreach(next, OID_MIB)) != NULL; nmib++);
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_sysOREntry];
@@ -195,7 +195,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Find the MIB root element for this Id */
 	for (next = miboid = NULL, nmib = 1;
-	    (next = mps_foreach(next, OID_MIB)) != NULL; nmib++) {
+	    (next = smi_foreach(next, OID_MIB)) != NULL; nmib++) {
 		if (nmib == idx)
 			miboid = next;
 	}
@@ -218,7 +218,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * But we use the symbolic OID string for now, it may
 		 * help to display names of internal OIDs.
 		 */
-		mps_oidstring(&miboid->o_id, buf, sizeof(buf));
+		smi_oidstring(&miboid->o_id, buf, sizeof(buf));
 		if ((ptr = strdup(buf)) == NULL) {
 			ber = ber_add_string(ber, miboid->o_name);
 		} else {
@@ -720,7 +720,7 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	idx = 0;
 	o->bo_id[OIDIDX_ifRcvAddressEntry + idx++] = kif->if_index;
 	o->bo_id[OIDIDX_ifRcvAddressEntry + idx] = 0;
-	mps_oidlen(o);
+	smi_oidlen(o);
 
 	/* extend the OID with the lladdr length and octets */
 	o->bo_id[OIDIDX_ifRcvAddressEntry + idx++] = sizeof(kif->if_lladdr);
@@ -1185,21 +1185,21 @@ mib_init(void)
 	/*
 	 * MIB declarations (to register the OID names)
 	 */
-	mps_mibtree(mib_tree);
+	smi_mibtree(mib_tree);
 
 	/*
 	 * MIB definitions (the implementation)
 	 */
 
 	/* SNMPv2-MIB */
-	mps_mibtree(base_mib);
+	smi_mibtree(base_mib);
 
 	/* IF-MIB */
-	mps_mibtree(if_mib);
+	smi_mibtree(if_mib);
 
 	/* IP-MIB */
-	mps_mibtree(ip_mib);
+	smi_mibtree(ip_mib);
 
 	/* OPENBSD-MIB */
-	mps_mibtree(openbsd_mib);
+	smi_mibtree(openbsd_mib);
 }
