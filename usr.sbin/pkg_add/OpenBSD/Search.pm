@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.7 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: Search.pm,v 1.8 2007/12/28 12:55:03 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,44 @@ sub add_pkgpath_hint
 {
 	my ($self, $pkgpath) = @_;
 	$self->{pkgpath} = $pkgpath;
+}
+
+package OpenBSD::Search::Exact;
+our @ISA=(qw(OpenBSD::Search::PkgSpec));
+sub match_ref
+{
+	my ($self, $r) = @_;
+	my @l = ();
+
+	for my $subpattern (@{$self->{patterns}}) {
+		if ($subpattern !~ m/^(.*?)\-(\d[^-]*)(.*)$/o) {
+			next;
+		}
+		my ($stem, $version, $flavor) = ($1, $2, $3);
+		$version =~ s/p\d+//;
+		for my $pkg (@$r) {
+			if ($pkg eq $subpattern) {
+				push(@l, $pkg);
+				next;
+			}
+			if ($pkg !~ m/^(.*?)\-(\d[^-]*)(.*)$/o) {
+				next;
+			}
+			if ($1 ne $stem) {
+				next;
+			}
+			if ($3 ne $flavor) {
+				next;
+			}
+			my $pkgversion = $2;
+			$pkgversion =~ s/p\d+//;
+			if ($pkgversion ne $version) {
+				next;
+			}
+			push(@l, $pkg);
+		}
+	}
+	return @l;
 }
 
 package OpenBSD::Search::Stem;
