@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.8 2007/12/28 15:32:02 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.9 2007/12/28 16:27:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -18,6 +18,13 @@
 
 #ifndef _SNMPD_MIB_H
 #define _SNMPD_MIB_H
+
+/*
+ * Adding new MIBs:
+ * - add the OID definitions below
+ * - add the OIDs to the MIB_TREE table at the end of this file
+ * - optional: write the implementation in mib.c
+ */
 
 /* From the SNMPv2-SMI MIB */
 #define MIB_iso				1
@@ -203,7 +210,16 @@
 #define MIB_ipNetToMediaType		MIB_ipNetToMediaEntry, 4
 #define MIB_ipRoutingDiscards		MIB_ipMIB, 23
 
-/* Some enterprise-specific OIDs */
+/*
+ * PRIVATE ENTERPRISE NUMBERS from
+ * http://www.iana.org/assignments/enterprise-numbers
+ *
+ * This is not the complete list of private enterprise numbers, it only
+ * includes some well-known companies and especially network companies
+ * that are very common in the datacenters around the world. It would
+ * be an overkill to include ~30.000 entries for all the organizations
+ * from the official list.
+ */
 #define MIB_ibm				MIB_enterprises, 2
 #define MIB_cmu				MIB_enterprises, 3
 #define MIB_unix			MIB_enterprises, 4
@@ -257,6 +273,227 @@
 #define MIB_sensorUnits			MIB_sensorEntry, 6
 #define MIB_sensorStatus		MIB_sensorEntry, 7
 
-void	 mib_init(void);
+#define MIB_TREE			{		\
+	{ MIBDECL(iso) },				\
+	{ MIBDECL(org) },				\
+	{ MIBDECL(dod) },				\
+	{ MIBDECL(internet) },				\
+	{ MIBDECL(directory) },				\
+	{ MIBDECL(mgmt) },				\
+	{ MIBDECL(mib_2) },				\
+	{ MIBDECL(system) },				\
+	{ MIBDECL(sysDescr) },				\
+	{ MIBDECL(sysOID) },				\
+	{ MIBDECL(sysUpTime) },				\
+	{ MIBDECL(sysContact) },			\
+	{ MIBDECL(sysName) },				\
+	{ MIBDECL(sysLocation) },			\
+	{ MIBDECL(sysServices) },			\
+	{ MIBDECL(sysORLastChange) },			\
+	{ MIBDECL(sysORTable) },			\
+	{ MIBDECL(sysOREntry) },			\
+	{ MIBDECL(sysORIndex) },			\
+	{ MIBDECL(sysORID) },				\
+	{ MIBDECL(sysORDescr) },			\
+	{ MIBDECL(sysORUpTime) },			\
+	{ MIBDECL(transmission) },			\
+	{ MIBDECL(snmp) },				\
+	{ MIBDECL(snmpInPkts) },			\
+	{ MIBDECL(snmpOutPkts) },			\
+	{ MIBDECL(snmpInBadVersions) },			\
+	{ MIBDECL(snmpInBadCommunityNames) },		\
+	{ MIBDECL(snmpInBadCommunityUses) },		\
+	{ MIBDECL(snmpInASNParseErrs) },		\
+	{ MIBDECL(snmpInTooBigs) },			\
+	{ MIBDECL(snmpInNoSuchNames) },			\
+	{ MIBDECL(snmpInBadValues) },			\
+	{ MIBDECL(snmpInReadOnlys) },			\
+	{ MIBDECL(snmpInGenErrs) },			\
+	{ MIBDECL(snmpInTotalReqVars) },		\
+	{ MIBDECL(snmpInTotalSetVars) },		\
+	{ MIBDECL(snmpInGetRequests) },			\
+	{ MIBDECL(snmpInGetNexts) },			\
+	{ MIBDECL(snmpInSetRequests) },			\
+	{ MIBDECL(snmpInGetResponses) },		\
+	{ MIBDECL(snmpInTraps) },			\
+	{ MIBDECL(snmpOutTooBigs) },			\
+	{ MIBDECL(snmpOutNoSuchNames) },		\
+	{ MIBDECL(snmpOutBadValues) },			\
+	{ MIBDECL(snmpOutGenErrs) },			\
+	{ MIBDECL(snmpOutGetRequests) },		\
+	{ MIBDECL(snmpOutGetNexts) },			\
+	{ MIBDECL(snmpOutSetRequests) },		\
+	{ MIBDECL(snmpOutGetResponses) },		\
+	{ MIBDECL(snmpOutTraps) },			\
+	{ MIBDECL(snmpEnableAuthenTraps) },		\
+	{ MIBDECL(snmpSilentDrops) },			\
+	{ MIBDECL(snmpProxyDrops) },			\
+	{ MIBDECL(experimental) },			\
+	{ MIBDECL(private) },				\
+	{ MIBDECL(enterprises) },			\
+	{ MIBDECL(security) },				\
+	{ MIBDECL(snmpV2) },				\
+	{ MIBDECL(snmpDomains) },			\
+	{ MIBDECL(snmpProxies) },			\
+	{ MIBDECL(snmpModules) },			\
+	{ MIBDECL(snmpMIB) },				\
+	{ MIBDECL(snmpMIBObjects) },			\
+	{ MIBDECL(snmpTrap) },				\
+	{ MIBDECL(snmpTrapOID) },			\
+	{ MIBDECL(snmpTrapEnterprise) },		\
+	{ MIBDECL(snmpTraps) },				\
+	{ MIBDECL(coldStart) },				\
+	{ MIBDECL(warmStart) },				\
+	{ MIBDECL(linkDown) },				\
+	{ MIBDECL(linkUp) },				\
+	{ MIBDECL(authenticationFailure) },		\
+	{ MIBDECL(egpNeighborLoss) },			\
+							\
+	{ MIBDECL(ifMIB) },				\
+	{ MIBDECL(ifMIBObjects) },			\
+	{ MIBDECL(ifXTable) },				\
+	{ MIBDECL(ifXEntry) },				\
+	{ MIBDECL(ifName) },				\
+	{ MIBDECL(ifInMulticastPkts) },			\
+	{ MIBDECL(ifInBroadcastPkts) },			\
+	{ MIBDECL(ifOutMulticastPkts) },		\
+	{ MIBDECL(ifOutBroadcastPkts) },		\
+	{ MIBDECL(ifHCInOctets) },			\
+	{ MIBDECL(ifHCInUcastPkts) },			\
+	{ MIBDECL(ifHCInMulticastPkts) },		\
+	{ MIBDECL(ifHCInBroadcastPkts) },		\
+	{ MIBDECL(ifHCOutOctets) },			\
+	{ MIBDECL(ifHCOutUcastPkts) },			\
+	{ MIBDECL(ifHCOutMulticastPkts) },		\
+	{ MIBDECL(ifHCOutBroadcastPkts) },		\
+	{ MIBDECL(ifLinkUpDownTrapEnable) },		\
+	{ MIBDECL(ifHighSpeed) },			\
+	{ MIBDECL(ifPromiscuousMode) },			\
+	{ MIBDECL(ifConnectorPresent) },		\
+	{ MIBDECL(ifAlias) },				\
+	{ MIBDECL(ifCounterDiscontinuityTime) },	\
+	{ MIBDECL(ifStackTable) },			\
+	{ MIBDECL(ifStackEntry) },			\
+	{ MIBDECL(ifRcvAddressTable) },			\
+	{ MIBDECL(ifRcvAddressEntry) },			\
+	{ MIBDECL(ifRcvAddressStatus) },		\
+	{ MIBDECL(ifRcvAddressType) },			\
+	{ MIBDECL(ifStackLastChange) },			\
+	{ MIBDECL(interfaces) },			\
+	{ MIBDECL(ifNumber) },				\
+	{ MIBDECL(ifTable) },				\
+	{ MIBDECL(ifEntry) },				\
+	{ MIBDECL(ifIndex) },				\
+	{ MIBDECL(ifDescr) },				\
+	{ MIBDECL(ifDescr) },				\
+	{ MIBDECL(ifMtu) },				\
+	{ MIBDECL(ifSpeed) },				\
+	{ MIBDECL(ifPhysAddress) },			\
+	{ MIBDECL(ifAdminStatus) },			\
+	{ MIBDECL(ifOperStatus) },			\
+	{ MIBDECL(ifLastChange) },			\
+	{ MIBDECL(ifInOctets) },			\
+	{ MIBDECL(ifInUcastPkts) },			\
+	{ MIBDECL(ifInNUcastPkts) },			\
+	{ MIBDECL(ifInDiscards) },			\
+	{ MIBDECL(ifInErrors) },			\
+	{ MIBDECL(ifInUnknownErrors) },			\
+	{ MIBDECL(ifOutOctets) },			\
+	{ MIBDECL(ifOutUcastPkts) },			\
+	{ MIBDECL(ifOutNUcastPkts) },			\
+	{ MIBDECL(ifOutDiscards) },			\
+	{ MIBDECL(ifOutErrors) },			\
+	{ MIBDECL(ifOutQLen) },				\
+	{ MIBDECL(ifSpecific) },			\
+							\
+	{ MIBDECL(ibm) },				\
+	{ MIBDECL(cmu) },				\
+	{ MIBDECL(unix) },				\
+	{ MIBDECL(ciscoSystems) },			\
+	{ MIBDECL(hp) },				\
+	{ MIBDECL(mit) },				\
+	{ MIBDECL(nortelNetworks) },			\
+	{ MIBDECL(sun) },				\
+	{ MIBDECL(3com) },				\
+	{ MIBDECL(synOptics) },				\
+	{ MIBDECL(enterasys) },				\
+	{ MIBDECL(sgi) },				\
+	{ MIBDECL(apple) },				\
+	{ MIBDECL(att) },				\
+	{ MIBDECL(nokia) },				\
+	{ MIBDECL(cern) },				\
+	{ MIBDECL(fsc) },				\
+	{ MIBDECL(compaq) },				\
+	{ MIBDECL(dell) },				\
+	{ MIBDECL(alteon) },				\
+	{ MIBDECL(extremeNetworks) },			\
+	{ MIBDECL(foundryNetworks) },			\
+	{ MIBDECL(huawaiTechnology) },			\
+	{ MIBDECL(ucDavis) },				\
+	{ MIBDECL(checkPoint) },			\
+	{ MIBDECL(juniper) },				\
+	{ MIBDECL(force10Networks) },			\
+	{ MIBDECL(alcatelLucent) },			\
+	{ MIBDECL(snom) },				\
+	{ MIBDECL(google) },				\
+	{ MIBDECL(f5Networks) },			\
+	{ MIBDECL(sFlow) },				\
+	{ MIBDECL(microSystems) },			\
+	{ MIBDECL(vantronix) },				\
+	{ MIBDECL(openBSD) },				\
+							\
+	{ MIBDECL(sensorMIBObjects) },			\
+	{ MIBDECL(sensors) },				\
+	{ MIBDECL(sensorNumber) },			\
+	{ MIBDECL(sensorTable) },			\
+	{ MIBDECL(sensorEntry) },			\
+	{ MIBDECL(sensorIndex) },			\
+	{ MIBDECL(sensorDescr) },			\
+	{ MIBDECL(sensorType) },			\
+	{ MIBDECL(sensorDevice) },			\
+	{ MIBDECL(sensorValue) },			\
+	{ MIBDECL(sensorUnits) },			\
+	{ MIBDECL(sensorStatus) },			\
+							\
+	{ MIBDECL(ipMIB) },				\
+	{ MIBDECL(ipForwarding) },			\
+	{ MIBDECL(ipDefaultTTL) },			\
+	{ MIBDECL(ipInReceives) },			\
+	{ MIBDECL(ipInHdrErrors) },			\
+	{ MIBDECL(ipInAddrErrors) },			\
+	{ MIBDECL(ipForwDatagrams) },			\
+	{ MIBDECL(ipInUnknownProtos) },			\
+	{ MIBDECL(ipInDiscards) },			\
+	{ MIBDECL(ipInDelivers) },			\
+	{ MIBDECL(ipOutRequests) },			\
+	{ MIBDECL(ipOutDiscards) },			\
+	{ MIBDECL(ipOutNoRoutes) },			\
+	{ MIBDECL(ipReasmTimeout) },			\
+	{ MIBDECL(ipReasmReqds) },			\
+	{ MIBDECL(ipReasmOKs) },			\
+	{ MIBDECL(ipReasmFails) },			\
+	{ MIBDECL(ipFragOKs) },				\
+	{ MIBDECL(ipFragFails) },			\
+	{ MIBDECL(ipFragCreates) },			\
+	{ MIBDECL(ipRoutingDiscards) },			\
+	{ MIBDECL(ipAddrTable) },			\
+	{ MIBDECL(ipAddrEntry) },			\
+	{ MIBDECL(ipAdEntAddr) },			\
+	{ MIBDECL(ipAdEntIfIndex) },			\
+	{ MIBDECL(ipAdEntNetMask) },			\
+	{ MIBDECL(ipAdEntBcastAddr) },			\
+	{ MIBDECL(ipAdEntReasmMaxSize) },		\
+	{ MIBDECL(ipNetToMediaTable) },			\
+	{ MIBDECL(ipNetToMediaEntry) },			\
+	{ MIBDECL(ipNetToMediaIfIndex) },		\
+	{ MIBDECL(ipNetToMediaPhysAddress) },		\
+	{ MIBDECL(ipNetToMediaNetAddress) },		\
+	{ MIBDECL(ipNetToMediaType) },			\
+	{ MIBDECL(ipNetToMediaType) },			\
+							\
+	{ MIBEND }					\
+}
+
+ void	 mib_init(void);
 
 #endif /* _SNMPD_MIB_H */

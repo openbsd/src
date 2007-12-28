@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.13 2007/12/28 15:32:02 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.14 2007/12/28 16:27:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -58,16 +58,11 @@ int	 mib_getsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sysor(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_setsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 
+static struct oid mib_tree[] = MIB_TREE;
+
 /* base MIB tree */
 static struct oid base_mib[] = {
-	{ MIB(iso) },
-	{ MIB(org) },
-	{ MIB(dod) },
-	{ MIB(internet) },
-	{ MIB(directory) },
-	{ MIB(mgmt) },
 	{ MIB(mib_2),			OID_MIB },
-	{ MIB(system) },
 	{ MIB(sysDescr),		OID_RD, mib_getsys },
 	{ MIB(sysOID),			OID_RD, mib_getsys },
 	{ MIB(sysUpTime),		OID_RD, mib_getsys },
@@ -76,13 +71,10 @@ static struct oid base_mib[] = {
 	{ MIB(sysLocation),		OID_RW, mib_getsys, mps_setstr },
 	{ MIB(sysServices),		OID_RS, mib_getsys },
 	{ MIB(sysORLastChange),		OID_RD, mps_getts },
-	{ MIB(sysORTable) },
-	{ MIB(sysOREntry) },
 	{ MIB(sysORIndex),		OID_TRD, mib_sysor },
 	{ MIB(sysORID),			OID_TRD, mib_sysor },
 	{ MIB(sysORDescr),		OID_TRD, mib_sysor },
 	{ MIB(sysORUpTime),		OID_TRD, mib_sysor },
-	{ MIB(transmission) },
 	{ MIB(snmp),			OID_MIB },
 	{ MIB(snmpInPkts),		OID_RD, mib_getsnmp },
 	{ MIB(snmpOutPkts),		OID_RD, mib_getsnmp },
@@ -114,26 +106,6 @@ static struct oid base_mib[] = {
 	{ MIB(snmpEnableAuthenTraps),	OID_RW, mib_getsnmp, mib_setsnmp },
 	{ MIB(snmpSilentDrops),		OID_RD, mib_getsnmp },
 	{ MIB(snmpProxyDrops),		OID_RD, mib_getsnmp },
-	{ MIB(experimental) },
-	{ MIB(private) },
-	{ MIB(enterprises) },
-	{ MIB(security) },
-	{ MIB(snmpV2) },
-	{ MIB(snmpDomains) },
-	{ MIB(snmpProxies) },
-	{ MIB(snmpModules) },
-	{ MIB(snmpMIB) },
-	{ MIB(snmpMIBObjects) },
-	{ MIB(snmpTrap) },
-	{ MIB(snmpTrapOID) },
-	{ MIB(snmpTrapEnterprise) },
-	{ MIB(snmpTraps) },
-	{ MIB(coldStart) },
-	{ MIB(warmStart) },
-	{ MIB(linkDown) },
-	{ MIB(linkUp) },
-	{ MIB(authenticationFailure) },
-	{ MIB(egpNeighborLoss) },
 	{ MIBEND }
 };
 
@@ -363,9 +335,6 @@ static struct ber_oid zerodotzero = { { 0, 0 }, 2 };
 
 static struct oid if_mib[] = {
 	{ MIB(ifMIB),			OID_MIB },
-	{ MIB(ifMIBObjects) },
-	{ MIB(ifXTable) },
-	{ MIB(ifXEntry) },
 	{ MIB(ifName),			OID_TRD, mib_ifxtable },
 	{ MIB(ifInMulticastPkts),	OID_TRD, mib_ifxtable },
 	{ MIB(ifInBroadcastPkts),	OID_TRD, mib_ifxtable },
@@ -385,17 +354,10 @@ static struct oid if_mib[] = {
 	{ MIB(ifConnectorPresent),	OID_TRD, mib_ifxtable },
 	{ MIB(ifAlias),			OID_TRD, mib_ifxtable },
 	{ MIB(ifCounterDiscontinuityTime), OID_TRD, mib_ifxtable },
-	{ MIB(ifStackTable) },
-	{ MIB(ifStackEntry) },
-	{ MIB(ifRcvAddressTable) },
-	{ MIB(ifRcvAddressEntry) },
 	{ MIB(ifRcvAddressStatus),	OID_TRD, mib_ifrcvtable },
 	{ MIB(ifRcvAddressType),	OID_TRD, mib_ifrcvtable },
 	{ MIB(ifStackLastChange),	OID_RD, mib_ifstacklast },
-	{ MIB(interfaces) },
 	{ MIB(ifNumber),		OID_RD, mib_ifnumber },
-	{ MIB(ifTable) },
-	{ MIB(ifEntry) },
 	{ MIB(ifIndex),			OID_TRD, mib_iftable },
 	{ MIB(ifDescr),			OID_TRD, mib_iftable },
 	{ MIB(ifDescr),			OID_TRD, mib_iftable },
@@ -787,55 +749,6 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 /*
- * PRIVATE ENTERPRISE NUMBERS from
- * http://www.iana.org/assignments/enterprise-numbers
- *
- * This is not the complete list of private enterprise numbers, it only
- * includes some well-known companies and especially network companies
- * that are very common in the datacenters around the world. It would
- * be an overkill to include ~30.000 entries for all the organizations
- * from the official list.
- */
-static struct oid enterprise_mib[] = {
-	{ MIB(ibm) },
-	{ MIB(cmu) },
-	{ MIB(unix) },
-	{ MIB(ciscoSystems) },
-	{ MIB(hp) },
-	{ MIB(mit) },
-	{ MIB(nortelNetworks) },
-	{ MIB(sun) },
-	{ MIB(3com) },
-	{ MIB(synOptics) },
-	{ MIB(enterasys) },
-	{ MIB(sgi) },
-	{ MIB(apple) },
-	{ MIB(att) },
-	{ MIB(nokia) },
-	{ MIB(cern) },
-	{ MIB(fsc) },
-	{ MIB(compaq) },
-	{ MIB(dell) },
-	{ MIB(alteon) },
-	{ MIB(extremeNetworks) },
-	{ MIB(foundryNetworks) },
-	{ MIB(huawaiTechnology) },
-	{ MIB(ucDavis) },
-	{ MIB(checkPoint) },
-	{ MIB(juniper) },
-	{ MIB(force10Networks) },
-	{ MIB(alcatelLucent) },
-	{ MIB(snom) },
-	{ MIB(google) },
-	{ MIB(f5Networks) },
-	{ MIB(sFlow) },
-	{ MIB(microSystems) },
-	{ MIB(vantronix) },
-	{ MIB(openBSD) },
-	{ MIBEND }
-};
-
-/*
  * Defined in OPENBSD-SENSORS-MIB.txt
  * (http://packetmischief.ca/openbsd/snmp/)
  */
@@ -847,10 +760,7 @@ char	*mib_sensorvalue(struct sensor *);
 
 static struct oid openbsd_mib[] = {
 	{ MIB(sensorMIBObjects),	OID_MIB },
-	{ MIB(sensors) },
 	{ MIB(sensorNumber),		OID_RD,	mib_sensornum },
-	{ MIB(sensorTable) },
-	{ MIB(sensorEntry) },
 	{ MIB(sensorIndex),		OID_TRD, mib_sensors },
 	{ MIB(sensorDescr),		OID_TRD, mib_sensors },
 	{ MIB(sensorType),		OID_TRD, mib_sensors },
@@ -1056,7 +966,9 @@ static struct oid ip_mib[] = {
 	{ MIB(ipInAddrErrors),		OID_RD, mib_ipinaddrerrs },
 	{ MIB(ipForwDatagrams),		OID_RD, mib_ipforwdgrams },
 	{ MIB(ipInUnknownProtos),	OID_RD, mib_ipstat },
+#ifdef notyet
 	{ MIB(ipInDiscards) },
+#endif
 	{ MIB(ipInDelivers),		OID_RD, mib_ipstat },
 	{ MIB(ipOutRequests),		OID_RD, mib_ipstat },
 	{ MIB(ipOutDiscards),		OID_RD, mib_ipstat },
@@ -1068,21 +980,18 @@ static struct oid ip_mib[] = {
 	{ MIB(ipFragOKs),		OID_RD, mib_ipstat },
 	{ MIB(ipFragFails),		OID_RD, mib_ipfragfails },
 	{ MIB(ipFragCreates),		OID_RD, mib_ipstat },
-	{ MIB(ipRoutingDiscards) },
-	{ MIB(ipAddrTable) },
-	{ MIB(ipAddrEntry) },
+#ifdef notyet
 	{ MIB(ipAdEntAddr) },
 	{ MIB(ipAdEntIfIndex) },
 	{ MIB(ipAdEntNetMask) },
 	{ MIB(ipAdEntBcastAddr) },
 	{ MIB(ipAdEntReasmMaxSize) },
-	{ MIB(ipNetToMediaTable) },
-	{ MIB(ipNetToMediaEntry) },
 	{ MIB(ipNetToMediaIfIndex) },
 	{ MIB(ipNetToMediaPhysAddress) },
 	{ MIB(ipNetToMediaNetAddress) },
 	{ MIB(ipNetToMediaType) },
-	{ MIB(ipNetToMediaType) },
+	{ MIB(ipRoutingDiscards) },
+#endif
 	{ MIBEND }
 };
 
@@ -1273,6 +1182,15 @@ mib_iproutingdiscards(struct oid *oid, struct ber_oid *o,
 void
 mib_init(void)
 {
+	/*
+	 * MIB declarations (to register the OID names)
+	 */
+	mps_mibtree(mib_tree);
+
+	/*
+	 * MIB definitions (the implementation)
+	 */
+
 	/* SNMPv2-MIB */
 	mps_mibtree(base_mib);
 
@@ -1281,9 +1199,6 @@ mib_init(void)
 
 	/* IP-MIB */
 	mps_mibtree(ip_mib);
-
-	/* some http://www.iana.org/assignments/enterprise-numbers */
-	mps_mibtree(enterprise_mib);
 
 	/* OPENBSD-MIB */
 	mps_mibtree(openbsd_mib);

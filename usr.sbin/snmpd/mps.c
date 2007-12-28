@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.5 2007/12/07 10:14:27 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.6 2007/12/28 16:27:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -378,15 +378,26 @@ mps_insert(struct oid *oid)
 void
 mps_mibtree(struct oid *oids)
 {
-	struct oid	*oid;
+	struct oid	*oid, *decl;
 	size_t		 i;
 
-	for (i = 0; oids[i].o_name != NULL; i++) {
+	for (i = 0; oids[i].o_oid[0] != 0; i++) {
 		oid = &oids[i];
 		mps_oidlen(&oid->o_id);
-		if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
-			fatalx("mps_mibtree: invalid MIB table");
-		RB_INSERT(oidtree, &mps_oidtree, oid);
+		if (oid->o_name != NULL) {
+			if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
+				fatalx("mps_mibtree: invalid MIB table");
+			RB_INSERT(oidtree, &mps_oidtree, oid);
+			continue;
+		}
+		decl = RB_FIND(oidtree, &mps_oidtree, oid);
+		if (decl == NULL)
+			fatalx("mps_mibtree: undeclared MIB");
+		decl->o_flags = oid->o_flags;
+		decl->o_get = oid->o_get;
+		decl->o_set = oid->o_set;
+		decl->o_val = oid->o_val;
+		decl->o_data = oid->o_data;
 	}
 }
 
