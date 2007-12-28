@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2007/12/07 10:22:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2007/12/28 15:32:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -205,27 +205,27 @@ system		: SYSTEM sysmib
 		;
 
 sysmib		: CONTACT STRING		{
-			struct ber_oid	 o = OID(MIB_SYSCONTACT);
+			struct ber_oid	 o = OID(MIB_sysContact);
 			mps_set(&o, $2, strlen($2));
 		}
 		| DESCR STRING			{
-			struct ber_oid	 o = OID(MIB_SYSDESCR);
+			struct ber_oid	 o = OID(MIB_sysDescr);
 			mps_set(&o, $2, strlen($2));
 		}
 		| LOCATION STRING		{
-			struct ber_oid	 o = OID(MIB_SYSLOCATION);
+			struct ber_oid	 o = OID(MIB_sysLocation);
 			mps_set(&o, $2, strlen($2));
 		}
 		| NAME STRING			{
-			struct ber_oid	 o = OID(MIB_SYSNAME);
+			struct ber_oid	 o = OID(MIB_sysName);
 			mps_set(&o, $2, strlen($2));
 		}
 		| OBJECTID oid			{
-			struct ber_oid	 o = OID(MIB_SYSOID);
+			struct ber_oid	 o = OID(MIB_sysOID);
 			mps_set(&o, $2, sizeof(struct ber_oid));
 		}
 		| SERVICES NUMBER		{
-			struct ber_oid	 o = OID(MIB_SYSSERVICES);
+			struct ber_oid	 o = OID(MIB_sysServices);
 			mps_set(&o, NULL, $2);
 		}
 		;

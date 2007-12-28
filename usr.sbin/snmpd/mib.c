@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.12 2007/12/15 06:26:59 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.13 2007/12/28 15:32:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -60,80 +60,80 @@ int	 mib_setsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 
 /* base MIB tree */
 static struct oid base_mib[] = {
-	{ MIB(ISO), "iso" },
-	{ MIB(ORG), "org" },
-	{ MIB(DOD), "dod" },
-	{ MIB(INTERNET), "internet" },
-	{ MIB(DIRECTORY), "directory" },
-	{ MIB(MGMT), "mgmt" },
-	{ MIB(MIB_2), "mib-2", OID_MIB },
-	{ MIB(SYSTEM), "system" },
-	{ MIB(SYSDESCR), "sysDescr", OID_RD,		mib_getsys },
-	{ MIB(SYSOID), "sysOID", OID_RD,		mib_getsys },
-	{ MIB(SYSUPTIME), "sysUpTime", OID_RD,		mib_getsys },
-	{ MIB(SYSCONTACT), "sysContact", OID_RW,	mib_getsys, mps_setstr },
-	{ MIB(SYSNAME), "sysName", OID_RW,		mib_getsys, mps_setstr },
-	{ MIB(SYSLOCATION), "sysLocation", OID_RW,	mib_getsys, mps_setstr },
-	{ MIB(SYSSERVICES), "sysServices", OID_RS,	mib_getsys },
-	{ MIB(SYSORLASTCHANGE), "sysORLastChange", OID_RD, mps_getts },
-	{ MIB(SYSORTABLE), "sysORTable" },
-	{ MIB(SYSORENTRY), "sysOREntry" },
-	{ MIB(SYSORINDEX), "sysORIndex", OID_TRD,	mib_sysor },
-	{ MIB(SYSORID), "sysORID", OID_TRD,		mib_sysor },
-	{ MIB(SYSORDESCR), "sysORDescr", OID_TRD,	mib_sysor },
-	{ MIB(SYSORUPTIME), "sysORUptime", OID_TRD,	mib_sysor },
-	{ MIB(TRANSMISSION), "transmission" },
-	{ MIB(SNMP), "snmp", OID_MIB },
-	{ MIB(SNMPINPKTS), "snmpInPkts", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPOUTPKTS), "snmpOutPkts", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPINBADVERSIONS), "snmpInBadVersions", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINBADCOMNNAMES), "snmpInBadCommunityNames", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINBADCOMNUSES), "snmpInBadCommunityUses", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINASNPARSEERRS), "snmpInASNParseErrs", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINTOOBIGS), "snmpInTooBigs", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPINNOSUCHNAMES), "snmpInNoSuchNames", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINBADVALUES), "snmpInBadValues", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINREADONLYS), "snmpInReadOnlys", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINGENERRS), "snmpInGenErrs", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPINTOTALREQVARS), "snmpInTotalReqVars", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINTOTALSETVARS), "snmpInTotalSetVars", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINGETREQUESTS), "snmpInGetRequests", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINGETNEXTS), "snmpInGetNexts", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINSETREQUESTS), "snmpInSetRequests", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINGETRESPONSES), "snmpInGetResponses", OID_RD, mib_getsnmp },
-	{ MIB(SNMPINTRAPS), "snmpInTraps", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPOUTTOOBIGS), "snmpOutTooBigs", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTNOSUCHNAMES), "snmpOutNoSuchNames", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTBADVALUES), "snmpOutBadValues", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTGENERRS), "snmpOutGenErrs", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTGETREQUESTS), "snmpOutGetRequests", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTGETNEXTS), "snmpOutGetNexts", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTSETREQUESTS), "snmpOutSetRequests", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTGETRESPONSES), "snmpOutGetResponses", OID_RD, mib_getsnmp },
-	{ MIB(SNMPOUTTRAPS), "snmpOutTraps", OID_RD,	mib_getsnmp },
-	{ MIB(SNMPENAUTHTRAPS), "snmpEnableAuthenTraps", OID_RW, mib_getsnmp, mib_setsnmp },
-	{ MIB(SNMPSILENTDROPS), "snmpSilentDrops", OID_RD, mib_getsnmp },
-	{ MIB(SNMPPROXYDROPS), "snmpProxyDrops", OID_RD, mib_getsnmp },
-	{ MIB(EXPERIMENTAL), "experimental" },
-	{ MIB(PRIVATE), "private" },
-	{ MIB(ENTERPRISES), "enterprises" },
-	{ MIB(SECURITY), "security" },
-	{ MIB(SNMPV2), "snmpV2" },
-	{ MIB(SNMPDOMAINS), "snmpDomains" },
-	{ MIB(SNMPPROXIES), "snmpProxies" },
-	{ MIB(SNMPMODULES), "snmpModules" },
-	{ MIB(SNMPMIB), "snmpMIB" },
-	{ MIB(SNMPMIBOBJECTS), "snmpMIBObjects" },
-	{ MIB(SNMPTRAP), "snmpTrap" },
-	{ MIB(SNMPTRAPOID), "snmpTrapOID" },
-	{ MIB(SNMPTRAPENTERPRISE), "snmpTrapEnterprise" },
-	{ MIB(SNMPTRAPS), "snmpTraps" },
-	{ MIB(COLDSTART), "coldStart" },
-	{ MIB(WARMSTART), "warmStart" },
-	{ MIB(LINKDOWN), "linkDown" },
-	{ MIB(LINKUP), "linkUp" },
-	{ MIB(AUTHFAILURE), "authenticationFailure" },
-	{ MIB(EGPNEIGHBORLOSS), "egpNeighborLoss" },
+	{ MIB(iso) },
+	{ MIB(org) },
+	{ MIB(dod) },
+	{ MIB(internet) },
+	{ MIB(directory) },
+	{ MIB(mgmt) },
+	{ MIB(mib_2),			OID_MIB },
+	{ MIB(system) },
+	{ MIB(sysDescr),		OID_RD, mib_getsys },
+	{ MIB(sysOID),			OID_RD, mib_getsys },
+	{ MIB(sysUpTime),		OID_RD, mib_getsys },
+	{ MIB(sysContact),		OID_RW, mib_getsys, mps_setstr },
+	{ MIB(sysName),			OID_RW, mib_getsys, mps_setstr },
+	{ MIB(sysLocation),		OID_RW, mib_getsys, mps_setstr },
+	{ MIB(sysServices),		OID_RS, mib_getsys },
+	{ MIB(sysORLastChange),		OID_RD, mps_getts },
+	{ MIB(sysORTable) },
+	{ MIB(sysOREntry) },
+	{ MIB(sysORIndex),		OID_TRD, mib_sysor },
+	{ MIB(sysORID),			OID_TRD, mib_sysor },
+	{ MIB(sysORDescr),		OID_TRD, mib_sysor },
+	{ MIB(sysORUpTime),		OID_TRD, mib_sysor },
+	{ MIB(transmission) },
+	{ MIB(snmp),			OID_MIB },
+	{ MIB(snmpInPkts),		OID_RD, mib_getsnmp },
+	{ MIB(snmpOutPkts),		OID_RD, mib_getsnmp },
+	{ MIB(snmpInBadVersions),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInBadCommunityNames),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInBadCommunityUses),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInASNParseErrs),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInTooBigs),		OID_RD,	mib_getsnmp },
+	{ MIB(snmpInNoSuchNames),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInBadValues),		OID_RD, mib_getsnmp },
+	{ MIB(snmpInReadOnlys),		OID_RD, mib_getsnmp },
+	{ MIB(snmpInGenErrs),		OID_RD, mib_getsnmp },
+	{ MIB(snmpInTotalReqVars),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInTotalSetVars),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInGetRequests),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInGetNexts),		OID_RD, mib_getsnmp },
+	{ MIB(snmpInSetRequests),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInGetResponses),	OID_RD, mib_getsnmp },
+	{ MIB(snmpInTraps),		OID_RD, mib_getsnmp },
+	{ MIB(snmpOutTooBigs),		OID_RD, mib_getsnmp },
+	{ MIB(snmpOutNoSuchNames),	OID_RD, mib_getsnmp },
+	{ MIB(snmpOutBadValues),	OID_RD, mib_getsnmp },
+	{ MIB(snmpOutGenErrs),		OID_RD, mib_getsnmp },
+	{ MIB(snmpOutGetRequests),	OID_RD, mib_getsnmp },
+	{ MIB(snmpOutGetNexts),		OID_RD, mib_getsnmp },
+	{ MIB(snmpOutSetRequests),	OID_RD, mib_getsnmp },
+	{ MIB(snmpOutGetResponses),	OID_RD, mib_getsnmp },
+	{ MIB(snmpOutTraps),		OID_RD, mib_getsnmp },
+	{ MIB(snmpEnableAuthenTraps),	OID_RW, mib_getsnmp, mib_setsnmp },
+	{ MIB(snmpSilentDrops),		OID_RD, mib_getsnmp },
+	{ MIB(snmpProxyDrops),		OID_RD, mib_getsnmp },
+	{ MIB(experimental) },
+	{ MIB(private) },
+	{ MIB(enterprises) },
+	{ MIB(security) },
+	{ MIB(snmpV2) },
+	{ MIB(snmpDomains) },
+	{ MIB(snmpProxies) },
+	{ MIB(snmpModules) },
+	{ MIB(snmpMIB) },
+	{ MIB(snmpMIBObjects) },
+	{ MIB(snmpTrap) },
+	{ MIB(snmpTrapOID) },
+	{ MIB(snmpTrapEnterprise) },
+	{ MIB(snmpTraps) },
+	{ MIB(coldStart) },
+	{ MIB(warmStart) },
+	{ MIB(linkDown) },
+	{ MIB(linkUp) },
+	{ MIB(authenticationFailure) },
+	{ MIB(egpNeighborLoss) },
 	{ MIBEND }
 };
 
@@ -149,7 +149,7 @@ mib_getsys(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	if (uname(&u) == -1)
 		return (-1);
 
-	switch (oid->o_oid[OIDIDX_SYSTEM]) {
+	switch (oid->o_oid[OIDIDX_system]) {
 	case 1:
 		if (s == NULL) {
 			if (asprintf(&s, "%s %s %s %s %s",
@@ -217,7 +217,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	    (next = mps_foreach(next, OID_MIB)) != NULL; nmib++);
 
 	/* Get and verify the current row index */
-	idx = o->bo_id[OIDIDX_ORENTRY];
+	idx = o->bo_id[OIDIDX_sysOREntry];
 	if (idx > nmib)
 		return (1);
 
@@ -233,7 +233,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	/* Tables need to prepend the OID on their own */
 	ber = ber_add_oid(ber, o);
 
-	switch (o->bo_id[OIDIDX_OR]) {
+	switch (o->bo_id[OIDIDX_sysOR]) {
 	case 1:
 		ber = ber_add_integer(ber, idx);
 		break;
@@ -311,7 +311,7 @@ mib_getsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		{ 32, &stats->snmp_proxydrops }
 	};
 
-	switch (oid->o_oid[OIDIDX_SNMP]) {
+	switch (oid->o_oid[OIDIDX_snmp]) {
 	case 30:
 		i = stats->snmp_enableauthentraps == 1 ? 1 : 2;
 		*elm = ber_add_integer(*elm, i);
@@ -319,7 +319,7 @@ mib_getsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	default:
 		for (i = 0;
 		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
-			if (oid->o_oid[OIDIDX_SNMP] == mapping[i].m_id) {
+			if (oid->o_oid[OIDIDX_snmp] == mapping[i].m_id) {
 				*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
 				ber_set_header(*elm,
 				    BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
@@ -362,62 +362,62 @@ static u_int8_t ether_zeroaddr[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 static struct ber_oid zerodotzero = { { 0, 0 }, 2 };
 
 static struct oid if_mib[] = {
-	{ MIB(IFMIB), "ifMIB", OID_MIB },
-	{ MIB(IFMIBOBJECTS), "ifMIBObjects" },
-	{ MIB(IFXTABLE), "ifXTable" },
-	{ MIB(IFXENTRY), "ifXEntry" },
-	{ MIB(IFNAME), "ifName", OID_TRD,		mib_ifxtable },
-	{ MIB(IFINMASTPKTS), "ifInMulticastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFINBASTPKTS), "ifInBroadcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFOUTMASTPKTS), "ifOutMulticastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFOUTBASTPKTS), "ifOurBroadcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCINOCTETS), "ifHCInOctets", OID_TRD,	mib_ifxtable },
-	{ MIB(IFHCINUCASTPKTS), "ifHCInUcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCINMCASTPKTS), "ifHCInMulticastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCINBCASTPKTS), "ifHCInBroadcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCOUTOCTETS), "ifHCOutOctets", OID_TRD,	mib_ifxtable },
-	{ MIB(IFHCOUTUCASTPKTS), "ifHCOutUcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCOUTMCASTPKTS), "ifHCOutMulticastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFHCOUTBCASTPKTS), "ifHCOutBroadcastPkts", OID_TRD, mib_ifxtable },
-	{ MIB(IFLINKUPDORNTRAPENABLE), "ifLinkUpDownTrapEnable", OID_TRD, mib_ifxtable },
-	{ MIB(IFHIGHSPEED), "ifHighSpeed", OID_TRD,	mib_ifxtable },
-	{ MIB(IFPROMISCMODE), "ifPromiscuousMode", OID_TRD, mib_ifxtable },
-	{ MIB(IFCONNECTORPRESENT), "ifConnectorPresent", OID_TRD, mib_ifxtable },
-	{ MIB(IFALIAS), "ifAlias", OID_TRD,		mib_ifxtable },
-	{ MIB(IFCNTDISCONTINUITYTIME), "ifCounterDiscontinuityTime", OID_TRD, mib_ifxtable },
-	{ MIB(IFSTACKTABLE), "ifStackTable" },
-	{ MIB(IFSTACKENTRY), "ifStackEntry" },
-	{ MIB(IFRCVTABLE), "ifRcvAddressTable" },
-	{ MIB(IFRCVENTRY), "ifRcvAddressEntry" },
-	{ MIB(IFRCVSTATUS), "ifRcvAddressStatus", OID_TRD, mib_ifrcvtable },
-	{ MIB(IFRCVTYPE), "ifRcvAddressType", OID_TRD,	mib_ifrcvtable },
-	{ MIB(IFSTACKLASTCHANGE), "ifStackLastChange", OID_RD, mib_ifstacklast },
-	{ MIB(INTERFACES), "interfaces" },
-	{ MIB(IFNUMBER), "ifNumber", OID_RD,		mib_ifnumber },
-	{ MIB(IFTABLE), "ifTable" },
-	{ MIB(IFENTRY), "ifEntry" },
-	{ MIB(IFINDEX), "ifIndex", OID_TRD,		mib_iftable },
-	{ MIB(IFDESCR), "ifDescr", OID_TRD,		mib_iftable },
-	{ MIB(IFTYPE), "ifDescr", OID_TRD,		mib_iftable },
-	{ MIB(IFMTU), "ifMtu", OID_TRD,			mib_iftable },
-	{ MIB(IFSPEED), "ifSpeed", OID_TRD,		mib_iftable },
-	{ MIB(IFPHYSADDR), "ifPhysAddress", OID_TRD,	mib_iftable },
-	{ MIB(IFADMINSTATUS), "ifAdminStatus", OID_TRD,	mib_iftable },
-	{ MIB(IFOPERSTATUS), "ifOperStatus", OID_TRD,	mib_iftable },
-	{ MIB(IFLASTCHANGE), "ifLastChange", OID_TRD,	mib_iftable },
-	{ MIB(IFINOCTETS), "ifInOctets", OID_TRD,	mib_iftable },
-	{ MIB(IFINUCASTPKTS), "ifInUcastPkts", OID_TRD,	mib_iftable },
-	{ MIB(IFINNUCASTPKTS), "ifInNUcastPkts", OID_TRD, mib_iftable },
-	{ MIB(IFINDISCARDS), "ifInDiscards", OID_TRD,	mib_iftable },
-	{ MIB(IFINERRORS), "ifInErrors", OID_TRD,	mib_iftable },
-	{ MIB(IFINUNKNOWNERRORS), "ifInUnknownErrors", OID_TRD,	mib_iftable },
-	{ MIB(IFOUTOCTETS), "ifOutOctets", OID_TRD,	mib_iftable },
-	{ MIB(IFOUTUCASTPKTS), "ifOutUcastPkts", OID_TRD, mib_iftable },
-	{ MIB(IFOUTNUCASTPKTS), "ifOutNUcastPkts", OID_TRD, mib_iftable },
-	{ MIB(IFOUTDISCARDS), "ifOutDiscards", OID_TRD,	mib_iftable },
-	{ MIB(IFOUTERRORS), "ifOutErrors", OID_TRD,	mib_iftable },
-	{ MIB(IFOUTQLEN), "ifOutQLen", OID_TRD,		mib_iftable },
-	{ MIB(IFSPECIFIC), "ifSpecific", OID_TRD,	mib_iftable },
+	{ MIB(ifMIB),			OID_MIB },
+	{ MIB(ifMIBObjects) },
+	{ MIB(ifXTable) },
+	{ MIB(ifXEntry) },
+	{ MIB(ifName),			OID_TRD, mib_ifxtable },
+	{ MIB(ifInMulticastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifInBroadcastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifOutMulticastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifOutBroadcastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHCInOctets),		OID_TRD, mib_ifxtable },
+	{ MIB(ifHCInUcastPkts),		OID_TRD, mib_ifxtable },
+	{ MIB(ifHCInMulticastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHCInBroadcastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHCOutOctets),		OID_TRD, mib_ifxtable },
+	{ MIB(ifHCOutUcastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHCOutMulticastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHCOutBroadcastPkts),	OID_TRD, mib_ifxtable },
+	{ MIB(ifLinkUpDownTrapEnable),	OID_TRD, mib_ifxtable },
+	{ MIB(ifHighSpeed),		OID_TRD, mib_ifxtable },
+	{ MIB(ifPromiscuousMode),	OID_TRD, mib_ifxtable },
+	{ MIB(ifConnectorPresent),	OID_TRD, mib_ifxtable },
+	{ MIB(ifAlias),			OID_TRD, mib_ifxtable },
+	{ MIB(ifCounterDiscontinuityTime), OID_TRD, mib_ifxtable },
+	{ MIB(ifStackTable) },
+	{ MIB(ifStackEntry) },
+	{ MIB(ifRcvAddressTable) },
+	{ MIB(ifRcvAddressEntry) },
+	{ MIB(ifRcvAddressStatus),	OID_TRD, mib_ifrcvtable },
+	{ MIB(ifRcvAddressType),	OID_TRD, mib_ifrcvtable },
+	{ MIB(ifStackLastChange),	OID_RD, mib_ifstacklast },
+	{ MIB(interfaces) },
+	{ MIB(ifNumber),		OID_RD, mib_ifnumber },
+	{ MIB(ifTable) },
+	{ MIB(ifEntry) },
+	{ MIB(ifIndex),			OID_TRD, mib_iftable },
+	{ MIB(ifDescr),			OID_TRD, mib_iftable },
+	{ MIB(ifDescr),			OID_TRD, mib_iftable },
+	{ MIB(ifMtu),			OID_TRD, mib_iftable },
+	{ MIB(ifSpeed),			OID_TRD, mib_iftable },
+	{ MIB(ifPhysAddress),		OID_TRD, mib_iftable },
+	{ MIB(ifAdminStatus),		OID_TRD, mib_iftable },
+	{ MIB(ifOperStatus),		OID_TRD, mib_iftable },
+	{ MIB(ifLastChange),		OID_TRD, mib_iftable },
+	{ MIB(ifInOctets),		OID_TRD, mib_iftable },
+	{ MIB(ifInUcastPkts),		OID_TRD, mib_iftable },
+	{ MIB(ifInNUcastPkts),		OID_TRD, mib_iftable },
+	{ MIB(ifInDiscards),		OID_TRD, mib_iftable },
+	{ MIB(ifInErrors),		OID_TRD, mib_iftable },
+	{ MIB(ifInUnknownErrors),	OID_TRD, mib_iftable },
+	{ MIB(ifOutOctets),		OID_TRD, mib_iftable },
+	{ MIB(ifOutUcastPkts),		OID_TRD, mib_iftable },
+	{ MIB(ifOutNUcastPkts),		OID_TRD, mib_iftable },
+	{ MIB(ifOutDiscards),		OID_TRD, mib_iftable },
+	{ MIB(ifOutErrors),		OID_TRD, mib_iftable },
+	{ MIB(ifOutQLen),		OID_TRD, mib_iftable },
+	{ MIB(ifSpecific),		OID_TRD, mib_iftable },
 	{ MIBEND }
 };
 
@@ -470,15 +470,15 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	char			*s;
 
 	/* Get and verify the current row index */
-	idx = o->bo_id[OIDIDX_IFENTRY];
+	idx = o->bo_id[OIDIDX_ifEntry];
 	if ((kif = mib_ifget(idx)) == NULL)
 		return (1);
 
 	/* Tables need to prepend the OID on their own */
-	o->bo_id[OIDIDX_IFENTRY] = kif->if_index;
+	o->bo_id[OIDIDX_ifEntry] = kif->if_index;
 	ber = ber_add_oid(ber, o);
 
-	switch (o->bo_id[OIDIDX_IF]) {
+	switch (o->bo_id[OIDIDX_if]) {
 	case 1:
 		ber = ber_add_integer(ber, kif->if_index);
 		break;
@@ -626,15 +626,15 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	char			*s;
 
 	/* Get and verify the current row index */
-	idx = o->bo_id[OIDIDX_IFXENTRY];
+	idx = o->bo_id[OIDIDX_ifXEntry];
 	if ((kif = mib_ifget(idx)) == NULL)
 		return (1);
 
 	/* Tables need to prepend the OID on their own */
-	o->bo_id[OIDIDX_IFXENTRY] = kif->if_index;
+	o->bo_id[OIDIDX_ifXEntry] = kif->if_index;
 	ber = ber_add_oid(ber, o);
 
-	switch (o->bo_id[OIDIDX_IFX]) {
+	switch (o->bo_id[OIDIDX_ifX]) {
 	case 1:
 		if ((s = strdup(kif->if_name)) == NULL)
 			return (-1);
@@ -743,7 +743,7 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	u_int			 i = 0;
 
 	/* Get and verify the current row index */
-	idx = o->bo_id[OIDIDX_IFRCVENTRY];
+	idx = o->bo_id[OIDIDX_ifRcvAddressEntry];
 	if ((kif = mib_ifget(idx)) == NULL)
 		return (1);
 
@@ -756,20 +756,20 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* first set the base OID and caluculate the length */
 	idx = 0;
-	o->bo_id[OIDIDX_IFRCVENTRY + idx++] = kif->if_index;
-	o->bo_id[OIDIDX_IFRCVENTRY + idx] = 0;
+	o->bo_id[OIDIDX_ifRcvAddressEntry + idx++] = kif->if_index;
+	o->bo_id[OIDIDX_ifRcvAddressEntry + idx] = 0;
 	mps_oidlen(o);
 
 	/* extend the OID with the lladdr length and octets */
-	o->bo_id[OIDIDX_IFRCVENTRY + idx++] = sizeof(kif->if_lladdr);
+	o->bo_id[OIDIDX_ifRcvAddressEntry + idx++] = sizeof(kif->if_lladdr);
 	o->bo_n++;
 	for (i = 0; i < sizeof(kif->if_lladdr); i++, o->bo_n++)
-		o->bo_id[OIDIDX_IFRCVENTRY + idx++] = kif->if_lladdr[i];
+		o->bo_id[OIDIDX_ifRcvAddressEntry + idx++] = kif->if_lladdr[i];
 
 	/* write OID */
 	ber = ber_add_oid(ber, o);
 
-	switch (o->bo_id[OIDIDX_IFRCV]) {
+	switch (o->bo_id[OIDIDX_ifRcvAddress]) {
 	case 2:
 		/* ifRcvAddressStatus: RowStatus active(1), notInService(2) */
 		i = kif->if_flags & IFF_UP ? 1 : 2;
@@ -797,41 +797,41 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
  * from the official list.
  */
 static struct oid enterprise_mib[] = {
-	{ MIB(IBM), "ibm" },
-	{ MIB(CMU), "cmu" },
-	{ MIB(UNIX), "unix" },
-	{ MIB(CISCO), "ciscoSystems" },
-	{ MIB(HP), "hp" },
-	{ MIB(MIT), "mit" },
-	{ MIB(NORTEL), "nortelNetworks" },
-	{ MIB(SUN), "sun" },
-	{ MIB(3COM), "3com" },
-	{ MIB(SYNOPTICS), "synOptics" },
-	{ MIB(ENTERASYS), "enterasys" },
-	{ MIB(SGI), "sgi" },
-	{ MIB(APPLE), "apple" },
-	{ MIB(ATT), "att" },
-	{ MIB(NOKIA), "nokia" },
-	{ MIB(CERN), "cern" },
-	{ MIB(FSC), "fsc" },
-	{ MIB(COMPAQ), "compaq" },
-	{ MIB(DELL), "dell" },
-	{ MIB(ALTEON), "alteon" },
-	{ MIB(EXTREME), "extremeNetworks" },
-	{ MIB(FOUNDRY), "foundryNetworks" },
-	{ MIB(HUAWAI), "huawaiTechnology" },
-	{ MIB(UCDAVIS), "ucDavis" },
-	{ MIB(CHECKPOINT), "checkPoint" },
-	{ MIB(JUNIPER), "juniper" },
-	{ MIB(FORCE10), "force10Networks" },
-	{ MIB(ALCATELLUCENT), "alcatelLucent" },
-	{ MIB(SNOM), "snom" },
-	{ MIB(GOOGLE), "google" },
-	{ MIB(F5), "f5Networks" },
-	{ MIB(SFLOW), "sFlow" },
-	{ MIB(MSYS), "microSystems" },
-	{ MIB(VANTRONIX), "vantronix" },
-	{ MIB(OPENBSD), "openBSD" },
+	{ MIB(ibm) },
+	{ MIB(cmu) },
+	{ MIB(unix) },
+	{ MIB(ciscoSystems) },
+	{ MIB(hp) },
+	{ MIB(mit) },
+	{ MIB(nortelNetworks) },
+	{ MIB(sun) },
+	{ MIB(3com) },
+	{ MIB(synOptics) },
+	{ MIB(enterasys) },
+	{ MIB(sgi) },
+	{ MIB(apple) },
+	{ MIB(att) },
+	{ MIB(nokia) },
+	{ MIB(cern) },
+	{ MIB(fsc) },
+	{ MIB(compaq) },
+	{ MIB(dell) },
+	{ MIB(alteon) },
+	{ MIB(extremeNetworks) },
+	{ MIB(foundryNetworks) },
+	{ MIB(huawaiTechnology) },
+	{ MIB(ucDavis) },
+	{ MIB(checkPoint) },
+	{ MIB(juniper) },
+	{ MIB(force10Networks) },
+	{ MIB(alcatelLucent) },
+	{ MIB(snom) },
+	{ MIB(google) },
+	{ MIB(f5Networks) },
+	{ MIB(sFlow) },
+	{ MIB(microSystems) },
+	{ MIB(vantronix) },
+	{ MIB(openBSD) },
 	{ MIBEND }
 };
 
@@ -846,18 +846,18 @@ char	*mib_sensorunit(struct sensor *);
 char	*mib_sensorvalue(struct sensor *);
 
 static struct oid openbsd_mib[] = {
-	{ MIB(SENSORMIBOBJECTS), "sensorMIBObjects", OID_MIB },
-	{ MIB(SENSORS), "sensors" },
-	{ MIB(SENSORNUMBER), "sensorNumber", OID_RD,	mib_sensornum },
-	{ MIB(SENSORTABLE), "sensorTable" },
-	{ MIB(SENSORENTRY), "sensorEntry" },
-	{ MIB(SENSORINDEX), "sensorIndex", OID_TRD,	mib_sensors },
-	{ MIB(SENSORDESCR), "sensorDescr", OID_TRD,	mib_sensors },
-	{ MIB(SENSORTYPE), "sensorType", OID_TRD,	mib_sensors },
-	{ MIB(SENSORDEVICE), "sensorDevice", OID_TRD,	mib_sensors },
-	{ MIB(SENSORVALUE), "sensorValue", OID_TRD,	mib_sensors },
-	{ MIB(SENSORUNITS), "sensorUnits", OID_TRD,	mib_sensors },
-	{ MIB(SENSORSTATUS), "sensorStatus", OID_TRD,	mib_sensors },
+	{ MIB(sensorMIBObjects),	OID_MIB },
+	{ MIB(sensors) },
+	{ MIB(sensorNumber),		OID_RD,	mib_sensornum },
+	{ MIB(sensorTable) },
+	{ MIB(sensorEntry) },
+	{ MIB(sensorIndex),		OID_TRD, mib_sensors },
+	{ MIB(sensorDescr),		OID_TRD, mib_sensors },
+	{ MIB(sensorType),		OID_TRD, mib_sensors },
+	{ MIB(sensorDevice),		OID_TRD, mib_sensors },
+	{ MIB(sensorValue),		OID_TRD, mib_sensors },
+	{ MIB(sensorUnits),		OID_TRD, mib_sensors },
+	{ MIB(sensorStatus),		OID_TRD, mib_sensors },
 	{ MIBEND }
 };
 
@@ -899,7 +899,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	char			*s;
 
 	/* Get and verify the current row index */
-	idx = o->bo_id[OIDIDX_SENSORENTRY];
+	idx = o->bo_id[OIDIDX_sensorEntry];
 
 	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
@@ -907,7 +907,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return (-1);
-			continue;	
+			continue;
 		}
 		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
 			mib[3] = j;
@@ -917,7 +917,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 				    &sensor, &slen, NULL, 0) == -1) {
 					if (errno != ENOENT)
 						return (-1);
-					continue;	
+					continue;
 				}
 				if (n == idx)
 					goto found;
@@ -929,7 +929,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
  found:
 	ber = ber_add_oid(ber, o);
 
-	switch (o->bo_id[OIDIDX_SENSOR]) {
+	switch (o->bo_id[OIDIDX_sensor]) {
 	case 1:
 		ber = ber_add_integer(ber, (int32_t)n);
 		break;
@@ -1048,41 +1048,41 @@ int mib_iproutingdiscards(struct oid *, struct ber_oid *,
     struct ber_element **);
 
 static struct oid ip_mib[] = {
-	{ MIB(IPMIB), "ipMIB", OID_MIB },
-	{ MIB(IPFORWARDING), "ipForwarding", OID_RD, mib_ipforwarding },
-	{ MIB(IPDEFAULTTTL), "ipDefaultTTL", OID_RD, mib_ipdefaultttl },
-	{ MIB(IPINRECEIVES), "ipInReceives", OID_RD, mib_ipstat },
-	{ MIB(IPINHDRERRORS), "ipInHdrErrors", OID_RD, mib_ipinhdrerrs },
-	{ MIB(IPINADDRERRORS), "ipInAddrErrors", OID_RD, mib_ipinaddrerrs },
-	{ MIB(IPFORWDATAGRAMS), "ipForwDatagrams", OID_RD, mib_ipforwdgrams },
-	{ MIB(IPINUNKNOWNPROTOS), "ipInUnknownProtos", OID_RD, mib_ipstat },
-	{ MIB(IPINDISCARDS), "ipInDiscards" },
-	{ MIB(IPINDELIVERS), "ipInDelivers", OID_RD, mib_ipstat },
-	{ MIB(IPOUTREQUESTS), "ipOutRequests", OID_RD, mib_ipstat },
-	{ MIB(IPOUTDISCARDS), "ipOutDiscards", OID_RD, mib_ipstat },
-	{ MIB(IPOUTNOROUTES), "ipOutNoRoutes", OID_RD, mib_ipstat },
-	{ MIB(IPREASMTIMEOUT), "ipReasmTimeout", OID_RD, mps_getint, NULL, IPFRAGTTL },
-	{ MIB(IPREASMREQDS), "ipReasmReqds", OID_RD, mib_ipstat },
-	{ MIB(IPREASMOKS), "ipReasmOKs", OID_RD, mib_ipstat },
-	{ MIB(IPREASMFAILS), "ipReasmFails", OID_RD, mib_ipreasmfails },
-	{ MIB(IPFRAGOKS), "ipFragOKs", OID_RD, mib_ipstat },
-	{ MIB(IPFRAGFAILS), "ipFragFails", OID_RD, mib_ipfragfails },
-	{ MIB(IPFRAGCREATES), "ipFragCreate", OID_RD, mib_ipstat },
-	{ MIB(IPROUTINGDISCARDS), "ipRoutingDiscards" },
-	{ MIB(IPADDRTABLE), "ipAddrTable" },
-	{ MIB(IPADDRENTRY), "ipAddrEntry" },
-	{ MIB(IPADENTADDR), "ipAdEntAddr" },
-	{ MIB(IPADENTIFINDEX), "ipAdEntIfIndex" },
-	{ MIB(IPADENTNETMASK), "ipAdEntNetMask" },
-	{ MIB(IPADENTBCASTADDR), "ipAdEntBcastAddr" },
-	{ MIB(IPADENTREASMMAXSIZE), "ipAdEntReasmMaxSize" },
-	{ MIB(IPNETTOMEDIATABLE), "ipNetToMediaTable" },
-	{ MIB(IPNETTOMEDIAENTRY), "ipNetToMediaEntry" },
-	{ MIB(IPNETTOMEDIAIFINDEX), "ipNetToMediaIfIndex" },
-	{ MIB(IPNETTOMEDIAPHYSADDRESS), "ipNetToMediaPhysAddress" },
-	{ MIB(IPNETTOMEDIANETADDRESS), "ipNetToMediaNetAddress" },
-	{ MIB(IPNETTOMEDIATYPE), "ipNetToMediaType" },
-	{ MIB(IPNETTOMEDIATYPE), "ipNetToMediaType" },
+	{ MIB(ipMIB),			OID_MIB },
+	{ MIB(ipForwarding),		OID_RD, mib_ipforwarding },
+	{ MIB(ipDefaultTTL),		OID_RD, mib_ipdefaultttl },
+	{ MIB(ipInReceives),		OID_RD, mib_ipstat },
+	{ MIB(ipInHdrErrors),		OID_RD, mib_ipinhdrerrs },
+	{ MIB(ipInAddrErrors),		OID_RD, mib_ipinaddrerrs },
+	{ MIB(ipForwDatagrams),		OID_RD, mib_ipforwdgrams },
+	{ MIB(ipInUnknownProtos),	OID_RD, mib_ipstat },
+	{ MIB(ipInDiscards) },
+	{ MIB(ipInDelivers),		OID_RD, mib_ipstat },
+	{ MIB(ipOutRequests),		OID_RD, mib_ipstat },
+	{ MIB(ipOutDiscards),		OID_RD, mib_ipstat },
+	{ MIB(ipOutNoRoutes),		OID_RD, mib_ipstat },
+	{ MIB(ipReasmTimeout),		OID_RD, mps_getint, NULL, IPFRAGTTL },
+	{ MIB(ipReasmReqds),		OID_RD, mib_ipstat },
+	{ MIB(ipReasmOKs),		OID_RD, mib_ipstat },
+	{ MIB(ipReasmFails),		OID_RD, mib_ipreasmfails },
+	{ MIB(ipFragOKs),		OID_RD, mib_ipstat },
+	{ MIB(ipFragFails),		OID_RD, mib_ipfragfails },
+	{ MIB(ipFragCreates),		OID_RD, mib_ipstat },
+	{ MIB(ipRoutingDiscards) },
+	{ MIB(ipAddrTable) },
+	{ MIB(ipAddrEntry) },
+	{ MIB(ipAdEntAddr) },
+	{ MIB(ipAdEntIfIndex) },
+	{ MIB(ipAdEntNetMask) },
+	{ MIB(ipAdEntBcastAddr) },
+	{ MIB(ipAdEntReasmMaxSize) },
+	{ MIB(ipNetToMediaTable) },
+	{ MIB(ipNetToMediaEntry) },
+	{ MIB(ipNetToMediaIfIndex) },
+	{ MIB(ipNetToMediaPhysAddress) },
+	{ MIB(ipNetToMediaNetAddress) },
+	{ MIB(ipNetToMediaType) },
+	{ MIB(ipNetToMediaType) },
 	{ MIBEND }
 };
 
@@ -1096,7 +1096,7 @@ mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &v, &len, NULL, 0) == -1)
 		return (-1);
-	
+
 	*elm = ber_add_integer(*elm, v);
 
 	return (0);
@@ -1154,7 +1154,7 @@ mib_ipstat(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	for (i = 0;
 	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
-		if (oid->o_oid[OIDIDX_IP] == mapping[i].m_id) {
+		if (oid->o_oid[OIDIDX_ip] == mapping[i].m_id) {
 			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
 			ber_set_header(*elm,
 			    BER_CLASS_APPLICATION, SNMP_T_COUNTER32);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.7 2007/12/15 06:26:59 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.8 2007/12/28 15:32:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -20,242 +20,242 @@
 #define _SNMPD_MIB_H
 
 /* From the SNMPv2-SMI MIB */
-#define MIB_ISO			1
-#define MIB_ORG				MIB_ISO, 3
-#define MIB_DOD				MIB_ORG, 6
-#define MIB_INTERNET			MIB_DOD, 1
-#define MIB_DIRECTORY			MIB_INTERNET, 1
-#define MIB_MGMT			MIB_INTERNET, 2
-#define MIB_MIB_2			MIB_MGMT, 1
-#define MIB_SYSTEM			MIB_MIB_2, 1
-#define OIDIDX_SYSTEM			7
-#define MIB_SYSDESCR			MIB_SYSTEM, 1
-#define MIB_SYSOID			MIB_SYSTEM, 2
-#define MIB_SYSUPTIME			MIB_SYSTEM, 3
-#define MIB_SYSCONTACT			MIB_SYSTEM, 4
-#define MIB_SYSNAME			MIB_SYSTEM, 5
-#define MIB_SYSLOCATION			MIB_SYSTEM, 6
-#define MIB_SYSSERVICES			MIB_SYSTEM, 7
-#define MIB_SYSORLASTCHANGE		MIB_SYSTEM, 8
-#define MIB_SYSORTABLE			MIB_SYSTEM, 9
-#define MIB_SYSORENTRY			MIB_SYSORTABLE, 1
-#define OIDIDX_OR			9
-#define OIDIDX_ORENTRY			10
-#define MIB_SYSORINDEX			MIB_SYSORENTRY, 1
-#define MIB_SYSORID			MIB_SYSORENTRY, 2
-#define MIB_SYSORDESCR			MIB_SYSORENTRY, 3
-#define MIB_SYSORUPTIME			MIB_SYSORENTRY, 4
-#define MIB_TRANSMISSION		MIB_MIB_2, 10
-#define MIB_SNMP			MIB_MIB_2, 11
-#define OIDIDX_SNMP			7
-#define MIB_SNMPINPKTS			MIB_SNMP, 1
-#define MIB_SNMPOUTPKTS			MIB_SNMP, 2
-#define MIB_SNMPINBADVERSIONS		MIB_SNMP, 3
-#define MIB_SNMPINBADCOMNNAMES		MIB_SNMP, 4
-#define MIB_SNMPINBADCOMNUSES		MIB_SNMP, 5
-#define MIB_SNMPINASNPARSEERRS		MIB_SNMP, 6
-#define MIB_SNMPINTOOBIGS		MIB_SNMP, 8
-#define MIB_SNMPINNOSUCHNAMES		MIB_SNMP, 9
-#define MIB_SNMPINBADVALUES		MIB_SNMP, 10
-#define MIB_SNMPINREADONLYS		MIB_SNMP, 11
-#define MIB_SNMPINGENERRS		MIB_SNMP, 12
-#define MIB_SNMPINTOTALREQVARS		MIB_SNMP, 13
-#define MIB_SNMPINTOTALSETVARS		MIB_SNMP, 14
-#define MIB_SNMPINGETREQUESTS		MIB_SNMP, 15
-#define MIB_SNMPINGETNEXTS		MIB_SNMP, 16
-#define MIB_SNMPINSETREQUESTS		MIB_SNMP, 17
-#define MIB_SNMPINGETRESPONSES		MIB_SNMP, 18
-#define MIB_SNMPINTRAPS			MIB_SNMP, 19
-#define MIB_SNMPOUTTOOBIGS		MIB_SNMP, 20
-#define MIB_SNMPOUTNOSUCHNAMES		MIB_SNMP, 21
-#define MIB_SNMPOUTBADVALUES		MIB_SNMP, 22
-#define MIB_SNMPOUTGENERRS		MIB_SNMP, 24
-#define MIB_SNMPOUTGETREQUESTS		MIB_SNMP, 25
-#define MIB_SNMPOUTGETNEXTS		MIB_SNMP, 26
-#define MIB_SNMPOUTSETREQUESTS		MIB_SNMP, 27
-#define MIB_SNMPOUTGETRESPONSES		MIB_SNMP, 28
-#define MIB_SNMPOUTTRAPS		MIB_SNMP, 29
-#define MIB_SNMPENAUTHTRAPS		MIB_SNMP, 30
-#define MIB_SNMPSILENTDROPS		MIB_SNMP, 31
-#define MIB_SNMPPROXYDROPS		MIB_SNMP, 32
-#define MIB_EXPERIMENTAL		MIB_INTERNET, 3
-#define MIB_PRIVATE			MIB_INTERNET, 4
-#define MIB_ENTERPRISES			MIB_PRIVATE, 1
-#define MIB_SECURITY			MIB_INTERNET, 5
-#define MIB_SNMPV2			MIB_INTERNET, 6
-#define MIB_SNMPDOMAINS			MIB_SNMPV2, 1
-#define MIB_SNMPPROXIES			MIB_SNMPV2, 2
-#define MIB_SNMPMODULES			MIB_SNMPV2, 3
-#define MIB_SNMPMIB			MIB_SNMPMODULES, 1
-#define MIB_SNMPMIBOBJECTS		MIB_SNMPMIB, 1
-#define MIB_SNMPTRAP			MIB_SNMPMIBOBJECTS, 4
-#define MIB_SNMPTRAPOID			MIB_SNMPTRAP, 1
-#define MIB_SNMPTRAPENTERPRISE		MIB_SNMPTRAP, 3
-#define MIB_SNMPTRAPS			MIB_SNMPMIBOBJECTS, 5
-#define MIB_COLDSTART			MIB_SNMPTRAPS, 1
-#define MIB_WARMSTART			MIB_SNMPTRAPS, 2
-#define MIB_LINKDOWN			MIB_SNMPTRAPS, 3
-#define MIB_LINKUP			MIB_SNMPTRAPS, 4
-#define MIB_AUTHFAILURE			MIB_SNMPTRAPS, 5
-#define MIB_EGPNEIGHBORLOSS		MIB_SNMPTRAPS, 6
+#define MIB_iso				1
+#define MIB_org				MIB_iso, 3
+#define MIB_dod				MIB_org, 6
+#define MIB_internet			MIB_dod, 1
+#define MIB_directory			MIB_internet, 1
+#define MIB_mgmt			MIB_internet, 2
+#define MIB_mib_2			MIB_mgmt, 1	/* XXX mib-2 */
+#define MIB_system			MIB_mib_2, 1
+#define OIDIDX_system			7
+#define MIB_sysDescr			MIB_system, 1
+#define MIB_sysOID			MIB_system, 2
+#define MIB_sysUpTime			MIB_system, 3
+#define MIB_sysContact			MIB_system, 4
+#define MIB_sysName			MIB_system, 5
+#define MIB_sysLocation			MIB_system, 6
+#define MIB_sysServices			MIB_system, 7
+#define MIB_sysORLastChange		MIB_system, 8
+#define MIB_sysORTable			MIB_system, 9
+#define MIB_sysOREntry			MIB_sysORTable, 1
+#define OIDIDX_sysOR			9
+#define OIDIDX_sysOREntry		10
+#define MIB_sysORIndex			MIB_sysOREntry, 1
+#define MIB_sysORID			MIB_sysOREntry, 2
+#define MIB_sysORDescr			MIB_sysOREntry, 3
+#define MIB_sysORUpTime			MIB_sysOREntry, 4
+#define MIB_transmission		MIB_mib_2, 10
+#define MIB_snmp			MIB_mib_2, 11
+#define OIDIDX_snmp			7
+#define MIB_snmpInPkts			MIB_snmp, 1
+#define MIB_snmpOutPkts			MIB_snmp, 2
+#define MIB_snmpInBadVersions		MIB_snmp, 3
+#define MIB_snmpInBadCommunityNames	MIB_snmp, 4
+#define MIB_snmpInBadCommunityUses	MIB_snmp, 5
+#define MIB_snmpInASNParseErrs		MIB_snmp, 6
+#define MIB_snmpInTooBigs		MIB_snmp, 8
+#define MIB_snmpInNoSuchNames		MIB_snmp, 9
+#define MIB_snmpInBadValues		MIB_snmp, 10
+#define MIB_snmpInReadOnlys		MIB_snmp, 11
+#define MIB_snmpInGenErrs		MIB_snmp, 12
+#define MIB_snmpInTotalReqVars		MIB_snmp, 13
+#define MIB_snmpInTotalSetVars		MIB_snmp, 14
+#define MIB_snmpInGetRequests		MIB_snmp, 15
+#define MIB_snmpInGetNexts		MIB_snmp, 16
+#define MIB_snmpInSetRequests		MIB_snmp, 17
+#define MIB_snmpInGetResponses		MIB_snmp, 18
+#define MIB_snmpInTraps			MIB_snmp, 19
+#define MIB_snmpOutTooBigs		MIB_snmp, 20
+#define MIB_snmpOutNoSuchNames		MIB_snmp, 21
+#define MIB_snmpOutBadValues		MIB_snmp, 22
+#define MIB_snmpOutGenErrs		MIB_snmp, 24
+#define MIB_snmpOutGetRequests		MIB_snmp, 25
+#define MIB_snmpOutGetNexts		MIB_snmp, 26
+#define MIB_snmpOutSetRequests		MIB_snmp, 27
+#define MIB_snmpOutGetResponses		MIB_snmp, 28
+#define MIB_snmpOutTraps		MIB_snmp, 29
+#define MIB_snmpEnableAuthenTraps	MIB_snmp, 30
+#define MIB_snmpSilentDrops		MIB_snmp, 31
+#define MIB_snmpProxyDrops		MIB_snmp, 32
+#define MIB_experimental		MIB_internet, 3
+#define MIB_private			MIB_internet, 4
+#define MIB_enterprises			MIB_private, 1
+#define MIB_security			MIB_internet, 5
+#define MIB_snmpV2			MIB_internet, 6
+#define MIB_snmpDomains			MIB_snmpV2, 1
+#define MIB_snmpProxies			MIB_snmpV2, 2
+#define MIB_snmpModules			MIB_snmpV2, 3
+#define MIB_snmpMIB			MIB_snmpModules, 1
+#define MIB_snmpMIBObjects		MIB_snmpMIB, 1
+#define MIB_snmpTrap			MIB_snmpMIBObjects, 4
+#define MIB_snmpTrapOID			MIB_snmpTrap, 1
+#define MIB_snmpTrapEnterprise		MIB_snmpTrap, 3
+#define MIB_snmpTraps			MIB_snmpMIBObjects, 5
+#define MIB_coldStart			MIB_snmpTraps, 1
+#define MIB_warmStart			MIB_snmpTraps, 2
+#define MIB_linkDown			MIB_snmpTraps, 3
+#define MIB_linkUp			MIB_snmpTraps, 4
+#define MIB_authenticationFailure	MIB_snmpTraps, 5
+#define MIB_egpNeighborLoss		MIB_snmpTraps, 6
 
 /* IF-MIB */
-#define MIB_IFMIB			MIB_MIB_2, 31
-#define MIB_IFMIBOBJECTS		MIB_IFMIB, 1
-#define MIB_IFXTABLE			MIB_IFMIBOBJECTS, 1
-#define MIB_IFXENTRY			MIB_IFXTABLE, 1
-#define OIDIDX_IFX			10
-#define OIDIDX_IFXENTRY			11
-#define MIB_IFNAME			MIB_IFXENTRY, 1
-#define MIB_IFINMASTPKTS		MIB_IFXENTRY, 2
-#define MIB_IFINBASTPKTS		MIB_IFXENTRY, 3
-#define MIB_IFOUTMASTPKTS		MIB_IFXENTRY, 4
-#define MIB_IFOUTBASTPKTS		MIB_IFXENTRY, 5
-#define MIB_IFHCINOCTETS		MIB_IFXENTRY, 6
-#define MIB_IFHCINUCASTPKTS		MIB_IFXENTRY, 7
-#define MIB_IFHCINMCASTPKTS		MIB_IFXENTRY, 8
-#define MIB_IFHCINBCASTPKTS		MIB_IFXENTRY, 9
-#define MIB_IFHCOUTOCTETS		MIB_IFXENTRY, 10
-#define MIB_IFHCOUTUCASTPKTS		MIB_IFXENTRY, 11
-#define MIB_IFHCOUTMCASTPKTS		MIB_IFXENTRY, 12
-#define MIB_IFHCOUTBCASTPKTS		MIB_IFXENTRY, 13
-#define MIB_IFLINKUPDORNTRAPENABLE	MIB_IFXENTRY, 14
-#define MIB_IFHIGHSPEED			MIB_IFXENTRY, 15
-#define MIB_IFPROMISCMODE		MIB_IFXENTRY, 16
-#define MIB_IFCONNECTORPRESENT		MIB_IFXENTRY, 17
-#define MIB_IFALIAS			MIB_IFXENTRY, 18
-#define MIB_IFCNTDISCONTINUITYTIME	MIB_IFXENTRY, 19
-#define MIB_IFSTACKTABLE		MIB_IFMIBOBJECTS, 2
-#define MIB_IFSTACKENTRY		MIB_IFSTACKTABLE, 1
-#define OIDIDX_IFSTACK			10
-#define OIDIDX_IFSTACKENTRY		11
-#define MIB_IFSTACKSTATUS		MIB_IFSTACKENTRY, 3
-#define MIB_IFRCVTABLE			MIB_IFMIBOBJECTS, 4
-#define MIB_IFRCVENTRY			MIB_IFRCVTABLE, 1
-#define OIDIDX_IFRCV			10
-#define OIDIDX_IFRCVENTRY		11
-#define MIB_IFRCVSTATUS			MIB_IFRCVENTRY, 2
-#define MIB_IFRCVTYPE			MIB_IFRCVENTRY, 3
-#define MIB_IFSTACKLASTCHANGE		MIB_IFMIBOBJECTS, 6
-#define MIB_INTERFACES			MIB_MIB_2, 2
-#define MIB_IFNUMBER			MIB_INTERFACES, 1
-#define MIB_IFTABLE			MIB_INTERFACES, 2
-#define MIB_IFENTRY			MIB_IFTABLE, 1
-#define OIDIDX_IF			9
-#define OIDIDX_IFENTRY			10
-#define MIB_IFINDEX			MIB_IFENTRY, 1
-#define MIB_IFDESCR			MIB_IFENTRY, 2
-#define MIB_IFTYPE			MIB_IFENTRY, 3
-#define MIB_IFMTU			MIB_IFENTRY, 4
-#define MIB_IFSPEED			MIB_IFENTRY, 5
-#define MIB_IFPHYSADDR			MIB_IFENTRY, 6
-#define MIB_IFADMINSTATUS		MIB_IFENTRY, 7
-#define MIB_IFOPERSTATUS		MIB_IFENTRY, 8
-#define MIB_IFLASTCHANGE		MIB_IFENTRY, 9
-#define MIB_IFINOCTETS			MIB_IFENTRY, 10
-#define MIB_IFINUCASTPKTS		MIB_IFENTRY, 11
-#define MIB_IFINNUCASTPKTS		MIB_IFENTRY, 12
-#define MIB_IFINDISCARDS		MIB_IFENTRY, 13
-#define MIB_IFINERRORS			MIB_IFENTRY, 14
-#define MIB_IFINUNKNOWNERRORS		MIB_IFENTRY, 15
-#define MIB_IFOUTOCTETS			MIB_IFENTRY, 16
-#define MIB_IFOUTUCASTPKTS		MIB_IFENTRY, 17
-#define MIB_IFOUTNUCASTPKTS		MIB_IFENTRY, 18
-#define MIB_IFOUTDISCARDS		MIB_IFENTRY, 19
-#define MIB_IFOUTERRORS			MIB_IFENTRY, 20
-#define MIB_IFOUTQLEN			MIB_IFENTRY, 21
-#define MIB_IFSPECIFIC			MIB_IFENTRY, 22
+#define MIB_ifMIB			MIB_mib_2, 31
+#define MIB_ifMIBObjects		MIB_ifMIB, 1
+#define MIB_ifXTable			MIB_ifMIBObjects, 1
+#define MIB_ifXEntry			MIB_ifXTable, 1
+#define OIDIDX_ifX			10
+#define OIDIDX_ifXEntry			11
+#define MIB_ifName			MIB_ifXEntry, 1
+#define MIB_ifInMulticastPkts		MIB_ifXEntry, 2
+#define MIB_ifInBroadcastPkts		MIB_ifXEntry, 3
+#define MIB_ifOutMulticastPkts		MIB_ifXEntry, 4
+#define MIB_ifOutBroadcastPkts		MIB_ifXEntry, 5
+#define MIB_ifHCInOctets		MIB_ifXEntry, 6
+#define MIB_ifHCInUcastPkts		MIB_ifXEntry, 7
+#define MIB_ifHCInMulticastPkts		MIB_ifXEntry, 8
+#define MIB_ifHCInBroadcastPkts		MIB_ifXEntry, 9
+#define MIB_ifHCOutOctets		MIB_ifXEntry, 10
+#define MIB_ifHCOutUcastPkts		MIB_ifXEntry, 11
+#define MIB_ifHCOutMulticastPkts	MIB_ifXEntry, 12
+#define MIB_ifHCOutBroadcastPkts	MIB_ifXEntry, 13
+#define MIB_ifLinkUpDownTrapEnable	MIB_ifXEntry, 14
+#define MIB_ifHighSpeed			MIB_ifXEntry, 15
+#define MIB_ifPromiscuousMode		MIB_ifXEntry, 16
+#define MIB_ifConnectorPresent		MIB_ifXEntry, 17
+#define MIB_ifAlias			MIB_ifXEntry, 18
+#define MIB_ifCounterDiscontinuityTime	MIB_ifXEntry, 19
+#define MIB_ifStackTable		MIB_ifMIBObjects, 2
+#define MIB_ifStackEntry		MIB_ifStackTable, 1
+#define OIDIDX_ifStack			10
+#define OIDIDX_ifStackEntry		11
+#define MIB_ifStackStatus		MIB_ifStackEntry, 3
+#define MIB_ifRcvAddressTable		MIB_ifMIBObjects, 4
+#define MIB_ifRcvAddressEntry		MIB_ifRcvAddressTable, 1
+#define OIDIDX_ifRcvAddress		10
+#define OIDIDX_ifRcvAddressEntry	11
+#define MIB_ifRcvAddressStatus		MIB_ifRcvAddressEntry, 2
+#define MIB_ifRcvAddressType		MIB_ifRcvAddressEntry, 3
+#define MIB_ifStackLastChange		MIB_ifMIBObjects, 6
+#define MIB_interfaces			MIB_mib_2, 2
+#define MIB_ifNumber			MIB_interfaces, 1
+#define MIB_ifTable			MIB_interfaces, 2
+#define MIB_ifEntry			MIB_ifTable, 1
+#define OIDIDX_if			9
+#define OIDIDX_ifEntry			10
+#define MIB_ifIndex			MIB_ifEntry, 1
+#define MIB_ifDescr			MIB_ifEntry, 2
+#define MIB_ifType			MIB_ifEntry, 3
+#define MIB_ifMtu			MIB_ifEntry, 4
+#define MIB_ifSpeed			MIB_ifEntry, 5
+#define MIB_ifPhysAddress		MIB_ifEntry, 6
+#define MIB_ifAdminStatus		MIB_ifEntry, 7
+#define MIB_ifOperStatus		MIB_ifEntry, 8
+#define MIB_ifLastChange		MIB_ifEntry, 9
+#define MIB_ifInOctets			MIB_ifEntry, 10
+#define MIB_ifInUcastPkts		MIB_ifEntry, 11
+#define MIB_ifInNUcastPkts		MIB_ifEntry, 12
+#define MIB_ifInDiscards		MIB_ifEntry, 13
+#define MIB_ifInErrors			MIB_ifEntry, 14
+#define MIB_ifInUnknownErrors		MIB_ifEntry, 15
+#define MIB_ifOutOctets			MIB_ifEntry, 16
+#define MIB_ifOutUcastPkts		MIB_ifEntry, 17
+#define MIB_ifOutNUcastPkts		MIB_ifEntry, 18
+#define MIB_ifOutDiscards		MIB_ifEntry, 19
+#define MIB_ifOutErrors			MIB_ifEntry, 20
+#define MIB_ifOutQLen			MIB_ifEntry, 21
+#define MIB_ifSpecific			MIB_ifEntry, 22
 
 /* IP-MIB */
-#define MIB_IPMIB			MIB_MIB_2, 4
-#define OIDIDX_IP			7
-#define MIB_IPFORWARDING		MIB_IPMIB, 1
-#define MIB_IPDEFAULTTTL		MIB_IPMIB, 2
-#define MIB_IPINRECEIVES		MIB_IPMIB, 3
-#define MIB_IPINHDRERRORS		MIB_IPMIB, 4
-#define MIB_IPINADDRERRORS		MIB_IPMIB, 5
-#define MIB_IPFORWDATAGRAMS		MIB_IPMIB, 6
-#define MIB_IPINUNKNOWNPROTOS		MIB_IPMIB, 7
-#define MIB_IPINDISCARDS		MIB_IPMIB, 8
-#define MIB_IPINDELIVERS		MIB_IPMIB, 9
-#define MIB_IPOUTREQUESTS		MIB_IPMIB, 10
-#define MIB_IPOUTDISCARDS		MIB_IPMIB, 11
-#define MIB_IPOUTNOROUTES		MIB_IPMIB, 12
-#define MIB_IPREASMTIMEOUT		MIB_IPMIB, 13
-#define MIB_IPREASMREQDS		MIB_IPMIB, 14
-#define MIB_IPREASMOKS			MIB_IPMIB, 15
-#define MIB_IPREASMFAILS		MIB_IPMIB, 16
-#define MIB_IPFRAGOKS			MIB_IPMIB, 17
-#define MIB_IPFRAGFAILS			MIB_IPMIB, 18
-#define MIB_IPFRAGCREATES		MIB_IPMIB, 19
-#define MIB_IPADDRTABLE			MIB_IPMIB, 20
-#define MIB_IPADDRENTRY			MIB_IPADDRTABLE, 1
-#define MIB_IPADENTADDR			MIB_IPADDRENTRY, 2
-#define MIB_IPADENTIFINDEX		MIB_IPADDRENTRY, 3
-#define MIB_IPADENTNETMASK		MIB_IPADDRENTRY, 4
-#define MIB_IPADENTBCASTADDR		MIB_IPADDRENTRY, 5
-#define MIB_IPADENTREASMMAXSIZE		MIB_IPADDRENTRY, 6
-#define MIB_IPNETTOMEDIATABLE		MIB_IPMIB, 22
-#define MIB_IPNETTOMEDIAENTRY		MIB_IPNETTOMEDIATABLE, 1
-#define MIB_IPNETTOMEDIAIFINDEX		MIB_IPNETTOMEDIAENTRY, 1
-#define MIB_IPNETTOMEDIAPHYSADDRESS	MIB_IPNETTOMEDIAENTRY, 2
-#define MIB_IPNETTOMEDIANETADDRESS	MIB_IPNETTOMEDIAENTRY, 3
-#define MIB_IPNETTOMEDIATYPE		MIB_IPNETTOMEDIAENTRY, 4
-#define MIB_IPROUTINGDISCARDS		MIB_IPMIB, 23
+#define MIB_ipMIB			MIB_mib_2, 4
+#define OIDIDX_ip			7
+#define MIB_ipForwarding		MIB_ipMIB, 1
+#define MIB_ipDefaultTTL		MIB_ipMIB, 2
+#define MIB_ipInReceives		MIB_ipMIB, 3
+#define MIB_ipInHdrErrors		MIB_ipMIB, 4
+#define MIB_ipInAddrErrors		MIB_ipMIB, 5
+#define MIB_ipForwDatagrams		MIB_ipMIB, 6
+#define MIB_ipInUnknownProtos		MIB_ipMIB, 7
+#define MIB_ipInDiscards		MIB_ipMIB, 8
+#define MIB_ipInDelivers		MIB_ipMIB, 9
+#define MIB_ipOutRequests		MIB_ipMIB, 10
+#define MIB_ipOutDiscards		MIB_ipMIB, 11
+#define MIB_ipOutNoRoutes		MIB_ipMIB, 12
+#define MIB_ipReasmTimeout		MIB_ipMIB, 13
+#define MIB_ipReasmReqds		MIB_ipMIB, 14
+#define MIB_ipReasmOKs			MIB_ipMIB, 15
+#define MIB_ipReasmFails		MIB_ipMIB, 16
+#define MIB_ipFragOKs			MIB_ipMIB, 17
+#define MIB_ipFragFails			MIB_ipMIB, 18
+#define MIB_ipFragCreates		MIB_ipMIB, 19
+#define MIB_ipAddrTable			MIB_ipMIB, 20
+#define MIB_ipAddrEntry			MIB_ipAddrTable, 1
+#define MIB_ipAdEntAddr			MIB_ipAddrEntry, 2
+#define MIB_ipAdEntIfIndex		MIB_ipAddrEntry, 3
+#define MIB_ipAdEntNetMask		MIB_ipAddrEntry, 4
+#define MIB_ipAdEntBcastAddr		MIB_ipAddrEntry, 5
+#define MIB_ipAdEntReasmMaxSize		MIB_ipAddrEntry, 6
+#define MIB_ipNetToMediaTable		MIB_ipMIB, 22
+#define MIB_ipNetToMediaEntry		MIB_ipNetToMediaTable, 1
+#define MIB_ipNetToMediaIfIndex		MIB_ipNetToMediaEntry, 1
+#define MIB_ipNetToMediaPhysAddress	MIB_ipNetToMediaEntry, 2
+#define MIB_ipNetToMediaNetAddress	MIB_ipNetToMediaEntry, 3
+#define MIB_ipNetToMediaType		MIB_ipNetToMediaEntry, 4
+#define MIB_ipRoutingDiscards		MIB_ipMIB, 23
 
 /* Some enterprise-specific OIDs */
-#define MIB_IBM				MIB_ENTERPRISES, 2
-#define MIB_CMU				MIB_ENTERPRISES, 3
-#define MIB_UNIX			MIB_ENTERPRISES, 4
-#define MIB_CISCO			MIB_ENTERPRISES, 9
-#define MIB_HP				MIB_ENTERPRISES, 11
-#define MIB_MIT				MIB_ENTERPRISES, 20
-#define MIB_NORTEL			MIB_ENTERPRISES, 35
-#define MIB_SUN				MIB_ENTERPRISES, 42
-#define MIB_3COM			MIB_ENTERPRISES, 43
-#define MIB_SYNOPTICS			MIB_ENTERPRISES, 45
-#define MIB_ENTERASYS			MIB_ENTERPRISES, 52
-#define MIB_SGI				MIB_ENTERPRISES, 59
-#define MIB_APPLE			MIB_ENTERPRISES, 63
-#define MIB_ATT				MIB_ENTERPRISES, 74
-#define MIB_NOKIA			MIB_ENTERPRISES, 94
-#define MIB_CERN			MIB_ENTERPRISES, 96
-#define MIB_FSC				MIB_ENTERPRISES, 231
-#define MIB_COMPAQ			MIB_ENTERPRISES, 232
-#define MIB_DELL			MIB_ENTERPRISES, 674
-#define MIB_ALTEON			MIB_ENTERPRISES, 1872
-#define MIB_EXTREME			MIB_ENTERPRISES, 1916
-#define MIB_FOUNDRY			MIB_ENTERPRISES, 1991
-#define MIB_HUAWAI			MIB_ENTERPRISES, 2011
-#define MIB_UCDAVIS			MIB_ENTERPRISES, 2021
-#define MIB_CHECKPOINT			MIB_ENTERPRISES, 2620
-#define MIB_JUNIPER			MIB_ENTERPRISES, 2636
-#define MIB_FORCE10			MIB_ENTERPRISES, 6027
-#define MIB_ALCATELLUCENT		MIB_ENTERPRISES, 7483
-#define MIB_SNOM			MIB_ENTERPRISES, 7526
-#define MIB_GOOGLE			MIB_ENTERPRISES, 11129
-#define MIB_F5				MIB_ENTERPRISES, 12276
-#define MIB_SFLOW			MIB_ENTERPRISES, 14706
-#define MIB_MSYS			MIB_ENTERPRISES, 18623
-#define MIB_VANTRONIX			MIB_ENTERPRISES, 26766
-#define MIB_OPENBSD			MIB_ENTERPRISES, 30155
+#define MIB_ibm				MIB_enterprises, 2
+#define MIB_cmu				MIB_enterprises, 3
+#define MIB_unix			MIB_enterprises, 4
+#define MIB_ciscoSystems		MIB_enterprises, 9
+#define MIB_hp				MIB_enterprises, 11
+#define MIB_mit				MIB_enterprises, 20
+#define MIB_nortelNetworks		MIB_enterprises, 35
+#define MIB_sun				MIB_enterprises, 42
+#define MIB_3com			MIB_enterprises, 43
+#define MIB_synOptics			MIB_enterprises, 45
+#define MIB_enterasys			MIB_enterprises, 52
+#define MIB_sgi				MIB_enterprises, 59
+#define MIB_apple			MIB_enterprises, 63
+#define MIB_att				MIB_enterprises, 74
+#define MIB_nokia			MIB_enterprises, 94
+#define MIB_cern			MIB_enterprises, 96
+#define MIB_fsc				MIB_enterprises, 231
+#define MIB_compaq			MIB_enterprises, 232
+#define MIB_dell			MIB_enterprises, 674
+#define MIB_alteon			MIB_enterprises, 1872
+#define MIB_extremeNetworks		MIB_enterprises, 1916
+#define MIB_foundryNetworks		MIB_enterprises, 1991
+#define MIB_huawaiTechnology		MIB_enterprises, 2011
+#define MIB_ucDavis			MIB_enterprises, 2021
+#define MIB_checkPoint			MIB_enterprises, 2620
+#define MIB_juniper			MIB_enterprises, 2636
+#define MIB_force10Networks		MIB_enterprises, 6027
+#define MIB_alcatelLucent		MIB_enterprises, 7483
+#define MIB_snom			MIB_enterprises, 7526
+#define MIB_google			MIB_enterprises, 11129
+#define MIB_f5Networks			MIB_enterprises, 12276
+#define MIB_sFlow			MIB_enterprises, 14706
+#define MIB_microSystems		MIB_enterprises, 18623
+#define MIB_vantronix			MIB_enterprises, 26766
+#define MIB_openBSD			MIB_enterprises, 30155
 
 /* OPENBSD-MIB */
-#define MIB_SYSOID_DEFAULT		MIB_OPENBSD, 23, 1
-#define MIB_SENSORMIBOBJECTS		MIB_OPENBSD, 2
-#define MIB_SENSORS			MIB_SENSORMIBOBJECTS, 1
-#define MIB_SENSORNUMBER		MIB_SENSORS, 1
-#define MIB_SENSORTABLE			MIB_SENSORS, 2
-#define MIB_SENSORENTRY			MIB_SENSORTABLE, 1
-#define OIDIDX_SENSOR			11
-#define OIDIDX_SENSORENTRY		12
-#define MIB_SENSORINDEX			MIB_SENSORENTRY, 1
-#define MIB_SENSORDESCR			MIB_SENSORENTRY, 2
-#define MIB_SENSORTYPE			MIB_SENSORENTRY, 3
-#define MIB_SENSORDEVICE		MIB_SENSORENTRY, 4
-#define MIB_SENSORVALUE			MIB_SENSORENTRY, 5
-#define MIB_SENSORUNITS			MIB_SENSORENTRY, 6
-#define MIB_SENSORSTATUS		MIB_SENSORENTRY, 7
+#define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
+#define MIB_sensorMIBObjects		MIB_openBSD, 2
+#define MIB_sensors			MIB_sensorMIBObjects, 1
+#define MIB_sensorNumber		MIB_sensors, 1
+#define MIB_sensorTable			MIB_sensors, 2
+#define MIB_sensorEntry			MIB_sensorTable, 1
+#define OIDIDX_sensor			11
+#define OIDIDX_sensorEntry		12
+#define MIB_sensorIndex			MIB_sensorEntry, 1
+#define MIB_sensorDescr			MIB_sensorEntry, 2
+#define MIB_sensorType			MIB_sensorEntry, 3
+#define MIB_sensorDevice		MIB_sensorEntry, 4
+#define MIB_sensorValue			MIB_sensorEntry, 5
+#define MIB_sensorUnits			MIB_sensorEntry, 6
+#define MIB_sensorStatus		MIB_sensorEntry, 7
 
 void	 mib_init(void);
 
