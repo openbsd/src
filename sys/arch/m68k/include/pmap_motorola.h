@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.16 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.17 2007/12/28 18:57:28 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -38,6 +38,8 @@
 
 #ifndef	_PMAP_MOTOROLA_H_
 #define	_PMAP_MOTOROLA_H_
+
+#ifdef	_KERNEL
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -108,8 +110,6 @@ struct pv_page {
 	struct pv_page_info pvp_pgi;
 	struct pv_entry pvp_pv[NPVPPG];
 };
-
-#ifdef	_KERNEL
 
 extern struct pmap	kernel_pmap_store;
 
