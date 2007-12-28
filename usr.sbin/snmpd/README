@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.3 2007/12/05 22:52:50 reyk Exp $
+# $OpenBSD: README,v 1.4 2007/12/28 17:26:09 reyk Exp $
 
 SNMP daemon
 -----------
@@ -90,7 +90,6 @@ TODO
                 - OPENBSD-MIB	(sensors done, etc.)
 		- ...
 	- Review review review
-	- Separate mps and snmpe?
 	- add trap receiver/logger
 	- manpages
 
