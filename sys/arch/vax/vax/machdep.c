@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.92 2007/06/06 17:15:13 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.93 2007/12/28 20:41:56 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -192,7 +192,6 @@ cpu_startup()
 	printf("real mem = %u (%uMB)\n", avail_end,
 	    avail_end/1024/1024);
 	physmem = btoc(avail_end);
-	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
