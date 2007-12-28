@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.140 2007/11/23 14:44:59 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.141 2007/12/28 16:19:15 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -967,7 +967,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 int
 sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
 {
-	struct scsi_inquiry_vpd vpd;
+	struct scsi_vpd_serial vpd;
 
 	bzero(di, sizeof(struct dk_inquiry));
 	scsi_strvis(di->vendor, sd->sc_link->inqdata.vendor,

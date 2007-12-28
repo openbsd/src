@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.54 2007/12/09 01:30:59 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.55 2007/12/28 16:19:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -553,17 +553,17 @@ atascsi_disk_serial(struct scsi_xfer *xs)
 	struct scsi_link        *link = xs->sc_link;
 	struct atascsi          *as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
-	struct scsi_inquiry_vpd	vpd;
+	struct scsi_vpd_serial	pg;
 
-	bzero(&vpd, sizeof(vpd));
+	bzero(&pg, sizeof(pg));
 
-	vpd.device = T_DIRECT;
-	vpd.page_code = SI_PG_SERIAL;
-	vpd.page_length = sizeof(ap->ap_identify.serial);
-	bcopy(ap->ap_identify.serial, vpd.serial,
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_SERIAL;
+	pg.hdr.page_length = sizeof(ap->ap_identify.serial);
+	bcopy(ap->ap_identify.serial, pg.serial,
 	    sizeof(ap->ap_identify.serial));
 
-	bcopy(&vpd, xs->data, MIN(sizeof(vpd), xs->datalen));
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
 	return (atascsi_done(xs, XS_NOERROR));
 }

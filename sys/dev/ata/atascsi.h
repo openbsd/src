@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.30 2007/12/06 12:19:01 jsg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.31 2007/12/28 16:19:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -93,6 +93,7 @@ struct ata_identify {
 	u_int16_t	features85;	/*  85 */
 	u_int16_t	features86;	/*  86 */
 	u_int16_t	features87;	/*  87 */
+#define ATA_ID_F87_WWN		(1<<8)
 	u_int16_t	ultradma;	/*  88 */
 	u_int16_t	erasetime;	/*  89 */
 	u_int16_t	erasetimex;	/*  90 */

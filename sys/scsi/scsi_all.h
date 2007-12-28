@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.43 2007/04/12 16:33:27 weingart Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.44 2007/12/28 16:19:15 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,9 @@ struct scsi_inquiry {
 	u_int8_t flags;
 #define SI_EVPD		0x01
 	u_int8_t pagecode;
+#define SI_PG_SUPPORTED	0x00
 #define SI_PG_SERIAL	0x80
+#define SI_PG_DEVID	0x83
 	u_int8_t length[2];
 	u_int8_t control;
 };
@@ -257,12 +259,54 @@ struct scsi_inquiry_data {
 	u_int8_t reserved;
 };
 
-struct scsi_inquiry_vpd {
+struct scsi_vpd_hdr {
 	u_int8_t device;
 	u_int8_t page_code;
 	u_int8_t reserved;
 	u_int8_t page_length;
+};
+
+struct scsi_vpd_serial {
+	struct scsi_vpd_hdr hdr;
 	char serial[32];
+};
+
+#define VPD_PROTO_ID_FC		0x0 /* Fibre Channel */
+#define VPD_PROTO_ID_SPI	0x1 /* Parallel SCSI */
+#define VPD_PROTO_ID_SSA	0x2
+#define VPD_PROTO_ID_IEEE1394	0x3
+#define VPD_PROTO_ID_SRP	0x4 /* SCSI RDMA Protocol */
+#define VPD_PROTO_ID_ISCSI	0x5 /* Internet SCSI (iSCSI) */
+#define VPD_PROTO_ID_SAS	0x6 /* Serial Attached SCSI */
+#define VPD_PROTO_ID_ADT	0x7 /* Automation/Drive Interface Transport */
+#define VPD_PROTO_ID_ATA	0x7 /* ATA/ATAPI */
+#define VPD_PROTO_ID_NONE	0xf
+
+struct scsi_vpd_devid_hdr {
+	u_int8_t pi_code;
+#define VPD_DEVID_PI(_f)	(((_f) >> 4) & 0xf0)
+#define VPD_DEVID_CODE(_f)	(((_f) >> 0) & 0x0f)
+#define VPD_DEVID_CODE_BINARY		0x1
+#define VPD_DEVID_CODE_ASCII		0x2
+#define VPD_DEVID_CODE_UTF8		0x3
+	u_int8_t flags;
+#define VPD_DEVID_PIV		0x80
+#define VPD_DEVID_ASSOC		0x30
+#define VPD_DEVID_ASSOC_LU		0x00
+#define VPD_DEVID_ASSOC_PORT		0x10
+#define VPD_DEVID_ASSOC_TARG		0x20
+#define VPD_DEVID_TYPE		(((_f) >> 0) & 0x0f)
+#define VPD_DEVID_TYPE_VENDOR		0x0
+#define VPD_DEVID_TYPE_T10		0x1
+#define VPD_DEVID_TYPE_EUI64		0x2
+#define VPD_DEVID_TYPE_NAA		0x3
+#define VPD_DEVID_TYPE_RELATIVE		0x4
+#define VPD_DEVID_TYPE_PORT		0x5
+#define VPD_DEVID_TYPE_LU		0x6
+#define VPD_DEVID_TYPE_MD5		0x7
+#define VPD_DEVID_TYPE_NAME		0x8
+	u_int8_t reserved;
+	u_int8_t len;
 };
 
 struct scsi_sense_data_unextended {

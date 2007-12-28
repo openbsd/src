@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.185 2007/09/27 08:45:19 chl Exp $	*/
+/*	$OpenBSD: ami.c,v 1.186 2007/12/28 16:19:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2013,7 +2013,7 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
     struct ami_big_diskarray *p)
 {
 	struct scsi_inquiry_data inqbuf;
-	struct scsi_inquiry_vpd vpdbuf;
+	struct scsi_vpd_serial vpdbuf;
 	char *plist;
 	int i, s, t, off;
 	int ld = p->ada_nld, error = EINVAL;
@@ -2073,8 +2073,8 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 			bcopy(vpdbuf.serial, ser, sizeof ser - 1);
 
 			ser[sizeof ser - 1] = '\0';
-			if (vpdbuf.page_length < sizeof ser)
-				ser[vpdbuf.page_length] = '\0';
+			if (vpdbuf.hdr.page_length < sizeof ser)
+				ser[vpdbuf.hdr.page_length] = '\0';
 
 			strlcpy(bd->bd_serial, ser, sizeof(bd->bd_serial));
 		}
@@ -2233,7 +2233,7 @@ int
 ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 {
 	struct scsi_inquiry_data inqbuf;
-	struct scsi_inquiry_vpd vpdbuf;
+	struct scsi_vpd_serial vpdbuf;
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	int i, s, t, d;
 	int off;
@@ -2313,8 +2313,8 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 				bcopy(vpdbuf.serial, ser, sizeof ser - 1);
 
 				ser[sizeof ser - 1] = '\0';
-				if (vpdbuf.page_length < sizeof ser)
-					ser[vpdbuf.page_length] = '\0';
+				if (vpdbuf.hdr.page_length < sizeof ser)
+					ser[vpdbuf.hdr.page_length] = '\0';
 				strlcpy(bd->bd_serial, ser,
 				    sizeof(bd->bd_serial));
 			}
