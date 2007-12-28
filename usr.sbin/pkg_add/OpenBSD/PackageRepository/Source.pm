@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Source.pm,v 1.6 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Source.pm,v 1.7 2007/12/28 12:57:13 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -56,10 +56,7 @@ sub build_package
 	my $pkgfile = `cd $dir && SUBDIR=$pkgpath ECHO_MSG=: $make show=PKGFILE`;
 	chomp $pkgfile;
 	if (! -f $pkgfile) {
-		# XXX
-		unlock_db();
-		system "cd $dir && SUBDIR=$pkgpath $make package BULK=Yes";
-		lock_db(0);
+		system "cd $dir && SUBDIR=$pkgpath $make package BULK=Yes PKGDB_LOCK='-F nolock' FETCH_PACKAGES=No";
 	}
 	if (! -f $pkgfile) {
 		return undef;
