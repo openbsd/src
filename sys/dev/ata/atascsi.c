@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.57 2007/12/28 16:30:08 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.58 2007/12/28 16:38:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,7 @@ int		atascsi_disk_cmd(struct scsi_xfer *);
 void		atascsi_disk_cmd_done(struct ata_xfer *);
 int		atascsi_disk_inq(struct scsi_xfer *);
 int		atascsi_disk_inquiry(struct scsi_xfer *);
+int		atascsi_disk_vpd_supported(struct scsi_xfer *);
 int		atascsi_disk_vpd_serial(struct scsi_xfer *);
 int		atascsi_disk_vpd_ident(struct scsi_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
@@ -475,6 +476,8 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 
 	if (ISSET(inq->flags, SI_EVPD)) {
 		switch (inq->pagecode) {
+		case SI_PG_SUPPORTED:
+			return (atascsi_disk_vpd_supported(xs));
 		case SI_PG_SERIAL:
 			return (atascsi_disk_vpd_serial(xs));
 		case SI_PG_DEVID:
@@ -548,6 +551,28 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	}
 
 	return (rv);
+}
+
+int
+atascsi_disk_vpd_supported(struct scsi_xfer *xs)
+{
+	struct {
+		struct scsi_vpd_hdr	hdr;
+		u_int8_t		list[3];
+	}			pg;
+
+	bzero(&pg, sizeof(pg));
+
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_SUPPORTED;
+	pg.hdr.page_length = sizeof(pg.list);
+	pg.list[0] = SI_PG_SUPPORTED;
+	pg.list[1] = SI_PG_SERIAL;
+	pg.list[2] = SI_PG_DEVID;
+
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
+
+	return (atascsi_done(xs, XS_NOERROR));
 }
 
 int
