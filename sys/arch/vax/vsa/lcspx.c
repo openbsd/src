@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.13 2007/12/09 21:54:00 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.14 2007/12/28 20:44:39 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -170,6 +170,9 @@ lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 	volatile struct adder *adder;
 	u_short status;
 
+	if (va->va_paddr != LCSPX_REG_ADDR)
+		return (0);
+
 	switch (vax_boardtype) {
 	default:
 		return (0);
@@ -177,9 +180,6 @@ lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		if (va->va_paddr != LCSPX_REG_ADDR)
-			return (0);
-
 		/* not present on microvaxes */
 		if ((vax_confdata & KA420_CFG_MULTU) != 0)
 			return (0);
@@ -211,9 +211,6 @@ lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 		break;
 
 	case VAX_BTYP_49:
-		if (va->va_paddr != LCSPX_REG_ADDR)
-			return (0);
-
 		if ((vax_confdata & 0x12) != 0x02)
 			return (0);
 
@@ -622,7 +619,7 @@ lcspx_resetcmap(struct lcspx_screen *ss)
  */
 
 int	lcspxcnprobe(void);
-void	lcspxcninit(void);
+int	lcspxcninit(void);
 
 int
 lcspxcnprobe()
@@ -699,7 +696,7 @@ lcspxcnprobe()
  * Because it's called before the VM system is initialized, virtual memory
  * for the framebuffer can be stolen directly without disturbing anything.
  */
-void
+int
 lcspxcninit()
 {
 	struct lcspx_screen *ss = &lcspx_consscr;
@@ -765,11 +762,13 @@ lcspxcninit()
 
 	virtual_avail = round_page(virtual_avail);
 
-	/* this had better not fail as we can't recover there */
+	/* this had better not fail */
 	if (lcspx_setup_screen(ss, width, height) != 0)
-		panic(__func__);
+		return (1);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&lcspx_stdscreen, ri, 0, 0, defattr);
+
+	return (0);
 }

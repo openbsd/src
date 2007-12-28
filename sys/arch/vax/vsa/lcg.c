@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.12 2007/12/18 19:39:27 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.13 2007/12/28 20:44:39 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -706,7 +706,7 @@ lcg_resetcmap(struct lcg_screen *ss)
  */
 
 int	lcgcnprobe(void);
-void	lcgcninit(void);
+int	lcgcninit(void);
 
 int
 lcgcnprobe()
@@ -764,7 +764,7 @@ lcgcnprobe()
  * Because it's called before the VM system is initialized, virtual memory
  * for the framebuffer can be stolen directly without disturbing anything.
  */
-void
+int
 lcgcninit()
 {
 	struct lcg_screen *ss = &lcg_consscr;
@@ -798,11 +798,13 @@ lcgcninit()
 
 	virtual_avail = round_page(virtual_avail);
 
-	/* this had better not fail as we can't recover there */
+	/* this had better not fail */
 	if (lcg_setup_screen(ss) != 0)
-		panic(__func__);
+		return (1);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&lcg_stdscreen, ri, 0, 0, defattr);
+
+	return (0);
 }

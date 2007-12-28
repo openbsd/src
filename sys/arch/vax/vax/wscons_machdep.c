@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2007/12/28 20:44:37 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -51,11 +51,11 @@
 #include "lcspx.h"
 #include "smg.h"
 
-void (*wsfbcninit)(void) = NULL;
+int (*wsfbcninit)(void) = NULL;
 
 #define	FRAMEBUFFER_PROTOS(fb) \
 extern int fb##cnprobe(void); \
-extern void fb##cninit(void);
+extern int fb##cninit(void);
 
 #define	FRAMEBUFFER_PROBE(fb) \
 do { \
@@ -73,11 +73,22 @@ FRAMEBUFFER_PROTOS(smg);
 #include <dev/cons.h>
 cons_decl(ws);
 
+int	wscn_ignore = 0;	/* nonzero if forcing a new console election */
+
 void
 wscnprobe(struct consdev *cp)
 {
 	extern int getmajor(void *);	/* conf.c */
 	int major;
+
+	/*
+	 * If we forced a console device reelection, mark ourselves as
+	 * non-working.
+	 */
+	if (wscn_ignore != 0) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
 
 	major = getmajor(wsdisplayopen);
 	if (major < 0)
@@ -105,7 +116,15 @@ found:
 void
 wscninit(struct consdev *cp)
 {
-	(*wsfbcninit)();
+	if ((*wsfbcninit)()) {
+		/*
+		 * For some reason, the console initialization failed.
+		 * Fallback to serial console, by re-electing a console.
+		 */
+		wscn_ignore = 1;
+		cninit();
+		return;
+	}
 
 	switch (vax_bustype) {
 	case VAX_VSBUS:

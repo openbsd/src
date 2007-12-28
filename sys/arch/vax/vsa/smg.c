@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.20 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: smg.c,v 1.21 2007/12/28 20:44:39 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -810,7 +810,7 @@ smg_erasecols(void *cookie, int row, int col, int num, long attr)
  */
 
 int	smgcnprobe(void);
-void	smgcninit(void);
+int	smgcninit(void);
 
 int
 smgcnprobe()
@@ -839,7 +839,7 @@ smgcnprobe()
  * Because it's called before the VM system is initialized, virtual memory
  * for the framebuffer can be stolen directly without disturbing anything.
  */
-void
+int
 smgcninit()
 {
 	struct smg_screen *ss = &smg_consscr;
@@ -857,11 +857,13 @@ smgcninit()
 
 	virtual_avail = round_page(virtual_avail);
 
-	/* this had better not fail as we can't recover there */
+	/* this had better not fail */
 	if (smg_setup_screen(ss) != 0)
-		panic(__func__);
+		return (1);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&smg_stdscreen, ri, 0, 0, defattr);
+
+	return (0);
 }

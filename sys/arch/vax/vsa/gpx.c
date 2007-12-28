@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.17 2007/12/09 21:53:01 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.18 2007/12/28 20:44:39 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -1229,7 +1229,7 @@ gpx_resetcmap(struct gpx_screen *ss)
  */
 
 int	gpxcnprobe(void);
-void	gpxcninit(void);
+int	gpxcninit(void);
 
 int
 gpxcnprobe()
@@ -1279,7 +1279,7 @@ gpxcnprobe()
  * Because it's called before the VM system is initialized, virtual memory
  * for the framebuffer can be stolen directly without disturbing anything.
  */
-void
+int
 gpxcninit()
 {
 	struct gpx_screen *ss = &gpx_consscr;
@@ -1309,11 +1309,13 @@ gpxcninit()
 
 	virtual_avail = round_page(virtual_avail);
 
-	/* this had better not fail as we can't recover there */
+	/* this had better not fail */
 	if (gpx_setup_screen(ss) != 0)
-		panic(__func__);
+		return (1);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&gpx_stdscreen, ri, 0, 0, defattr);
+
+	return (0);
 }
