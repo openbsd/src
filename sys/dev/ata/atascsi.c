@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.55 2007/12/28 16:19:14 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.56 2007/12/28 16:21:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ void		atascsi_disk_cmd_done(struct ata_xfer *);
 int		atascsi_disk_inq(struct scsi_xfer *);
 int		atascsi_disk_inquiry(struct scsi_xfer *);
 int		atascsi_disk_serial(struct scsi_xfer *);
+int		atascsi_disk_ident(struct scsi_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
 int		atascsi_disk_sync(struct scsi_xfer *);
 void		atascsi_disk_sync_done(struct ata_xfer *);
@@ -476,6 +477,8 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		switch (inq->pagecode) {
 		case SI_PG_SERIAL:
 			return (atascsi_disk_serial(xs));
+		case SI_PG_DEVID:
+			return (atascsi_disk_ident(xs));
 		default:
 			return (atascsi_done(xs, XS_DRIVER_STUFFUP));
 		}
@@ -564,6 +567,58 @@ atascsi_disk_serial(struct scsi_xfer *xs)
 	    sizeof(ap->ap_identify.serial));
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
+
+	return (atascsi_done(xs, XS_NOERROR));
+}
+
+int
+atascsi_disk_ident(struct scsi_xfer *xs)
+{
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi          *as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct {
+		struct scsi_vpd_hdr	hdr;
+		struct scsi_vpd_devid_hdr devid_hdr;
+		u_int8_t		devid[68];
+	}			pg;
+	u_int8_t		*p;
+	size_t			pg_len;
+
+	bzero(&pg, sizeof(pg));
+	if (ap->ap_identify.features87 & ATA_ID_F87_WWN) {
+		pg_len = 8;
+
+		pg.devid_hdr.pi_code = VPD_DEVID_CODE_BINARY;
+		pg.devid_hdr.flags = VPD_DEVID_ASSOC_LU | VPD_DEVID_TYPE_NAA;
+
+		/* XXX ata_identify field(s) should be renamed */
+		bcopy(&ap->ap_identify.naa_ieee_oui, pg.devid, pg_len);
+	} else {
+		pg_len = 68;
+
+		pg.devid_hdr.pi_code = VPD_DEVID_CODE_ASCII;
+		pg.devid_hdr.flags = VPD_DEVID_ASSOC_LU | VPD_DEVID_TYPE_T10;
+
+		p = pg.devid;
+		bcopy("ATA     ", p, 8);
+		p += 8;
+		bcopy(ap->ap_identify.model, p,
+		    sizeof(ap->ap_identify.model));
+		p += sizeof(ap->ap_identify.model);
+		bcopy(ap->ap_identify.serial, p,
+		    sizeof(ap->ap_identify.serial));
+	}
+
+	pg.devid_hdr.len = pg_len;
+	pg_len += sizeof(pg.devid_hdr);
+
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_DEVID;
+	pg.hdr.page_length = pg_len;
+	pg_len += sizeof(pg.hdr);
+
+	bcopy(&pg, xs->data, MIN(pg_len, xs->datalen));
 
 	return (atascsi_done(xs, XS_NOERROR));
 }
