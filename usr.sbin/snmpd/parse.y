@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2007/12/28 15:32:02 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2007/12/28 15:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -155,7 +155,7 @@ varset		: STRING '=' STRING	{
 		;
 
 main		: LISTEN ON STRING		{
-			struct addresslist 	 al;
+			struct addresslist	 al;
 			struct address		*h;
 
 			TAILQ_INIT(&al);

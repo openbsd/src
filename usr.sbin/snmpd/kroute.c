@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2007/12/06 04:10:46 deraadt Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.3 2007/12/28 15:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -448,7 +448,7 @@ kif_update(u_short if_index, int flags, struct if_data *ifd,
 {
 	struct kif_node		*kif;
 	struct ether_addr	*ea;
-        struct ifreq		 ifr;
+	struct ifreq		 ifr;
 
 	if ((kif = kif_find(if_index)) == NULL)
 		if ((kif = kif_insert(if_index)) == NULL)
@@ -637,7 +637,8 @@ if_newaddr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
 	if ((kif = kif_find(if_index)) == NULL) {
-		log_warnx("if_newaddr: corresponding if %i not found", if_index);
+		log_warnx("if_newaddr: corresponding if %i not found",
+		    if_index);
 		return;
 	}
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
