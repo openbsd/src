@@ -241,6 +241,7 @@
 ./usr/include/dev/ic/dp857xreg.h
 ./usr/include/dev/ic/dptreg.h
 ./usr/include/dev/ic/dptvar.h
+./usr/include/dev/ic/ds1687reg.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/espreg.h

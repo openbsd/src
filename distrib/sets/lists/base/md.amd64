@@ -914,6 +914,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/dp857xreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/dptreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/dptvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ds1687reg
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/elink3reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/elink3var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/espreg.ph
