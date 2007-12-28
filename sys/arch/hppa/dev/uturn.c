@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.4 2007/12/21 16:19:43 kettenis Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.5 2007/12/28 19:49:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -115,8 +115,11 @@ uturnattach(parent, self, aux)
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
+	case HPPA_BOARD_HP829:
 	case HPPA_BOARD_HP839:
+	case HPPA_BOARD_HP849:
 	case HPPA_BOARD_HP859:
+	case HPPA_BOARD_HP869:
 		hpa = ((struct iomod *)ioh)->io_io_low << 16;
 		pdc_scanbus(self, &nca, MAXMODBUS, hpa);
 		break;

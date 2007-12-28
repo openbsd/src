@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.68 2007/12/19 19:10:54 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.69 2007/12/28 19:48:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1082,8 +1082,11 @@ mbattach(parent, self, aux)
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
+	case HPPA_BOARD_HP829:
 	case HPPA_BOARD_HP839:
+	case HPPA_BOARD_HP849:
 	case HPPA_BOARD_HP859:
+	case HPPA_BOARD_HP869:
 #if 0
 	case HPPA_BOARD_HP770_J200:
 	case HPPA_BOARD_HP770_J210:
