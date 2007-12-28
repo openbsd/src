@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.55 2007/10/28 14:12:41 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.56 2007/12/28 17:25:18 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1333,7 +1333,7 @@ nfs_sndlock(flagp, rep)
 	} else
 		p = (struct proc *)0;
 	while (*flagp & NFSMNT_SNDLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, p))
+		if (rep && nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
