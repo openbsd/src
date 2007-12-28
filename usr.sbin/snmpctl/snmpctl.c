@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.3 2007/12/28 15:57:06 thib Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.4 2007/12/28 17:22:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -41,6 +41,7 @@
 
 #include "snmpd.h"
 #include "parser.h"
+#include "mib.h"
 
 __dead void	 usage(void);
 
@@ -50,6 +51,7 @@ struct imsgname {
 	void (*func)(struct imsg *);
 };
 
+void		 show_mib(void);
 struct imsgname *monitor_lookup(u_int8_t);
 void		 monitor_host_status(struct imsg *);
 void		 monitor_id(struct imsg *);
@@ -63,6 +65,8 @@ struct imsgname imsgunknown = {
 };
 
 struct imsgbuf	*ibuf;
+struct snmpd	*env;
+struct oid	 mib_tree[] = MIB_TREE;
 
 __dead void
 usage(void)
@@ -90,10 +94,30 @@ main(int argc, char *argv[])
 	int			 done = 0;
 	int			 n;
 
+	if ((env = calloc(1, sizeof(struct snmpd *))) == NULL)
+		err(1, "calloc");
+	gettimeofday(&env->sc_starttime, NULL);
+	smi_init();
+
 	/* parse options */
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
 		exit(1);
 
+	switch (res->action) {
+	case NONE:
+		usage();
+		break;
+	case SHOW_MIB:
+		show_mib();
+		break;
+	default:
+		goto connect;
+	}
+
+	free(env);
+	return (0);
+
+ connect:
 	/* connect to snmpd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
@@ -113,17 +137,17 @@ main(int argc, char *argv[])
 	}
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	imsg_init(ibuf, ctl_sock, NULL);
 	done = 0;
 
 	/* process user request */
 	switch (res->action) {
-	case NONE:
-		usage();
-		/* not reached */
 	case MONITOR:
 		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, -1, NULL, 0);
+		break;
+	case NONE:
+	case SHOW_MIB:
 		break;
 	}
 
@@ -147,6 +171,7 @@ main(int argc, char *argv[])
 				done = monitor(&imsg);
 				break;
 			case NONE:
+			case SHOW_MIB:
 				break;
 			}
 			imsg_free(&imsg);
@@ -156,6 +181,27 @@ main(int argc, char *argv[])
 	free(ibuf);
 
 	return (0);
+}
+
+void
+mib_init(void)
+{
+	/*
+	 * MIB declarations (to register the OID names)
+	 */
+	smi_mibtree(mib_tree);
+}
+
+void
+show_mib(void)
+{
+	struct oid	*oid;
+
+	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
+		char	 buf[BUFSIZ];
+		smi_oidstring(&oid->o_id, buf, sizeof(buf));
+		printf("%s\n", buf);
+	}
 }
 
 struct imsgname *
