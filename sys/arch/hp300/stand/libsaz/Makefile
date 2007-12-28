@@ -1,36 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2006/08/17 06:31:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/12/28 18:56:09 miod Exp $
 
-LIB=	saz
-
-.PATH:	${.CURDIR}/../../../../lib/libsa ${.CURDIR}/../libsa
-
-.include "${.CURDIR}/../Makefile.inc"
-
-CFLAGS+=-D__INTERNAL_LIBSA_CREAD \
-	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
-	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
-	-I${.CURDIR}/../../../../lib/libsa
-
-# stand routines
-SRCS=	alloc.c devopen.c exit.c exec.c getfile.c gets.c globals.c \
-	memcmp.c memcpy.c memset.c printf.c snprintf.c strerror.c strncpy.c
+CFLAGS+=-D__INTERNAL_LIBSA_CREAD
 
 # io routines
-SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
-	open.c read.c stat.c write.c cread.c
+SRCS+=	cread.c
 
-# network routines
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
+.include "${.CURDIR}/../libsa/Makefile"
+.PATH:	${.CURDIR}/../libsa
 
-# network info services
-SRCS+=	bootp.c bootparam.c rarp.c
-
-# boot filesystems
-SRCS+=	ufs.c nfs.c rawfs.c cd9660.c
-
-NOPROFILE=
-NOPIC=
-
-install:
-
-.include <bsd.lib.mk>
+LIB=	saz

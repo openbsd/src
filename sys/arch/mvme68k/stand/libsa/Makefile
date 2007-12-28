@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2007/11/26 10:26:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2007/12/28 18:56:09 miod Exp $
 
 LIB=sa
 
@@ -13,13 +13,13 @@ S=${.CURDIR}/../../../..
 SRCS+=	bugdev.c clock.c parse_args.c exec_mvme.c
 
 .PATH:  $S/lib/libsa
-SRCs+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c printf.c \
+SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c printf.c \
 	strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
 	snprintf.c close.c closeall.c dev.c dkcksum.c lseek.c open.c \
 	nullfs.c read.c fstat.c ufs.c cread.c
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c rarp.c bootparam.c
 
-.PATH:	${S}/lib/libkern/arch/m68k ${S}/lib/libkern
+.PATH:	${S}/lib/libkern
 SRCS+=	ashrdi3.c
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
