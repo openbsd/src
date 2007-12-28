@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.6 2007/12/22 14:05:04 stefan Exp $	*/
+/*	$OpenBSD: code.c,v 1.7 2007/12/28 12:32:55 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -144,8 +144,8 @@ bfcode(struct symtab **a, int n)
 	int reg = R3;
 	for (i=0; i < m; i++) {
 		NODE *r, *p;
-		a[i]->hdr.h_sclass = PARAM;
-		a[i]->hdr.h_offset = NOOFFSET;
+		a[i]->sclass = PARAM;
+		a[i]->soffset = NOOFFSET;
 		oalloc(a[i], &passedargoff);
 		spname = a[i];
 		p = buildtree(NAME, NIL, NIL);
