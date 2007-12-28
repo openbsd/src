@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2007/12/28 17:36:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -680,7 +680,7 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
 	conf->sc_address.ss.ss_family = AF_INET;
-	conf->sc_address.port = htons(SNMPD_PORT);
+	conf->sc_address.port = SNMPD_PORT;
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
