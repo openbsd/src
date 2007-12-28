@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.1 2007/12/05 09:22:44 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.2 2007/12/28 18:10:00 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -70,7 +70,7 @@ struct ber {
 
 /* common definitions */
 #define BER_MIN_OID_LEN		2	/* OBJECT */
-#define BER_MAX_OID_LEN		128	/* OBJECT */
+#define BER_MAX_OID_LEN		32	/* OBJECT */
 
 struct ber_oid {
 	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];
