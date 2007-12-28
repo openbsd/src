@@ -1,4 +1,4 @@
-/*	$Id: snmpctl.c,v 1.2 2007/12/05 16:02:34 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.3 2007/12/28 15:57:06 thib Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>

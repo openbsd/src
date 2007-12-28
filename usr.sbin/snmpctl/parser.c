@@ -1,4 +1,4 @@
-/*	$Id: parser.c,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2007/12/28 15:57:06 thib Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
