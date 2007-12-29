@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.16 2006/12/13 21:12:56 miod Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.17 2007/12/29 03:04:18 dlg Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -79,10 +79,10 @@ int	sbc_options = 0 /* | SBC_PDMA */;
 static	void	sbc_minphys(struct buf *bp);
 
 struct scsi_adapter	sbc_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	sbc_minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	ncr5380_scsi_cmd,		/* scsi_cmd() */
+	sbc_minphys,			/* scsi_minphys() */
+	NULL,				/* probe_dev() */
+	NULL,				/* free_dev() */
 };
 
 /* This is copied from julian's bt driver */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.32 2007/11/25 16:40:03 jmc Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.33 2007/12/29 03:04:18 dlg Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -78,10 +78,10 @@ static int	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ncr5380_switch = {
-	mac68k_ncr5380_scsi_cmd,	/* scsi_cmd()			*/
-	ncr5380_minphys,		/* scsi_minphys()		*/
-	0,				/* open_target_lu()		*/
-	0				/* close_target_lu()		*/
+	mac68k_ncr5380_scsi_cmd,	/* scsi_cmd() */
+	ncr5380_minphys,		/* scsi_minphys() */
+	NULL,				/* probe_dev() */
+	NULL				/* free_dev() */
 };
 
 struct scsi_device ncr5380_dev = {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.21 2006/12/13 21:12:58 miod Exp $ */
+/* $OpenBSD: ncr.c,v 1.22 2007/12/29 03:04:19 dlg Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -127,10 +127,10 @@ static	void si_dma_go(void *);
 	0, sc->ncr_sc.reg, val)
 
 struct scsi_adapter	si_ops = {
-	ncr5380_scsi_cmd,       /* scsi_cmd()       */
-	si_minphys,         /* scsi_minphys()   */
-	NULL,               /* open_target_lu() */
-	NULL,               /* close_target_lu()    */
+	ncr5380_scsi_cmd,	/* scsi_cmd() */
+	si_minphys,		/* scsi_minphys() */
+	NULL,			/* probe_dev() */
+	NULL			/* free_dev() */
 };
 
 struct scsi_device	si_dev = {
