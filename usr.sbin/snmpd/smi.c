@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.1 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.2 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -86,7 +86,7 @@ smi_oidstring(struct ber_oid *o, char *buf, size_t len)
 
 	bzero(buf, len);
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	key.o_flags |= OID_TABLE;	/* do not match wildcards */
+	key.o_flags |= OID_KEY;		/* do not match wildcards */
 
 	if (env->sc_flags & SNMPD_F_NONAMES)
 		lookup = 0;
@@ -161,6 +161,7 @@ smi_mibtree(struct oid *oids)
 		decl->o_flags = oid->o_flags;
 		decl->o_get = oid->o_get;
 		decl->o_set = oid->o_set;
+		decl->o_table = oid->o_table;
 		decl->o_val = oid->o_val;
 		decl->o_data = oid->o_data;
 	}
@@ -225,7 +226,7 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 	 * (it will match any sub-elements)
 	 */
 	if ((b->o_flags & OID_TABLE) &&
-	    (a->o_flags & OID_TABLE) == 0)
+	    (a->o_flags & OID_KEY) == 0)
 		return (0);
 
 	return (a->o_oidlen - b->o_oidlen);

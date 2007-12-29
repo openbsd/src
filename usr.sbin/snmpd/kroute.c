@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.4 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.5 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -85,6 +85,11 @@ struct kif		*kif_update(u_short, int, struct if_data *,
 			    struct sockaddr_dl *);
 int			 kif_validate(u_short);
 
+int			 ka_compare(struct kif_addr *, struct kif_addr *);
+struct kif_addr		*ka_insert(u_short, struct kif_addr *);
+struct kif_addr		*ka_find(struct in_addr *);
+int			 ka_remove(struct kif_addr *);
+
 u_int16_t		 rtlabel_name2id(const char *);
 const char		*rtlabel_id2name(u_int16_t);
 void			 rtlabel_unref(u_int16_t);
@@ -96,6 +101,8 @@ in_addr_t		 prefixlen2mask(u_int8_t);
 void			 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void			 if_change(u_short, int, struct if_data *);
 void			 if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *,
+			    struct sockaddr_in *);
+void			 if_deladdr(u_short, struct sockaddr_in *, struct sockaddr_in *,
 			    struct sockaddr_in *);
 void			 if_announce(void *);
 
@@ -111,6 +118,10 @@ RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_HEAD(kif_tree, kif_node)		kit;
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
+
+RB_HEAD(ka_tree, kif_addr)		kat;
+RB_PROTOTYPE(ka_tree, kif_addr, node, ka_compare)
+RB_GENERATE(ka_tree, kif_addr, node, ka_compare)
 
 int
 kif_init(void)
@@ -230,6 +241,12 @@ kif_compare(struct kif_node *a, struct kif_node *b)
 	return (a->k.if_index - b->k.if_index);
 }
 
+int
+ka_compare(struct kif_addr *a, struct kif_addr *b)
+{
+	return (memcmp(&a->addr, &b->addr, sizeof(struct in_addr)));
+}
+
 /* tree management */
 struct kroute_node *
 kroute_find(in_addr_t prefix, u_int8_t prefixlen)
@@ -257,7 +274,6 @@ kroute_matchgw(struct kroute_node *kr, struct in_addr nh)
 
 	return (NULL);
 }
-
 
 int
 kroute_insert(struct kroute_node *kr)
@@ -361,7 +377,7 @@ kr_getif(u_short if_index)
 	struct kif_node	*kn;
 
 	if (if_index == 0)
-		kn = RB_ROOT(&kit);
+		kn = RB_MIN(kif_tree, &kit);
 	else
 		kn = kif_find(if_index);
 	if (kn == NULL)
@@ -376,7 +392,7 @@ kr_getnextif(u_short if_index)
 	struct kif_node	*kn;
 
 	if (if_index == 0) {
-		kn = RB_ROOT(&kit);
+		kn = RB_MIN(kif_tree, &kit);
 		return (&kn->k);
 	}
 
@@ -421,7 +437,7 @@ kif_remove(struct kif_node *kif)
 
 	while ((ka = TAILQ_FIRST(&kif->addrs)) != NULL) {
 		TAILQ_REMOVE(&kif->addrs, ka, entry);
-		free(ka);
+		ka_remove(ka);
 	}
 	free(kif);
 
@@ -510,6 +526,64 @@ kroute_match(in_addr_t key)
 			return (kr);
 
 	return (NULL);
+}
+
+struct kif_addr *
+ka_insert(u_short if_index, struct kif_addr *ka)
+{
+	if (ka->addr.s_addr == INADDR_ANY)
+		return (ka);
+	ka->if_index = if_index;
+	return (RB_INSERT(ka_tree, &kat, ka));
+}
+
+struct kif_addr	*
+ka_find(struct in_addr *in)
+{
+	struct kif_addr		ka;
+
+	ka.addr.s_addr = in->s_addr;
+	return (RB_FIND(ka_tree, &kat, &ka));
+}
+
+int
+ka_remove(struct kif_addr *ka)
+{
+	RB_REMOVE(ka_tree, &kat, ka);
+	free(ka);
+	return (0);
+}
+
+struct kif_addr *
+kr_getaddr(struct in_addr *in)
+{
+	struct kif_addr	*ka;
+
+	if (in == NULL)
+		ka = RB_MIN(ka_tree, &kat);
+	else
+		ka = ka_find(in);
+	if (ka == NULL)
+		return (NULL);
+
+	return (ka);
+}
+
+struct kif_addr *
+kr_getnextaddr(struct in_addr *in)
+{
+	struct kif_addr	*ka;
+
+	if (in == NULL)
+		return (RB_MIN(ka_tree, &kat));
+
+	if ((ka = ka_find(in)) == NULL)
+		return (NULL);
+	ka = RB_NEXT(ka_tree, &kat, ka);
+	if (ka == NULL)
+		return (NULL);
+
+	return (ka);
 }
 
 /* misc */
@@ -641,6 +715,8 @@ if_newaddr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 		    if_index);
 		return;
 	}
+	if (ka_find(&ifa->sin_addr) != NULL)
+		return;
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal("if_newaddr");
 	ka->addr = ifa->sin_addr;
@@ -654,6 +730,28 @@ if_newaddr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 		ka->dstbrd.s_addr = INADDR_NONE;
 
 	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
+	ka_insert(if_index, ka);
+}
+
+void
+if_deladdr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
+    struct sockaddr_in *brd)
+{
+	struct kif_node *kif;
+	struct kif_addr *ka;
+
+	if (ifa == NULL || ifa->sin_family != AF_INET)
+		return;
+	if ((kif = kif_find(if_index)) == NULL) {
+		log_warnx("if_newaddr: corresponding if %i not found",
+		    if_index);
+		return;
+	}
+	if ((ka = ka_find(&ifa->sin_addr)) == NULL)
+		return;
+
+	TAILQ_REMOVE(&kif->addrs, ka, entry);
+	ka_remove(ka);
 }
 
 void
@@ -1051,6 +1149,19 @@ add:
 			memcpy(&ifm, next, sizeof(ifm));
 			if_change(ifm.ifm_index, ifm.ifm_flags,
 			    &ifm.ifm_data);
+			break;
+		case RTM_DELADDR:
+			ifam = (struct ifa_msghdr *)rtm;
+			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
+			    RTA_BRD)) == 0)
+				break;
+			sa = (struct sockaddr *)(ifam + 1);
+			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
+
+			if_deladdr(ifam->ifam_index,
+			    (struct sockaddr_in *)rti_info[RTAX_IFA],
+			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
+			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;

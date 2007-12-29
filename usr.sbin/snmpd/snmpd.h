@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.7 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.8 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -160,10 +160,13 @@ struct kroute {
 };
 
 struct kif_addr {
-	TAILQ_ENTRY(kif_addr)	 entry;
+	u_short			 if_index;
 	struct in_addr		 addr;
 	struct in_addr		 mask;
 	struct in_addr		 dstbrd;
+
+	TAILQ_ENTRY(kif_addr)	 entry;
+	RB_ENTRY(kif_addr)	 node;
 };
 
 struct kif {
@@ -199,10 +202,12 @@ struct oid {
 
 	u_int			 o_flags;
 
-	int			(*o_get)(struct oid *, struct ber_oid *,
+	int			 (*o_get)(struct oid *, struct ber_oid *,
 				    struct ber_element **);
-	int			(*o_set)(struct oid *, struct ber_oid *,
+	int			 (*o_set)(struct oid *, struct ber_oid *,
 				    struct ber_element **);
+	struct ber_oid		*(*o_table)(struct oid *, struct ber_oid *,
+				    struct ber_oid *);
 
 	long long		 o_val;
 	void			*o_data;
@@ -217,6 +222,7 @@ struct oid {
 #define OID_DYNAMIC		0x08	/* free allocated data */
 #define OID_TABLE		0x10	/* dynamic sub-elements */
 #define OID_MIB			0x20	/* root-OID of a supported MIB */
+#define OID_KEY			0x40	/* lookup tables */
 
 #define OID_RS			(OID_RD|OID_IFSET)
 #define OID_WS			(OID_WR|OID_IFSET)
@@ -375,6 +381,8 @@ u_int		 kr_ifnumber(void);
 u_long		 kr_iflastchange(void);
 struct kif	*kr_getif(u_short);
 struct kif	*kr_getnextif(u_short);
+struct kif_addr *kr_getaddr(struct in_addr *);
+struct kif_addr *kr_getnextaddr(struct in_addr *);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);
@@ -396,6 +404,8 @@ int		 mps_setint(struct oid *, struct ber_oid *,
 		    struct ber_element **);
 int		 mps_getts(struct oid *, struct ber_oid *,
 		    struct ber_element **);
+void		 mps_encodeinaddr(struct ber_oid *, struct in_addr *, int);
+void		 mps_decodeinaddr(struct ber_oid *, struct in_addr *, int);
 
 /* smi.c */
 int		 smi_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.7 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.8 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -172,10 +172,11 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 		return (NULL);
 	if (value->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */
-		if (mps_table(value, o, &no) == NULL)
-			return (NULL);
-		bcopy(&no, o, sizeof(*o));
-		ret = value->o_get(value, o, &ber);
+		if (mps_table(value, o, &no) != NULL) {
+			bcopy(&no, o, sizeof(*o));
+			ret = value->o_get(value, o, &ber);
+		} else
+			ret = 1;
 		switch (ret) {
 		case 0:
 			return (ber);
@@ -185,6 +186,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			break;
 		}
 	}
+ next:
 	for (next = value; next != NULL;) {
 		next = smi_next(next);
 		if (next == NULL)
@@ -198,7 +200,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 	if (next->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */
 		if (mps_table(next, o, &no) == NULL)
-			return (NULL);
+			return (ber);
 		bcopy(&no, o, sizeof(*o));
 		if ((ret = next->o_get(next, o, &ber)) != 0)
 			return (NULL);
@@ -247,9 +249,12 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	 * see mib_sysor() as an example.
 	 */
 
+	if (oid->o_table != NULL)
+		return (oid->o_table(oid, o, no));
+
+	bcopy(&oid->o_id, no, sizeof(*no));
 	id = oid->o_oidlen - 1;
 	subid = oid->o_oidlen;
-	bcopy(&oid->o_id, no, sizeof(*no));
 
 	if (o->bo_n >= oid->o_oidlen) {
 		/*
@@ -281,4 +286,23 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	smi_oidlen(no);
 
 	return (no);
+}
+
+void
+mps_encodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
+{
+	o->bo_n = offset;
+	o->bo_id[o->bo_n++] = addr->s_addr & 0xff;
+	o->bo_id[o->bo_n++] = (addr->s_addr >> 8) & 0xff;
+	o->bo_id[o->bo_n++] = (addr->s_addr >> 16) & 0xff;
+	o->bo_id[o->bo_n++] = (addr->s_addr >> 24) & 0xff;
+}
+
+void
+mps_decodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
+{
+	addr->s_addr = ((o->bo_id[offset] & 0xff)) |
+	    ((o->bo_id[offset + 1] & 0xff) << 8) |
+	    ((o->bo_id[offset + 2] & 0xff) << 16) |
+	    ((o->bo_id[offset + 3] & 0xff) << 24);
 }

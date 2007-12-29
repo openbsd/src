@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.15 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.16 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -956,6 +956,9 @@ int mib_ipreasmfails(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_ipfragfails(struct oid *, struct ber_oid *, struct ber_element **);
 int mib_iproutingdiscards(struct oid *, struct ber_oid *,
     struct ber_element **);
+int mib_ipaddr(struct oid *, struct ber_oid *, struct ber_element **);
+struct ber_oid *
+    mib_ipaddrtable(struct oid *, struct ber_oid *, struct ber_oid *);
 
 static struct oid ip_mib[] = {
 	{ MIB(ipMIB),			OID_MIB },
@@ -973,19 +976,25 @@ static struct oid ip_mib[] = {
 	{ MIB(ipOutRequests),		OID_RD, mib_ipstat },
 	{ MIB(ipOutDiscards),		OID_RD, mib_ipstat },
 	{ MIB(ipOutNoRoutes),		OID_RD, mib_ipstat },
-	{ MIB(ipReasmTimeout),		OID_RD, mps_getint, NULL, IPFRAGTTL },
+	{ MIB(ipReasmTimeout),		OID_RD, mps_getint, NULL,
+	    NULL, IPFRAGTTL },
 	{ MIB(ipReasmReqds),		OID_RD, mib_ipstat },
 	{ MIB(ipReasmOKs),		OID_RD, mib_ipstat },
 	{ MIB(ipReasmFails),		OID_RD, mib_ipreasmfails },
 	{ MIB(ipFragOKs),		OID_RD, mib_ipstat },
 	{ MIB(ipFragFails),		OID_RD, mib_ipfragfails },
 	{ MIB(ipFragCreates),		OID_RD, mib_ipstat },
+	{ MIB(ipAdEntAddr),		OID_TRD, mib_ipaddr, NULL,
+	    mib_ipaddrtable },
+	{ MIB(ipAdEntIfIndex),		OID_TRD, mib_ipaddr, NULL,
+	    mib_ipaddrtable },
+	{ MIB(ipAdEntNetMask),		OID_TRD, mib_ipaddr, NULL,
+	    mib_ipaddrtable },
+	{ MIB(ipAdEntBcastAddr),	OID_TRD, mib_ipaddr, NULL,
+	    mib_ipaddrtable },
+	{ MIB(ipAdEntReasmMaxSize),	OID_TRD, mib_ipaddr, NULL,
+	    mib_ipaddrtable },
 #ifdef notyet
-	{ MIB(ipAdEntAddr) },
-	{ MIB(ipAdEntIfIndex) },
-	{ MIB(ipAdEntNetMask) },
-	{ MIB(ipAdEntBcastAddr) },
-	{ MIB(ipAdEntReasmMaxSize) },
 	{ MIB(ipNetToMediaIfIndex) },
 	{ MIB(ipNetToMediaPhysAddress) },
 	{ MIB(ipNetToMediaNetAddress) },
@@ -1172,6 +1181,90 @@ int
 mib_iproutingdiscards(struct oid *oid, struct ber_oid *o,
     struct ber_element **elm)
 {
+	return (0);
+}
+
+struct ber_oid *
+mib_ipaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
+{
+	u_int32_t		 col, id;
+	struct oid		 a, b;
+	struct in_addr		 addr;
+	struct kif_addr		*ka;
+
+	bcopy(&oid->o_id, no, sizeof(*no));
+	id = oid->o_oidlen - 1;
+
+	if (o->bo_n >= oid->o_oidlen) {
+		/*
+		 * Compare the requested and the matched OID to see
+		 * if we have to iterate to the next element.
+		 */
+		bzero(&a, sizeof(a));
+		bcopy(o, &a.o_id, sizeof(struct ber_oid));
+		bzero(&b, sizeof(b));
+		bcopy(&oid->o_id, &b.o_id, sizeof(struct ber_oid));
+		b.o_oidlen--;
+		b.o_flags |= OID_TABLE;
+		if (smi_oid_cmp(&a, &b) == 0) {
+			col = oid->o_oid[id];
+			o->bo_id[id] = col;
+			bcopy(o, no, sizeof(*no));
+		}
+	}
+
+	mps_decodeinaddr(no, &addr, OIDIDX_ipAddr + 1);
+	if (addr.s_addr == INADDR_ANY)
+		ka = kr_getaddr(NULL);
+	else
+		ka = kr_getnextaddr(&addr);
+	addr.s_addr = ka == NULL ? 0 : ka->addr.s_addr;
+	mps_encodeinaddr(no, &addr, OIDIDX_ipAddr + 1);
+	smi_oidlen(o);
+
+	return (no);
+}
+
+int
+mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct kif_addr		*ka;
+	struct in_addr		 addr;
+	u_int32_t		 val;
+
+	mps_decodeinaddr(o, &addr, OIDIDX_ipAddr + 1);
+	ka = kr_getaddr(&addr);
+	if (ka == NULL)
+		return (1);
+
+	/* write OID */
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_ipAddr]) {
+	case 1:
+		val = addr.s_addr;
+		ber = ber_add_nstring(ber, (char *)&val, sizeof(u_int32_t));
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
+		break;
+	case 2:
+		ber = ber_add_integer(ber, ka->if_index);
+		break;
+	case 3:
+		val = ka->mask.s_addr;
+		ber = ber_add_nstring(ber, (char *)&val, sizeof(u_int32_t));
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
+		break;
+	case 4:
+		ber = ber_add_integer(ber, ka->dstbrd.s_addr ? 1 : 0);
+		break;
+	case 5:
+		ber = ber_add_integer(ber, IP_MAXPACKET);
+		break;
+	default:
+		return (-1);
+	}
+
 	return (0);
 }
 

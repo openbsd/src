@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.9 2007/12/28 16:27:51 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.10 2007/12/29 09:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -197,11 +197,13 @@
 #define MIB_ipFragCreates		MIB_ipMIB, 19
 #define MIB_ipAddrTable			MIB_ipMIB, 20
 #define MIB_ipAddrEntry			MIB_ipAddrTable, 1
-#define MIB_ipAdEntAddr			MIB_ipAddrEntry, 2
-#define MIB_ipAdEntIfIndex		MIB_ipAddrEntry, 3
-#define MIB_ipAdEntNetMask		MIB_ipAddrEntry, 4
-#define MIB_ipAdEntBcastAddr		MIB_ipAddrEntry, 5
-#define MIB_ipAdEntReasmMaxSize		MIB_ipAddrEntry, 6
+#define OIDIDX_ipAddr			9
+#define OIDIDX_ipAddrEntry		10
+#define MIB_ipAdEntAddr			MIB_ipAddrEntry, 1
+#define MIB_ipAdEntIfIndex		MIB_ipAddrEntry, 2
+#define MIB_ipAdEntNetMask		MIB_ipAddrEntry, 3
+#define MIB_ipAdEntBcastAddr		MIB_ipAddrEntry, 4
+#define MIB_ipAdEntReasmMaxSize		MIB_ipAddrEntry, 5
 #define MIB_ipNetToMediaTable		MIB_ipMIB, 22
 #define MIB_ipNetToMediaEntry		MIB_ipNetToMediaTable, 1
 #define MIB_ipNetToMediaIfIndex		MIB_ipNetToMediaEntry, 1
