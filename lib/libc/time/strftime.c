@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.17 2007/09/17 07:07:23 moritz Exp $ */
+/*	$OpenBSD: strftime.c,v 1.18 2007/12/29 22:26:51 millert Exp $ */
 #include "private.h"
 
 /*
@@ -61,7 +61,7 @@ struct lc_time_T {
 #ifdef LOCALE_HOME
 #include "sys/stat.h"
 static struct lc_time_T		localebuf;
-static struct lc_time_T *	_loc P((void));
+static struct lc_time_T *	_loc(void);
 #define Locale	_loc()
 #endif /* defined LOCALE_HOME */
 #ifndef LOCALE_HOME
@@ -114,11 +114,11 @@ static const struct lc_time_T	C_time_locale = {
 	"%a %b %e %H:%M:%S %Z %Y"
 };
 
-static char *	_add P((const char *, char *, const char *));
-static char *	_conv P((int, const char *, char *, const char *));
-static char *	_fmt P((const char *, const struct tm *, char *, const char *,
-			int *));
-static char *	_yconv P((int, int, int, int, char *, const char *));
+static char *	_add(const char *, char *, const char *);
+static char *	_conv(int, const char *, char *, const char *);
+static char *	_fmt(const char *, const struct tm *, char *, const char *,
+			int *);
+static char *	_yconv(int, int, int, int, char *, const char *);
 
 extern char *	tzname[];
 
@@ -652,7 +652,7 @@ const char * const	ptlim;
 
 #ifdef LOCALE_HOME
 static struct lc_time_T *
-_loc P((void))
+_loc(void)
 {
 	static const char	locale_home[] = LOCALE_HOME;
 	static const char	lc_time[] = "LC_TIME";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.20 2007/06/30 13:20:42 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.21 2007/12/29 22:26:51 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	8.3";
+static char	privatehid[] = "@(#)private.h	8.5";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -124,17 +124,15 @@ static char	privatehid[] = "@(#)private.h	8.3";
 #endif /* !defined WEXITSTATUS */
 
 #if HAVE_UNISTD_H
-#include "unistd.h"	/* for F_OK and R_OK */
+#include "unistd.h"	/* for F_OK, R_OK, and other POSIX goodness */
 #endif /* HAVE_UNISTD_H */
 
-#if !HAVE_UNISTD_H
 #ifndef F_OK
 #define F_OK	0
 #endif /* !defined F_OK */
 #ifndef R_OK
 #define R_OK	4
 #endif /* !defined R_OK */
-#endif /* !HAVE_UNISTD_H */
 
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
@@ -167,70 +165,7 @@ typedef long		int_fast64_t;
 ** Workarounds for compilers/systems.
 */
 
-/*
-** If your compiler lacks prototypes, "#define P(x) ()".
-*/
-
-#ifndef P
-#define P(x)	x
-#endif /* !defined P */
-
-/*
-** SunOS 4.1.1 headers lack EXIT_SUCCESS.
-*/
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS	0
-#endif /* !defined EXIT_SUCCESS */
-
-/*
-** SunOS 4.1.1 headers lack EXIT_FAILURE.
-*/
-
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE	1
-#endif /* !defined EXIT_FAILURE */
-
-/*
-** SunOS 4.1.1 headers lack FILENAME_MAX.
-*/
-
-#ifndef FILENAME_MAX
-
-#ifndef MAXPATHLEN
-#ifdef unix
-#include "sys/param.h"
-#endif /* defined unix */
-#endif /* !defined MAXPATHLEN */
-
-#ifdef MAXPATHLEN
-#define FILENAME_MAX	MAXPATHLEN
-#endif /* defined MAXPATHLEN */
-#ifndef MAXPATHLEN
-#define FILENAME_MAX	1024		/* Pure guesswork */
-#endif /* !defined MAXPATHLEN */
-
-#endif /* !defined FILENAME_MAX */
-
 #if 0
-/*
-** SunOS 4.1.1 libraries lack remove.
-*/
-
-#ifndef remove
-extern int	unlink P((const char * filename));
-#define remove	unlink
-#endif /* !defined remove */
-
-/*
-** Some ancient errno.h implementations don't declare errno.
-** But some newer errno.h implementations define it as a macro.
-** Fix the former without affecting the latter.
-*/
-#ifndef errno
-extern int errno;
-#endif /* !defined errno */
-
 /*
 ** Some time.h implementations don't declare asctime_r.
 ** Others might define it as a macro.
@@ -238,7 +173,7 @@ extern int errno;
 */
 
 #ifndef asctime_r
-extern char * asctime_r();
+extern char *	asctime_r(struct tm const *, char *);
 #endif
 #endif
 
@@ -246,14 +181,14 @@ extern char * asctime_r();
 ** Private function declarations.
 */
 
-char *		icalloc P((int nelem, int elsize));
-char *		icatalloc P((char * old, const char * new));
-char *		icpyalloc P((const char * string));
-char *		imalloc P((int n));
-void *		irealloc P((void * pointer, int size));
-void		icfree P((char * pointer));
-void		ifree P((char * pointer));
-const char *	scheck P((const char * string, const char * format));
+char *		icalloc(int nelem, int elsize);
+char *		icatalloc(char * old, const char * new);
+char *		icpyalloc(const char * string);
+char *		imalloc(int n);
+void *		irealloc(void * pointer, int size);
+void		icfree(char * pointer);
+void		ifree(char * pointer);
+const char *	scheck(const char * string, const char * format);
 
 /*
 ** Finally, some convenience items.
@@ -341,8 +276,8 @@ const char *	scheck P((const char * string, const char * format));
 #if HAVE_INCOMPATIBLE_CTIME_R
 #undef asctime_r
 #undef ctime_r
-char *asctime_r P((struct tm const *, char *));
-char *ctime_r P((time_t const *, char *));
+char *asctime_r(struct tm const *, char *);
+char *ctime_r(time_t const *, char *);
 #endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 #ifndef YEARSPERREPEAT

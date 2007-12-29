@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.32 2007/02/06 19:35:16 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.33 2007/12/29 22:26:51 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -132,51 +132,52 @@ struct rule {
 ** Prototypes for static functions.
 */
 
-static long		detzcode P((const char * codep));
-static time_t		detzcode64 P((const char * codep));
-static int		differ_by_repeat P((time_t t1, time_t t0));
-static const char *	getzname P((const char * strp));
-static const char *	getqzname P((const char * strp, const int delim));
-static const char *	getnum P((const char * strp, int * nump, int min,
-				int max));
-static const char *	getsecs P((const char * strp, long * secsp));
-static const char *	getoffset P((const char * strp, long * offsetp));
-static const char *	getrule P((const char * strp, struct rule * rulep));
-static void		gmtload P((struct state * sp));
-static struct tm *	gmtsub P((const time_t * timep, long offset,
-				struct tm * tmp));
-static struct tm *	localsub P((const time_t * timep, long offset,
-				struct tm * tmp));
-static int		increment_overflow P((int * number, int delta));
-static int		leaps_thru_end_of P((int y));
-static int		long_increment_overflow P((long * number, int delta));
-static int		long_normalize_overflow P((long * tensptr,
-				int * unitsptr, int base));
-static int		normalize_overflow P((int * tensptr, int * unitsptr,
-				int base));
-static void		settzname P((void));
-static time_t		time1 P((struct tm * tmp,
-				struct tm * (*funcp) P((const time_t *,
-				long, struct tm *)),
-				long offset));
-static time_t		time2 P((struct tm *tmp,
-				struct tm * (*funcp) P((const time_t *,
-				long, struct tm*)),
-				long offset, int * okayp));
-static time_t		time2sub P((struct tm *tmp,
-				struct tm * (*funcp) P((const time_t *,
-				long, struct tm*)),
-				long offset, int * okayp, int do_norm_secs));
-static struct tm *	timesub P((const time_t * timep, long offset,
-				const struct state * sp, struct tm * tmp));
-static int		tmcomp P((const struct tm * atmp,
-				const struct tm * btmp));
-static time_t		transtime P((time_t janfirst, int year,
-				const struct rule * rulep, long offset));
-static int		tzload P((const char * name, struct state * sp,
-				int doextend));
-static int		tzparse P((const char * name, struct state * sp,
-				int lastditch));
+static long		detzcode(const char * codep);
+static time_t		detzcode64(const char * codep);
+static int		differ_by_repeat(time_t t1, time_t t0);
+static const char *	getzname(const char * strp);
+static const char *	getqzname(const char * strp, const int delim);
+static const char *	getnum(const char * strp, int * nump, int min,
+				int max);
+static const char *	getsecs(const char * strp, long * secsp);
+static const char *	getoffset(const char * strp, long * offsetp);
+static const char *	getrule(const char * strp, struct rule * rulep);
+static void		gmtload(struct state * sp);
+static struct tm *	gmtsub(const time_t * timep, long offset,
+				struct tm * tmp);
+static struct tm *	localsub(const time_t * timep, long offset,
+				struct tm * tmp);
+static int		increment_overflow(int * number, int delta);
+static int		leaps_thru_end_of(int y);
+static int		long_increment_overflow(long * number, int delta);
+static int		long_normalize_overflow(long * tensptr,
+				int * unitsptr, int base);
+static int		normalize_overflow(int * tensptr, int * unitsptr,
+				int base);
+static void		settzname(void);
+static time_t		time1(struct tm * tmp,
+				struct tm * (*funcp)(const time_t *,
+				long, struct tm *),
+				long offset);
+static time_t		time2(struct tm *tmp,
+				struct tm * (*funcp)(const time_t *,
+				long, struct tm*),
+				long offset, int * okayp);
+static time_t		time2sub(struct tm *tmp,
+				struct tm * (*funcp)(const time_t *,
+				long, struct tm*),
+				long offset, int * okayp, int do_norm_secs);
+static struct tm *	timesub(const time_t * timep, long offset,
+				const struct state * sp, struct tm * tmp);
+static int		tmcomp(const struct tm * atmp,
+				const struct tm * btmp);
+static time_t		transtime(time_t janfirst, int year,
+				const struct rule * rulep, long offset);
+static int		typesequiv(const struct state * sp, int a, int b);
+static int		tzload(const char * name, struct state * sp,
+				int doextend);
+static int		tzparse(const char * name, struct state * sp,
+				int lastditch);
 
 #ifdef ALL_STATE
 static struct state *	lclptr;
@@ -251,7 +252,7 @@ const char * const	codep;
 }
 
 static void
-settzname P((void))
+settzname(void)
 {
 	register struct state * const	sp = lclptr;
 	register int			i;
@@ -558,13 +559,40 @@ register const int		doextend;
 	}
 	i = 2 * YEARSPERREPEAT;
 	sp->goback = sp->goahead = sp->timecnt > i;
-	sp->goback = sp->goback && sp->types[i] == sp->types[0] &&
+	sp->goback = sp->goback &&
+		typesequiv(sp, sp->types[i], sp->types[0]) &&
 		differ_by_repeat(sp->ats[i], sp->ats[0]);
 	sp->goahead = sp->goahead &&
-		sp->types[sp->timecnt - 1] == sp->types[sp->timecnt - 1 - i] &&
+		typesequiv(sp, sp->types[sp->timecnt - 1],
+		sp->types[sp->timecnt - 1 - i]) &&
 		differ_by_repeat(sp->ats[sp->timecnt - 1],
 			 sp->ats[sp->timecnt - 1 - i]);
 	return 0;
+}
+
+static int
+typesequiv(sp, a, b)
+const struct state * const	sp;
+const int			a;
+const int			b;
+{
+	register int	result;
+
+	if (sp == NULL ||
+		a < 0 || a >= sp->typecnt ||
+		b < 0 || b >= sp->typecnt)
+			result = FALSE;
+	else {
+		register const struct ttinfo *	ap = &sp->ttis[a];
+		register const struct ttinfo *	bp = &sp->ttis[b];
+		result = ap->tt_gmtoff == bp->tt_gmtoff &&
+			ap->tt_isdst == bp->tt_isdst &&
+			ap->tt_ttisstd == bp->tt_ttisstd &&
+			ap->tt_ttisgmt == bp->tt_ttisgmt &&
+			strcmp(&sp->chars[ap->tt_abbrind],
+			&sp->chars[bp->tt_abbrind]) == 0;
+	}
+	return result;
 }
 
 static const int	mon_lengths[2][MONSPERYEAR] = {
@@ -1113,7 +1141,7 @@ struct state * const	sp;
 }
 static
 void
-tzsetwall_basic P((void))
+tzsetwall_basic(void)
 {
 	if (lcl_is_set < 0)
 		return;
@@ -1141,7 +1169,7 @@ tzsetwall_basic P((void))
 static
 #endif /* !defined STD_INSPIRED */
 void
-tzsetwall P((void))
+tzsetwall(void)
 {
 	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
 	tzsetwall_basic();
@@ -1150,7 +1178,7 @@ tzsetwall P((void))
 
 static
 void
-tzset_basic P((void))
+tzset_basic(void)
 {
 	register const char *	name;
 
@@ -1193,7 +1221,7 @@ tzset_basic P((void))
 }
 
 void
-tzset P((void))
+tzset(void)
 {
 	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
 	tzset_basic();
@@ -1673,7 +1701,7 @@ register const struct tm * const btmp;
 static time_t
 time2sub(tmp, funcp, offset, okayp, do_norm_secs)
 struct tm * const	tmp;
-struct tm * (* const	funcp) P((const time_t*, long, struct tm*));
+struct tm * (* const	funcp)(const time_t*, long, struct tm*);
 const long		offset;
 int * const		okayp;
 const int		do_norm_secs;
@@ -1815,12 +1843,8 @@ const int		do_norm_secs;
 		** It's okay to guess wrong since the guess
 		** gets checked.
 		*/
-		/*
-		** The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
-		*/
 		sp = (const struct state *)
-			(((void *) funcp == (void *) localsub) ?
-			lclptr : gmtptr);
+			((funcp == localsub) ? lclptr : gmtptr);
 #ifdef ALL_STATE
 		if (sp == NULL)
 			return WRONG;
@@ -1861,7 +1885,7 @@ label:
 static time_t
 time2(tmp, funcp, offset, okayp)
 struct tm * const	tmp;
-struct tm * (* const	funcp) P((const time_t*, long, struct tm*));
+struct tm * (* const	funcp)(const time_t*, long, struct tm*);
 const long		offset;
 int * const		okayp;
 {
@@ -1879,7 +1903,7 @@ int * const		okayp;
 static time_t
 time1(tmp, funcp, offset)
 struct tm * const	tmp;
-struct tm * (* const	funcp) P((const time_t *, long, struct tm *));
+struct tm * (* const	funcp)(const time_t *, long, struct tm *);
 const long		offset;
 {
 	register time_t			t;
@@ -1914,11 +1938,7 @@ const long		offset;
 	** We try to divine the type they started from and adjust to the
 	** type they need.
 	*/
-	/*
-	** The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
-	*/
-	sp = (const struct state *) (((void *) funcp == (void *) localsub) ?
-		lclptr : gmtptr);
+	sp = (const struct state *) ((funcp == localsub) ?  lclptr : gmtptr);
 #ifdef ALL_STATE
 	if (sp == NULL)
 		return WRONG;

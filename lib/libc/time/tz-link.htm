@@ -8,7 +8,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"'>
 <meta name="DC.Creator" content="Eggert, Paul">
 <meta name="DC.Contributor" content="Olson, Arthur David">
-<meta name="DC.Date" content="2007-08-17">
+<meta name="DC.Date" content="2007-11-29">
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time">
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm">
@@ -18,7 +18,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.13
+@(#)tz-link.htm	8.14
 </address>
 <p>
 Please send corrections to this web page to the
@@ -152,7 +152,7 @@ Consortium</a> is promoting further work in this area. <a
 href="http://www.calconnect.org/publications/icalendartimezoneproblemsandrecommendationsv1.0.pdf">iCalendar
 TIMEZONE Problems and Recommendations</a> offers guidelines and
 recommendations for the use of VTIMEZONE and <code>tz</code>.</li>
-<li><a href="http://www.calconnect.org/dstlinks.html">Extended Daylight
+<li><a href="http://www.calconnect.org/dstlinks.shtml">Extended Daylight
 Saving Time Links, Advisories and Changes</a> lists vendor material on recent
 daylight saving time changes.</li>
 <li><a
@@ -198,9 +198,10 @@ available under both the <abbr>GPL</abbr> and the Perl Artistic
 License. DateTime::TimeZone also contains a script
 <code>tests_from_zdump</code> that generates test cases for each clock
 transition in the <code>tz</code> database.</li>
-<li><a href="http://icu-project.org/"><abbr
-title="International Components for Unicode">ICU</abbr></a>
-contains a C/C++ library for internationalization that
+<li><a href="http://icu-project.org/">International Components for
+Unicode (<abbr>ICU</abbr>)</a> contains C/C++ and <a
+href="http://en.wikipedia.org/wiki/Java_%28programming_language%29">Java</a>
+libraries for internationalization that
 has a compiler from <code>tz</code> source
 into an <abbr>ICU</abbr>-specific format.
 <abbr>ICU</abbr> is freely available under a
@@ -211,11 +212,6 @@ contains a class
 <code>org.joda.time.tz.ZoneInfoCompiler</code> that compiles
 <code>tz</code> source into a Joda-specific binary format. Joda Time
 is freely available under a <abbr>BSD</abbr>-style license.</li>
-<li><a href="http://mozware.free.fr/devtools/xmlDate/">xmlDate</a>
-contains <a
-href="http://en.wikipedia.org/wiki/JavaScript">JavaScript</a> code that
-parses <samp>tz</samp> source into an internal object that represents
-a time zone. It is freely available under the GPL.</li>
 <li><a href="http://sourceforge.net/projects/pytz/">PyTZ - Python Time
 Zone Library</a> compiles <code>tz</code> source into
 <a href="http://www.python.org/">Python</a>.
@@ -251,8 +247,7 @@ This library is freely available under the
 (<abbr title="Lesser General Public License">LGPL</abbr>)</a>,
 and is widely used in <abbr>GNU</abbr>/Linux systems.</li>
 <li><a href="http://www.bmsi.com/java/#TZ">ZoneInfo.java</a>
-is a <code>tz</code> binary file reader written in <a
-href="http://en.wikipedia.org/wiki/Java_%28programming_language%29">Java</a>.
+is a <code>tz</code> binary file reader written in Java.
 It is freely available under the <abbr>LGPL</abbr>.</li>
 <li>Tcl, mentioned above, also contains a
 <code>tz</code> binary file reader.</li>
@@ -420,10 +415,6 @@ href="http://www.aph.gov.au/LIBRARY/Pubs/rn/2006-07/07rn13.pdf">research
 note on daylight saving time in Australia</a>.
 The Bureau of Meteorology publishes a list of
 <a href="http://www.bom.gov.au/climate/averages/tables/dst_times.shtml">Implementation Dates of Daylight Savings Time within Australia</a>.</dd>
-<dt>Austria</dt>
-<dd>The National Metrology Institute publishes a
-table of <a href="http://www.metrologie.at/pdf/sommerzeit.pdf"
-hreflang="de">daylight saving time in Austria (in German)</a>.</dd>
 <dt>Belgium</dt>
 <dd>The Royal Observatory of Belgium maintains a table of <a
 href="http://www.astro.oma.be/GENERAL/INFO/nli001a.html"
@@ -500,9 +491,9 @@ Time Protocol</a>
 discusses how to synchronize clocks of
 Internet hosts.</li>
 <li><a
-href="ftp://ftp.rfc-editor.org/internet-drafts/draft-ietf-dhc-timezone-option-04.txt">A
+href="ftp://ftp.rfc-editor.org/in-notes/rfc4833.txt">A
 Timezone Option for <abbr title="Dynamic Host Configuration Protocol">DHCP</abbr></a>
-proposes a <a
+specifies a <a
 href="http://www.dhcp.org/">DHCP</a> option for a server to configure
 a client's time zone and daylight saving settings automatically.</li>
 <li><a href="http://gauss.gge.unb.ca/GMT.UT.and.the.RGO.html">A Few
@@ -608,8 +599,8 @@ abbreviations, identifiers, and formats. For example, it contains
 French translations for "Eastern European Summer Time", "<abbr
 title="Eastern European Summer Time">EEST</abbr>", and
 "Bucharest". <a
-href="http://unicode.org/cldr/data/charts/by_type/names.zone.html">By-Type
-Chart: names.zone</a> shows these values for many locales.
+href="http://www.unicode.org/cldr/data/charts/by_type/names.metazone.html">By-Type
+Chart: names.metazone</a> shows these values for many locales.
 <abbr>ICU</abbr> contains a mechanism for using this data.</li>
 <li>Alphabetic time zone abbreviations should not be used as unique
 identifiers for <abbr>UTC</abbr> offsets as they are ambiguous in
