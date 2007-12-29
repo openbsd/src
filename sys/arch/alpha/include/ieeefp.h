@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.4 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.5 2007/12/29 16:57:19 miod Exp $	*/
 /*	$NetBSD: ieeefp.h,v 1.1 1995/04/29 01:09:17 cgd Exp $	*/
 
 /* 
@@ -47,8 +47,7 @@ typedef enum {
     FP_RZ = 0,			/* round to zero (truncate) */
     FP_RM = 1,			/* round toward negative infinity */
     FP_RN = 2,			/* round to nearest representable number */
-    FP_RP = 3,			/* round toward positive infinity */
-    _FP_DYNAMIC=FP_RP
+    FP_RP = 3			/* round toward positive infinity */
 } fp_rnd;
 
 #endif /* _ALPHA_IEEEFP_H_ */
