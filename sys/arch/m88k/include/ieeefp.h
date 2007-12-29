@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.2 2007/12/29 17:41:33 miod Exp $ */
+/*	$OpenBSD: ieeefp.h,v 1.3 2007/12/29 17:43:12 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -72,6 +72,15 @@ typedef enum {
 
 #define	float_get_round(fpcr)	(((fpcr) >> FPCR_RD_SHIFT) & FPCR_RD_MASK)
 #define	fpgetround()		float_get_round(curproc->p_md.md_tf->tf_fpcr)
+
+#define	SOFTFLOAT_MD_CLZ
+static inline int
+countLeadingZeros32(u_int32_t a)
+{
+	int rc;
+	asm volatile("ff1 %0, %1" : "=r"(rc) : "r"(a));
+	return (a != 0 ? 31 - rc : rc);
+}
 
 #endif
 

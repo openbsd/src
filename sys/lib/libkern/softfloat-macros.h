@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-macros.h,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
+/*	$OpenBSD: softfloat-macros.h,v 1.3 2007/12/29 17:43:14 miod Exp $	*/
 /*	$NetBSD: softfloat-macros.h,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /*
@@ -654,6 +654,7 @@ Returns the number of leading 0 bits before the most-significant 1 bit of
 `a'.  If `a' is zero, 32 is returned.
 -------------------------------------------------------------------------------
 */
+#ifndef SOFTFLOAT_MD_CLZ
 static int8 countLeadingZeros32( bits32 a )
 {
     static const int8 countLeadingZerosHigh[] = {
@@ -689,6 +690,7 @@ static int8 countLeadingZeros32( bits32 a )
     return shiftCount;
 
 }
+#endif
 
 /*
 -------------------------------------------------------------------------------
