@@ -1,4 +1,4 @@
-/*	$OpenBSD: milieu.h,v 1.1 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: milieu.h,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
 /*	$NetBSD: milieu.h,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /* This is a derivative work. */
@@ -66,8 +66,6 @@ this code that are retained.
 
 ===============================================================================
 */
-
-#ifndef NO_IEEE
 
 #ifndef MILIEU_H
 #define MILIEU_H
@@ -160,4 +158,3 @@ to be `static'.
 #define INLINE static inline
 
 #endif
-#endif /* !NO_IEEE */

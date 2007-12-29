@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.h,v 1.1 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: softfloat.h,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
 /*	$NetBSD: softfloat.h,v 1.1 2001/04/26 03:10:48 ross Exp $	*/
 
 /* This is a derivative work. */
@@ -72,8 +72,6 @@ this code that are retained.
 
 ===============================================================================
 */
-
-#ifndef NO_IEEE
 
 #include <sys/types.h>
 
@@ -372,5 +370,3 @@ int float128_lt_quiet( float128, float128 );
 int float128_is_signaling_nan( float128 );
 
 #endif
-
-#endif /* !NO_IEEE */

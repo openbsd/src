@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-specialize.h,v 1.1 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: softfloat-specialize.h,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
 /*	$NetBSD: softfloat-specialize.h,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /* This is a derivative work. */
@@ -78,8 +78,6 @@ this code that are retained.
 Underflow tininess-detection mode, statically initialized to default value.
 -------------------------------------------------------------------------------
 */
-
-#ifndef NO_IEEE
 
 /* [ MP safe, does not change dynamically ] */
 int float_detect_tininess = float_tininess_after_rounding;
@@ -491,5 +489,3 @@ static float128 propagateFloat128NaN( float128 a, float128 b )
 }
 
 #endif
-
-#endif /* !NO_IEEE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.c,v 1.1 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: softfloat.c,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
 /*	$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /*
@@ -48,8 +48,6 @@ this code that are retained.
 
 ===============================================================================
 */
-
-#ifndef NO_IEEE
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -5502,5 +5500,3 @@ uint32 float32_to_uint32_round_to_zero( float32 a )
 }
 
 #endif
-
-#endif /* !NO_IEEE */
