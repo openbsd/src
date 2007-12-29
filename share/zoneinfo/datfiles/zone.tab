@@ -1,5 +1,5 @@
-# $OpenBSD: zone.tab,v 1.21 2007/08/22 11:29:44 millert Exp $
-# @(#)zone.tab	8.11
+# $OpenBSD: zone.tab,v 1.22 2007/12/29 13:41:05 millert Exp $
+# @(#)zone.tab	8.12
 #
 # TZ zone descriptions
 #
@@ -78,6 +78,7 @@ BG	+4241+02319	Europe/Sofia
 BH	+2623+05035	Asia/Bahrain
 BI	-0323+02922	Africa/Bujumbura
 BJ	+0629+00237	Africa/Porto-Novo
+BL	+1753-06251	America/St_Barthelemy
 BM	+3217-06446	Atlantic/Bermuda
 BN	+0456+11455	Asia/Brunei
 BO	-1630-06809	America/La_Paz
@@ -251,6 +252,7 @@ MA	+3339-00735	Africa/Casablanca
 MC	+4342+00723	Europe/Monaco
 MD	+4700+02850	Europe/Chisinau
 ME	+4226+01916	Europe/Podgorica
+MF	+1804-06305	America/Marigot
 MG	-1855+04731	Indian/Antananarivo
 MH	+0709+17112	Pacific/Majuro	most locations
 MH	+0905+16720	Pacific/Kwajalein	Kwajalein

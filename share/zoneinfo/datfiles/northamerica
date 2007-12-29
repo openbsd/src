@@ -1,5 +1,5 @@
-# $OpenBSD: northamerica,v 1.29 2007/11/06 15:35:52 millert Exp $
-# @(#)northamerica	8.19
+# $OpenBSD: northamerica,v 1.30 2007/12/29 13:41:05 millert Exp $
+# @(#)northamerica	8.20
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2304,6 +2304,10 @@ Zone	America/Grenada	-4:07:00 -	LMT	1911 Jul	# St George's
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun 8	# Pointe a Pitre
 			-4:00	-	AST
+# St Barthelemy
+Link America/Guadeloupe	America/St_Barthelemy
+# St Martin (French part)
+Link America/Guadeloupe	America/Marigot
 
 # Guatemala
 #
