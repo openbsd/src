@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.39 2007/12/27 22:32:37 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.40 2007/12/29 02:55:44 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -314,7 +314,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
 			if (setperf_prio < 30) {
-				printf("acpi does throttle\n");
 				cpu_setperf = acpicpu_setperf;
 				setperf_prio = 30;
 				acpi_hasprocfvs = 1;
