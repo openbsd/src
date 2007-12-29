@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: ieeefp.h,v 1.2 2007/12/29 17:41:33 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -52,5 +52,27 @@ typedef enum {
     FP_RM=2,		/* round toward negative infinity */
     FP_RP=3		/* round toward positive infinity */
 } fp_rnd;
+
+#ifdef _KERNEL
+
+/*
+ * Defines for the 88110 floating-point completion code.
+ */
+
+#include <sys/param.h>
+#include <sys/proc.h>
+
+#define	float_raise(bits)	curproc->p_md.md_tf->tf_fpsr |= bits
+#define	float_set_inexact()	float_raise(FP_X_IMP)
+#define	float_set_invalid()	float_raise(FP_X_INV)
+
+/* rounding mode bits position in FPCR */
+#define	FPCR_RD_SHIFT	14
+#define	FPCR_RD_MASK	0x03
+
+#define	float_get_round(fpcr)	(((fpcr) >> FPCR_RD_SHIFT) & FPCR_RD_MASK)
+#define	fpgetround()		float_get_round(curproc->p_md.md_tf->tf_fpcr)
+
+#endif
 
 #endif /* _M88K_IEEEFP_H_ */
