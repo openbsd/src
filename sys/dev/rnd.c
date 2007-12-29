@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.85 2007/10/15 23:20:56 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.86 2007/12/29 08:03:05 dlg Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -248,6 +248,7 @@
 #include <sys/sysctl.h>
 #include <sys/timeout.h>
 #include <sys/poll.h>
+#include <sys/mutex.h>
 
 #include <crypto/md5.h>
 #include <crypto/arc4.h>
@@ -427,6 +428,7 @@ struct filterops rndwrite_filtops =
 int rnd_attached;
 int arc4random_initialized;
 struct rndstats rndstats;
+struct mutex rndlock;
 
 static __inline u_int32_t roll(u_int32_t w, int i)
 {
@@ -491,7 +493,7 @@ void
 arc4_stir(void)
 {
 	u_int8_t buf[256];
-	int s, len;
+	int len;
 
 	nanotime((struct timespec *) buf);
 	len = random_state.entropy_count / 8; /* XXX maybe a half? */
@@ -500,7 +502,7 @@ arc4_stir(void)
 	get_random_bytes(buf + sizeof (struct timeval), len);
 	len += sizeof(struct timeval);
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	if (rndstats.arc4_nstirs > 0)
 		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
 
@@ -515,7 +517,7 @@ arc4_stir(void)
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
 	rc4_skip(&arc4random_state, 256 * 4);
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 void
@@ -548,30 +550,28 @@ arc4_reinit(void *v)
 u_int32_t
 arc4random(void)
 {
-	int s;
 	u_int32_t ret;
 
 	arc4maybeinit();
-	s = splhigh();
+	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, (u_char*)&ret, sizeof(ret));
 	rndstats.arc4_reads += sizeof(ret);
 	arc4random_count += sizeof(ret);
-	splx(s);
+	mtx_leave(&rndlock);
 	return ret;
 }
 
 static void
 arc4random_bytes_large(void *buf, size_t n)
 {
-	int s;
 	u_char lbuf[ARC4_SUB_KEY_BYTES];
 	struct rc4_ctx lctx;
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
 	rndstats.arc4_reads += n;
 	arc4random_count += sizeof(lbuf);
-	splx(s);
+	mtx_leave(&rndlock);
 
 	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
        	rc4_skip(&lctx, 256 * 4);
@@ -583,8 +583,6 @@ arc4random_bytes_large(void *buf, size_t n)
 void
 arc4random_bytes(void *buf, size_t n)
 {
-	int s;
-
 	arc4maybeinit();
 
 	/* Satisfy large requests via an independent ARC4 instance */
@@ -593,11 +591,11 @@ arc4random_bytes(void *buf, size_t n)
 		return;
 	}
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, (u_char*)buf, n);
 	rndstats.arc4_reads += n;
 	arc4random_count += n;
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 void
@@ -623,6 +621,7 @@ randomattach(void)
 	bzero(&rnd_event_space, sizeof(rnd_event_space));
 
 	bzero(&arc4random_state, sizeof(arc4random_state));
+	mtx_init(&rndlock, IPL_HIGH);
 	arc4_reinit(NULL);
 
 	rnd_attached = 1;
@@ -705,7 +704,6 @@ enqueue_randomness(int state, int val)
 	struct rand_event *rep;
 	struct timespec	tv;
 	u_int	time, nbits;
-	int s;
 
 	/* XXX on sparc we get here before randomattach() */
 	if (!rnd_attached)
@@ -782,10 +780,10 @@ enqueue_randomness(int state, int val)
 	} else if (p->max_entropy)
 		nbits = 8 * sizeof(val) - 1;
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	if ((rep = rnd_put()) == NULL) {
 		rndstats.rnd_drops++;
-		splx(s);
+		mtx_leave(&rndlock);
 		return;
 	}
 
@@ -803,7 +801,7 @@ enqueue_randomness(int state, int val)
 		random_state.tmo++;
 		timeout_add(&rnd_timeout, 1);
 	}
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 void
@@ -813,18 +811,17 @@ dequeue_randomness(void *v)
 	struct rand_event *rep;
 	u_int32_t buf[2];
 	u_int nbits;
-	int s;
 
 	timeout_del(&rnd_timeout);
 	rndstats.rnd_deqs++;
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	while ((rep = rnd_get())) {
 
 		buf[0] = rep->re_time;
 		buf[1] = rep->re_val;
 		nbits = rep->re_nbits;
-		splx(s);
+		mtx_leave(&rndlock);
 
 		add_entropy_words(buf, 2);
 
@@ -846,11 +843,11 @@ dequeue_randomness(void *v)
 			KNOTE(&rnd_rsel.si_note, 0);
 		}
 
-		s = splhigh();
+		mtx_enter(&rndlock);
 	}
 
 	rs->tmo = 0;
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 #if POOLWORDS % 16
@@ -870,7 +867,6 @@ extract_entropy(u_int8_t *buf, int nbytes)
 	u_char buffer[16];
 	MD5_CTX tmp;
 	u_int i;
-	int s;
 
 	add_timer_randomness(nbytes);
 
@@ -882,13 +878,13 @@ extract_entropy(u_int8_t *buf, int nbytes)
 
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
-		s = splhigh();
+		mtx_enter(&rndlock);
 		MD5Update(&tmp, (u_int8_t*)rs->pool, sizeof(rs->pool));
 		if (rs->entropy_count / 8 > i)
 			rs->entropy_count -= i * 8;
 		else
 			rs->entropy_count = 0;
-		splx(s);
+		mtx_leave(&rndlock);
 		MD5Final(buffer, &tmp);
 
 		/*
@@ -1025,7 +1021,6 @@ int
 randomkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
-	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -1041,9 +1036,9 @@ randomkqfilter(dev_t dev, struct knote *kn)
 	}
 	kn->kn_hook = (void *)&random_state;
 
-	s = splhigh();
+	mtx_enter(&rndlock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
+	mtx_leave(&rndlock);
 
 	return (0);
 }
@@ -1051,10 +1046,9 @@ randomkqfilter(dev_t dev, struct knote *kn)
 void
 filt_rndrdetach(struct knote *kn)
 {
-	int s = splhigh();
-
+	mtx_enter(&rndlock);
 	SLIST_REMOVE(&rnd_rsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 int
@@ -1069,10 +1063,9 @@ filt_rndread(struct knote *kn, long hint)
 void
 filt_rndwdetach(struct knote *kn)
 {
-	int s = splhigh();
-
+	mtx_enter(&rndlock);
 	SLIST_REMOVE(&rnd_wsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&rndlock);
 }
 
 int
@@ -1116,7 +1109,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 int
 randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int	s, ret = 0;
+	int	ret = 0;
 	u_int	cnt;
 
 	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
@@ -1131,29 +1124,29 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case RNDGETENTCNT:
-		s = splhigh();
+		mtx_enter(&rndlock);
 		*(u_int *)data = random_state.entropy_count;
-		splx(s);
+		mtx_leave(&rndlock);
 		break;
 	case RNDADDTOENTCNT:
 		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
 			cnt = *(u_int *)data;
-			s = splhigh();
+			mtx_enter(&rndlock);
 			random_state.entropy_count += cnt;
 			if (random_state.entropy_count > POOLBITS)
 				random_state.entropy_count = POOLBITS;
-			splx(s);
+			mtx_leave(&rndlock);
 		}
 		break;
 	case RNDZAPENTCNT:
 		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
-			s = splhigh();
+			mtx_enter(&rndlock);
 			random_state.entropy_count = 0;
-			splx(s);
+			mtx_leave(&rndlock);
 		}
 		break;
 	case RNDSTIRARC4:
@@ -1162,18 +1155,18 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else if (random_state.entropy_count < 64)
 			ret = EAGAIN;
 		else {
-			s = splhigh();
+			mtx_enter(&rndlock);
 			arc4random_initialized = 0;
-			splx(s);
+			mtx_leave(&rndlock);
 		}
 		break;
 	case RNDCLRSTATS:
 		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
-			s = splhigh();
+			mtx_enter(&rndlock);
 			bzero(&rndstats, sizeof(rndstats));
-			splx(s);
+			mtx_leave(&rndlock);
 		}
 		break;
 	default:
