@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.5 2007/12/28 19:49:43 kettenis Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -107,9 +107,16 @@ uturnattach(parent, self, aux)
 	/* keep it real */
 	((struct iomod *)ioh)->io_control = 0x80;
 
-	nca = *ca;	/* clone from us */
+	/*
+	 * U2/UTurn is actually a combination of an Upper Bus
+	 * Converter (UBC) and a Lower Bus Converter (LBC).  This
+	 * driver attaches to the UBC; the LBC isn't very interesting,
+	 * so we skip it.  This is easy, since it always is module 63,
+	 * hence the MAXMODBUS - 1 below.
+	 */
+	nca = *ca;
 	nca.ca_hpamask = HPPA_IOBEGIN;
-	pdc_scanbus(self, &nca, MAXMODBUS, 0);
+	pdc_scanbus(self, &nca, MAXMODBUS - 1, 0);
 
 	/* XXX On some machines, PDC doesn't tell us about all devices. */
 	switch (cpu_hvers) {
@@ -121,7 +128,7 @@ uturnattach(parent, self, aux)
 	case HPPA_BOARD_HP859:
 	case HPPA_BOARD_HP869:
 		hpa = ((struct iomod *)ioh)->io_io_low << 16;
-		pdc_scanbus(self, &nca, MAXMODBUS, hpa);
+		pdc_scanbus(self, &nca, MAXMODBUS - 1, hpa);
 		break;
 	default:
 		break;
