@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.58 2007/12/28 16:38:23 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.59 2007/12/29 00:45:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -57,11 +57,9 @@ void		atascsi_free(struct scsi_link *);
 struct scsi_adapter atascsi_switch = {
 	atascsi_cmd,		/* scsi_cmd */
 	minphys,		/* scsi_minphys */
-	NULL,
-	NULL,
-	atascsi_ioctl,		/* ioctl */
 	atascsi_probe,		/* dev_probe */
-	atascsi_free		/* dev_free */
+	atascsi_free,		/* dev_free */
+	atascsi_ioctl		/* ioctl */
 };
 
 struct scsi_device atascsi_device = {

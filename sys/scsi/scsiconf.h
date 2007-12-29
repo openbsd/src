@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.89 2007/11/26 15:40:51 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.90 2007/12/29 00:45:26 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -103,12 +103,10 @@ extern int scsi_autoconf;
 struct scsi_adapter {
 	int		(*scsi_cmd)(struct scsi_xfer *);
 	void		(*scsi_minphys)(struct buf *);
-	int		(*open_target_lu)(void);
-	int		(*close_target_lu)(void);
-	int		(*ioctl)(struct scsi_link *, u_long, caddr_t, int,
-			    struct proc *);
 	int		(*dev_probe)(struct scsi_link *);
 	void		(*dev_free)(struct scsi_link *);
+	int		(*ioctl)(struct scsi_link *, u_long, caddr_t, int,
+			    struct proc *);
 };
 
 /*
