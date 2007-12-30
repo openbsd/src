@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.110 2007/12/30 00:16:39 mglocker Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1825,11 +1825,15 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 	int		 thoff;
 	int		 opt, cnt, optlen = 0;
 	int		 rewrite = 0;
-	u_char		*optp;
+	u_char		 opts[MAX_TCPOPTLEN];
+	u_char		*optp = opts;
 
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
-	optp = mtod(m, caddr_t) + off + sizeof(struct tcphdr);
+
+	if (cnt > 0 && !pf_pull_hdr(m, off + sizeof(*th), opts, cnt,
+	    NULL, NULL, AF_INET))
+		return (rewrite);
 
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {
 		opt = optp[0];
@@ -1858,6 +1862,9 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 			break;
 		}
 	}
+
+	if (rewrite)
+		m_copyback(m, off + sizeof(*th), thoff - sizeof(*th), opts);
 
 	return (rewrite);
 }
