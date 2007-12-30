@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.33 2007/07/24 15:31:04 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.34 2007/12/30 13:38:47 sobrado Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -191,7 +191,7 @@ usage(void)
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
 	fprintf(stderr, " [-l lease-file]\n");
-	fprintf(stderr, "\t[if0 [...ifN]]\n");
+	fprintf(stderr, "\t[if0 [... ifN]]\n");
 	exit(1);
 }
 

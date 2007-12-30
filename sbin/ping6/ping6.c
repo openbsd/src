@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.69 2006/12/15 06:07:39 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.70 2007/12/30 13:38:47 sobrado Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -2439,6 +2439,6 @@ usage(void)
 #endif
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
             "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-S sourceaddr] [-s packetsize] [hops...] host\n");
+	    "\n\t[-S sourceaddr] [-s packetsize] [hops ...] host\n");
 	exit(1);
 }
