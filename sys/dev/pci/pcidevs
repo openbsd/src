@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1305 2007/12/22 06:07:05 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1306 2007/12/30 00:47:48 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3811,6 +3811,7 @@ product SUN GEMNETWORK		0x2bad	GEM
 product SUN SIMBA		0x5000	Simba PCI-PCI
 product SUN 5821		0x5454	Crypto 5821
 product SUN SCA1K		0x5455	Crypto 1K
+product SUN SCA6K		0x5ca0	Crypto 6K
 product SUN PSYCHO		0x8000	Psycho PCI
 product SUN MS_IIep		0x9000	microSPARC IIep PCI
 product SUN US_IIi		0xa000	UltraSPARC IIi PCI
