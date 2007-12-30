@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.131 2007/12/30 17:31:20 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.132 2007/12/30 21:30:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.131 2007/12/30 17:31:20 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.132 2007/12/30 21:30:53 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -727,7 +727,7 @@ void
 editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 {
 	struct partition *pp;
-	int c;
+	int partno;
 
 	if (p == NULL) {
 		p = getstring("partition to delete",
@@ -742,32 +742,25 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		zero_partitions(lp, freep);
 		return;
 	}
-	c = p[0] - 'a';
-	if (c < 0 || c == RAW_PART || c >= lp->d_npartitions) {
+	partno = p[0] - 'a';
+	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
 		fprintf(stderr, "Partition must be between 'a' and '%c' "
 		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
 		return;
 	}
-	pp = &lp->d_partitions[c];
+	pp = &lp->d_partitions[partno];
 
 	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
 		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
 		return;
 	}
 
-	if (c == RAW_PART) {
-		fputs(
-"You may not delete the 'c' partition.  The 'c' partition must exist and\n"
-"should span the entire disk.  By default it is of type 'unused' and so\n"
-"does not take up any space.\n", stderr);
-		return;
-	} else {
-		/* Really delete it (as opposed to just setting to "unused") */
-		memset(&lp->d_partitions[c], 0, sizeof(lp->d_partitions[c]));
-	}
-	if (mp != NULL && mp[c] != NULL) {
-		free(mp[c]);
-		mp[c] = NULL;
+	/* Really delete it (as opposed to just setting to "unused") */
+	memset(pp, 0, sizeof(*pp));
+
+	if (mp != NULL && mp[partno] != NULL) {
+		free(mp[partno]);
+		mp[partno] = NULL;
 	}
 	editor_countfree(lp, freep);
 }
@@ -891,13 +884,6 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 				    *freep, newsize - DL_GETPSIZE(pp));
 				return;
 			}
-		}
-	} else {
-		if (partno == RAW_PART && newsize +
-		    DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
-			fputs("'c' partition may not be larger than the disk\n",
-			    stderr);
-			return;
 		}
 	}
 	DL_SETPSIZE(pp, newsize);
@@ -2021,11 +2007,7 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 		} else {
 			if (ui == DL_GETPSIZE(pp))
 				break;			/* no change */
-			if (partno == RAW_PART &&
-			    ui + DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
-				fputs("'c' partition may not be larger than the disk\n",
-				    stderr);
-			} else if (pp->p_fstype == FS_UNUSED ||
+			if (pp->p_fstype == FS_UNUSED ||
 			    pp->p_fstype == FS_BOOT) {
 				break;
 			} else {
