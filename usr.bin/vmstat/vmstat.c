@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.107 2007/12/15 03:43:41 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.108 2007/12/30 13:29:52 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.107 2007/12/15 03:43:41 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.108 2007/12/30 13:29:52 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -442,7 +442,7 @@ printhdr(void)
 {
 	int i;
 
-	(void)printf(" procs  memory         page%*s", 20, "");
+	(void)printf(" procs    memory       page%*s", 20, "");
 	if (ndrives > 0)
 		(void)printf("%s %*straps          cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
