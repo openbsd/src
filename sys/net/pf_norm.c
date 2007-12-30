@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.110 2007/12/30 00:16:39 mglocker Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.111 2007/12/30 10:32:24 mglocker Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -115,7 +115,7 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
 			    struct pf_fragment **, int, int, int *);
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
-			    struct tcphdr *, int);
+			    struct tcphdr *, int, sa_family_t);
 
 #define	DPFPRINTF(x) do {				\
 	if (pf_status.debug >= PF_DEBUG_MISC) {		\
@@ -1316,7 +1316,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 	}
 
 	/* Process options */
-	if (r->max_mss && pf_normalize_tcpopt(r, m, th, off))
+	if (r->max_mss && pf_normalize_tcpopt(r, m, th, off, pd->af))
 		rewrite = 1;
 
 	/* copy back packet headers if we sanitized */
@@ -1819,7 +1819,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 
 int
 pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
-    int off)
+    int off, sa_family_t af)
 {
 	u_int16_t	*mss;
 	int		 thoff;
@@ -1832,7 +1832,7 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 	cnt = thoff - sizeof(struct tcphdr);
 
 	if (cnt > 0 && !pf_pull_hdr(m, off + sizeof(*th), opts, cnt,
-	    NULL, NULL, AF_INET))
+	    NULL, NULL, af))
 		return (rewrite);
 
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {
