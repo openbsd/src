@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.130 2007/12/30 16:51:55 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.131 2007/12/30 17:31:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.130 2007/12/30 16:51:55 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.131 2007/12/30 17:31:20 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -564,7 +564,7 @@ getoff1:
 	}
 
 	/* Update free sector count and make sure things stay contiguous. */
-	*freep -= DL_GETPSIZE(pp);
+	editor_countfree(lp, freep);
 	if (DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) > ending_sector ||
 	    has_overlap(lp, freep, -1))
 		make_contiguous(lp);
@@ -652,11 +652,8 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 
-	/* Did they disable/enable the partition? */
-	if ((pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_BOOT) &&
-	    origpart.p_fstype != FS_UNUSED && origpart.p_fstype != FS_BOOT)
-		*freep += DL_GETPSIZE(&origpart);
-	else if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
+	/* Ensure a newly enabled partition fits. */
+	if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
 	    (origpart.p_fstype == FS_UNUSED || origpart.p_fstype == FS_BOOT)) {
 		if (DL_GETPSIZE(pp) > *freep) {
 			fprintf(stderr,
@@ -664,10 +661,9 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 			    "free.  Setting size to %llu.\n", DL_GETPSIZE(pp), *freep,
 			    *freep);
 			DL_SETPSIZE(pp, *freep);
-			*freep = 0;
-		} else
-			*freep -= DL_GETPSIZE(pp);		/* have enough space */
+		}
 	}
+	editor_countfree(lp, freep);
 
 getoff2:
 	/* Get offset */
@@ -766,22 +762,14 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 "does not take up any space.\n", stderr);
 		return;
 	} else {
-		/* Update free sector count. */
-		if (DL_GETPOFFSET(&lp->d_partitions[c]) < ending_sector &&
-		    DL_GETPOFFSET(&lp->d_partitions[c]) >= starting_sector &&
-		    lp->d_partitions[c].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[c].p_fstype != FS_BOOT &&
-		    DL_GETPSIZE(&lp->d_partitions[c]) != 0)
-			*freep += DL_GETPSIZE(&lp->d_partitions[c]);
-
 		/* Really delete it (as opposed to just setting to "unused") */
-		(void)memset(&lp->d_partitions[c], 0,
-		    sizeof(lp->d_partitions[c]));
+		memset(&lp->d_partitions[c], 0, sizeof(lp->d_partitions[c]));
 	}
 	if (mp != NULL && mp[c] != NULL) {
 		free(mp[c]);
 		mp[c] = NULL;
 	}
+	editor_countfree(lp, freep);
 }
 
 /*
@@ -903,9 +891,6 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 				    *freep, newsize - DL_GETPSIZE(pp));
 				return;
 			}
-			*freep -= newsize - DL_GETPSIZE(pp);
-		} else if (newsize < DL_GETPSIZE(pp)) {
-			*freep += DL_GETPSIZE(pp) - newsize;
 		}
 	} else {
 		if (partno == RAW_PART && newsize +
@@ -916,6 +901,7 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 		}
 	}
 	DL_SETPSIZE(pp, newsize);
+	editor_countfree(lp, freep);
 	if (newsize + DL_GETPOFFSET(pp) > ending_sector ||
 	    has_overlap(lp, freep, -1))
 		make_contiguous(lp);
@@ -1193,7 +1179,7 @@ has_overlap(struct disklabel *lp, u_int64_t *freep, int resolve)
 
 				/* Mark the selected one as unused */
 				lp->d_partitions[c].p_fstype = FS_UNUSED;
-				*freep += DL_GETPSIZE(&lp->d_partitions[c]);
+				editor_countfree(lp, freep);
 				(void)free(spp);
 				return(has_overlap(lp, freep, resolve));
 			}
@@ -1334,8 +1320,6 @@ edit_parms(struct disklabel *lp, u_int64_t *freep)
 			fputs("Invalid entry\n", stderr);
 		else if (ui > DL_GETDSIZE(lp) &&
 		    ending_sector == DL_GETDSIZE(lp)) {
-			/* grow free count */
-			*freep += ui - DL_GETDSIZE(lp);
 			puts("You may want to increase the size of the 'c' "
 			    "partition.");
 			break;
@@ -1347,10 +1331,8 @@ edit_parms(struct disklabel *lp, u_int64_t *freep)
 				    "Not enough free space to shrink by %llu "
 				    "sectors (only %llu sectors left)\n",
 				    DL_GETDSIZE(lp) - ui, *freep);
-			else {
-				*freep -= DL_GETDSIZE(lp) - ui;
+			else
 				break;
-			}
 		} else
 			break;
 	}
@@ -1358,6 +1340,7 @@ edit_parms(struct disklabel *lp, u_int64_t *freep)
 	if (ending_sector > ui)
 		ending_sector = ui;
 	DL_SETDSIZE(lp, ui);
+	editor_countfree(lp, freep);
 
 	/* rpm */
 	for (;;) {
@@ -2044,8 +2027,6 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 				    stderr);
 			} else if (pp->p_fstype == FS_UNUSED ||
 			    pp->p_fstype == FS_BOOT) {
-				/* don't care what's free */
-				DL_SETPSIZE(pp, ui);
 				break;
 			} else {
 				if (ui > DL_GETPSIZE(pp) + *freep)
@@ -2053,15 +2034,13 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 					fprintf(stderr,
 					    "Size may not be larger than %llu "
 					    "sectors\n", DL_GETPSIZE(pp) + *freep);
-				else {
-					*freep += DL_GETPSIZE(pp) - ui;
-					DL_SETPSIZE(pp, ui);
+				else
 					break;			/* ok */
-				}
 			}
 		}
 	}
 	DL_SETPSIZE(pp, ui);
+	editor_countfree(lp, freep);
 	return(0);
 }
 
