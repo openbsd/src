@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.129 2007/12/30 01:52:07 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.130 2007/12/30 16:51:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.129 2007/12/30 01:52:07 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.130 2007/12/30 16:51:55 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -589,9 +589,9 @@ editor_name(struct disklabel *lp, char **mp, char *p)
 		return;
 	}
 	partno = p[0] - 'a';
-	if (partno < 0 || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
-		    'a' + lp->d_npartitions - 1);
+	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
 		return;
 	}
 	pp = &lp->d_partitions[partno];
@@ -632,9 +632,9 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 	partno = p[0] - 'a';
-	if (partno < 0 || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
-		    'a' + lp->d_npartitions - 1);
+	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
 		return;
 	}
 	pp = &lp->d_partitions[partno];
@@ -747,9 +747,9 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 	c = p[0] - 'a';
-	if (c < 0 || c >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
-		    'a' + lp->d_npartitions - 1);
+	if (c < 0 || c == RAW_PART || c >= lp->d_npartitions) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
 		return;
 	}
 	pp = &lp->d_partitions[c];
@@ -867,9 +867,9 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 		return;
 	}
 	partno = p[0] - 'a';
-	if (partno < 0 || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
-		    'a' + lp->d_npartitions - 1);
+	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
 		return;
 	}
 	pp = &lp->d_partitions[partno];
