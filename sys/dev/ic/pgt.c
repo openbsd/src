@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.45 2007/09/18 00:46:41 krw Exp $  */
+/*	$OpenBSD: pgt.c,v 1.46 2007/12/30 17:37:57 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -837,10 +837,13 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 	}
 
 	M_PREPEND(m, sizeof(*frame) + sizeof(*snap), M_DONTWAIT);
-	if (m != NULL)
-		m = m_pullup(m, sizeof(*frame) + sizeof(*snap));
 	if (m == NULL)
 		return (m);
+	if (m->m_len < sizeof(*frame) + sizeof(*snap)) {
+		m = m_pullup(m, sizeof(*frame) + sizeof(*snap));
+		if (m == NULL)
+			return (m);
+	}
 	frame = mtod(m, struct ieee80211_frame *);
 	snap = (struct llc *)&frame[1];
 	if (ni != NULL) {
