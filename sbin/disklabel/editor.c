@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.128 2007/12/25 17:26:49 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.129 2007/12/30 01:52:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.128 2007/12/25 17:26:49 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.129 2007/12/30 01:52:07 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -438,7 +438,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 {
 	struct partition *pp;
 	struct diskchunk *chunks;
-	char buf[BUFSIZ];
+	char buf[2];
 	int i, partno;
 	u_int64_t ui, old_offset, old_size, new_offset, new_size;
 
@@ -457,51 +457,39 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 
-	/* XXX - make more like other editor_* */
-	if (p != NULL) {
-		partno = p[0] - 'a';
-		if (partno < 0 || partno == RAW_PART ||
-		    partno >= MAXPARTITIONS) {
-			fprintf(stderr,
-			    "Partition must be between 'a' and '%c' "
-			    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
-			return;
-		} else if (lp->d_partitions[partno].p_fstype != FS_UNUSED &&
-		    DL_GETPSIZE(&lp->d_partitions[partno]) != 0) {
-			fprintf(stderr,
-			    "Partition '%c' exists.  Delete it first.\n",
-			    p[0]);
-			return;
-		}
-	} else {
-		/* Find first unused partition that is not 'c' */
-		for (partno = 0; partno < MAXPARTITIONS; partno++, p++) {
-			if (DL_GETPSIZE(&lp->d_partitions[partno]) == 0 &&
-			    partno != RAW_PART)
+	if (p == NULL) {
+		/*
+		 * Use the first unused partition that is not 'c' as the
+		 * default partition in the prompt string.
+		 */
+		pp = &lp->d_partitions[0];
+		buf[0] = buf[1] = '\0';
+		for (partno = 0; partno < MAXPARTITIONS; partno++, pp++) {
+			if (DL_GETPSIZE(pp) == 0 && partno != RAW_PART) {
+				buf[0] = partno + 'a';
+				p = &buf[0];
 				break;
+			}
 		}
-		if (partno < MAXPARTITIONS) {
-			buf[0] = partno + 'a';
-			buf[1] = '\0';
-			p = &buf[0];
-		} else
-			p = NULL;
-		for (;;) {
-			p = getstring("partition",
-			    "The letter of the new partition, a - p.", p);
-			if (p == NULL)
-				return;
-			partno = p[0] - 'a';
-			if (lp->d_partitions[partno].p_fstype != FS_UNUSED &&
-			    DL_GETPSIZE(&lp->d_partitions[partno]) != 0) {
-				fprintf(stderr,
-				    "Partition '%c' already exists.\n", p[0]);
-			} else if (partno >= 0 && partno < MAXPARTITIONS)
-				break;
-			fprintf(stderr,
-			    "Partition must be between 'a' and '%c'.\n",
-			    'a' + MAXPARTITIONS - 1);
-		}
+		p = getstring("partition",
+		    "The letter of the new partition, a - p.", p);
+	}
+	if (p == NULL) {
+		fputs("Command aborted\n", stderr);
+		return;
+	}
+	partno = p[0] - 'a';
+	if (partno < 0 || partno == RAW_PART || partno >= MAXPARTITIONS) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
+		return;
+	}	
+	pp = &lp->d_partitions[partno];
+
+	if (pp->p_fstype != FS_UNUSED && DL_GETPSIZE(pp) != 0) {
+		fprintf(stderr, "Partition '%c' exists.  Delete it first.\n",
+		    p[0]);
+		return;
 	}
 
 	/* Increase d_npartitions if necessary */
@@ -509,7 +497,6 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		lp->d_npartitions = partno + 1;
 
 	/* Set defaults */
-	pp = &lp->d_partitions[partno];
 	memset(pp, 0, sizeof(*pp));
 	new_size = *freep;
 	new_offset = next_offset(lp, &new_size);
