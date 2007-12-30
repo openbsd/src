@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.59 2007/12/29 00:45:26 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.60 2007/12/30 13:02:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -214,6 +214,9 @@ atascsi_probe(struct scsi_link *link)
 	ata_fix_identify(&ap->ap_identify);
 
 	as->as_ports[port] = ap;
+
+	if (type != ATA_PORT_T_DISK)
+		return (0);
 
 	/* Enable write cache if supported */
 	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_WRITECACHE) {
