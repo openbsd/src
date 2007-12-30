@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.72 2007/10/08 04:15:10 ray Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.73 2007/12/30 11:54:55 bluhm Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -105,7 +105,6 @@ struct mutex kprintf_mutex = MUTEX_INITIALIZER(IPL_HIGH);
  */
 
 extern struct	tty *constty;	/* pointer to console "window" tty */
-int	consintr = 1;	/* ok to handle console interrupts? */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
@@ -495,18 +494,15 @@ int
 printf(const char *fmt, ...)
 {
 	va_list ap;
-	int savintr, retval;
+	int retval;
 
 	mtx_enter(&kprintf_mutex);
 
-	savintr = consintr;		/* disable interrupts */
-	consintr = 0;
 	va_start(ap, fmt);
 	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	va_end(ap);
 	if (!panicstr)
 		logwakeup();
-	consintr = savintr;		/* reenable interrupts */
 
 	mtx_leave(&kprintf_mutex);
 
@@ -521,16 +517,13 @@ printf(const char *fmt, ...)
 int
 vprintf(const char *fmt, va_list ap)
 {
-	int savintr, retval;
+	int retval;
 
 	mtx_enter(&kprintf_mutex);
 
-	savintr = consintr;		/* disable interrupts */
-	consintr = 0;
 	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	if (!panicstr)
 		logwakeup();
-	consintr = savintr;		/* reenable interrupts */
 
 	mtx_leave(&kprintf_mutex);
 
