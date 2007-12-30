@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.27 2005/05/05 19:17:11 jmc Exp $	*/
+/*	$OpenBSD: quota.c,v 1.28 2007/12/30 13:32:19 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -41,7 +41,7 @@ static const char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
 static const char rcsid[] =
-"$OpenBSD: quota.c,v 1.27 2005/05/05 19:17:11 jmc Exp $";
+"$OpenBSD: quota.c,v 1.28 2007/12/30 13:32:19 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -179,11 +179,10 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-
 	fprintf(stderr, "%s\n%s\n%s\n",
-	    "Usage: quota [-q | -v] [-gu]",
-	    "\tquota [-q | -v] -g group ...",
-	    "\tquota [-q | -v] -u user ...");
+	    "usage: quota [-q | -v] [-gu]",
+	    "       quota [-q | -v] -g group ...",
+	    "       quota [-q | -v] -u user ...");
 	exit(1);
 }
 
