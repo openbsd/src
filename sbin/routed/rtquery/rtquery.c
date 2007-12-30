@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.17 2005/04/12 15:26:47 cloder Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.18 2007/12/30 13:46:13 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -211,9 +211,9 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 	if ((not_trace && trace) || argc == 0) {
-usage:		fprintf(stderr, "%s: [-1np] [-r addr] [-t op] [-w timeout]"
-		    " host ...\n",
-		    pgmname);
+usage:		fprintf(stderr,
+		    "usage: %s [-1np] [-r addr] [-t op] [-w timeout]"
+		    " host ...\n", pgmname);
 		exit(1);
 	}
 
