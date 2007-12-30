@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2003/08/04 17:06:46 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.10 2007/12/30 13:35:27 sobrado Exp $ */
 
 /*
  * Smartcard commander.
@@ -59,7 +59,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: sectok [-0123] [-f scriptfile] [-s sleeptime] [cmd] [args]\n");
+	    "usage: sectok [-0123] [-f scriptfile] [-s sleeptime] [command [arg ...]]\n");
 	exit(1);
 }
 
