@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.132 2007/12/30 21:30:53 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.133 2007/12/30 22:42:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.132 2007/12/30 21:30:53 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.133 2007/12/30 22:42:19 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -836,7 +836,6 @@ void
 editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 {
 	struct partition *pp;
-	u_int64_t newsize;
 	int partno;
 
 	if (p == NULL) {
@@ -862,33 +861,12 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 
 	printf("Partition %c is currently %llu sectors in size (%llu free).\n",
 	    p[0], DL_GETPSIZE(pp), *freep);
-	/* XXX - make maxsize lp->d_secperunit if FS_UNUSED/FS_BOOT? */
-	newsize = getuint(lp, partno, "new size", "Size of the partition.  "
-	    "You may also say +/- amount for a relative change.",
-	    DL_GETPSIZE(pp), DL_GETPSIZE(pp) + *freep, DL_GETPOFFSET(pp), DO_CONVERSIONS |
-	    (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
-	if (newsize == ULLONG_MAX - 1) {
-		fputs("Command aborted\n", stderr);
-		return;
-	} else if (newsize == ULLONG_MAX) {
-		fputs("Invalid entry\n", stderr);
-		return;
-	} else if (newsize == DL_GETPSIZE(pp))
+
+	/* Get size */
+	if (get_size(lp, partno, freep, 0) != 0)
 		return;
 
-	if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT) {
-		if (newsize > DL_GETPSIZE(pp)) {
-			if (newsize - DL_GETPSIZE(pp) > *freep) {
-				fprintf(stderr,
-				    "Only %llu sectors free, you asked for %llu\n",
-				    *freep, newsize - DL_GETPSIZE(pp));
-				return;
-			}
-		}
-	}
-	DL_SETPSIZE(pp, newsize);
-	editor_countfree(lp, freep);
-	if (newsize + DL_GETPOFFSET(pp) > ending_sector ||
+	if (DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) > ending_sector ||
 	    has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
@@ -1978,7 +1956,8 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 	struct partition *pp = &lp->d_partitions[partno];
 
 	for (;;) {
-		ui = getuint(lp, partno, "size", "Size of the partition.",
+		ui = getuint(lp, partno, "size", "Size of the partition. "
+		    "You may also say +/- amount for a relative change.",
 		    DL_GETPSIZE(pp), *freep + (new ? 0 : DL_GETPSIZE(pp)),
 		    DL_GETPOFFSET(pp),
 		    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
