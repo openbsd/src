@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.15 2006/12/16 08:49:18 jmc Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.16 2007/12/30 13:52:40 sobrado Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.15 2006/12/16 08:49:18 jmc Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.16 2007/12/30 13:52:40 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,9 +188,10 @@ usage(int ismkfifo)
 		(void)fprintf(stderr, "usage: %s [-m mode] fifo_name ...\n",
 		    __progname);
 	else {
-		(void)fprintf(stderr, "usage: %s [-m mode] name [b | c] major minor\n",
+		(void)fprintf(stderr,
+		    "usage: %s [-m mode] name [b | c] major minor\n",
 		    __progname);
-		(void)fprintf(stderr, "usage: %s [-m mode] name p\n",
+		(void)fprintf(stderr, "       %s [-m mode] name p\n",
 		    __progname);
 	}
 	exit(1);
