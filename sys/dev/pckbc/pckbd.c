@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.12 2007/10/17 21:54:29 deraadt Exp $ */
+/* $OpenBSD: pckbd.c,v 1.13 2007/12/31 17:08:07 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -119,7 +119,9 @@ struct pckbd_softc {
 
 	struct device *sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	int rawkbd;
+	int	rawkbd;
+	u_int	sc_rawcnt;
+	char	sc_rawbuf[3];
 #endif
 };
 
@@ -561,16 +563,28 @@ pckbd_input(vsc, data)
 	int data;
 {
 	struct pckbd_softc *sc = vsc;
-	int type, key;
+	int rc, type, key;
+
+	rc = pckbd_decode(sc->id, data, &type, &key);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->rawkbd) {
-		char d = data;
-		wskbd_rawinput(sc->sc_wskbddev, &d, 1);
-		return;
+		sc->sc_rawbuf[sc->sc_rawcnt++] = (char)data;
+
+		if (rc != 0 || sc->sc_rawcnt == sizeof(sc->sc_rawbuf)) {
+			wskbd_rawinput(sc->sc_wskbddev, sc->sc_rawbuf,
+			    sc->sc_rawcnt);
+			sc->sc_rawcnt = 0;
+		}
+
+		/*
+		 * Pass audio keys to wskbd_input anyway.
+		 */
+		if (rc == 0 || (key != 160 && key != 174 && key != 176))
+			return;
 	}
 #endif
-	if (pckbd_decode(sc->id, data, &type, &key))
+	if (rc != 0)
 		wskbd_input(sc->sc_wskbddev, type, key);
 }
 
