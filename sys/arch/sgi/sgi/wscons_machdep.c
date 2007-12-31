@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2007/12/31 11:42:43 jsing Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2007/12/31 12:46:14 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -37,9 +37,13 @@
 #include <machine/bus.h>
 
 #include <mips64/arcbios.h>
+#include <mips64/archtype.h>
 
-#include <sgi/dev/mkbcreg.h>
+#include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
+
+#include <sgi/dev/gbereg.h>
+#include <sgi/dev/mkbcreg.h>
 
 #include <dev/cons.h>
 #include <dev/ic/pckbcvar.h>
@@ -47,6 +51,7 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsconsio.h>
 
+#include "gbe.h"
 #include "mkbc.h"
 
 #include "wsdisplay.h"
@@ -73,12 +78,21 @@ wscnprobe(struct consdev *cp)
 	}
 
 	cp->cn_dev = makedev(maj, 0);
+	cp->cn_pri = CN_DEAD;
 
-	/* Attach as console if necessary. */
-	if (strncmp(bios_console, "video", 5) == 0) {
-		cp->cn_pri = CN_REMOTE;
-	} else {
-		cp->cn_pri = CN_INTERNAL;
+        switch (sys_config.system_type) {
+	case SGI_O2:
+#if NGBE > 0
+		if (gbe_cnprobe(&crimebus_tag, GBE_BASE)) {
+			if (strncmp(bios_console, "video", 5) == 0)
+				cp->cn_pri = CN_FORCED;
+			else
+				cp->cn_pri = CN_INTERNAL;
+		}
+#endif
+		break;
+	default:
+		break;
 	}
 }
 
@@ -92,15 +106,14 @@ static int initted;
 
 	initted = 1;
 
+#if NGBE > 0
+	if (!gbe_cnattach(&crimebus_tag, GBE_BASE))
+		return;
+#endif
 #if NMKBC > 0
 	if (!mkbc_cnattach(&macebus_tag, 0x00320000, PCKBC_KBD_SLOT))
 		return;
 #endif
-#if notyet
-	ukbd_cnattach();
-#endif
-
-	return;
 }
 
 void

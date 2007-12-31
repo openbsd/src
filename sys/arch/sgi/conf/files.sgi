@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.18 2007/12/31 11:42:43 jsing Exp $
+#	$OpenBSD: files.sgi,v 1.19 2007/12/31 12:46:14 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -87,7 +87,7 @@ file	arch/sgi/sgi/clock_md.c			clock
 # GBE framebuffer
 device	gbe: wsemuldisplaydev, rasops8, rasops16, rasops32
 attach	gbe at mainbus
-file	arch/sgi/dev/gbe.c			gbe
+file	arch/sgi/dev/gbe.c			gbe	needs-flag
 
 # 16[45]50-based "com" ports on localbus
 attach	com at xbowmux with com_xbow
