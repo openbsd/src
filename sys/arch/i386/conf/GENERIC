@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.597 2007/12/23 17:44:07 form Exp $
+#	$OpenBSD: GENERIC,v 1.598 2007/12/31 19:29:11 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -262,6 +262,7 @@ uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 zyd*	at uhub?		# Zydas ZD1211
+upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
@@ -547,6 +548,7 @@ tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
 et*	at pci?				# Agere/LSI ET1310
+lii*	at pci?				# Atheros L2 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
