@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.7 2007/12/08 18:38:23 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.8 2007/12/31 09:23:53 martin Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -118,7 +118,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	if (((vaddr_t)fp & 0x07) != 0)
 		fp = (struct sigframe *)((vaddr_t)fp & ~0x07);
 
-	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (vaddr_t)fp);
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2007/12/19 22:05:04 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2007/12/31 09:23:53 martin Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -255,7 +255,7 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in aviion_bootstrap() to compensate.
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+	for (i = 0; i < atop(MSGBUFSIZE); i++)
 		pmap_kenter_pa((paddr_t)msgbufp + i * PAGE_SIZE,
 		    avail_end + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2007/12/20 21:15:51 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2007/12/31 09:23:53 martin Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -704,7 +704,7 @@ pmap_bootstrap(vaddr_t load_start)
 	SYSMAP(caddr_t, vmpte, vmmap, 1);
 	invalidate_pte(vmpte);
 
-	SYSMAP(struct msgbuf *, msgbufmap, msgbufp, btoc(MSGBUFSIZE));
+	SYSMAP(struct msgbuf *, msgbufmap, msgbufp, atop(MSGBUFSIZE));
 
 	virtual_avail = virt;
 

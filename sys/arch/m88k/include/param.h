@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2007/12/05 22:12:32 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.12 2007/12/31 09:23:53 martin Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -98,10 +98,6 @@
 /* pages ("clicks") to disk blocks */
 #define ctod(x)			((x) << (PGSHIFT - DEV_BSHIFT))
 #define dtoc(x)			((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define ctob(x)			((x) << PGSHIFT)
-#define btoc(x)			(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define btodb(x)		((x) >> DEV_BSHIFT)
