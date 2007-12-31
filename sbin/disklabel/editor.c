@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.133 2007/12/30 22:42:19 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.134 2007/12/31 17:51:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.133 2007/12/30 22:42:19 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.134 2007/12/31 17:51:57 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -545,6 +545,7 @@ getoff1:
 		printf("\nPlease re-enter an offset and size for partition "
 		    "%c.\n", 'a' + partno);
 		DL_SETPOFFSET(pp, old_offset);
+		DL_SETPSIZE(pp, old_size);
 		goto getoff1;		/* Yeah, I know... */
 	}
 
