@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.17 2007/12/18 08:29:02 jasper Exp $
+#	$OpenBSD: files.sgi,v 1.18 2007/12/31 11:42:43 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -15,7 +15,7 @@ file	arch/sgi/sgi/conf.c
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mutex.c
 file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
-file	arch/sgi/dev/wscons_machdep.c		wsdisplay
+file	arch/sgi/sgi/wscons_machdep.c		wsdisplay
 
 #
 # Media Indepedent Interface (mii)
