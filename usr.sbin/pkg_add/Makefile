@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.46 2007/06/25 12:21:08 espie Exp $
+# $OpenBSD: Makefile,v 1.47 2007/12/31 14:55:10 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -109,7 +109,7 @@ mansrc.build:
 
 # Nothing to build
 depend:
-all: ${MANSRC_COOKIE}
+all: ${MANSRC_COOKIE} .WAIT ${MANALL} ${PSALL}
 
 stamp-mansrc.build:
 	@cd ${.CURDIR} && exec ${MAKE} mansrc.build
