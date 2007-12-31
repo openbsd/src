@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.248 2007/11/25 17:11:12 oga Exp $
+#	$OpenBSD: files.pci,v 1.249 2007/12/31 14:51:19 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -709,6 +709,11 @@ file	dev/pci/bt8370.c		art
 device	vic: ether, ifnet, ifmedia
 attach	vic at pci
 file	dev/pci/if_vic.c		vic
+
+# Atheros L2 Ethernet
+device	lii: ether, ifnet, ifmedia, mii
+attach	lii at pci
+file	dev/pci/if_lii.c		lii
 
 # Intel ICH SMBus controller
 device	ichiic: i2cbus
