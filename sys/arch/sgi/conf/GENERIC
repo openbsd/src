@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2007/12/18 08:29:02 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.25 2007/12/31 12:47:47 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,13 +48,13 @@ cpu*		at mainbus0
 macebus0	at mainbus0	# MACE controller localbus.
 
 # GBE Framebuffer
-gbe0		at mainbus0 disable
+gbe0		at mainbus0
 
 # Localbus devices
 clock0		at macebus0
 mec0		at macebus0 sys 0x18 base 0x00280000 irq 4
 mavb0		at macebus0 sys 0x18 base 0x00300000 irq 7
-mkbc0		at macebus0 disable sys 0x18 base 0x00320000 irq 6
+mkbc0		at macebus0 sys 0x18 base 0x00320000 irq 6
 com0		at macebus0 sys 0x18 base 0x00390000 irq 5
 com1		at macebus0 sys 0x18 base 0x00398000 irq 5
 power0		at macebus0 sys 0x18 irq 6
