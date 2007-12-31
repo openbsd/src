@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.25 2007/12/04 17:33:13 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.26 2007/12/31 19:13:36 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -230,6 +230,10 @@ void
 ppb_hotplug_insert(void *arg1, void *arg2)
 {
 	struct ppb_softc *sc = arg1;
+	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
+
+	if (!LIST_EMPTY(&psc->sc_devs))
+		return;
 
 	/* XXX Powerup the card. */
 
@@ -418,9 +422,10 @@ void
 ppb_hotplug_remove(void *arg1, void *arg2)
 {
 	struct ppb_softc *sc = arg1;
+	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
-	if (sc->sc_psc)
-		config_detach_children(sc->sc_psc, DETACH_FORCE);
+	if (psc)
+		pci_detach_devices(psc, DETACH_FORCE);
 }
 
 int

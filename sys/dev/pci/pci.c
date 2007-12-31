@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.54 2007/11/30 14:28:24 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.55 2007/12/31 19:13:36 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 int
 pcidetach(struct device *self, int flags)
 {
-	return config_detach_children(self, flags);
+	return pci_detach_devices((struct pci_softc *)self, flags);
 }
 
 /* save and restore the pci config space */
@@ -353,6 +353,26 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	}
 
 	return (ret);
+}
+
+int
+pci_detach_devices(struct pci_softc *sc, int flags)
+{
+	struct pci_dev *pd, *next;
+	int ret;
+
+	ret = config_detach_children(&sc->sc_dev, flags);
+	if (ret != 0)
+		return (ret);
+
+	for (pd = LIST_FIRST(&sc->sc_devs);
+	     pd != LIST_END(&sc->sc_devs); pd = next) {
+		next = LIST_NEXT(pd, pd_next);
+		free(pd, M_DEVBUF);
+	}
+	LIST_INIT(&sc->sc_devs);
+
+	return (0);
 }
 
 int
