@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.57 2007/12/23 22:40:00 stevesk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.58 2007/12/31 17:21:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@ volatile sig_atomic_t	 reconfig = 0;
 volatile sig_atomic_t	 sigchld = 0;
 struct imsgbuf		*ibuf;
 int			 debugsyslog = 0;
+int			 timeout = INFTIM;
 
 void
 sighdlr(int sig)
@@ -86,7 +87,7 @@ main(int argc, char *argv[])
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 chld_pid = 0, pid;
 	const char		*conffile;
-	int			 ch, nfds, timeout = INFTIM;
+	int			 ch, nfds;
 	int			 pipe_chld[2];
 	struct passwd		*pw;
 
@@ -308,6 +309,7 @@ dispatch_imsg(struct ntpd_conf *lconf)
 				if (daemon(1, 0))
 					fatal("daemon");
 			lconf->settime = 0;
+			timeout = INFTIM;
 			break;
 		case IMSG_HOST_DNS:
 			name = imsg.data;
