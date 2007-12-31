@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.328 2007/12/20 00:13:26 fkr Exp $
+$OpenBSD: usbdevs,v 1.329 2007/12/31 19:33:17 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -362,6 +362,7 @@ vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
 vendor ACTISYS		0x09c4	ACTiSYS
+vendor NOVATEL1		0x09d7	Novatel
 vendor AFOURTECH	0x09da	A-FOUR TECH
 vendor AIMEX		0x09dc	AIMEX
 vendor ADDONICS		0x09df	Addonics Technologies
@@ -466,7 +467,7 @@ vendor BALTECH		0x13ad	Baltech
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor AZUREWAVE	0x13d3	AsureWave
-vendor NOVATEL		0x1410	Novatel Wireless
+vendor NOVATEL		0x1410	Novatel
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor RADIOSHACK	0x1453	Radio Shack
 vendor HUAWEI3COM	0x1472	Huawei 3Com
@@ -1817,6 +1818,7 @@ product NOVATECH NV902W		0x9020	NV-902W
 product NOVATECH RT2573		0x9021	RT2573
 
 /* Novatel Wireless products */
+product NOVATEL1 FLEXPACKGPS	0x0100	NovAtel FlexPack GPS
 product NOVATEL EXPRESSCARD	0x1100	ExpressCard 3G
 product NOVATEL MERLINV620	0x1110	Merlin V620
 product NOVATEL S720		0x1130	S720
