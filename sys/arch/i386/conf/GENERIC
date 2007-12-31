@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.598 2007/12/31 19:29:11 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.599 2007/12/31 19:29:46 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -11,7 +11,7 @@
 
 machine		i386
 include		"../../../conf/GENERIC"
-maxusers	32			# estimated number of users
+maxusers	40			# estimated number of users
 
 option		USER_PCICONF	# user-space PCI configuration
 
