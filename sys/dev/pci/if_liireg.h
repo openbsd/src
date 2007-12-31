@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$OpenBSD: if_liireg.h,v 1.2 2007/12/31 15:18:06 jasper Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
