@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.18 2005/12/27 21:38:13 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.19 2008/01/01 22:54:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -92,6 +92,7 @@ struct vs_cb {
 
 struct vs_softc {
 	struct device		sc_dev;
+	int			sc_bid;		/* board id */
 	paddr_t			sc_paddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -99,9 +100,11 @@ struct vs_softc {
 	char			sc_intrname_e[16 + 4];
 	int			sc_ipl;
 	int			sc_evec, sc_nvec;
-	int			sc_id[2];
+	u_int			sc_nwq;		/* number of work queues */
+	int			sc_id[2];	/* host id per bus */
+	int			sc_width[2];	/* number of targets per bus */
 	struct scsi_link	sc_link[2];
-	struct vs_cb		sc_cb[NUM_WQ];
+	struct vs_cb		sc_cb[1 + NUM_WQ];
 };
 
 /* Access macros */

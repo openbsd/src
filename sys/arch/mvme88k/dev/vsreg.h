@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.14 2006/12/21 02:28:47 krw Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.15 2008/01/01 22:54:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -41,7 +41,8 @@
 
 #define	JAGUAR_MIN_Q_SIZ		2
 #define	JAGUAR_MAX_CTLR_CMDS		80	/* Interphase says so */
-#define	JAGUAR_MAX_Q_SIZ		(JAGUAR_MAX_CTLR_CMDS / NUM_WQ)
+#define	JAGUAR_MAX_Q_SIZ		(JAGUAR_MAX_CTLR_CMDS / JAGUAR_MAX_WQ)
+#define	JAGUAR_MAX_WQ			(2 * 7)
 
 /*
  * COUGAR specific device limits
@@ -56,7 +57,7 @@
 
 #define	NUM_CQE			10
 #define	NUM_IOPB		NUM_CQE
-#define	NUM_WQ			15
+#define	NUM_WQ			(2 * 15)
 
 /*
  * Master Control Status Block (MCSB)
@@ -186,15 +187,17 @@
  * Configuration Status Block (CSB)
  */
 
-#define	CSB_TYPE		0x000000	/* jaguar/cougar */
+#define	CSB_TYPE		0x000000	/* board ID */
 #define	COUGAR		0x4220
 #define	JAGUAR		0x0000
+#define	CSB_EXTID		0x000002	/* cougar extended ID */
 #define	CSB_PCODE		0x000003	/* product code */
 #define	CSB_PVAR		0x000009	/* product variation */
 #define	CSB_FREV		0x00000d	/* firmware revision level */
 #define	CSB_FDATE		0x000012	/* firmware release date */
 #define	CSB_SSIZE		0x00001a	/* system memory size in KB */
 #define	CSB_BSIZE		0x00001c	/* buffer memory size in KB */
+#define	CSB_NWQ			0x00001e	/* number of work queues (C) */
 #define	CSB_PFECID		0x000020	/* primary bus FEC id */
 #define	CSB_SFECID		0x000021	/* secondary bus FEC id */
 #define	CSB_PID			0x000022	/* primary bus id */
@@ -268,6 +271,7 @@
 #define	WQCF_WORKQ		0x00001c	/* work queue number */
 #define	WQCF_WOPT		0x00001e	/* work queue options */
 #define	WQCF_SLOTS		0x000020	/* # of slots in work queues */
+#define	WQCF_UNIT		0x000022	/* unit address (C) */
 #define	WQCF_CMDTO		0x000024	/* command timeout */
 
 /*
@@ -341,9 +345,6 @@
 #define	CNTR_DEV_REINIT			0x4c /* reinitialize device */
 #define	CNTR_ISSUE_ABORT		0x4e /* abort has been issued */
 #define	CNTR_DOWNLOAD_FIRMWARE		0x4f /* download firmware (COUGAR) */
-
-#define	IOPB_UNIT_VALUE(bus, target, lun) \
-	(((bus) << 6) | ((lun) << 3) | (target & 7))
 
 /*
  * Memory types
