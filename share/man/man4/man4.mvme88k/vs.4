@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vs.4,v 1.5 2007/05/31 19:19:55 jmc Exp $
+.\"	$OpenBSD: vs.4,v 1.6 2008/01/01 17:25:56 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 1 2008 $
 .Dt VS 4 mvme88k
 .Os
 .Sh NAME
@@ -97,7 +97,9 @@ The only supported configurations are:
 .Xr uk 4 ,
 .Xr vme 4
 .Sh BUGS
-The daughterboard providing access to the second
-.Tn SCSI
-channel is currently not supported by
-.Ox .
+The daughterboard providing access to the second SCSI channel is not
+working under
+.Ox
+unless the first SCSI channel is not empty.
+.Pp
+MVME328XT boards are not supported by this driver yet.
