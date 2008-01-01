@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.46 2007/03/20 18:50:11 jmc Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.47 2008/01/01 09:10:25 dtucker Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.46 2007/03/20 18:50:11 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.47 2008/01/01 09:10:25 dtucker Exp $";
 #endif
 #endif /* not lint */
 
@@ -446,9 +446,9 @@ syserr:
 			 * Make it compatible with possible future
 			 * versions expecting microseconds.
 			 */
-			(void)snprintf(buf, sizeof(buf), "T%ld 0 %ld 0\n",
-			    (long)stb.st_mtimespec.tv_sec,
-			    (long)stb.st_atimespec.tv_sec);
+			(void)snprintf(buf, sizeof(buf), "T%lu 0 %lu 0\n",
+			    (u_long) (stb.st_mtime < 0 ? 0 : stb.st_mtime),
+			    (u_long) (stb.st_atime < 0 ? 0 : stb.st_atime));
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
