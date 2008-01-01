@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.137 2008/01/01 17:15:03 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.138 2008/01/01 18:20:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.137 2008/01/01 17:15:03 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.138 2008/01/01 18:20:02 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -564,10 +564,8 @@ getoff1:
 		}
 	}
 
-	/* Update free sector count and make sure things stay contiguous. */
-	editor_countfree(lp, freep);
-	if (DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) > ending_sector ||
-	    has_overlap(lp, freep, -1))
+	/* Make sure things stay contiguous. */
+	if (has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
 
@@ -716,8 +714,7 @@ getoff2:
 	}
 
 	/* Make sure things stay contiguous. */
-	if (DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) > ending_sector ||
-	    has_overlap(lp, freep, -1))
+	if (has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
 
@@ -867,6 +864,7 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 	if (get_size(lp, partno, freep, 0) != 0)
 		return;
 
+	/* Make sure things stay contiguous. */
 	if (has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
