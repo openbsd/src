@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.9 2008/01/01 10:03:44 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.10 2008/01/01 10:10:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1464,7 +1464,7 @@ upgt_tx_task(void *arg)
 
 		/* XXX differ between data and mgmt frames? */
 		txdesc->header1.flags = UPGT_H1_FLAGS_TX_DATA;
-		txdesc->header1.type = UPGT_H1_TYPE_DATA_TX;
+		txdesc->header1.type = UPGT_H1_TYPE_TX_DATA;
 		txdesc->header1.len = htole16(m->m_pkthdr.len);
 
 		txdesc->header2.reqid = htole32(data_tx->addr);
@@ -1618,8 +1618,8 @@ upgt_rx_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		upgt_tx_done(sc, data_rx->buf);
 	} else
-	if (h1_type == UPGT_H1_TYPE_DATA_RX ||
-	    h1_type == UPGT_H1_TYPE_DATA_RX_MGMT) {
+	if (h1_type == UPGT_H1_TYPE_RX_DATA ||
+	    h1_type == UPGT_H1_TYPE_RX_DATA_MGMT) {
 		DPRINTF(3, "%s: received 802.11 RX data\n",
 		    sc->sc_dev.dv_xname);
 

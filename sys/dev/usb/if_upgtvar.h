@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.3 2008/01/01 10:03:44 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.4 2008/01/01 10:10:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -196,9 +196,9 @@ struct upgt_eeprom_freq4_2 {
 #define UPGT_H1_FLAGS_TX_MGMT		0x00	/* for TX: mgmt frame */
 #define UPGT_H1_FLAGS_TX_NO_CALLBACK	0x01	/* for TX: no USB callback */
 #define UPGT_H1_FLAGS_TX_DATA		0x10	/* for TX: data frame */
-#define UPGT_H1_TYPE_DATA_RX		0x00	/* 802.11 RX data frame */
-#define UPGT_H1_TYPE_DATA_RX_MGMT	0x01	/* 802.11 RX mgmt frame */
-#define UPGT_H1_TYPE_DATA_TX		0x40	/* 802.11 TX data frame */
+#define UPGT_H1_TYPE_RX_DATA		0x00	/* 802.11 RX data frame */
+#define UPGT_H1_TYPE_RX_DATA_MGMT	0x01	/* 802.11 RX mgmt frame */
+#define UPGT_H1_TYPE_TX_DATA		0x40	/* 802.11 TX data frame */
 #define UPGT_H1_TYPE_CTRL		0x80	/* control frame */
 struct upgt_lmac_h1 {
 	/* 4 bytes */
