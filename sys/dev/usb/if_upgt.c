@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.8 2007/12/22 11:16:40 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.9 2008/01/01 10:03:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -68,8 +68,6 @@
  * written by Jean-Baptiste Note <jean-baptiste.note@m4x.org> and
  * Sebastien Bourdeauducq <lekernel@prism54.org>.
  */
-
-#define UPGT_DEBUG
 
 #ifdef UPGT_DEBUG
 int upgt_debug = 2;
@@ -161,6 +159,9 @@ static const struct usb_devno upgt_devs[] = {
 	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_2 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_XG703A }
 };
+
+/* XXX for now just keep a rateset here */
+uint8_t rates[] = { 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x04, 0x01 };
 
 int
 upgt_match(struct device *parent, void *match, void *aux)
@@ -1458,6 +1459,7 @@ upgt_tx_task(void *arg)
 		/*
 		 * Transmit the second URB containing the TX data itself.
 		 */
+		bzero(data_tx->buf, MCLBYTES);
 		txdesc = (struct upgt_lmac_tx_desc *)data_tx->buf;
 
 		/* XXX differ between data and mgmt frames? */
@@ -1466,14 +1468,12 @@ upgt_tx_task(void *arg)
 		txdesc->header1.len = htole16(m->m_pkthdr.len);
 
 		txdesc->header2.reqid = htole32(data_tx->addr);
-		txdesc->header2.type = htole16(UPGT_H2_TYPE_TX_NOACK);
-		txdesc->header2.flags = 0;
+		txdesc->header2.type = htole16(UPGT_H2_TYPE_TX_ACK_YES);
+		txdesc->header2.flags = htole16(UPGT_H2_FLAGS_TX_ACK_YES);
 
+		bcopy(rates, txdesc->rates, sizeof(txdesc->rates));
 		txdesc->type = htole32(UPGT_TX_DESC_TYPE_DATA);
-		txdesc->unknown1 = 0;
-		txdesc->unknown2 = 0;
-		/* round TX descriptor header up to 4 byte boundary */
-		txdesc->frame_pad = UPGT_TX_DESC_FRAME_PAD;
+		txdesc->pad3[0] = UPGT_TX_DESC_PAD3_SIZE;
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {

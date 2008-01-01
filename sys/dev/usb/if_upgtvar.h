@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.2 2007/12/22 11:16:40 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.3 2008/01/01 10:03:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -207,11 +207,14 @@ struct upgt_lmac_h1 {
 	uint16_t			len;
 } __packed;
 
-#define UPGT_H2_TYPE_TX_NOACK		0x0000	/* for TX */
+#define UPGT_H2_TYPE_TX_ACK_NO		0x0000
+#define UPGT_H2_TYPE_TX_ACK_YES		0x0001
 #define UPGT_H2_TYPE_MACFILTER		0x0000
 #define UPGT_H2_TYPE_CHANNEL		0x0001
 #define UPGT_H2_TYPE_TX_DONE		0x0008
 #define UPGT_H2_TYPE_EEPROM		0x000c
+#define UPGT_H2_FLAGS_TX_ACK_NO		0x0101
+#define UPGT_H2_FLAGS_TX_ACK_YES	0x0707
 struct upgt_lmac_h2 {
 	/* 8 bytes */
 	uint32_t			reqid;
@@ -323,7 +326,7 @@ struct upgt_lmac_tx_desc_wep {
 #define UPGT_TX_DESC_TYPE_PROBE		0x00000001
 #define UPGT_TX_DESC_TYPE_MGMT		0x00000002
 #define UPGT_TX_DESC_TYPE_DATA		0x00000004
-#define UPGT_TX_DESC_FRAME_PAD		4
+#define UPGT_TX_DESC_PAD3_SIZE		2
 struct upgt_lmac_tx_desc {
 	struct upgt_lmac_h1		header1;
 	struct upgt_lmac_h2		header2;
@@ -334,8 +337,7 @@ struct upgt_lmac_tx_desc {
 	uint32_t			pad2;
 	uint32_t			unknown1;
 	uint32_t			unknown2;
-	uint8_t				frame_pad;
-	uint8_t				pad3[3];
+	uint8_t				pad3[2];
 	/* 802.11 frame data */
 } __packed;
 
