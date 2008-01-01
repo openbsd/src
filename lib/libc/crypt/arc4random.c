@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.16 2007/02/12 19:58:47 otto Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.17 2008/01/01 00:43:39 kurt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
+#include "thread_private.h"
 
 #ifdef __GNUC__
 #define inline __inline
@@ -58,42 +59,47 @@ static struct arc4_stream rs;
 static pid_t arc4_stir_pid;
 static int arc4_count;
 
-static inline u_int8_t arc4_getbyte(struct arc4_stream *);
+static inline u_int8_t arc4_getbyte(void);
 
 static inline void
-arc4_init(struct arc4_stream *as)
+arc4_init(void)
 {
 	int     n;
 
 	for (n = 0; n < 256; n++)
-		as->s[n] = n;
-	as->i = 0;
-	as->j = 0;
+		rs.s[n] = n;
+	rs.i = 0;
+	rs.j = 0;
 }
 
 static inline void
-arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
+arc4_addrandom(u_char *dat, int datlen)
 {
 	int     n;
 	u_int8_t si;
 
-	as->i--;
+	rs.i--;
 	for (n = 0; n < 256; n++) {
-		as->i = (as->i + 1);
-		si = as->s[as->i];
-		as->j = (as->j + si + dat[n % datlen]);
-		as->s[as->i] = as->s[as->j];
-		as->s[as->j] = si;
+		rs.i = (rs.i + 1);
+		si = rs.s[rs.i];
+		rs.j = (rs.j + si + dat[n % datlen]);
+		rs.s[rs.i] = rs.s[rs.j];
+		rs.s[rs.j] = si;
 	}
-	as->j = as->i;
+	rs.j = rs.i;
 }
 
 static void
-arc4_stir(struct arc4_stream *as)
+arc4_stir(void)
 {
 	int     i, mib[2];
 	size_t	len;
 	u_char rnd[128];
+
+	if (!rs_initialized) {
+		arc4_init();
+		rs_initialized = 1;
+	}
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARND;
@@ -102,75 +108,84 @@ arc4_stir(struct arc4_stream *as)
 	sysctl(mib, 2, rnd, &len, NULL, 0);
 
 	arc4_stir_pid = getpid();
-	arc4_addrandom(as, rnd, sizeof(rnd));
+	arc4_addrandom(rnd, sizeof(rnd));
 
 	/*
 	 * Discard early keystream, as per recommendations in:
 	 * http://www.wisdom.weizmann.ac.il/~itsik/RC4/Papers/Rc4_ksa.ps
 	 */
 	for (i = 0; i < 256; i++)
-		(void)arc4_getbyte(as);
+		(void)arc4_getbyte();
 	arc4_count = 1600000;
 }
 
 static inline u_int8_t
-arc4_getbyte(struct arc4_stream *as)
+arc4_getbyte(void)
 {
 	u_int8_t si, sj;
 
-	as->i = (as->i + 1);
-	si = as->s[as->i];
-	as->j = (as->j + si);
-	sj = as->s[as->j];
-	as->s[as->i] = sj;
-	as->s[as->j] = si;
-	return (as->s[(si + sj) & 0xff]);
+	rs.i = (rs.i + 1);
+	si = rs.s[rs.i];
+	rs.j = (rs.j + si);
+	sj = rs.s[rs.j];
+	rs.s[rs.i] = sj;
+	rs.s[rs.j] = si;
+	return (rs.s[(si + sj) & 0xff]);
 }
 
 u_int8_t
 __arc4_getbyte(void)
 {
+	u_int8_t val;
+
+	_ARC4_LOCK();
 	if (--arc4_count == 0 || !rs_initialized)
-		arc4random_stir();
-	return arc4_getbyte(&rs);
+		arc4_stir();
+	val = arc4_getbyte();
+	_ARC4_UNLOCK();
+	return val;
 }
 
 static inline u_int32_t
-arc4_getword(struct arc4_stream *as)
+arc4_getword(void)
 {
 	u_int32_t val;
-	val = arc4_getbyte(as) << 24;
-	val |= arc4_getbyte(as) << 16;
-	val |= arc4_getbyte(as) << 8;
-	val |= arc4_getbyte(as);
+	val = arc4_getbyte() << 24;
+	val |= arc4_getbyte() << 16;
+	val |= arc4_getbyte() << 8;
+	val |= arc4_getbyte();
 	return val;
 }
 
 void
 arc4random_stir(void)
 {
-	if (!rs_initialized) {
-		arc4_init(&rs);
-		rs_initialized = 1;
-	}
-	arc4_stir(&rs);
+	_ARC4_LOCK();
+	arc4_stir();
+	_ARC4_UNLOCK();
 }
 
 void
 arc4random_addrandom(u_char *dat, int datlen)
 {
+	_ARC4_LOCK();
 	if (!rs_initialized)
-		arc4random_stir();
-	arc4_addrandom(&rs, dat, datlen);
+		arc4_stir();
+	arc4_addrandom(dat, datlen);
+	_ARC4_UNLOCK();
 }
 
 u_int32_t
 arc4random(void)
 {
+	u_int32_t val;
+	_ARC4_LOCK();
 	arc4_count -= 4;
 	if (arc4_count <= 0 || !rs_initialized || arc4_stir_pid != getpid())
-		arc4random_stir();
-	return arc4_getword(&rs);
+		arc4_stir();
+	val = arc4_getword();
+	_ARC4_UNLOCK();
+	return val;
 }
 
 #if 0

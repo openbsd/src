@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.21 2007/11/19 02:54:19 kurt Exp $ */
+/* $OpenBSD: thread_private.h,v 1.22 2008/01/01 00:43:39 kurt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -148,6 +148,18 @@ void	_thread_atexit_unlock(void);
 #define _ATEXIT_UNLOCK()	do {					\
 					if (__isthreaded)		\
 						_thread_atexit_unlock();\
+				} while (0)
+
+void	_thread_arc4_lock(void);
+void	_thread_arc4_unlock(void);
+
+#define _ARC4_LOCK()		do {					\
+					if (__isthreaded)		\
+						_thread_arc4_lock();	\
+				} while (0)
+#define _ARC4_UNLOCK()		do {					\
+					if (__isthreaded)		\
+						_thread_arc4_unlock();\
 				} while (0)
 
 #endif /* _THREAD_PRIVATE_H_ */
