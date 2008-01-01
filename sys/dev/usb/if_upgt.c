@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.10 2008/01/01 10:10:20 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.11 2008/01/01 11:43:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1397,6 +1397,10 @@ void
 upgt_watchdog(struct ifnet *ifp)
 {
 	struct upgt_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_state == IEEE80211_S_INIT)
+		return;
 
 	printf("%s: watchdog timeout!\n", sc->sc_dev.dv_xname);
 
