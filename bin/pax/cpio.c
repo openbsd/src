@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.17 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.18 2008/01/01 16:22:44 tobias Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cpio.c,v 1.17 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cpio.c,v 1.18 2008/01/01 16:22:44 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ com_rd(ARCHD *arcn)
 }
 
 /*
- * cpio_end_wr()
+ * cpio_endwr()
  *	write the special file with the name trailer in the proper format
  * Return:
  *	result of the write of the trailer from the cpio specific write func
