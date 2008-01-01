@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.134 2007/12/31 17:51:57 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.135 2008/01/01 14:58:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.134 2007/12/31 17:51:57 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.135 2008/01/01 14:58:42 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1914,8 +1914,8 @@ mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 int
 get_offset(struct disklabel *lp, int partno)
 {
-	u_int64_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
+	u_int64_t ui;
 
 	for (;;) {
 		ui = getuint(lp, partno, "offset",
@@ -1928,16 +1928,12 @@ get_offset(struct disklabel *lp, int partno)
 			return(1);
 		} else if (ui == ULLONG_MAX)
 			fputs("Invalid entry\n", stderr);
-		else if (ui < starting_sector)
-			fprintf(stderr, "The OpenBSD portion of the disk starts"
-			    " at sector %llu, you tried to add a partition at %llu."
-			    "  You can use the 'b' command to change the size "
-			    "of the OpenBSD portion.\n" , starting_sector, ui);
-		else if (ui >= ending_sector)
-			fprintf(stderr, "The OpenBSD portion of the disk ends "
-			    "at sector %llu, you tried to add a partition at %llu."
-			    "  You can use the 'b' command to change the size "
-			    "of the OpenBSD portion.\n", ending_sector, ui);
+		else if (ui < starting_sector || ui >= ending_sector)
+			fprintf(stderr, "The offset must be between "
+			    "sector %llu and sector %llu, the limits of\n"
+			    "the OpenBSD portion of the disk. "
+			    "The 'b' command can change these limits.\n",
+			    starting_sector, ending_sector);
 #ifdef SUN_AAT0
 		else if (partno == 0 && ui != 0)
 			fprintf(stderr, "This architecture requires that "
@@ -1953,8 +1949,8 @@ get_offset(struct disklabel *lp, int partno)
 int
 get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 {
-	u_int64_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
+	u_int64_t ui;
 
 	for (;;) {
 		ui = getuint(lp, partno, "size", "Size of the partition. "
@@ -1966,40 +1962,20 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 		if (ui == ULLONG_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return(1);
-		} else if (ui == ULLONG_MAX) {
+		} else if (ui == ULLONG_MAX)
 			fputs("Invalid entry\n", stderr);
-			continue;
-		}
-		if (new) {
-			if (ui > *freep)
-				/* XXX - steal space from another partition */
-				fprintf(stderr,"Sorry, there are only %llu "
-				    "sectors left\n", *freep);
-			else if (DL_GETPOFFSET(pp) + ui > ending_sector)
-				fprintf(stderr, "The OpenBSD portion of the "
-				    "disk ends at sector %llu, you tried to add "
-				    "a partition ending at sector %llu.  You can "
-				    "use the 'b' command to change the size of "
-				    "the OpenBSD portion.\n",
-				    ending_sector, DL_GETPOFFSET(pp) + ui);
-			else
-				break;			/* ok */
-		} else {
-			if (ui == DL_GETPSIZE(pp))
-				break;			/* no change */
-			if (pp->p_fstype == FS_UNUSED ||
-			    pp->p_fstype == FS_BOOT) {
-				break;
-			} else {
-				if (ui > DL_GETPSIZE(pp) + *freep)
-					/* XXX - steal from another partition */
-					fprintf(stderr,
-					    "Size may not be larger than %llu "
-					    "sectors\n", DL_GETPSIZE(pp) + *freep);
-				else
-					break;			/* ok */
-			}
-		}
+		else if (ui + DL_GETPOFFSET(pp) > ending_sector)
+			fprintf(stderr, "The size can't be more than "
+			    "%llu sectors, or the partition would\n"
+			    "extend beyond the last sector (%llu) of the "
+			    "OpenBSD portion of\nthe disk. "
+			    "The 'b' command can change this limit.\n",
+			    ending_sector - DL_GETPOFFSET(pp), ending_sector);
+		else if (ui > *freep + (new ? 0 : DL_GETPSIZE(pp)))
+			fprintf(stderr,"Sorry, there are only %llu "
+			    "sectors left\n", *freep);
+		else
+			break;
 	}
 	DL_SETPSIZE(pp, ui);
 	editor_countfree(lp, freep);
