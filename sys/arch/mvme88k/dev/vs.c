@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.66 2007/10/06 02:18:38 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.67 2008/01/01 17:21:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -97,8 +97,7 @@ M328_SG	vs_build_memory_structure(struct vs_softc *, struct scsi_xfer *,
 void	vs_chksense(struct scsi_xfer *);
 void	vs_dealloc_scatter_gather(M328_SG);
 int	vs_eintr(void *);
-bus_addr_t vs_getcqe(struct vs_softc *);
-bus_addr_t vs_getiopb(struct vs_softc *);
+int	vs_getcqe(struct vs_softc *, bus_addr_t *, bus_addr_t *);
 int	vs_initialize(struct vs_softc *);
 int	vs_intr(struct vs_softc *);
 void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
@@ -111,7 +110,7 @@ void	vs_reset(struct vs_softc *, int);
 void	vs_resync(struct vs_softc *);
 void	vs_scsidone(struct vs_softc *, struct vs_cb *);
 
-static __inline__ void vs_free(struct vs_cb *);
+static __inline__ void vs_free(struct vs_softc *, struct vs_cb *);
 static __inline__ void vs_clear_return_info(struct vs_softc *);
 static __inline__ paddr_t kvtop(vaddr_t);
 
@@ -126,6 +125,10 @@ vsmatch(struct device *device, void *cf, void *args)
 	if (bus_space_map(iot, ca->ca_paddr, S_SHORTIO, 0, &ioh) != 0)
 		return 0;
 	rc = badaddr((vaddr_t)bus_space_vaddr(iot, ioh), 1);
+	if (rc == 0) {
+		if (bus_space_read_2(iot, ioh, sh_CSS + CSB_TYPE) != JAGUAR)
+			rc = 1;
+	}
 	bus_space_unmap(iot, ioh, S_SHORTIO);
 
 	return rc == 0;
@@ -198,7 +201,7 @@ vsattach(struct device *parent, struct device *self, void *args)
 #if 0
 		sc_link->luns = 1;
 #endif
-		sc_link->openings = NUM_IOPB / 8;
+		sc_link->openings = 1;
 		if (bus != 0)
 			sc_link->flags = SDEV_2NDBUS;
 
@@ -292,10 +295,8 @@ vs_poll(struct vs_softc *sc, struct vs_cb *cb)
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
 		xs->flags |= ITSDONE;
-#if 0
+		vs_free(sc, cb);
 		scsi_done(xs);
-#endif
-		vs_free(cb);
 	} else
 		vs_scsidone(sc, cb);
 	splx(s);
@@ -349,11 +350,8 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 	}
 
 	xs->flags |= ITSDONE;
-	thaw_queue(sc, cb->cb_q);
-
+	vs_free(sc, cb);
 	scsi_done(xs);
-
-	vs_free(cb);
 }
 
 int
@@ -396,16 +394,19 @@ vs_scsicmd(struct scsi_xfer *xs)
 		if (cb == NULL) {
 			splx(s);
 #ifdef VS_DEBUG
-			printf("%s: no free queues\n", sc->sc_dev.dv_xname);
+			printf("%s: queue for target %d is busy\n",
+			    sc->sc_dev.dv_xname, slp->target);
 #endif
 			return (TRY_AGAIN_LATER);
 		}
-		cqep = vs_getcqe(sc);
-		if (cqep == 0) {
+		if (vs_getcqe(sc, &cqep, &iopb)) {
+			/* XXX shouldn't happen since our queue is ready */
 			splx(s);
+#ifdef VS_DEBUG
+			printf("%s: no free CQEs\n", sc->sc_dev.dv_xname);
+#endif
 			return (TRY_AGAIN_LATER);
 		}
-		iopb = vs_getiopb(sc);
 	}
 
 	queue = cb->cb_q;
@@ -535,44 +536,29 @@ vs_chksense(struct scsi_xfer *xs)
 	splx(s);
 }
 
-bus_addr_t
-vs_getcqe(struct vs_softc *sc)
+int
+vs_getcqe(struct vs_softc *sc, bus_addr_t *cqep, bus_addr_t *iopbp)
 {
-	bus_addr_t cqep;
+	bus_addr_t cqe, iopb;
 	int qhdp;
 
 	qhdp = mcsb_read(2, MCSB_QHDP);
-	cqep = sh_CQE(qhdp);
+	cqe = sh_CQE(qhdp);
+	iopb = sh_IOPB(qhdp);
 
-	if (vs_read(2, cqep + CQE_QECR) & M_QECR_GO) {
-		/* should never happen */
-		return 0;
+	if (vs_read(2, cqe + CQE_QECR) & M_QECR_GO) {
+		/* queue still in use, should never happen */
+		return EAGAIN;
 	}
 
 	if (++qhdp == NUM_CQE)
 		qhdp = 0;
 	mcsb_write(2, MCSB_QHDP, qhdp);
 
-	vs_bzero(cqep, CQE_SIZE);
-	return cqep;
-}
-
-bus_addr_t
-vs_getiopb(struct vs_softc *sc)
-{
-	bus_addr_t iopb;
-	int qhdp;
-
-	/*
-	 * Since we are always invoked after vs_getcqe(), qhdp has already
-	 * been incremented...
-	 */
-	qhdp = mcsb_read(2, MCSB_QHDP);
-	if (--qhdp < 0)
-		qhdp = NUM_CQE - 1;
-
-	iopb = sh_IOPB(qhdp);
-	return iopb;
+	vs_bzero(cqe, CQE_SIZE);
+	*cqep = cqe;
+	*iopbp = iopb;
+	return (0);
 }
 
 int
@@ -800,10 +786,12 @@ vs_reset(struct vs_softc *sc, int bus)
 	splx(s);
 }
 
-/* free a cb; invoked at splbio */
+/* free a cb and thaw its queue; invoked at splbio */
 static __inline__ void
-vs_free(struct vs_cb *cb)
+vs_free(struct vs_softc *sc, struct vs_cb *cb)
 {
+	if (cb->cb_q != 0)
+		thaw_queue(sc, cb->cb_q);
 	if (cb->cb_sg != NULL) {
 		vs_dealloc_scatter_gather(cb->cb_sg);
 		cb->cb_sg = NULL;
@@ -930,21 +918,21 @@ struct vs_cb *
 vs_find_queue(struct scsi_link *sl, struct vs_softc *sc)
 {
 	struct vs_cb *cb;
-	static u_int last = 0;
 	u_int q;
 
-	q = last;
-	for (;;) {
-		if (++q == NUM_WQ)
-			q = 1;
-		if (q == last)
-			break;
+	/*
+	 * Map the target number (0-7) to the 1-7 range, target 0 picks
+	 * the host adapter target number (since host adapter commands
+	 * are issued on queue #0).
+	 */
+	q = sl->target;
+	if (q == 0)
+		q = sl->adapter_target;
+	if (sl->flags & SDEV_2NDBUS)
+		q += 7;		/* map to queues 8-14 */
 
-		if ((cb = &sc->sc_cb[q])->cb_xs == NULL) {
-			last = q;
-			return (cb);
-		}
-	}
+	if ((cb = &sc->sc_cb[q])->cb_xs == NULL)
+		return (cb);
 
 	return (NULL);
 }
