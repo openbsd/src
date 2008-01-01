@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.135 2008/01/01 14:58:42 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.136 2008/01/01 16:22:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.135 2008/01/01 14:58:42 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.136 2008/01/01 16:22:27 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -867,8 +867,7 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 	if (get_size(lp, partno, freep, 0) != 0)
 		return;
 
-	if (DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) > ending_sector ||
-	    has_overlap(lp, freep, -1))
+	if (has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
 
