@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.136 2008/01/01 16:22:27 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.137 2008/01/01 17:15:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.136 2008/01/01 16:22:27 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.137 2008/01/01 17:15:03 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1117,7 +1117,7 @@ has_overlap(struct disklabel *lp, u_int64_t *freep, int resolve)
 				    / sizeof(**spp);
 				printf("\nError, partitions %c and %c overlap:\n",
 				    'a' + i, 'a' + j);
-				printf("#    %13.13s %13.13s  fstype "
+				printf("#    %16.16s %16.16s  fstype "
 				    "[fsize bsize  cpg]\n", "size", "offset");
 				display_partition(stdout, lp, NULL, i, 0);
 				display_partition(stdout, lp, NULL, j, 0);
