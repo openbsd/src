@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.4 2008/01/01 10:10:20 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.5 2008/01/01 20:20:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -337,7 +337,7 @@ struct upgt_lmac_tx_desc {
 	uint32_t			pad2;
 	uint32_t			unknown1;
 	uint32_t			unknown2;
-	uint8_t				pad3[2];
+	uint16_t			pad3;
 	/* 802.11 frame data */
 } __packed;
 
