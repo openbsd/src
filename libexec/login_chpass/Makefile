@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2003/07/15 19:02:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/01/02 14:33:48 millert Exp $
 
 
 PROG=	login_chpass
@@ -7,15 +7,15 @@ MAN=	login_chpass.8
 
 .PATH:  ${.CURDIR}/../../usr.bin/passwd
 
-.include <bsd.own.mk>	# For KERBEROS and YP
+.include <bsd.own.mk>	# For KERBEROS5 and YP
 
 CFLAGS+=-Wall
 
-#.if (${KERBEROS:L} == "yes")
-#CFLAGS+=-DKERBEROS
-#SRCS+=	new_pwd.c
-#DPADD+= ${LIBKADM} ${LIBKRB} ${LIBDES}
-#LDADD+= -lkadm -lkrb -ldes
+#.if (${KERBEROS5:L} == "yes")
+#SRCS+= krb5_passwd.c
+#CFLAGS+= -DKRB5
+#DPADD+= ${LIBKRB5} ${LIBASN1} ${LIBDES} ${LIBCRYPTO}
+#LDADD+= -lkrb5 -lasn1 -ldes -lcrypto
 #.endif
 
 .if (${YP:L} == "yes")
