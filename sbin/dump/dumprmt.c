@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.24 2007/03/04 22:36:54 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.25 2008/01/02 12:59:35 chl Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.24 2007/03/04 22:36:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.25 2008/01/02 12:59:35 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -226,29 +226,6 @@ rmtwrite(char *buf, int count)
 	return (rmtreply("write"));
 }
 
-void
-rmtwrite0(int count)
-{
-	char line[30];
-
-	(void)snprintf(line, sizeof(line), "W%d\n", count);
-	write(rmtape, line, strlen(line));
-}
-
-void
-rmtwrite1(char *buf, int count)
-{
-
-	write(rmtape, buf, count);
-}
-
-int
-rmtwrite2(void)
-{
-
-	return (rmtreply("write"));
-}
-
 int
 rmtseek(int offset, int pos)
 {
@@ -256,22 +233,6 @@ rmtseek(int offset, int pos)
 
 	(void)snprintf(line, sizeof(line), "L%d\n%d\n", offset, pos);
 	return (rmtcall("seek", line));
-}
-
-struct	mtget mts;
-
-struct mtget *
-rmtstatus(void)
-{
-	int i;
-	char *cp;
-
-	if (rmtstate != TS_OPEN)
-		return (NULL);
-	rmtcall("status", "S\n");
-	for (i = 0, cp = (char *)&mts; i < sizeof(mts); i++)
-		*cp++ = rmtgetb();
-	return (&mts);
 }
 
 int
