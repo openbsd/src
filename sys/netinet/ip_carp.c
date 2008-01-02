@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.159 2007/12/14 18:33:40 deraadt Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.160 2008/01/02 03:33:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2380,7 +2380,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carp_ifgattr_ioctl(ifp, cmd, addr);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	if (bcmp(sc->sc_ac.ac_enaddr, sc->sc_curlladdr, ETHER_ADDR_LEN) != 0)

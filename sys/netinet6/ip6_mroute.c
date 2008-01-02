@@ -340,7 +340,7 @@ mrt6_ioctl(cmd, data)
 	case SIOCGETMIFCNT_IN6:
 		return (get_mif6_cnt((struct sioc_mif_req6 *)data));
 	default:
-		return (EINVAL);
+		return (ENOTTY);
 	}
 }
 
