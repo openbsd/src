@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2007/12/31 15:49:23 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.18 2008/01/02 15:37:22 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -85,12 +85,13 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 		gn->type |= OP_SILENT;
 
 	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
-	    (gn->type & (OP_NODEFAULT | OP_LIB)) == 0) {
+	    (gn->type & OP_LIB) == 0) {
 		/*
 		 * No commands. Look for .DEFAULT rule from which we might infer
 		 * commands
 		 */
-		if ((DEFAULT->type & OP_DUMMY) == 0 &&
+		if ((gn->type & OP_NODEFAULT) == 0 && 
+		    (DEFAULT->type & OP_DUMMY) == 0 &&
 		    !Lst_IsEmpty(&DEFAULT->commands)) {
 			/*
 			 * Make only looks for a .DEFAULT if the node was never
