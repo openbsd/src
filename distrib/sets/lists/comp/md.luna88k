@@ -125,6 +125,7 @@
 ./usr/include/luna88k/endian.h
 ./usr/include/luna88k/exec.h
 ./usr/include/luna88k/float.h
+./usr/include/luna88k/fpu.h
 ./usr/include/luna88k/frame.h
 ./usr/include/luna88k/ieee.h
 ./usr/include/luna88k/ieeefp.h
@@ -136,6 +137,7 @@
 ./usr/include/luna88k/m88100.h
 ./usr/include/luna88k/m8820x.h
 ./usr/include/luna88k/mmu.h
+./usr/include/luna88k/mplock.h
 ./usr/include/luna88k/mutex.h
 ./usr/include/luna88k/param.h
 ./usr/include/luna88k/pcb.h
@@ -165,6 +167,7 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/float.h
+./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
@@ -176,6 +179,7 @@
 ./usr/include/m88k/m88100.h
 ./usr/include/m88k/m8820x.h
 ./usr/include/m88k/mmu.h
+./usr/include/m88k/mplock.h
 ./usr/include/m88k/mutex.h
 ./usr/include/m88k/param.h
 ./usr/include/m88k/pcb.h

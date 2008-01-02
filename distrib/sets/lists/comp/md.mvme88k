@@ -121,6 +121,7 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/float.h
+./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
@@ -132,6 +133,7 @@
 ./usr/include/m88k/m88100.h
 ./usr/include/m88k/m8820x.h
 ./usr/include/m88k/mmu.h
+./usr/include/m88k/mplock.h
 ./usr/include/m88k/mutex.h
 ./usr/include/m88k/param.h
 ./usr/include/m88k/pcb.h
@@ -168,6 +170,7 @@
 ./usr/include/mvme88k/endian.h
 ./usr/include/mvme88k/exec.h
 ./usr/include/mvme88k/float.h
+./usr/include/mvme88k/fpu.h
 ./usr/include/mvme88k/frame.h
 ./usr/include/mvme88k/ieee.h
 ./usr/include/mvme88k/ieeefp.h
@@ -182,6 +185,7 @@
 ./usr/include/mvme88k/m88410.h
 ./usr/include/mvme88k/mioctl.h
 ./usr/include/mvme88k/mmu.h
+./usr/include/mvme88k/mplock.h
 ./usr/include/mvme88k/mutex.h
 ./usr/include/mvme88k/mvme187.h
 ./usr/include/mvme88k/mvme188.h
