@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2003/06/12 20:58:10 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2008/01/02 16:35:22 chl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.8 2003/06/12 20:58:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2008/01/02 16:35:22 chl Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,14 +90,6 @@ emalloc(size_t len)
 	if (!(p = malloc(len)))
 		error(archive);
 	return(p);
-}
-
-const char *
-rname(const char *path)
-{
-	const char *ind;
-
-	return((ind = strrchr(path, '/')) ? ind + 1 : path);
 }
 
 void
