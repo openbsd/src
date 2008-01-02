@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.62 2007/04/04 17:32:20 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.63 2008/01/02 17:57:49 miod Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	struct timespec rqt, rmt;
 	struct timespec sts, ets;
 	struct timeval tv;
-	int error;
+	int error, error1;
 
 	error = copyin((const void *)SCARG(uap, rqtp), (void *)&rqt,
 	    sizeof(struct timespec));
@@ -287,8 +287,10 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
 
-		error = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
+		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 		    sizeof(rmt));
+		if (error1 != 0)
+			error = error1;
 	}
 
 	return error;
