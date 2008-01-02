@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.2 2007/12/29 09:24:43 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.3 2008/01/02 20:54:59 maja Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -212,7 +212,7 @@ smi_foreach(struct oid *oid, u_int flags)
 	return (oid);
 }
 
-long
+int
 smi_oid_cmp(struct oid *a, struct oid *b)
 {
 	size_t	 i;
@@ -226,7 +226,8 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 	 * (it will match any sub-elements)
 	 */
 	if ((b->o_flags & OID_TABLE) &&
-	    (a->o_flags & OID_KEY) == 0)
+	    (a->o_flags & OID_KEY) == 0 &&
+	    (a->o_oidlen > b->o_oidlen))
 		return (0);
 
 	return (a->o_oidlen - b->o_oidlen);

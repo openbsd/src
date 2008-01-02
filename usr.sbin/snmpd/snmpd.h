@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.8 2007/12/29 09:24:43 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.9 2008/01/02 20:54:59 maja Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -418,6 +418,6 @@ void		 smi_oidlen(struct ber_oid *);
 char		*smi_oidstring(struct ber_oid *, char *, size_t);
 void		 smi_delete(struct oid *);
 void		 smi_insert(struct oid *);
-long		 smi_oid_cmp(struct oid *, struct oid *);
+int		 smi_oid_cmp(struct oid *, struct oid *);
 
 #endif /* _SNMPD_H */
