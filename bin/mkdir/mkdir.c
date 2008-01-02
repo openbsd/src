@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.19 2007/08/06 19:16:05 sobrado Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.20 2008/01/02 09:27:02 chl Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.19 2007/08/06 19:16:05 sobrado Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.20 2008/01/02 09:27:02 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,16 +154,21 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (stat(path, &sb)) {
-			if (errno != ENOENT ||
-			    (mkdir(path, done ? mode : dir_mode) &&
-			    errno != EEXIST)) {
+		if (mkdir(path, done ? mode : dir_mode) < 0) {
+			int mkdir_errno = errno;
+
+			if (stat(path, &sb)) {
+				/* Not there; use mkdir()s errno */
+				errno = mkdir_errno;
 				warn("%s", path);
 				return (-1);
 			}
-		} else if (!S_ISDIR(sb.st_mode)) {
-			warnx("%s: %s", path, strerror(ENOTDIR));
-			return (-1);
+			if (!S_ISDIR(sb.st_mode)) {
+				/* Is there, but isn't a directory */
+				errno = ENOTDIR;
+				warn("%s", path);
+				return (-1);
+			}
 		}
 
 		if (done)
