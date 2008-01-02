@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.57 2007/12/26 22:22:45 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.58 2008/01/02 19:59:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -668,7 +668,11 @@ m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
 			ext_flusher = mc88410_sync;
 		} else {
 			flusher = m88110_cmmu_inval_cache;
+#ifdef notyet
 			ext_flusher = mc88410_inval;
+#else
+			ext_flusher = mc88410_sync;
+#endif
 		}
 		break;
 	}
@@ -783,7 +787,11 @@ m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 			ext_flusher = mc88410_sync;
 		} else {
 			flusher = m88110_cmmu_inval_cache;
+#ifdef notyet
 			ext_flusher = mc88410_inval;
+#else
+			ext_flusher = mc88410_sync;
+#endif
 		}
 		break;
 	}
