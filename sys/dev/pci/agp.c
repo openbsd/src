@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.14 2007/12/07 17:35:22 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.15 2008/01/02 03:40:38 brad Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -353,10 +353,7 @@ agp_lookup(struct pci_attach_args *pa)
 int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, u_int32_t bar, u_int32_t memtype)
 {
-	/*
-	 * Find and the aperture. Don't map it (yet), this would
-	 * eat KVA.
-	 */
+	/* Find the aperture. Don't map it (yet), this would eat KVA */
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar,
 	    memtype, &sc->sc_apaddr, &sc->sc_apsize,
 	    &sc->sc_apflags) != 0)
