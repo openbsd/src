@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.18 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: noct.c,v 1.19 2008/01/02 04:48:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -1349,9 +1349,9 @@ noct_read_8(sc, reg)
 }
 
 /*
- * NSP2000 is has a nifty bug, writes or reads to consecutive addresses
- * can be coalesced by a PCI bridge and executed as a burst read or write
- * which NSP2000's AMBA bridge doesn't grok.  Avoid the hazard.
+ * NSP2000 has a nifty bug, writes or reads to consecutive addresses
+ * can be coalesced by a PCI bridge and executed as a burst read or
+ * write which NSP2000's AMBA bridge doesn't grok.  Avoid the hazard.
  */
 u_int32_t
 noct_read_4(sc, off)
