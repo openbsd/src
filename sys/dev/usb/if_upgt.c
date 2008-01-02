@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.12 2008/01/01 20:20:30 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.13 2008/01/02 10:07:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1186,18 +1186,15 @@ upgt_init(struct ifnet *ifp)
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 
-	/* set default channel */
-	upgt_set_channel(sc, sc->sc_curchan);
-
-	upgt_set_macfilter(sc, IEEE80211_S_SCAN);
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-	else
+	else {
+		upgt_set_macfilter(sc, IEEE80211_S_SCAN);
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	}
 
 	return (0);
 }
@@ -1207,9 +1204,6 @@ upgt_stop(struct upgt_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-
-	/* do not accept any frames if the device is down */
-	upgt_set_macfilter(sc, IEEE80211_S_INIT);
 
 	/* device down */
 	ifp->if_timer = 0;
@@ -1270,6 +1264,9 @@ upgt_newstate_task(void *arg)
 	case IEEE80211_S_INIT:
 		DPRINTF(1, "%s: newstate is IEEE80211_S_INIT\n",
 		    sc->sc_dev.dv_xname);
+
+		/* do not accept any frames if the device is down */
+		upgt_set_macfilter(sc, IEEE80211_S_INIT);
 		break;
 	case IEEE80211_S_SCAN:
 		DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
@@ -1277,7 +1274,6 @@ upgt_newstate_task(void *arg)
 
 		channel = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 		upgt_set_channel(sc, channel);
-
 		timeout_add(&sc->scan_to, hz / 5);
 		break;
 	case IEEE80211_S_AUTH:
