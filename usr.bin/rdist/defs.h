@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.15 2003/11/08 19:17:29 jmc Exp $	*/
+/*	$OpenBSD: defs.h,v 1.16 2008/01/02 17:44:11 chl Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -387,7 +387,6 @@ char *xstrdup(const char *);
 char *xbasename(char *);
 char *searchpath(char *);
 int mysetlinebuf(FILE *);
-int getsocketpair(int, int, int, int[]);
 
 /* distopt.c */
 DISTOPTINFO *getdistopt(char *, int *);
