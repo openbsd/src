@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.2 2007/12/28 18:10:00 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.3 2008/01/03 14:44:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -106,6 +106,7 @@ int			 ber_get_null(struct ber_element *);
 struct ber_element	*ber_add_eoc(struct ber_element *);
 int			 ber_get_eoc(struct ber_element *);
 struct ber_element	*ber_add_oid(struct ber_element *, struct ber_oid *);
+struct ber_element	*ber_add_noid(struct ber_element *, struct ber_oid *, int);
 struct ber_element	*ber_add_oidstring(struct ber_element *, const char *);
 int			 ber_get_oid(struct ber_element *, struct ber_oid *);
 size_t			 ber_oid2ber(struct ber_oid *, u_int8_t *, size_t);

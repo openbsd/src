@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.8 2007/12/29 09:24:43 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.9 2008/01/03 14:44:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -126,7 +126,8 @@ mps_getreq(struct ber_element *root, struct ber_oid *o)
 	if (OID_NOTSET(value))
 		return (NULL);
 	if ((value->o_flags & OID_TABLE) == 0)
-		elm = ber_add_oid(elm, &value->o_id);
+		elm = ber_add_noid(elm,
+		    &value->o_id, value->o_oidlen + 1);
 	if (value->o_get == NULL)
 		elm = ber_add_null(elm);
 	else
@@ -186,7 +187,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			break;
 		}
 	}
- next:
+
 	for (next = value; next != NULL;) {
 		next = smi_next(next);
 		if (next == NULL)
@@ -206,7 +207,8 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			return (NULL);
 	} else {
 		bcopy(&next->o_id, o, sizeof(*o));
-		ber = ber_add_oid(ber, &next->o_id);
+		ber = ber_add_noid(ber, &next->o_id,
+		    next->o_oidlen + 1);
 		if ((ret = next->o_get(next, o, &ber)) != 0)
 			return (NULL);
 	}

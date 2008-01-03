@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.4 2007/12/07 10:08:40 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.5 2008/01/03 14:44:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -422,6 +422,19 @@ ber_add_oid(struct ber_element *prev, struct ber_oid *o)
  fail:
 	ber_free_elements(elm);
 	return (NULL);
+}
+
+struct ber_element *
+ber_add_noid(struct ber_element *prev, struct ber_oid *o, int n)
+{
+	struct ber_oid		 no;
+
+	if (n > BER_MAX_OID_LEN)
+		return (NULL);
+	no.bo_n = n;
+	bcopy(&o->bo_id, &no.bo_id, sizeof(no.bo_id));
+
+	return (ber_add_oid(prev, &no));
 }
 
 struct ber_element *
