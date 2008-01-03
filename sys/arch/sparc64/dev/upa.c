@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.6 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: upa.c,v 1.7 2008/01/03 20:43:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -45,15 +45,6 @@
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 
-#include <sparc64/dev/ebusreg.h>
-#include <sparc64/dev/ebusvar.h>
-
-#include "pckbd.h"
-#if NPCKBD > 0
-#include <dev/ic/pckbcvar.h>
-#include <dev/pckbc/pckbdvar.h>
-#endif
-
 struct upa_range {
 	u_int64_t	ur_space;
 	u_int64_t	ur_addr;
@@ -95,6 +86,7 @@ upa_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ma->ma_name, "upa") == 0)
 		return (1);
+
 	return (0);
 }
 
