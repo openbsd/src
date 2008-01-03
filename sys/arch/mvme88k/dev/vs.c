@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.68 2008/01/01 22:54:28 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.69 2008/01/03 22:32:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -294,6 +294,10 @@ do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int canreset)
 		}
 		delay(1000);
 	}
+#ifdef VS_DEBUG
+	printf("%s: crsw %04x to %d/%d\n",
+	    __func__, crsw, to, xs ? xs->timeout : 2000);
+#endif
 	return 0;
 }
 
@@ -362,6 +366,10 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 #ifdef VS_DEBUG
 	printf("%s: queue %d, len %u (resid %d) error %d\n",
 	    __func__, cb->cb_q, len, xs->resid, error);
+	if (error != 0)
+		printf("%s: last select %d %d, phase %02x %02x\n",
+		    __func__, csb_read(1, CSB_LPDS), csb_read(1, CSB_LSDS),
+		    csb_read(1, CSB_PPS), csb_read(1, CSB_SPS));
 #endif
 	if ((error & 0xff) == SCSI_SELECTION_TO) {
 		xs->error = XS_SELTIMEOUT;
@@ -454,7 +462,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 		else
 		/* FALLTHROUGH */
 	default:
-		iopb_len = IOPB_SHORT_SIZE + xs->cmdlen;
+		iopb_len = IOPB_SHORT_SIZE + ((xs->cmdlen + 1) >> 1);
 		break;
 	}
 
@@ -487,6 +495,8 @@ vs_scsicmd(struct scsi_xfer *xs)
 	option = 0;
 	if (flags & SCSI_DATA_OUT)
 		option |= M_OPT_DIR;
+	if (slp->adapter_buswidth > 8)
+		option |= M_OPT_GO_WIDE;
 
 	if (flags & SCSI_POLL) {
 		vs_write(2, iopb + IOPB_OPTION, option);
@@ -938,8 +948,10 @@ vs_nintr(void *vsc)
 	struct vs_cb *cb;
 	int s;
 
+#if 0	/* bogus! */
 	if ((CRSW & CONTROLLER_ERROR) == CONTROLLER_ERROR)
 		return vs_eintr(sc);
+#endif
 
 	/* Got a valid interrupt on this device */
 	s = splbio();
