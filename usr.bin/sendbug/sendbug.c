@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.52 2007/10/17 20:02:33 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.53 2008/01/03 03:19:36 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -42,6 +42,18 @@ void	template(FILE *);
 const char *categories = "system user library documentation ports kernel "
     "alpha amd64 arm i386 m68k m88k mips ppc sgi sparc sparc64 vax";
 char *version = "4.2";
+const char *comment[] = {
+	"<synopsis of the problem (one line)>",
+	"<[ non-critical | serious | critical ] (one line)>",
+	"<[ low | medium | high ] (one line)>",
+	"<PR category (one line)>",
+	"<[ sw-bug | doc-bug | change-request | support ] (one line)>",
+	"<release number or tag (one line)>",
+	"<machine, os, target, libraries (multiple lines)>",
+	"<precise description of the problem (multiple lines)>",
+	"<code/input/activities to reproduce the problem (multiple lines)>",
+	"<how to correct or work around the problem, if known (multiple lines)>"
+};
 
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
@@ -189,9 +201,9 @@ dmesg(FILE *fp)
 	}
 
 	fputs("\n"
-	    "<dmesg is attached.>\n"
-	    "<Feel free to delete or use the -D flag if it contains "
-	    "sensitive information.>\n", fp);
+	    "SENDBUG: dmesg is attached.\n"
+	    "SENDBUG: Feel free to delete or use the -D flag if it contains "
+	    "sensitive information.\n", fp);
 	/* Find last dmesg. */
 	for (;;) {
 		off_t o;
@@ -471,7 +483,7 @@ int
 matchline(const char *s, const char *line, size_t linelen)
 {
 	size_t slen;
-	int comment;
+	int iscomment;
 
 	slen = strlen(s);
 	/* Is line shorter than string? */
@@ -483,13 +495,13 @@ matchline(const char *s, const char *line, size_t linelen)
 	/* Does line contain anything but comments and whitespace? */
 	line += slen;
 	linelen -= slen;
-	comment = 0;
+	iscomment = 0;
 	while (linelen) {
-		if (comment) {
+		if (iscomment) {
 			if (*line == '>')
-				comment = 0;
+				iscomment = 0;
 		} else if (*line == '<')
-			comment = 1;
+			iscomment = 1;
 		else if (!isspace((unsigned char)*line))
 			return (1);
 		++line;
@@ -558,28 +570,24 @@ template(FILE *fp)
 	fprintf(fp, ">Originator:\t%s\n", fullname);
 	fprintf(fp, ">Organization:\n");
 	fprintf(fp, "net\n");
-	fprintf(fp, ">Synopsis:\t<synopsis of the problem (one line)>\n");
-	fprintf(fp, ">Severity:\t"
-	    "<[ non-critical | serious | critical ] (one line)>\n");
-	fprintf(fp, ">Priority:\t<[ low | medium | high ] (one line)>\n");
-	fprintf(fp, ">Category:\t<PR category (one line)>\n");
-	fprintf(fp, ">Class:\t\t"
-	    "<[ sw-bug | doc-bug | change-request | support ] (one line)>\n");
-	fprintf(fp, ">Release:\t<release number or tag (one line)>\n");
+	fprintf(fp, ">Synopsis:\t%s\n", comment[0]);
+	fprintf(fp, ">Severity:\t%s\n", comment[1]);
+	fprintf(fp, ">Priority:\t%s\n", comment[2]);
+	fprintf(fp, ">Category:\t%s\n", comment[3]);
+	fprintf(fp, ">Class:\t\t%s\n", comment[4]);
+	fprintf(fp, ">Release:\t%s\n", comment[5]);
 	fprintf(fp, ">Environment:\n");
-	fprintf(fp, "\t<machine, os, target, libraries (multiple lines)>\n");
+	fprintf(fp, "\t%s\n", comment[6]);
 	fprintf(fp, "\tSystem      : %s %s\n", os, rel);
 	fprintf(fp, "\tDetails     : %s\n", details);
 	fprintf(fp, "\tArchitecture: %s.%s\n", os, mach);
 	fprintf(fp, "\tMachine     : %s\n", mach);
 	fprintf(fp, ">Description:\n");
-	fprintf(fp, "\t<precise description of the problem (multiple lines)>\n");
+	fprintf(fp, "\t%s\n", comment[7]);
 	fprintf(fp, ">How-To-Repeat:\n");
-	fprintf(fp, "\t<code/input/activities to reproduce the problem"
-	    " (multiple lines)>\n");
+	fprintf(fp, "\t%s\n", comment[8]);
 	fprintf(fp, ">Fix:\n");
-	fprintf(fp, "\t<how to correct or work around the problem,"
-	    " if known (multiple lines)>\n");
+	fprintf(fp, "\t%s\n", comment[9]);
 
 	if (!Dflag)
 		dmesg(fp);
