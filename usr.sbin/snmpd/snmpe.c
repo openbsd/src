@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.5 2007/12/28 16:59:31 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.6 2008/01/03 14:24:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -614,7 +614,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 
 	errstr = "invalid varbind element";
 	for (i = 1, a = msg->sm_varbind, last = NULL;
-	    a != NULL; a = a->be_next, i++) {
+	    a != NULL; a = next, i++) {
 		next = a->be_next;
 
 		if (a->be_class != BER_CLASS_UNIVERSAL &&
@@ -691,8 +691,8 @@ snmpe_parse(struct sockaddr_storage *ss,
 				if (last == NULL)
 					msg->sm_varbindresp = c;
 				else
-					ber_replace_elements(last, c);
-				a = c;
+					ber_link_elements(last, c);
+				last = c;
 				break;
 			}
 		}
@@ -700,7 +700,6 @@ snmpe_parse(struct sockaddr_storage *ss,
 			log_debug("snmpe_parse: state %d", state);
 			goto varfail;
 		}
-		last = a;
 	}
 
 	return (0);
