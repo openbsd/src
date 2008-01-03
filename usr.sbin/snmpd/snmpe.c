@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.7 2008/01/03 15:03:47 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.8 2008/01/03 15:32:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -790,8 +790,8 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	snmpe_debug_elements(resp);
 #endif
 
-	ber_write_elements(&ber, resp);
-	if ((len = ber_get_writebuf(&ber, (void *)&ptr)) == -1)
+	len = ber_write_elements(&ber, resp);
+	if (ber_get_writebuf(&ber, (void *)&ptr) == -1)
 		goto done;
 
 	len = sendto(fd, ptr, len, 0, (struct sockaddr *)&ss, slen);
