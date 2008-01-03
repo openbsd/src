@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.138 2008/01/01 18:20:02 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.139 2008/01/03 02:10:05 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.138 2008/01/01 18:20:02 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.139 2008/01/03 02:10:05 sthen Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2195,10 +2195,10 @@ set_geometry(struct disklabel *lp, struct disklabel *dgp,
     struct disklabel *ugp, char *p)
 {
 	if (p == NULL) {
-		p = getstring("[d]isk, [b]ios, or [u]ser geometry",
+		p = getstring("[d]isk or [u]ser geometry",
 		    "Enter 'd' to use the geometry based on what the disk "
-		    "itself thinks it is, 'b' to use what the BIOS says,"
-		    "or 'u' to use the geometry that was found on in the label.",
+		    "itself thinks it is, or 'u' to use the geometry that "
+		    "was found in the label.",
 		    "d");
 	}
 	if (p == NULL) {
@@ -2241,7 +2241,7 @@ set_geometry(struct disklabel *lp, struct disklabel *dgp,
 		}
 		break;
 	default:
-		fputs("You must enter either 'd', 'b', or 'u'.\n", stderr);
+		fputs("You must enter either 'd' or 'u'.\n", stderr);
 		break;
 	}
 }
