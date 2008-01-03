@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.46 2007/12/19 08:49:23 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.47 2008/01/03 21:01:40 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ void	routepr(u_long, u_long, u_long, u_long);
 
 void	nsprotopr(u_long, char *);
 
-void	intpr(int, u_long);
+void	intpr(int);
 
 void	unixpr(u_long);
 

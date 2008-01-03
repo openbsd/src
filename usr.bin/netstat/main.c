@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2007/12/19 08:49:23 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2008/01/03 21:01:40 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -59,35 +59,33 @@ struct nlist nl[] = {
 	{ "_udbtable" },
 #define N_DDPCB		2
 	{ "_ddpcb"},
-#define N_IFNET		3
-	{ "_ifnet" },
-#define N_UNIXSW	4
+#define N_UNIXSW	3
 	{ "_unixsw" },
 
-#define N_MFCHASHTBL	5
+#define N_MFCHASHTBL	4
 	{ "_mfchashtbl" },
-#define N_MFCHASH	6
+#define N_MFCHASH	5
 	{ "_mfchash" },
-#define N_VIFTABLE	7
+#define N_VIFTABLE	6
 	{ "_viftable" },
 
-#define N_MF6CTABLE	8
+#define N_MF6CTABLE	7
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	9
+#define N_MIF6TABLE	8
 	{ "_mif6table" },
 
-#define N_RTREE		10
+#define N_RTREE		9
 	{ "_rt_tables"},
-#define N_RTMASK	11
+#define N_RTMASK	10
 	{ "_mask_rnhead" },
-#define N_AF2RTAFIDX	12
+#define N_AF2RTAFIDX	11
 	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	13
+#define N_RTBLIDMAX	12
 	{ "_rtbl_id_max" },
 
-#define N_RAWIPTABLE	14
+#define N_RAWIPTABLE	13
 	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	15
+#define N_RAWIP6TABLE	14
 	{ "_rawin6pcbtable" },
 
 	{ ""}
@@ -366,7 +364,7 @@ main(int argc, char *argv[])
 	setnetent(1);
 
 	if (iflag) {
-		intpr(interval, nl[N_IFNET].n_value);
+		intpr(interval);
 		exit(0);
 	}
 	if (rflag) {
