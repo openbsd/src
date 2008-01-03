@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.13 2007/11/28 20:05:30 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.14 2008/01/03 22:33:49 miod Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -542,6 +542,7 @@ do {									\
 	else								\
 		__asm __volatile("wrpr %0, %1, %%" #name		\
 		    : : "r" (val), "rI" (xor) : "%g0");			\
+	__asm __volatile("" : : : "memory");				\
 } while(0)
 
 
