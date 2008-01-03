@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.6 2008/01/03 14:24:15 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.7 2008/01/03 15:03:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -501,7 +501,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 	const char		*errstr = "invalid message";
 	long long		 ver, req;
 	unsigned long		 type, errval, erridx;
-	int			 class, state, i = 0, j = 0;
+	u_int			 class, state, i = 0, j = 0;
 	char			*comn, buf[BUFSIZ], host[MAXHOSTNAMELEN];
 	struct ber_oid		 o;
 	size_t			 len;
@@ -614,7 +614,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 
 	errstr = "invalid varbind element";
 	for (i = 1, a = msg->sm_varbind, last = NULL;
-	    a != NULL; a = next, i++) {
+	    a != NULL && i < SNMPD_MAXVARBIND; a = next, i++) {
 		next = a->be_next;
 
 		if (a->be_class != BER_CLASS_UNIVERSAL &&
@@ -630,6 +630,10 @@ snmpe_parse(struct sockaddr_storage *ss,
 				if (o.bo_n < BER_MIN_OID_LEN ||
 				    o.bo_n > BER_MAX_OID_LEN)
 					goto varfail;
+				if (msg->sm_context == SNMP_T_SETREQ)
+					stats->snmp_intotalsetvars++;
+				else
+					stats->snmp_intotalreqvars++;
 				log_debug("snmpe_parse: %s: oid %s", host,
 				    smi_oidstring(&o, buf, sizeof(buf)));
 				break;
