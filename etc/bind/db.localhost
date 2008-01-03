@@ -1,0 +1,15 @@
+; $OpenBSD: db.localhost,v 1.4 2008/01/03 21:20:25 jakob Exp $
+
+$ORIGIN localhost.
+$TTL 6h
+
+@	IN	SOA	localhost. root.localhost. (
+			1	; serial
+			1h	; refresh
+			30m	; retry
+			7d	; expiration
+			1h )	; minimum
+
+		NS	localhost.
+		A	127.0.0.1
+		AAAA	::1
