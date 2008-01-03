@@ -1,4 +1,4 @@
-.\"	$OpenBSD: help.1,v 1.8 2007/05/31 19:20:13 jmc Exp $
+.\"	$OpenBSD: help.1,v 1.9 2008/01/03 17:33:49 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2008 $
 .Dt HELP 1
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ Each user's shell is indicated by the last field of their corresponding entry
 in the system password file
 .Pf ( Pa /etc/passwd ) .
 .Ss Basic Unix commands
-.Bl -tag -width logout
+.Bl -tag -width "chmodXXX"
 .It Cm man
 Interface to the system manual pages.
 For any of the commands listed below, type
@@ -152,7 +152,7 @@ configuration).
 Print the current system date and time.
 .It Cm mail
 Access mailbox.
-.It Cm logout
+.It Cm exit
 Log out of the system.
 .El
 .Pp
