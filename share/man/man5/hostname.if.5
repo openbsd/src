@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.50 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.51 2008/01/03 11:16:45 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2008 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ addresses:
 .Pp
 Regular IPv4 network setup:
 .Bd -ragged -offset indent
-.Va addr_family
+.Li inet
 .Op Li alias
 .Va addr
 .Va netmask
@@ -76,11 +76,14 @@ Regular IPv4 network setup:
 .Pp
 Regular IPv6 network setup:
 .Bd -ragged -offset indent
-.Va addr_family
+.Li inet6
 .Op Li alias
 .Va addr
 .Va prefixlen
 .Va options
+.br
+.Li dest
+.Va dest_addr
 .Ed
 .Pp
 Other network setup:
