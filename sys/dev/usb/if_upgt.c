@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.13 2008/01/02 10:07:26 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.14 2008/01/03 14:47:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -69,6 +69,7 @@
  * Sebastien Bourdeauducq <lekernel@prism54.org>.
  */
 
+#define UPGT_DEBUG
 #ifdef UPGT_DEBUG
 int upgt_debug = 2;
 #define DPRINTF(l, x...) do { if ((l) <= upgt_debug) printf(x); } while (0)
@@ -438,16 +439,7 @@ upgt_detach(struct device *self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	if (!(sc->sc_flags & UPGT_DEVICE_ATTACHED))
-		/* device was not properly attached */
-		return (0);
-
 	s = splusb();
-
-	/* remove tasks and timeouts */
-	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
-	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
-	timeout_del(&sc->scan_to);
 
 	/* abort and close TX / RX pipes */
 	if (sc->sc_tx_pipeh != NULL) {
@@ -459,6 +451,11 @@ upgt_detach(struct device *self, int flags)
 		usbd_close_pipe(sc->sc_rx_pipeh);
 	}
 
+	/* remove tasks and timeouts */
+	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
+	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
+	timeout_del(&sc->scan_to);
+
 	/* free xfers */
 	upgt_free_tx(sc);
 	upgt_free_rx(sc);
@@ -467,9 +464,11 @@ upgt_detach(struct device *self, int flags)
 	/* free firmware */
 	upgt_fw_free(sc);
 
-	/* detach interface */
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
+	if (sc->sc_flags & UPGT_DEVICE_ATTACHED) {
+		/* detach interface */
+		ieee80211_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 	splx(s);
 
