@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.106 2007/12/23 15:33:41 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.107 2008/01/03 17:09:42 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2671,10 +2671,7 @@ Lslowtrap_reenter:
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
-#if 1
-/*
- * This code is no longer needed.
- */
+
 /*
  * Do a `software' trap by re-entering the trap code, possibly first
  * switching from interrupt stack to kernel stack.  This is used for
@@ -2698,7 +2695,7 @@ softtrap:
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
 	or	%g5, %lo(EINTSTACK-BIAS), %g5
 	dec	%g7
-	sub	%g5, %g6, %g5
+	sub	%g5, %sp, %g5
 	sethi	%hi(CPCB), %g6
 	andncc	%g5, %g7, %g0
 	bnz,pt	%xcc, Lslowtrap_reenter
@@ -2751,7 +2748,6 @@ softtrap:
 #endif	/* DEBUG */
 	ba,pt	%xcc, Lslowtrap_reenter
 	 mov	%g6, %sp
-#endif	/* 1 */
 
 #if 0
 /*
