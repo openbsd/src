@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_clock.c,v 1.5 2007/01/11 07:24:52 robert Exp $ */
+/*	$OpenBSD: pxa2x0_clock.c,v 1.6 2008/01/03 17:59:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -16,12 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/time.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -72,6 +71,13 @@ struct cfdriver pxaost_cd = {
 	NULL, "pxaost", DV_DULL
 };
 
+u_int	pxaost_get_timecount(struct timecounter *tc);
+
+static struct timecounter pxaost_timecounter = {
+	pxaost_get_timecount, NULL, 0xffffffff, CLK4_TIMER_FREQUENCY,
+	"pxaost", 0, NULL
+};
+
 int
 pxaost_match(parent, match, aux)
 	struct device *parent;
@@ -115,6 +121,13 @@ pxaost_attach(parent, self, aux)
 	/* Zero the counter value */
 	bus_space_write_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSCR4, 0);
 
+}
+
+u_int
+pxaost_get_timecount(struct timecounter *tc)
+{
+	return bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh,
+	    OST_OSCR4);
 }
 
 int
@@ -239,38 +252,8 @@ cpu_initclocks()
 	    clk + pxaost_sc->sc_clock_count);
 	bus_space_write_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSMR5,
 	    clk + pxaost_sc->sc_statclock_count);
-}
 
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s, deltacnt;
-	u_int32_t counter, expected; 
-
-	if (pxaost_sc == NULL) {
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-
-	s = splhigh();
-	counter = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh,
-	    OST_OSCR4);
-	expected = pxaost_sc->sc_clock_count;
-
-	*tvp = time;
-	splx(s);
-
-	/* number of CLK4_TIMER_FREQUENCY ticks past time */
-	deltacnt = counter - expected + pxaost_sc->sc_clock_step;
-
-	tvp->tv_usec += deltacnt * 1000000ULL / CLK4_TIMER_FREQUENCY;
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
+	tc_init(&pxaost_timecounter);
 }
 
 void

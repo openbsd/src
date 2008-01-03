@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.11 2005/11/11 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.12 2008/01/03 17:59:32 kettenis Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -437,15 +438,19 @@ void
 resettodr(void)
 {
 	struct pxaip_softc *sc = pxaip_sc;
+	struct timeval tv;
+
+	microtime(&tv);
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RCNR,
-	    (u_int32_t)time.tv_sec);
+	    (u_int32_t)tv.tv_sec);
 }
 
 void
 inittodr(time_t base)
 {
 	struct pxaip_softc *sc = pxaip_sc;
+	struct timespec ts;
 	u_int32_t rcnr;
 
 	/* XXX decide if RCNR can be valid, based on the last reset
@@ -454,11 +459,12 @@ inittodr(time_t base)
 
 	/* XXX check how much RCNR differs from the filesystem date. */
 	if (rcnr > base)
-		time.tv_sec = rcnr;
+		ts.tv_sec = rcnr;
 	else {
 		printf("WARNING: using filesystem date -- CHECK AND RESET THE DATE!\n");
-		time.tv_sec = base;
+		ts.tv_sec = base;
 	}
 
-	time.tv_usec = 0;
+	ts.tv_nsec = 0;
+	tc_setclock(&ts);
 }
