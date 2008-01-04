@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.22 2006/05/19 22:51:09 miod Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.23 2008/01/04 19:05:32 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -121,7 +121,7 @@ do { \
 #define	PMAP_MD_MEMSIZE() \
 do { \
 	RELOC(avail_end, paddr_t) = ptoa(RELOC(physmem, int)) - \
-	    (round_page(MSGBUFSIZE) + ptoa(1)); \
+	    round_page(MSGBUFSIZE); \
 } while (0)
 
 #define	PMAP_MD_RELOC3()	/* nothing */
