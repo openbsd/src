@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2008/01/03 22:50:04 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2008/01/04 00:40:38 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -283,14 +283,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 
-	/* Need to create a %tstate if we're forking from proc0 */
+	/* Need to create a %tstate if we're forking from proc0. */
 	if (p1 == &proc0)
-		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
+		tf2->tf_tstate =
+		    ((u_int64_t)ASI_PRIMARY_NO_FAULT << TSTATE_ASI_SHIFT) |
+		    ((PSTATE_USER) << TSTATE_PSTATE_SHIFT);
 	else
-		/* clear condition codes and disable FPU */
+		/* Clear condition codes and disable FPU. */
 		tf2->tf_tstate &=
-		    ~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR);
+		    ~((PSTATE_PEF << TSTATE_PSTATE_SHIFT) | TSTATE_CCR);
 
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 

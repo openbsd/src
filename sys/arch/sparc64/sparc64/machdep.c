@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2007/12/22 15:14:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.105 2008/01/04 00:40:38 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -378,9 +378,8 @@ setregs(p, pack, stack, retval)
 		break;
 	}
 
-	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-		((pstate)<<TSTATE_PSTATE_SHIFT) | 
-		(tf->tf_tstate & TSTATE_CWP);
+	tstate = ((u_int64_t)ASI_PRIMARY_NO_FAULT << TSTATE_ASI_SHIFT) |
+	    (pstate << TSTATE_PSTATE_SHIFT) | (tf->tf_tstate & TSTATE_CWP);
 	if (p->p_md.md_fpstate != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
