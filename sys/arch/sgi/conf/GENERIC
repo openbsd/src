@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2007/12/31 12:47:47 jsing Exp $
+#	$OpenBSD: GENERIC,v 1.26 2008/01/04 08:17:14 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -112,8 +112,6 @@ emu*		at pci?
 audio*		at emu?
 
 #### WS console
-#wsdisplay*	at vga?
-#wskbd*		at ukbd? mux 1
 wsdisplay*	at gbe?
 
 #### Keyboard and Mouse
