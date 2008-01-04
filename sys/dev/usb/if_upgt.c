@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.15 2008/01/04 10:04:07 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.16 2008/01/04 11:50:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -619,12 +619,12 @@ upgt_fw_verify(struct upgt_softc *sc)
 	/*
 	 * Seek to beginning of Boot Record Area (BRA).
 	 */
-	for (offset = 0; offset < sc->sc_fw_size; offset += sizeof(uc)) {
+	for (offset = 0; offset < sc->sc_fw_size; offset += sizeof(*uc)) {
 		uc = (uint32_t *)(sc->sc_fw + offset);
 		if (*uc == 0)
 			break;
 	}
-	for (; offset < sc->sc_fw_size; offset += sizeof(uc)) {
+	for (; offset < sc->sc_fw_size; offset += sizeof(*uc)) {
 		uc = (uint32_t *)(sc->sc_fw + offset);
 		if (*uc != 0)
 			break;
@@ -644,7 +644,7 @@ upgt_fw_verify(struct upgt_softc *sc)
 		/* get current BRA option */
 		bra_option = (struct upgt_fw_bra_option *)(sc->sc_fw + offset);
 		bra_option_type = letoh32(bra_option->type);
-		bra_option_len = letoh32(bra_option->len) * sizeof(uc);
+		bra_option_len = letoh32(bra_option->len) * sizeof(*uc);
 
 		switch (bra_option_type) {
 		case UPGT_BRA_TYPE_FW:
