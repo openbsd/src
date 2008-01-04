@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.62 2007/12/30 14:45:24 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.63 2008/01/04 19:10:31 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -485,6 +485,8 @@ Lstart2:
 	moveq	#PGSHIFT,d2
 	subl	d0,d1			| compute amount of RAM present
 	lsrl	d2,d1			| convert to pages
+	addl	#3,d1			| restore the 3 pages lost (2 from
+					| the bootloader and the MAXADDR one)
 	RELOC(physmem, a0)
 	movl	d1,a0@			| save as physmem
 
