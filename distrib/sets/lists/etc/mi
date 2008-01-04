@@ -157,6 +157,10 @@
 ./var/named/etc/root.hint
 ./var/named/master
 ./var/named/slave
+./var/named/standard
+./var/named/standard/localhost
+./var/named/standard/loopback
+./var/named/standard/loopback6.arpa
 ./var/run/utmp
 ./var/www/cgi-bin/printenv
 ./var/www/cgi-bin/test-cgi
