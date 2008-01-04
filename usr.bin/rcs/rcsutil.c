@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.31 2007/07/19 06:37:58 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.32 2008/01/04 13:45:24 chl Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -272,16 +272,6 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	fd = open(rcspath, O_RDONLY);
 
 	return (fd);
-}
-
-/*
- * Allocate an RCSNUM and store in <rev>.
- */
-void
-rcs_set_rev(const char *str, RCSNUM **rev)
-{
-	if (str == NULL || (*rev = rcsnum_parse(str)) == NULL)
-		errx(1, "bad revision number `%s'", str);
 }
 
 /*
