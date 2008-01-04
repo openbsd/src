@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.53 2008/01/03 03:19:36 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.54 2008/01/04 00:50:09 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -425,45 +425,52 @@ int
 send_file(const char *file, int dst)
 {
 	size_t len;
-	char *buf;
+	char *buf, *lbuf;
 	FILE *fp;
-	int blank = 0, dmesg_line = 0;
+	int rval = -1, saved_errno;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		return (-1);
+	lbuf = NULL;
 	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			/* EOF without EOL, copy and add the NUL */
+			if ((lbuf = malloc(len + 1)) == NULL)
+				goto end;
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+
 		/* Skip lines starting with "SENDBUG". */
-		if (len >= sizeof("SENDBUG") - 1 &&
-		    memcmp(buf, "SENDBUG", sizeof("SENDBUG") - 1) == 0)
+		if (strncmp(buf, "SENDBUG", sizeof("SENDBUG") - 1) == 0)
 			continue;
-		/* Are we done with the headers? */
-		if (!blank && len == 1 && buf[0] == '\n')
-			blank = 1;
-		/* Have we reached the dmesg? */
-		if (blank && !dmesg_line &&
-		    len >= sizeof(DMESG_START) - 1 &&
-		    memcmp(buf, DMESG_START, sizeof(DMESG_START) - 1) == 0)
-			dmesg_line = 1;
-		/* Skip comments between headers and dmesg. */
 		while (len) {
 			char *sp = NULL, *ep = NULL;
 			size_t copylen;
 
-			if (blank && !dmesg_line &&
-			    (sp = memchr(buf, '<', len)) != NULL)
-				ep = memchr(sp, '>', len - (sp - buf + 1));
+			if ((sp = strchr(buf, '<')) != NULL) {
+				size_t i;
+
+				for (i = 0; i < sizeof(comment) / sizeof(*comment); ++i) {
+					size_t commentlen = strlen(comment[i]);
+
+					if (strncmp(sp, comment[i], commentlen) == 0) {
+						ep = sp + commentlen - 1;
+						break;
+					}
+				}
+			}
 			/* Length of string before comment. */
 			if (ep)
 				copylen = sp - buf;
 			else
 				copylen = len;
-			if (atomicio(vwrite, dst, buf, copylen) != copylen) {
-				int saved_errno = errno;
-
-				fclose(fp);
-				errno = saved_errno;
-				return (-1);
-			}
+			if (atomicio(vwrite, dst, buf, copylen) != copylen ||
+			    atomicio(vwrite, dst, "\n", 1) != 1)
+				goto end;
 			if (!ep)
 				break;
 			/* Skip comment. */
@@ -471,8 +478,13 @@ send_file(const char *file, int dst)
 			buf = ep + 1;
 		}
 	}
+	rval = 0;
+ end:
+	saved_errno = errno;
+	free(lbuf);
 	fclose(fp);
-	return (0);
+	errno = saved_errno;
+	return (rval);
 }
 
 /*
@@ -550,8 +562,7 @@ template(FILE *fp)
 {
 	fprintf(fp, "SENDBUG: -*- sendbug -*-\n");
 	fprintf(fp, "SENDBUG: Lines starting with `SENDBUG' will"
-	    " be removed automatically, as\n");
-	fprintf(fp, "SENDBUG: will all comments (text enclosed in `<' and `>').\n");
+	    " be removed automatically.\n");
 	fprintf(fp, "SENDBUG:\n");
 	fprintf(fp, "SENDBUG: Choose from the following categories:\n");
 	fprintf(fp, "SENDBUG:\n");
