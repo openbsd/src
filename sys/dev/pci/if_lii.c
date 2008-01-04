@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.2 2007/12/31 15:18:06 jasper Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.3 2008/01/04 01:43:09 dlg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -337,8 +337,7 @@ atl2_eeprom_present(struct atl2_softc *sc)
 int
 atl2_eeprom_read(struct atl2_softc *sc, uint32_t reg, uint32_t *val)
 {
-//	return pci_vpd_read(sc->sc_pc, sc->sc_tag, reg, 1, (pcireg_t *)val);
-	return (1);
+	return pci_vpd_read(sc->sc_pc, sc->sc_tag, reg, 1, (pcireg_t *)val);
 }
 
 #define MAKE_SFC(cssetup, clkhi, clklo, cshold, cshi, ins) \
