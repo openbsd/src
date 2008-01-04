@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.9 2007/12/07 17:35:22 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.10 2008/01/04 00:23:26 kettenis Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -88,14 +88,15 @@ int
 agp_intel_vgamatch(struct pci_attach_args *pa)
 {
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82855PE_AGP:
 	case PCI_PRODUCT_INTEL_82443LX_AGP:
 	case PCI_PRODUCT_INTEL_82443BX_AGP:
 	case PCI_PRODUCT_INTEL_82440BX_AGP:
-	case PCI_PRODUCT_INTEL_82850_AGP:	/* i850/i860 */
-	case PCI_PRODUCT_INTEL_82845_AGP:
 	case PCI_PRODUCT_INTEL_82840_AGP:
-	case PCI_PRODUCT_INTEL_82865_AGP:
+	case PCI_PRODUCT_INTEL_82845_AGP:
+	case PCI_PRODUCT_INTEL_82845G_AGP:
+	case PCI_PRODUCT_INTEL_82850_AGP:	/* i850/i860 */
+	case PCI_PRODUCT_INTEL_82855PM_AGP:
+	case PCI_PRODUCT_INTEL_82865G_AGP:
 	case PCI_PRODUCT_INTEL_82875P_AGP:
 		return (1);
 	}
@@ -142,14 +143,15 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82840_AGP:
 		isc->chiptype = CHIP_I840;
 		break;
-	case PCI_PRODUCT_INTEL_82855PE_AGP:
 	case PCI_PRODUCT_INTEL_82845_AGP:
+	case PCI_PRODUCT_INTEL_82845G_AGP:
+	case PCI_PRODUCT_INTEL_82855PM_AGP:
 		isc->chiptype = CHIP_I845;
 		break;
 	case PCI_PRODUCT_INTEL_82850_AGP:
 		isc->chiptype = CHIP_I850;
 		break;
-	case PCI_PRODUCT_INTEL_82865_AGP:
+	case PCI_PRODUCT_INTEL_82865G_AGP:
 	case PCI_PRODUCT_INTEL_82875P_AGP:
 		isc->chiptype = CHIP_I865;
 		break;

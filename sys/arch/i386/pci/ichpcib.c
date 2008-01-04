@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.22 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.23 2008/01/04 00:23:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -239,7 +239,7 @@ ichss_present(struct pci_attach_args *pa)
 			br_id = pci_conf_read(pa->pa_pc, br_tag, PCI_ID_REG);
 			br_class = pci_conf_read(pa->pa_pc, br_tag, PCI_CLASS_REG);
 
-			if (PCI_PRODUCT(br_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
+			if (PCI_PRODUCT(br_id) == PCI_PRODUCT_INTEL_82815_HB &&
 			    PCI_REVISION(br_class) < 5) {
 				ret = 0;
 			}
