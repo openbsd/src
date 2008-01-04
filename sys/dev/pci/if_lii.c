@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.3 2008/01/04 01:43:09 dlg Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.4 2008/01/04 01:47:55 dlg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -201,7 +201,6 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atl2_softc *sc = (struct atl2_softc *)self;
 	struct pci_attach_args *pa = aux;
-	uint8_t eaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	pci_intr_handle_t ih;
 	pcireg_t mem;
@@ -236,7 +235,7 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_memread = atl2_spi_read;
 
-	if (atl2_read_macaddr(sc, eaddr))
+	if (atl2_read_macaddr(sc, sc->sc_ac.ac_enaddr))
 		return;
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -283,7 +282,7 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	printf("%s, address %s\n", pci_intr_string(sc->sc_pc, ih),
-	    ether_sprintf(eaddr));
+	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	return;
 }
