@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.61 2007/03/16 20:51:01 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.62 2008/01/04 11:06:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -489,6 +489,8 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 	} else {
 		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
+		if ((p = strrchr(src->name, '/')) != NULL)
+			*p = '\0';
 		fprintf(fd, SET "[lid-%s]:Address=%s force\n", r->p2lid,
 		    src->name);
 	}
@@ -529,6 +531,8 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 	} else {
 		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
+		if ((p = strrchr(dst->name, '/')) != NULL)
+			*p = '\0';
 		fprintf(fd, SET "[rid-%s]:Address=%s force\n", r->p2rid,
 		    dst->name);
 	}
