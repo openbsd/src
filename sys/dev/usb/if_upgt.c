@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.14 2008/01/03 14:47:19 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.15 2008/01/04 10:04:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -69,7 +69,6 @@
  * Sebastien Bourdeauducq <lekernel@prism54.org>.
  */
 
-#define UPGT_DEBUG
 #ifdef UPGT_DEBUG
 int upgt_debug = 2;
 #define DPRINTF(l, x...) do { if ((l) <= upgt_debug) printf(x); } while (0)
@@ -1481,7 +1480,7 @@ upgt_tx_task(void *arg)
 		 */
 		bcopy(rates_11b, txdesc->rates, sizeof(txdesc->rates));
 		txdesc->type = htole32(UPGT_TX_DESC_TYPE_DATA);
-		txdesc->pad3 = UPGT_TX_DESC_PAD3_SIZE;
+		txdesc->pad3[0] = UPGT_TX_DESC_PAD3_SIZE;
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {
