@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.4 2007/12/28 17:22:32 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.5 2008/01/04 12:41:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -73,7 +73,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+	fprintf(stderr, "usage: %s [-n] <command> [arg [...]]\n", __progname);
 	exit(1);
 }
 
@@ -93,14 +93,29 @@ main(int argc, char *argv[])
 	int			 ctl_sock;
 	int			 done = 0;
 	int			 n;
+	int			 ch;
 
 	if ((env = calloc(1, sizeof(struct snmpd *))) == NULL)
 		err(1, "calloc");
 	gettimeofday(&env->sc_starttime, NULL);
+
+	while ((ch = getopt(argc, argv, "n")) != -1) {
+		switch (ch) {
+		case 'n':
+			env->sc_flags |= SNMPD_F_NONAMES;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
 	smi_init();
 
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
+	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	switch (res->action) {

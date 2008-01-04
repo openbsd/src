@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpctl.8,v 1.2 2007/12/28 17:22:32 reyk Exp $
+.\" $OpenBSD: snmpctl.8,v 1.3 2008/01/04 12:41:55 reyk Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2007 $
+.Dd $Mdocdate: January 4 2008 $
 .Dt SNMPCTL 8
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd control the SNMP daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl n
 .Ar command
 .Op Ar arguments ...
 .Sh DESCRIPTION
@@ -30,6 +31,12 @@ The
 program controls the
 .Xr snmpd 8
 daemon.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Show numeric OID values instead of their symbolic names.
+.El
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
