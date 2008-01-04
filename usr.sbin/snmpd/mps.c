@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.9 2008/01/03 14:44:08 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.10 2008/01/04 12:57:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -119,6 +119,7 @@ mps_getreq(struct ber_element *root, struct ber_oid *o)
 	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
+	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	value = smi_find(&key);
 	if (value == NULL)
@@ -145,6 +146,7 @@ mps_setreq(struct ber_element *ber, struct ber_oid *o)
 	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (-1);
+	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	value = smi_find(&key);
 	if (value == NULL)
@@ -167,6 +169,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
+	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	value = smi_find(&key);
 	if (value == NULL)
@@ -224,6 +227,7 @@ mps_set(struct ber_oid *o, void *p, long long len)
 	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (-1);
+	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	value = smi_find(&key);
 	if (value == NULL)

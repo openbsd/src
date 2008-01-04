@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.3 2008/01/02 20:54:59 maja Exp $	*/
+/*	$OpenBSD: smi.c,v 1.4 2008/01/04 12:57:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -85,6 +85,7 @@ smi_oidstring(struct ber_oid *o, char *buf, size_t len)
 	size_t		 i, lookup = 1;
 
 	bzero(buf, len);
+	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	key.o_flags |= OID_KEY;		/* do not match wildcards */
 
