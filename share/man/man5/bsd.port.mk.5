@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.204 2007/12/21 19:24:50 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.205 2008/01/04 17:55:49 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 21 2007 $
+.Dd $Mdocdate: January 4 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -573,6 +573,11 @@ List of all files that need to be retrieved by
 .Ar fetch ,
 with master site selection extension removed.
 Read-only.
+.It Ev ALL_FAKE_FLAGS
+Flags passed to ${MAKE} invocations during the fake process. 
+Equals
+.Li ${MAKE_FLAGS} ${DESTDIRNAME}=${WRKINST} ${FAKE_FLAGS} .
+Read-only.
 .It Ev ALL_TARGET
 Target used to build software.
 Default is
@@ -976,8 +981,7 @@ Set to
 .Sq No
 in very rare cases, and during port creation.
 .It Ev FAKE_FLAGS
-Flags passed to ${MAKE_PROGRAM} on fake invocation.
-By default, ${DESTDIRNAME}=${WRKINST}.
+Extra flags passed to ${MAKE_PROGRAM} on fake invocation.
 .It Ev FAKE_TARGET
 Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
@@ -1163,8 +1167,10 @@ and the BSD_INSTALL_* macros.
 .It Ev MAKE_FLAGS
 Flags used for all make invocations, except for the
 .Ar fake
-stage, which uses
-.Ev FAKE_FLAGS ,
+stage, which adds
+.Ev FAKE_FLAGS 
+(see
+.Ev ALL_FAKE_FLAGS )
 and for the regress stage, which uses
 .Ev REGRESS_FLAGS .
 .It Ev MAKE_FILE
@@ -2267,7 +2273,7 @@ If no do-install override is present, the port is installed using
 .Bd -literal -offset 2n
 env -i ${MAKE_ENV}
 PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
-${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
+${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
 .Ed
 .Pp
 Note that this does set both PREFIX and ${DESTDIRNAME}.
