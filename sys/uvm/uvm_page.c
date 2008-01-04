@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.63 2007/12/18 11:05:52 thib Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.64 2008/01/04 19:26:52 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -850,7 +850,7 @@ uvm_page_rehash()
 }
 
 
-#if 1 /* XXXCDC: TMP TMP TMP DEBUG DEBUG DEBUG */
+#ifdef DDB /* XXXCDC: TMP TMP TMP DEBUG DEBUG DEBUG */
 
 void uvm_page_physdump(void); /* SHUT UP GCC */
 
