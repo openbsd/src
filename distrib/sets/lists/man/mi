@@ -1397,6 +1397,7 @@
 ./usr/share/man/cat4/mpu.0
 ./usr/share/man/cat4/msk.0
 ./usr/share/man/cat4/mskc.0
+./usr/share/man/cat4/msts.0
 ./usr/share/man/cat4/mtd.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
@@ -1420,6 +1421,7 @@
 ./usr/share/man/cat4/mvme88k/le.0
 ./usr/share/man/cat4/mvme88k/mem.0
 ./usr/share/man/cat4/mvme88k/pcctwo.0
+./usr/share/man/cat4/mvme88k/syscon.0
 ./usr/share/man/cat4/mvme88k/vme.0
 ./usr/share/man/cat4/mvme88k/vs.0
 ./usr/share/man/cat4/mvmeppc
