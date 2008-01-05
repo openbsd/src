@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.70 2007/07/07 08:16:52 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.71 2008/01/05 19:51:55 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		initcg(cylno, utime);
 		if (quiet)
 			continue;
-		j = snprintf(tmpbuf, sizeof tmpbuf, " %ld,",
+		j = snprintf(tmpbuf, sizeof tmpbuf, " %lld,",
 		    fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		if (j >= sizeof tmpbuf)
 			j = sizeof tmpbuf - 1;
