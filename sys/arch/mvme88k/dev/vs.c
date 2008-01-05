@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.69 2008/01/03 22:32:42 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.70 2008/01/05 00:34:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -98,6 +98,7 @@ void	vs_chksense(struct scsi_xfer *);
 void	vs_dealloc_scatter_gather(M328_SG);
 int	vs_eintr(void *);
 int	vs_getcqe(struct vs_softc *, bus_addr_t *, bus_addr_t *);
+int	vs_identify(struct vs_channel *, int);
 int	vs_initialize(struct vs_softc *);
 int	vs_intr(struct vs_softc *);
 void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
@@ -148,6 +149,7 @@ void
 vsattach(struct device *parent, struct device *self, void *args)
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
+	struct vs_channel *vc;
 	struct confargs *ca = args;
 	struct scsi_link *sc_link;
 	struct scsibus_attach_args saa;
@@ -197,29 +199,6 @@ vsattach(struct device *parent, struct device *self, void *args)
 	    "%s_err", self->dv_xname);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e, sc->sc_intrname_e);
 
-	printf("SCSI ID");
-
-	for (bus = 0; bus < 2; bus++) {
-		if (sc->sc_id[bus] < 0)
-			continue;
-
-		sc_link = &sc->sc_link[bus];
-		sc_link->adapter = &vs_scsiswitch;
-		sc_link->adapter_buswidth = sc->sc_width[bus];
-		sc_link->adapter_softc = sc;
-		sc_link->adapter_target = sc->sc_id[bus];
-		sc_link->device = &vs_scsidev;
-		if (sc->sc_bid != JAGUAR)
-			sc_link->luns = 1;
-		sc_link->openings = 1;
-		if (bus != 0)
-			sc_link->flags = SDEV_2NDBUS;
-
-		printf("%c%d", bus == 0 ? ' ' : '/', sc->sc_id[bus]);
-	}
-
-	printf("\n");
-
 	/*
 	 * Attach all scsi units on us, watching for boot device
 	 * (see device_register).
@@ -229,10 +208,34 @@ vsattach(struct device *parent, struct device *self, void *args)
 		bootpart = -1;		/* invalid flag to device_register */
 
 	for (bus = 0; bus < 2; bus++) {
-		if (sc->sc_id[bus] < 0)
+		vc = &sc->sc_channel[bus];
+		if (vc->vc_id < 0)
 			continue;
 
-		if (sc->sc_width[bus] == 0) {
+		sc_link = &vc->vc_link;
+		sc_link->adapter = &vs_scsiswitch;
+		sc_link->adapter_buswidth = vc->vc_width;
+		sc_link->adapter_softc = sc;
+		sc_link->adapter_target = vc->vc_id;
+		sc_link->device = &vs_scsidev;
+		if (sc->sc_bid != JAGUAR)
+			sc_link->luns = 1;	/* not enough queues */
+		sc_link->openings = 1;
+		if (bus != 0)
+			sc_link->flags = SDEV_2NDBUS;
+
+		printf("%s: channel %d, ", sc->sc_dev.dv_xname, bus);
+		switch (vc->vc_type) {
+		case VCT_SE:
+			printf("single-ended, ");
+			break;
+		case VCT_DIFFERENTIAL:
+			printf("differential, ");
+			break;
+		}
+		printf("SCSI ID %d\n", vc->vc_id);
+
+		if (vc->vc_width == 0) {
 			printf("%s: daughterboard disabled, "
 			    "not enough on-board memory\n",
 			    sc->sc_dev.dv_xname);
@@ -240,7 +243,7 @@ vsattach(struct device *parent, struct device *self, void *args)
 		}
 
 		bzero(&saa, sizeof(saa));
-		saa.saa_sc_link = &sc->sc_link[bus];
+		saa.saa_sc_link = &vc->vc_link;
 
 		bootbus = bus;
 		config_found(self, &saa, scsiprint);
@@ -259,8 +262,8 @@ vs_print_addr(struct vs_softc *sc, struct scsi_xfer *xs)
 		sc_print_addr(xs->sc_link);
 
 		/* print bus number too if appropriate */
-		if (sc->sc_width[1] >= 0)
-			printf("(bus %d) ",
+		if (sc->sc_channel[1].vc_width >= 0)
+			printf("(channel %d) ",
 			    !!(xs->sc_link->flags & SDEV_2NDBUS));
 	}
 }
@@ -613,6 +616,41 @@ vs_getcqe(struct vs_softc *sc, bus_addr_t *cqep, bus_addr_t *iopbp)
 }
 
 int
+vs_identify(struct vs_channel *vc, int cid)
+{
+	vc->vc_width = 0;
+	vc->vc_type = VCT_UNKNOWN;
+
+	if (vc->vc_id < 0)
+		return (0);
+
+	switch (cid) {
+	case 0x00:
+		vc->vc_width = 8;
+		vc->vc_type = VCT_SE;
+		break;
+	case 0x01:
+		vc->vc_width = 8;
+		vc->vc_type = VCT_DIFFERENTIAL;
+		break;
+	case 0x02:
+		vc->vc_width = 16;
+		vc->vc_type = VCT_SE;
+		break;
+	case 0x03:
+	case 0x0e:
+		vc->vc_width = 16;
+		vc->vc_type = VCT_DIFFERENTIAL;
+		break;
+	default:
+		vc->vc_id = -1;
+		return (0);
+	}
+
+	return (vc->vc_width - 1);
+}
+
+int
 vs_initialize(struct vs_softc *sc)
 {
 	int i, msr, id;
@@ -652,38 +690,37 @@ vs_initialize(struct vs_softc *sc)
 		id = csb_read(1, CSB_EXTID);
 		switch (id) {
 		case 0x00:
-			printf("Cougar, ");
+			printf("Cougar");
 			break;
 		case 0x02:
-			printf("Cougar II, ");
+			printf("Cougar II");
 			break;
 		default:
-			printf("unknown Cougar %02x, ", id);
+			printf("unknown Cougar version %02x", id);
 			break;
 		}
 		break;
 	}
 
 	/* initialize channels id */
-	sc->sc_id[0] = csb_read(1, CSB_PID);
-	sc->sc_id[1] = -1;
+	sc->sc_channel[0].vc_id = csb_read(1, CSB_PID);
+	sc->sc_channel[1].vc_id = -1;
 	switch (id = csb_read(1, CSB_DBID)) {
 	case DBID_SCSI2:
 	case DBID_SCSI:
-#if 0
-		printf("daughter board, ");
-#endif
-		sc->sc_id[1] = csb_read(1, CSB_SID);
+		sc->sc_channel[1].vc_id = csb_read(1, CSB_SID);
 		break;
 	case DBID_PRINTER:
-		printf("printer port, ");
+		printf("with printer port");
 		break;
 	case DBID_NONE:
 		break;
 	default:
-		printf("unknown daughterboard id %x, ", id);
+		printf("with unknown daughterboard id %x", id);
 		break;
 	}
+
+	printf("\n");
 
 	/*
 	 * On cougar boards, find how many work queues we can use,
@@ -715,14 +752,10 @@ vs_initialize(struct vs_softc *sc)
 		if (sc->sc_nwq > NUM_WQ)
 			sc->sc_nwq = NUM_WQ;
 
-		sc->sc_width[0] = csb_read(1, CSB_PFECID) & 0x02 ? 16 : 8;
-		targets = sc->sc_width[0] - 1;
-		if (sc->sc_id[1] >= 0) {
-			sc->sc_width[1] =
-			    csb_read(1, CSB_SFECID) & 0x02 ? 16 : 8;
-			targets += sc->sc_width[1] - 1;
-		} else
-			sc->sc_width[1] = 0;
+		targets = vs_identify(&sc->sc_channel[0],
+		    csb_read(1, CSB_PFECID));
+		targets += vs_identify(&sc->sc_channel[1],
+		    csb_read(1, CSB_SFECID));
 
 		if (sc->sc_nwq > targets)
 			sc->sc_nwq = targets;
@@ -733,13 +766,13 @@ vs_initialize(struct vs_softc *sc)
 			 * XXX This might work by moving everything off-board?
 			 */
 			if (sc->sc_nwq < targets)
-				sc->sc_width[1] = 0;
+				sc->sc_channel[1].vc_width = 0;
 		}
 		break;
 	default:
 	case JAGUAR:
 		sc->sc_nwq = JAGUAR_MAX_WQ;
-		sc->sc_width[0] = sc->sc_width[1] = 8;
+		sc->sc_channel[0].vc_width = sc->sc_channel[1].vc_width = 8;
 		break;
 	}
 
@@ -809,8 +842,8 @@ vs_initialize(struct vs_softc *sc)
 		mce_iopb_write(4, WQCF_CMDTO, 4);	/* 1 second */
 		if (sc->sc_bid != JAGUAR)
 			mce_iopb_write(2, WQCF_UNIT,
-			    vs_unit_value(i > sc->sc_width[0],
-				i - sc->sc_width[0], 0));
+			    vs_unit_value(i > sc->sc_channel[0].vc_width,
+				i - sc->sc_channel[0].vc_width, 0));
 
 		vs_bzero(sh_MCE, CQE_SIZE);
 		mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
@@ -842,14 +875,16 @@ vs_initialize(struct vs_softc *sc)
 void
 vs_resync(struct vs_softc *sc)
 {
+	struct vs_channel *vc;
 	int bus, target;
 
 	for (bus = 0; bus < 2; bus++) {
-		if (sc->sc_id[bus] < 0 || sc->sc_width[bus] == 0)
+		vc = &sc->sc_channel[bus];
+		if (vc->vc_id < 0 || vc->vc_width == 0)
 			break;
 
-		for (target = 0; target < sc->sc_width[bus]; target++) {
-			if (target == sc->sc_id[bus])
+		for (target = 0; target < vc->vc_width; target++) {
+			if (target == vc->vc_id)
 				continue;
 
 			/* Wait until we can use the command queue entry. */
@@ -1085,7 +1120,7 @@ vs_find_queue(struct scsi_link *sl, struct vs_softc *sc)
 	if (q == 0)
 		q = sl->adapter_target;
 	if (sl->flags & SDEV_2NDBUS)
-		q += sc->sc_width[0] - 1;	/* map to 8-14 or 16-30 */
+		q += sc->sc_channel[0].vc_width - 1; /* map to 8-14 or 16-30 */
 
 	if ((cb = &sc->sc_cb[q])->cb_xs == NULL)
 		return (cb);

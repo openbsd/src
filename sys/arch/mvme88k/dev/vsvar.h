@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.19 2008/01/01 22:54:28 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.20 2008/01/05 00:34:07 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -90,6 +90,16 @@ struct vs_cb {
 	M328_SG cb_sg;
 };
 
+struct vs_channel {
+	int			vc_id;		/* host id */
+	int			vc_width;	/* number of targets */
+	int			vc_type;	/* channel type */
+#define	VCT_UNKNOWN			0
+#define	VCT_SE				1
+#define	VCT_DIFFERENTIAL		2
+	struct scsi_link	vc_link;
+};
+
 struct vs_softc {
 	struct device		sc_dev;
 	int			sc_bid;		/* board id */
@@ -101,9 +111,7 @@ struct vs_softc {
 	int			sc_ipl;
 	int			sc_evec, sc_nvec;
 	u_int			sc_nwq;		/* number of work queues */
-	int			sc_id[2];	/* host id per bus */
-	int			sc_width[2];	/* number of targets per bus */
-	struct scsi_link	sc_link[2];
+	struct vs_channel	sc_channel[2];
 	struct vs_cb		sc_cb[1 + NUM_WQ];
 };
 
