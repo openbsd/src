@@ -1155,10 +1155,10 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define IS_I865G(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82865_IG)
 
 #ifdef __OpenBSD__
-#define IS_I915G(dev) (dev->pci_device == PCI_PRODUCT_INTEL_82915G_IV)/* || dev->pci_device == PCI_DEVICE_ID_INTELPCI_CHIP_E7221_G)*/
-#define IS_I915GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82915GM_IGD)
+#define IS_I915G(dev) (dev->pci_device == PCI_PRODUCT_INTEL_82915G_IGD_1)/* || dev->pci_device == PCI_DEVICE_ID_INTELPCI_CHIP_E7221_G)*/
+#define IS_I915GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82915GM_IGD_1)
 #define IS_I945G(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82945G_IGD_1)
-#define IS_I945GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82945GM_IGD)
+#define IS_I945GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82945GM_IGD_1)
 #else
 #define IS_I915G(dev) (dev->pci_device == PCI_DEVICE_ID_INTEL_82915G_IG)/* || dev->pci_device == PCI_DEVICE_ID_INTELPCI_CHIP_E7221_G)*/
 #define IS_I915GM(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82915GM_IG)
