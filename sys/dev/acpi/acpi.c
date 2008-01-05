@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.111 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.112 2008/01/05 18:26:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -352,11 +352,14 @@ int acpi_add_device(struct aml_node *node, void *arg);
 int
 acpi_add_device(struct aml_node *node, void *arg)
 {
+	static int nacpicpus = 0;
 	struct device *self = arg;
 	struct acpi_softc *sc = arg;
 	struct acpi_attach_args aaa;
+#ifdef MULTIPROCESSOR
 	struct aml_value res;
-	int proc_id = 0;
+	int proc_id = -1;
+#endif
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_node = node;
@@ -368,18 +371,20 @@ acpi_add_device(struct aml_node *node, void *arg)
 
 	switch (node->value->type) {
 	case AML_OBJTYPE_PROCESSOR:
+		if (nacpicpus >= ncpus)
+			return 0;
+#ifdef MULTIPROCESSOR
 		if (aml_evalnode(sc, aaa.aaa_node, 0, NULL, &res) == 0) {
 			if (res.type == AML_OBJTYPE_PROCESSOR)
 				proc_id = res.v_processor.proc_id;
 			aml_freevalue(&res);
 		}
-#ifdef MULTIPROCESSOR
-		if (proc_id && (proc_id >= LAPIC_MAP_SIZE ||
-		    (acpi_lapic_flags[proc_id] & ACPI_PROC_ENABLE) == 0))
-#else
-		if (proc_id > 0)
-#endif
+		if (proc_id < -1 || proc_id >= LAPIC_MAP_SIZE ||
+		    (acpi_lapic_flags[proc_id] & ACPI_PROC_ENABLE) == 0)
 			return 0;
+#endif
+		nacpicpus++;
+
 		aaa.aaa_name = "acpicpu";
 		break;
 	case AML_OBJTYPE_THERMZONE:
