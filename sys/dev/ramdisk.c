@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.39 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.40 2008/01/05 07:33:37 brad Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -484,6 +484,9 @@ rdioctl(dev, cmd, data, flag, proc)
 			break;
 		}
 		break;
+
+	default:
+		return ENOTTY;
 	}
 	return EINVAL;
 }

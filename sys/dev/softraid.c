@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.89 2007/11/27 17:21:52 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.90 2008/01/05 07:33:37 brad Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -566,7 +566,7 @@ sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		DNPRINTF(SR_D_IOCTL, "invalid ioctl\n");
-		rv = EINVAL;
+		rv = ENOTTY;
 	}
 
 	rw_exit_write(&sc->sc_lock);

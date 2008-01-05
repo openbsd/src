@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.46 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.47 2008/01/05 07:33:37 brad Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -324,7 +324,7 @@ systracef_ioctl(fp, cmd, data, p)
 			ret = EINVAL;
 		break;
 	default:
-		ret = EINVAL;
+		ret = ENOTTY;
 		break;
 	}
 
@@ -399,7 +399,7 @@ systracef_ioctl(fp, cmd, data, p)
 		ret = systrace_getcwd(fst, strp);
 		break;
 	default:
-		ret = EINVAL;
+		ret = ENOTTY;
 		break;
 	}
 
