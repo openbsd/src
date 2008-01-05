@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vs.4,v 1.7 2008/01/01 22:38:49 jmc Exp $
+.\"	$OpenBSD: vs.4,v 1.8 2008/01/05 12:47:23 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2008 $
+.Dd $Mdocdate: January 5 2008 $
 .Dt VS 4 mvme88k
 .Os
 .Sh NAME
 .Nm vs
-.Nd MVME328S High Performance SCSI Controller
+.Nd MVME328, MVME328S and MVME328XT High Performance SCSI Controller
 .Sh SYNOPSIS
 .Cd "vs0 at vmes0 addr 0xffff9000 ipl 2"
 .Cd "vs1 at vmes0 addr 0xffff9800 ipl 2"
@@ -42,21 +42,43 @@
 .Sh DESCRIPTION
 The
 .Nm
-provides access to the MVME328S family of
-.Tn SCSI
-.Tn VME
-I/O boards.
-Depending on the version, it provides a single or dual channel single-ended
-.Tn SCSI
-interface.
-It is attached to the
-.Tn VME
-bus of the system, controlled by the
-.Xr vme 4
-.Tn VMEchip2
-interface chip.
-Several types of both internal and external connectors are provided, also
-depending on the version of the MVME328S.
+provides access to the Interphase 4210
+.Sq Jaguar ,
+4220 and 4220W
+.Sq Cougar ,
+also sold as the Motorola MVME328, MVME328S and MVME328XT
+VME boards.
+Depending on the version, these boards provide up to two
+single-ended or differential, narrow or wide SCSI interfaces.
+Dual-channel boards do not necessarily have channels of the same type.
+On
+.Sq Jaguar
+boards, the
+.Nm
+driver cannot report whether a channel is single-ended or differential.
+It is recommended to be very careful if the type of the channel is not
+known with certitude.
+.Ss MVME328 channel configuration
+The following table lists the channel configuration for Motorola MVME328
+boards.
+.Bl -column "Model Number" "Differential" "Channel 1" -offset indent
+.It Li Model Number Ta Channel 0 Ta Channel 1
+.It Li MVME328-1 Ta Single-ended Ta Missing
+.It Li MVME328-2 Ta Single-ended Ta Single-ended
+.It Li MVME328-3 Ta Differential Ta Missing
+.It Li MVME328-4 Ta Differential Ta Differential
+.El
+.Ss MVME328S channel configuration
+The following table lists the channel configuration for Motorola MVME328S
+boards.
+.Bl -column "Model Number" "Differential" "Channel 1" -offset indent
+.It Li Model Number Ta Channel 0 Ta Channel 1
+.It Li MVME328S-1 Ta Single-ended Ta Missing
+.It Li MVME328S-2 Ta Single-ended Ta Single-ended
+.\" No -3 model
+.It Li MVME328S-4 Ta Differential Ta Differential
+.It Li MVME328S-5 Ta Differential Ta Single-ended
+.El
 .Sh HARDWARE CONFIGURATION
 The card's base address
 .Po
@@ -64,7 +86,9 @@ matching the
 .Em addr
 locator on the configuration line
 .Pc
-is defined through a set of nine jumpers, labeled
+is defined through a set of jumpers on the card.
+.Ss MVME328, MVME328S and Interphase 4210 jumper configuration
+The card address is controlled with nine jumpers, labeled
 .Dq JB1
 on the board, near the fuse in a corner of the card.
 They are contiguous to the
@@ -76,15 +100,32 @@ dual jumper, located immediately to the left of the
 block.
 .Pp
 The only supported configurations are:
-.Bl -column "xxxxxxxxx" "0xffffffff"
+.Bl -column "xxxxxxxxx" "0xffffffff" -offset indent
 .It Li JB1 Ta Address Ta Configuration
-.It " "
 .It Li "___X_XX__" Ta "0xffff9000" Ta "1st board"
 .It Li "_____XX__" Ta "0xffff9800" Ta "2nd board"
 .It Li "____XX_X_" Ta "0xffff4800" Ta "3rd board"
 .It Li "_____X_X_" Ta "0xffff5800" Ta "4th board"
 .It Li "___X___X_" Ta "0xffff7000" Ta "5th board"
 .It Li "_______X_" Ta "0xffff7800" Ta "6th board"
+.El
+.Ss MVME328XT and Interphase 4220 and 4220W jumper configuration
+The card address is controlled with two sets of eleven jumpers \(en
+which label will depend on the card model and artwork revision.
+These jumpers are located between the two VME P1 and P2 connectors.
+With the card oriented so that the VME connectors are at the bottom,
+the bottom row of eleven jumpers should have the leftmost jumper set
+and the ten rightmost jumpers open.
+.Pp
+The only supported configurations for the top row are:
+.Bl -column "xxxxxxxxxxx" "0xffffffff" -offset indent
+.It Li Jumpers Ta Address Ta Configuration
+.It Li "___X_XX____" Ta "0xffff9000" Ta "1st board"
+.It Li "_____XX____" Ta "0xffff9800" Ta "2nd board"
+.It Li "____XX_X___" Ta "0xffff4800" Ta "3rd board"
+.It Li "_____X_X___" Ta "0xffff5800" Ta "4th board"
+.It Li "___X___X___" Ta "0xffff7000" Ta "5th board"
+.It Li "_______X___" Ta "0xffff7800" Ta "6th board"
 .El
 .Sh SEE ALSO
 .Xr cd 4 ,
@@ -101,5 +142,3 @@ The daughterboard providing access to the second SCSI channel does not
 work under
 .Ox
 if the first SCSI channel is empty.
-.Pp
-MVME328XT boards are not supported by this driver yet.
