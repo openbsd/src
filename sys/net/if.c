@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.167 2008/01/05 07:26:04 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.168 2008/01/05 19:08:19 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1290,8 +1290,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCGIFRTLABEL:
-		if (ifp->if_rtlabelid) {
-			label = rtlabel_id2name(ifp->if_rtlabelid);
+		if (ifp->if_rtlabelid &&
+		    (label = rtlabel_id2name(ifp->if_rtlabelid)) != NULL) {
 			strlcpy(ifrtlabelbuf, label, RTLABEL_LEN);
 			error = copyoutstr(ifrtlabelbuf, ifr->ifr_data,
 			    RTLABEL_LEN, &bytesdone);
