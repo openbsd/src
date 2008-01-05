@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.7 2007/05/31 19:19:55 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.8 2008/01/05 12:47:56 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 5 2008 $
 .Dt LE 4 mvme88k
 .Os
 .Sh NAME
 .Nm le
-.Nd AMD LANCE Ethernet device
+.Nd MVME376 AMD LANCE Ethernet device
 .Sh SYNOPSIS
 .Cd "le0 at vmes0 addr 0xffff1200 ipl 1"
 .Cd "le1 at vmes0 addr 0xffff1400 ipl 1"
@@ -41,7 +41,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides access to the AMD 7990/LANCE-based MVME376 VME board.
+driver provides access to the AMD 7990/LANCE-based Interphase 4207
+.Sq Hawk ,
+also sold as Motorola MVME376,
+VME boards.
 This in turn provides an interface to the
 .Tn Ethernet
 network.
@@ -62,7 +65,7 @@ VME connectors, and
 closer to the AM7990DC chip at the bottom edge.
 .Pp
 The only supported configurations are:
-.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff"
+.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff" -offset indent
 .It Li SW1 Ta SW2 Ta SW3 Ta Address
 .It " "
 .It Li "UUU_UU_U" Ta "U__U____" Ta "______U_" Ta "0xffff1200"

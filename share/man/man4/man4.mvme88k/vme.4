@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vme.4,v 1.4 2007/05/31 19:19:55 jmc Exp $
+.\"	$OpenBSD: vme.4,v 1.5 2008/01/05 12:47:56 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 5 2008 $
 .Dt VME 4 mvme88k
 .Os
 .Sh NAME
 .Nm vme
-.Nd VMEchip2 VMEbus interface chip
+.Nd VMEbus interface
 .Sh SYNOPSIS
 .Cd "vme0   at pcctwo0 offset 0x40000"
 .Cd "vme0   at syscon0 offset 0x85000"
@@ -39,48 +39,33 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides access to the VMEchip2 ASIC which interfaces from the
-MC68040-compatible local bus to the
-.Tn VMEbus .
-On
-.Tn MVME187
-and
-.Tn MVME197
-boards it is attached to the
+driver provides access to the VMEbus.
+On MVME187 and MVME197 boards, it operates the VMEchip2 ASIC connected to the
 .Xr pcctwo 4
-.Tn PCCchip2
-local bus controller.
-On
-.Tn MVME188
-boards it attaches to the
+PCCchip2 local bus controller.
+On MVME188 boards, it operates the VMEbus part of the
 .Xr syscon 4
-bus controller.
+device.
 .Pp
-Features Summary:
+The
+.Nm
+driver exposes the D16 and D32 access spaces through the
+.Nm vmes
+and
+.Nm vmel
+drivers, respectively.
 .Pp
-.Bl -bullet -compact
-.It
-Local Bus to VMEbus interface
-.It
-VMEbus to Local Bus interface
-.It
-32-bit Local Bus to VMEbus DMA controller
-.It
-VMEbus interrupter
-.It
-VMEbus system controller
-.It
-Global control status register set
-.It
-Interrupt handler
-.It
-Watchdog timer
-.It
-Two 32-bit tick timers
-.It
-Support for RESET and ABORT switches
+The currently VMEbus drivers supported are:
+.Pp
+.Bl -tag -compact -width 6n -offset indent
+.It Xr le 4
+MVME376 AMD LANCE Ethernet device
+.It Xr vs 4
+MVME328, MVME328S and MVME328XT high performance SCSI controller
+.\" .It Xr vx 4
+.\" MVME332XT high performance serial I/O controller
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr pcctwo 4
-.\" .Xr syscon 4
+.Xr pcctwo 4 ,
+.Xr syscon 4
