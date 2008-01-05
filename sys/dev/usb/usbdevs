@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.329 2007/12/31 19:33:17 deraadt Exp $
+$OpenBSD: usbdevs,v 1.330 2008/01/05 04:57:59 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2257,6 +2257,7 @@ product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
 
 /* SparkLAN products */
+product SPARKLAN RT2573		0x0004	RT2573
 product SPARKLAN RT2870		0x0006	RT2870
 
 /* Speed Dragon Multimedia products */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.66 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.67 2008/01/05 04:57:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -122,7 +122,8 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2671 },
 	{ USB_VENDOR_SITECOMEU,		USB_PRODUCT_SITECOMEU_WL113R2 },
 	{ USB_VENDOR_SITECOMEU,		USB_PRODUCT_SITECOMEU_WL172 },
-	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_RT2573 }
+	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_RT2573 },
+	{ USB_VENDOR_SPARKLAN,		USB_PRODUCT_SPARKLAN_RT2573 }
 };
 
 void		rum_attachhook(void *);
