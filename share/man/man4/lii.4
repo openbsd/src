@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lii.4,v 1.4 2008/01/05 06:51:44 dlg Exp $
+.\"	$OpenBSD: lii.4,v 1.5 2008/01/05 07:29:56 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm lii
-.Nd Attansic L2 10/100/Gigabit Ethernet device
+.Nd Attansic L2 10/100 Ethernet device
 .Sh SYNOPSIS
 .Cd lii* at pci?
 .Sh DESCRIPTION
@@ -47,7 +47,7 @@ Ethernet chipset.
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width 1000baseTX
+.Bl -tag -width 100baseTX
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -74,18 +74,6 @@ option can also be used to select either
 or
 .Cm half-duplex
 modes.
-.It Cm 1000baseT
-Set 1000baseT (Gigabit Ethernet) operation over twisted pair.
-Both
-.Cm full-duplex
-and
-.Cm half-duplex
-modes are supported.
-Both
-.Cm full-duplex
-and
-.Cm half-duplex
-modes are supported.
 .El
 .Pp
 The
@@ -112,6 +100,11 @@ For example,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 4.3 .
 .Sh AUTHORS
 .An -nosplit
 The
