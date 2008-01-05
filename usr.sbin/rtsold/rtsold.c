@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.39 2006/11/07 07:20:16 ray Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.40 2008/01/05 17:03:09 chl Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -89,11 +89,8 @@ static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurab
 static int ifreconfig(char *);
 #endif
 int ifconfig(char *ifname);
-void iflist_init(void);
 static int make_packet(struct ifinfo *);
 static struct timeval *rtsol_check_timer(void);
-static void TIMEVAL_ADD(struct timeval *, struct timeval *, struct timeval *);
-static void TIMEVAL_SUB(struct timeval *, struct timeval *, struct timeval *);
 
 #ifndef SMALL
 static void rtsold_set_dump_file(int);
@@ -376,22 +373,6 @@ bad:
 	free(ifinfo->sdl);
 	free(ifinfo);
 	return(-1);
-}
-
-void
-iflist_init(void)
-{
-	struct ifinfo *ifi, *next;
-
-	for (ifi = iflist; ifi; ifi = next) {
-		next = ifi->next;
-		if (ifi->sdl)
-			free(ifi->sdl);
-		if (ifi->rs_data)
-			free(ifi->rs_data);
-		free(ifi);
-		iflist = NULL;
-	}
 }
 
 #if 0
