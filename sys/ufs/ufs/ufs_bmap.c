@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.25 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.26 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ ufs_bmap(void *v)
  * next block and the disk address of the block (if it is assigned).
  */
 int
-ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
+ufs_bmaparray(struct vnode *vp, daddr64_t bn, daddr64_t *bnp, struct indir *ap,
     int *nump, int *runp)
 {
 	struct inode *ip;
@@ -98,8 +98,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	daddr64_t daddr;
-	long metalbn;
+	daddr64_t daddr, metalbn;
 	int error, maxrun = 0, num;
 
 	ip = VTOI(vp);
@@ -184,13 +183,13 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
 
 #ifdef FFS2
 		if (ip->i_ump->um_fstype == UM_UFS2) {
-			daddr = ((daddr64_t *)bp->b_data)[xap->in_off];
+			daddr = ((int64_t *)bp->b_data)[xap->in_off];
 			if (num == 1 && daddr && runp)
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
-					((daddr64_t *)bp->b_data)[bn - 1],
-					((daddr64_t *)bp->b_data)[bn]);
+					((int64_t *)bp->b_data)[bn - 1],
+					((int64_t *)bp->b_data)[bn]);
 				    ++bn, ++*runp);
 
                         continue;
@@ -198,13 +197,13 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
 
 #endif /* FFS2 */
 
-		daddr = ((daddr_t *)bp->b_data)[xap->in_off];
+		daddr = ((int32_t *)bp->b_data)[xap->in_off];
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 			    bn < MNINDIR(ump) && *runp < maxrun &&
 			    is_sequential(ump,
-				((daddr_t *)bp->b_data)[bn - 1],
-				((daddr_t *)bp->b_data)[bn]);
+				((int32_t *)bp->b_data)[bn - 1],
+				((int32_t *)bp->b_data)[bn]);
 			    ++bn, ++*runp);
 	}
 	if (bp)
@@ -225,9 +224,9 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
+ufs_getlbns(struct vnode *vp, daddr64_t bn, struct indir *ap, int *nump)
 {
-	long metalbn, realbn;
+	daddr64_t metalbn, realbn;
 	struct ufsmount *ump;
 	int64_t blockcnt;
 	int i, numlevels, off;
@@ -237,8 +236,8 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 		*nump = 0;
 	numlevels = 0;
 	realbn = bn;
-	if ((long)bn < 0)
-		bn = -(long)bn;
+	if (bn < 0)
+		bn = -bn;
 
 #ifdef DIAGNOSTIC
 	if (realbn < 0 && realbn > -NDADDR) {

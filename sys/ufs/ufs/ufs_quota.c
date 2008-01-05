@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.29 2007/10/01 16:39:30 krw Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.30 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ getinoquota(struct inode *ip)
  * Update disk usage, and take corrective action.
  */
 int 
-ufs_quota_alloc_blocks2(struct inode *ip, int32_t change, 
+ufs_quota_alloc_blocks2(struct inode *ip, daddr64_t change,
     struct ucred *cred, enum ufs_quota_flags flags)
 {
 	struct dquot *dq;
@@ -218,7 +218,7 @@ ufs_quota_alloc_blocks2(struct inode *ip, int32_t change,
 }
 
 int
-ufs_quota_free_blocks2(struct inode *ip, int32_t change, 
+ufs_quota_free_blocks2(struct inode *ip, daddr64_t change,
     struct ucred *cred, enum ufs_quota_flags flags)
 {
 	struct dquot *dq;

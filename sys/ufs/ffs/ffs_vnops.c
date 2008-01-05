@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.46 2007/09/23 20:15:07 millert Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.47 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ ffs_write(void *v)
 	struct fs *fs;
 	struct buf *bp;
 	struct proc *p;
-	daddr_t lbn;
+	daddr64_t lbn;
 	off_t osize;
 	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
 

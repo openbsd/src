@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.14 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.15 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred, 
+ext2fs_buf_alloc(struct inode *ip, daddr64_t bn, int size, struct ucred *cred, 
     struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;

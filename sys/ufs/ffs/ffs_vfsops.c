@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.111 2007/09/10 20:57:04 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.112 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -554,7 +554,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 
 	fs = VFSTOUFS(mountp)->um_fs;
 
-	error = bread(devvp, (daddr_t)(fs->fs_sblockloc / size), SBSIZE,
+	error = bread(devvp, (daddr64_t)(fs->fs_sblockloc / size), SBSIZE,
 	    NOCRED, &bp);
 	if (error) {
 		brelse(bp);

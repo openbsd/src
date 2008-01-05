@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.25 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.26 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -64,12 +64,12 @@ int ext2fs_realloccg(struct inode *, int32_t, int32_t, int, int,
 int ext2fs_reallocblks(void *);
 int ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *, 
     struct vnode **);
-daddr_t ext2fs_blkpref(struct inode *, int32_t, int, int32_t *);
+daddr64_t ext2fs_blkpref(struct inode *, int32_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, int32_t);
 int ext2fs_inode_free(struct inode *pip, ino_t ino, mode_t mode);
 
 /* ext2fs_balloc.c */
-int ext2fs_buf_alloc(struct inode *, daddr_t, int, struct ucred *,
+int ext2fs_buf_alloc(struct inode *, daddr64_t, int, struct ucred *,
 			struct buf **, int);
 
 /* ext2fs_bmap.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.24 2007/06/22 09:55:17 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.25 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ ext2fs_dirpref(struct m_ext2fs *fs)
  * contigously. The two fields of the ext2 inode extension (see
  * ufs/ufs/inode.h) help this.
  */
-int32_t
+daddr64_t
 ext2fs_blkpref(struct inode *ip, int32_t lbn, int indx, int32_t *bap)
 {
 	struct m_ext2fs *fs;

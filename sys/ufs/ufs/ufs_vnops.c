@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.84 2007/10/29 17:06:20 chl Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.85 2008/01/05 19:49:26 otto Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	uid_t ouid;
 	gid_t ogid;
 	int error = 0;
-	daddr_t change;
+	daddr64_t change;
 	enum ufs_quota_flags quota_flags = 0;
 
 	if (uid == (uid_t)VNOVAL)
@@ -1565,10 +1565,10 @@ ufs_strategy(void *v)
 			splx(s);
 			return (error);
 		}
-		if ((long)bp->b_blkno == -1)
+		if (bp->b_blkno == -1)
 			clrbuf(bp);
 	}
-	if ((long)bp->b_blkno == -1) {
+	if (bp->b_blkno == -1) {
 		s = splbio();
 		biodone(bp);
 		splx(s);
