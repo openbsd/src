@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.5 2008/01/05 03:49:06 deraadt Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.6 2008/01/05 07:51:04 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -256,6 +256,9 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	printf(": %s, address %s\n", pci_intr_string(sc->sc_pc, ih),
+	    ether_sprintf(sc->sc_ac.ac_enaddr));
+
 	timeout_set(&sc->sc_tick, atl2_tick, sc);
 
 	sc->sc_mii.mii_ifp = ifp;
@@ -277,9 +280,6 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = atl2_watchdog;
 	ifp->if_init = atl2_init;
 	IFQ_SET_READY(&ifp->if_snd);
-
-	printf("%s, address %s\n", pci_intr_string(sc->sc_pc, ih),
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
