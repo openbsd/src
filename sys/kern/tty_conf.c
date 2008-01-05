@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.11 2006/08/03 16:13:24 mbalmer Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.12 2008/01/05 17:33:28 mbalmer Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -91,6 +91,13 @@ int	nmeaclose(struct tty *, int);
 int	nmeainput(int, struct tty *);
 #endif
 
+#include "msts.h"
+#if NMSTS > 0
+int	mstsopen(dev_t, struct tty *);
+int	mstsclose(struct tty *, int);
+int	mstsinput(int, struct tty *);
+#endif
+
 struct	linesw linesw[] =
 {
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
@@ -138,6 +145,14 @@ struct	linesw linesw[] =
 #if NNMEA > 0
 	{ nmeaopen, nmeaclose, ttread, ttwrite, nullioctl,
 	  nmeainput, ttstart, ttymodem },		/* 7- NMEADISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+#if NMSTS > 0
+	{ mstsopen, mstsclose, ttread, ttwrite, nullioctl,
+	  mstsinput, ttstart, ttymodem },		/* 8- MSTSDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },

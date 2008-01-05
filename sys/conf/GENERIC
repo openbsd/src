@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.138 2007/11/28 12:25:39 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.139 2008/01/05 17:33:28 mbalmer Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -75,6 +75,7 @@ pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
 
 pseudo-device	pty	16	# initial number of pseudo-terminals
 pseudo-device	nmea	1	# NMEA 0183 line discipline
+pseudo-device	msts	1	# MSTS line discipline
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	ksyms	1	# kernel symbols device

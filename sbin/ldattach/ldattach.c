@@ -1,7 +1,7 @@
-/*	$OpenBSD: ldattach.c,v 1.3 2007/11/13 19:32:34 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.4 2008/01/05 17:33:28 mbalmer Exp $	*/
 
 /*
- * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-7dehmo] [-s baudrate] "
+	fprintf(stderr, "usage: %s [-27dehmo] [-s baudrate] "
 	    "[-t cond] discipline device\n", __progname);
 	exit(1);
 }
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 	sigset_t sigset;
 	pid_t ppid;
 	int ch, fd, ldisc, nodaemon = 0;
-	int  bits = 0, parity = 0, flowcl = 0, hupcl = 1;
+	int  bits = 0, parity = 0, stop = 0, flowcl = 0, hupcl = 1;
 	speed_t speed = 0;
 	char devn[32], *dev, *disc;
 
@@ -70,8 +70,11 @@ main(int argc, char *argv[])
 	if ((ppid = getppid()) == 1)
 		nodaemon = 1;
 
-	while ((ch = getopt(argc, argv, "7dehmos:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "27dehmos:t:")) != -1) {
 		switch (ch) {
+		case '2':
+			stop = 2;
+			break;
 		case '7':
 			bits = 7;
 			break;
@@ -143,6 +146,8 @@ main(int argc, char *argv[])
 		ldisc = NMEADISC;
 		if (speed == 0)
 			speed = B4800;	/* default is 4800 baud for nmea */
+	} else if (!strcmp(disc, "msts")) {
+		ldisc = MSTSDISC;
 	} else {
 		syslog(LOG_ERR, "unknown line discipline %s", disc);
 		goto bail_out;
@@ -179,6 +184,11 @@ main(int argc, char *argv[])
 		tty.c_cflag |= PARODD;
 	else
 		tty.c_cflag &= ~PARODD;
+
+	if (stop == 2)
+		tty.c_cflag |= CSTOPB;
+	else
+		tty.c_cflag &= ~CSTOPB;
 
 	if (flowcl)
 		tty.c_cflag |= CRTSCTS;
