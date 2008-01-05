@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.38 2007/06/02 01:29:11 pvalchev Exp $	*/
+/*	$OpenBSD: misc.c,v 1.39 2008/01/05 16:59:06 chl Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.38 2007/06/02 01:29:11 pvalchev Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.39 2008/01/05 16:59:06 chl Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -62,34 +62,6 @@ strcmp_until(const char *left, const char *right, char until) {
 		return (0);
 	}
 	return (*left - *right);
-}
-
-/* strdtb(s) - delete trailing blanks in string 's' and return new length
- */
-int
-strdtb(char *s) {
-	char	*x = s;
-
-	/* scan forward to the null
-	 */
-	while (*x)
-		x++;
-
-	/* scan backward to either the first character before the string,
-	 * or the last non-blank in the string, whichever comes first.
-	 */
-	do	{x--;}
-	while (x >= s && isspace((unsigned char)*x));
-
-	/* one character beyond where we stopped above is where the null
-	 * goes.
-	 */
-	*++x = '\0';
-
-	/* the difference between the position of the null character and
-	 * the position of the first character of the string is the length.
-	 */
-	return (x - s);
 }
 
 int
