@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.17 2006/09/22 15:29:57 pedro Exp $
+	$OpenBSD: syscalls.master,v 1.18 2008/01/05 00:36:11 miod Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -148,7 +148,7 @@
 70	NOARGS		{ int sys_sstk(int incr); }
 71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
-72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
+72	OBSOL		vadvise
 73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
 74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
 			    int prot); }

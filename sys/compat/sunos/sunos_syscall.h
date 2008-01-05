@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_syscall.h,v 1.19 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: sunos_syscall.h,v 1.20 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call numbers.
@@ -163,9 +163,7 @@
 /* syscall: "mmap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
 #define	SUNOS_SYS_mmap	71
 
-/* syscall: "vadvise" ret: "int" args: "int" */
-#define	SUNOS_SYS_vadvise	72
-
+				/* 72 is obsolete vadvise */
 /* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
 #define	SUNOS_SYS_munmap	73
 

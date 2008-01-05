@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsdos_syscall.h,v 1.19 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: bsdos_syscall.h,v 1.20 2008/01/05 00:36:10 miod Exp $	*/
 
 /*
  * System call numbers.
@@ -217,9 +217,7 @@
 /* syscall: "ommap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
 #define	BSDOS_SYS_ommap	71
 
-/* syscall: "vadvise" ret: "int" args: "int" */
-#define	BSDOS_SYS_vadvise	72
-
+				/* 72 is obsolete vadvise */
 /* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
 #define	BSDOS_SYS_munmap	73
 

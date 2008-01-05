@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_syscall.h,v 1.14 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: ultrix_syscall.h,v 1.15 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call numbers.
@@ -160,9 +160,7 @@
 /* syscall: "mmap" ret: "int" args: "caddr_t" "size_t" "int" "u_int" "int" "long" */
 #define	ULTRIX_SYS_mmap	71
 
-/* syscall: "vadvise" ret: "int" args: "int" */
-#define	ULTRIX_SYS_vadvise	72
-
+				/* 72 is obsolete vadvise */
 /* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
 #define	ULTRIX_SYS_munmap	73
 

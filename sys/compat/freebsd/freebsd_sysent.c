@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_sysent.c,v 1.35 2007/11/28 13:48:31 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_sysent.c,v 1.36 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call switch table.
@@ -178,8 +178,8 @@ struct sysent freebsd_sysent[] = {
 	    sys_sstk },				/* 70 = sstk */
 	{ 6, s(struct compat_43_sys_mmap_args), 0,
 	    compat_43_sys_mmap },		/* 71 = ommap */
-	{ 1, s(struct sys_ovadvise_args), 0,
-	    sys_ovadvise },			/* 72 = vadvise */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 72 = obsolete vadvise */
 	{ 2, s(struct sys_munmap_args), 0,
 	    sys_munmap },			/* 73 = munmap */
 	{ 3, s(struct sys_mprotect_args), 0,

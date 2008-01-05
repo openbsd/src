@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.32 2007/11/28 13:47:02 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.33 2008/01/05 00:36:13 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -158,7 +158,7 @@
 70	NOARGS		{ int sys_sstk(int incr); }
 71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
-72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
+72	OBSOL		vadvise
 73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
 74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
 			    int prot); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.31 2007/12/16 14:32:02 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.32 2008/01/05 00:36:13 miod Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -150,26 +150,6 @@ uvm_grow(p, sp)
 #endif
 	if (vm->vm_ssize + si <= atop(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		vm->vm_ssize += si;
-}
-
-/*
- * sys_oadvise: old advice system call
- */
-
-/* ARGSUSED */
-int
-sys_ovadvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct sys_ovadvise_args /* {
-		syscallarg(int) anom;
-	} */ *uap = v;
-#endif
-
-	return (EINVAL);
 }
 
 /*

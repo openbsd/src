@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_sysent.c,v 1.19 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: sunos_sysent.c,v 1.20 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call switch table.
@@ -173,8 +173,8 @@ struct sysent sunos_sysent[] = {
 	    sys_sstk },				/* 70 = sstk */
 	{ 6, s(struct sunos_sys_mmap_args), 0,
 	    sunos_sys_mmap },			/* 71 = mmap */
-	{ 1, s(struct sys_ovadvise_args), 0,
-	    sys_ovadvise },			/* 72 = vadvise */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 72 = obsolete vadvise */
 	{ 2, s(struct sys_munmap_args), 0,
 	    sys_munmap },			/* 73 = munmap */
 	{ 3, s(struct sys_mprotect_args), 0,

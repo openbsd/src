@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_syscall.h,v 1.12 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: osf1_syscall.h,v 1.13 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call numbers.
@@ -164,6 +164,7 @@
 /* syscall: "mmap" ret: "caddr_t" args: "caddr_t" "size_t" "int" "int" "int" "off_t" */
 #define	OSF1_SYS_mmap	71
 
+				/* 72 is obsolete vadvise */
 /* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
 #define	OSF1_SYS_munmap	73
 

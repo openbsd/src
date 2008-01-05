@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_sysent.c,v 1.12 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: osf1_sysent.c,v 1.13 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call switch table.
@@ -169,7 +169,7 @@ struct sysent osf1_sysent[] = {
 	{ 6, s(struct osf1_sys_mmap_args), 0,
 	    osf1_sys_mmap },			/* 71 = mmap */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 72 = unimplemented ovadvise */
+	    sys_nosys },			/* 72 = obsolete vadvise */
 	{ 2, s(struct sys_munmap_args), 0,
 	    sys_munmap },			/* 73 = munmap */
 	{ 3, s(struct osf1_sys_mprotect_args), 0,

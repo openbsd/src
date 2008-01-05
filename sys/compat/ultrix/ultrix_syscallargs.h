@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_syscallargs.h,v 1.15 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: ultrix_syscallargs.h,v 1.16 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call argument lists.
@@ -241,7 +241,6 @@ int	sys_vfork(struct proc *, void *, register_t *);
 int	sys_sbrk(struct proc *, void *, register_t *);
 int	sys_sstk(struct proc *, void *, register_t *);
 int	ultrix_sys_mmap(struct proc *, void *, register_t *);
-int	sys_ovadvise(struct proc *, void *, register_t *);
 int	sys_munmap(struct proc *, void *, register_t *);
 int	sys_mprotect(struct proc *, void *, register_t *);
 int	sys_madvise(struct proc *, void *, register_t *);

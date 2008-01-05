@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_syscalls.c,v 1.14 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: ultrix_syscalls.c,v 1.15 2008/01/05 00:36:13 miod Exp $	*/
 
 /*
  * System call names.
@@ -84,7 +84,7 @@ char *ultrix_syscallnames[] = {
 	"sbrk",			/* 69 = sbrk */
 	"sstk",			/* 70 = sstk */
 	"mmap",			/* 71 = mmap */
-	"vadvise",			/* 72 = vadvise */
+	"#72 (obsolete vadvise)",		/* 72 = obsolete vadvise */
 	"munmap",			/* 73 = munmap */
 	"mprotect",			/* 74 = mprotect */
 	"madvise",			/* 75 = madvise */
