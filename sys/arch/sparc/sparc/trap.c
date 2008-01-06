@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2007/05/08 07:23:18 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2008/01/06 21:15:58 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -657,7 +657,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	ftype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
+#if defined(SUN4)
 		extern char Lfsbail[];
+#endif
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 			printf("text fault: pc=0x%x ser=%b\n", pc,
@@ -665,12 +667,14 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
+#if defined(SUN4)
 		/*
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
 		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
 			goto kfault;
+#endif
 
 		/*
 		 * During autoconfiguration, faults are never OK unless
