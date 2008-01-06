@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.23 2008/01/06 09:53:17 mbalmer Exp $
+.\"	$OpenBSD: strip.4,v 1.24 2008/01/06 18:40:24 jmc Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -60,7 +60,7 @@ SLIP pseudo-device driver.
 A
 .Nm
 device is attached to a tty line with
-.Xr slattach 8 .
+.Xr ldattach 8 .
 Once attached, the interface is configured via
 .Xr ifconfig 8 .
 The major difference between the
@@ -150,7 +150,7 @@ The
 driver automatically detects if the radio has fallen out of starmode,
 and resets it back into starmode, if the baud rate was set correctly
 by
-.Xr slattach 8 .
+.Xr ldattach 8 .
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr arp 4 ,
