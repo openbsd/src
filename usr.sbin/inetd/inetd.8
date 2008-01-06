@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.30 2007/05/31 19:20:25 jmc Exp $
+.\"	$OpenBSD: inetd.8,v 1.31 2008/01/06 13:49:42 jmc Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 6 2008 $
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -65,6 +65,11 @@ Turns on debugging.
 .It Fl R Ar rate
 Specify the maximum number of times a service can be invoked
 in one minute; the default is 256.
+If a service exceeds this limit,
+.Nm
+will log the problem
+and stop servicing requests for the specific service for ten minutes.
+See also the wait/nowait configuration fields below.
 .El
 .Pp
 Upon execution,
@@ -251,13 +256,15 @@ suffix (separated from
 .Dq wait
 or
 .Dq nowait
-by a dot) specifies the maximum number of server instances that may be
-spawned from
-.Nm inetd
-within an interval of 60 seconds.
-When omitted,
-.Dq max
-defaults to 256.
+by a dot) specifies the maximum number of times a service can be invoked
+in one minute; the default is 256.
+If a service exceeds this limit,
+.Nm
+will log the problem
+and stop servicing requests for the specific service for ten minutes.
+See also the
+.Fl R
+option above.
 .Pp
 Stream servers are usually marked as
 .Dq nowait
