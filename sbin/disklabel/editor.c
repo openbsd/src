@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.142 2008/01/06 21:25:38 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.143 2008/01/06 22:28:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.142 2008/01/06 21:25:38 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.143 2008/01/06 22:28:13 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -438,7 +438,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	struct diskchunk *chunks;
 	char buf[2];
 	int i, partno;
-	u_int64_t ui, old_offset, old_size, new_offset, new_size;
+	u_int64_t ui, new_offset, new_size;
 
 	/* XXX - prompt user to steal space from another partition instead */
 #ifdef SUN_CYLCHECK
@@ -509,8 +509,6 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 #endif
 	pp->p_cpg = 1;
-	old_offset = DL_GETPOFFSET(pp);
-	old_size = DL_GETPSIZE(pp);
 
 	/* Get offset */
 	if (get_offset(lp, partno) != 0) {
@@ -1034,12 +1032,6 @@ has_overlap(struct disklabel *lp, u_int64_t *freep, int resolve)
 		for (j = i + 1; j < npartitions; j++) {
 			/* `if last_sec_in_part + 1 > first_sec_in_next_part' */
 			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) > DL_GETPOFFSET(spp[j])) {
-				/* Don't print, just return */
-				if (resolve == -1) {
-					(void)free(spp);
-					return(1);
-				}
-
 				/* Overlap!  Convert to real part numbers. */
 				i = ((char *)spp[i] - (char *)lp->d_partitions)
 				    / sizeof(**spp);
