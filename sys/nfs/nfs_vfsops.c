@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.68 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.69 2008/01/06 18:38:32 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ nfs_statfs(mp, sbp, p)
 	caddr_t bpos, dpos, cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
-	struct mbuf *mreq, *mrep = NULL, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep = NULL, *md, *mb;
 	struct ucred *cred;
 	struct nfsnode *np;
 	u_quad_t tquad;
@@ -192,7 +192,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	u_int32_t *tl, pref, max;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
