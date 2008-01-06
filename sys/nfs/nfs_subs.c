@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.68 2007/12/13 18:32:55 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.69 2008/01/06 17:38:23 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -556,7 +556,7 @@ void
 nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
     struct mbuf *mrest, int mrest_len)
 {
-	struct mbuf	*mb, *mb2;
+	struct mbuf	*mb;
 	u_int32_t	*tl;
 	u_int32_t	xid;
 	caddr_t		bpos;
@@ -599,7 +599,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	bpos = mtod(mb, caddr_t);
 
 	/* First the RPC header. */
-	nfsm_build(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
+	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED, &bpos);
 
 	/* Get a new (non-zero) xid */
 	do {
@@ -624,7 +624,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	/* The Authorization cred and its verifier */
 	switch (auth_type) {
 	case RPCAUTH_UNIX:
-		nfsm_build(tl, u_int32_t *, auth_len + 4 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, auth_len + 4 * NFSX_UNSIGNED, &bpos);
 		*tl++ = txdr_unsigned(RPCAUTH_UNIX);
 		*tl++ = txdr_unsigned(authsiz);
 
@@ -1464,15 +1464,15 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
 	struct mbuf **mbp;
 	char **bposp;
 {
-	struct mbuf *mb = *mbp, *mb2;
+	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
 	u_int32_t *tl;
 
 	if (before_ret) {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	} else {
-		nfsm_build(tl, u_int32_t *, 7 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, 7 * NFSX_UNSIGNED, &bpos);
 		*tl++ = nfs_true;
 		txdr_hyper(before_vap->va_size, tl);
 		tl += 2;
@@ -1493,16 +1493,16 @@ nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp)
 	struct mbuf **mbp;
 	char **bposp;
 {
-	struct mbuf *mb = *mbp, *mb2;
+	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
 	u_int32_t *tl;
 	struct nfs_fattr *fp;
 
 	if (after_ret) {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED + NFSX_V3FATTR);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED + NFSX_V3FATTR, &bpos);
 		*tl++ = nfs_true;
 		fp = (struct nfs_fattr *)tl;
 		nfsm_srvfattr(nfsd, after_vap, fp);
@@ -1927,7 +1927,7 @@ nfsrv_setcred(incred, outcred)
 void
 nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full, caddr_t *bposp)
 {
-	struct mbuf *mb, *mb2;
+	struct mbuf *mb;
 	u_int32_t *tl;
 	caddr_t bpos;
 
@@ -1935,64 +1935,93 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full, caddr_t *bposp)
 	bpos = *bposp;
 
 	if (a->va_mode != (mode_t)VNOVAL) {
-		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned(a->va_mode);
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	}
 	if (full && a->va_uid != (uid_t)VNOVAL) {
-		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned(a->va_uid);
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	}
 	if (full && a->va_gid != (gid_t)VNOVAL) {
-		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned((a)->va_gid);
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	}
 	if (full && a->va_size != VNOVAL) {
-		nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
 		*tl++ = nfs_true;
 		txdr_hyper(a->va_size, tl);
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = nfs_false;
 	}
 	if (a->va_atime.tv_sec != VNOVAL) {
 		if (a->va_atime.tv_sec != time_second) {
-			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_atime, tl);
 		} else {
-			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
 		}
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
 	if (a->va_mtime.tv_sec != VNOVAL) {
 		if (a->va_mtime.tv_sec != time_second) {
-			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_mtime, tl);
 		} else {
-			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
 		}
 	} else {
-		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
 
 	*bposp = bpos;
 	*mp = mb;
+}
+
+/*
+ * Ensure a contiguous buffer len bytes long
+ */
+void *
+nfsm_build(struct mbuf **mp, u_int len, caddr_t *bposp)
+{
+	struct mbuf *mb, *mb2;
+	caddr_t bpos;
+
+	mb = *mp;
+	bpos = *bposp;
+
+	if (len > M_TRAILINGSPACE(mb)) {
+		MGET(mb2, M_WAIT, MT_DATA);
+		if (len > MLEN)
+			panic("build > MLEN");
+		mb->m_next = mb2;
+		mb = mb2;
+		mb->m_len = 0;
+		bpos = mtod(mb, caddr_t);
+	}
+	mb->m_len += len;
+
+	*bposp = bpos + len;
+	*mp = mb;
+
+	return (bpos);
 }

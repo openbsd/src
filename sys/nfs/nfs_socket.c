@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.56 2007/12/28 17:25:18 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.57 2008/01/06 17:38:23 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1056,7 +1056,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 	u_int32_t *tl;
 	struct mbuf *mreq;
 	caddr_t bpos;
-	struct mbuf *mb, *mb2;
+	struct mbuf *mb;
 
 	MGETHDR(mreq, M_WAIT, MT_DATA);
 	mb = mreq;
@@ -1113,7 +1113,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 			*tl++ = rpc_auth_kerb;
 			*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
 			*tl = ktvout.tv_sec;
-			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
 			*tl++ = ktvout.tv_usec;
 			*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
 		    } else {
@@ -1130,7 +1130,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 			break;
 		case EPROGMISMATCH:
 			*tl = txdr_unsigned(RPC_PROGMISMATCH);
-			nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 			*tl++ = txdr_unsigned(2);
 			*tl = txdr_unsigned(3);
 			break;
@@ -1143,7 +1143,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 		default:
 			*tl = 0;
 			if (err != NFSERR_RETVOID) {
-				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
+				tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 				if (err)
 				    *tl = txdr_unsigned(nfsrv_errmap(nd, err));
 				else

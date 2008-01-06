@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.23 2007/12/13 18:32:55 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.24 2008/01/06 17:38:23 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -68,20 +68,6 @@
  * unions.
  */
 
-#define	nfsm_build(a,c,s) \
-		{ if ((s) > M_TRAILINGSPACE(mb)) { \
-			MGET(mb2, M_WAIT, MT_DATA); \
-			if ((s) > MLEN) \
-				panic("build > MLEN"); \
-			mb->m_next = mb2; \
-			mb = mb2; \
-			mb->m_len = 0; \
-			bpos = mtod(mb, caddr_t); \
-		} \
-		(a) = (c)(bpos); \
-		mb->m_len += (s); \
-		bpos += (s); }
-
 #define	nfsm_dissect(a, c, s) \
 		{ t1 = mtod(md, caddr_t)+md->m_len-dpos; \
 		if (t1 >= (s)) { \
@@ -99,7 +85,7 @@
 	      { if (v3) { \
 			t2 = nfsm_rndup(VTONFS(v)->n_fhsize) + NFSX_UNSIGNED; \
 			if (t2 <= M_TRAILINGSPACE(mb)) { \
-				nfsm_build(tl, u_int32_t *, t2); \
+				tl = nfsm_build(&mb, t2, &bpos); \
 				*tl++ = txdr_unsigned(VTONFS(v)->n_fhsize); \
 				*(tl + ((t2>>2) - 2)) = 0; \
 				bcopy((caddr_t)VTONFS(v)->n_fhp,(caddr_t)tl, \
@@ -112,22 +98,22 @@
 				goto nfsmout; \
 			} \
 		} else { \
-			nfsm_build(cp, caddr_t, NFSX_V2FH); \
+			cp = nfsm_build(&mb, NFSX_V2FH, &bpos); \
 			bcopy((caddr_t)VTONFS(v)->n_fhp, cp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvfhtom(f, v3) \
 		{ if (v3) { \
-			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED + NFSX_V3FH); \
+			tl = nfsm_build(&mb, NFSX_UNSIGNED + NFSX_V3FH,&bpos); \
 			*tl++ = txdr_unsigned(NFSX_V3FH); \
 			bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
 		} else { \
-			nfsm_build(cp, caddr_t, NFSX_V2FH); \
+			cp = nfsm_build(&mb, NFSX_V2FH, &bpos); \
 			bcopy((caddr_t)(f), cp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvpostop_fh(f) \
-		{ nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED + NFSX_V3FH); \
+		{ tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED + NFSX_V3FH, &bpos); \
 		*tl++ = nfs_true; \
 		*tl++ = txdr_unsigned(NFSX_V3FH); \
 		bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
@@ -272,7 +258,7 @@
 		} \
 		t2 = nfsm_rndup(s)+NFSX_UNSIGNED; \
 		if (t2 <= M_TRAILINGSPACE(mb)) { \
-			nfsm_build(tl,u_int32_t *,t2); \
+			tl = nfsm_build(&mb, t2, &bpos); \
 			*tl++ = txdr_unsigned(s); \
 			*(tl+((t2>>2)-2)) = 0; \
 			bcopy((caddr_t)(a), (caddr_t)tl, (s)); \
