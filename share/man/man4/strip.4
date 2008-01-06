@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.22 2007/05/31 19:19:52 jmc Exp $
+.\"	$OpenBSD: strip.4,v 1.23 2008/01/06 09:53:17 mbalmer Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -12,7 +12,7 @@
 .\" Stanford University makes no representations about the suitability
 .\" of this software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 6 2008 $
 .Dt STRIP 4
 .Os
 .Sh NAME
@@ -155,8 +155,8 @@ by
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
+.Xr ldattach 8 ,
 .Xr route 8 ,
-.Xr slattach 8 ,
 .Xr slip 8
 .Sh HISTORY
 .Nm
@@ -181,7 +181,7 @@ has not been widely tested on a variety of lower-level tty drivers.
 The detection and resetting of radios that crash out of Starmode does
 not always work in this version of the driver.
 One workaround is to kill the
-.Xr slattach 8
+.Xr ldattach 8
 process, ifconfig the
 .Nm
-interface down, and then start a new slattach and rerun ifconfig.
+interface down, and then start a new ldattach and rerun ifconfig.
