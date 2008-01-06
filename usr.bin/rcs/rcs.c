@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.42 2007/08/27 19:18:05 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.43 2008/01/06 09:12:17 sturm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,6 +72,7 @@
 #define RCS_TOK_LOG		21
 #define RCS_TOK_TEXT		22
 #define RCS_TOK_STRICT		23
+#define RCS_TOK_COMMITID	24
 
 #define RCS_ISKEY(t)	(((t) >= RCS_TOK_HEAD) && ((t) <= RCS_TOK_BRANCHES))
 
@@ -195,6 +196,7 @@ static struct rcs_key {
 	{ "branch",   RCS_TOK_BRANCH,   RCS_TOK_NUM,    RCS_VOPT     },
 	{ "branches", RCS_TOK_BRANCHES, RCS_TOK_NUM,    RCS_VOPT     },
 	{ "comment",  RCS_TOK_COMMENT,  RCS_TOK_STRING, RCS_VOPT     },
+	{ "commitid", RCS_TOK_COMMITID, RCS_TOK_ID,     0            },
 	{ "date",     RCS_TOK_DATE,     RCS_TOK_NUM,    0            },
 	{ "desc",     RCS_TOK_DESC,     RCS_TOK_STRING, RCS_NOSCOL   },
 	{ "expand",   RCS_TOK_EXPAND,   RCS_TOK_STRING, RCS_VOPT     },
@@ -1928,6 +1930,7 @@ rcs_parse_delta(RCSFILE *rfp)
 		case RCS_TOK_AUTHOR:
 		case RCS_TOK_STATE:
 		case RCS_TOK_NEXT:
+		case RCS_TOK_COMMITID:
 			ntok = rcs_gettok(rfp);
 			if (ntok == RCS_TOK_SCOLON) {
 				if (rk->rk_flags & RCS_VOPT)
@@ -1998,6 +2001,8 @@ rcs_parse_delta(RCSFILE *rfp)
 				tokstr = NULL;
 			} else if (tok == RCS_TOK_NEXT) {
 				rcsnum_aton(tokstr, NULL, rdp->rd_next);
+			} else if (tok == RCS_TOK_COMMITID) {
+				/* XXX just parse it, no action yet */
 			}
 			break;
 		case RCS_TOK_BRANCHES:
@@ -2482,7 +2487,9 @@ rcs_gettok(RCSFILE *rfp)
 			}
 			if (bp == pdp->rp_bufend)
 				break;
-			if (!isdigit(ch) && ch != '.') {
+			if (isalpha(ch) && ch != '.') {
+				type = RCS_TOK_ID;
+			} else if (!isdigit(ch) && ch != '.') {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}
