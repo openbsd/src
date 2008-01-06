@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.140 2008/01/06 16:44:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.141 2008/01/06 17:27:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.140 2008/01/06 16:44:54 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.141 2008/01/06 17:27:11 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1608,30 +1608,15 @@ find_bounds(struct disklabel *lp)
 void
 editor_countfree(struct disklabel *lp, u_int64_t *freep)
 {
+	struct diskchunk *chunks;
 	struct partition *pp;
 	int i;
 
-	*freep = ending_sector - starting_sector;
+	*freep = 0;
+	chunks = free_chunks(lp);
 
-	for (i = 0; i < lp->d_npartitions; i++) {
-		pp = &lp->d_partitions[i];
-		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-		    DL_GETPSIZE(pp) > 0) {
-			u_int64_t s = DL_GETPOFFSET(pp);
-			u_int64_t sz = DL_GETPSIZE(pp);
-			u_int64_t e = s + sz;
-
-			/* do not count if completely out of 'b' area */
-			if (e < starting_sector || s >= ending_sector)
-				continue;
-
-			if (s < starting_sector)
-				sz -= starting_sector - s;
-			if (e > ending_sector)
-				sz -= e - ending_sector;
-			*freep -= sz;
-		}
-	}
+	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++)
+		*freep += chunks[i].stop - chunks[i].start;
 }
 
 void
