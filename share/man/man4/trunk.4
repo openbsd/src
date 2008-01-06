@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.21 2008/01/06 13:41:45 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.22 2008/01/06 13:46:47 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -58,9 +58,9 @@ The interface link state is used to validate if the port is active or
 not.
 .Bl -tag -width loadbalance
 .It Ic roundrobin
-Distributes outgoing traffic using a round-robin scheduler
-through all active ports and accepts incoming traffic from
-any active port.
+Distributes outgoing traffic through all active ports
+and accepts incoming traffic from any active port.
+A round-robin scheduler is used to aggregate the traffic.
 .It Ic failover
 Sends and receives traffic only through the master port.
 If the master port becomes unavailable,
@@ -68,9 +68,9 @@ the next active port is used.
 The first interface added is the master port;
 any interfaces added after that are used as failover devices.
 .It Ic loadbalance
-Balances outgoing traffic across the active ports based on hashed
-protocol header information and accepts incoming traffic from
-any active port.
+Distributes outgoing traffic through all active ports
+and accepts incoming traffic from any active port.
+A hash of the protocol header is used to maintain packet ordering.
 The hash includes the Ethernet source and destination address, and, if
 available, the VLAN tag, and the IP source and destination address.
 .It Ic broadcast
