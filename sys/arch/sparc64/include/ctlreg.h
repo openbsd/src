@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.14 2008/01/03 22:33:49 miod Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.15 2008/01/06 16:09:49 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -438,6 +438,7 @@
 #define	SOFTINT13	(0x1<<13)
 #define	SOFTINT14	(0x1<<14)
 #define	SOFTINT15	(0x1<<15)
+#define	STICK_INT	(0x1<<16)
 
 /* Interrupt Dispatch -- usually reserved for cross-calls */
 #define	ASR_IDSR	0x48 /* Interrupt dispatch status reg */
