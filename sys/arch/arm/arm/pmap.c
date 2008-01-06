@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2007/12/09 00:24:04 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2008/01/06 21:39:08 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -523,9 +523,6 @@ extern void bcopy_page(vaddr_t, vaddr_t);
 vaddr_t virtual_avail;
 vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
-
-vaddr_t avail_start;
-vaddr_t avail_end;
 
 extern pv_addr_t systempage;
 
@@ -4048,18 +4045,6 @@ pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 void
 pmap_init(void)
 {
-	extern int physmem;
-
-	/*
-	 * Set the available memory vars - These do not map to real memory
-	 * addresses and cannot as the physical memory is fragmented.
-	 * They are used by ps for %mem calculations.
-	 * One could argue whether this should be the entire memory or just
-	 * the memory that is useable in a user process.
-	 */
-	avail_start = 0;
-	avail_end = physmem * PAGE_SIZE;
-
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
 	 * the kmem_map allocated and inited (done after this
