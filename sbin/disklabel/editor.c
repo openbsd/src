@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.141 2008/01/06 17:27:11 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.142 2008/01/06 21:25:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.141 2008/01/06 17:27:11 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.142 2008/01/06 21:25:38 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,6 @@ void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
 int	has_overlap(struct disklabel *, u_int64_t *, int);
-void	make_contiguous(struct disklabel *);
 u_int64_t next_offset(struct disklabel *, u_int64_t *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
@@ -513,7 +512,6 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	old_offset = DL_GETPOFFSET(pp);
 	old_size = DL_GETPSIZE(pp);
 
-getoff1:
 	/* Get offset */
 	if (get_offset(lp, partno) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
@@ -539,15 +537,6 @@ getoff1:
 		return;
 	}
 
-	/* Check for overlap */
-	if (has_overlap(lp, freep, 0)) {
-		printf("\nPlease re-enter an offset and size for partition "
-		    "%c.\n", 'a' + partno);
-		DL_SETPOFFSET(pp, old_offset);
-		DL_SETPSIZE(pp, old_size);
-		goto getoff1;		/* Yeah, I know... */
-	}
-
 	/* Get filesystem type and mountpoint */
 	if (get_fstype(lp, partno) != 0 || get_mp(lp, mp, partno) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
@@ -561,10 +550,6 @@ getoff1:
 			return;
 		}
 	}
-
-	/* Make sure things stay contiguous. */
-	if (has_overlap(lp, freep, -1))
-		make_contiguous(lp);
 }
 
 /*
@@ -662,7 +647,6 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 	editor_countfree(lp, freep);
 
-getoff2:
 	/* Get offset */
 	if (get_offset(lp, partno) != 0) {
 		*pp = origpart;			/* undo changes */
@@ -673,14 +657,6 @@ getoff2:
 	if (get_size(lp, partno, freep, 0) != 0 || DL_GETPSIZE(pp) == 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
-	}
-
-	/* Check for overlap and restore if not resolved */
-	if (has_overlap(lp, freep, 0)) {
-		puts("\nPlease re-enter an offset and size");
-		DL_SETPSIZE(pp, DL_GETPSIZE(&origpart));
-		DL_SETPOFFSET(pp, DL_GETPOFFSET(&origpart));
-		goto getoff2;		/* Yeah, I know... */
 	}
 
 	/* get mount point */
@@ -702,10 +678,6 @@ getoff2:
 			return;
 		}
 	}
-
-	/* Make sure things stay contiguous. */
-	if (has_overlap(lp, freep, -1))
-		make_contiguous(lp);
 }
 
 /*
@@ -850,38 +822,8 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 	printf("Partition %c is currently %llu sectors in size (%llu free).\n",
 	    p[0], DL_GETPSIZE(pp), *freep);
 
-	/* Get size */
-	if (get_size(lp, partno, freep, 0) != 0)
-		return;
-
-	/* Make sure things stay contiguous. */
-	if (has_overlap(lp, freep, -1))
-		make_contiguous(lp);
-}
-
-void
-make_contiguous(struct disklabel *lp)
-{
-	struct partition **spp;
-	u_int16_t npartitions;
-	int i;
-
-	/* Get a sorted list of the partitions */
-	if ((spp = sort_partitions(lp, &npartitions)) == NULL)
-		return;
-
-	/*
-	 * Make everything contiguous but don't muck with start of the first one
-	 * or partitions not in the BSD part of the label.
-	 */
-	for (i = 1; i < npartitions; i++) {
-		if (DL_GETPOFFSET(spp[i]) >= starting_sector ||
-		    DL_GETPOFFSET(spp[i]) < ending_sector)
-			DL_SETPOFFSET(spp[i], DL_GETPOFFSET(spp[i - 1]) +
-			    DL_GETPSIZE(spp[i - 1]));
-	}
-
-	(void)free(spp);
+	/* Get new size */
+	get_size(lp, partno, freep, 0);
 }
 
 /*
@@ -1922,7 +1864,7 @@ int
 get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	u_int64_t ui;
+	u_int64_t ui, old_psize;
 
 	for (;;) {
 		ui = getuint(lp, partno, "size", "Size of the partition. "
@@ -1946,10 +1888,15 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 		else if (ui > *freep + (new ? 0 : DL_GETPSIZE(pp)))
 			fprintf(stderr,"Sorry, there are only %llu "
 			    "sectors left\n", *freep);
-		else
-			break;
+		else {
+			old_psize = DL_GETPSIZE(pp);
+			DL_SETPSIZE(pp, ui);
+			if (has_overlap(lp, freep, 0))
+				DL_SETPSIZE(pp, old_psize);
+			else
+				break;
+		}
 	}
-	DL_SETPSIZE(pp, ui);
 	editor_countfree(lp, freep);
 	return(0);
 }
