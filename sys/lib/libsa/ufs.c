@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.18 2007/03/16 21:48:59 tsi Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.19 2008/01/06 11:17:18 otto Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ read_inode(ino_t inumber, struct open_file *f)
 	buf = alloc(fs->fs_bsize);
 	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-	    fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
+	    fsbtodb(fs, (daddr_t)ino_to_fsba(fs, inumber)), fs->fs_bsize,
 	    buf, &rsize);
 	if (rc)
 		goto out;
