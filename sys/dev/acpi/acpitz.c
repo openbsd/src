@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.20 2007/11/12 21:38:31 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.21 2008/01/06 18:06:50 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 
@@ -33,7 +34,9 @@
 
 #include <sys/sensors.h>
 
-#define ACPITZ_MAX_AC		10
+#define KTOC(k)			((k - 2732) / 10)
+#define ACPITZ_MAX_AC		(10)
+#define ACPITZ_TMP_RETRY	(3)
 
 struct acpitz_softc {
 	struct device		sc_dev;
@@ -69,6 +72,7 @@ struct cfdriver acpitz_cd = {
 void	acpitz_monitor(struct acpitz_softc *);
 void	acpitz_refresh(void *);
 int	acpitz_notify(struct aml_node *, int, void *);
+int	acpitz_gettempreading(struct acpitz_softc *, char *);
 int	acpitz_getreading(struct acpitz_softc *, char *);
 int	acpitz_setfan(struct acpitz_softc *, int, char *);
 int	acpitz_setcpu(struct acpitz_softc *, int);
@@ -103,28 +107,31 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node->child;
 
 	sc->sc_lasttmp = -1;
-	if ((sc->sc_tmp = acpitz_getreading(sc, "_TMP")) == -1) {
+	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
 		printf(": failed to read _TMP\n");
 		return;
 	}
 
-	if ((sc->sc_crt = acpitz_getreading(sc, "_CRT")) == -1) {
+	if ((sc->sc_crt = acpitz_gettempreading(sc, "_CRT")) == -1)
 		printf(": no critical temperature defined\n");
-		sc->sc_crt = 0;
-	} else
-		printf(": critical temperature %d degC\n",
-		    (sc->sc_crt - 2732) / 10);
+	else
+		printf(": critical temperature %d degC\n", KTOC(sc->sc_crt));
 
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
 		snprintf(name, sizeof name, "_AC%d", i);
-		sc->sc_ac[i] = acpitz_getreading(sc, name);
+		sc->sc_ac[i] = acpitz_gettempreading(sc, name);
 		sc->sc_ac_stat[0] = -1;
 	}
 
-	sc->sc_hot = acpitz_getreading(sc, "_HOT");
+	sc->sc_hot = acpitz_gettempreading(sc, "_HOT");
 	sc->sc_tc1 = acpitz_getreading(sc, "_TC1");
 	sc->sc_tc2 = acpitz_getreading(sc, "_TC2");
-	sc->sc_psv = acpitz_getreading(sc, "_PSV");
+	sc->sc_psv = acpitz_gettempreading(sc, "_PSV");
+	dnprintf(10, "%s: _HOT: %d _TC1: %d _TC2: %d _PSV: %d _TMP: %d "
+	    "_CRT: %d\n", DEVNAME(sc), sc->sc_hot, sc->sc_tc1, sc->sc_tc2,
+	    sc->sc_psv, sc->sc_tmp, sc->sc_crt);
+
+	/* get _PSL */
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
@@ -140,7 +147,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-acpitz_setcpu(struct acpitz_softc *sc, int trend)
+acpitz_setcpu(struct acpitz_softc *sc, int perc)
 {
 	struct aml_value res0, *ref;
 	int x;
@@ -155,7 +162,8 @@ acpitz_setcpu(struct acpitz_softc *sc, int trend)
 	}
 	for (x = 0; x < res0.length; x++) {
 		if (res0.v_package[x]->type != AML_OBJTYPE_OBJREF) {
-			printf("%s: _PSL[%d] not a object ref\n", DEVNAME(sc), x);
+			printf("%s: _PSL[%d] not a object ref\n",
+			    DEVNAME(sc), x);
 			continue;
 		}
 		ref = res0.v_package[x]->v_objref.ref;
@@ -241,40 +249,53 @@ void
 acpitz_refresh(void *arg)
 {
 	struct acpitz_softc	*sc = arg;
-	int			i, trend;
+	int			i, perc;
 	extern int		acpi_s5;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
 	    sc->sc_devnode->parent->name);
 
-	if (-1 == (sc->sc_tmp = acpitz_getreading(sc, "_TMP"))) {
-		dnprintf(30, "%s: %s: failed to read temp\n", DEVNAME(sc),
+	/* get _TMP and debounce the value */
+	if (-1 == (sc->sc_tmp = acpitz_gettempreading(sc, "_TMP"))) {
+		printf("%s: %s: failed to read temp\n", DEVNAME(sc),
 		    sc->sc_devnode->parent->name);
-		sc->sc_tmp = 0;	/* XXX */
+		return;
 	}
-
+	/* critical trip points */
 	if (sc->sc_crt != -1 && sc->sc_crt <= sc->sc_tmp) {
-		/* Do critical shutdown */
+		/* do critical shutdown */
 		printf("%s: Critical temperature, shutting down\n",
 		    DEVNAME(sc));
 		acpi_s5 = 1;
 		psignal(initproc, SIGUSR1);
 	}
-	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp)
+	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp) {
 		printf("%s: _HOT temperature\n", DEVNAME(sc));
+		/* XXX go to S4, until then cool as hard as we can */
+	}
 
+	/* passive cooling */
 	if (sc->sc_lasttmp != -1 && sc->sc_tc1 != -1 && sc->sc_tc2 != -1 &&
 	    sc->sc_psv != -1) {
+	    	dnprintf(30, "%s: passive cooling: lasttmp: %d tc1: %d "
+		    "tc2: %d psv: %d\n", DEVNAME(sc), sc->sc_lasttmp,
+		    sc->sc_tc1, sc->sc_tc2, sc->sc_psv);
 		if (sc->sc_psv <= sc->sc_tmp) {
 			sc->sc_pse = 1;
-			trend = sc->sc_tc1 * (sc->sc_tmp - sc->sc_lasttmp) +
+			perc = sc->sc_tc1 * (sc->sc_tmp - sc->sc_lasttmp) +
 			    sc->sc_tc2 * (sc->sc_tmp - sc->sc_psv);
-			/* printf("_TZ trend = %d\n", trend); */
+			perc /= 10;
+			if (perc < 0)
+				perc = 0;
+			else if (perc > 100)
+				perc = 100;
+			/* printf("_TZ perc = %d\n", perc); */
 		} else if (sc->sc_pse)
 			sc->sc_pse = 0;
 	}
 	sc->sc_lasttmp = sc->sc_tmp;
 
+	/* active cooling */
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
 		if (sc->sc_ac[i] != -1 && sc->sc_ac[i] <= sc->sc_tmp) {
 			/* turn on fan i */
@@ -296,12 +317,48 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 	int			rv = -1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res)) {
-		dnprintf(10, "%s: no %s\n", DEVNAME(sc), name);
+		dnprintf(10, "%s: acpitz_getreading: no %s\n", DEVNAME(sc), name);
+		aml_freevalue(&res);
 		goto out;
 	}
 	rv = aml_val2int(&res);
- out:
+out:
 	aml_freevalue(&res);
+	return (rv);
+}
+
+int
+acpitz_gettempreading(struct acpitz_softc *sc, char *name)
+{
+	int			rv = -1, tmp = -1, i;
+
+	for (i = 0; i < ACPITZ_TMP_RETRY; i++) {
+		tmp = acpitz_getreading(sc, name);
+		if (tmp == -1)
+			goto out;
+		if (KTOC(tmp) > 0) {
+			rv = tmp;
+			break;
+		} else {
+			dnprintf(20, "%s: %d invalid reading on %s, "
+			    "debouncing\n", DEVNAME(sc), tmp, name);
+		}
+
+		/* debounce value */
+		if (cold)
+			delay(1000000);
+		else
+			while (tsleep(sc, PWAIT, "tzsleep", hz) !=
+			    EWOULDBLOCK);
+	}
+	if (i >= ACPITZ_TMP_RETRY) {
+		printf("%s: %s: failed to read %s\n", DEVNAME(sc),
+		    sc->sc_devnode->parent->name, name);
+		goto out;
+	}
+ out:
+	dnprintf(30, "%s: name: %s tmp: %dK => %dC, rv: %d\n", DEVNAME(sc),
+	    name, tmp, KTOC(tmp), rv);
 	return (rv);
 }
 
@@ -309,23 +366,28 @@ int
 acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpitz_softc	*sc = arg;
-	u_int64_t crt;
+	int			crt;
 
 	dnprintf(10, "%s notify: %.2x %s\n", DEVNAME(sc), notify_type,
 	    sc->sc_devnode->parent->name);
 
 	switch (notify_type) {
-	case 0x81:	/* Operating Points changed */
-		sc->sc_psv = acpitz_getreading(sc, "_PSV");
+	case 0x80:	/* hardware notifications */
+		break;
+	case 0x81:	/* operating Points changed */
+		sc->sc_psv = acpitz_gettempreading(sc, "_PSV");
 		crt = sc->sc_crt;
-		sc->sc_crt = acpitz_getreading(sc, "_CRT");
+		sc->sc_crt = acpitz_gettempreading(sc, "_CRT");
 		if (crt != sc->sc_crt)
-			printf("%s: critical temperature: %u degC",
-			    DEVNAME(sc), (sc->sc_crt - 2732) / 10);
+			printf("%s: new critical temperature: %u degC",
+			    DEVNAME(sc), KTOC(sc->sc_crt));
+		break;
+	case 0x82:	/* re-evaluate thermal device list */
 		break;
 	default:
 		break;
 	}
+
 	acpitz_refresh(sc);
 	return (0);
 }
