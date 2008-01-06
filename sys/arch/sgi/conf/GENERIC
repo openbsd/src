@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2008/01/04 08:17:14 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.27 2008/01/06 06:08:01 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -11,7 +11,7 @@
 
 machine		sgi mips64
 include		"../../../conf/GENERIC"
-maxusers	32			# estimated number of users
+maxusers	32		# Estimated number of users
 
 # Make options
 makeoption	LINK_ADDRESS="0xffffffff80100000"
@@ -21,12 +21,11 @@ option		ARCBIOS		# We use arcbios for FW communication.
 
 #option		APERTURE
 
-#option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 
 option		PCIVERBOSE
-option		USBVERBOSE
 
-#option		UVMHIST		# enable uvm history logging
+#option		UVMHIST		# Enable uvm history logging
 
 #option		DEBUG
 #option		SYSCALL_DEBUG
@@ -34,7 +33,7 @@ option		USBVERBOSE
 # Define what targets to support
 option		TGT_O2
 
-# Specify storage configuration (its a joke..)
+# Specify storage configuration (it's a joke..)
 config		bsd	swap generic
 
 #
@@ -44,7 +43,6 @@ mainbus0	at root
 cpu*		at mainbus0
 
 #### Main local buses
-#crimebus0	at mainbus0
 macebus0	at mainbus0	# MACE controller localbus.
 
 # GBE Framebuffer
@@ -111,13 +109,13 @@ audio*		at mavb?
 emu*		at pci?
 audio*		at emu?
 
-#### WS console
+#### WS Console
 wsdisplay*	at gbe?
 
 #### Keyboard and Mouse
 pckbd*		at mkbc?
 pms*		at mkbc?
-wskbd*		at pckbd? console ?
+wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
@@ -130,8 +128,8 @@ safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
 
-#### crypto devices
+#### Crypto devices
 hifn*		at pci?		# Hi/fn 7751 crypto card
 
-#pseudo-device	wsmux	2	# mouse & keyboard multiplexor
-pseudo-device	crypto		1
+pseudo-device	wsmux	2       # Mouse and keyboard multiplexor
+pseudo-device	crypto	1
