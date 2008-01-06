@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.1 2008/01/05 17:33:28 mbalmer Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.2 2008/01/06 13:11:51 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -46,8 +46,14 @@ void	mstsattach(int);
 
 #define MSTSMAX	32
 #define MAXFLDS	4
+#ifdef MSTS_DEBUG
+#define TRUSTTIME	30
+#else
+#define TRUSTTIME	(10 * 60)	/* 10 minutes */
+#endif
 
 int msts_count;	/* this is wrong, it should really be a SLIST */
+static int t_trust;
 
 struct msts {
 	char			cbuf[MSTSMAX];	/* receive buffer */
@@ -55,6 +61,7 @@ struct msts {
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last <STX> */
+	struct timeout		msts_tout;	/* invalidate sensor */
 	int64_t			gap;		/* gap between two sentences */
 	int64_t			last;		/* last time rcvd */
 	int			sync;		/* if 1, waiting for <STX> */
@@ -84,6 +91,7 @@ mstsopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;
 	struct msts *np;
+	struct timeval t;
 	int error;
 
 	DPRINTF(("mstsopen\n"));
@@ -107,8 +115,16 @@ mstsopen(dev_t dev, struct tty *tp)
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
-	} else
+	} else {
 		sensordev_install(&np->timedev);
+		timeout_set(&np->msts_tout, msts_timeout, np);
+
+		/* convert timevals to hz */
+		t.tv_sec = TRUSTTIME;
+		t.tv_usec = 0;
+		t_trust = tvtohz(&t);
+	}
+
 	return error;
 }
 
@@ -118,6 +134,7 @@ mstsclose(struct tty *tp, int flags)
 	struct msts *np = (struct msts *)tp->t_sc;
 
 	tp->t_line = TTYDISC;	/* switch back to termios */
+	timeout_del(&np->msts_tout);
 	sensordev_deinstall(&np->timedev);
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
@@ -248,6 +265,13 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 	}
 	np->last = msts_now;
 	np->gap = 0LL;
+#ifdef MSTS_DEBUG
+	if (np->time.status == SENSOR_S_UNKNOWN) {
+		np->time.status = SENSOR_S_OK;
+		timeout_add(&np->msts_tout, t_trust);
+	}
+	np->gapno = 0;
+#endif
 
 	np->time.value = np->ts.tv_sec * 1000000000LL +
 	    np->ts.tv_nsec - msts_now;
@@ -259,15 +283,17 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 		if (fldcnt != 13)
 			strlcpy(np->time.desc, "MSTS", sizeof(np->time.desc));
 	}
-	if (fld[3][0] == '#')
-		np->time.status = SENSOR_S_CRIT;
-	else if (fld[3][0] == ' ' && fld[3][1] == '*')
-		np->time.status = SENSOR_S_WARN;
-	else if (fld[3][0] == ' ' && fld[3][1] == ' ')
+	/*
+	 * only update the timeout if the clock reports the time a valid,
+	 * the status is reported in fld[3][0] and fld[3][1] as follows:
+	 * fld[3][0] == '#'				critical
+	 * fld[3][0] == ' ' && fld[3][1] == '*'		warning
+	 * fld[3][0] == ' ' && fld[3][1] == ' '		ok
+	 */
+	if (fld[3][0] == ' ' && fld[3][1] == ' ') {
 		np->time.status = SENSOR_S_OK;
-	else
-		DPRINTF(("msts: unknown clock status indication\n"));
-
+		timeout_add(&np->msts_tout, t_trust);
+	}
 	/*
 	 * If tty timestamping is requested, but not PPS signal is present, set
 	 * the sensor state to CRITICAL.
@@ -370,4 +396,24 @@ msts_time_to_nano(char *s, int64_t *nano)
 
 	*nano = secs * 1000000000LL;
 	return 0;
+}
+
+/*
+ * Degrade the sensor state if we received no MSTS string for more than
+ * TRUSTTIME seconds.
+ */
+void
+msts_timeout(void *xnp)
+{
+	struct msts *np = xnp;
+
+	if (np->time.status == SENSOR_S_OK) {
+		np->time.status = SENSOR_S_WARN;
+		/*
+		 * further degrade in TRUSTTIME seconds if no new valid MSTS
+		 * strings are received.
+		 */
+		timeout_add(&np->msts_tout, t_trust);
+	} else
+		np->time.status = SENSOR_S_CRIT;
 }
