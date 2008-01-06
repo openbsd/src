@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.43 2008/01/06 09:12:17 sturm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.44 2008/01/06 14:45:50 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -468,7 +468,7 @@ rcs_write(RCSFILE *rfp)
 		    rdp->rd_author, rdp->rd_state);
 		fputs("branches", fp);
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
-			fprintf(fp, " %s", rcsnum_tostr(brp->rb_num, numbuf,
+			fprintf(fp, "\n\t%s", rcsnum_tostr(brp->rb_num, numbuf,
 			    sizeof(numbuf)));
 		}
 		fputs(";\n", fp);
