@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.139 2008/01/03 02:10:05 sthen Exp $	*/
+/*	$OpenBSD: editor.c,v 1.140 2008/01/06 16:44:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.139 2008/01/03 02:10:05 sthen Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.140 2008/01/06 16:44:54 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,6 @@ int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	mpsave(struct disklabel *, char **, char *, char *);
 int	get_bsize(struct disklabel *, int);
-int	get_cpg(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
@@ -510,7 +509,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 #else
 	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 #endif
-	pp->p_cpg = 16;
+	pp->p_cpg = 1;
 	old_offset = DL_GETPOFFSET(pp);
 	old_size = DL_GETPSIZE(pp);
 
@@ -557,8 +556,7 @@ getoff1:
 
 	if (expert && pp->p_fstype == FS_BSDFFS) {
 		/* Get fsize, bsize, and cpg */
-		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0 ||
-		    get_cpg(lp, partno) != 0) {
+		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
 			DL_SETPSIZE(pp, 0);		/* effective delete */
 			return;
 		}
@@ -702,14 +700,6 @@ getoff2:
 		if (get_bsize(lp, partno) != 0) {
 			*pp = origpart;		/* undo changes */
 			return;
-		}
-
-		if (pp->p_fstype == FS_BSDFFS) {
-			/* get cpg */
-			if (get_cpg(lp, partno) != 0) {
-				*pp = origpart;	/* undo changes */
-				return;
-			}
 		}
 	}
 
@@ -2048,29 +2038,6 @@ get_bsize(struct disklabel *lp, int partno)
 			break;
 	}
 	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui / frag, frag);
-	return(0);
-}
-
-int
-get_cpg(struct disklabel *lp, int partno)
-{
-	u_int64_t ui;
-	struct partition *pp = &lp->d_partitions[partno];
-
-	for (;;) {
-		ui = getuint(lp, partno, "cpg",
-		    "Number of filesystem cylinders per group."
-		    "  Usually 16 or 8.",
-		    pp->p_cpg ? pp->p_cpg : 16, 16, 0, 0);
-		if (ui == ULLONG_MAX - 1) {
-			fputs("Command aborted\n", stderr);
-			return(1);
-		} else if (ui == ULLONG_MAX)
-			fputs("Invalid entry\n", stderr);
-		else
-			break;
-	}
-	pp->p_cpg = ui;
 	return(0);
 }
 
