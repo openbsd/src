@@ -210,15 +210,26 @@ option.
 Make sure you sudoers_base matches exactly with the location you specified
 when you imported the sudoers.  Below is an example /etc/ldap.conf
 
-  # Either specify a URI or host and port.
-  # If neither is specified sudo will default to localhost port 389.
+  # Either specify one or more URIs or one or more host:port pairs.
+  # If neither is specified sudo will default to localhost, port 389.
+  #
   #host          ldapserver
+  #host          ldapserver1 ldapserver2:390
+  #
+  # Default port if host is specified without one, defaults to 389.
   #port          389
   #
-  # URI will override host & port settings but only works with LDAP
-  # SDK's that support ldap_initialize() such as OpenLDAP.
+  # URI will override the host and port settings.
   uri            ldap://ldapserver
   #uri            ldaps://secureldapserver
+  #uri            ldaps://secureldapserver ldap://ldapserver
+  #
+  # The amount of time, in seconds, to wait while trying to connect to
+  # an LDAP server.
+  bind_timelimit 30
+  #
+  # The amount of time, in seconds, to wait while performing an LDAP query.
+  timelimit 30
   #
   # must be set or sudo will ignore LDAP
   sudoers_base   ou=SUDOers,dc=example,dc=com
@@ -336,9 +347,8 @@ Here is an example:
   sudoCommand: ALL
 
 Another difference is that negations on the Host, User or Runas are
-currently ignorred.  For example, these attributes do not work how they first
-seem.  If you desperately want this to be changed, contact Aaron Spangler
-(aaron@spangler.ods.org).
+currently ignorred.  For example, these attributes do not work how
+they first seem.
 
   # does not match all but joe
   # rather, does not match anyone

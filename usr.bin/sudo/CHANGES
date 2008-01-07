@@ -2015,3 +2015,17 @@ Sudo 1.6.9p9 released.
      in addition to the existing start_tls support.
 
 Sudo 1.6.9p10 released.
+
+637) Fixed a compilation problem on SCO related to how they
+     store the high resolution timestamps in struct stat.
+
+638) Avoid checking the passwd file group multiple times
+     in the LDAP query when the user's passwd group is also
+     listed in the supplemental group vector.
+
+639) The URI specifier can now be used in ldap.conf even when
+     the LDAP SDK doesn't support ldap_initialize().
+
+640) New %p prompt escape that expands to the user whose password
+     is being prompted, as specified by the rootpw, targetpw and
+     runaspw sudoers flags.  Based on a diff from Patrick Schoenfeld.

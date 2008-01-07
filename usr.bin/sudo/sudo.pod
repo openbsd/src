@@ -19,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.70.2.19 2007/11/21 19:26:10 millert Exp $
+$Sudo: sudo.pod,v 1.70.2.20 2008/01/05 23:59:42 millert Exp $
 =pod
 
 =head1 NAME
@@ -237,6 +237,11 @@ I<sudoers> option is set)
 =item C<%h>
 
 expanded to the local hostname without the domain name
+
+=item C<%p>
+
+expanded to the user whose password is being asked for (respects the
+I<rootpw>, I<targetpw> and I<runaspw> flags in I<sudoers>)
 
 =item C<%U>
 

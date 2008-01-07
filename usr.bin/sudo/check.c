@@ -63,7 +63,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: check.c,v 1.223.2.9 2007/07/06 19:52:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: check.c,v 1.223.2.10 2008/01/05 23:59:42 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -206,6 +206,16 @@ expand_prompt(old_prompt, user, host)
 		    len += strlen(user_host) - 2;
 		    subst = 1;
 		    break;
+		case 'p':
+		    p++;
+		    if (def_rootpw)
+			    len += 2;
+		    else if (def_targetpw || def_runaspw)
+			    len += strlen(*user_runas) - 2;
+		    else
+			    len += strlen(user_name) - 2;
+		    subst = 1;
+		    break;
 		case 'u':
 		    p++;
 		    len += strlen(user_name) - 2;
@@ -245,6 +255,18 @@ expand_prompt(old_prompt, user, host)
 			n = strlcpy(np, user_host, np - endp);
 			if (n >= np - endp)
 			    goto oflow;
+			np += n;
+			continue;
+		    case 'p':
+			p++;
+			if (def_rootpw)
+				n = strlcpy(np, "root", np - endp);
+			else if (def_targetpw || def_runaspw)
+				n = strlcpy(np, *user_runas, np - endp);
+			else
+				n = strlcpy(np, user_name, np - endp);
+			if (n >= np - endp)
+				goto oflow;
 			np += n;
 			continue;
 		    case 'u':
