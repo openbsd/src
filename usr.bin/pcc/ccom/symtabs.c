@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtabs.c,v 1.3 2007/11/16 09:00:12 otto Exp $	*/
+/*	$OpenBSD: symtabs.c,v 1.4 2008/01/07 21:04:47 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -179,10 +179,10 @@ lookup(char *key, int ttype)
 {
 	struct symtab *sym;
 	struct tree *w, *new, *last;
-	int cix, bit, fbit, svbit, ix, bitno, match;
+	int cix, bit, fbit, svbit, bitno;
 	int type, uselvl;
+	intptr_t ix, match, code = (intptr_t)key;
 
-	long code = (long)key;
 	type = ttype & SMASK;
 	uselvl = (blevel > 0 && type != SSTRING);
 
@@ -228,7 +228,7 @@ lookup(char *key, int ttype)
 	}
 
 	sym = (struct symtab *)w;
-	match = (long)sym->sname;
+	match = (intptr_t)sym->sname;
 
 	ix = code ^ match;
 	if (ix == 0)
