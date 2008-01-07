@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.145 2008/01/07 19:24:33 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.146 2008/01/07 23:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.145 2008/01/07 19:24:33 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.146 2008/01/07 23:10:18 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -496,6 +496,8 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	for(; lp->d_npartitions <= partno; lp->d_npartitions++)
 		memset(&lp->d_partitions[lp->d_npartitions], 0, sizeof(*pp));
 
+	/* Make sure selected partition is zero'd too. */
+	memset(pp, 0, sizeof(*pp)); 
 	chunks = free_chunks(lp);
 
 	/*
