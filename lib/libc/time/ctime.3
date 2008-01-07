@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.34 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: ctime.3,v 1.35 2008/01/07 01:09:37 millert Exp $
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 7 2008 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -174,7 +174,9 @@ A negative value for
 causes the
 .Fn mktime
 function to attempt to divine whether summer time is in effect
-for the specified time.)
+for the specified time; in this case it does not use a consistent
+rule and may give a different answer when later
+presented with the same argument.)
 On successful completion, the values of the
 .Fa tm_wday
 and
@@ -310,6 +312,6 @@ as the superuser.
 Avoid using out-of-range values with
 .Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" based on @(#)newctime.3	8.1
+.\" based on @(#)newctime.3	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson (arthur_david_olson@nih.gov).

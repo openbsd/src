@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.21 2007/12/29 22:26:51 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.22 2008/01/07 01:09:37 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	8.5";
+static char	privatehid[] = "@(#)private.h	8.6";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -60,10 +60,6 @@ static char	privatehid[] = "@(#)private.h	8.5";
 #ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3
 #endif /* !defined HAVE_SETTIMEOFDAY */
-
-#ifndef HAVE_STRERROR
-#define HAVE_STRERROR		1
-#endif /* !defined HAVE_STRERROR */
 
 #ifndef HAVE_SYMLINK
 #define HAVE_SYMLINK		1

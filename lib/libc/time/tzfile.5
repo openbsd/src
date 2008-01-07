@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzfile.5,v 1.11 2007/05/31 19:19:34 jmc Exp $
-.Dd $Mdocdate: May 31 2007 $
+.\"	$OpenBSD: tzfile.5,v 1.12 2008/01/07 01:09:37 millert Exp $
+.Dd $Mdocdate: January 7 2008 $
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -64,7 +64,9 @@ types
 described in the file is associated with the same-indexed transition time.
 These values serve as indices into an array of
 .Fa ttinfo
-structures that appears next in the file;
+structures (with
+.Fa tzh_typecnt
+entries) that appears next in the file;
 these structures are defined as follows:
 .Bd -literal -offset indent
 .ta .5i +\w'unsigned int\0\0'u
@@ -141,13 +143,13 @@ For version-2-format time zone files,
 the above header and data is followed by a second header and data,
 identical in format except that
 eight bytes are used for each transition time or leap second time.
-After the second header and data comes a newline-encloded,
+After the second header and data comes a newline-enclosed,
 POSIX-TZ-environment-variable-style string for use in handling instants
 after the last transition time stored in the file
 (with nothing between the newlines if there is no POSIX representation for
 such instants).
 .Sh SEE ALSO
 .Xr ctime 3
-.\" @(#)tzfile.5	8.1
+.\" @(#)tzfile.5	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson.
