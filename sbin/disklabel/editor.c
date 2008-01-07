@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.144 2008/01/07 16:51:35 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.145 2008/01/07 19:24:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.144 2008/01/07 16:51:35 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.145 2008/01/07 19:24:33 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -489,12 +489,13 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 
-	/* Increase d_npartitions if necessary */
-	if (partno >= lp->d_npartitions)
-		lp->d_npartitions = partno + 1;
+	/*
+	 * Increase d_npartitions if necessary. Ensure all new partitions are
+	 * zero'ed to avoid inadvertant overlaps.
+	 */
+	for(; lp->d_npartitions <= partno; lp->d_npartitions++)
+		memset(&lp->d_partitions[lp->d_npartitions], 0, sizeof(*pp));
 
-	/* Set defaults */
-	memset(pp, 0, sizeof(*pp));
 	chunks = free_chunks(lp);
 
 	/*
