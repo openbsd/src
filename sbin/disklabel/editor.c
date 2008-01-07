@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.143 2008/01/06 22:28:13 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.144 2008/01/07 16:51:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.143 2008/01/06 22:28:13 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.144 2008/01/07 16:51:35 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,6 @@ void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
 int	has_overlap(struct disklabel *, u_int64_t *, int);
-u_int64_t next_offset(struct disklabel *, u_int64_t *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
 void	getdisktype(struct disklabel *, char *, char *);
@@ -87,7 +86,7 @@ int	get_bsize(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
-int	get_offset(struct disklabel *, int);
+int	get_offset(struct disklabel *, int, struct diskchunk *);
 int	get_size(struct disklabel *, int, u_int64_t *, int);
 void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
@@ -496,8 +495,20 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 
 	/* Set defaults */
 	memset(pp, 0, sizeof(*pp));
-	new_size = *freep;
-	new_offset = next_offset(lp, &new_size);
+	chunks = free_chunks(lp);
+
+	/*
+	 * Since we know there's free space, there must be at least one
+	 * chunk. So find the largest chunk and assume we want to add the
+	 * partition in that free space.
+	 */
+	new_size = new_offset = 0;
+	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
+		if (chunks[i].stop - chunks[i].start > new_size) {
+		    new_size = chunks[i].stop - chunks[i].start;
+		    new_offset = chunks[i].start;
+		}
+	}
 	DL_SETPSIZE(pp, new_size);
 	DL_SETPOFFSET(pp, new_offset);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
@@ -511,23 +522,10 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	pp->p_cpg = 1;
 
 	/* Get offset */
-	if (get_offset(lp, partno) != 0) {
+	if (get_offset(lp, partno, chunks) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
-
-	/* Recompute recommended size based on new offset */
-	ui = pp->p_fstype;
-	pp->p_fstype = FS_UNUSED;
-	chunks = free_chunks(lp);
-	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
-		if (DL_GETPOFFSET(pp) >= chunks[i].start &&
-		    DL_GETPOFFSET(pp) < chunks[i].stop) {
-			DL_SETPSIZE(pp, chunks[i].stop - DL_GETPOFFSET(pp));
-			break;
-		}
-	}
-	pp->p_fstype = ui;
 
 	/* Get size */
 	if (get_size(lp, partno, freep, 1) != 0 || DL_GETPSIZE(pp) == 0) {
@@ -600,7 +598,8 @@ void
 editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 {
 	struct partition origpart, *pp;
-	int partno;
+	struct diskchunk *chunks;
+	int partno, i;
 
 	/* Change which partition? */
 	if (p == NULL) {
@@ -626,27 +625,13 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 
 	origpart = *pp;
 
-	/* Get filesystem type */
-	if (get_fstype(lp, partno) != 0) {
-		*pp = origpart;			/* undo changes */
-		return;
-	}
-
-	/* Ensure a newly enabled partition fits. */
-	if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-	    (origpart.p_fstype == FS_UNUSED || origpart.p_fstype == FS_BOOT)) {
-		if (DL_GETPSIZE(pp) > *freep) {
-			fprintf(stderr,
-			    "Warning, need %llu sectors but there are only %llu "
-			    "free.  Setting size to %llu.\n", DL_GETPSIZE(pp), *freep,
-			    *freep);
-			DL_SETPSIZE(pp, *freep);
-		}
-	}
+	pp->p_fstype = FS_UNUSED;
+	chunks = free_chunks(lp);
 	editor_countfree(lp, freep);
+	pp->p_fstype = origpart.p_fstype;
 
 	/* Get offset */
-	if (get_offset(lp, partno) != 0) {
+	if (get_offset(lp, partno, chunks) != 0) {
 		*pp = origpart;			/* undo changes */
 		return;
 	}
@@ -654,6 +639,12 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	/* Get size */
 	if (get_size(lp, partno, freep, 0) != 0 || DL_GETPSIZE(pp) == 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
+		return;
+	}
+
+	/* Get filesystem type */
+	if (get_fstype(lp, partno) != 0) {
+		*pp = origpart;			/* undo changes */
 		return;
 	}
 
@@ -721,70 +712,6 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		mp[partno] = NULL;
 	}
 	editor_countfree(lp, freep);
-}
-
-/*
- * Find the next reasonable starting offset and returns it.
- * Assumes there is a least one free sector left (returns 0 if not).
- */
-u_int64_t
-next_offset(struct disklabel *lp, u_int64_t *sizep)
-{
-	struct partition **spp;
-	struct diskchunk *chunks;
-	u_int16_t npartitions;
-	u_int64_t new_offset, new_size;
-	int i, good_offset;
-
-	/* Get a sorted list of the partitions */
-	if ((spp = sort_partitions(lp, &npartitions)) == NULL)
-		return(starting_sector);
-
-	new_offset = starting_sector;
-	for (i = 0; i < npartitions; i++ ) {
-		u_int64_t pstart = DL_GETPOFFSET(spp[i]);
-		u_int64_t pend = pstart + DL_GETPSIZE(spp[i]);
-		u_int64_t newend = new_offset + *sizep;
-		
-		/*
-		 * Is new_offset inside this partition?  If so,
-		 * make it the next sector after the partition ends.
-		 */
-		if (pend < ending_sector &&
-		    ((new_offset >= pstart && new_offset < pend) ||
-		    (newend > pstart && newend <= pend)))
-			new_offset = pend;
-	}
-
-	/* Did we find a suitable offset? */
-	for (good_offset = 1, i = 0; i < npartitions; i++ ) {
-		u_int64_t pstart = DL_GETPOFFSET(spp[i]);
-		u_int64_t pend = pstart + DL_GETPSIZE(spp[i]);
-		u_int64_t newend = new_offset + *sizep;
-
-		if (newend > pstart && newend <= pend) {
-			/* Nope */
-			good_offset = 0;
-			break;
-		}
-	}
-
-	/* Specified size is too big, find something that fits */
-	if (!good_offset) {
-		chunks = free_chunks(lp);
-		new_size = 0;
-		for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
-			if (chunks[i].stop - chunks[i].start > new_size) {
-			    new_size = chunks[i].stop - chunks[i].start;
-			    new_offset = chunks[i].start;
-			}
-		}
-		/* XXX - should do something intelligent if new_size == 0 */
-		*sizep = new_size;
-	}
-
-	(void)free(spp);
-	return(new_offset);
 }
 
 /*
@@ -1818,10 +1745,11 @@ mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 }
 
 int
-get_offset(struct disklabel *lp, int partno)
+get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	u_int64_t ui;
+	u_int64_t ui, maxsize;
+	int i;
 
 	for (;;) {
 		ui = getuint(lp, partno, "offset",
@@ -1845,11 +1773,21 @@ get_offset(struct disklabel *lp, int partno)
 			fprintf(stderr, "This architecture requires that "
 			    "partition 'a' start at sector 0.\n");
 #endif
-		else
-			break;
+		else {
+			for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0;
+			     i++) {
+				if (ui < chunks[i].start ||
+				    ui >= chunks[i].stop)
+					continue;
+				DL_SETPOFFSET(pp, ui);
+				maxsize = chunks[i].stop - DL_GETPOFFSET(pp);
+				if (DL_GETPSIZE(pp) > maxsize)
+					DL_SETPSIZE(pp, maxsize);
+				return (0);
+			}
+			fputs("The offset must be in a free area.\n", stderr);
+		}
 	}
-	DL_SETPOFFSET(pp, ui);
-	return(0);
 }
 
 int
