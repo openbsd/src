@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.21 2007/11/14 20:43:12 kettenis Exp $	*/
+/*	$OpenBSD: sab.c,v 1.22 2008/01/08 05:08:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -413,14 +413,14 @@ sabtty_attach(parent, self, aux)
 
 		switch (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		case SABTTYF_CONS_IN:
-			acc = "input";
+			acc = " input";
 			break;
 		case SABTTYF_CONS_OUT:
-			acc = "output";
+			acc = " output";
 			break;
 		case SABTTYF_CONS_IN|SABTTYF_CONS_OUT:
 		default:
-			acc = "i/o";
+			acc = "";
 			break;
 		}
 
@@ -448,7 +448,7 @@ sabtty_attach(parent, self, aux)
 			cn_tab->cn_putc = sab_cnputc;
 			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
 		}
-		printf(": console %s", acc);
+		printf(": console%s", acc);
 	} else {
 		/* Not a console... */
 		sabtty_reset(sc);
