@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.146 2008/01/07 23:10:18 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.147 2008/01/08 13:07:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.146 2008/01/07 23:10:18 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.147 2008/01/08 13:07:10 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ void	editor_modify(struct disklabel *, char **, u_int64_t *, char *);
 void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
-int	has_overlap(struct disklabel *, u_int64_t *, int);
+int	has_overlap(struct disklabel *, int);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
 void	getdisktype(struct disklabel *, char *, char *);
@@ -128,12 +128,12 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(&label);
 
-	/* Set freesectors based on bounds and initial label */
-	editor_countfree(&label, &freesectors);
-
 	/* Make sure there is no partition overlap. */
-	if (has_overlap(&label, &freesectors, 1))
+	if (has_overlap(&label, 1))
 		errx(1, "can't run when there is partition overlap.");
+
+	/* Get initial value for freesectors. */
+	editor_countfree(&label, &freesectors);
 
 	/* If we don't have a 'c' partition, create one. */
 	pp = &label.d_partitions[RAW_PART];
@@ -942,7 +942,7 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
  * if unable to resolve, else 0.
  */
 int
-has_overlap(struct disklabel *lp, u_int64_t *freep, int resolve)
+has_overlap(struct disklabel *lp, int resolve)
 {
 	struct partition **spp;
 	u_int16_t npartitions;
@@ -995,9 +995,8 @@ has_overlap(struct disklabel *lp, u_int64_t *freep, int resolve)
 
 				/* Mark the selected one as unused */
 				lp->d_partitions[c].p_fstype = FS_UNUSED;
-				editor_countfree(lp, freep);
 				(void)free(spp);
-				return(has_overlap(lp, freep, resolve));
+				return(has_overlap(lp, resolve));
 			}
 		}
 	}
@@ -1824,7 +1823,7 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 		else {
 			old_psize = DL_GETPSIZE(pp);
 			DL_SETPSIZE(pp, ui);
-			if (has_overlap(lp, freep, 0))
+			if (has_overlap(lp, 0))
 				DL_SETPSIZE(pp, old_psize);
 			else
 				break;
