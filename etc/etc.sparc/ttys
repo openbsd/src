@@ -1,10 +1,10 @@
 #
-#	$OpenBSD: ttys,v 1.8 2002/08/12 10:45:06 miod Exp $
+#	$OpenBSD: ttys,v 1.9 2008/01/08 05:08:11 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
 # main console device
-console	"/usr/libexec/getty suncons"	sun	on  secure
+console	"/usr/libexec/getty std.9600"	sun	on  secure
 # graphics console
 ttyC0	"/usr/libexec/getty std.9600"	sun	off secure
 # on-board serial lines
