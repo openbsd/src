@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.147 2008/01/08 13:07:10 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.148 2008/01/08 13:12:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.147 2008/01/08 13:07:10 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.148 2008/01/08 13:12:26 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1373,7 +1373,7 @@ free_chunks(struct disklabel *lp)
 
 	/* Find chunks of free space */
 	numchunks = 0;
-	if (spp && DL_GETPOFFSET(spp[0]) > 0) {
+	if (spp && DL_GETPOFFSET(spp[0]) > starting_sector) {
 		chunks[0].start = starting_sector;
 		chunks[0].stop = DL_GETPOFFSET(spp[0]);
 		numchunks++;
