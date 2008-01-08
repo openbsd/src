@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.148 2008/01/08 13:12:26 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.149 2008/01/08 23:46:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.148 2008/01/08 13:12:26 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.149 2008/01/08 23:46:54 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -344,11 +344,22 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			/* NOTREACHED */
 			break;
 
-		case 'r':
-		    /* Recalculate free space */
-		    editor_countfree(&label, &freesectors);
-		    puts("Recalculated free space.");
-		    break;
+		case 'r': {
+			struct diskchunk *chunks;
+			int i;
+			/* Recalculate & display free space. */
+			editor_countfree(&label, &freesectors);
+			chunks = free_chunks(&label);
+			for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0;
+			    i++)
+				fprintf(stderr, "Free sectors: %16llu - %16llu "
+				    "(%16llu)\n",
+			    	    chunks[i].start, chunks[i].stop - 1,
+			   	    chunks[i].stop - chunks[i].start);
+			fprintf(stderr, "Total free sectors: %llu.\n",
+			    freesectors);
+		    	break;
+		}
 
 		case 's':
 			if (arg == NULL) {
@@ -1579,9 +1590,8 @@ editor_help(char *arg)
 		break;
 	case 'r':
 		puts(
-"The 'r' command is used to recalculate the free space available.  This option\n"
-"should really not be necessary under normal circumstances but can be useful if\n"
-"disklabel gets confused.\n");
+"The 'r' command is used to recalculate and display details about\n"
+"the available free space.\n");
 		break;
 	case 'u':
 		puts(
@@ -1636,7 +1646,7 @@ editor_help(char *arg)
 		puts("\tn [part]  - set the mount point for a partition.");
 		puts("\tp [unit]  - print label.");
 		puts("\tq         - quit and save changes.");
-		puts("\tr         - recalculate free space.");
+		puts("\tr         - recalculate & display free space details.");
 		puts("\ts [path]  - save label to file.");
 		puts("\tu         - undo last change.");
 		puts("\tw         - write label to disk.");

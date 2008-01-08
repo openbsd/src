@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.64 2007/12/16 14:58:27 sobrado Exp $
+.\"	$OpenBSD: disklabel.8,v 1.65 2008/01/08 23:46:54 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 16 2007 $
+.Dd $Mdocdate: January 8 2008 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -425,7 +425,8 @@ If any changes have been made, the user will be
 asked whether or not to save the changes to the on-disk label.
 .It Cm r
 Recalculate free space.
-This option should really not be necessary under normal circumstances.
+This command displays all the free areas on the disk and the total
+number of free sectors.
 .It Cm s Op Ar path
 Save the label to a file in
 .Tn ASCII
