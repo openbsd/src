@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.21 2008/01/06 18:06:50 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.22 2008/01/08 20:49:59 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -317,8 +317,8 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 	int			rv = -1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res)) {
-		dnprintf(10, "%s: acpitz_getreading: no %s\n", DEVNAME(sc), name);
-		aml_freevalue(&res);
+		dnprintf(10, "%s: acpitz_getreading: no %s\n", DEVNAME(sc),
+		    name);
 		goto out;
 	}
 	rv = aml_val2int(&res);
