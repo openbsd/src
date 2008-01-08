@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.63 2007/11/03 10:32:56 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.64 2008/01/08 10:08:31 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -678,7 +678,7 @@ install: maninstall
 		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_LIBEXECDIR}; \
 	done
 	@d=`mktemp -d /tmp/httpdXXXXXXXXXX`; \
-	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/apxs"; \
+	echo "Installing ${DESTDIR}${HTTPD_SBINDIR}/apxs"; \
 	j="sed -e 's;^#!/.*;#!${PERLPATH};' \
 		-e 's;\@prefix\@;${HTTPD_PREFIX};' \
 		-e 's;\@sbindir\@;${HTTPD_SBINDIR};' \
@@ -690,7 +690,7 @@ install: maninstall
 		$$d/apxs ${DESTDIR}${HTTPD_SBINDIR}"; \
 		echo $$j; \
 		eval $$j; \
-	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/apachectl"; \
+	echo "Installing ${DESTDIR}${HTTPD_SBINDIR}/apachectl"; \
 	j="sed -e 's;PIDFILE=.*;PIDFILE=${HTTPD_RUNDIR}/httpd.pid;' \
 		-e 's;HTTPD=.*;HTTPD=${HTTPD_SBINDIR}/httpd;' \
 		< ${.OBJDIR}/src/support/apachectl > $$d/apachectl && \
