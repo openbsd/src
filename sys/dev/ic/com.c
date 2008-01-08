@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.118 2007/08/22 09:22:30 jasper Exp $	*/
+/*	$OpenBSD: com.c,v 1.119 2008/01/08 00:29:36 dlg Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ bus_addr_t comsiraddr;
 #endif
 #ifdef COM_CONSOLE
 int	comconsfreq;
+int	comconsrate;
 int	comconsinit;
 bus_addr_t comconsaddr;
 int	comconsattached;
@@ -304,11 +305,15 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 #ifdef COM_CONSOLE
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			tp->t_cflag = comconscflag;
-		else
+			tp->t_ispeed = tp->t_ospeed = comconsrate;
+		} else
 #endif
+		{
 			tp->t_cflag = TTYDEF_CFLAG;
+			tp->t_ispeed = tp->t_ospeed = comdefaultrate;
+		}
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
@@ -316,7 +321,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 
 		s = spltty();
 
@@ -1367,7 +1371,7 @@ comcninit(struct consdev *cp)
 	if (comconsfreq == 0)
 		comconsfreq = COM_FREQ;
 
-	cominit(comconsiot, comconsioh, comdefaultrate, comconsfreq);
+	cominit(comconsiot, comconsioh, comconsrate, comconsfreq);
 	comconsinit = 0;
 }
 
@@ -1393,6 +1397,7 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency, tcf
 	comconsaddr = iobase;
 	comconscflag = cflag;
 	comconsfreq = frequency;
+	comconsrate = rate;
 
 	return (0);
 }

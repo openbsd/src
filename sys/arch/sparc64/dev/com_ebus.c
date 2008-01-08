@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.13 2007/11/15 20:39:45 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.14 2008/01/08 00:29:36 dlg Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -153,11 +153,15 @@ com_ebus_attach(parent, self, aux)
 
 	if (com_is_input || com_is_output) {
 		struct consdev *cn_orig;
+		int speed = 9600;
+
+		if (strcmp(ea->ea_name, "rsc-console") == 0)
+			speed = 115200;
 
 		comconsioh = sc->sc_ioh;
 		cn_orig = cn_tab;
 		/* Attach com as the console. */
-		if (comcnattach(sc->sc_iot, sc->sc_iobase, 9600,
+		if (comcnattach(sc->sc_iot, sc->sc_iobase, speed,
 		    sc->sc_frequency,
 		    ((TTYDEF_CFLAG & ~(CSIZE | PARENB))|CREAD | CS8 | HUPCL))) {
 			printf("Error: comcnattach failed\n");
