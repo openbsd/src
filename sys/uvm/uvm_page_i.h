@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.19 2007/12/18 11:05:52 thib Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.20 2008/01/09 17:42:17 miod Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
@@ -261,11 +261,15 @@ uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 PAGE_INLINE int
 uvm_page_lookup_freelist(struct vm_page *pg)
 {
+#if VM_PHYSSEG_MAX == 1
+	return (vm_physmem[0].free_list);
+#else
 	int lcv;
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
 	return (vm_physmem[lcv].free_list);
+#endif
 }
 
 #endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */
