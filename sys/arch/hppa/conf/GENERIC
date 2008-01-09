@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.113 2008/01/09 20:59:17 sthen Exp $
+#	$OpenBSD: GENERIC,v 1.114 2008/01/09 23:08:16 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -110,7 +110,7 @@ uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi?
 uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom?
-uark	at uhub?		# Arkmicro ARK3116 serial
+uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
