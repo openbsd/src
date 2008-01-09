@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.112 2007/09/09 01:37:28 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.113 2008/01/09 20:59:17 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -108,6 +108,10 @@ uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
 uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi?
+uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom?
+uark	at uhub?		# Arkmicro ARK3116 serial
+ucom*	at uark?
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
 atapiscsi* at umass?
@@ -117,6 +121,8 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+url*	at uhub?		# Realtek RTL8150L based adapters
 
 # untested USB devices
 umodem*	at uhub?		# USB Modems/Serial
@@ -127,14 +133,10 @@ uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
 ucom*	at uvscom?
 ubsa*	at uhub?		# Belkin serial adapter
 ucom*	at ubsa?
-uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom?
 umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
-uark*	at uhub?		# Arkmicro ARK3116 serial
-ucom*	at uark?
 uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
@@ -148,7 +150,6 @@ audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
-aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
@@ -156,7 +157,6 @@ kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 cdce*	at uhub?		# CDC Ethernet
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
 uscanner* at uhub?		# USB Scanners
@@ -312,6 +312,7 @@ bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 xmphy*		at mii?		# XaQti XMAC-II PHYs
 rlphy*		at mii?		# Realtek 8139 internal PHYs
+urlphy*		at mii?		# Realtek RTL8150L internal PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 # MI devices
