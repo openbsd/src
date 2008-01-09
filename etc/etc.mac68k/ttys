@@ -1,20 +1,11 @@
 #
-#	$OpenBSD: ttys,v 1.9 2006/03/09 20:49:01 miod Exp $
+#	$OpenBSD: ttys,v 1.10 2008/01/09 17:39:42 miod Exp $
 #
 # name	getty				type	status		comments
 #
-# If the console is marked insecure, single-user requires
-# the root password.
-console	"/usr/libexec/getty Pc"		vt220	off secure
-#console "/usr/libexec/getty std.9600"	vt220	on  secure
-
-# Define the console that we actually run getty on.
-# To enable the serial console, mark ttyC0 'off' and turn on the
-# console entry configuring it as though it were one of the serial
-# ports (e.g., setting the entry to 'std.9600').
-ttyC0	"/usr/libexec/getty Pc"		vt220	on  secure
-
-# Hardwired lines are marked off, by default, so getty(8)
-# is quiet when they don't exist.
+console "/usr/libexec/getty std.9600"	vt220	on  secure
+# graphics console
+ttyC0	"/usr/libexec/getty std.9600"	vt220	off secure
+# serial lines
 tty00	"/usr/libexec/getty std.9600"	unknown off secure
 tty01	"/usr/libexec/getty std.9600"	unknown off secure
