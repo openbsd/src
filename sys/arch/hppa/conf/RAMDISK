@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.75 2007/08/15 09:06:54 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.76 2008/01/09 23:58:43 sthen Exp $
 #
 # Diskless kernel config
 #
@@ -120,6 +120,8 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+url*	at uhub?		# Realtek RTL8150L based adapters
 
 # untested USB devices
 #umodem*	at uhub?	# USB Modems/Serial
@@ -140,7 +142,6 @@ uhid*	at uhidev?		# USB generic HID support
 #audio*	at uaudio?
 #umidi*	at uhub?		# USB MIDI
 #midi*	at umidi?
-aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
@@ -148,7 +149,6 @@ kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 cdce*	at uhub?		# CDC Ethernet
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 #uscanner* at uhub?		# USB Scanners
@@ -295,6 +295,7 @@ bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 xmphy*		at mii?		# XaQti XMAC-II PHYs
 rlphy*		at mii?		# Realtek 8139 internal PHYs
+urlphy*		at mii?		# Realtek RTL8150L internal PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 # MI devices
