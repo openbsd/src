@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.308 2007/12/07 17:13:35 deraadt Exp $
+#	$OpenBSD: rc,v 1.309 2008/01/09 21:38:19 mpf Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -221,7 +221,7 @@ if [ X"${pf}" != X"NO" ]; then
 		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type routersol"
 		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type routeradv"
 	fi
-	RULES="$RULES\npass proto { pfsync, carp }"
+	RULES="$RULES\npass proto carp"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
 	*[1-9]*)
 		# don't kill NFS
@@ -248,6 +248,10 @@ fi
 if [ X"${pf}" != X"NO" ]; then
 	if [ -f ${pf_rules} ]; then
 		pfctl -f ${pf_rules}
+	fi
+	# bring up pfsync after the working ruleset has been loaded
+	if [ -f /etc/hostname.pfsync0 ]; then
+		. /etc/netstart pfsync0
 	fi
 fi
 

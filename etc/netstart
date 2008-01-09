@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.116 2007/08/02 03:19:10 david Exp $
+#	$OpenBSD: netstart,v 1.117 2008/01/09 21:38:19 mpf Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -304,10 +304,8 @@ fi
 
 # The trunk interfaces need to come up first in this list.
 # The vlan interfaces need to come up after trunk.
-# The pfsync interfaces need to come up before carp.
-# Configure all the carp interfaces which we know about.
-# They must come up after pfsync but before default route.
-ifmstart "trunk vlan pfsync carp"
+# Configure all the carp interfaces which we know about before default route.
+ifmstart "trunk vlan carp"
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
