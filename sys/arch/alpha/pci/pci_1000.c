@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.5 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.6 2008/01/09 22:23:00 kettenis Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -177,7 +177,7 @@ dec_1000_intr_map(ccv, bustag, buspin, line, ihp)
 		return 0;
 	}
 
-bad:	printf("dec_1000_intr_map: can't map dev %d pin %d\n", device, buspin);
+bad:
 	return 1;
 }
 
