@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.10 2008/01/04 12:57:40 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.11 2008/01/09 21:47:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -297,18 +297,23 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 void
 mps_encodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
 {
+	u_int32_t	 a = htole32(addr->s_addr);
+
 	o->bo_n = offset;
-	o->bo_id[o->bo_n++] = addr->s_addr & 0xff;
-	o->bo_id[o->bo_n++] = (addr->s_addr >> 8) & 0xff;
-	o->bo_id[o->bo_n++] = (addr->s_addr >> 16) & 0xff;
-	o->bo_id[o->bo_n++] = (addr->s_addr >> 24) & 0xff;
+	o->bo_id[o->bo_n++] = a & 0xff;
+	o->bo_id[o->bo_n++] = (a >> 8) & 0xff;
+	o->bo_id[o->bo_n++] = (a >> 16) & 0xff;
+	o->bo_id[o->bo_n++] = (a >> 24) & 0xff;
 }
 
 void
 mps_decodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
 {
-	addr->s_addr = ((o->bo_id[offset] & 0xff)) |
+	u_int32_t	 a;
+
+	a = ((o->bo_id[offset] & 0xff)) |
 	    ((o->bo_id[offset + 1] & 0xff) << 8) |
 	    ((o->bo_id[offset + 2] & 0xff) << 16) |
 	    ((o->bo_id[offset + 3] & 0xff) << 24);
+	addr->s_addr = letoh32(a);
 }
