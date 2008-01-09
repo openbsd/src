@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpcivar.h,v 1.5 2007/10/28 18:29:13 fgsch Exp $	*/
+/*	$OpenBSD: cmpcivar.h,v 1.6 2008/01/09 02:17:52 jakemsr Exp $	*/
 /*	$NetBSD: cmpcivar.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
@@ -173,6 +173,14 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 /*
  * softc
  */
+
+	/* each channel */
+struct cmpci_channel {
+	void		(*intr)(void *);
+	void		*intr_arg;
+	int		md_divide;
+};
+
 struct cmpci_softc {
 	struct device		sc_dev;
 
@@ -194,6 +202,9 @@ struct cmpci_softc {
 #define CMPCI_CAP_REVERSE_FR		0x00000800
 #define CMPCI_CAP_SPDIN_PHASE		0x00001000
 #define CMPCI_CAP_2ND_SPDIN		0x00002000
+#define CMPCI_CAP_4CH			0x00004000
+#define CMPCI_CAP_6CH			0x00008000
+#define CMPCI_CAP_8CH			0x00010000
 
 #define CMPCI_CAP_CMI8338	(CMPCI_CAP_SPDIN | CMPCI_CAP_SPDOUT | \
 				CMPCI_CAP_SPDLOOP | CMPCI_CAP_SPDLEGACY)
@@ -225,14 +236,16 @@ struct cmpci_softc {
 	cmpci_dmapool_t		sc_dmap;
 
 	/* each channel */
-	struct {
-		void		(*intr)(void *);
-		void		*intr_arg;
-		int		md_divide;
-	} sc_play, sc_rec;
+	struct cmpci_channel	sc_ch0, sc_ch1;
+
+	/* which channel is used for playback */
+	uint32_t		sc_play_channel;
 
 	/* value of CMPCI_REG_MISC register */
 	uint32_t		sc_reg_misc;
+
+	/* chip version */
+	uint32_t		sc_version;
 
 	/* mixer */
 	uint8_t			sc_gain[CMPCI_NDEVS][2];
