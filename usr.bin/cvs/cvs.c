@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.139 2007/10/07 18:14:09 chl Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.140 2008/01/10 10:05:40 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -59,7 +59,6 @@ int	cvs_server_active = 0;
 
 char	*cvs_tagname = NULL;
 char	*cvs_defargs;		/* default global arguments from .cvsrc */
-char	*cvs_command;		/* name of the command we are running */
 char	*cvs_rootstr;
 char	*cvs_rsh = CVS_RSH_DEFAULT;
 char	*cvs_editor = CVS_EDITOR_DEFAULT;
@@ -68,6 +67,7 @@ char	*cvs_msg = NULL;
 char	*cvs_tmpdir = CVS_TMPDIR_DEFAULT;
 
 struct cvsroot *current_cvsroot = NULL;
+struct cvs_cmd *cmdp;			/* struct of command we are running */
 
 int		cvs_getopt(int, char **);
 __dead void	usage(void);
@@ -128,7 +128,6 @@ main(int argc, char **argv)
 {
 	char *envstr, *cmd_argv[CVS_CMD_MAXARG], **targv;
 	int i, ret, cmd_argc;
-	struct cvs_cmd *cmdp;
 	struct passwd *pw;
 	struct stat st;
 	char fpath[MAXPATHLEN];
@@ -172,8 +171,6 @@ main(int argc, char **argv)
 	if (argc == 0)
 		usage();
 
-	cvs_command = argv[0];
-
 	/*
 	 * check the tmp dir, either specified through
 	 * the environment variable TMPDIR, or via
@@ -184,9 +181,9 @@ main(int argc, char **argv)
 	else if (!S_ISDIR(st.st_mode))
 		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
 
-	cmdp = cvs_findcmd(cvs_command);
+	cmdp = cvs_findcmd(argv[0]);
 	if (cmdp == NULL) {
-		fprintf(stderr, "Unknown command: `%s'\n\n", cvs_command);
+		fprintf(stderr, "Unknown command: `%s'\n\n", argv[0]);
 		fprintf(stderr, "CVS commands are:\n");
 		for (i = 0; cvs_cdt[i] != NULL; i++)
 			fprintf(stderr, "\t%-16s%s\n",
@@ -396,7 +393,7 @@ cvs_read_rcfile(void)
 	char rcpath[MAXPATHLEN], *buf, *lbuf, *lp, *p;
 	int cmd_parsed, cvs_parsed, i, linenum;
 	size_t len, pos;
-	struct cvs_cmd *cmdp, *tcmdp;
+	struct cvs_cmd *tcmdp;
 	FILE *fp;
 
 	linenum = 0;
@@ -414,10 +411,6 @@ cvs_read_rcfile(void)
 			    strerror(errno));
 		return;
 	}
-
-	cmdp = cvs_findcmd(cvs_command);
-	if (cmdp == NULL)
-		fatal("unknown command `%s'", cvs_command);
 
 	cmd_parsed = cvs_parsed = 0;
 	lbuf = NULL;

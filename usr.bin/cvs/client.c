@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.86 2008/01/10 09:48:51 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.87 2008/01/10 10:05:40 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -1008,7 +1008,7 @@ cvs_client_initlog(void)
 		s++;
 		switch (*s) {
 		case 'c':
-			if (strlcpy(fpath, cvs_command, sizeof(fpath)) >=
+			if (strlcpy(fpath, cmdp->cmd_name, sizeof(fpath)) >=
 			    sizeof(fpath))
 				fatal("cvs_client_initlog: truncation");
 			break;

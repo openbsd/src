@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.36 2007/09/25 10:56:04 chl Exp $	*/
+/*	$OpenBSD: release.c,v 1.37 2008/01/10 10:05:40 tobias Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -155,7 +155,7 @@ cvs_release_local(struct cvs_file *cf)
 
 	if (cvs_yesno() == -1) {
 		(void)fprintf(stderr,
-		    "** `%s' aborted by user choice.\n", cvs_command);
+		    "** `%s' aborted by user choice.\n", cmdp->cmd_name);
 
 		/* change back to original working dir */
 		cvs_chdir(wdir, 0);

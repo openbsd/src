@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.147 2007/09/23 11:19:24 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.148 2008/01/10 10:05:40 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -289,7 +289,6 @@ extern volatile sig_atomic_t sig_received;
 extern volatile sig_atomic_t cvs_quit;
 extern struct cvsroot *current_cvsroot;
 extern char *cvs_tagname;
-extern char *cvs_command;
 extern char *cvs_editor;
 extern char *cvs_homedir;
 extern char *cvs_msg;
@@ -314,6 +313,7 @@ extern int  cvs_error;
 extern int  cvs_server_active;
 extern int  reset_stickies;
 
+extern struct cvs_cmd *cmdp;
 extern struct cvs_cmd *cvs_cdt[];
 
 extern struct cvs_cmd cvs_cmd_add;
