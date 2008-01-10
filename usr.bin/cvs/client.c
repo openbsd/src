@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.84 2008/01/10 09:41:52 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.85 2008/01/10 09:47:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -457,7 +457,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 	if (cf->file_type == CVS_DIR)
 		return;
 
-	if (cf->file_ent != NULL) {
+	if (cf->file_ent != NULL && cvs_cmdop != CVS_OP_IMPORT) {
 		if (cf->file_status == FILE_ADDED) {
 			len = strlcpy(rev, "0", sizeof(rev));
 			if (len >= sizeof(rev))
