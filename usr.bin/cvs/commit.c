@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.115 2007/10/08 14:13:13 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.116 2008/01/10 09:37:26 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -299,6 +299,9 @@ cvs_commit_local(struct cvs_file *cf)
 	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1)) {
 		rrev = rcs_head_get(cf->file_rcs);
 		crev = rcs_head_get(cf->file_rcs);
+		if (crev == NULL || rrev == NULL)
+			fatal("RCS head empty or missing in %s\n",
+			    cf->file_rcs->rf_path);
 
 		tag = cvs_directory_tag;
 		if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)

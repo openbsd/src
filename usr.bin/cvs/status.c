@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.77 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.78 2008/01/10 09:37:26 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -132,6 +132,10 @@ cvs_status_local(struct cvs_file *cf)
 		return;
 	}
 
+	head = rcs_head_get(cf->file_rcs);
+	if (head == NULL && cf->file_status != FILE_REMOVE_ENTRY)
+		return;
+
 	cvs_printf("%s\n", CVS_STATUS_SEP);
 
 	status = status_tab[cf->file_status];
@@ -141,6 +145,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNKNOWN ||
+	    cf->file_status == FILE_REMOVE_ENTRY ||
 	    (cf->file_rcs != NULL && cf->in_attic == 1 && cf->fd == -1)) {
 		(void)xsnprintf(buf, sizeof(buf), "no file %s\t",
 		    cf->file_name);
@@ -153,7 +158,8 @@ cvs_status_local(struct cvs_file *cf)
 	if (cf->file_ent == NULL) {
 		(void)xsnprintf(buf, sizeof(buf),
 		    "No entry for %s", cf->file_name);
-	} else if (cf->file_status == FILE_ADDED) {
+	} else if (cf->file_status == FILE_ADDED ||
+		   cf->file_status == FILE_REMOVE_ENTRY) {
 		len = strlcpy(buf, "New file!", sizeof(buf));
 		if (len >= sizeof(buf))
 			fatal("cvs_status_local: truncation");
@@ -181,12 +187,11 @@ cvs_status_local(struct cvs_file *cf)
 	cvs_printf("   Working revision:\t%s\n", buf);
 
 	buf[0] = '\0';
-	if (cf->file_rcs == NULL) {
+	if (cf->file_rcs == NULL || head == NULL) {
 		len = strlcat(buf, "No revision control file", sizeof(buf));
 		if (len >= sizeof(buf))
 			fatal("cvs_status_local: truncation");
 	} else {
-		head = rcs_head_get(cf->file_rcs);
 		rcsnum_tostr(head, revbuf, sizeof(revbuf));
 		rcsnum_free(head);
 		(void)xsnprintf(buf, sizeof(buf), "%s\t%s", revbuf,

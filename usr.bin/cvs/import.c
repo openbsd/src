@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.77 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.78 2008/01/10 09:37:26 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -326,6 +326,9 @@ import_update(struct cvs_file *cf)
 		newrev = rcsnum_inc(rev);
 	} else {
 		hrev = rcs_head_get(cf->file_rcs);
+		if (hrev == NULL)
+			fatal("RCS head empty or missing in %s\n",
+			    cf->file_rcs->rf_path);
 		d = import_get_rcsdiff(cf, hrev);
 		rcsnum_free(hrev);
 		newrev = rcsnum_brtorev(brev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.82 2007/09/23 11:19:24 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.83 2008/01/10 09:37:26 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -257,6 +257,9 @@ add_file(struct cvs_file *cf)
 
 	if (cf->file_rcs != NULL) {
 		head = rcs_head_get(cf->file_rcs);
+		if (head == NULL)
+			fatal("RCS head empty or missing in %s\n",
+			    cf->file_rcs->rf_path);
 		rcsnum_tostr(head, revbuf, sizeof(revbuf));
 		rcsnum_free(head);
 	}
@@ -278,6 +281,9 @@ add_file(struct cvs_file *cf)
 
 			/* Restore the file. */
 			head = rcs_head_get(cf->file_rcs);
+			if (head == NULL)
+				fatal("RCS head empty or missing in %s\n",
+				    cf->file_rcs->rf_path);
 			cvs_checkout_file(cf, head, NULL, 0);
 			rcsnum_free(head);
 
