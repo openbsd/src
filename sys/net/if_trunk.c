@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.40 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.41 2008/01/10 09:52:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -497,8 +497,10 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG ||
 	    (tp = (struct trunk_port *)ifp->if_tp) == NULL ||
-	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
+	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL) {
+		error = EINVAL;
 		goto fallback;
+	}
 
 	switch (cmd) {
 	case SIOCGTRUNKPORT:
@@ -518,6 +520,7 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		trunk_port2req(tp, rp);
 		break;
 	default:
+		error = ENOTTY;
 		goto fallback;
 	}
 
@@ -528,9 +531,9 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	splx(s);
 
 	if (tp != NULL)
-		return ((*tp->tp_ioctl)(ifp, cmd, data));
+		error = (*tp->tp_ioctl)(ifp, cmd, data);
 
-	return (EINVAL);
+	return (error);
 }
 
 void
