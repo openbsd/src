@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.78 2008/01/10 09:37:26 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.79 2008/01/10 09:54:04 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -300,7 +300,8 @@ import_update(struct cvs_file *cf)
 		fatal("import_update: rcsnum_parse failed");
 
 	if (rev != NULL) {
-		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, 0)) == NULL)
+		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE))
+		    == NULL)
 			fatal("import_update: failed to grab revision");
 
 		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
@@ -389,7 +390,7 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 		cvs_buf_free(b1);
 
 		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		rcs_rev_write_stmp(cf->file_rcs, rev, p2, 0);
+		rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
 		diff_format = D_RCSDIFF;
 		if (cvs_diffreg(p2, p1, b2) == D_ERROR)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.82 2008/01/10 09:39:32 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.83 2008/01/10 09:54:04 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,12 +78,12 @@
 #define RCS_KW_HEADER	(RCS_KW_ID | RCS_KW_FULLPATH)
 
 /* RCS keyword expansion modes (kflags) */
-#define RCS_KWEXP_NONE	0x00
-#define RCS_KWEXP_NAME	0x01	/* include keyword name */
-#define RCS_KWEXP_VAL	0x02	/* include keyword value */
-#define RCS_KWEXP_LKR	0x04	/* include name of locker */
-#define RCS_KWEXP_OLD	0x08	/* generate old keyword string */
-#define RCS_KWEXP_ERR	0x10	/* mode has an error */
+#define RCS_KWEXP_NONE	0x01	/* do not expand keywords */
+#define RCS_KWEXP_NAME	0x02	/* include keyword name */
+#define RCS_KWEXP_VAL	0x04	/* include keyword value */
+#define RCS_KWEXP_LKR	0x08	/* include name of locker */
+#define RCS_KWEXP_OLD	0x10	/* generate old keyword string */
+#define RCS_KWEXP_ERR	0x20	/* mode has an error */
 
 #define RCS_KWEXP_DEFAULT	(RCS_KWEXP_NAME | RCS_KWEXP_VAL)
 #define RCS_KWEXP_KVL		(RCS_KWEXP_NAME | RCS_KWEXP_VAL | RCS_KWEXP_LKR)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.105 2007/09/23 11:19:24 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.106 2008/01/10 09:54:04 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -271,7 +271,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	    (cvs_server_active) ? "to client" : "to disk");
 
 	if (co_flags & CO_DUMP) {
-		rcs_rev_write_fd(cf->file_rcs, rnum, STDOUT_FILENO, 1);
+		rcs_rev_write_fd(cf->file_rcs, rnum, STDOUT_FILENO, 0);
 		return;
 	}
 
@@ -290,7 +290,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 				fatal("cvs_checkout_file: open: %s",
 				    strerror(errno));
 
-			rcs_rev_write_fd(cf->file_rcs, rnum, cf->fd, 1);
+			rcs_rev_write_fd(cf->file_rcs, rnum, cf->fd, 0);
 		} else {
 			cvs_merge_file(cf, 1);
 		}
