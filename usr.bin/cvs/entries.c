@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.85 2007/11/11 10:06:52 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.86 2008/01/10 10:09:27 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -37,8 +37,7 @@ cvs_ent_open(const char *dir)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 
-	ep = (CVSENTRIES *)xmalloc(sizeof(*ep));
-	memset(ep, 0, sizeof(*ep));
+	ep = (CVSENTRIES *)xcalloc(1, sizeof(*ep));
 
 	(void)xsnprintf(buf, sizeof(buf), "%s/%s", dir, CVS_PATH_ENTRIES);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.123 2008/01/10 10:08:22 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.124 2008/01/10 10:09:27 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -653,20 +653,17 @@ cvs_splitlines(u_char *data, size_t len)
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 
-	lines = xmalloc(sizeof(*lines));
-	memset(lines, 0, sizeof(*lines));
+	lines = xcalloc(1, sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
 
-	lp = xmalloc(sizeof(*lp));
-	memset(lp, 0, sizeof(*lp));
+	lp = xcalloc(1, sizeof(*lp));
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
 	p = c = data;
 	for (i = 0; i < len; i++) {
 		if (*p == '\n' || (i == len - 1)) {
 			tlen = p - c + 1;
-			lp = xmalloc(sizeof(*lp));
-			memset(lp, 0, sizeof(*lp));
+			lp = xcalloc(1, sizeof(*lp));
 			lp->l_line = c;
 			lp->l_len = tlen;
 			lp->l_lineno = ++(lines->l_nblines);

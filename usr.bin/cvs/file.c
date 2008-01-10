@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.206 2008/01/10 09:37:26 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.207 2008/01/10 10:09:27 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -216,8 +216,7 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 	for (p = rpath; p[0] == '.' && p[1] == '/';)
 		p += 2;
 
-	cf = (struct cvs_file *)xmalloc(sizeof(*cf));
-	memset(cf, 0, sizeof(*cf));
+	cf = (struct cvs_file *)xcalloc(1, sizeof(*cf));
 
 	cf->file_name = xstrdup(f);
 	cf->file_wd = xstrdup(d);
