@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2008/01/10 12:24:16 tobias Exp $
+#	$OpenBSD: Makefile,v 1.11 2008/01/10 12:30:09 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -23,7 +23,10 @@ LTESTS= cvs-initial \
 	cvs-checkout-pflag \
 	cvs-tag \
 	cvs-add \
+	cvs-add-dir \
+	cvs-add-subdir_file \
 	cvs-commit-Fflag \
+	cvs-checkout \
 	cvs-tag-branch \
 	cvs-checkout-rflag_branch \
 	cvs-commit-to_branch \
@@ -33,17 +36,20 @@ LTESTS= cvs-initial \
 	cvs-checkout-rflag-1.1 \
 	cvs-update-Aflag \
 	cvs-status \
+	cvs-diff \
 	cvs-remove-fflag \
-	cvs-status-vflag
+	cvs-status-vflag \
+	cvs-rtag-one_more_branch
 # Known to fail.
 #	cvs-checkout-dflag
 #	cvs-rlog
+#	cvs-update-for_subdir
 # Known to behave unconform to GNU cvs.
 #	cvs-annotate-rflag-unknown_symbol-fflag
-#	cvs-diff
 #	cvs-diff-file
 #	cvs-export
 #	cvs-log
+#	cvs-rlog
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -55,6 +61,20 @@ test-cvs-add:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
 	    ${CVS} -q add seed2.txt > /dev/null 2> /dev/null
 #	    eval 'test `${CVS} -Q add seed2.txt | wc -l` -eq 0'
+
+test-cvs-add-dir:
+	@mkdir ${.OBJDIR}/regress_cvs_wcopy/seed/subdir
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -q add subdir > /dev/null 2> /dev/null
+	@test -d ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/CVS && \
+	    test -d ${.OBJDIR}/regress_cvs_root/seed/subdir
+
+test-cvs-add-subdir_file:
+	@echo "initial content of seed3.txt" \
+	    > ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -q add subdir/seed3.txt > /dev/null 2> /dev/null
+#	eval 'test `${CVS} -Q add seed2.txt | wc -l` -eq 0'
 
 test-cvs-annotate:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
@@ -130,6 +150,15 @@ test-cvs-checkout-dflag:
 	    ${.OBJDIR}/regress_cvs_wcopy seed
 	@test -d ${.OBJDIR}/regress_cvs_wcopy
 
+test-cvs-checkout-subdir:
+	@echo "test-cvs-checkout-subdir"
+	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
+	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
+	    cd ${.OBJDIR}/regress_cvs_wcopy; \
+	    ${CVS} -Q -d ${MYCVSROOT} co seed/subdir > /dev/null
+	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt && \
+	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
+
 test-cvs-commit-Fflag:
 	@sleep 1
 	@echo "second line" >> ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
@@ -188,11 +217,11 @@ test-cvs-rlog:
 
 test-cvs-status:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q status | wc -l` -eq 12'
+	    eval 'test `${CVS} -Q status | wc -l` -eq 18'
 
 test-cvs-status-vflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q status -v | wc -l` -eq 21'
+	    eval 'test `${CVS} -Q status -v | wc -l` -eq 30'
 
 test-cvs-tag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
@@ -206,6 +235,11 @@ test-cvs-tag-branch:
 	@grep FIRST_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
 	    > /dev/null
 
+test-cvs-rtag-one_more_branch:
+	@${CVS} -d ${MYCVSROOT} -Q rtag -b SECOND_BRANCH seed > /dev/null
+	@grep SECOND_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed2.txt,v \
+	    | grep 4 > /dev/null
+
 # XXX - Output is not GNU conform
 test-cvs-update-Aflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
@@ -213,6 +247,14 @@ test-cvs-update-Aflag:
 #	    eval 'test `${CVS} -q update -A | wc -l` -eq 1'
 	@eval 'test `grep -c T1 ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` \
 	    -eq 0'
+
+test-cvs-update-for_subdir:
+	@echo "test-cvs-update-for_subdir"
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -Q update > /dev/null
+	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt && \
+	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt && \
+	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
 
 clean:
 	@rm -rf ${CLEANFILES}
