@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.232 2008/01/06 14:45:50 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.233 2008/01/10 09:35:02 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -246,8 +246,8 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
-static void	rcs_kwexp_line(char *, struct rcs_delta *, struct cvs_line *,
-		    int mode);
+static void	rcs_kwexp_line(char *, struct rcs_delta *, struct cvs_lines *,
+		    struct cvs_line *, int mode);
 
 RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
@@ -2965,7 +2965,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 	int expmode, expand;
 	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
-	struct cvs_line *lp;
+	struct cvs_line *lp, *nlp;
 	BUF *bp;
 
 	expand = 0;
@@ -2985,14 +2985,20 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 		}
 	}
 
-	TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
-		if (lp->l_line == NULL)
+	for(lp = TAILQ_FIRST(&lines->l_lines); lp != NULL;) {
+		nlp = TAILQ_NEXT(lp, l_list);
+
+		if (lp->l_line == NULL) {
+			lp = nlp;
 			continue;
+		}
 
 		if (expand)
-			rcs_kwexp_line(rfp->rf_path, rdp, lp, expmode);
+			rcs_kwexp_line(rfp->rf_path, rdp, lines, lp, expmode);
 
-		cvs_buf_append(bp, lp->l_line, lp->l_len);
+		do {
+			cvs_buf_append(bp, lp->l_line, lp->l_len);
+		} while ((lp = TAILQ_NEXT(lp, l_list)) != nlp);
 	}
 
 	cvs_freelines(lines);
@@ -3012,7 +3018,7 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 	int expmode, expand;
 	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
-	struct cvs_line *lp;
+	struct cvs_line *lp, *nlp;
 	extern int print_stdout;
 
 	expand = 0;
@@ -3031,25 +3037,33 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 		}
 	}
 
-	TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
-		if (lp->l_line == NULL)
+	for(lp = TAILQ_FIRST(&lines->l_lines); lp != NULL;) {
+		nlp = TAILQ_NEXT(lp, l_list);
+
+		if (lp->l_line == NULL) {
+			lp = nlp;
 			continue;
-
-		if (expand)
-			rcs_kwexp_line(rfp->rf_path, rdp, lp, expmode);
-
-		/*
-		 * Solely for the checkout and update -p options.
-		 */
-		if (cvs_server_active == 1 &&
-		    (cvs_cmdop == CVS_OP_CHECKOUT ||
-		    cvs_cmdop == CVS_OP_UPDATE) && print_stdout == 1) {
-			if (atomicio(vwrite, fd, "M ", 2) != 2)
-				fatal("rcs_rev_write_fd: %s", strerror(errno));
 		}
 
-		if (atomicio(vwrite, fd, lp->l_line, lp->l_len) != lp->l_len)
-			fatal("rcs_rev_write_fd: %s", strerror(errno));
+		if (expand)
+			rcs_kwexp_line(rfp->rf_path, rdp, lines, lp, expmode);
+
+		do {
+			/*
+			 * Solely for the checkout and update -p options.
+			 */
+			if (cvs_server_active == 1 &&
+			    (cvs_cmdop == CVS_OP_CHECKOUT ||
+			    cvs_cmdop == CVS_OP_UPDATE) && print_stdout == 1) {
+				if (atomicio(vwrite, fd, "M ", 2) != 2)
+					fatal("rcs_rev_write_fd: %s",
+					    strerror(errno));
+			}
+
+			if (atomicio(vwrite, fd, lp->l_line, lp->l_len) !=
+			    lp->l_len)
+				fatal("rcs_rev_write_fd: %s", strerror(errno));
+		} while ((lp = TAILQ_NEXT(lp, l_list)) != nlp);
 	}
 
 	/* XXX: do we need to call futimes(2) on the output fd? */
@@ -3080,8 +3094,8 @@ rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 }
 
 static void
-rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
-    int mode)
+rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
+    struct cvs_line *line, int mode)
 {
 	BUF *tmpbuf;
 	int kwtype;
@@ -3276,11 +3290,129 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			}
 
 			/* order does not matter anymore below */
-			if (kwtype & RCS_KW_LOG)
+			if (kwtype & RCS_KW_LOG) {
+				char linebuf[256];
+				struct cvs_line *cur, *lp;
+				char *logp, *l_line, *prefix, *q, *sprefix;
+				size_t i;
+
+				/* $Log: rcs.c,v $
+				/* Revision 1.233  2008/01/10 09:35:02  tobias
+				/* Added support for keyword $Log$.  In order to support $Log$, new lines have
+				/* to be added which mustn't be expanded again (this log message for example
+				/* would loop forever due to $Log$ keywords in it).
+				/* line */
+				if (!(kwtype & RCS_KW_FULLPATH))
+					(void)strlcat(expbuf,
+					    basename(rcsfile), sizeof(expbuf));
+				else
+					(void)strlcat(expbuf, rcsfile,
+					    sizeof(expbuf));
+
 				if (strlcat(expbuf, " ", sizeof(expbuf)) >=
 				    sizeof(expbuf))
 					fatal("rcs_kwexp_line: string "
 					    "truncated");
+
+				cur = line;
+
+				/* copy rdp->rd_log for strsep */
+				logp = xstrdup(rdp->rd_log);
+
+				/* copy our prefix for later processing */
+				prefix = xmalloc(start - line->l_line + 1);
+				memcpy(prefix, line->l_line,
+				    start - line->l_line);
+				prefix[start - line->l_line] = '\0';
+
+				/* copy also prefix without trailing blanks. */
+				sprefix = xstrdup(prefix);
+				for (i = strlen(sprefix); i > 0 &&
+				    sprefix[i - 1] == ' '; i--)
+					sprefix[i - 1] = '\0';
+
+				/* new line: revision + date + author */
+				linebuf[0] = '\0';
+				if (strlcat(linebuf, "Revision ",
+				    sizeof(linebuf)) >= sizeof(linebuf))
+					fatal("rcs_kwexp_line: truncated");
+				rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
+				if (strlcat(linebuf, buf, sizeof(linebuf))
+				    >= sizeof(buf))
+					fatal("rcs_kwexp_line: truncated");
+				fmt = "  %Y/%m/%d %H:%M:%S  ";
+				if (strftime(buf, sizeof(buf), fmt,
+				    &rdp->rd_date) == 0)
+					fatal("rcs_kwexp_line: strftime "
+					    "failure");
+				if (strlcat(linebuf, buf, sizeof(linebuf))
+				    >= sizeof(linebuf))
+					fatal("rcs_kwexp_line: string "
+					    "truncated");
+				if (strlcat(linebuf, rdp->rd_author,
+				    sizeof(linebuf)) >= sizeof(linebuf))
+					fatal("rcs_kwexp_line: string "
+					    "truncated");
+
+				lp = xcalloc(1, sizeof(*lp));
+				xasprintf(&(lp->l_line), "%s%s\n",
+				    prefix, linebuf);
+				lp->l_len = strlen(lp->l_line);
+				TAILQ_INSERT_AFTER(&(lines->l_lines), cur, lp,
+				    l_list);
+				cur = lp;
+
+				/* Log message */
+				q = logp;
+				while ((l_line = strsep(&q, "\n")) != NULL &&
+				    q != NULL) {
+					lp = xcalloc(1, sizeof(*lp));
+
+					if (l_line[0] == '\0') {
+						xasprintf(&(lp->l_line), "%s\n",
+						    sprefix);
+					} else {
+						xasprintf(&(lp->l_line),
+						    "%s%s\n", prefix, l_line);
+					}
+
+					lp->l_len = strlen(lp->l_line);
+					TAILQ_INSERT_AFTER(&(lines->l_lines),
+					    cur, lp, l_list);
+					cur = lp;
+				}
+				xfree(logp);
+
+				/*
+				 * This is just another hairy mess, but it must
+				 * be done: All characters behind $Log: rcs.c,v $
+				 * be done: All characters behind Revision 1.233  2008/01/10 09:35:02  tobias
+				 * be done: All characters behind Added support for keyword $Log$.  In order to support $Log$, new lines have
+				 * be done: All characters behind to be added which mustn't be expanded again (this log message for example
+				 * be done: All characters behind would loop forever due to $Log$ keywords in it).
+				 * be done: All characters behind will be
+				 * written in a new line next to log messages.
+				 * But that's not enough, we have to strip all
+				 * trailing whitespaces of our prefix.
+				 */
+				lp = xcalloc(1, sizeof(*lp));
+				lp->l_line = xcalloc(strlen(sprefix) +
+				    line->l_line + line->l_len - end + 1, 1);
+				strlcpy(lp->l_line, sprefix,
+				    strlen(sprefix) + 1);
+				memcpy(lp->l_line + strlen(sprefix),
+				    end, line->l_line + line->l_len - end);
+				lp->l_len = strlen(lp->l_line);
+				TAILQ_INSERT_AFTER(&(lines->l_lines), cur, lp,
+				    l_list);
+				cur = lp;
+
+				end = line->l_line + line->l_len - 1;
+
+				xfree(prefix);
+				xfree(sprefix);
+
+			}
 
 			if (kwtype & RCS_KW_SOURCE) {
 				if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >=
