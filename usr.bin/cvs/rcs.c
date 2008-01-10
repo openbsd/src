@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.234 2008/01/10 09:37:26 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.235 2008/01/10 09:55:18 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1422,7 +1422,8 @@ rcs_kflag_get(const char *flags)
 	const char *fp;
 
 	fl = 0;
-	len = strlen(flags);
+	if (!(len = strlen(flags)))
+		return RCS_KWEXP_ERR;
 
 	for (fp = flags; *fp != '\0'; fp++) {
 		if (*fp == 'k')
@@ -3300,6 +3301,9 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				size_t i;
 
 				/* $Log: rcs.c,v $
+				/* Revision 1.235  2008/01/10 09:55:18  tobias
+				/* An empty -k option is invalid
+				/*
 				/* Revision 1.234  2008/01/10 09:37:26  tobias
 				/* RCS files without head keyword mustn't segfault our implementation.  Only
 				/* command that supports such files is "cvs status", therefore properly handle
@@ -3307,13 +3311,42 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				/*
 				/* Revision 1.233  2008/01/10 09:35:02  tobias
 				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword
 				/* Added support for keyword Revision 1.234  2008/01/10 09:37:26  tobias
 				/* Added support for keyword RCS files without head keyword mustn't segfault our implementation.  Only
 				/* Added support for keyword command that supports such files is "cvs status", therefore properly handle
 				/* Added support for keyword them in all other commands, too.
-				/* Added support for keyword .  In order to support $Log$, new lines have
+				/* Added support for keyword.  In order to support $Log: rcs.c,v $
+				/* Added support for keyword.  In order to support Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword.  In order to support An empty -k option is invalid
+				/* Added support for keyword.  In order to support
+				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword .  In order to support Revision 1.234  2008/01/10 09:37:26  tobias
+				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword .  In order to support RCS files without head keyword mustn't segfault our implementation.  Only
+				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword .  In order to support command that supports such files is "cvs status", therefore properly handle
+				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword .  In order to support them in all other commands, too.
+				/* Added support for keyword $Log: rcs.c,v $
+				/* Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				/* Added support for keyword An empty -k option is invalid
+				/* Added support for keyword .  In order to support, new lines have
 				/* to be added which mustn't be expanded again (this log message for example
 				/* would loop forever due to $Log: rcs.c,v $
+				/* would loop forever due to Revision 1.235  2008/01/10 09:55:18  tobias
+				/* would loop forever due to An empty -k option is invalid
+				/* would loop forever due to
 				/* would loop forever due to Revision 1.234  2008/01/10 09:37:26  tobias
 				/* would loop forever due to RCS files without head keyword mustn't segfault our implementation.  Only
 				/* would loop forever due to command that supports such files is "cvs status", therefore properly handle
@@ -3404,6 +3437,9 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				/*
 				 * This is just another hairy mess, but it must
 				 * be done: All characters behind $Log: rcs.c,v $
+				 * be done: All characters behind Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind An empty -k option is invalid
+				 * be done: All characters behind
 				 * be done: All characters behind Revision 1.234  2008/01/10 09:37:26  tobias
 				 * be done: All characters behind RCS files without head keyword mustn't segfault our implementation.  Only
 				 * be done: All characters behind command that supports such files is "cvs status", therefore properly handle
@@ -3411,13 +3447,42 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				 * be done: All characters behind
 				 * be done: All characters behind Revision 1.233  2008/01/10 09:35:02  tobias
 				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword
 				 * be done: All characters behind Added support for keyword Revision 1.234  2008/01/10 09:37:26  tobias
 				 * be done: All characters behind Added support for keyword RCS files without head keyword mustn't segfault our implementation.  Only
 				 * be done: All characters behind Added support for keyword command that supports such files is "cvs status", therefore properly handle
 				 * be done: All characters behind Added support for keyword them in all other commands, too.
-				 * be done: All characters behind Added support for keyword .  In order to support $Log$, new lines have
+				 * be done: All characters behind Added support for keyword.  In order to support $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword.  In order to support Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword.  In order to support An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword.  In order to support
+				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword .  In order to support Revision 1.234  2008/01/10 09:37:26  tobias
+				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword .  In order to support RCS files without head keyword mustn't segfault our implementation.  Only
+				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword .  In order to support command that supports such files is "cvs status", therefore properly handle
+				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword .  In order to support them in all other commands, too.
+				 * be done: All characters behind Added support for keyword $Log: rcs.c,v $
+				 * be done: All characters behind Added support for keyword Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind Added support for keyword An empty -k option is invalid
+				 * be done: All characters behind Added support for keyword .  In order to support, new lines have
 				 * be done: All characters behind to be added which mustn't be expanded again (this log message for example
 				 * be done: All characters behind would loop forever due to $Log: rcs.c,v $
+				 * be done: All characters behind would loop forever due to Revision 1.235  2008/01/10 09:55:18  tobias
+				 * be done: All characters behind would loop forever due to An empty -k option is invalid
+				 * be done: All characters behind would loop forever due to
 				 * be done: All characters behind would loop forever due to Revision 1.234  2008/01/10 09:37:26  tobias
 				 * be done: All characters behind would loop forever due to RCS files without head keyword mustn't segfault our implementation.  Only
 				 * be done: All characters behind would loop forever due to command that supports such files is "cvs status", therefore properly handle
