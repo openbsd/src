@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.121 2007/10/09 12:14:09 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.122 2008/01/10 10:00:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -566,10 +566,11 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 void
 cvs_mkpath(const char *path, char *tag)
 {
+	CVSENTRIES *ent;
 	FILE *fp;
 	size_t len;
-	char sticky[CVS_REV_BUFSZ];
-	char *sp, *dp, *dir, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+	char entry[CVS_ENT_MAXLINELEN], sticky[CVS_REV_BUFSZ];
+	char *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
 
 	dir = xstrdup(path);
 
@@ -620,6 +621,17 @@ cvs_mkpath(const char *path, char *tag)
 
 		cvs_mkadmin(rpath, current_cvsroot->cr_str, repo,
 		    tag, NULL, 0);
+
+		if (dp != NULL) {
+			if ((p = strchr(dp, '/')) != NULL)
+				*p = '\0';
+			ent = cvs_ent_open(rpath);
+			xsnprintf(entry, sizeof(entry), "D/%s/////", dp);
+			cvs_ent_add(ent, entry);
+			cvs_ent_close(ent, ENT_SYNC);
+			if (p != NULL)
+				*p = '/';
+		}
 
 		if (cvs_server_active == 1 && strcmp(rpath, ".")) {
 			if (tag != NULL) {
