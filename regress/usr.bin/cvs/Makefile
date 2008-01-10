@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2008/01/10 12:13:02 tobias Exp $
+#	$OpenBSD: Makefile,v 1.10 2008/01/10 12:24:16 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -6,6 +6,8 @@
 
 CVS?=		opencvs
 DIFF=		diff -u
+
+MYCVSROOT?=	${.OBJDIR}/regress_cvs_root
 
 CLEANFILES=	regress_cvs_root regress_cvs_wcopy regress_cvs_stderr \
 		regress_cvs_stdout
@@ -77,18 +79,18 @@ test-cvs-checkout:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co seed > /dev/null
+	    ${CVS} -Q -d ${MYCVSROOT} co seed > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
 
 test-cvs-checkout-pflag:
-	@eval 'test `${CVS} -Q -d ${.OBJDIR}/regress_cvs_root checkout \
+	@eval 'test `${CVS} -Q -d ${MYCVSROOT} checkout \
 	    -p seed/seed1.txt 2>/dev/null | wc -l` -eq 2'
 
 test-cvs-checkout-rflag_branch:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -r FIRST_BRANCH seed \
+	    ${CVS} -Q -d ${MYCVSROOT} co -r FIRST_BRANCH seed \
 	    > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
 	@eval 'test `grep -c TFIRST_BRANCH \
@@ -98,33 +100,33 @@ test-cvs-checkout-rflag-inval_branch_rev:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -r1.2.3.4 seed
+	    ${CVS} -Q -d ${MYCVSROOT} co -r1.2.3.4 seed
 	@eval 'test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt'
 
 test-cvs-checkout-rflag-too_high:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -r1.5 seed
+	    ${CVS} -Q -d ${MYCVSROOT} co -r1.5 seed
 	@eval 'test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt'
 
 test-cvs-checkout-rflag-HEAD:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -rHEAD seed > /dev/null
+	    ${CVS} -Q -d ${MYCVSROOT} co -rHEAD seed > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
 
 test-cvs-checkout-rflag-1.1:
 	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
 	    cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -r 1.1 seed > /dev/null
+	    ${CVS} -Q -d ${MYCVSROOT} co -r 1.1 seed > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt && \
 	    test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
 
 test-cvs-checkout-dflag:
-	@${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -d \
+	@${CVS} -Q -d ${MYCVSROOT} co -d \
 	    ${.OBJDIR}/regress_cvs_wcopy seed
 	@test -d ${.OBJDIR}/regress_cvs_wcopy
 
@@ -162,17 +164,17 @@ test-cvs-diff-file:
 test-cvs-export:
 	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
 	    cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root export
+	    ${CVS} -Q -d ${MYCVSROOT} export
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
 
 test-cvs-import-mflag:
 	@cd ${.CURDIR}/import_seed; \
-	    ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root import \
+	    ${CVS} -Q -d ${MYCVSROOT} import \
 	    -m'import seed repo' seed regress regress_import > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v
 
 test-cvs-initial: clean
-	@${CVS} -d ${.OBJDIR}/regress_cvs_root init
+	@${CVS} -d ${MYCVSROOT} init
 	@test -d ${.OBJDIR}/regress_cvs_root/CVSROOT
 
 test-cvs-log:
@@ -182,7 +184,7 @@ test-cvs-remove-fflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q remove -f seed1.txt
 
 test-cvs-rlog:
-	@${CVS} -Q -d ${.OBJDIR}/regress_cvs_root rlog seed
+	@${CVS} -Q -d ${MYCVSROOT} rlog seed
 
 test-cvs-status:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
