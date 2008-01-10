@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.60 2008/01/10 11:20:29 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.61 2008/01/10 11:25:27 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -173,7 +173,7 @@ cvs_tag(int argc, char **argv)
 	cr.flags = flags;
 
 	if (cvs_cmdop == CVS_OP_TAG ||
-	    current_cvsroot->cr_method == CVS_METHOD_LOCAL)) {
+	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
 		if (argc > 0)
 			cvs_file_run(argc, argv, &cr);
 		else

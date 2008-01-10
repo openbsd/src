@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.78 2007/09/24 22:06:28 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.79 2008/01/10 11:25:27 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -62,8 +62,7 @@ struct cvs_cmd cvs_cmd_rlog = {
 int
 cvs_getlog(int argc, char **argv)
 {
-	int ch;
-	int flags;
+	int ch, flags, i;
 	char *arg = ".";
 	struct cvs_recursion cr;
 
@@ -105,6 +104,16 @@ cvs_getlog(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (cvs_cmdop == CVS_OP_RLOG) {
+		if (argc == 0)
+			return 0;
+
+		for (i = 0; i < argc; i++)
+			if (argv[i][0] == '/')
+				fatal("Absolute path name is invalid: %s",
+				    argv[i]);
+	}
+
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
@@ -145,10 +154,13 @@ cvs_getlog(int argc, char **argv)
 
 	cr.flags = flags;
 
-	if (argc > 0)
-		cvs_file_run(argc, argv, &cr);
-	else
-		cvs_file_run(1, &arg, &cr);
+	if (cvs_cmdop == CVS_OP_LOG ||
+	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+		if (argc > 0)
+			cvs_file_run(argc, argv, &cr);
+		else
+			cvs_file_run(1, &arg, &cr);
+	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_send_files(argv, argc);
@@ -178,7 +190,7 @@ cvs_log_local(struct cvs_file *cf)
 	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_status == FILE_UNKNOWN) {
-		if (verbosity > 0)
+		if (verbosity > 0 && cvs_cmdop != CVS_OP_RLOG)
 			cvs_log(LP_ERR, "nothing known about %s",
 			    cf->file_path);
 		return;
