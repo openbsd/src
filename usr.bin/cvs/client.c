@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.85 2008/01/10 09:47:05 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.86 2008/01/10 09:48:51 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -796,6 +796,7 @@ cvs_client_merged(char *data)
 	ent = cvs_ent_open(wdir);
 	cvs_ent_add(ent, entry);
 	cvs_ent_close(ent, ENT_SYNC);
+	xfree(entry);
 
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_merged: open: %s: %s",
