@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.208 2008/01/10 10:12:09 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.209 2008/01/10 11:21:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -378,6 +378,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	l = stat(fpath, &st);
 	if (cvs_cmdop != CVS_OP_IMPORT && cvs_cmdop != CVS_OP_RLOG &&
+	    cvs_cmdop != CVS_OP_RTAG &&
 	    (l == -1 || (l == 0 && !S_ISDIR(st.st_mode)))) {
 		return;
 	}
@@ -427,7 +428,9 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			if (cvs_file_chkign(dp->d_name)) {
+			if (cvs_file_chkign(dp->d_name) &&
+			    cvs_cmdop != CVS_OP_RLOG &&
+			    cvs_cmdop != CVS_OP_RTAG) {
 				cp += dp->d_reclen;
 				continue;
 			}
@@ -591,7 +594,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s",
 	    repo, cf->file_name);
 
-	if (cf->file_type == CVS_FILE) {
+	if (cvs_cmdop != CVS_OP_RLOG && cvs_cmdop != CVS_OP_RTAG &&
+	    cf->file_type == CVS_FILE) {
 		len = strlcat(rcsfile, RCS_FILE_EXT, MAXPATHLEN);
 		if (len >= MAXPATHLEN)
 			fatal("cvs_file_classify: truncation");
@@ -619,7 +623,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	if (cf->file_type == CVS_DIR) {
 		if (cf->fd == -1 && stat(rcsfile, &st) != -1)
 			cf->file_status = DIR_CREATE;
-		else if (cf->file_ent != NULL || cvs_cmdop == CVS_OP_RLOG)
+		else if (cf->file_ent != NULL || cvs_cmdop == CVS_OP_RLOG ||
+		    cvs_cmdop == CVS_OP_RTAG)
 			cf->file_status = FILE_UPTODATE;
 		else
 			cf->file_status = FILE_UNKNOWN;
@@ -635,6 +640,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	case CVS_OP_IMPORT:
 	case CVS_OP_LOG:
 	case CVS_OP_RLOG:
+	case CVS_OP_RTAG:
 		rflags |= RCS_PARSE_FULLY;
 		break;
 	default:
