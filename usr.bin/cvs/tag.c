@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.59 2008/01/10 09:39:32 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.60 2008/01/10 11:20:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -15,6 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -36,6 +38,16 @@ static char	*tag_date = NULL;
 static char	*tag_name = NULL;
 static char	*tag_oldname = NULL;
 
+struct cvs_cmd cvs_cmd_rtag = {
+	CVS_OP_RTAG, 0, "rtag",
+	{ "rt", "rfreeze" },
+	"Add a symbolic tag to a module",
+	"[-bcdFflR] [-D date | -r rev] tag modules ...",
+	"bcD:dFflRr:",
+	NULL,
+	cvs_tag
+};
+
 struct cvs_cmd cvs_cmd_tag = {
 	CVS_OP_TAG, 0, "tag",
 	{ "ta", "freeze" },
@@ -49,7 +61,7 @@ struct cvs_cmd cvs_cmd_tag = {
 int
 cvs_tag(int argc, char **argv)
 {
-	int ch, flags;
+	int ch, flags, i;
 	char *arg = ".";
 	struct cvs_recursion cr;
 
@@ -88,7 +100,15 @@ cvs_tag(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
+	if (cvs_cmdop == CVS_OP_RTAG) {
+		if (argc < 2)
+			fatal("%s", cvs_cmd_rtag.cmd_synopsis);
+        
+                for (i = 1; i < argc; i++)
+                        if (argv[i][0] == '/')
+                                fatal("Absolute path name is invalid: %s",
+                                    argv[i]);
+        } else if (cvs_cmdop == CVS_OP_TAG && argc == 0)
 		fatal("%s", cvs_cmd_tag.cmd_synopsis);
 
 	tag_name = argv[0];
@@ -143,20 +163,30 @@ cvs_tag(int argc, char **argv)
 
 		cvs_client_send_request("Argument %s", tag_name);
 	} else {
+		if (cvs_cmdop == CVS_OP_RTAG &&
+		    chdir(current_cvsroot->cr_dir) == -1)
+			fatal("cvs_tag: %s", strerror(errno));
+
 		cr.fileproc = cvs_tag_local;
 	}
 
 	cr.flags = flags;
 
-	if (argc > 0)
-		cvs_file_run(argc, argv, &cr);
-	else
-		cvs_file_run(1, &arg, &cr);
+	if (cvs_cmdop == CVS_OP_TAG ||
+	    current_cvsroot->cr_method == CVS_METHOD_LOCAL)) {
+		if (argc > 0)
+			cvs_file_run(argc, argv, &cr);
+		else
+			cvs_file_run(1, &arg, &cr);
+	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
-		cvs_client_send_request("tag");
+
+		cvs_client_send_request((cvs_cmdop == CVS_OP_RTAG) ?
+		    "rtag" : "tag");
+
 		cvs_client_get_responses();
 	}
 
@@ -168,6 +198,8 @@ cvs_tag_local(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_tag_local(%s)", cf->file_path);
 
+	cvs_file_classify(cf, tag);
+
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1) {
 			cvs_log(LP_NOTICE, "%s %s",
@@ -176,8 +208,6 @@ cvs_tag_local(struct cvs_file *cf)
 		}
 		return;
 	}
-
-	cvs_file_classify(cf, tag);
 
 	if (runflags & T_CHECK_UPTODATE) {
 		if (cf->file_status != FILE_UPTODATE &&
@@ -216,6 +246,7 @@ cvs_tag_local(struct cvs_file *cf)
 		return;
 	case FILE_CHECKOUT:
 	case FILE_MODIFIED:
+	case FILE_PATCH:
 	case FILE_UPTODATE:
 		if (tag_add(cf) == 0) {
 			if (verbosity > 0)
@@ -246,7 +277,7 @@ static int
 tag_add(struct cvs_file *cf)
 {
 	char revbuf[CVS_REV_BUFSZ], trevbuf[CVS_REV_BUFSZ];
-	RCSNUM *trev;
+	RCSNUM *srev, *trev;
 	struct rcs_sym *sym;
 
 	if (cf->file_rcs == NULL) {
@@ -256,14 +287,21 @@ tag_add(struct cvs_file *cf)
 		return (-1);
 	}
 
+	if (cvs_cmdop == CVS_OP_TAG) {
+		if (cf->file_ent == NULL)
+			return (-1);
+		srev = cf->file_ent->ce_rev;
+	} else
+		srev = cf->file_rcsrev;
+
 	if (cvs_noexec == 1)
 		return (0);
 
-	(void)rcsnum_tostr(cf->file_rcsrev, revbuf, sizeof(revbuf));
+	(void)rcsnum_tostr(srev, revbuf, sizeof(revbuf));
 
 	trev = rcs_sym_getrev(cf->file_rcs, tag_name);
 	if (trev != NULL) {
-		if (rcsnum_cmp(cf->file_rcsrev, trev, 0) == 0) {
+		if (rcsnum_cmp(srev, trev, 0) == 0) {
 			rcsnum_free(trev);
 			return (-1);
 		}
@@ -277,7 +315,7 @@ tag_add(struct cvs_file *cf)
 			return (-1);
 		} else if (runflags & T_FORCE_MOVE) {
 			sym = rcs_sym_get(cf->file_rcs, tag_name);
-			rcsnum_cpy(cf->file_rcsrev, sym->rs_num, 0);
+			rcsnum_cpy(srev, sym->rs_num, 0);
 			cf->file_rcs->rf_flags &= ~RCS_SYNCED;
 
 			return (0);
@@ -285,7 +323,7 @@ tag_add(struct cvs_file *cf)
 	}
 
 	if (runflags & T_BRANCH) {
-		if ((trev = rcsnum_new_branch(cf->file_rcsrev)) == NULL)
+		if ((trev = rcsnum_new_branch(srev)) == NULL)
 			fatal("Cannot create a new branch");
 
 		for (;;) {
@@ -303,7 +341,7 @@ tag_add(struct cvs_file *cf)
 		}
 	} else {
 		trev = rcsnum_alloc();
-		rcsnum_cpy(cf->file_rcsrev, trev, 0);
+		rcsnum_cpy(srev, trev, 0);
 	}
 
 	if (rcs_sym_add(cf->file_rcs, tag_name, trev) == -1) {
