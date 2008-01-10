@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.207 2008/01/10 10:09:27 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.208 2008/01/10 10:12:09 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -600,6 +600,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	cf->file_rpath = xstrdup(rcsfile);
 	entlist = cvs_ent_open(cf->file_wd);
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);
+	cvs_ent_close(entlist, ENT_NOSYNC);
 
 	if (cf->file_ent != NULL) {
 		if (cf->file_ent->ce_type == CVS_ENT_DIR &&
@@ -623,7 +624,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		else
 			cf->file_status = FILE_UNKNOWN;
 
-		cvs_ent_close(entlist, ENT_NOSYNC);
 		return;
 	}
 
@@ -636,6 +636,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	case CVS_OP_LOG:
 	case CVS_OP_RLOG:
 		rflags |= RCS_PARSE_FULLY;
+		break;
+	default:
 		break;
 	}
 
@@ -765,7 +767,12 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		} else {
 			cf->file_status = FILE_UPTODATE;
 		}
-	} else if (cf->file_ent->ce_status == CVS_ENT_ADDED) {
+
+		return;
+	}
+
+	switch (cf->file_ent->ce_status) {
+	case CVS_ENT_ADDED:
 		if (cf->fd == -1) {
 			if (cvs_cmdop != CVS_OP_REMOVE) {
 				cvs_log(LP_NOTICE,
@@ -781,7 +788,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			    cf->file_path);
 			cf->file_status = FILE_CONFLICT;
 		}
-	} else if (cf->file_ent->ce_status == CVS_ENT_REMOVED) {
+		break;
+	case CVS_ENT_REMOVED:
 		if (cf->fd != -1) {
 			cvs_log(LP_NOTICE,
 			    "%s should be removed but is still there",
@@ -800,7 +808,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 				cf->file_status = FILE_REMOVED;
 			}
 		}
-	} else if (cf->file_ent->ce_status == CVS_ENT_REG) {
+		break;
+	case CVS_ENT_REG:
 		if (cf->file_rcs == NULL || rcsdead == 1 ||
 		    (reset_stickies == 1 && cf->in_attic == 1) ||
 		    (notag == 1 && tag != NULL)) {
@@ -851,9 +860,10 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 				}
 			}
 		}
+		break;
+	default:
+		break;
 	}
-
-	cvs_ent_close(entlist, ENT_NOSYNC);
 }
 
 void
