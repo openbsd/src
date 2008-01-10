@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.83 2008/01/10 09:37:26 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.84 2008/01/10 09:41:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -380,7 +380,13 @@ add_entry(struct cvs_file *cf)
 		    (kflag != RCS_KWEXP_DEFAULT) ? kbuf : "");
 	}
 
-	entlist = cvs_ent_open(cf->file_wd);
-	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
+	if (cvs_server_active) {
+		cvs_server_send_response("Checked-in %s/", cf->file_wd);
+		cvs_server_send_response(cf->file_path);
+		cvs_server_send_response(entry);
+	} else {
+		entlist = cvs_ent_open(cf->file_wd);
+		cvs_ent_add(entlist, entry);
+		cvs_ent_close(entlist, ENT_SYNC);
+	}
 }
