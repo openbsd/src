@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.90 2007/11/28 09:40:08 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.91 2008/01/10 20:34:03 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -476,9 +476,10 @@ figure_out_CURDIR()
 	 * directory */
 	if ((dir = getenv("PWD")) != NULL) {
 		if (stat(dir, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		    sa.st_dev == sb.st_dev)
+		    sa.st_dev == sb.st_dev) {
 		    	free(cwd);
 			return estrdup(dir);
+		}
 	}
 
 	return cwd;
