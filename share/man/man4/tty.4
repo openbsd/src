@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.32 2007/07/04 12:00:18 jmc Exp $
+.\"	$OpenBSD: tty.4,v 1.33 2008/01/10 17:32:54 mbalmer Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 4 2007 $
+.Dd $Mdocdate: January 10 2008 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -216,6 +216,8 @@ Point to Point Protocol line discipline.
 Starmode Radio IP line discipline.
 .It NMEADISC
 NMEA 0183 line discipline.
+.It MSTSDISC
+Meinberg Standard Time String line discipline.
 .El
 .Pp
 .It Dv TIOCGETD Fa int *ldisc
