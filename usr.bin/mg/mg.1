@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mg.1,v 1.32 2007/05/31 19:20:13 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.33 2008/01/10 20:12:45 kjell Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 10 2008 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -13,7 +13,7 @@
 .Sh DESCRIPTION
 .Nm
 is intended to be a small, fast, and portable editor for
-people who can't (or don't want to) run the real emacs for one
+people who can't (or don't want to) run emacs for one
 reason or another, or are not familiar with the
 .Xr vi 1
 editor.
@@ -25,7 +25,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Ar +number
 Go to the line specified by number (do not insert
-a space between the "+" sign and the number).
+a space between the
+.Sq +
+sign and the number).
 If a negative number is specified, the line number counts
 backwards from the end of the file i.e. +-1 will be the last
 line of the file, +-2 will be second last, and so on.
@@ -36,7 +38,33 @@ scratch buffer and all files.
 .It Fl n
 Turn off backup file generation.
 .El
-.Sh KEY BINDINGS
+.Sh WINDOWS AND BUFFERS
+When a file is loaded into
+.Nm ,
+it is stored in a
+.Em buffer .
+This buffer may be displayed on the screen in more than one window.
+At present, windows may only be split horizontally, so each window is
+delineated by a modeline at the bottom.
+If changes are made to a buffer, it will be reflected in all open windows.
+.Sh POINT AND MARK
+The current cursor location in
+.Nm
+is called the
+.Em point .
+It is possible to define a window-specific region of text by setting a second
+location, called the
+.Em mark .
+The
+.Em region
+is the text between point and mark inclusive.
+Deleting the character at the mark position leaves
+the mark at the point of deletion.
+.Pp
+Note: The point and mark are window-specific in
+.Nm ,
+not buffer-specific, as in other emacs flavours.
+.Sh DEFAULT KEY BINDINGS
 Normal editing commands are very similar to Gnu Emacs.
 In the following examples, ^X means control-X, and M-X means Meta-X,
 where the Meta key may be either a special key on your keyboard
@@ -106,12 +134,23 @@ Undo.
 Undo.
 .El
 .Pp
-For more key bindings, type
+For a complete set of key bindings, type
 .Dq M-x describe-bindings .
-.Sh CONFIGURATION AND COMMANDS
-Amongst other major differences, the
-.Nm
-configuration files are much simpler than real emacs.
+.Sh COMMANDS
+Commands are invoked by
+.Dq M-x ,
+or by binding to a key.
+Many commands take an optional numerical parameter,
+.Va n .
+This parameter is set either by
+M-<n> (where
+.Va n
+is the numerical argument) before the command, or by
+one or more invocations of the universal argument, usually bound to C-U.
+When invoked in this manner, the value of the numeric parameter to
+be passed is displayed in the minibuffer before the M-x.
+.\" A complete list of commands is given in mg(5)
+.Sh CONFIGURATION FILES
 There are two configuration files,
 .Pa .mg ,
 and
@@ -126,50 +165,15 @@ will use
 .Pa .mg-vt100
 as a startup file.
 The terminal type startup file is used first.
+.Pp
 The startup file format is a list of commands, one per line, as used for
-interactive evaluation, e.g.:
+interactive evaluation.
+Strings that are normally entered by the user at any subsequent prompts
+may be specified after the command name; e.g.:
 .Bd -literal -offset indent
 auto-fill-mode
 set-fill-column 72
 global-set-key "\e^x\e^f" find-file
-.Ed
-.Pp
-Here's another example sequence that you may find useful.
-By default,
-.Dq ()
-and
-.Dq []
-are recognized as brackets, so bracket matching can be done.
-The following defines
-.Dq {}
-as brackets, and turns on the mode that causes
-the cursor to "blink" to show you matching brackets.
-.Bd -literal -offset indent
-global-set-key } blink-matching-paren-hack
-blink-matching-paren
-set-default-mode blink
-.Ed
-.Pp
-More complicated key mappings are also possible, though there are some
-internal limitations compared to regular emacs.
-An example of how to map control characters and sequences follows,
-illustrating the Gosling-like line scrolling characters.
-.Bd -literal -offset indent
-global-set-key "\\^Z" scroll-one-line-up
-global-set-key "\\ez" scroll-one-line-down
-global-set-key "\\^_" suspend-emacs
-.Ed
-.Pp
-In order to use 8-bit characters, the Meta key needs to be disabled.
-This is required to read high bit characters like German umlauts.
-ESC can be used instead of the Meta key \(en see the
-.Sx KEY BINDINGS
-section for details.
-Execute the following command or add it to
-.Pa .mg
-to disable the Meta keys on startup:
-.Bd -literal -offset indent
-meta-key-mode
 .Ed
 .Sh FILES
 .Bl -tag -width ~/.mg-TERM -compact
@@ -182,14 +186,15 @@ terminal-specific startup file
 .Xr vi 1
 .Sh CAVEATS
 .Nm
-differs primarily in not having special modes for tasks other than
-straight editing, e.g., mail and news, and in not having special modes that
-support various programming languages.
-It does have text justification
-and auto-fill mode.
+differs from other emacs implementations primarily in not having many
+special modes for tasks other than straight editing, and in not having
+special modes that support various programming languages. 
+.Pp
 Since it is written completely in C, there is no
-language in which you can write extensions.
-However, you can rebind keys and change some parameters.
-There are no limits to line length or format.
-Command, buffer, and file name completion and listing can
-be done using the spacebar and tab keys.
+language in which you can write extensions;
+however, you can rebind keys and change certain parameters.
+.Pp
+In order to use 8-bit characters (such as German umlauts), the Meta key
+needs to be disabled via the
+.Dq meta-key-mode
+command.
