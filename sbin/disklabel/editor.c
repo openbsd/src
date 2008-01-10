@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.149 2008/01/08 23:46:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.150 2008/01/10 04:00:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.149 2008/01/08 23:46:54 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.150 2008/01/10 04:00:09 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -554,7 +554,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	if (expert && pp->p_fstype == FS_BSDFFS) {
-		/* Get fsize, bsize, and cpg */
+		/* Get fsize and bsize */
 		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
 			DL_SETPSIZE(pp, 0);		/* effective delete */
 			return;
@@ -669,14 +669,8 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	if (expert && (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED)){
-		/* get fsize */
-		if (get_fsize(lp, partno) != 0) {
-			*pp = origpart;		/* undo changes */
-			return;
-		}
-
-		/* get bsize */
-		if (get_bsize(lp, partno) != 0) {
+		/* Get fsize and bsize */
+		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
 			*pp = origpart;		/* undo changes */
 			return;
 		}
