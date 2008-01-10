@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2008/01/10 09:39:32 tobias Exp $
+#	$OpenBSD: Makefile,v 1.8 2008/01/10 10:20:11 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -142,7 +142,7 @@ test-cvs-commit-to_branch:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} commit \
 	    -m'first branch seed' > /dev/null
 	@eval 'test `cat ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v | wc -l` \
-	    -eq 77'
+	    -eq 80'
 
 test-cvs-diff:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q diff
