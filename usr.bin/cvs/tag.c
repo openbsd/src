@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.58 2007/11/17 12:42:39 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.59 2008/01/10 09:39:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #define T_CHECK_UPTODATE	0x01
 #define T_DELETE		0x02
 #define T_FORCE_MOVE		0x04
+#define T_BRANCH		0x08
 
 void	cvs_tag_local(struct cvs_file *);
 
@@ -56,6 +57,9 @@ cvs_tag(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_tag.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'b':
+			runflags |= T_BRANCH;
+			break;
 		case 'c':
 			runflags |= T_CHECK_UPTODATE;
 			break;
@@ -118,6 +122,9 @@ cvs_tag(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
+
+		if (runflags & T_BRANCH)
+			cvs_client_send_request("Argument -b");
 
 		if (runflags & T_CHECK_UPTODATE)
 			cvs_client_send_request("Argument -c");
@@ -277,14 +284,38 @@ tag_add(struct cvs_file *cf)
 		}
 	}
 
-	if (rcs_sym_add(cf->file_rcs, tag_name, cf->file_rcsrev) == -1) {
+	if (runflags & T_BRANCH) {
+		if ((trev = rcsnum_new_branch(cf->file_rcsrev)) == NULL)
+			fatal("Cannot create a new branch");
+
+		for (;;) {
+			TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list)
+				if (!rcsnum_cmp(sym->rs_num, trev, 0))
+					break;
+
+			if (sym != NULL) {
+				if (rcsnum_inc(trev) == NULL)
+					fatal("New revision too high");
+				if (rcsnum_inc(trev) == NULL)
+					fatal("New revision too high");
+			} else
+				break;
+		}
+	} else {
+		trev = rcsnum_alloc();
+		rcsnum_cpy(cf->file_rcsrev, trev, 0);
+	}
+
+	if (rcs_sym_add(cf->file_rcs, tag_name, trev) == -1) {
 		if (rcs_errno != RCS_ERR_DUPENT) {
 			cvs_log(LP_NOTICE,
 			    "failed to set tag %s to revision %s in %s",
 			    tag_name, revbuf, cf->file_rcs->rf_path);
 		}
+		rcsnum_free(trev);
 		return (-1);
 	}
 
+	rcsnum_free(trev);
 	return (0);
 }

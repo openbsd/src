@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.81 2007/11/11 10:01:41 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.82 2008/01/10 09:39:32 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -279,6 +279,7 @@ RCSNUM	*rcsnum_revtobr(const RCSNUM *);
 RCSNUM	*rcsnum_inc(RCSNUM *);
 RCSNUM	*rcsnum_dec(RCSNUM *);
 RCSNUM	*rcsnum_branch_root(RCSNUM *);
+RCSNUM	*rcsnum_new_branch(RCSNUM *);
 void	 rcsnum_free(RCSNUM *);
 int	 rcsnum_aton(const char *, char **, RCSNUM *);
 char	*rcsnum_tostr(const RCSNUM *, char *, size_t);

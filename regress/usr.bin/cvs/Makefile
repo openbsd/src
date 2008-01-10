@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2008/01/06 14:45:50 tobias Exp $
+#	$OpenBSD: Makefile,v 1.7 2008/01/10 09:39:32 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -189,10 +189,9 @@ test-cvs-tag:
 	@grep FIRST_TAG ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
 	    > /dev/null
 
-# Does not work with OpenCVS, but we need it for further tests _now_.
 test-cvs-tag-branch:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    cvs -Q tag -b FIRST_BRANCH > /dev/null
+	    ${CVS} -Q tag -b FIRST_BRANCH > /dev/null
 	@grep FIRST_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
 	    > /dev/null
 

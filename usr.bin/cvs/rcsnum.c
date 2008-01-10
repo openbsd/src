@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.48 2007/12/09 14:02:56 tobias Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.49 2008/01/10 09:39:32 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -387,6 +387,22 @@ rcsnum_brtorev(const RCSNUM *brnum)
 	num->rn_id[num->rn_len++] = 1;
 
 	return (num);
+}
+
+RCSNUM *
+rcsnum_new_branch(RCSNUM *rev)
+{
+	RCSNUM *branch;
+
+	if (rev->rn_len > RCSNUM_MAXLEN - 1)
+		return NULL;
+
+	branch = rcsnum_alloc();
+	rcsnum_cpy(rev, branch, 0);
+	rcsnum_setsize(branch, rev->rn_len + 1);
+	branch->rn_id[branch->rn_len - 1] = 2;
+
+	return branch;
 }
 
 RCSNUM *
