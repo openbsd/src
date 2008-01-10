@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.122 2008/01/10 10:00:53 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.123 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -471,7 +471,7 @@ void
 cvs_get_repository_name(const char *dir, char *dst, size_t len)
 {
 	FILE *fp;
-	char *s, fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN];
 
 	/* During checkout -p, do not use any locally available files. */
 	if (cvs_cmdop == CVS_OP_CHECKOUT && print_stdout) {
@@ -487,10 +487,7 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 	if (cvs_cmdop != CVS_OP_IMPORT && (fp = fopen(fpath, "r")) != NULL) {
 		if ((fgets(dst, len, fp)) == NULL)
 			fatal("cvs_get_repository_name: bad repository file");
-
-		if ((s = strchr(dst, '\n')) != NULL)
-			*s = '\0';
-
+		dst[strcspn(dst, "\n")] = '\0';
 		(void)fclose(fp);
 	} else {
 		dst[0] = '\0';

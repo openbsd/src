@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.39 2007/10/05 19:28:23 gilles Exp $	*/
+/*	$OpenBSD: edit.c,v 1.40 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -275,8 +275,7 @@ cvs_edit_local(struct cvs_file *cf)
 		fatal("gmtime failed");
 
 	asctime_r(t, timebuf);
-	if (timebuf[strlen(timebuf) - 1] == '\n')
-                timebuf[strlen(timebuf) - 1] = '\0';
+	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
@@ -362,8 +361,7 @@ cvs_unedit_local(struct cvs_file *cf)
 		fatal("gmtime failed");
 
 	asctime_r(t, timebuf);
-	if (timebuf[strlen(timebuf) - 1] == '\n')
-                timebuf[strlen(timebuf) - 1] = '\0';
+	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
@@ -396,8 +394,7 @@ cvs_unedit_local(struct cvs_file *cf)
 
 		memset(timebuf, 0, sizeof(timebuf));
 		ctime_r(&cf->file_ent->ce_mtime, timebuf);
-		if (timebuf[strlen(timebuf) - 1] == '\n')
-			timebuf[strlen(timebuf) - 1] = '\0';
+		timebuf[strcspn(timebuf, "\n")] = '\0';
 
 		(void)xasprintf(&entry, "/%s/%s/%s/%s/%s",
 		    cf->file_name, rbuf, timebuf,

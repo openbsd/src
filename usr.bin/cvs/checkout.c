@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.106 2008/01/10 09:54:04 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.107 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -315,8 +315,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	}
 
 	asctime_r(gmtime(&rcstime), tbuf);
-	if (tbuf[strlen(tbuf) - 1] == '\n')
-		tbuf[strlen(tbuf) - 1] = '\0';
+	tbuf[strcspn(tbuf, "\n")] = '\0';
 
 	if (co_flags & CO_MERGE) {
 		(void)xsnprintf(timebuf, sizeof(timebuf), "Result of merge+%s",

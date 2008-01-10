@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.85 2008/01/10 09:44:32 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.86 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -381,8 +381,7 @@ add_entry(struct cvs_file *cf)
 		rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
 
 		ctime_r(&cf->file_ent->ce_mtime, tbuf);
-		if (tbuf[strlen(tbuf) - 1] == '\n')
-			tbuf[strlen(tbuf) - 1] = '\0';
+		tbuf[strcspn(tbuf, "\n")] = '\0';
 
 		/* Remove the '-' prefixing the version number. */
 		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,

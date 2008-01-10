@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.87 2008/01/10 10:05:40 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.88 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -476,8 +476,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 		}
 
 		if (cf->file_ent->ce_conflict == NULL) {
-			if (timebuf[strlen(timebuf) - 1] == '\n')
-				timebuf[strlen(timebuf) - 1] = '\0';
+			timebuf[strcspn(timebuf, "\n")] = '\0';
 		} else {
 			len = strlcpy(timebuf, cf->file_ent->ce_conflict,
 			    sizeof(timebuf));
@@ -700,8 +699,7 @@ cvs_client_updated(char *data)
 
 	time(&now);
 	asctime_r(gmtime(&now), timebuf);
-	if (timebuf[strlen(timebuf) - 1] == '\n')
-		timebuf[strlen(timebuf) - 1] = '\0';
+	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	e = cvs_ent_parse(en);
 	xfree(en);
@@ -790,8 +788,7 @@ cvs_client_merged(char *data)
 
 	time(&now);
 	asctime_r(gmtime(&now), timebuf);
-	if (timebuf[strlen(timebuf) - 1] == '\n')
-		timebuf[strlen(timebuf) - 1] = '\0';
+	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	ent = cvs_ent_open(wdir);
 	cvs_ent_add(ent, entry);

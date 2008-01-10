@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.66 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.67 2008/01/10 10:08:22 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -189,8 +189,7 @@ cvs_remove_local(struct cvs_file *cf)
 			     sizeof(rbuf));
 
 			ctime_r(&cf->file_ent->ce_mtime, tbuf);
-			if (tbuf[strlen(tbuf) - 1] == '\n')
-				tbuf[strlen(tbuf) - 1] = '\0';
+			tbuf[strcspn(tbuf, "\n")] = '\0';
 
 			entry = xmalloc(CVS_ENT_MAXLINELEN);
 			(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
