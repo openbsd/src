@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.29 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.30 2008/01/11 07:04:22 otto Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.29 2007/06/03 20:16:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.30 2008/01/11 07:04:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ time_t
 do_stats(void)
 {
 	time_t tnow, ttaken;
-	int blocks;
+	int64_t blocks;
 
 	(void)time(&tnow);
 	ttaken = tnow - tstart_volume;
@@ -241,9 +241,9 @@ do_stats(void)
 	if (ttaken > 0) {
 		msg("Volume %d took %d:%02d:%02d\n", tapeno,
 		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60);
-		msg("Volume %d transfer rate: %d KB/s\n", tapeno,
-		    blocks / ttaken);
-		xferrate += blocks / ttaken;
+		blocks /= ttaken;
+		msg("Volume %d transfer rate: %lld KB/s\n", tapeno, blocks);
+		xferrate += blocks;
 	}
 	return(tnow);
 }
