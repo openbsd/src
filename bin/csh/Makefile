@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2005/05/24 22:25:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2008/01/11 20:16:02 jmc Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -14,10 +14,6 @@ SRCS=	alloc.c char.c const.c csh.c dir.c dol.c error.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c proc.c \
 	sem.c set.c str.c time.c
 
-MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
-	csh.1 foreach.1 csh.1 history.1 csh.1 jobs.1 csh.1 popd.1 \
-	csh.1 pushd.1 csh.1 rehash.1 csh.1 repeat.1 csh.1 suspend.1 \
-	csh.1 stop.1 csh.1 source.1 csh.1 unlimit.1
 CLEANFILES+=error.h const.h
 
 .if (${MACHINE_ARCH} == "vax")

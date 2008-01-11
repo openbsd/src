@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.20 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: patch.1,v 1.21 2008/01/11 20:16:02 jmc Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 11 2008 $
 .Dt PATCH 1
 .Os
 .Sh NAME
@@ -128,9 +128,8 @@ and the argument.
 .Xc
 Causes
 .Nm
-to interpret the next argument as a directory, and
-.Xr cd 1
-to it before doing anything else.
+to interpret the next argument as a directory,
+and change working directory to it before doing anything else.
 .It Fl E , Fl Fl remove-empty-files
 Causes
 .Nm
