@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.150 2008/01/10 04:00:09 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.151 2008/01/11 20:14:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.150 2008/01/10 04:00:09 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.151 2008/01/11 20:14:34 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -542,7 +542,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep, 1) != 0 || DL_GETPSIZE(pp) == 0) {
+	if (get_size(lp, partno, freep, 1) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -651,7 +651,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep, 0) != 0 || DL_GETPSIZE(pp) == 0) {
+	if (get_size(lp, partno, freep, 0) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -668,7 +668,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 
-	if (expert && (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED)){
+	if (expert && pp->p_fstype == FS_BSDFFS) {
 		/* Get fsize and bsize */
 		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
 			*pp = origpart;		/* undo changes */
@@ -1814,6 +1814,8 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 			return(1);
 		} else if (ui == ULLONG_MAX)
 			fputs("Invalid entry\n", stderr);
+		else if (ui == 0)
+			fputs("The size must be > 0\n", stderr);
 		else if (ui + DL_GETPOFFSET(pp) > ending_sector)
 			fprintf(stderr, "The size can't be more than "
 			    "%llu sectors, or the partition would\n"
