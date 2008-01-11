@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2008/01/11 10:16:40 espie Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -65,7 +65,7 @@ ${CDROM}: bsd ${CDBOOT}
 obsd:
 	cd ${SRCDIR}/sys/arch/${MACHINE}/conf && config ${KERNEL}
 	cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL} && \
-	    make depend && make clean && make
+	    ${MAKE} depend && ${MAKE} clean && ${MAKE}
 	cp ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL}/bsd obsd
 
 bsd.rd:	obsd ${IMAGE} ${RDSETROOT}
@@ -105,7 +105,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	    ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \

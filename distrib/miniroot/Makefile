@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2008/01/11 10:16:40 espie Exp $
 
 REV=		${OSrev}
 
@@ -41,7 +41,7 @@ all:
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config GENERIC
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/GENERIC && \
-	    make clean && make
+	    ${MAKE} clean && ${MAKE}
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/GENERIC/bsd bsd
 
 all: ${CBIN} bsd
@@ -70,7 +70,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	    ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \

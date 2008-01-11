@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/01/11 10:16:40 espie Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,7 +36,7 @@ bsd:
 .ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/luna88k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK && \
-	    make clean && make
+	    ${MAKE} clean && ${MAKE}
 .endif
 	cp ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/bsd bsd
 
@@ -74,7 +74,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

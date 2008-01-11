@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2008/01/11 10:16:40 espie Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -88,7 +88,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

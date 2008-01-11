@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2007/08/01 21:31:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2008/01/11 10:16:40 espie Exp $
 
 SUBDIR=	special notes
 
@@ -17,7 +17,7 @@ SUBDIR+=crunch
 #all: crunch-tools _SUBDIRUSE
 
 crunch-tools:
-	(cd $(.CURDIR)/crunch; $(MAKE) obj; \
-	 $(MAKE) depend && ${MAKE} && ${SUDO} ${MAKE} DESTDIR= install)
+	cd $(.CURDIR)/crunch; $(MAKE) obj; \
+	 $(MAKE) depend && ${MAKE} && ${SUDO} ${MAKE} DESTDIR= install
 
 .include <bsd.subdir.mk>

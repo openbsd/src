@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2008/01/11 10:16:40 espie Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -47,7 +47,7 @@ bootroot: xxboot boot
 	vnconfig -u ${VND}
 
 xxboot boot:
-	(cd /usr/src/sys/arch/vax/boot;make)
+	cd /usr/src/sys/arch/vax/boot;${MAKE}
 	cp /usr/src/sys/arch/vax/boot/xxboot/xxboot .
 	cp /usr/src/sys/arch/vax/boot/boot/boot .
 
@@ -64,7 +64,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../ -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk
+	${MAKE} -f ${CBIN}.mk
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

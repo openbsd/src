@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2008/01/11 10:16:40 espie Exp $
 
 REV=	${OSrev}
 
@@ -70,7 +70,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${TOP}/../../sys/arch/macppc/conf && config RAMDISK
 	cd ${TOP}/../../sys/arch/macppc/compile/RAMDISK && \
-	    make clean && make depend && make
+	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 	cp ${TOP}/../../sys/arch/macppc/compile/RAMDISK/bsd bsd
 
 rd_setup:
@@ -102,7 +102,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf

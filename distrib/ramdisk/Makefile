@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2008/01/11 10:16:40 espie Exp $
 
 REV=		${OSrev}
 
@@ -85,7 +85,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config ${KERNEL}
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL} && \
-	    make depend && make clean && COPTS=-Os make
+	    ${MAKE} depend && ${MAKE} clean && COPTS=-Os ${MAKE}
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
 bsd.rd:	bsd ${IMAGE} ${RDSETROOT}
@@ -125,7 +125,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	    ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \

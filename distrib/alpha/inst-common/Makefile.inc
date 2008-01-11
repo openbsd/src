@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.7 2004/11/05 21:22:37 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2008/01/11 10:16:40 espie Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -22,7 +22,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 	${STRIP} -R .eh_frame ${CBIN}
 
 do_files:

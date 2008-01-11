@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2008/01/11 10:16:40 espie Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -35,7 +35,7 @@ bsd:
 .ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/mac68k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISK && \
-	    make clean && make depend && make
+	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 .endif
 	cp ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISK/bsd bsd
 
@@ -73,7 +73,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

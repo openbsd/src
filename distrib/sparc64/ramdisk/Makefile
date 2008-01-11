@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2008/01/11 10:16:40 espie Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -85,7 +85,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${TOP}/../../sys/arch/sparc64/conf && config ${KERNEL}
 	cd ${TOP}/../../sys/arch/sparc64/compile/${KERNEL} && \
-	    make clean && make depend && COPTS=-Os make
+	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
 	cp ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/bsd bsd
 
 rd_setup:
@@ -120,7 +120,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
