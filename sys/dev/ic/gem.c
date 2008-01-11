@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.70 2007/09/30 11:33:14 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.71 2008/01/11 22:50:18 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -297,8 +297,7 @@ gem_config(struct gem_softc *sc)
 	 * devices.
 	 */
 	child = LIST_FIRST(&mii->mii_phys);
-	if (child == NULL && sc->sc_variant != GEM_SUN_ERI &&
-	    sc->sc_mif_config & (GEM_MIF_CONFIG_MDI0|GEM_MIF_CONFIG_MDI1)) {
+	if (child == NULL && sc->sc_variant != GEM_SUN_ERI) {
 		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 		    GEM_MII_DATAPATH_MODE, GEM_MII_DATAPATH_SERDES);
 
@@ -888,19 +887,6 @@ gem_init_regs(struct gem_softc *sc)
 		(sc->sc_arpcom.ac_enaddr[2]<<8) | sc->sc_arpcom.ac_enaddr[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
 		(sc->sc_arpcom.ac_enaddr[0]<<8) | sc->sc_arpcom.ac_enaddr[1]);
-
-
-	/*
-	 * Enable MII outputs.  Enable GMII if there is a gigabit PHY.
-	 */
-	sc->sc_mif_config = bus_space_read_4(t, h, GEM_MIF_CONFIG);
-	v = GEM_MAC_XIF_TX_MII_ENA;
-	if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
-		v |= GEM_MAC_XIF_FDPLX_LED;
-		if (sc->sc_flags & GEM_GIGABIT)
-			v |= GEM_MAC_XIF_GMII_MODE;
-	}
-	bus_space_write_4(t, h, GEM_MAC_XIF_CONFIG, v);
 }
 
 /*
@@ -1277,32 +1263,25 @@ gem_mii_statchg(struct device *dev)
 	bus_space_write_4(t, mac, GEM_MAC_TX_CONFIG, v);
 
 	/* XIF Configuration */
- /* We should really calculate all this rather than rely on defaults */
-	v = bus_space_read_4(t, mac, GEM_MAC_XIF_CONFIG);
-	v = GEM_MAC_XIF_LINK_LED;
-	v |= GEM_MAC_XIF_TX_MII_ENA;
-	/* If an external transceiver is connected, enable its MII drivers */
-	sc->sc_mif_config = bus_space_read_4(t, mac, GEM_MIF_CONFIG);
-	if ((sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) != 0) {
-		/* External MII needs echo disable if half duplex. */
-		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
-			/* turn on full duplex LED */
-			v |= GEM_MAC_XIF_FDPLX_LED;
- 		else
-	 		/* half duplex -- disable echo */
-		 	v |= GEM_MAC_XIF_ECHO_DISABL;
+	v = GEM_MAC_XIF_TX_MII_ENA;
+	v |= GEM_MAC_XIF_LINK_LED;
 
-		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-		case IFM_1000_T:  /* Gigabit using GMII interface */
-		case IFM_1000_SX:
-			v |= GEM_MAC_XIF_GMII_MODE;
-			break;
-		default:
-			v &= ~GEM_MAC_XIF_GMII_MODE;
-		}
-	} else
-		/* Internal MII needs buf enable */
-		v |= GEM_MAC_XIF_MII_BUF_ENA;
+	/* External MII needs echo disable if half duplex. */
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+		/* turn on full duplex LED */
+		v |= GEM_MAC_XIF_FDPLX_LED;
+	else
+		/* half duplex -- disable echo */
+		v |= GEM_MAC_XIF_ECHO_DISABL;
+
+	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	case IFM_1000_T:  /* Gigabit using GMII interface */
+	case IFM_1000_SX:
+		v |= GEM_MAC_XIF_GMII_MODE;
+		break;
+	default:
+		v &= ~GEM_MAC_XIF_GMII_MODE;
+	}
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
 }
 
@@ -1349,6 +1328,7 @@ gem_pcs_writereg(struct device *self, int phy, int reg, int val)
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t pcs = sc->sc_h1;
+	int reset = 0;
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
@@ -1359,8 +1339,12 @@ gem_pcs_writereg(struct device *self, int phy, int reg, int val)
 	if (phy != GEM_PHYAD_EXTERNAL)
 		return;
 
+	if (reg == MII_ANAR)
+		bus_space_write_4(t, pcs, GEM_MII_CONFIG, 0);
+
 	switch (reg) {
 	case MII_BMCR:
+		reset = (val & GEM_MII_CONTROL_RESET);
 		reg = GEM_MII_CONTROL;
 		break;
 	case MII_BMSR:
@@ -1378,7 +1362,10 @@ gem_pcs_writereg(struct device *self, int phy, int reg, int val)
 
 	bus_space_write_4(t, pcs, reg, val);
 
-	if (reg == GEM_MII_ANAR) {
+	if (reset)
+		gem_bitwait(sc, pcs, GEM_MII_CONTROL, GEM_MII_CONTROL_RESET, 0);
+
+	if (reg == GEM_MII_ANAR || reset) {
 		bus_space_write_4(t, pcs, GEM_MII_SLINK_CONTROL,
 		    GEM_MII_SLINK_LOOPBACK|GEM_MII_SLINK_EN_SYNC_D);
 		bus_space_write_4(t, pcs, GEM_MII_CONFIG,
