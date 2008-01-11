@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.8 2008/01/03 15:32:48 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.9 2008/01/11 12:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -530,18 +530,18 @@ snmpe_parse(struct sockaddr_storage *ss,
 	if (class != BER_CLASS_CONTEXT)
 		goto fail;
 	switch (type) {
-	case SNMP_T_GETBULKREQ:
+	case SNMP_C_GETBULKREQ:
 		if (msg->sm_version == SNMP_V1) {
 			stats->snmp_inbadversions++;
 			log_debug("invalid request for protocol version 1");
 			return (-1);
 		}
 		/* FALLTHROUGH */
-	case SNMP_T_GETREQ:
+	case SNMP_C_GETREQ:
 		stats->snmp_ingetrequests++;
 		/* FALLTHROUGH */
-	case SNMP_T_GETNEXTREQ:
-		if (type == SNMP_T_GETNEXTREQ)
+	case SNMP_C_GETNEXTREQ:
+		if (type == SNMP_C_GETNEXTREQ)
 			stats->snmp_ingetnexts++;
 		if (strcmp(env->sc_rdcommunity, comn) != 0 &&
 		    strcmp(env->sc_rwcommunity, comn) != 0) {
@@ -551,7 +551,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 		}
 		msg->sm_context = type;
 		break;
-	case SNMP_T_SETREQ:
+	case SNMP_C_SETREQ:
 		stats->snmp_insetrequests++;
 		if (strcmp(env->sc_rwcommunity, comn) != 0) {
 			if (strcmp(env->sc_rdcommunity, comn) != 0)
@@ -563,12 +563,12 @@ snmpe_parse(struct sockaddr_storage *ss,
 		}
 		msg->sm_context = type;
 		break;
-	case SNMP_T_GETRESP:
+	case SNMP_C_GETRESP:
 		errstr = "response without request";
 		stats->snmp_ingetresponses++;
 		goto fail;
-	case SNMP_T_TRAP:
-	case SNMP_T_TRAPV2:
+	case SNMP_C_TRAP:
+	case SNMP_C_TRAPV2:
 		if (strcmp(env->sc_trcommunity, comn) != 0) {
 			stats->snmp_inbadcommunitynames++;
 			log_debug("wrong trap community");
@@ -630,7 +630,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 				if (o.bo_n < BER_MIN_OID_LEN ||
 				    o.bo_n > BER_MAX_OID_LEN)
 					goto varfail;
-				if (msg->sm_context == SNMP_T_SETREQ)
+				if (msg->sm_context == SNMP_C_SETREQ)
 					stats->snmp_intotalsetvars++;
 				else
 					stats->snmp_intotalreqvars++;
@@ -640,7 +640,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 			case 1:
 				c = d = NULL;
 				switch (msg->sm_context) {
-				case SNMP_T_GETNEXTREQ:
+				case SNMP_C_GETNEXTREQ:
 					c = ber_add_sequence(NULL);
 					if ((d = mps_getnextreq(c, &o)) != NULL)
 						break;
@@ -649,19 +649,19 @@ snmpe_parse(struct sockaddr_storage *ss,
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
 					msg->sm_errorindex = i;
 					break;	/* ignore error */
-				case SNMP_T_GETREQ:
+				case SNMP_C_GETREQ:
 					c = ber_add_sequence(NULL);
 					if ((d = mps_getreq(c, &o)) != NULL)
 						break;
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
 					ber_free_elements(c);
 					goto varfail;
-				case SNMP_T_SETREQ:
+				case SNMP_C_SETREQ:
 					if (mps_setreq(b, &o) == 0)
 						break;
 					msg->sm_error = SNMP_ERROR_READONLY;
 					goto varfail;
-				case SNMP_T_GETBULKREQ:
+				case SNMP_C_GETBULKREQ:
 					j = msg->sm_maxrepetitions;
 					msg->sm_errorindex = 0;
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
@@ -782,7 +782,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	resp = ber_add_sequence(NULL);
 	ber_printf_elements(resp, "ds{tiii{e}}.",
 	    msg.sm_version, msg.sm_community,
-	    BER_CLASS_CONTEXT, SNMP_T_GETRESP,
+	    BER_CLASS_CONTEXT, SNMP_C_GETRESP,
 	    msg.sm_request, msg.sm_error, msg.sm_errorindex,
 	    msg.sm_varbindresp);
 

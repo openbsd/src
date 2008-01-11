@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.1 2007/12/05 09:22:44 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.2 2008/01/11 12:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -26,17 +26,17 @@ enum snmp_version {
 };
 
 enum snmp_context {
-	SNMP_T_GETREQ		= 0,
-	SNMP_T_GETNEXTREQ	= 1,
-	SNMP_T_GETRESP		= 2,
-	SNMP_T_SETREQ		= 3,
-	SNMP_T_TRAP		= 4,
+	SNMP_C_GETREQ		= 0,
+	SNMP_C_GETNEXTREQ	= 1,
+	SNMP_C_GETRESP		= 2,
+	SNMP_C_SETREQ		= 3,
+	SNMP_C_TRAP		= 4,
 
 	/* SNMPv2 */
-	SNMP_T_GETBULKREQ	= 5,
-	SNMP_T_INFORMREQ	= 6,
-	SNMP_T_TRAPV2		= 7,
-	SNMP_T_REPORT		= 8
+	SNMP_C_GETBULKREQ	= 5,
+	SNMP_C_INFORMREQ	= 6,
+	SNMP_C_TRAPV2		= 7,
+	SNMP_C_REPORT		= 8
 };
 
 enum snmp_application {
