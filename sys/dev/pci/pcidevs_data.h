@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1311 2008/01/11 06:32:02 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1312 2008/01/11 11:12:35 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6436,6 +6436,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7230 PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_PCIE_2,
+	    "82975X PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_HB,
 	    "82975X Host",
 	},
@@ -7154,6 +7158,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2,
 	    "Wireless WiFi Link 4965AGN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TURBO_MEMORY,
+	    "Turbo Memory",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
