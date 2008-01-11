@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.151 2008/01/11 20:14:34 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.152 2008/01/11 22:46:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.151 2008/01/11 20:14:34 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.152 2008/01/11 22:46:06 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1757,43 +1757,41 @@ get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
 	u_int64_t ui, maxsize;
 	int i;
 
-	for (;;) {
-		ui = getuint(lp, partno, "offset",
-		   "Starting sector for this partition.",
-		   DL_GETPOFFSET(pp),
-		   DL_GETPOFFSET(pp), 0, DO_CONVERSIONS |
-		   (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
-		if (ui == ULLONG_MAX - 1) {
-			fputs("Command aborted\n", stderr);
-			return(1);
-		} else if (ui == ULLONG_MAX)
-			fputs("Invalid entry\n", stderr);
-		else if (ui < starting_sector || ui >= ending_sector)
-			fprintf(stderr, "The offset must be between "
-			    "sector %llu and sector %llu, the limits of\n"
-			    "the OpenBSD portion of the disk. "
-			    "The 'b' command can change these limits.\n",
-			    starting_sector, ending_sector);
+	ui = getuint(lp, partno, "offset",
+	   "Starting sector for this partition.",
+	   DL_GETPOFFSET(pp),
+	   DL_GETPOFFSET(pp), 0, DO_CONVERSIONS |
+	   (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
+
+	if (ui == ULLONG_MAX - 1)
+		fputs("Command aborted\n", stderr);
+	else if (ui == ULLONG_MAX)
+		fputs("Invalid entry\n", stderr);
+	else if (ui < starting_sector || ui >= ending_sector)
+		fprintf(stderr, "The offset must be >= %llu and < %llu, "
+		    "the limits of the OpenBSD portion\n"
+		    "of the disk. The 'b' command can change these limits.\n",
+		    starting_sector, ending_sector);
 #ifdef SUN_AAT0
-		else if (partno == 0 && ui != 0)
-			fprintf(stderr, "This architecture requires that "
-			    "partition 'a' start at sector 0.\n");
+	else if (partno == 0 && ui != 0)
+		fprintf(stderr, "This architecture requires that "
+		    "partition 'a' start at sector 0.\n");
 #endif
-		else {
-			for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0;
-			     i++) {
-				if (ui < chunks[i].start ||
-				    ui >= chunks[i].stop)
-					continue;
-				DL_SETPOFFSET(pp, ui);
-				maxsize = chunks[i].stop - DL_GETPOFFSET(pp);
-				if (DL_GETPSIZE(pp) > maxsize)
-					DL_SETPSIZE(pp, maxsize);
-				return (0);
-			}
-			fputs("The offset must be in a free area.\n", stderr);
+	else {
+		for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
+			if (ui < chunks[i].start || ui >= chunks[i].stop)
+				continue;
+			DL_SETPOFFSET(pp, ui);
+			maxsize = chunks[i].stop - DL_GETPOFFSET(pp);
+			if (DL_GETPSIZE(pp) > maxsize)
+				DL_SETPSIZE(pp, maxsize);
+			return (0);
 		}
+		fputs("The offset must be in a free area.\n", stderr);
 	}
+
+	/* Partition offset was not set. */
+	return (1);
 }
 
 int
@@ -1802,41 +1800,44 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 	struct partition *pp = &lp->d_partitions[partno];
 	u_int64_t ui, old_psize;
 
-	for (;;) {
-		ui = getuint(lp, partno, "size", "Size of the partition. "
-		    "You may also say +/- amount for a relative change.",
-		    DL_GETPSIZE(pp), *freep + (new ? 0 : DL_GETPSIZE(pp)),
-		    DL_GETPOFFSET(pp),
-		    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
-		    pp->p_fstype == FS_SWAP) ?  DO_ROUNDING : 0));
-		if (ui == ULLONG_MAX - 1) {
-			fputs("Command aborted\n", stderr);
-			return(1);
-		} else if (ui == ULLONG_MAX)
-			fputs("Invalid entry\n", stderr);
-		else if (ui == 0)
-			fputs("The size must be > 0\n", stderr);
-		else if (ui + DL_GETPOFFSET(pp) > ending_sector)
-			fprintf(stderr, "The size can't be more than "
-			    "%llu sectors, or the partition would\n"
-			    "extend beyond the last sector (%llu) of the "
-			    "OpenBSD portion of\nthe disk. "
-			    "The 'b' command can change this limit.\n",
-			    ending_sector - DL_GETPOFFSET(pp), ending_sector);
-		else if (ui > *freep + (new ? 0 : DL_GETPSIZE(pp)))
-			fprintf(stderr,"Sorry, there are only %llu "
-			    "sectors left\n", *freep);
-		else {
-			old_psize = DL_GETPSIZE(pp);
-			DL_SETPSIZE(pp, ui);
-			if (has_overlap(lp, 0))
-				DL_SETPSIZE(pp, old_psize);
-			else
-				break;
-		}
+	ui = getuint(lp, partno, "size", "Size of the partition. "
+	    "You may also say +/- amount for a relative change.",
+	    DL_GETPSIZE(pp), *freep + (new ? 0 : DL_GETPSIZE(pp)),
+	    DL_GETPOFFSET(pp),
+	    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
+	    pp->p_fstype == FS_SWAP) ?  DO_ROUNDING : 0));
+
+	if (ui == ULLONG_MAX - 1)
+		fputs("Command aborted\n", stderr);
+	else if (ui == ULLONG_MAX)
+		fputs("Invalid entry\n", stderr);
+	else if (ui == 0)
+		fputs("The size must be > 0\n", stderr);
+	else if (ui + DL_GETPOFFSET(pp) > ending_sector)
+		fprintf(stderr, "The size can't be more than "
+		    "%llu sectors, or the partition would\n"
+		    "extend beyond the last sector (%llu) of the "
+		    "OpenBSD portion of\nthe disk. "
+		    "The 'b' command can change this limit.\n",
+		    ending_sector - DL_GETPOFFSET(pp), ending_sector);
+	else if (ui > *freep + (new ? 0 : DL_GETPSIZE(pp)))
+		fprintf(stderr,"Sorry, there are only %llu "
+		    "sectors left\n", *freep);
+	else {
+		old_psize = DL_GETPSIZE(pp);
+		DL_SETPSIZE(pp, ui);
+		if (has_overlap(lp, 0)) {
+			fprintf(stderr, "\nPartition '%c' not added\n",
+			    'a' + partno);
+			DL_SETPSIZE(pp, old_psize);
+		} else {
+			editor_countfree(lp, freep);
+			return (0);
+		}	
 	}
-	editor_countfree(lp, freep);
-	return(0);
+
+	/* Partition size was not set. */
+	return (1);
 }
 
 int
