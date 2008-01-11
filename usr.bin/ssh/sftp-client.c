@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.77 2007/09/16 00:55:52 djm Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.78 2008/01/11 07:22:27 chl Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -528,6 +528,7 @@ do_lstat(struct sftp_conn *conn, char *path, int quiet)
 	return(get_decode_stat(conn->fd_in, id, quiet));
 }
 
+#ifdef notyet
 Attrib *
 do_fstat(struct sftp_conn *conn, char *handle, u_int handle_len, int quiet)
 {
@@ -539,6 +540,7 @@ do_fstat(struct sftp_conn *conn, char *handle, u_int handle_len, int quiet)
 
 	return(get_decode_stat(conn->fd_in, id, quiet));
 }
+#endif
 
 int
 do_setstat(struct sftp_conn *conn, char *path, Attrib *a)
@@ -680,6 +682,7 @@ do_symlink(struct sftp_conn *conn, char *oldpath, char *newpath)
 	return(status);
 }
 
+#ifdef notyet
 char *
 do_readlink(struct sftp_conn *conn, char *path)
 {
@@ -726,6 +729,7 @@ do_readlink(struct sftp_conn *conn, char *path)
 
 	return(filename);
 }
+#endif
 
 static void
 send_read_request(int fd_out, u_int id, u_int64_t offset, u_int len,
