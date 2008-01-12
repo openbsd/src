@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.7 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: match.c,v 1.8 2008/01/12 17:17:28 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -147,6 +147,7 @@ tshape(NODE *p, int shape)
 		break;
 
 	case ICON:
+	case FCON:
 		if (shape & SCON)
 			return SRDIR;
 		break;
@@ -276,8 +277,10 @@ expand(NODE *p, int cookie, char *cp)
 
 		case 'F':  /* this line deleted if FOREFF is active */
 			if (cookie & FOREFF) {
-				while (*++cp != '\n' && *(cp - 1) != '\0')
-					continue;
+				while (*cp && *cp != '\n')
+					cp++;
+				if (*cp == 0)
+					return;
 			}
 			continue;
 
@@ -894,7 +897,6 @@ findleaf(NODE *p, int cookie)
 		F2DEBUG(("findleaf: ixp %d\n", ixp[i]));
 		if (!acceptable(q))		/* target-dependent filter */
 			continue;
-
 		if ((q->visit & cookie) == 0)
 			continue; /* wrong registers */
 
