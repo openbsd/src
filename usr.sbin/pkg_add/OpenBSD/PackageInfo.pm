@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.35 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.36 2008/01/12 14:02:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -193,10 +193,11 @@ sub lock_db($;$)
 	if (flock($dlock, $mode | LOCK_NB)) {
 		return;
 	}
-	print STDERR "Package database already locked... awaiting release\n"
+	print STDERR "Package database already locked... awaiting release... "
 		unless $quiet;
 	while (!flock($dlock, $mode)) {
 	}
+	print STDERR "done!\n" unless $quiet;
 	return;
 }
 
