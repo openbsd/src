@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.157 2008/01/12 19:39:40 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.158 2008/01/12 20:06:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.157 2008/01/12 19:39:40 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.158 2008/01/12 20:06:57 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -530,31 +530,16 @@ editor_add(struct disklabel *lp, char **mp, char *p)
 #endif
 	pp->p_cpg = 1;
 
-	/* Get offset */
-	if (get_offset(lp, partno) != 0) {
-		DL_SETPSIZE(pp, 0);		/* effective delete */
+	if (get_offset(lp, partno) == 0 &&
+	    get_size(lp, partno) == 0   &&
+	    get_fstype(lp, partno) == 0 &&
+	    get_mp(lp, mp, partno) == 0 &&
+	    get_fsize(lp, partno) == 0  &&
+	    get_bsize(lp, partno) == 0)
 		return;
-	}
 
-	/* Get size */
-	if (get_size(lp, partno) != 0) {
-		DL_SETPSIZE(pp, 0);		/* effective delete */
-		return;
-	}
-
-	/* Get filesystem type and mountpoint */
-	if (get_fstype(lp, partno) != 0 || get_mp(lp, mp, partno) != 0) {
-		DL_SETPSIZE(pp, 0);		/* effective delete */
-		return;
-	}
-
-	if (expert && pp->p_fstype == FS_BSDFFS) {
-		/* Get fsize and bsize */
-		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
-			DL_SETPSIZE(pp, 0);		/* effective delete */
-			return;
-		}
-	}
+	/* Bailed out at some point, so effectively delete the partition. */
+	DL_SETPSIZE(pp, 0);
 }
 
 /*
@@ -634,37 +619,16 @@ editor_modify(struct disklabel *lp, char **mp, char *p)
 
 	origpart = *pp;
 
-	/* Get offset */
-	if (get_offset(lp, partno) != 0) {
-		*pp = origpart;			/* undo changes */
+	if (get_offset(lp, partno) == 0 &&
+	    get_size(lp, partno) == 0   &&
+	    get_fstype(lp, partno) == 0 &&
+	    get_mp(lp, mp, partno) == 0 &&
+	    get_fsize(lp, partno) == 0  &&
+	    get_bsize(lp, partno) == 0)
 		return;
-	}
 
-	/* Get size */
-	if (get_size(lp, partno) != 0) {
-		DL_SETPSIZE(pp, 0);		/* effective delete */
-		return;
-	}
-
-	/* Get filesystem type */
-	if (get_fstype(lp, partno) != 0) {
-		*pp = origpart;			/* undo changes */
-		return;
-	}
-
-	/* get mount point */
-	if (get_mp(lp, mp, partno) != 0) {
-		*pp = origpart;			/* undo changes */
-		return;
-	}
-
-	if (expert && pp->p_fstype == FS_BSDFFS) {
-		/* Get fsize and bsize */
-		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0) {
-			*pp = origpart;		/* undo changes */
-			return;
-		}
-	}
+	/* Bailed out at some point, so undo any changes. */
+	*pp = origpart;
 }
 
 /*
@@ -1826,6 +1790,9 @@ get_fsize(struct disklabel *lp, int partno)
 	u_int64_t ui, fsize, frag;
 	struct partition *pp = &lp->d_partitions[partno];
 	
+	if (!expert || pp->p_fstype != FS_BSDFFS)
+		return (0);
+
 	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 	if (fsize == 0)
@@ -1854,6 +1821,9 @@ get_bsize(struct disklabel *lp, int partno)
 {
 	u_int64_t ui, bsize, frag, fsize;
 	struct partition *pp = &lp->d_partitions[partno];
+
+	if (!expert || pp->p_fstype != FS_BSDFFS)
+		return (0);
 
 	/* Avoid dividing by zero... */
 	if (pp->p_fragblock == 0)
