@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.107 2008/01/03 17:09:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.108 2008/01/12 14:18:46 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3304,27 +3304,60 @@ ENTRY(ipi_tlb_context_demap)
 	 nop
 
 ENTRY(ipi_save_fpstate)
-	save	%sp, -CC64FSZ, %sp
-	mov	CTX_PRIMARY, %o2
-	ldxa	[%o2] ASI_DMMU, %g7
+	sethi	%hi(FPPROC), %g1
+	ldx	[%g1 + %lo(FPPROC)], %g2
+	cmp	%g2, %g3
+	bne,pn	%xcc, 3f
+
+	 mov	CTX_SECONDARY, %g2
+	ldxa	[%g2] ASI_DMMU, %g6
 	membar	#LoadStore
-	stxa	%g0, [%o2] ASI_DMMU
+	stxa	%g0, [%g2] ASI_DMMU
 	membar	#Sync
-	sethi	%hi(FPPROC), %o0
-	ldx	[%o0 + %lo(FPPROC)], %o0
-	cmp	%o0, %g3
-	bne,pn	%xcc, 1f
-	 nop
-	call	savefpstate
-	 ldx	[%o0 + P_FPSTATE], %o0
-	sethi	%hi(FPPROC), %o0
-	stx	%g0, [%o0 + %lo(FPPROC)]	! fpproc = NULL
+
+	ldx	[%g3 + P_FPSTATE], %g3
+
+	rdpr	%pstate, %g2		! enable FP before we begin
+	rd	%fprs, %g4
+	wr	%g0, FPRS_FEF, %fprs
+	or	%g2, PSTATE_PEF, %g2
+	wrpr	%g2, 0, %pstate
+
+	stx	%fsr, [%g3 + FS_FSR]	! f->fs_fsr = getfsr();
+
+	rd	%gsr, %g2		! Save %gsr
+	st	%g2, [%g3 + FS_GSR]
+
+	add	%g3, FS_REGS, %g3	! This is zero...
+	btst	FPRS_DL, %g4		! Lower FPU clean?
+	bz,a,pt	%icc, 1f		! Then skip it
+	 add	%g3, 128, %g3		! Skip a block
+
+	membar	#Sync
+	stda	%f0, [%g3] ASI_BLK_S	! f->fs_f0 = etc;
+	inc	BLOCK_SIZE, %g3
+	stda	%f16, [%g3] ASI_BLK_S
+	inc	BLOCK_SIZE, %g3
 1:
-	mov	CTX_PRIMARY, %o2
-	stxa	%g7, [%o2] ASI_DMMU
+	btst	FPRS_DU, %g4		! Upper FPU clean?
+	bz,pt	%icc, 2f		! Then skip it
+	 nop
+
 	membar	#Sync
+	stda	%f32, [%g3] ASI_BLK_S
+	inc	BLOCK_SIZE, %g3
+	stda	%f48, [%g3] ASI_BLK_S
+2:
+	membar	#Sync			! Finish operation so we can
+	wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
+
+	stx	%g0, [%g1 + %lo(FPPROC)] ! fpproc = NULL
+	mov	CTX_SECONDARY, %g2
+	stxa	%g6, [%g2] ASI_DMMU
+	membar	#Sync
+3:
 	ba	ret_from_intr_vector
-	 restore
+	 nop
 
 ENTRY(ipi_drop_fpstate)
 	rdpr	%pstate, %g1
