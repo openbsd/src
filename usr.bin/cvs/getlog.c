@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.79 2008/01/10 11:25:27 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.80 2008/01/12 22:39:32 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -82,6 +82,7 @@ cvs_getlog(int argc, char **argv)
 			break;
 		case 'R':
 			runflags |= L_NAME;
+			break;
 		case 'r':
 			logrev = optarg;
 			break;
