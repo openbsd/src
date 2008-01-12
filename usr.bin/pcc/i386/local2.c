@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.6 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.7 2008/01/12 17:29:09 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -119,10 +119,12 @@ prologue(struct interpass_prolog *ipp)
 	int addto;
 
 	ftype = ipp->ipp_type;
+#if 0
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", ipp->ipp_name);
 	printf("	.align 4\n");
 	printf("%s:\n", ipp->ipp_name);
+#endif
 	/*
 	 * We here know what register to save and how much to 
 	 * add to the stack.
@@ -288,10 +290,10 @@ fldexpand(NODE *p, int cookie, char **cp)
 		break;
 	case 'M':
 	case 'N':
-		val = 1 << UPKFSZ(p->n_rval);
+		val = (CONSZ)1 << UPKFSZ(p->n_rval);
 		--val;
 		val <<= UPKFOFF(p->n_rval);
-		printf("0x%llx", (**cp == 'M' ? val : ~val)  & 0xffffffff);
+		printf("0x%llx", (**cp == 'M' ? val : ~val) & 0xffffffff);
 		break;
 	default:
 		comperr("fldexpand");

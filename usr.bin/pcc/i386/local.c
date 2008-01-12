@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.5 2007/12/09 18:54:39 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.6 2008/01/12 17:29:09 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -68,9 +68,9 @@ picsymtab(char *s, char *s2)
 	struct symtab *sp = IALLOC(sizeof(struct symtab));
 	size_t len = strlen(s) + strlen(s2) + 1;
 	
-	sp->sname = IALLOC(len);
-	strlcpy(sp->sname, s, len);
-	strlcat(sp->sname, s2, len);
+	sp->sname = sp->soname = IALLOC(len);
+	strlcpy(sp->soname, s, len);
+	strlcat(sp->soname, s2, len);
 	sp->sclass = EXTERN;
 	sp->sflags = sp->slevel = 0;
 	return sp;
@@ -84,10 +84,11 @@ static NODE *
 picext(NODE *p)
 {
 	NODE *q, *r;
+	struct symtab *sp;
 
 	q = tempnode(gotnr, PTR|VOID, 0, MKSUE(VOID));
-	r = bcon(0);
-	r->n_sp = picsymtab(gcc_findname(p->n_sp), "@GOT");
+	sp = picsymtab(p->n_sp->soname, "@GOT");
+	r = xbcon(0, sp, INT);
 	q = buildtree(PLUS, q, r);
 	q = block(UMUL, q, 0, PTR|VOID, 0, MKSUE(VOID));
 	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
@@ -103,17 +104,18 @@ static NODE *
 picstatic(NODE *p)
 {
 	NODE *q, *r;
+	struct symtab *sp;
 
 	q = tempnode(gotnr, PTR|VOID, 0, MKSUE(VOID));
-	r = bcon(0);
 	if (p->n_sp->slevel > 0 || p->n_sp->sclass == ILABEL) {
 		char buf[32];
 		snprintf(buf, 32, LABFMT, (int)p->n_sp->soffset);
-		r->n_sp = picsymtab(buf, "@GOTOFF");
+		sp = picsymtab(buf, "@GOTOFF");
 	} else
-		r->n_sp = picsymtab(gcc_findname(p->n_sp), "@GOTOFF");
-	r->n_sp->sclass = STATIC;
-	r->n_sp->stype = p->n_sp->stype;
+		sp = picsymtab(p->n_sp->soname, "@GOTOFF");
+	sp->sclass = STATIC;
+	sp->stype = p->n_sp->stype;
+	r = xbcon(0, sp, INT);
 	q = buildtree(PLUS, q, r);
 	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
 	q->n_sp = p->n_sp; /* for init */
@@ -475,7 +477,7 @@ fixnames(NODE *p)
 		    sp->sclass != EXTDEF)
 			cerror("fixnames");
 
-		if ((c = strstr(sp->sname, "@GOT")) == NULL)
+		if ((c = strstr(sp->soname, "@GOT")) == NULL)
 			cerror("fixnames2");
 		if (isu) {
 			memcpy(c, "@PLT", sizeof("@PLT"));
@@ -494,8 +496,35 @@ fixnames(NODE *p)
 void
 myp2tree(NODE *p)
 {
+	struct symtab *sp;
+
 	if (kflag)
-		walkf(p, fixnames);
+		walkf(p, fixnames); /* XXX walkf not needed */
+	if (p->n_op != FCON)
+		return;
+
+#if 0
+	/* put floating constants in memory */
+	setloc1(RDATA);
+	defalign(ALLDOUBLE);
+	deflab1(i = getlab());
+	ninval(0, btdims[p->n_type].suesize, p);
+#endif
+
+	sp = IALLOC(sizeof(struct symtab));
+	sp->sclass = STATIC;
+	sp->slevel = 1; /* fake numeric label */
+	sp->soffset = getlab();
+	sp->sflags = 0;
+	sp->stype = p->n_type;
+	sp->squal = (CON >> TSHIFT);
+
+	defloc(sp);
+	ninval(0, btdims[p->n_type].suesize, p);
+
+	p->n_op = NAME;
+	p->n_lval = 0;
+	p->n_sp = sp;
 }
 
 /*ARGSUSED*/
@@ -576,39 +605,18 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 
 }
 
-#if 0
-/*
- * Print out an integer constant of size size.
- * can only be sizes <= SZINT.
- */
-void
-indata(CONSZ val, int size)
-{
-	switch (size) {
-	case SZCHAR:
-		printf("\t.byte %d\n", (int)val & 0xff);
-		break;
-	case SZSHORT:
-		printf("\t.word %d\n", (int)val & 0xffff);
-		break;
-	case SZINT:
-		printf("\t.long %d\n", (int)val & 0xffffffff);
-		break;
-	default:
-		cerror("indata");
-	}
-}
-#endif
-
 /*
  * Print out a string of characters.
  * Assume that the assembler understands C-style escape
- * sequences.  Location is already set.
+ * sequences.
  */
 void
-instring(char *str)
+instring(struct symtab *sp)
 {
-	char *s;
+	char *s, *str;
+
+	defloc(sp);
+	str = sp->sname;
 
 	/* be kind to assemblers and avoid long strings */
 	printf("\t.ascii \"");
@@ -616,7 +624,7 @@ instring(char *str)
 		if (*s++ == '\\') {
 			(void)esccon(&s);
 		}
-		if (s - str > 64) {
+		if (s - str > 60) {
 			fwrite(str, 1, s - str, stdout);
 			printf("\"\n\t.ascii \"");
 			str = s;
@@ -625,6 +633,28 @@ instring(char *str)
 	fwrite(str, 1, s - str, stdout);
 	printf("\\0\"\n");
 }
+
+/*
+ * Print out a wide string by calling ninval().
+ */
+void
+inwstring(struct symtab *sp)
+{
+	char *s = sp->sname;
+	NODE *p;
+
+	defloc(sp);
+	p = bcon(0);
+	do {
+		if (*s++ == '\\')
+			p->n_lval = esccon(&s);
+		else
+			p->n_lval = (unsigned char)s[-1];
+		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
+	} while (s[-1] != 0);
+	nfree(p);
+}
+
 
 static int inbits, inval;
 
@@ -712,7 +742,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 			p = p->n_left;
 		p = p->n_right;
 		q = p->n_sp;
-		if ((c = strstr(q->sname, "@GOT")) != NULL)
+		if ((c = strstr(q->soname, "@GOT")) != NULL)
 			*c = 0; /* ignore GOT ref here */
 	}
 	if (p->n_op != ICON && p->n_op != FCON)
@@ -739,7 +769,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->sname));
+				printf("+%s", exname(q->soname));
 		}
 		printf("\n");
 		break;
@@ -772,42 +802,6 @@ ninval(CONSZ off, int fsz, NODE *p)
 		cerror("ninval");
 	}
 }
-
-#if 0
-/*
- * print out an integer.
- */
-void
-inval(CONSZ word)
-{
-	word &= 0xffffffff;
-	printf("	.long 0x%llx\n", word);
-}
-
-/* output code to initialize a floating point value */
-/* the proper alignment has been obtained */
-void
-finval(NODE *p)
-{
-	union { float f; double d; long double l; int i[3]; } u;
-
-	switch (p->n_type) {
-	case LDOUBLE:
-		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
-		break;
-	case DOUBLE:
-		u.d = (double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
-		break;
-	case FLOAT:
-		u.f = (float)p->n_dcon;
-		printf("\t.long\t0x%x\n", u.i[0]);
-		break;
-	}
-}
-#endif
 
 /* make a name look like an external name in the local machine */
 char *
@@ -848,84 +842,38 @@ extdec(struct symtab *q)
 
 /* make a common declaration for id, if reasonable */
 void
-commdec(struct symtab *q)
+defzero(struct symtab *sp)
 {
 	int off;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
+	off = tsize(sp->stype, sp->sdf, sp->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
-#ifdef GCC_COMPAT
-	printf("	.comm %s,0%o\n", gcc_findname(q), off);
-#else
-	printf("	.comm %s,0%o\n", exname(q->sname), off);
-#endif
+	printf("	.%scomm ", sp->sclass == STATIC ? "l" : "");
+	if (sp->slevel == 0)
+		printf("%s,0%o\n", exname(sp->soname), off);
+	else
+		printf(LABFMT ",0%o\n", sp->soffset, off);
 }
 
-/* make a local common declaration for id, if reasonable */
-void
-lcommdec(struct symtab *q)
-{
-	int off;
+char *nextsect;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZCHAR-1))/SZCHAR;
-	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("	.lcomm %s,0%o\n", gcc_findname(q), off);
-#else
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
-	else
-		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
+#define	SSECTION	010000
+
+/* * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	if (strcmp(ary[1], "section") || ary[2] == NULL)
+		return 0;
+	nextsect = newstring(ary[2], strlen(ary[2]));
+	return 1;
 }
 
 /*
- * print a (non-prog) label.
+ * Called when a identifier has been declared.
  */
 void
-deflab1(int label)
+fixdef(struct symtab *sp)
 {
-	printf(LABFMT ":\n", label);
 }
-
-static char *loctbl[] = { "text", "data", "section .rodata", "section .rodata" };
-
-void
-setloc1(int locc)
-{
-	if (locc == lastloc)
-		return;
-	lastloc = locc;
-	printf("	.%s\n", loctbl[locc]);
-}
-
-#if 0
-int
-ftoint(NODE *p, CONSZ **c)
-{
-	static CONSZ cc[3];
-	union { float f; double d; long double l; int i[3]; } u;
-	int n;
-
-	switch (p->n_type) {
-	case LDOUBLE:
-		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
-		n = SZLDOUBLE;
-		break;
-	case DOUBLE:
-		u.d = (double)p->n_dcon;
-		n = SZDOUBLE;
-		break;
-	case FLOAT:
-		u.f = (float)p->n_dcon;
-		n = SZFLOAT;
-		break;
-	}
-	cc[0] = u.i[0];
-	cc[1] = u.i[1];
-	cc[2] = u.i[2];
-	*c = cc;
-	return n;
-}
-#endif
