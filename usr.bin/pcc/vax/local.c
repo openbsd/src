@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.4 2007/11/17 12:00:37 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.5 2008/01/12 17:30:42 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -216,6 +216,26 @@ clocal(p) NODE *p; {
 void
 myp2tree(NODE *p)
 {
+	int o = p->n_op, i;
+
+	if (o != FCON) 
+		return;
+
+	/* Write float constants to memory */
+	/* Should be volontary per architecture */
+ 
+	setloc1(RDATA);
+	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
+	    ALDOUBLE : ALLDOUBLE );
+	deflab1(i = getlab()); 
+	ninval(0, btdims[p->n_type].suesize, p);
+	p->n_op = NAME;
+	p->n_lval = 0;	
+	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
+	p->n_sp->sclass = ILABEL;
+	p->n_sp->soffset = i;
+	p->n_sp->sflags = 0;
+
 }
 
 /*
@@ -363,7 +383,7 @@ void
 commdec( struct symtab *q ){ /* make a common declaration for id, if reasonable */
 	OFFSZ off;
 
-	printf( "	.comm	%s,", exname( q->sname ) );
+	printf( "	.comm	%s,", exname( q->soname ) );
 	off = tsize( q->stype, q->sdf, q->ssue );
 	printf( CONFMT, off/SZCHAR );
 	printf( "\n" );
@@ -378,11 +398,7 @@ lcommdec(struct symtab *q)
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("	.lcomm %s,0%o\n", gcc_findname(q), off);
-#else
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
+		printf("	.lcomm %s,0%o\n", exname(q->soname), off);
 	else
 		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
 }
@@ -437,7 +453,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->sname));
+				printf("+%s", exname(q->soname));
 		}
 		printf("\n");
 		break;
@@ -471,3 +487,19 @@ ninval(CONSZ off, int fsz, NODE *p)
 	}
 
 }
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	return 0; }
+
+/*
+ * Called when a identifier has been declared, to give target last word.
+ */
+void
+fixdef(struct symtab *sp)
+{
+}
+
