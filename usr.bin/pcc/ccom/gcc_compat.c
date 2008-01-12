@@ -1,4 +1,4 @@
-/*      $OpenBSD: gcc_compat.c,v 1.3 2007/10/20 18:24:11 otto Exp $     */
+/*      $OpenBSD: gcc_compat.c,v 1.4 2008/01/12 17:26:16 ragge Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -89,43 +89,5 @@ gcc_keyword(char *str, NODE **n)
 	}
 	cerror("gcc_keyword");
 	return 0;
-}
-
-static struct ren {
-	struct ren *next;
-	char *old, *new;
-} *renp;
-/*
- * Save a name for later renaming of a variable.
- */
-void
-gcc_rename(struct symtab *sp, char *newname)
-{
-	struct ren *ren = permalloc(sizeof(struct ren));
-
-	sp->sflags |= SRENAME;
-	ren->old = sp->sname;
-	ren->new = newstring(newname, strlen(newname)+1);
-	ren->next = renp;
-	renp = ren;
-}
-
-/*
- * Get a renamed variable.
- */
-char *
-gcc_findname(struct symtab *sp)
-{
-	struct ren *w;
-
-	if ((sp->sflags & SRENAME) == 0)
-		return sp->sname;
-
-	for (w = renp; w; w = w->next) {
-		if (w->old == sp->sname)
-			return w->new;
-	}
-	cerror("gcc_findname %s", sp->sname);
-	return NULL;
 }
 #endif

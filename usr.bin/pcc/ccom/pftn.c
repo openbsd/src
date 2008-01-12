@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.11 2007/12/25 14:00:45 stefan Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.12 2008/01/12 17:26:16 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -95,15 +95,6 @@ struct params;
 	r = argcast(r, t, d, s); *p = *r; nfree(r);
 
 /*
- * Info stored for delaying string printouts.
- */
-struct strsched {
-	struct strsched *next;
-	int locctr;
-	struct symtab *sym;
-} *strpole;
-
-/*
  * Linked list stack while reading in structs.
  */
 struct rstack {
@@ -137,7 +128,6 @@ static void dynalloc(struct symtab *p, int *poff);
 void inforce(OFFSZ n);
 void vfdalign(int n);
 static void ssave(struct symtab *);
-static void strprint(void);
 static void alprint(union arglist *al, int in);
 static void lcommadd(struct symtab *sp);
 
@@ -383,7 +373,6 @@ defid(NODE *q, int class)
 	p->sclass = class;
 	p->slevel = blevel;
 	p->soffset = NOOFFSET;
-	p->suse = lineno;
 	if (class == STNAME || class == UNAME) {
 		p->ssue = permalloc(sizeof(struct suedef));
 		suedefcnt++;
@@ -429,32 +418,15 @@ defid(NODE *q, int class)
 		break;
 	case STATIC:
 	case EXTDEF:
-		p->soffset = getlab();
-#ifdef GCC_COMPAT
-		{	extern char *renname;
-			if (renname)
-				gcc_rename(p, renname);
-			renname = NULL;
-		}
-#endif
-		break;
-
 	case EXTERN:
 	case UFORTRAN:
 	case FORTRAN:
 		p->soffset = getlab();
-#ifdef notdef
-		/* Cannot reset level here. What does the standard say??? */
-		p->slevel = 0;
-#endif
-#ifdef GCC_COMPAT
-		{	extern char *renname;
-			if (renname)
-				gcc_rename(p, renname);
-			renname = NULL;
-		}
-#endif
+		if (pragma_renamed)
+			p->soname = pragma_renamed;
+		pragma_renamed = NULL;
 		break;
+
 	case MOU:
 	case MOS:
 		oalloc(p, &strucoff);
@@ -469,12 +441,12 @@ defid(NODE *q, int class)
 		stabs_newsym(p);
 #endif
 
+	fixdef(p);	/* Leave last word to target */
 #ifdef PCC_DEBUG
 	if (ddebug)
 		printf( "	sdf, ssue, offset: %p, %p, %d\n",
 		    p->sdf, p->ssue, p->soffset);
 #endif
-
 }
 
 void
@@ -509,10 +481,7 @@ ftnend()
 	if (retlab != NOLAB && nerrors == 0) { /* inside a real function */
 		plabel(retlab);
 		efcode(); /* struct return handled here */
-		c = cftnsp->sname;
-#ifdef GCC_COMPAT
-		c = gcc_findname(cftnsp);
-#endif
+		c = cftnsp->soname;
 		SETOFF(maxautooff, ALCHAR);
 		send_passt(IP_EPILOG, 0, maxautooff/SZCHAR, c,
 		    cftnsp->stype, cftnsp->sclass == EXTDEF, retlab);
@@ -537,8 +506,6 @@ ftnend()
 	if (isinlining)
 		inline_end();
 	inline_prtout();
-
-	strprint();
 
 	tmpfree(); /* Release memory resources */
 }
@@ -614,10 +581,7 @@ dclargs()
 		intcompare = 0;
 	}
 done:	cendarg();
-	c = cftnsp->sname;
-#ifdef GCC_COMPAT
-	c = gcc_findname(cftnsp);
-#endif
+	c = cftnsp->soname;
 #if 0
 	prolab = getlab();
 	send_passt(IP_PROLOG, -1, -1, c, cftnsp->stype, 
@@ -836,7 +800,7 @@ bstruct(char *name, int soru)
  * Called after a struct is declared to restore the environment.
  */
 NODE *
-dclstruct(struct rstack *r, int pa)
+dclstruct(struct rstack *r)
 {
 	NODE *n;
 	struct params *l, *m;
@@ -876,7 +840,7 @@ dclstruct(struct rstack *r, int pa)
 	sue->suelem = permalloc(sizeof(struct symtab *) * i);
 
 	coff = 0;
-	if (pa == PRAG_PACKED || pa == PRAG_ALIGNED)
+	if (pragma_packed || pragma_aligned)
 		strucoff = 0; /* must recount it */
 
 	for (i = 0; l != NULL; l = l->next) {
@@ -890,9 +854,10 @@ dclstruct(struct rstack *r, int pa)
 		else
 			sz = tsize(p->stype, p->sdf, p->ssue);
 
-		if (pa == PRAG_PACKED || pa == PRAG_ALIGNED) {
+		if (pragma_packed || pragma_aligned) {
+			/* XXX check pack/align sizes */
 			p->soffset = coff;
-			if (pa == PRAG_ALIGNED)
+			if (pragma_aligned)
 				coff += ALLDOUBLE;
 			else
 				coff += sz;
@@ -912,6 +877,8 @@ dclstruct(struct rstack *r, int pa)
 
 	sue->suesize = strucoff;
 	sue->suealign = al;
+
+	pragma_packed = pragma_aligned = 0;
 
 #ifdef STABS
 	if (gflag)
@@ -1144,147 +1111,59 @@ tsize(TWORD ty, union dimfun *d, struct suedef *sue)
 }
 
 /*
- * Write last part of wide string.
- * Do not bother to save wide strings.
+ * Save string (and print it out).  If wide == 'L' then wide string.
  */
 NODE *
-wstrend(char *str)
+strend(int wide, char *str)
 {
-	struct symtab *sp = getsymtab(str, SSTRING|STEMP);
-	struct strsched *sc = tmpalloc(sizeof(struct strsched));
-	NODE *p = block(NAME, NIL, NIL, WCHAR_TYPE+ARY,
-	    tmpalloc(sizeof(union dimfun)), MKSUE(WCHAR_TYPE));
-	int i;
-	char *c;
+	struct symtab *sp;
+	NODE *p;
 
-	sp->sclass = ILABEL;
-	sp->soffset = getlab();
-	sp->stype = WCHAR_TYPE+ARY;
-
-	sc = tmpalloc(sizeof(struct strsched));
-	sc->locctr = STRNG;
-	sc->sym = sp;
-	sc->next = strpole;
-	strpole = sc;
-
-	/* length calculation, used only for sizeof */
-	for (i = 0, c = str; *c; ) {
-		if (*c++ == '\\')
-			(void)esccon(&c);
-		i++;
+	/* If an identical string is already emitted, just forget this one */
+	if (wide == 'L') {
+		/* Do not save wide strings, at least not now */
+		sp = getsymtab(str, SSTRING|STEMP);
+	} else {
+		str = addstring(str);	/* enter string in string table */
+		sp = lookup(str, SSTRING);	/* check for existance */
 	}
-	p->n_df->ddim = (i+1) * ((MKSUE(WCHAR_TYPE))->suesize/SZCHAR);
+
+	if (sp->soffset == 0) { /* No string */
+		char *wr;
+		int i;
+
+		sp->sclass = STATIC;
+		sp->slevel = 1;
+		sp->soffset = getlab();
+		sp->squal = (CON >> TSHIFT);
+		sp->sdf = permalloc(sizeof(union dimfun));
+		if (wide == 'L') {
+			sp->stype = WCHAR_TYPE+ARY;
+			sp->ssue = MKSUE(WCHAR_TYPE);
+		} else {
+#ifdef CHAR_UNSIGNED
+			sp->stype = UCHAR+ARY;
+			sp->ssue = MKSUE(UCHAR);
+#else
+			sp->stype = CHAR+ARY;
+			sp->ssue = MKSUE(CHAR);
+#endif
+		}
+		for (wr = sp->sname, i = 1; *wr; i++)
+			if (*wr++ == '\\')
+				(void)esccon(&wr);
+
+		sp->sdf->ddim = i;
+		if (wide == 'L')
+			inwstring(sp);
+		else
+			instring(sp);
+	}
+
+	p = block(NAME, NIL, NIL, sp->stype, sp->sdf, sp->ssue);
 	p->n_sp = sp;
 	return(clocal(p));
 }
-
-/*
- * Write last part of string.
- */
-NODE *
-strend(char *str)
-{
-//	extern int maystr;
-	struct symtab *s;
-	NODE *p;
-	int i;
-	char *c;
-
-	/* If an identical string is already emitted, just forget this one */
-	str = addstring(str);	/* enter string in string table */
-	s = lookup(str, SSTRING);	/* check for existance */
-
-	if (s->soffset == 0 /* && maystr == 0 */) { /* No string */
-		struct strsched *sc;
-		s->sclass = ILABEL;
-
-		/*
-		 * Delay printout of this string until after the current
-		 * function, or the end of the statement.
-		 */
-		sc = tmpalloc(sizeof(struct strsched));
-		sc->locctr = STRNG;
-		sc->sym = s;
-		sc->next = strpole;
-		strpole = sc;
-		s->soffset = getlab();
-	}
-
-	p = block(NAME, NIL, NIL, CHAR+ARY,
-	    tmpalloc(sizeof(union dimfun)), MKSUE(CHAR));
-#ifdef CHAR_UNSIGNED
-	p->n_type = UCHAR+ARY;
-	p->n_sue = MKSUE(UCHAR);
-#endif
-	/* length calculation, used only for sizeof */
-	for (i = 0, c = str; *c; ) {
-		if (*c++ == '\\')
-			(void)esccon(&c);
-		i++;
-	}
-	p->n_df->ddim = i+1;
-	p->n_sp = s;
-	return(clocal(p));
-}
-
-/*
- * Print out new strings, before temp memory is cleared.
- */
-void
-strprint()
-{
-	char *wr;
-	int i, val, isw;
-	NODE *p = bcon(0);
-
-	while (strpole != NULL) {
-		setloc1(STRNG);
-		deflab1(strpole->sym->soffset);
-		isw = strpole->sym->stype == WCHAR_TYPE+ARY;
-
-		i = 0;
-		wr = strpole->sym->sname;
-		while (*wr != 0) {
-			if (*wr++ == '\\')
-				val = esccon(&wr);
-			else
-				val = (unsigned char)wr[-1];
-			if (isw) {
-				p->n_lval = val;
-				p->n_type = WCHAR_TYPE;
-				ninval(i*(WCHAR_TYPE/SZCHAR),
-				    (MKSUE(WCHAR_TYPE))->suesize, p);
-			} else
-				bycode(val, i);
-			i++;
-		}
-		if (isw) {
-			p->n_lval = 0;
-			ninval(i*(WCHAR_TYPE/SZCHAR),
-			    (MKSUE(WCHAR_TYPE))->suesize, p);
-		} else {
-			bycode(0, i++);
-			bycode(-1, i);
-		}
-		strpole = strpole->next;
-	}
-	nfree(p);
-}
-
-#if 0
-/*
- * simulate byte v appearing in a list of integer values
- */
-void
-putbyte(int v)
-{
-	NODE *p;
-	p = bcon(v);
-	incode( p, SZCHAR );
-	tfree( p );
-//	gotscal();
-}
-#endif
 
 /*
  * update the offset pointed to by poff; return the
@@ -1323,7 +1202,7 @@ oalloc(struct symtab *p, int *poff )
 	    (p->stype < STRTY || ISPTR(p->stype)) &&
 	    !ISVOL((p->squal << TSHIFT)) && cisreg(p->stype)) {
 		NODE *tn = tempnode(0, p->stype, p->sdf, p->ssue);
-		p->soffset = tn->n_lval;
+		p->soffset = regno(tn);
 		p->sflags |= STNODE;
 		nfree(tn);
 		return 0;
@@ -1389,7 +1268,7 @@ dynalloc(struct symtab *p, int *poff)
 	p->sflags |= (STNODE|SDYNARRAY);
 	p->stype = INCREF(p->stype);	/* Make this an indirect pointer */
 	tn = tempnode(0, p->stype, p->sdf, p->ssue);
-	p->soffset = tn->n_lval;
+	p->soffset = regno(tn);
 
 	df = p->sdf;
 
@@ -1399,7 +1278,7 @@ dynalloc(struct symtab *p, int *poff)
 			continue;
 		n = arrstk[i++];
 		nn = tempnode(0, INT, 0, MKSUE(INT));
-		no = nn->n_lval;
+		no = regno(nn);
 		ecomp(buildtree(ASSIGN, nn, n)); /* Save size */
 
 		df->ddim = -no;
@@ -1534,7 +1413,7 @@ nidcl(NODE *p, int class)
 		if (blevel == 0)
 			lcommadd(p->n_sp);
 		else
-			lcommdec(p->n_sp);
+			defzero(p->n_sp);
 		break;
 	}
 }
@@ -1594,12 +1473,8 @@ lcommprint(void)
 	struct lcd *lc;
 
 	SLIST_FOREACH(lc, &lhead, next) {
-		if (lc->sp != NULL) {
-			if (lc->sp->sclass == STATIC)
-				lcommdec(lc->sp);
-			else
-				commdec(lc->sp);
-		}
+		if (lc->sp != NULL)
+			defzero(lc->sp);
 	}
 }
 
@@ -2012,7 +1887,7 @@ builtin_alloca(NODE *f, NODE *a)
 		return bcon(0);
 	}
 	t = tempnode(0, VOID|PTR, 0, MKSUE(INT) /* XXX */);
-	u = tempnode(t->n_lval, VOID|PTR, 0, MKSUE(INT) /* XXX */);
+	u = tempnode(regno(t), VOID|PTR, 0, MKSUE(INT) /* XXX */);
 	spalloc(t, a, SZCHAR);
 	tfree(f);
 	return u;
@@ -2072,7 +1947,7 @@ builtin_va_arg(NODE *f, NODE *a)
 	/* create a copy to a temp node of current ap */
 	p = tcopy(a->n_left);
 	q = tempnode(0, p->n_type, p->n_df, p->n_sue);
-	nodnum = q->n_lval;
+	nodnum = regno(q);
 	rv = buildtree(ASSIGN, q, p);
 
 	r = a->n_right;
@@ -2655,7 +2530,7 @@ getsymtab(char *name, int flags)
 		s = permalloc(sizeof(struct symtab));
 		symtabcnt++;
 	}
-	s->sname = name;
+	s->sname = s->soname = name;
 	s->snext = NULL;
 	s->stype = UNDEF;
 	s->squal = 0;
@@ -2665,7 +2540,6 @@ getsymtab(char *name, int flags)
 	s->slevel = blevel;
 	s->sdf = NULL;
 	s->ssue = NULL;
-	s->suse = 0;
 	return s;
 }
 

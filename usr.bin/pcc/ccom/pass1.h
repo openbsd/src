@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.7 2008/01/07 21:04:47 stefan Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.8 2008/01/12 17:26:16 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -89,14 +89,7 @@ extern	char *scnames(int);
 #define	SDYNARRAY	00200
 #define	SINLINE		00400
 #define	STNODE		01000
-#ifdef GCC_COMPAT
-#define	SRENAME		02000	/* Node is renamed */
-#endif
 #define	SASG		04000
-
-#ifndef FIXDEF
-#define FIXDEF(p)
-#endif
 
 	/* alignment of initialized quantities */
 #ifndef AL_INIT
@@ -153,12 +146,12 @@ struct symtab_hdr {
 
 struct	symtab {
 	struct	symtab_hdr hdr;
-	char	*sname;
+	char	*sname;		/* Symbol name */
+	char	*soname;	/* Written-out name */
 	TWORD	stype;		/* type word */
 	TWORD	squal;		/* qualifier word */
 	union	dimfun *sdf;	/* ptr to the dimension/prototype array */
 	struct	suedef *ssue;	/* ptr to the definition table */
-	int	suse;		/* line number of last use of the variable */
 };
 
 #define	snext	hdr.h_next
@@ -190,7 +183,6 @@ extern	char *ftitle;
 extern	struct symtab *cftnsp;
 extern	int autooff, maxautooff, argoff, strucoff;
 extern	int brkflag;
-extern	int lastloc;
 
 extern	OFFSZ inoff;
 
@@ -208,6 +200,10 @@ extern	int brklab;
 extern	int contlab;
 extern	int flostat;
 extern	int retlab;
+
+/* pragma globals */
+extern int pragma_packed, pragma_aligned;
+extern char *pragma_renamed;
 
 /*
  * Flags used in structures/unions
@@ -232,13 +228,13 @@ extern	NODE
 	*buildtree(int, NODE *l, NODE *r),
 	*mkty(unsigned, union dimfun *, struct suedef *),
 	*rstruct(char *, int),
-	*dclstruct(struct rstack *, int),
-	*strend(char *),
-	*wstrend(char *),
+	*dclstruct(struct rstack *),
+	*strend(int gtype, char *),
 	*tymerge(NODE *typ, NODE *idp),
 	*stref(NODE *),
 	*offcon(OFFSZ, TWORD, union dimfun *, struct suedef *),
 	*bcon(int),
+	*xbcon(CONSZ, struct symtab *, TWORD),
 	*bpsize(NODE *),
 	*convert(NODE *, int),
 	*pconvert(NODE *),
@@ -252,7 +248,6 @@ extern	NODE
 	*optim(NODE *),
 	*clocal(NODE *),
 	*ccopy(NODE *),
-	*btsize(TWORD, union dimfun *, struct suedef *),
 	*tempnode(int, TWORD type, union dimfun *df, struct suedef *sue),
 	*doacall(NODE *f, NODE *a);
 NODE	*intprom(NODE *);
@@ -264,14 +259,12 @@ char	*exname(char *);
 
 int oalloc(struct symtab *p, int *poff);
 void deflabel(char *);
-void deflab1(int);
-void setloc1(int);
 void gotolabel(char *);
 unsigned int esccon(char **sptr);
-void inline_start(char *name);
+void inline_start(struct symtab *sp);
 void inline_end(void);
 void inline_addarg(struct interpass *);
-void inline_ref(char *);
+void inline_ref(struct symtab *sp);
 void inline_prtout(void);
 void ftnarg(NODE *);
 struct rstack *bstruct(char *, int);
@@ -284,7 +277,6 @@ char *addstring(char *);
 char *addname(char *);
 char *newstring(char *, int len);
 void symclear(int level);
-void schedremove(struct symtab *p);
 struct symtab *hide(struct symtab *p);
 int talign(unsigned int, struct suedef *);
 void bfcode(struct symtab **, int);
@@ -292,16 +284,14 @@ int chkftn(union arglist *, union arglist *);
 void branch(int);
 void cbranch(NODE *p, NODE *q);
 void extdec(struct symtab *);
-void commdec(struct symtab *);
-void lcommdec(struct symtab *);
+void defzero(struct symtab *);
 int falloc(struct symtab *p, int w, int new, NODE *pty);
 TWORD ctype(TWORD);  
 void ninval(CONSZ off, int fsz, NODE *);
 void infld(CONSZ off, int fsz, CONSZ);
 void zbits(CONSZ off, int fsz);
-void indata(CONSZ, int);
-void instring(char *);
-void defnam(struct symtab *);
+void instring(struct symtab *sp);
+void inwstring(struct symtab *sp);
 void plabel(int lab);
 void bjobcode(void);
 void ejobcode(int);
@@ -327,12 +317,14 @@ struct symtab *enumhd(char *);
 NODE *enumdcl(struct symtab *);
 NODE *enumref(char *);
 CONSZ icons(NODE *);
+int mypragma(char **);
+void fixdef(struct symtab *);
+int cqual(TWORD t, TWORD q);
+void defloc(struct symtab *);
 
 #ifdef GCC_COMPAT
 void gcc_init(void);
 int gcc_keyword(char *, NODE **);
-void gcc_rename(struct symtab *sp, char *newname);
-char *gcc_findname(struct symtab *sp);
 #endif
 
 #ifdef STABS

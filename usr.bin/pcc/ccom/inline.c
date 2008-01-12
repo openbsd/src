@@ -1,4 +1,4 @@
-/*	$OpenBSD: inline.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: inline.c,v 1.2 2008/01/12 17:26:16 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 static struct istat {
 	struct istat *ilink;
-	char *name;
+	struct symtab *sp;
 	int type;
 #define	NOTYETR	0	/* saved but not yet referenced */
 #define	NOTYETW	1	/* saved and referenced but not yet written out */
@@ -60,11 +60,11 @@ tcnt(NODE *p)
 }
 
 static struct istat *
-findfun(char *name)
+findfun(struct symtab *sp)
 {
 	struct istat *is = ipole;
 	while (is) {
-		if (is->name == name)
+		if (is->sp == sp)
 			return is;
 		is = is->ilink;
 	}
@@ -72,16 +72,16 @@ findfun(char *name)
 }
 
 static void
-refnode(char *str)
+refnode(struct symtab *sp)
 {
 	struct interpass *ip;
 
 	if (sdebug)
-		printf("refnode(%s)\n", str);
+		printf("refnode(%s)\n", sp->sname);
 
 	ip = permalloc(sizeof(*ip));
 	ip->type = IP_REF;
-	ip->ip_name = str;
+	ip->ip_name = (char *)sp;
 	inline_addarg(ip);
 }
 
@@ -97,21 +97,21 @@ inline_addarg(struct interpass *ip)
  * Called to setup for inlining of a new function.
  */
 void
-inline_start(char *name)
+inline_start(struct symtab *sp)
 {
 	struct istat *is;
 
 	if (sdebug)
-		printf("inline_start(\"%s\")\n", name);
+		printf("inline_start(\"%s\")\n", sp->sname);
 
 	if (isinlining)
 		cerror("already inlining function");
 
-	if ((is = findfun(name)) == 0) {
+	if ((is = findfun(sp)) == 0) {
 		is = ialloc();
 		is->ilink = ipole;
 		ipole = is;
-		is->name = name;
+		is->sp = sp;
 		is->type = NOTYETR;
 	} else {
 		if (is->type != NOTYETD)
@@ -138,17 +138,17 @@ inline_end()
  * The function may not be defined when inline_ref() is called.
  */
 void
-inline_ref(char *name)
+inline_ref(struct symtab *sp)
 {
 	struct istat *w = ipole;
 
 	if (sdebug)
-		printf("inline_ref(\"%s\")\n", name);
+		printf("inline_ref(\"%s\")\n", sp->sname);
 	if (isinlining) {
-		refnode(name);
+		refnode(sp);
 	} else {
 		while (w != NULL) {
-			if (w->name == name) {
+			if (w->sp == sp) {
 				if (w->type == NOTYETR)
 					w->type = NOTYETW;
 				return; /* setup for writeout */
@@ -159,7 +159,7 @@ inline_ref(char *name)
 		w = ialloc();
 		w->ilink = ipole;
 		ipole = w;
-		w->name = name;
+		w->sp = sp;
 		w->type = NOTYETD;
 	}
 }
@@ -175,7 +175,7 @@ puto(struct istat *w)
 		nip = DLIST_NEXT(ip, qelem);
 		DLIST_REMOVE(ip, qelem);
 		if (ip->type == IP_REF)
-			inline_ref(ip->ip_name);
+			inline_ref((struct symtab *)ip->ip_name);
 		else
 			pass2_compile(ip);
 		ip = nip;
@@ -197,6 +197,7 @@ inline_prtout()
 	recovernodes++;
 	while (w != NULL) {
 		if (w->type == NOTYETW) {
+			defloc(w->sp);
 			puto(w);
 			w->type = WRITTEN;
 			gotone++;

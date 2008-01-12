@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.12 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: trees.c,v 1.13 2008/01/12 17:26:16 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -76,8 +76,6 @@ static int opact(NODE *p);
 static int moditype(TWORD);
 static NODE *strargs(NODE *);
 static void rmcops(NODE *p);
-
-int lastloc = -1;
 
 /*	some special actions, used in finding the type of nodes */
 # define NCVT 01
@@ -303,7 +301,7 @@ runtime:
 				p->n_type = sp->stype;
 				p->n_sue = sp->ssue;
 				p->n_df = sp->sdf;
-				p->n_lval = sp->soffset;
+				p->n_rval = sp->soffset;
 				break;
 			}
 				
@@ -909,12 +907,18 @@ notlval(p) register NODE *p; {
 NODE *
 bcon(int i)
 {
-	register NODE *p;
+	return xbcon(i, NULL, INT);
+}
 
-	p = block(ICON, NIL, NIL, INT, 0, MKSUE(INT));
-	p->n_lval = i;
-	p->n_sp = NULL;
-	return(clocal(p));
+NODE *
+xbcon(CONSZ val, struct symtab *sp, TWORD type)
+{
+	NODE *p;
+
+	p = block(ICON, NIL, NIL, type, 0, MKSUE(type));
+	p->n_lval = val;
+	p->n_sp = sp;
+	return clocal(p);
 }
 
 NODE *
@@ -1523,7 +1527,7 @@ moditype(TWORD ty)
 	}
 }
 
-int tvaloff = 100;
+int tvaloff = MAXREGS+NPERMREG > 100 ? MAXREGS+NPERMREG + 100 : 100;
 
 /*
  * Returns a TEMP node with temp number nr.
@@ -1535,7 +1539,7 @@ tempnode(int nr, TWORD type, union dimfun *df, struct suedef *sue)
 	NODE *r;
 
 	r = block(TEMP, NIL, NIL, type, df, sue);
-	r->n_lval = nr ? nr : tvaloff;
+	regno(r) = nr ? nr : tvaloff;
 	tvaloff += szty(type);
 	return r;
 }
@@ -1596,30 +1600,6 @@ eprint(NODE *p, int down, int *a, int *b)
 	printf( ", %p, %p\n", p->n_df, p->n_sue );
 }
 # endif
-
-void
-prtdcon(NODE *p)
-{
-	int o = p->n_op, i;
-
-	if (o != FCON)
-		return;
-
-	/* Write float constants to memory */
-	/* Should be volontary per architecture */
-
-	setloc1(RDATA);
-	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
-	    ALDOUBLE : ALLDOUBLE );
-	deflab1(i = getlab());
-	ninval(0, btdims[p->n_type].suesize, p);
-	p->n_op = NAME;
-	p->n_lval = 0;
-	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
-	p->n_sp->sclass = ILABEL;
-	p->n_sp->soffset = i;
-	p->n_sp->sflags = 0;
-}
 
 extern int negrel[];
 
@@ -1836,7 +1816,7 @@ again:
 		q = p->n_right->n_left;
 		if (type != VOID) {
 			r = tempnode(0, q->n_type, q->n_df, q->n_sue);
-			tval = r->n_lval;
+			tval = regno(r);
 			q = buildtree(ASSIGN, r, q);
 		}
 		rmcops(q);
@@ -1883,7 +1863,7 @@ again:
 		*r = *p;
 		andorbr(r, -1, lbl = getlab());
 		q = tempnode(0, p->n_type, p->n_df, p->n_sue);
-		tval = q->n_lval;
+		tval = regno(q);
 		r = tempnode(tval, p->n_type, p->n_df, p->n_sue);
 		ecode(buildtree(ASSIGN, q, bcon(1)));
 		branch(lbl2 = getlab());
@@ -1965,7 +1945,7 @@ delasgop(NODE *p)
 
 		if (has_se(l)) {
 			q = tempnode(0, ll->n_type, ll->n_df, ll->n_sue);
-			tval = q->n_lval;
+			tval = regno(q);
 			r = tempnode(tval, ll->n_type, ll->n_df,ll->n_sue);
 			l->n_left = q;
 			/* Now the left side of node p has no side effects. */
@@ -2014,7 +1994,6 @@ ecomp(NODE *p)
 	p = optim(p);
 	rmcops(p);
 	p = delasgop(p);
-	setloc1(PROG);
 	if (p->n_op == ICON && p->n_type == VOID)
 		tfree(p);
 	else
@@ -2059,7 +2038,7 @@ p2tree(NODE *p)
 			    q->sclass == ILABEL) {
 				printf(LABFMT, q->soffset);
 			} else
-				printf("%s\n", exname(q->sname));
+				printf("%s\n", exname(q->soname));
 		} else
 			printf("\n");
 		break;
@@ -2117,11 +2096,7 @@ p2tree(NODE *p)
 				snprintf(cp, 32, LABFMT, n);
 				p->n_name = cp;
 			} else {
-#ifdef GCC_COMPAT
-				p->n_name = gcc_findname(q);
-#else
-				p->n_name = q->sname;
-#endif
+				p->n_name = q->soname;
 			}
 		} else
 			p->n_name = "";
@@ -2179,7 +2154,7 @@ delvoid(NODE *p)
 			*q = *p;
 			q->n_type = BOOL_TYPE;
 			r = tempnode(0, BOOL_TYPE, NULL, MKSUE(BOOL_TYPE));
-			val = r->n_lval;
+			val = regno(r);
 			s = tempnode(val, BOOL_TYPE, NULL, MKSUE(BOOL_TYPE));
 			*p = *s;
 			q = buildtree(ASSIGN, r, q);
@@ -2202,7 +2177,6 @@ ecode(NODE *p)
 
 	p = optim(p);
 	p = delasgop(p);
-	walkf(p, prtdcon);
 	walkf(p, delvoid);
 #ifdef PCC_DEBUG
 	if (xdebug) {
@@ -2239,12 +2213,13 @@ send_passt(int type, ...)
 	ip->lineno = lineno;
 	switch (type) {
 	case IP_NODE:
-		setloc1(PROG);
 		ip->ip_node = va_arg(ap, NODE *);
 		break;
 	case IP_EPILOG:
+		if (!isinlining)
+			defloc(cftnsp);
+		/* FALLTHROUGH */
 	case IP_PROLOG:
-		setloc1(PROG);
 		ipp = (struct interpass_prolog *)ip;
 		ipp->ipp_regs = va_arg(ap, int);
 		ipp->ipp_autos = va_arg(ap, int);
@@ -2264,7 +2239,7 @@ send_passt(int type, ...)
 		if (blevel == 0) { /* outside function */
 			printf("\t%s\n", va_arg(ap, char *));
 			va_end(ap);
-			lastloc = -1;
+			defloc(NULL);
 			return;
 		}
 		ip->ip_asm = va_arg(ap, char *);
@@ -2277,8 +2252,6 @@ send_passt(int type, ...)
 		inline_addarg(ip);
 	else
 		pass2_compile(ip);
-	if (type == IP_EPILOG)
-		lastloc = PROG;
 }
 
 char *
@@ -2396,7 +2369,6 @@ ccopy(NODE *p)
 void
 plabel(int label)
 {
-	setloc1(PROG);
 	reached = 1; /* Will this always be correct? */
 	send_passt(IP_DEFLAB, label);
 }
@@ -2414,4 +2386,17 @@ intprom(NODE *n)
 		return makety(n, INT, 0, 0, MKSUE(INT));
 	}
 	return n;
+}
+
+/*
+ * Return CON/VOL/0, whichever are active for the current type.
+ */
+int
+cqual(TWORD t, TWORD q)
+{
+	while (ISARY(t))
+		t = DECREF(t), q = DECQAL(q);
+	if (t <= BTMASK)
+		q <<= TSHIFT;
+	return q & (CON|VOL);
 }

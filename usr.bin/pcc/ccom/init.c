@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2008/01/12 17:26:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -448,31 +448,6 @@ nsetval(CONSZ off, int fsz, NODE *p)
 }
 
 /*
- * Align data and set correct location.
- */
-static void
-setscl(struct symtab *sp)
-{
-	int ro = DATA;
-
-	if (BTYPE(sp->stype) == sp->stype && sp->squal & (CON >> TSHIFT))
-		ro = RDATA;
-	else if (ISPTR(sp->stype) && ISCON(sp->squal))
-		ro = RDATA;
-	/* XXX - readonly pointers */
-	setloc1(ro);
-	defalign(talign(sp->stype, sp->ssue));
-	if (sp->sclass == EXTDEF ||
-	    (sp->sclass == STATIC && sp->slevel == 0)) {
-		defnam(sp);
-	} else {
-		if (sp->soffset == NOOFFSET)
-			cerror("setscl");
-		deflab1(sp->soffset);
-	}
-}
-
-/*
  * take care of generating a value for the initializer p
  * inoff has the current offset (last bit written)
  * in the current word being generated
@@ -567,14 +542,13 @@ insbf(OFFSZ off, int fsz, int val)
 	spname = csym;
 	p = buildtree(ADDROF,
 	    buildtree(NAME, NIL, NIL), NIL);
-	r = block(ICON, NIL, NIL, typ, 0, MKSUE(typ));
 	sym.stype = typ;
 	sym.squal = 0;
 	sym.sdf = 0;
 	sym.ssue = MKSUE(typ);
 	sym.soffset = off;
 	sym.sclass = typ == INT ? FIELD | fsz : MOU;
-	r->n_sp = &sym;
+	r = xbcon(0, &sym, typ);
 	p = block(STREF, p, r, INT, 0, MKSUE(INT));
 	ecode(buildtree(ASSIGN, stref(p), bcon(val)));
 }
@@ -621,7 +595,7 @@ endinit(void)
 #endif
 
 	if (csym->sclass != AUTO)
-		setscl(csym);
+		defloc(csym);
 
 	/* Calculate total block size */
 	if (ISARY(csym->stype) && csym->sdf->ddim == 0) {
@@ -660,14 +634,13 @@ endinit(void)
 				p = buildtree(ADDROF,
 				    buildtree(NAME, NIL, NIL), NIL);
 				n = il->n;
-				r = block(ICON, NIL, NIL, INT, 0, MKSUE(INT));
 				sym.stype = n->n_type;
 				sym.squal = n->n_qual;
 				sym.sdf = n->n_df;
 				sym.ssue = n->n_sue;
 				sym.soffset = ll->begsz + il->off;
 				sym.sclass = fsz < 0 ? FIELD | -fsz : 0;
-				r->n_sp = &sym;
+				r = xbcon(0, &sym, INT);
 				p = block(STREF, p, r, INT, 0, MKSUE(INT));
 				ecode(buildtree(ASSIGN, stref(p), il->n));
 				if (fsz < 0)
@@ -954,7 +927,7 @@ simpleinit(struct symtab *sp, NODE *p)
 	case EXTDEF:
 		spname = sp;
 		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
-		setscl(sp);
+		defloc(sp);
 		ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
 		break;

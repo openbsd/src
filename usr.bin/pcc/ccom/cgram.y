@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.7 2007/11/25 10:27:35 stefan Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.8 2008/01/12 17:26:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -116,13 +116,7 @@
 %token	C_QUALIFIER
 %token	C_FUNSPEC
 %token	C_ASM
-
-/*
- * These tokens are only used for pragmas; let yacc handle syntax check.
- */
-%token	PRAG_PACKED
-%token	PRAG_ALIGNED
-%token	PRAG_RENAMED
+%token	NOMATCH
 
 /*
  * Precedence
@@ -154,10 +148,6 @@ int oldstyle;	/* Current function being defined */
 int noretype;
 static struct symtab *xnf;
 extern int enummer;
-#ifdef GCC_COMPAT
-char *renname; /* for renaming of variables */
-#endif
-
 
 static NODE *bdty(int op, ...);
 static void fend(void);
@@ -200,7 +190,7 @@ struct savbc {
 %start ext_def_list
 
 %type <intval> con_e ifelprefix ifprefix whprefix forprefix doprefix switchpart
-		type_qualifier_list str_attr
+		type_qualifier_list
 %type <nodep> e .e term enum_dcl struct_dcl cast_type funct_idn declarator
 		direct_declarator elist type_specifier merge_attribs
 		parameter_declaration abstract_declarator initializer
@@ -209,13 +199,12 @@ struct savbc {
 		specifier_qualifier_list merge_specifiers nocon_e
 		identifier_list arg_param_list arg_declaration arg_dcl_list
 		designator_list designator
-%type <strp>	string wstring C_STRING C_WSTRING PRAG_RENAMED
+%type <strp>	string wstring C_STRING C_WSTRING
 %type <rp>	str_head
 %type <symp>	xnfdeclarator clbrace enum_head
 
 %type <intval> C_CLASS C_STRUCT C_RELOP C_DIVOP C_SHIFTOP
 		C_ANDAND C_OROR C_STROP C_INCOP C_UNOP C_ASOP C_EQUOP
-		PRAG_PACKED PRAG_ALIGNED
 
 %type <nodep>  C_TYPE C_QUALIFIER C_ICON C_FCON
 %type <strp>	C_NAME C_TYPENAME
@@ -339,6 +328,12 @@ type_qualifier_list:
 direct_declarator: C_NAME { $$ = bdty(NAME, $1); }
 		|  '(' declarator ')' { $$ = $2; }
 		|  direct_declarator '[' nocon_e ']' { 
+			if (!ISINTEGER($3->n_type))
+				werror("array size is not an integer");
+			else if ($3->n_op == ICON && $3->n_lval < 0) {
+				uerror("array size must be non-negative");
+				$3->n_lval = 1;
+			}
 			$$ = block(LB, $1, $3, INT, 0, MKSUE(INT));
 		}
 		|  direct_declarator '[' ']' { $$ = bdty(LB, $1, 0); }
@@ -456,17 +451,17 @@ arg_param_list:	   declarator { olddecl(tymerge($<nodep>0, $1)); }
 /*
  * Declarations in beginning of blocks.
  */
-declaration_list:  declaration
-		|  declaration_list declaration
+block_item_list:   block_item
+		|  block_item_list block_item
+		;
+
+block_item:	   declaration
+		|  statement
 		;
 
 /*
  * Here starts the old YACC code.
  */
-
-stmt_list:	   stmt_list statement
-		|  { bccode(); }
-		;
 
 /*
  * Variables are declared in init_declarator.
@@ -504,8 +499,8 @@ moe:		   C_NAME {  moedef($1); }
 		|  C_NAME '=' con_e { enummer = $3; moedef($1); }
 		;
 
-struct_dcl:	   str_head '{' struct_dcl_list '}' str_attr {
-			$$ = dclstruct($1, $5); 
+struct_dcl:	   str_head '{' struct_dcl_list '}' empty {
+			$$ = dclstruct($1); 
 		}
 		|  C_STRUCT C_NAME {  $$ = rstruct($2,$1); }
 		|  C_STRUCT C_TYPENAME {  $$ = rstruct($2,$1); }
@@ -513,13 +508,12 @@ struct_dcl:	   str_head '{' struct_dcl_list '}' str_attr {
 #ifndef GCC_COMPAT
 			werror("gcc extension");
 #endif
-			$$ = dclstruct($1, 0); 
+			$$ = dclstruct($1); 
 		}
 		;
 
-str_attr:	   { $$ = 0; /* nothing */ }
-		|  PRAG_PACKED { $$ = PRAG_PACKED; }
-		|  PRAG_ALIGNED { $$ = PRAG_ALIGNED; }
+empty:		   { /* Get yacc read the next token before reducing */ }
+		|  NOMATCH
 		;
 
 str_head:	   C_STRUCT {  $$ = bstruct(NULL, $1);  }
@@ -594,13 +588,9 @@ xnfdeclarator:	   declarator { $$ = xnf = init_declarator($<nodep>0, $1, 1); }
  * Returns nothing.
  */
 init_declarator:   declarator { init_declarator($<nodep>0, $1, 0); }
-		|  declarator PRAG_RENAMED {
-			renname = $2; /* XXX ugly */
-			init_declarator($<nodep>0, $1, 0);
-		}
 		|  declarator C_ASM '(' string ')' {
 #ifdef GCC_COMPAT
-			renname = $4;
+			pragma_renamed = newstring($4, strlen($4));
 			init_declarator($<nodep>0, $1, 0);
 #else
 			werror("gcc extension");
@@ -635,7 +625,13 @@ designator_list:   designator { $$ = $1; }
 		|  designator_list designator { $$ = $2; $$->n_left = $1; }
 		;
 
-designator:	   '[' con_e ']' { $$ = bdty(LB, NULL, $2); }
+designator:	   '[' con_e ']' {
+			if ($2 < 0) {
+				uerror("designator must be non-negative");
+				$2 = 0;
+			}
+			$$ = bdty(LB, NULL, $2);
+		}
 		|  C_STROP C_NAME { $$ = bdty(NAME, $2); }
 		;
 
@@ -648,7 +644,7 @@ ibrace:		   '{' {  ilbrace(); }
 
 /*	STATEMENTS	*/
 
-compoundstmt:	   begin declaration_list stmt_list '}' {  
+compoundstmt:	   begin block_item_list '}' {  
 #ifdef STABS
 			if (gflag && blevel > 2)
 				stabs_rbrac(blevel);
@@ -662,7 +658,7 @@ compoundstmt:	   begin declaration_list stmt_list '}' {
 			autooff = savctx->contlab;
 			savctx = savctx->next;
 		}
-		|  begin stmt_list '}' {
+		|  begin '}' {
 #ifdef STABS
 			if (gflag && blevel > 2)
 				stabs_rbrac(blevel);
@@ -696,6 +692,7 @@ begin:		  '{' {
 			bc->contlab = autooff;
 			bc->next = savctx;
 			savctx = bc;
+			bccode();
 		}
 		;
 
@@ -882,7 +879,7 @@ switchpart:	   C_SWITCH  '('  e  ')' {
 				t = $3->n_type;
 			}
 			p = tempnode(0, t, 0, MKSUE(t));
-			num = p->n_lval;
+			num = regno(p);
 			ecomp(buildtree(ASSIGN, p, $3));
 			branch( $$ = getlab());
 			swstart(num, t);
@@ -997,27 +994,16 @@ term:		   term C_INCOP {  $$ = buildtree( $2, $1, bcon(1) ); }
 		|  term C_STROP C_TYPENAME { $$ = structref($1, $2, $3); }
 		|  C_NAME {
 			spname = lookup($1, 0);
-			/* recognize identifiers in initializations */
-			if (blevel==0 && spname->stype == UNDEF) {
-				register NODE *q;
-				werror("undeclared initializer name %s",
-				    spname->sname);
-				q = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
-				q->n_sp = spname;
-				defid(q, EXTERN);
-				nfree(q);
-			}
 			if (spname->sflags & SINLINE)
-				inline_ref($1);
+				inline_ref(spname);
 			$$ = buildtree(NAME, NIL, NIL);
-			spname->suse = -lineno;
 			if (spname->sflags & SDYNARRAY)
 				$$ = buildtree(UMUL, $$, NIL);
 		}
 		|  C_ICON { $$ = $1; }
 		|  C_FCON { $$ = $1; }
-		|  string {  $$ = strend($1); /* get string contents */ }
-		|  wstring { $$ = wstrend($1); }
+		|  string {  $$ = strend(0, $1); /* get string contents */ }
+		|  wstring { $$ = strend('L', $1); }
 		|   '('  e  ')' { $$=$2; }
 		;
 
@@ -1070,10 +1056,9 @@ funct_idn:	   C_NAME  '(' {
 				nfree(q);
 			}
 			if (s->sflags & SINLINE)
-				inline_ref($1);
+				inline_ref(s);
 			spname = s;
 			$$ = buildtree(NAME, NIL, NIL);
-			s->suse = -lineno;
 		}
 		|  term  '(' 
 		;
@@ -1089,6 +1074,7 @@ static NODE *
 bdty(int op, ...)
 {
 	va_list ap;
+	int val;
 	register NODE *q;
 
 	va_start(ap, op);
@@ -1108,7 +1094,9 @@ bdty(int op, ...)
 
 	case LB:
 		q->n_left = va_arg(ap, NODE *);
-		q->n_right = bcon(va_arg(ap, int));
+		if ((val = va_arg(ap, int)) < 0)
+			uerror("array size must be non-negative");
+		q->n_right = bcon(val < 0 ? 1 : val);
 		break;
 
 	case NAME:
@@ -1279,9 +1267,7 @@ genswitch(int num, TWORD type, struct swents **p, int n)
 	for (i = 1; i <= n; ++i) {
 		/* already in 1 */
 		r = tempnode(num, type, 0, MKSUE(type));
-		q = block(ICON, NIL, NIL, type, 0, MKSUE(type));
-		q->n_sp = NULL;
-		q->n_lval = p[i]->sval;
+		q = xbcon(p[i]->sval, NULL, type);
 		r = buildtree(NE, r, clocal(q));
 		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
 	}
@@ -1305,7 +1291,6 @@ init_declarator(NODE *tn, NODE *p, int assign)
 		typ->n_sp->sflags |= SINLINE;
 
 	if (ISFTN(typ->n_type) == 0) {
-		setloc1(DATA);
 		if (assign) {
 			defid(typ, class);
 			typ->n_sp->sflags |= SASG;
@@ -1333,7 +1318,6 @@ fundef(NODE *tp, NODE *p)
 	int class = tp->n_lval, oclass;
 	char *c;
 
-	setloc1(PROG);
 	/* Enter function args before they are clobbered in tymerge() */
 	/* Typecheck against prototype will be done in defid(). */
 	ftnarg(p);
@@ -1350,7 +1334,7 @@ fundef(NODE *tp, NODE *p)
 		/* Unreferenced, store it for (eventual) later use */
 		/* Ignore it if it not declared static */
 		s->sflags |= SINLINE;
-		inline_start(s->sname);
+		inline_start(s);
 	}
 	if (class == EXTERN)
 		class = SNULL; /* same result */
@@ -1358,10 +1342,7 @@ fundef(NODE *tp, NODE *p)
 	cftnsp = s;
 	defid(p, class);
 	prolab = getlab();
-	c = cftnsp->sname;
-#ifdef GCC_COMPAT
-	c = gcc_findname(cftnsp);
-#endif
+	c = cftnsp->soname;
 	send_passt(IP_PROLOG, -1, -1, c, cftnsp->stype,
 	    cftnsp->sclass == EXTDEF, prolab);
 	blevel = 1;

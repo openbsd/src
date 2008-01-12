@@ -1,4 +1,4 @@
-/*	$OpenBSD: stabs.c,v 1.5 2007/12/16 19:20:45 ragge Exp $	*/
+/*	$OpenBSD: stabs.c,v 1.6 2008/01/12 17:26:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -257,10 +257,7 @@ stabs_func(struct symtab *s)
 {
 	char str[MAXPSTR];
 
-	curfun = s->sname;
-#ifdef GCC_COMPAT
-	curfun = gcc_findname(cftnsp);
-#endif
+	curfun = s->soname;
 	printtype(s, str, sizeof(str));
 	cprint(savestabs, ".stabs	\"%s:%c%s\",%d,0,%d,%s",
 	    curfun, s->sclass == STATIC ? 'f' : 'F', str,
@@ -323,10 +320,7 @@ stabs_newsym(struct symtab *s)
 	    s->sclass == TYPEDEF || (s->sclass & FIELD))
 		return; /* XXX - fix structs */
 
-	sname = s->sname;
-#ifdef GCC_COMPAT
-	sname = gcc_findname(s);
-#endif
+	sname = s->soname;
 	suesize = BIT2BYTE(s->ssue->suesize);
 	if (suesize > 32767)
 		suesize = 32767;
