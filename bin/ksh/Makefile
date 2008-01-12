@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2005/10/06 06:39:35 otto Exp $
+#	$OpenBSD: Makefile,v 1.26 2008/01/12 22:36:34 miod Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
@@ -14,7 +14,7 @@ CLEANFILES+=	emacs.out
 
 LINKS=	${BINDIR}/ksh ${BINDIR}/rksh
 LINKS+=	${BINDIR}/ksh ${BINDIR}/sh
-MLINKS=	ksh.1 rksh.1 ksh.1 ulimit.1
+MLINKS=	ksh.1 rksh.1
 
 .depend emacs.o: emacs.out
 
