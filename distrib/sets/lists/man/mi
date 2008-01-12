@@ -26,7 +26,6 @@
 ./usr/share/man/cat1/addftinfo.0
 ./usr/share/man/cat1/afmtodit.0
 ./usr/share/man/cat1/afslog.0
-./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/alpha
 ./usr/share/man/cat1/amd64
 ./usr/share/man/cat1/amd64/fdformat.0
@@ -48,7 +47,6 @@
 ./usr/share/man/cat1/batch.0
 ./usr/share/man/cat1/bc.0
 ./usr/share/man/cat1/bdes.0
-./usr/share/man/cat1/bg.0
 ./usr/share/man/cat1/biff.0
 ./usr/share/man/cat1/c2ph.0
 ./usr/share/man/cat1/cal.0
@@ -56,7 +54,6 @@
 ./usr/share/man/cat1/cap_mkdb.0
 ./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/cat.0
-./usr/share/man/cat1/cd.0
 ./usr/share/man/cat1/cdio.0
 ./usr/share/man/cat1/checknr.0
 ./usr/share/man/cat1/chflags.0
@@ -99,7 +96,6 @@
 ./usr/share/man/cat1/diff3.0
 ./usr/share/man/cat1/dig.0
 ./usr/share/man/cat1/dirname.0
-./usr/share/man/cat1/dirs.0
 ./usr/share/man/cat1/domainname.0
 ./usr/share/man/cat1/dprofpp.0
 ./usr/share/man/cat1/du.0
@@ -116,7 +112,6 @@
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
 ./usr/share/man/cat1/false.0
-./usr/share/man/cat1/fg.0
 ./usr/share/man/cat1/fgen.0
 ./usr/share/man/cat1/fgrep.0
 ./usr/share/man/cat1/file.0
@@ -127,7 +122,6 @@
 ./usr/share/man/cat1/flex++.0
 ./usr/share/man/cat1/fmt.0
 ./usr/share/man/cat1/fold.0
-./usr/share/man/cat1/foreach.0
 ./usr/share/man/cat1/from.0
 ./usr/share/man/cat1/fs.0
 ./usr/share/man/cat1/fsplit.0
@@ -157,7 +151,6 @@
 ./usr/share/man/cat1/h2xs.0
 ./usr/share/man/cat1/head.0
 ./usr/share/man/cat1/hexdump.0
-./usr/share/man/cat1/history.0
 ./usr/share/man/cat1/host.0
 ./usr/share/man/cat1/hostname.0
 ./usr/share/man/cat1/hoststat.0
@@ -182,7 +175,6 @@
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
 ./usr/share/man/cat1/ipcs.0
-./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
 ./usr/share/man/cat1/kauth.0
@@ -204,7 +196,6 @@
 ./usr/share/man/cat1/less.0
 ./usr/share/man/cat1/lesskey.0
 ./usr/share/man/cat1/libnetcfg.0
-./usr/share/man/cat1/limit.0
 ./usr/share/man/cat1/lkbib.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/lndir.0
@@ -408,7 +399,6 @@
 ./usr/share/man/cat1/pod2usage.0
 ./usr/share/man/cat1/podchecker.0
 ./usr/share/man/cat1/podselect.0
-./usr/share/man/cat1/popd.0
 ./usr/share/man/cat1/pr.0
 ./usr/share/man/cat1/praliases.0
 ./usr/share/man/cat1/printenv.0
@@ -421,7 +411,6 @@
 ./usr/share/man/cat1/pstruct.0
 ./usr/share/man/cat1/pts.0
 ./usr/share/man/cat1/purgestat.0
-./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
 ./usr/share/man/cat1/radioctl.0
@@ -435,8 +424,6 @@
 ./usr/share/man/cat1/rdistd.0
 ./usr/share/man/cat1/readlink.0
 ./usr/share/man/cat1/refer.0
-./usr/share/man/cat1/rehash.0
-./usr/share/man/cat1/repeat.0
 ./usr/share/man/cat1/reset.0
 ./usr/share/man/cat1/rev.0
 ./usr/share/man/cat1/rksh.0
@@ -472,7 +459,6 @@
 ./usr/share/man/cat1/slogin.0
 ./usr/share/man/cat1/soelim.0
 ./usr/share/man/cat1/sort.0
-./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/sparc
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc64
@@ -486,13 +472,11 @@
 ./usr/share/man/cat1/ssh-keyscan.0
 ./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/stat.0
-./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
 ./usr/share/man/cat1/su.0
 ./usr/share/man/cat1/sum.0
 ./usr/share/man/cat1/sup.0
-./usr/share/man/cat1/suspend.0
 ./usr/share/man/cat1/systat.0
 ./usr/share/man/cat1/systrace.0
 ./usr/share/man/cat1/tail.0
@@ -522,14 +506,12 @@
 ./usr/share/man/cat1/tsort.0
 ./usr/share/man/cat1/tty.0
 ./usr/share/man/cat1/ul.0
-./usr/share/man/cat1/ulimit.0
 ./usr/share/man/cat1/uname.0
 ./usr/share/man/cat1/uncompress.0
 ./usr/share/man/cat1/unexpand.0
 ./usr/share/man/cat1/unifdef.0
 ./usr/share/man/cat1/uniq.0
 ./usr/share/man/cat1/units.0
-./usr/share/man/cat1/unlimit.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
 ./usr/share/man/cat1/usbhidaction.0
@@ -544,7 +526,6 @@
 ./usr/share/man/cat1/view.0
 ./usr/share/man/cat1/vis.0
 ./usr/share/man/cat1/w.0
-./usr/share/man/cat1/wait.0
 ./usr/share/man/cat1/wall.0
 ./usr/share/man/cat1/wc.0
 ./usr/share/man/cat1/what.0
