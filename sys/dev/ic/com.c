@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.119 2008/01/08 00:29:36 dlg Exp $	*/
+/*	$OpenBSD: com.c,v 1.120 2008/01/12 13:32:23 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ bus_addr_t comsiraddr;
 #endif
 #ifdef COM_CONSOLE
 int	comconsfreq;
-int	comconsrate;
+int	comconsrate = TTYDEF_SPEED;
 int	comconsinit;
 bus_addr_t comconsaddr;
 int	comconsattached;
