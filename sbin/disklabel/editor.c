@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.153 2008/01/12 18:15:22 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.154 2008/01/12 18:23:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.153 2008/01/12 18:15:22 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.154 2008/01/12 18:23:32 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
 int	get_offset(struct disklabel *, int, struct diskchunk *);
-int	get_size(struct disklabel *, int, u_int64_t *, int);
+int	get_size(struct disklabel *, int, u_int64_t *);
 void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 	    char *);
@@ -543,7 +543,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep, 1) != 0) {
+	if (get_size(lp, partno, freep) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -652,7 +652,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep, 0) != 0) {
+	if (get_size(lp, partno, freep) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -758,7 +758,7 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 	    p[0], DL_GETPSIZE(pp), max_partition_size(lp, partno));
 
 	/* Get new size */
-	get_size(lp, partno, freep, 0);
+	get_size(lp, partno, freep);
 }
 
 /*
@@ -1797,7 +1797,7 @@ get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
 }
 
 int
-get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
+get_size(struct disklabel *lp, int partno, u_int64_t *freep)
 {
 	struct partition *pp = &lp->d_partitions[partno];
 	u_int64_t maxsize, ui;
