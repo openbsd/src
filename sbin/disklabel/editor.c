@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.154 2008/01/12 18:23:32 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.155 2008/01/12 18:57:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.154 2008/01/12 18:23:32 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.155 2008/01/12 18:57:06 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,13 +61,13 @@ struct mountinfo {
 	int partno;
 };
 
-void	edit_parms(struct disklabel *, u_int64_t *);
-void	editor_add(struct disklabel *, char **, u_int64_t *, char *);
-void	editor_change(struct disklabel *, u_int64_t *, char *);
-void	editor_countfree(struct disklabel *, u_int64_t *);
-void	editor_delete(struct disklabel *, char **, u_int64_t *, char *);
+void	edit_parms(struct disklabel *);
+void	editor_add(struct disklabel *, char **, char *);
+void	editor_change(struct disklabel *, char *);
+u_int64_t editor_countfree(struct disklabel *);
+void	editor_delete(struct disklabel *, char **, char *);
 void	editor_help(char *);
-void	editor_modify(struct disklabel *, char **, u_int64_t *, char *);
+void	editor_modify(struct disklabel *, char **, char *);
 void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
@@ -76,7 +76,7 @@ int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
 void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
-void	set_bounds(struct disklabel *, u_int64_t *);
+void	set_bounds(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
 char **	mpcopy(char **, char **);
 int	micmp(const void *, const void *);
@@ -87,11 +87,11 @@ int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
 int	get_offset(struct disklabel *, int, struct diskchunk *);
-int	get_size(struct disklabel *, int, u_int64_t *);
+int	get_size(struct disklabel *, int);
 void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 	    char *);
-void	zero_partitions(struct disklabel *, u_int64_t *);
+void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
 
 static u_int64_t starting_sector;
@@ -107,7 +107,6 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	struct disklabel lastlabel, tmplabel, label = *lp;
 	struct disklabel *disk_geop;
 	struct partition *pp;
-	u_int64_t freesectors;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
 	char **mountpoints = NULL, **omountpoints = NULL, **tmpmountpoints = NULL;
@@ -132,9 +131,6 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	/* Make sure there is no partition overlap. */
 	if (has_overlap(&label, 1))
 		errx(1, "can't run when there is partition overlap.");
-
-	/* Get initial value for freesectors. */
-	editor_countfree(&label, &freesectors);
 
 	/* If we don't have a 'c' partition, create one. */
 	pp = &label.d_partitions[RAW_PART];
@@ -194,7 +190,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 				mpcopy(tmpmountpoints, omountpoints);
 				mpcopy(omountpoints, mountpoints);
 			}
-			editor_add(&label, mountpoints, &freesectors, arg);
+			editor_add(&label, mountpoints, arg);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
@@ -204,7 +200,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'b':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			set_bounds(&label, &freesectors);
+			set_bounds(&label);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			break;
@@ -212,7 +208,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'c':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			editor_change(&label, &freesectors, arg);
+			editor_change(&label, arg);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			break;
@@ -222,7 +218,6 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			lastlabel = label;
 			if (ioctl(f, DIOCGPDINFO, &label) == 0) {
 				dflag = 1;
-				editor_countfree(&label, &freesectors);
 			} else {
 				warn("unable to get default partition table");
 				lastlabel = tmplabel;
@@ -236,7 +231,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 				mpcopy(tmpmountpoints, omountpoints);
 				mpcopy(omountpoints, mountpoints);
 			}
-			editor_delete(&label, mountpoints, &freesectors, arg);
+			editor_delete(&label, mountpoints, arg);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
@@ -246,7 +241,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'e':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			edit_parms(&label, &freesectors);
+			edit_parms(&label);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			break;
@@ -266,7 +261,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 				mpcopy(tmpmountpoints, omountpoints);
 				mpcopy(omountpoints, mountpoints);
 			}
-			editor_modify(&label, mountpoints, &freesectors, arg);
+			editor_modify(&label, mountpoints, arg);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
@@ -288,7 +283,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 
 		case 'p':
 			display(stdout, &label, mountpoints, arg ? *arg : 0, 1,
-			    freesectors);
+			    editor_countfree(&label));
 			break;
 
 		case 'M': {
@@ -348,8 +343,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'r': {
 			struct diskchunk *chunks;
 			int i;
-			/* Recalculate & display free space. */
-			editor_countfree(&label, &freesectors);
+			/* Display free space. */
 			chunks = free_chunks(&label);
 			for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0;
 			    i++)
@@ -358,7 +352,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			    	    chunks[i].start, chunks[i].stop - 1,
 			   	    chunks[i].stop - chunks[i].start);
 			fprintf(stderr, "Total free sectors: %llu.\n",
-			    freesectors);
+			    editor_countfree(&label));
 		    	break;
 		}
 
@@ -387,8 +381,6 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 				tmplabel = label;
 				label = lastlabel;
 				lastlabel = tmplabel;
-				/* Recalculate free space */
-				editor_countfree(&label, &freesectors);
 				/* Restore mountpoints */
 				if (mountpoints != NULL)
 					mpcopy(mountpoints, omountpoints);
@@ -426,7 +418,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'z':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			zero_partitions(&label, &freesectors);
+			zero_partitions(&label);
 			break;
 
 		case '\n':
@@ -443,24 +435,26 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
  * Add a new partition.
  */
 void
-editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
+editor_add(struct disklabel *lp, char **mp, char *p)
 {
 	struct partition *pp;
 	struct diskchunk *chunks;
 	char buf[2];
 	int i, partno;
-	u_int64_t ui, new_offset, new_size;
+	u_int64_t freesectors, ui, new_offset, new_size;
+
+	freesectors = editor_countfree(lp);
 
 	/* XXX - prompt user to steal space from another partition instead */
 #ifdef SUN_CYLCHECK
-	if ((lp->d_flags & D_VENDOR) && *freep < lp->d_secpercyl) {
+	if ((lp->d_flags & D_VENDOR) && freesectors < lp->d_secpercyl) {
 		fputs("No space left, you need to shrink a partition "
 		    "(need at least one full cylinder)\n",
 		    stderr);
 		return;
 	}
 #endif
-	if (*freep == 0) {
+	if (freesectors == 0) {
 		fputs("No space left, you need to shrink a partition\n",
 		    stderr);
 		return;
@@ -543,7 +537,7 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep) != 0) {
+	if (get_size(lp, partno) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -610,7 +604,7 @@ editor_name(struct disklabel *lp, char **mp, char *p)
  * Change an existing partition.
  */
 void
-editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
+editor_modify(struct disklabel *lp, char **mp, char *p)
 {
 	struct partition origpart, *pp;
 	struct diskchunk *chunks;
@@ -642,7 +636,6 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 
 	pp->p_fstype = FS_UNUSED;
 	chunks = free_chunks(lp);
-	editor_countfree(lp, freep);
 	pp->p_fstype = origpart.p_fstype;
 
 	/* Get offset */
@@ -652,7 +645,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	}
 
 	/* Get size */
-	if (get_size(lp, partno, freep) != 0) {
+	if (get_size(lp, partno) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -682,7 +675,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
  * Delete an existing partition.
  */
 void
-editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
+editor_delete(struct disklabel *lp, char **mp, char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -697,7 +690,7 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		return;
 	}
 	if (p[0] == '*') {
-		zero_partitions(lp, freep);
+		zero_partitions(lp);
 		return;
 	}
 	partno = p[0] - 'a';
@@ -720,14 +713,13 @@ editor_delete(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 		free(mp[partno]);
 		mp[partno] = NULL;
 	}
-	editor_countfree(lp, freep);
 }
 
 /*
  * Change the size of an existing partition.
  */
 void
-editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
+editor_change(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -758,7 +750,7 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 	    p[0], DL_GETPSIZE(pp), max_partition_size(lp, partno));
 
 	/* Get new size */
-	get_size(lp, partno, freep);
+	get_size(lp, partno);
 }
 
 /*
@@ -1013,10 +1005,10 @@ has_overlap(struct disklabel *lp, int resolve)
 }
 
 void
-edit_parms(struct disklabel *lp, u_int64_t *freep)
+edit_parms(struct disklabel *lp)
 {
 	char *p;
-	u_int64_t ui;
+	u_int64_t freesectors, ui;
 	struct disklabel oldlabel = *lp;
 
 	printf("Changing device parameters for %s:\n", specname);
@@ -1148,11 +1140,12 @@ edit_parms(struct disklabel *lp, u_int64_t *freep)
 		} else if (ui < DL_GETDSIZE(lp) &&
 		    ending_sector == DL_GETDSIZE(lp)) {
 			/* shrink free count */
-			if (DL_GETDSIZE(lp) - ui > *freep)
+			freesectors = editor_countfree(lp);
+			if (DL_GETDSIZE(lp) - ui > freesectors)
 				fprintf(stderr,
 				    "Not enough free space to shrink by %llu "
 				    "sectors (only %llu sectors left)\n",
-				    DL_GETDSIZE(lp) - ui, *freep);
+				    DL_GETDSIZE(lp) - ui, freesectors);
 			else
 				break;
 		} else
@@ -1162,7 +1155,6 @@ edit_parms(struct disklabel *lp, u_int64_t *freep)
 	if (ending_sector > ui)
 		ending_sector = ui;
 	DL_SETDSIZE(lp, ui);
-	editor_countfree(lp, freep);
 
 	/* rpm */
 	for (;;) {
@@ -1322,7 +1314,7 @@ getdisktype(struct disklabel *lp, char *banner, char *dev)
  * XXX - should mention MBR values if DOSLABEL
  */
 void
-set_bounds(struct disklabel *lp, u_int64_t *freep)
+set_bounds(struct disklabel *lp)
 {
 	u_int64_t ui, start_temp;
 
@@ -1351,9 +1343,6 @@ set_bounds(struct disklabel *lp, u_int64_t *freep)
 	} while (ui > DL_GETDSIZE(lp) - start_temp);
 	ending_sector = start_temp + ui;
 	starting_sector = start_temp;
-
-	/* Recalculate the free sectors */
-	editor_countfree(lp, freep);
 }
 
 /*
@@ -1475,18 +1464,20 @@ find_bounds(struct disklabel *lp)
 /*
  * Calculate free space.
  */
-void
-editor_countfree(struct disklabel *lp, u_int64_t *freep)
+u_int64_t
+editor_countfree(struct disklabel *lp)
 {
 	struct diskchunk *chunks;
 	struct partition *pp;
+	u_int64_t freesectors = 0;
 	int i;
 
-	*freep = 0;
 	chunks = free_chunks(lp);
 
 	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++)
-		*freep += chunks[i].stop - chunks[i].start;
+		freesectors += chunks[i].stop - chunks[i].start;
+
+	return (freesectors);	
 }
 
 void
@@ -1797,7 +1788,7 @@ get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
 }
 
 int
-get_size(struct disklabel *lp, int partno, u_int64_t *freep)
+get_size(struct disklabel *lp, int partno)
 {
 	struct partition *pp = &lp->d_partitions[partno];
 	u_int64_t maxsize, ui;
@@ -1828,7 +1819,6 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep)
 		    maxsize);
 	else {
 		DL_SETPSIZE(pp, ui);
-		editor_countfree(lp, freep);
 		return (0);
 	}
 
@@ -2081,14 +2071,13 @@ set_geometry(struct disklabel *lp, struct disklabel *dgp,
 }
 
 void
-zero_partitions(struct disklabel *lp, u_int64_t *freep)
+zero_partitions(struct disklabel *lp)
 {
 	int i;
 
 	for (i = 0; i < MAXPARTITIONS; i++)
 		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	editor_countfree(lp, freep);
 }
 
 u_int64_t
