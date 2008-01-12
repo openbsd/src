@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.156 2008/01/12 19:20:29 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.157 2008/01/12 19:39:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.156 2008/01/12 19:20:29 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.157 2008/01/12 19:39:40 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ void	editor_modify(struct disklabel *, char **, char *);
 void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
-int	has_overlap(struct disklabel *, int);
+int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
 void	getdisktype(struct disklabel *, char *, char *);
@@ -129,7 +129,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	find_bounds(&label);
 
 	/* Make sure there is no partition overlap. */
-	if (has_overlap(&label, 1))
+	if (has_overlap(&label))
 		errx(1, "can't run when there is partition overlap.");
 
 	/* If we don't have a 'c' partition, create one. */
@@ -932,12 +932,11 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 }
 
 /*
- * Check for partition overlap in lp and prompt the user
- * to resolve the overlap if any is found.  Returns 1
- * if unable to resolve, else 0.
+ * Check for partition overlap in lp and prompt the user to resolve the overlap
+ * if any is found.  Returns 1 if unable to resolve, else 0.
  */
 int
-has_overlap(struct disklabel *lp, int resolve)
+has_overlap(struct disklabel *lp)
 {
 	struct partition **spp;
 	u_int16_t npartitions;
@@ -969,12 +968,6 @@ has_overlap(struct disklabel *lp, int resolve)
 				display_partition(stdout, lp, NULL, i, 0);
 				display_partition(stdout, lp, NULL, j, 0);
 
-				/* Did they ask us to resolve it ourselves? */
-				if (resolve != 1) {
-					(void)free(spp);
-					return(1);
-				}
-
 				/* Get partition to disable or ^D */
 				do {
 					printf("Disable which one? (^D to abort) [%c %c] ",
@@ -991,7 +984,7 @@ has_overlap(struct disklabel *lp, int resolve)
 				/* Mark the selected one as unused */
 				lp->d_partitions[c].p_fstype = FS_UNUSED;
 				(void)free(spp);
-				return(has_overlap(lp, resolve));
+				return (has_overlap(lp));
 			}
 		}
 	}
