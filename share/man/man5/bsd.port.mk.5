@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.206 2008/01/04 22:30:12 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.207 2008/01/12 14:23:07 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 4 2008 $
+.Dd $Mdocdate: January 12 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -330,6 +330,14 @@ Note that this does not affect bulk package building, since those links
 don't appear in the upper-level Makefiles.
 See also
 .Ar unlink-categories .
+.It Ar lock
+Manually obtain a lock on a given directory.
+Output must be used to update environment variables.
+The lock can be released with
+.Ar unlock .
+Seldom used, see
+.Xr ports 7
+for details.
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
 cryptographic fingerprints sha256, sha1, md5 and rmd160 on ${ALLFILES}.
@@ -435,7 +443,7 @@ Force rebuild of the port.
 Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
-env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${REGRESS_FLAGS} \e
+env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${ALL_REGRESS_FLAGS} \e
 	-f ${MAKE_FILE} ${REGRESS_TARGET} ${REGRESS_LOG}
 .Ed
 .Pp
@@ -485,6 +493,10 @@ Remove symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
 See also
 .Ar link-categories .
+.It Ar unlock
+Manually release a lock on a given directory.
+See
+.Ar lock .
 .It Ar update-patches
 Create or update patches for a port, using
 .Xr diff 1
@@ -577,6 +589,11 @@ Read-only.
 Flags passed to ${MAKE} invocations during the fake process.
 Equals
 .Li ${MAKE_FLAGS} ${DESTDIRNAME}=${WRKINST} ${FAKE_FLAGS} .
+Read-only.
+.It Ev ALL_REGRESS_FLAGS
+Flags passed to ${MAKE} invocations during regress.
+Equals
+.Li ${MAKE_FLAGS} ${REGRESS_FLAGS} .
 Read-only.
 .It Ev ALL_TARGET
 Target used to build software.
@@ -982,6 +999,7 @@ Set to
 in very rare cases, and during port creation.
 .It Ev FAKE_FLAGS
 Extra flags passed to ${MAKE_PROGRAM} on fake invocation.
+Empty by default.
 .It Ev FAKE_TARGET
 Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
@@ -1171,8 +1189,10 @@ stage, which adds
 .Ev FAKE_FLAGS
 (see
 .Ev ALL_FAKE_FLAGS )
-and for the regress stage, which uses
-.Ev REGRESS_FLAGS .
+and for the regress stage, which adds
+.Ev REGRESS_FLAGS
+(see
+.Ev ALL_REGRESS_FLAGS )
 .It Ev MAKE_FILE
 Name of the Makefile used for ports building.
 Defaults to Makefile.
@@ -1499,8 +1519,8 @@ See
 for specification.
 Regress dependencies are only checked if the regress stage is invoked.
 .It Ev REGRESS_FLAGS
-Flags to pass to ${MAKE_PROGRAM} to run the regression tests.
-Defaults to ${MAKE_FLAGS}.
+Extra Flags passed to ${MAKE_PROGRAM} to run the regression tests.
+Empty by default.
 .It Ev REGRESS_IS_INTERACTIVE
 Set to
 .Sq Yes
