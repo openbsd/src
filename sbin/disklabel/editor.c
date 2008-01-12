@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.152 2008/01/11 22:46:06 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.153 2008/01/12 18:15:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.152 2008/01/11 22:46:06 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.153 2008/01/12 18:15:22 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,6 +92,7 @@ void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 	    char *);
 void	zero_partitions(struct disklabel *, u_int64_t *);
+u_int64_t max_partition_size(struct disklabel *, int);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -752,8 +753,9 @@ editor_change(struct disklabel *lp, u_int64_t *freep, char *p)
 		return;
 	}
 
-	printf("Partition %c is currently %llu sectors in size (%llu free).\n",
-	    p[0], DL_GETPSIZE(pp), *freep);
+	printf("Partition %c is currently %llu sectors in size, and can have "
+	    "a maximum\nsize of %llu sectors.\n",
+	    p[0], DL_GETPSIZE(pp), max_partition_size(lp, partno));
 
 	/* Get new size */
 	get_size(lp, partno, freep, 0);
@@ -1798,12 +1800,13 @@ int
 get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	u_int64_t ui, old_psize;
+	u_int64_t maxsize, ui;
+
+	maxsize = max_partition_size(lp, partno);
 
 	ui = getuint(lp, partno, "size", "Size of the partition. "
 	    "You may also say +/- amount for a relative change.",
-	    DL_GETPSIZE(pp), *freep + (new ? 0 : DL_GETPSIZE(pp)),
-	    DL_GETPOFFSET(pp),
+	    DL_GETPSIZE(pp), maxsize, DL_GETPOFFSET(pp),
 	    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
 	    pp->p_fstype == FS_SWAP) ?  DO_ROUNDING : 0));
 
@@ -1820,20 +1823,13 @@ get_size(struct disklabel *lp, int partno, u_int64_t *freep, int new)
 		    "OpenBSD portion of\nthe disk. "
 		    "The 'b' command can change this limit.\n",
 		    ending_sector - DL_GETPOFFSET(pp), ending_sector);
-	else if (ui > *freep + (new ? 0 : DL_GETPSIZE(pp)))
-		fprintf(stderr,"Sorry, there are only %llu "
-		    "sectors left\n", *freep);
+	else if (ui > maxsize)
+		fprintf(stderr,"Sorry, there are only %llu sectors left\n",
+		    maxsize);
 	else {
-		old_psize = DL_GETPSIZE(pp);
 		DL_SETPSIZE(pp, ui);
-		if (has_overlap(lp, 0)) {
-			fprintf(stderr, "\nPartition '%c' not added\n",
-			    'a' + partno);
-			DL_SETPSIZE(pp, old_psize);
-		} else {
-			editor_countfree(lp, freep);
-			return (0);
-		}	
+		editor_countfree(lp, freep);
+		return (0);
 	}
 
 	/* Partition size was not set. */
@@ -2093,4 +2089,27 @@ zero_partitions(struct disklabel *lp, u_int64_t *freep)
 		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	editor_countfree(lp, freep);
+}
+
+u_int64_t
+max_partition_size(struct disklabel *lp, int partno)
+{
+	struct partition *pp = &lp->d_partitions[partno];
+	struct diskchunk *chunks;
+	u_int64_t maxsize, offset;
+	int fstype, i;
+
+	fstype = pp->p_fstype;
+	pp->p_fstype = FS_UNUSED;
+	chunks = free_chunks(lp);
+	pp->p_fstype = fstype;
+
+	offset = DL_GETPOFFSET(pp);
+	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
+		if (offset < chunks[i].start || offset >= chunks[i].stop)
+			continue;
+		maxsize = chunks[i].stop - offset;
+		break;
+	}	
+	return (maxsize);
 }
