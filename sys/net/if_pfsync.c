@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.88 2007/12/14 18:33:37 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.89 2008/01/12 17:08:33 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -177,6 +177,16 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
+	struct pfsync_softc *sc = ifp->if_softc;
+
+	timeout_del(&sc->sc_tmo);
+	timeout_del(&sc->sc_tdb_tmo);
+	timeout_del(&sc->sc_bulk_tmo);
+	timeout_del(&sc->sc_bulkfail_tmo);
+#if NCARP > 0
+	if (!pfsync_sync_ok)
+		carp_group_demote_adj(&sc->sc_if, -1);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
