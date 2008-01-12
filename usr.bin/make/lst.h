@@ -2,7 +2,7 @@
 #define _LST_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: lst.h,v 1.26 2007/01/04 17:55:35 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.27 2008/01/12 13:08:59 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -106,6 +106,8 @@ extern void		Lst_Replace(LstNode, void *);
 extern void		Lst_ConcatDestroy(Lst, Lst);
 /* Concatenate two lists, non-destructive.  */
 extern void		Lst_Concat(Lst, Lst);
+/* requeue element already in list at front of list */
+extern void		Lst_Requeue(Lst, LstNode);
 
 /*
  * Node-specific functions

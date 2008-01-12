@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.21 2007/11/02 17:27:24 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.22 2008/01/12 13:08:59 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -46,8 +46,6 @@
  *	Definitions pertaining to the running of jobs in parallel mode.
  */
 
-extern void Job_CatchChildren(void);
-extern void Job_CatchOutput(void);
 extern void Job_Make(GNode *);
 extern void Job_Init(int);
 extern bool Job_Full(void);
@@ -61,5 +59,6 @@ extern void Job_End(void);
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);
 extern void print_errors(void);
+extern void handle_running_jobs(void);
 
 #endif /* _JOB_H_ */

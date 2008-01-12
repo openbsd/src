@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.c,v 1.15 2007/11/03 10:41:48 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.16 2008/01/12 13:08:59 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -140,9 +140,7 @@ Finish(int errors) /* number of errors encountered in Make_Make */
 {
 	Job_Wait();
 	if (errors != 0) {
-		Error("make pid #%ld: %d error%s in directory %s:", (long)getpid(), 
-		    errors, errors == 1 ? "" : "s", 
-		    Var_Value(".CURDIR"));
+		Error("Stop in %s:", Var_Value(".CURDIR"));
 	}
 	print_errors();
 	if (DEBUG(GRAPH2))

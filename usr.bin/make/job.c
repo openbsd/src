@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.110 2007/12/01 15:14:34 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.111 2008/01/12 13:08:59 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -42,19 +42,6 @@
  *
  * Interface:
  *	Job_Make		Start the creation of the given target.
- *
- *	Job_CatchChildren	Check for and handle the termination of any
- *				children. This must be called reasonably
- *				frequently to keep the whole make going at
- *				a decent clip, since job table entries aren't
- *				removed until their process is caught this way.
- *
- *	Job_CatchOutput 	Print any output our children have produced.
- *				Should also be called fairly frequently to
- *				keep the user informed of what's going on.
- *				If no output is waiting, it will block for
- *				a time given by the SEL_* constants, below,
- *				or until output is ready.
  *
  *	Job_Init		Called to initialize this module. in addition,
  *				any commands attached to the .BEGIN target
@@ -159,6 +146,7 @@ typedef struct Job_ {
 #define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
 				 * Used to avoid infinite recursion between
 				 * JobFinish and JobRestart */
+#define JOB_DIDOUTPUT	0x001
     struct job_pipe in[2];
 } Job;
 
@@ -189,7 +177,7 @@ static LIST	errorsList;
 static int	errors;
 struct error_info {
 	int status;
-	char *name;
+	GNode *n;
 };
 
 
@@ -246,6 +234,9 @@ static bool print_complete_lines(struct job_pipe *, Job *, FILE *, size_t);
 static void prepare_pipe(struct job_pipe *, int *);
 static void handle_job_output(Job *, int, bool);
 static void register_error(int, Job *);
+static void loop_handle_running_jobs(void);
+static void Job_CatchChildren(void);
+static void Job_CatchOutput(void);
 
 static void
 register_error(int status, Job *job)
@@ -255,9 +246,8 @@ register_error(int status, Job *job)
 	errors++;
 	p = emalloc(sizeof(struct error_info));
 	p->status = status;
-	p->name = job->node->name;
-	if (p)
-		Lst_AtEnd(&errorsList, p);
+	p->n = job->node;
+	Lst_AtEnd(&errorsList, p);
 }
 
 void
@@ -265,18 +255,26 @@ print_errors()
 {
 	LstNode ln;
 	struct error_info *p;
+	const char *type;
+	int r;
 
 	for (ln = Lst_First(&errorsList); ln != NULL; ln = Lst_Adv(ln)) {
 		p = (struct error_info *)Lst_Datum(ln);
 		if (WIFEXITED(p->status)) {
-			Error("\tExit status %d in target %s", 
-			    WEXITSTATUS(p->status), p->name);
+			type = "Exit status";
+			r = WEXITSTATUS(p->status);
 		} else if (WIFSIGNALED(p->status)) {
-			Error("\tReceived signal %d in target s", 
-			    WTERMSIG(p->status), p->name);
+			type = "Received signal";
+			r = WTERMSIG(p->status);
 		} else {
-			Error("\tStatus %d in target %s", p->status, p->name);
+			type = "Status";
+			r = p->status;
 		}
+	if (p->n->lineno)
+		Error(" %s %d (%s, line %lu of %s)",
+		    type, r, p->n->name, p->n->lineno, p->n->fname);
+	else 
+		Error(" %s %d (%s)", type, r, p->n->name);
 	}
 }
 
@@ -549,7 +547,7 @@ JobFinish(Job *job, int status)
 			debug_printf("Process %ld exited.\n", (long)job->pid);
 			if (WEXITSTATUS(status) != 0) {
 				banner(job, stdout);
-				(void)fprintf(stdout, "*** Error code %d%s\n",
+				(void)fprintf(stdout, "*** Error code %d %s\n",
 				    WEXITSTATUS(status),
 				    (job->node->type & OP_IGNORE) ? 
 				    "(ignored)" : "");
@@ -635,8 +633,6 @@ JobFinish(Job *job, int status)
 		free(job);
 	}
 
-	JobRestartJobs();
-
 	/*
 	 * Set aborting if any error.
 	 */
@@ -649,6 +645,9 @@ JobFinish(Job *job, int status)
 		 */
 		aborting = ABORT_ERROR;
 	}
+
+	if (aborting != ABORT_ERROR)
+		JobRestartJobs();
 
 	if (aborting == ABORT_ERROR && Job_Empty()) {
 		/*
@@ -1027,6 +1026,7 @@ print_partial_buffer(struct job_pipe *p, Job *job, FILE *out, size_t endPos)
 	size_t i;
 
 	banner(job, out);
+	job->flags |= JOB_DIDOUTPUT;
 	for (i = 0; i < endPos; i++)
 		putc(p->buffer[i], out);
 }
@@ -1062,6 +1062,7 @@ print_complete_lines(struct job_pipe *p, Job *job, FILE *out, size_t limit)
 	}
 	return false;
 }
+
 /*-
  *-----------------------------------------------------------------------
  * handle_pipe	--
@@ -1122,7 +1123,7 @@ handle_job_output(Job *job, int i, bool finish)
 /*-
  *-----------------------------------------------------------------------
  * Job_CatchChildren --
- *	Handle the exit of a child. Called from Make_Make.
+ *	Handle the exit of a child. Called by handle_running_jobs
  *
  * Side Effects:
  *	The job descriptor is removed from the list of children.
@@ -1185,14 +1186,7 @@ Job_CatchChildren()
 /*-
  *-----------------------------------------------------------------------
  * Job_CatchOutput --
- *	Catch the output from our children, if we're using
- *	pipes do so. Otherwise just block time until we get a
- *	signal (most likely a SIGCHLD) since there's no point in
- *	just spinning when there's nothing to do and the reaping
- *	of a child can wait for a while.
- *
- * Side Effects:
- *	Output is read from pipes if we're piping.
+ *	Catch the output from our children.
  * -----------------------------------------------------------------------
  */
 void
@@ -1200,9 +1194,10 @@ Job_CatchOutput(void)
 {
 	int nfds;
 	struct timeval timeout;
-	LstNode ln;
+	LstNode ln, ln2;
 	Job *job;
 	int i;
+	int status;
 
 	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
 	fd_set *readfdsp = malloc(count);
@@ -1217,21 +1212,45 @@ Job_CatchOutput(void)
 
 	nfds = select(outputsn+1, readfdsp, NULL, NULL, &timeout);
 	handle_all_signals();
-	if (nfds > 0) {
-		for (ln = Lst_First(&runningJobs); nfds && ln != NULL;
-		    ln = Lst_Adv(ln)) {
-			job = (Job *)Lst_Datum(ln);
-			for (i = 0; i < 2; i++) {
-				if (FD_ISSET(job->in[i].fd, readfdsp)) {
-					handle_job_output(job, i, false);
-					nfds--;
-				}
+	for (ln = Lst_First(&runningJobs); nfds && ln != NULL;
+	    ln = ln2) {
+	    	ln2 = Lst_Adv(ln);
+		job = (Job *)Lst_Datum(ln);
+		job->flags &= ~JOB_DIDOUTPUT;
+		for (i = 1; i >= 0; i--) {
+			if (FD_ISSET(job->in[i].fd, readfdsp)) {
+				nfds--;
+				handle_job_output(job, i, false);
+			}
+		}
+		if (job->flags & JOB_DIDOUTPUT) {
+			if (wait4(job->pid, &status, WNOHANG|WUNTRACED, NULL) ==
+			    job->pid) {
+			    	Lst_Remove(&runningJobs, ln);
+			    	nJobs--;
+				jobFull = false;
+				JobFinish(job, status);
+			} else {
+				Lst_Requeue(&runningJobs, ln);
 			}
 		}
 	}
 	free(readfdsp);
 }
 
+void
+handle_running_jobs()
+{
+	Job_CatchOutput();
+	Job_CatchChildren();
+}
+
+static void
+loop_handle_running_jobs()
+{
+	while (nJobs)
+		handle_running_jobs();
+}
 /*-
  *-----------------------------------------------------------------------
  * Job_Make --
@@ -1275,10 +1294,7 @@ Job_Init(int maxproc)
 
 	if ((begin_node->type & OP_DUMMY) == 0) {
 		JobStart(begin_node, JOB_SPECIAL);
-		while (nJobs) {
-			Job_CatchOutput();
-			Job_CatchChildren();
-		}
+		loop_handle_running_jobs();
 	}
 }
 
@@ -1374,10 +1390,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 			ignoreErrors = false;
 
 			JobStart(interrupt_node, 0);
-			while (nJobs) {
-				Job_CatchOutput();
-				Job_CatchChildren();
-			}
+			loop_handle_running_jobs();
 		}
 	}
 	exit(signo);
@@ -1402,11 +1415,7 @@ Job_Finish(void)
 			Error("Errors reported so .END ignored");
 		} else {
 			JobStart(end_node, JOB_SPECIAL);
-
-			while (nJobs) {
-				Job_CatchOutput();
-				Job_CatchChildren();
-			}
+			loop_handle_running_jobs();
 		}
 	}
 	return errors;
@@ -1434,10 +1443,7 @@ void
 Job_Wait(void)
 {
 	aborting = ABORT_WAIT;
-	while (nJobs != 0) {
-		Job_CatchOutput();
-		Job_CatchChildren();
-	}
+	loop_handle_running_jobs();
 	aborting = 0;
 }
 
@@ -1498,7 +1504,8 @@ JobRestartJobs(void)
 {
 	Job *job;
 
-	while (!jobFull && (job = (Job *)Lst_DeQueue(&stoppedJobs)) != NULL) {
+	while (!Job_Full() && 
+	    (job = (Job *)Lst_DeQueue(&stoppedJobs)) != NULL) {
 		debug_printf("Job queue is not full. "
 		    "Restarting a stopped job.\n");
 		JobRestart(job);

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.56 2007/12/01 15:14:34 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.57 2008/01/12 13:08:59 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -553,8 +553,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	 * the keepgoing flag was given.
 	 */
 	while (!Job_Empty()) {
-		Job_CatchOutput();
-		Job_CatchChildren();
+		handle_running_jobs();
 		(void)MakeStartJobs();
 	}
 
