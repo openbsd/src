@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.9 2008/01/11 12:12:14 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.10 2008/01/12 13:57:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -363,31 +363,31 @@ snmpe_debug_elements(struct ber_element *root)
 		fprintf(stderr, "class: context(%u) type: ",
 		    root->be_class);
 		switch (root->be_type) {
-		case SNMP_T_GETREQ:
+		case SNMP_C_GETREQ:
 			fprintf(stderr, "getreq");
 			break;
-		case SNMP_T_GETNEXTREQ:
+		case SNMP_C_GETNEXTREQ:
 			fprintf(stderr, "nextreq");
 			break;
-		case SNMP_T_GETRESP:
+		case SNMP_C_GETRESP:
 			fprintf(stderr, "getresp");
 			break;
-		case SNMP_T_SETREQ:
+		case SNMP_C_SETREQ:
 			fprintf(stderr, "setreq");
 			break;
-		case SNMP_T_TRAP:
+		case SNMP_C_TRAP:
 			fprintf(stderr, "trap");
 			break;
-		case SNMP_T_GETBULKREQ:
+		case SNMP_C_GETBULKREQ:
 			fprintf(stderr, "getbulkreq");
 			break;
-		case SNMP_T_INFORMREQ:
+		case SNMP_C_INFORMREQ:
 			fprintf(stderr, "informreq");
 			break;
-		case SNMP_T_TRAPV2:
+		case SNMP_C_TRAPV2:
 			fprintf(stderr, "trapv2");
 			break;
-		case SNMP_T_REPORT:
+		case SNMP_C_REPORT:
 			fprintf(stderr, "report");
 			break;
 		}
