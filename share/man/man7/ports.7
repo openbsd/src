@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.71 2007/08/22 06:57:06 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.72 2008/01/12 14:17:33 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: August 22 2007 $
+.Dd $Mdocdate: January 12 2008 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -367,6 +367,19 @@ directories, and thus acquire some other locks as well.
 The infrastructure contains some protection against acquiring the same lock
 twice, thus recursive locking is not needed for
 .Ev LOCK_CMD .
+.Pp
+Starting with
+.Ox 4.3 ,
+the infrastructure supports manual locking: the targets
+.Ar lock
+and
+.Ar unlock
+can be used to acquire and release individual locks.
+Both these targets output a shell command that must be used to update
+environment variables.
+Manual locking can be used to protect a directory against interference
+by an automated build job, while the user is looking at or modifying a
+given port.
 .Sh UPDATING PACKAGES
 Instead of deinstalling each package and rebuilding from scratch, the
 ports tree can be used to update installed packages.
