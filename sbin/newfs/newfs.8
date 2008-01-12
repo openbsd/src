@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.61 2007/05/31 19:19:46 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.62 2008/01/12 08:56:28 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 12 2008 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -176,9 +176,9 @@ format file system.
 This option is primarily used to build root file systems that can
 be understood by older boot ROMs.
 .It 1
-Normal fast file system (default).
+Fast File System (the default).
 .It 2
-Enhanced fast file system (FFS2).
+Enhanced Fast File System (FFS2).
 .El
 .It Fl o Ar optimization
 .Ar space
@@ -201,9 +201,10 @@ With this option,
 will not print extraneous information like superblock backups.
 .It Fl s Ar size
 The size of the file system in sectors.
-The maximum size of a file
-system is 2,147,483,647 (2^31 \- 1) sectors, which is slightly less
+The maximum size of a Fast File
+System is 2,147,483,647 (2^31 \- 1) sectors, which is slightly less
 than 1TB, assuming a sector size of 512 bytes.
+FFS2 file systems can be as large as the maximum partition size supported.
 Note however that for
 .Nm mount_mfs
 the practical limit is based on
