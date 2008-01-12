@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.155 2008/01/12 18:57:06 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.156 2008/01/12 19:20:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.155 2008/01/12 18:57:06 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.156 2008/01/12 19:20:29 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ int	get_bsize(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
-int	get_offset(struct disklabel *, int, struct diskchunk *);
+int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
 void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
@@ -531,7 +531,7 @@ editor_add(struct disklabel *lp, char **mp, char *p)
 	pp->p_cpg = 1;
 
 	/* Get offset */
-	if (get_offset(lp, partno, chunks) != 0) {
+	if (get_offset(lp, partno) != 0) {
 		DL_SETPSIZE(pp, 0);		/* effective delete */
 		return;
 	}
@@ -634,12 +634,8 @@ editor_modify(struct disklabel *lp, char **mp, char *p)
 
 	origpart = *pp;
 
-	pp->p_fstype = FS_UNUSED;
-	chunks = free_chunks(lp);
-	pp->p_fstype = origpart.p_fstype;
-
 	/* Get offset */
-	if (get_offset(lp, partno, chunks) != 0) {
+	if (get_offset(lp, partno) != 0) {
 		*pp = origpart;			/* undo changes */
 		return;
 	}
@@ -1744,11 +1740,12 @@ mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 }
 
 int
-get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
+get_offset(struct disklabel *lp, int partno)
 {
+	struct diskchunk *chunks;
 	struct partition *pp = &lp->d_partitions[partno];
 	u_int64_t ui, maxsize;
-	int i;
+	int i, fstype;
 
 	ui = getuint(lp, partno, "offset",
 	   "Starting sector for this partition.",
@@ -1771,6 +1768,10 @@ get_offset(struct disklabel *lp, int partno, struct diskchunk *chunks)
 		    "partition 'a' start at sector 0.\n");
 #endif
 	else {
+		fstype = pp->p_fstype;
+		pp->p_fstype = FS_UNUSED;
+		chunks = free_chunks(lp);
+		pp->p_fstype = fstype;
 		for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
 			if (ui < chunks[i].start || ui >= chunks[i].stop)
 				continue;
