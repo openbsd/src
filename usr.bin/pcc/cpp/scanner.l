@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.7 2007/12/09 21:11:42 ragge Exp $   */
+/*	$OpenBSD: scanner.l,v 1.8 2008/01/12 17:58:29 ragge Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -618,6 +618,8 @@ elsestmt(void)
 static void
 ifdefstmt(void)		 
 { 
+	int t;
+
 	if (flslvl) {
 		/* just ignore the rest of the line */
 		while (input() != '\n')
@@ -628,7 +630,10 @@ ifdefstmt(void)
 		return;
 	}
 	slow = 1;
-	if (yylex() != WSPACE || yylex() != IDENT)
+	do
+		t = yylex();
+	while (t == WSPACE);
+	if (t != IDENT)
 		error("bad ifdef");
 	slow = 0;
 	if (flslvl == 0 && lookup((usch *)yytext, FIND) != 0)
@@ -641,8 +646,13 @@ ifdefstmt(void)
 static void
 ifndefstmt(void)	  
 { 
+	int t;
+
 	slow = 1;
-	if (yylex() != WSPACE || yylex() != IDENT)
+	do
+		t = yylex();
+	while (t == WSPACE);
+	if (t != IDENT)
 		error("bad ifndef");
 	slow = 0;
 	if (flslvl == 0 && lookup((usch *)yytext, FIND) == 0)

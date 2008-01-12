@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.7 2007/12/09 21:11:42 ragge Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.8 2008/01/12 17:58:29 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -262,6 +262,10 @@ main(int argc, char **argv)
 
 		nl = lookup((usch *)"__STDC__", ENTER);
 		savch(0); savch('1'); savch(OBJCT);
+		nl->value = stringbuf-1;
+
+		nl = lookup((usch *)"__STDC_VERSION__", ENTER);
+		savch(0); savstr((usch *)"199901L"); savch(OBJCT);
 		nl->value = stringbuf-1;
 	}
 
@@ -795,7 +799,7 @@ static void
 pragoper(void)
 {
 	usch *opb;
-	int t;
+	int t, plev;
 
 	slow = 1;
 	putstr((usch *)"\n#pragma ");
@@ -806,27 +810,39 @@ pragoper(void)
 	if ((t = yylex()) == WSPACE)
 		t = yylex();
 	opb = stringbuf;
-	while (t != ')') {
+	for (plev = 0; ; t = yylex()) {
+		if (t == '(')
+			plev++;
+		if (t == ')')
+			plev--;
+		if (plev < 0)
+			break;
 		savstr((usch *)yytext);
-		t = yylex();
 	}
+
 	savch(0);
 	cunput(WARN);
 	unpstr(opb);
 	stringbuf = opb;
 	expmac(NULL);
+	cunput('\n');
 	while (stringbuf > opb)
 		cunput(*--stringbuf);
-	if ((t = yylex()) != STRING)
-		goto bad;
-	opb = (usch *)yytext;
-	if (*opb++ == 'L')
-		opb++;
-	while ((t = *opb++) != '\"') {
-		if (t == '\\' && (*opb == '\"' || *opb == '\\'))
-			t = *opb++;
-		putch(t);
+	while ((t = yylex()) != '\n') {
+		if (t == WSPACE)
+			continue;
+		if (t != STRING)
+			goto bad;
+		opb = (usch *)yytext;
+		if (*opb++ == 'L')
+			opb++;
+		while ((t = *opb++) != '\"') {
+			if (t == '\\' && (*opb == '\"' || *opb == '\\'))
+				t = *opb++;
+			putch(t);
+		}
 	}
+
 	putch('\n');
 	prtline();
 	return;
@@ -1149,7 +1165,9 @@ expdef(vp, rp, gotwarn)
 		
 	}
 	if (narg == 0 && ellips == 0)
-		c = yylex();
+		while ((c = yylex()) == WSPACE || c == '\n')
+			;
+
 	if (c != ')' || (i != narg && ellips == 0) || (i < narg && ellips == 1))
 		error("wrong arg count");
 
