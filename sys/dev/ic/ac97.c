@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.64 2007/10/01 04:03:51 krw Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.65 2008/01/13 21:43:01 deanna Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -831,7 +831,7 @@ ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 
-	if (dip->index < as->num_source_info) {
+	if (dip->index < as->num_source_info && dip->index >= 0) {
 		struct ac97_source_info *si = &as->source_info[dip->index];
 		const char *name;
 
