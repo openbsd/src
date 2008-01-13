@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.h,v 1.1 2003/07/23 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.h,v 1.2 2008/01/13 20:23:34 chl Exp $	*/
 
 /* Copyright (c) 1994 HD Associates (hd@world.std.com)
  * All rights reserved.
@@ -51,15 +51,12 @@
 scsireq_t *scsireq_reset(scsireq_t *);
 scsireq_t *scsireq_new(void);
 
-int scsireq_buff_decode(u_char *, size_t, char *, ...);
 int scsireq_buff_decode_visit(u_char *, size_t, char *,
     void (*a)(void *, int, void *, int, char *), void *);
 
-int scsireq_decode(scsireq_t *, char *, ...);
 int scsireq_decode_visit(scsireq_t *, char *,
     void (*)(void *, int, void *, int, char *), void *);
 
-int scsireq_encode(scsireq_t *, char *, ...);
 int scsireq_encode_visit(scsireq_t *, char *,
     int (*)(void *, char *), void *);
 int scsireq_buff_encode_visit(u_char *, size_t, char *,

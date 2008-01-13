@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.5 2005/12/21 01:40:23 millert Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.6 2008/01/13 20:23:34 chl Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -338,19 +338,6 @@ do_buff_decode(u_char *databuf, size_t len,
 }
 
 int
-scsireq_decode(scsireq_t *scsireq, char *fmt, ...)
-{
-	va_list ap;
-	int ret;
-
-	va_start (ap, fmt);
-	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
-	    0, 0, fmt, ap);
-	va_end (ap);
-	return (ret);
-}
-
-int
 scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
     void (*arg_put)(void *, int , void *, int, char *), void *puthook)
 {
@@ -359,18 +346,6 @@ scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
 
 	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
 	    arg_put, puthook, fmt, ap);
-	va_end (ap);
-	return (ret);
-}
-
-int
-scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
-{
-	va_list ap;
-	int ret;
-
-	va_start (ap, fmt);
-	ret = do_buff_decode(buff, len, 0, 0, fmt, ap);
 	va_end (ap);
 	return (ret);
 }
@@ -782,22 +757,6 @@ scsireq_t
 	scsireq->cmdlen = cmdlen;
 
 	return scsireq;
-}
-
-int
-scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
-{
-	va_list ap;
-	int ret;
-
-	if (scsireq == 0)
-		return 0;
-
- 	va_start(ap, fmt);
-
- 	ret = do_encode(scsireq->databuf, scsireq->datalen, 0, 0, 0, fmt, ap);
-	va_end (ap);
-	return (ret);
 }
 
 int
