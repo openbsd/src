@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.34 2007/10/06 02:18:38 krw Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.35 2008/01/13 21:27:09 krw Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -322,8 +322,10 @@ retry:
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
-			} else
+			} else {
 				printf("deget(): pcbmap returned %d\n", error);
+				return (error);
+			}
 		}
 	} else
 		nvp->v_type = VREG;
