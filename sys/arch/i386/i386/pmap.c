@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2008/01/13 20:47:00 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -754,7 +754,6 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 void
 pmap_bootstrap(vaddr_t kva_start)
 {
-	extern paddr_t avail_end;
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
@@ -771,16 +770,6 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_bootstrap: PAGE_SIZE != NBPG");
-
-	/*
-	 * use the very last page of physical memory for the message buffer
-	 */
-
-	avail_end -= round_page(MSGBUFSIZE);
-	/*
-	 * The arguments passed in from /boot needs space too.
-	 */
-	avail_end -= round_page(bootargc);
 
 	/*
 	 * set up our local static global vars that keep track of the
