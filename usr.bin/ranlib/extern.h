@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2008/01/02 16:35:22 chl Exp $ */
+/*	$OpenBSD: extern.h,v 1.5 2008/01/13 20:31:19 chl Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +34,7 @@ extern int tmp(void);
 extern void *emalloc(size_t);
 extern void badfmt(void);
 extern void error(const char *);
+extern const char *rname(const char *);
 extern char *tname;			/* temporary file "name" */
 
 /* touch.c */
