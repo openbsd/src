@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2007/12/31 09:23:53 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 2008/01/13 20:20:27 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -716,6 +716,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+	case CPU_CPUTYPE:
+		return (sysctl_rdint(oldp, oldlenp, newp, cputyp));
 	default:
 		return (EOPNOTSUPP);
 	}

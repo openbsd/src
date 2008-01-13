@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2007/12/15 19:34:33 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.34 2008/01/13 20:20:29 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -45,11 +45,13 @@
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV	1	/* dev_t: console terminal device */
-#define	CPU_MAXID	2	/* number of valid machdep ids */
+#define	CPU_CPUTYPE	2	/* int: cpu type */
+#define	CPU_MAXID	3	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "cputype", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
