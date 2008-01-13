@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.414 2007/11/28 17:17:18 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.415 2008/01/13 14:03:21 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3063,20 +3063,20 @@ init386(paddr_t first_avail)
 			if (a < atop(16 * 1024 * 1024)) {
 				lim = MIN(atop(16 * 1024 * 1024), e);
 #ifdef DEBUG
--				printf(" %x-%x (<16M)", a, lim);
+				printf(" %x-%x (<16M)", a, lim);
 #endif
 				uvm_page_physload(a, lim, a, lim,
 				    VM_FREELIST_FIRST16);
 				if (e > lim) {
 #ifdef DEBUG
--					printf(" %x-%x", lim, e);
+					printf(" %x-%x", lim, e);
 #endif
 					uvm_page_physload(lim, e, lim, e,
 					    VM_FREELIST_DEFAULT);
 				}
 			} else {
 #ifdef DEBUG
--				printf(" %x-%x", a, e);
+				printf(" %x-%x", a, e);
 #endif
 				uvm_page_physload(a, e, a, e,
 				    VM_FREELIST_DEFAULT);
