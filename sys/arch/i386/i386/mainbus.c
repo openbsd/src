@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.39 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.40 2008/01/13 22:29:01 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -75,12 +75,6 @@
 
 #if NVESABIOS > 0
 #include <dev/vesa/vesabiosvar.h>
-#endif
-
-#if 0
-#ifdef SMP /* XXX MULTIPROCESSOR */
-#include <machine/mp.h>
-#endif
 #endif
 
 int	mainbus_match(struct device *, void *, void *);
@@ -200,21 +194,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_busname = "vesabios";
 		config_found(self, &mba.mba_busname, NULL);
 	}
-#endif
-
-#if 0
-#ifdef SMP
-	if (bios_smpinfo != NULL) {
-		struct mp_float *mp = bios_smpinfo;
-
-		printf("%s: MP 1.%d configuration %d\n", self->dv_xname,
-		    mp->revision, mp->feature1);
-	}
-#ifdef CPU_DEBUG
-	else
-		printf ("%s: No MP configuration found.", self->dv_xname);
-#endif
-#endif
 #endif
 
 #if NESM > 0
