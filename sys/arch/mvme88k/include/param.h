@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.38 2006/07/07 19:36:52 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.39 2008/01/13 20:18:54 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@
 #ifdef   _KERNEL
 #if !defined(_LOCORE)
 extern int brdtyp;
-extern int cpumod;
 #endif
 
 /*
@@ -66,13 +65,6 @@ extern int cpumod;
 #define BRD_188		0x188
 #define BRD_197		0x197
 #define BRD_8120	0x8120
-
-/*
- * Values for the cpumod variable.
- */
-#define MOD_LE		0x01
-#define MOD_SP		0x02
-#define MOD_DP		0x03
 
 #endif	/* _KERNEL */
 #endif /* !_MACHINE_PARAM_H_ */
