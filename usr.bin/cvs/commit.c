@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.117 2008/01/10 09:54:04 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.118 2008/01/13 11:11:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -512,7 +512,7 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
 		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
-			fatal("commit_diff_file: failed to load '%s'",
+			fatal("commit_diff: failed to load '%s'",
 			    cf->file_path);
 		cvs_buf_write_stmp(b1, p1, NULL);
 		cvs_buf_free(b1);
