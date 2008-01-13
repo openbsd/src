@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.26 2007/11/26 13:36:34 deraadt Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.27 2008/01/13 21:26:01 ratchov Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -341,14 +341,13 @@ main(int argc, char **argv)
 
 	for (j = i = 0; i < ndev; i++) {
 		if (infos[i].type != AUDIO_MIXER_CLASS &&
-		    infos[i].type != -1) {
+		    infos[i].prev == AUDIO_MIXER_LAST) {
 			fields[j++] = rfields[i];
 			for (pos = infos[i].next; pos != AUDIO_MIXER_LAST;
 			    pos = infos[pos].next) {
 				fields[j] = rfields[pos];
 				catstr(rfields[i].name, infos[pos].label.name,
 				    fields[j].name);
-				infos[pos].type = -1;
 				j++;
 			}
 		}
