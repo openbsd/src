@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.31 2007/10/10 15:53:51 art Exp $ */
+/* $OpenBSD: locore.s,v 1.32 2008/01/13 20:59:52 kettenis Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -65,15 +65,11 @@
  * rights to redistribute these changes.
  */
 
-.file 1 __FILE__
-
-.stabs	__FILE__,100,0,0,kernel_text
+.file	1 __FILE__
 
 #include <machine/asm.h>
 
 #include "assym.h"
-
-.stabs	__FILE__,132,0,0,kernel_text
 
 #if defined(MULTIPROCESSOR)
 
@@ -260,7 +256,6 @@ Lstart1: LDGP(pv)
 /**************************************************************************/
 
 	.text
-.stabs	__FILE__,132,0,0,backtolocore1	/* done with includes */
 .loc	1 __LINE__
 backtolocore1:
 /**************************************************************************/

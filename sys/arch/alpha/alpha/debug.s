@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.3 2006/04/13 14:37:26 brad Exp $ */
+/* $OpenBSD: debug.s,v 1.4 2008/01/13 20:59:52 kettenis Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -38,12 +38,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined (MULTIPROCESSOR)
+.file	5 __FILE__
+.loc	5 __LINE__
+#else
+.file	4 __FILE__
+.loc	4 __LINE__
+#endif
+
 /*
  * Debugger glue.
  */
 
 	.text
-inc6:	.stabs	__FILE__,132,0,0,inc6; .loc	1 __LINE__
 
 /*
  * Debugger stack.

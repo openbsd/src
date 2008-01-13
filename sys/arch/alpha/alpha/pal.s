@@ -1,4 +1,4 @@
-/* $OpenBSD: pal.s,v 1.6 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: pal.s,v 1.7 2008/01/13 20:59:52 kettenis Exp $ */
 /* $NetBSD: pal.s,v 1.14 1999/12/02 22:08:04 thorpej Exp $ */
 
 /*
@@ -28,6 +28,9 @@
  * rights to redistribute these changes.
  */
 
+.file	3 __FILE__
+.loc	3 __LINE__
+
 /*
  * The various OSF PALcode routines.
  *
@@ -40,7 +43,6 @@
  * and Richard T. Witek.
  */
 
-inc2:	.stabs	__FILE__,132,0,0,inc2; .loc	1 __LINE__
 /*
  * alpha_amask: read architecture features (XXX INSTRUCTION, NOT PALcode OP)
  *

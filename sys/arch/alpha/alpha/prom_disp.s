@@ -1,4 +1,4 @@
-/* $OpenBSD: prom_disp.s,v 1.6 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: prom_disp.s,v 1.7 2008/01/13 20:59:52 kettenis Exp $ */
 /* $NetBSD: prom_disp.s,v 1.8 1997/11/03 04:22:03 ross Exp $ */
 
 /*
@@ -28,6 +28,9 @@
  * rights to redistribute these changes.
  */
 
+.file	2 __FILE__
+.loc	2 __LINE__
+
 #ifndef _LOCORE
 #include <machine/asm.h>
 #endif
@@ -38,7 +41,6 @@
 	.text
 	.align	4
 
-inc3:	.stabs	__FILE__,132,0,0,inc3; .loc	1 __LINE__
 /*
  * Dispatcher routine.  Implements prom's calling machinery, saves our
  * callee-saved registers as required by C.

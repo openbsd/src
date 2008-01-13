@@ -1,4 +1,4 @@
-/* $OpenBSD: multiproc.s,v 1.2 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: multiproc.s,v 1.3 2008/01/13 20:59:52 kettenis Exp $ */
 /* $NetBSD: multiproc.s,v 1.5 1999/12/16 20:17:23 thorpej Exp $ */
 
 /*-
@@ -38,14 +38,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.5 1999/12/16 20:17:23 thorpej Exp $")
+.file	4 __FILE__
+.loc	4 __LINE__
 
 /*
  * Multiprocessor glue code.
  */
 
 	.text
-inc5:	.stabs	__FILE__,132,0,0,inc5; .loc	1 __LINE__
 
 /*
  * cpu_spinup_trampoline:
