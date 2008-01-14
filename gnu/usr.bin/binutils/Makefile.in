@@ -17879,7 +17879,7 @@ configure-bfd:
 	  || exit 1
 
 .PHONY: all-bfd maybe-all-bfd
-maybe-all-bfd:
+maybe-all-bfd: all-bfd
 all-bfd: configure-bfd
 	@r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
@@ -17947,7 +17947,7 @@ configure-opcodes:
 	  || exit 1
 
 .PHONY: all-opcodes maybe-all-opcodes
-maybe-all-opcodes:
+maybe-all-opcodes: all-opcodes
 all-opcodes: configure-opcodes
 	@r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
