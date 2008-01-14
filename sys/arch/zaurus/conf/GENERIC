@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.66 2007/09/09 01:37:28 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.67 2008/01/14 20:57:00 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -133,6 +133,7 @@ udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver
 udcf*		at uhub?		# Gude Expert mouseCLOCK
+umbg*		at uhub?		# Meinberg Funkuhren USB5131
 uow*		at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 
