@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.40 2007/11/09 11:32:57 jsing Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.41 2008/01/14 19:02:11 otto Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 
 #define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
 
-#define MAXDISKSIZE	0x1fffffffffffLL	/* 47 bits of reach */
+#define MAXDISKSIZE	0x7fffffffffffLL	/* 47 bits of reach */
 
 #ifndef _LOCORE
 struct disklabel {
