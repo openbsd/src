@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.26 2007/11/05 00:17:28 jakemsr Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.27 2008/01/14 01:25:50 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1901,6 +1901,9 @@ sbdsp_mixer_query_devinfo(addr, dip)
 
 	DPRINTF(("sbdsp_mixer_query_devinfo: model=%d index=%d\n",
 		 sc->sc_mixer_model, dip->index));
+
+	if (dip->index < 0)
+		return ENXIO;
 
 	if (sc->sc_mixer_model == SBM_NONE)
 		return ENXIO;
