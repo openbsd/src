@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.238 2008/01/13 11:11:08 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.239 2008/01/14 17:29:21 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2945,7 +2945,7 @@ rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 		if (line->l_line != NULL)
 			i++;
 	}
-	*alines = xmalloc((i + 1) * sizeof(struct cvs_line *));
+	*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
 	(*alines)[i] = NULL;
 
 	i = 0;
