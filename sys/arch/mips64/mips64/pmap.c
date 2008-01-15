@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2007/10/18 04:32:08 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2008/01/15 19:44:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1324,6 +1324,8 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	 * first root item can't be freed. Else walk the list.
 	 */
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
+		if (pg->pg_flags & PV_CACHED)
+			Mips_SyncDCachePage(va);
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
@@ -1333,7 +1335,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			atomic_clearbits_int(&pg->pg_flags,
 			    (PG_PMAP0 | PG_PMAP1 | PG_PMAP2 | PG_PMAP3) &
 			    ~PV_PRESERVE);
-			Mips_SyncDCachePage(va);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {
@@ -1343,6 +1344,8 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 				break;
 		}
 		if (npv != NULL) {
+			if (pg->pg_flags & PV_CACHED)
+				Mips_SyncDCachePage(va);
 			pv->pv_next = npv->pv_next;
 			pmap_pv_free(npv);
 		} else {
