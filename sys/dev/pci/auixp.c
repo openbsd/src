@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.13 2007/11/05 00:17:28 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.14 2008/01/15 02:52:50 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -364,6 +364,7 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
 	int error;
+	u_int temprate;
 
 	co = (struct auixp_codec *) hdl;
 	sc = co->sc;
@@ -534,9 +535,23 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			return (EINVAL);
 		}
 
-		error = ac97_set_rate(co->codec_if, play, AUMODE_PLAY);
+		temprate = play->sample_rate;
+		error = ac97_set_rate(co->codec_if,
+		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
+		play->sample_rate = temprate;
+		error = ac97_set_rate(co->codec_if,
+		    AC97_REG_PCM_SURR_DAC_RATE, &play->sample_rate);
+		if (error)
+			return (error);
+		play->sample_rate = temprate;
+		error = ac97_set_rate(co->codec_if,
+		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
+
+		if (error)
+			return (error);
+
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -571,7 +586,8 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 			return (EINVAL);
 		}
 
-		error = ac97_set_rate(co->codec_if, rec, AUMODE_RECORD);
+		error = ac97_set_rate(co->codec_if, AC97_REG_PCM_LR_ADC_RATE,
+		    &rec->sample_rate);
 		if (error)
 			return (error);
 	}

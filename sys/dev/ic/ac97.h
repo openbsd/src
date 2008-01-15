@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.19 2006/04/27 21:40:00 matthieu Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.20 2008/01/15 02:52:50 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -67,6 +67,12 @@ struct ac97_codec_if_vtbl {
 	 * after resume from a laptop suspend to disk.
 	 */
 	void (*restore_ports)(struct ac97_codec_if *addr);
+
+	u_int16_t (*get_caps)(struct ac97_codec_if *codec_if);
+	int (*set_rate)(struct ac97_codec_if *codec_if, int target,
+	    u_long *rate);
+	void (*set_clock)(struct ac97_codec_if *codec_if,
+	    unsigned int clock);
 };
 
 struct ac97_codec_if {
@@ -74,7 +80,7 @@ struct ac97_codec_if {
 };
 
 int ac97_attach(struct ac97_host_if *);
-int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
+int ac97_set_rate(struct ac97_codec_if *, int, u_long *);
 
 #define	AC97_REG_RESET			0x00
 #define	AC97_CAPS_MICIN			0x0001
@@ -139,20 +145,21 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define	AC97_EXT_AUDIO_REV_MASK		0x0c00
 #define	AC97_EXT_AUDIO_ID		0xc000
 #define	AC97_EXT_AUDIO_BITS		"\020\01vra\02dra\03spdif\04vrm\05dsa0\06dsa1\07cdac\010sdac\011ldac\012amap\013rev0\014rev1\017id0\020id1"
-#define	AC97_SINGLERATE			48000
-#define	AC97_REG_FRONT_DAC_RATE		0x2c
-#define	AC97_REG_SURROUND_DAC_RATE	0x2e
-#define	AC97_REG_PCM_DAC_RATE		0x30
-#define	AC97_REG_PCM_ADC_RATE		0x32
-#define	AC97_REG_MIC_ADC_RATE		0x34
-#define	AC97_REG_CENTER_LFE_VOLUME	0x36
-#define	AC97_REG_SURROUND_VOLUME	0x38
+#define AC97_SINGLE_RATE		48000
+#define AC97_REG_PCM_FRONT_DAC_RATE	0x2c
+#define AC97_REG_PCM_SURR_DAC_RATE	0x2e
+#define AC97_REG_PCM_LFE_DAC_RATE	0x30
+#define AC97_REG_PCM_LR_ADC_RATE	0x32
+#define AC97_REG_PCM_MIC_ADC_RATE	0x34
+#define AC97_REG_CENTER_LFE_MASTER	0x36
+#define AC97_REG_SURR_MASTER		0x38
 #define	AC97_REG_SPDIF_CTRL		0x3a
 #define	AC97_REG_SPDIF_CTRL_BITS	"\02\01pro\02/audio\03copy\04pre\014l\017drs\020valid"
 
 #define	AC97_REG_VENDOR_ID1		0x7c
 #define	AC97_REG_VENDOR_ID2		0x7e
 #define	AC97_VENDOR_ID_MASK		0xffffff00
+
 
 /* Analog Devices codec specific data */
 #define AC97_AD_REG_MISC	0x76
@@ -174,11 +181,21 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define AC97_AD_MISC_DACZ	0x8000	/*15 */
 
 /* Avance Logic codec specific data*/
-#define	AC97_AV_REG_MULTICH	0x6a
-#define	AC97_AV_MULTICH_MAGIC	0x8000
-#define	AC97_AV_REG_MISC	0x7a
-#define	AC97_AV_MISC_SPDIFEN	0x0002
-#define	AC97_AV_MISC_VREFDIS	0x1000
+#define AC97_ALC650_REG_MULTI_CHANNEL_CONTROL		0x6a
+#define	AC97_ALC650_MCC_SLOT_MODIFY_MASK		0xc000
+#define	AC97_ALC650_MCC_FRONTDAC_FROM_SPDIFIN		0x2000
+#define	AC97_ALC650_MCC_SPDIFOUT_FROM_ADC		0x1000
+#define	AC97_ALC650_MCC_PCM_FROM_SPDIFIN		0x0800
+#define	AC97_ALC650_MCC_MIC_OR_CENTERLFE		0x0400
+#define	AC97_ALC650_MCC_LINEIN_OR_SURROUND		0x0200
+#define	AC97_ALC650_MCC_INDEPENDENT_MASTER_L		0x0080
+#define	AC97_ALC650_MCC_INDEPENDENT_MASTER_R		0x0040
+#define	AC97_ALC650_MCC_ANALOG_TO_CENTERLFE		0x0020
+#define	AC97_ALC650_MCC_ANALOG_TO_SURROUND		0x0010
+#define	AC97_ALC650_MCC_EXCHANGE_CENTERLFE		0x0008
+#define	AC97_ALC650_MCC_CENTERLFE_DOWNMIX		0x0004
+#define	AC97_ALC650_MCC_SURROUND_DOWNMIX		0x0002
+#define	AC97_ALC650_MCC_LINEOUT_TO_SURROUND		0x0001
 
 /* Conexant codec specific data */
 #define AC97_CX_REG_MISC	0x5c
@@ -187,3 +204,8 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define AC97_CX_MASK		0x03
 #define AC97_CX_COPYRIGHT	0x04
 #define AC97_CX_SPDIFEN		0x08
+
+#define AC97_IS_FIXED_RATE(codec)	!((codec)->vtbl->get_caps(codec) & \
+    AC97_EXT_AUDIO_VRA)
+#define AC97_BITS_6CH	(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | \
+    AC97_EXT_AUDIO_LDAC)

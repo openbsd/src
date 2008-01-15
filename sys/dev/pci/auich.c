@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.67 2007/10/23 19:59:27 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.68 2008/01/15 02:52:50 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -874,12 +874,27 @@ auich_set_params(v, setmode, usemode, play, rec)
 		orate = adj_rate = play->sample_rate;
 		if (sc->sc_ac97rate != 0)
 			adj_rate = orate * AUICH_FIXED_RATE / sc->sc_ac97rate;
+
 		play->sample_rate = adj_rate;
-		error = ac97_set_rate(sc->codec_if, play, AUMODE_PLAY);
-		if (play->sample_rate == adj_rate)
-			play->sample_rate = orate;
+		error = ac97_set_rate(sc->codec_if,
+		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
+
+		play->sample_rate = adj_rate;
+		error = ac97_set_rate(sc->codec_if,
+		    AC97_REG_PCM_SURR_DAC_RATE, &play->sample_rate);
+		if (error)
+			return (error);
+
+		play->sample_rate = adj_rate;
+		error = ac97_set_rate(sc->codec_if,
+		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
+		if (error)
+			return (error);
+
+		play->sample_rate = orate;
+		return (error);
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -1033,7 +1048,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 		if (sc->sc_ac97rate != 0)
 			rec->sample_rate = orate * AUICH_FIXED_RATE /
 			    sc->sc_ac97rate;
-		error = ac97_set_rate(sc->codec_if, rec, AUMODE_RECORD);
+		error = ac97_set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE,
+		    &rec->sample_rate);
 		rec->sample_rate = orate;
 		if (error)
 			return (error);

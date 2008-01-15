@@ -1,4 +1,4 @@
-/*	$OpenBSD: auviavar.h,v 1.7 2003/02/28 15:26:23 mickey Exp $ */
+/*	$OpenBSD: auviavar.h,v 1.8 2008/01/15 02:52:50 jakemsr Exp $ */
 /*	$NetBSD: auviavar.h,v 1.1 2000/03/31 04:45:29 tsarna Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@ struct auvia_softc_chan {
 	struct auvia_dma_op *sc_dma_ops;
 	struct auvia_dma *sc_dma_ops_dma;
 	u_int16_t sc_dma_op_count;
+	int sc_base;
 	u_int16_t sc_reg;
 };
 
