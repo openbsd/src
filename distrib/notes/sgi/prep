@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2007/11/25 17:44:47 jasper Exp $
+dnl	$OpenBSD: prep,v 1.11 2008/01/15 18:55:48 jasper Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -22,10 +22,9 @@ Accessing the Maintenance Console:
 Switching from serial to graphics console and vice versa:
 
     Booting the ramdisk kernel can be done from the ARCS graphic console
-    although it might be more convenient to use the serial console since
-    the kernel currently only supports the serial console. Some systems
-    come with the serial console enabled by default but sometimes
-    this must be changed.
+    although it might be more convenient to use the serial console for
+    the installation procedure. Some systems come with the serial console
+    enabled by default but sometimes this must be changed.
 
     To change to serial console, go into the ARCS Maintenance Console
     and change the ``console'' environment variable, and power-cycle

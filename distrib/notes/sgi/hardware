@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2006/06/13 19:35:06 miod Exp $
+dnl	$OpenBSD: hardware,v 1.4 2008/01/15 18:55:48 jasper Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 	O2 with the following CPU configurations:
 		R5000, R52xx and RM7000 with any secondary/tertiary caches.
@@ -21,11 +21,17 @@ Supported devices {:-include-:}:
 - SCSI controllers
         built-in Adaptec AIC-7880 (ahc)
         53C8xx-based SCSI (siop)
+        LSI Logic Fusion-MPT Message Passing Interface (mpi)
 - RS-232 devices:
         on-board NS16550 compatible serial ports (com)
 - Miscellaneous devices:
         battery-backed real time clock
-        ``soft'' power button as available on some models (power)
+        ``soft'' power button as available on SGI O2 (power)
+        Moosehead A/V Board audio (mavb)
+        built-in SGI Graphics Back End framebuffer (gbe)
+        built-in PS/2 Controller (mkbc)
+                PS/2 mice (pms)
+                PS/2 keyboards (pckbd)
 
 If your hardware is not listed above, there is currently no support for it
 in this release.
