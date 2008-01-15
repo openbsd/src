@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.415 2008/01/13 14:03:21 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.416 2008/01/15 22:22:26 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2997,13 +2997,28 @@ init386(paddr_t first_avail)
 			if (a < 8 * NBPG)
 				a = 8 * NBPG;
 
-			/* skip shorter than page regions */
-			if (a >= e || (e - a) < NBPG) {
+			/* skip regions which are zero or negative in size */
+			if (a >= e) {
 #ifdef DEBUG
 				printf("-S");
 #endif
 				continue;
 			}
+
+			/*
+			 * XXX - This is a hack to work around BIOS bugs and
+			 * a bug in the  msgbuf allocation.  We skip regions
+			 * smaller than the message buffer or 16-bit segment
+			 * limit in size.
+			 */
+			if ((e - a) < max((MSGBUFSIZE / NBPG), (64 * 1024))) {
+#ifdef DEBUG
+				printf("-X");
+#endif
+				continue;
+			}
+
+			/* skip legacy IO region */
 			if ((a > IOM_BEGIN && a < IOM_END) ||
 			    (e > IOM_BEGIN && e < IOM_END)) {
 #ifdef DEBUG
