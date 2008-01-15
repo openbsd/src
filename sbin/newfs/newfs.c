@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.73 2007/11/26 12:19:37 tedu Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.74 2008/01/15 14:23:25 sthen Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -664,7 +664,7 @@ usage(void)
 
 	if (mfs) {
 	    fprintf(stderr,
-	        "usage: %s [-b block-size] [-c fragements-per-cylinder-group] "
+	        "usage: %s [-b block-size] [-c fragments-per-cylinder-group] "
 		"[-e maxbpg]\n"
 		"\t[-f frag-size] [-i bytes] [-m free space] [-o options] "
 		"[-P file]\n"
