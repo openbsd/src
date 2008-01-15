@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.22 2008/01/08 05:08:32 deraadt Exp $	*/
+/*	$OpenBSD: sab.c,v 1.23 2008/01/15 19:42:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -103,6 +103,7 @@ struct sabtty_softc {
 #define	SABTTYF_CONS_OUT	0x20
 #define	SABTTYF_TXDRAIN		0x40
 #define	SABTTYF_DONTDDB		0x80
+	int			sc_speed;
 	u_int8_t		sc_rbuf[SABTTY_RBUF_SIZE];
 	u_int8_t		*sc_rend, *sc_rput, *sc_rget;
 	u_int8_t		sc_polling, sc_pollrfc;
@@ -140,6 +141,7 @@ void sabtty_reset(struct sabtty_softc *);
 void sabtty_flush(struct sabtty_softc *);
 int sabtty_speed(int);
 void sabtty_console_flags(struct sabtty_softc *);
+void sabtty_console_speed(struct sabtty_softc *);
 void sabtty_cnpollc(struct sabtty_softc *, int);
 void sabtty_shutdown(void *);
 int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
@@ -406,6 +408,7 @@ sabtty_attach(parent, self, aux)
 	}
 
 	sabtty_console_flags(sc);
+	sabtty_console_speed(sc);
 
 	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		struct termios t;
@@ -430,7 +433,7 @@ sabtty_attach(parent, self, aux)
 		}
 
 		t.c_ispeed = 0;
-		t.c_ospeed = 9600;
+		t.c_ospeed = sc->sc_speed;
 		t.c_cflag = CREAD | CS8 | HUPCL;
 		sc->sc_tty->t_ospeed = 0;
 		sabttyparam(sc, sc->sc_tty, &t);
@@ -662,7 +665,10 @@ sabttyopen(dev, flags, mode, p)
 		if (sc->sc_openflags & TIOCFLAG_MDMBUF)
 			tp->t_cflag |= MDMBUF;
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT))
+			tp->t_ispeed = tp->t_ospeed = sc->sc_speed;
+		else
+			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 
 		sc->sc_rput = sc->sc_rget = sc->sc_rbuf;
 
@@ -1306,8 +1312,7 @@ void
 sabtty_console_flags(sc)
 	struct sabtty_softc *sc;
 {
-	int node, channel, cookie;
-	u_int options;
+	int node, channel, options, cookie;
 	char buf[255];
 
 	node = sc->sc_parent->sc_node;
@@ -1341,6 +1346,29 @@ sabtty_console_flags(sc)
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_OUT;
 	}
+}
+
+void
+sabtty_console_speed(sc)
+	struct sabtty_softc *sc;
+{
+	int options, i;
+	char buf[255];
+
+	options = OF_finddevice("/options");
+
+	if (OF_getprop(options, sc->sc_portno ? "ttyb-mode" : "ttya-mode",
+	    buf, sizeof(buf)) != -1) {
+		for (i = 0; i < sizeof(buf); i++) {
+			if (buf[i] < '0' || buf[i] > '9')
+				break;
+			sc->sc_speed *= 10;
+			sc->sc_speed += buf[i] - '0';
+		}
+	}
+
+	if (sc->sc_speed == 0)
+		sc->sc_speed = TTYDEF_SPEED;
 }
 
 void
