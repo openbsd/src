@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpconfig.h,v 1.5 2007/11/16 16:16:07 deraadt Exp $	*/
+/*	$OpenBSD: mpconfig.h,v 1.6 2008/01/15 19:30:32 kettenis Exp $	*/
 /*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
@@ -8,22 +8,6 @@
 
 #ifndef _AMD64_MPCONFIG_H
 #define _AMD64_MPCONFIG_H
-
-/* 
- * Interrupt typess
- */
-#define MPS_INTTYPE_INT         0
-#define MPS_INTTYPE_NMI         1
-#define MPS_INTTYPE_SMI         2
-#define MPS_INTTYPE_ExtINT      3
- 
-#define MPS_INTPO_DEF           0
-#define MPS_INTPO_ACTHI         1
-#define MPS_INTPO_ACTLO         3
- 
-#define MPS_INTTR_DEF           0 
-#define MPS_INTTR_EDGE          1
-#define MPS_INTTR_LEVEL         3
 
 #ifndef _LOCORE
 
