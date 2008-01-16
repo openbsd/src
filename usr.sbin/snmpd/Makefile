@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2007/12/28 16:59:31 reyk Exp $
+#	$OpenBSD: Makefile,v 1.4 2008/01/16 09:42:29 reyk Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
 SRCS=		parse.y ber.c log.c control.c buffer.c imsg.c snmpe.c \
-		    mps.c mib.c smi.c kroute.c snmpd.c
+		    mps.c trap.c mib.c smi.c kroute.c snmpd.c
 
 LDADD=		-levent
 DPADD=		${LIBEVENT}

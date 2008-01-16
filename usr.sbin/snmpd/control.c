@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2008/01/16 09:36:30 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2008/01/16 09:42:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,7 +231,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			c->flags |= CTL_CONN_NOTIFY;
 			break;
 		case IMSG_SNMP_TRAP:
-			if (snmpe_trap(&c->ibuf, imsg.hdr.pid) == -1) {
+			if (trap_request(&c->ibuf, imsg.hdr.pid) == -1) {
 				log_debug("control_dispatch_imsg: "
 				    "received invalid trap (pid %d)",
 				    imsg.hdr.pid);
