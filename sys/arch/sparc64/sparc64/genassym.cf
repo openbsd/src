@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.24 2007/11/13 13:50:10 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.25 2008/01/16 20:55:36 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -188,6 +188,7 @@ member	pcb_pstate
 member	pcb_cwp
 member	pcb_pil
 member	pcb_rw
+member	pcb_rwsp
 member	pcb_sp
 member	pcb_wcookie
 member	pcb_pc

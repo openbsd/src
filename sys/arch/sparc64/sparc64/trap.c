@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2007/12/26 17:40:59 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2008/01/16 20:55:36 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -510,6 +510,14 @@ badtrap:
 			preempt(NULL);
 		break;
 
+	case T_RWRET:
+		if (rwindow_save(p) == -1) {
+			KERNEL_PROC_LOCK(p);
+			trapsignal(p, SIGILL, 0, ILL_BADSTK, sv);
+			KERNEL_PROC_UNLOCK(p);
+		}
+		break;
+
 	case T_ILLINST:
 	{
 		union instr ins;
@@ -762,50 +770,21 @@ badtrap:
  * As a side effect, rwindow_save() always sets pcb_nsaved to 0.
  *
  * If the windows cannot be saved, pcb_nsaved is restored and we return -1.
- * 
- * XXXXXX This cannot work properly.  I need to re-examine this register
- * window thing entirely.  
  */
 int
-rwindow_save(p)
-	struct proc *p;
+rwindow_save(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct rwindow64 *rw = &pcb->pcb_rw[0];
-	u_int64_t rwdest;
-	int i, j;
+	int i;
 
-	i = pcb->pcb_nsaved;
-	if (i == 0)
-		return (0);
-	 while (i > 0) {
-		rwdest = rw[i--].rw_in[6];
-		if (rwdest & 1) {
-			struct rwindow64 rwstack = rw[i];
-
-			rwdest += BIAS;
-			rwstack.rw_in[7] ^= p->p_addr->u_pcb.pcb_wcookie;
-			if (copyout((caddr_t)&rwstack, (caddr_t)(u_long)rwdest,
-			    sizeof(rwstack))) {
-				return (-1);
-			}
-		} else {
-			struct rwindow32 rwstack;
-
-			/* 32-bit window */
-			for (j = 0; j < 8; j++) { 
-				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
-				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
-			}
-			/* Must truncate rwdest */
-			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest,
-			    sizeof(rwstack))) {
-				return (-1);
-			}
-		}
+	for (i = 0; i < pcb->pcb_nsaved; i++) {
+		pcb->pcb_rw[i].rw_in[7] ^= pcb->pcb_wcookie;
+		if (copyout(&pcb->pcb_rw[i], (void *)(pcb->pcb_rwsp[i] + BIAS),
+		    sizeof(struct rwindow64)))
+			return (-1);
 	}
-	pcb->pcb_nsaved = 0;
 
+	pcb->pcb_nsaved = 0;
 	return (0);
 }
 

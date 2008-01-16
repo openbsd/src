@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.108 2008/01/12 14:18:46 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.109 2008/01/16 20:55:36 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2018,31 +2018,19 @@ winfixspill:
 	saved
 	save
 winfixsave:
-	stxa	%l0, [%g5 + PCB_RW + ( 0*8)] %asi	! Save the window in the pcb, we can schedule other stuff in here
-	stxa	%l1, [%g5 + PCB_RW + ( 1*8)] %asi
-	stxa	%l2, [%g5 + PCB_RW + ( 2*8)] %asi
-	stxa	%l3, [%g5 + PCB_RW + ( 3*8)] %asi
-	stxa	%l4, [%g5 + PCB_RW + ( 4*8)] %asi
-	stxa	%l5, [%g5 + PCB_RW + ( 5*8)] %asi
-	stxa	%l6, [%g5 + PCB_RW + ( 6*8)] %asi
-	stxa	%l7, [%g5 + PCB_RW + ( 7*8)] %asi
+	sllx	%g7, 7, %g5
+	add	%g6, %g5, %g5
+	SPILL	stxa, %g5 + PCB_RW, 8, %asi	! Save the window in the pcb
 
-	stxa	%i0, [%g5 + PCB_RW + ( 8*8)] %asi
-	stxa	%i1, [%g5 + PCB_RW + ( 9*8)] %asi
-	stxa	%i2, [%g5 + PCB_RW + (10*8)] %asi
-	stxa	%i3, [%g5 + PCB_RW + (11*8)] %asi
-	stxa	%i4, [%g5 + PCB_RW + (12*8)] %asi
-	stxa	%i5, [%g5 + PCB_RW + (13*8)] %asi
-	stxa	%i6, [%g5 + PCB_RW + (14*8)] %asi
-	stxa	%i7, [%g5 + PCB_RW + (15*8)] %asi
+	sllx	%g7, 3, %g5
+	add	%g6, %g5, %g5
+	stxa	%sp, [%g5 + PCB_RWSP] %asi
 
 !	rdpr	%otherwin, %g1	! Check to see if we's done
 	dec	%g1
 	wrpr	%g0, 7, %cleanwin			! BUGBUG -- we should not hardcode this, but I have no spare globals
-	inc	16*8, %g5				! Move to next window
-	inc	%g7					! inc pcb_nsaved
 	brnz,pt	%g1, 3b
-	 stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
+	 inc	%g7					! inc pcb_nsaved
 
 	/* fix up pcb fields */
 	stba	%g7, [%g6 + PCB_NSAVED] %asi		! cpcb->pcb_nsaved = n
@@ -3801,131 +3789,18 @@ rft_user:
 	 */
 
 	sethi	%hi(CPCB), %g6
-	rdpr	%otherwin, %g7			! restore register window controls
-#ifdef DEBUG
-	rdpr	%canrestore, %g5		! DEBUG
-	tst	%g5				! DEBUG
-	tnz	%icc, 1; nop			! DEBUG
-!	mov	%g0, %g5			! There shoud be *NO* %canrestore
-	add	%g7, %g5, %g7			! DEBUG
-#endif	/* DEBUG */
-	wrpr	%g0, %g7, %canrestore
 	ldx	[%g6 + %lo(CPCB)], %g6
+	ldub	[%g6 + PCB_NSAVED], %g7
+	brnz,pn	%g7, softtrap
+	 mov	T_RWRET, %g4
+
+	rdpr	%otherwin, %g7			! restore register window controls
+	wrpr	%g0, %g7, %canrestore
 	wrpr	%g0, 0, %otherwin
 
 	CHKPT %g4,%g7,9
-	ldub	[%g6 + PCB_NSAVED], %g7		! Any saved reg windows?
 	wrpr	%g0, WSTATE_USER, %wstate	! Need to know where our sp points
 
-#ifdef DEBUG
-	set	rft_wcnt, %g4	! Keep track of all the windows we restored
-	stw	%g7, [%g4]
-#endif	/* DEBUG */
-
-	brz,pt	%g7, 5f				! No saved reg wins
-	 nop
-	dec	%g7				! We can do this now or later.  Move to last entry
-
-#ifdef DEBUG
-	rdpr	%canrestore, %g4			! DEBUG Make sure we've restored everything
-	brnz,a,pn	%g4, 0f				! DEBUG
-	 sir						! DEBUG we should NOT have any usable windows here
-0:							! DEBUG
-	wrpr	%g0, 5, %tl
-#endif	/* DEBUG */
-	rdpr	%otherwin, %g4
-	sll	%g7, 7, %g5			! calculate ptr into rw64 array 8*16 == 128 or 7 bits
-	brz,pt	%g4, 6f				! We should not have any user windows left
-	 add	%g5, %g6, %g5
-
-	set	1f, %o0
-	mov	%g7, %o1
-	mov	%g4, %o2
-	call	printf
-	 wrpr	%g0, PSTATE_KERN, %pstate
-	set	2f, %o0
-	call	panic
-	 nop
-	NOTREACHED
-	.data
-1:	.asciz	"pcb_nsaved=%x and otherwin=%x\n"
-2:	.asciz	"rft_user\n"
-	_ALIGN
-	.text
-6:
-3:
-	restored					! Load in the window
-	restore						! This should not trap!
-	ldx	[%g5 + PCB_RW + ( 0*8)], %l0		! Load the window from the pcb
-	ldx	[%g5 + PCB_RW + ( 1*8)], %l1
-	ldx	[%g5 + PCB_RW + ( 2*8)], %l2
-	ldx	[%g5 + PCB_RW + ( 3*8)], %l3
-	ldx	[%g5 + PCB_RW + ( 4*8)], %l4
-	ldx	[%g5 + PCB_RW + ( 5*8)], %l5
-	ldx	[%g5 + PCB_RW + ( 6*8)], %l6
-	ldx	[%g5 + PCB_RW + ( 7*8)], %l7
-
-	ldx	[%g5 + PCB_RW + ( 8*8)], %i0
-	ldx	[%g5 + PCB_RW + ( 9*8)], %i1
-	ldx	[%g5 + PCB_RW + (10*8)], %i2
-	ldx	[%g5 + PCB_RW + (11*8)], %i3
-	ldx	[%g5 + PCB_RW + (12*8)], %i4
-	ldx	[%g5 + PCB_RW + (13*8)], %i5
-	ldx	[%g5 + PCB_RW + (14*8)], %i6
-	ldx	[%g5 + PCB_RW + (15*8)], %i7
-
-#ifdef DEBUG
-	stx	%g0, [%g5 + PCB_RW + (14*8)]		! DEBUG mark that we've saved this one
-#endif	/* DEBUG */
-
-	cmp	%g5, %g6
-	bgu,pt	%xcc, 3b				! Next one?
-	 dec	8*16, %g5
-
-	rdpr	%ver, %g5
-	stb	%g0, [%g6 + PCB_NSAVED]			! Clear them out so we won't do this again
-	and	%g5, CWP, %g5
-	add	%g5, %g7, %g4
-	dec	1, %g5					! NWINDOWS-1-1
-	wrpr	%g5, 0, %cansave
-	wrpr	%g0, 0, %canrestore			! Make sure we have no freeloaders XXX
-	wrpr	%g0, WSTATE_USER, %wstate		! Save things to user space
-	mov	%g7, %g5				! We already did one restore
-4:
-	rdpr	%canrestore, %g4
-	inc	%g4
-	deccc	%g5
-	wrpr	%g4, 0, %cleanwin			! Make *sure* we don't trap to cleanwin
-	bge,a,pt	%xcc, 4b				! return to starting regwin
-	 save	%g0, %g0, %g0				! This may force a datafault
-
-#ifdef DEBUG
-	wrpr	%g0, 0, %tl
-#endif	/* DEBUG */
-	!!
-	!! We can't take any save faults in here 'cause they will never be serviced
-	!!
-
-#ifdef DEBUG
-	sethi	%hi(CPCB), %g5
-	ldx	[%g5 + %lo(CPCB)], %g5
-	ldub	[%g5 + PCB_NSAVED], %g5		! Any saved reg windows?
-	tst	%g5
-	tnz	%icc, 1; nop			! Debugger if we still have saved windows
-	bne,a	rft_user			! Try starting over again
-	 sethi	%hi(CURPROC), %g7
-#endif	/* DEBUG */
-	/*
-	 * Set up our return trapframe so we can recover if we trap from here
-	 * on in.
-	 */
-	wrpr	%g0, 1, %tl			! Set up the trap state
-	wrpr	%g2, 0, %tpc
-	wrpr	%g3, 0, %tnpc
-	ba,pt	%icc, 6f
-	 wrpr	%g1, %g0, %tstate
-
-5:
 	/*
 	 * Set up our return trapframe so we can recover if we trap from here
 	 * on in.
@@ -3935,7 +3810,7 @@ rft_user:
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g1, %g0, %tstate
 	restore
-6:
+
 	CHKPT %g4,%g7,0xa
 	rdpr	%canrestore, %g5
 	wrpr	%g5, 0, %cleanwin			! Force cleanup of kernel windows
