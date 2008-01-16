@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.23 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.24 2008/01/16 22:10:54 mbalmer Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
 SL-C3200 models at the moment.
@@ -287,3 +287,9 @@ dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
 		USB mice
 dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
 	On-board Display (pxalcd)
+
+	Miscellaneous Devices
+		Meinberg Funkuhren radio clocks
+			USB5131 USB attached DCF77 radio clock
+		Gude ADS radio clocks
+			Expert mouseCLOCK USB attached DCF77 radio clock
