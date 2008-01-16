@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.309 2008/01/09 21:38:19 mpf Exp $
+#	$OpenBSD: rc,v 1.310 2008/01/16 14:19:28 sthen Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -298,11 +298,13 @@ if [ -d /var/empty ]; then
 fi
 syslogd ${syslogd_flags}
 
-if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
+if [ X"${pf}" != X"NO" ]; then
 	ifconfig pflog0 create >/dev/null 2>&1
 	if ifconfig pflog0 >/dev/null 2>&1; then
 		ifconfig pflog0 up
-		pflogd ${pflogd_flags}
+		if [ X"${pflogd_flags}" != X"NO" ]; then
+			pflogd ${pflogd_flags}
+		fi
 	fi
 fi
 
