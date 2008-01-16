@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1 2008/01/16 09:42:29 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2008/01/16 09:45:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -140,14 +140,7 @@ trap_request(struct imsgbuf *ibuf, pid_t pid)
 				case SNMP_OBJECT:
 					/* universal types */
 					break;
-				case SNMP_IPADDR:
-				case SNMP_COUNTER32:
-				case SNMP_GAUGE32:
-				case SNMP_TIMETICKS:
-				case SNMP_OPAQUE:
-				case SNMP_NSAPADDR:
-				case SNMP_COUNTER64:
-				case SNMP_UINTEGER32:
+				default:
 					/* application-specific types */
 					ber_set_header(a, BER_CLASS_APPLICATION,
 					    sm->snmp_type);
@@ -176,11 +169,11 @@ trap_request(struct imsgbuf *ibuf, pid_t pid)
 	len = ber_calc_len(trap);
 	log_debug("snmpe_trap: %d bytes from pid %d", len, pid);
 
-	/* XXX send trap to registered receivers */
-
 #ifdef DEBUG
 	snmpe_debug_elements(trap);
 #endif
+
+	/* XXX send trap to registered receivers */
 
 	ret = 0;
  imsgdone:
