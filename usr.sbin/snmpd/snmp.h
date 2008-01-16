@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.5 2008/01/16 10:05:33 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.6 2008/01/16 10:23:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -70,7 +70,7 @@ struct snmp_imsg {
 enum snmp_version {
 	SNMP_V1			= 0,
 	SNMP_V2			= 1,	/* SNMPv2c */
-	SMMP_V3			= 3
+	SNMP_V3			= 3
 };
 
 enum snmp_context {
