@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.74 2007/07/16 19:15:01 millert Exp $	*/
+/*	$OpenBSD: re.c,v 1.75 2008/01/16 09:52:34 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -509,7 +509,7 @@ re_setmulti(struct rl_softc *sc)
 	struct ifnet		*ifp;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
-	u_int32_t		hwrev, rxfilt;
+	u_int32_t		rxfilt;
 	int			mcnt = 0;
 	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
@@ -564,13 +564,16 @@ re_setmulti(struct rl_softc *sc)
 	 * parts. This means we have to write the hash pattern in reverse
 	 * order for those devices.
 	 */
-	hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
-	if (hwrev == RL_HWREV_8100E_SPIN1 || hwrev == RL_HWREV_8100E_SPIN2 ||
-	    hwrev == RL_HWREV_8101E || hwrev == RL_HWREV_8168_SPIN1 ||
-	    hwrev == RL_HWREV_8168_SPIN2) {
+	switch (sc->sc_hwrev) {
+	case RL_HWREV_8100E_SPIN1:
+	case RL_HWREV_8100E_SPIN2:
+	case RL_HWREV_8101E:
+	case RL_HWREV_8168_SPIN1:
+	case RL_HWREV_8168_SPIN2:
 		CSR_WRITE_4(sc, RL_MAR0, swap32(hashes[1]));
 		CSR_WRITE_4(sc, RL_MAR4, swap32(hashes[0]));
-	} else {
+		break;
+	default:
 		CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 		CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
 	}
@@ -819,7 +822,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	struct ifnet	*ifp;
 	u_int16_t	re_did = 0;
 	int		error = 0, i;
-	u_int32_t	hwrev;
 	const struct re_revision *rr;
 	const char	*re_name = NULL;
 
@@ -875,16 +877,16 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
+	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
 	for (rr = re_revisions; rr->re_name != NULL; rr++) {
-		if (rr->re_chipid == hwrev)
+		if (rr->re_chipid == sc->sc_hwrev)
 			re_name = rr->re_name;
 	}
 
 	if (re_name == NULL)
-		printf(": unknown ASIC (0x%04x)", hwrev >> 16);
+		printf(": unknown ASIC (0x%04x)", sc->sc_hwrev >> 16);
 	else
-		printf(": %s (0x%04x)", re_name, hwrev >> 16);
+		printf(": %s (0x%04x)", re_name, sc->sc_hwrev >> 16);
 
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
