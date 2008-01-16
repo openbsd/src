@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.13 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.14 2008/01/16 19:36:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -46,14 +46,6 @@
 #define READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		(128 * 1024)
-
-struct address {
-	struct sockaddr_storage	 ss;
-	in_port_t		 port;
-	char			 ifname[IFNAMSIZ];
-	TAILQ_ENTRY(address)	 entry;
-};
-TAILQ_HEAD(addresslist, address);
 
 /*
  * imsg framework and privsep
@@ -306,6 +298,19 @@ struct snmp_stats {
 	u_int32_t		snmp_proxydrops;
 };
 
+struct address {
+	struct sockaddr_storage	 ss;
+	in_port_t		 port;
+	char			 ifname[IFNAMSIZ];
+
+	TAILQ_ENTRY(address)	 entry;
+
+	/* For SNMP trap receivers etc. */
+	char			*sa_community;
+	struct ber_oid		*sa_oid;
+};
+TAILQ_HEAD(addresslist, address);
+
 struct snmpd {
 	u_int8_t		 sc_flags;
 #define SNMPD_F_VERBOSE		 0x01
@@ -322,6 +327,8 @@ struct snmpd {
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
 
 	struct snmp_stats	 sc_stats;
+
+	struct addresslist	 sc_trapreceivers;
 };
 
 /* control.c */
@@ -387,9 +394,11 @@ struct kif_addr *kr_getnextaddr(struct in_addr *);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);
+void		 snmpe_debug_elements(struct ber_element *);
 
 /* trap.c */
-int		 trap_request(struct imsgbuf *, pid_t);
+int		 trap_imsg(struct imsgbuf *, pid_t);
+int		 trap_send(struct ber_element *, struct ber_oid *);
 
 /* mps.c */
 struct ber_element *
@@ -423,5 +432,8 @@ char		*smi_oidstring(struct ber_oid *, char *, size_t);
 void		 smi_delete(struct oid *);
 void		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
+
+/* snmpd.c */
+int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t);
 
 #endif /* _SNMPD_H */

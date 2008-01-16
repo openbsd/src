@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.3 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.4 2008/01/16 19:36:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -293,3 +293,28 @@ snmpd_dispatch_snmpe(int fd, short event, void * ptr)
 	}
 	imsg_event_add(ibuf);
 }
+
+int
+snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
+{
+	int	 s;
+
+	switch (ss->ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)ss)->sin_port = port;
+		((struct sockaddr_in *)ss)->sin_len =
+		    sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)ss)->sin6_port = port;
+		((struct sockaddr_in6 *)ss)->sin6_len =
+		    sizeof(struct sockaddr_in6);
+		break;
+	default:
+		return (-1);
+	}
+
+	s = socket(ss->ss_family, SOCK_DGRAM, IPPROTO_UDP);
+	return (s);
+}
+

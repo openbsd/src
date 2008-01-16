@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2008/01/16 19:36:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -81,8 +81,9 @@ struct sym {
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
-struct snmpd		*conf = NULL;
-static int		 errors = 0;
+struct snmpd			*conf = NULL;
+static int			 errors = 0;
+static struct addresslist	*hlist;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -112,7 +113,7 @@ typedef struct {
 %token	INCLUDE
 %token  LISTEN ON
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES
-%token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP
+%token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	ERROR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -198,6 +199,11 @@ main		: LISTEN ON STRING		{
 				YYERROR;
 			}
 			free($3);
+		}
+		| TRAP RECEIVER 		{
+			hlist = &conf->sc_trapreceivers;
+		} host				{
+			hlist = NULL;
 		}
 		;
 
@@ -299,6 +305,29 @@ oid		: STRING				{
 		}
 		;
 
+hostdef		: STRING			{
+			if (host($1, hlist, 1,
+			    SNMPD_TRAPPORT, NULL) <= 0) {
+				yyerror("invalid host: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+hostlist	: /* empty */
+		| hostlist comma hostdef
+		;
+
+host		: hostdef
+		| '{' hostlist '}'
+		;
+
+comma		: /* empty */
+		| ','
+		;
+
 %%
 
 struct keywords {
@@ -343,6 +372,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "read-only",		READONLY },
 		{ "read-write",		READWRITE },
+		{ "receiver",		RECEIVER },
 		{ "services",		SERVICES },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
@@ -684,6 +714,7 @@ parse_config(const char *filename, u_int flags)
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
+	TAILQ_INIT(&conf->sc_trapreceivers);
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		free(conf);

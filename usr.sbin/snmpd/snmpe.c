@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.13 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.14 2008/01/16 19:36:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -46,7 +46,6 @@ unsigned long
 void	 snmpe_sig_handler(int sig, short, void *);
 void	 snmpe_shutdown(void);
 void	 snmpe_dispatch_parent(int, short, void *);
-int	 snmpe_socket_af(struct sockaddr_storage *, in_port_t);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
 
@@ -217,37 +216,13 @@ snmpe_dispatch_parent(int fd, short event, void * ptr)
 }
 
 int
-snmpe_socket_af(struct sockaddr_storage *ss, in_port_t port)
-{
-	switch (ss->ss_family) {
-	case AF_INET:
-		((struct sockaddr_in *)ss)->sin_port = port;
-		((struct sockaddr_in *)ss)->sin_len =
-		    sizeof(struct sockaddr_in);
-		break;
-	case AF_INET6:
-		((struct sockaddr_in6 *)ss)->sin6_port = port;
-		((struct sockaddr_in6 *)ss)->sin6_len =
-		    sizeof(struct sockaddr_in6);
-		break;
-	default:
-		return (-1);
-	}
-
-	return (0);
-}
-
-int
 snmpe_bind(struct address *addr)
 {
 	char	 buf[512];
-	int	 s = -1;
+	int	 s;
 
-	if (snmpe_socket_af(&addr->ss, htons(addr->port)) == -1)
-		goto bad;
-
-	if ((s = socket(addr->ss.ss_family, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		goto bad;
+	if ((s = snmpd_socket_af(&addr->ss, htons(addr->port))) == -1)
+		return (-1);
 
 	/*
 	 * Socket options
@@ -266,13 +241,12 @@ snmpe_bind(struct address *addr)
 	return (s);
 
  bad:
-	if (s != -1)
-		close(s);
+	close(s);
 	return (-1);
 }
 
 #ifdef DEBUG
-static void
+void
 snmpe_debug_elements(struct ber_element *root)
 {
 	static int	 indent = 0;
@@ -738,10 +712,11 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 
 	stats->snmp_inpkts++;
 
+	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
 	ber_set_application(&ber, snmpe_application);
-
 	ber_set_readbuf(&ber, buf, len);
+
 	req = ber_read_elements(&ber, NULL);
 
 	if (req == NULL) {
