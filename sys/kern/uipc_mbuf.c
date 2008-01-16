@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.87 2007/11/27 16:38:50 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.88 2008/01/16 19:28:23 thib Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ m_get(int nowait, int type)
 	int s;
 
 	s = splvm();
-	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
 	if (m) {
 		m->m_type = type;
 		mbstat.m_mtypes[type]++;
@@ -182,7 +182,7 @@ m_gethdr(int nowait, int type)
 	int s;
 
 	s = splvm();
-	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
 	if (m) {
 		m->m_type = type;
 		mbstat.m_mtypes[type]++;
@@ -246,7 +246,7 @@ m_clget(struct mbuf *m, int how)
 
 	s = splvm();
 	m->m_ext.ext_buf =
-	    pool_get(&mclpool, how == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0);
+	    pool_get(&mclpool, how == M_WAIT ? PR_WAITOK : 0);
 	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
 		m->m_data = m->m_ext.ext_buf;
