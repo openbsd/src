@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.14 2008/01/16 19:36:06 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.15 2008/01/16 21:43:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -397,8 +397,9 @@ pid_t		 snmpe(struct snmpd *, int [2]);
 void		 snmpe_debug_elements(struct ber_element *);
 
 /* trap.c */
+void		 trap_init(void);
 int		 trap_imsg(struct imsgbuf *, pid_t);
-int		 trap_send(struct ber_element *, struct ber_oid *);
+int		 trap_send(struct ber_oid *, struct ber_element *);
 
 /* mps.c */
 struct ber_element *

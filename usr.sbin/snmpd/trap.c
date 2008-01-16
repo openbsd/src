@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2008/01/16 19:36:06 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2008/01/16 21:43:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -42,28 +42,32 @@
 
 extern struct snmpd	*env;
 
+void
+trap_init(void)
+{
+	struct ber_oid	 trapoid = OID(MIB_coldStart);
+
+	/*
+	 * Send a coldStart to notify that the daemon has been
+	 * started and re-initialized.
+	 */
+	trap_send(&trapoid, NULL);
+}
+
 int
 trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 {
 	struct imsg		 imsg;
-	int			 ret = -1, n, x = 0;
+	int			 ret = -1, n, x = 0, state = 0;
 	int			 done = 0;
 	struct snmp_imsg	*sm;
 	u_int32_t		 d;
 	u_int64_t		 l;
 	u_int8_t		*c;
 	char			 ostr[SNMP_MAX_OID_LEN];
-	struct ber_element	*ber, *trap = NULL, *oid = NULL, *a;
+	struct ber_element	*ber = NULL, *varbind = NULL, *a;
 	size_t			 len;
 	struct			 ber_oid o;
-	struct			 ber_oid uptime = OID(MIB_sysUpTime);
-	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
-
-	bzero(&o, sizeof(o));
-	smi_oidlen(&uptime);
-	ber = trap = ber_printf_elements(NULL, "{{Oit}",
-	    &uptime, smi_getticks(),
-	    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
 
 	while (!done) {
 		while (!done) {
@@ -79,19 +83,18 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 
 				sm = (struct snmp_imsg *)imsg.data;
 
-				if (oid == NULL) {
+				if (!state++) {
 					/* First element must be the trap OID */
 					if (sm->snmp_type != SNMP_NULL)
 						goto imsgdone;
 					ber_string2oid(sm->snmp_oid, &o);
-					smi_oidlen(&trapoid);
-					ber = oid = ber_printf_elements(ber,
-					    "{OO}", &trapoid, &o);
 					break;
 				}
 
-				ber = a = ber_add_sequence(ber);
-				a = ber_add_oidstring(a, sm->snmp_oid);
+				ber = ber_add_sequence(ber);
+				if (varbind == NULL)
+					varbind = ber;
+				a = ber_add_oidstring(ber, sm->snmp_oid);
 
 				switch (sm->snmp_type) {
 				case SNMP_OBJECT:
@@ -139,7 +142,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 					a = ber_add_integer(a, d);
 					break;
 				default:
-					log_debug("snmpe_trap: illegal type %d",
+					log_debug("trap_imsg: illegal type %d",
 					    sm->snmp_type);
 					imsg_free(&imsg);
 					goto imsgdone;
@@ -164,7 +167,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 				done = 1;
 				break;
 			default:
-				log_debug("snmpe_trap: illegal imsg %d",
+				log_debug("trap_imsg: illegal imsg %d",
 				    imsg.hdr.type);
 				goto imsgdone;
 			}
@@ -178,52 +181,72 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 			goto done;
 	}
 
-	len = ber_calc_len(trap);
-	smi_oidstring(&o, ostr, sizeof(ostr));
-	log_debug("trap_imsg: %s, len %d, pid %d", ostr, len, pid);
+	len = ber_calc_len(varbind);
+	log_debug("trap_imsg: from pid %u, len %d", pid, len);
 
-	trap_send(trap, &o);
+	trap_send(&o, varbind);
 
 	ret = 0;
  imsgdone:
 	if (ret != 0)
 		imsg_free(&imsg);
  done:
-	ber_free_elements(trap);
+	if (varbind != NULL)
+		ber_free_elements(varbind);
 	return (ret);
 }
 
 int
-trap_send(struct ber_element *trap, struct ber_oid *oid)
+trap_send(struct ber_oid *oid, struct ber_element *elm)
 {
-	int				 ok = 0, s;
-	struct address			*tr;
-	struct ber_element		*root, *b;
-	struct ber			 ber;
-	char				*c;
-	ssize_t				 len;
-	u_int8_t			*ptr;
+	int			 ret = 0, s;
+	struct address		*tr;
+	struct ber_element	*root, *b, *c, *trap;
+	struct ber		 ber;
+	char			*cmn;
+	ssize_t			 len;
+	u_int8_t		*ptr;
+	struct			 ber_oid uptime = OID(MIB_sysUpTime);
+	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
+	char			 ostr[SNMP_MAX_OID_LEN];
 
 	if (TAILQ_EMPTY(&env->sc_trapreceivers))
 		return (0);
 
+	smi_oidlen(&uptime);
+	smi_oidlen(&trapoid);
+	smi_oidlen(oid);
+
+	trap = ber_add_sequence(NULL);
+	c = ber_printf_elements(trap, "{Oit}{OO}",
+	    &uptime, smi_getticks(),
+	    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS,
+	    &trapoid, oid);
+	if (elm != NULL)
+		ber_link_elements(c, elm);
+
 	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
+
+	smi_oidstring(oid, ostr, sizeof(ostr));
+	log_debug("trap_send: oid %s", ostr);
 
 	TAILQ_FOREACH(tr, &env->sc_trapreceivers, entry) {
 		if (tr->sa_oid != NULL && tr->sa_oid->bo_n)
 			/* XXX only send if the OID is specified */;
 
-		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port))) == -1)
-			return (-1);
+		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port))) == -1) {
+			ret = -1;
+			goto done;
+		}
 
-		c = tr->sa_community != NULL ?
+		cmn = tr->sa_community != NULL ?
 		    tr->sa_community : env->sc_trcommunity;
 
 		/* SNMP header */
 		root = ber_add_sequence(NULL);
-		b = ber_printf_elements(root, "ds{tiii",
-		    SNMP_V2, c, BER_CLASS_CONTEXT, SNMP_C_TRAPV2,
+		b = ber_printf_elements(root, "ds{tddd",
+		    SNMP_V2, cmn, BER_CLASS_CONTEXT, SNMP_C_TRAPV2,
 		    arc4random(), 0, 0);
 		ber_link_elements(b, trap);
 
@@ -234,13 +257,20 @@ trap_send(struct ber_element *trap, struct ber_oid *oid)
 		len = ber_write_elements(&ber, root);
 		if (ber_get_writebuf(&ber, (void *)&ptr) > 0 &&
 		    sendto(s, ptr, len, 0, (struct sockaddr *)&tr->ss,
-		    tr->ss.ss_len) != -1)
+		    tr->ss.ss_len) != -1) {
 			env->sc_stats.snmp_outpkts++;
+			ret++;
+		}
 
 		close(s);
 		ber_unlink_elements(b);
 		ber_free_elements(root);
 	}
 
-	return (ok);
+ done:
+	if (elm != NULL)
+		ber_unlink_elements(c);
+	ber_free_elements(trap);
+
+	return (ret);
 }
