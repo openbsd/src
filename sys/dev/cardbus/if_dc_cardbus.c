@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.24 2007/05/08 00:04:47 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.25 2008/01/16 03:39:04 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ dc_cardbus_attach(parent, self, aux)
 	    &sc->dc_btag, &sc->dc_bhandle, &addr, &csc->sc_mapsize) == 0) {
 		csc->sc_actype = CARDBUS_MEM_ENABLE;
 	} else {
-		printf(": can\'t map device registers\n");
+		printf(": can't map device registers\n");
 		return;
 	}
 
@@ -200,8 +200,8 @@ dc_cardbus_attach(parent, self, aux)
 		printf(": can't establish interrupt at %d\n",
 		    ca->ca_intrline);
 		return;
-	} else
-		printf(" irq %d", ca->ca_intrline);
+	}
+	printf(": irq %d", ca->ca_intrline);
 
 	dc_reset(sc);
 
