@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.7 2007/12/28 17:36:55 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2008/01/16 09:51:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>

@@ -1,7 +1,7 @@
-/*	$OpenBSD: kroute.c,v 1.5 2007/12/29 09:24:43 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.6 2008/01/16 09:51:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *

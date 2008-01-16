@@ -1,7 +1,7 @@
-/*	$OpenBSD: snmpctl.c,v 1.5 2008/01/04 12:41:55 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.6 2008/01/16 09:51:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>

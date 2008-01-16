@@ -1,7 +1,7 @@
-/*	$OpenBSD: snmpd.h,v 1.12 2008/01/16 09:42:29 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.13 2008/01/16 09:51:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
