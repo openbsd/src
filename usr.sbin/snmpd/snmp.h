@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.2 2008/01/11 12:12:14 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.3 2008/01/16 09:36:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -18,6 +18,54 @@
 
 #ifndef SNMP_HEADER
 #define SNMP_HEADER
+
+/*
+ * SNMP IMSG interface
+ */
+
+#define SNMP_MAX_OID_LEN	128	/* max size of the OID _string_ */
+#define SNMP_SOCKET		"/var/run/snmpd.sock"
+
+enum snmp_type {
+	SNMP_IPADDR		= 0,
+	SNMP_COUNTER32		= 1,
+	SNMP_GAUGE32		= 2,
+	SNMP_UNSIGNED32		= 2,
+	SNMP_TIMETICKS		= 3,
+	SNMP_OPAQUE		= 4,
+	SNMP_NSAPADDR		= 5,
+	SNMP_COUNTER64		= 6,
+	SNMP_UINTEGER32		= 7,
+
+	SNMP_INTEGER32		= 100,
+	SNMP_BITSTRING		= 101,
+	SNMP_OCTETSTRING	= 102,
+	SNMP_NULL		= 103,
+	SNMP_OBJECT		= 104
+};
+
+enum snmp_imsg_ctl {
+	IMSG_SNMP_TRAP		= 1000,	/* something that works everywhere */
+	IMSG_SNMP_ELEMENT,
+	IMSG_SNMP_END
+};
+
+struct snmp_imsg_hdr {
+	u_int16_t	 imsg_type;
+	u_int16_t	 imsg_len;
+	u_int32_t	 imsg_peerid;
+	pid_t		 imsg_pid;
+};
+
+struct snmp_imsg {
+	char		 snmp_oid[SNMP_MAX_OID_LEN];
+	u_int8_t	 snmp_type;
+	u_int16_t	 snmp_len;
+};
+
+/*
+ * SNMP BER types
+ */
 
 enum snmp_version {
 	SNMP_V1			= 0,
@@ -46,7 +94,9 @@ enum snmp_application {
 	SNMP_T_UNSIGNED32	= 2,
 	SNMP_T_TIMETICKS	= 3,
 	SNMP_T_OPAQUE		= 4,
+	SNMP_T_NSAPADDR		= 5,
 	SNMP_T_COUNTER64	= 6,
+	SNMP_T_UINTEGER32	= 7
 };
 
 enum snmp_generic_trap {

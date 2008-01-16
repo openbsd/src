@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.10 2008/01/03 15:03:47 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.11 2008/01/16 09:36:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -387,6 +387,7 @@ struct kif_addr *kr_getnextaddr(struct in_addr *);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);
+int		 snmpe_trap(struct imsgbuf *, pid_t);
 
 /* mps.c */
 struct ber_element *
