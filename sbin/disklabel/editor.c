@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.158 2008/01/12 20:06:57 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.159 2008/01/16 23:00:21 chl Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.158 2008/01/12 20:06:57 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.159 2008/01/16 23:00:21 chl Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -441,7 +441,7 @@ editor_add(struct disklabel *lp, char **mp, char *p)
 	struct diskchunk *chunks;
 	char buf[2];
 	int i, partno;
-	u_int64_t freesectors, ui, new_offset, new_size;
+	u_int64_t freesectors, new_offset, new_size;
 
 	freesectors = editor_countfree(lp);
 
@@ -592,8 +592,7 @@ void
 editor_modify(struct disklabel *lp, char **mp, char *p)
 {
 	struct partition origpart, *pp;
-	struct diskchunk *chunks;
-	int partno, i;
+	int partno;
 
 	/* Change which partition? */
 	if (p == NULL) {
@@ -1421,7 +1420,6 @@ u_int64_t
 editor_countfree(struct disklabel *lp)
 {
 	struct diskchunk *chunks;
-	struct partition *pp;
 	u_int64_t freesectors = 0;
 	int i;
 
