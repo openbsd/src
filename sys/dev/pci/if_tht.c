@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.110 2008/01/14 16:13:40 thib Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.111 2008/01/17 20:45:16 thib Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -788,6 +788,7 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
 	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_baudrate = IF_Gbps(10);
 
 	ifmedia_init(&sc->sc_media, 0, tht_media_change, tht_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
