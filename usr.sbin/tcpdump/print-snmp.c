@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.14 2007/10/30 12:32:32 reyk Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.15 2008/01/17 17:33:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -57,7 +57,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-snmp.c,v 1.14 2007/10/30 12:32:32 reyk Exp $ (LBL)";
+    "@(#) $Id: print-snmp.c,v 1.15 2008/01/17 17:33:15 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -109,7 +109,14 @@ char *Application[] = {
 #define GAUGE 2
 	"TimeTicks",
 #define TIMETICKS 3
-	"Opaque"
+	"Opaque",
+#define OPAQUE 4
+	"NsapAddress",
+#define NSAPADDR 5
+	"Counter64",
+#define COUNTER64 6
+	"UInteger32"
+#define UINTEGER32 7
 };
 
 /*
@@ -124,8 +131,16 @@ char *Context[] = {
 #define GETRESP 2
 	"SetRequest",
 #define SETREQ 3
-	"Trap"
+	"Trap",
 #define TRAP 4
+	"GetBulkReq",
+#define GETBULKREQ 5
+	"InformReq",
+#define INFORMREQ 6
+	"TrapV2",
+#define TRAPV2 7
+	"Report"
+#define REPORT 8
 };
 
 /*
@@ -145,7 +160,20 @@ char *ErrorStatus[] = {
 	"noSuchName",
 	"badValue",
 	"readOnly",
-	"genErr"
+	"genErr",
+	"noAccess",
+	"wrongType",
+	"wrongLength",
+	"wrongEnc",
+	"wrongValue",
+	"noCreation",
+	"inconValue",
+	"resUnavail",
+	"commitFailed",
+	"undoFailed",
+	"authError",
+	"notWritable",
+	"inconName"
 };
 #define DECODE_ErrorStatus(e) \
 	( e >= 0 && e <= sizeof(ErrorStatus)/sizeof(ErrorStatus[0]) \
@@ -205,7 +233,7 @@ char *Form[] = {
  */
 struct obj {
 	char	*desc;			/* name of object */
-	u_char	oid;			/* sub-id following parent */
+	u_int	oid;			/* sub-id following parent */
 	u_char	type;			/* object type (unused) */
 	struct obj *child, *next;	/* child and next sibling pointers */
 } *objp = NULL;
@@ -242,6 +270,10 @@ struct obj_abrev {
 	/* .iso.org.dod.internet.experimental */
 	{ "X:",	&_experimental_obj,	"\53\6\1\3" },
 #endif
+#ifndef NO_ABREV_SNMPMIBOBJECTS
+	/* .iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects */
+	{ "S:", &_snmpmibobjects_obj,	"\53\6\1\6\3\1\1" },
+#endif
 	{ 0,0,0 }
 };
 
@@ -274,6 +306,7 @@ struct be {
 		caddr_t raw;
 		int32_t integer;
 		u_int32_t uns;
+		u_int64_t uns64;
 		const u_char *str;
 	} data;
 	u_short id;
@@ -290,13 +323,14 @@ struct be {
 #define BE_SEQ		7
 #define BE_INETADDR	8
 #define BE_PDU		9
+#define BE_UNS64	10
 };
 
 /*
  * Defaults for SNMP PDU components
  */
 #define DEF_COMMUNITY "public"
-#define DEF_VERSION 0
+#define DEF_VERSION 1
 
 /*
  * constants for ASN.1 decoding
@@ -476,13 +510,26 @@ asn1_parse(register const u_char *p, u_int len, struct be *elem)
 
 			case COUNTER:
 			case GAUGE:
-			case TIMETICKS: {
+			case TIMETICKS:
+			case OPAQUE:
+			case NSAPADDR:
+			case UINTEGER32: {
 				register u_int32_t data;
 				elem->type = BE_UNS;
 				data = 0;
 				for (i = elem->asnlen; i-- > 0; p++)
 					data = (data << 8) + *p;
 				elem->data.uns = data;
+				break;
+			}
+
+			case COUNTER64: {
+				register u_int64_t data;
+				elem->type = BE_UNS64;
+				data = 0;
+				for (i = elem->asnlen; i-- > 0; p++)
+					data = (data << 8) + *p;
+				elem->data.uns64 = data;
 				break;
 			}
 
@@ -608,6 +655,10 @@ asn1_print(struct be *elem)
 
 	case BE_UNS:
 		printf("%d", elem->data.uns);
+		break;
+
+	case BE_UNS64:
+		printf("%lld", elem->data.uns64);
 		break;
 
 	case BE_STR: {
@@ -789,7 +840,7 @@ varbind_print(u_char pduid, const u_char *np, u_int length, int error)
 		/* objVal (ANY) */
 		if ((count = asn1_parse(np, length, &elem)) < 0)
 			return;
-		if (pduid == GETREQ || pduid == GETNEXTREQ) {
+		if (pduid == GETREQ || pduid == GETNEXTREQ || pduid == GETBULKREQ) {
 			if (elem.type != BE_NULL) {
 				fputs("[objVal!=NULL]", stdout);
 				asn1_print(&elem);
@@ -840,7 +891,9 @@ snmppdu_print(u_char pduid, const u_char *np, u_int length)
 		char errbuf[20];
 		printf("[errorStatus(%s)!=0]",
 			DECODE_ErrorStatus(elem.data.integer));
-	} else if (elem.data.integer != 0) {
+	} else if (pduid == GETBULKREQ)
+		printf(" non-repeaters=%d", elem.data.integer);
+	else if (elem.data.integer != 0) {
 		char errbuf[20];
 		printf(" %s", DECODE_ErrorStatus(elem.data.integer));
 		error = elem.data.integer;
@@ -859,6 +912,8 @@ snmppdu_print(u_char pduid, const u_char *np, u_int length)
 	if ((pduid == GETREQ || pduid == GETNEXTREQ)
 	    && elem.data.integer != 0)
 		printf("[errorIndex(%d)!=0]", elem.data.integer);
+	else if (pduid == GETBULKREQ)
+		printf(" max-repetitions=%d", elem.data.integer);
 	else if (elem.data.integer != 0) {
 		if (!error)
 			printf("[errorIndex(%d) w/o errorStatus]",
@@ -1005,9 +1060,9 @@ snmp_print(const u_char *np, u_int length)
 		asn1_print(&elem);
 		return;
 	}
-	/* only handle version==0 */
-	if (elem.data.integer != DEF_VERSION) {
-		printf("[version(%d)!=0]", elem.data.integer);
+	/* only handle version 1 and 2 */
+	if (elem.data.integer > DEF_VERSION) {
+		printf("[version(%d)>%d]", elem.data.integer, DEF_VERSION);
 		return;
 	}
 	length -= count;
@@ -1051,6 +1106,10 @@ snmp_print(const u_char *np, u_int length)
 	case GETNEXTREQ:
 	case GETRESP:
 	case SETREQ:
+	case GETBULKREQ:
+	case INFORMREQ:
+	case TRAPV2:
+	case REPORT:
 		snmppdu_print(pdu.id, np, length);
 		break;
 	}
