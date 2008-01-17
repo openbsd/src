@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.142 2007/05/26 16:44:21 reyk Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.143 2008/01/17 12:43:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2009,8 +2009,11 @@ sk_yukon_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
+	int s;
 
+	s = splnet();
 	mii_tick(mii);
+	splx(s);
 	timeout_add(&sc_if->sk_tick_ch, hz);
 }
 
