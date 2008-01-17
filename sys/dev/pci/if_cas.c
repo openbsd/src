@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.12 2007/11/26 17:15:32 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.13 2008/01/17 21:27:02 kettenis Exp $	*/
 
 /*
  *
@@ -1483,16 +1483,6 @@ cas_mii_writereg(struct device *self, int phy, int reg, int val)
 			phy, reg, val);
 #endif
 
-#if 0
-	/* Select the desired PHY in the MIF configuration register */
-	v = bus_space_read_4(t, mif, CAS_MIF_CONFIG);
-	/* Clear PHY select bit */
-	v &= ~CAS_MIF_CONFIG_PHY_SEL;
-	if (phy == CAS_PHYAD_EXTERNAL)
-		/* Set PHY select bit to get at external device */
-		v |= CAS_MIF_CONFIG_PHY_SEL;
-	bus_space_write_4(t, mif, CAS_MIF_CONFIG, v);
-#endif
 	/* Construct the frame command */
 	v = CAS_MIF_FRAME_WRITE			|
 	    (phy << CAS_MIF_PHY_SHIFT)		|
