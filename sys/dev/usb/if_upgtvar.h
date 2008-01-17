@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.7 2008/01/17 07:23:45 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.8 2008/01/17 20:46:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -217,6 +217,7 @@ struct upgt_lmac_h1 {
 #define UPGT_H2_TYPE_MACFILTER		0x0000
 #define UPGT_H2_TYPE_CHANNEL		0x0001
 #define UPGT_H2_TYPE_TX_DONE		0x0008
+#define UPGT_H2_TYPE_STATS		0x000a
 #define UPGT_H2_TYPE_EEPROM		0x000c
 #define UPGT_H2_FLAGS_TX_ACK_NO		0x0101
 #define UPGT_H2_FLAGS_TX_ACK_YES	0x0707
@@ -301,6 +302,12 @@ struct upgt_lmac_channel {
 	struct upgt_lmac_freq4		freq4[8];
 	uint8_t				freq3_2[4];	/* XXX wrong? */
 	uint32_t			pad2;
+} __packed;
+
+struct upgt_lmac_stats {
+	struct upgt_lmac_h1		header1;
+	struct upgt_lmac_h2		header2;
+	uint8_t				data[76];
 } __packed;
 
 struct upgt_lmac_rx_desc {

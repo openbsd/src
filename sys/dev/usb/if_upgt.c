@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.17 2008/01/17 07:23:45 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.18 2008/01/17 20:46:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -118,6 +118,7 @@ void		upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void		upgt_rx(struct upgt_softc *, uint8_t *, int);
 int		upgt_set_macfilter(struct upgt_softc *, uint8_t state);
 int		upgt_set_channel(struct upgt_softc *, unsigned);
+int		upgt_get_stats(struct upgt_softc *);
 
 int		upgt_alloc_tx(struct upgt_softc *);
 int		upgt_alloc_rx(struct upgt_softc *);
@@ -1528,6 +1529,13 @@ upgt_tx_task(void *arg)
 		    sc->sc_dev.dv_xname, len);
 	}
 
+	/*
+	 * If we don't regulary read the device statistics, the RX queue
+	 * will stall.  It's strange, but it works, so we keep reading
+	 * the statistics here.  *shrug*
+	 */
+	upgt_get_stats(sc);
+
 	splx(s);
 }
 
@@ -1633,6 +1641,13 @@ upgt_rx_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    sc->sc_dev.dv_xname);
 
 		upgt_rx(sc, data_rx->buf + 4, letoh16(header->header1.len));
+	} else
+	if (h1_type == UPGT_H1_TYPE_CTRL &&
+	    h2_type == UPGT_H2_TYPE_STATS) {
+		DPRINTF(2, "%s: received statistic data\n",
+		    sc->sc_dev.dv_xname);
+
+		/* TODO: what could we do with the statistic data? */
 	} else {
 		/* ignore unknown frame types */
 		DPRINTF(1, "%s: received unknown frame type 0x%02x\n",
@@ -1855,6 +1870,52 @@ upgt_set_channel(struct upgt_softc *sc, unsigned channel)
 	}
 
 	return (0);
+}
+
+int
+upgt_get_stats(struct upgt_softc *sc)
+{
+	struct upgt_data *data_cmd = &sc->cmd_data;
+	struct upgt_lmac_mem *mem;
+	struct upgt_lmac_stats *stats;
+	int len;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+
+	/*
+	 * Transmit the URB containing the CMD data.
+	 */
+	bzero(data_cmd->buf, MCLBYTES);
+
+	mem = (struct upgt_lmac_mem *)data_cmd->buf;
+	mem->addr = htole32(sc->sc_memaddr_frame_start +
+	    UPGT_MEMSIZE_FRAME_HEAD);
+
+	stats = (struct upgt_lmac_stats *)(mem + 1);
+
+	stats->header1.flags = 0;
+	stats->header1.type = UPGT_H1_TYPE_CTRL;
+	stats->header1.len = htole16(
+	    sizeof(struct upgt_lmac_stats) -
+	    sizeof(struct upgt_lmac_header));
+
+	stats->header2.reqid = htole32(sc->sc_memaddr_frame_start);
+	stats->header2.type = htole16(UPGT_H2_TYPE_STATS);
+	stats->header2.flags = 0;
+
+	len = sizeof(*mem) + sizeof(*stats);
+
+	mem->chksum = htole32(upgt_chksum((uint32_t *)stats,
+	    len - sizeof(*mem)));
+
+	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
+		printf("%s: could not transmit statistics CMD data URB!\n",
+		    sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+
+	return (0);
+
 }
 
 int
