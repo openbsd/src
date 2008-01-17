@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.16 2008/01/04 11:50:14 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.17 2008/01/17 07:23:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -130,6 +130,7 @@ int		upgt_bulk_xmit(struct upgt_softc *, struct upgt_data *,
 
 void		upgt_hexdump(void *, int);
 uint32_t	upgt_crc32(const void *, size_t);
+uint32_t	upgt_chksum(const uint32_t *, size_t);
 
 struct cfdriver upgt_cd = {
 	NULL, "upgt", DV_IFNET
@@ -356,6 +357,7 @@ upgt_attachhook(void *arg)
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
+	usbd_delay_ms(sc->sc_udev, 100);
 
 	/*
 	 * Read the whole EEPROM content and parse it.
@@ -852,6 +854,7 @@ int
 upgt_eeprom_read(struct upgt_softc *sc)
 {
 	struct upgt_data *data_cmd = &sc->cmd_data;
+	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_eeprom	*eeprom;
 	int offset, block, len;
 
@@ -864,24 +867,15 @@ upgt_eeprom_read(struct upgt_softc *sc)
 		    sc->sc_dev.dv_xname, offset, block);
 
 		/*
-		 * Transmit the first URB containing the Prism memory address.
+		 * Transmit the URB containing the CMD data.
 		 */
-		*((uint32_t *)data_cmd->buf) =
-		    htole32(sc->sc_memaddr_frame_start +
+		bzero(data_cmd->buf, MCLBYTES);
+
+		mem = (struct upgt_lmac_mem *)data_cmd->buf;
+		mem->addr = htole32(sc->sc_memaddr_frame_start +
 		    UPGT_MEMSIZE_FRAME_HEAD);
 
-		len = sizeof(uint32_t);
-		if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0)
-		    != 0) {
-			printf("%s: could not transmit EEPROM memaddr URB!\n",
-			    sc->sc_dev.dv_xname);
-			return (EIO);
-		}
-
-		/*
-		 * Transmit the second URB containing the CMD data itself.
-		 */
-		eeprom = (struct upgt_lmac_eeprom *)data_cmd->buf;
+		eeprom = (struct upgt_lmac_eeprom *)(mem + 1);
 		eeprom->header1.flags = 0;
 		eeprom->header1.type = UPGT_H1_TYPE_CTRL;
 		eeprom->header1.len = htole16((
@@ -895,9 +889,13 @@ upgt_eeprom_read(struct upgt_softc *sc)
 		eeprom->offset = htole16(offset);
 		eeprom->len = htole16(block);
 
-		len = sizeof(struct upgt_lmac_eeprom) + block;
-		if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0)
-		    != 0) {
+		len = sizeof(*mem) + sizeof(*eeprom) + block;
+
+		mem->chksum = htole32(upgt_chksum((uint32_t *)eeprom,
+		    len - sizeof(*mem)));
+
+		if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len,
+		    USBD_FORCE_SHORT_XFER) != 0) {
 			printf("%s: could not transmit EEPROM data URB!\n",
 			    sc->sc_dev.dv_xname);
 			return (EIO);
@@ -1414,10 +1412,14 @@ upgt_tx_task(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_tx_desc *txdesc;
 	struct mbuf *m;
 	uint32_t addr;
-	int len, i;
+	int len, i, s;
+	usbd_status error;
+
+	s = splusb();
 
 	for (i = 0; i < UPGT_TX_COUNT; i++) {
 		struct upgt_data *data_tx = &sc->tx_data[i];
@@ -1443,26 +1445,14 @@ upgt_tx_task(void *arg)
 		}
 
 		/*
-		 * Transmit the first URB containing the Prism memory address.
-		 */
-		*((uint32_t *)data_tx->buf) = htole32(addr);
-
-		len = sizeof(uint32_t);
-		if (upgt_bulk_xmit(sc, data_tx, sc->sc_tx_pipeh, &len, 0)
-		    != 0) {
-			printf("%s: could not transmit TX memaddr URB!\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-
-		DPRINTF(2, "%s: TX memaddr sent (0x%08x)\n",
-		    sc->sc_dev.dv_xname, data_tx->addr);
-
-		/*
-		 * Transmit the second URB containing the TX data itself.
+		 * Transmit the URB containing the TX data.
 		 */
 		bzero(data_tx->buf, MCLBYTES);
-		txdesc = (struct upgt_lmac_tx_desc *)data_tx->buf;
+
+		mem = (struct upgt_lmac_mem *)data_tx->buf;
+		mem->addr = htole32(addr);
+
+		txdesc = (struct upgt_lmac_tx_desc *)(mem + 1);
 
 		/* XXX differ between data and mgmt frames? */
 		txdesc->header1.flags = UPGT_H1_FLAGS_TX_DATA;
@@ -1478,7 +1468,7 @@ upgt_tx_task(void *arg)
 		 * higher rates, we need to switch dynamically between 11b
 		 * and 11g here.  For now we set 11b fix.
 		 */
-		bcopy(rates_11b, txdesc->rates, sizeof(txdesc->rates));
+		bcopy(rates_11g, txdesc->rates, sizeof(txdesc->rates));
 		txdesc->type = htole32(UPGT_TX_DESC_TYPE_DATA);
 		txdesc->pad3[0] = UPGT_TX_DESC_PAD3_SIZE;
 
@@ -1504,12 +1494,19 @@ upgt_tx_task(void *arg)
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 		}
 #endif
-
 		/* copy frame below our TX descriptor header */
 		m_copydata(m, 0, m->m_pkthdr.len,
-		    data_tx->buf + sizeof(struct upgt_lmac_tx_desc));
+		    data_tx->buf + (sizeof(*mem) + sizeof(*txdesc)));
 
-		len = sizeof(struct upgt_lmac_tx_desc) + m->m_pkthdr.len;
+		/* calculate frame size */
+		len = sizeof(*mem) + sizeof(*txdesc) + m->m_pkthdr.len;
+
+		/* we need to align the frame to a 4 byte boundary */
+		len = (len + 3) & ~3;
+
+		/* calculate frame checksum */
+		mem->chksum = htole32(upgt_chksum((uint32_t *)txdesc,
+		    len - sizeof(*mem)));
 
 		/* we do not need the mbuf anymore */
 		m_freem(m);
@@ -1517,8 +1514,11 @@ upgt_tx_task(void *arg)
 
 		DPRINTF(2, "%s: TX start data sending\n", sc->sc_dev.dv_xname);
 
-		if (upgt_bulk_xmit(sc, data_tx, sc->sc_tx_pipeh, &len, 0)
-		    != 0) {
+		usbd_setup_xfer(data_tx->xfer, sc->sc_tx_pipeh, data_tx,
+		    data_tx->buf, len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+		    UPGT_USB_TIMEOUT, NULL);
+		error = usbd_transfer(data_tx->xfer);
+		if (error != 0 && error != USBD_IN_PROGRESS) {
 			printf("%s: could not transmit TX data URB!\n",
 			    sc->sc_dev.dv_xname);
 			return;
@@ -1527,6 +1527,8 @@ upgt_tx_task(void *arg)
 		DPRINTF(2, "%s: TX sent (%d bytes)\n",
 		    sc->sc_dev.dv_xname, len);
 	}
+
+	splx(s);
 }
 
 void
@@ -1598,21 +1600,21 @@ upgt_rx_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/*
 	 * Check what type of frame came in.
 	 */
-	header = (struct upgt_lmac_header *)data_rx->buf;
+	header = (struct upgt_lmac_header *)(data_rx->buf + 4);
 
 	h1_type = header->header1.type;
 	h2_type = letoh16(header->header2.type);
 
 	if (h1_type == UPGT_H1_TYPE_CTRL &&
 	    h2_type == UPGT_H2_TYPE_EEPROM) {
-		eeprom = (struct upgt_lmac_eeprom *)data_rx->buf;
+		eeprom = (struct upgt_lmac_eeprom *)(data_rx->buf + 4);
 		uint16_t eeprom_offset = letoh16(eeprom->offset);
 		uint16_t eeprom_len = letoh16(eeprom->len);
 
 		DPRINTF(2, "%s: received EEPROM block (offset=%d, len=%d)\n",
 			sc->sc_dev.dv_xname, eeprom_offset, eeprom_len);
 
-		bcopy(data_rx->buf + sizeof(struct upgt_lmac_eeprom),
+		bcopy(data_rx->buf + sizeof(struct upgt_lmac_eeprom) + 4,
 			sc->sc_eeprom + eeprom_offset, eeprom_len);
 
 		/* EEPROM data has arrived in time, wakeup tsleep() */
@@ -1623,14 +1625,14 @@ upgt_rx_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		DPRINTF(2, "%s: received 802.11 TX done\n",
 		    sc->sc_dev.dv_xname);
 
-		upgt_tx_done(sc, data_rx->buf);
+		upgt_tx_done(sc, data_rx->buf + 4);
 	} else
 	if (h1_type == UPGT_H1_TYPE_RX_DATA ||
 	    h1_type == UPGT_H1_TYPE_RX_DATA_MGMT) {
 		DPRINTF(3, "%s: received 802.11 RX data\n",
 		    sc->sc_dev.dv_xname);
 
-		upgt_rx(sc, data_rx->buf, letoh16(header->header1.len));
+		upgt_rx(sc, data_rx->buf + 4, letoh16(header->header1.len));
 	} else {
 		/* ignore unknown frame types */
 		DPRINTF(1, "%s: received unknown frame type 0x%02x\n",
@@ -1716,29 +1718,21 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct upgt_data *data_cmd = &sc->cmd_data;
+	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_filter *filter;
 	int len;
 	uint8_t broadcast[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 	/*
-	 * Transmit the first URB containing the Prism memory address.
-	 */
-	*((uint32_t *)data_cmd->buf) =
-	    htole32(sc->sc_memaddr_frame_start + UPGT_MEMSIZE_FRAME_HEAD);
-
-	len = sizeof(uint32_t);
-	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
-		printf("%s: could not transmit macfilter CMD memaddr URB!\n",
-		    sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-
-	/*
-	 * Transmit the second URB containing the CMD data itself.
+	 * Transmit the URB containing the CMD data.
 	 */
 	bzero(data_cmd->buf, MCLBYTES);
 
-	filter = (struct upgt_lmac_filter *)data_cmd->buf;
+	mem = (struct upgt_lmac_mem *)data_cmd->buf;
+	mem->addr = htole32(sc->sc_memaddr_frame_start +
+	    UPGT_MEMSIZE_FRAME_HEAD);
+
+	filter = (struct upgt_lmac_filter *)(mem + 1);
 
 	filter->header1.flags = UPGT_H1_FLAGS_TX_NO_CALLBACK;
 	filter->header1.type = UPGT_H1_TYPE_CTRL;
@@ -1764,9 +1758,11 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 		filter->type = htole16(UPGT_FILTER_TYPE_NONE);
 		IEEE80211_ADDR_COPY(filter->dst, ic->ic_myaddr);
 		IEEE80211_ADDR_COPY(filter->src, broadcast);
+		filter->unknown1 = htole16(UPGT_FILTER_UNKNOWN1);
 		filter->rxaddr = htole32(sc->sc_memaddr_rx_start);
+		filter->unknown2 = htole16(UPGT_FILTER_UNKNOWN2);
 		filter->rxhw = htole16(sc->sc_eeprom_hwrx);
-		filter->unknown5 = htole16(UPGT_FILTER_UNKNOWN5_V2);
+		filter->unknown3 = htole16(UPGT_FILTER_UNKNOWN3);
 		break;
 	case IEEE80211_S_RUN:
 		DPRINTF(1, "%s: set MAC filter to RUN (bssid %s)\n",
@@ -1775,11 +1771,11 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 		filter->type = htole16(UPGT_FILTER_TYPE_STA);
 		IEEE80211_ADDR_COPY(filter->dst, ic->ic_myaddr);
 		IEEE80211_ADDR_COPY(filter->src, ni->ni_bssid);
-		filter->unknown2 = htole32(UPGT_FILTER_UNKNOWN2_STA);
+		filter->unknown1 = htole16(UPGT_FILTER_UNKNOWN1);
 		filter->rxaddr = htole32(sc->sc_memaddr_rx_start);
-		filter->unknown5 = htole16(UPGT_FILTER_UNKNOWN5_V2);
+		filter->unknown2 = htole16(UPGT_FILTER_UNKNOWN2);
 		filter->rxhw = htole16(sc->sc_eeprom_hwrx);
-		filter->unknown6 = htole16(UPGT_FILTER_UNKNOWN6_STA);
+		filter->unknown3 = htole16(UPGT_FILTER_UNKNOWN3);
 		break;
 	default:
 		printf("%s: MAC filter does not know that state!\n",
@@ -1787,7 +1783,11 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 		break;
 	}
 
-	len = sizeof(struct upgt_lmac_filter);
+	len = sizeof(*mem) + sizeof(*filter);
+
+	mem->chksum = htole32(upgt_chksum((uint32_t *)filter,
+	    len - sizeof(*mem)));
+
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit macfilter CMD data URB!\n",
 		    sc->sc_dev.dv_xname);
@@ -1801,30 +1801,22 @@ int
 upgt_set_channel(struct upgt_softc *sc, unsigned channel)
 {
 	struct upgt_data *data_cmd = &sc->cmd_data;
+	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_channel *chan;
 	int len;
 
 	DPRINTF(1, "%s: %s: %d\n", sc->sc_dev.dv_xname, __func__, channel);
 
 	/*
-	 * Transmit the first URB containing the Prism memory address.
-	 */
-	*((uint32_t *)data_cmd->buf) =
-	    htole32(sc->sc_memaddr_frame_start + UPGT_MEMSIZE_FRAME_HEAD);
-
-	len = sizeof(uint32_t);
-	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
-		printf("%s: could not transmit channel CMD memaddr URB!\n",
-		    sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-
-	/*
-	 * Transmit the second URB containing the CMD data itself.
+	 * Transmit the URB containing the CMD data.
 	 */
 	bzero(data_cmd->buf, MCLBYTES);
 
-	chan = (struct upgt_lmac_channel *)data_cmd->buf;
+	mem = (struct upgt_lmac_mem *)data_cmd->buf;
+	mem->addr = htole32(sc->sc_memaddr_frame_start +
+	    UPGT_MEMSIZE_FRAME_HEAD);
+
+	chan = (struct upgt_lmac_channel *)(mem + 1);
 
 	chan->header1.flags = UPGT_H1_FLAGS_TX_NO_CALLBACK;
 	chan->header1.type = UPGT_H1_TYPE_CTRL;
@@ -1851,7 +1843,11 @@ upgt_set_channel(struct upgt_softc *sc, unsigned channel)
 	bcopy(&sc->sc_eeprom_freq3[channel].data, chan->freq3_2,
 	    sizeof(chan->freq3_2));
 
-	len = sizeof(struct upgt_lmac_channel);
+	len = sizeof(*mem) + sizeof(*chan);
+
+	mem->chksum = htole32(upgt_chksum((uint32_t *)chan,
+	    len - sizeof(*mem)));
+
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit channel CMD data URB!\n",
 		    sc->sc_dev.dv_xname);
@@ -1986,9 +1982,6 @@ upgt_free_cmd(struct upgt_softc *sc)
 	}
 }
 
-/*
- * For this device we use usbd_bulk_transfer() for all TX transfers.
- */
 int
 upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
     usbd_pipe_handle pipeh, uint32_t *size, int flags)
@@ -2031,6 +2024,24 @@ upgt_crc32(const void *buf, size_t size)
 
 	/* apply final XOR value as common for CRC-32 */
 	crc = crc ^ 0xffffffffU;
+
+	return (crc);
+}
+
+/*
+ * The firmware awaits a checksum for each frame we send to it.
+ * The algorithm used therefor is uncommon but somehow similar to CRC32.
+ */
+uint32_t
+upgt_chksum(const uint32_t *buf, size_t size)
+{
+	int i;
+	uint32_t crc = 0;
+
+	for (i = 0; i < size; i += sizeof(uint32_t)) {
+		crc ^= *buf++;
+		crc = (crc >> 5) ^ (crc << 3);
+	}
 
 	return (crc);
 }

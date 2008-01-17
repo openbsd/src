@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.6 2008/01/04 10:04:07 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.7 2008/01/17 07:23:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -193,11 +193,16 @@ struct upgt_eeprom_freq4_2 {
 /*
  * LMAC protocol.
  */
+struct upgt_lmac_mem {
+	uint32_t			addr;
+	uint32_t			chksum;
+} __packed;
+
 #define UPGT_H1_FLAGS_TX_MGMT		0x00	/* for TX: mgmt frame */
 #define UPGT_H1_FLAGS_TX_NO_CALLBACK	0x01	/* for TX: no USB callback */
 #define UPGT_H1_FLAGS_TX_DATA		0x10	/* for TX: data frame */
 #define UPGT_H1_TYPE_RX_DATA		0x00	/* 802.11 RX data frame */
-#define UPGT_H1_TYPE_RX_DATA_MGMT	0x01	/* 802.11 RX mgmt frame */
+#define UPGT_H1_TYPE_RX_DATA_MGMT	0x04	/* 802.11 RX mgmt frame */
 #define UPGT_H1_TYPE_TX_DATA		0x40	/* 802.11 TX data frame */
 #define UPGT_H1_TYPE_CTRL		0x80	/* control frame */
 struct upgt_lmac_h1 {
@@ -243,25 +248,22 @@ struct upgt_lmac_eeprom {
 #define UPGT_FILTER_TYPE_HOSTAP		0x0004
 #define UPGT_FILTER_TYPE_MONITOR	0x0010
 #define UPGT_FILTER_TYPE_RESET		0x0020
-#define UPGT_FILTER_UNKNOWN2_STA	0x0000015f
-#define UPGT_FILTER_UNKNOWN5_V2		0x0620
-#define UPGT_FILTER_UNKNOWN6_STA	0x01f4
+#define UPGT_FILTER_UNKNOWN1		0x0002
+#define UPGT_FILTER_UNKNOWN2		0x0ca8
+#define UPGT_FILTER_UNKNOWN3		0xffff
 struct upgt_lmac_filter {
 	struct upgt_lmac_h1		header1;
 	struct upgt_lmac_h2		header2;
-	/* 40 bytes */
+	/* 32 bytes */
 	uint16_t			type;
 	uint8_t				dst[IEEE80211_ADDR_LEN];
 	uint8_t				src[IEEE80211_ADDR_LEN];
 	uint16_t			unknown1;
-	uint32_t			unknown2;
-	uint32_t			unknown3;
-	uint32_t			unknown4;
 	uint32_t			rxaddr;
-	uint16_t			unknown5;
-	uint16_t			rxhw;
-	uint16_t			unknown6;
-	uint16_t			unknown7;
+	uint16_t			unknown2;
+	uint32_t			rxhw;
+	uint16_t			unknown3;
+	uint32_t			unknown4;
 } __packed;
 
 /* frequence 3 data */
