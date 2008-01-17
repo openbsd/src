@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2008/01/16 19:36:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2008/01/17 17:35:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -88,9 +88,9 @@ static struct addresslist	*hlist;
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
-		    int, in_port_t, const char *);
+		    int, in_port_t, struct ber_oid *, char *);
 int		 host(const char *, struct addresslist *,
-		    int, in_port_t, const char *);
+		    int, in_port_t, struct ber_oid *, char *);
 
 typedef struct {
 	union {
@@ -117,9 +117,10 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
+%type	<v.string>	hostcmn
 %type	<v.number>	optwrite
 %type	<v.data>	objtype
-%type	<v.oid>		oid
+%type	<v.oid>		oid hostoid
 
 %%
 
@@ -160,7 +161,7 @@ main		: LISTEN ON STRING		{
 			struct address		*h;
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, SNMPD_PORT, NULL) <= 0) {
+			if (host($3, &al, 1, SNMPD_PORT, NULL, NULL) <= 0) {
 				yyerror("invalid ip address: %s", $3);
 				free($3);
 				YYERROR;
@@ -305,9 +306,17 @@ oid		: STRING				{
 		}
 		;
 
-hostdef		: STRING			{
+hostoid		: /* empty */				{ $$ = NULL; }
+		| OBJECTID oid				{ $$ = $2; }
+		;
+
+hostcmn		: /* empty */				{ $$ = NULL; }
+		| COMMUNITY STRING			{ $$ = $2; }
+		;
+
+hostdef		: STRING hostoid hostcmn		{
 			if (host($1, hlist, 1,
-			    SNMPD_TRAPPORT, NULL) <= 0) {
+			    SNMPD_TRAPPORT, $2, $3) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
 				YYERROR;
@@ -868,7 +877,7 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-	 in_port_t port, const char *ifname)
+	 in_port_t port, struct ber_oid *oid, char *cmn)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -896,12 +905,16 @@ host_dns(const char *s, struct addresslist *al, int max,
 			fatal(NULL);
 
 		h->port = port;
-		if (ifname != NULL) {
-			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
-			    sizeof(h->ifname))
-				log_warnx("host_dns: interface name truncated");
-			return (-1);
+		if (oid != NULL) {
+			if ((h->sa_oid = calloc(1, sizeof(*oid))) == NULL)
+				fatal(NULL);
+			bcopy(oid, h->sa_oid, sizeof(*oid));
 		}
+		if (cmn != NULL) {
+			if ((h->sa_community = strdup(cmn)) == NULL)
+				fatal(NULL);
+		}
+
 		h->ss.ss_family = res->ai_family;
 		if (res->ai_family == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;
@@ -923,14 +936,18 @@ host_dns(const char *s, struct addresslist *al, int max,
 		    s, max);
 	}
 	freeaddrinfo(res0);
+	if (oid != NULL)
+		free(oid);
+	if (cmn != NULL)
+		free(cmn);
 	return (cnt);
 }
 
 int
 host(const char *s, struct addresslist *al, int max,
-    in_port_t port, const char *ifname)
+    in_port_t port, struct ber_oid *oid, char *cmn)
 {
-	struct address *h;
+	struct address	*h;
 
 	h = host_v4(s);
 
@@ -940,17 +957,12 @@ host(const char *s, struct addresslist *al, int max,
 
 	if (h != NULL) {
 		h->port = port;
-		if (ifname != NULL) {
-			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
-			    sizeof(h->ifname)) {
-				log_warnx("host: interface name truncated");
-				return (-1);
-			}
-		}
+		h->sa_oid = oid;
+		h->sa_community = cmn;
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, ifname));
+	return (host_dns(s, al, max, port, oid, cmn));
 }

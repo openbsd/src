@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 2008/01/16 21:43:19 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2008/01/17 17:35:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -209,6 +209,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	struct			 ber_oid uptime = OID(MIB_sysUpTime);
 	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
 	char			 ostr[SNMP_MAX_OID_LEN];
+	struct oid		 oa, ob;
 
 	if (TAILQ_EMPTY(&env->sc_trapreceivers))
 		return (0);
@@ -217,6 +218,17 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	smi_oidlen(&trapoid);
 	smi_oidlen(oid);
 
+	smi_oidstring(oid, ostr, sizeof(ostr));
+	log_debug("trap_send: oid %s", ostr);
+
+	/* Setup OIDs to compare against the trap receiver MIB */
+	bzero(&oa, sizeof(oa));
+	bcopy(oid->bo_id, &oa.o_oid, sizeof(oa.o_oid));
+	oa.o_oidlen = oid->bo_n;
+	bzero(&ob, sizeof(ob));
+	ob.o_flags = OID_TABLE;
+
+	/* Add mandatory varbind elements */
 	trap = ber_add_sequence(NULL);
 	c = ber_printf_elements(trap, "{Oit}{OO}",
 	    &uptime, smi_getticks(),
@@ -228,12 +240,15 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
 
-	smi_oidstring(oid, ostr, sizeof(ostr));
-	log_debug("trap_send: oid %s", ostr);
-
 	TAILQ_FOREACH(tr, &env->sc_trapreceivers, entry) {
-		if (tr->sa_oid != NULL && tr->sa_oid->bo_n)
-			/* XXX only send if the OID is specified */;
+		if (tr->sa_oid != NULL && tr->sa_oid->bo_n) {
+			/* The trap receiver may want only a specified MIB */
+			bcopy(&tr->sa_oid->bo_id, &ob.o_oid,
+			    sizeof(ob.o_oid));
+			ob.o_oidlen = tr->sa_oid->bo_n;
+			if (smi_oid_cmp(&oa, &ob) != 0)
+				continue;
+		}
 
 		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port))) == -1) {
 			ret = -1;

@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.4 2008/01/16 19:46:46 reyk Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.5 2008/01/17 17:35:06 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2008 $
+.Dd $Mdocdate: January 17 2008 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -84,11 +84,6 @@ The default value is
 Specify the name of the read-write community.
 The default value is
 .Ar private .
-.\".Pp
-.\".It Ic trap community Ar string
-.\"Specify the name of the trap community.
-.\"The default value is
-.\".Ar public .
 .Pp
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a
@@ -138,13 +133,20 @@ Specify the name of the trap community.
 The default value is
 .Ar public .
 .Pp
-.It Ic trap receiver Ar string
+.It Xo
+.Ic trap receiver Ar string
+.Op Ic oid Ar oid-string
+.Op Ic community Ar string
+.Xc
 Specify the address or FQDN of a remote trap receiver for outgoing traps
 sent by
 .Xr snmpd 8 .
 This option may be specified for multiple times.
 The daemon will send outgoing traps using the revised SNMPv2 format and the
 configured trap community.
+The default community is specified by the global
+.Ic trap community
+option.
 .Pp
 .El
 .Sh OID CONFIGURATION

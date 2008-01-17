@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.15 2008/01/16 21:43:19 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.16 2008/01/17 17:35:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -301,7 +301,6 @@ struct snmp_stats {
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
-	char			 ifname[IFNAMSIZ];
 
 	TAILQ_ENTRY(address)	 entry;
 
