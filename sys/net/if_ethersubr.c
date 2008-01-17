@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.112 2007/11/22 01:21:40 mpf Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.113 2008/01/17 17:50:59 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -597,6 +597,10 @@ ether_input(ifp, eh, m)
 		}
 	}
 
+	/*
+	 * Schedule softnet interrupt and enqueue packet within the same spl.
+	 */
+	s = splnet();
 decapsulate:
 
 	switch (etype) {
@@ -617,7 +621,7 @@ decapsulate:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
 		revarpinput(m);	/* XXX queue? */
-		return;
+		goto done;
 
 #endif
 #ifdef INET6
@@ -638,7 +642,7 @@ decapsulate:
 		/* probably this should be done with a NETISR as well */
 		/* XXX queue this */
 		aarpinput((struct arpcom *)ifp, m);
-		return;
+		goto done;
 #endif
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
@@ -647,18 +651,18 @@ decapsulate:
 		/*
 		if (m->m_flags & M_PROMISC) {
 			m_freem(m);
-			return;
+			goto done;
 		}
 		*/
 #ifndef PPPOE_SERVER
 		if (m->m_flags & (M_MCAST | M_BCAST)) {
 			m_freem(m);
-			return;
+			goto done;
 		}
 #endif
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 		if (m == NULL)
-			return;
+			goto done;
 
 		eh_tmp = mtod(m, struct ether_header *);
 		bcopy(eh, eh_tmp, sizeof(struct ether_header));
@@ -705,7 +709,7 @@ decapsulate:
 				m_adj(m, AT_LLC_SIZE);
 				/* XXX Really this should use netisr too */
 				aarpinput((struct arpcom *)ifp, m);
-				return;
+				goto done;
 			}
 #endif /* NETATALK */
 			if (l->llc_control == LLC_UI &&
@@ -719,7 +723,7 @@ decapsulate:
 				m->m_pkthdr.len -= 6;	/* XXX */
 				M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 				if (m == 0)
-					return;
+					goto done;
 				*mtod(m, struct ether_header *) = *eh;
 				goto decapsulate;
 			}
@@ -727,12 +731,12 @@ decapsulate:
 		dropanyway:
 		default:
 			m_freem(m);
-			return;
+			goto done;
 		}
 	}
 
-	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
+done:
 	splx(s);
 }
 
