@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2008/01/17 17:35:06 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2008/01/17 22:55:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -66,7 +66,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 	u_int8_t		*c;
 	char			 ostr[SNMP_MAX_OID_LEN];
 	struct ber_element	*ber = NULL, *varbind = NULL, *a;
-	size_t			 len;
+	size_t			 len = 0;
 	struct			 ber_oid o;
 
 	while (!done) {
@@ -181,9 +181,10 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 			goto done;
 	}
 
-	len = ber_calc_len(varbind);
-	log_debug("trap_imsg: from pid %u, len %d", pid, len);
-
+	if (varbind != NULL)
+		len = ber_calc_len(varbind);
+	log_debug("trap_imsg: from pid %u len %d elements %d",
+	    pid, x, len);
 	trap_send(&o, varbind);
 
 	ret = 0;
