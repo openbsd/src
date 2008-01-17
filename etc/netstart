@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.117 2008/01/09 21:38:19 mpf Exp $
+#	$OpenBSD: netstart,v 1.118 2008/01/17 12:36:33 brad Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -291,6 +291,11 @@ fi
 # Refer to hostname.if(5) and bridgename.if(5)
 ifmstart "" "trunk vlan carp gif gre pfsync pppoe"
 
+# The trunk interfaces need to come up first in this list.
+# The vlan interfaces need to come up after trunk.
+# Configure all the carp interfaces which we know about before default route.
+ifmstart "trunk vlan carp"
+
 if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
 	ra=`sysctl -n net.inet6.ip6.accept_rtadv`
@@ -301,11 +306,6 @@ if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 		echo "WARNING: inconsistent config - check /etc/sysctl.conf for IPv6 autoconf"
 	fi
 fi
-
-# The trunk interfaces need to come up first in this list.
-# The vlan interfaces need to come up after trunk.
-# Configure all the carp interfaces which we know about before default route.
-ifmstart "trunk vlan carp"
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
