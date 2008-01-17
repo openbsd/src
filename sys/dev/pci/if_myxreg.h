@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.2 2007/06/01 18:07:08 reyk Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.3 2008/01/17 18:56:05 thib Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -39,8 +39,8 @@
 #define MYXALIGN_CMD		64
 #define MYXALIGN_DATA		PAGE_SIZE
 
-#define MYX_ADDRHIGH(_v)	((_v >> 32) & 0xffffffff)
-#define MYX_ADDRLOW(_v)		(_v & 0xffffffff)
+#define MYX_ADDRHIGH(_v)	(((u_int64_t)_v >> 32) & 0xffffffff)
+#define MYX_ADDRLOW(_v)		((u_int64_t)_v & 0xffffffff)
 
 /*
  * PCI memory/register layout
