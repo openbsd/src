@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.20 2007/10/30 12:03:48 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.21 2008/01/17 16:27:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -129,7 +129,7 @@ restart:
 
 	/* Restore old terminal settings and signals. */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0) {
-		while (tcsetattr(input, TCSANOW|TCSASOFT, &oterm) == -1 &&
+		while (tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm) == -1 &&
 		    errno == EINTR)
 			continue;
 	}
