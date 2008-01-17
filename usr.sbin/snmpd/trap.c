@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2008/01/17 22:55:07 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2008/01/17 23:36:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -184,7 +184,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 	if (varbind != NULL)
 		len = ber_calc_len(varbind);
 	log_debug("trap_imsg: from pid %u len %d elements %d",
-	    pid, x, len);
+	    pid, len, x);
 	trap_send(&o, varbind);
 
 	ret = 0;
