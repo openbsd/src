@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.31 2008/01/03 21:37:25 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.32 2008/01/17 22:53:18 kettenis Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -217,7 +217,7 @@ sbus_print(void *args, const char *busname)
 	int i;
 
 	if (busname != NULL) {
-		printf("%s at %s", sa->sa_name, busname);
+		printf("\"%s\" at %s", sa->sa_name, busname);
 		class = getpropstring(sa->sa_node, "device_type");
 		if (*class != '\0')
 			printf(" class %s", class);

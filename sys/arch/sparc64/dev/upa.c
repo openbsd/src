@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.7 2008/01/03 20:43:13 kettenis Exp $	*/
+/*	$OpenBSD: upa.c,v 1.8 2008/01/17 22:53:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -146,7 +146,7 @@ upa_print(void *args, const char *name)
 	struct mainbus_attach_args *ma = args;
 
 	if (name)
-		printf("%s at %s", ma->ma_name, name);
+		printf("\"%s\" at %s", ma->ma_name, name);
 	return (UNCONF);
 }
 

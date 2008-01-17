@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.5 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: central.c,v 1.6 2008/01/17 22:53:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -137,7 +137,7 @@ central_print(void *args, const char *busname)
 	char *class;
 
 	if (busname != NULL) {
-		printf("%s at %s", ca->ca_name, busname);
+		printf("\"%s\" at %s", ca->ca_name, busname);
 		class = getpropstring(ca->ca_node, "device_type");
 		if (*class != '\0')
 			printf(" class %s", class);
