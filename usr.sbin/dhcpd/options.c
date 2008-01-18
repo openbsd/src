@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.19 2007/10/29 16:51:02 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.20 2008/01/18 20:14:03 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -308,8 +308,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	    buffer,
 	    (main_buffer_size - 7 + ((overload & 1) ? DHCP_FILE_LEN : 0) +
 		((overload & 2) ? DHCP_SNAME_LEN : 0)),
-	    options, priority_list, main_buffer_size,
-	    (main_buffer_size + ((overload & 1) ? DHCP_FILE_LEN : 0)),
+	    options, priority_list, main_buffer_size - 7,
+	    (main_buffer_size - 7 + ((overload & 1) ? DHCP_FILE_LEN : 0)),
 	    terminate);
 
 	/* Initialize the buffers to be used and put the cookie up front. */

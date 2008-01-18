@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.34 2007/10/29 16:51:02 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.35 2008/01/18 20:14:03 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -472,8 +472,6 @@ void	 parse_options(struct packet *);
 void	 parse_option_buffer(struct packet *, unsigned char *, int);
 int	 cons_options(struct packet *, struct dhcp_packet *, int,
 	    struct tree_cache **, int, int, int, u_int8_t *, int);
-int	 store_options(unsigned char *, int, struct tree_cache **,
-	    unsigned char *, int, int, int);
 char	*pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void	 do_packet(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
