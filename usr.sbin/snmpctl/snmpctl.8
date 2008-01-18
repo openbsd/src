@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpctl.8,v 1.4 2008/01/16 09:51:15 reyk Exp $
+.\" $OpenBSD: snmpctl.8,v 1.5 2008/01/18 02:09:30 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2008 $
+.Dd $Mdocdate: January 18 2008 $
 .Dt SNMPCTL 8
 .Os
 .Sh NAME
@@ -46,6 +46,53 @@ Monitor internal messages of the
 subsystems and engines.
 .It Cm show mib
 Dump the tree of compiled-in MIB objects.
+.It Xo
+.Cm trap send Ar oid-string
+.Op Cm oid Ar oid-string Ar type value ... Oc
+.Xc
+Send a SNMP trap via
+.Xr snmpd 8
+to the registered trap receivers.
+The command takes one 
+.Ar oid-string
+argument as the trap OID and optional varbind arguments with the specified
+.Ar oid-string ,
+.Ar type ,
+and
+.Ar value .
+The following types are supported:
+.Pp
+.Bl -tag -width bitstringXXXXXXXX -compact
+.It Cm ip Ar value
+An IPv4 address.
+.It Cm counter Ar value
+A 32 bit counter.
+.It Cm gauge Ar value
+A 32 bit gauge.
+.It Cm unsigned Ar value
+A 32 bit unsigned integer.
+.It Cm ticks Ar value
+A 32 bit timeticks integer value.
+.It Cm opaque Ar value
+A 32 bit opaque.
+.It Cm nsap Ar value
+A 32 bit NSAP address.
+.It Cm counter64 Ar value
+A 64 bit counter.
+.It Cm uint Ar value
+A 32 bit unsigned integer.
+.It Cm int Ar value
+A 32 bit integer.
+.It Cm bitstring Ar string
+A bit string.
+.It Cm string Ar string
+An octet string.
+.It Cm null
+This type takes no argument.
+.It Cm oid Ar oid-string
+An string describing a Object ID, for example
+.Ar 1.3.6.1.4.1.30155 .
+.El
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/snmpd.sockXX" -compact

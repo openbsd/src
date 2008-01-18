@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.3 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.4 2008/01/18 02:09:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -19,13 +19,13 @@
 enum actions {
 	NONE,
 	MONITOR,
-	SHOW_MIB
+	SHOW_MIB,
+	TRAP
 };
 
 struct parse_result {
-	enum actions	action;
+	enum actions	 action;
+	struct imsgbuf	*ibuf;
 };
 
 struct parse_result	*parse(int, char *[]);
-const struct token      *match_token(const char *, const struct token []);
-void                     show_valid_args(const struct token []);

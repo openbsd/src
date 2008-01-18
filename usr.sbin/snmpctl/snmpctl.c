@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.6 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.7 2008/01/18 02:09:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -40,6 +40,7 @@
 #include <event.h>
 
 #include "snmpd.h"
+#include "snmp.h"
 #include "parser.h"
 #include "mib.h"
 
@@ -151,8 +152,11 @@ main(int argc, char *argv[])
 		err(1, "connect: %s", SNMPD_SOCKET);
 	}
 
-	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		err(1, "malloc");
+	if (res->ibuf != NULL)
+		ibuf = res->ibuf;
+	else
+		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+			err(1, "malloc");
 	imsg_init(ibuf, ctl_sock, NULL);
 	done = 0;
 
@@ -163,6 +167,10 @@ main(int argc, char *argv[])
 		break;
 	case NONE:
 	case SHOW_MIB:
+		break;
+	case TRAP:
+		imsg_compose(ibuf, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
+		done = 1;
 		break;
 	}
 
@@ -184,6 +192,8 @@ main(int argc, char *argv[])
 			switch (res->action) {
 			case MONITOR:
 				done = monitor(&imsg);
+				break;
+			case TRAP:
 				break;
 			case NONE:
 			case SHOW_MIB:

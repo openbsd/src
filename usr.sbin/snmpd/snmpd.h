@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.16 2008/01/17 17:35:06 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.17 2008/01/18 02:09:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -371,6 +371,8 @@ ssize_t		 imsg_read(struct imsgbuf *);
 ssize_t		 imsg_get(struct imsgbuf *, struct imsg *);
 int		 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
+int		 imsg_composev(struct imsgbuf *, enum imsg_type , u_int32_t,
+		    pid_t, int, const struct iovec *, int);
 struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t,
 		    pid_t, u_int16_t);
 int		 imsg_add(struct buf *, void *, u_int16_t);
