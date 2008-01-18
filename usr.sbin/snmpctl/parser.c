@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2008/01/18 02:09:30 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.5 2008/01/18 02:15:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -287,7 +287,7 @@ match_token(char *word, const struct token table[])
 		case STRINGVAL:
 			if (word == NULL || strlen(word) == 0)
 				break;
-			iov[1].iov_len = strlen(word) + 1;
+			iov[1].iov_len = strlen(word);
 			iov[1].iov_base = word;
 			iovcnt = 2;
 			break;
