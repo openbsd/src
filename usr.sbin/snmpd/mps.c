@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.12 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.13 2008/01/18 21:55:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -66,7 +66,7 @@ int
 mps_setstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct ber_element	*ber = *elm;
-	char			*s;
+	char			*s, *v;
 
 	if ((oid->o_flags & OID_WR) == 0)
 		return (-1);
@@ -76,9 +76,12 @@ mps_setstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		return (-1);
 	if (ber_get_string(ber, &s) == -1)
 		return (-1);
-	if ((oid->o_data = (void *)strdup(s)) == NULL)
+	if ((v = (void *)strdup(s)) == NULL)
 		return (-1);
-	oid->o_val = strlen((char *)oid->o_data);
+	if (oid->o_data != NULL)
+		free(oid->o_data);
+	oid->o_data = v;
+	oid->o_val = strlen(v);
 
 	return (0);
 }
