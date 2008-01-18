@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.92 2007/11/27 23:29:57 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.93 2008/01/18 20:13:22 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -33,6 +33,10 @@ file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 device	clkbrd
 attach	clkbrd at fhc
 file	arch/sparc64/dev/clkbrd.c		clkbrd
+
+device	environ
+attach	environ at fhc
+file	arch/sparc64/dev/environ.c		environ
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia
