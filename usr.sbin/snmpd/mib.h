@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.11 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.12 2008/01/18 18:38:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -212,6 +212,26 @@
 #define MIB_ipNetToMediaType		MIB_ipNetToMediaEntry, 4
 #define MIB_ipRoutingDiscards		MIB_ipMIB, 23
 
+/* BRIDGE-MIB */
+#define MIB_dot1dBridge			MIB_mib_2, 17
+#define MIB_dot1dBase			MIB_dot1dBridge, 1
+#define MIB_dot1dBaseBridgeAddress	MIB_dot1dBase, 1
+#define MIB_dot1dBaseNumPorts		MIB_dot1dBase, 2
+#define MIB_dot1dBaseType		MIB_dot1dBase, 3
+#define MIB_dot1dBasePortTable		MIB_dot1dBase, 4
+#define OIDIDX_dot1d			10
+#define OIDIDX_dot1dEntry		11
+#define MIB_dot1dBasePortEntry		MIB_dot1dBasePortTable, 1
+#define MIB_dot1dBasePort		MIB_dot1dBasePortEntry, 1
+#define MIB_dot1dBasePortIfIndex	MIB_dot1dBasePortEntry, 2
+#define MIB_dot1dBasePortCircuit	MIB_dot1dBasePortEntry, 3
+#define MIB_dot1dBasePortDelayExceededDiscards	MIB_dot1dBasePortEntry, 4
+#define MIB_dot1dBasePortMtuExceededDiscards	MIB_dot1dBasePortEntry, 5
+#define MIB_dot1dStp			MIB_dot1dBridge, 2
+#define MIB_dot1dSr			MIB_dot1dBridge, 3
+#define MIB_dot1dTp			MIB_dot1dBridge, 4
+#define MIB_dot1dStatic			MIB_dot1dBridge, 5
+
 /*
  * PRIVATE ENTERPRISE NUMBERS from
  * http://www.iana.org/assignments/enterprise-numbers
@@ -387,7 +407,7 @@
 	{ MIBDECL(ifEntry) },				\
 	{ MIBDECL(ifIndex) },				\
 	{ MIBDECL(ifDescr) },				\
-	{ MIBDECL(ifDescr) },				\
+	{ MIBDECL(ifType) },				\
 	{ MIBDECL(ifMtu) },				\
 	{ MIBDECL(ifSpeed) },				\
 	{ MIBDECL(ifPhysAddress) },			\
@@ -407,6 +427,23 @@
 	{ MIBDECL(ifOutErrors) },			\
 	{ MIBDECL(ifOutQLen) },				\
 	{ MIBDECL(ifSpecific) },			\
+							\
+	{ MIBDECL(dot1dBridge) },			\
+	{ MIBDECL(dot1dBase) },				\
+	{ MIBDECL(dot1dBaseBridgeAddress) },		\
+	{ MIBDECL(dot1dBaseNumPorts) },			\
+	{ MIBDECL(dot1dBaseType) },			\
+	{ MIBDECL(dot1dBasePortTable) },		\
+	{ MIBDECL(dot1dBasePortEntry) },		\
+	{ MIBDECL(dot1dBasePort) },			\
+	{ MIBDECL(dot1dBasePortIfIndex) },		\
+	{ MIBDECL(dot1dBasePortCircuit) },		\
+	{ MIBDECL(dot1dBasePortDelayExceededDiscards) },\
+	{ MIBDECL(dot1dBasePortMtuExceededDiscards) },	\
+	{ MIBDECL(dot1dStp) },				\
+	{ MIBDECL(dot1dSr) },				\
+	{ MIBDECL(dot1dTp) },				\
+	{ MIBDECL(dot1dStatic) },			\
 							\
 	{ MIBDECL(ibm) },				\
 	{ MIBDECL(cmu) },				\

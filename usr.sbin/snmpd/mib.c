@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.17 2008/01/16 09:51:15 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.18 2008/01/18 18:38:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -360,7 +360,7 @@ static struct oid if_mib[] = {
 	{ MIB(ifNumber),		OID_RD, mib_ifnumber },
 	{ MIB(ifIndex),			OID_TRD, mib_iftable },
 	{ MIB(ifDescr),			OID_TRD, mib_iftable },
-	{ MIB(ifDescr),			OID_TRD, mib_iftable },
+	{ MIB(ifType),			OID_TRD, mib_iftable },
 	{ MIB(ifMtu),			OID_TRD, mib_iftable },
 	{ MIB(ifSpeed),			OID_TRD, mib_iftable },
 	{ MIB(ifPhysAddress),		OID_TRD, mib_iftable },
@@ -1269,6 +1269,62 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 /*
+ * Defined in BRIDGE-MIB.txt (rfc1493)
+ *
+ * This MIB is required by some NMS to accept the device because
+ * the RFC says that mostly any network device has to provide this MIB... :(
+ */
+
+int	 mib_dot1dtable(struct oid *, struct ber_oid *, struct ber_element **);
+
+static struct oid bridge_mib[] = {
+	{ MIB(dot1dBridge),		OID_MIB },
+	{ MIB(dot1dBaseBridgeAddress) },
+	{ MIB(dot1dBaseNumPorts),	OID_RD, mib_ifnumber },
+	{ MIB(dot1dBaseType),		OID_RD, mps_getint, NULL,
+	    NULL, 4 /* srt (sourceroute + transparent) */ },
+	{ MIB(dot1dBasePort),		OID_TRD, mib_dot1dtable },
+	{ MIB(dot1dBasePortIfIndex),	OID_TRD, mib_dot1dtable },
+	{ MIB(dot1dBasePortCircuit),	OID_TRD, mib_dot1dtable},
+	{ MIB(dot1dBasePortDelayExceededDiscards), OID_TRD, mib_dot1dtable },
+	{ MIB(dot1dBasePortMtuExceededDiscards), OID_TRD, mib_dot1dtable },
+	{ MIBEND }
+};
+
+int
+mib_dot1dtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	u_int32_t		 idx = 0;
+	struct kif		*kif;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_dot1dEntry];
+	if ((kif = mib_ifget(idx)) == NULL)
+		return (1);
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_dot1dEntry] = kif->if_index;
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_dot1d]) {
+	case 1:
+	case 2:
+		ber = ber_add_integer(ber, kif->if_index);
+		break;
+	case 3:
+		ber = ber_add_oid(ber, &zerodotzero);
+		break;
+	case 4:
+	case 5:
+		ber = ber_add_integer(ber, 0);		
+		break;
+	}
+
+	return (0);
+}
+
+/*
  * Import all MIBs
  */
 
@@ -1292,6 +1348,9 @@ mib_init(void)
 
 	/* IP-MIB */
 	smi_mibtree(ip_mib);
+
+	/* BRIDGE-MIB */
+	smi_mibtree(bridge_mib);
 
 	/* OPENBSD-MIB */
 	smi_mibtree(openbsd_mib);
