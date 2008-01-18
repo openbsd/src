@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fhc.4,v 1.7 2008/01/18 21:08:35 kettenis Exp $
+.\"     $OpenBSD: fhc.4,v 1.8 2008/01/18 22:06:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm fhc
-.Nd SPARC64 FireHose Controller
+.Nd SPARC64 FireHose controller
 .Sh SYNOPSIS
 .Cd "fhc* at central?"
 .Cd "fhc* at mainbus0"
@@ -37,7 +37,7 @@
 The
 .Nm
 device provides support for the
-FireHose Controllers
+FireHose controllers
 found on Sunfire, Starfire, and Wildfire
 UltraSPARC systems.
 These devices are used for board level
@@ -57,13 +57,13 @@ drivers, sorted by driver name:
 .Pp
 .Bl -tag -width zs/zstty/zskbd(4) -offset ind -compact
 .It Xr clkbrd 4
-Main system clock for E4500.
+SPARC64 Clock Board
 .It Xr clock 4
-Realtime clock.
+Real-time clock
 .It Xr environ 4
-Temperature sensor.
+SPARC64 temperature sensor
 .It Xr zs/zstty/zskbd 4
-Zilog 8530 serial controller (and serial keyboards).
+Zilog 8530 (ZSCC) serial communications driver
 .El
 .Sh SEE ALSO
 .Xr sysctl 3 ,
