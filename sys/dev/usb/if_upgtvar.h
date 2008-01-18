@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.8 2008/01/17 20:46:51 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.9 2008/01/18 21:31:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -69,6 +69,11 @@ struct upgt_tx_radiotap_header {
 
 /* device flags */
 #define UPGT_DEVICE_ATTACHED		(1 << 0)
+
+/* leds */
+#define UPGT_LED_OFF			0
+#define UPGT_LED_ON			1
+#define UPGT_LED_BLINK			2
 
 /*
  * USB xfers.
@@ -219,6 +224,7 @@ struct upgt_lmac_h1 {
 #define UPGT_H2_TYPE_TX_DONE		0x0008
 #define UPGT_H2_TYPE_STATS		0x000a
 #define UPGT_H2_TYPE_EEPROM		0x000c
+#define UPGT_H2_TYPE_LED		0x000d
 #define UPGT_H2_FLAGS_TX_ACK_NO		0x0101
 #define UPGT_H2_FLAGS_TX_ACK_YES	0x0707
 struct upgt_lmac_h2 {
@@ -302,6 +308,19 @@ struct upgt_lmac_channel {
 	struct upgt_lmac_freq4		freq4[8];
 	uint8_t				freq3_2[4];	/* XXX wrong? */
 	uint32_t			pad2;
+} __packed;
+
+#define UPGT_LED_MODE_SET		0x0003
+#define UPGT_LED_ACTION_OFF		0x0002
+#define UPGT_LED_ACTION_ON		0x0003
+#define UPGT_LED_ACTION_TMP_DUR		100		/* ms */
+struct upgt_lmac_led {
+	struct upgt_lmac_h1		header1;
+	struct upgt_lmac_h2		header2;
+	uint16_t			mode;
+	uint16_t			action_fix;
+	uint16_t			action_tmp;
+	uint16_t			action_tmp_dur;
 } __packed;
 
 struct upgt_lmac_stats {
@@ -400,6 +419,8 @@ struct upgt_softc {
 	int			 (*sc_newstate)(struct ieee80211com *,
 				     enum ieee80211_state, int);
 	struct timeout		 scan_to;
+	struct timeout		 led_to;
+	int			 sc_led_blink;
 	unsigned		 sc_curchan;
 
 	int			 sc_flags;

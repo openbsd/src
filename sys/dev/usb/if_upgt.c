@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.18 2008/01/17 20:46:51 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.19 2008/01/18 21:31:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -118,6 +118,8 @@ void		upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void		upgt_rx(struct upgt_softc *, uint8_t *, int);
 int		upgt_set_macfilter(struct upgt_softc *, uint8_t state);
 int		upgt_set_channel(struct upgt_softc *, unsigned);
+void		upgt_set_led(struct upgt_softc *, int);
+void		upgt_set_led_blink(void *);
 int		upgt_get_stats(struct upgt_softc *);
 
 int		upgt_alloc_tx(struct upgt_softc *);
@@ -246,10 +248,11 @@ upgt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* init tasks */
+	/* setup tasks and timeouts */
 	usb_init_task(&sc->sc_task_newstate, upgt_newstate_task, sc);
 	usb_init_task(&sc->sc_task_tx, upgt_tx_task, sc);
 	timeout_set(&sc->scan_to, upgt_next_scan, sc);
+	timeout_set(&sc->led_to, upgt_set_led_blink, sc);
 
 	/*
 	 * Open TX and RX USB bulk pipes.
@@ -457,6 +460,7 @@ upgt_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
 	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
 	timeout_del(&sc->scan_to);
+	timeout_del(&sc->led_to);
 
 	/* free xfers */
 	upgt_free_tx(sc);
@@ -1264,6 +1268,7 @@ upgt_newstate_task(void *arg)
 
 		/* do not accept any frames if the device is down */
 		upgt_set_macfilter(sc, IEEE80211_S_INIT);
+		upgt_set_led(sc, UPGT_LED_OFF);
 		break;
 	case IEEE80211_S_SCAN:
 		DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
@@ -1291,6 +1296,7 @@ upgt_newstate_task(void *arg)
 		ni = ic->ic_bss;
 
 		upgt_set_macfilter(sc, IEEE80211_S_RUN);
+		upgt_set_led(sc, UPGT_LED_ON);
 		break;
 	}
 
@@ -1421,6 +1427,8 @@ upgt_tx_task(void *arg)
 	usbd_status error;
 
 	s = splusb();
+
+	upgt_set_led(sc, UPGT_LED_BLINK);
 
 	for (i = 0; i < UPGT_TX_COUNT; i++) {
 		struct upgt_data *data_tx = &sc->tx_data[i];
@@ -1870,6 +1878,91 @@ upgt_set_channel(struct upgt_softc *sc, unsigned channel)
 	}
 
 	return (0);
+}
+
+void
+upgt_set_led(struct upgt_softc *sc, int action)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct upgt_data *data_cmd = &sc->cmd_data;
+	struct upgt_lmac_mem *mem;
+	struct upgt_lmac_led *led;
+	struct timeval t;
+	int len;
+
+	/*
+	 * Transmit the URB containing the CMD data.
+	 */
+	bzero(data_cmd->buf, MCLBYTES);
+
+	mem = (struct upgt_lmac_mem *)data_cmd->buf;
+	mem->addr = htole32(sc->sc_memaddr_frame_start +
+	    UPGT_MEMSIZE_FRAME_HEAD);
+
+	led = (struct upgt_lmac_led *)(mem + 1);
+
+	led->header1.flags = UPGT_H1_FLAGS_TX_NO_CALLBACK;
+	led->header1.type = UPGT_H1_TYPE_CTRL;
+	led->header1.len = htole16(
+	    sizeof(struct upgt_lmac_led) -
+	    sizeof(struct upgt_lmac_header));
+
+	led->header2.reqid = htole32(sc->sc_memaddr_frame_start);
+	led->header2.type = htole16(UPGT_H2_TYPE_LED);
+	led->header2.flags = 0;
+
+	switch (action) {
+	case UPGT_LED_OFF:
+		led->mode = htole16(UPGT_LED_MODE_SET);
+		led->action_fix = 0;
+		led->action_tmp = htole16(UPGT_LED_ACTION_OFF);
+		led->action_tmp_dur = 0;
+		break;
+	case UPGT_LED_ON:
+		led->mode = htole16(UPGT_LED_MODE_SET);
+		led->action_fix = 0;
+		led->action_tmp = htole16(UPGT_LED_ACTION_ON);
+		led->action_tmp_dur = 0;
+		break;
+	case UPGT_LED_BLINK:
+		if (ic->ic_state != IEEE80211_S_RUN)
+			return;
+		if (sc->sc_led_blink)
+			/* previous blink was not finished */
+			return;
+		led->mode = htole16(UPGT_LED_MODE_SET);
+		led->action_fix = htole16(UPGT_LED_ACTION_OFF);
+		led->action_tmp = htole16(UPGT_LED_ACTION_ON);
+		led->action_tmp_dur = htole16(UPGT_LED_ACTION_TMP_DUR);
+		/* lock blink */
+		sc->sc_led_blink = 1;
+		t.tv_sec = 0;
+		t.tv_usec = UPGT_LED_ACTION_TMP_DUR * 1000L;
+		timeout_add(&sc->led_to, tvtohz(&t));
+		break;
+	default:
+		return;
+	}
+
+	len = sizeof(*mem) + sizeof(*led);
+
+	mem->chksum = htole32(upgt_chksum((uint32_t *)led,
+	    len - sizeof(*mem)));
+
+	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
+		printf("%s: could not transmit led CMD URB!\n",
+		    sc->sc_dev.dv_xname);
+	}
+}
+
+void
+upgt_set_led_blink(void *arg)
+{
+	struct upgt_softc *sc = arg;
+
+	/* blink finished, we are ready for a next one */
+	sc->sc_led_blink = 0;
+	timeout_del(&sc->led_to);
 }
 
 int
