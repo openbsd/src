@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2008/01/18 02:15:41 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.6 2008/01/18 13:18:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -48,6 +48,7 @@ enum token_type {
 	TRAPOID,
 	ELEMENTOBJECT,
 	VALTYPE,
+	IPADDRVAL,
 	INT32VAL,
 	UINT32VAL,
 	INT64VAL,
@@ -68,6 +69,7 @@ static const struct token t_trapoid[];
 static const struct token t_element[];
 static const struct token t_oid[];
 static const struct token t_type[];
+static const struct token t_ipaddr[];
 static const struct token t_int32[];
 static const struct token t_uint32[];
 static const struct token t_int64[];
@@ -107,7 +109,7 @@ static const struct token t_oid[] = {
 };
 
 static const struct token t_type[] = {
-	{VALTYPE,	"ip",		SNMP_IPADDR,	t_int32 },
+	{VALTYPE,	"ip",		SNMP_IPADDR,	t_ipaddr },
 	{VALTYPE,	"counter",	SNMP_COUNTER32,	t_int32 },
 	{VALTYPE,	"gauge",	SNMP_GAUGE32,	t_int32 },
 	{VALTYPE,	"unsigned",	SNMP_GAUGE32,	t_uint32 },
@@ -121,6 +123,11 @@ static const struct token t_type[] = {
 	{VALTYPE,	"string",	SNMP_OCTETSTRING, t_string },
 	{VALTYPE,	"null",		SNMP_NULL,	t_element },
 	{VALTYPE,	"oid",		SNMP_OBJECT,	t_string },
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_ipaddr[] = {
+	{IPADDRVAL,	"",		NONE,		t_element},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -194,6 +201,8 @@ match_token(char *word, const struct token table[])
 	int64_t			 l;
 	struct iovec		 iov[2];
 	int			 iovcnt = 0;
+	struct in_addr		 in4;
+	struct in6_addr		 in6;
 
 	bzero(&iov, sizeof(iov));
 
@@ -259,6 +268,21 @@ match_token(char *word, const struct token table[])
 				errx(1, "oid too long");
 			match++;
 			t = &table[i];
+			break;
+		case IPADDRVAL:
+			if (word == NULL || strlen(word) == 0)
+				break;
+			if (inet_pton(AF_INET, word, &in4) == -1) {
+				/* XXX the SNMP_IPADDR type is IPv4-only? */
+				if (inet_pton(AF_INET6, word, &in6) == -1)
+					errx(1, "invalid IP address");
+				iov[1].iov_len = sizeof(in6);
+				iov[1].iov_base = &in6;
+			} else {
+				iov[1].iov_len = sizeof(in4);
+				iov[1].iov_base = &in4;
+			}
+			iovcnt = 2;
 			break;
 		case INT32VAL:
 			if (word == NULL || strlen(word) == 0)
@@ -340,6 +364,9 @@ show_valid_args(const struct token table[])
 		case TRAPOID:
 		case ELEMENTOBJECT:
 			fprintf(stderr, "  <oid-string>\n");
+			break;
+		case IPADDRVAL:
+			fprintf(stderr, "  <int32>\n");
 			break;
 		case INT32VAL:
 			fprintf(stderr, "  <int32>\n");
