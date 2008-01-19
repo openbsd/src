@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.164 2008/01/19 22:22:58 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.165 2008/01/19 22:37:19 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -497,7 +497,7 @@ do_fingerprint(struct passwd *pw)
 	FILE *f;
 	Key *public;
 	char *comment = NULL, *cp, *ep, line[16*1024], *fp;
-	int i, skip = 0, num = 1, invalid = 1;
+	int i, skip = 0, num = 0, invalid = 1;
 	enum fp_rep rep;
 	enum fp_type fptype;
 	struct stat st;
@@ -529,7 +529,8 @@ do_fingerprint(struct passwd *pw)
 	if (f != NULL) {
 		while (fgets(line, sizeof(line), f)) {
 			if ((cp = strchr(line, '\n')) == NULL) {
-				error("line %d too long: %.40s...", num, line);
+				error("line %d too long: %.40s...",
+				    num + 1, line);
 				skip = 1;
 				continue;
 			}
@@ -606,7 +607,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 	Key *public;
 	char *cp, *cp2, *kp, *kp2;
 	char line[16*1024], tmp[MAXPATHLEN], old[MAXPATHLEN];
-	int c, skip = 0, inplace = 0, num = 1, invalid = 0, has_unhashed = 0;
+	int c, skip = 0, inplace = 0, num = 0, invalid = 0, has_unhashed = 0;
 
 	if (!have_identity) {
 		cp = tilde_expand_filename(_PATH_SSH_USER_HOSTFILE, pw->pw_uid);
@@ -642,7 +643,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 
 	while (fgets(line, sizeof(line), in)) {
 		if ((cp = strchr(line, '\n')) == NULL) {
-			error("line %d too long: %.40s...", num, line);
+			error("line %d too long: %.40s...", num + 1, line);
 			skip = 1;
 			invalid = 1;
 			continue;
@@ -741,7 +742,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 	fclose(in);
 
 	if (invalid) {
-		fprintf(stderr, "%s is not a valid known_host file.\n",
+		fprintf(stderr, "%s is not a valid known_hosts file.\n",
 		    identity_file);
 		if (inplace) {
 			fprintf(stderr, "Not replacing existing known_hosts "
