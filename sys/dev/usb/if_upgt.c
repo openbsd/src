@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.19 2008/01/18 21:31:16 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.20 2008/01/19 10:39:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -132,8 +132,8 @@ int		upgt_bulk_xmit(struct upgt_softc *, struct upgt_data *,
 		    usbd_pipe_handle, uint32_t *, int);
 
 void		upgt_hexdump(void *, int);
-uint32_t	upgt_crc32(const void *, size_t);
-uint32_t	upgt_chksum(const uint32_t *, size_t);
+uint32_t	upgt_crc32_le(const void *, size_t);
+uint32_t	upgt_chksum_le(const uint32_t *, size_t);
 
 struct cfdriver upgt_cd = {
 	NULL, "upgt", DV_IFNET
@@ -754,9 +754,9 @@ upgt_fw_load(struct upgt_softc *sc)
 	bcopy(UPGT_X2_SIGNATURE, x2->signature, UPGT_X2_SIGNATURE_SIZE);
 	x2->startaddr = htole32(UPGT_MEMADDR_FIRMWARE_START);
 	x2->len = htole32(sc->sc_fw_size);
-	x2->crc = htole32(upgt_crc32(data_cmd->buf + UPGT_X2_SIGNATURE_SIZE,
+	x2->crc = upgt_crc32_le(data_cmd->buf + UPGT_X2_SIGNATURE_SIZE,
 	    sizeof(struct upgt_fw_x2_header) - UPGT_X2_SIGNATURE_SIZE -
-	    sizeof(uint32_t)));
+	    sizeof(uint32_t));
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not send firmware X2 header!\n",
 		    sc->sc_dev.dv_xname);
@@ -787,7 +787,7 @@ upgt_fw_load(struct upgt_softc *sc)
 	DPRINTF(1, "%s: firmware downloaded\n", sc->sc_dev.dv_xname);
 
 	/* load firmware */
-	crc32 = htole32(upgt_crc32(sc->sc_fw, sc->sc_fw_size));
+	crc32 = upgt_crc32_le(sc->sc_fw, sc->sc_fw_size);
 	*((uint32_t *)(data_cmd->buf)    ) = crc32;
 	*((uint8_t  *)(data_cmd->buf) + 4) = 'g';
 	*((uint8_t  *)(data_cmd->buf) + 5) = '\r';
@@ -896,8 +896,8 @@ upgt_eeprom_read(struct upgt_softc *sc)
 
 		len = sizeof(*mem) + sizeof(*eeprom) + block;
 
-		mem->chksum = htole32(upgt_chksum((uint32_t *)eeprom,
-		    len - sizeof(*mem)));
+		mem->chksum = upgt_chksum_le((uint32_t *)eeprom,
+		    len - sizeof(*mem));
 
 		if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len,
 		    USBD_FORCE_SHORT_XFER) != 0) {
@@ -1514,8 +1514,8 @@ upgt_tx_task(void *arg)
 		len = (len + 3) & ~3;
 
 		/* calculate frame checksum */
-		mem->chksum = htole32(upgt_chksum((uint32_t *)txdesc,
-		    len - sizeof(*mem)));
+		mem->chksum = upgt_chksum_le((uint32_t *)txdesc,
+		    len - sizeof(*mem));
 
 		/* we do not need the mbuf anymore */
 		m_freem(m);
@@ -1784,7 +1784,7 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 		filter->unknown1 = htole16(UPGT_FILTER_UNKNOWN1);
 		filter->rxaddr = htole32(sc->sc_memaddr_rx_start);
 		filter->unknown2 = htole16(UPGT_FILTER_UNKNOWN2);
-		filter->rxhw = htole16(sc->sc_eeprom_hwrx);
+		filter->rxhw = htole32(sc->sc_eeprom_hwrx);
 		filter->unknown3 = htole16(UPGT_FILTER_UNKNOWN3);
 		break;
 	case IEEE80211_S_RUN:
@@ -1797,7 +1797,7 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 		filter->unknown1 = htole16(UPGT_FILTER_UNKNOWN1);
 		filter->rxaddr = htole32(sc->sc_memaddr_rx_start);
 		filter->unknown2 = htole16(UPGT_FILTER_UNKNOWN2);
-		filter->rxhw = htole16(sc->sc_eeprom_hwrx);
+		filter->rxhw = htole32(sc->sc_eeprom_hwrx);
 		filter->unknown3 = htole16(UPGT_FILTER_UNKNOWN3);
 		break;
 	default:
@@ -1808,8 +1808,8 @@ upgt_set_macfilter(struct upgt_softc *sc, uint8_t state)
 
 	len = sizeof(*mem) + sizeof(*filter);
 
-	mem->chksum = htole32(upgt_chksum((uint32_t *)filter,
-	    len - sizeof(*mem)));
+	mem->chksum = upgt_chksum_le((uint32_t *)filter,
+	    len - sizeof(*mem));
 
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit macfilter CMD data URB!\n",
@@ -1868,8 +1868,8 @@ upgt_set_channel(struct upgt_softc *sc, unsigned channel)
 
 	len = sizeof(*mem) + sizeof(*chan);
 
-	mem->chksum = htole32(upgt_chksum((uint32_t *)chan,
-	    len - sizeof(*mem)));
+	mem->chksum = upgt_chksum_le((uint32_t *)chan,
+	    len - sizeof(*mem));
 
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit channel CMD data URB!\n",
@@ -1946,8 +1946,8 @@ upgt_set_led(struct upgt_softc *sc, int action)
 
 	len = sizeof(*mem) + sizeof(*led);
 
-	mem->chksum = htole32(upgt_chksum((uint32_t *)led,
-	    len - sizeof(*mem)));
+	mem->chksum = upgt_chksum_le((uint32_t *)led,
+	    len - sizeof(*mem));
 
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit led CMD URB!\n",
@@ -1998,8 +1998,8 @@ upgt_get_stats(struct upgt_softc *sc)
 
 	len = sizeof(*mem) + sizeof(*stats);
 
-	mem->chksum = htole32(upgt_chksum((uint32_t *)stats,
-	    len - sizeof(*mem)));
+	mem->chksum = upgt_chksum_le((uint32_t *)stats,
+	    len - sizeof(*mem));
 
 	if (upgt_bulk_xmit(sc, data_cmd, sc->sc_tx_pipeh, &len, 0) != 0) {
 		printf("%s: could not transmit statistics CMD data URB!\n",
@@ -2170,14 +2170,14 @@ upgt_hexdump(void *buf, int len)
 }
 
 uint32_t
-upgt_crc32(const void *buf, size_t size)
+upgt_crc32_le(const void *buf, size_t size)
 {
 	uint32_t crc;
 
 	crc = ether_crc32_le(buf, size);
 
 	/* apply final XOR value as common for CRC-32 */
-	crc = crc ^ 0xffffffffU;
+	crc = htole32(crc ^ 0xffffffffU);
 
 	return (crc);
 }
@@ -2187,14 +2187,14 @@ upgt_crc32(const void *buf, size_t size)
  * The algorithm used therefor is uncommon but somehow similar to CRC32.
  */
 uint32_t
-upgt_chksum(const uint32_t *buf, size_t size)
+upgt_chksum_le(const uint32_t *buf, size_t size)
 {
 	int i;
 	uint32_t crc = 0;
 
 	for (i = 0; i < size; i += sizeof(uint32_t)) {
-		crc ^= *buf++;
-		crc = (crc >> 5) ^ (crc << 3);
+		crc = htole32(crc ^ *buf++);
+		crc = htole32((crc >> 5) ^ (crc << 3));
 	}
 
 	return (crc);
