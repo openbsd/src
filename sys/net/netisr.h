@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.28 2007/09/08 02:45:04 dlg Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.29 2008/01/19 18:26:18 mpf Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ void	btintr(void);
 #include <machine/atomic.h>
 #define	schednetisr(anisr)						\
 do {									\
-	atomic_setbits_int(&netisr, (1 << (anisr)) | NETISR_RND);	\
+	atomic_setbits_int(&netisr, (1 << (anisr)) | (1 << NETISR_RND));\
 	setsoftnet();							\
 } while (0)
 #endif
