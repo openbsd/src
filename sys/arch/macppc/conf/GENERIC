@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.177 2007/11/17 23:44:24 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.178 2008/01/19 12:32:53 mglocker Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -279,6 +279,7 @@ scsibus* at usscanner?
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
+upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 udcf*	at uhub?		# Gude Expert mouseCLOCK
