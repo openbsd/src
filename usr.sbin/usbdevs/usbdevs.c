@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.12 2007/12/04 05:05:46 ckuethe Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.13 2008/01/19 23:04:11 winiger Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ int showdevs = 0;
 void usage(void);
 void usbdev(int f, int a, int rec);
 int getdevicedesc(int, int, usb_device_descriptor_t *);
-void getstring(int, int, int, char *);
+void getstring(int, int, int, char *, int);
 void usbdump(int f);
 void dumpone(char *name, int f, int addr);
 int main(int, char **);
@@ -79,7 +79,10 @@ usbdev(int f, int a, int rec)
 	struct usb_device_info di;
 	usb_device_descriptor_t dd;
 	char serialnum[USB_MAX_STRING_LEN];
+	struct usb_ctl_request req;
+	usb_string_descriptor_t us;
 	int e, p, i;
+	int langid = 0;
 
 	di.udi_addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
@@ -88,8 +91,20 @@ usbdev(int f, int a, int rec)
 			printf("addr %d: I/O error\n", a);
 		return;
 	}
+
+	req.ucr_addr = a;
+	req.ucr_request.bmRequestType = UT_READ_DEVICE;
+	req.ucr_request.bRequest = UR_GET_DESCRIPTOR;
+	req.ucr_data = &us;
+	USETW2(req.ucr_request.wValue, UDESC_STRING, 0);
+	USETW(req.ucr_request.wIndex, 0);
+	USETW(req.ucr_request.wLength, 4);
+	req.ucr_flags = 0;
+	if (ioctl(f, USB_REQUEST, &req) >= 0)
+		langid = UGETW(us.bString[0]);
+
 	if (getdevicedesc(f, a, &dd))
-		getstring(f, a, dd.iSerialNumber, serialnum);
+		getstring(f, a, dd.iSerialNumber, serialnum, langid);
 
 	printf("addr %d: ", a);
 	done[a] = 1;
@@ -181,7 +196,7 @@ getdevicedesc(int f, int addr, usb_device_descriptor_t *d)
 }
 
 void
-getstring(int f, int addr, int si, char *s)
+getstring(int f, int addr, int si, char *s, int langid)
 {
 	struct usb_ctl_request req;
 	usb_string_descriptor_t us;
@@ -197,7 +212,7 @@ getstring(int f, int addr, int si, char *s)
 	req.ucr_request.bRequest = UR_GET_DESCRIPTOR;
 	req.ucr_data = &us;
 	USETW2(req.ucr_request.wValue, UDESC_STRING, si);
-	USETW(req.ucr_request.wIndex, 0);
+	USETW(req.ucr_request.wIndex, langid);
 	USETW(req.ucr_request.wLength, sizeof(usb_string_descriptor_t));
 	req.ucr_flags = USBD_SHORT_XFER_OK;
 
