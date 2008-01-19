@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.33 2008/01/03 21:30:07 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.34 2008/01/19 11:13:43 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -316,21 +316,13 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 	return (0);
 }
 
-/* assume we are mapped little-endian/side-effect */
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
         pcireg_t val = (pcireg_t)~0;
 
-        DPRINTF(SPDB_CONF, ("pci_conf_read: tag %lx reg %x ",
-                (long)PCITAG_OFFSET(tag), reg));
-        if (PCITAG_NODE(tag) != -1) {
-                val = bus_space_read_4(pc->bustag, pc->bushandle,
-                        (PCITAG_OFFSET(tag) << pc->tagshift) + reg);
-        } else
-		DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
-	            (int)PCITAG_OFFSET(tag)));
-        DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
+        if (PCITAG_NODE(tag) != -1)
+		val = pc->conf_read(pc, tag, reg);
 
         return (val);
 }
@@ -338,17 +330,8 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-        DPRINTF(SPDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ",
-                (long)PCITAG_OFFSET(tag), reg, (int)data));
-
-        /* If we don't know it, just punt. */
-        if (PCITAG_NODE(tag) == -1) {
-                DPRINTF(SPDB_CONF, ("pci_config_write: bad addr"));
-                return;
-        }
-
-        bus_space_write_4(pc->bustag, pc->bushandle,
-                (PCITAG_OFFSET(tag) << pc->tagshift) + reg, data);
+        if (PCITAG_NODE(tag) != -1)
+		pc->conf_write(pc, tag, reg, data);
 }
 
 /*

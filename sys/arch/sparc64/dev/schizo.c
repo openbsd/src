@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.52 2007/11/13 15:51:59 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.53 2008/01/19 11:13:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -84,6 +84,9 @@ bus_space_tag_t schizo_alloc_config_tag(struct schizo_pbm *);
 bus_space_tag_t schizo_alloc_bus_tag(struct schizo_pbm *, const char *,
     int, int, int);
 bus_dma_tag_t schizo_alloc_dma_tag(struct schizo_pbm *);
+
+pcireg_t schizo_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void schizo_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 int schizo_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int schizo_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
@@ -223,6 +226,8 @@ schizo_init(struct schizo_softc *sc, int busa)
 	pba.pba_dmat = pbm->sp_dmat;
 	pba.pba_memt = pbm->sp_memt;
 	pba.pba_iot = pbm->sp_iot;
+	pba.pba_pc->conf_read = schizo_conf_read;
+	pba.pba_pc->conf_write = schizo_conf_write;
 	pba.pba_pc->intr_map = schizo_intr_map;
 
 	free(busranges, M_DEVBUF);
@@ -431,6 +436,20 @@ schizo_print(void *aux, const char *p)
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
+}
+
+pcireg_t
+schizo_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
+{
+	return (bus_space_read_4(pc->bustag, pc->bushandle,
+	    PCITAG_OFFSET(tag) + reg));
+}
+
+void
+schizo_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+{
+        bus_space_write_4(pc->bustag, pc->bushandle,
+	    PCITAG_OFFSET(tag) + reg, data);
 }
 
 /*

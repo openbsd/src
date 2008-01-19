@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.18 2007/11/25 00:38:49 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.19 2008/01/19 11:13:43 kettenis Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -68,7 +68,8 @@ struct sparc_pci_chipset {
 	bus_space_handle_t	bushandle;
 	int			rootnode;	/* PCI controller */
 	int			busnode[256];
-	int			tagshift;
+	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
+	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 	int (*intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
 };
 

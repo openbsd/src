@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.54 2007/10/08 18:30:13 krw Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.55 2008/01/19 11:13:43 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -114,6 +114,9 @@ void psycho_map_psycho(struct psycho_softc *, int, bus_addr_t, bus_size_t,
 int psycho_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 void psycho_identify_pbm(struct psycho_softc *sc, struct psycho_pbm *pp,
     struct pcibus_attach_args *pa);
+
+pcireg_t psycho_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void psycho_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -540,6 +543,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 	pba.pba_pc->bustag = sc->sc_configtag;
 	pba.pba_pc->bushandle = sc->sc_configaddr;
+	pba.pba_pc->conf_read = psycho_conf_read;
+	pba.pba_pc->conf_write = psycho_conf_write;
 	pba.pba_pc->intr_map = psycho_intr_map;
 
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
@@ -1047,6 +1052,21 @@ psycho_bus_addr(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h)
 	return (-1);
 }
 
+
+pcireg_t
+psycho_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
+{
+	return (bus_space_read_4(pc->bustag, pc->bushandle,
+	    PCITAG_OFFSET(tag) + reg));
+}
+
+void
+psycho_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+{
+        bus_space_write_4(pc->bustag, pc->bushandle,
+	    PCITAG_OFFSET(tag) + reg, data);
+}
+
 /*
  * Bus-specific interrupt mapping
  */ 
@@ -1239,4 +1259,3 @@ psycho_sabre_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
 		membar(MemIssue);
 }
-

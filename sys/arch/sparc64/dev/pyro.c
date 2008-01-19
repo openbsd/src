@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.10 2007/10/10 11:31:49 krw Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.11 2008/01/19 11:13:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -72,6 +72,9 @@ bus_space_tag_t pyro_alloc_config_tag(struct pyro_pbm *);
 bus_space_tag_t _pyro_alloc_bus_tag(struct pyro_pbm *, const char *,
     int, int, int);
 bus_dma_tag_t pyro_alloc_dma_tag(struct pyro_pbm *);
+
+pcireg_t pyro_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void pyro_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 int pyro_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int _pyro_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
@@ -188,6 +191,8 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pba.pba_dmat = pbm->pp_dmat;
 	pba.pba_memt = pbm->pp_memt;
 	pba.pba_iot = pbm->pp_iot;
+	pba.pba_pc->conf_read = pyro_conf_read;
+	pba.pba_pc->conf_write = pyro_conf_write;
 	pba.pba_pc->intr_map = pyro_intr_map;
 
 	free(busranges, M_DEVBUF);
@@ -227,6 +232,20 @@ pyro_print(void *aux, const char *p)
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
+}
+
+pcireg_t
+pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
+{
+	return (bus_space_read_4(pc->bustag, pc->bushandle,
+	    (PCITAG_OFFSET(tag) << 4) + reg));
+}
+
+void
+pyro_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+{
+        bus_space_write_4(pc->bustag, pc->bushandle,
+	    (PCITAG_OFFSET(tag) << 4) + reg, data);
 }
 
 /*
@@ -352,7 +371,6 @@ pyro_alloc_chipset(struct pyro_pbm *pbm, int node, pci_chipset_tag_t pc)
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pbm;
 	npc->rootnode = node;
-	npc->tagshift = 4;	/* PCIe has a larger config space */
 	return (npc);
 }
 
