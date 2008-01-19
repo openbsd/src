@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.61 2007/09/08 07:21:29 henning Exp $       */
+/* $OpenBSD: bioctl.c,v 1.62 2008/01/19 23:53:53 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -600,9 +600,12 @@ bio_createraid(u_int16_t level, char *dev_list)
 
 	switch (level) {
 	case 0:
-		min_disks = 1;
+		min_disks = 2;
 		break;
 	case 1:
+		min_disks = 2;
+		break;
+	case 'C':
 		min_disks = 2;
 		break;
 	case 'c':
@@ -611,6 +614,9 @@ bio_createraid(u_int16_t level, char *dev_list)
 	default:
 		errx(1, "unsupported raid level");
 	}
+
+	if (no_dev < min_disks)
+		errx(1, "not enough disks");
 
 	memset(&create, 0, sizeof(create));
 	create.bc_cookie = bl.bl_cookie;

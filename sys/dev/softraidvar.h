@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.35 2007/11/27 17:21:52 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.36 2008/01/19 23:53:53 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -119,6 +119,12 @@ struct sr_workunit {
 
 TAILQ_HEAD(sr_wu_list, sr_workunit);
 
+/* RAID 0 */
+#define SR_RAID0_NOWU		16
+struct sr_raid0 {
+	int32_t			sr0_stripbits;
+};
+
 /* RAID 1 */
 #define SR_RAID1_NOWU		16
 struct sr_raid1 {
@@ -220,7 +226,7 @@ struct sr_chunk {
 
 SLIST_HEAD(sr_chunk_head, sr_chunk);
 
-#define SR_VOL_VERSION	1	/* bump when sr_vol_meta changes */
+#define SR_VOL_VERSION	2	/* bump when sr_vol_meta changes */
 struct sr_vol_meta {
 	u_int32_t		svm_volid;	/* volume id */
 	u_int32_t		svm_status; 	/* use bioc_vol status */
@@ -234,6 +240,9 @@ struct sr_vol_meta {
 	char			svm_revision[4];/* scsi revision */
 	u_int32_t		svm_no_chunk;	/* number of chunks */
 	struct sr_uuid 		svm_uuid;	/* volume unique identifier */
+
+	/* optional members */
+	u_int32_t		svm_strip_size;	/* strip size */
 } __packed;
 
 struct sr_volume {
@@ -262,6 +271,7 @@ struct sr_discipline {
 	struct scsi_link	sd_link;	/* link to midlayer */
 
 	union {
+	    struct sr_raid0	mdd_raid0;
 	    struct sr_raid1	mdd_raid1;
 	    struct sr_crypto	mdd_crypto;
 	}			sd_dis_specific;/* dis specific members */
@@ -361,13 +371,20 @@ void			sr_raid_set_chunk_state(struct sr_discipline *,
 			    int, int);
 void			sr_raid_set_vol_state(struct sr_discipline *);
 void			sr_raid_startwu(struct sr_workunit *);
+int32_t			sr_validate_stripsize(u_int32_t);
 
+/* raid 0 */
+int			sr_raid0_alloc_resources(struct sr_discipline *);
+int			sr_raid0_free_resources(struct sr_discipline *);
+int			sr_raid0_rw(struct sr_workunit *);
+void			sr_raid0_intr(struct buf *);
+
+/* raid 1 */
 int			sr_raid1_alloc_resources(struct sr_discipline *);
 int			sr_raid1_free_resources(struct sr_discipline *);
 int			sr_raid1_rw(struct sr_workunit *);
 void			sr_raid1_intr(struct buf *);
 void			sr_raid1_recreate_wu(struct sr_workunit *);
-
 
 /* crypto discipline */
 struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
@@ -379,4 +396,4 @@ int			sr_crypto_rw2(struct cryptop *);
 void			sr_crypto_intr(struct buf *);
 int			sr_crypto_intr2(struct cryptop *);
 
-#endif
+#endif /* SOFTRAIDVAR_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.91 2008/01/19 15:33:13 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.92 2008/01/19 23:53:53 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -713,6 +713,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
 	int64_t			vol_size;
+	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
@@ -772,24 +773,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	}
 
 	if ((no_meta = sr_read_meta(sd)) == 0) {
-		/* no metadata available */
-		switch (bc->bc_level) {
-		case 1:
-			if (no_chunk < 2)
-				goto unwind;
-			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
-			break;
-#if 0
-		case 'C':
-			if (no_chunk != 1)
-				goto unwind;
-			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
-			break;
-#endif
-		default:
-			goto unwind;
-		}
-
 		/* fill out chunk array */
 		i = 0;
 		SLIST_FOREACH(ch_entry, cl, src_link)
@@ -797,10 +780,48 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 		/* fill out all chunk metadata */
 		sr_create_chunk_meta(sc, cl);
+		ch_entry = SLIST_FIRST(cl);
+
+		/* no metadata available */
+		switch (bc->bc_level) {
+		case 0:
+			if (no_chunk < 2)
+				goto unwind;
+			printf("1 ");
+			strlcpy(sd->sd_name, "RAID 0", sizeof(sd->sd_name));
+			printf("2 ");
+			/*
+			 * XXX add variable strip size later even though
+			 * MAXPHYS is really the clever value, users like
+			 * to tinker with that type of stuff
+			 */
+			printf("3 ");
+			strip_size = MAXPHYS;
+			printf("4 ");
+			vol_size =
+			    ch_entry->src_meta.scm_coerced_size * no_chunk;
+			printf("5 ");
+			break;
+		case 1:
+			if (no_chunk < 2)
+				goto unwind;
+			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
+			vol_size = ch_entry->src_meta.scm_coerced_size;
+			break;
+#if 0
+		case 'C':
+			if (no_chunk != 1)
+				goto unwind;
+			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
+			vol_size = ch_entry->src_meta.scm_coerced_size;
+			break;
+#endif
+		default:
+			goto unwind;
+		}
 
 		/* fill out all volume metadata */
-		ch_entry = SLIST_FIRST(cl);
-		vol_size = ch_entry->src_meta.scm_coerced_size;
+		printf("6 ");
 		DNPRINTF(SR_D_IOCTL,
 		    "%s: sr_ioctl_createraid: vol_size: %lld\n",
 		    DEVNAME(sc), vol_size);
@@ -808,6 +829,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_vol.sv_meta.svm_size = vol_size;
 		sd->sd_vol.sv_meta.svm_status = BIOC_SVONLINE;
 		sd->sd_vol.sv_meta.svm_level = bc->bc_level;
+		 sd->sd_vol.sv_meta.svm_strip_size = strip_size;
 		strlcpy(sd->sd_vol.sv_meta.svm_vendor, "OPENBSD",
 		    sizeof(sd->sd_vol.sv_meta.svm_vendor));
 		snprintf(sd->sd_vol.sv_meta.svm_product,
@@ -849,6 +871,27 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	/* XXX metadata SHALL be fully filled in at this point */
 
 	switch (bc->bc_level) {
+	case 0:
+		/* fill out discipline members */
+		sd->sd_type = SR_MD_RAID0;
+		sd->sd_max_ccb_per_wu =
+		    (MAXPHYS / sd->sd_vol.sv_meta.svm_strip_size + 1) *
+		    SR_RAID0_NOWU * sd->sd_vol.sv_meta.svm_no_chunk;
+		sd->sd_max_wu = SR_RAID0_NOWU;
+
+		/* setup discipline pointers */
+		sd->sd_alloc_resources = sr_raid0_alloc_resources;
+		sd->sd_free_resources = sr_raid0_free_resources;
+		sd->sd_scsi_inquiry = sr_raid_inquiry;
+		sd->sd_scsi_read_cap = sr_raid_read_cap;
+		sd->sd_scsi_tur = sr_raid_tur;
+		sd->sd_scsi_req_sense = sr_raid_request_sense;
+		sd->sd_scsi_start_stop = sr_raid_start_stop;
+		sd->sd_scsi_sync = sr_raid_sync;
+		sd->sd_scsi_rw = sr_raid0_rw;
+		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
+		sd->sd_set_vol_state = sr_raid_set_vol_state;
+		break;
 	case 1:
 		/* fill out discipline members */
 		sd->sd_type = SR_MD_RAID1;
@@ -2275,6 +2318,27 @@ bad:
 	return (1);
 }
 
+int32_t
+sr_validate_stripsize(u_int32_t b)
+{
+	int			s = 0;
+
+	if (b % 512)
+		return (-1);
+
+	while ((b & 1) == 0) {
+		b >>= 1;
+		s++;
+	}
+
+	/* only multiple of twos */
+	b >>= 1;
+	if (b)
+		return(-1);
+
+	return (s);
+}
+
 void
 sr_shutdown(void *arg)
 {
@@ -2419,6 +2483,9 @@ sr_print_metadata(struct sr_metadata *sm)
 	struct sr_vol_meta	*im_sv;
 	struct sr_chunk_meta	*im_sc;
 	int			ch;
+
+	if (!(sr_debug & SR_D_META))
+		return;
 
 	im_sv = (struct sr_vol_meta *)(sm + 1);
 	im_sc = (struct sr_chunk_meta *)(im_sv + 1);

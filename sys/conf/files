@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.422 2008/01/05 17:33:28 mbalmer Exp $
+#	$OpenBSD: files,v 1.423 2008/01/19 23:53:53 marco Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -442,6 +442,7 @@ file	dev/ipmi.c			ipmi	needs-flag
 device	softraid: scsi
 attach	softraid at root
 file	dev/softraid.c			softraid	needs-flag
+file	dev/softraid_raid0.c		softraid
 file	dev/softraid_raid1.c		softraid
 file	dev/softraid_crypto.c		softraid & crypto
 
