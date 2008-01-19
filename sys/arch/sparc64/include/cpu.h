@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.52 2007/10/31 22:46:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.53 2008/01/19 17:42:05 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -179,19 +179,15 @@ void	smp_signotify(struct proc *);
  * Arguments to hardclock, softclock and gatherstats encapsulate the
  * previous machine state in an opaque clockframe.  The ipl is here
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
- * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
-extern int intstack[];
-extern int eintstack[];
 struct clockframe {
 	struct trapframe64 t;
+	int saved_intr_level;
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
-#define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
-				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\
-				((framep)->t.tf_kstack > (vaddr_t)INTSTACK)))
+#define	CLKF_INTR(framep)	((framep)->saved_intr_level != 0)
 
 void setsoftnet(void);
 
