@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrd.c,v 1.5 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: clkbrd.c,v 1.6 2008/01/20 16:41:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -26,14 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/timeout.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
+#include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -46,6 +46,7 @@
 int clkbrd_match(struct device *, void *, void *);
 void clkbrd_attach(struct device *, struct device *, void *);
 void clkbrd_led_blink(void *, int);
+void clkbrd_refresh(void *);
 
 struct cfattach clkbrd_ca = {
 	sizeof(struct clkbrd_softc), clkbrd_match, clkbrd_attach
@@ -56,9 +57,7 @@ struct cfdriver clkbrd_cd = {
 };
 
 int
-clkbrd_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+clkbrd_match(struct device *parent, void *match, void *aux)
 {
 	struct fhc_attach_args *fa = aux;
 
@@ -68,9 +67,7 @@ clkbrd_match(parent, match, aux)
 }
 
 void
-clkbrd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clkbrd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct clkbrd_softc *sc = (struct clkbrd_softc *)self;
 	struct fhc_attach_args *fa = aux;
@@ -118,11 +115,25 @@ clkbrd_attach(parent, self, aux)
 		}
 	}
 
-	printf(": %d slots\n", slots);
-
 	sc->sc_blink.bl_func = clkbrd_led_blink;
 	sc->sc_blink.bl_arg = sc;
 	blink_led_register(&sc->sc_blink);
+
+	/* Initialize sensor data. */
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dv.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sc->sc_sensor.type = SENSOR_TEMP;
+
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+
+	if (sensor_task_register(sc, clkbrd_refresh, 5) == NULL) {
+		printf(": unable to register update task\n");
+		return;
+	}
+
+	sensordev_install(&sc->sc_sensordev);
+
+	printf(": %d slots\n", slots);
 }
 
 void
@@ -141,4 +152,54 @@ clkbrd_led_blink(void *vsc, int on)
 	bus_space_write_1(sc->sc_bt, sc->sc_creg, CLK_CTRL, r);
 	bus_space_read_1(sc->sc_bt, sc->sc_creg, CLK_CTRL);
 	splx(s);
+}
+
+/*
+ * Calibration table for temperature sensor.
+ */
+int8_t clkbrd_temp[] = {
+	 0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  1,  2,  4,  5,
+	 7,  8, 10, 11, 12, 13, 14, 15,
+	17, 18, 19, 20, 21, 22, 23, 24,
+	24, 25, 26, 27, 28, 29, 29, 30,
+	31, 32, 32, 33, 34, 35, 35, 36,
+	37, 38, 38, 39, 40, 40, 41, 42,
+	42, 43, 44, 44, 45, 46, 46, 47,
+	48, 48, 49, 50, 50, 51, 52, 52,
+	53, 54, 54, 55, 56, 57, 57, 58,
+	59, 59, 60, 60, 61, 62, 63, 63,
+	64, 65, 65, 66, 67, 68, 68, 69,
+	70, 70, 71, 72, 73, 74, 74, 75,
+	76, 77, 78, 78, 79, 80, 81, 82
+};
+
+const int8_t clkbrd_temp_warn = 60;
+const int8_t clkbrd_temp_crit = 68;
+
+void
+clkbrd_refresh(void *arg)
+{
+	struct clkbrd_softc *sc = arg;
+	u_int8_t val;
+	int8_t temp;
+
+	val = bus_space_read_1(sc->sc_bt, sc->sc_creg, CLK_TEMP);
+	if (val == 0xff) {
+		sc->sc_sensor.flags |= SENSOR_FINVALID;
+		return;
+	}
+
+	if (val < sizeof(clkbrd_temp))
+		temp = clkbrd_temp[val];
+	else
+		temp = clkbrd_temp[sizeof(clkbrd_temp) - 1];
+
+	sc->sc_sensor.value = val * 1000000 + 273150000;
+	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
+	sc->sc_sensor.status = SENSOR_S_OK;
+	if (temp >= clkbrd_temp_warn)
+		sc->sc_sensor.status = SENSOR_S_WARN;
+	if (temp >= clkbrd_temp_crit)
+		sc->sc_sensor.status = SENSOR_S_CRIT;
 }

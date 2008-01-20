@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrdvar.h,v 1.2 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: clkbrdvar.h,v 1.3 2008/01/20 16:41:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -34,4 +34,6 @@ struct clkbrd_softc {
 	int sc_node;
 	int sc_has_vreg;
 	struct blink_led sc_blink;
+	struct ksensor sc_sensor;
+	struct ksensordev sc_sensordev;
 };
