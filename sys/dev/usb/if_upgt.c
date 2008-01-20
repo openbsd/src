@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.22 2008/01/20 10:49:55 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.23 2008/01/20 11:55:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -866,11 +866,9 @@ upgt_eeprom_read(struct upgt_softc *sc)
 	struct upgt_lmac_eeprom	*eeprom;
 	int offset, block, len;
 
+	offset = 0;
 	block = UPGT_EEPROM_BLOCK_SIZE;
-	offset = UPGT_EEPROM_SIZE;
-	while (offset > 0) {
-		offset = offset - block;
-
+	while (offset < UPGT_EEPROM_SIZE) {
 		DPRINTF(1, "%s: request EEPROM block (offset=%d, len=%d)\n",
 		    sc->sc_dev.dv_xname, offset, block);
 
@@ -914,8 +912,9 @@ upgt_eeprom_read(struct upgt_softc *sc)
 			return (EIO);
 		}
 
-		if (offset < block)
-			block = offset;
+		offset += block;
+		if (UPGT_EEPROM_SIZE - offset < block)
+			block = UPGT_EEPROM_SIZE - offset;
 	}
 
 	return (0);
