@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.24 2008/01/20 23:31:50 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.25 2008/01/20 23:34:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -165,14 +165,6 @@ static const struct usb_devno upgt_devs[] = {
 	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_2 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_XG703A }
 };
-
-/*
- * XXX For now just keep the device ratesets here.
- * It seems the device does hardware rate control based on those available
- * ratesets.
- */
-uint8_t rates_11g[] = { 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x04, 0x01 };
-uint8_t rates_11b[] = { 0x13, 0x13, 0x12, 0x11, 0x11, 0x10, 0x10, 0x10 };
 
 int
 upgt_match(struct device *parent, void *match, void *aux)
