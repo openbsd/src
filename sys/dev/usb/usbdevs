@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.330 2008/01/05 04:57:59 deraadt Exp $
+$OpenBSD: usbdevs,v 1.331 2008/01/20 00:14:41 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -397,6 +397,7 @@ vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor HTC		0x0bb4	HTC
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
+vendor FSC		0x0bf8	Fujitsu Siemens Computers
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor MICRODIA		0x0c45	Microdia
@@ -1210,8 +1211,11 @@ product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
-/* Fujitsu protducts */
+/* Fujitsu products */
 product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
+
+/* Fujitsu Siemens Computers products */
+product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
 
 /* G.Mate */
 product	GMATE YP3X00		0x1001	YP3X00 PDA

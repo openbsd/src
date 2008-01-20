@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.20 2008/01/19 10:39:22 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.21 2008/01/20 00:14:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -153,6 +153,7 @@ static const struct usb_devno upgt_devs[] = {
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_PRISM_GT },
 	{ USB_VENDOR_DELL,		USB_PRODUCT_DELL_PRISM_GT_1 },
 	{ USB_VENDOR_DELL,		USB_PRODUCT_DELL_PRISM_GT_2 },
+	{ USB_VENDOR_FSC,		USB_PRODUCT_FSC_E5400 },
 	{ USB_VENDOR_GLOBESPAN,		USB_PRODUCT_GLOBESPAN_PRISM_GT_1 },
 	{ USB_VENDOR_GLOBESPAN,		USB_PRODUCT_GLOBESPAN_PRISM_GT_2 },
 	{ USB_VENDOR_INTERSIL,		USB_PRODUCT_INTERSIL_PRISM_GT },
