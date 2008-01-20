@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.92 2008/01/19 23:53:53 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.93 2008/01/20 17:20:10 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -787,20 +787,15 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		case 0:
 			if (no_chunk < 2)
 				goto unwind;
-			printf("1 ");
 			strlcpy(sd->sd_name, "RAID 0", sizeof(sd->sd_name));
-			printf("2 ");
 			/*
 			 * XXX add variable strip size later even though
 			 * MAXPHYS is really the clever value, users like
 			 * to tinker with that type of stuff
 			 */
-			printf("3 ");
 			strip_size = MAXPHYS;
-			printf("4 ");
 			vol_size =
 			    ch_entry->src_meta.scm_coerced_size * no_chunk;
-			printf("5 ");
 			break;
 		case 1:
 			if (no_chunk < 2)
@@ -821,7 +816,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		}
 
 		/* fill out all volume metadata */
-		printf("6 ");
 		DNPRINTF(SR_D_IOCTL,
 		    "%s: sr_ioctl_createraid: vol_size: %lld\n",
 		    DEVNAME(sc), vol_size);
