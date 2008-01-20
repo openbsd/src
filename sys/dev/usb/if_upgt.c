@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.23 2008/01/20 11:55:07 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.24 2008/01/20 23:31:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -116,6 +116,7 @@ void		upgt_tx_task(void *);
 void		upgt_tx_done(struct upgt_softc *, uint8_t *);
 void		upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void		upgt_rx(struct upgt_softc *, uint8_t *, int);
+void		upgt_setup_rates(struct upgt_softc *);
 int		upgt_set_macfilter(struct upgt_softc *, uint8_t state);
 int		upgt_set_channel(struct upgt_softc *, unsigned);
 void		upgt_set_led(struct upgt_softc *, int);
@@ -1187,7 +1188,10 @@ upgt_init(struct ifnet *ifp)
 
 	/* select default channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	sc->sc_cur_chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+	/* setup device rates */
+	upgt_setup_rates(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1455,6 +1459,8 @@ upgt_tx_task(void *arg)
 			m = ieee80211_wep_crypt(ifp, m, 1);
 			if (m == NULL)
 				return;
+			/* in case packet header moved, reset pointer */
+			wh = mtod(m, struct ieee80211_frame *);
 		}
 
 		/*
@@ -1476,12 +1482,14 @@ upgt_tx_task(void *arg)
 		txdesc->header2.type = htole16(UPGT_H2_TYPE_TX_ACK_YES);
 		txdesc->header2.flags = htole16(UPGT_H2_FLAGS_TX_ACK_YES);
 
-		/*
-		 * XXX As soon we have found out why the device crashes on
-		 * higher rates, we need to switch dynamically between 11b
-		 * and 11g here.  For now we set 11b fix.
-		 */
-		bcopy(rates_11g, txdesc->rates, sizeof(txdesc->rates));
+		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+		    IEEE80211_FC0_TYPE_MGT) {
+			/* always send mgmt frames at lowest rate (DS1) */
+			memset(txdesc->rates, 0x10, sizeof(txdesc->rates));
+		} else {
+			bcopy(sc->sc_cur_rateset, txdesc->rates,
+			    sizeof(txdesc->rates));
+		}
 		txdesc->type = htole32(UPGT_TX_DESC_TYPE_DATA);
 		txdesc->pad3[0] = UPGT_TX_DESC_PAD3_SIZE;
 
@@ -1737,6 +1745,49 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	splx(s);
 
 	DPRINTF(3, "%s: RX done\n", sc->sc_dev.dv_xname);
+}
+
+void
+upgt_setup_rates(struct upgt_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	/*
+	 * 0x01 = OFMD6   0x10 = DS1
+	 * 0x04 = OFDM9   0x11 = DS2
+	 * 0x06 = OFDM12  0x12 = DS5
+	 * 0x07 = OFDM18  0x13 = DS11
+	 * 0x08 = OFDM24
+	 * 0x09 = OFDM36
+	 * 0x0a = OFDM48
+	 * 0x0b = OFDM54
+	 */
+	const uint8_t rateset_auto_11b[] =
+	    { 0x13, 0x13, 0x12, 0x11, 0x11, 0x10, 0x10, 0x10 };
+	const uint8_t rateset_auto_11g[] =
+	    { 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x04, 0x01 };
+	const uint8_t rateset_fix_11bg[] =
+	    { 0x10, 0x11, 0x12, 0x13, 0x01, 0x04, 0x06, 0x07,
+	      0x08, 0x09, 0x0a, 0x0b };
+
+	if (ic->ic_fixed_rate == -1) {
+		/*
+		 * Automatic rate control is done by the device.
+		 * We just pass the rateset from which the device
+		 * will pickup a rate.
+		 */
+		if (ic->ic_curmode == IEEE80211_MODE_11B)
+			bcopy(rateset_auto_11b, sc->sc_cur_rateset,
+			    sizeof(sc->sc_cur_rateset));
+		if (ic->ic_curmode == IEEE80211_MODE_11G ||
+		    ic->ic_curmode == IEEE80211_MODE_AUTO)
+			bcopy(rateset_auto_11g, sc->sc_cur_rateset,
+			    sizeof(sc->sc_cur_rateset));
+	} else {
+		/* set a fixed rate */
+		memset(sc->sc_cur_rateset, rateset_fix_11bg[ic->ic_fixed_rate],
+		    sizeof(sc->sc_cur_rateset));
+	}
 }
 
 int
