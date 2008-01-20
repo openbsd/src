@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.21 2008/01/20 00:14:41 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.22 2008/01/20 10:49:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -444,6 +444,8 @@ upgt_detach(struct device *self, int flags)
 	struct upgt_softc *sc = (struct upgt_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	s = splusb();
 
@@ -1206,6 +1208,8 @@ upgt_stop(struct upgt_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	/* device down */
 	ifp->if_timer = 0;
@@ -1973,8 +1977,6 @@ upgt_get_stats(struct upgt_softc *sc)
 	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_stats *stats;
 	int len;
-
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	/*
 	 * Transmit the URB containing the CMD data.
