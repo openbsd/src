@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.331 2008/01/20 00:14:41 mglocker Exp $
+$OpenBSD: usbdevs,v 1.332 2008/01/21 12:54:22 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -585,6 +585,8 @@ product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
 product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SMCWUSBG		0x4505	SMCWUSB-G
+product ACCTON SMCWUSBTG2	0x4506	SMCWUSBT-G2
+product ACCTON SMCWUSBTG2_NF	0x4507	SMCWUSBT-G2
 product	ACCTON PRISM_GT		0x4521	PrismGT USB 2.0 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
 product ACCTON RT2870_2		0x6618	RT2870
