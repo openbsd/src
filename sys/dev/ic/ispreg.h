@@ -1,7 +1,7 @@
-/*	$OpenBSD: ispreg.h,v 1.13 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: ispreg.h,v 1.14 2008/01/21 20:00:33 sobrado Exp $ */
 /*
  * Machine Independent (well, as best as possible) register
- * definitions for Qlogic ISP SCSI adapters.
+ * definitions for QLogic ISP SCSI adapters.
  *
  * Copyright (c) 1997, 1998, 1999, 2000 by Matthew Jacob
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define	_ISPREG_H
 
 /*
- * Hardware definitions for the Qlogic ISP  registers.
+ * Hardware definitions for the QLogic ISP registers.
  */
 
 /*
@@ -681,7 +681,7 @@
 #define	ISPBSMX(c, byte, shift, mask)	\
 	(((c)[(byte)] >> (shift)) & (mask))
 /*
- * Qlogic 1020/1040 NVRAM is an array of 128 bytes.
+ * QLogic 1020/1040 NVRAM is an array of 128 bytes.
  *
  * Some portion of the front of this is for general host adapter properties
  * This is followed by an array of per-target parameters, and is tailed off
@@ -741,7 +741,7 @@
 #define	ISP_NVRAM_TGT_LUN_DISABLE(c, t)		ISPBSMX(c, _IxT(t, 3), 5, 0x01)
 
 /*
- * Qlogic 1080/1240 NVRAM is an array of 256 bytes.
+ * QLogic 1080/1240 NVRAM is an array of 256 bytes.
  *
  * Some portion of the front of this is for general host adapter properties
  * This is followed by an array of per-target parameters, and is tailed off
@@ -924,7 +924,7 @@
 	ISPBSMX(c, _IxT16(t, 4, (b)), 7, 0x01)
 
 /*
- * Qlogic 2XXX NVRAM is an array of 256 bytes.
+ * QLogic 2XXX NVRAM is an array of 256 bytes.
  *
  * Some portion of the front of this is for general RISC engine parameters,
  * mostly reflecting the state of the last INITIALIZE FIRMWARE mailbox command.

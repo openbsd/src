@@ -1,6 +1,6 @@
-/*     $OpenBSD: ispmbox.h,v 1.19 2003/03/03 18:38:10 mjacob Exp $ */
+/*     $OpenBSD: ispmbox.h,v 1.20 2008/01/21 20:00:33 sobrado Exp $ */
 /*
- * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
+ * Mailbox and Queue Entry Definitions for for QLogic ISP SCSI adapters.
  *
  * Copyright (c) 1997, 1998, 1999, 2000 by Matthew Jacob
  * All rights reserved.
@@ -451,7 +451,7 @@ typedef struct {
 } ispstatus_cont_t;
 
 /* 
- * For Qlogic 2X00, the high order byte of SCSI status has
+ * For QLogic 2X00, the high order byte of SCSI status has
  * additional meaning.
  */
 #define	RQCS_RU	0x800	/* Residual Under */
@@ -704,7 +704,7 @@ typedef struct isp_icb {
  * This is an at most 128 byte map that returns either
  * the LILP or Firmware generated list of ports.
  *
- * We deviate a bit from the returned qlogic format to
+ * We deviate a bit from the returned QLogic format to
  * use an extra bit to say whether this was a LILP or
  * f/w generated map.
  */

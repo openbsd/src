@@ -1,7 +1,7 @@
-/* 	$OpenBSD: isp.c,v 1.40 2007/10/16 23:41:42 fgsch Exp $ */
+/* 	$OpenBSD: isp.c,v 1.41 2008/01/21 20:00:33 sobrado Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
- * code for the Qlogic ISP SCSI adapters.
+ * code for the QLogic ISP SCSI adapters.
  *
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 by Matthew Jacob
  * Feral Software
@@ -1879,7 +1879,7 @@ isp_pdb_sync(struct ispsoftc *isp)
 		 * If we'd been logged in- see if we still are and we haven't
 		 * changed. If so, no need to log ourselves out, etc..
 		 *
-		 * Unfortunately, our charming Qlogic f/w has decided to
+		 * Unfortunately, our charming QLogic f/w has decided to
 		 * return a valid port database entry for a fabric device
 		 * that has, in fact, gone away. And it hangs trying to
 		 * log it out.
@@ -3218,7 +3218,7 @@ isp_start(XS_T *xs)
 
 		/*
 		 * Fibre Channel always requires some kind of tag.
-		 * The Qlogic drivers seem be happy not to use a tag,
+		 * The QLogic drivers seem be happy not to use a tag,
 		 * but this breaks for some devices (IBM drives).
 		 */
 		if (XS_TAG_P(xs)) {
@@ -3267,7 +3267,7 @@ isp_start(XS_T *xs)
 
 	/*
 	 * Set up DMA and/or do any bus swizzling of the request entry
-	 * so that the Qlogic F/W understands what is being asked of it.
+	 * so that the QLogic F/W understands what is being asked of it.
 	 */
 	i = ISP_DMASETUP(isp, xs, reqp, &nxti, optr);
 	if (i != CMD_QUEUED) {
@@ -6315,7 +6315,7 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 	 * I can find. However, we should account for this being set
 	 * at some point in the future.
 	 *
-	 * Qlogic WWNs have an NAA of 2, but usually nothing shows up in
+	 * QLogic WWNs have an NAA of 2, but usually nothing shows up in
 	 * bits 48..60. In the case of the 2202, it appears that they do
 	 * use bit 48 to distinguish between the two instances on the card.
 	 * The 2204, which I've never seen, *probably* extends this method.

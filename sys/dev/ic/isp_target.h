@@ -1,8 +1,8 @@
-/*	$OpenBSD: isp_target.h,v 1.11 2002/08/17 17:42:04 mjacob Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.12 2008/01/21 20:00:33 sobrado Exp $	*/
 
 /* @(#)isp_target.h 1.3 */
 /*
- * Qlogic Target Mode Structure and Flag Definitions
+ * QLogic Target Mode Structure and Flag Definitions
  *
  * Copyright (c) 1997, 1998
  * Patrick Stirling
@@ -513,7 +513,7 @@ typedef struct {
 #ifdef	ISP_TARGET_FUNCTIONS
 /*
  * The functions below are for the publicly available
- * target mode functions that are internal to the Qlogic driver.
+ * target mode functions that are internal to the QLogic driver.
  */
 
 /*

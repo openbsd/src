@@ -1,6 +1,6 @@
-/*	$OpenBSD: isp_pci.c,v 1.40 2007/09/22 16:03:23 krw Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.41 2008/01/21 20:00:33 sobrado Exp $	*/
 /*
- * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
+ * PCI specific probe and attach routines for QLogic ISP SCSI adapters.
  *
  *---------------------------------------
  * Copyright (c) 1997, 1998, 1999 by Matthew Jacob
@@ -334,7 +334,7 @@ struct cfattach isp_pci_ca = {
 
 #ifdef  DEBUG
 const char vstring[] =
-    "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
+    "QLogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
 #endif
 
 const struct pci_matchid ispdev[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.10 2007/09/11 13:39:34 gilles Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.11 2008/01/21 20:00:33 sobrado Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  * Please coordinate with Matthew Jacob on changes you wish to make here.
  */
 /*
- * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
+ * SBus specific probe and attach routines for QLogic ISP SCSI adapters.
  *
  * Copyright (c) 1997, 2001 by Matthew Jacob
  * NASA AMES Research Center
@@ -142,7 +142,7 @@ isp_match(struct device *parent, void *vcf, void *aux)
 #ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
-		printf("Qlogic ISP Driver, NetBSD (sbus) Platform Version "
+		printf("QLogic ISP Driver, NetBSD (sbus) Platform Version "
 		    "%d.%d Core Version %d.%d\n",
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);

@@ -1,6 +1,6 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.26 2004/08/02 19:55:45 art Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.27 2008/01/21 20:00:33 sobrado Exp $ */
 /*
- * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
+ * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
 /*
  * Copyright (C) 1999, 2000, 2001 by Matthew Jacob

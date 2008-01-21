@@ -1,6 +1,6 @@
-/* $OpenBSD: isp_target.c,v 1.14 2007/02/14 00:53:48 jsg Exp $ */
+/* $OpenBSD: isp_target.c,v 1.15 2008/01/21 20:00:33 sobrado Exp $ */
 /*
- * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
+ * Machine and OS Independent Target Mode Code for the QLogic SCSI/FC adapters.
  *
  * Copyright (c) 1999, 2000, 2001 by Matthew Jacob
  * All rights reserved.
@@ -66,7 +66,7 @@ static void isp_handle_ctio(struct ispsoftc *, ct_entry_t *);
 static void isp_handle_ctio2(struct ispsoftc *, ct2_entry_t *);
 
 /*
- * The Qlogic driver gets an interrupt to look at response queue entries.
+ * The QLogic driver gets an interrupt to look at response queue entries.
  * Some of these are status completions for initiatior mode commands, but
  * if target mode is enabled, we get a whole wad of response queue entries
  * to be handled here.
@@ -86,7 +86,7 @@ static void isp_handle_ctio2(struct ispsoftc *, ct2_entry_t *);
  * be moved and/or status to be sent) and finally finishing with sending
  * to the f/w's response queue an ATIO which then completes the handshake
  * with the f/w for that command. There's a lot of variations on this theme,
- * including flags you can set in the CTIO for the Qlogic 2X00 fibre channel
+ * including flags you can set in the CTIO for the QLogic 2X00 fibre channel
  * cards that 'auto-replenish' the f/w's ATIO count, but this is the basic
  * gist of it.
  *

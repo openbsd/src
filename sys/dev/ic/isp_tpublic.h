@@ -1,6 +1,6 @@
-/* $OpenBSD: isp_tpublic.h,v 1.9 2007/04/10 17:47:55 miod Exp $ */
+/* $OpenBSD: isp_tpublic.h,v 1.10 2008/01/21 20:00:33 sobrado Exp $ */
 /*
- * Qlogic ISP Host Adapter Public Target Interface Structures && Routines
+ * QLogic ISP Host Adapter Public Target Interface Structures && Routines
  *---------------------------------------
  * Copyright (c) 2000, 2001 by Matthew Jacob
  * All rights reserved.
@@ -97,7 +97,7 @@ typedef struct {
  * bus host adapters) that this applies to (consider it an extra Port
  * parameter). The iid, tgt and lun values are deliberately chosen to be
  * fat so that, for example, World Wide Names can be used instead of
- * the units that the Qlogic firmware uses (in the case where the MD
+ * the units that the QLogic firmware uses (in the case where the MD
  * layer maintains a port database, for example).
  *
  * The cd_tagtype field specifies what kind of command tag has been
@@ -107,11 +107,11 @@ typedef struct {
  *
  * N.B.: when the MD layer sends this command to outside software
  * the outside software likely *MUST* return the same cd_tagval that
- * was in place because this value is likely what the Qlogic f/w uses
+ * was in place because this value is likely what the QLogic f/w uses
  * to identify a command.
  *
  * The cd_cdb contains storage for the passed in command descriptor block.
- * This is the maximum size we can get out of the Qlogic f/w. There's no
+ * This is the maximum size we can get out of the QLogic f/w. There's no
  * passed in length because whoever decodes the command to act upon it
  * will know what the appropriate length is.
  *
@@ -241,7 +241,7 @@ typedef struct tmd_cmd {
 #define	CDFH_PRIVATE_0	0x80		/* private layer flags */
 
 /*
- * Action codes set by the Qlogic MD target driver for
+ * Action codes set by the QLogic MD target driver for
  * the external layer to figure out what to do with.
  */
 typedef enum {
@@ -255,7 +255,7 @@ typedef enum {
 
 /*
  * Action codes set by the external layer for the
- * MD Qlogic driver to figure out what to do with.
+ * MD QLogic driver to figure out what to do with.
  */
 typedef enum {
 	QIN_HBA_REG=6,	/* the argument is a pointer to a hba_register_t */
@@ -270,16 +270,16 @@ typedef enum {
  * A word about the START/CONT/DONE/FIN dance:
  *
  *	When the HBA is enabled for receiving commands, one may	show up
- *	without notice. When that happens, the Qlogic target mode driver
+ *	without notice. When that happens, the QLogic target mode driver
  *	gets a tmd_cmd_t, fills it with the info that just arrived, and
  *	calls the outer layer with a QOUT_TMD_START code and pointer to
  *	the tmd_cmd_t.
  *
  *	The outer layer decodes the command, fetches data, prepares stuff,
  *	whatever, and starts by passing back the pointer with a QIN_TMD_CONT
- *	code which causes the Qlogic target mode driver to generate CTIOs to
+ *	code which causes the QLogic target mode driver to generate CTIOs to
  *	satisfy whatever action needs to be taken. When those CTIOs complete,
- *	the Qlogic target driver sends the pointer to the cmd_tmd_t back with
+ *	the QLogic target driver sends the pointer to the cmd_tmd_t back with
  *	a QOUT_TMD_DONE code. This repeats for as long as necessary.
  *
  *	The outer layer signals it wants to end the command by settings within

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.22 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: isp.4,v 1.23 2008/01/21 20:00:32 sobrado Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -26,12 +26,12 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 21 2008 $
 .Dt ISP 4
 .Os
 .Sh NAME
 .Nm isp
-.Nd Qlogic based SCSI or Fibre Channel SCSI interface
+.Nd QLogic based SCSI or Fibre Channel SCSI interface
 .Sh SYNOPSIS
 .Cd "isp* at pci?     " Pq PCI
 .Cd "isp* at sbus?    " Pq SBus
@@ -42,7 +42,7 @@ This driver provides access to a
 .Tn SCSI
 bus or a Fibre Channel
 connected to
-.Tn Qlogic
+.Tn QLogic
 ISP1000 (SBus), ISP1020 (PCI), ISP1040 (PCI), ISP1080 (PCI), ISP12160 (PCI)
 .Tn SCSI
 host adapters or ISP2100 (PCI), ISP2200 (PCI) Fibre Channel
