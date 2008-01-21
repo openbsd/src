@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.5 2008/01/09 12:16:58 reyk Exp $
+# $OpenBSD: README,v 1.6 2008/01/21 23:33:39 reyk Exp $
 
 SNMP daemon
 -----------
@@ -86,20 +86,18 @@ TODO
 		- IP-MIB	(mostly done, at least the old version)
 		- TCP-MIB
 		- UDP-MIB
-		- BRIDGE-MIB
+		- BRIDGE-MIB	(partially done)
                 - OPENBSD-MIB	(sensors done, etc.)
 		- ...
 	- Review review review
 	- More tests on other platforms like sparc64, hppa, etc.
 	- Add trap receiver/logger
-	- Add an interface to send traps via imsg from snmpctl and daemons
 
 	- There is a SNMP over SSH draft, interesting reading:
 		http://tools.ietf.org/html/draft-ietf-isms-secshell-09
 		http://tools.ietf.org/wg/isms/
 
 	snmpctl:
-	- Add commands to query the SNMP mibtree via imsg
 	- Add commands to query/set remote SNMP daemons (instead snmpwalk etc.)
 	- Internal status, lalala, ...
 
