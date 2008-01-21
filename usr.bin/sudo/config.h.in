@@ -221,11 +221,17 @@
 /* Define to 1 if you have the `ldap_initialize' function. */
 #undef HAVE_LDAP_INITIALIZE
 
+/* Define to 1 if you have the <ldap_ssl.h> header file. */
+#undef HAVE_LDAP_SSL_H
+
 /* Define to 1 if you have the `ldap_start_tls_s' function. */
 #undef HAVE_LDAP_START_TLS_S
 
 /* Define to 1 if you have the `ldapssl_init' function. */
 #undef HAVE_LDAPSSL_INIT
+
+/* Define to 1 if you have the `ldapssl_set_strength' function. */
+#undef HAVE_LDAPSSL_SET_STRENGTH
 
 /* Define to 1 if you have the `lockf' function. */
 #undef HAVE_LOCKF
@@ -262,6 +268,9 @@
 
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
+
+/* Define to 1 if you have the <mps/ldap_ssl.h> header file. */
+#undef HAVE_MPS_LDAP_SSL_H
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H

@@ -256,7 +256,7 @@ when you imported the sudoers.  Below is an example /etc/ldap.conf
   #ssl start_tls
   #
   # Additional TLS options follow that allow tweaking of the
-  # SSL/TLS connection.  Only supported when using OpenLDAP.
+  # SSL/TLS connection.
   #
   #tls_checkpeer yes # verify server SSL certificate
   #tls_checkpeer no  # ignore server SSL certificate

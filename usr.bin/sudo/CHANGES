@@ -2029,3 +2029,19 @@ Sudo 1.6.9p10 released.
 640) New %p prompt escape that expands to the user whose password
      is being prompted, as specified by the rootpw, targetpw and
      runaspw sudoers flags.  Based on a diff from Patrick Schoenfeld.
+
+Sudo 1.6.9p11 released.
+
+641) Added a configure check for the ber_set_option() function.
+
+642) Fixed a compilation problem with the HP-UX K&R C compiler.
+
+643) Revamped the Kerberos 5 ticket verification code.
+
+644) Added support for the checkpeer ldap.conf variable for
+     netscape-based LDAP SDKs.
+
+645) Fixed a problem where an incomplete password could be echoed
+     to the screen if there was a read timeout.
+
+Sudo 1.6.9p12 released.

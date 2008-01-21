@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.36 2008/01/03 16:05:42 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.43 2008/01/21 16:46:50 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -2274,19 +2274,27 @@ if test ${with_ldap-'no'} != "no"; then
     done
     dnl if nothing linked just try with -lldap
     if test "$found" = "no"; then
-	LDAP_LIBS=" -lldap"
+	LIBS="${_LIBS} -lldap"
+	LDAP_LIBS="-lldap"
 	AC_MSG_RESULT([not found, using -lldap])
     else
 	AC_MSG_RESULT([$LDAP_LIBS])
     fi
-    dnl try again w/o explicitly including lber.h
+    dnl check if we need to link with -llber for ber_set_option
+    OLIBS="$LIBS"
+    AC_SEARCH_LIBS([ber_set_option], [lber], [found=yes], [found=no])
+    if test X"$found" = X"yes" -a X"$LIBS" != X"$OLIBS"; then
+	LDAP_LIBS="$LDAP_LIBS -llber"
+    fi
+    dnl check if ldap.h includes lber.h for us
     AC_MSG_CHECKING([whether lber.h is needed])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
     #include <ldap.h>]], [[(void)ldap_init(0, 0)]])], [AC_MSG_RESULT([no])], [
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_LBER_H)])
 
-    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init)
+    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init ldapssl_set_strength)
+    AC_CHECK_HEADERS([ldap_ssl.h] [mps/ldap_ssl.h], [break], [], [#include <ldap.h>])
 
     SUDO_LIBS="${SUDO_LIBS}${LDAP_LIBS}"
     LIBS="$_LIBS"

@@ -70,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.5 2007/10/17 15:39:43 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.6 2008/01/16 18:03:24 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -107,8 +107,6 @@ __unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.5 2007/10/17 1
 #  define tcsetattr(f, a, t)	ioctl(f, a, t)
 #  undef TCSAFLUSH
 #  define TCSAFLUSH		TCSETAF
-#  undef TCSANOW
-#  define TCSANOW		TCSETA
 # else
 #  undef termios
 #  define termios		sgttyb
@@ -117,8 +115,6 @@ __unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.5 2007/10/17 1
 #  define tcsetattr(f, a, t)	ioctl(f, a, t)
 #  undef TCSAFLUSH
 #  define TCSAFLUSH		TIOCSETP
-#  undef TCSANOW
-#  define TCSANOW		TIOCSETN
 # endif /* HAVE_TERMIO_H */
 #endif /* HAVE_TERMIOS_H */
 
@@ -202,7 +198,7 @@ restart:
 
     /* Restore old tty settings and signals. */
     if (memcmp(&term, &oterm, sizeof(term)) != 0) {
-	while (tcsetattr(input, TCSANOW|TCSASOFT, &oterm) == -1 &&
+	while (tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm) == -1 &&
 	    errno == EINTR)
 	    continue;
     }

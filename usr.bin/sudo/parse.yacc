@@ -60,6 +60,7 @@
 #ifdef HAVE_LSEARCH
 # include <search.h>
 #endif /* HAVE_LSEARCH */
+#include <limits.h>
 
 #include "sudo.h"
 #include "parse.h"
@@ -69,8 +70,21 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.9 2007/11/21 18:15:49 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.10 2008/01/16 23:20:53 millert Exp $";
 #endif /* lint */
+
+/*
+ * We must define SIZE_MAX for yacc's skeleton.c.
+ * If there is no SIZE_MAX or SIZE_T_MAX we have to assume that size_t
+ * could be signed (as it is on SunOS 4.x).
+ */
+#ifndef SIZE_MAX
+# ifdef SIZE_T_MAX
+#  define SIZE_MAX	SIZE_T_MAX
+# else
+#  define SIZE_MAX	INT_MAX
+# endif /* SIZE_T_MAX */
+#endif /* SIZE_MAX */
 
 /*
  * Globals
