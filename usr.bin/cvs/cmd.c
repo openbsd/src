@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.65 2008/01/10 11:20:29 tobias Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.66 2008/01/21 16:40:04 tobias Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -66,22 +66,22 @@ struct cvs_cmd *
 cvs_findcmd(const char *cmd)
 {
 	int i, j;
+	struct cvs_cmd *p;
 
-	cmdp = NULL;
-
-	for (i = 0; (cvs_cdt[i] != NULL) && (cmdp == NULL); i++) {
+	p = NULL;
+	for (i = 0; (cvs_cdt[i] != NULL) && (p == NULL); i++) {
 		if (strcmp(cmd, cvs_cdt[i]->cmd_name) == 0)
-			cmdp = cvs_cdt[i];
+			p = cvs_cdt[i];
 		else {
 			for (j = 0; j < CVS_CMD_MAXALIAS; j++) {
 				if (strcmp(cmd,
 				    cvs_cdt[i]->cmd_alias[j]) == 0) {
-					cmdp = cvs_cdt[i];
+					p = cvs_cdt[i];
 					break;
 				}
 			}
 		}
 	}
 
-	return (cmdp);
+	return (p);
 }
