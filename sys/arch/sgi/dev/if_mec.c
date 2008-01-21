@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.13 2008/01/20 16:44:03 jsing Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.14 2008/01/21 01:39:25 jsing Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -340,7 +340,7 @@ int	mec_ioctl(struct ifnet *, u_long, caddr_t);
 void	mec_reset(struct mec_softc *);
 void	mec_setfilter(struct mec_softc *);
 int	mec_intr(void *arg);
-void	mec_stop(struct ifnet *, int);
+void	mec_stop(struct ifnet *);
 void	mec_rxintr(struct mec_softc *, uint32_t);
 void	mec_txintr(struct mec_softc *, uint32_t);
 void	mec_shutdown(void *);
@@ -643,7 +643,7 @@ mec_init(struct ifnet *ifp)
 	int i;
 
 	/* Cancel any pending I/O. */
-	mec_stop(ifp, 0);
+	mec_stop(ifp);
 
 	/* Reset device. */
 	mec_reset(sc);
@@ -1009,7 +1009,7 @@ mec_start(struct ifnet *ifp)
 }
 
 void
-mec_stop(struct ifnet *ifp, int disable)
+mec_stop(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
 	struct mec_txsoft *txs;
@@ -1022,6 +1022,9 @@ mec_stop(struct ifnet *ifp, int disable)
 
 	timeout_del(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
+
+	/* Disable DMA. */
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_DMA_CONTROL, 0);
 
 	/* Release any TX buffers. */
 	for (i = 0; i < MEC_NTXDESC; i++) {
@@ -1082,7 +1085,7 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifp->if_flags & IFF_UP)
 			mec_init(ifp);
 		else if (ifp->if_flags & IFF_RUNNING)
-			mec_stop(ifp, 1);
+			mec_stop(ifp);
 		break;
 
 	case SIOCADDMULTI:
@@ -1464,5 +1467,5 @@ mec_shutdown(void *arg)
 {
 	struct mec_softc *sc = arg;
 
-	mec_stop(&sc->sc_ac.ac_if, 1);
+	mec_stop(&sc->sc_ac.ac_if);
 }
