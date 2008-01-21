@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.124 2008/01/10 10:09:27 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.125 2008/01/21 16:36:46 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -505,7 +505,8 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 				}
 			}
 		} else {
-			if (cvs_cmdop != CVS_OP_CHECKOUT) {
+			if ((cvs_cmdop == CVS_OP_EXPORT && strcmp(dir, ".")) ||
+			    cvs_cmdop != CVS_OP_CHECKOUT) {
 				if (strlcat(dst, dir, len) >= len)
 					fatal("cvs_get_repository_name: "
 					    "truncation");
@@ -615,6 +616,9 @@ cvs_mkpath(const char *path, char *tag)
 
 		if (mkdir(rpath, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_mkpath: %s: %s", rpath, strerror(errno));
+
+		if (cvs_cmdop == CVS_OP_EXPORT && !cvs_server_active)
+			continue;
 
 		cvs_mkadmin(rpath, current_cvsroot->cr_str, repo,
 		    tag, NULL, 0);

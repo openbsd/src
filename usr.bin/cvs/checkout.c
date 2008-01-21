@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.107 2008/01/10 10:08:22 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.108 2008/01/21 16:36:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -127,6 +127,9 @@ cvs_export(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (cvs_specified_tag == NULL)
+		fatal("must specify a tag or date");
+
 	if (argc == 0)
 		fatal("%s", cvs_cmd_export.cmd_synopsis);
 
@@ -173,7 +176,8 @@ checkout_check_repository(int argc, char **argv)
 		flags &= ~CR_REPO;
 		cr.flags = flags;
 
-		cvs_file_run(argc, argv, &cr);
+		if (cvs_cmdop != CVS_OP_EXPORT)
+			cvs_file_run(argc, argv, &cr);
 
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
@@ -349,7 +353,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	    cf->file_name, rev, timebuf, kbuf, stickytag);
 
 	if (cvs_server_active == 0) {
-		if (!(co_flags & CO_REMOVE)) {
+		if (!(co_flags & CO_REMOVE) && cvs_cmdop != CVS_OP_EXPORT) {
 			ent = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(ent, entry);
 			cvs_ent_close(ent, ENT_SYNC);

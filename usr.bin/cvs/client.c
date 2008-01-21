@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.89 2008/01/10 11:20:29 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.90 2008/01/21 16:36:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -96,7 +96,8 @@ struct cvs_req cvs_requests[] = {
 	{ "import",			0,	cvs_server_import,
 	    REQ_NEEDDIR },
 	{ "admin",			0,	cvs_server_admin, REQ_NEEDDIR },
-	{ "export",			0,	NULL, 0 },
+	{ "export",			0,	cvs_server_export,
+	    REQ_NEEDDIR },
 	{ "history",			0,	NULL, 0 },
 	{ "release",			0,	cvs_server_release,
 	    REQ_NEEDDIR },
@@ -168,6 +169,9 @@ client_check_directory(char *data)
 	STRIP_SLASH(data);
 
 	cvs_mkpath(data, NULL);
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
 
 	if ((base = basename(data)) == NULL)
 		fatal("client_check_directory: overflow");
@@ -714,9 +718,12 @@ cvs_client_updated(char *data)
 	    e->ce_opts ? e->ce_opts : "", sticky);
 
 	cvs_ent_free(e);
-	ent = cvs_ent_open(wdir);
-	cvs_ent_add(ent, entry);
-	cvs_ent_close(ent, ENT_SYNC);
+
+	if (cvs_cmdop != CVS_OP_EXPORT) {
+		ent = cvs_ent_open(wdir);
+		cvs_ent_add(ent, entry);
+		cvs_ent_close(ent, ENT_SYNC);
+	}
 
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_updated: open: %s: %s",
@@ -864,9 +871,6 @@ cvs_client_set_static_directory(char *data)
 	FILE *fp;
 	char *dir, fpath[MAXPATHLEN];
 
-	if (cvs_cmdop == CVS_OP_EXPORT)
-		return;
-
 	if (data == NULL)
 		fatal("Missing argument for Set-static-directory");
 
@@ -874,6 +878,9 @@ cvs_client_set_static_directory(char *data)
 
 	dir = cvs_remote_input();
 	xfree(dir);
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
 
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 	    data, CVS_PATH_STATICENTRIES);
@@ -890,9 +897,6 @@ cvs_client_clear_static_directory(char *data)
 {
 	char *dir, fpath[MAXPATHLEN];
 
-	if (cvs_cmdop == CVS_OP_EXPORT)
-		return;
-
 	if (data == NULL)
 		fatal("Missing argument for Clear-static-directory");
 
@@ -900,6 +904,9 @@ cvs_client_clear_static_directory(char *data)
 
 	dir = cvs_remote_input();
 	xfree(dir);
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
 
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 	    data, CVS_PATH_STATICENTRIES);
@@ -913,9 +920,6 @@ cvs_client_set_sticky(char *data)
 	FILE *fp;
 	char *dir, *tag, tagpath[MAXPATHLEN];
 
-	if (cvs_cmdop == CVS_OP_EXPORT)
-		return;
-
 	if (data == NULL)
 		fatal("Missing argument for Set-sticky");
 
@@ -924,6 +928,9 @@ cvs_client_set_sticky(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 	tag = cvs_remote_input();
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		goto out;
 
 	client_check_directory(data);
 
@@ -945,9 +952,6 @@ cvs_client_clear_sticky(char *data)
 {
 	char *dir, tagpath[MAXPATHLEN];
 
-	if (cvs_cmdop == CVS_OP_EXPORT)
-		return;
-
 	if (data == NULL)
 		fatal("Missing argument for Clear-sticky");
 
@@ -955,6 +959,9 @@ cvs_client_clear_sticky(char *data)
 
 	dir = cvs_remote_input();
 	xfree(dir);
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
 
 	client_check_directory(data);
 

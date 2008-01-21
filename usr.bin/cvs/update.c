@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.113 2008/01/10 10:08:22 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.114 2008/01/21 16:36:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -163,12 +163,14 @@ cvs_update_enterdir(struct cvs_file *cf)
 			fatal("cvs_update_enterdir: `%s': %s",
 			    cf->file_path, strerror(errno));
 
-		(void)xasprintf(&entry, "D/%s////", cf->file_name);
+		if (cvs_cmdop != CVS_OP_EXPORT) {
+			(void)xasprintf(&entry, "D/%s////", cf->file_name);
 
-		entlist = cvs_ent_open(cf->file_wd);
-		cvs_ent_add(entlist, entry);
-		cvs_ent_close(entlist, ENT_SYNC);
-		xfree(entry);
+			entlist = cvs_ent_open(cf->file_wd);
+			cvs_ent_add(entlist, entry);
+			cvs_ent_close(entlist, ENT_SYNC);
+			xfree(entry);
+		}
 	} else if ((cf->file_status == DIR_CREATE && build_dirs == 0) ||
 		    cf->file_status == FILE_UNKNOWN) {
 		cf->file_status = FILE_SKIP;
@@ -196,21 +198,8 @@ cvs_update_leavedir(struct cvs_file *cf)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 	CVSENTRIES *entlist;
-	char export[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
-
-	if (cvs_cmdop == CVS_OP_EXPORT) {
-		(void)xsnprintf(export, MAXPATHLEN, "%s/%s",
-		    cf->file_path, CVS_PATH_CVSDIR);
-
-		/* XXX */
-		if (cvs_rmdir(export) == -1)
-			fatal("cvs_update_leavedir: %s: %s:", export,
-			    strerror(errno));
-
-		return;
-	}
 
 	if (cvs_server_active == 1 && !strcmp(cf->file_name, "."))
 		return;
@@ -276,7 +265,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 		/* XXX */
 		cvs_rmdir(cf->file_path);
 
-		if (cvs_server_active == 0) {
+		if (cvs_server_active == 0 && cvs_cmdop != CVS_OP_EXPORT) {
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_remove(entlist, cf->file_name);
 			cvs_ent_close(entlist, ENT_SYNC);
@@ -295,8 +284,11 @@ cvs_update_local(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
 	if (cf->file_type == CVS_DIR) {
-		if (cf->file_status == FILE_SKIP)
+		if (cf->file_status == FILE_SKIP) {
+			if (cvs_cmdop == CVS_OP_EXPORT && verbosity > 0)
+				cvs_printf("? %s\n", cf->file_path);
 			return;
+		}
 
 		if (cf->file_status != FILE_UNKNOWN &&
 		    verbosity > 1)

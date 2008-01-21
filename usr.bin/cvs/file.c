@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.209 2008/01/10 11:21:34 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.210 2008/01/21 16:36:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -371,14 +371,14 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	/*
 	 * If we do not have a admin directory inside here, dont bother,
-	 * unless we are running import.
+	 * unless we are running export, import, rlog or rtag.
 	 */
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
 	    CVS_PATH_CVSDIR);
 
 	l = stat(fpath, &st);
-	if (cvs_cmdop != CVS_OP_IMPORT && cvs_cmdop != CVS_OP_RLOG &&
-	    cvs_cmdop != CVS_OP_RTAG &&
+	if (cvs_cmdop != CVS_OP_EXPORT && cvs_cmdop != CVS_OP_IMPORT &&
+	    cvs_cmdop != CVS_OP_RLOG && cvs_cmdop != CVS_OP_RTAG &&
 	    (l == -1 || (l == 0 && !S_ISDIR(st.st_mode)))) {
 		return;
 	}
