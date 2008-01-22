@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.26 2008/01/21 19:37:36 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.27 2008/01/22 21:26:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1141,6 +1141,7 @@ upgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
+	uint8_t chan;
 
 	s = splnet();
 
@@ -1166,10 +1167,25 @@ upgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
 		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &ic->ic_ac) :
-			ether_delmulti(ifr, &ic->ic_ac);
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
 		if (error == ENETRESET)
 			error = 0;
+		break;
+	case SIOCS80211CHANNEL:
+		/* allow fast channel switching in monitor mode */
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING)) {
+				ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+				chan = ieee80211_chan2ieee(ic,
+				    ic->ic_bss->ni_chan);
+				upgt_set_channel(sc, chan);
+			}
+			error = 0;
+		}
 		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
@@ -1207,12 +1223,13 @@ upgt_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+	upgt_set_macfilter(sc, IEEE80211_S_SCAN);
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		upgt_set_channel(sc, sc->sc_cur_chan);
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-	else {
-		upgt_set_macfilter(sc, IEEE80211_S_SCAN);
+	} else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	}
 
 	return (0);
 }
@@ -1236,13 +1253,19 @@ upgt_stop(struct upgt_softc *sc)
 int
 upgt_media_change(struct ifnet *ifp)
 {
+	struct upgt_softc *sc = ifp->if_softc;
 	int error;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	if ((error = ieee80211_media_change(ifp) != ENETRESET))
 		return (error);
 
-	if (ifp->if_flags & (IFF_UP | IFF_RUNNING))
+	if (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		/* give pending USB transfers a chance to finish */
+		usbd_delay_ms(sc->sc_udev, 100);
 		upgt_init(ifp);
+	}
 
 	return (0);
 }
@@ -1314,7 +1337,8 @@ upgt_newstate_task(void *arg)
 
 		ni = ic->ic_bss;
 
-		upgt_set_macfilter(sc, IEEE80211_S_RUN);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			upgt_set_macfilter(sc, IEEE80211_S_RUN);
 		upgt_set_led(sc, UPGT_LED_ON);
 		break;
 	}
