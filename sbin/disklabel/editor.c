@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.159 2008/01/16 23:00:21 chl Exp $	*/
+/*	$OpenBSD: editor.c,v 1.160 2008/01/22 00:06:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.159 2008/01/16 23:00:21 chl Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.160 2008/01/22 00:06:25 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -909,10 +909,8 @@ has_overlap(struct disklabel *lp)
 	/* Get a sorted list of the partitions */
 	spp = sort_partitions(lp, &npartitions);
 
-	if (npartitions < RAW_PART) {
-		(void)free(spp);
+	if (npartitions < RAW_PART)
 		return(0);			/* nothing to do */
-	}
 
 	/* Now that we have things sorted by starting sector check overlap */
 	for (i = 0; i < npartitions; i++) {
@@ -946,13 +944,11 @@ has_overlap(struct disklabel *lp)
 
 				/* Mark the selected one as unused */
 				lp->d_partitions[c].p_fstype = FS_UNUSED;
-				(void)free(spp);
 				return (has_overlap(lp));
 			}
 		}
 	}
 
-	(void)free(spp);
 	return(0);
 }
 
@@ -1144,9 +1140,11 @@ edit_parms(struct disklabel *lp)
 struct partition **
 sort_partitions(struct disklabel *lp, u_int16_t *npart)
 {
+	static struct partition *spp[MAXPARTITIONS+2];
 	u_int16_t npartitions;
-	struct partition **spp;
 	int i;
+
+	memset(spp, 0, sizeof(spp));
 
 	/* How many "real" partitions do we have? */
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
@@ -1160,9 +1158,6 @@ sort_partitions(struct disklabel *lp, u_int16_t *npart)
 		return(NULL);
 	}
 
-	/* Create an array of pointers to the partition data */
-	if ((spp = calloc(npartitions, sizeof(struct partition *))) == NULL)
-		errx(4, "out of memory");
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[i].p_fstype != FS_BOOT &&
@@ -1349,7 +1344,6 @@ free_chunks(struct disklabel *lp)
 
 	/* Terminate and return */
 	chunks[numchunks].start = chunks[numchunks].stop = 0;
-	(void)free(spp);
 	return(chunks);
 }
 
