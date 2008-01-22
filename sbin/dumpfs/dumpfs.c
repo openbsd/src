@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.23 2007/05/21 16:00:27 millert Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.24 2008/01/22 09:01:44 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.23 2007/05/21 16:00:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.24 2008/01/22 09:01:44 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ dumpfs(int fd, const char *name)
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
-		off = (off_t)(fsbtodb(&afs, (afs.fs_ffs1_csaddr + j *
+		off = (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j *
 		    afs.fs_frag))) * dev_bsize;
 		if (pread(fd, (char *)afs.fs_csp + i, size, off) != size)
 			goto err;
