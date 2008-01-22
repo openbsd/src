@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.47 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.48 2008/01/22 17:53:05 okan Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,7 +186,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
 	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
 	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
-	{ USB_VENDOR_SMART, USB_PRODUCT_SMART_PL2303 }
+	{ USB_VENDOR_SMART, USB_PRODUCT_SMART_PL2303 },
+	{ USB_VENDOR_YCCABLE, USB_PRODUCT_YCCABLE_PL2303 }
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
