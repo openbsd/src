@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.332 2008/01/21 12:54:22 jsg Exp $
+$OpenBSD: usbdevs,v 1.333 2008/01/22 17:51:34 okan Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -197,6 +197,7 @@ vendor THRUSTMASTER	0x05a4	Thrustmaster
 vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
+vendor YCCABLE		0x05ad	Y.C. Cable
 vendor DIGI		0x05c5	Digi International
 vendor QUALCOMM		0x05c6	Qualcomm
 vendor QTRONIX		0x05c7	Qtronix
@@ -2500,6 +2501,9 @@ product XIRLINK PCCAM		0x8080	IBM PC Camera
 /* Xyratex products */
 product	XYRATEX PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
 product	XYRATEX	PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
+
+/* Y.C. Cable products */
+product YCCABLE PL2303		0x0fba	PL2303 Serial
 
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
