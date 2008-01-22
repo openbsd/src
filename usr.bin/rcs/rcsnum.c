@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.8 2007/12/09 14:02:56 tobias Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.9 2008/01/22 08:31:18 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,7 +214,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 {
 	u_int32_t val;
 	const char *sp;
-	char *s;
 
 	if (nump->rn_id == NULL)
 		nump->rn_id = xmalloc(sizeof(*(nump->rn_id)));
@@ -262,35 +261,15 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	 * about this, cvs does this for "efficiency reasons", i'd like
 	 * to hear one.
 	 *
-	 * We just make sure we remove the .0. from in the branch number.
-	 *
 	 * XXX - for compatibility reasons with GNU cvs we _need_
-	 * to skip this part for the 'log' command, apparently it does
-	 * show the magic branches for an unknown and probably
-	 * completely insane and not understandable reason in that output.
-	 *
+	 * to add these magic branch numbers.
 	 */
-	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0
-	    && !(rcsnum_flags & RCSNUM_NO_MAGIC)) {
-		/*
-		 * Look for ".0.x" at the end of the branch number.
-		 */
-		if ((s = strrchr(str, '.')) != NULL) {
-			s--;
-			while (*s != '.')
-				s--;
-
-			/*
-			 * If we have a "magic" branch, adjust it
-			 * so the .0. is removed.
-			 */
-			if (!strncmp(s, RCS_MAGIC_BRANCH,
-			    strlen(RCS_MAGIC_BRANCH))) {
-				nump->rn_id[nump->rn_len - 1] =
-				    nump->rn_id[nump->rn_len];
-				nump->rn_len--;
-			}
-		}
+	if (nump->rn_len > 1 && !(nump->rn_len % 2)) {
+		nump->rn_len++;
+		nump->rn_id = xrealloc(nump->rn_id, nump->rn_len + 1,
+		    sizeof(*(nump->rn_id)));
+		nump->rn_id[nump->rn_len] = nump->rn_id[nump->rn_len - 1];
+		nump->rn_id[nump->rn_len - 1] = 0;
 	}
 
 	/* We can't have a single-digit rcs number. */
