@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.161 2008/01/22 00:19:18 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.162 2008/01/22 01:12:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.161 2008/01/22 00:19:18 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.162 2008/01/22 01:12:50 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
-struct partition **sort_partitions(struct disklabel *, u_int16_t *);
+struct partition **sort_partitions(struct disklabel *);
 void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
@@ -902,19 +902,19 @@ int
 has_overlap(struct disklabel *lp)
 {
 	struct partition **spp;
-	u_int16_t npartitions;
 	int c, i, j;
 	char buf[BUFSIZ];
 
-	/* Get a sorted list of the partitions */
-	spp = sort_partitions(lp, &npartitions);
+	/* Get a sorted list of the in-use partitions. */
+	spp = sort_partitions(lp);
 
-	if (npartitions < RAW_PART)
-		return(0);			/* nothing to do */
+	/* If there are less than two partitions in use, there is no overlap. */
+	if (spp[1] == NULL)
+		return(0);
 
 	/* Now that we have things sorted by starting sector check overlap */
-	for (i = 0; i < npartitions; i++) {
-		for (j = i + 1; j < npartitions; j++) {
+	for (i = 0; spp[i] != NULL; i++) {
+		for (j = i + 1; spp[j] != NULL; j++) {
 			/* `if last_sec_in_part + 1 > first_sec_in_next_part' */
 			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) > DL_GETPOFFSET(spp[j])) {
 				/* Overlap!  Convert to real part numbers. */
@@ -1138,11 +1138,10 @@ edit_parms(struct disklabel *lp)
 }
 
 struct partition **
-sort_partitions(struct disklabel *lp, u_int16_t *npart)
+sort_partitions(struct disklabel *lp)
 {
 	static struct partition *spp[MAXPARTITIONS+2];
-	u_int16_t npartitions;
-	int i;
+	int i, npartitions;
 
 	memset(spp, 0, sizeof(spp));
 
@@ -1153,7 +1152,6 @@ sort_partitions(struct disklabel *lp, u_int16_t *npart)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
 
-	*npart = npartitions;
 	if (npartitions == 0)
 		return(NULL);
 
@@ -1289,16 +1287,15 @@ set_bounds(struct disklabel *lp)
 struct diskchunk *
 free_chunks(struct disklabel *lp)
 {
-	u_int16_t npartitions;
 	struct partition **spp;
 	static struct diskchunk chunks[MAXPARTITIONS + 2];
 	int i, numchunks;
 
-	/* Sort the partitions based on offset */
-	spp = sort_partitions(lp, &npartitions);
+	/* Sort the in-use partitions based on offset */
+	spp = sort_partitions(lp);
 
 	/* If there are no partitions, it's all free. */
-	if (spp == NULL) {
+	if (spp[0] == NULL) {
 		chunks[0].start = starting_sector;
 		chunks[0].stop = ending_sector;
 		chunks[1].start = chunks[1].stop = 0;
@@ -1307,13 +1304,13 @@ free_chunks(struct disklabel *lp)
 
 	/* Find chunks of free space */
 	numchunks = 0;
-	if (spp && DL_GETPOFFSET(spp[0]) > starting_sector) {
+	if (DL_GETPOFFSET(spp[0]) > starting_sector) {
 		chunks[0].start = starting_sector;
 		chunks[0].stop = DL_GETPOFFSET(spp[0]);
 		numchunks++;
 	}
-	for (i = 0; i < npartitions; i++) {
-		if (i + 1 < npartitions) {
+	for (i = 0; spp[i] != NULL; i++) {
+		if (spp[i + 1] != NULL) {
 			u_int o1 = DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]);
 			u_int o2 = DL_GETPOFFSET(spp[i+1]);
 			if (o1 < o2) {
