@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.162 2008/01/22 01:12:50 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.163 2008/01/22 01:31:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.162 2008/01/22 01:12:50 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.163 2008/01/22 01:31:27 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1289,6 +1289,7 @@ free_chunks(struct disklabel *lp)
 {
 	struct partition **spp;
 	static struct diskchunk chunks[MAXPARTITIONS + 2];
+	u_int64_t start, stop;
 	int i, numchunks;
 
 	/* Sort the in-use partitions based on offset */
@@ -1310,23 +1311,15 @@ free_chunks(struct disklabel *lp)
 		numchunks++;
 	}
 	for (i = 0; spp[i] != NULL; i++) {
-		if (spp[i + 1] != NULL) {
-			u_int o1 = DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]);
-			u_int o2 = DL_GETPOFFSET(spp[i+1]);
-			if (o1 < o2) {
-				chunks[numchunks].start = o1;
-				chunks[numchunks].stop = o2;
-				numchunks++;
-			}
-		} else {
-			u_int o1 = DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]);
-			/* Last partition */
-			if (o1 < ending_sector) {
-
-				chunks[numchunks].start = o1;
-				chunks[numchunks].stop = ending_sector;
-				numchunks++;
-			}
+		start = DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]);
+		if (spp[i + 1] != NULL)
+			stop = DL_GETPOFFSET(spp[i+1]);
+		else
+			stop = ending_sector;
+		if (start < stop) {
+			chunks[numchunks].start = start;
+			chunks[numchunks].stop = stop;
+			numchunks++;
 		}
 	}
 
