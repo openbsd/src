@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.160 2008/01/22 00:06:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.161 2008/01/22 00:19:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.160 2008/01/22 00:06:25 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.161 2008/01/22 00:19:18 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1146,24 +1146,16 @@ sort_partitions(struct disklabel *lp, u_int16_t *npart)
 
 	memset(spp, 0, sizeof(spp));
 
-	/* How many "real" partitions do we have? */
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    DL_GETPSIZE(&lp->d_partitions[i]) != 0)
-			npartitions++;
-	}
-	if (npartitions == 0) {
-		*npart = 0;
-		return(NULL);
-	}
-
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    DL_GETPSIZE(&lp->d_partitions[i]) != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
+
+	*npart = npartitions;
+	if (npartitions == 0)
+		return(NULL);
 
 	/*
 	 * Sort the partitions based on starting offset.
@@ -1174,7 +1166,6 @@ sort_partitions(struct disklabel *lp, u_int16_t *npart)
 		    partition_cmp))
 			err(4, "failed to sort partition table");
 
-	*npart = npartitions;
 	return(spp);
 }
 
