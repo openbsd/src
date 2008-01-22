@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.163 2008/01/22 01:31:27 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.164 2008/01/22 01:47:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.163 2008/01/22 01:31:27 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.164 2008/01/22 01:47:33 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1336,6 +1336,8 @@ find_bounds(struct disklabel *lp)
 {
 #ifdef DOSLABEL
 	struct partition *pp = &lp->d_partitions[RAW_PART];
+	u_int64_t new_end;
+	int i;
 #endif
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
@@ -1348,8 +1350,6 @@ find_bounds(struct disklabel *lp)
 	 */
 	if (dosdp) {
 	    if (dosdp->dp_typ == DOSPTYP_OPENBSD) {
-			u_int32_t i, new_end;
-
 			/* Set start and end based on fdisk partition bounds */
 			starting_sector = letoh32(dosdp->dp_start);
 			ending_sector = starting_sector + letoh32(dosdp->dp_size);
