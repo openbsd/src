@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.106 2007/12/02 22:24:54 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.107 2008/01/22 19:28:57 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -81,7 +81,7 @@ int			aml_pc(uint8_t *);
 
 #define aml_delref(x) _aml_delref(x, __FUNCTION__, __LINE__)
 
-struct aml_value	*aml_parseop(struct aml_scope *, struct aml_value *);
+struct aml_value	*aml_parseop(struct aml_scope *, struct aml_value *,int);
 struct aml_value	*aml_parsetarget(struct aml_scope *, struct aml_value *,
 			    struct aml_value **);
 struct aml_value	*aml_parseterm(struct aml_scope *, struct aml_value *);
@@ -960,7 +960,7 @@ aml_parsenode(struct aml_scope *parent, struct aml_node *node, uint8_t *start,
 		res = aml_alloctmp(scope, 1);
 	while (scope != parent) {
 		while (scope->pos < scope->end)
-			aml_parseop(scope, res);
+			aml_parseop(scope, res, 't');
 		scope = aml_popscope(scope);
 	}
 	return 0;
@@ -1448,7 +1448,7 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 			argc = AML_METHOD_ARGCOUNT(ref->v_method.flags);
 			tmp = aml_alloctmp(scope, argc+1);
 			for (index = 0; index < argc; index++) {
-				aml_parseop(scope, &tmp[index]);
+				aml_parseop(scope, &tmp[index], 't');
 				aml_addref(&tmp[index]);
 			}
 			ref = aml_evalmethod(scope, ref->node, argc, tmp, &tmp[argc]);
@@ -2445,7 +2445,7 @@ aml_parseint(struct aml_scope *scope, int opcode)
 	default:
 		scope->pos = np;
 		tmpval = aml_alloctmp(scope, 1);
-		aml_parseterm(scope, tmpval);
+		aml_parseop(scope, tmpval, 'i');
 		return aml_val2int(tmpval);
 	}
 	dnprintf(15, "%.4x: [%s] %s\n", aml_pc(scope->pos-opsize(opcode)),
@@ -2489,7 +2489,7 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 	res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
 	switch (opcode) {
 	case AMLOP_NAME:
-		aml_parseop(scope, res);
+		aml_parseop(scope, res, 't');
 		break;
 	case AMLOP_ALIAS:
 		_aml_setvalue(res, AML_OBJTYPE_NAMEREF, 0, name);
@@ -2737,7 +2737,7 @@ aml_parsebufpkg(struct aml_scope *scope, int opcode, struct aml_value *res)
 	case AMLOP_VARPACKAGE:
 		_aml_setvalue(res, AML_OBJTYPE_PACKAGE, len, NULL);
 		for (len = 0; len < res->length && scope->pos < end; len++) {
-			aml_parseop(scope, res->v_package[len]);
+			aml_parseop(scope, res->v_package[len], 't');
 		}
 		if (scope->pos != end) {
 			dnprintf(99, "Package not equiv!! %.4x %.4x %d of %d\n",
@@ -2974,7 +2974,7 @@ aml_parsemisc2(struct aml_scope *scope, int opcode, struct aml_value *res)
 	case AMLOP_NOTIFY:
 		/* Assert: tmparg is nameref or objref */
 		tmparg = aml_alloctmp(scope, 1);
-		aml_parseop(scope, tmparg);
+		aml_parseop(scope, tmparg, 'r');
 		dev = aml_dereftarget(scope, tmparg);
 
 		i1 = aml_parseint(scope, AML_ANYINT);
@@ -3082,7 +3082,7 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		aml_setvalue(scope, tmparg, res, 0);
 		break;
 	case AMLOP_DEREFOF:
-		aml_parseop(scope, res);
+		aml_parseop(scope, res, 't');
 		break;
 	case AMLOP_RETURN:
 		tmparg = aml_alloctmp(scope, 1);
@@ -3128,8 +3128,8 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		break;
 	case AMLOP_LOAD:
 		tmparg = aml_alloctmp(scope, 2);
-		aml_parseop(scope, &tmparg[0]);
-		aml_parseop(scope, &tmparg[1]);
+		aml_parseop(scope, &tmparg[0], 't');
+		aml_parseop(scope, &tmparg[1], 't');
 		break;
 	case AMLOP_STORE:
 		tmparg = aml_alloctmp(scope, 1);
@@ -3234,7 +3234,7 @@ aml_parseterm(struct aml_scope *scope, struct aml_value *res)
 	if (res == NULL)
 		res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
 	tmpres = aml_alloctmp(scope, 1);
-	aml_parseop(scope, tmpres);
+	aml_parseop(scope, tmpres, 't');
 	aml_evalterm(scope, tmpres, res);
 	return res;
 }
@@ -3248,7 +3248,7 @@ aml_parsetarget(struct aml_scope *scope, struct aml_value *res,
 	/* If no value specified, allocate dynamic */
 	if (res == NULL)
 		res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
-	aml_parseop(scope, res);
+	aml_parseop(scope, res, 'r');
 	if (opt == NULL)
 		opt = &dummy;
 
@@ -3261,7 +3261,7 @@ int odp;
 
 /* Main Opcode Parser/Evaluator */
 struct aml_value *
-aml_parseop(struct aml_scope *scope, struct aml_value *res)
+aml_parseop(struct aml_scope *scope, struct aml_value *res, int ctype)
 {
 	int opcode;
 	struct aml_opcode *htab;
@@ -3283,6 +3283,11 @@ aml_parseop(struct aml_scope *scope, struct aml_value *res)
 		/* No opcode handler */
 		aml_die("Unknown opcode: %.4x @ %.4x", opcode,
 		    aml_pc(scope->pos - opsize(opcode)));
+	}
+	if (ctype == 'i' && res->type != AML_OBJTYPE_INTEGER) {
+		rv = aml_derefterm(scope, res, 0);
+		aml_freevalue(res);
+		aml_copyvalue(res, rv);
 	}
 	odp--;
 	return rv;
