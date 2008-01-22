@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.56 2007/05/08 18:49:32 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.57 2008/01/22 09:19:11 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1470,8 +1470,11 @@ rl_tick(v)
 	void *v;
 {
 	struct rl_softc *sc = v;
+	int s;
 
+	s = splnet();
 	mii_tick(&sc->sc_mii);
+	splx(s);
 	timeout_add(&sc->sc_tick_tmo, hz);
 }
 
