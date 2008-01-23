@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.108 2008/01/21 16:36:46 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.109 2008/01/23 09:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -335,6 +335,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		else
 			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
 			    rev);
+	else if (!reset_stickies && cf->file_ent != NULL &&
+	    cf->file_ent->ce_tag != NULL)
+		(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
+		    cf->file_ent->ce_tag);
 	else
 		stickytag[0] = '\0';
 
