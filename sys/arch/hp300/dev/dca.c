@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.32 2007/11/09 17:32:25 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.33 2008/01/23 16:37:56 jsing Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -995,12 +995,12 @@ dca_console_scan(scode, va, arg)
 	switch (dca->dca_id) {
 	case DCAID0:
 	case DCAID1:
-		pri = CN_NORMAL;
+		pri = CN_LOWPRI;
 		break;
 
 	case DCAID0 | DCACON:
 	case DCAID1 | DCACON:
-		pri = CN_REMOTE;
+		pri = CN_HIGHPRI;
 		break;
 
 	default:

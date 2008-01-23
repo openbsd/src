@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2007/12/31 12:46:14 jsing Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2008/01/23 16:37:56 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -87,7 +87,7 @@ wscnprobe(struct consdev *cp)
 			if (strncmp(bios_console, "video", 5) == 0)
 				cp->cn_pri = CN_FORCED;
 			else
-				cp->cn_pri = CN_INTERNAL;
+				cp->cn_pri = CN_MIDPRI;
 		}
 #endif
 		break;

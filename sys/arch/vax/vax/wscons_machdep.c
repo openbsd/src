@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.3 2007/12/28 20:44:37 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.4 2008/01/23 16:37:57 jsing Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -109,7 +109,7 @@ wscnprobe(struct consdev *cp)
 	return;
 
 found:
-	cp->cn_pri = CN_INTERNAL;
+	cp->cn_pri = CN_MIDPRI;
 	cp->cn_dev = makedev(major, 0);
 }
 

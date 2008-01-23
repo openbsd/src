@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.33 2006/12/17 22:18:14 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.34 2008/01/23 16:37:57 jsing Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ vgafb_cnprobe(struct consdev *cp)
 	if (cons_displaytype != 1)
 		return;
 
-	cp->cn_pri = CN_INTERNAL;
+	cp->cn_pri = CN_MIDPRI;
 }
 
 void

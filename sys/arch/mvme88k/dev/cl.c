@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.52 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.53 2008/01/23 16:37:57 jsing Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -901,7 +901,7 @@ clcnprobe(cp)
 		return;
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 }
 
 void

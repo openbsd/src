@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.2 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -389,7 +389,7 @@ pdccnprobe(cn)
 	struct consdev *cn;
 {
 	cn->cn_dev = makedev(22,0);
-	cn->cn_pri = CN_NORMAL;
+	cn->cn_pri = CN_LOWPRI;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.15 2007/10/22 14:46:46 jsing Exp $	*/
+/*	$OpenBSD: zs.c,v 1.16 2008/01/23 16:37:56 jsing Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -946,8 +946,8 @@ static int stdin, stdout;
  * be the console (as defined in mac68k/conf.c) gets probed. The probe
  * fills in the consdev structure. Important parts are the device #,
  * and the console priority. Values are CN_DEAD (don't touch me),
- * CN_NORMAL (I'm here, but elsewhere might be better), CN_INTERNAL
- * (the video, better than CN_NORMAL), and CN_REMOTE (pick me!)
+ * CN_LOWPRI (I'm here, but elsewhere might be better), CN_MIDPRI
+ * (the video, better than CN_LOWPRI), and CN_HIGHPRI (pick me!)
  *
  * As the mac's a bit different, we do extra work here. We mainly check
  * to see if we have serial echo going on. Also chould check for default
@@ -1081,7 +1081,7 @@ zscnprobe(cp)
 			break;
 
 	cp->cn_dev = makedev(maj, unit);
-	cp->cn_pri = CN_REMOTE;
+	cp->cn_pri = CN_HIGHPRI;
 }
 
 

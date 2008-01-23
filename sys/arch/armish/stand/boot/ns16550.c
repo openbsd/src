@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns16550.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
+/*	$OpenBSD: ns16550.c,v 1.3 2008/01/23 16:37:57 jsing Exp $	*/
 /*	$NetBSD: ns16550.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ comspeed(int speed)
 void
 com_probe(struct consdev *cn)
 {
-	cn->cn_pri = CN_NORMAL;
+	cn->cn_pri = CN_LOWPRI;
 	cn->cn_dev = makedev(12, 0);
 }
 

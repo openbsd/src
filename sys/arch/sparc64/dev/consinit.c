@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.12 2007/11/14 20:43:12 kettenis Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.13 2008/01/23 16:37:57 jsing Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ prom_cnprobe(struct consdev *cd)
 		if (cdevsw[maj].d_open == pconsopen)
 			break;
 	cd->cn_dev = makedev(maj, 0);
-	cd->cn_pri = CN_INTERNAL;
+	cd->cn_pri = CN_MIDPRI;
 #endif
 }
 

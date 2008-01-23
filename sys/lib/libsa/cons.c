@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.12 2007/09/10 17:29:02 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.13 2008/01/23 16:37:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,7 @@ cninit(void)
 	 */
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
+		if (cp->cn_pri != CN_DEAD &&
 		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
 			cn_tab = cp;
 	}
@@ -83,7 +83,7 @@ cnset(dev_t dev)
 			/* short-circuit noop */
 			if (cp == cn_tab && cp->cn_dev == dev)
 				return (0);
-			if (cp->cn_pri > CN_DEAD) {
+			if (cp->cn_pri != CN_DEAD) {
 				cn_tab = cp;
 				cp->cn_dev = dev;
 				/* Turn it on.  */

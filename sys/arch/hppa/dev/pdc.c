@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.30 2007/07/15 19:25:49 kettenis Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.31 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -59,7 +59,7 @@ int pdcngetc(dev_t);
 void pdcnputc(dev_t, char *);
 
 struct consdev pdccons = { NULL, NULL, pdccngetc, pdccnputc,
-     nullcnpollc, NULL, makedev(22, 0), CN_NORMAL };
+     nullcnpollc, NULL, makedev(22, 0), CN_LOWPRI };
 
 int pdcmatch(struct device *, void *, void *);
 void pdcattach(struct device *, struct device *, void *);

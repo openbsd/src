@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.13 2007/06/23 18:51:45 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.14 2008/01/23 16:37:57 jsing Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ getchar()
 void
 ofc_probe(struct consdev *cn)
 {
-	cn->cn_pri = CN_NORMAL;
+	cn->cn_pri = CN_LOWPRI;
 	cn->cn_dev = makedev(0,0); /* WTF */
 }
 

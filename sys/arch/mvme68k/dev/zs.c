@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.25 2006/06/11 20:46:50 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.26 2008/01/23 16:37:57 jsing Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -1011,7 +1011,7 @@ zscnprobe(cp)
 			break;
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 }
 
 /* initialize the keyboard for use as the console */

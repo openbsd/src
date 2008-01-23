@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.28 2006/01/01 11:59:37 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.29 2008/01/23 16:37:56 jsing Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1507,11 +1507,11 @@ dcm_console_scan(scode, va, arg)
 
 	switch (dcm->dcm_rsid) {
 	case DCMID:
-		pri = CN_NORMAL;
+		pri = CN_LOWPRI;
 		break;
 
 	case DCMID|DCMCON:
-		pri = CN_REMOTE;
+		pri = CN_HIGHPRI;
 		break;
 
 	default:

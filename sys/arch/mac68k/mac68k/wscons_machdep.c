@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2008/01/23 16:37:56 jsing Exp $	*/
 /*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ wscnprobe(struct consdev *cp)
 #endif
 
 	cp->cn_dev = NODEV;
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 
 #if NWSDISPLAY > 0
 	unit = 0;
@@ -71,7 +71,7 @@ wscnprobe(struct consdev *cp)
 			break;
 
 	if (maj != nchrdev) {
-		cp->cn_pri = CN_INTERNAL;
+		cp->cn_pri = CN_MIDPRI;
 		cp->cn_dev = makedev(maj, unit);
 	}
 #endif

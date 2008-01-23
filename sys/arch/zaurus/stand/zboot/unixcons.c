@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixcons.c,v 1.1 2005/05/24 20:38:20 uwe Exp $	*/
+/*	$OpenBSD: unixcons.c,v 1.2 2008/01/23 16:37:57 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -103,7 +103,7 @@ common_getc(dev_t dev)
 void
 cn_probe(struct consdev *cn)
 {
-	cn->cn_pri = CN_INTERNAL;
+	cn->cn_pri = CN_MIDPRI;
 	cn->cn_dev = makedev(0,0);
 	printf("cn%d ", minor(cn->cn_dev));
 }
@@ -146,7 +146,7 @@ com_probe(struct consdev *cn)
 		printf("com%d ", i);
 	}
 
-	cn->cn_pri = CN_NORMAL;
+	cn->cn_pri = CN_LOWPRI;
 	/* XXX from arm/conf.c */
 	cn->cn_dev = makedev(12, 0);
 }

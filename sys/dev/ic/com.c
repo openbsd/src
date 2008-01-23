@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.120 2008/01/12 13:32:23 miod Exp $	*/
+/*	$OpenBSD: com.c,v 1.121 2008/01/23 16:37:55 jsing Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1354,9 +1354,9 @@ comcnprobe(struct consdev *cp)
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, CONUNIT);
 #if defined(COMCONSOLE) || defined(PCCOMCONSOLE) || !defined(__amd64__)
-	cp->cn_pri = CN_REMOTE;
+	cp->cn_pri = CN_HIGHPRI;
 #else
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 #endif
 }
 
@@ -1381,7 +1381,7 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency, tcf
 {
 	static struct consdev comcons = {
 		NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
-		NODEV, CN_NORMAL
+		NODEV, CN_LOWPRI
 	};
 
 #ifndef __sparc64__

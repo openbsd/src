@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.23 2007/12/28 20:42:31 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.24 2008/01/23 16:37:57 jsing Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -313,7 +313,7 @@ dzcnprobe(cndev)
 	default:
 		return;
 	}
-	cndev->cn_pri = diagcons != 0 ? CN_REMOTE : CN_NORMAL;
+	cndev->cn_pri = diagcons != 0 ? CN_HIGHPRI : CN_LOWPRI;
 	cndev->cn_dev = makedev(major, dz_can_have_kbd() ? 3 : diagcons);
 	dz_regs = iospace;
 	dz = (void *)dz_regs;

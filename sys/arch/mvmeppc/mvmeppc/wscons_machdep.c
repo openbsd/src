@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.4 2004/10/05 14:33:17 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.5 2008/01/23 16:37:57 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -62,7 +62,7 @@ wscnprobe(cp)
 	}
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
+	cp->cn_pri = CN_MIDPRI;
 }
 
 void

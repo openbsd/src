@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.30 2007/11/09 17:32:25 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.31 2008/01/23 16:37:56 jsing Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -906,9 +906,9 @@ apcicnprobe(cp)
 	frodoregs = (volatile u_int8_t *)IIOV(FRODO_BASE);
 	if (badaddr((caddr_t)frodoregs) == 0 &&
 	    !ISSET(frodoregs[FRODO_IISR], FRODO_IISR_SERVICE))
-		cp->cn_pri = CN_REMOTE;
+		cp->cn_pri = CN_HIGHPRI;
 	else
-		cp->cn_pri = CN_NORMAL;
+		cp->cn_pri = CN_LOWPRI;
 
 	/*
 	 * If our priority is higher than the currently-remembered

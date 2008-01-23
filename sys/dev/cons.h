@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.15 2006/01/01 11:59:40 miod Exp $	*/
+/*	$OpenBSD: cons.h,v 1.16 2008/01/23 16:37:55 jsing Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -53,15 +53,15 @@ struct consdev {
 				/* ring bell */
 	void	(*cn_bell)(dev_t, u_int, u_int, u_int);
 	dev_t	cn_dev;		/* major/minor of device */
-	int	cn_pri;		/* picking order; the higher the better */
+	u_int	cn_pri;		/* picking order; the higher the better */
 };
 
-/* values for cn_pri - reflect our policy for console selection */
-#define	CN_DEAD		0	/* device doesn't exist */
-#define CN_NORMAL	1	/* device exists but is nothing special */
-#define CN_INTERNAL	2	/* "internal" bit-mapped display */
-#define CN_REMOTE	3	/* serial interface with remote bit set */
-#define	CN_FORCED	4
+/* Values for cn_pri - policy for console selection. */
+#define	CN_DEAD		0	/* Device does not exist. */
+#define CN_LOWPRI	1	/* Device exists and is low priority. */
+#define CN_MIDPRI	2	/* Device exists and is medium priority. */
+#define CN_HIGHPRI	3	/* Device exists and is high priority. */
+#define	CN_FORCED	4	/* Use this device. */
 
 /* XXX */
 #define	CONSMAJOR	0

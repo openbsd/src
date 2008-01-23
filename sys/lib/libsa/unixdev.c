@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.7 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.8 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -115,7 +115,7 @@ ulseek(int fd, off_t off, int wh)
 void
 unix_probe(struct consdev *cn)
 {
-	cn->cn_pri = CN_INTERNAL;
+	cn->cn_pri = CN_MIDPRI;
 	cn->cn_dev = makedev(0,0);
 	printf("ux%d ", minor(cn->cn_dev));
 }

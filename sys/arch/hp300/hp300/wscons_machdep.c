@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.8 2006/12/18 18:57:26 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.9 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -274,7 +274,7 @@ wscnprobe(struct consdev *cp)
 	return;
 
 found:
-	cp->cn_pri = CN_INTERNAL;
+	cp->cn_pri = CN_MIDPRI;
 #ifdef CONSCODE
 	if (CONSCODE == tmpconscode)
 		cp->cn_pri = CN_FORCED;
@@ -293,7 +293,6 @@ found:
 		conscode = tmpconscode;
 		conaddr = (caddr_t)va;
 		convasize = mapsize;
-		
 	}
 }
 

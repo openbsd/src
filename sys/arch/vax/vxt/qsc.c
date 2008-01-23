@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsc.c,v 1.1 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: qsc.c,v 1.2 2008/01/23 16:37:57 jsing Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -829,7 +829,7 @@ qsccnprobe(struct consdev *cp)
 	ioaccess(iospace, QSCADDR, 1);
 
 	cp->cn_dev = makedev(maj, QSC_LINE_SERIAL);
-	cp->cn_pri = vax_confdata & 2 ? CN_NORMAL : CN_REMOTE;
+	cp->cn_pri = vax_confdata & 2 ? CN_LOWPRI : CN_HIGHPRI;
 }
 
 void

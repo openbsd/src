@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.76 2007/12/11 17:53:16 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.77 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -638,7 +638,7 @@ bioscnprobe(struct consdev *cn)
 	if (0 && bios_call(BOOTC_CHECK, NULL))
 		return;
 
-	cn->cn_pri = CN_NORMAL;
+	cn->cn_pri = CN_LOWPRI;
 	cn->cn_dev = makedev(48, 0);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.3 2007/04/28 19:23:10 deraadt Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.4 2008/01/23 16:37:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -48,14 +48,14 @@
 void
 pc_probe(struct consdev *cn)
 {
-	cn->cn_pri = CN_INTERNAL;
+	cn->cn_pri = CN_MIDPRI;
 	cn->cn_dev = makedev(12, 0);
 	printf(" pc%d", minor(cn->cn_dev));
 
 #if 0
 	outb(IO_RTC, NVRAM_EQUIPMENT);
 	if ((inb(IO_RTC+1) & PRESENT_MASK) == PRESENT_MASK) {
-		cn->cn_pri = CN_INTERNAL;
+		cn->cn_pri = CN_MIDPRI;
 		/* XXX from i386/conf.c */
 		cn->cn_dev = makedev(12, 0);
 		printf(" pc%d", minor(cn->cn_dev));
@@ -125,7 +125,7 @@ com_probe(struct consdev *cn)
 	for (i = 0; i < n; i++)
 		printf(" com%d", i);
 	if (n) {
-		cn->cn_pri = CN_NORMAL;
+		cn->cn_pri = CN_LOWPRI;
 		/* XXX from i386/conf.c */
 		cn->cn_dev = makedev(8, 0);
 	}

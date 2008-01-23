@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.10 2004/05/14 20:38:32 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.11 2008/01/23 16:37:57 jsing Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -440,7 +440,7 @@ bugttycnprobe(cp)
 			break;
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 }
 
 void

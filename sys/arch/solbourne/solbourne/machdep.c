@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2007/05/29 20:36:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2008/01/23 16:37:57 jsing Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -806,7 +806,7 @@ void
 earlycnprobe(struct consdev *cn)
 {
 	cn->cn_dev = makedev(0, 0);
-	cn->cn_pri = CN_INTERNAL;
+	cn->cn_pri = CN_MIDPRI;
 }
 
 void

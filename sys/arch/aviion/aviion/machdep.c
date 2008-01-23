@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2008/01/13 20:20:27 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2008/01/23 16:37:58 jsing Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
+/* $OpenBSD: machdep.c,v 1.23 2008/01/23 16:37:58 jsing Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -199,7 +199,7 @@ struct consdev bootcons = {
 	nullcnpollc,
 	NULL,
 	makedev(14, 0),
-	CN_NORMAL
+	CN_LOWPRI
 };
 
 /*
@@ -861,7 +861,7 @@ bootcnprobe(cp)
 	struct consdev *cp;
 {
 	cp->cn_dev = makedev(0, 0);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_LOWPRI;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cninit.c,v 1.7 2007/09/10 17:29:00 miod Exp $	*/
+/*	$OpenBSD: cninit.c,v 1.8 2008/01/23 16:37:55 jsing Exp $	*/
 /*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
 
 /*
@@ -59,21 +59,23 @@ cninit()
 
 	/*
 	 * Collect information about all possible consoles
-	 * and find the one with highest priority
+	 * and find the one with highest priority.
 	 */
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
+		if (cp->cn_pri != CN_DEAD &&
 		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
 			cn_tab = cp;
 	}
+
 	/*
-	 * No console, we can handle it
+	 * No console, we can handle it.
 	 */
 	if ((cp = cn_tab) == NULL)
 		return;
+
 	/*
-	 * Turn on console
+	 * Turn on console.
 	 */
 	(*cp->cn_init)(cp);
 }
@@ -89,10 +91,10 @@ cnset(dev)
 	 */
 	for (cp = constab; cp->cn_probe; cp++) {
 		if (major(cp->cn_dev) == major(dev)) {
-			/* short-circuit noop */
+			/* Short-circuit noop. */
 			if (cp == cn_tab && cp->cn_dev == dev)
 				return (0);
-			if (cp->cn_pri > CN_DEAD) {
+			if (cp->cn_pri != CN_DEAD) {
 				cn_tab = cp;
 				cp->cn_dev = dev;
 				/* Turn it on.  */
