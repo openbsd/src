@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.130 2007/12/23 18:26:13 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.131 2008/01/23 08:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,8 @@ void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 int		 show_rib_detail_msg(struct imsg *, int);
 void		 show_community(u_char *, u_int16_t);
+const char	*get_ext_subtype(u_int8_t);
+void		 show_ext_community(u_char *, u_int16_t);
 char		*fmt_mem(int64_t);
 int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
@@ -1115,7 +1117,8 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 	struct in_addr		 id;
 	char			*aspath, *s;
 	u_char			*data;
-	u_int16_t		 ilen, alen;
+	u_int32_t		 as;
+	u_int16_t		 ilen, alen, ioff;
 	u_int8_t		 flags, type;
 	time_t			 now;
 
@@ -1157,28 +1160,61 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 	case IMSG_CTL_SHOW_RIB_ATTR:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
 		if (ilen < 3)
-			break;
+			errx(1, "bad IMSG_CTL_SHOW_RIB_ATTR received");
 		data = imsg->data;
 		flags = data[0];
 		type = data[1];
-		if (type == ATTR_COMMUNITIES) {
-			if (flags & ATTR_EXTLEN) {
-				if (ilen < 4)
-					break;
-				memcpy(&alen, data+2, sizeof(u_int16_t));
-				alen = ntohs(alen);
-				data += 4;
-				ilen -= 4;
-			} else {
-				alen = data[2];
-				data += 3;
-				ilen -= 3;
-			}
-			if (alen != ilen)
-				break;
-			printf("    Community: ");
+
+		/* get the attribute length */
+		if (flags & ATTR_EXTLEN) {
+			if (ilen < 4)
+				errx(1, "bad IMSG_CTL_SHOW_RIB_ATTR received");
+			memcpy(&alen, data+2, sizeof(u_int16_t));
+			alen = ntohs(alen);
+			data += 4;
+			ilen -= 4;
+		} else {
+			alen = data[2];
+			data += 3;
+			ilen -= 3;
+		}
+		/* bad imsg len how can that happen!? */
+		if (alen != ilen)
+			errx(1, "bad IMSG_CTL_SHOW_RIB_ATTR received");
+
+		switch (type) {
+		case ATTR_COMMUNITIES:
+			printf("    Communities: ");
 			show_community(data, alen);
 			printf("\n");
+			break;
+		case ATTR_AGGREGATOR:
+			memcpy(&as, data, sizeof(as));
+			memcpy(&id, data + sizeof(as), sizeof(id));
+			printf("    Aggregator: %s [%s]\n", log_as(as),
+			   inet_ntoa(id));
+			break;
+		case ATTR_ORIGINATOR_ID:
+			memcpy(&id, data, sizeof(id));
+			printf("    Originator Id: %s\n", inet_ntoa(id));
+			break;
+		case ATTR_CLUSTER_LIST:
+			printf("    Cluster ID List:");
+			for (ioff = 0; ioff + sizeof(id) <= ilen;
+			    ioff += sizeof(id)) {
+				memcpy(&id, data + ioff, sizeof(id));
+				printf(" %s", inet_ntoa(id));
+			}
+			printf("\n");
+			break;
+		case ATTR_EXT_COMMUNITIES:
+			printf("    Ext. communities:");
+			show_ext_community(data, alen);
+			printf("\n");
+			break;
+		default:
+			/* ignore unknown attributes */
+			break;
 		}
 		break;
 	case IMSG_CTL_END:
@@ -1287,6 +1323,78 @@ show_community(u_char *data, u_int16_t len)
 
 		if (i + 4 < len)
 			printf(" ");
+	}
+}
+
+const char *
+get_ext_subtype(u_int8_t type)
+{
+	static char etype[6];
+
+	switch (type) {
+	case EXT_COMMUNITY_ROUTE_TGT:
+		return "rt";	/* route target */
+	case EXT_CUMMUNITY_ROUTE_ORIG:
+		return "soo";	/* source of origin */
+	case EXT_COMMUNITY_OSPF_DOM_ID:
+		return "odi";	/* ospf domain id */
+	case EXT_COMMUNITY_OSPF_RTR_TYPE:
+		return "ort";	/* ospf route type */
+	case EXT_COMMUNITY_OSPF_RTR_ID:
+		return "ori";	/* ospf router id */
+	case EXT_COMMUNITY_BGP_COLLECT:
+		return "bdc";	/* bgp data collection */
+	default:
+		snprintf(etype, sizeof(etype), "[%i]", (int)type);
+		return etype;
+	}
+}
+
+void
+show_ext_community(u_char *data, u_int16_t len)
+{
+	u_int64_t	ext;
+	struct in_addr	ip;
+	u_int32_t	as4, u32;
+	u_int16_t	i, as2, u16;
+	u_int8_t	type, subtype;
+
+	if (len & 0x7)
+		return;
+
+	for (i = 0; i < len; i += 8) {
+		type = data[i];
+		subtype = data[i + 1];
+
+		switch (type & EXT_COMMUNITY_VALUE) {
+		case EXT_COMMUNITY_TWO_AS:
+			memcpy(&as2, data + i + 2, sizeof(as2));
+			memcpy(&u32, data + i + 4, sizeof(u32));
+			printf("%s %hu:%u", get_ext_subtype(subtype), as2, u32);
+			break;
+		case EXT_COMMUNITY_IPV4:
+			memcpy(&ip, data + i + 2, sizeof(ip));
+			memcpy(&u16, data + i + 6, sizeof(u16));
+			printf("%s %s:%hu", get_ext_subtype(subtype),
+			    inet_ntoa(ip), u16);
+			break;
+		case EXT_COMMUNITY_FOUR_AS:
+			memcpy(&as4, data + i + 2, sizeof(as4));
+			memcpy(&u16, data + i + 6, sizeof(u16));
+			printf("%s %s:%hu", get_ext_subtype(subtype),
+			    log_as(as4), u16);
+			break;
+		case EXT_COMMUNITY_OPAQUE:
+			memcpy(&ext, data + i, sizeof(ext));
+			ext = betoh64(ext) & 0xffffffffffffLL;
+			printf("%s 0x%llx", get_ext_subtype(subtype), ext); 
+			break;
+		default:
+			memcpy(&ext, data + i, sizeof(ext));
+			printf("0x%llx", betoh64(ext)); 
+		}
+		if (i + 8 < len)
+			printf(", ");
 	}
 }
 
