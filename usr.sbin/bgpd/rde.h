@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.101 2007/11/27 01:13:54 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.102 2008/01/23 08:11:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -106,6 +106,7 @@ enum attrtypes {
 	ATTR_CLUSTER_LIST,
 	ATTR_MP_REACH_NLRI=14,
 	ATTR_MP_UNREACH_NLRI=15,
+	ATTR_EXT_COMMUNITIES=16,
 	ATTR_NEW_ASPATH=17,
 	ATTR_NEW_AGGREGATOR=18
 };

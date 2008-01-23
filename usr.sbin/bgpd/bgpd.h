@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.221 2007/12/23 18:26:13 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.222 2008/01/23 08:11:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -602,6 +602,24 @@ struct filter_peers {
 #define	COMMUNITY_NO_ADVERTISE		0xff02
 #define	COMMUNITY_NO_EXPSUBCONFED	0xff03
 #define	COMMUNITY_NO_PEER		0xff04	/* RFC 3765 */
+
+/* extended community definitions */
+#define EXT_COMMUNITY_IANA		0x80
+#define EXT_COMMUNITY_TRANSITIVE	0x40
+#define EXT_COMMUNITY_VALUE		0x3f
+/* extended types */
+#define EXT_COMMUNITY_TWO_AS		0	/* 2 octet AS specific */
+#define EXT_COMMUNITY_IPV4		1	/* IPv4 specific */
+#define EXT_COMMUNITY_FOUR_AS		2	/* 4 octet AS specific */
+#define EXT_COMMUNITY_OPAQUE		3	/* opaque ext community */
+/* sub types */
+#define EXT_COMMUNITY_ROUTE_TGT		2	/* RFC 4360 & RFC4364 */
+#define EXT_CUMMUNITY_ROUTE_ORIG	3	/* RFC 4360 & RFC4364 */
+#define EXT_COMMUNITY_OSPF_DOM_ID	5	/* RFC 4577 */
+#define EXT_COMMUNITY_OSPF_RTR_TYPE	6	/* RFC 4577 */
+#define EXT_COMMUNITY_OSPF_RTR_ID	7	/* RFC 4577 */
+#define EXT_COMMUNITY_BGP_COLLECT	8	/* RFC 4384 */
+
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
