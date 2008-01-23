@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.5 2008/01/01 00:43:39 kurt Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.6 2008/01/23 02:20:24 kurt Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -173,6 +173,23 @@ _thread_malloc_unlock(void)
 void
 _thread_malloc_init(void)
 {
+}
+
+/*
+ * atexit lock
+ */
+static _spinlock_lock_t atexit_lock = _SPINLOCK_UNLOCKED;
+
+void
+_thread_atexit_lock(void)
+{
+	_spinlock(&atexit_lock);
+}
+
+void
+_thread_atexit_unlock(void)
+{
+	_spinunlock(&atexit_lock);
 }
 
 /*
