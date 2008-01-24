@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.2 2008/01/24 13:58:14 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.3 2008/01/24 14:01:06 marco Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -101,8 +101,9 @@ sr_raid0_rw(struct sr_workunit *wu)
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
 	int			s;
-	daddr64_t		blk, lbaoffs, strip_no, chunk, stripoffs, strip_bits;
-	daddr64_t		strip_size, no_chunk, chunkoffs, physoffs, length, leftover;
+	daddr64_t		blk, lbaoffs, strip_no, chunk, stripoffs;
+	daddr64_t		strip_size, no_chunk, chunkoffs, physoffs;
+	daddr64_t		strip_bits, length, leftover;
 	u_int8_t		*data;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid0_rw 0x%02x\n", DEVNAME(sd->sd_sc),
