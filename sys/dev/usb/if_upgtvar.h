@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.11 2008/01/21 19:37:36 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.12 2008/01/24 21:44:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -27,7 +27,6 @@ struct upgt_rx_radiotap_header {
 	uint8_t				wr_rate;
 	uint16_t			wr_chan_freq;
 	uint16_t			wr_chan_flags;
-	uint8_t				wr_antenna;
 	uint8_t				wr_antsignal;
 } __packed;
 
@@ -35,7 +34,6 @@ struct upgt_rx_radiotap_header {
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_ANTENNA) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
 
 struct upgt_tx_radiotap_header {
@@ -44,14 +42,12 @@ struct upgt_tx_radiotap_header {
 	uint8_t				wt_rate;
 	uint16_t			wt_chan_freq;
 	uint16_t			wt_chan_flags;
-	uint8_t				wt_antenna;
 } __packed;
 
 #define UPGT_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_ANTENNA))
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 /*
  * General values.

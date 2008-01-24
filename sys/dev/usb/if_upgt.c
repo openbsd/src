@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.28 2008/01/24 21:24:05 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.29 2008/01/24 21:44:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1540,7 +1540,6 @@ upgt_tx_task(void *arg)
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
-			tap->wt_antenna = 0;
 
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = sc->sc_txtap_len;
@@ -1753,7 +1752,6 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 		tap->wr_rate = upgt_rx_rate(sc, rxdesc->rate);
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-		tap->wr_antenna = 0;
 		tap->wr_antsignal = rxdesc->rssi;
 
 		mb.m_data = (caddr_t)tap;
