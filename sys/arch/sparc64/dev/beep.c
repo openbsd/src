@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.3 2006/05/29 03:26:54 jason Exp $	*/
+/*	$OpenBSD: beep.c,v 1.4 2008/01/24 14:54:49 robert Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -45,6 +45,11 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+#include "ukbd.h"
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
+#endif
+
 #define	BEEP_CTRL		0
 #define	BEEP_CNT_0		2
 #define	BEEP_CNT_1		3
@@ -65,6 +70,9 @@ struct beep_softc {
 	bus_space_handle_t	sc_ioh;
 	int			sc_clk;
 	struct beep_freq	sc_freqs[9];
+	struct timeout		sc_to;
+	int			sc_belltimeout;
+	int			sc_bellactive;
 };
 
 int beep_match(struct device *, void *, void *);
@@ -78,6 +86,11 @@ struct cfattach beep_ca = {
 struct cfdriver beep_cd = {
 	NULL, "beep", DV_DULL
 };
+
+#if NUKBD > 0
+void beep_stop(void *);
+void beep_bell(void *, u_int, u_int, u_int, int);
+#endif
 
 int
 beep_match(struct device *parent, void *match, void *aux)
@@ -130,14 +143,21 @@ beep_attach(parent, self, aux)
 	/* set beep at around 1200hz */
 	beep_setfreq(sc, 1200);
 
+#if 0
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
 	    BEEP_CTRL_ON);
 	for (i = 0; i < 1000; i++)
 		DELAY(1000);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
 	    BEEP_CTRL_OFF);
+#endif
 
 	printf(": clock %sMHz\n", clockfreq(sc->sc_clk));
+
+#if NUKBD > 0
+	timeout_set(&sc->sc_to, beep_stop, sc);
+	ukbd_hookup_bell(beep_bell, sc);
+#endif
 }
 
 void
@@ -179,3 +199,49 @@ beep_setfreq(struct beep_softc *sc, int freq)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_3,
 	    (sc->sc_freqs[i].reg >>  0) & 0xff);
 }
+
+#if NUKBD > 0
+void
+beep_stop(void *vsc)
+{
+	struct beep_softc *sc = vsc;
+	int s;
+
+	s = spltty();
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
+	    BEEP_CTRL_OFF);
+	sc->sc_bellactive = 0;
+	sc->sc_belltimeout = 0;
+	splx(s);
+}
+
+void
+beep_bell(void *vsc, u_int pitch, u_int period, u_int volume, int poll)
+{
+	struct beep_softc *sc = vsc;
+	int s, ticks;
+
+	ticks = (period * hz) / 1000;
+	if (ticks <= 0)
+		ticks = 1;
+
+	s = spltty();
+	if (sc->sc_bellactive) {
+		if (sc->sc_belltimeout == 0)
+			timeout_del(&sc->sc_to);
+	}
+	if (pitch == 0 || period == 0 || volume == 0) {
+		beep_stop(sc);
+		splx(s);
+		return;
+	}
+	if (!sc->sc_bellactive) {
+		sc->sc_bellactive = 1;
+		sc->sc_belltimeout = 1;
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
+	    	    BEEP_CTRL_ON);
+		timeout_add(&sc->sc_to, ticks);
+	}
+	splx(s);
+}
+#endif /* NUKBD > 0 */

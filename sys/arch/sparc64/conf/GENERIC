@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.191 2008/01/19 17:21:07 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.192 2008/01/24 14:54:49 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -221,6 +221,7 @@ cardslot* at cbb?
 
 auxio*	at ebus?
 auxio*	at sbus?
+beep*	at ebus?
 beeper*	at ebus?
 power*	at ebus?
 
