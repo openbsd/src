@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.29 2008/01/24 21:44:32 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.30 2008/01/24 22:35:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -230,11 +230,12 @@ upgt_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_rx_no = ed->bEndpointAddress;
 
 		/*
-		 * XXX Just get the version 2 bulk pipes for now.
 		 * 0x01 TX pipe
 		 * 0x81 RX pipe
-		 * 0x02 TX MGMT pipe (not used with fw version >2.5.x)
-		 * 0x82 TX MGMT pipe (not used with fw version >2.5.x)
+		 *
+		 * Deprecated scheme (not used with fw version >2.5.6.x):
+		 * 0x02 TX MGMT pipe
+		 * 0x82 TX MGMT pipe
 		 */
 		if (sc->sc_tx_no != -1 && sc->sc_rx_no != -1)
 			break;
@@ -1535,7 +1536,7 @@ upgt_tx_task(void *arg)
 			struct upgt_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->wt_flags = 0;
-			tap->wt_rate = 0;
+			tap->wt_rate = 0;	/* TODO: where to get? */
 			tap->wt_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
