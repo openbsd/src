@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.31 2006/09/26 03:26:36 djm Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.32 2008/01/24 11:56:29 krw Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -3096,7 +3096,7 @@ int ap_read_etag_state(pool *pconf)
 
     /* read 4 random 32-bit uints from file and update the hash context */
     for (u = 0; u < 4; u++) {
-        if (read(fd, &rnd, sizeof(rnd)) < sizeof(rnd))
+        if (read(fd, &rnd, sizeof(rnd)) != sizeof(rnd))
             return (-1);
 
         ap_SHA1Update_binary(&baseCtx, (const unsigned char *)&rnd,
