@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.11 2007/06/02 15:33:21 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.12 2008/01/24 19:33:16 marco Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2007 $
+.Dd $Mdocdate: January 24 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -27,14 +27,19 @@
 .Sh DESCRIPTION
 The
 .Nm
-device emulates an HBA (host bus adapter) that provides RAID and other IO
+device emulates an HBA (Host Bus Adapter) that provides RAID and other IO
 related services.
-The idea is to tie chunks together into an IO discipline.
-A discipline can for example provide a volume that mirrors chunks (RAID 1).
+The
+.Nm
+device provides a scaffold to implement more complex IO transformation
+disciplines.
+For example, one can tie chunks together into a mirroring discipline.
+There really is no limit on what type of discipline one can write as long
+as it fits the SCSI model.
 .Pp
 Currently
 .Nm
-only supports a mirroring discipline.
+supports a mirroring (RAID 1) and a striping (RAID 0) discipline.
 .Pp
 A
 .Em discipline
@@ -58,16 +63,16 @@ An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
 Initialize the partition tables of all disks:
 .Bd -literal -offset indent
-echo y | fdisk -i wd1
-echo y | fdisk -i wd2
-echo y | fdisk -i wd3
+fdisk -iy wd1
+fdisk -iy wd2
+fdisk -iy wd3
 .Ed
 .Pp
 Now create RAID partitions on all disks:
 .Bd -literal -offset indent
-echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
-echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
-echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
+echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
+echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
+echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
 .Ed
 .Pp
 Assemble the RAID volume:
@@ -90,8 +95,8 @@ dd if=/dev/zero of=/dev/rsd0c bs=1m count=1
 Initialize the partition table and create a filesystem on the
 new RAID volume:
 .Bd -literal -offset indent
-echo y | fdisk -i sd0
-echo "d a\ena\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
+fdisk -iy sd0
+echo "a\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
 newfs /dev/rsd0a
 .Ed
 .Pp
@@ -131,6 +136,12 @@ Currently the RAID 1 support does not have the ability to recover a
 failed chunk.
 .Pp
 The RAID 1 discipline does not initialize the mirror upon creation.
+This is by design because all sectors that are read are written first.
+There is no point in wasting a lot of time syncing random data.
+.Pp
+Currently there is no automated mechanism to recover from failed disks.
+.Pp
+There is no boot support at this time for any disciplines.
 .Pp
 Certain RAID levels can protect against some data loss
 due to component failure.
