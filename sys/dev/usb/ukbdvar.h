@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdvar.h,v 1.2 2000/11/08 18:10:38 aaron Exp $ */
+/*	$OpenBSD: ukbdvar.h,v 1.3 2008/01/24 14:50:38 robert Exp $ */
 /*	$NetBSD: ukbdvar.h,v 1.2 2000/06/01 14:29:00 augustss Exp $	*/
 
 /*-
@@ -42,5 +42,8 @@
 #define	_DEV_USB_UKBDVAR_H_
 
 int	ukbd_cnattach(void);
+
+void	ukbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int),
+	    void *);
 
 #endif /* _DEV_USB_UKBDVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.38 2007/11/23 19:21:40 deraadt Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.39 2008/01/24 14:50:38 robert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -296,13 +296,20 @@ int	ukbd_is_console;
 
 void	ukbd_cngetc(void *, u_int *, int *);
 void	ukbd_cnpollc(void *, int);
+void	ukbd_cnbell(void *, u_int, u_int, u_int);
 
 const struct wskbd_consops ukbd_consops = {
 	ukbd_cngetc,
 	ukbd_cnpollc,
+	ukbd_cnbell,
 };
 
 const char *ukbd_parse_desc(struct ukbd_softc *sc);
+
+void	(*ukbd_bell_fn)(void *, u_int, u_int, u_int, int);
+void	*ukbd_bell_fn_arg;
+
+void	ukbd_bell(u_int, u_int, u_int, int);
 
 void	ukbd_intr(struct uhidev *addr, void *ibuf, u_int len);
 void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
@@ -803,6 +810,11 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
 		return (0);
+	case WSKBDIO_COMPLEXBELL:
+#define d ((struct wskbd_bell_data *)data)
+		ukbd_bell(d->pitch, d->period, d->volume, 0);
+#undef d
+		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
@@ -812,6 +824,23 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 #endif
 	}
 	return (-1);
+}
+
+void
+ukbd_bell(u_int pitch, u_int period, u_int volume, int poll)
+{
+	if (ukbd_bell_fn != NULL)
+		(*ukbd_bell_fn)(ukbd_bell_fn_arg, pitch, period,
+		    volume, poll);
+}
+
+void
+ukbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+	if (ukbd_bell_fn == NULL) {
+		ukbd_bell_fn = fn;
+		ukbd_bell_fn_arg = arg;
+	}
 }
 
 /*
@@ -874,6 +903,12 @@ ukbd_cnpollc(void *v, int on)
 	}
 	usbd_set_polling(dev, on);
 }
+
+void
+ukbd_cnbell(void *v, u_int pitch, u_int period, u_int volume) 
+{
+	ukbd_bell(pitch, period, volume, 1);
+}	
 
 int
 ukbd_cnattach(void)
