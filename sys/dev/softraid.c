@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.93 2008/01/20 17:20:10 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.94 2008/01/24 13:54:47 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -823,7 +823,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_vol.sv_meta.svm_size = vol_size;
 		sd->sd_vol.sv_meta.svm_status = BIOC_SVONLINE;
 		sd->sd_vol.sv_meta.svm_level = bc->bc_level;
-		 sd->sd_vol.sv_meta.svm_strip_size = strip_size;
+		sd->sd_vol.sv_meta.svm_strip_size = strip_size;
 		strlcpy(sd->sd_vol.sv_meta.svm_vendor, "OPENBSD",
 		    sizeof(sd->sd_vol.sv_meta.svm_vendor));
 		snprintf(sd->sd_vol.sv_meta.svm_product,
@@ -1065,8 +1065,9 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 			goto unwind;
 		}
 
-		/* get partition size */
-		ch_entry->src_size = size = DL_GETPSIZE(&label.d_partitions[part]) -
+		/* get partition size while accounting for metadata! */
+		ch_entry->src_size = size =
+		    DL_GETPSIZE(&label.d_partitions[part]) -
 		    SR_META_SIZE - SR_META_OFFSET;
 		if (size <= 0) {
 			printf("%s: %s partition too small\n",
