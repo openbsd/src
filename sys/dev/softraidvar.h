@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.37 2008/01/24 13:58:14 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.38 2008/01/24 19:58:08 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -359,6 +359,10 @@ void			sr_free_wu(struct sr_discipline *);
 struct sr_workunit	*sr_get_wu(struct sr_discipline *);
 void			sr_put_wu(struct sr_workunit *);
 
+/* misc functions */
+int32_t			sr_validate_stripsize(u_int32_t);
+void			sr_save_metadata_callback(void *, void *);
+
 /* discipline functions */
 int			sr_raid_inquiry(struct sr_workunit *);
 int			sr_raid_read_cap(struct sr_workunit *);
@@ -366,17 +370,16 @@ int			sr_raid_tur(struct sr_workunit *);
 int			sr_raid_request_sense( struct sr_workunit *);
 int			sr_raid_start_stop(struct sr_workunit *);
 int			sr_raid_sync(struct sr_workunit *);
-void			sr_raid_set_chunk_state(struct sr_discipline *,
-			    int, int);
-void			sr_raid_set_vol_state(struct sr_discipline *);
 void			sr_raid_startwu(struct sr_workunit *);
-int32_t			sr_validate_stripsize(u_int32_t);
 
 /* raid 0 */
 int			sr_raid0_alloc_resources(struct sr_discipline *);
 int			sr_raid0_free_resources(struct sr_discipline *);
 int			sr_raid0_rw(struct sr_workunit *);
 void			sr_raid0_intr(struct buf *);
+void			sr_raid0_set_chunk_state(struct sr_discipline *,
+			    int, int);
+void			sr_raid0_set_vol_state(struct sr_discipline *);
 
 /* raid 1 */
 int			sr_raid1_alloc_resources(struct sr_discipline *);
@@ -384,10 +387,13 @@ int			sr_raid1_free_resources(struct sr_discipline *);
 int			sr_raid1_rw(struct sr_workunit *);
 void			sr_raid1_intr(struct buf *);
 void			sr_raid1_recreate_wu(struct sr_workunit *);
+void			sr_raid1_set_chunk_state(struct sr_discipline *,
+			    int, int);
+void			sr_raid1_set_vol_state(struct sr_discipline *);
 
 /* crypto discipline */
-struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
-void *			sr_crypto_putcryptop(struct cryptop *);
+struct cryptop 		*sr_crypto_getcryptop(struct sr_workunit *, int);
+void 			*sr_crypto_putcryptop(struct cryptop *);
 int			sr_crypto_alloc_resources(struct sr_discipline *);
 int			sr_crypto_free_resources(struct sr_discipline *);
 int			sr_crypto_rw(struct sr_workunit *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.4 2008/01/24 17:50:17 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.5 2008/01/24 19:58:08 marco Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -90,6 +90,112 @@ sr_raid0_free_resources(struct sr_discipline *sd)
 
 	rv = 0;
 	return (rv);
+}
+
+void
+sr_raid0_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
+{
+	int			old_state, s;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: %s: sr_raid_set_chunk_state %d -> %d\n",
+	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+	    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname, c, new_state);
+
+	/* ok to go to splbio since this only happens in error path */
+	s = splbio();
+	old_state = sd->sd_vol.sv_chunks[c]->src_meta.scm_status;
+
+	/* multiple IOs to the same chunk that fail will come through here */
+	if (old_state == new_state)
+		goto done;
+
+	switch (old_state) {
+	case BIOC_SDONLINE:
+		if (new_state == BIOC_SDOFFLINE)
+			break;
+		else
+			goto die;
+		break;
+
+	case BIOC_SDOFFLINE:
+		goto die;
+
+	default:
+die:
+		splx(s); /* XXX */
+		panic("%s: %s: %s: invalid chunk state transition "
+		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    sd->sd_vol.sv_meta.svm_devname,
+		    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname,
+		    old_state, new_state);
+		/* NOTREACHED */
+	}
+
+	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
+	sd->sd_set_vol_state(sd);
+
+	sd->sd_must_flush = 1;
+	workq_add_task(NULL, 0, sr_save_metadata_callback, sd, NULL);
+done:
+	splx(s);
+}
+
+void
+sr_raid0_set_vol_state(struct sr_discipline *sd)
+{
+	int			states[SR_MAX_STATES];
+	int			new_state, i, s, nd;
+	int			old_state = sd->sd_vol.sv_meta.svm_status;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state\n",
+	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
+
+	nd = sd->sd_vol.sv_meta.svm_no_chunk;
+
+	for (i = 0; i < SR_MAX_STATES; i++)
+		states[i] = 0;
+
+	for (i = 0; i < nd; i++) {
+		s = sd->sd_vol.sv_chunks[i]->src_meta.scm_status;
+		if (s > SR_MAX_STATES)
+			panic("%s: %s: %s: invalid chunk state",
+			    DEVNAME(sd->sd_sc),
+			    sd->sd_vol.sv_meta.svm_devname,
+			    sd->sd_vol.sv_chunks[i]->src_meta.scm_devname);
+		states[s]++;
+	}
+
+	if (states[BIOC_SDONLINE] == nd)
+		new_state = BIOC_SVONLINE;
+	else 
+		new_state = BIOC_SVOFFLINE;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state %d -> %d\n",
+	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+	    old_state, new_state);
+
+	switch (old_state) {
+	case BIOC_SVONLINE:
+		if (new_state == BIOC_SVOFFLINE)
+			break;
+		else
+			goto die;
+		break;
+
+	case BIOC_SVOFFLINE:
+		/* XXX this might be a little too much */
+		goto die;
+
+	default:
+die:
+		panic("%s: %s: invalid volume state transition "
+		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    sd->sd_vol.sv_meta.svm_devname,
+		    old_state, new_state);
+		/* NOTREACHED */
+	}
+
+	sd->sd_vol.sv_meta.svm_status = new_state;
 }
 
 int

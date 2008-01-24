@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.95 2008/01/24 17:50:17 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.96 2008/01/24 19:58:08 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -107,7 +107,6 @@ void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_clear_metadata(struct sr_discipline *);
 int			sr_save_metadata(struct sr_discipline *, u_int32_t);
-void			sr_save_metadata_callback(void *, void *);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
@@ -886,8 +885,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_scsi_start_stop = sr_raid_start_stop;
 		sd->sd_scsi_sync = sr_raid_sync;
 		sd->sd_scsi_rw = sr_raid0_rw;
-		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid_set_vol_state;
+		sd->sd_set_chunk_state = sr_raid0_set_chunk_state;
+		sd->sd_set_vol_state = sr_raid0_set_vol_state;
 		break;
 	case 1:
 		/* fill out discipline members */
@@ -905,8 +904,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_scsi_start_stop = sr_raid_start_stop;
 		sd->sd_scsi_sync = sr_raid_sync;
 		sd->sd_scsi_rw = sr_raid1_rw;
-		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid_set_vol_state;
+		sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
+		sd->sd_set_vol_state = sr_raid1_set_vol_state;
 		break;
 #ifdef CRYPTO
 	case 'C':
@@ -925,8 +924,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_scsi_start_stop = sr_raid_start_stop;
 		sd->sd_scsi_sync = sr_raid_sync;
 		sd->sd_scsi_rw = sr_crypto_rw;
-		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid_set_vol_state;
+		/* XXX reuse raid 1 functions for now FIXME */
+		sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
+		sd->sd_set_vol_state = sr_raid1_set_vol_state;
 		break;
 #endif
 	default:
@@ -1553,202 +1553,6 @@ sr_raid_startwu(struct sr_workunit *wu)
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 		bdevsw_lookup(ccb->ccb_buf.b_dev)->d_strategy(&ccb->ccb_buf);
 	}
-}
-
-void
-sr_raid_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
-{
-	int			old_state, s;
-
-	DNPRINTF(SR_D_STATE, "%s: %s: %s: sr_raid_set_chunk_state %d -> %d\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
-	    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname, c, new_state);
-
-	/* ok to go to splbio since this only happens in error path */
-	s = splbio();
-	old_state = sd->sd_vol.sv_chunks[c]->src_meta.scm_status;
-
-	/* multiple IOs to the same chunk that fail will come through here */
-	if (old_state == new_state)
-		goto done;
-
-	switch (old_state) {
-	case BIOC_SDONLINE:
-		switch (new_state) {
-		case BIOC_SDOFFLINE:
-			break;
-		case BIOC_SDSCRUB:
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SDOFFLINE:
-		if (new_state == BIOC_SDREBUILD) {
-			;
-		} else
-			goto die;
-		break;
-
-	case BIOC_SDSCRUB:
-		if (new_state == BIOC_SDONLINE) {
-			;
-		} else
-			goto die;
-		break;
-
-	case BIOC_SDREBUILD:
-		if (new_state == BIOC_SDONLINE) {
-			;
-		} else
-			goto die;
-		break;
-
-	case BIOC_SDHOTSPARE:
-		if (new_state == BIOC_SDREBUILD) {
-			;
-		} else
-			goto die;
-		break;
-
-	default:
-die:
-		splx(s); /* XXX */
-		panic("%s: %s: %s: invalid chunk state transition "
-		    "%d -> %d\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname,
-		    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname,
-		    old_state, new_state);
-		/* NOTREACHED */
-	}
-
-	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
-	sd->sd_set_vol_state(sd);
-
-	sd->sd_must_flush = 1;
-	workq_add_task(NULL, 0, sr_save_metadata_callback, sd, NULL);
-done:
-	splx(s);
-}
-
-void
-sr_raid_set_vol_state(struct sr_discipline *sd)
-{
-	int			states[SR_MAX_STATES];
-	int			new_state, i, s, nd;
-	int			old_state = sd->sd_vol.sv_meta.svm_status;
-
-	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
-
-	nd = sd->sd_vol.sv_meta.svm_no_chunk;
-
-	for (i = 0; i < SR_MAX_STATES; i++)
-		states[i] = 0;
-
-	for (i = 0; i < nd; i++) {
-		s = sd->sd_vol.sv_chunks[i]->src_meta.scm_status;
-		if (s > SR_MAX_STATES)
-			panic("%s: %s: %s: invalid chunk state",
-			    DEVNAME(sd->sd_sc),
-			    sd->sd_vol.sv_meta.svm_devname,
-			    sd->sd_vol.sv_chunks[i]->src_meta.scm_devname);
-		states[s]++;
-	}
-
-	if (states[BIOC_SDONLINE] == nd)
-		new_state = BIOC_SVONLINE;
-	else if (states[BIOC_SDONLINE] == 0)
-		new_state = BIOC_SVOFFLINE;
-	else if (states[BIOC_SDSCRUB] != 0)
-		new_state = BIOC_SVSCRUB;
-	else if (states[BIOC_SDREBUILD] != 0)
-		new_state = BIOC_SVREBUILD;
-	else if (states[BIOC_SDOFFLINE] != 0)
-		new_state = BIOC_SVDEGRADED;
-	else {
-		printf("old_state = %d, ", old_state);
-		for (i = 0; i < nd; i++)
-			printf("%d = %d, ", i,
-			    sd->sd_vol.sv_chunks[i]->src_meta.scm_status);
-		panic("invalid new_state");
-	}
-
-	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state %d -> %d\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
-	    old_state, new_state);
-
-	switch (old_state) {
-	case BIOC_SVONLINE:
-		switch (new_state) {
-		case BIOC_SVOFFLINE:
-		case BIOC_SVDEGRADED:
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SVOFFLINE:
-		/* XXX this might be a little too much */
-		goto die;
-
-	case BIOC_SVSCRUB:
-		switch (new_state) {
-		case BIOC_SVONLINE:
-		case BIOC_SVOFFLINE:
-		case BIOC_SVDEGRADED:
-		case BIOC_SVSCRUB: /* can go to same state */
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SVBUILDING:
-		switch (new_state) {
-		case BIOC_SVONLINE:
-		case BIOC_SVOFFLINE:
-		case BIOC_SVBUILDING: /* can go to the same state */
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SVREBUILD:
-		switch (new_state) {
-		case BIOC_SVONLINE:
-		case BIOC_SVOFFLINE:
-		case BIOC_SVREBUILD: /* can go to the same state */
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SVDEGRADED:
-		switch (new_state) {
-		case BIOC_SVOFFLINE:
-		case BIOC_SVREBUILD:
-		case BIOC_SVDEGRADED: /* can go to the same state */
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	default:
-die:
-		panic("%s: %s: invalid volume state transition "
-		    "%d -> %d\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname,
-		    old_state, new_state);
-		/* NOTREACHED */
-	}
-
-	sd->sd_vol.sv_meta.svm_status = new_state;
 }
 
 u_int32_t
