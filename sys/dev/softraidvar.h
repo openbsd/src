@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.36 2008/01/19 23:53:53 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.37 2008/01/24 13:58:14 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -30,7 +30,6 @@
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-/* #define SR_DEBUG */
 #ifdef SR_DEBUG
 extern u_int32_t		sr_debug;
 #define DPRINTF(x...)		do { if (sr_debug) printf(x); } while(0)
@@ -122,7 +121,7 @@ TAILQ_HEAD(sr_wu_list, sr_workunit);
 /* RAID 0 */
 #define SR_RAID0_NOWU		16
 struct sr_raid0 {
-	int32_t			sr0_stripbits;
+	int32_t			sr0_strip_bits;
 };
 
 /* RAID 1 */

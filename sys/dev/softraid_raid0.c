@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.1 2008/01/19 23:53:53 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.2 2008/01/24 13:58:14 marco Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -61,9 +61,9 @@ sr_raid0_alloc_resources(struct sr_discipline *sd)
 		goto bad;
 
 	/* setup runtime values */
-	sd->mds.mdd_raid0.sr0_stripbits =
+	sd->mds.mdd_raid0.sr0_strip_bits =
 	    sr_validate_stripsize(sd->sd_vol.sv_meta.svm_strip_size);
-	if (sd->mds.mdd_raid0.sr0_stripbits == -1)
+	if (sd->mds.mdd_raid0.sr0_strip_bits == -1)
 		goto bad;
 
 	rv = 0;
@@ -98,14 +98,15 @@ sr_raid0_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
+	struct sr_ccb		*ccb;
+	struct sr_chunk		*scp;
 	int			s;
-	daddr64_t		blk;
+	daddr64_t		blk, lbaoffs, strip_no, chunk, stripoffs, strip_bits;
+	daddr64_t		strip_size, no_chunk, chunkoffs, physoffs, length, leftover;
+	u_int8_t		*data;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid0_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
-
-	/* XXX don't do io yet */
-	goto bad;
 
 	if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
 		DNPRINTF(SR_D_DIS, "%s: sr_raid0_rw device offline\n",
@@ -130,7 +131,7 @@ sr_raid0_rw(struct sr_workunit *wu)
 	}
 
 	wu->swu_blk_start = blk;
-	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
+	wu->swu_blk_end = blk + (xs->datalen >> DEV_BSHIFT) - 1;
 
 	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
 		DNPRINTF(SR_D_DIS, "%s: sr_raid0_rw out of bounds start: %lld "
@@ -146,11 +147,87 @@ sr_raid0_rw(struct sr_workunit *wu)
 		goto bad;
 	}
 
-	/* calculate physical block */
-	blk += SR_META_SIZE + SR_META_OFFSET;
-	s = splbio();
+	strip_size = sd->sd_vol.sv_meta.svm_strip_size;
+	strip_bits = sd->mds.mdd_raid0.sr0_strip_bits;
+	no_chunk = sd->sd_vol.sv_meta.svm_no_chunk;
 
-	/* generate ios */
+	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname, blk, xs->datalen);
+
+	/* all offs are in bytes */
+	lbaoffs = blk << DEV_BSHIFT;
+	strip_no = lbaoffs >> strip_bits;
+	chunk = strip_no % no_chunk;
+	stripoffs = lbaoffs & (strip_size - 1);
+	chunkoffs = (strip_no / no_chunk) << strip_bits;
+	physoffs = chunkoffs + stripoffs +
+	    ((SR_META_OFFSET + SR_META_SIZE) << DEV_BSHIFT);
+	length = MIN(xs->datalen, strip_size - stripoffs);
+	leftover = xs->datalen;
+	data = xs->data;
+	for (wu->swu_io_count = 1;; wu->swu_io_count++) {
+		/* make sure chunk is online */
+		scp = sd->sd_vol.sv_chunks[chunk];
+		if (scp->src_meta.scm_status != BIOC_SDONLINE) {
+			sr_put_ccb(ccb);
+			goto bad;
+		}
+
+		ccb = sr_get_ccb(sd);
+		if (!ccb) {
+			/* should never happen but handle more gracefully */
+			printf("%s: %s: too many ccbs queued\n",
+			    DEVNAME(sd->sd_sc),
+			    sd->sd_vol.sv_meta.svm_devname);
+			goto bad;
+		}
+
+		DNPRINTF(SR_D_DIS, "%s: %s raid io: lbaoffs: %lld "
+		    "strip_no: %lld chunk: %lld stripoffs: %lld "
+		    "chunkoffs: %lld physoffs: %lld length: %lld "
+		    "leftover: %lld data: %p\n",
+		    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname, lbaoffs,
+		    strip_no, chunk, stripoffs, chunkoffs, physoffs, length,
+		    leftover, data);
+
+		ccb->ccb_buf.b_flags = B_CALL;
+		ccb->ccb_buf.b_iodone = sr_raid0_intr;
+		ccb->ccb_buf.b_blkno = physoffs >> DEV_BSHIFT;
+		ccb->ccb_buf.b_bcount = length;
+		ccb->ccb_buf.b_bufsize = length;
+		ccb->ccb_buf.b_resid = length;
+		ccb->ccb_buf.b_data = data;
+		ccb->ccb_buf.b_error = 0;
+		ccb->ccb_buf.b_proc = curproc;
+		ccb->ccb_wu = wu;
+		ccb->ccb_buf.b_flags |= xs->flags & SCSI_DATA_IN ?
+		    B_READ : B_WRITE;
+		ccb->ccb_target = chunk;
+		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[chunk]->src_dev_mm;
+		ccb->ccb_buf.b_vp = NULL;
+		LIST_INIT(&ccb->ccb_buf.b_dep);
+		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
+
+		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid0: b_bcount: %d "
+		    "b_blkno: %lld b_flags 0x%0x b_data %p\n",
+		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+
+		leftover -= length;
+		if (leftover == 0)
+			break;
+
+		data += length;
+		if (++chunk > no_chunk - 1) {
+			chunk = 0;
+			physoffs += length;
+		} else if (wu->swu_io_count == 1)
+			physoffs -= stripoffs;
+		length = MIN(leftover,strip_size);
+	}
+
+	s = splbio();
 
 	/* walk queue backwards and fill in collider if we have one */
 	TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
@@ -170,8 +247,6 @@ sr_raid0_rw(struct sr_workunit *wu)
 		sd->sd_wu_collisions++;
 		goto queued;
 	}
-
-/* start: */
 	sr_raid_startwu(wu);
 queued:
 	splx(s);
@@ -185,11 +260,11 @@ void
 sr_raid0_intr(struct buf *bp)
 {
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu;
+	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	int			s;
+	int			s, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
@@ -202,6 +277,9 @@ sr_raid0_intr(struct buf *bp)
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
+		printf("%s: i/o error on block %lld target: %d b_error: %d\n",
+		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target,
+		    ccb->ccb_buf.b_error);
 		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
 		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
 		wu->swu_ios_failed++;
@@ -221,7 +299,48 @@ sr_raid0_intr(struct buf *bp)
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
 	    wu->swu_ios_failed);
 
-/* bad: */
+	if (wu->swu_ios_complete >= wu->swu_io_count) {
+		if (wu->swu_ios_failed)
+			goto bad;
+
+		xs->error = XS_NOERROR;
+		xs->resid = 0;
+		xs->flags |= ITSDONE;
+
+		pend = 0;
+		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
+			if (wu == wup) {
+				/* wu on pendq, remove */
+				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+				pend = 1;
+
+				if (wu->swu_collider) {
+					/* restart deferred wu */
+					wu->swu_collider->swu_state =
+					    SR_WU_INPROGRESS;
+					TAILQ_REMOVE(&sd->sd_wu_defq,
+					    wu->swu_collider, swu_link);
+					sr_raid_startwu(wu->swu_collider);
+				}
+				break;
+			}
+		}
+
+		if (!pend)
+			printf("%s: wu: %p not on pending queue\n",
+			    DEVNAME(sc), wu);
+
+		/* do not change the order of these 2 functions */
+		sr_put_wu(wu);
+		scsi_done(xs);
+
+		if (sd->sd_sync && sd->sd_wu_pending == 0)
+			wakeup(sd);
+	}
+
+	splx(s);
+	return;
+bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
 	sr_put_wu(wu);
