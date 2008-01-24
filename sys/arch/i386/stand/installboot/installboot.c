@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.50 2008/01/05 19:50:48 otto Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.51 2008/01/24 12:09:54 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 	if (dl.d_type != 0 && dl.d_type != DTYPE_FLOPPY &&
 	    dl.d_type != DTYPE_VND) {
 		if (lseek(devfd, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
-		    read(devfd, &mbr, sizeof(mbr)) < sizeof(mbr))
+		    read(devfd, &mbr, sizeof(mbr)) != sizeof(mbr))
 			err(4, "can't read master boot record");
 
 		if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
