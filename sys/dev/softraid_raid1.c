@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.1 2007/11/27 17:21:52 tedu Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.2 2008/01/24 17:50:17 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -114,6 +114,8 @@ sr_raid1_rw(struct sr_workunit *wu)
 
 	if (xs->cmdlen == 10)
 		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+	else if (xs->cmdlen == 16)
+		blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 6)
 		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 	else {

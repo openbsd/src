@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.94 2008/01/24 13:54:47 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.95 2008/01/24 17:50:17 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -433,8 +433,10 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
 	case READ_BIG:
+	case READ_16:
 	case WRITE_COMMAND:
 	case WRITE_BIG:
+	case WRITE_16:
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: READ/WRITE %02x\n",
 		    DEVNAME(sc), xs->cmd->opcode);
 		if (sd->sd_scsi_rw(wu))
@@ -470,8 +472,9 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		goto complete;
 
 	case READ_CAPACITY:
-		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd READ CAPACITY\n",
-		    DEVNAME(sc));
+	case READ_CAPACITY_16:
+		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd READ CAPACITY 0x%02x\n",
+		    DEVNAME(sc), xs->cmd->opcode);
 		if (sd->sd_scsi_read_cap(wu))
 			goto stuffup;
 		goto complete;
@@ -608,7 +611,7 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 
 		sv = &sc->sc_dis[i]->sd_vol;
 		bv->bv_status = sv->sv_meta.svm_status;
-		bv->bv_size = sv->sv_meta.svm_size;
+		bv->bv_size = sv->sv_meta.svm_size << DEV_BSHIFT;
 		bv->bv_level = sv->sv_meta.svm_level;
 		bv->bv_nodisk = sv->sv_meta.svm_no_chunk;
 		strlcpy(bv->bv_dev, sv->sv_meta.svm_devname,
@@ -641,7 +644,7 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 
 		src = sc->sc_dis[i]->sd_vol.sv_chunks[id];
 		bd->bd_status = src->src_meta.scm_status;
-		bd->bd_size = src->src_meta.scm_size;
+		bd->bd_size = src->src_meta.scm_size << DEV_BSHIFT;
 		bd->bd_channel = vol;
 		bd->bd_target = id;
 		strlcpy(bd->bd_vendor, src->src_meta.scm_devname,
@@ -712,7 +715,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
-	int64_t			vol_size;
+	u_int64_t		vol_size;
 	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
@@ -1395,15 +1398,29 @@ sr_raid_read_cap(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_read_cap_data rcd;
+	struct scsi_read_cap_data_16 rcd16;
+	int			rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_read_cap\n", DEVNAME(sd->sd_sc));
 
-	bzero(&rcd, sizeof(rcd));
-	_lto4b(sd->sd_vol.sv_meta.svm_size, rcd.addr);
-	_lto4b(512, rcd.length);
-	sr_copy_internal_data(xs, &rcd, sizeof(rcd));
+	if (xs->cmd->opcode == READ_CAPACITY) {
+		bzero(&rcd, sizeof(rcd));
+		if (sd->sd_vol.sv_meta.svm_size > 0xffffffffllu)
+			_lto4b(0xffffffff, rcd.addr);
+		else
+			_lto4b(sd->sd_vol.sv_meta.svm_size, rcd.addr);
+		_lto4b(512, rcd.length);
+		sr_copy_internal_data(xs, &rcd, sizeof(rcd));
+		rv = 0;
+	} else if (xs->cmd->opcode == READ_CAPACITY_16) {
+		bzero(&rcd16, sizeof(rcd16));
+		_lto8b(sd->sd_vol.sv_meta.svm_size, rcd16.addr);
+		_lto4b(512, rcd16.length);
+		sr_copy_internal_data(xs, &rcd16, sizeof(rcd16));
+		rv = 0;
+	}
 
-	return (0);
+	return (rv);
 }
 
 int
