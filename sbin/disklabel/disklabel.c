@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.121 2008/01/21 20:07:11 sobrado Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.122 2008/01/24 12:23:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.121 2008/01/21 20:07:11 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.122 2008/01/24 12:23:35 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -572,7 +572,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
 			(void)lseek(f, (alt + i) * lp->d_secsize, SEEK_SET);
 			if (!donothing)
-				if (write(f, boot, lp->d_secsize) < lp->d_secsize)
+				if (write(f, boot, lp->d_secsize) != lp->d_secsize)
 					warn("alternate label %d write", i/2);
 		}
 	}
@@ -624,7 +624,7 @@ readmbr(int f)
 	 */
 	dp = (struct dos_partition *)mbr;
 	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
+	    read(f, mbr, sizeof(mbr)) != sizeof(mbr))
 		return (NULL);
 	signature = *((u_char *)mbr + DOSMBR_SIGNATURE_OFF) |
 	    (*((u_char *)mbr + DOSMBR_SIGNATURE_OFF + 1) << 8);
@@ -694,7 +694,7 @@ readlabel(int f)
 			    sectoffset/DEV_BSIZE +
 			    (LABELSECTOR * DEV_BSIZE) + LABELOFFSET);
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
-		    read(f, bootarea, BBSIZE) < BBSIZE)
+		    read(f, bootarea, BBSIZE) != BBSIZE)
 			err(4, "%s", specname);
 
 		lp = (struct disklabel *)(bootarea +
@@ -782,7 +782,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	if (!installboot) {
 #ifndef __i386__
 		if (rflag) {
-			if (read(f, boot, BBSIZE) < BBSIZE)
+			if (read(f, boot, BBSIZE) != BBSIZE)
 				err(4, "%s", specname);
 			memset(lp, 0, sizeof *lp);
 		}
