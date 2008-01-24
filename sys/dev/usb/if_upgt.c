@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.27 2008/01/22 21:26:25 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.28 2008/01/24 21:24:05 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -118,6 +118,7 @@ void		upgt_tx_done(struct upgt_softc *, uint8_t *);
 void		upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void		upgt_rx(struct upgt_softc *, uint8_t *, int);
 void		upgt_setup_rates(struct upgt_softc *);
+uint8_t		upgt_rx_rate(struct upgt_softc *, const int);
 int		upgt_set_macfilter(struct upgt_softc *, uint8_t state);
 int		upgt_set_channel(struct upgt_softc *, unsigned);
 void		upgt_set_led(struct upgt_softc *, int);
@@ -1749,7 +1750,7 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 		struct upgt_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		tap->wr_flags = 0;
-		tap->wr_rate = 0;
+		tap->wr_rate = upgt_rx_rate(sc, rxdesc->rate);
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 		tap->wr_antenna = 0;
@@ -1823,6 +1824,68 @@ upgt_setup_rates(struct upgt_softc *sc)
 		memset(sc->sc_cur_rateset, rateset_fix_11bg[ic->ic_fixed_rate],
 		    sizeof(sc->sc_cur_rateset));
 	}
+}
+
+uint8_t
+upgt_rx_rate(struct upgt_softc *sc, const int rate)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		if (rate < 0 || rate > 3)
+			/* invalid rate */
+			return (0);
+
+		switch (rate) {
+		case 0:
+			return (2);
+		case 1:
+			return (4);
+		case 2:
+			return (11);
+		case 3:
+			return (22);
+		default:
+			return (0);
+		}
+	}
+
+	if (ic->ic_curmode == IEEE80211_MODE_11G) {
+		if (rate < 0 || rate > 11)
+			/* invalid rate */
+			return (0);
+
+		switch (rate) {
+		case 0:
+			return (2);
+		case 1:
+			return (4);
+		case 2:
+			return (11);
+		case 3:
+			return (22);
+		case 4:
+			return (12);
+		case 5:
+			return (18);
+		case 6:
+			return (24);
+		case 7:
+			return (36);
+		case 8:
+			return (48);
+		case 9:
+			return (72);
+		case 10:
+			return (96);
+		case 11:
+			return (108);
+		default:
+			return (0);
+		}
+	}
+
+	return (0);
 }
 
 int
