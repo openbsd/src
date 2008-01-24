@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2008/01/18 13:04:28 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2008/01/24 06:36:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -231,7 +231,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 
 	/* Add mandatory varbind elements */
 	trap = ber_add_sequence(NULL);
-	c = ber_printf_elements(trap, "{Oit}{OO}",
+	c = ber_printf_elements(trap, "{Odt}{OO}",
 	    &uptime, smi_getticks(),
 	    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS,
 	    &trapoid, oid);
