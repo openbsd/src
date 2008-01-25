@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.125 2008/01/05 09:53:42 jmc Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.126 2008/01/25 13:52:20 espie Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.125 2008/01/05 09:53:42 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.126 2008/01/25 13:52:20 espie Exp $";
 #endif /* not lint */
 
 /*
@@ -373,6 +373,11 @@ main(int argc, char *argv[])
 		CONFIG = argv[0];
 	if (CONFIG == NULL) {
 		fprintf(stderr, "%s: non-root must specify a config file\n",
+		    progname);
+		exit(1);
+	}
+	if (argc > 1) {
+		fprintf(stderr, "%s: more than one argument specified\n",
 		    progname);
 		exit(1);
 	}
