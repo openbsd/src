@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.67 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.68 2008/01/25 16:14:56 mglocker Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1016,6 +1016,15 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 	 * An imitation of the FIONREAD ioctl code.
 	 */
 	d = bpfilter_lookup(minor(dev));
+	/*
+	 * XXX The USB stack manages it to trigger some race condition
+	 * which causes bpfilter_lookup to return NULL when a USB device
+	 * gets detached while it is up and has an open bpf handler (e.g.
+	 * dhclient).  We still should recheck if we can fix the root
+	 * cause of this issue.
+	 */
+	if (d == NULL)
+		return (POLLERR);
 	s = splnet();
 	if (d->bd_hlen == 0 && (!d->bd_immediate || d->bd_slen == 0)) {
 		revents = 0;		/* no data waiting */
