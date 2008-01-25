@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.416 2008/01/15 22:22:26 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.417 2008/01/25 19:48:15 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1125,6 +1125,11 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 #endif
 
 	switch (model) {
+	/* Possible earlier models */
+	case 0: case 1: case 2:
+	case 3: case 4: case 5:
+		break;
+
 	case 6: /* C3 Samuel 1 */
 	case 7: /* C3 Samuel 2 or C3 Ezra */
 	case 8: /* C3 Ezra-T */
@@ -1141,11 +1146,11 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		if (step < 3)
 			break;
 		/*
-		 * C3 Nehemiah: fall through.
+		 * C3 Nehemiah & later: fall through.
 		 */
-	case 10:
+	default:
 		/*
-		 * C3 Nehemiah/Esther:
+		 * C3 Nehemiah/Esther & later models:
 		 * First we check for extended feature flags, and then
 		 * (if present) retrieve the ones at 0xC0000001.  In this
 		 * bit 2 tells us if the RNG is present.  Bit 3 tells us
