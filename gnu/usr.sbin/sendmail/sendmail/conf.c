@@ -1513,7 +1513,7 @@ getla()
 		sm_dprintf("getla: symbol address = %#lx\n",
 			(unsigned long) Nl[X_AVENRUN].n_value);
 	if (lseek(kmem, (off_t) Nl[X_AVENRUN].n_value, SEEK_SET) == -1 ||
-	    read(kmem, (char *) avenrun, sizeof(avenrun)) < sizeof(avenrun))
+	    read(kmem, (char *) avenrun, sizeof(avenrun)) != sizeof(avenrun))
 	{
 		/* thank you Ian */
 		if (tTd(3, 1))
@@ -1835,7 +1835,7 @@ getla(void)
 
 	if (lseek(kmem, CAST_SYSMP(sysmp(MP_KERNADDR, MPKA_AVENRUN)), SEEK_SET)
 		== -1 ||
-	    read(kmem, (char *) avenrun, sizeof(avenrun)) < sizeof(avenrun))
+	    read(kmem, (char *) avenrun, sizeof(avenrun)) != sizeof(avenrun))
 	{
 		if (tTd(3, 1))
 			sm_dprintf("getla: lseek or read: %s\n",
@@ -1943,6 +1943,13 @@ getla()
 	}
 
 	r = read(afd, &avenrun, sizeof(avenrun));
+	if (r != sizeof(avenrun))
+	{
+		sm_syslog(LOG_ERR, NOQID,
+			"can't read %s: %s", _PATH_AVENRUN,
+			r == -1 ? sm_errstring(errno) : "short read");
+		return -1;
+	}
 
 	if (tTd(3, 5))
 		sm_dprintf("getla: avenrun = %d\n", avenrun);
