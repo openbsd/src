@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.65 2008/01/08 23:46:54 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.66 2008/01/25 15:30:11 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 8 2008 $
+.Dd $Mdocdate: January 25 2008 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -167,7 +167,8 @@ Make no permanent changes to the disklabel
 Print partition sizes and offsets in
 .Ar unit
 instead of sectors.
-Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes) and g(igabytes).
+Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes), g(igabytes)
+and t(erabytes).
 For operations other than displaying a partition the
 .Ql %
 (percent of total) and
@@ -688,6 +689,8 @@ partition of the boot disk is the root partition, and the
 partition of the boot disk is the swap partition,
 but all other letters can be used in any order for any other
 partitions as desired.
+.Pp
+The maximum disk and partition size is 64PB.
 .Sh BUGS
 When a disk name is given without a full pathname, the constructed
 device name uses the
