@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.30 2008/01/24 22:35:08 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.31 2008/01/25 07:12:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1338,6 +1338,12 @@ upgt_newstate_task(void *arg)
 		    sc->sc_dev.dv_xname);
 
 		ni = ic->ic_bss;
+
+		/*
+		 * TX rate control is done by the firmware.
+		 * Report the maximum rate which is available therefore.
+		 */
+		ni->ni_txrate = ni->ni_rates.rs_nrates - 1;
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			upgt_set_macfilter(sc, IEEE80211_S_RUN);
