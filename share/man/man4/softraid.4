@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.12 2008/01/24 19:33:16 marco Exp $
+.\"	$OpenBSD: softraid.4,v 1.13 2008/01/26 08:58:54 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2008 $
+.Dd $Mdocdate: January 26 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@ as it fits the SCSI model.
 .Pp
 Currently
 .Nm
-supports a mirroring (RAID 1) and a striping (RAID 0) discipline.
+supports a striping (RAID 0) and mirroring (RAID 1) discipline.
 .Pp
 A
 .Em discipline
@@ -63,24 +63,24 @@ An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
 Initialize the partition tables of all disks:
 .Bd -literal -offset indent
-fdisk -iy wd1
-fdisk -iy wd2
-fdisk -iy wd3
+# fdisk -iy wd1
+# fdisk -iy wd2
+# fdisk -iy wd3
 .Ed
 .Pp
 Now create RAID partitions on all disks:
 .Bd -literal -offset indent
-echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
-echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
-echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
+# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
+# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
+# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
 .Ed
 .Pp
 Assemble the RAID volume:
 .Bd -literal -offset indent
-bioctl -c 1 -l /dev/wd1a,/dev/wd2a,/dev/wd3a softraid0
+# bioctl -c 1 -l /dev/wd1a,/dev/wd2a,/dev/wd3a softraid0
 .Ed
 .Pp
-The console will give away what device was added to the system:
+The console will show what device was added to the system:
 .Bd -literal -offset indent
 scsibus0 at softraid0: 1 targets
 sd0 at scsibus0 targ 0 lun 0: <OPENBSD, SR RAID 1, 001> SCSI2
@@ -89,15 +89,15 @@ sd0: 1MB, 0 cyl, 255 head, 63 sec, 512 bytes/sec, 3714 sec total
 .Pp
 It is good practice to wipe the front of the disk before using it:
 .Bd -literal -offset indent
-dd if=/dev/zero of=/dev/rsd0c bs=1m count=1
+# dd if=/dev/zero of=/dev/rsd0c bs=1m count=1
 .Ed
 .Pp
 Initialize the partition table and create a filesystem on the
 new RAID volume:
 .Bd -literal -offset indent
-fdisk -iy sd0
-echo "a\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
-newfs /dev/rsd0a
+# fdisk -iy sd0
+# echo "a\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
+# newfs /dev/rsd0a
 .Ed
 .Pp
 The RAID volume is now ready to be used as a normal disk device.
