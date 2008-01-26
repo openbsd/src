@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.75 2007/11/05 23:43:26 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.76 2008/01/26 07:04:50 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -83,7 +83,7 @@ int		mfi_get_info(struct mfi_softc *);
 uint32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
 int		mfi_poll(struct mfi_ccb *);
-int		mfi_despatch_cmd(struct mfi_ccb *);
+int		mfi_dispatch_cmd(struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* commands */
@@ -700,9 +700,9 @@ nopcq:
 }
 
 int
-mfi_despatch_cmd(struct mfi_ccb *ccb)
+mfi_dispatch_cmd(struct mfi_ccb *ccb)
 {
-	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n",
+	DNPRINTF(MFI_D_CMD, "%s: mfi_dispatch_cmd\n",
 	    DEVNAME(ccb->ccb_sc));
 
 	mfi_write(ccb->ccb_sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
@@ -723,7 +723,7 @@ mfi_poll(struct mfi_ccb *ccb)
 	hdr->mfh_cmd_status = 0xff;
 	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
 
-	mfi_despatch_cmd(ccb);
+	mfi_dispatch_cmd(ccb);
 
 	while (hdr->mfh_cmd_status == 0xff) {
 		delay(1000);
@@ -1034,7 +1034,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
 
-	mfi_despatch_cmd(ccb);
+	mfi_dispatch_cmd(ccb);
 
 	DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd queued %d\n", DEVNAME(sc),
 	    ccb->ccb_dmamap->dm_nsegs);
@@ -1157,7 +1157,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 		if (mfi_poll(ccb))
 			goto done;
 	} else {
-		mfi_despatch_cmd(ccb);
+		mfi_dispatch_cmd(ccb);
 
 		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
