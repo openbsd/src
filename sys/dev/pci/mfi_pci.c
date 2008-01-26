@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.13 2007/11/26 23:02:43 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.14 2008/01/26 05:43:03 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -169,7 +169,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	if (mfi_attach(sc)) {
-		printf("%s: can't attach", DEVNAME(sc));
+		printf("%s: can't attach\n", DEVNAME(sc));
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
