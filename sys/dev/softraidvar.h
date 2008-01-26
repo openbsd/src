@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.38 2008/01/24 19:58:08 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.39 2008/01/26 19:29:55 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -30,6 +30,7 @@
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
+/* #define SR_DEBUG */
 #ifdef SR_DEBUG
 extern u_int32_t		sr_debug;
 #define DPRINTF(x...)		do { if (sr_debug) printf(x); } while(0)
@@ -392,13 +393,8 @@ void			sr_raid1_set_chunk_state(struct sr_discipline *,
 void			sr_raid1_set_vol_state(struct sr_discipline *);
 
 /* crypto discipline */
-struct cryptop 		*sr_crypto_getcryptop(struct sr_workunit *, int);
-void 			*sr_crypto_putcryptop(struct cryptop *);
 int			sr_crypto_alloc_resources(struct sr_discipline *);
 int			sr_crypto_free_resources(struct sr_discipline *);
 int			sr_crypto_rw(struct sr_workunit *);
-int			sr_crypto_rw2(struct cryptop *);
-void			sr_crypto_intr(struct buf *);
-int			sr_crypto_intr2(struct cryptop *);
 
 #endif /* SOFTRAIDVAR_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.2 2008/01/24 17:50:17 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.3 2008/01/26 19:29:55 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  *
@@ -48,9 +48,6 @@
 
 struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
 void *			sr_crypto_putcryptop(struct cryptop *);
-int			sr_crypto_alloc_resources(struct sr_discipline *);
-int			sr_crypto_free_resources(struct sr_discipline *);
-int			sr_crypto_rw(struct sr_workunit *);
 int			sr_crypto_rw2(struct cryptop *);
 void			sr_crypto_intr(struct buf *);
 int			sr_crypto_intr2(struct cryptop *);
