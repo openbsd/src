@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.14 2008/01/26 16:39:27 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.15 2008/01/26 22:55:40 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -27,15 +27,26 @@
 .Sh DESCRIPTION
 The
 .Nm
-device emulates an HBA (Host Bus Adapter) that provides RAID and other IO
+device emulates a Host Bus Adapter (HBA) that provides RAID and other I/O
 related services.
 The
 .Nm
-device provides a scaffold to implement more complex IO transformation
+device provides a scaffold to implement more complex I/O transformation
 disciplines.
 For example, one can tie chunks together into a mirroring discipline.
 There really is no limit on what type of discipline one can write as long
 as it fits the SCSI model.
+.Pp
+.Nm
+supports a number of
+.Em disciplines .
+A discipline is a collection of functions
+that provides specific I/O functionality.
+This includes I/O path, bring-up, failure recovery, statistical
+information gathering etc.\&
+Essentially a discipline is a lower
+level driver that provides the I/O transformation for the softraid
+device.
 .Pp
 Currently
 .Nm
@@ -58,16 +69,6 @@ Unlike traditional RAID 1,
 .Nm
 supports the use of more than two disks in a RAID 1 setup.
 .El
-.Pp
-A
-.Em discipline
-is a collection of functions that provides specific IO
-functionality.
-This includes IO path, bring-up, failure recovery, statistical
-information gathering etc.\&
-Essentially a discipline is a lower
-level driver that provides the IO transformation for the softraid
-device.
 .Pp
 A
 .Em volume
