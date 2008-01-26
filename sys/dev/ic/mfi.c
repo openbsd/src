@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.76 2008/01/26 07:04:50 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.77 2008/01/26 07:13:59 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -714,10 +714,11 @@ mfi_dispatch_cmd(struct mfi_ccb *ccb)
 int
 mfi_poll(struct mfi_ccb *ccb)
 {
+	struct mfi_softc *sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr;
-	int			to = 0;
+	int			to = 0, rv = 0;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(ccb->ccb_sc));
+	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(sc));
 
 	hdr = &ccb->ccb_frame->mfr_header;
 	hdr->mfh_cmd_status = 0xff;
@@ -731,13 +732,22 @@ mfi_poll(struct mfi_ccb *ccb)
 			break;
 	}
 	if (hdr->mfh_cmd_status == 0xff) {
-		printf("%s: timeout on ccb %d\n", DEVNAME(ccb->ccb_sc),
+		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
 		    hdr->mfh_context);
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
 		return (1);
 	}
-	
-	return (0);
+
+	if (ccb->ccb_direction != MFI_DATA_NONE) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_direction & MFI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	return (rv);
 }
 
 int
