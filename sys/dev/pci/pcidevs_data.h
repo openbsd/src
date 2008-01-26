@@ -2552,6 +2552,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mobility Radeon HD 2400",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600,
+	    "Radeon HD 2600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HDA,
+	    "Radeon HD 2600 HD Audio",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690M_HDA,
 	    "RS690M HD Audio",
 	},
