@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.77 2008/01/26 07:13:59 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.78 2008/01/26 08:57:31 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -735,7 +735,7 @@ mfi_poll(struct mfi_ccb *ccb)
 		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
 		    hdr->mfh_context);
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
-		return (1);
+		rv = 1;
 	}
 
 	if (ccb->ccb_direction != MFI_DATA_NONE) {
