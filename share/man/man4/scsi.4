@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.29 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: scsi.4,v 1.30 2008/01/26 23:07:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 26 2008 $
 .Dt SCSI 4
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@ In addition, the device type, ATAPI or SCSI, is returned.
 .Sh ADAPTERS
 The system allows common device drivers to work through many different
 types of adapters.
-The adapters take requests from the upper layers and do all IO between the
+The adapters take requests from the upper layers and do all I/O between the
 .Em SCSI
 bus and the system.
 The maximum size of a transfer is governed by the adapter.

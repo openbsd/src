@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.37 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: raidctl.8,v 1.38 2008/01/26 23:07:55 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 26 2008 $
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -1195,7 +1195,7 @@ Types of controller cards and their bandwidth
 .It
 Distribution of components among controllers
 .It
-IO bandwidth
+I/O bandwidth
 .It
 File system access patterns
 .It
@@ -1212,15 +1212,15 @@ For a RAID 1 set, a SectPerSU value of 64 or 128 is typically sufficient.
 Since data in a RAID 1 set is arranged in a linear
 fashion on each component, selecting an appropriate stripe size is
 somewhat less critical than it is for a RAID 5 set.
-However: a stripe size that is too small will cause large IO's to be
+However: a stripe size that is too small will cause large I/Os to be
 broken up into a number of smaller ones, hurting performance.
 At the same time, a large stripe size may cause problems with concurrent
 accesses to stripes, which may also affect performance.
 Thus values in the range of 32 to 128 are often the most effective.
 .Pp
 Tuning RAID 5 sets is trickier.
-In the best case, IO is presented to the RAID set one stripe at a time.
-Since the entire stripe is available at the beginning of the IO,
+In the best case, I/O is presented to the RAID set one stripe at a time.
+Since the entire stripe is available at the beginning of the I/O,
 the parity of that stripe can be calculated before the stripe is written,
 and then the stripe data and parity can be written in parallel.
 When the amount of data being written is less than a full stripe worth, the
@@ -1243,13 +1243,13 @@ All this extra data shuffling results in a serious loss of performance,
 and is typically 2 to 4 times slower than a full stripe write (or read).
 To combat this problem in the real world, it may be useful to ensure that
 stripe sizes are small enough that a
-.Sq large IO
+.Sq large I/O
 from the system will use exactly one large stripe write.
 As is seen later, there are some file system dependencies which may come
 into play here as well.
 .Pp
 Since the size of a
-.Sq large IO
+.Sq large I/O
 is often (currently) only 32K or 64K, on a 5-drive RAID 5 set it may
 be desirable to select a SectPerSU value of 16 blocks (8K) or 32
 blocks (16K).

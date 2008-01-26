@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_conf_read.9,v 1.9 2007/08/02 07:13:27 jmc Exp $
+.\"	$OpenBSD: pci_conf_read.9,v 1.10 2008/01/26 23:07:55 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2007 $
+.Dd $Mdocdate: January 26 2008 $
 .Dt PCI_CONF_READ 9
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ for PCI_CLASS_* and PCI_SUBCLASS_* definitions.
 Specify (low byte to high): cache line size, PCI latency timer, header type,
 and BIST.
 .It 0x10 - 0x28
-Base address registers for IO and memory space mapped registers.
+Base address registers for I/O and memory space mapped registers.
 .It 0x28
 CardBus CIS register.
 .It 0x2c
