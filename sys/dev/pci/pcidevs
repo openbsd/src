@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1314 2008/01/25 05:30:45 brad Exp $
+$OpenBSD: pcidevs,v 1.1315 2008/01/26 18:07:36 claudio Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1024,6 +1024,8 @@ product ATI RS690_PCIE_5	0x7917	RS690 PCIE
 product ATI RS690_HDA		0x7919	RS690 HD Audio
 product ATI RADEON_X1250	0x791e	Radeon X1250
 product ATI RADEON_HD2400_M72	0x94c9	Mobility Radeon HD 2400
+product ATI RADEON_HD2600	0x9589	Radeon HD 2600
+product ATI RADEON_HD2600_HDA	0xaa08	Radeon HD 2600 HD Audio
 product ATI RS690M_HDA		0xaa10	RS690M HD Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
