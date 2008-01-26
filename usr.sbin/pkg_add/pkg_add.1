@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.68 2007/11/05 13:09:13 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.69 2008/01/26 16:38:52 landry Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 5 2007 $
+.Dd $Mdocdate: January 26 2008 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -367,7 +367,7 @@ If it is,
 installation is terminated.
 .It
 A check is made to determine if the package conflicts (from
-.Cm @pkgcfl
+.Cm @conflict
 directives; see
 .Xr pkg_create 1 )
 with a package already recorded as installed.
