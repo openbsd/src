@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.13 2008/01/26 08:58:54 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.14 2008/01/26 16:39:27 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -39,7 +39,25 @@ as it fits the SCSI model.
 .Pp
 Currently
 .Nm
-supports a striping (RAID 0) and mirroring (RAID 1) discipline.
+supports the following disciplines:
+.Bl -ohang -offset indent
+.It RAID 0
+A
+.Em striping
+discipline.
+It segments data over a number of disks to increase performance.
+RAID 0 does not provide for data loss (redundancy).
+.It RAID 1
+A
+.Em mirroring
+discipline.
+It copies data across more than one disk to provide for data loss.
+Read performance is increased,
+though at the cost of write speed.
+Unlike traditional RAID 1,
+.Nm
+supports the use of more than two disks in a RAID 1 setup.
+.El
 .Pp
 A
 .Em discipline
