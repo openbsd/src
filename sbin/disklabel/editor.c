@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.165 2008/01/25 16:52:34 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.166 2008/01/26 15:37:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.165 2008/01/25 16:52:34 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.166 2008/01/26 15:37:59 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ void	editor_help(char *);
 void	editor_modify(struct disklabel *, char **, char *);
 void	editor_name(struct disklabel *, char **, char *);
 char	*getstring(char *, char *, char *);
-u_int64_t getuint(struct disklabel *, int, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
+u_int64_t getuint(struct disklabel *, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *);
@@ -766,7 +766,7 @@ getstring(char *prompt, char *helpstring, char *oval)
  * Usually only called by helper functions.
  */
 u_int64_t
-getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
+getuint(struct disklabel *lp, char *prompt, char *helpstring,
     u_int64_t oval, u_int64_t maxval, u_int64_t offset, int flags)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
@@ -1004,7 +1004,7 @@ edit_parms(struct disklabel *lp)
 
 	/* sectors/track */
 	for (;;) {
-		ui = getuint(lp, 0, "sectors/track",
+		ui = getuint(lp, "sectors/track",
 		    "The Numer of sectors per track.", lp->d_nsectors,
 		    lp->d_nsectors, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1020,7 +1020,7 @@ edit_parms(struct disklabel *lp)
 
 	/* tracks/cylinder */
 	for (;;) {
-		ui = getuint(lp, 0, "tracks/cylinder",
+		ui = getuint(lp, "tracks/cylinder",
 		    "The number of tracks per cylinder.", lp->d_ntracks,
 		    lp->d_ntracks, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1036,7 +1036,7 @@ edit_parms(struct disklabel *lp)
 
 	/* sectors/cylinder */
 	for (;;) {
-		ui = getuint(lp, 0, "sectors/cylinder",
+		ui = getuint(lp, "sectors/cylinder",
 		    "The number of sectors per cylinder (Usually sectors/track "
 		    "* tracks/cylinder).", lp->d_secpercyl, lp->d_secpercyl,
 		    0, 0);
@@ -1053,7 +1053,7 @@ edit_parms(struct disklabel *lp)
 
 	/* number of cylinders */
 	for (;;) {
-		ui = getuint(lp, 0, "number of cylinders",
+		ui = getuint(lp, "number of cylinders",
 		    "The total number of cylinders on the disk.",
 		    lp->d_ncylinders, lp->d_ncylinders, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1071,7 +1071,7 @@ edit_parms(struct disklabel *lp)
 	for (;;) {
 		u_int64_t nsec = MAX(DL_GETDSIZE(lp),
 		    (u_int64_t)lp->d_ncylinders * lp->d_secpercyl);
-		ui = getuint(lp, 0, "total sectors",
+		ui = getuint(lp, "total sectors",
 		    "The total number of sectors on the disk.",
 		    nsec, nsec, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1106,7 +1106,7 @@ edit_parms(struct disklabel *lp)
 
 	/* rpm */
 	for (;;) {
-		ui = getuint(lp, 0, "rpm",
+		ui = getuint(lp, "rpm",
 		  "The rotational speed of the disk in revolutions per minute.",
 		  lp->d_rpm, lp->d_rpm, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1122,7 +1122,7 @@ edit_parms(struct disklabel *lp)
 
 	/* interleave */
 	for (;;) {
-		ui = getuint(lp, 0, "interleave",
+		ui = getuint(lp, "interleave",
 		  "The physical sector interleave, set when formatting.  Almost always 1.",
 		  lp->d_interleave, lp->d_interleave, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1253,7 +1253,7 @@ set_bounds(struct disklabel *lp)
 
 	/* Starting sector */
 	do {
-		ui = getuint(lp, 0, "Starting sector",
+		ui = getuint(lp, "Starting sector",
 		  "The start of the OpenBSD portion of the disk.",
 		  starting_sector, DL_GETDSIZE(lp), 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1265,7 +1265,7 @@ set_bounds(struct disklabel *lp)
 
 	/* Size */
 	do {
-		ui = getuint(lp, 0, "Size ('*' for entire disk)",
+		ui = getuint(lp, "Size ('*' for entire disk)",
 		  "The size of the OpenBSD portion of the disk ('*' for the "
 		  "entire disk).", ending_sector - starting_sector,
 		  DL_GETDSIZE(lp) - start_temp, 0, 0);
@@ -1674,7 +1674,7 @@ get_offset(struct disklabel *lp, int partno)
 	u_int64_t ui, maxsize;
 	int i, fstype;
 
-	ui = getuint(lp, partno, "offset",
+	ui = getuint(lp, "offset",
 	   "Starting sector for this partition.",
 	   DL_GETPOFFSET(pp),
 	   DL_GETPOFFSET(pp), 0, DO_CONVERSIONS |
@@ -1723,7 +1723,7 @@ get_size(struct disklabel *lp, int partno)
 
 	maxsize = max_partition_size(lp, partno);
 
-	ui = getuint(lp, partno, "size", "Size of the partition. "
+	ui = getuint(lp, "size", "Size of the partition. "
 	    "You may also say +/- amount for a relative change.",
 	    DL_GETPSIZE(pp), maxsize, DL_GETPOFFSET(pp),
 	    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
@@ -1769,7 +1769,7 @@ get_fsize(struct disklabel *lp, int partno)
 		frag = 8;
 
 	for (;;) {
-		ui = getuint(lp, partno, "fragment size",
+		ui = getuint(lp, "fragment size",
 		    "Size of fs block fragments.  Usually 2048 or 512.",
 		    fsize, fsize, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
@@ -1804,7 +1804,7 @@ get_bsize(struct disklabel *lp, int partno)
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 
 	for (;;) {
-		ui = getuint(lp, partno, "block size",
+		ui = getuint(lp, "block size",
 		    "Size of filesystem blocks.  Usually 16384 or 4096.",
 		    fsize * frag, fsize * frag,
 		    0, 0);
@@ -1859,7 +1859,7 @@ get_fstype(struct disklabel *lp, int partno)
 		}
 	} else {
 		for (;;) {
-			ui = getuint(lp, partno, "FS type (decimal)",
+			ui = getuint(lp, "FS type (decimal)",
 			    "Filesystem type as a decimal number; usually 7 (4.2BSD) or 1 (swap).",
 			    pp->p_fstype, pp->p_fstype, 0, 0);
 			if (ui == ULLONG_MAX - 1) {
