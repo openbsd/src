@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.5 2008/01/24 19:58:08 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.6 2008/01/26 19:23:07 marco Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -244,8 +244,9 @@ sr_raid0_rw(struct sr_workunit *wu)
 
 	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
 		DNPRINTF(SR_D_DIS, "%s: sr_raid0_rw out of bounds start: %lld "
-		    "end: %lld length: %d\n", wu->swu_blk_start,
-		    wu->swu_blk_end, xs->datalen);
+		    "end: %lld length: %d\n",
+		    DEVNAME(sd->sd_sc), wu->swu_blk_start, wu->swu_blk_end,
+		    xs->datalen);
 
 		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
 		    SSD_ERRCODE_VALID;
@@ -261,7 +262,8 @@ sr_raid0_rw(struct sr_workunit *wu)
 	no_chunk = sd->sd_vol.sv_meta.svm_no_chunk;
 
 	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
-	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname, blk, xs->datalen);
+	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+	    blk, xs->datalen);
 
 	/* all offs are in bytes */
 	lbaoffs = blk << DEV_BSHIFT;
@@ -295,7 +297,7 @@ sr_raid0_rw(struct sr_workunit *wu)
 		    "strip_no: %lld chunk: %lld stripoffs: %lld "
 		    "chunkoffs: %lld physoffs: %lld length: %lld "
 		    "leftover: %lld data: %p\n",
-		    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname, lbaoffs,
+		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname, lbaoffs,
 		    strip_no, chunk, stripoffs, chunkoffs, physoffs, length,
 		    leftover, data);
 
