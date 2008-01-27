@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.3 2008/01/26 19:29:55 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.4 2008/01/27 15:02:28 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  *
@@ -214,6 +214,8 @@ sr_crypto_rw2(struct cryptop *crp)
 
 	if (xs->cmdlen == 10)
 		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+	else if (xs->cmdlen == 16)
+		blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 6)
 		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 	else {
