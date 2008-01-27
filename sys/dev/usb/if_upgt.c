@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.31 2008/01/25 07:12:41 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.32 2008/01/27 21:05:59 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -63,6 +63,13 @@
  * Driver for the USB PrismGT devices.
  *
  * For now just USB 2.0 devices with the GW3887 chipset are supported.
+ * The driver has been written based on the firmware version 2.13.1.0_LM87.
+ *
+ * TODO's:
+ * - Fix MONITOR mode (MAC filter).
+ * - Add HOSTAP mode.
+ * - Add IBSS mode.
+ * - Support the USB 1.0 devices (NET2280, ISL3880, ISL3886 chipsets).
  *
  * Parts of this driver has been influenced by reading the p54u driver
  * written by Jean-Baptiste Note <jean-baptiste.note@m4x.org> and
@@ -1542,7 +1549,7 @@ upgt_tx_task(void *arg)
 			struct upgt_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->wt_flags = 0;
-			tap->wt_rate = 0;	/* TODO: where to get? */
+			tap->wt_rate = 0;	/* TODO: where to get from? */
 			tap->wt_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
