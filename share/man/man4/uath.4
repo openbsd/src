@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.11 2008/01/21 12:57:31 jsg Exp $
+.\" $OpenBSD: uath.4,v 1.12 2008/01/27 08:30:31 jmc Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2008 $
+.Dd $Mdocdate: January 27 2008 $
 .Os
 .Dt UATH 4
 .Sh NAME
@@ -259,14 +259,6 @@ channel 11, obtaining an IP address using DHCP:
 dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Ed
 .Pp
-The following
-.Xr hostname.if 5
-example creates a host-based access point on boot:
-.Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-        mediaopt hostap nwid my_net chan 11
-.Ed
-.Pp
 Configure uath0 for WEP, using hex key
 .Dq 0x1deadbeef1 :
 .Bd -literal -offset indent
@@ -313,7 +305,6 @@ This should not happen.
 .Xr netintro 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
-.Xr hostapd 8 ,
 .Xr ifconfig 8
 .Pp
 Atheros Communications AR5005UG/AR5005UX:
