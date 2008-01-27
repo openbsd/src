@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.15 2008/01/26 22:55:40 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.16 2008/01/27 00:38:16 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2008 $
+.Dd $Mdocdate: January 27 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ driver first appeared in
 .An Marco Peereboom .
 .Sh CAVEATS
 The driver relies on underlying hardware to properly fail chunks.
-Currently the RAID 1 support does not have the ability to recover a
+Currently RAID 1 support does not have the ability to recover a
 failed chunk.
 .Pp
 The RAID 1 discipline does not initialize the mirror upon creation.
