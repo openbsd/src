@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.120 2008/01/28 20:31:07 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.121 2008/01/28 21:26:51 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -54,17 +54,22 @@ struct cvs_cmd cvs_cmd_commit = {
 int
 cvs_commit(int argc, char **argv)
 {
-	int ch;
+	int ch, Fflag, mflag;
 	char *arg = ".";
 	int flags;
 	struct cvs_recursion cr;
 
 	flags = CR_RECURSE_DIRS;
+	Fflag = mflag = 0;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'F':
+			/* free previously assigned value */
+			if (logmsg != NULL)
+				xfree(logmsg);
 			logmsg = cvs_logmsg_read(optarg);
+			Fflag = 1;
 			break;
 		case 'f':
 			break;
@@ -72,7 +77,11 @@ cvs_commit(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'm':
+			/* free previously assigned value */
+			if (logmsg != NULL)
+				xfree(logmsg);
 			logmsg = xstrdup(optarg);
+			mflag = 1;
 			break;
 		case 'R':
 			flags |= CR_RECURSE_DIRS;
@@ -86,6 +95,10 @@ cvs_commit(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	/* -F and -m are mutually exclusive */
+	if (Fflag && mflag)
+		fatal("cannot specify both a log file and a message");
 
 	TAILQ_INIT(&files_affected);
 	TAILQ_INIT(&files_added);
