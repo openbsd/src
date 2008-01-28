@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.90 2007/12/23 18:39:50 stevesk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.91 2008/01/28 11:45:59 mpf Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@
 #define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
 #define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
 #define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
+#define MAX_SEND_ERRORS		3	/* max send errors before reconnect */
 
 
 #define	SENSOR_DATA_MAXAGE	(15*60)
@@ -130,6 +131,7 @@ struct ntp_peer {
 	u_int8_t			 trustlevel;
 	u_int8_t			 weight;
 	int				 lasterror;
+	int				 senderrors;
 };
 
 struct ntp_sensor {

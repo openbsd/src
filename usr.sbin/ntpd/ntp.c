@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.102 2007/12/27 01:46:50 stevesk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.103 2008/01/28 11:45:59 mpf Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -229,11 +229,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 				if (client_query(p) == 0)
 					sent_cnt++;
 			}
-			if (p->next > 0 && p->next < nextaction)
-				nextaction = p->next;
-
-			if (p->deadline > 0 && p->deadline < nextaction)
-				nextaction = p->deadline;
 			if (p->deadline > 0 && p->deadline <= getmonotime()) {
 				timeout = error_interval();
 				log_debug("no reply from %s received in time, "
@@ -247,6 +242,19 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 				client_nextaddr(p);
 				set_next(p, timeout);
 			}
+			if (p->senderrors > MAX_SEND_ERRORS) {
+				log_debug("failed to send query to %s, "
+				    "next query %ds", log_sockaddr(
+				    (struct sockaddr *)&p->addr->ss),
+				    INTERVAL_QUERY_PATHETIC);
+				p->senderrors = 0;
+				client_nextaddr(p);
+				set_next(p, INTERVAL_QUERY_PATHETIC);
+			}
+			if (p->next > 0 && p->next < nextaction)
+				nextaction = p->next;
+			if (p->deadline > 0 && p->deadline < nextaction)
+				nextaction = p->deadline;
 
 			if (p->state == STATE_QUERY_SENT &&
 			    p->query->fd != -1) {

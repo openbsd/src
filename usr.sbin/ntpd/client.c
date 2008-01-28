@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.78 2007/12/27 01:46:50 stevesk Exp $ */
+/*	$OpenBSD: client.c,v 1.79 2008/01/28 11:45:59 mpf Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,7 @@ client_peer_init(struct ntp_peer *p)
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
 	p->lasterror = 0;
+	p->senderrors = 0;
 
 	return (client_addr_init(p));
 }
@@ -172,11 +173,13 @@ client_query(struct ntp_peer *p)
 
 	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg,
 	    NTP_MSGSIZE_NOAUTH, 0) == -1) {
+		p->senderrors++;
 		set_next(p, INTERVAL_QUERY_PATHETIC);
 		p->trustlevel = TRUSTLEVEL_PATHETIC;
 		return (-1);
 	}
 
+	p->senderrors = 0;
 	p->state = STATE_QUERY_SENT;
 	set_deadline(p, QUERYTIME_MAX);
 
