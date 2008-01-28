@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.140 2008/01/10 10:05:40 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.141 2008/01/28 21:32:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -497,7 +497,6 @@ cvs_read_rcfile(void)
 int
 cvs_var_set(const char *var, const char *val)
 {
-	char *valcp;
 	const char *cp;
 	struct cvs_var *vp;
 
@@ -519,7 +518,6 @@ cvs_var_set(const char *var, const char *val)
 		if (strcmp(vp->cv_name, var) == 0)
 			break;
 
-	valcp = xstrdup(val);
 	if (vp == NULL) {
 		vp = xcalloc(1, sizeof(*vp));
 
@@ -529,7 +527,7 @@ cvs_var_set(const char *var, const char *val)
 	} else	/* free the previous value */
 		xfree(vp->cv_val);
 
-	vp->cv_val = valcp;
+	vp->cv_val = xstrdup(val);
 
 	return (0);
 }

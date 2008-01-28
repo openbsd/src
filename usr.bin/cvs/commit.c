@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.121 2008/01/28 21:26:51 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.122 2008/01/28 21:32:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -519,17 +519,17 @@ static BUF *
 commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 {
 	char *p1, *p2, *p;
-	BUF *b1, *b2;
+	BUF *b;
 
 	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
-		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
+		if ((b = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("commit_diff: failed to load '%s'",
 			    cf->file_path);
-		cvs_buf_write_stmp(b1, p1, NULL);
-		cvs_buf_free(b1);
+		cvs_buf_write_stmp(b, p1, NULL);
+		cvs_buf_free(b);
 	} else {
 		rcs_rev_write_stmp(cf->file_rcs, rev, p1, 0);
 	}
@@ -537,7 +537,7 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
 	rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
-	if ((b2 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+	if ((b = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
 		fatal("commit_diff: failed to create diff buf");
 
 	diff_format = D_RCSDIFF;
@@ -548,13 +548,13 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 		p2 = p;
 	}
 
-	if (cvs_diffreg(p1, p2, b2) == D_ERROR)
+	if (cvs_diffreg(p1, p2, b) == D_ERROR)
 		fatal("commit_diff: failed to get RCS patch");
 
 	xfree(p1);
 	xfree(p2);
 
-	return (b2);
+	return (b);
 }
 
 static void
