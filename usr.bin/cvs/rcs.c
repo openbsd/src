@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.239 2008/01/14 17:29:21 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.240 2008/01/28 21:33:20 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2635,6 +2635,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		break;
 	}
 
+	rcsnum_free(rev);
 	frev = rcsnum_alloc();
 	if (brp == NULL) {
 		rcsnum_cpy(rdp->rd_num, frev, 0);
