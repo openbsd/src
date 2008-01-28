@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.24 2007/11/27 10:06:55 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.25 2008/01/28 20:32:50 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -65,7 +65,7 @@ struct nmea {
 #endif
 	int64_t			last;		/* last time rcvd */
 	int			sync;		/* if 1, waiting for '$' */
-	int			pos;		/* positon in rcv buffer */
+	int			pos;		/* position in rcv buffer */
 	int			no_pps;		/* no PPS although requested */
 	char			mode;		/* GPS mode */
 };
