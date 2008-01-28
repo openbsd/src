@@ -1,4 +1,4 @@
-/*	 $OpenBSD: uthread_machdep.c,v 1.5 2006/04/06 15:27:08 kurt Exp $	*/
+/*	 $OpenBSD: uthread_machdep.c,v 1.6 2008/01/28 18:48:41 kettenis Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -65,8 +65,12 @@ _thread_machdep_init(struct _machdep_state* statep, void *base, int len,
 {
 	struct frame *f;
 
-	/* Locate the initial frame, aligned at the top of the stack */
-	f = (struct frame *)(((int)base + len - sizeof *f) & ~15);
+	/*
+	 * Locate the initial frame at the top of the stack.  For the
+	 * stack to end up properly (16-byte) aligned, we need to
+	 * align the frame at an odd 8-byte boundary.
+	 */
+	f = (struct frame *)((((int)base + len - sizeof *f) & ~15) - 8);
 
 	/* Set up initial frame */
 	f->fr_esp = (int)&f->fr_edi;
