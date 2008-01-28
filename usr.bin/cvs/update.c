@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.114 2008/01/21 16:36:46 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.115 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,6 +89,7 @@ cvs_update(int argc, char **argv)
 		case 'q':
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
 			cvs_specified_tag = optarg;

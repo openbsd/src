@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.43 2007/10/09 12:59:53 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.44 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -63,6 +63,7 @@ cvs_annotate(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
 			cvs_specified_tag = optarg;

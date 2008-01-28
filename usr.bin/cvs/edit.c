@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.40 2008/01/10 10:08:22 tobias Exp $	*/
+/*	$OpenBSD: edit.c,v 1.41 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -100,6 +100,7 @@ cvs_edit(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		default:
 			fatal("%s", cvs_cmd_edit.cmd_synopsis);
@@ -157,6 +158,7 @@ cvs_editors(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		default:
 			fatal("%s", cvs_cmd_editors.cmd_synopsis);
@@ -211,6 +213,7 @@ cvs_unedit(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		default:
 			fatal("%s", cvs_cmd_unedit.cmd_synopsis);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.18 2008/01/12 22:39:32 tobias Exp $	*/
+/*	$OpenBSD: watch.c,v 1.19 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -104,6 +104,7 @@ cvs_watch(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		default:
 			fatal("%s", cvs_cmd_watch.cmd_synopsis);
@@ -179,6 +180,7 @@ cvs_watchers(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		default:
 			fatal("%s", cvs_cmd_watchers.cmd_synopsis);

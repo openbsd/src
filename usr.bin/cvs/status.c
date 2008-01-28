@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.78 2008/01/10 09:37:26 tobias Exp $	*/
+/*	$OpenBSD: status.c,v 1.79 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -69,6 +69,7 @@ cvs_status(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'v':
 			show_sym = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.121 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.122 2008/01/28 20:31:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,7 +35,7 @@ struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, 0, "diff",
 	{ "di", "dif" },
 	"Show differences between revisions",
-	"[-cilNnpu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
+	"[-cilNnpRu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
 	"[-k mode] [file ...]",
 	"cD:iklNnpr:Ru",
 	NULL,
@@ -73,6 +73,9 @@ cvs_diff(int argc, char **argv)
 		case 'p':
 			strlcat(diffargs, " -p", sizeof(diffargs));
 			diff_pflag = 1;
+			break;
+		case 'R':
+			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
 			if (rev1 == NULL) {
