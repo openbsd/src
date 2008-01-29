@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.13 2004/01/05 09:02:03 miod Exp $	*/
+/*	$OpenBSD: common.c,v 1.14 2008/01/29 13:02:31 krw Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -61,7 +61,7 @@ __load_rtld(dp)
 	}
 
 	/* Read LDSO exec header */
-	if (read(crt.crt_ldfd, &hdr, sizeof hdr) < sizeof hdr) {
+	if (read(crt.crt_ldfd, &hdr, sizeof hdr) != sizeof hdr) {
 		_FATAL("Failure reading ld.so\n");
 	}
 	if (N_GETMAGIC(hdr) != ZMAGIC && N_GETMAGIC(hdr) != QMAGIC) {

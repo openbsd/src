@@ -1,4 +1,4 @@
-/*	$OpenBSD: headersize.c,v 1.8 2005/08/10 16:58:42 todd Exp $	*/
+/*	$OpenBSD: headersize.c,v 1.9 2008/01/29 13:02:31 krw Exp $	*/
 /*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ main(argc, argv)
 	if ((fd = open(fname, O_RDONLY, 0)) == -1)
 		err(1, "%s: open failed", fname);
 
-	if (read(fd, &buf, HDR_BUFSIZE) < HDR_BUFSIZE)
+	if (read(fd, &buf, HDR_BUFSIZE) != HDR_BUFSIZE)
 		err(1, "%s: read failed", fname);
 #ifdef ALPHA_BOOT_ELF
 	elfp = (Elf64_Ehdr *)buf;

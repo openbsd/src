@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.74 2008/01/15 14:23:25 sthen Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.75 2008/01/29 13:02:31 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -630,7 +630,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 			if (lseek(cfd, offset, SEEK_SET) == -1)
 				fatal("lseek to badsector area: %s",
 				    strerror(errno));
-			if (write(cfd, blk, lp->d_secsize) < lp->d_secsize)
+			if (write(cfd, blk, lp->d_secsize) != lp->d_secsize)
 				warn("alternate label %d write", i/2);
 		}
 		close(cfd);

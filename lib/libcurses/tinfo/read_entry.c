@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.14 2003/03/18 16:55:54 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.15 2008/01/29 13:02:31 krw Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -214,7 +214,7 @@ read_termtype(int fd, TERMTYPE * ptr)
 
     /* grab the booleans */
     if ((ptr->Booleans = typeCalloc(char, max(BOOLCOUNT, bool_count))) == 0
-	|| read(fd, ptr->Booleans, (unsigned) bool_count) < bool_count) {
+	|| read(fd, ptr->Booleans, (unsigned) bool_count) != bool_count) {
 	return (0);
     }
 

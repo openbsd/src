@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.2 2006/05/14 17:49:54 miod Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.3 2008/01/29 13:02:31 krw Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 	ehead.a.data_start = N_DATADDR(head);	/* ignored */
 
 	n = write(outfd, &ehead, sizeof(ehead));
-	if (n < sizeof(ehead))
+	if (n != sizeof(ehead))
 		err(1, "write");
 
 	/*
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 	escn[2].s_vaddr = escn[2].s_paddr;
 
 	n = write(outfd, &escn, sizeof(escn));
-	if (n < sizeof(escn))
+	if (n != sizeof(escn))
 		err(1, "write");
 
 	/*
@@ -276,9 +276,9 @@ copybits(int from, int to, u_int32_t count)
 
 	while (count != 0) {
 		chunk = min(count, sizeof buf);
-		if (read(from, buf, chunk) < chunk)
+		if (read(from, buf, chunk) != chunk)
 			err(1, "read");
-		if (write(to, buf, chunk) < chunk)
+		if (write(to, buf, chunk) != chunk)
 			err(1, "write");
 		count -= chunk;
 	}
@@ -292,7 +292,7 @@ zerobits(int to, u_int32_t count)
 	bzero(buf, sizeof buf);
 	while (count != 0) {
 		chunk = min(count, sizeof buf);
-		if (write(to, buf, chunk) < chunk)
+		if (write(to, buf, chunk) != chunk)
 			err(1, "write");
 		count -= chunk;
 	}

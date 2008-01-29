@@ -411,7 +411,7 @@ PRIVATE unsigned LYRead_Jumpfile ARGS1(struct JumpTable *, jtp)
     if (IsStream_LF) {
     /** Handle as a stream. **/
 #endif /* VMS */
-	if (read(fd, mp, st.st_size) < st.st_size) {
+	if (read(fd, mp, st.st_size) != st.st_size) {
 	    HTAlert(ERROR_READING_JUMP_FILE);
 	    FREE(mp);
 	    return 0;
