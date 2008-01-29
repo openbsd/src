@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.101 2008/01/29 10:30:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -329,12 +329,14 @@ rdr		: REDIRECT STRING	{
 			    sizeof(srv->conf.name)) >=
 			    sizeof(srv->conf.name)) {
 				yyerror("redirection name truncated");
+				free(srv);
 				YYERROR;
 			}
 			free($2);
 			srv->conf.id = last_rdr_id++;
 			if (last_rdr_id == INT_MAX) {
 				yyerror("too many redirections defined");
+				free(srv);
 				YYERROR;
 			}
 			rdr = srv;
@@ -456,6 +458,7 @@ tabledef	: TABLE table		{
 			    sizeof(struct timeval));
 			if (last_table_id == INT_MAX) {
 				yyerror("too many tables defined");
+				free(tb);
 				YYERROR;
 			}
 			table = tb;
@@ -676,6 +679,7 @@ proto		: proto_type PROTO STRING	{
 			if (strlcpy(p->name, $3, sizeof(p->name)) >=
 			    sizeof(p->name)) {
 				yyerror("protocol name truncated");
+				free(p);
 				YYERROR;
 			}
 			free($3);
@@ -690,6 +694,7 @@ proto		: proto_type PROTO STRING	{
 			    sizeof(p->sslciphers));
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
+				free(p);
 				YYERROR;
 			}
 			RB_INIT(&p->request_tree);
@@ -758,6 +763,7 @@ protoptsl	: SSL sslflags
 				pn->flags |= PNFLAG_LOG;
 			if (pn->id == INT_MAX) {
 				yyerror("too many protocol nodes defined");
+				free(pn);
 				YYERROR;
 			}
 			if ((proot =
@@ -1104,6 +1110,7 @@ relay		: RELAY STRING	{
 			if (strlcpy(r->conf.name, $2, sizeof(r->conf.name)) >=
 			    sizeof(r->conf.name)) {
 				yyerror("relay name truncated");
+				free(r);
 				YYERROR;
 			}
 			free($2);
@@ -1115,6 +1122,7 @@ relay		: RELAY STRING	{
 			r->conf.dstretry = 0;
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
+				free(r);
 				YYERROR;
 			}
 			rlay = r;
@@ -2030,6 +2038,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname))
 				log_warnx("host_dns: interface name truncated");
+			freeaddrinfo(res0);
 			return (-1);
 		}
 		h->ss.ss_family = res->ai_family;
