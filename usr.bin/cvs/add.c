@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.86 2008/01/10 10:08:22 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.87 2008/01/29 12:22:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -72,7 +72,7 @@ cvs_add(int argc, char **argv)
 			(void)xsnprintf(kbuf, sizeof(kbuf), "-k%s", koptstr);
 			break;
 		case 'm':
-			logmsg = xstrdup(optarg);
+			logmsg = optarg;
 			break;
 		default:
 			fatal("%s", cvs_cmd_add.cmd_synopsis);
