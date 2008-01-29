@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.76 2008/01/21 16:36:46 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.77 2008/01/29 12:01:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -554,7 +554,8 @@ cvs_server_commit(char *data)
 
 void
 cvs_server_checkout(char *data)
-{	if (chdir(server_currentdir) == -1)
+{
+	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_checkout: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_CHECKOUT;
@@ -575,8 +576,9 @@ cvs_server_diff(char *data)
 
 void
 cvs_server_export(char *data)
-{	if (chdir(server_currentdir) == -1)
-		fatal("cvs_server_checkout: %s", strerror(errno));
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_export: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_EXPORT;
 	cvs_checkout(server_argc, server_argv);
@@ -670,7 +672,7 @@ void
 cvs_server_rtag(char *data)
 {
 	if (chdir(current_cvsroot->cr_dir) == -1)
-		fatal("cvs_server_rlog: %s", strerror(errno));
+		fatal("cvs_server_rtag: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RTAG;
 	cvs_tag(server_argc, server_argv);
