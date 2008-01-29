@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.3 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.4 2008/01/29 16:36:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -261,6 +261,8 @@ relay_udp_server(int fd, short sig, void *arg)
 	/* Save the received data */
 	if (evbuffer_add(con->out.output, buf, len) == -1) {
 		relay_close(con, "failed to store buffer");
+		if (cnl != NULL)
+			free(cnl);
 		return;
 	}
 
