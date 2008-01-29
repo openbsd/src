@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.65 2007/12/10 20:31:56 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.66 2008/01/29 17:36:08 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -383,7 +383,7 @@ void
 reconfigure(void)
 {
 	struct relayd		*env = relayd_env;
-	struct relayd		*new_env;
+	struct relayd		*new_env = NULL;
 	struct rdr		*rdr;
 	struct address		*virt;
 	struct table            *table;
@@ -391,8 +391,6 @@ reconfigure(void)
 
 	log_info("reloading configuration");
 	if ((new_env = parse_config(env->confpath, env->opts)) == NULL) {
-		purge_config(new_env, PURGE_EVERYTHING);
-		free(new_env);
 		log_warnx("configuration reloading FAILED");
 		return;
 	}
