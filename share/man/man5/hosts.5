@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.17 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: hosts.5,v 1.18 2008/01/29 10:03:44 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 29 2008 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
@@ -84,11 +84,10 @@ is incomplete, use of the name server is recommended for sites on the
 .Tn DARPA
 Internet.
 .Pp
-Network addresses are specified in the conventional Internet
-.Dq \&.
-(dot) notation using the
-.Xr inet_addr 3
-routine from the Internet address manipulation library,
+Internet addresses are specified using either
+dot notation (IPv4)
+or colon separated notation (IPv6).
+Further information on network addressing is contained in
 .Xr inet 3 .
 Host names may contain any printable character other than a field delimiter,
 newline, or comment character.
@@ -100,6 +99,7 @@ newline, or comment character.
 .Xr getaddrinfo 3 ,
 .Xr gethostbyname 3 ,
 .Xr getnameinfo 3 ,
+.Xr inet 3 ,
 .Xr resolv.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr named 8
