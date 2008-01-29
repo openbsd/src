@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2007/05/23 07:28:15 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.80 2008/01/29 00:47:08 espie Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -78,22 +78,40 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 LDADD+=		${LWRESLIB} -lkeynote -lcrypto -ldes -lm
 DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBDES} ${LIBM}
 
-exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
+exchange_num.c exchange_num.h: stamp_exchange_num
+
+stamp_exchange_num: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num
+	@touch $@
 
-ipsec_fld.c ipsec_fld.h: genfields.sh ipsec_fld.fld
+ipsec_fld.c ipsec_fld.h: stamp_ipsec_fld
+
+stamp_ipsec_fld: genfields.sh ipsec_fld.fld
 	/bin/sh ${.CURDIR}/genfields.sh ${.CURDIR}/ipsec_fld
+	@touch $@
 
-ipsec_num.c ipsec_num.h: genconstants.sh ipsec_num.cst
+ipsec_num.c ipsec_num.h: stamp_ipsec_num
+
+stamp_ipsec_num: genconstants.sh ipsec_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/ipsec_num
+	@touch $@
 
-isakmp_fld.c isakmp_fld.h: genfields.sh isakmp_fld.fld
+isakmp_fld.c isakmp_fld.h: stamp_isakmp_fld
+
+stamp_isakmp_fld: genfields.sh isakmp_fld.fld
 	/bin/sh ${.CURDIR}/genfields.sh ${.CURDIR}/isakmp_fld
+	@touch $@
 
-isakmp_num.c isakmp_num.h: genconstants.sh isakmp_num.cst
+isakmp_num.c isakmp_num.h: stamp_isakmp_num
+
+stamp_isakmp_num: genconstants.sh isakmp_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/isakmp_num
+	@touch $@
 
 ${PROG} beforedepend: ${GENERATED}
+
+CLEANFILES += stamp_exchange_num stamp_ipsec_fld \
+	stamp_ipsec_num stamp_isakmp_fld stamp_isakmp_num
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
