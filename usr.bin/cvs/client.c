@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.90 2008/01/21 16:36:46 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.91 2008/01/29 11:55:30 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -828,6 +828,9 @@ cvs_client_removed(char *data)
 {
 	CVSENTRIES *entlist;
 	char *rpath, *filename, fpath[MAXPATHLEN];
+
+	if (data == NULL)
+		fatal("Missing argument for Removed");
 
 	rpath = cvs_remote_input();
 	if ((filename = strrchr(rpath, '/')) == NULL)
