@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.122 2008/01/28 21:32:00 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.123 2008/01/29 11:58:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -147,9 +147,7 @@ cvs_commit(int argc, char **argv)
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
 
-		if (logmsg != NULL)
-			cvs_client_send_logmsg(logmsg);
-
+		cvs_client_send_logmsg(logmsg);
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 		cvs_client_send_request("ci");
@@ -160,6 +158,7 @@ cvs_commit(int argc, char **argv)
 		cvs_file_freelist(&files_affected);
 	}
 
+	xfree(logmsg);
 	return (0);
 }
 
@@ -169,6 +168,8 @@ cvs_commit_check_files(struct cvs_file *cf)
 	char *tag;
 	RCSNUM *branch, *brev;
 	char rev[CVS_REV_BUFSZ];
+
+	branch = brev = NULL;
 
 	cvs_log(LP_TRACE, "cvs_commit_check_files(%s)", cf->file_path);
 
@@ -231,6 +232,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 				cvs_log(LP_ERR, "%s is not a branch revision",
 				    rev);
 				conflicts_found++;
+				rcsnum_free(brev);
 				return;
 			}
 
@@ -238,6 +240,8 @@ cvs_commit_check_files(struct cvs_file *cf)
 				cvs_log(LP_ERR, "%s is not a branch revision",
 				    rev);
 				conflicts_found++;
+				rcsnum_free(branch);
+				rcsnum_free(brev);
 				return;
 			}
 
@@ -246,12 +250,19 @@ cvs_commit_check_files(struct cvs_file *cf)
 				cvs_log(LP_ERR, "%s (%s) is not a branch",
 				    cf->file_ent->ce_tag, rev);
 				conflicts_found++;
+				rcsnum_free(branch);
+				rcsnum_free(brev);
 				return;
 			}
 		}
 	}
 
 next:
+	if (branch != NULL)
+		rcsnum_free(branch);
+	if (brev != NULL)
+		rcsnum_free(brev);
+
 	if (cf->file_status == FILE_ADDED ||
 	    cf->file_status == FILE_REMOVED ||
 	    cf->file_status == FILE_MODIFIED)
@@ -340,6 +351,7 @@ cvs_commit_local(struct cvs_file *cf)
 				nrev = rcsnum_brtorev(brev);
 				if (nrev == NULL)
 					fatal("failed to create branch rev");
+				rcsnum_free(brev);
 			} else {
 				fatal("this isnt suppose to happen, honestly");
 			}
@@ -356,6 +368,8 @@ cvs_commit_local(struct cvs_file *cf)
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 	}
 
+	if (rrev != NULL)
+		rcsnum_free(rrev);
 	isnew = 0;
 	if (cf->file_status == FILE_ADDED) {
 		isnew = 1;
