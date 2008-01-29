@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.16 2008/01/27 00:38:16 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.17 2008/01/29 10:26:56 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2008 $
+.Dd $Mdocdate: January 29 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -89,9 +89,9 @@ Initialize the partition tables of all disks:
 .Pp
 Now create RAID partitions on all disks:
 .Bd -literal -offset indent
-# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
-# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
-# echo "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
+# printf "a\en\en\en\enRAID\enw\enq\en\en" | disklabel -E wd1
+# printf "a\en\en\en\enRAID\enw\enq\en\en" | disklabel -E wd2
+# printf "a\en\en\en\enRAID\enw\enq\en\en" | disklabel -E wd3
 .Ed
 .Pp
 Assemble the RAID volume:
@@ -115,7 +115,7 @@ Initialize the partition table and create a filesystem on the
 new RAID volume:
 .Bd -literal -offset indent
 # fdisk -iy sd0
-# echo "a\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
+# printf "a\en\en\en\en4.2BSD\enw\enq\en\en" | disklabel -E sd0
 # newfs /dev/rsd0a
 .Ed
 .Pp
