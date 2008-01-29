@@ -30,8 +30,8 @@ CFLAGS		+= -I${AFSSRC}/lib/ko
 sysname.c: gensysname
 	./gensysname -c > sysname.c
 
+gensysname.o: vldb.h lwp.h
 gensysname: gensysname.o getarg.o strupr.o get_window_size.o
 	${HOSTCC} ${CFLAGS} -o gensysname gensysname.o getarg.o strupr.o get_window_size.o
 
 CLEANFILES+=	gensysname.o agetarg.o
-
