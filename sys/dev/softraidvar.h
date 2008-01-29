@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.39 2008/01/26 19:29:55 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.40 2008/01/29 23:25:02 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -74,6 +74,8 @@ struct sr_ccb {
 #define SR_CCB_INPROGRESS	1
 #define SR_CCB_OK		2
 #define SR_CCB_FAILED		3
+
+	void			*ccb_opaque; /* discipline usable pointer */
 
 	TAILQ_ENTRY(sr_ccb)	ccb_link;
 } __packed;

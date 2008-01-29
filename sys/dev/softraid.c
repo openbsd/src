@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.96 2008/01/24 19:58:08 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.97 2008/01/29 23:25:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -277,6 +277,7 @@ sr_put_ccb(struct sr_ccb *ccb)
 	ccb->ccb_wu = NULL;
 	ccb->ccb_state = SR_CCB_FREE;
 	ccb->ccb_target = -1;
+	ccb->ccb_opaque = NULL;
 
 	TAILQ_INSERT_TAIL(&sd->sd_ccb_freeq, ccb, ccb_link);
 
@@ -807,7 +808,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			break;
 #if 0
 		case 'C':
-			if (no_chunk != 1)
+			if (no_chunk < 2)
 				goto unwind;
 			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scm_coerced_size;
