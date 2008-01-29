@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.68 2007/11/10 13:59:48 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.69 2008/01/29 22:23:10 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ CompatMake(void *gnp,	/* The node to make */
 			/* Our commands are ok, but we still have to worry
 			 * about the -t flag...	*/
 			if (!touchFlag)
-				run_gnode(gn, 0);
+				run_gnode(gn);
 			else
 				Job_Touch(gn);
 		} else
@@ -216,7 +216,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	/* If the user has defined a .BEGIN target, execute the commands
 	 * attached to it.  */
 	if (!queryFlag) {
-		if (run_gnode(begin_node, 0) == ERROR) {
+		if (run_gnode(begin_node) == ERROR) {
 			printf("\n\nStop.\n");
 			exit(1);
 		}
@@ -247,5 +247,5 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 
 	/* If the user has defined a .END target, run its commands.  */
 	if (errors == 0)
-		run_gnode(end_node, 0);
+		run_gnode(end_node);
 }

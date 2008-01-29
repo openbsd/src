@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2008/01/02 15:37:22 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.19 2008/01/29 22:23:10 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -619,7 +619,6 @@ run_command(const char *cmd, bool errCheck)
 static int
 setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 {
-	char *cmdStart;	/* Start of expanded command */
 	bool silent;	/* Don't print command */
 	bool doExecute;	/* Execute the command */
 	bool errCheck;	/* Check errors */
@@ -632,16 +631,12 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 	errCheck = !(gn->type & OP_IGNORE);
 	doExecute = !noExecute;
 
-	cmdStart = Var_Subst(cmd, &gn->context, false);
-
 	/* How can we execute a null command ? we warn the user that the
 	 * command expanded to nothing (is this the right thing to do?).  */
-	if (*cmdStart == '\0') {
-		free(cmdStart);
+	if (*cmd == '\0') {
 		Error("%s expands to empty string", cmd);
 		return 1;
-	} else
-		cmd = cmdStart;
+	} 
 
 	for (;; cmd++) {
 		if (*cmd == '@')
@@ -686,7 +681,6 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 	default:
 		break;
 	}
-	free(cmdStart);
 
 	/* The child is off and running. Now all we can do is wait...  */
 	while (1) {
@@ -751,25 +745,47 @@ handle_compat_interrupts(GNode *gn)
 		signal(SIGQUIT, SIG_IGN);
 		got_signal = 0;
 		got_SIGINT = 0;
-		run_gnode(interrupt_node, 0);
+		run_gnode(interrupt_node);
 		exit(255);
 	}
 	exit(255);
 }
 
-int
-run_gnode(GNode *gn, int parallel)
+void
+expand_commands(GNode *gn)
 {
-	LstNode ln, nln;
+	LstNode ln;
+	char *cmd;
+
+	for (ln = Lst_First(&gn->commands); ln != NULL; ln = Lst_Adv(ln)) {
+		cmd = Var_Subst(Lst_Datum(ln), &gn->context, false);
+		Lst_AtEnd(&gn->expanded, cmd);
+	}
+}
+
+int
+run_gnode(GNode *gn)
+{
+	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
+		expand_commands(gn);
+	}
+	return run_prepared_gnode(gn, 0);
+}
+
+int
+run_prepared_gnode(GNode *gn, int parallel)
+{
+	char *cmd;
 
 	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
 		gn->built_status = MADE;
-		for (ln = Lst_First(&gn->commands); ln != NULL; ln = nln) {
-			nln = Lst_Adv(ln);
-			if (setup_and_run_command(Lst_Datum(ln), gn, 
-			    parallel && nln == NULL) == 0)
+		while ((cmd = Lst_DeQueue(&gn->expanded)) != NULL) {
+			if (setup_and_run_command(cmd, gn, 
+			    parallel && Lst_IsEmpty(&gn->expanded)) == 0)
 				break;
+			free(cmd);
 		}
+		free(cmd);
 		if (got_signal && !parallel)
 			handle_compat_interrupts(gn);
 		return gn->built_status;

@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: memory.c,v 1.4 2007/09/16 10:43:53 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.5 2008/01/29 22:23:10 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -49,6 +49,7 @@
 #include "memory.h"
 
 static void enomem(size_t);
+static void enocmem(size_t, size_t);
 
 /*
  * emalloc --
@@ -99,8 +100,16 @@ ecalloc(size_t s1, size_t s2)
 	void *p;
 
 	if ((p = calloc(s1, s2)) == NULL)
-		enomem(s1 * s2);
+		enocmem(s1, s2);
 	return p;
+}
+
+void *
+erecalloc(void *ptr, size_t s1, size_t s2)
+{
+	if ((ptr = recalloc(ptr, s1, s2)) == NULL)
+		enocmem(s1, s2);
+	return ptr;
 }
 
 /* Support routines for hash tables.  */
@@ -131,10 +140,16 @@ element_alloc(size_t s, void *u UNUSED)
 void
 enomem(size_t size)
 {
-	fprintf(stderr, "make: %s (%lu)\n", strerror(errno), (u_long)size);
+	fprintf(stderr, "make: %s (%zu)\n", strerror(errno), size);
 	exit(2);
 }
 
+void
+enocmem(size_t sz1, size_t sz2)
+{
+	fprintf(stderr, "make: %s (%zu * %zu)\n", strerror(errno), sz1, sz2);
+	exit(2);
+}
 /*
  * esetenv --
  *	change environment, die on error.

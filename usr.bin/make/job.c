@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.111 2008/01/12 13:08:59 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.112 2008/01/29 22:23:10 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -161,11 +161,16 @@ static int	nJobs;		/* The number of children currently running */
 static LIST	runningJobs;	/* The structures that describe them */
 static bool	jobFull;	/* Flag to tell when the job table is full. It
 				 * is set true when nJobs equals maxJobs */
-static fd_set	*outputsp;	/* Set of descriptors of pipes connected to
-				 * the output channels of children */
-static int	outputsn;
 static GNode	*lastNode;	/* The node for which output was most recently
 				 * produced. */
+
+/* data structure linked to job handling through select */
+static fd_set *output_mask = NULL;	/* File descriptors to look for */
+				 
+static fd_set *actual_mask = NULL;	/* actual select argument */
+static int largest_fd = -1;
+static size_t mask_size = 0;
+
 /*
  * When JobStart attempts to run a job but isn't allowed to,
  * the job is placed on the queuedJobs queue to be run
@@ -173,13 +178,21 @@ static GNode	*lastNode;	/* The node for which output was most recently
  */
 static LIST	stoppedJobs;	
 static LIST	queuedJobs;
+
+/* wait possibilities */
+#define JOB_EXITED 0
+#define JOB_SIGNALED 1
+#define JOB_CONTINUED 2
+#define JOB_STOPPED 3
+#define JOB_UNKNOWN 4
+
 static LIST	errorsList;
 static int	errors;
 struct error_info {
-	int status;
+	int reason;
+	int code;
 	GNode *n;
 };
-
 
 
 #if defined(USE_PGRP) && defined(SYSV)
@@ -192,32 +205,12 @@ struct error_info {
 # endif
 #endif
 
-/*
- * Grmpf... There is no way to set bits of the wait structure
- * anymore with the stupid W*() macros. I liked the union wait
- * stuff much more. So, we devise our own macros... This is
- * really ugly, use dramamine sparingly. You have been warned.
- */
-#define W_SETMASKED(st, val, fun)				\
-	{							\
-		int sh = (int) ~0;				\
-		int mask = fun(sh);				\
-								\
-		for (sh = 0; ((mask >> sh) & 1) == 0; sh++)	\
-			continue;				\
-		*(st) = (*(st) & ~mask) | ((val) << sh);	\
-	}
-
-#define W_SETTERMSIG(st, val) W_SETMASKED(st, val, WTERMSIG)
-#define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
-
-
 static void pass_signal_to_job(void *, void *);
 static void handle_all_signals(void);
 static void handle_signal(int);
 static int JobCmpPid(void *, void *);
-static void JobClose(Job *);
 static void JobFinish(Job *, int);
+static void finish_job(Job *, int, int);
 static void JobExec(Job *);
 static void JobRestart(Job *);
 static void JobStart(GNode *, int);
@@ -227,25 +220,49 @@ static void debug_printf(const char *, ...);
 static Job *prepare_job(GNode *, int);
 static void start_queued_job(Job *);
 static void banner(Job *, FILE *);
+
+/***
+ ***  Input/output from jobs
+ ***/
+
+/* prepare_pipe(jp, &fd):
+ *	set up pipe data structure (buffer and pos) corresponding to
+ *	pointed fd, and prepare to watch for it.
+ */
+static void prepare_pipe(struct job_pipe *, int *);
+
+/* close_job_pipes(j):
+ *	handle final output from job, and close pipes properly
+ */
+static void close_job_pipes(Job *);
+
+
+static void handle_all_jobs_output(void);
+
+/* handle_job_output(job, n, finish): 
+ *	n = 0 or 1 (stdout/stderr), set finish to retrieve everything.
+ */
+static void handle_job_output(Job *, int, bool);
+
 static void print_partial_buffer(struct job_pipe *, Job *, FILE *, size_t);
 static void print_partial_buffer_and_shift(struct job_pipe *, Job *, FILE *, 
     size_t);
 static bool print_complete_lines(struct job_pipe *, Job *, FILE *, size_t);
-static void prepare_pipe(struct job_pipe *, int *);
-static void handle_job_output(Job *, int, bool);
-static void register_error(int, Job *);
+
+
+static void register_error(int, int, Job *);
 static void loop_handle_running_jobs(void);
 static void Job_CatchChildren(void);
-static void Job_CatchOutput(void);
 
 static void
-register_error(int status, Job *job)
+register_error(int reason, int code, Job *job)
 {
 	struct error_info *p;
 
 	errors++;
 	p = emalloc(sizeof(struct error_info));
-	p->status = status;
+	p->reason = reason;
+	p->code = code;
 	p->n = job->node;
 	Lst_AtEnd(&errorsList, p);
 }
@@ -256,25 +273,31 @@ print_errors()
 	LstNode ln;
 	struct error_info *p;
 	const char *type;
-	int r;
 
 	for (ln = Lst_First(&errorsList); ln != NULL; ln = Lst_Adv(ln)) {
 		p = (struct error_info *)Lst_Datum(ln);
-		if (WIFEXITED(p->status)) {
+		switch(p->reason) {
+		case JOB_EXITED:
 			type = "Exit status";
-			r = WEXITSTATUS(p->status);
-		} else if (WIFSIGNALED(p->status)) {
+			break;
+		case JOB_SIGNALED:
 			type = "Received signal";
-			r = WTERMSIG(p->status);
-		} else {
-			type = "Status";
-			r = p->status;
+			break;
+		case JOB_STOPPED:
+			type = "Stopped";
+			break;
+		case JOB_CONTINUED:
+			type = "Continued";
+			break;
+		default:
+			type = "Should not happen";
+			break;
 		}
 	if (p->n->lineno)
 		Error(" %s %d (%s, line %lu of %s)",
-		    type, r, p->n->name, p->n->lineno, p->n->fname);
+		    type, p->code, p->n->name, p->n->lineno, p->n->fname);
 	else 
-		Error(" %s %d (%s)", type, r, p->n->name);
+		Error(" %s %d (%s)", type, p->code, p->n->name);
 	}
 }
 
@@ -461,22 +484,13 @@ debug_printf(const char *fmt, ...)
 	}
 }
 	
-/*-
- *-----------------------------------------------------------------------
- * JobClose --
- *	Called to close both input and output pipes when a job is finished.
- *
- * Side Effects:
- *	The file descriptors associated with the job are closed.
- *-----------------------------------------------------------------------
- */
 static void
-JobClose(Job *job)
+close_job_pipes(Job *job)
 {
 	int i;
 
-	for (i = 0; i < 2; i++) {
-		FD_CLR(job->in[i].fd, outputsp);
+	for (i = 1; i >= 0; i--) {
+		FD_CLR(job->in[i].fd, output_mask);
 		handle_job_output(job, i, true);
 		(void)close(job->in[i].fd);
 	}
@@ -499,14 +513,41 @@ JobClose(Job *job)
  *-----------------------------------------------------------------------
  */
 /*ARGSUSED*/
+
 static void
 JobFinish(Job *job, int status)
 {
+	int reason, code;
+	/* parse status */
+	if (WIFEXITED(status)) {
+		reason = JOB_EXITED;
+		code = WEXITSTATUS(status);
+	} else if (WIFSIGNALED(status)) {
+		reason = JOB_SIGNALED;
+		code = WTERMSIG(status);
+	} else if (WIFCONTINUED(status)) {
+		reason = JOB_CONTINUED;
+		code = 0;
+    	} else if (WIFSTOPPED(status)) {
+		reason = JOB_STOPPED;
+		code = WSTOPSIG(status);
+	} else {
+		/* can't happen, set things to be bad. */
+		reason = UNKNOWN;
+		code = status;
+	}
+	finish_job(job, reason, code);
+}
+
+
+static void
+finish_job(Job *job, int reason, int code)
+{
 	bool	 done;
 
-	if ((WIFEXITED(status) &&
-	     WEXITSTATUS(status) != 0 && !(job->node->type & OP_IGNORE)) ||
-	    (WIFSIGNALED(status) && WTERMSIG(status) != SIGCONT)) {
+	if ((reason == JOB_EXITED &&
+	     code != 0 && !(job->node->type & OP_IGNORE)) ||
+	    (reason == JOB_SIGNALED && code != SIGCONT)) {
 		/*
 		 * If it exited non-zero and either we're doing things our
 		 * way or we're not ignoring errors, the job is finished.
@@ -515,9 +556,9 @@ JobFinish(Job *job, int status)
 		 * cases, finish out the job's output before printing the exit
 		 * status...
 		 */
-		JobClose(job);
+		close_job_pipes(job);
 		done = true;
-	} else if (WIFEXITED(status)) {
+	} else if (reason == JOB_EXITED) {
 		/*
 		 * Deal with ignored errors in -B mode. We need to print a
 		 * message telling of the ignored error as well as setting
@@ -525,13 +566,13 @@ JobFinish(Job *job, int status)
 		 * this, we set done to be true if in -B mode and the job
 		 * exited non-zero.
 		 */
-		done = WEXITSTATUS(status) != 0;
+		done = code != 0;
 		/*
 		 * Old comment said: "Note we don't want to close down any of
 		 * the streams until we know we're at the end." But we do.
 		 * Otherwise when are we going to print the rest of the stuff?
 		 */
-		JobClose(job);
+		close_job_pipes(job);
 	} else {
 		/*
 		 * No need to close things down or anything.
@@ -539,78 +580,78 @@ JobFinish(Job *job, int status)
 		done = false;
 	}
 
-	if (done ||
-	    WIFSTOPPED(status) ||
-	    (WIFSIGNALED(status) && WTERMSIG(status) == SIGCONT) ||
-	    DEBUG(JOB)) {
-		if (WIFEXITED(status)) {
+	if (reason == JOB_STOPPED) {
+		debug_printf("Process %ld stopped.\n", (long)job->pid);
+		banner(job, stdout);
+		(void)fprintf(stdout, "*** Stopped -- signal %d\n",
+		    code);
+		job->flags |= JOB_RESUME;
+		Lst_AtEnd(&stoppedJobs, job);
+		(void)fflush(stdout);
+		return;
+	}
+	if (reason == JOB_SIGNALED && code == SIGCONT) {
+		/*
+		 * If the beastie has continued, shift the Job from the
+		 * stopped list to the running one (or re-stop it if
+		 * concurrency is exceeded) and go and get another
+		 * child.
+		 */
+		if (job->flags & (JOB_RESUME|JOB_RESTART)) {
+			banner(job, stdout);
+			(void)fprintf(stdout, "*** Continued\n");
+		}
+		if (!(job->flags & JOB_CONTINUING)) {
+			debug_printf(
+			    "Warning: "
+			    "process %ld was not continuing.\n",
+			    (long)job->pid);
+#if 0
+			/*
+			 * We don't really want to restart a job from
+			 * scratch just because it continued,
+			 * especially not without killing the
+			 * continuing process!	That's why this is
+			 * ifdef'ed out.  FD - 9/17/90
+			 */
+			JobRestart(job);
+#endif
+		}
+		job->flags &= ~JOB_CONTINUING;
+		Lst_AtEnd(&runningJobs, job);
+		nJobs++;
+		debug_printf("Process %ld is continuing locally.\n",
+		    (long)job->pid);
+		if (nJobs == maxJobs) {
+			jobFull = true;
+			debug_printf("Job queue is full.\n");
+		}
+		(void)fflush(stdout);
+		return;
+	}
+
+	if (done || DEBUG(JOB)) {
+		if (reason == JOB_EXITED) {
 			debug_printf("Process %ld exited.\n", (long)job->pid);
-			if (WEXITSTATUS(status) != 0) {
+			if (code != 0) {
 				banner(job, stdout);
 				(void)fprintf(stdout, "*** Error code %d %s\n",
-				    WEXITSTATUS(status),
+				    code,
 				    (job->node->type & OP_IGNORE) ? 
 				    "(ignored)" : "");
 
 				if (job->node->type & OP_IGNORE) {
-					status = 0;
+					reason = JOB_EXITED;
+					code = 0;
 				}
 			} else if (DEBUG(JOB)) {
 				banner(job, stdout);
 				(void)fprintf(stdout,
 				    "*** Completed successfully\n");
 			}
-		} else if (WIFSTOPPED(status)) {
-			debug_printf("Process %ld stopped.\n", (long)job->pid);
-			banner(job, stdout);
-			(void)fprintf(stdout, "*** Stopped -- signal %d\n",
-			    WSTOPSIG(status));
-			job->flags |= JOB_RESUME;
-			Lst_AtEnd(&stoppedJobs, job);
-			(void)fflush(stdout);
-			return;
-		} else if (WTERMSIG(status) == SIGCONT) {
-			/*
-			 * If the beastie has continued, shift the Job from the
-			 * stopped list to the running one (or re-stop it if
-			 * concurrency is exceeded) and go and get another
-			 * child.
-			 */
-			if (job->flags & (JOB_RESUME|JOB_RESTART)) {
-				banner(job, stdout);
-				(void)fprintf(stdout, "*** Continued\n");
-			}
-			if (!(job->flags & JOB_CONTINUING)) {
-				debug_printf(
-				    "Warning: "
-				    "process %ld was not continuing.\n",
-				    (long)job->pid);
-#if 0
-				/*
-				 * We don't really want to restart a job from
-				 * scratch just because it continued,
-				 * especially not without killing the
-				 * continuing process!	That's why this is
-				 * ifdef'ed out.  FD - 9/17/90
-				 */
-				JobRestart(job);
-#endif
-			}
-			job->flags &= ~JOB_CONTINUING;
-			Lst_AtEnd(&runningJobs, job);
-			nJobs++;
-			debug_printf("Process %ld is continuing locally.\n",
-			    (long)job->pid);
-			if (nJobs == maxJobs) {
-				jobFull = true;
-				debug_printf("Job queue is full.\n");
-			}
-			(void)fflush(stdout);
-			return;
 		} else {
 			banner(job, stdout);
-			(void)fprintf(stdout, "*** Signal %d\n",
-			    WTERMSIG(status));
+			(void)fprintf(stdout, "*** Signal %d\n", code);
 		}
 
 		(void)fflush(stdout);
@@ -621,15 +662,15 @@ JobFinish(Job *job, int status)
 	if (done &&
 	    aborting != ABORT_ERROR &&
 	    aborting != ABORT_INTERRUPT &&
-	    status == 0) {
+	    reason == JOB_EXITED && code == 0) {
 		/* As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
 		job->node->built_status = MADE;
 		Make_Update(job->node);
 		free(job);
-	} else if (status != 0) {
-		register_error(status, job);
+	} else if (!(reason == JOB_EXITED && code == 0)) {
+		register_error(reason, code, job);
 		free(job);
 	}
 
@@ -665,23 +706,23 @@ prepare_pipe(struct job_pipe *p, int *fd)
 	p->fd = fd[0]; 
 	close(fd[1]);
 
-	if (outputsp == NULL || p->fd > outputsn) {
+	if (output_mask == NULL || p->fd > largest_fd) {
 		int fdn, ofdn;
-		fd_set *tmp;
 
 		fdn = howmany(p->fd+1, NFDBITS);
-		ofdn = outputsn ? howmany(outputsn+1, NFDBITS) : 0;
+		ofdn = howmany(largest_fd+1, NFDBITS);
 
 		if (fdn != ofdn) {
-			tmp = recalloc(outputsp, fdn, sizeof(fd_mask));
-			if (tmp == NULL)
-				return;
-			outputsp = tmp;
+			output_mask = erecalloc(output_mask, fdn, 
+			    sizeof(fd_mask));
+			actual_mask = erecalloc(actual_mask, fdn, 
+			    sizeof(fd_mask));
+			mask_size = fdn * sizeof(fd_mask);
 		}
-		outputsn = p->fd;
+		largest_fd = p->fd;
 	}
 	fcntl(p->fd, F_SETFL, O_NONBLOCK);
-	FD_SET(p->fd, outputsp);
+	FD_SET(p->fd, output_mask);
 }
 
 /*-
@@ -767,7 +808,7 @@ JobExec(Job *job)
 				usleep(random() % random_delay);
 
 		/* most cases won't return, but will exit directly */
-		result = run_gnode(job->node, 1);
+		result = run_prepared_gnode(job->node, 1);
 		switch(result) {
 		case MADE:
 			exit(0);
@@ -854,7 +895,6 @@ JobRestart(Job *job)
 			 * (or maxJobs is 0), it's ok to resume the job.
 			 */
 			bool error;
-			int status = 0;
 
 			error = KILL(job->pid, SIGCONT) != 0;
 
@@ -865,16 +905,14 @@ JobRestart(Job *job)
 				 * table.
 				 */
 				job->flags |= JOB_CONTINUING;
-				W_SETTERMSIG(&status, SIGCONT);
-				JobFinish(job, status);
+				finish_job(job, JOB_SIGNALED, SIGCONT);
 
 				job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
 				debug_printf("done\n");
 			} else {
 				Error("couldn't resume %s: %s",
 				    job->node->name, strerror(errno));
-				W_SETEXITSTATUS(&status, 1);
-				JobFinish(job, status);
+				finish_job(job, JOB_EXITED, 1);
 			}
 		} else {
 			/*
@@ -915,6 +953,7 @@ prepare_job(GNode *gn, int flags)
 	 * to migrate to the node
 	 */
 	cmdsOK = Job_CheckCommands(gn, Error);
+	expand_commands(gn);
 
 	if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
 		/*
@@ -1146,9 +1185,8 @@ Job_CatchChildren()
 	/*
 	 * Don't even bother if we know there's no one around.
 	 */
-	if (nJobs == 0) {
+	if (nJobs == 0)
 		return;
-	}
 
 	while ((pid = waitpid((pid_t) -1, &status, WNOHANG|WUNTRACED)) > 0) {
 		handle_all_signals();
@@ -1183,14 +1221,8 @@ Job_CatchChildren()
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_CatchOutput --
- *	Catch the output from our children.
- * -----------------------------------------------------------------------
- */
 void
-Job_CatchOutput(void)
+handle_all_jobs_output(void)
 {
 	int nfds;
 	struct timeval timeout;
@@ -1199,18 +1231,17 @@ Job_CatchOutput(void)
 	int i;
 	int status;
 
-	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
-	fd_set *readfdsp = malloc(count);
-
-	(void)fflush(stdout);
-	if (readfdsp == NULL)
+	/* no jobs */
+	if (Lst_IsEmpty(&runningJobs))
 		return;
 
-	memcpy(readfdsp, outputsp, count);
+	(void)fflush(stdout);
+
+	memcpy(actual_mask, output_mask, mask_size);
 	timeout.tv_sec = SEL_SEC;
 	timeout.tv_usec = SEL_USEC;
 
-	nfds = select(outputsn+1, readfdsp, NULL, NULL, &timeout);
+	nfds = select(largest_fd+1, actual_mask, NULL, NULL, &timeout);
 	handle_all_signals();
 	for (ln = Lst_First(&runningJobs); nfds && ln != NULL;
 	    ln = ln2) {
@@ -1218,7 +1249,7 @@ Job_CatchOutput(void)
 		job = (Job *)Lst_Datum(ln);
 		job->flags &= ~JOB_DIDOUTPUT;
 		for (i = 1; i >= 0; i--) {
-			if (FD_ISSET(job->in[i].fd, readfdsp)) {
+			if (FD_ISSET(job->in[i].fd, actual_mask)) {
 				nfds--;
 				handle_job_output(job, i, false);
 			}
@@ -1235,13 +1266,12 @@ Job_CatchOutput(void)
 			}
 		}
 	}
-	free(readfdsp);
 }
 
 void
 handle_running_jobs()
 {
-	Job_CatchOutput();
+	handle_all_jobs_output();
 	Job_CatchChildren();
 }
 

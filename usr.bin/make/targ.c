@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.55 2007/11/28 09:39:01 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.56 2008/01/29 22:23:10 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -196,7 +196,8 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->fname = NULL;
 	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);
-	gn->suffix =	NULL;
+	Lst_Init(&gn->expanded);
+	gn->suffix = NULL;
 
 #ifdef STATS_GN_CREATION
 	STAT_GN_COUNT++;
