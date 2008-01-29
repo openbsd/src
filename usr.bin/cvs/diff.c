@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.122 2008/01/28 20:31:07 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.123 2008/01/29 12:00:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -202,8 +202,11 @@ cvs_diff_local(struct cvs_file *cf)
 			return;
 
 	if (rev2 != NULL)
-		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) == NULL)
+		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) ==
+		    NULL) {
+			rcsnum_free(diff_rev1);
 			return;
+		}
 
 	diff_file = cf->file_path;
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
