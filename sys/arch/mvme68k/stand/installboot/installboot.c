@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.11 2007/06/17 00:28:56 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.12 2008/01/30 02:13:04 krw Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -406,7 +406,7 @@ vid_to_disklabel(char *dkname, char *bootproto)
 	f = opendev(dkname, O_RDWR, OPENDEV_PART, &specname);
 
 	if (lseek(f, 0, SEEK_SET) < 0 ||
-	    read(f, pcpul, sizeof(struct mvmedisklabel)) <
+	    read(f, pcpul, sizeof(struct mvmedisklabel)) !=
 	    sizeof(struct mvmedisklabel))
 		err(4, "%s", specname);
 
