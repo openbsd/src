@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.18 2008/01/18 18:38:35 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.19 2008/01/30 10:12:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1317,7 +1317,7 @@ mib_dot1dtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		break;
 	case 4:
 	case 5:
-		ber = ber_add_integer(ber, 0);		
+		ber = ber_add_integer(ber, 0);
 		break;
 	}
 

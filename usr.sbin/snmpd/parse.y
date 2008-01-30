@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2008/01/17 17:35:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2008/01/30 10:12:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -201,7 +201,7 @@ main		: LISTEN ON STRING		{
 			}
 			free($3);
 		}
-		| TRAP RECEIVER 		{
+		| TRAP RECEIVER			{
 			hlist = &conf->sc_trapreceivers;
 		} host				{
 			hlist = NULL;
