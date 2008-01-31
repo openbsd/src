@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.46 2007/12/20 20:15:43 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.47 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -129,7 +129,7 @@ pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2hce[0]);
 	close(pipe_parent2hce[1]);
-	for (i = 0; i < env->prefork_relay; i++) {
+	for (i = 0; i < env->sc_prefork_relay; i++) {
 		close(pipe_parent2relay[i][0]);
 		close(pipe_parent2relay[i][1]);
 		close(pipe_pfe2relay[i][0]);
@@ -137,13 +137,13 @@ pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	size = sizeof(struct imsgbuf);
 	if ((ibuf_hce = calloc(1, size)) == NULL ||
-	    (ibuf_relay = calloc(env->prefork_relay, size)) == NULL ||
+	    (ibuf_relay = calloc(env->sc_prefork_relay, size)) == NULL ||
 	    (ibuf_main = calloc(1, size)) == NULL)
 		fatal("pfe");
 
 	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg);
 	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent);
-	for (i = 0; i < env->prefork_relay; i++)
+	for (i = 0; i < env->sc_prefork_relay; i++)
 		imsg_init(&ibuf_relay[i], pipe_pfe2relay[i][1],
 		    pfe_dispatch_relay);
 
@@ -188,7 +188,7 @@ pfe_setup_events(void)
 	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
-	for (i = 0; i < env->prefork_relay; i++) {
+	for (i = 0; i < env->sc_prefork_relay; i++) {
 		ibuf = &ibuf_relay[i];
 
 		ibuf->events = EV_READ;
@@ -198,9 +198,9 @@ pfe_setup_events(void)
 	}
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->statev, pfe_statistics, NULL);
-	bcopy(&env->statinterval, &tv, sizeof(tv));
-	evtimer_add(&env->statev, &tv);
+	evtimer_set(&env->sc_statev, pfe_statistics, NULL);
+	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->sc_statev, &tv);
 }
 
 void
@@ -210,10 +210,10 @@ pfe_disable_events(void)
 
 	event_del(&ibuf_hce->ev);
 
-	for (i = 0; i < env->prefork_relay; i++)
+	for (i = 0; i < env->sc_prefork_relay; i++)
 		event_del(&ibuf_relay[i].ev);
 
-	event_del(&env->statev);
+	event_del(&env->sc_statev);
 }
 
 void
@@ -280,7 +280,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 				break;
 
 			/* Forward to relay engine(s) */
-			for (n = 0; n < env->prefork_relay; n++)
+			for (n = 0; n < env->sc_prefork_relay; n++)
 				imsg_compose(&ibuf_relay[n],
 				    IMSG_HOST_STATUS, 0, 0, -1, &st,
 				    sizeof(st));
@@ -374,23 +374,23 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			/*
 			 * no relays when reconfiguring yet.
 			 */
-			env->relays = NULL;
-			env->protos = NULL;
+			env->sc_relays = NULL;
+			env->sc_protos = NULL;
 
-			env->tables = calloc(1, sizeof(*env->tables));
-			env->rdrs = calloc(1, sizeof(*env->rdrs));
-			if (env->tables == NULL || env->rdrs == NULL)
+			env->sc_tables = calloc(1, sizeof(*env->sc_tables));
+			env->sc_rdrs = calloc(1, sizeof(*env->sc_rdrs));
+			if (env->sc_tables == NULL || env->sc_rdrs == NULL)
 				fatal(NULL);
 
-			TAILQ_INIT(env->tables);
-			TAILQ_INIT(env->rdrs);
+			TAILQ_INIT(env->sc_tables);
+			TAILQ_INIT(env->sc_rdrs);
 			break;
 		case IMSG_RECONF_TABLE:
 			if ((table = calloc(1, sizeof(*table))) == NULL)
 				fatal(NULL);
 			memcpy(&table->conf, imsg.data, sizeof(table->conf));
 			TAILQ_INIT(&table->hosts);
-			TAILQ_INSERT_TAIL(env->tables, table, entry);
+			TAILQ_INSERT_TAIL(env->sc_tables, table, entry);
 			break;
 		case IMSG_RECONF_HOST:
 			if ((host = calloc(1, sizeof(*host))) == NULL)
@@ -407,7 +407,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			rdr->table = table_find(env,
 			     rdr->conf.table_id);
 			if (rdr->conf.backup_id == EMPTY_TABLE)
-				rdr->backup = &env->empty_table;
+				rdr->backup = &env->sc_empty_table;
 			else
 				rdr->backup = table_find(env,
 				    rdr->conf.backup_id);
@@ -419,7 +419,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			log_debug("pfe_dispatch_parent: rdr->backup: %s",
 			    rdr->backup->conf.name);
 			TAILQ_INIT(&rdr->virts);
-			TAILQ_INSERT_TAIL(env->rdrs, rdr, entry);
+			TAILQ_INSERT_TAIL(env->sc_rdrs, rdr, entry);
 			break;
 		case IMSG_RECONF_VIRT:
 			if ((virt = calloc(1, sizeof(*virt))) == NULL)
@@ -484,7 +484,7 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(cnl))
 				fatalx("invalid imsg header len");
 			bcopy(imsg.data, &cnl, sizeof(cnl));
-			if (cnl.proc > env->prefork_relay)
+			if (cnl.proc > env->sc_prefork_relay)
 				fatalx("pfe_dispatch_relay: "
 				    "invalid relay proc");
 			if (natlook(env, &cnl) != 0)
@@ -496,14 +496,14 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(crs))
 				fatalx("invalid imsg header len");
 			bcopy(imsg.data, &crs, sizeof(crs));
-			if (crs.proc > env->prefork_relay)
+			if (crs.proc > env->sc_prefork_relay)
 				fatalx("pfe_dispatch_relay: "
 				    "invalid relay proc");
 			if ((rlay = relay_find(env, crs.id)) == NULL)
 				fatalx("pfe_dispatch_relay: invalid relay id");
 			bcopy(&crs, &rlay->stats[crs.proc], sizeof(crs));
 			rlay->stats[crs.proc].interval =
-			    env->statinterval.tv_sec;
+			    env->sc_statinterval.tv_sec;
 			break;
 		default:
 			log_debug("pfe_dispatch_relay: unexpected imsg %d",
@@ -522,9 +522,9 @@ show(struct ctl_conn *c)
 	struct host	*host;
 	struct relay	*rlay;
 
-	if (env->rdrs == NULL)
+	if (env->sc_rdrs == NULL)
 		goto relays;
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		imsg_compose(&c->ibuf, IMSG_CTL_RDR, 0, 0, -1,
 		    rdr, sizeof(*rdr));
 		if (rdr->conf.flags & F_DISABLE)
@@ -550,10 +550,10 @@ show(struct ctl_conn *c)
 				    host, sizeof(*host));
 	}
 relays:
-	if (env->relays == NULL)
+	if (env->sc_relays == NULL)
 		goto end;
-	TAILQ_FOREACH(rlay, env->relays, entry) {
-		rlay->stats[env->prefork_relay].id = EMPTY_ID;
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
+		rlay->stats[env->sc_prefork_relay].id = EMPTY_ID;
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY, 0, 0, -1,
 		    rlay, sizeof(*rlay));
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY_STATS, 0, 0, -1,
@@ -578,7 +578,7 @@ show_sessions(struct ctl_conn *c)
 	int		 n, proc, done;
 	struct imsg	 imsg;
 
-	for (proc = 0; proc < env->prefork_relay; proc++) {
+	for (proc = 0; proc < env->sc_prefork_relay; proc++) {
 		/*
 		 * Request all the running sessions from the process
 		 */
@@ -783,7 +783,7 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 	imsg_compose(ibuf_hce, IMSG_HOST_DISABLE, 0, 0, -1,
 	    &host->conf.id, sizeof(host->conf.id));
 	/* Forward to relay engine(s) */
-	for (n = 0; n < env->prefork_relay; n++)
+	for (n = 0; n < env->sc_prefork_relay; n++)
 		imsg_compose(&ibuf_relay[n],
 		    IMSG_HOST_DISABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
@@ -817,7 +817,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0, -1,
 	    &host->conf.id, sizeof (host->conf.id));
 	/* Forward to relay engine(s) */
-	for (n = 0; n < env->prefork_relay; n++)
+	for (n = 0; n < env->sc_prefork_relay; n++)
 		imsg_compose(&ibuf_relay[n],
 		    IMSG_HOST_ENABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
@@ -838,7 +838,7 @@ pfe_sync(void)
 
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		rdr->conf.flags &= ~(F_BACKUP);
 		rdr->conf.flags &= ~(F_DOWN);
 
@@ -889,7 +889,7 @@ pfe_sync(void)
 		}
 	}
 
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		/*
 		 * clean up change flag.
 		 */
@@ -933,7 +933,7 @@ pfe_statistics(int fd, short events, void *arg)
 	if (gettimeofday(&tv_now, NULL))
 		fatal("pfe_statistics: gettimeofday");
 
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		cnt = check_table(env, rdr, rdr->table);
 		if (rdr->conf.backup_id != EMPTY_TABLE)
 			cnt += check_table(env, rdr, rdr->backup);
@@ -947,12 +947,12 @@ pfe_statistics(int fd, short events, void *arg)
 		cur->tick++;
 		cur->avg = (cur->last + cur->avg) / 2;
 		cur->last_hour += cur->last;
-		if ((cur->tick % (3600 / env->statinterval.tv_sec)) == 0) {
+		if ((cur->tick % (3600 / env->sc_statinterval.tv_sec)) == 0) {
 			cur->avg_hour = (cur->last_hour + cur->avg_hour) / 2;
 			resethour++;
 		}
 		cur->last_day += cur->last;
-		if ((cur->tick % (86400 / env->statinterval.tv_sec)) == 0) {
+		if ((cur->tick % (86400 / env->sc_statinterval.tv_sec)) == 0) {
 			cur->avg_day = (cur->last_day + cur->avg_day) / 2;
 			resethour++;
 		}
@@ -961,11 +961,11 @@ pfe_statistics(int fd, short events, void *arg)
 		if (resetday)
 			cur->last_day = 0;
 
-		rdr->stats.interval = env->statinterval.tv_sec;
+		rdr->stats.interval = env->sc_statinterval.tv_sec;
 	}
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->statev, pfe_statistics, NULL);
-	bcopy(&env->statinterval, &tv, sizeof(tv));
-	evtimer_add(&env->statev, &tv);
+	evtimer_set(&env->sc_statev, pfe_statistics, NULL);
+	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->sc_statev, &tv);
 }

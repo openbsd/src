@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.90 2007/12/20 20:15:43 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.91 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -597,36 +597,36 @@ enum {
 } relayd_process;
 
 struct relayd {
-	u_int8_t		 opts;
-	u_int32_t		 flags;
-	const char		*confpath;
-	struct pfdata		*pf;
-	int			 tablecount;
-	int			 rdrcount;
-	int			 protocount;
-	int			 relaycount;
-	struct timeval		 interval;
-	struct timeval		 timeout;
-	struct table		 empty_table;
-	struct protocol		 proto_default;
-	struct event		 ev;
-	struct tablelist	*tables;
-	struct rdrlist		*rdrs;
-	struct protolist	*protos;
-	struct relaylist	*relays;
-	u_int16_t		 prefork_relay;
-	char			 demote_group[IFNAMSIZ];
-	u_int16_t		 id;
+	u_int8_t		 sc_opts;
+	u_int32_t		 sc_flags;
+	const char		*sc_confpath;
+	struct pfdata		*sc_pf;
+	int			 sc_tablecount;
+	int			 sc_rdrcount;
+	int			 sc_protocount;
+	int			 sc_relaycount;
+	struct timeval		 sc_interval;
+	struct timeval		 sc_timeout;
+	struct table		 sc_empty_table;
+	struct protocol		 sc_proto_default;
+	struct event		 sc_ev;
+	struct tablelist	*sc_tables;
+	struct rdrlist		*sc_rdrs;
+	struct protolist	*sc_protos;
+	struct relaylist	*sc_relays;
+	u_int16_t		 sc_prefork_relay;
+	char			 sc_demote_group[IFNAMSIZ];
+	u_int16_t		 sc_id;
 
-	struct event		 statev;
-	struct timeval		 statinterval;
+	struct event		 sc_statev;
+	struct timeval		 sc_statinterval;
 
-	int			 has_icmp;
-	int			 has_icmp6;
-	struct ctl_icmp_event	 icmp_send;
-	struct ctl_icmp_event	 icmp_recv;
-	struct ctl_icmp_event	 icmp6_send;
-	struct ctl_icmp_event	 icmp6_recv;
+	int			 sc_has_icmp;
+	int			 sc_has_icmp6;
+	struct ctl_icmp_event	 sc_icmp_send;
+	struct ctl_icmp_event	 sc_icmp_recv;
+	struct ctl_icmp_event	 sc_icmp6_send;
+	struct ctl_icmp_event	 sc_icmp6_recv;
 };
 
 #define RELAYD_OPT_VERBOSE		0x01

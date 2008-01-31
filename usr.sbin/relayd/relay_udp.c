@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.4 2008/01/29 16:36:04 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.5 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -433,7 +433,7 @@ relay_dns_request(struct session *con)
 	}
 
 	event_again(&con->ev, con->out.s, EV_TIMEOUT,
-	    relay_udp_timeout, &con->tv_start, &env->timeout, con);
+	    relay_udp_timeout, &con->tv_start, &env->sc_timeout, con);
 
 	return (0);
 }

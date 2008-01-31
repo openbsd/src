@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2008/01/29 10:30:10 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -272,14 +272,14 @@ sendbuf		: NOTHING		{
 		;
 
 main		: INTERVAL NUMBER	{
-			if ((conf->interval.tv_sec = $2) < 0) {
+			if ((conf->sc_interval.tv_sec = $2) < 0) {
 				yyerror("invalid interval: %d", $2);
 				YYERROR;
 			}
 		}
-		| LOG loglevel		{ conf->opts |= $2; }
+		| LOG loglevel		{ conf->sc_opts |= $2; }
 		| TIMEOUT timeout	{
-			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
+			bcopy(&$2, &conf->sc_timeout, sizeof(struct timeval));
 		}
 		| PREFORK NUMBER	{
 			if ($2 <= 0 || $2 > RELAY_MAXPROC) {
@@ -287,21 +287,21 @@ main		: INTERVAL NUMBER	{
 				    "relays: %d", $2);
 				YYERROR;
 			}
-			conf->prefork_relay = $2;
+			conf->sc_prefork_relay = $2;
 		}
 		| DEMOTE STRING		{
-			conf->flags |= F_DEMOTE;
-			if (strlcpy(conf->demote_group, $2,
-			    sizeof(conf->demote_group))
-			    >= sizeof(conf->demote_group)) {
+			conf->sc_flags |= F_DEMOTE;
+			if (strlcpy(conf->sc_demote_group, $2,
+			    sizeof(conf->sc_demote_group))
+			    >= sizeof(conf->sc_demote_group)) {
 				yyerror("yyparse: demote group name too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			if (carp_demote_init(conf->demote_group, 1) == -1) {
+			if (carp_demote_init(conf->sc_demote_group, 1) == -1) {
 				yyerror("yyparse: error initializing group %s",
-				    conf->demote_group);
+				    conf->sc_demote_group);
 				YYERROR;
 			}
 		}
@@ -314,7 +314,7 @@ loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 rdr		: REDIRECT STRING	{
 			struct rdr *srv;
 
-			TAILQ_FOREACH(srv, conf->rdrs, entry)
+			TAILQ_FOREACH(srv, conf->sc_rdrs, entry)
 				if (!strcmp(srv->conf.name, $2))
 					break;
 			if (srv != NULL) {
@@ -351,11 +351,11 @@ rdr		: REDIRECT STRING	{
 				    rdr->conf.name);
 				YYERROR;
 			}
-			conf->rdrcount++;
+			conf->sc_rdrcount++;
 			if (rdr->backup == NULL) {
 				rdr->conf.backup_id =
-				    conf->empty_table.conf.id;
-				rdr->backup = &conf->empty_table;
+				    conf->sc_empty_table.conf.id;
+				rdr->backup = &conf->sc_empty_table;
 			} else if (rdr->backup->conf.port !=
 			    rdr->table->conf.port) {
 				yyerror("redirection %s uses two different "
@@ -365,7 +365,7 @@ rdr		: REDIRECT STRING	{
 			}
 			if (!(rdr->conf.flags & F_DISABLE))
 				rdr->conf.flags |= F_ADD;
-			TAILQ_INSERT_HEAD(conf->rdrs, rdr, entry);
+			TAILQ_INSERT_HEAD(conf->sc_rdrs, rdr, entry);
 			tableport = 0;
 			rdr = NULL;
 		}
@@ -378,12 +378,12 @@ rdropts_l	: rdropts_l rdroptsl nl
 rdroptsl	: FORWARD TO tablespec		{
 			if ($3->conf.check == CHECK_NOCHECK) {
 				yyerror("table %s has no check", $3->conf.name);
-				purge_table(conf->tables, $3);
+				purge_table(conf->sc_tables, $3);
 				YYERROR;
 			}
 			if (rdr->backup) {
 				yyerror("only one backup table is allowed");
-				purge_table(conf->tables, $3);
+				purge_table(conf->sc_tables, $3);
 				YYERROR;
 			}
 			if (rdr->table) {
@@ -438,7 +438,7 @@ table		: '<' STRING '>'	{
 tabledef	: TABLE table		{
 			struct table *tb;
 
-			TAILQ_FOREACH(tb, conf->tables, entry)
+			TAILQ_FOREACH(tb, conf->sc_tables, entry)
 				if (!strcmp(tb->conf.name, $2))
 					break;
 			if (tb != NULL) {
@@ -454,7 +454,7 @@ tabledef	: TABLE table		{
 			free($2);
 
 			tb->conf.id = last_table_id++;
-			bcopy(&conf->timeout, &tb->conf.timeout,
+			bcopy(&conf->sc_timeout, &tb->conf.timeout,
 			    sizeof(struct timeval));
 			if (last_table_id == INT_MAX) {
 				yyerror("too many tables defined");
@@ -468,8 +468,8 @@ tabledef	: TABLE table		{
 				    table->conf.name);
 				YYERROR;
 			}
-			conf->tablecount++;
-			TAILQ_INSERT_HEAD(conf->tables, table, entry);
+			conf->sc_tablecount++;
+			TAILQ_INSERT_HEAD(conf->sc_tables, table, entry);
 		}
 		;
 
@@ -538,13 +538,13 @@ tableopts	: CHECK tablecheck
 			}
 		}
 		| INTERVAL NUMBER	{
-			if ($2 < conf->interval.tv_sec ||
-			    $2 % conf->interval.tv_sec) {
+			if ($2 < conf->sc_interval.tv_sec ||
+			    $2 % conf->sc_interval.tv_sec) {
 				yyerror("table interval must be "
 				    "divisible by global interval");
 				YYERROR;
 			}
-			table->conf.skip_cnt = ($2 / conf->interval.tv_sec) - 1;
+			table->conf.skip_cnt = ($2 / conf->sc_interval.tv_sec) - 1;
 		}
 		| MODE dstmode		{
 			switch ($2) {
@@ -568,12 +568,12 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| TCP			{ table->conf.check = CHECK_TCP; }
 		| SSL			{
 			table->conf.check = CHECK_TCP;
-			conf->flags |= F_SSL;
+			conf->sc_flags |= F_SSL;
 			table->conf.flags |= F_SSL;
 		}
 		| http_type STRING hostname CODE NUMBER {
 			if ($1) {
-				conf->flags |= F_SSL;
+				conf->sc_flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			table->conf.check = CHECK_HTTP_CODE;
@@ -594,7 +594,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		}
 		| http_type STRING hostname digest {
 			if ($1) {
-				conf->flags |= F_SSL;
+				conf->sc_flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			table->conf.check = CHECK_HTTP_DIGEST;
@@ -614,7 +614,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| SEND sendbuf EXPECT STRING optssl {
 			table->conf.check = CHECK_SEND_EXPECT;
 			if ($5) {
-				conf->flags |= F_SSL;
+				conf->sc_flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			if (strlcpy(table->conf.exbuf, $4,
@@ -662,9 +662,9 @@ proto		: proto_type PROTO STRING	{
 			struct protocol *p;
 
 			if (strcmp($3, "default") == 0) {
-				p = &conf->proto_default;
+				p = &conf->sc_proto_default;
 			} else {
-				TAILQ_FOREACH(p, conf->protos, entry)
+				TAILQ_FOREACH(p, conf->sc_protos, entry)
 					if (!strcmp(p->name, $3))
 						break;
 			}
@@ -701,14 +701,14 @@ proto		: proto_type PROTO STRING	{
 			RB_INIT(&p->response_tree);
 			proto = p;
 		} protopts_n			{
-			conf->protocount++;
+			conf->sc_protocount++;
 
 			if ((proto->sslflags & SSLFLAG_VERSION) == 0) {
 				yyerror("invalid SSL protocol");
 				YYERROR;
 			}
 
-			TAILQ_INSERT_HEAD(conf->protos, proto, entry);
+			TAILQ_INSERT_HEAD(conf->sc_protos, proto, entry);
 		}
 		;
 
@@ -1096,7 +1096,7 @@ sslcache	: NUMBER			{
 relay		: RELAY STRING	{
 			struct relay *r;
 
-			TAILQ_FOREACH(r, conf->relays, entry)
+			TAILQ_FOREACH(r, conf->sc_relays, entry)
 				if (!strcmp(r->conf.name, $2))
 					break;
 			if (r != NULL) {
@@ -1140,17 +1140,17 @@ relay		: RELAY STRING	{
 				YYERROR;
 			}
 			if (rlay->conf.proto == EMPTY_ID) {
-				rlay->proto = &conf->proto_default;
-				rlay->conf.proto = conf->proto_default.id;
+				rlay->proto = &conf->sc_proto_default;
+				rlay->conf.proto = conf->sc_proto_default.id;
 			}
 			if (relay_load_certfiles(rlay) == -1) {
 				yyerror("cannot load certificates for relay %s",
 				    rlay->conf.name);
 				YYERROR;
 			}
-			conf->relaycount++;
+			conf->sc_relaycount++;
 			SPLAY_INIT(&rlay->sessions);
-			TAILQ_INSERT_HEAD(conf->relays, rlay, entry);
+			TAILQ_INSERT_HEAD(conf->sc_relays, rlay, entry);
 			tableport = 0;
 			rlay = NULL;
 		}
@@ -1182,7 +1182,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			rlay->conf.port = h->port;
 			if ($5) {
 				rlay->conf.flags |= F_SSL;
-				conf->flags |= F_SSL;
+				conf->sc_flags |= F_SSL;
 			}
 			tableport = h->port;
 		}
@@ -1196,7 +1196,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 		| PROTO STRING			{
 			struct protocol *p;
 
-			TAILQ_FOREACH(p, conf->protos, entry)
+			TAILQ_FOREACH(p, conf->sc_protos, entry)
 				if (!strcmp(p->name, $2))
 					break;
 			if (p == NULL) {
@@ -1216,7 +1216,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 forwardspec	: tablespec	{
 			if (rlay->dsttable) {
 				yyerror("table already specified");
-				purge_table(conf->tables, $1);
+				purge_table(conf->sc_tables, $1);
 				YYERROR;
 			}
 
@@ -1762,10 +1762,10 @@ parse_config(const char *filename, int opts)
 	struct host	*h;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
-	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
-	    (conf->relays = calloc(1, sizeof(*conf->relays))) == NULL ||
-	    (conf->protos = calloc(1, sizeof(*conf->protos))) == NULL ||
-	    (conf->rdrs = calloc(1, sizeof(*conf->rdrs))) == NULL) {
+	    (conf->sc_tables = calloc(1, sizeof(*conf->sc_tables))) == NULL ||
+	    (conf->sc_relays = calloc(1, sizeof(*conf->sc_relays))) == NULL ||
+	    (conf->sc_protos = calloc(1, sizeof(*conf->sc_protos))) == NULL ||
+	    (conf->sc_rdrs = calloc(1, sizeof(*conf->sc_rdrs))) == NULL) {
 		log_warn("cannot allocate memory");
 		return (NULL);
 	}
@@ -1779,34 +1779,34 @@ parse_config(const char *filename, int opts)
 	rlay = NULL;
 	proto = NULL;
 
-	TAILQ_INIT(conf->rdrs);
-	TAILQ_INIT(conf->tables);
-	TAILQ_INIT(conf->protos);
-	TAILQ_INIT(conf->relays);
+	TAILQ_INIT(conf->sc_rdrs);
+	TAILQ_INIT(conf->sc_tables);
+	TAILQ_INIT(conf->sc_protos);
+	TAILQ_INIT(conf->sc_relays);
 
-	memset(&conf->empty_table, 0, sizeof(conf->empty_table));
-	conf->empty_table.conf.id = EMPTY_TABLE;
-	conf->empty_table.conf.flags |= F_DISABLE;
-	(void)strlcpy(conf->empty_table.conf.name, "empty",
-	    sizeof(conf->empty_table.conf.name));
+	memset(&conf->sc_empty_table, 0, sizeof(conf->sc_empty_table));
+	conf->sc_empty_table.conf.id = EMPTY_TABLE;
+	conf->sc_empty_table.conf.flags |= F_DISABLE;
+	(void)strlcpy(conf->sc_empty_table.conf.name, "empty",
+	    sizeof(conf->sc_empty_table.conf.name));
 
-	bzero(&conf->proto_default, sizeof(conf->proto_default));
-	conf->proto_default.flags = F_USED;
-	conf->proto_default.cache = RELAY_CACHESIZE;
-	conf->proto_default.type = RELAY_PROTO_TCP;
-	(void)strlcpy(conf->proto_default.name, "default",
-	    sizeof(conf->proto_default.name));
-	RB_INIT(&conf->proto_default.request_tree);
-	RB_INIT(&conf->proto_default.response_tree);
+	bzero(&conf->sc_proto_default, sizeof(conf->sc_proto_default));
+	conf->sc_proto_default.flags = F_USED;
+	conf->sc_proto_default.cache = RELAY_CACHESIZE;
+	conf->sc_proto_default.type = RELAY_PROTO_TCP;
+	(void)strlcpy(conf->sc_proto_default.name, "default",
+	    sizeof(conf->sc_proto_default.name));
+	RB_INIT(&conf->sc_proto_default.request_tree);
+	RB_INIT(&conf->sc_proto_default.response_tree);
 
-	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
-	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
-	conf->interval.tv_sec = CHECK_INTERVAL;
-	conf->interval.tv_usec = 0;
-	conf->prefork_relay = RELAY_NUMPROC;
-	conf->statinterval.tv_sec = RELAY_STATINTERVAL;
-	conf->opts = opts;
-	conf->confpath = filename;
+	conf->sc_timeout.tv_sec = CHECK_TIMEOUT / 1000;
+	conf->sc_timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
+	conf->sc_interval.tv_sec = CHECK_INTERVAL;
+	conf->sc_interval.tv_usec = 0;
+	conf->sc_prefork_relay = RELAY_NUMPROC;
+	conf->sc_statinterval.tv_sec = RELAY_STATINTERVAL;
+	conf->sc_opts = opts;
+	conf->sc_confpath = filename;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		free(conf);
@@ -1823,7 +1823,7 @@ parse_config(const char *filename, int opts)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->opts & RELAYD_OPT_VERBOSE) && !sym->used)
+		if ((conf->sc_opts & RELAYD_OPT_VERBOSE) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {
@@ -1834,25 +1834,25 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(conf->rdrs) && TAILQ_EMPTY(conf->relays)) {
+	if (TAILQ_EMPTY(conf->sc_rdrs) && TAILQ_EMPTY(conf->sc_relays)) {
 		log_warnx("no redirections, nothing to do");
 		errors++;
 	}
 
-	if (TAILQ_EMPTY(conf->relays))
-		conf->prefork_relay = 0;
+	if (TAILQ_EMPTY(conf->sc_relays))
+		conf->sc_prefork_relay = 0;
 
-	if (timercmp(&conf->timeout, &conf->interval, >=)) {
+	if (timercmp(&conf->sc_timeout, &conf->sc_interval, >=)) {
 		log_warnx("global timeout exceeds interval");
 		errors++;
 	}
 
 	/* Verify that every table is used */
-	for (table = TAILQ_FIRST(conf->tables); table != NULL;
+	for (table = TAILQ_FIRST(conf->sc_tables); table != NULL;
 	     table = nexttb) {
 		nexttb = TAILQ_NEXT(table, entry);
 		if (table->conf.port == 0) {
-			TAILQ_REMOVE(conf->tables, table, entry);
+			TAILQ_REMOVE(conf->sc_tables, table, entry);
 			while ((h = TAILQ_FIRST(&table->hosts)) != NULL) {
 				TAILQ_REMOVE(&table->hosts, h, entry);
 				free(h);
@@ -1866,7 +1866,7 @@ parse_config(const char *filename, int opts)
 			log_warnx("unused table: %s", table->conf.name);
 			errors++;
 		}
-		if (timercmp(&table->conf.timeout, &conf->interval, >=)) {
+		if (timercmp(&table->conf.timeout, &conf->sc_interval, >=)) {
 			log_warnx("table timeout exceeds interval: %s",
 			    table->conf.name);
 			errors++;
@@ -1874,7 +1874,7 @@ parse_config(const char *filename, int opts)
 	}
 
 	/* Verify that every non-default protocol is used */
-	TAILQ_FOREACH(proto, conf->protos, entry) {
+	TAILQ_FOREACH(proto, conf->sc_protos, entry) {
 		if (!(proto->flags & F_USED)) {
 			log_warnx("unused protocol: %s", proto->name);
 		}
@@ -2153,8 +2153,8 @@ table_inherit(struct table *tb)
 		TAILQ_INSERT_HEAD(&tb->hosts, h, entry);
 	}
 
-	conf->tablecount++;
-	TAILQ_INSERT_HEAD(conf->tables, tb, entry);
+	conf->sc_tablecount++;
+	TAILQ_INSERT_HEAD(conf->sc_tables, tb, entry);
 
 	return (tb);
 }

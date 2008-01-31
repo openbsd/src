@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.38 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.39 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -147,7 +147,7 @@ hce(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2hce[0]);
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2pfe[1]);
-	for (i = 0; i < env->prefork_relay; i++) {
+	for (i = 0; i < env->sc_prefork_relay; i++) {
 		close(pipe_parent2relay[i][0]);
 		close(pipe_parent2relay[i][1]);
 		close(pipe_pfe2relay[i][0]);
@@ -167,15 +167,15 @@ hce_setup_events(void)
 	struct timeval	 tv;
 	struct table	*table;
 
-	if (!TAILQ_EMPTY(env->tables)) {
-		evtimer_set(&env->ev, hce_launch_checks, env);
+	if (!TAILQ_EMPTY(env->sc_tables)) {
+		evtimer_set(&env->sc_ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
-		evtimer_add(&env->ev, &tv);
+		evtimer_add(&env->sc_ev, &tv);
 	}
 
-	if (env->flags & F_SSL) {
+	if (env->sc_flags & F_SSL) {
 		ssl_init(env);
-		TAILQ_FOREACH(table, env->tables, entry) {
+		TAILQ_FOREACH(table, env->sc_tables, entry) {
 			if (!(table->conf.flags & F_SSL))
 				continue;
 			table->ssl_ctx = ssl_ctx_create(env);
@@ -189,20 +189,20 @@ hce_disable_events(void)
 	struct table	*table;
 	struct host	*host;
 
-	evtimer_del(&env->ev);
-	TAILQ_FOREACH(table, env->tables, entry) {
+	evtimer_del(&env->sc_ev);
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			event_del(&host->cte.ev);
 			close(host->cte.s);
 		}
 	}
-	if (env->has_icmp) {
-		event_del(&env->icmp_send.ev);
-		event_del(&env->icmp_recv.ev);
+	if (env->sc_has_icmp) {
+		event_del(&env->sc_icmp_send.ev);
+		event_del(&env->sc_icmp_recv.ev);
 	}
-	if (env->has_icmp6) {
-		event_del(&env->icmp6_send.ev);
-		event_del(&env->icmp6_recv.ev);
+	if (env->sc_has_icmp6) {
+		event_del(&env->sc_icmp6_send.ev);
+		event_del(&env->sc_icmp6_recv.ev);
 	}
 }
 
@@ -217,7 +217,7 @@ hce_launch_checks(int fd, short event, void *arg)
 	 * notify pfe checks are done and schedule next check
 	 */
 	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, -1, NULL, 0);
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 			event_del(&host->cte.ev);
@@ -227,7 +227,7 @@ hce_launch_checks(int fd, short event, void *arg)
 	if (gettimeofday(&tv, NULL))
 		fatal("hce_launch_checks: gettimeofday");
 
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		if (table->conf.flags & F_DISABLE)
 			continue;
 		if (table->conf.skip_cnt) {
@@ -264,8 +264,8 @@ hce_launch_checks(int fd, short event, void *arg)
 	}
 	check_icmp(env, &tv);
 
-	bcopy(&env->interval, &tv, sizeof(tv));
-	evtimer_add(&env->ev, &tv);
+	bcopy(&env->sc_interval, &tv, sizeof(tv));
+	evtimer_add(&env->sc_ev, &tv);
 }
 
 void
@@ -314,7 +314,7 @@ hce_notify_done(struct host *host, const char *msg)
 	if ((table = table_find(env, host->conf.tableid)) == NULL)
 		fatalx("hce_notify_done: invalid table id");
 
-	if (env->opts & logopt) {
+	if (env->sc_opts & logopt) {
 		log_info("host %s, check %s%s (%lums), state %s -> %s, "
 		    "availability %s",
 		    host->conf.name, table_check(table->conf.check),
@@ -403,8 +403,8 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 				host->up = HOST_UNKNOWN;
 			break;
 		case IMSG_CTL_POLL:
-			evtimer_del(&env->ev);
-			TAILQ_FOREACH(table, env->tables, entry)
+			evtimer_del(&env->sc_ev);
+			TAILQ_FOREACH(table, env->sc_tables, entry)
 				table->skipped = 0;
 			hce_launch_checks(-1, EV_TIMEOUT, env);
 			break;
@@ -475,18 +475,18 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			purge_config(env, PURGE_TABLES);
 			merge_config(env, (struct relayd *)imsg.data);
 
-			env->tables = calloc(1, sizeof(*env->tables));
-			if (env->tables == NULL)
+			env->sc_tables = calloc(1, sizeof(*env->sc_tables));
+			if (env->sc_tables == NULL)
 				fatal(NULL);
 
-			TAILQ_INIT(env->tables);
+			TAILQ_INIT(env->sc_tables);
 			break;
 		case IMSG_RECONF_TABLE:
 			if ((table = calloc(1, sizeof(*table))) == NULL)
 				fatal(NULL);
 			memcpy(&table->conf, imsg.data, sizeof(table->conf));
 			TAILQ_INIT(&table->hosts);
-			TAILQ_INSERT_TAIL(env->tables, table, entry);
+			TAILQ_INSERT_TAIL(env->sc_tables, table, entry);
 			break;
 		case IMSG_RECONF_SENDBUF:
 			len = imsg.hdr.len - IMSG_HEADER_SIZE;

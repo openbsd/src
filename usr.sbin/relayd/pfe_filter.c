@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.22 2007/12/20 20:15:43 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.23 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,11 +54,11 @@ init_filter(struct relayd *env)
 {
 	struct pf_status	status;
 
-	if ((env->pf = calloc(1, sizeof(*(env->pf)))) == NULL)
+	if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
 		fatal("calloc");
-	if ((env->pf->dev = open(PF_SOCKET, O_RDWR)) == -1)
+	if ((env->sc_pf->dev = open(PF_SOCKET, O_RDWR)) == -1)
 		fatal("init_filter: cannot open pf socket");
-	if (ioctl(env->pf->dev, DIOCGETSTATUS, &status) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCGETSTATUS, &status) == -1)
 		fatal("init_filter: DIOCGETSTATUS");
 	if (!status.running)
 		fatalx("init_filter: pf is disabled");
@@ -73,11 +73,11 @@ init_tables(struct relayd *env)
 	struct pfr_table	*tables;
 	struct pfioc_table	 io;
 
-	if ((tables = calloc(env->rdrcount, sizeof(*tables))) == NULL)
+	if ((tables = calloc(env->sc_rdrcount, sizeof(*tables))) == NULL)
 		fatal("calloc");
 	i = 0;
 
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		if (strlcpy(tables[i].pfrt_anchor, RELAYD_ANCHOR "/",
 		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
@@ -91,27 +91,27 @@ init_tables(struct relayd *env)
 		tables[i].pfrt_flags |= PFR_TFLAG_PERSIST;
 		i++;
 	}
-	if (i != env->rdrcount)
+	if (i != env->sc_rdrcount)
 		fatalx("init_tables: table count modified");
 
 	memset(&io, 0, sizeof(io));
-	io.pfrio_size = env->rdrcount;
+	io.pfrio_size = env->sc_rdrcount;
 	io.pfrio_esize = sizeof(*tables);
 	io.pfrio_buffer = tables;
 
-	if (ioctl(env->pf->dev, DIOCRADDTABLES, &io) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCRADDTABLES, &io) == -1)
 		fatal("init_tables: cannot create tables");
 	log_debug("init_tables: created %d tables", io.pfrio_nadd);
 
 	free(tables);
 
-	if (io.pfrio_nadd == env->rdrcount)
+	if (io.pfrio_nadd == env->sc_rdrcount)
 		return;
 
 	/*
 	 * clear all tables, since some already existed
 	 */
-	TAILQ_FOREACH(rdr, env->rdrs, entry)
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry)
 		flush_table(env, rdr);
 
 	return;
@@ -126,14 +126,14 @@ kill_tables(struct relayd *env) {
 	struct rdr		*rdr;
 
 	memset(&io, 0, sizeof(io));
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (strlcat(io.pfrio_table.pfrt_anchor, rdr->conf.name,
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
-		if (ioctl(env->pf->dev, DIOCRCLRTABLES, &io) == -1)
+		if (ioctl(env->sc_pf->dev, DIOCRCLRTABLES, &io) == -1)
 			fatal("kill_tables: ioctl faile: ioctl failed");
 	}
 	log_debug("kill_tables: deleted %d tables", io.pfrio_ndel);
@@ -209,7 +209,7 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 	if (i != table->up)
 		fatalx("sync_table: desynchronized");
 
-	if (ioctl(env->pf->dev, DIOCRSETADDRS, &io) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCRSETADDRS, &io) == -1)
 		fatal("sync_table: cannot set address list");
 
 	free(addlist);
@@ -239,9 +239,9 @@ flush_table(struct relayd *env, struct rdr *rdr)
 	    sizeof(io.pfrio_table.pfrt_name)) >=
 	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
-	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table addresses");
-	if (ioctl(env->pf->dev, DIOCRCLRTSTATS, &io) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCRCLRTSTATS, &io) == -1)
 		fatal("flush_table: cannot flush table stats");
 	log_debug("flush_table: flushed table %s", rdr->conf.name);
 	return;
@@ -253,15 +253,15 @@ flush_table(struct relayd *env, struct rdr *rdr)
 int
 transaction_init(struct relayd *env, const char *anchor)
 {
-	env->pf->pft.size = 1;
-	env->pf->pft.esize = sizeof env->pf->pfte;
-	env->pf->pft.array = &env->pf->pfte;
+	env->sc_pf->pft.size = 1;
+	env->sc_pf->pft.esize = sizeof env->sc_pf->pfte;
+	env->sc_pf->pft.array = &env->sc_pf->pfte;
 
-	memset(&env->pf->pfte, 0, sizeof env->pf->pfte);
-	(void)strlcpy(env->pf->pfte.anchor, anchor, PF_ANCHOR_NAME_SIZE);
-	env->pf->pfte.rs_num = PF_RULESET_RDR;
+	memset(&env->sc_pf->pfte, 0, sizeof env->sc_pf->pfte);
+	(void)strlcpy(env->sc_pf->pfte.anchor, anchor, PF_ANCHOR_NAME_SIZE);
+	env->sc_pf->pfte.rs_num = PF_RULESET_RDR;
 
-	if (ioctl(env->pf->dev, DIOCXBEGIN, &env->pf->pft) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCXBEGIN, &env->sc_pf->pft) == -1)
 		return (-1);
 	return (0);
 }
@@ -269,7 +269,7 @@ transaction_init(struct relayd *env, const char *anchor)
 int
 transaction_commit(struct relayd *env)
 {
-	if (ioctl(env->pf->dev, DIOCXCOMMIT, &env->pf->pft) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCXCOMMIT, &env->sc_pf->pft) == -1)
 		return (-1);
 	return (0);
 }
@@ -310,8 +310,8 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		memset(&pio, 0, sizeof(pio));
 		(void)strlcpy(rio.anchor, anchor, sizeof(rio.anchor));
 
-		rio.ticket = env->pf->pfte.ticket;
-		if (ioctl(env->pf->dev, DIOCBEGINADDRS, &pio) == -1)
+		rio.ticket = env->sc_pf->pfte.ticket;
+		if (ioctl(env->sc_pf->dev, DIOCBEGINADDRS, &pio) == -1)
 			fatal("sync_ruleset: cannot initialise address pool");
 
 		rio.pool_ticket = pio.ticket;
@@ -351,7 +351,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		    sizeof(pio.addr.addr.v.tblname)) >=
 		    sizeof(pio.addr.addr.v.tblname))
 			fatal("sync_ruleset: table name too long");
-		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
+		if (ioctl(env->sc_pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
 		rio.rule.rpool.proxy_port[0] = ntohs(rdr->table->conf.port);
@@ -360,7 +360,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		if (rdr->conf.flags & F_STICKY)
 			rio.rule.rpool.opts |= PF_POOL_STICKYADDR;
 
-		if (ioctl(env->pf->dev, DIOCADDRULE, &rio) == -1)
+		if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");
 		log_debug("sync_ruleset: rule added");
 	}
@@ -379,7 +379,7 @@ flush_rulesets(struct relayd *env)
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
 	kill_tables(env);
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		if (strlcpy(anchor, RELAYD_ANCHOR "/", sizeof(anchor)) >=
 		    PF_ANCHOR_NAME_SIZE)
 			goto toolong;
@@ -438,10 +438,10 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	pnl.direction = PF_IN;
 	cnl->in = 1;
 
-	if (ioctl(env->pf->dev, DIOCNATLOOK, &pnl) == -1) {
+	if (ioctl(env->sc_pf->dev, DIOCNATLOOK, &pnl) == -1) {
 		pnl.direction = PF_OUT;
 		cnl->in = 0;
-		if (ioctl(env->pf->dev, DIOCNATLOOK, &pnl) == -1) {
+		if (ioctl(env->sc_pf->dev, DIOCNATLOOK, &pnl) == -1) {
 			log_debug("natlook: error");
 			return (-1);
 		}
@@ -503,7 +503,7 @@ check_table(struct relayd *env, struct rdr *rdr, struct table *table)
 	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
 
-	if (ioctl(env->pf->dev, DIOCRGETTSTATS, &io) == -1)
+	if (ioctl(env->sc_pf->dev, DIOCRGETTSTATS, &io) == -1)
 		fatal("sync_table: cannot get table stats");
 
 	return (tstats.pfrts_match);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.66 2008/01/29 17:36:08 thib Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.67 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -166,12 +166,12 @@ main(int argc, char *argv[])
 		exit(1);
 	relayd_env = env;
 
-	if (env->opts & RELAYD_OPT_NOACTION) {
+	if (env->sc_opts & RELAYD_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
 	if (debug)
-		env->opts |= RELAYD_OPT_LOGUPDATE;
+		env->sc_opts |= RELAYD_OPT_LOGUPDATE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 	    pipe_pfe2hce) == -1)
 		fatal("socketpair");
-	for (c = 0; c < env->prefork_relay; c++) {
+	for (c = 0; c < env->sc_prefork_relay; c++) {
 		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 		    pipe_parent2relay[c]) == -1)
 			fatal("socketpair");
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 	hce_pid = hce(env, pipe_parent2pfe, pipe_parent2hce,
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	if (env->prefork_relay > 0)
+	if (env->sc_prefork_relay > 0)
 		relay_pid = relay(env, pipe_parent2pfe, pipe_parent2hce,
 		    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 	close(pipe_parent2hce[1]);
 	close(pipe_pfe2hce[0]);
 	close(pipe_pfe2hce[1]);
-	for (c = 0; c < env->prefork_relay; c++) {
+	for (c = 0; c < env->sc_prefork_relay; c++) {
 		close(pipe_pfe2relay[c][0]);
 		close(pipe_pfe2relay[c][1]);
 		close(pipe_parent2relay[c][0]);
@@ -253,15 +253,15 @@ main(int argc, char *argv[])
 	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 
-	if (env->prefork_relay > 0) {
-		if ((ibuf_relay = calloc(env->prefork_relay,
+	if (env->sc_prefork_relay > 0) {
+		if ((ibuf_relay = calloc(env->sc_prefork_relay,
 		    sizeof(struct imsgbuf))) == NULL)
 			fatal(NULL);
 	}
 
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);
 	imsg_init(ibuf_hce, pipe_parent2hce[0], main_dispatch_hce);
-	for (c = 0; c < env->prefork_relay; c++) {
+	for (c = 0; c < env->sc_prefork_relay; c++) {
 		ibuf = &ibuf_relay[c];
 		imsg_init(ibuf, pipe_parent2relay[c][1], main_dispatch_relay);
 		ibuf->events = EV_READ;
@@ -280,8 +280,8 @@ main(int argc, char *argv[])
 	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
-	if (env->flags & F_DEMOTE)
-		carp_demote_reset(env->demote_group, 0);
+	if (env->sc_flags & F_DEMOTE)
+		carp_demote_reset(env->sc_demote_group, 0);
 
 	event_dispatch();
 
@@ -308,8 +308,8 @@ main_shutdown(struct relayd *env)
 
 	control_cleanup();
 	carp_demote_shutdown();
-	if (env->flags & F_DEMOTE)
-		carp_demote_reset(env->demote_group, 128);
+	if (env->sc_flags & F_DEMOTE)
+		carp_demote_reset(env->sc_demote_group, 128);
 	log_info("terminating");
 	exit(0);
 }
@@ -343,7 +343,7 @@ send_all(struct relayd *env, enum imsg_type type, void *buf, u_int16_t len)
 		return (-1);
 	if (imsg_compose(ibuf_hce, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
-	for (i = 0; i < env->prefork_relay; i++) {
+	for (i = 0; i < env->sc_prefork_relay; i++) {
 		if (imsg_compose(&ibuf_relay[i], type, 0, 0, -1, buf, len)
 		    == -1)
 			return (-1);
@@ -354,28 +354,28 @@ send_all(struct relayd *env, enum imsg_type type, void *buf, u_int16_t len)
 void
 merge_config(struct relayd *env, struct relayd *new_env)
 {
-	env->opts = new_env->opts;
-	env->flags = new_env->flags;
-	env->confpath = new_env->confpath;
-	env->tablecount = new_env->tablecount;
-	env->rdrcount = new_env->rdrcount;
-	env->protocount = new_env->protocount;
-	env->relaycount = new_env->relaycount;
+	env->sc_opts = new_env->sc_opts;
+	env->sc_flags = new_env->sc_flags;
+	env->sc_confpath = new_env->sc_confpath;
+	env->sc_tablecount = new_env->sc_tablecount;
+	env->sc_rdrcount = new_env->sc_rdrcount;
+	env->sc_protocount = new_env->sc_protocount;
+	env->sc_relaycount = new_env->sc_relaycount;
 
-	memcpy(&env->interval, &new_env->interval, sizeof(env->interval));
-	memcpy(&env->timeout, &new_env->timeout, sizeof(env->timeout));
-	memcpy(&env->empty_table, &new_env->empty_table,
-	    sizeof(env->empty_table));
-	memcpy(&env->proto_default, &new_env->proto_default,
-	    sizeof(env->proto_default));
-	env->prefork_relay = new_env->prefork_relay;
-	(void)strlcpy(env->demote_group, new_env->demote_group,
-	    sizeof(env->demote_group));
+	memcpy(&env->sc_interval, &new_env->sc_interval, sizeof(env->sc_interval));
+	memcpy(&env->sc_timeout, &new_env->sc_timeout, sizeof(env->sc_timeout));
+	memcpy(&env->sc_empty_table, &new_env->sc_empty_table,
+	    sizeof(env->sc_empty_table));
+	memcpy(&env->sc_proto_default, &new_env->sc_proto_default,
+	    sizeof(env->sc_proto_default));
+	env->sc_prefork_relay = new_env->sc_prefork_relay;
+	(void)strlcpy(env->sc_demote_group, new_env->sc_demote_group,
+	    sizeof(env->sc_demote_group));
 
-	env->tables = new_env->tables;
-	env->rdrs = new_env->rdrs;
-	env->relays = new_env->relays;
-	env->protos = new_env->protos;
+	env->sc_tables = new_env->sc_tables;
+	env->sc_rdrs = new_env->sc_rdrs;
+	env->sc_relays = new_env->sc_relays;
+	env->sc_protos = new_env->sc_protos;
 }
 
 
@@ -390,7 +390,7 @@ reconfigure(void)
 	struct host             *host;
 
 	log_info("reloading configuration");
-	if ((new_env = parse_config(env->confpath, env->opts)) == NULL) {
+	if ((new_env = parse_config(env->sc_confpath, env->sc_opts)) == NULL) {
 		log_warnx("configuration reloading FAILED");
 		return;
 	}
@@ -404,7 +404,7 @@ reconfigure(void)
 	 * first reconfigure pfe
 	 */
 	imsg_compose(ibuf_pfe, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		imsg_compose(ibuf_pfe, IMSG_RECONF_TABLE, 0, 0, -1,
 		    &table->conf, sizeof(table->conf));
 		TAILQ_FOREACH(host, &table->hosts, entry) {
@@ -412,7 +412,7 @@ reconfigure(void)
 			    &host->conf, sizeof(host->conf));
 		}
 	}
-	TAILQ_FOREACH(rdr, env->rdrs, entry) {
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		imsg_compose(ibuf_pfe, IMSG_RECONF_RDR, 0, 0, -1,
 		    &rdr->conf, sizeof(rdr->conf));
 		TAILQ_FOREACH(virt, &rdr->virts, entry)
@@ -425,7 +425,7 @@ reconfigure(void)
 	 * then reconfigure hce
 	 */
 	imsg_compose(ibuf_hce, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		imsg_compose(ibuf_hce, IMSG_RECONF_TABLE, 0, 0, -1,
 		    &table->conf, sizeof(table->conf));
 		if (table->sendbuf != NULL)
@@ -449,29 +449,29 @@ purge_config(struct relayd *env, u_int8_t what)
 	struct relay		*rly;
 	struct session		*sess;
 
-	if (what & PURGE_TABLES && env->tables != NULL) {
-		while ((table = TAILQ_FIRST(env->tables)) != NULL)
-			purge_table(env->tables, table);
-		free(env->tables);
-		env->tables = NULL;
+	if (what & PURGE_TABLES && env->sc_tables != NULL) {
+		while ((table = TAILQ_FIRST(env->sc_tables)) != NULL)
+			purge_table(env->sc_tables, table);
+		free(env->sc_tables);
+		env->sc_tables = NULL;
 	}
 
-	if (what & PURGE_RDRS && env->rdrs != NULL) {
-		while ((rdr = TAILQ_FIRST(env->rdrs)) != NULL) {
-			TAILQ_REMOVE(env->rdrs, rdr, entry);
+	if (what & PURGE_RDRS && env->sc_rdrs != NULL) {
+		while ((rdr = TAILQ_FIRST(env->sc_rdrs)) != NULL) {
+			TAILQ_REMOVE(env->sc_rdrs, rdr, entry);
 			while ((virt = TAILQ_FIRST(&rdr->virts)) != NULL) {
 				TAILQ_REMOVE(&rdr->virts, virt, entry);
 				free(virt);
 			}
 			free(rdr);
 		}
-		free(env->rdrs);
-		env->rdrs = NULL;
+		free(env->sc_rdrs);
+		env->sc_rdrs = NULL;
 	}
 
-	if (what & PURGE_RELAYS && env->relays != NULL) {
-		while ((rly = TAILQ_FIRST(env->relays)) != NULL) {
-			TAILQ_REMOVE(env->relays, rly, entry);
+	if (what & PURGE_RELAYS && env->sc_relays != NULL) {
+		while ((rly = TAILQ_FIRST(env->sc_relays)) != NULL) {
+			TAILQ_REMOVE(env->sc_relays, rly, entry);
 			while ((sess = SPLAY_ROOT(&rly->sessions)) != NULL) {
 				SPLAY_REMOVE(session_tree,
 				    &rly->sessions, sess);
@@ -485,21 +485,21 @@ purge_config(struct relayd *env, u_int8_t what)
 				SSL_CTX_free(rly->ssl_ctx);
 			free(rly);
 		}
-		free(env->relays);
-		env->relays = NULL;
+		free(env->sc_relays);
+		env->sc_relays = NULL;
 	}
 
-	if (what & PURGE_PROTOS && env->protos != NULL) {
-		while ((proto = TAILQ_FIRST(env->protos)) != NULL) {
-			TAILQ_REMOVE(env->protos, proto, entry);
+	if (what & PURGE_PROTOS && env->sc_protos != NULL) {
+		while ((proto = TAILQ_FIRST(env->sc_protos)) != NULL) {
+			TAILQ_REMOVE(env->sc_protos, proto, entry);
 			purge_tree(&proto->request_tree);
 			purge_tree(&proto->response_tree);
 			if (proto->style != NULL)
 				free(proto->style);
 			free(proto);
 		}
-		free(env->protos);
-		env->protos = NULL;
+		free(env->sc_protos);
+		env->sc_protos = NULL;
 	}
 }
 
@@ -728,7 +728,7 @@ host_find(struct relayd *env, objid_t id)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, env->tables, entry)
+	TAILQ_FOREACH(table, env->sc_tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			if (host->conf.id == id)
 				return (host);
@@ -740,7 +740,7 @@ table_find(struct relayd *env, objid_t id)
 {
 	struct table	*table;
 
-	TAILQ_FOREACH(table, env->tables, entry)
+	TAILQ_FOREACH(table, env->sc_tables, entry)
 		if (table->conf.id == id)
 			return (table);
 	return (NULL);
@@ -751,7 +751,7 @@ rdr_find(struct relayd *env, objid_t id)
 {
 	struct rdr	*rdr;
 
-	TAILQ_FOREACH(rdr, env->rdrs, entry)
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry)
 		if (rdr->conf.id == id)
 			return (rdr);
 	return (NULL);
@@ -762,7 +762,7 @@ relay_find(struct relayd *env, objid_t id)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, env->relays, entry)
+	TAILQ_FOREACH(rlay, env->sc_relays, entry)
 		if (rlay->conf.id == id)
 			return (rlay);
 	return (NULL);
@@ -774,7 +774,7 @@ session_find(struct relayd *env, objid_t id)
 	struct relay		*rlay;
 	struct session		*con;
 
-	TAILQ_FOREACH(rlay, env->relays, entry)
+	TAILQ_FOREACH(rlay, env->sc_relays, entry)
 		SPLAY_FOREACH(con, session_tree, &rlay->sessions)
 			if (con->id == id)
 				return (con);
@@ -787,7 +787,7 @@ host_findbyname(struct relayd *env, const char *name)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, env->tables, entry)
+	TAILQ_FOREACH(table, env->sc_tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			if (strcmp(host->conf.name, name) == 0)
 				return (host);
@@ -799,7 +799,7 @@ table_findbyname(struct relayd *env, const char *name)
 {
 	struct table	*table;
 
-	TAILQ_FOREACH(table, env->tables, entry)
+	TAILQ_FOREACH(table, env->sc_tables, entry)
 		if (strcmp(table->conf.name, name) == 0)
 			return (table);
 	return (NULL);
@@ -815,7 +815,7 @@ table_findbyconf(struct relayd *env, struct table *tb)
 	a.id = a.rdrid = 0;
 	a.flags &= ~(F_USED|F_BACKUP);
 
-	TAILQ_FOREACH(table, env->tables, entry) {
+	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		bcopy(&table->conf, &b, sizeof(b));
 		b.id = b.rdrid = 0;
 		b.flags &= ~(F_USED|F_BACKUP);
@@ -838,7 +838,7 @@ rdr_findbyname(struct relayd *env, const char *name)
 {
 	struct rdr	*rdr;
 
-	TAILQ_FOREACH(rdr, env->rdrs, entry)
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry)
 		if (strcmp(rdr->conf.name, name) == 0)
 			return (rdr);
 	return (NULL);
@@ -849,7 +849,7 @@ relay_findbyname(struct relayd *env, const char *name)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, env->relays, entry)
+	TAILQ_FOREACH(rlay, env->sc_relays, entry)
 		if (strcmp(rlay->conf.name, name) == 0)
 			return (rlay);
 	return (NULL);

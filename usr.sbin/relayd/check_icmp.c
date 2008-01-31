@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.22 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.23 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -65,11 +65,11 @@ icmp_setup(struct relayd *env, struct ctl_icmp_event *cie, int af)
 void
 icmp_init(struct relayd *env)
 {
-	icmp_setup(env, &env->icmp_send, AF_INET);
-	icmp_setup(env, &env->icmp_recv, AF_INET);
-	icmp_setup(env, &env->icmp6_send, AF_INET6);
-	icmp_setup(env, &env->icmp6_recv, AF_INET6);
-	env->id = getpid() & 0xffff;
+	icmp_setup(env, &env->sc_icmp_send, AF_INET);
+	icmp_setup(env, &env->sc_icmp_recv, AF_INET);
+	icmp_setup(env, &env->sc_icmp6_send, AF_INET6);
+	icmp_setup(env, &env->sc_icmp6_recv, AF_INET6);
+	env->sc_id = getpid() & 0xffff;
 }
 
 void
@@ -79,9 +79,9 @@ schedule_icmp(struct relayd *env, struct host *host)
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 
 	if (((struct sockaddr *)&host->conf.ss)->sa_family == AF_INET)
-		env->has_icmp = 1;
+		env->sc_has_icmp = 1;
 	else
-		env->has_icmp6 = 1;
+		env->sc_has_icmp6 = 1;
 }
 
 void
@@ -92,7 +92,7 @@ check_icmp_add(struct ctl_icmp_event *cie, int flags, struct timeval *start,
 
 	if (start != NULL)
 		bcopy(start, &cie->tv_start, sizeof(cie->tv_start));
-	bcopy(&cie->env->timeout, &tv, sizeof(tv));
+	bcopy(&cie->env->sc_timeout, &tv, sizeof(tv));
 	if (gettimeofday(&cie->tv_start, NULL))
 		fatal("check_icmp_add: gettimeofday");
 	event_del(&cie->ev);
@@ -103,13 +103,13 @@ check_icmp_add(struct ctl_icmp_event *cie, int flags, struct timeval *start,
 void
 check_icmp(struct relayd *env, struct timeval *tv)
 {
-	if (env->has_icmp) {
-		check_icmp_add(&env->icmp_recv, EV_READ, tv, recv_icmp);
-		check_icmp_add(&env->icmp_send, EV_WRITE, tv, send_icmp);
+	if (env->sc_has_icmp) {
+		check_icmp_add(&env->sc_icmp_recv, EV_READ, tv, recv_icmp);
+		check_icmp_add(&env->sc_icmp_send, EV_WRITE, tv, send_icmp);
 	}
-	if (env->has_icmp6) {
-		check_icmp_add(&env->icmp6_recv, EV_READ, tv, recv_icmp);
-		check_icmp_add(&env->icmp6_send, EV_WRITE, tv, send_icmp);
+	if (env->sc_has_icmp6) {
+		check_icmp_add(&env->sc_icmp6_recv, EV_READ, tv, recv_icmp);
+		check_icmp_add(&env->sc_icmp6_send, EV_WRITE, tv, send_icmp);
 	}
 }
 
@@ -119,7 +119,7 @@ icmp_checks_done(struct ctl_icmp_event *cie)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->sc_tables, entry) {
 		if (table->conf.flags & F_DISABLE ||
 		    table->conf.check != CHECK_ICMP)
 			continue;
@@ -140,7 +140,7 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->sc_tables, entry) {
 		if (table->conf.flags & F_DISABLE ||
 		    table->conf.check != CHECK_ICMP)
 			continue;
@@ -181,18 +181,18 @@ send_icmp(int s, short event, void *arg)
 	if (cie->af == AF_INET) {
 		icp->icmp_type = ICMP_ECHO;
 		icp->icmp_code = 0;
-		icp->icmp_id = htons(cie->env->id);
+		icp->icmp_id = htons(cie->env->sc_id);
 		icp->icmp_cksum = 0;
 		slen = sizeof(struct sockaddr_in);
 	} else {
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
 		icp6->icmp6_cksum = 0;
-		icp6->icmp6_id = htons(cie->env->id);
+		icp6->icmp6_id = htons(cie->env->sc_id);
 		slen = sizeof(struct sockaddr_in6);
 	}
 
-	TAILQ_FOREACH(table, cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->sc_tables, entry) {
 		if (table->conf.check != CHECK_ICMP ||
 		    table->conf.flags & F_DISABLE)
 			continue;
@@ -236,7 +236,7 @@ send_icmp(int s, short event, void *arg)
 
  retry:
 	event_again(&cie->ev, s, EV_TIMEOUT|EV_WRITE, send_icmp,
-	    &cie->tv_start, &cie->env->timeout, cie);
+	    &cie->tv_start, &cie->env->sc_timeout, cie);
 }
 
 void
@@ -278,7 +278,7 @@ recv_icmp(int s, short event, void *arg)
 		icpid = ntohs(icp6->icmp6_id);
 		memcpy(&id, packet + sizeof(*icp6), sizeof(id));
 	}
-	if (icpid != cie->env->id)
+	if (icpid != cie->env->sc_id)
 		goto retry;
 	host = host_find(cie->env, id);
 	if (host == NULL) {
@@ -299,7 +299,7 @@ recv_icmp(int s, short event, void *arg)
 
  retry:
 	event_again(&cie->ev, s, EV_TIMEOUT|EV_READ, recv_icmp,
-	    &cie->tv_start, &cie->env->timeout, cie);
+	    &cie->tv_start, &cie->env->sc_timeout, cie);
 }
 
 /* in_cksum from ping.c --

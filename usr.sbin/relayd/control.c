@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.24 2008/01/29 16:32:29 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.25 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -326,7 +326,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_RELOAD:
-			if (env->prefork_relay > 0) {
+			if (env->sc_prefork_relay > 0) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 				break;

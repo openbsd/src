@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.77 2007/12/08 20:36:36 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.78 2008/01/31 09:33:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -204,7 +204,7 @@ relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 #endif
 
 	/* Fork child handlers */
-	for (i = 1; i < env->prefork_relay; i++) {
+	for (i = 1; i < env->sc_prefork_relay; i++) {
 		if (fork() == 0) {
 			proc_id = i;
 			break;
@@ -230,7 +230,7 @@ relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2hce[1]);
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2pfe[1]);
-	for (i = 0; i < env->prefork_relay; i++) {
+	for (i = 0; i < env->sc_prefork_relay; i++) {
 		if (i == proc_id)
 			continue;
 		close(pipe_parent2relay[i][0]);
@@ -272,7 +272,7 @@ relay_shutdown(void)
 	struct session	*con;
 
 	struct relay	*rlay;
-	TAILQ_FOREACH(rlay, env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
 		if (rlay->conf.flags & F_DISABLE)
 			continue;
 		close(rlay->s);
@@ -415,10 +415,10 @@ relay_privinit(void)
 	struct relay	*rlay;
 	extern int	 debug;
 
-	if (env->flags & F_SSL)
+	if (env->sc_flags & F_SSL)
 		ssl_init(env);
 
-	TAILQ_FOREACH(rlay, env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
 		log_debug("relay_privinit: adding relay %s", rlay->conf.name);
 
 		if (debug)
@@ -465,7 +465,7 @@ relay_init(void)
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("relay_init: failed to set resource limit");
 
-	TAILQ_FOREACH(rlay, env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
 		if ((rlay->conf.flags & F_SSL) &&
 		    (rlay->ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_init: failed to create SSL context");
@@ -499,9 +499,9 @@ relay_init(void)
 	}
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->statev, relay_statistics, NULL);
-	bcopy(&env->statinterval, &tv, sizeof(tv));
-	evtimer_add(&env->statev, &tv);
+	evtimer_set(&env->sc_statev, relay_statistics, NULL);
+	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->sc_statev, &tv);
 }
 
 void
@@ -522,7 +522,7 @@ relay_statistics(int fd, short events, void *arg)
 	if (gettimeofday(&tv_now, NULL))
 		fatal("relay_init: gettimeofday");
 
-	TAILQ_FOREACH(rlay, env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
 		bzero(&crs, sizeof(crs));
 		resethour = resetday = 0;
 
@@ -531,12 +531,12 @@ relay_statistics(int fd, short events, void *arg)
 		cur->tick++;
 		cur->avg = (cur->last + cur->avg) / 2;
 		cur->last_hour += cur->last;
-		if ((cur->tick % (3600 / env->statinterval.tv_sec)) == 0) {
+		if ((cur->tick % (3600 / env->sc_statinterval.tv_sec)) == 0) {
 			cur->avg_hour = (cur->last_hour + cur->avg_hour) / 2;
 			resethour++;
 		}
 		cur->last_day += cur->last;
-		if ((cur->tick % (86400 / env->statinterval.tv_sec)) == 0) {
+		if ((cur->tick % (86400 / env->sc_statinterval.tv_sec)) == 0) {
 			cur->avg_day = (cur->last_day + cur->avg_day) / 2;
 			resethour++;
 		}
@@ -564,9 +564,9 @@ relay_statistics(int fd, short events, void *arg)
 	}
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->statev, relay_statistics, NULL);
-	bcopy(&env->statinterval, &tv, sizeof(tv));
-	evtimer_add(&env->statev, &tv);
+	evtimer_set(&env->sc_statev, relay_statistics, NULL);
+	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	evtimer_add(&env->sc_statev, &tv);
 }
 
 void
@@ -575,7 +575,7 @@ relay_launch(void)
 	struct relay	*rlay;
 	void		(*callback)(int, short, void *);
 
-	TAILQ_FOREACH(rlay, env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
 		log_debug("relay_launch: running relay %s", rlay->conf.name);
 
 		rlay->up = HOST_UP;
@@ -2165,7 +2165,7 @@ relay_connect(struct session *con)
 
 	if (errno == EINPROGRESS)
 		event_again(&con->ev, con->out.s, EV_WRITE|EV_TIMEOUT,
-		    relay_connected, &con->tv_start, &env->timeout, con);
+		    relay_connected, &con->tv_start, &env->sc_timeout, con);
 	else
 		relay_connected(con->out.s, EV_WRITE, con);
 
@@ -2186,7 +2186,7 @@ relay_close(struct session *con, const char *msg)
 	if (con->out.bev != NULL)
 		bufferevent_disable(con->out.bev, EV_READ|EV_WRITE);
 
-	if (env->opts & RELAYD_OPT_LOGUPDATE) {
+	if (env->sc_opts & RELAYD_OPT_LOGUPDATE) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
 		(void)print_host(&con->in.ss, ibuf, sizeof(ibuf));
@@ -2359,7 +2359,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			evtimer_add(&con->ev, &tv);
 			break;
 		case IMSG_CTL_SESSION:
-			TAILQ_FOREACH(rlay, env->relays, entry)
+			TAILQ_FOREACH(rlay, env->sc_relays, entry)
 				SPLAY_FOREACH(con, session_tree,
 				    &rlay->sessions)
 					imsg_compose(ibuf, IMSG_CTL_SESSION,
@@ -2501,7 +2501,7 @@ relay_ssl_transaction(struct session *con)
 	con->in.ssl = ssl;
 
 	event_again(&con->ev, con->in.s, EV_TIMEOUT|EV_READ,
-	    relay_ssl_accept, &con->tv_start, &env->timeout, con);
+	    relay_ssl_accept, &con->tv_start, &env->sc_timeout, con);
 	return;
 
  err:
@@ -2566,7 +2566,7 @@ retry:
 	DPRINTF("relay_ssl_accept: session %d: scheduling on %s", con->id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&con->ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_accept,
-	    &con->tv_start, &env->timeout, con);
+	    &con->tv_start, &env->sc_timeout, con);
 }
 
 void
