@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.211 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.212 2008/01/31 21:56:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -544,8 +544,12 @@ walkrepo:
 		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
 		cvs_repository_lock(repo);
 
-		cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
-		    (cr->flags & CR_RECURSE_DIRS));
+		xsnprintf(fpath, sizeof(fpath), "%s/%s", cf->file_path,
+		    CVS_PATH_STATICENTRIES);
+
+		if (stat(fpath, &st) == -1)
+			cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
+			    (cr->flags & CR_RECURSE_DIRS));
 	}
 
 	cvs_file_walklist(&fl, cr);
