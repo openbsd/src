@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.1 2007/10/08 10:44:50 norby Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.2 2008/01/31 20:00:08 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2007 $
+.Dd $Mdocdate: January 31 2008 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -205,7 +205,7 @@ is set to a value different to 1 or if the FIB is not coupled.
 .El
 .Sh AREAS
 Areas are used for grouping interfaces.
-All interface specific parameters can
+All interface-specific parameters can
 be configured per area, overruling the global settings.
 .Bl -tag -width Ds
 .It Ic area Ar address
@@ -255,7 +255,7 @@ interface em0 {
 interface fxp0:192.168.1.3
 .Ed
 .Pp
-Interface specific parameters are listed below.
+Interface-specific parameters are listed below.
 .Bl -tag -width Ds
 .It Ic demote Ar group
 Increase the

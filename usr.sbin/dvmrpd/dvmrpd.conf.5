@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.5 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.6 2008/01/31 20:00:08 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 31 2008 $
 .Dt DVMRPD.CONF 5
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ The default is
 .El
 .Sh GROUPS
 Groups can be used to easily configure similar interfaces.
-All interface specific parameters can
+All interface-specific parameters can
 be configured per group, overruling the global settings.
 .Bl -tag -width Ds
 .It Ic group
@@ -106,7 +106,7 @@ interface em0 {
 }
 .Ed
 .Pp
-Interface specific parameters are listed below.
+Interface-specific parameters are listed below.
 .Bl -tag -width Ds
 .It Ic igmp-version Ar number
 Do not use a newer version than specified.

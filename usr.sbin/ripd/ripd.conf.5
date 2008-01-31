@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.6 2007/05/31 19:20:28 jmc Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.7 2008/01/31 20:00:08 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 31 2008 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ configuration file.
 Global settings for
 .Xr ripd 8 .
 .It Sy Interfaces Configuration
-Interface specific parameters.
+Interface-specific parameters.
 .El
 .Sh MACROS
 Much like
@@ -153,7 +153,7 @@ interface em0 {
 }
 .Ed
 .Pp
-Interface specific parameters are listed below.
+Interface-specific parameters are listed below.
 .Bl -tag -width Ds
 .It Ic auth-key Ar key
 Set the authentication key for

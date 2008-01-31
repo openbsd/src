@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.51 2008/01/03 11:16:45 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.52 2008/01/31 20:00:08 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 3 2008 $
+.Dd $Mdocdate: January 31 2008 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ Comments are allowed.
 Anything following a comment character is treated as a comment.
 .It Li \&! Ns Ar command-line
 Arbitrary shell commands can be executed using this directive.
-Useful for doing interface specific configuration such as
+Useful for doing interface-specific configuration such as
 setting up custom routes using
 .Xr route 8
 or establishing tunnels using
