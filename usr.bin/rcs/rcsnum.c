@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.9 2008/01/22 08:31:18 tobias Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.10 2008/01/31 16:36:11 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,6 +53,24 @@ rcsnum_alloc(void)
 	rnp->rn_id = NULL;
 
 	return (rnp);
+}
+
+/*
+ * rcsnum_addmagic()
+ *
+ * Adds a magic branch number to an RCS number.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcsnum_addmagic(RCSNUM *rn)
+{
+	if (!rn->rn_len || rn->rn_len > RCSNUM_MAXLEN - 1)
+		return -1;
+	rcsnum_setsize(rn, rn->rn_len + 1);
+	rn->rn_id[rn->rn_len - 1] = rn->rn_id[rn->rn_len - 2];
+	rn->rn_id[rn->rn_len - 2] = 0;
+
+	return 0;
 }
 
 /*
@@ -214,6 +232,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 {
 	u_int32_t val;
 	const char *sp;
+	char *s;
 
 	if (nump->rn_id == NULL)
 		nump->rn_id = xmalloc(sizeof(*(nump->rn_id)));
@@ -261,15 +280,35 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	 * about this, cvs does this for "efficiency reasons", i'd like
 	 * to hear one.
 	 *
+	 * We just make sure we remove the .0. from in the branch number.
+	 *
 	 * XXX - for compatibility reasons with GNU cvs we _need_
-	 * to add these magic branch numbers.
+	 * to skip this part for the 'log' command, apparently it does
+	 * show the magic branches for an unknown and probably
+	 * completely insane and not understandable reason in that output.
+	 *
 	 */
-	if (nump->rn_len > 1 && !(nump->rn_len % 2)) {
-		nump->rn_len++;
-		nump->rn_id = xrealloc(nump->rn_id, nump->rn_len + 1,
-		    sizeof(*(nump->rn_id)));
-		nump->rn_id[nump->rn_len] = nump->rn_id[nump->rn_len - 1];
-		nump->rn_id[nump->rn_len - 1] = 0;
+	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0
+	    && !(rcsnum_flags & RCSNUM_NO_MAGIC)) {
+		/*
+		 * Look for ".0.x" at the end of the branch number.
+		 */
+		if ((s = strrchr(str, '.')) != NULL) {
+			s--;
+			while (*s != '.')
+				s--;
+
+			/*
+	 		 * If we have a "magic" branch, adjust it
+	 		 * so the .0. is removed.
+	 		 */
+			if (!strncmp(s, RCS_MAGIC_BRANCH,
+			    strlen(RCS_MAGIC_BRANCH))) {
+				nump->rn_id[nump->rn_len - 1] =
+				    nump->rn_id[nump->rn_len];
+				nump->rn_len--;
+			}
+		}
 	}
 
 	/* We can't have a single-digit rcs number. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.44 2008/01/06 14:45:50 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.45 2008/01/31 16:36:11 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -423,6 +423,8 @@ rcs_write(RCSFILE *rfp)
 
 	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
+		if (RCSNUM_ISBRANCH(symp->rs_num))
+			rcsnum_addmagic(symp->rs_num);
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
 		fprintf(fp, "\n\t%s:%s", symp->rs_name, numbuf);
 	}
