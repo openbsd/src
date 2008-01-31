@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.112 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.113 2008/01/31 19:38:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include "remote.h"
 
 static void checkout_check_repository(int, char **);
+static int checkout_classify(const char *, const char *);
 static void checkout_repository(const char *, const char *);
 
 extern int print_stdout;
@@ -146,7 +147,6 @@ checkout_check_repository(int argc, char **argv)
 {
 	int i;
 	char repo[MAXPATHLEN];
-	struct stat st;
 	struct cvs_recursion cr;
 
 	build_dirs = print_stdout ? 0 : 1;
@@ -199,31 +199,64 @@ checkout_check_repository(int argc, char **argv)
 		(void)xsnprintf(repo, sizeof(repo), "%s/%s",
 		    current_cvsroot->cr_dir, argv[i]);
 
-		if (stat(repo, &st) == -1) {
-			/* check if a single file was requested */
-			strlcat(repo, RCS_FILE_EXT, MAXPATHLEN);
-
-			if (stat(repo, &st) == -1) {
-				cvs_log(LP_ERR,
-				    "cannot find module `%s' - ignored",
-				    argv[i]);
-				continue;
-			}
-
+		switch (checkout_classify(repo, argv[i])) {
+		case CVS_FILE:
 			cr.fileproc = cvs_update_local;
 			cr.flags = flags;
 
 			if (build_dirs == 1)
 				cvs_mkpath(dirname(argv[i]), cvs_specified_tag);
 			cvs_file_run(1, &(argv[i]), &cr);
-
-			continue;
+			break;
+		case CVS_DIR:
+			if (build_dirs == 1)
+				cvs_mkpath(argv[i], cvs_specified_tag);
+			checkout_repository(repo, argv[i]);
+			break;
+		default:
+			break;
 		}
-
-		if (build_dirs == 1)
-			cvs_mkpath(argv[i], cvs_specified_tag);
-		checkout_repository(repo, argv[i]);
 	}
+}
+
+static int
+checkout_classify(const char *repo, const char *arg)
+{
+	char *d, *f, fpath[MAXPATHLEN];
+	struct stat sb;
+
+	if (stat(repo, &sb) == 0) {
+		if (!S_ISDIR(sb.st_mode)) {
+			cvs_log(LP_ERR, "ignoring %s: not a directory", arg);
+			return 0;
+		}
+		return CVS_DIR;
+	}
+
+	d = dirname(repo);
+	f = basename(repo);
+
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s%s", d, f, RCS_FILE_EXT);
+	if (stat(fpath, &sb) == 0) {
+		if (!S_ISREG(sb.st_mode)) {
+			cvs_log(LP_ERR, "ignoring %s: not a regular file", arg);
+			return 0;
+		}
+		return CVS_FILE;
+	}
+
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s/%s%s",
+	    d, CVS_PATH_ATTIC, f, RCS_FILE_EXT);
+	if (stat(fpath, &sb) == 0) {
+		if (!S_ISREG(sb.st_mode)) {
+			cvs_log(LP_ERR, "ignoring %s: not a regular file", arg);
+			return 0;
+		}
+		return CVS_FILE;
+	}
+
+	cvs_log(LP_ERR, "cannot find module `%s' - ignored", arg);
+	return 0;
 }
 
 static void
