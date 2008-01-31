@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.82 2008/01/31 20:29:16 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.83 2008/01/31 22:09:05 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -366,6 +366,6 @@ log_rev_print(struct rcs_delta *rdp)
 		}
 		cvs_printf("\n");
 	}
- 
+
 	cvs_printf("%s", rdp->rd_log);
 }
