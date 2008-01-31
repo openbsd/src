@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.126 2008/01/31 10:17:47 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.127 2008/01/31 16:44:46 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -473,45 +473,41 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 	FILE *fp;
 	char fpath[MAXPATHLEN];
 
-	/* During checkout -p, do not use any locally available files. */
-	if (cvs_cmdop == CVS_OP_CHECKOUT && print_stdout) {
-		dst[0] = '\0';
-		if (strlcat(dst, dir, len) >= len)
+	dst[0] = '\0';
+
+	if (!(cmdp->cmd_flags & CVS_USE_WDIR)) {
+		if (strlcpy(dst, dir, len) >= len)
 			fatal("cvs_get_repository_name: truncation");
 		return;
 	}
 
-	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
-	    dir, CVS_PATH_REPOSITORY);
-
-	if (cvs_cmdop != CVS_OP_IMPORT && (fp = fopen(fpath, "r")) != NULL) {
-		if ((fgets(dst, len, fp)) == NULL)
-			fatal("cvs_get_repository_name: bad repository file");
-		dst[strcspn(dst, "\n")] = '\0';
-		(void)fclose(fp);
-	} else {
-		dst[0] = '\0';
-
-		if (cvs_cmdop == CVS_OP_IMPORT) {
-			if (strlcpy(dst, import_repository, len) >= len)
+	switch (cvs_cmdop) {
+	case CVS_OP_EXPORT:
+		if (strcmp(dir, "."))
+			if (strlcpy(dst, dir, len) >= len)
 				fatal("cvs_get_repository_name: truncation");
-			if (strlcat(dst, "/", len) >= len)
-				fatal("cvs_get_repository_name: truncation");
+		break;
+	case CVS_OP_IMPORT:
+		if (strlcpy(dst, import_repository, len) >= len)
+			fatal("cvs_get_repository_name: truncation");
+		if (strlcat(dst, "/", len) >= len)
+			fatal("cvs_get_repository_name: truncation");
 
-			if (strcmp(dir, ".")) {
-				if (strlcat(dst, dir, len) >= len) {
-					fatal("cvs_get_repository_name: "
-					    "truncation");
-				}
-			}
-		} else {
-			if ((cvs_cmdop == CVS_OP_EXPORT && strcmp(dir, ".")) ||
-			    cvs_cmdop != CVS_OP_CHECKOUT) {
-				if (strlcat(dst, dir, len) >= len)
-					fatal("cvs_get_repository_name: "
-					    "truncation");
-			}
-		}
+		if (strcmp(dir, "."))
+			if (strlcat(dst, dir, len) >= len)
+				fatal("cvs_get_repository_name: truncation");
+		break;
+	default:
+		(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+		    dir, CVS_PATH_REPOSITORY);
+		if ((fp = fopen(fpath, "r")) != NULL) {
+			if ((fgets(dst, len, fp)) == NULL)
+				fatal("%s: bad repository file", fpath);
+			dst[strcspn(dst, "\n")] = '\0';
+			(void)fclose(fp);
+		} else if (cvs_cmdop != CVS_OP_CHECKOUT)
+			fatal("%s is missing", fpath);
+		break;
 	}
 }
 
