@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.49 2008/01/10 09:39:32 tobias Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.50 2008/01/31 22:19:36 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,6 +49,24 @@ rcsnum_alloc(void)
 	rnp->rn_id = NULL;
 
 	return (rnp);
+}
+
+/*
+ * rcsnum_addmagic()
+ *
+ * Adds a magic branch number to an RCS number.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcsnum_addmagic(RCSNUM *rn)
+{
+	if (!rn->rn_len || rn->rn_len > RCSNUM_MAXLEN - 1)
+		return -1;
+	rcsnum_setsize(rn, rn->rn_len + 1);
+	rn->rn_id[rn->rn_len - 1] = rn->rn_id[rn->rn_len - 2];
+	rn->rn_id[rn->rn_len - 2] = 0;
+
+	return 0;
 }
 
 /*
