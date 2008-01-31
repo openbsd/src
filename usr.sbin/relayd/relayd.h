@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.92 2008/01/31 09:56:29 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.93 2008/01/31 12:12:50 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -405,24 +405,24 @@ struct rdr {
 TAILQ_HEAD(rdrlist, rdr);
 
 struct session {
-	objid_t				 id;
-	u_int32_t			 key;
-	objid_t				 relayid;
-	struct ctl_relay_event		 in;
-	struct ctl_relay_event		 out;
-	u_int32_t			 outkey;
-	struct event			 ev;
-	struct timeval			 timeout;
-	struct timeval			 tv_start;
-	struct timeval			 tv_last;
-	int				 done;
-	int				 retry;
-	u_int16_t			 mark;
-	struct evbuffer			*log;
-	void				*relay;
-	struct ctl_natlook		*cnl;
+	objid_t				 se_id;
+	u_int32_t			 se_key;
+	objid_t				 se_relayid;
+	struct ctl_relay_event		 se_in;
+	struct ctl_relay_event		 se_out;
+	u_int32_t			 se_outkey;
+	struct event			 se_ev;
+	struct timeval			 se_timeout;
+	struct timeval			 se_tv_start;
+	struct timeval			 se_tv_last;
+	int				 se_done;
+	int				 se_retry;
+	u_int16_t			 se_mark;
+	struct evbuffer			*se_log;
+	void				*se_relay;
+	struct ctl_natlook		*se_cnl;
 
-	SPLAY_ENTRY(session)		 nodes;
+	SPLAY_ENTRY(session)		 se_nodes;
 };
 SPLAY_HEAD(session_tree, session);
 
@@ -746,8 +746,8 @@ void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct session *, struct session *);
 int	 relay_load_certfiles(struct relay *);
 
-RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);
-SPLAY_PROTOTYPE(session_tree, session, nodes, relay_session_cmp);
+RB_PROTOTYPE(proto_tree, protonode, se_nodes, relay_proto_cmp);
+SPLAY_PROTOTYPE(session_tree, session, se_nodes, relay_session_cmp);
 
 /* relay_udp.c */
 void	 relay_udp_privinit(struct relayd *, struct relay *);

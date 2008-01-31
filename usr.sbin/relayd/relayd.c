@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.68 2008/01/31 09:56:28 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.69 2008/01/31 12:12:50 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -776,7 +776,7 @@ session_find(struct relayd *env, objid_t id)
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 		SPLAY_FOREACH(con, session_tree, &rlay->rl_sessions)
-			if (con->id == id)
+			if (con->se_id == id)
 				return (con);
 	return (NULL);
 }

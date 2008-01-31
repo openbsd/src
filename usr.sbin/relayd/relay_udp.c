@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.6 2008/01/31 09:56:28 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.7 2008/01/31 12:12:50 thib Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -202,31 +202,31 @@ relay_udp_server(int fd, short sig, void *arg)
 	    calloc(1, sizeof(struct session))) == NULL)
 		return;
 
-	con->key = key;
-	con->in.s = -1;
-	con->out.s = -1;
-	con->in.dst = &con->out;
-	con->out.dst = &con->in;
-	con->in.con = con;
-	con->out.con = con;
-	con->relay = rlay;
-	con->id = ++relay_conid;
-	con->outkey = rlay->rl_dstkey;
-	con->in.tree = &proto->request_tree;
-	con->out.tree = &proto->response_tree;
-	con->in.dir = RELAY_DIR_REQUEST;
-	con->out.dir = RELAY_DIR_RESPONSE;
-	con->retry = rlay->rl_conf.dstretry;
-	gettimeofday(&con->tv_start, NULL);
-	bcopy(&con->tv_start, &con->tv_last, sizeof(con->tv_last));
-	bcopy(&ss, &con->in.ss, sizeof(con->in.ss));
-	con->out.port = rlay->rl_conf.dstport;
+	con->se_key = key;
+	con->se_in.s = -1;
+	con->se_out.s = -1;
+	con->se_in.dst = &con->se_out;
+	con->se_out.dst = &con->se_in;
+	con->se_in.con = con;
+	con->se_out.con = con;
+	con->se_relay = rlay;
+	con->se_id = ++relay_conid;
+	con->se_outkey = rlay->rl_dstkey;
+	con->se_in.tree = &proto->request_tree;
+	con->se_out.tree = &proto->response_tree;
+	con->se_in.dir = RELAY_DIR_REQUEST;
+	con->se_out.dir = RELAY_DIR_RESPONSE;
+	con->se_retry = rlay->rl_conf.dstretry;
+	gettimeofday(&con->se_tv_start, NULL);
+	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
+	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
+	con->se_out.port = rlay->rl_conf.dstport;
 	switch (ss.ss_family) {
 	case AF_INET:
-		con->in.port = ((struct sockaddr_in *)&ss)->sin_port;
+		con->se_in.port = ((struct sockaddr_in *)&ss)->sin_port;
 		break;
 	case AF_INET6:
-		con->in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
+		con->se_in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	}
 
@@ -237,15 +237,15 @@ relay_udp_server(int fd, short sig, void *arg)
 	rlay->rl_stats[proc_id].last++;
 
 	/* Pre-allocate output buffer */
-	con->out.output = evbuffer_new();
-	if (con->out.output == NULL) {
+	con->se_out.output = evbuffer_new();
+	if (con->se_out.output == NULL) {
 		relay_close(con, "failed to allocate output buffer");
 		return;
 	}
 
 	/* Pre-allocate log buffer */
-	con->log = evbuffer_new();
-	if (con->log == NULL) {
+	con->se_log = evbuffer_new();
+	if (con->se_log == NULL) {
 		relay_close(con, "failed to allocate log buffer");
 		return;
 	}
@@ -259,7 +259,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	}
 
 	/* Save the received data */
-	if (evbuffer_add(con->out.output, buf, len) == -1) {
+	if (evbuffer_add(con->se_out.output, buf, len) == -1) {
 		relay_close(con, "failed to store buffer");
 		if (cnl != NULL)
 			free(cnl);
@@ -267,20 +267,20 @@ relay_udp_server(int fd, short sig, void *arg)
 	}
 
 	if (rlay->rl_conf.flags & F_NATLOOK && cnl != NULL) {
-		con->cnl = cnl;;
+		con->se_cnl = cnl;
 		bzero(cnl, sizeof(*cnl));
 		cnl->in = -1;
-		cnl->id = con->id;
+		cnl->id = con->se_id;
 		cnl->proc = proc_id;
-		bcopy(&con->in.ss, &cnl->src, sizeof(cnl->src));
+		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
 		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */
-		evtimer_set(&con->ev, relay_natlook, con);
+		evtimer_set(&con->se_ev, relay_natlook, con);
 		bcopy(&rlay->rl_conf.timeout, &tv, sizeof(tv));
-		evtimer_add(&con->ev, &tv);
+		evtimer_add(&con->se_ev, &tv);
 		return;
 	}
 
@@ -332,7 +332,7 @@ relay_dns_log(struct session *con, u_int8_t *buf)
 
 	log_debug("relay_dns_log: session %d: %s id 0x%x "
 	    "flags 0x%x:0x%x qd %u an %u ns %u ar %u",
-	    con->id,
+	    con->se_id,
 	    hdr->dns_flags0 & DNS_F0_QR ? "response" : "request",
 	    ntohs(hdr->dns_id),
 	    hdr->dns_flags0,
@@ -367,10 +367,10 @@ relay_dns_validate(struct relay *rlay, struct sockaddr_storage *ss,
 	 * Lookup if this response is for a known session and if the
 	 * remote host matches the original destination of the request.
 	 */
-	lookup.key = *key;
+	lookup.se_key = *key;
 	if ((con = SPLAY_FIND(session_tree,
 	    &rlay->rl_sessions, &lookup)) != NULL &&
-	    relay_cmp_af(ss, &con->out.ss) == 0)
+	    relay_cmp_af(ss, &con->se_out.ss) == 0)
 		relay_dns_response(con, buf, len);
 
 	/*
@@ -382,9 +382,9 @@ relay_dns_validate(struct relay *rlay, struct sockaddr_storage *ss,
 int
 relay_dns_request(struct session *con)
 {
-	struct relay		*rlay = (struct relay *)con->relay;
-	u_int8_t		*buf = EVBUFFER_DATA(con->out.output);
-	size_t			 len = EVBUFFER_LENGTH(con->out.output);
+	struct relay		*rlay = (struct relay *)con->se_relay;
+	u_int8_t		*buf = EVBUFFER_DATA(con->se_out.output);
+	size_t			 len = EVBUFFER_LENGTH(con->se_out.output);
 	struct relay_dnshdr	*hdr;
 	socklen_t		 slen;
 
@@ -393,47 +393,47 @@ relay_dns_request(struct session *con)
 	if (debug)
 		relay_dns_log(con, buf);
 
-	if (gettimeofday(&con->tv_start, NULL))
+	if (gettimeofday(&con->se_tv_start, NULL))
 		return (-1);
 
 	if (rlay->rl_dsttable != NULL) {
 		if (relay_from_table(con) != 0)
 			return (-1);
-	} else if (con->out.ss.ss_family == AF_UNSPEC) {
-		bcopy(&rlay->rl_conf.dstss, &con->out.ss, sizeof(con->out.ss));
-		con->out.port = rlay->rl_conf.dstport;
+	} else if (con->se_out.ss.ss_family == AF_UNSPEC) {
+		bcopy(&rlay->rl_conf.dstss, &con->se_out.ss, sizeof(con->se_out.ss));
+		con->se_out.port = rlay->rl_conf.dstport;
 	}
 
-	if (relay_socket_af(&con->out.ss, con->out.port) == -1)
+	if (relay_socket_af(&con->se_out.ss, con->se_out.port) == -1)
 		return (-1);
-	slen = con->out.ss.ss_len;
+	slen = con->se_out.ss.ss_len;
 
 	/*
 	 * Replace the DNS request Id with a random Id.
 	 */
 	hdr = (struct relay_dnshdr *)buf;
-	con->outkey = con->key;
-	con->key = arc4random() & 0xffff;
-	hdr->dns_id = htons(con->key);
+	con->se_outkey = con->se_key;
+	con->se_key = arc4random() & 0xffff;
+	hdr->dns_id = htons(con->se_key);
 
  retry:
 	if (sendto(rlay->rl_s, buf, len, 0,
-	    (struct sockaddr *)&con->out.ss, slen) == -1) {
-		if (con->retry) {
-			con->retry--;
+	    (struct sockaddr *)&con->se_out.ss, slen) == -1) {
+		if (con->se_retry) {
+			con->se_retry--;
 			log_debug("relay_dns_request: session %d: "
 			    "forward failed: %s, %s",
-			    con->id, strerror(errno),
-			    con->retry ? "next retry" : "last retry");
+			    con->se_id, strerror(errno),
+			    con->se_retry ? "next retry" : "last retry");
 			goto retry;
 		}
 		log_debug("relay_dns_request: session %d: forward failed: %s",
-		    con->id, strerror(errno));
+		    con->se_id, strerror(errno));
 		return (-1);
 	}
 
-	event_again(&con->ev, con->out.s, EV_TIMEOUT,
-	    relay_udp_timeout, &con->tv_start, &env->sc_timeout, con);
+	event_again(&con->se_ev, con->se_out.s, EV_TIMEOUT,
+	    relay_udp_timeout, &con->se_tv_start, &env->sc_timeout, con);
 
 	return (0);
 }
@@ -441,7 +441,7 @@ relay_dns_request(struct session *con)
 void
 relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 {
-	struct relay		*rlay = (struct relay *)con->relay;
+	struct relay		*rlay = (struct relay *)con->se_relay;
 	struct relay_dnshdr	*hdr;
 	socklen_t		 slen;
 
@@ -452,11 +452,11 @@ relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 	 * Replace the random DNS request Id with the original Id
 	 */
 	hdr = (struct relay_dnshdr *)buf;
-	hdr->dns_id = htons(con->outkey);
+	hdr->dns_id = htons(con->se_outkey);
 
-	slen = con->out.ss.ss_len;
+	slen = con->se_out.ss.ss_len;
 	if (sendto(rlay->rl_s, buf, len, 0,
-	    (struct sockaddr *)&con->in.ss, slen) == -1) {
+	    (struct sockaddr *)&con->se_in.ss, slen) == -1) {
 		relay_close(con, "response failed");
 		return;
 	}
@@ -467,5 +467,5 @@ relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 int
 relay_dns_cmp(struct session *a, struct session *b)
 {
-	return (memcmp(&a->key, &b->key, sizeof(a->key)));
+	return (memcmp(&a->se_key, &b->se_key, sizeof(a->se_key)));
 }

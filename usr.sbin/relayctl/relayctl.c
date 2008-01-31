@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.32 2008/01/31 09:56:29 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.33 2008/01/31 12:12:50 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -389,20 +389,20 @@ show_session_msg(struct imsg *imsg)
 	case IMSG_CTL_SESSION:
 		con = imsg->data;
 
-		(void)print_host(&con->in.ss, a, sizeof(a));
-		(void)print_host(&con->out.ss, b, sizeof(b));
+		(void)print_host(&con->se_in.ss, a, sizeof(a));
+		(void)print_host(&con->se_out.ss, b, sizeof(b));
 		printf("session %u:%u %s:%u -> %s:%u\t%s\n",
-		    imsg->hdr.peerid, con->id,
-		    a, ntohs(con->in.port), b, ntohs(con->out.port),
-		    con->done ? "DONE" : "RUNNING");
+		    imsg->hdr.peerid, con->se_id,
+		    a, ntohs(con->se_in.port), b, ntohs(con->se_out.port),
+		    con->se_done ? "DONE" : "RUNNING");
 
 		if (gettimeofday(&tv_now, NULL))
 			fatal("show_session_msg: gettimeofday");
-		print_time(&tv_now, &con->tv_start, a, sizeof(a));
-		print_time(&tv_now, &con->tv_last, b, sizeof(b));
-		printf("\tage %s, idle %s, relay %u", a, b, con->relayid);
-		if (con->mark)
-			printf(", mark %u", con->mark);
+		print_time(&tv_now, &con->se_tv_start, a, sizeof(a));
+		print_time(&tv_now, &con->se_tv_last, b, sizeof(b));
+		printf("\tage %s, idle %s, relay %u", a, b, con->se_relayid);
+		if (con->se_mark)
+			printf(", mark %u", con->se_mark);
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
