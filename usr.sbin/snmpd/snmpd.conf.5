@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.5 2008/01/17 17:35:06 reyk Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.6 2008/01/31 19:40:38 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 17 2008 $
+.Dd $Mdocdate: January 31 2008 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ Specify a description of the local system.
 The default value is the operating system identification as printed by the
 .Xr uname 1
 command using the
-.Ar -a
+.Fl a
 flag:
 .Bd -literal -offset indent
 OpenBSD myhost.example.com 4.2 GENERIC#595 i386
@@ -118,7 +118,9 @@ Specify the authoritative identification of the local system.
 The default value is
 .Ar 1.3.6.1.4.1.30155.23.1
 .Pq iso.org.dod.internet.private.enterprises.openbsd.23.1
-indentifying a common OpenBSD system.
+indentifying a common
+.Ox
+system.
 .Pp
 .It Ic system services Ar number
 Specify a magic value which indicates the set of services that the local
@@ -141,7 +143,7 @@ The default value is
 Specify the address or FQDN of a remote trap receiver for outgoing traps
 sent by
 .Xr snmpd 8 .
-This option may be specified for multiple times.
+This option may be specified multiple times.
 The daemon will send outgoing traps using the revised SNMPv2 format and the
 configured trap community.
 The default community is specified by the global
@@ -160,19 +162,25 @@ It is possible to specify user-defined OIDs in the configuration file:
 .Op Ar type
 .Ar value
 .Xc
-Return the specified value to the client for this OID, the
+Return the specified value to the client for this OID.
+The
 .Ic read-write
 option may allow the client to override it,
 and the type is is either
 .Ic string
 or
 .Ic integer .
+.El
+.Sh FILES
+.Bl -tag -width "/etc/snmpd.conf" -compact
+.It Pa /etc/snmpd.conf
+Default location of the configuration file.
+.El
 .Sh EXAMPLES
 The following example will tell
-.Nm
+.Xr snmpd 8
 to listen on localhost, override the default system OID, set the
-magic services value and some custom OID values:
-.Pp
+magic services value and provides some custom OID values:
 .Bd -literal -offset indent
 listen on 127.0.0.1
 
@@ -181,12 +189,7 @@ system services 74
 
 oid 1.3.6.1.4.1.30155.42.1 name myName read-only string "humppa"
 oid 1.3.6.1.4.1.30155.42.2 name myStatus read-only integer 1
-.El
-.Sh FILES
-.Bl -tag -width "/etc/snmpd.conf" -compact
-.It Pa /etc/snmpd.conf
-Default location of the configuration file.
-.El
+.Ed
 .Sh SEE ALSO
 .Xr snmpd 8
 .Sh HISTORY
