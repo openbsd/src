@@ -55,6 +55,7 @@ _dvmrpd:*:87:
 _ripd:*:88:
 _relayd:*:89:
 _ospf6d:*:90:
+_snmpd:*:91:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

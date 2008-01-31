@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.310 2008/01/16 14:19:28 sthen Exp $
+#	$OpenBSD: rc,v 1.311 2008/01/31 14:18:03 reyk Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -561,6 +561,10 @@ if [ ! -f /etc/isakmpd/private/local.key ]; then
 fi
 
 echo -n starting network daemons:
+
+if [ X"${snmpd_flags}" != X"NO" ]; then
+	echo -n ' snmpd';		/usr/sbin/snmpd $snmpd_flags
+fi
 
 if [ X"${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
