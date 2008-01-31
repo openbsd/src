@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.16 2008/01/10 09:57:51 tobias Exp $	*/
+/*	$OpenBSD: repository.c,v 1.17 2008/01/31 13:54:12 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -150,9 +150,11 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 				cvs_file_get(fpath, 0, dl);
 			break;
 		case CVS_FILE:
-			if ((s = strrchr(fpath, ',')) != NULL)
+			if ((s = strrchr(fpath, ',')) != NULL &&
+			    s != fpath && !strcmp(s, RCS_FILE_EXT)) {
 				*s = '\0';
-			cvs_file_get(fpath, 0, fl);
+				cvs_file_get(fpath, 0, fl);
+			}
 			break;
 		default:
 			fatal("type %d unknown, shouldn't happen", type);
