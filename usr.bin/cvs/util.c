@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.128 2008/01/31 22:09:05 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.129 2008/01/31 22:11:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -790,14 +790,12 @@ cvs_revision_select(RCSFILE *file, char *range)
 				nrev++;
 			}
 		}
+
+		rcsnum_free(lnum);
+		rcsnum_free(rnum);
 	}
 
 	cvs_argv_destroy(revargv);
-
-	if (lnum != NULL)
-		rcsnum_free(lnum);
-	if (rnum != NULL)
-		rcsnum_free(rnum);
 
 	return (nrev);
 }

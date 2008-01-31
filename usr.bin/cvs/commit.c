@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.124 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.125 2008/01/31 22:11:38 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -218,6 +218,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 			if (brev != NULL) {
 				if (RCSNUM_ISBRANCH(brev))
 					goto next;
+				rcsnum_free(brev);
 			}
 
 			brev = rcs_translate_tag(tag, cf->file_rcs);
@@ -525,6 +526,9 @@ cvs_commit_local(struct cvs_file *cf)
 		histtype = CVS_HISTORY_COMMIT_REMOVED;
 		break;
 	}
+
+	if (crev != NULL)
+		rcsnum_free(crev);
 
 	cvs_history_add(histtype, cf, NULL);
 }
