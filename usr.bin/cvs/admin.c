@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.53 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.54 2008/01/31 21:52:48 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -170,7 +170,7 @@ cvs_admin(int argc, char **argv)
 			cvs_client_send_request("Argument -U");
 
 		if (logstr != NULL)
-			cvs_client_send_request("Argument -m%s", logstr);
+			cvs_client_send_logmsg(logstr);
 
 		if (orange != NULL)
 			cvs_client_send_request("Argument -o%s", orange);
