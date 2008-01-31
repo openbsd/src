@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.241 2008/01/31 20:29:16 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.242 2008/01/31 21:49:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2645,8 +2645,11 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	/* Possibly we could be passed a version number */
 	if ((rev = rcsnum_parse(revstr)) != NULL) {
 		/* Do not return if it is not in RCS file */
-		if ((rdp = rcs_findrev(rfp, rev)) != NULL)
-			return (rev);
+		if ((rdp = rcs_findrev(rfp, rev)) != NULL) {
+			frev = rcsnum_alloc();
+			rcsnum_cpy(rev, frev, 0);
+			return (frev);
+		}
 	} else {
 		/* More likely we will be passed a symbol */
 		rev = rcs_sym_getrev(rfp, revstr);
