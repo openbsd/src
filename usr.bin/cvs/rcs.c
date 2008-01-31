@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.240 2008/01/28 21:33:20 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.241 2008/01/31 20:29:16 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1132,6 +1132,55 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
 	dlines->l_nblines = lineno - 1;
 
 	return (0);
+}
+
+void
+rcs_delta_stats(struct rcs_delta *rdp, int *ladded, int *lremoved)
+{
+	struct cvs_lines *plines;
+	struct cvs_line *lp;
+	int added, i, lineno, nbln, removed;
+	char op, *ep;
+	u_char tmp;
+
+	added = removed = 0;
+
+	plines = cvs_splitlines(rdp->rd_text, rdp->rd_tlen);
+	lp = TAILQ_FIRST(&(plines->l_lines));
+
+	/* skip first bogus line */
+	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
+	    lp = TAILQ_NEXT(lp, l_list)) {
+		if (lp->l_len < 2)
+			fatal("line too short, RCS patch seems broken");
+		op = *(lp->l_line);
+		/* NUL-terminate line buffer for strtol() safety. */
+		tmp = lp->l_line[lp->l_len - 1];
+		lp->l_line[lp->l_len - 1] = '\0';
+		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
+		ep++;
+		nbln = (int)strtol(ep, &ep, 10);
+		/* Restore the last byte of the buffer */
+		lp->l_line[lp->l_len - 1] = tmp;
+		if (nbln < 0)
+			fatal("invalid line number specification in RCS patch");
+
+		if (op == 'a') {
+			added += nbln;
+			for (i = 0; i < nbln; i++) {
+				lp = TAILQ_NEXT(lp, l_list);
+				if (lp == NULL)
+					fatal("truncated RCS patch");
+			}
+		}
+		else if (op == 'd')
+			removed += nbln;
+		else
+			fatal("unknown RCS patch operation '%c'", op);
+	}
+
+	*ladded = added;
+	*lremoved = removed;
 }
 
 /*

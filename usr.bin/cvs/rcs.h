@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.84 2008/01/10 10:06:59 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.85 2008/01/31 20:29:16 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -266,6 +266,7 @@ struct cvs_lines	*rcs_rev_getlines(RCSFILE *, RCSNUM *,
 void			 rcs_annotate_getlines(RCSFILE *, RCSNUM *,
 			     struct cvs_line ***);
 BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *, int);
+void			 rcs_delta_stats(struct rcs_delta *, int *, int *);
 
 int	rcs_kflag_get(const char *);
 void	rcs_kflag_usage(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.81 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.82 2008/01/31 20:29:16 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -288,6 +288,8 @@ log_rev_print(struct rcs_delta *rdp)
 	int i, found;
 	char numb[CVS_REV_BUFSZ], timeb[CVS_TIME_BUFSZ];
 	struct cvs_argvector *sargv, *wargv;
+	struct rcs_branch *rb;
+	struct rcs_delta *nrdp;
 
 	i = found = 0;
 
@@ -326,7 +328,44 @@ log_rev_print(struct rcs_delta *rdp)
 	cvs_printf("revision %s", numb);
 
 	strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S", &rdp->rd_date);
-	cvs_printf("\ndate: %s;  author: %s;  state: %s;\n",
+	cvs_printf("\ndate: %s;  author: %s;  state: %s;",
 	    timeb, rdp->rd_author, rdp->rd_state);
+
+	/*
+	 * If we are a branch revision, the diff of this revision is stored
+	 * in place.
+	 * Otherwise, it is stored in the previous revision as a reversed diff.
+	 */
+	if (RCSNUM_ISBRANCHREV(rdp->rd_num))
+		nrdp = rdp;
+	else
+		nrdp = TAILQ_NEXT(rdp, rd_list);
+
+	/*
+	 * We do not write diff stats for the first revision of the default
+	 * branch, since it was not a diff but a full text.
+	 */
+	if (nrdp != NULL && rdp->rd_num->rn_len == nrdp->rd_num->rn_len) {
+		int added, removed;
+		rcs_delta_stats(nrdp, &added, &removed);
+		if (RCSNUM_ISBRANCHREV(rdp->rd_num))
+			cvs_printf("  lines: +%d -%d", added, removed);
+		else
+			cvs_printf("  lines: +%d -%d", removed, added);
+	}
+	cvs_printf("\n");
+
+	if (!TAILQ_EMPTY(&(rdp->rd_branches))) {
+		cvs_printf("branches:");
+		TAILQ_FOREACH(rb, &(rdp->rd_branches), rb_list) {
+			RCSNUM *branch;
+			branch = rcsnum_revtobr(rb->rb_num);
+			rcsnum_tostr(branch, numb, sizeof(numb));
+			cvs_printf("  %s;", numb);
+			rcsnum_free(branch);
+		}
+		cvs_printf("\n");
+	}
+ 
 	cvs_printf("%s", rdp->rd_log);
 }
