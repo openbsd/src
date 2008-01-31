@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.67 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.68 2008/01/31 09:56:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -446,7 +446,7 @@ purge_config(struct relayd *env, u_int8_t what)
 	struct rdr		*rdr;
 	struct address		*virt;
 	struct protocol		*proto;
-	struct relay		*rly;
+	struct relay		*rlay;
 	struct session		*sess;
 
 	if (what & PURGE_TABLES && env->sc_tables != NULL) {
@@ -470,20 +470,20 @@ purge_config(struct relayd *env, u_int8_t what)
 	}
 
 	if (what & PURGE_RELAYS && env->sc_relays != NULL) {
-		while ((rly = TAILQ_FIRST(env->sc_relays)) != NULL) {
-			TAILQ_REMOVE(env->sc_relays, rly, entry);
-			while ((sess = SPLAY_ROOT(&rly->sessions)) != NULL) {
+		while ((rlay = TAILQ_FIRST(env->sc_relays)) != NULL) {
+			TAILQ_REMOVE(env->sc_relays, rlay, rl_entry);
+			while ((sess = SPLAY_ROOT(&rlay->rl_sessions)) != NULL) {
 				SPLAY_REMOVE(session_tree,
-				    &rly->sessions, sess);
+				    &rlay->rl_sessions, sess);
 				free(sess);
 			}
-			if (rly->bev != NULL)
-				bufferevent_free(rly->bev);
-			if (rly->dstbev != NULL)
-				bufferevent_free(rly->dstbev);
-			if (rly->ssl_ctx != NULL)
-				SSL_CTX_free(rly->ssl_ctx);
-			free(rly);
+			if (rlay->rl_bev != NULL)
+				bufferevent_free(rlay->rl_bev);
+			if (rlay->rl_dstbev != NULL)
+				bufferevent_free(rlay->rl_dstbev);
+			if (rlay->rl_ssl_ctx != NULL)
+				SSL_CTX_free(rlay->rl_ssl_ctx);
+			free(rlay);
 		}
 		free(env->sc_relays);
 		env->sc_relays = NULL;
@@ -762,8 +762,8 @@ relay_find(struct relayd *env, objid_t id)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, env->sc_relays, entry)
-		if (rlay->conf.id == id)
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
+		if (rlay->rl_conf.id == id)
 			return (rlay);
 	return (NULL);
 }
@@ -774,8 +774,8 @@ session_find(struct relayd *env, objid_t id)
 	struct relay		*rlay;
 	struct session		*con;
 
-	TAILQ_FOREACH(rlay, env->sc_relays, entry)
-		SPLAY_FOREACH(con, session_tree, &rlay->sessions)
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
+		SPLAY_FOREACH(con, session_tree, &rlay->rl_sessions)
 			if (con->id == id)
 				return (con);
 	return (NULL);
@@ -849,8 +849,8 @@ relay_findbyname(struct relayd *env, const char *name)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, env->sc_relays, entry)
-		if (strcmp(rlay->conf.name, name) == 0)
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
+		if (strcmp(rlay->rl_conf.name, name) == 0)
 			return (rlay);
 	return (NULL);
 }

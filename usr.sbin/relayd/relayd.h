@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.91 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.92 2008/01/31 09:56:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -552,33 +552,33 @@ struct relay_config {
 };
 
 struct relay {
-	TAILQ_ENTRY(relay)	 entry;
-	struct relay_config	 conf;
+	TAILQ_ENTRY(relay)	 rl_entry;
+	struct relay_config	 rl_conf;
 
-	int			 up;
-	struct protocol		*proto;
-	int			 s;
-	struct bufferevent	*bev;
+	int			 rl_up;
+	struct protocol		*rl_proto;
+	int			 rl_s;
+	struct bufferevent	*rl_bev;
 
-	int			 dsts;
-	struct bufferevent	*dstbev;
+	int			 rl_dsts;
+	struct bufferevent	*rl_dstbev;
 
-	struct table		*dsttable;
-	u_int32_t		 dstkey;
-	struct host		*dsthost[RELAY_MAXHOSTS];
-	int			 dstnhosts;
+	struct table		*rl_dsttable;
+	u_int32_t		 rl_dstkey;
+	struct host		*rl_dsthost[RELAY_MAXHOSTS];
+	int			 rl_dstnhosts;
 
-	struct event		 ev;
+	struct event		 rl_ev;
 
-	SSL_CTX			*ssl_ctx;
-	char			*ssl_cert;
-	off_t			 ssl_cert_len;
-	char			*ssl_key;
-	off_t			 ssl_key_len;
+	SSL_CTX			*rl_ssl_ctx;
+	char			*rl_ssl_cert;
+	off_t			 rl_ssl_cert_len;
+	char			*rl_ssl_key;
+	off_t			 rl_ssl_key_len;
 
-	struct ctl_stats	 stats[RELAY_MAXPROC + 1];
+	struct ctl_stats	 rl_stats[RELAY_MAXPROC + 1];
 
-	struct session_tree	 sessions;
+	struct session_tree	 rl_sessions;
 };
 TAILQ_HEAD(relaylist, relay);
 

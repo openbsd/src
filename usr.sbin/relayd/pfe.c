@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.47 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.48 2008/01/31 09:56:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -501,8 +501,8 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 				    "invalid relay proc");
 			if ((rlay = relay_find(env, crs.id)) == NULL)
 				fatalx("pfe_dispatch_relay: invalid relay id");
-			bcopy(&crs, &rlay->stats[crs.proc], sizeof(crs));
-			rlay->stats[crs.proc].interval =
+			bcopy(&crs, &rlay->rl_stats[crs.proc], sizeof(crs));
+			rlay->rl_stats[crs.proc].interval =
 			    env->sc_statinterval.tv_sec;
 			break;
 		default:
@@ -552,19 +552,19 @@ show(struct ctl_conn *c)
 relays:
 	if (env->sc_relays == NULL)
 		goto end;
-	TAILQ_FOREACH(rlay, env->sc_relays, entry) {
-		rlay->stats[env->sc_prefork_relay].id = EMPTY_ID;
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
+		rlay->rl_stats[env->sc_prefork_relay].id = EMPTY_ID;
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY, 0, 0, -1,
 		    rlay, sizeof(*rlay));
 		imsg_compose(&c->ibuf, IMSG_CTL_RELAY_STATS, 0, 0, -1,
-		    &rlay->stats, sizeof(rlay->stats));
+		    &rlay->rl_stats, sizeof(rlay->rl_stats));
 
-		if (rlay->dsttable == NULL)
+		if (rlay->rl_dsttable == NULL)
 			continue;
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
-		    rlay->dsttable, sizeof(*rlay->dsttable));
-		if (!(rlay->dsttable->conf.flags & F_DISABLE))
-			TAILQ_FOREACH(host, &rlay->dsttable->hosts, entry)
+		    rlay->rl_dsttable, sizeof(*rlay->rl_dsttable));
+		if (!(rlay->rl_dsttable->conf.flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
 				    host, sizeof(*host));
 	}

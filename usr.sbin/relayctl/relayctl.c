@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.31 2007/12/20 20:15:43 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.32 2008/01/31 09:56:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -353,8 +353,8 @@ show_summary_msg(struct imsg *imsg, int type)
 			break;
 		rlay = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
-		    rlay->conf.id, "relay", rlay->conf.name, "",
-		    print_relay_status(rlay->conf.flags));
+		    rlay->rl_conf.id, "relay", rlay->rl_conf.name, "",
+		    print_relay_status(rlay->rl_conf.flags));
 		break;
 	case IMSG_CTL_RDR_STATS:
 		if (type != SHOW_RDRS)

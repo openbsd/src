@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2008/01/31 09:56:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -558,7 +558,7 @@ tableopts	: CHECK tablecheck
 				/* FALLTHROUGH */
 			case RELAY_DSTMODE_ROUNDROBIN:
 				if (rlay != NULL)
-					rlay->conf.dstmode = $2;
+					rlay->rl_conf.dstmode = $2;
 				break;
 			}
 		}
@@ -1096,8 +1096,8 @@ sslcache	: NUMBER			{
 relay		: RELAY STRING	{
 			struct relay *r;
 
-			TAILQ_FOREACH(r, conf->sc_relays, entry)
-				if (!strcmp(r->conf.name, $2))
+			TAILQ_FOREACH(r, conf->sc_relays, rl_entry)
+				if (!strcmp(r->rl_conf.name, $2))
 					break;
 			if (r != NULL) {
 				yyerror("relay %s defined twice", $2);
@@ -1107,19 +1107,19 @@ relay		: RELAY STRING	{
 			if ((r = calloc(1, sizeof (*r))) == NULL)
 				fatal("out of memory");
 
-			if (strlcpy(r->conf.name, $2, sizeof(r->conf.name)) >=
-			    sizeof(r->conf.name)) {
+			if (strlcpy(r->rl_conf.name, $2, sizeof(r->rl_conf.name)) >=
+			    sizeof(r->rl_conf.name)) {
 				yyerror("relay name truncated");
 				free(r);
 				YYERROR;
 			}
 			free($2);
-			r->conf.id = last_relay_id++;
-			r->conf.timeout.tv_sec = RELAY_TIMEOUT;
-			r->proto = NULL;
-			r->conf.proto = EMPTY_ID;
-			r->conf.dsttable = EMPTY_ID;
-			r->conf.dstretry = 0;
+			r->rl_conf.id = last_relay_id++;
+			r->rl_conf.timeout.tv_sec = RELAY_TIMEOUT;
+			r->rl_proto = NULL;
+			r->rl_conf.proto = EMPTY_ID;
+			r->rl_conf.dsttable = EMPTY_ID;
+			r->rl_conf.dstretry = 0;
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
 				free(r);
@@ -1127,30 +1127,30 @@ relay		: RELAY STRING	{
 			}
 			rlay = r;
 		} '{' optnl relayopts_l '}'	{
-			if (rlay->conf.ss.ss_family == AF_UNSPEC) {
+			if (rlay->rl_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("relay %s has no listener",
-				    rlay->conf.name);
+				    rlay->rl_conf.name);
 				YYERROR;
 			}
-			if ((rlay->conf.flags & F_NATLOOK) == 0 &&
-			    rlay->conf.dstss.ss_family == AF_UNSPEC &&
-			    rlay->conf.dsttable == EMPTY_ID) {
+			if ((rlay->rl_conf.flags & F_NATLOOK) == 0 &&
+			    rlay->rl_conf.dstss.ss_family == AF_UNSPEC &&
+			    rlay->rl_conf.dsttable == EMPTY_ID) {
 				yyerror("relay %s has no target, rdr, "
-				    "or table", rlay->conf.name);
+				    "or table", rlay->rl_conf.name);
 				YYERROR;
 			}
-			if (rlay->conf.proto == EMPTY_ID) {
-				rlay->proto = &conf->sc_proto_default;
-				rlay->conf.proto = conf->sc_proto_default.id;
+			if (rlay->rl_conf.proto == EMPTY_ID) {
+				rlay->rl_proto = &conf->sc_proto_default;
+				rlay->rl_conf.proto = conf->sc_proto_default.id;
 			}
 			if (relay_load_certfiles(rlay) == -1) {
 				yyerror("cannot load certificates for relay %s",
-				    rlay->conf.name);
+				    rlay->rl_conf.name);
 				YYERROR;
 			}
 			conf->sc_relaycount++;
-			SPLAY_INIT(&rlay->sessions);
-			TAILQ_INSERT_HEAD(conf->sc_relays, rlay, entry);
+			SPLAY_INIT(&rlay->rl_sessions);
+			TAILQ_INSERT_HEAD(conf->sc_relays, rlay, rl_entry);
 			tableport = 0;
 			rlay = NULL;
 		}
@@ -1164,9 +1164,9 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			struct addresslist	 al;
 			struct address		*h;
 
-			if (rlay->conf.ss.ss_family != AF_UNSPEC) {
+			if (rlay->rl_conf.ss.ss_family != AF_UNSPEC) {
 				yyerror("relay %s listener already specified",
-				    rlay->conf.name);
+				    rlay->rl_conf.name);
 				YYERROR;
 			}
 
@@ -1178,17 +1178,17 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 			free($3);
 			h = TAILQ_FIRST(&al);
-			bcopy(&h->ss, &rlay->conf.ss, sizeof(rlay->conf.ss));
-			rlay->conf.port = h->port;
+			bcopy(&h->ss, &rlay->rl_conf.ss, sizeof(rlay->rl_conf.ss));
+			rlay->rl_conf.port = h->port;
 			if ($5) {
-				rlay->conf.flags |= F_SSL;
+				rlay->rl_conf.flags |= F_SSL;
 				conf->sc_flags |= F_SSL;
 			}
 			tableport = h->port;
 		}
 		| FORWARD TO forwardspec
 		| FORWARD TIMEOUT NUMBER	{
-			if ((rlay->conf.timeout.tv_sec = $3) < 0) {
+			if ((rlay->rl_conf.timeout.tv_sec = $3) < 0) {
 				yyerror("invalid timeout: %d", $3);
 				YYERROR;
 			}
@@ -1205,33 +1205,33 @@ relayoptsl	: LISTEN ON STRING port optssl {
 				YYERROR;
 			}
 			p->flags |= F_USED;
-			rlay->conf.proto = p->id;
-			rlay->proto = p;
+			rlay->rl_conf.proto = p->id;
+			rlay->rl_proto = p;
 			free($2);
 		}
-		| DISABLE		{ rlay->conf.flags |= F_DISABLE; }
+		| DISABLE		{ rlay->rl_conf.flags |= F_DISABLE; }
 		| include
 		;
 
 forwardspec	: tablespec	{
-			if (rlay->dsttable) {
+			if (rlay->rl_dsttable) {
 				yyerror("table already specified");
 				purge_table(conf->sc_tables, $1);
 				YYERROR;
 			}
 
-			rlay->dsttable = $1;
-			rlay->dsttable->conf.flags |= F_USED;
-			rlay->conf.dsttable = $1->conf.id;
-			rlay->conf.dstport = $1->conf.port;
+			rlay->rl_dsttable = $1;
+			rlay->rl_dsttable->conf.flags |= F_USED;
+			rlay->rl_conf.dsttable = $1->conf.id;
+			rlay->rl_conf.dstport = $1->conf.port;
 		}
 		| STRING port retry {
 			struct addresslist	 al;
 			struct address		*h;
 
-			if (rlay->conf.dstss.ss_family != AF_UNSPEC) {
+			if (rlay->rl_conf.dstss.ss_family != AF_UNSPEC) {
 				yyerror("relay %s target or redirection already "
-				    "specified", rlay->conf.name);
+				    "specified", rlay->rl_conf.name);
 				free($1);
 				YYERROR;
 			}
@@ -1244,14 +1244,14 @@ forwardspec	: tablespec	{
 			}
 			free($1);
 			h = TAILQ_FIRST(&al);
-			bcopy(&h->ss, &rlay->conf.dstss,
-			    sizeof(rlay->conf.dstss));
-			rlay->conf.dstport = h->port;
-			rlay->conf.dstretry = $3;
+			bcopy(&h->ss, &rlay->rl_conf.dstss,
+			    sizeof(rlay->rl_conf.dstss));
+			rlay->rl_conf.dstport = h->port;
+			rlay->rl_conf.dstretry = $3;
 		}
 		| NAT LOOKUP retry		{
-			rlay->conf.flags |= F_NATLOOK;
-			rlay->conf.dstretry = $3;
+			rlay->rl_conf.flags |= F_NATLOOK;
+			rlay->rl_conf.dstretry = $3;
 		}
 		;
 
