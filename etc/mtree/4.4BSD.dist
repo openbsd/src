@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.189 2008/01/03 23:46:19 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.190 2008/01/31 22:44:40 henning Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2279,11 +2279,6 @@ mk
 # ./usr/share/nls
 nls
 # ./usr/share/nls
-..
-
-# ./usr/share/pf
-pf
-# ./usr/share/pf
 ..
 
 # ./usr/share/sendmail
