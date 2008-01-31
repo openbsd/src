@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2008/01/31 17:49:47 tobias Exp $
+#	$OpenBSD: Makefile,v 1.14 2008/01/31 21:00:16 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -39,17 +39,16 @@ LTESTS= cvs-initial \
 	cvs-diff \
 	cvs-remove-fflag \
 	cvs-status-vflag \
+	cvs-log \
+	cvs-rlog \
 	cvs-rtag-one_more_branch \
 	cvs-export
 # Known to fail.
 #	cvs-checkout-dflag
-#	cvs-rlog
 #	cvs-update-for_subdir
 # Known to behave unconform to GNU cvs.
 #	cvs-annotate-rflag-unknown_symbol-fflag
 #	cvs-diff-file
-#	cvs-log
-#	cvs-rlog
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -208,13 +207,14 @@ test-cvs-initial: clean
 	@test -d ${.OBJDIR}/regress_cvs_root/CVSROOT
 
 test-cvs-log:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q log
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    eval 'test `${CVS} -Q log | wc -l` -eq 68'
 
 test-cvs-remove-fflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q remove -f seed1.txt
 
 test-cvs-rlog:
-	@${CVS} -Q -d ${MYCVSROOT} rlog seed
+	@eval 'test `${CVS} -Q -d ${MYCVSROOT} rlog seed | wc -l` -eq 65'
 
 test-cvs-status:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
