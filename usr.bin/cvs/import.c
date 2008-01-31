@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.80 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.81 2008/01/31 21:30:08 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -289,7 +289,7 @@ import_update(struct cvs_file *cf)
 	int ret;
 	BUF *b1, *b2, *d;
 	char branch[CVS_REV_BUFSZ];
-	RCSNUM *newrev, *rev, *brev, *hrev;
+	RCSNUM *newrev, *rev, *brev;
 
 	cvs_log(LP_TRACE, "import_update(%s)", cf->file_path);
 
@@ -299,41 +299,27 @@ import_update(struct cvs_file *cf)
 	if ((brev = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_update: rcsnum_parse failed");
 
-	if (rev != NULL) {
-		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE))
-		    == NULL)
-			fatal("import_update: failed to grab revision");
+	if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE)) == NULL)
+		fatal("import_update: failed to grab revision");
 
-		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
-			fatal("import_update: failed to load %s",
-			    cf->file_path);
+	if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
+		fatal("import_update: failed to load %s", cf->file_path);
 
-		ret = cvs_buf_differ(b1, b2);
-		cvs_buf_free(b1);
-		cvs_buf_free(b2);
-		if (ret == 0) {
-			import_tag(cf, brev, rev);
-			rcsnum_free(brev);
-			rcs_write(cf->file_rcs);
-			return;
-		}
+	ret = cvs_buf_differ(b1, b2);
+	cvs_buf_free(b1);
+	cvs_buf_free(b2);
+	if (ret == 0) {
+		import_tag(cf, brev, rev);
+		rcsnum_free(brev);
+		rcs_write(cf->file_rcs);
+		return;
 	}
 
 	if (cf->file_rcs->rf_branch != NULL)
 		rcsnum_tostr(cf->file_rcs->rf_branch, branch, sizeof(branch));
 
-	if (rev != NULL) {
-		d = import_get_rcsdiff(cf, rev);
-		newrev = rcsnum_inc(rev);
-	} else {
-		hrev = rcs_head_get(cf->file_rcs);
-		if (hrev == NULL)
-			fatal("RCS head empty or missing in %s\n",
-			    cf->file_rcs->rf_path);
-		d = import_get_rcsdiff(cf, hrev);
-		rcsnum_free(hrev);
-		newrev = rcsnum_brtorev(brev);
-	}
+	d = import_get_rcsdiff(cf, rev);
+	newrev = rcsnum_inc(rev);
 
 	if (rcs_rev_add(cf->file_rcs, newrev, logmsg, -1, NULL) == -1)
 		fatal("import_update: failed to add new revision");
