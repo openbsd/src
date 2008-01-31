@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.62 2008/01/28 20:31:07 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.63 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -49,7 +49,7 @@ struct cvs_cmd cvs_cmd_rtag = {
 };
 
 struct cvs_cmd cvs_cmd_tag = {
-	CVS_OP_TAG, 0, "tag",
+	CVS_OP_TAG, CVS_USE_WDIR, "tag",
 	{ "ta", "freeze" },
 	"Add a symbolic tag to checked out version of files",
 	"[-bcdFflR] [-D date | -r rev] tag [file ...]",
@@ -102,6 +102,8 @@ cvs_tag(int argc, char **argv)
 	argv += optind;
 
 	if (cvs_cmdop == CVS_OP_RTAG) {
+		flags |= CR_REPO;
+
 		if (argc < 2)
 			fatal("%s", cvs_cmd_rtag.cmd_synopsis);
         

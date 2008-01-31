@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.19 2008/01/28 20:31:07 tobias Exp $	*/
+/*	$OpenBSD: watch.c,v 1.20 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -37,7 +37,7 @@ static int	watch_req = 0;
 static int	watch_aflags = 0;
 
 struct cvs_cmd cvs_cmd_watch = {
-	CVS_OP_WATCH, 0, "watch",
+	CVS_OP_WATCH, CVS_USE_WDIR, "watch",
 	{ },
 	"Set watches",
 	"on | off | add | remove [-lR] [-a action] [file ...]",
@@ -47,7 +47,7 @@ struct cvs_cmd cvs_cmd_watch = {
 };
 
 struct cvs_cmd cvs_cmd_watchers = {
-	CVS_OP_WATCHERS, 0, "watchers",
+	CVS_OP_WATCHERS, CVS_USE_WDIR, "watchers",
 	{ },
 	"See who is watching a file",
 	"[-lR] [file ...]",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.80 2008/01/12 22:39:32 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.81 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -40,7 +40,7 @@ char	*slist = NULL;
 char	*wlist = NULL;
 
 struct cvs_cmd cvs_cmd_log = {
-	CVS_OP_LOG, 0, "log",
+	CVS_OP_LOG, CVS_USE_WDIR, "log",
 	{ "lo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
@@ -106,6 +106,8 @@ cvs_getlog(int argc, char **argv)
 	argv += optind;
 
 	if (cvs_cmdop == CVS_OP_RLOG) {
+		flags |= CR_REPO;
+
 		if (argc == 0)
 			return 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.111 2008/01/28 21:35:09 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.112 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -39,7 +39,7 @@ extern int build_dirs;
 static int flags = CR_REPO | CR_RECURSE_DIRS;
 
 struct cvs_cmd cvs_cmd_checkout = {
-	CVS_OP_CHECKOUT, 0, "checkout",
+	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
 	{ "co", "get" },
 	"Checkout a working copy of a repository",
 	"[-AcflNnPpRs] [-D date | -r tag] [-d dir] [-j rev] [-k mode] "
@@ -50,7 +50,7 @@ struct cvs_cmd cvs_cmd_checkout = {
 };
 
 struct cvs_cmd cvs_cmd_export = {
-	CVS_OP_EXPORT, 0, "export",
+	CVS_OP_EXPORT, CVS_USE_WDIR, "export",
 	{ "exp", "ex" },
 	"Export sources from CVS, similar to checkout",
 	"[-flNnR] [-d dir] [-k mode] -D date | -r rev module ...",
@@ -78,6 +78,7 @@ cvs_checkout(int argc, char **argv)
 			prune_dirs = 1;
 			break;
 		case 'p':
+			cmdp->cmd_flags &= ~CVS_USE_WDIR;
 			print_stdout = 1;
 			cvs_noexec = 1;
 			break;
@@ -237,8 +238,13 @@ checkout_repository(const char *repobase, const char *wdbase)
 	cvs_history_add((cvs_cmdop == CVS_OP_CHECKOUT) ?
 	    CVS_HISTORY_CHECKOUT : CVS_HISTORY_EXPORT, NULL, wdbase);
 
-	cr.enterdir = cvs_update_enterdir;
-	cr.leavedir = cvs_update_leavedir;
+	if (print_stdout) {
+		cr.enterdir = NULL;
+		cr.leavedir = NULL;
+	} else {
+		cr.enterdir = cvs_update_enterdir;
+		cr.leavedir = cvs_update_leavedir;
+	}
 	cr.fileproc = cvs_update_local;
 	cr.flags = flags;
 

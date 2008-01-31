@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.77 2008/01/29 12:01:52 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.78 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -76,7 +76,7 @@ static char *server_argv[CVS_CMD_MAXARG];
 static int server_argc = 1;
 
 struct cvs_cmd cvs_cmd_server = {
-	CVS_OP_SERVER, 0, "server", { "", "" },
+	CVS_OP_SERVER, CVS_USE_WDIR, "server", { "", "" },
 	"server mode",
 	NULL,
 	NULL,
@@ -504,6 +504,7 @@ cvs_server_add(char *data)
 		fatal("cvs_server_add: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_ADD;
+	cmdp->cmd_flags = cvs_cmd_add.cmd_flags;
 	cvs_add(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -515,6 +516,7 @@ cvs_server_import(char *data)
 		fatal("cvs_server_import: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_IMPORT;
+	cmdp->cmd_flags = cvs_cmd_import.cmd_flags;
 	cvs_import(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -526,6 +528,7 @@ cvs_server_admin(char *data)
 		fatal("cvs_server_admin: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_ADMIN;
+	cmdp->cmd_flags = cvs_cmd_admin.cmd_flags;
 	cvs_admin(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -537,6 +540,7 @@ cvs_server_annotate(char *data)
 		fatal("cvs_server_annotate: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_ANNOTATE;
+	cmdp->cmd_flags = cvs_cmd_annotate.cmd_flags;
 	cvs_annotate(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -548,6 +552,7 @@ cvs_server_commit(char *data)
 		fatal("cvs_server_commit: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_COMMIT;
+	cmdp->cmd_flags = cvs_cmd_commit.cmd_flags;
 	cvs_commit(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -559,6 +564,7 @@ cvs_server_checkout(char *data)
 		fatal("cvs_server_checkout: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_CHECKOUT;
+	cmdp->cmd_flags = cvs_cmd_checkout.cmd_flags;
 	cvs_checkout(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -570,6 +576,7 @@ cvs_server_diff(char *data)
 		fatal("cvs_server_diff: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_DIFF;
+	cmdp->cmd_flags = cvs_cmd_diff.cmd_flags;
 	cvs_diff(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -581,6 +588,7 @@ cvs_server_export(char *data)
 		fatal("cvs_server_export: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_EXPORT;
+	cmdp->cmd_flags = cvs_cmd_export.cmd_flags;
 	cvs_checkout(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -598,6 +606,7 @@ cvs_server_init(char *data)
 		fatal("Invalid argument for init");
 
 	cvs_cmdop = CVS_OP_INIT;
+	cmdp->cmd_flags = cvs_cmd_init.cmd_flags;
 	cvs_init(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -609,6 +618,7 @@ cvs_server_release(char *data)
 		fatal("cvs_server_release: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RELEASE;
+	cmdp->cmd_flags = cvs_cmd_release.cmd_flags;
 	cvs_release(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -620,6 +630,7 @@ cvs_server_remove(char *data)
 		fatal("cvs_server_remove: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_REMOVE;
+	cmdp->cmd_flags = cvs_cmd_remove.cmd_flags;
 	cvs_remove(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -631,6 +642,7 @@ cvs_server_status(char *data)
 		fatal("cvs_server_status: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_STATUS;
+	cmdp->cmd_flags = cvs_cmd_status.cmd_flags;
 	cvs_status(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -642,6 +654,7 @@ cvs_server_log(char *data)
 		fatal("cvs_server_log: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_LOG;
+	cmdp->cmd_flags = cvs_cmd_log.cmd_flags;
 	cvs_getlog(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -653,6 +666,7 @@ cvs_server_rlog(char *data)
 		fatal("cvs_server_rlog: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RLOG;
+	cmdp->cmd_flags = cvs_cmd_rlog.cmd_flags;
 	cvs_getlog(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -664,6 +678,7 @@ cvs_server_tag(char *data)
 		fatal("cvs_server_tag: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_TAG;
+	cmdp->cmd_flags = cvs_cmd_tag.cmd_flags;
 	cvs_tag(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -675,6 +690,7 @@ cvs_server_rtag(char *data)
 		fatal("cvs_server_rtag: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RTAG;
+	cmdp->cmd_flags = cvs_cmd_rtag.cmd_flags;
 	cvs_tag(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -686,6 +702,7 @@ cvs_server_update(char *data)
 		fatal("cvs_server_update: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_UPDATE;
+	cmdp->cmd_flags = cvs_cmd_update.cmd_flags;
 	cvs_update(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
@@ -694,6 +711,7 @@ void
 cvs_server_version(char *data)
 {
 	cvs_cmdop = CVS_OP_VERSION;
+	cmdp->cmd_flags = cvs_cmd_version.cmd_flags;
 	cvs_version(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }

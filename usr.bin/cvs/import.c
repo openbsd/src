@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.79 2008/01/10 09:54:04 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.80 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -47,7 +47,7 @@ char *import_repository = NULL;
 int import_conflicts = 0;
 
 struct cvs_cmd cvs_cmd_import = {
-	CVS_OP_IMPORT, 0, "import",
+	CVS_OP_IMPORT, CVS_USE_WDIR, "import",
 	{ "im", "imp" },
 	"Import sources into CVS, using vendor branches",
 	"[-b branch] [-d] [-k mode] [-m message] "

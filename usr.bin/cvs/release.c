@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.37 2008/01/10 10:05:40 tobias Exp $	*/
+/*	$OpenBSD: release.c,v 1.38 2008/01/31 10:15:05 tobias Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -31,7 +31,7 @@ static int	dflag = 0;
 static int	files_altered = 0;
 
 struct cvs_cmd cvs_cmd_release = {
-	CVS_OP_RELEASE, 0, "release",
+	CVS_OP_RELEASE, CVS_USE_WDIR, "release",
 	{ "re", "rel" },
 	"Indicate that a Module is no longer in use",
 	"[-d] dir...",

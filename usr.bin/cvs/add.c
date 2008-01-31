@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.87 2008/01/29 12:22:59 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.88 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -41,7 +41,7 @@ static char	 kbuf[8], *koptstr;
 char	*logmsg;
 
 struct cvs_cmd cvs_cmd_add = {
-	CVS_OP_ADD, 0, "add",
+	CVS_OP_ADD, CVS_USE_WDIR, "add",
 	{ "ad", "new" },
 	"Add a new file or directory to the repository",
 	"[-k mode] [-m message] ...",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.68 2008/01/28 20:31:07 tobias Exp $	*/
+/*	$OpenBSD: remove.c,v 1.69 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -32,7 +32,7 @@ static int	removed = 0;
 static int	existing = 0;
 
 struct cvs_cmd cvs_cmd_remove = {
-	CVS_OP_REMOVE, 0, "remove",
+	CVS_OP_REMOVE, CVS_USE_WDIR, "remove",
 	{ "rm", "delete" },
 	"Remove an entry from the repository",
 	"[-flR] [file ...]",

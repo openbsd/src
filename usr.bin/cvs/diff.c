@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.123 2008/01/29 12:00:34 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.124 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,7 +32,7 @@ static char *rev1 = NULL;
 static char *rev2 = NULL;
 
 struct cvs_cmd cvs_cmd_diff = {
-	CVS_OP_DIFF, 0, "diff",
+	CVS_OP_DIFF, CVS_USE_WDIR, "diff",
 	{ "di", "dif" },
 	"Show differences between revisions",
 	"[-cilNnpRu] [[-D date] [-r rev] [-D date2 | -r rev2]] "

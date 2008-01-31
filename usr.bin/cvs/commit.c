@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.123 2008/01/29 11:58:59 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.124 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -42,7 +42,7 @@ int	conflicts_found;
 char	*logmsg = NULL;
 
 struct cvs_cmd cvs_cmd_commit = {
-	CVS_OP_COMMIT, 0, "commit",
+	CVS_OP_COMMIT, CVS_USE_WDIR, "commit",
 	{ "ci", "com" },
 	"Check files into the repository",
 	"[-flR] [-F logfile | -m msg] [-r rev] ...",

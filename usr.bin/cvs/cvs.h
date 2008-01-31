@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.148 2008/01/10 10:05:40 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.149 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,6 +100,9 @@
 #define CVS_CMD_MAXDESCRLEN	64
 #define CVS_CMD_MAXARG		128
 
+/* flags */
+#define CVS_USE_WDIR		1
+
 /* defaults */
 #define CVS_SERVER_DEFAULT	"cvs"
 #define CVS_RSH_DEFAULT		"ssh"
@@ -166,7 +169,7 @@ void	cvs_history_add(int, struct cvs_file *, const char *);
 
 struct cvs_cmd {
 	u_int	 cmd_op;
-	u_int	 cmd_req;
+	u_int	 cmd_flags;
 	char	 cmd_name[CVS_CMD_MAXNAMELEN];
 	char	 cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
 	char	 cmd_descr[CVS_CMD_MAXDESCRLEN];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.34 2007/09/10 10:56:37 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.35 2008/01/31 10:15:05 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -30,7 +30,7 @@
 void	cvs_history_local(struct cvs_file *);
 
 struct cvs_cmd		cvs_cmd_history = {
-	CVS_OP_HISTORY, 0, "history",
+	CVS_OP_HISTORY, CVS_USE_WDIR, "history",
 	{ "hi", "his" },			/* omghi2you */
 	"Display history of actions done in the base repository",
 	"[-ac]",
