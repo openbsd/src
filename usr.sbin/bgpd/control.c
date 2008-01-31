@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.57 2007/12/23 18:26:13 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.58 2008/01/31 12:17:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -131,6 +131,7 @@ control_accept(int listenfd, int restricted)
 
 	if ((ctl_conn = malloc(sizeof(struct ctl_conn))) == NULL) {
 		log_warn("session_control_accept");
+		close(connfd);
 		return (0);
 	}
 
