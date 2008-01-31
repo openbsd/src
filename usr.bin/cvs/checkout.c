@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.113 2008/01/31 19:38:59 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.114 2008/01/31 19:49:05 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -303,7 +303,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	struct timeval tv[2];
 	char *tosend;
 	char template[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
-	char kbuf[8], stickytag[32], rev[CVS_REV_BUFSZ];
+	char kbuf[8], sticky[32], rev[CVS_REV_BUFSZ];
 	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 
 	exists = 0;
@@ -372,17 +372,15 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 
 	if (co_flags & CO_SETSTICKY)
 		if (tag != NULL)
-			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
-			    tag);
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
 		else
-			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
-			    rev);
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s", rev);
 	else if (!reset_stickies && cf->file_ent != NULL &&
 	    cf->file_ent->ce_tag != NULL)
-		(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
+		(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 		    cf->file_ent->ce_tag);
 	else
-		stickytag[0] = '\0';
+		sticky[0] = '\0';
 
 	kbuf[0] = '\0';
 	if (cf->file_ent != NULL) {
@@ -396,7 +394,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	}
 
 	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
-	    cf->file_name, rev, timebuf, kbuf, stickytag);
+	    cf->file_name, rev, timebuf, kbuf, sticky);
 
 	if (cvs_server_active == 0) {
 		if (!(co_flags & CO_REMOVE) && cvs_cmdop != CVS_OP_EXPORT) {
