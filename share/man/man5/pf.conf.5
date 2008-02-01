@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.390 2007/11/21 03:58:46 ray Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.391 2008/02/01 07:26:41 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 21 2007 $
+.Dd $Mdocdate: February 1 2008 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2462,10 +2462,8 @@ into the anchor.
 .Pp
 Optionally,
 .Ar anchor
-rules can specify the parameter's
-direction, interface, address family, protocol and source/destination
-address/port
-using the same syntax as filter rules.
+rules can specify packet filtering parameters using the same syntax as
+filter rules.
 When parameters are used, the
 .Ar anchor
 rule is only evaluated for matching packets.
@@ -2842,7 +2840,7 @@ queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
                  subqueue
 
 anchor-rule    = "anchor" [ string ] [ ( "in" | "out" ) ] [ "on" ifspec ]
-                 [ af ] [ protospec ] [ hosts ] [ "{" ]
+                 [ af ] [ protospec ] [ hosts ] [ filteropt-list ] [ "{" ]
 
 anchor-close   = "}"
 
