@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2007/11/09 16:03:25 tobias Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2008/02/01 18:10:26 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,25 +30,66 @@
 void
 cvs_parse_configfile(void)
 {
-	FILE *fp;
-	size_t len;
+	cvs_log(LP_TRACE, "cvs_parse_configfile()");
+	cvs_read_config(CVS_PATH_CONFIG, config_parse_line);
+}
+
+void
+config_parse_line(char *line)
+{
 	struct rlimit rl;
 	const char *errstr;
-	char *p, *buf, *ep, *lbuf, *opt, *val, fpath[MAXPATHLEN];
+	char *val, *opt, *ep;
+
+	opt = line;
+	if ((val = strrchr(opt, '=')) == NULL)
+		fatal("cvs_parse_configfile: bad option '%s'", opt);
+
+	*(val++) = '\0';
+
+	if (!strcmp(opt, "tag")) {
+		if (cvs_tagname != NULL)
+			xfree(cvs_tagname);
+		cvs_tagname = xstrdup(val);
+	} else if (!strcmp(opt, "umask")) {
+		cvs_umask = strtol(val, &ep, 8);
+
+		if (val == ep || *ep != '\0')
+			fatal("cvs_parse_configfile: umask %s is "
+			    "invalid", val);
+		if (cvs_umask < 0 || cvs_umask > 07777)
+			fatal("cvs_parse_configfile: umask %s is "
+			    "invalid", val);
+	} else if (!strcmp(opt, "dlimit")) {
+		if (getrlimit(RLIMIT_DATA, &rl) != -1) {
+			rl.rlim_cur = (int)strtonum(val, 0, INT_MAX,
+			    &errstr);
+			if (errstr != NULL)
+				fatal("cvs_parse_configfile: %s: %s",
+				    val, errstr);
+			rl.rlim_cur = rl.rlim_cur * 1024;
+			(void)setrlimit(RLIMIT_DATA, &rl);
+		}
+	} else {
+		cvs_log(LP_ERR, "ignoring unknown option '%s'", opt);
+	}
+}
+
+void
+cvs_read_config(char *name, void (*cb)(char *))
+{
+	FILE *fp;
+	size_t len;
+	char *p, *buf, *lbuf, fpath[MAXPATHLEN];
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
-	    current_cvsroot->cr_dir, CVS_PATH_CONFIG);
+	    current_cvsroot->cr_dir, name);
 
-	cvs_log(LP_TRACE, "cvs_parse_configfile(%s)", fpath);
-
-	if ((fp = fopen(fpath, "r")) == NULL) {
-		if (errno != ENOENT)
-			cvs_log(LP_ERRNO, "%s", CVS_PATH_CONFIG);
+	if ((fp = fopen(fpath, "r")) == NULL)
 		return;
-	}
 
 	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
+	while ((buf = fgetln(fp, &len)) != NULL) {
 		if (buf[len - 1] == '\n') {
 			buf[len - 1] = '\0';
 		} else {
@@ -59,51 +100,17 @@ cvs_parse_configfile(void)
 		}
 
 		p = buf;
-		while (*p == ' ')
+		while (*p == ' ' || *p == '\t')
 			p++;
 
-		if (p[0] == '#' || p[0] == '\0') {
-			if (lbuf != NULL)
-				xfree(lbuf);
+		if (p[0] == '#' || p[0] == '\0')
 			continue;
-		}
 
-		opt = p;
-		if ((val = strrchr(opt, '=')) == NULL)
-			fatal("cvs_parse_configfile: bad option '%s'", opt);
-
-		*(val++) = '\0';
-
-		if (!strcmp(opt, "tag")) {
-			if (cvs_tagname != NULL)
-				xfree(cvs_tagname);
-			cvs_tagname = xstrdup(val);
-		} else if (!strcmp(opt, "umask")) {
-			cvs_umask = strtol(val, &ep, 8);
-
-			if (val == ep || *ep != '\0')
-				fatal("cvs_parse_configfile: umask %s is "
-				    "invalid", val);
-			if (cvs_umask < 0 || cvs_umask > 07777)
-				fatal("cvs_parse_configfile: umask %s is "
-				    "invalid", val);
-		} else if (!strcmp(opt, "dlimit")) {
-			if (getrlimit(RLIMIT_DATA, &rl) != -1) {
-				rl.rlim_cur = (int)strtonum(val, 0, INT_MAX,
-				    &errstr);
-				if (errstr != NULL)
-					fatal("cvs_parse_configfile: %s: %s",
-					    val, errstr);
-				rl.rlim_cur = rl.rlim_cur * 1024;
-				(void)setrlimit(RLIMIT_DATA, &rl);
-			}
-		} else {
-			cvs_log(LP_ERR, "ignoring unknown option '%s'", opt);
-		}
-
-		if (lbuf != NULL)
-			xfree(lbuf);
+		cb(p);
 	}
+
+	if (lbuf != NULL)
+		xfree(lbuf);
 
 	(void)fclose(fp);
 }
