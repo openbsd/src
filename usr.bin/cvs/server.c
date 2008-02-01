@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.79 2008/01/31 22:09:05 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.80 2008/02/01 17:18:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -541,6 +541,18 @@ cvs_server_annotate(char *data)
 
 	cvs_cmdop = CVS_OP_ANNOTATE;
 	cmdp->cmd_flags = cvs_cmd_annotate.cmd_flags;
+	cvs_annotate(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_rannotate(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_rannotate: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_RANNOTATE;
+	cmdp->cmd_flags = cvs_cmd_rannotate.cmd_flags;
 	cvs_annotate(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }

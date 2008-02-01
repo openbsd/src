@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.149 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.150 2008/02/01 17:18:59 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -332,6 +332,7 @@ extern struct cvs_cmd cvs_cmd_history;
 extern struct cvs_cmd cvs_cmd_import;
 extern struct cvs_cmd cvs_cmd_init;
 extern struct cvs_cmd cvs_cmd_log;
+extern struct cvs_cmd cvs_cmd_rannotate;
 extern struct cvs_cmd cvs_cmd_rdiff;
 extern struct cvs_cmd cvs_cmd_release;
 extern struct cvs_cmd cvs_cmd_remove;
