@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2008/01/31 21:00:16 tobias Exp $
+#	$OpenBSD: Makefile,v 1.15 2008/02/01 13:36:43 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -33,6 +33,7 @@ LTESTS= cvs-initial \
 	cvs-annotate \
 	cvs-annotate-rflag-inval_branch_rev \
 	cvs-annotate-rflag-inval_branch_rev-fflag \
+	cvs-annotate-rflag-unknown_symbol-fflag \
 	cvs-checkout-rflag-1.1 \
 	cvs-update-Aflag \
 	cvs-status \
@@ -47,7 +48,6 @@ LTESTS= cvs-initial \
 #	cvs-checkout-dflag
 #	cvs-update-for_subdir
 # Known to behave unconform to GNU cvs.
-#	cvs-annotate-rflag-unknown_symbol-fflag
 #	cvs-diff-file
 
 .for t in ${LTESTS}
