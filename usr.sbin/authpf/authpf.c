@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.105 2007/09/25 11:20:34 chl Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.106 2008/02/01 07:08:03 mcbride Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -46,6 +46,7 @@ static void	print_message(char *);
 static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
 static int	remove_stale_rulesets(void);
+static int	recursive_ruleset_purge(char *, char *);
 static int	change_filter(int, const char *, const char *);
 static int	change_table(int, const char *);
 static void	authpf_kill_states(void);
@@ -571,7 +572,7 @@ static int
 remove_stale_rulesets(void)
 {
 	struct pfioc_ruleset	 prs;
-	u_int32_t		 nr, mnr;
+	u_int32_t		 nr;
 
 	memset(&prs, 0, sizeof(prs));
 	strlcpy(prs.path, anchorname, sizeof(prs.path));
@@ -582,13 +583,12 @@ remove_stale_rulesets(void)
 			return (1);
 	}
 
-	mnr = prs.nr;
-	nr = 0;
-	while (nr < mnr) {
+	nr = prs.nr;
+	while (nr) {
 		char	*s, *t;
 		pid_t	 pid;
 
-		prs.nr = nr;
+		prs.nr = nr - 1;
 		if (ioctl(dev, DIOCGETRULESET, &prs))
 			return (1);
 		errno = 0;
@@ -600,31 +600,75 @@ remove_stale_rulesets(void)
 		if (!prs.name[0] || errno ||
 		    (*s && (t == prs.name || *s != ')')))
 			return (1);
-		if (kill(pid, 0) && errno != EPERM) {
-			int			i;
-			struct pfioc_trans_e	t_e[PF_RULESET_MAX+1];
-			struct pfioc_trans	t;
-
-			bzero(&t, sizeof(t));
-			bzero(t_e, sizeof(t_e));
-			t.size = PF_RULESET_MAX+1;
-			t.esize = sizeof(t_e[0]);
-			t.array = t_e;
-			for (i = 0; i < PF_RULESET_MAX+1; ++i) {
-				t_e[i].rs_num = i;
-				snprintf(t_e[i].anchor, sizeof(t_e[i].anchor),
-				    "%s/%s", anchorname, prs.name);
-			}
-			t_e[PF_RULESET_MAX].rs_num = PF_RULESET_TABLE;
-			if ((ioctl(dev, DIOCXBEGIN, &t) ||
-			    ioctl(dev, DIOCXCOMMIT, &t)) &&
-			    errno != EINVAL)
+		if ((kill(pid, 0) && errno != EPERM) || pid == getpid()) {
+			if (recursive_ruleset_purge(anchorname, prs.name))
 				return (1);
-			mnr--;
-		} else
-			nr++;
+		}
+		nr--;
 	}
 	return (0);
+}
+
+static int
+recursive_ruleset_purge(char *an, char *rs)
+{
+	struct pfioc_trans_e     *t_e = NULL;
+	struct pfioc_trans	 *t = NULL;
+	struct pfioc_ruleset	 *prs = NULL;
+	int			  i;
+
+
+	/* purge rules */
+	errno = 0;
+	if ((t = calloc(1, sizeof(struct pfioc_trans))) == NULL)
+		goto no_mem;
+	if ((t_e = calloc(PF_RULESET_MAX+1,
+	    sizeof(struct pfioc_trans_e))) == NULL)
+		goto no_mem;
+	t->size = PF_RULESET_MAX+1;
+	t->esize = sizeof(struct pfioc_trans_e);
+	t->array = t_e;
+	for (i = 0; i < PF_RULESET_MAX+1; ++i) {
+		t_e[i].rs_num = i;
+		snprintf(t_e[i].anchor, sizeof(t_e[i].anchor), "%s/%s", an, rs);
+	}
+	t_e[PF_RULESET_MAX].rs_num = PF_RULESET_TABLE;
+	if ((ioctl(dev, DIOCXBEGIN, t) ||
+	    ioctl(dev, DIOCXCOMMIT, t)) &&
+	    errno != EINVAL)
+		goto cleanup;
+
+	/* purge any children */
+	if ((prs = calloc(1, sizeof(struct pfioc_ruleset))) == NULL)
+		goto no_mem;
+	snprintf(prs->path, sizeof(prs->path), "%s/%s", an, rs);
+	if (ioctl(dev, DIOCGETRULESETS, prs)) {
+		if (errno != EINVAL)
+			goto cleanup;
+		errno = 0;
+	} else {
+		int nr = prs->nr;
+
+		while (nr) {
+			prs->nr = 0;
+			if (ioctl(dev, DIOCGETRULESET, prs))
+				goto cleanup;
+
+			if (recursive_ruleset_purge(prs->path, prs->name))
+				goto cleanup;
+			nr--;
+		}
+	}
+
+no_mem:
+	if (errno == ENOMEM)
+		syslog(LOG_ERR, "calloc failed");
+
+cleanup:
+	free(t);
+	free(t_e);
+	free(prs);
+	return (errno);
 }
 
 /*
@@ -644,67 +688,63 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	gid_t   gid;
 	int	s;
 
-	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
-		syslog(LOG_ERR, "invalid luser/ipsrc");
-		goto error;
-	}
-
-	if (asprintf(&rsn, "%s/%s", anchorname, rulesetname) == -1)
-		goto no_mem;
-	if (asprintf(&fdpath, "/dev/fd/%d", dev) == -1)
-		goto no_mem;
-	if (asprintf(&ipstr, "user_ip=%s", ipsrc) == -1)
-		goto no_mem;
-	if (asprintf(&userstr, "user_id=%s", luser) == -1)
-		goto no_mem;
-
 	if (add) {
 		struct stat sb;
 
-		if (asprintf(&fn, "%s/%s/authpf.rules", PATH_USER_DIR, luser)
-		    == -1)
+		if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
+			syslog(LOG_ERR, "invalid luser/ipsrc");
+			goto error;
+		}
+
+		if (asprintf(&rsn, "%s/%s", anchorname, rulesetname) == -1)
+			goto no_mem;
+		if (asprintf(&fdpath, "/dev/fd/%d", dev) == -1)
+			goto no_mem;
+		if (asprintf(&ipstr, "user_ip=%s", ipsrc) == -1)
+			goto no_mem;
+		if (asprintf(&userstr, "user_id=%s", luser) == -1)
+			goto no_mem;
+		if (asprintf(&fn, "%s/%s/authpf.rules",
+		    PATH_USER_DIR, luser) == -1)
 			goto no_mem;
 		if (stat(fn, &sb) == -1) {
 			free(fn);
 			if ((fn = strdup(PATH_PFRULES)) == NULL)
 				goto no_mem;
 		}
-	}
-	pargv[2] = fdpath;
-	pargv[5] = rsn;
-	pargv[7] = userstr;
-	pargv[9] = ipstr;
-	if (!add)
-		pargv[11] = "/dev/null";
-	else
+		pargv[2] = fdpath;
+		pargv[5] = rsn;
+		pargv[7] = userstr;
+		pargv[9] = ipstr;
 		pargv[11] = fn;
 
-	switch (pid = fork()) {
-	case -1:
-		syslog(LOG_ERR, "fork failed");
-		goto error;
-	case 0:
-		/* revoke group privs before exec */
-		gid = getgid();
-		if (setregid(gid, gid) == -1) {
-			err(1, "setregid");
+		switch (pid = fork()) {
+		case -1:
+			syslog(LOG_ERR, "fork failed");
+			goto error;
+		case 0:
+			/* revoke group privs before exec */
+			gid = getgid();
+			if (setregid(gid, gid) == -1) {
+				err(1, "setregid");
+			}
+			execvp(PATH_PFCTL, pargv);
+			warn("exec of %s failed", PATH_PFCTL);
+			_exit(1);
 		}
-		execvp(PATH_PFCTL, pargv);
-		warn("exec of %s failed", PATH_PFCTL);
-		_exit(1);
-	}
 
-	/* parent */
-	waitpid(pid, &s, 0);
-	if (s != 0) {
-		syslog(LOG_ERR, "pfctl exited abnormally");
-		goto error;
-	}
+		/* parent */
+		waitpid(pid, &s, 0);
+		if (s != 0) {
+			syslog(LOG_ERR, "pfctl exited abnormally");
+			goto error;
+		}
 
-	if (add) {
 		gettimeofday(&Tstart, NULL);
 		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
 	} else {
+		remove_stale_rulesets();
+
 		gettimeofday(&Tend, NULL);
 		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
@@ -823,7 +863,6 @@ do_death(int active)
 		change_filter(0, luser, ipsrc);
 		change_table(0, ipsrc);
 		authpf_kill_states();
-		remove_stale_rulesets();
 	}
 	if (pidfile[0] && (pidfp != NULL))
 		if (unlink(pidfile) == -1)
