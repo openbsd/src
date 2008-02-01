@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.535 2007/11/13 00:47:56 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.536 2008/02/01 06:58:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -742,6 +742,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 		    filter_opts pfa_anchor
 		{
 			struct pf_rule	r;
+			struct node_proto	*proto;
 
 			if (check_rulestate(PFCTL_STATE_FILTER)) {
 				if ($2)
@@ -792,6 +793,55 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			r.prob = $9.prob;
 			r.rtableid = $9.rtableid;
 
+			if ($9.tag)
+				if (strlcpy(r.tagname, $9.tag,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			if ($9.match_tag)
+				if (strlcpy(r.match_tagname, $9.match_tag,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			r.match_tag_not = $9.match_tag_not;
+			if (rule_label(&r, $9.label))
+				YYERROR;
+			free($9.label);
+			r.flags = $9.flags.b1;
+			r.flagset = $9.flags.b2;
+			if (($9.flags.b1 & $9.flags.b2) != $9.flags.b1) {
+				yyerror("flags always false");
+				YYERROR;
+			}
+			if ($9.flags.b1 || $9.flags.b2 || $8.src_os) {
+				for (proto = $7; proto != NULL &&
+				    proto->proto != IPPROTO_TCP;
+				    proto = proto->next)
+					;	/* nothing */
+				if (proto == NULL && $7 != NULL) {
+					if ($9.flags.b1 || $9.flags.b2)
+						yyerror(
+						    "flags only apply to tcp");
+					if ($8.src_os)
+						yyerror(
+						    "OS fingerprinting only "
+						    "applies to tcp");
+					YYERROR;
+				}
+			}
+
+			r.tos = $9.tos;
+
+			if ($9.keep.action) {
+				yyerror("cannot specify state handling "
+				    "on anchors");
+				YYERROR;
+			}
+
 			if ($9.match_tag)
 				if (strlcpy(r.match_tagname, $9.match_tag,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
@@ -806,8 +856,8 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			expand_rule(&r, $5, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    0, 0, 0, pf->astack[pf->asd + 1] ?
-			    pf->alast->name : $2);
+			    $9.uid, $9.gid, $9.icmpspec,
+			    pf->astack[pf->asd + 1] ? pf->alast->name : $2);
 			free($2);
 			pf->astack[pf->asd + 1] = NULL;
 		}
