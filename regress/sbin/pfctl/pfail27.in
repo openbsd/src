@@ -3,3 +3,4 @@
 rdr-anchor foo from 10/8 port 1024 to any
 rdr-anchor foo to 10/8 port { 80, 443 }
 rdr-anchor foo to 10/8 port 6000:7000
+anchor foo keep state

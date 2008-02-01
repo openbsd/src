@@ -1,3 +1,4 @@
 stdin:3: source port parameter not supported in rdr-anchor
 stdin:4: destination port list expansion not supported in rdr-anchor
 stdin:5: destination port operators not supported in rdr-anchor
+stdin:6: cannot specify state handling on anchors
