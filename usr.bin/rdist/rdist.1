@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.35 2007/05/31 19:20:15 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.36 2008/02/02 22:16:43 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 2 2008 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -63,6 +63,7 @@
 is a program to maintain identical copies of files over multiple hosts.
 It preserves the owner, group, mode, and mtime of files if possible and
 can update programs that are executing.
+.Pp
 .Nm
 reads commands from
 .Pa distfile
@@ -83,7 +84,18 @@ If no names are specified on the command line,
 .Nm
 will update all of the files and directories listed in
 .Pa distfile .
-Otherwise, the argument is taken to be the name of a file to be updated
+If the file
+.Pa /etc/Distfile
+exists,
+it will be run automatically by the clock daemon
+.Xr cron 8 ,
+via the system script
+.Xr daily 8 .
+.Pp
+If
+.Ar name
+is specified,
+it is taken to be the name of a file to be updated
 or the label of a command to execute.
 If label and file names conflict, it is assumed to be a label.
 These may be used together to update specific files using specific commands.
@@ -733,8 +745,12 @@ The default is
 .Pa /tmp .
 .El
 .Sh FILES
-.Bl -tag -width "$TMPDIR/rdist*" -compact
+.Bl -tag -width "$TMPDIR/rdist*XXX" -compact
 .It {d,D}istfile
+.Nm
+command file.
+.It /etc/Distfile
+System-wide
 .Nm
 command file.
 .It $TMPDIR/rdist*
@@ -806,6 +822,7 @@ notifying root@cory if an update has happened:
 .Xr sh 1 ,
 .Xr ssh 1 ,
 .Xr re_format 7 ,
+.Xr daily 8 ,
 .Xr syslogd 8
 .Sh STANDARDS
 The options
