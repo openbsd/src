@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.243 2008/01/31 22:19:36 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.244 2008/02/02 16:59:48 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2657,8 +2657,14 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		rev = rcs_sym_getrev(rfp, revstr);
 	}
 
+	/*
+	 * Although many cvs commands do have option -f to force head
+	 * if a revision is not found, GNU cvs simply fatals with
+	 * unknown symbols.  If we reach this point rev is still NULL,
+	 * do the same...
+	 */
 	if (rev == NULL)
-		return (NULL);
+		fatal("no such tag %s", revstr);
 
 	/*
 	 * If it was not a branch, thats ok the symbolic
