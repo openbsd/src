@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.13 2005/12/31 19:29:38 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.14 2008/02/02 15:31:31 kettenis Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -65,8 +65,9 @@
 #define	_POSIX2_RE_DUP_MAX	_POSIX_RE_DUP_MAX
 
 #if __POSIX_VISIBLE >= 200112
-#define _POSIX_TTY_NAME_MAX	9	/* includes trailing NUL */
+#define _POSIX_HOST_NAME_MAX	255
 #define _POSIX_LOGIN_NAME_MAX	9	/* includes trailing NUL */
+#define _POSIX_TTY_NAME_MAX	9	/* includes trailing NUL */
 #endif /* __POSIX_VISIBLE >= 200112 */
 #endif /* __POSIX_VISIBLE */
 

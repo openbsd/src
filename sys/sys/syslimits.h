@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.10 2005/12/31 19:29:39 millert Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.11 2008/02/02 15:31:31 kettenis Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -70,3 +70,7 @@
 #define TTY_NAME_MAX		260	/* max tty device name length w/ NUL */
 #define LOGIN_NAME_MAX          32	/* max login name length w/ NUL */
 #endif /* __XPG_VISIBLE >= 500 || __POSIX_VISIBLE >= 199506 || __BSD_VISIBLE */
+
+#if __POSIX_VISIBLE >= 200112
+#define HOST_NAME_MAX		255
+#endif
