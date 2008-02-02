@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.76 2008/01/31 03:43:00 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.77 2008/02/02 04:03:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -604,8 +604,7 @@
 #define BGE_SERDES_STS			0x0594
 #define BGE_SGDIG_CFG			0x05B0
 #define BGE_SGDIG_STS			0x05B4
-#define BGE_RX_STATS			0x0800
-#define BGE_TX_STATS			0x0880
+#define BGE_MAC_STATS			0x0800
 
 /* Ethernet MAC Mode register */
 #define BGE_MACMODE_RESET		0x00000001
@@ -2473,9 +2472,9 @@ struct bge_softc {
 	struct timeout		bge_timeout;
 	void			*sc_powerhook;
 	void			*sc_shutdownhook;
-	u_long			bge_rx_discards;
-	u_long			bge_tx_discards;
-	u_long			bge_tx_collisions;
+	u_int32_t		bge_rx_discards;
+	u_int32_t		bge_tx_discards;
+	u_int32_t		bge_tx_collisions;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };
