@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_dup2.c,v 1.11 2007/04/27 12:59:24 kurt Exp $ */
+/* $OpenBSD: uthread_dup2.c,v 1.12 2008/02/02 21:44:59 kurt Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -10,11 +10,39 @@
 int
 dup2(int fd, int newfd)
 {
-	int	ret;
+	int	ret = 0;
 	int	saved_errno;
+	int	*kern_pipe_fd = NULL;
 
-	if (newfd >= 0 && newfd < _thread_max_fdtsize &&
-	    newfd != _thread_kern_pipe[0] && newfd != _thread_kern_pipe[1]) {
+	if (newfd < 0 || newfd >= _thread_max_fdtsize) {
+		errno = EBADF;
+		return(-1);
+	}
+
+	/*
+	 * Defer signals so another thread is not scheduled
+	 * while we're checking and possibly moving the pipe fd.
+	 */
+	_thread_kern_sig_defer();
+
+	/* Check if newfd will collide with our internal pipe. */
+	if (newfd == _thread_kern_pipe[0])
+		kern_pipe_fd = &_thread_kern_pipe[0];
+	else if (newfd == _thread_kern_pipe[1])
+		kern_pipe_fd = &_thread_kern_pipe[1];
+
+	/* if we have a conflict move the internal pipe fd */
+	if (kern_pipe_fd != NULL) {
+		ret = _thread_sys_dup(*kern_pipe_fd);
+		if (ret != -1) {
+			*kern_pipe_fd = ret;
+			ret = 0;
+		}
+	}
+
+	_thread_kern_sig_undefer();
+
+	if (ret == 0) {
 		ret = _FD_LOCK(fd, FD_RDWR, NULL);
 		if (ret == 0) {
 			if ((ret = _FD_LOCK(newfd, FD_RDWR_CLOSE, NULL)) == 0) {
@@ -50,9 +78,6 @@ dup2(int fd, int newfd)
 			}
 			_FD_UNLOCK(fd, FD_RDWR);
 		}
-	} else {
-		errno = EBADF;
-		ret = -1;
 	}
 
 	return (ret);
