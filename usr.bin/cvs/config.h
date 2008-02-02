@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.2 2008/02/01 18:10:26 joris Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 2008/02/02 19:32:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -18,9 +18,25 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-void cvs_parse_configfile(void);
 void cvs_read_config(char *name, void (*cb)(char *));
 
+void cvs_parse_configfile(void);
+void cvs_parse_modules(void);
+
 void config_parse_line(char *);
+void modules_parse_line(char *);
+
+#include <sys/queue.h>
+
+/* module stuff */
+
+char *cvs_module_lookup(char *);
+
+struct module_info {
+	char				*mi_name;
+	char				*mi_repository;
+
+	TAILQ_ENTRY(module_info)	m_list;
+};
 
 #endif
