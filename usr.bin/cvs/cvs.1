@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.116 2008/02/02 16:44:11 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.117 2008/02/02 17:37:34 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -1300,7 +1300,122 @@ Aliases:
 .Ic rm ,
 .Ic delete .
 .Ss rlog
-Print out history information for a module.
+The
+.Ic rlog
+command displays information on a
+.Ar file
+such as its different revisions, description, different tags,
+as well as the comments, dates, and authors of these revisions.
+By default, the
+.Ic rlog
+command displays all the available information; the options are only
+used to restrict the displayed information.
+This command does not need a local checkout of the repository
+to work.
+.Bd -literal -offset indent
+usage: cvs rlog [-bhlNRt] [-d dates] [-r revs] [-s state]
+               [-w users] module ...
+.Ed
+.Pp
+The
+.Ic rlog
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl b
+List revisions of the default branch only.
+.It Fl d Ar dates
+Specify revisions with dates matching the specification.
+The specification might be as follows:
+.Bl -tag -width Ds
+.It date1<date2 or date2>date1
+Select all revisions between
+.Ar date1
+and
+.Ar date2 .
+.It <date or date>
+Select all revisions before
+.Ar date .
+.It >date or date<
+Select all revisions after
+.Ar date .
+.It date
+Select the latest revision before or equal to
+.Ar date .
+.El
+.Pp
+The
+.Sq \*(Gt
+and
+.Sq \*(Lt
+characters can be followed by the
+.Sq =
+character to imply an inclusive specification.
+Several specifications can be used by separating them with the
+.Sq \&;
+character.
+.It Fl h
+Print header only.
+.It Fl l
+Limit the scope of the search to the local directory only.
+.It Fl N
+Do not list tags.
+.It Fl R
+Print name of RCS file only.
+.It Fl r Ar revs
+Specify revision(s) to list:
+.Bl -tag -width Ds
+.It rev1,rev2,...
+A list of revisions is specified by separating names or numbers
+of revisions by the
+.Sq \&,
+character.
+.It rev1:rev2
+List all revisions between
+.Ar rev1
+and
+.Ar rev2
+(they must be on the same branch).
+.It :rev
+List all revisions since the beginning of the branch until
+.Ar rev
+included.
+.It rev:
+List all revisions of the branch beginning with
+.Ar rev .
+.It branch
+List all revisions of a branch.
+.It branch.
+List the latest revision of the branch
+.Ar branch .
+.It branch1:branch2
+List all revisions of branches between
+.Ar branch1
+and
+.Ar branch2 .
+.El
+.Pp
+Without argument, the
+.Fl r
+option means the latest revision of the default branch.
+.It Fl s Ar state
+List revisions of the specified
+.Ar state
+only.
+Several states can be listed by separating them with the
+.Sq \&,
+character.
+.It Fl t
+Print header and description only.
+.It Fl w Ar users
+Do not list revisions made by specified
+.Ar users .
+Usernames should be separated by the
+.Sq \&,
+character.
+.El
+.Pp
+Aliases:
+.Ic rlo .
 .Ss rtag
 The
 .Ic rtag
