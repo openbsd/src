@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.5,v 1.5 2008/02/02 21:24:17 xsa Exp $
+.\"	$OpenBSD: cvs.5,v 1.6 2008/02/02 21:57:00 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -89,7 +89,7 @@ post-commit logging.
 .It Pa $CVSROOT/CVSROOT/modules
 The format of each line is as follows:
 .Pp
-.Dl module [option] directory
+.Dl module [option] directory [file ...] [&module ...]
 .Pp
 Empty lines are ignored.
 A line beginning with a hash character
