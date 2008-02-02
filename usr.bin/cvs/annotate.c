@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.47 2008/02/01 17:18:59 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.48 2008/02/02 16:44:11 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -48,7 +48,7 @@ struct cvs_cmd cvs_cmd_rannotate = {
 	CVS_OP_RANNOTATE, 0, "rannotate",
 	{ "rann", "ra" },
 	"Show last revision where each line was modified",
-	"[-flR] [-D date | -r rev] [file ...]",
+	"[-flR] [-D date | -r rev] module ...",
 	"D:flRr:",
 	NULL,
 	cvs_annotate
