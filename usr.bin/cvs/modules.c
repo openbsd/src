@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.1 2008/02/02 19:32:28 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.2 2008/02/02 19:35:39 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -19,8 +19,6 @@
 #include <sys/dirent.h>
 #include <sys/resource.h>
 
-#include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
