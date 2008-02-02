@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.32 2008/01/27 21:05:59 mglocker Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.33 2008/02/02 13:48:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -93,6 +93,7 @@ void		upgt_shutdown_hook(void *);
 int		upgt_detach(struct device *, int);
 int		upgt_activate(struct device *, enum devact);
 
+int		upgt_device_type(struct upgt_softc *, uint16_t, uint16_t);
 int		upgt_device_init(struct upgt_softc *);
 int		upgt_mem_init(struct upgt_softc *);
 uint32_t	upgt_mem_alloc(struct upgt_softc *);
@@ -157,7 +158,13 @@ const struct cfattach upgt_ca = {
 	upgt_activate,
 };
 
-static const struct usb_devno upgt_devs[] = {
+static const struct usb_devno upgt_devs_1[] = {
+	/* version 1 devices */
+	{ USB_VENDOR_ALCATELT,		USB_PRODUCT_ALCATELT_ST120G }
+};
+
+static const struct usb_devno upgt_devs_2[] = {
+	/* version 2 devices */
 	{ USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_PRISM_GT },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050 },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_PRISM_GT },
@@ -183,8 +190,13 @@ upgt_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return ((usb_lookup(upgt_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	if (usb_lookup(upgt_devs_1, uaa->vendor, uaa->product) != NULL)
+		return (UMATCH_VENDOR_PRODUCT);
+
+	if (usb_lookup(upgt_devs_2, uaa->vendor, uaa->product) != NULL)
+		return (UMATCH_VENDOR_PRODUCT);
+
+	return (UMATCH_NONE);
 }
 
 void
@@ -201,6 +213,10 @@ upgt_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach USB device.
 	 */
 	sc->sc_udev = uaa->device;
+
+	/* check device type */
+	if (upgt_device_type(sc, uaa->vendor, uaa->product) != 0)
+		return;
 
 	/* set configuration number */
 	if (usbd_set_config_no(sc->sc_udev, UPGT_CONFIG_NO, 0) != 0) {
@@ -515,6 +531,22 @@ upgt_activate(struct device *self, enum devact act)
 		return (EOPNOTSUPP);
 	case (DVACT_DEACTIVATE):
 		break;
+	}
+
+	return (0);
+}
+
+int
+upgt_device_type(struct upgt_softc *sc, uint16_t vendor, uint16_t product)
+{
+	if (usb_lookup(upgt_devs_1, vendor, product) != NULL) {
+		sc->sc_device_type = 1;
+		/* XXX */
+		printf("%s: version 1 devices not supported yet!\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	} else {
+		sc->sc_device_type = 2;
 	}
 
 	return (0);

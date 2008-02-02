@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.13 2008/01/24 22:35:08 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.14 2008/02/02 13:48:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -409,6 +409,7 @@ struct upgt_softc {
 	struct upgt_data	 cmd_data;
 	int			 tx_queued;
 
+	uint8_t			 sc_device_type;
 	struct ieee80211com	 sc_ic;
 	enum ieee80211_state	 sc_state;
 	int			 sc_arg;
