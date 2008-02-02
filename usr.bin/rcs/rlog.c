@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.60 2008/02/02 16:21:38 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.61 2008/02/02 19:26:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -370,25 +370,26 @@ rlog_rev_print(struct rcs_delta *rdp)
 	 */
 	if (nrdp != NULL && rdp->rd_num->rn_len == nrdp->rd_num->rn_len) {
 		int added, removed;
+
 		rcs_delta_stats(nrdp, &added, &removed);
 		if (RCSNUM_ISBRANCHREV(rdp->rd_num))
 			printf("  lines: +%d -%d", added, removed);
 		else
 			printf("  lines: +%d -%d", removed, added);
+	}
+	printf("\n");
+ 
+	if (!TAILQ_EMPTY(&(rdp->rd_branches))) {
+		printf("branches:");
+		TAILQ_FOREACH(rb, &(rdp->rd_branches), rb_list) {
+			RCSNUM *branch;
+			branch = rcsnum_revtobr(rb->rb_num);
+			(void)rcsnum_tostr(branch, numb, sizeof(numb));
+			printf("  %s;", numb);
+			rcsnum_free(branch);
 		}
 		printf("\n");
- 
-		if (!TAILQ_EMPTY(&(rdp->rd_branches))) {
-			printf("branches:");
-			TAILQ_FOREACH(rb, &(rdp->rd_branches), rb_list) {
-				RCSNUM *branch;
-				branch = rcsnum_revtobr(rb->rb_num);
-				(void)rcsnum_tostr(branch, numb, sizeof(numb));
-				printf("  %s;", numb);
-				rcsnum_free(branch);
-			}
-			printf("\n");
-		}
+	}
 
 	printf("%s", rdp->rd_log);
 }
