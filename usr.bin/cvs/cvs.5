@@ -1,7 +1,7 @@
-.\"	$OpenBSD: cvs.5,v 1.4 2007/09/19 13:49:55 tobias Exp $
+.\"	$OpenBSD: cvs.5,v 1.5 2008/02/02 21:24:17 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
-.\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
+.\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2007 $
+.Dd $Mdocdate: February 2 2008 $
 .Dt CVS 5
 .Os
 .Sh NAME
@@ -86,6 +86,53 @@ command shows these reports according to several criteria.
 .It Pa $CVSROOT/CVSROOT/loginfo
 File containing associations between modules and handlers for
 post-commit logging.
+.It Pa $CVSROOT/CVSROOT/modules
+The format of each line is as follows:
+.Pp
+.Dl module [option] directory
+.Pp
+Empty lines are ignored.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
+A long line can be continued on the next line by specifying a backslash
+.Pq Sq \e
+character as last character.
+.Pp
+The following options are available:
+.Bl -tag -width Ds -offset 3n
+.It Fl d Ar name
+Allow check out of module under different
+.Ar name .
+.It Fl i Ar prog
+Specify program
+.Ar prog
+to run whenever the
+.Ic commit
+command is issued.
+.It Fl o Ar prog
+Specify program
+.Ar prog
+to run whenever the
+.Ic checkout
+command is issued.
+.It Fl s Ar status
+Set
+.Ar status
+to module.
+.It Fl t Ar prog
+Specify program
+.Ar prog
+to run whenever the
+.Ic rtag
+command is issued.
+.It Fl u Ar prog
+Specify program
+.Ar prog
+to run whenever the
+.Ic update
+command is issued.
+.El
 .El
 .Pp
 Each directory that is managed by
