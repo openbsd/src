@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.174 2007/10/21 03:49:54 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.175 2008/02/02 05:11:51 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -135,6 +135,7 @@ void em_init(void *);
 void em_stop(void *);
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int  em_media_change(struct ifnet *);
+int  em_flowstatus(struct em_softc *);
 void em_identify_hardware(struct em_softc *);
 int  em_allocate_pci_resources(struct em_softc *);
 void em_free_pci_resources(struct em_softc *);
@@ -805,7 +806,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct em_softc *sc = ifp->if_softc;
 	u_char fiber_type = IFM_1000_SX;
-	u_int16_t ar, lpar, gsr;
+	u_int16_t gsr;
 
 	INIT_DEBUGOUT("em_media_status: begin");
 
@@ -841,24 +842,9 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		}
 
 		if (sc->link_duplex == FULL_DUPLEX)
-			ifmr->ifm_active |= IFM_FDX;
+			ifmr->ifm_active |= em_flowstatus(sc) | IFM_FDX;
 		else
 			ifmr->ifm_active |= IFM_HDX;
-
-		if (ifmr->ifm_active & IFM_FDX) {
-			em_read_phy_reg(&sc->hw, PHY_AUTONEG_ADV, &ar);
-			em_read_phy_reg(&sc->hw, PHY_LP_ABILITY, &lpar);
-
-			if ((ar & NWAY_AR_PAUSE) && (lpar & NWAY_LPAR_PAUSE))
-				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE |
-						    IFM_ETH_RXPAUSE;
-			else if (!(ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
-			    (lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
-				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
-			else if ((ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
-			    !(lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
-				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-		}
 
 		if (IFM_SUBTYPE(ifmr->ifm_active) == IFM_1000_T) {
 			em_read_phy_reg(&sc->hw, PHY_1000T_STATUS, &gsr);
@@ -925,6 +911,26 @@ em_media_change(struct ifnet *ifp)
 	sc->hw.phy_reset_disable = FALSE;
 
 	em_init(sc);
+
+	return (0);
+}
+
+int
+em_flowstatus(struct em_softc *sc)
+{
+	u_int16_t ar, lpar;
+
+	em_read_phy_reg(&sc->hw, PHY_AUTONEG_ADV, &ar);
+	em_read_phy_reg(&sc->hw, PHY_LP_ABILITY, &lpar);
+
+	if ((ar & NWAY_AR_PAUSE) && (lpar & NWAY_LPAR_PAUSE))
+		return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+	else if (!(ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
+		(lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
+		return (IFM_FLOW|IFM_ETH_TXPAUSE);
+	else if ((ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
+		!(lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
+		return (IFM_FLOW|IFM_ETH_RXPAUSE);
 
 	return (0);
 }
