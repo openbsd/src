@@ -1,7 +1,7 @@
-.\"	$OpenBSD: cvs.1,v 1.114 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: cvs.1,v 1.115 2008/02/02 16:35:41 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
-.\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
+.\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: February 2 2008 $
 .Dt CVS 1
 .Os
 .Sh NAME
@@ -174,6 +174,7 @@ import,
 init,
 kserver,
 log,
+rannotate,
 rdiff,
 release,
 remove,
@@ -1074,6 +1075,49 @@ character.
 .Pp
 Aliases:
 .Ic lo .
+.Ss rannotate
+For each line of any files specified, show information about its
+last revision.
+The information given is the last revision when a modification occurred,
+the author's name, and the date of the revision.
+This command does not need a local checkout of the repository
+to work.
+.Bd -literal -offset indent
+usage: cvs annotate [flR] [-D date | -r rev] [file ...]
+.Ed
+.Pp
+The  
+.Ic rannotate
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl D Ar date
+Show the annotations as of the latest revision no later than
+.Ar date .
+.It Fl f
+Force the use of the head revision if the specified
+tag or date is not found.
+This can be used in combination with
+.Fl D
+or
+.Fl r  
+to ensure that there is some output from the
+.Ic rannotate
+command, even if only to show Revision 1.1 of the file.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Show annotations as of revision
+.Ar rev  
+(can be a revision number or a tag).
+.El
+.Pp
+Aliases:
+.Ic rann ,
+.Ic ra .
 .Ss rdiff
 The
 .Ic rdiff
