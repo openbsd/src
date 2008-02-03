@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.18 2008/02/03 22:50:28 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.19 2008/02/03 23:34:41 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -108,8 +108,12 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 		(void)xsnprintf(rpath, MAXPATHLEN, "%s/%s", dir, dp->d_name);
 
 		if (!TAILQ_EMPTY(&checkout_ign_pats)) {
+			if ((s = strrchr(fpath, ',')) != NULL)
+				*s = '\0';
 			if (cvs_file_chkign(fpath))
 				continue;
+			if (s != NULL)
+				*s = ',';
 		}
 
 		/*

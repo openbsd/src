@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.5 2008/02/03 22:53:04 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.6 2008/02/03 23:34:41 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -163,9 +163,6 @@ modules_parse_line(char *line)
 	if (!(mi->mi_flags & MODULE_ALIAS) && TAILQ_EMPTY(&(mi->mi_modules)))
 		cvs_file_get(dirname, 0, &(mi->mi_modules));
 
-	fl = TAILQ_FIRST(&(mi->mi_modules));
-	mi->mi_repository = xstrdup(fl->file_path);
-
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
 }
 
@@ -183,10 +180,7 @@ cvs_module_lookup(char *name)
 			mc->mc_modules = mi->mi_modules;
 			mc->mc_ignores = mi->mi_ignores;
 			mc->mc_canfree = 0;
-			if (mi->mi_flags & MODULE_ALIAS)
-				mc->mc_wdir = xstrdup(mi->mi_repository);
-			else
-				mc->mc_wdir = xstrdup(mi->mi_name);
+			mc->mc_name = xstrdup(mi->mi_name);
 			mc->mc_flags = mi->mi_flags;
 			return (mc);
 		}
@@ -196,7 +190,7 @@ cvs_module_lookup(char *name)
 	TAILQ_INIT(&(mc->mc_ignores));
 	cvs_file_get(name, 0, &(mc->mc_modules));
 	mc->mc_canfree = 1;
-	mc->mc_wdir = xstrdup(name);
+	mc->mc_name = xstrdup(name);
 	mc->mc_flags |= MODULE_ALIAS;
 
 	return (mc);

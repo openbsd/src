@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.123 2008/02/03 22:50:28 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.124 2008/02/03 23:34:41 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -228,8 +228,10 @@ checkout_check_repository(int argc, char **argv)
 
 			if (dflag != NULL)
 				wdir = dflag;
+			else if (mc->mc_flags & MODULE_ALIAS)
+				wdir = fl->file_path;
 			else
-				wdir = mc->mc_wdir;
+				wdir = mc->mc_name;
 
 			switch (checkout_classify(repo, fl->file_path)) {
 			case CVS_FILE:
@@ -280,7 +282,6 @@ checkout_check_repository(int argc, char **argv)
 			xfree(ip);
 		}
 
-		xfree(mc->mc_wdir);
 		xfree(mc);
 	}
 }
