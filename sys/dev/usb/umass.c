@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.54 2007/10/11 18:33:15 deraadt Exp $ */
+/*	$OpenBSD: umass.c,v 1.55 2008/02/03 00:36:29 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ void umass_bbb_transfer(struct umass_softc *, int, void *, int, void *,
 void umass_bbb_reset(struct umass_softc *, int);
 void umass_bbb_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-usbd_status umass_bbb_get_max_lun(struct umass_softc *, u_int8_t *);
+u_int8_t umass_bbb_get_max_lun(struct umass_softc *);
 
 /* CBI related functions */
 void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
@@ -490,12 +490,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	 * Get the maximum LUN supported by the device.
 	 */
 	if (sc->sc_wire == UMASS_WPROTO_BBB) {
-		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
-		if (err) {
-			printf("%s: unable to get Max Lun: %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
-			return;
-		}
+		sc->maxlun = umass_bbb_get_max_lun(sc);
 	} else {
 		sc->maxlun = 0;
 	}
@@ -1854,13 +1849,13 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 }
 
-usbd_status
-umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
+u_int8_t
+umass_bbb_get_max_lun(struct umass_softc *sc)
 {
 	usb_device_request_t req;
 	usbd_status err;
-
-	*maxlun = 0;		/* Default to 0. */
+	u_int8_t maxlun = 0;
+	u_int8_t buf = 0;
 
 	DPRINTF(UDMASS_BBB, ("%s: Get Max Lun\n", sc->sc_dev.dv_xname));
 
@@ -1871,40 +1866,23 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 
-	err = usbd_do_request_flags(sc->sc_udev, &req, maxlun,
+	err = usbd_do_request_flags(sc->sc_udev, &req, &buf,
 	    USBD_SHORT_XFER_OK, 0, USBD_DEFAULT_TIMEOUT);
+
 	switch (err) {
 	case USBD_NORMAL_COMPLETION:
-		DPRINTF(UDMASS_BBB, ("%s: Max Lun %d\n",
-		    sc->sc_dev.dv_xname, *maxlun));
-		break;
-
-	case USBD_STALLED:
-		/*
-		 * Device doesn't support Get Max Lun request.
-		 */
-		err = USBD_NORMAL_COMPLETION;
-		DPRINTF(UDMASS_BBB, ("%s: Get Max Lun not supported\n",
-		    sc->sc_dev.dv_xname));
-		break;
-
-	case USBD_SHORT_XFER:
-		/*
-		 * XXX This must mean Get Max Lun is not supported, too!
-		 */
-		err = USBD_NORMAL_COMPLETION;
-		DPRINTF(UDMASS_BBB, ("%s: Get Max Lun SHORT_XFER\n",
-		    sc->sc_dev.dv_xname));
+		maxlun = buf;
 		break;
 
 	default:
-		printf("%s: Get Max Lun failed: %s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		/* XXX Should we port_reset the device? */
+		DPRINTF(UDMASS_BBB, ("%s: Get Max Lun not supported (%s)\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		break;
 	}
 
-	return (err);
+	DPRINTF(UDMASS_BBB, ("%s: Max Lun %d\n", sc->sc_dev.dv_xname, maxlun));
+	return (maxlun);
 }
 
 #ifdef UMASS_DEBUG
