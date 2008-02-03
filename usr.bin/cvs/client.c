@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.97 2008/02/03 15:57:25 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.98 2008/02/03 17:20:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -108,7 +108,7 @@ struct cvs_req cvs_requests[] = {
 	{ "",			-1,	NULL, 0 }
 };
 
-static void	 client_check_directory(char *);
+static void	 client_check_directory(char *, char *);
 static char	*client_get_supported_responses(void);
 static char	*lastdir = NULL;
 static int	 end_of_response = 0;
@@ -153,12 +153,21 @@ client_get_supported_responses(void)
 }
 
 static void
-client_check_directory(char *data)
+client_check_directory(char *data, char *repository)
 {
 	CVSENTRIES *entlist;
-	char entry[CVS_ENT_MAXLINELEN], *parent, *base;
+	char entry[CVS_ENT_MAXLINELEN], *parent, *base, *p;
 
 	STRIP_SLASH(data);
+
+	/* first directory we get is our module root */
+	if (module_repo_root == NULL) {
+		p = repository + strlen(current_cvsroot->cr_dir) + 1;
+		module_repo_root = xstrdup(p);
+		p = strrchr(module_repo_root, '/');
+		if (p != NULL)
+			*p = '\0';
+	}
 
 	cvs_mkpath(data, NULL);
 
@@ -658,19 +667,18 @@ cvs_client_updated(char *data)
 	struct timeval tv[2];
 	char repo[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
-	char *en, *mode, *len, *fpath, *rpath, *wdir;
-	char sticky[CVS_ENT_MAXLINELEN];
+	char *en, *mode, *len, *rpath;
+	char sticky[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN];
 
 	if (data == NULL)
 		fatal("Missing argument for Updated");
-
-	client_check_directory(data);
 
 	rpath = cvs_remote_input();
 	en = cvs_remote_input();
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
 
+	client_check_directory(data, rpath);
 	cvs_get_repository_path(".", repo, MAXPATHLEN);
 
 	STRIP_SLASH(repo);
@@ -678,9 +686,8 @@ cvs_client_updated(char *data)
 	if (strlen(repo) + 1 > strlen(rpath))
 		fatal("received a repository path that is too short");
 
-	fpath = rpath + strlen(repo) + 1;
-	if ((wdir = dirname(fpath)) == NULL)
-		fatal("cvs_client_updated: dirname: %s", strerror(errno));
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", data,
+	    strrchr(rpath, '/'));
 
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
@@ -712,7 +719,7 @@ cvs_client_updated(char *data)
 	cvs_ent_free(e);
 
 	if (cvs_cmdop != CVS_OP_EXPORT) {
-		ent = cvs_ent_open(wdir);
+		ent = cvs_ent_open(data);
 		cvs_ent_add(ent, entry);
 		cvs_ent_close(ent, ENT_SYNC);
 	}
@@ -754,12 +761,12 @@ cvs_client_merged(char *data)
 	if (data == NULL)
 		fatal("Missing argument for Merged");
 
-	client_check_directory(data);
-
 	rpath = cvs_remote_input();
 	entry = cvs_remote_input();
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
+
+	client_check_directory(data, rpath);
 
 	repo = xmalloc(MAXPATHLEN);
 	cvs_get_repository_path(".", repo, MAXPATHLEN);
@@ -921,13 +928,12 @@ cvs_client_set_sticky(char *data)
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
-	xfree(dir);
 	tag = cvs_remote_input();
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		goto out;
 
-	client_check_directory(data);
+	client_check_directory(data, dir);
 
 	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
 
@@ -940,6 +946,7 @@ cvs_client_set_sticky(char *data)
 	(void)fclose(fp);
 out:
 	xfree(tag);
+	xfree(dir);
 }
 
 void
@@ -953,15 +960,18 @@ cvs_client_clear_sticky(char *data)
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
-	xfree(dir);
 
-	if (cvs_cmdop == CVS_OP_EXPORT)
+	if (cvs_cmdop == CVS_OP_EXPORT) {
+		xfree(dir);
 		return;
+	}
 
-	client_check_directory(data);
+	client_check_directory(data, dir);
 
 	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
 	(void)unlink(tagpath);
+
+	xfree(dir);
 }
 
 

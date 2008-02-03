@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.118 2008/02/03 15:20:10 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.119 2008/02/03 17:20:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -147,9 +147,9 @@ static void
 checkout_check_repository(int argc, char **argv)
 {
 	int i;
-	char *module;
 	char repo[MAXPATHLEN];
 	struct cvs_recursion cr;
+	struct module_checkout *mc;
 
 	build_dirs = print_stdout ? 0 : 1;
 
@@ -198,28 +198,37 @@ checkout_check_repository(int argc, char **argv)
 	cvs_directory_tag = cvs_specified_tag;
 
 	for (i = 0; i < argc; i++) {
-		module = cvs_module_lookup(argv[i]);
+		mc = cvs_module_lookup(argv[i]);
+		current_module = mc;
 
 		(void)xsnprintf(repo, sizeof(repo), "%s/%s",
-		    current_cvsroot->cr_dir, module);
+		    current_cvsroot->cr_dir, mc->mc_repo);
 
-		switch (checkout_classify(repo, module)) {
+		if (!(mc->mc_flags & MODULE_ALIAS))
+			module_repo_root = mc->mc_repo;
+
+		switch (checkout_classify(repo, mc->mc_repo)) {
 		case CVS_FILE:
 			cr.fileproc = cvs_update_local;
 			cr.flags = flags;
 
 			if (build_dirs == 1)
-				cvs_mkpath(dirname(module), cvs_specified_tag);
-			cvs_file_run(1, &(module), &cr);
+				cvs_mkpath(dirname(mc->mc_wdir),
+				    cvs_specified_tag);
+			cvs_file_run(1, &(mc->mc_repo), &cr);
 			break;
 		case CVS_DIR:
 			if (build_dirs == 1)
-				cvs_mkpath(module, cvs_specified_tag);
-			checkout_repository(repo, module);
+				cvs_mkpath(mc->mc_wdir, cvs_specified_tag);
+			checkout_repository(repo, mc->mc_wdir);
 			break;
 		default:
 			break;
 		}
+
+		xfree(mc->mc_wdir);
+		xfree(mc->mc_repo);
+		xfree(mc);
 	}
 }
 

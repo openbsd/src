@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.2 2008/02/02 19:35:39 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.3 2008/02/03 17:20:14 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -26,6 +26,9 @@
 #include "config.h"
 
 TAILQ_HEAD(, module_info)	modules;
+
+struct module_checkout *current_module = NULL;
+char *module_repo_root = NULL;
 
 void
 cvs_parse_modules(void)
@@ -83,6 +86,21 @@ modules_parse_line(char *line)
 
 		switch (val[1]) {
 		case 'a':
+			if (flags & MODULE_TARGETDIR) {
+				cvs_log(LP_NOTICE, "cannot use -a with -d");
+				return;
+			}
+			flags |= MODULE_ALIAS;
+			break;
+		case 'd':
+			if (flags & MODULE_ALIAS) {
+				cvs_log(LP_NOTICE, "cannot use -d with -a");
+				return;
+			}
+			flags |= MODULE_TARGETDIR;
+			break;
+		case 'l':
+			flags |= MODULE_NORECURSE;
 			break;
 		}
 
@@ -92,18 +110,34 @@ modules_parse_line(char *line)
 	mi = xmalloc(sizeof(*mi));
 	mi->mi_name = xstrdup(module);
 	mi->mi_repository = xstrdup(val);
+	mi->mi_flags = flags;
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
 }
 
-char *
+struct module_checkout *
 cvs_module_lookup(char *name)
 {
+	struct module_checkout *mc;
 	struct module_info *mi;
 
+	mc = xmalloc(sizeof(*mc));
+
 	TAILQ_FOREACH(mi, &modules, m_list) {
-		if (!strcmp(name, mi->mi_name))
-			return (mi->mi_repository);
+		if (!strcmp(name, mi->mi_name)) {
+			mc = xmalloc(sizeof(*mc));
+			mc->mc_repo = xstrdup(mi->mi_repository);
+			if (mi->mi_flags & MODULE_ALIAS)
+				mc->mc_wdir = xstrdup(mi->mi_repository);
+			else
+				mc->mc_wdir = xstrdup(mi->mi_name);
+			mc->mc_flags = mi->mi_flags;
+			return (mc);
+		}
 	}
 
-	return (name);
+	mc->mc_repo = xstrdup(name);
+	mc->mc_wdir = xstrdup(name);
+	mc->mc_flags |= MODULE_ALIAS;
+
+	return (mc);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.150 2008/02/01 17:18:59 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.151 2008/02/03 17:20:14 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -286,6 +286,9 @@ typedef struct cvs_entries {
 
 	TAILQ_HEAD(, cvs_ent_line)	 cef_ent;
 } CVSENTRIES;
+
+extern struct module_checkout *current_module;
+extern char *module_repo_root;
 
 extern struct cvs_wklhead temp_files;
 extern volatile sig_atomic_t sig_received;

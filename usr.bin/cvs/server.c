@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.80 2008/02/01 17:18:59 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.81 2008/02/03 17:20:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -168,6 +168,7 @@ cvs_server_root(char *data)
 		fatal("Invalid Root specified!");
 
 	cvs_parse_configfile();
+	cvs_parse_modules();
 	umask(cvs_umask);
 }
 
@@ -752,8 +753,13 @@ cvs_server_set_sticky(char *dir, char *tag)
 {
 	char fpath[MAXPATHLEN];
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
-	    current_cvsroot->cr_dir, dir);
+	if (module_repo_root != NULL) {
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s/%s",
+		    current_cvsroot->cr_dir, module_repo_root, dir);
+	} else {
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+		    current_cvsroot->cr_dir, dir);
+	}
 
 	cvs_server_send_response("Set-sticky %s", dir);
 	cvs_remote_output(fpath);
@@ -765,8 +771,13 @@ cvs_server_clear_sticky(char *dir)
 {
 	char fpath[MAXPATHLEN];
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
-	    current_cvsroot->cr_dir, dir);
+	if (module_repo_root != NULL) {
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s/%s",
+		    current_cvsroot->cr_dir, module_repo_root, dir);
+	} else {
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+		    current_cvsroot->cr_dir, dir);
+	}
 
 	cvs_server_send_response("Clear-sticky %s", dir);
 	cvs_remote_output(fpath);
