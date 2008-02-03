@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.17 2008/01/31 13:54:12 tobias Exp $	*/
+/*	$OpenBSD: repository.c,v 1.18 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -106,6 +106,11 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 
 		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", wdir, dp->d_name);
 		(void)xsnprintf(rpath, MAXPATHLEN, "%s/%s", dir, dp->d_name);
+
+		if (!TAILQ_EMPTY(&checkout_ign_pats)) {
+			if (cvs_file_chkign(fpath))
+				continue;
+		}
 
 		/*
 		 * nfs and afs will show d_type as DT_UNKNOWN

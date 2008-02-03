@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 2008/02/03 17:20:14 joris Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,23 +27,32 @@ void config_parse_line(char *);
 void modules_parse_line(char *);
 
 #include <sys/queue.h>
+#include "file.h"
 
 /* module stuff */
 
 #define MODULE_ALIAS		0x01
 #define MODULE_TARGETDIR	0x02
 #define MODULE_NORECURSE	0x04
+#define MODULE_RUN_ON_COMMIT	0x08
 
 struct module_checkout {
 	char			*mc_repo;
 	char			*mc_wdir;
 	int			 mc_flags;
+
+	int			 mc_canfree;
+	struct cvs_flisthead	 mc_modules;
+	struct cvs_flisthead	 mc_ignores;
 };
 
 struct module_info {
 	char				*mi_name;
 	char				*mi_repository;
 	int				 mi_flags;
+
+	struct cvs_flisthead		 mi_modules;
+	struct cvs_flisthead		 mi_ignores;
 
 	TAILQ_ENTRY(module_info)	 m_list;
 };

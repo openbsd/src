@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.122 2008/02/03 20:01:37 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.123 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -153,10 +153,12 @@ static void
 checkout_check_repository(int argc, char **argv)
 {
 	int i;
-	char *wdir;
-	char repo[MAXPATHLEN];
+	char *wdir, *d;
 	struct cvs_recursion cr;
 	struct module_checkout *mc;
+	struct cvs_ignpat *ip;
+	struct cvs_filelist *fl, *nxt;
+	char repo[MAXPATHLEN], fpath[MAXPATHLEN], *f[1];
 
 	build_dirs = print_stdout ? 0 : 1;
 
@@ -211,41 +213,74 @@ checkout_check_repository(int argc, char **argv)
 		mc = cvs_module_lookup(argv[i]);
 		current_module = mc;
 
-		(void)xsnprintf(repo, sizeof(repo), "%s/%s",
-		    current_cvsroot->cr_dir, mc->mc_repo);
+		TAILQ_FOREACH(fl, &(mc->mc_ignores), flist)
+			cvs_file_ignore(fl->file_path, &checkout_ign_pats);
 
-		if (!(mc->mc_flags & MODULE_ALIAS) || dflag != NULL)
-			module_repo_root = mc->mc_repo;
+		TAILQ_FOREACH(fl, &(mc->mc_modules), flist) {
+			(void)xsnprintf(repo, sizeof(repo), "%s/%s",
+			    current_cvsroot->cr_dir, fl->file_path);
 
-		if (mc->mc_flags & MODULE_NORECURSE)
-			flags &= ~CR_RECURSE_DIRS;
+			if (!(mc->mc_flags & MODULE_ALIAS) || dflag != NULL)
+				module_repo_root = fl->file_path;
 
-		if (dflag != NULL)
-			wdir = dflag;
-		else
-			wdir = mc->mc_wdir;
+			if (mc->mc_flags & MODULE_NORECURSE)
+				flags &= ~CR_RECURSE_DIRS;
 
-		switch (checkout_classify(repo, mc->mc_repo)) {
-		case CVS_FILE:
-			cr.fileproc = cvs_update_local;
-			cr.flags = flags;
+			if (dflag != NULL)
+				wdir = dflag;
+			else
+				wdir = mc->mc_wdir;
 
-			if (build_dirs == 1)
-				cvs_mkpath(dirname(wdir),
-				    cvs_specified_tag);
-			cvs_file_run(1, &(mc->mc_repo), &cr);
-			break;
-		case CVS_DIR:
-			if (build_dirs == 1)
-				cvs_mkpath(wdir, cvs_specified_tag);
-			checkout_repository(repo, wdir);
-			break;
-		default:
-			break;
+			switch (checkout_classify(repo, fl->file_path)) {
+			case CVS_FILE:
+				cr.fileproc = cvs_update_local;
+				cr.flags = flags;
+
+				if (!(mc->mc_flags & MODULE_ALIAS)) {
+					module_repo_root =
+					    dirname(fl->file_path);
+					d = wdir;
+					(void)xsnprintf(fpath, sizeof(fpath),
+					    "%s/%s", d,
+					    basename(fl->file_path));
+				} else {
+					d = dirname(wdir);
+					strlcpy(fpath, fl->file_path,
+					    sizeof(fpath));
+				}
+
+				if (build_dirs == 1)
+					cvs_mkpath(d, cvs_specified_tag);
+
+				f[0] = fpath;
+				cvs_file_run(1, f, &cr);
+				break;
+			case CVS_DIR:
+				if (build_dirs == 1)
+					cvs_mkpath(wdir, cvs_specified_tag);
+				checkout_repository(repo, wdir);
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (mc->mc_canfree == 1) {
+			for (fl = TAILQ_FIRST(&(mc->mc_modules));
+			    fl != TAILQ_END(&(mc->mc_modules)); fl = nxt) {
+				nxt = TAILQ_NEXT(fl, flist);
+				TAILQ_REMOVE(&(mc->mc_modules), fl, flist);
+				xfree(fl->file_path);
+				xfree(fl);
+			}
+		}
+
+		while ((ip = TAILQ_FIRST(&checkout_ign_pats)) != NULL) {
+			TAILQ_REMOVE(&checkout_ign_pats, ip, ip_list);
+			xfree(ip);
 		}
 
 		xfree(mc->mc_wdir);
-		xfree(mc->mc_repo);
 		xfree(mc);
 	}
 }
@@ -257,11 +292,8 @@ checkout_classify(const char *repo, const char *arg)
 	struct stat sb;
 
 	if (stat(repo, &sb) == 0) {
-		if (!S_ISDIR(sb.st_mode)) {
-			cvs_log(LP_ERR, "ignoring %s: not a directory", arg);
-			return 0;
-		}
-		return CVS_DIR;
+		if (S_ISDIR(sb.st_mode))
+			return CVS_DIR;
 	}
 
 	d = dirname(repo);

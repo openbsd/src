@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.3 2008/02/03 17:20:14 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.4 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -43,8 +43,10 @@ void
 modules_parse_line(char *line)
 {
 	int flags;
-	char *val, *p, *module;
+	struct cvs_filelist *fl, *nxt;
+	char *val, *p, *module, *sp, *dp;
 	struct module_info *mi;
+	char *dirname, fpath[MAXPATHLEN];
 
 	flags = 0;
 	p = val = line;
@@ -102,15 +104,62 @@ modules_parse_line(char *line)
 		case 'l':
 			flags |= MODULE_NORECURSE;
 			break;
+		case 'i':
+			if (flags != 0) {
+				cvs_log(LP_NOTICE,
+				    "-i cannot be used with other flags");
+				return;
+			}
+			flags |= MODULE_RUN_ON_COMMIT;
+			break;
 		}
 
 		val = p;
 	}
 
+	/* XXX: until we support it */
+	if (flags & MODULE_RUN_ON_COMMIT)
+		return;
+
 	mi = xmalloc(sizeof(*mi));
 	mi->mi_name = xstrdup(module);
-	mi->mi_repository = xstrdup(val);
 	mi->mi_flags = flags;
+
+	dirname = NULL;
+	TAILQ_INIT(&(mi->mi_modules));
+	TAILQ_INIT(&(mi->mi_ignores));
+	for (sp = val; sp != NULL; sp = dp) {
+		dp = strchr(sp, ' ');
+		if (dp != NULL)
+			*(dp++) = '\0';
+
+		if (mi->mi_flags & MODULE_ALIAS) {
+			if (sp[0] == '!')
+				cvs_file_get((sp + 1), 0, &(mi->mi_ignores));
+			else
+				cvs_file_get(sp, 0, &(mi->mi_modules));
+		} else if (sp == val) {
+			dirname = sp;
+		} else {
+			if (sp[0] == '!') {
+				sp++;
+				(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+				    dirname, sp);
+				cvs_file_get(fpath, 0, &(mi->mi_ignores));
+			} else {
+				(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+				    dirname, sp);
+				cvs_file_get(fpath, 0, &(mi->mi_modules));
+			}
+		}
+	}
+
+	if (!(mi->mi_flags & MODULE_ALIAS) && TAILQ_EMPTY(&(mi->mi_modules)))
+		cvs_file_get(dirname, 0, &(mi->mi_modules));
+
+	fl = TAILQ_FIRST(&(mi->mi_modules));
+	mi->mi_repository = xstrdup(fl->file_path);
+
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
 }
 
@@ -125,7 +174,9 @@ cvs_module_lookup(char *name)
 	TAILQ_FOREACH(mi, &modules, m_list) {
 		if (!strcmp(name, mi->mi_name)) {
 			mc = xmalloc(sizeof(*mc));
-			mc->mc_repo = xstrdup(mi->mi_repository);
+			mc->mc_modules = mi->mi_modules;
+			mc->mc_ignores = mi->mi_ignores;
+			mc->mc_canfree = 0;
 			if (mi->mi_flags & MODULE_ALIAS)
 				mc->mc_wdir = xstrdup(mi->mi_repository);
 			else
@@ -135,7 +186,10 @@ cvs_module_lookup(char *name)
 		}
 	}
 
-	mc->mc_repo = xstrdup(name);
+	TAILQ_INIT(&(mc->mc_modules));
+	TAILQ_INIT(&(mc->mc_ignores));
+	cvs_file_get(name, 0, &(mc->mc_modules));
+	mc->mc_canfree = 1;
 	mc->mc_wdir = xstrdup(name);
 	mc->mc_flags |= MODULE_ALIAS;
 

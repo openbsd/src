@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.151 2008/02/03 17:20:14 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.152 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -290,6 +290,7 @@ typedef struct cvs_entries {
 extern struct module_checkout *current_module;
 extern char *module_repo_root;
 
+extern struct ignore_head checkout_ign_pats;
 extern struct cvs_wklhead temp_files;
 extern volatile sig_atomic_t sig_received;
 extern volatile sig_atomic_t cvs_quit;

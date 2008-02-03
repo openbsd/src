@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.213 2008/02/03 15:08:04 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.214 2008/02/03 22:50:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -78,6 +78,7 @@ static const char *cvs_ign_std[] = {
 char *cvs_directory_tag = NULL;
 struct ignore_head cvs_ign_pats;
 struct ignore_head dir_ign_pats;
+struct ignore_head checkout_ign_pats;
 
 void
 cvs_file_init(void)
@@ -88,6 +89,7 @@ cvs_file_init(void)
 
 	TAILQ_INIT(&cvs_ign_pats);
 	TAILQ_INIT(&dir_ign_pats);
+	TAILQ_INIT(&checkout_ign_pats);
 
 	/* standard patterns to ignore */
 	for (i = 0; i < (int)(sizeof(cvs_ign_std)/sizeof(char *)); i++)
@@ -160,6 +162,14 @@ cvs_file_chkign(const char *file)
 	}
 
 	TAILQ_FOREACH(ip, &dir_ign_pats, ip_list) {
+		if (ip->ip_flags & CVS_IGN_STATIC) {
+			if (cvs_file_cmpname(file, ip->ip_pat) == 0)
+				return (1);
+		} else if (fnmatch(ip->ip_pat, file, flags) == 0)
+			return (1);
+	}
+
+	TAILQ_FOREACH(ip, &checkout_ign_pats, ip_list) {
 		if (ip->ip_flags & CVS_IGN_STATIC) {
 			if (cvs_file_cmpname(file, ip->ip_pat) == 0)
 				return (1);
