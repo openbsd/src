@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.60 2007/11/25 00:27:44 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.61 2008/02/03 21:20:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -209,6 +209,7 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055_2 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8056 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8058 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8061CU },
@@ -218,6 +219,7 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8070 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8071 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8072 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8075 },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx }
 };
@@ -954,6 +956,7 @@ msk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
 	case SK_YUKON_FE_P:
+	case SK_YUKON_SUPR:
 		return (1);
 	}
 
@@ -1334,6 +1337,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_FE_P:
 		sc->sk_name = "Yukon-2 FE+";
+		break;
+	case SK_YUKON_SUPR:
+		sc->sk_name = "Yukon-2 Supreme";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";
