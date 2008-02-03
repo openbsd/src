@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.49 2008/02/02 16:59:48 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.50 2008/02/03 16:59:11 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -161,6 +161,11 @@ cvs_annotate_local(struct cvs_file *cf)
 				/* Stick at weird GNU cvs, ignore error. */
 				return;
 
+			/* -f is not allowed for unknown symbols */   
+			rev = rcsnum_parse(cvs_specified_tag);   
+			if (rev == NULL)   
+				fatal("no such tag %s", cvs_specified_tag);   
+                        rcsnum_free(rev);
 			rev = rcsnum_alloc();
 			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
 		}
