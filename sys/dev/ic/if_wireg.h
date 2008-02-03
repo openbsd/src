@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.38 2005/10/18 13:37:48 fgsch Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.39 2008/02/03 15:04:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,36 +81,22 @@
  * register space access macros
  */
 
-#if defined(__sparc64__)
-#define WI_BIG_ENDIAN_POSSIBLE	(sc->wi_flags & WI_FLAGS_BUS_PCMCIA)
-#else
-#define WI_BIG_ENDIAN_POSSIBLE 	0
-#endif
-
 #define CSR_WRITE_4(sc, reg, val)				\
 	bus_space_write_4(sc->wi_btag, sc->wi_bhandle,		\
-	    (sc->sc_pci ? reg * 2: reg),			\
-	     WI_BIG_ENDIAN_POSSIBLE ? htole32(val) : (val))
+	    (sc->sc_pci ? reg * 2: reg), (val))
 #define CSR_WRITE_2(sc, reg, val)				\
 	bus_space_write_2(sc->wi_btag, sc->wi_bhandle,		\
-	    (sc->sc_pci ? reg * 2: reg),			\
-	    WI_BIG_ENDIAN_POSSIBLE ? htole16(val) : (val))
+	    (sc->sc_pci ? reg * 2: reg), (val))
 #define CSR_WRITE_1(sc, reg, val)				\
 	bus_space_write_1(sc->wi_btag, sc->wi_bhandle,		\
 	    (sc->sc_pci ? reg * 2: reg), val)
 
 #define CSR_READ_4(sc, reg)					\
-	(WI_BIG_ENDIAN_POSSIBLE ?				\
-	letoh32(bus_space_read_4(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci ? reg * 2: reg))) :			\
 	bus_space_read_4(sc->wi_btag, sc->wi_bhandle,		\
-	    (sc->sc_pci ? reg * 2: reg)))
+	    (sc->sc_pci ? reg * 2: reg))
 #define CSR_READ_2(sc, reg)					\
-	(WI_BIG_ENDIAN_POSSIBLE ?				\
-	letoh16(bus_space_read_2(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci ? reg * 2: reg))) :			\
 	bus_space_read_2(sc->wi_btag, sc->wi_bhandle,		\
-	    (sc->sc_pci ? reg * 2: reg)))
+	    (sc->sc_pci ? reg * 2: reg))
 #define CSR_READ_1(sc, reg)					\
 	bus_space_read_1(sc->wi_btag, sc->wi_bhandle,		\
 	    (sc->sc_pci ? reg * 2: reg))
