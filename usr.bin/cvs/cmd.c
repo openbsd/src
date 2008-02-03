@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.67 2008/02/01 17:18:59 tobias Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.68 2008/02/03 18:18:44 tobias Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -43,6 +43,7 @@ struct cvs_cmd *cvs_cdt[] = {
 	&cvs_cmd_init,
 	&cvs_cmd_log,
 	&cvs_cmd_rannotate,
+	&cvs_cmd_rdiff,
 	&cvs_cmd_release,
 	&cvs_cmd_remove,
 	&cvs_cmd_rlog,
@@ -55,7 +56,6 @@ struct cvs_cmd *cvs_cdt[] = {
 #if 0
 	&cvs_cmd_edit,
 	&cvs_cmd_editors,
-	&cvs_cmd_rdiff,
 	&cvs_cmd_unedit,
 	&cvs_cmd_watch,
 	&cvs_cmd_watchers,

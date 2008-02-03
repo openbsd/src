@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.124 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.125 2008/02/03 18:18:44 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -16,8 +16,10 @@
  */
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -28,6 +30,7 @@
 void	cvs_diff_local(struct cvs_file *);
 
 static int Nflag = 0;
+static int force_head = 0;
 static char *rev1 = NULL;
 static char *rev2 = NULL;
 
@@ -37,7 +40,18 @@ struct cvs_cmd cvs_cmd_diff = {
 	"Show differences between revisions",
 	"[-cilNnpRu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
 	"[-k mode] [file ...]",
-	"cD:iklNnpr:Ru",
+	"cfD:iklNnpr:Ru",
+	NULL,
+	cvs_diff
+};
+
+struct cvs_cmd cvs_cmd_rdiff = {
+	CVS_OP_RDIFF, 0, "rdiff",
+	{ "patch", "pa" },
+	"Show differences between revisions",
+	"[-flR] [-c | -u] [-s | -t] [-V ver] -D date | -r rev\n"
+	"[-D date2 | -r rev2] [-k mode] module ...",
+	"cfD:klr:Ru",
 	NULL,
 	cvs_diff
 };
@@ -59,6 +73,13 @@ cvs_diff(int argc, char **argv)
 			strlcat(diffargs, " -c", sizeof(diffargs));
 			diff_format = D_CONTEXT;
 			break;
+		case 'f':
+			force_head = 1;
+			break;
+		case 'i':
+			strlcat(diffargs, " -i", sizeof(diffargs));
+			diff_iflag = 1;
+			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
 			break;
@@ -67,7 +88,6 @@ cvs_diff(int argc, char **argv)
 			diff_format = D_RCSDIFF;
 			break;
 		case 'N':
-			strlcat(diffargs, " -N", sizeof(diffargs));
 			Nflag = 1;
 			break;
 		case 'p':
@@ -102,6 +122,18 @@ cvs_diff(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
+	if (cvs_cmdop == CVS_OP_RDIFF) {
+		if (rev1 == NULL)
+			fatal("must specify at least one revision/date!");
+
+		if (!diff_format) {
+			strlcat(diffargs, " -c", sizeof(diffargs));
+			diff_format = D_CONTEXT;
+		}
+
+		flags |= CR_REPO;
+	}
+
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
@@ -134,6 +166,10 @@ cvs_diff(int argc, char **argv)
 		if (rev2 != NULL)
 			cvs_client_send_request("Argument -r%s", rev2);
 	} else {
+		if (cvs_cmdop == CVS_OP_RDIFF &&
+		    chdir(current_cvsroot->cr_dir) == -1)
+			fatal("cvs_diff: %s", strerror(errno));
+
 		cr.fileproc = cvs_diff_local;
 	}
 
@@ -141,15 +177,21 @@ cvs_diff(int argc, char **argv)
 
 	diff_rev1 = diff_rev2 = NULL;
 
-	if (argc > 0)
-		cvs_file_run(argc, argv, &cr);
-	else
-		cvs_file_run(1, &arg, &cr);
+	if (cvs_cmdop == CVS_OP_DIFF ||
+	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+		if (argc > 0)
+			cvs_file_run(argc, argv, &cr);
+		else
+			cvs_file_run(1, &arg, &cr);
+	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
-		cvs_client_send_request("diff");
+
+		cvs_client_send_request((cvs_cmdop == CVS_OP_RDIFF) ?
+		    "rdiff" : "diff");
+
 		cvs_client_get_responses();
 	}
 
@@ -198,19 +240,54 @@ cvs_diff_local(struct cvs_file *cf)
 	}
 
 	if (rev1 != NULL)
-		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) == NULL)
-			return;
+		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) ==
+		    NULL) {
+			if (cvs_cmdop == CVS_OP_DIFF) {
+				cvs_log(LP_ERR, "tag %s is not in file %s",
+				    rev1, cf->file_path);
+				return;
+			}
+ 			if (force_head) {
+				/* -f is not allowed for unknown symbols */
+				diff_rev1 = rcsnum_parse(rev1);
+				if (diff_rev1 == NULL)
+					fatal("no such tag %s", rev1);
+				rcsnum_free(diff_rev1);
+
+				diff_rev1 = rcsnum_alloc();
+				rcsnum_cpy(cf->file_rcs->rf_head, diff_rev1, 0);
+			}
+		}
 
 	if (rev2 != NULL)
 		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) ==
 		    NULL) {
-			rcsnum_free(diff_rev1);
-			return;
+			if (cvs_cmdop == CVS_OP_DIFF) {
+				rcsnum_free(diff_rev1);
+				cvs_log(LP_ERR, "tag %s is not in file %s",
+				    rev2, cf->file_path);
+				return;
+			}
+ 			if (force_head) {
+				/* -f is not allowed for unknown symbols */
+				diff_rev2 = rcsnum_parse(rev2);
+				if (diff_rev2 == NULL)
+					fatal("no such tag %s", rev2);
+				rcsnum_free(diff_rev2);
+
+				diff_rev2 = rcsnum_alloc();
+				rcsnum_cpy(cf->file_rcs->rf_head, diff_rev2, 0);
+			}
 		}
 
+	if (cvs_cmdop == CVS_OP_RDIFF && diff_rev1 == NULL && diff_rev2 == NULL)
+		return;
+
 	diff_file = cf->file_path;
-	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
-	    RCS_DIFF_DIV, cf->file_rpath);
+
+	cvs_printf("Index: %s\n", cf->file_path);
+	if (cvs_cmdop == CVS_OP_DIFF)
+		cvs_printf("%s\nRCS file: %s\n", RCS_DIFF_DIV, cf->file_rpath);
 
 	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
@@ -218,35 +295,55 @@ cvs_diff_local(struct cvs_file *cf)
 	if (cf->file_status != FILE_ADDED) {
 		if (diff_rev1 != NULL)
 			r1 = diff_rev1;
-		else
+		else if (cf->file_ent != NULL)
 			r1 = cf->file_ent->ce_rev;
+		else
+			r1 = NULL;
 
 		diff_rev1 = r1;
-		rcsnum_tostr(r1, rbuf , sizeof(rbuf));
 
-		tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
-		tv[0].tv_usec = 0;
-		tv[1] = tv[0];
+		if (diff_rev1 != NULL) {
+			(void)rcsnum_tostr(r1, rbuf, sizeof(rbuf));
 
-		cvs_printf("Retrieving revision %s\n", rbuf);
-		rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
+			tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
+			tv[0].tv_usec = 0;
+			tv[1] = tv[0];
+
+			if (cvs_cmdop == CVS_OP_DIFF)
+				cvs_printf("retrieving revision %s\n", rbuf);
+			rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
+			if (utimes(p1, tv) == -1)
+				fatal("cvs_diff_local: utimes failed");
+		}
 	}
 
 	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED &&
 	    cf->file_status != FILE_REMOVED) {
-		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+		(void)rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
 
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
 
-		cvs_printf("Retrieving revision %s\n", rbuf);
+		if (cvs_cmdop == CVS_OP_DIFF)
+			cvs_printf("retrieving revision %s\n", rbuf);
 		rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
+		if (utimes(p2, tv2) == -1)
+			fatal("cvs_diff_local: utimes failed");
 	} else if (cf->file_status != FILE_REMOVED) {
-		if (cvs_server_active == 1 &&
-		    cf->file_status != FILE_MODIFIED) {
-			rcs_rev_write_stmp(cf->file_rcs,
-			    cf->file_rcsrev, p2, 0);
+		if (cvs_cmdop == CVS_OP_RDIFF || (cvs_server_active == 1 &&
+		    cf->file_status != FILE_MODIFIED)) {
+			if (diff_rev2 != NULL) {
+				tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs,
+				    cf->file_rcsrev);
+				tv2[0].tv_usec = 0;
+				tv2[1] = tv2[0];
+
+				rcs_rev_write_stmp(cf->file_rcs,
+				    cf->file_rcsrev, p2, 0);
+				if (utimes(p2, tv2) == -1)
+					fatal("cvs_diff_local: utimes failed");
+			}
 		} else {
 			if (fstat(cf->fd, &st) == -1)
 				fatal("fstat failed %s", strerror(errno));
@@ -262,24 +359,59 @@ cvs_diff_local(struct cvs_file *cf)
 		}
 	}
 
-	cvs_printf("%s", diffargs);
+	if (cvs_cmdop == CVS_OP_DIFF) {
+		cvs_printf("%s", diffargs);
 
-	if (cf->file_status != FILE_ADDED) {
-		rcsnum_tostr(r1, rbuf, sizeof(rbuf));
-		cvs_printf(" -r%s", rbuf);
-
-		if (diff_rev2 != NULL) {
-			rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+		if (cf->file_status != FILE_ADDED) {
+			(void)rcsnum_tostr(r1, rbuf, sizeof(rbuf));
 			cvs_printf(" -r%s", rbuf);
+
+			if (diff_rev2 != NULL) {
+				(void)rcsnum_tostr(diff_rev2, rbuf,
+				    sizeof(rbuf));
+				cvs_printf(" -r%s", rbuf);
+			}
+		}
+
+		if (diff_rev2 == NULL)
+			cvs_printf(" %s\n", cf->file_name);
+	} else {
+		cvs_printf("diff ");
+		switch (diff_format) {
+		case D_CONTEXT:
+			cvs_printf("-c ");
+			break;
+		case D_RCSDIFF:
+			cvs_printf("-n ");
+			break;
+		case D_UNIFIED:
+			cvs_printf("-u ");
+			break;
+		default:
+			break;
+		}
+		if (diff_rev1 == NULL) {
+			cvs_printf("%s ", CVS_PATH_DEVNULL);
+		} else {
+			(void)rcsnum_tostr(diff_rev1, rbuf, sizeof(rbuf));
+			cvs_printf("%s:%s ", cf->file_path, rbuf);
+		}
+
+		if (diff_rev2 == NULL) {
+			cvs_printf("%s:removed\n", cf->file_path);
+		} else {
+			(void)rcsnum_tostr(diff_rev2 != NULL ? diff_rev2 :
+			    cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+			cvs_printf("%s:%s\n", cf->file_path, rbuf);
 		}
 	}
 
-	cvs_printf(" %s\n", cf->file_path);
-
-	if (cf->file_status == FILE_ADDED) {
+	if (cf->file_status == FILE_ADDED ||
+	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev1 == NULL)) {
 		xfree(p1);
 		(void)xasprintf(&p1, "%s", CVS_PATH_DEVNULL);
-	} else if (cf->file_status == FILE_REMOVED) {
+	} else if (cf->file_status == FILE_REMOVED ||
+	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev2 == NULL)) {
 		xfree(p2);
 		(void)xasprintf(&p2, "%s", CVS_PATH_DEVNULL);
 	}
@@ -294,9 +426,10 @@ cvs_diff_local(struct cvs_file *cf)
 	if (p2 != NULL)
 		xfree(p2);
 
-	if (diff_rev1 != NULL && diff_rev1 != cf->file_ent->ce_rev)
+	if (diff_rev1 != NULL && diff_rev1 != cf->file_rcs->rf_head &&
+	    (cf->file_ent != NULL && diff_rev1 != cf->file_ent->ce_rev))
 		rcsnum_free(diff_rev1);
-	if (diff_rev2 != NULL && diff_rev2 != cf->file_rcsrev)
+	if (diff_rev2 != NULL)
 		rcsnum_free(diff_rev2);
 
 	diff_rev1 = diff_rev2 = NULL;

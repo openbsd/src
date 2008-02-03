@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.81 2008/02/03 17:20:14 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.82 2008/02/03 18:18:44 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -590,6 +590,18 @@ cvs_server_diff(char *data)
 
 	cvs_cmdop = CVS_OP_DIFF;
 	cmdp->cmd_flags = cvs_cmd_diff.cmd_flags;
+	cvs_diff(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_rdiff(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_rdiff: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_RDIFF;
+	cmdp->cmd_flags = cvs_cmd_rdiff.cmd_flags;
 	cvs_diff(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
