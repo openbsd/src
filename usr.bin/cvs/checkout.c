@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.120 2008/02/03 18:42:32 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.121 2008/02/03 19:57:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -213,6 +213,9 @@ checkout_check_repository(int argc, char **argv)
 
 		if (!(mc->mc_flags & MODULE_ALIAS) || dflag != NULL)
 			module_repo_root = mc->mc_repo;
+
+		if (mc->mc_flags & MODULE_NORECURSE)
+			flags &= ~CR_RECURSE_DIRS;
 
 		if (dflag != NULL)
 			wdir = dflag;
