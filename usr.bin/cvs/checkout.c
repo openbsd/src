@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.119 2008/02/03 17:20:14 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.120 2008/02/03 18:42:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -39,6 +39,7 @@ extern int prune_dirs;
 extern int build_dirs;
 
 static int flags = CR_REPO | CR_RECURSE_DIRS;
+static char *dflag = NULL;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
@@ -70,6 +71,11 @@ cvs_checkout(int argc, char **argv)
 		switch (ch) {
 		case 'A':
 			reset_stickies = 1;
+			break;
+		case 'd':
+			if (dflag != NULL)
+				fatal("-d specified two or more times");
+			dflag = optarg;
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -147,6 +153,7 @@ static void
 checkout_check_repository(int argc, char **argv)
 {
 	int i;
+	char *wdir;
 	char repo[MAXPATHLEN];
 	struct cvs_recursion cr;
 	struct module_checkout *mc;
@@ -204,8 +211,13 @@ checkout_check_repository(int argc, char **argv)
 		(void)xsnprintf(repo, sizeof(repo), "%s/%s",
 		    current_cvsroot->cr_dir, mc->mc_repo);
 
-		if (!(mc->mc_flags & MODULE_ALIAS))
+		if (!(mc->mc_flags & MODULE_ALIAS) || dflag != NULL)
 			module_repo_root = mc->mc_repo;
+
+		if (dflag != NULL)
+			wdir = dflag;
+		else
+			wdir = mc->mc_wdir;
 
 		switch (checkout_classify(repo, mc->mc_repo)) {
 		case CVS_FILE:
@@ -213,14 +225,14 @@ checkout_check_repository(int argc, char **argv)
 			cr.flags = flags;
 
 			if (build_dirs == 1)
-				cvs_mkpath(dirname(mc->mc_wdir),
+				cvs_mkpath(dirname(wdir),
 				    cvs_specified_tag);
 			cvs_file_run(1, &(mc->mc_repo), &cr);
 			break;
 		case CVS_DIR:
 			if (build_dirs == 1)
-				cvs_mkpath(mc->mc_wdir, cvs_specified_tag);
-			checkout_repository(repo, mc->mc_wdir);
+				cvs_mkpath(wdir, cvs_specified_tag);
+			checkout_repository(repo, wdir);
 			break;
 		default:
 			break;
