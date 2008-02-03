@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.96 2008/02/03 15:08:04 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.97 2008/02/03 15:57:25 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include <sys/param.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
-#include <sys/times.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <fcntl.h>
