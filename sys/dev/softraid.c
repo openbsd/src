@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.97 2008/01/29 23:25:02 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.98 2008/02/03 00:25:21 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -911,9 +911,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 #ifdef CRYPTO
 	case 'C':
 		/* fill out discipline members */
-		sd->sd_type = SR_MD_RAIDCRYPTO;
+		sd->sd_type = SR_MD_CRYPTO;
 		sd->sd_max_ccb_per_wu = no_chunk;
-		sd->sd_max_wu = SR_RAIDCRYPTO_NOWU;
+		sd->sd_max_wu = SR_CRYPTO_NOWU;
 
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_crypto_alloc_resources;
