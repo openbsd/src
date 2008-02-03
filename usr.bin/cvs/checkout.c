@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.116 2008/02/02 19:32:28 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.117 2008/02/03 15:08:04 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <fcntl.h>

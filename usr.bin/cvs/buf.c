@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.66 2007/09/25 10:02:50 chl Exp $	*/
+/*	$OpenBSD: buf.c,v 1.67 2008/02/03 15:08:04 tobias Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <fcntl.h>
