@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.17 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.18 2008/02/03 18:59:44 tobias Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -869,9 +869,9 @@ diff_head(void)
 		t = localtime(&curr_time);
 	}
 
-	(void)strftime(buf, sizeof(buf), "%d %b %G %H:%M:%S -0000", t);
-	diff_output("%s %s	%s", diff_format == D_CONTEXT ? "***" : "---",
-	    diff_file, buf);
+	(void)strftime(buf, sizeof(buf), "%b %G %H:%M:%S -0000", t);
+	diff_output("%s %s	%d %s", diff_format == D_CONTEXT ?
+	    "***" : "---", diff_file, t->tm_mday, buf);
 
 	if (diff_rev1 != NULL) {
 		rcsnum_tostr(diff_rev1, buf, sizeof(buf));
@@ -880,16 +880,11 @@ diff_head(void)
 
 	diff_output("\n");
 
-	if (diff_rev2 != NULL)
-		t = gmtime(&stb2.st_mtime);
-	else {
-		time(&curr_time);
-		t = localtime(&curr_time);
-	}
+	t = gmtime(&stb2.st_mtime);
 
-	(void)strftime(buf, sizeof(buf), "%d %b %G %H:%M:%S -0000", t);
-	diff_output("%s %s	%s", diff_format == D_CONTEXT ? "---" : "+++",
-	    diff_file, buf);
+	(void)strftime(buf, sizeof(buf), "%b %G %H:%M:%S -0000", t);
+	diff_output("%s %s	%d %s", diff_format == D_CONTEXT ?
+	    "---" : "+++", diff_file, t->tm_mday, buf);
 
 	if (diff_rev2 != NULL) {
 		rcsnum_tostr(diff_rev2, buf, sizeof(buf));
