@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.4 2008/02/03 22:50:28 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.5 2008/02/03 22:53:04 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -43,7 +43,7 @@ void
 modules_parse_line(char *line)
 {
 	int flags;
-	struct cvs_filelist *fl, *nxt;
+	struct cvs_filelist *fl;
 	char *val, *p, *module, *sp, *dp;
 	struct module_info *mi;
 	char *dirname, fpath[MAXPATHLEN];
@@ -134,14 +134,20 @@ modules_parse_line(char *line)
 			*(dp++) = '\0';
 
 		if (mi->mi_flags & MODULE_ALIAS) {
-			if (sp[0] == '!')
+			if (sp[0] == '!') {
+				if (strlen(sp) < 2)
+					fatal("invalid ! pattern");
 				cvs_file_get((sp + 1), 0, &(mi->mi_ignores));
-			else
+			} else {
 				cvs_file_get(sp, 0, &(mi->mi_modules));
+			}
 		} else if (sp == val) {
 			dirname = sp;
 		} else {
 			if (sp[0] == '!') {
+				if (strlen(sp) < 2)
+					fatal("invalid ! pattern");
+
 				sp++;
 				(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 				    dirname, sp);
