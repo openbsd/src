@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.80 2008/01/31 12:12:50 thib Exp $	*/
+/*	$OpenBSD: relay.c,v 1.81 2008/02/04 12:05:26 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -137,12 +137,6 @@ static struct relayd		*env = NULL;
 struct imsgbuf			*ibuf_pfe;
 struct imsgbuf			*ibuf_main;
 int				 proc_id;
-
-#if DEBUG > 1
-#define DPRINTF		log_debug
-#else
-#define DPRINTF(x...)	do { } while(0)
-#endif
 
 void
 relay_sig_handler(int sig, short event, void *arg)

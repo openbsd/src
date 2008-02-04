@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.94 2008/02/04 12:01:33 thib Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.95 2008/02/04 12:05:26 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,6 +55,12 @@
 #define PURGE_RELAYS		0x04
 #define PURGE_PROTOS		0x08
 #define PURGE_EVERYTHING	0xff
+
+#if DEBUG > 1
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif
 
 /* buffer */
 struct buf {
