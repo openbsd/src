@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2008/02/01 18:10:26 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2008/02/04 19:08:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,7 +35,7 @@ cvs_parse_configfile(void)
 }
 
 void
-config_parse_line(char *line)
+config_parse_line(char *line, int lineno)
 {
 	struct rlimit rl;
 	const char *errstr;
@@ -76,10 +76,11 @@ config_parse_line(char *line)
 }
 
 void
-cvs_read_config(char *name, void (*cb)(char *))
+cvs_read_config(char *name, void (*cb)(char *, int))
 {
 	FILE *fp;
 	size_t len;
+	int lineno;
 	char *p, *buf, *lbuf, fpath[MAXPATHLEN];
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
@@ -89,7 +90,9 @@ cvs_read_config(char *name, void (*cb)(char *))
 		return;
 
 	lbuf = NULL;
+	lineno = 0;
 	while ((buf = fgetln(fp, &len)) != NULL) {
+		lineno++;
 		if (buf[len - 1] == '\n') {
 			buf[len - 1] = '\0';
 		} else {
@@ -106,7 +109,7 @@ cvs_read_config(char *name, void (*cb)(char *))
 		if (p[0] == '#' || p[0] == '\0')
 			continue;
 
-		cb(p);
+		cb(p, lineno);
 	}
 
 	if (lbuf != NULL)

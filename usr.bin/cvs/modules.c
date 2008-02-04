@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.6 2008/02/03 23:34:41 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.7 2008/02/04 19:08:32 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -40,49 +40,42 @@ cvs_parse_modules(void)
 }
 
 void
-modules_parse_line(char *line)
+modules_parse_line(char *line, int lineno)
 {
 	int flags;
-	struct cvs_filelist *fl;
-	char *val, *p, *module, *sp, *dp;
 	struct module_info *mi;
-	char *dirname, fpath[MAXPATHLEN];
+	char *val, *p, *module, *sp, *dp;
+	char *dirname, fpath[MAXPATHLEN], *prog;
 
 	flags = 0;
 	p = val = line;
-	while (*p != ' ' && *p != '\t')
+	while (*p != ' ' && *p != '\t' && *p != '\0')
 		p++;
+
+	if (*p == '\0')
+		goto bad;
 
 	*(p++) = '\0';
 	module = val;
 
-	while (*p == ' ' || *p == '\t')
+	while ((*p == ' ' || *p == '\t') && *p != '\0')
 		p++;
 
-	if (*p == '\0') {
-		cvs_log(LP_NOTICE, "premature ending of CVSROOT/modules line");
-		return;
-	}
+	if (*p == '\0')
+		goto bad;
 
 	val = p;
 	while (*p != ' ' && *p != '\t')
 		p++;
 
-	if (*p == '\0') {
-		cvs_log(LP_NOTICE, "premature ending of CVSROOT/modules line");
-		return;
-	}
-
+	prog = NULL;
 	while (val[0] == '-') {
 		p = val;
 		while (*p != ' ' && *p != '\t' && *p != '\0')
 			p++;
 
-		if (*p == '\0') {
-			cvs_log(LP_NOTICE,
-			    "misplaced option in CVSROOT/modules");
-			return;
-		}
+		if (*p == '\0')
+			goto bad;
 
 		*(p++) = '\0';
 
@@ -105,11 +98,18 @@ modules_parse_line(char *line)
 			flags |= MODULE_NORECURSE;
 			break;
 		case 'i':
-			if (flags != 0) {
+			if (flags != 0 || prog != NULL) {
 				cvs_log(LP_NOTICE,
 				    "-i cannot be used with other flags");
 				return;
 			}
+
+			if ((val = strchr(p, ' ' )) == NULL)
+				goto bad;
+
+			*(val++) = '\0';
+			prog = xstrdup(p);
+			p = val;
 			flags |= MODULE_RUN_ON_COMMIT;
 			break;
 		}
@@ -117,13 +117,13 @@ modules_parse_line(char *line)
 		val = p;
 	}
 
-	/* XXX: until we support it */
-	if (flags & MODULE_RUN_ON_COMMIT)
-		return;
+	if (*val == '\0')
+		goto bad;
 
 	mi = xmalloc(sizeof(*mi));
 	mi->mi_name = xstrdup(module);
 	mi->mi_flags = flags;
+	mi->mi_prog = prog;
 
 	dirname = NULL;
 	TAILQ_INIT(&(mi->mi_modules));
@@ -164,6 +164,10 @@ modules_parse_line(char *line)
 		cvs_file_get(dirname, 0, &(mi->mi_modules));
 
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
+	return;
+
+bad:
+	cvs_log(LP_NOTICE, "malformed line in CVSROOT/modules: %d", lineno);
 }
 
 struct module_checkout *
@@ -180,8 +184,9 @@ cvs_module_lookup(char *name)
 			mc->mc_modules = mi->mi_modules;
 			mc->mc_ignores = mi->mi_ignores;
 			mc->mc_canfree = 0;
-			mc->mc_name = xstrdup(mi->mi_name);
+			mc->mc_name = mi->mi_name;
 			mc->mc_flags = mi->mi_flags;
+			mc->mc_prog = mi->mi_prog;
 			return (mc);
 		}
 	}
@@ -190,8 +195,9 @@ cvs_module_lookup(char *name)
 	TAILQ_INIT(&(mc->mc_ignores));
 	cvs_file_get(name, 0, &(mc->mc_modules));
 	mc->mc_canfree = 1;
-	mc->mc_name = xstrdup(name);
+	mc->mc_name = name;
 	mc->mc_flags |= MODULE_ALIAS;
+	mc->mc_prog = NULL;
 
 	return (mc);
 }

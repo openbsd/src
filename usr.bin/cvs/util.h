@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.23 2008/02/04 18:23:58 tobias Exp $	*/
+/*	$OpenBSD: util.h,v 1.24 2008/02/04 19:08:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -41,6 +41,7 @@ int	  cvs_unlink(const char *);
 int	  cvs_rmdir(const char *);
 char	**cvs_makeargv(const char *, int *);
 void	  cvs_freeargv(char **, int);
+void	  cvs_exec(const char *);
 u_int	  cvs_revision_select(RCSFILE *, char *);
 
 struct cvs_line {

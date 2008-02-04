@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.131 2008/02/04 18:23:58 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.132 2008/02/04 19:08:32 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -33,6 +33,7 @@
 #include <md5.h>
 #include <stdlib.h>
 #include <string.h>
+#include <paths.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -823,4 +824,22 @@ cvs_yesno(void)
 			c = getchar();
 
 	return (ret);
+}
+
+void
+cvs_exec(const char *prog)
+{
+	pid_t pid;
+	char *argp[] = { "sh", "-c", NULL, NULL };
+
+	argp[2] = prog;
+
+	if ((pid = fork()) == -1) {
+		cvs_log(LP_ERR, "cvs_exec: fork failed");
+		return;
+	} else if (pid == 0) {
+		execv(_PATH_BSHELL, argp);
+		cvs_log(LP_ERR, "failed to run '%s'", prog);
+		_exit(127);
+	}
 }
