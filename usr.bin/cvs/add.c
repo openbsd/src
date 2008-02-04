@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.90 2008/02/04 15:07:32 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.91 2008/02/04 18:23:58 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -238,7 +238,7 @@ add_directory(struct cvs_file *cf)
 			    repo, cf->file_name);
 
 			cvs_mkadmin(cf->file_path, current_cvsroot->cr_dir,
-			    entry, tag, date, nb);
+			    entry, tag, date);
 
 			p = xmalloc(CVS_ENT_MAXLINELEN);
 			(void)xsnprintf(p, CVS_ENT_MAXLINELEN,
