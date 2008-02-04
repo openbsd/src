@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.1 2008/02/04 12:15:03 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.2 2008/02/04 12:33:47 espie Exp $
 
 =head1 NAME
 
@@ -17,29 +17,29 @@ Design modules that manipulate some notions in a consistent way, so
 that they can be used by the package tools proper, but also with a
 high-level API that's useful for anything that needs to manipulate
 packages.  This was validated by the ease with which we can now update
-packing-lists, check for conflicts, and validate various properties of
+packing-lists, check for conflicts, and check various properties of
 our packages.
 
 Try to be as safe as possible where installation and update operations
 are concerned.  Cut up operations into small subsets which yields frequent
 safe intermediate points where the machine is completely functional.
 
-Traditional package tools often rely on the followng model: take
+Traditional package tools often rely on the following model: take
 a snapshot of the system, try to perform an operation, and roll back to
 a stable state if anything goes wrong.
 
-Instead, these package tools take a computational approach: record
+Instead, OpenBSD package tools take a computational approach: record
 semantic information in a useful format, pre-compute as much as can be
-about an operation that's going to happen, and only perform it when we
+about an operation, and only perform the operation when we
 have proved that (almost) nothing can go wrong.  As far as possible,
-perform the actual operation on the side, as a temporary package, and
-only commit to the operation once most of the work is over.
+the actual operation happens on the side, as a temporary scaffolding, and
+we only commit to the operation once most of the work is over.
 
-Keep high level semantic information instead of recomputing it all the
+Keep high-level semantic information instead of recomputing it all the
 time, but try to organize as much as possible as plain text files.
-Originally, it was a bit of a challenge, trying to see how much we could
+Originally, it was a bit of a challenge: trying to see how much we could
 get away with, before having to define an actual database format.
-Turned out we do not need a database format, or even any cache on the
+Turns out we do not need a database format, or even any cache on the
 ftp server.
 
 Avoid copying files all over the place. Hence the L<OpenBSD::UStar(3p)>
@@ -49,7 +49,7 @@ having to extract them first in a staging area.
 All the package tools use the same internal perl modules, which gives them
 some consistency about fundamental notions.
 
-It is highly recommended to try to understand packing-lists and packing 
+It is highly recommended to try to understand packing-lists and packing
 elements first, since they are the core that unlocks most of the package
 tools.
 
@@ -62,44 +62,44 @@ tools.
 
 Each package consists of a list of objects (mostly files, but there are some
 other abstract structures, like new user accounts, or stuff to do when
-the package gets installed).  
+the package gets installed).
 They are recorded in a L<OpenBSD::PackingList(3p)>, the module offers
 everything needed to manipulate packing-lists.
-The packing-list format has a text representation, which is documented 
-within L<pkg_create(3p)>.
+The packing-list format has a text representation, which is documented
+in L<pkg_create(3p)>.
 Internally, packing-lists are heavily structured. Objects are reordered
 by the internals of L<OpenBSD::PackingList(3p)>, and there are some standard
 filters defined to gain access to some commonly used information (dependencies
-and conflicts mostly) without having to read and parse all the packing-list.
+and conflicts mostly) without having to read and parse the whole packing-list.
 Each object is an L<OpenBSD::PackingElement(3p)>, which is an abstract class
 with lots of children classes.
 The use of packing-lists most often combines two classic design patterns:
-one uses Visitor to traverse a packing-list and perform an operation on 
-all its elements (this is where the order is important, and why some 
+one uses Visitor to traverse a packing-list and perform an operation on
+all its elements (this is where the order is important, and why some
 stuff like user creation will `bubble up' to the beginning of the list), allied
-to Template Method: the operation is often completely undefined for a
+to Template Method: the operation is often not determined for a
 basic L<OpenBSD::PackingElement(3p)>, but will make more sense to an
 L<OpenBSD::PackingElement::FileObject(3p)> or similar.
-Packing-lists object have an "automatic visitor": if a method is not
+Packing-list objects have an "automatic visitor" property: if a method is not
 defined for the packing-list proper, but exists for packing elements, then
 invoking the method on the packing-list will traverse it and apply the method
-to all the elements.
+to each element.
 For instance, package installation happens through the following snippet:
 
     $plist->install_and_progress(...)
 
-where install_and_progress is defined at the packing element level,
+where C<install_and_progress> is defined at the packing element level,
 and invokes C<install> and shows a progress bar if needed.
 
 =item package names and specs
 
-Package names and specifications for package names have a specific format, 
+Package names and specifications for package names have a specific format,
 which is described in L<packages-specs(7)>.   Package names are handled
 within L<OpenBSD::PackageName(3p)>.  There is also a framework to organize
-searches based in L<OpenBSD::Search(3p)>.  Specifications are structured
-in a specific way, which yields a shorthand for conflict handling
+searches based on L<OpenBSD::Search(3p)> objects.  Specifications are
+structured in a specific way, which yields a shorthand for conflict handling
 through L<OpenBSD::PkgCfl(3p)>, allows the package system to resolve
-dependencies in L<OpenBSD::Dependencies(3p)>, and to figure out package
+dependencies in L<OpenBSD::Dependencies(3p)> and to figure out package
 updates in L<OpenBSD::Update(3p)>.
 
 =item sources of packages
@@ -107,27 +107,27 @@ updates in L<OpenBSD::Update(3p)>.
 Historically, L<OpenBSD::PackageInfo(3p)> was used to get to the list of
 installed packages and grab information.  This is now part of a more
 generic framework L<OpenBSD::PackageRepository(3p)>, which interacts with
-the searches objects to allow you to access packages, be they installed,
+the search objects to allow you to access packages, be they installed,
 on the local machines, or distant.  Once a package is located, the repository
 yields a proxy object called L<OpenBSD::PackageLocation(3p)> that can be used
 to gain further info.  (There are still shortcuts for installed packages
-for performance and simplicity reasons).
+for performance and simplicity reasons.)
 
 =item update sets
 
 This is a new notion (introduced around OpenBSD 4.1) which is not yet fully
 used throughout the package tools.  Each operation (installation, removal,
-or replacement of packages) is cut up as small atomic operations, in order
+or replacement of packages) is cut up into small atomic operations, in order
 to guarantee maximal stability of the installed system. The package tools
 will try really hard to only deal with one or two packages at a time,
 in order to minimize combinatorial complexity, and to have a maximal number
 of safe points, where an update operation can stop without hosing the
-whole system. And update set is simply a minimal bag of packages, with old
+whole system. An update set is simply a minimal bag of packages, with old
 packages that are going to be installed, new packages that are going
-to replace them, and an area to record related ongoing computations.  
+to replace them, and an area to record related ongoing computations.
 The old set may be empty, the new set may be empty, and in all cases,
 the update set shall be small (as small as possible).   Currently,
-the package tools do not deal with all cases they should. This is still
+the package tools do not deal with all the cases they should. This is still
 under construction.  We have already met with update situations where
 dependencies between packages invert (A-1.0 depends on B-1.0, but B-0.0
 depends on A-0.0), or where files move between packages, which in
@@ -136,10 +136,10 @@ old packages.  Currently, we cheat.
 
 =item dependency information
 
-Dependency information exists at three levels: there are source
-specifications within ports. Those specifications turn into binary
-specifications with more constraints when the package is built by 
-L<pkg_create(1)>, and then they're matched against lists of installed
+Dependency information exists at three levels: first, there are source
+specifications within ports. Then, those specifications turn into binary
+specifications with more constraints when the package is built by
+L<pkg_create(1)>, and finally, they're matched against lists of installed
 objects when the package is installed, and recorded as lists of
 inter-dependencies in the package system.
 
@@ -156,22 +156,22 @@ more generic will do.
 At the same time, shared libraries have harsher constraints: a package
 won't work without the exact same shared libraries it needs (same major
 number, at least), so shared libraries are handled through a want/provide
-mechanism that walk the whole dependency tree to find the required shared
+mechanism that walks the whole dependency tree to find the required shared
 libraries.
 
 Dependencies are just a subclass of the packing-elements, rooted at
 the C<OpenBSD::PackingElement::Depend> class.
 
-A specific C<OpenBSD::Dependencies::Solver> object is used for the resolution 
+A specific C<OpenBSD::Dependencies::Solver> object is used for the resolution
 of dependencies (see L<OpenBSD::Dependencies(3p)>, the solver is mostly
-a tree-walker, but there are performance considerations, so it can need
-to cache a lot of information).  
-Specificities of shared libraries are handled by L<OpenBSD::SharedLibs(3p)>. 
-In particular, the base system also provides some shared libraries which are 
+a tree-walker, but there are performance considerations, so it may need
+to cache a lot of information).
+Specificities of shared libraries are handled by L<OpenBSD::SharedLibs(3p)>.
+In particular, the base system also provides some shared libraries which are
 not recorded within the dependency tree.
 
-Lists of inter-dependencies are recorded in both directions 
-(RequiredBy/Requiring). The L<OpenBSD::RequiredBy(3p)> module handles the 
+Lists of inter-dependencies are recorded in both directions
+(RequiredBy/Requiring). The L<OpenBSD::RequiredBy(3p)> module handles the
 subtleties (removing duplicates, keeping things ordered, and handling
 pretend operations).
 
@@ -180,7 +180,7 @@ pretend operations).
 
 Some items may be recorded multiple times within several packages (mostly
 directories, users and groups). There is a specific L<OpenBSD::SharedItems(3p)>
-module which handles these. Mostly, all removal operations will scan
+module which handles these. Mostly, removal operations will scan
 all packing-lists at high speed to figure out shared items, and remove
 stuff that's no longer in use.
 
@@ -188,7 +188,7 @@ stuff that's no longer in use.
 
 Most package operations will lead to the installation and removal of some
 files.   Everything is checked beforehand: the package systeme must verify
-that no new file will erase an existing file, or that the filing system
+that no new file will erase an existing file, or that the file system
 won't overflow during the package installation.
 The package tools also have a "pretend" mode where the user can check what
 will happen before doing an operation.  All the computations and caching
@@ -227,7 +227,7 @@ common operations related to a package deletion
 
 =item OpenBSD::Error
 
-handles external calls through C<system(3p)>, exception mechanism, 
+handles external calls through C<system(3p)>, exception mechanism,
 fatal errors and warnings.
 
 =item OpenBSD::Getopt
@@ -257,7 +257,7 @@ Obtained through C<OpenBSD::PackageRepository>.
 
 =item OpenBSD::PackageLocator
 
-central non-OO hub for the normal repository list 
+central non-OO hub for the normal repository list
 (should use a singleton pattern instead).
 
 =item OpenBSD::PackageName
