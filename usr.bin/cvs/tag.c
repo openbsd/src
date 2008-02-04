@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.64 2008/01/31 22:09:05 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.65 2008/02/04 21:25:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -67,7 +67,8 @@ cvs_tag(int argc, char **argv)
 
 	flags = CR_RECURSE_DIRS;
 
-	while ((ch = getopt(argc, argv, cvs_cmd_tag.cmd_opts)) != -1) {
+	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_TAG ?
+	    cvs_cmd_tag.cmd_opts : cvs_cmd_rtag.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'b':
 			runflags |= T_BRANCH;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.83 2008/01/31 22:09:05 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.84 2008/02/04 21:25:32 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -69,7 +69,8 @@ cvs_getlog(int argc, char **argv)
 	rcsnum_flags |= RCSNUM_NO_MAGIC;
 	flags = CR_RECURSE_DIRS;
 
-	while ((ch = getopt(argc, argv, cvs_cmd_log.cmd_opts)) != -1) {
+	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_LOG ?
+	    cvs_cmd_log.cmd_opts : cvs_cmd_rlog.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'h':
 			runflags |= L_HEAD;
