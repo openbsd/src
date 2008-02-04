@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.126 2008/02/04 19:08:32 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.127 2008/02/04 21:29:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -41,6 +41,8 @@ extern int build_dirs;
 static int flags = CR_REPO | CR_RECURSE_DIRS;
 static char *dflag = NULL;
 static char *koptstr = NULL;
+
+static int nflag = 0;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
@@ -92,6 +94,9 @@ cvs_checkout(int argc, char **argv)
 			break;
 		case 'N':
 			break;
+		case 'n':
+			nflag = 1;
+			break;
 		case 'P':
 			prune_dirs = 1;
 			break;
@@ -99,6 +104,7 @@ cvs_checkout(int argc, char **argv)
 			cmdp->cmd_flags &= ~CVS_USE_WDIR;
 			print_stdout = 1;
 			cvs_noexec = 1;
+			nflag = 1;
 			break;
 		case 'R':
 			flags |= CR_RECURSE_DIRS;
@@ -205,6 +211,9 @@ checkout_check_repository(int argc, char **argv)
 		if (print_stdout == 1)
 			cvs_client_send_request("Argument -p");
 
+		if (nflag == 1)
+			cvs_client_send_request("Argument -n");
+
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
 		if (print_stdout)
@@ -288,7 +297,7 @@ checkout_check_repository(int argc, char **argv)
 				break;
 			}
 
-			if (mc->mc_prog != NULL &&
+			if (nflag != 1 && mc->mc_prog != NULL &&
 			    mc->mc_flags & MODULE_RUN_ON_COMMIT)
 				cvs_exec(mc->mc_prog);
 		}
