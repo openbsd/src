@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.93 2008/01/31 12:12:50 thib Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.94 2008/02/04 12:01:33 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -404,6 +404,7 @@ struct rdr {
 };
 TAILQ_HEAD(rdrlist, rdr);
 
+struct relay;
 struct session {
 	objid_t				 se_id;
 	u_int32_t			 se_key;
@@ -419,7 +420,7 @@ struct session {
 	int				 se_retry;
 	u_int16_t			 se_mark;
 	struct evbuffer			*se_log;
-	void				*se_relay;
+	struct relay			*se_relay;
 	struct ctl_natlook		*se_cnl;
 
 	SPLAY_ENTRY(session)		 se_nodes;
@@ -504,7 +505,6 @@ enum prototype {
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!ADH"
 
-struct relay;
 struct protocol {
 	objid_t			 id;
 	u_int32_t		 flags;
