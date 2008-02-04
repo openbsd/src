@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.7 2008/02/04 19:08:32 joris Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 2008/02/04 22:36:40 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,6 +35,7 @@ void modules_parse_line(char *, int);
 #define MODULE_TARGETDIR	0x02
 #define MODULE_NORECURSE	0x04
 #define MODULE_RUN_ON_COMMIT	0x08
+#define MODULE_RUN_ON_CHECKOUT	0x10
 
 struct module_checkout {
 	char			*mc_name;

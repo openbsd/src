@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.126 2008/02/04 15:07:33 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.127 2008/02/04 22:36:40 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -54,10 +54,11 @@ struct cvs_cmd cvs_cmd_commit = {
 int
 cvs_commit(int argc, char **argv)
 {
-	int ch, Fflag, mflag;
-	char *arg = ".";
 	int flags;
+	int ch, Fflag, mflag;
+	struct module_checkout *mc;
 	struct cvs_recursion cr;
+	char *arg = ".", repo[MAXPATHLEN];
 
 	flags = CR_RECURSE_DIRS;
 	Fflag = mflag = 0;
@@ -156,6 +157,12 @@ cvs_commit(int argc, char **argv)
 		cr.fileproc = cvs_commit_local;
 		cvs_file_walklist(&files_affected, &cr);
 		cvs_file_freelist(&files_affected);
+
+		cvs_get_repository_name(".", repo, MAXPATHLEN);
+		mc = cvs_module_lookup(repo);
+		if (mc->mc_prog != NULL &&
+		    (mc->mc_flags & MODULE_RUN_ON_COMMIT))
+			cvs_exec(mc->mc_prog);
 	}
 
 	xfree(logmsg);

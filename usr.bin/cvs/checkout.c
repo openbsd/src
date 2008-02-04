@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.127 2008/02/04 21:29:17 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.128 2008/02/04 22:36:40 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -298,7 +298,7 @@ checkout_check_repository(int argc, char **argv)
 			}
 
 			if (nflag != 1 && mc->mc_prog != NULL &&
-			    mc->mc_flags & MODULE_RUN_ON_COMMIT)
+			    mc->mc_flags & MODULE_RUN_ON_CHECKOUT)
 				cvs_exec(mc->mc_prog);
 		}
 

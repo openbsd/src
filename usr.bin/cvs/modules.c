@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.7 2008/02/04 19:08:32 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.8 2008/02/04 22:36:40 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -96,6 +96,21 @@ modules_parse_line(char *line, int lineno)
 			break;
 		case 'l':
 			flags |= MODULE_NORECURSE;
+			break;
+		case 'o':
+			if (flags != 0 || prog != NULL) {
+				cvs_log(LP_NOTICE,
+				    "-o cannot be used with other flags");
+				return;
+			}
+
+			if ((val = strchr(p, ' ' )) == NULL)
+				goto bad;
+
+			*(val++) = '\0';
+			prog = xstrdup(p);
+			p = val;
+			flags |= MODULE_RUN_ON_CHECKOUT;
 			break;
 		case 'i':
 			if (flags != 0 || prog != NULL) {
