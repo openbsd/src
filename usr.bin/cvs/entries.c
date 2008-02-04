@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.86 2008/01/10 10:09:27 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.87 2008/02/04 15:08:44 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -73,7 +73,11 @@ cvs_ent_open(const char *dir)
 		while (fgets(buf, sizeof(buf), fp)) {
 			buf[strcspn(buf, "\n")] = '\0';
 
-			p = &buf[1];
+			if (strlen(buf) < 2)
+				fatal("cvs_ent_open: %s: malformed line %s",
+				    ep->cef_lpath, buf);
+
+			p = &buf[2];
 
 			if (buf[0] == 'A') {
 				line = xmalloc(sizeof(*line));
@@ -274,7 +278,7 @@ cvs_ent_add(CVSENTRIES *ep, const char *line)
 		fatal("cvs_ent_add: fopen: `%s': %s",
 		    ep->cef_lpath, strerror(errno));
 
-	fputc('A', fp);
+	fputs("A ", fp);
 	fputs(line, fp);
 	fputc('\n', fp);
 
@@ -302,7 +306,7 @@ cvs_ent_remove(CVSENTRIES *ep, const char *name)
 		fatal("cvs_ent_remove: fopen: `%s': %s", ep->cef_lpath,
 		    strerror(errno));
 
-	fputc('R', fp);
+	fputs("R ", fp);
 	fputs(l->buf, fp);
 	fputc('\n', fp);
 
