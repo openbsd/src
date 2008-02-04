@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.91 2008/02/04 18:23:58 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.92 2008/02/04 19:54:21 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -91,7 +91,7 @@ cvs_add(int argc, char **argv)
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_add_remote;
 
-		if (kflag);
+		if (kflag)
 			cvs_client_send_request("Argument %s", kbuf);
 
 		if (logmsg != NULL)
