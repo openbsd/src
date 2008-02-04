@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.81 2008/01/31 21:30:08 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.82 2008/02/04 15:07:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,7 +40,6 @@ static char *logmsg = NULL;
 static char *vendor_tag = NULL;
 static char *release_tag = NULL;
 static char *koptstr;
-static int kflag = RCS_KWEXP_DEFAULT;
 static int dflag = 0;
 
 char *import_repository = NULL;
@@ -111,7 +110,7 @@ cvs_import(int argc, char **argv)
 
 		cvs_client_send_request("Argument -b%s", IMPORT_DEFAULT_BRANCH);
 
-		if (kflag != RCS_KWEXP_DEFAULT)
+		if (kflag)
 			cvs_client_send_request("Argument -k%s", koptstr);
 
 		cvs_client_send_logmsg(logmsg);
@@ -273,7 +272,7 @@ import_new(struct cvs_file *cf)
 	    cf->file_rcs->rf_head, bp) == -1)
 		fatal("import_new: failed to set deltatext");
 
-	if (kflag != RCS_KWEXP_DEFAULT)
+	if (kflag)
 		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	rcs_write(cf->file_rcs);
@@ -337,7 +336,7 @@ import_update(struct cvs_file *cf)
 		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
 	}
 
-	if (kflag != RCS_KWEXP_DEFAULT)
+	if (kflag)
 		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	rcsnum_free(brev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.124 2008/02/03 23:34:41 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.125 2008/02/04 15:07:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,6 +40,7 @@ extern int build_dirs;
 
 static int flags = CR_REPO | CR_RECURSE_DIRS;
 static char *dflag = NULL;
+static char *koptstr = NULL;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
@@ -76,6 +77,15 @@ cvs_checkout(int argc, char **argv)
 			if (dflag != NULL)
 				fatal("-d specified two or more times");
 			dflag = optarg;
+			break;
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_add.cmd_synopsis);
+			}
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -121,6 +131,15 @@ cvs_export(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_export.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_add.cmd_synopsis);
+			}
+			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
 			break;
@@ -170,6 +189,9 @@ checkout_check_repository(int argc, char **argv)
 			    cvs_specified_tag);
 		if (reset_stickies == 1)
 			cvs_client_send_request("Argument -A");
+
+		if (kflag)
+			cvs_client_send_request("Argument -k%s", koptstr);
 
 		if (dflag != NULL)
 			cvs_client_send_request("Argument -d%s", dflag);
@@ -361,7 +383,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
-	int kflag, oflags, exists;
+	int cf_kflag, oflags, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
@@ -447,14 +469,14 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		sticky[0] = '\0';
 
 	kbuf[0] = '\0';
-	if (cf->file_ent != NULL) {
-		if (cf->file_ent->ce_opts != NULL)
-			strlcpy(kbuf, cf->file_ent->ce_opts, sizeof(kbuf));
-	} else if (cf->file_rcs->rf_expand != NULL) {
-		kflag = rcs_kflag_get(cf->file_rcs->rf_expand);
-		if (!(kflag & RCS_KWEXP_DEFAULT))
+	if (cf->file_rcs->rf_expand != NULL) {
+		cf_kflag = rcs_kflag_get(cf->file_rcs->rf_expand);
+		if (kflag || cf_kflag != RCS_KWEXP_DEFAULT)
 			(void)xsnprintf(kbuf, sizeof(kbuf),
 			    "-k%s", cf->file_rcs->rf_expand);
+	} else if (!reset_stickies && cf->file_ent != NULL) {
+		if (cf->file_ent->ce_opts != NULL)
+			strlcpy(kbuf, cf->file_ent->ce_opts, sizeof(kbuf));
 	}
 
 	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",

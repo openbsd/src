@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.125 2008/01/31 22:11:38 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.126 2008/02/04 15:07:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -456,10 +456,10 @@ cvs_commit_local(struct cvs_file *cf)
 	}
 
 	if (cf->file_status == FILE_ADDED && cf->file_ent->ce_opts != NULL) {
-		int kflag;
+		int cf_kflag;
 
-		kflag = rcs_kflag_get(cf->file_ent->ce_opts + 2);
-		rcs_kwexp_set(cf->file_rcs, kflag);
+		cf_kflag = rcs_kflag_get(cf->file_ent->ce_opts + 2);
+		rcs_kwexp_set(cf->file_rcs, cf_kflag);
 	}
 
 	rcs_write(cf->file_rcs);

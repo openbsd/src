@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.89 2008/01/31 10:17:47 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.90 2008/02/04 15:07:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -35,8 +35,8 @@ static void add_directory(struct cvs_file *);
 static void add_file(struct cvs_file *);
 static void add_entry(struct cvs_file *);
 
-static int	 kflag = RCS_KWEXP_DEFAULT;
-static char	 kbuf[8], *koptstr;
+int		kflag = 0;
+static char	kbuf[8];
 
 char	*logmsg;
 
@@ -62,14 +62,13 @@ cvs_add(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmd_add.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'k':
-			koptstr = optarg;
-			kflag = rcs_kflag_get(koptstr);
+			kflag = rcs_kflag_get(optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expension mode");
 				fatal("%s", cvs_cmd_add.cmd_synopsis);
 			}
-			(void)xsnprintf(kbuf, sizeof(kbuf), "-k%s", koptstr);
+			(void)xsnprintf(kbuf, sizeof(kbuf), "-k%s", optarg);
 			break;
 		case 'm':
 			logmsg = optarg;
@@ -92,7 +91,7 @@ cvs_add(int argc, char **argv)
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_add_remote;
 
-		if (kflag != RCS_KWEXP_DEFAULT)
+		if (kflag);
 			cvs_client_send_request("Argument %s", kbuf);
 
 		if (logmsg != NULL)
@@ -406,7 +405,7 @@ add_entry(struct cvs_file *cf)
 
 		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
 		    "/%s/0/Initial %s/%s/", cf->file_name, cf->file_name,
-		    (kflag != RCS_KWEXP_DEFAULT) ? kbuf : "");
+		    kflag ? kbuf : "");
 	}
 
 	if (cvs_server_active) {

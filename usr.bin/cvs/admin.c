@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.54 2008/01/31 21:52:48 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.55 2008/02/04 15:07:32 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -49,7 +49,6 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
-static int	 kflag = RCS_KWEXP_DEFAULT;
 static char	*alist, *comment, *elist, *logmsg, *logstr, *koptstr;
 static char	*oldfilename, *orange, *state, *statestr;
 static RCSNUM	*logrev;
@@ -299,7 +298,7 @@ cvs_admin_local(struct cvs_file *cf)
 	}
 
 	/* Default `-kv' is accepted here. */
-	if (koptstr != NULL) {
+	if (kflag) {
 		if (cf->file_rcs->rf_expand == NULL ||
 		    strcmp(cf->file_rcs->rf_expand, koptstr) != 0)
 			rcs_kwexp_set(cf->file_rcs, kflag);

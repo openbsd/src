@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.125 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.126 2008/02/04 15:07:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -29,10 +29,11 @@
 
 void	cvs_diff_local(struct cvs_file *);
 
-static int Nflag = 0;
-static int force_head = 0;
-static char *rev1 = NULL;
-static char *rev2 = NULL;
+static int	 Nflag = 0;
+static int	 force_head = 0;
+static char	*koptstr;
+static char	*rev1 = NULL;
+static char	*rev2 = NULL;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_USE_WDIR, "diff",
@@ -40,7 +41,7 @@ struct cvs_cmd cvs_cmd_diff = {
 	"Show differences between revisions",
 	"[-cilNnpRu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
 	"[-k mode] [file ...]",
-	"cfD:iklNnpr:Ru",
+	"cfD:ik:lNnpr:Ru",
 	NULL,
 	cvs_diff
 };
@@ -51,7 +52,7 @@ struct cvs_cmd cvs_cmd_rdiff = {
 	"Show differences between revisions",
 	"[-flR] [-c | -u] [-s | -t] [-V ver] -D date | -r rev\n"
 	"[-D date2 | -r rev2] [-k mode] module ...",
-	"cfD:klr:Ru",
+	"cfD:k:lr:RuV:",
 	NULL,
 	cvs_diff
 };
@@ -79,6 +80,15 @@ cvs_diff(int argc, char **argv)
 		case 'i':
 			strlcat(diffargs, " -i", sizeof(diffargs));
 			diff_iflag = 1;
+			break;
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {   
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_add.cmd_synopsis);
+			}
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -111,6 +121,9 @@ cvs_diff(int argc, char **argv)
 			strlcat(diffargs, " -u", sizeof(diffargs));
 			diff_format = D_UNIFIED;
 			break;
+		case 'V':
+			fatal("the -V option is obsolete "
+			    "and should not be used");
 		default:
 			fatal("%s", cvs_cmd_diff.cmd_synopsis);
 		}
@@ -140,6 +153,9 @@ cvs_diff(int argc, char **argv)
 
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
+
+		if (kflag)
+			cvs_client_send_request("Argument -k%s", koptstr);
 
 		switch (diff_format) {
 		case D_CONTEXT:
@@ -238,6 +254,9 @@ cvs_diff_local(struct cvs_file *cf)
 	     rev2 == NULL) {
 		return;
 	}
+
+	if (kflag)
+		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	if (rev1 != NULL)
 		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) ==

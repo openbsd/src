@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.69 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: remove.c,v 1.70 2008/02/04 15:07:33 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -186,15 +186,16 @@ cvs_remove_local(struct cvs_file *cf)
 			}
 			return;
 		default:
-			rcsnum_tostr(cf->file_ent->ce_rev, rbuf,
-			     sizeof(rbuf));
+			rcsnum_tostr(cf->file_ent->ce_rev, rbuf, sizeof(rbuf));
 
 			ctime_r(&cf->file_ent->ce_mtime, tbuf);
 			tbuf[strcspn(tbuf, "\n")] = '\0';
 
 			entry = xmalloc(CVS_ENT_MAXLINELEN);
 			(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
-			     "/%s/-%s/%s//", cf->file_name, rbuf, tbuf);
+			    "/%s/-%s/%s/%s/%s", cf->file_name, rbuf, tbuf,
+			    cf->file_ent->ce_opts ? : "",
+			    cf->file_ent->ce_tag ? : "");
 
 			if (cvs_server_active == 1) {
 				cvs_server_update_entry("Checked-in", cf);
