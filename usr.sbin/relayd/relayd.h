@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.95 2008/02/04 12:05:26 thib Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.96 2008/02/04 12:12:30 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -751,6 +751,14 @@ pid_t	 relay(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct session *, struct session *);
 int	 relay_load_certfiles(struct relay *);
+void	 relay_close(struct session *, const char *);
+void	 relay_natlook(int, short, void *);
+void	 relay_session(struct session *);
+int	 relay_from_table(struct session *);
+int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
+int	 relay_cmp_af(struct sockaddr_storage *,
+		 struct sockaddr_storage *);
+
 
 RB_PROTOTYPE(proto_tree, protonode, se_nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, session, se_nodes, relay_session_cmp);

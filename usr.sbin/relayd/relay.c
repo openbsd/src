@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.81 2008/02/04 12:05:26 thib Exp $	*/
+/*	$OpenBSD: relay.c,v 1.82 2008/02/04 12:12:30 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,6 @@ void		 relay_nodedebug(const char *, struct protonode *);
 void		 relay_protodebug(struct relay *);
 void		 relay_init(void);
 void		 relay_launch(void);
-int		 relay_socket_af(struct sockaddr_storage *, in_port_t);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
 int		 relay_socket_listen(struct sockaddr_storage *, in_port_t,
@@ -69,15 +68,11 @@ int		 relay_socket_connect(struct sockaddr_storage *, in_port_t,
 
 void		 relay_accept(int, short, void *);
 void		 relay_input(struct session *);
-void		 relay_close(struct session *, const char *);
-void		 relay_session(struct session *);
-void		 relay_natlook(int, short, void *);
 
 int		 relay_connect(struct session *);
 void		 relay_connected(int, short, void *);
 
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
-int		 relay_from_table(struct session *);
 
 void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
@@ -122,8 +117,6 @@ int		 relay_bufferevent_write_chunk(struct ctl_relay_event *,
 		    struct evbuffer *, size_t);
 int		 relay_bufferevent_write(struct ctl_relay_event *,
 		    void *, size_t);
-int		 relay_cmp_af(struct sockaddr_storage *,
-		    struct sockaddr_storage *);
 char		*relay_load_file(const char *, off_t *);
 static __inline int
 		 relay_proto_cmp(struct protonode *, struct protonode *);

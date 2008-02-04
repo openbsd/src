@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.7 2008/01/31 12:12:50 thib Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.8 2008/02/04 12:12:30 thib Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -52,14 +52,6 @@ extern objid_t relay_conid;
 extern int proc_id;
 extern struct imsgbuf *ibuf_pfe;
 extern int debug;
-
-extern void	 relay_close(struct session *, const char *);
-extern void	 relay_natlook(int, short, void *);
-extern void	 relay_session(struct session *);
-extern int	 relay_from_table(struct session *);
-extern int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
-extern int	 relay_cmp_af(struct sockaddr_storage *,
-		    struct sockaddr_storage *);
 
 struct relayd *env = NULL;
 
