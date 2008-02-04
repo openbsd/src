@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.2 2008/02/04 12:33:47 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.3 2008/02/04 13:18:12 landry Exp $
 
 =head1 NAME
 
@@ -9,7 +9,7 @@ OpenBSD::Intro - Introduction to the pkg tools internals
    use OpenBSD::PackingList;
    ...
 
-=head1 DESCRIPTIOn
+=head1 DESCRIPTION
 
 The design of the package tools revolves around a few central ideas:
 
