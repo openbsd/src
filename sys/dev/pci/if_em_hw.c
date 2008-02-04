@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.26 2007/05/09 18:02:46 deraadt Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.27 2008/02/04 00:30:01 brad Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -420,7 +420,10 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82571EB_SERDES:
     case E1000_DEV_ID_82571EB_QUAD_COPPER:
     case E1000_DEV_ID_82571EB_QUAD_FIBER:
-    case E1000_DEV_ID_82571EB_QUAD_COPPER_LOWPROFILE:
+    case E1000_DEV_ID_82571EB_QUAD_COPPER_LP:
+    case E1000_DEV_ID_82571EB_SERDES_DUAL:
+    case E1000_DEV_ID_82571EB_SERDES_QUAD:
+    case E1000_DEV_ID_82571PT_QUAD_COPPER:
             hw->mac_type = em_82571;
         break;
     case E1000_DEV_ID_82572EI_COPPER:
@@ -505,6 +508,8 @@ em_set_media_type(struct em_hw *hw)
     case E1000_DEV_ID_82545GM_SERDES:
     case E1000_DEV_ID_82546GB_SERDES:
     case E1000_DEV_ID_82571EB_SERDES:
+    case E1000_DEV_ID_82571EB_SERDES_DUAL:
+    case E1000_DEV_ID_82571EB_SERDES_QUAD:
     case E1000_DEV_ID_82572EI_SERDES:
     case E1000_DEV_ID_80003ES2LAN_SERDES_DPT:
         hw->media_type = em_media_type_internal_serdes;

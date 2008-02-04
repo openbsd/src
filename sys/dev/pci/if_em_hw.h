@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.22 2007/10/12 04:38:07 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.23 2008/02/04 00:30:01 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -464,7 +464,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82571EB_SERDES_QUAD 0x10DA
 #define E1000_DEV_ID_82571EB_QUAD_COPPER 0x10A4
 #define E1000_DEV_ID_82571EB_QUAD_FIBER  0x10A5
-#define E1000_DEV_ID_82571EB_QUAD_COPPER_LOWPROFILE  0x10BC
+#define E1000_DEV_ID_82571EB_QUAD_COPPER_LP 0x10BC
 #define E1000_DEV_ID_82571PT_QUAD_COPPER 0x10D5
 #define E1000_DEV_ID_82572EI_COPPER      0x107D
 #define E1000_DEV_ID_82572EI_FIBER       0x107E
@@ -481,10 +481,10 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82573E_PM           0x10B3
 #define E1000_DEV_ID_82573L_PL_2         0x10B4
 #define E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3 0x10B5
-#define E1000_DEV_ID_80003ES2LAN_COPPER_DPT     0x1096
-#define E1000_DEV_ID_80003ES2LAN_SERDES_DPT     0x1098
-#define E1000_DEV_ID_80003ES2LAN_COPPER_SPT     0x10BA
-#define E1000_DEV_ID_80003ES2LAN_SERDES_SPT     0x10BB
+#define E1000_DEV_ID_80003ES2LAN_COPPER_DPT 0x1096
+#define E1000_DEV_ID_80003ES2LAN_SERDES_DPT 0x1098
+#define E1000_DEV_ID_80003ES2LAN_COPPER_SPT 0x10BA
+#define E1000_DEV_ID_80003ES2LAN_SERDES_SPT 0x10BB
 #define E1000_DEV_ID_ICH8_IGP_M_AMT      0x1049
 #define E1000_DEV_ID_ICH8_IGP_AMT        0x104A
 #define E1000_DEV_ID_ICH8_IGP_C          0x104B
