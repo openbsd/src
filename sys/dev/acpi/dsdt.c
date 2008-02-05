@@ -1,4 +1,5 @@
-/* $OpenBSD: dsdt.c,v 1.107 2008/01/22 19:28:57 jordan Exp $ */
+
+/* $OpenBSD: dsdt.c,v 1.108 2008/02/05 21:15:26 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -980,9 +981,10 @@ void
 aml_setbufint(struct aml_value *dst, int bitpos, int bitlen,
     struct aml_value *src)
 {
-	if (src->type != AML_OBJTYPE_BUFFER)
+	if (src->type != AML_OBJTYPE_BUFFER) {
+		aml_showvalue(src, 0);
 		aml_die("wrong setbufint type %d\n", src->type);
-
+	}
 #if 1
 	/* Return buffer type */
 	_aml_setvalue(dst, AML_OBJTYPE_BUFFER, (bitlen+7)>>3, NULL);
@@ -1633,9 +1635,15 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 	struct aml_value tmpint;
 
 	/* Use integer as result */
+	memset(&tmpint, 0, sizeof(tmpint));
 	if (rhs == NULL) {
-		memset(&tmpint, 0, sizeof(tmpint));
 		rhs = _aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, ival, NULL);
+	}
+	else if (rhs->type == AML_OBJTYPE_BUFFERFIELD ||
+		 rhs->type == AML_OBJTYPE_FIELDUNIT)
+	{
+		aml_fieldio(scope, rhs, &tmpint, ACPI_IOREAD);
+		rhs = &tmpint;
 	}
 
 	if (!is_local(scope, lhs))
@@ -1725,6 +1733,7 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		dnprintf(10, "setvalue.unknown: %x", lhs->type);
 		break;
 	}
+	aml_freevalue(&tmpint);
 }
 
 /* Allocate dynamic AML value
