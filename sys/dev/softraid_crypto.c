@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.7 2008/02/05 16:15:35 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.8 2008/02/05 16:49:25 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -240,7 +240,6 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_workunit	*wup;
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
 	int			s;
@@ -299,25 +298,10 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 
 
-	/* walk queue backwards and fill in collider if we have one */
 	s = splbio();
-	TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
-		if (wu->swu_blk_end < wup->swu_blk_start ||
-		    wup->swu_blk_end < wu->swu_blk_start)
-			continue;
 
-		/* we have an LBA collision, defer wu */
-		wu->swu_state = SR_WU_DEFERRED;
-		if (wup->swu_collider)
-			/* wu is on deferred queue, append to last wu */
-			while (wup->swu_collider)
-				wup = wup->swu_collider;
-
-		wup->swu_collider = wu;
-		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
-		sd->sd_wu_collisions++;
+	if (sr_check_io_collision(wu))
 		goto queued;
-	}
 
 	sr_raid_startwu(wu);
 

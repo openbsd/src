@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.100 2008/02/05 16:24:12 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.101 2008/02/05 16:49:25 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2226,6 +2226,38 @@ sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
 	rv = 0;
 bad:
 	return (rv);
+}
+
+int
+sr_check_io_collision(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_workunit	*wup;
+
+	splassert(IPL_BIO);
+
+	/* walk queue backwards and fill in collider if we have one */
+	TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
+		if (wu->swu_blk_end < wup->swu_blk_start ||
+		    wup->swu_blk_end < wu->swu_blk_start)
+			continue;
+
+		/* we have an LBA collision, defer wu */
+		wu->swu_state = SR_WU_DEFERRED;
+		if (wup->swu_collider)
+			/* wu is on deferred queue, append to last wu */
+			while (wup->swu_collider)
+				wup = wup->swu_collider;
+
+		wup->swu_collider = wu;
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
+		sd->sd_wu_collisions++;
+		goto queued;
+	}
+
+	return (0);
+queued:
+	return (1);
 }
 
 #ifndef SMALL_KERNEL
