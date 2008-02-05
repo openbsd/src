@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_sii3112_reg.h,v 1.5 2006/02/10 21:45:41 kettenis Exp $	*/
+/*	$OpenBSD: pciide_sii3112_reg.h,v 1.6 2008/02/05 20:22:22 blambert Exp $	*/
 /*	$NetBSD: pciide_sii3112_reg.h,v 1.1 2003/03/20 04:22:50 thorpej Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ struct pciide_satalink {
 	} regs[4];
 };
 
-static INLINE uint32_t
+static uint32_t
 ba5_read_4_ind(struct pciide_softc *sc, pcireg_t reg)
 {
 	uint32_t rv;
@@ -351,7 +351,7 @@ ba5_read_4_ind(struct pciide_softc *sc, pcireg_t reg)
 	return (rv);
 }
 
-static INLINE uint32_t
+static uint32_t
 ba5_read_4(struct pciide_softc *sc, bus_size_t reg)
 {
 	struct pciide_satalink *sl = sc->sc_cookie;
@@ -365,7 +365,7 @@ ba5_read_4(struct pciide_softc *sc, bus_size_t reg)
 #define	BA5_READ_4(sc, chan, reg)					\
 	ba5_read_4((sc), satalink_ba5_regmap[(chan)].reg)
 
-static INLINE void
+static void
 ba5_write_4_ind(struct pciide_softc *sc, pcireg_t reg, uint32_t val)
 {
 	int s;
@@ -376,7 +376,7 @@ ba5_write_4_ind(struct pciide_softc *sc, pcireg_t reg, uint32_t val)
 	splx(s);
 }
 
-static INLINE void
+static void
 ba5_write_4(struct pciide_softc *sc, bus_size_t reg, uint32_t val)
 {
 	struct pciide_satalink *sl = sc->sc_cookie;

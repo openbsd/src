@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.279 2008/01/29 10:34:00 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.280 2008/02/05 20:22:22 blambert Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -108,12 +108,6 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if defined(SMALL_KERNEL)
-#define	INLINE
-#else
-#define	INLINE __inline
-#endif
-
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
@@ -137,21 +131,21 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_jmicron_reg.h>
 #include <dev/pci/cy82c693var.h>
 
-/* inlines for reading/writing 8-bit PCI registers */
+/* functions for reading/writing 8-bit PCI registers */
 
-static INLINE u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
+u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
 					int);
-static INLINE void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
+void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
 					int, u_int8_t);
 
-static INLINE u_int8_t
+u_int8_t
 pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 {
 	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
 	    ((reg & 0x03) * 8) & 0xff);
 }
 
-static INLINE void
+void
 pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, u_int8_t val)
 {
 	pcireg_t pcival;
@@ -173,9 +167,9 @@ void piix_setup_channel(struct channel_softc *);
 void piix3_4_setup_channel(struct channel_softc *);
 void piix_timing_debug(struct pciide_softc *);
 
-static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
-static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
-static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
+u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
+u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
+u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 
 void amd756_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void amd756_setup_channel(struct channel_softc *);
@@ -235,6 +229,8 @@ int  pdc202xx_pci_intr(void *);
 int  pdc20265_pci_intr(void *);
 void pdc20262_dma_start(void *, int, int);
 int  pdc20262_dma_finish(void *, int, int, int);
+
+u_int8_t pdc268_config_read(struct channel_softc *, int);
 
 void pdcsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void pdc203xx_setup_channel(struct channel_softc *);
@@ -2746,7 +2742,7 @@ pio:		/* use PIO mode */
 
 
 /* setup ISP and RTC fields, based on mode */
-static u_int32_t
+u_int32_t
 piix_setup_idetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 
@@ -2763,7 +2759,7 @@ piix_setup_idetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 }
 
 /* setup DTE, PPE, IE and TIME field based on PIO mode */
-static u_int32_t
+u_int32_t
 piix_setup_idetim_drvs(struct ata_drive_datas *drvp)
 {
 	u_int32_t ret = 0;
@@ -2818,7 +2814,7 @@ piix_setup_idetim_drvs(struct ata_drive_datas *drvp)
 }
 
 /* setup values in SIDETIM registers, based on mode */
-static u_int32_t
+u_int32_t
 piix_setup_sidetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 	if (dma)
@@ -5881,7 +5877,7 @@ hpt_pci_intr(void *arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20276  ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20277)
 
-static INLINE u_int8_t
+u_int8_t
 pdc268_config_read(struct channel_softc *chp, int index)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
@@ -5892,20 +5888,6 @@ pdc268_config_read(struct channel_softc *chp, int index)
 	    PDC268_INDEX(channel), index);
 	return (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 	    PDC268_DATA(channel)));
-}
-
-/* unused */
-static __inline void
-pdc268_config_write(struct channel_softc *chp, int index, u_int8_t value)
-{
-	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int channel = chp->channel;
-
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    PDC268_INDEX(channel), index);
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    PDC268_DATA(channel), value);
 }
 
 void
