@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2008/02/05 18:11:34 tobias Exp $
+#	$OpenBSD: Makefile,v 1.17 2008/02/05 18:40:43 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -16,6 +16,7 @@ LTESTS= cvs-initial \
 	cvs-import-mflag \
 	cvs-checkout-dflag \
 	cvs-checkout-rflag-HEAD \
+	cvs-checkout-kflag-k-rflag-HEAD \
 	cvs-checkout-rflag-inval_branch_rev \
 	cvs-checkout-rflag-too_high \
 	cvs-checkout \
@@ -34,7 +35,7 @@ LTESTS= cvs-initial \
 	cvs-annotate-rflag-inval_branch_rev \
 	cvs-annotate-rflag-inval_branch_rev-fflag \
 	cvs-annotate-rflag-unknown_symbol-fflag \
-	cvs-checkout-rflag-1.1 \
+	cvs-checkout-kflag-kv-rflag-1.1 \
 	cvs-update-Aflag \
 	cvs-status \
 	cvs-diff \
@@ -97,6 +98,26 @@ test-cvs-checkout:
 	@cd ${.OBJDIR}/regress_cvs_wcopy; \
 	    ${CVS} -Q -d ${MYCVSROOT} co seed > /dev/null
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
+
+test-cvs-checkout-kflag-k-rflag-HEAD:
+	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
+	@mkdir ${.OBJDIR}/regress_cvs_wcopy
+	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	    ${CVS} -Q -d ${MYCVSROOT} co -rHEAD -kkv seed > /dev/null
+	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
+	@eval 'test `grep -c -e THEAD -e -kkv \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
+	@eval 'test `grep -c $Id: Makefile,v 1.17 2008/02/05 18:40:43 tobias Exp $ \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt | wc -l` -eq 1'
+
+test-cvs-checkout-kflag-kv-rflag-1.1:
+	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
+	@mkdir ${.OBJDIR}/regress_cvs_wcopy
+	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	    ${CVS} -Q -d ${MYCVSROOT} co -r 1.1 -kkv seed > /dev/null
+	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
+	@eval 'test `grep -c -e T1.1 -e -kkv \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
 
 test-cvs-checkout-pflag:
 	@eval 'test `${CVS} -Q -d ${MYCVSROOT} checkout \
@@ -249,8 +270,8 @@ test-cvs-update-Aflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
 	    ${CVS} -Q update -A > /dev/null
 #	    eval 'test `${CVS} -q update -A | wc -l` -eq 1'
-	@eval 'test `grep -c T1 ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` \
-	    -eq 0'
+	@eval 'test `grep -c -e T1 -e kkv \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
 
 test-cvs-update-for_subdir:
 	@echo "test-cvs-update-for_subdir"
