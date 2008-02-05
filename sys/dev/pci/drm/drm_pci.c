@@ -100,39 +100,53 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		free(dmah, M_DRM);
 		return NULL;
 	}
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
-	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (ret != 0) {
-		aprint_error("%s: bus_dmamem_alloc(%zd, %zd) returned %d\n",
-		    __func__, size, align, ret);
-		free(dmah, M_DRM);
-		return NULL;
-	}
-	if(nsegs != 1) {
-		aprint_error("%s: bus_dmamem_alloc(%zd) returned %d segments\n",
-		    __func__, size, nsegs);
-		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, nsegs);
-		free(dmah, M_DRM);
-		return NULL;
-	}
-
-	ret = bus_dmamem_map(dev->pa.pa_dmat, &dmah->seg, 1, size, (caddr_t*)&dmah->addr,
-	    BUS_DMA_NOWAIT);
-	if (ret != 0) {
-		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
-		aprint_error("%s: bus_dmamem_map() failed %d\n", __func__,
-		    ret);
-		free(dmah, M_DRM);
-		return NULL;
-	}
-
-	dmah->busaddr = dmah->seg.ds_addr;
-	dmah->vaddr = dmah->addr;
-	dmah->size = size;
-#endif
 
 	return dmah;
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	if (bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->dmamap) != 0)
+		goto dmahfree;
+		
+	if (bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
+		DRM_ERROR("bus_dmamem_alloc(%zd, %zd) returned %d\n",
+		    size, align, ret);
+		goto destroy;
+	}
+	if(nsegs != 1) {
+		DRM_ERROR("bus_dmamem_alloc(%zd) returned %d segments\n",
+		    size, nsegs);
+		goto free;
+	}
+
+	if (bus_dmamem_map(dev->pa.pa_dmat, &dmah->seg, 1, size,
+	    (caddr_t*)&dmah->addr, BUS_DMA_NOWAIT) != 0) {
+		DRM_ERROR("bus_dmamem_map() failed %d\n", ret);
+		goto free;
+	}
+
+	if (bus_dmamap_load(dev->pa.pa_dmat, dmah->dmamap, dmah->addr, size,
+	    NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	dmah->busaddr = dmah->dmamap->dm_segs[0].ds_addr;
+	dmah->vaddr = dmah->addr;
+	dmah->size = size;
+
+	return dmah;
+
+unmap:
+	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->addr, size);
+free:
+	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
+destroy:
+	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->dmamap);
+dmahfree:
+	free(dmah, M_DRM);
+
+	return (NULL);
+#endif
+
 }
 
 /**
@@ -148,8 +162,10 @@ drm_pci_free(drm_device_t *dev, drm_dma_handle_t *dmah)
 	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
 	bus_dma_tag_destroy(dmah->tag);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
+	bus_dmamap_unload(dev->pa.pa_dmat, dmah->dmamap);
 	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->vaddr, dmah->size);
 	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
+	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->dmamap);
 #endif
 
 	free(dmah, M_DRM);

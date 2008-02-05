@@ -175,7 +175,7 @@ drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	aprint_normal("%s: interrupting at %s\n", dev->device.dv_xname, istr);
+	DRM_DEBUG("%s: interrupting at %s\n", dev->device.dv_xname, istr);
 #endif
 
 				/* After installing handler */

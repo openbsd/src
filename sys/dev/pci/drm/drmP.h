@@ -275,8 +275,6 @@ extern drm_device_t *drm_units[];
 #define DRM_SYSCTL_HANDLER_ARGS	(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, \
     size_t newlen, struct proc *p)
 /* Deal with netbsd code where only the print statements differ */
-#define aprint_error printf
-#define aprint_normal printf
 #define printk printf
 #define __unused /* nothing */
 /*
@@ -594,6 +592,7 @@ typedef struct drm_dma_handle {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
+	bus_dmamap_t	dmamap;
 	bus_dma_segment_t seg;
 	void *addr;
 	bus_addr_t dmaaddr;
