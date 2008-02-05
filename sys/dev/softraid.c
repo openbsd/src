@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.99 2008/02/05 16:15:35 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.100 2008/02/05 16:24:12 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2393,6 +2393,7 @@ sr_print_metadata(struct sr_metadata *sm)
 	DNPRINTF(SR_D_META, "\t\tvol no chunks %d\n", im_sv->svm_no_chunk);
 	DNPRINTF(SR_D_META, "\t\tvol uuid ");
 	sr_print_uuid(& im_sv->svm_uuid, 1);
+	DNPRINTF(SR_D_META, "\t\tvol stripsize %d\n", im_sv->svm_strip_size);
 
 	for (ch = 0; ch < im_sv->svm_no_chunk; ch++) {
 		DNPRINTF(SR_D_META, "\t\t\tchunk vol id %d\n",
