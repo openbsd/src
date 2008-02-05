@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.80 2007/12/14 18:33:41 deraadt Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.81 2008/02/05 22:57:31 mpf Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -258,7 +258,6 @@ ip6_input(m)
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
 	    ip6->ip6_nxt != IPPROTO_ICMPV6 &&
 	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32))
@@ -552,7 +551,6 @@ ip6_input(m)
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
 	    ip6->ip6_nxt == IPPROTO_ICMPV6 &&
 	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32))

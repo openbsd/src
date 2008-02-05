@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.156 2007/12/14 18:33:41 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.157 2008/02/05 22:57:31 mpf Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -351,10 +351,8 @@ ipv4_input(m)
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
-	    ip->ip_p != IPPROTO_ICMP &&
-	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
-	    &ip->ip_dst.s_addr))
+	    ip->ip_p != IPPROTO_ICMP && carp_lsdrop(m, AF_INET,
+	    &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
 		goto bad;
 #endif
 
@@ -452,10 +450,8 @@ ipv4_input(m)
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
-	    ip->ip_p == IPPROTO_ICMP &&
-	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
-	    &ip->ip_dst.s_addr))
+	    ip->ip_p == IPPROTO_ICMP && carp_lsdrop(m, AF_INET,
+	    &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
 		goto bad;
 #endif
 	/*

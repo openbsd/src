@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.28 2007/09/18 09:18:04 mpf Exp $
+.\"	$OpenBSD: carp.4,v 1.29 2008/02/05 22:57:31 mpf Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 18 2007 $
+.Dd $Mdocdate: February 5 2008 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -116,9 +116,6 @@ Log bad
 .Nm
 packets.
 Disabled by default.
-.It net.inet.carp.arpbalance
-Balance local traffic using ARP.
-Disabled by default.
 .El
 .Sh LOAD BALANCING
 .Nm
@@ -156,36 +153,55 @@ A rule of thumb might be to use ARP balancing if there
 are many hosts on the same network segment and
 to use IP balancing for all other cases.
 .Pp
-The configuration of ARP and IP load balancing is quite similar:
-a load balancing group is created out of multiple
+To configure load balancing one has to specify multiple
+carp nodes using the
+.Cm carpnodes
+option.
+Each node in a load balancing cluster is represented
+by at least one
+.Qq Cm vhid : Ns Cm advskew
+pair in a comma separated list.
 .Nm
-interfaces by configuring them with the same IP addresses,
-but to different VHIDs.
-All
-.Nm
-nodes in the cluster are configured identically, except
+tries to distribute the incoming network load over all configured carpnodes.
+The following example
+creates a load balancing group consisting of three nodes,
+using vhids 3, 4 and 6:
+.Bd -literal -offset indent
+# ifconfig carp0 carpnodes 3:0,4:0,6:100
+.Ed
+.Pp
+The advskew value of the last node is set to 100,
+so that this node is designated to the BACKUP state.
+It will only become MASTER if all nodes with a lower advskew value have failed.
+By varying this value throughout the machines in the cluster
+it is possible to decide which share of the network load each node receives.
+Therefore, all carp interfaces in the cluster are configured identically, except
 for a different
 .Cm advskew
-to control which interfaces on a host will be the designated master.
+value within the carpnodes specification.
+.Pp
 See the
 .Sx EXAMPLES
 section for a practical example of load balancing.
 .Ss ARP BALANCING
-For load balancing, several
-.Nm
-interfaces are configured to the same IP address, but to different VHIDs.
+For ARP balancing, one has to configure multiple
+.Cm carpnodes
+and choose the
+.Cm balancing
+mode
+.Ar arp .
+.Pp
 Once an ARP request is received, the CARP protocol will use a hashing
 function against the source MAC address in the ARP request to determine
-which VHID the request belongs to.
+which carpnode the request belongs to.
 If the corresponding
-.Nm
-interface is in master state, the ARP request will be answered, otherwise
+carpnode is in master state, the ARP request will be answered, otherwise
 it will be ignored.
 .Pp
 The ARP load balancing has some limitations.
 Firstly, ARP balancing only works on the local network segment.
 It cannot balance traffic that crosses a router, because the
-router itself will always be balanced to the same virtual host.
+router itself will always be balanced to the same carpnode.
 Secondly, ARP load balancing can lead to asymmetric routing
 of incoming and outgoing traffic, thus combining it with
 .Xr pfsync 4
@@ -199,6 +215,9 @@ This requires multiple CARP groups with
 .Em different
 IP addresses on the outgoing interface, configured so that each host is the
 master of one group.
+.Pp
+ARP balancing also works for IPv6, but instead of ARP the Neighbor Discovery
+Protocol (NDP) is used.
 .Ss IP BALANCING
 IP load balancing works by utilizing the network itself to distribute
 incoming traffic to all
@@ -211,51 +230,51 @@ packet.
 All the other nodes will just silently drop it.
 The filtering function uses a hash over the source and destination
 address of the IPv4 or IPv6 packet and compares the result against the
-state of the
-.Nm
-load balancing group.
+state of the carpnode.
 .Pp
-A load balancing group consists of two or more
-.Nm
-interfaces per host which are configured with common IP addresses
-but different VHIDs.
 IP balancing is activated by setting the
-.Cm link0
-flag on the first interface of the group.
-In most cases it is recommended to also enable the
-.Cm link1
-flag.
-This flag enables the stealth mode on the interface.
+.Cm balancing
+mode to
+.Ar ip .
+This is the recommended default setting.
+In this mode, carp uses a multicast MAC address, so that a switch
+sends incoming traffic towards all nodes.
+.Pp
+However, there are a few OS and routers that do not accept a multicast
+MAC address being mapped to a unicast IP.
+This can be resolved by using one of the following unicast options.
+For scenarios where a hub is used it is not necessary to use a multicast MAC
+and it is safe to use the
+.Ar ip-unicast
+mode.
+Managable switches can usually be tricked into forwarding unicast
+traffic to all cluster nodes ports by configuring them into some
+sort of monitoring mode.
+If this is not possible, using the
+.Ar ip-stealth
+mode is another option, which should work on most switches.
 In this mode
 .Nm
 never sends packets with its virtual MAC address as source.
-This is necessary to receive incoming traffic on all hosts in switched networks.
 Stealth mode prevents a switch from learning the virtual MAC
 address, so that it has to flood the traffic to all its ports.
-The
-.Cm link1
-flag can be avoided
-only if using a hub or if the switch ports that are connected
-to the cluster nodes can be configured into some sort of monitoring mode.
 Please note that activating stealth mode on a
 .Nm
 interface that has already been running might not work instantly.
-As a workaround the VHID can be changed to a previously unused
-one, or just wait until the MAC table entry in the switch times out.
-.Pp
+As a workaround the VHID of the first carpnode can be changed to a
+previously unused one, or just wait until the MAC table entry in the
+switch times out.
 Some Layer-3 switches do port learning based on ARP packets.
 Therefore the stealth mode cannot hide the virtual MAC address
 from these kind of devices.
-In such cases,
-.Nm
-can be told to use a multicast MAC address by additionally enabling the
-.Cm link2
-flag.
 .Pp
 If IP balancing is being used on a firewall, it is recommended to
-configure the load balancing group in a symmetrical manner.
-This is achieved by prioritizing the interfaces in the same order
-(ascending by VHID) on both sides of the firewall.
+configure the
+.Cm carpnodes
+in a symmetrical manner.
+This is achieved by simply using the same
+.Cm carpnodes
+list on all sides of the firewall.
 This ensures that packets of one connection will pass in and out
 on the same host and are not routed asymmetrically.
 .Sh EXAMPLES
@@ -292,46 +311,32 @@ interfaces.
 This will cause host B to preempt on both interfaces instead of
 just the failed one.
 .Ss LOAD BALANCING
-In order to set up an load balanced virtual host, it is necessary to configure
-one virtual host for each physical host.
-In the following example, two virtual hosts are configured on two hosts to
+In order to set up a load balanced virtual host, it is necessary to configure
+one
+.Cm carpnodes
+entry for each physical host.
+In the following example, two physical hosts are configured to
 provide balancing and failover for the IP address 192.168.1.10.
 .Pp
 First the
 .Nm
-interfaces on Host A are configured.
+interface on Host A is configured.
 The
 .Cm advskew
-of 100 on the second virtual host means that its advertisements will be sent
+of 100 on the second carpnode entry means that its advertisements will be sent
 out slightly less frequently and will therefore become the designated backup.
-.Bd -literal -offset indent
-# ifconfig carp0 192.168.1.10 vhid 1
-# ifconfig carp1 192.168.1.10 vhid 2 advskew 100
-.Ed
+.Pp
+.Dl # ifconfig carp0 192.168.1.10 carpnodes 1:0,2:100 balancing ip
 .Pp
 The configuration for host B is identical, except the skew is on
-virtual host 1 rather than virtual host 2.
-.Bd -literal -offset indent
-# ifconfig carp0 192.168.1.10 vhid 1 advskew 100
-# ifconfig carp1 192.168.1.10 vhid 2
-.Ed
+the carpnode entry with virtual host 1 rather than virtual host 2.
 .Pp
-If ARP balancing is being used, it must be enabled on both hosts:
+.Dl # ifconfig carp0 192.168.1.10 carpnodes 1:100,2:0 balancing ip
 .Pp
-.Dl # sysctl net.inet.carp.arpbalance=1
-.Pp
-If IP balancing is being used, instead enable the
-.Cm link0
-and
-.Cm link1
-flags on the first interface of the load balancing group on both hosts:
-.Bd -literal -offset indent
-A# ifconfig carp0 192.168.1.10 vhid 1 link0 link1
-A# ifconfig carp1 192.168.1.10 vhid 2 advskew 100
-.Pp
-B# ifconfig carp0 192.168.1.10 vhid 1 advskew 100 link0 link1
-B# ifconfig carp1 192.168.1.10 vhid 2
-.Ed
+If ARP balancing or a different mode of IP balancing is desired
+the
+.Cm balancing
+mode can be adjusted accordingly.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr inet 4 ,
@@ -346,3 +351,16 @@ The
 .Nm
 device first appeared in
 .Ox 3.5 .
+.Sh BUGS
+If load balancing is used in setups where the carpdev does not share
+an IP in the same subnet as
+.Nm ,
+it is not possible to use the IP of the
+.Nm
+interface for self originated traffic.
+This is because the return packets are also subject to load balancing
+and might end up on any other node in the cluster.
+.Pp
+If an IPv6 load balanced carp interface is taken down manually,
+it will accept all incoming packets for its address.
+This will lead to duplicated packets.

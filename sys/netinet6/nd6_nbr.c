@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.46 2007/12/09 21:24:58 hshoexer Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.47 2008/02/05 22:57:31 mpf Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ nd6_ns_input(m, off, icmp6len)
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
-		if (ifa && !carp_iamatch6(ifp, ifa))
+		if (ifa && !carp_iamatch6(ifp, lladdr, &proxydl))
 			ifa = NULL;
 	} else {
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.192 2007/11/27 16:21:02 chl Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.193 2008/02/05 22:57:30 mpf Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -196,7 +196,8 @@ void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
 void	setcarpdev(const char *, int);
 void	unsetcarpdev(const char *, int);
-void	setcarpnodes(const char *, int);
+void	setcarp_nodes(const char *, int);
+void	setcarp_balancing(const char *, int);
 void	setpfsync_syncdev(const char *, int);
 void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncdev(const char *, int);
@@ -314,7 +315,8 @@ const struct	cmd {
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "carpdev",	NEXTARG,	0,		setcarpdev },
-	{ "carpnodes",	NEXTARG,	0,		setcarpnodes },
+	{ "carpnodes",	NEXTARG,	0,		setcarp_nodes },
+	{ "balancing",	NEXTARG,	0,		setcarp_balancing },
 	{ "-carpdev",	1,		0,		unsetcarpdev },
 	{ "syncdev",	NEXTARG,	0,		setpfsync_syncdev },
 	{ "-syncdev",	1,		0,		unsetpfsync_syncdev },
@@ -2885,11 +2887,12 @@ unsetvlandev(const char *val, int d)
 }
 
 static const char *carp_states[] = { CARP_STATES };
+static const char *carp_bal_modes[] = { CARP_BAL_MODES };
 
 void
 carp_status(void)
 {
-	const char *state;
+	const char *state, *balmode;
 	struct carpreq carpr;
 	int i;
 
@@ -2901,6 +2904,11 @@ carp_status(void)
 
 	if (carpr.carpr_vhids[0] == 0)
 		return;
+
+	if (carpr.carpr_balancing > CARP_BAL_MAXID)
+		balmode = "<UNKNOWN>";
+	else
+		balmode = carp_bal_modes[carpr.carpr_balancing];
 
 	for (i = 0; carpr.carpr_vhids[i]; i++) {
 		if (carpr.carpr_states[i] > CARP_MAXSTATE)
@@ -2915,10 +2923,11 @@ carp_status(void)
 		    	    carpr.carpr_advbase, carpr.carpr_advskews[0]);
 		} else {
 			if (i == 0) {
-				printf("\tcarp: carpdev %s advbase %d\n",
+				printf("\tcarp: carpdev %s advbase %d"
+				    " balancing %s\n",
 				    carpr.carpr_carpdev[0] != '\0' ?
 				    carpr.carpr_carpdev : "none",
-				    carpr.carpr_advbase);
+				    carpr.carpr_advbase, balmode);
 			}
 			printf("\t\tstate %s vhid %u advskew %u\n", state,
 			    carpr.carpr_vhids[i], carpr.carpr_advskews[i]);
@@ -3078,7 +3087,7 @@ unsetcarpdev(const char *val, int d)
 }
 
 void
-setcarpnodes(const char *val, int d)
+setcarp_nodes(const char *val, int d)
 {
 	char *str;
 	int i;
@@ -3114,6 +3123,31 @@ setcarpnodes(const char *val, int d)
 		i++;
 	}
 	free(str);
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
+void
+setcarp_balancing(const char *val, int d)
+{
+	int i;
+	struct carpreq carpr;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	for (i = 0; i <= CARP_BAL_MAXID; i++)
+		if (!strcasecmp(val, carp_bal_modes[i]))
+			break;
+
+	if (i > CARP_BAL_MAXID)
+		errx(1, "balancing %s: unknown mode", val);
+
+	carpr.carpr_balancing = i;
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");

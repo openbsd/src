@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.113 2008/01/17 17:50:59 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.114 2008/02/05 22:57:30 mpf Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -564,12 +564,10 @@ ether_input(ifp, eh, m)
 		    (carp_input(m, (u_int8_t *)&eh->ether_shost,
 		    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0))
 			return;
-		/* Always clear multicast flags if received on a carp address */
+		/* clear mcast if received on a carp IP balanced address */
 		else if (ifp->if_type == IFT_CARP &&
-		    ifp->if_flags & IFF_LINK2 &&
 		    m->m_flags & (M_BCAST|M_MCAST) &&
-		    !bcmp(((struct arpcom *)ifp)->ac_enaddr,
-		    (caddr_t)eh->ether_dhost, ETHER_ADDR_LEN))
+		    carp_our_mcastaddr(ifp, (u_int8_t *)&eh->ether_dhost))
 			m->m_flags &= ~(M_BCAST|M_MCAST);
 	}
 #endif /* NCARP > 0 */

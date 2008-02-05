@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.78 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.79 2008/02/05 22:57:31 mpf Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -452,7 +452,6 @@ icmp_input(struct mbuf *m, ...)
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 #if NCARP > 0
 		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
 		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
@@ -530,7 +529,6 @@ icmp_input(struct mbuf *m, ...)
 reflect:
 #if NCARP > 0
 		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
 		    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
@@ -579,7 +577,6 @@ reflect:
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 #if NCARP > 0
 		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
 		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;

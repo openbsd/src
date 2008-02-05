@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.69 2007/11/06 21:52:00 miod Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.70 2008/02/05 22:57:30 mpf Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -531,13 +531,13 @@ in_arpinput(m)
 #if NBRIDGE > 0
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
-#if NCARP > 0
-	u_int32_t count = 0, index = 0;
-#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
 	u_int8_t *enaddr = NULL;
+#if NCARP > 0
+	u_int8_t *ether_shost = NULL;
+#endif
 	int op;
 
 	ea = mtod(m, struct ether_arp *);
@@ -563,10 +563,10 @@ in_arpinput(m)
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
-			index++;
 			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			    (op == ARPOP_REPLY  ||
 			    carp_iamatch(ia, ea->arp_sha,
-			    &count, index))
+			    &enaddr, &ether_shost)))
 				break;
 		} else
 #endif
@@ -589,7 +589,7 @@ in_arpinput(m)
 			    m->m_pkthdr.rcvif->if_bridge ==
 			    ia->ia_ifp->if_carpdev->if_bridge &&
 			    carp_iamatch(ia, ea->arp_sha,
-			    &count, index))
+			    &enaddr, &ether_shost))
 				bridge_ia = ia;
 #endif
 		}
@@ -731,12 +731,10 @@ reply:
 	eh = (struct ether_header *)sa.sa_data;
 	bcopy(ea->arp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
 #if NCARP > 0
-	if (ac->ac_if.if_type == IFT_CARP && ac->ac_if.if_flags & IFF_LINK1)
-		bcopy(((struct arpcom *)ac->ac_if.if_carpdev)->ac_enaddr,
-		    eh->ether_shost, sizeof(eh->ether_shost));
-	else
+	if (ether_shost)
+		enaddr = ether_shost;
 #endif
-		bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
+	bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
 
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = pseudo_AF_HDRCMPLT;
