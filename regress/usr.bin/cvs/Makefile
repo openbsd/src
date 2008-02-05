@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2008/02/05 18:40:43 tobias Exp $
+#	$OpenBSD: Makefile,v 1.18 2008/02/05 20:15:24 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -107,7 +107,7 @@ test-cvs-checkout-kflag-k-rflag-HEAD:
 	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
 	@eval 'test `grep -c -e THEAD -e -kkv \
 	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
-	@eval 'test `grep -c $Id: Makefile,v 1.17 2008/02/05 18:40:43 tobias Exp $ \
+	@eval 'test `grep -c Id$ \
 	    ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt | wc -l` -eq 1'
 
 test-cvs-checkout-kflag-kv-rflag-1.1:
