@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.99 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.100 2008/02/05 21:49:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -639,8 +639,7 @@ cvs_client_checkedin(char *data)
 
 		if (newent->ce_tag != NULL)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
-			    ent->ce_tag);
-		newent->ce_opts = ent->ce_opts;
+			    newent->ce_tag);
 
 		cvs_ent_free(ent);
 	}
