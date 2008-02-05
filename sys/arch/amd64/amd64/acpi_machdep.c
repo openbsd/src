@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.11 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.12 2008/02/05 22:00:54 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -90,7 +90,7 @@ acpi_scan(struct acpi_mem_map *handle, paddr_t pa, size_t len)
 			if (rsdp->revision == 0 &&
 			    acpi_checksum(ptr, sizeof(struct acpi_rsdp1)) == 0)
 				return (ptr);
-			else if (rsdp->revision == 2 &&
+			else if (rsdp->revision >= 2 && rsdp->revision <= 3 &&
 			    acpi_checksum(ptr, sizeof(struct acpi_rsdp)) == 0)
 				return (ptr);
 		}
