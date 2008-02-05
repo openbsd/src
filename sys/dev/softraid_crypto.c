@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.6 2008/01/31 20:55:43 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.7 2008/02/05 16:15:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -242,60 +242,13 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
 	struct sr_ccb		*ccb;
-	struct sr_chunk		*scp;
 	struct uio		*uio;
 	int			s;
 	daddr64_t		blk;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw2 wu: %p\n",
-	    DEVNAME(sd->sd_sc), wu);
-
-	if (sd->sd_vol.sv_meta.svm_status != BIOC_SVONLINE) {
-		DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw2 device offline\n",
-		    DEVNAME(sd->sd_sc));
+	/* blk and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blk, "sr_crypto_rw2"))
 		goto bad;
-	}
-	scp = sd->sd_vol.sv_chunks[0];
-	if (scp->src_meta.scm_status != BIOC_SDONLINE) {
-		DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw2 disk offline\n",
-		    DEVNAME(sd->sd_sc));
-		goto bad;
-	}
-
-	if (xs->datalen == 0) {
-		printf("%s: %s: illegal block count\n",
-		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
-		goto bad;
-	}
-
-	if (xs->cmdlen == 10)
-		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
-	else if (xs->cmdlen == 16)
-		blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
-	else if (xs->cmdlen == 6)
-		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
-	else {
-		printf("%s: %s: illegal cmdlen\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname);
-		goto bad;
-	}
-
-	wu->swu_blk_start = blk;
-	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
-
-	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
-		DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw2 out of bounds "
-		    "start: %lld end: %lld length: %d\n", wu->swu_blk_start,
-		    wu->swu_blk_end, xs->datalen);
-
-		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
-		    SSD_ERRCODE_VALID;
-		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
-		sd->sd_scsi_sense.add_sense_code = 0x21;
-		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
-		sd->sd_scsi_sense.extra_len = 4;
-		goto bad;
-	}
 
 	/* calculate physical block */
 	blk += SR_META_SIZE + SR_META_OFFSET;

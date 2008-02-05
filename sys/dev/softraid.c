@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.98 2008/02/03 00:25:21 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.99 2008/02/05 16:15:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2169,6 +2169,63 @@ sr_shutdown(void *arg)
 	sr_save_metadata(sd, 0);
 
 	sr_shutdown_discipline(sd);
+}
+
+int
+sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct scsi_xfer	*xs = wu->swu_xs;
+	int			rv = 1;
+
+	DNPRINTF(SR_D_DIS, "%s: %s 0x%02x\n", DEVNAME(sd->sd_sc), func,
+	    xs->cmd->opcode);
+
+	if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
+		DNPRINTF(SR_D_DIS, "%s: %s device offline\n",
+		    DEVNAME(sd->sd_sc));
+		goto bad;
+	}
+
+	if (xs->datalen == 0) {
+		printf("%s: %s: illegal block count\n",
+		    DEVNAME(sd->sd_sc), func, sd->sd_vol.sv_meta.svm_devname);
+		goto bad;
+	}
+
+	if (xs->cmdlen == 10)
+		*blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+	else if (xs->cmdlen == 16)
+		*blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
+	else if (xs->cmdlen == 6)
+		*blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
+	else {
+		printf("%s: %s: illegal cmdlen\n", DEVNAME(sd->sd_sc), func,
+		    sd->sd_vol.sv_meta.svm_devname);
+		goto bad;
+	}
+
+	wu->swu_blk_start = *blk;
+	wu->swu_blk_end = *blk + (xs->datalen >> DEV_BSHIFT) - 1;
+
+	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
+		DNPRINTF(SR_D_DIS, "%s: %s out of bounds start: %lld "
+		    "end: %lld length: %d\n",
+		    DEVNAME(sd->sd_sc), func, wu->swu_blk_start,
+		    wu->swu_blk_end, xs->datalen);
+
+		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
+		    SSD_ERRCODE_VALID;
+		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
+		sd->sd_scsi_sense.add_sense_code = 0x21;
+		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
+		sd->sd_scsi_sense.extra_len = 4;
+		goto bad;
+	}
+
+	rv = 0;
+bad:
+	return (rv);
 }
 
 #ifndef SMALL_KERNEL
