@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.104 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.105 2008/02/05 16:14:31 sthen Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ protopr0(u_long off, char *name, int af)
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
-	int istcp, israw;
+	int istcp, israw, isany;
 	int first = 1;
 	char *name0;
 	char namebuf[20];
@@ -146,22 +146,25 @@ protopr0(u_long off, char *name, int af)
 		case AF_INET:
 			if ((inpcb.inp_flags & INP_IPV6) != 0)
 				continue;
+			isany = inet_lnaof(inpcb.inp_faddr) == INADDR_ANY;
 			break;
 		case AF_INET6:
 			if ((inpcb.inp_flags & INP_IPV6) == 0)
 				continue;
+			isany = IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6);
 			break;
 		default:
+			isany = 0;
 			break;
 		}
 
-		if (!aflag &&
-		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
-			continue;
 		kread((u_long)inpcb.inp_socket, &sockb, sizeof (sockb));
 		if (istcp) {
 			kread((u_long)inpcb.inp_ppcb, &tcpcb, sizeof (tcpcb));
-		}
+			if (!aflag && tcpcb.t_state <= TCPS_LISTEN)
+				continue;
+		} else if (!aflag && isany)
+			continue;
 		if (first) {
 			printf("Active Internet connections");
 			if (aflag)
