@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.49 2007/08/23 09:09:49 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.50 2008/02/06 20:22:19 bernd Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -440,17 +440,16 @@ our %distant = ();
 sub grab_object
 {
 	my ($self, $object) = @_;
-	my $ftp = $ENV{'FETCH_CMD'} || OpenBSD::Paths->ftp;
-	my @extra = ();
+	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
 	if (defined $ENV{'FTP_KEEPALIVE'}) {
 		push(@extra, "-k", $ENV{'FTP_KEEPALIVE'});
 	}
-	exec {OpenBSD::Paths->ftp} 
-	    "ftp", 
+	exec {$ftp} 
+	    $ftp,
 	    @extra,
 	    "-o", 
 	    "-", $self->url($object->{name})
-	or die "can't run ftp";
+	or die "can't run ".OpenBSD::Paths->ftp;
 }
 
 sub maxcount
@@ -594,7 +593,8 @@ sub get_http_list
 	my $fullname = $self->url;
 	my $l = [];
 	local $_;
-	open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return;
+	open(my $fh, '-|', OpenBSD::Paths->ftp." -o - $fullname 2>$error")
+	    or return;
 	# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 	while(<$fh>) {
 		chomp;
@@ -658,7 +658,8 @@ sub get_ftp_list
 	my ($self, $error) = @_;
 
 	my $fullname = $self->url;
-	return $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
+	return $self->_list("echo 'nlist *.tgz'| ".OpenBSD::Paths->ftp
+	    ." -o - $fullname 2>$error");
 }
 
 sub obtain_list
