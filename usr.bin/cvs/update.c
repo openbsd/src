@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.120 2008/02/04 18:23:58 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.121 2008/02/06 12:42:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -445,6 +445,7 @@ update_clear_conflict(struct cvs_file *cf)
 	time_t now;
 	CVSENTRIES *entlist;
 	char *entry, revbuf[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ];
+	char sticky[CVS_ENT_MAXLINELEN];
 
 	cvs_log(LP_TRACE, "update_clear_conflict(%s)", cf->file_path);
 
@@ -454,10 +455,15 @@ update_clear_conflict(struct cvs_file *cf)
 
 	rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
 
+	sticky[0] = '\0';
+	if (cf->file_ent->ce_tag != NULL)
+		(void)xsnprintf(sticky, sizeof(sticky), "T%s",
+		    cf->file_ent->ce_tag);
+
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
 	    cf->file_name, revbuf, timebuf, cf->file_ent->ce_opts ? : "",
-	    cf->file_ent->ce_tag ? : "");
+	    sticky);
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(entlist, entry);

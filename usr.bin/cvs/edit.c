@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.43 2008/02/04 15:07:33 tobias Exp $	*/
+/*	$OpenBSD: edit.c,v 1.44 2008/02/06 12:42:46 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -329,7 +329,7 @@ cvs_unedit_local(struct cvs_file *cf)
 	struct tm *t;
 	time_t now;
 	char bfpath[MAXPATHLEN], timebuf[64], thishost[MAXHOSTNAMELEN];
-	char wdir[MAXPATHLEN];
+	char wdir[MAXPATHLEN], sticky[CVS_ENT_MAXLINELEN];
 	RCSNUM *ba_rev;
 
 	if (cvs_noexec == 1)
@@ -399,9 +399,14 @@ cvs_unedit_local(struct cvs_file *cf)
 		ctime_r(&cf->file_ent->ce_mtime, timebuf);
 		timebuf[strcspn(timebuf, "\n")] = '\0';
 
+		sticky[0] = '\0';
+		if (cf->file_ent->ce_tag != NULL)
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
+			    cf->file_ent->ce_tag);
+
 		(void)xasprintf(&entry, "/%s/%s/%s/%s/%s",
 		    cf->file_name, rbuf, timebuf, cf->file_ent->ce_opts ? : "",
-		    cf->file_ent->ce_tag ? : "");
+		    sticky);
 
 		cvs_ent_add(entlist, entry);
 
