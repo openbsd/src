@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.128 2008/02/04 22:36:40 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.129 2008/02/06 22:43:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -75,6 +75,9 @@ cvs_checkout(int argc, char **argv)
 		case 'A':
 			reset_stickies = 1;
 			break;
+		case 'c':
+			cvs_modules_list();
+			exit(0);
 		case 'd':
 			if (dflag != NULL)
 				fatal("-d specified two or more times");

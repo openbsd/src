@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.9 2008/02/06 10:37:10 tobias Exp $	*/
+/*	$OpenBSD: modules.c,v 1.10 2008/02/06 22:43:22 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -41,12 +41,23 @@ cvs_parse_modules(void)
 }
 
 void
+cvs_modules_list(void)
+{
+	struct module_info *mi;
+
+	TAILQ_FOREACH(mi, &modules, m_list)
+		printf("%s\n", mi->mi_str);
+}
+
+void
 modules_parse_line(char *line, int lineno)
 {
 	int flags;
 	struct module_info *mi;
-	char *val, *p, *module, *sp, *dp;
+	char *bline, *val, *p, *module, *sp, *dp;
 	char *dirname, fpath[MAXPATHLEN], *prog;
+
+	bline = xstrdup(line);
 
 	flags = 0;
 	p = val = line;
@@ -131,6 +142,8 @@ modules_parse_line(char *line, int lineno)
 			p = val;
 			flags |= MODULE_RUN_ON_COMMIT;
 			break;
+		default:
+			goto bad;
 		}
 
 		val = p;
@@ -143,6 +156,7 @@ modules_parse_line(char *line, int lineno)
 	mi->mi_name = xstrdup(module);
 	mi->mi_flags = flags;
 	mi->mi_prog = prog;
+	mi->mi_str = bline;
 
 	dirname = NULL;
 	TAILQ_INIT(&(mi->mi_modules));
