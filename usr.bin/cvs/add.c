@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.92 2008/02/04 19:54:21 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.93 2008/02/06 18:12:28 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -280,9 +280,16 @@ add_directory(struct cvs_file *cf)
 static void
 add_file(struct cvs_file *cf)
 {
-	int added, stop;
+	int added, nb, stop;
 	char revbuf[CVS_REV_BUFSZ];
 	RCSNUM *head;
+	char *tag;
+
+	cvs_parse_tagfile(cf->file_wd, &tag, NULL, &nb);
+	if (nb) {
+		cvs_log(LP_ERR, "cannot add file on non-branch tag %s", tag);
+		return;
+	}
 
 	if (cf->file_rcs != NULL) {
 		head = rcs_head_get(cf->file_rcs);
@@ -371,10 +378,13 @@ add_entry(struct cvs_file *cf)
 	FILE *fp;
 	char entry[CVS_ENT_MAXLINELEN], path[MAXPATHLEN];
 	char revbuf[CVS_REV_BUFSZ], tbuf[CVS_TIME_BUFSZ];
+	char sticky[CVS_ENT_MAXLINELEN];
 	CVSENTRIES *entlist;
 
 	if (cvs_noexec == 1)
 		return;
+
+	sticky[0] = '\0';
 
 	if (cf->file_status == FILE_REMOVED) {
 		rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
@@ -382,10 +392,14 @@ add_entry(struct cvs_file *cf)
 		ctime_r(&cf->file_ent->ce_mtime, tbuf);
 		tbuf[strcspn(tbuf, "\n")] = '\0';
 
+		if (cf->file_ent->ce_tag != NULL)
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
+			    cf->file_ent->ce_tag);
+
 		/* Remove the '-' prefixing the version number. */
 		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
-		    "/%s/%s/%s/%s/", cf->file_name, revbuf, tbuf,
-		    cf->file_ent->ce_opts ? cf->file_ent->ce_opts : "");
+		    "/%s/%s/%s/%s/%s", cf->file_name, revbuf, tbuf,
+		    cf->file_ent->ce_opts ? cf->file_ent->ce_opts : "", sticky);
 	} else {
 		if (logmsg != NULL) {
 			(void)xsnprintf(path, MAXPATHLEN, "%s/%s%s",
@@ -403,9 +417,18 @@ add_entry(struct cvs_file *cf)
 			(void)fclose(fp);
 		}
 
+		if (cvs_directory_tag != NULL)
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
+			    cvs_directory_tag);
+
+		tbuf[0] = '\0';
+		if (!cvs_server_active)
+			(void)xsnprintf(tbuf, sizeof(tbuf), "Initial %s",
+			    cf->file_name);
+
 		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
-		    "/%s/0/Initial %s/%s/", cf->file_name, cf->file_name,
-		    kflag ? kbuf : "");
+		    "/%s/0/%s/%s/%s", cf->file_name, tbuf, kflag ? kbuf : "",
+		    sticky);
 	}
 
 	if (cvs_server_active) {
