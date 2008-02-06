@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.8 2008/02/04 22:36:40 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.9 2008/02/06 10:37:10 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/dirent.h>
 #include <sys/resource.h>
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -49,7 +50,7 @@ modules_parse_line(char *line, int lineno)
 
 	flags = 0;
 	p = val = line;
-	while (*p != ' ' && *p != '\t' && *p != '\0')
+	while (!isspace(*p) && *p != '\0')
 		p++;
 
 	if (*p == '\0')
@@ -58,20 +59,20 @@ modules_parse_line(char *line, int lineno)
 	*(p++) = '\0';
 	module = val;
 
-	while ((*p == ' ' || *p == '\t') && *p != '\0')
+	while (isspace(*p))
 		p++;
 
 	if (*p == '\0')
 		goto bad;
 
 	val = p;
-	while (*p != ' ' && *p != '\t')
+	while (!isspace(*p) && *p != '\0')
 		p++;
 
 	prog = NULL;
 	while (val[0] == '-') {
 		p = val;
-		while (*p != ' ' && *p != '\t' && *p != '\0')
+		while (!isspace(*p) && *p != '\0')
 			p++;
 
 		if (*p == '\0')
@@ -104,7 +105,10 @@ modules_parse_line(char *line, int lineno)
 				return;
 			}
 
-			if ((val = strchr(p, ' ' )) == NULL)
+			val = p;
+			while (!isspace(*val) && *val != '\0')
+				val++;
+			if (*val == '\0')
 				goto bad;
 
 			*(val++) = '\0';
@@ -143,9 +147,11 @@ modules_parse_line(char *line, int lineno)
 	dirname = NULL;
 	TAILQ_INIT(&(mi->mi_modules));
 	TAILQ_INIT(&(mi->mi_ignores));
-	for (sp = val; sp != NULL; sp = dp) {
-		dp = strchr(sp, ' ');
-		if (dp != NULL)
+	for (sp = val; *sp != '\0'; sp = dp) {
+		dp = sp;
+		while (!isspace(*dp) && *dp != '\0')
+			dp++;
+		if (*dp != '\0')
 			*(dp++) = '\0';
 
 		if (mi->mi_flags & MODULE_ALIAS) {
