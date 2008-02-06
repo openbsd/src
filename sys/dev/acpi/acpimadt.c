@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.17 2007/12/07 19:06:02 fgsch Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.18 2008/02/06 21:28:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -82,8 +82,8 @@ struct mp_bus acpimadt_isa_bus;
 void
 acpimadt_cfg_intr(int flags, u_int32_t *redir)
 {
-	int mpspo = flags & 0x03; /* XXX magic */
-	int mpstrig = (flags >> 2) & 0x03; /* XXX magic */
+	int mpspo = (flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
+	int mpstrig = (flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
