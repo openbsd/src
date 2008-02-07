@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.71 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.72 2008/02/07 16:04:01 thib Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1395,6 +1395,12 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				vr_stop(sc);
 		}
 		sc->sc_if_flags = ifp->if_flags;
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
