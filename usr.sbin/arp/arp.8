@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.18 2007/05/31 19:20:22 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.19 2008/02/07 15:57:07 thib Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 7 2008 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -50,24 +50,28 @@
 The
 .Nm
 program displays and modifies the Internet-to-Ethernet address translation
-tables used by the address resolution protocol
-.Pq Xr arp 4 .
-With no flags, the program displays the current
-.Tn ARP
-entry for
-.Ar hostname .
-The host may be specified by name or by number,
-using Internet dot notation.
+tables used by the address resolution protocol (ARP).
 .Pp
-Available options:
+.Nm
+displays the current ARP entry for
+.Ar hostname
+when no optional parameters are supplied.
+.Ar hostname
+may be specified by name or by number,
+using Internet dot notation.
+If no parameters are provided,
+a summary of all current ARP entries is provided.
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Display all of the current
-.Tn ARP
-entries.
+Display all of the current ARP entries.
 See also the
 .Fl d
 option below.
+This is the default,
+if no parameters are given to
+.Nm .
 .It Fl d
 Delete an entry for the host called
 .Ar hostname .
@@ -88,9 +92,7 @@ options).
 .It Fl f Ar file
 Process entries from
 .Ar file
-to be set in the
-.Tn ARP
-tables.
+to be set in the ARP tables.
 Any entries in the file that already exist for a given host
 will not be overwritten unless
 .Fl F
@@ -102,22 +104,17 @@ Entries in the file should be of the form:
 .Op Cm pub
 .Ed
 .Pp
-The entry will be static, i.e., will not time out, unless the word
+The entry will be static (will not time out) unless the word
 .Cm temp
 is given in the command.
-A static
-.Tn ARP
-entry can be overwritten by network traffic, unless the word
+A static ARP entry can be overwritten by network traffic, unless the word
 .Cm permanent
 is given.
 If the word
 .Cm pub
 is given, the entry will be
 .Dq published ;
-i.e., this system will
-act as an
-.Tn ARP
-server,
+that is, this system will act as an ARP server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
@@ -132,9 +129,7 @@ attempts to display addresses symbolically).
 .Op Cm temp | permanent
 .Op Cm pub
 .Xc
-Create an
-.Tn ARP
-entry for the host called
+Create an ARP entry for the host called
 .Ar hostname
 with the Ethernet address
 .Ar ether_addr .
@@ -157,7 +152,7 @@ View the current
 .Xr arp 4
 table:
 .Pp
-.Dl $ arp -a
+.Dl $ arp
 .Pp
 Create a permanent
 entry (one that cannot be overwritten by other network traffic):
