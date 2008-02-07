@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.41 2008/01/06 18:01:31 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.42 2008/02/07 19:53:49 pvalchev Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -209,7 +209,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 {
 	struct acpicpu_softc	*sc = arg;
 
-#ifdef ACPI_DEBUG
+#if defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
 	aml_showvalue(val, 0);
 #endif
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length != 4)
