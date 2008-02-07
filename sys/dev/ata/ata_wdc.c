@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.30 2007/02/14 00:53:47 jsg Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.31 2008/02/07 12:58:30 sthen Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -291,7 +291,8 @@ again:
 		} /* else not DMA */
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
-		if (ata_bio->nblks > 1 && (ata_bio->flags & ATA_SINGLE) == 0) {
+		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
+		if (ata_bio->nblks > 1) {
 			if (ata_bio->flags & ATA_LBA48)
 				cmd = (ata_bio->flags & ATA_READ) ?
 				    WDCC_READMULTI_EXT : WDCC_WRITEMULTI_EXT;

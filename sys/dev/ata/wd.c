@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.68 2007/12/05 23:11:34 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.69 2008/02/07 12:58:30 sthen Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -548,7 +548,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	 * the sector number of the problem, and will eventually allow the
 	 * transfer to succeed.
 	 */
-	if (wd->sc_multi == 1 || wd->retries >= WDIORETRIES_SINGLE)
+	if (wd->retries >= WDIORETRIES_SINGLE)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
@@ -1065,11 +1065,8 @@ wddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 	}
 
 	while (nblks > 0) {
-again:
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wddumpmulti == 1)
-			wd->sc_wdc_bio.flags |= ATA_SINGLE;
 		if (wd->sc_flags & WDF_LBA48)
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
@@ -1116,11 +1113,6 @@ again:
 			panic("wddump: unknown error type");
 		}
 		if (err != 0) {
-			if (wddumpmulti != 1) {
-				wddumpmulti = 1; /* retry in single-sector */
-				printf(", retrying\n");
-				goto again;
-			}
 			printf("\n");
 			return err;
 		}
