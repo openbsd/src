@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.18 2008/02/05 20:15:24 tobias Exp $
+#	$OpenBSD: Makefile,v 1.19 2008/02/07 16:16:57 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
 # Based on OpenRCS regression framework.
 
-CVS?=		opencvs
+CVS?=		opencvs -f
 MYCVSROOT?=	${.OBJDIR}/regress_cvs_root
 
 CLEANFILES=	regress_cvs_root regress_cvs_wcopy regress_cvs_stderr \
