@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.108 2008/02/05 21:15:26 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.109 2008/02/07 17:48:59 henning Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -982,7 +982,9 @@ aml_setbufint(struct aml_value *dst, int bitpos, int bitlen,
     struct aml_value *src)
 {
 	if (src->type != AML_OBJTYPE_BUFFER) {
+#ifndef SMALL_KERNEL
 		aml_showvalue(src, 0);
+#endif
 		aml_die("wrong setbufint type %d\n", src->type);
 	}
 #if 1
@@ -1724,7 +1726,7 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 			snprintf(lhs->v_string, lhs->length, "%lld",
 			    rhs->v_integer);
 		} else {
-			//aml_showvalue(rhs);
+			/* aml_showvalue(rhs); */
 			aml_die("setvalue.str");
 		}
 		break;
