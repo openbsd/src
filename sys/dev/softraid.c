@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.101 2008/02/05 16:49:25 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.102 2008/02/07 15:08:49 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -716,6 +716,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
 	u_int64_t		vol_size;
+#if 0
+	u_int32_t		*pk, sz;
+#endif
 	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
@@ -808,10 +811,35 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			break;
 #if 0
 		case 'C':
-			if (no_chunk < 2)
+			if (no_chunk < 1 || no_chunk > 2)
 				goto unwind;
 			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scm_coerced_size;
+
+			/* generate crypto key */
+			sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key) / 4;
+			pk = (u_int32_t *)
+			    sd->mds.mdd_crypto.scr_meta[0].scm_key;
+			for (i = 0; i < sz; i++)
+				*pk++ = arc4random();
+
+			/* generate salt */
+			sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt) /4;
+			pk = (u_int32_t *)
+			    sd->mds.mdd_crypto.scr_meta[0].scm_salt;
+			for (i = 0; i < sz; i++)
+				*pk++ = arc4random();
+
+			sd->mds.mdd_crypto.scr_meta[0].scm_flags =
+			    SR_CRYPTOF_KEY | SR_CRYPTOF_SALT;
+
+			strlcpy(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
+			    "my super secret passphrase ZOMGPASSWD",
+			    sizeof(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase));
+			sd->mds.mdd_crypto.scr_meta[1].scm_flags =
+			    SR_CRYPTOF_PASSPHRASE;
+
+			sr_crypto_encrypt_key(sd);
 			break;
 #endif
 		default:
@@ -1103,6 +1131,7 @@ sr_read_meta(struct sr_discipline *sd)
 	struct buf		b;
 	struct sr_vol_meta	*mv;
 	struct sr_chunk_meta	*mc;
+	struct sr_opt_meta	*mo;
 	size_t			sz = SR_META_SIZE * 512;
 	int			no_chunk = 0;
 	u_int32_t		volid, ondisk = 0, cid;
@@ -1216,6 +1245,19 @@ sr_read_meta(struct sr_discipline *sd)
 			    m->ssd_ondisk < ondisk ? m->ssd_chunk_id : cid);
 			no_chunk = -1;
 			goto bad;
+		}
+
+		/* XXX fix this check, sd_type isnt filled in yet */
+		if (mv->svm_level == 'C') {
+			mo = (struct sr_opt_meta *)(mc + mv->svm_no_chunk);
+			if (m->ssd_chunk_id > 2) {
+				no_chunk = -1;
+				goto bad;
+			}
+			bcopy(&mo->som_meta,
+			    &sd->mds.mdd_crypto.scr_meta[m->ssd_chunk_id],
+			    sizeof(sd->mds.mdd_crypto.scr_meta[m->ssd_chunk_id])
+			    );
 		}
 	}
 
@@ -1677,10 +1719,11 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 	struct sr_metadata	*sm = sd->sd_meta;
 	struct sr_vol_meta	*sv = &sd->sd_vol.sv_meta, *im_sv;
 	struct sr_chunk_meta	*im_sc;
+	struct sr_opt_meta	*im_so;
 	struct sr_chunk		*src;
 	struct buf		b;
 	struct sr_workunit	wu;
-	int			i, rv = 1, ch = 0;
+	int			i, rv = 1, ch = 0, no_chunk, sz_opt;
 	size_t			sz = SR_META_SIZE * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
@@ -1693,10 +1736,18 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 
 	im_sv = (struct sr_vol_meta *)(sm + 1);
 	im_sc = (struct sr_chunk_meta *)(im_sv + 1);
+	no_chunk = sd->sd_vol.sv_meta.svm_no_chunk;
+	im_so = (struct sr_opt_meta *)(im_sc + no_chunk);
+
+	/* XXX this is a temporary hack until meta is properly redone */
+	if (sd->sd_type == SR_MD_CRYPTO)
+		sz_opt = sizeof(struct sr_opt_meta);
+	else
+		sz_opt = 0;
 
 	if (sizeof(struct sr_metadata) + sizeof(struct sr_vol_meta) +
-	    (sizeof(struct sr_chunk_meta) * sd->sd_vol.sv_meta.svm_no_chunk) >
-	    sz) {
+	    (sizeof(struct sr_chunk_meta) * no_chunk) +
+	    sz_opt > sz) {
 		printf("%s: too much metadata; metadata NOT written\n",
 		    DEVNAME(sc));
 		goto bad;
@@ -1722,18 +1773,24 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		sm->ssd_vd_size = sizeof(struct sr_vol_meta);
 
 		/* chunk */
-		for (i = 0; i < sd->sd_vol.sv_meta.svm_no_chunk; i++)
+		for (i = 0; i < no_chunk; i++)
 			bcopy(sd->sd_vol.sv_chunks[i], &im_sc[i],
 			    sizeof(struct sr_chunk_meta));
 
 		sm->ssd_chunk_ver = SR_CHUNK_VERSION;
 		sm->ssd_chunk_size = sizeof(struct sr_chunk_meta);
-		sm->ssd_chunk_no = sd->sd_vol.sv_meta.svm_no_chunk;
+		sm->ssd_chunk_no = no_chunk;
 
 		/* optional */
 		sm->ssd_opt_ver = SR_OPT_VERSION;
-		sm->ssd_opt_size = 0; /* unused */
-		sm->ssd_opt_no = 0; /* unused */
+		if (sd->sd_type == SR_MD_CRYPTO) {
+			bzero(im_so, sizeof(*im_so));
+			sm->ssd_opt_size = sizeof(struct sr_opt_meta);
+			sm->ssd_opt_no = 1;
+		} else {
+			sm->ssd_opt_size = 0;
+			sm->ssd_opt_no = 0;
+		}
 	}
 
 	/* from here on out metadata is updated */
@@ -1747,6 +1804,8 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		sm->ssd_chunk_chk ^= sr_checksum(DEVNAME(sc),
 		    (u_int32_t *)&im_sc[ch], sm->ssd_chunk_size);
 
+	/* XXX do checksum on optional meta too */
+
 	sr_print_metadata(sm);
 
 	for (i = 0; i < sm->ssd_chunk_no; i++) {
@@ -1758,11 +1817,20 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		if (src->src_meta.scm_status == BIOC_SDOFFLINE)
 			continue;
 
+		/* copy encrypted key / passphrase into optinal metadata area */
+		if (sd->sd_type == SR_MD_CRYPTO && i < 2) {
+			im_so->som_type = SR_OPT_CRYPTO;
+			bcopy(&sd->mds.mdd_crypto.scr_meta[i],
+			    &im_so->som_meta.smm_crypto,
+			    sizeof(im_so->som_meta.smm_crypto));
+		}
+
 		/* calculate metdata checksum and ids */
 		sm->ssd_vd_volid = im_sv->svm_volid;
 		sm->ssd_chunk_id = i;
 		sm->ssd_checksum = sr_checksum(DEVNAME(sc),
 		    (u_int32_t *)sm, sm->ssd_size);
+
 		DNPRINTF(SR_D_META, "%s: sr_save_metadata %s: volid: %d "
 		    "chunkid: %d checksum: 0x%x\n",
 		    DEVNAME(sc), src->src_meta.scm_devname,
@@ -1782,9 +1850,12 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		b.b_iodone = NULL;
 		LIST_INIT(&b.b_dep);
 		bdevsw_lookup(b.b_dev)->d_strategy(&b);
+
 		biowait(&b);
 
 		/* make sure in memory copy is clean */
+		if (sd->sd_type == SR_MD_CRYPTO)
+			bzero(im_so, sizeof(*im_so));
 		sm->ssd_vd_volid = 0;
 		sm->ssd_chunk_id = 0;
 		sm->ssd_checksum = 0;
@@ -2388,6 +2459,7 @@ sr_print_metadata(struct sr_metadata *sm)
 {
 	struct sr_vol_meta	*im_sv;
 	struct sr_chunk_meta	*im_sc;
+	struct sr_opt_meta	*im_so;
 	int			ch;
 
 	if (!(sr_debug & SR_D_META))
@@ -2395,6 +2467,7 @@ sr_print_metadata(struct sr_metadata *sm)
 
 	im_sv = (struct sr_vol_meta *)(sm + 1);
 	im_sc = (struct sr_chunk_meta *)(im_sv + 1);
+	im_so = (struct sr_opt_meta *)(im_sc + im_sv->svm_no_chunk);
 
 	DNPRINTF(SR_D_META, "\tmeta magic 0x%llx\n", sm->ssd_magic);
 	DNPRINTF(SR_D_META, "\tmeta version %d\n", sm->ssd_version);
@@ -2412,6 +2485,13 @@ sr_print_metadata(struct sr_metadata *sm)
 	DNPRINTF(SR_D_META, "\tchunk size %u\n", sm->ssd_chunk_size);
 	DNPRINTF(SR_D_META, "\tchunk id %u\n", sm->ssd_chunk_id);
 	DNPRINTF(SR_D_META, "\tchunk checksum 0x%x\n", sm->ssd_chunk_chk);
+	if (sm->ssd_opt_no) {
+		DNPRINTF(SR_D_META, "\topt version %d\n", sm->ssd_opt_ver);
+		DNPRINTF(SR_D_META, "\topt items %d\n", sm->ssd_opt_no);
+		DNPRINTF(SR_D_META, "\topt size %d\n", sm->ssd_opt_size);
+		DNPRINTF(SR_D_META, "\topt chk 0x%x\n", sm->ssd_opt_chk);
+	}
+
 
 	DNPRINTF(SR_D_META, "\t\tvol id %d\n", im_sv->svm_volid);
 	DNPRINTF(SR_D_META, "\t\tvol status %d\n", im_sv->svm_status);
@@ -2444,4 +2524,15 @@ sr_print_metadata(struct sr_metadata *sm)
 		sr_print_uuid(&im_sc[ch].scm_uuid, 1);
 	}
 }
+
+void
+sr_dump_mem(u_int8_t *p, int len)
+{
+	int			i;
+
+	for (i = 0; i < len; i++)
+		printf("%02x ", *p++);
+	printf("\n");
+}
+
 #endif /* SR_DEBUG */

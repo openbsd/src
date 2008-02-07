@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.8 2008/02/05 16:49:25 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.9 2008/02/07 15:08:49 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -49,6 +49,7 @@
 
 struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
 void			*sr_crypto_putcryptop(struct cryptop *);
+int			sr_crypto_decrypt_key(struct sr_discipline *);
 int			sr_crypto_write(struct cryptop *);
 int			sr_crypto_rw2(struct sr_workunit *, struct cryptop *);
 void			sr_crypto_intr(struct buf *);
@@ -96,7 +97,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	if (crp == NULL)
 		goto unwind;
 
-	crp->crp_sid = sd->mds.mdd_crypto.src_sid;
+	crp->crp_sid = sd->mds.mdd_crypto.scr_sid;
 	crp->crp_ilen = xs->datalen;
 	crp->crp_alloctype = M_DEVBUF;
 	crp->crp_buf = uio;
@@ -108,7 +109,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 		crd->crd_alg = CRYPTO_AES_CBC;
 		crd->crd_klen = 256;
 		crd->crd_rnd = 14;
-		crd->crd_key = sd->mds.mdd_crypto.src_key;
+		crd->crd_key = sd->mds.mdd_crypto.scr_key;
 		memset(crd->crd_iv, blk + i, sizeof(crd->crd_iv));
 	}
 
@@ -139,6 +140,29 @@ sr_crypto_putcryptop(struct cryptop *crp)
 	return (wu);
 }
 
+
+int
+sr_crypto_decrypt_key(struct sr_discipline *sd)
+{
+	/* XXX decrypt for real! */
+	bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key,
+	    sd->mds.mdd_crypto.scr_key,
+	    sizeof(sd->mds.mdd_crypto.scr_key));
+
+	return (0);
+}
+
+int
+sr_crypto_encrypt_key(struct sr_discipline *sd)
+{
+	/* XXX encrypt for real! */
+	bcopy(sd->mds.mdd_crypto.scr_key,
+	    sd->mds.mdd_crypto.scr_meta[0].scm_key,
+	    sizeof(sd->mds.mdd_crypto.scr_key));
+
+	return (0);
+}
+
 int
 sr_crypto_alloc_resources(struct sr_discipline *sd)
 {
@@ -155,17 +179,17 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	if (sr_alloc_ccb(sd))
 		return (ENOMEM);
 
-	/* XXX we need a real key later */
-	memset(sd->mds.mdd_crypto.src_key, 'k',
-	    sizeof sd->mds.mdd_crypto.src_key);
+	if (sr_crypto_decrypt_key(sd)) {
+		return (1);
+	}
 
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_CBC;
 	cri.cri_klen = 256;
 	cri.cri_rnd = 14;
-	cri.cri_key = sd->mds.mdd_crypto.src_key;
+	cri.cri_key = sd->mds.mdd_crypto.scr_key;
 
-	return (crypto_newsession(&sd->mds.mdd_crypto.src_sid, &cri, 0));
+	return (crypto_newsession(&sd->mds.mdd_crypto.scr_sid, &cri, 0));
 }
 
 int
@@ -182,8 +206,11 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	sr_free_wu(sd);
 	sr_free_ccb(sd);
 
-	if (sd->sd_meta)
+	if (sd->sd_meta) {
+		bzero(sd->mds.mdd_crypto.scr_key,
+		    sizeof(sd->mds.mdd_crypto.scr_key));
 		free(sd->sd_meta, M_DEVBUF);
+	}
 
 	rv = 0;
 	return (rv);

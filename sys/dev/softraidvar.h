@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.43 2008/02/05 16:49:25 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.44 2008/02/07 15:08:49 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -133,11 +133,30 @@ struct sr_raid1 {
 	u_int32_t		sr1_counter;
 };
 
-/* RAID CRYPTO */
+/* CRYPTO */
+struct sr_crypto_metadata {
+	u_int32_t		scm_flags;
+#define SR_CRYPTOF_INVALID	(0)
+#define SR_CRYPTOF_KEY		(1<<0)
+#define SR_CRYPTOF_SALT		(1<<1)
+#define SR_CRYPTOF_PASSPHRASE	(1<<2)
+
+	u_int32_t		scm_pad;
+	char			scm_key[64];
+	char			scm_salt[64];
+	char			scm_passphrase[128]; /* _PASSWORD_LEN */
+};
+
 #define SR_CRYPTO_NOWU		16
 struct sr_crypto {
-	u_int64_t		src_sid;
-	char			src_key[64];
+	/*
+	 * [0] contains encrypted key & salt
+	 * [1] contains password
+	 */
+	struct sr_crypto_metadata scr_meta[2];
+
+	u_int64_t		scr_sid;
+	char			scr_key[64]; /* unencrypted key */
 };
 
 #define SR_META_SIZE		32	/* save space at chunk beginning */
@@ -192,11 +211,11 @@ SLIST_HEAD(sr_metadata_list_head, sr_metadata_list);
 #define SR_OPT_VERSION		1	/* bump when sr_opt_meta changes */
 struct sr_opt_meta {
 	u_int32_t		som_type;
-	u_int32_t		som_pad;
 #define SR_OPT_INVALID		0x00
 #define SR_OPT_CRYPTO		0x01
+	u_int32_t		som_pad;
 	union {
-		struct sr_crypto	smm_crypto;
+		struct sr_crypto_metadata smm_crypto;
 	}			som_meta;
 };
 
@@ -401,5 +420,10 @@ void			sr_raid1_set_vol_state(struct sr_discipline *);
 int			sr_crypto_alloc_resources(struct sr_discipline *);
 int			sr_crypto_free_resources(struct sr_discipline *);
 int			sr_crypto_rw(struct sr_workunit *);
+int			sr_crypto_encrypt_key(struct sr_discipline *);
+
+#ifdef SR_DEBUG
+void			sr_dump_mem(u_int8_t *, int);
+#endif
 
 #endif /* SOFTRAIDVAR_H */
