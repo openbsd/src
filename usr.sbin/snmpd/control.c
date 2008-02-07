@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2008/02/07 11:11:59 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2008/02/07 11:33:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,6 +220,21 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
+		if (c->flags & CTL_CONN_LOCKED) {
+			switch (imsg.hdr.type) {
+			case IMSG_SNMP_TRAP:
+			case IMSG_SNMP_ELEMENT:
+			case IMSG_SNMP_END:
+				break;
+			default:
+				log_debug("control_dispatch_imsg: "
+				    "client requested restricted command");
+				imsg_free(&imsg);
+				control_close(fd);
+				return;
+			}
+		}
+
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
@@ -230,6 +245,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				break;
 			}
 			c->flags |= CTL_CONN_NOTIFY;
+			break;
+		case IMSG_SNMP_LOCK:
+			/* enable restricted control mode */
+			c->flags |= CTL_CONN_LOCKED;
 			break;
 		case IMSG_SNMP_TRAP:
 			if (trap_imsg(&c->ibuf, imsg.hdr.pid) == -1) {
