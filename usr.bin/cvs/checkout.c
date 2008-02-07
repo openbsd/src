@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.129 2008/02/06 22:43:22 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.130 2008/02/07 07:50:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
