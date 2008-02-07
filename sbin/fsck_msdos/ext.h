@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.8 2003/03/11 04:42:25 david Exp $	*/
+/*	$OpenBSD: ext.h,v 1.9 2008/02/07 01:34:12 ian Exp $	*/
 /*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ int checkfilesys(const char *);
 #define	FSFATAL		16		/* Some unrecoverable error occurred */
 
 /*
- * read a boot block in a machine independend fashion and translate
+ * read a boot block in a machine independent fashion and translate
  * it into our struct bootblock.
  */
 int readboot(int, struct bootblock *);
