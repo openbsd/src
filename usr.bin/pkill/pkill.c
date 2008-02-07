@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.15 2006/09/19 05:52:23 otto Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.16 2008/02/07 15:38:07 millert Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.15 2006/09/19 05:52:23 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.16 2008/02/07 15:38:07 millert Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ static const char rcsid[] = "$OpenBSD: pkill.c,v 1.15 2006/09/19 05:52:23 otto E
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
@@ -90,6 +91,7 @@ int	nproc;
 int	pgrep;
 int	signum = SIGTERM;
 int	newest;
+int	oldest;
 int	inverse;
 int	longfmt;
 int	matchargs;
@@ -158,7 +160,7 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:U:d:fg:lns:t:u:vx")) != -1)
+	while ((ch = getopt(argc, argv, "G:P:U:d:fg:lnos:t:u:vx")) != -1)
 		switch (ch) {
 		case 'G':
 			makelist(&rgidlist, LT_GROUP, optarg);
@@ -193,6 +195,10 @@ main(int argc, char **argv)
 			newest = 1;
 			criteria = 1;
 			break;
+		case 'o':
+			oldest = 1;
+			criteria = 1;
+			break;
 		case 's':
 			makelist(&sidlist, LT_SID, optarg);
 			criteria = 1;
@@ -220,7 +226,7 @@ main(int argc, char **argv)
 	argv += optind;
 	if (argc != 0)
 		criteria = 1;
-	if (!criteria)
+	if (!criteria || (newest && oldest))
 		usage();
 
 	mypid = getpid();
@@ -364,18 +370,25 @@ main(int argc, char **argv)
 			selected[i] = 1;
 	}
 
-	if (newest) {
-		bestsec = 0;
-		bestusec = 0;
+	if (newest || oldest) {
 		bestidx = -1;
+
+		if (newest)
+			bestsec = bestusec = 0;
+		else
+			bestsec = bestusec = UINT32_MAX;
 
 		for (i = 0, kp = plist; i < nproc; i++, kp++) {
 			if (!selected[i])
 				continue;
 
-			if (kp->p_ustart_sec > bestsec ||
+			if ((newest && (kp->p_ustart_sec > bestsec ||
 			    (kp->p_ustart_sec == bestsec
-			    && kp->p_ustart_usec > bestusec)) {
+			    && kp->p_ustart_usec > bestusec)))
+			|| (oldest && (kp->p_ustart_sec < bestsec ||
+                            (kp->p_ustart_sec == bestsec
+                            && kp->p_ustart_usec < bestusec)))) {
+
 				bestsec = kp->p_ustart_sec;
 				bestusec = kp->p_ustart_usec;
 				bestidx = i;
@@ -417,9 +430,9 @@ usage(void)
 	const char *ustr;
 
 	if (pgrep)
-		ustr = "[-flnvx] [-d delim]";
+		ustr = "[-flnovx] [-d delim]";
 	else
-		ustr = "[-signal] [-fnvx]";
+		ustr = "[-signal] [-fnovx]";
 
 	fprintf(stderr, "usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] "
 	    "[-t tty]\n\t[-U uid] [-u euid] [pattern ...]\n", __progname, ustr);
