@@ -106,6 +106,7 @@
 ./etc/security
 ./etc/sensorsd.conf
 ./etc/services
+./etc/snmpd.conf
 ./etc/shells
 ./etc/skel/.cshrc
 ./etc/skel/.login

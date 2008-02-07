@@ -809,6 +809,7 @@
 ./usr/share/man/cat3p/Opcode.0
 ./usr/share/man/cat3p/OpenBSD::Getopt.0
 ./usr/share/man/cat3p/OpenBSD::IdCache.0
+./usr/share/man/cat3p/OpenBSD::Intro.0
 ./usr/share/man/cat3p/OpenBSD::Mtree.0
 ./usr/share/man/cat3p/OpenBSD::PackageName.0
 ./usr/share/man/cat3p/OpenBSD::PackingElement.0
@@ -1944,6 +1945,7 @@
 ./usr/share/man/cat5/sgi
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/skey.0
+./usr/share/man/cat5/snmpd.conf.0
 ./usr/share/man/cat5/spamd.conf.0
 ./usr/share/man/cat5/sparc
 ./usr/share/man/cat5/sparc64
@@ -2402,6 +2404,8 @@
 ./usr/share/man/cat8/smrsh.0
 ./usr/share/man/cat8/snkadm.0
 ./usr/share/man/cat8/snkinit.0
+./usr/share/man/cat8/snmpctl.0
+./usr/share/man/cat8/snmpd.0
 ./usr/share/man/cat8/spamd-setup.0
 ./usr/share/man/cat8/spamd.0
 ./usr/share/man/cat8/spamdb.0
