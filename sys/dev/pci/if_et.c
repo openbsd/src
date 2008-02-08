@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.6 2008/02/03 21:51:27 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.7 2008/02/08 04:42:05 brad Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -2012,7 +2012,7 @@ et_txeof(struct et_softc *sc)
 	if (tbd->tbd_used + ET_NSEG_SPARE <= ET_TX_NDESC)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-	ifp->if_start(ifp);
+	et_start(ifp);
 }
 
 void
