@@ -16,10 +16,14 @@
  */
 
 #include <sys/types.h>
+#include <pwd.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "sftp.h"
+#include "misc.h"
 
 void
 cleanup_exit(int i)
@@ -30,5 +34,15 @@ cleanup_exit(int i)
 int
 main(int argc, char **argv)
 {
-	return (sftp_server_main(argc, argv));
+	struct passwd *user_pw;
+
+	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	sanitise_stdfd();
+
+	if ((user_pw = getpwuid(getuid())) == NULL) {
+		fprintf(stderr, "No user found for uid %lu", (u_long)getuid());
+		return 1;
+	}
+
+	return (sftp_server_main(argc, argv, user_pw));
 }

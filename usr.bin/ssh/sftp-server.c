@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.76 2008/02/04 21:53:00 markus Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.77 2008/02/08 23:24:07 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1198,7 +1198,7 @@ sftp_server_usage(void)
 }
 
 int
-sftp_server_main(int argc, char **argv)
+sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 {
 	fd_set *rset, *wset;
 	int in, out, max, ch, skipargs = 0, log_stderr = 0;
@@ -1208,9 +1208,6 @@ sftp_server_main(int argc, char **argv)
 
 	extern char *optarg;
 	extern char *__progname;
-
-	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
-	sanitise_stdfd();
 
 	log_init(__progname, log_level, log_facility, log_stderr);
 
@@ -1255,11 +1252,7 @@ sftp_server_main(int argc, char **argv)
 	} else
 		client_addr = xstrdup("UNKNOWN");
 
-	if ((pw = getpwuid(getuid())) == NULL) {
-		error("No user found for uid %lu", (u_long)getuid());
-		sftp_server_cleanup_exit(255);
-	}
-	pw = pwcopy(pw);
+	pw = pwcopy(user_pw);
 
 	logit("session opened for local user %s from [%s]",
 	    pw->pw_name, client_addr);
