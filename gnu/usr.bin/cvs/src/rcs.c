@@ -3403,7 +3403,7 @@ mdoc_date (rcs_date)
 {
     int year, mon, mday, hour, min, sec;
     char buf[100];
-    char *months[] = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    char *months[] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
     (void) sscanf (rcs_date, SDATEFORM, &year, &mon, &mday, &hour, &min,
 		   &sec);
     if (mon < 1 || mon > 12)
