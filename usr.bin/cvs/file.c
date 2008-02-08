@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.216 2008/02/08 21:32:07 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.217 2008/02/08 22:07:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -771,7 +771,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		if (!strcmp(state, RCS_STATE_DEAD))
 			rcsdead = 1;
 
-		if (cvs_specified_tag == NULL && cf->in_attic &&
+		if (tag == NULL &&cf->in_attic &&
 		    !RCSNUM_ISBRANCHREV(cf->file_rcsrev))
 			rcsdead = 1;
 
