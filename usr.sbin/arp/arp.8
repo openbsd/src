@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.19 2008/02/07 15:57:07 thib Exp $
+.\"	$OpenBSD: arp.8,v 1.20 2008/02/08 08:19:17 jmc Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 7 2008 $
+.Dd $Mdocdate: February 8 2008 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -59,8 +59,9 @@ when no optional parameters are supplied.
 .Ar hostname
 may be specified by name or by number,
 using Internet dot notation.
-If no parameters are provided,
-a summary of all current ARP entries is provided.
+If no parameters are provided at all,
+a summary of all current ARP entries is provided
+.Pq Fl an .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -69,9 +70,6 @@ Display all of the current ARP entries.
 See also the
 .Fl d
 option below.
-This is the default,
-if no parameters are given to
-.Nm .
 .It Fl d
 Delete an entry for the host called
 .Ar hostname .
@@ -150,9 +148,10 @@ is given.
 .Sh EXAMPLES
 View the current
 .Xr arp 4
-table:
+table,
+showing network addresses symbolically:
 .Pp
-.Dl $ arp
+.Dl $ arp -a
 .Pp
 Create a permanent
 entry (one that cannot be overwritten by other network traffic):
