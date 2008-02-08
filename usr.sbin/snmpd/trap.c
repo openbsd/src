@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2008/01/24 06:36:51 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2008/02/08 12:36:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -75,6 +75,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 				goto done;
 			if (n == 0)
 				break;
+
 			switch (imsg.hdr.type) {
 			case IMSG_SNMP_ELEMENT:
 				if (imsg.hdr.len < (IMSG_HEADER_SIZE +
@@ -139,7 +140,7 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 					if (sm->snmp_len != sizeof(l))
 						goto imsgdone;
 					bcopy(sm + 1, &l, sm->snmp_len);
-					a = ber_add_integer(a, d);
+					a = ber_add_integer(a, l);
 					break;
 				default:
 					log_debug("trap_imsg: illegal type %d",
