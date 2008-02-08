@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.121 2008/02/06 12:42:46 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.122 2008/02/08 21:44:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -311,6 +311,8 @@ cvs_update_local(struct cvs_file *cf)
 	flags = 0;
 	if (cvs_specified_tag != NULL)
 		tag = cvs_specified_tag;
+	else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
+		tag = cf->file_ent->ce_tag;
 	else
 		tag = cvs_directory_tag;
 
@@ -318,9 +320,6 @@ cvs_update_local(struct cvs_file *cf)
 
 	if (kflag)
 		rcs_kwexp_set(cf->file_rcs, kflag);
-
-	if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
-		tag = cf->file_ent->ce_tag;
 
 	if ((cf->file_status == FILE_UPTODATE ||
 	    cf->file_status == FILE_MODIFIED) && cf->file_ent != NULL &&
