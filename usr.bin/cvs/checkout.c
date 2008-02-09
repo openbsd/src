@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.134 2008/02/09 17:01:43 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.135 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -425,7 +425,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	struct timeval tv[2];
 	struct tm *datetm;
 	char *tosend;
-	char template[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
+	char template[MAXPATHLEN], *entry;
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
 	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 
@@ -520,14 +520,16 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			strlcpy(kbuf, cf->file_ent->ce_opts, sizeof(kbuf));
 	}
 
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
-	    cf->file_name, rev, timebuf, kbuf, sticky);
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	cvs_ent_line_str(cf->file_name, rev, timebuf, kbuf, sticky, 0, 0,
+	    entry, CVS_ENT_MAXLINELEN);
 
 	if (cvs_server_active == 0) {
 		if (!(co_flags & CO_REMOVE) && cvs_cmdop != CVS_OP_EXPORT) {
 			ent = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(ent, entry);
 			cvs_ent_close(ent, ENT_SYNC);
+			xfree(entry);
 		}
 	} else {
 		if (co_flags & CO_MERGE) {
@@ -544,8 +546,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		else
 			cvs_server_update_entry("Updated", cf);
 
-		if (!(co_flags & CO_REMOVE))
+		if (!(co_flags & CO_REMOVE)) {
 			cvs_remote_output(entry);
+			xfree(entry);
+		}
 
 		if (!(co_flags & CO_COMMIT) && !(co_flags & CO_REMOVE)) {
 			if (!(co_flags & CO_MERGE)) {

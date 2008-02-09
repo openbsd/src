@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.128 2008/02/09 17:52:32 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.129 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -473,9 +473,9 @@ update_clear_conflict(struct cvs_file *cf)
 		    cf->file_ent->ce_tag);
 
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
-	    cf->file_name, revbuf, timebuf, cf->file_ent->ce_opts ? : "",
-	    sticky);
+	cvs_ent_line_str(cf->file_name, revbuf, timebuf,
+	    cf->file_ent->ce_opts ? : "", sticky, 0, 0,
+	    entry, CVS_ENT_MAXLINELEN);
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(entlist, entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.101 2008/02/09 12:48:23 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.102 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -156,7 +156,7 @@ static void
 client_check_directory(char *data, char *repository)
 {
 	CVSENTRIES *entlist;
-	char entry[CVS_ENT_MAXLINELEN], *parent, *base, *p;
+	char *entry, *parent, *base, *p;
 
 	STRIP_SLASH(data);
 
@@ -183,11 +183,15 @@ client_check_directory(char *data, char *repository)
 	if (!strcmp(parent, "."))
 		return;
 
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	cvs_ent_line_str(base, NULL, NULL, NULL, NULL, 1, 0, entry,
+	    CVS_ENT_MAXLINELEN);
 
 	entlist = cvs_ent_open(parent);
 	cvs_ent_add(entlist, entry);
 	cvs_ent_close(entlist, ENT_SYNC);
+
+	xfree(entry);
 }
 
 void
@@ -603,7 +607,7 @@ cvs_client_checkedin(char *data)
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
 	size_t len;
-	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[CVS_REV_BUFSZ];
+	char *dir, *e, *entry, rev[CVS_REV_BUFSZ];
 	char sticky[CVS_ENT_MAXLINELEN], timebuf[CVS_TIME_BUFSZ];
 
 	if (data == NULL)
@@ -644,13 +648,17 @@ cvs_client_checkedin(char *data)
 		cvs_ent_free(ent);
 	}
 
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s/%s/%s",
-	    newent->ce_name, (newent->ce_status == CVS_ENT_REMOVED) ? "-" : "",
-	    rev, timebuf, newent->ce_opts ? newent->ce_opts : "", sticky);
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	cvs_ent_line_str(newent->ce_name, rev, timebuf,
+	    newent->ce_opts ? newent->ce_opts : "", sticky, 0,
+	    newent->ce_status == CVS_ENT_REMOVED ? 1 : 0,
+	    entry, CVS_ENT_MAXLINELEN);
 
 	cvs_ent_free(newent);
 	cvs_ent_add(entlist, entry);
 	cvs_ent_close(entlist, ENT_SYNC);
+
+	xfree(entry);
 }
 
 void
@@ -664,7 +672,7 @@ cvs_client_updated(char *data)
 	struct cvs_ent *e;
 	const char *errstr;
 	struct timeval tv[2];
-	char repo[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
+	char repo[MAXPATHLEN], *entry;
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
 	char *en, *mode, *len, *rpath;
 	char sticky[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN];
@@ -711,9 +719,11 @@ cvs_client_updated(char *data)
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s", e->ce_tag);
 
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
-	    e->ce_name, revbuf, timebuf,
-	    e->ce_opts ? e->ce_opts : "", sticky);
+
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	cvs_ent_line_str(e->ce_name, revbuf, timebuf,
+	    e->ce_opts ? e->ce_opts : "", sticky, 0, 0,
+	    entry, CVS_ENT_MAXLINELEN);
 
 	cvs_ent_free(e);
 
@@ -722,6 +732,8 @@ cvs_client_updated(char *data)
 		cvs_ent_add(ent, entry);
 		cvs_ent_close(ent, ENT_SYNC);
 	}
+
+	xfree(entry);
 
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_updated: open: %s: %s",

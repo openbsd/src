@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.89 2008/02/09 17:01:43 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.90 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -315,6 +315,25 @@ cvs_ent_remove(CVSENTRIES *ep, const char *name)
 	TAILQ_REMOVE(&(ep->cef_ent), l, entries_list);
 	xfree(l->buf);
 	xfree(l);
+}
+
+/*
+ * cvs_ent_line_str()
+ *
+ * Build CVS/Entries line.
+ *
+ */
+void
+cvs_ent_line_str(const char *name, char *rev, char *tstamp, char *opts,
+    char *sticky, int isdir, int isremoved, char *buf, size_t len)
+{
+	if (isdir == 1) {
+		(void)xsnprintf(buf, len, "D/%s////", name);
+		return;
+	}
+
+	(void)xsnprintf(buf, len, "/%s/%s%s/%s/%s/%s",
+	    name, isremoved == 1 ? "-" : "", rev, tstamp, opts, sticky);
 }
 
 void

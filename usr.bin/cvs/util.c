@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.134 2008/02/09 16:56:58 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.135 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -554,7 +554,7 @@ cvs_mkpath(const char *path, char *tag)
 	CVSENTRIES *ent;
 	FILE *fp;
 	size_t len;
-	char entry[CVS_ENT_MAXLINELEN], sticky[CVS_REV_BUFSZ];
+	char *entry, sticky[CVS_REV_BUFSZ];
 	char *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
 
 	dir = xstrdup(path);
@@ -619,10 +619,16 @@ cvs_mkpath(const char *path, char *tag)
 		if (dp != NULL) {
 			if ((p = strchr(dp, '/')) != NULL)
 				*p = '\0';
+
+			entry = xmalloc(CVS_ENT_MAXLINELEN);
+			cvs_ent_line_str(dp, NULL, NULL, NULL, NULL, 1, 0,
+			    entry, CVS_ENT_MAXLINELEN);
+
 			ent = cvs_ent_open(rpath);
-			xsnprintf(entry, sizeof(entry), "D/%s////", dp);
 			cvs_ent_add(ent, entry);
 			cvs_ent_close(ent, ENT_SYNC);
+			xfree(entry);
+
 			if (p != NULL)
 				*p = '/';
 		}

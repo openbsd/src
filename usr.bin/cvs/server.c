@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.82 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.83 2008/02/09 20:04:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -317,7 +317,7 @@ void
 cvs_server_directory(char *data)
 {
 	CVSENTRIES *entlist;
-	char *dir, *repo, *parent, entry[CVS_ENT_MAXLINELEN], *dirn, *p;
+	char *dir, *repo, *parent, *entry, *dirn, *p;
 
 	if (current_cvsroot == NULL)
 		fatal("No Root specified for Directory");
@@ -351,11 +351,14 @@ cvs_server_directory(char *data)
 		fatal("cvs_server_directory: %s", strerror(errno));
 
 	if (strcmp(parent, ".")) {
-		entlist = cvs_ent_open(parent);
-		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", dirn);
+		entry = xmalloc(CVS_ENT_MAXLINELEN);
+		cvs_ent_line_str(dirn, NULL, NULL, NULL, NULL, 1, 0,
+		    entry, CVS_ENT_MAXLINELEN);
 
+		entlist = cvs_ent_open(parent);
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
+		xfree(entry);
 	}
 
 	if (server_currentdir != NULL)
