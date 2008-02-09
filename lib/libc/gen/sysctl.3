@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.177 2008/02/05 22:57:31 mpf Exp $
+.\"	$OpenBSD: sysctl.3,v 1.178 2008/02/09 15:34:36 kettenis Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 5 2008 $
+.Dd $Mdocdate: February 9 2008 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -285,11 +285,13 @@ privileges may change the value.
 .It Dv HW_NCPU No "	integer	no"
 .It Dv HW_PAGESIZE No "	integer	no"
 .It Dv HW_PHYSMEM No "	integer	no"
+.It Dv HW_PHYSMEM64 No "	int64_t	no"
 .It Dv HW_PRODUCT No "	string	no"
 .It Dv HW_SENSORS No "	node	not applicable"
 .It Dv HW_SERIALNO No "	string	no"
 .It Dv HW_SETPERF No "	integer	yes"
 .It Dv HW_USERMEM No "	integer	no"
+.It Dv HW_USERMEM64 No "	int64_t	no"
 .It Dv HW_UUID No "	string	no"
 .It Dv HW_VENDOR No "	string	no"
 .It Dv HW_VERSION No "	string	no"
@@ -317,6 +319,11 @@ The number of CPUs.
 .It Dv HW_PAGESIZE
 The software page size.
 .It Dv HW_PHYSMEM
+The total physical memory, in bytes.
+This variable is deprecated; use
+.Dv HW_PHYSMEM64
+instead.
+.It Dv HW_PHYSMEM64
 The total physical memory, in bytes.
 .It Dv HW_PRODUCT
 The product name of the machine.
@@ -354,6 +361,11 @@ The serial number of the machine.
 Current CPU performance
 .Pq percentage .
 .It Dv HW_USERMEM
+The amount of available non-kernel memory in bytes.
+This variable is deprecated; use
+.Dv HW_USERMEM64
+instead.
+.It Dv HW_USERMEM64
 The amount of available non-kernel memory in bytes.
 .It Dv HW_UUID
 The universal unique identification number assigned to the machine.
