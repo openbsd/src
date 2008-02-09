@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.88 2008/02/04 18:23:58 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.89 2008/02/09 17:01:43 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -427,6 +427,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 	RCSNUM *rev;
 	char tagpath[MAXPATHLEN];
 	char sticky[CVS_REV_BUFSZ];
+	struct tm *datetm;
 	int i;
 
 	cvs_log(LP_TRACE, "cvs_write_tagfile(%s, %s, %s)", dir,
@@ -439,7 +440,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 	if (i < 0 || i >= MAXPATHLEN)
 		return;
 
-	if ((tag != NULL) || (date != NULL)) {
+	if (tag != NULL || cvs_specified_date != 0) {
 		if ((fp = fopen(tagpath, "w+")) == NULL) {
 			if (errno != ENOENT) {
 				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
@@ -458,7 +459,9 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 				    "T%s", tag);
 			}
 		} else {
-			(void)xsnprintf(sticky, sizeof(sticky), "D%s", date);
+			datetm = gmtime(&cvs_specified_date);
+			strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S",
+			    datetm);
 		}
 
 		if (cvs_server_active == 1)

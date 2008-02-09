@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.133 2008/02/09 12:48:23 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.134 2008/02/09 17:01:43 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -423,6 +423,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
+	struct tm *datetm;
 	char *tosend;
 	char template[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
@@ -495,7 +496,11 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	if (co_flags & CO_SETSTICKY)
 		if (tag != NULL)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
-		else
+		else if (cvs_specified_date != 0) {
+                        datetm = gmtime(&cvs_specified_date);
+                        strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S",
+                            datetm);
+		} else
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", rev);
 	else if (!reset_tag && cf->file_ent != NULL &&
 	    cf->file_ent->ce_tag != NULL)
