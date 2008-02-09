@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.52 2008/02/04 21:25:32 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.53 2008/02/09 14:34:40 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,6 +32,7 @@ void	cvs_annotate_local(struct cvs_file *);
 
 extern char	*cvs_specified_tag;
 
+static char	*dateflag;
 static int	 force_head = 0;
 
 struct cvs_cmd cvs_cmd_annotate = {
@@ -67,6 +68,8 @@ cvs_annotate(int argc, char **argv)
 	    cvs_cmd_annotate.cmd_opts : cvs_cmd_rannotate.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'D':
+			dateflag = optarg;
+			cvs_specified_date = cvs_date_parse(dateflag);
 			break;
 		case 'f':
 			force_head = 1;
@@ -97,6 +100,9 @@ cvs_annotate(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
+
+		if (dateflag != NULL)
+			cvs_client_send_request("Argument -D%s", dateflag);
 
 		if (force_head == 1)
 			cvs_client_send_request("Argument -f");
@@ -197,7 +203,7 @@ cvs_annotate_local(struct cvs_file *cf)
 		}
 		rcsnum_free(rev);
 	} else {
-		rcs_rev_getlines(cf->file_rcs, cf->file_rcs->rf_head, &alines);
+		rcs_rev_getlines(cf->file_rcs, cf->file_rcsrev, &alines);
 	}
 
 	/* Stick at weird GNU cvs, ignore error. */
