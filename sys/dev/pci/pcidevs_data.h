@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1320 2008/02/09 15:03:25 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1321 2008/02/09 19:05:02 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5569,7 +5569,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_DMA,
-	    "5000 DMA Engine",
+	    "5000 DMA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR,
@@ -5880,32 +5880,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7500 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_DRAM,
-	    "E7500 DRAM",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_ERR,
+	    "E7500 Error Reporting",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B1,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_B1,
+	    "E7500 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B2,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_B2,
+	    "E7500 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C1,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_C1,
+	    "E7500 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C2,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_C2,
+	    "E7500 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_D1,
+	    "E7500 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
-	    "E7500 MCH",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_PCI_D2,
+	    "E7500 PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7501_HB,
@@ -5916,19 +5916,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7505 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_RAS,
-	    "E7505 RAS",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_ERR,
+	    "E7505 Error Reporting",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP,
 	    "E7505 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_PCI_B1,
 	    "E7505 PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_PCI_B2,
 	    "E7505 PCI",
 	},
 	{
@@ -6112,7 +6112,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5000 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_ERR_REG,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_ERR,
 	    "5000 Error Reporting",
 	},
 	{
@@ -6133,19 +6133,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7,
-	    "5000 PCIE",
+	    "5000 PCIE x8",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8,
-	    "5000 PCIE",
+	    "5000 PCIE x8",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_9,
-	    "5000 PCIE",
+	    "5000 PCIE x8",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_PCIE,
-	    "5000X PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_10,
+	    "5000 PCIE x16",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E8500_HB,
@@ -6192,7 +6192,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E8500 PCIE x8",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E8500_IMI_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E8500_IMI,
 	    "E8500 IMI",
 	},
 	{
@@ -7116,7 +7116,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7520 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_MCH_ERR,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_ERR,
 	    "E7520 Error Reporting",
 	},
 	{
@@ -7124,40 +7124,40 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7320 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_ERR,
-	    "E7525 Error Reporting",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7320_ERR,
+	    "E7320 Error Reporting",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_DMA,
 	    "E7520 DMA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEA0,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_A0,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEA1,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_A1,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEB0,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_B0,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEB1,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_B1,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEC0,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_C0,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEC1,
-	    "MCH PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_PCIE_C1,
+	    "E7520 PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_CFG,
-	    "E7525 Config",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_CFG,
+	    "E7520 Config",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_HB,
