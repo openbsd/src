@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.246 2008/02/09 11:17:02 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.247 2008/02/09 13:41:22 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3549,7 +3549,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	}
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
-		fatal("rcs_datetorev: cannot find revision");
+		fatal("rcs_translate_tag: cannot find revision");
 
 	if (cvs_specified_date == 0)
 		return rev;
