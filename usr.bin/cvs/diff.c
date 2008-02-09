@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.127 2008/02/04 21:25:32 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.128 2008/02/09 12:27:31 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -65,7 +65,8 @@ cvs_diff(int argc, char **argv)
 	struct cvs_recursion cr;
 
 	flags = CR_RECURSE_DIRS;
-	strlcpy(diffargs, argv[0], sizeof(diffargs));
+	strlcpy(diffargs, cvs_cmdop == CVS_OP_DIFF ? "diff" : "rdiff",
+	    sizeof(diffargs));
 
 	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_DIFF ?
 	    cvs_cmd_diff.cmd_opts : cvs_cmd_rdiff.cmd_opts)) != -1) {
