@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.5 2008/01/03 14:44:08 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.6 2008/02/09 13:03:01 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1129,6 +1129,13 @@ void
 ber_set_application(struct ber *b, unsigned long (*cb)(struct ber_element *))
 {
 	b->br_application = cb;
+}
+
+void
+ber_free(struct ber *b)
+{
+	if (b->br_wbuf != NULL)
+		free (b->br_wbuf);
 }
 
 static ssize_t

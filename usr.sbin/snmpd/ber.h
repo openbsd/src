@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.3 2008/01/03 14:44:08 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.4 2008/02/09 13:03:01 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -121,4 +121,5 @@ void			 ber_free_elements(struct ber_element *);
 size_t			 ber_calc_len(struct ber_element *);
 void			 ber_set_application(struct ber *,
 			    unsigned long (*)(struct ber_element *));
+void			 ber_free(struct ber *);
 __END_DECLS

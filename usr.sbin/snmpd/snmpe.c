@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.15 2008/01/16 21:43:19 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.16 2008/02/09 13:03:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -699,7 +699,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 {
 	struct snmp_stats	*stats = &env->sc_stats;
 	struct sockaddr_storage	 ss;
-	u_int8_t		 buf[READ_BUF_SIZE], *ptr;
+	u_int8_t		 buf[READ_BUF_SIZE], *ptr = NULL;
 	socklen_t		 slen;
 	ssize_t			 len;
 	struct ber		 ber;
@@ -775,6 +775,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 		stats->snmp_outpkts++;
 
  done:
+	ber_free(&ber);
 	if (req != NULL)
 		ber_free_elements(req);
 	if (resp != NULL)
