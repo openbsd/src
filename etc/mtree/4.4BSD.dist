@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.190 2008/01/31 22:44:40 henning Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.191 2008/02/09 12:10:54 mcbride Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -132,6 +132,12 @@ ppp
 
 # ./etc/skel
 skel
+
+# ./etc/skel/.ssh
+.ssh		uname=root mode=0700
+# ./etc/skel/.ssh
+..
+
 # ./etc/skel
 ..
 

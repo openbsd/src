@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.259 2008/01/31 14:18:03 reyk Exp $
+#	$OpenBSD: Makefile,v 1.260 2008/02/09 12:10:53 mcbride Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -110,7 +110,9 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 dot.mailrc \
 		    ${DESTDIR}/etc/skel/.mailrc; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
-		    ${DESTDIR}/etc/skel/.profile
+		    ${DESTDIR}/etc/skel/.profile; \
+		${INSTALL} -c -o root -g wheel -m 600 /dev/null \
+		    ${DESTDIR}/etc/skel/.ssh/authorized_keys
 	cd kerberosV; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/kerberosV; \
