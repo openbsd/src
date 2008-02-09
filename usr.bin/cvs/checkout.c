@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.132 2008/02/09 12:20:33 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.133 2008/02/09 12:48:23 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -43,9 +43,11 @@ static int flags = CR_REPO | CR_RECURSE_DIRS;
 static int Aflag = 0;
 static char *dflag = NULL;
 static char *koptstr = NULL;
+static char *dateflag = NULL;
 
 static int nflag = 0;
 
+char *checkout_target_dir = NULL;
 time_t cvs_specified_date;
 
 struct cvs_cmd cvs_cmd_checkout = {
@@ -87,12 +89,14 @@ cvs_checkout(int argc, char **argv)
 			cvs_modules_list();
 			exit(0);
 		case 'D':
-			cvs_specified_date = cvs_date_parse(optarg);
+			dateflag = optarg;
+			cvs_specified_date = cvs_date_parse(dateflag);
 			break;
 		case 'd':
 			if (dflag != NULL)
 				fatal("-d specified two or more times");
 			dflag = optarg;
+			checkout_target_dir = dflag;
 			break;
 		case 'k':
 			reset_option = 0;
@@ -211,6 +215,9 @@ checkout_check_repository(int argc, char **argv)
 			    cvs_specified_tag);
 		if (Aflag)
 			cvs_client_send_request("Argument -A");
+
+		if (dateflag != NULL)
+			cvs_client_send_request("Argument -D%s", dateflag);
 
 		if (kflag)
 			cvs_client_send_request("Argument -k%s", koptstr);

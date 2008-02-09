@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.124 2008/02/09 12:20:33 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.125 2008/02/09 12:48:23 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -34,6 +34,7 @@ int	reset_tag = 0;
 char *cvs_specified_tag = NULL;
 
 static char *koptstr;
+static char *dateflag = NULL;
 static int Aflag = 0;
 
 static void update_clear_conflict(struct cvs_file *);
@@ -70,7 +71,8 @@ cvs_update(int argc, char **argv)
 			break;
 		case 'C':
 		case 'D':
-			cvs_specified_date = cvs_date_parse(optarg);
+			dateflag = optarg;
+			cvs_specified_date = cvs_date_parse(dateflag);
 			break;
 		case 'd':
 			build_dirs = 1;
@@ -130,6 +132,8 @@ cvs_update(int argc, char **argv)
 		cvs_client_connect_to_server();
 		if (Aflag)
 			cvs_client_send_request("Argument -A");
+		if (dateflag != NULL)
+			cvs_client_send_request("Argument -D%s", dateflag);
 		if (build_dirs)
 			cvs_client_send_request("Argument -d");
 		if (kflag)

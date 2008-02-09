@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.100 2008/02/05 21:49:29 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.101 2008/02/09 12:48:23 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -161,7 +161,7 @@ client_check_directory(char *data, char *repository)
 	STRIP_SLASH(data);
 
 	/* first directory we get is our module root */
-	if (module_repo_root == NULL) {
+	if (module_repo_root == NULL && checkout_target_dir != NULL) {
 		p = repository + strlen(current_cvsroot->cr_dir) + 1;
 		module_repo_root = xstrdup(p);
 		p = strrchr(module_repo_root, '/');
