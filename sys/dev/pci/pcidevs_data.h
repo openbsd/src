@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1319 2008/02/08 12:38:59 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1320 2008/02/09 15:03:25 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5260,12 +5260,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000MT (82573E)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_KCS,
-	    "82573E KCS (Active Management)",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IDE,
+	    "82573E IDE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_AMT,
-	    "82573E AMT",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_KCS,
+	    "82573E KCS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_SERIAL,
+	    "82573E Serial",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_15,
