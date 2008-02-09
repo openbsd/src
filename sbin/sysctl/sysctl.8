@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.143 2008/02/05 22:57:31 mpf Exp $
+.\"	$OpenBSD: sysctl.8,v 1.144 2008/02/09 15:23:59 kettenis Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: February 5 2008 $
+.Dd $Mdocdate: February 9 2008 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -320,8 +320,8 @@ not all of the variables are relevant to all architectures.
 .It hw.model	string	no
 .It hw.ncpu	integer	no
 .It hw.byteorder	integer	no
-.It hw.physmem	integer	no
-.It hw.usermem	integer	no
+.It hw.physmem	int64_t	no
+.It hw.usermem	int64_t	no
 .It hw.pagesize	integer	no
 .It hw.diskstats	struct	no
 .It hw.disknames	string	no
