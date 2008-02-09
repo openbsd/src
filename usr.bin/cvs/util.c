@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.133 2008/02/09 16:52:27 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.134 2008/02/09 16:56:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -517,7 +517,6 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
     char *tag, char *date)
 {
 	FILE *fp;
-	struct stat st;
 	char buf[MAXPATHLEN];
 
 	if (cvs_server_active == 0)
