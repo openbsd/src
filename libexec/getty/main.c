@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2003/07/29 18:39:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2008/02/09 10:13:34 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.28 2003/07/29 18:39:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.29 2008/02/09 10:13:34 mbalmer Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -565,11 +565,9 @@ putf(char *cp)
 			break;
 
 		case 'd': {
-			static char fmt[] = "%l:% %p on %A, %d %B %Y";
-
-			fmt[4] = 'M';		/* I *hate* SCCS... */
 			(void)time(&t);
-			(void)strftime(db, sizeof(db), fmt, localtime(&t));
+			(void)strftime(db, sizeof(db),
+			    "%l:%M%p on %A, %d %B %Y", localtime(&t));
 			xputs(db);
 			break;
 		}
