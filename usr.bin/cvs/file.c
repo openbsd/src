@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.218 2008/02/09 11:17:02 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.219 2008/02/09 12:20:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -847,8 +847,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		break;
 	case CVS_ENT_REG:
 		if (cf->file_rcs == NULL || cf->file_rcsrev == NULL ||
-		    rcsdead == 1 || (reset_stickies == 1 &&
-		    cf->in_attic == 1)|| (notag == 1 && tag != NULL)) {
+		    rcsdead == 1 || (reset_tag == 1 && cf->in_attic == 1) ||
+		    (notag == 1 && tag != NULL)) {
 			if (cf->fd == -1 && server_has_file == 0) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"

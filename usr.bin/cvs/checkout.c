@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.131 2008/02/09 11:17:02 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.132 2008/02/09 12:20:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,6 +40,7 @@ extern int prune_dirs;
 extern int build_dirs;
 
 static int flags = CR_REPO | CR_RECURSE_DIRS;
+static int Aflag = 0;
 static char *dflag = NULL;
 static char *koptstr = NULL;
 
@@ -76,7 +77,11 @@ cvs_checkout(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
-			reset_stickies = 1;
+			Aflag = 1;
+			if (koptstr == NULL)
+				reset_option = 1;
+			if (cvs_specified_tag == NULL)
+				reset_tag = 1;
 			break;
 		case 'c':
 			cvs_modules_list();
@@ -90,6 +95,7 @@ cvs_checkout(int argc, char **argv)
 			dflag = optarg;
 			break;
 		case 'k':
+			reset_option = 0;
 			koptstr = optarg;
 			kflag = rcs_kflag_get(koptstr);
 			if (RCS_KWEXP_INVAL(kflag)) {
@@ -119,6 +125,7 @@ cvs_checkout(int argc, char **argv)
 			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
+			reset_tag = 0;
 			cvs_specified_tag = optarg;
 			break;
 		default:
@@ -202,7 +209,7 @@ checkout_check_repository(int argc, char **argv)
 		if (cvs_specified_tag != NULL)
 			cvs_client_send_request("Argument -r%s",
 			    cvs_specified_tag);
-		if (reset_stickies == 1)
+		if (Aflag)
 			cvs_client_send_request("Argument -A");
 
 		if (kflag)
@@ -483,7 +490,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
 		else
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", rev);
-	else if (!reset_stickies && cf->file_ent != NULL &&
+	else if (!reset_tag && cf->file_ent != NULL &&
 	    cf->file_ent->ce_tag != NULL)
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 		    cf->file_ent->ce_tag);
@@ -496,7 +503,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		if (kflag || cf_kflag != RCS_KWEXP_DEFAULT)
 			(void)xsnprintf(kbuf, sizeof(kbuf),
 			    "-k%s", cf->file_rcs->rf_expand);
-	} else if (!reset_stickies && cf->file_ent != NULL) {
+	} else if (!reset_option && cf->file_ent != NULL) {
 		if (cf->file_ent->ce_opts != NULL)
 			strlcpy(kbuf, cf->file_ent->ce_opts, sizeof(kbuf));
 	}

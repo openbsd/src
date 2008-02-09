@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.123 2008/02/09 11:40:43 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.124 2008/02/09 12:20:33 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -29,10 +29,12 @@
 int	prune_dirs = 0;
 int	print_stdout = 0;
 int	build_dirs = 0;
-int	reset_stickies = 0;
+int	reset_option = 0;
+int	reset_tag = 0;
 char *cvs_specified_tag = NULL;
 
 static char *koptstr;
+static int Aflag = 0;
 
 static void update_clear_conflict(struct cvs_file *);
 
@@ -60,7 +62,11 @@ cvs_update(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmd_update.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
-			reset_stickies = 1;
+			Aflag = 1;
+			if (koptstr == NULL)
+				reset_option = 1;
+			if (cvs_specified_tag == NULL)
+				reset_tag = 1;
 			break;
 		case 'C':
 		case 'D':
@@ -76,6 +82,7 @@ cvs_update(int argc, char **argv)
 		case 'j':
 			break;
 		case 'k':
+			reset_option = 0;
 			koptstr = optarg;
 			kflag = rcs_kflag_get(koptstr);
 			if (RCS_KWEXP_INVAL(kflag)) {
@@ -101,6 +108,7 @@ cvs_update(int argc, char **argv)
 			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
+			reset_tag = 0;
 			cvs_specified_tag = optarg;
 			break;
 		case 'u':
@@ -120,7 +128,7 @@ cvs_update(int argc, char **argv)
 		flags |= CR_REPO;
 	} else {
 		cvs_client_connect_to_server();
-		if (reset_stickies)
+		if (Aflag)
 			cvs_client_send_request("Argument -A");
 		if (build_dirs)
 			cvs_client_send_request("Argument -d");
@@ -186,7 +194,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 	} else if ((cf->file_status == DIR_CREATE && build_dirs == 0) ||
 		    cf->file_status == FILE_UNKNOWN) {
 		cf->file_status = FILE_SKIP;
-	} else if (reset_stickies == 1) {
+	} else if (reset_tag) {
 		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 		    cf->file_path, CVS_PATH_TAG);
 		(void)unlink(fpath);
@@ -323,7 +331,7 @@ cvs_update_local(struct cvs_file *cf)
 
 	if ((cf->file_status == FILE_UPTODATE ||
 	    cf->file_status == FILE_MODIFIED) && cf->file_ent != NULL &&
-	    cf->file_ent->ce_tag != NULL && reset_stickies == 1) {
+	    cf->file_ent->ce_tag != NULL && reset_tag) {
 		if (cf->file_status == FILE_MODIFIED)
 			cf->file_status = FILE_MERGE;
 		else
@@ -361,7 +369,7 @@ cvs_update_local(struct cvs_file *cf)
 
 			    	if (strcmp(kbuf, cf->file_ent->ce_opts))
 					cf->file_status = FILE_CHECKOUT;
-			} else if (reset_stickies)
+			} else if (reset_option)
 				cf->file_status = FILE_CHECKOUT;
 		}
 	}
@@ -392,9 +400,9 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if ((tag != NULL && reset_stickies != 1) ||
+		if ((tag != NULL && !reset_tag) ||
 		    (((cf->file_ent != NULL) && cf->file_ent->ce_tag != NULL) &&
-		    (reset_stickies != 1)))
+		    !reset_tag))
 			flags = CO_SETSTICKY;
 
 		cvs_checkout_file(cf, cf->file_rcsrev, tag, flags);

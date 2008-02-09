@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2008/02/07 16:16:57 tobias Exp $
+#	$OpenBSD: Makefile,v 1.20 2008/02/09 12:20:33 tobias Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -36,6 +36,9 @@ LTESTS= cvs-initial \
 	cvs-annotate-rflag-inval_branch_rev-fflag \
 	cvs-annotate-rflag-unknown_symbol-fflag \
 	cvs-checkout-kflag-kv-rflag-1.1 \
+	cvs-update-Aflag-kflag-kv \
+	cvs-update-Aflag-kflag-k-rflag-1.1 \
+	cvs-update-Aflag-rflag-1.1 \
 	cvs-update-Aflag \
 	cvs-status \
 	cvs-diff \
@@ -265,12 +268,34 @@ test-cvs-rtag-one_more_branch:
 	@grep SECOND_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed2.txt,v \
 	    | grep 4 > /dev/null
 
-# XXX - Output is not GNU conform
 test-cvs-update-Aflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
 	    ${CVS} -Q update -A > /dev/null
-#	    eval 'test `${CVS} -q update -A | wc -l` -eq 1'
 	@eval 'test `grep -c -e T1 -e kkv \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
+
+test-cvs-update-Aflag-kflag-kv:
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -Q update -A -kv > /dev/null
+	@eval 'test `grep -c T1 \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
+	@eval 'test `grep -c kv \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+
+test-cvs-update-Aflag-kflag-k-rflag-1.1:
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -Q update -A -kk -r 1.1 > /dev/null
+	@eval 'test `grep -c T1 \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@eval 'test `grep -c kk \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+
+test-cvs-update-Aflag-rflag-1.1:
+	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	    ${CVS} -Q update -A -r 1.1 > /dev/null
+	@eval 'test `grep -c T1 \
+	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@eval 'test `grep -c kk \
 	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
 
 test-cvs-update-for_subdir:
