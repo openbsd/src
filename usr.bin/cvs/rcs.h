@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.86 2008/01/31 22:19:36 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.87 2008/02/09 14:03:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,6 @@ struct rcs_kw {
 
 #define RCSNUM_ISBRANCH(n)	((n)->rn_len % 2)
 #define RCSNUM_ISBRANCHREV(n)	(!((n)->rn_len % 2) && ((n)->rn_len >= 4))
-#define RCSNUM_NO_MAGIC		(1<<0)
 
 /* file flags */
 #define RCS_READ	  (1<<0)
@@ -287,7 +286,5 @@ char	*rcsnum_tostr(const RCSNUM *, char *, size_t);
 void	 rcsnum_cpy(const RCSNUM *, RCSNUM *, u_int);
 int	 rcsnum_cmp(RCSNUM *, RCSNUM *, u_int);
 int	 rcsnum_differ(RCSNUM *, RCSNUM *);
-
-extern int rcsnum_flags;
 
 #endif	/* RCS_H */

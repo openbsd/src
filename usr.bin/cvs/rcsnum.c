@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.50 2008/01/31 22:19:36 tobias Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.51 2008/02/09 14:03:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,8 +31,6 @@
 
 static void	 rcsnum_setsize(RCSNUM *, u_int);
 static char	*rcsnum_itoa(u_int16_t, char *, size_t);
-
-int rcsnum_flags;
 
 /*
  * rcsnum_alloc()
@@ -287,8 +285,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	 * completely insane and not understandable reason in that output.
 	 *
 	 */
-	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0
-	    && !(rcsnum_flags & RCSNUM_NO_MAGIC)) {
+	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0) {
 		/*
 		 * Look for ".0.x" at the end of the branch number.
 		 */

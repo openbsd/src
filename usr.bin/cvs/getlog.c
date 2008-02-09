@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.84 2008/02/04 21:25:32 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.85 2008/02/09 14:03:20 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -35,7 +35,7 @@ void	cvs_log_local(struct cvs_file *);
 static void	log_rev_print(struct rcs_delta *);
 
 int	 runflags = 0;
-char 	*logrev = NULL;
+char	*logrev = NULL;
 char	*slist = NULL;
 char	*wlist = NULL;
 
@@ -66,7 +66,6 @@ cvs_getlog(int argc, char **argv)
 	char *arg = ".";
 	struct cvs_recursion cr;
 
-	rcsnum_flags |= RCSNUM_NO_MAGIC;
 	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_LOG ?
@@ -245,6 +244,9 @@ cvs_log_local(struct cvs_file *cf)
 	if (!(runflags & L_NOTAGS)) {
 		cvs_printf("symbolic names:\n");
 		TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list) {
+			if (RCSNUM_ISBRANCH(sym->rs_num))
+				rcsnum_addmagic(sym->rs_num);
+
 			cvs_printf("\t%s: %s\n", sym->rs_name,
 			    rcsnum_tostr(sym->rs_num, numb, sizeof(numb)));
 		}
