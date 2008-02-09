@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.91 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.92 2008/02/09 15:10:58 kettenis Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -552,7 +552,9 @@ struct kinfo_proc2 {
 #define	HW_VERSION	16		/* string: hardware version */
 #define	HW_SERIALNO	17		/* string: hardware serial number */
 #define	HW_UUID		18		/* string: universal unique id */
-#define	HW_MAXID	19		/* number of valid hw ids */
+#define	HW_PHYSMEM64	19		/* quad: total memory */
+#define	HW_USERMEM64	20		/* quad: non-kernel memory */
+#define	HW_MAXID	21		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -560,8 +562,8 @@ struct kinfo_proc2 {
 	{ "model", CTLTYPE_STRING }, \
 	{ "ncpu", CTLTYPE_INT }, \
 	{ "byteorder", CTLTYPE_INT }, \
-	{ "physmem", CTLTYPE_INT }, \
-	{ "usermem", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
+	{ "gap", 0 }, \
 	{ "pagesize", CTLTYPE_INT }, \
 	{ "disknames", CTLTYPE_STRING }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
@@ -574,6 +576,8 @@ struct kinfo_proc2 {
 	{ "version", CTLTYPE_STRING }, \
 	{ "serialno", CTLTYPE_STRING }, \
 	{ "uuid", CTLTYPE_STRING }, \
+	{ "physmem", CTLTYPE_QUAD }, \
+	{ "usermem", CTLTYPE_QUAD }, \
 }
 
 /*
