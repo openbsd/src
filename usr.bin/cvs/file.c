@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.217 2008/02/08 22:07:50 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.218 2008/02/09 11:17:02 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -703,11 +703,11 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	notag = 0;
 	cf->file_flags |= FILE_HAS_TAG;
 	if (tag != NULL && cf->file_rcs != NULL) {
-		if ((cf->file_rcsrev = rcs_translate_tag(tag,
-		    cf->file_rcs)) != NULL) {
+		if ((cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs))
+		    != NULL) {
 			rcsnum_tostr(cf->file_rcsrev, r1, sizeof(r1));
 		} else {
-			cf->file_rcsrev = rcs_head_get(cf->file_rcs);
+			cf->file_rcsrev = rcs_translate_tag(NULL, cf->file_rcs);
 			if (cf->file_rcsrev != NULL) {
 				notag = 1;
 				cf->file_flags &= ~FILE_HAS_TAG;
@@ -717,7 +717,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_rcsrev = rcsnum_alloc();
 		rcsnum_cpy(cf->file_ent->ce_rev, cf->file_rcsrev, 0);
 	} else if (cf->file_rcs != NULL) {
-		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
+		cf->file_rcsrev = rcs_translate_tag(NULL, cf->file_rcs);
 	} else {
 		cf->file_rcsrev = NULL;
 	}
@@ -745,7 +745,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	}
 
 	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL &&
-	    !RCSNUM_ISBRANCH(cf->file_rcsrev)) {
+	    cf->file_rcsrev != NULL && !RCSNUM_ISBRANCH(cf->file_rcsrev)) {
 		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcsrev, 0);
 		if (b1 == NULL)
 			fatal("failed to get HEAD revision for comparison");
@@ -771,7 +771,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		if (!strcmp(state, RCS_STATE_DEAD))
 			rcsdead = 1;
 
-		if (tag == NULL &&cf->in_attic &&
+		if (cvs_specified_date == 0 && tag == NULL && cf->in_attic &&
 		    !RCSNUM_ISBRANCHREV(cf->file_rcsrev))
 			rcsdead = 1;
 
@@ -798,7 +798,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			} else if (cvs_cmdop != CVS_OP_ADD) {
 				cf->file_status = FILE_UNKNOWN;
 			}
-		} else if (notag == 0) {
+		} else if (notag == 0 && cf->file_rcsrev != NULL) {
 			cf->file_status = FILE_CHECKOUT;
 		} else {
 			cf->file_status = FILE_UPTODATE;
@@ -846,9 +846,9 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		}
 		break;
 	case CVS_ENT_REG:
-		if (cf->file_rcs == NULL || rcsdead == 1 ||
-		    (reset_stickies == 1 && cf->in_attic == 1) ||
-		    (notag == 1 && tag != NULL)) {
+		if (cf->file_rcs == NULL || cf->file_rcsrev == NULL ||
+		    rcsdead == 1 || (reset_stickies == 1 &&
+		    cf->in_attic == 1)|| (notag == 1 && tag != NULL)) {
 			if (cf->fd == -1 && server_has_file == 0) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"
@@ -874,7 +874,9 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 					cf->file_status = FILE_UNLINK;
 				}
 			}
-		} else {
+		} else if (cf->file_rcsrev == NULL) {
+			cf->file_status = FILE_UNLINK;
+		} else{
 			if (cf->fd == -1 && server_has_file == 0) {
 				if (cvs_cmdop != CVS_OP_REMOVE) {
 					cvs_log(LP_NOTICE,
@@ -882,6 +884,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 					    cf->file_path);
 				}
 				cf->file_status = FILE_LOST;
+			} else if (cf->file_rcsrev == NULL) {
+				cf->file_status = FILE_UNLINK;
 			} else {
 				if (ismodified == 1)
 					cf->file_status = FILE_MODIFIED;
