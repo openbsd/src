@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.127 2008/02/04 22:36:40 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.128 2008/02/10 13:07:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -210,6 +210,13 @@ cvs_commit_check_files(struct cvs_file *cf)
 	    cf->file_status == FILE_CHECKOUT ||
 	    cf->file_status == FILE_LOST) {
 		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
+		    cf->file_path);
+		conflicts_found++;
+		return;
+	}
+
+	if (cf->file_ent != NULL && cf->file_ent->ce_date != -1) {
+		cvs_log(LP_ERR, "conflict: cannot commit to sticky date for %s",
 		    cf->file_path);
 		conflicts_found++;
 		return;
