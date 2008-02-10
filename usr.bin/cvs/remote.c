@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.19 2008/02/10 14:04:40 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.20 2008/02/10 14:15:36 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -251,10 +251,8 @@ cvs_validate_directory(const char *path)
 {
 	char *dir, *sp, *dp;
 
-	if (cvs_server_active == 1 && path[0] == '/')
-		fatal("No absolute directories allowed, go away.");
-
 	dir = xstrdup(path);
+
 	for (sp = dir; sp != NULL; sp = dp) {
 		dp = strchr(sp, '/');
 		if (dp != NULL)
