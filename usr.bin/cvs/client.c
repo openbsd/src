@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.103 2008/02/10 12:34:37 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.104 2008/02/10 14:08:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -503,8 +503,8 @@ cvs_client_sendfile(struct cvs_file *cf)
 			    cf->file_ent->ce_tag);
 		} else if (cf->file_ent->ce_date != -1) {
 			datetm = gmtime(&(cf->file_ent->ce_date));
-			strftime(sticky, sizeof(sticky),
-			    "D%Y.%m.%d.%H.%M.%S", datetm);
+			(void)strftime(sticky, sizeof(sticky),
+			    "D"CVS_DATE_FMT, datetm);
 		}
 
 		cvs_client_send_request("Entry /%s/%s%s/%s/%s/%s",
@@ -652,8 +652,8 @@ cvs_client_checkedin(char *data)
 			    newent->ce_tag);
 		} else if (newent->ce_date != -1) {
 			datetm = gmtime(&(newent->ce_date));
-			strftime(sticky, sizeof(sticky),
-			    "D%Y.%m.%d.%H.%M.%S", datetm);
+			(void)strftime(sticky, sizeof(sticky),
+			    "D"CVS_DATE_FMT, datetm);
 		}
 
 		cvs_ent_free(ent);
@@ -731,7 +731,8 @@ cvs_client_updated(char *data)
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s", e->ce_tag);
 	} else if (e->ce_date != -1) {
 		datetm = gmtime(&(e->ce_date));
-		strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S", datetm);
+		(void)strftime(sticky, sizeof(sticky),
+		    "D"CVS_DATE_FMT, datetm);
 	}
 
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));

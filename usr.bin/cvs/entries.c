@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.93 2008/02/10 11:52:35 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.94 2008/02/10 14:08:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -508,8 +508,8 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 			}
 		} else {
 			datetm = gmtime(&cvs_specified_date);
-			strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S",
-			    datetm);
+			(void)strftime(sticky, sizeof(sticky),
+			    "D"CVS_DATE_FMT, datetm);
 		}
 
 		if (cvs_server_active == 1)

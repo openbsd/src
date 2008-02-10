@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.81 2008/02/10 13:16:35 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.82 2008/02/10 14:08:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -214,7 +214,7 @@ cvs_status_local(struct cvs_file *cf)
 
 			datetm = gmtime(&(cf->file_ent->ce_date));
                         (void)strftime(datetmp, sizeof(datetmp),
-                            "%Y.%m.%d.%H.%M.%S", datetm);
+			    CVS_DATE_FMT, datetm);
 
 			cvs_printf("   Sticky Date:\t\t%s\n", datetmp);
 		} else if (verbosity > 0)
