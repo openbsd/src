@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.90 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.91 2008/02/10 10:10:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -107,7 +107,7 @@ struct cvs_ent *
 cvs_ent_parse(const char *entry)
 {
 	int i;
-	struct tm t;
+	struct tm t, dt;
 	struct cvs_ent *ent;
 	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 
@@ -184,9 +184,25 @@ cvs_ent_parse(const char *entry)
 	else
 		ent->ce_opts = NULL;
 
-	if (strcmp(fields[5], ""))
-		ent->ce_tag = fields[5] + 1;
-	else
+	if (strcmp(fields[5], "")) {
+		switch(*fields[5]) {
+		case 'D':
+			if (sscanf(fields[5] + 1, "%d.%d.%d.%d.%d.%d",
+			    &dt.tm_year, &dt.tm_mon, &dt.tm_mday,
+			    &dt.tm_hour, &dt.tm_min, &dt.tm_sec) != 6)
+				fatal("wrong date specification");
+			dt.tm_year -= 1900;
+			dt.tm_mon -= 1;
+			ent->ce_date = timegm(&dt);
+			ent->ce_tag = NULL;
+			break;
+		case 'T':
+			ent->ce_tag = fields[5] + 1;
+			break;
+		default:
+			fatal("invalid sticky entry");
+		}
+	} else
 		ent->ce_tag = NULL;
 
 	return (ent);
@@ -379,6 +395,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	FILE *fp;
 	int i, linenum;
 	size_t len;
+	struct tm datetm;
 	char linebuf[128], tagpath[MAXPATHLEN];
 
 	if (tagp != NULL)
@@ -420,6 +437,17 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 				*tagp = xstrdup(linebuf + 1);
 			break;
 		case 'D':
+			if (sscanf(linebuf + 1, "%d.%d.%d.%d.%d.%d",
+			    &datetm.tm_year, &datetm.tm_mon, &datetm.tm_mday,
+			    &datetm.tm_hour, &datetm.tm_min, &datetm.tm_sec) !=
+			    6)
+				fatal("wrong date specification");
+			datetm.tm_year -= 1900;
+			datetm.tm_mon -= 1;
+
+			if (cvs_specified_date == 0)
+				cvs_specified_date = timegm(&datetm);
+
 			if (datep != NULL)
 				*datep = xstrdup(linebuf + 1);
 			break;
