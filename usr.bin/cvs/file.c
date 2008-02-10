@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.220 2008/02/10 10:21:42 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.221 2008/02/10 14:00:41 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -237,6 +237,10 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 	cf->file_type = type;
 	cf->file_status = cf->file_flags = 0;
 	cf->file_ent = NULL;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
+	    cvs_server_active == 1)
+		cvs_validate_directory(cf->file_path);
 
 	return (cf);
 }

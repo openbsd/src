@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.137 2008/02/10 13:01:08 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.138 2008/02/10 14:00:42 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -556,6 +556,10 @@ cvs_mkpath(const char *path, char *tag)
 	size_t len;
 	char *entry, sticky[CVS_REV_BUFSZ];
 	char *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
+	    cvs_server_active == 1)
+		cvs_validate_directory(path);
 
 	dir = xstrdup(path);
 

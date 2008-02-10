@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.30 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: remote.h,v 1.31 2008/02/10 14:00:41 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -129,5 +129,7 @@ extern struct cvs_resp cvs_responses[];
 
 struct cvs_req *cvs_remote_get_request_info(const char *);
 struct cvs_resp *cvs_remote_get_response_info(const char *);
+
+void	cvs_validate_directory(const char *);
 
 #endif
