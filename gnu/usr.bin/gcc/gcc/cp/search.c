@@ -2047,7 +2047,7 @@ check_final_overrider (overrider, basefn)
   else if ((i = covariant_return_p (base_return, over_return)))
     {
       if (i == 2)
-	sorry ("adjusting pointers for covariant returns");
+	sorry ("adjusting pointers for covariant returns in %#D", overrider);
 
       if (pedantic && i == -1)
 	{
