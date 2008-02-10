@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.135 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.136 2008/02/10 11:52:35 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -585,7 +585,7 @@ cvs_mkpath(const char *path, char *tag)
 			len = strlcpy(repo, module_repo_root, sizeof(repo));
 			if (len >= (int)sizeof(repo))
 				fatal("cvs_mkpath: overflow");
-		} else {
+		} else if (strcmp(sp, ".")) {
 			if (repo[0] != '\0') {
 				len = strlcat(repo, "/", sizeof(repo));
 				if (len >= (int)sizeof(repo))
