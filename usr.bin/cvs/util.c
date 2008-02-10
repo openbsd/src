@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.138 2008/02/10 14:00:42 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.139 2008/02/10 14:04:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -466,6 +466,7 @@ cvs_get_repository_path(const char *dir, char *dst, size_t len)
 
 	cvs_get_repository_name(dir, buf, sizeof(buf));
 	(void)xsnprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
+	cvs_validate_directory(dst);
 }
 
 void
