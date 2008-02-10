@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.135 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.136 2008/02/10 10:21:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -48,7 +48,7 @@ static char *dateflag = NULL;
 static int nflag = 0;
 
 char *checkout_target_dir = NULL;
-time_t cvs_specified_date;
+time_t cvs_specified_date = -1;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
@@ -496,7 +496,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	if (co_flags & CO_SETSTICKY)
 		if (tag != NULL)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
-		else if (cvs_specified_date != 0) {
+		else if (cvs_specified_date != -1) {
                         datetm = gmtime(&cvs_specified_date);
                         strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S",
                             datetm);

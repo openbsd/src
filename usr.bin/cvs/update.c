@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.130 2008/02/10 10:10:15 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.131 2008/02/10 10:21:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -204,7 +204,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 		    cf->file_path, CVS_PATH_TAG);
 		(void)unlink(fpath);
 	} else {
-		if (cvs_specified_tag != NULL || cvs_specified_date != 0)
+		if (cvs_specified_tag != NULL || cvs_specified_date != -1)
 			cvs_write_tagfile(cf->file_path,
 				    cvs_specified_tag, NULL);
 	}
@@ -405,7 +405,7 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if ((tag != NULL && !reset_tag) || cvs_specified_date != 0 ||
+		if ((tag != NULL && !reset_tag) || cvs_specified_date != -1 ||
 		    (((cf->file_ent != NULL) && cf->file_ent->ce_tag != NULL) &&
 		    !reset_tag))
 			flags = CO_SETSTICKY;
@@ -444,7 +444,7 @@ cvs_update_local(struct cvs_file *cf)
 		if (cf->file_rcsrev == NULL)
 			break;
 
-		if (tag == NULL && cvs_specified_date == 0)
+		if (tag == NULL && cvs_specified_date == -1)
 			break;
 
 		if (cf->file_rcs->rf_dead != 1 &&

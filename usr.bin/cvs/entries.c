@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.91 2008/02/10 10:10:15 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.92 2008/02/10 10:21:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -137,6 +137,8 @@ cvs_ent_parse(const char *entry)
 	ent->ce_status = CVS_ENT_REG;
 	ent->ce_name = fields[1];
 	ent->ce_rev = NULL;
+	ent->ce_date = -1;
+	ent->ce_tag = NULL;
 
 	if (ent->ce_type == CVS_ENT_FILE) {
 		if (*fields[2] == '-') {
@@ -202,8 +204,7 @@ cvs_ent_parse(const char *entry)
 		default:
 			fatal("invalid sticky entry");
 		}
-	} else
-		ent->ce_tag = NULL;
+	}
 
 	return (ent);
 }
@@ -445,7 +446,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 			datetm.tm_year -= 1900;
 			datetm.tm_mon -= 1;
 
-			if (cvs_specified_date == 0)
+			if (cvs_specified_date == -1)
 				cvs_specified_date = timegm(&datetm);
 
 			if (datep != NULL)
@@ -487,7 +488,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 	if (i < 0 || i >= MAXPATHLEN)
 		return;
 
-	if (tag != NULL || cvs_specified_date != 0) {
+	if (tag != NULL || cvs_specified_date != -1) {
 		if ((fp = fopen(tagpath, "w+")) == NULL) {
 			if (errno != ENOENT) {
 				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
