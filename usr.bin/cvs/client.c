@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.102 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.103 2008/02/10 12:34:37 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -455,6 +455,7 @@ void
 cvs_client_sendfile(struct cvs_file *cf)
 {
 	size_t len;
+	struct tm *datetm;
 	char rev[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ], sticky[CVS_REV_BUFSZ];
 
 	if (cf->file_type != CVS_FILE)
@@ -500,6 +501,10 @@ cvs_client_sendfile(struct cvs_file *cf)
 		if (cf->file_ent->ce_tag != NULL) {
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 			    cf->file_ent->ce_tag);
+		} else if (cf->file_ent->ce_date != -1) {
+			datetm = gmtime(&(cf->file_ent->ce_date));
+			strftime(sticky, sizeof(sticky),
+			    "D%Y.%m.%d.%H.%M.%S", datetm);
 		}
 
 		cvs_client_send_request("Entry /%s/%s%s/%s/%s/%s",
@@ -607,6 +612,7 @@ cvs_client_checkedin(char *data)
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
 	size_t len;
+	struct tm *datetm;
 	char *dir, *e, *entry, rev[CVS_REV_BUFSZ];
 	char sticky[CVS_ENT_MAXLINELEN], timebuf[CVS_TIME_BUFSZ];
 
@@ -641,9 +647,14 @@ cvs_client_checkedin(char *data)
 		ctime_r(&ent->ce_mtime, timebuf);
 		timebuf[strcspn(timebuf, "\n")] = '\0';
 
-		if (newent->ce_tag != NULL)
+		if (newent->ce_tag != NULL) {
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 			    newent->ce_tag);
+		} else if (newent->ce_date != -1) {
+			datetm = gmtime(&(newent->ce_date));
+			strftime(sticky, sizeof(sticky),
+			    "D%Y.%m.%d.%H.%M.%S", datetm);
+		}
 
 		cvs_ent_free(ent);
 	}
@@ -671,6 +682,7 @@ cvs_client_updated(char *data)
 	CVSENTRIES *ent;
 	struct cvs_ent *e;
 	const char *errstr;
+	struct tm *datetm;
 	struct timeval tv[2];
 	char repo[MAXPATHLEN], *entry;
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
@@ -715,8 +727,12 @@ cvs_client_updated(char *data)
 	xfree(en);
 
 	sticky[0] = '\0';
-	if (e->ce_tag != NULL)
+	if (e->ce_tag != NULL) {
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s", e->ce_tag);
+	} else if (e->ce_date != -1) {
+		datetm = gmtime(&(e->ce_date));
+		strftime(sticky, sizeof(sticky), "D%Y.%m.%d.%H.%M.%S", datetm);
+	}
 
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
 
