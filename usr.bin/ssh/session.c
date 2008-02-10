@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.226 2008/02/08 23:24:07 djm Exp $ */
+/* $OpenBSD: session.c,v 1.227 2008/02/10 10:54:29 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1016,6 +1016,8 @@ safely_chroot(const char *path, uid_t uid)
 void
 do_setusercontext(struct passwd *pw)
 {
+	char *chroot_path, *tmp;
+
 	if (getuid() == 0 || geteuid() == 0) {
 		/* Prepare groups */
 		if (setusercontext(lc, pw, pw->pw_uid,
@@ -1026,11 +1028,12 @@ do_setusercontext(struct passwd *pw)
 
 		if (options.chroot_directory != NULL &&
 		    strcasecmp(options.chroot_directory, "none") != 0) {
-			char *chroot_path;
-
-			chroot_path = percent_expand(options.chroot_directory,
-			    "h", pw->pw_dir, "u", pw->pw_name, (char *)NULL);
+                        tmp = tilde_expand_filename(options.chroot_directory,
+			    pw->pw_uid);
+			chroot_path = percent_expand(tmp, "h", pw->pw_dir,
+			    "u", pw->pw_name, (char *)NULL);
 			safely_chroot(chroot_path, pw->pw_uid);
+			free(tmp);
 			free(chroot_path);
 		}
 
