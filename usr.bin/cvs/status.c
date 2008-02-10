@@ -1,7 +1,7 @@
-/*	$OpenBSD: status.c,v 1.80 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: status.c,v 1.81 2008/02/10 13:16:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
- * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -207,6 +207,18 @@ cvs_status_local(struct cvs_file *cf)
 			    cf->file_ent->ce_tag);
 		else if (verbosity > 0)
 			cvs_printf("   Sticky Tag:\t\t(none)\n");
+
+		if (cf->file_ent->ce_date != -1) {
+			struct tm *datetm;
+			char datetmp[CVS_TIME_BUFSZ];
+
+			datetm = gmtime(&(cf->file_ent->ce_date));
+                        (void)strftime(datetmp, sizeof(datetmp),
+                            "%Y.%m.%d.%H.%M.%S", datetm);
+
+			cvs_printf("   Sticky Date:\t\t%s\n", datetmp);
+		} else if (verbosity > 0)
+			cvs_printf("   Sticky Date:\t\t(none)\n");
 
 		if (cf->file_ent->ce_opts != NULL)
 			cvs_printf("   Sticky Options:\t%s\n",
