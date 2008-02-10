@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.15 2005/01/07 20:41:13 otto Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.16 2008/02/10 16:56:13 kettenis Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.15 2005/01/07 20:41:13 otto Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.16 2008/02/10 16:56:13 kettenis Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ extern int kvm_sysctl_only;
 int
 donlist(void)
 {
+	int64_t physmem;
 	int rval, mib[2];
 	size_t siz;
 
@@ -117,14 +118,15 @@ donlist(void)
 			warnx("fscale: failed to get kern.fscale");
 			eval = rval = 1;
 		}
-		siz = sizeof (mempages);
+		siz = sizeof (physmem);
 		mib[0] = CTL_HW;
-		mib[1] = HW_PHYSMEM;
-		if (sysctl(mib, 2, &mempages, &siz, NULL, 0) < 0) {
+		mib[1] = HW_PHYSMEM64;
+		if (sysctl(mib, 2, &physmem, &siz, NULL, 0) < 0) {
 			warnx("physmem: failed to get hw.physmem");
 			eval = rval = 1;
 		}
-		mempages /= getpagesize(); /* translate bytes into page count */
+		/* translate bytes into page count */
+		mempages = physmem / getpagesize();
 		siz = sizeof (ccpu);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CCPU;
