@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2008/01/15 19:44:50 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2008/02/11 20:40:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -345,7 +345,6 @@ pmap_destroy(pmap_t pmap)
 					panic("pmap_destroy: segmap not empty");
 			}
 #endif
-			Mips_HitInvalidateDCache((vaddr_t)pte, PAGE_SIZE);
 			pmap_page_free((vaddr_t)pte);
 #ifdef PARANOIA
 			pmap->pm_segtab->seg_tab[i] = NULL;
@@ -573,6 +572,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
+			if ((entry & PG_M) != 0 /* && p != PG_M */)
+				if ((entry & PG_CACHEMODE) == PG_CACHED)
+					Mips_HitSyncDCache(sva, PAGE_SIZE);
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			/*
@@ -607,6 +609,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
+			if ((entry & PG_M) != 0 /* && p != PG_M */)
+				if ((entry & PG_CACHEMODE) == PG_CACHED)
+					Mips_SyncDCachePage(sva);
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			if (pmap->pm_tlbgen == tlbpid_gen)
@@ -1155,6 +1160,7 @@ pmap_page_free(vaddr_t va)
 {
 	vm_page_t pg;
 
+	Mips_HitInvalidateDCache(va, PAGE_SIZE);
 	pg = PHYS_TO_VM_PAGE(XKPHYS_TO_PHYS(va));
 	uvm_pagefree(pg);
 }
