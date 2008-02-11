@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.422 2007/12/14 08:30:11 otto Exp $
+#	$OpenBSD: install.sub,v 1.423 2008/02/11 23:40:03 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -215,6 +215,15 @@ get_serialdev() {
 	_td=$3
 	set -- $(scan_dmesg "/^${_d}\([0-9]\) .*/s//\1/p")
 	echo "$_bd$1 $_td$1"
+}
+
+get_console() {
+	local _d
+
+	# Find '<dev>: console' and extract <dev>.
+	_d=$(sed -ne '/^\([^ ]*\): console$/s//\1/p' /var/run/dmesg.boot)
+	set -- $MDSERIAL
+	[[ ${_d%[0-9]} == $1 ]] && echo "$2${_d##*[a-z]} $3${_d##*[a-z]}"
 }
 
 get_drive() {
@@ -1528,7 +1537,7 @@ populateusrlocal() {
 }
 
 questions() {
-	local _bd _td
+	local _bd _td _sp
 
 	ask_yn "Start sshd(8) by default?" yes
 	if [[ $resp == n ]]; then
@@ -1561,12 +1570,19 @@ server $1
 	fi
 
 	[[ -z $SERIALDEV ]] && return
-	set -- $SERIALDEV
+	set -- $(get_console)
+	if [[ -n $1 && -n $2 ]]; then
+		# When installing via a serial console use it and current speed.
+		_sp=$(stty speed)
+	else
+		# Use first serial port and 9600 (i.e. leave _sp unset).
+		set -- $SERIALDEV
+	fi
 	_bd=$1
 	_td=$2
 	ask_yn "Change the default console to $_bd?"
 	[[ $resp == n ]] && return
-	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200"
+	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200" $_sp
 	[[ $resp == done ]] && return
 	echo "stty $_bd $resp\nset tty $_bd" >>/mnt/etc/boot.conf
 	sed	-e "/^${_td}/s/std.9600/std.${resp}/" \
