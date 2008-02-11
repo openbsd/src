@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.12 2007/02/01 13:25:28 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.13 2008/02/11 11:50:30 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -174,7 +174,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 		/* insert plaintext key */
 		if ((md = md_list_find(&iface->auth_md_list,
 		    iface->auth_keyid)) == NULL) {
-			log_debug("auth_validate: keyid %d not configured, "
+			log_debug("auth_gen: keyid %d not configured, "
 			    "interface %s", iface->auth_keyid, iface->name);
 			return (-1);
 		}
@@ -227,7 +227,7 @@ md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
 
 	TAILQ_FOREACH(m, from, entry) {
 		if ((md = calloc(1, sizeof(struct auth_md))) == NULL)
-			fatalx("md_list_add");
+			fatalx("md_list_copy");
 
 		md->keyid = m->keyid;
 		strncpy(md->key, m->key, sizeof(md->key));
