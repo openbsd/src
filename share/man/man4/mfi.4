@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mfi.4,v 1.8 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: mfi.4,v 1.9 2008/02/11 07:40:33 dlg Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 11 2008 $
 .Dt MFI 4
 .Os
 .Sh NAME
@@ -41,7 +41,9 @@ including:
 .Bl -dash -offset indent -compact
 .It
 Dell PERC 5/e,
-PERC 5/i
+PERC 5/i,
+PERC 6/e,
+PERC 6/i,
 .It
 Intel RAID Controller SRCSAS18E,
 SRCSAS144E
@@ -52,7 +54,9 @@ MegaRAID SAS 8300XLP,
 MegaRAID SAS 8308ELP,
 MegaRAID SAS 8344ELP,
 MegaRAID SAS 8408E,
-MegaRAID SAS 8480E
+MegaRAID SAS 8480E,
+MegaRAID SAS 8888ELP,
+MegaRAID SAS 8880EM2
 .El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, RAID 10 and RAID 50
