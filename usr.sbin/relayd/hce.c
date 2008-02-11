@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.39 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.40 2008/02/11 10:42:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -167,6 +167,8 @@ hce_setup_events(void)
 	struct timeval	 tv;
 	struct table	*table;
 
+	snmp_init(env, ibuf_main);
+
 	if (!TAILQ_EMPTY(env->sc_tables)) {
 		evtimer_set(&env->sc_ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
@@ -322,6 +324,10 @@ hce_notify_done(struct host *host, const char *msg)
 		    host_status(host->last_up), host_status(host->up),
 		    print_availability(host->check_cnt, host->up_cnt));
 	}
+
+	if (host->last_up != host->up)
+		snmp_hosttrap(table, host);
+
 	host->last_up = host->up;
 }
 

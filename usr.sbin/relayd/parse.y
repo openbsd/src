@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.103 2008/01/31 09:56:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.104 2008/02/11 10:42:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -126,7 +126,7 @@ typedef struct {
 %token	CODE COOKIE DEMOTE DIGEST DISABLE EXPECT EXTERNAL FILTER FORWARD
 %token	FROM HASH HEADER HOST ICMP INCLUDE INTERFACE INTERVAL IP LABEL
 %token	LISTEN LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO NODELAY NOTHING
-%token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE
+%token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
 %token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
 %token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
 %token	VIRTUAL WITH ERROR
@@ -305,6 +305,7 @@ main		: INTERVAL NUMBER	{
 				YYERROR;
 			}
 		}
+		| SEND TRAP		{ conf->sc_flags |= F_TRAP; }
 		;
 
 loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
@@ -1437,6 +1438,7 @@ lookup(char *s)
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
 		{ "to",			TO },
+		{ "trap",		TRAP },
 		{ "updates",		UPDATES },
 		{ "url",		URL },
 		{ "virtual",		VIRTUAL },

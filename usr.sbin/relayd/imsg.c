@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.10 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.11 2008/02/11 10:42:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,13 +36,15 @@
 void
 imsg_init(struct imsgbuf *ibuf, int fd, void (*handler)(int, short, void *))
 {
-	msgbuf_init(&ibuf->w);
-	bzero(&ibuf->r, sizeof(ibuf->r));
+	if (!ibuf->pid) {
+		msgbuf_init(&ibuf->w);
+		bzero(&ibuf->r, sizeof(ibuf->r));
+		ibuf->pid = getpid();
+		ibuf->handler = handler;
+		TAILQ_INIT(&ibuf->fds);
+	}
 	ibuf->fd = fd;
 	ibuf->w.fd = fd;
-	ibuf->pid = getpid();
-	ibuf->handler = handler;
-	TAILQ_INIT(&ibuf->fds);
 }
 
 ssize_t
@@ -150,6 +152,32 @@ imsg_compose(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 	return (n);
 }
 
+int
+imsg_composev(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
+    pid_t pid, int fd, const struct iovec *iov, int iovcnt)
+{
+	struct buf	*wbuf;
+	int		 n;
+	int		 i, datalen = 0;
+
+	for (i = 0; i < iovcnt; i++)
+		datalen += iov[i].iov_len;
+
+	if ((wbuf = imsg_create(ibuf, type, peerid, pid, datalen)) == NULL)
+		return (-1);
+
+	for (i = 0; i < iovcnt; i++)
+		if (imsg_add(wbuf, iov[i].iov_base, iov[i].iov_len) == -1)
+			return (-1);
+
+	wbuf->fd = fd;
+
+	if ((n = imsg_close(ibuf, wbuf)) < 0)
+		return (-1);
+
+	return (n);
+}
+
 /* ARGSUSED */
 struct buf *
 imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
@@ -230,4 +258,20 @@ imsg_get_fd(struct imsgbuf *ibuf)
 	free(ifd);
 
 	return (fd);
+}
+
+int
+imsg_flush(struct imsgbuf *ibuf)
+{
+	while (ibuf->w.queued)
+		if (msgbuf_write(&ibuf->w) < 0)
+			return (-1);
+	return (0);
+}
+
+void
+imsg_clear(struct imsgbuf *ibuf)
+{
+	while (ibuf->w.queued)
+		msgbuf_clear(&ibuf->w);
 }

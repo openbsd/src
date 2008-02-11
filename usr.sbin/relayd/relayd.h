@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.96 2008/02/04 12:12:30 thib Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.97 2008/02/11 10:42:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,6 +55,8 @@
 #define PURGE_RELAYS		0x04
 #define PURGE_PROTOS		0x08
 #define PURGE_EVERYTHING	0xff
+
+#define SNMP_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
 
 #if DEBUG > 1
 #define DPRINTF		log_debug
@@ -154,7 +156,8 @@ enum imsg_type {
 	IMSG_RECONF_PNODE_VAL,
 	IMSG_RECONF_RELAY,
 	IMSG_RECONF_END,
-	IMSG_SCRIPT
+	IMSG_SCRIPT,
+	IMSG_SNMPSOCK
 };
 
 struct imsg_hdr {
@@ -314,6 +317,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_DEMOTED		0x00008000
 #define F_UDP			0x00010000
 #define F_RETURN		0x00020000
+#define F_TRAP			0x00040000
 
 struct host_config {
 	objid_t			 id;
@@ -627,6 +631,10 @@ struct relayd {
 	struct event		 sc_statev;
 	struct timeval		 sc_statinterval;
 
+	int			 sc_snmp;
+	struct event		 sc_snmpto;
+	struct event		 sc_snmpev;
+
 	int			 sc_has_icmp;
 	int			 sc_has_icmp6;
 	struct ctl_icmp_event	 sc_icmp_send;
@@ -709,6 +717,8 @@ ssize_t	 imsg_read(struct imsgbuf *);
 ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
+int	 imsg_composev(struct imsgbuf *, enum imsg_type, u_int32_t,
+	    pid_t, int, const struct iovec *, int);
 struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    u_int16_t);
 int	 imsg_add(struct buf *, void *, u_int16_t);
@@ -716,6 +726,8 @@ int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 int	 imsg_get_fd(struct imsgbuf *);
+int	 imsg_flush(struct imsgbuf *);
+void	 imsg_clear(struct imsgbuf *);
 
 /* pfe.c */
 pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
@@ -827,3 +839,7 @@ const char	*pn_id2name(u_int16_t);
 void		 pn_unref(u_int16_t);
 void		 pn_ref(u_int16_t);
 
+/* snmp.c */
+void	 snmp_init(struct relayd *, struct imsgbuf *);
+int	 snmp_sendsock(struct imsgbuf *);
+void	 snmp_hosttrap(struct table *, struct host *);

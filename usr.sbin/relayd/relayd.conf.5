@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.76 2007/12/12 14:55:12 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.77 2008/02/11 10:42:50 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2007 $
+.Dd $Mdocdate: February 11 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -146,6 +146,16 @@ to a relay.
 .Xr relayd 8
 runs 5 relay processes by default and every process will handle
 all configured relays.
+.Pp
+.It Ic send trap
+Request to send a SNMP trap when the state of a host changes.
+.Xr relayd 8
+will try to connect to
+.Xr snmpd 8
+and request it to send a trap to the registered trap receivers,
+see
+.Xr snmpd.conf 5
+for more information about the configuration.
 .Pp
 .It Xo
 .Ic timeout Ar number
@@ -989,6 +999,7 @@ relay "sshforward" {
 .Sh SEE ALSO
 .Xr relayctl 8 ,
 .Xr relayd 8 ,
+.Xr snmpd 8 ,
 .Xr ssl 8
 .Sh HISTORY
 The
