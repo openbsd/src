@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.14 2008/01/26 05:43:03 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.15 2008/02/11 01:07:02 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -37,7 +37,6 @@
 #define	MFI_BAR		0x10
 #define	MFI_PCI_MEMSIZE	0x2000 /* 8k */
 
-int	mfi_pci_find_device(void *);
 int	mfi_pci_match(struct device *, void *, void *);
 void	mfi_pci_attach(struct device *, struct device *, void *);
 
@@ -49,75 +48,44 @@ static const
 struct	mfi_pci_device {
 	pcireg_t	mpd_vendor;
 	pcireg_t	mpd_product;
-	pcireg_t	mpd_subvendor;
-	pcireg_t	mpd_subproduct;
-	char		*mpd_model;
-	uint32_t	mpd_flags;
+	enum mfi_iop	mpd_iop;
 } mfi_pci_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
-	  0,			0,		"",			0 },
+	  MFI_IOP_XSCALE },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
-	  0,			0,		"",			0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x1006,		"LSI 8888elp",		0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x100a,		"LSI 8708elp",		0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x100f,		"LSI 8708E",		0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x1012,		"LSI 8704ELP",		0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x1013,		"LSI 8708em2",		0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 ,
-	  PCI_VENDOR_SYMBIOS,	0x1016,		"LSI 8880em2",		0 },
+	  MFI_IOP_XSCALE },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078,
+	  MFI_IOP_PPC },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
-	  PCI_VENDOR_DELL,	0x1f01,		"Dell PERC 5/e",	0 },
-	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
-	  PCI_VENDOR_DELL,	0x1f02,		"Dell PERC 5/i",	0 },
+	  MFI_IOP_XSCALE },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  PCI_VENDOR_DELL,	0x1f0a,		"Dell PERC 6/e",	0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  PCI_VENDOR_DELL,	0x1f0b,		"Dell PERC 6/i",	0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  PCI_VENDOR_DELL,	0x1f0d,		"Dell CERC 6/i",	0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  PCI_VENDOR_DELL,	0x1f0c,		"Dell PERC 6/i integrated", 0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  PCI_VENDOR_DELL,	0x1f11,		"Dell CERC 6/i integrated", 0 },
-	{ 0 }
+	  MFI_IOP_PPC }
 };
 
-int
-mfi_pci_find_device(void *aux) {
-	struct pci_attach_args	*pa = aux;
-	int			i;
+#define sizeofa(_a) (sizeof(_a) / sizeof((_a)[0]))
+const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
 
-	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++) {
-		if (mfi_pci_devices[i].mpd_vendor == PCI_VENDOR(pa->pa_id) &&
-		    mfi_pci_devices[i].mpd_product == PCI_PRODUCT(pa->pa_id)) {
-		    	DNPRINTF(MFI_D_MISC, "mfi_pci_find_device: %i\n", i);
-			return (i);
-		}
+const struct mfi_pci_device *
+mfi_pci_find_device(struct pci_attach_args *pa)
+{
+	const struct mfi_pci_device *mpd;
+	int i;
+
+	for (i = 0; i < sizeofa(mfi_pci_devices); i++) {
+		mpd = &mfi_pci_devices[i];
+
+		if (mpd->mpd_vendor == PCI_VENDOR(pa->pa_id) &&
+		    mpd->mpd_product == PCI_PRODUCT(pa->pa_id))
+			return (mpd);
 	}
 
-	return (-1);
+	return (NULL);
 }
 
 int
 mfi_pci_match(struct device *parent, void *match, void *aux)
 {
-	int			i;
-
-	if ((i = mfi_pci_find_device(aux)) != -1) {
-		DNPRINTF(MFI_D_MISC,
-		    "mfi_pci_match: vendor: %04x  product: %04x\n",
-		    mfi_pci_devices[i].mpd_vendor,
-		    mfi_pci_devices[i].mpd_product);
-
-		return (1);
-	}
-
-	return (0);
+	return ((mfi_pci_find_device(aux) != NULL) ? 1 : 0);
 }
 
 void
@@ -125,22 +93,15 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)self;
 	struct pci_attach_args	*pa = aux;
+	const struct mfi_pci_device *mpd;
 	const char		*intrstr;
 	pci_intr_handle_t	ih;
 	bus_size_t		size;
 	pcireg_t		csr;
-	uint32_t		subsysid, i;
 
-	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++)
-		if (mfi_pci_devices[i].mpd_subvendor == PCI_VENDOR(subsysid) &&
-		    mfi_pci_devices[i].mpd_subproduct == PCI_PRODUCT(subsysid)){
-				printf(", %s", mfi_pci_devices[i].mpd_model);
-				break;
-		}
+	mpd = mfi_pci_find_device(pa);
 
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
-	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, MFI_BAR, csr, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, MFI_PCI_MEMSIZE)) {
 		printf(": can't map controller pci space\n");
@@ -168,7 +129,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", intrstr);
 
-	if (mfi_attach(sc)) {
+	if (mfi_attach(sc, mpd->mpd_iop)) {
 		printf("%s: can't attach\n", DEVNAME(sc));
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;

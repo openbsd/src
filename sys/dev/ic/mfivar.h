@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.30 2007/03/22 16:55:31 deraadt Exp $ */
+/* $OpenBSD: mfivar.h,v 1.31 2008/02/11 01:07:02 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -94,10 +94,24 @@ struct mfi_ccb {
 
 TAILQ_HEAD(mfi_ccb_list, mfi_ccb);
 
+enum mfi_iop {
+	MFI_IOP_XSCALE,
+	MFI_IOP_PPC
+};
+
+struct mfi_iop_ops {
+	u_int32_t	(*mio_fw_state)(struct mfi_softc *);
+	void		(*mio_intr_ena)(struct mfi_softc *);
+	int		(*mio_intr)(struct mfi_softc *);
+	void		(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
+};
+
 struct mfi_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
 	struct scsi_link	sc_link;
+
+	const struct mfi_iop_ops *sc_iop;
 
 	u_int32_t		sc_flags;
 
@@ -148,5 +162,5 @@ struct mfi_softc {
 	struct ksensordev	sc_sensordev;
 };
 
-int	mfi_attach(struct mfi_softc *sc);
+int	mfi_attach(struct mfi_softc *sc, enum mfi_iop);
 int	mfi_intr(void *);
