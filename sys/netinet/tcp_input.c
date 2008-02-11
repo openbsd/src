@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.210 2007/11/27 17:23:23 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.211 2008/02/11 18:03:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1504,6 +1504,7 @@ trimthenstep6:
 			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
 			tp->snd_scale = tp->requested_s_scale;
 			tp->rcv_scale = tp->request_r_scale;
+			tiwin = th->th_win << tp->snd_scale;
 		}
 		tcp_reass_lock(tp);
 		(void) tcp_reass(tp, (struct tcphdr *)0, (struct mbuf *)0,
@@ -3789,8 +3790,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
-		tp->snd_scale = sc->sc_requested_s_scale;
-		tp->rcv_scale = sc->sc_request_r_scale;
 		tp->t_flags |= TF_REQ_SCALE|TF_RCVD_SCALE;
 	}
 	if (sc->sc_flags & SCF_TIMESTAMP)
