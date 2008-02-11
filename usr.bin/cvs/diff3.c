@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.39 2007/09/17 10:07:21 tobias Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.40 2008/02/11 20:33:11 tobias Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.39 2007/09/17 10:07:21 tobias Exp $";
+    "$OpenBSD: diff3.c,v 1.40 2008/02/11 20:33:11 tobias Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -176,10 +176,10 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 	rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
 	rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
 
-	b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT);
-	d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
-	d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
-	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
+	b1 = cvs_buf_load_fd(cf->fd);
+	d1 = cvs_buf_alloc(128);
+	d2 = cvs_buf_alloc(128);
+	diffb = cvs_buf_alloc(128);
 
 	(void)close(cf->fd);
 	cf->fd = open(cf->file_path, O_WRONLY | O_TRUNC);

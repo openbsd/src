@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.128 2008/02/09 12:27:31 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.129 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -367,8 +367,7 @@ cvs_diff_local(struct cvs_file *cf)
 		} else {
 			if (fstat(cf->fd, &st) == -1)
 				fatal("fstat failed %s", strerror(errno));
-			if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
-				fatal("failed to load %s", cf->file_path);
+			b1 = cvs_buf_load_fd(cf->fd);
 
 			tv2[0].tv_sec = st.st_mtime;
 			tv2[0].tv_usec = 0;

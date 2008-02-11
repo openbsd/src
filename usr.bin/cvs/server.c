@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.83 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.84 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -212,7 +212,7 @@ cvs_server_validreq(char *data)
 	int i, first;
 
 	first = 0;
-	bp = cvs_buf_alloc(512, BUF_AUTOEXT);
+	bp = cvs_buf_alloc(512);
 	for (i = 0; cvs_requests[i].supported != -1; i++) {
 		if (cvs_requests[i].hdlr == NULL)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.67 2008/02/03 15:08:04 tobias Exp $	*/
+/*	$OpenBSD: buf.c,v 1.68 2008/02/11 20:33:10 tobias Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,8 +40,6 @@
 #define BUF_INCR	128
 
 struct cvs_buf {
-	u_int	cb_flags;
-
 	/* buffer handle, buffer size, and data length */
 	u_char	*cb_buf;
 	size_t	 cb_size;
@@ -60,7 +58,7 @@ static void	cvs_buf_grow(BUF *, size_t);
  * once the buffer is no longer needed.
  */
 BUF *
-cvs_buf_alloc(size_t len, u_int flags)
+cvs_buf_alloc(size_t len)
 {
 	BUF *b;
 
@@ -71,7 +69,6 @@ cvs_buf_alloc(size_t len, u_int flags)
 	else
 		b->cb_buf = NULL;
 
-	b->cb_flags = flags;
 	b->cb_size = len;
 	b->cb_len = 0;
 
@@ -79,7 +76,7 @@ cvs_buf_alloc(size_t len, u_int flags)
 }
 
 BUF *
-cvs_buf_load(const char *path, u_int flags)
+cvs_buf_load(const char *path)
 {
 	int fd;
 	BUF *bp;
@@ -88,13 +85,13 @@ cvs_buf_load(const char *path, u_int flags)
 		fatal("cvs_buf_load: failed to load '%s' : %s", path,
 		    strerror(errno));
 
-	bp = cvs_buf_load_fd(fd, flags);
+	bp = cvs_buf_load_fd(fd);
 	(void)close(fd);
 	return (bp);
 }
 
 BUF *
-cvs_buf_load_fd(int fd, u_int flags)
+cvs_buf_load_fd(int fd)
 {
 	struct stat st;
 	BUF *buf;
@@ -105,7 +102,7 @@ cvs_buf_load_fd(int fd, u_int flags)
 	if (lseek(fd, 0, SEEK_SET) == -1)
 		fatal("cvs_buf_load_fd: lseek: %s", strerror(errno));
 
-	buf = cvs_buf_alloc(st.st_size, flags);
+	buf = cvs_buf_alloc(st.st_size);
 	if (atomicio(read, fd, buf->cb_buf, buf->cb_size) != buf->cb_size)
 		fatal("cvs_buf_load_fd: read: %s", strerror(errno));
 	buf->cb_len = buf->cb_size;
@@ -168,10 +165,7 @@ cvs_buf_putc(BUF *b, int c)
 	bp = b->cb_buf + b->cb_len;
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
-		if (b->cb_flags & BUF_AUTOEXT)
-			cvs_buf_grow(b, (size_t)BUF_INCR);
-		else
-			fatal("cvs_buf_putc failed");
+		cvs_buf_grow(b, (size_t)BUF_INCR);
 
 		/* the buffer might have been moved */
 		bp = b->cb_buf + b->cb_len;
@@ -201,52 +195,23 @@ cvs_buf_getc(BUF *b, size_t pos)
  * will get resized to an appropriate size to accept all data.
  * Returns the number of bytes successfully appended to the buffer.
  */
-ssize_t
+void
 cvs_buf_append(BUF *b, const void *data, size_t len)
 {
-	size_t left, rlen;
+	size_t left;
 	u_char *bp, *bep;
 
 	bp = b->cb_buf + b->cb_len;
 	bep = b->cb_buf + b->cb_size;
 	left = bep - bp;
-	rlen = len;
 
 	if (left < len) {
-		if (b->cb_flags & BUF_AUTOEXT) {
-			cvs_buf_grow(b, len - left);
-			bp = b->cb_buf + b->cb_len;
-		} else
-			rlen = bep - bp;
+		cvs_buf_grow(b, len - left);
+		bp = b->cb_buf + b->cb_len;
 	}
 
-	memcpy(bp, data, rlen);
-	b->cb_len += rlen;
-
-	return (rlen);
-}
-
-/*
- * cvs_buf_fappend()
- *
- */
-ssize_t
-cvs_buf_fappend(BUF *b, const char *fmt, ...)
-{
-	ssize_t ret;
-	char *str;
-	va_list vap;
-
-	va_start(vap, fmt);
-	ret = vasprintf(&str, fmt, vap);
-	va_end(vap);
-
-	if (ret == -1)
-		fatal("cvs_buf_fappend: failed to format data");
-
-	ret = cvs_buf_append(b, str, (size_t)ret);
-	xfree(str);
-	return (ret);
+	memcpy(bp, data, len);
+	b->cb_len += len;
 }
 
 /*

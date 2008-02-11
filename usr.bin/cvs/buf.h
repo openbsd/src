@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.22 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: buf.h,v 1.23 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,16 +34,14 @@
 
 typedef struct cvs_buf BUF;
 
-BUF		*cvs_buf_alloc(size_t, u_int);
-BUF		*cvs_buf_load(const char *, u_int);
-BUF		*cvs_buf_load_fd(int, u_int);
+BUF		*cvs_buf_alloc(size_t);
+BUF		*cvs_buf_load(const char *);
+BUF		*cvs_buf_load_fd(int);
 void		 cvs_buf_free(BUF *);
 u_char		*cvs_buf_release(BUF *);
 u_char		 cvs_buf_getc(BUF *, size_t);
 void		 cvs_buf_empty(BUF *);
-ssize_t		 cvs_buf_append(BUF *, const void *, size_t);
-ssize_t		 cvs_buf_fappend(BUF *, const char *, ...)
-		     __attribute__((format(printf, 2, 3)));
+void		 cvs_buf_append(BUF *, const void *, size_t);
 void		 cvs_buf_putc(BUF *, int);
 size_t		 cvs_buf_len(BUF *);
 int		 cvs_buf_write_fd(BUF *, int);

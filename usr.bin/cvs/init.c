@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.32 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.33 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -157,10 +157,9 @@ init_mkfile(char *path, const char *const *content)
 	if (content != NULL) {
 		for (p = content; *p != NULL; ++p) {
 			len = strlen(*p);
-			b = cvs_buf_alloc(len, BUF_AUTOEXT);
+			b = cvs_buf_alloc(len);
 
-			if (cvs_buf_append(b, *p, strlen(*p)) < 0)
-				fatal("init_mkfile: cvs_buf_append");
+			cvs_buf_append(b, *p, strlen(*p));
 
 			if (cvs_buf_write_fd(b, fd) < 0)
 				fatal("init_mkfile: cvs_buf_write_fd");
@@ -184,8 +183,7 @@ init_mkfile(char *path, const char *const *content)
 	if ((file = rcs_open(rpath, fd, rcsflags, 0444)) == NULL)
 		fatal("failed to create RCS file for `%s'", path);
 
-	if ((b = cvs_buf_load(path, BUF_AUTOEXT)) == NULL)
-		fatal("init_mkfile: failed to load %s", path);
+	b = cvs_buf_load(path);
 
 	if (rcs_rev_add(file, RCS_HEAD_REV, "initial checkin", -1, NULL) == -1)
 		fatal("init_mkfile: failed to add new revision");

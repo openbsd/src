@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.248 2008/02/10 10:21:42 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.249 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1319,7 +1319,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	prevbuf = NULL;
 
 	if (prevrdp != NULL && nextrdp != NULL) {
-		newdiff = cvs_buf_alloc(64, BUF_AUTOEXT);
+		newdiff = cvs_buf_alloc(64);
 
 		/* calculate new diff */
 		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
@@ -3032,7 +3032,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
-	bp = cvs_buf_alloc(1024, BUF_AUTOEXT);
+	bp = cvs_buf_alloc(1024);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)
@@ -3494,7 +3494,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				fatal("rcs_kwexp_line: truncated");
 
 		/* Concatenate everything together. */
-		tmpbuf = cvs_buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
+		tmpbuf = cvs_buf_alloc(len + strlen(expbuf));
 		/* Append everything before keyword. */
 		cvs_buf_append(tmpbuf, line->l_line,
 		    start - line->l_line);

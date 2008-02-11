@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.131 2008/02/10 10:21:42 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.132 2008/02/11 20:33:11 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -509,9 +509,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 	if (cf->fd == -1)
 		return (0);
 
-	if ((bp = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
-		fatal("update_has_conflict_markers: failed to load %s",
-		    cf->file_path);
+	bp = cvs_buf_load_fd(cf->fd);
 
 	cvs_buf_putc(bp, '\0');
 	len = cvs_buf_len(bp);
