@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.9 2007/12/13 08:54:05 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.10 2008/02/11 13:48:39 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -682,7 +682,7 @@ lsa_timeout(int fd, short event, void *bula)
 				tv.tv_sec = MAX_AGE - ntohs(v->lsa->hdr.age);
 
 			if (evtimer_add(&v->ev, &tv) != 0)
-				fatal("lsa_add");
+				fatal("lsa_timeout");
 		}
 		return;
 	}

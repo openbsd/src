@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.5 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.6 2008/02/11 13:48:39 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -647,7 +647,7 @@ start_spf_holdtimer(struct ospfd_conf *conf)
 	case SPF_HOLDQUEUE:
 		fatalx("start_spf_holdtimer: invalid state");
 	default:
-		fatalx("spf_start_holdtimer: unknown state");
+		fatalx("start_spf_holdtimer: unknown state");
 	}
 }
 

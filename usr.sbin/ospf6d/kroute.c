@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2007/12/13 08:54:05 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2008/02/11 13:48:39 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -791,7 +791,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	u_int8_t		 reachable;
 
 	if ((iface = kif_update(ifindex, flags, ifd, NULL)) == NULL) {
-		log_warn("if_change:  kif_update(%u)", ifindex);
+		log_warn("if_change: kif_update(%u)", ifindex);
 		return;
 	}
 
@@ -880,7 +880,7 @@ if_announce(void *msg)
 	switch (ifan->ifan_what) {
 	case IFAN_ARRIVAL:
 		if ((iface = if_new(ifan->ifan_index, ifan->ifan_name)) == NULL)
-			fatal("if_new failed");
+			fatal("if_announce failed");
 		iface->cflags |= F_IFACE_AVAIL;
 		break;
 	case IFAN_DEPARTURE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.6 2007/12/13 08:54:05 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.7 2008/02/11 13:48:39 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -165,7 +165,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	int			 dupe = 0;
 
 	if (len < sizeof(dd_hdr)) {
-		log_warnx("recv_dd_description: "
+		log_warnx("recv_db_description: "
 		    "bad packet size, neighbor ID %s", inet_ntoa(nbr->id));
 		return;
 	}
@@ -175,7 +175,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 	/* db description packet sanity checks */
 	if (ntohs(dd_hdr.iface_mtu) > nbr->iface->mtu) {
-		log_warnx("recv_dd_description: invalid MTU %d sent by "
+		log_warnx("recv_db_description: invalid MTU %d sent by "
 		    "neighbor ID %s, expected %d", ntohs(dd_hdr.iface_mtu),
 		    inet_ntoa(nbr->id), nbr->iface->mtu);
 		return;
