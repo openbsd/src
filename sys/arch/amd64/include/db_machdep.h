@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 2007/10/19 18:11:18 fgsch Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.8 2008/02/11 20:44:09 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -97,8 +97,6 @@ void		db_task_name(/* task_t */);
 #endif
 
 /* macro for checking if a thread has used floating-point */
-
-#define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
 int kdb_trap(int, int, db_regs_t *);
 
