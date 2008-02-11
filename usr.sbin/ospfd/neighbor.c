@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.36 2007/10/11 08:21:29 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.37 2008/02/11 12:37:37 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -488,7 +488,7 @@ nbr_adj_ok(struct nbr *nbr)
 			break;
 		return (0);
 	default:
-		fatalx("nbr_act_ok: unknown interface type");
+		fatalx("nbr_adj_ok: unknown interface type");
 	}
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.72 2007/10/11 12:19:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.73 2008/02/11 12:37:37 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -501,7 +501,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_DB_ASBR:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE &&
 			    imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(aid)) {
-				log_warnx("rde_dispatch: wrong imsg len");
+				log_warnx("rde_dispatch_imsg: wrong imsg len");
 				break;
 			}
 			if (imsg.hdr.len == IMSG_HEADER_SIZE) {
@@ -553,7 +553,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			    NULL, 0);
 			break;
 		default:
-			log_debug("rde_dispatch_msg: unexpected imsg %d",
+			log_debug("rde_dispatch_imsg: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -609,7 +609,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(rr)) {
-				log_warnx("rde_dispatch: wrong imsg len");
+				log_warnx("rde_dispatch_parent: "
+				    "wrong imsg len");
 				break;
 			}
 			memcpy(&rr, imsg.data, sizeof(rr));
@@ -623,7 +624,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(rr)) {
-				log_warnx("rde_dispatch: wrong imsg len");
+				log_warnx("rde_dispatch_parent: "
+				    "wrong imsg len");
 				break;
 			}
 			memcpy(&rr, imsg.data, sizeof(rr));
@@ -642,7 +644,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			break;
 		case IMSG_KROUTE_GET:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("rde_dispatch: wrong imsg len");
+				log_warnx("rde_dispatch_parent: "
+				    "wrong imsg len");
 				break;
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));

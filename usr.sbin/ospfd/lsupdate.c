@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.32 2006/06/02 18:49:55 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.33 2008/02/11 12:37:37 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -152,7 +152,7 @@ prepare_ls_update(struct iface *iface)
 	struct buf		*buf;
 
 	if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
-		fatal("send_ls_update");
+		fatal("prepare_ls_update");
 
 	/* OSPF header */
 	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_UPDATE))
