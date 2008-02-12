@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tda.4,v 1.1 2008/02/12 10:12:14 robert Exp $
+.\"	$OpenBSD: tda.4,v 1.2 2008/02/12 13:52:06 kettenis Exp $
 .\"
 .\" Copyright (c) 2008 <robert@openbsd.org>
 .\"
@@ -25,8 +25,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the TDA8444 DAC to adjust the output voltage of fans
-available in the Sun Blade 1000/1500/2000/2500 machines.
+driver supports the TDA8444 DAC to adjust the output voltage to the fans
+on Sun Blade 1000/2000 machines.
 .Pp
 The driver watches the internal and external temperature provided by the
 sensors framework and adjusts the fan speeds accordingly.
