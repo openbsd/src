@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.14 2008/01/15 02:52:50 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.15 2008/02/12 13:02:21 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -540,15 +540,16 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
+
 		play->sample_rate = temprate;
 		error = ac97_set_rate(co->codec_if,
 		    AC97_REG_PCM_SURR_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
+
 		play->sample_rate = temprate;
 		error = ac97_set_rate(co->codec_if,
 		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
-
 		if (error)
 			return (error);
 
@@ -1632,7 +1633,11 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 		codec->host_if.flags  = auixp_flags_codec;
 		switch (subdev) {
 		case 0x1311462: /* MSI S270 */
-			codec->codec_flags = AC97_HOST_DONT_ENABLE_SPDIF;
+		case 0x1611462: /* LG K1 Express */
+		case 0x3511462: /* MSI L725 */
+		case 0x4711462: /* MSI L720 */
+		case 0x0611462: /* MSI S250 */
+			codec->codec_flags = AC97_HOST_ALC650_PIN47_IS_EAPD;
 			break;
 		}
 	}

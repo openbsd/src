@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.66 2008/01/15 02:52:50 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.67 2008/02/12 13:02:21 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1351,6 +1351,14 @@ ac97_ad198x_init(struct ac97_softc *as)
 void
 ac97_alc650_init(struct ac97_softc *as)
 {
+	u_int16_t misc;
+
+	ac97_read(as, AC97_ALC650_REG_MISC, &misc);
+	if (as->host_flags & AC97_HOST_ALC650_PIN47_IS_EAPD)
+		misc &= ~AC97_ALC650_MISC_PIN47;
+	misc &= ~AC97_ALC650_MISC_VREFDIS;
+	ac97_write(as, AC97_ALC650_REG_MISC, misc);
+
 	struct ac97_source_info sources[3] = {
 		{ AudioCoutputs, AudioNsurround, "lineinjack",
 		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.20 2008/01/15 02:52:50 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.21 2008/02/12 13:02:21 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -36,7 +36,7 @@ enum ac97_host_flags {
 	AC97_HOST_DONT_READ = 0x1,
 	AC97_HOST_DONT_READANY = 0x2,
 	AC97_HOST_SWAPPED_CHANNELS = 0x4,
-	AC97_HOST_DONT_ENABLE_SPDIF = 0x8
+	AC97_HOST_ALC650_PIN47_IS_EAPD = 0x8
 };
 
 struct ac97_host_if {
@@ -196,6 +196,10 @@ int ac97_set_rate(struct ac97_codec_if *, int, u_long *);
 #define	AC97_ALC650_MCC_CENTERLFE_DOWNMIX		0x0004
 #define	AC97_ALC650_MCC_SURROUND_DOWNMIX		0x0002
 #define	AC97_ALC650_MCC_LINEOUT_TO_SURROUND		0x0001
+#define AC97_ALC650_REG_MISC				0x7a
+#define	AC97_ALC650_MISC_PIN47				0x0002
+#define	AC97_ALC650_MISC_VREFDIS			0x1000
+
 
 /* Conexant codec specific data */
 #define AC97_CX_REG_MISC	0x5c
