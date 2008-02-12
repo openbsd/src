@@ -112,6 +112,8 @@
 ./etc/skel/.login
 ./etc/skel/.mailrc
 ./etc/skel/.profile
+./etc/skel/.ssh
+./etc/skel/.ssh/authorized_keys
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/spwd.db
