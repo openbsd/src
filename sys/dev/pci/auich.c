@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.69 2008/02/08 14:35:01 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.70 2008/02/12 11:25:57 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -877,7 +877,7 @@ auich_set_params(v, setmode, usemode, play, rec)
 
 		play->sample_rate = adj_rate;
 		error = ac97_set_rate(sc->codec_if,
-		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
+		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
 
@@ -889,14 +889,12 @@ auich_set_params(v, setmode, usemode, play, rec)
 
 		play->sample_rate = adj_rate;
 		error = ac97_set_rate(sc->codec_if,
-		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
+		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
 
-		play->sample_rate = orate;
-
-		if (error)
-			return (error);
+		if (play->sample_rate == adj_rate)
+			play->sample_rate = orate;
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -1052,9 +1050,9 @@ auich_set_params(v, setmode, usemode, play, rec)
 			    sc->sc_ac97rate;
 		error = ac97_set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE,
 		    &rec->sample_rate);
-		rec->sample_rate = orate;
 		if (error)
 			return (error);
+		rec->sample_rate = orate;
 	}
 
 	return (0);
