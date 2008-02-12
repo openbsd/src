@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.115 2007/09/17 15:53:00 sthen Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.116 2008/02/12 06:12:25 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2007 $
+.Dd $Mdocdate: February 12 2008 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -690,21 +690,35 @@ the
 .Ic peer
 specification can be left out.
 .It Ic type Ar modifier
-This optional parameter sets up special flows using the modifiers
-.Ar require ,
-.Ar use ,
-.Ar acquire ,
-.Ar dontacq ,
-.Ar bypass
-or
-.Ar deny .
-A bypass flow is used to specify a flow for which security processing
-will be bypassed: matching packets will not be processed by any other
-flows and handled in normal operation.
-A deny flow is used to drop any matching packets.
+This optional parameter sets up special flows using modifiers.
 By default,
 .Xr ipsecctl 8
 will automatically set up normal flows with the corresponding type.
+.Ar modifier
+may be one of the following:
+.Pp
+.Bl -tag -width "acquireXX" -offset indent -compact
+.It acquire
+Use IPsec and establish SAs dynamically.
+Unencrypted traffic is permitted until it is protected by IPsec.
+.It bypass
+Matching packets are not processed by IPsec.
+.It deny
+Matching packets are dropped.
+.It dontacq
+Use IPsec.
+If no SAs are available,
+does not trigger
+.Xr isakmpd 8 .
+.It require
+Use IPsec and establish SAs dynamically.
+Unencrypted traffic is not permitted until it is protected by IPsec.
+.It use
+Use IPsec.
+Unencrypted traffic is permitted.
+Does not trigger
+.Xr isakmpd 8 .
+.El
 .El
 .Sh MANUAL SECURITY ASSOCIATIONS (SAs)
 In this scenario,
