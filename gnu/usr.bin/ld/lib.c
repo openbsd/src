@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.12 2003/05/07 21:52:13 vincent Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.13 2008/02/12 21:17:53 miod Exp $	- library routines*/
 /*
  */
 
@@ -634,10 +634,11 @@ read_shared_object(int fd, struct file_entry *entry)
 		errx(1, "%s: premature EOF reading symbols ",
 			get_file_name(entry));
 
-	if (has_nz)
+	if (has_nz) {
 		md_swapin_zsymbols(nzp, entry->nsymbols);
-	else
+	} else {
 		md_swapin_symbols(np, entry->nsymbols);
+	}
 
 	/* Convert to structs localsymbol */
 	for (i = 0; i < entry->nsymbols; i++) {
@@ -824,7 +825,7 @@ findlib(struct file_entry *p)
 
 dot_a:
 	p->flags &= ~E_SEARCH_DYNAMIC;
-	if (cp = strrchr(p->filename, '/')) {
+	if ((cp = strrchr(p->filename, '/'))) {
 		char *tmp;
 		*cp++ = '\0';
 		tmp = concat(p->filename, "/lib", cp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.11 2005/09/29 20:40:35 deraadt Exp $*/
+/*	$OpenBSD: rrs.c,v 1.12 2008/02/12 21:17:53 miod Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -1184,10 +1184,11 @@ write_rrs_text(void)
 			offset, rrs_strtab_size);
 
 	/* Write the symbol table */
-	if (rrs_symbol_size == sizeof(struct nlist))
+	if (rrs_symbol_size == sizeof(struct nlist)) {
 		md_swapout_symbols(rrs_symbols, number_of_rrs_symbols);
-	else
+	} else {
 		md_swapout_zsymbols(rrs_symbols, number_of_rrs_symbols);
+	}
 	mywrite(rrs_symbols, symsize, 1, outstream);
 
 	/* Write the strings */

@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.11 2005/12/21 01:40:22 millert Exp $*/
+/* * $OpenBSD: warnings.c,v 1.12 2008/02/12 21:17:53 miod Exp $*/
 /*
  */
 
@@ -644,6 +644,7 @@ do_file_warnings(struct file_entry *entry, void *arg)
 				      "of symbol `%s', type %#x",
 				      get_file_name(entry),
 				      g->name, np->n_type);
+				line_number = -1;
 				break;
 			}
 
