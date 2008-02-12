@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.20 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: de.4,v 1.21 2008/02/12 19:00:58 brad Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 12 2008 $
 .Dt DE 4
 .Os
 .Sh NAME
@@ -126,25 +126,3 @@ This manual page was written by David E. O'Brien.
 .Sh CAVEATS
 Since the 21040 is available on both EISA and PCI boards, one must be careful
 in how one defines the 21040 in the kernel config file.
-.Pp
-On the alpha platform, disk space requirements on the installation media
-cause the
-.Nm
-driver to be preferred to the
-.Nm dc
-driver.
-However, the
-.Nm dc
-will perform better on some hardware; if this is the case, it is advised to
-rename the
-.Pa /etc/hostname.de*
-files to
-.Pa /etc/hostname.dc* ,
-and disable the
-.Nm
-driver in the kernel, so that the
-.Nm dc
-driver will be used.
-Refer to
-.Xr boot_config 8
-for details on how to disable drivers in the kernel.
