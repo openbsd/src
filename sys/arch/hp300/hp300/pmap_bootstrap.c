@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.25 2008/01/04 19:05:30 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.26 2008/02/13 21:19:54 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /*
@@ -88,7 +88,8 @@ do { \
 
 #define	PMAP_MD_MEMSIZE() \
 do { \
-	RELOC(avail_end, paddr_t) = MAXADDR - round_page(MSGBUFSIZE); \
+	RELOC(avail_end, paddr_t) = MAXADDR - PAGE_SIZE - \
+	    round_page(MSGBUFSIZE); \
 } while (0)
 
 	/*
