@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.16 2008/02/13 23:30:51 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.17 2008/02/13 23:35:08 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1256,21 +1256,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_output_dma || !sc->sc_input_dma)
 		return;
 
-	/* fill in the missing details about the dma channels. */
-
-	/* for output */
-	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
-	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
-					    ATI_REG_CMD_SEND_EN;
-	/* have spdif? then this too! XXX not seeing LED yet! XXX */
-	if (sc->has_spdif)
-		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
-
-	/* and for input */
-	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
-	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
-					    ATI_REG_CMD_RECEIVE_EN;
-
 #if 0
 	/* could preliminary program DMA chain */
 	auixp_program_dma_chain(sc, sc->sc_output_dma);
@@ -1363,6 +1348,23 @@ auixp_post_config(void *self)
 		if (codec->present)
 			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
 	}
+
+	if (sc->has_spdif)
+		sc->has_spdif = 0;
+
+	/* fill in the missing details about the dma channels. */
+	/* for output */
+	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
+	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
+					    ATI_REG_CMD_SEND_EN;
+	/* have spdif? then this too! XXX not seeing LED yet! XXX */
+	if (sc->has_spdif)
+		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
+
+	/* and for input */
+	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
+	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
+					    ATI_REG_CMD_RECEIVE_EN;
 
 	/* done! now enable all interrupts we can service */
 	auixp_enable_interrupts(sc);
