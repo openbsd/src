@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.15 2008/02/12 13:02:21 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.16 2008/02/13 23:30:51 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -537,7 +537,7 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 
 		temprate = play->sample_rate;
 		error = ac97_set_rate(co->codec_if,
-		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
+		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
 
@@ -549,7 +549,7 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 
 		play->sample_rate = temprate;
 		error = ac97_set_rate(co->codec_if,
-		    AC97_REG_PCM_LFE_DAC_RATE, &play->sample_rate);
+		    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
 		if (error)
 			return (error);
 
