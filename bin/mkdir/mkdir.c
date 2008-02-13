@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.20 2008/01/02 09:27:02 chl Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.21 2008/02/13 14:50:51 millert Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.20 2008/01/02 09:27:02 chl Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.21 2008/02/13 14:50:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
-	int done;
+	int done, exists;
 
 	slash = path;
 
@@ -154,12 +154,16 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (mkdir(path, done ? mode : dir_mode) < 0) {
-			int mkdir_errno = errno;
+		/* skip existing path components */
+		exists = !stat(path, &sb);
+		if (!done && exists && S_ISDIR(sb.st_mode)) {
+			*slash = '/';
+			continue;
+		}
 
-			if (stat(path, &sb)) {
-				/* Not there; use mkdir()s errno */
-				errno = mkdir_errno;
+		if (mkdir(path, done ? mode : dir_mode) < 0) {
+			if (!exists) {
+				/* Not there */
 				warn("%s", path);
 				return (-1);
 			}
