@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.353 2007/12/31 15:27:04 dtucker Exp $ */
+/* $OpenBSD: sshd.c,v 1.354 2008/02/13 22:38:17 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -566,11 +566,12 @@ privsep_preauth_child(void)
 	u_int32_t rnd[256];
 	gid_t gidset[1];
 	struct passwd *pw;
-	int i;
+	u_int i;
 
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
 
+	arc4random_stir();
 	for (i = 0; i < 256; i++)
 		rnd[i] = arc4random();
 	RAND_seed(rnd, sizeof(rnd));
@@ -651,6 +652,9 @@ privsep_preauth(Authctxt *authctxt)
 static void
 privsep_postauth(Authctxt *authctxt)
 {
+	u_int32_t rnd[256];
+	u_int i;
+
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
 		use_privsep = 0;
@@ -677,6 +681,11 @@ privsep_postauth(Authctxt *authctxt)
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
+
+	arc4random_stir();
+	for (i = 0; i < 256; i++)
+		rnd[i] = arc4random();
+	RAND_seed(rnd, sizeof(rnd));
 
 	/* Drop privileges */
 	do_setusercontext(authctxt->pw);

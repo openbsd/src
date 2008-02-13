@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.227 2008/02/10 10:54:29 djm Exp $ */
+/* $OpenBSD: session.c,v 1.228 2008/02/13 22:38:17 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -85,9 +85,6 @@
 #ifdef KRB5
 #include <kafs.h>
 #endif
-
-/* Magic name for internal sftp-server */
-#define INTERNAL_SFTP_NAME	"internal-sftp"
 
 /* func */
 
@@ -438,6 +435,8 @@ do_exec_no_pty(Session *s, const char *command)
 		if (dup2(err[0], 2) < 0)	/* stderr */
 			perror("dup2 stderr");
 
+		closefrom(STDERR_FILENO + 1);
+
 		/* Do processing for the child (exec command etc). */
 		do_child(s, command);
 		/* NOTREACHED */
@@ -507,6 +506,8 @@ do_exec_pty(Session *s, const char *command)
 		/* record login, etc. similar to login(1) */
 		if (!(options.use_login && command == NULL))
 			do_login(s, command);
+
+		closefrom(STDERR_FILENO + 1);
 
 		/* Do common processing for the child, such as execing the command. */
 		do_child(s, command);
