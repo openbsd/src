@@ -1,6 +1,7 @@
-/*	$OpenBSD: relayd.c,v 1.72 2008/02/13 11:20:08 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.73 2008/02/13 11:32:59 reyk Exp $	*/
 
 /*
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

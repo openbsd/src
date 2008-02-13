@@ -1,7 +1,7 @@
-/*	$OpenBSD: relay_udp.c,v 1.8 2008/02/04 12:12:30 thib Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.9 2008/02/13 11:32:59 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
