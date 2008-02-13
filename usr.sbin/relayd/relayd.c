@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.71 2008/02/13 11:02:37 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.72 2008/02/13 11:20:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1074,14 +1074,11 @@ protonode_add(enum direction dir, struct protocol *proto,
 	bcopy(node, pn, sizeof(*pn));
 	pn->key = node->key;
 	pn->value = node->value;
-	pn->type = node->type;
-	pn->label = node->label;
 	SIMPLEQ_INIT(&pn->head);
 	if (dir == RELAY_DIR_RESPONSE)
 		pn->id = proto->response_nodes++;
 	else
 		pn->id = proto->request_nodes++;
-	pn->flags = node->flags;
 	if (pn->id == INT_MAX) {
 		log_warnx("too many protocol nodes defined");
 		free(pn);
