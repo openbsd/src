@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.272 2007/11/27 16:22:13 martynas Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.273 2008/02/13 19:55:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1492,7 +1492,8 @@ pfctl_fopen(const char *name, const char *mode)
 void
 pfctl_init_options(struct pfctl *pf)
 {
-	int mib[2], mem;
+	int64_t mem;
+	int mib[2];
 	size_t size;
 
 	pf->timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
@@ -1523,10 +1524,10 @@ pfctl_init_options(struct pfctl *pf)
 	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
 
 	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM;
+	mib[1] = HW_PHYSMEM64;
 	size = sizeof(mem);
 	(void) sysctl(mib, 2, &mem, &size, NULL, 0);
-	if ((unsigned)mem <= 100*1024*1024)
+	if (mem <= 100*1024*1024)
 		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
 
 	pf->debug = PF_DEBUG_URGENT;
