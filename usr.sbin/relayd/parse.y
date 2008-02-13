@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2008/02/11 10:53:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.106 2008/02/13 11:02:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -739,98 +739,13 @@ protoptsl	: SSL sslflags
 			label = 0;
 		}
 		| direction protonode log	{
-			struct protonode	*pn, *proot, pk;
-			struct proto_tree	*tree;
-
-			if ($1 == RELAY_DIR_RESPONSE)
-				tree = &proto->response_tree;
-			else
-				tree = &proto->request_tree;
-			if ((pn = calloc(1, sizeof (*pn))) == NULL)
-				fatal("out of memory");
-
-			bcopy(&node, pn, sizeof(*pn));
-			pn->key = node.key;
-			pn->value = node.value;
-			pn->type = node.type;
-			pn->label = label;
-			SIMPLEQ_INIT(&pn->head);
-			if ($1 == RELAY_DIR_RESPONSE)
-				pn->id = proto->response_nodes++;
-			else
-				pn->id = proto->request_nodes++;
 			if ($3)
-				pn->flags |= PNFLAG_LOG;
-			if (pn->id == INT_MAX) {
-				yyerror("too many protocol nodes defined");
-				free(pn);
+				node.flags |= PNFLAG_LOG;
+			node.label = label;
+			if (protonode_add($1, proto, &node) == -1) {
+				yyerror("failed to add protocol node");
 				YYERROR;
 			}
-			if ((proot =
-			    RB_INSERT(proto_tree, tree, pn)) != NULL) {
-				/*
-				 * A protocol node with the same key already
-				 * exists, append it to a queue behind the
-				 * existing node.
-				 */
-				if (SIMPLEQ_EMPTY(&proot->head))
-					SIMPLEQ_NEXT(proot, entry) = pn;
-				SIMPLEQ_INSERT_TAIL(&proot->head, pn, entry);
-			}
-
-			if (node.type == NODE_TYPE_COOKIE)
-				pk.key = "Cookie";
-			else if (node.type == NODE_TYPE_URL)
-				pk.key = "Host";
-			else
-				pk.key = "GET";
-			if (node.type != NODE_TYPE_HEADER) {
-				pk.type = NODE_TYPE_HEADER;
-				pn = RB_FIND(proto_tree, tree, &pk);
-				if (pn == NULL) {
-					if ((pn = (struct protonode *)
-					    calloc(1, sizeof(*pn))) == NULL)
-						fatal("out of memory");
-					pn->key = strdup(pk.key);
-					if (pn->key == NULL)
-						fatal("out of memory");
-					pn->value = NULL;
-					pn->action = NODE_ACTION_NONE;
-					pn->type = pk.type;
-					SIMPLEQ_INIT(&pn->head);
-					if ($1 == RELAY_DIR_RESPONSE)
-						pn->id =
-						    proto->response_nodes++;
-					else
-						pn->id = proto->request_nodes++;
-					if (pn->id == INT_MAX) {
-						yyerror("too many protocol "
-						    "nodes defined");
-						YYERROR;
-					}
-					RB_INSERT(proto_tree, tree, pn);
-				}
-				switch (node.type) {
-				case NODE_TYPE_QUERY:
-					pn->flags |= PNFLAG_LOOKUP_QUERY;
-					break;
-				case NODE_TYPE_COOKIE:
-					pn->flags |= PNFLAG_LOOKUP_COOKIE;
-					break;
-				case NODE_TYPE_URL:
-					if (node.flags &
-					    PNFLAG_LOOKUP_URL_DIGEST)
-						pn->flags |= node.flags &
-						    PNFLAG_LOOKUP_URL_DIGEST;
-					else
-						pn->flags |=
-						    PNFLAG_LOOKUP_DIGEST(0);
-					break;
-				default:
-					break;
-				}
-			}
-
 			bzero(&node, sizeof(node));
 		}
 		| include

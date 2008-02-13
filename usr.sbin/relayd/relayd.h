@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.97 2008/02/11 10:42:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.98 2008/02/13 11:02:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -825,6 +825,10 @@ void		 purge_table(struct tablelist *, struct table *);
 void		 merge_config(struct relayd *, struct relayd *);
 char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
 const char	*canonicalize_host(const char *, char *, size_t);
+struct protonode *protonode_header(enum direction, struct protocol *,
+		    struct protonode *);
+int		 protonode_add(enum direction, struct protocol *,
+		    struct protonode *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);
