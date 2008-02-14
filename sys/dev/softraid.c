@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.102 2008/02/07 15:08:49 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.103 2008/02/14 22:04:34 ckuethe Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -716,9 +716,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
 	u_int64_t		vol_size;
-#if 0
-	u_int32_t		*pk, sz;
-#endif
 	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
@@ -810,37 +807,18 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			vol_size = ch_entry->src_meta.scm_coerced_size;
 			break;
 #if 0
+#ifdef CRYPTO
 		case 'C':
 			if (no_chunk < 1 || no_chunk > 2)
 				goto unwind;
 			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
-			vol_size = ch_entry->src_meta.scm_coerced_size;
+			vol_size = ch_entry->src_meta.scm_size;
 
-			/* generate crypto key */
-			sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key) / 4;
-			pk = (u_int32_t *)
-			    sd->mds.mdd_crypto.scr_meta[0].scm_key;
-			for (i = 0; i < sz; i++)
-				*pk++ = arc4random();
-
-			/* generate salt */
-			sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt) /4;
-			pk = (u_int32_t *)
-			    sd->mds.mdd_crypto.scr_meta[0].scm_salt;
-			for (i = 0; i < sz; i++)
-				*pk++ = arc4random();
-
-			sd->mds.mdd_crypto.scr_meta[0].scm_flags =
-			    SR_CRYPTOF_KEY | SR_CRYPTOF_SALT;
-
-			strlcpy(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
-			    "my super secret passphrase ZOMGPASSWD",
-			    sizeof(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase));
-			sd->mds.mdd_crypto.scr_meta[1].scm_flags =
-			    SR_CRYPTOF_PASSPHRASE;
-
+			/* create crypto keys and encrypt them */
+			sr_crypto_create_keys(sd);
 			sr_crypto_encrypt_key(sd);
 			break;
+#endif /* CRYPTO */
 #endif
 		default:
 			goto unwind;

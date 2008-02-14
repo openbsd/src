@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.9 2008/02/07 15:08:49 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.10 2008/02/14 22:04:34 ckuethe Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -39,6 +39,7 @@
 #include <sys/uio.h>
 
 #include <crypto/cryptodev.h>
+#include <crypto/md5.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -66,6 +67,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	struct uio		*uio;
 	int			flags, i, n;
 	daddr64_t		blk = 0;
+	MD5_CTX			ctx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
@@ -89,7 +91,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	else if (xs->cmdlen == 6)
 		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 
-	n = xs->datalen >> 9;
+	n = xs->datalen >> DEV_BSHIFT;
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
 	    CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
 
@@ -101,16 +103,24 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	crp->crp_ilen = xs->datalen;
 	crp->crp_alloctype = M_DEVBUF;
 	crp->crp_buf = uio;
-	for (i = 0, crd = crp->crp_desc; crd; i++, crd = crd->crd_next) {
-		crd->crd_skip = 512 * i;
-		crd->crd_len = 512;
+	for (i = 0, crd = crp->crp_desc; crd; i++, blk++, crd = crd->crd_next) {
+		crd->crd_skip = i << DEV_BSHIFT;
+		crd->crd_len = DEV_BSIZE;
 		crd->crd_inject = 0;
 		crd->crd_flags = flags;
 		crd->crd_alg = CRYPTO_AES_CBC;
-		crd->crd_klen = 256;
-		crd->crd_rnd = 14;
-		crd->crd_key = sd->mds.mdd_crypto.scr_key;
-		memset(crd->crd_iv, blk + i, sizeof(crd->crd_iv));
+		crd->crd_klen = SR_CRYPTO_KEYBITS;
+		crd->crd_rnd = SR_CRYPTO_ROUNDS;
+		crd->crd_key =
+		    sd->mds.mdd_crypto.scr_key2[blk % SR_CRYPTO_MAXKEYS];
+
+		/* use MD5 for IV because is exactly 16 bytes */
+		MD5Init(&ctx);
+		MD5Update(&ctx,
+		    sd->mds.mdd_crypto.scr_key1[blk % SR_CRYPTO_MAXKEYS],
+		    sizeof(sd->mds.mdd_crypto.scr_key1[0]));
+		MD5Update(&ctx, (void *)&blk, sizeof blk);
+		MD5Final(crd->crd_iv, &ctx);
 	}
 
 	return (crp);
@@ -144,10 +154,20 @@ sr_crypto_putcryptop(struct cryptop *crp)
 int
 sr_crypto_decrypt_key(struct sr_discipline *sd)
 {
+	int			i;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n",
+	    DEVNAME(sd->sd_sc));
+
 	/* XXX decrypt for real! */
-	bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key,
-	    sd->mds.mdd_crypto.scr_key,
-	    sizeof(sd->mds.mdd_crypto.scr_key));
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key1[i],
+		    sd->mds.mdd_crypto.scr_key1[i],
+		    sizeof(sd->mds.mdd_crypto.scr_key1[i]));
+		bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key2[i],
+		    sd->mds.mdd_crypto.scr_key2[i],
+		    sizeof(sd->mds.mdd_crypto.scr_key2[i]));
+	}
 
 	return (0);
 }
@@ -155,12 +175,59 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 int
 sr_crypto_encrypt_key(struct sr_discipline *sd)
 {
+	int			i;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_encrypt_key\n",
+	    DEVNAME(sd->sd_sc));
+
 	/* XXX encrypt for real! */
-	bcopy(sd->mds.mdd_crypto.scr_key,
-	    sd->mds.mdd_crypto.scr_meta[0].scm_key,
-	    sizeof(sd->mds.mdd_crypto.scr_key));
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		bcopy(sd->mds.mdd_crypto.scr_key1[i],
+		    sd->mds.mdd_crypto.scr_meta[0].scm_key1[i],
+		    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key1[i]));
+		bcopy(sd->mds.mdd_crypto.scr_key2[i],
+		    sd->mds.mdd_crypto.scr_meta[0].scm_key2[i],
+		    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key2[i]));
+	}
 
 	return (0);
+}
+
+void
+sr_crypto_create_keys(struct sr_discipline *sd)
+{
+	u_int32_t		*pk1, *pk2, sz;
+	int			i, x;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_create_keys\n",
+	    DEVNAME(sd->sd_sc));
+
+	/* generate crypto keys */
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		sz = sizeof(sd->mds.mdd_crypto.scr_key1[i]) / 4;
+		pk1 = (u_int32_t *)sd->mds.mdd_crypto.scr_key1[i];
+		pk2 = (u_int32_t *)sd->mds.mdd_crypto.scr_key2[i];
+		for (x = 0; x < sz; x++) {
+			*pk1++ = arc4random();
+			*pk2++ = arc4random();
+		}
+	}
+
+	/* generate salt */
+	sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt) / 4;
+	pk1 = (u_int32_t *)
+	    sd->mds.mdd_crypto.scr_meta[0].scm_salt;
+	for (i = 0; i < sz; i++)
+		*pk1++ = arc4random();
+
+	sd->mds.mdd_crypto.scr_meta[0].scm_flags =
+	    SR_CRYPTOF_KEY | SR_CRYPTOF_SALT;
+
+	strlcpy(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
+	    "my super secret passphrase ZOMGPASSWD",
+	    sizeof(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase));
+	sd->mds.mdd_crypto.scr_meta[1].scm_flags =
+	    SR_CRYPTOF_PASSPHRASE;
 }
 
 int
@@ -185,10 +252,14 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_CBC;
-	cri.cri_klen = 256;
-	cri.cri_rnd = 14;
-	cri.cri_key = sd->mds.mdd_crypto.scr_key;
+	cri.cri_klen = SR_CRYPTO_KEYBITS;
+	cri.cri_rnd = SR_CRYPTO_ROUNDS;
+	cri.cri_key = sd->mds.mdd_crypto.scr_key2[0];
 
+	/*
+	 * XXX maybe we need to revisit the fact that we are only using one
+	 * session even though we have 64 keys.
+	 */
 	return (crypto_newsession(&sd->mds.mdd_crypto.scr_sid, &cri, 0));
 }
 
@@ -207,8 +278,10 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	sr_free_ccb(sd);
 
 	if (sd->sd_meta) {
-		bzero(sd->mds.mdd_crypto.scr_key,
-		    sizeof(sd->mds.mdd_crypto.scr_key));
+		bzero(sd->mds.mdd_crypto.scr_key1,
+		    sizeof(sd->mds.mdd_crypto.scr_key1));
+		bzero(sd->mds.mdd_crypto.scr_key2,
+		    sizeof(sd->mds.mdd_crypto.scr_key2));
 		free(sd->sd_meta, M_DEVBUF);
 	}
 
