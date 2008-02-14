@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.7 2007/05/21 14:54:35 drahn Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.8 2008/02/14 19:53:22 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -69,6 +69,7 @@ static struct timecounter tcr1_timecounter = {
 	tcr1_get_timecount, NULL, 0xffffffff, 0, "tcr1", 0, NULL
 };
 
+todr_chip_handle_t todr_handle;
 
 /* 
  * TMR0 is used in non-reload mode as it is used for both the clock
@@ -266,13 +267,54 @@ void
 cpu_initclocks()
 {
 	uint32_t now;
+	struct timeval rtctime;
+	time_t	first_sec, sec;
+	u_int32_t first_tb, second_tb;
 
 	/* would it make sense to have this be 100/1000 to round nicely? */
 	/* 100/1000 or 128/1024 ? */
 	stathz = 100;
 	profhz = 1000;
 
+
 	ticks_per_second = 200 * 1000000; /* 200 MHz */
+
+
+	if (todr_handle != NULL && todr_gettime(todr_handle, &rtctime) == 0) {
+		int psw;
+		int new_tps;
+		int tps_diff;
+
+		psw = disable_interrupts(I32_bit);
+
+		first_sec =  rtctime.tv_sec;
+		do {
+			first_tb = tcr1_read();
+			todr_gettime(todr_handle, &rtctime);
+			sec = rtctime.tv_sec;
+		} while (sec == first_sec);
+		first_sec = sec;
+		do {
+			second_tb = tcr1_read();
+			todr_gettime(todr_handle, &rtctime);
+			sec = rtctime.tv_sec;
+		} while (sec == first_sec);
+
+		new_tps = first_tb - second_tb;
+		tps_diff = ticks_per_second - new_tps;
+		if (tps_diff < 0)
+			tps_diff = -tps_diff;
+
+		/*
+		 * only if the calculated time is more than 0.1% use the
+		 * new calculate time. Otherwise system with accurate clocks
+		 * can be penalized. (error in measurement)
+		 */
+		if (tps_diff > ticks_per_second/1000)
+			ticks_per_second = new_tps;
+
+		restore_interrupts(psw);
+	}
 
 	setstatclockrate(stathz);
 
@@ -376,7 +418,6 @@ i80321_calibrate_delay(void)
 	tmr1_write(TMRx_ENABLE|TMRx_RELOAD|TMRx_PRIV|TMRx_CSEL_CORE);
 }
 
-todr_chip_handle_t todr_handle;
 
 /*
  * inittodr:
