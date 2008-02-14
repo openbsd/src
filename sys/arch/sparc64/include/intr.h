@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2008/02/14 19:07:56 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -58,7 +58,6 @@ struct intrhand {
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	char			ih_pil;		/* interrupt priority */
-	volatile char		ih_busy;	/* handler is on list */
 	struct intrhand		*ih_next;	/* global list */
 	struct intrhand		*ih_pending;	/* pending list */
 	volatile u_int64_t	*ih_map;	/* interrupt map reg */

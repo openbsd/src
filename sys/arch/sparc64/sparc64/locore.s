@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.109 2008/01/16 20:55:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.110 2008/02/14 19:07:56 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3158,25 +3158,20 @@ Lsoftint_regular:
 	 nop
 
 setup_sparcintr:
-#ifndef MULTIPROCESSOR
-	ldstub  [%g5+IH_BUSY], %g6	! Check if already in use
-	membar #LoadLoad | #LoadStore
+	ldx	[%g5+IH_PEND], %g6	! Check if already in use
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
-#endif
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
-	mov	8, %g7			! Number of slots to search
 	sll	%g6, 3+3, %g3	! Find start of table for this IPL
 	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
 	 add	%g1, %g3, %g1
 1:
 	ldx	[%g1], %g3		! Load list head
-	stx	%g3, [%g5+IH_PEND]	! Link our intrhand node in
-	mov	%g5, %g7
-	casxa	[%g1] ASI_N, %g3, %g7
-	cmp	%g7, %g3		! Did it work?
-	bne,pn	%xcc, 1b		! No, try again
+	add	%g5, IH_PEND, %g7
+	casxa	[%g7] ASI_N, %g0, %g3
+	brnz,pn	%g3, ret_from_intr_vector
 	 nop
+	stx	%g5, [%g1]
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
@@ -3529,21 +3524,6 @@ sparc_intr_retry:
 	ldx	[%l2 + IH_CLR], %l1	! ih->ih_clear
 
 	stx	%g0, [%l2 + IH_PEND]	! Unlink from list
-
-	! Note that the function handler itself or an interrupt
-	! may add handlers to the pending pending. This includes
-	! the current entry in %l2 and entries held on our local
-	! pending list in %l7.  The former is ok because we are
-	! done with it now and the latter because they are still
-	! marked busy. We may also be able to do this by having
-	! the soft interrupts use a variation of the hardware
-	! interrupts' ih_clr scheme.  Note:  The busy flag does
-	! not itself prevent the handler from being entered
-	! recursively.  It only indicates that the handler is
-	! about to be invoked and that it should not be added
-	! to the pending table.
-	membar	#StoreStore | #LoadStore
-	stb	%g0, [%l2 + IH_BUSY]	! Allow the ih to be reused
 
 	! At this point, the current ih could already be added
 	! back to the pending table.
@@ -8495,35 +8475,31 @@ ENTRY(cecc_catch)
  *	enable the softint, causing a spurious interrupt.
  */
 ENTRY(send_softint)
-	rdpr	%pil, %g1	! s = splx(level)
-	!cmp	%g1, %o1
-	!bge,pt	%icc, 1f
-	! nop
-	wrpr	%g0, PIL_HIGH, %pil
-1:
-	brz,pn	%o2, 1f
-	 mov	8, %o4			! Number of slots to search
-	set	CPUINFO_VA+CI_INTRPENDING, %o3
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g1
+	wrpr	%g1, 0, %pstate
 
-	ldstub	[%o2 + IH_BUSY], %o5
-	membar #LoadLoad | #LoadStore
-	brnz	%o5, 1f
+	brz,pn	%o2, 1f
+	 set	CPUINFO_VA+CI_INTRPENDING, %o3
+
+	ldx	[%o2 + IH_PEND], %o5
+	brnz,pn	%o5, 1f
 	 sll	%o1, 3+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
-2:
+
 	ldx	[%o3], %o5		! Load list head
-	stx	%o5, [%o2+IH_PEND]	! Link our intrhand node in
-	mov	%o2, %o4
-	casxa	[%o3] ASI_N, %o5, %o4
-	cmp	%o4, %o5		! Did it work?
-	bne,pn	%xcc, 2b		! No, try again
+	add	%o2, IH_PEND, %o4
+	casxa	[%o4] ASI_N, %g0, %o5
+	brnz,pn	%o5, 1f
 	 nop
-1:
+	stx	%o2, [%o3]
+
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3
 	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
+1:
 	retl
-	 wrpr	%g1, 0, %pil		! restore IPL
+	 wrpr	%g1, 0, %pstate		! restore interrupts
 
 /*
  * Here is a very good random number generator.  This implementation is

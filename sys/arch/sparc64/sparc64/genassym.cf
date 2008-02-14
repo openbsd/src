@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.25 2008/01/16 20:55:36 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.26 2008/02/14 19:07:56 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -234,7 +234,6 @@ member	ih_fun
 member	ih_arg
 member	ih_number
 member	ih_pil
-member	ih_busy
 member	IH_PEND		ih_pending
 member	ih_next
 member	ih_map
