@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.42 2008/02/07 16:53:58 thib Exp $ */
+/*	$OpenBSD: arp.c,v 1.43 2008/02/14 09:28:02 thib Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -131,9 +131,6 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-	if (argc == 1)
-		aflag = nflag = 1;
-
 	argc -= optind;
 	argv += optind;
 
