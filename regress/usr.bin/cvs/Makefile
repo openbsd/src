@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2008/02/10 11:42:28 xsa Exp $
+#	$OpenBSD: Makefile,v 1.22 2008/02/14 22:32:48 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -55,6 +55,7 @@ LTESTS= cvs-initial \
 	cvs-export
 # Known to fail.
 #	cvs-update-for_subdir
+#	cvs-release-dflag
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -241,6 +242,12 @@ test-cvs-initial: clean
 test-cvs-log:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
 	    eval 'test `${CVS} -Q log | wc -l` -eq 68'
+
+test-cvs-release-dflag: test-cvs-checkout
+	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	    ${CVS} -Q -d ${MYCVSROOT} release -d seed
+	@test ! -d ${.OBJDIR}/regress_cvs_wcopy/seed
+	@eval 'test `grep '^F' ${.OBJDIR}/regress_cvs_root/CVSROOT/history | wc -l` -eq 1'
 
 test-cvs-remove-fflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q remove -f seed1.txt
