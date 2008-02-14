@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.5 2007/09/27 22:10:25 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -105,18 +105,22 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct bwi_softc *sc = &psc->psc_bwi;
 	const char *intrstr = NULL;
 	pci_intr_handle_t ih;
-	pcireg_t reg;
-	int error;
+	pcireg_t memtype, reg;
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
 
 	/* map control / status registers */
-	error = pci_mapreg_map(pa, BWI_PCI_BAR0,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_mem_bt, &sc->sc_mem_bh, NULL, &psc->psc_mapsize, 0);
-	if (error != 0) {
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, BWI_PCI_BAR0,
+		    memtype, 0, &sc->sc_mem_bt, &sc->sc_mem_bh,
+		    NULL, &psc->psc_mapsize, 0) == 0)
+			break;
+	default:
 		printf(": could not map memory space\n");
 		return;
 	}
