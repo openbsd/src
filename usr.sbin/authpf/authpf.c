@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.106 2008/02/01 07:08:03 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.107 2008/02/14 01:49:17 mcbride Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -55,6 +55,7 @@ int	dev;			/* pf device */
 char	anchorname[PF_ANCHOR_NAME_SIZE] = "authpf";
 char	rulesetname[MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 2];
 char	tablename[PF_TABLE_NAME_SIZE] = "authpf_users";
+int	user_ip = 1;	/* controls whether $user_ip is set */
 
 FILE	*pidfp;
 char	 luser[MAXLOGNAME];	/* username */
@@ -66,6 +67,7 @@ struct timeval	Tstart, Tend;	/* start and end times of session */
 volatile sig_atomic_t	want_death;
 static void		need_death(int signo);
 static __dead void	do_death(int);
+extern char *__progname;	/* program name */
 
 /*
  * User shell for authenticating gateways. Sole purpose is to allow
@@ -85,6 +87,9 @@ main(int argc, char *argv[])
 	uid_t		 uid;
 	char		*shell;
 	login_cap_t	*lc;
+
+	if (strcmp(__progname, "-authpf-noip") == 0)
+                user_ip = 0;
 
 	config = fopen(PATH_CONFFILE, "r");
 	if (config == NULL) {
@@ -140,7 +145,8 @@ main(int argc, char *argv[])
 
 	login_close(lc);
 
-	if (strcmp(shell, PATH_AUTHPF_SHELL)) {
+	if (strcmp(shell, PATH_AUTHPF_SHELL) && 
+	    strcmp(shell, PATH_AUTHPF_SHELL_NOIP)) {
 		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
 		    pw->pw_name, pw->pw_uid);
 		if (shell != pw->pw_shell)
@@ -172,8 +178,9 @@ main(int argc, char *argv[])
 	}
 
 
-	/* Make our entry in /var/authpf as /var/authpf/ipaddr */
-	n = snprintf(pidfile, sizeof(pidfile), "%s/%s", PATH_PIDFILE, ipsrc);
+	/* Make our entry in /var/authpf as ipaddr or username */
+	n = snprintf(pidfile, sizeof(pidfile), "%s/%s",
+	    PATH_PIDFILE, user_ip ? ipsrc : luser);
 	if (n < 0 || (u_int)n >= sizeof(pidfile)) {
 		syslog(LOG_ERR, "path to pidfile too long");
 		goto die;
@@ -293,7 +300,7 @@ main(int argc, char *argv[])
 		printf("Unable to modify filters\r\n");
 		do_death(0);
 	}
-	if (change_table(1, ipsrc) == -1) {
+	if (user_ip && change_table(1, ipsrc) == -1) {
 		printf("Unable to modify table\r\n");
 		change_filter(0, luser, ipsrc);
 		do_death(0);
@@ -677,11 +684,6 @@ cleanup:
 static int
 change_filter(int add, const char *luser, const char *ipsrc)
 {
-	char	*pargv[13] = {
-		"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor/ruleset",
-		"-D", "user_ip=X", "-D", "user_id=X", "-f",
-		"file", NULL
-	};
 	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
 	char	*rsn = NULL, *fn = NULL;
 	pid_t	pid;
@@ -690,6 +692,10 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 	if (add) {
 		struct stat sb;
+		char	*pargv[13] = {
+			"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor/ruleset",
+			"-D", "user_id=X", "-D", "user_ip=X", "-f", "file", NULL
+		};
 
 		if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 			syslog(LOG_ERR, "invalid luser/ipsrc");
@@ -715,8 +721,14 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		pargv[2] = fdpath;
 		pargv[5] = rsn;
 		pargv[7] = userstr;
-		pargv[9] = ipstr;
-		pargv[11] = fn;
+		if (user_ip) {
+			pargv[9] = ipstr;
+			pargv[11] = fn;
+		} else {
+			pargv[8] = "-f";
+			pargv[9] = fn;
+			pargv[10] = NULL;
+		}
 
 		switch (pid = fork()) {
 		case -1:
@@ -861,8 +873,10 @@ do_death(int active)
 
 	if (active) {
 		change_filter(0, luser, ipsrc);
-		change_table(0, ipsrc);
-		authpf_kill_states();
+		if (user_ip) {
+			change_table(0, ipsrc);
+			authpf_kill_states();
+		}
 	}
 	if (pidfile[0] && (pidfp != NULL))
 		if (unlink(pidfile) == -1)
