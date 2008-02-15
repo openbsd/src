@@ -29,6 +29,10 @@ Boston, MA 02111-1307, USA.  */
 #undef	SET_ASM_OP
 #define	SET_ASM_OP	"equ"
 
+/* <m88k/m88k.h> provided wrong SUPPORTS_WEAK and SUPPORTS_ONE_ONLY values */
+#undef	SUPPORTS_WEAK
+#undef	SUPPORTS_ONE_ONLY
+
 #define	OBSD_HAS_CORRECT_ASM_OPS
 #define	OBSD_OLD_GAS
 #define	OBSD_NO_DYNAMIC_LIBRARIES
