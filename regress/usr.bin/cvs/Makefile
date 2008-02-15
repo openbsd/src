@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2008/02/15 23:13:45 xsa Exp $
+#	$OpenBSD: Makefile,v 1.25 2008/02/15 23:26:58 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -6,13 +6,14 @@
 
 CVS?=		opencvs -f
 
+REGRESS_ROOT=	${.OBJDIR}/regress_cvs_root
 REGRESS_WCOPY=	${.OBJDIR}/regress_cvs_wcopy
 REGRESS_SEED=	${REGRESS_WCOPY}/seed
 
 .if defined(REMOTE)
-MYCVSROOT?=	localhost:${.OBJDIR}/regress_cvs_root
+MYCVSROOT?=	localhost:${REGRESS_ROOT}
 .else
-MYCVSROOT?=	${.OBJDIR}/regress_cvs_root
+MYCVSROOT?=	${REGRESS_ROOT}
 .endif
 
 CLEANFILES=	regress_cvs_root regress_cvs_wcopy regress_cvs_stderr \
@@ -75,7 +76,7 @@ test-cvs-add-dir:
 	@mkdir ${REGRESS_SEED}/subdir
 	@cd ${REGRESS_SEED}; ${CVS} -q add subdir > /dev/null 2> /dev/null
 	@test -d ${REGRESS_SEED}/subdir/CVS && \
-	    test -d ${.OBJDIR}/regress_cvs_root/seed/subdir
+	    test -d ${REGRESS_ROOT}/seed/subdir
 
 test-cvs-add-subdir_file:
 	@echo "initial content of seed3.txt" > ${REGRESS_SEED}/subdir/seed3.txt
@@ -190,16 +191,14 @@ test-cvs-commit-Fflag:
 	@cd ${REGRESS_SEED}; ${CVS} commit \
 	    -F ${REGRESS_WCOPY}/logmsg.txt > /dev/null
 	@grep "^@commit seed repo" \
-	    ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v > /dev/null
-	@eval 'test `cat ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v | wc -l` \
-	    -eq 60'
-	@test -f ${.OBJDIR}/regress_cvs_root/seed/seed2.txt,v
+	    ${REGRESS_ROOT}/seed/seed1.txt,v > /dev/null
+	@eval 'test `cat ${REGRESS_ROOT}/seed/seed1.txt,v | wc -l` -eq 60'
+	@test -f ${REGRESS_ROOT}/seed/seed2.txt,v
 
 test-cvs-commit-to_branch:
 	@sleep 1
 	@cd ${REGRESS_SEED}; ${CVS} commit -m'first branch seed' > /dev/null
-	@eval 'test `cat ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v | wc -l` \
-	    -eq 80'
+	@eval 'test `cat ${REGRESS_ROOT}/seed/seed1.txt,v | wc -l` -eq 80'
 	@eval 'test `grep -c TFIRST_BRANCH ${REGRESS_SEED}/CVS/Entries` -eq 2'
 
 test-cvs-diff:
@@ -224,11 +223,11 @@ test-cvs-import-mflag:
 	@cd ${.CURDIR}/import_seed; \
 	    ${CVS} -Q -d ${MYCVSROOT} import \
 	    -m'import seed repo' seed regress regress_import > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v
+	@test -f ${REGRESS_ROOT}/seed/seed1.txt,v
 
 test-cvs-initial: clean
 	@${CVS} -d ${MYCVSROOT} init
-	@test -d ${.OBJDIR}/regress_cvs_root/CVSROOT
+	@test -d ${REGRESS_ROOT}/CVSROOT
 
 test-cvs-log:
 	@cd ${REGRESS_SEED}; eval 'test `${CVS} -Q log | wc -l` -eq 68'
@@ -236,8 +235,7 @@ test-cvs-log:
 test-cvs-release-dflag: test-cvs-checkout
 	@cd ${REGRESS_WCOPY}; ${CVS} -Q -d ${MYCVSROOT} release -d seed
 	@test ! -d ${.OBJDIR}/regress_cvs_wcopy/seed
-	@eval 'test `grep '^F' ${.OBJDIR}/regress_cvs_root/CVSROOT/history \
-	    | wc -l` -eq 1'
+	@eval 'test `grep '^F' ${REGRESS_ROOT}/CVSROOT/history | wc -l` -eq 1'
 
 test-cvs-remove-fflag:
 	@cd ${REGRESS_SEED}; ${CVS} -Q remove -f seed1.txt
@@ -254,17 +252,15 @@ test-cvs-status-vflag:
 
 test-cvs-tag:
 	@cd ${REGRESS_SEED}; ${CVS} -Q tag FIRST_TAG > /dev/null
-	@grep FIRST_TAG ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
-	    > /dev/null
+	@grep FIRST_TAG ${REGRESS_ROOT}/seed/seed1.txt,v > /dev/null
 
 test-cvs-tag-branch:
 	@cd ${REGRESS_SEED}; ${CVS} -Q tag -b FIRST_BRANCH > /dev/null
-	@grep FIRST_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
-	    > /dev/null
+	@grep FIRST_BRANCH ${REGRESS_ROOT}/seed/seed1.txt,v > /dev/null
 
 test-cvs-rtag-one_more_branch:
 	@${CVS} -d ${MYCVSROOT} -Q rtag -b SECOND_BRANCH seed > /dev/null
-	@grep SECOND_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed2.txt,v \
+	@grep SECOND_BRANCH ${REGRESS_ROOT}/seed/seed2.txt,v \
 	    | grep 4 > /dev/null
 
 test-cvs-update-Aflag:
