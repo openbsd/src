@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.191 2008/02/09 12:10:54 mcbride Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.192 2008/02/15 11:15:59 bernd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2757,6 +2757,18 @@ logs  type=dir uname=root gname=daemon mode=755
 
 #./www/conf
 conf  type=dir uname=root gname=daemon mode=755
+#./www/conf
+
+#./www/conf/modules
+modules  type=dir uname=root gname=daemon mode=755
+#./www/conf/modules
+..
+
+#./www/conf/modules.sample
+modules.sample  type=dir uname=root gname=daemon mode=755
+#./www/conf/modules.sample
+..
+
 #./www/conf
 ..
 
