@@ -1,10 +1,13 @@
-#	$OpenBSD: Makefile,v 1.23 2008/02/15 18:05:38 xsa Exp $
+#	$OpenBSD: Makefile,v 1.24 2008/02/15 23:13:45 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
 # Based on OpenRCS regression framework.
 
 CVS?=		opencvs -f
+
+REGRESS_WCOPY=	${.OBJDIR}/regress_cvs_wcopy
+REGRESS_SEED=	${REGRESS_WCOPY}/seed
 
 .if defined(REMOTE)
 MYCVSROOT?=	localhost:${.OBJDIR}/regress_cvs_root
@@ -63,138 +66,129 @@ REGRESS_TARGETS+=test-${t}
 
 # XXX - should not print anything
 test-cvs-add:
-	@echo "initial content" > ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@echo "initial content" > ${REGRESS_SEED}/seed2.txt
+	@cd ${REGRESS_SEED}; \
 	    ${CVS} -q add seed2.txt > /dev/null 2> /dev/null
 #	    eval 'test `${CVS} -Q add seed2.txt | wc -l` -eq 0'
 
 test-cvs-add-dir:
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy/seed/subdir
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -q add subdir > /dev/null 2> /dev/null
-	@test -d ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/CVS && \
+	@mkdir ${REGRESS_SEED}/subdir
+	@cd ${REGRESS_SEED}; ${CVS} -q add subdir > /dev/null 2> /dev/null
+	@test -d ${REGRESS_SEED}/subdir/CVS && \
 	    test -d ${.OBJDIR}/regress_cvs_root/seed/subdir
 
 test-cvs-add-subdir_file:
-	@echo "initial content of seed3.txt" \
-	    > ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@echo "initial content of seed3.txt" > ${REGRESS_SEED}/subdir/seed3.txt
+	@cd ${REGRESS_SEED}; \
 	    ${CVS} -q add subdir/seed3.txt > /dev/null 2> /dev/null
-#	eval 'test `${CVS} -Q add seed2.txt | wc -l` -eq 0'
+#	@eval 'test `${CVS} -Q add seed2.txt | wc -l` -eq 0'
 
 test-cvs-annotate:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@cd ${REGRESS_SEED}; \
 	    eval 'test `${CVS} -Q annotate seed1.txt 2>/dev/null | wc -l` -eq 3'
 
 test-cvs-annotate-rflag-inval_branch_rev:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@cd ${REGRESS_SEED}; \
 	    eval 'test `${CVS} -Q annotate -r 1.2.3.4 seed1.txt 2>/dev/null \
 	    | wc -l` -eq 0'
 
 test-cvs-annotate-rflag-inval_branch_rev-fflag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@cd ${REGRESS_SEED}; \
 	    eval 'test `${CVS} -Q annotate -f -r 1.2.3.4 seed1.txt 2>/dev/null \
 	    | wc -l` -eq 3'
 
 test-cvs-annotate-rflag-unknown_symbol-fflag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@cd ${REGRESS_SEED}; \
 	    eval 'test `${CVS} -Q annotate -f -r UNKNOWN seed1.txt 2>/dev/null \
 	    | wc -l` -eq 0'
 
 test-cvs-checkout:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${MYCVSROOT} co seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; ${CVS} -Q -d ${MYCVSROOT} co seed > /dev/null
+	@test -f ${REGRESS_SEED}/seed1.txt
 
 test-cvs-checkout-kflag-k-rflag-HEAD:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co -rHEAD -kkv seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
+	@test -f ${REGRESS_SEED}/seed1.txt
 	@eval 'test `grep -c -e THEAD -e -kkv \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
+	    ${REGRESS_SEED}/CVS/Entries | wc -l` -eq 1'
 	@eval 'test `grep -c Id$ \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt | wc -l` -eq 1'
+	    ${REGRESS_SEED}/seed1.txt | wc -l` -eq 1'
 
 test-cvs-checkout-kflag-kv-rflag-1.1:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co -r 1.1 -kkv seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
+	@test -f ${REGRESS_SEED}/seed1.txt;
 	@eval 'test `grep -c -e T1.1 -e -kkv \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
+	    ${REGRESS_SEED}/CVS/Entries | wc -l` -eq 1'
 
 test-cvs-checkout-pflag:
 	@eval 'test `${CVS} -Q -d ${MYCVSROOT} checkout \
 	    -p seed/seed1.txt 2>/dev/null | wc -l` -eq 2'
 
 test-cvs-checkout-rflag_branch:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${MYCVSROOT} co -r FIRST_BRANCH seed \
-	    > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
-	@eval 'test `grep -c TFIRST_BRANCH \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
+	    ${CVS} -Q -d ${MYCVSROOT} co -r FIRST_BRANCH seed > /dev/null
+	@test -f ${REGRESS_SEED}/seed1.txt
+	@eval 'test `grep -c TFIRST_BRANCH ${REGRESS_SEED}/CVS/Entries` -eq 2'
 
 test-cvs-checkout-rflag-inval_branch_rev:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${MYCVSROOT} co -r1.2.3.4 seed
-	@eval 'test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt'
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; ${CVS} -Q -d ${MYCVSROOT} co -r1.2.3.4 seed
+	@eval 'test ! -f ${REGRESS_SEED}/seed1.txt'
 
 test-cvs-checkout-rflag-too_high:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${MYCVSROOT} co -r1.5 seed
-	@eval 'test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt'
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; ${CVS} -Q -d ${MYCVSROOT} co -r1.5 seed
+	@eval 'test ! -f ${REGRESS_SEED}/seed1.txt'
 
 test-cvs-checkout-rflag-HEAD:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co -rHEAD seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt;
-	@eval 'test `grep -c THEAD \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries | wc -l` -eq 1'
+	@test -f ${REGRESS_SEED}/seed1.txt;
+	@eval 'test `grep -c THEAD ${REGRESS_SEED}/CVS/Entries | wc -l` -eq 1'
 
 test-cvs-checkout-rflag-1.1:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
-	    cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co -r 1.1 seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt && \
-	    test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
+	@test -f ${REGRESS_SEED}/seed1.txt && test -f ${REGRESS_SEED}/seed2.txt
 
 test-cvs-checkout-dflag:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
-	    cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co -d seed2 seed > /dev/null
-	@test -d ${.OBJDIR}/regress_cvs_wcopy/seed2/CVS
+	@test -d ${REGRESS_WCOPY}/seed2/CVS
 
 test-cvs-checkout-subdir:
 	@echo "test-cvs-checkout-subdir"
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
-	    cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} co seed/subdir > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt && \
-	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
+	@test -f ${REGRESS_SEED}/subdir/seed3.txt && \
+	    test ! -f ${REGRESS_SEED}/seed2.txt
 
 test-cvs-commit-Fflag:
 	@sleep 1
-	@echo "second line" >> ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
-	@echo "commit seed repo" > ${.OBJDIR}/regress_cvs_wcopy/logmsg.txt
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} commit \
-	    -F ${.OBJDIR}/regress_cvs_wcopy/logmsg.txt > /dev/null
+	@echo "second line" >> ${REGRESS_SEED}/seed1.txt
+	@echo "commit seed repo" > ${REGRESS_WCOPY}/logmsg.txt
+	@cd ${REGRESS_SEED}; ${CVS} commit \
+	    -F ${REGRESS_WCOPY}/logmsg.txt > /dev/null
 	@grep "^@commit seed repo" \
 	    ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v > /dev/null
 	@eval 'test `cat ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v | wc -l` \
@@ -203,31 +197,28 @@ test-cvs-commit-Fflag:
 
 test-cvs-commit-to_branch:
 	@sleep 1
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} commit \
-	    -m'first branch seed' > /dev/null
+	@cd ${REGRESS_SEED}; ${CVS} commit -m'first branch seed' > /dev/null
 	@eval 'test `cat ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v | wc -l` \
 	    -eq 80'
-	@eval 'test `grep -c TFIRST_BRANCH \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@eval 'test `grep -c TFIRST_BRANCH ${REGRESS_SEED}/CVS/Entries` -eq 2'
 
 test-cvs-diff:
 	@sleep 1
-	@echo "modified" > ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q diff | wc -l` -eq 9'
+	@echo "modified" > ${REGRESS_SEED}/seed2.txt
+	@cd ${REGRESS_SEED}; eval 'test `${CVS} -Q diff | wc -l` -eq 9'
 
 test-cvs-diff-file:
 	@sleep 1
-	@echo "first branch line" >> ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
+	@echo "first branch line" >> ${REGRESS_SEED}/seed1.txt
+	@cd ${REGRESS_SEED}; \
 	    eval 'test `${CVS} -Q diff seed1.txt | wc -l` -eq 7'
 
 test-cvs-export:
-	@rm -rf ${.OBJDIR}/regress_cvs_wcopy
-	@mkdir ${.OBJDIR}/regress_cvs_wcopy; \
-	    cd ${.OBJDIR}/regress_cvs_wcopy; \
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir ${REGRESS_WCOPY}
+	@cd ${REGRESS_WCOPY}; \
 	    ${CVS} -Q -d ${MYCVSROOT} export -r HEAD seed > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
+	@test -f ${REGRESS_SEED}/seed1.txt
 
 test-cvs-import-mflag:
 	@cd ${.CURDIR}/import_seed; \
@@ -240,39 +231,34 @@ test-cvs-initial: clean
 	@test -d ${.OBJDIR}/regress_cvs_root/CVSROOT
 
 test-cvs-log:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q log | wc -l` -eq 68'
+	@cd ${REGRESS_SEED}; eval 'test `${CVS} -Q log | wc -l` -eq 68'
 
 test-cvs-release-dflag: test-cvs-checkout
-	@cd ${.OBJDIR}/regress_cvs_wcopy; \
-	    ${CVS} -Q -d ${MYCVSROOT} release -d seed
+	@cd ${REGRESS_WCOPY}; ${CVS} -Q -d ${MYCVSROOT} release -d seed
 	@test ! -d ${.OBJDIR}/regress_cvs_wcopy/seed
-	@eval 'test `grep '^F' ${.OBJDIR}/regress_cvs_root/CVSROOT/history | wc -l` -eq 1'
+	@eval 'test `grep '^F' ${.OBJDIR}/regress_cvs_root/CVSROOT/history \
+	    | wc -l` -eq 1'
 
 test-cvs-remove-fflag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q remove -f seed1.txt
-	@test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
+	@cd ${REGRESS_SEED}; ${CVS} -Q remove -f seed1.txt
+	@test ! -f ${REGRESS_SEED}/seed1.txt
 
 test-cvs-rlog:
 	@eval 'test `${CVS} -Q -d ${MYCVSROOT} rlog seed | wc -l` -eq 65'
 
 test-cvs-status:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q status | wc -l` -eq 18'
+	@cd ${REGRESS_SEED}; eval 'test `${CVS} -Q status | wc -l` -eq 18'
 
 test-cvs-status-vflag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    eval 'test `${CVS} -Q status -v | wc -l` -eq 30'
+	@cd ${REGRESS_SEED}; eval 'test `${CVS} -Q status -v | wc -l` -eq 30'
 
 test-cvs-tag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q tag FIRST_TAG > /dev/null
+	@cd ${REGRESS_SEED}; ${CVS} -Q tag FIRST_TAG > /dev/null
 	@grep FIRST_TAG ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
 	    > /dev/null
 
 test-cvs-tag-branch:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q tag -b FIRST_BRANCH > /dev/null
+	@cd ${REGRESS_SEED}; ${CVS} -Q tag -b FIRST_BRANCH > /dev/null
 	@grep FIRST_BRANCH ${.OBJDIR}/regress_cvs_root/seed/seed1.txt,v \
 	    > /dev/null
 
@@ -282,42 +268,30 @@ test-cvs-rtag-one_more_branch:
 	    | grep 4 > /dev/null
 
 test-cvs-update-Aflag:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q update -A > /dev/null
-	@eval 'test `grep -c -e T1 -e kkv \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
+	@cd ${REGRESS_SEED}; ${CVS} -Q update -A > /dev/null
+	@eval 'test `grep -c -e T1 -e kkv ${REGRESS_SEED}/CVS/Entries` -eq 0'
 
 test-cvs-update-Aflag-kflag-kv:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q update -A -kv > /dev/null
-	@eval 'test `grep -c T1 \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
-	@eval 'test `grep -c kv \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@cd ${REGRESS_SEED}; ${CVS} -Q update -A -kv > /dev/null
+	@eval 'test `grep -c T1 ${REGRESS_SEED}/CVS/Entries` -eq 0'
+	@eval 'test `grep -c kv ${REGRESS_SEED}/CVS/Entries` -eq 2'
 
 test-cvs-update-Aflag-kflag-k-rflag-1.1:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q update -A -kk -r 1.1 > /dev/null
-	@eval 'test `grep -c T1 \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
-	@eval 'test `grep -c kk \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
+	@cd ${REGRESS_SEED}; ${CVS} -Q update -A -kk -r 1.1 > /dev/null
+	@eval 'test `grep -c T1 ${REGRESS_SEED}/CVS/Entries` -eq 2'
+	@eval 'test `grep -c kk ${REGRESS_SEED}/CVS/Entries` -eq 2'
 
 test-cvs-update-Aflag-rflag-1.1:
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q update -A -r 1.1 > /dev/null
-	@eval 'test `grep -c T1 \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 2'
-	@eval 'test `grep -c kk \
-	    ${.OBJDIR}/regress_cvs_wcopy/seed/CVS/Entries` -eq 0'
+	@cd ${REGRESS_SEED}; ${CVS} -Q update -A -r 1.1 > /dev/null
+	@eval 'test `grep -c T1 ${REGRESS_SEED}/CVS/Entries` -eq 2'
+	@eval 'test `grep -c kk ${REGRESS_SEED}/CVS/Entries` -eq 0'
 
 test-cvs-update-for_subdir:
 	@echo "test-cvs-update-for_subdir"
-	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; \
-	    ${CVS} -Q update > /dev/null
-	@test -f ${.OBJDIR}/regress_cvs_wcopy/seed/subdir/seed3.txt && \
-	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt && \
-	    test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed2.txt
+	@cd ${REGRESS_SEED}; ${CVS} -Q update > /dev/null
+	@test -f ${REGRESS_SEED}/subdir/seed3.txt && \
+	    test ! -f ${REGRESS_SEED}/seed1.txt && \
+	    test ! -f ${REGRESS_SEED}/seed2.txt
 
 clean:
 	@rm -rf ${CLEANFILES}
