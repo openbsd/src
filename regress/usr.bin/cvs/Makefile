@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2008/02/14 22:32:48 xsa Exp $
+#	$OpenBSD: Makefile,v 1.23 2008/02/15 18:05:38 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -251,6 +251,7 @@ test-cvs-release-dflag: test-cvs-checkout
 
 test-cvs-remove-fflag:
 	@cd ${.OBJDIR}/regress_cvs_wcopy/seed; ${CVS} -Q remove -f seed1.txt
+	@test ! -f ${.OBJDIR}/regress_cvs_wcopy/seed/seed1.txt
 
 test-cvs-rlog:
 	@eval 'test `${CVS} -Q -d ${MYCVSROOT} rlog seed | wc -l` -eq 65'
