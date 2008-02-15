@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.6 2007/12/13 05:55:13 tedu Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.7 2008/02/15 04:08:36 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/queue.h>
 #include <sys/kthread.h>
 #include <sys/workq.h>
-#include <sys/mutex.h>
 
 struct workq_task {
 	int		wqt_flags;
@@ -44,7 +43,6 @@ struct workq {
 	const char	*wq_name;
 
 	SIMPLEQ_HEAD(, workq_task) wq_tasklist;
-	struct mutex	wq_mtx;
 };
 
 struct pool	workq_task_pool;
@@ -66,7 +64,6 @@ workq_init(void)
 {
 	pool_init(&workq_task_pool, sizeof(struct workq_task), 0, 0,
 	    0, "wqtasks", NULL);
-	pool_setipl(&workq_task_pool, IPL_HIGH);
 
 	SIMPLEQ_INIT(&workq_syswq.wq_tasklist);
 	kthread_create_deferred(workq_init_syswq, NULL);
@@ -97,7 +94,6 @@ workq_create(const char *name, int maxqs)
 	wq->wq_max = maxqs;
 	wq->wq_name = name;
 	SIMPLEQ_INIT(&wq->wq_tasklist);
-	mtx_init(&wq->wq_mtx, IPL_HIGH);
 
 	/* try to create a thread to guarantee that tasks will be serviced */
 	kthread_create_deferred(workq_create_thread, wq);
@@ -108,16 +104,17 @@ workq_create(const char *name, int maxqs)
 void
 workq_destroy(struct workq *wq)
 {
+	int s;
 
-	mtx_enter(&wq->wq_mtx);
+	s = splhigh();
 
 	wq->wq_flags &= ~WQ_F_RUNNING;
 	while (wq->wq_running != 0) {
 		wakeup(wq);
-		msleep(&wq->wq_running, &wq->wq_mtx, PWAIT, "wqdestroy", 0);
+		tsleep(&wq->wq_running, PWAIT, "wqdestroy", 0);
 	}
 
-	mtx_leave(&wq->wq_mtx);
+	splx(s);
 
 	free(wq, M_DEVBUF);
 }
@@ -126,14 +123,16 @@ int
 workq_add_task(struct workq *wq, int flags, workq_fn func, void *a1, void *a2)
 {
 	struct workq_task	*wqt;
-	int			wake = 1;
+	int			s;
 
 	if (wq == NULL) {
 		wq = &workq_syswq;
 	}
 	
+	s = splhigh();
 	wqt = pool_get(&workq_task_pool, (flags & WQ_WAITOK) ?
 	    PR_WAITOK : PR_NOWAIT);
+	splx(s);
 	if (!wqt)
 		return (ENOMEM);
 
@@ -142,12 +141,11 @@ workq_add_task(struct workq *wq, int flags, workq_fn func, void *a1, void *a2)
 	wqt->wqt_arg1 = a1;
 	wqt->wqt_arg2 = a2;
 
-	mtx_enter(&wq->wq_mtx);
+	s = splhigh();
 	SIMPLEQ_INSERT_TAIL(&wq->wq_tasklist, wqt, wqt_entry);
-	mtx_leave(&wq->wq_mtx);
+	splx(s);
 
-	if (wake)
-		wakeup_one(wq);
+	wakeup_one(wq);
 
 	return (0);
 }
@@ -172,29 +170,26 @@ workq_thread(void *arg)
 {
 	struct workq		*wq = arg;
 	struct workq_task	*wqt;
+	int			s;
 
-	KERNEL_PROC_UNLOCK(curproc);
-	mtx_enter(&wq->wq_mtx);
+	s = splhigh();
 	while (wq->wq_flags & WQ_F_RUNNING) {
 		while ((wqt = SIMPLEQ_FIRST(&wq->wq_tasklist)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&wq->wq_tasklist, wqt_entry);
 			wq->wq_busy++;
-			mtx_leave(&wq->wq_mtx);
+			splx(s);
 
-			if ((wqt->wqt_flags & WQ_MPSAFE) == 0)
-				KERNEL_PROC_LOCK(curproc);
 			wqt->wqt_func(wqt->wqt_arg1, wqt->wqt_arg2);
-			if ((wqt->wqt_flags & WQ_MPSAFE) == 0)
-				KERNEL_PROC_UNLOCK(curproc);
+
+			s = splhigh();
 			pool_put(&workq_task_pool, wqt);
 
-			mtx_enter(&wq->wq_mtx);
 			wq->wq_busy--;
 		}
-		msleep(wq, &wq->wq_mtx, PWAIT, "bored", 0);
+		tsleep(wq, PWAIT, "bored", 0);
 	}
 	wq->wq_running--;
-	mtx_leave(&wq->wq_mtx);
+	splx(s);
 	wakeup(&wq->wq_running);
 
 	KERNEL_PROC_LOCK(curproc);
