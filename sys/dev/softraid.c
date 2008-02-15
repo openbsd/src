@@ -1,6 +1,7 @@
-/* $OpenBSD: softraid.c,v 1.103 2008/02/14 22:04:34 ckuethe Exp $ */
+/* $OpenBSD: softraid.c,v 1.104 2008/02/15 05:29:25 ckuethe Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
+ * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
