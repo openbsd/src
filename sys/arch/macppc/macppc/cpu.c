@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.45 2007/12/04 22:36:39 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.46 2008/02/15 17:33:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -55,6 +55,7 @@
 #define HID0_LRSTK	(1 << (31-27))
 #define HID0_FOLD	(1 << (31-28))
 #define HID0_BHT	(1 << (31-29))
+extern u_int32_t	hid0_idle;
 
 /* SCOM addresses (24-bit) */
 #define SCOM_PCR	0x0aa001 /* Power Control Register */
@@ -376,16 +377,18 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_IBM750FX:
 	case PPC_CPU_MPC7410:
 		/* select DOZE mode */
-		hid0 &= ~(HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM;
+		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
+		hid0_idle = HID0_DOZE;
+		hid0 |= HID0_DPM;
 		break;
 	case PPC_CPU_MPC7447A:
 	case PPC_CPU_MPC7450:
 	case PPC_CPU_MPC7455:
 	case PPC_CPU_MPC7457:
 		/* select NAP mode */
-		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
+		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
+		hid0_idle = HID0_NAP;
+		hid0 |= HID0_DPM;
 		/* try some other flags */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
@@ -395,8 +398,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	case PPC_CPU_IBM970FX:
 		/* select NAP mode */
-		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
+		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
+		hid0 |= HID0_DPM;
 		break;
 	}
 	if (ppc_proc_is_64b == 0)

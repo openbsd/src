@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2007/12/04 22:36:39 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2008/02/15 17:33:51 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -60,6 +60,9 @@ fwargsave:
 			.long 0
 			.long 0
 
+       .globl  _C_LABEL(hid0_idle),
+       .type   _C_LABEL(hid0_idle),@object
+_C_LABEL(hid0_idle):   .long   0       /* hid0 bits to set on idle, DOZE/NAP *
 /*
  * Startup entry
  */
@@ -215,19 +218,66 @@ switch_exited:
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_enter))
+	/* must disable external interrupts during idle queue checking */
+	mfmsr	%r3
+	andi.	%r3,%r3,~PSL_EE@l
+	mtmsr	%r3
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_cycle))
-#if 0
-	/* low power mode */
+	/*
+	 * interrupts were disabled in cpu_idle_enter, but must be enabled
+	 * for sleeping
+	 */
+	lis	%r4, _C_LABEL(hid0_idle)@ha
+	lwz	%r4, _C_LABEL(hid0_idle)@l(%r4)
 	mfmsr	%r3
-	oris	%r3, %r3, PSL_POW@h
-	mtmsr	%r3
+	//* if hid0_idle is 0, no low power */
+	cmpwi	%r4, 0
+	beq	idledone
+	/* set HID0_(HID|NAP|DOZ) as appropriate in hid0 */
+	mfspr	%r5, 1008
+	or	%r5, %r5, %r4
+	mtspr	1008,	%r5
 	isync
-#endif
+	/* enable interrupts, required before setting POW */
+	ori	%r5,%r3,PSL_EE@l
+	mtmsr	%r5
+	oris	%r5, %r5, PSL_POW@h
+	sync
+	/* low power mode */
+	mtmsr	%r5
+	sync
+	isync
+
+	/*
+	 * restore interrupts to disabled, so hid0 is only modified with
+	 * interrupts disabled.
+	 */
+	mtmsr %r3
+	isync
+
+	/* clear HID0_(HID|NAP|DOZ) since sleeping is over */
+	mfspr	%r5, 1008
+	andc	%r5, %r5, %r4
+	mtspr	1008, %r5
+idledone:
+	/*
+	 * enable interrupts for a small window here to catch machines
+	 * that do not have any sleep mode
+	 */
+	ori     %r5,%r3,PSL_EE@l
+	mtmsr	%r5
+	isync
+	mtmsr	%r3
 	blr
 
+
 _ENTRY(_C_LABEL(cpu_idle_leave))
+	/* enable interrupts disabled in cpu_idle_enter. */
+	mfmsr	%r3
+	ori	%r3,%r3,PSL_EE@l
+	mtmsr	%r3
 	blr
 
 /*
@@ -684,6 +734,18 @@ nop32_7e:
 _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 #endif  /* DDB */
 
+#define HID_IDLE_CHECK(sr1,sr2,sr3,rSRR0)				\
+	/* detect if interrupt occurred from idle */			\
+	mfspr	sr1, 1008;						\
+	lis	sr2,_C_LABEL(hid0_idle)@ha;				\
+	lwz	sr2,_C_LABEL(hid0_idle)@l(sr2);				\
+	and.	sr3,sr1,sr2;						\
+	andc	sr1,sr1,sr2;						\
+	beq+	1f;							\
+	mtspr	1008, sr1;						\
+	lis	rSRR0,_C_LABEL(idledone)@ha;				\
+	addi	rSRR0,rSRR0,_C_LABEL(idledone)@l;			\
+1:
 
 /*
  * FRAME_SETUP assumes:
@@ -745,6 +807,7 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 	stw	%r5,FRAME_EXC+8(%r1);					\
 	stw	%r28,FRAME_DAR+8(%r1);					\
 	stw	%r29,FRAME_DSISR+8(%r1);				\
+	HID_IDLE_CHECK(%r5,%r6,%r0,%r30)				\
 	stw	%r30,FRAME_SRR0+8(%r1);					\
 	stw	%r31,FRAME_SRR1+8(%r1)
 
