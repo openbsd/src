@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.63 2007/11/17 16:50:02 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.64 2008/02/16 10:09:23 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -701,6 +701,8 @@ bwi_attach(struct bwi_softc *sc)
 	struct bwi_phy *phy;
 	int i, error;
 
+	DPRINTF(1, "\n");
+
 	/* Initialize LED vars */
 	sc->sc_led_idle = (2350 * hz) / 1000;
 	sc->sc_led_blink = 1;
@@ -1213,7 +1215,8 @@ bwi_mac_init(struct bwi_mac *mac)
 	 */
 	error = sc->sc_init_rx_ring(sc);
 	if (error) {
-		DPRINTF(1, "can't initialize RX ring\n");
+		DPRINTF(1, "%s: can't initialize RX ring\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -2220,9 +2223,12 @@ bwi_mac_set_retry_lim(struct bwi_mac *mac, const struct bwi_retry_lim *lim)
 void
 bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 {
-	DPRINTF(1, "%s\n", __func__);
-
+	struct bwi_softc *sc;
 	int i;
+
+	sc = mac->mac_sc;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	/* XXX not standard conforming */
 	for (i = 0; i < rs->rs_nrates; ++i) {
@@ -2419,9 +2425,12 @@ bwi_mac_get_property(struct bwi_mac *mac)
 void
 bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 {
-	DPRINTF(1, "%s\n", __func__);
-
+	struct bwi_softc *sc;
 	uint16_t slot_time;
+
+	sc = mac->mac_sc;
+
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B)
 		return;
@@ -2432,7 +2441,7 @@ bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 		slot_time = IEEE80211_DUR_SLOT;
 
 	CSR_WRITE_2(mac->mac_sc, BWI_MAC_SLOTTIME,
-		    slot_time + BWI_MAC_SLOTTIME_ADJUST);
+	    slot_time + BWI_MAC_SLOTTIME_ADJUST);
 	MOBJ_WRITE_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_SLOTTIME, slot_time);
 }
 
@@ -3981,7 +3990,7 @@ bwi_rf_work_around(struct bwi_mac *mac, uint chan)
 	struct bwi_rf *rf = &mac->mac_rf;
 
 	if (chan == IEEE80211_CHAN_ANY) {
-		DPRINTF(1, "%s: %s invalid channel!!\n",
+		DPRINTF(1, "%s: %s invalid channel!\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return;
 	}
@@ -5842,7 +5851,7 @@ bwi_power_on(struct bwi_softc *sc, int with_pll)
 {
 	uint32_t gpio_in, gpio_out, gpio_en, status;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	gpio_in = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN);
 	if (gpio_in & BWI_PCIM_GPIO_PWR_ON)
@@ -5882,7 +5891,7 @@ bwi_power_off(struct bwi_softc *sc, int with_pll)
 {
 	uint32_t gpio_out, gpio_en;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	(sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN); /* dummy read */
 	gpio_out = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
@@ -6017,8 +6026,9 @@ bwi_led_attach(struct bwi_softc *sc)
 			}
 		}
 
-		DPRINTF(1, "%dth led, act %d, lowact %d\n",
-		    i, led->l_act, led->l_flags & BWI_LED_F_ACTLOW);
+		DPRINTF(1, "%s: %dth led, act %d, lowact %d\n",
+		    sc->sc_dev.dv_xname, i, led->l_act,
+		    led->l_flags & BWI_LED_F_ACTLOW);
 	}
 	timeout_set(&sc->sc_led_blink_next_ch, bwi_led_blink_next, sc);
 	timeout_set(&sc->sc_led_blink_end_ch, bwi_led_blink_end, sc);
@@ -6614,7 +6624,7 @@ bwi_init(struct ifnet *ifp)
 	struct bwi_mac *mac;
 	int error;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	error = bwi_stop(sc);
 	if (error) {
@@ -6903,7 +6913,7 @@ bwi_stop(struct bwi_softc *sc)
 	struct bwi_mac *mac;
 	int i, error, pwr_off = 0;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
@@ -7058,7 +7068,7 @@ bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	struct bwi_softc *sc = ic->ic_if.if_softc;
 	int i;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	ieee80211_amrr_node_init(&sc->sc_amrr, &((struct bwi_node *)ni)->amn);
 
@@ -8298,7 +8308,7 @@ int
 bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
     struct ieee80211_node *ni)
 {
-	DPRINTF(2, "%s\n", __func__);
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_ring_data *rd = &sc->sc_tx_rdata[BWI_TX_DATA_RING];
@@ -8933,7 +8943,7 @@ bwi_updateslot(struct ieee80211com *ic)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	DPRINTF(2, "%s\n", __func__);
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
