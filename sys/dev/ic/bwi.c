@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.71 2008/02/16 22:06:44 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.72 2008/02/16 23:17:15 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -82,10 +82,6 @@ int bwi_debug = 1;
 #endif
 
 /* XXX temporary porting goop */
-#define KKASSERT(cond) if (!(cond)) panic("KKASSERT: %s in %s", #cond, __func__)
-#undef KASSERT
-#define KASSERT(cond, complaint) if (!(cond)) panic complaint
-
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -645,7 +641,7 @@ bwi_intr(void *xsc)
 	}
 
 	if (intr_status & BWI_INTR_TBTT) {
-		KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 		bwi_mac_config_ps((struct bwi_mac *)sc->sc_cur_regwin);
 	}
 
@@ -1306,11 +1302,11 @@ bwi_mac_set_tpctl_11bg(struct bwi_mac *mac, const struct bwi_tpctl *new_tpctl)
 	struct bwi_tpctl *tpctl = &mac->mac_tpctl;
 
 	if (new_tpctl != NULL) {
-		KKASSERT(new_tpctl->bbp_atten <= BWI_BBP_ATTEN_MAX);
-		KKASSERT(new_tpctl->rf_atten <=
+		KASSERT(new_tpctl->bbp_atten <= BWI_BBP_ATTEN_MAX);
+		KASSERT(new_tpctl->rf_atten <=
 		    (rf->rf_rev < 6 ? BWI_RF_ATTEN_MAX0
 		    : BWI_RF_ATTEN_MAX1));
-		KKASSERT(new_tpctl->tp_ctrl1 <= BWI_TPCTL1_MAX);
+		KASSERT(new_tpctl->tp_ctrl1 <= BWI_TPCTL1_MAX);
 
 		tpctl->bbp_atten = new_tpctl->bbp_atten;
 		tpctl->rf_atten = new_tpctl->rf_atten;
@@ -1559,7 +1555,7 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 	struct bwi_tpctl tpctl_orig;
 	int restore_tpctl = 0;
 
-	KKASSERT(phy->phy_mode != IEEE80211_MODE_11A);
+	KASSERT(phy->phy_mode != IEEE80211_MODE_11A);
 
 	if (BWI_IS_BRCM_BU4306(sc))
 		return;
@@ -2464,7 +2460,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	struct bwi_mac *mac;
 	int i;
 
-	KKASSERT(sc->sc_nmac <= BWI_MAC_MAX && sc->sc_nmac >= 0);
+	KASSERT(sc->sc_nmac <= BWI_MAC_MAX && sc->sc_nmac >= 0);
 
 	if (sc->sc_nmac == BWI_MAC_MAX) {
 		printf("%s: too many MACs\n", sc->sc_dev.dv_xname);
@@ -2559,7 +2555,7 @@ bwi_mac_balance_atten(int *bbp_atten0, int *rf_atten0)
 	}
 
 	/* RF attenuation MUST be within range */
-	KKASSERT(rf_atten >= 0 && rf_atten <= BWI_RF_ATTEN_MAX0);
+	KASSERT(rf_atten >= 0 && rf_atten <= BWI_RF_ATTEN_MAX0);
 
 	/*
 	 * Clamp BBP attenuation
@@ -2721,7 +2717,7 @@ bwi_mac_lock(struct bwi_mac *mac)
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	KKASSERT((mac->mac_flags & BWI_MAC_F_LOCKED) == 0);
+	KASSERT((mac->mac_flags & BWI_MAC_F_LOCKED) == 0);
 
 	if (mac->mac_rev < 3)
 		bwi_mac_stop(mac);
@@ -2743,7 +2739,7 @@ bwi_mac_unlock(struct bwi_mac *mac)
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	KKASSERT(mac->mac_flags & BWI_MAC_F_LOCKED);
+	KASSERT(mac->mac_flags & BWI_MAC_F_LOCKED);
 
 	CSR_READ_2(sc, BWI_PHYINFO); /* dummy read */
 
@@ -2913,7 +2909,7 @@ bwi_tbl_write_2(struct bwi_mac *mac, uint16_t ofs, uint16_t data)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
 
-	KKASSERT(phy->phy_tbl_ctrl != 0 && phy->phy_tbl_data_lo != 0);
+	KASSERT(phy->phy_tbl_ctrl != 0 && phy->phy_tbl_data_lo != 0);
 	PHY_WRITE(mac, phy->phy_tbl_ctrl, ofs);
 	PHY_WRITE(mac, phy->phy_tbl_data_lo, data);
 }
@@ -2923,7 +2919,7 @@ bwi_tbl_write_4(struct bwi_mac *mac, uint16_t ofs, uint32_t data)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
 
-	KKASSERT(phy->phy_tbl_data_lo != 0 && phy->phy_tbl_data_hi != 0 &&
+	KASSERT(phy->phy_tbl_data_lo != 0 && phy->phy_tbl_data_hi != 0 &&
 	    phy->phy_tbl_ctrl != 0);
 
 	PHY_WRITE(mac, phy->phy_tbl_ctrl, ofs);
@@ -3045,10 +3041,10 @@ bwi_phy_init_11g(struct bwi_mac *mac)
 		bwi_rf_set_nrssi_thr(mac);
 	} else if ((phy->phy_flags & BWI_PHY_F_LINKED) || phy->phy_rev >= 2) {
 		if (rf->rf_nrssi[0] == BWI_INVALID_NRSSI) {
-			KKASSERT(rf->rf_nrssi[1] == BWI_INVALID_NRSSI);
+			KASSERT(rf->rf_nrssi[1] == BWI_INVALID_NRSSI);
 			bwi_rf_calc_nrssi_slope(mac);
 		} else {
-			KKASSERT(rf->rf_nrssi[1] != BWI_INVALID_NRSSI);
+			KASSERT(rf->rf_nrssi[1] != BWI_INVALID_NRSSI);
 			bwi_rf_set_nrssi_thr(mac);
 		}
 	}
@@ -3680,7 +3676,7 @@ bwi_get_rf_lo(struct bwi_mac *mac, uint16_t rf_atten, uint16_t bbp_atten)
 	int n;
 
 	n = rf_atten + (14 * (bbp_atten / 2));
-	KKASSERT(n < BWI_RFLO_MAX);
+	KASSERT(n < BWI_RFLO_MAX);
 
 	return (&mac->mac_rf.rf_lo[n]);
 }
@@ -3692,7 +3688,7 @@ bwi_rf_lo_isused(struct bwi_mac *mac, const struct bwi_rf_lo *lo)
 	int idx;
 
 	idx = lo - rf->rf_lo;
-	KKASSERT(idx >= 0 && idx < BWI_RFLO_MAX);
+	KASSERT(idx >= 0 && idx < BWI_RFLO_MAX);
 
 	return (isset(rf->rf_lo_used, idx));
 }
@@ -4112,7 +4108,7 @@ bwi_rf_lo_find(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 		static const uint16_t map[MAP_MAX] =
 		{ 11, 10, 11, 12, 13, 12, 13, 12, 13, 12 };
 #if 0
-		KKASSERT(rf_atten < MAP_MAX);
+		KASSERT(rf_atten < MAP_MAX);
 		rf_atten = map[rf_atten];
 #else
 		if (rf_atten >= MAP_MAX) {
@@ -4521,7 +4517,7 @@ bwi_rf_calibval(struct bwi_mac *mac)
 
 	val = RF_READ(mac, BWI_RFR_BBP_ATTEN);
 	idx = __SHIFTOUT(val, BWI_RFR_BBP_ATTEN_CALIB_IDX);
-	KKASSERT(idx < (int)(sizeof(rf_calibvals) / sizeof(rf_calibvals[0])));
+	KASSERT(idx < (int)(sizeof(rf_calibvals) / sizeof(rf_calibvals[0])));
 
 	calib = rf_calibvals[idx] << 1;
 	if (val & BWI_RFR_BBP_ATTEN_CALIB_BIT)
@@ -5084,11 +5080,11 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 
 		if (i < LO_ADJUST_MIN)
 			i += LO_ADJUST_MAX;
-		KKASSERT(i <= LO_ADJUST_MAX && i >= LO_ADJUST_MIN);
+		KASSERT(i <= LO_ADJUST_MAX && i >= LO_ADJUST_MIN);
 
 		if (fin > LO_ADJUST_MAX)
 			fin -= LO_ADJUST_MAX;
-		KKASSERT(fin <= LO_ADJUST_MAX && fin >= LO_ADJUST_MIN);
+		KASSERT(fin <= LO_ADJUST_MAX && fin >= LO_ADJUST_MIN);
 
 		bcopy(&lo_min, &lo_base, sizeof(lo_base));
 		for (;;) {
@@ -5782,7 +5778,7 @@ bwi_rf_set_ant_mode(struct bwi_mac *mac, int ant_mode)
 	struct bwi_phy *phy = &mac->mac_phy;
 	uint16_t val;
 
-	KKASSERT(ant_mode == BWI_ANT_MODE_0 ||
+	KASSERT(ant_mode == BWI_ANT_MODE_0 ||
 	    ant_mode == BWI_ANT_MODE_1 ||
 	    ant_mode == BWI_ANT_MODE_AUTO);
 
@@ -6672,7 +6668,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		printf("%s: no MAC was found\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
-	KKASSERT(sc->sc_nmac > 0);
+	KASSERT(sc->sc_nmac > 0);
 
 	/* Bus regwin must exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
@@ -6697,7 +6693,7 @@ bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 	int error;
 
 	bus = &sc->sc_bus_regwin;
-	KKASSERT(sc->sc_cur_regwin == &mac->mac_regwin);
+	KASSERT(sc->sc_cur_regwin == &mac->mac_regwin);
 
 	/*
 	 * Tell bus to generate requested interrupts
@@ -6827,9 +6823,9 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	bzero(freq, sizeof(*freq));
 	com = &sc->sc_com_regwin;
 
-	KKASSERT(BWI_REGWIN_EXIST(com));
-	KKASSERT(sc->sc_cur_regwin == com);
-	KKASSERT(sc->sc_cap & BWI_CAP_CLKMODE);
+	KASSERT(BWI_REGWIN_EXIST(com));
+	KASSERT(sc->sc_cur_regwin == com);
+	KASSERT(sc->sc_cap & BWI_CAP_CLKMODE);
 
 	/*
 	 * Calculate clock frequency
@@ -6865,8 +6861,8 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 		div = (__SHIFTOUT(val, BWI_CLOCK_INFO_FDIV) + 1) << 2;
 	}
 
-	KKASSERT(src >= 0 && src < BWI_CLKSRC_MAX);
-	KKASSERT(div != 0);
+	KASSERT(src >= 0 && src < BWI_CLKSRC_MAX);
+	KASSERT(div != 0);
 
 	DPRINTF(1, "%s: clksrc %s\n",
 	    sc->sc_dev.dv_xname,
@@ -7277,7 +7273,7 @@ bwi_stop(struct bwi_softc *sc)
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 		mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 		bwi_disable_intrs(sc, BWI_ALL_INTRS);
@@ -7351,7 +7347,7 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		bwi_set_bssid(sc, ic->ic_bss->ni_bssid);
 
-		KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 		mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 		/* Initial TX power calibration */
@@ -7495,8 +7491,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		break;
 	}
 
-	KKASSERT(desc_sz != 0);
-	KKASSERT(txrx_ctrl_step != 0);
+	KASSERT(desc_sz != 0);
+	KASSERT(txrx_ctrl_step != 0);
 
 	tx_ring_sz = roundup(desc_sz * BWI_TX_NDESC, BWI_RING_ALIGN);
 	rx_ring_sz = roundup(desc_sz * BWI_RX_NDESC, BWI_RING_ALIGN);
@@ -7855,7 +7851,7 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	struct bwi_txbuf_data *tbd;
 	uint32_t val, addr_hi, addr_lo;
 
-	KKASSERT(ring_idx < BWI_TX_NRING);
+	KASSERT(ring_idx < BWI_TX_NRING);
 	rd = &sc->sc_tx_rdata[ring_idx];
 	tbd = &sc->sc_tx_bdata[ring_idx];
 
@@ -7962,7 +7958,7 @@ bwi_setup_rx_desc32(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
 {
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 
-	KKASSERT(buf_idx < BWI_RX_NDESC);
+	KASSERT(buf_idx < BWI_RX_NDESC);
 	bwi_setup_desc32(sc, rd->rdata_desc, BWI_RX_NDESC, buf_idx,
 	    paddr, buf_len, 0);
 }
@@ -7971,7 +7967,7 @@ void
 bwi_setup_tx_desc32(struct bwi_softc *sc, struct bwi_ring_data *rd,
     int buf_idx, bus_addr_t paddr, int buf_len)
 {
-	KKASSERT(buf_idx < BWI_TX_NDESC);
+	KASSERT(buf_idx < BWI_TX_NDESC);
 	bwi_setup_desc32(sc, rd->rdata_desc, BWI_TX_NDESC, buf_idx,
 	    paddr, buf_len, 1);
 }
@@ -8022,7 +8018,7 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	struct mbuf *m;
 	int error;
 
-	KKASSERT(buf_idx < BWI_RX_NDESC);
+	KASSERT(buf_idx < BWI_RX_NDESC);
 
 	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -8113,7 +8109,7 @@ bwi_set_chan(struct bwi_softc *sc, uint8_t chan)
 {
 	struct bwi_mac *mac;
 
-	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	bwi_rf_set_chan(mac, chan, 0);
@@ -8334,7 +8330,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	uint32_t state, val;
 	int i;
 
-	KKASSERT(ring_idx < BWI_TX_NRING);
+	KASSERT(ring_idx < BWI_TX_NRING);
 	rd = &sc->sc_tx_rdata[ring_idx];
 	tbd = &sc->sc_tx_bdata[ring_idx];
 
@@ -8656,7 +8652,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	int i;
 #endif
 
-	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -8916,13 +8912,13 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 	ring_idx = __SHIFTOUT(tx_id, BWI_TXH_ID_RING_MASK);
 	buf_idx = __SHIFTOUT(tx_id, BWI_TXH_ID_IDX_MASK);
 
-	KKASSERT(ring_idx == BWI_TX_DATA_RING);
-	KKASSERT(buf_idx < BWI_TX_NDESC);
+	KASSERT(ring_idx == BWI_TX_DATA_RING);
+	KASSERT(buf_idx < BWI_TX_NDESC);
 #if 0
 	DPRINTF(1, "%s: txeof idx %d\n", sc->sc_dev.dv_xname, buf_idx);
 #endif
 	tbd = &sc->sc_tx_bdata[ring_idx];
-	KKASSERT(tbd->tbd_used > 0);
+	KASSERT(tbd->tbd_used > 0);
 	tbd->tbd_used--;
 
 	tb = &tbd->tbd_buf[buf_idx];
@@ -9012,7 +9008,7 @@ bwi_get_pwron_delay(struct bwi_softc *sc)
 	int error;
 
 	com = &sc->sc_com_regwin;
-	KKASSERT(BWI_REGWIN_EXIST(com));
+	KASSERT(BWI_REGWIN_EXIST(com));
 
 	if ((sc->sc_cap & BWI_CAP_CLKMODE) == 0)
 		return (0);
@@ -9242,7 +9238,7 @@ bwi_set_bssid(struct bwi_softc *sc, const uint8_t *bssid)
 	uint32_t val;
 	int n, i;
 
-	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	bwi_set_addr_filter(sc, BWI_ADDR_FILTER_BSSID, bssid);
@@ -9275,7 +9271,7 @@ bwi_updateslot(struct ieee80211com *ic)
 
 	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
-	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	bwi_mac_updateslot(mac, (ic->ic_flags & IEEE80211_F_SHSLOT));
@@ -9293,7 +9289,7 @@ bwi_calibrate(void *xsc)
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		struct bwi_mac *mac;
 
-		KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 		mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
@@ -9311,7 +9307,7 @@ bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 {
 	struct bwi_mac *mac;
 
-	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	return (bwi_rf_calc_rssi(mac, hdr));
