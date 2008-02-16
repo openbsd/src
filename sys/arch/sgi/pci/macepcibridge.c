@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.13 2007/10/18 04:32:27 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.14 2008/02/16 18:42:21 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -188,7 +188,6 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
 	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
 	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
-	sc->sc_pc.pc_sync_cache = sys_config._IOSyncDCache;
 
 	/* Create extents for PCI mappings */
 	mace_pcibbus_io_tag.bus_extent = extent_create("pci_io",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 2007/05/20 14:22:35 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.4 2008/02/16 18:42:21 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -52,9 +52,6 @@ struct mips_pci_chipset {
     void	*(*pc_intr_establish)(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *);
     void	(*pc_intr_disestablish)(void *, void *);
-    int		(*pc_ether_hw_addr)(u_int8_t *, u_int8_t, u_int8_t);
-    int		(*pc_scsi_clock)(u_int8_t, u_int8_t);
-    void	(*pc_sync_cache)(vaddr_t, int, int);
 };
 
 /*
@@ -80,9 +77,3 @@ struct mips_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
-#define	pci_ether_hw_addr(c, p, t, s)					\
-    (*(c)->pc_ether_hw_addr)((p), (t), (s))
-#define	pci_scsi_clock(c, t, s)						\
-    (*(c)->pc_scsi_clock)((t), (s))
-#define	pci_sync_cache(c, p, s, d)					\
-    (*(c)->pc_sync_cache)((p), (s), (d))
