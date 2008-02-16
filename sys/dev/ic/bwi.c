@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.69 2008/02/16 17:52:28 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.70 2008/02/16 20:09:05 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -333,7 +333,6 @@ void		 bwi_free_tx_ring32(struct bwi_softc *, int);
 void		 bwi_free_txstats64(struct bwi_softc *);
 void		 bwi_free_rx_ring64(struct bwi_softc *);
 void		 bwi_free_tx_ring64(struct bwi_softc *, int);
-uint8_t		 bwi_rate2plcp(uint8_t); /* XXX belongs to 802.11 */
 uint8_t		 bwi_ofdm_plcp2rate(uint32_t *);
 uint8_t		 bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *);
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
@@ -2251,17 +2250,20 @@ bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 		switch (modtype) {
 		case IEEE80211_MODTYPE_DS:
 			ofs = 0x4c0;
+			ofs += (ieee80211_rate2plcp(rs->rs_rates[i],
+			    IEEE80211_MODE_11B) & 0xf) * 2;
 			break;
 		case IEEE80211_MODTYPE_OFDM:
 			ofs = 0x480;
+			ofs += (ieee80211_rate2plcp(rs->rs_rates[i],
+			    IEEE80211_MODE_11G) & 0xf) * 2;
 			break;
 		default:
 			panic("unsupported modtype %u\n", modtype);
 		}
-		ofs += (bwi_rate2plcp(rs->rs_rates[i]) & 0xf) * 2;
 
 		MOBJ_WRITE_2(mac, BWI_COMM_MOBJ, ofs + 0x20,
-			     MOBJ_READ_2(mac, BWI_COMM_MOBJ, ofs));
+		    MOBJ_READ_2(mac, BWI_COMM_MOBJ, ofs));
 	}
 }
 
@@ -8403,33 +8405,6 @@ bwi_free_tx_ring64(struct bwi_softc *sc, int ring_idx)
 	/* TODO: 64 */
 }
 
-/* XXX does not belong here */
-uint8_t
-bwi_rate2plcp(uint8_t rate)
-{
-	rate &= IEEE80211_RATE_VAL;
-
-	switch (rate) {
-	case 2:		return (0xa);
-	case 4:		return (0x14);
-	case 11:	return (0x37);
-	case 22:	return (0x6e);
-	case 44:	return (0xdc);
-
-	case 12:	return (0xb);
-	case 18:	return (0xf);
-	case 24:	return (0xa);
-	case 36:	return (0xe);
-	case 48:	return (0x9);
-	case 72:	return (0xd);
-	case 96:	return (0x8);
-	case 108:	return (0xc);
-
-	default:
-		panic("unsupported rate %u\n", rate);
-	}
-}
-
 uint8_t
 bwi_ofdm_plcp2rate(uint32_t *plcp0)
 {
@@ -8453,7 +8428,8 @@ bwi_ofdm_plcp_header(uint32_t *plcp0, int pkt_len, uint8_t rate)
 {
 	uint32_t plcp;
 
-	plcp = __SHIFTIN(bwi_rate2plcp(rate), IEEE80211_OFDM_PLCP_RATE_MASK) |
+	plcp = __SHIFTIN(ieee80211_rate2plcp(rate, IEEE80211_MODE_11G),
+	    IEEE80211_OFDM_PLCP_RATE_MASK) |
 	    __SHIFTIN(pkt_len, IEEE80211_OFDM_PLCP_LEN_MASK);
 	*plcp0 = htole32(plcp);
 }
@@ -8480,7 +8456,7 @@ bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *plcp, int pkt_len,
 			service |= IEEE80211_DS_PLCP_SERVICE_LENEXT7;
 	}
 
-	plcp->i_signal = bwi_rate2plcp(rate);
+	plcp->i_signal = ieee80211_rate2plcp(rate, IEEE80211_MODE_11B);
 	plcp->i_service = service;
 	plcp->i_length = htole16(len);
 	/* NOTE: do NOT touch i_crc */
