@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.79 2008/02/11 01:07:02 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.80 2008/02/16 15:24:05 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -986,7 +986,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL) {
 		DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd no ccb\n", DEVNAME(sc));
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 
 	xs->error = XS_NOERROR;
