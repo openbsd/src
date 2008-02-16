@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.8,v 1.5 2008/01/31 19:40:38 jmc Exp $
+.\" $OpenBSD: snmpd.8,v 1.6 2008/02/16 22:06:10 sobrado Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2008 $
+.Dd $Mdocdate: February 16 2008 $
 .Dt SNMPD 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd Simple Network Management Protocol Daemon
 .Sh SYNOPSIS
 .Nm snmpd
-.Op Fl dnNv
+.Op Fl dNnv
 .Oo Xo
 .Fl D Ar macro Ns = Ns Ar value Oc
 .Xc
@@ -50,11 +50,11 @@ Use
 .Ar file
 as the configuration file, instead of the default
 .Pa /etc/snmpd.conf .
+.It Fl N
+Show numeric OID values instead of their symbolic names.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl N
-Show numeric OID values instead of their symbolic names.
 .It Fl v
 Produce more verbose output.
 .El
