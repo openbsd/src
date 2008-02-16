@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.68 2008/02/16 17:29:21 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.69 2008/02/16 17:52:28 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -126,6 +126,7 @@ struct ieee80211_ds_plcp_hdr {
 	uint16_t	i_crc;
 } __packed;
 
+/* MAC */
 void		 bwi_tmplt_write_4(struct bwi_mac *, uint32_t, uint32_t);
 void		 bwi_hostflags_write(struct bwi_mac *, uint64_t);
 uint64_t	 bwi_hostflags_read(struct bwi_mac *);
@@ -148,7 +149,7 @@ void		 bwi_mac_detach(struct bwi_mac *);
 int		 bwi_get_firmware(const char *, const uint8_t *, size_t,
 		     size_t *, size_t *);
 int		 bwi_fwimage_is_valid(struct bwi_softc *, uint8_t *,
-		    size_t fw_len, char *, uint8_t);
+		     size_t, char *, uint8_t);
 int		 bwi_mac_fw_alloc(struct bwi_mac *);
 void		 bwi_mac_fw_free(struct bwi_mac *);
 int		 bwi_mac_fw_load(struct bwi_mac *);
@@ -177,6 +178,8 @@ void		 bwi_mac_calibrate_txpower(struct bwi_mac *);
 void		 bwi_mac_lock(struct bwi_mac *);
 void		 bwi_mac_unlock(struct bwi_mac *);
 void		 bwi_mac_set_promisc(struct bwi_mac *, int);
+
+/* PHY */
 void		 bwi_phy_write(struct bwi_mac *, uint16_t, uint16_t);
 uint16_t	 bwi_phy_read(struct bwi_mac *, uint16_t);
 int		 bwi_phy_attach(struct bwi_mac *);
@@ -196,6 +199,8 @@ void		 bwi_phy_config_11g(struct bwi_mac *);
 void		 bwi_phy_config_agc(struct bwi_mac *);
 void		 bwi_set_gains(struct bwi_mac *, const struct bwi_gains *);
 void		 bwi_phy_clear_state(struct bwi_phy *);
+
+/* RF */
 int16_t		 bwi_nrssi_11g(struct bwi_mac *);
 struct bwi_rf_lo
 		*bwi_get_rf_lo(struct bwi_mac *, uint16_t, uint16_t);
@@ -222,14 +227,12 @@ uint16_t	 bwi_rf_calibval(struct bwi_mac *);
 int32_t		 _bwi_adjust_devide(int32_t, int32_t);
 int		 bwi_rf_calc_txpower(int8_t *, uint8_t, const int16_t[]);
 int		 bwi_rf_map_txpower(struct bwi_mac *);
-
 void		 bwi_rf_lo_update_11g(struct bwi_mac *);
 uint32_t	 bwi_rf_lo_devi_measure(struct bwi_mac *, uint16_t);
 uint16_t	 bwi_rf_get_tp_ctrl2(struct bwi_mac *);
 uint8_t		 _bwi_rf_lo_update_11g(struct bwi_mac *, uint16_t);
 void		 bwi_rf_lo_measure_11g(struct bwi_mac *,
 		     const struct bwi_rf_lo *, struct bwi_rf_lo *, uint8_t);
-
 void		 bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *);
 void		 bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *);
 void		 bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *);
@@ -254,6 +257,7 @@ int		 bwi_rf_calc_rssi_bcm2060(struct bwi_mac *,
 uint16_t	 bwi_rf_lo_measure_11b(struct bwi_mac *);
 void		 bwi_rf_lo_update_11b(struct bwi_mac *);
 
+/* INTERFACE */
 uint16_t	 bwi_read_sprom(struct bwi_softc *, uint16_t);
 void		 bwi_setup_desc32(struct bwi_softc *, struct bwi_desc32 *, int,
 		     int, bus_addr_t, int, int);
@@ -910,6 +914,8 @@ bwi_detach(void *arg)
 
 	return (0);
 }
+
+/* MAC */
 
 void
 bwi_tmplt_write_4(struct bwi_mac *mac, uint32_t ofs, uint32_t val)
@@ -2763,7 +2769,7 @@ bwi_mac_set_promisc(struct bwi_mac *mac, int promisc)
 		CSR_CLRBITS_4(sc, BWI_MAC_STATUS, BWI_MAC_STATUS_PROMISC);
 }
 
-/* BWIPHY */
+/* PHY */
 
 void
 bwi_phy_write(struct bwi_mac *mac, uint16_t ctrl, uint16_t data)
@@ -3650,7 +3656,7 @@ bwi_phy_clear_state(struct bwi_phy *phy)
 	phy->phy_flags &= ~BWI_CLEAR_PHY_FLAGS;
 }
 
-/* BWIRF */
+/* RF */
 
 int16_t
 bwi_nrssi_11g(struct bwi_mac *mac)
@@ -6162,7 +6168,7 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 	bwi_rf_workaround(mac, rf->rf_curchan);
 }
 
-/* IF_BWI */
+/* INTERFACE */
 
 uint16_t
 bwi_read_sprom(struct bwi_softc *sc, uint16_t ofs)
@@ -8454,7 +8460,7 @@ bwi_ofdm_plcp_header(uint32_t *plcp0, int pkt_len, uint8_t rate)
 
 void
 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *plcp, int pkt_len,
-		   uint8_t rate)
+    uint8_t rate)
 {
 	int len, service, pkt_bitlen;
 
