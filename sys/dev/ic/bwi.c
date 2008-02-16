@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.67 2008/02/16 16:45:28 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.68 2008/02/16 17:29:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -617,7 +617,7 @@ bwi_intr(void *xsc)
 		    CSR_READ_4(sc, BWI_TXRX_INTR_STATUS(i)) & mask;
 
 		if (txrx_intr_status[i] & BWI_TXRX_INTR_ERROR) {
-			DPRINTF(1, "%s: intr fatal TX/RX (%d) error 0x%08x\n",
+			printf("%s: intr fatal TX/RX (%d) error 0x%08x\n",
 			    sc->sc_dev.dv_xname, i, txrx_intr_status[i]);
 			txrx_error = 1;
 		}
@@ -635,7 +635,7 @@ bwi_intr(void *xsc)
 	bwi_disable_intrs(sc, BWI_ALL_INTRS);
 
 	if (intr_status & BWI_INTR_PHY_TXERR)
-		DPRINTF(1, "%s: intr PHY TX error\n", sc->sc_dev.dv_xname);
+		printf("%s: intr PHY TX error\n", sc->sc_dev.dv_xname);
 
 	if (txrx_error) {
 		/* TODO: reset device */
@@ -647,7 +647,7 @@ bwi_intr(void *xsc)
 	}
 
 	if (intr_status & BWI_INTR_EO_ATIM)
-		DPRINTF(1, "%s: EO_ATIM\n", sc->sc_dev.dv_xname);
+		printf("%s: EO_ATIM\n", sc->sc_dev.dv_xname);
 
 	if (intr_status & BWI_INTR_PMQ) {
 		for (;;) {
@@ -658,7 +658,7 @@ bwi_intr(void *xsc)
 	}
 
 	if (intr_status & BWI_INTR_NOISE)
-		DPRINTF(1, "%s: intr noise\n", sc->sc_dev.dv_xname);
+		printf("%s: intr noise\n", sc->sc_dev.dv_xname);
 
 	if (txrx_intr_status[0] & BWI_TXRX_INTR_RX)
 		rx_data = sc->sc_rxeof(sc);
@@ -834,7 +834,7 @@ bwi_attach(struct bwi_softc *sc)
 		if (IEEE80211_IS_MULTICAST(ic->ic_myaddr)) {
 			bwi_get_eaddr(sc, BWI_SPROM_11A_EADDR, ic->ic_myaddr);
 			if (IEEE80211_IS_MULTICAST(ic->ic_myaddr)) {
-				DPRINTF(1, "%s: invalid MAC address: %s\n",
+				printf("%s: invalid MAC address: %s\n",
 				    sc->sc_dev.dv_xname,
 				    ether_sprintf(ic->ic_myaddr));
 			}
@@ -1222,8 +1222,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	 */
 	error = sc->sc_init_rx_ring(sc);
 	if (error) {
-		DPRINTF(1, "%s: can't initialize RX ring\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: can't initialize RX ring\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -1233,7 +1232,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	if (mac->mac_flags & BWI_MAC_F_HAS_TXSTATS) {
 		error = sc->sc_init_txstats(sc);
 		if (error) {
-			DPRINTF(1, "%s: can't initialize TX stats ring\n",
+			printf("%s: can't initialize TX stats ring\n",
 			    sc->sc_dev.dv_xname);
 			return (error);
 		}
@@ -1347,7 +1346,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL1);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL1) {
-		DPRINTF(1, "%s: TEST1 failed\n", sc->sc_dev.dv_xname);
+		printf("%s: TEST1 failed\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -1355,7 +1354,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL2);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL2) {
-		DPRINTF(1, "%s: TEST2 failed\n", sc->sc_dev.dv_xname);
+		printf("%s: TEST2 failed\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -1364,14 +1363,14 @@ bwi_mac_test(struct bwi_mac *mac)
 
 	val = CSR_READ_4(sc, BWI_MAC_STATUS);
 	if ((val & ~BWI_MAC_STATUS_PHYLNK) != BWI_MAC_STATUS_IHREN) {
-		DPRINTF(1, "%s: %s failed, MAC status 0x%08x\n",
+		printf("%s: %s failed, MAC status 0x%08x\n",
 		    sc->sc_dev.dv_xname, __func__, val);
 		return (ENXIO);
 	}
 
 	val = CSR_READ_4(sc, BWI_MAC_INTR_STATUS);
 	if (val != 0) {
-		DPRINTF(1, "%s: %s failed, intr status %08x\n",
+		printf("%s: %s failed, intr status %08x\n",
 		    sc->sc_dev.dv_xname, __func__, val);
 		return (ENXIO);
 	}
@@ -1762,7 +1761,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
 			idx = 5;
 		} else {
-			DPRINTF(1, "%s: no suitable IV for MAC rev %d\n",
+			printf("%s: no suitable IV for MAC rev %d\n",
 			    sc->sc_dev.dv_xname, mac->mac_rev);
 			return (ENODEV);
 		}
@@ -1884,7 +1883,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: firmware (fw & pcm) loading timed out\n",
+		printf("%s: firmware (fw & pcm) loading timed out\n",
 		    sc->sc_dev.dv_xname);
 		error = ETIMEDOUT;
 		goto out;
@@ -1895,7 +1894,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 
 	fw_rev = MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWREV);
 	if (fw_rev > BWI_FW_VERSION3_REVMAX) {
-		DPRINTF(1, "%s: firmware version 4 is not supported yet\n",
+		printf("%s: firmware version 4 is not supported yet\n",
 		    sc->sc_dev.dv_xname);
 		error = ENODEV;
 		goto out;
@@ -2297,7 +2296,7 @@ bwi_mac_stop(struct bwi_mac *mac)
 		DELAY(1);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: can't stop MAC\n", sc->sc_dev.dv_xname);
+		printf("%s: can't stop MAC\n", sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
 	}
 #undef NRETRY
@@ -2331,8 +2330,7 @@ bwi_mac_config_ps(struct bwi_mac *mac)
 			DELAY(10);
 		}
 		if (i == NRETRY) {
-			DPRINTF(1, "%s: config PS failed\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: config PS failed\n", sc->sc_dev.dv_xname);
 			return (ETIMEDOUT);
 		}
 #undef NRETRY
@@ -2461,7 +2459,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	KKASSERT(sc->sc_nmac <= BWI_MAC_MAX && sc->sc_nmac >= 0);
 
 	if (sc->sc_nmac == BWI_MAC_MAX) {
-		DPRINTF(1, "%s: too many MACs\n", sc->sc_dev.dv_xname);
+		printf("%s: too many MACs\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
 
@@ -2492,7 +2490,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 			break;
 	}
 	if (i == N(bwi_sup_macrev)) {
-		DPRINTF(1, "%s: MAC rev %u is not supported\n",
+		printf("%s: MAC rev %u is not supported\n",
 		    sc->sc_dev.dv_xname, rev);
 		return (ENXIO);
 	}
@@ -2811,7 +2809,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 	switch (phytype) {
 	case BWI_PHYINFO_TYPE_11A:
 		if (phyrev >= 4) {
-			DPRINTF(1, "%s: unsupported 11A PHY, rev %u\n",
+			printf("%s: unsupported 11A PHY, rev %u\n",
 			    sc->sc_dev.dv_xname, phyrev);
 			return (ENXIO);
 		}
@@ -2830,7 +2828,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 			}
 		}
 		if (i == N(bwi_sup_bphy)) {
-			DPRINTF(1, "%s: unsupported 11B PHY, rev %u\n",
+			printf("%s: unsupported 11B PHY, rev %u\n",
 			    sc->sc_dev.dv_xname, phyrev);
 			return (ENXIO);
 		}
@@ -2839,7 +2837,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 		break;
 	case BWI_PHYINFO_TYPE_11G:
 		if (phyrev > 8) {
-			DPRINTF(1, "%s: unsupported 11G PHY, rev %u\n",
+			printf("%s: unsupported 11G PHY, rev %u\n",
 			    sc->sc_dev.dv_xname, phyrev);
 			return (ENXIO);
 		}
@@ -2850,7 +2848,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 		phy->phy_tbl_data_hi = BWI_PHYR_TBL_DATA_HI_11G;
 		break;
 	default:
-		DPRINTF(1, "%s: unsupported PHY type %d\n",
+		printf("%s: unsupported PHY type %d\n",
 		    sc->sc_dev.dv_xname, phytype);
 		return (ENXIO);
 	}
@@ -3066,7 +3064,7 @@ bwi_phy_init_11b_rev2(struct bwi_mac *mac)
 	sc = mac->mac_sc;
 
 	/* TODO: 11B */
-	DPRINTF(1, "%s: %s is not implemented yet\n",
+	printf("%s: %s is not implemented yet\n",
 	    sc->sc_dev.dv_xname, __func__);
 }
 
@@ -3770,7 +3768,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		if (manu != BWI_RF_MANUFACT_BCM ||
 		    type != BWI_RF_T_BCM2060 ||
 		    rev != 1) {
-			DPRINTF(1, "%s: only BCM2060 rev 1 RF is supported for "
+			printf("%s: only BCM2060 rev 1 RF is supported for "
 			    "11A PHY\n", sc->sc_dev.dv_xname);
 			return (ENXIO);
 		}
@@ -3787,7 +3785,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 			rf->rf_ctrl_adj = 1;
 			rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2053;
 		} else {
-			DPRINTF(1, "%s: only BCM2050/BCM2053 RF is supported "
+			printf("%s: only BCM2050/BCM2053 RF is supported "
 			    "for supported for 11B PHY\n", sc->sc_dev.dv_xname);
 			return (ENXIO);
 		}
@@ -3802,7 +3800,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		break;
 	case IEEE80211_MODE_11G:
 		if (type != BWI_RF_T_BCM2050) {
-			DPRINTF(1, "%s: only BCM2050 RF is supported for 11G "
+			printf("%s: only BCM2050 RF is supported for 11G "
 			    "PHY\n", sc->sc_dev.dv_xname);
 			return (ENXIO);
 		}
@@ -3818,7 +3816,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		rf->rf_lo_update = bwi_rf_lo_update_11g;
 		break;
 	default:
-		DPRINTF(1, "%s: unsupported PHY mode\n", sc->sc_dev.dv_xname);
+		printf("%s: unsupported PHY mode\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -4064,7 +4062,7 @@ bwi_rf_workaround(struct bwi_mac *mac, uint chan)
 	struct bwi_rf *rf = &mac->mac_rf;
 
 	if (chan == IEEE80211_CHAN_ANY) {
-		DPRINTF(1, "%s: %s invalid channel!\n",
+		printf("%s: %s invalid channel!\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return;
 	}
@@ -4601,7 +4599,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			rf->rf_txpower_max -= 3;
 	}
 	if (rf->rf_txpower_max <= 0) {
-		DPRINTF(1, "%s: invalid max txpower in sprom\n",
+		printf("%s: invalid max txpower in sprom\n",
 		    sc->sc_dev.dv_xname);
 		rf->rf_txpower_max = 74;
 	}
@@ -4619,6 +4617,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	else
 		ant_gain = __SHIFTOUT(val, BWI_SPROM_ANT_GAIN_MASK_11BG);
 	if (ant_gain == 0xff) {
+		/* XXX why this always invalid? */
 		DPRINTF(1, "%s: invalid antenna gain in sprom\n",
 		    sc->sc_dev.dv_xname);
 		ant_gain = 2;
@@ -4721,7 +4720,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		error = bwi_rf_calc_txpower(&rf->rf_txpower_map0[i], i,
 					    pa_params);
 		if (error) {
-			DPRINTF(1, "%s: bwi_rf_calc_txpower failed\n",
+			printf("%s: bwi_rf_calc_txpower failed\n",
 			    sc->sc_dev.dv_xname);
 			break;
 		}
@@ -6278,7 +6277,7 @@ bwi_regwin_switch(struct bwi_softc *sc, struct bwi_regwin *rw,
 	if (sc->sc_cur_regwin != rw) {
 		error = bwi_regwin_select(sc, rw->rw_id);
 		if (error) {
-			DPRINTF(1, "%s: can't select regwin %d\n",
+			printf("%s: can't select regwin %d\n",
 			    sc->sc_dev.dv_xname, rw->rw_id);
 			return (error);
 		}
@@ -6553,7 +6552,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	 */
 	error = bwi_regwin_select(sc, 0);
 	if (error) {
-		DPRINTF(1, "%s: can't select regwin 0\n", sc->sc_dev.dv_xname);
+		printf("%s: can't select regwin 0\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 	bwi_regwin_info(sc, &rw_type, &rw_rev);
@@ -6582,7 +6581,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (bbp_id == 0) {
-			DPRINTF(1, "%s: no BBP id for device id 0x%04x\n",
+			printf("%s: no BBP id for device id 0x%04x\n",
 			    sc->sc_dev.dv_xname, did);
 			return (ENXIO);
 		}
@@ -6605,7 +6604,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (nregwin == 0) {
-			DPRINTF(1, "%s: no number of win for BBP id 0x%04x\n",
+			printf("%s: no number of win for BBP id 0x%04x\n",
 			    sc->sc_dev.dv_xname, bbp_id);
 			return (ENXIO);
 		}
@@ -6615,7 +6614,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	sc->sc_bbp_id = bbp_id;
 	sc->sc_bbp_rev = __SHIFTOUT(info, BWI_INFO_BBPREV_MASK);
 	sc->sc_bbp_pkg = __SHIFTOUT(info, BWI_INFO_BBPPKG_MASK);
-	DPRINTF(1, "%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
+	DPRINTF("%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
 	DPRINTF(1, "%s: nregwin %d, cap 0x%08x\n",
 	    sc->sc_dev.dv_xname, nregwin, sc->sc_cap);
@@ -6633,7 +6632,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		 */
 		error = bwi_regwin_select(sc, i);
 		if (error) {
-			DPRINTF(1, "%s: can't select regwin %d\n",
+			printf("%s: can't select regwin %d\n",
 			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
@@ -6648,7 +6647,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		if (rw_type == BWI_REGWIN_T_BUSPCI ||
 		    rw_type == BWI_REGWIN_T_BUSPCIE) {
 			if (BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-				DPRINTF(1, "%s: bus regwin already exists\n",
+				printf("%s: bus regwin already exists\n",
 				    sc->sc_dev.dv_xname);
 			} else {
 				BWI_CREATE_REGWIN(&sc->sc_bus_regwin, i,
@@ -6662,15 +6661,14 @@ bwi_bbp_attach(struct bwi_softc *sc)
 
 	/* At least one MAC shold exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_mac[0].mac_regwin)) {
-		DPRINTF(1, "%s: no MAC was found\n", sc->sc_dev.dv_xname);
+		printf("%s: no MAC was found\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 	KKASSERT(sc->sc_nmac > 0);
 
 	/* Bus regwin must exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-		DPRINTF(1, "%s: no bus regwin was found\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: no bus regwin was found\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -7025,7 +7023,7 @@ bwi_init(struct ifnet *ifp)
 			CSR_READ_4(sc, BWI_TXSTATUS_1);
 		}
 		if (i == NRETRY)
-			DPRINTF(1, "%s: can't drain TX status\n",
+			printf("%s: can't drain TX status\n",
 			    sc->sc_dev.dv_xname);
 #undef NRETRY
 	}
@@ -7247,7 +7245,7 @@ bwi_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
-			DPRINTF(1, "%s: watchdog timeout\n",
+			printf("%s: watchdog timeout\n",
 			    sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
 			/* TODO */
@@ -7330,7 +7328,7 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	error = bwi_set_chan(sc, chan);
 	if (error) {
-		DPRINTF(1, "%s: can't set channel to %u\n",
+		printf("%s: can't set channel to %u\n",
 		    sc->sc_dev.dv_xname,
 		    ieee80211_chan2ieee(ic, ic->ic_des_chan));
 		return (error);
@@ -7504,14 +7502,14 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_rdata[i].rdata_dmap);
 		if (error) {
-			DPRINTF(1, "%s: %dth TX ring DMA create failed\n",
+			printf("%s: %dth TX ring DMA create failed\n",
 			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
 		error = bwi_dma_ring_alloc(sc,
 		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
-			DPRINTF(1, "%s: %dth TX ring DMA alloc failed\n",
+			printf("%s: %dth TX ring DMA alloc failed\n",
 			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
@@ -7524,23 +7522,21 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_rx_rdata.rdata_dmap);
 	if (error) {
-		DPRINTF(1, "%s: RX ring DMA create failed\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: RX ring DMA create failed\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	error = bwi_dma_ring_alloc(sc, &sc->sc_rx_rdata,
 	    rx_ring_sz, TXRX_CTRL(0));
 	if (error) {
-		DPRINTF(1, "%s: RX ring DMA alloc failed\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: RX ring DMA alloc failed\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	if (has_txstats) {
 		error = bwi_dma_txstats_alloc(sc, TXRX_CTRL(3), desc_sz);
 		if (error) {
-			DPRINTF(1, "%s: TX stats DMA alloc failed\n",
+			printf("%s: TX stats DMA alloc failed\n",
 			    sc->sc_dev.dv_xname);
 			return (error);
 		}
@@ -7586,21 +7582,21 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 	error = bus_dmamem_alloc(sc->sc_dmat, size, BWI_ALIGN, 0,
 	    &rd->rdata_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
+		printf("%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &rd->rdata_seg, nsegs,
 	    size, (caddr_t *)&rd->rdata_desc, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't map DMA mem\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map DMA mem\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->rdata_dmap, rd->rdata_desc,
 	    size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		DPRINTF(1, "%s: can't load DMA mem\n", sc->sc_dev.dv_xname);
+		printf("%s: can't load DMA mem\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, nsegs);
 		rd->rdata_desc = NULL;
 		return (error);
@@ -7631,7 +7627,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
 	if (error) {
-		DPRINTF(1, "%s: can't create txstats ring DMA mem\n",
+		printf("%s: can't create txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -7639,7 +7635,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_RING_ALIGN, 0,
 	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't allocate txstats ring DMA mem\n",
+		printf("%s: can't allocate txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -7647,7 +7643,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_ring_seg, nsegs,
 	    dma_size, (caddr_t *)&st->stats_ring, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't map txstats ring DMA mem\n",
+		printf("%s: can't map txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -7655,7 +7651,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_ring_dmap,
 	    st->stats_ring, dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		DPRINTF(1, "%s: can't load txstats ring DMA mem\n",
+		printf("%s: can't load txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &st->stats_ring_seg, nsegs);
 		return (error);
@@ -7673,14 +7669,14 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_dmap);
 	if (error) {
-		DPRINTF(1, "%s: can't create txstats ring DMA mem\n",
+		printf("%s: can't create txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_ALIGN, 0,
 	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't allocate txstats DMA mem\n",
+		printf("%s: can't allocate txstats DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -7688,16 +7684,14 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_seg, nsegs,
 	    dma_size, (caddr_t *)&st->stats, BUS_DMA_NOWAIT);
 	if (error) {
-		DPRINTF(1, "%s: can't map txstats DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: can't map txstats DMA mem\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_dmap, st->stats,
 	    dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		DPRINTF(1, "%s: can't load txstats DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: can't load txstats DMA mem\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &st->stats_seg, nsegs);
 		return (error);
 	}
@@ -7745,7 +7739,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 			    0, BUS_DMA_NOWAIT, &tbd->tbd_buf[j].tb_dmap);
 			if (error) {
-				DPRINTF(1,
+				printf(
 				    "%s: can't create %dth tbd, %dth DMA map\n",
 				    sc->sc_dev.dv_xname, i, j);
 				ntx = i;
@@ -7765,7 +7759,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 	    BUS_DMA_NOWAIT, &rbd->rbd_tmp_dmap);
 	if (error) {
-		DPRINTF(1, "%s: can't create spare RX buf DMA map\n",
+		printf("%s: can't create spare RX buf DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
@@ -7774,7 +7768,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &rbd->rbd_buf[j].rb_dmap);
 		if (error) {
-			DPRINTF(1, "%s: can't create %dth RX buf DMA map\n",
+			printf("%s: can't create %dth RX buf DMA map\n",
 			    sc->sc_dev.dv_xname, j);
 
 			for (k = 0; k < j; ++k) {
@@ -7913,7 +7907,7 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 	for (i = 0; i < BWI_RX_NDESC; ++i) {
 		error = bwi_newbuf(sc, i, 1);
 		if (error) {
-			DPRINTF(1, "%s: can't allocate %dth RX buffer\n",
+			printf("%s: can't allocate %dth RX buffer\n",
 			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
@@ -8174,7 +8168,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 
 		buflen = letoh16(hdr->rxh_buflen);
 		if (buflen <= wh_ofs) {
-			DPRINTF(1, "%s: zero length data, hdr_extra %d\n",
+			printf("%s: zero length data, hdr_extra %d\n",
 			    sc->sc_dev.dv_xname, hdr_extra);
 			ifp->if_ierrors++;
 			m_freem(m);
@@ -8291,7 +8285,7 @@ bwi_reset_rx_ring32(struct bwi_softc *sc, uint32_t rx_ctrl)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		DPRINTF(1, "%s: reset rx ring timedout\n", sc->sc_dev.dv_xname);
+		printf("%s: reset rx ring timedout\n", sc->sc_dev.dv_xname);
 #undef NRETRY
 
 	CSR_WRITE_4(sc, rx_ctrl + BWI_RX32_RINGINFO, 0);
@@ -8348,7 +8342,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		DELAY(1000);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: wait for TX ring(%d) stable timed out\n",
+		printf("%s: wait for TX ring(%d) stable timed out\n",
 		    sc->sc_dev.dv_xname, ring_idx);
 	}
 
@@ -8362,7 +8356,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		DPRINTF(1, "%s: reset TX ring (%d) timed out\n",
+		printf("%s: reset TX ring (%d) timed out\n",
 		    sc->sc_dev.dv_xname, ring_idx);
 #undef NRETRY
 
@@ -8711,7 +8705,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		rate = (1 * 2);
 
 	if (rate == 0) {
-		DPRINTF(1, "%s: invalid rate %u or fallback rate",
+		printf("%s: invalid rate %u or fallback rate",
 		    sc->sc_dev.dv_xname, rate);
 		rate = (1 * 2); /* Force 1Mbytes/s */
 	}
@@ -8745,8 +8739,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	 */
 	M_PREPEND(m, sizeof(*hdr), M_DONTWAIT);
 	if (m == NULL) {
-		DPRINTF(1, "%s: prepend TX header failed\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: prepend TX header failed\n", sc->sc_dev.dv_xname);
 		return (ENOBUFS);
 	}
 	hdr = mtod(m, struct bwi_txbuf_hdr *);
@@ -8798,7 +8791,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 	    BUS_DMA_NOWAIT);
 	if (error && error != EFBIG) {
-		DPRINTF(1, "%s: can't load TX buffer (1) %d\n",
+		printf("%s: can't load TX buffer (1) %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto back;
 	}
@@ -8841,7 +8834,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {
-			DPRINTF(1, "%s: can't load TX buffer (2) %d\n",
+			printf("%s: can't load TX buffer (2) %d\n",
 			    sc->sc_dev.dv_xname, error);
 			goto back;
 		}
@@ -8934,7 +8927,7 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 	int ring_idx, buf_idx;
 
 	if (tx_id == 0) {
-		DPRINTF(1, "%s: zero tx id\n", sc->sc_dev.dv_xname);
+		printf("%s: zero tx id\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -9167,7 +9160,7 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: %s disable clock timeout\n",
+		printf("%s: %s disable clock timeout\n",
 		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
 	}
 
@@ -9180,7 +9173,7 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: %s wait BUSY unset timeout\n",
+		printf("%s: %s wait BUSY unset timeout\n",
 		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
 	}
 #undef NRETRY
