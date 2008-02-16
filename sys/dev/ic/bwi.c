@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.70 2008/02/16 20:09:05 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.71 2008/02/16 22:06:44 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8980,6 +8980,8 @@ bwi_txeof(struct bwi_softc *sc)
 			continue;
 
 		_bwi_txeof(sc, letoh16(tx_id));
+
+		ifp->if_opackets++;
 	}
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
