@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.64 2008/02/16 10:09:23 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.65 2008/02/16 12:36:07 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -231,16 +231,6 @@ void		 bwi_rf_lo_measure(struct bwi_mac *,
 void		 bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *);
 void		 bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *);
 void		 bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *);
-void		 bwi_rf_off_11a(struct bwi_mac *);
-void		 bwi_rf_off_11bg(struct bwi_mac *);
-void		 bwi_rf_off_11g_rev5(struct bwi_mac *);
-int		 bwi_rf_attach(struct bwi_mac *);
-int		 bwi_rf_map_txpower(struct bwi_mac *);
-void		 bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
-void		 bwi_rf_set_chan(struct bwi_mac *, uint, int);
-void		 bwi_rf_get_gains(struct bwi_mac *);
-void		 bwi_rf_init(struct bwi_mac *);
-void		 bwi_rf_init_bcm2050(struct bwi_mac *);
 void		 bwi_rf_init_sw_nrssi_table(struct bwi_mac *);
 void		 bwi_rf_init_hw_nrssi_table(struct bwi_mac *, uint16_t);
 void		 bwi_rf_set_nrssi_thr_11b(struct bwi_mac *);
