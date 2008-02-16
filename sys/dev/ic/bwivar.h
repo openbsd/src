@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.20 2007/11/17 16:50:02 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.21 2008/02/16 14:56:00 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -372,6 +372,11 @@ struct bwi_rf {
 
 	void			(*rf_set_nrssi_thr)(struct bwi_mac *);
 	void			(*rf_calc_nrssi_slope)(struct bwi_mac *);
+	int			(*rf_calc_rssi)
+				(struct bwi_mac *,
+				 const struct bwi_rxbuf_hdr *);
+
+	void			(*rf_lo_update)(struct bwi_mac *);
 
 #define BWI_TSSI_MAX		64
 	int8_t			rf_txpower_map0[BWI_TSSI_MAX];
@@ -697,6 +702,12 @@ static __inline void
 bwi_rf_set_nrssi_thr(struct bwi_mac *_mac)
 {
 	_mac->mac_rf.rf_set_nrssi_thr(_mac);
+}
+
+static __inline void
+bwi_rf_lo_update(struct bwi_mac *_mac)
+{
+	return (_mac->mac_rf.rf_lo_update(_mac));
 }
 
 #define RF_WRITE(mac, ofs, val)		bwi_rf_write((mac), (ofs), (val))
