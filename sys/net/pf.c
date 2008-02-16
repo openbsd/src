@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.565 2007/11/22 02:01:46 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.566 2008/02/16 12:22:19 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,6 +50,8 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+
+#include <crypto/md5.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -110,6 +112,11 @@ u_int32_t		 ticket_altqs_inactive;
 int			 altqs_inactive_open;
 u_int32_t		 ticket_pabuf;
 
+MD5_CTX			 pf_tcp_secret_ctx;
+u_char			 pf_tcp_secret[16];
+int			 pf_tcp_secret_init;
+int			 pf_tcp_iss_off;
+
 struct pf_anchor_stackframe {
 	struct pf_ruleset			*rs;
 	struct pf_rule				*r;
@@ -160,6 +167,7 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 void			 pf_attach_state(struct pf_state_key *,
 			    struct pf_state *, int);
 void			 pf_detach_state(struct pf_state *, int);
+u_int32_t		 pf_tcp_iss(struct pf_pdesc *);
 int			 pf_test_rule(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
@@ -2872,6 +2880,34 @@ pf_alloc_state_key(struct pf_state *s)
 	return (sk);
 }
 
+u_int32_t
+pf_tcp_iss(struct pf_pdesc *pd)
+{
+	MD5_CTX ctx;
+	u_int32_t digest[4];
+
+	if (pf_tcp_secret_init == 0) {
+		arc4random_bytes(pf_tcp_secret, sizeof(pf_tcp_secret));
+		MD5Init(&pf_tcp_secret_ctx);
+		MD5Update(&pf_tcp_secret_ctx, pf_tcp_secret, sizeof(pf_tcp_secret));
+		pf_tcp_secret_init = 1;
+	}
+	ctx = pf_tcp_secret_ctx;
+
+	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_sport, sizeof(u_short));
+	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_dport, sizeof(u_short));
+	if (pd->af == AF_INET6) {
+		MD5Update(&ctx, (char *)&pd->src->v6, sizeof(struct in6_addr));
+		MD5Update(&ctx, (char *)&pd->dst->v6, sizeof(struct in6_addr));
+	} else {
+		MD5Update(&ctx, (char *)&pd->src->v4, sizeof(struct in_addr));
+		MD5Update(&ctx, (char *)&pd->dst->v4, sizeof(struct in_addr));
+	}
+	MD5Final((u_char *)digest, &ctx);
+	pf_tcp_iss_off += 4096;
+	return (digest[0] + tcp_iss + pf_tcp_iss_off);
+}
+
 int
 pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h,
@@ -3339,9 +3375,9 @@ cleanup:
 			if ((th->th_flags & (TH_SYN|TH_ACK)) ==
 			TH_SYN && r->keep_state == PF_STATE_MODULATE) {
 				/* Generate sequence number modulator */
-				while ((s->src.seqdiff =
-				    tcp_rndiss_next() - s->src.seqlo) == 0)
-					;
+				if ((s->src.seqdiff = pf_tcp_iss(pd) -
+				    s->src.seqlo) == 0)
+					s->src.seqdiff = 1;
 				pf_change_a(&th->th_seq, &th->th_sum,
 				    htonl(s->src.seqlo + s->src.seqdiff), 0);
 				rewrite = 1;
@@ -3786,7 +3822,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 		/* Deferred generation of sequence number modulator */
 		if (dst->seqdiff && !src->seqdiff) {
-			while ((src->seqdiff = tcp_rndiss_next() - seq) == 0)
+			/* use random iss for the TCP server */
+			while ((src->seqdiff = arc4random() - seq) == 0)
 				;
 			ack = ntohl(th->th_ack) - dst->seqdiff;
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
