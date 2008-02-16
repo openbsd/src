@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.2 2005/05/24 20:35:29 miod Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.3 2008/02/16 23:01:18 miod Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 #endif
 
 	if (nxt != 0) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		if (off < sizeof(struct ipovly))
 			panic("in4_cksum: offset too short");
 		if (m->m_len < sizeof(struct ip))
