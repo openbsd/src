@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.21 2008/02/16 14:56:00 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.22 2008/02/16 16:45:28 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -63,6 +63,8 @@
 #define BWI_LED_EVENT_RX	2
 #define BWI_LED_SLOWDOWN(dur)	(dur) = (((dur) * 3) / 2)
 
+#define BWI_NOISE_FLOOR		-95	/* TODO: noise floor calc */
+
 #define CSR_READ_4(sc, reg)			\
 	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
 #define CSR_READ_2(sc, reg)			\
@@ -120,16 +122,21 @@ struct bwi_rxbuf_hdr {
 	uint16_t	rxh_flags1;
 	uint8_t		rxh_rssi;
 	uint8_t		rxh_sq;
-	uint8_t		rxh_pad2[2];
+	uint16_t	rxh_phyinfo;	/* BWI_RXH_PHYINFO_ */
 	uint16_t	rxh_flags3;
 	uint16_t	rxh_flags2;	/* BWI_RXH_F2_ */
 	uint16_t	rxh_tsf;
 	uint8_t		rxh_pad3[14];	/* Padded to 30bytes */
 } __packed;
 
+#define BWI_RXH_F1_BCM2053_RSSI (1 << 14)
 #define BWI_RXH_F1_OFDM		(1 << 0)
 
 #define BWI_RXH_F2_TYPE2FRAME	(1 << 2)
+
+#define BWI_RXH_F3_BCM2050_RSSI	(1 << 10)
+
+#define BWI_RXH_PHYINFO_LNAGAIN	(3 << 14)
 
 struct bwi_txbuf_hdr {
 	/* Little endian */
@@ -702,6 +709,12 @@ static __inline void
 bwi_rf_set_nrssi_thr(struct bwi_mac *_mac)
 {
 	_mac->mac_rf.rf_set_nrssi_thr(_mac);
+}
+
+static __inline int
+bwi_rf_calc_rssi(struct bwi_mac *_mac, const struct bwi_rxbuf_hdr *_hdr)
+{
+	return (_mac->mac_rf.rf_calc_rssi(_mac, _hdr));
 }
 
 static __inline void

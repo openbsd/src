@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.66 2008/02/16 14:56:00 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.67 2008/02/16 16:45:28 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -245,6 +245,12 @@ void		 bwi_rf_on_11bg(struct bwi_mac *);
 void		 bwi_rf_set_ant_mode(struct bwi_mac *, int);
 int		 bwi_rf_get_latest_tssi(struct bwi_mac *, int8_t[], uint16_t);
 int		 bwi_rf_tssi2dbm(struct bwi_mac *, int8_t, int8_t *);
+int		 bwi_rf_calc_rssi_bcm2050(struct bwi_mac *,
+		     const struct bwi_rxbuf_hdr *);
+int		 bwi_rf_calc_rssi_bcm2053(struct bwi_mac *,
+		     const struct bwi_rxbuf_hdr *);
+int		 bwi_rf_calc_rssi_bcm2060(struct bwi_mac *,
+		     const struct bwi_rxbuf_hdr *);
 uint16_t	 bwi_rf_lo_measure_11b(struct bwi_mac *);
 void		 bwi_rf_lo_update_11b(struct bwi_mac *);
 
@@ -353,6 +359,8 @@ void		 bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
 void		 bwi_set_bssid(struct bwi_softc *, const uint8_t *);
 void		 bwi_updateslot(struct ieee80211com *);
 void		 bwi_calibrate(void *);
+int		 bwi_calc_rssi(struct bwi_softc *,
+		     const struct bwi_rxbuf_hdr *);
 uint8_t		 bwi_ack_rate(struct ieee80211_node *, uint8_t);
 uint16_t	 bwi_txtime(struct ieee80211com *, struct ieee80211_node *,
 		     uint, uint8_t, uint32_t);
@@ -3769,12 +3777,15 @@ bwi_rf_attach(struct bwi_mac *mac)
 		rf->rf_ctrl_rd = BWI_RF_CTRL_RD_11A;
 		rf->rf_on = bwi_rf_on_11a;
 		rf->rf_off = bwi_rf_off_11a;
+		rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2060;
 		break;
 	case IEEE80211_MODE_11B:
 		if (type == BWI_RF_T_BCM2050) {
 			rf->rf_ctrl_rd = BWI_RF_CTRL_RD_11BG;
+			rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2050;
 		} else if (type == BWI_RF_T_BCM2053) {
 			rf->rf_ctrl_adj = 1;
+			rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2053;
 		} else {
 			DPRINTF(1, "%s: only BCM2050/BCM2053 RF is supported "
 			    "for supported for 11B PHY\n", sc->sc_dev.dv_xname);
@@ -3803,6 +3814,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 			rf->rf_off = bwi_rf_off_11bg;
 		rf->rf_calc_nrssi_slope = bwi_rf_calc_nrssi_slope_11g;
 		rf->rf_set_nrssi_thr = bwi_rf_set_nrssi_thr_11g;
+		rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2050;
 		rf->rf_lo_update = bwi_rf_lo_update_11g;
 		break;
 	default:
@@ -5872,6 +5884,141 @@ bwi_rf_tssi2dbm(struct bwi_mac *mac, int8_t tssi, int8_t *txpwr)
 	*txpwr = rf->rf_txpower_map[pwr_idx];
 
 	return (0);
+}
+
+int
+bwi_rf_calc_rssi_bcm2050(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
+{
+	uint16_t flags1, flags3;
+	int rssi, lna_gain;
+
+	rssi = hdr->rxh_rssi;
+	flags1 = letoh16(hdr->rxh_flags1);
+	flags3 = letoh16(hdr->rxh_flags3);
+
+#define NEW_BCM2050_RSSI
+#ifdef NEW_BCM2050_RSSI
+	if (flags1 & BWI_RXH_F1_OFDM) {
+		if (rssi > 127)
+			rssi -= 256;
+		if (flags3 & BWI_RXH_F3_BCM2050_RSSI)
+			rssi += 17;
+		else
+			rssi -= 4;
+		return (rssi);
+	}
+
+	if (mac->mac_sc->sc_card_flags & BWI_CARD_F_SW_NRSSI) {
+		struct bwi_rf *rf = &mac->mac_rf;
+
+		if (rssi >= BWI_NRSSI_TBLSZ)
+			rssi = BWI_NRSSI_TBLSZ - 1;
+
+		rssi = ((31 - (int)rf->rf_nrssi_table[rssi]) * -131) / 128;
+		rssi -= 67;
+	} else {
+		rssi = ((31 - rssi) * -149) / 128;
+		rssi -= 68;
+	}
+
+	if (mac->mac_phy.phy_mode != IEEE80211_MODE_11G)
+		return (rssi);
+
+	if (flags3 & BWI_RXH_F3_BCM2050_RSSI)
+		rssi += 20;
+
+	lna_gain = __SHIFTOUT(letoh16(hdr->rxh_phyinfo),
+	    BWI_RXH_PHYINFO_LNAGAIN);
+	DPRINTF(mac->mac_sc, BWI_DBG_RF | BWI_DBG_RX,
+		"lna_gain %d, phyinfo 0x%04x\n",
+		lna_gain, le16toh(hdr->rxh_phyinfo));
+	switch (lna_gain) {
+	case 0:
+		rssi += 27;
+		break;
+	case 1:
+		rssi += 6;
+		break;
+	case 2:
+		rssi += 12;
+		break;
+	case 3:
+		/*
+		 * XXX
+		 * According to v3 spec, we should do _nothing_ here,
+		 * but it seems that the result RSSI will be too low
+		 * (relative to what ath(4) says).  Raise it a little
+		 * bit.
+		 */
+		rssi += 5;
+		break;
+	default:
+		panic("impossible lna gain %d", lna_gain);
+	}
+#else	/* !NEW_BCM2050_RSSI */
+	lna_gain = 0; /* shut up gcc warning */
+
+	if (flags1 & BWI_RXH_F1_OFDM) {
+		if (rssi > 127)
+			rssi -= 256;
+		rssi = (rssi * 73) / 64;
+
+		if (flags3 & BWI_RXH_F3_BCM2050_RSSI)
+			rssi += 25;
+		else
+			rssi -= 3;
+		return (rssi);
+	}
+
+	if (mac->mac_sc->sc_card_flags & BWI_CARD_F_SW_NRSSI) {
+		struct bwi_rf *rf = &mac->mac_rf;
+
+		if (rssi >= BWI_NRSSI_TBLSZ)
+			rssi = BWI_NRSSI_TBLSZ - 1;
+
+		rssi = ((31 - (int)rf->rf_nrssi_table[rssi]) * -131) / 128;
+		rssi -= 57;
+	} else {
+		rssi = ((31 - rssi) * -149) / 128;
+		rssi -= 68;
+	}
+
+	if (mac->mac_phy.phy_mode != IEEE80211_MODE_11G)
+		return (rssi);
+
+	if (flags3 & BWI_RXH_F3_BCM2050_RSSI)
+		rssi += 25;
+#endif	/* NEW_BCM2050_RSSI */
+	return (rssi);
+}
+
+int
+bwi_rf_calc_rssi_bcm2053(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
+{
+	uint16_t flags1;
+	int rssi;
+
+	rssi = (((int)hdr->rxh_rssi - 11) * 103) / 64;
+
+	flags1 = letoh16(hdr->rxh_flags1);
+	if (flags1 & BWI_RXH_F1_BCM2053_RSSI)
+		rssi -= 109;
+	else
+		rssi -= 83;
+
+	return (rssi);
+}
+
+int
+bwi_rf_calc_rssi_bcm2060(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
+{
+	int rssi;
+
+	rssi = hdr->rxh_rssi;
+	if (rssi > 127)
+		rssi -= 256;
+
+	return (rssi);
 }
 
 uint16_t
@@ -8006,7 +8153,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		struct mbuf *m;
 		void *plcp;
 		uint16_t flags2;
-		int buflen, wh_ofs, hdr_extra, type, rate;
+		int buflen, wh_ofs, hdr_extra, rssi, type, rate;
 
 		m = rb->rb_mbuf;
 		bus_dmamap_sync(sc->sc_dmat, rb->rb_dmap, 0,
@@ -8035,6 +8182,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		}
 
 		plcp = ((uint8_t *)(hdr + 1) + hdr_extra);
+		rssi = bwi_calc_rssi(sc, hdr);
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_len = m->m_pkthdr.len = buflen + sizeof(*hdr);
@@ -8051,16 +8199,15 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			struct mbuf mb;
 			struct bwi_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
-			/* TODO: calculate rate and signal */
 			tap->wr_tsf = hdr->rxh_tsf;
 			tap->wr_flags = 0;
-			tap->wr_rate = 0;
+			tap->wr_rate = rate;
 			tap->wr_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wr_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
-			tap->wr_antsignal = 0;
-			tap->wr_antnoise = 0;
+			tap->wr_antsignal = rssi;
+			tap->wr_antnoise = BWI_NOISE_FLOOR;
 
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = sc->sc_rxtap_len;
@@ -9180,4 +9327,15 @@ bwi_calibrate(void *xsc)
 	}
 
 	splx(s);
+}
+
+int
+bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
+{
+	struct bwi_mac *mac;
+
+	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	mac = (struct bwi_mac *)sc->sc_cur_regwin;
+
+	return (bwi_rf_calc_rssi(mac, hdr));
 }
