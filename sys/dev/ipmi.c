@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.62 2007/11/25 23:37:01 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.63 2008/02/16 05:20:31 cnst Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1616,6 +1616,10 @@ ipmi_poll_thread(void *arg)
 	else
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sensordev_install(&sc->sc_sensordev);
+
 	while (thread->running) {
 		ipmi_refresh_sensors(sc);
 		tsleep(thread, PWAIT, "ipmi_poll", SENSOR_REFRESH_RATE);
@@ -1725,10 +1729,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Setup threads */
 	kthread_create_deferred(ipmi_create_thread, sc);
-
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensordev.xname));
-	sensordev_install(&sc->sc_sensordev);
 
 	printf(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
