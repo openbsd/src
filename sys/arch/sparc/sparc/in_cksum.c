@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.11 2005/05/03 00:39:39 brad Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.12 2008/02/16 23:02:41 miod Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 1996/10/05 23:44:34 mrg Exp $ */
 
 /*
@@ -125,7 +125,6 @@
 				: "0" (sum), "r" (w))
 
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16);}
-#define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
 #define ROL		{sum = sum << 8;}	/* depends on recent REDUCE */
 #define ADDBYTE		{ROL; sum += *w; byte_swapped ^= 1;}
 #define ADDSHORT	{sum += *(u_short *)w;}
@@ -212,8 +211,9 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 		REDUCE;
 		ROL;
 	}
+	/* Two REDUCEs is faster than REDUCE1; if (sum > 65535) sum -= 65535; */
 	REDUCE;
-	ADDCARRY;
+	REDUCE;
 
 	return (0xffff ^ sum);
 }

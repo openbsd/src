@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 2005/05/05 14:28:34 miod Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 2008/02/16 23:02:39 miod Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 #define	ADDB		(ROL, sum += *w, byte_swapped ^= 1)
 #define	ADDS		(sum += *(u_short *)w)
 #define	SHIFT(n)	(w += (n), mlen -= (n))
-#define	ADDCARRY	do { while (sum > 0xffff) REDUCE; } while (0)
+#define	ADDCARRY	do { REDUCE; REDUCE; } while (0)
 
 static __inline__ int
 in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
