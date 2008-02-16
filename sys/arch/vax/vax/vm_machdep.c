@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2007/10/13 07:18:02 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2008/02/16 22:59:34 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -271,10 +271,7 @@ vmapbuf(bp, len)
 	paddr_t pa;
 	struct proc *p;
 
-	if (vax_boardtype != VAX_BTYP_46
-	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49
-	    && vax_boardtype != VAX_BTYP_1303)
+	if (phys_map == NULL)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -309,10 +306,7 @@ vunmapbuf(bp, len)
 #if VAX46 || VAX48 || VAX49 || VAX53
 	vaddr_t addr, off;
 
-	if (vax_boardtype != VAX_BTYP_46
-	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49
-	    && vax_boardtype != VAX_BTYP_1303)
+	if (phys_map == NULL)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
