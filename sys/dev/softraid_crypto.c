@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.11 2008/02/15 05:29:25 ckuethe Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.12 2008/02/17 20:39:22 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -40,6 +40,8 @@
 #include <sys/uio.h>
 
 #include <crypto/cryptodev.h>
+#include <crypto/cryptosoft.h>
+#include <crypto/sha1.h>
 #include <crypto/md5.h>
 
 #include <scsi/scsi_all.h>
@@ -52,11 +54,19 @@
 struct cryptop *	sr_crypto_getcryptop(struct sr_workunit *, int);
 void			*sr_crypto_putcryptop(struct cryptop *);
 int			sr_crypto_decrypt_key(struct sr_discipline *);
+int			sr_crypto_encrypt_key(struct sr_discipline *);
 int			sr_crypto_write(struct cryptop *);
 int			sr_crypto_rw2(struct sr_workunit *, struct cryptop *);
 void			sr_crypto_intr(struct buf *);
 int			sr_crypto_read(struct cryptop *);
 void			sr_crypto_finish_io(struct sr_workunit *);
+void			sr_crypto_prf(const u_int8_t *, int, const u_int8_t *,
+			    int, u_int8_t *);
+void			sr_crypto_xor(const u_int8_t *, u_int8_t *, int);
+void			sr_crypto_prf_iterate(const u_int8_t *, int, const
+			    u_int8_t *, int, int, int, u_int8_t *);
+int			sr_crypto_pbkdf2(const u_int8_t *, int, const
+			    u_int8_t *, int, int, int, u_int8_t **);
 
 struct cryptop *
 sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
@@ -151,47 +161,76 @@ sr_crypto_putcryptop(struct cryptop *crp)
 	return (wu);
 }
 
-
 int
 sr_crypto_decrypt_key(struct sr_discipline *sd)
 {
-	int			i;
+	u_int8_t	*dkkey, *pk1, *ck1, *pk2, *ck2;
+	int		 i, j, error = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n",
 	    DEVNAME(sd->sd_sc));
 
-	/* XXX decrypt for real! */
-	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
-		bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key1[i],
-		    sd->mds.mdd_crypto.scr_key1[i],
-		    sizeof(sd->mds.mdd_crypto.scr_key1[i]));
-		bcopy(sd->mds.mdd_crypto.scr_meta[0].scm_key2[i],
-		    sd->mds.mdd_crypto.scr_key2[i],
-		    sizeof(sd->mds.mdd_crypto.scr_key2[i]));
-	}
+	/*  derive key from passphrase */
+	if ((error = sr_crypto_pbkdf2(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
+	    strlen(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase),
+	    sd->mds.mdd_crypto.scr_meta[0].scm_salt,
+	    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt),
+	    SR_CRYPTO_PBKDF2_ROUNDS, SR_CRYPTO_KEYBYTES, &dkkey)) != 0)
+		goto out;
 
-	return (0);
+	/* recover key */
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		pk1 = sd->mds.mdd_crypto.scr_key1[i];
+		pk2 = sd->mds.mdd_crypto.scr_key2[i];
+		ck1 = sd->mds.mdd_crypto.scr_meta[0].scm_key1[i];
+		ck2 = sd->mds.mdd_crypto.scr_meta[0].scm_key2[i];
+
+		for (j = 0; j < SR_CRYPTO_KEYBYTES; j++) {
+			pk1[j] = ck1[j] ^ dkkey[j];
+			pk2[j] = ck2[j] ^ dkkey[j];
+		}
+	}
+out:
+	bzero(dkkey, SR_CRYPTO_KEYBYTES);
+	free(dkkey, M_DEVBUF);
+
+	return (error);
 }
 
 int
 sr_crypto_encrypt_key(struct sr_discipline *sd)
 {
-	int			i;
+	u_int8_t	*dkkey, *pk1, *pk2, *ck1, *ck2;
+	int	 	 i, j, error = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_encrypt_key\n",
 	    DEVNAME(sd->sd_sc));
 
-	/* XXX encrypt for real! */
-	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
-		bcopy(sd->mds.mdd_crypto.scr_key1[i],
-		    sd->mds.mdd_crypto.scr_meta[0].scm_key1[i],
-		    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key1[i]));
-		bcopy(sd->mds.mdd_crypto.scr_key2[i],
-		    sd->mds.mdd_crypto.scr_meta[0].scm_key2[i],
-		    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_key2[i]));
-	}
+	/*  derive key from passphrase */
+	if ((error = sr_crypto_pbkdf2(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
+	    strlen(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase),
+	    sd->mds.mdd_crypto.scr_meta[0].scm_salt,
+	    sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt),
+	    SR_CRYPTO_PBKDF2_ROUNDS, SR_CRYPTO_KEYBYTES, &dkkey)) != 0)
+		goto out;
 
-	return (0);
+	/* mask keys */
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		pk1 = sd->mds.mdd_crypto.scr_key1[i];
+		pk2 = sd->mds.mdd_crypto.scr_key2[i];
+		ck1 = sd->mds.mdd_crypto.scr_meta[0].scm_key1[i];
+		ck2 = sd->mds.mdd_crypto.scr_meta[0].scm_key2[i];
+
+		for (j = 0; j < SR_CRYPTO_KEYBYTES; j++) {
+			ck1[j] = pk1[j] ^ dkkey[j];
+			ck2[j] = pk2[j] ^ dkkey[j];
+		}
+	}
+out:
+	bzero(dkkey, SR_CRYPTO_KEYBYTES);
+	free(dkkey, M_DEVBUF);
+
+	return (error);
 }
 
 void
@@ -216,8 +255,7 @@ sr_crypto_create_keys(struct sr_discipline *sd)
 
 	/* generate salt */
 	sz = sizeof(sd->mds.mdd_crypto.scr_meta[0].scm_salt) / 4;
-	pk1 = (u_int32_t *)
-	    sd->mds.mdd_crypto.scr_meta[0].scm_salt;
+	pk1 = (u_int32_t *)sd->mds.mdd_crypto.scr_meta[0].scm_salt;
 	for (i = 0; i < sz; i++)
 		*pk1++ = arc4random();
 
@@ -549,6 +587,128 @@ sr_crypto_read(struct cryptop *crp)
 	s = splbio();
 	sr_crypto_finish_io(crp->crp_opaque);
 	splx(s);
+
+	return (0);
+}
+
+void
+sr_crypto_prf(const u_int8_t *p, int plen, const u_int8_t *data, int datalen,
+    u_int8_t *output)
+{
+	SHA1_CTX	 ictx, octx;
+	u_int8_t	 tmp[SHA1_DIGEST_LENGTH];
+	u_int8_t	*buf;
+	int		 i;
+
+	/* Calculate a 160bit HMAC using SHA1 */
+
+	buf = malloc(plen, M_DEVBUF, M_NOWAIT);
+
+	/* apply ipad */
+	for (i = 0; i < plen; i++)
+		buf[i] = p[i] ^ HMAC_IPAD_VAL;
+	
+	/* inner hash */
+	SHA1Init(&ictx);
+	SHA1Update(&ictx, buf, plen);
+	SHA1Update(&ictx, hmac_ipad_buffer, HMAC_BLOCK_LEN - plen);
+
+	/* apply inner hash on text */
+	SHA1Update(&ictx, data, datalen);
+	SHA1Final(tmp, &ictx);
+
+	/* apply opad, undo ipad */
+	for (i = 0; i < plen; i++)
+		buf[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
+
+	/* outer hash */
+	SHA1Init(&octx);
+	SHA1Update(&octx, buf, plen);
+	SHA1Update(&octx, hmac_opad_buffer, HMAC_BLOCK_LEN - plen);
+
+	bzero(buf, plen);
+	free(buf, M_DEVBUF);
+
+	/* apply outer hash on result of inner hash */
+	SHA1Update(&octx, tmp, sizeof(tmp));
+	SHA1Final(output, &octx);
+
+	bzero(tmp, sizeof(tmp));
+}
+
+void
+sr_crypto_xor(const u_int8_t *src, u_int8_t *dst, int len)
+{
+	int	i;
+
+	for (i = 0; i < len; i++)
+		dst[i] ^= src[i];
+}
+
+void
+sr_crypto_prf_iterate(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
+    int c, int i, u_int8_t *dk)
+{
+	int		 j, len;
+	u_int8_t	 buffer[SHA1_DIGEST_LENGTH];
+	u_int8_t	*data;
+
+	/*
+	 * Concatenate salt with msb-encoded index i
+	 */
+	len = slen + sizeof(u_int32_t);
+	data = malloc(slen + sizeof(int), M_DEVBUF, M_NOWAIT);
+	bcopy(s, data, slen);
+	*(u_int32_t *)(data + slen) = htonl(i);
+
+	/*
+	 * Calculate U1..c.  U1 is PRF(P, s||htonl(i)).  All other are
+	 * Ux = PRF(P, Ux-1).  Return block T is U1 xor U2 xor ... Uc.
+	 */
+	for (j = 0; j < c; j++) {
+		sr_crypto_prf(p, plen, data, len, buffer);
+
+		if (j == 0) {
+			bcopy(buffer, dk, SHA1_DIGEST_LENGTH);
+			bzero(data, sizeof(data));
+			free(data, M_DEVBUF);
+			len = SHA1_DIGEST_LENGTH;
+			data = malloc(len, M_DEVBUF, M_NOWAIT);
+		} else
+			sr_crypto_xor(buffer, dk, SHA1_DIGEST_LENGTH);
+		bcopy(buffer, data, SHA1_DIGEST_LENGTH);
+	}
+	bzero(data, len);
+	bzero(buffer, sizeof(buffer));
+	free(data, M_DEVBUF);
+
+	return;
+}
+
+int
+sr_crypto_pbkdf2(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
+    int c, int dklen, u_int8_t **dk)
+{
+	int	l, i;
+
+	if (dklen > HMAC_BLOCK_LEN)
+		return (EINVAL);
+
+	/*
+	 * Get a large enough buffer for the key, ie.
+	 * dklen <= l * SHA1_DIGEST_LENGTH < dklen + SHA1_DIGEST_LENGTH
+	 * This adds some extra bytes to *dk, which will be zeroed out,
+	 * see below.
+	 */
+	l = (dklen + SHA1_DIGEST_LENGTH - 1) / SHA1_DIGEST_LENGTH;
+	*dk = malloc(l * SHA1_DIGEST_LENGTH, M_DEVBUF, M_NOWAIT | M_ZERO);
+
+	for (i = 0; i < l; i++)
+		sr_crypto_prf_iterate(p, plen, s, slen, c, i, *dk +
+		    i * SHA1_DIGEST_LENGTH);
+
+	/* Zero out the extra bytes */
+	bzero(*dk + dklen, l * SHA1_DIGEST_LENGTH - dklen);
 
 	return (0);
 }

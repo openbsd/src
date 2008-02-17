@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.46 2008/02/15 05:29:25 ckuethe Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.47 2008/02/17 20:39:22 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -139,6 +139,7 @@ struct sr_raid1 {
 #define SR_CRYPTO_KEYBITS	256
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
 #define SR_CRYPTO_ROUNDS	14
+#define SR_CRYPTO_PBKDF2_ROUNDS	20000
 
 struct sr_crypto_metadata {
 	u_int32_t		scm_flags;
