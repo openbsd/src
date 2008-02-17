@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.218 2008/02/02 04:03:33 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.219 2008/02/17 06:39:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2596,11 +2596,12 @@ bge_txeof(struct bge_softc *sc)
 		}
 		sc->bge_txcnt--;
 		BGE_INC(sc->bge_tx_saved_considx, BGE_TX_RING_CNT);
-		ifp->if_timer = 0;
 	}
 
-	if (cur_tx != NULL)
+	if (sc->bge_txcnt < BGE_TX_RING_CNT - 16)
 		ifp->if_flags &= ~IFF_OACTIVE;
+	if (sc->bge_txcnt == 0)
+		ifp->if_timer = 0;
 }
 
 int
@@ -2648,8 +2649,7 @@ bge_intr(void *xsc)
 		/* Re-enable interrupts. */
 		bge_writembx(sc, BGE_MBX_IRQ0_LO, 0);
 
-		if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-			bge_start(ifp);
+		bge_start(ifp);
 
 		return (1);
 	} else
@@ -2950,7 +2950,11 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->bge_link || IFQ_IS_EMPTY(&ifp->if_snd))
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+	if (!sc->bge_link)
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
@@ -3560,8 +3564,7 @@ bge_power(int why, void *xsc)
 		ifp = &sc->arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP) {
 			bge_init(xsc);
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_start(ifp);
+			bge_start(ifp);
 		}
 	}
 }
