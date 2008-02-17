@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.55 2007/11/25 19:16:00 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.56 2008/02/17 19:34:40 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -41,12 +41,10 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
  *   BCM5708C B1
  *
  * The following controllers are not supported by this driver:
- * (These are not "Production" versions of the controller.)
- * 
  *   BCM5706C A0, A1
  *   BCM5706S A0, A1, A2, A3
  *   BCM5708C A0, B0
- *   BCM5708S A0, B0, B1
+ *   BCM5708S A0, B0, B1, B2
  */
 
 #include <dev/pci/if_bnxreg.h>
@@ -659,18 +657,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Save ASIC revsion info. */
 	sc->bnx_chipid =  REG_RD(sc, BNX_MISC_ID);
-
-	/* Weed out any non-production controller revisions. */
-	switch(BNX_CHIP_ID(sc)) {
-	case BNX_CHIP_ID_5706_A0:
-	case BNX_CHIP_ID_5706_A1:
-	case BNX_CHIP_ID_5708_A0:
-	case BNX_CHIP_ID_5708_B0:
-		printf(": unsupported controller revision (%c%d)!\n",
-		    (((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf0) >> 4)
-		    + 'A'), (pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf));
-		goto bnx_attach_fail;
-	}
 
 	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
 		printf(": SerDes controllers are not supported!\n");
