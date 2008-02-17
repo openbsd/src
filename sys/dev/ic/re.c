@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.75 2008/01/16 09:52:34 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.76 2008/02/17 05:29:25 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -386,7 +386,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 
 	s = splnet();
 
-	if (sc->rl_type == RL_8169) {
+	if (sc->sc_hwrev != RL_HWREV_8139CPLUS) {
 		rval = re_gmii_readreg(dev, phy, reg);
 		splx(s);
 		return (rval);
@@ -433,7 +433,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 		return (0);
 	}
 	rval = CSR_READ_2(sc, re8139_reg);
-	if (sc->rl_type == RL_8139CPLUS && re8139_reg == RL_BMCR) {
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS && re8139_reg == RL_BMCR) {
 		/* 8139C+ has different bit layout. */
 		rval &= ~(BMCR_LOOP | BMCR_ISO);
 	}
@@ -450,7 +450,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 
 	s = splnet();
 
-	if (sc->rl_type == RL_8169) {
+	if (sc->sc_hwrev != RL_HWREV_8139CPLUS) {
 		re_gmii_writereg(dev, phy, reg, data);
 		splx(s);
 		return;
@@ -464,7 +464,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	switch(reg) {
 	case MII_BMCR:
 		re8139_reg = RL_BMCR;
-		if (sc->rl_type == RL_8139CPLUS) {
+		if (sc->sc_hwrev == RL_HWREV_8139CPLUS) {
 			/* 8139C+ has different bit layout. */
 			data &= ~(BMCR_LOOP | BMCR_ISO);
 		}
@@ -671,10 +671,10 @@ re_diag(struct rl_softc *sc)
 	re_reset(sc);
 	re_init(ifp);
 	sc->rl_link = 1;
-	if (sc->rl_type == RL_8169)
-		phyaddr = 1;
-	else
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		phyaddr = 0;
+	else
+		phyaddr = 1;
 
 	re_miibus_writereg((struct device *)sc, phyaddr, MII_BMCR,
 	    BMCR_RESET);
@@ -861,23 +861,24 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	}
 #endif
 
+	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
+
 	/*
 	 * Set RX length mask, TX poll request register
 	 * and TX descriptor count.
 	 */
-	if (sc->rl_type == RL_8169) {
-		sc->rl_rxlenmask = RL_RDESC_STAT_GFRAGLEN;
-		sc->rl_txstart = RL_GTXSTART;
-		sc->rl_ldata.rl_tx_desc_cnt = RL_TX_DESC_CNT_8169;
-	} else {
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS) {
 		sc->rl_rxlenmask = RL_RDESC_STAT_FRAGLEN;
 		sc->rl_txstart = RL_TXSTART;
 		sc->rl_ldata.rl_tx_desc_cnt = RL_TX_DESC_CNT_8139;
+	} else {
+		sc->rl_rxlenmask = RL_RDESC_STAT_GFRAGLEN;
+		sc->rl_txstart = RL_GTXSTART;
+		sc->rl_ldata.rl_tx_desc_cnt = RL_TX_DESC_CNT_8169;
 	}
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
 	for (rr = re_revisions; rr->re_name != NULL; rr++) {
 		if (rr->re_chipid == sc->sc_hwrev)
 			re_name = rr->re_name;
@@ -1002,7 +1003,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
-	if (sc->rl_type == RL_8169)
+	if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
 		ifp->if_hardmtu = RL_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -1047,7 +1048,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	 * Some 32-bit cards were incorrectly wired and would
 	 * malfunction if plugged into a 64-bit slot.
 	 */
-	if (sc->rl_type == RL_8169) {
+	if (sc->sc_hwrev == RL_HWREV_8169) {
 		error = re_diag(sc);
 		if (error) {
 			printf("%s: attach aborted due to hardware diag failure\n",
@@ -1281,7 +1282,7 @@ re_rxeof(struct rl_softc *sc)
 		 * them using the 8169 status as though it was in the
 		 * same format as that of the 8139C+.
 		 */
-		if (sc->rl_type == RL_8169)
+		if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
 			rxstat >>= 1;
 
 		/*
@@ -1856,12 +1857,12 @@ re_init(struct ifnet *ifp)
 	 * Set the initial TX and RX configuration.
 	 */
 	if (sc->rl_testmode) {
-		if (sc->rl_type == RL_8169)
-			CSR_WRITE_4(sc, RL_TXCFG,
-			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON);
-		else
+		if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 			CSR_WRITE_4(sc, RL_TXCFG,
 			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON_CPLUS);
+		else
+			CSR_WRITE_4(sc, RL_TXCFG,
+			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON);
 	} else
 		CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
 
@@ -1914,16 +1915,16 @@ re_init(struct ifnet *ifp)
 	 * reloaded on each transmit. This gives us TX interrupt
 	 * moderation, which dramatically improves TX frame rate.
 	 */
-	if (sc->rl_type == RL_8169)
-		CSR_WRITE_4(sc, RL_TIMERINT_8169, 0x800);
-	else
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		CSR_WRITE_4(sc, RL_TIMERINT, 0x400);
+	else
+		CSR_WRITE_4(sc, RL_TIMERINT_8169, 0x800);
 
 	/*
 	 * For 8169 gigE NICs, set the max allowed RX packet
 	 * size so we can receive jumbo frames.
 	 */
-	if (sc->rl_type == RL_8169)
+	if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
 		CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
 
 	if (sc->rl_testmode)

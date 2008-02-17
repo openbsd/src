@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.19 2006/11/28 20:04:02 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.20 2008/02/17 05:29:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -186,18 +186,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_flags |= RL_ENABLED;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)
-			sc->rl_type = RL_8139CPLUS;
-		else
-			sc->rl_type = RL_8169;
-	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TTTECH &&
-		   PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TTTECH_MC322)
-		sc->rl_type = RL_8139CPLUS;
-	else
-		sc->rl_type = RL_8169;
+	sc->sc_flags |= RL_ENABLED;
 
 	/* Call bus-independent attach routine */
 	re_attach(sc, intrstr);
