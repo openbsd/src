@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.13 2008/02/17 20:40:56 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.14 2008/02/17 21:11:37 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -17,7 +17,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* RAID crypto functions */
 
 #include "bio.h"
 
