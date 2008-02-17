@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.124 2007/05/31 19:19:45 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.125 2008/02/17 10:36:32 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 17 2008 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ For Main Mode:
 where:
 .Bl -tag -width "{cipher}" -offset indent -compact
 .It Ns { Ns Ar cipher Ns }
-is either DES, BLF, 3DES, CAST, or AES
+is either DES, BLF, 3DES, CAST, AES, AES-128, AES-192 or AES-256
 .It Ns { Ns Ar hash Ns }
 is either MD5, SHA, or SHA2-{256,384,512}
 .It Ns { Ns Ar group Ns }
@@ -141,7 +141,7 @@ where:
 .It Ns { Ns Ar proto Ns }
 is either ESP or AH
 .It Ns { Ns Ar cipher Ns }
-is either DES, 3DES, CAST, BLF, AES, AESCTR, or NULL
+is either DES, 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR, or NULL
 .It Ns { Ns Ar hash Ns }
 is either MD5, SHA, RIPEMD, or SHA2-{256,384,512}
 .It Ns { Ns Ar group Ns }
@@ -1057,6 +1057,36 @@ AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	MODP_1024
 Life=			LIFE_MAIN_MODE
 
+# AES-128
+
+[AES-128-SHA]
+ENCRYPTION_ALGORITHM=   AES_CBC
+KEY_LENGTH=             128,128:128
+HASH_ALGORITHM=         SHA
+AUTHENTICATION_METHOD=  PRE_SHARED
+GROUP_DESCRIPTION=      MODP_1024
+Life=                   LIFE_MAIN_MODE
+
+# AES-192
+
+[AES-192-SHA]
+ENCRYPTION_ALGORITHM=   AES_CBC
+KEY_LENGTH=             192,192:192
+HASH_ALGORITHM=         SHA
+AUTHENTICATION_METHOD=  PRE_SHARED
+GROUP_DESCRIPTION=      MODP_1024
+Life=                   LIFE_MAIN_MODE
+
+# AES-256
+
+[AES-256-SHA]
+ENCRYPTION_ALGORITHM=   AES_CBC
+KEY_LENGTH=             256,256:256
+HASH_ALGORITHM=         SHA
+AUTHENTICATION_METHOD=  PRE_SHARED
+GROUP_DESCRIPTION=      MODP_1024
+Life=                   LIFE_MAIN_MODE
+
 # Blowfish
 
 [BLF-SHA]
@@ -1114,6 +1144,30 @@ Protocols=              QM-ESP-AES-SHA
 
 [QM-ESP-AES-SHA-PFS-SUITE]
 Protocols=              QM-ESP-AES-SHA-PFS
+
+# AES-128
+
+[QM-ESP-AES-128-SHA-SUITE]
+Protocols=              QM-ESP-AES-128-SHA
+
+[QM-ESP-AES-128-SHA-PFS-SUITE]
+Protocols=              QM-ESP-AES-128-SHA-PFS
+
+# AES-192
+
+[QM-ESP-AES-192-SHA-SUITE]
+Protocols=              QM-ESP-AES-192-SHA
+
+[QM-ESP-AES-192-SHA-PFS-SUITE]
+Protocols=              QM-ESP-AES-192-SHA-PFS
+
+# AES-256
+
+[QM-ESP-AES-256-SHA-SUITE]
+Protocols=              QM-ESP-AES-256-SHA
+
+[QM-ESP-AES-256-SHA-PFS-SUITE]
+Protocols=              QM-ESP-AES-256-SHA-PFS
 
 # AH
 
@@ -1181,6 +1235,49 @@ Transforms=		QM-ESP-AES-SHA-PFS-XF
 [QM-ESP-AES-SHA-TRP]
 PROTOCOL_ID=		IPSEC_ESP
 Transforms=		QM-ESP-AES-SHA-TRP-XF
+
+# AES-128
+
+[QM-ESP-AES-128-SHA]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-128-SHA-XF
+
+[QM-ESP-AES-128-SHA-PFS]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-128-SHA-PFS-XF
+
+[QM-ESP-AES-128-SHA-TRP]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-128-SHA-TRP-XF
+
+# AES-192
+
+[QM-ESP-AES-192-SHA]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-192-SHA-XF
+
+[QM-ESP-AES-192-SHA-PFS]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-192-SHA-PFS-XF
+
+[QM-ESP-AES-192-SHA-TRP]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-192-SHA-TRP-XF
+
+# AES-256
+
+[QM-ESP-AES-256-SHA]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-256-SHA-XF
+
+[QM-ESP-AES-256-SHA-PFS]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-256-SHA-PFS-XF
+
+[QM-ESP-AES-256-SHA-TRP]
+PROTOCOL_ID=            IPSEC_ESP
+Transforms=             QM-ESP-AES-256-SHA-TRP-XF
+
 
 # AH MD5
 
@@ -1264,6 +1361,79 @@ ENCAPSULATION_MODE=	TRANSPORT
 AUTHENTICATION_ALGORITHM=	HMAC_SHA
 KEY_LENGTH=		128
 Life=			LIFE_QUICK_MODE
+
+# AES-128
+
+[QM-ESP-AES-128-SHA-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             128
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-128-SHA-PFS-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+GROUP_DESCRIPTION=      MODP_1024
+KEY_LENGTH=             128
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-128-SHA-TRP-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TRANSPORT
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             128
+Life=                   LIFE_QUICK_MODE
+
+# AES-192
+
+[QM-ESP-AES-192-SHA-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             192
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-192-SHA-PFS-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+GROUP_DESCRIPTION=      MODP_1024
+KEY_LENGTH=             192
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-192-SHA-TRP-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TRANSPORT
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             192
+Life=                   LIFE_QUICK_MODE
+
+# AES-256
+
+[QM-ESP-AES-256-SHA-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             256
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-256-SHA-PFS-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TUNNEL
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+GROUP_DESCRIPTION=      MODP_1024
+KEY_LENGTH=             256
+Life=                   LIFE_QUICK_MODE
+
+[QM-ESP-AES-256-SHA-TRP-XF]
+TRANSFORM_ID=           AES
+ENCAPSULATION_MODE=     TRANSPORT
+AUTHENTICATION_ALGORITHM=       HMAC_SHA
+KEY_LENGTH=             256
+Life=                   LIFE_QUICK_MODE
+
 
 # AH
 

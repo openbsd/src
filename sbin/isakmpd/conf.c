@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.96 2007/06/01 10:27:17 moritz Exp $	 */
+/* $OpenBSD: conf.c,v 1.97 2008/02/17 10:36:32 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -288,13 +288,13 @@ conf_parse(int trans, char *buf, size_t sz)
  *
  * Resulting section names can be:
  *  For main mode:
- *     {DES,BLF,3DES,CAST,AES}-{MD5,SHA,SHA2-{256,384,512}}[-GRP{1,2,5,14,15}] \
- *         [-{DSS,RSA_SIG}]
+ *     {DES,BLF,3DES,CAST,AES,AES-{128,192,256}-{MD5,SHA,SHA2-{256,384,512}} \
+ *         [-GRP{1,2,5,14,15}][-{DSS,RSA_SIG}]
  *  For quick mode:
  *     QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
  *     where
  *       {proto}  = ESP, AH
- *       {cipher} = DES, 3DES, CAST, BLF, AES, AESCTR
+ *       {cipher} = DES, 3DES, CAST, BLF, AES, AES-{128,192,256}, AESCTR
  *       {hash}   = MD5, SHA, RIPEMD, SHA2-{256,384,512}
  *       {group}  = GRP1, GRP2, GRP5, GRP14, GRP15
  *
@@ -361,6 +361,12 @@ conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
 	if (strcmp(mme, "BLOWFISH_CBC") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
 		    1);
+        else if (strcmp(mme_p, "AES-128") == 0)
+                conf_set(tr, sect, "KEY_LENGTH", "128,128:128", 0, 1);
+        else if (strcmp(mme_p, "AES-192") == 0)
+                conf_set(tr, sect, "KEY_LENGTH", "192,192:192", 0, 1);
+        else if (strcmp(mme_p, "AES-256") == 0)
+                conf_set(tr, sect, "KEY_LENGTH", "256,256:256", 0, 1);
 	else if (strcmp(mme, "AES_CBC") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_AES_KEYLEN, 0,
 		    1);
@@ -422,9 +428,16 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 	if (strcmp(qme ,"BLOWFISH") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
 			 1);
+	else if (strcmp(qme_p ,"-AES-128") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", "128,192:128", 0, 1);
+	else if (strcmp(qme_p ,"-AES-192") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", "192,192:192", 0, 1);
+        else if (strcmp(qme_p ,"-AES-256") == 0)
+                conf_set(tr, sect, "KEY_LENGTH", "256,256:256", 0, 1);
 	else if (strcmp(qme ,"AES") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_AES_KEYLEN, 0,
 			 1);
+
 	conf_set(tr, sect, "ENCAPSULATION_MODE", MODE(mode), 0, 1);
 	if (strcmp(qmh, "NONE")) {
 		conf_set(tr, sect, "AUTHENTICATION_ALGORITHM", qmh, 0, 1);
@@ -451,16 +464,18 @@ conf_load_defaults(int tr)
 	char	*mm_hash_p[] = {"-MD5", "-SHA", "-SHA2-256", "-SHA2-384",
 		    "-SHA2-512", "", 0 };
 	char	*mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC", "CAST_CBC",
-		    "AES_CBC", 0};
-	char	*mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
+		    "AES_CBC", "AES_CBC", "AES_CBC", "AES_CBC", 0};
+	char	*mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", "AES-128",
+		    "AES-192", "AES-256", 0};
 	char	*dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
 		    "MODP_1536", "MODP_2048", "MODP_3072", 0};
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", 0};
 	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
-		    "AES_128_CTR", "NULL", "NONE", 0};
+		    "AES", "AES", "AES", "AES_128_CTR", "NULL", "NONE", 0};
 	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
-		    "-AESCTR", "-NULL", "", 0};
+		    "-AES-128", "-AES-192", "-AES-256", "-AESCTR", "-NULL",
+		    "", 0};
 	char	*qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
 		    "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512", "NONE",
 		    0};
