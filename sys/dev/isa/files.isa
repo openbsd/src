@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.100 2007/12/18 21:17:54 form Exp $
+#	$OpenBSD: files.isa,v 1.101 2008/02/17 15:04:08 kettenis Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -336,9 +336,15 @@ file	dev/isa/midi_pcppi.c		midi_pcppi
 attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
+# Winbond LPC Super I/O
+device	wbsio {}
+attach	wbsio at isa
+file	dev/isa/wbsio.c			wbsio
+
 # National Semiconductor LM78/79/81 and compatible hardware monitors
 attach	lm at isa with lm_isa
-file	dev/isa/lm78_isa.c		lm_isa
+attach	lm at wbsio with lm_wbsio
+file	dev/isa/lm78_isa.c		lm_isa | lm_wbsio
 
 # NSC PC87366 Super IO / monitor chip
 device	nsclpcsio: gpiobus

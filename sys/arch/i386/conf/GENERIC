@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.599 2007/12/31 19:29:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.600 2008/02/17 15:04:08 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -127,6 +127,11 @@ it2	at isa? port 0xd00		# monitors and watchdog timer
 viaenv*	at pci?				# VIA VT82C686A hardware monitor
 viasio*	at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
 viasio*	at isa? port 0x4e flags 0x0000
+
+wbsio*	at isa? port 0x2e		# Winbond LPC Super I/O
+wbsio*	at isa? port 0x4e
+lm*	at wbsio?
+
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
