@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.11 2007/12/14 10:13:17 jsing Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.12 2008/02/18 19:43:28 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -75,7 +75,8 @@ static struct systypes {
     { NULL,		"SGI-IP25",			SGI_POWER10 },
     { NULL,		"SGI-IP26",			SGI_POWERI },
     { NULL,		"SGI-IP27",			SGI_O200 },
-    { NULL,		"SGI-IP32",			SGI_O2 },
+    { NULL,		"SGI-IP30",			SGI_OCTANE },
+    { NULL,		"SGI-IP32",			SGI_O2 }
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
@@ -210,14 +211,13 @@ bios_printf(const char *fmt, ...)
 void
 bios_configure_memory()
 {
-	arc_mem_t *descr = 0;
+	arc_mem_t *descr = NULL;
 	struct phys_mem_desc *m;
 	vaddr_t seg_start, seg_end;
 	int	i;
 
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
-	while(descr != 0) {
-
+	while (descr != NULL) {
 		seg_start = descr->BasePage;
 		seg_end = seg_start + descr->PageCount;
 
@@ -228,10 +228,10 @@ bios_configure_memory()
 		case FreeMemory:
 		case FreeContigous:
 			physmem += descr->PageCount;
-			m = 0;
+			m = NULL;
 			for (i = 0; i < MAXMEMSEGS; i++) {
 				if (mem_layout[i].mem_last_page == 0) {
-					if (m == 0)
+					if (m == NULL)
 						m = &mem_layout[i]; /* free */
 				}
 				else if (seg_end == mem_layout[i].mem_first_page) {
@@ -268,7 +268,7 @@ bios_configure_memory()
 	}
 
 #ifdef DEBUG_MEM_LAYOUT
-	for ( i = 0; i < MAXMEMSEGS; i++) {
+	for (i = 0; i < MAXMEMSEGS; i++) {
 		if (mem_layout[i].mem_first_page) {
 			bios_printf("MEM %d, 0x%x to  0x%x\n",i,
 				mem_layout[i].mem_first_page * 4096,
@@ -286,6 +286,8 @@ bios_get_system_type()
 {
 	arc_config_t	*cf;
 	arc_sid_t	*sid;
+	char		*sysid;
+	int		sysid_len;
 	int		i;
 
 	/*
@@ -308,26 +310,41 @@ bios_get_system_type()
 	sid = (arc_sid_t *)Bios_GetSystemId();
 
 	cf = (arc_config_t *)Bios_GetChild(NULL);
-	if (cf) {
-		for (i = 0; i < KNOWNSYSTEMS; i++) {
-			if (strcmp(sys_types[i].sys_name, (char *)(long)cf->id) != 0)
-				continue;
-			if (sys_types[i].sys_vend &&
-			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
-				continue;
-			return (sys_types[i].sys_type);	/* Found it. */
+	if (cf != NULL) {
+		if (bios_is_32bit) {
+			sysid = (char *)(long)cf->id;
+			sysid_len = cf->id_len;
+		} else {
+			sysid = (char *)((arc_config64_t *)cf)->id;
+			sysid_len = ((arc_config64_t *)cf)->id_len;
 		}
+
+		if (sysid_len > 0 && sysid != NULL) {
+			sysid_len--;
+			for (i = 0; i < KNOWNSYSTEMS; i++) {
+				if (strlen(sys_types[i].sys_name) !=sysid_len)
+					continue;
+				if (strncmp(sys_types[i].sys_name, sysid,
+				    sysid_len) != 0)
+					continue;
+				if (sys_types[i].sys_vend &&
+				    strncmp(sys_types[i].sys_vend, sid->vendor,
+				      8) != 0)
+					continue;
+				return (sys_types[i].sys_type);	/* Found it. */
+			}
+		}
+	} else {
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-	} else if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
-		/* If we find a kldir assume IP27 */
-		return SGI_O200;
+		if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
+			/* If we find a kldir assume IP27 */
+			return SGI_O200;
+		}
 #endif
 	}
 
-	sid->vendor[8] = 0;
-	sid->prodid[8] = 0;
-	bios_printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%s' PRODUCT '%s'\n",
-		cf ? (char *)(long)cf->id : "??", sid->vendor, sid->prodid);
+	bios_printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%8.8s' PRODUCT '%8.8s'\n",
+	    cf == NULL ? "??" : sysid, sid->vendor, sid->prodid);
 	bios_printf("See the www.openbsd.org for further information.\n");
 	bios_printf("Halting system!\n");
 	Bios_Halt();
@@ -342,11 +359,16 @@ void
 bios_ident()
 {
 	sys_config.system_type = bios_get_system_type();
-	if (sys_config.system_type < 0 || sys_config.system_type == SGI_O200) {
-		return;
+	/* Get memory configuration from bios if applicable */
+	switch (sys_config.system_type) {
+	case SGI_O200:
+	case SGI_OCTANE:
+		break;
+	default:
+		if (sys_config.system_type >= 0)
+			bios_configure_memory();
+		break;
 	}
-	/* If not an IP27 platform, get memory configuration from bios */
-	bios_configure_memory();
 #ifdef __arc__
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
 #endif

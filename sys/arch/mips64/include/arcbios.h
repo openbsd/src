@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.8 2007/12/14 10:13:17 jsing Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.9 2008/02/18 19:43:27 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -110,6 +110,20 @@ typedef struct arc_config
 	u_int32_t		id_len;
 	int32_t			id;
 } arc_config_t;
+
+typedef struct arc_config64
+{
+	arc_config_class_t	class;		/* Likely these three all */
+	arc_config_type_t	type;		/* need to be uchar to make */
+	arc_dev_flags_t		flags;		/* the alignment right */
+	u_int16_t		version;
+	u_int16_t		revision;
+	u_int64_t		key;
+	u_int64_t		affinity_mask;
+	u_int64_t		config_data_len;
+	u_int64_t		id_len;
+	int64_t			id;
+} arc_config64_t;
 
 typedef enum arc_status
 {
