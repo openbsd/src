@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.219 2008/02/17 06:39:16 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.220 2008/02/18 09:40:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -672,7 +672,8 @@ bge_miibus_statchg(struct device *dev)
 	}
 
 	BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_PORTMODE);
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_SX)
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_GMII);
 	else
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_MII);
@@ -1623,12 +1624,20 @@ bge_blockinit(struct bge_softc *sc)
 	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
 
+	val = BGE_MACMODE_TXDMA_ENB | BGE_MACMODE_RXDMA_ENB |
+	    BGE_MACMODE_RX_STATS_CLEAR | BGE_MACMODE_TX_STATS_CLEAR |
+	    BGE_MACMODE_RX_STATS_ENB | BGE_MACMODE_TX_STATS_ENB |
+	    BGE_MACMODE_FRMHDR_DMA_ENB;
+
+	if (sc->bge_flags & BGE_PHY_FIBER_TBI)
+	    val |= BGE_PORTMODE_TBI;
+	else if (sc->bge_flags & BGE_PHY_FIBER_MII)
+	    val |= BGE_PORTMODE_GMII;
+	else
+	    val |= BGE_PORTMODE_MII;
+
 	/* Turn on DMA, clear stats */
-	CSR_WRITE_4(sc, BGE_MAC_MODE, BGE_MACMODE_TXDMA_ENB|
-	    BGE_MACMODE_RXDMA_ENB|BGE_MACMODE_RX_STATS_CLEAR|
-	    BGE_MACMODE_TX_STATS_CLEAR|BGE_MACMODE_RX_STATS_ENB|
-	    BGE_MACMODE_TX_STATS_ENB|BGE_MACMODE_FRMHDR_DMA_ENB|
-	    (sc->bge_flags & BGE_PHY_FIBER_TBI ? BGE_PORTMODE_TBI : BGE_PORTMODE_MII));
+	CSR_WRITE_4(sc, BGE_MAC_MODE, val);
 
 	/* Set misc. local control, enable interrupts on attentions */
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
@@ -2103,12 +2112,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		hwcfg = ntohl(hwcfg);
 	}
 
-	if ((hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER)	    
-		sc->bge_flags |= BGE_PHY_FIBER_TBI;
-
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
-	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41)
-		sc->bge_flags |= BGE_PHY_FIBER_TBI;
+	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41 ||
+	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
+		if (BGE_IS_5714_FAMILY(sc))
+		    sc->bge_flags |= BGE_PHY_FIBER_MII;
+		else
+		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
+	}
 
 	/* Hookup IRQ last. */
 	DPRINTFN(5, ("pci_intr_establish\n"));
