@@ -1,4 +1,4 @@
-/*	$OpenBSD: tda.c,v 1.1 2008/02/12 10:12:14 robert Exp $ */
+/*	$OpenBSD: tda.c,v 1.2 2008/02/18 21:23:00 kettenis Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -22,6 +22,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
+
+#include <machine/autoconf.h>
+#include <machine/openfirm.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -75,8 +78,15 @@ int
 tda_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	char name[32];
 
 	if (strcmp(ia->ia_name, "tda8444") != 0)
+		return (0);
+
+	/* Only attach on the Sun Blade 1000/2000. */
+	if (OF_getprop(findroot(), "name", name, sizeof(name)) <= 0)
+		return (0);
+	if (strcmp(name, "SUNW,Sun-Blade-1000") != 0)
 		return (0);
 
 	return (1);
