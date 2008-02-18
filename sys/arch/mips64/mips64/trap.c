@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2007/10/25 16:24:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2008/02/18 19:47:36 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -1129,7 +1129,7 @@ stacktrace_subr(regs, printfn)
 	struct trap_frame *regs;
 	int (*printfn)(const char*, ...);
 {
-	long pc, sp, fp, ra, va, subr;
+	vaddr_t pc, sp, fp, ra, va, subr;
 	long a0, a1, a2, a3;
 	unsigned instr, mask;
 	InstFmt i;
@@ -1138,10 +1138,10 @@ stacktrace_subr(regs, printfn)
 	unsigned int frames =  0;
 
 	/* get initial values from the exception frame */
-	sp = regs->sp;
-	pc = regs->pc;
-	fp = regs->s8;
-	ra = regs->ra;		/* May be a 'leaf' function */
+	sp = (vaddr_t)regs->sp;
+	pc = (vaddr_t)regs->pc;
+	fp = (vaddr_t)regs->s8;
+	ra = (vaddr_t)regs->ra;		/* May be a 'leaf' function */
 	a0 = regs->a0;
 	a1 = regs->a1;
 	a2 = regs->a2;
@@ -1159,7 +1159,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS((vaddr_t)sp) && sp < KSEG0_BASE)) {
+	if (sp & 3 || (!IS_XKPHYS(sp) && sp < KSEG0_BASE)) {
 		(*printfn)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -1170,7 +1170,7 @@ loop:
 	/* Backtraces should contine through interrupts from kernel mode */
 	if (pc >= (vaddr_t)MipsKernIntr && pc < (vaddr_t)MipsUserIntr) {
 		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(vaddr_t)MipsKernIntr, a0, a1, a2);
+		       pc - (vaddr_t)MipsKernIntr, a0, a1, a2);
 		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
 		a0 = kdbpeek(&regs->a0);
 		a1 = kdbpeek(&regs->a1);
@@ -1191,7 +1191,8 @@ loop:
 		Between((vaddr_t)a, pc, (vaddr_t)b)
 
 	/* check for bad PC */
-	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
+	if (pc & 3 || (!IS_XKPHYS(pc) && pc < KSEG0_BASE) ||
+	    pc >= (vaddr_t)edata) {
 		(*printfn)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;

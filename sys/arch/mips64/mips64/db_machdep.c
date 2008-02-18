@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.14 2007/10/22 14:46:46 jsing Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.15 2008/02/18 19:47:36 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -213,7 +213,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t diff;
 	db_addr_t subr;
 	char *symname;
-	register_t pc, sp, ra, va;
+	vaddr_t pc, sp, ra, va;
 	register_t a0, a1, a2, a3;
 	unsigned instr, mask;
 	InstFmt i;
@@ -224,9 +224,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	struct trap_frame *regs = &ddb_regs;
 
 	/* get initial values from the exception frame */
-	sp = regs->sp;
-	pc = regs->pc;
-	ra = regs->ra;		/* May be a 'leaf' function */
+	sp = (vaddr_t)regs->sp;
+	pc = (vaddr_t)regs->pc;
+	ra = (vaddr_t)regs->ra;		/* May be a 'leaf' function */
 	a0 = regs->a0;
 	a1 = regs->a1;
 	a2 = regs->a2;
@@ -239,7 +239,7 @@ loop:
 	stksize = 0;
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS((vaddr_t)sp) && sp < KSEG0_BASE)) {
+	if (sp & 3 || (!IS_XKPHYS(sp) && sp < KSEG0_BASE)) {
 		(*pr)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -248,9 +248,9 @@ loop:
 
 #if 0
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
+	if (pc >= (vaddr_t)MipsKernIntr && pc < (vaddr_t)MipsUserIntr) {
 		(*pr)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
+		       pc - (vaddr_t)MipsKernIntr, a0, a1, a2);
 		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
 		a0 = kdbpeek(&regs->a0);
 		a1 = kdbpeek(&regs->a1);
@@ -266,7 +266,8 @@ loop:
 
 
 	/* check for bad PC */
-	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
+	if (pc & 3 || (!IS_XKPHYS(pc) && pc < KSEG0_BASE) ||
+	    pc >= (vaddr_t)edata) {
 		(*pr)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
