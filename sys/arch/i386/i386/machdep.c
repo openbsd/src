@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.417 2008/01/25 19:48:15 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.418 2008/02/18 16:31:55 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -420,8 +420,9 @@ cpu_startup()
 	curcpu()->ci_feature_flags = cpu_feature;
 	identifycpu(curcpu());
 
-	printf("real mem  = %llu (%lluMB)\n", ptoa((unsigned long long)physmem),
-	    ptoa((unsigned long long)physmem)/1024U/1024U);
+	printf("real mem  = %llu (%lluMB)\n",
+	    (unsigned long long)ptoa((psize_t)physmem),
+	    (unsigned long long)ptoa((psize_t)physmem)/1024U/1024U);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -454,8 +455,8 @@ cpu_startup()
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	printf("avail mem = %llu (%lluMB)\n",
-	    ptoa((unsigned long long)uvmexp.free),
-	    ptoa((unsigned long long)uvmexp.free)/1024U/1024U);
+	    (unsigned long long)ptoa((psize_t)uvmexp.free),
+	    (unsigned long long)ptoa((psize_t)uvmexp.free)/1024U/1024U);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
