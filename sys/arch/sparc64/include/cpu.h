@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.53 2008/01/19 17:42:05 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.54 2008/02/18 10:37:20 robert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -246,8 +246,6 @@ int	rwindow_save(struct proc *);
 /* vm_machdep.c */
 void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct proc *, int);
-/* amd7930intr.s */
-void	amd7930_trap(void);
 /* cons.c */
 int	cnrom(void);
 /* zs.c */
