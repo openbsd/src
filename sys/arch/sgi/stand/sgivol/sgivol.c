@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.7 2005/08/01 19:34:50 jmc Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.8 2008/02/18 15:58:27 jsing Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -60,7 +60,22 @@
  * that "whole cylinder" multiples are not required.
  */
 
-#define SGI_SIZE_VOLHDR	3135	/* Can be overridden via -h parameter */
+#define SGILABEL_MAGIC	0xbe5a941
+
+#define SGI_SIZE_VOLHDR	3135	/* Can be overridden via -h parameter. */
+#define SGI_SIZE_VOLDIR	15
+
+#define SGI_PTYPE_VOLHDR	0
+#define SGI_PTYPE_RAW		3
+#define SGI_PTYPE_BSD		4
+#define SGI_PTYPE_VOLUME	6
+#define SGI_PTYPE_EFS		7
+#define SGI_PTYPE_LVOL		8
+#define SGI_PTYPE_RLVOL		9
+#define SGI_PTYPE_XFS		10
+#define SGI_PTYPE_XFSLOG	11
+#define SGI_PTYPE_XLV		12
+#define SGI_PTYPE_XVM		13
 
 struct local_devparms {
 	u_int8_t	dp_skew;
@@ -88,10 +103,7 @@ struct local_devparms {
 	u_int16_t	dp_xwcont;
 } __packed;
 
-#define	SGI_SIZE_VOLDIR	15
-
 struct local_sgilabel {
-#define SGILABEL_MAGIC  0xbe5a941
 	u_int32_t	magic;
 	int16_t		root;
 	int16_t		swap;
@@ -111,31 +123,23 @@ struct local_sgilabel {
 	int32_t		_pad;
 } __packed;
 
-#define SGI_PTYPE_VOLHDR	0
-#define SGI_PTYPE_RAW		3
-#define SGI_PTYPE_BSD		4
-#define SGI_PTYPE_VOLUME	6
-#define SGI_PTYPE_EFS		7
-#define SGI_PTYPE_LVOL		8
-#define SGI_PTYPE_RLVOL		9
-#define SGI_PTYPE_XFS		10
-#define SGI_PTYPE_XFSLOG	11
-#define SGI_PTYPE_XLV		12
-#define SGI_PTYPE_XVM		13
+/*
+ * Mode of operation can be one of:
+ * -i	Initialise volume header.
+ * -r	Read a file from volume header.
+ * -w	Write a file to volume header.
+ * -l	Link a file into the volume header.
+ * -d	Delete a file from the volume header.
+ * -p	Modify a partition.
+ */
 
+char	mode;
+int	quiet;
 int	fd;
-int	opt_i;			/* Initialize volume header */
-int	opt_r;			/* Read a file from volume header */
-int	opt_w;			/* Write a file to volume header */
-int	opt_l;			/* Link a file in volume header */
-int	opt_d;			/* Delete a file from volume header */
-int	opt_p;			/* Modify a partition */
-int	opt_q;			/* quiet mode */
-int	opt_f;			/* Don't ask, just do what you're told */
 int	partno, partfirst, partblocks, parttype;
-struct local_sgilabel *volhdr;
+struct	local_sgilabel *volhdr;
 int32_t	checksum;
-u_int32_t	volhdr_size = SGI_SIZE_VOLHDR;
+u_int32_t volhdr_size = SGI_SIZE_VOLHDR;
 
 const char *vfilename = "";
 const char *ufilename = "";
@@ -179,20 +183,19 @@ main(int argc, char *argv[])
 	int ch, oflags;
 	char *endp;
 
+	quiet = 0;
+	mode = ' ';
+
 	while ((ch = getopt(argc, argv, "irwlpdqfh:")) != -1) {
 		switch (ch) {
-		/* -i, -r, -w, -l, -d and -p override each other */
-		/* -q implies -f */
 		case 'q':
-			++opt_q;
-			++opt_f;
+			quiet = 1;
 			break;
 		case 'f':
-			++opt_f;
+			/* Legacy. Do nothing. */
 			break;
 		case 'i':
-			++opt_i;
-			opt_r = opt_w = opt_l = opt_d = opt_p = 0;
+			mode = 'i';
 			break;
 		case 'h':
 			volhdr_size = strtol(optarg, &endp, 0);
@@ -201,24 +204,19 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case 'r':
-			++opt_r;
-			opt_i = opt_w = opt_l = opt_d = opt_p = 0;
+			mode = 'r';
 			break;
 		case 'w':
-			++opt_w;
-			opt_i = opt_r = opt_l = opt_d = opt_p = 0;
+			mode = 'w';
 			break;
 		case 'l':
-			++opt_l;
-			opt_i = opt_r = opt_w = opt_d = opt_p = 0;
+			mode = 'l';
 			break;
 		case 'd':
-			++opt_d;
-			opt_i = opt_r = opt_w = opt_l = opt_p = 0;
+			mode = 'd';
 			break;
 		case 'p':
-			++opt_p;
-			opt_i = opt_r = opt_w = opt_l = opt_d = 0;
+			mode = 'p';
 			break;
 		default:
 			usage();
@@ -227,23 +225,20 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (opt_r || opt_w || opt_l) {
+	if (mode == 'r' || mode == 'w' || mode == 'l') {
 		if (argc != 3)
 			usage();
 		vfilename = argv[0];
 		ufilename = argv[1];
 		argc -= 2;
 		argv += 2;
-	}
-	if (opt_d) {
+	} else if (mode == 'd') {
 		if (argc != 2)
 			usage();
 		vfilename = argv[0];
 		argc--;
 		argv++;
-	}
-
-	if (opt_p) {
+	} else if (mode == 'p') {
 		if (argc != 5)
 			usage();
 		partno = strtol(argv[0], &endp, 0);
@@ -265,47 +260,42 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	oflags = ((opt_i | opt_w | opt_l | opt_d | opt_p) ? O_RDWR : O_RDONLY);
+	oflags = ((mode == 'i' || mode == 'w' || mode == 'l' || mode == 'd'
+	    || mode == 'p') ? O_RDWR : O_RDONLY);
+
 	if ((fd = open(argv[0], oflags)) < 0) {
 		snprintf(buf, sizeof(buf), "/dev/r%s%c",
 		    argv[0], 'a' + getrawpartition());
 		if ((fd = open(buf, oflags)) < 0)
 			err(1, "open %s", buf);
 	}
+
 	if (read(fd, buf, sizeof(buf)) != sizeof(buf))
 		err(1, "read volhdr");
 	if (ioctl(fd, DIOCGDINFO, &lbl) == -1)
 		err(1, "ioctl DIOCGDINFO");
 	volhdr = (struct local_sgilabel *)buf;
-	if (opt_i) {
+
+	if (mode == 'i') {
 		init_volhdr();
 		exit(0);
 	}
+
 	if (betoh32(volhdr->magic) != SGILABEL_MAGIC)
 		errx(2, "no Volume Header found, magic=%x.  Use -i first.",
 		    betoh32(volhdr->magic));
-	if (opt_r) {
-		read_file();
-		exit(0);
-	}
-	if (opt_w) {
-		write_file();
-		exit(0);
-	}
-	if (opt_l) {
-		link_file();
-		exit(0);
-	}
-	if (opt_d) {
-		delete_file();
-		exit(0);
-	}
-	if (opt_p) {
-		modify_partition();
-		exit(0);
-	}
 
-	if (!opt_q)
+	if (mode == 'r')
+		read_file();
+	else if (mode == 'w')
+		write_file();
+	else if (mode == 'l')
+		link_file();
+	else if (mode == 'd')
+		delete_file();
+	else if (mode == 'p')
+		modify_partition();
+	else if (!quiet)
 		display_vol();
 
 	exit (0);
@@ -326,6 +316,7 @@ display_vol(void)
 	printf("root part: %d\n", betoh32(volhdr->root));
 	printf("swap part: %d\n", betoh32(volhdr->swap));
 	printf("bootfile: %s\n", volhdr->bootfile);
+
 	/* volhdr->devparams[0..47] */
 	printf("\nVolume header files:\n");
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
@@ -338,6 +329,7 @@ display_vol(void)
 			    DEV_BSIZE));
 		}
 	}
+
 	printf("\nSGI partitions:\n");
 	for (i = 0; i < MAXPARTITIONS; ++i) {
 		if (betoh32(volhdr->partitions[i].blocks) != 0) {
@@ -389,7 +381,7 @@ read_file(void)
 	FILE *fp;
 	int i;
 
-	if (!opt_q)
+	if (!quiet)
 		printf("Reading file %s\n", vfilename);
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
@@ -421,13 +413,13 @@ write_file(void)
 	struct stat st;
 	char fbuf[DEV_BSIZE];
 
-	if (!opt_q)
+	if (!quiet)
 		printf("Writing file %s\n", ufilename);
 	if (stat(ufilename, &st) != 0)
 		err(1, "stat %s", ufilename);
 	if (st.st_size == 0)
 		errx(1, "%s: file is empty", vfilename);
-	if (!opt_q)
+	if (!quiet)
 		printf("File %s has %lld bytes\n", ufilename, st.st_size);
 	slot = -1;
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
@@ -442,7 +434,7 @@ write_file(void)
 		errx(1, "no more directory entries available");
 	/* -w can overwrite, -a won't overwrite */
 	if (betoh32(volhdr->voldir[slot].block) > 0) {
-		if (!opt_q)
+		if (!quiet)
 			printf("File %s exists, removing old file\n",
 			    vfilename);
 		volhdr->voldir[slot].name[0] = 0;
@@ -468,7 +460,7 @@ write_file(void)
 
 	write_volhdr();
 
-	/* write the file itself */
+	/* Write the file itself. */
 	if (lseek(fd, block * DEV_BSIZE, SEEK_SET) == -1)
 		err(1, "lseek write");
 	i = st.st_size;
@@ -487,7 +479,7 @@ link_file(void)
 	int slot, i;
 	int32_t block, bytes;
 
-	if (!opt_q)
+	if (!quiet)
 		printf("Linking file %s to %s\n", vfilename, ufilename);
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
@@ -549,7 +541,7 @@ delete_file(void)
 void
 modify_partition(void)
 {
-	if (!opt_q)
+	if (!quiet)
 		printf("Modify partition %d start %d length %d\n",
 		    partno, partfirst, partblocks);
 	volhdr->partitions[partno].blocks = htobe32(partblocks);
@@ -565,14 +557,8 @@ write_volhdr(void)
 
 	checksum_vol();
 
-	if (!opt_q)
+	if (!quiet)
 		display_vol();
-	if (!opt_f) {
-		printf("\nDo you want to update volume (y/n)? ");
-		i = getchar();
-		if (i != 'Y' && i != 'y')
-			exit(1);
-	}
 	if (lseek(fd, 0, SEEK_SET) == -1)
 		err(1, "lseek 0");
 	if (write(fd, buf, sizeof(buf)) != sizeof(buf))
@@ -642,11 +628,14 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-fq] [-d vhfilename] disk\n"
-	    "       %s [-fiq] [-h vhsize] disk\n"
-	    "       %s [-fq] [-l vhfilename1 vhfilename2] disk\n"
-	    "       %s [-fq] [-r vhfilename diskfilename] disk\n"
-	    "       %s [-fq] [-w vhfilename diskfilename] disk\n",
-	    __progname, __progname, __progname, __progname, __progname);
+	    "usage: %s [-q] disk\n"
+	    "       %s [-q] -d vhfilename disk\n"
+	    "       %s [-q] -i [-h vhsize] disk\n"
+	    "       %s [-q] -l vhfilename1 vhfilename2 disk\n"
+	    "       %s [-q] -r vhfilename diskfilename disk\n"
+	    "       %s [-q] -w vhfilename diskfilename disk\n",
+	    __progname, __progname, __progname, __progname, __progname,
+	    __progname);
+
 	exit(1);
 }

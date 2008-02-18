@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sgivol.8,v 1.5 2007/05/31 19:20:05 jmc Exp $
+.\"	$OpenBSD: sgivol.8,v 1.6 2008/02/18 15:58:27 jsing Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt
 .\" All rights reserved.
@@ -25,37 +25,40 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 18 2008 $
 .Dt SGIVOL 8 sgi
 .Os
 .Sh NAME
 .Nm sgivol
-.Nd installs a volume header on disk
+.Nd initialise and manipulate SGI disk volume headers
 .Sh SYNOPSIS
 .Nm sgivol
-.Op Fl fq
-.Op Fl d Ar vhfilename
+.Op Fl q
 .Ar disk
 .Nm sgivol
-.Op Fl fiq
+.Op Fl q
+.Fl d Ar vhfilename
+.Ar disk
+.Nm sgivol
+.Op Fl q
+.Fl i
 .Op Fl h Ar vhsize
 .Ar disk
 .Nm sgivol
-.Op Fl fq
-.Op Fl l Ar vhfilename1 Ar vhfilename2
+.Op Fl q
+.Fl l Ar vhfilename1 Ar vhfilename2
 .Ar disk
 .Nm sgivol
-.Op Fl fq
-.Op Fl r Ar vhfilename Ar diskfilename
+.Op Fl q
+.Fl r Ar vhfilename Ar diskfilename
 .Ar disk
 .Nm sgivol
-.Op Fl fq
-.Op Fl w Ar vhfilename Ar diskfilename
+.Op Fl q
+.Fl w Ar vhfilename Ar diskfilename
 .Ar disk
 .Sh DESCRIPTION
 .Nm
-is used to initialize, and then add or remove programs from the
-SGI disk volume header.
+is used to initialise and manipulate SGI disk volume headers.
 .Pp
 The SGI volume header is a disklabel-like structure located at the
 start of a disk.
@@ -68,14 +71,11 @@ The options are as follows:
 Delete the file
 .Ar vhfilename
 from the filesystem storage space in the volume header.
-.It Fl f
-Force.
-Do not ask yes/no questions.
 .It Fl h Ar vhsize
 Choose an alternate volume header size, in (512-byte) disk blocks.
 The default is 3135 blocks.
 .It Fl i
-Initialize a volume header on the supplied device.
+Initialise a volume header on the supplied device.
 .It Fl l Ar vhfilename1 Ar vhfilename2
 Link the file
 .Ar vhfilename1
@@ -86,16 +86,16 @@ within the filesystem storage space in the volume header.
 Be quiet about various diagnostic issues.
 .It Fl r Ar vhfilename Ar diskfilename
 Locate the file
-.Ar diskfilename
+.Ar vhfilename
 in the storage space of the volume header, and copy it to the
 standard file
-.Ar vhfilename .
+.Ar diskfilename .
 .It Fl w Ar vhfilename Ar diskfilename
 Copy the standard file
-.Ar vhfilename
+.Ar diskfilename
 to the filesystem storage space in the volume header, placing
 it there with the name
-.Ar diskfilename .
+.Ar vhfilename .
 .It Ar disk
 The name of the disk containing the partition in which the second-stage
 boot program resides and the first-stage boot program is to be installed.
@@ -119,8 +119,8 @@ will display the current volume header information.
 .Sh EXAMPLES
 The typical use is
 .Bd -literal -offset indent
-# /usr/mdec/sgivol -f -i sd0
-# /usr/mdec/sgivol -f -w boot /usr/mdec/boot sd0
+# /usr/mdec/sgivol -i sd0
+# /usr/mdec/sgivol -w boot /usr/mdec/boot sd0
 .Ed
 .Sh SEE ALSO
 .Xr disklabel 8 ,
