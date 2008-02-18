@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.9 2008/02/18 19:43:27 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.10 2008/02/18 19:48:35 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -175,6 +175,12 @@ typedef struct arc_mem {
 	u_int32_t	BasePage;	/* Page no, first page */
 	u_int32_t	PageCount;	/* Number of pages */
 } arc_mem_t;
+
+typedef struct arc_mem64 {
+	MEMORYTYPE	Type;		/* Memory chunk type */
+	u_int64_t	BasePage;	/* Page no, first page */
+	u_int64_t	PageCount;	/* Number of pages */
+} arc_mem64_t;
 
 typedef caddr_t arc_time_t; /* XXX */
 

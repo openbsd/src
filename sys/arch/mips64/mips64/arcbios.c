@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.12 2008/02/18 19:43:28 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.13 2008/02/18 19:48:36 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -170,8 +170,10 @@ char c;
 		buf[0] = '\r';
 		buf[1] = c;
 		cnt = 2;
+#ifdef __arc__
 		if (displayinfo.CursorYPosition < displayinfo.CursorMaxYPosition)
 			displayinfo.CursorYPosition++;
+#endif
 	}
 	else {
 		buf[0] = c;
@@ -213,13 +215,21 @@ bios_configure_memory()
 {
 	arc_mem_t *descr = NULL;
 	struct phys_mem_desc *m;
+	uint64_t start, count;
 	vaddr_t seg_start, seg_end;
 	int	i;
 
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while (descr != NULL) {
-		seg_start = descr->BasePage;
-		seg_end = seg_start + descr->PageCount;
+		if (bios_is_32bit) {
+			start = descr->BasePage;
+			count = descr->PageCount;
+		} else {
+			start = ((arc_mem64_t *)descr)->BasePage;
+			count = ((arc_mem64_t *)descr)->PageCount;
+		}
+		seg_start = start;
+		seg_end = seg_start + count;
 
 		switch (descr->Type) {
 		case BadMemory:		/* Have no use for theese */
@@ -227,7 +237,7 @@ bios_configure_memory()
 
 		case FreeMemory:
 		case FreeContigous:
-			physmem += descr->PageCount;
+			physmem += count;
 			m = NULL;
 			for (i = 0; i < MAXMEMSEGS; i++) {
 				if (mem_layout[i].mem_last_page == 0) {
@@ -253,12 +263,12 @@ bios_configure_memory()
 		case SystemParameterBlock:
 		case FirmwareTemporary:
 		case FirmwarePermanent:
-			rsvdmem += descr->PageCount;
-			physmem += descr->PageCount;
+			rsvdmem += count;
+			physmem += count;
 			break;
 
 		case LoadedProgram:	/* Count this into total memory */
-			physmem += descr->PageCount;
+			physmem += count;
 			break;
 
 		default:		/* Unknown type, leave it alone... */
@@ -362,7 +372,6 @@ bios_ident()
 	/* Get memory configuration from bios if applicable */
 	switch (sys_config.system_type) {
 	case SGI_O200:
-	case SGI_OCTANE:
 		break;
 	default:
 		if (sys_config.system_type >= 0)
