@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.64 2007/12/30 13:26:03 sobrado Exp $
+.\"	$OpenBSD: fdisk.8,v 1.65 2008/02/18 21:33:05 sobrado Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 30 2007 $
+.Dd $Mdocdate: February 18 2008 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -141,9 +141,9 @@ prints the MBR partition table of the specified device:
 # fdisk wd0
 Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
 Offset: 0       Signature: 0xAA55
-         Starting       Ending       LBA Info:
+          Starting      Ending        LBA Info:
  #: id    C   H  S -    C   H  S [       start:      size   ]
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
  0: 04    0   1  1 -  170   0 63 [          63:     2570462 ] DOS FAT-16
  1: 00    0   0  0 -    0   0  0 [           0:           0 ] unused
  2: 00    0   0  0 -    0   0  0 [           0:           0 ] unused

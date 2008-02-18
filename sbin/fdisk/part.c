@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.45 2007/07/04 16:34:15 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.46 2008/02/18 21:33:05 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -282,13 +282,13 @@ PRT_print(int num, prt_t *partn, char *units)
 	i = unit_lookup(units);
 
 	if (partn == NULL) {
-		printf("          Starting         Ending        LBA Info:\n");
-		printf(" #: id      C   H  S -      C   H  S [       start:        size ]\n");
-		printf("------------------------------------------------------------------------\n");
+		printf("            Starting         Ending         LBA Info:\n");
+		printf(" #: id      C   H   S -      C   H   S [       start:        size ]\n");
+		printf("-------------------------------------------------------------------------------\n");
 	} else {
 		size = ((double)partn->ns * unit_types[SECTORS].conversion) /
 		    unit_types[i].conversion;
-		printf("%c%1d: %.2X %6u %3u %2u - %6u %3u %2u [%12u:%12.0f%s] %s\n",
+		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u [%12u:%12.0f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
 			partn->scyl, partn->shead, partn->ssect,
