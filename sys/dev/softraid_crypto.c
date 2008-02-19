@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.14 2008/02/17 21:11:37 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.15 2008/02/19 03:28:28 marco Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -164,11 +164,10 @@ sr_crypto_putcryptop(struct cryptop *crp)
 int
 sr_crypto_decrypt_key(struct sr_discipline *sd)
 {
-	u_int8_t	*dkkey, *pk1, *ck1, *pk2, *ck2;
-	int		 i, j, error = 0;
+	u_int8_t		*dkkey, *pk1, *ck1, *pk2, *ck2;
+	int			i, j, error = 0;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n",
-	    DEVNAME(sd->sd_sc));
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n", DEVNAME(sd->sd_sc));
 
 	/*  derive key from passphrase */
 	if ((error = sr_crypto_pbkdf2(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
@@ -200,11 +199,10 @@ out:
 int
 sr_crypto_encrypt_key(struct sr_discipline *sd)
 {
-	u_int8_t	*dkkey, *pk1, *pk2, *ck1, *ck2;
-	int	 	 i, j, error = 0;
+	u_int8_t		*dkkey, *pk1, *pk2, *ck1, *ck2;
+	int			i, j, error = 0;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_encrypt_key\n",
-	    DEVNAME(sd->sd_sc));
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_encrypt_key\n", DEVNAME(sd->sd_sc));
 
 	/*  derive key from passphrase */
 	if ((error = sr_crypto_pbkdf2(sd->mds.mdd_crypto.scr_meta[1].scm_passphrase,
@@ -595,10 +593,10 @@ void
 sr_crypto_prf(const u_int8_t *p, int plen, const u_int8_t *data, int datalen,
     u_int8_t *output)
 {
-	SHA1_CTX	 ictx, octx;
-	u_int8_t	 tmp[SHA1_DIGEST_LENGTH];
-	u_int8_t	*buf;
-	int		 i;
+	SHA1_CTX		ictx, octx;
+	u_int8_t		tmp[SHA1_DIGEST_LENGTH];
+	u_int8_t		*buf;
+	int			i;
 
 	/* Calculate a 160bit HMAC using SHA1 */
 
@@ -639,7 +637,7 @@ sr_crypto_prf(const u_int8_t *p, int plen, const u_int8_t *data, int datalen,
 void
 sr_crypto_xor(const u_int8_t *src, u_int8_t *dst, int len)
 {
-	int	i;
+	int			i;
 
 	for (i = 0; i < len; i++)
 		dst[i] ^= src[i];
@@ -649,9 +647,9 @@ void
 sr_crypto_prf_iterate(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
     int c, int i, u_int8_t *dk)
 {
-	int		 j, len;
-	u_int8_t	 buffer[SHA1_DIGEST_LENGTH];
-	u_int8_t	*data;
+	int			j, len;
+	u_int8_t		buffer[SHA1_DIGEST_LENGTH];
+	u_int8_t		*data;
 
 	/*
 	 * Concatenate salt with msb-encoded index i
@@ -681,18 +679,21 @@ sr_crypto_prf_iterate(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
 	bzero(data, len);
 	bzero(buffer, sizeof(buffer));
 	free(data, M_DEVBUF);
-
-	return;
 }
 
 int
 sr_crypto_pbkdf2(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
     int c, int dklen, u_int8_t **dk)
 {
-	int	l, i;
+	int			l, i, rv = EINVAL;
 
-	if (dklen > HMAC_BLOCK_LEN)
-		return (EINVAL);
+	DNPRINTF(SR_D_DIS, "softraid0: sr_crypto_pbkdf2\n");
+
+	if (dklen > HMAC_BLOCK_LEN) {
+		DNPRINTF(SR_D_DIS, "softraid0: sr_crypto_pbkdf2: invalid "
+		    "dklen\n");
+		goto out;
+	}
 
 	/*
 	 * Get a large enough buffer for the key, ie.
@@ -710,5 +711,7 @@ sr_crypto_pbkdf2(const u_int8_t *p, int plen, const u_int8_t *s, int slen,
 	/* Zero out the extra bytes */
 	bzero(*dk + dklen, l * SHA1_DIGEST_LENGTH - dklen);
 
-	return (0);
+	rv = 0;
+out:
+	return (rv);
 }
