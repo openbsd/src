@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.8 2007/05/31 19:19:58 jmc Exp $
+.\" $OpenBSD: packages-specs.7,v 1.9 2008/02/19 21:55:02 landry Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 19 2008 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -59,14 +59,14 @@ distribution version number, or release date.
 In case there are substantial changes in the
 .Ox
 package, a patch level marker should be appended, e.g.,
-.Sq p1 ,
-.Sq p2 ...
+.Sq p0 ,
+.Sq p1 ...
 For example, assuming that the screen package for release 2.8 was
 named
 .Qq screen-2.9.8
 and that an important security patch led to a newer package,
 the new package would be called
-.Qq screen-2.9.8p1 .
+.Qq screen-2.9.8p0 .
 Obviously, these specific markers are reserved for
 .Ox
 purposes.
