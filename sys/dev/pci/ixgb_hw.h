@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.h,v 1.1 2005/11/14 23:25:43 brad Exp $ */ 
+/* $OpenBSD: ixgb_hw.h,v 1.2 2008/02/19 18:47:18 brad Exp $ */ 
 
 #ifndef _IXGB_HW_H_
 #define _IXGB_HW_H_
@@ -51,7 +51,8 @@ typedef enum {
 	ixgb_phy_type_g6005,	/* 850nm, MM fiber, XPAK transceiver */
 	ixgb_phy_type_g6104,	/* 1310nm, SM fiber, XPAK transceiver */
 	ixgb_phy_type_txn17201,	/* 850nm, MM fiber, XPAK transceiver */
-	ixgb_phy_type_txn17401	/* 1310nm, SM fiber, XENPAK transceiver */
+	ixgb_phy_type_txn17401,	/* 1310nm, SM fiber, XENPAK transceiver */
+	ixgb_phy_type_bcm	/* SUN specific board */
 } ixgb_phy_type;
 
 /* XPAK transceiver vendors, for the SR adapters */

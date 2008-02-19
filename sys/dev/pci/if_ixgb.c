@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.38 2007/10/01 15:34:48 krw Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.39 2008/02/19 18:47:18 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1919,8 +1919,13 @@ ixgb_receive_checksum(struct ixgb_softc *sc,
 void
 ixgb_enable_intr(struct ixgb_softc *sc)
 {
-	IXGB_WRITE_REG(&sc->hw, IMS, (IXGB_INT_RXT0 | IXGB_INT_TXDW |
-			    IXGB_INT_RXDMT0 | IXGB_INT_LSC | IXGB_INT_RXO));
+	uint32_t val;
+
+	val = IXGB_INT_RXT0 | IXGB_INT_TXDW | IXGB_INT_RXDMT0 |
+	      IXGB_INT_LSC | IXGB_INT_RXO;
+	if (sc->hw.subsystem_vendor_id == SUN_SUBVENDOR_ID)
+		val |= IXGB_INT_GPI0;
+	IXGB_WRITE_REG(&sc->hw, IMS, val);
 }
 
 void
