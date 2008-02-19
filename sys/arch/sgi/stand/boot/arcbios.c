@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.4 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.5 2008/02/19 13:18:50 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -244,8 +244,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	 *  Scan the component list and find device and partition.
 	 */
 	while ((ncp = bios_get_path_component(cp, namebuf, &i)) != NULL) {
-		if ((strcmp(namebuf, "partition") == 0) ||
-		    (strcmp(namebuf, "partition") == 0)) {
+		if (strcmp(namebuf, "partition") == 0) {
 			partition = i;
 			if (USE_SGI_PARTITIONS)
 				ecp = ncp;
