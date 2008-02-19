@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.333 2008/01/22 17:51:34 okan Exp $
+$OpenBSD: usbdevs,v 1.334 2008/02/19 10:54:24 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -727,7 +727,8 @@ product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
 
 /* Anydata products */
-product ANYDATA ADU_E100H		0x6501	ADU-E100H
+product ANYDATA ADU_E100H	0x6501	ADU-E100H
+product ANYDATA ADU_500A	0x6502	ADU-500A
 
 /* AOX, Inc. products */
 product AOX USB101		0x0008	Ethernet
