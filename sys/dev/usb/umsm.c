@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.19 2007/12/31 19:33:49 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.20 2008/02/19 10:57:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -56,6 +56,7 @@ struct ucom_methods umsm_methods = {
 
 static const struct usb_devno umsm_devs[] = {
 	{ USB_VENDOR_AIRPRIME,	USB_PRODUCT_AIRPRIME_PC5220 },
+	{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_ADU_500A },
 	{ USB_VENDOR_DELL,	USB_PRODUCT_DELL_W5500 },
 	{ USB_VENDOR_KYOCERA2,	USB_PRODUCT_KYOCERA2_KPC650 },
 	{ USB_VENDOR_NOVATEL1,	USB_PRODUCT_NOVATEL1_FLEXPACKGPS },
