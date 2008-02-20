@@ -1,8 +1,9 @@
-/*	$OpenBSD: ip_carp.c,v 1.161 2008/02/05 22:57:30 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.162 2008/02/20 22:11:53 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
  * Copyright (c) 2003 Ryan McBride. All rights reserved.
+ * Copyright (c) 2006-2008 Marco Pfatschbacher. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
