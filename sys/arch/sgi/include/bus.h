@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2007/11/27 14:11:06 jsing Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2008/02/20 19:13:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -26,8 +26,6 @@
 
 #ifndef _MACHINE_BUS_H_
 #define _MACHINE_BUS_H_
-
-#include <machine/pio.h>
 
 #ifdef __STDC__
 #define CAT(a,b)	a##b

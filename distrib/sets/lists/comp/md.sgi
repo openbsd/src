@@ -163,7 +163,6 @@
 ./usr/include/mips64/cpustate.h
 ./usr/include/mips64/db_machdep.h
 ./usr/include/mips64/endian.h
-./usr/include/mips64/exception.h
 ./usr/include/mips64/exec.h
 ./usr/include/mips64/float.h
 ./usr/include/mips64/frame.h
@@ -177,7 +176,6 @@
 ./usr/include/mips64/mips_opcode.h
 ./usr/include/mips64/param.h
 ./usr/include/mips64/pcb.h
-./usr/include/mips64/pio.h
 ./usr/include/mips64/pmap.h
 ./usr/include/mips64/proc.h
 ./usr/include/mips64/profile.h
@@ -223,7 +221,6 @@
 ./usr/include/sgi/mutex.h
 ./usr/include/sgi/param.h
 ./usr/include/sgi/pcb.h
-./usr/include/sgi/pio.h
 ./usr/include/sgi/pmap.h
 ./usr/include/sgi/proc.h
 ./usr/include/sgi/profile.h

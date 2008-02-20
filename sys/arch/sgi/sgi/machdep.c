@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.54 2008/02/20 19:13:38 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -63,7 +63,6 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
