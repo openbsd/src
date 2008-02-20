@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.566 2008/02/16 12:22:19 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.567 2008/02/20 23:40:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3276,10 +3276,22 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    (r->rule_flag & PFRULE_RETURN)) &&
 		    !(th->th_flags & TH_RST)) {
 			u_int32_t	 ack = ntohl(th->th_seq) + pd->p_len;
-			struct ip	*h = mtod(m, struct ip *);
+			int		 len = 0;
+			struct ip	*h4;
+			struct ip6_hdr	*h6;
 
-			if (pf_check_proto_cksum(m, off,
-			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+			switch (af) {
+			case AF_INET:
+				h4 = mtod(m, struct ip *);
+				len = ntohs(h4->ip_len) - off;
+				break;
+			case AF_INET6:
+				h6 = mtod(m, struct ip6_hdr *);
+				len = ntohs(h6->ip6_plen) - (off - sizeof(*h6));
+				break;
+			}
+
+			if (pf_check_proto_cksum(m, off, len, IPPROTO_TCP, af))
 				REASON_SET(&reason, PFRES_PROTCKSUM);
 			else {
 				if (th->th_flags & TH_SYN)
