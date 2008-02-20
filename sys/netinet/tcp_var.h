@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.85 2008/02/20 11:24:03 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.86 2008/02/20 14:23:31 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -656,10 +656,6 @@ int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
 int	tcp_signature(struct tdb *, int, struct mbuf *, struct tcphdr *,
 	    int, int, char *);
 #endif /* TCP_SIGNATURE */
-void	tcp_rndiss_init(void);
-tcp_seq	tcp_rndiss_next(void);
-u_int16_t
-	tcp_rndiss_encrypt(u_int16_t);
 void     tcp_set_iss_tsm(struct tcpcb *);
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,

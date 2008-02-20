@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.102 2008/02/20 11:24:03 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.103 2008/02/20 14:23:31 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1174,50 +1174,3 @@ tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
 	return (0);
 }
 #endif /* TCP_SIGNATURE */
-
-#define TCP_RNDISS_ROUNDS	16
-#define TCP_RNDISS_OUT	7200
-#define TCP_RNDISS_MAX	30000
-
-u_int8_t tcp_rndiss_sbox[128];
-u_int16_t tcp_rndiss_msb;
-u_int16_t tcp_rndiss_cnt;
-long tcp_rndiss_reseed;
-
-u_int16_t
-tcp_rndiss_encrypt(val)
-	u_int16_t val;
-{
-	u_int16_t sum = 0, i;
-
-	for (i = 0; i < TCP_RNDISS_ROUNDS; i++) {
-		sum += 0x79b9;
-		val ^= ((u_int16_t)tcp_rndiss_sbox[(val^sum) & 0x7f]) << 7;
-		val = ((val & 0xff) << 7) | (val >> 8);
-	}
-
-	return val;
-}
-
-void
-tcp_rndiss_init()
-{
-	arc4random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
-
-	tcp_rndiss_reseed = time_second + TCP_RNDISS_OUT;
-	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;
-	tcp_rndiss_cnt = 0;
-}
-
-tcp_seq
-tcp_rndiss_next()
-{
-        if (tcp_rndiss_cnt >= TCP_RNDISS_MAX ||
-	    time_second > tcp_rndiss_reseed)
-                tcp_rndiss_init();
-
-	/* (arc4random() & 0x7fff) ensures a 32768 byte gap between ISS */
-	return ((tcp_rndiss_encrypt(tcp_rndiss_cnt++) | tcp_rndiss_msb) <<16) |
-		(arc4random() & 0x7fff);
-}
-
