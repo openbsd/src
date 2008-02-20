@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.222 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.223 2008/02/20 09:16:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -728,9 +728,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 
 	if (cf->file_ent != NULL)
 		rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
-	if (cf->file_rcsrev != NULL) {
+	if (cf->file_rcsrev != NULL)
 		rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
-	}
 
 	ismodified = rcsdead = 0;
 	if (cf->fd != -1 && cf->file_ent != NULL) {
