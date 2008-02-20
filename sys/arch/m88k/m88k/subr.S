@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.16 2007/12/22 17:14:39 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.17 2008/02/20 18:35:41 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -361,7 +361,7 @@ ASLOCAL(Lcidone)
 	ldcr	r5,   CPU
 	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
-	 st	r0,r6,PCB_ONFAULT
+	 st	r0,   r6,   PCB_ONFAULT
 
 ASLOCAL(Lciflt)
 	br.n	_ASM_LABEL(Lcidone)
@@ -637,7 +637,7 @@ ASLOCAL(Lcodone)
 	ldcr	r5,   CPU
 	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
-	 st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	 st	r0,   r6,   PCB_ONFAULT	/* clear the handler */
 
 ASLOCAL(Lcoflt)
 	br.n	_ASM_LABEL(Lcodone)
@@ -705,7 +705,7 @@ ASLOCAL(Lcosdone)
 	ldcr	r5,   CPU
 	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
-	 st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	 st	r0,   r6,   PCB_ONFAULT	/* clear the handler */
 
 #undef	SRC
 #undef	DEST
@@ -720,10 +720,13 @@ ASLOCAL(Lcosdone)
  * Copy len bytes from src to dst, aborting if we encounter a page fault.
  */
 ENTRY(kcopy)
+	subu	r31,  r31,  16
 	ldcr	r5,   CPU
 	ld	r6,   r5,   CI_CURPCB
 	or.u	r5,   r0,   hi16(_ASM_LABEL(kcopy_fault))
+	ld	r7,   r6,   PCB_ONFAULT
 	or	r5,   r5,   lo16(_ASM_LABEL(kcopy_fault))
+	st	r7,   r31,  0			/* save old pcb_onfault */
 	st	r5,   r6,   PCB_ONFAULT		/* pcb_onfault = kcopy_fault */
 	bcnd	le0,r4,_ASM_LABEL(kcopy_out)	/* nothing to do if <= 0 */
 /*
@@ -973,9 +976,11 @@ ASLOCAL(kcopy_out)
 	or	r2,   r0,   0		/* return success */
 ASLOCAL(kcopy_out_fault)
 	ldcr	r5,   CPU
+	ld	r7,   r31,  0
 	ld	r6,   r5,   CI_CURPCB
+	add	r31,  r31,  16
 	jmp.n	r1		/* all done, return to caller */
-	 st	r0,   r6,   PCB_ONFAULT	/* clear the handler */
+	 st	r7,   r6,   PCB_ONFAULT	/* restore previous pcb_onfault */
 
 ASLOCAL(kcopy_fault)
 	br.n	_ASM_LABEL(kcopy_out_fault)

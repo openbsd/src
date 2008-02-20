@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.10 2007/05/20 14:34:23 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.11 2008/02/20 18:35:43 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -415,19 +415,22 @@ _copyerr:
 /*
  *  kcopy is a wrapper around bcopy that catches bad memory references.
  */
-NON_LEAF(kcopy, FRAMESZ(CF_SZ), ra)
-	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
-	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-	PTR_S	ra, CF_RA_OFFS(sp)
-	li	v0, KT_KCOPYERR
+NON_LEAF(kcopy, FRAMESZ(CF_SZ + REGSZ), ra)
+	PTR_SUBU sp, sp, FRAMESZ(CF_SZ + REGSZ)
+	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ + REGSZ))
+	PTR_S	ra, CF_RA_OFFS + REGSZ(sp)
 	PTR_L	t3, curprocpaddr
+	lw	v1, PCB_ONFAULT(t3)
+	li	v0, KT_KCOPYERR
+	PTR_S	v1, CF_ARGSZ(sp)	# save old pcb_onfault
 	jal	bcopy
 	sw	v0, PCB_ONFAULT(t3)
 
-	PTR_L	ra, CF_RA_OFFS(sp)
+	PTR_L	v0, CF_ARGSZ(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, PCB_ONFAULT(t3)
-	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
+	PTR_L	ra, CF_RA_OFFS + REGSZ(sp)
+	sw	v0, PCB_ONFAULT(t3)
+	PTR_ADDU sp, sp, FRAMESZ(CF_SZ + REGSZ)
 	j	ra
 	move	v0, zero
 END(kcopy)
