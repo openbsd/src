@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.41 2007/11/27 17:23:23 deraadt Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.42 2008/02/20 11:24:03 markus Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ tcp_timer_keep(void *arg)
 		 */
 		tcpstat.tcps_keepprobe++;
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
-		    (struct mbuf *)NULL, tp->rcv_nxt, tp->snd_una - 1, 0);
+		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0);
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);

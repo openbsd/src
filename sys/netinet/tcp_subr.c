@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.101 2007/11/27 17:23:23 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.102 2008/02/20 11:24:03 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -318,18 +318,23 @@ tcp_template(tp)
 /* This function looks hairy, because it was so IPv4-dependent. */
 #endif /* INET6 */
 void
-tcp_respond(tp, template, m, ack, seq, flags)
+tcp_respond(tp, template, th0, ack, seq, flags)
 	struct tcpcb *tp;
 	caddr_t template;
-	struct mbuf *m;
+	struct tcphdr *th0;
 	tcp_seq ack, seq;
 	int flags;
 {
 	int tlen;
 	int win = 0;
+	struct mbuf *m = 0;
 	struct route *ro = 0;
 	struct tcphdr *th;
-	struct tcpiphdr *ti = (struct tcpiphdr *)template;
+	struct ip *ip;
+	struct ipovly *ih;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
 	int af;		/* af on wire */
 
 	if (tp) {
@@ -346,65 +351,48 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		 */
 		ro = &tp->t_inpcb->inp_route;
 	} else
-		af = (((struct ip *)ti)->ip_v == 6) ? AF_INET6 : AF_INET;
-	if (m == 0) {
-		m = m_gethdr(M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
-			return;
-		tlen = 0;
-		m->m_data += max_linkhdr;
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
-			    sizeof(struct ip6_hdr));
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
-			    sizeof(struct ip));
-			break;
-		}
+		af = (((struct ip *)template)->ip_v == 6) ? AF_INET6 : AF_INET;
 
-		ti = mtod(m, struct tcpiphdr *);
-		flags = TH_ACK;
-	} else {
-		m_freem(m->m_next);
-		m->m_next = 0;
-		m->m_data = (caddr_t)ti;
-		tlen = 0;
+	m = m_gethdr(M_DONTWAIT, MT_HEADER);
+	if (m == NULL)
+		return;
+	m->m_data += max_linkhdr;
+	tlen = 0;
+
 #define xchg(a,b,type) do { type t; t=a; a=b; b=t; } while (0)
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			m->m_len = sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
-			xchg(((struct ip6_hdr *)ti)->ip6_dst,
-			    ((struct ip6_hdr *)ti)->ip6_src, struct in6_addr);
-			th = (void *)((caddr_t)ti + sizeof(struct ip6_hdr));
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			m->m_len = sizeof (struct tcpiphdr);
-			xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_int32_t);
-			th = (void *)((caddr_t)ti + sizeof(struct ip));
-			break;
-		}
-		xchg(th->th_dport, th->th_sport, u_int16_t);
-#undef xchg
-	}
 	switch (af) {
 #ifdef INET6
 	case AF_INET6:
-		tlen += sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
-		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip6_hdr));
+		ip6 = mtod(m, struct ip6_hdr *);
+		th = (struct tcphdr *)(ip6 + 1);
+		tlen = sizeof(*ip6) + sizeof(*th);
+		if (th0) {
+			bcopy(template, ip6, sizeof(*ip6));
+			bcopy(th0, th, sizeof(*th));
+			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
+		} else {
+			bcopy(template, ip6, tlen);
+		}
 		break;
 #endif /* INET6 */
 	case AF_INET:
-		ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) + tlen));
-		tlen += sizeof (struct tcpiphdr);
-		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip));
+		ip = mtod(m, struct ip *);
+		th = (struct tcphdr *)(ip + 1);
+		tlen = sizeof(*ip) + sizeof(*th);
+		if (th0) {
+			bcopy(template, ip, sizeof(*ip));
+			bcopy(th0, th, sizeof(*th));
+			xchg(ip->ip_dst.s_addr, ip->ip_src.s_addr, u_int32_t);
+		} else {
+			bcopy(template, ip, tlen);
+		}
 		break;
 	}
+	if (th0)
+		xchg(th->th_dport, th->th_sport, u_int16_t);
+	else
+		flags = TH_ACK;
+#undef xchg
 
 	m->m_len = tlen;
 	m->m_pkthdr.len = tlen;
@@ -424,23 +412,23 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	switch (af) {
 #ifdef INET6
 	case AF_INET6:
-		((struct ip6_hdr *)ti)->ip6_flow   = htonl(0x60000000);
-		((struct ip6_hdr *)ti)->ip6_nxt  = IPPROTO_TCP;
-		((struct ip6_hdr *)ti)->ip6_hlim =
-			in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
-		((struct ip6_hdr *)ti)->ip6_plen = tlen - sizeof(struct ip6_hdr);
+		ip6->ip6_flow = htonl(0x60000000);
+		ip6->ip6_nxt  = IPPROTO_TCP;
+		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
+		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		th->th_sum = 0;
 		th->th_sum = in6_cksum(m, IPPROTO_TCP,
-		   sizeof(struct ip6_hdr), ((struct ip6_hdr *)ti)->ip6_plen);
-		HTONS(((struct ip6_hdr *)ti)->ip6_plen);
+		   sizeof(struct ip6_hdr), ip6->ip6_plen);
+		HTONS(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
 		    (struct route_in6 *)ro, 0, NULL, NULL,
 		    tp ? tp->t_inpcb : NULL);
 		break;
 #endif /* INET6 */
 	case AF_INET:
-		bzero(ti->ti_x1, sizeof ti->ti_x1);
-		ti->ti_len = htons((u_short)tlen - sizeof(struct ip));
+		ih = (struct ipovly *)ip;
+		bzero(ih->ih_x1, sizeof ih->ih_x1);
+		ih->ih_len = htons((u_short)tlen - sizeof(struct ip));
 
 		/*
 		 * There's no point deferring to hardware checksum processing
@@ -449,8 +437,8 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		 */
 		th->th_sum = 0;
 		th->th_sum = in_cksum(m, tlen);
-		((struct ip *)ti)->ip_len = htons(tlen);
-		((struct ip *)ti)->ip_ttl = ip_defttl;
+		ip->ip_len = htons(tlen);
+		ip->ip_ttl = ip_defttl;
 		ip_output(m, (void *)NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
 			(void *)NULL, tp ? tp->t_inpcb : (void *)NULL);
 	}
