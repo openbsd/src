@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.83 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.84 2008/02/20 17:29:28 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -292,14 +292,13 @@ import_update(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "import_update(%s)", cf->file_path);
 
 	if ((rev = rcs_translate_tag(import_branch, cf->file_rcs)) == NULL)
-		fatal("import_update: could not translate tag `%s'", import_branch);
+		fatal("import_update: could not translate tag `%s'",
+		    import_branch);
 
 	if ((brev = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_update: rcsnum_parse failed");
 
-	if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE)) == NULL)
-		fatal("import_update: failed to grab revision");
-
+	b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE);
 	b2 = cvs_buf_load_fd(cf->fd);
 
 	ret = cvs_buf_differ(b1, b2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.129 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.130 2008/02/20 17:29:28 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -441,8 +441,6 @@ cvs_commit_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_REMOVED) {
 		b = rcs_rev_getbuf(cf->file_rcs, crev, 0);
-		if (b == NULL)
-			fatal("cvs_commit_local: failed to get crev");
 	} else if (onbranch == 1) {
 		b = commit_diff(cf, crev, 1);
 	} else {
