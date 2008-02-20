@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.94 2008/02/12 10:12:14 robert Exp $
+#	$OpenBSD: files.sparc64,v 1.95 2008/02/20 09:44:47 robert Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -314,7 +314,7 @@ file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 # TDA8444 (sparc64 only for now)
 device	tda
 attach	tda at i2c
-file	arch/sparc64/dev/tda.c			tda
+file	arch/sparc64/dev/tda.c			tda needs-flag
 
 #
 # Machine-independent GPIO drivers

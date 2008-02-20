@@ -1,4 +1,4 @@
-/*	$OpenBSD: tda.c,v 1.2 2008/02/18 21:23:00 kettenis Exp $ */
+/*	$OpenBSD: tda.c,v 1.3 2008/02/20 09:44:47 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -74,6 +74,8 @@ struct cfdriver tda_cd = {
 	NULL, "tda", DV_DULL
 };
 
+void *tda_cookie;
+
 int
 tda_match(struct device *parent, void *match, void *aux)
 {
@@ -122,6 +124,8 @@ tda_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to register update task\n", DEVNAME(sc));
 		return;
 	}
+
+	tda_cookie = sc;
 }
 
 void
@@ -217,4 +221,44 @@ tda_adjust(void *v)
 
 out:
 	tda_setspeed(sc);
+}
+
+/* This code gets called when we are about to drop to ddb,
+ * in order to operate the fans at full speed during the
+ * timeouts are not working.
+ */
+void
+tda_full_blast()
+{
+	struct tda_softc *sc = tda_cookie;
+	u_int8_t cmd[2];
+
+	if (sc == NULL)
+		return;
+
+	sc->sc_cfan_speed = sc->sc_sfan_speed = TDA_FANSPEED_MAX;
+
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+
+	cmd[0] = TDA_CPUFAN_REG;
+	cmd[1] = sc->sc_cfan_speed;
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof(cmd), NULL, 0, 0)) {
+		printf("%s: cannot write cpu-fan register\n",
+		    DEVNAME(sc));
+		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		return;
+        }
+
+	cmd[0] = TDA_SYSFAN_REG;
+	cmd[1] = sc->sc_sfan_speed;
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof(cmd), NULL, 0, 0)) {
+		printf("%s: cannot write system-fan register\n",
+		    DEVNAME(sc));
+		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		return;
+	}
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }

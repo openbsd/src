@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.54 2008/02/18 10:37:20 robert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.55 2008/02/20 09:44:47 robert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -255,6 +255,8 @@ void zs_kgdb_init(void);
 #endif
 /* fb.c */
 void	fb_unblank(void);
+/* tda.c */
+void	tda_full_blast(void);
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
