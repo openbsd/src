@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.193 2008/02/12 10:32:47 robert Exp $
+#	$OpenBSD: GENERIC,v 1.194 2008/02/20 09:45:49 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -389,7 +389,7 @@ maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 pcfadc*	at iic?				# Philips PCF8591 
 ecadc*	at iic?				# SUNW,envctrl temperature sensors
 spdmem* at iic?				# SPD memory eeproms
-#tda*	at iic?				# Philips TDA8444
+tda*	at iic?				# Philips TDA8444
 
 # Framebuffers
 agten*		at sbus?		# Fujitsu AG-10e framebuffer
