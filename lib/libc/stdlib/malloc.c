@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.87 2007/09/03 14:37:02 millert Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.88 2008/02/20 18:31:34 otto Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -260,7 +260,7 @@ static struct pginfo *pginfo_list;
 static struct pgfree *pgfree_list;
 
 static struct pgfree *
-alloc_pgfree()
+alloc_pgfree(void)
 {
 	struct pgfree *p;
 	int i;
@@ -281,7 +281,7 @@ alloc_pgfree()
 }
 
 static struct pginfo *
-alloc_pginfo()
+alloc_pginfo(void)
 {
 	struct pginfo *p;
 	int i;
@@ -1199,9 +1199,9 @@ imalloc(size_t size, int zero_fill)
 	if (suicide)
 		abort();
 
-	/* does not matter if malloc_bytes fails */
+	/* does not matter if alloc_pgfree() fails */
 	if (px == NULL)
-		px = malloc_bytes(sizeof *px);
+		px = alloc_pgfree();
 
 	if (malloc_ptrguard && size == PTR_SIZE) {
 		ptralloc = 1;
@@ -1840,7 +1840,7 @@ ifree(void *ptr)
 	else
 		free_bytes(ptr);
 
-	/* does not matter if malloc_bytes fails */
+	/* does not matter if alloc_pgfree fails */
 	if (px == NULL)
 		px = alloc_pgfree();
 
