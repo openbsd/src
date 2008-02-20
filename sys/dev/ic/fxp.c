@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.89 2007/10/13 16:12:29 fgsch Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.90 2008/02/20 12:31:48 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -857,10 +857,12 @@ fxp_intr(void *arg)
 				FXP_TXCB_SYNC(sc, txs,
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			}
-			sc->sc_cbt_cons = txs;
 			sc->sc_cbt_cnt = txcnt;
-			ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
+			/* Did we transmit any packets? */
+			if (sc->sc_cbt_cons != txs)
+				ifp->if_flags &= ~IFF_OACTIVE;
+			ifp->if_timer = sc->sc_cbt_cnt ? 5 : 0;
+			sc->sc_cbt_cons = txs;
 
 			if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 				/*
