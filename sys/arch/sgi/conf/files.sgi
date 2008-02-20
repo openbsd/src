@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.19 2007/12/31 12:46:14 jsing Exp $
+#	$OpenBSD: files.sgi,v 1.20 2008/02/20 18:46:20 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -12,6 +12,7 @@ file	arch/sgi/sgi/disksubr.c			disk
 file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/bus_dma.c
 file	arch/sgi/sgi/conf.c
+file	arch/sgi/sgi/ip30_machdep.c		tgt_octane
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mutex.c
 file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
@@ -43,7 +44,7 @@ attach	cpu at mainbus
 #
 #	O2 MACE localbus autoconfiguration devices
 #
-define	macebus {[sys = - 1], [base = -1], [irq = -1]}
+define	macebus {[base = -1], [irq = -1]}
 device	macebus
 attach	macebus at mainbus
 file	arch/sgi/localbus/macebus.c		macebus
@@ -80,8 +81,7 @@ include	"dev/pci/files.pci"
 
 # Clock device
 device	clock
-attach	clock at macebus with clock_macebus
-attach	clock at xbowmux with clock_xbowmux
+attach	clock at macebus
 file	arch/sgi/sgi/clock_md.c			clock
 
 # GBE framebuffer
@@ -90,13 +90,8 @@ attach	gbe at mainbus
 file	arch/sgi/dev/gbe.c			gbe	needs-flag
 
 # 16[45]50-based "com" ports on localbus
-attach	com at xbowmux with com_xbow
-attach	com at macebus with com_localbus
-file	arch/sgi/localbus/com_lbus.c		com_localbus | com_xbow
-
-# PC parallel ports (XXX what chip?)
-attach	lpt at macebus with lpt_localbus
-file	arch/sgi/dev/lpt_lbus.c			lpt_localbus
+attach	com at macebus with com_macebus
+file	arch/sgi/localbus/com_lbus.c		com_macebus
 
 # MACE MAC-110 ethernet
 device	mec: ether, ifnet, ifmedia, mii

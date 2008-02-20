@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.10 2007/12/14 10:07:12 jsing Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.11 2008/02/20 18:46:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -136,6 +136,8 @@ int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handl
 void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 
-void *macebus_intr_establish(void *, u_long, int, int, int (*)(void *), void *, char *);
+void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
+	    void *, char *);
+void	macebus_intr_disestablish(void *, void *);
 
 #endif	/* _MACEBUS_H_ */

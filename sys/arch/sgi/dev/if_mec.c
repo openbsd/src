@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.14 2008/01/21 01:39:25 jsing Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.15 2008/02/20 18:46:20 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -105,6 +105,8 @@
 #include <mips64/archtype.h>
 #include <mips64/arcbios.h>
 #include <sgi/dev/if_mecreg.h>
+
+#include <sgi/localbus/macebus.h>
 
 #ifdef MEC_DEBUG
 #define MEC_DEBUG_RESET		0x01
@@ -348,11 +350,6 @@ void	mec_shutdown(void *);
 int
 mec_match(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
-
-	if (ca->ca_sys != SGI_O2 || strcmp(ca->ca_name, mec_cd.cd_name))
-		return (0);
-
 	return (1);
 }
 
@@ -481,7 +478,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	/* Establish interrupt handler. */
-	BUS_INTR_ESTABLISH(ca, NULL, ca->ca_intr, IST_EDGE, IPL_NET,
+	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_NET,
 	    mec_intr, sc, sc->sc_dev.dv_xname);
 
 	/* Set hook to stop interface on shutdown. */

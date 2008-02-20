@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.4 2007/12/27 03:00:51 jsing Exp $	*/
+/*	$OpenBSD: power.c,v 1.5 2008/02/20 18:46:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -64,13 +64,7 @@ struct cfdriver power_cd = {
 int
 power_match(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
-
-	/* Power button only on SGI_O2, for now that is */
-	if (ca->ca_sys == SGI_O2)
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 void

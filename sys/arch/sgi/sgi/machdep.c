@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2007/12/18 08:29:02 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.53 2008/02/20 18:46:20 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -288,11 +288,6 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		sys_config.cons_ioaddr[1] = MACE_ISA_SER2_OFFS;
 		sys_config.cons_baudclk = 1843200;		/*XXX*/
 		sys_config.cons_iot = &macebus_tag;
-		sys_config.local.bus_base = 0x0;		/*XXX*/
-		sys_config.pci_io[0].bus_base = 0xffffffff00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_base = 0xffffffff00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_reverse = my_endian;
 		sys_config.cpu[0].tlbwired = 2;
 
 		crime_configure_memory();
@@ -321,19 +316,14 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	case SGI_O200:
 		bios_printf("Found SGI-IP27, setting up.\n");
-		strlcpy(cpu_model, "SGI- Origin200 (IP27)", sizeof(cpu_model));
+		strlcpy(cpu_model, "SGI-Origin200 (IP27)", sizeof(cpu_model));
 
 		kl_scan_config(0);
 
 		sys_config.cons_ioaddr[0] = kl_get_console_base();
 		sys_config.cons_ioaddr[1] = kl_get_console_base() - 8;
 		sys_config.cons_baudclk = 22000000 / 3;	/*XXX*/
-		sys_config.cons_iot = &xbowmux_tag;
-		sys_config.local.bus_base = 0x0;		/*XXX*/
-		sys_config.pci_io[0].bus_base = 0xffffffff00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_base = 0xffffffff00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_reverse = my_endian;
+		sys_config.cons_iot = &xbowbus_tag;
 		sys_config.cpu[0].tlbwired = 2;
 		break;
 #endif

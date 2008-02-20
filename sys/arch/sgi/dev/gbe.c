@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.4 2007/12/31 12:46:14 jsing Exp $ */
+/*	$OpenBSD: gbe.c,v 1.5 2008/02/20 18:46:20 miod Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -164,11 +164,12 @@ struct cfdriver gbe_cd = {
 int
 gbe_match(struct device *parent, void *cf, void *aux)
 {
-	/* GBE framebuffer only on SGI O2 (for now anyway). */
-	if (sys_config.system_type == SGI_O2)
-		return 1;
+	struct confargs *ca = aux;
 
-	return 0;
+	if (strcmp(ca->ca_name, gbe_cd.cd_name) != 0)
+		return 0;
+
+	return 1;
 }
 
 void

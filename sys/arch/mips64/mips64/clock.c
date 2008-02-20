@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2007/04/29 17:35:27 kettenis Exp $ */
+/*	$OpenBSD: clock.c,v 1.19 2008/02/20 18:46:18 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,7 +49,7 @@ intrmask_t clock_int5(intrmask_t, struct trap_frame *);
 void clock_int5_init(struct clock_softc *);
 
 struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL, NULL, 0
+	NULL, "clock", DV_DULL
 };
 
 struct cfattach clock_ca = {
@@ -60,7 +60,6 @@ int	clock_started = 0;
 u_int32_t cpu_counter_last;
 u_int32_t cpu_counter_interval;
 u_int32_t pendingticks;
-u_int32_t ticktime;
 
 u_int cp0_get_timecount(struct timecounter *);
 
@@ -90,7 +89,7 @@ clockmatch(struct device *parent, void *cfdata, void *aux)
         if (strcmp(ca->ca_name, clock_cd.cd_name) != 0)
                 return (0);
 
-	if (cf->cf_unit >= 1)
+	if (cf->cf_unit > 0)
 		return 0;
 	return 10;	/* Try to get clock early */
 }
@@ -104,22 +103,24 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	sc = (struct clock_softc *)self;
 
 	switch (sys_config.system_type) {
+#if 0
 	case ALGOR_P4032:
 	case ALGOR_P5064:
 	case MOMENTUM_CP7000:
 	case MOMENTUM_CP7000G:
 	case MOMENTUM_JAGUAR:
 	case GALILEO_EV64240:
+#endif
 	case SGI_INDY:
 	case SGI_O2:
 	case SGI_O200:
+	case SGI_OCTANE:
 		printf(" ticker on int5 using count register");
 		set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
-		ticktime = sys_config.cpu[0].clock / 2000;
 		break;
 
 	default:
-		panic("clockattach: it didn't get here.  really.");
+		panic("system clock handling code is missing");
 	}
 
 	printf("\n");

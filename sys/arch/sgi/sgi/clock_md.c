@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.10 2007/12/27 02:59:13 jsing Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.11 2008/02/20 18:46:20 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,14 +49,6 @@ extern int clock_started;
 #define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
 #define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
-struct cfattach clock_macebus_ca = {
-        sizeof(struct clock_softc), clockmatch, clockattach
-};
-
-struct cfattach clock_xbowmux_ca = {
-        sizeof(struct clock_softc), clockmatch, clockattach
-};
-
 void	ds1687_get(struct clock_softc *, time_t, struct tod_time *);
 void	ds1687_set(struct clock_softc *, struct tod_time *);
 
@@ -64,9 +56,7 @@ void
 md_clk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct clock_softc *sc = (struct clock_softc *)self;
-	struct confargs *ca;
-
-	ca = aux;
+	struct confargs *ca = aux;
 
 	switch (sys_config.system_type) {
 	case SGI_O2:
@@ -96,11 +86,19 @@ md_clk_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_clock.clk_hz = 100;
 		sc->sc_clock.clk_profhz = 100;
 		sc->sc_clock.clk_stathz = 0;	/* XXX no stat clock yet */
-		printf("TODO set up clock.");
+		/* XXX MK48T35 */
+		break;
+
+	case SGI_OCTANE:
+		sc->sc_clock.clk_init = clock_int5_init;
+		sc->sc_clock.clk_hz = 100;
+		sc->sc_clock.clk_profhz = 100;
+		sc->sc_clock.clk_stathz = 0;	/* XXX no stat clock yet */
+		/* XXX DS1687 */
 		break;
 
 	default:
-		printf("don't know how to set up clock.");
+		panic("don't know how to set up clock.");
 	}
 }
 

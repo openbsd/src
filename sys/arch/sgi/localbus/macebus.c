@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.33 2007/12/14 16:34:29 jsing Exp $ */
+/*	$OpenBSD: macebus.c,v 1.34 2008/02/20 18:46:20 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -59,11 +59,8 @@
 int	macebusmatch(struct device *, void *, void *);
 void	macebusattach(struct device *, struct device *, void *);
 int	macebusprint(void *, const char *);
-int	macebusscan(struct device *, void *, void *);
+int	macebussearch(struct device *, void *, void *);
 
-void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
-	    void *, char *);
-void	macebus_intr_disestablish(void *, void *);
 void	macebus_intr_makemasks(void);
 void	macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
@@ -79,7 +76,7 @@ struct cfattach macebus_ca = {
 };
 
 struct cfdriver macebus_cd = {
-	NULL, "macebus", DV_DULL, 1
+	NULL, "macebus", DV_DULL
 };
 
 bus_space_t macebus_tag = {
@@ -143,58 +140,48 @@ macebusmatch(struct device *parent, void *match, void *aux)
 int
 macebusprint(void *aux, const char *macebus)
 {
-/* XXXX print flags */
-	return (QUIET);
+	struct confargs *ca = aux;
+
+	if (macebus != NULL)
+		printf("%s at %s", ca->ca_name, macebus);
+
+	if (ca->ca_baseaddr != 0)
+		printf(" base 0x%08x", ca->ca_baseaddr);
+	if (ca->ca_intr != 0)
+		printf(" irq %d", ca->ca_intr);
+
+	return (UNCONF);
 }
 
-
 int
-macebusscan(struct device *parent, void *child, void *args)
+macebussearch(struct device *parent, void *child, void *args)
 {
-	struct device *dev = child;
-	struct cfdata *cf = dev->dv_cfdata;
-	struct confargs lba;
-	struct abus lbus;
+	struct cfdata *cf = child;
+	struct confargs ca;
 
-	if (cf->cf_fstate == FSTATE_STAR) {
-		printf("macebus '*' devs not allowed!\n");
-		return 0;
-	}
+	ca.ca_name = cf->cf_driver->cd_name;
+	ca.ca_iot = &macebus_tag;
+	ca.ca_memt = &macebus_tag;
+	ca.ca_dmat = &mace_bus_dma_tag;
+	if (cf->cf_loc[0] == -1)
+		ca.ca_baseaddr = 0;
+	else
+		ca.ca_baseaddr = cf->cf_loc[0];
+	if (cf->cf_loc[1] == -1)
+		ca.ca_intr = 0;
+	else
+		ca.ca_intr = cf->cf_loc[1];
 
-	lba.ca_sys = cf->cf_loc[0];
-	if (cf->cf_loc[1] == -1) {
-		lba.ca_baseaddr = 0;
-	} else {
-		lba.ca_baseaddr = cf->cf_loc[1];
-	}
-	if (cf->cf_loc[2] == -1) {
-		lba.ca_intr = 0;
-		lba.ca_nintr = 0;
-	} else {
-		lba.ca_intr = cf->cf_loc[2];
-		lba.ca_nintr = 1;
-	}
+	if ((*cf->cf_attach->ca_match)(parent, cf, &ca) == 0)
+		return (0);
 
-	lba.ca_bus = &lbus;
-
-	/* Fill in members needed for probing. */
-	lba.ca_bus->ab_type = BUS_LOCAL;
-	lba.ca_bus->ab_matchname = NULL;
-	lba.ca_name = cf->cf_driver->cd_name;
-	lba.ca_num = dev->dv_unit;
-	lba.ca_iot = &macebus_tag;
-	lba.ca_memt = &macebus_tag;
-	lba.ca_dmat = &mace_bus_dma_tag;
-
-	return (*cf->cf_attach->ca_match)(parent, cf, &lba);
+	config_attach(parent, cf, &ca, macebusprint);
+	return (1);
 }
 
 void
 macebusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct device *dev;
-	struct confargs lba;
-	struct abus lbus;
 	u_int32_t creg;
 	u_int64_t mask;
 
@@ -246,59 +233,17 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT, 0);
 
 	/*
-	 * Now attach all devices to macebus in the proper order.
-	 */
-	memset(&lba, 0, sizeof(lba));
-	memset(&lbus, 0, sizeof(lbus));
-	lba.ca_bus = &lbus;
-	lba.ca_bus->ab_type = BUS_LOCAL;
-	lba.ca_bus->ab_matchname = NULL;
-	lba.ca_iot = &macebus_tag;
-	lba.ca_memt = &macebus_tag;
-	lba.ca_dmat = &mace_bus_dma_tag;
-
-	/*
 	 * On O2 systems all interrupts are handled by the macebus interrupt
 	 * handler. Register all except clock.
 	 */
-	switch (sys_config.system_type) {
-	case SGI_O2:
-		set_intr(INTPRI_MACEIO, CR_INT_0, macebus_iointr);
-		lba.ca_bus->ab_intr_establish = macebus_intr_establish;
-		lba.ca_bus->ab_intr_disestablish = macebus_intr_disestablish;
-		register_pending_int_handler(macebus_do_pending_int);
-		break;
-	default:
-		panic("macebusscan: unknown macebus type!");
-	}
+	set_intr(INTPRI_MACEIO, CR_INT_0, macebus_iointr);
+	register_pending_int_handler(macebus_do_pending_int);
 
 	/* DEBUG: Set up a handler called when clock interrupts go off. */
 	set_intr(INTPRI_MACEAUX, CR_INT_5, macebus_aux);
 
-	while ((dev = config_search(macebusscan, self, aux)) != NULL) {
-		struct cfdata *cf;
-
-		cf = dev->dv_cfdata;
-		lba.ca_sys = cf->cf_loc[0];
-		if (cf->cf_loc[1] == -1)
-			lba.ca_baseaddr = 0;
-		else
-			lba.ca_baseaddr = cf->cf_loc[1];
-
-		if (cf->cf_loc[2] == -1) {
-			lba.ca_intr = 0;
-			lba.ca_nintr = 0;
-		} else {
-			lba.ca_intr= cf->cf_loc[2];
-			lba.ca_nintr = 1;
-		}
-		lba.ca_name = cf->cf_driver->cd_name;
-		lba.ca_num = dev->dv_unit;
-
-		config_attach(self, dev, &lba, macebusprint);
-	}
+	config_search(macebussearch, self, aux);
 }
-
 
 /*
  * Bus access primitives. These are really ugly...

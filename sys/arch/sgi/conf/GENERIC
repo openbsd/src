@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2008/01/06 06:08:01 jsing Exp $
+#	$OpenBSD: GENERIC,v 1.28 2008/02/20 18:46:20 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,8 +18,6 @@ makeoption	LINK_ADDRESS="0xffffffff80100000"
 
 # MD options
 option		ARCBIOS		# We use arcbios for FW communication.
-
-#option		APERTURE
 
 option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 
@@ -50,12 +48,12 @@ gbe0		at mainbus0
 
 # Localbus devices
 clock0		at macebus0
-mec0		at macebus0 sys 0x18 base 0x00280000 irq 4
-mavb0		at macebus0 sys 0x18 base 0x00300000 irq 7
-mkbc0		at macebus0 sys 0x18 base 0x00320000 irq 6
-com0		at macebus0 sys 0x18 base 0x00390000 irq 5
-com1		at macebus0 sys 0x18 base 0x00398000 irq 5
-power0		at macebus0 sys 0x18 irq 6
+mec0		at macebus0 base 0x00280000 irq 4
+mavb0		at macebus0 base 0x00300000 irq 7
+mkbc0		at macebus0 base 0x00320000 irq 6
+com0		at macebus0 base 0x00390000 irq 5
+com1		at macebus0 base 0x00398000 irq 5
+power0		at macebus0 irq 6
 
 #### PCI Bus
 macepcibr0	at macebus0	# MACE controller PCI Bus bridge.

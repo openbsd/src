@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.7 2007/05/20 14:17:05 miod Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.8 2008/02/20 18:46:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1065,9 +1065,6 @@ mavb_match(struct device *parent, void *match, void *aux)
 	bus_space_handle_t ioh;
 	u_int64_t control;
 
-	if (ca->ca_sys != SGI_O2 || strcmp(ca->ca_name, mavb_cd.cd_name))
-		return (0);
-
 	if (bus_space_map(ca->ca_iot, ca->ca_baseaddr, MAVB_NREGS, 0,
 	    &ioh) != 0)
 		return (0);
@@ -1130,7 +1127,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
 
 	/* Establish interrupt.  */
-	BUS_INTR_ESTABLISH(ca, NULL, ca->ca_intr, IST_EDGE, IPL_AUDIO,
+	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_AUDIO,
 	    mavb_intr, sc, sc->sc_dev.dv_xname);
 
 	/* 2. Assert the RESET signal.  */

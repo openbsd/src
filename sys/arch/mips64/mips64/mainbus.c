@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2005/01/31 21:35:50 grange Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.5 2008/02/20 18:46:18 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,154 +34,68 @@
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
 
-struct mainbus_softc {
-	struct	device sc_dv;
-	struct	abus sc_bus;
-};
-
 /* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, void *, void *);
-static void	mbattach(struct device *, struct device *, void *);
-static int	mbprint(void *, const char *);
+int	mbmatch(struct device *, void *, void *);
+void	mbattach(struct device *, struct device *, void *);
+int	mbprint(void *, const char *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mbmatch, mbattach
+const struct cfattach mainbus_ca = {
+	sizeof(struct device), mbmatch, mbattach
 };
+
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, NULL, 0
+	NULL, "mainbus", DV_DULL
 };
 
-void	*mb_intr_establish(void *, u_long, int, int, int (*)(void *),
-	    void *, char *);
-void	mb_intr_disestablish(void *, void *);
-caddr_t	mb_cvtaddr(struct confargs *);
-int	mb_matchname(struct confargs *, char *);
-
-static int
-mbmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+int
+mbmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct cfdata *cf = cfdata;
 
 	if (cf->cf_unit > 0)
-		return(0);
-	return(1);
+		return (0);
+	return (1);
 }
 
-static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+void
+mbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
 
 	printf("\n");
-
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_MAIN;
-	sc->sc_bus.ab_intr_establish = mb_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = mb_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = mb_cvtaddr;
-	sc->sc_bus.ab_matchname = mb_matchname;
 
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
 	 * ( Right now only one CPU so code is simple )
 	 */
 
+	bzero(&nca, sizeof nca);
 	nca.ca_name = "cpu";
-	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
-	/*
-	 *  Attach the clocks.
-	 */
-	nca.ca_name = "clock";
-	nca.ca_bus = &sc->sc_bus;
-	config_found(self, &nca, mbprint);
-
-	if (sys_config.system_type == SGI_INDY) {
-		nca.ca_name = "indy";
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-	}
-	else if (sys_config.system_type == SGI_O2) {
+	switch (sys_config.system_type) {
+#ifdef TGT_O2
+	case SGI_O2:
 		nca.ca_name = "macebus";
-		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
-
-		nca.ca_name = "macepcibr";
-		nca.ca_bus = &sc->sc_bus;
-		nca.ca_num = 0;
+		nca.ca_name = "gbe";
 		config_found(self, &nca, mbprint);
-	}
-	else if (sys_config.system_type == ALGOR_P4032 ||
-            sys_config.system_type == ALGOR_P5064 ||
-	    sys_config.system_type == MOMENTUM_CP7000 ||
-	    sys_config.system_type == MOMENTUM_CP7000G ||
-	    sys_config.system_type == MOMENTUM_JAGUAR ||
-	    sys_config.system_type == GALILEO_EV64240) {
-
-		nca.ca_name = "localbus";
-		nca.ca_bus = &sc->sc_bus;
+		break;
+#endif
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(TGT_OCTANE)
+	case SGI_O200:
+	case SGI_OCTANE:
+		nca.ca_name = "xbow";
 		config_found(self, &nca, mbprint);
-
-		nca.ca_name = "pcibr";
-		nca.ca_bus = &sc->sc_bus;
-		nca.ca_num = 0;
-		config_found(self, &nca, mbprint);
-
-		nca.ca_name = "pcibr";
-		nca.ca_bus = &sc->sc_bus;
-		nca.ca_num = 1;
-		config_found(self, &nca, mbprint);
+		break;
+#endif
 	}
 }
 
-static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+int
+mbprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		return (QUIET);
 	return (UNCONF);
-}
-
-void *
-mb_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
-        void *icp;
-        u_long irq;     /* XXX pci_intr_handle_t compatible XXX */
-        int type;
-        int level;
-        int (*ih_fun)(void *);
-        void *ih_arg;
-        char *ih_what;
-{
-	panic("can never mb_intr_establish");
-}
-
-void
-mb_intr_disestablish(void *p1, void *p2)
-{
-	panic("can never mb_intr_disestablish");
-}
-
-caddr_t
-mb_cvtaddr(ca)
-	struct confargs *ca;
-{
-	return (NULL);
-}
-
-int
-mb_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-	return (strcmp(name, ca->ca_name) == 0);
 }
