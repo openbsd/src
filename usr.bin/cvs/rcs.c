@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.249 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.250 2008/02/20 09:19:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3525,13 +3525,20 @@ RCSNUM *
 rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 {
 	int follow;
+	char branch[CVS_REV_BUFSZ];
 	RCSNUM *brev, *frev, *rev;
 	struct rcs_delta *rdp, *trdp;
 
 	brev = frev = NULL;
 
-	if (revstr == NULL)
-		revstr = RCS_HEAD_BRANCH;
+	if (revstr == NULL) {
+		if (rfp->rf_branch != NULL) {
+			rcsnum_tostr(rfp->rf_branch, branch, sizeof(branch));
+			revstr = branch;
+		} else {
+			revstr = RCS_HEAD_BRANCH;
+		}
+	}
 
 	if ((rev = rcs_get_revision(revstr, rfp)) == NULL)
 		return NULL;
