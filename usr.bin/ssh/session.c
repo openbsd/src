@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.228 2008/02/13 22:38:17 djm Exp $ */
+/* $OpenBSD: session.c,v 1.229 2008/02/20 15:25:26 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1845,7 +1845,7 @@ session_exit_message(Session *s, int status)
 	} else if (WIFSIGNALED(status)) {
 		channel_request_start(s->chanid, "exit-signal", 0);
 		packet_put_cstring(sig2name(WTERMSIG(status)));
-		packet_put_char(WCOREDUMP(status));
+		packet_put_char(WCOREDUMP(status)? 1 : 0);
 		packet_put_cstring("");
 		packet_put_cstring("");
 		packet_send();
