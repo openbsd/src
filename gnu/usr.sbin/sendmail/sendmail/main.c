@@ -2517,9 +2517,12 @@ main(argc, argv, envp)
 		macdefine(&BlankEnvelope.e_macro, A_TEMP, '_', authinfo);
 
 		/* at this point we are in a child: reset state */
-		sm_rpool_free(MainEnvelope.e_rpool);
-		(void) newenvelope(&MainEnvelope, &MainEnvelope,
-				   sm_rpool_new_x(NULL));
+		{
+			SM_RPOOL_T *opool = MainEnvelope.e_rpool;
+			(void) newenvelope(&MainEnvelope, &MainEnvelope,
+					   sm_rpool_new_x(NULL));
+			sm_rpool_free(opool);
+		}
 	}
 
 	if (LogLevel > 9)
