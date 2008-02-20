@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.12 2008/02/20 19:13:38 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.13 2008/02/20 21:34:19 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,7 +58,7 @@
 onfault_table:
 	PTR_VAL	0		# invalid index number
 	PTR_VAL	_copyerr
-	PTR_VAL	_copyerr
+	PTR_VAL	_kcopyerr
 #if defined(DDB) || defined(DEBUG)
 	PTR_VAL	kt_ddberr
 #else
@@ -321,3 +321,12 @@ NON_LEAF(kcopy, FRAMESZ(CF_SZ + REGSZ), ra)
 	j	ra
 	move	v0, zero
 END(kcopy)
+
+_kcopyerr:
+	PTR_L	v0, CF_ARGSZ(sp)
+	PTR_L	t3, curprocpaddr
+	PTR_L	ra, CF_RA_OFFS + REGSZ(sp)
+	sw	v0, PCB_ONFAULT(t3)
+	PTR_ADDU sp, sp, FRAMESZ(CF_SZ + REGSZ)
+	j	ra
+	li	v0, EFAULT		# return error
