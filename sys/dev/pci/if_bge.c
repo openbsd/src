@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.220 2008/02/18 09:40:11 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.221 2008/02/20 10:26:53 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -586,6 +586,7 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 	/* Reading with autopolling on may trigger PCI errors */
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
+		BGE_STS_CLRBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_CLRBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
@@ -611,6 +612,7 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 
 done:
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
+		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
@@ -632,6 +634,7 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		DELAY(40);
+		BGE_STS_CLRBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_CLRBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(10); /* 40 usec is supposed to be adequate */
 	}
@@ -647,6 +650,7 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
+		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
@@ -1718,6 +1722,7 @@ bge_blockinit(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
+		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
 		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2)
@@ -2646,7 +2651,7 @@ bge_intr(void *xsc)
 		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
 		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2) ||
 		    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
-		    sc->bge_link_evt)
+		    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
 			bge_link_upd(sc);
 
 		if (ifp->if_flags & IFF_RUNNING) {
@@ -2687,10 +2692,17 @@ bge_tick(void *xsc)
 		 * link status manually. Here we register pending link event
 		 * and trigger interrupt.
 		 */
-		sc->bge_link_evt++;
+		BGE_STS_SETBIT(sc, BGE_STS_LINK_EVT);
 		BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_SET);
-	} else
-		mii_tick(mii);
+	} else {
+		/*
+		 * Do not touch PHY if we have link up. This could break
+		 * IPMI/ASF mode or produce extra input errors.
+		 * (extra input errors was reported for bcm5701 & bcm5704).
+		 */
+		if (!BGE_STS_BIT(sc, BGE_STS_LINK))
+			mii_tick(mii);
+	}       
 
 	timeout_add(&sc->bge_timeout, hz);
 
@@ -2963,7 +2975,7 @@ bge_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-	if (!sc->bge_link)
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
 		return;
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
@@ -3172,7 +3184,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 		return (0);
 	}
 
-	sc->bge_link_evt++;
+	BGE_STS_SETBIT(sc, BGE_STS_LINK_EVT);
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
 		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
@@ -3445,7 +3457,7 @@ bge_stop(struct bge_softc *sc)
 	 * lead to hardware deadlock. So we just clearing MAC's link state
 	 * (PHY may still have link UP).
 	 */
-	sc->bge_link = 0;
+	BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 }
 
 /*
@@ -3466,10 +3478,11 @@ bge_link_upd(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mii_data *mii = &sc->bge_mii;
-	u_int32_t link, status;
+	u_int32_t status;
+	int link;
 
 	/* Clear 'pending link event' flag */
-	sc->bge_link_evt = 0;
+	BGE_STS_CLRBIT(sc, BGE_STS_LINK_EVT);
 
 	/*
 	 * Process link state changes.
@@ -3493,14 +3506,14 @@ bge_link_upd(struct bge_softc *sc)
 			timeout_del(&sc->bge_timeout);
 			bge_tick(sc);
 
-			if (!sc->bge_link &&
+			if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
 			    mii->mii_media_status & IFM_ACTIVE &&
 			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-				sc->bge_link++;
-			} else if (sc->bge_link &&
+				BGE_STS_SETBIT(sc, BGE_STS_LINK);
+			} else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
 			    (!(mii->mii_media_status & IFM_ACTIVE) ||
 			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)) {
-				sc->bge_link = 0;
+				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 			}
 
 			/* Clear the interrupt */
@@ -3516,8 +3529,8 @@ bge_link_upd(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
-			if (!sc->bge_link) {
-				sc->bge_link++;
+			if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
+				BGE_STS_SETBIT(sc, BGE_STS_LINK);
 				if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 					BGE_CLRBIT(sc, BGE_MAC_MODE,
 					    BGE_MACMODE_TBI_SEND_CFGS);
@@ -3529,33 +3542,38 @@ bge_link_upd(struct bge_softc *sc)
 				    LINK_STATE_FULL_DUPLEX;
 				if_link_state_change(ifp);
 			}
-		} else if (sc->bge_link) {
-			sc->bge_link = 0;
+		} else if (BGE_STS_BIT(sc, BGE_STS_LINK)) {
+			BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 			ifp->if_link_state = LINK_STATE_DOWN;
 			if_link_state_change(ifp);
 		}
-	/* Discard link events for MII/GMII cards if MI auto-polling disabled */
-	} else if (CSR_READ_4(sc, BGE_MI_MODE) & BGE_MIMODE_AUTOPOLL) {
+        /*
+	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
+	 * This should not happen since mii callouts are locked now, but
+	 * we keep this check for debug.
+	 */
+	} else if (BGE_STS_BIT(sc, BGE_STS_AUTOPOLL)) {
 		/* 
 		 * Some broken BCM chips have BGE_STATFLAG_LINKSTATE_CHANGED bit
 		 * in status word always set. Workaround this bug by reading
 		 * PHY link status directly.
 		 */
-		link = (CSR_READ_4(sc, BGE_MI_STS) & BGE_MISTS_LINK) ? 1 : 0;
+		link = (CSR_READ_4(sc, BGE_MI_STS) & BGE_MISTS_LINK)?
+		    BGE_STS_LINK : 0;
 
-		if (link != sc->bge_link ||
+		if (BGE_STS_BIT(sc, BGE_STS_LINK) != link ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700) {
 			timeout_del(&sc->bge_timeout);
 			bge_tick(sc);
 
-			if (!sc->bge_link &&
+			if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
 			    mii->mii_media_status & IFM_ACTIVE &&
 			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
-				sc->bge_link++;
-			else if (sc->bge_link &&
+				BGE_STS_SETBIT(sc, BGE_STS_LINK);
+			else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
 			    (!(mii->mii_media_status & IFM_ACTIVE) ||
 			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
-				sc->bge_link = 0;
+				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 		}
 	}
 

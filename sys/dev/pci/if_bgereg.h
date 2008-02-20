@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.78 2008/02/18 09:40:11 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.79 2008/02/20 10:26:53 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2465,11 +2465,16 @@ struct bge_softc {
 	u_int32_t		bge_rx_max_coal_bds;
 	u_int32_t		bge_tx_max_coal_bds;
 	u_int32_t		bge_tx_buf_ratio;
+	u_int32_t		bge_sts;
+#define BGE_STS_LINK		0x00000001	/* MAC link status */
+#define BGE_STS_LINK_EVT	0x00000002	/* pending link event */
+#define BGE_STS_AUTOPOLL	0x00000004	/* PHY auto-polling  */
+#define BGE_STS_BIT(sc, x)	((sc)->bge_sts & (x))
+#define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
+#define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
 	int			bge_flowflags;
 	int			bge_if_flags;
 	int			bge_txcnt;
-	int			bge_link;	/* link state */
-	int			bge_link_evt;	/* pending link event */
 	struct timeout		bge_timeout;
 	void			*sc_powerhook;
 	void			*sc_shutdownhook;
