@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.79 2008/02/20 10:26:53 sthen Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.80 2008/02/20 12:17:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2480,6 +2480,8 @@ struct bge_softc {
 	void			*sc_shutdownhook;
 	u_int32_t		bge_rx_discards;
 	u_int32_t		bge_tx_discards;
+	u_int32_t		bge_rx_inerrors;
+	u_int32_t		bge_rx_overruns;
 	u_int32_t		bge_tx_collisions;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];

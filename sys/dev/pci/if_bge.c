@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.221 2008/02/20 10:26:53 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.222 2008/02/20 12:17:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2718,6 +2718,10 @@ bge_stats_update_regs(struct bge_softc *sc)
 	    offsetof(struct bge_mac_stats_regs, etherStatsCollisions));
 
 	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
+
+	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
+
+	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS);
 }
 
 void
@@ -2737,6 +2741,14 @@ bge_stats_update(struct bge_softc *sc)
 	cnt = READ_STAT(sc, stats, ifInDiscards.bge_addr_lo);
 	ifp->if_ierrors += (u_int32_t)(cnt - sc->bge_rx_discards);
 	sc->bge_rx_discards = cnt;
+
+	cnt = READ_STAT(sc, stats, ifInErrors.bge_addr_lo);
+	ifp->if_ierrors += (u_int32_t)(cnt - sc->bge_rx_inerrors);
+	sc->bge_rx_inerrors = cnt;
+
+	cnt = READ_STAT(sc, stats, nicNoMoreRxBDs.bge_addr_lo);
+	ifp->if_ierrors += (u_int32_t)(cnt - sc->bge_rx_overruns);
+	sc->bge_rx_overruns = cnt;
 
 	cnt = READ_STAT(sc, stats, txstats.ifOutDiscards.bge_addr_lo);
 	ifp->if_oerrors += (u_int32_t)(cnt - sc->bge_tx_discards);
@@ -3103,7 +3115,11 @@ bge_init(void *xsc)
 	sc->bge_rx_saved_considx = 0;
 
 	/* Init our RX/TX stat counters. */
-	sc->bge_rx_discards = sc->bge_tx_discards = sc->bge_tx_collisions = 0;
+	sc->bge_tx_collisions = 0;
+	sc->bge_rx_discards = 0;
+	sc->bge_rx_inerrors = 0;
+	sc->bge_rx_overruns = 0;
+	sc->bge_tx_discards = 0;
 
 	/* Init TX ring. */
 	bge_init_tx_ring(sc);
