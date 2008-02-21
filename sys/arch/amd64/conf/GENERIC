@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.213 2008/02/21 01:15:04 brad Exp $
+#	$OpenBSD: GENERIC,v 1.214 2008/02/21 02:16:42 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -461,6 +461,7 @@ etphy*	at mii?				# Agere/LSI ET1011 TruePHY
 ukphy*	at mii?				# "unknown" PHYs
 
 eap*	at pci?				# Ensoniq AudioPCI S5016
+envy*	at pci?				# VIA Envy24 (aka ICE1712)
 #eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 #sv*	at pci?				# S3 SonicVibes (S3 617)
 #neo*	at pci?				# NeoMagic 256AV/ZX
@@ -495,6 +496,7 @@ spkr0	at pcppi?		# PC speaker
 
 # Audio Support
 audio*	at eap?
+audio*	at envy?
 #audio*	at eso?
 #audio*	at sv?
 #audio*	at neo?
