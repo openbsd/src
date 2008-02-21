@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.6 2008/02/21 01:37:55 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.7 2008/02/21 01:41:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -842,9 +842,8 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 {
 	int i, n, out;
 	char *classes[] = { 
-		AudioCinputs, AudioCoutputs, "source", AudioCmonitor 
+		AudioCinputs, AudioCoutputs, AudioCmonitor 
 	};
-	/* XXX: define AudioCsource */
 
 	if (dev->index < 0)
 		return ENXIO;
@@ -861,11 +860,12 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		n = 0;
 		out = dev->index - ENVY_MIX_OUTSRC;
 		dev->type = AUDIO_MIXER_ENUM;
-		dev->mixer_class = ENVY_MIX_CLASSMIX;
+		dev->mixer_class = ENVY_MIX_CLASSOUT;
+		dev->prev = ENVY_MIX_OLVL(4) + out;
 		for (i = 0; i < 10; i++) {
 			dev->un.e.member[n].ord = n;
 			snprintf(dev->un.e.member[n++].label.name,
-			    MAX_AUDIO_DEV_LEN, "in%d", i);
+			    MAX_AUDIO_DEV_LEN, AudioNline "%d", i);
 		}
 		dev->un.e.member[n].ord = n;
 		snprintf(dev->un.e.member[n++].label.name, 
@@ -875,7 +875,8 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 			snprintf(dev->un.e.member[n++].label.name, 
 			    MAX_AUDIO_DEV_LEN, "mon%d", out);
 		}
-		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, "out%d", out);
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, 
+		    AudioNsource, out);
 		dev->un.s.num_mem = n;
 		return 0;
 	}
@@ -896,7 +897,8 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		dev->mixer_class = ENVY_MIX_CLASSIN;
 		dev->un.v.delta = 2;
 		dev->un.v.num_channels = 1;
-		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, "line%d", out);
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, 
+		    AudioNline "%d", out);
 		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
 		return 0;
 	}
@@ -904,9 +906,11 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		out = dev->index - ENVY_MIX_OLVL(4);
 		dev->type = AUDIO_MIXER_VALUE;
 		dev->mixer_class = ENVY_MIX_CLASSOUT;
+		dev->next = ENVY_MIX_OUTSRC + out;
 		dev->un.v.delta = 2;
 		dev->un.v.num_channels = 1;
-		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, "line%d", out);
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN,
+		    AudioNline "%d", out);
 		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
 		return 0;
 	}
@@ -915,14 +919,14 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		dev->type = AUDIO_MIXER_ENUM;
 		dev->mixer_class = ENVY_MIX_CLASSOUT;
 		dev->un.e.member[0].ord = 0;
-		strlcpy(dev->un.e.member[0].label.name, "off", 
+		strlcpy(dev->un.e.member[0].label.name, AudioNoff,
 		    MAX_AUDIO_DEV_LEN);
 		dev->un.e.member[1].ord = 1;
-		strlcpy(dev->un.e.member[1].label.name, "on", 
+		strlcpy(dev->un.e.member[1].label.name, AudioNon,
 		    MAX_AUDIO_DEV_LEN);
 		dev->un.s.num_mem = 2;
 		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN,
-		    "mute%u-%u", 2 * out, 2 * out + 1);
+		    AudioNmute "%d-%d", 2 * out, 2 * out + 1);
 		return 0;
 	}
 	return ENXIO;
