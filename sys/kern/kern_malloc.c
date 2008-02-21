@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.73 2007/09/15 10:10:37 martin Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.74 2008/02/21 10:40:48 kettenis Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ malloc(unsigned long size, int type, int flags)
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
 #endif
 	if (kbp->kb_next == NULL) {
-		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
 			allocsize = round_page(size);
 		else
@@ -261,7 +260,7 @@ malloc(unsigned long size, int type, int flags)
 			freep->next = cp;
 		}
 		freep->next = savedlist;
-		if (kbp->kb_last == NULL)
+		if (savedlist == NULL)
 			kbp->kb_last = (caddr_t)freep;
 	}
 	va = kbp->kb_next;
