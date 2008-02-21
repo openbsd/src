@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkbc.c,v 1.5 2008/02/20 18:46:20 miod Exp $  */
+/*	$OpenBSD: mkbc.c,v 1.6 2008/02/21 13:30:04 jsing Exp $  */
 
 /*
  * Copyright (c) 2006, 2007, Joel Sing
@@ -98,7 +98,6 @@ const char *mkbc_slot_names[] = { "kbd", "mouse" };
 
 struct mkbc_softc {
 	struct pckbc_softc sc_pckbc;
-	int sc_irq;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 };
@@ -182,6 +181,7 @@ mkbcprint(void *aux, const char *pnp)
 
 	if (!pnp)
 		printf(" (%s slot)", mkbc_slot_names[pa->pa_slot]);
+
 	return (QUIET);
 }
 
@@ -252,9 +252,6 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct pckbc_internal *t;
-	void *rv = NULL;
-
-	printf(": ");
 
 	if (mkbc_console == 0) {
 
@@ -262,7 +259,7 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 		msc->iot = ca->ca_iot;
 		if (bus_space_map(msc->iot, ca->ca_baseaddr, MKBC_PORTSIZE * 2, 0, 
 		    &msc->ioh)) {
-			printf("unable to map bus space!\n");
+			printf(": unable to map bus space!\n");
 			return;
 		}
 
@@ -290,13 +287,11 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Establish interrupt handler. */
-	msc->sc_irq = ca->ca_intr;
-	rv = macebus_intr_establish(NULL, msc->sc_irq, IST_EDGE,
-	    IPL_TTY, mkbcintr, msc, sc->sc_dv.dv_xname);
-	if (rv == NULL)
-		printf("unable to establish interrupt\n");
+	if (macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_TTY,
+	    mkbcintr, msc, sc->sc_dv.dv_xname))
+		printf("\n");
 	else
-		printf("using irq %d\n", msc->sc_irq);
+		printf(": unable to establish interrupt\n");
 
 	/*
 	 * Attach "slots" - technically these are separate controllers
@@ -305,8 +300,6 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	mkbc_attach_slot(msc, PCKBC_KBD_SLOT);
 	mkbc_attach_slot(msc, PCKBC_AUX_SLOT);
-
-	return;
 }
 
 int
