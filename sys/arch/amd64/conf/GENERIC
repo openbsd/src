@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.212 2008/02/17 15:04:08 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.213 2008/02/21 01:15:04 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -482,7 +482,7 @@ mpu*	at isa? port 0x330
 # OPL[23] FM synthesizers
 #opl*	at eso?
 opl*	at yds?
-#opl*	at cmpci?
+opl*	at cmpci?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
