@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.2 2007/10/28 18:25:21 fgsch Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.3 2008/02/21 01:37:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -79,7 +79,10 @@ struct envy_softc {
 #define ENVY_MIX_CLASSMON	3
 #define ENVY_MIX_OUTSRC		4
 #define ENVY_MIX_MONITOR	14
-#define ENVY_MIX_INVAL		34
+#define ENVY_MIX_ILVL(nak)	34
+#define ENVY_MIX_OLVL(nak)	(ENVY_MIX_ILVL(nak) + 2 * (nak))
+#define ENVY_MIX_OMUTE(nak)	(ENVY_MIX_OLVL(nak) + 2 * (nak))
+#define ENVY_MIX_INVAL(nak)	(ENVY_MIX_OMUTE(nak) + (nak))
 
 #define ENVY_MIX_OUTSRC_LINEIN	0
 #define ENVY_MIX_OUTSRC_SPDIN	8

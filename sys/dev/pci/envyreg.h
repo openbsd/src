@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.2 2007/10/28 18:25:21 fgsch Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.3 2008/02/21 01:37:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -127,7 +127,8 @@
 #define   ENVY_MT_SPDSRC_MON	0x01
 #define   ENVY_MT_SPDSRC_LINE	0x02
 #define   ENVY_MT_SPDSRC_SPD	0x03
-#define   ENVY_MT_SPDSRC_MASK	0x04
+#define   ENVY_MT_SPDSRC_BITS	0x02
+#define   ENVY_MT_SPDSRC_MASK	((1 << ENVY_MT_SPDSRC_BITS) - 1)
 #define   ENVY_MT_SPDSEL_BITS	0x4
 #define   ENVY_MT_SPDSEL_MASK	((1 << ENVY_MT_SPDSEL_BITS) - 1)
 #define ENVY_MT_INSEL		0x34
@@ -160,6 +161,10 @@
 #define   AK_FMT_IIS24		0x60
 #define   AK_FMT_LSB24		0x80
 #define AK_DEEMVOL		0x03
+#define   AK_DEEM_44K1		0x00
+#define   AK_DEEM_OFF		0x01
+#define   AK_DEEM_48K		0x02
+#define   AK_DEEM_32K		0x03
 #define   AK_MUTE		0x80
 #define AK_ADC_GAIN0		0x04
 #define	AK_ADC_GAIN1		0x05

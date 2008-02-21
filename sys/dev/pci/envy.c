@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.5 2008/01/14 01:23:53 jakemsr Exp $	*/
+/*	$OpenBSD: envy.c,v 1.6 2008/02/21 01:37:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -233,6 +233,7 @@ envy_ak_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 	int bits, i, reg;
 
+	DPRINTFN(2, "envy_ak_write: %d, %d, 0x%x\n", dev, addr, data);
 	sc->ak[dev].reg[addr] = data;
 
 	reg = envy_cci_read(sc, ENVY_GPIO_DATA);
@@ -301,6 +302,11 @@ envy_reset(struct envy_softc *sc)
 		delay(300);
 		envy_ak_write(sc, dev, AK_RST, AK_RST_AD | AK_RST_DA);
 		envy_ak_write(sc, dev, AK_FMT, AK_FMT_IIS24);
+		sc->ak[dev].reg[AK_DEEMVOL] = AK_DEEM_OFF;
+		sc->ak[dev].reg[AK_ADC_GAIN0] = 0x7f;
+		sc->ak[dev].reg[AK_ADC_GAIN1] = 0x7f;
+		sc->ak[dev].reg[AK_DAC_GAIN0] = 0x7f;
+		sc->ak[dev].reg[AK_DAC_GAIN1] = 0x7f;
 	}
 
 	/*
@@ -465,7 +471,7 @@ envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val) {
 
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
 	reg = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA + ch);
-	*val = 0x7f - ((reg) & 0x7f);
+	*val = 0x7f - (reg & 0x7f);
 }
 
 void
@@ -873,7 +879,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		dev->un.s.num_mem = n;
 		return 0;
 	}
-	if (dev->index < ENVY_MIX_INVAL) {
+	if (dev->index < ENVY_MIX_ILVL(4)) {
 		out = dev->index - ENVY_MIX_MONITOR;
 		dev->type = AUDIO_MIXER_VALUE;
 		dev->mixer_class = ENVY_MIX_CLASSMON;
@@ -882,6 +888,41 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, 
 			 "%s%d", out < 10 ? "play" : "rec", out % 10);
 		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
+		return 0;
+	}
+	if (dev->index < ENVY_MIX_OLVL(4)) {	/* inputs.line */
+		out = dev->index - ENVY_MIX_ILVL(4);
+		dev->type = AUDIO_MIXER_VALUE;
+		dev->mixer_class = ENVY_MIX_CLASSIN;
+		dev->un.v.delta = 2;
+		dev->un.v.num_channels = 1;
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, "line%d", out);
+		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
+		return 0;
+	}
+	if (dev->index < ENVY_MIX_OMUTE(4)) {	/* outputs.line */
+		out = dev->index - ENVY_MIX_OLVL(4);
+		dev->type = AUDIO_MIXER_VALUE;
+		dev->mixer_class = ENVY_MIX_CLASSOUT;
+		dev->un.v.delta = 2;
+		dev->un.v.num_channels = 1;
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN, "line%d", out);
+		strlcpy(dev->un.v.units.name, AudioNvolume, MAX_AUDIO_DEV_LEN);
+		return 0;
+	}
+	if (dev->index < ENVY_MIX_INVAL(4)) {	/* outputs.mute */
+		out = dev->index - ENVY_MIX_OMUTE(4);
+		dev->type = AUDIO_MIXER_ENUM;
+		dev->mixer_class = ENVY_MIX_CLASSOUT;
+		dev->un.e.member[0].ord = 0;
+		strlcpy(dev->un.e.member[0].label.name, "off", 
+		    MAX_AUDIO_DEV_LEN);
+		dev->un.e.member[1].ord = 1;
+		strlcpy(dev->un.e.member[1].label.name, "on", 
+		    MAX_AUDIO_DEV_LEN);
+		dev->un.s.num_mem = 2;
+		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN,
+		    "mute%u-%u", 2 * out, 2 * out + 1);
 		return 0;
 	}
 	return ENXIO;
@@ -906,11 +947,31 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 		ctl->un.ord = envy_spdout_getsrc(sc, out);
 		return 0;
 	}
-	if (ctl->dev <  ENVY_MIX_INVAL) {
+	if (ctl->dev <  ENVY_MIX_ILVL(4)) {
 		out = ctl->dev - ENVY_MIX_MONITOR;
 		envy_mon_getvol(sc, out / 2, out % 2, &val);
 		ctl->un.value.num_channels = 1;
 		ctl->un.value.level[0] = 2 * val;
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_OLVL(4)) {
+		out = ctl->dev - ENVY_MIX_ILVL(4);
+		val = envy_ak_read(sc, out / 2, (out % 2) + AK_ADC_GAIN0);
+		ctl->un.value.num_channels = 1;
+		ctl->un.value.level[0] = 2 * val;
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_OMUTE(4)) {
+		out = ctl->dev - ENVY_MIX_OLVL(4);
+		val = envy_ak_read(sc, out / 2, (out % 2) + AK_DAC_GAIN0);
+		ctl->un.value.num_channels = 1;
+		ctl->un.value.level[0] = 2 * val;
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_INVAL(4)) {
+		out = ctl->dev - ENVY_MIX_OMUTE(4);
+		val = envy_ak_read(sc, out, AK_DEEMVOL);
+		ctl->un.ord = (val & AK_MUTE) ? 1 : 0;
 		return 0;
 	}
 	return ENXIO;
@@ -940,13 +1001,37 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 		envy_spdout_setsrc(sc, out, ctl->un.ord);
 		return 0;
 	}
-	if (ctl->dev <  ENVY_MIX_INVAL) {
+	if (ctl->dev <  ENVY_MIX_ILVL(4)) {
 		out = ctl->dev - ENVY_MIX_MONITOR;
 		if (ctl->un.value.num_channels != 1) {
 			return EINVAL;
 		}
 		val = ctl->un.value.level[0] / 2;
 		envy_mon_setvol(sc, out / 2, out % 2, val);
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_OLVL(4)) {
+		if (ctl->un.value.num_channels != 1)
+			return EINVAL;
+		out = ctl->dev - ENVY_MIX_ILVL(4);
+		val = ctl->un.value.level[0] / 2;
+		envy_ak_write(sc, out / 2, (out % 2) + AK_ADC_GAIN0, val);
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_OMUTE(4)) {
+		if (ctl->un.value.num_channels != 1)
+			return EINVAL;
+		out = ctl->dev - ENVY_MIX_OLVL(4);
+		val = ctl->un.value.level[0] / 2;
+		envy_ak_write(sc, out / 2, (out % 2) + AK_DAC_GAIN0, val);
+		return 0;
+	}
+	if (ctl->dev < ENVY_MIX_INVAL(4)) {
+		if (ctl->un.ord >= 2)
+			return EINVAL;
+		out = ctl->dev - ENVY_MIX_OMUTE(4);
+		val = AK_DEEM_OFF | (ctl->un.ord ? AK_MUTE : 0);
+		envy_ak_write(sc, out, AK_DEEMVOL, val);
 		return 0;
 	}
 	return ENXIO;
