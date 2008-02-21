@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.27 2007/05/28 22:54:04 ckuethe Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.28 2008/02/21 03:58:07 brad Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -146,14 +146,10 @@ struct fxp_softc {
 };
 
 /* Macros to ease CSR access. */
-#define	CSR_READ_1(sc, reg)						\
-	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_READ_2(sc, reg)						\
 	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_READ_4(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
-#define	CSR_WRITE_1(sc, reg, val)					\
-	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 #define	CSR_WRITE_2(sc, reg, val)					\
 	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 #define	CSR_WRITE_4(sc, reg, val)					\
