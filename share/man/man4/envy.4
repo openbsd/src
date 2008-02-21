@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.2 2007/10/29 11:38:27 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.3 2008/02/21 01:44:59 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2007 $
+.Dd $Mdocdate: February 21 2008 $
 .Dt ENVY 4
 .Os
 .Sh NAME
@@ -40,43 +40,43 @@ streams below as follows:
 There are 10 streams corresponding to data received by the
 device from the codecs.
 They are labelled
-.Va in0
+.Va line0
 \(en
-.Va in9
+.Va line9
 in the
 .Xr mixer 4
 interface.
 Streams
-.Va in0
+.Va line0
 to
-.Va in7
+.Va line7
 correspond to analog inputs and
-.Va in8
+.Va line8
 to
-.Va in9
+.Va line9
 correspond to
 digital inputs.
 .It Dv outputs
 There are 10 streams corresponding to data sent by the device to the codecs.
 They are labelled
-.Va out0
+.Va line0
 \(en
-.Va out9 .
+.Va line9 .
 Streams
-.Va out0
+.Va line0
 to
-.Va out7
+.Va line7
 correspond to analog outputs and
-.Va out8
+.Va line8
 to
-.Va out9
+.Va line9
 correspond to digital outputs.
 Each of them can be individually configured to use any of
 the external inputs or its corresponding playback stream as source.
-Additionally,
-.Va out0 , out1 , out8 ,
+Additionally, outputs
+.Va line0 , line1 , line8 ,
 and
-.Va out9
+.Va line9
 can be configured to use
 .Va mon0
 or
@@ -105,9 +105,9 @@ There are 12 streams corresponding to samples transferred
 from the device to the host.
 They are not controllable by the mixer.
 Streams 0 to 9 are hardwired to external inputs
-.Va in0
+.Va line0
 \(en
-.Va in9
+.Va line9
 and streams 10 and 11 are hardwired to
 .Va mon0
 and
@@ -128,11 +128,6 @@ The
 driver first appeared in
 .Ox 4.3 .
 .Sh BUGS
-PGAs and deemphasis filters on the AK4524 codecs are not yet accessible
-through the
-.Xr mixer 4
-interface.
-.Pp
 MIDI and S/PDIF transmitter/receivers are not yet supported.
 .Pp
 The current
