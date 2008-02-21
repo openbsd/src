@@ -1789,6 +1789,7 @@
 ./usr/sbin/apxs
 ./usr/sbin/arp
 ./usr/sbin/authpf
+./usr/sbin/authpf-noip
 ./usr/sbin/bgpctl
 ./usr/sbin/bgpd
 ./usr/sbin/bos

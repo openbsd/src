@@ -1774,6 +1774,7 @@
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wbenv.0
 ./usr/share/man/cat4/wbng.0
+./usr/share/man/cat4/wbsio.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/we.0
@@ -2052,6 +2053,7 @@
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/authpf.0
+./usr/share/man/cat8/authpf-noip.0
 ./usr/share/man/cat8/aviion
 ./usr/share/man/cat8/aviion/MAKEDEV.0
 ./usr/share/man/cat8/aviion/a2coff.0
