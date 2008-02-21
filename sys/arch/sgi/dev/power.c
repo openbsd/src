@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.5 2008/02/20 18:46:20 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.6 2008/02/21 11:42:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -37,7 +37,7 @@
 #include <sgi/localbus/macebus.h>
 
 /*
- * Power button driver for the SGI O2
+ * Power button driver for the SGI O2.
  */
 
 struct power_softc {
@@ -72,35 +72,29 @@ power_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct power_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	int sc_irq;
 	extern bus_space_handle_t clock_h;
 	extern bus_space_handle_t mace_h;
-	void *rv = NULL;
 
 	sc->sc_st = ca->ca_iot;
-	sc_irq = ca->ca_intr;
-
-	printf(": ");
 
 	/* Map subregion to clock address space. */
 	if (bus_space_subregion(sc->sc_st, clock_h, 0, 0x50, &sc->sc_sh)) {
-		printf("failed to map clock address space!\n");
+		printf(": failed to map clock address space!\n");
 		return;
 	}
 
 	/* Map subregion to ISA control registers. */
 	if (bus_space_subregion(sc->sc_st, mace_h, 0, 0x80, &sc->sc_isash)) {
-		printf("failed to map ISA control registers!\n");
+		printf(": failed to map ISA control registers!\n");
 		return;
 	}
  	
-	/* Establish the interrupt. */
-	rv = macebus_intr_establish(NULL, sc_irq, IST_EDGE, IPL_TTY, power_intr,
-	    sc, sc->sc_dev.dv_xname);
-	if (rv == NULL)
-		printf("unable to establish interrupt\n");
+	/* Establish interrupt handler. */
+	if (macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_TTY,
+	    power_intr, sc, sc->sc_dev.dv_xname))
+		printf("\n");
 	else
-		printf("using irq %d\n", sc_irq);
+		printf(": unable to establish interrupt!\n");
 }
 
 int
