@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.3 2008/02/21 01:44:59 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.4 2008/02/22 07:55:02 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2008 $
+.Dd $Mdocdate: February 22 2008 $
 .Dt ENVY 4
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ driver supports sound cards based on VIA Envy24 PCI chips,
 such as the M-Audio Delta-1010LT PCI card.
 The Envy24 chip, formerly known as the ICE1712, is a versatile digital
 PCI chip that can be attached to
-up to 4x2 external analog converters and 2x2 S/PDIF transmitter/receivers.
+up to 4x2 external analog converters and 1x2 S/PDIF transmitter/receivers.
 Currently only Asahi Kasei AK4524 codecs are supported.
 .Ss Mixer device
 The chip features a digital mixer that routes and mixes the
@@ -97,7 +97,7 @@ from the host to the device.
 They are labelled
 .Va play0
 \(en
-.Va play10 .
+.Va play9 .
 From the mixer's point of view they are input streams,
 so they are usable as sources of output streams.
 .It Dv record
