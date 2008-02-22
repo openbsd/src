@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2007/11/12 23:59:41 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.60 2008/02/22 10:56:50 simon Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -126,7 +126,7 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno no optlist, optlist_l option demotecount
+%type	<v.number>	yesno no optlist optlist_l option demotecount
 %type	<v.string>	string
 
 %%
@@ -158,6 +158,7 @@ yesno		: YES	{ $$ = 1; }
 
 no		: /* empty */	{ $$ = 0; }
 		| NO		{ $$ = 1; }
+		;
 
 varset		: STRING '=' string		{
 			if (conf->opts & OSPFD_OPT_VERBOSE)
