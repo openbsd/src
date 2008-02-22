@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.56 2008/02/17 19:34:40 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.57 2008/02/22 22:25:27 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3052,11 +3052,9 @@ bnx_chipinit(struct bnx_softc *sc)
 
 	/* Clear the PCI-X relaxed ordering bit. See errata E3_5708CA0_570. */
 	if (sc->bnx_flags & BNX_PCIX_FLAG) {
-		u_int16_t val;
-
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD,
-		    val & ~0x2);
+		    val & ~0x20000);
 	}
 
 	/* Enable the RX_V2P and Context state machines before access. */

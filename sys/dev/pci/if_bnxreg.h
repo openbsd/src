@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.21 2007/09/14 22:53:24 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.22 2008/02/22 22:25:27 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -655,7 +655,7 @@ struct flash_spec {
  * PCI registers defined in the PCI 2.2 spec.
  */
 #define BNX_PCI_BAR0			0x10
-#define BNX_PCI_PCIX_CMD		0x42
+#define BNX_PCI_PCIX_CMD		0x40
 
 /****************************************************************************/
 /* Convenience definitions.                                                 */
