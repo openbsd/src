@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.229 2008/02/20 15:25:26 markus Exp $ */
+/* $OpenBSD: session.c,v 1.230 2008/02/22 05:58:56 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -435,8 +435,6 @@ do_exec_no_pty(Session *s, const char *command)
 		if (dup2(err[0], 2) < 0)	/* stderr */
 			perror("dup2 stderr");
 
-		closefrom(STDERR_FILENO + 1);
-
 		/* Do processing for the child (exec command etc). */
 		do_child(s, command);
 		/* NOTREACHED */
@@ -506,8 +504,6 @@ do_exec_pty(Session *s, const char *command)
 		/* record login, etc. similar to login(1) */
 		if (!(options.use_login && command == NULL))
 			do_login(s, command);
-
-		closefrom(STDERR_FILENO + 1);
 
 		/* Do common processing for the child, such as execing the command. */
 		do_child(s, command);
@@ -1218,6 +1214,8 @@ do_child(Session *s, const char *command)
 		if (login_getcapbool(lc, "requirehome", 0))
 			exit(1);
 	}
+
+	closefrom(STDERR_FILENO + 1);
 
 	if (!options.use_login)
 		do_rc_files(s, shell);
