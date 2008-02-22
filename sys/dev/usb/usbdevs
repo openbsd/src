@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.334 2008/02/19 10:54:24 jsg Exp $
+$OpenBSD: usbdevs,v 1.335 2008/02/22 10:45:15 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -982,6 +982,7 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
+product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
 product COREGA RT2870_1		0x002f	RT2870
 product COREGA RT2870_2		0x003c	RT2870
 product COREGA RT2870_3		0x003f	RT2870
@@ -1440,6 +1441,7 @@ product IODATA ETGUS2		0x0930	ETG-US2
 product IODATA FT232R		0x093c	FT232R
 product IODATA USBRSAQ		0x0a03	RSAQ1 Serial
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
+product IODATA USBRSAQ5		0x0a0e	RSAQ5 Serial
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
