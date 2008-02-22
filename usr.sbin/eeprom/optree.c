@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.3 2007/11/12 20:54:54 kettenis Exp $	*/
+/*	$OpenBSD: optree.c,v 1.4 2008/02/22 20:23:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -51,15 +51,30 @@ op_print(struct opiocdesc *opio, int depth)
 		opio->op_buf[opio->op_buflen] = '\0';
 		special = 0;
 
+		/*
+		 * XXX This allows multiple NUL characters within
+		 * string-valued properties, which may not be what we
+		 * want.  But on macppc we have string-values
+		 * properties that end with multiple NUL characters,
+		 * and the serial number has them embedded within the
+		 * string.
+		 */
 		if (opio->op_buf[0] != '\0') {
 			for (i = 0; i < opio->op_buflen; i++) {
 				p = &opio->op_buf[i];
-				if ((*p < ' ' || *p > '~') && (*p != '\0' ||
-				    (i + 1 < opio->op_buflen &&
-				    (*++p < ' ' || *p > '~')))) {
-					special = 1;
-					break;
+				if (*p >= ' ' && *p <= '~')
+					continue;
+				if (*p == '\0') {
+					if (i + 1 < opio->op_buflen)
+						p++;
+					if (*p >= ' ' && *p <= '~')
+						continue;
+					if (*p == '\0')
+						continue;
 				}
+
+				special = 1;
+				break;
 			}
 		} else {
 			if (opio->op_buflen > 1)
@@ -84,6 +99,8 @@ op_print(struct opiocdesc *opio, int depth)
 		} else {
 			for (i = 0; i < opio->op_buflen;
 			    i += strlen(&opio->op_buf[i]) + 1) {
+				if (i && strlen(&opio->op_buf[i]) == 0)
+					continue;
 				if (i)
 					printf(" + ");
 				printf("'%s'", &opio->op_buf[i]);
