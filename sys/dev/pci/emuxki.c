@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.24 2007/07/10 22:04:28 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.25 2008/02/22 11:45:36 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1627,13 +1627,16 @@ emuxki_voice_set_audioparms(struct emuxki_voice *voice, u_int8_t stereo,
 	       stereo ? "stereo" : "mono", (b16 + 1) * 8, srate);
 #endif
 	
-	if (voice->stereo != stereo) {
-		if ((error = emuxki_voice_set_stereo(voice, stereo)))
-			return (error);
-	 }
 	voice->b16 = b16;
-	if (voice->sample_rate != srate)
+
+	/* sample rate must be set after any channel number changes */ 
+	if ((voice->stereo != stereo) || (voice->sample_rate != srate)) {
+		if (voice->stereo != stereo) {
+			if ((error = emuxki_voice_set_stereo(voice, stereo)))
+				return (error);
+		}
 		error = emuxki_voice_set_srate(voice, srate);
+	}
 	return error;
 }
 
