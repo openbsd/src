@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.48 2008/02/17 22:56:20 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.49 2008/02/22 23:00:04 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -136,7 +136,7 @@ struct sr_raid1 {
 
 /* CRYPTO */
 #define SR_CRYPTO_MAXKEYS	32
-#define SR_CRYPTO_KEYBITS	256
+#define SR_CRYPTO_KEYBITS	128
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
 #define SR_CRYPTO_ROUNDS	14
 #define SR_CRYPTO_PBKDF2_ROUNDS	20000

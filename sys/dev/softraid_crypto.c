@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.15 2008/02/19 03:28:28 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.16 2008/02/22 23:00:04 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -42,7 +42,7 @@
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <crypto/sha1.h>
-#include <crypto/md5.h>
+#include <crypto/rijndael.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -77,8 +77,8 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	struct cryptodesc	*crd;
 	struct uio		*uio;
 	int			flags, i, n;
-	daddr64_t		blk = 0;
-	MD5_CTX			ctx;
+	daddr64_t		blk[2];
+	rijndael_ctx		ctx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
@@ -95,12 +95,13 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	} else
 		uio->uio_iov->iov_base = xs->data;
 
+	blk[0] = 0;
 	if (xs->cmdlen == 10)
-		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+		blk[1] = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
 	else if (xs->cmdlen == 16)
-		blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
+		blk[1] = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 6)
-		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
+		blk[1] = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 
 	n = xs->datalen >> DEV_BSHIFT;
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
@@ -110,11 +111,16 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	if (crp == NULL)
 		goto unwind;
 
+	if (rijndael_set_key_enc_only(&ctx,
+	    sd->mds.mdd_crypto.scr_key1[blk[1] % SR_CRYPTO_MAXKEYS],
+	    SR_CRYPTO_KEYBITS) != 0)
+		goto unwind;
+
 	crp->crp_sid = sd->mds.mdd_crypto.scr_sid;
 	crp->crp_ilen = xs->datalen;
 	crp->crp_alloctype = M_DEVBUF;
 	crp->crp_buf = uio;
-	for (i = 0, crd = crp->crp_desc; crd; i++, blk++, crd = crd->crd_next) {
+	for (i = 0, crd = crp->crp_desc; crd; i++, blk[1]++, crd = crd->crd_next) {
 		crd->crd_skip = i << DEV_BSHIFT;
 		crd->crd_len = DEV_BSIZE;
 		crd->crd_inject = 0;
@@ -123,16 +129,11 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 		crd->crd_klen = SR_CRYPTO_KEYBITS;
 		crd->crd_rnd = SR_CRYPTO_ROUNDS;
 		crd->crd_key =
-		    sd->mds.mdd_crypto.scr_key2[blk % SR_CRYPTO_MAXKEYS];
+		    sd->mds.mdd_crypto.scr_key2[blk[1] % SR_CRYPTO_MAXKEYS];
 
-		/* use MD5 for IV because is exactly 16 bytes */
-		MD5Init(&ctx);
-		MD5Update(&ctx,
-		    sd->mds.mdd_crypto.scr_key1[blk % SR_CRYPTO_MAXKEYS],
-		    sizeof(sd->mds.mdd_crypto.scr_key1[0]));
-		MD5Update(&ctx, (void *)&blk, sizeof blk);
-		MD5Final(crd->crd_iv, &ctx);
+		rijndael_encrypt(&ctx, (u_char *)blk, crd->crd_iv);
 	}
+	bzero(&ctx, sizeof(ctx));
 
 	return (crp);
 unwind:
@@ -164,8 +165,9 @@ sr_crypto_putcryptop(struct cryptop *crp)
 int
 sr_crypto_decrypt_key(struct sr_discipline *sd)
 {
+	rijndael_ctx		ctx;
 	u_int8_t		*dkkey, *pk1, *ck1, *pk2, *ck2;
-	int			i, j, error = 0;
+	int			i, error = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n", DEVNAME(sd->sd_sc));
 
@@ -177,6 +179,9 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 	    SR_CRYPTO_PBKDF2_ROUNDS, SR_CRYPTO_KEYBYTES, &dkkey)) != 0)
 		goto out;
 
+	if ((error = rijndael_set_key(&ctx, dkkey, SR_CRYPTO_KEYBITS)) != 0)
+		goto out;
+	
 	/* recover key */
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
 		pk1 = sd->mds.mdd_crypto.scr_key1[i];
@@ -184,12 +189,12 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 		ck1 = sd->mds.mdd_crypto.scr_meta[0].scm_key1[i];
 		ck2 = sd->mds.mdd_crypto.scr_meta[0].scm_key2[i];
 
-		for (j = 0; j < SR_CRYPTO_KEYBYTES; j++) {
-			pk1[j] = ck1[j] ^ dkkey[j];
-			pk2[j] = ck2[j] ^ dkkey[j];
-		}
+		/* note:  with aes-128 blocksize == keysize */
+		rijndael_decrypt(&ctx, (u_char *)ck1, (u_char *)pk1);  
+		rijndael_decrypt(&ctx, (u_char *)ck2, (u_char *)pk2);  
 	}
 out:
+	bzero(&ctx, sizeof(ctx));
 	bzero(dkkey, SR_CRYPTO_KEYBYTES);
 	free(dkkey, M_DEVBUF);
 
@@ -199,8 +204,9 @@ out:
 int
 sr_crypto_encrypt_key(struct sr_discipline *sd)
 {
+	rijndael_ctx		ctx;
 	u_int8_t		*dkkey, *pk1, *pk2, *ck1, *ck2;
-	int			i, j, error = 0;
+	int			i, error = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_encrypt_key\n", DEVNAME(sd->sd_sc));
 
@@ -212,19 +218,23 @@ sr_crypto_encrypt_key(struct sr_discipline *sd)
 	    SR_CRYPTO_PBKDF2_ROUNDS, SR_CRYPTO_KEYBYTES, &dkkey)) != 0)
 		goto out;
 
-	/* mask keys */
+	if ((error = rijndael_set_key_enc_only(&ctx, dkkey,
+	    SR_CRYPTO_KEYBITS)) != 0)
+		goto out;
+
+	/* encrypt keys */ 
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
 		pk1 = sd->mds.mdd_crypto.scr_key1[i];
 		pk2 = sd->mds.mdd_crypto.scr_key2[i];
 		ck1 = sd->mds.mdd_crypto.scr_meta[0].scm_key1[i];
 		ck2 = sd->mds.mdd_crypto.scr_meta[0].scm_key2[i];
 
-		for (j = 0; j < SR_CRYPTO_KEYBYTES; j++) {
-			ck1[j] = pk1[j] ^ dkkey[j];
-			ck2[j] = pk2[j] ^ dkkey[j];
-		}
+		/* note:  with aes-128 blocksize == keysize */
+		rijndael_encrypt(&ctx, (u_char *)pk1, (u_char *)ck1);  
+		rijndael_encrypt(&ctx, (u_char *)pk2, (u_char *)ck2);  
 	}
 out:
+	bzero(&ctx, sizeof(ctx));
 	bzero(dkkey, SR_CRYPTO_KEYBYTES);
 	free(dkkey, M_DEVBUF);
 
