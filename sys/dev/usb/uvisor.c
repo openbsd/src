@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.36 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.37 2008/02/22 12:42:40 jsg Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -177,6 +177,8 @@ struct uvisor_type {
 };
 static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_ACEECA, USB_PRODUCT_ACEECA_MEZ1000 }, PALM4 },
+	{{ USB_VENDOR_FOSSIL, USB_PRODUCT_FOSSIL_WRISTPDA }, PALM4 },
+	{{ USB_VENDOR_GARMIN, USB_PRODUCT_GARMIN_IQUE3600 }, PALM4 },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO }, PALM4 },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO600 }, VISOR },
@@ -196,7 +198,6 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_NX60 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_TJ25 }, PALM4 },
 /*	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_25 }, PALM4 },*/
-	{{ USB_VENDOR_GARMIN, USB_PRODUCT_GARMIN_IQUE3600 }, PALM4 },
 	{{ USB_VENDOR_TAPWAVE, USB_PRODUCT_TAPWAVE_ZODIAC }, PALM4 },
 };
 #define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))

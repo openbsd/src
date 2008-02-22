@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.44 2007/11/11 02:14:24 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.45 2008/02/22 12:42:40 jsg Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -157,7 +157,8 @@ uftdi_match(struct device *parent, void *match, void *aux)
 		     uaa->vendor, uaa->product));
 
 	if (uaa->vendor == USB_VENDOR_FTDI &&
-	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
+	    (uaa->product == USB_PRODUCT_FTDI_EISCOU ||
+	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_232BM ||
 	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
@@ -178,7 +179,11 @@ uftdi_match(struct device *parent, void *match, void *aux)
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_633 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_634 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_635 ||
-	     uaa->product == USB_PRODUCT_FTDI_MJS_SIRIUS_PC))
+	     uaa->product == USB_PRODUCT_FTDI_MJS_SIRIUS_PC ||
+	     uaa->product == USB_PRODUCT_FTDI_OPENPORT_13M ||
+	     uaa->product == USB_PRODUCT_FTDI_OPENPORT_13S ||
+	     uaa->product == USB_PRODUCT_FTDI_OPENPORT_13U ||
+	     uaa->product == USB_PRODUCT_FTDI_UOPTBR))
 		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_IODATA &&
 	     uaa->product == USB_PRODUCT_IODATA_FT232R)
@@ -197,6 +202,9 @@ uftdi_match(struct device *parent, void *match, void *aux)
 	    (uaa->product == USB_PRODUCT_FALCOM_TWIST ||
 	     uaa->product == USB_PRODUCT_FALCOM_SAMBA))
 		 return (UMATCH_VENDOR_PRODUCT);
+	if (uaa->vendor == USB_VENDOR_RATOC &&
+	    (uaa->product == USB_PRODUCT_RATOC_REXUSB60F))
+		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_SEALEVEL &&
 	    uaa->product == USB_PRODUCT_SEALEVEL_USBSERIAL)
 		return (UMATCH_VENDOR_PRODUCT);
