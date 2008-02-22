@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.12 2007/08/21 20:29:25 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.13 2008/02/22 01:24:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.12 2007/08/21 20:29:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.13 2008/02/22 01:24:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,8 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 {
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;
-	int bite, expsign = 1, sign = 1;
-	u_char lastvalue, *nonzero, *tline, *C_TENS;
+	int bite, expsign = 1, sign = 1, zeroskip = 0;
+	u_char lastvalue, *tline, *C_TENS;
 	u_char *nweights;
 
 	if (Rflag)
@@ -227,7 +227,7 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 	}
 	/* eat initial zeroes */
 	for (; *line == '0' && line < lineend; line++)
-		;
+		zeroskip = 1;
 	/* calculate exponents < 0 */
 	if (*line == DECIMAL) {
 		exponent = 1;
@@ -238,8 +238,10 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 	}
 	/* next character better be a digit */
 	if (*line < '1' || *line > '9' || line >= lineend) {
-		*pos++ = nweights[127];
-		return (pos);
+		if (!zeroskip) {
+			*pos++ = nweights[127];
+			return (pos);
+		}
 	}
 	if (expincr) {
 		for (tline = line-1; *++tline >= '0' && 
@@ -270,8 +272,6 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 						: *line);
 				if (pos == bufend)
 					return (NULL);
-				if (*line != '0' || lastvalue != '0')
-					nonzero = pos;	
 			} else
 				lastvalue = *line;
 			parity ^= 1;
@@ -282,11 +282,10 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 		} else
 			break;
 	}
-	if (parity && lastvalue != '0') {
+	if (parity) {
 		*pos++ = or_sign ? OFF_NTENS[lastvalue] - '0' :
 					OFF_TENS[lastvalue] + '0';
-	} else
-		pos = nonzero;	
+	}
 	if (pos > bufend-1)
 		return (NULL);
 	*pos++ = or_sign ? nweights[254] : nweights[0];
