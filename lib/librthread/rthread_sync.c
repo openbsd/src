@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.18 2007/06/05 18:11:49 kurt Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.19 2008/02/22 09:18:28 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -157,7 +157,7 @@ sem_destroy(sem_t *semp)
 		return (EINVAL);
 	if ((*semp)->waitcount) {
 #define MSG "sem_destroy on semaphore with waiters!\n"
-		write(2, MSG, sizeof(MSG));
+		write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
 		return (EBUSY);
 	}
@@ -241,7 +241,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 
 	if ((*mutexp) && (*mutexp)->count) {
 #define MSG "pthread_mutex_destroy on mutex with waiters!\n"
-		write(2, MSG, sizeof(MSG));
+		write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
 		return (EBUSY);
 	}
@@ -502,16 +502,46 @@ pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
 int
 pthread_rwlock_destroy(pthread_rwlock_t *lockp)
 {
+	if ((*lockp) && ((*lockp)->readers || (*lockp)->writer)) {
+#define MSG "pthread_rwlock_destroy on rwlock with waiters!\n"
+		write(2, MSG, sizeof(MSG) - 1);
+#undef MSG
+		return (EBUSY);
+	}
 	free(*lockp);
 	*lockp = NULL;
 
 	return (0);
 }
 
+static int
+_rthread_rwlock_ensure_init(pthread_rwlock_t *lockp)
+{
+	int ret = 0;
+
+	/*
+	 * If the rwlock is statically initialized, perform the dynamic
+	 * initialization.
+	 */
+	if (*lockp == NULL)
+	{
+		_spinlock(&static_init_lock);
+		if (*lockp == NULL)
+			ret = pthread_rwlock_init(lockp, NULL);
+		_spinunlock(&static_init_lock);
+	}
+	return (ret);
+}
+
+
 int
 pthread_rwlock_rdlock(pthread_rwlock_t *lockp)
 {
 	pthread_rwlock_t lock;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
 
 	lock = *lockp;
 again:
@@ -531,6 +561,10 @@ int
 pthread_rwlock_tryrdlock(pthread_rwlock_t *lockp)
 {
 	pthread_rwlock_t lock;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
 
 	lock = *lockp;
 
@@ -549,6 +583,10 @@ int
 pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
 {
 	pthread_rwlock_t lock;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
 
 	lock = *lockp;
 
@@ -570,6 +608,10 @@ int
 pthread_rwlock_trywrlock(pthread_rwlock_t *lockp)
 {
 	pthread_rwlock_t lock;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
 
 	lock = *lockp;
 
