@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.70 2007/11/17 19:09:16 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.71 2008/02/23 20:38:08 hshoexer Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1669,6 +1669,7 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 
 	fw->main = p;
 	fw->ucode = p + fw->main_size;
+	sc->fw_data = fw->data;
 
 	return 0;
 
@@ -1967,6 +1968,14 @@ ipw_stop(struct ifnet *ifp, int disable)
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
+
+	/*
+	 * Free memory claimed by firmware.
+	 */
+	if (sc->fw_data) {
+		free(sc->fw_data, M_DEVBUF);
+		sc->fw_data = NULL;
+	}
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }
