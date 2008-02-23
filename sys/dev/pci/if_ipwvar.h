@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.14 2006/08/19 12:03:05 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.15 2008/02/23 21:35:41 hshoexer Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -158,4 +158,6 @@ struct ipw_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+
+	void				*fw_data;
 };
