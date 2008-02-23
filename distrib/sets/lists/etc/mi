@@ -106,7 +106,6 @@
 ./etc/security
 ./etc/sensorsd.conf
 ./etc/services
-./etc/snmpd.conf
 ./etc/shells
 ./etc/skel/.cshrc
 ./etc/skel/.login
@@ -116,6 +115,7 @@
 ./etc/skel/.ssh/authorized_keys
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
+./etc/snmpd.conf
 ./etc/spwd.db
 ./etc/ssh
 ./etc/ssh/ssh_config

@@ -1627,6 +1627,7 @@
 ./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/schizo.0
 ./usr/share/man/cat4/sparc64/spif.0
+./usr/share/man/cat4/sparc64/tda.0
 ./usr/share/man/cat4/sparc64/timer.0
 ./usr/share/man/cat4/sparc64/tvtwo.0
 ./usr/share/man/cat4/sparc64/upa.0
@@ -2052,8 +2053,8 @@
 ./usr/share/man/cat8/armish/hotplugd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
-./usr/share/man/cat8/authpf.0
 ./usr/share/man/cat8/authpf-noip.0
+./usr/share/man/cat8/authpf.0
 ./usr/share/man/cat8/aviion
 ./usr/share/man/cat8/aviion/MAKEDEV.0
 ./usr/share/man/cat8/aviion/a2coff.0
