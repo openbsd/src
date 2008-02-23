@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1326 2008/02/23 13:16:17 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1327 2008/02/23 23:19:56 miod Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11860,8 +11860,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SK-9Exx",
 	},
 	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
+	    "IOC3",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1,
+	    "Rad1",
+	},
+	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 	    "Tigon",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4,
+	    "IOC4",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
