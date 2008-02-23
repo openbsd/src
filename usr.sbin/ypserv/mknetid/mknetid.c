@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.15 2008/02/23 22:21:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.15 2008/02/23 22:21:17 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -541,21 +541,21 @@ main(int argc, char *argv[])
 	if (pfile == NULL) {
 		fprintf(stderr,"mknetid: can't open file \"%s\"\n",
 		    PasswdFile);
-		exit(1);
+		goto bad;
 	}
 
 	gfile = fopen(GroupFile, "r");
 	if (gfile == NULL) {
 		fprintf(stderr,"mknetid: can't open file \"%s\"\n",
-		    PasswdFile);
-		exit(1);
+		    GroupFile);
+		goto bad;
 	}
 
 	hfile = fopen(HostFile, "r");
 	if (hfile == NULL) {
 		fprintf(stderr,"mknetid: can't open file \"%s\"\n",
-		    PasswdFile);
-		exit(1);
+		    HostFile);
+		goto bad;
 	}
 
 	printf("NetidFile: %s\n", NetidFile);
@@ -570,4 +570,8 @@ main(int argc, char *argv[])
 	if (mfile != NULL)
 		print_netid(mfile, NetidFile);
 	return (0);
+
+bad:
+	fprintf(stderr, "mknetid: passwd, group, host and netid maps not updated!\n");
+	exit(1);
 }
