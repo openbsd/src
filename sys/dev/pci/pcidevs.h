@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1325 2008/02/22 22:36:30 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1326 2008/02/23 13:16:17 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1028,6 +1028,8 @@
 #define	PCI_PRODUCT_ATI_RS690_PCIE_5	0x7917		/* RS690 PCIE */
 #define	PCI_PRODUCT_ATI_RS690_HDA	0x7919		/* RS690 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_X1250	0x791e		/* Radeon X1250 */
+#define	PCI_PRODUCT_ATI_RADEON_HD2400_XT	0x94c1		/* Radeon HD 2400 XT */
+#define	PCI_PRODUCT_ATI_RADEON_HD2400_PRO	0x94c3		/* Radeon HD 2400 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_M72	0x94c9		/* Mobility Radeon HD 2400 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600	0x9589		/* Radeon HD 2600 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HDA	0xaa08		/* Radeon HD 2600 HD Audio */
