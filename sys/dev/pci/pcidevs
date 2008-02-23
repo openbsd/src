@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1326 2008/02/23 13:16:17 sthen Exp $
+$OpenBSD: pcidevs,v 1.1327 2008/02/23 23:19:56 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3702,7 +3702,10 @@ product SCHNEIDERKOCH SK9Sxx	0x9000	SK-9Sxx
 product SCHNEIDERKOCH SK9Exx	0x9e00	SK-9Exx
 
 /* SGI products */
+product SGI IOC3		0x0003	IOC3
+product SGI RAD1		0x0005	Rad1
 product SGI TIGON		0x0009	Tigon
+product SGI IOC4		0x100a	IOC4
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000		0x0008	STG 2000X
