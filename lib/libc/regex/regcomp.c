@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.18 2007/10/10 21:23:44 chl Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.19 2008/02/23 08:13:07 otto Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1051,6 +1051,9 @@ allocset(struct parse *p)
 
 		(void) memset((char *)p->g->setbits + (nbytes - css), 0, css);
 	}
+	/* XXX should not happen */
+	if (p->g->sets == NULL || p->g->setbits == NULL)
+		goto nomem;
 
 	cs = &p->g->sets[no];
 	cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
