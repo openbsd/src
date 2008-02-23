@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.72 2007/04/13 15:55:58 miod Exp $
+dnl	$OpenBSD: hardware,v 1.73 2008/02/23 10:36:27 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -173,11 +173,11 @@ Supported devices {:-include-:}:
 	  + Sun SBus PCMCIA bridge (stp)
 	  + Tadpole PCMCIA controller (tslot)
 	- Wireless Ethernet adapters (wi)
-	  + Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
-	    (will be detected as PCMCIA adapters)
+	  + WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b Compact Flash
+	    adapters (will be detected as PCMCIA adapters)
 	      AmbiCom WL1100C-CF
-	      ASUS WL-110
-	      Belkin F5D6060 (version 1)
+	      ASUS SpaceLink WL-110
+	      Belkin F5D6060 (version 1 only)
 	      Buffalo AirStation
 	      D-Link DCF-660W
 	      ELSA XI800
@@ -185,22 +185,23 @@ Supported devices {:-include-:}:
 	      Netgear MA701
 	      Pretec Compact WLAN OC-WLBXX-A
 	      Senao NL-2511CF
-	  + Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
-	    based PCMCIA IEEE 802.11b adapters
+	  + WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b PCMCIA adapters
 	      3Com AirConnect 3CRWE737A
-	      ACTIONTEC HWC01170
+	      Actiontec HWC01170
+	      Adaptec AWN-8030
 	      Addtron AWP-100
-	      Agere Orinoco
+	      Agere ORiNOCO
 	      ARtem Onair
-	      BUFFALO AirStation
+	      ASUS SpaceLink WL-100
+	      Belkin F5D6020 (version 1 only)
+	      Buffalo AirStation
 	      Cabletron RoamAbout
 	      Compaq Agency NC5004
 	      Contec FLEXLAN/FX-DS110-PCC
 	      Corega PCC-11
 	      Corega PCCA-11
 	      Corega PCCB-11
-	      Corega CGWLPCIA11
-	      D-Link DWL-650 revisions A1-J3
+	      D-Link DWL-650 (rev A1-J3 only)
 	      ELSA XI300
 	      ELSA XI325
 	      ELSA XI325H
@@ -215,6 +216,7 @@ Supported devices {:-include-:}:
 	      Linksys Instant Wireless WPC11 2.5
 	      Linksys Instant Wireless WPC11 3.0
 	      Lucent WaveLAN
+	      Microsoft MN520
 	      NANOSPEED ROOT-RZ2000
 	      NEC CMZ-RT-WP
 	      Netgear MA401
@@ -222,10 +224,11 @@ Supported devices {:-include-:}:
 	      Nokia C020 Wireless LAN
 	      Nokia C110/C111 Wireless LAN
 	      NTT-ME 11Mbps Wireless LAN
-	      Planex GW-NS11H Wireless LAN
+	      Planex GW-NS11H
 	      Proxim Harmony
 	      Proxim RangeLAN-DS
 	      Samsung MagicLAN SWL-2000N
+	      Siemens SpeedStream SS1021
 	      SMC 2632 EZ Connect
 	      Symbol Spectrum24
 	      TDK LAK-CD011WL

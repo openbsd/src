@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.255 2007/11/10 13:17:11 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.256 2008/02/23 10:36:27 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -570,21 +570,22 @@ Supported hardware {:-include-:}:
 		    TRENDnet TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		ADMtek ADM8211 based IEEE 802.11b CardBus adapters [A] [B] [C]
+		ADMtek ADM8211 IEEE 802.11b CardBus adapters [A] [B] [C]
 		    3Com OfficeConnect 3CRSHPW796
 		    Blitz NetWave Point
 		    D-Link DWL-650 Rev. L1
-		    SMC 2635W v1
-		    TRENDnet TEW-221PC CardBus
-		ADMtek ADM8211 based IEEE 802.11b PCI adapters [A] [B] [C]
-		    Belkin F5D6001 v2
+		    SMC 2635W (version 1 only)
+		    TRENDnet TEW-221PC
+		ADMtek ADM8211 IEEE 802.11b PCI adapters [A] [B] [C]
+		    Belkin F5D6001
 		    D-Link DWL-520 Rev. C1
 		    LanReady WP2000
 		    Xterasys XN2511B
-		Aironet 4500/4800 IEEE 802.11FH/b ISA PnP, PCMCIA and PCI
-		  [A] [B] [C]
-		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters
-		  [A] [B]
+		Aironet Communications 4500/4800 IEEE 802.11FH/b ISA PnP, PCI,
+		and PCMCIA adapters [A] [B] [C]
+		    Aironet 4500/4800
+		    Cisco 340/350
+		Atheros IEEE 802.11a/b/g CardBus adapters [A] [B]
 		    3Com 3CRPAG175
 		    Cisco AIR-CB21AG
 		    D-Link DWL-A650
@@ -596,13 +597,13 @@ Supported hardware {:-include-:}:
 		    Proxim Skyline 4030
 		    SMC SMC2735W
 		    Sony PCWA-C500
-		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [A] [B]
+		Atheros IEEE 802.11a/b/g PCI adapters [A] [B]
 		    D-Link DWL-A520
-		    IBM 11ABG WL LAN
+		    IBM 11ABG WL LAN Mini PCI
 		    Proxim Skyline 4032
-		    Senao NL-5354MP
-		    Wistron CM9
-		Atheros USB IEEE 802.11a/b/g adapters [G]
+		    Senao NL-5354MP Mini PCI
+		    Wistron CM9 Mini PCI
+		Atheros USB IEEE 802.11a/b/g USB adapters [G]
 		    Compex WLU108AG
 		    Compex WLU108G
 		    D-Link DWL-G132
@@ -613,13 +614,14 @@ Supported hardware {:-include-:}:
 		    PLANET WDL-U357
 		    Siemens Gigaset 108
 		    SMC SMCWUSBT-G
+		    SMC SMCWUSBT-G2
 		    SparkLAN WL-785A
 		    TP-Link TL-WN620G
 		    TRENDware International TEW-444UB
 		    TRENDware International TEW-504UB
 		    Unex Technology UR054ag
 		    ZyXEL XtremeMIMO M-202
-		Atmel AT76C50x based USB IEEE 802.11b adapters [G]
+		Atmel AT76C50x IEEE 802.11b USB adapters [G]
 		    3Com 3CRSHEW696
 		    AboCom BWU613
 		    Accton 2664W
@@ -631,6 +633,12 @@ Supported hardware {:-include-:}:
 		    Askey Computer Voyager 1010
 		    Askey Computer WLL013 (Intersil Radio)
 		    Askey Computer WLL013 (RFMD Radio)
+		    Atmel AT76C503 (Intersil Radio)
+		    Atmel AT76C503 (RFMD Radio)
+		    Atmel AT76C505 (RFMD Radio)
+		    Atmel AT76C505 (RFMD 2958 Radio)
+		    Atmel AT76C505A (RFMD 2958 Radio)
+		    Atmel AT76C505AS (RFMD 2958 Radio)
 		    Belkin F5D6050
 		    Bluetake BW002
 		    Compaq iPAQ h54xx/h55xx Internal WLAN
@@ -649,144 +657,44 @@ Supported hardware {:-include-:}:
 		    Intel AP310 AnyPoint II
 		    I/O DATA USB WN-B11
 		    Lexar 2662W-AR
-		    Linksys WUSB11
-		    Linksys WUSB11 v2.8
+		    Linksys WUSB11 802.11b
+		    Linksys WUSB11 802.11b v2.8
 		    MSI WLAN
 		    Netgear MA101
 		    Netgear MA101 rev B
-		    OQO model 01 builtin wireless
+		    OQO model 01 WiFi
 		    Ovislink AirLive WL-1120USB
 		    OvisLink AirLive WL-1130USB
 		    Planex Communications GW-US11S
 		    Samsung SWL2100W
 		    Siemens WLL013
-		    SMC 2662W-AR
-		    SMC 2662W-V4
+		    SMC EZ Connect 11Mbps (SMC2662w)
+		    SMC EZ Connect 11Mbps v2 (SMC2662wV2)
 		    Tekram U-300C
 		    TRENDnet TEW-229UB
 		    W-Buddie WN210
 		    Z-Com M4Y-750
-		Intel PRO/Wireless 2100 IEEE 802.11b adapters [G]
-		Intel PRO/Wireless 2200BG/2225BG/2915ABG
-		  IEEE 802.11a/b/g adapters [G]
-		Intel PRO/Wireless 3945ABG [G]
-		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
-		(will be detected as PCMCIA adapters) [A] [B]
-		    AmbiCom WL1100C-CF
-		    ASUS WL-110
-		    Belkin F5D6060 (version 1)
-		    Buffalo AirStation
-		    D-Link DCF-660W
-		    ELSA XI800
-		    Linksys WCF12
-		    Netgear MA701
-		    Pretec Compact WLAN OC-WLBXX-A
-		    Senao NL-2511CF
-		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
-		  based PCMCIA IEEE 802.11b adapters [A] [B]
-		    3Com AirConnect 3CRWE737A
-		    ACTIONTEC HWC01170
-		    Addtron AWP-100
-		    Agere Orinoco
-		    ARtem Onair
-		    BUFFALO AirStation
-		    Cabletron RoamAbout
-		    Compaq Agency NC5004
-		    Contec FLEXLAN/FX-DS110-PCC
-		    Corega PCC-11
-		    Corega PCCA-11
-		    Corega PCCB-11
-		    Corega CGWLPCIA11
-		    D-Link DWL-650 revisions A1-J3
-		    ELSA XI300
-		    ELSA XI325
-		    ELSA XI325H
-		    EMTAC A2424i
-		    Ericsson Wireless LAN CARD C11
-		    Gemtek WL-311
-		    Hawking Technology WE110P
-		    I-O DATA WN-B11/PCM
-		    Intel PRO/Wireless 2011
-		    Intersil Prism II
-		    Linksys Instant Wireless WPC11
-		    Linksys Instant Wireless WPC11 2.5
-		    Linksys Instant Wireless WPC11 3.0
-		    Lucent WaveLAN
-		    NANOSPEED ROOT-RZ2000
-		    NEC CMZ-RT-WP
-		    Netgear MA401
-		    Netgear MA401RA
-		    Nokia C020 Wireless LAN
-		    Nokia C110/C111 Wireless LAN
-		    NTT-ME 11Mbps Wireless LAN
-		    Planex GW-NS11H Wireless LAN
-		    Proxim Harmony
-		    Proxim RangeLAN-DS
-		    Samsung MagicLAN SWL-2000N
-		    Siemens SpeedStream SS1021
-		    SMC 2632 EZ Connect
-		    Symbol Spectrum24
-		    TDK LAK-CD011WL
-		    US Robotics 2410
-		    US Robotics 2445
-		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
-		  IEEE 802.11b adapters [A] [B]
-		    3Com AirConnect 3CRWE777A
-		    Addtron AWA-100
-		    Belkin F5D6000 PCI version 1 (a rebadged WL11000P)
-		    Corega CGWLPCIA11
-		    Eumitcom WL11000P
-		    D-Link DWL-520 revisions A and B
-		    Global Sun Technology GL24110P (untested)
-		    Global Sun Technology GL24110P02
-		    Intersil Mini-PCI
-		    Linksys WDT11 (a rebadged GL24110P02)
-		    NDC/Sohoware NCP130
-		    Netgear MA301
-		    Netgear MA311
-		    US Robotics 2415 (rebadged WL11000P)
-		    Nortel E-mobility 211818-A
-		    Symbol LA4123
-		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters [A] [B]
-		    Acer Warplink USB-400
-		    Actiontec HWU01170
-		    AirVast WM168b
-		    Ambit WLAN
-		    Apacer Wireless Steno MB112
-		    ASUS WL-140
-		    Compaq W100
-		    Corega WLUSB-11
-		    Corega WLUSB-11 Key
-		    D-Link DWL-120 (rev F)
-		    D-Link DWL-122
-		    I-O DATA WN-B11/USB
-		    Intel PRO/Wireless 2011B
-		    Intersil Prism 2X
-		    JVC MP-XP7250
-		    Linksys WUSB11 v3.0
-		    Linksys WUSB12
-		    Melco WLI-USB-KB11
-		    Melco WLI-USB-KS11G
-		    Melco WLI-USB-S11
-		    Microsoft MN510
-		    Netgear MA111 (version 1)
-		    Pheenet WL-503IA
-		    Planex GW-US11H
-		    Siemens SpeedStream SS1022
-		    Sitecom WL-022
-		    Syntax USB-400
-		    US Robotics 1120
-		    ViewSonic Airsync
-		    Z-Com XI-725/726
-		    Z-Com XI-735
-		    ZyXEL ZyAIR B-200
-		Intersil/Conexant Prism GT CardBus Full-MAC IEEE 802.11a/b/g [G]
+		 Broadcom AirForce IEEE 802.11b/g CardBus adapters [G]
+		    Buffalo WLI-CB-G54
+		    Linksys WPC54G Ver 3
+		    Linksys WPC54GS Ver 2
+		    TRENDnet TEW-401PCplus
+		    US Robotics 5411
+		 Broadcom AirForce IEEE 802.11b/g PCI adapters [G]
+		    Apple Airport Extreme BCM4306
+		    Apple Airport Extreme BCM4318
+		    ASUS WL-138g
+		    Compaq R4035 onboard
+		    HP nx6125
+		Conexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g CardBus
+		adapters [G]
 		    3COM 3CRWE154G72
-		    NETGEAR WG511
+		    some NETGEAR WG511 (those made in Taiwan, NOT in China)
 		    SMC EZ Connect g 2.4GHz SMC2835W-v2
 		    Soyo Aerielink
-		    Zyxel ZyAIR G-100 
-		Intersil/Conexant Prism GT PCI Full-MAC IEEE 802.11a/b/g [G]
+		    ZyXEL ZyAIR G-100
+		Conexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g PCI
+		adapters [G]
 		    D-Link DWL-g650 A1
 		    I-O Data WN-G54/CB
 		    I4 Z-Com XG-600
@@ -796,13 +704,33 @@ Supported hardware {:-include-:}:
 		    PLANEX GW-DS54G
 		    SMC EZ Connect g 2.4GHz SMC2802W
 		    SMC 2802Wv2
-		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters [G]
+		Conexant/Intersil Prism GT SoftMAC IEEE 802.11b/g USB adapters
+		[A] [B] [C]
+		    Belkin F5D7050 (version 1000)
+		    Cohiba Proto Board
+		    D-Link DWL-G120 Cohiba
+		    FSC Connect2Air E-5400 USB D1700
+		    Gigaset USB Adapter 54
+		    Inventel UR045G
+		    Netgear WG111v2
+		    SMC EZ ConnectG SMC2862W-G
+		    Sagem XG703A
+		    Spinnaker DUT
+		    Spinnaker Proto Board
+		Intel PRO/Wireless 2100 IEEE 802.11b PCI adapters [G]
+		Intel PRO/Wireless 2200BG/2225BG/2915ABG 802.11a/b/g PCI
+		adapters [G]
+		Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g PCI adapters [G]
+		Marvell Libertas IEEE 802.11b/g CardBus adapters [G]
 		    Netgear WG511v2
 		    Tenda TWL541C
-		Marvell Libertas PCI IEEE 802.11b/g wireless adapters [G]
+		Marvell Libertas IEEE 802.11b/g PCI adapters [G]
 		    Netgear WG311v3
 		    Tenda TWL542P
-		Ralink RT2500 based CardBus IEEE 802.11b/g adapters [A] [B]
+		Marvell Libertas IEEE 802.11b/g Compact Flash adapters (will be
+		detected as PCMCIA adapters) [G]
+		    Ambicom WL54CF
+		Ralink Technology IEEE 802.11a/b/g CardBus adapters [A] [B]
 		    A-Link WL54PC
 		    Alfa AWPC036
 		    Amigo AWI-914W
@@ -811,14 +739,13 @@ Supported hardware {:-include-:}:
 		    Atlantis Land A02-PCM-W54
 		    Belkin F5D7010 v2
 		    Canyon CN-WF513
-		    CC&C WL-2102
+		    CC&amp;C WL-2102
 		    CNet CWC-854
-		    Compex WL54
+		    Compex WL54G
 		    Conceptronic C54RC
 		    Corega CG-WLCB54GL
 		    Digiconnect WL591C
 		    Digitus DN-7001G-RA
-		    Dynalink WLG25CARDBUS
 		    E-Tech WGPC02
 		    E-Tech WGPC03
 		    Edimax EW-7108PCg
@@ -827,6 +754,8 @@ Supported hardware {:-include-:}:
 		    Eusso UGL2454-01R
 		    Fibreline WL-400X
 		    Gigabyte GN-WMKG
+		    Gigabyte GN-WM01GS
+		    Gigabyte GN-WM01GM
 		    Hawking HWC54GR
 		    Hercules HWGPCMCIA-54
 		    JAHT WN-4054P
@@ -848,65 +777,77 @@ Supported hardware {:-include-:}:
 		    Unex MR054g-R02
 		    Zinwell ZWX-G160
 		    Zonet ZEW1500
-		Ralink RT2500 based Mini PCI IEEE 802.11b/g adapters [A] [B]
-		    Amigo AWI-922W
-		    Billionton MIWLGRL
-		    Gigabyte GN-WIKG
-		    MSI MP54G2
-		    MSI MS-6833
-		    Tonze PC-620C
-		    Zinwell ZWX-G360
-		Ralink RT2500 based PCI IEEE 802.11b/g adapters [A] [B]
+		Ralink Technology IEEE 802.11a/b/g PCI adapters [B] [C]
 		    A-Link WL54H
+		    AirLive WN-5000PCI
+		    Amigo AWI-922W Mini PCI
 		    Amigo AWI-926W
 		    AMIT WL531P
 		    AOpen AOI-831
-		    ASUS WL-130g
+		    ASUS WL-130G
+		    ASUS WL-130N
 		    ASUS WIFI-G-AAY
 		    Atlantis Land A02-PCI-W54
 		    Belkin F5D7000 v3
+		    Billionton MIWLGRL Mini PCI
 		    Canyon CN-WF511
 		    CNet CWP-854
 		    Compex WLP54G
 		    Conceptronic C54Ri
-		    Corega CG-WLPCI54GL
 		    Digitus DN-7006G-RA
 		    Dynalink WLG25PCI
 		    E-Tech WGPI02
 		    Edimax EW-7128g
+		    Edimax EW-7628Ig
+		    Edimax EW-7728In
 		    Eminent EM3037
 		    Encore ENLWI-G-RLAM
 		    Eusso UGL2454-VPR
 		    Fiberline WL-400P
-		    Foxconn WLL-3350
+		    Gigabyte GN-WIKG Mini PCI
+		    Gigabyte GN-WI01GS Mini PCI
+		    Gigabyte GN-WI02GM Mini PCI
 		    Gigabyte GN-WPKG
+		    Gigabyte GN-WP01GS
+		    Gigabyte GN-WI02GM
+		    Gigabyte GN-WP01GM
 		    Hawking HWP54GR
 		    Hercules HWGPCI-54
 		    iNexQ CR054g-009 (R03)
 		    JAHT WN-4054PCI
+		    KCORP LifeStyle KLS-660
 		    LevelOne WNC-0301 v2
 		    Linksys WMP54G v4
 		    Micronet SP906GK
 		    Minitar MN54GPC-R
+		    MSI MP54G2 Mini PCI
+		    MSI MP6833 Mini PCI
 		    MSI MS-6834
 		    MSI PC54G2
 		    OvisLink EVO-W54PCI
 		    PheeNet HWL-PCIG/RA
+		    Planex PCI-GW-DS300N
 		    Pro-Nets PC80211G
 		    Repotec RP-WP0854
 		    SATech SN-54P
+		    Signamax 065-1798
 		    Sitecom WL-115
+		    SparkLAN WL-660R
+		    SparkLAN WMIR-215GN Mini PCI
+		    Surecom EP-9321-g
 		    Surecom EP-9321-g1
 		    Sweex LC700030
 		    TekComm NE-9321-g
+		    Tonze PC-620C Mini PCI
 		    Tonze PC-6200C
 		    Unex CR054g-R02
+		    Zinwell ZWX-G360 Mini PCI
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
-		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters [A] [B]
+		Ralink Technology IEEE 802.11b/g USB adapters [A] [B] [C]
 		    AMIT WL532U
-		    ASUS WL-167g v1
-		    Belkin F5D7050 v2000
+		    ASUS WL-167g
+		    Belkin F5D7050
 		    Buffalo WLI-U2-KG54
 		    Buffalo WLI-U2-KG54-AI
 		    Buffalo WLI-U2-KG54-YB
@@ -920,13 +861,13 @@ Supported hardware {:-include-:}:
 		    Gigabyte GN-WBKG
 		    Hercules HWGUSB2-54
 		    KCORP LifeStyle KLS-685
-		    Linksys HU200-TS
 		    Linksys WUSB54G v4
 		    Linksys WUSB54GP v4
 		    MSI MS-6861
 		    MSI MS-6865
 		    MSI MS-6869
 		    Nintendo Wi-Fi USB Connector
+		    Nova Tech NV-902W
 		    OvisLink Evo-W54USB
 		    SerComm UB801R
 		    SparkLAN WL-685R
@@ -935,25 +876,28 @@ Supported hardware {:-include-:}:
 		    Sweex LC100060
 		    Tonze UW-6200C
 		    Zaapa ZNWUSB-54
+		    Zinwell ZPlus-G250
 		    Zinwell ZWX-G261
-		    Zonet ZEW2500P
-		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g
-		adapters [G]
+		    Zonet ZEW2500
+		Ralink Technology USB IEEE 802.11a/b/g USB adapters [A] [B] [C]
 		    3Com Aolynk WUB320g
 		    Abocom WUG2700
 		    Airlink101 AWLL5025
+		    ASUS WL-167g ver 2
 		    Belkin F5D7050 ver 3
 		    Belkin F5D9050 ver 3
 		    Buffalo WLI-U2-SG54HP
 		    Buffalo WLI-U2-G54HP
 		    CNet CWD-854 ver F
 		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR
 		    Edimax EW-7318USG
 		    Gigabyte GN-WB01GS
+		    Gigabyte GN-WI05GS
 		    Hawking HWUG1
 		    Hawking HWU54DM
 		    Hercules HWGUSB2-54-LB
@@ -969,7 +913,165 @@ Supported hardware {:-include-:}:
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
-		ZyDAS ZD1211/ZD1211B USB IEEE 802.11b/g adapters [A] [B] [C]
+		Raytheon Raylink/WebGear Aviator IEEE 802.11FH PCMCIA adapters
+		[A] [B] [C]
+		    Raytheon Raylink WLAN
+		    WebGear Aviator 2.4
+		    WebGear Aviator PRO
+		Realtek RTL8180L IEEE 802.11b CardBus adapters [A] [B] [C]
+		    Allnet ALL0182
+		    Belkin F5D6020 V3
+		    Buffalo WLI-CB-B11
+		    Corega CG-WLCB11V3
+		    D-Link DWL-610
+		    Edimax EW-7106
+		    GigaFast WF721-AEX (R* serial)
+		    Jensen AirLink 6011
+		    Level-One WPC-0101
+		    Linksys WPC11 v4
+		    Netgear MA521
+		    Ovislink AirLive WL-1120PCM
+		    Planet WL-3553
+		    Q-Tec 770WC
+		    Q-Tec 775WC
+		    Roper FreeLan 802.11b
+		    SAFECOM SWLCR-1100
+		    TRENDnet TEW-226PC
+		    VCTnet PC-11B1
+		    Winstron CB-200B
+		    Zonet ZEW1000
+		TI ACX100/ACX111 IEEE 802.11a/b/g CardBus adapters [G]
+		    D-Link DWL-650+
+		    D-Link DWL-G630+
+		    D-Link DWL-G650+
+		    Ergenic ERG WL-003
+		    Hamlet HNWP254
+		    Linksys WPC54Gv2
+		    Microcom Travelcard
+		    Sceptre SC254W+
+		    USR USR5410
+		    ZyXEL G-160
+		TI ACX100/ACX111 IEEE 802.11a/b/g PCI adapters [G]
+		    D-Link DWL-520+
+		    D-Link DWL-G520+
+		    Hawking HWP54G
+		    Netgear WG311v2
+		    Tornado/ADT 211g
+		    USR USR5416
+		    ZyXEL G-360 EE
+		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b Compact
+		Flash adapters (will be detected as PCMCIA adapters) [B]
+		    AmbiCom WL1100C-CF
+		    ASUS SpaceLink WL-110
+		    Belkin F5D6060 (version 1 only)
+		    Buffalo AirStation
+		    D-Link DCF-660W
+		    ELSA XI800
+		    Linksys WCF12
+		    Netgear MA701
+		    Pretec Compact WLAN OC-WLBXX-A
+		    Senao NL-2511CF
+		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b PCI
+		adapters [C]
+		    3Com AirConnect 3CRWE777A
+		    Addtron AWA-100
+		    Belkin F5D6001 (version 1 only)
+		    Corega CGWLPCIA11
+		    D-Link DWL-520 (rev A and B only)
+		    Intersil Mini PCI
+		    Intersil ISL3872
+		    Longshine 8301
+		    NDC/Sohoware NCP130
+		    Netgear MA311
+		    Nortel E-mobility 211818-A
+		    Samsung MagicLAN SWL-2210P
+		    Senao NL-2511MP
+		    Symbol LA4123
+		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b PCMCIA
+		adapters [B]
+		    3Com AirConnect 3CRWE737A
+		    Actiontec HWC01170
+		    Adaptec AWN-8030
+		    Addtron AWP-100
+		    Agere ORiNOCO
+		    ARtem Onair
+		    ASUS SpaceLink WL-100
+		    Belkin F5D6020 (version 1 only)
+		    Buffalo AirStation
+		    Cabletron RoamAbout
+		    Compaq Agency NC5004
+		    Contec FLEXLAN/FX-DS110-PCC
+		    Corega PCC-11
+		    Corega PCCA-11
+		    Corega PCCB-11
+		    D-Link DWL-650 (rev A1-J3 only)
+		    ELSA XI300
+		    ELSA XI325
+		    ELSA XI325H
+		    EMTAC A2424i
+		    Ericsson Wireless LAN CARD C11
+		    Gemtek WL-311
+		    Hawking Technology WE110P
+		    I-O DATA WN-B11/PCM
+		    Intel PRO/Wireless 2011
+		    Intersil Prism II
+		    Linksys Instant Wireless WPC11
+		    Linksys Instant Wireless WPC11 2.5
+		    Linksys Instant Wireless WPC11 3.0
+		    Lucent WaveLAN
+		    Microsoft MN520
+		    NANOSPEED ROOT-RZ2000
+		    NEC CMZ-RT-WP
+		    Netgear MA401
+		    Netgear MA401RA
+		    Nokia C020 Wireless LAN
+		    Nokia C110/C111 Wireless LAN
+		    NTT-ME 11Mbps Wireless LAN
+		    Planex GW-NS11H
+		    Proxim Harmony
+		    Proxim RangeLAN-DS
+		    Samsung MagicLAN SWL-2000N
+		    Siemens SpeedStream SS1021
+		    SMC 2632 EZ Connect
+		    Symbol Spectrum24
+		    TDK LAK-CD011WL
+		    US Robotics 2410
+		    US Robotics 2445
+		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b USB
+		adapters [A] [B]
+		    Acer Warplink USB-400
+		    Actiontec HWU01170
+		    AirVast WM168b
+		    Ambit WLAN
+		    Apacer Wireless Steno MB112
+		    ASUS WL-140
+		    Compaq W100
+		    Corega WLUSB-11
+		    Corega WLUSB-11 Key
+		    D-Link DWL-120 (rev F)
+		    D-Link DWL-122
+		    I-O DATA WN-B11/USB
+		    Intel PRO/Wireless 2011B
+		    Intersil Prism 2X
+		    JVC MP-XP7250
+		    Linksys WUSB11 v3.0
+		    Linksys WUSB12
+		    Melco WLI-USB-KB11
+		    Melco WLI-USB-KS11G
+		    Melco WLI-USB-S11
+		    Microsoft MN510
+		    Netgear MA111 (version 1 only)
+		    Pheenet WL-503IA
+		    Planex GW-US11H
+		    Siemens SpeedStream SS1022
+		    Sitecom WL-022
+		    Syntax USB-400
+		    US Robotics 1120
+		    ViewSonic Airsync
+		    Z-Com XI-725/726
+		    Z-Com XI-735
+		    ZyXEL ZyAIR B-200
+		ZyDAS ZD1211/ZD1211B USB IEEE 802.11b/g USB adapters [G]
 		    3COM 3CRUSB10075
 		    Acer WLAN-G-US1
 		    Airlink+ AWLL3025
@@ -980,9 +1082,10 @@ Supported hardware {:-include-:}:
 		    Belkin F5D7050 v.4000
 		    Billion BiPAC 3011G
 		    Buffalo WLI-U2-KG54L
-		    CC&C WL-2203B
+		    CC&amp;C WL-2203B
 		    DrayTek Vigor 550
 		    Edimax EW-7317UG
+		    Edimax EW-7317LDG
 		    Fiberline Networks WL-43OU
 		    iNexQ UR055g
 		    Linksys WUSBF54G
@@ -990,13 +1093,15 @@ Supported hardware {:-include-:}:
 		    MSI US54SE
 		    Philips SNU5600
 		    Planet WL-U356
+		    Planex GW-US54GD
+		    Planex GW-US54GXS
 		    Planex GW-US54GZL
 		    Planex GW-US54Mini
 		    Safecom SWMULZ-5400
 		    Sagem XG 760A
 		    Sagem XG 76NA
 		    Sandberg Wireless G54 USB
-		    Sitecom  WL-113
+		    Sitecom WL-113
 		    SMC SMCWUSB-G
 		    Sweex wireless USB 54 Mbps
 		    Tekram/Siemens USB adapter
@@ -1008,41 +1113,7 @@ Supported hardware {:-include-:}:
 		    X-Micro XWL-11GUZX
 		    Yakumo QuickWLAN USB
 		    Zonet ZEW2501
-		    Zyxel ZyAIR G-220
-		Raytheon Raylink PCMCIA IEEE 802.11 FH adapters [A] [B] [C]
-		Realtek RTL8180L based CardBus IEEE 802.11b adapters [A] [B]
-		    Belkin F5D6020 V3
-		    Buffalo WLI-CB-B11
-		    Corega CG-WLCB11V3
-		    D-Link DWL-610
-		    Level-One WPC-0101
-		    Linksys WPC11 v4
-		    Netgear MA521
-		    Ovislink AirLive WL-1120PCM
-		    Planet WL-3553
-		    TRENDnet TEW-226PC
-		    VCTnet PC-11B1
-		Texas Instruments ACX100/ACX111 CardBus IEEE 802.11a/b/g
-		  adapters [G]
-		    D-Link DWL-650+
-		    D-Link DWL-G630+
-		    D-Link DWL-G650+
-		    Ergenic ERG WL-003
-		    Hamlet HNWP254
-		    Linksys WPC54Gv2
-		    Microcom Travelcard
-		    Sceptre SC254W+
-		    USR USR5410
-		    Zyxel G-160
-		Texas Instruments ACX100/ACX111 PCI IEEE 802.11a/b/g
-		  adapters [G]
-		    D-Link DWL-520+
-		    D-Link DWL-G520+
-		    Hawking HWP54G
-		    Netgear WG311v2
-		    Tornado/ADT 211g
-		    USR USR5416
-		    Zyxel G-360 EE
+		    ZyXEL ZyAIR G-220
 		
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
