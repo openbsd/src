@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.33 2007/11/25 22:26:55 deraadt Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.34 2008/02/23 22:19:13 deraadt Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -142,6 +142,11 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C550AVR, ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS1,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_BAD_HID }},
+
+ /* SISPM devices */
+ { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_OLD,	    ANY,   { UQ_BAD_HID }},
+ { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM,	    ANY,   { UQ_BAD_HID }},
+ { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_FLASH,	    ANY,   { UQ_BAD_HID }},
  { 0, 0, 0, { 0 } }
 };
 

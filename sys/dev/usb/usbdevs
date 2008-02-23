@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.336 2008/02/22 12:37:59 jsg Exp $
+$OpenBSD: usbdevs,v 1.337 2008/02/23 22:19:13 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1014,6 +1014,9 @@ product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
 product CYPRESS USBRS232	0x5500	RS232
 product CYPRESS HUB2		0x6560	USB2 Hub
+product CYPRESS SISPM_OLD	0xfd10  Sispm - old version
+product CYPRESS SISPM		0xfd11  Sispm
+product CYPRESS SISPM_FLASH	0xfd12  Sispm - flash
 
 /* Daisy Technology products */
 product DAISY DMC		0x6901	PhotoClip
