@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm.h,v 1.1 2007/06/01 02:46:11 uwe Exp $	*/
-/*	$NetBSD: rfcomm.h,v 1.3 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$OpenBSD: rfcomm.h,v 1.2 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.6 2007/11/20 20:25:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.1 2007/06/01 02:46:11 uwe Exp $
+ * $Id: rfcomm.h,v 1.2 2008/02/24 21:34:48 uwe Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -78,6 +78,7 @@
 #define RFCOMM_CREDITS_MAX		255	/* in any single packet */
 #define RFCOMM_CREDITS_DEFAULT		7	/* default initial value */
 
+#define RFCOMM_CHANNEL_ANY		0
 #define RFCOMM_CHANNEL_MIN		1
 #define RFCOMM_CHANNEL_MAX		30
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.10 2008/02/24 21:34:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -53,13 +53,20 @@
 
 struct sbt_softc {
 	struct device sc_dev;		/* base device */
-	struct hci_unit sc_unit;	/* MI host controller */
 	struct sdmmc_function *sc_sf;	/* SDIO function */
-	struct proc *sc_thread;		/* inquiry thread */
+	struct workq *sc_workq;		/* transfer deferred packets */
+	int sc_enabled;			/* HCI enabled */
 	int sc_dying;			/* shutdown in progress */
+	int sc_busy;			/* transmitting or receiving */
 	void *sc_ih;
 	u_char *sc_buf;
 	int sc_rxtry;
+
+	struct hci_unit *sc_unit;	/* MI host controller */
+	struct bt_stats sc_stats;	/* MI bluetooth stats */
+	struct ifqueue sc_cmdq;
+	struct ifqueue sc_acltxq;
+	struct ifqueue sc_scotxq;
 };
 
 int	sbt_match(struct device *, void *, void *);
@@ -71,17 +78,20 @@ int	sbt_read_packet(struct sbt_softc *, u_char *, size_t *);
 
 int	sbt_intr(void *);
 
-int	sbt_enable(struct hci_unit *);
-void	sbt_disable(struct hci_unit *);
-void	sbt_start(struct hci_unit *, struct ifqueue *, int);
-void	sbt_start_cmd(struct hci_unit *);
-void	sbt_start_acl(struct hci_unit *);
-void	sbt_start_sco(struct hci_unit *);
+int	sbt_enable(struct device *);
+void	sbt_disable(struct device *);
+void	sbt_start(struct sbt_softc *, struct mbuf *, struct ifqueue *, int);
+void	sbt_xmit_cmd(struct device *, struct mbuf *);
+void	sbt_xmit_acl(struct device *, struct mbuf *);
+void	sbt_xmit_sco(struct device *, struct mbuf *);
+void	sbt_start_task(void *, void *);
+
+void	sbt_stats(struct device *, struct bt_stats *, int);
 
 #undef DPRINTF
 #define SBT_DEBUG
 #ifdef SBT_DEBUG
-int sbt_debug = 1;
+int sbt_debug = 0;
 #define DPRINTF(s)	printf s
 #define DNPRINTF(n, s)	do { if ((n) <= sbt_debug) printf s; } while (0)
 #else
@@ -112,6 +122,16 @@ static const struct sbt_product {
 	{ SDMMC_VENDOR_SOCKETCOM,
 	  SDMMC_PRODUCT_SOCKETCOM_BTCARD,
 	  SDMMC_CIS_SOCKETCOM_BTCARD }
+};
+
+const struct hci_if sbt_hci = {
+	.enable = sbt_enable,
+	.disable = sbt_disable,
+	.output_cmd = sbt_xmit_cmd,
+	.output_acl = sbt_xmit_acl,
+	.output_sco = sbt_xmit_sco,
+	.get_stats = sbt_stats,
+	.ipl = IPL_SDMMC
 };
 
 int
@@ -155,10 +175,17 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	/* It may be Type-B, but we use it only in Type-A mode. */
 	printf("%s: SDIO Bluetooth Type-A\n", DEVNAME(sc));
 
-	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF,
-	    M_NOWAIT | M_CANFAIL);
+	/* Create a shared buffer for receive and transmit. */
+	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF, M_NOWAIT | M_CANFAIL);
 	if (sc->sc_buf == NULL) {
 		printf("%s: can't allocate cmd buffer\n", DEVNAME(sc));
+		return;
+	}
+
+	/* Create a work thread to transmit deferred packets. */
+	sc->sc_workq = workq_create(DEVNAME(sc), 1);
+	if (sc->sc_workq == NULL) {
+		printf("%s: can't allocate workq\n", DEVNAME(sc));
 		return;
 	}
 
@@ -176,15 +203,7 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Attach Bluetooth unit (machine-independent HCI).
 	 */
-	sc->sc_unit.hci_softc = self;
-	sc->sc_unit.hci_devname = DEVNAME(sc);
-	sc->sc_unit.hci_enable = sbt_enable;
-	sc->sc_unit.hci_disable = sbt_disable;
-	sc->sc_unit.hci_start_cmd = sbt_start_cmd;
-	sc->sc_unit.hci_start_acl = sbt_start_acl;
-	sc->sc_unit.hci_start_sco = sbt_start_sco;
-	sc->sc_unit.hci_ipl = IPL_TTY; /* XXX */
-	hci_attach(&sc->sc_unit);
+	sc->sc_unit = hci_attach(&sbt_hci, &sc->sc_dev, 0);
 }
 
 int
@@ -193,13 +212,24 @@ sbt_detach(struct device *self, int flags)
 	struct sbt_softc *sc = (struct sbt_softc *)self;
 
 	sc->sc_dying = 1;
-	while (sc->sc_thread != NULL)
-		tsleep(sc, PWAIT, "dying", 0);
 
-	hci_detach(&sc->sc_unit);
+	while (sc->sc_busy)
+		tsleep(&sc->sc_busy, PWAIT, "sbtdie", 0);
+
+	/* Detach HCI interface */
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
+	}
 
 	if (sc->sc_ih != NULL)
 		sdmmc_intr_disestablish(sc->sc_ih);
+
+	if (sc->sc_workq != NULL)
+		workq_destroy(sc->sc_workq);
+
+	if (sc->sc_buf != NULL)
+		free(sc->sc_buf, M_DEVBUF);
 
 	return 0;
 }
@@ -302,6 +332,7 @@ out:
  * Interrupt handling
  */
 
+/* This function is called from the SDIO interrupt thread. */
 int
 sbt_intr(void *arg)
 {
@@ -311,6 +342,7 @@ sbt_intr(void *arg)
 	size_t len;
 	int s;
 
+	/* Block further SDIO interrupts; XXX not really needed? */
 	s = splsdmmc();
 
 	status = CSR_READ_1(sc, SBT_REG_ISTAT);
@@ -348,27 +380,27 @@ eoi:
 		case HCI_ACL_DATA_PKT:
 			DNPRINTF(1,("%s: recv ACL packet (%d bytes)\n",
 			    DEVNAME(sc), m->m_pkthdr.len));
-			hci_input_acl(&sc->sc_unit, m);
+			hci_input_acl(sc->sc_unit, m);
 			break;
 		case HCI_SCO_DATA_PKT:
 			DNPRINTF(1,("%s: recv SCO packet (%d bytes)\n",
 			    DEVNAME(sc), m->m_pkthdr.len));
-			hci_input_sco(&sc->sc_unit, m);
+			hci_input_sco(sc->sc_unit, m);
 			break;
 		case HCI_EVENT_PKT:
 			DNPRINTF(1,("%s: recv EVENT packet (%d bytes)\n",
 			    DEVNAME(sc), m->m_pkthdr.len));
-			hci_input_event(&sc->sc_unit, m);
+			hci_input_event(sc->sc_unit, m);
 			break;
 		default:
 			DPRINTF(("%s: recv 0x%x packet (%d bytes)\n",
 			    DEVNAME(sc), sc->sc_buf[0], m->m_pkthdr.len));
-			sc->sc_unit.hci_stats.err_rx++;
+			sc->sc_stats.err_rx++;
 			m_free(m);
 			break;
 		}
 	} else
-		sc->sc_unit.hci_stats.err_rx++;
+		sc->sc_stats.err_rx++;
 
 	splx(s);
 
@@ -382,22 +414,27 @@ eoi:
  */
 
 int
-sbt_enable(struct hci_unit *unit)
+sbt_enable(struct device *self)
 {
-	if (unit->hci_flags & BTF_RUNNING)
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+
+	if (sc->sc_enabled)
 		return 0;
 
-	unit->hci_flags |= BTF_RUNNING;
-	unit->hci_flags &= ~BTF_XMIT;
+	sc->sc_enabled = 1;
 	return 0;
 }
 
 void
-sbt_disable(struct hci_unit *unit)
+sbt_disable(struct device *self)
 {
-	if (!(unit->hci_flags & BTF_RUNNING))
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+	int s;
+
+	if (!sc->sc_enabled)
 		return;
 
+	s = splsdmmc();
 #ifdef notyet			/* XXX */
 	if (sc->sc_rxp) {
 		m_freem(sc->sc_rxp);
@@ -409,22 +446,38 @@ sbt_disable(struct hci_unit *unit)
 		sc->sc_txp = NULL;
 	}
 #endif
-
-	unit->hci_flags &= ~BTF_RUNNING;
+	sc->sc_enabled = 0;
+	splx(s);
 }
 
 void
-sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
+sbt_start(struct sbt_softc *sc, struct mbuf *m, struct ifqueue *q, int xmit)
 {
-	struct sbt_softc *sc = (struct sbt_softc *)unit->hci_softc;
-	struct mbuf *m;
+	int s;
 	int len;
 #ifdef SBT_DEBUG
 	const char *what;
 #endif
 
-	if (sc->sc_dying || IF_IS_EMPTY(q))
+	s = splsdmmc();
+	if (m != NULL)
+		IF_ENQUEUE(q, m);
+
+	if (sc->sc_dying || IF_IS_EMPTY(q)) {
+		splx(s);
 		return;
+	}
+
+	if (curproc == NULL || sc->sc_busy) {
+		(void)workq_add_task(sc->sc_workq, 0, sbt_start_task,
+		    sc, (void *)xmit);
+		splx(s);
+		return;
+	}
+
+	/* Defer additional transfers and reception of packets. */
+	sdmmc_intr_disable(sc->sc_sf);
+	sc->sc_busy++;
 
 	IF_DEQUEUE(q, m);
 
@@ -444,7 +497,7 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 	    what, m->m_pkthdr.len));
 #endif
 
-	unit->hci_flags |= xmit;
+	sc->sc_unit->hci_flags |= xmit;
 
 	len = m->m_pkthdr.len;
 	m_copydata(m, 0, len, sc->sc_buf);
@@ -453,23 +506,71 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 	if (sbt_write_packet(sc, sc->sc_buf, len))
 		DPRINTF(("%s: sbt_write_packet failed\n", DEVNAME(sc)));
 
-	unit->hci_flags &= ~xmit;
+	sc->sc_unit->hci_flags &= ~xmit;
+
+	sc->sc_busy--;
+	sdmmc_intr_enable(sc->sc_sf);
+
+	if (sc->sc_dying)
+		wakeup(&sc->sc_busy);
+
+	splx(s);
 }
 
 void
-sbt_start_cmd(struct hci_unit *unit)
+sbt_xmit_cmd(struct device *self, struct mbuf *m)
 {
-	sbt_start(unit, &unit->hci_cmdq, BTF_XMIT_CMD);
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+
+	sbt_start(sc, m, &sc->sc_cmdq, BTF_XMIT_CMD);
 }
 
 void
-sbt_start_acl(struct hci_unit *unit)
+sbt_xmit_acl(struct device *self, struct mbuf *m)
 {
-	sbt_start(unit, &unit->hci_acltxq, BTF_XMIT_ACL);
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+
+	sbt_start(sc, m, &sc->sc_acltxq, BTF_XMIT_ACL);
 }
 
 void
-sbt_start_sco(struct hci_unit *unit)
+sbt_xmit_sco(struct device *self, struct mbuf *m)
 {
-	sbt_start(unit, &unit->hci_scotxq, BTF_XMIT_SCO);
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+
+	sbt_start(sc, m, &sc->sc_scotxq, BTF_XMIT_SCO);
+}
+
+void
+sbt_start_task(void *arg1, void *arg2)
+{
+	struct sbt_softc *sc = arg1;
+	int xmit = (int)arg2;
+
+	switch (xmit) {
+	case BTF_XMIT_CMD:
+		sbt_xmit_cmd(&sc->sc_dev, NULL);
+		break;
+	case BTF_XMIT_ACL:
+		sbt_xmit_acl(&sc->sc_dev, NULL);
+		break;
+	case BTF_XMIT_SCO:
+		sbt_xmit_sco(&sc->sc_dev, NULL);
+		break;
+	}
+}
+
+void
+sbt_stats(struct device *self, struct bt_stats *dest, int flush)
+{
+	struct sbt_softc *sc = (struct sbt_softc *)self;
+	int s;
+
+	s = splsdmmc();
+	memcpy(dest, &sc->sc_stats, sizeof(struct bt_stats));
+
+	if (flush)
+		memset(&sc->sc_stats, 0, sizeof(struct bt_stats));
+
+	splx(s);
 }

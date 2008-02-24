@@ -1,5 +1,5 @@
-/*	$OpenBSD: bluetooth.h,v 1.4 2007/05/30 03:42:53 uwe Exp $	*/
-/*	$NetBSD: bluetooth.h,v 1.5 2007/04/21 06:15:22 plunky Exp $	*/
+/*	$OpenBSD: bluetooth.h,v 1.5 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.6 2007/09/17 01:23:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -138,9 +138,9 @@ extern int bluetooth_debug;
 # define UNKNOWN(value)			\
 		printf("%s: %s = %d unknown!\n", __func__, #value, (value));
 #else
-# define DPRINTF(...)
-# define DPRINTFN(...)
-# define UNKNOWN(x)
+# define DPRINTF(...) ((void)0)
+# define DPRINTFN(...) ((void)0)
+# define UNKNOWN(x) ((void)0)
 #endif	/* BLUETOOTH_DEBUG */
 
 #endif	/* _KERNEL */

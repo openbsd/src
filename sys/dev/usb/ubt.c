@@ -1,4 +1,5 @@
-/* $OpenBSD: ubt.c,v 1.10 2007/11/09 18:05:51 miod Exp $ */
+/*	$OpenBSD: ubt.c,v 1.11 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: ubt.c,v 1.30 2007/12/16 19:01:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -73,8 +74,6 @@
  * reference.
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -100,6 +99,7 @@
 #undef DPRINTF
 #undef DPRINTFN
 
+#define UBT_DEBUG 0
 #ifdef UBT_DEBUG
 int	ubt_debug = UBT_DEBUG;
 
@@ -162,6 +162,7 @@ struct ubt_softc {
 	usbd_device_handle	 sc_udev;
 	int			 sc_refcnt;
 	int			 sc_dying;
+	int			 sc_enabled;
 
 	/* Control Interface */
 	usbd_interface_handle	 sc_iface0;
@@ -169,6 +170,8 @@ struct ubt_softc {
 	/* Commands (control) */
 	usbd_xfer_handle	 sc_cmd_xfer;
 	uint8_t			*sc_cmd_buf;
+	int			 sc_cmd_busy;	/* write active */
+	struct ifqueue		 sc_cmd_queue;	/* output queue */
 
 	/* Events (interrupt) */
 	int			 sc_evt_addr;	/* endpoint address */
@@ -187,6 +190,8 @@ struct ubt_softc {
 	usbd_pipe_handle	 sc_aclwr_pipe;	/* write pipe */
 	usbd_xfer_handle	 sc_aclwr_xfer;	/* write xfer */
 	uint8_t			*sc_aclwr_buf;	/* write buffer */
+	int			 sc_aclwr_busy;	/* write active */
+	struct ifqueue		 sc_aclwr_queue;/* output queue */
 
 	/* ISOC interface */
 	usbd_interface_handle	 sc_iface1;	/* ISOC interface */
@@ -207,9 +212,12 @@ struct ubt_softc {
 	int			 sc_scowr_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scowr[UBT_NXFERS];
 	struct mbuf		*sc_scowr_mbuf;	/* current packet */
+	int			 sc_scowr_busy;	/* write active */
+	struct ifqueue		 sc_scowr_queue;/* output queue */
 
 	/* Protocol structure */
-	struct hci_unit		 sc_unit;
+	struct hci_unit		*sc_unit;
+	struct bt_stats		 sc_stats;
 
 	/* Successfully attached */
 	int			 sc_ok;
@@ -218,18 +226,21 @@ struct ubt_softc {
 /*
  * Bluetooth unit/USB callback routines
  */
-int ubt_enable(struct hci_unit *);
-void ubt_disable(struct hci_unit *);
+int ubt_enable(struct device *);
+void ubt_disable(struct device *);
 
-void ubt_xmit_cmd_start(struct hci_unit *);
+void ubt_xmit_cmd(struct device *, struct mbuf *);
+void ubt_xmit_cmd_start(struct ubt_softc *);
 void ubt_xmit_cmd_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
 
-void ubt_xmit_acl_start(struct hci_unit *);
+void ubt_xmit_acl(struct device *, struct mbuf *);
+void ubt_xmit_acl_start(struct ubt_softc *);
 void ubt_xmit_acl_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
 
-void ubt_xmit_sco_start(struct hci_unit *);
+void ubt_xmit_sco(struct device *, struct mbuf *);
+void ubt_xmit_sco_start(struct ubt_softc *);
 void ubt_xmit_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
 void ubt_xmit_sco_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
@@ -244,6 +255,8 @@ void ubt_recv_acl_complete(usbd_xfer_handle,
 void ubt_recv_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
 void ubt_recv_sco_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
+
+void ubt_stats(struct device *, struct bt_stats *, int);
 
 int ubt_match(struct device *, void *, void *); 
 void ubt_attach(struct device *, struct device *, void *); 
@@ -262,6 +275,16 @@ const struct cfattach ubt_ca = {
 	ubt_activate, 
 };
 
+const struct hci_if ubt_hci = {
+	.enable = ubt_enable,
+	.disable = ubt_disable,
+	.output_cmd = ubt_xmit_cmd,
+	.output_acl = ubt_xmit_acl,
+	.output_sco = ubt_xmit_sco,
+	.get_stats = ubt_stats,
+	.ipl = IPL_USB,		/* IPL_SOFTUSB ??? */
+};
+
 static int ubt_set_isoc_config(struct ubt_softc *);
 static void ubt_abortdealloc(struct ubt_softc *);
 
@@ -274,7 +297,6 @@ static void ubt_abortdealloc(struct ubt_softc *);
  * to the ubt_ignore list.
  */
 static const struct usb_devno ubt_ignore[] = {
-	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033 },
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
 	{ 0, 0 }	/* end of list */
 };
@@ -282,7 +304,6 @@ static const struct usb_devno ubt_ignore[] = {
 int
 ubt_match(struct device *parent, void *match, void *aux)
 {
-
 	struct usb_attach_arg *uaa = aux;
 	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
 
@@ -313,6 +334,12 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(50, "ubt_attach: sc=%p\n", sc);
 
 	sc->sc_udev = uaa->device;
+
+#ifndef __OpenBSD__		/* ??? */
+	MBUFQ_INIT(&sc->sc_cmd_queue);
+	MBUFQ_INIT(&sc->sc_aclwr_queue);
+	MBUFQ_INIT(&sc->sc_scowr_queue);
+#endif
 
 	/*
 	 * Move the device into the configured state
@@ -424,22 +451,12 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach HCI */
-	sc->sc_unit.hci_softc = self;
-	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
-	sc->sc_unit.hci_enable = ubt_enable;
-	sc->sc_unit.hci_disable = ubt_disable;
-	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
-	sc->sc_unit.hci_start_acl = ubt_xmit_acl_start;
-	sc->sc_unit.hci_start_sco = ubt_xmit_sco_start;
-	sc->sc_unit.hci_ipl = IPL_USB; /* XXX: IPL_SOFTUSB ?? */
-	hci_attach(&sc->sc_unit);
+	sc->sc_unit = hci_attach(&ubt_hci, &sc->sc_dev, 0);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   &sc->sc_dev);
 
 	sc->sc_ok = 1;
-
-	return;
 }
 
 int
@@ -456,7 +473,10 @@ ubt_detach(struct device *self, int flags)
 		return 0;
 
 	/* Detach HCI interface */
-	hci_detach(&sc->sc_unit);
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
+	}
 
 	/*
 	 * Abort all pipes. Causes processes waiting for transfer to wake.
@@ -488,17 +508,21 @@ ubt_activate(struct device *self, enum devact act)
 	struct ubt_softc *sc = (struct ubt_softc *)self;
 	int error = 0;
 
-	DPRINTFN(1, "ubt_activate: sc=%p, act=%d\n", sc, act);
+	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;
+
+	default:
+		error = EOPNOTSUPP;
+		break;
 	}
+
 	return error;
 }
 
@@ -691,6 +715,11 @@ ubt_abortdealloc(struct ubt_softc *sc)
 		m_freem(sc->sc_scowr_mbuf);
 		sc->sc_scowr_mbuf = NULL;
 	}
+
+	/* Empty mbuf queues */
+	IF_PURGE(&sc->sc_cmd_queue);
+	IF_PURGE(&sc->sc_aclwr_queue);
+	IF_PURGE(&sc->sc_scowr_queue);
 }
 
 /*******************************************************************************
@@ -700,16 +729,18 @@ ubt_abortdealloc(struct ubt_softc *sc)
  * All of this will be called at the IPL_ we specified above
  */
 int
-ubt_enable(struct hci_unit *unit)
+ubt_enable(struct device *self)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = (struct ubt_softc *)self;
 	usbd_status err;
-	int i, error;
+	int s, i, error;
 
 	DPRINTFN(1, "sc=%p\n", sc);
 
-	if (unit->hci_flags & BTF_RUNNING)
+	if (sc->sc_enabled)
 		return 0;
+
+	s = splusb();
 
 	/* Events */
 	sc->sc_evt_buf = malloc(UBT_BUFSIZ_EVENT, M_USBDEV, M_NOWAIT);
@@ -742,6 +773,7 @@ ubt_enable(struct hci_unit *unit)
 		error = ENOMEM;
 		goto bad;
 	}
+	sc->sc_cmd_busy = 0;
 
 	/* ACL read */
 	err = usbd_open_pipe(sc->sc_iface0, sc->sc_aclrd_addr,
@@ -780,6 +812,7 @@ ubt_enable(struct hci_unit *unit)
 		error = ENOMEM;
 		goto bad;
 	}
+	sc->sc_aclwr_busy = 0;
 
 	/* SCO read */
 	if (sc->sc_scord_size > 0) {
@@ -832,36 +865,58 @@ ubt_enable(struct hci_unit *unit)
 			sc->sc_scowr[i].softc = sc;
 			sc->sc_scowr[i].busy = 0;
 		}
+
+		sc->sc_scowr_busy = 0;
 	}
 
-	unit->hci_flags &= ~BTF_XMIT;
-	unit->hci_flags |= BTF_RUNNING;
+	sc->sc_enabled = 1;
+	splx(s);
 	return 0;
 
 bad:
 	ubt_abortdealloc(sc);
+	splx(s);
 	return error;
 }
 
 void
-ubt_disable(struct hci_unit *unit)
+ubt_disable(struct device *self)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = (struct ubt_softc *)self;
+	int s;
 
 	DPRINTFN(1, "sc=%p\n", sc);
 
-	if ((unit->hci_flags & BTF_RUNNING) == 0)
+	if (sc->sc_enabled == 0)
 		return;
 
+	s = splusb();
 	ubt_abortdealloc(sc);
 
-	unit->hci_flags &= ~BTF_RUNNING;
+	sc->sc_enabled = 0;
+	splx(s);
 }
 
 void
-ubt_xmit_cmd_start(struct hci_unit *unit)
+ubt_xmit_cmd(struct device *self, struct mbuf *m)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = (struct ubt_softc *)self;
+	int s;
+
+	KASSERT(sc->sc_enabled);
+
+	s = splusb();
+	IF_ENQUEUE(&sc->sc_cmd_queue, m);
+
+	if (sc->sc_cmd_busy == 0)
+		ubt_xmit_cmd_start(sc);
+
+	splx(s);
+}
+
+void
+ubt_xmit_cmd_start(struct ubt_softc *sc)
+{
 	usb_device_request_t req;
 	usbd_status status;
 	struct mbuf *m;
@@ -870,16 +925,17 @@ ubt_xmit_cmd_start(struct hci_unit *unit)
 	if (sc->sc_dying)
 		return;
 
-	if (IF_IS_EMPTY(&unit->hci_cmdq))
+	if (IF_IS_EMPTY(&sc->sc_cmd_queue))
 		return;
 
-	IF_DEQUEUE(&unit->hci_cmdq, m);
+	IF_DEQUEUE(&sc->sc_cmd_queue, m);
+	KASSERT(m != NULL);
 
 	DPRINTFN(15, "%s: xmit CMD packet (%d bytes)\n",
-			unit->hci_devname, m->m_pkthdr.len);
+	    &sc->sc_dev, m->m_pkthdr.len);
 
 	sc->sc_refcnt++;
-	unit->hci_flags |= BTF_XMIT_CMD;
+	sc->sc_cmd_busy = 1;
 
 	len = m->m_pkthdr.len - 1;
 	m_copydata(m, 1, len, sc->sc_cmd_buf);
@@ -891,7 +947,7 @@ ubt_xmit_cmd_start(struct hci_unit *unit)
 
 	usbd_setup_default_xfer(sc->sc_cmd_xfer,
 				sc->sc_udev,
-				unit,
+				sc,
 				UBT_CMD_TIMEOUT,
 				&req,
 				sc->sc_cmd_buf,
@@ -908,7 +964,7 @@ ubt_xmit_cmd_start(struct hci_unit *unit)
 			usbd_errstr(status), status);
 
 		sc->sc_refcnt--;
-		unit->hci_flags &= ~BTF_XMIT_CMD;
+		sc->sc_cmd_busy = 0;
 	}
 }
 
@@ -916,14 +972,13 @@ void
 ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 			usbd_private_handle h, usbd_status status)
 {
-	struct hci_unit *unit = h;
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = h;
 	uint32_t count;
 
 	DPRINTFN(15, "%s: CMD complete status=%s (%d)\n",
-			unit->hci_devname, usbd_errstr(status), status);
+	    sc->sc_dev.dv_xname, usbd_errstr(status), status);
 
-	unit->hci_flags &= ~BTF_XMIT_CMD;
+	sc->sc_cmd_busy = 0;
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("sc_refcnt=%d\n", sc->sc_refcnt);
@@ -940,21 +995,37 @@ ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 		DPRINTF("status=%s (%d)\n",
 			usbd_errstr(status), status);
 
-		unit->hci_stats.err_tx++;
+		sc->sc_stats.err_tx++;
 		return;
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-	unit->hci_stats.cmd_tx++;
-	unit->hci_stats.byte_tx += count;
+	sc->sc_stats.cmd_tx++;
+	sc->sc_stats.byte_tx += count;
 
-	ubt_xmit_cmd_start(unit);
+	ubt_xmit_cmd_start(sc);
 }
 
 void
-ubt_xmit_acl_start(struct hci_unit *unit)
+ubt_xmit_acl(struct device *self, struct mbuf *m)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = (struct ubt_softc *)self;
+	int s;
+
+	KASSERT(sc->sc_enabled);
+
+	s = splusb();
+	IF_ENQUEUE(&sc->sc_aclwr_queue, m);
+
+	if (sc->sc_aclwr_busy == 0)
+		ubt_xmit_acl_start(sc);
+
+	splx(s);
+}
+
+void
+ubt_xmit_acl_start(struct ubt_softc *sc)
+{
 	struct mbuf *m;
 	usbd_status status;
 	int len;
@@ -962,21 +1033,22 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 	if (sc->sc_dying)
 		return;
 
-	if (IF_IS_EMPTY(&unit->hci_acltxq))
+	if (IF_IS_EMPTY(&sc->sc_aclwr_queue))
 		return;
 
 	sc->sc_refcnt++;
-	unit->hci_flags |= BTF_XMIT_ACL;
+	sc->sc_aclwr_busy = 1;
 
-	IF_DEQUEUE(&unit->hci_acltxq, m);
+	IF_DEQUEUE(&sc->sc_aclwr_queue, m);
+	KASSERT(m != NULL);
 
 	DPRINTFN(15, "%s: xmit ACL packet (%d bytes)\n",
-			unit->hci_devname, m->m_pkthdr.len);
+	    sc->sc_dev.dv_xname, m->m_pkthdr.len);
 
 	len = m->m_pkthdr.len - 1;
 	if (len > UBT_BUFSIZ_ACL) {
 		DPRINTF("%s: truncating ACL packet (%d => %d)!\n",
-			unit->hci_devname, len, UBT_BUFSIZ_ACL);
+		    sc->sc_dev.dv_xname, len, UBT_BUFSIZ_ACL);
 
 		len = UBT_BUFSIZ_ACL;
 	}
@@ -984,12 +1056,12 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 	m_copydata(m, 1, len, sc->sc_aclwr_buf);
 	m_freem(m);
 
-	unit->hci_stats.acl_tx++;
-	unit->hci_stats.byte_tx += len;
+	sc->sc_stats.acl_tx++;
+	sc->sc_stats.byte_tx += len;
 
 	usbd_setup_xfer(sc->sc_aclwr_xfer,
 			sc->sc_aclwr_pipe,
-			unit,
+			sc,
 			sc->sc_aclwr_buf,
 			len,
 			USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
@@ -1005,7 +1077,7 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 			usbd_errstr(status), status);
 
 		sc->sc_refcnt--;
-		unit->hci_flags &= ~BTF_XMIT_ACL;
+		sc->sc_aclwr_busy = 0;
 	}
 }
 
@@ -1013,13 +1085,12 @@ void
 ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
-	struct hci_unit *unit = h;
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = h;
 
 	DPRINTFN(15, "%s: ACL complete status=%s (%d)\n",
-		unit->hci_devname, usbd_errstr(status), status);
+	    sc->sc_dev.dv_xname, usbd_errstr(status), status);
 
-	unit->hci_flags &= ~BTF_XMIT_ACL;
+	sc->sc_aclwr_busy = 0;
 
 	if (--sc->sc_refcnt < 0) {
 		usb_detach_wakeup(&sc->sc_dev);
@@ -1033,7 +1104,7 @@ ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 		DPRINTF("status=%s (%d)\n",
 			usbd_errstr(status), status);
 
-		unit->hci_stats.err_tx++;
+		sc->sc_stats.err_tx++;
 
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_aclwr_pipe);
@@ -1041,13 +1112,29 @@ ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 			return;
 	}
 
-	ubt_xmit_acl_start(unit);
+	ubt_xmit_acl_start(sc);
 }
 
 void
-ubt_xmit_sco_start(struct hci_unit *unit)
+ubt_xmit_sco(struct device *self, struct mbuf *m)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)unit->hci_softc;
+	struct ubt_softc *sc = (struct ubt_softc *)self;
+	int s;
+
+	KASSERT(sc->sc_enabled);
+
+	s = splusb();
+	IF_ENQUEUE(&sc->sc_scowr_queue, m);
+
+	if (sc->sc_scowr_busy == 0)
+		ubt_xmit_sco_start(sc);
+
+	splx(s);
+}
+
+void
+ubt_xmit_sco_start(struct ubt_softc *sc)
+{
 	int i;
 
 	if (sc->sc_dying || sc->sc_scowr_size == 0)
@@ -1084,7 +1171,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 	m = sc->sc_scowr_mbuf;
 	while (space > 0) {
 		if (m == NULL) {
-			IF_DEQUEUE(&sc->sc_unit.hci_scotxq, m);
+			IF_DEQUEUE(&sc->sc_scowr_queue, m);
 			if (m == NULL)
 				break;
 
@@ -1103,8 +1190,10 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 		}
 
 		if (m->m_pkthdr.len == 0) {
-			sc->sc_unit.hci_stats.sco_tx++;
-			hci_complete_sco(&sc->sc_unit, m);
+			sc->sc_stats.sco_tx++;
+			if (!hci_complete_sco(sc->sc_unit, m))
+				sc->sc_stats.err_tx++;
+
 			m = NULL;
 		}
 	}
@@ -1116,8 +1205,8 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 		return;
 
 	sc->sc_refcnt++;
-	sc->sc_unit.hci_flags |= BTF_XMIT_SCO;
-	sc->sc_unit.hci_stats.byte_tx += len;
+	sc->sc_scowr_busy = 1;
+	sc->sc_stats.byte_tx += len;
 	isoc->busy = 1;
 
 	/*
@@ -1160,7 +1249,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 
 	for (i = 0 ; ; i++) {
 		if (i == UBT_NXFERS) {
-			sc->sc_unit.hci_flags &= ~BTF_XMIT_SCO;
+			sc->sc_scowr_busy = 0;
 			break;
 		}
 
@@ -1180,7 +1269,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 		DPRINTF("status=%s (%d)\n",
 			usbd_errstr(status), status);
 
-		sc->sc_unit.hci_stats.err_tx++;
+		sc->sc_stats.err_tx++;
 
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_scowr_pipe);
@@ -1188,7 +1277,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 			return;
 	}
 
-	ubt_xmit_sco_start(&sc->sc_unit);
+	ubt_xmit_sco_start(sc);
 }
 
 /*
@@ -1236,18 +1325,16 @@ ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
 
 	if (count < sizeof(hci_event_hdr_t) - 1) {
 		DPRINTF("dumped undersized event (count = %d)\n", count);
-		sc->sc_unit.hci_stats.err_rx++;
+		sc->sc_stats.err_rx++;
 		return;
 	}
 
-	sc->sc_unit.hci_stats.evt_rx++;
-	sc->sc_unit.hci_stats.byte_rx += count;
+	sc->sc_stats.evt_rx++;
+	sc->sc_stats.byte_rx += count;
 
 	m = ubt_mbufload(buf, count, HCI_EVENT_PKT);
-	if (m != NULL)
-		hci_input_event(&sc->sc_unit, m);
-	else
-		sc->sc_unit.hci_stats.err_rx++;
+	if (m == NULL || !hci_input_event(sc->sc_unit, m))
+		sc->sc_stats.err_rx++;
 }
 
 void
@@ -1319,7 +1406,7 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 		DPRINTF("status=%s (%d)\n",
 			usbd_errstr(status), status);
 
-		sc->sc_unit.hci_stats.err_rx++;
+		sc->sc_stats.err_rx++;
 
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_aclrd_pipe);
@@ -1330,16 +1417,14 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 
 		if (count < sizeof(hci_acldata_hdr_t) - 1) {
 			DPRINTF("dumped undersized packet (%d)\n", count);
-			sc->sc_unit.hci_stats.err_rx++;
+			sc->sc_stats.err_rx++;
 		} else {
-			sc->sc_unit.hci_stats.acl_rx++;
-			sc->sc_unit.hci_stats.byte_rx += count;
+			sc->sc_stats.acl_rx++;
+			sc->sc_stats.byte_rx += count;
 
 			m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
-			if (m != NULL)
-				hci_input_acl(&sc->sc_unit, m);
-			else
-				sc->sc_unit.hci_stats.err_rx++;
+			if (m == NULL || !hci_input_acl(sc->sc_unit, m))
+				sc->sc_stats.err_rx++;
 		}
 	}
 
@@ -1412,7 +1497,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 		DPRINTF("status=%s (%d)\n",
 			usbd_errstr(status), status);
 
-		sc->sc_unit.hci_stats.err_rx++;
+		sc->sc_stats.err_rx++;
 
 		if (status == USBD_STALLED) {
 			usbd_clear_endpoint_stall_async(sc->sc_scord_pipe);
@@ -1429,7 +1514,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 	DPRINTFN(15, "sc=%p, isoc=%p, count=%u\n",
 			sc, isoc, count);
 
-	sc->sc_unit.hci_stats.byte_rx += count;
+	sc->sc_stats.byte_rx += count;
 
 	/*
 	 * Extract SCO packets from ISOC frames. The way we have it,
@@ -1466,7 +1551,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 					printf("%s: out of memory (xfer halted)\n",
 						sc->sc_dev.dv_xname);
 
-					sc->sc_unit.hci_stats.err_rx++;
+					sc->sc_stats.err_rx++;
 					return;		/* lost sync */
 				}
 
@@ -1499,8 +1584,10 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 
 				if (got == want) {
 					m->m_pkthdr.len = m->m_len = got;
-					sc->sc_unit.hci_stats.sco_rx++;
-					hci_input_sco(&sc->sc_unit, m);
+					sc->sc_stats.sco_rx++;
+					if (!hci_input_sco(sc->sc_unit, m))
+						sc->sc_stats.err_rx++;
+						
 					m = NULL;
 				}
 			}
@@ -1516,4 +1603,19 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 
 restart: /* and restart */
 	ubt_recv_sco_start1(sc, isoc);
+}
+
+void
+ubt_stats(struct device *self, struct bt_stats *dest, int flush)
+{
+	struct ubt_softc *sc = (struct ubt_softc *)self;
+	int s;
+
+	s = splusb();
+	memcpy(dest, &sc->sc_stats, sizeof(struct bt_stats));
+
+	if (flush)
+		memset(&sc->sc_stats, 0, sizeof(struct bt_stats));
+
+	splx(s);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
-/*	$NetBSD: l2cap_misc.c,v 1.3 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.3 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -30,8 +30,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,10 +85,11 @@ l2cap_setmode(struct l2cap_channel *chan)
 	KASSERT(chan != NULL);
 	KASSERT(chan->lc_link != NULL);
 
-	DPRINTF("CID #%d, auth %s, encrypt %s, secure %s\n", chan->lc_lcid,
-		(chan->lc_mode & L2CAP_LM_AUTH ? "yes" : "no"),
-		(chan->lc_mode & L2CAP_LM_ENCRYPT ? "yes" : "no"),
-		(chan->lc_mode & L2CAP_LM_SECURE ? "yes" : "no"));
+	DPRINTF("(%s) CID #%d, auth %s, encrypt %s, secure %s\n",
+	    device_xname(chan->lc_link->hl_unit->hci_dev), chan->lc_lcid,
+	    (chan->lc_mode & L2CAP_LM_AUTH ? "yes" : "no"),
+	    (chan->lc_mode & L2CAP_LM_ENCRYPT ? "yes" : "no"),
+	    (chan->lc_mode & L2CAP_LM_SECURE ? "yes" : "no"));
 
 	if (chan->lc_mode & L2CAP_LM_AUTH)
 		chan->lc_link->hl_flags |= HCI_LINK_AUTH_REQ;

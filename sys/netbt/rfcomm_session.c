@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_session.c,v 1.2 2007/09/17 01:33:33 krw Exp $	*/
-/*	$NetBSD: rfcomm_session.c,v 1.9 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_session.c,v 1.3 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.12 2008/01/31 19:30:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -31,8 +31,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/kernel.h>

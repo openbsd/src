@@ -1,5 +1,5 @@
-/*	$OpenBSD: l2cap_signal.c,v 1.2 2007/07/22 21:05:00 gwk Exp $	*/
-/*	$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $	*/
+/*	$OpenBSD: l2cap_signal.c,v 1.3 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.9 2007/11/10 23:12:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -30,8 +30,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +81,7 @@ l2cap_recv_signal(struct mbuf *m, struct hci_link *link)
 			goto reject;
 
 		DPRINTFN(2, "(%s) code %d, ident %d, len %d\n",
-			link->hl_unit->hci_devname,
+			device_xname(link->hl_unit->hci_dev),
 			cmd.code, cmd.ident, cmd.length);
 
 		switch (cmd.code) {
@@ -405,7 +403,7 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 }
 
 /*
- * Process Received Config Reqest.
+ * Process Received Config Request.
  */
 static void
 l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
@@ -527,13 +525,13 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			if (opt.type & L2CAP_OPT_HINT_BIT)
 				break;
 
-			/* unknown options supercede all else */
+			/* unknown options supersede all else */
 			if (rp.result != L2CAP_UNKNOWN_OPTION) {
 				rp.result = L2CAP_UNKNOWN_OPTION;
 				len = sizeof(rp);
 			}
 
-			/* ignore if it don't fit */
+			/* ignore if it doesn't fit */
 			if (len + sizeof(opt) > sizeof(buf))
 				break;
 
@@ -902,7 +900,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 
 	if (sizeof(l2cap_cmd_hdr_t) + length > link->hl_mtu)
 		printf("(%s) exceeding L2CAP Signal MTU for link!\n",
-			link->hl_unit->hci_devname);
+		    device_xname(link->hl_unit->hci_dev));
 #endif
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -938,7 +936,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 	m->m_len = MIN(length, MHLEN);
 
 	DPRINTFN(2, "(%s) code %d, ident %d, len %d\n",
-		link->hl_unit->hci_devname, code, ident, length);
+		device_xname(link->hl_unit->hci_dev), code, ident, length);
 
 	return hci_acl_send(m, link, NULL);
 }

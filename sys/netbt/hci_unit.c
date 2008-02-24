@@ -1,5 +1,5 @@
-/*	$OpenBSD: hci_unit.c,v 1.7 2007/06/24 20:55:27 uwe Exp $	*/
-/*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.8 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.9 2007/12/30 18:26:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,8 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -56,55 +54,95 @@ struct hci_unit_list hci_unit_list = TAILQ_HEAD_INITIALIZER(hci_unit_list);
 int hci_eventq_max = 20;
 int hci_aclrxq_max = 50;
 int hci_scorxq_max = 50;
+int hci_cmdwait_max = 50;
+int hci_scodone_max = 50;
+
+/*
+ * This is the default minimum command set supported by older
+ * devices. Anything conforming to 1.2 spec or later will get
+ * updated during init.
+ */
+static const uint8_t hci_cmds_v10[HCI_COMMANDS_SIZE] = {
+	0xff, 0xff, 0xff, 0x01, 0xfe, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0x7f, 0x32, 0x03, 0xb8, 0xfe,
+	0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
 /*
  * bluetooth unit functions
  */
 
-void
-hci_attach(struct hci_unit *unit)
+struct hci_unit *
+hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 {
-	KASSERT(unit->hci_softc != NULL);
-	KASSERT(unit->hci_devname != NULL);
-	KASSERT(unit->hci_enable != NULL);
-	KASSERT(unit->hci_disable != NULL);
-	KASSERT(unit->hci_start_cmd != NULL);
-	KASSERT(unit->hci_start_acl != NULL);
-	KASSERT(unit->hci_start_sco != NULL);
+	struct hci_unit *unit;
+	int s;
+
+	KASSERT(dev != NULL);
+	KASSERT(hci_if->enable != NULL);
+	KASSERT(hci_if->disable != NULL);
+	KASSERT(hci_if->output_cmd != NULL);
+	KASSERT(hci_if->output_acl != NULL);
+	KASSERT(hci_if->output_sco != NULL);
+	KASSERT(hci_if->get_stats != NULL);
+
+	unit = malloc(sizeof(struct hci_unit), M_BLUETOOTH, M_ZERO | M_WAITOK);
+	KASSERT(unit != NULL);
+
+	unit->hci_dev = dev;
+	unit->hci_if = hci_if;
+	unit->hci_flags = flags;
+
+	mtx_init(&unit->hci_devlock, hci_if->ipl);
 
 	unit->hci_eventq.ifq_maxlen = hci_eventq_max;
 	unit->hci_aclrxq.ifq_maxlen = hci_aclrxq_max;
 	unit->hci_scorxq.ifq_maxlen = hci_scorxq_max;
+	unit->hci_cmdwait.ifq_maxlen = hci_cmdwait_max;
+	unit->hci_scodone.ifq_maxlen = hci_scodone_max;
 
 	TAILQ_INIT(&unit->hci_links);
 	LIST_INIT(&unit->hci_memos);
 
+	s = splsoftnet();
 	TAILQ_INSERT_TAIL(&hci_unit_list, unit, hci_next);
+	splx(s);
+
+	return unit;
 }
 
 void
 hci_detach(struct hci_unit *unit)
 {
+	int s;
+
+	s = splsoftnet();
 	hci_disable(unit);
 
 	TAILQ_REMOVE(&hci_unit_list, unit, hci_next);
+	splx(s);
+
+	free(unit, M_BLUETOOTH);
 }
 
 int
 hci_enable(struct hci_unit *unit)
 {
-	int s, err;
+	int err;
 
 	/*
 	 * Bluetooth spec says that a device can accept one
 	 * command on power up until they send a Command Status
 	 * or Command Complete event with more information, but
 	 * it seems that some devices cant and prefer to send a
-	 * No-op Command Status packet when they are ready, so
-	 * we set this here and allow the driver (bt3c) to zero
-	 * it.
+	 * No-op Command Status packet when they are ready.
 	 */
-	unit->hci_num_cmd_pkts = 1;
+	unit->hci_num_cmd_pkts = (unit->hci_flags & BTF_POWER_UP_NOOP) ? 0 : 1;
 	unit->hci_num_acl_pkts = 0;
 	unit->hci_num_sco_pkts = 0;
 
@@ -115,11 +153,19 @@ hci_enable(struct hci_unit *unit)
 	unit->hci_acl_mask = HCI_PKT_DM1 | HCI_PKT_DH1;
 	unit->hci_packet_type = unit->hci_acl_mask;
 
-	s = splraiseipl(unit->hci_ipl);
-	err = (*unit->hci_enable)(unit);
-	splx(s);
+	memcpy(unit->hci_cmds, hci_cmds_v10, HCI_COMMANDS_SIZE);
+
+#ifndef __OpenBSD__
+	unit->hci_rxint = softint_establish(SOFTINT_NET, &hci_intr, unit);
+	if (unit->hci_rxint == NULL)
+		return EIO;
+#endif
+
+	err = (*unit->hci_if->enable)(unit->hci_dev);
 	if (err)
 		goto bad1;
+
+	unit->hci_flags |= BTF_RUNNING;
 
 	/*
 	 * Reset the device, this will trigger initialisation
@@ -145,17 +191,20 @@ hci_enable(struct hci_unit *unit)
 	/*
 	 * Attach Bluetooth Device Hub
 	 */
-	unit->hci_bthub = config_found(unit->hci_softc,
+	unit->hci_bthub = config_found(unit->hci_dev,
 	    &unit->hci_bdaddr, NULL);
 
 	return 0;
 
 bad2:
-	s = splraiseipl(unit->hci_ipl);
-	(*unit->hci_disable)(unit);
-	splx(s);
-
+	(*unit->hci_if->disable)(unit->hci_dev);
+	unit->hci_flags &= ~BTF_RUNNING;
 bad1:
+#ifndef __OpenBSD__
+	softint_disestablish(unit->hci_rxint);
+	unit->hci_rxint = NULL;
+#endif
+
 	return err;
 }
 
@@ -164,16 +213,22 @@ hci_disable(struct hci_unit *unit)
 {
 	struct hci_link *link, *next;
 	struct hci_memo *memo;
-	int s, acl;
+	int acl;
 
 	if (unit->hci_bthub) {
 		config_detach(unit->hci_bthub, DETACH_FORCE);
 		unit->hci_bthub = NULL;
 	}
 
-	s = splraiseipl(unit->hci_ipl);
-	(*unit->hci_disable)(unit);
-	splx(s);
+#ifndef __OpenBSD__
+	if (unit->hci_rxint) {
+		softint_disestablish(unit->hci_rxint);
+		unit->hci_rxint = NULL;
+	}
+#endif
+
+	(*unit->hci_if->disable)(unit->hci_dev);
+	unit->hci_flags &= ~BTF_RUNNING;
 
 	/*
 	 * close down any links, take care to close SCO first since
@@ -191,6 +246,8 @@ hci_disable(struct hci_unit *unit)
 	while ((memo = LIST_FIRST(&unit->hci_memos)) != NULL)
 		hci_memo_free(memo);
 
+	/* (no need to hold hci_devlock, the driver is disabled) */
+
 	IF_PURGE(&unit->hci_eventq);
 	unit->hci_eventqlen = 0;
 
@@ -200,10 +257,7 @@ hci_disable(struct hci_unit *unit)
 	IF_PURGE(&unit->hci_scorxq);
 	unit->hci_scorxqlen = 0;
 
-	IF_PURGE(&unit->hci_cmdq);
 	IF_PURGE(&unit->hci_cmdwait);
-	IF_PURGE(&unit->hci_acltxq);
-	IF_PURGE(&unit->hci_scotxq);
 	IF_PURGE(&unit->hci_scodone);
 }
 
@@ -243,7 +297,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 	p->opcode = htole16(opcode);
 	p->length = len;
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
-	M_SETCTX(m, NULL);
+	M_SETCTX(m, NULL);	/* XXX is this needed? */
 
 	if (len) {
 		KASSERT(buf != NULL);
@@ -255,7 +309,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 		}
 	}
 
-	DPRINTFN(2, "(%s) opcode (%3.3x|%4.4x)\n", unit->hci_devname,
+	DPRINTFN(2, "(%s) opcode (%3.3x|%4.4x)\n", device_xname(unit->hci_dev),
 		HCI_OGF(opcode), HCI_OCF(opcode));
 
 	/* and send it on */
@@ -278,19 +332,19 @@ hci_intr(void *arg)
 {
 	struct hci_unit *unit = arg;
 	struct mbuf *m;
-	int s;
 
 another:
-	s = splraiseipl(unit->hci_ipl);
+	mtx_enter(&unit->hci_devlock);
 
 	if (unit->hci_eventqlen > 0) {
 		IF_DEQUEUE(&unit->hci_eventq, m);
 		unit->hci_eventqlen--;
+		mtx_leave(&unit->hci_devlock);
+
 		KASSERT(m != NULL);
-		splx(s);
 
 		DPRINTFN(10, "(%s) recv event, len = %d\n",
-				unit->hci_devname, m->m_pkthdr.len);
+		    device_xname(unit->hci_dev), m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -302,11 +356,12 @@ another:
 	if (unit->hci_scorxqlen > 0) {
 		IF_DEQUEUE(&unit->hci_scorxq, m);
 		unit->hci_scorxqlen--;
+		mtx_leave(&unit->hci_devlock);
+
 		KASSERT(m != NULL);
-		splx(s);
 
 		DPRINTFN(10, "(%s) recv SCO, len = %d\n",
-				unit->hci_devname, m->m_pkthdr.len);
+		    device_xname(unit->hci_dev), m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -318,11 +373,12 @@ another:
 	if (unit->hci_aclrxqlen > 0) {
 		IF_DEQUEUE(&unit->hci_aclrxq, m);
 		unit->hci_aclrxqlen--;
+		mtx_leave(&unit->hci_devlock);
+
 		KASSERT(m != NULL);
-		splx(s);
 
 		DPRINTFN(10, "(%s) recv ACL, len = %d\n",
-				unit->hci_devname, m->m_pkthdr.len);
+		    device_xname(unit->hci_dev), m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -334,10 +390,11 @@ another:
 	IF_DEQUEUE(&unit->hci_scodone, m);
 	if (m != NULL) {
 		struct hci_link *link;
-		splx(s);
+
+		mtx_leave(&unit->hci_devlock);
 
 		DPRINTFN(11, "(%s) complete SCO\n",
-				unit->hci_devname);
+		    device_xname(unit->hci_dev));
 
 		TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
 			if (link == M_GETCTX(m, struct hci_link *)) {
@@ -352,7 +409,7 @@ another:
 		goto another;
 	}
 
-	splx(s);
+	mtx_leave(&unit->hci_devlock);
 
 	DPRINTFN(10, "done\n");
 }
@@ -361,62 +418,86 @@ another:
  *
  * IO routines
  *
- * input & complete routines will be called from device driver
- * (at unit->hci_ipl)
+ * input & complete routines will be called from device drivers,
+ * possibly in interrupt context. We return success or failure to
+ * enable proper accounting but we own the mbuf.
  */
 
-void
+int
 hci_input_event(struct hci_unit *unit, struct mbuf *m)
 {
+	int rv;
+
+	mtx_enter(&unit->hci_devlock);
+
 	if (unit->hci_eventqlen > hci_eventq_max) {
-		DPRINTF("(%s) dropped event packet.\n", unit->hci_devname);
-		unit->hci_stats.err_rx++;
+		DPRINTF("(%s) dropped event packet.\n", device_xname(unit->hci_dev));
 		m_freem(m);
+		rv = 0;
 	} else {
 		unit->hci_eventqlen++;
 		IF_ENQUEUE(&unit->hci_eventq, m);
 		schednetisr(NETISR_BT);
+		rv = 1;
 	}
+
+	mtx_leave(&unit->hci_devlock);
+	return rv;
 }
 
-void
+int
 hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 {
+	int rv;
+
+	mtx_enter(&unit->hci_devlock);
+
 	if (unit->hci_aclrxqlen > hci_aclrxq_max) {
-		DPRINTF("(%s) dropped ACL packet.\n", unit->hci_devname);
-		unit->hci_stats.err_rx++;
+		DPRINTF("(%s) dropped ACL packet.\n", device_xname(unit->hci_dev));
 		m_freem(m);
+		rv = 0;
 	} else {
 		unit->hci_aclrxqlen++;
 		IF_ENQUEUE(&unit->hci_aclrxq, m);
 		schednetisr(NETISR_BT);
+		rv = 1;
 	}
+
+	mtx_leave(&unit->hci_devlock);
+	return rv;
 }
 
-void
+int
 hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 {
+	int rv;
+
+	mtx_enter(&unit->hci_devlock);
+
 	if (unit->hci_scorxqlen > hci_scorxq_max) {
-		DPRINTF("(%s) dropped SCO packet.\n", unit->hci_devname);
-		unit->hci_stats.err_rx++;
+		DPRINTF("(%s) dropped SCO packet.\n", device_xname(unit->hci_dev));
 		m_freem(m);
+		rv = 0;
 	} else {
 		unit->hci_scorxqlen++;
 		IF_ENQUEUE(&unit->hci_scorxq, m);
 		schednetisr(NETISR_BT);
+		rv = 1;
 	}
+
+	mtx_leave(&unit->hci_devlock);
+	return rv;
 }
 
 void
 hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 {
 	void *arg;
-	int s;
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_cmd_pkts=%d\n", unit->hci_devname,
-					       unit->hci_num_cmd_pkts);
+	DPRINTFN(10, "(%s) num_cmd_pkts=%d\n",
+	    device_xname(unit->hci_dev), unit->hci_num_cmd_pkts);
 
 	unit->hci_num_cmd_pkts--;
 
@@ -428,57 +509,52 @@ hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 	if (arg != NULL)
 		hci_drop(arg);
 
-	s = splraiseipl(unit->hci_ipl);
-	IF_ENQUEUE(&unit->hci_cmdq, m);
-	if ((unit->hci_flags & BTF_XMIT_CMD) == 0)
-		(*unit->hci_start_cmd)(unit);
-
-	splx(s);
+	(*unit->hci_if->output_cmd)(unit->hci_dev, m);
 }
 
 void
 hci_output_acl(struct hci_unit *unit, struct mbuf *m)
 {
-	int s;
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_acl_pkts=%d\n", unit->hci_devname,
-					       unit->hci_num_acl_pkts);
+	DPRINTFN(10, "(%s) num_acl_pkts=%d\n",
+	    device_xname(unit->hci_dev), unit->hci_num_acl_pkts);
 
 	unit->hci_num_acl_pkts--;
-
-	s = splraiseipl(unit->hci_ipl);
-	IF_ENQUEUE(&unit->hci_acltxq, m);
-	if ((unit->hci_flags & BTF_XMIT_ACL) == 0)
-		(*unit->hci_start_acl)(unit);
-
-	splx(s);
+	(*unit->hci_if->output_acl)(unit->hci_dev, m);
 }
 
 void
 hci_output_sco(struct hci_unit *unit, struct mbuf *m)
 {
-	int s;
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_sco_pkts=%d\n", unit->hci_devname,
-					       unit->hci_num_sco_pkts);
+	DPRINTFN(10, "(%s) num_sco_pkts=%d\n",
+	    device_xname(unit->hci_dev), unit->hci_num_sco_pkts);
 
 	unit->hci_num_sco_pkts--;
-
-	s = splraiseipl(unit->hci_ipl);
-	IF_ENQUEUE(&unit->hci_scotxq, m);
-	if ((unit->hci_flags & BTF_XMIT_SCO) == 0)
-		(*unit->hci_start_sco)(unit);
-
-	splx(s);
+	(*unit->hci_if->output_sco)(unit->hci_dev, m);
 }
 
-void
+int
 hci_complete_sco(struct hci_unit *unit, struct mbuf *m)
 {
+
+#ifndef __OpenBSD__
+	if (unit->hci_rxint == NULL) {
+		DPRINTFN(10, "(%s) complete SCO!\n", device_xname(unit->hci_dev));
+		m_freem(m);
+		return 0;
+	}
+#endif
+
+	mtx_enter(&unit->hci_devlock);
+
 	IF_ENQUEUE(&unit->hci_scodone, m);
 	schednetisr(NETISR_BT);
+
+	mtx_leave(&unit->hci_devlock);
+	return 1;
 }

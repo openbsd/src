@@ -1,5 +1,5 @@
-/*	$OpenBSD: hci_ioctl.c,v 1.1 2007/06/01 02:46:11 uwe Exp $	*/
-/*	$NetBSD: hci_ioctl.c,v 1.5 2007/01/04 19:07:03 elad Exp $	*/
+/*	$OpenBSD: hci_ioctl.c,v 1.2 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.7 2007/11/28 20:16:12 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,8 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/ioctl.h>
@@ -63,7 +61,7 @@ hci_dump(void)
 	TAILQ_FOREACH(unit, &hci_unit_list, hci_next) {
 		printf("UNIT %s: flags 0x%4.4x, "
 			"num_cmd=%d, num_acl=%d, num_sco=%d\n",
-			unit->hci_devname, unit->hci_flags,
+			device_xname(unit->hci_dev), unit->hci_flags,
 			unit->hci_num_cmd_pkts,
 			unit->hci_num_acl_pkts,
 			unit->hci_num_sco_pkts);
@@ -135,7 +133,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 {
 	struct btreq *btr = data;
 	struct hci_unit *unit;
-	int s, err = 0;
+	int err = 0;
 
 	DPRINTFN(1, "cmd %#lx\n", cmd);
 
@@ -175,7 +173,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 	case SIOCZBTSTATS:
 	case SIOCSBTSCOMTU:
 		TAILQ_FOREACH(unit, &hci_unit_list, hci_next) {
-			if (strncmp(unit->hci_devname, btr->btr_name,
+			if (strncmp(device_xname(unit->hci_dev), btr->btr_name,
 			    HCI_DEVNAME_SIZE) == 0)
 				break;
 		}
@@ -205,7 +203,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 	case SIOCGBTINFO:	/* get unit info */
 	case SIOCGBTINFOA:	/* get info by address */
 		memset(btr, 0, sizeof(struct btreq));
-		strlcpy(btr->btr_name, unit->hci_devname, HCI_DEVNAME_SIZE);
+		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);
 		bdaddr_copy(&btr->btr_bdaddr, &unit->hci_bdaddr);
 
 		btr->btr_flags = unit->hci_flags;
@@ -231,9 +229,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 			unit->hci_flags &= ~BTF_UP;
 		}
 
-		s = splraiseipl(unit->hci_ipl);
 		unit->hci_flags |= (btr->btr_flags & BTF_INIT);
-		splx(s);
 
 		if ((unit->hci_flags & BTF_UP) == 0
 		    && (btr->btr_flags & BTF_UP)) {
@@ -241,9 +237,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 			if (err)
 				break;
 
-			s = splraiseipl(unit->hci_ipl);
 			unit->hci_flags |= BTF_UP;
-			splx(s);
 		}
 
 		btr->btr_flags = unit->hci_flags;
@@ -270,10 +264,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCGBTSTATS:	/* get unit statistics */
-		s = splraiseipl(unit->hci_ipl);
-		memcpy(&btr->btr_stats, &unit->hci_stats,
-			sizeof(struct bt_stats));
-		splx(s);
+		(*unit->hci_if->get_stats)(unit->hci_dev, &btr->btr_stats, 0);
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
@@ -281,12 +272,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		if (err)
 			break;
 
-		s = splraiseipl(unit->hci_ipl);
-		memcpy(&btr->btr_stats, &unit->hci_stats,
-			sizeof(struct bt_stats));
-		memset(&unit->hci_stats, 0, sizeof(struct bt_stats));
-		splx(s);
-
+		(*unit->hci_if->get_stats)(unit->hci_dev, &btr->btr_stats, 1);
 		break;
 
 	case SIOCSBTSCOMTU:	/* set sco_mtu value for unit */

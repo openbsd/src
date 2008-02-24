@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.3 2007/10/01 16:39:30 krw Exp $	*/
-/*	$NetBSD: rfcomm_upper.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.4 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -31,8 +31,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -302,20 +300,23 @@ rfcomm_detach(struct rfcomm_dlc **handle)
  *
  * This DLC is a listener. We look for an existing listening session
  * with a matching address to attach to or else create a new one on
- * the listeners list.
+ * the listeners list. If the ANY channel is given, allocate the first
+ * available for the session.
  */
 int
 rfcomm_listen(struct rfcomm_dlc *dlc)
 {
-	struct rfcomm_session *rs, *any, *best;
+	struct rfcomm_session *rs;
+	struct rfcomm_dlc *used;
 	struct sockaddr_bt addr;
-	int err;
+	int err, channel;
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
 		return EISCONN;
 
-	if (dlc->rd_laddr.bt_channel < RFCOMM_CHANNEL_MIN
-	    || dlc->rd_laddr.bt_channel > RFCOMM_CHANNEL_MAX)
+	if (dlc->rd_laddr.bt_channel != RFCOMM_CHANNEL_ANY
+	    && (dlc->rd_laddr.bt_channel < RFCOMM_CHANNEL_MIN
+	    || dlc->rd_laddr.bt_channel > RFCOMM_CHANNEL_MAX))
 		return EADDRNOTAVAIL;
 
 	if (dlc->rd_laddr.bt_psm == L2CAP_PSM_ANY)
@@ -325,7 +326,6 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 	    || L2CAP_PSM_INVALID(dlc->rd_laddr.bt_psm)))
 		return EADDRNOTAVAIL;
 
-	any = best = NULL;
 	LIST_FOREACH(rs, &rfcomm_session_listen, rs_next) {
 		l2cap_sockaddr(rs->rs_l2cap, &addr);
 
@@ -333,13 +333,9 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 			continue;
 
 		if (bdaddr_same(&dlc->rd_laddr.bt_bdaddr, &addr.bt_bdaddr))
-			best = rs;
-
-		if (bdaddr_any(&addr.bt_bdaddr))
-			any = rs;
+			break;
 	}
 
-	rs = best ? best : any;
 	if (rs == NULL) {
 		rs = rfcomm_session_alloc(&rfcomm_session_listen,
 						&dlc->rd_laddr);
@@ -353,6 +349,24 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 			rfcomm_session_free(rs);
 			return err;
 		}
+	}
+
+	if (dlc->rd_laddr.bt_channel == RFCOMM_CHANNEL_ANY) {
+		channel = RFCOMM_CHANNEL_MIN;
+		used = LIST_FIRST(&rs->rs_dlcs);
+
+		while (used != NULL) {
+			if (used->rd_laddr.bt_channel == channel) {
+				if (channel++ == RFCOMM_CHANNEL_MAX)
+					return EADDRNOTAVAIL;
+
+				used = LIST_FIRST(&rs->rs_dlcs);
+			} else {
+				used = LIST_NEXT(used, rd_next);
+			}
+		}
+
+		dlc->rd_laddr.bt_channel = channel;
 	}
 
 	dlc->rd_session = rs;
