@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2001/02/24 10:55:02 hugh Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2008/02/24 19:32:27 deraadt Exp $
 
-SUBDIR=	../ramdisk
-REV=	28
+REV=	${OSrev}
 
-.include <bsd.subdir.mk>
+.include <bsd.own.mk>
