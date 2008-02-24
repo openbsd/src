@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.81 2008/02/05 22:57:31 mpf Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.82 2008/02/24 23:31:30 mcbride Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -739,7 +739,7 @@ ip6_check_rh0hdr(struct mbuf *m)
 				return (1);
 			}
 
-			if (off + sizeof(opt6) > lim) {
+			if (off + sizeof(rthdr) > lim) {
 				/* packet to short to make sense */
 				return (1);
 			}
