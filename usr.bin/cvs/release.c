@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.39 2008/02/23 13:07:43 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.40 2008/02/24 11:06:13 xsa Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -123,8 +123,9 @@ cvs_release_local(struct cvs_file *cf)
 		cvs_chdir(cf->file_path, 0);
 
 		if (stat(CVS_PATH_CVSDIR, &st) == -1 || !S_ISDIR(st.st_mode)) {
-			cvs_log(LP_ERR, "no repository directory: %s",
-			    cf->file_path);
+			if (verbosity > 0)
+				cvs_log(LP_ERR, "no repository directory: %s",
+				    cf->file_path);
 			return;
 		}
 	}
