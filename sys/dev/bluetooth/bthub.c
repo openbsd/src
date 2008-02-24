@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthub.c,v 1.3 2007/07/23 14:45:38 mk Exp $	*/
+/*	$OpenBSD: bthub.c,v 1.4 2008/02/24 21:46:19 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -25,14 +25,20 @@
 
 #include <netbt/bluetooth.h>
 
+#include <dev/bluetooth/btdev.h>
+
 struct bthub_softc {
 	struct device sc_dev;
 	int sc_open;
+	bdaddr_t sc_laddr;
+	LIST_HEAD(, btdev) sc_list;
 };
 
 int	bthub_match(struct device *, void *, void *);
 void	bthub_attach(struct device *, struct device *, void *);
 int	bthub_detach(struct device *, int);
+int	bthub_print(void *, const char *);
+int	bthub_devioctl(dev_t, u_long, struct btdev_attach_args *);
 
 struct cfattach bthub_ca = {
 	sizeof(struct bthub_softc), bthub_match, bthub_attach, bthub_detach
@@ -51,10 +57,11 @@ bthub_match(struct device *parent, void *match, void *aux)
 void
 bthub_attach(struct device *parent, struct device *self, void *aux)
 {
-	bdaddr_t *addr = aux;
 	struct bthub_softc *sc = (struct bthub_softc *)self;
+	bdaddr_t *addr = aux;
 
 	sc->sc_open = 0;
+	bdaddr_copy(&sc->sc_laddr, addr);
 
 	printf(" %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    addr->b[5], addr->b[4], addr->b[3],
@@ -64,7 +71,10 @@ bthub_attach(struct device *parent, struct device *self, void *aux)
 int
 bthub_detach(struct device *self, int flags)
 {
+	struct bthub_softc *sc = (struct bthub_softc *)self;
+	struct btdev *btdev;
 	int maj, mn;
+	int err;
 
 	/* Locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -75,7 +85,34 @@ bthub_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 
+	/* Detach all child devices. */
+	while (!LIST_EMPTY(&sc->sc_list)) {
+		btdev = LIST_FIRST(&sc->sc_list);
+		LIST_REMOVE(btdev, sc_next);
+
+		err = config_detach(&btdev->sc_dev, flags);
+		if (err && (flags & DETACH_FORCE) == 0) {
+			LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
+			return err;
+		}
+	}
+
 	return (0);
+}
+
+int
+bthub_print(void *aux, const char *parentname)
+{
+	struct btdev_attach_args *bd = aux;
+	bdaddr_t *raddr = &bd->bd_raddr;
+
+	if (parentname != NULL)
+		return QUIET;
+
+	printf(" %02x:%02x:%02x:%02x:%02x:%02x",
+	    raddr->b[5], raddr->b[4], raddr->b[3], raddr->b[2],
+	    raddr->b[1], raddr->b[0]);
+	return QUIET;
 }
 
 int
@@ -117,6 +154,75 @@ bthubclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 bthubioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (ENOTTY);
+	struct btdev_attach_args *bd;
+	int err;
+
+	switch (cmd) {
+	case BTDEV_ATTACH:
+	case BTDEV_DETACH:
+		bd = (struct btdev_attach_args *)data;
+		err = bthub_devioctl(dev, cmd, bd);
+		break;
+	default:
+		err = ENOTTY;
+	}
+
+	return err;
+}
+
+int
+bthub_devioctl(dev_t dev, u_long cmd, struct btdev_attach_args *bd)
+{
+	struct device *dv;
+	struct bthub_softc *sc;
+	struct btdev *btdev;
+	int unit;
+
+	/* Locate the relevant bthub. */
+	for (unit = 0; unit < bthub_cd.cd_ndevs; unit++) {
+		if ((dv = bthub_cd.cd_devs[unit]) == NULL)
+			continue;
+
+		sc = (struct bthub_softc *)dv;
+		if (bdaddr_same(&sc->sc_laddr, &bd->bd_laddr))
+			break;
+	}
+	if (unit == bthub_cd.cd_ndevs)
+		return (ENXIO);
+
+	/* Locate matching child device, if any. */
+	LIST_FOREACH(btdev, &sc->sc_list, sc_next) {
+		if (!bdaddr_same(&btdev->sc_addr, &bd->bd_raddr))
+			continue;
+		if (btdev->sc_type != bd->bd_type)
+			continue;
+		break;
+	}
+
+	switch (cmd) {
+	case BTDEV_ATTACH:
+		if (btdev != NULL)
+			return EADDRINUSE;
+
+		dv = config_found(&sc->sc_dev, bd, bthub_print);
+		if (dv == NULL)
+			return ENXIO;
+
+		btdev = (struct btdev *)dv;
+		bdaddr_copy(&btdev->sc_addr, &bd->bd_raddr);
+		btdev->sc_type = bd->bd_type;
+		LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
+		break;
+
+	case BTDEV_DETACH:
+		if (btdev == NULL)
+			return ENXIO;
+
+		LIST_REMOVE(btdev, sc_next);
+		config_detach(&btdev->sc_dev, DETACH_FORCE);
+		break;
+	}
+
+	return 0;
 }
 

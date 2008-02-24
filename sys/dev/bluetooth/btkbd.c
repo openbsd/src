@@ -1,5 +1,5 @@
-/*	$OpenBSD: btkbd.c,v 1.2 2007/09/01 17:06:26 xsa Exp $	*/
-/*	$NetBSD: btkbd.c,v 1.7 2007/07/09 21:00:31 ad Exp $	*/
+/*	$OpenBSD: btkbd.c,v 1.3 2008/02/24 21:46:19 uwe Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.9 2007/11/03 18:24:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,6 +107,7 @@ struct btkbd_softc {
 #endif
 };
 
+/* autoconf(9) methods */
 int	btkbd_match(struct device *, void *, void *);
 void	btkbd_attach(struct device *, struct device *, void *);
 int	btkbd_detach(struct device *, int);
@@ -122,6 +123,7 @@ const struct cfattach btkbd_ca = {
 	btkbd_detach,
 };
 
+/* wskbd(4) accessops */
 int	btkbd_enable(void *, int);
 void	btkbd_set_leds(void *, int);
 int	btkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -192,8 +194,7 @@ btkbd_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
-	timeout_set(&sc->sc_repeat, NULL, NULL);
-	/* callout_setfunc(&sc->sc_repeat, btkbd_repeat, sc); */
+	timeout_set(&sc->sc_repeat, btkbd_repeat, sc);
 #endif
 #endif
 
@@ -520,8 +521,6 @@ btkbd_input(struct bthidev *self, uint8_t *data, int len)
 		timeout_del(&sc->sc_repeat);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			timeout_del(&sc->sc_repeat);
-			timeout_set(&sc->sc_repeat, btkbd_repeat, sc);
 			timeout_add(&sc->sc_repeat, hz * REP_DELAY1 / 1000);
 		}
 #endif
@@ -550,8 +549,6 @@ btkbd_repeat(void *arg)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbd, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout_del(&sc->sc_repeat);
-	timeout_set(&sc->sc_repeat, btkbd_repeat, sc);
 	timeout_add(&sc->sc_repeat, hz * REP_DELAYN / 1000);
 }
 #endif

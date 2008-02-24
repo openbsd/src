@@ -1,5 +1,5 @@
-/*	$OpenBSD: btms.c,v 1.2 2007/09/01 17:06:26 xsa Exp $	*/
-/*	$NetBSD: btms.c,v 1.6 2007/03/04 06:01:45 christos Exp $	*/
+/*	$OpenBSD: btms.c,v 1.3 2008/02/24 21:46:19 uwe Exp $	*/
+/*	$NetBSD: btms.c,v 1.7 2007/11/03 17:41:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -81,6 +81,7 @@ struct btms_softc {
 #define BTMS_HASZ		(1 << 1)	/* has Z direction */
 #define BTMS_HASW		(1 << 2)	/* has W direction */
 
+/* autoconf(9) methods */
 int	btms_match(struct device *, void *, void *);
 void	btms_attach(struct device *, struct device *, void *);
 int	btms_detach(struct device *, int);
@@ -97,14 +98,14 @@ const struct cfattach btms_ca = {
 };
 
 /* wsmouse(4) accessops */
-int	btms_enable(void *);
-int	btms_ioctl(void *, u_long, caddr_t, int, struct proc *);
-void	btms_disable(void *);
+int	btms_wsmouse_enable(void *);
+int	btms_wsmouse_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	btms_wsmouse_disable(void *);
 
-const struct wsmouse_accessops btms_accessops = {
-	btms_enable,
-	btms_ioctl,
-	btms_disable,
+const struct wsmouse_accessops btms_wsmouse_accessops = {
+	btms_wsmouse_enable,
+	btms_wsmouse_ioctl,
+	btms_wsmouse_disable,
 };
 
 /* bthid methods */
@@ -167,7 +168,7 @@ btms_attach(struct device *parent, struct device *self, void *aux)
 	zloc = &sc->sc_loc_z;
 	if (hl) {
 		if (NOTMOUSE(flags)) {
-			printf("\n%s: Wheel report 0x%04x not supported\n",
+			printf("\n%s: Wheel report 0x%04x ignored\n",
 			    sc->sc_hidev.sc_dev.dv_xname, flags);
 
 			/* ignore Bad Z coord */
@@ -223,7 +224,7 @@ btms_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_flags & BTMS_HASZ ? " and Z dir" : "",
 	    sc->sc_flags & BTMS_HASW ? "s" : "");
 
-	wsma.accessops = &btms_accessops;
+	wsma.accessops = &btms_wsmouse_accessops;
 	wsma.accesscookie = sc;
 
 	sc->sc_wsmouse = config_found((struct device *)sc,
@@ -245,7 +246,7 @@ btms_detach(struct device *self, int flags)
 }
 
 int
-btms_enable(void *self)
+btms_wsmouse_enable(void *self)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 
@@ -257,7 +258,8 @@ btms_enable(void *self)
 }
 
 int
-btms_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
+btms_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	/* struct btms_softc *sc = (struct btms_softc *)self; */
 
@@ -271,7 +273,7 @@ btms_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 void
-btms_disable(void *self)
+btms_wsmouse_disable(void *self)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 
