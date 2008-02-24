@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: named.8,v 1.9 2007/12/09 20:36:23 jakob Exp $
+.\" $Id: named.8,v 1.10 2008/02/24 10:15:17 mbalmer Exp $
 .\"
 .hy 0
 .ad l
@@ -71,7 +71,7 @@ Run the server in the foreground and force all logging to \fIstderr\fR\&.
 Turn on memory usage debugging flags\&. Possible flags are \fIusage\fR, \fItrace\fR, \fIrecord\fR, \fIsize\fR, and \fImctx\fR\&. These correspond to the ISC_MEM_DEBUGXXXX flags described in \fI<isc/mem\&.h>\fR\&.
 .TP
 \-i \fIpid\-file\fR
-Specifies the file taht contains the process ID of \fBnamed\fR\&. The default is \fI/var/run/named\&.pid\fR\&.
+Specifies the file that contains the process ID of \fBnamed\fR\&. The default is \fI/var/run/named\&.pid\fR\&.
 .TP
 \-n \fI#cpus\fR
 Create \fI#cpus\fR worker threads to take advantage of multiple CPUs\&. If not specified, \fBnamed\fR will try to determine the number of CPUs present and create one thread per CPU\&. If it is unable to determine the number of CPUs, a single worker thread will be created\&.
