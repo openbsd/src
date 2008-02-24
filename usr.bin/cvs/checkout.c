@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.138 2008/02/10 14:08:52 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.139 2008/02/24 20:04:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -271,11 +271,13 @@ checkout_check_repository(int argc, char **argv)
 			cvs_file_ignore(fl->file_path, &checkout_ign_pats);
 
 		TAILQ_FOREACH(fl, &(mc->mc_modules), flist) {
+			module_repo_root = NULL;
+
 			(void)xsnprintf(repo, sizeof(repo), "%s/%s",
 			    current_cvsroot->cr_dir, fl->file_path);
 
 			if (!(mc->mc_flags & MODULE_ALIAS) || dflag != NULL)
-				module_repo_root = fl->file_path;
+				module_repo_root = xstrdup(fl->file_path);
 
 			if (mc->mc_flags & MODULE_NORECURSE)
 				flags &= ~CR_RECURSE_DIRS;
@@ -294,7 +296,7 @@ checkout_check_repository(int argc, char **argv)
 
 				if (!(mc->mc_flags & MODULE_ALIAS)) {
 					module_repo_root =
-					    dirname(fl->file_path);
+					    xstrdup(dirname(fl->file_path));
 					d = wdir;
 					(void)xsnprintf(fpath, sizeof(fpath),
 					    "%s/%s", d,
@@ -323,6 +325,9 @@ checkout_check_repository(int argc, char **argv)
 			if (nflag != 1 && mc->mc_prog != NULL &&
 			    mc->mc_flags & MODULE_RUN_ON_CHECKOUT)
 				cvs_exec(mc->mc_prog);
+
+			if (module_repo_root != NULL)
+				xfree(module_repo_root);
 		}
 
 		if (mc->mc_canfree == 1) {
