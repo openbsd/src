@@ -184,7 +184,7 @@
         <term>-i <replaceable class="parameter">pid-file</replaceable></term>
         <listitem>
           <para>
-	    Specifies the file taht contains the process ID of
+	    Specifies the file that contains the process ID of
 	    <command>named</command>.  The default is
 	    <filename>/var/run/named.pid</filename>.
           </para>
