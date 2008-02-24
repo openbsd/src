@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.110 2008/02/14 19:07:56 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.111 2008/02/24 19:16:08 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5798,10 +5798,6 @@ paginuse:
 	.word	0
 	.text
 ENTRY(pmap_zero_phys)
-	!!
-	!! If we have 64-bit physical addresses (and we do now)
-	!! we need to move the pointer from %o0:%o1 to %o0
-	!!
 	set	NBPG, %o2		! Loop count
 	clr	%o1
 1:
@@ -5821,35 +5817,22 @@ dlflush6:
  * pmap_copy_page(src, dst)
  *
  * Copy one page physically addressed
- * We need to use a global reg for ldxa/stxa
- * so the top 32-bits cannot be lost if we take
- * a trap and need to save our stack frame to a
- * 32-bit stack.  We will unroll the loop by 8 to
- * improve performance.
  *
  * We also need to blast the D$ and flush like
  * pmap_zero_page.
  */
 ENTRY(pmap_copy_phys)
-	!!
-	!! If we have 64-bit physical addresses (and we do now)
-	!! we need to move the pointer from %o0:%o1 to %o0 and
-	!! %o2:%o3 to %o1
-	!!
 	set	NBPG, %o3
 	add	%o3, %o0, %o3
-	mov	%g1, %o4		! Save g1
 1:
-	DLFLUSH %o0,%g1
-	ldxa	[%o0] ASI_PHYS_CACHED, %g1
+	ldxa	[%o0] ASI_PHYS_CACHED, %o4
 	inc	8, %o0
 	cmp	%o0, %o3
-	stxa	%g1, [%o1] ASI_PHYS_CACHED
-	DLFLUSH %o1,%g1
-	bl,pt	%icc, 1b		! We don't care about pages >4GB
+	stxa	%o4, [%o1] ASI_PHYS_CACHED
+	blu,pt	%xcc, 1b
 	 inc	8, %o1
 	retl
-	 mov	%o4, %g1		! Restore g1
+	 nop
 
 /*
  * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
