@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.40 2007/11/27 16:42:17 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.41 2008/02/24 15:47:47 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -305,7 +305,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[3] = (Elf_Addr)object;
 	}
 	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_addr, object->got_size,
+		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
