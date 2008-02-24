@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.11 2005/02/07 06:08:10 david Exp $
+#	$OpenBSD: disktab,v 1.12 2008/02/24 11:47:57 maja Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
@@ -514,4 +514,9 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
+
+isoroot:\
+	:ty=fake:se#512:nt#11:ns#33:rm#3600:nc#1507:\
+	:pa#547041:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pc#547041:oc#0:
 
