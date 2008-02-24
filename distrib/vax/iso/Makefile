@@ -1,0 +1,59 @@
+#	$OpenBSD: Makefile,v 1.1 2008/02/24 11:52:17 maja Exp $
+
+TOP=	${.CURDIR}/..
+
+CDROM=		install${REV}.iso
+RELXDIR=	/home/relx-${MACHINE}
+RELDIR?=	/home/rel-${MACHINE}
+DESTDIR?=	/home/dest-${MACHINE}
+MOUNT_POINT?=	/mnt
+VND?=		svnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+DISKTYPE=	isoroot
+PID!=		echo $$$$
+ISOIMAGE!=	echo image.${PID}
+ISOSIZE=	547041	# 33*11*1507
+BOOT=		${DESTDIR}/usr/mdec/boot
+BOOTXX=		${DESTDIR}/usr/mdec/xxboot
+NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192 -i 8192 -s ${ISOSIZE}
+
+BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
+		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
+		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
+		${RELDIR}/bsd ${RELDIR}/bsd.rd \
+		${RELDIR}/INSTALL.${MACHINE}
+XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
+		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
+		${RELXDIR}/xserv${OSrev}.tgz
+
+all: ${CDROM}
+
+${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
+	-rm -f ${.OBJDIR}/image.*
+	dd if=/dev/zero of=${ISOIMAGE} count=${ISOSIZE}
+	vnconfig -v -c ${VND} ${ISOIMAGE}
+	disklabel -w ${VND} ${DISKTYPE}
+	newfs ${NEWFSOPTS} ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	cp ${BOOT} ${MOUNT_POINT}/
+	cp ${RELDIR}/bsd.rd ${MOUNT_POINT}/bsd
+	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	cp -p ${BASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	cp -p ${XBASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	disklabel -B -b ${BOOTXX} ${VND}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND}
+	mv ${ISOIMAGE} ${CDROM}
+
+install:
+	cp ${CDROM} ${RELDIR}/
+
+clean cleandir:
+	/bin/rm -f ${CDROM} ${.OBJDIR}/image.*
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
