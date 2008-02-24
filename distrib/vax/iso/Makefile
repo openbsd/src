@@ -1,11 +1,22 @@
-#	$OpenBSD: Makefile,v 1.1 2008/02/24 11:52:17 maja Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/02/24 19:32:48 deraadt Exp $
 
 TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
 
 CDROM=		install${REV}.iso
 RELXDIR=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
-DESTDIR?=	/home/dest-${MACHINE}
+
+BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
+		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
+		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
+		${RELDIR}/bsd ${RELDIR}/bsd.rd \
+		${RELDIR}/INSTALL.${MACHINE}
+XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
+		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
+		${RELXDIR}/xserv${OSrev}.tgz
+
 MOUNT_POINT?=	/mnt
 VND?=		svnd0
 VND_DEV=	/dev/${VND}a
@@ -17,15 +28,6 @@ ISOSIZE=	547041	# 33*11*1507
 BOOT=		${DESTDIR}/usr/mdec/boot
 BOOTXX=		${DESTDIR}/usr/mdec/xxboot
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192 -i 8192 -s ${ISOSIZE}
-
-BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
-		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
-		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
-		${RELDIR}/bsd ${RELDIR}/bsd.rd \
-		${RELDIR}/INSTALL.${MACHINE}
-XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
-		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
-		${RELXDIR}/xserv${OSrev}.tgz
 
 all: ${CDROM}
 
