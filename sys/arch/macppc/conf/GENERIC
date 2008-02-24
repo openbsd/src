@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.178 2008/01/19 12:32:53 mglocker Exp $g
+#	$OpenBSD: GENERIC,v 1.179 2008/02/24 21:49:37 uwe Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -292,6 +292,13 @@ onewire* at uow?
 
 # Bluetooth bus support
 #bthub*	at ubt?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
 
 # I2C bus support
 iic*		at kiic?

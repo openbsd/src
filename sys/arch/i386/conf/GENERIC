@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.601 2008/02/21 02:03:01 ratchov Exp $
+#	$OpenBSD: GENERIC,v 1.602 2008/02/24 21:49:37 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -288,6 +288,13 @@ scsibus* at sdmmc?		# SCSI emulation
 # Bluetooth bus support
 #bthub*	at sbt?
 #bthub*	at ubt?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?

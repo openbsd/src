@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.19 2007/10/11 17:28:31 sthen Exp $ 
+# $OpenBSD: GENERIC,v 1.20 2008/02/24 21:49:37 uwe Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -158,6 +158,13 @@ onewire* at uow?
 
 # Bluetooth bus support
 #bthub*	at ubt?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
 
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs

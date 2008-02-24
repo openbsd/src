@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.197 2007/12/09 19:48:55 martin Exp $
+#	$OpenBSD: GENERIC,v 1.198 2008/02/24 21:49:36 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -132,6 +132,13 @@ onewire* at uow?
 
 # Bluetooth bus support
 #bthub*	at ubt?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
