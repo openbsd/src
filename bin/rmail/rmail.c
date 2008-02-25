@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.21 2006/11/15 22:23:09 miod Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.22 2008/02/25 18:52:39 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.21 2006/11/15 22:23:09 miod Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.22 2008/02/25 18:52:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 		}
 
 		if (offset != -1)
-			offset = (off_t)ftell(stdin);
+			offset = ftello(stdin);
 	}
 
 	i = 0;
