@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.13 2008/01/19 23:04:11 winiger Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.14 2008/02/25 18:57:32 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ usbdev(int f, int a, int rec)
 	if (ioctl(f, USB_REQUEST, &req) >= 0)
 		langid = UGETW(us.bString[0]);
 
+	bzero(serialnum, sizeof serialnum);
 	if (getdevicedesc(f, a, &dd))
 		getstring(f, a, dd.iSerialNumber, serialnum, langid);
 
