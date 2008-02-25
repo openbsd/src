@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.19 2007/05/05 13:24:03 deraadt Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.20 2008/02/25 20:32:10 brad Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -119,59 +119,51 @@ const struct xl_cardbus_product {
 	int		ecp_flags;	/* initial softc flags */
 	pcireg_t	ecp_csr;	/* PCI CSR flags */
 	int		ecp_cardtype;	/* card type */
-	const char	*ecp_name;	/* device name */
 } xl_cardbus_products[] = {
 	{ PCI_PRODUCT_3COM_3C575,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_BOOMERANG,
-	  "3c575-TX Ethernet" },
+	  XL_CARDBUS_BOOMERANG },
 
 	{ PCI_PRODUCT_3COM_3CCFE575BT,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_CYCLONE,
-	  "3c575B-TX Ethernet" },
+	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFE575CT,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_CYCLONE,
-	  "3c575C-TX Ethernet" },
+	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_CYCLONE,
-	  "3c656-TX Ethernet" },
+	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656B,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_CYCLONE,
-	  "3c656B-TX Ethernet" },
+	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656C,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CARDBUS_CYCLONE,
-	  "3c656C-TX Ethernet" },
+	  XL_CARDBUS_CYCLONE },
 
 	{ 0,
 	  0,
 	  0,
-	  0,
-	  NULL },
+	  0 },
 };
 
 const struct xl_cardbus_product *xl_cardbus_lookup(const struct cardbus_attach_args *);
@@ -184,7 +176,7 @@ xl_cardbus_lookup(const struct cardbus_attach_args *ca)
 	if (CARDBUS_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
 		return (NULL);
 
-	for (ecp = xl_cardbus_products; ecp->ecp_name != NULL; ecp++)
+	for (ecp = xl_cardbus_products; ecp->ecp_prodid != 0; ecp++)
 		if (CARDBUS_PRODUCT(ca->ca_id) == ecp->ecp_prodid)
 			return (ecp);
 	return (NULL);
@@ -226,8 +218,6 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic("xl_cardbus_attach: impossible");
 	}
-
-	printf(": 3Com %s", ecp->ecp_name);
 
 	sc->xl_flags = ecp->ecp_flags;
 	sc->sc_dmat = ca->ca_dmat;
