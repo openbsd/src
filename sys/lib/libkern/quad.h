@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: quad.h,v 1.9 2004/11/28 07:23:41 mickey Exp $
+ *	$OpenBSD: quad.h,v 1.10 2008/02/25 21:21:58 deraadt Exp $
  */
 
 /*
@@ -113,13 +113,6 @@ quad_t __ashldi3(quad_t, qshift_t);
 quad_t __ashrdi3(quad_t, qshift_t);
 int __cmpdi2(quad_t, quad_t);
 quad_t __divdi3(quad_t, quad_t);
-quad_t __fixdfdi(double);
-quad_t __fixsfdi(float);
-u_quad_t __fixunsdfdi(double);
-u_quad_t __fixunssfdi(float);
-double __floatdidf(quad_t);
-float __floatdisf(quad_t);
-double __floatunsdidf(u_quad_t);
 quad_t __iordi3(quad_t, quad_t);
 quad_t __lshldi3(quad_t, qshift_t);
 quad_t __lshrdi3(quad_t, qshift_t);
