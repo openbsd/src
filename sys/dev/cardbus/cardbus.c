@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.37 2007/09/19 21:54:22 martin Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.38 2008/02/25 20:30:56 brad Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -582,35 +582,17 @@ cardbusprint(void *aux, const char *pnp)
 {
 	struct cardbus_attach_args *ca = aux;
 	char devinfo[256];
-	int i;
 
 	if (pnp) {
 		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo,
 		    sizeof(devinfo));
-		for (i = 0; i < 4; i++) {
-			if (ca->ca_cis.cis1_info[i] == NULL)
-				break;
-			if (i)
-				printf(", ");
-			printf("%s", ca->ca_cis.cis1_info[i]);
-		}
-		if (i)
-			printf(" ");
-		if (ca->ca_cis.manufacturer)
-			printf("(manufacturer 0x%x, product 0x%x) ",
-			    ca->ca_cis.manufacturer, ca->ca_cis.product);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", ca->ca_device, ca->ca_function);
-
 	if (!pnp) {
-		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo,
+		pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo,
 		    sizeof(devinfo));
-		for (i = 0; i < 3 && ca->ca_cis.cis1_info[i]; i++)
-			printf("%s%s", i ? ", " : " \"",
-			    ca->ca_cis.cis1_info[i]);
-		if (ca->ca_cis.cis1_info[0])
-			printf("\"");
+		printf(" %s", devinfo);
 	}
 
 	return (UNCONF);
