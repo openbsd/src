@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1327 2008/02/23 23:19:56 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1328 2008/02/25 13:45:58 bernd Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2340,6 +2340,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon XPRESS 200M",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX200_HB,
+	    "Radeon XPRESS 200",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_PCIE,
 	    "RX480 PCIE",
 	},
@@ -2480,8 +2484,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1300 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300,
+	    "Radeon X1300",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300PRO_S,
 	    "Radeon X1300 Pro Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_S,
+	    "Radeon X1300 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO,
