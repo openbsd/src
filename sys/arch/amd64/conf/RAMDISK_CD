@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.80 2007/12/31 19:29:09 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.81 2008/02/25 23:16:47 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -273,6 +273,8 @@ vge*	at pci?			# VIA VT612x
 nfe*	at pci?			# NVIDIA nForce Ethernet
 xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
 bce*	at pci?			# Broadcom BCM4401
+et*	at pci?			# Agere/LSI ET1310
+#lii*	at pci?			# Attansic L2 Ethernet
 
 # Wireless network cards
 ath*	at pci?			# Atheros AR5k (802.11a/b/g)
@@ -313,6 +315,7 @@ xmphy*	at mii?			# XaQti XMAC-II PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
 rgephy*	at mii?			# Realtek 8169S/8110S PHY
 ciphy*	at mii?			# Cicada CS8201 10/100/1000 copper PHY
+etphy*	at mii?			# Agere/LSI ET1011 TruePHY
 ukphy*	at mii?			# "unknown" PHYs
 
 pseudo-device	loop	1	# network loopback

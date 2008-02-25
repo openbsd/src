@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.602 2008/02/24 21:49:37 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.603 2008/02/25 23:16:47 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -560,7 +560,7 @@ tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
 et*	at pci?				# Agere/LSI ET1310
-lii*	at pci?				# Atheros L2 Ethernet
+#lii*	at pci?				# Attansic L2 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
