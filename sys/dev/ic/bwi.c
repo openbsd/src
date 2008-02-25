@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.72 2008/02/16 23:17:15 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.73 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -170,7 +170,8 @@ void		 bwi_mac_updateslot(struct bwi_mac *, int);
 int		 bwi_mac_attach(struct bwi_softc *, int, uint8_t);
 void		 bwi_mac_balance_atten(int *, int *);
 void		 bwi_mac_adjust_tpctl(struct bwi_mac *, int, int);
-void		 bwi_mac_calibrate_txpower(struct bwi_mac *);
+void		 bwi_mac_calibrate_txpower(struct bwi_mac *,
+		     enum bwi_txpwrcb_type);
 void		 bwi_mac_lock(struct bwi_mac *);
 void		 bwi_mac_unlock(struct bwi_mac *);
 void		 bwi_mac_set_promisc(struct bwi_mac *, int);
@@ -282,7 +283,9 @@ int		 bwi_init(struct ifnet *);
 int		 bwi_ioctl(struct ifnet *, u_long, caddr_t);
 void		 bwi_start(struct ifnet *);
 void		 bwi_watchdog(struct ifnet *);
-int		 bwi_stop(struct bwi_softc *);
+void		 bwi_newstate_begin(struct bwi_softc *, enum ieee80211_state);
+void		 bwi_init_statechg(struct bwi_softc *, int);
+int		 bwi_stop(struct bwi_softc *, int);
 int		 bwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int		 bwi_media_change(struct ifnet *);
 void		 bwi_iter_func(void *, struct ieee80211_node *);
@@ -580,6 +583,7 @@ int
 bwi_intr(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
+	struct bwi_mac *mac;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
@@ -601,6 +605,9 @@ bwi_intr(void *xsc)
 
 	DPRINTF(2, "%s: intr status 0x%08x\n",
 	    sc->sc_dev.dv_xname, intr_status);
+
+	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
+	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	txrx_error = 0;
 
@@ -633,17 +640,21 @@ bwi_intr(void *xsc)
 	/* Disable all interrupts */
 	bwi_disable_intrs(sc, BWI_ALL_INTRS);
 
-	if (intr_status & BWI_INTR_PHY_TXERR)
-		printf("%s: intr PHY TX error\n", sc->sc_dev.dv_xname);
+	if (intr_status & BWI_INTR_PHY_TXERR) {
+		if (mac->mac_flags & BWI_MAC_F_PHYE_RESET) {
+			printf("intr PHY TX error\n");
+			/* XXX to netisr0? */
+			bwi_init_statechg(sc, 0);
+			return (0);
+		}
+	}
 
 	if (txrx_error) {
 		/* TODO: reset device */
 	}
 
-	if (intr_status & BWI_INTR_TBTT) {
-		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
-		bwi_mac_config_ps((struct bwi_mac *)sc->sc_cur_regwin);
-	}
+	if (intr_status & BWI_INTR_TBTT)
+		bwi_mac_config_ps(mac);
 
 	if (intr_status & BWI_INTR_EO_ATIM)
 		printf("%s: EO_ATIM\n", sc->sc_dev.dv_xname);
@@ -898,7 +909,7 @@ bwi_detach(void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i;
 
-	bwi_stop(sc);
+	bwi_stop(sc, 1);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -2506,6 +2517,8 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	if (mac->mac_rev < 5) {
 		mac->mac_flags |= BWI_MAC_F_HAS_TXSTATS;
 		DPRINTF(1, "%s: has TX stats\n", sc->sc_dev.dv_xname);
+	} else {
+		mac->mac_flags |= BWI_MAC_F_PHYE_RESET;
 	}
 
 	return (0);
@@ -2626,7 +2639,7 @@ bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
  * http://bcm-specs.sipsolutions.net/RecalculateTransmissionPower
  */
 void
-bwi_mac_calibrate_txpower(struct bwi_mac *mac)
+bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -2654,14 +2667,27 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac)
 	if (error) {
 		DPRINTF(1, "%s: no DS tssi\n", sc->sc_dev.dv_xname);
 
-		if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B)
-			return;
+		if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B) {
+			if (type == BWI_TXPWR_FORCE) {
+				rf_atten_adj = 0;
+				bbp_atten_adj = 1;
+				goto calib;
+			} else {
+				return;
+			}
+		}
 
 		error = bwi_rf_get_latest_tssi(mac, tssi,
 		    BWI_COMM_MOBJ_TSSI_OFDM);
 		if (error) {
 			DPRINTF(1, "%s: no OFDM tssi\n", sc->sc_dev.dv_xname);
-			return;
+			if (type == BWI_TXPWR_FORCE) {
+				rf_atten_adj = 0;
+				bbp_atten_adj = 1;
+				goto calib;
+			} else {
+				return;
+			}
 		}
 
 		for (i = 0; i < 4; ++i) {
@@ -2695,8 +2721,16 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac)
 	txpwr_diff = rf->rf_txpower_max - cur_txpwr; /* XXX ni_txpower */
 
 	rf_atten_adj = -howmany(txpwr_diff, 8);
-	bbp_atten_adj = -(txpwr_diff / 2) -
-	    (BWI_RF_ATTEN_FACTOR * rf_atten_adj);
+
+	if (type == BWI_TXPWR_INIT) {
+		/*
+		 * Move toward EEPROM max TX power as fast as we can
+		 */
+		bbp_atten_adj = -txpwr_diff;
+	} else {
+		bbp_atten_adj = -(txpwr_diff / 2);
+	}
+	bbp_atten_adj -= (BWI_RF_ATTEN_FACTOR * rf_atten_adj);
 
 	if (rf_atten_adj == 0 && bbp_atten_adj == 0) {
 		DPRINTF(1, "%s: no need to adjust RF/BBP attenuation\n",
@@ -2705,6 +2739,7 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac)
 		return;
 	}
 
+calib:
 	DPRINTF(1, "%s: rf atten adjust %d, bbp atten adjust %d\n",
 	    sc->sc_dev.dv_xname, rf_atten_adj, bbp_atten_adj);
 	bwi_mac_adjust_tpctl(mac, rf_atten_adj, bbp_atten_adj);
@@ -6975,16 +7010,26 @@ int
 bwi_init(struct ifnet *ifp)
 {
 	struct bwi_softc *sc = ifp->if_softc;
+
+	bwi_init_statechg(sc, 1);
+
+	return (0);
+}
+
+void
+bwi_init_statechg(struct bwi_softc *sc, int statechg)
+{
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct bwi_mac *mac;
 	int error;
 
 	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
-	error = bwi_stop(sc);
+	error = bwi_stop(sc, statechg);
 	if (error) {
 		DPRINTF(1, "%s: can't stop\n", sc->sc_dev.dv_xname);
-		return (1);
+		return;
 	}
 
 	/* power on cardbus socket */
@@ -7046,17 +7091,21 @@ bwi_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		/* start background scanning */
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	else
-		/* in monitor mode change directly into run state */
-		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	if (statechg) {
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		} else {
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+		}
+	} else {
+		ieee80211_new_state(ic, ic->ic_state, -1);
+	}
+
 back:
 	if (error)
-		bwi_stop(sc);
-
-	return (0);
+		bwi_stop(sc, 1);
+	else
+		bwi_start(ifp);
 }
 
 int
@@ -7086,7 +7135,7 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				bwi_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				bwi_stop(sc);
+				bwi_stop(sc, 1);
 		}
 		break;
         case SIOCADDMULTI:
@@ -7260,8 +7309,20 @@ bwi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
+void
+bwi_newstate_begin(struct bwi_softc *sc, enum ieee80211_state nstate)
+{
+	timeout_del(&sc->sc_scan_ch);
+	timeout_del(&sc->sc_calib_ch);
+
+	bwi_led_newstate(sc, nstate);
+
+	if (nstate == IEEE80211_S_INIT)
+		sc->sc_txpwrcb_type = BWI_TXPWR_INIT;
+}
+
 int
-bwi_stop(struct bwi_softc *sc)
+bwi_stop(struct bwi_softc *sc, int state_chg)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -7270,7 +7331,10 @@ bwi_stop(struct bwi_softc *sc)
 
 	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	if (state_chg)
+		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	else
+		bwi_newstate_begin(sc, IEEE80211_S_INIT);
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
@@ -7321,10 +7385,8 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	uint8_t chan;
 
 	timeout_del(&sc->sc_amrr_ch);
-	timeout_del(&sc->sc_scan_ch);
-	timeout_del(&sc->sc_calib_ch);
 
-	bwi_led_newstate(sc, nstate);
+	bwi_newstate_begin(sc, nstate);
 
 	if (nstate == IEEE80211_S_INIT)
 		goto back;
@@ -7351,8 +7413,12 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 		/* Initial TX power calibration */
-		bwi_mac_calibrate_txpower(mac);
-
+		bwi_mac_calibrate_txpower(mac, BWI_TXPWR_INIT);
+#ifdef notyet
+		sc->sc_txpwrcb_type = BWI_TXPWR_FORCE;
+#else
+		sc->sc_txpwrcb_type = BWI_TXPWR_CALIB;
+#endif
 		if (ic->ic_opmode == IEEE80211_M_STA) {
 			/* fake a join to init the tx rate */
 			bwi_newassoc(ic, ni, 1);
@@ -7373,7 +7439,7 @@ back:
 		timeout_add(&sc->sc_scan_ch, (sc->sc_dwell_time * hz) / 1000);
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
-		timeout_add(&sc->sc_calib_ch, hz * 15);
+		timeout_add(&sc->sc_calib_ch, hz);
 	}
 
 	return (error);
@@ -8734,7 +8800,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		ack_rate = bwi_ack_rate(ni, rate);
 		dur = bwi_txtime(ic, ni,
 		    sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
-		    ack_rate, ic->ic_flags & ~IEEE80211_F_SHPREAMBLE);
+		    ack_rate, ic->ic_flags & IEEE80211_F_SHPREAMBLE);
 
 		hdr->txh_fb_duration = htole16(dur);
 	}
@@ -9292,8 +9358,10 @@ bwi_calibrate(void *xsc)
 		KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 		mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
-			bwi_mac_calibrate_txpower(mac);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			bwi_mac_calibrate_txpower(mac, sc->sc_txpwrcb_type);
+			sc->sc_txpwrcb_type = BWI_TXPWR_CALIB;
+		}
 
 		/* XXX 15 seconds */
 		timeout_add(&sc->sc_calib_ch, hz * 15);
