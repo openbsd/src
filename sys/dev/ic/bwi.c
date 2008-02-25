@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.73 2008/02/25 20:36:54 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5967,9 +5967,8 @@ bwi_rf_calc_rssi_bcm2050(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 
 	lna_gain = __SHIFTOUT(letoh16(hdr->rxh_phyinfo),
 	    BWI_RXH_PHYINFO_LNAGAIN);
-	DPRINTF(mac->mac_sc, BWI_DBG_RF | BWI_DBG_RX,
-		"lna_gain %d, phyinfo 0x%04x\n",
-		lna_gain, le16toh(hdr->rxh_phyinfo));
+	DPRINTF(3, "lna_gain %d, phyinfo 0x%04x\n",
+	    lna_gain, letoh16(hdr->rxh_phyinfo));
 	switch (lna_gain) {
 	case 0:
 		rssi += 27;
@@ -6653,7 +6652,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	sc->sc_bbp_id = bbp_id;
 	sc->sc_bbp_rev = __SHIFTOUT(info, BWI_INFO_BBPREV_MASK);
 	sc->sc_bbp_pkg = __SHIFTOUT(info, BWI_INFO_BBPPKG_MASK);
-	DPRINTF("%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
+	DPRINTF(1, "%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
 	DPRINTF(1, "%s: nregwin %d, cap 0x%08x\n",
 	    sc->sc_dev.dv_xname, nregwin, sc->sc_cap);
