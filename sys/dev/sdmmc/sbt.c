@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.10 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.11 2008/02/25 12:20:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -470,7 +470,7 @@ sbt_start(struct sbt_softc *sc, struct mbuf *m, struct ifqueue *q, int xmit)
 
 	if (curproc == NULL || sc->sc_busy) {
 		(void)workq_add_task(sc->sc_workq, 0, sbt_start_task,
-		    sc, (void *)xmit);
+		    sc, (void *)(long)xmit);
 		splx(s);
 		return;
 	}
@@ -545,7 +545,7 @@ void
 sbt_start_task(void *arg1, void *arg2)
 {
 	struct sbt_softc *sc = arg1;
-	int xmit = (int)arg2;
+	int xmit = (long)arg2;
 
 	switch (xmit) {
 	case BTF_XMIT_CMD:
