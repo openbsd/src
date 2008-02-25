@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.30 2007/05/08 21:28:11 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.31 2008/02/25 23:10:16 brad Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -259,7 +259,7 @@ com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (Cardbus_mapreg_map(ca->ca_ct, csc->cc_reg, csc->cc_type, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &csc->cc_addr, &csc->cc_size) != 0) {
-		printf("failed to map memory");
+		printf(": failed to map memory\n");
 		return;
 	}
 
@@ -281,14 +281,8 @@ com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->disable = com_cardbus_disable;
 	sc->enabled = 0;
 
-	if (ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1]) {
-		printf(": %s %s\n", ca->ca_cis.cis1_info[0],
-		    ca->ca_cis.cis1_info[1]);
-		printf("%s", DEVNAME(csc));
-	}
-
 	if (com_cardbus_enable(sc))
-		printf(": function enable failed\n");
+		return;
 	sc->enabled = 1;
 
 	sc->sc_hwflags = 0;
@@ -349,7 +343,7 @@ com_cardbus_enable(struct com_softc *sc)
 	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
 	    IPL_TTY, comintr, sc, DEVNAME(csc));
 	if (csc->cc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", DEVNAME(csc));
+		printf(": couldn't establish interrupt\n", DEVNAME(csc));
 		return (1);
 	}
 

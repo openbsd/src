@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.20 2007/05/08 20:43:07 deraadt Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.21 2008/02/25 23:10:16 brad Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -161,12 +161,6 @@ fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		csc->size = size;
 	} else
 		panic("%s: failed to allocate mem and io space", __func__);
-
-	if (ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1])
-		printf(": %s %s", ca->ca_cis.cis1_info[0],
-		    ca->ca_cis.cis1_info[1]);
-	else
-		printf("\n");
 
 	sc->sc_dmat = ca->ca_dmat;
 #if 0

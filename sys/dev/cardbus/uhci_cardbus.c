@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.5 2006/10/12 16:35:52 grange Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.6 2008/02/25 23:10:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ struct cfattach uhci_cardbus_ca = {
 
 #define CARDBUS_INTERFACE_UHCI PCI_INTERFACE_UHCI
 #define cardbus_findvendor pci_findvendor
-#define cardbus_devinfo pci_devinfo
 
 int
 uhci_cardbus_match(struct device *parent, void *match, void *aux)
@@ -99,18 +98,14 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t csr;
-	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(" %s", devinfo);
-
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBIO, CARDBUS_MAPREG_TYPE_IO, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map io space\n", devname);
+		printf(": can't map io space\n", devname);
 		return;
 	}
 
@@ -135,7 +130,7 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, uhci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		printf(": couldn't establish interrupt\n", devname);
 		return;
 	}
 	printf(": irq %d\n", ca->ca_intrline);
