@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfmakeraw.c,v 1.6 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: cfmakeraw.c,v 1.7 2008/02/25 06:20:57 deraadt Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,5 +42,6 @@ cfmakeraw(struct termios *t)
 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	t->c_cflag &= ~(CSIZE|PARENB);
 	t->c_cflag |= CS8;
-	/* XXX set MIN/TIME */
+	t->c_cc[VMIN] = 1;
+	t->c_cc[VTIME] = 0;
 }
