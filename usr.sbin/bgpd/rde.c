@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.229 2007/11/27 01:13:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.230 2008/02/26 19:58:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1154,8 +1154,8 @@ bad_len:
 
 	switch (type) {
 	case ATTR_UNDEF:
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_UNSPECIFIC, NULL, 0);
-		return (-1);
+		/* ignore and drop path attributes with a type code of 0 */
+		break;
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
 			goto bad_len;
