@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.38 2007/11/10 17:30:26 ajacoutot Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.39 2008/02/26 18:34:18 deraadt Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_DX4000 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_DX5000 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_DX6000 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_CX5400 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_GT9700F }, USC_KEEP_OPEN },
 
   /* UMAX */

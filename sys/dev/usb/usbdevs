@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.338 2008/02/26 18:32:06 deraadt Exp $
+$OpenBSD: usbdevs,v 1.339 2008/02/26 18:34:18 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1173,6 +1173,7 @@ product EPSON DX3800		0x0818	Stylus DX3800
 product EPSON DX4000		0x082f	Stylus DX4000
 product EPSON DX5000		0x082b	Stylus DX5000
 product EPSON DX6000		0x082e	Stylus DX6000
+product EPSON CX5400		0x0808	CX5400
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial
