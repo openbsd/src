@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.337 2008/02/23 22:19:13 deraadt Exp $
+$OpenBSD: usbdevs,v 1.338 2008/02/26 18:32:06 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -497,7 +497,8 @@ vendor GIGASET		0x1690	Gigaset
 vendor GLOBALSUN	0x16ab	Global Sun Technology
 vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
-vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
+vendor CMOTECH		0x16d8	CMOTECH
+vendor AXESSTEL		0x1726	Axesstel
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor METAGEEK		0x1781	MetaGeek
@@ -825,6 +826,9 @@ product AVERATEC USBWLAN	0x4013	WLAN
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U
+
+/* Axesstel products */
+product AXESSTEL DATAMODEM	0x1000	Data Modem
 
 /* AsureWave products */
 product AZUREWAVE RT2870	0x3247	RT2870
