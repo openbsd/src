@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.24 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: defs.c,v 1.25 2008/02/26 09:52:38 jsg Exp $
  */
 
 
@@ -264,7 +264,7 @@ SpeedToInt(speed_t speed)
       return sp->nspeed;
     }
   }
-  return 0;
+  return ((int)speed);
 }
 
 speed_t
@@ -277,7 +277,7 @@ IntToSpeed(int nspeed)
       return sp->speed;
     }
   }
-  return B0;
+  return ((speed_t)nspeed);
 }
 
 char *
