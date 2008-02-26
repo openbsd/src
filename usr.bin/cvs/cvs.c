@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.142 2008/02/02 19:32:28 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.143 2008/02/26 21:23:00 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -158,7 +158,6 @@ main(int argc, char **argv)
 	if ((cvs_homedir = getenv("HOME")) == NULL) {
 		if ((pw = getpwuid(getuid())) != NULL)
 			cvs_homedir = pw->pw_dir;
-
 	}
 
 	if ((envstr = getenv("TMPDIR")) != NULL)
