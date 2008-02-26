@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.108 2008/02/26 10:09:58 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -57,7 +57,7 @@ static struct file {
 	char			*name;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -1400,7 +1400,7 @@ lgetc(int quotec)
 		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -1418,7 +1418,7 @@ lgetc(int quotec)
 	}
 
 	while (c == EOF) {
-		if (popfile() == EOF)
+		if (file == topfile || popfile() == EOF)
 			return (EOF);
 		c = getc(file->stream);
 	}
@@ -1659,16 +1659,15 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file);
+	file = prev;
+	return (file ? 0 : EOF);
 }
 
 struct relayd *
@@ -2069,6 +2068,7 @@ table_inherit(struct table *tb)
 		h->tablename = tb->conf.name;
 		TAILQ_INSERT_HEAD(&tb->hosts, h, entry);
 	}
+	topfile = file;
 
 	conf->sc_tablecount++;
 	TAILQ_INSERT_HEAD(conf->sc_tables, tb, entry);

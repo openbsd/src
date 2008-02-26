@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2007/11/12 23:59:40 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2008/02/26 10:09:58 mpf Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -40,7 +40,7 @@ static struct file {
 	char			*name;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 struct file	*pushfile(const char *);
 int		 popfile(void);
 int		 yyparse(void);
@@ -200,8 +200,9 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
-			yyerror("reached end of file while parsing quoted string");
-			if (popfile() == EOF)
+			yyerror("reached end of file while parsing "
+			    "quoted string");
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -219,7 +220,7 @@ lgetc(int quotec)
 	}
 
 	while (c == EOF) {
-		if (popfile() == EOF)
+		if (file == topfile || popfile() == EOF)
 			return (EOF);
 		c = getc(file->stream);
 	}
@@ -404,16 +405,15 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file);
+	file = prev;
+	return (file ? 0 : EOF);
 }
 
 char *
@@ -444,6 +444,7 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 				tapedev = NULL;
 		}
 	}
+	topfile = file;
 
 guess:
 	/* if no device found, do the default of /dev/rstX */

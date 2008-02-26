@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2007/11/12 23:59:41 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.42 2008/02/26 10:09:58 mpf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,7 @@ static struct file {
 	char			*name;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 struct file	*pushfile(const char *);
 int		 popfile(void);
 int		 yyparse(void);
@@ -353,8 +353,9 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
-			yyerror("reached end of file while parsing quoted string");
-			if (popfile() == EOF)
+			yyerror("reached end of file while parsing "
+			    "quoted string");
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -372,7 +373,7 @@ lgetc(int quotec)
 	}
 
 	while (c == EOF) {
-		if (popfile() == EOF)
+		if (file == topfile || popfile() == EOF)
 			return (EOF);
 		c = getc(file->stream);
 	}
@@ -560,16 +561,15 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file);
+	file = prev;
+	return (file ? 0 : EOF);
 }
 
 int
@@ -585,6 +585,7 @@ parse_config(const char *filename, struct ntpd_conf *xconf)
 	if ((file = pushfile(filename)) == NULL) {
 		return (-1);
 	}
+	topfile = file;
 
 	yyparse();
 	errors = file->errors;
