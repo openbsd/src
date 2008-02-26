@@ -693,8 +693,9 @@ xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	viac3_xcrypt_cbc(cw, usein, useout, ctx->cipher_data,  inl / 16, ivp);
 
-	if (ISUNALIGNED(out)) {
-		bcopy(spare, out, inl);
+	if (ISUNALIGNED(in) || ISUNALIGNED(out)) {
+		if (ISUNALIGNED(out))
+			bcopy(spare, out, inl);
 		free(spare);
 	}
 
