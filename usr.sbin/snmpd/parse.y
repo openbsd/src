@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2008/01/30 10:12:45 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2008/02/26 20:06:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -170,6 +170,11 @@ main		: LISTEN ON STRING		{
 			h = TAILQ_FIRST(&al);
 			bcopy(&h->ss, &conf->sc_address.ss, sizeof(*h));
 			conf->sc_address.port = h->port;
+
+			while ((h = TAILQ_FIRST(&al)) != NULL) {
+				TAILQ_REMOVE(&al, h, entry);
+				free(h);
+			}
 		}
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
