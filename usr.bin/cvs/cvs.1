@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.120 2008/02/11 07:58:28 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.121 2008/02/26 21:48:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 11 2008 $
+.Dd $Mdocdate: February 26 2008 $
 .Dt CVS 1
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ a CVS source repository.
 CVS is used to maintain version information on files that are kept in a
 repository.
 Although it is more commonly used to track changes in source code, there
-are no real limitations to the type of files that you can store in a
+are no real limitations to the type of files that can be stored in a
 repository.
 For a general introduction to CVS, see
 .Xr cvsintro 7 .
@@ -593,7 +593,8 @@ The
 .Ic edit
 command is used to make a file that is being watched
 (and therefore read-only)
-readable and writable and to inform others that you are planning to edit it.
+readable and writable and to inform others that it is in the
+process of being changed.
 Notifications terminate when the
 .Ic commit
 command is issued.
@@ -922,7 +923,7 @@ specifies the location of the sources to be imported;
 .Ar vendortag
 is a tag for the entire branch;
 .Ar releasetag
-is used to identify the files you created with
+is used to identify the files created with
 .Ic cvs import .
 .Bd -literal -offset indent
 usage: cvs import [-d] [-b branch] [-I ign] [-k mode] [-m msg]
@@ -1581,7 +1582,7 @@ If the file has been modified since the
 .Ic edit
 command has been issued,
 .Nm
-will ask if you want to go back to the previous version, and lose the
+will ask if it should go back to the previous version, and lose the
 modifications done on the file, or stay in edition mode on it.
 .Bd -literal -offset indent
 usage: cvs unedit [-lR] [file ...]
