@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.9 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.10 2008/02/27 18:10:05 tobias Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.9 2007/09/10 14:29:53 tobias Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.10 2008/02/27 18:10:05 tobias Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -193,10 +193,8 @@ main(int argc, char **argv)
 	m = readin(argv[0], &d13);
 	n = readin(argv[1], &d23);
 	for (i = 0; i <= 2; i++) {
-		if ((fp[i] = fopen(argv[i + 2], "r")) == NULL) {
-			printf("diff3: can't open %s\n", argv[i + 2]);
-			exit(EXIT_FAILURE);
-		}
+		if ((fp[i] = fopen(argv[i + 2], "r")) == NULL)
+			err(EXIT_FAILURE, "can't open %s", argv[i + 2]);
 	}
 	merge(m, n);
 	exit(EXIT_SUCCESS);
@@ -215,6 +213,8 @@ readin(char *name, struct diff **dd)
 	char kind, *p;
 
 	fp[0] = fopen(name, "r");
+	if (fp[0] == NULL)
+		err(EXIT_FAILURE, "can't open %s", name);
 	for (i=0; (p = getchange(fp[0])); i++) {
 		if (i >= szchanges - 1)
 			increase();
