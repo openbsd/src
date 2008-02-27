@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2008/02/26 10:09:58 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2008/02/27 16:07:20 mpf Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -429,6 +429,7 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 		warnx("cannot open the main config file!");
 		goto guess;
 	}
+	topfile = file;
 
 	yyparse();
 	errors = file->errors;
@@ -444,7 +445,6 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 				tapedev = NULL;
 		}
 	}
-	topfile = file;
 
 guess:
 	/* if no device found, do the default of /dev/rstX */
