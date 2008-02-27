@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1328 2008/02/25 13:45:58 bernd Exp 
+ *	OpenBSD: pcidevs,v 1.1329 2008/02/27 20:08:35 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6544,8 +6544,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801GR AHCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GR_SATA,
-	    "82801GR SATA",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GR_RAID,
+	    "82801GR RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_SATA,
@@ -6557,7 +6557,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_RAID,
-	    "82801GHM SATA RAID",
+	    "82801GHM RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_USB_1,
@@ -6648,11 +6648,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801HBM LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1_6P,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1,
 	    "82801H SATA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AHCI,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AHCI_6P,
 	    "82801H AHCI",
 	},
 	{
@@ -6660,20 +6660,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801H RAID",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1_4P,
-	    "82801H SATA",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AHCI_4P,
+	    "82801H AHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_2,
 	    "82801H SATA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA,
 	    "82801HBM SATA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_2,
-	    "82081HBM SATA",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_AHCI,
+	    "82801HBM AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_RAID,
+	    "82081HBM RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SMB,
