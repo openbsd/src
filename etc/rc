@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.311 2008/01/31 14:18:03 reyk Exp $
+#	$OpenBSD: rc,v 1.312 2008/02/27 20:27:38 djm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -99,6 +99,23 @@ wsconsctl_conf()
 	done
 }
 
+random_seed()
+{
+	if [ -f /var/db/host.random -a "X$random_seed_done" = "X" ]; then
+		dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
+		    > /dev/null 2>&1
+		dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
+		    > /dev/null 2>&1
+	
+		# reset seed file, so that if a shutdown-less reboot occurs,
+		# the next seed is not a repeat
+		dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
+		    > /dev/null 2>&1
+
+		random_seed_done=1
+	fi
+}
+
 # End subroutines
 
 stty status '^T'
@@ -196,6 +213,8 @@ mount -a -t nonfs,vnd
 mount -uw /		# root on nfs requires this, others aren't hurt
 rm -f /fastboot		# XXX (root now writeable)
 
+random_seed
+
 # pick up option configuration
 . /etc/rc.conf
 
@@ -264,15 +283,8 @@ if [ ! -f /var/db/host.random ]; then
 		>/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 else
-	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
-	    > /dev/null 2>&1
-	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
-	    > /dev/null 2>&1
-
-	# reset seed file, so that if a shutdown-less reboot occurs,
-	# the next seed is not a repeat
-	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
-	    > /dev/null 2>&1
+	# Try to read seed if it was not initially present (e.g. /var on NFS)
+	random_seed
 fi
 
 # clean up left-over files
