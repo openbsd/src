@@ -1003,6 +1003,11 @@ cat_module (status)
 	wid = 0;
 	while ((c = getopt (argc, argv, CVSMODULE_OPTS)) != -1)
 	{
+	    if (c == '?') {
+		error (0, 0, "invalid module line");
+		return;
+	    }
+
 	    if (!status)
 	    {
 		if (c == 'a' || c == 'l')
