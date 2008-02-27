@@ -38,7 +38,6 @@
  */
 int b_readlb(hfsvol *vol, unsigned long num, block *bp)
 {
-  int bytes;
 #ifdef APPLE_HYB
   block *b;
   hce_mem *hce;
@@ -67,6 +66,7 @@ int b_readlb(hfsvol *vol, unsigned long num, block *bp)
   memcpy(bp, b, HFS_BLOCKSZ);
 
 #else
+  int bytes;
 
   if (lseek(vol->fd, (vol->vstart + num) * HFS_BLOCKSZ, SEEK_SET) < 0)
     {
@@ -100,7 +100,6 @@ int b_readlb(hfsvol *vol, unsigned long num, block *bp)
  */
 int b_writelb(hfsvol *vol, unsigned long num, block *bp)
 {
-  int bytes;
 #ifdef APPLE_HYB
   block *b;
   hce_mem *hce;
@@ -131,6 +130,7 @@ int b_writelb(hfsvol *vol, unsigned long num, block *bp)
   memcpy(b, bp, HFS_BLOCKSZ);
 
 #else
+  int bytes;
 
   if (lseek(vol->fd, (vol->vstart + num) * HFS_BLOCKSZ, SEEK_SET) < 0)
     {

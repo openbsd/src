@@ -190,7 +190,8 @@ int FDECL2(make_mac_volume, struct directory *, dpnt, int, start_extent)
 	    else {
 		/* allocation size has changed, so update ISO volume size */
 		if ((vlen = get_adj_size(Csize)) < 0) {
-		    sprintf(hce->error,"too many files for HFS volume");
+		    snprintf(hce->error, ERROR_SIZE, 
+		    	"too many files for HFS volume");
 		    return (-1);
 		}
 		vlen += V_ROUND_UP(start_extent * SECTOR_SIZE, Csize);
@@ -211,7 +212,7 @@ int FDECL2(make_mac_volume, struct directory *, dpnt, int, start_extent)
 	/* format and mount the "volume" */
 	if (hfs_format(hce, 0, vol_name) < 0)
 	{
-	    sprintf(hce->error,"can't HFS format %s",vol_name);
+	    snprintf(hce->error, ERROR_SIZE, "can't HFS format %s",vol_name);
 	    return(-1);
 	}
 
@@ -224,7 +225,7 @@ int FDECL2(make_mac_volume, struct directory *, dpnt, int, start_extent)
 
 	if ((vol = hfs_mount(hce, 0, 0)) == 0)
 	{
-	    sprintf(hce->error,"can't HFS mount %s",vol_name);
+	    snprintf(hce->error, ERROR_SIZE, "can't HFS mount %s",vol_name);
 	    return(-1);
 	}
 
@@ -327,7 +328,8 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 		    {
 			/* not an "exist" error, or we can't append as
 			   the filename is already HFS_MAX_FLEN chars */
-			sprintf(hce->error, "can't HFS create file %s",
+			snprintf(hce->error, ERROR_SIZE, 
+				"can't HFS create file %s",
 				s_entry->whole_name);
 			return(-1);
 		    }
@@ -366,7 +368,8 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 	    /* open file */
 	    if ((hfp = hfs_open(vol, ent->name)) == 0)
 	    {
-		sprintf(hce->error, "can't HFS open %s", s_entry->whole_name);
+		snprintf(hce->error, ERROR_SIZE, "can't HFS open %s", 
+		    s_entry->whole_name);
 		return(-1);
 	    }
 
@@ -385,7 +388,7 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 	    /* update any HFS file attributes */
 	    if ((hfs_fsetattr(hfp, ent)) < 0)
 	    {
-		sprintf(hce->error, "can't HFS set attributes %s",
+		snprintf(hce->error, ERROR_SIZE, "can't HFS set attributes %s",
 			s_entry->whole_name);
 		return(-1);
 	    }
@@ -407,7 +410,7 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 	    /* close the file and update the starting blocks */
 	    if (hfs_close(hfp, dext, rext) < 0)
 	    {
-		sprintf(hce->error, "can't HFS close file %s",
+		snprintf(hce->error, ERROR_SIZE, "can't HFS close file %s",
 			s_entry->whole_name);
 		return(-1);
 	    }
@@ -434,7 +437,9 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 		/* have a problem - can't find the real directory */
 		if(s_entry1 == NULL)
 		{
-		    sprintf(hce->error, "can't locate relocated directory %s", s_entry->whole_name);
+		    snprintf(hce->error, ERROR_SIZE,
+		    	"can't locate relocated directory %s", 
+			s_entry->whole_name);
 		    return(-1);
 		}
 	    }
@@ -456,7 +461,9 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 		    dpnt = dpnt->next;
 		    if(!dpnt)
 		    {
-			sprintf(hce->error, "can't find directory location %s", s_entry1->whole_name);
+			snprintf(hce->error, ERROR_SIZE, 
+			    "can't find directory location %s", 
+			    s_entry1->whole_name);
 			return (-1);
 		    }
 		}
@@ -485,7 +492,8 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 			{
 			    /* not an "exist" error, or we can't append as
 			       the filename is already HFS_MAX_FLEN chars */
-			    sprintf(hce->error, "can't HFS create folder %s",
+			    snprintf(hce->error, ERROR_SIZE, 
+			    	"can't HFS create folder %s",
 				s_entry->whole_name);
 			    return(-1);
 			}

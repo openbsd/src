@@ -5,7 +5,7 @@
  */
 
 /*
- * 	$Id: match.h,v 1.2 2002/11/03 20:27:03 pvalchev Exp $
+ * 	$Id: match.h,v 1.3 2008/02/27 09:59:51 espie Exp $
  */
 
 #include <inttypes.h>
@@ -25,6 +25,7 @@ int i_add_match __PR((char *fn));
 int j_add_match __PR((char *fn));
 
 int hfs_add_match __PR((char *fn));
+void hfs_add_list __PR((char *fn));
 int hfs_matches __PR((char *fn));
 intptr_t hfs_ishidden __PR((void));
 

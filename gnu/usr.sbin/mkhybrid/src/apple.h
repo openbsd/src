@@ -50,6 +50,9 @@ typedef struct {
 	unsigned short	fdflags;		/* finder flags */
 } afpmap;
 
+extern void hfs_init(char *, unsigned short, int, int, unsigned int);
+extern void clean_hfs(void);
+
 /* from "data.h" - libhfs routines */
 unsigned long d_toutime(unsigned long);
 long d_getl(unsigned char *);

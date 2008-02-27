@@ -19,7 +19,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: write.c,v 1.1 2000/10/10 20:40:22 beck Exp $";
+static char rcsid[] ="$Id: write.c,v 1.2 2008/02/27 09:59:51 espie Exp $";
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 16/3/1999 */
 #include <string.h>
@@ -148,7 +148,7 @@ void FDECL4(xfwrite, void *, buffer, int, count, int, size, FILE *, file)
 
 		if (idx == 0)
 			unlink(outfile);
-		sprintf(nbuf, "%s_%02d", outfile, idx++);
+		snprintf(nbuf, sizeof nbuf, "%s_%02d", outfile, idx++);
 		file = freopen(nbuf, "wb", file);
 		if (file == NULL) {
 			fprintf(stderr, "Cannot open '%s'.\n", nbuf);
@@ -711,11 +711,12 @@ static void FDECL1(assign_file_addresses, struct directory *, dpnt)
 			 dwpnt->table = s_entry->table;
 			 dwpnt->name = NULL;
 #ifdef APPLE_HYB
-			 sprintf(whole_path,"%s%s%s",
+			 snprintf(whole_path, sizeof whole_path, "%s%s%s",
 				 s_entry->filedir->whole_name, SPATH_SEPARATOR,
 					trans_tbl);
 #else
-			 sprintf(whole_path,"%s%sTRANS.TBL",
+			 snprintf(whole_path, sizeof whole_path, 
+			 	"%s%sTRANS.TBL",
 				 s_entry->filedir->whole_name, SPATH_SEPARATOR);
 #endif /* APPLE_HYB */
 		    } 
@@ -1325,7 +1326,8 @@ static int FDECL1(pvd_write, FILE *, outfile)
    * This will break  in the year  2000, I supose, but there is no good way
    * to get the top two digits of the year. 
    */
-  sprintf(iso_time, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d00", 1900 + local.tm_year,
+  snprintf(iso_time, sizeof iso_time, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d00", 
+	  1900 + local.tm_year,
 	  local.tm_mon+1, local.tm_mday,
 	  local.tm_hour, local.tm_min, local.tm_sec);
 
@@ -1512,7 +1514,7 @@ static int file_gen()
     /* allocate memory for the libhfs/mkisofs extra info */
     hce = (hce_mem *)e_malloc(sizeof(hce_mem));
 
-    hce->error = (char *)e_malloc(1024);
+    hce->error = (char *)e_malloc(ERROR_SIZE);
 
     /* mark as unallocated for use later */
     hce->hfs_ce = hce->hfs_hdr = hce->hfs_map = 0;

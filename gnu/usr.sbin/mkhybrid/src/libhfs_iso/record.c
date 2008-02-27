@@ -19,6 +19,7 @@
 
 # include <string.h>
 # include <errno.h>
+# include <stdlib.h>
 
 # include "internal.h"
 # include "data.h"

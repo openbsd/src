@@ -33,5 +33,7 @@ typedef struct {
   char *error;			/* HFS error message */
 } hce_mem;
 
+#define ERROR_SIZE	1024
+
 #define _HYBRID_H
 #endif /* _HYBRID_H */

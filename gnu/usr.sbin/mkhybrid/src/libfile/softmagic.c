@@ -43,7 +43,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.1 2000/10/10 20:40:37 beck Exp $";
+	"@(#)$Id: softmagic.c,v 1.2 2008/02/27 09:59:52 espie Exp $";
 #endif	/* lint */
 
 /* static int match	__P((unsigned char *, int)); */
@@ -51,8 +51,6 @@ static char *match	__P((unsigned char *, int));
 static int mget		__P((union VALUETYPE *,
 			     unsigned char *, struct magic *, int));
 static int mcheck	__P((union VALUETYPE *, struct magic *));
-static int32 mprint	__P((union VALUETYPE *, struct magic *));
-static void mdebug	__P((int32, char *, int));
 static int mconvert	__P((union VALUETYPE *, struct magic *));
 
 /*
@@ -102,7 +100,6 @@ unsigned char	*s;
 int nbytes;
 {
 	int magindex = 0;
-	int cont_level = 0;
 	union VALUETYPE p;
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
@@ -170,18 +167,6 @@ struct magic *m;
 	}
 }
 
-
-static void
-mdebug(offset, str, len)
-int32 offset;
-char *str;
-int len;
-{
-	(void) fprintf(stderr, "mget @%d: ", offset);
-	showstr(stderr, (char *) str, len);
-	(void) fputc('\n', stderr);
-	(void) fputc('\n', stderr);
-}
 
 static int
 mget(p, s, m, nbytes)

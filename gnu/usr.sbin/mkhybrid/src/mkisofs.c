@@ -20,7 +20,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: mkisofs.c,v 1.3 2001/10/01 17:05:05 drahn Exp $";
+static char rcsid[] ="$Id: mkisofs.c,v 1.4 2008/02/27 09:59:51 espie Exp $";
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 12/3/99 */
 
@@ -1140,7 +1140,6 @@ parse_input_files:
 
 #if defined(__NetBSD__) || defined(__OpenBSD__) 
     {
-	int resource;
     struct rlimit rlp;
 	if (getrlimit(RLIMIT_DATA,&rlp) == -1) 
 		perror("Warning: getrlimit");

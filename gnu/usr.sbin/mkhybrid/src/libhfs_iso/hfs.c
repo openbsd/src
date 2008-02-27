@@ -55,10 +55,11 @@ hfsvol *hfs_mount(hce_mem *hce, int pnum, int flags)
 hfsvol *hfs_mount(char *path, int pnum, int flags)
 #endif /* APPLE_HYB */
 {
-  struct stat dev;
   hfsvol *vol = 0;
 
 #ifndef APPLE_HYB
+
+  struct stat dev;
   /* see if the volume is already mounted */
 
   if (stat(path, &dev) >= 0)

@@ -41,18 +41,21 @@ gen_mac_label(defer *mac_boot)
     /* If we have a boot file, then open and check it */
     if (mac_boot->name) {
 	if (stat(mac_boot->name, &stat_buf) < 0) {
-	    sprintf(hce->error,"unable to stat HFS boot file %s", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE, 
+	    	"unable to stat HFS boot file %s", mac_boot->name);
 	    return (-1);
 	}
 
 
 	if ((fp = fopen(mac_boot->name, "rb")) == NULL) {
-	    sprintf(hce->error,"unable to open HFS boot file %s", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE,
+	    	"unable to open HFS boot file %s", mac_boot->name);
 	    return (-1);
 	}
 
 	if (fread(tmp, 1, SECTOR_SIZE, fp) != SECTOR_SIZE) {
-	    sprintf(hce->error,"unable to read HFS boot file %s", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE, 
+	    	"unable to read HFS boot file %s", mac_boot->name);
 	    return (-1);
 	}
 
@@ -61,20 +64,23 @@ gen_mac_label(defer *mac_boot)
 	mac_part = (MacPart*)(tmp+HFS_BLOCKSZ);
 
 	if (!(IS_MAC_PART(mac_part) && !strncmp(mac_part->pmPartType, pmPartType_2, 12))) {
-	    sprintf(hce->error,"%s is not a HFS boot file", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE, "%s is not a HFS boot file", 
+	    	mac_boot->name);
 	    return (-1);
 	}
 
 	/* check we have a boot block as well - last 2 blocks of file */
 
 	if (fseek(fp, -2 * HFS_BLOCKSZ, 2) != 0) {
-	    sprintf(hce->error,"unable to seek HFS boot file %s", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE, 
+	    	"unable to seek HFS boot file %s", mac_boot->name);
 	    return (-1);
 	}
 
 	/* overwrite (empty) boot block for our HFS volume */
 	if (fread(hce->hfs_hdr, 2, HFS_BLOCKSZ, fp) != HFS_BLOCKSZ) {
-	    sprintf(hce->error,"unable to read HFS boot block %s", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE, 
+	    	"unable to read HFS boot block %s", mac_boot->name);
 	    return (-1);
 	}
 
@@ -82,7 +88,8 @@ gen_mac_label(defer *mac_boot)
 
 	/* check boot block is valid */
 	if (d_getw((unsigned char *)hce->hfs_hdr) != HFS_BB_SIGWORD) {
-	    sprintf(hce->error,"%s does not contain a valid boot block", mac_boot->name);
+	    snprintf(hce->error, ERROR_SIZE,
+	    	"%s does not contain a valid boot block", mac_boot->name);
 	    return (-1);
 	}
 
