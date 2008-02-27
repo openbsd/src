@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.129 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.130 2008/02/27 20:04:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -393,7 +393,8 @@ cvs_diff_local(struct cvs_file *cf)
 		}
 
 		if (diff_rev2 == NULL)
-			cvs_printf(" %s\n", cf->file_name);
+			cvs_printf(" %s", cf->file_name);
+		cvs_printf("\n");
 	} else {
 		cvs_printf("diff ");
 		switch (diff_format) {
