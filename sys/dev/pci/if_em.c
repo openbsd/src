@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.177 2008/02/20 00:00:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.178 2008/02/27 20:05:51 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2215,15 +2215,16 @@ em_txeof(struct em_softc *sc)
 	 * If there are no pending descriptors, clear the timeout. Otherwise,
 	 * if some descriptors have been freed, restart the timeout.
 	 */
-	if (num_avail > EM_TX_CLEANUP_THRESHOLD) {
+	if (num_avail > EM_TX_CLEANUP_THRESHOLD)
 		ifp->if_flags &= ~IFF_OACTIVE;
-		/* All clean, turn off the timer */
-		if (num_avail == sc->num_tx_desc)
-			ifp->if_timer = 0;
-		/* Some cleaned, reset the timer */
-		else if (num_avail != sc->num_tx_desc_avail)
-			ifp->if_timer = EM_TX_TIMEOUT;
-	}
+
+	/* All clean, turn off the timer */
+	if (num_avail == sc->num_tx_desc)
+		ifp->if_timer = 0;
+	/* Some cleaned, reset the timer */
+	else if (num_avail != sc->num_tx_desc_avail)
+		ifp->if_timer = EM_TX_TIMEOUT;
+
 	sc->num_tx_desc_avail = num_avail;
 }
 
