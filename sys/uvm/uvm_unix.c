@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.32 2008/01/05 00:36:13 miod Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.33 2008/02/27 21:46:34 kettenis Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ uvm_coredump(p, vp, cred, chdr)
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
 	vm_map_entry_t entry;
-	vaddr_t start, end;
+	vaddr_t start, end, top;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
@@ -202,13 +202,17 @@ uvm_coredump(p, vp, cred, chdr)
 
 #ifdef MACHINE_STACK_GROWS_UP
 		if (USRSTACK <= start && start < (USRSTACK + MAXSSIZ)) {
-			end = round_page(USRSTACK + ptoa(vm->vm_ssize));
+			top = round_page(USRSTACK + ptoa(vm->vm_ssize));
+			if (end > top)
+				end = top;
+
 			if (start >= end)
 				continue;
-			start = USRSTACK;
 #else
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			start = trunc_page(USRSTACK - ptoa(vm->vm_ssize));
+			top = trunc_page(USRSTACK - ptoa(vm->vm_ssize));
+			if (start < top)
+				start = top;
 
 			if (start >= end)
 				continue;
