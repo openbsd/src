@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2008/02/27 10:30:11 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2008/02/27 15:12:10 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -719,7 +719,6 @@ parse_config(const char *filename, u_int flags)
 		log_warn("cannot allocate memory");
 		return (NULL);
 	}
-	topfile = file;
 
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
@@ -734,6 +733,7 @@ parse_config(const char *filename, u_int flags)
 		free(conf);
 		return (NULL);
 	}
+	topfile = file;
 	setservent(1);
 
 	yyparse();
