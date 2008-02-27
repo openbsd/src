@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.55 2007/12/31 19:13:36 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.56 2008/02/27 21:11:11 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -669,20 +669,16 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    pci->sc_bus == io->pi_sel.pc_bus)
 			break;
 	}
-	if (pci != NULL && pci->sc_bus == io->pi_sel.pc_bus) {
-		pc = pci->sc_pc;
-	} else {
-		error = ENXIO;
-		goto done;
-	}
+	if (i >= pci_cd.cd_ndevs)
+		return ENXIO;
+
 	/* Check bounds */
 	if (pci->sc_bus >= 256 || 
-	    io->pi_sel.pc_dev >= pci_bus_maxdevs(pc, pci->sc_bus) ||
-	    io->pi_sel.pc_func >= 8) {
-		error = EINVAL;
-		goto done;
-	}
+	    io->pi_sel.pc_dev >= pci_bus_maxdevs(pci->sc_pc, pci->sc_bus) ||
+	    io->pi_sel.pc_func >= 8)
+		return EINVAL;
 
+	pc = pci->sc_pc;
 	tag = pci_make_tag(pc, io->pi_sel.pc_bus, io->pi_sel.pc_dev,
 			   io->pi_sel.pc_func);
 
@@ -728,7 +724,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = ENOTTY;
 		break;
 	}
- done:
+
 	return (error);
 }
 
