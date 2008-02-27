@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2008/02/26 10:09:58 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2008/02/27 15:36:42 mpf Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -728,6 +728,7 @@ parse_config(char *filename, int opts)
 		free(conf);
 		return (NULL);
 	}
+	topfile = file;
 
 	yyparse();
 	errors = file->errors;
@@ -754,7 +755,6 @@ parse_config(char *filename, int opts)
 		clear_config(conf);
 		return (NULL);
 	}
-	topfile = file;
 
 	return (conf);
 }

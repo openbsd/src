@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2008/02/26 10:09:58 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2008/02/27 15:36:42 mpf Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -713,7 +713,6 @@ parse_config(char *filename, int opts)
 		errx(1, "parse_config calloc");
 		return (NULL);
 	}
-	topfile = file;
 
 	defs = &globaldefs;
 	defs->probe_interval = DEFAULT_PROBE_INTERVAL;
@@ -732,6 +731,7 @@ parse_config(char *filename, int opts)
 		free(conf);
 		return (NULL);
 	}
+	topfile = file;
 
 	/* Generation ID must be non decreasing */
 	gettimeofday(&now, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2008/02/26 10:09:58 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.38 2008/02/27 15:36:42 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1711,6 +1711,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	if ((file = pushfile(cfg->c_config, 1)) == NULL)
 		hostapd_fatal("failed to open the main config file: %s\n",
 		    cfg->c_config);
+	topfile = file;
 
 	/* Init tables and data structures */
 	TAILQ_INIT(&cfg->c_apmes);
@@ -1739,7 +1740,6 @@ hostapd_parse_file(struct hostapd_config *cfg)
 			free(sym);
 		}
 	}
-	topfile = file;
 
 	return (errors ? EINVAL : ret);
 }

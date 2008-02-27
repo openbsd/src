@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.108 2008/02/26 10:09:58 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.109 2008/02/27 15:36:42 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1728,6 +1728,7 @@ parse_config(const char *filename, int opts)
 		free(conf);
 		return (NULL);
 	}
+	topfile = file;
 	setservent(1);
 
 	yyparse();
@@ -2068,7 +2069,6 @@ table_inherit(struct table *tb)
 		h->tablename = tb->conf.name;
 		TAILQ_INSERT_HEAD(&tb->hosts, h, entry);
 	}
-	topfile = file;
 
 	conf->sc_tablecount++;
 	TAILQ_INSERT_HEAD(conf->sc_tables, tb, entry);
