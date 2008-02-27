@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.139 2008/02/24 20:04:05 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.140 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -424,7 +424,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
-	int cf_kflag, oflags, exists;
+	int cf_kflag, oflags, exists, fd;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
@@ -540,6 +540,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		if (co_flags & CO_MERGE) {
 			cvs_merge_file(cf, 1);
 			tosend = cf->file_path;
+			fd = cf->fd;
 		}
 
 		if (co_flags & CO_COMMIT)
@@ -561,14 +562,15 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 				(void)xsnprintf(template, MAXPATHLEN,
 				    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
 
-				rcs_rev_write_stmp(cf->file_rcs, rnum,
+				fd = rcs_rev_write_stmp(cf->file_rcs, rnum,
 				    template, 0);
 				tosend = template;
 			}
 
-			cvs_remote_send_file(tosend);
+			cvs_remote_send_file(tosend, fd);
 
 			if (!(co_flags & CO_MERGE)) {
+				close(fd);
 				(void)unlink(template);
 				cvs_worklist_run(&temp_files,
 				    cvs_worklist_unlink);

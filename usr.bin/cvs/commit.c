@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.130 2008/02/20 17:29:28 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.131 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -547,6 +547,7 @@ cvs_commit_local(struct cvs_file *cf)
 static BUF *
 commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 {
+	int fd1, fd2, f;
 	char *p1, *p2, *p;
 	BUF *b;
 
@@ -555,14 +556,14 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
 		b = cvs_buf_load_fd(cf->fd);
-		cvs_buf_write_stmp(b, p1, NULL);
+		fd1 = cvs_buf_write_stmp(b, p1, NULL);
 		cvs_buf_free(b);
 	} else {
-		rcs_rev_write_stmp(cf->file_rcs, rev, p1, 0);
+		fd1 = rcs_rev_write_stmp(cf->file_rcs, rev, p1, 0);
 	}
 
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-	rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
+	fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
 	b = cvs_buf_alloc(128);
 
@@ -572,10 +573,17 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 		p = p1;
 		p1 = p2;
 		p2 = p;
+
+		f = fd1;
+		fd1 = fd2;
+		fd2 = f;
 	}
 
-	if (cvs_diffreg(p1, p2, b) == D_ERROR)
+	if (cvs_diffreg(p1, p2, fd1, fd2, b) == D_ERROR)
 		fatal("commit_diff: failed to get RCS patch");
+
+	close(fd1);
+	close(fd2);
 
 	xfree(p1);
 	xfree(p2);

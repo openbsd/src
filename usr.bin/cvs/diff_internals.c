@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.18 2008/02/03 18:59:44 tobias Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.19 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -295,10 +295,10 @@ u_char cup2low[256] = {
 };
 
 int
-cvs_diffreg(const char *file1, const char *file2, BUF *out)
+cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2, BUF *out)
 {
 	FILE *f1, *f2;
-	int i, rval;
+	int i, rval, fd1, fd2;
 
 	f1 = f2 = NULL;
 	rval = D_SAME;
@@ -310,23 +310,38 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	if (out != NULL)
 		diffbuf = out;
 
-	f1 = fopen(file1, "r");
+	fd1 = dup(_fd1);
+	if (fd1 == -1)
+		fatal("cvs_diffreg: dup: %s", strerror(errno));
+
+	fd2 = dup(_fd2);
+	if (fd2 == -1)
+		fatal("cvs_diffreg: dup: %s", strerror(errno));
+
+	if (lseek(fd1, SEEK_SET, 0) < 0)
+		fatal("cvs_diffreg: lseek: %s", strerror(errno));
+
+	f1 = fdopen(fd1, "r");
 	if (f1 == NULL) {
 		cvs_log(LP_ERR, "%s", file1);
 		goto closem;
 	}
 
-	f2 = fopen(file2, "r");
+	if (lseek(fd2, SEEK_SET, 0) < 0)
+		fatal("cvs_diffreg: lseek: %s", strerror(errno));
+
+	f2 = fdopen(fd2, "r");
 	if (f2 == NULL) {
 		cvs_log(LP_ERR, "%s", file2);
 		goto closem;
 	}
 
-	if (fstat(fileno(f1), &stb1) < 0) {
+	if (fstat(fd1, &stb1) < 0) {
 		cvs_log(LP_ERR, "%s", file1);
 		goto closem;
 	}
-	if (fstat(fileno(f2), &stb2) < 0) {
+
+	if (fstat(fd2, &stb2) < 0) {
 		cvs_log(LP_ERR, "%s", file2);
 		goto closem;
 	}
@@ -386,6 +401,7 @@ closem:
 	}
 	if (f1 != NULL)
 		fclose(f1);
+
 	if (f2 != NULL)
 		fclose(f2);
 

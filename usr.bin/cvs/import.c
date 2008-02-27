@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.84 2008/02/20 17:29:28 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.85 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -359,6 +359,7 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 {
 	char *p1, *p2;
 	BUF *b1, *b2;
+	int fd1, fd2;
 
 	b2 = cvs_buf_alloc(128);
 
@@ -366,15 +367,18 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 		b1 = cvs_buf_load_fd(cf->fd);
 
 		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b1, p1, NULL);
+		fd1 = cvs_buf_write_stmp(b1, p1, NULL);
 		cvs_buf_free(b1);
 
 		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
+		fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
 		diff_format = D_RCSDIFF;
-		if (cvs_diffreg(p2, p1, b2) == D_ERROR)
+		if (cvs_diffreg(p2, p1, fd2, fd1, b2) == D_ERROR)
 			fatal("import_get_rcsdiff: failed to get RCS patch");
+
+		close(fd1);
+		close(fd2);
 
 		(void)unlink(p1);
 		(void)unlink(p2);

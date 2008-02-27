@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.31 2008/02/10 14:00:41 joris Exp $	*/
+/*	$OpenBSD: remote.h,v 1.32 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -119,7 +119,7 @@ void	cvs_remote_classify_file(struct cvs_file *);
 void	cvs_remote_output(const char *);
 char	*cvs_remote_input(void);
 void	cvs_remote_receive_file(int, size_t);
-void	cvs_remote_send_file(const char *);
+void	cvs_remote_send_file(const char *, int);
 
 extern int cvs_client_inlog_fd;
 extern int cvs_client_outlog_fd;

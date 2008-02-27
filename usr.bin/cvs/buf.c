@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.68 2008/02/11 20:33:10 tobias Exp $	*/
+/*	$OpenBSD: buf.c,v 1.69 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -276,7 +276,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
  * specified using <template> (see mkstemp.3). NB. This function will modify
  * <template>, as per mkstemp
  */
-void
+int
 cvs_buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 {
 	int fd;
@@ -294,9 +294,12 @@ cvs_buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 			fatal("cvs_buf_write_stmp: futimes failed");
 	}
 
-	(void)close(fd);
-
 	cvs_worklist_add(template, &temp_files);
+
+	if (lseek(fd, SEEK_SET, 0) < 0)
+		fatal("cvs_buf_write_stmp: lseek: %s", strerror(errno));
+
+	return (fd);
 }
 
 /*

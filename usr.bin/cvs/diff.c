@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.130 2008/02/27 20:04:59 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.131 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/time.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -220,6 +221,7 @@ cvs_diff_local(struct cvs_file *cf)
 {
 	RCSNUM *r1;
 	BUF *b1;
+	int fd1, fd2;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
 	char rbuf[CVS_REV_BUFSZ], *p1, *p2;
@@ -331,8 +333,8 @@ cvs_diff_local(struct cvs_file *cf)
 
 			if (cvs_cmdop == CVS_OP_DIFF)
 				cvs_printf("retrieving revision %s\n", rbuf);
-			rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
-			if (utimes(p1, tv) == -1)
+			fd1 = rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
+			if (futimes(fd1, tv) == -1)
 				fatal("cvs_diff_local: utimes failed");
 		}
 	}
@@ -347,8 +349,8 @@ cvs_diff_local(struct cvs_file *cf)
 
 		if (cvs_cmdop == CVS_OP_DIFF)
 			cvs_printf("retrieving revision %s\n", rbuf);
-		rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
-		if (utimes(p2, tv2) == -1)
+		fd2 = rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
+		if (futimes(fd2, tv2) == -1)
 			fatal("cvs_diff_local: utimes failed");
 	} else if (cf->file_status != FILE_REMOVED) {
 		if (cvs_cmdop == CVS_OP_RDIFF || (cvs_server_active == 1 &&
@@ -359,9 +361,9 @@ cvs_diff_local(struct cvs_file *cf)
 				tv2[0].tv_usec = 0;
 				tv2[1] = tv2[0];
 
-				rcs_rev_write_stmp(cf->file_rcs,
+				fd2 = rcs_rev_write_stmp(cf->file_rcs,
 				    cf->file_rcsrev, p2, 0);
-				if (utimes(p2, tv2) == -1)
+				if (futimes(fd2, tv2) == -1)
 					fatal("cvs_diff_local: utimes failed");
 			}
 		} else {
@@ -373,7 +375,7 @@ cvs_diff_local(struct cvs_file *cf)
 			tv2[0].tv_usec = 0;
 			tv2[1] = tv2[0];
 
-			cvs_buf_write_stmp(b1, p2, tv2);
+			fd2 = cvs_buf_write_stmp(b1, p2, tv2);
 			cvs_buf_free(b1);
 		}
 	}
@@ -429,15 +431,26 @@ cvs_diff_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_ADDED ||
 	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev1 == NULL)) {
 		xfree(p1);
+		close(fd1);
 		(void)xasprintf(&p1, "%s", CVS_PATH_DEVNULL);
+		if ((fd1 = open(p1, O_RDONLY)) == -1)
+			fatal("cvs_diff_local: cannot open %s",
+			    CVS_PATH_DEVNULL);
 	} else if (cf->file_status == FILE_REMOVED ||
 	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev2 == NULL)) {
 		xfree(p2);
+		close(fd2);
 		(void)xasprintf(&p2, "%s", CVS_PATH_DEVNULL);
+		if ((fd1 = open(p2, O_RDONLY)) == -1)
+			fatal("cvs_diff_local: cannot open %s",
+			    CVS_PATH_DEVNULL);
 	}
 
-	if (cvs_diffreg(p1, p2, NULL) == D_ERROR)
+	if (cvs_diffreg(p1, p2, fd1, fd2, NULL) == D_ERROR)
 		fatal("cvs_diff_local: failed to get RCS patch");
+
+	close(fd1);
+	close(fd2);
 
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
 

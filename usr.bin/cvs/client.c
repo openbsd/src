@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.105 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.106 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -525,7 +525,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 	case FILE_ADDED:
 	case FILE_MODIFIED:
 		cvs_client_send_request("Modified %s", cf->file_name);
-		cvs_remote_send_file(cf->file_path);
+		cvs_remote_send_file(cf->file_path, cf->fd);
 		break;
 	case FILE_UPTODATE:
 		cvs_client_send_request("Unchanged %s", cf->file_name);

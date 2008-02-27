@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.250 2008/02/20 09:19:04 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.251 2008/02/27 22:34:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1292,6 +1292,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
+	int fd1, fd2;
 	char *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
 	BUF *prevbuf, *newdiff, *newdeltatext;
@@ -1323,14 +1324,18 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 
 		/* calculate new diff */
 		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-		rcs_rev_write_stmp(rf, nextrdp->rd_num, path_tmp1, 0);
+		fd1 = rcs_rev_write_stmp(rf, nextrdp->rd_num, path_tmp1, 0);
 
 		(void)xasprintf(&path_tmp2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		rcs_rev_write_stmp(rf, prevrdp->rd_num, path_tmp2, 0);
+		fd2 = rcs_rev_write_stmp(rf, prevrdp->rd_num, path_tmp2, 0);
 
 		diff_format = D_RCSDIFF;
-		if (cvs_diffreg(path_tmp1, path_tmp2, newdiff) == D_ERROR)
+		if (cvs_diffreg(path_tmp1, path_tmp2,
+		    fd1, fd2, newdiff) == D_ERROR)
 			fatal("rcs_diffreg failed");
+
+		close(fd1);
+		close(fd2);
 
 		newdeltatext = newdiff;
 	} else if (nextrdp == NULL && prevrdp != NULL) {
@@ -3141,7 +3146,7 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
  * specified using <template> (see mkstemp(3)). NB. This function will modify
  * <template>, as per mkstemp.
  */
-void
+int
 rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 {
 	int fd;
@@ -3152,7 +3157,10 @@ rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 	cvs_worklist_add(template, &temp_files);
 	rcs_rev_write_fd(rfp, rev, fd, mode);
 
-	(void)close(fd);
+	if (lseek(fd, SEEK_SET, 0) < 0)
+		fatal("rcs_rev_write_stmp: lseek: %s", strerror(errno));
+
+	return (fd);
 }
 
 static void
