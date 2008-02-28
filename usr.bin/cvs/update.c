@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.132 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.133 2008/02/28 21:55:48 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -302,9 +302,9 @@ void
 cvs_update_local(struct cvs_file *cf)
 {
 	char *tag;
-	int ret, flags;
+	int ent_kflag, rcs_kflag, ret, flags;
 	CVSENTRIES *entlist;
-	char kbuf[8], rbuf[CVS_REV_BUFSZ];
+	char rbuf[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
@@ -368,13 +368,15 @@ cvs_update_local(struct cvs_file *cf)
 			if (kflag)
 				cf->file_status = FILE_CHECKOUT;
 		} else {
-			if (kflag) {
-				(void)xsnprintf(kbuf, sizeof(kbuf),
-				    "-k%s", cf->file_rcs->rf_expand);
+			if (strlen(cf->file_ent->ce_opts) < 3)
+				fatal("malformed option for file %s",
+				    cf->file_path);
 
-			    	if (strcmp(kbuf, cf->file_ent->ce_opts))
-					cf->file_status = FILE_CHECKOUT;
-			} else if (reset_option)
+			ent_kflag = rcs_kflag_get(cf->file_ent->ce_opts + 2);
+			rcs_kflag = rcs_kwexp_get(cf->file_rcs);
+
+			if ((kflag && (kflag != ent_kflag)) ||
+			    (reset_option && (ent_kflag != rcs_kflag)))
 				cf->file_status = FILE_CHECKOUT;
 		}
 	}
