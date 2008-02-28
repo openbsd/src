@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.42 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.43 2008/02/28 20:35:27 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.42 2008/02/27 22:34:04 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.43 2008/02/28 20:35:27 joris Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -303,13 +303,10 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	increase();
 
 	/* fds[0] and fds[1] are closed in readin() */
-	cvs_printf("calling readin with fds[0] (%s)\n", argv[0]);
 	m = readin(fds[0], &d13);
-	cvs_printf("calling readin with fds[1] (%s)\n", argv[1]);
 	n = readin(fds[1], &d23);
 
 	for (i = 0; i <= 2; i++) {
-		cvs_printf("opening fds[%d] (%s)\n", i + 2, argv[i + 2]);
 		if ((fp[i] = fdopen(fds[i + 2], "r")) == NULL) {
 			cvs_log(LP_ERR, "%s", argv[i + 2]);
 			return (-1);
