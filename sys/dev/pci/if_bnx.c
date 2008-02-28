@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.57 2008/02/22 22:25:27 kettenis Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.58 2008/02/28 02:02:43 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -38,7 +38,7 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
 /*
  * The following controllers are supported by this driver:
  *   BCM5706C A2, A3
- *   BCM5708C B1
+ *   BCM5708C B1, B2
  *
  * The following controllers are not supported by this driver:
  *   BCM5706C A0, A1
@@ -658,11 +658,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	/* Save ASIC revsion info. */
 	sc->bnx_chipid =  REG_RD(sc, BNX_MISC_ID);
 
-	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
-		printf(": SerDes controllers are not supported!\n");
-		goto bnx_attach_fail;
-	}
-
 	/*
 	 * Find the base address for shared memory access.
 	 * Newer versions of bootcode use a signature and offset
@@ -749,7 +744,7 @@ bnx_attachhook(void *xsc)
 	struct pci_attach_args *pa = &sc->bnx_pa;
 	struct ifnet		*ifp;
 	u_int32_t		val;
-	int error;
+	int			error, mii_flags = 0;
 
 	if ((error = bnx_read_firmware(sc)) != 0) {
 		printf("%s: error %d, could not read firmware\n",
@@ -814,28 +809,23 @@ bnx_attachhook(void *xsc)
 	sc->bnx_stats_ticks = 1000000 & 0xffff00;
 
 	/*
-	 * The copper based NetXtreme II controllers
-	 * use an integrated PHY at address 1 while
-	 * the SerDes controllers use a PHY at
-	 * address 2.
+	 * The SerDes based NetXtreme II controllers
+	 * that support 2.5Gb operation (currently 
+	 * 5708S) use a PHY at address 2, otherwise 
+	 * the PHY is present at address 1.
 	 */
 	sc->bnx_phy_addr = 1;
 
 	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
 		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
-		if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5708) {
+		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
 			sc->bnx_phy_addr = 2;
 			val = REG_RD_IND(sc, sc->bnx_shmem_base +
 					 BNX_SHARED_HW_CFG_CONFIG);
 			if (val & BNX_SHARED_HW_CFG_PHY_2_5G)
 				sc->bnx_phy_flags |= BNX_PHY_2_5G_CAPABLE_FLAG;
 		}
-	}
-
-	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
-		printf(": SerDes is not supported by this driver!\n");
-		goto bnx_attach_fail;
 	}
 
 	/* Allocate DMA memory resources. */
@@ -853,10 +843,6 @@ bnx_attachhook(void *xsc)
 	ifp->if_ioctl = bnx_ioctl;
 	ifp->if_start = bnx_start;
 	ifp->if_watchdog = bnx_watchdog;
-        if (sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
-                ifp->if_baudrate = IF_Mbps(2500);
-        else
-                ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -885,8 +871,10 @@ bnx_attachhook(void *xsc)
 	/* Look for our PHY. */
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, bnx_ifmedia_upd,
 	    bnx_ifmedia_sts);
+	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
+		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(&sc->bnx_dev, &sc->bnx_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&sc->bnx_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->bnx_dev.dv_xname);
@@ -949,12 +937,8 @@ bnx_detach(void *xsc)
 	ether_ifdetach(ifp);
 
 	/* If we have a child device on the MII bus remove it too. */
-	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
-		ifmedia_removeall(&sc->bnx_ifmedia);
-	} else {
-		bus_generic_detach(dev);
-		device_delete_child(dev, sc->bnx_mii);
-	}
+	bus_generic_detach(dev);
+	device_delete_child(dev, sc->bnx_mii);
 
 	/* Release all remaining resources. */
 	bnx_release_resources(sc);
@@ -1214,28 +1198,52 @@ bnx_miibus_statchg(struct device *dev)
 {
 	struct bnx_softc	*sc = (struct bnx_softc *)dev;
 	struct mii_data		*mii = &sc->bnx_mii;
+	int			val;
 
-	BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT);
+	val = REG_RD(sc, BNX_EMAC_MODE);
+	val &= ~(BNX_EMAC_MODE_PORT | BNX_EMAC_MODE_HALF_DUPLEX | 
+		BNX_EMAC_MODE_MAC_LOOP | BNX_EMAC_MODE_FORCE_LINK | 
+		BNX_EMAC_MODE_25G);
 
-	/* Set MII or GMII inerface based on the speed negotiated by the PHY. */
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-		DBPRINT(sc, BNX_INFO, "Setting GMII interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT_GMII);
-	} else {
-		DBPRINT(sc, BNX_INFO, "Setting MII interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT_MII);
+	/* Set MII or GMII interface based on the speed
+	 * negotiated by the PHY.
+	 */
+	switch (IFM_SUBTYPE(mii->mii_media_active)) {
+	case IFM_10_T:
+		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
+			DBPRINT(sc, BNX_INFO, "Enabling 10Mb interface.\n");
+			val |= BNX_EMAC_MODE_PORT_MII_10;
+			break;
+		}
+		/* FALLTHROUGH */
+	case IFM_100_TX:
+		DBPRINT(sc, BNX_INFO, "Enabling MII interface.\n");
+		val |= BNX_EMAC_MODE_PORT_MII;
+		break;
+	case IFM_2500_SX:
+		DBPRINT(sc, BNX_INFO, "Enabling 2.5G MAC mode.\n");
+		val |= BNX_EMAC_MODE_25G;
+		/* FALLTHROUGH */
+	case IFM_1000_T:
+	case IFM_1000_SX:
+		DBPRINT(sc, BNX_INFO, "Enablinb GMII interface.\n");
+		val |= BNX_EMAC_MODE_PORT_GMII;
+		break;
+	default:
+		val |= BNX_EMAC_MODE_PORT_GMII;
+		break;
 	}
 
 	/* Set half or full duplex based on the duplicity
 	 * negotiated by the PHY.
 	 */
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
-		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
-		BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
-	} else {
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
 		DBPRINT(sc, BNX_INFO, "Setting Half-Duplex interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
-	}
+		val |= BNX_EMAC_MODE_HALF_DUPLEX;
+	} else
+		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
+
+	REG_WR(sc, BNX_EMAC_MODE, val);
 }
 
 /****************************************************************************/
@@ -2895,11 +2903,11 @@ void
 bnx_stop(struct bnx_softc *sc)
 {
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	struct mii_data		*mii = NULL;
+	struct ifmedia_entry	*ifm;
+	struct mii_data		*mii;
+	int			mtmp, itmp;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
-
-	mii = &sc->bnx_mii;
 
 	timeout_del(&sc->bnx_timeout);
 
@@ -2920,6 +2928,21 @@ bnx_stop(struct bnx_softc *sc)
 
 	/* Free TX buffers. */
 	bnx_free_tx_chain(sc);
+
+	/*
+	 * Isolate/power down the PHY, but leave the media selection
+	 * unchanged so that things will be put back to normal when
+	 * we bring the interface back up.
+	 */
+	mii = &sc->bnx_mii;
+	itmp = ifp->if_flags;
+	ifp->if_flags |= IFF_UP;
+	ifm = mii->mii_media.ifm_cur;
+	mtmp = ifm->ifm_media;
+	ifm->ifm_media = IFM_ETHER|IFM_NONE;
+	mii_mediachg(mii);
+	ifm->ifm_media = mtmp;
+	ifp->if_flags = itmp;
 
 	ifp->if_timer = 0;
 
@@ -3615,13 +3638,9 @@ bnx_ifmedia_upd(struct ifnet *ifp)
 {
 	struct bnx_softc	*sc;
 	struct mii_data		*mii;
-	struct ifmedia		*ifm;
 	int			rc = 0;
 
 	sc = ifp->if_softc;
-	ifm = &sc->bnx_ifmedia;
-
-	/* DRC - ToDo: Add SerDes support. */
 
 	mii = &sc->bnx_mii;
 	sc->bnx_link = 0;
@@ -3653,8 +3672,6 @@ bnx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	s = splnet();
 
 	mii = &sc->bnx_mii;
-
-	/* DRC - ToDo: Add SerDes support. */
 
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
@@ -4517,7 +4534,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct mii_data		*mii;
+	struct mii_data		*mii = &sc->bnx_mii;
 	int			s, error = 0;
 
 	s = splnet();
@@ -4580,14 +4597,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
 		    sc->bnx_phy_flags);
 
-		if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
-			error = ifmedia_ioctl(ifp, ifr,
-			    &sc->bnx_ifmedia, command);
-		else {
-			mii = &sc->bnx_mii;
-			error = ifmedia_ioctl(ifp, ifr,
-			    &mii->mii_media, command);
-		}
+		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 
 	default:
@@ -5061,8 +5071,6 @@ bnx_tick(void *xsc)
 	/* If link is up already up then we're done. */
 	if (sc->bnx_link)
 		goto bnx_tick_exit;
-
-	/* DRC - ToDo: Add SerDes support and check SerDes link here. */
 
 	mii = &sc->bnx_mii;
 	mii_tick(mii);

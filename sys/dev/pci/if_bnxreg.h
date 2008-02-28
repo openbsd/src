@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.22 2008/02/22 22:25:27 kettenis Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.23 2008/02/28 02:02:43 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4593,8 +4593,6 @@ struct bnx_softc
 
 	struct pci_attach_args		bnx_pa;
 	pci_intr_handle_t		bnx_ih;
-
-	struct ifmedia		bnx_ifmedia;		/* TBI media info */
 
 	bus_space_tag_t		bnx_btag;			/* Device bus tag */
 	bus_space_handle_t	bnx_bhandle;		/* Device bus handle */
