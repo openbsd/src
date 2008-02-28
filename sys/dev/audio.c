@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.89 2007/11/17 13:31:30 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.90 2008/02/28 09:15:04 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2735,6 +2735,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	oldpblksize = sc->sc_pr.blksize;
 	oldrblksize = sc->sc_rr.blksize;
 	if (ai->blocksize != ~0) {
+		sc->sc_blkset = 0;
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
@@ -2748,8 +2749,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			fs = rp.channels * (rp.precision / 8) * rp.factor; 
 			fpb = ai->blocksize / fs;
 		}
-		audio_set_blksize(sc, AUMODE_RECORD, fpb);
-		sc->sc_blkset = 1;
+		if (sc->sc_blkset == 0)
+			audio_set_blksize(sc, AUMODE_RECORD, fpb);
 	}
 	if (np) {
 		if (ai->blocksize == ~0 || ai->blocksize == 0) {
@@ -2758,9 +2759,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			fs = pp.channels * (pp.precision / 8) * pp.factor; 
 			fpb = ai->blocksize / fs;
 		}
-		audio_set_blksize(sc, AUMODE_PLAY, fpb);
-		sc->sc_blkset = 1;
+		if (sc->sc_blkset == 0)
+			audio_set_blksize(sc, AUMODE_PLAY, fpb);
 	}
+	if ((ai->blocksize != ~0) && (ai->blocksize != 0))
+		sc->sc_blkset = 1;
 
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr)
