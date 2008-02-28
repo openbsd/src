@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.251 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.252 2008/02/28 20:24:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3132,8 +3132,6 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 				fatal("rcs_rev_write_fd: %s", strerror(errno));
 		} while ((lp = TAILQ_NEXT(lp, l_list)) != nlp);
 	}
-
-	/* XXX: do we need to call futimes(2) on the output fd? */
 
 	cvs_freelines(lines);
 
