@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.9 2008/01/05 17:33:28 mbalmer Exp $
+.\"	$OpenBSD: ldattach.8,v 1.10 2008/02/28 11:22:12 mbalmer Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2008 $
+.Dd $Mdocdate: February 28 2008 $
 .Dt LDATTACH 8
 .Os
 .Sh NAME
@@ -71,7 +71,9 @@ and
 line disciplines only.
 Chooses the condition which will cause the current system time to be
 immediately copied to the terminal timestamp storage for subsequent use by
-.Xr nmea 4 .
+.Xr nmea 4
+or
+.Xr msts 4 .
 Only one can be used.
 .Pp
 .Bl -tag -width DCDXX -offset indent -compact

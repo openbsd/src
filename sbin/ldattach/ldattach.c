@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.4 2008/01/05 17:33:28 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.5 2008/02/28 11:22:12 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -153,9 +153,10 @@ main(int argc, char *argv[])
 		goto bail_out;
 	}
 
-	syslog(LOG_INFO, "attach %s on %s", disc, dev);
-	if ((fd = open(dev, O_RDWR)) < 0)
+	if ((fd = open(dev, O_RDWR)) < 0) {
+		syslog(LOG_ERR, "can't open %s", dev);
 		goto bail_out;
+	}
 
 	/*
 	 * Get the current line attributes, modify only values that are
@@ -235,6 +236,7 @@ main(int argc, char *argv[])
 	if (!nodaemon && daemon(0, 0))
 		errx(1, "can't daemonize");
 
+	syslog(LOG_INFO, "attach %s on %s", disc, dev);
 	signal(SIGHUP, coroner);
 	signal(SIGTERM, coroner);
 
