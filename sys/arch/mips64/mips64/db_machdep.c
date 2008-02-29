@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.15 2008/02/18 19:47:36 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.16 2008/02/29 19:00:39 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -148,19 +148,20 @@ kdb_trap(type, fp)
 	bcopy((void *)&ddb_regs, (void *)fp, NUMSAVEREGS * sizeof(register_t));
 	return(TRUE);
 }
+
 void
 db_read_bytes(addr, size, data)
 	vaddr_t addr;
 	size_t      size;
 	char       *data;
 {
-	while(size >= sizeof(int)) {
+	while (size >= sizeof(int)) {
 		*((int *)data)++ = kdbpeek((void *)addr);
 		addr += sizeof(int);
 		size -= sizeof(int);
 	}
 
-	if (size > sizeof(short)) {
+	if (size >= sizeof(short)) {
 		*((short *)data)++ = kdbpeekw((void *)addr);
 		addr += sizeof(short);
 		size -= sizeof(short);
@@ -195,7 +196,7 @@ db_write_bytes(addr, size, data)
 	if (len) {
 		kdbpokeb(ptr, *data++);
 	}
-	if (addr < VM_MIN_KERNEL_ADDRESS) {
+	if (addr < VM_MAXUSER_ADDRESS) {
 		Mips_HitSyncDCache(addr, size);
 		Mips_InvalidateICache(PHYS_TO_KSEG0(addr & 0xffff), size);
 	}
@@ -402,8 +403,8 @@ done:
 		(*pr)("%s+%p ", symname, diff);
 	(*pr)("(%llx,%llx,%llx,%llx) sp %llx ra %llx, sz %d\n", a0, a1, a2, a3, sp, ra, stksize);
 
-	if (subr == (long)k_intr || subr == (long)k_general) {
-		if (subr == (long)k_intr)
+	if (subr == (vaddr_t)k_intr || subr == (vaddr_t)k_general) {
+		if (subr == (vaddr_t)k_intr)
 			(*pr)("(KERNEL INTERRUPT)\n");
 		else
 			(*pr)("(KERNEL TRAP)\n");
@@ -605,7 +606,7 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 			continue;
 
 		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
-			printf("%2d v=%16llx", tlbno, tlb.tlb_hi & (long)~0xff);
+			printf("%2d v=%16llx", tlbno, tlb.tlb_hi & ~0xffL);
 			printf("/%02x ", tlb.tlb_hi & 0xff);
 
 			if (tlb.tlb_lo0 & PG_V) {
