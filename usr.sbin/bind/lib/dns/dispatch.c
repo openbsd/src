@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #include <isc/entropy.h>
-#include <isc/lcg.h>
+#include <isc/shuffle.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/print.h>
@@ -61,7 +61,7 @@ typedef struct dns_qid {
 	unsigned int	qid_nbuckets;	/*%< hash table size */
 	unsigned int	qid_increment;	/*%< id increment on collision */
 	isc_mutex_t	lock;
-	isc_lcg_t	qid_lcg;	/* state generator info */
+	isc_shuffle_t	qid_shuffle;	/* state generator info */
 	dns_nsid_t      nsid;
 	dns_displist_t	*qid_table;	/*%< the table itself */
 } dns_qid_t;
@@ -284,7 +284,7 @@ static dns_messageid_t
 dns_randomid(dns_qid_t *qid) {
 	isc_uint16_t id;
 
-	id = isc_lcg_generate16(&qid->qid_lcg);
+	id = isc_shuffle_generate16(&qid->qid_shuffle);
 
 	return ((dns_messageid_t)id);
 }
@@ -1444,7 +1444,7 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 	qid->qid_increment = increment;
 	qid->magic = QID_MAGIC;
 
-	isc_lcg_init(&qid->qid_lcg);
+	isc_shuffle_init(&qid->qid_shuffle);
 
 	*qidp = qid;
 	return (ISC_R_SUCCESS);

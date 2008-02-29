@@ -1,11 +1,11 @@
-$OpenBSD: README.OpenBSD,v 1.8 2004/09/28 17:14:01 jakob Exp $
+$OpenBSD: README.OpenBSD,v 1.9 2008/02/29 12:21:10 deraadt Exp $
 
 additional features
 
 - write pid-file before chroot
 - privilege separation for binding to privileged ports from within chroot
-- add LCG (Linear Congruential Generator) implementation to libisc
-- use LCG instead of LFSR for ID generation until LFSR is proven reliable
+- add 64K entry shuffle (somewhat like Fisher-Yates) implementation to libisc
+- use shuffle instead of LFSR for ID generation
 - strlcpy/strlcat/snprintf fixes
 
 default parameter changes
