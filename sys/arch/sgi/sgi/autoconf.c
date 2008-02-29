@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2007/06/01 19:25:10 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2008/02/29 19:02:34 miod Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -202,10 +202,10 @@ makebootdev(const char *bp, int offs)
 		devname = "sd";
 		cp += 5;
 		cp = boot_getnr(cp, &i);
-		if (*cp == ',') {
+		if (*cp++ == ',') {
 			cp = boot_getnr(cp, &i);
 			unit = i - 1;
-			if (*cp == ',') {
+			if (*cp++ == ',') {
 				cp = boot_getnr(cp, &i);
 				partition = i;
 			}
@@ -235,7 +235,8 @@ makebootdev(const char *bp, int offs)
 		return -1;
 	}
 
-	snprintf(bootdev, sizeof(bootdev), "%s%d%c", devname, unit, 'a');
+	snprintf(bootdev, sizeof(bootdev), "%s%d%c", devname, unit,
+	    'a' + partition);
 	return 0;
 }
 
