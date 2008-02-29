@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.107 2008/02/28 20:00:56 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.108 2008/02/29 21:43:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -751,6 +751,7 @@ cvs_client_updated(char *data)
 
 	xfree(entry);
 
+	(void)unlink(fpath);
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_updated: open: %s: %s",
 		    fpath, strerror(errno));
@@ -828,6 +829,7 @@ cvs_client_merged(char *data)
 	cvs_ent_close(ent, ENT_SYNC);
 	xfree(entry);
 
+	(void)unlink(fpath);
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_merged: open: %s: %s",
 		    fpath, strerror(errno));

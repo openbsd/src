@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.140 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.141 2008/02/29 21:43:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -424,7 +424,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
-	int cf_kflag, oflags, exists, fd;
+	int cf_kflag, exists, fd;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
@@ -450,16 +450,16 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	}
 
 	if (cvs_server_active == 0) {
+		(void)unlink(cf->file_path);
+
 		if (!(co_flags & CO_MERGE)) {
-			oflags = O_WRONLY | O_TRUNC;
 			if (cf->fd != -1) {
 				exists = 1;
 				(void)close(cf->fd);
-			} else  {
-				oflags |= O_CREAT;
 			}
 
-			cf->fd = open(cf->file_path, oflags);
+			cf->fd = open(cf->file_path,
+			    O_CREAT | O_WRONLY | O_TRUNC);
 			if (cf->fd == -1)
 				fatal("cvs_checkout_file: open: %s",
 				    strerror(errno));
@@ -538,6 +538,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		}
 	} else {
 		if (co_flags & CO_MERGE) {
+			(void)unlink(cf->file_path);
 			cvs_merge_file(cf, 1);
 			tosend = cf->file_path;
 			fd = cf->fd;
