@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.86 2008/03/01 20:45:41 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.87 2008/03/01 20:49:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -368,29 +368,27 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 
 	b2 = cvs_buf_alloc(128);
 
-	if (cvs_noexec != 1) {
-		b1 = cvs_buf_load_fd(cf->fd);
+	b1 = cvs_buf_load_fd(cf->fd);
 
-		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-		fd1 = cvs_buf_write_stmp(b1, p1, NULL);
-		cvs_buf_free(b1);
+	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+	fd1 = cvs_buf_write_stmp(b1, p1, NULL);
+	cvs_buf_free(b1);
 
-		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
+	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+	fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
-		diff_format = D_RCSDIFF;
-		if (cvs_diffreg(p2, p1, fd2, fd1, b2) == D_ERROR)
-			fatal("import_get_rcsdiff: failed to get RCS patch");
+	diff_format = D_RCSDIFF;
+	if (cvs_diffreg(p2, p1, fd2, fd1, b2) == D_ERROR)
+		fatal("import_get_rcsdiff: failed to get RCS patch");
 
-		close(fd1);
-		close(fd2);
+	close(fd1);
+	close(fd2);
 
-		(void)unlink(p1);
-		(void)unlink(p2);
+	(void)unlink(p1);
+	(void)unlink(p2);
 
-		xfree(p1);
-		xfree(p2);
-	}
+	xfree(p1);
+	xfree(p2);
 
 	return (b2);
 }
