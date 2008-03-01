@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.133 2008/02/28 21:55:48 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.134 2008/03/01 22:35:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -473,7 +473,7 @@ update_clear_conflict(struct cvs_file *cf)
 	ctime_r(&now, timebuf);
 	timebuf[strcspn(timebuf, "\n")] = '\0';
 
-	rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
+	rcsnum_tostr(cf->file_rcsrev, revbuf, sizeof(revbuf));
 
 	sticky[0] = '\0';
 	if (cf->file_ent->ce_tag != NULL)
