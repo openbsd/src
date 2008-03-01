@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.15 2007/05/29 09:54:27 sobrado Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.16 2008/03/01 15:56:09 kettenis Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -129,6 +129,7 @@ long	getproplen(int node, char *name);
 int	getprop(int, char *, size_t, int *, void **);
 char	*getpropstring(int node, char *name);
 int	getpropint(int node, char *name, int deflt);
+int	getpropspeed(int node, char *name);
 
 /* Frequently used options node */
 extern int optionsnode;

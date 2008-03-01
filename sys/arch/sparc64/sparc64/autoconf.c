@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.76 2008/03/01 14:42:42 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.77 2008/03/01 15:56:09 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -930,12 +930,33 @@ getpropint(node, name, deflt)
 {
 	int intbuf;
 
-	
-
 	if (OF_getprop(node, name, &intbuf, sizeof(intbuf)) != sizeof(intbuf))
 		return (deflt);
 
 	return (intbuf);
+}
+
+int
+getpropspeed(node, name)
+	int node;
+	char *name;
+{
+	char buf[128];
+	int i, speed = 0;
+
+	if (OF_getprop(node, name, buf, sizeof(buf)) != -1) {
+		for (i = 0; i < sizeof(buf); i++) {
+			if (buf[i] < '0' || buf[i] > '9')
+				break;
+			speed *= 10;
+			speed += buf[i] - '0';
+		}
+	}
+
+	if (speed == 0)
+		speed = 9600;
+
+	return (speed);
 }
 
 /*
