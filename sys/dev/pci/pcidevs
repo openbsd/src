@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1330 2008/03/01 11:29:24 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1331 2008/03/01 11:42:16 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -333,6 +333,7 @@ vendor	INVALID		0xffff	INVALID VENDOR ID
  */
 
 /* O2 Micro */
+product O2MICRO FIREWIRE	0x00f7	Firewire
 product O2MICRO OZ6729		0x6729	OZ6729 CardBus
 product O2MICRO OZ6730		0x673a	OZ6730 CardBus
 product O2MICRO OZ6922		0x6825	OZ6922 CardBus
