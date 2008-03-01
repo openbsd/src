@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.23 2008/01/15 19:42:15 kettenis Exp $	*/
+/*	$OpenBSD: sab.c,v 1.24 2008/03/01 16:03:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1352,23 +1352,24 @@ void
 sabtty_console_speed(sc)
 	struct sabtty_softc *sc;
 {
-	int options, i;
-	char buf[255];
+	char *name;
+	int node, channel, options;
 
-	options = OF_finddevice("/options");
+	node = sc->sc_parent->sc_node;
+	channel = sc->sc_portno;
 
-	if (OF_getprop(options, sc->sc_portno ? "ttyb-mode" : "ttya-mode",
-	    buf, sizeof(buf)) != -1) {
-		for (i = 0; i < sizeof(buf); i++) {
-			if (buf[i] < '0' || buf[i] > '9')
-				break;
-			sc->sc_speed *= 10;
-			sc->sc_speed += buf[i] - '0';
-		}
+	if (getpropint(node, "ssp-console", -1) == channel) {
+		sc->sc_speed = getpropspeed(node, "ssp-console-modes");
+		return;
+	}
+	if (getpropint(node, "ssp-control", -1) == channel) {
+		sc->sc_speed = getpropspeed(node, "ssp-control-modes");
+		return;
 	}
 
-	if (sc->sc_speed == 0)
-		sc->sc_speed = TTYDEF_SPEED;
+	options = OF_finddevice("/options");
+	name = sc->sc_portno ? "ttyb-mode" : "ttya-mode";
+	sc->sc_speed = getpropspeed(options, name);
 }
 
 void
