@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1330 2008/03/01 11:29:24 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1331 2008/03/01 11:42:16 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -51,6 +51,10 @@ struct pci_known_product {
 };
 
 static const struct pci_known_product pci_known_products[] = {
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_FIREWIRE,
+	    "Firewire",
+	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
 	    "OZ6729 CardBus",
