@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.88 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.89 2008/03/01 20:03:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,7 +214,6 @@ typedef struct rcs_file {
 	void	*rf_pdata;
 } RCSFILE;
 
-extern int rcs_errno;
 struct cvs_line;
 struct cvs_lines;
 
