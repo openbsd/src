@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.85 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.86 2008/03/01 20:45:41 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -307,12 +307,25 @@ import_update(struct cvs_file *cf)
 	if (ret == 0) {
 		import_tag(cf, brev, rev);
 		rcsnum_free(brev);
-		rcs_write(cf->file_rcs);
+		if (cvs_noexec != 1)
+			rcs_write(cf->file_rcs);
+		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
 		return;
 	}
 
 	if (cf->file_rcs->rf_branch != NULL)
 		rcsnum_tostr(cf->file_rcs->rf_branch, branch, sizeof(branch));
+
+	if (cf->file_rcs->rf_branch == NULL || cf->in_attic == 1 ||
+	    strcmp(branch, import_branch)) {
+		import_conflicts++;
+		cvs_printf("C %s/%s\n", import_repository, cf->file_path);
+	} else {
+		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
+	}
+
+	if (cvs_noexec == 1)
+		return;
 
 	d = import_get_rcsdiff(cf, rev);
 	newrev = rcsnum_inc(rev);
@@ -324,14 +337,6 @@ import_update(struct cvs_file *cf)
 		fatal("import_update: failed to set deltatext");
 
 	import_tag(cf, brev, newrev);
-
-	if (cf->file_rcs->rf_branch == NULL || cf->in_attic == 1 ||
-	    strcmp(branch, import_branch)) {
-		import_conflicts++;
-		cvs_printf("C %s/%s\n", import_repository, cf->file_path);
-	} else {
-		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
-	}
 
 	if (kflag)
 		rcs_kwexp_set(cf->file_rcs, kflag);
