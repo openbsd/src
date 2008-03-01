@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1329 2008/02/27 20:08:35 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1330 2008/03/01 11:29:24 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6389,11 +6389,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_RAID_1,
-	    "6321ESB SATA RAID",
+	    "6321ESB RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_RAID_2,
-	    "6321ESB SATA RAID",
+	    "6321ESB RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_USB_1,
@@ -6877,11 +6877,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD_1,
-	    "82946GZ Graphics",
+	    "82946GZ Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD_2,
-	    "82946GZ Graphics",
+	    "82946GZ Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HECI_1,
@@ -6893,7 +6893,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_PT_IDER,
-	    "82946GZ PT_IDER",
+	    "82946GZ PT IDER",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_KT,
