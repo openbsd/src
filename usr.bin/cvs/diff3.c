@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.44 2008/02/29 21:43:57 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.45 2008/03/01 14:40:23 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.44 2008/02/29 21:43:57 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.45 2008/03/01 14:40:23 joris Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -247,7 +247,7 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 	}
 
 	(void)close(cf->fd);
-	cf->fd = open(cf->file_path, O_CREAT | O_WRONLY | O_TRUNC);
+	cf->fd = open(cf->file_path, O_CREAT | O_RDWR | O_TRUNC, 0644);
 	if (cf->fd == -1) {
 		fatal("cvs_merge_file: failed to reopen fd for writing: %s",
 		    strerror(errno));
