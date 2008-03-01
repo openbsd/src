@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.15 2008/02/10 16:31:30 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.16 2008/03/01 15:59:04 kettenis Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ cdev_decl(com); /* XXX this belongs elsewhere */
 
 int	com_ebus_match(struct device *, void *, void *);
 void	com_ebus_attach(struct device *, struct device *, void *);
+int	com_ebus_speed(struct ebus_attach_args *);
 
 struct cfattach com_ebus_ca = {
 	sizeof(struct com_softc), com_ebus_match, com_ebus_attach
@@ -68,10 +69,7 @@ static char *com_names[] = {
 };
 
 int
-com_ebus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+com_ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	int i;
@@ -101,9 +99,7 @@ com_ebus_match(parent, match, aux)
 #define BAUD_BASE       (1843200)
 
 void
-com_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
@@ -154,10 +150,9 @@ com_ebus_attach(parent, self, aux)
 
 	if (com_is_input || com_is_output) {
 		struct consdev *cn_orig;
-		int speed = 9600;
+		int speed;
 
-		if (strcmp(ea->ea_name, "rsc-console") == 0)
-			speed = 115200;
+		speed = com_ebus_speed(ea);
 
 		comconsioh = sc->sc_ioh;
 		cn_orig = cn_tab;
@@ -186,4 +181,29 @@ com_ebus_attach(parent, self, aux)
 
 	/* Now attach the driver */
 	com_attach_subr(sc);
+}
+
+int
+com_ebus_speed(struct ebus_attach_args *ea)
+{
+	char buf[128];
+	char *name = NULL;
+	int aliases, options;
+
+	if (strcmp(ea->ea_name, "rsc-console") == 0)
+		return 115200;
+
+	aliases = OF_finddevice("/aliases");
+	if (OF_getprop(aliases, "ttya", buf, sizeof(buf)) != -1 &&
+	    OF_finddevice(buf) == ea->ea_node)
+		name = "ttya-mode";
+	if (OF_getprop(aliases, "ttyb", buf, sizeof(buf)) != -1 &&
+	    OF_finddevice(buf) == ea->ea_node)
+		name = "ttyb-mode";
+
+	if (name == NULL)
+		return TTYDEF_SPEED;
+
+	options = OF_finddevice("/options");
+	return (getpropspeed(options, name));
 }
