@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.75 2007/11/16 23:27:28 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.76 2008/03/01 14:42:42 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -236,6 +236,7 @@ get_ncpus(void)
 	return (1);
 #endif
 }
+
 /*
  * locore.s code calls bootstrap() just before calling main().
  *
@@ -723,6 +724,8 @@ extern bus_space_tag_t mainbus_space_tag;
 			if (strcmp(buf, "cpu") == 0)
 				OF_getprop(node, "compatible", buf, sizeof(buf));
 			ma.ma_name = buf;
+			getprop(node, "reg", sizeof(*ma.ma_reg),
+			    &ma.ma_nreg, (void **)&ma.ma_reg);
 			config_found(dev, &ma, mbprint);
 			ncpus++;
 		}
