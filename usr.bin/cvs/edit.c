@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.44 2008/02/06 12:42:46 tobias Exp $	*/
+/*	$OpenBSD: edit.c,v 1.45 2008/03/01 21:29:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -451,7 +451,7 @@ cvs_base_handle(struct cvs_file *cf, int flags)
 	}
 
 	if (fp != NULL) {
-		while(fgets(buf, sizeof(buf), fp)) {
+		while (fgets(buf, sizeof(buf), fp)) {
 			buf[strcspn(buf, "\n")] = '\0';
 
 			if (buf[0] != 'B')

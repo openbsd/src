@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.161 2008/02/10 14:08:52 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.162 2008/03/01 21:29:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -375,9 +375,9 @@ time_t		 cvs_date_parse(const char *);
 struct cvs_ent	*cvs_ent_parse(const char *);
 struct cvs_ent	*cvs_ent_get(CVSENTRIES *, const char *);
 CVSENTRIES	*cvs_ent_open(const char *);
-void	 	cvs_ent_add(CVSENTRIES *, const char *);
-void	 	cvs_ent_remove(CVSENTRIES *, const char *);
-void	 	cvs_ent_close(CVSENTRIES *, int);
+void		cvs_ent_add(CVSENTRIES *, const char *);
+void		cvs_ent_remove(CVSENTRIES *, const char *);
+void		cvs_ent_close(CVSENTRIES *, int);
 void		cvs_ent_free(struct cvs_ent *);
 void		cvs_ent_line_str(const char *, char *, char *, char *, char *,
 		    int, int, char *, size_t);

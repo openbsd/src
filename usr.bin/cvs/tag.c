@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.68 2008/03/01 20:03:56 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.69 2008/03/01 21:29:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -234,7 +234,7 @@ cvs_tag_local(struct cvs_file *cf)
 		return;
 	}
 
-	switch(cf->file_status) {
+	switch (cf->file_status) {
 	case FILE_ADDED:
 		if (verbosity > 1) {
 			cvs_log(LP_NOTICE,

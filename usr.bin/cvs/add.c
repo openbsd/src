@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.94 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.95 2008/03/01 21:29:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -431,7 +431,6 @@ add_entry(struct cvs_file *cf)
 			(void)xsnprintf(tbuf, sizeof(tbuf), "Initial %s",
 			    cf->file_name);
 
-		
 		cvs_ent_line_str(cf->file_name, "0", tbuf, kflag ? kbuf : "",
 		    sticky, 0, 0, entry, CVS_ENT_MAXLINELEN);
 	}

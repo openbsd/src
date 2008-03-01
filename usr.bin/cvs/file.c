@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.225 2008/03/01 14:55:03 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.226 2008/03/01 21:29:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -321,7 +321,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 					(void)close(fd);
 					goto next;
 				}
-			
+
 				/* this file is not in our working copy yet */
 				(void)close(fd);
 				fd = -1;
@@ -969,7 +969,7 @@ cvs_file_cmp(const char *file1, const char *file2)
 		if (stb1.st_size > (off_t)SIZE_MAX) {
 			ret = 1;
 			goto out;
-		}	
+		}
 
 		if ((p1 = mmap(NULL, stb1.st_size, PROT_READ,
 		    MAP_FILE, fd1, (off_t)0)) == MAP_FAILED)
@@ -1026,7 +1026,7 @@ cvs_file_copy(const char *from, const char *to)
 		if (st.st_size > (off_t)SIZE_MAX) {
 			ret = -1;
 			goto out;
-		}	
+		}
 
 		if ((dst = open(to, O_CREAT|O_TRUNC|O_WRONLY,
 		    st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO))) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.131 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.132 2008/03/01 21:29:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -86,7 +86,7 @@ cvs_diff(int argc, char **argv)
 		case 'k':
 			koptstr = optarg;
 			kflag = rcs_kflag_get(koptstr);
-			if (RCS_KWEXP_INVAL(kflag)) {   
+			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expension mode");
 				fatal("%s", cvs_cmd_add.cmd_synopsis);
@@ -269,7 +269,7 @@ cvs_diff_local(struct cvs_file *cf)
 				    rev1, cf->file_path);
 				return;
 			}
- 			if (force_head) {
+			if (force_head) {
 				/* -f is not allowed for unknown symbols */
 				diff_rev1 = rcsnum_parse(rev1);
 				if (diff_rev1 == NULL)
@@ -290,7 +290,7 @@ cvs_diff_local(struct cvs_file *cf)
 				    rev2, cf->file_path);
 				return;
 			}
- 			if (force_head) {
+			if (force_head) {
 				/* -f is not allowed for unknown symbols */
 				diff_rev2 = rcsnum_parse(rev2);
 				if (diff_rev2 == NULL)

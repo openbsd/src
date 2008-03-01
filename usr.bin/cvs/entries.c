@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.94 2008/02/10 14:08:52 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.95 2008/03/01 21:29:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -187,7 +187,7 @@ cvs_ent_parse(const char *entry)
 		ent->ce_opts = NULL;
 
 	if (strcmp(fields[5], "")) {
-		switch(*fields[5]) {
+		switch (*fields[5]) {
 		case 'D':
 			if (sscanf(fields[5] + 1, "%d.%d.%d.%d.%d.%d",
 			    &dt.tm_year, &dt.tm_mon, &dt.tm_mday,
