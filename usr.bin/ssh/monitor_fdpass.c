@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_fdpass.c,v 1.13 2007/09/04 03:21:03 djm Exp $ */
+/* $OpenBSD: monitor_fdpass.c,v 1.14 2008/03/02 18:19:35 deraadt Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,14 +39,17 @@ int
 mm_send_fd(int sock, int fd)
 {
 	struct msghdr msg;
-	char tmp[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char tmp[CMSG_SPACE(sizeof(int))];
+	} tmp;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	char ch = '\0';
 	ssize_t n;
 
 	memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t)tmp;
+	msg.msg_control = (caddr_t)&tmp;
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	cmsg = CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -77,7 +80,10 @@ int
 mm_receive_fd(int sock)
 {
 	struct msghdr msg;
-	char tmp[CMSG_SPACE(sizeof(int))];
+	union {
+		char tmp[CMSG_SPACE(sizeof(int))];
+		struct cmsghdr hdr;
+	} tmp;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	ssize_t n;
@@ -89,7 +95,7 @@ mm_receive_fd(int sock)
 	vec.iov_len = 1;
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
-	msg.msg_control = tmp;
+	msg.msg_control = &tmp;
 	msg.msg_controllen = sizeof(tmp);
 
 	if ((n = recvmsg(sock, &msg, 0)) == -1) {
