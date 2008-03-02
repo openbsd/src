@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.77 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: bios.c,v 1.78 2008/03/02 18:01:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -149,7 +149,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	struct smbtable bios;
 	volatile u_int8_t *va;
 	char scratch[64], *str;
-	int flags;
+	int flags, havesmbios = 0;
 #if NAPM > 0 || defined(MULTIPROCESSOR)
 	int ncpu = 0;
 #endif
@@ -230,7 +230,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	if (!(flags & BIOSF_SMBIOS)) {
 		for (va = ISA_HOLE_VADDR(SMBIOS_START);
 		    va < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); va+= 16) {
-			struct smbhdr * sh = (struct smbhdr *)va;
+			struct smbhdr *sh = (struct smbhdr *)va;
 			u_int8_t chksum;
 			vaddr_t eva;
 			paddr_t pa, end;
@@ -268,6 +268,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			for (; pa < end; pa+= NBPG, eva+= NBPG)
 				pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
+			havesmbios = 1;
 			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 			    sh->majrev, sh->minrev, sh->addr, sh->count);
 
@@ -341,7 +342,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 #if NACPI > 0
 #if NPCI > 0
-	if (pci_mode_detect() != 0)
+	if (havesmbios && pci_mode_detect() != 0)
 #endif
 	{
 		struct bios_attach_args ba;
