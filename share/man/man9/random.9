@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.23 2008/03/02 21:29:07 djm Exp $
+.\"	$OpenBSD: random.9,v 1.24 2008/03/02 22:30:05 djm Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -93,7 +93,7 @@ to the entropy pool.
 .Fn arc4random_uniform
 will return a uniformly distributed random number less than
 .Fa upper_bound ,
-avoiding "modulo bias" when the upper bound is not a divisor of 2**32.
+avoiding "modulo bias" when the upper bound is not a power of two.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr pchb 4 ,
