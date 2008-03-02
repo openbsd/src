@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: shuffle.c,v 1.1 2008/02/29 12:21:12 deraadt Exp $ */
+/* $OpenBSD: shuffle.c,v 1.2 2008/03/02 22:39:12 djm Exp $ */
 
 #include <config.h>
 
@@ -31,7 +31,6 @@
 void
 isc_shuffle_init(isc_shuffle_t *shuffle)
 {
-	isc_uint32_t si;
 	isc_uint16_t r;
 	int i, i2;
 
@@ -43,9 +42,7 @@ isc_shuffle_init(isc_shuffle_t *shuffle)
 
 	/* Initialize using a Durstenfeld shuffle */
 	for (i = 65536; --i; ) {
-		isc_random_get(&si);
-		/* disregard the modulo bias because it is small */
-		i2 = (si % (i + 1)) & 0xffff;
+		i2 = isc_random_uniform(i + 1);
 		r = shuffle->id_shuffle[i];
 		shuffle->id_shuffle[i] = shuffle->id_shuffle[i2];
 		shuffle->id_shuffle[i2] = r;

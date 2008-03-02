@@ -57,6 +57,13 @@ isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter);
  * This is useful for jittering timer values.
  */
 
+isc_uint32_t
+isc_random_uniform(isc_uint32_t upper_bound);
+/*%<
+ * Get a uniformly distributed random value < upper_bound.
+ * Avoid bias when upper_bound is not a power of two.
+ */
+
 ISC_LANG_ENDDECLS
 
 #endif /* ISC_RANDOM_H */
