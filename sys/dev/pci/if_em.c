@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.178 2008/02/27 20:05:51 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.179 2008/03/02 00:02:11 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2264,7 +2264,7 @@ em_get_buf(struct em_softc *sc, int i)
 	error = bus_dmamap_load_mbuf(sc->rxtag, sc->rx_sparemap,
 	    m, BUS_DMA_NOWAIT);
 	if (error) {
-		m_free(m);
+		m_freem(m);
 		return (error);
 	}
 
