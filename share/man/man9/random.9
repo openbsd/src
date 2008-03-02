@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.22 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: random.9,v 1.23 2008/03/02 21:29:07 djm Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 2 2008 $
 .Dt RND 9
 .Os
 .Sh NAME
@@ -51,6 +51,8 @@
 .Fn arc4random "void"
 .Ft void
 .Fn arc4random_bytes "void *buf" "size_t nbytes"
+.Ft u_int32_t
+.Fn arc4random_uniform "u_int32_t upper_bound"
 .Sh DESCRIPTION
 The
 .Fn add_mouse_randomness ,
@@ -87,6 +89,11 @@ and
 will give random 32 bit numbers hashed with
 the ARC4 algorithm, which appears to be faster and less abusive
 to the entropy pool.
+.Pp
+.Fn arc4random_uniform
+will return a uniformly distributed random number less than
+.Fa upper_bound ,
+avoiding "modulo bias" when the upper bound is not a divisor of 2**32.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr pchb 4 ,

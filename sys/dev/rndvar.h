@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.19 2003/11/03 18:24:28 tedu Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.20 2008/03/02 21:29:07 djm Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -87,6 +87,7 @@ void enqueue_randomness(int, int);
 void get_random_bytes(void *, size_t);
 void arc4random_bytes(void *, size_t);
 u_int32_t arc4random(void);
+u_int32_t arc4random_uniform(u_int32_t);
 
 #endif /* _KERNEL */
 
