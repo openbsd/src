@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.20 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.21 2008/03/02 16:05:26 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ nsphy_status(struct mii_softc *sc)
 			anlpar = PHY_READ(sc, MII_ANAR) &
 			    PHY_READ(sc, MII_ANLPAR);
 			if (anlpar & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4;
+				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
 			else if (anlpar & ANLPAR_TX_FD)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
 			else if (anlpar & ANLPAR_TX)
