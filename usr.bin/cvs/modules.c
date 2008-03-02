@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.11 2008/02/26 20:20:49 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.12 2008/03/02 11:58:45 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -49,7 +49,7 @@ cvs_modules_list(void)
 		printf("%s\n", mi->mi_str);
 }
 
-void
+int
 modules_parse_line(char *line, int lineno)
 {
 	int flags;
@@ -199,13 +199,14 @@ modules_parse_line(char *line, int lineno)
 		cvs_file_get(dirname, 0, &(mi->mi_modules));
 
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
-	return;
+	return (0);
 
 bad:
 	if (prog != NULL)
 		xfree(prog);
 	xfree(bline);
 	cvs_log(LP_NOTICE, "malformed line in CVSROOT/modules: %d", lineno);
+	return (0);
 }
 
 struct module_checkout *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.9 2008/02/06 22:43:22 joris Exp $	*/
+/*	$OpenBSD: config.h,v 1.10 2008/03/02 11:58:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,13 +20,13 @@
 
 void cvs_modules_list(void);
 
-void cvs_read_config(char *name, void (*cb)(char *, int));
+void cvs_read_config(char *name, int (*cb)(char *, int));
 
 void cvs_parse_configfile(void);
 void cvs_parse_modules(void);
 
-void config_parse_line(char *, int);
-void modules_parse_line(char *, int);
+int config_parse_line(char *, int);
+int modules_parse_line(char *, int);
 
 #include <sys/queue.h>
 #include "file.h"

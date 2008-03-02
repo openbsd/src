@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.14 2008/02/04 19:08:32 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.15 2008/03/02 11:58:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -34,7 +34,7 @@ cvs_parse_configfile(void)
 	cvs_read_config(CVS_PATH_CONFIG, config_parse_line);
 }
 
-void
+int
 config_parse_line(char *line, int lineno)
 {
 	struct rlimit rl;
@@ -73,10 +73,12 @@ config_parse_line(char *line, int lineno)
 	} else {
 		cvs_log(LP_ERR, "ignoring unknown option '%s'", opt);
 	}
+
+	return (0);
 }
 
 void
-cvs_read_config(char *name, void (*cb)(char *, int))
+cvs_read_config(char *name, int (*cb)(char *, int))
 {
 	FILE *fp;
 	size_t len;
@@ -109,7 +111,8 @@ cvs_read_config(char *name, void (*cb)(char *, int))
 		if (p[0] == '#' || p[0] == '\0')
 			continue;
 
-		cb(p, lineno);
+		if (cb(p, lineno) < 0)
+			break;
 	}
 
 	if (lbuf != NULL)
