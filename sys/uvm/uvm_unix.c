@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.33 2008/02/27 21:46:34 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.34 2008/03/02 20:29:20 kettenis Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,8 @@ uvm_coredump(p, vp, cred, chdr)
 			panic("uvm_coredump: user process with submap?");
 		}
 
-		if (!(entry->protection & VM_PROT_WRITE))
+		if (!(entry->protection & VM_PROT_WRITE) &&
+		    entry->start != p->p_sigcode)
 			continue;
 
 		/*
