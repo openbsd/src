@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.80 2008/02/20 12:17:25 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.81 2008/03/02 11:24:50 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -361,7 +361,7 @@
 #define BGE_PCISTATE_FORCE_RESET	0x00000001
 #define BGE_PCISTATE_INTR_NOT_ACTIVE	0x00000002
 #define BGE_PCISTATE_PCI_BUSMODE	0x00000004 /* 1 = PCI, 0 = PCI-X */
-#define BGE_PCISTATE_PCI_BUSSPEED	0x00000008 /* 1 = 33/66, 0 = 66/133 */
+#define BGE_PCISTATE_PCI_BUSSPEED	0x00000008 /* 1 = 66/133, 0 = 33/66 */
 #define BGE_PCISTATE_32BIT_BUS		0x00000010 /* 1 = 32bit, 0 = 64bit */
 #define BGE_PCISTATE_WANT_EXPROM	0x00000020
 #define BGE_PCISTATE_EXPROM_RETRY	0x00000040
