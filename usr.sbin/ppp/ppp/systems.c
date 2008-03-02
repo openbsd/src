@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: systems.c,v 1.19 2008/03/02 18:46:33 miod Exp $
+ * $OpenBSD: systems.c,v 1.20 2008/03/02 19:31:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -237,7 +237,6 @@ AllowUsers(struct cmdargs const *arg)
         userok = 1;
         break;
       }
-  endpwent();
 
   return 0;
 }
