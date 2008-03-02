@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.255 2008/03/01 21:29:37 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.256 2008/03/02 19:31:08 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -211,17 +211,6 @@ static struct rcs_key {
 };
 
 #define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
-
-static const char *rcs_errstrs[] = {
-	"No error",
-	"No such entry",
-	"Duplicate entry found",
-	"Bad RCS number",
-	"Invalid RCS symbol",
-	"Parse error",
-};
-
-#define RCS_NERR   (sizeof(rcs_errstrs)/sizeof(rcs_errstrs[0]))
 
 static RCSNUM	*rcs_get_revision(const char *, RCSFILE *);
 int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *,
@@ -1476,25 +1465,6 @@ rcs_kflag_get(const char *flags)
 	}
 
 	return (fl);
-}
-
-/*
- * rcs_errstr()
- *
- * Get the error string matching the RCS error code <code>.
- */
-const char *
-rcs_errstr(int code)
-{
-	const char *esp;
-
-	if (code < 0 || (code >= (int)RCS_NERR && code != RCS_ERR_ERRNO))
-		esp = NULL;
-	else if (code == RCS_ERR_ERRNO)
-		esp = strerror(errno);
-	else
-		esp = rcs_errstrs[code];
-	return (esp);
 }
 
 /* rcs_parse_deltas()
