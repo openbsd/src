@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.132 2008/03/01 21:29:36 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.133 2008/03/02 19:05:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,7 +89,9 @@ cvs_diff(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expension mode");
-				fatal("%s", cvs_cmd_add.cmd_synopsis);
+				fatal("%s", cvs_cmdop == CVS_OP_DIFF ?
+				    cvs_cmd_diff.cmd_synopsis :
+				    cvs_cmd_rdiff.cmd_synopsis);
 			}
 			break;
 		case 'l':
@@ -127,7 +129,9 @@ cvs_diff(int argc, char **argv)
 			fatal("the -V option is obsolete "
 			    "and should not be used");
 		default:
-			fatal("%s", cvs_cmd_diff.cmd_synopsis);
+			fatal("%s", cvs_cmdop == CVS_OP_DIFF ?
+			    cvs_cmd_diff.cmd_synopsis :
+			    cvs_cmd_rdiff.cmd_synopsis);
 		}
 	}
 

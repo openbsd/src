@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.86 2008/02/09 14:25:02 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.87 2008/03/02 19:05:34 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -98,7 +98,9 @@ cvs_getlog(int argc, char **argv)
 			wlist = optarg;
 			break;
 		default:
-			fatal("%s", cvs_cmd_log.cmd_synopsis);
+			fatal("%s", cvs_cmdop == CVS_OP_LOG ?
+			    cvs_cmd_log.cmd_synopsis :
+			    cvs_cmd_rlog.cmd_synopsis);
 		}
 	}
 

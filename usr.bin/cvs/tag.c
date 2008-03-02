@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.69 2008/03/01 21:29:37 deraadt Exp $	*/
+/*	$OpenBSD: tag.c,v 1.70 2008/03/02 19:05:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -95,7 +95,9 @@ cvs_tag(int argc, char **argv)
 			tag_oldname = optarg;
 			break;
 		default:
-			fatal("%s", cvs_cmd_tag.cmd_synopsis);
+			fatal("%s", cvs_cmdop == CVS_OP_TAG ?
+			    cvs_cmd_tag.cmd_synopsis :
+			    cvs_cmd_rtag.cmd_synopsis);
 		}
 	}
 

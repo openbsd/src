@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.55 2008/02/10 10:21:42 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.56 2008/03/02 19:05:34 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -84,7 +84,9 @@ cvs_annotate(int argc, char **argv)
 			cvs_specified_tag = optarg;
 			break;
 		default:
-			fatal("%s", cvs_cmd_annotate.cmd_synopsis);
+			fatal("%s", cvs_cmdop == CVS_OP_ANNOTATE ?
+			    cvs_cmd_annotate.cmd_synopsis :
+			    cvs_cmd_rannotate.cmd_synopsis);
 		}
 	}
 

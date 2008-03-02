@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.134 2008/03/01 22:35:44 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.135 2008/03/02 19:05:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -91,7 +91,7 @@ cvs_update(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expension mode");
-				fatal("%s", cvs_cmd_add.cmd_synopsis);
+				fatal("%s", cvs_cmd_update.cmd_synopsis);
 			}
 			break;
 		case 'l':
