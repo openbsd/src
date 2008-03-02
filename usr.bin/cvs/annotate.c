@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.56 2008/03/02 19:05:34 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.57 2008/03/02 19:14:10 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -93,8 +93,12 @@ cvs_annotate(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (cvs_cmdop == CVS_OP_RANNOTATE)
+	if (cvs_cmdop == CVS_OP_RANNOTATE) {
+		if (argc == 0)
+			fatal("%s", cvs_cmd_rannotate.cmd_synopsis);
+
 		flags |= CR_REPO;
+	}
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
