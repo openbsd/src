@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.61 2008/02/03 21:20:23 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.62 2008/03/02 19:16:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1570,9 +1570,9 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 void
 msk_start(struct ifnet *ifp)
 {
-        struct sk_if_softc	*sc_if = ifp->if_softc;
-        struct mbuf		*m_head = NULL;
-        u_int32_t		idx = sc_if->sk_cdata.sk_tx_prod;
+	struct sk_if_softc	*sc_if = ifp->if_softc;
+	struct mbuf		*m_head = NULL;
+	u_int32_t		idx = sc_if->sk_cdata.sk_tx_prod;
 	int			pkts = 0;
 
 	DPRINTFN(2, ("msk_start\n"));
