@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.42 2007/06/18 10:47:03 espie Exp $
+# $OpenBSD: Replace.pm,v 1.43 2008/03/02 23:43:32 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -119,8 +119,11 @@ sub extract
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 
 		print "extracting $tempname\n" if $state->{very_verbose};
-		$file->{name} = $tempname;
 		$self->{tempname} = $tempname;
+
+		# XXX don't apply destdir twice
+		$file->{destdir} = '';
+		$file->{name} = $tempname;
 		$file->create;
 	}
 }
