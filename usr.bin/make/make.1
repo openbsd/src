@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.77 2007/12/01 17:45:02 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.78 2008/03/02 23:56:58 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: December 1 2007 $
+.Dd $Mdocdate: March 2 2008 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1430,3 +1430,19 @@ will evaluate to a b c d after the loop, not z b c d.
 .Ic ORDER
 is only used in parallel mode, so
 keep dependency ordered for sequential mode!
+.Pp
+Distinct target names are treated separately, even though they might 
+correspond to the same file in the file system.
+This can cause excessive rebuilds of some targets, and bogus
+races in parallel mode.
+This can also prevent
+.Nm
+from finding a rule to solve a dependency if the target name is not
+exactly the same as the dependency.
+.Pp
+In parallel mode,
+.Fl j Ar n
+only limits the number of concurrent makes it knows about.
+During recursive invocations, each level will multiply the number
+of processes by
+.Ar n.
