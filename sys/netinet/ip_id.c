@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_id.c,v 1.17 2008/03/02 21:29:07 djm Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.18 2008/03/02 21:38:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
@@ -58,7 +58,6 @@ ip_randomid(void)
 		for (i = 0; i < sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); ++i)
 			ip_shuffle[i] = i;
 		for (i = sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); --i; ) {
-			/* disregard the modulo bias because it is small */
 			i2 = arc4random_uniform(i + 1);
 			r = ip_shuffle[i];
 			ip_shuffle[i] = ip_shuffle[i2];
