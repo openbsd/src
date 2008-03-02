@@ -5635,6 +5635,7 @@
 ./usr/share/man/cat9/aml_val2int.0
 ./usr/share/man/cat9/arc4random.0
 ./usr/share/man/cat9/arc4random_bytes.0
+./usr/share/man/cat9/arc4random_uniform.0
 ./usr/share/man/cat9/assert.0
 ./usr/share/man/cat9/atomic.0
 ./usr/share/man/cat9/atomic_clearbits_int.0
