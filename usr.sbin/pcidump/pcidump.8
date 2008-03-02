@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcidump.8,v 1.5 2007/11/18 19:48:16 jmc Exp $
+.\"	$OpenBSD: pcidump.8,v 1.6 2008/03/02 17:59:10 kettenis Exp $
 .\"
 .\" Copyright (c) 2007 Paul de Weerd <weerd@weirdnet.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 18 2007 $
+.Dd $Mdocdate: March 2 2008 $
 .Dt PCIDUMP 8
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Op Fl v | x | xx
 .Op Fl d Ar pcidev
 .Sm off
-.Op Ar dev : bus : func
+.Op Ar bus : dev : func
 .Sm on
 .Sh DESCRIPTION
 The
@@ -34,9 +34,9 @@ utility displays the device address, vendor, and product name
 of PCI devices.
 When no arguments are given,
 information on all PCI devices in the system is shown;
-otherwise a single device may be specified by device, bus, and function:
+otherwise a single device may be specified by bus, device, and function:
 .Sm off
-.Ar dev : bus : func .
+.Ar bus : dev : func .
 .Sm on
 .Pp
 The options are as follows:
