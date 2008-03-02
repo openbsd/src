@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2008/03/01 22:39:22 joris Exp $
+#	$OpenBSD: Makefile,v 1.45 2008/03/02 11:29:24 brad Exp $
 
 PROG=	opencvs
 MAN=	cvsintro.7 # cvs.1 cvs.5
@@ -18,9 +18,6 @@ CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=-Wsign-compare
 DEBUG=	-g -ggdb
 YFLAGS=
-
-DPADD+=	${LIBZ}
-LDADD+=
 
 INSTALL_STRIP=
 
