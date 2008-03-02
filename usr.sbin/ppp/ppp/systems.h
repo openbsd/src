@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: systems.h,v 1.7 2001/11/23 11:17:03 brian Exp $
+ * $OpenBSD: systems.h,v 1.8 2008/03/02 18:46:33 miod Exp $
  */
 
 struct prompt;
@@ -40,4 +40,4 @@ extern FILE *OpenSecret(const char *);
 extern void CloseSecret(FILE *);
 extern int AllowUsers(struct cmdargs const *);
 extern int AllowModes(struct cmdargs const *);
-extern const char *InterpretArg(const char *, char *);
+extern const char *InterpretArg(const char *, char *, size_t);

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.91 2005/09/21 16:28:47 brad Exp $
+ * $OpenBSD: command.c,v 1.92 2008/03/02 18:46:32 miod Exp $
  */
 
 #include <sys/param.h>
@@ -1130,7 +1130,10 @@ command_Expand_Interpret(char *buff, int nb, char *argv[MAXARGS], int offset)
 {
   char buff2[LINE_LEN-offset];
 
-  InterpretArg(buff, buff2);
+  if (InterpretArg(buff, buff2, sizeof buff2) == NULL) {
+    log_Printf(LogWARN, "Failed to expand command '%s': too long for the destination buffer\n", buff);
+    return -1;
+  }
   strncpy(buff, buff2, LINE_LEN - offset - 1);
   buff[LINE_LEN - offset - 1] = '\0';
 
