@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.5 2008/02/25 16:58:46 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.6 2008/03/02 23:39:19 espie Exp $
 
 =head1 NAME
 
@@ -307,18 +307,37 @@ suitable candidates are found.
 =head1 BUGS AND LIMITATIONS
 
 There are a few desireable changes that will happen in the future:
-* pkg_add -u should be able to find updates with a stem change.
+
+=over
+
+=item *
+
+pkg_add -u should be able to find updates with a stem change.
 This requires an extra mechanism that would say `oh, this package changed
 name', as we cannot afford to look into every single package.
-* more complicated update scenarios could happen, once UpdateSets are fully
+
+=item *
+
+more complicated update scenarios could happen, once UpdateSets are fully
 functional.
-* pkg_add has no real notion of version number. Thus, updates work only
+
+=item *
+
+pkg_add has no real notion of version number. Thus, updates work only
 in so far as you direct your PKG_PATH to a more recent repository.
-* there should be some carefully designed mechanisms to register more
+
+=item *
+
+there should be some carefully designed mechanisms to register more
 `global' processing, to avoid exec/unexec.
-* some packages should be able to refuse automatic update, and to interact
+
+=item *
+
+some packages should be able to refuse automatic update, and to interact
 with the user. Again, to be carefully designed, so that one can still
 understand what's going on.
+
+=back
 
 =head1 LIST OF MODULES
 
