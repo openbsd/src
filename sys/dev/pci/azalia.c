@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.46 2007/12/16 18:46:43 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.47 2008/03/02 17:24:12 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -525,6 +525,14 @@ azalia_pci_detach(struct device *self, int flags)
 	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
 	azalia_delete_rirb(az);
+
+	DPRINTF(("%s: disable interrupts\n", __func__));
+	AZ_WRITE_4(az, INTCTL, 0);
+
+	DPRINTF(("%s: clear interrupts\n", __func__));
+	AZ_WRITE_4(az, INTSTS, HDA_INTSTS_CIS | HDA_INTSTS_GIS);
+	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
+	AZ_WRITE_1(az, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
 
 	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
@@ -1911,6 +1919,11 @@ azalia_stream_delete(stream_t *this, azalia_t *az)
 {
 	if (this->bdlist.addr == NULL)
 		return 0;
+
+	/* disable stream interrupts */
+	STR_WRITE_1(this, CTL, STR_READ_1(this, CTL) |
+	    ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE));
+
 	azalia_free_dmamem(az, &this->bdlist);
 	return 0;
 }
