@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.179 2008/03/02 00:02:11 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.180 2008/03/02 01:28:16 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -931,6 +931,10 @@ int
 em_flowstatus(struct em_softc *sc)
 {
 	u_int16_t ar, lpar;
+
+	if (sc->hw.media_type == em_media_type_fiber ||
+	    sc->hw.media_type == em_media_type_internal_serdes)
+		return (0);
 
 	em_read_phy_reg(&sc->hw, PHY_AUTONEG_ADV, &ar);
 	em_read_phy_reg(&sc->hw, PHY_LP_ABILITY, &lpar);
