@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.155 2008/02/11 23:40:03 krw Exp $
+#	$OpenBSD: install.sh,v 1.156 2008/03/02 21:18:58 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -325,8 +325,8 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 # Remove existing network configuration files in /tmp to ensure they don't leak
 # onto the installed system in the case of a restarted install. Any information
 # contained within them should be accessible via ifconfig, hostname, route,
-# etc.
-( cd /tmp; rm -f host* my* resolv.* dhclient.* )
+# etc, or from resolv.conf.shadow.
+( cd /tmp; rm -f host* my* resolv.conf resolv.conf.tail dhclient.* )
 
 # Always create new hosts file.
 cat >/tmp/hosts <<__EOT
