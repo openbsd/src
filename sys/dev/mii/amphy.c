@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.15 2006/12/31 15:04:33 krw Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.16 2008/03/02 16:04:08 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -249,7 +249,7 @@ amphy_status(struct mii_softc *sc)
 		else if (par & DSCSR_100HDX)
 			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
 		else if (par & DSCSR_10FDX)
-			mii->mii_media_active |= IFM_10_T|IFM_HDX;
+			mii->mii_media_active |= IFM_10_T|IFM_FDX;
 		else if (par & DSCSR_10HDX)
 			mii->mii_media_active |= IFM_10_T|IFM_HDX;
 	} else
