@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.71 2007/06/30 11:35:21 espie Exp $
+# $OpenBSD: Delete.pm,v 1.72 2008/03/03 16:48:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -493,6 +493,7 @@ sub delete
 	if (!defined $orig) {
 		Fatal "\@sample element does not reference a valid file\n";
 	}
+	my $action = $state->{replacing} ? "check" : "remove";
 	my $origname = $orig->realname($state);
 	if (! -e $realname) {
 		$state->print("File $realname does not exist\n");
@@ -511,7 +512,7 @@ sub delete
 	if ($state->{quick}) {
 		unless ($state->{extra}) {
 			$self->mark_dir($state);
-			$state->print("You should also remove $realname\n");
+			$state->print("You should also $action $realname\n");
 			return;
 		}
 	} else {
@@ -521,7 +522,7 @@ sub delete
 		} else {
 			unless ($state->{extra}) {
 				$self->mark_dir($state);
-				$state->print("You should also remove $realname (which was modified)\n");
+				$state->print("You should also $action $realname (which was modified)\n");
 				return;
 			}
 		}
