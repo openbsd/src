@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.31 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.32 2008/03/03 16:58:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -107,24 +107,24 @@ tcp_write(int s, short event, void *arg)
 	socklen_t		 len;
 
 	if (event == EV_TIMEOUT) {
-		log_debug("tcp_write: connect timed out");
+		close(s);
 		cte->host->up = HOST_DOWN;
-	} else {
-		len = sizeof(err);
-		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len))
-			fatal("tcp_write: getsockopt");
-		if (err != 0)
-			cte->host->up = HOST_DOWN;
-		else
-			cte->host->up = HOST_UP;
+		hce_notify_done(cte->host, "tcp_write: connect timed out");
+		return;
 	}
 
-	if (cte->host->up == HOST_UP)
-		tcp_host_up(s, cte);
-	else {
+	len = sizeof(err);
+	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len))
+		fatal("tcp_write: getsockopt");
+	if (err != 0) {
 		close(s);
+		cte->host->up = HOST_DOWN;
 		hce_notify_done(cte->host, "tcp_write: connect failed");
+		return;
 	}
+
+	cte->host->up = HOST_UP;
+	tcp_host_up(s, cte);
 }
 
 void

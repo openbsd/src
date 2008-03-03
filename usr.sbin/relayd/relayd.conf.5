@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.78 2008/02/11 13:59:57 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.79 2008/03/03 16:58:41 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2008 $
+.Dd $Mdocdate: March 3 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -164,6 +164,9 @@ Set the global timeout in milliseconds for checks.
 This can be overriden by the timeout value in the table definitions.
 The default interval is 200 milliseconds and it must not exceed the
 global interval.
+Please note that the default value is optimized for checks within the
+same collision domain, use a higher timeout like 1000 milliseconds for
+checks of hosts in other subnets.
 .El
 .Sh TABLES
 Tables are used to group a set of hosts as the target for redirections
