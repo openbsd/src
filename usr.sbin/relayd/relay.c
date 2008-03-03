@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.84 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.85 2008/03/03 16:41:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2796,6 +2796,7 @@ relay_bufferevent_write(struct ctl_relay_event *cre, void *data, size_t size)
 int
 relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 {
+	int ret = -1;
 	struct sockaddr_in ia, ib;
 	struct sockaddr_in6 ia6, ib6;
 
@@ -2804,23 +2805,27 @@ relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 		bcopy(a, &ia, sizeof(struct sockaddr_in));
 		bcopy(b, &ib, sizeof(struct sockaddr_in));
 
-		return (memcmp(&ia.sin_addr, &ib.sin_addr,
-		    sizeof(ia.sin_addr)) +
-		    memcmp(&ia.sin_port, &ib.sin_port,
-		    sizeof(ia.sin_port)));
+		ret = memcmp(&ia.sin_addr, &ib.sin_addr,
+		    sizeof(ia.sin_addr));
+		if (ret == 0)
+			ret = memcmp(&ia.sin_port, &ib.sin_port,
+			    sizeof(ia.sin_port));
 		break;
 	case AF_INET6:
 		bcopy(a, &ia6, sizeof(struct sockaddr_in6));
 		bcopy(b, &ib6, sizeof(struct sockaddr_in6));
 
-		return (memcmp(&ia6.sin6_addr, &ib6.sin6_addr,
-		    sizeof(ia6.sin6_addr)) +
-		    memcmp(&ia6.sin6_port, &ib6.sin6_port,
-		    sizeof(ia6.sin6_port)));
+		ret = memcmp(&ia6.sin6_addr, &ib6.sin6_addr,
+		    sizeof(ia6.sin6_addr));
+		if (ret == 0)
+			ret = memcmp(&ia6.sin6_port, &ib6.sin6_port,
+			    sizeof(ia6.sin6_port));
 		break;
 	default:
-		return (-1);
+		break;
 	}
+
+	return (ret);
 }
 
 char *
