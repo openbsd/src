@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2008/02/27 15:36:42 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2008/03/03 16:47:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2051,6 +2051,12 @@ table_inherit(struct table *tb)
 		return (NULL);
 	}
 	tb->conf.flags |= dsttb->conf.flags;
+
+	/* Inherit global table options */
+	bcopy(&dsttb->conf.timeout, &tb->conf.timeout, sizeof(struct timeval));
+	tb->conf.skip_cnt = dsttb->conf.skip_cnt;
+	strlcpy(tb->conf.demote_group, dsttb->conf.demote_group,
+	    sizeof(tb->conf.demote_group));
 
 	/* Copy the associated hosts */
 	bzero(&tb->hosts, sizeof(tb->hosts));
