@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.9 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.10 2008/03/03 16:43:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -194,7 +194,10 @@ relay_udp_server(int fd, short sig, void *arg)
 	    calloc(1, sizeof(struct session))) == NULL)
 		return;
 
-	con->se_key = key;
+	/*
+	 * Replace the DNS request Id with a random Id.
+	 */
+	con->se_key = arc4random() & 0xffff;
 	con->se_in.s = -1;
 	con->se_out.s = -1;
 	con->se_in.dst = &con->se_out;
@@ -203,7 +206,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	con->se_out.con = con;
 	con->se_relay = rlay;
 	con->se_id = ++relay_conid;
-	con->se_outkey = rlay->rl_dstkey;
+	con->se_outkey = key;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
 	con->se_in.dir = RELAY_DIR_REQUEST;
@@ -400,12 +403,7 @@ relay_dns_request(struct session *con)
 		return (-1);
 	slen = con->se_out.ss.ss_len;
 
-	/*
-	 * Replace the DNS request Id with a random Id.
-	 */
 	hdr = (struct relay_dnshdr *)buf;
-	con->se_outkey = con->se_key;
-	con->se_key = arc4random() & 0xffff;
 	hdr->dns_id = htons(con->se_key);
 
  retry:
