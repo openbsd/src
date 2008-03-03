@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.339 2008/02/26 18:34:18 deraadt Exp $
+$OpenBSD: usbdevs,v 1.340 2008/03/03 20:48:30 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2022,6 +2022,7 @@ product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 /* Qcom products */
 product QCOM RT2573		0x6196	RT2573
 product QCOM RT2573_2		0x6229	RT2573
+product QCOM RT2573_3		0x6238	RT2573
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N
@@ -2575,5 +2576,6 @@ product ZYXEL M202		0x340a	M-202
 product ZYXEL G270S		0x340c	G-270S
 product ZYXEL G220V2		0x340f	G-220 v2
 product ZYXEL G202		0x3410	G-202
+product ZYXEL RT2573		0x3415	RT2573
 product ZYXEL RT2870		0x3416	RT2870
 product ZYXEL PRESTIGE		0x401a	Prestige
