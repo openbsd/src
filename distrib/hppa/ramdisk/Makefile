@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/01/11 10:16:40 espie Exp $
+#	$OpenBSD: Makefile,v 1.13 2008/03/04 23:43:11 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -18,7 +18,7 @@ DISKTYPE=	rdroot
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
-IMAGESIZE?=	5120 # 2.5MB in 512 byte blocks
+IMAGESIZE?=	4608 # 2.25MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 RDSETROOT?=	elfrdsetroot
 CRUNCHGENOPTS?=-E
