@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.47 2008/02/05 22:57:31 mpf Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.48 2008/03/04 11:19:35 markus Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -682,6 +682,8 @@ nd6_na_input(m, off, icmp6len)
 			 * affect the status of associated prefixes..
 			 */
 			pfxlist_onlink_check();
+			if ((rt->rt_flags & RTF_LLINFO) == 0)
+				goto freeit;	/* ln is gone */
 		}
 	} else {
 		int llchange;
