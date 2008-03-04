@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2008/03/04 00:36:38 krw Exp $
+#	$OpenBSD: install.md,v 1.14 2008/03/04 18:09:37 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ md_consoleinfo() {
 	for _u in $(scan_dmesg "/^$_d\([0-9]\) .*/s//\1/p"); do
 		if [[ $_d$_u == $CONSOLE || -z $CONSOLE ]]; then
 			CDEV=$_d$_u
+			CPROM=com$_u
 			CTTY=tty0$_u
 			return
 		fi
