@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2007/05/28 02:57:11 krw Exp $
+#	$OpenBSD: install.md,v 1.26 2008/03/04 00:36:38 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -80,4 +80,7 @@ md_prep_disklabel() {
 }
 
 md_congrats() {
+}
+
+md_consoleinfo() {
 }

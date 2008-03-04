@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.32 2007/08/15 15:33:20 deraadt Exp $
+#	$OpenBSD: install.md,v 1.33 2008/03/04 00:36:38 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -187,4 +187,19 @@ described in the INSTALL.$ARCH document. The command to boot OpenBSD will
 be something like 'boot hd:,ofwboot /bsd'.
 
 __EOT
+}
+
+md_consoleinfo() {
+	local _u _d=zstty
+
+	for _u in $(scan_dmesg "/^$_d\([0-9]\) .*/s//\1/p"); do
+		if [[ $_d$_u == $CONSOLE || -z $CONSOLE ]]; then
+			CDEV=$_d$_u
+			: ${CSPEED:=56700}
+			set -- a b c d e f g h i j
+			shift $_u
+			CTTY=tty$1
+			return
+		fi
+	done
 }

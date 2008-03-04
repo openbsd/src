@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.424 2008/02/20 17:46:50 miod Exp $
+#	$OpenBSD: install.sub,v 1.425 2008/03/04 00:36:38 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,6 +67,7 @@
 #	md_congrats()		  - display friendly message
 #	md_installboot()	  - install boot-blocks on disk
 #	md_prep_disklabel()	  - put an OpenBSD disklabel on the disk
+#	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
 #
 # The following variables can be provided if required:
 #	MDSETS	    - list of files to add to THESETS
@@ -74,7 +75,6 @@
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
-#	MDSERIAL    - offer to configure a serial console
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 . install.md
 
@@ -192,38 +192,6 @@ get_ifdevs() {
 	ifconfig \
 	    | egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
 	    | sed -ne 's/^\(.*\):.*/\1/p'
-}
-
-# Get the first (lowest unit #) serial device if any, if MDSERIAL is set.
-#
-# MDSERIAL is of the form
-#
-# "<dmesg device prefix> <boot loader device prefix> <tty device prefix>"
-#
-# So "pccom com tty0" means the dmesg is searched for devices pccom0, pccom1,
-# ... pccom9. If pccom2 is found, then com2 and tty02 are used in serial
-# console configuration via boot.conf commands and /etc/ttys.
-#
-# NOTE: Only single digit serial devices (<dev>0 -> <dev>9) are looked for.
-get_serialdev() {
-	local _d _bd _td
-
-	[[ -n $MDSERIAL ]] || exit
-	set -- $MDSERIAL
-	_d=$1
-	_bd=$2
-	_td=$3
-	set -- $(scan_dmesg "/^${_d}\([0-9]\) .*/s//\1/p")
-	echo "$_bd$1 $_td$1"
-}
-
-get_console() {
-	local _d
-
-	# Find '<dev>: console' and extract <dev>.
-	_d=$(sed -ne '/^\([^ ]*\): console$/s//\1/p' /var/run/dmesg.boot)
-	set -- $MDSERIAL
-	[[ ${_d%[0-9]} == $1 ]] && echo "$2${_d##*[a-z]} $3${_d##*[a-z]}"
 }
 
 get_drive() {
@@ -1537,7 +1505,7 @@ populateusrlocal() {
 }
 
 questions() {
-	local _bd _td _sp
+	local _d
 
 	ask_yn "Start sshd(8) by default?" yes
 	if [[ $resp == n ]]; then
@@ -1569,25 +1537,19 @@ server $1
 		fi
 	fi
 
-	[[ -z $SERIALDEV ]] && return
-	set -- $(get_console)
-	if [[ -n $1 && -n $2 ]]; then
-		# When installing via a serial console use it and current speed.
-		_sp=$(stty speed)
-	else
-		# Use first serial port and 9600 (i.e. leave _sp unset).
-		set -- $SERIALDEV
-	fi
-	_bd=$1
-	_td=$2
-	ask_yn "Change the default console to $_bd?"
+	[[ -n $CDEV ]] || return
+	_d=${CPROM:-$CDEV}
+	ask_yn "Change the default console to $_d?"
 	[[ $resp == n ]] && return
-	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200" $_sp
+	ask_which "speed" "should $_d use" "9600 19200 38400 57600 115200" \
+		$CSPEED
 	[[ $resp == done ]] && return
-	echo "stty $_bd $resp\nset tty $_bd" >>/mnt/etc/boot.conf
-	sed	-e "/^${_td}/s/std.9600/std.${resp}/" \
-		-e "/^${_td}/s/unknown/vt220	/" \
-		-e "/${_td}/s/off/on secure/" /mnt/etc/ttys >/tmp/ttys
+	sed	-e "/^$CTTY/s/std.9600/std.${resp}/" \
+		-e "/^$CTTY/s/unknown/vt220	/" \
+		-e "/$CTTY/s/off/on secure/" /mnt/etc/ttys >/tmp/ttys
+
+	[[ -n $CPROM ]] && \
+		echo "stty $CPROM $resp\nset tty $CPROM" >>/mnt/etc/boot.conf
 }
 
 finish_up() {
@@ -1675,7 +1637,15 @@ DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
-SERIALDEV=$(get_serialdev)
+
+CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
+CONSOLE=${CONSOLE% }
+[[ -n $CONSOLE ]] && CSPEED=$(stty speed)
+
+# Look for the serial device matching the console. If we are not installing
+# from a serial console, just find the first serial device that could be used
+# as a console. If a suitable device is found, set CDEV, CTTY, CSPEED, CPROM.
+md_consoleinfo
 
 # Selected sets will be installed in the order they are listed in $THESETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite

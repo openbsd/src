@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.21 2005/10/10 19:22:19 martin Exp $
+#       $OpenBSD: install.md,v 1.22 2008/03/04 00:36:38 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,4 +84,24 @@ md_prep_disklabel() {
 }
 
 md_congrats() {
+}
+
+md_consoleinfo() {
+	local _d _u
+	integer i=0
+
+	# Set up TTYS array to parallel serial device names _d can assume.
+	TTYS[0]=tty0
+	TTYS[1]=ttyB
+
+	for _d in com scc; do
+		for _u in $(scan_dmesg "/^${_d}\([0-9]\) .*/s//\1/p"); do
+			if [[ $_d$_u == $CONSOLE || -z $CONSOLE ]]; then
+				CDEV=$_d$_u
+				CTTY=${TTYS[i]}$_u
+				return
+			fi
+		done
+		i=i+1
+	done
 }

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.26 2006/03/09 20:49:00 miod Exp $
+#       $OpenBSD: install.md,v 1.27 2008/03/04 00:36:38 krw Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -107,4 +107,7 @@ __EOT
 }
 
 md_congrats() {
+}
+
+md_consoleinfo() {
 }

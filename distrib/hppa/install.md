@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2005/03/27 15:13:49 krw Exp $
+#	$OpenBSD: install.md,v 1.7 2008/03/04 00:36:38 krw Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -40,4 +40,7 @@ md_prep_disklabel() {
 }
 
 md_congrats() {
+}
+
+md_consoleinfo() {
 }
