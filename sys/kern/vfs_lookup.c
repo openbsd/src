@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.37 2007/09/08 01:45:58 hshoexer Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.38 2008/03/04 15:30:18 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -220,6 +220,10 @@ badlink:
 			break;
 		}
 		linklen = MAXPATHLEN - auio.uio_resid;
+		if (linklen == 0) {
+			error = ENOENT;
+			goto badlink;
+		}
 		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
 			error = ENAMETOOLONG;
 			goto badlink;
