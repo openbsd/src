@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.98 2007/09/19 02:32:57 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.99 2008/03/04 19:43:18 miod Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3242,6 +3242,9 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	    IF_DEQUEUE(&sc->tulip_rxq, ms);
 	    for (me = ms; total_len > 0; total_len--) {
 		map = TULIP_GETCTX(me, bus_dmamap_t);
+#ifdef __alpha__
+		if (map->_dm_window != NULL)
+#endif
 		TULIP_RXMAP_POSTSYNC(sc, map);
 		bus_dmamap_unload(sc->tulip_dmatag, map);
 		sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
@@ -3490,6 +3493,9 @@ tulip_tx_intr(tulip_softc_t * const sc)
 		IF_DEQUEUE(&sc->tulip_txq, m);
 		if (m != NULL) {
 		    bus_dmamap_t map = TULIP_GETCTX(m, bus_dmamap_t);
+#ifdef __alpha__
+		    if (map->_dm_window != NULL)
+#endif
 		    TULIP_TXMAP_POSTSYNC(sc, map);
 		    sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
 #if NBPFILTER > 0
