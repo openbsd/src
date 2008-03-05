@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2007/08/10 12:29:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2008/03/05 21:28:36 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -25,6 +25,10 @@ ${CDROM}: ${BASE} ${XBASE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	# make sure right kernel is in /
+	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
 
 	cp -p ${RELDIR}/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/bootxx ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
