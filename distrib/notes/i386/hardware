@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.256 2008/02/23 10:36:27 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.257 2008/03/05 20:44:04 deraadt Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -69,24 +69,27 @@ Supported hardware {:-include-:}:
 		Acer Labs M5229
 		Adaptec AAR-1210SA
 		Advanced Micro Devices AMD-756, AMD-766, AMD-768, AMD-8111
-		ATI IXP 200, IXP 300, IXP 400
+		ATI IXP 200, IXP 300, IXP 400, IXP 700
 		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, PCI0649, PCI0680
 		Contaq Microsystems/Cypress CY82C693
 		HighPoint HPT366, HPT370, HPT372, HPT302, HPT371, HPT374
 		    (RAID mode is not supported)
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R/
-		    ICH6/ICH6M/ICH6R/ICH7)
-		Intel 6300ESB
-		ITE IT8212F (RAID mode is not supported)
+		    ICH6/ICH6M/ICH6R/ICH7/ICH7M/ICH7R/ICH7M DH/ICH8/ICH8M/
+		    ICH9/ICH9M)
+		Intel 6300ESB/6321ESB
+		ITE IT8211F/IT8212F (RAID mode is not supported)
+		JMicron JMB361/JMB363/JMB365/JMB366/JMB368
 		National Semiconductor PC87415
 		National Semiconductor SCx200 (found on SC1100 SoC)
-		NVIDIA nForce/nForce2/nForce2-400/nForce3/nForce3-250/nForce4
+		NVIDIA nForce/nForce2/nForce2-400/nForce3/nForce3-250/nForce4/
+		    MCP04/MCP51/MCP55/MCP61/MCP65/MCP67/MCP73/MCP77
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
 		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277,
 		    PDC20318, PDC20319, PDC20371, PDC20375, PDC20376, PDC20377,
 		    PDC20378, PDC20379, PDC20571, PDC20575, PDC20579, PDC20775,
-		    PDC40518, PDC40718, PDC40719
+		    PDC40518, PDC40718, PDC40719, PDC40779
 		ServerWorks OSB4, CSB5, CSB6 (including support for the third
 		    channel)
 		Silicon Image SiI3112, SiI3512, SiI3114
@@ -94,8 +97,9 @@ Supported hardware {:-include-:}:
 		    550, 620, 630, 630S, 633, 635, 640, 645, 645DX, 648, 650,
 		    651, 652, 661, 655, 658, 730, 733, 735, 740, 745, 746, 748,
 		    750, 751, 752, 755, 760, 962, 963
-		VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B,
-		    VT8231, VT8366, VT8233, VT8235, VT8237, VT8251, VT6410
+		VIA Technologies CX700, VT82C586/A/B, VT82C596A/B, VT82C686A/B,
+		    VT8231, VT8366, VT8233, VT8235, VT8237, VT8237A/S, VT8251,
+		    VT6410, VX700
 	SCSI Host Adapters
 		Adaptec AHA-1540, AHA-154xA, AHA-154xB, AHA-1542C,
 		    AHA-1542CF, AHA-1542CP, AHA-1640 [B] [C]
@@ -144,7 +148,7 @@ Supported hardware {:-include-:}:
 		    DTC Domex 3194U Plus
 		LSI Fusion-MPT (Symbios Logic/NCR) [A] [C]
 		    53C1020/53C1020A/53C1030/53C1030T/53C1035
-		    FC909/FC919/919X/FC929/FC949/FC949X
+		    FC909/FC919/919X/FC929/FC929X/FC949/FC949E/FC949X
 		    SAS1064/SAS1064E/SAS1068/SAS1068E
 		QLogic PCI SCSI controllers [A] [C]
 		Seagate/Future Domain ISA SCSI adapter cards, including: [B] [C]
@@ -206,10 +210,10 @@ Supported hardware {:-include-:}:
 		    and probably other vendors' controllers supporting
 		    I2O, including Intel and Mylex (untested)
 		LSI Logic & Dell MegaRAID SAS controllers
-		    Dell PERC 5/e, PERC 5/i
+		    Dell PERC 5/e, PERC 5/i, PERC 6/e, PERC 6/i
 		    Intel RAID Controller SRCSAS18E, SRCSAS144E
-		    LSI Logic MegaRAID SAS 8208ELP/8208XLP/8300XLP/8308ELP,
-		      MegaRAID SAS 8344ELP/8408E/8480E
+		    LSI Logic MegaRAID SAS 8300XLP/8308ELP/8344ELP/8408E,
+		      MegaRAID SAS 8480E/8888ELP/8880EM2
 
 	CD-ROM and DVD-ROM Drives
 		Mitsumi CD-ROM drives [*]
@@ -393,6 +397,8 @@ Supported hardware {:-include-:}:
 		    JVC MP-PRX1
 		    Level One USB-0200
 		    Linksys USB200M
+		    Linksys USB1000
+		    Logitec LAN-GTJ/U2
 		    Netgear FA120
 		    Nintendo Wii USB Lan Ethernet Adapter RVL-015
 		    OQO model 01+ Ethernet
@@ -684,8 +690,13 @@ Supported hardware {:-include-:}:
 		    Apple Airport Extreme BCM4306
 		    Apple Airport Extreme BCM4318
 		    ASUS WL-138g
+		    Buffalo WLI-CB-G54
 		    Compaq R4035 onboard
 		    HP nx6125
+		    Linksys WPC54G Ver 3
+		    Linksys WPC54GS Ver 2
+		    TRENDnet TEW-401PCplus
+		    US Robotics 5411
 		Conexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g CardBus
 		adapters [G]
 		    3COM 3CRWE154G72
@@ -721,6 +732,8 @@ Supported hardware {:-include-:}:
 		Intel PRO/Wireless 2200BG/2225BG/2915ABG 802.11a/b/g PCI
 		adapters [G]
 		Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g PCI adapters [G]
+		Intel Wireless WiFi Link 4965AGN IEEE 802.11a/b/g/Draft-N
+		adapters [G]
 		Marvell Libertas IEEE 802.11b/g CardBus adapters [G]
 		    Netgear WG511v2
 		    Tenda TWL541C
@@ -884,6 +897,7 @@ Supported hardware {:-include-:}:
 		    Abocom WUG2700
 		    Airlink101 AWLL5025
 		    ASUS WL-167g ver 2
+		    Atlantis Land A02-UP1-W54
 		    Belkin F5D7050 ver 3
 		    Belkin F5D9050 ver 3
 		    Buffalo WLI-U2-SG54HP
@@ -1116,6 +1130,7 @@ Supported hardware {:-include-:}:
 		    ZyXEL ZyAIR G-220
 		
 	Gigabit Ethernet Adapters
+		Agere/LSI ET1310 based adapters [A] [B] [C]
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]
 		    3Com 3c985 and 3c985B
@@ -1162,6 +1177,24 @@ Supported hardware {:-include-:}:
 		    Intel PRO/1000PT Quad Port Server Adapter
 		    Intel PRO/1000PF Server Adapter (SX Fiber)
 		    Intel PRO/1000PF Dual Port Server Adapter (SX Fiber)
+		Marvell Yukon-2 based adapters, including: [A] [B] [C]
+		    D-Link DGE-550SX
+		    D-Link DGE-560SX
+		    D-Link DGE-550T B1
+		    D-Link DGE-560T
+		    SysKonnect SK-9E21
+		    SysKonnect SK-9E22
+		    SysKonnect SK-9E81
+		    SysKonnect SK-9E82
+		    SysKonnect SK-9E91
+		    SysKonnect SK-9E92
+		    SysKonnect SK-9S21
+		    SysKonnect SK-9S22
+		    SysKonnect SK-9S81
+		    SysKonnect SK-9S82
+		    SysKonnect SK-9S91
+		    SysKonnect SK-9S92
+		    SysKonnect SK-9E21D
 		National Semiconductor DP83280 and DP83281 based PCI
 		adapters, including: [A] [B] [C]
 		    Addtron AEG320T
@@ -1174,6 +1207,9 @@ Supported hardware {:-include-:}:
 		Level1 LXT1001 based adapters (untested), including: [*]
 		    SMC TigerCard 1000
 		    D-Link DGE-500SX
+		NVIDIA nForce MCP based adapters, including:
+		    nForce/nForce 2/nForce 3/CK804/MCP04/MCP51/MCP55/MCP61/
+		    MCP65/MCP67/MCP73/MCP77/MCP79
 		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A] [C]
 		    3Com 3c996-T
 		    3Com 3c996-SX
@@ -1181,9 +1217,18 @@ Supported hardware {:-include-:}:
 		    Dell PowerEdge 1750 integrated BCM5704C NIC
 		    Dell PowerEdge 2550 integrated BCM5700 NIC
 		    Dell PowerEdge 2650 integrated BCM5703 NIC
+		    HP ProLiant NC320T PCI-E Gigabit NIC
+		    HP ProLiant NC370F PCI-X Gigabit NIC
+		    HP ProLiant NC370T PCI-X Gigabit NIC
+		    HP ProLiant NC1020 PCI Gigabit NIC
+		    HP ProLiant NC6770 PCI-X Gigabit NIC
 		    HP ProLiant NC7760 embedded Gigabit NIC
 		    HP ProLiant NC7770 PCI-X Gigabit NIC
+		    HP ProLiant NC7771 PCI-X Gigabit NIC
+		    HP ProLiant NC7780 embedded PCI-X Gigabit NIC
 		    HP ProLiant NC7781 embedded PCI-X Gigabit NIC
+		    HP ProLiant NC7782 embedded PCI-X Gigabit NIC
+		    IBM ThinkPad T43/T43p integrated BCM5751M NIC
 		    IBM xSeries 235 integrated BCM5703X NIC
 		    IBM xSeries 305 integrated BCM5703X NIC
 		    Netgear GA302T
@@ -1193,6 +1238,7 @@ Supported hardware {:-include-:}:
 		  including: [A] [B] [C]
 		    Dell PowerEdge 1950 integrated BCM5708
 		    Dell PowerEdge 2950 integrated BCM5708
+		    Dell PowerEdge 2970 integrated BCM5708
 		    HP NC370F PCI-X
 		    HP NC370T PCI-X
 		    HP NC373F PCI Express 
@@ -1200,8 +1246,9 @@ Supported hardware {:-include-:}:
 		    HP NC380T PCI Express Dual Port
 		    IBM xSeries 3550 integrated BCM5708
 		    IBM xSeries 3650 integrated BCM5708
-		Realtek 8169/8169S/8110S based PCI adapters, including:
+		Realtek 8139C+/8169/816xS/811xS/8101E based PCI adapters, including:
 		    Buffalo LGY-PCI-GT (8169S)
+		    Compaq Evo N1015v Integrated Ethernet (8139C+)
 		    Corega CG-LAPCIGT (8169S)
 		    D-Link DGE-528T (8169S)
 		    D-Link DGE-660TD (8196/8110SB)
@@ -1213,6 +1260,7 @@ Supported hardware {:-include-:}:
 		    PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 		    Surecom EP-320G-TX1 (8169S)
 		    US Robotics USR997902 (8169S)
+		    TTTech MC322 (8139C+)
 		    Xterasys XN-152 10/100/1000 NIC (8169)
 		Sundance/Tamarack TC9021 based PCI adapters, including: [G]
 		    D-Link DGE-550T (10/100/1000baseTX)
@@ -1236,6 +1284,31 @@ Supported hardware {:-include-:}:
 		VIA Networking VT6122 based PCI adapters, including:
 		    ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
 		    ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
+	10 Gigabit Ethernet Adapters
+		Intel 82597EX based PCI-X adapters, including:
+		    Intel PRO/10GbE CX4 Server Adapter (PXLA8591CX4)
+		    Intel PRO/10GbE LR Server Adapter (PXLA8591LR)
+		    Intel PRO/10GbE SR Server Adapter (PXLA8591SR)
+		    Sun 10 Gigabit Ethernet PCI-X Adapter (X5544A-4)
+		Neterion Xframe/Xframe II based adapters, including:
+		    Hitachi PCI-X 10 Gigabit Ethernet Adapter
+		    HP AB287A 10 Gigabit Ethernet Adapter
+		    IBM 10GbE SR Server Adapter
+		    IBM 10 Gb Ethernet-LR PCI-X 2.0 DDR Adapter
+		    IBM 10 Gb Ethernet-SR PCI-X 2.0 DDR Adapter
+		    Neterion/S2io Xframe
+		    Neterion Xframe II
+		    Neterion Xframe II Sun Fire
+		    Neterion Xframe E
+		    SGI 10 Gigabit Ethernet Network Adapter
+		Tehuti Networks adapters, including:
+		    TN3017-S 10 GbE Single Port XAUI Server Controller
+		    TN3017-D 10 GbE Dual Port XAUI Server Controller
+		    TN7581-D 10 GbE Dual XFP Server Adapter
+		    TN7585-D 10 GbE Dual CX4 Low Profile Server Adapter
+		    TN7588-S 10 GbE Single 10GBASET Low Profile Server Adapter
+		    TN7588-D 10 GbE Dual 10GBASET Low Profile Server Adapter
+		    TN7589-S 10 GbE Single CX4 Low Profile Server Adapter
 	ATM Adapters
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
 		interfaces [*]
@@ -1390,6 +1463,7 @@ Supported hardware {:-include-:}:
 		SoundBlaster PCI128
 		SoundBlaster Live! and PCI512 (EMU10k1)
 		Trident 4DWAVE-DX/NX and clones (SiS 7018, ALi M5451)
+		VIA Envy24
 		VIA VT82C686A, VT8233, VT8235, VT8237 SouthBridge
 		    integrated AC'97 audio
 		VIA VT8237A/VT8251
