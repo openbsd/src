@@ -1,32 +1,39 @@
-#	$OpenBSD: Makefile,v 1.4 2005/03/11 15:40:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/03/05 21:29:13 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
-CDROM=	cd${OSrev}.iso
+.include "${TOP}/Makefile.inc"
+
+CDROM=		cd${OSrev}.iso
 
 all: ${CDROM}
 
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/alpha
-	cp ${.OBJDIR}/../bsd.rd/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/alpha
-	ln ${.OBJDIR}/cd-dir/${OSREV}/alpha/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	cp ${.OBJDIR}/../bsd.rd/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	# make sure right kernel is in /
+	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
-	cp ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/cd-dir/${OSREV}/alpha
-	cp ${DESTDIR}/usr/mdec/bootxx ${.OBJDIR}/cd-dir/${OSREV}/alpha
+
+	cp ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp ${DESTDIR}/usr/mdec/bootxx ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
 	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
-	    -A "OpenBSD ${OSREV} alpha bootonly CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/alpha   ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
 	mount -t cd9660 /dev/svnd0a /mnt
 	/usr/mdec/installboot -v \
-	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f1` \
-	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/alpha/boot /usr/mdec/bootxx /dev/rsvnd0c
-	#disklabel -w svnd0 fakecdrom "OpenBSD/alpha   "
+	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
+	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
+	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rsvnd0c
+	#disklabel -w svnd0 fakecdrom "OpenBSD/${MACHINE}   "
 	umount /mnt
 	vnconfig -u svnd0
 
