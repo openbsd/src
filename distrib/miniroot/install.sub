@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.425 2008/03/04 00:36:38 krw Exp $
+#	$OpenBSD: install.sub,v 1.426 2008/03/05 01:09:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1546,7 +1546,7 @@ server $1
 	[[ $resp == done ]] && return
 	sed	-e "/^$CTTY/s/std.9600/std.${resp}/" \
 		-e "/^$CTTY/s/unknown/vt220	/" \
-		-e "/$CTTY/s/off/on secure/" /mnt/etc/ttys >/tmp/ttys
+		-e "/$CTTY/s/off.*/on secure/" /mnt/etc/ttys >/tmp/ttys
 
 	[[ -n $CPROM ]] && \
 		echo "stty $CPROM $resp\nset tty $CPROM" >>/mnt/etc/boot.conf
