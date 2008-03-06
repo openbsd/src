@@ -1,7 +1,7 @@
-/*	$OpenBSD: microcode.h,v 1.4 2008/03/06 09:11:57 deraadt Exp $	*/
+/*	$OpenBSD: microcode.h,v 1.5 2008/03/06 09:18:04 deraadt Exp $	*/
 
 /*-
- * Copyright (c) 2005-2006, Ralink Technology, Corp.
+ * Copyright (c) 2005-2008, Ralink Technology, Corp.
  *	Paul Lin <paul_lin@ralinktech.com.tw>
  *
  * Permission to use, copy, modify, and distribute this software for any
