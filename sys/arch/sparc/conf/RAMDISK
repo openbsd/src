@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.62 2007/05/29 09:54:03 sobrado Exp $
+#	$OpenBSD: RAMDISK,v 1.63 2008/03/06 08:23:49 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -9,7 +9,7 @@ maxusers	2
 
 # the size for MINIROOTSIZE must insure: 16384+size(bsd) < RELOC(boot,bootxx)
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=4352
+option		MINIROOTSIZE=4000
 
 #option		DDB		# need this to see what's happening
 

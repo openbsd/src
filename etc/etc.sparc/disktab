@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.21 2003/03/01 00:46:24 miod Exp $
+# $OpenBSD: disktab,v 1.22 2008/03/06 08:23:48 deraadt Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -25,9 +25,9 @@ miniroot:\
 	:pc#12288:oc#0:
 
 rdroot:\
-	:ty=ramdisk:se#512:nt#2:rm#300:ns#4:nc#544:\
-	:pa#4352:oa#0:ta=4.2BSD:ba#8192:fa#1024:\
-	:pc#4352:oc#0:
+	:ty=ramdisk:se#512:nt#2:rm#300:ns#4:nc#500:\
+	:pa#4000:oa#0:ta=4.2BSD:ba#8192:fa#1024:\
+	:pc#4000:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
