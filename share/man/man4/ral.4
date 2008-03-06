@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.78 2007/12/10 10:32:54 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.79 2008/03/06 09:14:22 deraadt Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2007 $
+.Dd $Mdocdate: March 6 2008 $
 .Os
 .Dt RAL 4
 .Sh NAME
@@ -274,14 +274,6 @@ files to be loaded when an interface is brought up:
 .It /etc/firmware/ral-rt2661
 .It /etc/firmware/ral-rt2860
 .El
-.Pp
-The firmware for the RT2800 chipset cannot be redistributed with the base
-system because of license restrictions.
-A prepackaged version of the firmware, designed to be used with
-.Xr pkg_add 1 ,
-can be found at:
-.Pp
-.Pa http://damien.bergamini.free.fr/packages/openbsd/ral-firmware-1.1.tgz
 .Pp
 The RT2500 chipset does not require a firmware to operate.
 .Sh HARDWARE
