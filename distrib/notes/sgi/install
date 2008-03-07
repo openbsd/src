@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.10 2008/03/07 17:58:23 jsing Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -62,6 +62,14 @@ dnl XXX needs extra text here once graphics console is available
 OpenBSDInstallPart3
 
 OpenBSDInstallPart4
+
+	No partitions should overlap with the SGI Volume Header, which by
+	default will use the first 3134 sectors. Additionally, the 'a'
+	partition must be the first partition on the disk, immediately
+	following the SGI Volume Header. If the default Volume Header size is
+	used, the 'a' partition should be located at offset 3135. If the 'a'
+	partition is not located immediately after the Volume Header the boot
+	loader will not be able to locate and load the kernel.
 
 OpenBSDInstallPart5(sd0)
 
