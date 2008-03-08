@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.45 2008/03/01 14:40:23 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.46 2008/03/08 11:53:36 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.45 2008/03/01 14:40:23 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.46 2008/03/08 11:53:36 joris Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -216,11 +216,11 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 	argv[argc++] = path2;
 	argv[argc++] = path3;
 
-	if (lseek(fds[2], SEEK_SET, 0) < 0)
+	if (lseek(fds[2], 0, SEEK_SET) < 0)
 		fatal("cvs_merge_file: lseek fds[2]: %s", strerror(errno));
-	if (lseek(fds[3], SEEK_SET, 0) < 0)
+	if (lseek(fds[3], 0, SEEK_SET) < 0)
 		fatal("cvs_merge_file: lseek fds[3]: %s", strerror(errno));
-	if (lseek(fds[4], SEEK_SET, 0) < 0)
+	if (lseek(fds[4], 0, SEEK_SET) < 0)
 		fatal("cvs_merge_file: lseek fds[4]: %s", strerror(errno));
 
 	diff3_conflicts = diff3_internal(argc, argv, cf->file_path, r2);

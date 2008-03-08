@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.21 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.22 2008/03/08 11:53:36 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -173,7 +173,7 @@ cvs_remote_send_file(const char *path, int _fd)
 	if (fd == -1)
 		fatal("cvs_remote_send_file: dup: %s", strerror(errno));
 
-	if (lseek(fd, SEEK_SET, 0) < 0)
+	if (lseek(fd, 0, SEEK_SET) < 0)
 		fatal("cvs_remote_send_file: %s: lseek: %s", path,
 		    strerror(errno));
 

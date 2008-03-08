@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.19 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.20 2008/03/08 11:53:36 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -318,7 +318,7 @@ cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2, BUF *out)
 	if (fd2 == -1)
 		fatal("cvs_diffreg: dup: %s", strerror(errno));
 
-	if (lseek(fd1, SEEK_SET, 0) < 0)
+	if (lseek(fd1, 0, SEEK_SET) < 0)
 		fatal("cvs_diffreg: lseek: %s", strerror(errno));
 
 	f1 = fdopen(fd1, "r");
@@ -327,7 +327,7 @@ cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2, BUF *out)
 		goto closem;
 	}
 
-	if (lseek(fd2, SEEK_SET, 0) < 0)
+	if (lseek(fd2, 0, SEEK_SET) < 0)
 		fatal("cvs_diffreg: lseek: %s", strerror(errno));
 
 	f2 = fdopen(fd2, "r");
