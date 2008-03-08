@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.34 2008/01/19 11:13:43 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.35 2008/03/08 16:34:32 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -254,6 +254,9 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 
 	for (node = OF_child(node); node != 0 && node != -1;
 	     node = OF_peer(node)) {
+		if (!checkstatus(node))
+			continue;
+
 		name[0] = name[29] = 0;
 		OF_getprop(node, "name", name, sizeof(name));
 
