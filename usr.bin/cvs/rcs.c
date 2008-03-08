@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.259 2008/03/08 20:52:36 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.260 2008/03/08 22:33:03 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3461,7 +3461,6 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		fatal("rcs_translate_tag: cannot find revision");
 
 	if (cvs_specified_date == -1) {
-
 		/* XXX */
 		if (rev->rn_len < 4) {
 			return (rev);
@@ -3499,7 +3498,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 
 	if (frev != NULL) {
 		brev = rcsnum_revtobr(frev);
-		brev->rn_len = rev->rn_len;
+		brev->rn_len = rev->rn_len - 1;
 	}
 
 	rcsnum_free(rev);
@@ -3512,8 +3511,18 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 				trdp = TAILQ_PREV(rdp, rcs_dlist, rd_list);
 				if (trdp == NULL)
 					trdp = rdp;
+
+				if (trdp->rd_num->rn_len != rdp->rd_num->rn_len)
+					return (NULL);
+
 				rev = rcsnum_alloc();
 				rcsnum_cpy(trdp->rd_num, rev, 0);
+				return (rev);
+			}
+
+			if (rdp->rd_next->rn_len == 0) {
+				rev = rcsnum_alloc();
+				rcsnum_cpy(rdp->rd_num, rev, 0);
 				return (rev);
 			}
 		} else {

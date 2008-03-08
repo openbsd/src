@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.136 2008/03/08 20:26:34 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.137 2008/03/08 22:33:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -638,16 +638,23 @@ update_join_file(struct cvs_file *cf)
 	if (rev1 == NULL || !strcmp(state1, RCS_STATE_DEAD)) {
 		if (cf->fd != -1) {
 			cvs_printf("%s exists but has been added in %s\n",
-			    cf->file_path, cvs_join_rev2);
+			    cf->file_path, jrev2);
 		} else {
+			cvs_printf("A %s\n", cf->file_path);
 			cvs_checkout_file(cf, cf->file_rcsrev, NULL, 0);
 			cvs_add_local(cf);
 		}
 		goto out;
 	}
 
-	if (cf->fd == -1)
+	if (!rcsnum_cmp(rev1, rev2, 0))
 		goto out;
+
+	if (cf->fd == -1) {
+		cvs_printf("%s does not exist but is present in %s\n",
+		    cf->file_path, jrev2);
+		goto out;
+	}
 
 	flag = rcs_kwexp_get(cf->file_rcs);
 	if (flag & RCS_KWEXP_NONE) {
