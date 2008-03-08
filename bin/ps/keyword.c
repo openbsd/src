@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.27 2007/04/13 19:20:23 miod Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.28 2008/03/08 19:20:12 millert Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.27 2007/04/13 19:20:23 miod Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.28 2008/03/08 19:20:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 
 /* Bit types must match their respective entries in struct kinfo_proc2 */
 VAR var[] = {
-	{"%cpu", "%CPU", NULL, 0, pcpu, 4},
-	{"%mem", "%MEM", NULL, 0, pmem, 4},
+	{"%cpu", "%CPU", NULL, NLIST, pcpu, 4},
+	{"%mem", "%MEM", NULL, NLIST, pmem, 4},
 	{"acflag", "ACFLG", NULL, 0, pvar, 3, 0, POFF(p_acflag), UINT16, "x"},
 	{"acflg", "", "acflag"},
 	{"args", "", "command"},
@@ -162,7 +162,7 @@ VAR var[] = {
 	{"ssiz", "SSIZ", NULL, 0, ssize, 4},
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
-	{"state", "STAT", NULL, LJUST, state, 5},
+	{"state", "STAT", NULL, LJUST|NLIST, state, 5},
 	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
 	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},

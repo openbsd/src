@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.7 2006/10/16 15:00:10 millert Exp $	*/
+/*	$OpenBSD: ps.h,v 1.8 2008/03/08 19:20:12 millert Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@ typedef struct var {
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	USER	0x04		/* needs user structure */
 #define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
+#define	NLIST	0x10		/* needs nlist info from kernel */
 	u_int	flag;
 				/* output routine */
 	void	(*oproc)(const struct kinfo_proc2 *, struct varent *);
