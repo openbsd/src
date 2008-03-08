@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.8 2006/06/27 03:51:29 pedro Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.9 2008/03/08 19:15:26 espie Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -54,6 +54,19 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, path, p);
 	error = namei(&nid);
+#ifdef RAMDISK_HOOKS
+	/* try again with mounted disk */
+	if (error) {
+		if (snprintf(path, MAXPATHLEN, "/mnt/etc/firmware/%s", name) >=
+		    MAXPATHLEN) {
+			error = ENAMETOOLONG;
+			goto err;
+		}
+
+		NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, path, p);
+		error = namei(&nid);
+	}
+#endif
 	if (error)
 		goto err;
 	error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
