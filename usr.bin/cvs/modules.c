@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.12 2008/03/02 11:58:45 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.13 2008/03/08 21:58:34 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -234,7 +234,7 @@ cvs_module_lookup(char *name)
 	cvs_file_get(name, 0, &(mc->mc_modules));
 	mc->mc_canfree = 1;
 	mc->mc_name = name;
-	mc->mc_flags |= MODULE_ALIAS;
+	mc->mc_flags = MODULE_ALIAS;
 	mc->mc_prog = NULL;
 
 	return (mc);
