@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.112 2008/03/08 11:32:38 espie Exp $
+# $OpenBSD: pkg_delete,v 1.113 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ use OpenBSD::Vstat;
 use OpenBSD::Paths;
 use OpenBSD::UpdateSet;
 
-our %forced = ();
+our %defines = ();
 our $not;
 
 package OpenBSD::pkg_delete::State;
@@ -48,12 +48,12 @@ try {
 	     'h' => sub { Usage(); },
 	     'F' => sub { 
 			    for my $o (split /\,/o, shift) { 
-				    $forced{$o} = 1;
+				    $defines{$o} = 1;
 			    }
 		    },
 	     'f' => sub { 
 			    for my $o (split /\,/o, shift) { 
-				    $forced{$o} = 1;
+				    $defines{$o} = 1;
 			    }
 	    	}}); 
 } catchall {
@@ -94,7 +94,7 @@ $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
-$state->{forced} = \%forced;
+$state->{defines} = \%defines;
 $state->{destdir} = $opt_B;
 $state->{interactive} = $opt_i;
 if ($opt_B eq '') {
@@ -105,7 +105,7 @@ if ($opt_B eq '') {
 
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
-lock_db($opt_n) unless $state->{forced}->{nolock};
+lock_db($opt_n) unless $state->{defines}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 
@@ -120,7 +120,7 @@ OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
 my @todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
 if (@todo > @realnames) {
-	my $details = $state->{very_verbose} || $forced{verbosedeps};
+	my $details = $state->{very_verbose} || $defines{verbosedeps};
 	my $show    = sub {
 		my ($p, $d) = @_;
 		print "Can't remove ".join(' ', @$p)." without also removing:\n"
@@ -146,7 +146,7 @@ if (@todo > @realnames) {
 		}
 	}
 	my $them = @todo > 1 ? 'them' : 'it';
-	if ($forced{dependencies} or 
+	if ($defines{dependencies} or 
 	    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
 		print "(removing $them as well)\n";
 	} else {
@@ -172,7 +172,7 @@ eval {
 		}
 		my $r = OpenBSD::RequiredBy->new($pkgname);
 		if ($r->list > 0) {
-			if ($forced{baddepend}) {
+			if ($defines{baddepend}) {
 				for my $p ($r->list) {
 					if ($done{$p}) {
 						$r->delete($p);

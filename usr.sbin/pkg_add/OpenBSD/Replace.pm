@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.43 2008/03/02 23:43:32 espie Exp $
+# $OpenBSD: Replace.pm,v 1.44 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -224,7 +224,7 @@ sub validate_depend
 	# nothing to do if new dependency just matches
 	return if $self->spec->filter($replacement);
 
-	if ($state->{forced}->{updatedepends}) {
+	if ($state->{defines}->{updatedepends}) {
 	    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
 	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
 	    $state->{forcedupdates}->{$wanting} = 1;
@@ -312,7 +312,7 @@ sub can_old_package_be_replaced
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
-		if ($state->{forced}->{update}) {
+		if ($state->{defines}->{update}) {
 			Warn "(forcing update)\n";
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
@@ -356,7 +356,7 @@ sub is_new_package_safe
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
-		if ($state->{forced}->{update}) {
+		if ($state->{defines}->{update}) {
 			Warn "(forcing update)\n";
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {

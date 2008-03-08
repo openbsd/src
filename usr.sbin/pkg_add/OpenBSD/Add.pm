@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.81 2007/06/25 09:30:16 espie Exp $
+# $OpenBSD: Add.pm,v 1.82 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -369,7 +369,7 @@ sub prepare_for_addition
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);
 	}
-	if ($state->{forced}->{kitchensink} && $state->{not}) {
+	if ($state->{defines}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {
@@ -489,7 +489,7 @@ sub prepare_for_addition
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);
 	}
-	if ($state->{forced}->{kitchensink} && $state->{not}) {
+	if ($state->{defines}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {
@@ -680,7 +680,7 @@ sub prepare_for_addition
 	if ($s->{noexec} && $self->exec_on_delete) {
 		$s->report_noexec($state, $fname);
 	}
-	if ($state->{forced}->{kitchensink} && $state->{not}) {
+	if ($state->{defines}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {

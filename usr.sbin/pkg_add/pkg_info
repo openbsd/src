@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.65 2007/12/18 10:58:46 espie Exp $
+# $OpenBSD: pkg_info,v 1.66 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -342,7 +342,7 @@ sub print_info
 
 set_usage('pkg_info [-AacDdfIiKkLMPpqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
-my %forced;
+my %defines;
 my $locked;
 try { 
 	getopts('cDdfF:hIikKLmpPQ:qRrsSUve:E:Ml:aAt',
@@ -350,7 +350,7 @@ try {
 		    sub {
 			    my $pat = shift;
 			    my @list;
-			    lock_db(1, $opt_q) unless $forced{nolock};
+			    lock_db(1, $opt_q) unless $defines{nolock};
 			    $locked = 1;
 			    if ($pat =~ m/\//o) {
 				    @list = find_by_path($pat);
@@ -366,7 +366,7 @@ try {
 		    },
 	     'F' => sub { 
 			    for my $o (split /\,/o, shift) { 
-				    $forced{$o} = 1;
+				    $defines{$o} = 1;
 			    }
 		    },
 	     'h' => sub {	Usage(); },
@@ -382,7 +382,7 @@ try {
 	Usage($_);
 };
 
-lock_db(1, $opt_q) unless $locked or $forced{nolock};
+lock_db(1, $opt_q) unless $locked or $defines{nolock};
 
 if ($opt_D) {
 	$opt_M = 1;

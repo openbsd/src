@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.330 2008/03/08 11:32:38 espie Exp $
+# $OpenBSD: pkg_add,v 1.331 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,7 @@ use OpenBSD::UpdateSet;
 
 my $bad = 0;
 
-our %forced = ();
+our %defines = ();
 our $not;
 
 package OpenBSD::pkg_add::State;
@@ -173,7 +173,7 @@ sub can_install
 	@conflicts = keys %conflicts;
 
 	if (!$state->{allow_replacing}) {
-		if ($state->{forced}->{conflicts}) {
+		if ($state->{defines}->{conflicts}) {
 			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")\n";
 			return 1;
 		}
@@ -420,7 +420,7 @@ sub install_set
 		return ();
 	}
 	if ($handle->has_error) {
-		if ((!$state->{forced}->{kitchensink} ||
+		if ((!$state->{defines}->{kitchensink} ||
 		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) &&
 		    !$handle->{tweaked}) {
 			$state->set_name_from_handle($handle);
@@ -436,7 +436,7 @@ sub install_set
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
 			print "$handle->{pkgname} is not for the right architecture\n";
-			return () unless $forced{arch};
+			return () unless $defines{arch};
 		}
 	}
 	if (!defined $set->{solver}) {
@@ -465,7 +465,7 @@ sub install_set
 #	print "Didn't need to process: ", join(',', @{$set->{solver}->{todo}}), "\n";
 	if (!$set->{solver}->solve_wantlibs($state)) {
 		$location->close_now;
-		if (!$forced{libdepends}) {
+		if (!$defines{libdepends}) {
 			$bad++;
 			return ();
 		}
@@ -493,7 +493,7 @@ sub find_truenames
 			$path = "";
 		    }
 		    my @l = $h->match(OpenBSD::Search::Stem->new($pkgname));
-		    if (@l > 1 && !$state->{forced}->{allversions}) {
+		    if (@l > 1 && !$state->{defines}->{allversions}) {
 			@l = OpenBSD::PackageName::keep_most_recent(@l);
 		    }
 		    my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l);
@@ -535,12 +535,12 @@ try {
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
 	 		for my $o (split /\,/o, shift) { 
-				$forced{$o} = 1;
+				$defines{$o} = 1;
 			}
 	    	},
 	 'f' => sub { 
 	 		for my $o (split /\,/o, shift) { 
-				$forced{$o} = 1;
+				$defines{$o} = 1;
 			}
 	    	}}); 
 } catchall {
@@ -556,7 +556,7 @@ $state->{recorder} = OpenBSD::SharedItemsRecorder->new;
 $state->{do_faked} = 0;
 $state->{localbase} = $opt_L;
 $state->{arch} = $opt_A;
-$state->{forced} = \%forced;
+$state->{defines} = \%defines;
 
 if (defined $opt_Q and defined $opt_B) {
 	Usage "-Q and -B are incompatible options";
@@ -609,7 +609,7 @@ if (@ARGV == 0 && !$opt_u) {
 	Usage "Missing pkgname";
 }
 
-lock_db($state->{not}) unless $state->{forced}->{nolock};
+lock_db($state->{not}) unless $state->{defines}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 
@@ -629,7 +629,7 @@ if ($opt_u) {
 
 	if (@cantupdate > 0) {
 			print "Cannot find updates for ", join(' ', @cantupdate), "\n";
-		if ($state->{forced}->{alwaysupdate} ||
+		if ($state->{defines}->{alwaysupdate} ||
 		    $state->{full_update} && !$state->{interactive}) {
 			print "Proceeding anyways\n";
 		} else {
@@ -651,7 +651,7 @@ if ($opt_u) {
 } else {
 	find_truenames(\@ARGV, \@todo, $state);
 	OpenBSD::Add::tag_user_packages(@todo);
-	if (defined $state->{forced}->{kitchensink}) {
+	if (defined $state->{defines}->{kitchensink}) {
 		reorder(\@todo);
 		if (!$opt_r) {
 			@todo = grep {s/\.tgz$//o; !is_installed($_);} @todo;
@@ -697,7 +697,7 @@ if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	    join(' ', sort(keys %{$state->{updatedepends}})),
 	    " may remain\n";
 }
-if (defined $state->{forced}->{kitchensink}) {
+if (defined $state->{defines}->{kitchensink}) {
 	print "Added:\n", (map { "\t$_\n" } sort $state->installed), "\n";
 }
 rethrow $dielater;
@@ -770,7 +770,7 @@ sub get_plist
 
 	if (is_installed($pkgname) && 
 	    (!$state->{allow_replacing} ||	
-	      !$state->{forced}->{installed} &&
+	      !$state->{defines}->{installed} &&
 	      !$plist->has_new_sig($state) && 
 	      !$plist->uses_old_libs)) {
 		$handle->{tweaked} = 

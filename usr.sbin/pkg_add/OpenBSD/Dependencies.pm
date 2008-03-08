@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.59 2007/06/26 14:40:25 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.60 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -239,7 +239,7 @@ sub find_dep_in_repositories
 	# XXX not really efficient, but hey
 	my %c = map {($_->{name}, $_)} @candidates;
 	my @pkgs = keys %c;
-	if (!$state->{forced}->{allversions}) {
+	if (!$state->{defines}->{allversions}) {
 		@pkgs = OpenBSD::PackageName::keep_most_recent(@pkgs);
 	}
 	if (@pkgs == 1) {

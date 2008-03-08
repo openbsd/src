@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.81 2007/09/20 09:01:34 espie Exp $
+# $OpenBSD: Update.pm,v 1.82 2008/03/08 12:07:45 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -64,7 +64,7 @@ sub process_package
 	}
 	my @search = ();
 	push(@search, OpenBSD::Search::Stem->split($pkgname));
-	if (!$state->{forced}->{allversions}) {
+	if (!$state->{defines}->{allversions}) {
 		push(@search, OpenBSD::Search::Filter->keep_most_recent);
 	}
 
@@ -77,7 +77,7 @@ sub process_package
 		if (@l == 0) {
 			return @l;
 		}
-		if (@l == 1 && $state->{forced}->{pkgpath}) {
+		if (@l == 1 && $state->{defines}->{pkgpath}) {
 			return @l;
 		}
 		my @l2 = ();
@@ -126,14 +126,14 @@ sub process_package
 		return;
 	}
 	if (@l == 1) {
-		if ($state->{forced}->{pkgpath}) {
+		if ($state->{defines}->{pkgpath}) {
 			$state->progress->clear;
 			print "Directly updating $pkgname -> ", $l[0], "\n";
 			$self->add2updates($l[0]);
 			return;
 		}
 		if (defined $found && $found eq  $l[0] && 
-		    !$plist->uses_old_libs && !$state->{forced}->{installed}) {
+		    !$plist->uses_old_libs && !$state->{defines}->{installed}) {
 				my $msg = "No need to update $pkgname";
 				$state->progress->message($msg);
 				print "$msg\n" if $state->{beverbose};
@@ -168,7 +168,7 @@ sub process
 	my @list = ();
 
 	OpenBSD::PackageInfo::solve_installed_names($old, \@list, "(updating them all)", $state);
-	unless (defined $state->{full_update} or defined $state->{forced}->{noclosure}) {
+	unless (defined $state->{full_update} or defined $state->{defines}->{noclosure}) {
 		require OpenBSD::RequiredBy;
 
 		@list = OpenBSD::Requiring->compute_closure(@list);
