@@ -1633,6 +1633,7 @@
 ./usr/share/man/cat4/sparc64/upa.0
 ./usr/share/man/cat4/sparc64/uperf.0
 ./usr/share/man/cat4/sparc64/vbus.0
+./usr/share/man/cat4/sparc64/vcons.4
 ./usr/share/man/cat4/sparc64/vigra.0
 ./usr/share/man/cat4/sparc64/vrtc.0
 ./usr/share/man/cat4/sparc64/xbox.0
