@@ -12,11 +12,10 @@
  */
 #endif /* APPLE_HYB */
 
-static char rcsid[] ="$Id: match.c,v 1.2 2002/11/03 20:27:03 pvalchev Exp $";
-
 #include "config.h"
 #include <prototyp.h>
 #include <stdio.h>
+#include <fnmatch.h>
 #ifndef VMS
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -65,7 +64,7 @@ char * fn;
   register int i;
 
   for (i=0; mat[i] && i<MAXMATCH; i++) {
-    if (fnmatch(mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+    if (fnmatch(mat[i], fn, FNM_PATHNAME) != FNM_NOMATCH) {
       return 1; /* found -> excluded filenmae */
     }
   }
@@ -108,7 +107,7 @@ char * fn;
   register int i;
 
   for (i=0; i_mat[i] && i<MAXMATCH; i++) {
-    if (fnmatch(i_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+    if (fnmatch(i_mat[i], fn, FNM_PATHNAME) != FNM_NOMATCH) {
       return 1; /* found -> excluded filenmae */
     }
   }
@@ -158,7 +157,7 @@ char * fn;
   register int i;
 
   for (i=0; j_mat[i] && i<MAXMATCH; i++) {
-    if (fnmatch(j_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+    if (fnmatch(j_mat[i], fn, FNM_PATHNAME) != FNM_NOMATCH) {
       return 1; /* found -> excluded filenmae */
     }
   }
@@ -228,7 +227,7 @@ char * fn;
   register int i;
 
   for (i=0; hfs_mat[i] && i<MAXMATCH; i++) {
-    if (fnmatch(hfs_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+    if (fnmatch(hfs_mat[i], fn, FNM_PATHNAME) != FNM_NOMATCH) {
       return 1; /* found -> excluded filenmae */
     }
   }

@@ -19,7 +19,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: hash.c,v 1.1 2000/10/10 20:40:15 beck Exp $";
 
 #include <stdlib.h>
 #include "config.h"

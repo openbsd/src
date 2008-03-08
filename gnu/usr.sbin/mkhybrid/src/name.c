@@ -21,8 +21,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: name.c,v 1.1 2000/10/10 20:40:20 beck Exp $";
-
 #include "config.h"
 #include "mkisofs.h"
 

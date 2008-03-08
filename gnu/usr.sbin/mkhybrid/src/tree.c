@@ -20,8 +20,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: tree.c,v 1.3 2008/02/27 09:59:51 espie Exp $";
-
 /* ADD_FILES changes made by Ross Biro biro@yggdrasil.com 2/23/95 */
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 16/3/1999 */
@@ -32,6 +30,7 @@ static char rcsid[] ="$Id: tree.c,v 1.3 2008/02/27 09:59:51 espie Exp $";
 #include <errno.h>
 
 #include "config.h"
+#include "apple_proto.h"
 
 #ifndef VMS
 #if defined(MAJOR_IN_SYSMACROS)
@@ -67,8 +66,6 @@ extern char * strdup(const char *);
 #include "match.h"
 
 #include <sys/stat.h>
-
-#include "exclude.h"
 
 #ifdef	DOESNT_WORK
 
@@ -1277,7 +1274,6 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
 	and not excluded */
     if (S_ISREG(lstatbuf.st_mode) && !have_rsrc && apple_both && !x_hfs) {
       char	rsrc_path[1024];	/* rsrc fork filename */
-/*      int	htype; */
 
       /* construct the resource full path */
       htype = get_hfs_rname(whole_path, short_name, rsrc_path);
@@ -1290,7 +1286,6 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
 
 	lstatus = lstat_filter(rsrc_path, &rlstatbuf);
 
-/*	if(!status && !lstatus && S_ISREG(rlstatbuf.st_mode) && rlstatbuf.st_size > 0) { */
 	if(!status && !lstatus && S_ISREG(rstatbuf.st_mode) && rstatbuf.st_size > 0) {
 	  /* have a resource file - insert it into the current directory
 	     but flag that we have a resource fork */

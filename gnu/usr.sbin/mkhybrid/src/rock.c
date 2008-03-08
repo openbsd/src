@@ -19,8 +19,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: rock.c,v 1.2 2003/05/08 21:04:17 vincent Exp $";
-
 #include <stdlib.h>
 
 #include "config.h"

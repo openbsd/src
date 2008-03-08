@@ -41,11 +41,6 @@
 
 #include "file.h"
 
-#ifndef	lint
-static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.2 2008/02/27 09:59:52 espie Exp $";
-#endif	/* lint */
-
 /* static int match	__P((unsigned char *, int)); */
 static char *match	__P((unsigned char *, int));
 static int mget		__P((union VALUETYPE *,

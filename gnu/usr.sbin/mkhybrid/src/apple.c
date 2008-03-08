@@ -17,14 +17,17 @@
 
 #ifdef APPLE_HYB
 
+#include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#include <err.h>
 #include <fcntl.h>
 #include <config.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <apple.h>
+#include "apple_proto.h"
 #include <mkisofs.h>
 
 /* tidy up mkisofs definition ... */
@@ -44,6 +47,7 @@ static int get_fe_info(char *, char *, dir_ent *, int);
 static int get_sgi_dir(char *, char *, dir_ent *, int);
 static int get_sgi_info(char *, char *, dir_ent *, int);
 
+void map_ext(char *, char **, char **, unsigned short *, char *);
 static afpmap	**map;				/* list of mappings */
 static afpmap	*defmap;			/* the default mapping */
 static int	last_ent;			/* previous mapped entry */
@@ -303,7 +307,6 @@ get_cap_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 {
 	FileInfo 	info;			/* finderinfo struct */
 	int		num = -1;		/* bytes read */
-	char		*name;
 	char		*c;
 	char		*t;
 	hfsdirent	*hfs_ent = s_entry->hfs_ent;
@@ -440,7 +443,7 @@ get_es_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 
 	/* this should exist ... */
 	if ((s_entry1 = s_entry->assoc) == NULL)
-	    perr("TYPE_ESH error - shouldn't happen!");
+	    errx(1, "TYPE_ESH error - shouldn't happen!");
 
 	/* fill in the HFS info stuff */
 	strncpy(hfs_ent->type, t, CT_SIZE);
@@ -504,7 +507,9 @@ get_mb_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 	hfsdirent	*hfs_ent;
 	dir_ent		*s_entry1;
 	int		i;
+#ifdef TEST_CODE
 	unsigned short	crc_file, crc_calc;
+#endif
 
 	info = (mb_info *)p_buf;
 
@@ -555,7 +560,7 @@ get_mb_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 
 	    /* this should exist ... */
 	    if((s_entry1 = s_entry->assoc) == NULL)
-		perr("TYPE_MBIN error - shouldn't happen!");
+		errx(1, "TYPE_MBIN error - shouldn't happen!");
 
 	    hfs_ent = s_entry->hfs_ent;
 
@@ -636,7 +641,7 @@ get_dbl_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 
 	/* get the rsrc file info - should exist ... */
 	if ((s_entry1 = s_entry->assoc) == NULL)
-	    perr("TYPE_DBL error - shouldn't happen!");
+	    errx(1, "TYPE_DBL error - shouldn't happen!");
 
 	/* open and read the info/rsrc file (it's the same file) */
 	if ((fp = fopen(hname,"rb")) != NULL)
@@ -745,7 +750,6 @@ get_sgl_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 	char		*c;
 	char		*t;
 	int		nentries;
-	FILE		*fp;
 	hfsdirent	*hfs_ent;
 	dir_ent		*s_entry1;
 	char		name[64];
@@ -780,7 +784,7 @@ get_sgl_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 
 	    /* get the rsrc file info - should exist ... */
 	    if ((s_entry1 = s_entry->assoc) == NULL)
-		perr("TYPE_SGL error - shouldn't happen!");
+		errx(1, "TYPE_SGL error - shouldn't happen!");
 
 	    hfs_ent = s_entry->hfs_ent;
 
@@ -1383,23 +1387,23 @@ get_hfs_rname(char *wname, char *dname, char *rname)
 	    else {
 		/* if we are probing, then have a look at the contents to
 		   find type */
-		if (p_fd < 0)
+		if (p_fd < 0) {
 		    /* open file, if not already open */
 		    if((p_fd = open(wname, O_RDONLY | O_BINARY)) < 0) {
 			/* can't open it, then give up */
 			return (TYPE_NONE);
-		    }
-		    else {
+		    } else {
 			if((p_num = read(p_fd, p_buf, sizeof(p_buf))) <= 0) {
 			/* can't read, or zero length - give up */
 			    close(p_fd);
 			    return(TYPE_NONE);
+			}
+			/* get file pointer and close file */
+			p_fp = fdopen(p_fd, "rb");
+			close(p_fd);
+			if(p_fp == NULL)
+			    return(TYPE_NONE);
 		    }
-		    /* get file pointer and close file */
-		    p_fp = fdopen(p_fd, "rb");
-		    close(p_fd);
-		    if(p_fp == NULL)
-			return(TYPE_NONE);
 		}
 		/* call routine to do the work - use the given dname as
 		   this is the name we may use on the CD */
@@ -1511,6 +1515,7 @@ hfs_exclude(char *d_name)
 **	print_hfs_info: print info about the HFS files.
 **
 */
+void
 print_hfs_info(dir_ent *s_entry)
 {
 	fprintf(stderr,"Name: %s\n",s_entry->whole_name);
@@ -1529,11 +1534,13 @@ print_hfs_info(dir_ent *s_entry)
 void
 hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 	unsigned int hfs_select)
-/* char		*name;				/* afpfile name */
-/* u_short	*fdflags;			/* default finder flags */
-/* int		probe;				/* probe flag */
-/* int		nomacfiles;			/* don't look for mac files */
-/* u_int	hfs_select			/* select certain mac files */
+#if 0
+   char		*name;				/* afpfile name */
+   u_short	*fdflags;			/* default finder flags */
+   int		probe;				/* probe flag */
+   int		nomacfiles;			/* don't look for mac files */
+   u_int	hfs_select			/* select certain mac files */
+#endif
 {
 	FILE	*fp;				/* File pointer */
 	int	count = NUMMAP;			/* max number of entries */
@@ -1576,14 +1583,14 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 
 	/* initialise magic file */
 	if(magic_file && init_magic(magic_file) != 0)
-	    perr("unable to open magic file");
+	    errx(1, "unable to open magic file");
 
 	/* set defaults */
 	map_num = last_ent = 0;
 
 	/* allocate memory for the default entry */
 	if((defmap = (afpmap *)malloc(sizeof(afpmap))) == NULL)
-	    perr("not enough memory");
+	    errx(1, "not enough memory");
 
 	/* set default values */
 	defmap->extn = DEFMATCH;
@@ -1617,10 +1624,10 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 	}
 
 	if((fp = fopen(name,"r")) == NULL)
-	    perr("unable to open mapping file: %s", name);
+	    err(1, "unable to open mapping file: %s", name);
 
 	if((map = (afpmap **)malloc(NUMMAP * sizeof(afpmap *))) == NULL)
-	    perr("not enough memory");
+	    errx(1, "not enough memory");
 
 	/* read afpfile line by line */
 	while(fgets(buf, MAXPATHLEN, fp) != NULL) {
@@ -1635,12 +1642,12 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 		count += NUMMAP;
 		map = (afpmap **)realloc(map, count * sizeof(afpmap *));
 		if (map == NULL)
-		    perr("not enough memory");
+		    errx(1, "not enough memory");
 	    }
 
 	    /* allocate memory for this entry */
 	    if((amap = (afpmap *)malloc(sizeof(afpmap))) == NULL)
-		perr("not enough memory");
+		errx(1, "not enough memory");
 
 	    t = amap->type;
 	    c = amap->creator;
@@ -1655,7 +1662,7 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 
 	    /* copy the extension found */
 	    if ((amap->extn = (char *)strdup(tmp)) == NULL)
-		perr("not enough memory");
+		errx(1, "not enough memory");
 
 	    /* set end-of-string */
 	    *(t+4) = *(c+4) = '\0';
@@ -1687,7 +1694,7 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 	if (map_num != count) {
 	    map = (afpmap **)realloc(map, map_num * sizeof(afpmap *));
 	    if (map == NULL)
-		perr("not enough memory");
+		errx(1, "not enough memory");
 	}
 
 }
@@ -1695,12 +1702,15 @@ hfs_init(char *name, unsigned short fdflags, int probe, int nomacfiles,
 /*
 **	map_ext: map a files extension with the list to get type/creator
 */
+void
 map_ext(char *name, char **type, char **creator, unsigned short *fdflags,
 	char *whole_name)
-/* char		*name;				/* filename */
-/* char		**type;				/* set type */
-/* char		**creator;			/* set creator */
-/* u_short	*fdflags;			/* set finder flags */
+#if 0
+   char		*name;				/* filename */
+   char		**type;				/* set type */
+   char		**creator;			/* set creator */
+   u_short	*fdflags;			/* set finder flags */
+#endif
 {
 	int	i;				/* loop counter */
 	int	len;				/* filename length */
@@ -1801,11 +1811,3 @@ clean_hfs()
 #else
 #include <stdio.h>
 #endif /* APPLE_HYB */
-
-perr(char *a)
-{
-	if (a)
-		fprintf(stderr,"mkhybrid: %s\n",a);
-	perror("mkhybrid");
-	exit(1);
-}

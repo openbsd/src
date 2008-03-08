@@ -21,6 +21,7 @@
 
 #include <config.h>
 #include <mkisofs.h>
+#include "mac_label_proto.h"
 #include <mac_label.h>
 
 int

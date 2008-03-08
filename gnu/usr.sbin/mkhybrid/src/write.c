@@ -19,14 +19,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: write.c,v 1.2 2008/02/27 09:59:51 espie Exp $";
-
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 16/3/1999 */
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 #include "config.h"
 #include "mkisofs.h"
 #include "iso9660.h"
+#include "volume.h"
+#include "write.h"
+#include "apple_proto.h"
+#include "mac_label_proto.h"
 #include <time.h>
 #include <errno.h>
 
@@ -168,20 +171,6 @@ void FDECL4(xfwrite, void *, buffer, int, count, int, size, FILE *, file)
 	  count-=got,*(char**)&buffer+=size*got;
      }
 }
-
-struct deferred_write
-{
-  struct deferred_write * next;
-  char			* table;
-  unsigned int		  extent;
-  unsigned int		  size;
-  char			* name;
-#ifdef APPLE_HYB
-  struct directory_entry *s_entry;
-  unsigned int            pad;
-  unsigned int		  off;
-#endif /* APPLE_HYB */
-};
 
 #ifdef APPLE_HYB
 /* use the deferred_write struct to store info about the hfs_boot_file */
@@ -1556,7 +1545,7 @@ static int file_gen()
 		/* exit with the error */
 		if (*hce->error)
 		    fprintf(stderr, "%s\n", hce->error);
-		perr(hfs_error);
+		err(1, hfs_error);
 	    }
 	    else
 	    {
@@ -1586,14 +1575,14 @@ static int file_gen()
       if (gen_mac_label(&mac_boot)) {
 	if (*hce->error)
 	    fprintf(stderr, "%s\n", hce->error);
-	perr(hfs_error);
+	err(1, hfs_error);
       }
     }
 
     /* set Autostart filename if required */
     if (autoname) {
 	if(autostart())
-	    perr("Autostart filename must less than 12 characters");
+	    errx(1, "Autostart filename must less than 12 characters");
     }
 
     /* finished with any HFS type errors */

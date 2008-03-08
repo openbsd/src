@@ -1,6 +1,6 @@
 # Generated automatically from Makefile.in by configure.
 #
-# $Id: Makefile,v 1.2 2002/12/13 03:12:26 millert Exp $
+# $Id: Makefile,v 1.3 2008/03/08 15:36:12 espie Exp $
 #
 ## Makefile for mkhybrid - based on mkisofs v1.12
 # James Pearson 16/3/1999
@@ -45,7 +45,7 @@ manext = 8
 CFLAGS=$(COPTS) $(DEFINES) -I. -Iinclude -I$(libhfsdir) -DVANILLA_AUTOCONF
 LDFLAGS= -L$(libhfsdir) -L$(libfiledir)
 OBJS=mkisofs.o tree.o write.o hash.o rock.o multi.o \
-		joliet.o match.o name.o fnmatch.o eltorito.o \
+		joliet.o match.o name.o eltorito.o \
 		apple.o volume.o desktop.o mac_label.o
 
 World: mkhybrid
@@ -93,9 +93,6 @@ joliet.o: joliet.c mkisofs.h iso9660.h config.h Makefile
 
 match.o: match.c match.h config.h Makefile
 	$(CC) -c $(CFLAGS) $(srcdir)/match.c
-
-fnmatch.o: fnmatch.c fnmatch.h config.h Makefile
-	$(CC) -c $(CFLAGS) $(srcdir)/fnmatch.c
 
 multi.o: multi.c iso9660.h mkisofs.h config.h Makefile
 	$(CC) -c $(CFLAGS) $(srcdir)/multi.c

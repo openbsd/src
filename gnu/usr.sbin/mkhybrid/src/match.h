@@ -5,11 +5,10 @@
  */
 
 /*
- * 	$Id: match.h,v 1.3 2008/02/27 09:59:51 espie Exp $
+ * 	$Id: match.h,v 1.4 2008/03/08 15:36:12 espie Exp $
  */
 
 #include <inttypes.h>
-#include "fnmatch.h"
 
 int matches	__PR((char *fn));
 

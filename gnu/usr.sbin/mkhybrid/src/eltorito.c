@@ -21,7 +21,6 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.   */
 
 
-static char rcsid[] ="$Id: eltorito.c,v 1.2 2004/06/22 22:58:06 tom Exp $";
 
 #include <stdio.h>
 #include <sys/types.h>

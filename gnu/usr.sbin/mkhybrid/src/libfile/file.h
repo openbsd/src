@@ -1,6 +1,6 @@
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.1 2000/10/10 20:40:36 beck Exp $
+ * @(#)$Id: file.h,v 1.2 2008/03/08 15:36:12 espie Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -88,7 +88,6 @@ struct magic {
 # endif
 #endif
 
-extern int   init_magic		__P((char *));
 extern int   ascmagic		__P((unsigned char *, int));
 extern void  error		__P((const char *, ...));
 extern void  ckfputs		__P((const char *, FILE *));

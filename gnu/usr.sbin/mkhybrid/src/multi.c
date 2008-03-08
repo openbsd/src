@@ -19,8 +19,6 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  
  */
 
-static char rcsid[] ="$Id: multi.c,v 1.1 2000/10/10 20:40:20 beck Exp $";
-
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

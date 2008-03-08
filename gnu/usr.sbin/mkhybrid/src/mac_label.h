@@ -105,18 +105,6 @@ typedef struct {
 #define HFS_BB_SIGWORD		0x4c4b
 
 /* borrowed from write.c - we just need parts of this */
-struct deferred_write {
-	struct deferred_write * next;
-	char		      * table;
-	unsigned int		extent;
-	unsigned int		size;
-	char		      * name;
-	struct directory_entry *s_entry;
-	unsigned int		pad;
-	unsigned int		off;
-};
-
-typedef struct deferred_write defer;
 
 #ifdef __cplusplus
 }

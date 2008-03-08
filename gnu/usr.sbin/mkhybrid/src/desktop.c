@@ -23,6 +23,7 @@
 #ifdef APPLE_HYB
 
 #include <string.h>
+#include <err.h>
 #include "hfs.h"
 
 #define	DB	"Desktop DB"
@@ -40,7 +41,7 @@ extern hce_mem *hce;		/* libhfs/mkisofs extras */
 
 int
 make_desktop(hfsvol *vol, int end)
-/* hfsvol  *vol;				/* Mac volume */
+/* hfsvol  *vol;				   Mac volume */
 {
 	hfsfile		*hfp;			/* Mac file */
 	hfsdirent	ent;			/* Mac finderinfo */
@@ -95,28 +96,28 @@ make_desktop(hfsvol *vol, int end)
 	
 	    /* open file */
 	    if((hfp = hfs_open(vol, DB)) == 0)
-		perr(hfs_error);
+		err(1, hfs_error);
 
 	    /* "write" file */
 	    write_fork(hfp, clps);
 
 	    /* set DB file attributes */
 	    if (hfs_fsetattr(hfp, &ent) < 0)
-		perr(hfs_error);
+		err(1, hfs_error);
 
 	    /* find the real start of the file */
 	    end += hce->hfs_ce_size;
 
 	    /* close DB file */
 	    if (hfs_close(hfp, end, 0) < 0)
-		perr(hfs_error);
+		err(1, hfs_error);
 	}
 	else
 	{
 	    /* if it already exists, then make sure it has the correct
 	       type/creator and flags */
 	    if(hfs_setattr(vol, DB, &ent) < 0)
-		perr(hfs_error);
+		err(1, hfs_error);
 	}
 
 	/* setup "Desktop DF" file as an empty file */
@@ -128,7 +129,7 @@ make_desktop(hfsvol *vol, int end)
 
 	/* set DB file attributes */
 	if (hfs_setattr(vol, DF, &ent) < 0)
-	    perr(hfs_error);
+	    err(1, hfs_error);
 	return 0;
 }
 #endif /* APPLE_HYB */ 
