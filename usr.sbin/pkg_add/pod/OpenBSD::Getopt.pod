@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Getopt.pod,v 1.1 2005/08/17 08:32:29 espie Exp $
+$OpenBSD: OpenBSD::Getopt.pod,v 1.2 2008/03/08 11:32:38 espie Exp $
 
 =head1 NAME
 
@@ -22,6 +22,9 @@ all the options using the C<$optstring> as a list of simple switches
 
 Option values are directly written into local variables of the form
 C<$opt_S>, where C<S> is the switch name.
+
+Contrary to L<getopt(3)>, C<$opt_S> is incremented each time the switch is
+seen, to allow for stuff like C<-vv>.
 
 An optional hash can be used as a second argument, with switches as keys
 and subs as values. When a switch is met, the sub C<$foo> is called as

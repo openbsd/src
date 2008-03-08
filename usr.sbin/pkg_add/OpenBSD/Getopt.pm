@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Getopt.pm,v 1.4 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.5 2008/03/08 11:32:38 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -30,16 +30,20 @@ sub handle_option
 {
 	my ($opt, $hash, $params) = @_;
 
-	$params = 1 unless defined $params;
 	if (defined $hash->{$opt} and ref($hash->{$opt}) eq 'CODE') {
 		&{$hash->{$opt}}($params);
 	} else {
 		no strict "refs";
 		no strict "vars";
 
-		${"opt_$opt"} = $params;
+		if (defined $params) {
+			${"opt_$opt"} = $params;
+			$hash->{$opt} = $params;
+		} else {
+			${"opt_$opt"}++;
+			$hash->{$opt}++;
+		}
 		push(@EXPORT, "\$opt_$opt");
-		$hash->{$opt} = $params;
 	}
 }
 

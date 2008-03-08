@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.329 2007/12/18 10:58:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.330 2008/03/08 11:32:38 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -531,7 +531,7 @@ our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $op
 $opt_v = 0;
 try { 
 	getopts('aqchivnruxIL:f:F:B:A:P:Q:',
-	{'v' => sub {++$opt_v;},
+	{
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
 	 		for my $o (split /\,/o, shift) { 
