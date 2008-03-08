@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.15 2008/01/06 16:09:49 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.16 2008/03/08 19:46:59 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -99,7 +99,11 @@
 #define	ASI_PHYS_CACHED_LITTLE		0x1c	/* [4u] MMU bypass to main memory, little endian */
 #define	ASI_PHYS_NON_CACHED_LITTLE	0x1d	/* [4u] MMU bypass to I/O location, little endian */
 
+#define	ASI_SCRATCHPAD			0x20	/* [4v] scratchpad registers */
+#define	ASI_MMU_CONTEXTID		0x21	/* [4v] MMU context */
+
 #define	ASI_NUCLEUS_QUAD_LDD		0x24	/* [4u] use w/LDDA to load 128-bit item */
+#define	ASI_QUEUE			0x25	/* [4v] interrupt queue registers */
 #define	ASI_NUCLEUS_QUAD_LDD_LITTLE	0x2c	/* [4u] use w/LDDA to load 128-bit item, little endian */
 
 #define	ASI_FLUSH_D_PAGE_PRIMARY	0x38	/* [4u] flush D-cache page using primary context */
