@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.77 2008/03/01 15:56:09 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.78 2008/03/08 16:30:36 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -767,6 +767,9 @@ extern bus_space_tag_t mainbus_space_tag;
 		if (sp != NULL)
 			continue; /* an "early" device already configured */
 
+		if (!checkstatus(node))
+			continue;
+
 		bzero(&ma, sizeof ma);
 		ma.ma_bustag = mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
@@ -979,7 +982,26 @@ nextsibling(node)
 	return OF_peer(node);
 }
 
-/* The following are used primarily in consinit() */
+int
+checkstatus(int node)
+{
+	char buf[32];
+
+	/* If there is no "status" property, assume everything is fine. */
+	if (OF_getprop(node, "status", buf, sizeof(buf)) <= 0)
+		return 1;
+
+	/*
+	 * If OpenBoot Diagnostics discovers a problem with a device
+	 * it will mark it with "fail" or "fail-xxx", where "xxx" is
+	 * additional human-readable information about the particular
+	 * fault-condition.
+	 */
+	if (strcmp(buf, "disabled") == 0 || strncmp(buf, "fail", 4) == 0)
+		return 0;
+
+	return 1;
+}
 
 int
 node_has_property(node, prop)	/* returns 1 if node has given property */

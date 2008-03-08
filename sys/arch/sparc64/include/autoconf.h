@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.16 2008/03/01 15:56:09 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.17 2008/03/08 16:30:36 kettenis Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -165,5 +165,6 @@ void	*findzs(int);
 int	romgetcursoraddr(int **, int **);
 int	findroot(void);
 int	findnode(int, const char *);
+int	checkstatus(int);
 int	node_has_property(int, const char *);
 void	device_register(struct device *, void *);
