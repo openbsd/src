@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.95 2008/03/01 21:29:36 deraadt Exp $	*/
+/*	$OpenBSD: add.c,v 1.96 2008/03/08 20:26:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -27,7 +27,6 @@
 
 extern char *__progname;
 
-void	cvs_add_local(struct cvs_file *);
 void	cvs_add_entry(struct cvs_file *);
 void	cvs_add_remote(struct cvs_file *);
 
@@ -145,7 +144,8 @@ cvs_add_local(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_add_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, cvs_directory_tag);
+	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_UPDATE)
+		cvs_file_classify(cf, cvs_directory_tag);
 
 	/* dont use `cvs add *' */
 	if (strcmp(cf->file_name, ".") == 0 ||

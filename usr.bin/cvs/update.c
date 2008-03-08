@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.135 2008/03/02 19:05:34 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.136 2008/03/08 20:26:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,12 +32,15 @@ int	build_dirs = 0;
 int	reset_option = 0;
 int	reset_tag = 0;
 char *cvs_specified_tag = NULL;
+char *cvs_join_rev1 = NULL;
+char *cvs_join_rev2 = NULL;
 
 static char *koptstr;
 static char *dateflag = NULL;
 static int Aflag = 0;
 
 static void update_clear_conflict(struct cvs_file *);
+static void update_join_file(struct cvs_file *);
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_USE_WDIR, "update",
@@ -83,6 +86,12 @@ cvs_update(int argc, char **argv)
 		case 'I':
 			break;
 		case 'j':
+			if (cvs_join_rev1 == NULL)
+				cvs_join_rev1 = optarg;
+			else if (cvs_join_rev2 == NULL)
+				cvs_join_rev2 = optarg;
+			else
+				fatal("too many -j options");
 			break;
 		case 'k':
 			reset_option = 0;
@@ -301,10 +310,9 @@ cvs_update_leavedir(struct cvs_file *cf)
 void
 cvs_update_local(struct cvs_file *cf)
 {
-	char *tag;
-	int ent_kflag, rcs_kflag, ret, flags;
 	CVSENTRIES *entlist;
-	char rbuf[CVS_REV_BUFSZ];
+	int ent_kflag, rcs_kflag, ret, flags;
+	char *tag, rbuf[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
@@ -417,6 +425,8 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_history_add(CVS_HISTORY_UPDATE_CO, cf, NULL);
 		break;
 	case FILE_MERGE:
+		d3rev1 = cf->file_ent->ce_rev;
+		d3rev2 = cf->file_rcsrev;
 		cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_MERGE);
 
 		if (diff3_conflicts != 0) {
@@ -457,6 +467,9 @@ cvs_update_local(struct cvs_file *cf)
 	default:
 		break;
 	}
+
+	if (cvs_join_rev1 != NULL)
+		update_join_file(cf);
 }
 
 static void
@@ -465,7 +478,7 @@ update_clear_conflict(struct cvs_file *cf)
 	time_t now;
 	CVSENTRIES *entlist;
 	char *entry, revbuf[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ];
-	char sticky[CVS_ENT_MAXLINELEN];
+	char sticky[CVS_ENT_MAXLINELEN], opt[4];
 
 	cvs_log(LP_TRACE, "update_clear_conflict(%s)", cf->file_path);
 
@@ -476,13 +489,17 @@ update_clear_conflict(struct cvs_file *cf)
 	rcsnum_tostr(cf->file_rcsrev, revbuf, sizeof(revbuf));
 
 	sticky[0] = '\0';
-	if (cf->file_ent->ce_tag != NULL)
+	if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 		    cf->file_ent->ce_tag);
 
+	opt[0] = '\0';
+	if (cf->file_ent != NULL && cf->file_ent->ce_opts != NULL)
+		strlcpy(opt, cf->file_ent->ce_opts, sizeof(opt));
+
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	cvs_ent_line_str(cf->file_name, revbuf, timebuf,
-	    cf->file_ent->ce_opts ? : "", sticky, 0, 0,
+	    opt[0] != '\0' ? opt : "", sticky, 0, 0,
 	    entry, CVS_ENT_MAXLINELEN);
 
 	entlist = cvs_ent_open(cf->file_wd);
@@ -538,4 +555,134 @@ update_has_conflict_markers(struct cvs_file *cf)
 	cvs_freelines(lines);
 	xfree(content);
 	return (conflict);
+}
+
+void
+update_join_file(struct cvs_file *cf)
+{
+	int flag;
+	time_t told;
+	RCSNUM *rev1, *rev2;
+	const char *state1, *state2;
+	char rbuf[CVS_REV_BUFSZ], *jrev1, *jrev2, *p;
+
+	rev1 = rev2 = NULL;
+	jrev1 = jrev2 = NULL;
+
+	jrev1 = xstrdup(cvs_join_rev1);
+	if (cvs_join_rev2 != NULL)
+		jrev2 = xstrdup(cvs_join_rev2);
+
+	if (jrev2 == NULL) {
+		jrev2 = jrev1;
+		jrev1 = NULL;
+	}
+
+	told = cvs_specified_date;
+
+	if ((p = strrchr(jrev2, ':')) != NULL) {
+		(*p++) = '\0';
+		cvs_specified_date = cvs_date_parse(p);
+	}
+
+	rev2 = rcs_translate_tag(jrev2, cf->file_rcs);
+	cvs_specified_date = told;
+
+	if (jrev1 != NULL) {
+		if ((p = strrchr(jrev1, ':')) != NULL) {
+			(*p++) = '\0';
+			cvs_specified_date = cvs_date_parse(p);
+		}
+
+		rev1 = rcs_translate_tag(jrev1, cf->file_rcs);
+		cvs_specified_date = told;
+	} else {
+		if (rev2 == NULL)
+			goto out;
+
+		rev1 = rcsnum_alloc();
+		rcsnum_cpy(cf->file_rcsrev, rev1, 0);
+	}
+
+	state1 = state2 = RCS_STATE_DEAD;
+
+	if (rev1 != NULL)
+		state1 = rcs_state_get(cf->file_rcs, rev1);
+	if (rev2 != NULL)
+		state2 = rcs_state_get(cf->file_rcs, rev2);
+
+	if (rev2 == NULL || !strcmp(state2, RCS_STATE_DEAD)) {
+		if (rev1 == NULL || !strcmp(state1, RCS_STATE_DEAD))
+			goto out;
+
+		if (cf->file_status == FILE_REMOVED ||
+		    cf->file_rcs->rf_dead == 1)
+			goto out;
+
+		if (cf->file_status == FILE_MODIFIED ||
+		    cf->file_status == FILE_ADDED)
+			goto out;
+
+		(void)unlink(cf->file_path);
+		(void)close(cf->fd);
+		cf->fd = -1;
+		cvs_remove_local(cf);
+		goto out;
+	}
+
+	if (cf->file_ent != NULL) {
+		if (!rcsnum_cmp(cf->file_ent->ce_rev, rev2, 0))
+			goto out;
+	}
+
+	if (rev1 == NULL || !strcmp(state1, RCS_STATE_DEAD)) {
+		if (cf->fd != -1) {
+			cvs_printf("%s exists but has been added in %s\n",
+			    cf->file_path, cvs_join_rev2);
+		} else {
+			cvs_checkout_file(cf, cf->file_rcsrev, NULL, 0);
+			cvs_add_local(cf);
+		}
+		goto out;
+	}
+
+	if (cf->fd == -1)
+		goto out;
+
+	flag = rcs_kwexp_get(cf->file_rcs);
+	if (flag & RCS_KWEXP_NONE) {
+		cvs_printf("non-mergable file: %s needs merge!\n",
+		    cf->file_path);
+		goto out;
+	}
+
+	cvs_printf("joining ");
+	rcsnum_tostr(rev1, rbuf, sizeof(rbuf));
+	cvs_printf("%s ", rbuf);
+
+	rcsnum_tostr(rev2, rbuf, sizeof(rbuf));
+	cvs_printf("%s ", rbuf);
+
+	rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
+	cvs_printf("into %s (%s)\n", cf->file_path, rbuf);
+
+	d3rev1 = rev1;
+	d3rev2 = rev2;
+	cvs_checkout_file(cf, cf->file_rcsrev, NULL, CO_MERGE);
+
+	if (diff3_conflicts == 0) {
+		update_clear_conflict(cf);
+		cvs_history_add(CVS_HISTORY_UPDATE_MERGED, cf, NULL);
+	}
+
+out:
+	if (rev1 != NULL)
+		rcsnum_free(rev1);
+	if (rev2 != NULL)
+		rcsnum_free(rev2);
+
+	if (jrev1 != NULL)
+		xfree(jrev1);
+	if (jrev2 != NULL)
+		xfree(jrev2);
 }

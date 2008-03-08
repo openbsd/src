@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.141 2008/02/29 21:43:57 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.142 2008/03/08 20:26:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -97,6 +97,14 @@ cvs_checkout(int argc, char **argv)
 				fatal("-d specified two or more times");
 			dflag = optarg;
 			checkout_target_dir = dflag;
+			break;
+		case 'j':
+			if (cvs_join_rev1 == NULL)
+				cvs_join_rev1 = optarg;
+			else if (cvs_join_rev2 == NULL)
+				cvs_join_rev2 = optarg;
+			else
+				fatal("too many -j options");
 			break;
 		case 'k':
 			reset_option = 0;
@@ -459,14 +467,14 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			}
 
 			cf->fd = open(cf->file_path,
-			    O_CREAT | O_WRONLY | O_TRUNC);
+			    O_CREAT | O_RDWR | O_TRUNC);
 			if (cf->fd == -1)
 				fatal("cvs_checkout_file: open: %s",
 				    strerror(errno));
 
 			rcs_rev_write_fd(cf->file_rcs, rnum, cf->fd, 0);
 		} else {
-			cvs_merge_file(cf, 1);
+			cvs_merge_file(cf, (cvs_join_rev1 == NULL));
 		}
 
 		if (fchmod(cf->fd, 0644) == -1)
@@ -534,12 +542,13 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			ent = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(ent, entry);
 			cvs_ent_close(ent, ENT_SYNC);
+			cf->file_ent = cvs_ent_parse(entry);
 			xfree(entry);
 		}
 	} else {
 		if (co_flags & CO_MERGE) {
 			(void)unlink(cf->file_path);
-			cvs_merge_file(cf, 1);
+			cvs_merge_file(cf, (cvs_join_rev1 == NULL));
 			tosend = cf->file_path;
 			fd = cf->fd;
 		}

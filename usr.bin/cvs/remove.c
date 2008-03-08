@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.72 2008/02/09 20:04:00 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.73 2008/03/08 20:26:34 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -24,7 +24,6 @@
 
 extern char *__progname;
 
-void		cvs_remove_local(struct cvs_file *);
 void		cvs_remove_force(struct cvs_file *);
 
 static int	force_remove = 0;
@@ -147,7 +146,8 @@ cvs_remove_local(struct cvs_file *cf)
 		return;
 	}
 
-	cvs_file_classify(cf, cvs_directory_tag);
+	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_UPDATE)
+		cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_status == FILE_UNKNOWN) {
 		if (verbosity > 1)
