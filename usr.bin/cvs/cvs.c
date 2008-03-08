@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.143 2008/02/26 21:23:00 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.144 2008/03/08 20:52:36 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -241,6 +241,9 @@ main(int argc, char **argv)
 		return (0);
 	}
 
+	cvs_umask = umask(0);
+	umask(cvs_umask);
+
 	if ((current_cvsroot = cvsroot_get(".")) == NULL) {
 		cvs_log(LP_ERR,
 		    "No CVSROOT specified! Please use the '-d' option");
@@ -273,8 +276,6 @@ main(int argc, char **argv)
 		cvs_parse_configfile();
 		cvs_parse_modules();
 	}
-
-	umask(cvs_umask);
 
 	cmdp->cmd(cmd_argc, cmd_argv);
 	cvs_cleanup();
