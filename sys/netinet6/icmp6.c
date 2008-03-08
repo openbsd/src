@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.95 2008/02/05 22:57:31 mpf Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.96 2008/03/08 01:52:35 sthen Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1548,7 +1548,7 @@ ni6_nametodns(name, namelen, old)
 			if (i <= 0 || i >= 64)
 				goto fail;
 			*cp++ = i;
-			if (!isalpha(p[0]) || !isalnum(p[i - 1]))
+			if (!isalnum(p[0]) || !isalnum(p[i - 1]))
 				goto fail;
 			while (i > 0) {
 				if (!isalnum(*p) && *p != '-')
