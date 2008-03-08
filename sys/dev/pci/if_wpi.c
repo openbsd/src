@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.58 2007/11/19 19:34:25 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.59 2008/03/08 16:24:45 espie Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -72,7 +72,9 @@ static const struct pci_matchid wpi_devices[] = {
 
 int		wpi_match(struct device *, void *, void *);
 void		wpi_attach(struct device *, struct device *, void *);
+#ifndef SMALL_KERNEL
 void		wpi_sensor_attach(struct wpi_softc *);
+#endif
 void		wpi_radiotap_attach(struct wpi_softc *);
 void		wpi_power(int, void *);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -308,7 +310,9 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
+#ifndef SMALL_KERNEL
 	wpi_sensor_attach(sc);
+#endif
 	wpi_radiotap_attach(sc);
 
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
@@ -325,6 +329,7 @@ fail2:	wpi_free_shared(sc);
 fail1:	wpi_free_fwmem(sc);
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Attach the adapter's on-board thermal sensor to the sensors framework.
  */
@@ -342,6 +347,7 @@ wpi_sensor_attach(struct wpi_softc *sc)
 	sensor_attach(&sc->sensordev, &sc->sensor);
 	sensordev_install(&sc->sensordev);
 }
+#endif
 
 /*
  * Attach the interface to 802.11 radiotap.

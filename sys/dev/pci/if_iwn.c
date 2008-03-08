@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.16 2007/11/30 19:19:47 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.17 2008/03/08 16:24:44 espie Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -72,7 +72,9 @@ static const struct pci_matchid iwn_devices[] = {
 
 int		iwn_match(struct device *, void *, void *);
 void		iwn_attach(struct device *, struct device *, void *);
+#ifndef SMALL_KERNEL
 void		iwn_sensor_attach(struct iwn_softc *);
+#endif
 void		iwn_radiotap_attach(struct iwn_softc *);
 void		iwn_power(int, void *);
 int		iwn_dma_contig_alloc(bus_dma_tag_t, struct iwn_dma_info *,
@@ -331,7 +333,9 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
+#ifndef SMALL_KERNEL
 	iwn_sensor_attach(sc);
+#endif
 	iwn_radiotap_attach(sc);
 
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
@@ -349,6 +353,7 @@ fail2:	iwn_free_kw(sc);
 fail1:	iwn_free_fwmem(sc);
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Attach the adapter's on-board thermal sensor to the sensors framework.
  */
@@ -364,6 +369,7 @@ iwn_sensor_attach(struct iwn_softc *sc)
 	sensor_attach(&sc->sensordev, &sc->sensor);
 	sensordev_install(&sc->sensordev);
 }
+#endif
 
 /*
  * Attach the interface to 802.11 radiotap.
