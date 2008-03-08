@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.11 2008/02/24 18:37:14 ian Exp $
+dnl	$OpenBSD: prep,v 1.12 2008/03/08 01:13:18 sthen Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about RedBoot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -81,26 +81,23 @@ Once you have done this, and have set up your TFTP server on
 the gateway machine (10.0.0.7 in the above example), you can
 boot manually.
 
-RedBoot> load /boot.armish
+RedBoot> load /bsd.rd
 Using default protocol (TFTP)
-Entry point: 0x00100000, address range: 0x00100000-0x00106804
+Entry point: 0x00200000, address range: 0x00200000-0x0066a49c
 RedBoot> go
->> OpenBSD/armish BOOT 1.0
-boot> boot /bsd.rd
-booting wd0a:/bsd.rd: 196+1878672+2663444+0+225844 [75+110592+98669]=0x4c49f0
 
 OpenBSD/armish booting ...
 initarm: Configuring system ...
-physmemory: 32768 pages at 0xa0000000 -> 0xa7ffffff
-[ using 209832 bytes of bsd ELF symbol table ]
+physmemory: 65536 pages at 0xa0000000 -> 0xafffffff
+[ no symbol table formats found ]
 Copyright (c) 1982, 1986, 1989, 1991, 1993
         The Regents of the University of California.  All rights reserved.
-Copyright (c) 1995-2007 OpenBSD. All rights reserved.  http://www.OpenBSD.org
+Copyright (c) 1995-2008 OpenBSD. All rights reserved.  http://www.OpenBSD.org
 
-OpenBSD 4.1-current (RAMDISK) #108: Thu Jun  7 22:09:18 MDT 2007
+OpenBSD 4.3 (RAMDISK) #175: Tue Mar  4 21:54:34 MST 2008
     deraadt@armish.openbsd.org:/usr/src/sys/arch/armish/compile/RAMDISK
-real mem  = 134217728 (128MB)
-avail mem = 121081856 (115MB)
+real mem  = 268435456 (256MB)
+avail mem = 250630144 (239MB)
 ...
 Install(I), Upgrade(U) or Shell(S)?
 
@@ -282,8 +279,8 @@ Update RedBoot non-volatile configuration - continue (y/n)? y
 ---
 
 The important part is that 'Run script' is true and that the commands are
-"fis load boot' and 'go' (note that 'boot' is the same as the 'fis create boot'
-confirm the update and 'reset' to auto boot. XXX What does that mean??
+'fis load boot' and 'go' ('boot' is the file created by 'fis create boot'
+earlier). Confirm the update and type 'reset' to auto boot.
 
 The bootloader is command driven with timeout like many other OpenBSD
 architectures.
