@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.96 2008/03/08 19:27:26 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.97 2008/03/08 19:28:37 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -329,3 +329,8 @@ include "dev/gpio/files.gpio"
 # Machine-independent 1-Wire drivers
 #
 include "dev/onewire/files.onewire"
+
+# Virtual rtc
+device	vrtc
+attach	vrtc at vbus
+file	arch/sparc64/dev/vrtc.c			vrtc
