@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.1 2004/08/23 14:22:40 pefo Exp $ */
+/*	$OpenBSD: start.S,v 1.2 2008/03/08 16:52:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Opsycon AB (www.opsycon.se)
@@ -38,7 +38,7 @@
 #include <machine/asm.h> 
 
 /*
- * Frame required for the debugger (if we have any)
+ * Frame required for the debugger (if we have any).
  */
 #define START_FRAME	((4 * 4) + 4 + 4)
 

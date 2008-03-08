@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.5 2008/02/19 13:18:50 jsing Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.6 2008/03/08 16:52:28 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -34,15 +34,15 @@
 
 #define	USE_SGI_PARTITIONS	1
 
-void bios_configure_memory(void);
-int bios_get_system_type(void);
+void	bios_configure_memory(void);
+int	bios_get_system_type(void);
 const char *bios_get_path_component(const char *, char *, int *);
 
-arc_dsp_stat_t	displayinfo;		/* Save area for display status info. */
+arc_dsp_stat_t	displayinfo;	/* Save area for display status info. */
 
 static struct systypes {
-	char *sys_vend;		/* Vendor ID if name is ambigous */
-	char *sys_name;		/* May be left NULL if name is sufficient */
+	char *sys_vend;		/* Vendor ID if name is ambiguous. */
+	char *sys_name;		/* May be left NULL if name is sufficient. */
 	int  sys_type;
 } sys_types[] = {
     { NULL,		"PICA-61",			ACER_PICA_61 },
@@ -58,13 +58,13 @@ static struct systypes {
     { NULL,		"SGI-IP22",			SGI_INDY },
     { NULL,		"SGI-IP25",			SGI_POWER10 },
     { NULL,		"SGI-IP26",			SGI_POWERI },
-    { NULL,		"SGI-IP32",			SGI_O2 },
+    { NULL,		"SGI-IP32",			SGI_O2 }
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
 
 /*
- *	ARC Bios trampoline code.
+ * ARCBios trampoline code.
  */
 #define ARC_Call(Name,Offset)	\
 __asm__("\n"			\
@@ -119,26 +119,26 @@ ARC_Call(Bios_TestUnicodeCharacter,	0x8c);
 ARC_Call(Bios_GetDisplayStatus,		0x90);
 
 /*
- *	Simple getchar/putchar interface.
+ * Simple getchar/putchar interface.
  */
 
 int
 getchar()
 {
 	char buf[4];
-	int  cnt;
+	int cnt;
 
 	if (Bios_Read(0, &buf[0], 1, &cnt) != 0)
-		return(-1);
-	return(buf[0] & 255);
+		return (-1);
+
+	return (buf[0] & 255);
 }
 
 void
-putchar(c)
-char c;
+putchar(int c)
 {
 	char buf[4];
-	int  cnt;
+	int cnt;
 
 	if (c == '\n') {
 		buf[0] = '\r';
@@ -146,36 +146,34 @@ char c;
 		cnt = 2;
 		if (displayinfo.CursorYPosition < displayinfo.CursorMaxYPosition)
 			displayinfo.CursorYPosition++;
-	}
-	else {
+	} else {
 		buf[0] = c;
 		cnt = 1;
 	}
+
 	Bios_Write(1, &buf[0], cnt, &cnt);
 }
 
 void
-bios_putstring(s)
-char *s;
+bios_putstring(char *s)
 {
-	while (*s) {
+	while (*s)
 		putchar(*s++);
-	}
 }
 
 /*
- * Find out system type.
+ * Identify system type.
  */
 int
 bios_get_system_type()
 {
-	arc_config_t	*cf;
-	arc_sid_t	*sid;
-	int		i;
+	arc_config_t *cf;
+	arc_sid_t *sid;
+	int i;
 
 	if ((ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC) &&
 	    (ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
-		return(-1);	/* This is not an ARC system */
+		return (-1);	/* This is not an ARC system. */
 	}
 
 	sid = (arc_sid_t *)Bios_GetSystemId();
@@ -201,7 +199,7 @@ bios_get_system_type()
 	bios_putstring(sid->vendor);
 	bios_putstring("'. Please contact OpenBSD (www.openbsd.org).\n");
 	bios_putstring("Reset system to restart!\n");
-	while(1);
+	while (1);
 }
 
 /*
@@ -209,11 +207,7 @@ bios_get_system_type()
  * display configuration.
  */
 void
-bios_display_info(xpos, ypos, xsize, ysize)
-    int	*xpos;
-    int	*ypos;
-    int *xsize;
-    int *ysize;
+bios_display_info(int *xpos, int *ypos, int *xsize, int *ysize)
 {
 #ifdef __arc__
 	*xpos = displayinfo.CursorXPosition;
@@ -222,7 +216,6 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*ysize = displayinfo.CursorMaxYPosition;
 #endif
 }
-
 
 /*
  *  Decompose the device pathname and find driver.
@@ -241,7 +234,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	ecp = cp = fname;
 
 	/*
-	 *  Scan the component list and find device and partition.
+	 * Scan the component list and find device and partition.
 	 */
 	while ((ncp = bios_get_path_component(cp, namebuf, &i)) != NULL) {
 		if (strcmp(namebuf, "partition") == 0) {
@@ -251,7 +244,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		} else
 			ecp = ncp;
 
-		/* XXX do this with a table if more devs are added */
+		/* XXX Do this with a table if more devs are added. */
 		if (strcmp(namebuf, "scsi") == 0)
 			strncpy(devname, namebuf, sizeof(devname)); 
 
@@ -262,7 +255,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	namebuf[ecp - fname] = '\0';
 
 	/*
-	 *  Dig out the driver.
+	 * Dig out the driver.
 	 */
 	dp = devsw;
 	n = ndevs;
@@ -278,19 +271,18 @@ devopen(struct open_file *f, const char *fname, char **file)
 		}
 		dp++;
 	}
-	return ENXIO;
+	return (ENXIO);
 }
 
 const char *
 bios_get_path_component(const char *p, char *comp, int *no)
 {
-	while (*p && *p != '(') {
+	while (*p && *p != '(')
 		*comp++ = *p++;
-	}
 	*comp = '\0';
 
 	if (*p == NULL)
-		return NULL;
+		return (NULL);
 
 	*no = 0;
 	p++;
@@ -298,7 +290,7 @@ bios_get_path_component(const char *p, char *comp, int *no)
 		if (*p >= '0' && *p <= '9')
 			*no = *no * 10 + *p++ - '0';
 		else
-			return NULL;
+			return (NULL);
 	}
-	return ++p;
+	return (++p);
 }

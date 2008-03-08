@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2004/08/23 14:22:40 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2008/03/08 16:52:28 jsing Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -40,7 +40,7 @@ int	dioclose(struct open_file *);
 #define	dioioctl	noioctl
 
 struct devsw devsw[] = {
-	{ "scsi",	diostrategy, dioopen, dioclose,	dioioctl }, /*0*/
+	{ "scsi",	diostrategy, dioopen, dioclose,	dioioctl }
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));

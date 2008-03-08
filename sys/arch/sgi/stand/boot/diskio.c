@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.2 2004/09/16 18:54:48 pefo Exp $ */
+/*	$OpenBSD: diskio.c,v 1.3 2008/03/08 16:52:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -38,16 +38,15 @@
 #include <sys/disklabel.h>
 #include <mips64/arcbios.h>
 
-
 struct	dio_softc {
-	int	sc_fd;			/* PROM file id */
-	int	sc_part;		/* disk partition number */
-	struct	disklabel sc_label;	/* disk label for this disk */
+	int	sc_fd;			/* PROM file ID */
+	int	sc_part;		/* Disk partition number. */
+	struct	disklabel sc_label;	/* Disk label for this disk. */
 };
 
 int
-diostrategy(void *devdata, int rw, daddr_t bn, u_int reqcnt,
-		char *addr, u_int *cnt)
+diostrategy(void *devdata, int rw, daddr_t bn, u_int reqcnt, char *addr,
+    u_int *cnt)
 {
 	struct dio_softc *sc = (struct dio_softc *)devdata;
 	struct partition *pp = &sc->sc_label.d_partitions[sc->sc_part];
@@ -58,7 +57,7 @@ diostrategy(void *devdata, int rw, daddr_t bn, u_int reqcnt,
 
 	if ((Bios_Seek(sc->sc_fd, &offset, 0) < 0) ||
 	    (Bios_Read(sc->sc_fd, addr, reqcnt, &result) < 0))
-		return EIO;
+		return (EIO);
 
 	*cnt = result;
 	return (0);
@@ -103,7 +102,7 @@ dioopen(struct open_file *f, ...)
 	labelsector = LABELSECTOR;
 
 #if 0
-	/* try to read disk label and partition table information */
+	/* Try to read disk label and partition table information. */
 	i = diostrategy(sc, F_READ, (daddr_t)labelsector, DEV_BSIZE, buf, &cnt);
 
 	if (i == 0 && cnt == DEV_BSIZE)
@@ -113,19 +112,18 @@ dioopen(struct open_file *f, ...)
 
 	if (msg) {
 		printf("%s: %s\n", ctlr, msg);
-		return ENXIO;
+		return (ENXIO);
 	}
 #endif
 
-	return 0;
+	return (0);
 }
 
 int
-dioclose(f)
-	struct open_file *f;
+dioclose(struct open_file *f)
 {
 	Bios_Close(((struct dio_softc *)f->f_devdata)->sc_fd);
 	free(f->f_devdata, sizeof(struct dio_softc));
 	f->f_devdata = NULL;
-	return 0;
+	return (0);
 }
