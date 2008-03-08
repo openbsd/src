@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.140 2008/03/01 15:10:20 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.141 2008/03/08 22:15:30 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -27,9 +27,12 @@
  */
 
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
+#include <atomicio.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <md5.h>
 #include <stdlib.h>
 #include <string.h>
@@ -518,6 +521,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
     char *tag, char *date)
 {
 	FILE *fp;
+	int fd;
 	char buf[MAXPATHLEN];
 
 	if (cvs_server_active == 0)
@@ -550,6 +554,19 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	(void)fclose(fp);
 
 	cvs_write_tagfile(path, tag, date);
+
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", path, CVS_PATH_ENTRIES);
+
+	if ((fd = open(buf, O_WRONLY|O_CREAT|O_EXCL, 0666 & ~cvs_umask))
+	    == -1) {
+		if (errno == EEXIST)
+			return;
+		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
+	}
+
+	if (atomicio(vwrite, fd, "D\n", 2) != 2)
+		fatal("cvs_mkadmin: %s", strerror(errno));
+	close(fd);
 }
 
 void
