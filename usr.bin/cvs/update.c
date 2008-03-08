@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.137 2008/03/08 22:33:03 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.138 2008/03/08 22:54:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -677,10 +677,8 @@ update_join_file(struct cvs_file *cf)
 	d3rev2 = rev2;
 	cvs_checkout_file(cf, cf->file_rcsrev, NULL, CO_MERGE);
 
-	if (diff3_conflicts == 0) {
+	if (diff3_conflicts == 0)
 		update_clear_conflict(cf);
-		cvs_history_add(CVS_HISTORY_UPDATE_MERGED, cf, NULL);
-	}
 
 out:
 	if (rev1 != NULL)
