@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.6 2006/07/07 12:05:10 ray Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.7 2008/03/08 12:34:09 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -117,10 +117,13 @@ vs_columns(sp, lp, lno, cnop, diffp)
 	 * Initialize the screen offset.
 	 */
 	scno = 0;
+	curoff = 0;
 
 	/* Leading number if O_NUMBER option set. */
-	if (O_ISSET(sp, O_NUMBER))
+	if (O_ISSET(sp, O_NUMBER)) {
 		scno += O_NUMBER_LENGTH;
+		curoff += O_NUMBER_LENGTH;
+	}
 
 	/* Need the line to go any further. */
 	if (lp == NULL) {
@@ -141,11 +144,9 @@ done:		if (diffp != NULL)		/* XXX */
 	leftright = O_ISSET(sp, O_LEFTRIGHT);
 
 	/*
-	 * Initialize the pointer into the buffer and screen and current
-	 * offsets.
+	 * Initialize the pointer into the buffer.
 	 */
 	p = lp;
-	curoff = 0;
 
 	/* Macro to return the display length of any signal character. */
 #define	CHLEN(val) (ch = *(u_char *)p++) == '\t' &&			\
