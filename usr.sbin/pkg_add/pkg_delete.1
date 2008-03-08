@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.26 2008/03/08 11:41:42 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.27 2008/03/08 11:48:01 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -91,7 +91,9 @@ may ask questions to the user if faced with difficult decisions.
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
 .It Fl q
-Delete package quickly, do not bother with checksums before removing files.
+Delete package quickly, do not bother with checksums before removing normal
+files.
+If used twice, it will not bother with checksums either for configuration files.
 .It Fl v
 Turn on verbose output.
 Several

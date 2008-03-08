@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.70 2008/03/08 11:41:42 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.71 2008/03/08 11:48:01 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -283,7 +283,9 @@ symbolic links are resolved, and package installation stops at
 .Cm @endfake
 marker.
 .It Fl q
-Replace package quickly; do not bother with checksums before removing files.
+Replace package quickly; do not bother with checksums before removing normal 
+files.
+If used twice, it will not bother with checksums either for configuration files.
 .It Fl r
 Replace existing packages.
 .Nm

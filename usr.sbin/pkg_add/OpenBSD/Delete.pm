@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.73 2008/03/08 11:41:42 espie Exp $
+# $OpenBSD: Delete.pm,v 1.74 2008/03/08 11:48:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -509,7 +509,7 @@ sub delete
 		return;
 	}
 
-	if ($state->{quick}) {
+	if ($state->{quick} >= 2) {
 		unless ($state->{extra}) {
 			$self->mark_dir($state);
 			$state->print("You should also $action $realname\n");
