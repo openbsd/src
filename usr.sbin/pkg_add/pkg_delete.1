@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.25 2007/10/31 14:45:06 jmc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.26 2008/03/08 11:41:42 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 31 2007 $
+.Dd $Mdocdate: March 8 2008 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ may ask questions to the user if faced with difficult decisions.
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
 .It Fl q
-Delete package quickly, do not bother checking MD5s before removing files.
+Delete package quickly, do not bother with checksums before removing files.
 .It Fl v
 Turn on verbose output.
 Several
