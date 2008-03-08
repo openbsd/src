@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.78 2008/03/08 16:30:36 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.79 2008/03/08 22:53:02 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -700,6 +700,9 @@ extern bus_space_tag_t mainbus_space_tag;
 
 	ncpus = 0;
 	for (node = OF_child(node), node0 = 0; node; node = OF_peer(node)) {
+		if (!checkstatus(node))
+			continue;
+
 		/* 
 		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
 		 * a "cmp" node.  Go down one level, but remember
