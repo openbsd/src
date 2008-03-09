@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.142 2008/03/09 01:58:00 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.143 2008/03/09 12:52:33 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -43,6 +43,7 @@
 #include "remote.h"
 
 extern int print_stdout;
+extern int build_dirs;
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
@@ -534,7 +535,8 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	if (mkdir(buf, 0755) == -1 && errno != EEXIST)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
 
-	if (cvs_cmdop == CVS_OP_CHECKOUT || cvs_cmdop == CVS_OP_ADD) {
+	if (cvs_cmdop == CVS_OP_CHECKOUT || cvs_cmdop == CVS_OP_ADD ||
+	    (cvs_cmdop == CVS_OP_UPDATE && build_dirs == 1)) {
 		(void)xsnprintf(buf, sizeof(buf), "%s/%s",
 		    path, CVS_PATH_ROOTSPEC);
 
