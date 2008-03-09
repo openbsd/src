@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.141 2008/03/09 14:28:21 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.142 2008/03/09 15:43:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -575,7 +575,7 @@ update_join_file(struct cvs_file *cf)
 
 	told = cvs_specified_date;
 
-	if ((p = strrchr(jrev2, ':')) != NULL) {
+	if ((p = strchr(jrev2, ':')) != NULL) {
 		(*p++) = '\0';
 		cvs_specified_date = cvs_date_parse(p);
 	}
@@ -584,7 +584,7 @@ update_join_file(struct cvs_file *cf)
 	cvs_specified_date = told;
 
 	if (jrev1 != NULL) {
-		if ((p = strrchr(jrev1, ':')) != NULL) {
+		if ((p = strchr(jrev1, ':')) != NULL) {
 			(*p++) = '\0';
 			cvs_specified_date = cvs_date_parse(p);
 		}
