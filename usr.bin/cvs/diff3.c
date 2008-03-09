@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.47 2008/03/08 20:26:34 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.48 2008/03/09 01:52:55 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.47 2008/03/08 20:26:34 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.48 2008/03/09 01:52:55 joris Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -333,7 +333,7 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 int
 ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 {
-	char op, *ep, *p;
+	char op, *ep;
 	struct cvs_line *sort, *lp, *dlp, *ndlp, *insert_after;
 	int start, end, i, lineno;
 	u_char tmp;
