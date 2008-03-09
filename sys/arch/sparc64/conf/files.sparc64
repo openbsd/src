@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.99 2008/03/09 17:24:19 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.100 2008/03/09 17:34:30 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -105,8 +105,8 @@ device	vgafb: wsemuldisplaydev, rasops_bswap, rasops8, rasops16, rasops32
 attach	vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
-# IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho
+# IOMMU is for both sbus and pci
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
 
 device	ebus {[addr = -1]}: pcibus
 attach	ebus at pci
