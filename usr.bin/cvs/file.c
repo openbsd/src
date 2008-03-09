@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.233 2008/03/09 03:06:56 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.234 2008/03/09 03:14:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -238,6 +238,7 @@ cvs_file_get_cf(const char *d, const char *f, int fd,
 	cf->file_type = type;
 	cf->file_status = cf->file_flags = 0;
 	cf->user_supplied = user_supplied;
+	cf->in_attic = 0;
 	cf->file_ent = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
@@ -341,10 +342,21 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				if (cvs_directory_tag == NULL &&
 				    cvs_specified_tag != NULL)
 					cvs_directory_tag = cvs_specified_tag;
+
+				if (current_cvsroot->cr_method ==
+				    CVS_METHOD_LOCAL) {
+					cvs_get_repository_path(cf->file_wd,
+					    repo, MAXPATHLEN);
+					cvs_repository_lock(repo,
+					    (cmdp->cmd_flags & CVS_LOCK_REPO));
+				}
 			}
 
 			if (cr->fileproc != NULL)
 				cr->fileproc(cf);
+
+			if (l->user_supplied && cmdp->cmd_flags & CVS_LOCK_REPO)
+				cvs_repository_unlock(repo);
 		}
 
 		cvs_file_free(cf);
@@ -556,10 +568,12 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	cvs_ent_close(entlist, ENT_NOSYNC);
 
 walkrepo:
-	if (cr->flags & CR_REPO) {
+	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
 		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
-		cvs_repository_lock(repo);
+		cvs_repository_lock(repo, (cmdp->cmd_flags & CVS_LOCK_REPO));
+	}
 
+	if (cr->flags & CR_REPO) {
 		xsnprintf(fpath, sizeof(fpath), "%s/%s", cf->file_path,
 		    CVS_PATH_STATICENTRIES);
 
@@ -571,7 +585,8 @@ walkrepo:
 	cvs_file_walklist(&fl, cr);
 	cvs_file_freelist(&fl);
 
-	if (cr->flags & CR_REPO)
+	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL &&
+	    (cmdp->cmd_flags & CVS_LOCK_REPO))
 		cvs_repository_unlock(repo);
 
 	cvs_file_walklist(&dl, cr);

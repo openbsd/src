@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.131 2008/02/27 22:34:04 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.132 2008/03/09 03:14:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -29,6 +29,7 @@
 
 void	cvs_commit_local(struct cvs_file *);
 void	cvs_commit_check_files(struct cvs_file *);
+void	cvs_commit_lock_dirs(struct cvs_file *);
 
 static BUF *commit_diff(struct cvs_file *, RCSNUM *, int);
 static void commit_desc_set(struct cvs_file *);
@@ -42,7 +43,7 @@ int	conflicts_found;
 char	*logmsg = NULL;
 
 struct cvs_cmd cvs_cmd_commit = {
-	CVS_OP_COMMIT, CVS_USE_WDIR, "commit",
+	CVS_OP_COMMIT, CVS_USE_WDIR | CVS_LOCK_REPO, "commit",
 	{ "ci", "com" },
 	"Check files into the repository",
 	"[-flR] [-F logfile | -m msg] [-r rev] ...",
@@ -154,6 +155,9 @@ cvs_commit(int argc, char **argv)
 		cvs_client_send_request("ci");
 		cvs_client_get_responses();
 	} else {
+		cr.fileproc = cvs_commit_lock_dirs;
+		cvs_file_walklist(&files_affected, &cr);
+
 		cr.fileproc = cvs_commit_local;
 		cvs_file_walklist(&files_affected, &cr);
 		cvs_file_freelist(&files_affected);
@@ -167,6 +171,18 @@ cvs_commit(int argc, char **argv)
 
 	xfree(logmsg);
 	return (0);
+}
+
+void
+cvs_commit_lock_dirs(struct cvs_file *cf)
+{
+	char repo[MAXPATHLEN];
+
+	cvs_get_repository_path(cf->file_wd, repo, sizeof(repo));
+	cvs_log(LP_TRACE, "cvs_commit_lock_dirs: %s", repo);
+
+	/* locks stay in place until we are fully done and exit */
+	cvs_repository_lock(repo, 1);
 }
 
 void

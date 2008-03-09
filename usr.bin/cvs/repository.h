@@ -25,7 +25,7 @@
 extern struct cvs_wklhead repo_locks;
 
 void	cvs_repository_unlock(const char *);
-void	cvs_repository_lock(const char *);
+void	cvs_repository_lock(const char *, int);
 void	cvs_repository_getdir(const char *, const char *,
 		struct cvs_flisthead *, struct cvs_flisthead *, int);
 

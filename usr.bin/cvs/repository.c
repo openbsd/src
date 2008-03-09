@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.19 2008/02/03 23:34:41 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.20 2008/03/09 03:14:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -41,9 +41,10 @@ cvs_repository_unlock(const char *repo)
 }
 
 void
-cvs_repository_lock(const char *repo)
+cvs_repository_lock(const char *repo, int wantlock)
 {
 	int i;
+	uid_t myuid;
 	struct stat st;
 	char fpath[MAXPATHLEN];
 	struct passwd *pw;
@@ -51,9 +52,11 @@ cvs_repository_lock(const char *repo)
 	if (cvs_noexec == 1 || cvs_readonlyfs == 1)
 		return;
 
-	cvs_log(LP_TRACE, "cvs_repository_lock(%s)", repo);
+	cvs_log(LP_TRACE, "cvs_repository_lock(%s, %d)", repo, wantlock);
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
+
+	myuid = getuid();
 
 	for (i = 0; i < CVS_LOCK_TRIES; i++) {
 		if (cvs_quit)
@@ -61,6 +64,9 @@ cvs_repository_lock(const char *repo)
 
 		if (stat(fpath, &st) == -1)
 			break;
+
+		if (st.st_uid == myuid)
+			return;
 
 		if ((pw = getpwuid(st.st_uid)) == NULL)
 			fatal("cvs_repository_lock: %s", strerror(errno));
@@ -72,6 +78,9 @@ cvs_repository_lock(const char *repo)
 
 	if (i == CVS_LOCK_TRIES)
 		fatal("maximum wait time for lock inside '%s' reached", repo);
+
+	if (wantlock == 0)
+		return;
 
 	if ((i = open(fpath, O_WRONLY|O_CREAT|O_TRUNC, 0755)) < 0) {
 		if (errno == EEXIST)

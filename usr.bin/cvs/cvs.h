@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.163 2008/03/08 20:26:34 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.164 2008/03/09 03:14:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -103,7 +103,8 @@
 #define CVS_CMD_MAXARG		128
 
 /* flags */
-#define CVS_USE_WDIR		1
+#define CVS_USE_WDIR		0x01
+#define CVS_LOCK_REPO		0x02
 
 /* defaults */
 #define CVS_SERVER_DEFAULT	"cvs"
