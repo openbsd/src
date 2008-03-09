@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.32 2008/02/23 10:36:27 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.33 2008/03/09 15:32:30 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -223,6 +223,7 @@ Supported devices {:-include-:}:
 	    Abocom WUG2700
 	    Airlink101 AWLL5025
 	    ASUS WL-167g ver 2
+	    Atlantis Land A02-UP1-W54
 	    Belkin F5D7050 ver 3
 	    Belkin F5D9050 ver 3
 	    Buffalo WLI-U2-SG54HP

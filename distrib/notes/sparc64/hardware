@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.128 2008/02/23 10:36:27 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.129 2008/03/09 15:32:30 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -507,6 +507,7 @@ Supported devices {:-include-:}:
 		    Abocom WUG2700
 		    Airlink101 AWLL5025
 		    ASUS WL-167g ver 2
+		    Atlantis Land A02-UP1-W54
 		    Belkin F5D7050 ver 3
 		    Belkin F5D9050 ver 3
 		    Buffalo WLI-U2-SG54HP
