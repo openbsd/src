@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.232 2008/03/09 02:30:42 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.233 2008/03/09 03:06:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -351,10 +351,6 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 
 next:
 		nxt = TAILQ_NEXT(l, flist);
-		TAILQ_REMOVE(fl, l, flist);
-
-		xfree(l->file_path);
-		xfree(l);
 	}
 }
 
