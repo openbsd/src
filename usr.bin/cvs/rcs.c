@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.260 2008/03/08 22:33:03 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.261 2008/03/09 19:41:13 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1351,6 +1351,9 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	int isbrev;
 	struct rcs_delta *rdp;
 
+	if (rev == NULL)
+		return NULL;
+
 	isbrev = RCSNUM_ISBRANCHREV(rev);
 
 	/*
@@ -2560,6 +2563,9 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
 	rdp = NULL;
 
 	if (!strcmp(revstr, RCS_HEAD_BRANCH)) {
+		if (rfp->rf_head == NULL)
+			return NULL;
+
 		frev = rcsnum_alloc();
 		rcsnum_cpy(rfp->rf_head, frev, 0);
 		return (frev);
