@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.234 2008/03/09 03:14:52 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.235 2008/03/09 18:02:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -655,11 +655,11 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_ent = NULL;
 
 	if (cf->file_ent != NULL) {
-		if (cf->file_ent->ce_type == CVS_ENT_DIR &&
+		if (cf->fd != -1 && cf->file_ent->ce_type == CVS_ENT_DIR &&
 		    cf->file_type != CVS_DIR)
 			fatal("%s is supposed to be a directory, but it is not",
 			    cf->file_path);
-		if (cf->file_ent->ce_type == CVS_ENT_FILE &&
+		if (cf->fd != -1 && cf->file_ent->ce_type == CVS_ENT_FILE &&
 		    cf->file_type != CVS_FILE)
 			fatal("%s is supposed to be a file, but it is not",
 			    cf->file_path);
@@ -867,8 +867,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			if (cf->fd == -1 && server_has_file == 0) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"
-				    " there is no longer a file"
-				    " in the repository,"
+				    " is no longer in the repository,"
 				    " removing entry",
 				     cf->file_path);
 				cf->file_status = FILE_REMOVE_ENTRY;
