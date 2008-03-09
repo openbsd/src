@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.71 2008/03/08 11:48:01 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.72 2008/03/09 15:36:45 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 8 2008 $
+.Dd $Mdocdate: March 9 2008 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -285,7 +285,8 @@ marker.
 .It Fl q
 Replace package quickly; do not bother with checksums before removing normal 
 files.
-If used twice, it will not bother with checksums either for configuration files.
+If used twice,
+it will not bother with checksums for configuration files either.
 .It Fl r
 Replace existing packages.
 .Nm
