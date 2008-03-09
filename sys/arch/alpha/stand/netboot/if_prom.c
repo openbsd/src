@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.3 1997/05/05 06:02:01 millert Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.4 2008/03/09 12:03:03 sobrado Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ reallypunt:
 	printf("\n");
 	printf("Boot device name was: \"%s\"\n", devname);
 	printf("\n");
-	printf("Your firmware may be too old to network-boot OpenBSD/Alpha,\n");
+	printf("Your firmware may be too old to network-boot OpenBSD/alpha,\n");
 	printf("or you might have to hard-code an ethernet address into\n");
 	printf("your network boot block with setnetbootinfo(8).\n");
 	halt();

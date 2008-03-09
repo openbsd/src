@@ -1,4 +1,4 @@
-$OpenBSD: README.syscalls,v 1.4 2001/07/09 05:15:23 fgsch Exp $
+$OpenBSD: README.syscalls,v 1.5 2008/03/09 12:03:03 sobrado Exp $
 $NetBSD: README.syscalls,v 1.2 1999/04/27 16:09:28 cgd Exp $
 
 XXX this file should be gutted.  functions' comments should go with
@@ -17,7 +17,7 @@ Finally, there are some OSF/1 syscalls which were left unimplemented,
 but which seem strange enough to merit a bit more explanation.
 
 OSF/1 compatibility is helped by the fact that the sigcontext
-structure was created for NetBSD/Alpha to be the same as the OSF/1
+structure was created for NetBSD/alpha to be the same as the OSF/1
 sigcontext structure.  Because of this, only one sendsig() function is
 needed, and then the NetBSD sigreturn() function can be used for OSF/1
 sigreturn(), as well.

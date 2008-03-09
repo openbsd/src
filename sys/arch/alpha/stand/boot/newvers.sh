@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.9 2005/05/30 01:31:12 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.10 2008/03/09 12:03:03 sobrado Exp $
 #	$NetBSD: newvers.sh,v 1.3 1996/06/14 20:03:04 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -35,7 +35,7 @@
 u=${USER-root} h=`hostname` t=`date`
 r=`awk ' { print $3 ; exit } ' < $1`
 
-echo "char bootprog_name[] = \"OpenBSD/Alpha boot ${r}\";" > vers.c
+echo "char bootprog_name[] = \"OpenBSD/alpha boot ${r}\";" > vers.c
 #echo "char bootprog_rev[] = \"${r}\";" >> vers.c
 #echo "char bootprog_date[] = \"${t}\";" >> vers.c
 #echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c

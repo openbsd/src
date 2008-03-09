@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.44 2007/01/22 06:12:18 miod Exp $	*/
+/*	$OpenBSD: in6.h,v 1.45 2008/03/09 12:03:03 sobrado Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 /*
  * Equality
- * NOTE: Some of kernel programming environment (for example, openbsd/sparc)
+ * NOTE: Some of kernel programming environment (for example, OpenBSD/sparc)
  * does not supply memcmp().  For userland memcmp() is preferred as it is
  * in ANSI standard.
  */
@@ -607,7 +607,7 @@ struct ip6_mtuinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
-/*#define IPV6CTL_MAPPED_ADDR	23	not for openbsd */
+/*#define IPV6CTL_MAPPED_ADDR	23	not for OpenBSD */
 #define IPV6CTL_V6ONLY		24
 /* 25 to 40: resrved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
