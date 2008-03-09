@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.139 2008/03/09 01:02:38 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.140 2008/03/09 13:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -196,6 +196,9 @@ cvs_update_enterdir(struct cvs_file *cf)
 		if ((cf->fd = open(cf->file_path, O_RDONLY)) == -1)
 			fatal("cvs_update_enterdir: `%s': %s",
 			    cf->file_path, strerror(errno));
+
+		if (cvs_server_active == 1 && cvs_cmdop != CVS_OP_CHECKOUT)
+			cvs_server_clear_sticky(cf->file_path);
 
 		if (cvs_cmdop != CVS_OP_EXPORT) {
 			(void)xasprintf(&entry, "D/%s////", cf->file_name);
