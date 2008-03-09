@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.98 2008/03/08 19:40:07 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.99 2008/03/09 17:24:19 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -244,6 +244,7 @@ file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/emul.c
+file	arch/sparc64/sparc64/hvcall.S		sun4v
 file	arch/sparc64/sparc64/in_cksum.S		inet
 file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
