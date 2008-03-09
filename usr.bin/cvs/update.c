@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.140 2008/03/09 13:01:22 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.141 2008/03/09 14:28:21 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -232,8 +232,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 	struct stat st;
 	struct dirent *dp;
 	char *buf, *ebuf, *cp;
-	struct cvs_ent *ent;
-	struct cvs_ent_line *line;
 	CVSENTRIES *entlist;
 
 	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
@@ -272,18 +270,9 @@ cvs_update_leavedir(struct cvs_file *cf)
 
 			if (!strcmp(dp->d_name, CVS_PATH_CVSDIR)) {
 				entlist = cvs_ent_open(cf->file_path);
-				TAILQ_FOREACH(line, &(entlist->cef_ent),
-				    entries_list) {
-					ent = cvs_ent_parse(line->buf);
+				if (!TAILQ_EMPTY(&(entlist->cef_ent)))
+					isempty = 0;
 
-					if (ent->ce_status == CVS_ENT_REMOVED) {
-						isempty = 0;
-						cvs_ent_free(ent);
-						break;
-					}
-
-					cvs_ent_free(ent);
-				}
 				cvs_ent_close(entlist, ENT_NOSYNC);
 			} else {
 				isempty = 0;
