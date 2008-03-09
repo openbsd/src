@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.427 2008/03/09 00:42:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.428 2008/03/09 02:00:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1092,7 +1092,6 @@ install_url() {
 	# Irrelevant if using a proxy.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]]; then
 		set_ftp_opt "active mode ftp" "-A"
-		set_ftp_opt "keepalive (NOOP) commands" "-k60"
 	fi
 
 	# Get server directory
