@@ -6,18 +6,10 @@ Please consult http://www.opencvs.org/ for portable release availability.
 
 This is a BSD-licensed equivalent of the popular versioning system
 CVS.  It is currently in development and thus is not yet suited to replace
-GNU CVS entirely, so is not yet enabled in /usr/src/usr.bin/Makefile.
-This program should NOT be used on a development tree unless
-you don't care about losing your modifications due to possible bugs.
+GNU CVS entirely.  This program should NOT be used on a development tree
+unless you don't care about losing your modifications due to possible bugs.
 
-To build and install this release on your OpenBSD system, do the following:
-
-	# cd /usr/src/usr.bin/cvs
-	# make obj
-	# make cleandir
-	# make && make install
-
-The OpenCVS binary will be installed as /usr/bin/opencvs to
-prevent people from accidently overwriting their GNU CVS binary for now.
+The OpenCVS binary is installed as /usr/bin/opencvs.  Man pages for OpenCVS
+are not installed, yet.
 
 See http://www.opencvs.org/ for more information.
