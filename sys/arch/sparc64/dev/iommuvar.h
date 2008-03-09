@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.11 2007/12/05 21:15:46 deraadt Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.12 2008/03/09 19:27:56 kettenis Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct iommu_page_map {
 struct iommu_map_state {
 	struct strbuf_flush ims_flush;	/* flush should be first (alignment) */
 	struct strbuf_ctl *ims_sb;	/* Link to parent */
+	struct iommu_state *ims_iommu;
 	int ims_flags;
 	struct iommu_page_map ims_map;	/* map must be last (array at end) */
 };
@@ -115,6 +116,7 @@ struct iommu_state {
 	/* copies of our parents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
 	bus_space_handle_t	is_iommu;	/* IOMMU registers */
+	uint64_t		is_devhandle;
 };
 
 /* interfaces for PCI/SBus code */
