@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2007/05/28 22:26:03 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2008/03/09 00:23:17 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -73,6 +73,7 @@
 #include "zstty.h"
 #include "sab.h"
 #include "pcons.h"
+#include "vcons.h"
 #include "com.h"
 #include "lpt.h"
 #include "bpp.h"
@@ -282,6 +283,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 	cdev_ptm_init(NPTY,ptm),	/* 123: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 124: devices hot plugging */
+	cdev_tty_init(NVCONS,vcons)	/* 125: virtual console */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
