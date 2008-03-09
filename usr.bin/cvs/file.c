@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.228 2008/03/09 01:02:38 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.229 2008/03/09 01:25:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -196,7 +196,7 @@ cvs_file_run(int argc, char **argv, struct cvs_recursion *cr)
 }
 
 struct cvs_filelist *
-cvs_file_get(const char *name, int check_dir_tag, struct cvs_flisthead *fl)
+cvs_file_get(const char *name, int user_supplied, struct cvs_flisthead *fl)
 {
 	const char *p;
 	struct cvs_filelist *l;
@@ -210,7 +210,7 @@ cvs_file_get(const char *name, int check_dir_tag, struct cvs_flisthead *fl)
 
 	l = (struct cvs_filelist *)xmalloc(sizeof(*l));
 	l->file_path = xstrdup(p);
-	l->check_dir_tag = check_dir_tag;
+	l->user_supplied = user_supplied;
 
 	TAILQ_INSERT_TAIL(fl, l, flist);
 	return (l);
@@ -332,7 +332,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		if (cf->file_type == CVS_DIR) {
 			cvs_file_walkdir(cf, cr);
 		} else {
-			if (l->check_dir_tag) {
+			if (l->user_supplied) {
 				cvs_parse_tagfile(cf->file_wd,
 				    &cvs_directory_tag, NULL, NULL);
 

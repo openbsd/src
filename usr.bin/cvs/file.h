@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.46 2007/09/23 10:49:49 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.47 2008/03/09 01:25:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -74,7 +74,7 @@ struct cvs_file {
 
 struct cvs_filelist {
 	char	*file_path;
-	int	check_dir_tag;
+	int	user_supplied;
 	TAILQ_ENTRY(cvs_filelist) flist;
 };
 
