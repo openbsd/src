@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.78 2008/03/05 00:06:21 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.79 2008/03/09 19:15:03 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -97,14 +97,14 @@ option		PCMCIADEBUG,PCMCIAVERBOSE
 pcmcia*		at cardslot?
 
 # PCI USB Controllers
-#ehci*	at pci?			# Enhanced Host Controller
-#ehci*	at cardbus?
+ehci*	at pci?			# Enhanced Host Controller
+ehci*	at cardbus?
 ohci*	at pci?			# Open Host Controller
 ohci*	at cardbus?
 uhci*	at pci?			# Universal Host Controller (Intel)
 
 # USB bus support
-#usb*	at ehci?
+usb*	at ehci?
 usb*	at uhci?
 usb*	at ohci?
 
