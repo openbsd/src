@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.138 2008/03/08 22:54:58 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.139 2008/03/09 01:02:38 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -244,6 +244,9 @@ cvs_update_leavedir(struct cvs_file *cf)
 	bufsize = st.st_size;
 	if (bufsize < st.st_blksize)
 		bufsize = st.st_blksize;
+
+	if (st.st_size > SIZE_MAX)
+		fatal("cvs_buf_load_fd: %s: file size too big", cf->file_name);
 
 	isempty = 1;
 	buf = xmalloc(bufsize);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.227 2008/03/08 20:26:34 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.228 2008/03/09 01:02:38 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -429,6 +429,9 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	if (fstat(cf->fd, &st) == -1)
 		fatal("cvs_file_walkdir: %s %s", cf->file_path,
 		    strerror(errno));
+
+	if (st.st_size > SIZE_MAX)
+		fatal("cvs_file_walkdir: %s: file size too big", cf->file_name);
 
 	bufsize = st.st_size;
 	if (bufsize < st.st_blksize)
@@ -967,7 +970,7 @@ cvs_file_cmp(const char *file1, const char *file2)
 	if (S_ISREG(stb1.st_mode)) {
 		void *p1, *p2;
 
-		if (stb1.st_size > (off_t)SIZE_MAX) {
+		if (stb1.st_size > SIZE_MAX) {
 			ret = 1;
 			goto out;
 		}
@@ -1024,7 +1027,7 @@ cvs_file_copy(const char *from, const char *to)
 		char *p;
 		int saved_errno;
 
-		if (st.st_size > (off_t)SIZE_MAX) {
+		if (st.st_size > SIZE_MAX) {
 			ret = -1;
 			goto out;
 		}
