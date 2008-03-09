@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.32 2008/01/17 22:53:18 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.33 2008/03/09 13:28:20 kettenis Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -415,6 +415,9 @@ sbus_attach_common(struct sbus_softc *sc, int node, int indirect)
 	 */
 	node0 = firstchild(node);
 	for (node = node0; node; node = nextsibling(node)) {
+		if (!checkstatus(node))
+			continue;
+
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
 			DPRINTF(SDB_CHILD,
