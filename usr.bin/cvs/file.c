@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.229 2008/03/09 01:25:31 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.230 2008/03/09 01:54:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -217,7 +217,8 @@ cvs_file_get(const char *name, int user_supplied, struct cvs_flisthead *fl)
 }
 
 struct cvs_file *
-cvs_file_get_cf(const char *d, const char *f, int fd, int type)
+cvs_file_get_cf(const char *d, const char *f, int fd,
+	int type, int user_supplied)
 {
 	struct cvs_file *cf;
 	char *p, rpath[MAXPATHLEN];
@@ -236,6 +237,7 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 	cf->repo_fd = -1;
 	cf->file_type = type;
 	cf->file_status = cf->file_flags = 0;
+	cf->user_supplied = user_supplied;
 	cf->file_ent = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
@@ -328,7 +330,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 			}
 		}
 
-		cf = cvs_file_get_cf(d, f, fd, type);
+		cf = cvs_file_get_cf(d, f, fd, type, l->user_supplied);
 		if (cf->file_type == CVS_DIR) {
 			cvs_file_walkdir(cf, cr);
 		} else {
