@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.231 2008/03/09 02:06:32 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.232 2008/03/09 02:30:42 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -619,7 +619,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	cvs_log(LP_TRACE, "cvs_file_classify(%s, %s)", cf->file_path,
 	    (tag != NULL) ? tag : "none");
 
-	if (cf->file_type == CVS_DIR && cf->user_supplied) {
+	if (!strcmp(cf->file_path, ".")) {
 		cf->file_status = FILE_UPTODATE;
 		return;
 	}
