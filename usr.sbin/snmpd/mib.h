@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.13 2008/01/21 23:56:39 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.14 2008/03/10 11:02:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -105,6 +105,45 @@
 #define MIB_linkUp			MIB_snmpTraps, 4
 #define MIB_authenticationFailure	MIB_snmpTraps, 5
 #define MIB_egpNeighborLoss		MIB_snmpTraps, 6
+
+/* HOST-RESOURCES-MIB */
+#define MIB_host			MIB_mib_2, 25
+#define MIB_hrSystem			MIB_host, 1
+#define MIB_hrSystemUptime		MIB_hrSystem, 1
+#define MIB_hrSystemDate		MIB_hrSystem, 2
+#define MIB_hrSystemInitialLoadDevice	MIB_hrSystem, 3
+#define MIB_hrSystemInitialLoadParameters MIB_hrSystem, 4
+#define MIB_hrSystemNumUsers		MIB_hrSystem, 5
+#define MIB_hrSystemProcesses		MIB_hrSystem, 6
+#define MIB_hrSystemMaxProcesses	MIB_hrSystem, 7
+#define MIB_hrStorage			MIB_host, 2
+#define MIB_hrStorageTypes		MIB_hrStorage, 1
+#define MIB_hrStorageOther		MIB_hrStorageTypes, 1
+#define MIB_hrStorageRam		MIB_hrStorageTypes, 2
+#define MIB_hrStorageVirtualMemory	MIB_hrStorageTypes, 3
+#define MIB_hrStorageFixedDisk		MIB_hrStorageTypes, 4
+#define MIB_hrStorageRemovableDisk	MIB_hrStorageTypes, 5
+#define MIB_hrStorageFloppyDisk		MIB_hrStorageTypes, 6
+#define MIB_hrStorageCompactDisc	MIB_hrStorageTypes, 7
+#define MIB_hrStorageRamDisk		MIB_hrStorageTypes, 8
+#define MIB_hrStorageFlashMemory	MIB_hrStorageTypes, 9
+#define MIB_hrStorageNetworkDisk	MIB_hrStorageTypes, 10
+#define MIB_hrMemorySize		MIB_hrStorage, 2
+#define MIB_hrStorageTable		MIB_hrStorage, 3
+#define MIB_hrStorageEntry		MIB_hrStorageTable, 1
+#define OIDIDX_hrStorage		10
+#define OIDIDX_hrStorageEntry		11
+#define MIB_hrStorageIndex		MIB_hrStorageEntry, 1
+#define MIB_hrStorageType		MIB_hrStorageEntry, 2
+#define MIB_hrStorageDescr		MIB_hrStorageEntry, 3
+#define MIB_hrStorageAllocationUnits	MIB_hrStorageEntry, 4
+#define MIB_hrStorageSize		MIB_hrStorageEntry, 5
+#define MIB_hrStorageUsed		MIB_hrStorageEntry, 6
+#define MIB_hrStorageAllocationFailures	MIB_hrStorageEntry, 7
+#define MIB_hrSWRun			MIB_host, 4
+#define MIB_hrSWRunPerf			MIB_host, 5
+#define MIB_hrSWInstalled		MIB_host, 6
+#define MIB_hrMIBAdminInfo		MIB_host, 7
 
 /* IF-MIB */
 #define MIB_ifMIB			MIB_mib_2, 31
@@ -372,6 +411,28 @@
 	{ MIBDECL(linkUp) },				\
 	{ MIBDECL(authenticationFailure) },		\
 	{ MIBDECL(egpNeighborLoss) },			\
+							\
+	{ MIBDECL(host) },				\
+	{ MIBDECL(hrSystem) },				\
+	{ MIBDECL(hrSystemUptime) },			\
+	{ MIBDECL(hrSystemDate) },			\
+	{ MIBDECL(hrSystemInitialLoadDevice) },		\
+	{ MIBDECL(hrSystemInitialLoadParameters) },	\
+	{ MIBDECL(hrSystemNumUsers) },			\
+	{ MIBDECL(hrSystemProcesses) },			\
+	{ MIBDECL(hrSystemMaxProcesses) },		\
+	{ MIBDECL(hrStorage) },				\
+	{ MIBDECL(hrStorageTypes) },			\
+	{ MIBDECL(hrMemorySize) },			\
+	{ MIBDECL(hrStorageTable) },			\
+	{ MIBDECL(hrStorageEntry) },			\
+	{ MIBDECL(hrStorageIndex) },			\
+	{ MIBDECL(hrStorageType) },			\
+	{ MIBDECL(hrStorageDescr) },			\
+	{ MIBDECL(hrStorageAllocationUnits) },		\
+	{ MIBDECL(hrStorageSize) },			\
+	{ MIBDECL(hrStorageUsed) },			\
+	{ MIBDECL(hrStorageAllocationFailures) },	\
 							\
 	{ MIBDECL(ifMIB) },				\
 	{ MIBDECL(ifMIBObjects) },			\

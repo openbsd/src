@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.19 2008/01/30 10:12:45 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.20 2008/03/10 11:02:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -26,6 +26,7 @@
 #include <sys/utsname.h>
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
+#include <sys/mount.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -314,6 +315,99 @@ mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		return (-1);
 
 	stats->snmp_enableauthentraps = i == 1 ? 1 : 0;
+
+	return (0);
+}
+
+/*
+ * Defined in HOST-RESOURCES-MIB.txt (RFC 2790)
+ */
+
+int	 mib_hrmemory(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrstorage(struct oid *, struct ber_oid *, struct ber_element **);
+
+static struct oid hr_mib[] = {
+	{ MIB(host),				OID_MIB },
+	{ MIB(hrStorage),			OID_MIB },
+	{ MIB(hrMemorySize),			OID_RD,	mib_hrmemory },
+	{ MIB(hrStorageIndex),			OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageType),			OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageDescr),			OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageAllocationUnits),	OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageSize),			OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageUsed),			OID_TRD, mib_hrstorage },
+	{ MIB(hrStorageAllocationFailures),	OID_TRD, mib_hrstorage },
+	{ MIBEND }
+};
+
+int
+mib_hrmemory(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	int			 mib[] = { CTL_HW, HW_PHYSMEM64 };
+	size_t			 miblen = sizeof(mib) / sizeof(mib[0]);
+	u_int64_t		 physmem;
+	size_t			 len = sizeof(physmem);
+
+	if (sysctl(mib, miblen, &physmem, &len, NULL, 0) == -1)
+		return (-1);
+
+	ber = ber_add_integer(ber, physmem / 1024);
+
+	return (0);
+}
+
+int
+mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	static struct ber_oid	 so = { { MIB_hrStorageFixedDisk } };
+	u_int32_t		 idx;
+	struct statfs		*mntbuf, *mnt;
+	int			 mntsize;
+
+	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
+	if (mntsize == 0)
+		return (-1);
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_hrStorageEntry];
+	if ((int)idx > mntsize)
+		return (1);
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_hrStorageEntry] = idx;
+	ber = ber_add_oid(ber, o);
+
+	mnt = &mntbuf[idx - 1];
+
+	switch (o->bo_id[OIDIDX_hrStorage]) {
+	case 1: /* hrStorageIndex */
+		ber = ber_add_integer(ber, idx);
+		break;
+	case 2: /* hrStorageType */
+		smi_oidlen(&so);
+		ber = ber_add_oid(ber, &so);
+		break;
+	case 3: /* hrStorageDescr */
+		ber = ber_add_string(ber, mnt->f_mntonname);
+		break;
+	case 4: /* hrStorageAllocationUnits */
+		ber = ber_add_integer(ber, mnt->f_bsize);
+		break;
+	case 5: /* hrStorageSize */
+		ber = ber_add_integer(ber, mnt->f_blocks);
+		break;
+	case 6: /* hrStorageUsed */
+		ber = ber_add_integer(ber, mnt->f_blocks - mnt->f_bfree);
+		break;
+	case 7: /* hrStorageAllocationFailures */
+		ber = ber_add_integer(ber, 0);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+		break;
+	default:
+		return (-1);
+	}
 
 	return (0);
 }
@@ -1342,6 +1436,9 @@ mib_init(void)
 
 	/* SNMPv2-MIB */
 	smi_mibtree(base_mib);
+
+	/* HOST-RESOURCES-MIB */
+	smi_mibtree(hr_mib);
 
 	/* IF-MIB */
 	smi_mibtree(if_mib);
