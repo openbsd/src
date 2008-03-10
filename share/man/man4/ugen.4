@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.13 2007/05/31 19:19:52 jmc Exp $
+.\"	$OpenBSD: ugen.4,v 1.14 2008/03/10 12:48:24 sobrado Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 10 2008 $
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -111,6 +111,7 @@ calls:
 Allow short read transfer.
 Normally a transfer from the device which is shorter than the request
 specified is reported as an error.
+.Pp
 .It Dv USB_SET_TIMEOUT (int)
 Set the timeout on the device operations, the time is specified
 in milliseconds.
@@ -143,6 +144,7 @@ struct usb_alt_interface {
 	int	uai_alt_no;
 };
 .Ed
+.Pp
 .It Dv USB_SET_ALTINTERFACE (struct usb_alt_interface)
 Set the alternative setting to the given number in the interface with the
 given index.
@@ -248,9 +250,10 @@ struct usb_ctl_request {
 	void	*ucr_data;
 	int	ucr_flags;
 #define	USBD_SHORT_XFER_OK	0x04	/* allow short reads */
-	int	ucr_actlen;		/* actual length transferred */
+	int	ucr_actlen;	/* actual length transferred */
 };
 .Ed
+.Pp
 This is a dangerous operation in that it can perform arbitrary operations
 on the device.
 Some of the most dangerous (e.g., changing the device address) are not
