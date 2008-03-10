@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.17 2007/08/30 04:21:16 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.18 2008/03/10 21:25:53 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -13,32 +13,29 @@ OpenBSDcd
 
 	lif{:--:}OSrev.fs	A LIF bootable miniroot image, suitable for network
 			boot.
-dnl
-dnl	installboot	The OpenBSD/MACHINE boot loader installation program
 
 	xxboot		The OpenBSD/MACHINE LIF boot block.
 
-DistributionDescription(ten)
+DistributionDescription(eleven)
 
-OpenBSDbase(43157731,115274066,shared)
+OpenBSDbase(46694889,124245316,shared)
 
-OpenBSDcomp(64790954,233458466,shared)
+OpenBSDcomp(67855227,241802856,shared)
 
-OpenBSDetc(1152890,4000167)
+OpenBSDetc(1216946,4015311)
 
-OpenBSDgame(2752846,6108407)
+OpenBSDgame(2764991,6110288)
 
-OpenBSDman(7433072,26646021)
+OpenBSDman(7710819,27896378)
 
-OpenBSDmisc(2276220,7482328)
+OpenBSDmisc(2306745,7714263)
 
-OpenBSDxbase(10235158,25504087)
+OpenBSDxbase(11666617,32606314)
 
-OpenBSDxetc(80703,294489)
+OpenBSDxetc(78891,294702)
 
-OpenBSDxfont(33235838,37547572)
+OpenBSDxfont(35581866,43728442)
 
-dnl Do not list xserv, on purpose. No real X11 server yet.
-dnl OpenBSDxserv(7280093,17870757)
-dnl
-OpenBSDxshare(2079311,10998944)
+OpenBSDxserv(3830680,9687558)
+
+OpenBSDxshare(2743527,14575867)

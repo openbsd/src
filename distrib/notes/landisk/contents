@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.2 2007/02/28 22:30:05 miod Exp $
+dnl	$OpenBSD: contents,v 1.3 2008/03/10 21:25:53 miod Exp $
 TopPart
 
 dnl can't use OpenBSDminiroot here - comment is inappropriate
@@ -17,22 +17,24 @@ dnl XXX describe boot, mbr, and xxboot. Or stop providing them?
 
 DistributionDescription(eleven)
 
-OpenBSDbase(87288058,179014870)
+OpenBSDbase(86428434,181933701)
 
-OpenBSDcomp(62336682,181123299)
+OpenBSDcomp(64499584,187918649)
 
-OpenBSDetc(1237410,4082221)
+OpenBSDetc(1216790,4014133)
 
-OpenBSDgame(7146289,13072218)
+OpenBSDgame(6908856,12851988)
 
-OpenBSDman(7644466,27595277)
+OpenBSDman(7712331,27896372)
 
-OpenBSDmisc(2292771,7568192)
+OpenBSDmisc(2306764,7714263)
 
-OpenBSDxbase(84782265,140201761)
+OpenBSDxbase(84833778,145797829)
 
-OpenBSDxetc(991594,1700766)
+OpenBSDxetc(1003988,1784996)
 
-OpenBSDxfont(33239414,37547572)
+OpenBSDxfont(35584612,43728442)
 
-OpenBSDxshare(2080226,10996662)
+OpenBSDxserv(7002,16352)
+
+OpenBSDxshare(2737812,14539940)

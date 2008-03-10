@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.30 2006/02/28 20:42:35 miod Exp $
+dnl	$OpenBSD: contents,v 1.31 2008/03/10 21:25:53 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -23,24 +23,26 @@ They can also be used to configure an NFS server to support installation
 "over the network".  See the section "Getting the OpenBSD system onto
 Useful Media" for more information.
 
-DistributionDescription(ten)
+DistributionDescription(eleven)
 
-OpenBSDbase(41235056,133562744,shared)
+OpenBSDbase(45245543,144438257,shared)
 
-OpenBSDcomp(48648044,170497721,shared)
+OpenBSDcomp(51473029,177951159,shared)
 
-OpenBSDetc(1152689,3835768)
+OpenBSDetc(1217211,4014702)
 
-OpenBSDgame(2640660,6304469)
+OpenBSDgame(2648343,6303982)
 
-OpenBSDman(6839794,24380198)
+OpenBSDman(7111287,25546144)
 
-OpenBSDmisc(2276337,7482328)
+OpenBSDmisc(2306850,7714263)
 
-OpenBSDxbase(7800993,22896934)
+OpenBSDxbase(8703004,26380967)
 
-OpenBSDxetc(65881,261053)
+OpenBSDxetc(76766,310397)
 
-OpenBSDxfont(33239009,37547572)
+OpenBSDxfont(35585881,43728442)
 
-OpenBSDxshare(2094916,11019793)
+OpenBSDxserv(1157054,2810482)
+
+OpenBSDxshare(2746742,14575968)

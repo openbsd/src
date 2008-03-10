@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.76 2007/11/04 01:35:49 krw Exp $
+dnl	$OpenBSD: m4.common,v 1.77 2008/03/10 21:25:52 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -227,9 +227,9 @@ define({:-OpenBSDinstalliso-:},
 			or upgrade can be done without network connectivity.-:})dnl
 define({:-OpenBSDcd-:},
 {:-	cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
-			as a bootable CD-ROM image, but will require the base and
-			X sets be found via another media or network; otherwise
-			similar to the bsd.rd image above.-:})dnl
+			as a bootable CD-ROM image, but will require the base
+			and X sets be found via another media or network;
+			otherwise similar to the bsd.rd image above.-:})dnl
 dnl
 dnl OpenBSDfloppydesc(number of floppies, Article, plural)
 dnl

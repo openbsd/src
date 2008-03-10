@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.1 2007/03/15 20:18:23 miod Exp $
+dnl	$OpenBSD: contents,v 1.2 2008/03/10 21:25:52 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -17,7 +17,6 @@ dnl	bootsd		The OpenBSD/MACHINE disk boot loader.
 dnl	bootst		The OpenBSD/MACHINE tape boot loader.
 	netboot		The OpenBSD/MACHINE Sun-compatible network boot
 			loader.
-dnl	stboot		A VID tape block.
 dnl	tftpboot	The OpenBSD/MACHINE tftp-compatible network boot
 dnl			loader.
 
@@ -28,14 +27,15 @@ dnl Media" for more information.
 
 DistributionDescription(six)
 
-OpenBSDbase(82256499,203198142)
+OpenBSDbase(87127369,214673707)
 
-OpenBSDcomp(39873329,141571234)
+OpenBSDcomp(38773889,137789701)
 
-OpenBSDetc(1152254,3995885)
+OpenBSDetc(1234685,3765812)
 
-OpenBSDgame(7097975,15193395)
+OpenBSDgame(7198035,15341026)
 
-OpenBSDman(6838594,24373480)
+OpenBSDman(7055148,25283996)
 
-OpenBSDmisc(2276390,7482328)
+OpenBSDmisc(2292816,7568192)
+

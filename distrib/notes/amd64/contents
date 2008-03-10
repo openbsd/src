@@ -1,18 +1,7 @@
-dnl	$OpenBSD: contents,v 1.20 2007/08/30 04:21:16 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.21 2008/03/10 21:25:52 miod Exp $
 TopPart
 
-dnl uncomment as stuff becomes available
-dnl
 OpenBSDfloppy
-dnl
-dnl	floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-dnl			this one features all the drivers not available
-dnl			in floppy{:--:}OSrev.fs, such as SCSI, RAID, Gigabit
-dnl			Ethernet, and such; see below.
-dnl
-dnl	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-dnl			this one features most of the cardbus and
-dnl			PCMCIA drivers; see below.
 
 	pxeboot		i386-specific second-stage PXE bootstrap (for
 			network installs); see below.
@@ -51,31 +40,31 @@ dnl		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
 dnl		see installation section, below.
 dnl
 dnl
-OpenBSDfloppydesc(,The)
+OpenBSDfloppydesc(single,The)
 dnl
 dnl In addition, the "tools/" directory contains some utilities that might be
 dnl useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(44672069,138481711,shared)
+OpenBSDbase(48347476,148896227,shared)
 
-OpenBSDcomp(87031601,308801726,shared)
+OpenBSDcomp(91564208,321576408,shared)
 
-OpenBSDetc(1152568,3837470)
+OpenBSDetc(1217072,4016473)
 
-OpenBSDgame(2690128,6162995)
+OpenBSDgame(2702471,6162604)
 
-OpenBSDman(7432420,26645880)
+OpenBSDman(7710700,27896380)
 
-OpenBSDmisc(2276145,7482328)
+OpenBSDmisc(2306646,7714263)
 
-OpenBSDxbase(11686810,36200909)
+OpenBSDxbase(10929656,34574070)
 
-OpenBSDxetc(93321,363680)
+OpenBSDxetc(79031,299834)
 
-OpenBSDxfont(33234618,37547572)
+OpenBSDxfont(35580507,43728442)
 
-OpenBSDxserv(12009524,35230563)
+OpenBSDxserv(9384576,27980931)
 
-OpenBSDxshare(2078183,10998944)
+OpenBSDxshare(2742763,14575889)
