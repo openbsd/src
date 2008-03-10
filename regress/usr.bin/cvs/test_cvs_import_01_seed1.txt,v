@@ -1,0 +1,40 @@
+head     1.1;
+branch   1.1.1;
+access   ;
+symbols  regress_import:1.1.1.1 regress:1.1.1;
+locks    ; strict;
+comment  @# @;
+
+
+1.1
+date     2000.01.01.00.00.00;  author user;  state Exp;
+branches 1.1.1.1;
+next     ;
+
+1.1.1.1
+date     2000.01.01.00.00.00;  author user;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@$Id: seed1.txt,v 1.1 2007/06/05 05:49:41 niallo Exp $
+a test file for the seed repository
+@
+
+
+1.1.1.1
+log
+@import seed repo
+@
+text
+@@
