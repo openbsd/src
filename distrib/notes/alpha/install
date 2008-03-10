@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.29 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.30 2008/03/10 21:27:33 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -67,6 +67,7 @@ Booting from Network:
 
 	subnet 10.0.0.0 netmask 255.0.0.0 {
 		host piper {
+			always-reply-rfc1048 "true";
 			filename "netboot";
 			option root-path "/alpha";
 			hardware ethernet 00:02:56:00:73:31;
