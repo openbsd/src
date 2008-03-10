@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.67 2008/03/09 15:35:42 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.68 2008/03/10 22:56:43 espie Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: March 9 2008 $
+.Dd $Mdocdate: March 10 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -164,6 +164,9 @@ This assumes the FTP server can deal with extra commands coming over
 the control connection during a transfer.
 Well-behaved servers queue those commands, and process them after the
 transfer.
+By default,
+.Nm
+will send a byte every 60 seconds.
 .It Fl m
 Causes
 .Nm

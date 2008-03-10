@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.67 2007/06/16 08:58:33 espie Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.68 2008/03/10 22:56:43 espie Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.67 2007/06/16 08:58:33 espie Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.68 2008/03/10 22:56:43 espie Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -325,7 +325,7 @@ command(const char *fmt, ...)
 	return (r);
 }
 
-int keep_alive_timeout = 0;		/* 0 -> no timeout */
+int keep_alive_timeout = 60;		/* 0 -> no timeout */
 
 static int full_noops_sent = 0;
 static time_t last_timestamp = 0;	/* 0 -> no measurement yet */
