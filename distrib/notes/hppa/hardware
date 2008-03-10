@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.33 2008/03/09 15:32:30 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.34 2008/03/10 21:41:26 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -34,6 +34,7 @@ dnl	705, 710, 720, 730, 750
 - PA8700-based (in 32-bit mode):
 	C3650, C3700, C3750, J6700, J6750
 
+A minimum of 16MB of RAM is required.
 
 Supported devices {:-include-:}:
 - Ethernet Controllers
