@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.60 2008/03/10 21:25:53 miod Exp $
+dnl	$OpenBSD: contents,v 1.61 2008/03/10 21:45:44 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -12,7 +12,7 @@ OpenBSDfloppy
 			features most of the cardbus and PCMCIA drivers; see
 			below.
 
-	pxeboot		i386-specific second-stage PXE bootstrap (for
+	pxeboot		MACHINE-specific second-stage PXE bootstrap (for
 			network installs); see below.
 
 OpenBSDdistsets

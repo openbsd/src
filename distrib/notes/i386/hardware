@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.257 2008/03/05 20:44:04 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.258 2008/03/10 21:45:44 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -10,19 +10,15 @@ OpenBSD/MACHINE OSREV supports most SMP (Symmetrical MultiProcessor)
 systems.  To support SMP operation, a separate SMP kernel (bsd.mp)
 is included with the installation file sets.
 
-The minimal configuration to install the system is 12MB or 16MB of RAM and
-perhaps 100MB of disk space.  A custom kernel might be able to run with only
-8MB.  To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (16MB of RAM will actually
-allow you to run X and/or compile but it won't be speedy. Note that until
-you have around 32MB of RAM, getting more RAM is more important than getting
-a faster CPU.)
+The minimal configuration to install the system is 24MB or 32MB of RAM and
+perhaps 200MB of disk space.  To install the entire system requires much more
+disk space, and to run X or compile the system, more RAM is recommended.
 
 Supported hardware {:-include-:}:
 	Processors
-		All CPU chips compatible with the Intel 80386 (MACHINE)
+		All CPU chips compatible with the Intel 80486
 		architecture:
-			386/486 (SX/DX/DX2/DX4, an FPU is required)
+			80486 (SX/DX/DX2/DX4, an FPU is required)
 			Intel Pentium/Pentium-MMX
 			Intel Pentium Pro/II/III/Celeron/Xeon
 			Intel Pentium IV
@@ -36,9 +32,11 @@ Supported hardware {:-include-:}:
 			NexGen 586
 			NS Geode GX1
 			Transmeta TMS3200, TMS5400, TMS5600
-		Everything that is a clone of the 386 or up should work
-		fine. The only CPU that is known to work poorly (due to
-		flawed motherboard designs) is the Cyrix 386DLC.
+		Everything that is a clone of the 486 or up should work
+		fine.
+dnl Says 386, pretended to be a 486, but won't work so don't bother
+dnl	       	The only CPU that is known to work poorly (due to
+dnl		flawed motherboard designs) is the Cyrix 386DLC.
 	Buses
 		All standard ISA, EISA, VLB, and PCI bus based machines,
 		including:
