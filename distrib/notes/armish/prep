@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.12 2008/03/08 01:13:18 sthen Exp $
+dnl	$OpenBSD: prep,v 1.13 2008/03/10 21:34:14 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about RedBoot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -24,14 +24,19 @@ be aware that there are two different types of 10-pin IDC to DB-9M
 ribbon cable in use, which look identical (the differences are hidden
 inside the DB-9 connector). The cable you need is wired using the
 "AT-Everex" or "Asus" pinout, as described here:
-http://www.pccables.com/07120.htm
+
+    http://www.pccables.com/07120.htm
+
 and *not* the more straightforward to solder "crossed" type:
-http://www.pccables.com/07121.htm.
+
+    http://www.pccables.com/07121.htm.
+
 If you wish to check a cable, or make your own, the pinouts are:
-DB9           IDC10
-===           =====
-1 2 3 4 5     1 3 5 7 9
- 6 7 8 9      2 4 6 8 10
+
+    DB9           IDC10
+    ===           =====
+    1 2 3 4 5     1 3 5 7 9
+     6 7 8 9      2 4 6 8 10
 
 Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
 
@@ -40,7 +45,9 @@ route the serial port interrupt to allow serial to work under OpenBSD.
 This jumper is under the disk drives, so you may wish to ensure its
 correct setting while you are installing the disk(s).  For instructions
 on assembling/disassembling your N2100, see the N2100 Manual at
-http://www.thecus.com/download/manual/N2100%20UM%20EN.pdf
+
+    http://www.thecus.com/download/manual/N2100%20UM%20EN.pdf
+
 
 Booting Thecus N2100
 
@@ -51,7 +58,7 @@ and start it.
 
 After some device probe information, you should see this prompt:
 
-== Executing boot script in 3.000 seconds - enter ^C to abort
+    == Executing boot script in 3.000 seconds - enter ^C to abort
 
 To enter interactive RedBoot, it is necessary to press ^C within the given
 number of seconds of the prompt. It will typically accept the ^C if typed 
@@ -69,22 +76,18 @@ Using ip_address only allows you to set the local IP address and
 the IP address of the server where bsd.rd is located.  This command
 takes effect immediately but will not persist across a reboot.
 
-eg:
----
-RedBoot> ip_address -l 10.0.0.21 -h 10.0.0.7
-IP: 10.0.0.21/255.255.255.0, Gateway: 0.0.0.0
-Default server: 10.0.0.7, DNS server IP: 0.0.0.0
-
----
+    RedBoot> ip_address -l 10.0.0.21 -h 10.0.0.7
+    IP: 10.0.0.21/255.255.255.0, Gateway: 0.0.0.0
+    Default server: 10.0.0.7, DNS server IP: 0.0.0.0
 
 Once you have done this, and have set up your TFTP server on
 the gateway machine (10.0.0.7 in the above example), you can
 boot manually.
 
-RedBoot> load /bsd.rd
-Using default protocol (TFTP)
-Entry point: 0x00200000, address range: 0x00200000-0x0066a49c
-RedBoot> go
+    RedBoot> load /bsd.rd
+    Using default protocol (TFTP)
+    Entry point: 0x00200000, address range: 0x00200000-0x0066a49c
+    RedBoot> go
 
 OpenBSD/armish booting ...
 initarm: Configuring system ...
@@ -103,6 +106,7 @@ Install(I), Upgrade(U) or Shell(S)?
 
 If you then install to your hard disk, in future you can
 load /boot the same way and just hit "return" to boot OpenBSD.
+
 
 Automatic Booting
 
@@ -138,53 +142,52 @@ you can autoboot just by changing the boot script with fconfig,
 as follows: (in this example, 192.168.1.254 is both the default
 IP gateway and also the TFTP server):
 
-RedBoot> fconfig
-Run script at boot: true
-Boot script: 
-.. load /boot.armish
-.. go
-Enter script, terminate with empty line
->> load /boot.armish
->> go
->> 
-Boot script timeout (1000ms resolution): 3
-Use BOOTP for network configuration: false
-Gateway IP address: 192.168.1.254
-Local IP address: 192.168.1.253
-Local IP address mask: 255.255.255.0
-Default server IP address: 192.168.1.254
-Console baud rate: 115200
-DNS server IP address: 
-GDB connection port: 9000
-HW Status: 0
-Force console for special debug messages: false
-MAC address: 0x00:0x14:0xFD:0x30:0x25:0x14
-MAC address 2: 0x00:0x14:0xFD:0x30:0x25:0x15
-Network debug at boot time: false
-Reset default: Normal
-Serial number: N2100 V2.1.06
-... Unlock from 0xf0fc0000-0xf0fc1000: .
-... Erase from 0xf0fc0000-0xf0fc1000: .
-... Program from 0x07fd2000-0x07fd3000 at 0xf0fc0000: .
-... Lock from 0xf0fc0000-0xf0fc1000: .
-RedBoot> 
+    RedBoot> fconfig
+    Run script at boot: true
+    Boot script: 
+    .. load /boot.armish
+    .. go
+    Enter script, terminate with empty line
+    >> load /boot.armish
+    >> go
+    >> 
+    Boot script timeout (1000ms resolution): 3
+    Use BOOTP for network configuration: false
+    Gateway IP address: 192.168.1.254
+    Local IP address: 192.168.1.253
+    Local IP address mask: 255.255.255.0
+    Default server IP address: 192.168.1.254
+    Console baud rate: 115200
+    DNS server IP address: 
+    GDB connection port: 9000
+    HW Status: 0
+    Force console for special debug messages: false
+    MAC address: 0x00:0x14:0xFD:0x30:0x25:0x14
+    MAC address 2: 0x00:0x14:0xFD:0x30:0x25:0x15
+    Network debug at boot time: false
+    Reset default: Normal
+    Serial number: N2100 V2.1.06
+    ... Unlock from 0xf0fc0000-0xf0fc1000: .
+    ... Erase from 0xf0fc0000-0xf0fc1000: .
+    ... Program from 0x07fd2000-0x07fd3000 at 0xf0fc0000: .
+    ... Lock from 0xf0fc0000-0xf0fc1000: .
+    RedBoot> 
 
 This configuration can easily be set back to the default, as the
 Linux system does not get erased from the flash memory. To set it
 back, just change the boot script with fconfig back to what it was,
 for example:
 
-	thecus_setip
-	fis load ramdisk
-	fis load kernel
-	exec -c "console=ttyS0,115200 root=/dev/ram0 initrd=0xa0800000,42M mem=128M@0xa0000000"
+    thecus_setip
+    fis load ramdisk
+    fis load kernel
+    exec -c "console=ttyS0,115200 root=/dev/ram0 initrd=0xa0800000,42M mem=128M@0xa0000000"
 
 You could also remove the boot script altogether by not re-entering
 it, so you would be dropped to the RedBoot shell by default.
 
 Recheck the new values and use the 'reset' command.
 
----
 
 For the standalone booting option, you will have to load /boot into
 the flash memory...
@@ -193,17 +196,16 @@ To overwrite the Thecus ROM and boot from the load device, it is necessary
 to delete a 'rom file' and load the openbsd bootloader image there.  With
 networking configured (as above) remove a region and load the 'boot' program.
 
-Initially the machine will contain much like the following
----
-RedBoot> fis list
-Name              FLASH addr  Mem addr    Length      Entry point
-RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
-RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
-FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
-ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
-kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
-user              0xF0EA0000  0xF0EA0000  0x00120000  0x00200000
----
+Initially the machine will contain much like the following:
+
+    RedBoot> fis list
+    Name              FLASH addr  Mem addr    Length      Entry point
+    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+    user              0xF0EA0000  0xF0EA0000  0x00120000  0x00200000
 
 There is no free space in the rom for the 'boot' program, so something must
 be removed. 
@@ -215,68 +217,60 @@ directory regions, as doing so will probably brick the device.
 
 Remove (with confirmation) a region to make space, eg 'user' (the
 non-root files needed to run Linux from Flash Memory).
----
-RedBoot> fis delete user
-Delete image 'user' - continue (y/n)? y
-... Erase from 0xf0ea0000-0xf0fc0000: .........
-... Unlock from 0xf0fe0000-0xf1000000: .
-... Erase from 0xf0fe0000-0xf1000000: .
-... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
-... Lock from 0xf0fe0000-0xf1000000: .
----
+
+    RedBoot> fis delete user
+    Delete image 'user' - continue (y/n)? y
+    ... Erase from 0xf0ea0000-0xf0fc0000: .........
+    ... Unlock from 0xf0fe0000-0xf1000000: .
+    ... Erase from 0xf0fe0000-0xf1000000: .
+    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+    ... Lock from 0xf0fe0000-0xf1000000: .
 
 Load the Armish OpenBSD bootloader 'boot' via tftp or http:
 
----
-RedBoot> load -m http /boot
-Entry point: 0x00100000, address range: 0x00100000-0x001067e0
----
+    RedBoot> load -m http /boot
+    Entry point: 0x00100000, address range: 0x00100000-0x001067e0
 
 Save that loaded file to flash:
 
----
-RedBoot> fis create boot
-... Erase from 0xf0ea0000-0xf0ec0000: .
-... Program from 0x00100000-0x001067e0 at 0xf0ea0000: .
-... Unlock from 0xf0fe0000-0xf1000000: .
-... Erase from 0xf0fe0000-0xf1000000: .
-... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
-... Lock from 0xf0fe0000-0xf1000000: .
----
+    RedBoot> fis create boot
+    ... Erase from 0xf0ea0000-0xf0ec0000: .
+    ... Program from 0x00100000-0x001067e0 at 0xf0ea0000: .
+    ... Unlock from 0xf0fe0000-0xf1000000: .
+    ... Erase from 0xf0fe0000-0xf1000000: .
+    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+    ... Lock from 0xf0fe0000-0xf1000000: .
 
 Confirm its addition:
 
----
-RedBoot> fis list
-Name              FLASH addr  Mem addr    Length      Entry point
-RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
-RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
-FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
-ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
-kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
-boot              0xF0EA0000  0x00100000  0x00020000  0x00100000
----
+    RedBoot> fis list
+    Name              FLASH addr  Mem addr    Length      Entry point
+    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+    boot              0xF0EA0000  0x00100000  0x00020000  0x00100000
 
 Now that the bootloader is in place, update fconfig to autoboot OpenBSD:
----
-RedBoot> fconfig
-Run script at boot: true
-Boot script:
-.. fis load ramdisk
-.. fis load kernel
-.. exec ...
-Enter script, terminate with empty line
->> fis load boot
->> go
->>
-Boot script timeout (1000ms resolution): 1
-...
-Update RedBoot non-volatile configuration - continue (y/n)? y
-... Unlock from 0xf0fc0000-0xf0fc1000: .
-... Erase from 0xf0fc0000-0xf0fc1000: .
-... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
-... Lock from 0xf0fc0000-0xf0fc1000: .
----
+
+    RedBoot> fconfig
+    Run script at boot: true
+    Boot script:
+    .. fis load ramdisk
+    .. fis load kernel
+    .. exec ...
+    Enter script, terminate with empty line
+    >> fis load boot
+    >> go
+    >>
+    Boot script timeout (1000ms resolution): 1
+    ...
+    Update RedBoot non-volatile configuration - continue (y/n)? y
+    ... Unlock from 0xf0fc0000-0xf0fc1000: .
+    ... Erase from 0xf0fc0000-0xf0fc1000: .
+    ... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
+    ... Lock from 0xf0fc0000-0xf0fc1000: .
 
 The important part is that 'Run script' is true and that the commands are
 'fis load boot' and 'go' ('boot' is the file created by 'fis create boot'
@@ -285,7 +279,6 @@ earlier). Confirm the update and type 'reset' to auto boot.
 The bootloader is command driven with timeout like many other OpenBSD
 architectures.
 
-------
 
 How to boot/install IOData HDL-G:
 
@@ -313,15 +306,12 @@ bsd.rd will allow manipulation of that parition.
 
 To load the ramdisk kernel to install use the commands
 
----
-RedBoot> load -m disk hda1:/bsd.rd
-RedBoot> go
----
+    RedBoot> load -m disk hda1:/bsd.rd
+    RedBoot> go
 
 to boot normally, load the bootloader which will give options to boot other
 kernels.
 
----
-RedBoot> load -m disk hda1:/boot
-RedBoot> go
----
+    RedBoot> load -m disk hda1:/boot
+    RedBoot> go
+
