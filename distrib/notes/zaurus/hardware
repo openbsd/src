@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2008/03/09 15:32:30 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.27 2008/03/10 22:00:12 miod Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
 SL-C3200 models at the moment.
@@ -358,7 +358,7 @@ dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
 		USB keyboards
 	Pointing Devices
 		USB mice
-dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
+dnl C3000 specific. Mention it when C860 is supported but not its display.
 	On-board Display (pxalcd)
 
 	Miscellaneous Devices

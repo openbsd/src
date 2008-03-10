@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.129 2008/03/09 15:32:30 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.130 2008/03/10 22:00:12 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -37,7 +37,7 @@ dnl XXX uncomment machine entries as they become supported
 dnl 	Ultra 3 Mobile Workstation 
 dnl	Ultra 25/45 
 dnl	Netra 1280/1290 
-dnl	Sun Fite V445
+dnl	Sun Fire V445
 dnl	Sun Fire V490/V890 
 dnl	Sun Fire V1280 
 dnl	Sun Fire E2900/E4900/E6900 

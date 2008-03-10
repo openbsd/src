@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.21 2007/03/08 05:21:29 david Exp $
+dnl	$OpenBSD: prep,v 1.22 2008/03/10 22:00:12 miod Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -94,9 +94,9 @@ dnl XXX uncomment machine entries as they become supported
 	Enterprise 420R	109082
 	Enterprise 450	106122
 	Enterprise 3x00/4x00/5x00/6x00	103346
-dnl	Sun Fire 3800/4800/4810/6800	112883
-dnl	Sun Fire V480	113034
-dnl	Sun Fire V880	112186
+	Sun Fire 3800/4800/4810/6800	112883
+	Sun Fire V480	113034
+	Sun Fire V880	112186
 	Netra T1 200	111991
 	Netra X1	111952
 	Ultra 1		104881
@@ -106,7 +106,7 @@ dnl	Sun Fire V880	112186
 	Ultra 30	105930
 	Ultra 60	106455
 	Ultra 80	109082
-dnl	Ultra 450	106122
+	Ultra 450	106122
 
 Get the patch installation notes from Sun's FTP site, as
     ftp://ftp.sun.com/patchroot/all_unsigned/104169-08.README

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.22 2007/12/09 22:01:37 miod Exp $
+dnl	$OpenBSD: hardware,v 1.23 2008/03/10 22:00:12 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -63,7 +63,7 @@ Supported devices {:-include-:}:
 	- LK201 and LK401 keyboards (lkkbd)
 	- VSxxx mouse (lkms)
 
-The lowest amount of memory tested is 6MB; however, more is recommended.
+The lowest amount of memory tested is 8MB; however, more is recommended.
 
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed

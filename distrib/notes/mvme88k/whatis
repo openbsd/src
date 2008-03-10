@@ -1,5 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.6 2005/03/18 13:29:46 miod Exp $
+dnl	$OpenBSD: whatis,v 1.7 2008/03/10 22:00:12 miod Exp $
 
-dnl keep it 88100 until 197 works
-OpenBSD/MACHINE runs on the Motorola 88100 processor-based VME boards
-and systems built upon them.
+OpenBSD/MACHINE runs on the Motorola 88100 and 88110 processor-based VME
+boards and systems built upon them.
