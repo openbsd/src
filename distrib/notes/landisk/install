@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.3 2007/03/01 19:24:10 miod Exp $
+dnl	$OpenBSD: install,v 1.4 2008/03/10 21:38:28 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -8,8 +8,11 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs(,"wd0")
 
-	You will next be asked for your terminal type.  You should just
-	hit return to select the default (vt220).
+	You will next be asked for your terminal type.  If you are
+	installing from a non-serial console, the default of "vt220"
+	is correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt220.)
 
 OpenBSDInstallPart3({:-"wd0" for IDE drives-:})
 

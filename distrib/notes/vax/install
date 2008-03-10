@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2008/03/10 21:38:28 miod Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -93,10 +93,11 @@ OpenBSDInstallPart2
 OpenBSDBootMsgs(the quick brown vax jumped over the lazy pdp,"sd0" for SCSI drives,{:-"ra0" for MSCP
 	drives-:}, or "hd0" for MFM drives)
 
-	You will next be asked for your terminal type.
-	If you are installing from a serial console you should choose
-	the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100.)
+	You will next be asked for your terminal type.  If you are
+	installing from a non-serial console, the default of "vt220"
+	is correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt220.)
 
 OpenBSDInstallPart3
 

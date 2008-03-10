@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.14 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.15 2008/03/10 21:38:27 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -121,10 +121,10 @@ OpenBSDInstallPart2
 OpenBSDBootMsgs(,"sd0")
 
 	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt100"
+	installing from a non-serial console, the default of "vt220"
 	is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+	(If your terminal type is xterm, just use vt220.)
 
 OpenBSDInstallPart3
 

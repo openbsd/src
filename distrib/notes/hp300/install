@@ -1,6 +1,5 @@
-dnl	$OpenBSD: install,v 1.32 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.33 2008/03/10 21:38:27 miod Exp $
 OpenBSDInstallPrelude({:-HP-IB disks-:})
-dnl No extra line, this has to stick to the geometry notes paragraph.
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
 SCSI devices (such as Zip(tm) disk).  Note that loading from HP-IB or SCSI
@@ -93,12 +92,11 @@ OpenBSDInstallPart2
 OpenBSDBootMsgs(warn,{:-"sd0" for SCSI drives-:},{:-or "hd0" for HP-IB
 	drives-:})
 
-	You will next be asked for your terminal type.  There are only
-	a few specific terminal types supported.  If you are using a
-	graphics display, just hit return to select the default (vt220).
-	If you are using an ASCII terminal, it should either be an HP
-	or vt100 compatible terminal; nothing else is supported.  (If
-	your terminal type is xterm, just use vt100.)
+	You will next be asked for your terminal type.  If you are
+	installing from a non-serial console, the default of "vt220"
+	is correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt220.)
 	
 OpenBSDInstallPart3
 

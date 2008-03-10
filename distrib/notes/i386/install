@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.39 2007/03/01 19:24:45 miod Exp $
+dnl	$OpenBSD: install,v 1.40 2008/03/10 21:38:27 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -47,8 +47,11 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	You will next be asked for your terminal type.  You should just
-	hit return to select the default (vt220).
+	You will next be asked for your terminal type.  If you are
+	installing from a non-serial console, the default of "vt220"
+	is correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt220.)
 
 OpenBSDInstallPart3
 
