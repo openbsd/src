@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.25 2008/02/22 11:45:36 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.26 2008/03/10 21:25:53 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -207,7 +207,6 @@ void emuxki_ac97_reset(void *);
 
 const struct pci_matchid emuxki_devices[] = {
 	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE },
-	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2 },
 	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY },
 	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY2 },
 };
