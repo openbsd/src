@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2007/12/28 18:56:09 miod Exp $
+#	$OpenBSD: Makefile,v 1.21 2008/03/11 20:07:53 deraadt Exp $
 
 LIB=sa
 
@@ -20,7 +20,7 @@ SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c printf.c \
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c rarp.c bootparam.c
 
 .PATH:	${S}/lib/libkern
-SRCS+=	ashrdi3.c
+SRCS+=	ashrdi3.c muldi3.c
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
