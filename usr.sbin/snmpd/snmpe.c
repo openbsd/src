@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.17 2008/03/12 13:12:42 claudio Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.18 2008/03/12 14:11:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -486,7 +486,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 	if (ber_scanf_elements(root, "e{ieset{e",
 	    &msg->sm_header, &ver, &msg->sm_headerend, &comn,
 	    &msg->sm_pdu, &class, &type, &a) != 0)
-		goto fail;
+		goto parsefail;
 
 	/* SNMP version and community */
 	switch (ver) {
@@ -497,19 +497,19 @@ snmpe_parse(struct sockaddr_storage *ss,
 	case SNMP_V3:
 	default:
 		stats->snmp_inbadversions++;
-		log_debug("bad snmp version");
-		return (-1);
+		errstr = "bad snmp version";
+		goto fail;
 	}
 
 	/* SNMP PDU context */
 	if (class != BER_CLASS_CONTEXT)
-		goto fail;
+		goto parsefail;
 	switch (type) {
 	case SNMP_C_GETBULKREQ:
 		if (msg->sm_version == SNMP_V1) {
 			stats->snmp_inbadversions++;
-			log_debug("invalid request for protocol version 1");
-			return (-1);
+			errstr = "invalid request for protocol version 1";
+			goto fail;
 		}
 		/* FALLTHROUGH */
 	case SNMP_C_GETREQ:
@@ -521,8 +521,8 @@ snmpe_parse(struct sockaddr_storage *ss,
 		if (strcmp(env->sc_rdcommunity, comn) != 0 &&
 		    strcmp(env->sc_rwcommunity, comn) != 0) {
 			stats->snmp_inbadcommunitynames++;
-			log_debug("wrong read community");
-			return (-1);
+			errstr = "wrong read community";
+			goto fail;
 		}
 		msg->sm_context = type;
 		break;
@@ -533,35 +533,35 @@ snmpe_parse(struct sockaddr_storage *ss,
 				stats->snmp_inbadcommunitynames++;
 			else
 				stats->snmp_inbadcommunityuses++;
-			log_debug("wrong write community");
-			return (-1);
+			errstr = "wrong write community";
+			goto fail;
 		}
 		msg->sm_context = type;
 		break;
 	case SNMP_C_GETRESP:
-		errstr = "response without request";
 		stats->snmp_ingetresponses++;
-		goto fail;
+		errstr = "response without request";
+		goto parsefail;
 	case SNMP_C_TRAP:
 	case SNMP_C_TRAPV2:
 		if (strcmp(env->sc_trcommunity, comn) != 0) {
 			stats->snmp_inbadcommunitynames++;
-			log_debug("wrong trap community");
-			return (-1);
+			errstr = "wrong trap community";
+			goto fail;
 		}
-		errstr = "received trap";
 		stats->snmp_intraps++;
+		errstr = "received trap";
 		goto fail;
 	default:
 		errstr = "invalid context";
-		goto fail;
+		goto parsefail;
 	}
 
 	if (strlcpy(msg->sm_community, comn, sizeof(msg->sm_community)) >=
 	    sizeof(msg->sm_community)) {
 		stats->snmp_inbadcommunitynames++;
-		log_debug("community name too long");
-		return (-1);
+		errstr = "community name too long";
+		goto fail;
 	}
 
 	/* SNMP PDU */		    
@@ -569,22 +569,22 @@ snmpe_parse(struct sockaddr_storage *ss,
 	    &req, &errval, &erridx, &msg->sm_pduend,
 	    &msg->sm_varbind, &class, &type) != 0) {
 		stats->snmp_silentdrops++;
-		log_debug("invalid PDU");
-		return (-1);
+		errstr = "invalid PDU";
+		goto fail;
 	}
 	if (class != BER_CLASS_UNIVERSAL || type != BER_TYPE_SEQUENCE) {
 		stats->snmp_silentdrops++;
-		log_debug("invalid varbind");
-		return (-1);
+		errstr = "invalid varbind";
+		goto fail;
 	}
 
 	msg->sm_request = req;
 	msg->sm_error = errval;
 	msg->sm_errorindex = erridx;
 
+	log_host(ss, host, sizeof(host));
 	log_debug("snmpe_parse: %s: SNMPv%d '%s' context %d request %lld",
-	    log_host(ss, host, sizeof(host)),
-	    msg->sm_version + 1, msg->sm_community, msg->sm_context,
+	    host, msg->sm_version + 1, msg->sm_community, msg->sm_context,
 	    msg->sm_request);
 
 	errstr = "invalid varbind element";
@@ -688,8 +688,10 @@ snmpe_parse(struct sockaddr_storage *ss,
 		msg->sm_error = SNMP_ERROR_GENERR;
 	msg->sm_errorindex = i;
 	return (0);
- fail:
+ parsefail:
 	stats->snmp_inasnparseerrs++;
+ fail:
+	log_host(ss, host, sizeof(host));
 	log_debug("snmpe_parse: %s: %s", host, errstr);
 	return (-1);
 }
