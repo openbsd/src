@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.13 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.14 2008/03/12 11:32:17 brad Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -245,7 +245,7 @@ nsphyter_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {

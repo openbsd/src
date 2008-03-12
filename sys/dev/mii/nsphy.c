@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.21 2008/03/02 16:05:26 brad Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.22 2008/03/12 11:32:17 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ nsphy_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The PAR status bits are only valid of autonegotiation
+		 * The PAR status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {
