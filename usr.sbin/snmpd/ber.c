@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.6 2008/02/09 13:03:01 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.7 2008/03/12 13:06:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1102,6 +1102,10 @@ ber_readbuf(struct ber *b, void *buf, size_t nbytes)
 
 	sz = b->br_rend - b->br_rptr;
 	len = MIN(nbytes, sz);
+	if (len == 0) {
+		errno = ECANCELED;
+		return (-1);	/* end of buffer and parser wants more data */
+	}
 
 	bcopy(b->br_rptr, buf, len);
 	b->br_rptr += len;
