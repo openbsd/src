@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.30 2008/02/14 19:07:56 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.31 2008/03/12 20:52:36 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -71,6 +71,7 @@ void	strayintr(const struct trapframe64 *, int);
 int	softintr(void *);
 int	softnet(void *);
 int	intr_list_handler(void *);
+void	intr_ack(struct intrhand *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -185,6 +186,11 @@ intr_list_handler(arg)
 	return (claimed);
 }
 
+void
+intr_ack(struct intrhand *ih)
+{
+	*ih->ih_clr = INTCLR_IDLE;
+}
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
@@ -207,6 +213,10 @@ intr_establish(level, ih)
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
+	if (ih->ih_clr)
+		ih->ih_ack = intr_ack;
+	else
+		ih->ih_ack = NULL;
 
 	/*
 	 * Store in fast lookup table
@@ -312,6 +322,7 @@ softintr_establish(level, fun, arg)
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_pending = 0;
+	ih->ih_ack = NULL;
 	ih->ih_clr = NULL;
 	return (void *)ih;
 }

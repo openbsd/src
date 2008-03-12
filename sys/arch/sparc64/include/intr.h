@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2008/02/14 19:07:56 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2008/03/12 20:52:36 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -62,6 +62,7 @@ struct intrhand {
 	struct intrhand		*ih_pending;	/* pending list */
 	volatile u_int64_t	*ih_map;	/* interrupt map reg */
 	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
+	void			(*ih_ack)(struct intrhand *);
 	struct evcount		ih_count;	/* # of interrupts */
 	const void		*ih_bus;	/* parent bus */
 	char			ih_name[32];	/* device name */

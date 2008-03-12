@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.111 2008/02/24 19:16:08 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.112 2008/03/12 20:52:36 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3521,7 +3521,7 @@ sparc_intr_retry:
 	ldx	[%l2 + IH_PEND], %l7	! Load next pending
 	ldx	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	ldx	[%l2 + IH_ARG], %o0	! ih->ih_arg
-	ldx	[%l2 + IH_CLR], %l1	! ih->ih_clear
+	ldx	[%l2 + IH_ACK], %l1	! ih->ih_ack
 
 	stx	%g0, [%l2 + IH_PEND]	! Unlink from list
 
@@ -3534,9 +3534,11 @@ sparc_intr_retry:
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5		! Add handler return value
 	ldx	[%l2 + IH_COUNT], %o0	! ih->ih_count.ec_count++;
-	stx	%g0, [%l1]		! Clear intr source
 	inc	%o0
 	stx	%o0, [%l2 + IH_COUNT]
+
+	jmpl	%l1, %o7		! (*ih->ih_ack)(ih)
+	 mov	%l2, %o0
 0:
 	brnz,pn	%l7, 2b			! 'Nother?
 	 mov	%l7, %l2

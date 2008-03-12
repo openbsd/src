@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.26 2008/02/14 19:07:56 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.27 2008/03/12 20:52:36 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -236,10 +236,9 @@ member	ih_number
 member	ih_pil
 member	IH_PEND		ih_pending
 member	ih_next
-member	ih_map
-member	ih_clr
+member	ih_ack
 member	IH_COUNT	ih_count.ec_count
-	
+
 # mbuf fields of import
 struct	mbuf
 member	m_next
