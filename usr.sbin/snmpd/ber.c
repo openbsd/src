@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.10 2008/03/12 17:41:38 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.11 2008/03/12 17:48:27 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1166,8 +1166,6 @@ ber_getc(struct ber *b, u_char *c)
 		r = ber_readbuf(b, c, 1);
 	else
 		r = read(b->fd, c, 1);
-	if (r == -1)
-		warn("ber_getc");
 	return r;
 }
 
