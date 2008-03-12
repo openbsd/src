@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.90 2008/02/28 09:15:04 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.91 2008/03/12 20:33:13 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ audio_calcwater(struct audio_softc *sc)
 		lowat = hiwat - 1;
 	sc->sc_pr.usedhigh = hiwat * sc->sc_pr.blksize;
 	sc->sc_pr.usedlow = lowat * sc->sc_pr.blksize;
-	sc->sc_rr.usedhigh = sc->sc_rr.end - sc->sc_rr.start - sc->sc_rr.blksize;
+	sc->sc_rr.usedhigh = sc->sc_rr.end - sc->sc_rr.start;
 	sc->sc_rr.usedlow = 0;
 }
 
