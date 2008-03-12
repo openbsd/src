@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.8 2008/03/12 13:09:12 claudio Exp $ */
+/*	$OpenBSD: ber.c,v 1.9 2008/03/12 14:30:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -642,6 +642,9 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			break;
 		case '{':
 		case '(':
+			if (ber->be_encoding != BER_TYPE_SEQUENCE &&
+			    ber->be_encoding != BER_TYPE_SET)
+				goto fail;
 			if (ber->be_sub == NULL || level >= _MAX_SEQ)
 				goto fail;
 			parent[++level] = ber;
