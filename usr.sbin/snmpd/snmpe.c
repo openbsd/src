@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.16 2008/02/09 13:03:01 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.17 2008/03/12 13:12:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -572,7 +572,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 		log_debug("invalid PDU");
 		return (-1);
 	}
-	if (class != BER_CLASS_UNIVERSAL && type != BER_TYPE_SEQUENCE) {
+	if (class != BER_CLASS_UNIVERSAL || type != BER_TYPE_SEQUENCE) {
 		stats->snmp_silentdrops++;
 		log_debug("invalid varbind");
 		return (-1);
@@ -592,9 +592,9 @@ snmpe_parse(struct sockaddr_storage *ss,
 	    a != NULL && i < SNMPD_MAXVARBIND; a = next, i++) {
 		next = a->be_next;
 
-		if (a->be_class != BER_CLASS_UNIVERSAL &&
+		if (a->be_class != BER_CLASS_UNIVERSAL ||
 		    a->be_type != BER_TYPE_SEQUENCE)
-			goto varfail;
+			continue;
 		if ((b = a->be_sub) == NULL)
 			continue;
 		for (state = 0; state < 2 && b != NULL; b = b->be_next) {
