@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.7 2008/03/12 13:06:09 claudio Exp $ */
+/*	$OpenBSD: ber.c,v 1.8 2008/03/12 13:09:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -940,8 +940,7 @@ get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 }
 
 /*
- * extract length of a ber object -- if length is unknown a length of -1 is
- * returned.
+ * extract length of a ber object -- if length is unknown an error is returned.
  */
 static ssize_t
 get_len(struct ber *b, ssize_t *len)
@@ -976,8 +975,11 @@ get_len(struct ber *b, ssize_t *len)
 		return -1;
 	}
 
-	if (s == 0)
-		s = -1;
+	if (s == 0) {
+		/* invalid encoding */
+		errno = EINVAL;
+		return -1;
+	}
 
 	*len = s;
 	return r;
