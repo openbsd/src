@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.14 2008/02/20 09:37:52 brad Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.15 2008/03/12 17:27:03 canacar Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -144,6 +144,8 @@ struct pppoe_softc {
 	char *sc_concentrator_name;	/* if != NULL: requested concentrator id */
 	u_int8_t *sc_ac_cookie;		/* content of AC cookie we must echo back */
 	size_t sc_ac_cookie_len;	/* length of cookie data */
+	u_int8_t *sc_relay_sid;		/* content of relay SID we must echo back */
+	size_t sc_relay_sid_len;	/* length of relay SID data */
 #ifdef PPPOE_SERVER
 	u_int8_t *sc_hunique;		/* content of host unique we must echo back */
 	size_t sc_hunique_len;		/* length of host unique */
@@ -290,6 +292,8 @@ pppoe_clone_destroy(struct ifnet *ifp)
 		free(sc->sc_service_name, M_DEVBUF);
 	if (sc->sc_ac_cookie)
 		free(sc->sc_ac_cookie, M_DEVBUF);
+	if (sc->sc_relay_sid)
+		free(sc->sc_relay_sid, M_DEVBUF);
 
 	free(sc, M_DEVBUF);
 
@@ -395,10 +399,12 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	struct ether_header *eh;
 	const char *err_msg, *devname;
 	size_t ac_cookie_len;
+	size_t relay_sid_len;
 	int noff, err, errortag;
 	u_int16_t tag, len;
 	u_int16_t session, plen;
 	u_int8_t *ac_cookie;
+	u_int8_t *relay_sid;
 #ifdef PPPOE_SERVER
 	u_int8_t *hunique;
 	size_t hunique_len;
@@ -418,6 +424,8 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 
 	ac_cookie = NULL;
 	ac_cookie_len = 0;
+	relay_sid = NULL;
+	relay_sid_len = 0;
 #ifdef PPPOE_SERVER
 	hunique = NULL;
 	hunique_len = 0;
@@ -508,6 +516,19 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				}
 				ac_cookie = mtod(n, caddr_t) + noff;
 				ac_cookie_len = len;
+			}
+			break;
+		case PPPOE_TAG_RELAYSID:
+			if (relay_sid == NULL) {
+				n = m_pulldown(m, off + sizeof(*pt), len,
+				    &noff);
+				if (n == NULL) {
+					err_msg = "TAG RELAYSID ERROR";
+					m = NULL;
+					break;
+				}
+				relay_sid = mtod(n, caddr_t) + noff;
+				relay_sid_len = len;
 			}
 			break;
 		case PPPOE_TAG_SNAME_ERR:
@@ -648,6 +669,16 @@ breakbreak:
 			sc->sc_ac_cookie_len = ac_cookie_len;
 			memcpy(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
 		}
+		if (relay_sid) {
+			if (sc->sc_relay_sid)
+				free(sc->sc_relay_sid, M_DEVBUF);
+			sc->sc_relay_sid = malloc(relay_sid_len, M_DEVBUF,
+			    M_DONTWAIT);
+			if (sc->sc_relay_sid == NULL)
+				goto done;
+			sc->sc_relay_sid_len = relay_sid_len;
+			memcpy(sc->sc_relay_sid, relay_sid, relay_sid_len);
+		}
 		
 		memcpy(&sc->sc_dest, eh->ether_shost, sizeof(sc->sc_dest));
 		timeout_del(&sc->sc_timeout);
@@ -690,7 +721,12 @@ breakbreak:
 			free(sc->sc_ac_cookie, M_DEVBUF);
 			sc->sc_ac_cookie = NULL;
 		}
+		if (sc->sc_relay_sid) {
+			free(sc->sc_relay_sid, M_DEVBUF);
+			sc->sc_relay_sid = NULL;
+		}
 		sc->sc_ac_cookie_len = 0;
+		sc->sc_relay_sid_len = 0;
 		sc->sc_session = 0;
 		sc->sc_session_time.tv_sec = 0;
 		sc->sc_session_time.tv_usec = 0;
@@ -1190,6 +1226,11 @@ pppoe_disconnect(struct pppoe_softc *sc)
 		sc->sc_ac_cookie = NULL;
 	}
 	sc->sc_ac_cookie_len = 0;
+	if (sc->sc_relay_sid) {
+		free(sc->sc_relay_sid, M_DEVBUF);
+		sc->sc_relay_sid = NULL;
+	}
+	sc->sc_relay_sid_len = 0;
 #ifdef PPPOE_SERVER
 	if (sc->sc_hunique) {
 		free(sc->sc_hunique, M_DEVBUF);
@@ -1241,6 +1282,8 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	}
 	if (sc->sc_ac_cookie_len > 0)
 		len += 2 + 2 + sc->sc_ac_cookie_len;	/* AC cookie */
+	if (sc->sc_relay_sid_len > 0)
+		len += 2 + 2 + sc->sc_relay_sid_len;	/* Relay SID */
 
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (m0 == NULL)
@@ -1262,6 +1305,12 @@ pppoe_send_padr(struct pppoe_softc *sc)
 		PPPOE_ADD_16(p, sc->sc_ac_cookie_len);
 		memcpy(p, sc->sc_ac_cookie, sc->sc_ac_cookie_len);
 		p += sc->sc_ac_cookie_len;
+	}
+	if (sc->sc_relay_sid_len > 0) {
+		PPPOE_ADD_16(p, PPPOE_TAG_RELAYSID);
+		PPPOE_ADD_16(p, sc->sc_relay_sid_len);
+		memcpy(p, sc->sc_relay_sid, sc->sc_relay_sid_len);
+		p += sc->sc_relay_sid_len;
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sizeof(sc->sc_unique));
