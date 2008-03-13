@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.46 2007/12/30 17:37:57 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.47 2008/03/13 23:07:29 brad Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1541,7 +1541,6 @@ pgt_datarx_completion(struct pgt_softc *sc, enum pgt_queue pq)
 	}
 
 	if (top) {
-		ifp->if_ipackets++;
 		top->m_pkthdr.len = tlen;
 		top->m_pkthdr.rcvif = ifp;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.80 2007/11/26 09:28:33 martynas Exp $ */
+/*	$OpenBSD: acx.c,v 1.81 2008/03/13 23:07:28 brad Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1393,7 +1393,6 @@ acx_rxeof(struct acx_softc *sc)
 			    letoh32(head->rbh_time));
 
 			ieee80211_release_node(ic, ni);
-			ifp->if_ipackets++;
 		} else {
 			m_freem(m);
 			ifp->if_ierrors++;

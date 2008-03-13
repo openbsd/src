@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.55 2007/09/30 11:33:14 kettenis Exp $	*/
+/*	$OpenBSD: atw.c,v 1.56 2008/03/13 23:07:29 brad Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3176,7 +3176,6 @@ atw_rxintr(struct atw_softc *sc)
 			continue;
 		}
 
-		ifp->if_ipackets++;
 		if (sc->sc_opmode & ATW_NAR_PR)
 			len -= IEEE80211_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
