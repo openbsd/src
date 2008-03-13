@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.36 2007/12/05 17:28:06 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.37 2008/03/13 21:24:45 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -259,7 +259,7 @@ check_sdlim(struct sdlim_t *sdlim)
 
 	TAILQ_FOREACH(limit, &sdlim->limits, entries) {
 		if ((limit->flags & SENSORSD_L_ISTATUS) &&
-		    !(limit->flags & SENSORSD_L_USERLIMIT)) 
+		    !(limit->flags & SENSORSD_L_USERLIMIT))
 			continue;
 
 		mib[3] = limit->type;
@@ -282,7 +282,7 @@ check_sdlim(struct sdlim_t *sdlim)
 				}
 			}
 		}
-	
+
 		if (limit->flags & SENSORSD_L_USERLIMIT) {
 			enum sensorsd_s_status 	 newustatus;
 
@@ -331,7 +331,7 @@ void
 report(time_t last_report)
 {
 	struct sdlim_t	*sdlim;
- 
+
 	TAILQ_FOREACH(sdlim, &sdlims, entries)
 		report_sdlim(sdlim, last_report);
 }
@@ -433,6 +433,29 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 				case 'n':
 					r = snprintf(&buf[n], len - n, "%d",
 					    limit->numt);
+					break;
+				case 's':
+				{
+					char *s;
+					switch(limit->astatus){
+					case SENSOR_S_UNSPEC:
+						s = "UNSPEC";
+						break;
+					case SENSOR_S_OK:
+						s = "OK";
+						break;
+					case SENSOR_S_WARN:
+						s = "WARNING";
+						break;
+					case SENSOR_S_CRIT:
+						s = "CRITICAL";
+						break;
+					default:
+						s = "UNKNOWN";
+					}
+					r = snprintf(&buf[n], len - n, "%s",
+					    s);
+				}
 					break;
 				case '2':
 					r = snprintf(&buf[n], len - n, "%s",
@@ -556,7 +579,7 @@ parse_config_sdlim(struct sdlim_t *sdlim, char **cfa)
 	char		  node[48];
 
 	TAILQ_FOREACH(p, &sdlim->limits, entries) {
-		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d", 
+		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d",
 		    sdlim->dxname, sensor_type_s[p->type], p->numt);
 		p->flags = 0;
 		if (cgetent(&buf, cfa, node) != 0)
