@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.79 2008/03/08 22:53:02 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.80 2008/03/13 23:03:02 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -61,6 +61,7 @@
 #include <net/if.h>
 
 #include <dev/cons.h>
+#include <dev/clock_subr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -842,6 +843,14 @@ extern bus_space_tag_t mainbus_space_tag;
 	bzero(&ma, sizeof ma);
 	ma.ma_name = "pcons";
 	config_found(dev, &ma, mbprint);
+
+	extern todr_chip_handle_t todr_handle;
+
+	if (todr_handle == NULL) {
+		bzero(&ma, sizeof ma);
+		ma.ma_name = "prtc";
+		config_found(dev, &ma, mbprint);
+	}
 }
 
 struct cfattach mainbus_ca = {
