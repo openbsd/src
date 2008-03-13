@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.39 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.40 2008/03/13 08:32:02 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -170,6 +170,8 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	const usb_descriptor_t		*desc;
 	usbd_desc_iter_t		 iter;
 	usb_string_descriptor_t		 eaddr_str;
+	struct timeval			 now;
+	u_int32_t			 macaddr_lo;
 	u_int16_t			 macaddr_hi;
 	int				 i, j, numalts, len;
 	int				 ctl_ifcno = -1;
@@ -319,7 +321,9 @@ found:
 		macaddr_hi = htons(0x2acb);
 		bcopy(&macaddr_hi, &sc->cdce_arpcom.ac_enaddr[0],
 		    sizeof(u_int16_t));
-		bcopy(&ticks, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
+		getmicrotime(&now);
+		macaddr_lo = htonl(now.tv_usec);
+		bcopy(&macaddr_lo, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
 		sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_unit);
 	} else {
 		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
