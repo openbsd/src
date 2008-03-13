@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.25 2008/02/20 09:44:47 robert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.26 2008/03/13 23:29:46 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -793,17 +793,17 @@ db_proc_cmd(addr, have_addr, count, modif)
 	}
 	db_printf("process %p:", p);
 	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p pri:%d upri:%d\n",
-		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
-		  p->p_vmspace->vm_map.pmap->pm_ctx,
-		  p->p_wchan, p->p_priority, p->p_usrpri);
+	    p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
+	    p->p_vmspace->vm_map.pmap->pm_ctx,
+	    p->p_wchan, p->p_priority, p->p_usrpri);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
-		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
-		  (unsigned long long)ptoa(p->p_vmspace->vm_ssize));
+	    p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
+	    (unsigned long long)ptoa(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
-		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
-		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
-	db_printf("pcb: %p fpstate: %p\n", &p->p_addr->u_pcb, 
-		p->p_md.md_fpstate);
+	    p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
+	    p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+	db_printf("pcb: %p tf: %p fpstate: %p\n", &p->p_addr->u_pcb, 
+	    p->p_md.md_tf, p->p_md.md_fpstate);
 	return;
 }
 
@@ -853,7 +853,7 @@ db_dump_pcb(addr, have_addr, count, modif)
 	
 	for (i=0; i<pcb->pcb_nsaved; i++) {
 		db_printf("win %d: at %llx local, in\n", i, 
-			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
+			  (unsigned long long)pcb->pcb_rwsp[i]);
 		db_printf("%16llx %16llx %16llx %16llx\n",
 			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
 			  (unsigned long long)pcb->pcb_rw[i].rw_local[1],
