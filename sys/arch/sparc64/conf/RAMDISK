@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.67 2008/02/02 10:16:41 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.68 2008/03/13 23:06:19 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -243,6 +243,9 @@ sbus*		at xbox?
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console
 wsdisplay* at pcons?
+
+## PROM clock -- if all else failse
+prtc0	at mainbus0
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback
