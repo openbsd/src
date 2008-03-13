@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.36 2006/09/19 13:04:01 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.37 2008/03/13 01:49:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -156,7 +156,10 @@ msgbuf_write(struct msgbuf *msgbuf)
 	ssize_t		 n;
 	struct msghdr	 msg;
 	struct cmsghdr	*cmsg;
-	char		 cmsgbuf[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char	buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
@@ -174,8 +177,8 @@ msgbuf_write(struct msgbuf *msgbuf)
 	msg.msg_iovlen = i;
 
 	if (buf != NULL && buf->fd != -1) {
-		msg.msg_control = (caddr_t)cmsgbuf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_control = (caddr_t)&cmsgbuf.buf;
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;

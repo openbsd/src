@@ -1,4 +1,4 @@
-/*	$OpenBSD: activate.c,v 1.6 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: activate.c,v 1.7 2008/03/13 01:49:52 deraadt Exp $	*/
 /*	$NetBSD: activate.c,v 1.5 1995/04/23 10:33:18 cgd Exp $	*/
 
 /*
@@ -103,10 +103,11 @@ send_reply(int so, int fd, int error)
 	int n;
 	struct iovec iov;
 	struct msghdr msg;
+	struct cmsghdr *cmsg;
 	struct {
 		struct cmsghdr cmsg;
-		int fd;
-	} ctl;
+		u_char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	/*
 	 * Line up error code.  Don't worry about byte ordering
@@ -127,12 +128,13 @@ send_reply(int so, int fd, int error)
 	 * construct a suitable rights control message.
 	 */
 	if (fd >= 0) {
-		ctl.fd = fd;
-		ctl.cmsg.cmsg_len = sizeof(ctl);
-		ctl.cmsg.cmsg_level = SOL_SOCKET;
-		ctl.cmsg.cmsg_type = SCM_RIGHTS;
-		msg.msg_control = (caddr_t)&ctl;
-		msg.msg_controllen = ctl.cmsg.cmsg_len;
+		msg.msg_control = (caddr_t)&cmsgbuf.buf;
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = fd;
 	}
 
 	/*

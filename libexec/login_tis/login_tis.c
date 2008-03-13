@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.6 2007/07/26 17:48:41 millert Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.7 2008/03/13 01:49:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -289,11 +289,14 @@ send_fd(struct tis_connection *tc, int sock)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmp;
-	char cmsgbuf[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	memset(&msg, 0, sizeof(msg));
-	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	cmp = CMSG_FIRSTHDR(&msg);
 	cmp->cmsg_len = CMSG_LEN(sizeof(int));

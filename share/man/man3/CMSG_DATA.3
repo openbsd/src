@@ -1,7 +1,7 @@
-.\"	$OpenBSD: CMSG_DATA.3,v 1.2 2007/05/31 19:19:48 jmc Exp $
+.\"	$OpenBSD: CMSG_DATA.3,v 1.3 2008/03/13 01:49:53 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 13 2008 $
 .Dt CMSG_DATA 3
 .Os
 .Sh NAME
@@ -61,6 +61,8 @@ This routine determines the size in bytes of a control message,
 which includes the control message header.
 .Fa len
 specifies the length of the data held by the control message.
+This value is what is normally stored in
+.Fa cmsg_len .
 This routine accounts for any alignment constraints on the beginning of
 ancillary data.
 .It Fn CMSG_NXTHDR mhdr cmsg
@@ -77,6 +79,8 @@ This routine determines the size in bytes needed to hold a control
 message and its contents of length
 .Fa len ,
 which includes the control message header.
+This value is what is normally stored in
+.Fa msg_msgcontrollen .
 This routine accounts for any alignment constraints on the beginning of
 ancillary data as well as any needed to pad the next control message.
 .El
@@ -86,11 +90,14 @@ descriptor and passes it over a socket:
 .Bd -literal -offset indent
 struct msghdr	 msg;
 struct cmsghdr	*cmsg;
-unsigned char	 buf[CMSG_SPACE(sizeof(int))];
+union {
+	struct cmsghdr hdr;
+	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
+} cmsgbuf;
 
 memset(&msg, 0, sizeof(msg));
-msg.msg_control = buf;
-msg.msg_controllen = CMSG_LEN(sizeof(int));
+msg.msg_control = &cmsgbuf.buf;
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 cmsg = CMSG_FIRSTHDR(&msg);
 cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -106,11 +113,14 @@ And an example that receives and decomposes the control message:
 .Bd -literal -offset indent
 struct msghdr	 msg;
 struct cmsghdr	*cmsg;
-unsigned char	 buf[CMSG_SPACE(sizeof(int))];
+union {
+	struct cmsghdr hdr;
+	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
+} cmsgbuf;
 
 memset(&msg, 0, sizeof(msg));
-msg.msg_control = buf;
-msg.msg_controllen = sizeof(buf);
+msg.msg_control = &cmsgbuf.buf;
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");

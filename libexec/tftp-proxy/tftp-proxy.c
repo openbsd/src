@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.2 2006/12/20 03:33:38 joel Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.3 2008/03/13 01:49:52 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -75,8 +75,10 @@ main(int argc, char *argv[])
 	char *p;
 	struct tftphdr *tp;
 	struct passwd *pw;
-
-	char cbuf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	} cmsgbuf;
 	char req[PKTSIZE];
 	struct cmsghdr *cmsg;
 	struct msghdr msg;
@@ -161,8 +163,8 @@ main(int argc, char *argv[])
 	msg.msg_namelen = sizeof(from);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = cbuf;
-	msg.msg_controllen = CMSG_LEN(sizeof(struct sockaddr_storage));
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	if (recvmsg(fd, &msg, 0) < 0) {
 		syslog(LOG_ERR, "recvmsg: %m");

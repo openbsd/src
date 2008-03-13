@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.32 2007/11/01 00:55:20 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.33 2008/03/13 01:49:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -988,11 +988,14 @@ _recv_fd(auth_session_t *as, int fd)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmp;
-	char cmsgbuf[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	memset(&msg, 0, sizeof(msg));
-	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = sizeof(cmsgbuf);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 	if (recvmsg(fd, &msg, 0) < 0)
 		syslog(LOG_ERR, "recvmsg: %m");
 	else if (msg.msg_flags & MSG_TRUNC)

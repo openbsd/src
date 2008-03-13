@@ -173,7 +173,8 @@ update_client_creds(int s, kcm_client *peer)
 	}	
 	
 	cmp = CMSG_FIRSTHDR(&msg);
-	if (cmp->cmsg_level != SOL_SOCKET || cmp->cmsg_type != SCM_CREDS) {
+	if (cmp->cmsg_level != SOL_SOCKET || cmp->cmsg_type != SCM_CREDS ||
+	    cmp->cmsg_len != CMSG_LEN(sizeof(struct sockcred))) {
 	    free(crmsg);
 	    goto failed_scm_creds;
 	}	

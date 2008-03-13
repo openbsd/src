@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.12 2004/08/30 18:13:14 millert Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.13 2008/03/13 01:49:53 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -74,7 +74,10 @@ main(int argc, char *argv[])
 	struct sockaddr_un sun, csun;
 	int csunlen;
 	pid_t pid;
-	char message[CMSG_SPACE(sizeof(int) * 2)];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int) * 2)];
+	} cmsgbuf;
 	int pflag;
 	extern char *__progname;
 
@@ -169,8 +172,8 @@ main(int argc, char *argv[])
 	 * Grab the descriptors passed to us.
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = message;
-	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	if (recvmsg(sock, &msg, 0) < 0)
 		err(1, "recvmsg");
@@ -243,7 +246,10 @@ child(int sock)
 	struct cmsghdr *cmp;
 	int i, fd;
 	struct sockaddr_un sun;
-	char cmsgbuf[CMSG_SPACE(sizeof(int) * 2)];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int) * 2)];
+	} cmsgbuf;
 	int *files;
 
 	/*
@@ -263,8 +269,8 @@ child(int sock)
 	}
 
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	cmp = CMSG_FIRSTHDR(&msg);
 	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);

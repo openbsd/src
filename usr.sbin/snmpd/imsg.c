@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.2 2008/01/18 02:09:30 reyk Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.3 2008/03/13 01:49:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,10 @@ imsg_read(struct imsgbuf *ibuf)
 {
 	struct msghdr		 msg;
 	struct cmsghdr		*cmsg;
-	char			 cmsgbuf[CMSG_SPACE(sizeof(int) * 16)];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int) * 16)];
+	} cmsgbuf;
 	struct iovec		 iov;
 	ssize_t			 n;
 	int			 fd;
@@ -64,8 +67,8 @@ imsg_read(struct imsgbuf *ibuf)
 	iov.iov_len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = sizeof(cmsgbuf);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	if ((n = recvmsg(ibuf->fd, &msg, 0)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {

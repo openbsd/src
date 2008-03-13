@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.59 2007/11/29 11:38:46 jmc Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.60 2008/03/13 01:49:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.59 2007/11/29 11:38:46 jmc Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.60 2008/03/13 01:49:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -167,7 +167,10 @@ main(int argc, char *argv[])
 	int		 n = 0, on = 1, fd = 0, i, c, dobind = 1;
 	struct tftphdr	*tp;
 	struct passwd	*pw;
-	char		 cbuf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	union {
+		struct cmsghdr hdr;
+		char	buf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	} cmsgbuf;
 	struct cmsghdr	*cmsg;
 	struct msghdr	 msg;
 	struct iovec	 iov;
@@ -282,8 +285,8 @@ main(int argc, char *argv[])
 	msg.msg_namelen = sizeof(from);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = cbuf;
-	msg.msg_controllen = CMSG_LEN(sizeof(struct sockaddr_storage));
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	n = recvmsg(fd, &msg, 0);
 	if (n < 0) {
@@ -326,9 +329,8 @@ main(int argc, char *argv[])
 			msg.msg_namelen = sizeof(from);
 			msg.msg_iov = &iov;
 			msg.msg_iovlen = 1;
-			msg.msg_control = cbuf;
-			msg.msg_controllen =
-			    CMSG_LEN(sizeof(struct sockaddr_storage));
+			msg.msg_control = &cmsgbuf.buf;
+			msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 			i = recvmsg(fd, &msg, 0);
 			if (i > 0)

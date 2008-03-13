@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.71 2005/09/21 15:04:28 brad Exp $
+ *	$OpenBSD: bundle.c,v 1.72 2008/03/13 01:49:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1376,7 +1376,10 @@ bundle_LinkSize()
 void
 bundle_ReceiveDatalink(struct bundle *bundle, int s)
 {
-  char cmsgbuf[sizeof(struct cmsghdr) + sizeof(int) * SEND_MAXFD];
+  union {
+    struct cmsghdr hdr;
+    char buf[sizeof(struct cmsghdr) + sizeof(int) * SEND_MAXFD];
+  } cmsgbuf;
   int niov, expect, f, *fd, nfd, onfd, got;
   struct iovec iov[SCATTER_SEGMENTS];
   struct cmsghdr *cmsg;
@@ -1409,19 +1412,17 @@ bundle_ReceiveDatalink(struct bundle *bundle, int s)
       expect += iov[f].iov_len;
   }
 
-  /* Set up our message */
-  cmsg = (struct cmsghdr *)cmsgbuf;
-  cmsg->cmsg_len = sizeof cmsgbuf;
-  cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = 0;
-
   memset(&msg, '\0', sizeof msg);
   msg.msg_name = NULL;
   msg.msg_namelen = 0;
   msg.msg_iov = iov;
   msg.msg_iovlen = 1;		/* Only send the version at the first pass */
-  msg.msg_control = cmsgbuf;
-  msg.msg_controllen = sizeof cmsgbuf;
+  msg.msg_control = cmsgbuf.buf;
+  msg.msg_controllen = sizeof cmsgbuf.buf;
+  cmsg = CMSG_FIRSTHDR(&msg);
+  cmsg->cmsg_len = sizeof cmsgbuf.buf;
+  cmsg->cmsg_level = SOL_SOCKET;
+  cmsg->cmsg_type = 0;
 
   log_Printf(LogDEBUG, "Expecting %u scatter/gather bytes\n",
              (unsigned)iov[0].iov_len);
@@ -1537,7 +1538,10 @@ bundle_ReceiveDatalink(struct bundle *bundle, int s)
 void
 bundle_SendDatalink(struct datalink *dl, int s, struct sockaddr_un *sun)
 {
-  char cmsgbuf[CMSG_SPACE(sizeof(int) * SEND_MAXFD)];
+  union {
+    struct cmsghdr hdr;
+    char buf[CMSG_SPACE(sizeof(int) * SEND_MAXFD)];
+  } cmsgbuf;
   const char *constlock;
   char *lock;
   struct cmsghdr *cmsg;
@@ -1586,11 +1590,10 @@ bundle_SendDatalink(struct datalink *dl, int s, struct sockaddr_un *sun)
      */
     msg.msg_iovlen = 1;
     msg.msg_iov = iov;
-    msg.msg_control = cmsgbuf;
+    msg.msg_control = &cmsgbuf.buf;
     msg.msg_controllen = CMSG_SPACE(sizeof(int) * nfd);
     msg.msg_flags = 0;
-
-    cmsg = (struct cmsghdr *)cmsgbuf;
+    cmsg = CMSG_FIRSTHDR(&msg);
     cmsg->cmsg_len = msg.msg_controllen;
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.1 2004/11/28 18:49:30 henning Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.2 2008/03/13 01:49:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthieu Herrb
@@ -31,7 +31,10 @@ void
 send_fd(int sock, int fd)
 {
 	struct msghdr msg;
-	char tmp[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	int result = 0;
@@ -40,8 +43,8 @@ send_fd(int sock, int fd)
 	memset(&msg, 0, sizeof(msg));
 
 	if (fd >= 0) {
-		msg.msg_control = (caddr_t)tmp;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_control = (caddr_t)&cmsgbuf.buf;
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;
@@ -66,7 +69,10 @@ int
 recv_fd(int sock)
 {
 	struct msghdr msg;
-	char tmp[CMSG_SPACE(sizeof(int))];
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	ssize_t n;
@@ -78,8 +84,8 @@ recv_fd(int sock)
 	vec.iov_len = sizeof(int);
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
-	msg.msg_control = tmp;
-	msg.msg_controllen = sizeof(tmp);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	if ((n = recvmsg(sock, &msg, 0)) == -1)
 		syslog(LOG_WARNING, "recv_fd: recvmsg(%d): %m", sock);
