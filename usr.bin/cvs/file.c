@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.235 2008/03/09 18:02:17 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.236 2008/03/13 17:06:09 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -687,6 +687,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	case CVS_OP_COMMIT:
 		rflags = RCS_WRITE;
 		break;
+	case CVS_OP_ADMIN:
 	case CVS_OP_IMPORT:
 	case CVS_OP_LOG:
 	case CVS_OP_RLOG:
