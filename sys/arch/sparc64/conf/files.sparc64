@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.101 2008/03/09 20:52:55 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.102 2008/03/13 22:46:58 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -59,6 +59,10 @@ include	"dev/wsfont/files.wsfont"
 device	pcons: wsemuldisplaydev
 attach	pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
+
+device	prtc
+attach	prtc at mainbus
+file	arch/sparc64/dev/prtc.c			prtc
 
 include	"dev/sbus/files.sbus"
 include	"dev/i2o/files.i2o"
