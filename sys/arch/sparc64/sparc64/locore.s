@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.112 2008/03/12 20:52:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.113 2008/03/13 20:37:46 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3980,10 +3980,7 @@ dostart:
 	 * Ready to run C code; finish bootstrap.
 	 */
 1:	
-	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	set	0x2000,%o0			! fixed: 8192 contexts
-	stxa	%g0, [%o1] ASI_DMMU
-	membar	#Sync
+	set	0x2000, %o0			! fixed: 8192 contexts
 	call	_C_LABEL(bootstrap)
 	 clr	%g4				! Clear data segment pointer
 
