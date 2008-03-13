@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.27 2007/05/27 21:14:41 thib Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.28 2008/03/13 16:16:42 thib Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.27 2007/05/27 21:14:41 thib Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.28 2008/03/13 16:16:42 thib Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,8 @@ main(int argc, char *argv[])
 	const char *errstr = NULL;
 	socklen_t len;
 
+	if (argc == 1)
+		udpflag = 1;
 	while ((ch = getopt(argc, argv, "n:rtu")) != -1)
 		switch (ch) {
 		case 'n':
