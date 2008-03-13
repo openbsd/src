@@ -10,8 +10,10 @@ MAXPAGESIZE=0x1000
 ENTRY="__start"
 MACHINE=hppa1.1    # We use 1.1 specific features.
 OTHER_READONLY_SECTIONS=".PARISC.unwind ${RELOCATING-0} : { *(.PARISC.unwind) }"
-DATA_START_SYMBOLS='PROVIDE ($global$ = .);'
 DATA_NONEXEC_PLT=
 GENERATE_SHLIB_SCRIPT=yes
 
 . ${srcdir}/emulparams/elf_obsd.sh
+
+#override elf_obsd.sh
+DATA_START_SYMBOLS='PROVIDE ($global$ = .); __data_start = . ;'
