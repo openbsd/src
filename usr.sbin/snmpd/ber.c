@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.11 2008/03/12 17:48:27 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.12 2008/03/14 15:22:22 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -227,6 +227,28 @@ ber_add_string(struct ber_element *prev, char *string)
 
 	elm->be_val = string;
 	elm->be_len = strlen(string);	/* terminating '\0' not included */
+
+	ber_link_elements(prev, elm);
+
+	return elm;
+}
+
+struct ber_element *
+ber_add_astring(struct ber_element *prev, const char *string)
+{
+	struct ber_element *elm;
+	char *str;
+
+	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL)
+		return NULL;
+	if ((str = strdup(string)) == NULL) {
+		ber_free_elements(elm);
+		return NULL;
+	}
+
+	elm->be_val = str;
+	elm->be_len = strlen(str);	/* terminating '\0' not included */
+	elm->be_free = 1;		/* free string on cleanup */
 
 	ber_link_elements(prev, elm);
 
