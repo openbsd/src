@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.21 2008/03/14 00:06:18 ckuethe Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.22 2008/03/14 15:23:49 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -91,23 +91,23 @@ The command is executed when there is any change in sensor state.
 Tokens in the command are substituted as follows:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It %x
-the xname of the device the sensor sits on
-.It %t
-the type of sensor
-.It %n
-the sensor number
-.It %s
-the sensor status
 .It %l
-whether the value exceeds or is within the user specified limits.
-Can be one of: "exceeds", "within", "invalid" or "uninitialised".
+Whether the value exceeds or is within the user specified limits.
+Can be one of: "exceeds", "within", "invalid", or "uninitialised".
+.It %n
+The sensor number.
+.It %s
+The sensor status.
+.It %x
+The xname of the device the sensor sits on.
+.It %t
+The type of sensor.
 .It %2
-the sensor's current value
+The sensor's current value.
 .It %3
-the sensor's low limit
+The sensor's low limit.
 .It %4
-the sensor's high limit
+The sensor's high limit.
 .El
 .Pp
 By default,
@@ -160,7 +160,6 @@ timedelta:istatus	#ignore status changes for timedelta
 .Sh SEE ALSO
 .Xr getcap 3 ,
 .Xr bio 4 ,
-.Xr esm 4 ,
 .Xr ipmi 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
