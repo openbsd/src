@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.26 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: ip.4,v 1.27 2008/03/14 15:16:06 jmc Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 14 2008 $
 .Dt IP 4
 .Os
 .Sh NAME
@@ -310,7 +310,7 @@ programs running on multihomed hosts may need to
 join the same group on more than one interface.
 Up to
 .Dv IP_MAX_MEMBERSHIPS
-(currently 20) memberships may be added on a
+(currently 4095) memberships may be added on a
 single socket.
 .Pp
 To drop a membership, use:
