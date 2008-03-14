@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.80 2008/03/13 23:03:02 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.81 2008/03/14 17:04:48 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -839,10 +839,15 @@ extern bus_space_tag_t mainbus_space_tag;
 		if (ma.ma_naddress)
 			free(ma.ma_address, M_DEVBUF);
 	}
-	/* Try to attach PROM console */
-	bzero(&ma, sizeof ma);
-	ma.ma_name = "pcons";
-	config_found(dev, &ma, mbprint);
+
+	extern int prom_cngetc(dev_t);
+
+	/* Attach PROM console if no other console attached. */
+	if (cn_tab->cn_getc == prom_cngetc) {
+		bzero(&ma, sizeof ma);
+		ma.ma_name = "pcons";
+		config_found(dev, &ma, mbprint);
+	}
 
 	extern todr_chip_handle_t todr_handle;
 
