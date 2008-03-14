@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.145 2008/02/11 07:58:28 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.146 2008/03/14 19:19:57 sobrado Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: February 11 2008 $
+.Dd $Mdocdate: March 14 2008 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -38,14 +38,13 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
+.Op Fl Aan
+.Nm sysctl
 .Op Fl n
 .Ar name ...
 .Nm sysctl
 .Op Fl nq
 .Ar name Ns = Ns Ar value ...
-.Nm sysctl
-.Op Fl n
-.Fl Aa
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,6 +74,8 @@ Those with string or integer values will be printed as with the
 flag; for the table values, the name of the utility to retrieve them is given.
 .It Fl a
 List all the currently available string or integer values.
+This is the default, if no parameters are given to
+.Nm .
 .It Fl n
 Suppress printing of the field name, only output the field value.
 Useful for setting shell variables.
