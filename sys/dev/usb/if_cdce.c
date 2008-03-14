@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.40 2008/03/13 08:32:02 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.41 2008/03/14 21:54:23 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -322,7 +322,7 @@ found:
 		bcopy(&macaddr_hi, &sc->cdce_arpcom.ac_enaddr[0],
 		    sizeof(u_int16_t));
 		getmicrotime(&now);
-		macaddr_lo = htonl(now.tv_usec);
+		macaddr_lo = htonl(now.tv_usec << 8);
 		bcopy(&macaddr_lo, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
 		sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_unit);
 	} else {
