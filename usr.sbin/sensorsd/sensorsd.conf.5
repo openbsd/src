@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.20 2008/03/13 21:29:51 ckuethe Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.21 2008/03/14 00:06:18 ckuethe Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2008 $
+.Dd $Mdocdate: March 14 2008 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -99,6 +99,9 @@ the type of sensor
 the sensor number
 .It %s
 the sensor status
+.It %l
+whether the value exceeds or is within the user specified limits.
+Can be one of: "exceeds", "within", "invalid" or "uninitialised".
 .It %2
 the sensor's current value
 .It %3

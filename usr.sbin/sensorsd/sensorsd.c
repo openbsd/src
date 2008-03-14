@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.37 2008/03/13 21:24:45 ckuethe Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.38 2008/03/14 00:06:18 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -434,6 +434,27 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 					r = snprintf(&buf[n], len - n, "%d",
 					    limit->numt);
 					break;
+				case 'l':
+				{
+					char *s = "";
+					switch(limit->ustatus){
+					case SENSORSD_S_UNSPEC:
+						s = "uninitialised";
+						break;
+					case SENSORSD_S_INVALID:
+						s = "invalid";
+						break;
+					case SENSORSD_S_WITHIN:
+						s = "within";
+						break;
+					case SENSORSD_S_OUTSIDE:
+						s = "exceeds";
+						break;
+					}
+					r = snprintf(&buf[n], len - n, "%s",
+					    s);
+					break;
+				}
 				case 's':
 				{
 					char *s;
@@ -455,8 +476,8 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 					}
 					r = snprintf(&buf[n], len - n, "%s",
 					    s);
-				}
 					break;
+				}
 				case '2':
 					r = snprintf(&buf[n], len - n, "%s",
 					    print_sensor(limit->type,
