@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.71 2008/03/13 01:49:53 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.72 2008/03/15 16:10:11 kettenis Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ main(int argc, char *argv[])
 	int ch, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
-	int ip6optlen = 0;
+	int ip6optlen = 0, ip6optspace = 0;
 	struct cmsghdr *scmsgp = NULL;
 #if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 	u_long lsockbufsize;
@@ -493,13 +493,13 @@ main(int argc, char *argv[])
 	}
 
 	if (argc > 1) {
-		rthlen = CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0,
-		    argc - 1));
+		rthlen = inet6_rth_space(IPV6_RTHDR_TYPE_0, argc - 1);
 		if (rthlen == 0) {
 			errx(1, "too many intermediate hops");
 			/*NOTREACHED*/
 		}
-		ip6optlen += rthlen;
+		ip6optlen = ip6optspace + CMSG_LEN(rthlen);
+		ip6optspace += CMSG_SPACE(rthlen);
 	}
 
 	if (options & F_NIGROUP) {
@@ -680,20 +680,26 @@ main(int argc, char *argv[])
 */
 
 	/* Specify the outgoing interface and/or the source address */
-	if (usepktinfo)
-		ip6optlen += CMSG_SPACE(sizeof(struct in6_pktinfo));
+	if (usepktinfo) {
+		ip6optlen = ip6optspace + CMSG_LEN(sizeof(struct in6_pktinfo));
+		ip6optspace += CMSG_SPACE(sizeof(struct in6_pktinfo));
+	}
 
-	if (hoplimit != -1)
-		ip6optlen += CMSG_SPACE(sizeof(int));
+	if (hoplimit != -1) {
+		ip6optlen = ip6optspace + CMSG_LEN(sizeof(int));
+		ip6optspace += CMSG_SPACE(sizeof(int));
+	}
 
 #ifdef IPV6_REACHCONF
-	if (options & F_REACHCONF)
-		ip6optlen += CMSG_SPACE(0);
+	if (options & F_REACHCONF) {
+		ip6optlen = ip6optspace + CMSG_LEN(0);
+		ip6optspace += CMSG_SPACE(0);
+	}
 #endif
 
 	/* set IP6 packet options */
 	if (ip6optlen) {
-		if ((scmsg = malloc(ip6optlen)) == 0)
+		if ((scmsg = malloc(ip6optspace)) == 0)
 			errx(1, "can't allocate enough memory");
 		smsghdr.msg_control = (caddr_t)scmsg;
 		smsghdr.msg_controllen = ip6optlen;
@@ -875,7 +881,7 @@ main(int argc, char *argv[])
 		struct msghdr m;
 		union {
 			struct cmsghdr hdr;
-			u_char buf[sizeof(struct in6_pktinfo)];
+			u_char buf[CMSG_SPACE(1024)];
 		} cmsgbuf;
 		struct iovec iov[2];
 
@@ -923,7 +929,7 @@ main(int argc, char *argv[])
 		m.msg_iov = iov;
 		m.msg_iovlen = 1;
 		m.msg_control = (caddr_t)&cmsgbuf.buf;
-		m.msg_controllen = sizeof(cmsgbuf.buf);
+		m.msg_controllen = CMSG_LEN(1024);
 
 		cc = recvmsg(s, &m, 0);
 		if (cc < 0) {
