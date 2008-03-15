@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: memset.c,v 1.6 2008/03/15 21:40:39 ray Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,12 +36,11 @@
 void *
 memset(void *dst, int c, size_t n)
 {
-
 	if (n != 0) {
-		char *d = dst;
+		unsigned char *d = dst;
 
 		do
-			*d++ = c;
+			*d++ = (unsigned char)c;
 		while (--n != 0);
 	}
 	return (dst);
