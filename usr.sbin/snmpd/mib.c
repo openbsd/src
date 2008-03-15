@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.21 2008/03/15 00:56:08 dlg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.22 2008/03/15 23:50:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -61,6 +61,8 @@ int	 mib_setsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid mib_tree[] = MIB_TREE;
 static struct ber_oid zerodotzero = { { 0, 0 }, 2 };
+
+#define sizeofa(_a) (sizeof(_a) / sizeof((_a)[0]))
 
 /* base MIB tree */
 static struct oid base_mib[] = {
@@ -346,11 +348,10 @@ mib_hrmemory(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct ber_element	*ber = *elm;
 	int			 mib[] = { CTL_HW, HW_PHYSMEM64 };
-	size_t			 miblen = sizeof(mib) / sizeof(mib[0]);
 	u_int64_t		 physmem;
 	size_t			 len = sizeof(physmem);
 
-	if (sysctl(mib, miblen, &physmem, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeof(mib), &physmem, &len, NULL, 0) == -1)
 		return (-1);
 
 	ber = ber_add_integer(ber, physmem / 1024);
@@ -636,8 +637,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		mib[3] = IPCTL_IFQUEUE;
 		mib[4] = IFQCTL_DROPS;
 		len = sizeof(ifq);
-		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-		    &ifq, &len, 0, 0) == -1) {
+		if (sysctl(mib, sizeofa(mib), &ifq, &len, 0, 0) == -1) {
 			log_info("mib_iftable: %s: invalid ifq: %s",
 			    kif->if_name, strerror(errno));
 			return (-1);
@@ -653,8 +653,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		mib[3] = IPCTL_IFQUEUE;
 		mib[4] = IFQCTL_LEN;
 		len = sizeof(ifq);
-		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-		    &ifq, &len, 0, 0) == -1) {
+		if (sysctl(mib, sizeofa(mib), &ifq, &len, 0, 0) == -1) {
 			log_info("mib_iftable: %s: invalid ifq: %s",
 			    kif->if_name, strerror(errno));
 			return (-1);
@@ -871,13 +870,11 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	struct sensordev	 sensordev;
 	size_t			 len = sizeof(sensordev);
 	int			 mib[] = { CTL_HW, HW_SENSORS, 0 };
-	size_t			 miblen = sizeof(mib) / sizeof(mib[0]);
 	int			 i, c;
 
 	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, miblen,
-		    &sensordev, &len, NULL, 0) == -1) {
+		if (sysctl(mib, sizeof(mib), &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return (-1);
 			continue;
@@ -907,8 +904,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, 3,
-		    &sensordev, &len, NULL, 0) == -1) {
+		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return (-1);
 			continue;
@@ -1105,8 +1101,7 @@ mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	int	v;
 	size_t	len = sizeof(v);
 
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &v, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeofa(mib), &v, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, v);
@@ -1121,8 +1116,7 @@ mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	int	v;
 	size_t	len = sizeof(v);
 
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &v, &len, NULL, 0) == -1)
+	if (sysctl(mib, sizeofa(mib), &v, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, v);
@@ -1136,8 +1130,7 @@ mib_getipstat(struct ipstat *ipstat)
 	int	 mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
 	size_t	 len = sizeof(*ipstat);
 
-	return (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    ipstat, &len, NULL, 0));
+	return (sysctl(mib, sizeofa(mib), ipstat, &len, NULL, 0));
 }
 
 int
