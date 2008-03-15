@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_id.c,v 1.19 2008/03/15 04:36:31 djm Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.20 2008/03/15 04:52:23 djm Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
@@ -59,7 +59,7 @@ ip_randomid(void)
 		 * doing this until the first packet being sent and now must
 		 * generate an ID.
 		 */
-		for (i = 0; i < sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); ++i) {
+		for (i = 0; i < sizeof(ip_shuffle)/sizeof(*ip_shuffle)-1; ++i) {
 			i2 = arc4random_uniform(i + 1);
 			ip_shuffle[i] = ip_shuffle[i2];
 			ip_shuffle[i2] = i;
