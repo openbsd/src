@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tvtwo.4,v 1.6 2008/03/15 15:16:41 miod Exp $
+.\"	$OpenBSD: tvtwo.4,v 1.7 2008/03/15 17:51:49 jmc Exp $
 .\" Copyright (c) 2003 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -47,16 +47,16 @@ but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
 .Sh DISPLAY RESOLUTION
-The XVideo and PowerVideo frame buffers vill adapt their resolution and
+The XVideo and PowerVideo frame buffers will adapt their resolution and
 refresh rate to the monitor they are connected to.
-However, when not connected to a Sun monitor, the device vill default to the
+However, when not connected to a Sun monitor, the device will default to the
 .Xr cgthree 4 -compatible
 1152x900 resolution, with a refresh rate of 67Hz.
 A different resolution can be forced using the rotary switch on the edge
 of the board.
 .Pp
 The available modes are as follows:
-.Bl -column "Rotary" "Resolution" "Refresh Rate"
+.Bl -column "Rotary" "Resolution" "Refresh Rate" -offset indent
 .It Li Rotary Ta Resolution Ta "Refresh Rate"
 .\" .It " "
 .It Li 0 Ta autodetect Ta autodetect
@@ -72,7 +72,7 @@ E and F.
 Position E enables the board built-in debugger on the serial port, and
 should not be used by end-users.
 Position F selects the video mode settings stored in the cards NVRAM.
-These settings can not be modified under
+These settings cannot be modified under
 .Ox .
 .Sh SEE ALSO
 .Xr agten 4 ,
