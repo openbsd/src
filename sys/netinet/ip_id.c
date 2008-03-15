@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_id.c,v 1.18 2008/03/02 21:38:18 deraadt Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.19 2008/03/15 04:36:31 djm Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
@@ -51,17 +51,18 @@ ip_randomid(void)
 		ipid_initialized = 1;
 
 		/*
-		 * Initialize using a Durstenfeld shuffle. Even if our PRNG
-		 * is imperfect at boot time, we have deferred doing this until
-		 * the first packet being sent and now must generate an ID.
+		 * Initialize with a random permutation. Do so using Knuth
+		 * which avoids the exchange in the Durstenfeld shuffle.
+		 * (See "The Art of Computer Programming, Vol 2" 3rd ed, pg. 145).
+		 *
+		 * Even if our PRNG is imperfect at boot time, we have deferred
+		 * doing this until the first packet being sent and now must
+		 * generate an ID.
 		 */
-		for (i = 0; i < sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); ++i)
-			ip_shuffle[i] = i;
-		for (i = sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); --i; ) {
+		for (i = 0; i < sizeof(ip_shuffle)/sizeof(ip_shuffle[0]); ++i) {
 			i2 = arc4random_uniform(i + 1);
-			r = ip_shuffle[i];
 			ip_shuffle[i] = ip_shuffle[i2];
-			ip_shuffle[i2] = r;
+			ip_shuffle[i2] = i;
 		}
 	}
 
