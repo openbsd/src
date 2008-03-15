@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.13 2008/03/13 01:49:53 deraadt Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.14 2008/03/15 16:49:15 hshoexer Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	pid_t pid;
 	union {
 		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int) * 2)];
+		char buf[CMSG_SPACE(sizeof(int) * 3)];
 	} cmsgbuf;
 	int pflag;
 	extern char *__progname;
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	/*
 	 * Create the test files.
 	 */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 3; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 			err(1, "open %s", fname);
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int) * 3);
 
 	if (recvmsg(sock, &msg, 0) < 0)
 		err(1, "recvmsg");
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 
 		switch (cmp->cmsg_type) {
 		case SCM_RIGHTS:
-			if (cmp->cmsg_len != CMSG_LEN(sizeof(int) * 2))
+			if (cmp->cmsg_len != CMSG_LEN(sizeof(int) * 3))
 				errx(1, "bad fd control message length %d",
 				    cmp->cmsg_len);
 
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 	if (files == NULL)
 		warnx("didn't get fd control message");
 	else {
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < 3; i++) {
 			(void) memset(buf, 0, sizeof(buf));
 			if (read(files[i], buf, sizeof(buf)) <= 0)
 				err(1, "read file %d (%d)", i + 1, files[i]);
@@ -248,7 +248,7 @@ child(int sock)
 	struct sockaddr_un sun;
 	union {
 		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int) * 2)];
+		char buf[CMSG_SPACE(sizeof(int) * 3)];
 	} cmsgbuf;
 	int *files;
 
@@ -270,10 +270,10 @@ child(int sock)
 
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int) * 3);
 
 	cmp = CMSG_FIRSTHDR(&msg);
-	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);
+	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 3);
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
@@ -281,7 +281,7 @@ child(int sock)
 	 * Open the files again, and pass them to the child over the socket.
 	 */
 	files = (int *)CMSG_DATA(cmp);
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 3; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
