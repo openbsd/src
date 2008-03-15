@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.38 2008/03/14 00:06:18 ckuethe Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.39 2008/03/15 01:08:08 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,8 @@ enum sensorsd_s_status {
 	SENSORSD_S_UNSPEC,	/* status is unspecified */
 	SENSORSD_S_INVALID,	/* status is invalid, per SENSOR_FINVALID */
 	SENSORSD_S_WITHIN,	/* status is within limits */
-	SENSORSD_S_OUTSIDE	/* status is outside limits */
+	SENSORSD_S_ABOVE,	/* status is above the higher limit */
+	SENSORSD_S_BELOW	/* status is below the lower limit */
 };
 
 struct limits_t {
@@ -288,9 +289,10 @@ check_sdlim(struct sdlim_t *sdlim)
 
 			if (sensor.flags & SENSOR_FINVALID)
 				newustatus = SENSORSD_S_INVALID;
-			else if (sensor.value > limit->upper ||
-				sensor.value < limit->lower)
-				newustatus = SENSORSD_S_OUTSIDE;
+			else if (sensor.value > limit->upper)
+				newustatus = SENSORSD_S_ABOVE;
+			else if (sensor.value < limit->lower)
+				newustatus = SENSORSD_S_BELOW;
 			else
 				newustatus = SENSORSD_S_WITHIN;
 
@@ -388,9 +390,15 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 				snprintf(us, sizeof(us), "within limits: %s",
 				    print_sensor(limit->type, limit->last_val));
 				break;
-			case SENSORSD_S_OUTSIDE:
-				snprintf(us, sizeof(us), "exceeds limits: %s",
-				    print_sensor(limit->type, limit->last_val));
+			case SENSORSD_S_ABOVE:
+				snprintf(us, sizeof(us), "exceeds limits: %s is above %s",
+				    print_sensor(limit->type, limit->last_val),
+				    print_sensor(limit->type, limit->upper));
+				break;
+			case SENSORSD_S_BELOW:
+				snprintf(us, sizeof(us), "exceeds limits: %s is below %s",
+				    print_sensor(limit->type, limit->last_val),
+				    print_sensor(limit->type, limit->lower));
 				break;
 			}
 			syslog(limit->ustatus == SENSORSD_S_WITHIN ? LOG_INFO :
@@ -447,8 +455,11 @@ report_sdlim(struct sdlim_t *sdlim, time_t last_report)
 					case SENSORSD_S_WITHIN:
 						s = "within";
 						break;
-					case SENSORSD_S_OUTSIDE:
-						s = "exceeds";
+					case SENSORSD_S_ABOVE:
+						s = "above";
+						break;
+					case SENSORSD_S_BELOW:
+						s = "below";
 						break;
 					}
 					r = snprintf(&buf[n], len - n, "%s",
