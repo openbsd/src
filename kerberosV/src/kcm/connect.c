@@ -143,24 +143,25 @@ update_client_creds(int s, kcm_client *peer)
     /* NetBSD */
     if (peer->uid == -1) {
 	struct msghdr msg;
-	socklen_t crmsgsize;
+	socklen_t crmsgspace, crmsglen;
 	void *crmsg;
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
 	
 	memset(&msg, 0, sizeof(msg));
-	crmsgsize = CMSG_SPACE(SOCKCREDSIZE(NGROUPS));
+	crmsgspace = CMSG_SPACE(SOCKCREDSIZE(NGROUPS));
+	crmsglen = CMSG_LEN(SOCKCREDSIZE(NGROUPS));
 	if (crmsgsize == 0)
 	    return 1 ;
 
-	crmsg = malloc(crmsgsize);
+	crmsg = malloc(crmsgspace);
 	if (crmsg == NULL)
 	    goto failed_scm_creds;
 
-	memset(crmsg, 0, crmsgsize);
+	memset(crmsg, 0, crmsgspace);
 	
 	msg.msg_control = crmsg;
-	msg.msg_controllen = crmsgsize;
+	msg.msg_controllen = crmsglen;
 	
 	if (recvmsg(s, &msg, 0) < 0) {
 	    free(crmsg);
