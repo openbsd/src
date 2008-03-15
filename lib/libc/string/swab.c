@@ -1,4 +1,4 @@
-/*	$OpenBSD: swab.c,v 1.7 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: swab.c,v 1.8 2008/03/15 21:54:09 ray Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -36,19 +36,25 @@
 void
 swab(const void *from, void *to, size_t len)
 {
-	unsigned long temp;
-	int n;
+	size_t n;
 	char *fp, *tp;
+	char temp;
 
-	n = (len >> 1) + 1;
+	n = (len / 2) + 1;
 	fp = (char *)from;
 	tp = (char *)to;
-#define	STEP	temp = *fp++,*tp++ = *fp++,*tp++ = temp
+#define	STEP do {	\
+	temp = *fp++;	\
+	*tp++ = *fp++;	\
+	*tp++ = temp;	\
+} while (0)
 	/* round to multiple of 8 */
 	while ((--n) & 07)
 		STEP;
 	n >>= 3;
-	while (--n >= 0) {
+	if (n == 0)
+		return;
+	while (n-- != 0) {
 		STEP; STEP; STEP; STEP;
 		STEP; STEP; STEP; STEP;
 	}
