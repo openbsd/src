@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.65 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.66 2008/03/15 21:21:09 miod Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -476,7 +476,7 @@ statclock(struct clockframe *frame)
 {
 #ifdef GPROF
 	struct gmonparam *g;
-	int i;
+	u_long i;
 #endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
