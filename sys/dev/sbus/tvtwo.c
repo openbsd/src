@@ -1,6 +1,7 @@
-/*	$OpenBSD: tvtwo.c,v 1.11 2007/03/13 19:40:49 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.12 2008/03/15 21:10:38 miod Exp $	*/
+
 /*
- * Copyright (c) 2003, 2006, Miodrag Vallat.
+ * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +30,8 @@
 /*
  * Driver for the Parallax XVideo and PowerVideo graphics boards.
  *
- * Some details about these board are available at:
- * http://www.jlw.com/~woolsey/parallax/support/developers/xvideotech.html
+ * Some details about these board used to be available at:
+ *   http://www.jlw.com/~woolsey/parallax/support/developers/xvideotech.html
  */
 
 /*
@@ -81,16 +82,6 @@
  *	8-bit plane	080000 - 17ffff
  *	24-bit plane	200000 - 6fffff
  *	PROM1		7f0000 - 7fffff
- *
- * Older XVideo provide two sets of SBus registers:
- *	R0		040000 - 040800
- *	R1		080000 - 17d200
- * While the more recent revisions provide only one register:
- *	R0		000000 - 7fffff
- *
- * We currently refuse to attach to the old version because mapping
- * things requires us to play with the sbus register ranges, and I
- * don't want to play this game without the hardware at hand -- miod
  */
 
 #define	PX_PROM0_OFFSET		0x000000
@@ -101,14 +92,16 @@
 #define	PX_PLANE24_OFFSET	0x200000
 #define	PX_PROM1_OFFSET		0x7f0000
 
+#define	PX_MAP_SIZE		0x800000
+
 /*
  * Partial registers layout
  */
 
-#define	PX_REG_DISPKLUDGE	0x00b8	/* write only */
-#define	DISPKLUDGE_DEFAULT	0xc41f
-#define	DISPKLUDGE_BLANK	(1 << 12)
-#define	DISPKLUDGE_SYNC		(1 << 13)
+#define	PX_REG_DISPKLUGE	0x00b8	/* write only */
+#define	DISPKLUGE_DEFAULT	0xc41f
+#define	DISPKLUGE_BLANK		(1 << 12)
+#define	DISPKLUGE_SYNC		(1 << 13)
 
 #define	PX_REG_BT463_RED	0x0480
 #define	PX_REG_BT463_GREEN	0x0490
@@ -204,21 +197,28 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	bus_space_handle_t bh;
 	int node, width, height, freqcode;
 	int isconsole;
-	char *freqstring;
+	char *freqstring, *revision;
 
 	bt = sa->sa_bustag;
 	node = sa->sa_node;
 
 	printf(": %s", getpropstring(node, "model"));
-	printf(", revision %s\n", getpropstring(node, "revision"));
+	revision = getpropstring(node, "revision");
+	if (*revision != '\0')
+		printf(", revision %s", revision);
 
-	/* We do not handle older boards yet. */
-	if (sa->sa_nreg != 1) {
-		printf("%s: old-style boards with %d registers are not supported\n"
-		    "%s: please report this to <sparc@openbsd.org>\n",
-		    self->dv_xname, sa->sa_nreg,
-		    self->dv_xname);
-		return;
+	/* Older XVideo provide two sets of SBus registers:
+	 *	R0		040000 - 040800
+	 *	R1		080000 - 17d200
+	 * While the more recent revisions provide only one register:
+	 *	R0		000000 - 7fffff
+	 *
+	 * We'll simply ``rewrite'' R0 on older boards and handle them as
+	 * recent boards.
+	 */
+	if (sa->sa_nreg > 1) {
+		sa->sa_offset -= PX_REG_OFFSET;
+		sa->sa_size = PX_MAP_SIZE;
 	}
 
 	isconsole = node == fbnode;
@@ -232,25 +232,35 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	}
 	sc->sc_regs = bus_space_vaddr(bt, bh);
 
-	/* Compute framebuffer size. */
+	/*
+	 * Compute framebuffer size.
+	 * Older boards do not have the ``freqcode'' property and are
+	 * restricted to 1152x900.
+	 */
 	freqstring = getpropstring(node, "freqcode");
-	freqcode = (int)*freqstring;
-	if (freqcode == 'g') {
-		width = height = 1024;
+	if (*freqstring != '\0') {
+		freqcode = (int)*freqstring;
+		if (freqcode == 'g') {
+			width = height = 1024;
+		} else {
+			if (freqcode < '1' || freqcode > '6')
+				freqcode = 0;
+			else
+				freqcode -= '1';
+			width = defwidth[freqcode];
+			height = defheight[freqcode];
+
+			/* in case our table is wrong or incomplete... */
+			width = getpropint(node, "hres", width);
+			height = getpropint(node, "vres", height);
+		}
 	} else {
-		if (freqcode < '1' || freqcode > '6')
-			freqcode = 0;
-		else
-			freqcode -= '1';
-		width = defwidth[freqcode];
-		height = defheight[freqcode];
+		width = 1152;
+		height = 900;
 	}
 
-	width = getpropint(node, "hres", width);
-	height = getpropint(node, "vres", height);
-
 	/*
-	 * Since the depth property is usually missing, we could do
+	 * Since the depth property is missing, we could do
 	 * fb_setsize(&sc->sc_sunfb, 8, width, height, node, 0);
 	 * but for safety in case it would exist and be set to 32, do it
 	 * manually...
@@ -260,6 +270,8 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_height = height;
 	sc->sc_sunfb.sf_linebytes = width >= 1024 ? width : 1024;
 	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_linebytes * height;
+
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	/* Map the frame buffer memory area we're interested in. */
 	sc->sc_paddr = sbus_bus_addr(bt, sa->sa_slot, sa->sa_offset);
@@ -296,9 +308,6 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 		fbwscons_console_init(&sc->sc_sunfb,
 		    width >= 1024 ? -1 : 0);
 	}
-
-	printf("%s: %dx%d\n", self->dv_xname,
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	fbwscons_attach(&sc->sc_sunfb, &tvtwo_accessops, isconsole);
 }
@@ -419,18 +428,17 @@ void
 tvtwo_burner(void *v, u_int on, u_int flags)
 {
 	struct tvtwo_softc *sc = v;
-	u_int32_t dispkludge;
+	u_int32_t dispkluge;
 
 	if (on)
-		dispkludge = DISPKLUDGE_DEFAULT & ~DISPKLUDGE_BLANK;
+		dispkluge = DISPKLUGE_DEFAULT & ~DISPKLUGE_BLANK;
 	else {
-		dispkludge = DISPKLUDGE_DEFAULT | DISPKLUDGE_BLANK;
+		dispkluge = DISPKLUGE_DEFAULT | DISPKLUGE_BLANK;
 		if (flags & WSDISPLAY_BURN_VBLANK)
-			dispkludge |= DISPKLUDGE_SYNC;
+			dispkluge |= DISPKLUGE_SYNC;
 	}
 
-	*(volatile u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUDGE) =
-	    dispkludge;
+	*(volatile u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUGE) = dispkluge;
 }
 
 void
