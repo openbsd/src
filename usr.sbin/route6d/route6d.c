@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.49 2008/03/13 01:49:53 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.50 2008/03/15 16:23:27 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.49 2008/03/13 01:49:53 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.50 2008/03/15 16:23:27 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -965,7 +965,7 @@ sendpacket(struct sockaddr_in6 *sin6, int len)
 	} else {
 		memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 		m.msg_control = (caddr_t)&cmsgbuf.buf;
-		m.msg_controllen = sizeof(cmsgbuf.buf);
+		m.msg_controllen = CMSG_LEN(sizeof(struct in6_pktinfo));
 		cm = CMSG_FIRSTHDR(&m);
 		cm->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
 		cm->cmsg_level = IPPROTO_IPV6;
@@ -1005,7 +1005,7 @@ riprecv(void)
 	struct iovec iov[2];
 	union {
 		struct cmsghdr hdr;
-		u_char buf[CMSG_LEN(sizeof(struct in6_pktinfo))];
+		u_char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	} cmsgbuf;
 	struct in6_pktinfo *pi = NULL;
 	int *hlimp = NULL;
@@ -1023,7 +1023,7 @@ riprecv(void)
 	m.msg_iov = iov;
 	m.msg_iovlen = 1;
 	m.msg_control = (caddr_t)&cmsgbuf.buf;
-	m.msg_controllen = sizeof(cmsgbuf.buf);
+	m.msg_controllen = CMSG_LEN(sizeof(struct in6_pktinfo));
 	if ((len = recvmsg(ripsock, &m, 0)) < 0) {
 		fatal("recvmsg");
 		/*NOTREACHED*/
