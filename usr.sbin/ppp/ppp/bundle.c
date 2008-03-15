@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.72 2008/03/13 01:49:53 deraadt Exp $
+ *	$OpenBSD: bundle.c,v 1.73 2008/03/15 16:25:00 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1418,7 +1418,7 @@ bundle_ReceiveDatalink(struct bundle *bundle, int s)
   msg.msg_iov = iov;
   msg.msg_iovlen = 1;		/* Only send the version at the first pass */
   msg.msg_control = cmsgbuf.buf;
-  msg.msg_controllen = sizeof cmsgbuf.buf;
+  msg.msg_controllen = CMSG_LEN(sizeof(int) * SEND_MAXFD);
   cmsg = CMSG_FIRSTHDR(&msg);
   cmsg->cmsg_len = sizeof cmsgbuf.buf;
   cmsg->cmsg_level = SOL_SOCKET;
@@ -1591,7 +1591,7 @@ bundle_SendDatalink(struct datalink *dl, int s, struct sockaddr_un *sun)
     msg.msg_iovlen = 1;
     msg.msg_iov = iov;
     msg.msg_control = &cmsgbuf.buf;
-    msg.msg_controllen = CMSG_SPACE(sizeof(int) * nfd);
+    msg.msg_controllen = CMSG_LEN(sizeof(int) * nfd);
     msg.msg_flags = 0;
     cmsg = CMSG_FIRSTHDR(&msg);
     cmsg->cmsg_len = msg.msg_controllen;

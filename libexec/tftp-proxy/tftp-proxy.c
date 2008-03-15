@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.3 2008/03/13 01:49:52 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.4 2008/03/15 16:25:00 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(struct sockaddr_storage));
 
 	if (recvmsg(fd, &msg, 0) < 0) {
 		syslog(LOG_ERR, "recvmsg: %m");
