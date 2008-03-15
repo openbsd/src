@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.20 2008/03/10 11:02:32 dlg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.21 2008/03/15 00:56:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -60,6 +60,7 @@ int	 mib_sysor(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_setsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid mib_tree[] = MIB_TREE;
+static struct ber_oid zerodotzero = { { 0, 0 }, 2 };
 
 /* base MIB tree */
 static struct oid base_mib[] = {
@@ -425,7 +426,6 @@ int	 mib_ifstacklast(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_ifrcvtable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static u_int8_t ether_zeroaddr[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static struct ber_oid zerodotzero = { { 0, 0 }, 2 };
 
 static struct oid if_mib[] = {
 	{ MIB(ifMIB),			OID_MIB },
