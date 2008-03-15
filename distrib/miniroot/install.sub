@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.428 2008/03/09 02:00:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.429 2008/03/15 05:28:31 jsing Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1194,7 +1194,7 @@ install_nfs() {
 	[[ $resp == y ]] && _tcp=-T
 
 	# Mount the server
-	mount_nfs $_tcp -o ro $NFS_ADDR:$NFS_PATH /mnt2 || return
+	mount_nfs $_tcp -o ro -R 5 $NFS_ADDR:$NFS_PATH /mnt2 || return
 
 	install_mounted_fs
 }
