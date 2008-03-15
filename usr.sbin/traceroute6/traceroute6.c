@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.43 2006/12/19 14:47:45 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.44 2008/03/15 16:43:59 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
-	int ch, i, on = 1, seq, rcvcmsglen, error, minlen;
+	int ch, i, on = 1, seq, rcvcmsglen, rcvcmsgspace, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
 	u_long probe, hops, lport;
@@ -590,9 +590,12 @@ main(int argc, char *argv[])
 	rcvmhdr.msg_namelen = sizeof(Rcv);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
-	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	rcvcmsgspace = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
-	if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
+	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_LEN(sizeof(int));
+	
+	if ((rcvcmsgbuf = malloc(rcvcmsgspace)) == NULL) {
 		fprintf(stderr, "traceroute6: malloc failed\n");
 		exit(1);
 	}
