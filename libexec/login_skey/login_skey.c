@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.20 2008/03/13 01:49:52 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.21 2008/03/15 16:19:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -270,7 +270,7 @@ send_fd(int sock)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
 
 	cmp = CMSG_FIRSTHDR(&msg);
 	cmp->cmsg_len = CMSG_LEN(sizeof(int));

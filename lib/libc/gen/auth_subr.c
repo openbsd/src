@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.33 2008/03/13 01:49:52 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.34 2008/03/15 16:19:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -995,7 +995,7 @@ _recv_fd(auth_session_t *as, int fd)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	if (recvmsg(fd, &msg, 0) < 0)
 		syslog(LOG_ERR, "recvmsg: %m");
 	else if (msg.msg_flags & MSG_TRUNC)
