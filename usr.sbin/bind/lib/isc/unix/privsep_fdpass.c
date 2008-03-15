@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_fdpass.c,v 1.5 2008/03/13 01:49:53 deraadt Exp $	*/
+/*	$OpenBSD: privsep_fdpass.c,v 1.6 2008/03/15 16:33:58 deraadt Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -61,7 +61,7 @@ send_fd(int sock, int fd)
 
 	if (fd >= 0) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = sizeof(cmsgbuf.buf);
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;
@@ -102,7 +102,7 @@ receive_fd(int sock)
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
 
 	if ((n = recvmsg(sock, &msg, 0)) == -1)
 		warn("%s: recvmsg", __func__);
