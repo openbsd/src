@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2007/12/21 12:15:36 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2008/03/15 22:05:51 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -363,6 +363,18 @@ cpu_attach(parent, dev, aux)
 	}
 }
 
+int
+cpu_myid(void)
+{
+	char buf[32];
+
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
+		return lduwa(0x1fff40000d0UL, ASI_PHYS_NON_CACHED);
+	else
+		return CPU_UPAID;
+}
+
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
@@ -370,14 +382,27 @@ struct cfdriver cpu_cd = {
 #ifdef MULTIPROCESSOR
 void cpu_mp_startup(void);
 
+#define STARFIRE_UPAID2HWMID(upaid) \
+    (((upaid & 0x3c) << 1) | ((upaid & 0x40) >> 4) | (upaid & 0x3))
+
 void
 cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	int cpuid, i;
+	char buf[32];
+
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0) {
+		for (ci = cpus; ci != NULL; ci = ci->ci_next)
+			ci->ci_itid = STARFIRE_UPAID2HWMID(ci->ci_upaid);
+	} else {
+		for (ci = cpus; ci != NULL; ci = ci->ci_next)
+			ci->ci_itid = ci->ci_upaid;
+	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci->ci_upaid == CPU_UPAID)
+		if (ci->ci_upaid == cpu_myid())
 			continue;
 
 		cpuid = getpropint(ci->ci_node, "cpuid", -1);

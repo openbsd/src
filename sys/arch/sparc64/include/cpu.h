@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.55 2008/02/20 09:44:47 robert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.56 2008/03/15 22:05:51 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -115,6 +115,9 @@ struct cpu_info {
 	int			ci_number;
 	int			ci_flags;
 	int			ci_upaid;
+#ifdef MULTIPROCESSOR
+	int			ci_itid;
+#endif
 	int			ci_node;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
@@ -213,6 +216,8 @@ extern void need_resched(struct cpu_info *);
 
 void signotify(struct proc *);
 
+/* cpu.c */
+int	cpu_myid(void);
 /* machdep.c */
 int	ldcontrolb(caddr_t);
 void	dumpconf(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.6 2007/11/27 19:00:26 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.7 2008/03/15 22:05:51 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -60,7 +60,7 @@ void	ipi_softint(void);
  * Send an interprocessor interrupt.
  */
 void
-sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
+sparc64_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	int i, j, shift = 0;
 
@@ -68,10 +68,10 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 
 	/*
 	 * UltraSPARC-IIIi CPUs select the BUSY/NACK pair based on the
-	 * lower two bits of the target CPU ID.
+	 * lower two bits of the ITID.
 	 */
 	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) == IMPL_JALAPENO)
-		shift = (upaid & 0x3) * 2;
+		shift = (itid & 0x3) * 2;
 
 	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift)) {
 		__asm __volatile("ta 1; nop");
@@ -84,7 +84,7 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, (u_int64_t)func);
 		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, arg0);
 		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg1);
-		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
+		stxa(IDCR(itid), ASI_INTERRUPT_DISPATCH, 0);
 		membar(Sync);
 
 		for (j = 0; j < 1000000; j++) {
@@ -104,7 +104,7 @@ sparc64_send_ipi(int upaid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 
 #if 1
 	if (db_active || panicstr != NULL)
-		printf("ipi_send: couldn't send ipi to module %u\n", upaid);
+		printf("ipi_send: couldn't send ipi to module %u\n", itid);
 	else
 		panic("ipi_send: couldn't send ipi");
 #else
@@ -125,7 +125,7 @@ sparc64_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
-		sparc64_send_ipi(ci->ci_upaid, func, arg0, arg1);
+		sparc64_send_ipi(ci->ci_itid, func, arg0, arg1);
 	}
 }
 
@@ -157,5 +157,5 @@ smp_signotify(struct proc *p)
 	if (db_active)
 		return;
 
-	sparc64_send_ipi(p->p_cpu->ci_upaid, ipi_softint, 1 << IPL_NONE, 0UL);
+	sparc64_send_ipi(p->p_cpu->ci_itid, ipi_softint, 1 << IPL_NONE, 0UL);
 }
