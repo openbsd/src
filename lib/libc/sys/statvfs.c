@@ -1,4 +1,4 @@
-/*	$OpenBSD: statvfs.c,v 1.1 2008/03/16 19:44:34 otto Exp $	*/
+/*	$OpenBSD: statvfs.c,v 1.2 2008/03/16 19:46:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -55,7 +55,8 @@ fstatvfs(int fd, struct statvfs *p)
 	return (ret);
 }
 
-int statvfs(const char *path, struct statvfs *p)
+int
+statvfs(const char *path, struct statvfs *p)
 {
 	struct statfs sb;
 	int ret;
