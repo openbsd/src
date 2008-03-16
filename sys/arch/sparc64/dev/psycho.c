@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.55 2008/01/19 11:13:43 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.56 2008/03/16 22:19:57 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/openfirm.h>
 #include <machine/psl.h>
 
 #include <dev/pci/pcivar.h>
@@ -58,6 +59,7 @@
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
+#include <sparc64/dev/starfire.h>
 #include <sparc64/sparc64/cache.h>
 
 #ifdef DEBUG
@@ -233,6 +235,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	u_int64_t csr;
 	int psycho_br[2], n;
 	struct psycho_type *ptype;
+	char buf[32];
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
@@ -388,6 +391,11 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 
 	if (osc == NULL) {
 		uint64_t timeo;
+
+		/* Initialize Starfire PC interrupt translation. */
+		if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
+			starfire_pc_ittrans_init(ma->ma_upaid);
 
 		/*
 		 * Establish handlers for interesting interrupts....

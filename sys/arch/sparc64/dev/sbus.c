@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.33 2008/03/09 13:28:20 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.34 2008/03/16 22:19:57 kettenis Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -117,6 +117,7 @@
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>
+#include <sparc64/dev/starfire.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/xboxvar.h>
 
@@ -124,6 +125,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/openfirm.h>
 #include <machine/sparc64.h>
 
 #ifdef DEBUG
@@ -296,6 +298,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	struct intrhand *ih;
 	int ipl, error;
 	struct sysioreg *sysio;
+	char buf[32];
 	char *name;
 
 	sc->sc_master = sc;
@@ -352,6 +355,11 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	iommu_init(name, &sc->sc_is, 0, -1);
+
+	/* Initialize Starfire PC interrupt translation. */
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
+		starfire_pc_ittrans_init(ma->ma_upaid);
 
 	/* Enable the over temp intr */
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT | M_ZERO);
