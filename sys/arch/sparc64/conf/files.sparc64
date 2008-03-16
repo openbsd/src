@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.102 2008/03/13 22:46:58 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.103 2008/03/16 22:21:27 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -116,6 +116,9 @@ file	arch/sparc64/dev/vgafb.c		vgafb
 # IOMMU is for both sbus and pci
 file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
 file	arch/sparc64/dev/viommu.c		vpci
+
+# Starfire PC is needed for sbus and pci
+file	arch/sparc64/dev/starfire.c		sbus | psycho
 
 device	ebus {[addr = -1]}: pcibus
 attach	ebus at pci
