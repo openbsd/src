@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.603 2008/02/25 23:16:47 brad Exp $
+#	$OpenBSD: GENERIC,v 1.604 2008/03/16 19:00:28 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -85,7 +85,6 @@ gpio*	at gscpcib?
 glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 gpio*	at glxpcib?
 
-agp*	at pchb?		# AGP bridges
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller
 gpio*	at elansc?
@@ -317,6 +316,8 @@ wsdisplay*	at pcdisplay?
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
+
+agp*		at vga?			# AGP bridges
 
 #vesabios0	at mainbus?
 # option	VESABIOSVERBOSE

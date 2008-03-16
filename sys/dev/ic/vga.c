@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.46 2007/10/01 04:03:51 krw Exp $ */
+/* $OpenBSD: vga.c,v 1.47 2008/03/16 19:00:28 oga Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -99,6 +99,8 @@ void	vga_putchar(void *, int, int, u_int, long);
 int	vga_alloc_attr(void *, int, int, int, long *);
 void	vga_copyrows(void *, int, int, int);
 void	vga_unpack_attr(void *, long, int *, int *, int *);
+
+int	displaysubmatch(struct device *, void *, void *);
 
 static const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
@@ -545,7 +547,19 @@ vga_extended_attach(self, iot, memt, type, map)
 	aa.accesscookie = vc;
 	aa.defaultscreens = 0;
 
-        config_found(self, &aa, wsemuldisplaydevprint);
+        config_found_sm(self, &aa, wsemuldisplaydevprint, displaysubmatch);
+}
+
+int
+displaysubmatch(struct device *parent, void *match, void *aux)
+{
+	extern struct cfdriver wsdisplay_cd;
+	struct cfdata *cf = match;
+
+	/* only allow wsdisplay to attach */
+	if (cf->cf_driver == &wsdisplay_cd)
+		return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return (0);
 }
 
 int

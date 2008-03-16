@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.10 2007/12/07 17:35:22 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.11 2008/03/16 19:00:28 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #define AGPUNIT(x)	minor(x)
 
 struct agpbus_attach_args {
-        char    *apa_busname; 
         struct pci_attach_args apa_pci_args;
 };
 
@@ -174,6 +173,7 @@ paddr_t	agpmmap(void *, off_t, int);
 int	agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	agpopen(dev_t, int, int, struct proc *);
 int	agpclose(dev_t, int, int , struct proc *);
+void	agp_set_pchb(struct pci_attach_args*);
 /*
  * Functions private to the AGP code.
  */

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.216 2008/02/25 23:16:47 brad Exp $
+#	$OpenBSD: GENERIC,v 1.217 2008/03/16 19:00:28 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,7 +64,7 @@ pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge
 
-agp* 	at pchb?		# AGP bridge
+agp* 	at vga?			# AGP bridge
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290

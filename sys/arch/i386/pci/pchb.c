@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.66 2008/01/04 00:23:25 kettenis Exp $ */
+/*	$OpenBSD: pchb.c,v 1.67 2008/03/16 19:00:28 oga Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -79,6 +79,8 @@
 
 #include <dev/ic/i82802reg.h>
 
+#include "agp.h"
+
 #define PCISET_INTEL_BRIDGETYPE_MASK	0x3
 #define PCISET_INTEL_TYPE_COMPAT	0x1
 #define PCISET_INTEL_TYPE_AUX		0x2
@@ -139,7 +141,6 @@ struct cfdriver pchb_cd = {
 };
 
 int	pchb_print(void *, const char *);
-int	agpbus_print(void *, const char *);
 void	pchb_rnd(void *);
 void	pchb_amd64ht_attach(struct device *, struct pci_attach_args *, int);
 
@@ -174,7 +175,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct pcibus_attach_args pba;
-	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
@@ -396,17 +396,16 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+#if NAGP > 0
 	/*
 	 * If we haven't detected AGP yet (via a product ID),
 	 * then check for AGP capability on the device.
 	 */
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
-	    NULL, NULL) != 0) {
-		apa.apa_busname = "agp";
-		apa.apa_pci_args = *pa;
-		config_found(self, &apa, agpbus_print);
-	}
+	    NULL, NULL) != 0)
+		agp_set_pchb(pa);
+#endif /* NAGP > 0 */
 #ifdef __i386__
 	if (doattach == 0)
 		return;
@@ -431,14 +430,6 @@ pchb_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
-	return (UNCONF);
-}
-
-int
-agpbus_print(void *vaa, const char *pnp)
-{
-	if (pnp)
-		printf("agp at %s", pnp);
 	return (UNCONF);
 }
 

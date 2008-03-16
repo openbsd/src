@@ -1,31 +1,27 @@
-#	$OpenBSD: files.agp,v 1.1 2007/11/25 17:11:12 oga Exp $
+#	$OpenBSD: files.agp,v 1.2 2008/03/16 19:00:28 oga Exp $
 
-define	agpbus { }
-
-device	agp
-attach	agp at agpbus
 file	dev/pci/agp.c		agp			needs-flag
 
 define	agp_ali
-file	dev/pci/agp_ali.c	agp_ali & agp		needs-flag
+file	dev/pci/agp_ali.c	agp_ali & agpbus	needs-flag
 
 define	agp_amd
-file	dev/pci/agp_amd.c	agp_amd & agp		needs-flag
+file	dev/pci/agp_amd.c	agp_amd & agpbus	needs-flag
 
 define	agp_apple
-file	dev/pci/agp_apple.c	agp_apple & agp		needs-flag
+file	dev/pci/agp_apple.c	agp_apple & agpbus	needs-flag
 
 define	agp_i810
-file	dev/pci/agp_i810.c	agp_i810 & agp		needs-flag
+file	dev/pci/agp_i810.c	agp_i810 & agpbus	needs-flag
 
 define	agp_intel
-file	dev/pci/agp_intel.c	agp_intel & agp		needs-flag
+file	dev/pci/agp_intel.c	agp_intel & agpbus	needs-flag
 
 define	agp_sis
-file	dev/pci/agp_sis.c	agp_sis & agp		needs-flag
+file	dev/pci/agp_sis.c	agp_sis & agpbus	needs-flag
 
 define	agp_via
-file	dev/pci/agp_via.c	agp_via & agp		needs-flag
+file	dev/pci/agp_via.c	agp_via & agpbus	needs-flag
 
 define	agp_amd64
-file	dev/pci/agp_amd64.c	agp_amd64 & agp		needs-flag
+file	dev/pci/agp_amd64.c	agp_amd64 & agpbus	needs-flag
