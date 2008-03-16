@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.34 2008/03/15 22:05:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.35 2008/03/16 22:22:15 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -67,6 +67,8 @@
 #include <machine/sparc64.h>
 
 #include <sparc64/sparc64/cache.h>
+
+#include <sparc64/dev/starfire.h>
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo = {
@@ -381,9 +383,6 @@ struct cfdriver cpu_cd = {
 
 #ifdef MULTIPROCESSOR
 void cpu_mp_startup(void);
-
-#define STARFIRE_UPAID2HWMID(upaid) \
-    (((upaid & 0x3c) << 1) | ((upaid & 0x40) >> 4) | (upaid & 0x3))
 
 void
 cpu_boot_secondary_processors(void)
