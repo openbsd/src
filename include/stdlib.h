@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.40 2007/09/03 14:37:02 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.41 2008/03/16 19:47:43 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -272,6 +272,10 @@ u_int32_t arc4random(void);
 void	arc4random_stir(void);
 void	arc4random_addrandom(unsigned char *, int)
 	__attribute__((__bounded__ (__string__,1,2)));
+u_int32_t arc4random_uniform(u_int32_t);
+void arc4random_buf(void *, size_t)
+	__attribute__((__bounded__ (__string__,1,2)));
+
 #endif /* __BSD_VISIBLE */
 
 __END_DECLS

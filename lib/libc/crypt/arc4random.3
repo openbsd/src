@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.22 2007/05/31 19:19:27 jmc Exp $
+.\" $OpenBSD: arc4random.3,v 1.23 2008/03/16 19:47:43 otto Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 16 2008 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -42,6 +42,10 @@
 .Fd #include <stdlib.h>
 .Ft u_int32_t
 .Fn arc4random "void"
+.Ft void
+.Fn arc4random_buf "void *buf" "size_t nbytes"
+.Ft u_int32_t
+.Fn arc4random_uniform "u_int32_t upper_bound"
 .Ft void
 .Fn arc4random_stir "void"
 .Ft void
@@ -72,6 +76,21 @@ versus the fast but poor quality interfaces described in
 .Xr random 3 ,
 and
 .Xr drand48 3 .
+.Pp
+.Fn arc4random_buf
+fills the region
+.Fa buf
+of length
+.Fa nbytes
+with ARC4-derived random data.
+.Pp
+.Fn arc4random_uniform
+will return a uniformly distributed random number less than
+.Fa upper_bound .
+.Fn arc4random_uniform
+is recommended over constructions like
+.Do Li arc4random() % upper_bound Dc
+as it avoids "modulo bias" when the upper bound is not a power of two.
 .Pp
 The
 .Fn arc4random_stir
