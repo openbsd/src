@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.108 2007/12/30 13:29:52 sobrado Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.109 2008/03/16 11:11:59 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.108 2007/12/30 13:29:52 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.109 2008/03/16 11:11:59 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -1145,6 +1145,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-fimstvz] [-c count] [-M core] "
-	    "[-N system] [-w wait] [disks]\n", __progname);
+	    "[-N system] [-w wait] [disk ...]\n", __progname);
 	exit(1);
 }
