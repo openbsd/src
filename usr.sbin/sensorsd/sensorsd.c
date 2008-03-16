@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.40 2008/03/16 03:07:03 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.41 2008/03/16 23:54:01 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -642,11 +642,11 @@ get_val(char *buf, int upper, enum sensor_type type)
 		switch(*p) {
 		case 'C':
 			printf("C");
-			rval = (val + 273.16) * 1000 * 1000;
+			rval = val * 1000 * 1000 + 273150000;
 			break;
 		case 'F':
 			printf("F");
-			rval = ((val - 32.0) / 9 * 5 + 273.16) * 1000 * 1000;
+			rval = (val * 1000 * 1000 + 459670000) / 9 * 5;
 			break;
 		default:
 			errx(1, "unknown unit %s for temp sensor", p);
