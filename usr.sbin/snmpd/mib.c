@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.22 2008/03/15 23:50:54 dlg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.23 2008/03/16 00:35:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -328,6 +328,11 @@ mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 int	 mib_hrmemory(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrstorage(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrswrun(struct oid *, struct ber_oid *, struct ber_element **);
+
+int	 kinfo_proc_comp(const void *, const void *);
+int	 kinfo_proc(u_int32_t, struct kinfo_proc2 **);
+int	 kinfo_args(struct kinfo_proc2 *, char **);
 
 static struct oid hr_mib[] = {
 	{ MIB(host),				OID_MIB },
@@ -340,6 +345,14 @@ static struct oid hr_mib[] = {
 	{ MIB(hrStorageSize),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageUsed),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageAllocationFailures),	OID_TRD, mib_hrstorage },
+	{ MIB(hrSWRun),				OID_MIB },
+	{ MIB(hrSWRunIndex),			OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunName),			OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunID),			OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunPath),			OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunParameters),		OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunType),			OID_TRD, mib_hrswrun },
+	{ MIB(hrSWRunStatus),			OID_TRD, mib_hrswrun },
 	{ MIBEND }
 };
 
@@ -409,6 +422,195 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		break;
 	default:
 		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct kinfo_proc2	*kinfo;
+	char			*s;
+
+	/* Get and verify the current row index */
+	if (kinfo_proc(o->bo_id[OIDIDX_hrSWRunEntry], &kinfo) == -1)
+		return (-1);
+
+	if (kinfo == NULL)
+		return (1);
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_hrSWRunEntry] = kinfo->p_pid;
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_hrSWRun]) {
+	case 1: /* hrSWRunIndex */
+		ber = ber_add_integer(ber, kinfo->p_pid);
+		break;
+	case 2: /* hrSWRunName */
+	case 4: /* hrSWRunPath */
+		ber = ber_add_astring(ber, kinfo->p_comm);
+		break;
+	case 3: /* hrSWRunID */
+		ber = ber_add_oid(ber, &zerodotzero);
+		break;
+	case 5: /* hrSWRunParameters */
+		if (kinfo_args(kinfo, &s) == -1)
+			return (-1);
+
+		ber = ber_add_astring(ber, s);
+		break;
+	case 6: /* hrSWRunType */
+		if (kinfo->p_flag & P_SYSTEM) {
+			/* operatingSystem(2) */
+			ber = ber_add_integer(ber, 2);
+		} else {
+			/* application(4) */
+			ber = ber_add_integer(ber, 4);
+		}
+		break;
+	case 7: /* hrSWRunStatus */
+		switch (kinfo->p_stat) {
+		case SONPROC:
+			/* running(1) */
+			ber = ber_add_integer(ber, 1);
+			break;
+		case SIDL:
+		case SRUN:
+		case SSLEEP:
+			/* runnable(2) */
+			ber = ber_add_integer(ber, 2);
+			break;
+		case SSTOP:
+			/* notRunnable(3) */
+			ber = ber_add_integer(ber, 3);
+			break;
+		case SZOMB:
+		case SDEAD:
+		default:
+			/* invalid(4) */
+			ber = ber_add_integer(ber, 4);
+			break;
+		}
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+kinfo_proc_comp(const void *a, const void *b)
+{
+	struct kinfo_proc2 * const *k1 = a;
+	struct kinfo_proc2 * const *k2 = b;
+
+	return (((*k1)->p_pid > (*k2)->p_pid) ? 1 : -1);
+}
+
+int
+kinfo_proc(u_int32_t idx, struct kinfo_proc2 **kinfo)
+{
+	static struct kinfo_proc2 *kp = NULL;
+	static size_t		 nkp = 0;
+	int			 mib[] = { CTL_KERN, KERN_PROC2,
+				    KERN_PROC_ALL, 0, sizeof(*kp), 0 };
+	struct kinfo_proc2	**klist;
+	size_t			 size, count, i;
+
+	for (;;) {
+		size = nkp * sizeof(*kp);
+		mib[5] = nkp;
+		if (sysctl(mib, sizeofa(mib), kp, &size, NULL, 0) == -1) {
+			if (errno == ENOMEM) {
+				free(kp);
+				kp = NULL;
+				nkp = 0;
+				continue;
+			}
+
+			return (-1);
+		}
+
+		count = size / sizeof(*kp);
+		if (count <= nkp)
+			break;
+
+		kp = malloc(size);
+		if (kp == NULL) {
+			nkp = 0;
+			return (-1);
+		}
+		nkp = count;
+	}
+
+	klist = malloc(count * sizeof(*klist));
+	if (klist == NULL)
+		return (-1);
+
+	for (i = 0; i < count; i++)
+		klist[i] = &kp[i];
+	qsort(klist, count, sizeof(*klist), kinfo_proc_comp);
+
+	*kinfo = NULL;
+	for (i = 0; i < count; i++) {
+		if (klist[i]->p_pid >= (int32_t)idx) {
+			*kinfo = klist[i];
+			break;
+		}
+	}
+	free(klist);
+
+	return (0);
+}
+
+int
+kinfo_args(struct kinfo_proc2 *kinfo, char **s)
+{
+	static char		 str[128];
+	static char		*buf = NULL;
+	static size_t		 buflen = 128;
+
+	int			 mib[] = { CTL_KERN, KERN_PROC_ARGS,
+				    kinfo->p_pid, KERN_PROC_ARGV };
+	char			*nbuf, **argv;
+
+	if (buf == NULL) {
+		buf = malloc(buflen);
+		if (buf == NULL)
+			return (-1);
+	}
+
+	str[0] = '\0';
+	*s = str;
+
+	while (sysctl(mib, sizeofa(mib), buf, &buflen, NULL, 0) == -1) {
+		if (errno != ENOMEM) {
+			/* some errors are expected, dont get too upset */
+			return (0);
+		}
+
+		nbuf = realloc(buf, buflen + 128);
+		if (nbuf == NULL)
+			return (-1);
+
+		buf = nbuf;
+		buflen += 128;
+	}
+
+	argv = (char **)buf;
+	if (argv[0] == NULL)
+		return (0);
+
+	argv++;
+	while (*argv != NULL) {
+		strlcat(str, *argv, sizeof(str));
+		argv++;
+		if (*argv != NULL)
+			strlcat(str, " ", sizeof(str));
 	}
 
 	return (0);

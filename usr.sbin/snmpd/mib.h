@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.14 2008/03/10 11:02:32 dlg Exp $	*/
+/*	$OpenBSD: mib.h,v 1.15 2008/03/16 00:35:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -141,7 +141,25 @@
 #define MIB_hrStorageUsed		MIB_hrStorageEntry, 6
 #define MIB_hrStorageAllocationFailures	MIB_hrStorageEntry, 7
 #define MIB_hrSWRun			MIB_host, 4
+#define MIB_hrSWOSIndex			MIB_hrSWRun, 1
+#define MIB_hrSWRunTable		MIB_hrSWRun, 2
+#define MIB_hrSWRunEntry		MIB_hrSWRunTable, 1
+#define OIDIDX_hrSWRun			10
+#define OIDIDX_hrSWRunEntry		11
+#define MIB_hrSWRunIndex		MIB_hrSWRunEntry, 1
+#define MIB_hrSWRunName			MIB_hrSWRunEntry, 2
+#define MIB_hrSWRunID			MIB_hrSWRunEntry, 3
+#define MIB_hrSWRunPath			MIB_hrSWRunEntry, 4
+#define MIB_hrSWRunParameters		MIB_hrSWRunEntry, 5
+#define MIB_hrSWRunType			MIB_hrSWRunEntry, 6
+#define MIB_hrSWRunStatus		MIB_hrSWRunEntry, 7
 #define MIB_hrSWRunPerf			MIB_host, 5
+#define MIB_hrSWRunPerfTable		MIB_hrSWRunPerf, 1
+#define OIDIDX_hrSWRunPerf		10
+#define OIDIDX_hrSWRunPerfEntry		11
+#define MIB_hrSWRunPerfEntry		MIB_hrSWRunPerfTable, 1
+#define MIB_hrSWRunPerfCPU		MIB_hrSWRunPerfEntry, 1
+#define MIB_hrSWRunPerfMem		MIB_hrSWRunPerfEntry, 2
 #define MIB_hrSWInstalled		MIB_host, 6
 #define MIB_hrMIBAdminInfo		MIB_host, 7
 
@@ -433,6 +451,22 @@
 	{ MIBDECL(hrStorageSize) },			\
 	{ MIBDECL(hrStorageUsed) },			\
 	{ MIBDECL(hrStorageAllocationFailures) },	\
+	{ MIBDECL(hrSWRun) },				\
+	{ MIBDECL(hrSWOSIndex) },			\
+	{ MIBDECL(hrSWRunTable) },			\
+	{ MIBDECL(hrSWRunEntry) },			\
+	{ MIBDECL(hrSWRunIndex) },			\
+	{ MIBDECL(hrSWRunName) },			\
+	{ MIBDECL(hrSWRunID) },				\
+	{ MIBDECL(hrSWRunPath) },			\
+	{ MIBDECL(hrSWRunParameters) },			\
+	{ MIBDECL(hrSWRunType) },			\
+	{ MIBDECL(hrSWRunStatus) },			\
+	{ MIBDECL(hrSWRunPerf) },			\
+	{ MIBDECL(hrSWRunPerfTable) },			\
+	{ MIBDECL(hrSWRunPerfEntry) },			\
+	{ MIBDECL(hrSWRunPerfCPU) },			\
+	{ MIBDECL(hrSWRunPerfMem) },			\
 							\
 	{ MIBDECL(ifMIB) },				\
 	{ MIBDECL(ifMIBObjects) },			\
