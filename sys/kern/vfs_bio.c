@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.102 2007/10/21 15:54:55 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.103 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -377,6 +377,7 @@ struct buf *
 bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 {
 	struct buf *bp;
+	struct mount *mp;
 
 	bp = getblk(vp, blkno, size, 0, 0);
 
@@ -393,6 +394,20 @@ bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
 	} else if (async) {
 		brelse(bp);
+	}
+
+	mp = vp->v_type == VBLK? vp->v_specmountpoint : vp->v_mount;
+
+	/*
+	 * Collect statistics on synchronous and asynchronous reads.
+	 * Reads from block devices are charged to their associated
+	 * filesystem (if any).
+	 */
+	if (mp != NULL) {
+		if (async == 0)
+			mp->mnt_stat.f_syncreads++;
+		else
+			mp->mnt_stat.f_asyncreads++;
 	}
 
 	return (bp);

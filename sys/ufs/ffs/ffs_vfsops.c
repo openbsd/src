@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.112 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.113 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -842,6 +842,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		mp->mnt_stat.f_fsid.val[1] = fs->fs_id[1];
 	else
 		mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
@@ -1110,13 +1111,8 @@ ffs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_bavail = sbp->f_bfree - ((int64_t)fs->fs_dsize * fs->fs_minfree / 100);
 	sbp->f_files = fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-		bcopy(&mp->mnt_stat.mount_info.ufs_args,
-		    &sbp->mount_info.ufs_args, sizeof(struct ufs_args));
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	sbp->f_favail = sbp->f_ffree;
+	copy_statfs_info(sbp, mp);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.30 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: types.h,v 1.31 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -146,6 +146,8 @@ typedef	__swblk_t	swblk_t;	/* swap offset */
 typedef	__uid_t		uid_t;		/* user id */
 typedef	__useconds_t	useconds_t;	/* microseconds */
 typedef	__suseconds_t	suseconds_t;	/* microseconds (signed) */
+typedef	__fsblkcnt_t	fsblkcnt_t;	/* file system block count */
+typedef	__fsfilcnt_t	fsfilcnt_t;	/* file system file count */
 
 /*
  * XPG4.2 states that inclusion of <netinet/in.h> must pull these

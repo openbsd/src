@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.1 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: _types.h,v 1.2 2008/03/16 19:42:57 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,6 +56,8 @@ typedef	__int32_t	__swblk_t;	/* swap offset */
 typedef	__uint32_t	__uid_t;	/* user id */
 typedef	__uint32_t	__useconds_t;	/* microseconds */
 typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
+typedef __uint64_t	__fsblkcnt_t;	/* file system block count */
+typedef __uint64_t	__fsfilcnt_t;	/* file system file count */
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte

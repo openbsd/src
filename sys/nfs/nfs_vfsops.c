@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.69 2008/01/06 18:38:32 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.70 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
+#include <sys/dirent.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
@@ -145,15 +146,18 @@ nfs_statfs(mp, sbp, p)
 	if (v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_tbytes);
-		sbp->f_blocks = (u_int32_t)(tquad / (u_quad_t)NFS_FABLKSIZE);
+		sbp->f_blocks = tquad / (u_quad_t)NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_fbytes);
-		sbp->f_bfree = (u_int32_t)(tquad / (u_quad_t)NFS_FABLKSIZE);
+		sbp->f_bfree = tquad / (u_quad_t)NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_abytes);
-		sbp->f_bavail = (int32_t)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
-		sbp->f_files = (fxdr_unsigned(int32_t,
-		    sfp->sf_tfiles.nfsuquad[1]) & 0x7fffffff);
-		sbp->f_ffree = (fxdr_unsigned(int32_t,
-		    sfp->sf_ffiles.nfsuquad[1]) & 0x7fffffff);
+		sbp->f_bavail = (quad_t)tquad / (quad_t)NFS_FABLKSIZE;
+
+		tquad = fxdr_hyper(&sfp->sf_tfiles);
+		sbp->f_files = tquad;
+		tquad = fxdr_hyper(&sfp->sf_ffiles);
+		sbp->f_ffree = tquad;
+		sbp->f_favail = tquad;
+		sbp->f_namemax = MAXNAMLEN;
 	} else {
 		sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
 		sbp->f_blocks = fxdr_unsigned(int32_t, sfp->sf_blocks);
@@ -162,13 +166,7 @@ nfs_statfs(mp, sbp, p)
 		sbp->f_files = 0;
 		sbp->f_ffree = 0;
 	}
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-		bcopy(&mp->mnt_stat.mount_info.nfs_args,
-		    &sbp->mount_info.nfs_args, sizeof(struct nfs_args));
-	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	m_freem(mrep);
 nfsmout: 
 	vrele(vp);

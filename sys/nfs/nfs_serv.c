@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.48 2008/01/06 17:38:23 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.49 2008/03/16 19:42:57 otto Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -3061,12 +3061,11 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		tval = (u_quad_t)sf->f_bavail;
 		tval *= (u_quad_t)sf->f_bsize;
 		txdr_hyper(tval, &sfp->sf_abytes);
-		sfp->sf_tfiles.nfsuquad[0] = 0;
-		sfp->sf_tfiles.nfsuquad[1] = txdr_unsigned(sf->f_files);
-		sfp->sf_ffiles.nfsuquad[0] = 0;
-		sfp->sf_ffiles.nfsuquad[1] = txdr_unsigned(sf->f_ffree);
-		sfp->sf_afiles.nfsuquad[0] = 0;
-		sfp->sf_afiles.nfsuquad[1] = txdr_unsigned(sf->f_ffree);
+		tval = (u_quad_t)sf->f_files;
+		txdr_hyper(tval, &sfp->sf_tfiles);
+		tval = (u_quad_t)sf->f_ffree;
+		txdr_hyper(tval, &sfp->sf_ffiles);
+		txdr_hyper(tval, &sfp->sf_afiles);
 		sfp->sf_invarsec = 0;
 	} else {
 		sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);

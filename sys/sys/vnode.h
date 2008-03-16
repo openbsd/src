@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.90 2007/12/27 13:59:12 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.91 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ struct mount;
 struct nameidata;
 struct proc;
 struct stat;
+struct statfs;
 struct ucred;
 struct uio;
 struct vattr;
@@ -371,6 +372,7 @@ int	vrecycle(struct vnode *, struct proc *);
 void	vrele(struct vnode *);
 void	vref(struct vnode *);
 void	vprint(char *, struct vnode *);
+void	copy_statfs_info(struct statfs *, const struct mount *);
 
 /* vfs_getcwd.c */
 int vfs_getcwd_scandir(struct vnode **, struct vnode **, char **, char *,

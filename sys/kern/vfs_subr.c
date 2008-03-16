@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.161 2007/12/13 18:22:36 blambert Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.162 2008/03/16 19:42:57 otto Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2228,19 +2228,22 @@ vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
             vfc->vfc_vfsops, vfc->vfc_name, vfc->vfc_typenum,
 	    vfc->vfc_refcount, vfc->vfc_flags);
 
-	(*pr)("statvfs cache: bsize %x iosize %x\nblocks %u free %u avail %u\n",
+	(*pr)("statvfs cache: bsize %x iosize %x\nblocks %llu free %llu avail %lld\n",
 	    mp->mnt_stat.f_bsize, mp->mnt_stat.f_iosize, mp->mnt_stat.f_blocks,
 	    mp->mnt_stat.f_bfree, mp->mnt_stat.f_bavail);
 
-	(*pr)("  files %u ffiles %u\n", mp->mnt_stat.f_files,
-	    mp->mnt_stat.f_ffree);
+	(*pr)("  files %llu ffiles %llu favail $lld\n", mp->mnt_stat.f_files,
+	    mp->mnt_stat.f_ffree, mp->mnt_stat.f_favail);
 
 	(*pr)("  f_fsidx {0x%x, 0x%x} owner %u ctime 0x%x\n",
 	    mp->mnt_stat.f_fsid.val[0], mp->mnt_stat.f_fsid.val[1],
 	    mp->mnt_stat.f_owner, mp->mnt_stat.f_ctime);
 
- 	(*pr)("  syncwrites %lu asyncwrites = %lu\n",
+ 	(*pr)("  syncwrites %llu asyncwrites = %llu\n",
 	    mp->mnt_stat.f_syncwrites, mp->mnt_stat.f_asyncwrites);
+
+ 	(*pr)("  syncreads %llu asyncreads = %llu\n",
+	    mp->mnt_stat.f_syncreads, mp->mnt_stat.f_asyncreads);
 
 	(*pr)("  fstype \"%s\" mnton \"%s\" mntfrom \"%s\"\n",
 	    mp->mnt_stat.f_fstypename, mp->mnt_stat.f_mntonname,
@@ -2273,3 +2276,28 @@ vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
 	}
 }
 #endif /* DDB */
+
+void
+copy_statfs_info(struct statfs *sbp, const struct mount *mp)
+{
+	const struct statfs *mbp;
+
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+
+	if (sbp == (mbp = &mp->mnt_stat))
+		return;
+
+	sbp->f_fsid = mbp->f_fsid;
+	sbp->f_owner = mbp->f_owner;
+	sbp->f_flags = mbp->f_flags;
+	sbp->f_syncwrites = mbp->f_syncwrites;
+	sbp->f_asyncwrites = mbp->f_asyncwrites;
+	sbp->f_syncreads = mbp->f_syncreads;
+	sbp->f_asyncreads = mbp->f_asyncreads;
+	sbp->f_namemax = mbp->f_namemax;
+	bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
+	bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+	bcopy(&mp->mnt_stat.mount_info.ufs_args, &sbp->mount_info.ufs_args,
+	    sizeof(struct ufs_args));
+}
+
