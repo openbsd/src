@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.48 2007/12/22 17:37:36 chl Exp $	*/
+/*	$OpenBSD: df.c,v 1.49 2008/03/16 20:04:35 otto Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.48 2007/12/22 17:37:36 chl Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.49 2008/03/16 20:04:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ void	 posixprint(struct statfs *, long, int);
 int 	 bread(int, off_t, void *, int);
 void	 usage(void);
 void	 prthumanval(long long);
-void	 prthuman(struct statfs *sfsp, unsigned long);
+void	 prthuman(struct statfs *sfsp, unsigned long long);
 
 int		raw_df(char *, struct statfs *);
 extern int	ffs_df(int, char *, struct statfs *);
@@ -307,11 +307,11 @@ prthumanval(long long bytes)
 }
 
 void
-prthuman(struct statfs *sfsp, unsigned long used)
+prthuman(struct statfs *sfsp, unsigned long long used)
 {
-	prthumanval((long long)sfsp->f_blocks * (long long)sfsp->f_bsize);
-	prthumanval((long long)used * (long long)sfsp->f_bsize);
-	prthumanval((long long)sfsp->f_bavail * (long long)sfsp->f_bsize);
+	prthumanval(sfsp->f_blocks * sfsp->f_bsize);
+	prthumanval(used * sfsp->f_bsize);
+	prthumanval(sfsp->f_bavail * sfsp->f_bsize);
 }
 
 /*
@@ -328,7 +328,7 @@ prthuman(struct statfs *sfsp, unsigned long used)
 void
 prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 {
-	u_int32_t used, inodes;
+	u_int64_t used, inodes;
 	int64_t availblks;
 
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
@@ -337,7 +337,7 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 	if (hflag)
 		prthuman(sfsp, used);
 	else
-		(void)printf(" %*u %9u %9d", headerlen,
+		(void)printf(" %*llu %9llu %9lld", headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 		    fsbtoblk(used, sfsp->f_bsize, blocksize),
 		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
@@ -346,7 +346,7 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7u %7u %5.0f%% ", used, sfsp->f_ffree,
+		(void)printf(" %7llu %7llu %5.0f%% ", used, sfsp->f_ffree,
 		   inodes == 0 ? 100.0 : (double)used / (double)inodes * 100.0);
 	} else
 		(void)printf("  ");
@@ -400,7 +400,7 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 	int blocksize;
 	char *blockstr;
 	struct statfs *sfsp;
-	long used, avail;
+	long long used, avail;
 	double percentused;
 
 	if (kflag) {
@@ -424,7 +424,7 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 		else
 			percentused = (double)used / (double)avail * 100.0;
 
-		(void) printf ("%-*.*s %*d %10ld %11d %5.0f%%   %s\n",
+		(void) printf ("%-*.*s %*lld %10lld %11lld %5.0f%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
 			(int)strlen(blockstr),
 			fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
