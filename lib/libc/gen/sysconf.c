@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.8 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.9 2008/03/16 19:56:27 kettenis Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/vmmeter.h>
 
 #include <errno.h>
 #include <unistd.h>
@@ -198,6 +199,31 @@ yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 		    KERN_SEMINFO_SEMMNS : KERN_SEMINFO_SEMVMX;
 		namelen = 3;
 		break;
+
+/* Extensions */
+	case _SC_PHYS_PAGES:
+	{
+		int64_t physmem;
+
+		mib[0] = CTL_HW;
+		mib[1] = HW_PHYSMEM64;
+		len = sizeof(physmem);
+		if (sysctl(mib, namelen, &physmem, &len, NULL, 0) == -1)
+			return (-1);
+		return (physmem / getpagesize());
+	}
+	case _SC_AVPHYS_PAGES:
+	{
+		struct vmtotal vmtotal;
+
+		mib[0] = CTL_VM;
+		mib[1] = VM_METER;
+		len = sizeof(vmtotal);
+		if (sysctl(mib, namelen, &vmtotal, &len, NULL, 0) == -1)
+			return (-1);
+		return (vmtotal.t_free);
+	}
+
 	default:
 		errno = EINVAL;
 		return (-1);
