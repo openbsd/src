@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.31 2008/03/16 15:44:18 mpf Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.32 2008/03/16 16:55:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -737,11 +737,11 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 static void
 sig_pass_to_chld(int sig)
 {
-	int oerrno = errno;
+	int save_errno = errno;
 
 	if (child_pid != -1)
 		kill(child_pid, sig);
-	errno = oerrno;
+	errno = save_errno;
 }
 
 /* When child dies, move into the shutdown state */
@@ -749,6 +749,7 @@ sig_pass_to_chld(int sig)
 static void
 sig_got_chld(int sig)
 {
+	int save_errno = errno;
 	pid_t	pid;
 
 	do {
@@ -756,6 +757,7 @@ sig_got_chld(int sig)
 		if (pid == child_pid && cur_state < STATE_QUIT)
 			cur_state = STATE_QUIT;
 	} while (pid > 0 || (pid == -1 && errno == EINTR));
+	errno = save_errno;
 }
 
 /* Read all data or return 1 for error.  */
