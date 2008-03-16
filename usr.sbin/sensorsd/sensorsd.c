@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.39 2008/03/15 01:08:08 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.40 2008/03/16 03:07:03 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,6 @@
 
 #define	RFBUFSIZ	28	/* buffer size for print_sensor */
 #define	RFBUFCNT	4	/* ring buffers */
-#define REPORT_PERIOD	60	/* report every n seconds */
 #define CHECK_PERIOD	20	/* check every n seconds */
 
 enum sensorsd_s_status {
@@ -76,8 +75,8 @@ struct sdlim_t {
 
 void		 usage(void);
 struct sdlim_t	*create_sdlim(struct sensordev *);
-void		 check(void);
-void		 check_sdlim(struct sdlim_t *);
+void		 check(time_t);
+void		 check_sdlim(struct sdlim_t *, time_t);
 void		 execute(char *);
 void		 report(time_t);
 void		 report_sdlim(struct sdlim_t *, time_t);
@@ -97,7 +96,7 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d] [-c check] [-r report]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-c check]\n", __progname);
 	exit(1);
 }
 
@@ -107,14 +106,13 @@ main(int argc, char *argv[])
 	struct sensordev sensordev;
 	struct sdlim_t	*sdlim;
 	size_t		 sdlen = sizeof(sensordev);
-	time_t		 next_report, last_report = 0, next_check;
+	time_t		 last_report = 0, this_check;
 	int		 mib[3], dev;
-	int		 sleeptime, sensor_cnt = 0, ch;
+	int		 sensor_cnt = 0, ch;
 	int		 check_period = CHECK_PERIOD;
-	int		 report_period = REPORT_PERIOD;
 	const char	*errstr;
 
-	while ((ch = getopt(argc, argv, "c:dr:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d")) != -1) {
 		switch (ch) {
 		case 'c':
 			check_period = strtonum(optarg, 1, 600, &errstr);
@@ -123,11 +121,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
-			break;
-		case 'r':
-			report_period = strtonum(optarg, 1, 600, &errstr);
-			if (errstr)
-				errx(1, "report %s", errstr);
 			break;
 		default:
 			usage();
@@ -167,29 +160,19 @@ main(int argc, char *argv[])
 
 	syslog(LOG_INFO, "startup, system has %d sensors", sensor_cnt);
 
-	next_check = next_report = time(NULL);
-
 	for (;;) {
 		if (reload) {
 			parse_config(configfile);
 			syslog(LOG_INFO, "configuration reloaded");
 			reload = 0;
 		}
-		if (next_check <= time(NULL)) {
-			check();
-			next_check = time(NULL) + check_period;
-		}
-		if (next_report <= time(NULL)) {
-			report(last_report);
-			last_report = next_report;
-			next_report = time(NULL) + report_period;
-		}
-		if (next_report < next_check)
-			sleeptime = next_report - time(NULL);
-		else
-			sleeptime = next_check - time(NULL);
-		if (sleeptime > 0)
-			sleep(sleeptime);
+		this_check = time(NULL);
+		if (!(last_report < this_check))
+			this_check = last_report + 1;
+		check(this_check);
+		report(last_report);
+		last_report = this_check;
+		sleep(check_period);
 	}
 }
 
@@ -237,16 +220,16 @@ create_sdlim(struct sensordev *snsrdev)
 }
 
 void
-check(void)
+check(time_t this_check)
 {
 	struct sdlim_t	*sdlim;
 
 	TAILQ_FOREACH(sdlim, &sdlims, entries)
-		check_sdlim(sdlim);
+		check_sdlim(sdlim, this_check);
 }
 
 void
-check_sdlim(struct sdlim_t *sdlim)
+check_sdlim(struct sdlim_t *sdlim, time_t this_check)
 {
 	struct sensor		 sensor;
 	struct limits_t		*limit;
@@ -279,7 +262,7 @@ check_sdlim(struct sdlim_t *sdlim)
 					limit->last_val = sensor.value;
 					limit->astatus2 =
 					    limit->astatus = newastatus;
-					limit->astatus_changed = time(NULL);
+					limit->astatus_changed = this_check;
 				}
 			}
 		}
@@ -304,7 +287,7 @@ check_sdlim(struct sdlim_t *sdlim)
 					limit->last_val = sensor.value;
 					limit->ustatus2 =
 					    limit->ustatus = newustatus;
-					limit->ustatus_changed = time(NULL);
+					limit->ustatus_changed = this_check;
 				}
 			}
 		}

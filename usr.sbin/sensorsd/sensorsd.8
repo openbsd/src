@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.18 2007/11/28 19:20:05 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.19 2008/03/16 03:07:03 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2007 $
+.Dd $Mdocdate: March 16 2008 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
@@ -26,7 +26,6 @@
 .Nm sensorsd
 .Op Fl d
 .Op Fl c Ar check
-.Op Fl r Ar report
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,15 +62,14 @@ The options are as follows:
 Check sensors every
 .Ar check
 seconds.
+The shortest reporting period for state changes
+will be three times this value.
+The default is 20.
 .It Fl d
 Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground.
-.It Fl r Ar report
-Report changes in sensor status every
-.Ar report
-seconds.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
@@ -99,4 +97,4 @@ an additional delay in status reporting and command execution,
 e.g. one may notice that
 .Nm
 makes its initial report about the state of monitored sensors
-not immediately, but either 1 or 2 minutes after it is being started up.
+not immediately, but about 60 seconds after it is being started up.
