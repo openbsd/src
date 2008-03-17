@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.418 2008/02/18 16:31:55 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.419 2008/03/17 23:17:22 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2271,7 +2271,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	if (i386_use_fxsave)
 		tf->tf_eip += &sigcode_xmm - &sigcode;
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
