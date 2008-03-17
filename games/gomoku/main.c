@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2007/04/02 14:33:37 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2008/03/17 09:17:56 sobrado Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 2007/04/02 14:33:37 jmc Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 2008/03/17 09:17:56 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 		case 'h':
 		default:
 			fprintf(stderr,
-			    "usage:  %s [-bcdu] [-D debugfile] [inputfile]\n",
+			    "usage: %s [-bcdu] [-D debugfile] [inputfile]\n",
 			    prog);
 			exit(1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.17 2007/09/06 20:50:55 chl Exp $	*/
+/*	$OpenBSD: factor.c,v 1.18 2008/03/17 09:17:56 sobrado Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.17 2007/09/06 20:50:55 chl Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.18 2008/03/17 09:17:56 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: factor.c,v 1.17 2007/09/06 20:50:55 chl Exp $";
  *   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
  *
  * usage:
- *	factor [number] ...
+ *	factor [number ...]
  *
  * The form of the output is:
  *
@@ -296,6 +296,6 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: factor [value ...]\n");
+	(void)fprintf(stderr, "usage: factor [number ...]\n");
 	exit (1);
 }

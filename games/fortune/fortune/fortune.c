@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.25 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.26 2008/03/17 09:17:56 sobrado Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.25 2007/09/10 14:29:53 tobias Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.26 2008/03/17 09:17:56 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -1373,7 +1373,7 @@ matches_in_list(FILEDESC *list)
 void
 usage(void)
 {
-	(void) fprintf(stderr, "fortune [-ae");
+	(void) fprintf(stderr, "usage: fortune [-ae");
 #ifdef	DEBUG
 	(void) fprintf(stderr, "D");
 #endif	/* DEBUG */
@@ -1385,6 +1385,6 @@ usage(void)
 #ifndef	NO_REGEX
 	(void) fprintf(stderr, " [-m pattern]");
 #endif	/* NO_REGEX */
-	(void) fprintf(stderr, " [[#%%] file/directory/all]\n");
+	(void) fprintf(stderr, " [[N%%] file/directory/all]\n");
 	exit(1);
 }
