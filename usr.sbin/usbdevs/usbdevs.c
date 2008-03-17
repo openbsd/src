@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.14 2008/02/25 18:57:32 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.15 2008/03/17 16:30:05 sobrado Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -65,8 +65,7 @@ extern char *__progname;
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-dv] [-a addr] [-f dev]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n", __progname);
 	exit(1);
 }
 
