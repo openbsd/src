@@ -1617,6 +1617,7 @@
 ./usr/share/man/cat4/sparc64/pmc.0
 ./usr/share/man/cat4/sparc64/power.0
 ./usr/share/man/cat4/sparc64/ppm.0
+./usr/share/man/cat4/sparc64/prtc.0
 ./usr/share/man/cat4/sparc64/psycho.0
 ./usr/share/man/cat4/sparc64/pyro.0
 ./usr/share/man/cat4/sparc64/qe.0
@@ -1633,8 +1634,9 @@
 ./usr/share/man/cat4/sparc64/upa.0
 ./usr/share/man/cat4/sparc64/uperf.0
 ./usr/share/man/cat4/sparc64/vbus.0
-./usr/share/man/cat4/sparc64/vcons.4
+./usr/share/man/cat4/sparc64/vcons.0
 ./usr/share/man/cat4/sparc64/vigra.0
+./usr/share/man/cat4/sparc64/vpci.0
 ./usr/share/man/cat4/sparc64/vrtc.0
 ./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0

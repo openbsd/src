@@ -1505,6 +1505,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdarg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/swap.ph

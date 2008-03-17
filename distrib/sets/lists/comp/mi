@@ -1482,6 +1482,7 @@
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
 ./usr/include/sys/stat.h
+./usr/include/sys/statvfs.h
 ./usr/include/sys/stdarg.h
 ./usr/include/sys/stdint.h
 ./usr/include/sys/swap.h
@@ -2898,7 +2899,9 @@
 ./usr/share/man/cat3/alphasort.0
 ./usr/share/man/cat3/arc4random.0
 ./usr/share/man/cat3/arc4random_addrandom.0
+./usr/share/man/cat3/arc4random_buf.0
 ./usr/share/man/cat3/arc4random_stir.0
+./usr/share/man/cat3/arc4random_uniform.0
 ./usr/share/man/cat3/arg_printusage.0
 ./usr/share/man/cat3/asctime.0
 ./usr/share/man/cat3/asctime_r.0
