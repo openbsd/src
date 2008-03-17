@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.18 2007/09/02 15:19:40 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.19 2008/03/17 20:30:17 sobrado Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.18 2007/09/02 15:19:40 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.19 2008/03/17 20:30:17 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -509,9 +509,9 @@ static void
 usage(void)
 {
 #ifdef	COMPAT
-	fprintf(stderr, "Usage: quot [-nfcvha] [filesystem ...]\n");
+	fprintf(stderr, "usage: quot [-nfcvha] [filesystem ...]\n");
 #else	/* COMPAT */
-	fprintf(stderr, "Usage: quot [ -acfhknv ] [ filesystem ... ]\n");
+	fprintf(stderr, "usage: quot [-acfhknv] [filesystem ...]\n");
 #endif	/* COMPAT */
 	exit(1);
 }
