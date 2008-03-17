@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.24 2008/03/17 13:56:17 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.25 2008/03/17 14:40:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1076,7 +1076,8 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
-		if (sysctl(mib, sizeof(mib), &sensordev, &len, NULL, 0) == -1) {
+		if (sysctl(mib, sizeofa(mib),
+		    &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				return (-1);
 			continue;
