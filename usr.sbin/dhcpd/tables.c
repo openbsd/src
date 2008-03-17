@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.5 2007/10/29 16:51:02 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.6 2008/03/17 00:17:52 dlg Exp $	*/
 
 /* Tables of information... */
 
@@ -314,7 +314,7 @@ struct option dhcp_options[256] = {
 	{ "option-249", "X",				&dhcp_universe, 249 },
 	{ "option-250", "X",				&dhcp_universe, 250 },
 	{ "option-251", "X",				&dhcp_universe, 251 },
-	{ "option-252", "X",				&dhcp_universe, 252 },
+	{ "autoproxy-script", "t",			&dhcp_universe, 252 },
 	{ "option-253", "X",				&dhcp_universe, 253 },
 	{ "option-254", "X",				&dhcp_universe, 254 },
 	{ "option-end", "e",				&dhcp_universe, 255 },
