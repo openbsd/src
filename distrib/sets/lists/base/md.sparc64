@@ -1541,6 +1541,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/float.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/frame.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fsr.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/hypervisor.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/idprom.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieee.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieeefp.ph
