@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.9 2005/01/04 21:14:35 espie Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.10 2008/03/17 23:10:21 kettenis Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -143,12 +143,5 @@ int kdb_trap(int, struct trapframe64 *);
  */
 #define	DB_ELF_SYMBOLS
 #define DB_ELFSIZE	64
-
-/*
- * KGDB definitions
- */
-typedef u_long		kgdb_reg_t;
-#define KGDB_NUMREGS	72
-#define KGDB_BUFLEN	1024
 
 #endif	/* _SPARC_DB_MACHDEP_H_ */

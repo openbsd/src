@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.113 2008/03/13 20:37:46 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.114 2008/03/17 23:10:21 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -283,16 +283,6 @@ _C_LABEL(data_start):					! Start of data segment
 _C_LABEL(u0):	.xword	0
 estack0:	.xword	0
 
-#ifdef KGDB
-/*
- * Another item that must be aligned, easiest to put it here.
- */
-KGDB_STACK_SIZE = 2048
-	.globl	_C_LABEL(kgdb_stack)
-_C_LABEL(kgdb_stack):
-	.space	KGDB_STACK_SIZE		! hope this is enough
-#endif	/* KGDB */
-
 #ifdef DEBUG
 /*
  * This stack is used when we detect kernel stack corruption.
@@ -408,15 +398,6 @@ _C_LABEL(cold):
 	.macro STRAP type
 	VTRAP \type, slowtrap
 	.endm
-
-/* breakpoint acts differently under kgdb */
-#ifdef KGDB
-#define	BPT		VTRAP T_BREAKPOINT, bpt
-#define	BPT_KGDB_EXEC	VTRAP T_KGDB_EXEC, bpt
-#else	/* KGDB */
-#define	BPT		TRAP T_BREAKPOINT
-#define	BPT_KGDB_EXEC	TRAP T_KGDB_EXEC
-#endif	/* KGDB */
 
 #define	SYSCALL		VTRAP 0x100, syscall_setup
 #define	ZS_INTERRUPT4U	HARDINT4U 12
@@ -778,11 +759,11 @@ TABLE/**/ufillk:
 	UTRAP 0x0fc; TA32	! 0x0fc fill_7_other
 TABLE/**/syscall:
 	SYSCALL			! 0x100 = sun syscall
-	BPT			! 0x101 = pseudo breakpoint instruction
+	TRAP T_BREAKPOINT	! 0x101 = pseudo breakpoint instruction
 	STRAP 0x102; STRAP 0x103; STRAP 0x104; STRAP 0x105; STRAP 0x106; STRAP 0x107
 	SYSCALL			! 0x108 = svr4 syscall
 	SYSCALL			! 0x109 = bsd syscall
-	BPT_KGDB_EXEC		! 0x10a = enter kernel gdb on kernel startup
+	TRAP T_KGDB_EXEC	! 0x10a = enter kernel gdb on kernel startup
 	STRAP 0x10b; STRAP 0x10c; STRAP 0x10d; STRAP 0x10e; STRAP 0x10f;
 	STRAP 0x110; STRAP 0x111; STRAP 0x112; STRAP 0x113; STRAP 0x114; STRAP 0x115; STRAP 0x116; STRAP 0x117
 	STRAP 0x118; STRAP 0x119; STRAP 0x11a; STRAP 0x11b; STRAP 0x11c; STRAP 0x11d; STRAP 0x11e; STRAP 0x11f
@@ -937,11 +918,11 @@ TABLE/**/kfill:
 	UTRAP 0x0fc; TA32	! 0x0fc fill_7_other
 TABLE/**/syscall:
 	SYSCALL			! 0x100 = sun syscall
-	BPT			! 0x101 = pseudo breakpoint instruction
+	TRAP T_BREAKPOINT	! 0x101 = pseudo breakpoint instruction
 	STRAP 0x102; STRAP 0x103; STRAP 0x104; STRAP 0x105; STRAP 0x106; STRAP 0x107
 	SYSCALL			! 0x108 = svr4 syscall
 	SYSCALL			! 0x109 = bsd syscall
-	BPT_KGDB_EXEC		! 0x10a = enter kernel gdb on kernel startup
+	TRAP T_KGDB_EXEC	! 0x10a = enter kernel gdb on kernel startup
 	STRAP 0x10b; STRAP 0x10c; STRAP 0x10d; STRAP 0x10e; STRAP 0x10f;
 	STRAP 0x110; STRAP 0x111; STRAP 0x112; STRAP 0x113; STRAP 0x114; STRAP 0x115; STRAP 0x116; STRAP 0x117
 	STRAP 0x118; STRAP 0x119; STRAP 0x11a; STRAP 0x11b; STRAP 0x11c; STRAP 0x11d; STRAP 0x11e; STRAP 0x11f
@@ -2799,187 +2780,6 @@ breakpoint:
 	stb	%l6, [%l0+DBR_TL]
 	dec	1, %g7
 #endif	/* 0 */
-
-/*
- * I will not touch any of the DDB or KGDB stuff until I know what's going
- * on with the symbol table.  This is all still v7/v8 code and needs to be fixed.
- */
-#ifdef KGDB
-/*
- * bpt is entered on all breakpoint traps.
- * If this is a kernel breakpoint, we do not want to call trap().
- * Among other reasons, this way we can set breakpoints in trap().
- */
-bpt:
-	set	TSTATE_PRIV, %l4
-	andcc	%l4, %l0, %g0		! breakpoint from kernel?
-	bz	slowtrap		! no, go do regular trap
-	 nop
-
-	/*
-	 * Build a trap frame for kgdb_trap_glue to copy.
-	 * Enable traps but set ipl high so that we will not
-	 * see interrupts from within breakpoints.
-	 */
-	save	%sp, -CCFSZ-TF_SIZE, %sp		! allocate a trap frame
-	TRAP_SETUP -CCFSZ-TF_SIZE
-	or	%l0, PSR_PIL, %l4	! splhigh()
-	wr	%l4, 0, %psr		! the manual claims that this
-	wr	%l4, PSR_ET, %psr	! song and dance is necessary
-	std	%l0, [%sp + CCFSZ + 0]	! tf.tf_psr, tf.tf_pc
-	mov	%l3, %o0		! trap type arg for kgdb_trap_glue
-	rd	%y, %l3
-	std	%l2, [%sp + CCFSZ + 8]	! tf.tf_npc, tf.tf_y
-	rd	%wim, %l3
-	st	%l3, [%sp + CCFSZ + 16]	! tf.tf_wim (a kgdb-only r/o field)
-	st	%g1, [%sp + CCFSZ + 20]	! tf.tf_global[1]
-	std	%g2, [%sp + CCFSZ + 24]	! etc
-	std	%g4, [%sp + CCFSZ + 32]
-	std	%g6, [%sp + CCFSZ + 40]
-	std	%i0, [%sp + CCFSZ + 48]	! tf.tf_in[0..1]
-	std	%i2, [%sp + CCFSZ + 56]	! etc
-	std	%i4, [%sp + CCFSZ + 64]
-	std	%i6, [%sp + CCFSZ + 72]
-
-	/*
-	 * Now call kgdb_trap_glue(); if it returns, call trap().
-	 */
-	mov	%o0, %l3		! gotta save trap type
-	call	_C_LABEL(kgdb_trap_glue)		! kgdb_trap_glue(type, &trapframe)
-	 add	%sp, CCFSZ, %o1		! (&trapframe)
-
-	/*
-	 * Use slowtrap to call trap---but first erase our tracks
-	 * (put the registers back the way they were).
-	 */
-	mov	%l3, %o0		! slowtrap will need trap type
-	ld	[%sp + CCFSZ + 12], %l3
-	wr	%l3, 0, %y
-	ld	[%sp + CCFSZ + 20], %g1
-	ldd	[%sp + CCFSZ + 24], %g2
-	ldd	[%sp + CCFSZ + 32], %g4
-	b	Lslowtrap_reenter
-	 ldd	[%sp + CCFSZ + 40], %g6
-
-/*
- * Enter kernel breakpoint.  Write all the windows (not including the
- * current window) into the stack, so that backtrace works.  Copy the
- * supplied trap frame to the kgdb stack and switch stacks.
- *
- * kgdb_trap_glue(type, tf0)
- *	int type;
- *	struct trapframe *tf0;
- */
-	.globl	_C_LABEL(kgdb_trap_glue)
-_C_LABEL(kgdb_trap_glue):
-	save	%sp, -CCFSZ, %sp
-
-	flushw				! flush all windows
-	mov	%sp, %l4		! %l4 = current %sp
-
-	/* copy trapframe to top of kgdb stack */
-	set	_C_LABEL(kgdb_stack) + KGDB_STACK_SIZE - 80, %l0
-					! %l0 = tfcopy -> end_of_kgdb_stack
-	mov	80, %l1
-1:	ldd	[%i1], %l2
-	inc	8, %i1
-	deccc	8, %l1
-	std	%l2, [%l0]
-	bg	1b
-	 inc	8, %l0
-
-#ifdef DEBUG
-	/* save old red zone and then turn it off */
-	sethi	%hi(_C_LABEL(redzone)), %l7
-	ld	[%l7 + %lo(_C_LABEL(redzone))], %l6
-	st	%g0, [%l7 + %lo(_C_LABEL(redzone))]
-#endif	/* DEBUG */
-	/* switch to kgdb stack */
-	add	%l0, -CCFSZ-TF_SIZE, %sp
-
-	/* if (kgdb_trap(type, tfcopy)) kgdb_rett(tfcopy); */
-	mov	%i0, %o0
-	call	_C_LABEL(kgdb_trap)
-	add	%l0, -80, %o1
-	tst	%o0
-	bnz,a	kgdb_rett
-	 add	%l0, -80, %g1
-
-	/*
-	 * kgdb_trap() did not handle the trap at all so the stack is
-	 * still intact.  A simple `restore' will put everything back,
-	 * after we reset the stack pointer.
-	 */
-	mov	%l4, %sp
-#ifdef DEBUG
-	st	%l6, [%l7 + %lo(_C_LABEL(redzone))]	! restore red zone
-#endif	/* DEBUG */
-	ret
-	 restore
-
-/*
- * Return from kgdb trap.  This is sort of special.
- *
- * We know that kgdb_trap_glue wrote the window above it, so that we will
- * be able to (and are sure to have to) load it up.  We also know that we
- * came from kernel land and can assume that the %fp (%i6) we load here
- * is proper.  We must also be sure not to lower ipl (it is at splhigh())
- * until we have traps disabled, due to the SPARC taking traps at the
- * new ipl before noticing that PSR_ET has been turned off.  We are on
- * the kgdb stack, so this could be disastrous.
- *
- * Note that the trapframe argument in %g1 points into the current stack
- * frame (current window).  We abandon this window when we move %g1->tf_psr
- * into %psr, but we will not have loaded the new %sp yet, so again traps
- * must be disabled.
- */
-kgdb_rett:
-	rd	%psr, %g4		! turn off traps
-	wr	%g4, PSR_ET, %psr
-	/* use the three-instruction delay to do something useful */
-	ld	[%g1], %g2		! pick up new %psr
-	ld	[%g1 + 12], %g3		! set %y
-	wr	%g3, 0, %y
-#ifdef DEBUG
-	st	%l6, [%l7 + %lo(_C_LABEL(redzone))] ! and restore red zone
-#endif	/* DEBUG */
-	wr	%g0, 0, %wim		! enable window changes
-	nop; nop; nop
-	/* now safe to set the new psr (changes CWP, leaves traps disabled) */
-	wr	%g2, 0, %psr		! set rett psr (including cond codes)
-	/* 3 instruction delay before we can use the new window */
-/*1*/	ldd	[%g1 + 24], %g2		! set new %g2, %g3
-/*2*/	ldd	[%g1 + 32], %g4		! set new %g4, %g5
-/*3*/	ldd	[%g1 + 40], %g6		! set new %g6, %g7
-
-	/* now we can use the new window */
-	mov	%g1, %l4
-	ld	[%l4 + 4], %l1		! get new pc
-	ld	[%l4 + 8], %l2		! get new npc
-	ld	[%l4 + 20], %g1		! set new %g1
-
-	/* set up returnee's out registers, including its %sp */
-	ldd	[%l4 + 48], %i0
-	ldd	[%l4 + 56], %i2
-	ldd	[%l4 + 64], %i4
-	ldd	[%l4 + 72], %i6
-
-	/* load returnee's window, making the window above it be invalid */
-	restore
-	restore	%g0, 1, %l1		! move to inval window and set %l1 = 1
-	rd	%psr, %l0
-	srl	%l1, %l0, %l1
-	wr	%l1, 0, %wim		! %wim = 1 << (%psr & 31)
-	sethi	%hi(CPCB), %l1
-	ldx	[%l1 + %lo(CPCB)], %l1
-	and	%l0, 31, %l0		! CWP = %psr & 31;
-	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = CWP;
-	save	%g0, %g0, %g0		! back to window to reload
-	LOADWIN(%sp)
-	save	%g0, %g0, %g0		! back to trap window
-	/* note, we have not altered condition codes; safe to just rett */
-	RETT
-#endif	/* KGDB */
 
 /*
  * syscall_setup() builds a trap frame and calls syscall().

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.81 2008/03/14 17:04:48 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.82 2008/03/17 23:10:21 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -96,10 +96,6 @@ int printspl = 0;
 int	stdinnode;	/* node ID of ROM's console input device */
 int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
-
-#ifdef KGDB
-extern	int kgdb_debug_panic;
-#endif
 
 static	int rootnode;
 char platform_type[64];
@@ -260,6 +256,9 @@ bootstrap(nctx)
 	extern int end;	/* End of kernel */
 	int ncpus;
 
+	/* Initialize the PROM console so printf will not panic. */
+	(*cn_tab->cn_init)(cn_tab);
+
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
 	 * We can do this because ddb_init() does not allocate anything,
@@ -269,12 +268,6 @@ bootstrap(nctx)
 	 * By doing this first and installing the OBP callbacks
 	 * we get to do symbolic debugging of pmap_bootstrap().
 	 */
-#ifdef KGDB
-/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
-	zs_kgdb_init();		/* XXX */
-#endif
-	/* Initialize the PROM console so printf will not panic */
-	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
@@ -427,10 +420,7 @@ bootpath_build()
 
 		/* specialties */
 		if (*cp == 'd') {
-#if defined(KGDB)
-			kgdb_debug_panic = 1;
-			kgdb_connect(1);
-#elif defined(DDB)
+#if defined(DDB)
 			Debugger();
 #else
 			printf("kernel has no debugger\n");

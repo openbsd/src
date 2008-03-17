@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2008/03/15 22:05:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2008/03/17 23:10:21 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -255,19 +255,10 @@ void	fpusave_proc(struct proc *, int);
 int	cnrom(void);
 /* zs.c */
 void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
-#ifdef KGDB
-void zs_kgdb_init(void);
-#endif
 /* fb.c */
 void	fb_unblank(void);
 /* tda.c */
 void	tda_full_blast(void);
-/* kgdb_stub.c */
-#ifdef KGDB
-void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
-void kgdb_connect(int);
-void kgdb_panic(void);
-#endif
 /* emul.c */
 int	fixalign(struct proc *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
