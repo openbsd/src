@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.19 2004/02/04 21:54:05 jmc Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.20 2008/03/17 16:29:25 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.19 $"
+#ident "$Revision: 1.20 $"
 #endif
 
 #include "timedc.h"
@@ -188,7 +188,7 @@ clockdiff(int argc, char *argv[])
 	int measure_status;
 
 	if (argc < 2)  {
-		printf("Usage: clockdiff host ... \n");
+		printf("usage: clockdiff host ...\n");
 		return;
 	}
 
@@ -296,7 +296,7 @@ msite(int argc, char *argv[])
 	char *tgtname;
 
 	if (argc < 1) {
-		printf("Usage: msite [hostname]\n");
+		printf("usage: msite [hostname]\n");
 		return;
 	}
 
@@ -415,7 +415,7 @@ testing(int argc, char *argv[])
 	struct servent *srvp;
 
 	if (argc < 2)  {
-		printf("Usage: election host1 [host2 ...]\n");
+		printf("usage: election host1 [host2 ...]\n");
 		return;
 	}
 
@@ -481,7 +481,7 @@ tracing(int argc, char *argv[])
 	socklen_t length;
 
 	if (argc != 2) {
-		printf("Usage: tracing { on | off }\n");
+		printf("usage: tracing { on | off }\n");
 		return;
 	}
 
