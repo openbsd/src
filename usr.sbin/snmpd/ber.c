@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.12 2008/03/14 15:22:22 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.13 2008/03/18 14:53:07 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -376,7 +376,7 @@ ber_oid2ber(struct ber_oid *o, u_int8_t *buf, size_t len)
 	v = (o->bo_id[0] * 40) + o->bo_id[1];
 	for (i = 2, j = 0; i <= o->bo_n; v = o->bo_id[i], i++) {
 		for (k = 28; k >= 7; k -= 7) {
-			if (v > (u_int)(1 << k)) {
+			if (v >= (u_int)(1 << k)) {
 				if (len)
 					buf[j] = v >> k | BER_TAG_MORE;
 				j++;
