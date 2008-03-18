@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.114 2008/03/17 23:10:21 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.115 2008/03/18 20:00:40 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -427,30 +427,6 @@ _C_LABEL(cold):
 
 	mov %l0,%l1; mov %l0,%l2	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
 	mov %l0,%l3; mov %l0,%l4
-#if 0
-#ifdef DIAGNOSTIC
-	!!
-	!! Check the sp redzone
-	!!
-	!! Since we can't spill the current window, we'll just keep
-	!! track of the frame pointer.  Problems occur when the routine
-	!! allocates and uses stack storage.
-	!!
-!	rdpr	%wstate, %l5	! User stack?
-!	cmp	%l5, WSTATE_KERN
-!	bne,pt	%icc, 7f
-	 sethi	%hi(CPCB), %l5
-	ldx	[%l5 + %lo(CPCB)], %l5	! If pcb < fp < pcb+sizeof(pcb)
-	inc	PCB_SIZE, %l5		! then we have a stack overflow
-	btst	%fp, 1			! 64-bit stack?
-	sub	%fp, %l5, %l7
-	bnz,a,pt	%icc, 1f
-	 inc	BIAS, %l7		! Remove BIAS
-1:
-	cmp	%l7, PCB_SIZE
-	blu	%xcc, cleanwin_overflow
-#endif	/* DIAGNOSTIC */
-#endif	/* 0 */
 	mov %l0, %l5
 	mov %l0, %l6; mov %l0, %l7; mov %l0, %o0; mov %l0, %o1
 
@@ -955,32 +931,6 @@ TABLE/**/syscall:
 	UTRAP 0x1e8; UTRAP 0x1e9; UTRAP 0x1ea; UTRAP 0x1eb; UTRAP 0x1ec; UTRAP 0x1ed; UTRAP 0x1ee; UTRAP 0x1ef
 	UTRAP 0x1f0; UTRAP 0x1f1; UTRAP 0x1f2; UTRAP 0x1f3; UTRAP 0x1f4; UTRAP 0x1f5; UTRAP 0x1f6; UTRAP 0x1f7
 	UTRAP 0x1f8; UTRAP 0x1f9; UTRAP 0x1fa; UTRAP 0x1fb; UTRAP 0x1fc; UTRAP 0x1fd; UTRAP 0x1fe; UTRAP 0x1ff
-
-/*
- * If the cleanwin trap handler detects an overflow we come here.
- * We need to fix up the window registers, switch to the interrupt
- * stack, and then trap to the debugger.
- */
-cleanwin_overflow:
-	!! We've already incremented %cleanwin
-	!! So restore %cwp
-	rdpr	%cwp, %l0
-	dec	%l0
-	wrpr	%l0, %g0, %cwp
-	set	EINTSTACK-BIAS-CC64FSZ, %l0
-	save	%l0, 0, %sp
-
-	ta	1		! Enter debugger
-	sethi	%hi(1f), %o0
-	call	_C_LABEL(panic)
-	 or	%o0, %lo(1f), %o0
-	restore
-	retry
-	.data
-1:
-	.asciz	"Kernel stack overflow!"
-	_ALIGN
-	.text
 
 #ifdef DEBUG
 	.macro CHKREG r
@@ -2718,69 +2668,6 @@ softtrap:
 	ba,pt	%xcc, Lslowtrap_reenter
 	 mov	%g6, %sp
 
-#if 0
-/*
- * breakpoint:	capture as much info as possible and then call DDB
- * or trap, as the case may be.
- *
- * First, we switch to interrupt globals, and blow away %g7.  Then
- * switch down one stackframe -- just fiddle w/cwp, don't save or
- * we'll trap.  Then slowly save all the globals into our static
- * register buffer.  etc. etc.
- */
-
-breakpoint:
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! Get IG to use
-	rdpr	%cwp, %g7
-	inc	1, %g7					! Equivalent of save
-	wrpr	%g7, 0, %cwp				! Now we have some unused locals to fiddle with
-	set	_C_LABEL(ddb_regs), %l0
-	stx	%g1, [%l0+DBR_IG+(1*8)]			! Save IGs
-	stx	%g2, [%l0+DBR_IG+(2*8)]
-	stx	%g3, [%l0+DBR_IG+(3*8)]
-	stx	%g4, [%l0+DBR_IG+(4*8)]
-	stx	%g5, [%l0+DBR_IG+(5*8)]
-	stx	%g6, [%l0+DBR_IG+(6*8)]
-	stx	%g7, [%l0+DBR_IG+(7*8)]
-	wrpr	%g0, PSTATE_KERN|PSTATE_MG, %pstate	! Get MG to use
-	stx	%g1, [%l0+DBR_MG+(1*8)]			! Save MGs
-	stx	%g2, [%l0+DBR_MG+(2*8)]
-	stx	%g3, [%l0+DBR_MG+(3*8)]
-	stx	%g4, [%l0+DBR_MG+(4*8)]
-	stx	%g5, [%l0+DBR_MG+(5*8)]
-	stx	%g6, [%l0+DBR_MG+(6*8)]
-	stx	%g7, [%l0+DBR_MG+(7*8)]
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! Get AG to use
-	stx	%g1, [%l0+DBR_AG+(1*8)]			! Save AGs
-	stx	%g2, [%l0+DBR_AG+(2*8)]
-	stx	%g3, [%l0+DBR_AG+(3*8)]
-	stx	%g4, [%l0+DBR_AG+(4*8)]
-	stx	%g5, [%l0+DBR_AG+(5*8)]
-	stx	%g6, [%l0+DBR_AG+(6*8)]
-	stx	%g7, [%l0+DBR_AG+(7*8)]
-	wrpr	%g0, PSTATE_KERN, %pstate	! Get G to use
-	stx	%g1, [%l0+DBR_G+(1*8)]			! Save Gs
-	stx	%g2, [%l0+DBR_G+(2*8)]
-	stx	%g3, [%l0+DBR_G+(3*8)]
-	stx	%g4, [%l0+DBR_G+(4*8)]
-	stx	%g5, [%l0+DBR_G+(5*8)]
-	stx	%g6, [%l0+DBR_G+(6*8)]
-	stx	%g7, [%l0+DBR_G+(7*8)]
-	rdpr	%canrestore, %l1
-	stb	%l1, [%l0+DBR_CANRESTORE]
-	rdpr	%cansave, %l2
-	stb	%l2, [%l0+DBR_CANSAVE]
-	rdpr	%cleanwin, %l3
-	stb	%l3, [%l0+DBR_CLEANWIN]
-	rdpr	%wstate, %l4
-	stb	%l4, [%l0+DBR_WSTATE]
-	rd	%y, %l5
-	stw	%l5, [%l0+DBR_Y]
-	rdpr	%tl, %l6
-	stb	%l6, [%l0+DBR_TL]
-	dec	1, %g7
-#endif	/* 0 */
-
 /*
  * syscall_setup() builds a trap frame and calls syscall().
  * sun_syscall is same but delivers sun system call number
@@ -3390,25 +3277,6 @@ intrcmplt:
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
-#ifdef notyet
-/*
- * Level 12 (ZS serial) interrupt.  Handle it quickly, schedule a
- * software interrupt, and get out.  Do the software interrupt directly
- * if we would just take it on the way out.
- *
- * Input:
- *	%l0 = %psr
- *	%l1 = return pc
- *	%l2 = return npc
- * Internal:
- *	%l3 = zs device
- *	%l4, %l5 = temporary
- *	%l6 = rr3 (or temporary data) + 0x100 => need soft int
- *	%l7 = zs soft status
- */
-zshard:
-#endif /* notyet */	/* notyet */
-
 	.globl	return_from_trap, rft_kernel, rft_user
 	.globl	softtrap, slowtrap
 	.globl	syscall
@@ -3444,18 +3312,8 @@ return_from_trap:
 	orcc	%g2, %g3, %g0
 	tz	%icc, 1
 #endif	/* DEBUG */
-	!!
-	!! We'll make sure we flush our pcb here, rather than later.
-	!!
 	ldx	[%sp + CC64FSZ + BIAS + TF_TSTATE], %g1
 	btst	TSTATE_PRIV, %g1			! returning to userland?
-#if 0
-	bnz,pt	%icc, 0f
-	 sethi	%hi(CURPROC), %o1
-	call	_C_LABEL(rwindow_save)			! Flush out our pcb
-	 ldx	[%o1 + %lo(CURPROC)], %o0
-0:
-#endif	/* 0 */
 	!!
 	!! Let all pending interrupts drain before returning to userland
 	!!
@@ -4185,14 +4043,6 @@ dlflush2:
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 	wrpr	%g0, WSTATE_KERN, %wstate
-
-#ifdef DEBUG
-	wrpr	%g0, 1, %tl			! Debug -- start at tl==3 so we'll watchdog
-	wrpr	%g0, 0x1ff, %tt			! Debug -- clear out unused trap regs
-	wrpr	%g0, 0, %tpc
-	wrpr	%g0, 0, %tnpc
-	wrpr	%g0, 0, %tstate
-#endif	/* DEBUG */
 
 	/*
 	 * Call our startup routine.
@@ -6327,40 +6177,7 @@ Lbcopy_block:
  * %o5		last safe fetchable address
  */
 
-#if 1
 	ENABLE_FPU 0
-#else	/* 1 */
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPPROC), %l1
-	ldx	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
-	add	%sp, (CC64FSZ+BIAS+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fpproc == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	ldx	[%l2 + P_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-BIAS, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
-	 set	INTSTACK-BIAS, %l4
-	cmp	%sp, %l4
-	blu	%xcc, 1f
-0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
-	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
-1:
-	sethi	%hi(CURPROC), %l4			! Use curproc
-	ldx	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
-	 nop
-2:
-	ldx	[%l5 + P_FPSTATE], %l6			! Save old fpstate
-	stx	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
-	stx	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif	/* 1 */
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
@@ -7433,26 +7250,7 @@ Lbcopy_blockfinish:
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
-#if 1
 	RESTORE_FPU
-#else	/* 1 */
-#ifdef DEBUG
-	ldx	[%l1 + %lo(FPPROC)], %l7
-	cmp	%l7, %l5
-!	tnz	1		! fpproc has changed!
-	ldx	[%l5 + P_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif	/* DEBUG */
-	andcc	%l2, %l3, %g0				! If (fpproc && fpstate)
-	stx	%l2, [%l1 + %lo(FPPROC)]		! Restore old fproc
-	bz,pt	%xcc, 1f				! Skip if no fpstate
-	 stx	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
-	
-	call	_C_LABEL(loadfpstate)			! Re-load orig fpstate
-	 mov	%l3, %o0
-1:
-#endif	/* 1 */
 	ret
 	 restore	%g1, 0, %o0			! Return DEST for memcpy
 #endif	/* _KERNEL		 */
@@ -7596,46 +7394,7 @@ Lbzero_block:
  *
  */
 
-#if 1
 	ENABLE_FPU 0
-#else	/* 1 */
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPPROC), %l1
-	ldx	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
-	add	%sp, (CC64FSZ+BIAS+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fpproc == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	ldx	[%l2 + P_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-BIAS, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
-	 set	INTSTACK-BIAS, %l4
-	cmp	%sp, %l4
-	blu	%xcc, 1f
-0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
-	ba,pt	%xcc, 2f				! XXXX needs to change to CPU's idle proc
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
-1:
-	sethi	%hi(CURPROC), %l4			! Use curproc
-	ldx	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
-2:
-	mov	%i0, %o0
-	mov	%i2, %o2
-	ldx	[%l5 + P_FPSTATE], %l6			! Save old fpstate
-	mov	%i3, %o3
-	stx	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
-	stx	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif	/* 1 */
 	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
 	btst	63, %i0
 	bz,pt	%xcc, 2f
@@ -7677,27 +7436,10 @@ Lbzero_block:
  * We've saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
-#if 1
 	RESTORE_FPU
 	addcc	%i2, 56, %i2	! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
-#else	/* 1 */
-#ifdef DEBUG
-	ldx	[%l1 + %lo(FPPROC)], %l7
-	cmp	%l7, %l5
-!	tnz	1		! fpproc has changed!
-	ldx	[%l5 + P_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif	/* DEBUG */
-	stx	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
-	stx	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
-	addcc	%i2, 56, %i2	! Restore the count
-	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
-	 restore
-#endif	/* 1 */
 #endif	/* 1 */
 #endif	/* 1 */
 
