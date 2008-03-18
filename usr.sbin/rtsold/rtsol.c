@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsol.c,v 1.12 2007/09/07 14:24:02 jmc Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.13 2008/03/18 19:32:19 deraadt Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -73,18 +73,20 @@ int
 sockopen(void)
 {
 	static u_char *rcvcmsgbuf = NULL, *sndcmsgbuf = NULL;
-	int rcvcmsglen, sndcmsglen, on;
+	int rcvcmsgspace, sndcmsgspace, rcvcmsglen, sndcmsglen, on;
 	static u_char answer[1500];
 	struct icmp6_filter filt;
 
 	sndcmsglen = rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_LEN(sizeof(int));
+	sndcmsgspace = rcvcmsgspace = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
-	if (rcvcmsgbuf == NULL && (rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
+	if (rcvcmsgbuf == NULL && (rcvcmsgbuf = malloc(rcvcmsgspace)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "malloc for receive msghdr failed");
 		return(-1);
 	}
-	if (sndcmsgbuf == NULL && (sndcmsgbuf = malloc(sndcmsglen)) == NULL) {
+	if (sndcmsgbuf == NULL && (sndcmsgbuf = malloc(sndcmsgspace)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "malloc for send msghdr failed");
 		return(-1);

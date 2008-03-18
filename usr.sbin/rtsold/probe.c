@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.10 2003/10/05 15:29:28 deraadt Exp $	*/
+/*	$OpenBSD: probe.c,v 1.11 2008/03/18 19:32:19 deraadt Exp $	*/
 /*	$KAME: probe.c,v 1.16 2002/06/10 20:00:36 itojun Exp $	*/
 
 /*
@@ -64,11 +64,13 @@ int
 probe_init(void)
 {
 	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_LEN(sizeof(int));
+	int scmsgspace = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	static u_char *sndcmsgbuf = NULL;
 
 	if (sndcmsgbuf == NULL &&
-	    (sndcmsgbuf = (u_char *)malloc(scmsglen)) == NULL) {
+	    (sndcmsgbuf = (u_char *)malloc(scmsgspace)) == NULL) {
 		warnmsg(LOG_ERR, __func__, "malloc failed");
 		return(-1);
 	}

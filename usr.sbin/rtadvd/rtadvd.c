@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.28 2007/01/10 08:10:47 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.29 2008/03/18 19:32:18 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -67,8 +67,10 @@
 
 struct msghdr rcvmhdr;
 static u_char *rcvcmsgbuf;
+static size_t rcvcmsgbufspace;
 static size_t rcvcmsgbuflen;
 static u_char *sndcmsgbuf = NULL;
+static size_t sndcmsgbufspace;
 static size_t sndcmsgbuflen;
 volatile sig_atomic_t do_dump;
 volatile sig_atomic_t do_die;
@@ -1295,16 +1297,20 @@ sock_open()
 	static u_char answer[1500];
 
 	rcvcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-				CMSG_SPACE(sizeof(int));
-	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbuflen);
+	    CMSG_LEN(sizeof(int));
+	rcvcmsgbufspace = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_SPACE(sizeof(int));
+	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbufspace);
 	if (rcvcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> not enough core", __func__);
 		exit(1);
 	}
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
-				CMSG_SPACE(sizeof(int));
-	sndcmsgbuf = (u_char *)malloc(sndcmsgbuflen);
+	    CMSG_LEN(sizeof(int));
+	sndcmsgbufspace = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
+	    CMSG_SPACE(sizeof(int));
+	sndcmsgbuf = (u_char *)malloc(sndcmsgbufspace);
 	if (sndcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> not enough core", __func__);
 		exit(1);
