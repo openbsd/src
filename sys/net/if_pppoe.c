@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.17 2008/03/18 21:23:47 claudio Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.18 2008/03/18 21:33:45 claudio Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -410,6 +410,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	u_int16_t session, plen;
 	u_int8_t *ac_cookie;
 	u_int8_t *relay_sid;
+	u_int8_t code;
 #ifdef PPPOE_SERVER
 	u_int8_t *hunique;
 	size_t hunique_len;
@@ -457,6 +458,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 
 	session = ntohs(ph->session);
 	plen = ntohs(ph->plen);
+	code = ph->code;
 	off += sizeof(*ph);
 	if (plen + off > m->m_pkthdr.len) {
 		printf("pppoe: packet content does not fit: data available = %d, packet size = %u\n",
@@ -566,7 +568,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		off += sizeof(*pt) + len;
 	}
 breakbreak:
-	switch (ph->code) {
+	switch (code) {
 	case PPPOE_CODE_PADI:
 #ifdef PPPOE_SERVER
 		/*
@@ -741,7 +743,7 @@ breakbreak:
 	default:
 		printf("%s: unknown code (0x%04x) session = 0x%04x\n",
 		    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe",
-		    ph->code, session);
+		    code, session);
 		break;
 	}
 
