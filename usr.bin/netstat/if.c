@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.56 2008/01/03 21:01:40 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.57 2008/03/18 20:03:37 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -156,6 +156,9 @@ intpr(int interval)
 		case RTM_NEWADDR:
 			if (qflag && total == 0)
 				continue;
+			if (interface != 0 && strcmp(name, interface) != 0)
+				continue;
+
 			ifam = (struct ifa_msghdr *)next;
 			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
 			    RTA_BRD)) == 0)
