@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.16 2008/03/14 02:56:26 brad Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.17 2008/03/18 21:23:47 claudio Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -371,18 +371,23 @@ void
 pppoeintr(void)
 {
 	struct mbuf *m;
+	int s;
 
 	splassert(IPL_SOFTNET);
 	
 	while (ppoediscinq.ifq_head) {
-		MBUFLOCK(IF_DEQUEUE(&ppoediscinq, m););
+		s = splnet();
+		IF_DEQUEUE(&ppoediscinq, m);
+		splx(s);
 		if (m == NULL)
 			break;
 		pppoe_disc_input(m);
 	}
 
 	while (ppoeinq.ifq_head) {
-		MBUFLOCK(IF_DEQUEUE(&ppoeinq, m););
+		s = splnet();
+		IF_DEQUEUE(&ppoeinq, m);
+		splx(s);
 		if (m == NULL)
 			break;
 		pppoe_data_input(m);
