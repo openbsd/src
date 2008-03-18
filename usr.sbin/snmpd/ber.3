@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.5 2008/03/14 15:22:22 reyk Exp $
+.\" $OpenBSD: ber.3,v 1.6 2008/03/18 16:57:58 reyk Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2008 $
+.Dd $Mdocdate: March 18 2008 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -30,10 +30,9 @@
 .Nm ber_add_boolean ,
 .Nm ber_get_boolean ,
 .Nm ber_add_string ,
-.Nm ber_add_astring ,
-.Nm ber_get_string ,
 .Nm ber_add_nstring ,
 .Nm ber_add_bitstring ,
+.Nm ber_get_string ,
 .Nm ber_get_nstring ,
 .Nm ber_get_bitstring ,
 .Nm ber_add_null ,
@@ -81,17 +80,15 @@
 .Ft "int"
 .Fn "ber_get_boolean" "struct ber_element *root" "int *bool"
 .Ft "struct ber_element *"
-.Fn "ber_add_string" "struct ber_element *prev" "char *string"
+.Fn "ber_add_string" "struct ber_element *prev" "const char *string"
 .Ft "struct ber_element *"
-.Fn "ber_add_astring" "struct ber_element *prev" "char *string"
-.Ft "struct ber_element *"
-.Fn "ber_add_nstring" "struct ber_element *prev" "char *string" "size_t size"
+.Fn "ber_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
 .Ft "int"
 .Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
 .Ft "int"
 .Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "struct ber_element *"
-.Fn "ber_add_bitstring" "struct ber_element *prev" "void *buf" "size_t size"
+.Fn "ber_add_bitstring" "struct ber_element *prev" "const void *buf" "size_t size"
 .Ft "int"
 .Fn "ber_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "struct ber_element *"
@@ -155,10 +152,9 @@ using the
 .Fn ber_add_boolean ,
 .Fn ber_get_boolean ,
 .Fn ber_add_string ,
-.Fn ber_add_astring ,
-.Fn ber_get_string ,
 .Fn ber_add_nstring ,
 .Fn ber_add_bitstring ,
+.Fn ber_get_string ,
 .Fn ber_get_nstring ,
 .Fn ber_get_bitstring ,
 .Fn ber_add_null ,

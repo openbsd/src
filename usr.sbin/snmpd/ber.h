@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.5 2008/03/14 15:22:22 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.6 2008/03/18 16:57:58 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -92,13 +92,13 @@ struct ber_element	*ber_add_integer(struct ber_element *, long long);
 int			 ber_get_integer(struct ber_element *, long long *);
 struct ber_element	*ber_add_boolean(struct ber_element *, int);
 int			 ber_get_boolean(struct ber_element *, int *);
-struct ber_element	*ber_add_string(struct ber_element *, char *);
-struct ber_element	*ber_add_astring(struct ber_element *, const char *);
-struct ber_element	*ber_add_nstring(struct ber_element *, char *, size_t);
+struct ber_element	*ber_add_string(struct ber_element *, const char *);
+struct ber_element	*ber_add_nstring(struct ber_element *, const char *,
+			    size_t);
 int			 ber_get_string(struct ber_element *, char **);
 int			 ber_get_nstring(struct ber_element *, void **,
 			    size_t *);
-struct ber_element	*ber_add_bitstring(struct ber_element *, void *,
+struct ber_element	*ber_add_bitstring(struct ber_element *, const void *,
 			    size_t);
 int			 ber_get_bitstring(struct ber_element *, void **,
 			    size_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2008/02/08 12:36:47 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2008/03/18 16:57:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -110,17 +110,13 @@ trap_imsg(struct imsgbuf *ibuf, pid_t pid)
 					if ((sm->snmp_len < 1) ||
 					    (sm->snmp_len >= SNMPD_MAXSTRLEN))
 						goto imsgdone;
-					if ((c =
-					    calloc(1, sm->snmp_len)) == NULL)
-						goto imsgdone;
-					bcopy(sm + 1, c, sm->snmp_len);
+					c = (u_int8_t *)(sm + 1);
 					if (sm->snmp_type == SNMP_BITSTRING)
 						a = ber_add_bitstring(a, c,
 						    sm->snmp_len);
 					else
 						a = ber_add_nstring(a, c,
 						    sm->snmp_len);
-					a->be_free = 1;
 					break;
 				case SNMP_NULL:
 					a = ber_add_null(a);

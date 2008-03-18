@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.26 2008/03/17 14:47:20 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.27 2008/03/18 16:57:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -223,7 +223,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * help to display names of internal OIDs.
 		 */
 		smi_oidstring(&miboid->o_id, buf, sizeof(buf));
-		ber = ber_add_astring(ber, buf);
+		ber = ber_add_string(ber, buf);
 		break;
 	case 4:
 		/*
@@ -446,7 +446,7 @@ mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		break;
 	case 2: /* hrSWRunName */
 	case 4: /* hrSWRunPath */
-		ber = ber_add_astring(ber, kinfo->p_comm);
+		ber = ber_add_string(ber, kinfo->p_comm);
 		break;
 	case 3: /* hrSWRunID */
 		ber = ber_add_oid(ber, &zerodotzero);
@@ -455,7 +455,7 @@ mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		if (kinfo_args(kinfo, &s) == -1)
 			return (-1);
 
-		ber = ber_add_astring(ber, s);
+		ber = ber_add_string(ber, s);
 		break;
 	case 6: /* hrSWRunType */
 		if (kinfo->p_flag & P_SYSTEM) {
@@ -741,7 +741,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * but we just use the interface name (like ifName).
 		 * The interface name includes the driver name on OpenBSD.
 		 */
-		ber = ber_add_astring(ber, kif->if_name);
+		ber = ber_add_string(ber, kif->if_name);
 		break;
 	case 3:
 		if (kif->if_type >= 0xf0) {
@@ -883,7 +883,7 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	switch (o->bo_id[OIDIDX_ifX]) {
 	case 1:
-		ber = ber_add_astring(ber, kif->if_name);
+		ber = ber_add_string(ber, kif->if_name);
 		break;
 	case 2:
 		ber = ber_add_integer(ber, (u_int32_t)kif->if_imcasts);
@@ -953,7 +953,7 @@ mib_ifxtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, i);
 		break;
 	case 18:
-		ber = ber_add_astring(ber, kif->if_descr);
+		ber = ber_add_string(ber, kif->if_descr);
 		break;
 	case 19:
 		ber = ber_add_integer(ber, 0);
@@ -1034,7 +1034,7 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 int	 mib_sensornum(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sensors(struct oid *, struct ber_oid *, struct ber_element **);
-char	*mib_sensorunit(struct sensor *);
+const char *mib_sensorunit(struct sensor *);
 char	*mib_sensorvalue(struct sensor *);
 
 static struct oid openbsd_mib[] = {
@@ -1121,25 +1121,22 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, (int32_t)n);
 		break;
 	case 2:
-		ber = ber_add_astring(ber, sensor.desc);
+		ber = ber_add_string(ber, sensor.desc);
 		break;
 	case 3:
 		ber = ber_add_integer(ber, sensor.type);
 		break;
 	case 4:
-		ber = ber_add_astring(ber, sensordev.xname);
+		ber = ber_add_string(ber, sensordev.xname);
 		break;
 	case 5:
 		if ((s = mib_sensorvalue(&sensor)) == NULL)
 			return (-1);
 		ber = ber_add_string(ber, s);
-		ber->be_free = 1;
+		free(s);
 		break;
 	case 6:
-		if ((s = mib_sensorunit(&sensor)) == NULL)
-			return (-1);
-		ber = ber_add_string(ber, s);
-		ber->be_free = 1;
+		ber = ber_add_string(ber, mib_sensorunit(&sensor));
 		break;
 	case 7:
 		ber = ber_add_integer(ber, sensor.status);
@@ -1160,13 +1157,13 @@ static const char * const sensor_unit_s[SENSOR_MAX_TYPES + 1] = {
 	"", "", "%", "lx", "", "sec", ""
 };
 
-char *
+const char *
 mib_sensorunit(struct sensor *s)
 {
 	u_int	 idx;
 	idx = s->type > SENSOR_MAX_TYPES ?
 	    SENSOR_MAX_TYPES : s->type;
-	return (strdup(sensor_unit_s[idx]));
+	return (sensor_unit_s[idx]);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.13 2008/03/18 14:53:07 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.14 2008/03/18 16:57:58 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -218,53 +218,28 @@ ber_get_boolean(struct ber_element *elm, int *b)
 }
 
 struct ber_element *
-ber_add_string(struct ber_element *prev, char *string)
+ber_add_string(struct ber_element *prev, const char *string)
 {
-	struct ber_element *elm;
-
-	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL)
-		return NULL;
-
-	elm->be_val = string;
-	elm->be_len = strlen(string);	/* terminating '\0' not included */
-
-	ber_link_elements(prev, elm);
-
-	return elm;
+	return ber_add_nstring(prev, string, strlen(string));
 }
 
 struct ber_element *
-ber_add_astring(struct ber_element *prev, const char *string)
+ber_add_nstring(struct ber_element *prev, const char *string0, size_t len)
 {
 	struct ber_element *elm;
-	char *str;
+	char *string;
 
-	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL)
+	if ((string = calloc(1, len)) == NULL)
 		return NULL;
-	if ((str = strdup(string)) == NULL) {
-		ber_free_elements(elm);
+	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL) {
+		free(string);
 		return NULL;
 	}
 
-	elm->be_val = str;
-	elm->be_len = strlen(str);	/* terminating '\0' not included */
-	elm->be_free = 1;		/* free string on cleanup */
-
-	ber_link_elements(prev, elm);
-
-	return elm;
-}
-
-struct ber_element *
-ber_add_nstring(struct ber_element *prev, char *string, size_t len)
-{
-	struct ber_element *elm;
-
-	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL)
-		return NULL;
-
+	bcopy(string0, string, len);
 	elm->be_val = string;
 	elm->be_len = len;
+	elm->be_free = 1;		/* free string on cleanup */
 
 	ber_link_elements(prev, elm);
 
@@ -293,15 +268,22 @@ ber_get_nstring(struct ber_element *elm, void **p, size_t *len)
 }
 
 struct ber_element *
-ber_add_bitstring(struct ber_element *prev, void *v, size_t len)
+ber_add_bitstring(struct ber_element *prev, const void *v0, size_t len)
 {
 	struct ber_element *elm;
+	void *v;
 
-	if ((elm = ber_get_element(BER_TYPE_BITSTRING)) == NULL)
+	if ((v = calloc(1, len)) == NULL)
 		return NULL;
+	if ((elm = ber_get_element(BER_TYPE_BITSTRING)) == NULL) {
+		free(v);
+		return NULL;
+	}
 
+	bcopy(v0, v, len);
 	elm->be_val = v;
 	elm->be_len = len;
+	elm->be_free = 1;		/* free string on cleanup */
 
 	ber_link_elements(prev, elm);
 
