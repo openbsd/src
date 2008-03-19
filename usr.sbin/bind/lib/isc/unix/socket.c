@@ -190,8 +190,10 @@ struct isc_socket {
 #endif
 
 	char			*recvcmsgbuf;
+	ISC_SOCKADDR_LEN_T	recvcmsgbufspace;
 	ISC_SOCKADDR_LEN_T	recvcmsgbuflen;
 	char			*sendcmsgbuf;
+	ISC_SOCKADDR_LEN_T	sendcmsgbufspace;
 	ISC_SOCKADDR_LEN_T	sendcmsgbuflen;
 };
 
@@ -511,11 +513,14 @@ cmsg_space(ISC_SOCKADDR_LEN_T len) {
 	 * XXX: The buffer length is an ad-hoc value, but should be enough
 	 * in a practical sense.
 	 */
-	char dummybuf[sizeof(struct cmsghdr) + 1024];
+	union {
+		struct cmsghdr hdr;
+		char buf[cmsg_sizeof(struct cmsghdr) + 1024];
+	};
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = dummybuf;
-	msg.msg_controllen = sizeof(dummybuf);
+	msg.msg_controllen = cmsg_len(sizeof(cmsg_sizeof(struct cmsghdr) + 1024));
 
 	cmsgp = (struct cmsghdr *)dummybuf;
 	cmsgp->cmsg_len = cmsg_len(len);
@@ -721,7 +726,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 			   "sendto pktinfo data, ifindex %u",
 			   dev->pktinfo.ipi6_ifindex);
 
-		msg->msg_controllen = cmsg_space(sizeof(struct in6_pktinfo));
+		msg->msg_controllen = cmsg_len(sizeof(struct in6_pktinfo));
 		INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
 		msg->msg_control = (void *)sock->sendcmsgbuf;
 
@@ -862,7 +867,7 @@ build_msghdr_recv(isc_socket_t *sock, isc_socketevent_t *dev,
 	msg->msg_flags = 0;
 #if defined(USE_CMSG)
 	if (sock->type == isc_sockettype_udp) {
-		msg->msg_control = sock->recvcmsgbuf;
+		msg->msg_control = sock->recvcmsgbuf;	
 		msg->msg_controllen = sock->recvcmsgbuflen;
 	}
 #endif /* USE_CMSG */
@@ -1257,7 +1262,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 {
 	isc_socket_t *sock;
 	isc_result_t result;
-	ISC_SOCKADDR_LEN_T cmsgbuflen;
+	ISC_SOCKADDR_LEN_T cmsgbuflen, cmsgbufspace;
 
 	sock = isc_mem_get(manager->mctx, sizeof(*sock));
 
@@ -1282,26 +1287,33 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	 * set up cmsg buffers
 	 */
 	cmsgbuflen = 0;
+	cmsgbufspace = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen = cmsgbufspace + cmsg_len(sizeof(struct in6_pktinfo));
+	cmsgbufspace += cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 #if defined(USE_CMSG) && defined(SO_TIMESTAMP)
-	cmsgbuflen += cmsg_space(sizeof(struct timeval));
+	cmsgbuflen = cmsgbufspace + cmsg_len(sizeof(struct timeval));
+	cmsgbufspace += cmsg_space(sizeof(struct timeval));
 #endif
 	sock->recvcmsgbuflen = cmsgbuflen;
-	if (sock->recvcmsgbuflen != 0U) {
-		sock->recvcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
+	sock->recvcmsgbufspace = cmsgbufspace;
+	if (sock->recvcmsgbufspace != 0U) {
+		sock->recvcmsgbuf = isc_mem_get(manager->mctx, cmsgbufspace);
 		if (sock->recvcmsgbuf == NULL)
 			goto error;
 	}
 
 	cmsgbuflen = 0;
+	cmsgbufspace = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen = cmsgbufspace + cmsg_len(sizeof(struct in6_pktinfo));
+	cmsgbufspace += cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 	sock->sendcmsgbuflen = cmsgbuflen;
+	sock->sendcmsgbufspace = cmsgbufspace;
 	if (sock->sendcmsgbuflen != 0U) {
-		sock->sendcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
+		sock->sendcmsgbuf = isc_mem_get(manager->mctx, cmsgbufspace);
 		if (sock->sendcmsgbuf == NULL)
 			goto error;
 	}
@@ -1348,10 +1360,10 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
  error:
 	if (sock->recvcmsgbuf != NULL)
 		isc_mem_put(manager->mctx, sock->recvcmsgbuf,
-			    sock->recvcmsgbuflen);
+			    sock->recvcmsgbufspace);
 	if (sock->sendcmsgbuf != NULL)
 		isc_mem_put(manager->mctx, sock->sendcmsgbuf,
-			    sock->sendcmsgbuflen);
+			    sock->sendcmsgbufspace);
 	isc_mem_put(manager->mctx, sock, sizeof(*sock));
 
 	return (result);
@@ -1381,10 +1393,10 @@ free_socket(isc_socket_t **socketp) {
 
 	if (sock->recvcmsgbuf != NULL)
 		isc_mem_put(sock->manager->mctx, sock->recvcmsgbuf,
-			    sock->recvcmsgbuflen);
+			    sock->recvcmsgbufspace);
 	if (sock->sendcmsgbuf != NULL)
 		isc_mem_put(sock->manager->mctx, sock->sendcmsgbuf,
-			    sock->sendcmsgbuflen);
+			    sock->sendcmsgbufspace);
 
 	sock->magic = 0;
 
