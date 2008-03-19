@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.260 2008/02/09 12:10:53 mcbride Exp $
+#	$OpenBSD: Makefile,v 1.261 2008/03/19 12:22:09 sobrado Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -101,7 +101,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/.cshrc; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
-		    ${DESTDIR}/.profile;
+		    ${DESTDIR}/.profile
 	cd skel; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/etc/skel/.cshrc; \
@@ -166,7 +166,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
 		    ${DESTDIR}/etc/systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_named \
-		    ${DESTDIR}/etc/systrace;
+		    ${DESTDIR}/etc/systrace
 	cd bind; \
 		${INSTALL} -c -o root -g named -m 640 named-simple.conf \
 		    ${DESTDIR}/var/named/etc/named.conf; \
@@ -179,7 +179,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 db.loopback \
 		    ${DESTDIR}/var/named/standard/loopback; \
 		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
-		    ${DESTDIR}/var/named/standard/loopback6.arpa; \
+		    ${DESTDIR}/var/named/standard/loopback6.arpa
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
