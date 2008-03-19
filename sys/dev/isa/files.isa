@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.101 2008/02/17 15:04:08 kettenis Exp $
+#	$OpenBSD: files.isa,v 1.102 2008/03/19 19:33:09 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -345,6 +345,11 @@ file	dev/isa/wbsio.c			wbsio
 attach	lm at isa with lm_isa
 attach	lm at wbsio with lm_wbsio
 file	dev/isa/lm78_isa.c		lm_isa | lm_wbsio
+
+# Fintek (Feature Integration Technology) F71805F hardware monitor subfunction
+device	fins
+attach	fins at isa
+file	dev/isa/fins.c			fins
 
 # NSC PC87366 Super IO / monitor chip
 device	nsclpcsio: gpiobus
