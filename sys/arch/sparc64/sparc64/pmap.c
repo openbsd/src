@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2008/03/19 20:42:05 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2008/03/19 23:16:19 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -198,7 +198,7 @@ extern void	pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
 extern void	pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
 extern void	pmap_page_cache(struct pmap *pm, paddr_t pa, int mode);
 
-void	pmap_bootstrap_cpu(void);
+void	pmap_bootstrap_cpu(paddr_t);
 
 void	pmap_pinit(struct pmap *);
 void	pmap_release(struct pmap *);
@@ -1404,11 +1404,11 @@ remap_data:
 		avail_end = mp->start+mp->size;
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 
-	pmap_bootstrap_cpu();
+	pmap_bootstrap_cpu(cpus->ci_paddr);
 }
 
 void
-pmap_bootstrap_cpu(void)
+pmap_bootstrap_cpu(paddr_t intstack)
 {
 	u_int64_t data;
 	paddr_t pa;
@@ -1437,6 +1437,10 @@ pmap_bootstrap_cpu(void)
 		prom_dtlb_load(index, data, va);
 		index--;
 	}
+
+	data = TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
+	data |= TLB_L;
+	prom_dtlb_load(index, data, INTSTACK);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.116 2008/03/19 20:42:05 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.117 2008/03/19 23:16:19 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3672,36 +3672,6 @@ _C_LABEL(cpu_initialize):
 	 * switch to our initial stack.
 	 */
 
-	mov	%g2, %l1			! Load the interrupt stack's PA
-
-	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
-	sllx	%l2, 32, %l2			! Shift it into place
-
-	mov	-1, %l3				! Create a nice mask
-	sllx	%l3, 41, %l4			! Mask off high bits
-	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
-
-	andn	%l1, %l4, %l1			! Mask the phys page number
-
-	or	%l2, %l1, %l1			! Now take care of the high bits
-#ifdef NO_VCACHE
-	or	%l1, TLB_L|TLB_CP|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
-#else	/* NO_VCACHE */
-	or	%l1, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
-#endif	/* NO_VCACHE */
-
-	!!
-	!!  Now, map in the interrupt stack as context==0
-	!!
-	set	TLB_TAG_ACCESS, %l5
-	sethi	%hi(INTSTACK), %l0
-	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync				! We may need more membar #Sync in here
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync				! We may need more membar #Sync in here
-	sethi	%hi(KERNBASE), %o5
-	flush	%o5
-
 !!! Make sure our stack's OK.
 	flushw
 	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
@@ -3786,10 +3756,10 @@ ENTRY(cpu_mp_startup)
 	set	tmpstack-CC64FSZ-BIAS, %sp
 
 	call	_C_LABEL(pmap_bootstrap_cpu)
-	 mov	%o0, %l0
+	 nop
 
-	ba,pt	%xcc, cpu_initialize
-	 mov	%l0, %g2
+	ba,a,pt	%xcc, cpu_initialize
+	 nop
 #endif
 
 /*
