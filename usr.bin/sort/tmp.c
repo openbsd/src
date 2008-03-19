@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.7 2006/12/06 05:03:29 ray Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.8 2008/03/19 19:25:49 kili Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)tmp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tmp.c,v 1.7 2006/12/06 05:03:29 ray Exp $";
+static char rcsid[] = "$OpenBSD: tmp.c,v 1.8 2008/03/19 19:25:49 kili Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,12 +62,11 @@ ftmp(void)
 	sigset_t set, oset;
 	FILE *fp;
 	int fd;
-	char pathb[PATH_MAX], *path;
+	char path[PATH_MAX];
 
-	path = pathb;
 	if (tmpdir[0] == '\0')
 		errx(2, "invalid temporary directory: \"\"");
-	(void)snprintf(path, sizeof(pathb), "%s%s%s", tmpdir,
+	(void)snprintf(path, sizeof(path), "%s%s%s", tmpdir,
 		       (tmpdir[strlen(tmpdir)-1] != '/') ? "/" : "", _NAME_TMP);
 
 	sigfillset(&set);
