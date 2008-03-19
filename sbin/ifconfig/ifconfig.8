@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.153 2008/02/11 07:58:28 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.154 2008/03/19 08:44:54 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 11 2008 $
+.Dd $Mdocdate: March 19 2008 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -247,6 +247,10 @@ interface group.
 .It
 IEEE 802.11 wireless interfaces are members of the
 .Em wlan
+interface group.
+.It
+Any interfaces used for network booting are members of the
+.Em netboot
 interface group.
 .El
 .It Cm -group Ar group-name
