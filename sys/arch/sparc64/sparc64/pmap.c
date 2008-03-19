@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2008/03/15 22:05:51 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2008/03/19 20:42:05 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -197,6 +197,8 @@ static struct pool pmap_pool;
 extern void	pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
 extern void	pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
 extern void	pmap_page_cache(struct pmap *pm, paddr_t pa, int mode);
+
+void	pmap_bootstrap_cpu(void);
 
 void	pmap_pinit(struct pmap *);
 void	pmap_release(struct pmap *);
@@ -1402,6 +1404,39 @@ remap_data:
 		avail_end = mp->start+mp->size;
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 
+	pmap_bootstrap_cpu();
+}
+
+void
+pmap_bootstrap_cpu(void)
+{
+	u_int64_t data;
+	paddr_t pa;
+	vaddr_t va;
+	int index;
+
+	/*
+	 * Establish the 4MB locked mappings for kernel data and text.
+	 *
+	 * The text segment needs to be mapped into the DTLB too,
+	 * because of .rodata.
+	 */
+
+	index = 15; /* XXX */
+	for (va = ktext, pa = ktextp; va < ektext; va += 4*MEG, pa += 4*MEG) {
+		data = TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, FORCE_ALIAS, 1, 0);
+		data |= TLB_L;
+		prom_itlb_load(index, data, va);
+		prom_dtlb_load(index, data, va);
+		index--;
+	}
+
+	for (va = kdata, pa = kdatap; va < ekdata; va += 4*MEG, pa += 4*MEG) {
+		data = TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, FORCE_ALIAS, 1, 0);
+		data |= TLB_L;
+		prom_dtlb_load(index, data, va);
+		index--;
+	}
 }
 
 /*
