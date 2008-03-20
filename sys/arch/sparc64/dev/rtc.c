@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.3 2007/04/24 18:30:45 kettenis Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.4 2008/03/20 22:00:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,7 +165,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	 * On ds1287 models (which really are ns87317 chips), the
 	 * interrupt is wired to the powerbutton.
 	 */
-	if(strcmp(model, "ds1287") == 0 && ea->ea_nintrs > 0) {
+	if (strcmp(model, "ds1287") == 0 && ea->ea_nintrs > 0) {
 		sc->sc_ih = bus_intr_establish(sc->sc_iot, ea->ea_intrs[0],
 		    IPL_BIO, 0, rtc_intr, sc, self->dv_xname);
 		if (sc->sc_ih == NULL) {
