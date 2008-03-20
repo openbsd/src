@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1332 2008/03/20 22:13:03 brad Exp $
+$OpenBSD: pcidevs,v 1.1333 2008/03/20 22:14:14 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3525,6 +3525,7 @@ product PLX 1076		0x1076	I/O 1076
 product PLX 1077		0x1077	I/O 1077
 product PLX 8114_PCI		0x8114	8114 PCIE-PCI
 product PLX 8518_PCIE		0x8518	8518 PCIE
+product PLX 8524_PCIE		0x8524	8524 PCIE
 product PLX 8532_PCIE		0x8532	8532 PCIE
 product PLX 9016		0x9016	I/O 9016
 product PLX 9050		0x9050	I/O 9050
