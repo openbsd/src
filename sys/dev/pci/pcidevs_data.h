@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1331 2008/03/01 11:42:16 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1335 2008/03/20 22:18:07 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10828,6 +10828,70 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP77 AHCI",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_1,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_2,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_3,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_4,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_5,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_6,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_7,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_8,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_9,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_10,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_11,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_AHCI_12,
+	    "MCP7B AHCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_HDA_1,
+	    "MCP7B HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_HDA_2,
+	    "MCP7B HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_HDA_3,
+	    "MCP7B HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP7B_HDA_4,
+	    "MCP7B HD Audio",
+	},
+	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
 	    "OTI107",
 	},
@@ -11270,6 +11334,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8518_PCIE,
 	    "8518 PCIE",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8524_PCIE,
+	    "8524 PCIE",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8532_PCIE,
@@ -11918,6 +11986,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_DVDMAGICPRO,
 	    "DVDmagic-PRO",
+	},
+	{
+	    PCI_VENDOR_SILAN, PCI_PRODUCT_SILAN_SC92301,
+	    "SC92301",
+	},
+	{
+	    PCI_VENDOR_SILAN, PCI_PRODUCT_SILAN_8139D,
+	    "8139D",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
@@ -13292,10 +13368,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VX700 IDE",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
-	    "CX700 IDE",
-	},
-	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C585,
 	    "VT82C585 ISA",
 	},
@@ -13788,12 +13860,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "P4M900 Host",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_IOAPIC,
-	    "P4M890 IOAPIC",
-	},
-	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_IOAPIC,
 	    "K8T890 IOAPIC",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
+	    "CX700 IDE",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_IOAPIC,
+	    "P4M890 IOAPIC",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M890_IOAPIC,
@@ -15522,6 +15598,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_XGI,
 	    "XGI Technology",
+	},
+	{
+	    PCI_VENDOR_SILAN,
+	    "Silan",
 	},
 	{
 	    PCI_VENDOR_SANGOMA,
