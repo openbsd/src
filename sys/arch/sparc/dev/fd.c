@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.56 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.57 2008/03/20 00:59:37 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -244,7 +244,7 @@ struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK
 };
 
-void fdgetdisklabel(dev_t);
+void fdgetdisklabel(dev_t, struct fd_softc *, struct disklabel *, int);
 int fd_get_parms(struct fd_softc *);
 void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
@@ -984,7 +984,7 @@ fdopen(dev, flags, fmt, p)
 	 * Only update the disklabel if we're not open anywhere else.
 	 */
 	if (fd->sc_dk.dk_openmask == 0)
-		fdgetdisklabel(dev);
+		fdgetdisklabel(dev, fd, fd->sc_dk.dk_label, 0);
 
 	pmask = (1 << FDPART(dev));
 
@@ -1943,12 +1943,9 @@ fdformat(dev, finfo, p)
 }
 
 void
-fdgetdisklabel(dev)
-	dev_t dev;
+fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
+    int spoofonly)
 {
-	int unit = FDUNIT(dev);
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
-	struct disklabel *lp = fd->sc_dk.dk_label;
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
@@ -1974,7 +1971,7 @@ fdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, 0);
+	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
 	}

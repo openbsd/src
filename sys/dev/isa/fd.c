@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.68 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.69 2008/03/20 00:59:37 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/timeout.h>
 
 #include <machine/cpu.h>
@@ -138,7 +139,7 @@ struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK
 };
 
-void fdgetdisklabel(struct fd_softc *);
+void fdgetdisklabel(dev_t, struct fd_softc *, struct disklabel *, int);
 int fd_get_parms(struct fd_softc *);
 void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
@@ -154,6 +155,42 @@ int fdformat(dev_t, struct fd_formb *, struct proc *);
 static __inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 void fdretry(struct fd_softc *);
 void fdtimeout(void *);
+
+void
+fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
+    int spoofonly)
+{
+	char *errstring;
+
+	bzero(lp, sizeof(struct disklabel));
+
+	lp->d_type = DTYPE_FLOPPY;
+	lp->d_secsize = FD_BSIZE(fd);
+	lp->d_secpercyl = fd->sc_type->seccyl;
+	lp->d_nsectors = fd->sc_type->sectrac;
+	lp->d_ncylinders = fd->sc_type->tracks;
+	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
+	DL_SETDSIZE(lp, fd->sc_type->size);
+	lp->d_rpm = 300;	/* XXX like it matters... */
+
+	strncpy(lp->d_typename, "floppy disk", sizeof(lp->d_typename));
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_interleave = 1;
+	lp->d_version = 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine.  If there's
+	 * not a label there, fake it.
+	 */
+	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, spoofonly);
+	if (errstring) {
+		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
+	}
+}
 
 int
 fdprobe(parent, match, aux)
@@ -535,13 +572,13 @@ fd_motor_on(arg)
 }
 
 int
-fdopen(dev, flags, mode, p)
+fdopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
-	int mode;
+	int fmt;
 	struct proc *p;
 {
- 	int unit;
+ 	int unit, pmask;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
@@ -563,21 +600,55 @@ fdopen(dev, flags, mode, p)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
+	/*
+	 * Only update the disklabel if we're not open anywhere else.
+	 */
+	if (fd->sc_dk.dk_openmask == 0)
+		fdgetdisklabel(dev, fd, fd->sc_dk.dk_label, 0);
+
+	pmask = (1 << FDPART(dev));
+
+	switch (fmt) {
+	case S_IFCHR:
+		fd->sc_dk.dk_copenmask |= pmask;
+		break;
+
+	case S_IFBLK:
+		fd->sc_dk.dk_bopenmask |= pmask;
+		break;
+	}
+	fd->sc_dk.dk_openmask =
+	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
+
 	return 0;
 }
 
 int
-fdclose(dev, flags, mode, p)
+fdclose(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
-	int mode;
+	int fmt;
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	int pmask = (1 << FDPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~FDOPT_NORETRY;
-	return 0;
+
+	switch (fmt) {
+	case S_IFCHR:
+		fd->sc_dk.dk_copenmask &= ~pmask;
+		break;
+
+	case S_IFBLK:
+		fd->sc_dk.dk_bopenmask &= ~pmask;
+		break;
+	}
+	fd->sc_dk.dk_openmask =
+	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
+
+	return (0);
 }
 
 daddr64_t
@@ -960,7 +1031,6 @@ fdioctl(dev, cmd, addr, flag, p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel dl, *lp = &dl;
-	char *errstring;
 	int error;
 
 	switch (cmd) {
@@ -969,31 +1039,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			return EIO;
 		return (0);
 	case DIOCGDINFO:
-		bzero(lp, sizeof(*lp));
-
-		lp->d_secsize = FD_BSIZE(fd);
-		lp->d_secpercyl = fd->sc_type->seccyl;
-		lp->d_ntracks = fd->sc_type->heads;
-		lp->d_nsectors = fd->sc_type->sectrac;
-		lp->d_ncylinders = fd->sc_type->tracks;
-
-		strncpy(lp->d_typename, "floppy disk", sizeof lp->d_typename);
-		lp->d_type = DTYPE_FLOPPY;
-		strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
-		DL_SETDSIZE(lp, fd->sc_type->size);
-		lp->d_rpm = 300;
-		lp->d_interleave = 1;
-		lp->d_version = 1;
-
-		lp->d_magic = DISKMAGIC;
-		lp->d_magic2 = DISKMAGIC;
-		lp->d_checksum = dkcksum(lp);
-
-		errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, 0);
-		if (errstring) {
-			/*printf("%s: %s\n", fd->sc_dev.dv_xname, errstring);*/
-		}
-
+		fdgetdisklabel(dev, fd, lp, 0);
 		*(struct disklabel *)addr = *lp;
 		return 0;
 
