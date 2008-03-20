@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.18 2008/03/18 21:33:45 claudio Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.19 2008/03/20 16:46:34 brad Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -88,6 +88,7 @@ struct pppoetag {
 } __packed;
 
 #define PPPOE_HEADERLEN		sizeof(struct pppoehdr)
+#define	PPPOE_OVERHEAD		(PPPOE_HEADERLEN + 2)
 #define	PPPOE_VERTYPE		0x11		/* VER=1, TYPE = 1 */
 
 #define	PPPOE_TAG_EOL		0x0000		/* end of list */
@@ -108,7 +109,7 @@ struct pppoetag {
 #define	PPPOE_CODE_PADT		0xA7		/* Active Discovery Terminate */
 
 /* two byte PPP protocol discriminator, then IP data */
-#define	PPPOE_MAXMTU	(ETHERMTU - PPPOE_HEADERLEN - 2)
+#define	PPPOE_MAXMTU	(ETHERMTU - PPPOE_OVERHEAD)
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define	PPPOE_ADD_16(PTR, VAL)			\
@@ -906,13 +907,22 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		if ((error = suser(p, p->p_acflag)) != 0)
 			return (error);
 		if (parms->eth_ifname[0] != '\0') {
-			sc->sc_eth_if = ifunit(parms->eth_ifname);
-			if (sc->sc_eth_if == NULL ||
-			    (sc->sc_eth_if->if_type != IFT_ETHER &&
-			     sc->sc_eth_if->if_type != IFT_L2VLAN)) {
+			struct ifnet	*eth_if;
+
+			eth_if = ifunit(parms->eth_ifname);
+			if (eth_if == NULL ||
+			    (eth_if->if_type != IFT_ETHER &&
+			     eth_if->if_type != IFT_L2VLAN)) {
 				sc->sc_eth_if = NULL;
 				return (ENXIO);
 			}
+
+			if (sc->sc_sppp.pp_if.if_mtu >
+			    eth_if->if_mtu - PPPOE_OVERHEAD) {
+				sc->sc_sppp.pp_if.if_mtu = eth_if->if_mtu -
+				    PPPOE_OVERHEAD;
+			}
+			sc->sc_eth_if = eth_if;
 		}
 
 		if (sc->sc_concentrator_name)
@@ -1004,7 +1014,8 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	{
 		struct ifreq *ifr = (struct ifreq *)data;
 
-		if (ifr->ifr_mtu > PPPOE_MAXMTU)
+		if (ifr->ifr_mtu > (sc->sc_eth_if == NULL ?
+		    PPPOE_MAXMTU : (sc->sc_eth_if->if_mtu - PPPOE_OVERHEAD)))
 			return (EINVAL);
 		return (sppp_ioctl(ifp, cmd, data));
 	}
