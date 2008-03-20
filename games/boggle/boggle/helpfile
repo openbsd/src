@@ -25,17 +25,17 @@ Any time you are prompted while the board is displayed you can type:
 to see where "word" is on the board.
 
 Usage:
-    bog [-b] [-d] [-s#] [-t#] [-w#] [+[+]] [boardspec]
+    boggle [-Bbcd] [-s seed] [-t time] [-w length] [+[+]] [boardspec]
 
     -b: batch mode (boardspec must be present); dictionary read from stdin
     -d: debug mode
-    -s#: use # as the random number seed
-    -t#: time limit is # seconds instead of default 180
-    -w#: minimum word length is # letters instead of default 3
+    -s seed: use "seed" as the random number seed
+    -t time: time limit in seconds instead of default 180
+    -w length: minimum word length in letters instead of default 3
     +: can reuse a cube, but not twice in succession
     ++: can reuse cubes arbitrarily
     boardspec: the first board to use (use 'q' for 'qu'); e.g.:
-          bog nolezeebnqieegei
+          boggle nolezeebnqieegei
 .
                             Default Rules
 
@@ -51,10 +51,10 @@ Words consist solely of lower case letters and must be at least 3 letters long.
 Command line flags can be given to change the rules of the game.
 The '+' flag allows a cube to be used multiple times, but not in succession.
 The '++' flag makes each cube adjacent to itself.
-The time limit can be changed from the default 3 minutes by using the flag
-'-t#', where # is the duration (in seconds) of each game.
-The minimum word length can be changed from 3 letters by specifying 'w#',
-where # is the minimum number of letters to use.
+The time limit can be changed from the default 3 minutes by using the
+flag '-t time' where 'time' is the duration (in seconds) of each game.
+The minimum word length can be changed from 3 letters by specifying
+'-w length' where 'length' is the minimum number of letters to use.
 .
 Copyright (c) 1988
 Barry Brachman           | UUCP:    {alberta,uw-beaver,uunet}!
