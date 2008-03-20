@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1333 2008/03/20 22:14:14 brad Exp $
+$OpenBSD: pcidevs,v 1.1334 2008/03/20 22:16:01 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -289,6 +289,7 @@ vendor	INPROCOMM	0x17fe	INPROCOMM
 vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
 vendor	XGI		0x18ca	XGI Technology
+vendor	SILAN		0x1904	Silan
 vendor	SANGOMA		0x1923	Sangoma
 vendor	OPTION		0x1931	Option
 vendor	ATTANSIC	0x1969	Attansic Technology
@@ -3722,6 +3723,10 @@ product SGSTHOMSON 1764X	0x1746	STG 1764X
 /* Sigma Designs */
 product SIGMA 64GX		0x6401	64GX
 product SIGMA DVDMAGICPRO	0x8300	DVDmagic-PRO
+
+/* Silan products */
+product SILAN SC92301		0x2301	SC92301
+product SILAN 8139D		0x8139	8139D
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201 AGP
