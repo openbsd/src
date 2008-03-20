@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.77 2008/03/12 16:26:45 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.78 2008/03/20 23:54:57 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1533,7 +1533,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	bus_dmamap_t	map;
 	int		error, seg, nsegs, uidx, startidx, curidx, lastidx, pad;
 	struct rl_desc	*d;
-	u_int32_t	cmdstat, rl_flags = 0;
+	u_int32_t	cmdstat, vlanctl, rl_flags = 0;
 	struct rl_txq	*txq;
 #if NVLAN > 0
 	struct ifvlan	*ifv = NULL;
@@ -1600,6 +1600,17 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		BUS_DMASYNC_PREWRITE);
 
 	/*
+	 * Set up hardware VLAN tagging. Note: vlan tag info must
+	 * appear in all descriptors of a multi-descriptor
+	 * transmission attempt.
+	 */
+	vlanctl = 0;
+#if NVLAN > 0
+	if (ifv != NULL)
+		vlanctl = swap16(ifv->ifv_tag) | RL_TDESC_VLANCTL_TAG;
+#endif
+
+	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
 	 * they really only have meaning in the TX case. (In the RX case,
@@ -1633,7 +1644,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 			goto fail_unload;
 		}
 
-		d->rl_vlanctl = 0;
+		d->rl_vlanctl = htole32(vlanctl);
 		re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
 		cmdstat = rl_flags | map->dm_segs[seg].ds_len;
 		if (seg == 0)
@@ -1654,7 +1665,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		bus_addr_t paddaddr;
 
 		d = &sc->rl_ldata.rl_tx_list[curidx];
-		d->rl_vlanctl = 0;
+		d->rl_vlanctl = htole32(vlanctl);
 		paddaddr = RL_TXPADDADDR(sc);
 		re_set_bufaddr(d, paddaddr);
 		cmdstat = rl_flags |
@@ -1669,20 +1680,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		curidx = RL_NEXT_TX_DESC(sc, curidx);
 	}
 	KASSERT(lastidx != -1);
-
-	/*
-	 * Set up hardware VLAN tagging. Note: vlan tag info must
-	 * appear in the first descriptor of a multi-descriptor
-	 * transmission attempt.
-	 */
-
-#if NVLAN > 0
-	if (ifv != NULL) {
-		sc->rl_ldata.rl_tx_list[startidx].rl_vlanctl =
-		    htole32(swap16(ifv->ifv_tag) |
-		    RL_TDESC_VLANCTL_TAG);
-	}
-#endif
 
 	/* Transfer ownership of packet to the chip. */
 
