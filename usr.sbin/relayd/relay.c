@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.85 2008/03/03 16:41:36 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.86 2008/03/20 22:24:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -841,6 +841,9 @@ relay_write(struct bufferevent *bev, void *arg)
 void
 relay_dump(struct ctl_relay_event *cre, const void *buf, size_t len)
 {
+	if (!len)
+		return;
+
 	/*
 	 * This function will dump the specified message directly
 	 * to the underlying session, without waiting for success
@@ -1195,6 +1198,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 
 		/* Last chunk is 0 bytes followed by an empty newline */
 		if ((cre->toread = lval) == 0) {
+			DPRINTF("relay_read_httpchunks: last chunk");
+
 			line = evbuffer_readline(src);
 			if (line == NULL) {
 				relay_close(con, "invalid chunk");
@@ -1256,7 +1261,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *proot, *pnv = NULL, pkv;
 	char			*line;
-	int			 header = 0, ret, pass = 0;
+	int			 header = 0, ret, pass = 0, content = 0;
 	const char		*errstr;
 	size_t			 size;
 
@@ -1399,11 +1404,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
+			cre->toread = strtonum(pk.value, 0, INT_MAX, &errstr);
 			if (errstr) {
 				relay_close_http(con, 500, errstr, 0);
 				goto abort;
 			}
+			content = 1;
 		}
  lookup:
 		if (strcasecmp("Transfer-Encoding", pk.key) == 0 &&
@@ -1483,7 +1489,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
 			/* HTTP request payload */
-			if (cre->toread) {
+			if (cre->toread || content) {
 				bev->readcb = relay_read_httpcontent;
 				break;
 			}
