@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.15 2007/10/18 18:15:40 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.16 2008/03/20 22:54:49 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -655,6 +655,9 @@ LEAF(proc_trampoline, 0)
 	mfc0	t0, COP_0_STATUS_REG
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
+	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
+
 	ori	t0, SR_EXL		# restoring to user mode.
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
