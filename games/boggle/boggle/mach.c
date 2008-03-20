@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: mach.c,v 1.9 2008/03/20 12:02:27 millert Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.9 2008/03/20 12:02:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $"
 
 #include <ctype.h>
 #include <curses.h>
+#include <err.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -63,15 +64,33 @@ static char rcsid[] = "$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $"
 
 static int ccol, crow, maxw;
 static int colstarts[MAXCOLS], ncolstarts;
-static int lastline;
-int ncols, nlines;
+static char *separator;
+int ncols, nlines, lastline;
 
-extern char *pword[], *mword[];
-extern int ngames, nmwords, npwords, tnmwords, tnpwords;
+/* 
+ * The following determine the screen layout
+ */
+int PROMPT_COL	= 20;
+int PROMPT_LINE	= 3;
+
+int BOARD_COL	= 0;
+int BOARD_LINE	= 0;
+
+int SCORE_COL	= 20;
+int SCORE_LINE	= 0;
+
+int LIST_COL	= 0;
+int LIST_LINE	= 10;
+
+int TIMER_COL	= 20;
+int TIMER_LINE	= 2;
+
+extern char **pword, **mword;
+extern int ngames, nmwords, npwords, tnmwords, tnpwords, ncubes, grid;
 
 static void	cont_catcher(int);
-static int	prwidth(char *[], int);
-static void	prword(char *[], int);
+static int	prwidth(char **, int);
+static void	prword(char **, int);
 static void	stop_catcher(int);
 static void	tty_cleanup(void);
 static int	tty_setup(void);
@@ -85,6 +104,8 @@ static void	winch_catcher(int);
 int
 setup(char *seed)
 {
+	char *cp, *ep;
+
 	if (tty_setup() < 0)
 		return(-1);
 
@@ -92,6 +113,26 @@ setup(char *seed)
 		srandom(atol(seed));
 	else
 		srandomdev();
+
+	separator = malloc(4 * grid + 2);
+	if (separator == NULL)
+		err(1, NULL);
+
+	ep = separator + 4 * grid;
+	for (cp = separator; cp < ep;) {
+		*cp++ = '+';
+		*cp++ = '-';
+		*cp++ = '-';
+		*cp++ = '-';
+	}
+	*cp++ = '+';
+	*cp = '\0';
+
+	SCORE_COL += (grid - 4) * 4;
+	TIMER_COL += (grid - 4) * 4;
+	PROMPT_COL += (grid - 4) * 4;
+	LIST_LINE += (grid - 4) * 2;
+
 	return(0);
 }
 
@@ -133,20 +174,24 @@ results(void)
 	denom2 = tnpwords + tnmwords;
  
 	move(SCORE_LINE, SCORE_COL);
+	printw("Score: %d out of %d\n", npwords, nmwords);
+	move(SCORE_LINE + 1, SCORE_COL);
 	printw("Percentage: %0.2f%% (%0.2f%% over %d game%s)\n",
 	denom1 ? (100.0 * npwords) / (double) (npwords + nmwords) : 0.0,
 	denom2 ? (100.0 * tnpwords) / (double) (tnpwords + tnmwords) : 0.0,
 	ngames, ngames > 1 ? "s" : "");
+	move(TIMER_LINE, TIMER_COL);
+	wclrtoeol(stdscr);
 }
 
 static void
-prword(char *base[], int indx)
+prword(char **base, int indx)
 {
 	printw("%s", base[indx]);
 }
 
 static int
-prwidth(char *base[], int indx)
+prwidth(char **base, int indx)
 {
 	return (strlen(base[indx]));
 }
@@ -391,9 +436,9 @@ findword(void)
 {
 	int c, col, found, i, r, row;
 	char buf[MAXWORDLEN + 1];
-	extern char board[];
+	extern char *board;
 	extern int usedbits, wordpath[];
-	extern char *mword[], *pword[];
+	extern char **mword, **pword;
 	extern int nmwords, npwords;
 
 	getyx(stdscr, r, c);
@@ -636,21 +681,28 @@ static void
 tty_showboard(char *b)
 {
 	int i, line;
+	char ch;
 
 	clear();
 	move(BOARD_LINE, BOARD_COL);
 	line = BOARD_LINE;
-	printw("+---+---+---+---+");
+	printw(separator);
 	move(++line, BOARD_COL);
-	for (i = 0; i < 16; i++) {
-		if (b[i] == 'q')
-			printw("| Qu");
+	for (i = 0; i < ncubes; i++) {
+		printw("| ");
+		ch = SEVENBIT(b[i]);
+		if (HISET(b[i]))
+			attron(A_BOLD);
+		if (ch == 'q')
+			printw("Qu");
 		else
-			printw("| %c ", toupper(b[i]));
-		if ((i + 1) % 4 == 0) {
+			printw("%c ", toupper(ch));
+		if (HISET(b[i]))
+			attroff(A_BOLD);
+		if ((i + 1) % grid == 0) {
 			printw("|");
 			move(++line, BOARD_COL);
-			printw("+---+---+---+---+");
+			printw(separator);
 			move(++line, BOARD_COL);
 		}
 	}

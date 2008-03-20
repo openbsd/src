@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.h,v 1.3 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: bog.h,v 1.4 2008/03/20 12:02:27 millert Exp $	*/
 /*	$NetBSD: bog.h,v 1.2 1995/03/21 12:14:32 cgd Exp $	*/
 
 /*-
@@ -50,29 +50,15 @@
  */
 #define MAXWORDLEN		40	/* Maximum word length */
 #define MAXPWORDS		200	/* Maximum number of player's words */
-#define MAXMWORDS		200	/* Maximum number of machine's words */
+#define MAXMWORDS		400	/* Maximum number of machine's words */
 #define MAXPSPACE		2000	/* Space for player's words */
 #define MAXMSPACE		4000	/* Space for machines's words */
 
 #define MAXCOLS			20
 
-/*
- * The following determine the screen layout
- */
-#define PROMPT_COL		20
-#define PROMPT_LINE		2
-
-#define BOARD_COL		0
-#define BOARD_LINE		0
-
-#define SCORE_COL		20
-#define SCORE_LINE		0
-
-#define LIST_COL		0
-#define LIST_LINE		10
-
-#define TIMER_COL		20
-#define TIMER_LINE		2
+#define SEVENBIT(c)		((c) & 0x7f)
+#define HISET(c)		((c) & 0x80)
+#define SETHI(c)		((c) | 0x80)
 
 /*
  * Internal dictionary index

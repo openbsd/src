@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boggle.6,v 1.15 2007/05/31 19:19:17 jmc Exp $
+.\"	$OpenBSD: boggle.6,v 1.16 2008/03/20 12:02:27 millert Exp $
 .\"	$NetBSD: boggle.6,v 1.2 1995/03/21 12:14:35 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"	@(#)boggle.6	8.1 (Berkeley) 6/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 20 2008 $
 .Dt BOGGLE 6
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Nd word search game
 .Sh SYNOPSIS
 .Nm boggle
-.Op Fl bd
+.Op Fl Bbcd
 .Op Fl s Ar seed
 .Op Fl t Ar time
 .Op Fl w Ar length
@@ -87,6 +87,14 @@ Words consist solely of lower case letters and must be at least 3 letters long.
 .Pp
 Command line flags can be given to change the rules of the game:
 .Bl -tag -width boardspec
+.It Fl B
+Use an alternate five by five arrangement of Boggle cubes.
+In this mode the default minimum word length is 4 letters.
+This arrangement has been marketed over the years under the names
+.Em Big Boggle ,
+.Em Super Boggle
+and
+.Em Boggle Deluxe .
 .It Fl b
 Run
 .Nm
@@ -97,6 +105,13 @@ must also be given.
 The dictionary is read from stdin and a list of words appearing in
 .Ar boardspec
 is printed to stdout.
+.It Fl c
+Add a so-called
+.Em challenge cube
+to the board, which contains less commonly used letters.
+The challenge cube will be displayed in boldface on the board.
+Depending on the terminal capabilities, it may be displayed in
+underline or a different color (such as red).
 .It Fl d
 Enable debugging output.
 .It Fl s Ar seed
