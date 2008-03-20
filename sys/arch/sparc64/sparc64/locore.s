@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.117 2008/03/19 23:16:19 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.118 2008/03/20 22:22:47 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -82,9 +82,6 @@
 #undef	CURPROC
 #undef	CPCB
 #undef	FPPROC
-#define	CURPROC	(CPUINFO_VA+CI_CURPROC)
-#define CPCB	(CPUINFO_VA+CI_CPCB)
-#define	FPPROC	(CPUINFO_VA+CI_FPPROC)
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
@@ -99,6 +96,17 @@
 #else	/* 1 */
 #define NOTREACHED
 #endif	/* 1 */
+
+#define GET_CPUINFO_VA(ci) \
+	set CPUINFO_VA, ci
+
+#define GET_CPCB(pcb) \
+	GET_CPUINFO_VA(pcb)			;\
+	ldx	[pcb + CI_CPCB], pcb
+
+#define GET_CURPROC(curproc) \
+	GET_CPUINFO_VA(curproc)			;\
+	ldx	[curproc + CI_CURPROC], curproc
 
 /*
  * This macro will clear out a cache line before an explicit
@@ -214,9 +222,9 @@
 
 	.macro ENABLE_FPU siz
 	save	%sp, -(CC64FSZ), %sp;		! Allocate a stack frame
-	sethi	%hi(FPPROC), %l1;
+	GET_CPUINFO_VA(%l1);
 	add	%fp, BIAS-FS_SIZE, %l0;		! Allocate a fpstate
-	ldx	[%l1 + %lo(FPPROC)], %l2;	! Load fpproc
+	ldx	[%l1 + CI_FPPROC], %l2;		! Load fpproc
 	andn	%l0, BLOCK_SIZE, %l0;		! Align it
 	clr	%l3;				! NULL fpstate
 	brz,pt	%l2, 1f;			! fpproc == NULL?
@@ -237,13 +245,12 @@
 	ba,pt	%xcc, 2f;			! XXXX needs to change to CPUs idle proc
 	 or	%l4, %lo(_C_LABEL(proc0)), %l5;
 1:
-	sethi	%hi(CURPROC), %l4;		! Use curproc
-	ldx	[%l4 + %lo(CURPROC)], %l5;
+	GET_CURPROC(%l5);			! Use curproc
 	brz,pn	%l5, 0b; nop;			! If curproc is NULL need to use proc0
 2:
 	ldx	[%l5 + P_FPSTATE], %l6;		! Save old fpstate
 	stx	%l0, [%l5 + P_FPSTATE];		! Insert new fpstate
-	stx	%l5, [%l1 + %lo(FPPROC)];	! Set new fpproc
+	stx	%l5, [%l1 + CI_FPPROC];		! Set new fpproc
 	wr	%g0, FPRS_FEF, %fprs		! Enable FPU
 	.endm
 
@@ -258,7 +265,7 @@
 	cmp	%l7, %l0
 	tnz	1
 #endif	/* DEBUG */
-	stx	%l2, [%l1 + %lo(FPPROC)]	! Restore old fproc
+	stx	%l2, [%l1 + CI_FPPROC]		! Restore old fproc
 	wr	%g0, 0, %fprs			! Disable fpu
 	brz,pt	%l3, 1f				! Skip if no fpstate
 	 stx	%l6, [%l5 + P_FPSTATE]		! Restore old fpstate
@@ -513,8 +520,7 @@ _C_LABEL(cold):
 	stxa	%i4, [%sp + BIAS + (12*8)] %asi
 	stxa	%i5, [%sp + BIAS + (13*8)] %asi
 	stxa	%i6, [%sp + BIAS + (14*8)] %asi
-	sethi	%hi(CPCB), %g5
-	ldx	[%g5 + %lo(CPCB)], %g5
+	GET_CPCB(%g5)
 	ldx	[%g5 + PCB_WCOOKIE], %g5
 	xor	%g5, %i7, %g5		! stackghost
 	stxa	%g5, [%sp + BIAS + (15*8)] %asi
@@ -566,8 +572,7 @@ _C_LABEL(cold):
 \label:
 	wr	%g0, \as, %asi
 	FILL	ldxa, %sp+BIAS, 8, %asi
-	sethi	%hi(CPCB), %g5
-	ldx	[%g5 + %lo(CPCB)], %g5
+	GET_CPCB(%g5)
 	ldx	[%g5 + PCB_WCOOKIE], %g5
 	xor	%g5, %i7, %i7		! stackghost
 	restored
@@ -1219,10 +1224,8 @@ intr_setup_msg:
 	.text
 
 	.macro	TRAP_SETUP stackspace
-	sethi	%hi(CPCB), %g6
+	GET_CPCB(%g6)
 	sethi	%hi((\stackspace)), %g5
-
-	ldx	[%g6 + %lo(CPCB)], %g6
 	sethi	%hi(USPACE), %g7		! Always multiple of page size
 	or	%g5, %lo((\stackspace)), %g5
 
@@ -1672,8 +1675,7 @@ winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
 	brlez,pt	%g1, datafault	! Don't go below trap level 1
-	 sethi	%hi(CPCB), %g6		! get current pcb
-
+	 nop
 
 	CHKPT %g4,%g7,0x20
 	wrpr	%g1, 0, %tl		! Pop a trap level
@@ -1823,7 +1825,7 @@ winfixspill:
 	 wrpr	%g5, 0, %cwp				!  return here and write out all dirty windows.
 #endif	/* 1 */
 	wrpr	%g2, 0, %tl				! Restore trap level for now XXXX
-	ldx	[%g6 + %lo(CPCB)], %g6	! This is in the locked TLB and should not fault
+	GET_CPCB(%g6)
 #ifdef DEBUG
 	set	0x12, %g5				! debug
 	sethi	%hi(DATA_START), %g7			! debug
@@ -2465,7 +2467,7 @@ checkalign:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
 	bneg,pn	%icc, slowtrap		! Huh?
-	 sethi	%hi(CPCB), %g6		! Get current pcb
+	 nop
 
 	wrpr	%g1, 0, %tl
 	rdpr	%tt, %g7
@@ -2572,13 +2574,13 @@ Lslowtrap_reenter:
 	stx	%g7, [%sp + CC64FSZ + BIAS + TF_G + (7*8)]
 	stb	%g5, [%sp + CC64FSZ + BIAS + TF_PIL]
 	stb	%g5, [%sp + CC64FSZ + BIAS + TF_OLDPIL]
+
 	/*
 	 * Phew, ready to enable traps and call C code.
 	 */
 	rdpr	%tl, %g1
 	dec	%g1
 	movrlz	%g1, %g0, %g1
-	CHKPT %g2,%g3,0x24
 	wrpr	%g0, %g1, %tl		! Revert to kernel mode
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
@@ -2586,7 +2588,6 @@ Lslowtrap_reenter:
 	call	_C_LABEL(trap)			! trap(tf, type, pc, pstate)
 	 nop
 
-	CHKPT %o1,%o2,3
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
@@ -2614,14 +2615,14 @@ softtrap:
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
 	or	%g5, %lo(EINTSTACK-BIAS), %g5
 	dec	%g7
+
 	sub	%g5, %sp, %g5
-	sethi	%hi(CPCB), %g6
 	andncc	%g5, %g7, %g0
 	bnz,pt	%xcc, Lslowtrap_reenter
-	 ldx	[%g6 + %lo(CPCB)], %g7
+	 nop
+	GET_CPCB(%g7)
 	set	USPACE-CC64FSZ-TF_SIZE-BIAS, %g5
 	add	%g7, %g5, %g6
-	SET_SP_REDZONE %g7, %g5
 	stx	%g1, [%g6 + CC64FSZ + BIAS + TF_FAULT]		! Generate a new trapframe
 	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_O + (0*8)]	!	but don't bother with
 	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_O + (1*8)]	!	locals and ins
@@ -2697,7 +2698,6 @@ syscall_setup:
 	rd	%y, %o4
 	stx	%g5, [%sp + CC64FSZ + BIAS + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + BIAS + TF_G + ( 6*8)]
-	CHKPT %g5,%g6,0x31
 	wrpr	%g0, 0, %tl			! return to tl=0
 	stx	%g7, [%sp + CC64FSZ + BIAS + TF_G + ( 7*8)]
 	add	%sp, CC64FSZ + BIAS, %o0	! (&tf)
@@ -2719,9 +2719,7 @@ syscall_setup:
 	/* see `proc_trampoline' for the reason for this label */
 return_from_syscall:
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
-	CHKPT %o1,%o2,0x32
 	wrpr	%g0, 0, %tl			! Return to tl==0
-	CHKPT %o1,%o2,4
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
@@ -2848,10 +2846,10 @@ setup_sparcintr:
 	ldx	[%g5+IH_PEND], %g6	! Check if already in use
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
-	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
+	GET_CPUINFO_VA(%g1)
 	sll	%g6, 3+3, %g3	! Find start of table for this IPL
-	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
-	 add	%g1, %g3, %g1
+	add	%g1, CI_INTRPENDING, %g1
+	add	%g1, %g3, %g1
 1:
 	ldx	[%g1], %g3		! Load list head
 	add	%g5, IH_PEND, %g7
@@ -2974,8 +2972,8 @@ ENTRY(ipi_tlb_context_demap)
 	 nop
 
 ENTRY(ipi_save_fpstate)
-	sethi	%hi(FPPROC), %g1
-	ldx	[%g1 + %lo(FPPROC)], %g2
+	GET_CPUINFO_VA(%g1)
+	ldx	[%g1 + CI_FPPROC], %g2
 	cmp	%g2, %g3
 	bne,pn	%xcc, 3f
 
@@ -3021,7 +3019,7 @@ ENTRY(ipi_save_fpstate)
 	membar	#Sync			! Finish operation so we can
 	wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
 
-	stx	%g0, [%g1 + %lo(FPPROC)] ! fpproc = NULL
+	stx	%g0, [%g1 + CI_FPPROC]	! fpproc = NULL
 	mov	CTX_SECONDARY, %g2
 	stxa	%g6, [%g2] ASI_DMMU
 	membar	#Sync
@@ -3034,12 +3032,12 @@ ENTRY(ipi_drop_fpstate)
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
-	sethi	%hi(FPPROC), %g1
-	ldx	[%g1 + %lo(FPPROC)], %g5
+	GET_CPUINFO_VA(%g1)
+	ldx	[%g1 + CI_FPPROC], %g5
 	cmp	%g5, %g3
 	bne,pn	%xcc, 1f
 	 nop
-	stx	%g0, [%g1 + %lo(FPPROC)]	! fpproc = NULL
+	stx	%g0, [%g1 + CI_FPPROC]		! fpproc = NULL
 1:
 	ba	ret_from_intr_vector
 	 nop
@@ -3164,7 +3162,7 @@ _C_LABEL(sparc_interrupt):
 	mov	1, %l3			! Ack softint
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
-	sethi	%hi(CPUINFO_VA+CI_HANDLED_INTR_LEVEL), %l4
+	GET_CPUINFO_VA(%l4)
 
 	wrpr	%l6, %pil
 
@@ -3172,16 +3170,16 @@ _C_LABEL(sparc_interrupt):
 	 * Set handled_intr_level and save the old one so we can restore it
 	 * later.
 	 */
-	ld	[%l4 + %lo(CPUINFO_VA+CI_HANDLED_INTR_LEVEL)], %l7
-	st	%l6, [%l4 + %lo(CPUINFO_VA+CI_HANDLED_INTR_LEVEL)]
+	ld	[%l4 + CI_HANDLED_INTR_LEVEL], %l7
+	st	%l6, [%l4 + CI_HANDLED_INTR_LEVEL]
 	st	%l7, [%sp + CC64FSZ + BIAS + TF_SIZE]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	sll	%l6, 3+3, %l2
-	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %l4
-	or	%l4, %lo(CPUINFO_VA+CI_INTRPENDING), %l4
+	GET_CPUINFO_VA(%l4)
+	add	%l4, CI_INTRPENDING, %l4
 	mov	8, %l7
 	add	%l2, %l4, %l4
 
@@ -3265,9 +3263,9 @@ intrcmplt:
 #endif	/* DEBUG */
 
 	/* Restore old handled_intr_level */
-	sethi	%hi(CPUINFO_VA+CI_HANDLED_INTR_LEVEL), %l4
+	GET_CPUINFO_VA(%l4)
 	ld	[%sp + CC64FSZ + BIAS + TF_SIZE], %l7
-	st	%l7, [%l4 + %lo(CPUINFO_VA+CI_HANDLED_INTR_LEVEL)]
+	st	%l7, [%l4 + CI_HANDLED_INTR_LEVEL]
 
 	ldub	[%sp + CC64FSZ + BIAS + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
@@ -3352,18 +3350,10 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + BIAS + TF_PC], %g2
 	ldx	[%sp + CC64FSZ + BIAS + TF_NPC], %g3
 
-#ifdef DEBUG
-	tst	%g2
-	tz	1		! tpc NULL? Panic
-	tst	%i6
-	tz	1		! %fp NULL? Panic
-#endif	/* DEBUG */
-
 	/* Returning to user mode or kernel mode? */
 	btst	TSTATE_PRIV, %g1		! returning to userland?
-	CHKPT %g4, %g7, 6
 	bz,pt	%icc, rft_user
-	 sethi	%hi(CURPROC), %g7		! first instr of rft_user
+	 nop
 
 /*
  * Return from trap, to kernel.
@@ -3374,25 +3364,22 @@ return_from_trap:
  *
  */
 rft_kernel:
-	rdpr	%tl, %g4				! Grab a set of trap registers
+	rdpr	%tl, %g4			! Grab a set of trap registers
 	inc	%g4
 	wrpr	%g4, %g0, %tl
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
-	CHKPT %g1,%g2,7
+
 	restore
-	CHKPT %g1,%g2,0			! Clear this out
+
 	rdpr	%tstate, %g1			! Since we may have trapped our regs may be toast
 	rdpr	%cwp, %g2
 	andn	%g1, CWP, %g1
 	wrpr	%g1, %g2, %tstate		! Put %cwp in %tstate
-	CLRTT
-#if	0
-	wrpr	%g0, 0, %cleanwin	! DEBUG
-#endif	/* 0 */
 	retry					! We should allow some way to distinguish retry/done
 	NOTREACHED
+
 /*
  * Return from trap, to user.  Checks for scheduling trap (`ast') first;
  * will re-enter trap() if set.  Note that we may have to switch from
@@ -3407,13 +3394,10 @@ rft_wcnt:	.word 0
 	.text
 
 rft_user:
-!	sethi	%hi(CURPROC), %g7		! (done above)
-	ldx	[%g7 + %lo(CURPROC)], %g7
-	lduw	[%g7 + %lo(P_MD_ASTPENDING)], %g7! want AST trap?
+	GET_CURPROC(%g7)
+	lduw	[%g7 + P_MD_ASTPENDING], %g7	! want AST trap?
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 	 mov	T_AST, %g4
-
-	CHKPT %g4,%g7,8
 
 	/*
 	 * NB: only need to do this after a cache miss
@@ -3428,9 +3412,8 @@ rft_user:
 	 * by the data fault trap handlers and we don't want possible conflict.
 	 */
 
-	sethi	%hi(CPCB), %g6
-	ldx	[%g6 + %lo(CPCB)], %g6
-	ldub	[%g6 + PCB_NSAVED], %g7
+	GET_CPCB(%g6)
+ 	ldub	[%g6 + PCB_NSAVED], %g7		! Any saved reg windows?
 	brnz,pn	%g7, softtrap
 	 mov	T_RWRET, %g4
 
@@ -3459,7 +3442,6 @@ rft_user:
 	rdpr	%cwp, %g7			! Find our cur window
 	andn	%g1, CWP, %g1			! Clear it from %tstate
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
-	CHKPT %g4,%g7,0xb
 
 	wr	%g0, ASI_DMMU, %asi		! restore the user context
 	ldxa	[CTX_SECONDARY] %asi, %g4
@@ -3470,8 +3452,7 @@ rft_user:
 	CLRTT
 	CHKPT %g4,%g7,0xd
 #ifdef DEBUG
-	sethi	%hi(CPCB), %g5
-	ldx	[%g5 + %lo(CPCB)], %g5
+	GET_CPCB(%g5)
 	ldub	[%g5 + PCB_NSAVED], %g5		! Any saved reg windows?
 	tst	%g5
 	tnz	%icc, 1; nop			! Debugger if we still have saved windows!
@@ -3637,7 +3618,7 @@ dostart:
 	/*
 	 * Ready to run C code; finish bootstrap.
 	 */
-1:	
+1:
 	set	0x2000, %o0			! fixed: 8192 contexts
 	call	_C_LABEL(bootstrap)
 	 clr	%g4				! Clear data segment pointer
@@ -3666,7 +3647,7 @@ dostart:
 _C_LABEL(cpu_initialize):
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
-
+	
 	/*
 	 * Step 6: map cpu_info struct and interrupt stack and 
 	 * switch to our initial stack.
@@ -3674,8 +3655,8 @@ _C_LABEL(cpu_initialize):
 
 !!! Make sure our stack's OK.
 	flushw
-	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
-	ldx	[%l0 + %lo(CPUINFO_VA+CI_INITSTACK)], %l0
+	GET_CPUINFO_VA(%l0)
+	ldx	[%l0 + CI_INITSTACK], %l0
  	add	%l0, - CC64FSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
 	sub	%l0, BIAS, %l0			! and biased
@@ -3724,8 +3705,8 @@ _C_LABEL(cpu_initialize):
 	 * Call our startup routine.
 	 */
 
-	sethi	%hi(CPUINFO_VA+CI_SPINUP), %l0
-	ldx	[%l0 + %lo(CPUINFO_VA+CI_SPINUP)], %o1
+	GET_CPUINFO_VA(%l0)
+	ldx	[%l0 + CI_SPINUP], %o1
 
 	call	%o1				! Call routine
 	 clr	%o0				! our frame arg is ignored
@@ -3748,6 +3729,8 @@ tmpstack:
 	.text
 
 ENTRY(cpu_mp_startup)
+	mov	%o0, %g2
+
 	wrpr	%g0, 0, %cleanwin
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
@@ -4279,11 +4262,11 @@ ENTRY(getfp)
 ENTRY(copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
 	brgz,pt	%o2, 1f					! Make sure len is valid
-	 sethi	%hi(CPCB), %o4		! (first instr of copy)
+	 nop
 	retl
 	 mov	ENAMETOOLONG, %o0
 1:
-	ldx	[%o4 + %lo(CPCB)], %o4	! catch faults
+	GET_CPCB(%o4)			! catch faults
 	set	Lcsfault, %o5
 	membar	#Sync
 	stx	%o5, [%o4 + PCB_ONFAULT]
@@ -4312,11 +4295,11 @@ ENTRY(copyinstr)
 ENTRY(copyoutstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
 	brgz,pt	%o2, 1f					! Make sure len is valid
-	 sethi	%hi(CPCB), %o4		! (first instr of copy)
+	 nop
 	retl
 	 mov	ENAMETOOLONG, %o0
 1:
-	ldx	[%o4 + %lo(CPCB)], %o4	! catch faults
+	GET_CPCB(%o4)			! catch faults
 	set	Lcsfault, %o5
 	membar	#Sync
 	stx	%o5, [%o4 + PCB_ONFAULT]
@@ -4404,9 +4387,8 @@ ENTRY(copystr)
 
 ENTRY(copyin)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
-	sethi	%hi(CPCB), %o3
+	GET_CPCB(%o3)
 	wr	%g0, ASI_AIUS, %asi
-	ldx	[%o3 + %lo(CPCB)], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
 	membar	#Sync
@@ -4571,9 +4553,7 @@ Lcopyin_mopb:
 	stb	%o4, [%o1]
 
 Lcopyin_done:
-	sethi	%hi(CPCB), %o3
-!	stb	%o4,[%o1]	! Store last byte -- should not be needed
-	ldx	[%o3 + %lo(CPCB)], %o3
+	GET_CPCB(%o3)
 	membar	#Sync
 	stx	%g0, [%o3 + PCB_ONFAULT]
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
@@ -4598,9 +4578,8 @@ ENTRY(copyout)
 	 * ******NOTE****** this depends on bcopy() not using %g7
 	 */
 Ldocopy:
-	sethi	%hi(CPCB), %o3
+	GET_CPCB(%o3)
 	wr	%g0, ASI_AIUS, %asi
-	ldx	[%o3 + %lo(CPCB)], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
 	membar	#Sync
@@ -4767,8 +4746,7 @@ Lcopyout_mopb:
 	stba	%o4, [%o1] %asi
 
 Lcopyout_done:
-	sethi	%hi(CPCB), %o3
-	ldx	[%o3 + %lo(CPCB)], %o3
+	GET_CPCB(%o3)
 	membar	#Sync
 	stx	%g0, [%o3 + PCB_ONFAULT]
 !	jmp	%g7 + 8		! Original instr
@@ -4782,8 +4760,7 @@ Lcopyout_done:
 ! the only special thing is that we have to return to [g7 + 8] rather than
 ! [o7 + 8].
 Lcopyfault:
-	sethi	%hi(CPCB), %o3
-	ldx	[%o3 + %lo(CPCB)], %o3
+	GET_CPCB(%o3)
 	stx	%g0, [%o3 + PCB_ONFAULT]
 	membar	#StoreStore|#StoreLoad
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
@@ -4816,9 +4793,8 @@ ENTRY(cpu_switchto)
 	mov	%i0, %l4		! oldproc
 	mov	%i1, %l3		! newproc
 
-	sethi	%hi(CPCB), %l6
-	ldx	[%l6 + %lo(CPCB)], %l5
-	sethi   %hi(CURPROC), %l7
+	set	CPUINFO_VA, %l6
+	ldx	[%l6 + CI_CPCB], %l5
 
 	/*
 	 * Register usage:
@@ -4828,8 +4804,7 @@ ENTRY(cpu_switchto)
 	 *	%l3 = p
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
-	 *	%l6 = %hi(_cpcb)
-	 *	%l7 = %hi(_curproc)
+	 *	%l6 = curcpu
 	 *	%o0 = tmp 1
 	 *	%o1 = oldpstate
 	 *	%o2 = tmp 2
@@ -4854,16 +4829,14 @@ ENTRY(cpu_switchto)
 	/*
 	 * p->p_cpu = curcpu();
 	 */
-	sethi	%hi(CPUINFO_VA+CI_SELF), %o0
-	ldx	[%o0 + %lo(CPUINFO_VA+CI_SELF)], %o0
+	ldx	[%l6 + CI_SELF], %o0
 	stx	%o0, [%l3 + P_CPU]
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%l3 + P_STAT]
-	sethi	%hi(CPUINFO_VA+CI_WANT_RESCHED), %o0
-	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]	! want_resched = 0;
+	st	%g0, [%l6 + CI_WANT_RESCHED]	! want_resched = 0;
 	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
-	stx	%l4, [%l7 + %lo(CURPROC)]	! restore old proc so we can save it
+	stx	%l4, [%l6 + CI_CURPROC]		! restore old proc so we can save it
 
 	/*
 	 * Not the old process.  Save the old process, if any;
@@ -4888,8 +4861,8 @@ ENTRY(cpu_switchto)
 	 */
 Lsw_load:
 	/* set new cpcb */
-	stx	%l3, [%l7 + %lo(CURPROC)]	! curproc = p;
-	stx	%l1, [%l6 + %lo(CPCB)]	! cpcb = newpcb;
+	stx	%l3, [%l6 + CI_CURPROC]	! curproc = p;
+	stx	%l1, [%l6 + CI_CPCB]	! cpcb = newpcb;
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7
@@ -4901,17 +4874,7 @@ Lsw_load:
 !	wrpr	%g0, 0, %cleanwin	! DEBUG
 	dec	1, %l7					! NWINDOWS-1-1
 	wrpr	%l7, %cansave
-#ifdef DEBUG
-	wrpr	%g0, 4, %tl				! DEBUG -- force watchdog
-	flushw						! DEBUG
-	wrpr	%g0, 0, %tl				! DEBUG
-	/* load window */
-!	restore				! The logic is just too complicated to handle here.  Let the traps deal with the problem
-!	flushw						! DEBUG
-	mov	%l1, %o0
-	SET_SP_REDZONE %o0, %o1
-	CHECK_SP_REDZONE %o0, %o1
-#endif	/* DEBUG */
+
 	/* finally, enable traps */
 	wrpr	%g0, PSTATE_INTR, %pstate
 
@@ -4923,7 +4886,7 @@ Lsw_load:
 	ldx	[%l3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	sethi	%hi(_C_LABEL(kernel_pmap_)), %o1
 	mov	CTX_SECONDARY, %l5		! Recycle %l5
-	ldx	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap.pm_ctx != NULL)
+	ldx	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap != kernel_pmap_)
 	or	%o1, %lo(_C_LABEL(kernel_pmap_)), %o1
 	cmp	%o2, %o1
 	bz,pn	%xcc, Lsw_havectx		! Don't replace kernel context!
@@ -5060,8 +5023,7 @@ ENTRY(proc_trampoline)
 ENTRY(probeget)
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4)
-	sethi	%hi(CPCB), %o2
-	ldx	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfsprobe;
+	GET_CPCB(%o2)			! cpcb->pcb_onfault = Lfsprobe;
 	set	_C_LABEL(Lfsprobe), %o5
 	stx	%o5, [%o2 + PCB_ONFAULT]
 	or	%o0, 0x9, %o3		! if (PHYS_ASI(asi)) {
@@ -7154,8 +7116,7 @@ ENTRY(kcopy)
 	.text
 3:
 #endif	/* DEBUG */
-	sethi	%hi(CPCB), %o5		! cpcb->pcb_onfault = Lkcerr;
-	ldx	[%o5 + %lo(CPCB)], %o5
+	GET_CPCB(%o5)			! cpcb->pcb_onfault = Lkcerr;
 	set	Lkcerr, %o3
 	ldx	[%o5 + PCB_ONFAULT], %g1! save current onfault handler
 	membar	#LoadStore
@@ -7689,7 +7650,9 @@ ENTRY(send_softint)
 	wrpr	%g1, 0, %pstate
 
 	brz,pn	%o2, 1f
-	 set	CPUINFO_VA+CI_INTRPENDING, %o3
+	 nop
+	GET_CPUINFO_VA(%o3)
+	add	%o3, CI_INTRPENDING, %o3
 
 	ldx	[%o2 + IH_PEND], %o5
 	brnz,pn	%o5, 1f
