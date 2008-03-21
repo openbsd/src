@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.67 2007/08/01 16:30:00 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.68 2008/03/21 17:10:33 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -42,6 +42,7 @@ option		INET		# Internet protocol suite
 #option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
 option		SCSITERSE		# less verbose scsi error messages
+option		WSKBD_NO_INTL_LAYOUTS	# no international keyboard layouts
 
 option		BOOT_CONFIG
 

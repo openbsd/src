@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.19 2006/12/05 21:28:02 otto Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.20 2008/03/21 17:10:46 miod Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -209,7 +209,7 @@ static const keysym_t gsckbd_keydesc_precisionbook[] = {
     KC(140),			KS_Meta_R,
 };
 
-#if !defined(SMALL_KERNEL) || !defined(__alpha__)
+#if !defined(WSKBD_NO_INTL_LAYOUTS)
 
 static const keysym_t gsckbd_keydesc_de[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
@@ -982,14 +982,14 @@ static const keysym_t gsckbd_keydesc_nl_nodead[] = {
     KC(85),	KS_degree,	KS_asciitilde,	KS_cedilla,
 };
 
-#endif	/* SMALL_KERNEL */
+#endif	/* WSKBD_NO_INTL_LAYOUTS */
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
 const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	gsckbd_keydesc_us),
-#if !defined(SMALL_KERNEL) || !defined(__alpha__)
+#if !defined(WSKBD_NO_INTL_LAYOUTS)
 	KBD_MAP(KB_DE,			KB_US,	gsckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	gsckbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,			KB_US,	gsckbd_keydesc_fr),
@@ -1034,7 +1034,7 @@ const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_LV,			KB_US,	gsckbd_keydesc_lv),
 	KBD_MAP(KB_NL,			KB_US, 	gsckbd_keydesc_nl),
 	KBD_MAP(KB_NL | KB_NODEAD,	KB_NL,	gsckbd_keydesc_nl_nodead),
-#endif	/* SMALL_KERNEL */
+#endif	/* WSKBD_NO_INTL_LAYOUTS */
 	KBD_MAP(KB_US | KB_MACHDEP,	KB_US,	gsckbd_keydesc_precisionbook),
 	{0, 0, 0, 0}
 };
