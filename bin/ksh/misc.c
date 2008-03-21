@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.32 2007/08/02 11:05:54 fgsch Exp $	*/
+/*	$OpenBSD: misc.c,v 1.33 2008/03/21 12:51:19 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -891,10 +891,10 @@ ksh_getopt_reset(Getopt *go, int flags)
  *	  the option is missing).
  *	  Used for 'read -u2', 'print -u2' and fc -40.
  *	- '#' is like ':' in options, expect that the argument is optional
- *	  and must start with a digit.  If the argument doesn't start with a
- *	  digit, it is assumed to be missing and normal option processing
- *	  continues (optarg is set to 0 if the option is missing).
- *	  Used for 'typeset -LZ4'.
+ *	  and must start with a digit or be the string "unlimited".  If the
+ *	  argument doesn't match, it is assumed to be missing and normal option
+ *	  processing continues (optarg is set to 0 if the option is missing).
+ *	  Used for 'typeset -LZ4' and 'ulimit -adunlimited'.
  *	- accepts +c as well as -c IF the GF_PLUSOPT flag is present.  If an
  *	  option starting with + is accepted, the GI_PLUS flag will be set
  *	  in go->info.
@@ -977,13 +977,15 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 		 * argument is missing.
 		 */
 		if (argv[go->optind - 1][go->p]) {
-			if (digit(argv[go->optind - 1][go->p])) {
+			if (digit(argv[go->optind - 1][go->p]) ||
+			    !strcmp(&argv[go->optind - 1][go->p], "unlimited")) {
 				go->optarg = argv[go->optind - 1] + go->p;
 				go->p = 0;
 			} else
 				go->optarg = (char *) 0;
 		} else {
-			if (argv[go->optind] && digit(argv[go->optind][0])) {
+			if (argv[go->optind] && (digit(argv[go->optind][0]) ||
+			    !strcmp(argv[go->optind], "unlimited"))) {
 				go->optarg = argv[go->optind++];
 				go->p = 0;
 			} else

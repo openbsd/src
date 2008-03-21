@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.120 2007/05/31 20:47:44 otto Exp $
+.\"	$OpenBSD: ksh.1,v 1.121 2008/03/21 12:51:19 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 21 2008 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4256,24 +4256,19 @@ except zero padding is used instead of space padding.
 .Pp
 .It Xo
 .Ic ulimit
-.Op Fl acdfHlmnpSst
-.Op Ar value
+.Op Fl acdfHlmnpSst Op Ar value
+.Ar ...
 .Xc
 Display or set process limits.
 If no options are used, the file size limit
 .Pq Fl f
 is assumed.
 .Ar value ,
-if specified, may be either an arithmetic expression or the word
+if specified, may be either an arithmetic expression starting with a
+number or the word
 .Dq unlimited .
 The limits affect the shell and any processes created by the shell after a
-limit is imposed.
-Note that some systems may not allow limits to be increased
-once they are set.
-Also note that the types of limits available are system
-dependent \- some systems have only the
-.Fl f
-limit.
+limit is imposed; limits may not be increased once they are set.
 .Bl -tag -width 5n
 .It Fl a
 Display all limits; unless
