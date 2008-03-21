@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.222 2008/02/20 12:17:25 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.223 2008/03/21 21:11:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2154,13 +2154,18 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->bge_ifmedia, IFM_ETHER|IFM_AUTO);
 		sc->bge_ifmedia.ifm_media = sc->bge_ifmedia.ifm_cur->ifm_media;
 	} else {
+		int mii_flags;
+
 		/*
 		 * Do transceiver setup.
 		 */
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
+		mii_flags = MIIF_DOPAUSE;
+		if (sc->bge_flags & BGE_PHY_FIBER_MII)
+			mii_flags |= MIIF_HAVEFIBER;
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
-			   MII_PHY_ANY, MII_OFFSET_ANY, MIIF_DOPAUSE);
+			   MII_PHY_ANY, MII_OFFSET_ANY, mii_flags);
 		
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
