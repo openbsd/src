@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.28 2008/02/20 00:00:06 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.29 2008/03/21 00:20:55 brad Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -669,9 +669,9 @@ em_reset_hw(struct em_hw *hw)
         case em_ich9lan:
             if (!hw->phy_reset_disable &&
                 em_check_phy_reset_block(hw) == E1000_SUCCESS) {
-                /* em_ich8lan PHY HW reset requires MAC CORE reset
-                 * at the same time to make sure the interface between
-                 * MAC and the external PHY is reset.
+                /* PHY HW reset requires MAC CORE reset at the same
+                 * time to make sure the interface between MAC and the
+                 * external PHY is reset.
                  */
                 ctrl |= E1000_CTRL_PHY_RST;
             }
@@ -897,11 +897,8 @@ em_init_hw(struct em_hw *hw)
 
     DEBUGFUNC("em_init_hw");
 
-    /* force full DMA clock frequency for 10/100 on ICH8 A0-B0 */
-    if ((hw->mac_type == em_ich8lan) &&
-        ((hw->revision_id < 3) ||
-         ((hw->device_id != E1000_DEV_ID_ICH8_IGP_M_AMT) &&
-          (hw->device_id != E1000_DEV_ID_ICH8_IGP_M)))) {
+    /* force full DMA clock frequency for ICH8 */
+    if (hw->mac_type == em_ich8lan) {
             reg_data = E1000_READ_REG(hw, STATUS);
             reg_data &= ~0x80000000;
             E1000_WRITE_REG(hw, STATUS, reg_data);
@@ -922,8 +919,8 @@ em_init_hw(struct em_hw *hw)
 
     /* Disabling VLAN filtering. */
     DEBUGOUT("Initializing the IEEE VLAN\n");
-    /* VET hardcoded to standard value and VFTA removed in ICH8 LAN */
-    if (hw->mac_type != em_ich8lan) {
+    /* VET hardcoded to standard value and VFTA removed in ICH8/ICH9 LAN */
+    if (hw->mac_type != em_ich8lan && hw->mac_type != em_ich9lan) {
         if (hw->mac_type < em_82545_rev_3)
             E1000_WRITE_REG(hw, VET, 0);
         em_clear_vfta(hw);
@@ -1230,8 +1227,8 @@ em_setup_link(struct em_hw *hw)
      */
     DEBUGOUT("Initializing the Flow Control address, type and timer regs\n");
 
-    /* FCAL/H and FCT are hardcoded to standard values in em_ich8lan. */
-    if (hw->mac_type != em_ich8lan) {
+    /* FCAL/H and FCT are hardcoded to standard values in em_ich8lan/em_ich9lan. */
+    if (hw->mac_type != em_ich8lan && hw->mac_type != em_ich9lan) {
         E1000_WRITE_REG(hw, FCT, FLOW_CONTROL_TYPE);
         E1000_WRITE_REG(hw, FCAH, FLOW_CONTROL_ADDRESS_HIGH);
         E1000_WRITE_REG(hw, FCAL, FLOW_CONTROL_ADDRESS_LOW);
@@ -8229,14 +8226,20 @@ em_init_lcd_from_nvm_config_region(struct em_hw *hw,
 STATIC int32_t
 em_init_lcd_from_nvm(struct em_hw *hw)
 {
-    uint32_t reg_data, cnf_base_addr, cnf_size, ret_val, loop;
+    uint32_t reg_data, cnf_base_addr, cnf_size, ret_val, loop, sw_cfg_mask;
 
     if (hw->phy_type != em_phy_igp_3)
           return E1000_SUCCESS;
 
     /* Check if SW needs configure the PHY */
+    if ((hw->device_id == E1000_DEV_ID_ICH8_IGP_M_AMT) ||
+        (hw->device_id == E1000_DEV_ID_ICH8_IGP_M))
+           sw_cfg_mask = FEXTNVM_SW_CONFIG_ICH8M;
+    else
+           sw_cfg_mask = FEXTNVM_SW_CONFIG;
+
     reg_data = E1000_READ_REG(hw, FEXTNVM);
-    if (!(reg_data & FEXTNVM_SW_CONFIG))
+    if (!(reg_data & sw_cfg_mask))
         return E1000_SUCCESS;
 
     /* Wait for basic configuration completes before proceeding*/
