@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.84 2007/12/29 16:59:13 miod Exp $
+#	$OpenBSD: files.alpha,v 1.85 2008/03/21 18:44:13 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -6,7 +6,7 @@
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16
 
-maxusers 2 8 64
+maxusers 2 8 128
 
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr

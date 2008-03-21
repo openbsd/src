@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.217 2008/03/16 19:00:28 oga Exp $
+#	$OpenBSD: GENERIC,v 1.218 2008/03/21 18:44:14 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -11,7 +11,7 @@
 
 machine		amd64
 include		"../../../conf/GENERIC"
-maxusers	40			# estimated number of users
+maxusers	80			# estimated number of users
 
 option		USER_PCICONF	# user-space PCI configuration
 
