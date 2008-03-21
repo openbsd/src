@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.86 2008/03/20 22:24:46 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.87 2008/03/21 05:22:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1158,7 +1158,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
 	struct session		*con = (struct session *)cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
-	char			*line, *ep;
+	char			*line;
 	long			 lval;
 	size_t			 size;
 
@@ -1176,21 +1176,16 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 			relay_close(con, "invalid chunk");
 			return;
 		}
+		if (!strlen(line))
+			goto next;
 
-		/* Read prepended chunk size in hex */
-		errno = 0;
-		lval = strtol(line, &ep, 16);
-		if (line[0] == '\0' || *ep != '\0') {
+		/* Read prepended chunk size in hex, ingore the trailer */
+		if (sscanf(line, "%lx", &lval) != 1) {
 			free(line);
 			relay_close(con, "invalid chunk size");
 			return;
 		}
-		if (errno == ERANGE &&
-		    (lval == LONG_MAX || lval == LONG_MIN)) {
-			free(line);
-			relay_close(con, "chunk size out of range");
-			return;
-		}
+
 		if (relay_bufferevent_print(cre->dst, line) == -1 ||
 		    relay_bufferevent_print(cre->dst, "\r\n") == -1)
 			goto fail;
@@ -1202,7 +1197,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 
 			line = evbuffer_readline(src);
 			if (line == NULL) {
-				relay_close(con, "invalid chunk");
+				relay_close(con, "invalid last chunk");
 				return;
 			}
 			free(line);
@@ -1223,23 +1218,19 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		    size, cre->toread);
 
 		if (cre->toread == 0) {
-			/* Chunk is terminated by an empty newline */
+			/* Chunk is terminated by an empty (empty) newline */
 			line = evbuffer_readline(src);
-			if (line == NULL || strlen(line)) {
-				if (line != NULL)
-					free(line);
-				relay_close(con, "invalid chunk");
-				return;
-			}
-			free(line);
+			if (line != NULL)
+				free(line);
 			if (relay_bufferevent_print(cre->dst, "\r\n\r\n") == -1)
 				goto fail;
 		}
 	}
 
+ next:
 	if (con->se_done)
 		goto done;
-	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_httpchunks)
+	if (EVBUFFER_LENGTH(src))
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
@@ -1261,7 +1252,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *proot, *pnv = NULL, pkv;
 	char			*line;
-	int			 header = 0, ret, pass = 0, content = 0;
+	int			 header = 0, ret, pass = 0;
 	const char		*errstr;
 	size_t			 size;
 
@@ -1409,7 +1400,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				relay_close_http(con, 500, errstr, 0);
 				goto abort;
 			}
-			content = 1;
 		}
  lookup:
 		if (strcasecmp("Transfer-Encoding", pk.key) == 0 &&
@@ -1489,7 +1479,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
 			/* HTTP request payload */
-			if (cre->toread || content) {
+			if (cre->toread) {
 				bev->readcb = relay_read_httpcontent;
 				break;
 			}
