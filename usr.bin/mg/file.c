@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.64 2006/12/24 01:20:53 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.65 2008/03/21 08:01:20 pyr Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -248,8 +248,10 @@ readin(char *fname)
 	if (ro == TRUE)
 		curbp->b_flag |= BFREADONLY;
 
-	if (startrow)
+	if (startrow) {
 		gotoline(FFARG, startrow);
+		startrow = 0;
+	}
 
 	undo_add_modified();
 	return (status);
