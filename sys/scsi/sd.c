@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.141 2007/12/28 16:19:15 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.142 2008/03/21 19:57:44 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1459,6 +1459,11 @@ validate:
 
 	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
 	    cyls;
+
+	if (dp->cyls == 0) {
+		dp->heads = dp->cyls = 1;
+		dp->sectors = dp->disksize;
+	}
 
 	return (SDGP_RESULT_OK);
 }
