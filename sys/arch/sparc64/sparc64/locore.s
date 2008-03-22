@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.119 2008/03/22 10:53:15 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.120 2008/03/22 12:49:53 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7526,9 +7526,9 @@ ENTRY(savefpstate)
 	 add	%o2, 128, %o2		! Skip a block
 
 	membar	#Sync
-	stda	%f0, [%o2] ASI_BLK_COMMIT_P	! f->fs_f0 = etc;
+	stda	%f0, [%o2] ASI_BLK_P	! f->fs_f0 = etc;
 	inc	BLOCK_SIZE, %o2
-	stda	%f16, [%o2] ASI_BLK_COMMIT_P
+	stda	%f16, [%o2] ASI_BLK_P
 	inc	BLOCK_SIZE, %o2
 1:
 	btst	FPRS_DU, %o5		! Upper FPU clean?
@@ -7536,9 +7536,9 @@ ENTRY(savefpstate)
 	 nop
 
 	membar	#Sync
-	stda	%f32, [%o2] ASI_BLK_COMMIT_P
+	stda	%f32, [%o2] ASI_BLK_P
 	inc	BLOCK_SIZE, %o2
-	stda	%f48, [%o2] ASI_BLK_COMMIT_P
+	stda	%f48, [%o2] ASI_BLK_P
 2:
 	membar	#Sync			! Finish operation so we can
 	retl
