@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.49 2007/06/15 20:18:57 kili Exp $
+ * $OpenBSD: calendar.birthday,v 1.50 2008/03/22 02:08:45 sthen Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -114,6 +114,7 @@
 03/15	J.J. Robert's Birthday in Liberia
 03/16	George Clymer born, 1739
 03/16	James Madison born, 1751
+03/19	Arthur C. Clarke died in Colombo, Sri Lanka, 2008
 03/21	Jean Baptiste Joseph Fourier born, 1768, mathematician & physicist
 03/22	Jack Kerouac born in Lowell MA, 1922
 03/23	Pierre Simon de Laplace born, 1749, mathematician & astronomer
@@ -327,6 +328,7 @@
 12/10	Emily Dickinson born, 1830
 12/12	E.G. Robinson born, 1893
 12/14	George Washington dies, 1799
+12/16	Arthur C. Clarke born in Somerset, England, 1917
 12/17	William Safire (Safir) born, 1929
 12/17	William Thomson (a.k.a. Lord Kelvin) died, 1907
 12/18	Konrad Zuse died, 1995
