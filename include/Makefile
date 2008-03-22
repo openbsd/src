@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.141 2007/10/19 14:28:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.142 2008/03/22 10:36:11 matthieu Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -149,7 +149,7 @@ copies:
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-    	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
+	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 		pax -rw -pa -s "|\.\./sys/arch/${MACHINE_ARCH}/include||" \
 		    ../sys/arch/${MACHINE_ARCH}/include/*.h \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
