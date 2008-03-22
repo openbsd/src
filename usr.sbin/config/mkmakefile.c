@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.28 2008/03/22 22:30:36 espie Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.29 2008/03/22 22:35:15 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -498,10 +498,10 @@ emitrules(FILE *fp)
 		if (fi->fi_mkrule[0] || fi->fi_mkrule[1]) {
 			if (emit_1rule(fp, fi, fpath, ".o", 0) ||
 			    emit_1rule(fp, fi, fpath, ".ln", 1))
-			    	return (1);
+				return (1);
 		/* simple default rule */
 		} else {
-			if (fprintf(fp, "%s.o %s.ln: %s%s\n", fi->fi_base, 
+			if (fprintf(fp, "%s.o %s.ln: %s%s\n", fi->fi_base,
 			    fi->fi_base,
 			    *fpath != '/' ? "$S/" : "", fpath) < 0)
 				return (1);
