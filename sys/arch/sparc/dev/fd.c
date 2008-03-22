@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.57 2008/03/20 00:59:37 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.58 2008/03/22 22:54:43 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1768,11 +1768,29 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct disklabel *lp;
 	int error;
 
 	switch (cmd) {
+	case DIOCRLDINFO:
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		fdgetdisklabel(dev, fd, lp, 0);
+		bcopy(lp, fd->sc_dk.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
+		return 0;
+
+	case DIOCGPDINFO:
+		fdgetdisklabel(dev, fd, (struct disklabel *)addr, 1);
+		return 0;
+
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
+		return 0;
+
+	case DIOCGPART:
+		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
+		    &fd->sc_dk.dk_label->d_partitions[FDPART(dev)];
 		return 0;
 
 	case DIOCWLABEL:
