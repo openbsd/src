@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.39 2005/10/03 10:57:16 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.40 2008/03/22 19:18:42 otto Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -16,8 +16,8 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         raise.c readdir.c readpassphrase.c rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
         setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
-        sigsetops.c sleep.c strtofflags.c sysconf.c sysctl.c syslog.c \
-        telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+        sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c sysctl.c \
+        syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
         utime.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c \
         warnx.c vwarn.c vwarnx.c verr.c verrx.c
@@ -55,10 +55,10 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
 	login_cap.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pw_dup.3 \
 	pwcache.3 raise.3 readpassphrase.3 scandir.3 setjmp.3 setmode.3 \
-	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 sysconf.3 \
-	sysctl.3 strtofflags.3 syslog.3 time.3 times.3 timezone.3 toascii.3 \
-	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 \
-	utime.3 valloc.3 vis.3
+	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 statvfs.3 \
+	sysconf.3 sysctl.3 strtofflags.3 syslog.3 time.3 times.3 timezone.3 \
+	toascii.3 tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
+	usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=auth_subr.3 auth_open.3 auth_subr.3 auth_call.3 auth_subr.3 \
 	auth_challenge.3 auth_subr.3 auth_check_change.3 auth_subr.3 \
@@ -123,6 +123,7 @@ MLINKS+=setmode.3 getmode.3
 MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigaddset.3 sigsetops.3 sigdelset.3 \
 	sigsetops.3 sigismember.3
+MLINKS+=statvfs.3 fstatvfs.3
 MLINKS+=strtofflags.3 fflagstostr.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3 syslog.3 syslog_r.3 syslog.3 closelog_r.3 \
