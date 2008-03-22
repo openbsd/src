@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.43 2007/12/15 17:24:07 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.44 2008/03/22 20:52:32 jasper Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -284,7 +284,6 @@ void		pmap_reference(pmap_t);
 void		pmap_release(pmap_t);
 void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
 void		pmap_remove_holes(struct vm_map *);
-int		pmap_page_index(paddr_t);
 void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 void		pmap_redzone(void);
 void		kvm_setcache(caddr_t, int, int);
