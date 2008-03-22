@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.91 2008/03/12 20:33:13 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.92 2008/03/22 07:48:58 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1350,7 +1350,7 @@ audio_set_blksize(struct audio_softc *sc, int mode, int fpb) {
 		rb = &sc->sc_rr;
 	}
 
-	fs = parm->channels * parm->precision / NBBY * parm->factor;
+	fs = parm->channels * parm->precision / NBBY;
 	bs = fpb * fs;
 	maxbs = rb->bufsize / 2;
 	if (bs > maxbs)
@@ -2746,8 +2746,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (ai->blocksize == ~0 || ai->blocksize == 0) {
 			fpb = rp.sample_rate * audio_blk_ms / 1000;
 		} else {
-			fs = rp.channels * (rp.precision / 8) * rp.factor; 
-			fpb = ai->blocksize / fs;
+			fs = rp.channels * (rp.precision / 8); 
+			fpb = (ai->blocksize * rp.factor) / fs;
 		}
 		if (sc->sc_blkset == 0)
 			audio_set_blksize(sc, AUMODE_RECORD, fpb);
@@ -2756,8 +2756,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (ai->blocksize == ~0 || ai->blocksize == 0) {
 			fpb = pp.sample_rate * audio_blk_ms / 1000;
 		} else {
-			fs = pp.channels * (pp.precision / 8) * pp.factor; 
-			fpb = ai->blocksize / fs;
+			fs = pp.channels * (pp.precision / 8);
+			fpb = (ai->blocksize * pp.factor) / fs;
 		}
 		if (sc->sc_blkset == 0)
 			audio_set_blksize(sc, AUMODE_PLAY, fpb);
