@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2008/03/04 00:36:38 krw Exp $
+#	$OpenBSD: install.md,v 1.10 2008/03/22 23:28:10 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,23 +42,6 @@
 ARCH=ARCH
 
 md_installboot() {
-}
-
-md_checkfordisklabel() {
-	# $1 is the disk to check
-	local rval
-
-	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
-	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval=2
-	else
-		rval=0
-	fi
-
-	rm -f /tmp/checkfordisklabel
-	return $rval
 }
 
 md_prep_disklabel()
@@ -159,12 +142,6 @@ end of the 'i' partition. This is the Volume Header and destroying it will
 render the disk useless.
 
 __EOT
-	md_checkfordisklabel $_disk
-	case $? in
-	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
-		;;
-	esac
-
 	disklabel -W $_disk
 	disklabel -c -f /tmp/fstab.$_disk -E $_disk
 }
