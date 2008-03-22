@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.118 2008/03/20 22:22:47 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.119 2008/03/22 10:53:15 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3647,20 +3647,6 @@ dostart:
 _C_LABEL(cpu_initialize):
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
-	
-	/*
-	 * Step 6: map cpu_info struct and interrupt stack and 
-	 * switch to our initial stack.
-	 */
-
-!!! Make sure our stack's OK.
-	flushw
-	GET_CPUINFO_VA(%l0)
-	ldx	[%l0 + CI_INITSTACK], %l0
- 	add	%l0, - CC64FSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
-	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
-	sub	%l0, BIAS, %l0			! and biased
-	mov	%l0, %sp
 	flushw
 
 	/*
@@ -3700,6 +3686,14 @@ _C_LABEL(cpu_initialize):
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 	wrpr	%g0, WSTATE_KERN, %wstate
+
+	/*
+	 * Switch to our initial stack.
+	 */
+
+	GET_CPUINFO_VA(%l0)
+	ldx	[%l0 + CI_INITSTACK], %l0
+	add	%l0, -BIAS-CC64FSZ, %sp
 
 	/*
 	 * Call our startup routine.
