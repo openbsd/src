@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.87 2007/10/21 21:34:14 mk Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.88 2008/03/22 08:38:38 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2007 $
+.Dd $Mdocdate: March 22 2008 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -715,6 +715,8 @@ will raise the memory requirements of
 because the unmodified
 .Em AS path attributes
 need to be stored as well.
+The default is
+.Ic yes .
 .Pp
 .It Ic tcp md5sig password Ar secret
 .It Ic tcp md5sig key Ar secret
