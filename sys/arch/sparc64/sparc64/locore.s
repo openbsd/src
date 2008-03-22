@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.122 2008/03/22 16:41:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.123 2008/03/22 17:15:42 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4761,7 +4761,7 @@ ENTRY(cpu_switchto)
 	mov	%i0, %l4		! oldproc
 	mov	%i1, %l3		! newproc
 
-	set	CPUINFO_VA, %l6
+	GET_CPUINFO_VA(%l6)
 	ldx	[%l6 + CI_CPCB], %l5
 
 	/*
@@ -4806,6 +4806,8 @@ ENTRY(cpu_switchto)
 	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
 	stx	%l4, [%l6 + CI_CURPROC]		! restore old proc so we can save it
 
+	flushw				! save all register windows except this one
+
 	/*
 	 * Not the old process.  Save the old process, if any;
 	 * then load p.
@@ -4813,7 +4815,6 @@ ENTRY(cpu_switchto)
 	brz,pn	%l4, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
-	flushw				! save all register windows except this one
 	stx	%i6, [%l5 + PCB_SP]	! cpcb->pcb_sp = sp;
 	stx	%i7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
 	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
@@ -4834,14 +4835,6 @@ Lsw_load:
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7
-	wrpr	%g0, 0, %otherwin
-	wrpr	%g0, 0, %canrestore
-	rdpr	%ver, %l7
-	and	%l7, CWP, %l7
-	wrpr	%g0, %l7, %cleanwin
-!	wrpr	%g0, 0, %cleanwin	! DEBUG
-	dec	1, %l7					! NWINDOWS-1-1
-	wrpr	%l7, %cansave
 
 	/* finally, enable traps */
 	wrpr	%g0, PSTATE_INTR, %pstate
