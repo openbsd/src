@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.82 2008/03/17 23:10:21 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.83 2008/03/22 21:10:28 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -254,6 +254,9 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
+#ifdef SUN4V
+	char buf[32];
+#endif
 	int ncpus;
 
 	/* Initialize the PROM console so printf will not panic. */
@@ -273,6 +276,12 @@ bootstrap(nctx)
 	ddb_init();
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
+#endif
+
+#ifdef SUN4V
+	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "sun4v") == 0)
+		cputyp = CPU_SUN4V;
 #endif
 
 	ncpus = get_ncpus();

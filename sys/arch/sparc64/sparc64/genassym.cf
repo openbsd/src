@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.27 2008/03/12 20:52:36 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.28 2008/03/22 21:10:29 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -284,3 +284,6 @@ struct	mutex
 member	mtx_wantipl
 member	mtx_oldipl
 member	mtx_owner
+
+export	CPU_SUN4U
+export	CPU_SUN4V

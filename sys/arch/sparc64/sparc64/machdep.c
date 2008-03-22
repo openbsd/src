@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.105 2008/01/04 00:40:38 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.106 2008/03/22 21:10:29 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -465,7 +465,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 	case CPU_CPUTYPE:
-		return (sysctl_rdint(oldp, oldlenp, newp, CPU_SUN4U));
+		return (sysctl_rdint(oldp, oldlenp, newp, cputyp));
 	case CPU_CECCERRORS:
 		return (sysctl_rdint(oldp, oldlenp, newp, ceccerrs));
 	case CPU_CECCLAST:

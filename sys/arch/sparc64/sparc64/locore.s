@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.123 2008/03/22 17:15:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.124 2008/03/22 21:10:29 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -303,6 +303,15 @@ panicstack:
  */
 	.globl	romp
 romp:	.xword	0
+
+/*
+ * cputyp is the current cpu type, used to distinguish between
+ * the many variations of different sun4* machines. It contains
+ * the value CPU_SUN4U or CPU_SUN4V.
+ */
+	.globl	_C_LABEL(cputyp)
+_C_LABEL(cputyp):
+	.word	CPU_SUN4U
 
 	.globl _C_LABEL(cold)
 _C_LABEL(cold):
