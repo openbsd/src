@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.1 2008/03/22 19:17:51 otto Exp $
+.\"	$OpenBSD: statvfs.3,v 1.2 2008/03/22 19:37:05 otto Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -67,8 +67,8 @@ struct statvfs {
         unsigned long f_namemax;  /* maximum filename length */
 };
 
-#define ST_RDONLY     0x0001L     /* read-only filesystem */
-#define	ST_NOSUID     0x0002L     /* nosuid flag set */
+#define ST_RDONLY     0x0001UL    /* read-only filesystem */
+#define	ST_NOSUID     0x0002UL    /* nosuid flag set */
 .Ed
 .Pp
 .Fn fstatvfs

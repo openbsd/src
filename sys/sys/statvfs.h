@@ -1,4 +1,4 @@
-/*	$OpenBSD: statvfs.h,v 1.1 2008/03/16 19:42:57 otto Exp $	*/
+/*	$OpenBSD: statvfs.h,v 1.2 2008/03/22 19:37:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -35,8 +35,8 @@ struct statvfs {
 	unsigned long	f_namemax;	/* maximum filename length */
 };
 
-#define ST_RDONLY	0x0001L		/* read-only filesystem */
-#define	ST_NOSUID	0x0002L		/* nosuid flag set */
+#define ST_RDONLY	0x0001UL	/* read-only filesystem */
+#define	ST_NOSUID	0x0002UL	/* nosuid flag set */
 
 __BEGIN_DECLS
 int fstatvfs(int, struct statvfs *);
