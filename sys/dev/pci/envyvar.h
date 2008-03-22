@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.4 2008/02/21 01:41:04 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.5 2008/03/22 11:23:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,20 +36,6 @@ struct envy_ak {
 	unsigned char reg[8];	/* shadow for ak4524 registers */
 };
 
-/*
- * the envy24 have multiple components with their respective mixers
- * depending on the configuration of the sound card, so we use
- * "submixers" for them
- */
-struct envy_submix {
-	int ndevs;
-	void (*devinfo)(struct mixer_devinfo *, int);
-	int  (*set)(struct mixer_devinfo *, int);
-	int  (*get)(struct mixer_devinfo *, int);
-};
-
-#define ENVY_SUBMIX_NMAX	0x10
-
 struct envy_softc {
 	struct device		dev;
 	struct device	       *audio;
@@ -65,8 +51,6 @@ struct envy_softc {
 	bus_space_handle_t      mt_ioh;
 	bus_size_t		mt_iosz;
 	struct envy_ak		ak[4];
-	struct envy_submix	submix[ENVY_SUBMIX_NMAX];
-	int			nsubmix;
 	void (*iintr)(void *);
 	void *iarg;
 	void (*ointr)(void *);
