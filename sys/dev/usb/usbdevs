@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.343 2008/03/18 12:35:34 jsg Exp $
+$OpenBSD: usbdevs,v 1.344 2008/03/22 02:47:45 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -336,6 +336,7 @@ vendor 2WIRE		0x08c8	2Wire
 vendor AIPTEK		0x08ca	AIPTEK International
 vendor SMARTBRIDGES	0x08d1	SmartBridges
 vendor BILLIONTON	0x08dd	Billionton Systems
+vendor GEMPLUS		0x08e6	GEMPLUS
 vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
@@ -445,6 +446,7 @@ vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
+vendor SILABS3		0x10c5	Silicon Labs
 vendor ANALOG		0x1110	Analog Devices
 vendor TENX		0x1130	Ten X Technology, Inc.
 vendor ISSC		0x1131	Integrated System Solution Corp.
@@ -499,6 +501,7 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
+vendor CLIPSAL		0x166a	Clipsal
 vendor ATHEROS		0x168c	Atheros Communications
 vendor GIGASET		0x1690	Gigaset
 vendor GLOBALSUN	0x16ab	Global Sun Technology
@@ -959,6 +962,9 @@ product CISCOLINKSYS WUSB54GR	0x0023	WUSB54GR
 product CISCOLINKSYS WUSBF54G	0x0024	WUSBF54G
 product CISCOLINKSYS HU200TS	0x001a	HU200-TS
 
+/* Clipsal products */
+product CLIPSAL 5500PCU		0x0303	5500PCU C-Bus
+
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
@@ -1121,6 +1127,7 @@ product DRAYTEK VIGOR600	0x0600	Vigor600
 
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
+product DYNASTREAM ANT2USB	0x1004	ANT2USB
 
 /* EasyDisk products */
 product EASYDISK EASYDISK	0x0005	Flash Disk
@@ -1365,6 +1372,9 @@ product	GMATE YP3X00		0x1001	YP3X00 PDA
 /* Garmin International products */
 product GARMIN GPSMAP60CSX	0x0003	GPSmap 60Csx
 product GARMIN IQUE3600		0x0004	Ique 3600
+
+/* GEMPLUS products */
+product GEMPLUS PROXPU		0x5501	Prox-PU/CU
 
 /* Genesys Logic products */
 product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
@@ -2428,21 +2438,32 @@ product SILICOM U2E		0x0001	U2E
 product SILICOM GPE		0x0002	Psion Dacom Gold Port Ethernet
 
 /* Silicon Labs products */
+product SILABS BSM7DUSB		0x800a	BSM7-D-USB
 product SILABS POLOLU		0x803b	Pololu Serial
+product SILABS EDG1228		0x8053	EDG1228
 product SILABS ARGUSISP		0x8066	Argussoft ISP
 product SILABS CRUMB128		0x807a	Crumb128
 product SILABS DEGREECONT	0x80ca	Degree Controls
+product SILABS TRACIENT		0x80dd	Tracient RFID
 product SILABS TRAQMATE		0x80ed	Track Systems Traqmate
 product SILABS SUNNTO		0x80f6	Suunto sports
 product SILABS DESKTOPMOBILE	0x813d	Burnside Desktop mobile
+product SILABS RIGBLASTER	0x814a	RIGblaster P&P
+product SILABS RIGTALK		0x814b	RIGtalk
 product SILABS IPLINK1220	0x815e	IP-Link 1220
 product SILABS LIPOWSKY_JTAG	0x81c8	Lipowsky Baby-JTAG
 product SILABS LIPOWSKY_LIN	0x81e2	Lipowsky Baby-LIN
+product SILABS AEROCOMM		0x81e7	Aerocomm Radio
 product SILABS LIPOWSKY_HARP	0x8218	Lipowsky HARP-1
 product SILABS MC35PU		0x8341	MC35pu
 product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
 product SILABS CP210X_1		0xea60	CP210x Serial
 product SILABS CP210X_2		0xea61	CP210x Serial
+product SILABS3 GPRS_MODEM	0xea61	GPRS Modem
+product SILABS USBSCOPE50	0xf001	USBscope50
+product SILABS USBWAVE12	0xf002	USBwave12
+product SILABS USBPULSE100	0xf003	USBpulse100
+product SILABS USBCOUNT50	0xf004	USBcount50
 
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
