@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiovar.h,v 1.9 2002/08/26 16:20:04 mickey Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.10 2008/03/22 11:05:31 ratchov Exp $	*/
 /*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ struct audio_ringbuffer {
 	char	copying;	/* data is being copied */
 	char	needfill;	/* buffer needs filling when copying is done */
 	char	mmapped;	/* device is mmap()-ed */
+	u_char	blkset;		/* blksize has been set, for stickiness */
 };
 
 #define AUDIO_N_PORTS 4
@@ -112,8 +113,6 @@ struct audio_softc {
 	/* Ring buffers, separate for record and play. */
 	struct	audio_ringbuffer sc_rr; /* Record ring */
 	struct	audio_ringbuffer sc_pr; /* Play ring */
-
-	u_char	sc_blkset;	/* Blocksize has been set */
 
 	u_char	*sc_sil_start;	/* start of silence in buffer */
 	int	sc_sil_count;	/* # of silence bytes */

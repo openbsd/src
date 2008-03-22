@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.50 2007/12/06 19:41:28 deanna Exp $
+.\"	$OpenBSD: audio.4,v 1.51 2008/03/22 11:05:31 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2007 $
+.Dd $Mdocdate: March 22 2008 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -367,6 +367,11 @@ or a bitwise OR combination of the three.
 Only full-duplex audio devices support
 simultaneous record and playback.
 .Pp
+.Va blocksize
+is used to attempt to set both play and record block sizes
+to the same value, it is left for compatibility only and
+its use is discouraged.
+.Pp
 .Va hiwat
 and
 .Va lowat
@@ -384,27 +389,6 @@ is the maximum value and for
 .Va lowat
 75% of
 .Va hiwat .
-.Pp
-.Va blocksize
-sets the current audio blocksize.
-The generic
-.Nm audio
-driver layer and the hardware driver have the
-opportunity to adjust this block size to get it within
-implementation-required limits.
-Upon return from an
-.Dv AUDIO_SETINFO
-call, the actual blocksize set is returned in this field.
-Normally the
-.Va blocksize
-is calculated to correspond to 50ms of sound and it is recalculated
-when the encoding parameter changes, but if the
-.Va blocksize
-is set explicitly this value becomes sticky, i.e., it remains
-even when the encoding is changed.
-The stickiness can be cleared by reopening the device or setting the
-.Va blocksize
-to 0.
 .Bd -literal
 struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in samples/s */
@@ -507,12 +491,33 @@ The available ports can be found in
 .Va buffer_size
 is the total size of the audio buffer.
 The buffer size divided by the
-.Va blocksize
+.Va block_size
 gives the maximum value for
 .Va hiwat .
 Currently the
 .Va buffer_size
 can only be read and not set.
+.Pp
+.Va block_size
+sets the current audio block size.
+The generic
+.Nm audio
+driver layer and the hardware driver have the
+opportunity to adjust this block size to get it within
+implementation-required limits.
+Upon return from an
+.Dv AUDIO_SETINFO
+call, the actual block_size set is returned in this field.
+Normally the
+.Va block_size
+is calculated to correspond to 50ms of sound and it is recalculated
+when the encoding parameter changes, but if the
+.Va block_size
+is set explicitly this value becomes sticky, i.e., it remains
+even when the encoding is changed.
+The stickiness can be cleared by reopening the device or setting the
+.Va block_size
+to 0.
 .Pp
 The
 .Va seek

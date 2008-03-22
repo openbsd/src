@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.18 2007/10/03 21:49:13 jakemsr Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.19 2008/03/22 11:05:31 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct audio_prinfo {
 	u_int	seek;		/* BSD extension */
 	u_int	avail_ports;	/* available I/O ports */
 	u_int	buffer_size;	/* total size audio buffer */
-	u_int	_ispare[1];
+	u_int	block_size;	/* size a block */
 	/* Current state of device: */
 	u_int	samples;	/* number of samples */
 	u_int	eof;		/* End Of File (zero-size writes) counter */

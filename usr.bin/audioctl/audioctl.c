@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.16 2007/11/26 13:36:34 deraadt Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.17 2008/03/22 11:05:31 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ struct field {
 	{ "play.open",		&info.play.open,	UCHAR,	READONLY },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
 	{ "play.buffer_size",	&info.play.buffer_size,	UINT,	0 },
+	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
@@ -135,6 +136,7 @@ struct field {
 	{ "record.open",	&info.record.open,	UCHAR,	READONLY },
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
 	{ "record.buffer_size",	&info.record.buffer_size,UINT,	0 },
+	{ "record.block_size",	&info.record.block_size,UINT,	0 },
 	{ "record.errors",	&rerror,		INT,	READONLY },
 	{ 0 }
 };
