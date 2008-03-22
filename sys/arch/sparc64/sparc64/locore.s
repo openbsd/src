@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.121 2008/03/22 16:01:32 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.122 2008/03/22 16:41:49 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 
 #define HORRID_III_HACK
 
-#undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
@@ -1783,9 +1782,6 @@ winfixfill:
  * The fillowing is duplicated from datafault:
  */
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
-#endif	/* TRAPS_USE_IG */
 #ifdef DEBUG
 	set	DATA_START, %g7				! debug
 	set	0x20, %g6				! debug
@@ -2093,9 +2089,6 @@ dlflush1:
 	andn	%g2, CWP, %g2
 	wrpr	%g1, %g2, %tstate
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif	/* TRAPS_USE_IG */
 	mov	%g6, %sp
 	done
 
@@ -2116,9 +2109,6 @@ dlflush1:
  */
 datafault:
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
-#endif	/* TRAPS_USE_IG */
 #ifdef DEBUG
 	set	DATA_START, %g7				! debug
 	set	0x20, %g6				! debug
@@ -2368,9 +2358,6 @@ instr_miss:
 
 textfault:
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
-#endif	/* TRAPS_USE_IG */
 	wr	%g0, ASI_IMMU, %asi
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
@@ -2522,9 +2509,6 @@ checkalign:
  *
  */
 slowtrap:
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif	/* TRAPS_USE_IG */
 #ifdef DIAGNOSTIC
 	/* Make sure kernel stack is aligned */
 	btst	0x03, %sp		! 32-bit stack OK?
@@ -2676,9 +2660,6 @@ softtrap:
  *	ptrace...
  */
 syscall_setup:
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif	/* TRAPS_USE_IG */
 	TRAP_SETUP -CC64FSZ-TF_SIZE
 
 #ifdef DEBUG
@@ -3109,9 +3090,6 @@ ENTRY(ipi_softint)
 
 	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif	/* TRAPS_USE_IG */
 	/*
 	 * If this is a %tick softint, clear it then call interrupt_vector.
 	 */
@@ -3332,9 +3310,6 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (7*8)], %g7
 	/* Switch to alternate globals and load outs */
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
-#ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif	/* TRAPS_USE_IG */
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (1*8)], %i1
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (2*8)], %i2
