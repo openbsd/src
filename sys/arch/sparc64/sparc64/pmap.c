@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2008/03/19 23:16:19 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2008/03/22 16:01:32 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1407,6 +1407,8 @@ remap_data:
 	pmap_bootstrap_cpu(cpus->ci_paddr);
 }
 
+extern void sun4u_set_tsbs(void);
+
 void
 pmap_bootstrap_cpu(paddr_t intstack)
 {
@@ -1438,9 +1440,15 @@ pmap_bootstrap_cpu(paddr_t intstack)
 		index--;
 	}
 
+	/*
+	 * Establish the 64KB locked mapping for the interrupt stack.
+	 */
+
 	data = TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
 	data |= TLB_L;
 	prom_dtlb_load(index, data, INTSTACK);
+
+	sun4u_set_tsbs();
 }
 
 /*

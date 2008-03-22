@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.120 2008/03/22 12:49:53 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.121 2008/03/22 16:01:32 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3637,48 +3637,15 @@ dostart:
  * Initialize a CPU.  This is used both for bootstrapping the first CPU
  * and spinning up each subsequent CPU.  Basically:
  *
- *	Locate the cpu_info structure for this CPU.
- *	Establish a locked mapping for interrupt stack.
+ *	Install trap table.
  *	Switch to the initial stack.
- *	Call the routine passed in in cpu_info->ci_spinup
+ *	Call the routine passed in in cpu_info->ci_spinup.
  */
-
 
 _C_LABEL(cpu_initialize):
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	flushw
-
-	/*
-	 * Step 7: change the trap base register, and install our TSBs
-	 */
-
-	/* Set the dmmu tsb */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_dmmu), %l0
-	ldx	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
-	membar	#Sync
-
-
-	/* Set the immu tsb */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_immu), %l0
-	ldx	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
-	membar	#Sync				! We may need more membar #Sync in here
 
 	/* Change the trap base register */
 	set	_C_LABEL(trapbase), %l1
@@ -3714,6 +3681,38 @@ _C_LABEL(cpu_initialize):
 	.asciz	"main() returned\r\n"
 	_ALIGN
 	.text
+
+ENTRY(sun4u_set_tsbs)
+
+	/* Set the dmmu tsb */
+	sethi	%hi(0x1fff), %o2
+	set	_C_LABEL(tsb_dmmu), %o0
+	ldx	[%o0], %o0
+	set	_C_LABEL(tsbsize), %o1
+	or	%o2, %lo(0x1fff), %o2
+	ld	[%o1], %o1
+	andn	%o0, %o2, %o0			! Mask off size and split bits
+	or	%o0, %o1, %o0			! Make a TSB pointer
+	set	TSB, %o2
+	stxa	%o0, [%o2] ASI_DMMU		! Install data TSB pointer
+	membar	#Sync
+
+	/* Set the immu tsb */
+	sethi	%hi(0x1fff), %o2
+	set	_C_LABEL(tsb_immu), %o0
+	ldx	[%o0], %o0
+	set	_C_LABEL(tsbsize), %o1
+	or	%o2, %lo(0x1fff), %o2
+	ld	[%o1], %o1
+	andn	%o0, %o2, %o0			! Mask off size and split bits
+	or	%o0, %o1, %o0			! Make a TSB pointer
+	set	TSB, %o2
+	stxa	%o0, [%o2] ASI_IMMU		! Install insn TSB pointer
+	membar	#Sync
+
+	retl
+	 nop
+
 
 #ifdef MULTIPROCESSOR
 	.data
