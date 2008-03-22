@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.121 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.122 2008/03/22 16:25:08 weingart Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -601,7 +601,7 @@ try586:	/* Use the `cpuid' instruction. */
 
 /*
  * Construct a page table directory.
-*/
+ */
 	movl	RELOC(_C_LABEL(nkpde)),%ecx		# count of pde s,
 	leal	(PROC0PDIR+0*4)(%esi),%ebx		# where temp maps!
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0
@@ -667,6 +667,7 @@ begin:
 	addl	$4,%esp
 
 	call	_C_LABEL(main)
+	/* NOTREACHED */
 
 NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
