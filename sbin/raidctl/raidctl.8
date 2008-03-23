@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.38 2008/01/26 23:07:55 jmc Exp $
+.\"	$OpenBSD: raidctl.8,v 1.39 2008/03/23 23:28:46 krw Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: January 26 2008 $
+.Dd $Mdocdate: March 23 2008 $
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -1312,7 +1312,7 @@ Edit the label:
 .It
 Put the new label on the RAID set:
 .Bd -unfilled -offset indent
-# disklabel -R -r raid0 /tmp/label
+# disklabel -R raid0 /tmp/label
 .Ed
 .Pp
 .It

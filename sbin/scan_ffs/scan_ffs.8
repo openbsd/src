@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.15 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.16 2008/03/23 23:28:46 krw Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" .TH scan_ffs 8
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 23 2008 $
 .Dt SCAN_FFS 8
 .Os
 .Sh NAME
@@ -39,8 +39,8 @@
 .Sh DESCRIPTION
 This is the life-saver of typos.
 If you have ever been working too long,
-and just happened to type 'disklabel -rw sd0 floppy', instead of 'disklabel
--rw fd0 floppy', you know what I am talking about.
+and just happened to type 'disklabel -w sd0 floppy', instead of 'disklabel
+-w fd0 floppy', you know what I am talking about.
 .Pp
 This little program will take a raw disk device (which you might have to
 create) that covers the whole disk, and finds all probable UFS/FFS partitions
