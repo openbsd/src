@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.605 2008/03/19 23:19:17 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.606 2008/03/23 08:36:15 cnst Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -134,6 +134,7 @@ fins0	at isa? port 0x4e		# Fintek F71805 Super I/O
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
+andl*	at iic?				# Andigilog aSC7611
 adl*	at iic?				# Andigilog aSC7621
 admtemp* at iic?			# Analog Devices ADM1021
 admlc*	at iic?				# Analog Devices ADM1024
