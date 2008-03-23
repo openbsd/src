@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.13 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.14 2008/03/23 00:51:57 deraadt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -180,7 +180,7 @@ flockfile(FILE * fp)
 	struct	file_lock	*p;
 
 	/* Check if this is a real file: */
-	if (fp->_file >= 0) {
+	if (fileno(fp) >= 0) {
 		/* Lock the hash table: */
 		_SPINLOCK(&hash_lock);
 
@@ -245,7 +245,7 @@ ftrylockfile(FILE * fp)
 	struct	file_lock	*p;
 
 	/* Check if this is a real file: */
-	if (fp->_file >= 0) {
+	if (fileno(fp) >= 0) {
 		/* Lock the hash table: */
 		_SPINLOCK(&hash_lock);
 
@@ -296,7 +296,7 @@ funlockfile(FILE * fp)
 	struct	file_lock	*p;
 
 	/* Check if this is a real file: */
-	if (fp->_file >= 0) {
+	if (fileno(fp) >= 0) {
 		/*
 		 * Defer signals to protect the scheduling queues from
 		 * access by the signal handler:
