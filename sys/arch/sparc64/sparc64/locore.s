@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.124 2008/03/22 21:10:29 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.125 2008/03/23 12:03:50 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7399,7 +7399,7 @@ Lback_fancy:
 	dec	2, %o0		! do {
 	ldsh	[%o0], %o4	!	src -= 2;
 	dec	2, %o1		!	dst -= 2;
-	deccc	2, %o0		!	*(short *)dst = *(short *)src;
+	deccc	2, %o2		!	*(short *)dst = *(short *)src;
 	bge	5b		! } while ((len -= 2) >= 0);
 	 sth	%o4, [%o1]
 	b	Lback_mopb	! goto mop_up_byte;
