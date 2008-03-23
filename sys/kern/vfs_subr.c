@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.162 2008/03/16 19:42:57 otto Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.163 2008/03/23 12:32:44 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2272,7 +2272,7 @@ vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
 				(*pr)(" %p,\n\t", vp);
 			else
 				(*pr)(" %p,", vp);
-		(*pr)("\n", vp);
+		(*pr)("\n");
 	}
 }
 #endif /* DDB */
