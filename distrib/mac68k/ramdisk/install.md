@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.27 2008/03/04 00:36:38 krw Exp $
+#       $OpenBSD: install.md,v 1.28 2008/03/23 15:51:35 krw Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -69,41 +69,23 @@ ARCH=ARCH
 md_installboot() {
 }
 
-# $1 is the disk to check
-md_checkfordisklabel() {
-	local rval=0
-
-	disklabel $1 >/tmp/checkfordisklabel 2>&1
-
-	if grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval=2
-	elif grep " HFS " /tmp/checkfordisklabel; then
-		rval=3
-	fi >/dev/null 2>&1
-
-	rm -f /tmp/checkfordisklabel
-	return $rval
-}
-
 md_prep_disklabel() {
 	local _disk=$1
 
-	md_checkfordisklabel $_disk
-	case $? in
-	3)	cat <<__EOT
+	if [[ -n $(disklabel -c $_disk 2>/dev/null | grep ' HFS ') ]]; then
+		cat <<__EOT
 This disk has been setup under MacOS. You will now edit a MacOS partition
 table. Be careful not to remove the MacOS partitions in use.
 __EOT
 		pdisk /dev/${_disk}c
-		;;
-	*)	cat <<__EOT
+	else
+		cat <<__EOT
 This disk is not shared with MacOS. You will now edit a regular OpenBSD
 disklabel.
 __EOT
 		disklabel -W $_disk >/dev/null 2>&1
 		disklabel -f /tmp/fstab.$_disk -E $_disk
-		;;
-	esac
+	fi
 }
 
 md_congrats() {
