@@ -1604,6 +1604,7 @@
 ./usr/share/man/cat4/sparc64/environ.0
 ./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/fhc.0
+./usr/share/man/cat4/sparc64/ifb.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
