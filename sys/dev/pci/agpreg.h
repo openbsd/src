@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.9 2007/12/07 17:35:22 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.10 2008/03/23 08:36:41 damien Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -262,5 +262,8 @@
  */
 #define AGP_G33_GCC1_GMS_STOLEN_128M	0x80
 #define AGP_G33_GCC1_GMS_STOLEN_256M	0x90
+#define AGP_G33_PGTBL_SIZE_MASK		(3U << 8)
+#define AGP_G33_PGTBL_SIZE_1M		(1U << 8)
+#define AGP_G33_PGTBL_SIZE_2M		(2U << 8)
 
 #endif /* !_PCI_AGPREG_H_ */

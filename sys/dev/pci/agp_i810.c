@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.32 2008/01/04 00:23:26 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.33 2008/03/23 08:36:41 damien Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -65,7 +65,8 @@ enum {
 	CHIP_I830	= 1,	/* i830/i845 */
 	CHIP_I855	= 2,	/* i852GM/i855GM/i865G */
 	CHIP_I915	= 3,	/* i915G/i915GM */
-	CHIP_I965	= 4	/* i965/i965GM */
+	CHIP_I965	= 4,	/* i965/i965GM */
+	CHIP_G33	= 5	/* G33/Q33/Q35 */
 };
 
 struct agp_i810_softc {
@@ -143,6 +144,8 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82Q965_IGD_2:
 	case PCI_PRODUCT_INTEL_82GM965_IGD_1:
 	case PCI_PRODUCT_INTEL_82GM965_IGD_2:
+	case PCI_PRODUCT_INTEL_82G33_IGD_1:
+	case PCI_PRODUCT_INTEL_82G33_IGD_2:
 		return (1);
 	}
 
@@ -217,10 +220,15 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82GM965_IGD_2:
 		isc->chiptype = CHIP_I965;
 		break;
+	case PCI_PRODUCT_INTEL_82G33_IGD_1:
+	case PCI_PRODUCT_INTEL_82G33_IGD_2:
+		isc->chiptype = CHIP_G33;
+		break;
 	}
 
 	switch (isc->chiptype) {
 	case CHIP_I915:
+	case CHIP_G33:
 		gmaddr = AGP_I915_GMADR;
 		mmaddr = AGP_I915_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM;
@@ -256,7 +264,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		return (error);
 	}
 
-	if (isc->chiptype == CHIP_I915) {
+	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_GTTADR, memtype,
 		    0, &isc->gtt_bst, &isc->gtt_bsh, NULL, NULL, 0);
 		if (error != 0) {
@@ -338,15 +346,18 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 		gatt->ag_physical = pgtblctl & ~1;
 	} else if (isc->chiptype == CHIP_I855 || isc->chiptype == CHIP_I915 ||
-		   isc->chiptype == CHIP_I965) {
+		   isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G33) {
 		pcireg_t reg;
 		u_int32_t pgtblctl, stolen;
 		u_int16_t gcc1;
 
 		/* Stolen memory is set up at the beginning of the aperture by
-                 * the BIOS, consisting of the GATT followed by 4kb for the
+		 * the BIOS, consisting of the GATT followed by 4kb for the
 		 * BIOS display.
-                 */
+		 */
+
+		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I855_GCC1);
+		gcc1 = (u_int16_t)(reg >> 16);
                 switch (isc->chiptype) {
 		case CHIP_I855:
 		/* The 855GM automatically initializes the 128k gatt on boot. */
@@ -371,14 +382,23 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 				break;
 			}
 			break;
+		case CHIP_G33:
+			switch (gcc1 & AGP_G33_PGTBL_SIZE_MASK) {
+			case AGP_G33_PGTBL_SIZE_2M:
+				stolen = 2048 + 4;
+				break;
+			case AGP_G33_PGTBL_SIZE_1M:
+			default:
+				stolen = 1024 + 4;
+				break;
+			}
+			break;
 		default:
 			printf("bad chiptype\n");
 			agp_generic_detach(sc);
 			return (EINVAL);
-               }
+		}
 
-		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I855_GCC1);
-		gcc1 = (u_int16_t)(reg >> 16);
 		switch (gcc1 & AGP_I855_GCC1_GMS) {
 		case AGP_I855_GCC1_GMS_STOLEN_1M:
 			isc->stolen = (1024 - stolen) * 1024 / 4096;
@@ -495,7 +515,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 			return (64 * 1024 * 1024);
 		else
 			return (128 * 1024 * 1024);
-	} else if (isc->chiptype == CHIP_I915) {
+	} else if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I915_MSAC);
 		if ((reg & AGP_I915_MSAC_GMASIZE) == AGP_I915_MSAC_GMASIZE_128) {
 			return (128 * 1024 * 1024);
@@ -597,7 +617,7 @@ agp_i810_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 			return (EINVAL);
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_I965_MSAC, reg);
-	} else {	/* CHIP_I855 */
+	} else {	/* CHIP_I855, CHIP_G33 */
 		if (aperture != (128 * 1024 * 1024)) {
 			printf("agp: bad aperture size %d\n", aperture);
 			return (EINVAL);
@@ -835,7 +855,7 @@ agp_i810_write_gatt(struct agp_i810_softc *isc, bus_size_t off, u_int32_t v)
 
 	d = v | 1;
 
-	if (isc->chiptype == CHIP_I915)
+	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33)
 		WRITEGTT((u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, v ? d : 0);
 	else if (isc->chiptype == CHIP_I965) {
 		d |= (v & 0x0000000f00000000ULL) >> 28;
