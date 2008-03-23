@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.28 2008/03/22 21:10:29 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.29 2008/03/23 21:49:48 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -265,20 +265,11 @@ member	dbr_local
 member	dbr_in
 endif
 
-export	TLB_ACCESS
-export	TLB_MODIFY
-export	TLB_REAL_W
-export	TLB_TSB_LOCK
-export	TLB_EXEC
-export	TLB_EXEC_ONLY
-export	TLB_L
-export	TLB_CACHE_MASK
-export	TLB_CP
-export	TLB_CV
-export	TLB_E
-export	TLB_P
-export	TLB_W
-export	TLB_G
+export	SUN4U_TLB_ACCESS
+export	SUN4U_TLB_MODIFY
+export	SUN4U_TLB_REAL_W
+export	SUN4U_TLB_EXEC
+export	SUN4U_TLB_W
 
 struct	mutex
 member	mtx_wantipl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.125 2008/03/23 12:03:50 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.126 2008/03/23 21:49:48 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1463,9 +1463,10 @@ dmmu_write_fault:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
-	 or	%g4, TLB_MODIFY|TLB_ACCESS|TLB_W, %g7	! Update the modified bit
+	 or	%g4, SUN4U_TLB_MODIFY|SUN4U_TLB_ACCESS|SUN4U_TLB_W, %g7
+		! Update the modified bit
 	
-	btst	TLB_REAL_W|TLB_W, %g4			! Is it a ref fault?
+	btst	SUN4U_TLB_REAL_W|SUN4U_TLB_W, %g4	! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -1491,7 +1492,8 @@ dmmu_write_fault:
 	membar	#StoreLoad
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TLB_MODIFY|TLB_ACCESS|TLB_W, %g4	! Update the modified bit
+	 or	%g4, SUN4U_TLB_MODIFY|SUN4U_TLB_ACCESS|SUN4U_TLB_W, %g4
+		! Update the modified bit
 	stx	%g1, [%g2]				! Update TSB entry tag
 	mov	SFSR, %g7
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -1590,15 +1592,15 @@ data_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
-	 or	%g4, TLB_ACCESS, %g7			! Update the access bit
+	 or	%g4, SUN4U_TLB_ACCESS, %g7		! Update the access bit
 	
-	btst	TLB_ACCESS, %g4				! Need to update access git?
+	btst	SUN4U_TLB_ACCESS, %g4			! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TLB_ACCESS, %g4				! Update the modified bit
+	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update the modified bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	
@@ -2304,19 +2306,19 @@ instr_miss:
 	 nop
 
 	/* Check if it's an executable mapping. */
-	andcc	%g4, TLB_EXEC, %g0
+	andcc	%g4, SUN4U_TLB_EXEC, %g0
 	bz,pn	%xcc, textfault
 	 nop
 
 
-	or	%g4, TLB_ACCESS, %g7			! Update accessed bit
-	btst	TLB_ACCESS, %g4				! Need to update access bit?
+	or	%g4, SUN4U_TLB_ACCESS, %g7		! Update accessed bit
+	btst	SUN4U_TLB_ACCESS, %g4			! Need to update access bit?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and store it
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TLB_ACCESS, %g4			! Update accessed bit
+	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update accessed bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
