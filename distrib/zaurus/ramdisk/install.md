@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2008/03/04 18:09:37 deraadt Exp $
+#	$OpenBSD: install.md,v 1.15 2008/03/23 14:03:55 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,20 +42,6 @@
 ARCH=ARCH
 
 md_installboot() {
-}
-
-# $1 is the disk to check
-md_checkfordisklabel() {
-	local rval=0
-
-	disklabel -r $1 >/dev/null 2>/tmp/checkfordisklabel
-
-	if grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval=2
-	fi >/dev/null 2>&1
-
-	rm -f /tmp/checkfordisklabel
-	return $rval
 }
 
 md_prep_fdisk() {
@@ -109,12 +95,6 @@ The offsets used in the disklabel are ABSOLUTE, i.e. relative to the
 start of the disk, NOT the start of the OpenBSD MBR partition.
 
 __EOT
-
-	md_checkfordisklabel $_disk
-	case $? in
-	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
-		;;
-	esac
 
 	disklabel -W $_disk >/dev/null 2>&1
 	disklabel -f /tmp/fstab.$_disk -E $_disk
