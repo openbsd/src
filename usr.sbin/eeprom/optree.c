@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.4 2008/02/22 20:23:19 kettenis Exp $	*/
+/*	$OpenBSD: optree.c,v 1.5 2008/03/23 12:05:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include <sys/ioctl.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -106,7 +107,8 @@ op_print(struct opiocdesc *opio, int depth)
 				printf("'%s'", &opio->op_buf[i]);
 			}
 		}
-	}
+	} else if(opio->op_buflen < 0)
+		printf("too large");
 	printf("\n");
 }
 
@@ -150,8 +152,12 @@ op_nodes(int fd, int node, int depth)
 		opio.op_buflen = sizeof(op_buf);
 
 		/* And its value. */
-		if (ioctl(fd, OPIOCGET, &opio) < 0)
-			err(1, "OPIOCGET");
+		if (ioctl(fd, OPIOCGET, &opio) < 0) {
+			if (errno != ENOMEM)
+				err(1, "OPIOCGET");
+
+			opio.op_buflen = -1;	/* for op_print */
+		}
 
 		op_print(&opio, depth + 1);
 	}
