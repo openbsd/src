@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.15 2008/03/08 01:23:16 simon Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.16 2008/03/23 15:00:29 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.15 2008/03/08 01:23:16 simon Exp $";
+static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.16 2008/03/23 15:00:29 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -604,8 +604,6 @@ disable(int devno)
 	struct cfdata *cd;
 	int done = 0;
 
-	ukc_mod_kernel = 1;
-
 	if (devno <= maxdev) {
 
 		cd = get_cfdata(devno);
@@ -628,8 +626,11 @@ disable(int devno)
 
 		printf("%3d ", devno);
 		pdevnam(devno);
-		if (done)
+		if (done) {
 			printf(" already");
+		} else {
+			ukc_mod_kernel = 1;
+		}
 		printf(" disabled\n");
 
 		return;
@@ -657,8 +658,6 @@ enable(int devno)
 	struct cfdata *cd;
 	int done = 0;
 
-	ukc_mod_kernel = 1;
-
 	if (devno <= maxdev) {
 		cd = get_cfdata(devno);
 
@@ -680,8 +679,11 @@ enable(int devno)
 
 		printf("%3d ", devno);
 		pdevnam(devno);
-		if (done)
+		if (done) {
 			printf(" already");
+		} else {
+			ukc_mod_kernel = 1;
+		}
 		printf(" enabled\n");
 
 		return;
