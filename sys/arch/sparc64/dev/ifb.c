@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.1 2008/03/23 20:07:21 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.2 2008/03/23 20:20:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -26,7 +26,7 @@
  * or source code, the best we can do is experiment.
  *
  * Quoting Alan Coopersmith in
- * http://mail.opensolaris.org/pipermail/opensolaris-discuss/2005-December/0118885.html
+ * http://mail.opensolaris.org/pipermail/opensolaris-discuss/2005-December/011885.html
  * ``Unfortunately, the lawyers have asked we not give details about why
  *   specific components are not being released.''
  */
