@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.18 2008/03/23 08:36:41 damien Exp $ */
+/* $OpenBSD: agp.c,v 1.19 2008/03/23 19:54:47 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -357,6 +357,21 @@ agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, u_int32_t bar
 	    memtype, &sc->sc_apaddr, &sc->sc_apsize,
 	    &sc->sc_apflags) != 0)
 		return (ENXIO);
+
+	return (0);
+}
+
+u_int32_t
+agp_generic_get_aperture(struct agp_softc *sc)
+{
+	return (sc->sc_apsize);
+}
+
+int
+agp_generic_set_aperture(struct agp_softc *sc, u_int32_t aperture)
+{
+	if (aperture != AGP_GET_APERTURE(sc))
+		return (EINVAL);
 
 	return (0);
 }

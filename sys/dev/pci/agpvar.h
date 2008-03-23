@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.11 2008/03/16 19:00:28 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.12 2008/03/23 19:54:47 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -181,6 +181,8 @@ void	agp_set_pchb(struct pci_attach_args*);
 int	agp_find_caps(pci_chipset_tag_t, pcitag_t);
 int	agp_map_aperture(struct pci_attach_args *, 
 	    struct agp_softc *, u_int32_t, u_int32_t);
+u_int32_t agp_generic_get_aperture(struct agp_softc *);
+int	agp_generic_set_aperture(struct agp_softc *, u_int32_t);
 struct agp_gatt *
 	agp_alloc_gatt(struct agp_softc *);
 void	agp_free_gatt(struct agp_softc *, struct agp_gatt *);
