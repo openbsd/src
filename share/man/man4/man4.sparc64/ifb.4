@@ -1,0 +1,121 @@
+.\"	$OpenBSD: ifb.4,v 1.1 2008/03/23 20:07:19 miod Exp $
+.\"
+.\" Copyright (c) 2008 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies. And
+.\" I won't mind if you keep the disclaimer below.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 23 2008 $
+.Dt IFB 4
+.Os
+.Sh NAME
+.Nm ifb
+.Nd inextricable frame buffer
+.Sh SYNOPSIS
+.Cd "ifb* at pci?"
+.Cd "wsdisplay* at ifb?"
+.Sh DESCRIPTION
+The
+.Nm
+driver attempts to support various frame buffer cards based on the
+3DLabs
+.Sq Wildcat
+chips, such as the
+Sun
+Expert3D
+and
+XVR-500
+boards.
+It does not provide direct device driver entry points
+but makes its functions available via the internal
+.Xr wsdisplay 4
+interface.
+.Sh DISPLAY RESOLUTION
+If the
+.Nm
+frame buffer is used as the console display, a different resolution than
+the default 1152x900 can be selected by changing the OpenPROM environment.
+To change the default resolution, type the following:
+.Pp
+.Em \   ok
+setenv
+.Em output-device
+screen:r1280x1024x76
+.Pp
+to change to a 76Hz 1280x1024 resolution.
+.Pp
+The
+.Nm
+frame buffer accepts the following resolutions:
+.Pp
+.Bl -tag -width 5n -offset indent
+.It screen:r640x480x60
+VGA 640x480, with a refresh rate of 60Hz.
+.It screen:r640x480x60i
+VGA 640x480, with a refresh rate of 60Hz, interleaved.
+.It screen:r768x575x50i
+768x575, with a refresh rate of 50Hz, interleaved.
+.It screen:r1024x768x60
+Super VGA 1024x768, with a refresh rate of 60Hz.
+.It screen:r1024x768x70
+Super VGA 1024x768, with a refresh rate of 70Hz.
+.It screen:r1024x768x75
+Super VGA 1024x768, with a refresh rate of 75Hz.
+.It screen:r1024x768x76
+Super VGA 1024x768, with a refresh rate of 76Hz.
+.It screen:r1024x768x77
+Super VGA 1024x768, with a refresh rate of 77Hz.
+.It screen:r1024x800x84
+1024x800, with a refresh rate of 84Hz.
+.It screen:r1152x900x66
+Standard 1152x900, with a refresh rate of 66Hz.
+.It screen:r1152x900x76
+Standard 1152x900, with a refresh rate of 76Hz.
+.It screen:r1280x800x76
+1280x800, with a refresh rate of 76Hz.
+.It screen:r1280x1024x60
+High res 1280x1024, with a refresh rate of 60Hz.
+.It screen:r1280x1024x67
+High res 1280x1024, with a refresh rate of 67Hz.
+.It screen:r1280x1024x76
+High res 1280x1024, with a refresh rate of 76Hz.
+.It screen:r1280x1024x85
+High res 1280x1024, with a refresh rate of 85Hz.
+.It screen:r1440x900x76
+1440x900, with a refresh rate of 76Hz.
+.It screen:r1600x1000x66
+1600x1000, with a refresh rate of 66Hz.
+.It screen:r1600x1000x76
+1600x1000, with a refresh rate of 76Hz.
+.It screen:r1600x1280x76
+High res 1600x1280, with a refresh rate of 76Hz.
+.It screen:r1792x1344x75
+1792x1344, with a refresh rate of 75Hz.
+.It screen:r1920x1080x72
+1920x1080, with a refresh rate of 72Hz.
+.It screen:r1920x1200x70
+1920x1200, with a refresh rate of 70Hz.
+.It screen:r1920x1200x75
+1920x1200, with a refresh rate of 75Hz.
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
+.Sh BUGS
+Overlay parasitic data appears above the displayed text.
+This is especially visible in the lower left corner of the display.
+This essentially makes this driver currently unusable.
+.Pp
+Vertical scrolling could be done in a much smoother way.
