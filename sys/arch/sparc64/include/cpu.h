@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2008/03/17 23:10:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2008/03/23 23:46:21 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -133,6 +133,18 @@ struct cpu_info {
 	void			(*ci_spinup)(void); /* spinup routine */
 	void			*ci_initstack;
 	paddr_t			ci_paddr;	/* Phys addr of this structure. */
+
+#ifdef SUN4V
+	struct rwindow64	ci_rw;
+	u_int64_t		ci_rwsp;
+
+	paddr_t			ci_mmfsa;
+	paddr_t			ci_cpumq;
+	paddr_t			ci_devmq;
+
+	paddr_t			ci_cpuset;
+	paddr_t			ci_mondo;
+#endif
 };
 
 #define CPUF_RUNNING	0x0001		/* CPU is running */

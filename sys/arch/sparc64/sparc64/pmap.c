@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2008/03/22 16:01:32 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2008/03/23 23:46:21 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -43,6 +43,7 @@
 #include <machine/pcb.h>
 #include <machine/sparc64.h>
 #include <machine/ctlreg.h>
+#include <machine/hypervisor.h>
 #include <machine/openfirm.h>
 #include <machine/kcore.h>
 
@@ -234,6 +235,10 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
  * never allocated.
  */
 #define TSB_TAG_INVALID (~0LL)
+
+#ifdef SUN4V
+struct tsb_desc *tsb_desc;
+#endif
 
 struct pmap kernel_pmap_;
 
@@ -1044,6 +1049,19 @@ remap_data:
 	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void *)tsb_dmmu,
 	    (int)TSBSIZE));
 
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		valloc(tsb_desc, struct tsb_desc, sizeof(struct tsb_desc));
+		bzero(tsb_desc, sizeof(struct tsb_desc));
+		tsb_desc->td_idxpgsz = 0;
+		tsb_desc->td_assoc = 1;
+		tsb_desc->td_size = TSBENTS;
+		tsb_desc->td_ctxidx = -1;
+		tsb_desc->td_pgsz = 0xf;
+		tsb_desc->td_pa = (paddr_t)tsb_dmmu + kdatap - kdata;
+	}
+#endif
+
 	first_phys_addr = mem->start;
 	BDPRINTF(PDB_BOOT1, ("firstaddr after pmap=%08lx\r\n", 
 		(u_long)firstaddr));
@@ -1385,6 +1403,9 @@ remap_data:
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
+#ifdef SUN4V
+		cpus->ci_mmfsa = cpu0paddr;
+#endif
 		proc0paddr = cpus->ci_cpcb;
 
 		cpu0paddr += 64 * KB;
@@ -1407,10 +1428,22 @@ remap_data:
 	pmap_bootstrap_cpu(cpus->ci_paddr);
 }
 
-extern void sun4u_set_tsbs(void);
+void sun4u_bootstrap_cpu(paddr_t);
+void sun4v_bootstrap_cpu(paddr_t);
 
 void
 pmap_bootstrap_cpu(paddr_t intstack)
+{
+	if (CPU_ISSUN4V)
+		sun4v_bootstrap_cpu(intstack);
+	else
+		sun4u_bootstrap_cpu(intstack);
+}
+
+extern void sun4u_set_tsbs(void);
+
+void
+sun4u_bootstrap_cpu(paddr_t intstack)
 {
 	u_int64_t data;
 	paddr_t pa;
@@ -1426,16 +1459,16 @@ pmap_bootstrap_cpu(paddr_t intstack)
 
 	index = 15; /* XXX */
 	for (va = ktext, pa = ktextp; va < ektext; va += 4*MEG, pa += 4*MEG) {
-		data = TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, FORCE_ALIAS, 1, 0);
-		data |= TLB_L;
+		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, FORCE_ALIAS, 1, 0);
+		data |= SUN4U_TLB_L;
 		prom_itlb_load(index, data, va);
 		prom_dtlb_load(index, data, va);
 		index--;
 	}
 
 	for (va = kdata, pa = kdatap; va < ekdata; va += 4*MEG, pa += 4*MEG) {
-		data = TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, FORCE_ALIAS, 1, 0);
-		data |= TLB_L;
+		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, FORCE_ALIAS, 1, 0);
+		data |= SUN4U_TLB_L;
 		prom_dtlb_load(index, data, va);
 		index--;
 	}
@@ -1444,11 +1477,63 @@ pmap_bootstrap_cpu(paddr_t intstack)
 	 * Establish the 64KB locked mapping for the interrupt stack.
 	 */
 
-	data = TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
-	data |= TLB_L;
+	data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
+	data |= SUN4U_TLB_L;
 	prom_dtlb_load(index, data, INTSTACK);
 
 	sun4u_set_tsbs();
+}
+
+void
+sun4v_bootstrap_cpu(paddr_t intstack)
+{
+#ifdef SUN4V
+	u_int64_t data;
+	paddr_t pa;
+	vaddr_t va;
+	int err;
+
+	/*
+	 * Establish the 4MB locked mappings for kernel data and text.
+	 *
+	 * The text segment needs to be mapped into the DTLB too,
+	 * because of .rodata.
+	 */
+
+	for (va = ktext, pa = ktextp; va < ektext; va += 4*MEG, pa += 4*MEG) {
+		data = SUN4V_TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, 0, 1, 0);
+		data |= SUN4V_TLB_X;
+		err = hv_mmu_map_perm_addr(va, data, MAP_ITLB|MAP_DTLB);
+		if (err != H_EOK)
+			prom_printf("err: %d\r\n", err);
+	}
+
+	for (va = kdata, pa = kdatap; va < ekdata; va += 4*MEG, pa += 4*MEG) {
+		data = SUN4V_TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, 0, 1, 0);
+		err = hv_mmu_map_perm_addr(va, data, MAP_DTLB);
+		if (err != H_EOK)
+			prom_printf("err: %d\r\n", err);
+	}
+
+#ifndef MULTIPROCESSOR
+	/*
+	 * Establish the 64KB locked mapping for the interrupt stack.
+	 */
+	data = SUN4V_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, 0, 1, 0);
+	err = hv_mmu_map_perm_addr(INTSTACK, data, MAP_DTLB);
+	if (err != H_EOK)
+		prom_printf("err: %d\r\n", err);
+#endif
+
+	stxa(0, ASI_SCRATCHPAD, intstack + (CPUINFO_VA - INTSTACK));
+
+	err = hv_mmu_tsb_ctx0(1, (paddr_t)tsb_desc + kdatap - kdata);
+	if (err != H_EOK)
+		prom_printf("err: %d\r\n", err);
+	err = hv_mmu_tsb_ctxnon0(1, (paddr_t)tsb_desc + kdatap - kdata);
+	if (err != H_EOK)
+		prom_printf("err: %d\r\n", err);
+#endif
 }
 
 /*
