@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2008/02/20 19:13:38 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.55 2008/03/23 17:05:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -343,14 +343,8 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
-	 * Default to AUTOBOOT if no args or SINGLE and DFLTROOT
-	 * if this is a ramdisk kernel.
 	 */
-#ifdef RAMDISK_HOOKS
-	boothowto = RB_SINGLE | RB_DFLTROOT;
-#else
 	boothowto = RB_AUTOBOOT;
-#endif /* RAMDISK_HOOKS */
 
 	dobootopts(argc, argv);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2007/11/04 13:43:38 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 2008/03/23 17:05:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -348,14 +348,8 @@ initppc(startkernel, endkernel, args)
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
-	 * Default to SINGLE and ASKNAME if no args or
-	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
 	 */
-#ifdef RAMDISK_HOOKS
-	boothowto = RB_SINGLE | RB_DFLTROOT;
-#else
 	boothowto = RB_AUTOBOOT;
-#endif /* RAMDISK_HOOKS */
 
 	/*
 	 * Parse arg string.

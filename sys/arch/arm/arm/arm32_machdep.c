@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.27 2007/05/30 17:13:29 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.28 2008/03/23 17:05:41 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -278,15 +278,6 @@ cpu_startup()
 		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-
-	/*
-	 * Look at arguments passed to us and compute boothowto.
-	 * Default to SINGLE and ASKNAME if no args or
-	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
-	 */
-#ifdef RAMDISK_HOOKS
-	boothowto = RB_SINGLE | RB_DFLTROOT;
-#endif /* RAMDISK_HOOKS */
 
 	/*
 	 * Identify ourselves for the msgbuf (everything printed earlier will

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.10 2007/05/19 15:49:05 miod Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.11 2008/03/23 17:05:41 deraadt Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -371,10 +371,6 @@ initarm(void *arg)
 	/* XXX should really be done after setting up the console, but we
 	 * XXX need to parse the console selection flags right now. */
 	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
-#ifdef RAMDISK_HOOKS
-        boothowto |= RB_DFLTROOT;
-#endif /* RAMDISK_HOOKS */
-
 
 	/* Calibrate the delay loop. */
 #if 1

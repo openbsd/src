@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2008/03/23 17:05:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -169,10 +169,6 @@ landisk_startup(int howto, char *_esym)
 
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
-
-#ifdef RAMDISK_HOOKS
-	boothowto |= RB_DFLTROOT;   
-#endif /* RAMDISK_HOOKS */
 
 #if defined(DDB)
 	db_machine_init();

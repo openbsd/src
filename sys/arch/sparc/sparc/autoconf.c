@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.80 2007/06/01 19:25:10 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.81 2008/03/23 17:05:41 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -423,10 +423,6 @@ bootpath_build()
 
 		case 'a':
 			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'b':
-			boothowto |= RB_DFLTROOT;
 			break;
 
 		case 'c':
