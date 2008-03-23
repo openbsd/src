@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.51 2008/03/21 17:14:12 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.52 2008/03/23 12:10:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -112,12 +112,10 @@ extern int allowaperture;
 #endif
 
 static const struct pci_matchid ifb_devices[] = {
-	{ PCI_VENDOR_INTERGRAPH, 0x108 },	/* XXX */
-	{ PCI_VENDOR_INTERGRAPH, 0x140 },	/* XXX */
-	{ PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
-	{ PCI_VENDOR_3DLABS,	 0x7a1 },	/* Wildcat III 6210 */
-	{ PCI_VENDOR_3DLABS,	 0x7a2 },	/* Sun XVR-500 */
-	{ PCI_VENDOR_3DLABS,	 0x7a3 },	/* Wildcat IV 7210 */
+    { PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
+    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_6210 },
+    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_5110 },/* Sun XVR-500 */
+    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_7210 }
 };
 
 int
