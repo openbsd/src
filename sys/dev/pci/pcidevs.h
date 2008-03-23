@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1335 2008/03/20 22:18:07 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1336 2008/03/23 12:10:00 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -431,6 +431,9 @@
 #define	PCI_PRODUCT_3DLABS_OXYGEN_GVX1_CPU	0x0008		/* Oxygen GVX1 */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x0009		/* Permedia 3 */
 #define	PCI_PRODUCT_3DLABS_OXYGEN_GVX1	0x000a		/* Oxygen GVX1 */
+#define	PCI_PRODUCT_3DLABS_WILDCAT_6210	0x07a1		/* Wildcat III 6210 */
+#define	PCI_PRODUCT_3DLABS_WILDCAT_5110	0x07a2		/* Wildcat 5110 */
+#define	PCI_PRODUCT_3DLABS_WILDCAT_7210	0x07a3		/* Wildcat IV 7210 */
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* 5000/6000 series RAID */
