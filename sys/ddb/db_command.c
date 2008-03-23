@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.48 2007/11/14 17:52:36 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.49 2008/03/23 12:31:57 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -38,6 +38,7 @@
 #include <sys/pool.h>
 #include <sys/msgbuf.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>		/* type definitions */
@@ -333,6 +334,19 @@ db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	vfs_mount_print((struct mount *) addr, full, db_printf);
 }
 
+void
+db_show_all_mounts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+	struct mount *mp;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list)
+		vfs_mount_print(mp, full, db_printf);
+}
+
 /*ARGSUSED*/
 void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
@@ -418,6 +432,7 @@ struct db_command db_show_all_cmds[] = {
 	{ "procs",	db_show_all_procs,	0, NULL },
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
+	{ "mounts",	db_show_all_mounts,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
