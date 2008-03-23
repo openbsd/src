@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1335 2008/03/20 22:18:07 brad Exp $
+$OpenBSD: pcidevs,v 1.1336 2008/03/23 12:10:00 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -426,6 +426,9 @@ product 3DLABS PERMEDIA2	0x0007	Permedia 2
 product 3DLABS OXYGEN_GVX1_CPU	0x0008	Oxygen GVX1
 product 3DLABS PERMEDIA3	0x0009	Permedia 3
 product 3DLABS OXYGEN_GVX1	0x000a	Oxygen GVX1
+product 3DLABS WILDCAT_6210	0x07a1	Wildcat III 6210
+product 3DLABS WILDCAT_5110	0x07a2	Wildcat 5110
+product 3DLABS WILDCAT_7210	0x07a3	Wildcat IV 7210
 
 /* 3ware products */
 product 3WARE ESCALADE		0x1000	5000/6000 series RAID
