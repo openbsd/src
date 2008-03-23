@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.43 2007/10/26 15:00:49 martin Exp $
+# $OpenBSD: files.i2c,v 1.44 2008/03/23 07:04:48 cnst Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -137,6 +137,11 @@ file	dev/i2c/pca9532.c			pcaled
 device	adl
 attach	adl at i2c
 file	dev/i2c/asc7621.c			adl
+
+# Andigilog aSC7611
+device	andl
+attach	andl at i2c
+file	dev/i2c/asc7611.c			andl
 
 # TI TMHC50 / Analog ADM1022
 device	thmc
