@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.70 2008/02/12 11:25:57 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.71 2008/03/24 07:03:16 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -644,7 +644,7 @@ auich_query_encoding(v, aep)
 		strlcpy(aep->name, AudioEulinear, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
-		aep->flags = 0;
+		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 1:
 		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
