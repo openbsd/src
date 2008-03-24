@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.45 2007/11/05 16:09:49 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.46 2008/03/24 01:16:58 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ struct raid_softc **raid_scPtrs;
 
 void rf_shutdown_hook(RF_ThreadArg_t);
 void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, struct disklabel *);
-void raidgetdisklabel(dev_t, struct disklabel *, int);
+void raidgetdisklabel(dev_t, struct raid_softc *, struct disklabel *, int);
 
 int  raidlock(struct raid_softc *);
 void raidunlock(struct raid_softc *);
@@ -620,7 +620,7 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 
 	if ((rs->sc_flags & RAIDF_INITED) && (rs->sc_dkdev.dk_openmask == 0))
-		raidgetdisklabel(dev, rs->sc_dkdev.dk_label, 0);
+		raidgetdisklabel(dev, rs, rs->sc_dkdev.dk_label, 0);
 
 	/* Make sure that this partition exists. */
 
@@ -1577,7 +1577,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case DIOCGPDINFO:
-		raidgetdisklabel(dev, (struct disklabel *)data, 1);
+		raidgetdisklabel(dev, rs, (struct disklabel *)data, 1);
 		break;
 
 	default:
@@ -2101,10 +2101,10 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
  * If one is not present, fake one up.
  */
 void
-raidgetdisklabel(dev_t dev, struct disklabel *lp, int spoofonly)
+raidgetdisklabel(dev_t dev, struct raid_softc *rs, struct disklabel *lp,
+    int spoofonly)
 {
 	int unit = DISKUNIT(dev);
-	struct raid_softc *rs = &raid_softc[unit];
 	char *errstring;
 	RF_Raid_t *raidPtr;
 	int i;
