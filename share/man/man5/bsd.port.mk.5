@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.208 2008/01/12 16:04:35 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.209 2008/03/24 14:41:35 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2008 $
+.Dd $Mdocdate: March 24 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1597,6 +1597,8 @@ ports system must have control over shared library versions because of global
 changes that may require bumping the major version of every shared library in
 the system, or simply because the third party programmers do not understand
 the rules for shared library versions, thus breaking the update mechanism.
+For that reason it is advised to set libversion to 0.0 when first importing a
+port.
 .Pp
 Porters of software using libtool should also set
 .Ev USE_LIBTOOL
