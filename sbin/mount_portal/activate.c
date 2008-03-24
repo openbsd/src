@@ -1,4 +1,4 @@
-/*	$OpenBSD: activate.c,v 1.8 2008/03/15 16:19:02 deraadt Exp $	*/
+/*	$OpenBSD: activate.c,v 1.9 2008/03/24 16:11:08 deraadt Exp $	*/
 /*	$NetBSD: activate.c,v 1.5 1995/04/23 10:33:18 cgd Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ send_reply(int so, int fd, int error)
 	 */
 	if (fd >= 0) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;

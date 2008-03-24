@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.11 2008/03/15 16:19:02 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.12 2008/03/24 16:11:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -181,7 +181,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 
 	if (buf != NULL && buf->fd != -1) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;
@@ -204,7 +204,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 
 	if (buf != NULL && buf->fd != -1) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;

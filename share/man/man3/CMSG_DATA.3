@@ -1,7 +1,7 @@
-.\"	$OpenBSD: CMSG_DATA.3,v 1.4 2008/03/15 16:27:48 deraadt Exp $
+.\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
-.Dd $Mdocdate: March 15 2008 $
+.Dd $Mdocdate: March 24 2008 $
 .Dt CMSG_DATA 3
 .Os
 .Sh NAME
@@ -61,10 +61,9 @@ This routine determines the size in bytes of a control message,
 which includes the control message header.
 .Fa len
 specifies the length of the data held by the control message.
-This value is what is normally stored in
+This value is what is normally stored in the
 .Fa cmsg_len
-and
-.Fa msg_msgcontrollen .
+of each control message.
 This routine accounts for any alignment constraints on the beginning of
 ancillary data.
 .It Fn CMSG_NXTHDR mhdr cmsg
@@ -99,7 +98,7 @@ union {
 
 memset(&msg, 0, sizeof(msg));
 msg.msg_control = &cmsgbuf.buf;
-msg.msg_controllen = CMSG_LEN(sizeof(int));
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 cmsg = CMSG_FIRSTHDR(&msg);
 cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -122,7 +121,7 @@ union {
 
 memset(&msg, 0, sizeof(msg));
 msg.msg_control = &cmsgbuf.buf;
-msg.msg_controllen = CMSG_LEN(sizeof(int));
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");

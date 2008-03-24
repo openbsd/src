@@ -451,7 +451,7 @@ Perl_dump_sv_child(pTHX_ SV *sv)
        be open, the wait would be forever.  */
 
     msg.msg_control = control.control;
-    msg.msg_controllen = CMSG_LEN(sizeof(int));
+    msg.msg_controllen = sizeof(control.control);
     /* We're a connected socket so we don't need a destination  */
     msg.msg_name = NULL;
     msg.msg_namelen = 0;
@@ -716,7 +716,7 @@ perl_destruct(pTHXx)
 		int got_fd;
 
 		msg.msg_control = control.control;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		msg.msg_controllen = sizeof(control.control);
 		/* We're a connected socket so we don't need a source  */
 		msg.msg_name = NULL;
 		msg.msg_namelen = 0;

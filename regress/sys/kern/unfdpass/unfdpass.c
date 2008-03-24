@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.14 2008/03/15 16:49:15 hshoexer Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.15 2008/03/24 16:11:08 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int) * 3);
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	if (recvmsg(sock, &msg, 0) < 0)
 		err(1, "recvmsg");
@@ -270,7 +270,7 @@ child(int sock)
 
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int) * 3);
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 	cmp = CMSG_FIRSTHDR(&msg);
 	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 3);
