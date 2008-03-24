@@ -1,4 +1,4 @@
-.\"     $OpenBSD: power.4,v 1.1 2007/12/18 08:32:26 jasper Exp $
+.\"     $OpenBSD: power.4,v 1.2 2008/03/24 14:34:27 jsing Exp $
 .\"
 .\" Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 .\" All rights reserved.
@@ -15,14 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2007 $
+.Dd $Mdocdate: March 24 2008 $
 .Dt POWER 4 sgi
 .Os
 .Sh NAME
 .Nm power
 .Nd power button
 .Sh SYNOPSIS
-.Cd "power0 at mainbus?"
+.Cd "power0 at macebus0 irq 6"
 .Sh DESCRIPTION
 The SGI O2 machines generate an interrupt when the power button on the front
 panel is pressed.
