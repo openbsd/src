@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.112 2008/01/29 22:23:10 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.113 2008/03/24 18:03:53 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -713,9 +713,11 @@ prepare_pipe(struct job_pipe *p, int *fd)
 		ofdn = howmany(largest_fd+1, NFDBITS);
 
 		if (fdn != ofdn) {
-			output_mask = erecalloc(output_mask, fdn, 
+			output_mask = emult_realloc(output_mask, fdn, 
 			    sizeof(fd_mask));
-			actual_mask = erecalloc(actual_mask, fdn, 
+			memset(((char *)output_mask) + ofdn * sizeof(fd_mask), 
+			    0, (fdn-ofdn) * sizeof(fd_mask));
+			actual_mask = emult_realloc(actual_mask, fdn, 
 			    sizeof(fd_mask));
 			mask_size = fdn * sizeof(fd_mask);
 		}

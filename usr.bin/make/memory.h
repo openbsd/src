@@ -2,7 +2,7 @@
 #define MEMORY_H
 
 /* $OpenPackages$ */
-/* $OpenBSD: memory.h,v 1.4 2008/01/29 22:23:10 espie Exp $ */
+/* $OpenBSD: memory.h,v 1.5 2008/03/24 18:03:53 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@ extern void *emalloc(size_t);
 extern char *estrdup(const char *);
 extern void *erealloc(void *, size_t);
 extern void *ecalloc(size_t, size_t);
-extern void *erecalloc(void *, size_t, size_t);
+extern void *emult_realloc(void *, size_t, size_t);
 extern int eunlink(const char *);
 extern void esetenv(const char *, const char *);
 
