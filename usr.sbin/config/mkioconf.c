@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.27 2005/01/02 21:59:33 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.28 2008/03/24 21:35:03 maja Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ emitpseudo(FILE *fp)
 {
 	struct devi *i;
 	struct devbase *d;
-	int cnt = 0;
+	int cnt = 0, umax;
 
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);
@@ -473,8 +473,11 @@ emitpseudo(FILE *fp)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next) {
 		d = i->i_base;
+		umax = d->d_umax;
+		if (i->i_disable)
+		    umax*=-1;
 		if (fprintf(fp, "\t{ %sattach, %d },\n",
-		    d->d_name, d->d_umax) < 0)
+		    d->d_name, umax) < 0)
 			return (1);
 	}
 	return (fputs("\t{ NULL, 0 }\n};\n", fp) < 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.34 2005/12/09 09:09:52 jsg Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.35 2008/03/24 21:35:03 maja Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -257,9 +257,12 @@ userconf_pdev(short devno)
 
 	if (devno > userconf_totdev &&
 	    devno <= userconf_totdev+pdevnames_size) {
-		printf("%3d %s count %d (pseudo device)\n", devno,
+		printf("%3d %s count %d", devno,
 		    pdevnames[devno-userconf_totdev-1],
-		    pdevinit[devno-userconf_totdev-1].pdev_count);
+		    abs(pdevinit[devno-userconf_totdev-1].pdev_count));
+		if (pdevinit[devno-userconf_totdev-1].pdev_count < 1)
+			printf(" disable");
+		printf(" (pseudo device)\n");
 		return;
 	}
 
@@ -598,8 +601,17 @@ userconf_disable(int devno)
 
 	if (devno > userconf_totdev &&
 	    devno <= userconf_totdev+pdevnames_size) {
-		printf("%3d %s can't disable pseudo device\n", devno,
-		    pdevnames[devno-userconf_totdev-1]);
+		printf("%3d %", devno, pdevnames[devno-userconf_totdev-1]);
+		if (pdevinit[devno-userconf_totdev-1].pdev_count < 1) {
+			printf(" already ");
+		} else {
+			pdevinit[devno-userconf_totdev-1].pdev_count *= -1;
+			/* XXX add cmd 'd' <devno> eoc */
+			userconf_hist_cmd('d');
+			userconf_hist_int(devno);
+			userconf_hist_eoc();
+		}
+		printf(" disabled\n");
 		return;
 	}
 
@@ -649,8 +661,17 @@ userconf_enable(int devno)
 
 	if (devno > userconf_totdev &&
 	    devno <= userconf_totdev+pdevnames_size) {
-		printf("%3d %s can't enable pseudo device\n", devno,
-		    pdevnames[devno-userconf_totdev-1]);
+		printf("%3d %", devno, pdevnames[devno-userconf_totdev-1]);
+		if (pdevinit[devno-userconf_totdev-1].pdev_count > 0) {
+			printf(" already");
+		} else {
+			pdevinit[devno-userconf_totdev-1].pdev_count *= -1;
+			/* XXX add cmd 'e' <devno> eoc */
+			userconf_hist_cmd('e');
+			userconf_hist_int(devno);
+			userconf_hist_eoc();
+		}
+		printf(" enabled\n");
 		return;
 	}
 

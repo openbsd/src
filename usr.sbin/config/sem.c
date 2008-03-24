@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.30 2004/01/04 18:30:05 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.31 2008/03/24 21:35:03 maja Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -888,7 +888,7 @@ bad:
 }
 
 void
-addpseudo(const char *name, int number)
+addpseudo(const char *name, int number, int disable)
 {
 	struct devbase *d;
 	struct devi *i;
@@ -910,6 +910,7 @@ addpseudo(const char *name, int number)
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
 	if (ht_insert(devitab, name, i))
 		panic("addpseudo(%s)", name);
+	i->i_disable = disable;
 	selectbase(d, NULL);
 	*nextpseudo = i;
 	nextpseudo = &i->i_next;

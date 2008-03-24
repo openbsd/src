@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.12 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.13 2008/03/24 21:35:03 maja Exp $	*/
 /*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		adddev(const char *, const char *, struct nvlist *, int, int);
 void		enabledev(const char *, const char *);
-void		addpseudo(const char *name, int number);
+void		addpseudo(const char *name, int number, int disable);
 const char     *ref(const char *name);
 const char     *starref(const char *name);
 const char     *wildref(const char *name);

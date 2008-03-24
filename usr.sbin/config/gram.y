@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.21 2008/03/22 22:35:15 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.22 2008/03/24 21:35:03 maja Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ config_spec:
 	MAKEOPTIONS mkopt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
 	CONFIG conf sysparam_list	{ addconf(&conf); } |
-	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
+	PSEUDO_DEVICE WORD npseudo disable { addpseudo($2, $3, $4); } |
 	device_instance AT attachment ENABLE { enabledev($1, $3); } |
 	device_instance AT attachment disable locators flags_opt
 					{ adddev($1, $3, $5, $6, $4); };

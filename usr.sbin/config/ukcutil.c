@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.16 2008/03/23 15:00:29 maja Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.17 2008/03/24 21:35:03 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.16 2008/03/23 15:00:29 maja Exp $";
+static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.17 2008/03/24 21:35:03 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -183,9 +183,12 @@ pdev(short devno)
 		}
 		if (devno > totdev && devno <= totdev + maxpseudo) {
 			pi = get_pdevinit(devno - totdev -1);
-			printf("%3d %s count %d (pseudo device)\n", devno,
+			printf("%3d %s count %d", devno,
 			    get_pdevnames(devno - totdev - 1),
-			    pi->pdev_count);
+			    abs(pi->pdev_count));
+			if (pi->pdev_count < 0)
+				printf(" disable");
+			printf(" (pseudo device)\n");
 			return;
 		}
 	}
@@ -602,6 +605,7 @@ void
 disable(int devno)
 {
 	struct cfdata *cd;
+	struct pdevinit *pi;
 	int done = 0;
 
 	if (devno <= maxdev) {
@@ -642,8 +646,17 @@ disable(int devno)
 			return;
 		}
 		if (devno > totdev && devno <= totdev + maxpseudo) {
-			printf("%3d %s can't disable pseudo device\n", devno,
-			    get_pdevnames(devno - totdev - 1));
+			pi = get_pdevinit(devno-totdev-1);
+
+			printf("%3d %s", devno,
+				get_pdevnames(devno - totdev - 1));
+			if (pi->pdev_count < 1) {
+				printf(" already");
+			} else {
+				ukc_mod_kernel = 1;
+				pi->pdev_count*=-1;
+			}
+			printf(" disabled\n");
 			return;
 		}
 	}
@@ -656,6 +669,7 @@ void
 enable(int devno)
 {
 	struct cfdata *cd;
+	struct pdevinit *pi;
 	int done = 0;
 
 	if (devno <= maxdev) {
@@ -695,8 +709,17 @@ enable(int devno)
 			return;
 		}
 		if (devno > totdev && devno <= totdev + maxpseudo) {
-			printf("%3d %s can't enable pseudo device\n", devno,
-			    get_pdevnames(devno - totdev - 1));
+			pi = get_pdevinit(devno-totdev-1);
+
+			printf("%3d %s", devno,
+				get_pdevnames(devno - totdev - 1));
+			if (pi->pdev_count > 0) {
+				printf(" already");
+			} else {
+				ukc_mod_kernel = 1;
+				pi->pdev_count*=-1;
+			}
+			printf(" enabled\n");
 			return;
 		}
 	}
