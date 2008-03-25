@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.3 2008/03/25 06:01:26 otto Exp $
+.\"	$OpenBSD: statvfs.3,v 1.4 2008/03/25 12:04:47 otto Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -70,6 +70,11 @@ struct statvfs {
 #define ST_RDONLY     0x0001UL    /* read-only filesystem */
 #define	ST_NOSUID     0x0002UL    /* nosuid flag set */
 .Ed
+.Pp
+The fields of type
+.Va fsblkcnt_t
+are reported in units of
+.Va f_frsize .
 .Pp
 .Fn fstatvfs
 returns the same information about an open file referenced by descriptor
