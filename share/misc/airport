@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.14 2006/10/29 13:19:32 mbalmer Exp $
+#	$OpenBSD: airport,v 1.15 2008/03/25 15:07:10 kettenis Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -1332,6 +1332,7 @@ PUY:Pula, Croatia (Hrvatska)
 PUZ:Puerto Cabezas, Nicaragua
 PVC:Provincetown, MA, USA
 PVD:Providence Theodore Francis Green State, Rhode Island, USA
+PVG:Pudong International, Shanghai, China
 PVN:Pleven, Bulgaria
 PVR:Gustavo Diaz Ordaz, Puerto Vallarta, Jalisco, Mexico
 PVU:Provo, UT, USA
@@ -1450,7 +1451,7 @@ SGN:Tan Son Nhut, Ho Chi Minh City, Vietnam
 SGO:St George, Queensland, Australia
 SGU:St George, UT, USA
 SGY:Skagway, AK, USA
-SHA:Shanghai Intl /Hongqiao/, Shanghai, China
+SHA:Hongqiao International, Shanghai, China
 SHC:Indaselassie, Ethiopia
 SHD:Shenandoah Valley Regional, Staunton, VA, USA
 SHE:Shenyang, China
