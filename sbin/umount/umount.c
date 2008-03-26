@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.19 2007/09/02 15:19:25 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.20 2008/03/26 06:55:06 otto Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.19 2007/09/02 15:19:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.20 2008/03/26 06:55:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static char rcsid[] = "$OpenBSD: umount.c,v 1.19 2007/09/02 15:19:25 deraadt Exp
 
 typedef enum { MNTON, MNTFROM } mntwhat;
 
-int	fake, fflag, verbose;
+int	fflag, verbose;
 char	**typelist = NULL;
 char	*nfshost;
 
@@ -87,13 +87,10 @@ main(int argc, char *argv[])
 	sync();
 
 	all = 0;
-	while ((ch = getopt(argc, argv, "aFfh:t:v")) != -1)
+	while ((ch = getopt(argc, argv, "afh:t:v")) != -1)
 		switch (ch) {
 		case 'a':
 			all = 1;
-			break;
-		case 'F':
-			fake = 1;
 			break;
 		case 'f':
 			fflag = MNT_FORCE;
@@ -229,8 +226,6 @@ umountfs(char *oname)
 
 	if (verbose)
 		(void)printf("%s: unmount from %s\n", name, mntpt);
-	if (fake)
-		return (0);
 
 	if (unmount(mntpt, fflag) < 0) {
 		warn("%s", mntpt);
