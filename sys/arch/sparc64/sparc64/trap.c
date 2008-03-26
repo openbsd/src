@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2008/01/16 20:55:36 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2008/03/26 22:07:23 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -645,6 +645,7 @@ badtrap:
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
+#if 0
 	{
 		int64_t dsfsr, dsfar=0, isfsr;
 
@@ -652,6 +653,8 @@ badtrap:
 		if (dsfsr & SFSR_FV)
 			dsfar = ldxa(SFAR, ASI_DMMU);
 		isfsr = ldxa(SFSR, ASI_IMMU);
+	}
+#endif
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */
@@ -660,7 +663,6 @@ badtrap:
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
 		}
-	}
 		
 		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
 		    fixalign(p, tf) == 0) {
