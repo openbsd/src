@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.4 2008/03/25 12:04:47 otto Exp $
+.\"	$OpenBSD: statvfs.3,v 1.5 2008/03/26 09:37:59 jmc Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: March 25 2008 $
+.Dd $Mdocdate: March 26 2008 $
 .Dt STATVFS 3
 .Os
 .Sh NAME
@@ -152,5 +152,7 @@ functions conform to
 .Sh HISTORY
 The
 .Fn statvfs
-function first appeared in
+and
+.Fn fstatvfs
+functions first appeared in
 .Ox 4.4 .
