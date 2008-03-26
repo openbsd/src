@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.9 2008/03/20 12:02:27 millert Exp $	*/
+/*	$OpenBSD: mach.c,v 1.10 2008/03/26 20:12:59 millert Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.9 2008/03/20 12:02:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.10 2008/03/26 20:12:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,11 @@ getline(char *q)
 int
 inputch(void)
 {
-	return (getch() & 0177);
+	int ch;
+
+	if ((ch = getch()) == ERR)
+		err(1, "cannot read input");
+	return (ch & 0177);
 }
 
 void
@@ -538,7 +542,7 @@ getword(char *q)
 	addch('[');
 	refresh();
 	while (!done && i < MAXWORDLEN - 1) {
-		ch = getch() & 0177;
+		ch = inputch();
 		switch (ch) {
 		case '\177':			/* <del> */
 		case '\010':			/* <bs> */
