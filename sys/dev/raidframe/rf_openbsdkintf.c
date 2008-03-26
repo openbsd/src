@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.46 2008/03/24 01:16:58 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.47 2008/03/26 00:48:54 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -833,6 +833,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error = 0;
 	int part, pmask;
 	struct raid_softc *rs;
+	struct disklabel *lp;
 	RF_Config_t *k_cfg, *u_cfg;
 	RF_Raid_t *raidPtr;
 	RF_RaidDisk_t *diskPtr;
@@ -876,6 +877,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case DIOCWDINFO:
 	case DIOCGPART:
 	case DIOCWLABEL:
+	case DIOCRLDINFO:
 	case DIOCGPDINFO:
 	case RAIDFRAME_SHUTDOWN:
 	case RAIDFRAME_REWRITEPARITY:
@@ -1532,6 +1534,13 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	 * Add support for "regular" device ioctls here.
 	 */
 	switch (cmd) {
+	case DIOCRLDINFO:
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		raidgetdisklabel(dev, rs, lp, 0);
+		bcopy(lp, rs->sc_dkdev.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
+		break;
+
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(rs->sc_dkdev.dk_label);
 		break;
