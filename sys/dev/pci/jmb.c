@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.6 2007/07/03 01:08:36 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.7 2008/03/27 09:21:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -74,7 +74,10 @@ struct jmb_softc {
 };
 
 struct cfattach jmb_ca = {
-	sizeof(struct jmb_softc), jmb_match, jmb_attach
+	sizeof(struct jmb_softc),
+	jmb_match,
+	jmb_attach,
+	config_detach_children
 };
 
 struct cfdriver jmb_cd = {
