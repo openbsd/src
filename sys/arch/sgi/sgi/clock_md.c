@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.11 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.12 2008/03/27 14:36:11 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -102,7 +102,6 @@ md_clk_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-
 /*
  * Dallas clock driver.
  */
@@ -116,10 +115,6 @@ ds1687_get(struct clock_softc *sc, time_t base, struct tod_time *ct)
 	/* Select bank 1. */
 	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A);
 	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
-
-	/* Select data mode 0 (BCD). */
-	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
-	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl & ~DS1687_DM_1);
 
 	/* Wait for no update in progress. */
 	while (bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A) & DS1687_UIP)
@@ -151,9 +146,10 @@ ds1687_set(struct clock_softc *sc, struct tod_time *ct)
 	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_A);
 	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
 
-	/* Select data mode 0 (BCD). */
+	/* Select data mode 0 (BCD) and 24 hour time. */
 	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
-	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B, ctrl & ~DS1687_DM_1);
+	bus_space_write_1(clk_t, clk_h, DS1687_CTRL_B,
+	    (ctrl & ~DS1687_DM_1) | DS1687_24_HR);
 
 	/* Prevent updates. */
 	ctrl = bus_space_read_1(clk_t, clk_h, DS1687_CTRL_B);
