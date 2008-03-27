@@ -1,4 +1,4 @@
-/*	$OpenBSD: kate.c,v 1.1 2008/03/27 01:44:23 cnst Exp $	*/
+/*	$OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -54,14 +54,14 @@
  */
 static const struct {
 	const char	rev[5];
-	const pcireg_t	cpuid[4];
+	const pcireg_t	cpuid[5];
 } kate_proc[] = {
-	{ "JH-F", { 0x00040F10, 0x00040F30, 0, 0 } },	/* F2, F3*/
-	{ "BH-F", { 0x00040FB0, 0x00040F80, 0, 0 } },	/* F2 */
-	{ "DH-F", { 0x00040FF0, 0x00050FF0, 0x00040FC0, 0 } },	/* F2, F3 */
-	{ "JH-F", { 0x00040F30, 0x000C0F10, 0x00040F30, 0 } },	/* F3 */
-	{ "BH-G", { 0x00060FB0, 0x00060F80, 0, 0 } },	/* G1, G2 */
-	{ "DH-G", { 0x00070FF0, 0x00060FF0, 0, 0 } }	/* G1, G2 */
+	{ "BH-F", { 0x00040FB0, 0x00040F80, 0, 0, 0 } },	/* F2 */
+	{ "DH-F", { 0x00040FF0, 0x00050FF0, 0x00040FC0, 0, 0 } }, /* F2, F3 */
+	{ "JH-F", { 0x00040F10, 0x00040F30, 0x000C0F10, 0, 0 } }, /* F2, F3 */
+	{ "BH-G", { 0x00060FB0, 0x00060F80, 0, 0, 0 } },	/* G1, G2 */
+	{ "DH-G", { 0x00070FF0, 0x00060FF0,
+	    0x00060FC0, 0x00070FC0, 0 } }	/* G1, G2 */
 };
 
 
