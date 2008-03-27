@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.6 2008/03/08 16:52:28 jsing Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.7 2008/03/27 15:11:37 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -34,11 +34,11 @@
 
 #define	USE_SGI_PARTITIONS	1
 
+int	bios_is_32bit;
+
 void	bios_configure_memory(void);
 int	bios_get_system_type(void);
 const char *bios_get_path_component(const char *, char *, int *);
-
-arc_dsp_stat_t	displayinfo;	/* Save area for display status info. */
 
 static struct systypes {
 	char *sys_vend;		/* Vendor ID if name is ambiguous. */
@@ -58,6 +58,8 @@ static struct systypes {
     { NULL,		"SGI-IP22",			SGI_INDY },
     { NULL,		"SGI-IP25",			SGI_POWER10 },
     { NULL,		"SGI-IP26",			SGI_POWERI },
+    { NULL,		"SGI-IP27",			SGI_O200 },
+    { NULL,		"SGI-IP30",			SGI_OCTANE },
     { NULL,		"SGI-IP32",			SGI_O2 }
 };
 
@@ -144,21 +146,12 @@ putchar(int c)
 		buf[0] = '\r';
 		buf[1] = c;
 		cnt = 2;
-		if (displayinfo.CursorYPosition < displayinfo.CursorMaxYPosition)
-			displayinfo.CursorYPosition++;
 	} else {
 		buf[0] = c;
 		cnt = 1;
 	}
 
 	Bios_Write(1, &buf[0], cnt, &cnt);
-}
-
-void
-bios_putstring(char *s)
-{
-	while (*s)
-		putchar(*s++);
 }
 
 /*
@@ -169,52 +162,69 @@ bios_get_system_type()
 {
 	arc_config_t *cf;
 	arc_sid_t *sid;
-	int i;
+	char *sysid;
+	int i, sysid_len;
 
-	if ((ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC) &&
-	    (ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
-		return (-1);	/* This is not an ARC system. */
-	}
+	/*
+	 * Figure out if this is an ARCBios machine and if it is, see if we're
+	 * dealing with a 32 or 64 bit version.
+	 */
+	if ((ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC) ||
+	    (ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
+		bios_is_32bit = 1;
+		printf("ARCS32 Firmware Version %d.%d\n",
+		    ArcBiosBase32->version, ArcBiosBase32->revision);
+	} else if ((ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC) ||
+	    (ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
+		bios_is_32bit = 0;
+		printf("ARCS64 Firmware Version %d.%d\n",
+		    ArcBiosBase64->version, ArcBiosBase64->revision);
+	} else
+		return (-1);	/* XXX BAD BAD BAD!!! */
 
 	sid = (arc_sid_t *)Bios_GetSystemId();
+
 	cf = (arc_config_t *)Bios_GetChild(NULL);
-	if (cf) {
-		for (i = 0; i < KNOWNSYSTEMS; i++) {
-			if (strcmp(sys_types[i].sys_name, (char *)cf->id) != 0)
-				continue;
-			if (sys_types[i].sys_vend &&
-			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
-				continue;
-			return (sys_types[i].sys_type);	/* Found it. */
+	if (cf != NULL) {
+		if (bios_is_32bit) {
+			sysid = (char *)(long)cf->id;
+			sysid_len = cf->id_len;
+		} else {
+			sysid = (char *)((arc_config64_t *)cf)->id;
+			sysid_len = ((arc_config64_t *)cf)->id_len;
 		}
+
+		if (sysid_len > 0 && sysid != NULL) {
+			sysid_len--;
+			for (i = 0; i < KNOWNSYSTEMS; i++) {
+				if (strlen(sys_types[i].sys_name) !=sysid_len)
+					continue;
+				if (strncmp(sys_types[i].sys_name, sysid,
+				    sysid_len) != 0)
+					continue;
+				if (sys_types[i].sys_vend &&
+				    strncmp(sys_types[i].sys_vend, sid->vendor,
+				      8) != 0)
+					continue;
+				return (sys_types[i].sys_type);	/* Found it. */
+			}
+		}
+	} else {
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+		if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
+			/* If we find a kldir assume IP27. */
+			return (SGI_O200);
+		}
+#endif
 	}
 
-	bios_putstring("UNIDENTIFIED SYSTEM `");
-	if (cf)
-		bios_putstring((char *)cf->id);
-	else
-		bios_putstring("????????");
-	bios_putstring("' VENDOR `");
-	sid->vendor[8] = 0;
-	bios_putstring(sid->vendor);
-	bios_putstring("'. Please contact OpenBSD (www.openbsd.org).\n");
-	bios_putstring("Reset system to restart!\n");
+	printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%8.8s' PRODUCT '%8.8s'\n",
+	    cf == NULL ? "??" : sysid, sid->vendor, sid->prodid);
+	printf("See www.openbsd.org for further information.\n");
+	printf("Halting system!\n");
+	Bios_Halt();
+	printf("Halting failed, use manual reset!\n");
 	while (1);
-}
-
-/*
- * Return geometry of the display. Used by pccons.c to set up the
- * display configuration.
- */
-void
-bios_display_info(int *xpos, int *ypos, int *xsize, int *ysize)
-{
-#ifdef __arc__
-	*xpos = displayinfo.CursorXPosition;
-	*ypos = displayinfo.CursorYPosition;
-	*xsize = displayinfo.CursorMaxXPosition;
-	*ysize = displayinfo.CursorMaxYPosition;
-#endif
 }
 
 /*
