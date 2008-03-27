@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.113 2008/03/19 21:01:10 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.114 2008/03/27 05:46:09 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -592,11 +592,13 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	case 0x61:		/* Andigilog */
 		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3f) == 0x69 &&
+		    iicprobe(0x22) >= 0xaf &&		/* Vdd */
 		    (iicprobe(0x09) & 0xbf) == 0x00 && iicprobe(0x0f) == 0x00 &&
 		    (iicprobe(0x40) & 0xf0) == 0x00)
 			name = "asc7611";
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-		    iicprobe(0x3f) == 0x6c)
+		    iicprobe(0x3f) == 0x6c &&
+		    iicprobe(0x22) >= 0xae)		/* Vdd */
 			name = "asc7621";
 		break;
 	case 0xa1:		/* Philips */
