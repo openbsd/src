@@ -422,6 +422,9 @@ case $host_os in
     if [ "$host_cpu" = "hppa" ]; then
       deplibs_check_method=pass_all;
     fi
+    if [ "$host_cpu" = "sh" ]; then
+      deplibs_check_method=pass_all;
+    fi
     ;;
   osf3*)
     case $cc_basename in

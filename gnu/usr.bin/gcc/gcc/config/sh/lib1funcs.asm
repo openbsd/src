@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef __ELF__
 #define LOCAL(X) .L_##X
-#define	FUNC(X,Y) .type X,Y
+#define	FUNC(X,Y) .type X,Y; .hidden X
 #define	ENDFUNC(X) .size X,.-X
 #else
 #define LOCAL(X) L_##X
@@ -376,7 +376,7 @@ LOCAL(ashrsi3_0):
 ! (none)
 !
 	.global	GLOBAL(ashlsi3)
-	FUNC(GLOBAL(ashrsi3),function)
+	FUNC(GLOBAL(ashlsi3),function)
 	.align	2
 GLOBAL(ashlsi3):
 	mov	#31,r0
@@ -390,7 +390,7 @@ GLOBAL(ashlsi3):
 	braf	r5
 #endif
 	mov	r4,r0
-	ENDFUNC(GLOBAL(ashrsi3))
+	ENDFUNC(GLOBAL(ashlsi3))
 
 	.align	2
 LOCAL(ashlsi3_table):
