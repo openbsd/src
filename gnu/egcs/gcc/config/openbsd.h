@@ -235,7 +235,7 @@ Boston, MA 02111-1307, USA.  */
 #undef ASM_DECLARE_OBJECT_NAME
 #define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
   do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
+    fprintf (FILE, "\t%s\t", TYPE_ASM_OP);				\
     assemble_name (FILE, NAME);						\
     fputs (" , ", FILE);						\
     fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
