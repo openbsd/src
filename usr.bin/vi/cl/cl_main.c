@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.18 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.19 2008/03/28 17:58:20 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -53,9 +53,7 @@ static void	   term_init(char *, char *);
  *	This is the main loop for the standalone curses editor.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	static int reenter;
 	CL_PRIVATE *clp;

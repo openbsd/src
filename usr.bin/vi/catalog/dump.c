@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.4 2006/01/08 21:05:38 miod Exp $	*/
+/*	$OpenBSD: dump.c,v 1.5 2008/03/28 17:58:20 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -94,9 +94,7 @@ parse(fp)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 
