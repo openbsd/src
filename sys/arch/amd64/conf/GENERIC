@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.220 2008/03/24 18:44:45 form Exp $
+#	$OpenBSD: GENERIC,v 1.221 2008/03/29 01:07:17 cnst Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,6 +63,7 @@ pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge
+kate*	at pci?			# AMD K8 temperature sensor
 
 agp* 	at vga?			# AGP bridge
 
