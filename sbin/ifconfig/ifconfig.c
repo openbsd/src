@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.193 2008/02/05 22:57:30 mpf Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.194 2008/03/29 18:56:43 damien Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3089,7 +3089,7 @@ unsetcarpdev(const char *val, int d)
 void
 setcarp_nodes(const char *val, int d)
 {
-	char *str;
+	char *optlist, *str;
 	int i;
 	struct carpreq carpr;
 
@@ -3102,11 +3102,12 @@ setcarp_nodes(const char *val, int d)
 	bzero(carpr.carpr_vhids, sizeof(carpr.carpr_vhids));
 	bzero(carpr.carpr_advskews, sizeof(carpr.carpr_advskews));
 
-	str = strdup(val);
-	if (str == NULL)
+	optlist = strdup(val);
+	if (optlist == NULL)
 		err(1, "strdup");
 
-	for (i = 0; (str = strtok(str, ",")) != NULL; str = NULL) {
+	str = strtok(optlist, ",");
+	for (i = 0; str != NULL; i++) {
 		u_int vhid, advskew;
 		if (i > CARP_MAXNODES)
 			errx(1, "too many carp nodes");
@@ -3120,9 +3121,9 @@ setcarp_nodes(const char *val, int d)
 
 		carpr.carpr_vhids[i] = vhid;
 		carpr.carpr_advskews[i] = advskew;
-		i++;
+		str = strtok(NULL, ",");
 	}
-	free(str);
+	free(optlist);
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
