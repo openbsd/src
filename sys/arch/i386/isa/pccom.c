@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.62 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.63 2008/03/29 15:26:47 krw Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -139,14 +139,11 @@ void cominit(bus_space_tag_t, bus_space_handle_t, int);
 #define	CONSPEED B9600
 #endif
 
-#if defined(COMCONSOLE) || defined(PCCOMCONSOLE)
-int	comdefaultrate = CONSPEED;		/* XXX why set default? */
-#else
 int	comdefaultrate = TTYDEF_SPEED;
-#endif
-bus_addr_t comconsaddr;
+int	comconsrate = CONSPEED;
 int	comconsinit;
 int	comconsattached;
+bus_addr_t comconsaddr;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
@@ -516,10 +513,13 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			tp->t_cflag = comconscflag;
-		else
+			tp->t_ispeed = tp->t_ospeed = comconsrate;
+		} else {
 			tp->t_cflag = TTYDEF_CFLAG;
+			tp->t_ispeed = tp->t_ospeed = comdefaultrate;
+		}
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
@@ -527,7 +527,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 
 		s = spltty();
 
@@ -1593,7 +1592,7 @@ comcninit(struct consdev *cp)
 	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
-	cominit(comconsiot, comconsioh, comdefaultrate);
+	cominit(comconsiot, comconsioh, comconsrate);
 	comconsinit = 0;
 }
 
