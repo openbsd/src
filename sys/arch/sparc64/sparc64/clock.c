@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.38 2007/11/14 20:43:12 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.39 2008/03/29 20:07:36 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -700,8 +700,6 @@ clockintr(cap)
 	/* Let locore.s clear the interrupt for us. */
 	hardclock((struct clockframe *)cap);
 
-	level10.ih_count.ec_count++;
-
 	return (1);
 }
 
@@ -774,8 +772,6 @@ statintr(cap)
 			send_softint(-1, PIL_SCHED, &schedint);
 	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
 	     tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
-
-	level14.ih_count.ec_count++;
 
 	return (1);
 }
