@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.419 2008/03/17 23:17:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.420 2008/03/30 14:09:20 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -165,7 +165,7 @@ extern struct proc *npxproc;
 #include "com.h"
 #include "pccom.h"
 
-#if NPCCOM > 0
+#if (NCOM > 0 || NPCCOM > 0)
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #if NCOM > 0
