@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.127 2008/03/30 12:30:01 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.128 2008/03/30 13:39:53 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4252,17 +4252,10 @@ gl0_x:
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
 	rdpr	%tnpc, %l2
-#if 0
-	rdpr	%tl, %l3		! Dump our trap frame now we have taken the IRQ
-	stw	%l6, [%sp + CC64FSZ + BIAS + TF_Y]	! Silly, but we need to save this for rft
-	dec	%l3
-	wrpr	%g0, %l3, %tl
-#else
 	wrpr	%g0, 0, %tl
 
 	! Dump our trap frame now we have taken the IRQ
 	stw	%l6, [%sp + CC64FSZ + BIAS + TF_Y]	! Silly, but we need to save this for rft
-#endif
 	sth	%l5, [%sp + CC64FSZ + BIAS + TF_TT]! debug
 	stx	%l0, [%sp + CC64FSZ + BIAS + TF_TSTATE]	! set up intrframe/clockframe
 	stx	%l1, [%sp + CC64FSZ + BIAS + TF_PC]
