@@ -1,4 +1,4 @@
-/*	$OpenBSD: memconf.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.3 2008/03/30 20:13:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -38,7 +38,9 @@ struct phys_mem_desc {
 };
 
 #ifdef _KERNEL
+#ifndef	MAXMEMSEGS
 #define	MAXMEMSEGS	16
+#endif
 extern struct phys_mem_desc mem_layout[];
 #endif
 

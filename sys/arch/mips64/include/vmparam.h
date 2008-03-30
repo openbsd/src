@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2007/05/03 19:34:00 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2008/03/30 20:13:14 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -88,7 +88,9 @@
 #define SHMMAXPGS	8192		/* 8mb */
 #endif
 
+#ifndef	VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX	8	/* Max number of physical memory segments */
+#endif
 #define VM_PHYSSEG_STRAT VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD
 
@@ -99,7 +101,9 @@
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffffc0000000L)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfffffffffffff000L)
 
+#ifndef VM_NFREELIST
 #define	VM_NFREELIST		1
+#endif
 #define	VM_FREELIST_DEFAULT	0
 
 /* virtual sizes (bytes) for various kernel submaps */
