@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2007/09/10 18:49:45 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.42 2008/03/30 18:25:13 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -69,7 +69,7 @@ vaddr_t	istack;
 struct pmap kernel_pmap_store;
 
 pt_entry_t *Sysmap;		/* System page table */
-void	*scratch;
+vaddr_t scratch;
 vaddr_t	iospace;
 
 vaddr_t ptemapstart, ptemapend;
@@ -176,13 +176,13 @@ pmap_bootstrap()
 	mtpr((unsigned)Sysmap - KERNBASE, PR_SBR);
 
 	/* Map Interrupt stack and set red zone */
-	istack = (unsigned)Sysmap + ROUND_PAGE(sysptsize * 4);
+	istack = (vaddr_t)Sysmap + ROUND_PAGE(sysptsize * 4);
 	mtpr(istack + ISTACK_SIZE, PR_ISP);
 	*kvtopte(istack) &= ~PG_V;
 
 	/* Some scratch pages */
-	scratch = (void *)((u_int)istack + ISTACK_SIZE);
-	avail_start = (u_int)scratch + 4 * VAX_NBPG - KERNBASE;
+	scratch = istack + ISTACK_SIZE;
+	avail_start = scratch + 4 * VAX_NBPG - KERNBASE;
 
 	/* Kernel message buffer */
 	avail_end -= MSGBUFSIZE;
@@ -221,7 +221,7 @@ pmap_bootstrap()
 
 #if 0 /* Breaks cninit() on some machines */
 	cninit();
-	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
+	printf("Sysmap %p, istack %p, scratch %p\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
 	printf("SYSPTSIZE %x\n",sysptsize);
 	printf("ptemapstart %lx ptemapend %lx\n", ptemapstart, ptemapend);

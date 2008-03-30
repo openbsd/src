@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.32 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.33 2008/03/30 18:25:13 miod Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -89,7 +89,7 @@ extern struct cpu_dep vxt_calls;
 void
 start(struct rpb *prpb)
 {
-	extern void *scratch;
+	extern vaddr_t scratch;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
@@ -344,7 +344,7 @@ start(struct rpb *prpb)
 	/* Now running virtual. set red zone for proc0 */
 	*kvtopte((u_int)proc0.p_addr + REDZONEADDR) &= ~PG_V;
 
-	((struct pcb *)proc0paddr)->framep = scratch;
+	((struct pcb *)proc0paddr)->framep = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack
