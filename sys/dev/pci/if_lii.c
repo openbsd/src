@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.7 2008/03/30 14:08:46 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.8 2008/03/30 14:09:56 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -597,14 +597,12 @@ atl2_init(struct ifnet *ifp)
 	AT_WRITE_4(sc, ATL2_MHDC, 0x07a0f037 |
 	     MHDC_EXC_DEF_EN);
 
-#if 0
 	/* 100 means 200us */
 	AT_WRITE_2(sc, ATL2_IMTIV, 100);
 	AT_WRITE_2(sc, ATL2_SMC, SMC_ITIMER_EN);
 
 	/* 500000 means 100ms */
 	AT_WRITE_2(sc, ATL2_IALTIV, 50000);
-#endif
 
 	AT_WRITE_4(sc, ATL2_MTU, ifp->if_mtu + ETHER_HDR_LEN
 	    + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
