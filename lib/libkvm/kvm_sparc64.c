@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.6 2006/03/20 15:11:48 mickey Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.7 2008/03/30 14:49:45 kettenis Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -62,6 +62,12 @@
 #include <db.h>
 
 #include "kvm_private.h"
+
+/*
+ * UltraSPARC T1 & T2 implement only a 40-bit real address range, just
+ * like older UltraSPARC CPUs.
+ */
+#define TLB_PA_MASK	SUN4U_TLB_PA_MASK
 
 int _kvm_kvatop(kvm_t *, u_long, u_long *);
 
