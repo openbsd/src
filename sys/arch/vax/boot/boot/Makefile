@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2008/03/30 19:54:05 miod Exp $
 #	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
@@ -7,7 +7,6 @@ NOMAN=	# defined
 .include <bsd.own.mk>
 
 PROG=	boot
-WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	urem.s udiv.s consio.c consio2.S str.S ${DEVS} findcpu.c
@@ -20,9 +19,8 @@ CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_DHCP -D_STANDALONE \
 
 BINDIR=/usr/mdec
 
-#SA_AS= library
-#SAMISCMAKEFLAGS=SA_USE_CREAD=yes SA_INCLUDE_NET=yes SA_USE_LOADFILE=yes
 SA_ZLIB=	yes
+USE_LOADFILE=	yes
 SAREL=
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
@@ -43,13 +41,10 @@ machine-links:
 	@rm -f ${MACHINE_ARCH} && ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .NOPATH: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
+CPPFLAGS+=	-I${.OBJDIR}
 .endif
 
-#.if ${OBJECT_FMT} == "ELF"
-#START=start
-#.else
 START=nisse
-#.endif
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym -Llib/sa -L. ${OBJS} \

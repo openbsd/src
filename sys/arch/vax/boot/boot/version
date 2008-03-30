@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.4 2007/04/10 17:47:55 miod Exp $
+$OpenBSD: version,v 1.5 2008/03/30 19:54:05 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -25,7 +25,7 @@ is taken as the current.
 	address if possible.
 	Cleanup use of u_int/size_t.
 1.8:	Switch to loadfile instead of exec.  Now we can load a.out or ELF
-	kernels.
+	kernels. (disabled in OpenBSD)
 1.9:	Support verbose/quiet boot.
 1.10:	Remove the 11/750 pcs code and the list of kernels to try to boot
 	in order.
@@ -33,3 +33,4 @@ is taken as the current.
 	to behave as expected.
 1.11:	Better VXT2000{,+} support.
 1.12:	Glass console support on VXT2000{,+}.
+1.13:	Enable the loadfile code added in revision 1.8.
