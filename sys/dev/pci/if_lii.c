@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.8 2008/03/30 14:09:56 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.9 2008/03/30 14:17:48 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -141,6 +141,7 @@ int	atl2_reset(struct atl2_softc *);
 int	atl2_eeprom_present(struct atl2_softc *);
 int	atl2_read_macaddr(struct atl2_softc *, uint8_t *);
 int	atl2_eeprom_read(struct atl2_softc *, uint32_t, uint32_t *);
+void	atl2_spi_configure(struct atl2_softc *);
 int	atl2_spi_read(struct atl2_softc *, uint32_t, uint32_t *);
 void	atl2_setmulti(struct atl2_softc *);
 void	atl2_tick(void *);
@@ -231,7 +232,7 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	if (atl2_reset(sc))
 		return;
 
-	/* XXX set correct opcodes for the flash */
+	atl2_spi_configure(sc);
 
 	if (atl2_eeprom_present(sc))
 		sc->sc_memread = atl2_eeprom_read;
@@ -338,6 +339,56 @@ int
 atl2_eeprom_read(struct atl2_softc *sc, uint32_t reg, uint32_t *val)
 {
 	return pci_vpd_read(sc->sc_pc, sc->sc_tag, reg, 1, (pcireg_t *)val);
+}
+
+void
+atl2_spi_configure(struct atl2_softc *sc)
+{
+	/*
+	 * We don't offer a way to configure the SPI Flash vendor parameter, so
+	 * the table is given for reference
+	 */
+	static const struct lii_spi_flash_vendor {
+	    const char *sfv_name;
+	    const uint8_t sfv_opcodes[9];
+	} lii_sfv[] = {
+	    { "Atmel", { 0x00, 0x03, 0x02, 0x06, 0x04, 0x05, 0x15, 0x52, 0x62 } },
+	    { "SST",   { 0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0x90, 0x20, 0x60 } },
+	    { "ST",    { 0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0xab, 0xd8, 0xc7 } },
+	};
+#define SF_OPCODE_WRSR	0
+#define SF_OPCODE_READ	1
+#define SF_OPCODE_PRGM	2
+#define SF_OPCODE_WREN	3
+#define SF_OPCODE_WRDI	4
+#define SF_OPCODE_RDSR	5
+#define SF_OPCODE_RDID	6
+#define SF_OPCODE_SECT_ER	7
+#define SF_OPCODE_CHIP_ER	8
+
+#define SF_DEFAULT_VENDOR	0
+	static const uint8_t vendor = SF_DEFAULT_VENDOR;
+
+	/*
+	 * Why isn't WRDI used?  Heck if I know.
+	 */
+
+	AT_WRITE_1(sc, ATL2_SFOP_WRSR,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_WRSR]);
+	AT_WRITE_1(sc, ATL2_SFOP_READ,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_READ]);
+	AT_WRITE_1(sc, ATL2_SFOP_PROGRAM,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_PRGM]);
+	AT_WRITE_1(sc, ATL2_SFOP_WREN,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_WREN]);
+	AT_WRITE_1(sc, ATL2_SFOP_RDSR,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_RDSR]);
+	AT_WRITE_1(sc, ATL2_SFOP_RDID,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_RDID]);
+	AT_WRITE_1(sc, ATL2_SFOP_SC_ERASE,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_SECT_ER]);
+	AT_WRITE_1(sc, ATL2_SFOP_CHIP_ERASE,
+	    lii_sfv[vendor].sfv_opcodes[SF_OPCODE_CHIP_ER]);
 }
 
 #define MAKE_SFC(cssetup, clkhi, clklo, cshold, cshi, ins) \
