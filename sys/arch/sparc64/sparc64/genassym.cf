@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.29 2008/03/23 21:49:48 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.30 2008/03/30 12:30:01 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -157,6 +157,13 @@ member	ci_intrpending
 member	ci_spinup
 member	ci_initstack
 member	ci_paddr
+ifdef SUN4V
+member	ci_rw
+member	ci_rwsp
+member	ci_mmfsa
+member	ci_cpumq
+member	ci_devmq
+endif
 
 # FPU state
 struct	fpstate64
@@ -270,6 +277,12 @@ export	SUN4U_TLB_MODIFY
 export	SUN4U_TLB_REAL_W
 export	SUN4U_TLB_EXEC
 export	SUN4U_TLB_W
+
+export	SUN4V_TLB_ACCESS
+export	SUN4V_TLB_MODIFY
+export	SUN4V_TLB_REAL_W
+export	SUN4V_TLB_EXEC
+export	SUN4V_TLB_W
 
 struct	mutex
 member	mtx_wantipl

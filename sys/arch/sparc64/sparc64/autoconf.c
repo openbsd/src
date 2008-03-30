@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.83 2008/03/22 21:10:28 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.84 2008/03/30 12:30:01 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -67,10 +67,12 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/hypervisor.h>
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
+#include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
@@ -282,6 +284,53 @@ bootstrap(nctx)
 	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "sun4v") == 0)
 		cputyp = CPU_SUN4V;
+#endif
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		extern vaddr_t dlflush_start, ctxid_start;
+		extern vaddr_t gl0_start, gl1_start;
+		vaddr_t *pva;
+		u_int32_t insn;
+		int32_t disp;
+
+		for (pva = &dlflush_start; *pva; pva++) {
+			*(u_int32_t *)(*pva) = 0x01000000; /* nop */
+			flush((void *)(*pva));
+		}
+
+		for (pva = &ctxid_start; *pva; pva++) {
+			insn = *(u_int32_t *)(*pva);
+			insn &= ~(ASI_DMMU << 5);
+			insn |= (ASI_MMU_CONTEXTID << 5);
+			*(u_int32_t *)(*pva) = insn;
+			flush((void *)(*pva));
+		}
+
+		for (pva = &gl0_start; *pva; pva++) {
+			*(u_int32_t *)(*pva) = 0xa1902000; /* wr %g0, 0, %gl */
+			flush((void *)(*pva));
+		}
+
+		for (pva = &gl1_start; *pva; pva++) {
+			*(u_int32_t *)(*pva) = 0xa1902001; /* wr %g0, 1, %gl */
+			flush((void *)(*pva));
+		}
+
+		disp = (vaddr_t)hv_mmu_demap_page - (vaddr_t)sp_tlb_flush_pte;
+		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_page */
+		((u_int32_t *)sp_tlb_flush_pte)[0] = insn;
+		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
+		((u_int32_t *)sp_tlb_flush_pte)[1] = insn;
+
+		disp =  (vaddr_t)hv_mmu_demap_ctx - (vaddr_t)sp_tlb_flush_ctx;
+		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_ctx */
+		((u_int32_t *)sp_tlb_flush_ctx)[0] = insn;
+		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
+		((u_int32_t *)sp_tlb_flush_ctx)[1] = insn;
+
+		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
+	}
 #endif
 
 	ncpus = get_ncpus();

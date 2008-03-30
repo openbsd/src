@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2008/03/23 21:49:48 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2008/03/30 12:30:02 kettenis Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -230,54 +230,6 @@ void smp_tlb_flush_ctx(int);
 ((cache)?((aliased)?SUN4V_TLB_CP:SUN4V_TLB_CACHE_MASK):SUN4V_TLB_E)|\
 ((priv)?SUN4V_TLB_P:0LL)|((write)?SUN4V_TLB_W:0LL)|((g)?SUN4V_TLB_G:0LL)|\
 ((ie)?SUN4V_TLB_IE:0LL))
-
-#ifdef SUN4V
-#define TLB_SZ		SUN4V_TLB_SZ
-
-#define TLB_V		SUN4V_TLB_V
-#define TLB_NFO		SUN4V_TLB_NFO
-#define TLB_IE		SUN4V_TLB_IE
-#define TLB_PA_MASK	SUN4V_TLB_PA_MASK
-#define TLB_ACCESS	SUN4V_TLB_ACCESS
-#define TLB_MODIFY	SUN4V_TLB_MODIFY
-#define TLB_REAL_W	SUN4V_TLB_REAL_W
-#define TLB_TSB_LOCK	SUN4V_TLB_TSB_LOCK
-#define TLB_EXEC	SUN4V_TLB_EXEC
-#define TLB_EXEC_ONLY	SUN4V_TLB_EXEC_ONLY
-#define TLB_L		0ULL
-#define TLB_CACHE_MASK	SUN4V_TLB_CACHE_MASK
-#define TLB_CP		SUN4V_TLB_CP
-#define TLB_CV		SUN4V_TLB_CV
-#define TLB_E		SUN4V_TLB_E
-#define TLB_P		SUN4V_TLB_P
-#define TLB_W		SUN4V_TLB_W
-#define TLB_G		SUN4V_TLB_G
-
-#define TSB_DATA	SUN4V_TSB_DATA
-#else
-#define TLB_SZ		SUN4U_TLB_SZ
-
-#define TLB_V		SUN4U_TLB_V
-#define TLB_NFO		SUN4U_TLB_NFO
-#define TLB_IE		SUN4U_TLB_IE
-#define TLB_PA_MASK	SUN4U_TLB_PA_MASK
-#define TLB_ACCESS	SUN4U_TLB_ACCESS
-#define TLB_MODIFY	SUN4U_TLB_MODIFY
-#define TLB_REAL_W	SUN4U_TLB_REAL_W
-#define TLB_TSB_LOCK	SUN4U_TLB_TSB_LOCK
-#define TLB_EXEC	SUN4U_TLB_EXEC
-#define TLB_EXEC_ONLY	SUN4U_TLB_EXEC_ONLY
-#define TLB_L		SUN4U_TLB_L
-#define TLB_CACHE_MASK	SUN4U_TLB_CACHE_MASK
-#define TLB_CP		SUN4U_TLB_CP
-#define TLB_CV		SUN4U_TLB_CV
-#define TLB_E		SUN4U_TLB_E
-#define TLB_P		SUN4U_TLB_P
-#define TLB_W		SUN4U_TLB_W
-#define TLB_G		SUN4U_TLB_G
-
-#define TSB_DATA	SUN4U_TSB_DATA
-#endif
 
 
 #define MMU_CACHE_VIRT	0x3

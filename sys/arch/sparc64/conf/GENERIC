@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.197 2008/03/13 23:06:19 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.198 2008/03/30 12:30:02 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -12,6 +12,8 @@
 machine		sparc64
 include		"../../../conf/GENERIC"
 maxusers	64			# estimated number of users
+
+option		SUN4V
 
 option		PCIVERBOSE
 option		USER_PCICONF		# user-space PCI configuration
@@ -40,10 +42,13 @@ schizo*	at mainbus0
 pci*	at schizo?
 pyro*	at mainbus0
 pci*	at pyro?
+vpci*	at mainbus0
+pci*	at vpci?
 pci*	at ppb?
 ppb*	at pci?
 ebus*	at mainbus0
 ebus*	at pci?
+vbus0	at mainbus0
 
 # PCI Ethernet
 lmc*	at pci?			# Lan Media Corp SSI/T3/HSSI
@@ -289,6 +294,10 @@ prtc0	at mainbus0
 
 ## Timer chip found on (some) sun4u systems.
 timer*	at mainbus0
+
+# Virtual devices for sun4v systems.
+vcons0	at vbus?
+vrtc0	at vbus?
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?
