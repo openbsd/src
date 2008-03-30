@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.34 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.35 2008/03/30 20:14:40 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -66,6 +66,22 @@ void	macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
 intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
 
+u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int32_t mace_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int64_t mace_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+void mace_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
+void mace_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
+void mace_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
+
+int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
+
+void *mace_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+
 bus_addr_t macebus_pa_to_device(paddr_t);
 paddr_t	macebus_device_to_pa(bus_addr_t);
 
@@ -89,6 +105,7 @@ bus_space_t macebus_tag = {
 	mace_read_4, mace_write_4,
 	mace_read_8, mace_write_8,
 	mace_space_map, mace_space_unmap, mace_space_region,
+	mace_space_vaddr
 };
 
 bus_space_t crimebus_tag = {
@@ -101,6 +118,7 @@ bus_space_t crimebus_tag = {
 	mace_read_4, mace_write_4,
 	mace_read_8, mace_write_8,
 	mace_space_map, mace_space_unmap, mace_space_region,
+	mace_space_vaddr
 };
 
 bus_space_handle_t crime_h;
@@ -270,11 +288,7 @@ mace_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 u_int64_t
 mace_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-#ifdef __LP64__
 	return *(volatile u_int64_t *)(h + o);
-#else
-	return lp32_read8((u_int64_t *)(h + o));
-#endif
 }
 
 void
@@ -298,11 +312,7 @@ mace_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v)
 void
 mace_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
-#ifdef __LP64__
 	*(volatile u_int64_t *)(h + o) = v;
-#else
-	lp32_write8((u_int64_t *)(h + o), v);
-#endif
 }
 
 extern int extent_malloc_flags;
@@ -383,6 +393,12 @@ mace_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+void *
+mace_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
+{
+	return (void *)h;
 }
 
 /*

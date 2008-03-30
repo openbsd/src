@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.11 2008/02/20 18:46:20 miod Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.12 2008/03/30 20:14:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -121,20 +121,6 @@
 
 extern bus_space_t macebus_tag;
 extern struct machine_bus_dma_tag mace_bus_dma_tag;
-
-u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int32_t mace_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int64_t mace_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-void mace_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
-void mace_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
-void mace_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
-
-int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 
 void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
 	    void *, char *);
