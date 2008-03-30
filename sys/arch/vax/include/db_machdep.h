@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2005/11/06 22:21:30 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.12 2008/03/30 18:24:02 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
@@ -44,7 +44,7 @@ typedef	vaddr_t	db_addr_t;		/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-db_regs_t	ddb_regs;	/* register state */
+extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
