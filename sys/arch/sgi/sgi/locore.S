@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2007/10/18 04:32:27 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.8 2008/03/30 20:14:14 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,9 +38,6 @@
 #include "assym.h"
 
 	.set	noreorder		# Noreorder is default style!
-
-	.globl	idle_stack	# idle stack just below kernel.
-idle_stack:
 
 	.globl	start
 	.globl	kernel_text
