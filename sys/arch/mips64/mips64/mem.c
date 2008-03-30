@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 2007/10/18 04:32:25 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.10 2008/03/30 20:12:25 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -60,10 +60,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifdef APERTURE
-static int ap_open_count = 0;
-extern int allowaperture;
-#endif
 caddr_t zeropage;
 
 #define mmread  mmrw
@@ -81,17 +77,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	case 2:
 	case 12:
 		return (0);
-#ifdef APERTURE
-	case 4:
-		if (suser(p->p_ucred, &p->p_acflag) != 0 || !allowaperture)
-			return (EPERM);
-
-		/* authorize only one simultaneous open() */
-		if (ap_open_count > 0)
-			return(EPERM);
-		ap_open_count++;
-		return (0);
-#endif
 	default:
 		return (ENXIO);
 	}
@@ -101,10 +86,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-#ifdef APERTURE
-	if (minor(dev) == 4)
-		ap_open_count--;
-#endif
 	return (0);
 }
 
@@ -134,7 +115,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = iov->iov_len;
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_NONCOHERENT);
+			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_CACHED);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -207,19 +188,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-#ifdef APERTURE
-	if (minor(dev) == 4) {
-		if (off >= 0x0000 && off < 0x10000) {
-			off += sys_config.pci_io[0].bus_base;
-			return atop(off);
-		} else if (off >= 0xa0000 && off < 0x10000000) {
-			off += sys_config.pci_mem[0].bus_base;
-			return atop(off);
-		} else {
-			return -1;
-		}
-	}
-#endif
 	return -1;
 }
 
