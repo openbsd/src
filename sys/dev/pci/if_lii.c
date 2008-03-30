@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.6 2008/01/05 07:51:04 deraadt Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.7 2008/03/30 14:08:46 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -186,6 +186,9 @@ void	atl2_txintr(struct atl2_softc *);
 #define AT_TXD_NUM		64
 #define AT_TXD_BUFFER_SIZE	8192
 #define AT_RXD_NUM		64
+
+/* Pad the RXD buffer so that the packets are on a 128-byte boundary. */
+#define AT_RXD_PADDING		120
 
 int
 atl2_match(struct device *parent, void *match, void *aux)
@@ -566,7 +569,8 @@ atl2_init(struct ifnet *ifp)
 	    sc->sc_ringmap->dm_segs[0].ds_addr >> 32);
 */
 	AT_WRITE_4(sc, ATL2_RXD_BASE_ADDR_LO,
-	    sc->sc_ringmap->dm_segs[0].ds_addr & 0xffffffff);
+	    (sc->sc_ringmap->dm_segs[0].ds_addr & 0xffffffff)
+	    + AT_RXD_PADDING);
 	AT_WRITE_4(sc, ATL2_TXS_BASE_ADDR_LO,
 	    sc->sc_txsp & 0xffffffff);
 	AT_WRITE_4(sc, ATL2_TXD_BASE_ADDR_LO,
@@ -918,7 +922,8 @@ atl2_alloc_rings(struct atl2_softc *sc)
 	 * and only 8kb for transmitting up to 64 Ethernet frames.
 	 */
 
-	sc->sc_ringsize = bs = AT_RXD_NUM * sizeof(struct rx_pkt)
+	sc->sc_ringsize = bs = AT_RXD_PADDING
+	    + AT_RXD_NUM * sizeof(struct rx_pkt)
 	    + AT_TXD_NUM * sizeof(struct tx_pkt_status)
 	    + AT_TXD_BUFFER_SIZE;
 
@@ -946,9 +951,9 @@ atl2_alloc_rings(struct atl2_softc *sc)
 		goto fail2;
 	}
 
-	sc->sc_rxp = (void *)sc->sc_ring;
-	sc->sc_txs =
-	    (void *)(sc->sc_ring + AT_RXD_NUM * sizeof(struct rx_pkt));
+	sc->sc_rxp = (void *)(sc->sc_ring + AT_RXD_PADDING);
+	sc->sc_txs = (void *)(sc->sc_ring + AT_RXD_PADDING
+	    + AT_RXD_NUM * sizeof(struct rx_pkt));
 	sc->sc_txdbase = ((char *)sc->sc_txs)
 	    + AT_TXD_NUM * sizeof(struct tx_pkt_status);
 	sc->sc_txsp = sc->sc_ringmap->dm_segs[0].ds_addr
