@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.13 2006/05/17 06:21:34 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.14 2008/03/31 22:14:43 miod Exp $	*/
 
 
 /*-
@@ -35,22 +35,11 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <a.out.h>
 
 #include "stand.h"
 #include "libsa.h"
 
-struct kernel {
-	void    *entry;
-	void    *symtab;
-	void    *esym;
-	int     bflags;
-	int     bdev;
-	char    *kname;
-	void    *smini;
-	void    *emini;
-	u_int   end_loaded;
-} kernel;
+#include <lib/libsa/loadfile.h>
 
 /*ARGSUSED*/
 void
@@ -58,153 +47,33 @@ exec_mvme(file, flag)
 	char    *file;
 	int     flag;
 {
-	char *loadaddr;
-	int io;
-	struct exec x;
-	int cc, magic;
-	void (*entry)();
-	char *cp;
-	int *ip;
+	u_long marks[MARK_MAX];
+	int options;
+	int rc;
+	void (*entry)(int, int, int, int, int, int, int);
 	int bootdev;
 	struct mvmeprom_brdid *id;
 
 	id = mvmeprom_brdid();
+	options = LOAD_KERNEL | COUNT_KERNEL;
+	if ((flag & RB_NOSYM) != 0)
+		options &= ~(LOAD_SYM | COUNT_SYM);
 
-#ifdef DEBUG
-	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, id->model);
-#endif
-
-	io = open(file, 0);
-	if (io < 0)
+	marks[MARK_START] = 0;
+	rc = loadfile(file, marks, options);
+	if (rc != 0)
 		return;
 
-	/*
-	 * Read in the exec header, and validate it.
-	 */
-	if (read(io, (char *)&x, sizeof(x)) != sizeof(x))
-		goto shread;
-
-	if (N_BADMAG(x)) {
-		errno = EFTYPE;
-		goto closeout;
-	}
-
-	/*
-	 * note: on the mvme ports, the kernel is linked in such a way that
-	 * its entry point is the first item in .text, and thus a_entry can
-	 * be used to determine both the load address and the entry point.
-	 * (also note that we make use of the fact that the kernel will live
-	 *  in a VA == PA range of memory ... otherwise we would take
-	 *  loadaddr as a parameter and let the kernel relocate itself!)
-	 *
-	 * note that ZMAGIC files included the a.out header in the text area
-	 * so we must mask that off (has no effect on the other formats)
-	 */
-	loadaddr = (void *)(x.a_entry & ~sizeof(x));
-
-	cp = loadaddr;
-	magic = N_GETMAGIC(x);
-	if (magic == ZMAGIC)
-		cp += sizeof(x);
-	entry = (void (*)())cp;
-
-	/*
-	 * Leave a copy of the exec header before the text.
-	 * The sun3 kernel uses this to verify that the
-	 * symbols were loaded by this boot program.
-	 */
-	bcopy(&x, cp - sizeof(x), sizeof(x));
-
-	/*
-	 * Read in the text segment.
-	 */
-	printf("%d", x.a_text);
-	cc = x.a_text;
-	if (magic == ZMAGIC)
-		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
-	if (read(io, cp, cc) != cc)
-		goto shread;
-	cp += cc;
-
-	/*
-	 * NMAGIC may have a gap between text and data.
-	 */
-	if (magic == NMAGIC) {
-		register int mask = N_PAGSIZ(x) - 1;
-		while ((int)cp & mask)
-			*cp++ = 0;
-	}
-
-	/*
-	 * Read in the data segment.
-	 */
-	printf("+%d", x.a_data);
-	if (read(io, cp, x.a_data) != x.a_data)
-		goto shread;
-	cp += x.a_data;
-
-	/*
-	 * Zero out the BSS section.
-	 * (Kernel doesn't care, but do it anyway.)
-	 */
-	printf("+%d", x.a_bss);
-	cc = x.a_bss;
-	while ((int)cp & 3) {
-		*cp++ = 0;
-		--cc;
-	}
-	ip = (int *)cp;
-	cp += cc;
-	while ((char *)ip < cp)
-		*ip++ = 0;
-
-	/*
-	 * Read in the symbol table and strings.
-	 * (Always set the symtab size word.)
-	 */
-	*ip++ = x.a_syms;
-	cp = (char *) ip;
-
-	if (x.a_syms > 0 && (flag & RB_NOSYM) == 0) {
-
-		/* Symbol table and string table length word. */
-		cc = x.a_syms;
-		printf("+[%d", cc);
-		cc += sizeof(int);	/* strtab length too */
-		if (read(io, cp, cc) != cc)
-			goto shread;
-		cp += x.a_syms;
-		ip = (int *)cp;		/* points to strtab length */
-		cp += sizeof(int);
-
-		/* String table.  Length word includes itself. */
-		cc = *ip;
-		printf("+%d]", cc);
-		cc -= sizeof(int);
-		if (cc <= 0)
-			goto shread;
-		if (read(io, cp, cc) != cc)
-			goto shread;
-		cp += cc;
-	}
-	printf("=0x%lx\n", cp - loadaddr);
-	close(io);
-
-	printf("Start @ 0x%x\n", (int)entry);
+	printf("Start @ 0x%lx\n", marks[MARK_START]);
 	printf("Controller Address 0x%x\n", bugargs.ctrl_addr);
 	if (flag & RB_HALT)
 		_rtt();
 
 	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
+	entry = (void(*)(int, int, int, int, int, int, int))marks[MARK_START];
+	(*entry)(flag, bugargs.ctrl_addr, marks[MARK_END], marks[MARK_SYM],
+	    0, bootdev, id->model);
 
-	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, id->model);
 	printf("exec: kernel returned!\n");
-	return;
-
-shread:
-	printf("exec: short read\n");
-	errno = EIO;
-closeout:
-	close(io);
 	return;
 }
