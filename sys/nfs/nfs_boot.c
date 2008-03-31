@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.19 2008/03/19 05:47:47 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.20 2008/03/31 22:27:43 deraadt Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ nfs_boot_init(nd, procp)
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
 	printf("nfs_boot: using interface %s, with revarp & bootparams\n",
 	    ireq.ifr_name);
-	if_addgroup(ifp, "netboot");
 
 	/*
 	 * Bring up the interface.

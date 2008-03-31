@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.70 2008/03/30 20:24:32 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.71 2008/03/31 22:27:41 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -57,6 +57,11 @@
 #include <sys/dkstat.h>		/* XXX */
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
+
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+
+#include <net/if.h>
 
 #include <dev/rndvar.h>
 #include <dev/cons.h>
@@ -1059,6 +1064,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 	struct swdevt *swp;
 	struct device *rootdv, *dv;
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
+	struct ifnet *ifp = NULL;
 	char buf[128];
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
@@ -1196,6 +1202,14 @@ gotswap:
 		    findblkname(majdev), unit, 'a' + part);
 		rootdv = parsedisk(buf, strlen(buf), 0, &nrootdev);
 	}
+
+	if (rootdv && rootdv == bootdv && rootdv->dv_class == DV_IFNET)
+		ifp = ifunit(rootdv->dv_xname);
+	else if (bootdv && bootdv->dv_class == DV_IFNET)
+		ifp = ifunit(bootdv->dv_xname);
+
+	if (ifp)
+		if_addgroup(ifp, "netboot");
 
 	switch (rootdv->dv_class) {
 #if defined(NFSCLIENT)
