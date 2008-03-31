@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1687reg.h,v 1.1 2007/12/27 02:59:13 jsing Exp $ */
+/*	$OpenBSD: ds1687reg.h,v 1.2 2008/03/31 07:14:00 jsing Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -29,10 +29,11 @@
  *
  * The DS1687 contains a DS1685, which is an improved version of the older
  * DS1287 RTC. New/extended registers are available by selecting bank 1.
+ * Register values are either in BCD (data mode 0) or binary (data mode 1).
  */
 
 /*
- * DS1687 Registers (Data Mode 0 - BCD).
+ * DS1687 Registers.
  */
 #define DS1687_SEC		0x00	/* Seconds. */
 #define DS1687_SEC_ALRM		0x01	/* Alarm seconds. */
@@ -49,6 +50,7 @@
 #define   DS1687_BANK_1		0x10	/* Bank select. */
 #define   DS1687_UIP		0x80	/* Update in progress. */
 #define DS1687_CTRL_B		0x0b	/* Control register B. */
+#define   DS1687_24_HR		0x02	/* Use 24 hour time. */
 #define   DS1687_DM_1		0x04	/* Data mode 1 (binary). */
 #define   DS1687_SET_CLOCK	0x80	/* Prohibit updates. */
 #define DS1687_CTRL_C		0x0c	/* Control register C. */
