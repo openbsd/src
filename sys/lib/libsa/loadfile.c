@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.16 2008/03/31 19:58:10 miod Exp $ */
+/* $OpenBSD: loadfile.c,v 1.17 2008/03/31 22:12:37 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -311,8 +311,10 @@ aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 	else {
 		if (flags & LOAD_HDR)
 			BCOPY(x, maxp, sizeof(*x));
-		if (flags & (LOAD_HDR|COUNT_HDR))
+		if (flags & (LOAD_HDR|COUNT_HDR)) {
+			minp += sizeof(*x);
 			maxp += sizeof(*x);
+		}
 	}
 
 	/*
