@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/11/26 10:26:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2008/03/31 22:11:37 miod Exp $
 
 LIB=sa
 
@@ -27,7 +27,7 @@ SRCS+=	ashrdi3.c bzero.c
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-DEFS= -D__INTERNAL_LIBSA_CREAD
+DEFS= -D__INTERNAL_LIBSA_CREAD -D_STANDALONE
 #DEFS+=-DNETIF_DEBUG
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL}
