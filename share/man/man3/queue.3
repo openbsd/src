@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.45 2007/12/24 10:30:27 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.46 2008/03/31 13:15:53 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: December 24 2007 $
+.Dd $Mdocdate: March 31 2008 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -93,6 +93,7 @@
 .Nm TAILQ_INSERT_HEAD ,
 .Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
+.Nm TAILQ_REPLACE ,
 .Nm CIRCLEQ_ENTRY ,
 .Nm CIRCLEQ_HEAD ,
 .Nm CIRCLEQ_HEAD_INITIALIZER ,
@@ -109,7 +110,8 @@
 .Nm CIRCLEQ_INSERT_BEFORE ,
 .Nm CIRCLEQ_INSERT_HEAD ,
 .Nm CIRCLEQ_INSERT_TAIL ,
-.Nm CIRCLEQ_REMOVE
+.Nm CIRCLEQ_REMOVE ,
+.Nm CIRCLEQ_REPLACE
 .Nd "implementations of singly-linked lists, doubly-linked lists, simple queues, tail queues, and circular queues"
 .Sh SYNOPSIS
 .Fd #include <sys/queue.h>
@@ -176,6 +178,7 @@
 .Fn SIMPLEQ_END "SIMPLEQ_HEAD *head"
 .Ft int
 .Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
+.Fn SIMPLEQ_FOREACH "VARNAME" "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
 .Ft void
 .Fn SIMPLEQ_INIT "SIMPLEQ_HEAD *head"
 .Ft void
@@ -216,6 +219,8 @@
 .Fn TAILQ_INSERT_TAIL "TAILQ_HEAD *head" "struct TYPE *elm" "TAILQ_ENTRY NAME"
 .Ft void
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "struct TYPE *elm" "TAILQ_ENTRY NAME"
+.Ft void
+.Fn TAILQ_REPLACE "struct TYPE *elm" "struct TYPE *elm2" "TAILQ_ENTRY NAME"
 .Pp
 .Fn CIRCLEQ_ENTRY "TYPE"
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
@@ -246,6 +251,8 @@
 .Fn CIRCLEQ_INSERT_TAIL "CIRCLEQ_HEAD *head" "struct TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Ft void
 .Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "struct TYPE *elm" "CIRCLEQ_ENTRY NAME"
+.Ft void
+.Fn CIRCLEQ_REPLACE "struct TYPE *elm" "struct TYPE *elm2" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
 These macros define and operate on five types of data structures:
 singly-linked lists, simple queues, lists, tail queues, and circular queues.
@@ -839,6 +846,13 @@ macro removes the element
 .Fa elm
 from the tail queue.
 .Pp
+The
+.Fn TAILQ_REPLACE
+macro replaces the list element
+.Fa elm
+with the new element
+.Fa elm2 .
+.Pp
 .Fn TAILQ_FOREACH
 and
 .Fn TAILQ_FOREACH_REVERSE
@@ -975,6 +989,13 @@ The
 macro removes the element
 .Fa elm
 from the circular queue.
+.Pp
+The
+.Fn CIRCLEQ_REPLACE
+macro replaces the list element
+.Fa elm
+with the new element
+.Fa elm2 .
 .Pp
 The
 .Fn CIRCLEQ_FIRST ,
