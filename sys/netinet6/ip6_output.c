@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.99 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.100 2008/03/31 21:15:20 deraadt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2689,7 +2689,10 @@ ip6_setpktopts(control, opt, stickyopt, priv, uproto)
 	struct ip6_pktopts *opt, *stickyopt;
 	int priv, uproto;
 {
+	u_int clen;
 	struct cmsghdr *cm = 0;
+	caddr_t cmsgs;
+	int error;
 
 	if (control == NULL || opt == NULL)
 		return (EINVAL);
@@ -2718,24 +2721,25 @@ ip6_setpktopts(control, opt, stickyopt, priv, uproto)
 	if (control->m_next)
 		return (EINVAL);
 
-	for (; control->m_len; control->m_data += CMSG_ALIGN(cm->cmsg_len),
-	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
-		int error;
-
-		if (control->m_len < CMSG_LEN(0))
+	clen = control->m_len;
+	cmsgs = mtod(control, caddr_t);
+	do {
+		if (clen < CMSG_LEN(0))
 			return (EINVAL);
-
-		cm = mtod(control, struct cmsghdr *);
-		if (cm->cmsg_len == 0 || cm->cmsg_len > control->m_len)
+		cm = (struct cmsghdr *)cmsgs;
+		if (cm->cmsg_len < CMSG_LEN(0) ||
+		    CMSG_ALIGN(cm->cmsg_len) > clen)
 			return (EINVAL);
-		if (cm->cmsg_level != IPPROTO_IPV6)
-			continue;
+		if (cm->cmsg_level == IPPROTO_IPV6) {
+			error = ip6_setpktopt(cm->cmsg_type, CMSG_DATA(cm),
+			    cm->cmsg_len - CMSG_LEN(0), opt, priv, 0, 1, uproto);
+			if (error)
+				return (error);
+		}
 
-		error = ip6_setpktopt(cm->cmsg_type, CMSG_DATA(cm),
-		    cm->cmsg_len - CMSG_LEN(0), opt, priv, 0, 1, uproto);
-		if (error)
-			return (error);
-	}
+		clen -= CMSG_ALIGN(cm->cmsg_len);
+		cmsgs += CMSG_ALIGN(cm->cmsg_len);
+	} while (clen);
 
 	return (0);
 }
