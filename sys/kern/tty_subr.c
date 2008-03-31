@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.19 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.20 2008/03/31 22:40:34 deraadt Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -107,9 +107,11 @@ getc(struct clist *clp)
 		goto out;
 
 	c = *clp->c_cf & 0xff;
+	*clp->c_cf = 0;
 	if (clp->c_cq) {
 		if (isset(clp->c_cq, clp->c_cf - clp->c_cs) )
 			c |= TTY_QUOTE;
+		clrbit(clp->c_cq, clp->c_cl - clp->c_cs);
 	}
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
@@ -140,6 +142,9 @@ q_to_b(struct clist *clp, u_char *cp, int count)
 		if (cc > count)
 			cc = count;
 		bcopy(clp->c_cf, p, cc);
+		bzero(clp->c_cf, cc);
+		if (clp->c_cq)
+			clrbits(clp->c_cq, clp->c_cl - clp->c_cs, cc);
 		count -= cc;
 		p += cc;
 		clp->c_cc -= cc;
@@ -347,9 +352,8 @@ b_to_q(u_char *cp, int count, struct clist *clp)
 		if (cc > count)
 			cc = count;
 		bcopy(p, clp->c_cl, cc);
-		if (clp->c_cq) {
+		if (clp->c_cq)
 			clrbits(clp->c_cq, clp->c_cl - clp->c_cs, cc);
-		}
 		p += cc;
 		count -= cc;
 		clp->c_cc += cc;
