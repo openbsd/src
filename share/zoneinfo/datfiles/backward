@@ -1,5 +1,5 @@
-# $OpenBSD: backward,v 1.19 2008/01/07 00:26:00 millert Exp $
-# @(#)backward	8.4
+# $OpenBSD: backward,v 1.20 2008/03/31 14:14:46 millert Exp $
+# @(#)backward	8.6
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -25,8 +25,10 @@ Link	America/St_Thomas	America/Virgin
 Link	Asia/Ashgabat		Asia/Ashkhabad
 Link	Asia/Chongqing		Asia/Chungking
 Link	Asia/Dhaka		Asia/Dacca
+Link	Asia/Kolkata		Asia/Calcutta
 Link	Asia/Macau		Asia/Macao
 Link	Asia/Jerusalem		Asia/Tel_Aviv
+Link	Asia/Ho_Chi_Minh	Asia/Saigon
 Link	Asia/Thimphu		Asia/Thimbu
 Link	Asia/Makassar		Asia/Ujung_Pandang
 Link	Asia/Ulaanbaatar	Asia/Ulan_Bator
