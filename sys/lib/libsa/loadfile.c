@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.15 2008/03/30 19:31:44 miod Exp $ */
+/* $OpenBSD: loadfile.c,v 1.16 2008/03/31 19:58:10 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -319,7 +319,7 @@ aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 	 * Read in the text segment.
 	 */
 	if (flags & LOAD_TEXT) {
-		PROGRESS(("%ld", x->a_text));
+		PROGRESS(("%d", x->a_text));
 
 		if (READ(fd, maxp, x->a_text - sub) != x->a_text - sub) {
 			WARN(("read text"));
@@ -353,7 +353,7 @@ aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 	 * Read in the data segment.
 	 */
 	if (flags & LOAD_DATA) {
-		PROGRESS(("+%ld", x->a_data));
+		PROGRESS(("+%d", x->a_data));
 
 		if (READ(fd, maxp, x->a_data) != x->a_data) {
 			WARN(("read data"));
@@ -374,7 +374,7 @@ aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 	 * (Kernel doesn't care, but do it anyway.)
 	 */
 	if (flags & LOAD_BSS) {
-		PROGRESS(("+%ld", x->a_bss));
+		PROGRESS(("+%d", x->a_bss));
 
 		BZERO(maxp, x->a_bss);
 	}
@@ -398,7 +398,7 @@ aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 		/* Symbol table and string table length word. */
 
 		if (flags & LOAD_SYM) {
-			PROGRESS(("+[%ld", x->a_syms));
+			PROGRESS(("+[%d", x->a_syms));
 
 			if (READ(fd, maxp, x->a_syms) != x->a_syms) {
 				WARN(("read symbols"));
