@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2008/03/30 20:12:25 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.11 2008/03/31 04:03:32 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = iov->iov_len;
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_CACHED);
+			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_NONCOHERENT);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
