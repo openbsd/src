@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.1 2008/02/17 15:04:08 kettenis Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.2 2008/03/31 17:56:41 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -206,6 +206,9 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if (iobase == 0)
+		return;
 
 	nia = *ia;
 	nia.ia_iobase = iobase;
