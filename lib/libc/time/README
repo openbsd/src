@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.6 2007/02/06 19:35:16 millert Exp $
-@(#)README	8.1
+$OpenBSD: README,v 1.7 2008/03/31 14:16:53 millert Exp $
+@(#)README	8.2
 
 "What time is it?" -- Richard Deacon as The King
 "Any time you want it to be." -- Frank Baxter as The Scientist
@@ -66,7 +66,7 @@ Historical local time information has been included here to:
 	system.
 
 The information in the time zone data files is by no means authoritative;
-the files currently do not even attempt to covar all time stamps before
+the files currently do not even attempt to cover all time stamps before
 1970, and there are undoubtedly errors even for time stamps since 1970.
 If you know that the rules are different from those in a file, by all means
 feel free to change file (and please send the changed version to
