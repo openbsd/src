@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.7 2008/03/15 22:05:51 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.8 2008/03/31 22:14:01 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -40,6 +40,7 @@
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
+#include <machine/hypervisor.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
 
@@ -49,11 +50,18 @@ extern int db_active;
 
 #define	sparc64_ipi_sleep()	delay(1000)
 
+void	sun4u_send_ipi(int, void (*)(void), u_int64_t, u_int64_t);
+void	sun4u_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);
+void	sun4v_send_ipi(int, void (*)(void), u_int64_t, u_int64_t);
+void	sun4v_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);
+
 /*
  * These are the "function" entry points in locore.s to handle IPI's.
  */
-void	ipi_tlb_page_demap(void);
-void	ipi_tlb_context_demap(void);
+void	sun4u_ipi_tlb_page_demap(void);
+void	sun4u_ipi_tlb_context_demap(void);
+void	sun4v_ipi_tlb_page_demap(void);
+void	sun4v_ipi_tlb_context_demap(void);
 void	ipi_softint(void);
 
 /*
@@ -61,6 +69,15 @@ void	ipi_softint(void);
  */
 void
 sparc64_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
+{
+	if (CPU_ISSUN4V)
+		sun4v_send_ipi(itid, func, arg0, arg1);
+	else
+		sun4u_send_ipi(itid, func, arg0, arg1);
+}
+
+void
+sun4u_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	int i, j, shift = 0;
 
@@ -112,11 +129,41 @@ sparc64_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 #endif
 }
 
+void
+sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
+{
+	struct cpu_info *ci = curcpu();
+	int err, i;
+
+	stha(ci->ci_cpuset, ASI_PHYS_CACHED, itid);
+	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
+	stxa(ci->ci_mondo + 8, ASI_PHYS_CACHED, arg0);
+	stxa(ci->ci_mondo + 16, ASI_PHYS_CACHED, arg1);
+
+	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
+		err = hv_cpu_mondo_send(1, ci->ci_cpuset, ci->ci_mondo);
+		if (err != H_EWOULDBLOCK)
+			break;
+		delay(10);
+	}
+	if (err != H_EOK)
+		panic("Unable to send mondo %lx to cpu %d: %d", func, itid, err);
+}
+
 /*
  * Broadcast an IPI to all but ourselves.
  */
 void
 sparc64_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
+{
+	if (CPU_ISSUN4V)
+		sun4v_broadcast_ipi(func, arg0, arg1);
+	else
+		sun4u_broadcast_ipi(func, arg0, arg1);
+}
+
+void
+sun4u_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	struct cpu_info *ci;
 
@@ -125,7 +172,21 @@ sparc64_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
-		sparc64_send_ipi(ci->ci_itid, func, arg0, arg1);
+		sun4u_send_ipi(ci->ci_itid, func, arg0, arg1);
+	}
+}
+
+void
+sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
+{
+	struct cpu_info *ci;
+
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci->ci_number == cpu_number())
+			continue;
+		if ((ci->ci_flags & CPUF_RUNNING) == 0)
+			continue;
+		sun4v_send_ipi(ci->ci_itid, func, arg0, arg1);
 	}
 }
 
@@ -137,7 +198,10 @@ smp_tlb_flush_pte(vaddr_t va, int ctx)
 	if (db_active)
 		return;
 
-	sparc64_broadcast_ipi(ipi_tlb_page_demap, va, ctx);
+	if (CPU_ISSUN4V)
+		sun4v_broadcast_ipi(sun4v_ipi_tlb_page_demap, va, ctx);
+	else
+		sun4u_broadcast_ipi(sun4u_ipi_tlb_page_demap, va, ctx);
 }
 
 void
@@ -148,14 +212,22 @@ smp_tlb_flush_ctx(int ctx)
 	if (db_active)
 		return;
 
-	sparc64_broadcast_ipi(ipi_tlb_context_demap, ctx, 0);
+	if (CPU_ISSUN4V)
+		sun4v_broadcast_ipi(sun4v_ipi_tlb_context_demap, ctx, 0);
+	else
+		sun4u_broadcast_ipi(sun4u_ipi_tlb_context_demap, ctx, 0);
 }
 
 void
 smp_signotify(struct proc *p)
 {
+	struct cpu_info *ci = p->p_cpu;
+
 	if (db_active)
 		return;
 
-	sparc64_send_ipi(p->p_cpu->ci_itid, ipi_softint, 1 << IPL_NONE, 0UL);
+	if (CPU_ISSUN4V)
+		sun4v_send_ipi(ci->ci_itid, ipi_softint, 1 << IPL_NONE, 0UL);
+	else
+		sun4u_send_ipi(ci->ci_itid, ipi_softint, 1 << IPL_NONE, 0UL);
 }

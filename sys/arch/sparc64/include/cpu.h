@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2008/03/23 23:46:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2008/03/31 22:14:01 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -157,7 +157,18 @@ extern struct cpu_info *cpus;
 #ifdef MULTIPROCESSOR
 
 #define	cpu_number()	(curcpu()->ci_number)
-#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+
+extern __inline struct cpu_info *curcpu(void);
+extern __inline struct cpu_info *
+curcpu(void)
+{
+	if (CPU_ISSUN4V) {
+		__asm __volatile("nop" : : : "memory");
+		return (struct cpu_info *)ldxa(0, ASI_SCRATCHPAD);
+	}
+
+	return (((struct cpu_info *)CPUINFO_VA)->ci_self);
+}
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)
 #define CPU_INFO_ITERATOR	int

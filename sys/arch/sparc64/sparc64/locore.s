@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.128 2008/03/30 13:39:53 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.129 2008/03/31 22:14:01 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -96,8 +96,19 @@
 #define NOTREACHED
 #endif	/* 1 */
 
+#ifdef MULTIPROCESSOR
+	.section	.sun4v_mp_patch, "ax"
+	.globl _C_LABEL(sun4v_mp_patch)
+_C_LABEL(sun4v_mp_patch):
+	.previous
+#endif
+
 #define GET_CPUINFO_VA(ci) \
-	set CPUINFO_VA, ci
+999:	set	CPUINFO_VA, ci			;\
+	.section	.sun4v_mp_patch, "ax"	;\
+	.word	999b				;\
+	ldxa	[%g0] ASI_SCRATCHPAD, ci	;\
+	.previous
 
 #define GET_CPCB(pcb) \
 	GET_CPUINFO_VA(pcb)			;\
@@ -110,12 +121,13 @@
 #ifdef SUN4V
 
 #define GET_CPUINFO_PA(ci) \
-	nop					;\
-	ldxa	[%g0] ASI_SCRATCHPAD, ci
+	mov	8, ci				;\
+	ldxa	[ci] ASI_SCRATCHPAD, ci
 
 #define GET_MMFSA(mmfsa) \
-	GET_CPUINFO_VA(mmfsa)			;\
-	ldx	[mmfsa + CI_MMFSA], mmfsa
+	GET_CPUINFO_PA(mmfsa)			;\
+	add	mmfsa, CI_MMFSA, mmfsa		;\
+	ldxa	[mmfsa] ASI_PHYS_CACHED, mmfsa
 
 #endif
 
@@ -1485,10 +1497,9 @@ intr_setup_msg:
 	.macro	INTR_SETUP stackspace, label
 	rdpr	%wstate, %g7			! Find if we're from user mode
 
-	sethi	%hi(EINTSTACK-BIAS), %g6
+	GET_CPUINFO_VA(%g6)
 	sethi	%hi(EINTSTACK-INTSTACK), %g4
-
-	or	%g6, %lo(EINTSTACK-BIAS), %g6	! Base of interrupt stack
+	sub	%g6, BIAS, %g6			! Base of interrupt stack
 	dec	%g4				! Make it into a mask
 
 	sub	%g6, %sp, %g1			! Offset from interrupt stack
@@ -3624,9 +3635,9 @@ gl0_1:	nop
  *	%g4 = tt == T_AST
  */
 softtrap:
-	sethi	%hi(EINTSTACK-BIAS), %g5
+	GET_CPUINFO_VA(%g5)
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
-	or	%g5, %lo(EINTSTACK-BIAS), %g5
+	sub	%g5, BIAS, %g5
 	dec	%g7
 
 	sub	%g5, %sp, %g5
@@ -3977,7 +3988,7 @@ sun4v_dev_mondo:
 #endif
 
 #ifdef MULTIPROCESSOR
-ENTRY(ipi_tlb_page_demap)
+ENTRY(sun4u_ipi_tlb_page_demap)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %g2
 	wrpr	%g2, %pstate				! disable interrupts
@@ -4008,7 +4019,7 @@ ENTRY(ipi_tlb_page_demap)
 	ba,a	ret_from_intr_vector
 	 nop
 
-ENTRY(ipi_tlb_context_demap)
+ENTRY(sun4u_ipi_tlb_context_demap)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %g2
 	wrpr	%g2, %pstate				! disable interrupts
@@ -4038,6 +4049,25 @@ ENTRY(ipi_tlb_context_demap)
 	ba,a	ret_from_intr_vector
 	 nop
 
+#ifdef SUN4V
+ENTRY(sun4v_ipi_tlb_page_demap)
+	mov	%o0, %g1
+	mov	%o1, %g2
+	mov	%o2, %g4
+	mov	%g3, %o0
+	mov	%g5, %o1
+	mov	MAP_DTLB|MAP_ITLB, %o2
+	ta	MMU_UNMAP_ADDR
+	mov	%g1, %o0
+	mov	%g2, %o1
+	mov	%g4, %o2
+
+	retry
+
+ENTRY(sun4v_ipi_tlb_context_demap)
+	NOTREACHED
+#endif
+
 ENTRY(ipi_save_fpstate)
 	GET_CPUINFO_VA(%g1)
 	ldx	[%g1 + CI_FPPROC], %g2
@@ -4045,8 +4075,10 @@ ENTRY(ipi_save_fpstate)
 	bne,pn	%xcc, 3f
 
 	 mov	CTX_SECONDARY, %g2
+ctxid_9:
 	ldxa	[%g2] ASI_DMMU, %g6
 	membar	#LoadStore
+ctxid_10:
 	stxa	%g0, [%g2] ASI_DMMU
 	membar	#Sync
 
@@ -4088,6 +4120,7 @@ ENTRY(ipi_save_fpstate)
 
 	stx	%g0, [%g1 + CI_FPPROC]	! fpproc = NULL
 	mov	CTX_SECONDARY, %g2
+ctxid_11:
 	stxa	%g6, [%g2] ASI_DMMU
 	membar	#Sync
 3:
@@ -4800,8 +4833,7 @@ _C_LABEL(cpu_initialize):
 	bne,pt	%icc, 1f
 	 nop
 	set	_C_LABEL(trapbase_sun4v), %l1
-	GET_CPUINFO_VA(%o1)
-	ldx	[%o1 + CI_MMFSA], %o1
+	GET_MMFSA(%o1)
 1:
 #endif
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
@@ -9103,5 +9135,20 @@ _C_LABEL(ctxid_start):
 	.xword	ctxid_6
 	.xword	ctxid_7
 	.xword	ctxid_8
-	.xword	0
+#ifdef MULTIPROCESSOR
+	.xword	ctxid_9
+	.xword	ctxid_10
+	.xword	ctxid_11
+#endif
+	.xword	0	
+#endif
+
+	/* XXX This is in mutex.S for now */
+#if 0
+#ifdef MULTIPROCESSOR
+	.section	.sun4v_mp_patch, "ax"
+	.globl _C_LABEL(sun4v_mp_patch_end)
+_C_LABEL(sun4v_mp_patch_end):
+	.previous
+#endif
 #endif

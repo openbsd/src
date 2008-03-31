@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.84 2008/03/30 12:30:01 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.85 2008/03/31 22:14:01 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -328,6 +328,24 @@ bootstrap(nctx)
 		((u_int32_t *)sp_tlb_flush_ctx)[0] = insn;
 		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
 		((u_int32_t *)sp_tlb_flush_ctx)[1] = insn;
+
+#ifdef MULTIPROCESSOR
+	{
+		struct sun4v_patch {
+			u_int32_t addr;
+			u_int32_t insn;
+		};
+
+		extern struct sun4v_patch sun4v_mp_patch;
+		extern struct sun4v_patch sun4v_mp_patch_end;
+		struct sun4v_patch *p;
+
+		for (p = &sun4v_mp_patch; p < &sun4v_mp_patch_end; p++) {
+			*(u_int32_t *)(vaddr_t)p->addr = p->insn;
+			flush((void *)(vaddr_t)p->addr);
+		}
+	}
+#endif
 
 		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
 	}

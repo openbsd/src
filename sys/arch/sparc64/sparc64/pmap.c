@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2008/03/30 12:30:01 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2008/03/31 22:14:01 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1556,9 +1556,13 @@ sun4v_bootstrap_cpu(paddr_t intstack)
 	err = hv_mmu_map_perm_addr(INTSTACK, data, MAP_DTLB);
 	if (err != H_EOK)
 		prom_printf("err: %d\r\n", err);
+#else
+	pa = intstack + (CPUINFO_VA - INTSTACK);
+	pa += offsetof(struct cpu_info, ci_self);
+	stxa(0, ASI_SCRATCHPAD, ldxa(pa, ASI_PHYS_CACHED));
 #endif
 
-	stxa(0, ASI_SCRATCHPAD, intstack + (CPUINFO_VA - INTSTACK));
+	stxa(8, ASI_SCRATCHPAD, intstack + (CPUINFO_VA - INTSTACK));
 
 	err = hv_mmu_tsb_ctx0(1, (paddr_t)tsb_desc + kdatap - kdata);
 	if (err != H_EOK)

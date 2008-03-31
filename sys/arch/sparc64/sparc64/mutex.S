@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.1 2007/08/25 18:36:47 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.2 2008/03/31 22:14:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -25,6 +25,26 @@
 #include <machine/asm.h>
 #include <machine/param.h>
 
+#ifdef MULTIPROCESSOR
+
+#include <machine/ctlreg.h>
+
+#define GET_CURCPU(ci) \
+	sethi	%hi(CPUINFO_VA + CI_SELF), ci		;\
+999:	ldx	[ci + %lo(CPUINFO_VA + CI_SELF)], ci	;\
+	.section	.sun4v_mp_patch, "ax"		;\
+	.word	999b					;\
+	ldxa	[%g0] ASI_SCRATCHPAD, ci		;\
+	.previous
+
+#else
+
+#define GET_CURCPU(ci) \
+	set	CPUINFO_VA, ci
+
+#endif
+
+
 ENTRY(mtx_init)
 	stx	%g0, [%o0 + MTX_OWNER]
 	stw	%o1, [%o0 + MTX_WANTIPL]
@@ -32,13 +52,8 @@ ENTRY(mtx_init)
 	 stw	%g0, [%o0 + MTX_OLDIPL]
 
 ENTRY(mtx_enter)
-#ifdef MULTIPROCESSOR
-	sethi	%hi(CPUINFO_VA+CI_SELF), %g1
-	ldx	[%g1 + %lo(CPUINFO_VA+CI_SELF)], %g1
-#else
-	set	CPUINFO_VA, %g1
-#endif
 	rdpr	%pil, %g4
+	GET_CURCPU(%g1)
 1:
 	ld	[%o0 + MTX_WANTIPL], %g5
 	cmp	%g4, %g5
@@ -73,3 +88,13 @@ ENTRY(mtx_leave)
 	stx	%g0, [%o0 + MTX_OWNER]
 	retl
 	 wrpr	%g1, %pil
+
+/*
+ *	XXX Move this back to locore.s.
+ */
+#ifdef MULTIPROCESSOR
+	.section	.sun4v_mp_patch, "ax"
+	.globl _C_LABEL(sun4v_mp_patch_end)
+_C_LABEL(sun4v_mp_patch_end):
+	.previous
+#endif
