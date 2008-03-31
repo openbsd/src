@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.71 2008/03/31 22:27:41 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.72 2008/03/31 23:56:29 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1171,8 +1171,11 @@ gotswap:
 		rootdv = bootdv;
 		rootdev = dumpdev = swapdev = NODEV;
 #endif
-	} else if (mountroot == NULL && rootdev == NODEV) {
-		/* `swap generic': Use the device the ROM told us to use */
+	} else if (mountroot == NULL) {
+		/*
+		 * `swap generic' or RAMDISK_HOOKS -- use the
+		 * device we were told to
+		 */
 		rootdv = bootdv;
 		majdev = findblkmajor(rootdv);
 		if (majdev >= 0) {
