@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxtbus.4,v 1.3 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: vxtbus.4,v 1.4 2008/03/31 12:43:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 31 2008 $
 .Dt VXTBUS 4 vax
 .Os
 .Sh NAME
@@ -39,18 +39,15 @@ driver is an abstraction for the internal I/O bus found on the VXT2000
 terminal.
 .Sh SUPPORTED DEVICES
 The following devices are supported on
-.Nm vxtbus :
+.Nm :
 .Pp
 .Bl -tag -width 8n -compact -offset indent
 .It Xr lcspx 4
-Low-Cost SPX color frame buffer.
+Low-Cost SPX color frame buffer
 .It Xr qsc 4
-SC26C94 quad UART controller.
+SC26C94 quad UART controller
 .It Xr ze 4
-SGEC Ethernet interface.
+SGEC Ethernet device
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr lcspx 4 ,
-.Xr qsc 4 ,
-.Xr ze 4
+.Xr intro 4

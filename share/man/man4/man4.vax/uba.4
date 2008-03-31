@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uba.4,v 1.11 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: uba.4,v 1.12 2008/03/31 12:43:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 31 2008 $
 .Dt UBA 4 vax
 .Os
 .Sh NAME
@@ -39,23 +39,23 @@ driver supports UNIBUS and Q-bus controllers found
 on many VAX systems.
 .Sh SUPPORTED DEVICES
 The following devices are supported on
-.Nm uba .
+.Nm :
+.Pp
 .Bl -tag -width mtc(4) -compact -offset indent
+.It Xr de 4
+DEC DEUNA/DELUA Ethernet device
 .It Xr dhu 4
-DHU-11 terminal multiplexor.
+DHU-11/DHV-11 communications multiplexer
 .It Xr dz 4
-DZ-11 terminal multiplexer.
+DZ-11 multiplexer device interface
 .It Xr mtc 4
-MSCP tape controller.
+UNIBUS MSCP tape controller driver
 .It Xr qe 4
-DEQNA/DELQA Ethernet interface.
+DEC DEQNA Q-bus Ethernet device
+.It Xr ts 4
+TS11/TSV05 magtape interface
 .It Xr uda 4
-MSCP disk controller interface.
+UDA50 disk controller interface
 .El
 .Sh SEE ALSO
-.Xr dhu 4 ,
-.Xr dz 4 ,
-.Xr intro 4 ,
-.Xr mtc 4 ,
-.Xr qe 4 ,
-.Xr uda 4
+.Xr intro 4

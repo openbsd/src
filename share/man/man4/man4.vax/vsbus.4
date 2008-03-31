@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbus.4,v 1.13 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: vsbus.4,v 1.14 2008/03/31 12:43:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 31 2008 $
 .Dt VSBUS 4 vax
 .Os
 .Sh NAME
@@ -40,27 +40,27 @@ driver supports the internal I/O bus found on VAXstation 3100 and
 class systems.
 .Sh SUPPORTED DEVICES
 The following devices are supported on
-.Nm vsbus .
+.Nm :
 .Pp
 .Bl -tag -width 8n -compact -offset indent
 .It Xr asc 4
-VAXstation 4000 SCSI controller.
+VAXstation 4000 SCSI controller
 .It Xr dz 4
-DZ-11 multiplexer device interface.
+DZ-11 multiplexer device interface
 .It Xr gpx 4
-GPX color frame buffer.
+GPX color frame buffer
 .It Xr lcg 4
-Low-Cost Graphics color frame buffer.
+Low-Cost Graphics color frame buffer
 .It Xr lcspx 4
-Low-Cost SPX color frame buffer.
+Low-Cost SPX color frame buffer
 .It Xr le 4
-AMD LANCE Ethernet device.
+AMD LANCE Ethernet device
 .It Xr ncr 4
-VAXstation 2000/3100 SCSI controller.
+VAXstation 2000/3100 SCSI controller
 .It Xr smg 4
-Small Monochrome Graphics frame buffer.
+Small Monochrome Graphics frame buffer
 .It Xr ze 4
-SGEC Ethernet device.
+SGEC Ethernet device
 .El
 .Sh SEE ALSO
 .Xr intro 4
