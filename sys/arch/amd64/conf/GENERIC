@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.221 2008/03/29 01:07:17 cnst Exp $
+#	$OpenBSD: GENERIC,v 1.222 2008/03/31 04:17:22 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -411,7 +411,7 @@ tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
 bce*	at pci?				# Broadcom BCM4401
 et*	at pci?				# Agere/LSI ET1310
-#lii*	at pci?				# Attansic L2 Ethernet
+lii*	at pci?				# Attansic L2 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
