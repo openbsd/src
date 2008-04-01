@@ -2188,6 +2188,7 @@
 ./usr/share/man/cat3/CIRCLEQ_NEXT.0
 ./usr/share/man/cat3/CIRCLEQ_PREV.0
 ./usr/share/man/cat3/CIRCLEQ_REMOVE.0
+./usr/share/man/cat3/CIRCLEQ_REPLACE.0
 ./usr/share/man/cat3/CMSG_DATA.0
 ./usr/share/man/cat3/CMSG_FIRSTHDR.0
 ./usr/share/man/cat3/CMSG_LEN.0
@@ -2872,6 +2873,7 @@
 ./usr/share/man/cat3/TAILQ_NEXT.0
 ./usr/share/man/cat3/TAILQ_PREV.0
 ./usr/share/man/cat3/TAILQ_REMOVE.0
+./usr/share/man/cat3/TAILQ_REPLACE.0
 ./usr/share/man/cat3/_Exit.0
 ./usr/share/man/cat3/_longjmp.0
 ./usr/share/man/cat3/_setjmp.0

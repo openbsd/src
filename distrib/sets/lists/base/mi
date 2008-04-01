@@ -2831,6 +2831,7 @@
 ./usr/share/zoneinfo/America/Argentina/Mendoza
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos
 ./usr/share/zoneinfo/America/Argentina/San_Juan
+./usr/share/zoneinfo/America/Argentina/San_Luis
 ./usr/share/zoneinfo/America/Argentina/Tucuman
 ./usr/share/zoneinfo/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/America/Aruba
@@ -3013,6 +3014,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe
 ./usr/share/zoneinfo/Asia/Gaza
 ./usr/share/zoneinfo/Asia/Harbin
+./usr/share/zoneinfo/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Hovd
 ./usr/share/zoneinfo/Asia/Irkutsk
@@ -3025,6 +3027,7 @@
 ./usr/share/zoneinfo/Asia/Karachi
 ./usr/share/zoneinfo/Asia/Kashgar
 ./usr/share/zoneinfo/Asia/Katmandu
+./usr/share/zoneinfo/Asia/Kolkata
 ./usr/share/zoneinfo/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur
 ./usr/share/zoneinfo/Asia/Kuching
@@ -3413,6 +3416,7 @@
 ./usr/share/zoneinfo/posix/America/Argentina/Mendoza
 ./usr/share/zoneinfo/posix/America/Argentina/Rio_Gallegos
 ./usr/share/zoneinfo/posix/America/Argentina/San_Juan
+./usr/share/zoneinfo/posix/America/Argentina/San_Luis
 ./usr/share/zoneinfo/posix/America/Argentina/Tucuman
 ./usr/share/zoneinfo/posix/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/posix/America/Aruba
@@ -3595,6 +3599,7 @@
 ./usr/share/zoneinfo/posix/Asia/Dushanbe
 ./usr/share/zoneinfo/posix/Asia/Gaza
 ./usr/share/zoneinfo/posix/Asia/Harbin
+./usr/share/zoneinfo/posix/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/posix/Asia/Hong_Kong
 ./usr/share/zoneinfo/posix/Asia/Hovd
 ./usr/share/zoneinfo/posix/Asia/Irkutsk
@@ -3607,6 +3612,7 @@
 ./usr/share/zoneinfo/posix/Asia/Karachi
 ./usr/share/zoneinfo/posix/Asia/Kashgar
 ./usr/share/zoneinfo/posix/Asia/Katmandu
+./usr/share/zoneinfo/posix/Asia/Kolkata
 ./usr/share/zoneinfo/posix/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/posix/Asia/Kuala_Lumpur
 ./usr/share/zoneinfo/posix/Asia/Kuching
@@ -3996,6 +4002,7 @@
 ./usr/share/zoneinfo/right/America/Argentina/Mendoza
 ./usr/share/zoneinfo/right/America/Argentina/Rio_Gallegos
 ./usr/share/zoneinfo/right/America/Argentina/San_Juan
+./usr/share/zoneinfo/right/America/Argentina/San_Luis
 ./usr/share/zoneinfo/right/America/Argentina/Tucuman
 ./usr/share/zoneinfo/right/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/right/America/Aruba
@@ -4178,6 +4185,7 @@
 ./usr/share/zoneinfo/right/Asia/Dushanbe
 ./usr/share/zoneinfo/right/Asia/Gaza
 ./usr/share/zoneinfo/right/Asia/Harbin
+./usr/share/zoneinfo/right/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/right/Asia/Hong_Kong
 ./usr/share/zoneinfo/right/Asia/Hovd
 ./usr/share/zoneinfo/right/Asia/Irkutsk
@@ -4190,6 +4198,7 @@
 ./usr/share/zoneinfo/right/Asia/Karachi
 ./usr/share/zoneinfo/right/Asia/Kashgar
 ./usr/share/zoneinfo/right/Asia/Katmandu
+./usr/share/zoneinfo/right/Asia/Kolkata
 ./usr/share/zoneinfo/right/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/right/Asia/Kuala_Lumpur
 ./usr/share/zoneinfo/right/Asia/Kuching
