@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.83 2008/03/05 20:44:04 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.84 2008/04/01 14:40:58 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -787,6 +787,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Conceptronic C54RU ver 2
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
+		    Corega CG-WLUSB2GPX
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR

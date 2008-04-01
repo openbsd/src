@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.130 2008/03/10 22:00:12 miod Exp $
+dnl	$OpenBSD: hardware,v 1.131 2008/04/01 14:40:58 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -516,6 +516,7 @@ Supported devices {:-include-:}:
 		    Conceptronic C54RU ver 2
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
+		    Corega CG-WLUSB2GPX
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR

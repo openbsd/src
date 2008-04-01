@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.91 2008/03/09 15:32:30 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.92 2008/04/01 14:40:58 jmc Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -550,6 +550,7 @@ Supported Peripherals:
 		    Conceptronic C54RU ver 2
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
+		    Corega CG-WLUSB2GPX
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR
