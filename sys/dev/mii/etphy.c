@@ -1,4 +1,4 @@
-/*	$OpenBSD: etphy.c,v 1.2 2007/11/25 20:28:06 brad Exp $	*/
+/*	$OpenBSD: etphy.c,v 1.3 2008/04/01 01:21:20 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -50,9 +50,20 @@
 #include <dev/mii/miidevs.h>
 
 #define ETPHY_INDEX		0x10	/* XXX reserved in DS */
+#define ETPHY_INDEX_MAGIC	0x402
 #define ETPHY_DATA		0x11	/* XXX reserved in DS */
 
 #define ETPHY_CTRL		0x12
+#define ETPHY_CTRL_DIAG		0x0004
+#define ETPHY_CTRL_RSV1		0x0002	/* XXX reserved */
+#define ETPHY_CTRL_RSV0		0x0001	/* XXX reserved */
+
+#define ETPHY_CONF		0x16
+#define ETPHY_CONF_TXFIFO_MASK	0x3000
+#define ETPHY_CONF_TXFIFO_8	0x0000
+#define ETPHY_CONF_TXFIFO_16	0x1000
+#define ETPHY_CONF_TXFIFO_24	0x2000
+#define ETPHY_CONF_TXFIFO_32	0x3000
 
 #define ETPHY_SR		0x1a
 #define ETPHY_SR_SPD_MASK	0x0300
@@ -250,18 +261,20 @@ etphy_reset(struct mii_softc *sc)
 		PHY_READ(sc, MII_PHYIDR2);
 
 		PHY_READ(sc, ETPHY_CTRL);
-		PHY_WRITE(sc, ETPHY_CTRL, 0x6);
+		PHY_WRITE(sc, ETPHY_CTRL,
+		    ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1);
 
-		PHY_WRITE(sc, ETPHY_INDEX, 0x402);
+		PHY_WRITE(sc, ETPHY_INDEX, ETPHY_INDEX_MAGIC);
 		PHY_READ(sc, ETPHY_DATA);
 
-		PHY_WRITE(sc, ETPHY_CTRL, 0x2);
+		PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_RSV1);
 	}
 
 	PHY_READ(sc, MII_BMCR);
 	PHY_READ(sc, ETPHY_CTRL);
 	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_PDOWN | BMCR_S1000);
-	PHY_WRITE(sc, ETPHY_CTRL, 0x7);
+	PHY_WRITE(sc, ETPHY_CTRL,
+	    ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1 | ETPHY_CTRL_RSV0);
 
 #define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
 
@@ -280,7 +293,7 @@ etphy_reset(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMCR);
 	PHY_READ(sc, ETPHY_CTRL);
 	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN |  BMCR_S1000);
-	PHY_WRITE(sc, ETPHY_CTRL, 0x2);
+	PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_RSV1);
 
 	mii_phy_reset(sc);
 }
