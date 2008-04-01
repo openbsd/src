@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2007/12/25 00:29:49 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2008/04/01 21:10:18 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1698,7 +1698,7 @@ splassert_check(int wantipl, const char *func)
  *
  * Note that we do not attempt to do anything for .d.usr instructions - the
  * kernel never issues such instructions, and they cause a privileged
- * isntruction exception from userland.
+ * instruction exception from userland.
  */
 int
 double_reg_fixup(struct trapframe *frame)
