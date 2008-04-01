@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.115 2008/04/01 01:10:49 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.116 2008/04/01 03:28:32 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -785,10 +785,11 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l785ts-l";
 	} else if (addr >= 0x2c && addr <= 0x2f &&
-	    addr * 2 == iicprobe(0x0b) &&
-	    (iicprobe(0x0c) & 0x40) && !(iicprobe(0x0c) & 0x04) &&
+	    ((iicprobe(0x00) & 0x07) != 0x0 ||
+	    ((iicprobe(0x00) & 0x07) == 0x0 && addr * 2 == iicprobe(0x0b) &&
+	    (iicprobe(0x0c) & 0x40) && !(iicprobe(0x0c) & 0x04))) &&
 	    iicprobe(0x0e) == 0x7b &&
-	    (iicprobe(0x0f) == 0x11 || iicprobe(0x0f) == 0x12) &&
+	    (iicprobe(0x0f) & 0xf0) == 0x10 &&
 	    ((iicprobe(0x0d) == 0x5c && (iicprobe(0x00) & 0x80)) ||
 	    (iicprobe(0x0d) == 0xa3 && !(iicprobe(0x00) & 0x80)))) {
 		name = "w83793g";
