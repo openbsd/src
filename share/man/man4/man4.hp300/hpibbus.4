@@ -1,0 +1,76 @@
+.\"	$OpenBSD: hpibbus.4,v 1.1 2008/04/01 14:22:28 jmc Exp $
+.\"
+.\" Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
+.\" Copyright (c) 1982, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: April 1 2008 $
+.Dt HPIBBUS 4 hp300
+.Os
+.Sh NAME
+.Nm hpibbus
+.Nd HP-IB bus interface
+.Sh SYNOPSIS
+.Cd "hpibbus*	at nhpib?"
+.Cd "hpibbus*	at fhpib?"
+.Pp
+.Cd "hd*	at hpibbus?                 " Pq "disks"
+.Cd "ct*	at hpibbus?                 " Pq "cartridge tapes"
+.Cd "mt*	at hpibbus?                 " Pq "9-track tapes"
+.Cd "ppi0	at hpibbus? slave 5 punit 0 " Pq "plotter"
+.Sh DESCRIPTION
+HP-IB is essentially an IEEE 488 bus,
+with an HP command set
+.Po
+CS/80 on
+.Sq newer
+devices, Amigo on before-the-early-1980s devices
+.Pc
+thrown on top.
+Devices that respond to CS/80 (and probably Amigo, too)
+are tagged with a 16-bit ID.
+.Pp
+HP-IB has a 2-level addressing scheme:
+slave, the analog of a SCSI ID, and punit, the analog of a SCSI LUN.
+.Pp
+The CS/80 ID is unique to the slave, and is shared by all its punits.
+Most devices only have one punit; multiple punits are often used for disk
+drives that have an accompanying tape drive on the second punit,
+or for dual floppy drives.
+.Pp
+In addition, not all HP-IB devices speak CS/80 or Amigo.
+Examples of such devices are HP-IB plotters,
+which simply take raw plotter commands over 488.
+These devices do not have ID tags,
+and often the host cannot even tell if such
+a device is attached to the system.
+.Sh SEE ALSO
+.Xr \&ct 4 ,
+.Xr hd 4 ,
+.Xr intro 4 ,
+.Xr nhpib 4 ,
+.Xr ppi 4
