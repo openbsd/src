@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.6 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.7 2008/04/01 21:05:50 miod Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ typedef struct {
 
 extern bool Guessed[];
 
-extern char Word[], Known[];
+extern char Word[BUFSIZ], Known[BUFSIZ];
 extern const char *const Noose_pict[];
 
 extern int Errors, Wordnum;
@@ -85,10 +85,16 @@ extern FILE *Dict;
 
 extern off_t Dict_size;
 
+extern int ksyms;
+extern int ksymfd;
+extern off_t ksymoffs, ksymsize;
+
 void	die(int);
 void	endgame(void);
 void	getguess(void);
 void	getword(void);
+void	kgetword(void);
+int	ksetup(void);
 void	playgame(void);
 void	prdata(void);
 void	prman(void);

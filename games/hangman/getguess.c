@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.7 2005/04/13 02:33:07 deraadt Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.8 2008/04/01 21:05:50 miod Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getguess.c,v 1.7 2005/04/13 02:33:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getguess.c,v 1.8 2008/04/01 21:05:50 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ void
 getguess(void)
 {
 	int	i;
-	int	ch;
+	int	ch, uch;
 	bool	correct;
 
 	leaveok(stdscr, FALSE);
@@ -78,9 +78,13 @@ getguess(void)
 
 	Guessed[ch - 'a'] = TRUE;
 	correct = FALSE;
+	uch = toupper(ch);
 	for (i = 0; Word[i] != '\0'; i++)
 		if (Word[i] == ch) {
 			Known[i] = ch;
+			correct = TRUE;
+		} else if (Word[i] == uch) {
+			Known[i] = uch;
 			correct = TRUE;
 		}
 	if (!correct)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.8 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: setup.c,v 1.9 2008/04/01 21:05:50 miod Exp $	*/
 /*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.8 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.9 2008/04/01 21:05:50 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,10 +67,17 @@ setup(void)
 	}
 
 	srandomdev();
-	if ((Dict = fopen(Dict_name, "r")) == NULL) {
-		endwin();
-		err(1, "fopen %s", Dict_name);
+	if (ksyms) {
+		if (ksetup() != 0) {
+			endwin();
+			err(1, "open %s", Dict_name);
+		}
+	} else {
+		if ((Dict = fopen(Dict_name, "r")) == NULL) {
+			endwin();
+			err(1, "fopen %s", Dict_name);
+		}
+		fstat(fileno(Dict), &sbuf);
+		Dict_size = sbuf.st_size;
 	}
-	fstat(fileno(Dict), &sbuf);
-	Dict_size = sbuf.st_size;
 }

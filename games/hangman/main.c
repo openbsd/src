@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2008/04/01 21:05:50 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -40,11 +40,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2008/04/01 21:05:50 miod Exp $";
 #endif
 #endif /* not lint */
 
 # include	"hangman.h"
+#include <paths.h>
+
+void	usage();
 
 /*
  * This game written by Ken Arnold.
@@ -54,16 +57,22 @@ main(int argc, char *argv[])
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "d:h")) != -1) {
+	while ((ch = getopt(argc, argv, "d:hk")) != -1) {
 		switch (ch) {
 		case 'd':
-			Dict_name = optarg;
+			if (ksyms)
+				usage();
+			else
+				Dict_name = optarg;
+			break;
+		case 'k':
+			ksyms = 1;
+			Dict_name = _PATH_KSYMS;
 			break;
 		case 'h':
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: hangman [-d wordlist]\n");
-			exit(1);
+			usage();
 		}
 	}
 
@@ -93,4 +102,11 @@ die(int dummy)
 	endwin();
 	putchar('\n');
 	exit(0);
+}
+
+__dead void
+usage()
+{
+	(void)fprintf(stderr, "usage: hangman [-k] [-d wordlist]\n");
+	exit(1);
 }
