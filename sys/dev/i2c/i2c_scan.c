@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.116 2008/04/01 03:28:32 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.117 2008/04/01 04:18:17 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -438,7 +438,7 @@ iic_dump(struct device *dv, u_int8_t addr, char *name)
 		if (iicprobe(i) != val)
 			printf(" %02x=%02x", i, iicprobe(i));
 	}
-	printf(" words", dv->dv_xname, addr);
+	printf(" words");
 	for (i = 0; i < 8; i++)
 		printf(" %02x=%04x", i, iicprobew(i));
 	if (name)
