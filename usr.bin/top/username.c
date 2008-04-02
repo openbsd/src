@@ -1,4 +1,4 @@
-/* $OpenBSD: username.c,v 1.14 2004/05/09 22:14:15 deraadt Exp $	 */
+/* $OpenBSD: username.c,v 1.15 2008/04/02 16:41:24 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -134,45 +134,16 @@ enter_user(uid_t uid, char *name, int wecare)
 
 /*
  * Get a userid->name mapping from the system.
- * If the passwd database is hashed (#define RANDOM_PW), we
- * just handle this uid.  Otherwise we scan the passwd file
- * and cache any entries we pass over while looking.
  */
 static int
 get_user(uid_t uid)
 {
 	struct passwd *pwd;
 
-#ifdef RANDOM_PW
 	/* no performance penalty for using getpwuid makes it easy */
 	if ((pwd = getpwuid(uid)) != NULL)
 		return (enter_user(pwd->pw_uid, pwd->pw_name, 1));
-#else
 
-	int from_start = 0;
-
-	/*
-	 *  If we just called getpwuid each time, things would be very slow
-	 *  since that just iterates through the passwd file each time.  So,
-	 *  we walk through the file instead (using getpwent) and cache each
-	 *  entry as we go.  Once the right record is found, we cache it and
-	 *  return immediately.  The next time we come in, getpwent will get
-	 *  the next record.  In theory, we never have to read the passwd file
-	 *  a second time (because we cache everything we read).  But in
-	 *  practice, the cache may not be large enough, so if we don't find
-	 *  it the first time we have to scan the file a second time.  This
-	 *  is not very efficient, but it will do for now.
-	 */
-	while (from_start++ < 2) {
-		while ((pwd = getpwent()) != NULL) {
-			if (pwd->pw_uid == uid)
-				return (enter_user(pwd->pw_uid, pwd->pw_name, 1));
-			(void) enter_user(pwd->pw_uid, pwd->pw_name, 0);
-		}
-		/* try again */
-		setpwent();
-	}
-#endif
 	/* if we can't find the name at all, then use the uid as the name */
 	return (enter_user(uid, format_uid(uid), 1));
 }
