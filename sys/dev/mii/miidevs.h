@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.94 2008/02/28 01:31:49 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.95 2008/04/02 20:40:29 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.91 2008/02/28 01:31:13 brad Exp 
+ *	OpenBSD: miidevs,v 1.92 2008/04/02 20:40:03 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -209,6 +209,8 @@
 /* Cicada Semiconductor PHYs (now owned by Vitesse) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
 #define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8204	0x0004
+#define	MII_STR_CICADA_CS8204	"Cicada CS8204 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_VSC8211	0x000b
 #define	MII_STR_CICADA_VSC8211	"VSC8211 10/100/1000 PHY"
 #define	MII_MODEL_CICADA_CS8201A	0x0020
