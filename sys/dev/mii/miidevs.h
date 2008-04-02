@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.95 2008/04/02 20:40:29 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.96 2008/04/02 22:09:52 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.92 2008/04/02 20:40:03 brad Exp 
+ *	OpenBSD: miidevs,v 1.93 2008/04/02 22:06:12 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -349,6 +349,8 @@
 #define	MII_STR_NATSEMI_DP83891	"DP83891 10/100/1000 PHY"
 #define	MII_MODEL_NATSEMI_DP83861	0x0006
 #define	MII_STR_NATSEMI_DP83861	"DP83861 10/100/1000 PHY"
+#define	MII_MODEL_NATSEMI_DP83865	0x0007
+#define	MII_STR_NATSEMI_DP83865	"DP83865 10/100/1000 PHY"
 
 /* Plessey Semiconductor PHYs */
 #define	MII_MODEL_PLESSEY_NWK914	0x0000
