@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hangman.6,v 1.14 2008/04/01 21:05:50 miod Exp $
+.\"	$OpenBSD: hangman.6,v 1.15 2008/04/02 05:12:47 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hangman.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: April 1 2008 $
+.Dd $Mdocdate: April 2 2008 $
 .Dt HANGMAN 6
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@
 .Nd computer version of the game hangman
 .Sh SYNOPSIS
 .Nm hangman
-.Op Fl d Ar wordlist
 .Op Fl k
+.Op Fl d Ar wordlist
 .Sh DESCRIPTION
 In
 .Nm hangman ,
@@ -48,10 +48,6 @@ The computer keeps track of which letters have been guessed
 and how many wrong guesses you have made on the screen in a graphic fashion.
 .Pp
 .Bl -tag -width 11n compact
-.It Fl k
-Use the kernel symbols, as read from
-.Pa /dev/ksyms ,
-instead of the default.
 .It Fl d Ar wordlist
 Use the specified
 .Ar wordlist
@@ -60,6 +56,10 @@ A wordlist file must have one word per line.
 Only lowercase words of at least a certain length
 .Pq typically 6 characters
 are chosen.
+.It Fl k
+Use the kernel symbols, as read from
+.Pa /dev/ksyms ,
+instead of the default.
 .El
 .Sh FILES
 .Bl -tag -width /usr/share/dict/words -compact
