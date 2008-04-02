@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nsgphy.4,v 1.7 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: nsgphy.4,v 1.8 2008/04/02 22:54:11 kettenis Exp $
 .\"
 .\" Copyright (c) 2001 Nathan L. Binkert <binkertn@umich.edu>
 .\"
@@ -13,19 +13,19 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 2 2008 $
 .Dt NSGPHY 4
 .Os
 .Sh NAME
 .Nm nsgphy
-.Nd National Semiconductor DP83891 and DP83861 10/100/1000 Ethernet PHY
+.Nd National Semiconductor DP83891/DP83861/DP83865 10/100/1000 Ethernet PHY
 .Sh SYNOPSIS
 .Cd "nsgphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the National Semiconductor DP83891 and DP83861 10/100/1000
-Ethernet PHYs.
+driver supports the National Semiconductor DP83891, DP83861 and
+DP83865 10/100/1000 Ethernet PHYs.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
