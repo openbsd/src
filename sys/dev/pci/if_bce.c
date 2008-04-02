@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.21 2007/11/26 09:28:33 martynas Exp $ */
+/* $OpenBSD: if_bce.c,v 1.22 2008/04/02 06:49:59 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -255,8 +255,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 		    &sc->bce_bhandle, &memaddr, &memsize, 0) == 0)
 			break;
 	default:
-		printf("%s: unable to find mem space\n",
-		    sc->bce_dev.dv_xname);
+		printf(": unable to find mem space\n");
 		return;
 	}
 
@@ -268,29 +267,26 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake up from power state D3\n",
-			       sc->bce_dev.dv_xname);
+			printf(": unable to wake up from power state D3\n");
 			return;
 		}
 		if (pmode != 0) {
-			printf("%s: waking up from power state D%d\n",
-			       sc->bce_dev.dv_xname, pmode);
+			printf(": waking up from power state D%d\n",
+			       pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
+
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->bce_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
 
+	intrstr = pci_intr_string(pc, ih);
 	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc,
 	    self->dv_xname);
-
 	if (sc->bce_intrhand == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->bce_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -312,36 +308,41 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->bce_dmatag,
 	    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
-		printf("%s: unable to alloc space for ring descriptors, "
-		       "error = %d\n", sc->bce_dev.dv_xname, error);
+		printf(": unable to alloc space for ring descriptors, "
+		       "error = %d\n", error);
 		return;
 	}
+
 	/* map ring space to kernel */
 	if ((error = bus_dmamem_map(sc->bce_dmatag, &seg, rseg,
 	    2 * PAGE_SIZE, &kva, BUS_DMA_NOWAIT))) {
-		printf("%s: unable to map DMA buffers, error = %d\n",
-		    sc->bce_dev.dv_xname, error);
+		printf(": unable to map DMA buffers, error = %d\n",
+		    error);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
+
 	/* create a dma map for the ring */
 	if ((error = bus_dmamap_create(sc->bce_dmatag,
 	    2 * PAGE_SIZE, 1, 2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT,
 				       &sc->bce_ring_map))) {
-		printf("%s: unable to create ring DMA map, error = %d\n",
-		    sc->bce_dev.dv_xname, error);
+		printf(": unable to create ring DMA map, error = %d\n",
+		    error);
 		bus_dmamem_unmap(sc->bce_dmatag, kva, 2 * PAGE_SIZE);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
+
 	/* connect the ring space to the dma map */
 	if (bus_dmamap_load(sc->bce_dmatag, sc->bce_ring_map, kva,
 	    2 * PAGE_SIZE, NULL, BUS_DMA_NOWAIT)) {
+		printf(": unable to load ring DMA map\n");
 		bus_dmamap_destroy(sc->bce_dmatag, sc->bce_ring_map);
 		bus_dmamem_unmap(sc->bce_dmatag, kva, 2 * PAGE_SIZE);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
+
 	/* save the ring space in softc */
 	sc->bce_rx_ring = (struct bce_dma_slot *) kva;
 	sc->bce_tx_ring = (struct bce_dma_slot *) (kva + PAGE_SIZE);
@@ -350,8 +351,8 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < BCE_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bce_dmatag, MCLBYTES,
 		    BCE_NTXFRAGS, MCLBYTES, 0, 0, &sc->bce_cdata.bce_tx_map[i])) != 0) {
-			printf("%s: unable to create tx DMA map, error = %d\n",
-			    sc->bce_dev.dv_xname, error);
+			printf(": unable to create tx DMA map, error = %d\n",
+			    error);
 		}
 		sc->bce_cdata.bce_tx_chain[i] = NULL;
 	}
@@ -360,8 +361,8 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bce_dmatag, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->bce_cdata.bce_rx_map[i])) != 0) {
-			printf("%s: unable to create rx DMA map, error = %d\n",
-			    sc->bce_dev.dv_xname, error);
+			printf(": unable to create rx DMA map, error = %d\n",
+			    error);
 		}
 		sc->bce_cdata.bce_rx_chain[i] = NULL;
 	}
@@ -392,11 +393,11 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET4);
 	sc->bce_ac.ac_enaddr[5] =
 	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET5);
+
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->bce_ac.ac_enaddr));
 
 	/* Initialize our media structures and probe the MII. */
-
 	sc->bce_mii.mii_ifp = ifp;
 	sc->bce_mii.mii_readreg = bce_mii_read;
 	sc->bce_mii.mii_writereg = bce_mii_write;
@@ -410,23 +411,26 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE);
 	} else
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
+
 	/* get the phy */
 	sc->bce_phy = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_PHY) & 0x1f;
+
 	/*
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
 	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
+
 	/* enable traffic meter led mode */
 	bce_mii_write((struct device *) sc, 1, 27,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
 
-
 	/* Attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
 	timeout_set(&sc->bce_timeout, bce_tick, sc);
 }
 
