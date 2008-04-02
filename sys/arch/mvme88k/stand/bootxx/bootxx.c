@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.6 2006/05/16 22:52:09 miod Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.7 2008/04/02 21:53:17 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -67,6 +67,7 @@ daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 extern		char *version;
 
+void	bugexec(void (*)());
 int	copyboot(struct open_file *, char *);
 
 int
@@ -140,4 +141,16 @@ copyboot(struct open_file *fp, char *addr)
 	}
 
 	return 0;
+}
+
+void
+bugexec(void (*addr)())
+{
+	(*addr)(bugargs.dev_lun, bugargs.ctrl_lun, bugargs.flags,
+	    bugargs.ctrl_addr, (u_int)addr, bugargs.conf_blk,
+	    bugargs.arg_start, bugargs.arg_end);
+
+	printf("bugexec: %p returned!\n", addr);
+
+	_rtt();
 }

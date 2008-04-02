@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2006/05/16 22:51:30 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.8 2008/04/02 21:53:18 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -70,11 +70,6 @@ main()
 {
 	char *cp, *file;
 	int ask = 0, howto, ret;
-
-	/* cycle in the correct args */
-	bugargs.arg_start = bugargs.nbarg_start;
-	bugargs.arg_end   = bugargs.nbarg_end;
-	*bugargs.arg_end = 0; /* ensure */
 
 	printf("\n>> OpenBSD/mvme88k netboot [%s]\n", version);
 

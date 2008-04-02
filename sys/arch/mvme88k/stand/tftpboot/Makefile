@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2006/05/16 22:51:30 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2008/04/02 21:53:18 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -23,15 +23,13 @@ LDFLAGS+= -s -N -T ${STAGE2_RELOC}
 
 all:	tftpboot.bin
 
-tftpboot: ${OBJS} ${SINGLE} ${LIBS}
+tftpboot: ${OBJS} ${NETBOOT_CRT} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
-#	@${SIZE} $@
+		${NETBOOT_CRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 
 tftpboot.bin: tftpboot
 	${STRIP} tftpboot
 	dd ibs=32 skip=1 if=tftpboot of=$@
-#	dd ibs=38 skip=1 if=tftpboot of=$@
 
 install:
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \

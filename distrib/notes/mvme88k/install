@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2008/04/02 21:53:15 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -81,6 +81,7 @@ using an MVME328 board.
 Note that OpenBSD/MACHINE can boot off any tape drive supported by the BUG,
 even if its controller is not supported by OpenBSD.
 
+
 Booting from Network:
 
 OpenBSD/MACHINE can boot off any network card supported by the BUG, even
@@ -139,14 +140,36 @@ example, on an MVME187 system with no external network card:
 If the BUG does not support the NIOT command (MVME187 BUG prior to version
 1.3 doesn't), then it has no support for netbooting.
 
-Before netbooting, enter "NIOT" and fill the parameters. Be sure to provide
-the correct values for Controller LUN and Device LUN (as listed in the
-"NIOT;H" output); also the "Boot File Load Address" and "Boot File
-Execution Address" need to be set to 00AF0000. The "Boot File Name" must
-match the name of the netboot file on the server (copying it as
-"netboot.mvme88k" or "tftpboot.mvme88k" is usually a wise choice). Finally,
-"Argument File Name" needs to be set to "bsd.rd" in order to boot the
-installation miniroot, rather than the regular kernel.
+If you know the IP address for the MACHINE and the TFTP server,
+you can directly provide the boot loader's filename and the kernel name
+on the commandline:
+
+     187-Bug> NBO 00 00 192.168.0.68 192.168.0.1 netboot.mvme88k bsd.rd
+or
+     187-Bug> NBO 00 00 192.168.0.68 192.168.0.1 tftpboot.mvme88k bsd.rd
+
+where, in this example, 192.168.0.68 is the address of the MACHINE computer,
+and 192.168.0.1 the address of the diskless server.
+
+Specifying both IP addresses as 0.0.0.0 will cause them to be obtained
+with reverse ARP (for the MACHINE address) and bootp or dhcp (for the
+server address):
+
+     187-Bug> NBO 00 00 0.0.0.0 0.0.0.0 netboot.mvme88k bsd.rd
+or
+     187-Bug> NBO 00 00 0.0.0.0 0.0.0.0 tftpboot.mvme88k bsd.rd
+
+If you intend to netboot very often, these parameters can be made permanent
+by filling the "NIOT" parameters and save them to NVRAM.
+
+Be sure to provide the correct values for Controller LUN and Device LUN (as
+listed in the "NIOT;H" output); also the "Boot File Load Address" and
+"Boot File Execution Address" need to match (there is no reason to change
+the default value of 001F0000). The "Boot File Name" must match the name
+of the netboot file on the server (copying it as "netboot.mvme88k" or
+"tftpboot.mvme88k" is usually a wise choice). Finally, "Argument File Name"
+needs to be set to the kernel name: "bsd.rd" in order to boot the
+installation miniroot, or "bsd" for the regular kernel.
 
 Here are acceptable values for a 187 card using the built-in controller:
 
@@ -161,8 +184,8 @@ Here are acceptable values for a 187 card using the built-in controller:
     Gateway IP Address     =0.0.0.0? 
     Boot File Name ("NULL" for None)     =? netboot.mvme88k
     Argument File Name ("NULL" for None) =? bsd.rd
-    Boot File Load Address         =001F0000? 00AF0000
-    Boot File Execution Address    =001F0000? 00AF0000
+    Boot File Load Address         =001F0000?
+    Boot File Execution Address    =001F0000?
     Boot File Execution Delay      =00000000? 
     Boot File Length               =00000000? 
     Boot File Byte Offset          =00000000? 
@@ -183,22 +206,9 @@ address for the NIOT parameters block in this case. A valid setting is:
 for example.
 
 Once the NIOT parameters are set, it should be possible to boot the machine
-from the server with the NBO command:
+from the server with a shortened NBO command:
 
     187-Bug> NBO 00 00
-
-or if you know the IP address for the MACHINE and the TFTP server,
-you can directly provide the boot loader's filename and the kernel name
-on the commandline:
-
-     187-Bug> NBO 00 00 192.168.0.68 192.168.0.1 tftpboot.mvme88k bsd.rd
-
-where, in this example, 192.168.0.68 is the address of the MACHINE computer,
-and 192.168.0.1 the address of the diskless server.
-
-If the BUG version does not understand the NIOT and NBO commands (most
-MVME187 don't), there is currently no way to netboot.
-
 
 
 Installing using the tape or netboot procedure:

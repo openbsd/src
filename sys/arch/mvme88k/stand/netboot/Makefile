@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2006/05/16 22:51:30 miod Exp $
+#	$OpenBSD: Makefile,v 1.15 2008/04/02 21:53:18 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -25,15 +25,14 @@ LDFLAGS+= -s -N -T ${STAGE2_RELOC}
 
 all:	netboot.bin
 
-netboot: ${OBJS} ${SINGLE} ${LIBS}
+netboot: ${OBJS} ${NETBOOT_CRT} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
+		${NETBOOT_CRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 #	@${SIZE} $@
 
 netboot.bin: netboot
 	${STRIP} netboot
 	dd ibs=32 skip=1 if=netboot of=$@
-#	dd ibs=38 skip=1 if=netboot of=$@
 
 install:
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \

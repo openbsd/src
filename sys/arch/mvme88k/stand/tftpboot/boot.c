@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2004/01/28 08:45:13 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 2008/04/02 21:53:18 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -49,11 +49,6 @@ main()
 	char *cp, *file;
 	int flag, ret;
 	int ask = 0;
-
-	/* skip first argument, it's our own name */
-	bugargs.arg_start = bugargs.nbarg_start;
-	bugargs.arg_end = bugargs.nbarg_end;
-	*bugargs.arg_end = '\0';	/* just stay on the safe side */
 
 	printf("\n>> OpenBSD/mvme88k tftpboot [%s]\n", version);
 

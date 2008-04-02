@@ -1,4 +1,4 @@
-/*	$OpenBSD: libbug.h,v 1.5 2006/05/17 06:21:33 miod Exp $ */
+/*	$OpenBSD: libbug.h,v 1.6 2008/04/02 21:53:18 miod Exp $ */
 
 /*
  * prototypes and such.   note that get/put char are in stand.h
@@ -27,10 +27,6 @@ struct mvmeprom_args {
 	u_int	conf_blk;
 	char	*arg_start;
 	char	*arg_end;
-	char	*nbarg_start;
-	char	*nbarg_end;
 };
 
 extern struct mvmeprom_args bugargs;
-
-void	bugexec(void (*)());

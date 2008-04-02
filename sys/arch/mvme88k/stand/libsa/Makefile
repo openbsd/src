@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2008/03/31 22:14:43 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2008/04/02 21:53:18 miod Exp $
 
 LIB=sa
 
@@ -22,7 +22,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
 SRCS+=	loadfile.c
 
 .PATH:	${S}/lib/libkern/arch/m88k ${S}/lib/libkern
-SRCS+=	ashrdi3.c bzero.c
+SRCS+=	ashrdi3.c bzero.c __main.c
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
