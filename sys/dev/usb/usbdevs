@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.345 2008/04/01 13:41:09 jsg Exp $
+$OpenBSD: usbdevs,v 1.346 2008/04/02 08:51:08 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -516,6 +516,7 @@ vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
+vendor QUALCOMM3		0x19d2	Qualcomm Inc.
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor MOTOROLA2	0x22b8	Motorola
@@ -2223,6 +2224,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N
 product QUALCOMM MSM_MODEM	0x3196	CDMA MSM modem
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
+product QUALCOMM3 CDMA_MSM	0x0001	CDMA Technologies MSM modem
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
