@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.23 2007/03/19 05:18:32 ray Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.24 2008/04/02 19:54:05 millert Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -270,6 +270,10 @@ bcrypt(const char *key, const char *salt)
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
+	memset(&state, 0, sizeof(state));
+	memset(ciphertext, 0, sizeof(ciphertext));
+	memset(csalt, 0, sizeof(csalt));
+	memset(cdata, 0, sizeof(cdata));
 	return encrypted;
 }
 
