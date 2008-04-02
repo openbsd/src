@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.259 2008/04/01 14:40:58 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.260 2008/04/02 03:01:38 cnst Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1509,30 +1509,53 @@ dnl		flawed motherboard designs) is the Cyrix 386DLC.
 		    VideoLogic Captivator PCI
 		    Zoltrix TV and Genie TV/FM
 		Hardware monitoring sensors, including: [G]
-		    Asus AS99127F
-		    Asus ASB100
+		    AMD K8 embedded temperature sensor
 		    Analog Devices AD7416, AD7417 and AD7418
-		    Analog Devices ADM1021
+		    Analog Devices ADM1021, ADM1023 and ADM1032
+		    Analog Devices ADM1022 and ADM1028
 		    Analog Devices ADM1024
 		    Analog Devices ADM1025
 		    Analog Devices ADM1026
+		    Analog Devices ADM1027
 		    Analog Devices ADM1030
 		    Analog Devices ADM1031
-		    Analog Devices ADT7460
+		    Analog Devices ADM9240
+		    Analog Devices ADT7460, ADT7465, ADT7475, ADT7476, ADT7477
+		    Andigilog aSC7611
+		    Andigilog aSC7621
+		    Asus AS99127F
+		    Asus ASB100
+		    Dallas Semiconductor 1775
+		    Dallas Semiconductor 1780
+		    Fintek F71805
 		    Genesys Logic GL518SM
-		    ITE IT8705F, IT8712F
-		    National Semiconductor LM87
+		    Genesys Logic GL523SM
+		    Global Mixed-mode Technology G781
+		    Intel Core embedded temperature sensor
+		    Intel Xeon embedded temperature sensor
+		    ITE IT8705F, IT8712F, IT8716F, IT8718F and IT8726F
+		    Maxim DS1617
+		    Maxim DS1624, DS1631 and DS1721
+		    Maxim MAX6642, MAX6657, MAX6658, MAX6659 and MAX6690
 		    National Semiconductor LM75, LM77
 		    National Semiconductor LM78, LM78-J, LM79
+		    National Semiconductor LM81 and LM87
+		    National Semiconductor LM85 and LM96000
+		    National Semiconductor LM86, LM89, LM90, LM99 and LM99-1
+		    National Semiconductor LM93
 		    National Semiconductor PC87366 LPC Super I/O VLM and TMS
-		    Maxim DS1624/DS1631/DS1721
-		    Maxim MAX6642/MAX6690
+		    Philips LM75A
+		    Philips NE1619
+		    SMSC 47m192
+		    SMSC EMC6D10x and SCH5017
 		    SiS SiS950
+		    Texas Instruments THMC50
 		    ThinkPad Active Protection System accelerometer
 		    VIA VT1211
 		    VIA VT82C686A, VT8231
 		    Winbond W83627HF, W83627THF, W83627DHG, W83627EHF, W83637HF
 		    Winbond W83697HF, W83781D, W83782D, W83783S, W83791D, W83792D
+		    Winbond W83793G
 		    Winbond W83L784R, W83L785R and W83L785TS-L
 		Hardware watchdog timer support, including: [G]
 		    AMD Elan SC520 System Controller
