@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.198 2008/03/30 12:30:02 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.199 2008/04/02 22:32:43 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -384,6 +384,7 @@ rlphy*	at mii?				# RealTek 8139 internal PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
+nsgphy*	at mii?				# NS gigabit PHYs
 ukphy*	at mii?				# Unknown PHYs
 
 # sensors
