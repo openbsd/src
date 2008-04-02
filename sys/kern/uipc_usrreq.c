@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.38 2008/03/24 16:07:37 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.39 2008/04/02 19:09:13 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -622,29 +622,27 @@ unp_externalize(struct mbuf *rights)
 
 	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
 
-#ifdef notyet
 	/* Make sure the recipient should be able to see the descriptors.. */
-	if (p->p_cwdi->cwdi_rdir != NULL) {
+	if (p->p_fd->fd_rdir != NULL) {
 		rp = (struct file **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
 			/*
-			 * If we are in a chroot'ed directory, and
-			 * someone wants to pass us a directory, make
-			 * sure it's inside the subtree we're allowed
-			 * to access.
+			 * No to block devices.  If passing a directory,
+			 * make sure that it is underneath the root.
 			 */
 			if (fp->f_type == DTYPE_VNODE) {
 				struct vnode *vp = (struct vnode *)fp->f_data;
-				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
+
+				if (vp->v_type == VBLK ||
+				    (vp->v_type == VDIR &&
+				    !vn_isunder(vp, p->p_fd->fd_rdir, p))) {
 					error = EPERM;
 					break;
 				}
 			}
 		}
 	}
-#endif
 
 restart:
 	fdplock(p->p_fd);
