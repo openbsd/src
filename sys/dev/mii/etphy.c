@@ -1,4 +1,4 @@
-/*	$OpenBSD: etphy.c,v 1.3 2008/04/01 01:21:20 brad Exp $	*/
+/*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -333,7 +333,7 @@ etphy_status(struct mii_softc *sc)
 		break;
 	default:
 		mii->mii_media_active |= IFM_NONE;
-		break;
+		return;
 	}
 
 	if (sr & ETPHY_SR_FDX)
