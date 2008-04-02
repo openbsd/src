@@ -8,22 +8,25 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.16 2005/01/06 17:21:03 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.17 2008/04/02 15:03:01 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
-define(`confSMTP_LOGIN_MSG', `openbsd.org Sendmail $v/$Z/millert ready willing and able at $b')dnl
+define(`confSMTP_LOGIN_MSG', `openbsd.org spamd IP-based SPAM blocker; $d')dnl
 dnl
 dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy,noetrn,noverb,nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
-define(`confQUEUE_LA', `25')dnl
-define(`confREFUSE_LA', `50')dnl
+define(`confQUEUE_LA', `6')dnl
+define(`confREFUSE_LA', `20')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
+dnl
+dnl Do not send postmaster bounce failures
+define(`confDOUBLE_BOUNCE_ADDRESS', `')dnl
 dnl
 dnl Keep host status on disk between sendmail runs in the .hoststat dir
 define(`confHOST_STATUS_DIRECTORY', `/var/spool/mqueue/.hoststat')dnl
@@ -89,6 +92,15 @@ dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
 dnl
+dnl Only allow up to 4 new connections per second
+define(`confCONNECTION_RATE_THROTTLE', `4')dnl
+dnl
+dnl Start to throttle sender after receiving 3 unknown users
+define(`confBAD_RCPT_THROTTLE',`3')dnl
+dnl
+dnl Reject mail from senders who don't wait for us to say hello
+FEATURE(`greet_pause', `700')dnl
+dnl
 dnl milter-regex
 INPUT_MAIL_FILTER(`milter-regex', `S=local:/var/run/milter-regex/sock, T=S:30s;R:2m')dnl
 dnl
@@ -123,7 +135,7 @@ KSirCamWormMarker regex -f -aSUSPECT multipart/mixed;boundary=----.+_Outlook_Exp
 #
 #  Names that won't be allowed in a To: line (local-part and domains)
 #
-C{RejectToLocalparts}		friend you user
+C{RejectToLocalparts}		friend you user 3Dobsdpaypal obsdpaypal
 C{RejectToDomains}		public.com the-internet.com
 
 LOCAL_RULESETS
