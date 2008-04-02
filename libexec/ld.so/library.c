@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.54 2006/05/08 20:34:36 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.55 2008/04/02 02:27:36 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -79,7 +79,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 {
 	int	libfile, i, align = _dl_pagesz - 1;
 	struct load_list *next_load, *load_list = NULL;
-	Elf_Addr maxva = 0, minva = 0x7fffffff;	/* XXX Correct for 64bit? */
+	Elf_Addr maxva = 0, minva = ELFDEFNNAME(NO_ADDR);
 	Elf_Addr libaddr, loff;
 	elf_object_t *object;
 	char	hbuf[4096];
