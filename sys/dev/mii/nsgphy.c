@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.18 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.19 2008/04/02 22:14:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -45,6 +45,8 @@
  * 83861 can. (I think it wasn't originally designed to do this, but
  * it can now thanks to firmware updates.) The 83861 also allows
  * access to its internal RAM via indirect register access.
+ *
+ * The DP83865 is a low power version of the DP83861.
  */
 
 #include <sys/param.h>
@@ -84,6 +86,8 @@ const struct mii_phy_funcs nsgphy_funcs = {
 static const struct mii_phydesc nsgphys[] = {
 	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83861,
 	  MII_STR_NATSEMI_DP83861 },
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83865,
+	  MII_STR_NATSEMI_DP83865 },
 	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83891,
 	  MII_STR_NATSEMI_DP83891 },
 
