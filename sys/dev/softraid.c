@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.104 2008/02/15 05:29:25 ckuethe Exp $ */
+/* $OpenBSD: softraid.c,v 1.105 2008/04/02 21:32:03 martin Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -771,7 +771,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		bzero(sd->sd_meta, SR_META_SIZE  * 512);
 
 		if (sr_clear_metadata(sd)) {
-			printf("%s: failed to clear metadata\n");
+			printf("%s: failed to clear metadata\n", DEVNAME(sc));
 			goto unwind;
 		}
 	}
