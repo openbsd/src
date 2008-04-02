@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.14 2008/02/08 10:56:41 thib Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.15 2008/04/02 22:26:16 kettenis Exp $	*/
 
 /*
  *
@@ -152,7 +152,8 @@ int		cas_intr(void *);
 #endif
 
 const struct pci_matchid cas_pci_devices[] = {
-	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI }
+	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI },
+	{ PCI_VENDOR_NS, PCI_PRODUCT_NS_SATURN }
 };
 
 int
