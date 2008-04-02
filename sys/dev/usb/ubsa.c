@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.32 2008/02/26 18:32:06 deraadt Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.33 2008/04/02 08:54:08 fkr Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -236,6 +236,8 @@ const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUADPLUS },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
+	/* Qualcomm Inc. ZTE CMDMA MSM modem */
+	{ USB_VENDOR_QUALCOMM3, USB_PRODUCT_QUALCOMM3_CDMA_MSM },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
