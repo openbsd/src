@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cas.4,v 1.5 2007/07/01 17:08:00 kettenis Exp $
+.\"	$OpenBSD: cas.4,v 1.6 2008/04/02 22:50:36 kettenis Exp $
 .\"
 .\" Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 1 2007 $
+.Dd $Mdocdate: April 2 2008 $
 .Dt CAS 4
 .Os
 .Sh NAME
@@ -24,20 +24,26 @@
 .Cd "cas* at pci?"
 .Cd "brgphy* at mii?"
 .Cd "gentbi* at mii?"
+.Cd "nsgphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for various NICs based on the Sun Cassini and
-Cassini+ Ethernet controller chips, including the following:
+driver provides support for various NICs based on the Sun
+Cassini/Cassini+ and National Semiconductor Saturn Ethernet controller
+chips, including the following:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
 Sun GigaSwift Ethernet Adapter (10/100/1000baseT)
 .It
 Sun GigaSwift Ethernet Adapter (1000baseSX)
+.It
+Sun Quad GigaSwift Ethernet UTP Adapter (10/100/1000baseT)
+.It
+Sun Quad GigaSwift PCI-X Adapter (10/100/1000baseT)
 .El
 .Pp
-It uses an external PHY or an external 10-bit interface.
+It uses an internal or external PHY or an external 10-bit interface.
 .Pp
 The
 .Nm
@@ -73,6 +79,7 @@ Use 10baseT, half duplex
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr nsgphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
