@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.9 2008/03/30 14:17:48 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.10 2008/04/03 16:39:54 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -728,7 +728,7 @@ atl2_tx_put(struct atl2_softc *sc, struct mbuf *m)
 	}
 
 	/* Round to a 32-bit boundary */
-	sc->sc_txd_cur = (sc->sc_txd_cur + 3) & ~3;
+	sc->sc_txd_cur = ((sc->sc_txd_cur + 3) & ~3) % AT_TXD_BUFFER_SIZE;
 	if (sc->sc_txd_cur == sc->sc_txd_ack)
 		sc->sc_free_tx_slots = 0;
 }
