@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yp.8,v 1.24 2008/04/03 01:06:02 deraadt Exp $
+.\"	$OpenBSD: yp.8,v 1.25 2008/04/03 07:01:28 jmc Exp $
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -131,7 +131,7 @@ of their maps through
 .Nm YP .
 The YP subsystem requires that
 .Xr portmap 8
-be running, since these the entire subsystem uses the RPC subsystem. 
+be running, since the entire subsystem uses the RPC subsystem.
 .Pp
 .Nm ypinit
 is used to initialize
@@ -204,6 +204,7 @@ YP maps Makefile
 .Xr group 5 ,
 .Xr passwd 5 ,
 .Xr resolv.conf 5 ,
+.Xr portmap 8 ,
 .Xr rpc.yppasswdd 8 ,
 .Xr ypbind 8 ,
 .Xr ypinit 8 ,
