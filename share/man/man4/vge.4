@@ -1,4 +1,4 @@
-.\" $OpenBSD: vge.4,v 1.12 2008/01/10 10:27:19 brad Exp $
+.\" $OpenBSD: vge.4,v 1.13 2008/04/03 02:54:08 brad Exp $
 .\" $FreeBSD: vge.4,v 1.6 2004/11/24 19:06:43 brueffer Exp $
 .\"
 .\" Copyright (c) 2004
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 10 2008 $
+.Dd $Mdocdate: April 3 2008 $
 .Dt VGE 4
 .Os
 .Sh NAME
@@ -45,103 +45,7 @@ The
 .Nm
 driver provides support for various NICs and embedded Ethernet interfaces
 based on the VIA Networking Technologies VT6122 Gigabit Ethernet
-controller chips.
-.Pp
-The VT6122 is a 33/66Mhz 64-bit PCI device which combines a tri-speed MAC with
-an integrated 10/100/1000 copper PHY.
-(Some older cards use an external PHY.)
-The MAC supports IPv4 transmit/receive IP/TCP/UDP hardware
-checksum offload, VLAN tag insertion, a 64-entry CAM filter and a 64-entry VLAN
-filter, 64-bit multicast hash filter, 4 separate transmit DMA queues, flow control
-and Jumbo frames up to 16K in size.
-The VT6122 has a 16K receive FIFO and 48K transmit FIFO.
-.Pp
-The
-.Nm
-driver takes advantage of the VT6122's checksum offload and VLAN
-tagging features, as well as the CAM filter support.
-The CAM filter is used for multicast address filtering to provide
-64 perfect multicast address filter support.
-If it is necessary for the interface to join more than 64 multicast
-groups, the driver will switch over to using the hash filter.
-.Pp
-The
-.Nm
-driver supports the following media types:
-.Bl -tag -width 10baseTXUTP
-.It autoselect
-Enable autoselection of the media type and options.
-The user can manually override the autoselected mode by adding media
-options to the appropriate
-.Xr hostname.if 5
-file.
-.It 10baseT/UTP
-Set 10Mbps operation.
-The
-.Xr ifconfig 8
-.Ic mediaopt
-option can also be used to select either
-.Ar full-duplex
-or
-.Ar half-duplex
-modes.
-.It 100baseTX
-Set 100Mbps (Fast Ethernet) operation.
-The
-.Xr ifconfig 8
-.Ic mediaopt
-option can also be used to select either
-.Ar full-duplex
-or
-.Ar half-duplex
-modes.
-.It 1000baseT
-Set 1000baseT operation over twisted pair.
-Both
-.Ar full-duplex
-and
-.Ar half-duplex
-modes are supported.
-.El
-.Pp
-The
-.Nm
-driver supports the following media options:
-.Bl -tag -width full-duplex
-.It full-duplex
-Force full duplex operation.
-.It half-duplex
-Force half duplex operation.
-.El
-.Pp
-The
-.Nm
-driver also supports one special link option for 1000baseT cards:
-.Bl -tag -width link0
-.It link0
-With 1000baseT cards, establishing a link between two ports requires
-that one port be configured as a master and the other a slave.
-With autonegotiation,
-the master/slave settings will be chosen automatically.
-However when manually selecting the link state, it is necessary to
-force one side of the link to be a master and the other a slave.
-The
-.Nm
-driver configures the ports as slaves by default.
-Setting the
-.Cm link0
-flag with
-.Xr ifconfig 8
-will set a port as a master instead.
-.El
-.Pp
-For more information on configuring this device, see
-.Xr ifconfig 8 .
-.Sh HARDWARE
-The
-.Nm
-driver supports VIA Networking VT3119 and VT6122 based
-Gigabit Ethernet adapters including:
+controller chips, including the following:
 .Pp
 .Bl -bullet -compact
 .It
@@ -151,18 +55,77 @@ ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
 .It
 ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
 .El
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "vge%d: can't map mem space"
-A fatal initialization error has occurred.
-.It "vge%d: can't map i/o space"
-A fatal initialization error has occurred.
-.It "vge%d: couldn't map interrupt"
-A fatal initialization error has occurred.
-.It "vge%d: watchdog timeout"
-The device has stopped responding to the network, or there is a problem with
-the network connection (cable).
+.Pp
+The VT6122 is a 33/66Mhz 64-bit PCI device which combines a tri-speed
+MAC with an integrated 10/100/1000 copper PHY.
+(Some older cards use an external PHY.)
+The MAC supports IPv4 transmit/receive IP/TCP/UDP hardware
+checksum offload, VLAN tag insertion and stripping, a 64-entry CAM
+filter and a 64-entry VLAN filter, 64-bit multicast hash filter,
+4 separate transmit DMA queues, flow control
+and Jumbo frames up to 16K in size.
+The VT6122 has a 16K receive FIFO and 48K transmit FIFO.
+.Pp
+The
+.Nm
+driver takes advantage of the VT6122's checksum offload and the CAM
+filter support.
+The CAM filter is used for multicast address filtering to provide
+64 perfect multicast address filter support.
+If it is necessary for the interface to join more than 64 multicast
+groups, the driver will switch over to using the hash filter.
+.Pp
+The
+.Nm
+driver supports the following media types:
+.Bl -tag -width 10baseTXUTP
+.It Cm autoselect
+Enable autoselection of the media type and options.
+The user can manually override the autoselected mode by adding media
+options to the appropriate
+.Xr hostname.if 5
+file.
+.It Cm 10baseT/UTP
+Set 10Mbps operation.
+The
+.Xr ifconfig 8
+.Ic mediaopt
+option can also be used to select either
+.Cm full-duplex
+or
+.Cm half-duplex
+modes.
+.It Cm 100baseTX
+Set 100Mbps (Fast Ethernet) operation.
+The
+.Xr ifconfig 8
+.Ic mediaopt
+option can also be used to select either
+.Cm full-duplex
+or
+.Cm half-duplex
+modes.
+.It Cm 1000baseT
+Set 1000baseT operation over twisted pair.
+Both
+.Cm full-duplex
+and
+.Cm half-duplex
+modes are supported.
 .El
+.Pp
+The
+.Nm
+driver supports the following media options:
+.Bl -tag -width full-duplex
+.It Cm full-duplex
+Force full duplex operation.
+.It Cm half-duplex
+Force half duplex operation.
+.El
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ciphy 4 ,
