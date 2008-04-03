@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.4 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.5 2008/04/03 18:08:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -60,9 +60,9 @@ struct cfattach ebus_mainbus_ca = {
 };
 
 
-int _ebus_mainbus_bus_map(bus_space_tag_t, bus_space_tag_t,
+int ebus_mainbus_bus_map(bus_space_tag_t, bus_space_tag_t,
     bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void *_ebus_mainbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
+void *ebus_mainbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
     int, int, int, int (*)(void *), void *, const char *);
 bus_space_tag_t ebus_alloc_bus_tag(struct ebus_softc *, bus_space_tag_t);
 
@@ -178,14 +178,14 @@ ebus_alloc_bus_tag(struct ebus_softc *sc, bus_space_tag_t parent)
 	bt->parent = parent;
 	bt->asi = parent->asi;
 	bt->sasi = parent->sasi;
-	bt->sparc_bus_map = _ebus_mainbus_bus_map;
-	bt->sparc_intr_establish = _ebus_mainbus_intr_establish;
+	bt->sparc_bus_map = ebus_mainbus_bus_map;
+	bt->sparc_intr_establish = ebus_mainbus_intr_establish;
 
 	return (bt);
 }
 
 int
-_ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
@@ -236,7 +236,7 @@ _ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 }
 
 void *
-_ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct ebus_softc *sc = t->cookie;
