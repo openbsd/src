@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2008/04/02 20:23:22 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2008/04/03 23:10:25 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -310,9 +310,11 @@ tsb_invalidate(int ctx, vaddr_t va)
 	i = ptelookup_va(va);
 	tag = TSB_TAG(0, ctx, va);
 	if (tsb_dmmu[i].tag == tag)
-		tsb_dmmu[i].tag = TSB_TAG_INVALID;
+		sparc64_casx((volatile unsigned long *)&tsb_dmmu[i].tag,
+		    tag, TSB_TAG_INVALID);
 	if (tsb_immu[i].tag == tag)
-		tsb_immu[i].tag = TSB_TAG_INVALID;
+		sparc64_casx((volatile unsigned long *)&tsb_immu[i].tag,
+		    tag, TSB_TAG_INVALID);
 }
 
 #if notyet
