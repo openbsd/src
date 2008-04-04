@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.17 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.18 2008/04/04 17:42:39 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 4 2008 $
 .Dt BSD_AUTH 3
 .Os
 .Sh NAME
@@ -241,6 +241,21 @@ If the login script exits with a 0 and does not specify any return state
 on the back channel, the state prior to the call to
 .Fn auth_call
 is retained.
+.Pp
+Note that while
+.Fn auth_call
+will zero out the copies it makes of sensitive information, such as plain text
+passwords, after it is sent, it is the responsibility of the
+caller to zero out the original copies of this sensitive information.
+Due to the mechanics of the
+.Fn auth_call
+function, this data must be zeroed
+.Em before
+.Fn auth_call
+is called.
+The safest place to zero out sensitive information is immediately
+after it has been passed to
+.Fn auth_setdata .
 .Pp
 The back channel data may also contain a file descriptor passed back
 from the login script.
