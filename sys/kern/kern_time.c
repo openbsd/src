@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.63 2008/01/02 17:57:49 miod Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.64 2008/04/04 22:48:02 dlg Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -749,7 +749,7 @@ ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 	struct timeval tv, delta;
 	int rv = 0;
 
-	microuptime(&tv);
+	getmicrouptime(&tv);
 
 	timersub(&tv, lasttime, &delta);
 
