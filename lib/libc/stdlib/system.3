@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: system.3,v 1.10 2007/05/31 19:19:32 jmc Exp $
+.\"     $OpenBSD: system.3,v 1.11 2008/04/04 19:30:41 kurt Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 4 2008 $
 .Dt SYSTEM 3
 .Os
 .Sh NAME
@@ -66,6 +66,11 @@ Otherwise,
 .Fn system
 returns the termination status of the shell in the format specified by
 .Xr waitpid 2 .
+.Pp
+Note that fork handlers established using
+.Xr pthread_atfork 3
+are not called when a multithreaded program calls
+.Fn system .
 .Sh RETURN VALUES
 If a child process cannot be created, or the termination status of
 the shell cannot be obtained,

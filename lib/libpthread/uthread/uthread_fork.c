@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.18 2007/11/20 19:35:37 deraadt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.19 2008/04/04 19:30:41 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,17 +46,8 @@ pid_t _dofork(int vfork);
 pid_t
 fork(void)
 {
-	return (_dofork(0));
-}
-
-pid_t
-_dofork(int vfork)
-{
-	struct pthread	*curthread = _get_curthread();
+	pid_t pid;
 	struct pthread_atfork *af;
-	int             i, flags;
-	pid_t           ret;
-	pthread_t	pthread;
 
 	/*
 	 * Defer signals to protect the scheduling queues from access
@@ -72,15 +63,40 @@ _dofork(int vfork)
 			af->prepare();
 	}
 
-	/* Fork a new process: */
-	if ((ret = (vfork ? _thread_sys_vfork() : _thread_sys_fork())) != 0) {
+	if ((pid = _dofork(0)) == 0) {
+		/* Run down atfork child handlers. */
+		TAILQ_FOREACH(af, &_atfork_list, qe) {
+			if (af->child != NULL)
+				af->child();
+		}
+		_mutex_reinit(&_atfork_mutex);
+	} else {
 		/* Run down atfork parent handlers. */
 		TAILQ_FOREACH(af, &_atfork_list, qe) {
 			if (af->parent != NULL)
 				af->parent();
 		}
 		pthread_mutex_unlock(&_atfork_mutex);
-	} else {
+	}
+
+	/*
+	 * Undefer and handle pending signals, yielding if necessary:
+	 */
+	_thread_kern_sig_undefer();
+
+	return(pid);
+}
+
+pid_t
+_dofork(int vfork)
+{
+	struct pthread	*curthread = _get_curthread();
+	int             i, flags;
+	pid_t           ret;
+	pthread_t	pthread;
+
+	/* Fork a new process and reset child's state */
+	if ((ret = (vfork ? _thread_sys_vfork() : _thread_sys_fork())) == 0) {
 		/* Close the pthread kernel pipe: */
 		_thread_sys_close(_thread_kern_pipe[0]);
 		_thread_sys_close(_thread_kern_pipe[1]);
@@ -210,18 +226,7 @@ _dofork(int vfork)
 				}
 			}
 		}
-		/* Run down atfork child handlers. */
-		TAILQ_FOREACH(af, &_atfork_list, qe) {
-			if (af->child != NULL)
-				af->child();
-		}
-		_mutex_reinit(&_atfork_mutex);
 	}
-
-	/*
-	 * Undefer and handle pending signals, yielding if necessary:
-	 */
-	_thread_kern_sig_undefer();
 
 	/* Return the process ID: */
 	return (ret);
