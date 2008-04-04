@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.8,v 1.9 2007/05/31 19:20:29 jmc Exp $
+.\" $OpenBSD: sasyncd.8,v 1.10 2008/04/04 06:21:27 otto Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" Manual page for sasyncd
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 4 2008 $
 .Dt SASYNCD 8
 .Os
 .Sh NAME
@@ -144,3 +144,7 @@ daemon first appeared in
 .Ox 3.8 .
 It was written in 2004-2005 by Hakan Olsson, in part sponsored by
 Multicom Security AB, Sweden.
+.Sh BUGS
+Due to the absence of a proper on the wire SA transfer protocol,
+.Nm
+only works if the peers share the same hardware architecture.
