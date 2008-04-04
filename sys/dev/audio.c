@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.93 2008/03/22 11:05:31 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.94 2008/04/04 04:57:16 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1622,6 +1622,7 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
+	struct audio_info ai;
 	int error = 0, s, offs, fd;
 	int rbus, pbus;
 
@@ -1768,8 +1769,15 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				error = hw->setfd(sc->hw_hdl, fd);
 			else
 				error = 0;
-			if (!error)
+			if (!error) {
 				sc->sc_full_duplex = fd;
+				if (fd) {
+					AUDIO_INITINFO(&ai);
+					ai.mode = sc->sc_mode |
+					    (AUMODE_PLAY | AUMODE_RECORD);
+					error = audiosetinfo(sc, &ai);
+				}
+			}
 		} else {
 			if (fd)
 				error = ENOTTY;
