@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.112 2008/02/02 20:34:42 brad Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.113 2008/04/04 11:05:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,7 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+#include <sys/time.h>
 
 #include <machine/bus.h>
 
@@ -482,6 +483,7 @@ struct tht_softc {
 
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
+	struct timeval		sc_mediacheck;
 
 	u_int16_t		sc_lladdr[3];
 
@@ -1761,8 +1763,12 @@ tht_fw_tick(void *arg)
 void
 tht_link_state(struct tht_softc *sc)
 {
+	static const struct timeval	interval = { 0, 10000 };
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 	int				link_state = LINK_STATE_DOWN;
+
+	if (!ratecheck(&sc->sc_mediacheck, &interval))
+		return;
 
 	if (tht_read(sc, THT_REG_MAC_LNK_STAT) & THT_REG_MAC_LNK_STAT_LINK)
 		link_state = LINK_STATE_UP;
