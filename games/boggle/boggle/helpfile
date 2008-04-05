@@ -7,18 +7,13 @@ Delete line:                <^u> or <^w>
 Redraw screen:              <^l> or <^r>
 Pause game:                 <^s>
 Resume game:                <^q> or <^s>
-Suspend game (BSD only):    <^z>
+Suspend game:               <^z>
 Give up on current cube:    <^d>
 Show remaining time:        <space> first thing on a line
 Show help:                  ? (Suspends timer until done)
 Exit game:                  <^c>
 
 (^u means "control u", etc.)
-
-[Note for users of versions of this program that do not display a timer:
-The first word entered after the timer has run out causes a list of all the
-words you found, the words you missed, and your running statistics to be
-displayed.]
 
 Any time you are prompted while the board is displayed you can type:
                            <esc>word
