@@ -41,8 +41,6 @@ echo 'srcdir = @srcdir@'
 echo 'VPATH = @srcdir@'
 echo 'EQ = ='
 echo
-echo 'force:'
-echo
 
 # Disable SHLIB_LINK if shared libgcc not enabled.
 if [ "@enable_shared@" = "no" ]; then
@@ -426,7 +424,7 @@ for ml in $MULTILIBS; do
   fi
 done
 
-echo 'stmp-dirs: force'
+echo 'stmp-dirs:'
 echo '	for d in '"$dirs"'; do \'
 echo '	  if [ -d $$d ]; then true; else '$mkinstalldirs' $$d; fi; \'
 echo '	done'
