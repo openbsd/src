@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.66 2006/10/23 07:13:56 henning Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.67 2008/04/06 19:42:16 stefan Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -450,7 +450,8 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	struct iovec *iov;
 	int i;
 	struct mbuf *to, *control;
-	int len, error;
+	size_t len;
+	int error;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
