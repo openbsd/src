@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.7 2007/06/20 18:15:45 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 2008/04/06 21:19:35 drahn Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -35,11 +35,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_DISKLABEL_H_
-#define _ARM_DISKLABEL_H_
+#ifndef _SH_DISKLABEL_H_
+#define _SH_DISKLABEL_H_
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
 #define MAXPARTITIONS	16		/* number of partitions */
 
-#endif /* _ARM_DISKLABEL_H_ */
+#endif /* _SH_DISKLABEL_H_ */
