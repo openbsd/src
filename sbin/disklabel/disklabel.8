@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.67 2008/03/23 19:42:17 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.68 2008/04/06 20:18:54 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 23 2008 $
+.Dd $Mdocdate: April 6 2008 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -107,11 +107,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl B
 Install bootstrap code.
-The
-.Fl r
-flag is implied by
-.Fl B
-and never needs to be specified.
 .It Fl b Ar boot1
 Specify the single level boot program, or the primary boot program,
 depending on the system boot architecture
