@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.123 2008/03/23 19:42:17 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.124 2008/04/06 13:10:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.123 2008/03/23 19:42:17 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.124 2008/04/06 13:10:43 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -230,8 +230,7 @@ main(int argc, char *argv[])
 		op = READ;
 #endif
 
-	if (argc < 1 || (cflag + dflag > 0) ||
-	    (fstabfile && op != EDITOR))
+	if (argc < 1 || (fstabfile && op != EDITOR))
 		usage();
 
 	dkname = argv[0];
