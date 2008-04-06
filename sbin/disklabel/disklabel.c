@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.124 2008/04/06 13:10:43 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.125 2008/04/06 21:36:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.124 2008/04/06 13:10:43 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.125 2008/04/06 21:36:24 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,7 +108,6 @@ enum {
 int	cflag;
 int	dflag;
 int	tflag;
-int	nwflag;
 int	verbose;
 int	donothing;
 
@@ -389,15 +388,6 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	int writeable;
 	off_t sectoffset = 0;
 
-	if (nwflag) {
-		warnx("DANGER! The disklabel was not found at the correct location!");
-		warnx("To repair this situation, use `disklabel %s > file' to",
-		    dkname);
-		warnx("save it, then use `disklabel -R %s file' to replace it.",
-		    dkname);
-		warnx("A new disklabel is not being installed now.");
-		return(0); /* Actually 1 but we want to exit */
-	}
 #if NUMBOOT > 0
 	setbootflag(lp);
 #endif
