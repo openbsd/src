@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1338 2008/04/06 00:43:43 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1339 2008/04/07 10:13:19 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12550,6 +12550,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI,
 	    "Cassini",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_NEPTUNE,
+	    "Neptune",
 	},
 	{
 	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1,
