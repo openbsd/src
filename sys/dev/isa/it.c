@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.31 2008/04/07 17:37:58 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.32 2008/04/07 17:50:37 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -247,9 +247,8 @@ it_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sensors[i].type = it_sensors[i].type;
 
 		if (it_sensors[i].desc != NULL)
-			snprintf(sc->sc_sensors[i].desc,
-			    sizeof(sc->sc_sensors[i].desc), "%s",
-			    it_sensors[i].desc); 
+			strlcpy(sc->sc_sensors[i].desc, it_sensors[i].desc,
+			    sizeof(sc->sc_sensors[i].desc));
 	}
 
 	/* register update task */
