@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.125 2008/04/06 21:36:24 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.126 2008/04/07 23:27:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.125 2008/04/06 21:36:24 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.126 2008/04/07 23:27:21 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -388,13 +388,108 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	int writeable;
 	off_t sectoffset = 0;
 
-#if NUMBOOT > 0
-	setbootflag(lp);
-#endif
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
+#if NUMBOOT > 0
+	setbootflag(lp);
+	if (installboot) {
+#ifdef DOSLABEL
+		struct partition *pp = &lp->d_partitions[2];
+
+		/*
+		 * If OpenBSD DOS partition is missing, or if
+		 * the label to be written is not within partition,
+		 * prompt first. Need to allow this in case operator
+		 * wants to convert the drive for dedicated use.
+		 * In this case, partition 'a' had better start at 0,
+		 * otherwise we reject the request as meaningless. -wfj
+		 */
+		if (dosdp && DL_GETPSIZE(pp) && (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
+			sectoffset = (off_t)letoh32(dosdp->dp_start) *
+			    lp->d_secsize;
+		} else {
+			if (dosdp) {
+				int first, ch;
+
+				printf("Erase the previous contents of the disk? [n]: ");
+				fflush(stdout);
+				first = ch = getchar();
+				while (ch != '\n' && ch != EOF)
+					ch = getchar();
+				if (first != 'y' && first != 'Y')
+					exit(0);
+			}
+			sectoffset = 0;
+		}
+#endif
+		/*
+		 * First set the kernel disk label,
+		 * then write a label to the raw disk.
+		 * If the SDINFO ioctl fails because it is unimplemented,
+		 * keep going; otherwise, the kernel consistency checks
+		 * may prevent us from changing the current (in-core)
+		 * label.
+		 */
+		if (!donothing) {
+			if (ioctl(f, DIOCSDINFO, lp) < 0 &&
+			    errno != ENODEV && errno != ENOTTY) {
+				l_perror("ioctl DIOCSDINFO");
+				return (1);
+			}
+		}
+		if (verbose)
+			printf("writing label to block %lld (0x%qx)\n",
+			    (long long)sectoffset/DEV_BSIZE,
+			    (long long)sectoffset/DEV_BSIZE);
+		if (!donothing) {
+			if (lseek(f, sectoffset, SEEK_SET) < 0) {
+				perror("lseek");
+				return (1);
+			}
+			/*
+			 * write enable label sector before write (if necessary),
+			 * disable after writing.
+			 */
+			writeable = 1;
+
+			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
+				perror("ioctl DIOCWLABEL");
+#ifdef __alpha__
+			/*
+			 * The Alpha requires that the boot block be checksummed.
+			 * The first 63 8-byte quantites are summed into the 64th.
+			 */
+			{
+				int i;
+				u_int64_t *dp, sum;
+
+				dp = (u_int64_t *)boot;
+				sum = 0;
+				for (i = 0; i < 63; i++)
+					sum += dp[i];
+				dp[63] = sum;
+			}
+#endif
+			if (write(f, boot, lp->d_bbsize) != lp->d_bbsize) {
+				perror("write");
+				return (1);
+			}
+		}
+		/*
+		 * Output the remainder of the disklabel
+		 */
+		if (!donothing && bootbuf && write(f, bootbuf, bootsize) != bootsize) {
+			perror("write");
+			return(1);
+		}
+		writeable = 0;
+		if (!donothing)
+			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
+				perror("ioctl DIOCWLABEL");
+	} else
+#endif /* NUMBOOT > 0 */	
 	if (!donothing) {
 		if (ioctl(f, DIOCWDINFO, lp) < 0) {
 			l_perror("ioctl DIOCWDINFO");
