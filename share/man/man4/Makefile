@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.445 2008/03/27 01:54:44 cnst Exp $
+#	$OpenBSD: Makefile,v 1.446 2008/04/07 01:31:46 deraadt Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -43,7 +43,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbt.4 sbus.4 scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 ses.4 \
 	sequencer.4 sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sli.4 \
-	sm.4 softraid.4 spdmem.4 speaker.4 sppp.4 sqphy.4 \
+	sm.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
 	ss.4 st.4 ste.4 stge.4 sti.4 \
 	stp.4 sv.4 systrace.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 twe.4 txp.4 \
