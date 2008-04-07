@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.13 2008/03/15 14:46:13 reyk Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.14 2008/04/07 12:12:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -241,13 +241,61 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 void
 dump_type0(int bus, int dev, int func)
 {
+	const char *memtype;
+	u_int64_t mem;
 	u_int32_t reg;
 	int bar;
 
 	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
 		if (pci_read(bus, dev, func, bar, &reg) != 0)
 			warn("unable to read PCI_MAPREG 0x%02x", bar);
-		printf("\t0x%04x: %08x\n", bar, reg);
+
+		printf("\t0x%04x: BAR ", bar);
+
+		if (reg == 0x0) {
+			printf("empty (%08x)\n", reg);
+			continue;
+		}
+
+		switch (PCI_MAPREG_TYPE(reg)) {
+		case PCI_MAPREG_TYPE_MEM:
+			printf("mem ");
+			if (PCI_MAPREG_MEM_PREFETCHABLE(reg))
+				printf("prefetchable ");
+
+			memtype = "32bit 1m";
+			switch (PCI_MAPREG_MEM_TYPE(reg)) {
+			case PCI_MAPREG_MEM_TYPE_32BIT:
+				memtype = "32bit";
+			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+				printf("%s ", memtype);
+
+				printf("addr: 0x%08x len: %d\n",
+				    PCI_MAPREG_MEM_ADDR(reg),
+				    PCI_MAPREG_MEM_SIZE(reg));
+
+				break;
+			case PCI_MAPREG_MEM_TYPE_64BIT:
+				mem = reg;
+				bar += 0x04;
+				if (pci_read(bus, dev, func, bar, &reg) != 0)
+					warn("unable to read 0x%02x", bar);
+
+				mem |= (u_int64_t)reg << 32;
+
+				printf("64bit addr: 0x%016llx size: %lld\n",
+				    PCI_MAPREG_MEM64_ADDR(mem),
+				    PCI_MAPREG_MEM64_SIZE(mem));
+
+				break;
+			}
+			break;
+
+		case PCI_MAPREG_TYPE_IO:
+			printf("io addr: 0x%08x size: %d\n",
+			    PCI_MAPREG_IO_ADDR(reg), PCI_MAPREG_IO_SIZE(reg));
+			break;
+		}
 	}
 
 	if (pci_read(bus, dev, func, PCI_CARDBUS_CIS_REG, &reg) != 0)
