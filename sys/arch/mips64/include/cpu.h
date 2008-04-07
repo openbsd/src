@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2007/12/18 08:29:02 jasper Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2008/04/07 22:29:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,41 +47,75 @@
 
 #include <machine/psl.h>
 
-#ifdef __LP64__
+/*
+ * MIPS32-style segment definitions.
+ * They only cover the first 512MB of physical addresses.
+ */
 #define KSEG0_BASE	0xffffffff80000000
 #define KSEG1_BASE	0xffffffffa0000000
 #define KSSEG_BASE	0xffffffffc0000000
 #define KSEG3_BASE	0xffffffffe0000000
-#else
-#define KSEG0_BASE	0x80000000
-#define KSEG1_BASE	0xa0000000
-#define KSSEG_BASE	0xc0000000
-#define KSEG3_BASE	0xe0000000
-#endif
-#define KSEG_SIZE	0x20000000
+#define KSEG_SIZE	0x0000000020000000
 
-#define	KSEG0_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
-#define	KSEG1_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
+#define	KSEG0_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
+#define	KSEG1_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
 #define	PHYS_TO_KSEG0(x)	((u_long)(x) | KSEG0_BASE)
 #define	PHYS_TO_KSEG1(x)	((u_long)(x) | KSEG1_BASE)
 #define	PHYS_TO_KSEG3(x)	((u_long)(x) | KSEG3_BASE)
 
 /*
- * Cache Coherency Attributes
- * We only list values common to r4k and r5k.
+ * MIPS64-style segment definitions.
+ * These allow for 36 bits of addressable physical memory, thus 64GB.
  */
-#if !defined(_LOCORE)
+
+#ifndef _LOCORE
+
+/*
+ * Cache Coherency Attributes.
+ */
+/* r8k only */
+#define	CCA_NC_COPROCESSOR	0UL	/* uncached, coprocessor ordered */
+/* common to r4, r5k, r8k and r1xk */
 #define	CCA_NC			2UL	/* uncached, write-around */
 #define	CCA_NONCOHERENT		3UL	/* cached, non-coherent, write-back */
+/* r8k, r1xk only */
+#define	CCA_COHERENT_EXCL	4UL	/* cached, coherent, exclusive */
+#define	CCA_COHERENT_EXCLWRITE	5UL	/* cached, coherent, exclusive write */
+/* r1xk only */
+#define	CCA_NC_ACCELERATED	7UL	/* uncached accelerated */
+/* r4k only */
+#define	CCA_COHERENT_UPDWRITE	6UL	/* cached, coherent, update on write */
+
+#ifdef TGT_COHERENT
+#define	CCA_CACHED		CCA_COHERENT_EXCLWRITE
+#else
+#define	CCA_CACHED		CCA_NONCOHERENT
 #endif
 
-#ifdef __LP64__
+/*
+ * Uncached spaces.
+ * R1x000 processors use bits 58:57 of uncached virtual addresses (CCA_NC)
+ * to select different spaces. Unfortunately, other processors need these
+ * bits to be zero, so uncached address have to be decided at runtime.
+ */
+#define	SP_HUB			0UL	/* Hub space */
+#define	SP_IO			1UL	/* I/O space */
+#define	SP_SPECIAL		2UL	/* Memory Special space */
+#define	SP_NC			3UL	/* Memory Uncached space */
+
+extern vaddr_t uncached_base;
+
+#endif	/* _LOCORE */
+
 #define	XKPHYS_BASE		0x8000000000000000UL
 #define	XKPHYS_TO_PHYS(x)	((paddr_t)(x) & 0x0000000fffffffffUL)
-#define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | (c) << 59)
+#define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | ((c) << 59))
+#define	PHYS_TO_XKPHYS_UNCACHED(x,s) \
+	(PHYS_TO_XKPHYS(x, CCA_NC) | ((s) << 57))
+#define	PHYS_TO_UNCACHED(x)	((paddr_t)(x) | uncached_base)
 #define	IS_XKPHYS(va)		(((va) >> 62) == 2)
 #define	XKPHYS_TO_CCA(x)	(((x) >> 59) & 0x07)
-#endif
+#define	XKPHYS_TO_SP(x)		(((x) >> 57) & 0x03)
 
 #ifdef _KERNEL
 
