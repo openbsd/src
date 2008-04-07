@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.20 2008/02/24 21:49:37 uwe Exp $ 
+# $OpenBSD: GENERIC,v 1.21 2008/04/07 01:35:20 deraadt Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -54,6 +54,7 @@ pcaled0		at iic? addr 0x60	# led controller
 gpio*		at pcaled0
 fintek0		at iic?	flags 0x0001	# temp/fan controller
 spdmem*		at iic?			# SPD memory eeproms
+sdtemp*		at iic?			# SO-DIMM (JC-42.4) temperature
 
 #iopwdog*	at iopxs?	# Watchdog timer
 pci0		at iopxs? bus ?	# PCI/PCI-X support

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.610 2008/04/03 20:28:05 form Exp $
+#	$OpenBSD: GENERIC,v 1.611 2008/04/07 01:35:20 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -155,6 +155,7 @@ wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
 glenv*	at iic?				# Genesys Logic GL518SM
 thmc*	at iic?				# TI TMHC50 / Analog ADM1022
 spdmem*	at iic?				# SPD memory eeproms
+sdtemp*	at iic?				# SO-DIMM (JC-42.4) temperature
 wbng*	at iic?				# Winbond W83793G
 
 #isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
