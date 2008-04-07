@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2007/10/18 04:32:09 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2008/04/07 22:30:05 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,16 +69,12 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_NV		0x00000000
 #define	PG_M		0x00000004
 #define	PG_ATTR		0x0000003f
-#define	PG_UNCACHED	0x00000010
-#define	PG_CACHED_NC	0x00000018	/* Cached, non coherent */
-#define	PG_CACHED_CE	0x00000020	/* Cached, coherent exclusive */
-#define	PG_CACHED_CEW	0x00000028	/* Cached, coherent exclusive write */
+#define	PG_UNCACHED	(CCA_NC << 3)
+#define	PG_CACHED_NC	(CCA_NONCOHERENT << 3)
+#define	PG_CACHED_CE	(CCA_COHERENT_EXCL << 3)
+#define	PG_CACHED_CEW	(CCA_COHERENT_EXCLWRITE << 3)
 #define	PG_CACHEMODE	0x00000038
-#ifdef TGT_COHERENT
-#define	PG_CACHED	PG_CACHED_CE
-#else
-#define	PG_CACHED	PG_CACHED_NC
-#endif
+#define	PG_CACHED	(CCA_CACHED << 3)
 #define	PG_ROPAGE	(PG_V | PG_RO | PG_CACHED) /* Write protected */
 #define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not w-prot not clean */
 #define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
