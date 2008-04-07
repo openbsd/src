@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.28 2008/04/03 20:28:05 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.29 2008/04/07 09:31:30 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -59,6 +59,16 @@ void it_ec_refresh(void *arg);
 
 int it_wdog_cb(void *, int);
 
+/*
+ * IT87-compatible chips can typically measure voltages up to 4.096 V.
+ * To measure higher voltages the input is attenuated with (external)
+ * resistors.  Negative voltages are measured using a reference
+ * voltage.  So we have to convert the sensor values back to real
+ * voltages by applying the appropriate resistor factor.
+ */
+#define RFACT_NONE		10000
+#define RFACT(x, y)		(RFACT_NONE * ((x) + (y)) / (y))
+
 
 struct {
 	int		type;
@@ -89,13 +99,17 @@ struct {
 	{ SENSOR_VOLTS_DC,	"VBAT"		}
 };
 
-#define RFACT_NONE		10000
-#define RFACT(x, y)		(RFACT_NONE * ((x) + (y)) / (y))
-
+/* rfact values for voltage sensors */
 int it_vrfact[IT_VOLT_COUNT] = {
-	RFACT_NONE, RFACT_NONE, RFACT_NONE, RFACT(68, 100), RFACT(30, 10),
-	RFACT(21, 10), RFACT(83, 20),
-	RFACT(68, 100), RFACT_NONE
+	RFACT_NONE,		/* VCORE_A	*/
+	RFACT_NONE,		/* VCORE_A	*/
+	RFACT_NONE,		/* +3.3V	*/
+	RFACT(68, 100),		/* +5V		*/
+	RFACT(30, 10),		/* +12V		*/
+	RFACT(21, 10),		/* -5V		*/
+	RFACT(83, 20),		/* -12V		*/
+	RFACT(68, 100),		/* +5VSB	*/
+	RFACT_NONE		/* VBAT		*/
 };
 
 LIST_HEAD(, it_softc) it_softc_list = LIST_HEAD_INITIALIZER(&it_softc_list);
