@@ -1,4 +1,4 @@
-/*	$OpenBSD: itvar.h,v 1.8 2008/04/03 20:28:05 form Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.9 2008/04/07 09:43:54 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -71,8 +71,12 @@
 
 #define IT_WDT_CSR		0x71
 #define IT_WDT_TCR		0x72
-#define IT_WDT_LSB		0x73
-#define IT_WDT_MSB		0x74
+#define IT_WDT_TMO_LSB		0x73
+#define IT_WDT_TMO_MSB		0x74
+
+#define IT_WDT_TCR_SECS		0x80
+#define IT_WDT_TCR_KRST		0x40
+#define IT_WDT_TCR_PWROK	0x10
 
 
 struct it_softc {

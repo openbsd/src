@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.29 2008/04/07 09:31:30 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.30 2008/04/07 09:43:54 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -215,7 +215,8 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_chipid != IT_ID_8705) {
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_CSR, 0x00);
-		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0x80);
+		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
+		    IT_WDT_TCR_SECS);
 		wdog_register(sc, it_wdog_cb);
 	}
 
@@ -415,7 +416,7 @@ it_wdog_cb(void *arg, int period)
 	it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 
 	/* disable watchdog timeout */
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0x80);
+	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, IT_WDT_TCR_SECS);
 
 	/* 1000s should be enough for everyone */
 	if (period > 1000)
@@ -424,12 +425,13 @@ it_wdog_cb(void *arg, int period)
 		period = 0;
 
 	/* set watchdog timeout */
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_MSB, period >> 8);
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_LSB, period & 0xff);
+	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_MSB, period >> 8);
+	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_LSB, period & 0xff);
 
 	if (period > 0)
 		/* enable watchdog timeout */
-		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0xc0);
+		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
+		    IT_WDT_TCR_SECS | IT_WDT_TCR_KRST);
 
 	/* exit MB PnP mode */
 	it_exit(sc->sc_iot, sc->sc_ioh);
