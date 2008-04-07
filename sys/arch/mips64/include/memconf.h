@@ -1,4 +1,4 @@
-/*	$OpenBSD: memconf.h,v 1.3 2008/03/30 20:13:14 miod Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.4 2008/04/07 22:40:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -35,6 +35,7 @@
 struct phys_mem_desc {
 	u_int32_t	mem_first_page;
 	u_int32_t	mem_last_page;
+	unsigned int	mem_freelist;
 };
 
 #ifdef _KERNEL

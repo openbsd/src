@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.13 2008/02/18 19:48:36 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.14 2008/04/07 22:40:58 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -28,10 +28,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/memconf.h>
-#include <machine/param.h>
-#include <machine/autoconf.h>
+#include <machine/vmparam.h>
+
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
@@ -216,6 +218,7 @@ bios_configure_memory()
 	arc_mem_t *descr = NULL;
 	struct phys_mem_desc *m;
 	uint64_t start, count;
+	MEMORYTYPE type;
 	vaddr_t seg_start, seg_end;
 	int	i;
 
@@ -224,15 +227,50 @@ bios_configure_memory()
 		if (bios_is_32bit) {
 			start = descr->BasePage;
 			count = descr->PageCount;
+			type = descr->Type;
 		} else {
 			start = ((arc_mem64_t *)descr)->BasePage;
 			count = ((arc_mem64_t *)descr)->PageCount;
+			type = descr->Type;
+
+#ifdef TGT_OCTANE
+			/*
+			 * Memory above 1GB physical (address 1.5GB)
+			 * gets reported as reserved on Octane, while
+			 * it isn't.
+			 */
+			if (sys_config.system_type == SGI_OCTANE &&
+			    type == FirmwarePermanent &&
+			    start >= 0x60000)
+				type = FreeMemory;
+#endif
+
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+			/*
+			 * On Origin200 systems, data after the first
+			 * FirmwarePermanent entry is not reliable
+			 * (entries conflict with each other), and memory
+			 * after 32MB is not listed anyway.
+			 * So, break from the loop as soon as a
+			 * FirmwarePermanent entry is found, after
+			 * making it span the end of the first 32MB.
+			 * The rest of the memory is gathered from the
+			 * node structures.  This probably loses some of
+			 * the first 32MB, but at least we're safe to
+			 * use ARCBios after going virtual.
+			 */
+			if (sys_config.system_type == SGI_O200 &&
+			    type == FirmwarePermanent) {
+				count = (32 << (20 - 12)) - start;
+				descr = NULL;
+			}
+#endif
 		}
 		seg_start = start;
 		seg_end = seg_start + count;
 
-		switch (descr->Type) {
-		case BadMemory:		/* Have no use for theese */
+		switch (type) {
+		case BadMemory:		/* Have no use for these */
 			break;
 
 		case FreeMemory:
@@ -256,6 +294,7 @@ bios_configure_memory()
 			if (m && m->mem_first_page == 0) {
 				m->mem_first_page = seg_start;
 				m->mem_last_page = seg_end;
+				m->mem_freelist = VM_FREELIST_DEFAULT;
 			}
 			break;
 
@@ -274,6 +313,10 @@ bios_configure_memory()
 		default:		/* Unknown type, leave it alone... */
 			break;
 		}
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+		if (descr == NULL)
+			break;
+#endif
 		descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	}
 
@@ -369,15 +412,7 @@ void
 bios_ident()
 {
 	sys_config.system_type = bios_get_system_type();
-	/* Get memory configuration from bios if applicable */
-	switch (sys_config.system_type) {
-	case SGI_O200:
-		break;
-	default:
-		if (sys_config.system_type >= 0)
-			bios_configure_memory();
-		break;
-	}
+	bios_configure_memory();
 #ifdef __arc__
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
 #endif
@@ -401,4 +436,3 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*ysize = displayinfo.CursorMaxYPosition;
 #endif
 }
-
