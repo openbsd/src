@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.3 2008/04/07 12:02:59 espie Exp $
+# $OpenBSD: Subst.pm,v 1.4 2008/04/07 12:15:59 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,7 @@ sub hash
 sub add
 {
 	my ($self, $k, $v) = @_;
+	$k =~ s/^\^//;
 	$self->{$k} = $v;
 }
 
