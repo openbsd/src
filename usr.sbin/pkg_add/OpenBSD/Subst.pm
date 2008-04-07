@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.2 2008/04/07 11:55:22 espie Exp $
+# $OpenBSD: Subst.pm,v 1.3 2008/04/07 12:02:59 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -25,6 +25,11 @@ package OpenBSD::Subst;
 sub new
 {
 	bless {}, shift;
+}
+
+sub hash
+{
+	shift;
 }
 
 sub add
@@ -57,7 +62,7 @@ sub do
 	my $self = shift;
 	local $_ = shift;
 	return $_ unless m/\$/o;	# optimization
-	while (my ($k, $v) = each %$self) {
+	while (my ($k, $v) = each %{$self->hash}) {
 		s/\$\{\Q$k\E\}/$v/g;
 	}
 	s/\$\\/\$/go;
