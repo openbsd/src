@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2008/02/11 20:40:32 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2008/04/07 22:30:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,7 +40,6 @@
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <machine/memconf.h>
 #include <machine/vmparam.h>
 #include <mips64/archtype.h>
 
@@ -231,7 +230,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (pa + size < KSEG_SIZE)
 			va = PHYS_TO_KSEG0(pa);
 		else
-			va = PHYS_TO_XKPHYS(pa, CCA_NONCOHERENT);
+			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 
 		bzero((void *)va, size);
 		return (va);
@@ -925,7 +924,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", phys));
 
-	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_NONCOHERENT);
+	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
 	if ((pg->pg_flags & PV_CACHED) &&
 	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
@@ -953,8 +952,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	src = VM_PAGE_TO_PHYS(srcpg);
 	dst = VM_PAGE_TO_PHYS(dstpg);
-	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_NONCOHERENT);
-	d = (vaddr_t)PHYS_TO_XKPHYS(dst, CCA_NONCOHERENT);
+	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_CACHED);
+	d = (vaddr_t)PHYS_TO_XKPHYS(dst, CCA_CACHED);
 
 	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
 
@@ -1151,7 +1150,7 @@ pmap_page_alloc(vaddr_t *ret)
 	if (pg == NULL)
 		return ENOMEM;
 
-	*ret = PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(pg), CCA_NONCOHERENT);
+	*ret = PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(pg), CCA_CACHED);
 	return 0;
 }
 

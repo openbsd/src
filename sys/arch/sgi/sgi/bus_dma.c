@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.4 2008/04/07 17:25:20 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.5 2008/04/07 22:30:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -492,10 +492,12 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	if (nsegs == 1) {
 		pa = (*t->_device_to_pa)(segs[0].ds_addr);
+#ifndef TGT_COHERENT
 		if (flags & BUS_DMA_COHERENT)
-			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_NC);
+			*kvap = (caddr_t)PHYS_TO_UNCACHED(pa);
 		else
-			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_NONCOHERENT);
+#endif
+			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.6 2007/10/18 04:32:25 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.7 2008/04/07 22:30:47 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -213,7 +213,7 @@ LEAF(Mips10k_SyncCache, 0)
  * Sync the instruction cache.
  */
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, t1			# Compute end address
 	PTR_SUBU t1, 128
 
@@ -232,7 +232,7 @@ LEAF(Mips10k_SyncCache, 0)
  * the selected cache and differs from Hit in that sense.
  */
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, t2			# End address
 	PTR_SUBU t1, t1, 128
 1:
@@ -250,7 +250,7 @@ LEAF(Mips10k_SyncCache, 0)
 	PTR_ADDU t0, t0, 128
 
 /* Do L2 */
-	LOAD_XKPHYS(t3, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t3, CCA_CACHED)
 	lw	ta0, CpuSecondaryCacheSize	# XXX Need set size here.
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
@@ -317,7 +317,7 @@ END(Mips10k_InvalidateICachePage)
  *----------------------------------------------------------------------------
  */
 LEAF(Mips10k_InvalidateICache, 0)
-	LOAD_XKPHYS(a2, CCA_NONCOHERENT)
+	LOAD_XKPHYS(a2, CCA_CACHED)
 	and	a0, 0x00ffffff			# Reduce addr to cache index
 	PTR_ADDU a1, 63				# Round up size
 	PTR_ADDU a1, a0				# Add extra from address
@@ -358,7 +358,7 @@ END(Mips10k_InvalidateICache)
  *----------------------------------------------------------------------------
  */
 LEAF(Mips10k_SyncDCachePage, 0)
-	LOAD_XKPHYS(a2, CCA_NONCOHERENT)
+	LOAD_XKPHYS(a2, CCA_CACHED)
 	dsll	a0, 34
 	dsrl	a0, 34
 	PTR_ADDU a0, a2				# a0 now new XKPHYS address

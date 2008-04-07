@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.21 2007/10/24 20:04:26 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.22 2008/04/07 22:30:47 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -240,7 +240,7 @@ Conf5K:						# R5xxx type, check for L2 cache
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
@@ -270,7 +270,7 @@ Conf52K:					# R5200 type, check for L2 cache
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
@@ -311,7 +311,7 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	mtc0	v0, COP_0_CONFIG		# Enable L3 cache
 	or	t2, CTYPE_HAS_XL3
 #endif
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta3
 1:
 	cache	InvalidatePage_T, 0(t0)
@@ -330,7 +330,7 @@ Conf7KL2:
 	ori	v0, CF_7_SE
 
 	mtc0	v0, COP_0_CONFIG		# Enable and init L2 cache
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -338,7 +338,7 @@ Conf7KL2:
 	cache	IndexStoreTag_S, -4(t0)
 	sync
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -346,7 +346,7 @@ Conf7KL2:
 	lw	zero, -4(t0)
 	sync
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -426,7 +426,7 @@ LEAF(Mips5k_SyncCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, t1			# Compute end address
 	PTR_SUBU t1, 128
 
@@ -444,7 +444,7 @@ LEAF(Mips5k_SyncCache, 0)
  * the selected cache and differs from Hit in that sense.
  */
 
-	LOAD_XKPHYS(t0, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, t2			# End address
 	PTR_SUBU t1, t1, 128
 1:
@@ -463,7 +463,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 3:
-	LOAD_XKPHYS(t3, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t3, CCA_CACHED)
 	lw	ta0, CpuSecondaryCacheSize
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
@@ -479,7 +479,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
-	LOAD_XKPHYS(t3, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t3, CCA_CACHED)
 	lw	ta0, CpuSecondaryCacheSize
 21:
 	cache	InvalidateSecondaryPage, 0(t3)
@@ -495,7 +495,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
-	LOAD_XKPHYS(t3, CCA_NONCOHERENT)
+	LOAD_XKPHYS(t3, CCA_CACHED)
 	lw	ta0, CpuTertiaryCacheSize
 31:
 	cache	InvalidatePage_T, 0(t3)
@@ -586,7 +586,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	lw	v0, CpuNWayCache		# Cache properties
 	lw	t0, CpuPrimaryInstSetSize	# Set size
 	and	a0, 0x00ffffff			# Reduce addr to cache index
-	LOAD_XKPHYS(a2, CCA_NONCOHERENT)
+	LOAD_XKPHYS(a2, CCA_CACHED)
 	PTR_ADDU a1, 31				# Round up size
 	PTR_ADDU a1, a0				# Add extra from address
 	and	a0, -32				# Align start address
@@ -648,7 +648,7 @@ LEAF(Mips5k_SyncDCachePage, 0)
 	li	v0, SR_DIAG_DE
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
-	LOAD_XKPHYS(a2, CCA_NONCOHERENT)
+	LOAD_XKPHYS(a2, CCA_CACHED)
 	lw	v0, CpuNWayCache
 	dsll	a0, 34
 	dsrl	a0, 34
