@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirevar.h,v 1.4 2006/10/08 21:12:51 grange Exp $	*/
+/*	$OpenBSD: onewirevar.h,v 1.5 2008/04/07 22:50:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -57,6 +57,9 @@ int		onewire_search(void *, u_int64_t *, int, u_int64_t);
 /* Bus attachment */
 struct onewirebus_attach_args {
 	struct onewire_bus *	oba_bus;
+	int			oba_flags;
+#define	ONEWIRE_SCAN_NOW		0x0001
+#define	ONEWIRE_NO_PERIODIC_SCAN	0x0002
 };
 
 int	onewirebus_print(void *, const char *);

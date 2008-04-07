@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.8 2007/10/09 17:06:18 gilles Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.9 2008/04/07 22:50:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -51,6 +51,7 @@ struct onewire_softc {
 	TAILQ_HEAD(, onewire_device)	sc_devs;
 
 	int				sc_dying;
+	int				sc_flags;
 	u_int64_t			sc_rombuf[ONEWIRE_MAXDEVS];
 };
 
@@ -98,10 +99,17 @@ onewire_attach(struct device *parent, struct device *self, void *aux)
 	struct onewirebus_attach_args *oba = aux;
 
 	sc->sc_bus = oba->oba_bus;
+	sc->sc_flags = oba->oba_flags;
 	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 	TAILQ_INIT(&sc->sc_devs);
 
 	printf("\n");
+
+	if (sc->sc_flags & ONEWIRE_SCAN_NOW) {
+		onewire_scan(sc);
+		if (sc->sc_flags & ONEWIRE_NO_PERIODIC_SCAN)
+			return;
+	}
 
 	kthread_create_deferred(onewire_createthread, sc);
 }
@@ -393,6 +401,8 @@ onewire_thread(void *arg)
 
 	while (!sc->sc_dying) {
 		onewire_scan(sc);
+		if (sc->sc_flags & ONEWIRE_NO_PERIODIC_SCAN)
+			break;
 		tsleep(sc->sc_thread, PWAIT, "owidle", ONEWIRE_SCANTIME * hz);
 	}
 
