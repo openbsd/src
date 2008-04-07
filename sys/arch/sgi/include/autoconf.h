@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.13 2008/04/07 22:32:46 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,8 +53,6 @@ struct sys_rec {
 		u_int32_t clock_bus;
 		u_int32_t tlbsize;
 		u_int32_t tlbwired;
-		u_int32_t cfg_reg;
-		u_int32_t stat_reg;
 	} cpu[MAX_CPUS];
 	/* Published Cache OPS */
 	void    (*_SyncCache)(void);
@@ -66,9 +64,9 @@ struct sys_rec {
 	void    (*_HitInvalidateDCache)(vaddr_t, int);
 	/* Console/Serial configuration */
 	int	cons_baudclk;
-	struct mips_bus_space console_io;	/* for stupid map designs */
+	struct mips_bus_space console_io;
 	struct mips_bus_space *cons_iot;
-	bus_addr_t cons_ioaddr[8];		/* up to eight loclbus tty's */
+	bus_addr_t cons_ioaddr;
 };
 
 extern struct sys_rec sys_config;
@@ -78,7 +76,7 @@ extern struct sys_rec sys_config;
  */
 #define	COM_FREQ	(sys_config.cons_baudclk)
 #define	CONCOM_FREQ	(sys_config.cons_baudclk)
-#define	CONADDR		(sys_config.cons_ioaddr[0])
+#define	CONADDR		(sys_config.cons_ioaddr)
 
 
 /**/
@@ -94,5 +92,9 @@ struct confargs {
 };
 
 void	enaddr_aton(const char *, u_int8_t *);
+
+void	ip27_setup(void);
+void	ip30_setup(void);
+void	ip32_setup(void);
 
 #endif /* _MACHINE_AUTOCONF_H_ */
