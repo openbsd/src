@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.45 2007/11/05 17:15:16 sthen Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.46 2008/04/07 12:30:04 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 5 2007 $
+.Dd $Mdocdate: April 7 2008 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -111,6 +111,9 @@ the argument itself.
 This string should also
 give some idea of which version of the product (if any) the package
 represents.
+Deprecated, use
+.Fl D Ar COMMENT Ns = Ns Ar value
+instead.
 .It Fl D Ar name Ns = Ns Ar value
 Define
 .Ar name
