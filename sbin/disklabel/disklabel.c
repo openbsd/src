@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.126 2008/04/07 23:27:21 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.127 2008/04/07 23:37:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.126 2008/04/07 23:27:21 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.127 2008/04/07 23:37:14 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -456,22 +456,6 @@ writelabel(int f, char *boot, struct disklabel *lp)
 
 			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 				perror("ioctl DIOCWLABEL");
-#ifdef __alpha__
-			/*
-			 * The Alpha requires that the boot block be checksummed.
-			 * The first 63 8-byte quantites are summed into the 64th.
-			 */
-			{
-				int i;
-				u_int64_t *dp, sum;
-
-				dp = (u_int64_t *)boot;
-				sum = 0;
-				for (i = 0; i < 63; i++)
-					sum += dp[i];
-				dp[63] = sum;
-			}
-#endif
 			if (write(f, boot, lp->d_bbsize) != lp->d_bbsize) {
 				perror("write");
 				return (1);
