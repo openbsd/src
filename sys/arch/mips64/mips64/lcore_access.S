@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.13 2008/02/20 21:34:19 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.14 2008/04/07 22:37:18 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -64,6 +64,7 @@ onfault_table:
 #else
 	PTR_VAL	0
 #endif
+	PTR_VAL	_guarderr
 	.text
 
 /*
@@ -328,5 +329,43 @@ _kcopyerr:
 	PTR_L	ra, CF_RA_OFFS + REGSZ(sp)
 	sw	v0, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ + REGSZ)
+	j	ra
+	li	v0, EFAULT		# return error
+
+/*
+ * Guarded ``memory'' access routines
+ * int guarded_read_4(paddr_t address, uint32_t *dest);
+ * int guarded_write_4(paddr_t address, uint32_t src);
+ */
+
+LEAF(guarded_read_4, 0)
+	PTR_L	t3, curprocpaddr
+	li	v0, KT_GUARDERR
+	lw	v1, PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
+
+	lw	v0, 0(a0)
+	sw	v0, 0(a1)
+	
+	sw	v1, PCB_ONFAULT(t3)
+	j	ra
+	move	v0, zero
+END(guarded_read_4)
+
+LEAF(guarded_write_4, 0)
+	PTR_L	t3, curprocpaddr
+	li	v0, KT_GUARDERR
+	lw	v1, PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
+
+	sw	a1, 0(a0)
+	
+	sw	v1, PCB_ONFAULT(t3)
+	j	ra
+	move	v0, zero
+END(guarded_write_4)
+
+_guarderr:
+	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	li	v0, EFAULT		# return error

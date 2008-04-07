@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2008/04/07 22:29:16 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2008/04/07 22:37:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -545,9 +545,11 @@ int	tlb_update(vaddr_t, unsigned);
 void	tlb_read(int, struct tlb_entry *);
 
 void	savectx(struct user *, int);
-void	switch_exit(struct proc *);
 void	MipsSaveCurFPState(struct proc *);
 void	MipsSaveCurFPState16(struct proc *);
+
+int	guarded_read_4(paddr_t, uint32_t *);
+int	guarded_write_4(paddr_t, uint32_t);
 
 extern u_int32_t cpu_counter_interval;  /* Number of counter ticks/tick */
 extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */
