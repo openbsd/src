@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.1 2008/04/07 11:02:24 espie Exp $
+# $OpenBSD: Subst.pm,v 1.2 2008/04/07 11:55:22 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -33,6 +33,12 @@ sub add
 	$self->{$k} = $v;
 }
 
+sub value
+{
+	my ($self, $k) = @_;
+	return $self->{$k};
+}
+
 sub parse_option
 {
 	my ($self, $opt) = @_;
@@ -40,9 +46,9 @@ sub parse_option
 		my ($k, $v) = ($1, $2);
 		$v =~ s/^\'(.*)\'$/$1/;
 		$v =~ s/^\"(.*)\"$/$1/;
-		$self->{$k} = $v;
+		$self->add($k, $v);
 	} else {
-		$self->{$opt} = 1;
+		$self->add($opt, 1);
 	}
 }
 
@@ -79,27 +85,25 @@ sub has_fragment
 {
 	my ($self, $def, $frag) = @_;
 
-	if (!defined $self->{$def}) {
+	my $v = self->value($def);
+
+	if (!defined $v) {
 		die "Error: unknown fragment $frag";
-	} elsif ($self->{$def} == 1) {
+	} elsif ($v == 1) {
 		return 1;
-	} elsif ($self->{$def} == 0) {
+	} elsif ($v == 0) {
 		return 0;
 	} else {
 		die "Incorrect define for $frag";
 	}
 }
 
-sub value
-{
-	my ($self, $k) = @_;
-	return $self->{$k};
-}
-
 sub empty
 {
 	my ($self, $k) = @_;
-	if (defined $self->{$k} && $self->{$k}) {
+
+	my $v = $self->value($k);
+	if (defined $v && $v) {
 		return 0;
 	} else {
 		return 1;
