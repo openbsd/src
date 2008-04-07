@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.4 2008/04/07 12:15:59 espie Exp $
+# $OpenBSD: Subst.pm,v 1.5 2008/04/07 17:56:43 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -91,7 +91,7 @@ sub has_fragment
 {
 	my ($self, $def, $frag) = @_;
 
-	my $v = self->value($def);
+	my $v = $self->value($def);
 
 	if (!defined $v) {
 		die "Error: unknown fragment $frag";
