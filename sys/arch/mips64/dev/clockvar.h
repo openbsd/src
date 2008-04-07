@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockvar.h,v 1.4 2007/12/18 08:07:53 jsing Exp $	*/
+/*	$OpenBSD: clockvar.h,v 1.5 2008/04/07 22:36:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,13 +29,13 @@
  */
 
 /*
- * Definitions for "cpu-independent" clock handling for the mips arc arch.
+ * Definitions for "cpu-independent" clock handling.
  */
 
 /*
- * clocktime structure:
+ * tod_time structure:
  *
- * structure passed to TOY clocks when setting them.  broken out this
+ * structure passed to TOD clocks when setting them.  broken out this
  * way, so that the time_t -> field conversion can be shared.
  */
 struct tod_time {
@@ -49,32 +49,16 @@ struct tod_time {
 };
 
 /*
- * clockdesc structure:
+ * tod_desc structure:
  *
- * provides clock-specific functions to do necessary operations.
+ * provides tod-specific functions to do necessary operations.
  */
-struct clock_softc;
 
-struct clock_desc {
-	void	(*clk_attach)(struct device *, struct device *, void *);
-	void	(*clk_init)(struct clock_softc *);
-	void	(*clk_get)(struct clock_softc *, time_t, struct tod_time *);
-	void	(*clk_set)(struct clock_softc *, struct tod_time *);
-	int	clk_hz;
-	int	clk_stathz;
-	int	clk_profhz;
+struct tod_desc {
+	void	*tod_cookie;
+	void	(*tod_get)(void *, time_t, struct tod_time *);
+	void	(*tod_set)(void *, struct tod_time *);
+	int	tod_valid;
 };
 
-struct clock_softc {
-	struct	device sc_dev;
-	struct	clock_desc sc_clock;
-	int	sc_initted;
-	bus_space_tag_t sc_clk_t;
-	bus_space_handle_t sc_clk_h;
-	void	*ih;
-};
-
-/* XXX Handle to clock address space. */
-bus_space_handle_t clock_h;
-
-void md_clk_attach(struct device *, struct device *, void *);
+extern struct tod_desc sys_tod;

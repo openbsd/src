@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.21 2008/04/07 22:32:44 miod Exp $
+#	$OpenBSD: files.sgi,v 1.22 2008/04/07 22:36:26 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -43,6 +43,10 @@ attach	mainbus at root
 device	cpu
 attach	cpu at mainbus
 
+#	Clock device
+device	clock
+attach	clock at mainbus
+
 #
 #	O2 MACE localbus autoconfiguration devices
 #
@@ -55,10 +59,14 @@ file	arch/sgi/localbus/macectrl.S		macebus
 #
 #	Origin200/Origin2000 XBOW mux bridge
 #
-define	xbowmux {[sys = - 1], [base = -1], [irq = -1]}
-device	xbowmux
-attach	xbowmux at mainbus
-file	arch/sgi/localbus/xbowmux.c		xbowmux
+define	xbow {[vendor = -1], [product = -1]}
+device	xbow
+attach	xbow at mainbus
+file	arch/sgi/xbow/xbow.c			xbow
+
+include "dev/onewire/files.onewire"
+
+include "arch/sgi/xbow/files.xbow"
 
 #
 #	PCI Bus bridges
@@ -67,10 +75,6 @@ device	macepcibr {} : pcibus
 attach	macepcibr at macebus
 file	arch/sgi/pci/macepcibridge.c		macepcibr needs-flag
 file	arch/sgi/pci/macepcimap.c		macepcibr
-
-device	xiopcibr {} : pcibus
-attach	xiopcibr at xbowmux
-file	arch/sgi/pci/xiopcibridge.c		xiopcibr needs-flag
 
 #	Use machine independent SCSI driver routines
 include	"scsi/files.scsi"
@@ -81,10 +85,21 @@ include	"dev/i2o/files.i2o"
 
 include	"dev/pci/files.pci"
 
-# Clock device
-device	clock
-attach	clock at macebus
-file	arch/sgi/sgi/clock_md.c			clock
+# IOC3
+define	ioc {[base = -1], [irq = -1]}
+device	ioc: onewirebus
+attach	ioc at pci
+file	arch/sgi/pci/ioc.c			ioc
+
+# IOC3 serial ports
+attach	com at ioc with com_ioc
+file	arch/sgi/dev/com_ioc.c			com_ioc
+
+# DS1687 Time-Of-Day calendar device
+device	dsrtc
+attach	dsrtc at macebus with dsrtc_macebus
+attach	dsrtc at ioc with dsrtc_ioc
+file	arch/sgi/dev/dsrtc.c			dsrtc
 
 # GBE framebuffer
 device	gbe: wsemuldisplaydev, rasops8, rasops16, rasops32
@@ -133,6 +148,19 @@ include	"dev/wscons/files.wscons"
 # Machine-independent USB drivers
 #
 include	"dev/usb/files.usb"
+
+#
+# Number-In-a-Can containers
+#
+# Ethernet address
+device	owmac
+attach	owmac at onewire
+file	arch/sgi/dev/owmac.c			owmac
+# Serial numbers
+device	owserial
+attach	owserial at onewire
+file	arch/sgi/dev/owserial.c			owserial
+file	arch/sgi/dev/owmem_subr.c		owmac | owserial
 
 #
 # Specials.

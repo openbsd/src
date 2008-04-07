@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2008/02/20 18:46:20 miod Exp $
+#	$OpenBSD: GENERIC,v 1.29 2008/04/07 22:36:26 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -39,6 +39,7 @@ config		bsd	swap generic
 #
 mainbus0	at root
 cpu*		at mainbus0
+clock0		at mainbus0
 
 #### Main local buses
 macebus0	at mainbus0	# MACE controller localbus.
@@ -47,12 +48,12 @@ macebus0	at mainbus0	# MACE controller localbus.
 gbe0		at mainbus0
 
 # Localbus devices
-clock0		at macebus0
 mec0		at macebus0 base 0x00280000 irq 4
 mavb0		at macebus0 base 0x00300000 irq 7
 mkbc0		at macebus0 base 0x00320000 irq 6
 com0		at macebus0 base 0x00390000 irq 5
 com1		at macebus0 base 0x00398000 irq 5
+dsrtc0		at macebus0
 power0		at macebus0 irq 6
 
 #### PCI Bus
