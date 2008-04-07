@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.5 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.6 2008/04/07 22:34:21 miod Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -201,7 +201,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 		 * We've already been setup via gbe_cnattach().
 		 */
 
-		gsc->ioh = PHYS_TO_XKPHYS(GBE_BASE, CCA_NC);
+		gsc->ioh = PHYS_TO_UNCACHED(GBE_BASE);
 		gsc->rev = bus_space_read_4(gsc->iot, gsc->ioh, GBE_CTRL_STAT)
 		    & 0xf;
 
@@ -834,7 +834,7 @@ gbe_cnprobe(bus_space_tag_t iot, bus_addr_t addr)
 	int val, width, height;
 
 	/* Setup bus space mapping. */
-	ioh = PHYS_TO_XKPHYS(addr, CCA_NC);
+	ioh = PHYS_TO_UNCACHED(addr);
 
 	/* Determine resolution configured by firmware. */
 	val = bus_space_read_4(iot, ioh, GBE_VT_HCMAP);
@@ -866,7 +866,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	
 	/* Setup bus space mapping. */
 	gsc.iot = iot;
-	gsc.ioh = PHYS_TO_XKPHYS(addr, CCA_NC);
+	gsc.ioh = PHYS_TO_UNCACHED(addr);
 
 	/* Determine GBE revision. */
 	gsc.rev = bus_space_read_4(gsc.iot, gsc.ioh, GBE_CTRL_STAT) & 0xf;
@@ -893,7 +893,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	va = pmap_steal_memory(gbe_consdata.tm_size + 65536, NULL, NULL);
 	pmap_extract(pmap_kernel(), va, &pa);
 	gbe_consdata.tm_phys = ((pa >> 16) + 1) << 16;
-	gbe_consdata.tm = (caddr_t)PHYS_TO_XKPHYS(gbe_consdata.tm_phys, CCA_NC);
+	gbe_consdata.tm = (caddr_t)PHYS_TO_UNCACHED(gbe_consdata.tm_phys);
 	
 	/* 
 	 * Steal memory for framebuffer - 64KB aligned and coherent.
@@ -901,7 +901,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	va = pmap_steal_memory(gbe_consdata.fb_size + 65536, NULL, NULL);
 	pmap_extract(pmap_kernel(), va, &pa);
 	gbe_consdata.fb_phys = ((pa >> 16) + 1) << 16;
-	gbe_consdata.fb = (caddr_t)PHYS_TO_XKPHYS(gbe_consdata.fb_phys, CCA_NC);
+	gbe_consdata.fb = (caddr_t)PHYS_TO_UNCACHED(gbe_consdata.fb_phys);
 
 	/*
 	 * Setup GBE hardware.
