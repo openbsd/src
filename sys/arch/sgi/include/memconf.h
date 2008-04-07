@@ -1,5 +1,10 @@
-/*	$OpenBSD: memconf.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: memconf.h,v 1.2 2008/04/07 22:41:52 miod Exp $ */
 
-/* Use Mips generic include file */
+#ifndef	_SGI_MEMCONF_H_
+#define	_SGI_MEMCONF_H_
+
+#define	MAXMEMSEGS	32
 
 #include <mips64/memconf.h>
+
+#endif	/* _SGI_MEMCONF_H_ */
