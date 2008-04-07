@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.72 2008/03/31 23:56:29 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.73 2008/04/07 23:10:24 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1025,7 +1025,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 		part = defpart;
 
 #ifdef RAMDISK_HOOKS
-	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+	if (strncmp(str, fakerdrootdev.dv_xname, len) == 0) {
 		dv = &fakerdrootdev;
 		goto gotdisk;
 	}
