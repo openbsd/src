@@ -1,0 +1,16 @@
+#	$OpenBSD: files.xbow,v 1.1 2008/04/07 22:47:40 miod Exp $
+
+# IP30 Heart
+device	xheart {} : onewirebus
+attach	xheart at xbow
+file	arch/sgi/xbow/xheart.c			xheart
+
+# IP27 Hub
+device	xhub {}
+attach	xhub at xbow
+file	arch/sgi/xbow/xhub.c			xhub
+
+# PCI Bridge
+device	xbridge {} : pcibus
+attach	xbridge at xbow
+file	arch/sgi/xbow/xbridge.c			xbridge
