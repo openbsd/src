@@ -1,0 +1,79 @@
+/*
+ * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
+ *
+ * generated from:
+ *	OpenBSD: xbowdevs,v 1.1 2008/04/07 22:47:40 miod Exp 
+ */
+
+/*
+ * Copyright (c) 2008 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+/* Descriptions of known devices. */
+struct xbow_product {
+	uint32_t vendor;
+	uint32_t product;
+	const char *productname;
+};
+
+static const struct xbow_product xbow_products[] = {
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_XBOW,
+	    "XBow",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_XXBOW,
+	    "XXBow",
+	},
+	{
+	    PCI_VENDOR_SGI2, PCI_PRODUCT_SGI2_ODYSSEY,
+	    "Odyssey",
+	},
+	{
+	    PCI_VENDOR_SGI3, PCI_PRODUCT_SGI3_TPU,
+	    "TPU",
+	},
+	{
+	    PCI_VENDOR_SGI3, PCI_PRODUCT_SGI3_XBRIDGE,
+	    "XBridge",
+	},
+	{
+	    PCI_VENDOR_SGI4, PCI_PRODUCT_SGI4_HEART,
+	    "Heart",
+	},
+	{
+	    PCI_VENDOR_SGI4, PCI_PRODUCT_SGI4_BRIDGE,
+	    "Bridge",
+	},
+	{
+	    PCI_VENDOR_SGI4, PCI_PRODUCT_SGI4_HUB,
+	    "Hub",
+	},
+	{
+	    PCI_VENDOR_SGI4, PCI_PRODUCT_SGI4_BEDROCK,
+	    "Bedrock",
+	},
+	{
+	    PCI_VENDOR_SGI5, PCI_PRODUCT_SGI5_IMPACT,
+	    "ImpactSR",
+	},
+	{
+	    PCI_VENDOR_SGI5, PCI_PRODUCT_SGI5_KONA,
+	    "Kona",
+	},
+	{ 0, 0, NULL, }
+};
+
