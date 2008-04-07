@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2008/03/26 22:07:23 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2008/04/07 16:21:26 thib Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1261,7 +1261,7 @@ syscall(tf, code, pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p;
-	int error = 0, new;
+	int error = 0, new, lock;
 	register_t args[8];
 	register_t rval[2];
 
@@ -1281,6 +1281,8 @@ syscall(tf, code, pc)
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
+
+	lock = !(callp->sy_flags & SY_NOLOCK);
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -1352,20 +1354,27 @@ syscall(tf, code, pc)
 		goto bad;
 	}
 
-	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
+	KERNEL_PROC_UNLOCK(p);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 #if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		KERNEL_PROC_LOCK(p);
 		error = systrace_redirect(code, p, args, rval);
-	else
+		KERNEL_PROC_UNLOCK(p);
+	} else
 #endif
+	{
+		if (lock)
+			KERNEL_PROC_LOCK(p);
 		error = (*callp->sy_call)(p, args, rval);
-	KERNEL_PROC_UNLOCK(p);
-
+		if (lock)
+			KERNEL_PROC_UNLOCK(p);
+	}
 	switch (error) {
 		vaddr_t dest;
 	case 0:
