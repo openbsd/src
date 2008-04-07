@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1338 2008/04/06 00:43:43 brad Exp $
+$OpenBSD: pcidevs,v 1.1339 2008/04/07 10:13:19 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3900,6 +3900,7 @@ product SUN MS_IIep		0x9000	microSPARC IIep PCI
 product SUN US_IIi		0xa000	UltraSPARC IIi PCI
 product SUN US_IIe		0xa001	UltraSPARC IIe PCI
 product SUN CASSINI		0xabba	Cassini
+product SUN NEPTUNE		0xabcd	Neptune
 
 /* Sundance products */
 product SUNDANCE ST201_1	0x0200	ST201
