@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.6 2008/03/02 23:39:19 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.7 2008/04/07 11:21:16 espie Exp $
 
 =head1 NAME
 
@@ -457,6 +457,11 @@ handles items that may be shared by several packages.
 =item OpenBSD::SharedLibs
 
 shared library specificities when handled as dependencies.
+
+=item OpenBSD::Subst
+
+conventions used for substituting variables during L<pkg_create(1)>, 
+and related algorithms.
 
 =item OpenBSD::Temp
 
