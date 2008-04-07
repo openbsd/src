@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.48 2008/02/04 12:15:03 espie Exp $
+# $OpenBSD: Makefile,v 1.49 2008/04/07 11:02:24 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,7 @@ PACKAGES= \
     OpenBSD/Search.pm \
     OpenBSD/SharedItems.pm \
     OpenBSD/SharedLibs.pm \
+    OpenBSD/Subst.pm \
     OpenBSD/Temp.pm \
     OpenBSD/Update.pm \
     OpenBSD/UpdateSet.pm \

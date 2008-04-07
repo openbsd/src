@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.115 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: pkg_create,v 1.116 2008/04/07 11:02:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,7 @@ use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
 use OpenBSD::Paths;
+use OpenBSD::Subst;
 use File::Basename;
 
 # Extra stuff needed to archive files
@@ -303,34 +304,7 @@ sub close
 
 package main;
 
-my %defines;
-
-sub dosubst
-{
-	local $_ = shift;
-	return $_ unless m/\$/o;
-	while (my ($k, $v) = each %defines) {
-		s/\$\{\Q$k\E\}/$v/g;
-	}
-	s/\$\\/\$/go;
-	return $_;
-}
-
-sub copy_subst_fh
-{
-	my ($srcname, $dest) = @_;
-	open my $src, '<', $srcname or die "can't open $srcname";
-	local $_;
-	while (<$src>) {
-		print $dest dosubst($_);
-	}
-}
-sub copy_subst
-{
-	my ($srcname, $destname) = @_;
-	open my $dest, '>', $destname or die "can't open $destname";
-	copy_subst_fh($srcname, $dest);
-}
+my $subst = OpenBSD::Subst->new;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k,
 	$opt_S, $opt_s, $opt_O, $opt_A, $opt_L,
@@ -383,14 +357,10 @@ sub read_fragments
 						$def = 'SHARED_LIBS';
 						$frag = 'shared';
 					}
-					if (!defined $defines{$def}) {
-						die "Error: unknown fragment $frag";
-					} elsif ($defines{$def} == 1) {
+					if ($subst->has_fragment($def, $frag)) {
 						next GETLINE if defined $not;
-					} elsif ($defines{$def} == 0) {
-						next GETLINE unless defined $not;
 					} else {
-						die "Incorrect define for $frag";
+						next GETLINE unless defined $not;
 					}
 					my $newname = deduce_name($file->name, $frag, $not);
 					if (defined $newname) {
@@ -407,7 +377,7 @@ sub read_fragments
 					Warn "Shared library without SHARED_LIBS: $_";
 					$main::errors++;
 				}
-				&$cont(dosubst($_));
+				&$cont($subst->do($_));
 			}
 		}
 	}
@@ -419,7 +389,7 @@ sub add_special_file
 	my ($plist, $name, $opt) = @_;
 	if (defined $opt) {
 	    my $o = OpenBSD::PackingElement::File->add($plist, $name);
-	    copy_subst($opt, $o->fullname) if defined $o->fullname;
+	    $subst->copy($opt, $o->fullname) if defined $o->fullname;
 	}
 }
 
@@ -427,7 +397,7 @@ sub add_description
 {
 	my ($plist, $name, $opt_c, $opt_d) = @_;
 	my $o = OpenBSD::PackingElement::FDESC->add($plist, $name);
-	my $comment = $defines{COMMENT};
+	my $comment = $subst->value('COMMENT');
 	if (defined $comment) {
 		if (length $comment > 60) {
 			print STDERR "Error: comment is too long\n";
@@ -444,23 +414,23 @@ sub add_description
 	if (defined $o->fullname) {
 	    open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
 	    if (defined $comment) {
-	    	print $fh dosubst($comment), "\n";
+	    	print $fh $subst->do($comment), "\n";
 	    } else {
 		if ($opt_c =~ /^\-(.*)$/o) {
 		    print $fh $1, "\n";
 		} else {
-		    copy_subst_fh($opt_c, $fh);
+		    $subst->copy_fh($opt_c, $fh);
 		}
 	    }
 	    if ($opt_d =~ /^\-(.*)$/o) {
 		print $fh $1, "\n";
 	    } else {
-		copy_subst_fh($opt_d, $fh);
+		$subst->copy_fh($opt_d, $fh);
 	    }
 	    if (defined $comment) {
-	    	print $fh "\n", dosubst('Maintainer: ${MAINTAINER}'), "\n";
-	    	if (defined $defines{HOMEPAGE} && $defines{HOMEPAGE} ne '') {
-			print $fh "\n", dosubst('WWW: ${HOMEPAGE}'), "\n";
+	    	print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
+		if (!$subst->empty('HOMEPAGE')) {
+			print $fh "\n", $subst->do('WWW: ${HOMEPAGE}'), "\n";
 		}
 	    }
 	    close($fh);
@@ -485,15 +455,7 @@ try {
 	getopts('p:f:c:d:vi:k:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
 		sub { 
-			local $_ = shift;
-			if (m/^([^=]+)\=(.*)$/o) {
-				my ($k, $v) = ($1, $2);
-				$v =~ s/^\'(.*)\'$/$1/;
-				$v =~ s/^\"(.*)\"$/$1/;
-				$defines{$k} = $v;
-			} else {
-				$defines{$_} = 1;
-			}
+			$subst->parse_option(shift);
 		},
 	 'f' =>
 	 	sub {
@@ -590,9 +552,9 @@ if ($regen_package) {
 		$pkgname =~ s/\.tgz$//o;
 		$plist->set_pkgname($pkgname);
 	}
-	my $fullpkgpath = $defines{'FULLPKGPATH'};
-	my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
-	my $ftp = $defines{'PERMIT_PACKAGE_FTP'};
+	my $fullpkgpath = $subst->value('FULLPKGPATH');
+	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM');
+	my $ftp = $subst->value('PERMIT_PACKAGE_FTP');
 	if (defined $fullpkgpath && defined $cdrom && defined $ftp) {
 		$cdrom = 'yes' if $cdrom =~ m/^yes$/io;
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
