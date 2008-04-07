@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.2 2008/03/31 17:56:41 deraadt Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.3 2008/04/07 18:45:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -198,9 +198,15 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 	/* Select HM logical device */
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
 
+	/*
+	 * The address should be 8-byte aligned, but it seems some
+	 * BIOSes ignore this.  They get away with it, because
+	 * Apparently the hardware simply ignores the lower three
+	 * bits.  We do the same here.
+	 */
 	reg0 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_LSB);
 	reg1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_MSB);
-	iobase = (reg1 << 8) | reg0;
+	iobase = (reg1 << 8) | (reg0 & ~0x7);
 
 	printf("\n");
 
