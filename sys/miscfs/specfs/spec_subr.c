@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_subr.c,v 1.3 2007/12/09 20:54:01 jmc Exp $	*/
+/*	$OpenBSD: spec_subr.c,v 1.4 2008/04/08 14:46:45 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
@@ -25,12 +25,20 @@
 
 #include <miscfs/specfs/specdev.h>
 
+#ifdef	CLONE_DEBUG
+#define	DNPRINTF(m...)	do { printf(m);  } while (0)
+#else
+#define	DNPRINTF(m...)	/* nothing */
+#endif
+
 int
 spec_open_clone(struct vop_open_args *ap)
 {
 	struct vnode *cvp, *vp = ap->a_vp;
 	struct cloneinfo *cip;
 	int error, i;
+
+	DNPRINTF("cloning vnode\n");
 
 	for (i = 1; i < sizeof(vp->v_specbitmap) * NBBY; i++)
 		if (isclr(vp->v_specbitmap, i)) {
@@ -40,9 +48,6 @@ spec_open_clone(struct vop_open_args *ap)
 
 	if (i == sizeof(vp->v_specbitmap) * NBBY)
 		return (EBUSY); /* too many open instances */
-
-	printf("spec_open_clone(): cloning device (%d, %d) for pid %u\n",
-	    major(vp->v_rdev), minor(vp->v_rdev), curproc->p_pid);
 
 	error = cdevvp(makedev(major(vp->v_rdev), i), &cvp);
 	if (error)
@@ -60,6 +65,8 @@ spec_open_clone(struct vop_open_args *ap)
 		 return (error); /* device open failed */
 	}
 
+	cvp->v_flag |= VCLONE;
+
 	cip = malloc(sizeof(struct cloneinfo), M_TEMP, M_WAITOK);
 	cip->ci_data = vp->v_data;
 	cip->ci_vp = cvp;
@@ -68,8 +75,7 @@ spec_open_clone(struct vop_open_args *ap)
 	vp->v_flag |= VCLONED;
 	vp->v_data = cip;
 
-	printf("spec_open_clone(): new minor for cloned device is %d\n",
-	    minor(cvp->v_rdev));
+	DNPRINTF("clone of vnode %p is vnode %p\n", vp, cvp);
 
 	return (0); /* device cloned */
 }
@@ -87,9 +93,7 @@ spec_close_clone(struct vop_close_args *ap)
 
 	pvp = vp->v_specparent; /* get parent device */
 	clrbit(pvp->v_specbitmap, minor(vp->v_rdev));
-
-	printf("spec_close_clone(): freeing minor %d of dev %d for"
-	    " pid %u\n", minor(vp->v_rdev), major(vp->v_rdev), curproc->p_pid);
+	vrele(pvp);
 
 	return (0); /* clone closed */
 }

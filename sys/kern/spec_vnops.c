@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.44 2007/12/27 13:59:12 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.45 2008/04/08 14:46:45 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -529,6 +529,8 @@ spec_close(void *v)
 			vrele(vp);
 			ap->a_p->p_session->s_ttyvp = NULL;
 		}
+		if (cdevsw[major(dev)].d_flags & D_CLONE)
+			return (spec_close_clone(ap));
 		/*
 		 * If the vnode is locked, then we are in the midst
 		 * of forcably closing the device, otherwise we only
@@ -536,8 +538,6 @@ spec_close(void *v)
 		 */
 		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
 			return (0);
-		if (cdevsw[major(dev)].d_flags & D_CLONE)
-			return (spec_close_clone(ap));
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
 		break;
@@ -577,6 +577,47 @@ spec_close(void *v)
 	}
 
 	return ((*devclose)(dev, ap->a_fflag, mode, ap->a_p));
+}
+
+int
+spec_getattr(void *v)
+{
+	struct vop_getattr_args	*ap = v;
+	struct vnode		*vp = ap->a_vp;
+
+	if (!(vp->v_flag & VCLONE))
+		return (EBADF);
+
+	return (VOP_GETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p));
+}
+
+int
+spec_setattr(void *v)
+{
+	struct vop_getattr_args	*ap = v;
+	struct vnode		*vp = ap->a_vp;
+	int			 error;
+
+	if (!(vp->v_flag & VCLONE))
+		return (EBADF);
+
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, ap->a_p);
+	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p);
+	VOP_UNLOCK(vp, 0, ap->a_p);
+
+	return (error);
+}
+
+int
+spec_access(void *v)
+{
+	struct vop_access_args	*ap = v;
+	struct vnode		*vp = ap->a_vp;
+
+	if (!(vp->v_flag & VCLONE))
+		return (EBADF);
+
+	return (VOP_ACCESS(vp->v_specparent, ap->a_mode, ap->a_cred, ap->a_p));
 }
 
 /*

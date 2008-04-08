@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.60 2007/10/01 22:06:02 sobrado Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.61 2008/04/08 14:46:45 thib Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.60 2007/10/01 22:06:02 sobrado Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.61 2008/04/08 14:46:45 thib Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,6 +72,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.60 2007/10/01 22:06:02 sobrado Exp $
 
 #include <xfs/xfs_config.h>
 #include <xfs/xfs_node.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -151,6 +153,7 @@ int isofs_filestat(struct vnode *, struct filestat *);
 int msdos_filestat(struct vnode *, struct filestat *);
 int nfs_filestat(struct vnode *, struct filestat *);
 int xfs_filestat(struct vnode *, struct filestat *);
+int spec_filestat(struct vnode *, struct filestat *);
 void dofiles(struct kinfo_proc2 *);
 void getinetproto(int);
 void usage(void);
@@ -416,7 +419,7 @@ vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 		dprintf("can't read vnode at %p for pid %ld", vp, (long)Pid);
 		return;
 	}
-	if (vn.v_type == VNON || vn.v_tag == VT_NON)
+	if (vn.v_type == VNON)
 		badtype = "none";
 	else if (vn.v_type == VBAD)
 		badtype = "bad";
@@ -447,6 +450,14 @@ vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 			if (!xfs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
+		case VT_NON:
+			if (vn.v_flag & VCLONE) {
+				if (!spec_filestat(&vn, &fst))
+					badtype = "error";
+			} else {
+				badtype = "none";	/* not a clone */
+			}
+			break;
 		default: {
 			static char unknown[30];
 			snprintf(badtype = unknown, sizeof unknown,
@@ -476,11 +487,14 @@ vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 		(void)printf(" -           -  %10s    -\n", badtype);
 		return;
 	}
+
 	if (nflg)
 		(void)printf(" %2ld,%-2ld", (long)major(fst.fsid),
 		    (long)minor(fst.fsid));
-	else
+	else if (!(vn.v_flag & VCLONE))
 		(void)printf(" %-8s", getmnton(vn.v_mount));
+	else
+		(void)printf(" clone");
 	if (nflg)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
@@ -662,6 +676,35 @@ xfs_filestat(struct vnode *vp, struct filestat *fsp)
 	fsp->rdev = xfs_node.attr.va_rdev;
 
 	return 1;
+}
+
+int
+spec_filestat(struct vnode *vp, struct filestat *fsp)
+{
+	struct specinfo		specinfo;
+	struct vnode		parent;
+
+	if (!KVM_READ(vp->v_specinfo, &specinfo, sizeof(struct specinfo))) {
+		dprintf("can't read specinfo at %p for pid %ld",
+		     vp->v_specinfo, (long) Pid);
+		return (0);
+	}
+
+	vp->v_specinfo = &specinfo;
+
+	if (!KVM_READ(vp->v_specparent, &parent, sizeof(struct vnode))) {
+		dprintf("can't read parent vnode at %p for pid %ld",
+		     vp->v_specparent, (long) Pid);
+		return (0);
+	}
+
+	if (!ufs_filestat(&parent, fsp))
+		return (0);
+
+	if (nflg)
+		fsp->rdev = vp->v_rdev;
+
+	return (1);
 }
 
 char *
