@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.3 2008/04/07 18:45:26 kettenis Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.4 2008/04/08 18:48:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -222,10 +222,12 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-wbsio_print(void *aux, const char *isa)
+wbsio_print(void *aux, const char *pnp)
 {
 	struct isa_attach_args *ia = aux;
 
+	if (pnp)
+		printf("%s", pnp);
 	if (ia->ia_iosize)
 		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
