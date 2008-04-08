@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.52 2008/03/03 07:02:28 matthieu Exp $
+.\"	$OpenBSD: release.8,v 1.53 2008/04/08 14:59:07 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: March 3 2008 $
+.Dd $Mdocdate: April 8 2008 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -162,15 +162,19 @@ $ make clean depend && make
 .Li "make clean"
 is your friend.)
 .Pp
-Replace the old kernel and reboot:
+Replace the old kernel and reboot.
+The current kernel is copied to
+.Pa /obsd
+and the new kernel to
+.Pa /bsd .
 .Bd -literal -offset indent
 $ su
-# mv /bsd /bsd.old && mv bsd / && chown root:wheel /bsd
+# make install
 # shutdown -r now
 .Ed
 .Pp
 If the system does not come up you can boot using
-.Pa bsd.old .
+.Pa /obsd .
 .Ss 3. Build a new system
 Now that you are running your new kernel you can build a new system.
 It's safer (but slower) to remove your object directories and re-create
