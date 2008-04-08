@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.1 2008/03/09 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.2 2008/04/08 22:05:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -261,7 +261,7 @@ vpci_alloc_io_tag(struct vpci_pbm *pp)
 {
 	return (vpci_alloc_bus_tag(pp, "io",
 	    0x01,       /* IO space (where's the #define???) */
-	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
+	    ASI_PRIMARY, ASI_PRIMARY_LITTLE));
 }
 
 bus_space_tag_t
