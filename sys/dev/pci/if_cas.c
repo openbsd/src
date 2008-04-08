@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.15 2008/04/02 22:26:16 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.16 2008/04/08 23:41:56 brad Exp $	*/
 
 /*
  *
@@ -630,19 +630,32 @@ cas_tick(void *arg)
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t mac = sc->sc_memh;
 	int s;
+	u_int32_t v;
 
 	/* unload collisions counters */
-	ifp->if_collisions +=
-	    bus_space_read_4(t, mac, CAS_MAC_NORM_COLL_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_EXCESS_COLL_CNT) +
+	v = bus_space_read_4(t, mac, CAS_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_LATE_COLL_CNT);
+	ifp->if_collisions += v +
+	    bus_space_read_4(t, mac, CAS_MAC_NORM_COLL_CNT) +
+	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT);
+	ifp->if_oerrors += v;
+
+	/* read error counters */
+	ifp->if_ierrors +=
+	    bus_space_read_4(t, mac, CAS_MAC_RX_LEN_ERR_CNT) +
+	    bus_space_read_4(t, mac, CAS_MAC_RX_ALIGN_ERR) +
+	    bus_space_read_4(t, mac, CAS_MAC_RX_CRC_ERR_CNT) +
+	    bus_space_read_4(t, mac, CAS_MAC_RX_CODE_VIOL);
 
 	/* clear the hardware counters */
 	bus_space_write_4(t, mac, CAS_MAC_NORM_COLL_CNT, 0);
 	bus_space_write_4(t, mac, CAS_MAC_FIRST_COLL_CNT, 0);
 	bus_space_write_4(t, mac, CAS_MAC_EXCESS_COLL_CNT, 0);
 	bus_space_write_4(t, mac, CAS_MAC_LATE_COLL_CNT, 0);
+	bus_space_write_4(t, mac, CAS_MAC_RX_LEN_ERR_CNT, 0);
+	bus_space_write_4(t, mac, CAS_MAC_RX_ALIGN_ERR, 0);
+	bus_space_write_4(t, mac, CAS_MAC_RX_CRC_ERR_CNT, 0);
+	bus_space_write_4(t, mac, CAS_MAC_RX_CODE_VIOL, 0);
 
 	s = splnet();
 	mii_tick(&sc->sc_mii);
