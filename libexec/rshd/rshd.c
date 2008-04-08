@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.51 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.52 2008/04/08 19:16:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.51 2004/11/17 01:47:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.52 2008/04/08 19:16:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -473,7 +473,6 @@ doit(struct sockaddr *fromp)
 	getstr(remuser, sizeof(remuser), "remuser");
 	getstr(locuser, sizeof(locuser), "locuser");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
-	setpwent();
 	pwd = getpwnam(locuser);
 	if (pwd == NULL) {
 		syslog(LOG_INFO|LOG_AUTH,
