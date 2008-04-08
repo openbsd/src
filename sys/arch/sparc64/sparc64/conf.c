@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2008/03/09 00:23:17 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2008/04/08 14:31:54 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -263,13 +263,13 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
 	cdev_bpp_init(NBPP,bpp),	/* 107: on-board parallel port */
 	cdev_tty_init(NSTTY,stty),	/* 108: spif serial ports */
 	cdev_gen_init(NSBPP,sbpp),	/* 109: spif parallel ports */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
-	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */
+	cdev_tun_init(NTUN,tun),	/* 111: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 112: loadable module driver */
 	cdev_lkm_dummy(),		/* 113 */
 	cdev_lkm_dummy(),		/* 114 */

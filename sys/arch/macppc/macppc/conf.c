@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2007/11/12 19:23:26 kettenis Exp $ */
+/*	$OpenBSD: conf.c,v 1.34 2008/04/08 14:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -165,8 +165,8 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
-	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
+	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
 	cdev_apm_init(NAPM,apm),	/* 25: APM interface */
 	cdev_tty_init(NCOM,com),        /* 26: Serial Ports via com(4) */

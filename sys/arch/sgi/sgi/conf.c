@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2007/05/29 07:23:20 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 2008/04/08 14:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,8 +140,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 9: SCSI disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
-	cdev_bpftun_init(NTUN,tun),	/* 13: network tunnel */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 12: berkeley packet filter */
+	cdev_tun_init(NTUN,tun),	/* 13: network tunnel */
 	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */

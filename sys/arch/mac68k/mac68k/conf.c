@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 2007/05/28 22:26:03 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 2008/04/08 14:31:54 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -130,9 +130,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 22: Berkeley packet filter */
 	cdev_notdef(),			/* 23 was ADB */
-	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
+	cdev_tun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 25: loadable module driver */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */

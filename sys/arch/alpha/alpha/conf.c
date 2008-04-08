@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 2007/06/20 18:28:56 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.56 2008/04/08 14:31:54 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -143,11 +143,11 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_bpftun_init(NTUN,tun),	/* 7: network tunnel */
+	cdev_tun_init(NTUN,tun),	/* 7: network tunnel */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
 	cdev_fd_init(1,filedesc),	/* 10: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 11: Berkeley packet filter */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 11: Berkeley packet filter */
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */

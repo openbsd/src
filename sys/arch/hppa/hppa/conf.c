@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 2007/07/15 19:25:49 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.42 2008/04/08 14:31:54 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -141,8 +141,8 @@ struct cdevsw   cdevsw[] =
 	cdev_ss_init(NSS,ss),		/* 14: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 15: SCSI unknown */
 	cdev_fd_init(1,filedesc),	/* 16: file descriptor pseudo-device */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 17: Berkeley packet filter */
-	cdev_bpftun_init(NTUN,tun),	/* 18: network tunnel */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 17: Berkeley packet filter */
+	cdev_tun_init(NTUN,tun),	/* 18: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 19: loadable module driver */
 	cdev_random_init(1,random),	/* 20: random generator */
 	cdev_pf_init(NPF,pf),		/* 21: packet filter */

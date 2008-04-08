@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2007/11/25 17:11:12 oga Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2008/04/08 14:31:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -213,7 +213,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_notdef(), 			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
+	cdev_bpf_init(NBPFILTER,bpf),	/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
 #if 0
 	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
@@ -234,7 +234,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 37: Extended PS/2 mouse */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
-	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
+	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
 #ifdef COMPAT_SVR4

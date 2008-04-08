@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2007/05/28 22:26:03 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2008/04/08 14:31:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -302,7 +302,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NVND,vnd),		/* 19: vnode disk driver */
 	cdev_lkm_dummy(),			/* 20: */
 	cdev_disk_init(NCCD,ccd),		/* 21: concatenated disk driver */
-	cdev_bpftun_init(NBPFILTER,bpf),	/* 22: Berkeley packet filter */
+	cdev_bpf_init(NBPFILTER,bpf),		/* 22: Berkeley packet filter */
 	cdev_lkm_dummy(),			/* 23: */
 	cdev_disk_init(NSD,sd),			/* 24: SCSI disk */
 	cdev_tape_init(NST,st),			/* 25: SCSI tape */
@@ -313,7 +313,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 30: */
 	cdev_lkm_dummy(),			/* 31: */
 	cdev_lkm_dummy(),			/* 32: */
-	cdev_bpftun_init(NTUN,tun),		/* 33: network tunnel */
+	cdev_tun_init(NTUN,tun),		/* 33: network tunnel */
 	cdev_apm_init(NAPM,apm),		/* 34: APM interface */
 	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
