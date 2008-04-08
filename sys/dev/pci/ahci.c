@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.136 2007/11/28 16:01:34 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.137 2008/04/08 12:20:31 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -383,6 +383,7 @@ struct ahci_softc {
 	struct device		sc_dev;
 
 	void			*sc_ih;
+	pci_chipset_tag_t	*sc_pc;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -433,13 +434,20 @@ static const struct ahci_device ahci_devices[] = {
 int			ahci_pci_match(struct device *, void *, void *);
 void			ahci_pci_attach(struct device *, struct device *,
 			    void *);
+int			ahci_pci_detach(struct device *, int);
 
 struct cfattach ahci_pci_ca = {
-	sizeof(struct ahci_softc), ahci_pci_match, ahci_pci_attach
+	sizeof(struct ahci_softc),
+	ahci_pci_match,
+	ahci_pci_attach,
+	ahci_pci_detach
 };
 
 struct cfattach ahci_jmb_ca = {
-	sizeof(struct ahci_softc), ahci_pci_match, ahci_pci_attach
+	sizeof(struct ahci_softc),
+	ahci_pci_match,
+	ahci_pci_attach,
+	ahci_pci_detach
 };
 
 struct cfdriver ahci_cd = {
@@ -449,14 +457,10 @@ struct cfdriver ahci_cd = {
 
 int			ahci_map_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
-void			ahci_unmap_regs(struct ahci_softc *,
-			    struct pci_attach_args *);
+void			ahci_unmap_regs(struct ahci_softc *);
 int			ahci_map_intr(struct ahci_softc *,
 			    struct pci_attach_args *, pci_intr_handle_t);
-#ifdef notyet
-void			ahci_unmap_intr(struct ahci_softc *,
-			    struct pci_attach_args *);
-#endif
+void			ahci_unmap_intr(struct ahci_softc *);
 
 int			ahci_init(struct ahci_softc *);
 int			ahci_port_alloc(struct ahci_softc *, u_int);
@@ -618,6 +622,8 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t			cap, pi;
 	int				i;
 
+	sc->sc_pc = pa->pa_pc;
+
 	ad = ahci_lookup_device(pa);
 	if (ad != NULL && ad->ad_attach != NULL) {
 		if (ad->ad_attach(sc, pa) != 0) {
@@ -742,14 +748,38 @@ noccc:
 	return;
 
 freeports:
-	for (i = 0; i < AHCI_MAX_PORTS; i++)
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
 		if (sc->sc_ports[i] != NULL)
 			ahci_port_free(sc, i);
+	}
 unmap:
 	/* Disable controller */
 	ahci_write(sc, AHCI_REG_GHC, 0);
-	ahci_unmap_regs(sc, pa);
+	ahci_unmap_regs(sc);
 	return;
+}
+
+int
+ahci_pci_detach(struct device *self, int flags)
+{
+	struct ahci_softc		*sc = (struct ahci_softc *)self;
+	int				 rv, i;
+
+	if (sc->sc_atascsi != NULL) {
+		rv = atascsi_detach(sc->sc_atascsi, flags);
+		if (rv != 0)
+			return (rv);
+	}
+
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+		if (sc->sc_ports[i] != NULL)
+			ahci_port_free(sc, i);
+	}
+
+	ahci_unmap_intr(sc);
+	ahci_unmap_regs(sc);
+
+	return (0);
 }
 
 int
@@ -768,7 +798,7 @@ ahci_map_regs(struct ahci_softc *sc, struct pci_attach_args *pa)
 }
 
 void
-ahci_unmap_regs(struct ahci_softc *sc, struct pci_attach_args *pa)
+ahci_unmap_regs(struct ahci_softc *sc)
 {
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
@@ -778,7 +808,7 @@ int
 ahci_map_intr(struct ahci_softc *sc, struct pci_attach_args *pa,
     pci_intr_handle_t ih)
 {
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    ahci_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to map interrupt\n", DEVNAME(sc));
@@ -788,14 +818,11 @@ ahci_map_intr(struct ahci_softc *sc, struct pci_attach_args *pa,
 	return (0);
 }
 
-#ifdef notyet
-/* one day we'll have hotplug pci */
 void
-ahci_unmap_intr(struct ahci_softc *sc, struct pci_attach_args *pa)
+ahci_unmap_intr(struct ahci_softc *sc)
 {
-	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 }
-#endif
 
 int
 ahci_init(struct ahci_softc *sc)
@@ -1604,7 +1631,7 @@ ahci_intr(void *arg)
 
 	/* Read global interrupt status */
 	is = ahci_read(sc, AHCI_REG_IS);
-	if (is == 0)
+	if (is == 0 || is == 0xffffffff)
 		return (0);
 	ack = is;
 
