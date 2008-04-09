@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.86 2007/10/10 04:36:11 ray Exp $	*/
+/*	$OpenBSD: trap.c,v 1.87 2008/04/09 16:49:17 thib Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ syscall(struct trapframe frame)
 	caddr_t params;
 	struct sysent *callp;
 	struct proc *p;
-	int orig_error, error, opc, nsys;
+	int orig_error, error, opc, nsys, lock;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
@@ -697,27 +697,44 @@ syscall(struct trapframe frame)
 	else
 		error = 0;
 	orig_error = error;
-	KERNEL_PROC_LOCK(p);
+
+	lock = !(callp->sy_flags & SY_NOLOCK);	
+
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
+	KERNEL_PROC_UNLOCK(p);
 #endif
+
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, argsize, args);
-#endif
-	if (error) {
 		KERNEL_PROC_UNLOCK(p);
+	}
+#endif
+
+	if (error) {
 		goto bad;
 	}
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
+
 #if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		KERNEL_PROC_LOCK(p);
 		orig_error = error = systrace_redirect(code, p, args, rval);
-	else
+		KERNEL_PROC_UNLOCK(p);
+	} else
 #endif
-		orig_error = error = (*callp->sy_call)(p, args, rval);
-	KERNEL_PROC_UNLOCK(p);
+	{
+		if (lock)
+			KERNEL_PROC_LOCK(p);
+			orig_error = error = (*callp->sy_call)(p, args, rval);
+		if (lock)
+			KERNEL_PROC_UNLOCK(p);
+	}
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
