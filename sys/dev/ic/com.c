@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.121 2008/01/23 16:37:55 jsing Exp $	*/
+/*	$OpenBSD: com.c,v 1.122 2008/04/09 19:50:38 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -918,14 +918,15 @@ comstart(struct tty *tp)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
-		u_char buffer[64];	/* XXX: largest fifo */
+		u_char buffer[128];	/* largest fifo */
+		int i, n;
 
-		int n = q_to_b(&tp->t_outq, buffer, sc->sc_fifolen);
-		int i;
-
+		n = q_to_b(&tp->t_outq, buffer,
+		    min(sc->sc_fifolen, sizeof buffer));
 		for (i = 0; i < n; i++) {
 			bus_space_write_1(iot, ioh, com_data, buffer[i]);
 		}
+		bzero(buffer, n);
 	} else if (tp->t_outq.c_cc != 0)
 		bus_space_write_1(iot, ioh, com_data, getc(&tp->t_outq));
 out:
