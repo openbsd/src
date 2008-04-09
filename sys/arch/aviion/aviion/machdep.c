@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2008/01/23 16:37:58 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2008/04/09 16:58:10 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-/* $OpenBSD: machdep.c,v 1.23 2008/01/23 16:37:58 jsing Exp $	*/
+/* $OpenBSD: machdep.c,v 1.24 2008/04/09 16:58:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -399,8 +399,8 @@ boot(howto)
 			printf("WARNING: not updating battery clock\n");
 	}
 
-	/* Disable interrupts. */
-	splhigh();
+	uvm_shutdown();
+	splhigh();		/* Disable interrupts. */
 
 	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)

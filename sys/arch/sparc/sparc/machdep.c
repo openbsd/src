@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 2008/04/09 16:58:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -675,6 +675,8 @@ boot(howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+
+	uvm_shutdown();
 	(void) splhigh();		/* ??? */
 
 	if (howto & RB_DUMP)

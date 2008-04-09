@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2008/03/29 15:26:47 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2008/04/09 16:58:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -774,8 +774,8 @@ boot(int howto)
 
 	delay(4*1000000);	/* XXX */
 
-	/* Disable interrupts. */
-	splhigh();
+	uvm_shutdown();
+	splhigh();		/* Disable interrupts. */
 
 	/* Do a dump if requested. */
 	if (howto & RB_DUMP)

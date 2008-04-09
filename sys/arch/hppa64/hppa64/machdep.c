@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2008/04/09 16:58:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -645,6 +645,7 @@ boot(howto)
 
 		/* XXX probably save howto into stable storage */
 
+		uvm_shutdown();
 		splhigh();
 
 		if (howto & RB_DUMP)

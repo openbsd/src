@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2008/03/23 17:05:41 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2008/04/09 16:58:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -210,8 +210,8 @@ boot(int howto)
 			printf("WARNING: not updating battery clock\n");
 	}
 
-	/* Disable interrupts. */
-	splhigh();
+	uvm_shutdown();
+	splhigh();		/* Disable interrupts. */
 
 	/* Do a dump if requested. */
 	if (howto & RB_DUMP)
