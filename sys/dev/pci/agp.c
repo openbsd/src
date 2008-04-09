@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.19 2008/03/23 19:54:47 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.20 2008/04/09 18:59:58 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -219,7 +219,7 @@ agpmmap(void *v, off_t off, int prot)
 int
 agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
-        struct agp_softc *sc = (struct agp_softc *)device_lookup(&agp_cd, AGPUNIT(dev));
+        struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
 
         if (sc == NULL)
                 return (ENXIO);
@@ -239,7 +239,7 @@ agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 int
 agpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 {
-	struct agp_softc *sc = (struct agp_softc *)device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
 
 	if (sc ==NULL)
 		return (ENODEV);
@@ -284,8 +284,7 @@ agpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 int
 agpclose(dev_t dev, int flags, int devtype, struct proc *p)
 {
-	struct agp_softc *sc = 
-		(struct agp_softc *)device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
 	struct agp_memory *mem;
 
 	/*
@@ -871,7 +870,9 @@ agp_unbind_user(void *dev, agp_unbind *unbind)
 void *
 agp_find_device(int unit)
 {
-        return (device_lookup(&agp_cd, unit)); 
+	if (unit >= agp_cd.cd_ndevs || unit < 0)
+		return (NULL);
+	return (agp_cd.cd_devs[unit]);
 }
 
 enum agp_acquire_state
