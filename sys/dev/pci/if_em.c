@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.180 2008/03/02 01:28:16 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.181 2008/04/09 12:50:11 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -457,6 +457,7 @@ em_start(struct ifnet *ifp)
 {
 	struct mbuf    *m_head;
 	struct em_softc *sc = ifp->if_softc;
+	int		post = 0;
 
 	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
@@ -464,9 +465,14 @@ em_start(struct ifnet *ifp)
 	if (!sc->link_active)
 		return;
 
+	if (sc->hw.mac_type != em_82547) {
+		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		    sc->txdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	}
+
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m_head);
-
 		if (m_head == NULL)
 			break;
 
@@ -485,7 +491,22 @@ em_start(struct ifnet *ifp)
 
 		/* Set timeout in case hardware has problems transmitting */
 		ifp->if_timer = EM_TX_TIMEOUT;
-	}	
+
+		post = 1;
+	}
+
+	if (sc->hw.mac_type != em_82547) {
+		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		    sc->txdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		/* 
+		 * Advance the Transmit Descriptor Tail (Tdt),
+		 * this tells the E1000 that this frame is
+		 * available to transmit.
+		 */
+		if (post)
+			E1000_WRITE_REG(&sc->hw, TDT, sc->next_avail_tx_desc);
+	}
 }
 
 /*********************************************************************
@@ -986,6 +1007,12 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		}
 	}
 
+	if (sc->hw.mac_type == em_82547) {
+		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		    sc->txdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	}
+
 	/*
 	 * Map the packet for DMA.
 	 *
@@ -1002,7 +1029,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	error = bus_dmamap_load_mbuf(sc->txtag, map, m_head, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		sc->no_tx_dma_setup++;
-		return (error);
+		goto loaderr;
 	}
 	EM_KASSERT(map->dm_nsegs!= 0, ("em_encap: empty packet"));
 
@@ -1102,16 +1129,16 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * this tells the E1000 that this frame is
 	 * available to transmit.
 	 */
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	if (sc->hw.mac_type == em_82547 &&
-	    sc->link_duplex == HALF_DUPLEX) {
-		em_82547_move_tail_locked(sc);
-	} else {
-		E1000_WRITE_REG(&sc->hw, TDT, i);
-		if (sc->hw.mac_type == em_82547)
+	if (sc->hw.mac_type == em_82547) {
+		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		    sc->txdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		if (sc->link_duplex == HALF_DUPLEX)
+			em_82547_move_tail_locked(sc);
+		else {
+			E1000_WRITE_REG(&sc->hw, TDT, i);
 			em_82547_update_fifo_head(sc, m_head->m_pkthdr.len);
+		}
 	}
 
 	return (0);
@@ -1119,7 +1146,14 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 fail:
 	sc->no_tx_desc_avail2++;
 	bus_dmamap_unload(sc->txtag, map);
-	return (ENOBUFS);
+	error = ENOBUFS;
+loaderr:
+	if (sc->hw.mac_type == em_82547) {
+		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		    sc->txdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	return (error);
 }
 
 /*********************************************************************
