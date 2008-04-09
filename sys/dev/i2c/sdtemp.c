@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.1 2008/04/07 01:31:44 deraadt Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.2 2008/04/09 21:56:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -57,7 +57,8 @@ sdtemp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "se98") == 0 ||
+	if (strcmp(ia->ia_name, "se97") == 0 ||
+	    strcmp(ia->ia_name, "se98") == 0 ||
 	    strcmp(ia->ia_name, "adt7408") == 0)
 		return (1);
 	return (0);
