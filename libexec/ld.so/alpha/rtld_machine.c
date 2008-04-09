@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.41 2008/02/24 15:47:47 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.42 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -53,7 +53,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf64_Rela  *relas;
 	struct load_list *llist;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
@@ -176,7 +176,7 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
-	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
+	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 	if (object->plt_size != 0 && !(*addr >=  object->plt_start &&
 	    *addr < (object->plt_start + object->plt_size ))) {
 		/* something is broken, relocation has already occurred */
@@ -294,9 +294,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 
 			for (i = 0; i < size; i++) {
-				addr = (Elf_Addr *)(object->load_offs +
+				addr = (Elf_Addr *)(object->obj_base +
 				    rela[i].r_offset);
-				*addr += object->load_offs;
+				*addr += object->obj_base;
 			}
 		}
 	}

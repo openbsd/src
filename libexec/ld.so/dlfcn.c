@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.77 2007/11/27 18:56:32 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.78 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -395,7 +395,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 				break;
 			case 'e':
 				_dl_fdprintf(fd, "%lX",
-				    (void *)(object->load_addr +
+				    (void *)(object->load_base +
 				    object->load_size));
 				break;
 			case 'g':
@@ -423,7 +423,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 				_dl_fdprintf(fd, "%s", objtypename);
 				break;
 			case 'x':
-				_dl_fdprintf(fd, "%lX", object->load_addr);
+				_dl_fdprintf(fd, "%lX", object->load_base);
 				break;
 			}
 		}
@@ -546,17 +546,17 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *data),
 	int retval = -1;
 
 	for (object = _dl_objects; object != NULL; object = object->next) {
-		ehdr = (Elf_Ehdr *)object->load_addr;
+		ehdr = (Elf_Ehdr *)object->load_base;
 		if (object->phdrp == NULL && ehdr == NULL)
 			continue;
 
-		info.dlpi_addr = object->load_addr;
+		info.dlpi_addr = object->load_base;
 		info.dlpi_name = object->load_name;
 		info.dlpi_phdr = object->phdrp;
 		info.dlpi_phnum = object->phdrc;
 		if (info.dlpi_phdr == NULL) {
 		    info.dlpi_phdr = (Elf_Phdr *)
-			((char *)object->load_addr + ehdr->e_phoff);
+			((char *)object->load_base + ehdr->e_phoff);
 		    info.dlpi_phnum = ehdr->e_phnum;
 		}
 		retval = callback(&info, sizeof (struct dl_phdr_info), data);
@@ -578,9 +578,9 @@ obj_from_addr(const void *addr)
 	int i;
 
 	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
-		if (dynobj->load_addr != NULL) {
-			ehdr = (Elf_Ehdr *)dynobj->load_addr;
-			phdr = (Elf_Phdr *)((char *)dynobj->load_addr + ehdr->e_phoff);
+		if (dynobj->load_base != NULL) {
+			ehdr = (Elf_Ehdr *)dynobj->load_base;
+			phdr = (Elf_Phdr *)((char *)dynobj->load_base + ehdr->e_phoff);
 			phdrc = ehdr->e_phnum;
 		} else if (dynobj->phdrp != NULL) {
 			phdr = dynobj->phdrp;
@@ -591,7 +591,7 @@ obj_from_addr(const void *addr)
 		for (i = 0; i < phdrc; i++) {
 			switch (phdr[i].p_type) {
 			case PT_LOAD:
-				start = phdr[i].p_vaddr + dynobj->load_addr;
+				start = dynobj->obj_base + phdr[i].p_vaddr;
 				if ((Elf_Addr)addr >= start &&
 				    (Elf_Addr)addr < start + phdr[i].p_memsz)
 					return dynobj;
@@ -621,7 +621,7 @@ dladdr(const void *addr, Dl_info *info)
 	}
 
 	info->dli_fname = (char *)object->load_name;
-	info->dli_fbase = (void *)object->load_addr;
+	info->dli_fbase = (void *)object->load_base;
 	info->dli_sname = NULL;
 	info->dli_saddr = (void *)0;
 
@@ -644,7 +644,7 @@ dladdr(const void *addr, Dl_info *info)
 		 * it is further away from addr than the current nearest
 		 * symbol, then reject it.
 		 */
-		symbol_addr = (void *)(object->load_addr + sym->st_value);
+		symbol_addr = (void *)(object->obj_base + sym->st_value);
 		if (symbol_addr > addr || symbol_addr < info->dli_saddr)
 			continue;
 

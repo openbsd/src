@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.55 2008/04/02 02:27:36 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.56 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -69,7 +69,7 @@ _dl_unload_shlib(elf_object_t *object)
 			_dl_unload_shlib(n->data);
 		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));
 		_dl_load_list_free(object->load_list);
-		_dl_munmap((void *)object->load_addr, object->load_size);
+		_dl_munmap((void *)object->load_base, object->load_size);
 		_dl_remove_object(object);
 	}
 }

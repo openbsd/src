@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.47 2006/05/03 16:10:51 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.48 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,12 +71,12 @@ _dl_add_object(elf_object_t *object)
  */
 elf_object_t *
 _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
-    const int objtype, const long laddr, const long loff)
+    const int objtype, const long lbase, const long obase)
 {
 	elf_object_t *object;
 #if 0
-	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x laddr %lx, loff %lx\n",
-	    objname, dynp, dl_data, objtype, laddr, loff);
+	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x lbase %lx, obase %lx\n",
+	    objname, dynp, dl_data, objtype, lbase, obase);
 #endif
 	object = _dl_malloc(sizeof(elf_object_t));
 	object->prev = object->next = NULL;
@@ -103,27 +103,27 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 	 *  the ones which have pointer values.
 	 */
 	if (object->Dyn.info[DT_PLTGOT])
-		object->Dyn.info[DT_PLTGOT] += loff;
+		object->Dyn.info[DT_PLTGOT] += obase;
 	if (object->Dyn.info[DT_HASH])
-		object->Dyn.info[DT_HASH] += loff;
+		object->Dyn.info[DT_HASH] += obase;
 	if (object->Dyn.info[DT_STRTAB])
-		object->Dyn.info[DT_STRTAB] += loff;
+		object->Dyn.info[DT_STRTAB] += obase;
 	if (object->Dyn.info[DT_SYMTAB])
-		object->Dyn.info[DT_SYMTAB] += loff;
+		object->Dyn.info[DT_SYMTAB] += obase;
 	if (object->Dyn.info[DT_RELA])
-		object->Dyn.info[DT_RELA] += loff;
+		object->Dyn.info[DT_RELA] += obase;
 	if (object->Dyn.info[DT_SONAME])
-		object->Dyn.info[DT_SONAME] += loff;
+		object->Dyn.info[DT_SONAME] += obase;
 	if (object->Dyn.info[DT_RPATH])
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_REL])
-		object->Dyn.info[DT_REL] += loff;
+		object->Dyn.info[DT_REL] += obase;
 	if (object->Dyn.info[DT_INIT])
-		object->Dyn.info[DT_INIT] += loff;
+		object->Dyn.info[DT_INIT] += obase;
 	if (object->Dyn.info[DT_FINI])
-		object->Dyn.info[DT_FINI] += loff;
+		object->Dyn.info[DT_FINI] += obase;
 	if (object->Dyn.info[DT_JMPREL])
-		object->Dyn.info[DT_JMPREL] += loff;
+		object->Dyn.info[DT_JMPREL] += obase;
 
 	if (object->Dyn.info[DT_HASH] != 0) {
 		Elf_Word *hashtab = (Elf_Word *)object->Dyn.info[DT_HASH];
@@ -139,8 +139,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 		object->phdrc = dl_data[AUX_phnum];
 	}
 	object->obj_type = objtype;
-	object->load_addr = laddr;
-	object->load_offs = loff;
+	object->load_base = lbase;
+	object->obj_base = obase;
 	object->load_name = _dl_strdup(objname);
 	if (_dl_loading_object == NULL) {
 		/*
@@ -274,7 +274,7 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 			*pobj = sobj;
 		if (_dl_prebind_validate) /* XXX */
 			prebind_validate(req_obj, symidx, flags, ref_sym);
-		return sobj->load_offs;
+		return sobj->obj_base;
 	}
 
 	sym = req_obj->dyn.symtab;
@@ -430,7 +430,7 @@ found:
 	if (pobj)
 		*pobj = object;
 
-	return (object->load_offs);
+	return (object->obj_base);
 }
 
 int

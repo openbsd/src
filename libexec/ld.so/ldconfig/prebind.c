@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.9 2007/09/02 15:19:20 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.10 2008/04/09 21:45:26 kurt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -497,7 +497,7 @@ elf_load_object(void *pexe, const char *name)
 	Elf_Phdr *phdr;
 	const Elf_Sym	*symt;
 	const char	*strt;
-	Elf_Addr loff;
+	Elf_Addr lbase;
 	Elf_Word *needed_list;
 	int needed_cnt = 0, i;
 
@@ -507,9 +507,9 @@ elf_load_object(void *pexe, const char *name)
 		exit(10);
 	}
 	ehdr = pexe;
-	loff = (Elf_Addr)pexe;
+	lbase = (Elf_Addr)pexe;
 
-	object->load_addr = 0;
+	object->load_base = lbase;
 	object->load_name = strdup(name);
 
 	phdr = (Elf_Phdr *)((char *)pexe + ehdr->e_phoff);
@@ -533,7 +533,7 @@ elf_load_object(void *pexe, const char *name)
 		return NULL; /* not a dynamic binary */
 	}
 
-	dynp = (Elf_Dyn *)((unsigned long)dynp + loff);
+	dynp = (Elf_Dyn *)((unsigned long)dynp + lbase);
 	odynp = dynp;
 	while (dynp->d_tag != DT_NULL) {
 		if (dynp->d_tag < DT_NUM)
@@ -568,20 +568,20 @@ elf_load_object(void *pexe, const char *name)
 	}
 
 	if (object->Dyn.info[DT_HASH])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_HASH]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_HASH]);
 	if (object->Dyn.info[DT_STRTAB])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_STRTAB]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_STRTAB]);
 	if (object->Dyn.info[DT_SYMTAB])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_SYMTAB]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_SYMTAB]);
 
 	if (object->Dyn.info[DT_RELA])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_RELA]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_RELA]);
 	if (object->Dyn.info[DT_RPATH])
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_REL])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_REL]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_REL]);
 	if (object->Dyn.info[DT_JMPREL])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_JMPREL]);
+		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_JMPREL]);
 
 	symt = object->dyn.symtab;
 	strt = object->dyn.strtab;

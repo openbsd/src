@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.55 2007/11/27 16:42:15 miod Exp $ */
+/*	$OpenBSD: resolve.h,v 1.56 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,13 +49,13 @@ struct load_list {
  */
 typedef struct elf_object elf_object_t;
 struct elf_object {
-	Elf_Addr load_addr;		/* Real load address */
+	Elf_Addr obj_base;		/* object's address '0' base */
 	char	*load_name;		/* Pointer to object name */
 	Elf_Dyn *load_dyn;		/* Pointer to object dynamic data */
 	struct elf_object *next;
 	struct elf_object *prev;
 /* End struct link_map compatible */
-	Elf_Addr load_offs;		/* Load offset from link address */
+	Elf_Addr load_base;		/* Base address of loadable segments */
 
 	struct load_list *load_list;
 
@@ -152,7 +152,7 @@ void _dl_rt_resolve(void);
 
 void _dl_add_object(elf_object_t *object);
 elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
-    const long *, const int objtype, const long laddr, const long loff);
+    const long *, const int objtype, const long lbase, const long obase);
 void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
 

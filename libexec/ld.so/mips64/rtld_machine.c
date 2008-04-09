@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2007/11/27 16:42:19 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.11 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -49,7 +49,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	Elf64_Rel  *relocs;
 	const Elf64_Sym *sym, *this;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf64_Rel);
 	relocs = (Elf64_Rel *)(object->Dyn.info[rel]);
 
@@ -183,7 +183,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		return (0);
 
 	lazy = 0;	/* XXX Fix ld before enabling lazy */
-	loff = object->load_offs;
+	loff = object->obj_base;
 	strt = object->dyn.strtab;
 	gotp = object->dyn.pltgot;
 	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];

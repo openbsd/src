@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2008/02/24 15:47:47 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.11 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -604,7 +604,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_RelA *rels;
 	struct load_list *llist;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 
@@ -812,8 +812,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
 			Elf_Addr *where;
-			where = (Elf_Addr *)(rel->r_offset + object->load_offs);
-			*where += object->load_offs;
+			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
+			*where += object->obj_base;
 		}
 
 		pltgot[1] = (Elf_Addr)object;
@@ -854,7 +854,7 @@ _dl_bind(elf_object_t *object, int relidx)
 		*((int *)0) = 0;	/* XXX */
 	}
 
-	addr = (Elf_Addr *)(object->load_offs + rel->r_offset);
+	addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	newval = ooff + this->st_value;
 
 	/* if GOT is protected, allow the write */

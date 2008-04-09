@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.41 2008/02/24 10:16:58 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.42 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -210,7 +210,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_RelA *relas;
 	struct load_list *llist;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
@@ -617,7 +617,7 @@ _dl_bind(elf_object_t *object, int index)
 	sym += ELF64_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Word *)(object->load_offs + rela->r_offset);
+	addr = (Elf_Word *)(object->obj_base + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,

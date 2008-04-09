@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2007/11/27 16:42:19 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -178,7 +178,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	Elf_RelA *rels;
 	struct load_list *llist;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_RelA);
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 	if (rels == NULL)
@@ -348,7 +348,7 @@ _dl_bind(elf_object_t *object, int index)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Word *)(object->load_offs + rel->r_offset);
+	addr = (Elf_Word *)(object->obj_base + rel->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
@@ -431,8 +431,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		num = (object->Dyn.info[DT_PLTRELSZ]);
 		for (i = 0; i < num/sizeof(Elf_RelA); i++, rel++) {
 			Elf_Addr *where;
-			where = (Elf_Addr *)(rel->r_offset + object->load_offs);
-			*where += object->load_offs;
+			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
+			*where += object->obj_base;
 		}
 
 	}

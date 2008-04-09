@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.44 2007/11/27 16:42:19 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.45 2008/04/09 21:45:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -89,7 +89,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	Elf32_Addr *first_rela;
 
-	loff = object->load_offs;
+	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
@@ -497,12 +497,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	} else {
 		first_rela = (Elf32_Addr *)
 		    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
-		    object->load_offs);
+		    object->obj_base);
 		pltresolve = (Elf32_Addr *)(first_rela) - 18;
 
 		relas = (Elf32_Rela *)(object->Dyn.info[DT_JMPREL]);
 		numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
-		r_addr = (Elf32_Addr *)(relas->r_offset + object->load_offs);
+		r_addr = (Elf32_Addr *)(relas->r_offset + object->obj_base);
 
 		for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
 			if (index >= (2 << 12)) {
@@ -556,7 +556,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(relas->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	r_addr = (Elf_Addr *)(object->load_offs + relas->r_offset);
+	r_addr = (Elf_Addr *)(object->obj_base + relas->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
