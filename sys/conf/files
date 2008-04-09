@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.426 2008/03/16 19:42:57 otto Exp $
+#	$OpenBSD: files,v 1.427 2008/04/09 19:49:55 robert Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -20,6 +20,7 @@ define	radiobus {}
 define	i2cbus {}
 define	gpiobus {}
 define	onewirebus {}
+define	video {}
 
 # filesystem firmware loading attribute
 define firmload
@@ -33,6 +34,9 @@ define tea5757
 define lm700x
 define tc921x
 define pt2254a
+
+device	video
+attach	video at video
 
 # audio and midi devices, attaches to audio hardware driver
 device	audio
@@ -619,6 +623,7 @@ file dev/raidframe/rf_stripelocks.c	raid			needs-flag
 file dev/raidframe/rf_strutils.c	raid			needs-flag
 file dev/raidframe/rf_threadstuff.c	raid			needs-flag
 file dev/raidframe/rf_utils.c		raid			needs-flag
+file dev/video.c			video			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660

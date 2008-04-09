@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.86 2008/04/08 14:31:54 claudio Exp $	*/
+/*	$OpenBSD: conf.h,v 1.87 2008/04/09 19:49:55 robert Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -450,6 +450,13 @@ void	randomattach(void);
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl */
+#define cdev_video_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
 /* open, close, write, ioctl */
 #define cdev_spkr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -587,6 +594,7 @@ cdev_decl(audio);
 cdev_decl(midi);
 cdev_decl(sequencer);
 cdev_decl(radio);
+cdev_decl(video);
 cdev_decl(cn);
 
 bdev_decl(sw);
