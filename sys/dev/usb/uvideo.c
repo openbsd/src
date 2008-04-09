@@ -1,3 +1,5 @@
+/*	$OpenBSD: uvideo.c,v 1.2 2008/04/09 20:38:55 mglocker Exp $ */
+
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
