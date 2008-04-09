@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.12 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.13 2008/04/09 19:03:54 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -214,6 +214,7 @@ ehci_pci_detach(struct device *self, int flags)
 	return (0);
 }
 
+#if 0	/* not used */
 void
 ehci_pci_givecontroller(struct ehci_pci_softc *sc)
 {
@@ -231,6 +232,7 @@ ehci_pci_givecontroller(struct ehci_pci_softc *sc)
 		    legsup & ~EHCI_LEGSUP_OSOWNED);
 	}
 }
+#endif
 
 void
 ehci_pci_takecontroller(struct ehci_pci_softc *sc)
@@ -246,9 +248,9 @@ ehci_pci_takecontroller(struct ehci_pci_softc *sc)
 		if (EHCI_EECP_ID(eec) != EHCI_EC_LEGSUP)
 			continue;
 		legsup = eec;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, eecp,
-		    legsup | EHCI_LEGSUP_OSOWNED);
 		if (legsup & EHCI_LEGSUP_BIOSOWNED) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag, eecp,
+			    legsup | EHCI_LEGSUP_OSOWNED);
 			DPRINTF(("%s: waiting for BIOS to give up control\n",
 			    sc->sc.sc_bus.bdev.dv_xname));
 			for (i = 0; i < 5000; i++) {
@@ -271,5 +273,8 @@ ehci_pci_shutdown(void *v)
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)v;
 
 	ehci_shutdown(&sc->sc);
+#if 0
+	/* best not to do this anymore; BIOS SMM spins? */
 	ehci_pci_givecontroller(sc);
+#endif
 }
