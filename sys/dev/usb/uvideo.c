@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.2 2008/04/09 20:38:55 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.3 2008/04/10 09:22:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1026,12 +1026,13 @@ uvideo_dump_desc_frame_mjpeg(struct uvideo_softc *sc,
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFrameIndex=0x%02x\n", d->bFrameIndex);
 	printf("bmCapabilities=0x%02x\n", d->bmCapabilities);
-	printf("wWidth=0x%d\n", UGETW(d->wWidth));
-	printf("wHeight=0x%d\n", UGETW(d->wHeight));
-	printf("dwMinBitRate=0x%08x\n", UGETDW(d->dwMaxBitRate));
-	printf("dwMaxVideoFrameBufferSize=0x%08x\n",
+	printf("wWidth=%d\n", UGETW(d->wWidth));
+	printf("wHeight=%d\n", UGETW(d->wHeight));
+	printf("dwMinBitRate=%d\n", UGETDW(d->dwMinBitRate));
+	printf("dwMaxBitRate=%d\n", UGETDW(d->dwMaxBitRate));
+	printf("dwMaxVideoFrameBufferSize=%d\n",
 	    UGETDW(d->dwMaxVideoFrameBufferSize));
-	printf("dwDefaultFrameInterval=0x%d\n",
+	printf("dwDefaultFrameInterval=%d\n",
 	    UGETDW(d->dwDefaultFrameInterval));
 	printf("bFrameIntervalType=0x%02x\n", d->bFrameIntervalType);
 }
