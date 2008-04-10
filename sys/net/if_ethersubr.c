@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.115 2008/04/10 22:33:14 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.116 2008/04/10 23:15:45 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -432,8 +432,7 @@ ether_output(ifp0, m0, dst, rt0)
 #endif /* NCARP > 0 */
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if_start(ifp);
 	splx(s);
 	return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.13 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.14 2008/04/10 23:15:45 dlg Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -63,3 +63,4 @@
 #if NBLUETOOTH > 0
 	DONETISR(NETISR_BT,btintr);
 #endif
+	DONETISR(NETISR_TX,nettxintr);

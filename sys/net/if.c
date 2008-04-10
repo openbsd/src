@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.168 2008/01/05 19:08:19 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.169 2008/04/10 23:15:45 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ int if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet_head ifnet;
+struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
 struct ifnet *lo0ifp;
 
 /*
@@ -459,6 +460,40 @@ if_attach(struct ifnet *ifp)
 	if_attachsetup(ifp);
 }
 
+void
+if_start(struct ifnet *ifp)
+{
+	if (IF_QFULL(&ifp->if_snd) && !ISSET(ifp->if_flags, IFF_OACTIVE)) {
+		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
+			TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
+			CLR(ifp->if_xflags, IFXF_TXREADY);
+		}
+		ifp->if_start(ifp);
+		return;
+	}
+
+	if (!ISSET(ifp->if_xflags, IFXF_TXREADY)) {
+		SET(ifp->if_xflags, IFXF_TXREADY);
+		TAILQ_INSERT_TAIL(&iftxlist, ifp, if_txlist);
+		schednetisr(NETISR_TX);
+	}
+}
+
+void
+nettxintr(void)
+{
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	while ((ifp = TAILQ_FIRST(&iftxlist)) != NULL) {
+		TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
+		CLR(ifp->if_xflags, IFXF_TXREADY);
+		ifp->if_start(ifp);
+	}
+	splx(s);
+}
+
 /*
  * Detach an interface from everything in the kernel.  Also deallocate
  * private resources.
@@ -559,6 +594,8 @@ do { \
 
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
+	if (ISSET(ifp->if_xflags, IFXF_TXREADY))
+		TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
 
 	/*
 	 * Deallocate private resources.

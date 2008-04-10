@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.29 2008/01/19 18:26:18 mpf Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.30 2008/04/10 23:15:45 dlg Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
  */
 #define	NETISR_RND	1
 #define	NETISR_IP	2		/* same as AF_INET */
+#define	NETISR_TX	3		/* for if_snd processing */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
@@ -69,6 +70,7 @@
 extern int	netisr;			/* scheduling bits for network */
 
 void	netrndintr(void);
+void	nettxintr(void);
 void	arpintr(void);
 void	ipintr(void);
 void	ip6intr(void);
