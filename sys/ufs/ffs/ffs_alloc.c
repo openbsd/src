@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.82 2008/01/22 20:45:00 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.83 2008/04/10 19:39:37 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/stdint.h>
+#include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,6 +89,9 @@ int ffs2_reallocblks(void *);
 int      ffs_checkblk(struct inode *, daddr64_t, long);
 #endif
 
+static const struct timeval	fserr_interval = { 2, 0 };
+
+
 /*
  * Allocate a block in the file system.
  *
@@ -111,6 +115,7 @@ int
 ffs_alloc(struct inode *ip, daddr64_t lbn, daddr64_t bpref, int size,
     struct ucred *cred, daddr64_t *bnp)
 {
+	static struct timeval fsfull_last;
 	struct fs *fs;
 	daddr64_t bno;
 	int cg;
@@ -161,8 +166,11 @@ ffs_alloc(struct inode *ip, daddr64_t lbn, daddr64_t bpref, int size,
 	(void) ufs_quota_free_blocks(ip, btodb(size), cred);
 
 nospace:
-	ffs_fserr(fs, cred->cr_uid, "file system full");
-	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
+	if (ratecheck(&fsfull_last, &fserr_interval)) {
+		ffs_fserr(fs, cred->cr_uid, "file system full");
+		uprintf("\n%s: write failed, file system is full\n",
+		    fs->fs_fsmnt);
+	}
 	return (ENOSPC);
 }
 
@@ -178,6 +186,7 @@ int
 ffs_realloccg(struct inode *ip, daddr64_t lbprev, daddr64_t bpref, int osize,
     int nsize, struct ucred *cred, struct buf **bpp, daddr64_t *blknop)
 {
+	static struct timeval fsfull_last;
 	struct fs *fs;
 	struct buf *bp = NULL;
 	daddr64_t quota_updated = 0;
@@ -322,11 +331,11 @@ ffs_realloccg(struct inode *ip, daddr64_t lbprev, daddr64_t bpref, int osize,
 	return (0);
 
 nospace:
-	/*
-	 * no space available
-	 */
-	ffs_fserr(fs, cred->cr_uid, "file system full");
-	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
+	if (ratecheck(&fsfull_last, &fserr_interval)) {
+		ffs_fserr(fs, cred->cr_uid, "file system full");
+		uprintf("\n%s: write failed, file system is full\n",
+		    fs->fs_fsmnt);
+	}
 	error = ENOSPC;
 
 error:
@@ -824,6 +833,7 @@ int
 ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
     struct vnode **vpp)
 {
+	static struct timeval fsnoinodes_last;
 	struct vnode *pvp = ITOV(pip);
 	struct fs *fs;
 	struct inode *ip;
@@ -893,8 +903,11 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	return (0);
 
 noinodes:
-	ffs_fserr(fs, cred->cr_uid, "out of inodes");
-	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
+	if (ratecheck(&fsnoinodes_last, &fserr_interval)) {
+		ffs_fserr(fs, cred->cr_uid, "out of inodes");
+		uprintf("\n%s: create/symlink failed, no inodes free\n",
+		    fs->fs_fsmnt);
+	}
 	return (ENOSPC);
 }
 
