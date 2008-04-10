@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.21 2006/10/29 22:51:09 tom Exp $	*/
+/*	$OpenBSD: cal.c,v 1.22 2008/04/10 15:07:04 pyr Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.21 2006/10/29 22:51:09 tom Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.22 2008/04/10 15:07:04 pyr Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,17 +69,31 @@ static const int days_in_month[2][13] = {
 	{0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
-const int sep1752[MAXDAYS] = {
+const int sep1752s[MAXDAYS] = {
 	SPACE,	SPACE,	1,	2,	14,	15,	16,
 	17,	18,	19,	20,	21,	22,	23,
 	24,	25,	26,	27,	28,	29,	30,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
-}, j_sep1752[MAXDAYS] = {
+}, sep1752m[MAXDAYS] = {
+	SPACE,	1,	2,	14,	15,	16,	17,
+	18,	19,	20,	21,	22,	23,	24,
+	25,	26,	27,	28,	29,	30,	SPACE,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+}, sep1752js[MAXDAYS] = {
 	SPACE,	SPACE,	245,	246,	258,	259,	260,
 	261,	262,	263,	264,	265,	266,	267,
 	268,	269,	270,	271,	272,	273,	274,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
+}, sep1752jm[MAXDAYS] = {
+	SPACE,	245,	246,	258,	259,	260,	261,
+	262,	263,	264,	265,	266,	267,	268,
+	269,	270,	271,	272,	273,	274,	SPACE,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
@@ -97,8 +111,13 @@ const char *month_names[12] = {
 	"July", "August", "September", "October", "November", "December",
 };
 
-const char *day_headings = "Su Mo Tu We Th Fr Sa";
-const char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
+#define	DAY_HEADINGS_S	"Su Mo Tu We Th Fr Sa"
+#define	DAY_HEADINGS_M	"Mo Tu We Th Fr Sa Su"
+#define	DAY_HEADINGS_JS	" Su  Mo  Tu  We  Th  Fr  Sa"
+#define	DAY_HEADINGS_JM	" Mo  Tu  We  Th  Fr  Sa  Su"
+
+const int	*sep1752 = NULL;
+const char	*day_headings = NULL;
 
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
@@ -118,6 +137,7 @@ const char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 	((yr) / 4 - centuries_since_1700(yr) + quad_centuries_since_1700(yr))
 
 int julian;
+int mflag = 0;
 
 void	ascii_day(char *, int);
 void	center(const char *, int, int);
@@ -140,10 +160,13 @@ main(int argc, char *argv[])
 	const char *errstr;
 
 	yflag = year = 0;
-	while ((ch = getopt(argc, argv, "jy")) != -1)
+	while ((ch = getopt(argc, argv, "jmy")) != -1)
 		switch(ch) {
 		case 'j':
 			julian = 1;
+			break;
+		case 'm':
+			mflag = 1;
 			break;
 		case 'y':
 			yflag = 1;
@@ -154,6 +177,19 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	day_headings = DAY_HEADINGS_S;
+	sep1752 = sep1752s;
+	if (mflag && julian) {
+		sep1752 = sep1752jm;
+		day_headings = DAY_HEADINGS_JM;
+	} else if (mflag) {
+		sep1752 = sep1752m;
+		day_headings = DAY_HEADINGS_M;
+	} else if (julian) {
+		sep1752 = sep1752js;
+		day_headings = DAY_HEADINGS_JS;
+	}
 
 	month = 0;
 	switch(argc) {
@@ -215,7 +251,7 @@ monthly(int month, int year)
 	len = strlen(lineout);
 	(void)printf("%*s%s\n%s\n",
 	    ((julian ? J_WEEK_LEN : WEEK_LEN) - len) / 2, "",
-	    lineout, julian ? j_day_headings : day_headings);
+	    lineout, day_headings);
 	for (row = 0; row < 6; row++) {
 		for (col = 0, p = lineout; col < 7; col++,
 		    p += julian ? J_DAY_LEN : DAY_LEN)
@@ -243,8 +279,9 @@ j_yearly(int year)
 	for (month = 0; month < 12; month += 2) {
 		center(month_names[month], J_WEEK_LEN, J_HEAD_SEP);
 		center(month_names[month + 1], J_WEEK_LEN, 0);
-		(void)printf("\n%s%*s%s\n", j_day_headings, J_HEAD_SEP, "",
-		    j_day_headings);
+		(void)printf("\n%s%*s%s\n", day_headings,
+		    J_HEAD_SEP, "", day_headings);
+
 		for (row = 0; row < 6; row++) {
 			for (which_cal = 0; which_cal < 2; which_cal++) {
 				p = lineout + which_cal * (J_WEEK_LEN + 2);
@@ -278,8 +315,9 @@ yearly(int year)
 		center(month_names[month], WEEK_LEN, HEAD_SEP);
 		center(month_names[month + 1], WEEK_LEN, HEAD_SEP);
 		center(month_names[month + 2], WEEK_LEN, 0);
-		(void)printf("\n%s%*s%s%*s%s\n", day_headings, HEAD_SEP,
-		    "", day_headings, HEAD_SEP, "", day_headings);
+		(void)printf("\n%s%*s%s%*s%s\n", day_headings,
+		    HEAD_SEP, "", day_headings, HEAD_SEP, "", day_headings);
+
 		for (row = 0; row < 6; row++) {
 			for (which_cal = 0; which_cal < 3; which_cal++) {
 				p = lineout + which_cal * (WEEK_LEN + 2);
@@ -308,13 +346,12 @@ day_array(int month, int year, int *days)
 	int day, dw, dm;
 
 	if (month == 9 && year == 1752) {
-		memmove(days,
-		    julian ? j_sep1752 : sep1752, MAXDAYS * sizeof(int));
+		memmove(days, sep1752, MAXDAYS * sizeof(int));
 		return;
 	}
 	memmove(days, empty, MAXDAYS * sizeof(int));
 	dm = days_in_month[leap_year(year)][month];
-	dw = day_in_week(1, month, year);
+	dw = day_in_week(mflag?0:1, month, year);
 	day = julian ? day_in_year(1, month, year) : 1;
 	while (dm--)
 		days[dw++] = day++;
@@ -423,7 +460,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: cal [-jy] [month] [year]\n");
+	(void)fprintf(stderr, "usage: cal [-jmy] [month] [year]\n");
 	exit(1);
 }
 
