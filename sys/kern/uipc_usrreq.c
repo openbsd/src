@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.40 2008/04/08 20:47:55 stefan Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.41 2008/04/10 17:50:46 kettenis Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -740,7 +740,8 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	 * using CMSG_SPACE().  In particular, sparc64 alignment changes.
 	 */ 
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
-	    cm->cmsg_len > control->m_len)
+	    !(cm->cmsg_len == control->m_len ||
+	    control->m_len == CMSG_ALIGN(cm->cmsg_len)))
 		return (EINVAL);
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof (int);
 
