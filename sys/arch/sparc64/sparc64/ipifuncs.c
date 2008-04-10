@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.8 2008/03/31 22:14:01 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.9 2008/04/10 19:25:42 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -179,15 +179,36 @@ sun4u_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 void
 sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
-	struct cpu_info *ci;
+	struct cpu_info *ci = curcpu();
+	paddr_t cpuset = ci->ci_cpuset;
+	int err, i, ncpus = 0;
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_number == cpu_number())
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
-		sun4v_send_ipi(ci->ci_itid, func, arg0, arg1);
+		stha(cpuset, ASI_PHYS_CACHED, ci->ci_itid);
+		cpuset += sizeof(int16_t);
+		ncpus++;
 	}
+
+	if (ncpus == 0)
+		return;
+
+	ci = curcpu();
+	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
+	stxa(ci->ci_mondo + 8, ASI_PHYS_CACHED, arg0);
+	stxa(ci->ci_mondo + 16, ASI_PHYS_CACHED, arg1);
+
+	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
+		err = hv_cpu_mondo_send(ncpus, ci->ci_cpuset, ci->ci_mondo);
+		if (err != H_EWOULDBLOCK)
+			break;
+		delay(10);
+	}
+	if (err != H_EOK)
+		panic("Unable to broadcast mondo %lx: %d", func, err);
 }
 
 void
