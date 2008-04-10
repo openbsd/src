@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.114 2008/02/05 22:57:30 mpf Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.115 2008/04/10 22:33:14 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -449,8 +449,8 @@ bad:
  * the ether header, which is provided separately.
  */
 void
-ether_input(ifp, eh, m)
-	struct ifnet *ifp;
+ether_input(ifp0, eh, m)
+	struct ifnet *ifp0;
 	struct ether_header *eh;
 	struct mbuf *m;
 {
@@ -459,6 +459,7 @@ ether_input(ifp, eh, m)
 	int s, llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
+	struct ifnet *ifp = ifp0;
 #if NTRUNK > 0
 	int i = 0;
 #endif
@@ -518,9 +519,17 @@ ether_input(ifp, eh, m)
 		else
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
+#if NTRUNK > 0
+		if (ifp != ifp0)
+			ifp0->if_imcasts++;
+#endif
 	}
 
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
+#if NTRUNK > 0
+	if (ifp != ifp0)
+		ifp0->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
+#endif
 
 	etype = ntohs(eh->ether_type);
 
