@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.74 2007/10/29 14:12:19 chl Exp $	*/
+/*	$OpenBSD: tty.c,v 1.75 2008/04/10 19:55:41 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1665,7 +1665,7 @@ int
 ttwrite(struct tty *tp, struct uio *uio, int flag)
 {
 	u_char *cp = NULL;
-	int cc, ce;
+	int cc, ce, obufcc = 0;
 	struct proc *p;
 	int i, hiwat, cnt, error, s;
 	u_char obuf[OBUFSIZ];
@@ -1680,7 +1680,8 @@ loop:
 	    !ISSET(tp->t_cflag, CLOCAL)) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			splx(s);
-			return (EIO);
+			error = EIO;
+			goto done;
 		} else if (flag & IO_NDELAY) {
 			splx(s);
 			error = EWOULDBLOCK;
@@ -1722,7 +1723,7 @@ loop:
 	while (uio->uio_resid > 0 || cc > 0) {
 		if (ISSET(tp->t_lflag, FLUSHO)) {
 			uio->uio_resid = 0;
-			return (0);
+			goto done;
 		}
 		if (tp->t_outq.c_cc > hiwat)
 			goto ovhiwat;
@@ -1738,6 +1739,8 @@ loop:
 				cc = 0;
 				break;
 			}
+			if (cc > obufcc)
+				obufcc = cc;
 		}
 		/*
 		 * If nothing fancy need be done, grab those characters we
@@ -1803,6 +1806,9 @@ out:
 	 * (the call will either return short or restart with a new uio).
 	 */
 	uio->uio_resid += cc;
+done:
+	if (obufcc)
+		bzero(obuf, obufcc);
 	return (error);
 
 overfull:
@@ -1828,6 +1834,8 @@ ovhiwat:
 	if (flag & IO_NDELAY) {
 		splx(s);
 		uio->uio_resid += cc;
+		if (obufcc)
+			bzero(obuf, obufcc);
 		return (uio->uio_resid == cnt ? EWOULDBLOCK : 0);
 	}
 	SET(tp->t_state, TS_ASLEEP);
