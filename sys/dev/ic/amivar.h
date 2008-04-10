@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.52 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.53 2008/04/10 06:39:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -70,6 +70,7 @@ struct ami_ccb {
 	}			ccb_state;
 	int			ccb_flags;
 #define AMI_CCB_F_ERR			(1<<0)
+	int			ccb_status;
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 };
 

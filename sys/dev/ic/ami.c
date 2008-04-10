@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.186 2007/12/28 16:19:14 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.187 2008/04/10 06:39:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -134,7 +134,7 @@ int		ami_alloc_ccbs(struct ami_softc *, int);
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 void		ami_start(struct ami_softc *, struct ami_ccb *);
 void		ami_complete(struct ami_softc *, struct ami_ccb *, int);
-int		ami_done(struct ami_softc *, int);
+int		ami_done(struct ami_softc *, int, int);
 void		ami_runqueue_tick(void *);
 void		ami_runqueue(struct ami_softc *);
 
@@ -1040,7 +1040,7 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 		if (sc->sc_done(sc, &mbox) != 0) {
 			for (j = 0; j < mbox.acc_nstat; j++) {
 				int ready = mbox.acc_cmplidl[j];
-				ami_done(sc, ready);
+				ami_done(sc, ready, mbox.acc_status);
 				if (ready == ccb->ccb_cmd.acc_id)
 					done = 1;
 			}
@@ -1107,7 +1107,7 @@ ami_stimeout(void *v)
 }
 
 int
-ami_done(struct ami_softc *sc, int idx)
+ami_done(struct ami_softc *sc, int idx, int status)
 {
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
 
@@ -1120,6 +1120,7 @@ ami_done(struct ami_softc *sc, int idx)
 	}
 
 	ccb->ccb_state = AMI_CCB_READY;
+	ccb->ccb_status = status;
 	TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
 
 	ccb->ccb_done(sc, ccb);
@@ -1154,7 +1155,9 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
- 	else if (xs->flags & SCSI_POLL && xs->cmd->opcode == INQUIRY) {
+ 	else if (ccb->ccb_status != 0x00)
+		xs->error = XS_DRIVER_STUFFUP;
+	else if (xs->flags & SCSI_POLL && xs->cmd->opcode == INQUIRY) {
 		type = ((struct scsi_inquiry_data *)xs->data)->device &
 		    SID_TYPE;
 		if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
@@ -1630,7 +1633,7 @@ ami_intr(void *v)
 
 			AMI_DPRINTF(AMI_D_CMD, ("ready=%d ", ready));
 
-			if (!ami_done(sc, ready))
+			if (!ami_done(sc, ready, mbox.acc_status))
 				rv |= 1;
 		}
 	}
