@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.46 2007/12/16 18:48:19 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.47 2008/04/10 17:55:17 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2144,9 +2144,8 @@ azalia_ad1984_init_dacgroup(codec_t *this)
 		{{2, {0x03, 0x04}}}};
 
 	static const convgroupset_t adcs = {
-		-1, 2,
-		{{1, {0x05}},
-		 {1, {0x06}}}};
+		-1, 1,
+		{{1, {0x08}}}};
 
 	this->dacs = dacs;
 	this->adcs = adcs;
@@ -2165,6 +2164,19 @@ static const mixer_item_t ad1984_mixer_items[] = {
 	  4, 0, .un.v={{""}, 2, MIXER_DELTA(39)}}, 0x03, AD1984_TARGET_MASTER},
 	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 3, ENUM_OFFON}, 0x11, AD1984_TARGET_MASTER_MUTE},
+	{{0, {AudioNvolume}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(54)}}, 0x0c, MI_TARGET_OUTAMP},
+	{{0, {AudioNvolume"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x0c, MI_TARGET_OUTAMP},
+	{{0, {AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={1, {{{AudioNmicrophone}, 0}}}},
+	 0x0c, MI_TARGET_CONNLIST},
+	{{0, {AudioNmicrophone"."AudioNpreamp}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(3)}}, 0x14, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmicrophone}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(31)}}, 0x20, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmicrophone"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x20, MI_TARGET_INAMP(0)},
 	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(39)}}, 0x03, MI_TARGET_OUTAMP},
 	{{0, {AudioNheadphone"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
