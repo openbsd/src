@@ -847,11 +847,14 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uvideo.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesafbvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/ascii.ph
@@ -1537,6 +1540,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/utsname.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/varargs.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode_if.ph

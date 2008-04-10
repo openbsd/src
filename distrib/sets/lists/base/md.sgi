@@ -1469,11 +1469,14 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/uvideo.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vesa
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vesa/vesabiosreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vesa/vesafbvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/ascii.ph
@@ -2261,6 +2264,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/utsname.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/varargs.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/vnode_if.ph
