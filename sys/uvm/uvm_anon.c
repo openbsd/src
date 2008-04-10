@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.28 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.29 2008/04/10 16:43:47 miod Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -156,6 +156,13 @@ uvm_anfree(anon)
 			    anon, pg, 0, 0);
 		}
 	}
+	if (pg == NULL && anon->an_swslot != 0) {
+		/* this page is no longer only in swap. */
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly > 0);
+		uvmexp.swpgonly--;
+		simple_unlock(&uvm.swap_data_lock);
+	}
 
 	/*
 	 * free any swap resources.
@@ -191,13 +198,6 @@ uvm_anon_dropswap(anon)
 		    anon, anon->an_swslot, 0, 0);
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
-
-	if (anon->an_page == NULL) {
-		/* this page is no longer only in swap. */
-		simple_lock(&uvm.swap_data_lock);
-		uvmexp.swpgonly--;
-		simple_unlock(&uvm.swap_data_lock);
-	} 
 }
 
 /*
