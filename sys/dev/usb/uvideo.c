@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.3 2008/04/10 09:22:15 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.4 2008/04/11 05:37:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -166,7 +166,7 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 	struct uvideo_softc *sc = (struct uvideo_softc *) self;
 	struct usb_attach_arg *uaa = aux;
 	usb_config_descriptor_t *cdesc;
-	usbd_status     err;
+	usbd_status err;
 	uint8_t probe_data[34];
 	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
 
@@ -182,8 +182,10 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 
 	uvideo_dump_desc_all(sc);
 
+	bzero(probe_data, sizeof(probe_data));
 	if (uvideo_vs_set_probe(sc, probe_data))
 		return;
+	bzero(probe_data, sizeof(probe_data));
 	if (uvideo_vs_get_probe(sc, probe_data))
 		return;
 	if (uvideo_vs_set_probe_commit(sc, probe_data))
@@ -513,9 +515,7 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	USETW(req.wIndex, 1);
 	USETW(req.wLength, 26);
 
-	bzero(probe_data, sizeof(probe_data));
 	pc = (struct usb_video_probe_commit *)probe_data;
-	USETW(pc->bmHint, 8);
 	//USETW(pc->bmHint, 1);
 	pc->bFormatIndex = 1;
 	pc->bFrameIndex = 1;
@@ -529,6 +529,20 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 
 	DPRINTF(1, "%s: SET probe control request successfully\n",
 	    DEVNAME(sc));
+
+	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
+	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
+	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
+	DPRINTF(1, "dwFrameInterval=%d (ns)\n", UGETDW(pc->dwFrameInterval));
+	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
+	DPRINTF(1, "wPFrameRate=0x%d\n", UGETW(pc->wPFrameRate));
+	DPRINTF(1, "wCompQuality=0x%d\n", UGETW(pc->wCompQuality));
+	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
+	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
+	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
+	    UGETDW(pc->dwMaxVideoFrameSize));
+	DPRINTF(1, "dwMaxPayloadTransferSize=%d (bytes)\n",
+	    UGETDW(pc->dwMaxPayloadTransferSize));
 
 	return (0);
 }
@@ -549,7 +563,6 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	USETW(req.wIndex, 1);
 	USETW(req.wLength, 26);
 
-	bzero(probe_data, sizeof(probe_data));
 	pc = (struct usb_video_probe_commit *)probe_data;
 
 	err = usbd_do_request(sc->sc_udev, &req, probe_data);
