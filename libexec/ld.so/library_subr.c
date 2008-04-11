@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.27 2006/12/23 21:08:01 krw Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.28 2008/04/11 15:30:16 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -46,10 +46,6 @@
 /* STATIC DATA */
 struct dlochld _dlopened_child_list;
 
-
-/* local functions */
-elf_object_t * _dl_load_shlib_hint(struct sod *sod, struct sod *req_sod,
-    int type, int flags, int use_hints, const char *libpath);
 
 /*
  * _dl_match_file()
@@ -230,30 +226,6 @@ nohints:
 }
 
 /*
- * attempt to locate and load a library based on libpath, sod info and
- * if it needs to respect hints, passing type and flags to perform open
- */
-elf_object_t *
-_dl_load_shlib_hint(struct sod *sod, struct sod *req_sod, int type,
-    int flags, int use_hints, const char *libpath)
-{
-	elf_object_t *object = NULL;
-	char *hint;
-
-	hint = _dl_find_shlib(req_sod, libpath, use_hints);
-	if (hint != NULL) {
-		if (req_sod->sod_minor < sod->sod_minor)
-			_dl_printf("warning: lib%s.so.%d.%d: "
-			    "minor version >= %d expected, "
-			    "using it anyway\n",
-			    sod->sod_name, sod->sod_major,
-			    req_sod->sod_minor, sod->sod_minor);
-		object = _dl_tryload_shlib(hint, type, flags);
-	}
-	return object;
-}
-
-/*
  *  Load a shared object. Search order is:
  *	If the name contains a '/' use only the path preceding the
  *	library name and do not continue on to other methods if not
@@ -283,6 +255,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 	int try_any_minor, ignore_hints;
 	struct sod sod, req_sod;
 	elf_object_t *object = NULL;
+	char *hint;
 
 	try_any_minor = 0;
 	ignore_hints = 0;
@@ -308,9 +281,8 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 		req_sod = sod;
 
 fullpathagain:
-		object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
-		    ignore_hints,  lpath);
-		if (object != NULL)
+		hint = _dl_find_shlib(&req_sod, lpath, ignore_hints);
+		if (hint != NULL)
 			goto fullpathdone;
 
 		if (try_any_minor == 0) {
@@ -322,8 +294,7 @@ fullpathagain:
 		_dl_errno = DL_NOT_FOUND;
 fullpathdone:
 		_dl_free(lpath);
-		_dl_free((char *)sod.sod_name);
-		return (object);
+		goto done;
 	}
 
 	_dl_build_sod(libname, &sod);
@@ -332,32 +303,28 @@ fullpathdone:
 again:
 	/* No '/' in name. Scan the known places, LD_LIBRARY_PATH first.  */
 	if (_dl_libpath != NULL) {
-		object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
-		    ignore_hints,  _dl_libpath);
-		if (object != NULL)
+		hint = _dl_find_shlib(&req_sod, _dl_libpath, ignore_hints);
+		if (hint != NULL)
 			goto done;
 	}
 
 	/* Check DT_RPATH.  */
 	if (parent->dyn.rpath != NULL) {
-		object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
-		    ignore_hints,  parent->dyn.rpath);
-		if (object != NULL)
+		hint = _dl_find_shlib(&req_sod, parent->dyn.rpath, ignore_hints);
+		if (hint != NULL)
 			goto done;
 	}
 
 	/* Check main program's DT_RPATH, if parent != main program */
 	if (parent != _dl_objects && _dl_objects->dyn.rpath != NULL) {
-		object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
-		    ignore_hints, _dl_objects->dyn.rpath);
-		if (object != NULL)
+		hint = _dl_find_shlib(&req_sod, _dl_objects->dyn.rpath, ignore_hints);
+		if (hint != NULL)
 			goto done;
 	}
 
 	/* check 'standard' locations */
-	object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
-	    ignore_hints, NULL);
-	if (object != NULL)
+	hint = _dl_find_shlib(&req_sod, NULL, ignore_hints);
+	if (hint != NULL)
 		goto done;
 
 	if (try_any_minor == 0) {
@@ -368,6 +335,15 @@ again:
 	}
 	_dl_errno = DL_NOT_FOUND;
 done:
+	if (hint != NULL) {
+		if (req_sod.sod_minor < sod.sod_minor)
+			_dl_printf("warning: lib%s.so.%d.%d: "
+			    "minor version >= %d expected, "
+			    "using it anyway\n",
+			    sod.sod_name, sod.sod_major,
+			    req_sod.sod_minor, sod.sod_minor);
+		object = _dl_tryload_shlib(hint, type, flags);
+	}
 	_dl_free((char *)sod.sod_name);
 	return(object);
 }
