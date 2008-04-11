@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2008/02/22 23:51:31 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.134 2008/04/11 00:05:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,6 +246,7 @@ typedef struct {
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
 %token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT TAG
+%token	INCLUDE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -276,6 +277,7 @@ typedef struct {
 %%
 
 grammar		: /* empty */
+		| grammar include '\n'
 		| grammar '\n'
 		| grammar ikerule '\n'
 		| grammar flowrule '\n'
@@ -287,6 +289,21 @@ grammar		: /* empty */
 
 comma		: ','
 		| /* empty */
+		;
+
+include		: INCLUDE STRING		{
+			struct file	*nfile;
+
+			if ((nfile = pushfile($2, 0)) == NULL) {
+				yyerror("failed to include file %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			file = nfile;
+			lungetc('\n');
+		}
 		;
 
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
@@ -877,6 +894,7 @@ lookup(char *s)
 		{ "group",		GROUP },
 		{ "ike",		IKE },
 		{ "in",			IN },
+		{ "include",		INCLUDE },
 		{ "ipcomp",		IPCOMP },
 		{ "ipip",		IPIP },
 		{ "life",		LIFE },
