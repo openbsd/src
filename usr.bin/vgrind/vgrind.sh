@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$OpenBSD: vgrind.sh,v 1.4 2003/06/03 02:56:21 millert Exp $
+#	$OpenBSD: vgrind.sh,v 1.5 2008/04/11 14:24:29 millert Exp $
 #	$NetBSD: vgrind.sh,v 1.3 1994/11/17 08:28:06 jtc Exp $
 #
 # Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 if ( $?TROFF ) then
 	set troff = "$TROFF"
 else
-	set troff = "troff"
+	set troff = "groff"
 endif
 
 set vf=/usr/libexec/vfontedpr
@@ -59,8 +59,19 @@ if ($#argv > 0) then
 	shift
 	goto top
 
+    case -T:
+	if ($#argv < 2) then
+	    echo "vgrind: $1:q option must have argument"
+	    goto done
+	else
+	    set voptions = ($voptions $1:q $2)
+	    shift
+	    shift
+	    goto top
+	endif
+
     case -t:
-	set voptions = "$voptions -t"
+	# ignore for backwards compatibility
 	shift
 	goto top
 
