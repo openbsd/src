@@ -1,4 +1,4 @@
-# $OpenBSD: sudoers,v 1.20 2008/03/20 12:46:43 sthen Exp $
+# $OpenBSD: sudoers,v 1.21 2008/04/11 20:51:57 thib Exp $
 #
 # sudoers file.
 #
@@ -20,6 +20,9 @@ Defaults env_keep +="DESTDIR FETCH_CMD FLAVOR FTPMODE GROUP MAKE MULTI_PACKAGES"
 Defaults env_keep +="OKAY_FILES OWNER PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH"
 Defaults env_keep +="PKG_TMPDIR PORTSDIR RELEASEDIR SUBPACKAGE WRKOBJDIR"
 Defaults env_keep +="SSH_AUTH_SOCK EDITOR VISUAL SHARED_ONLY"
+
+# Uncomment to disable the lecture the first time you run sudo
+#Defaults !lecture
 
 # Uncomment to preserve the environment for users in group wheel
 #Defaults:%wheel !env_reset
