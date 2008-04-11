@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.113 2008/04/04 11:05:04 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.114 2008/04/11 11:34:00 thib Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -297,6 +297,7 @@ struct tht_rx_free {
 #define THT_RXF_SGL_LEN		((THT_FIFO_DESC_LEN - \
 				    sizeof(struct tht_rx_free)) / \
 				    sizeof(struct tht_pbd))
+#define THT_RXF_PKT_NUM		128
 
 /* rx descriptor */
 struct tht_rx_desc {
@@ -378,6 +379,7 @@ struct tht_tx_task {
 #define THT_TXT_SGL_LEN		((THT_FIFO_DESC_LEN - \
 				    sizeof(struct tht_tx_task)) / \
 				    sizeof(struct tht_pbd))
+#define THT_TXT_PKT_NUM		128
 
 /* tx free fifo */
 struct tht_tx_free {
@@ -943,9 +945,11 @@ tht_up(struct tht_softc *sc)
 		return;
 	}
 
-	if (tht_pkt_alloc(sc, &sc->sc_tx_list, 128, THT_TXT_SGL_LEN) != 0)
+	if (tht_pkt_alloc(sc, &sc->sc_tx_list, THT_TXT_PKT_NUM,
+	    THT_TXT_SGL_LEN) != 0)
 		return;
-	if (tht_pkt_alloc(sc, &sc->sc_rx_list, 128, THT_RXF_SGL_LEN) != 0)
+	if (tht_pkt_alloc(sc, &sc->sc_rx_list, THT_RXF_PKT_NUM,
+	    THT_RXF_SGL_LEN) != 0)
 		goto free_tx_list;
 
 	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
