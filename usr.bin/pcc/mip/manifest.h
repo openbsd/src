@@ -1,4 +1,4 @@
-/*	$OpenBSD: manifest.h,v 1.9 2008/01/12 17:17:28 ragge Exp $	*/
+/*	$OpenBSD: manifest.h,v 1.10 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -167,6 +167,7 @@
 #define DATA		1		/* (rw) data segment */
 #define RDATA		2		/* (ro) data segment */
 #define STRNG		3		/* (ro) string segment */
+#define	UDATA		4		/* (rw) uninitialized data */
 
 
 #define	regno(p)	((p)->n_rval)	/* register number */
@@ -177,7 +178,7 @@
 extern int bdebug, tdebug, edebug;
 extern int ddebug, xdebug, f2debug;
 extern int iTflag, oTflag, kflag;
-extern int sflag, nflag, gflag;
+extern int sflag, nflag, gflag, pflag;
 extern int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
 	Wimplicit_function_declaration;
 extern int xssaflag, xtailcallflag, xtemps, xdeljumps;
@@ -319,4 +320,5 @@ NODE *tcopy(NODE *);
 void fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down);
 
 extern	int nerrors;		/* number of errors seen so far */
+extern	int warniserr;		/* treat warnings as errors */
 #endif

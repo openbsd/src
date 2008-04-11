@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.3 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: local2.c,v 1.4 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -86,18 +86,18 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i)) {
 			if (i <= R31)
-				printf("\tstw\t%s,%d(%%sp)\n",
+				printf("\tstw\t%s,%d(%%r3)\n",
 				    rnames[i], regoff[i]);
 			else if (i <= RETD0)
-				printf("\tstw\t%s,%d(%%sp)\n"
-				    "\tstw\t%s,%d(%%sp)\n",
+				printf("\tstw\t%s,%d(%%r3)\n"
+				    "\tstw\t%s,%d(%%r3)\n",
 				    rnames[rl[i - RD0]], regoff[i] + 0,
 				    rnames[rh[i - RD0]], regoff[i] + 4);
 			else if (i <= FR31)
-				printf("\tfstws\t%s,%d(%%sp)\n",
+				printf("\tfstws\t%s,%d(%%r3)\n",
 				    rnames[i], regoff[i]);
 			else
-				printf("\tfstds\t%s,%d(%%sp)\n",
+				printf("\tfstds\t%s,%d(%%r3)\n",
 				    rnames[i], regoff[i]);
 		}
 }
@@ -108,7 +108,7 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 static int
 offcalc(struct interpass_prolog *ipp)
 {
-	int i, addto;
+	int i, addto, off;
 
 	addto = 32;
 	if (p2calls) {
@@ -119,12 +119,12 @@ offcalc(struct interpass_prolog *ipp)
 		addto += i * 4;
 	}
 
-	for (i = 0; i < MAXREGS; i++)
+	for (off = 4, i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i)) {
-			regoff[i] = addto;
-			addto += SZINT/SZCHAR;
+			regoff[i] = off;
+			off += szty(PERMTYPE(i)) * SZINT/SZCHAR;
 		}
-	addto += 4 + p2maxautooff;
+	addto += off + p2maxautooff;
 	return (addto + 63) & ~63;
 }
 
@@ -160,18 +160,18 @@ eoftn(struct interpass_prolog *ipp)
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i)) {
 			if (i <= R31)
-				printf("\tldw\t%d(%%sp),%s\n",
+				printf("\tldw\t%d(%%r3),%s\n",
 				    regoff[i], rnames[i]);
 			else if (i <= RETD0)
-				printf("\tldw\t%d(%%sp),%s\n"
-				    "\tldw\t%d(%%sp),%s\n",
+				printf("\tldw\t%d(%%r3),%s\n"
+				    "\tldw\t%d(%%r3),%s\n",
 				    regoff[i] + 0, rnames[rl[i - RD0]],
 				    regoff[i] + 4, rnames[rh[i - RD0]]);
 			else if (i <= FR31)
-				printf("\tfldws\t%d(%%sp),%s\n",
+				printf("\tfldws\t%d(%%r3),%s\n",
 				    regoff[i], rnames[i]);
 			else
-				printf("\tfldds\t%d(%%sp),%s\n",
+				printf("\tfldds\t%d(%%r3),%s\n",
 				    regoff[i], rnames[i]);
 		}
 
@@ -285,7 +285,7 @@ tlen(p) NODE *p;
 
 		default:
 			if (!ISPTR(p->n_type))
-				comperr("tlen type %d not pointer");
+				comperr("tlen type %d not pointer", p->n_type);
 			return SZPOINT(p->n_type)/SZCHAR;
 		}
 }
@@ -293,6 +293,7 @@ tlen(p) NODE *p;
 static int
 argsiz(NODE *p)
 {
+	NODE *q;
 	TWORD t = p->n_type;
 
 	if (t < LONGLONG || t == FLOAT || t > BTMASK)
@@ -300,10 +301,16 @@ argsiz(NODE *p)
 	if (t == LONGLONG || t == ULONGLONG || t == DOUBLE)
 		return 8;
 	if (t == LDOUBLE)
-		return 8;	/* quad is 16 */
-	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize;
-	comperr("argsiz");
+		return 8;	/* LDOUBLE is 16 */
+	if ((t == STRTY || t == UNIONTY) && p->n_right->n_op == STARG)
+		return 4 + p->n_right->n_stsize;
+        /* perhaps it's down there somewhere -- let me take another look! */
+	if ((t == STRTY || t == UNIONTY) && p->n_right->n_op == CALL) {
+		q = p->n_right->n_right->n_left->n_left->n_right;
+		if (q->n_op == STARG)
+			return 4 + q->n_stsize;
+	}
+	comperr("argsiz %p", p);
 	return 0;
 }
 
@@ -345,11 +352,19 @@ twollcomp(NODE *p)
 	}
 	if (p->n_op >= ULE)
 		cb1 += 4, cb2 += 4;
-	expand(p, 0, "	cmpl UR,UL\n");
-	if (cb1) cbgen(cb1, s);
-	if (cb2) cbgen(cb2, e);
-	expand(p, 0, "	cmpl AR,AL\n");
-	cbgen(p->n_op, e);
+	if (cb1) {
+		p->n_op = cb1;
+		p->n_label = s;
+		expand(p, 0, "\tcomb,O\tUR,UL,LC\n\tnop\n");
+		p->n_label = e;
+		p->n_op = o;
+	}
+	if (cb2) {
+		p->n_op = cb2;
+		expand(p, 0, "\tcomb,O\tUR,UL,LC\n\tnop\n");
+		p->n_op = o;
+	}
+	expand(p, 0, "\tcomb,O\tAR,AL,LC\n\tnop\n");
 	deflab(s);
 }
 
@@ -554,7 +569,6 @@ adrput(FILE *io, NODE *p)
 		} else
 			fprintf(io, "(%s)", rnames[p->n_rval]);
 		return;
-	case MOVE:
 	case REG:
 		if (RD0 <= p->n_rval && p->n_rval <= RETD0)
 			fprintf(io, "%s", rnames[rl[p->n_rval - RD0]]);

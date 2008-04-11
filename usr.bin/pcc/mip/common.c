@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.8 2007/11/17 12:00:37 ragge Exp $	*/
+/*	$OpenBSD: common.c,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -75,9 +75,18 @@ int nerrors = 0;  /* number of errors */
 char *ftitle;
 int lineno;
 
+int warniserr = 0;
+
 #ifndef WHERE
 #define	WHERE(ch) fprintf(stderr, "%s, line %d: ", ftitle, lineno);
 #endif
+
+static void
+incerr(void)
+{
+	if (++nerrors > 30)
+		cerror("too many errors");
+}
 
 /*
  * nonfatal error message
@@ -90,13 +99,11 @@ uerror(char *s, ...)
 	va_list ap;
 
 	va_start(ap, s);
-	++nerrors;
 	WHERE('u');
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
-	if (nerrors > 30)
-		cerror("too many errors");
 	va_end(ap);
+	incerr();
 }
 
 /*
@@ -137,6 +144,8 @@ werror(char *s, ...)
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
+	if (warniserr)
+		incerr();
 }
 
 #ifndef MKEXT
@@ -190,7 +199,6 @@ tcopy(NODE *p)
 
 	return(q);
 }
-
 
 /*
  * ensure that all nodes have been freed
@@ -317,7 +325,6 @@ struct dopest {
 	{ REG, "REG", LTYPE, },
 	{ OREG, "OREG", LTYPE, },
 	{ TEMP, "TEMP", LTYPE, },
-	{ MOVE, "MOVE", UTYPE, },
 	{ ICON, "ICON", LTYPE, },
 	{ FCON, "FCON", LTYPE, },
 	{ CCODES, "CCODES", LTYPE, },
@@ -328,7 +335,8 @@ struct dopest {
 	{ UFORTCALL, "UFCALL", UTYPE|CALLFLG, },
 	{ COMPL, "~", UTYPE, },
 	{ FORCE, "FORCE", UTYPE, },
-/*	{ INIT, "INIT", UTYPE, }, */
+	{ XARG, "XARG", UTYPE, },
+	{ XASM, "XASM", BITYPE, },
 	{ SCONV, "SCONV", UTYPE, },
 	{ PCONV, "PCONV", UTYPE, },
 	{ PLUS, "+", BITYPE|FLOFLG|SIMPFLG|COMMFLG, },

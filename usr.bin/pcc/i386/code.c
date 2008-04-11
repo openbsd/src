@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.7 2008/01/12 17:29:09 ragge Exp $	*/
+/*	$OpenBSD: code.c,v 1.8 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -48,6 +48,13 @@ defloc(struct symtab *sp)
 	}
 	t = sp->stype;
 	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+#ifdef TLS
+	if (sp->sflags & STLS) {
+		if (s != DATA)
+			cerror("non-data symbol in tls section");
+		nextsect = ".tdata";
+	}
+#endif
 	if (nextsect) {
 		printf("	.section %s\n", nextsect);
 		nextsect = NULL;

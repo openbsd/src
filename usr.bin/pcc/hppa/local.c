@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.3 2007/12/19 20:19:54 otto Exp $	*/
+/*	$OpenBSD: local.c,v 1.4 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -34,6 +34,8 @@
 
 /*	this file contains code which is dependent on the target machine */
 
+struct symtab *makememcpy(void);
+
 /* clocal() is called to do local transformations on
  * an expression tree preparitory to its being
  * written out in intermediate code.
@@ -48,7 +50,7 @@
 NODE *
 clocal(NODE *p)
 {
-	register struct symtab *q;
+	register struct symtab *q, *sp;
 	register NODE *r, *l, *s;
 	register int o, m, rn;
 	char *ch, name[16];
@@ -113,13 +115,14 @@ clocal(NODE *p)
 
 		case STATIC:
 		case EXTERN:
+			if (strncmp(p->n_sp->soname, "__builtin", 9) == 0)
+				break;
+
 			l = block(REG, NIL, NIL, INT, 0, 0);
 			l->n_lval = 0;
 			l->n_rval = R1;
 			l = block(ASSIGN, l, p, INT, 0, 0);
-			r = block(ICON, NIL, NIL, INT, 0, 0);
-			r->n_sp = p->n_sp;
-			r->n_lval = 0;
+			r = xbcon(0, p->n_sp, INT);
 			p = block(UMUL,
 			    block(PLUS, l, r, INT, 0, 0),
 			    NIL, p->n_type, p->n_df, p->n_sue);
@@ -135,9 +138,7 @@ clocal(NODE *p)
 		l->n_lval = 0;
 		l->n_rval = R1;
 		l = block(ASSIGN, l, p->n_left, INT, 0, 0);
-		r = block(ICON, NIL, NIL, INT, 0, 0);
-		r->n_sp = p->n_left->n_sp;
-		r->n_lval = 0;
+		r = xbcon(0, p->n_left->n_sp, INT);
 		l = block(PLUS, l, r, p->n_type, p->n_df, p->n_sue);
 		nfree(p);
 		p = l;
@@ -285,7 +286,16 @@ clocal(NODE *p)
 			l->n_sue = MKSUE(m);
 			nfree(p);
 			return l;
+                } else if (l->n_op == FCON) {
+			l->n_lval = l->n_dcon;
+			l->n_sp = NULL;
+			l->n_op = ICON;
+			l->n_type = m;
+			l->n_sue = MKSUE(m);
+			nfree(p);
+			return clocal(l);
 		}
+
 		if (DEUNSIGN(p->n_type) == SHORT &&
 		    DEUNSIGN(l->n_type) == SHORT) {
 			nfree(p);
@@ -384,6 +394,77 @@ clocal(NODE *p)
 		    p->n_type, p->n_df, p->n_sue);
 		l->n_left = tcopy(r);
 		break;
+
+	case STASG:
+		/* memcpy(left, right, size) */
+		sp = makememcpy();
+		l = p->n_left;
+		/* guess struct return */
+		if (l->n_op == NAME && ISFTN(l->n_sp->stype)) {
+			l = block(REG, NIL, NIL, VOID|PTR, 0, MKSUE(LONG));
+			l->n_lval = 0;
+			l->n_rval = RET0;
+		} else if (l->n_op == UMUL)
+			l = tcopy(l->n_left);
+		else if (l->n_op == NAME)
+			l = block(ADDROF,tcopy(l),NIL,PTR|STRTY,0,MKSUE(LONG));
+		l = block(CALL, block(ADDROF,
+		    (s = block(NAME, NIL, NIL, FTN, 0, MKSUE(LONG))),
+		    NIL, PTR|FTN, 0, MKSUE(LONG)),
+		    block(CM, block(CM, l, tcopy(p->n_right),
+		    STRTY|PTR, 0, MKSUE(LONG)),
+		    (r = block(ICON, NIL, NIL, INT, 0, MKSUE(LONG))), 0, 0, 0),
+		    INT, 0, MKSUE(LONG));
+		r->n_lval = p->n_sue->suesize/SZCHAR;
+		s->n_sp = sp;
+		s->n_df = s->n_sp->sdf;
+		defid(s, EXTERN);
+		tfree(p);
+		p = l;
+		p->n_left = clocal(p->n_left);
+		p->n_right = clocal(p->n_right);
+		calldec(p->n_left, p->n_right);
+		funcode(p);
+		break;
+
+	case STARG:
+		/* arg = memcpy(argN-size, src, size) */
+		sp = makememcpy();
+		l = block(CALL, block(ADDROF,
+		    (s = block(NAME, NIL, NIL, FTN, 0, MKSUE(LONG))),NIL,0,0,0),
+		    block(CM, block(CM, tcopy(p), tcopy(p->n_left), 0, 0, 0),
+		    (r = block(ICON, NIL, NIL, INT, 0, MKSUE(LONG))), 0, 0, 0),
+		    INT, 0, MKSUE(LONG));
+		r->n_lval = p->n_sue->suesize/SZCHAR;
+		s->n_sp = sp;
+		s->n_df = s->n_sp->sdf;
+		defid(s, EXTERN);
+		tfree(p);
+		p = l;
+		p->n_left = clocal(p->n_left);
+		calldec(p->n_left, p->n_right);
+		funcode(p);
+		break;
+
+	case STCALL:
+	case CALL:
+		for (r = p->n_right; r->n_op == CM; r = r->n_left) {
+			if (r->n_right->n_op == ASSIGN &&
+			    r->n_right->n_right->n_op == CALL) {
+				s = r->n_right->n_right;
+				l = tempnode(0, s->n_type, s->n_df, s->n_sue);
+				ecode(buildtree(ASSIGN, l, s));
+				r->n_right->n_right = tcopy(l);
+			}
+			if (r->n_left->n_op == ASSIGN &&
+			    r->n_left->n_right->n_op == CALL) {
+				s = r->n_left->n_right;
+				l = tempnode(0, s->n_type, s->n_df, s->n_sue);
+				ecode(buildtree(ASSIGN, l, s));
+				r->n_left->n_right = tcopy(l);
+			}
+		}
+		break;
 	}
 
 	/* second pass - rewrite long ops */
@@ -414,6 +495,7 @@ clocal(NODE *p)
 		p->n_left->n_left->n_sp = lookup(addname(name), 0);
 		defid(p->n_left->n_left, EXTERN);
 		p->n_left = clocal(p->n_left);
+		calldec(p->n_left, p->n_right);
 		p->n_op = CALL;
 		funcode(p);
 		break;
@@ -428,9 +510,60 @@ clocal(NODE *p)
 	return(p);
 }
 
+struct symtab *
+makememcpy()
+{
+	NODE *memcpy, *args, *t, *u;
+	struct symtab *sp;
+
+	/* TODO check that it's a func proto */
+	if ((sp = lookup(addname("memcpy"), SNORMAL)))
+		return sp;
+
+	memcpy = block(NAME, NIL, NIL, 0, 0, MKSUE(LONG));
+	memcpy->n_sp = sp = lookup(addname("memcpy"), SNORMAL);
+	defid(memcpy, EXTERN);
+
+	args = block(CM, block(CM,
+	    block(NAME, NIL, NIL, VOID|PTR, 0, MKSUE(LONG)),
+	    block(NAME, NIL, NIL, VOID|PTR, 0, MKSUE(LONG)), 0, 0, 0),
+	    block(NAME, NIL, NIL, LONG, 0, MKSUE(LONG)), 0, 0, 0);
+
+	tymerge(t = block(TYPE, NIL, NIL, VOID|PTR, 0, 0),
+	    (u = block(UMUL, block(CALL, memcpy, args, LONG, 0, 0),
+	    NIL, LONG, 0, 0)));
+	tfree(t);
+	tfree(u);
+
+	return sp;
+}
+
 void
 myp2tree(NODE *p)
 {
+	int o = p->n_op;
+
+	if (o != FCON) 
+		return;
+
+	/* Write float constants to memory */
+	/* Should be volontary per architecture */
+ 
+#if 0
+	setloc1(RDATA);
+	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
+	    ALDOUBLE : ALLDOUBLE );
+	deflab1(i = getlab()); 
+#endif
+
+	ninval(0, btdims[p->n_type].suesize, p);
+	p->n_op = NAME;
+	p->n_lval = 0;	
+	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
+	p->n_sp->sclass = ILABEL;
+	p->n_sp->soffset = getlab();
+	p->n_sp->sflags = 0;
+
 }
 
 /*ARGSUSED*/
@@ -540,9 +673,12 @@ indata(CONSZ val, int size)
  * sequences.  Location is already set.
  */
 void
-instring(char *str)
+instring(struct symtab *sp)
 {
-	char *s;
+	char *s, *str;
+
+	defloc(sp);
+	str = sp->sname;
 
 	/* be kind to assemblers and avoid long strings */
 	printf("\t.ascii\t\"");
@@ -558,6 +694,27 @@ instring(char *str)
 	}
 	fwrite(str, 1, s - str, stdout);
 	printf("\\0\"\n");
+}
+
+/*
+ * Print out a wide string by calling ninval().
+ */
+void
+inwstring(struct symtab *sp)
+{
+	char *s = sp->sname;
+	NODE *p;
+
+	defloc(sp);
+	p = bcon(0);
+	do { 
+		if (*s++ == '\\')
+			p->n_lval = esccon(&s);
+		else
+			p->n_lval = (unsigned char)s[-1];
+		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
+	} while (s[-1] != 0);
+	nfree(p);
 }
 
 static int inbits, inval;
@@ -660,7 +817,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->sname));
+				printf("+%s", exname(q->soname));
 		}
 		printf("\n");
 		break;
@@ -719,71 +876,65 @@ ctype(TWORD type)
 }
 
 void
-calldec(NODE *p, NODE *q) 
+calldec(NODE *f, NODE *a) 
 {
-	printf("\t.call\n");
+	struct symtab *q;
+	if (f->n_op == UMUL && f->n_left->n_op == PLUS &&
+	    f->n_left->n_right->n_op == ICON)
+		q = f->n_left->n_right->n_sp;
+	else if (f->n_op == PLUS && f->n_right->n_op == ICON)
+		q = f->n_right->n_sp;
+	else {
+		fwalk(f, eprint, 0);
+		cerror("unknown function");
+		return;
+	}
+
+	printf("\t.import\t%s,code\n", exname(q->soname));
 }
 
 void
 extdec(struct symtab *q)
 {
-#ifdef GCC_COMPAT
-	printf("\t.import\t%s,data\n", gcc_findname(q));
-#else
-	printf("\t.import\t%s,data\n", exname(q->sname));
-#endif
+	printf("\t.import\t%s,data\n", exname(q->soname));
 }
 
 /* make a common declaration for id, if reasonable */
 void
-commdec(struct symtab *q)
+defzero(struct symtab *sp)
 {
 	int off;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZCHAR-1))/SZCHAR;
-#ifdef GCC_COMPAT
-	printf("\t.label\t%s\n", gcc_findname(q));
-#else
-	printf("\t.label\t%s\n", exname(q->sname));
-#endif
-	printf("\t.comm\t%d\n", off);
+	off = tsize(sp->stype, sp->sdf, sp->ssue);
+	off = (off + (SZCHAR - 1)) / SZCHAR;
+	printf("\t.%scomm\t", sp->sclass == STATIC ? "l" : "");
+	if (sp->slevel == 0)
+		printf("%s,0%o\n", exname(sp->soname), off);
+	else
+		printf(LABFMT ",0%o\n", sp->soffset, off);
 }
 
-/* make a local common declaration for id, if reasonable */
-void
-lcommdec(struct symtab *q)
-{
-	int off;
+char *nextsect;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZCHAR-1))/SZCHAR;
-	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("\t.lcomm %s,0%o\n", gcc_findname(q), off);
-#else
-		printf("\t.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
-	else
-		printf("\t.lcomm " LABFMT ",0%o\n", q->soffset, off);
+#define	SSECTION	010000
+
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	if (strcmp(ary[1], "section") || ary[2] == NULL)
+		return 0;
+	nextsect = newstring(ary[2], strlen(ary[2]));
+	return 1;
 }
 
 /*
- * print a (non-prog) label.
+ * Called when a identifier has been declared, to give target last word.
  */
 void
-deflab1(int label)
+fixdef(struct symtab *sp)
 {
-	printf("\t.label\t" LABFMT "\n", label);
 }
 
-static char *loctbl[] = { "text", "data", "section .rodata", "section .rodata" };
-
-void
-setloc1(int locc)
-{
-	if (locc == lastloc)
-		return;
-	lastloc = locc;
-	printf("\t.%s\n", loctbl[locc]);
-}

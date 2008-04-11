@@ -1,3 +1,4 @@
+/*	$OpenBSD: code.c,v 1.2 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 
@@ -31,7 +32,16 @@ defloc(struct symtab *sp)
 	lastloc = s;
 	if (s == PROG)
 		return;
-	printf("\t.align 4\n");
+
+	switch (DEUNSIGN(sp->stype)) {
+		case CHAR:	s = 1;
+		case SHORT:	s = 2;
+		case INT:
+		case UNSIGNED:	s = 4;
+		default:	s = 8;
+	}
+	printf("\t.align %d\n", s);
+
 	if (sp->sclass == EXTDEF)
 		printf("\t.global %s\n", sp->soname);
 	if (sp->slevel == 0) {
@@ -52,14 +62,15 @@ efcode()
 void
 bfcode(struct symtab **sp, int cnt)
 {
-	int i;
+	int i, off;
 	NODE *p, *q;
 	struct symtab *sym;
 
-	for (i=0; i < cnt && i < I7 - I0; i++) {
+	/* Process the first six arguments. */
+	for (i=0; i < cnt && i < 6; i++) {
 		sym = sp[i];
 		q = block(REG, NIL, NIL, sym->stype, sym->sdf, sym->ssue);
-		q->n_rval = i + I0;
+		q->n_rval = RETREG_PRE(sym->stype) + i;
 		p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
 		sym->soffset = regno(p);
 		sym->sflags |= STNODE;
@@ -67,8 +78,19 @@ bfcode(struct symtab **sp, int cnt)
 		ecomp(p);
 	}
 
-	if (i < cnt)
-		cerror("unprocessed arguments in bfcode"); /* TODO */
+	/* Process the remaining arguments. */
+	for (off = V9RESERVE; i < cnt; i++) {
+		sym = sp[i];
+		spname = sym;
+		p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
+		off = ALIGN(off, (tlen(p) - 1));
+		sym->soffset = off * SZCHAR;
+		off += tlen(p);
+		p = buildtree(ASSIGN, p, buildtree(NAME, 0, 0));
+		sym->soffset = regno(p->n_left);
+		sym->sflags |= STNODE;
+		ecomp(p);
+	}
 }
 
 void
@@ -87,30 +109,55 @@ bjobcode()
 {
 }
 
+/*
+ * The first six 64-bit arguments are saved in the registers O0 to O5,
+ * which become I0 to I5 after the "save" instruction moves the register
+ * window. Arguments 7 and up must be saved on the stack to %sp+BIAS+176.
+ *
+ * For a pretty picture, see Figure 3-16 in the SPARC Compliance Def 2.4.
+ */
 static NODE *
-moveargs(NODE *p, int *regp)
+moveargs(NODE *p, int *regp, int *stacksize)
 {
 	NODE *r, *q;
 
 	if (p->n_op == CM) {
-		p->n_left = moveargs(p->n_left, regp);
+		p->n_left = moveargs(p->n_left, regp, stacksize);
 		r = p->n_right;
 	} else {
 		r = p;
 	}
 
-	if (*regp > I7 && r->n_op != STARG)
-		cerror("reg > I7 in moveargs"); /* TODO */
-	else if (r->n_op == STARG)
+	/* XXX more than six FP args can and should be passed in registers. */
+	if (*regp > 5 && r->n_op != STARG) {
+		/* We are storing the stack offset in n_rval. */
+		r = block(FUNARG, r, NIL, r->n_type, r->n_df, r->n_sue);
+		/* Make sure we are appropriately aligned. */
+		*stacksize = ALIGN(*stacksize, (tlen(r) - 1));
+		r->n_rval = *stacksize;
+		*stacksize += tlen(r);
+	} else if (r->n_op == STARG)
 		cerror("op STARG in moveargs");
-	else if (r->n_type == DOUBLE || r->n_type == LDOUBLE)
-		cerror("FP in moveargs");
-	else if (r->n_type == FLOAT)
-		cerror("FP in moveargs");
 	else {
-		/* Argument can fit in O0...O7. */
 		q = block(REG, NIL, NIL, r->n_type, r->n_df, r->n_sue);
-		q->n_rval = (*regp)++;
+
+		/*
+		 * The first six non-FP arguments go in the registers O0 - O5.
+		 * Float arguments are stored in %fp1, %fp3, ..., %fp29, %fp31.
+		 * Double arguments are stored in %fp0, %fp2, ..., %fp28, %fp30.
+		 * A non-fp argument still increments register, eg.
+		 *     test(int a, int b, float b)
+		 * takes %o0, %o1, %fp5.
+		 */
+		if (q->n_type == FLOAT)
+			q->n_rval = F0 + (*regp++ * 2) + 1;
+		else if (q->n_type == DOUBLE)
+			q->n_rval = D0 + *regp++;
+		else if (q->n_type == LDOUBLE)
+			cerror("long double support incomplete");
+		else
+			q->n_rval = O0 + (*regp)++;
+
 		r = buildtree(ASSIGN, q, r);
 	}
 
@@ -125,8 +172,51 @@ moveargs(NODE *p, int *regp)
 NODE *
 funcode(NODE *p)
 {
-	int reg = O0;
-	p->n_right = moveargs(p->n_right, &reg);
+	NODE *r, *l;
+	int reg = 0, stacksize = 0;
+
+	r = l = 0;
+
+	p->n_right = moveargs(p->n_right, &reg, &stacksize);
+
+	/*
+	 * This is a particularly gross and inefficient way to handle
+	 * argument overflows. First, we calculate how much stack space
+	 * we need in moveargs(). Then we assign it by moving %sp, make
+	 * the function call, and then move %sp back.
+	 *
+	 * What we should be doing is getting the maximum of all the needed
+	 * stacksize values to the prologue and doing it all in the "save"
+	 * instruction.
+	 */
+	if (stacksize != 0) {
+		stacksize = V9STEP(stacksize); /* 16-bit alignment. */
+
+		r = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		r->n_lval = 0;
+		r->n_rval = SP;
+		r = block(MINUS, r, bcon(stacksize), INT, 0, MKSUE(INT));
+
+		l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		l->n_lval = 0;
+		l->n_rval = SP;
+		r = buildtree(ASSIGN, l, r);
+
+		p = buildtree(COMOP, r, p);
+
+		r = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		r->n_lval = 0;
+		r->n_rval = SP;
+		r = block(PLUS, r, bcon(stacksize), INT, 0, MKSUE(INT));
+
+		l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		l->n_lval = 0;
+		l->n_rval = SP;
+		r = buildtree(ASSIGN, l, r);
+
+		p = buildtree(COMOP, p, r);
+
+	}
 	return p;
 }
 

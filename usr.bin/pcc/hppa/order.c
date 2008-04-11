@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
+/*	$OpenBSD: order.c,v 1.3 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -177,6 +177,7 @@ setorder(NODE *p)
 {
 	return 0; /* nothing differs on hppa */
 }
+
 /*
  * Set registers "live" at function calls (like arguments in registers).
  * This is for liveness analysis of registers.
@@ -184,9 +185,23 @@ setorder(NODE *p)
 int *
 livecall(NODE *p)
 {
-	static int r[1] = { -1 }; /* Terminate with -1 */
+	static int r[5], *s = &r[4];
+	 
+	*s = -1;
+	if (p->n_op == UCALL || p->n_op == UFORTCALL || p->n_op == USTCALL ||
+	    p->n_op == FORTCALL)
+		return s;
 
-	return &r[0];
+	for (p = p->n_right; p->n_op == CM; p = p->n_left)
+		if (p->n_right->n_op == ASSIGN &&
+		    p->n_right->n_left->n_op == REG)
+			*--s = p->n_right->n_left->n_rval;
+
+	if (p->n_op == ASSIGN &&
+	    p->n_left->n_op == REG)
+		*--s = p->n_left->n_rval;
+
+	return s;
 }
 
 /*

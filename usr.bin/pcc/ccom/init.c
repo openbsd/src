@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -118,8 +118,8 @@ int idebug;
  */
 static struct instk {
 	struct	instk *in_prev; /* linked list */
-	struct	symtab **in_xp;	/* member in structure initializations */
-	struct	symtab *in_sym; /* stab index */
+	struct	symtab *in_lnk;	/* member in structure initializations */
+	struct	symtab *in_sym; /* symtab index */
 	union	dimfun *in_df;	/* dimenston of array */
 	TWORD	in_t;		/* type for this level */
 	int	in_n;		/* number of arrays seen so far */
@@ -231,7 +231,7 @@ beginit(struct symtab *sp)
 	curll = ll = getll(); /* at least first entry in list */
 
 	/* first element */
-	is->in_xp = ISSOU(sp->stype) ? sp->ssue->suelem : NULL;
+	is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
 	is->in_n = 0;
 	is->in_t = sp->stype;
 	is->in_sym = sp;
@@ -279,22 +279,22 @@ stkpush(void)
 	is->in_n = 0;
 	if (pstk == NULL) {
 		/* stack empty */
-		is->in_xp = ISSOU(sp->stype) ? sp->ssue->suelem : NULL;
+		is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
 		is->in_t = sp->stype;
 		is->in_sym = sp;
 		is->in_df = sp->sdf;
 	} else if (ISSOU(t)) {
-		sq = *pstk->in_xp;
+		sq = pstk->in_lnk;
 		if (sq == NULL) {
 			uerror("excess of initializing elements");
 		} else {
-			is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
+			is->in_lnk = ISSOU(sq->stype) ? sq->ssue->sylnk : 0;
 			is->in_t = sq->stype;
 			is->in_sym = sq;
 			is->in_df = sq->sdf;
 		}
 	} else if (ISARY(t)) {
-		is->in_xp = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suelem : 0;
+		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->sylnk : 0;
 		is->in_t = DECREF(t);
 		is->in_sym = sp;
 		if (pstk->in_df->ddim && pstk->in_n >= pstk->in_df->ddim) {
@@ -329,9 +329,9 @@ stkpop(void)
 		printf("stkpop\n");
 #endif
 	for (; pstk; pstk = pstk->in_prev) {
-		if (pstk->in_t == STRTY && pstk->in_xp[0] != NULL) {
-			pstk->in_xp++;
-			if (*pstk->in_xp != NULL)
+		if (pstk->in_t == STRTY && pstk->in_lnk != NULL) {
+			pstk->in_lnk = pstk->in_lnk->snext;
+			if (pstk->in_lnk != NULL)
 				break;
 		}
 		if (ISSOU(pstk->in_t) && pstk->in_fl)
@@ -716,8 +716,9 @@ irbrace()
 		if (ISARY(pstk->in_t))
 			pstk->in_n = pstk->in_df->ddim;
 		else if (pstk->in_t == STRTY) {
-			while (pstk->in_xp[0] != NULL && pstk->in_xp[1] != NULL)
-				pstk->in_xp++;
+			while (pstk->in_lnk != NULL &&
+			    pstk->in_lnk->snext != NULL)
+				pstk->in_lnk = pstk->in_lnk->snext;
 		}
 		stkpop();
 		return;
@@ -751,11 +752,11 @@ mkstack(NODE *p)
 		break;
 
 	case NAME:
-		if (pstk->in_xp) {
-			for (; pstk->in_xp[0]; pstk->in_xp++)
-				if (pstk->in_xp[0]->sname == (char *)p->n_sp)
+		if (pstk->in_lnk) {
+			for (; pstk->in_lnk; pstk->in_lnk = pstk->in_lnk->snext)
+				if (pstk->in_lnk->sname == (char *)p->n_sp)
 					break;
-			if (pstk->in_xp[0] == NULL)
+			if (pstk->in_lnk == NULL)
 				uerror("member missing");
 		} else {
 			uerror("not a struct/union");
@@ -783,7 +784,7 @@ desinit(NODE *p)
 		pstk = pstk->in_prev; /* Empty stack */
 
 	if (ISSOU(pstk->in_t))
-		pstk->in_xp = pstk->in_sym->ssue->suelem;
+		pstk->in_lnk = pstk->in_sym->ssue->sylnk;
 
 	mkstack(p);	/* Setup for assignment */
 
@@ -889,8 +890,8 @@ prtstk(struct instk *in)
 		if (in->in_fl) printf("{ ");
 		printf("soff=%d ", in->in_sym->soffset);
 		if (in->in_t == STRTY) {
-			if (in->in_xp && in->in_xp[0])
-				printf("curel %s ", in->in_xp[0]->sname);
+			if (in->in_lnk)
+				printf("curel %s ", in->in_lnk->sname);
 			else
 				printf("END struct");
 		}

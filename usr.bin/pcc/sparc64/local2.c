@@ -1,3 +1,4 @@
+/*	$OpenBSD: local2.c,v 1.2 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 
@@ -17,13 +18,6 @@
 #include "pass1.h"
 #include "pass2.h"
 
-/*
- * Many arithmetic instructions take 'reg_or_imm' in SPARCv9, where imm
- * means we can use a signed 13-bit constant (simm13). This gives us a
- * shortcut for small constants, instead of loading them into a register.
- * Special handling is required because 13 bits lies between SSCON and SCON.
- */
-#define SIMM13(val) (val < 4096 && val > -4097)
 
 char *
 rnames[] = {
@@ -33,13 +27,16 @@ rnames[] = {
 	"\%l0", "\%l1", "\%l2", "\%l3", "\%l4", "\%l5", "\%l6", "\%l7",
 	"\%i0", "\%i1", "\%i2", "\%i3", "\%i4", "\%i5", "\%i6", "\%i7",
 
-	"\%sp", "\%fp",
-
 	"\%f0",  "\%f1",  "\%f2",  "\%f3",  "\%f4",  "\%f5",  "\%f6",  "\%f7",
 	"\%f8",  "\%f9",  "\%f10", "\%f11", "\%f12", "\%f13", "\%f14", "\%f15",
 	"\%f16", "\%f17", "\%f18", "\%f19", "\%f20", "\%f21", "\%f22", "\%f23",
-	"\%f24", "\%f25", "\%f26", "\%f27", "\%f28", "\%f29", "\%f30"
+	"\%f24", "\%f25", "\%f26", "\%f27", "\%f28", "\%f29", "\%f30",
 	/*, "\%f31" XXX removed due to 31-element class limit */
+
+	"\%f0",  "\%f2",  "\%f4",  "\%f6",  "\%f8",  "\%f10", "\%f12", "\%f14",
+	"\%f16", "\%f18", "\%f20", "\%f22", "\%f24", "\%f26", "\%f28", "\%f30",
+
+	"\%sp", "\%fp",
 };
 
 void
@@ -53,22 +50,22 @@ prologue(struct interpass_prolog *ipp)
 {
 	int i, stack;
 
-	/*
-	 * SPARCv9 has a 2047 bit stack bias. Looking at output asm from gcc
-	 * suggests this means we need a base 192 bit offset for %sp. Further
-	 * steps need to be 8-byte aligned.
-	 */
-	stack = 192 + p2maxautooff + (p2maxautooff % 8);
+	stack = V9RESERVE + V9STEP(p2maxautooff);
 
 	for (i=ipp->ipp_regs; i; i >>= 1)
 		if (i & 1)
-			stack += 8;
+			stack += 16;
 
 	/* TODO printf("\t.proc %d\n"); */
 	printf("\t.global %s\n", ipp->ipp_name);
 	printf("\t.align 4\n");
 	printf("%s:\n", ipp->ipp_name);
-	printf("\tsave %%sp,-%d,%%sp\n", stack);
+	if (SIMM13(stack))
+		printf("\tsave %%sp,-%d,%%sp\n", stack);
+	else {
+		printf("\tsetx -%d,%%g4,%%g1\n", stack);
+		printf("\tsave %%sp,%%g1,%%sp\n");
+	}
 }
 
 void
@@ -119,13 +116,15 @@ tlen(NODE *p)
 		case SHORT:
 		case USHORT:
 			return (SZSHORT / SZCHAR);
+		case FLOAT:
+			return (SZFLOAT / SZCHAR);
 		case DOUBLE:
 			return (SZDOUBLE / SZCHAR);
 		case INT:
 		case UNSIGNED:
+			return (SZINT / SZCHAR);
 		case LONG:
 		case ULONG:
-			return (SZINT / SZCHAR);
 		case LONGLONG:
 		case ULONGLONG:
 			return SZLONGLONG / SZCHAR;
@@ -139,42 +138,85 @@ tlen(NODE *p)
 void
 zzzcode(NODE * p, int c)
 {
+	char *str;
+	NODE *l, *r;
+	l = p->n_left;
+	r = p->n_right;
+
 	switch (c) {
 
-	case 'A':	/* Load constant to register. */
-		if (!ISPTR(p->n_type) && SIMM13(p->n_lval))
-			expand(p, 0, "\tor %g0,AL,A1\t\t\t! load const\n");
-		else {
+	case 'A':	/* Add const. */
+		if (ISPTR(l->n_type) && l->n_rval == FP)
+			r->n_lval += V9BIAS;
+
+		if (SIMM13(r->n_lval))
+			expand(p, 0, "\tadd AL,AR,A1\t\t! add const\n");
+		else
+			expand(p, 0, "\tsetx AR,A3,A2\t\t! add const\n"
+			             "\tadd AL,A2,A1\n");
+		break;
+	case 'B':	/* Subtract const. */
+		if (ISPTR(l->n_type) && l->n_rval == FP)
+			r->n_lval -= V9BIAS;
+
+		if (SIMM13(r->n_lval))
+			expand(p, 0, "\tsub AL,AR,A1\t\t! subtract const\n");
+		else
+			expand(p, 0, "\tsetx AR,A3,A2\t\t! subtract const\n"
+			             "\tsub AL,A2,A1\n");
+		break;
+	case 'C':	/* Load constant to register. */
+		if (ISPTR(p->n_type))
 			expand(p, 0,
-				"\tsethi %h44(AL),A1\t\t! load const\n"
+				"\tsethi %h44(AL),A1\t\t! load label\n"
 				"\tor A1,%m44(AL),A1\n"
 				"\tsllx A1,12,A1\n"
 				"\tor A1,%l44(AL),A1\n");
-		}
+		else if (SIMM13(p->n_lval))
+			expand(p, 0, "\tor %g0,AL,A1\t\t\t! load const\n");
+		else
+			expand(p, 0, "\tsetx AL,A2,A1\t\t! load const\n");
 		break;
-	case 'B':	/* Subtract const, store in temp. */
-		/*
-		 * If we are dealing with a stack location, SPARCv9 has a
-		 * stack offset of +2047 bits. This is mostly handled by
-		 * notoff(), but when passing as an argument this op is used.
-		 */
-		if (ISPTR(p->n_left->n_type) && p->n_left->n_rval == FP)
-			p->n_right->n_lval -= 2047;
-
-		if (SIMM13(p->n_right->n_lval))
-			expand(p, 0, "\tsub AL,AR,A1\t\t! subtract const");
-		else {
-			expand(p, 0,
-				"\tsethi %h44(AR),%g1\t\t! subtract const\n"
-				"\tor %g1,%m44(AR),%g1\n"
-				"\tsllx %g1,12,%g1\n"
-				"\tor %g1,%l44(AR),%g1\n"
-				"\tsub AL,%g1,A1\n");
+	case 'F':	/* Floating-point comparison, cf. hopcode(). */
+		switch (p->n_op) {
+			case EQ:        str = "fbe"; break;
+			case NE:        str = "fbne"; break;
+			case ULE:
+			case LE:        str = "fbule"; break;
+			case ULT:
+			case LT:        str = "fbul";  break;
+			case UGE:
+			case GE:        str = "fbuge"; break;
+			case UGT:
+			case GT:        str = "fbug";  break;
+			/* XXX
+			case PLUS:      str = "add"; break;
+			case MINUS:     str = "sub"; break;
+			case AND:       str = "and"; break;
+			case OR:        str = "or";  break;
+			case ER:        str = "xor"; break;*/
+			default:
+				comperr("unknown float code: %d", p->n_op);
+				return;
 		}
+		printf(str);
+		break;
+
+	case 'Q':	/* Structure assignment. */
+		/* TODO Check if p->n_stsize is small and use a few ldx's
+		        to move the struct instead of memcpy. The equiv.
+			could be done on all the architectures. */
+		if (l->n_rval != O0)
+			printf("\tmov %s,%s\n", rnames[l->n_rval], rnames[O0]);
+		if (SIMM13(p->n_stsize))
+			printf("\tor %%g0,%d,%%o2\n", p->n_stsize);
+		else
+			printf("\tsetx %d,%%g1,%%o2\n", p->n_stsize);
+		printf("\tcall memcpy\t\t\t! struct assign (dest, src, len)\n");
+		printf("\tnop\n");
 		break;
 	default:
 		cerror("unknown zzzcode call: %c", c);
-
 	}
 }
 
@@ -219,13 +261,10 @@ conput(FILE * fp, NODE * p)
 
 	if (p->n_name[0] != '\0') {
 		fprintf(fp, "%s", p->n_name);
-		if (p->n_lval < 0) {
-			comperr("conput: negative offset (%lld) on label %s\n",
-				p->n_lval, p->n_name);
-			return;
-		}
+		if (p->n_lval > 0)
+			fprintf(fp, "+");
 		if (p->n_lval)
-			fprintf(fp, "+%lld", p->n_lval);
+			fprintf(fp, "%lld", p->n_lval);
 	} else
 		fprintf(fp, CONFMT, p->n_lval);
 }
@@ -268,9 +307,10 @@ adrput(FILE * io, NODE * p)
 		return;
 	case OREG:
 		fprintf(io, "%s", rnames[p->n_rval]);
-		/* SPARCv9 stack bias adjustment. */
 		if (p->n_rval == FP)
-			off += 2047;
+			off += V9BIAS;
+		if (p->n_rval == SP)
+			off += V9BIAS + V9RESERVE;
 		if (off > 0)
 			fprintf(io, "+");
 		if (off)
@@ -280,11 +320,13 @@ adrput(FILE * io, NODE * p)
 		/* addressable value of the constant */
 		conput(io, p);
 		return;
-	case MOVE:
 	case REG:
 		fputs(rnames[p->n_rval], io);
 		return;
-
+	case FUNARG:
+		/* We do something odd and store the stack offset in n_rval. */
+		fprintf(io, "%d", V9BIAS + V9RESERVE + p->n_rval);
+		return;
 	default:
 		comperr("bad address, %s, node %p", copst(p->n_op), p);
 		return;
@@ -320,7 +362,11 @@ rmove(int s, int d, TWORD t)
 int
 gclass(TWORD t)
 {
-	return (t == FLOAT || t == DOUBLE || t == LDOUBLE) ? CLASSC : CLASSA;
+	if (t == FLOAT)
+		return CLASSB;
+	if (t == DOUBLE)
+		return CLASSC;
+	return CLASSA;
 }
 
 void
@@ -348,12 +394,17 @@ COLORMAP(int c, int *r)
 			num += r[CLASSA];
 			return num < 32;
 		case CLASSB:
-			return 0;
+			num += r[CLASSB];
+			num += 2*r[CLASSC];
+			return num < 32;;
 		case CLASSC:
 			num += r[CLASSC];
-			return num < 32;
+			num += 2*r[CLASSB];
+			return num < 17;
+		case CLASSD:
+			return 0;
 		default:
-			comperr("COLORMAP: unknown class");
+			comperr("COLORMAP: unknown class: %d", c);
 			return 0;
 	}
 }

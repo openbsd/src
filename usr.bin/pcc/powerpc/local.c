@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.5 2007/12/22 14:05:04 stefan Exp $	*/
+/*	$OpenBSD: local.c,v 1.6 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -27,8 +27,11 @@
  */
 
 #include <assert.h>
-
 #include "pass1.h"
+
+#define IALLOC(sz) (isinlining ? permalloc(sz) : tmpalloc(sz))
+
+#define SNOUNDERSCORE SLOCAL1
 
 extern int kflag;
 
@@ -37,102 +40,205 @@ void simmod(NODE *p);
 
 /*	this file contains code which is dependent on the target machine */
 
-/* don't permit CALLs to be arguments to other CALLs (nest CALLs) */
+#if defined(MACHOABI)
 
-static NODE *
-emitinnercall(NODE *r)
+/*
+ *  Keep track of PIC stubs.
+ */
+
+void
+addstub(struct stub *list, char *name)
 {
-	NODE *tmp1, *tmp2;
+        struct stub *s;
 
-#ifdef PCC_DEBUG
-	if (xdebug) {
-		printf("clocal::emitinnercall():\n");
-		fwalk(r, eprint, 0);
-	}
+        DLIST_FOREACH(s, list, link) {
+                if (strcmp(s->name, name) == 0)
+                        return;
+        }
+
+        if ((s = permalloc(sizeof(struct stub))) == NULL)
+                cerror("addstub: malloc");
+        if ((s->name = strdup(name)) == NULL)
+                cerror("addstub: strdup");
+        DLIST_INSERT_BEFORE(list, s, link);
+}
+
 #endif
 
-	tmp1 = tempnode(0, r->n_type, r->n_df, r->n_sue);
-	tmp2 = tempnode(tmp1->n_lval, r->n_type, r->n_df, r->n_sue);
-	ecode(buildtree(ASSIGN, tmp1, r));
 
-	return tmp2;
-}
- 
-static void
-breaknestedcalls(NODE *p)
+/*
+ * Make a symtab entry for PIC use.
+ */
+static struct symtab *
+picsymtab(char *p, char *s, char *s2)
 {
+	struct symtab *sp = IALLOC(sizeof(struct symtab));
+	size_t len = strlen(p) + strlen(s) + strlen(s2) + 1;
+
+	sp->sname = sp->soname = IALLOC(len);
+	strlcpy(sp->soname, p, len);
+	strlcat(sp->soname, s, len);
+	strlcat(sp->soname, s2, len);
+	sp->sclass = EXTERN;
+	sp->sflags = sp->slevel = 0;
+
+	return sp;
+}
+
+int gotnr;  /* tempnum for GOT register */
+
+/*
+ * Create a reference for an extern variable.
+ */
+static NODE *
+picext(NODE *p)
+{
+	NODE *q;
+	struct symtab *sp;
+
+	if (strncmp(p->n_sp->soname, "__builtin", 9) == 0)
+		return p;
+
+#if defined(ELFABI)
+
+	sp = picsymtab("", p->n_sp->soname, "@got(31)");
+	q = xbcon(0, sp, PTR+VOID);
+	q = block(UMUL, q, 0, PTR+VOID, 0, MKSUE(VOID));
+
+#elif defined(MACHOABI)
+
+	char buf2[64];
 	NODE *r;
 
-	for (r = p->n_right; r->n_op == CM; r = r->n_left) {
-		if (r->n_right->n_op == CALL)
-			r->n_right = emitinnercall(r->n_right);
-		if (r->n_left->n_op == CALL)
-			r->n_left = emitinnercall(r->n_left);
-	}
-
-#ifdef PCC_DEBUG
-	if (xdebug) {
-		printf("clocal::breaknestedcalls(): exiting with tree:\n");
-		fwalk(p, eprint, 0);
-	}
-#endif
-}
-
-static void
-fixupfuncargs(NODE *r, int *reg)
-{
-#ifdef PCC_DEBUG
-	if (xdebug)
-		printf("fixupfuncargs(): r=%p\n", r);
-#endif
-
-	if (r->n_op == CM) {
-		/* recurse to the bottom of the tree */
-		fixupfuncargs(r->n_left, reg);
-
-		if (r->n_right->n_op == STARG) {
-			assert(0);
-		}
-
-		r->n_right = block(ASSIGN, NIL, r->n_right, 
-			    r->n_right->n_type, r->n_right->n_df,
-			    r->n_right->n_sue);
-		r->n_right->n_left = block(REG, NIL, NIL, r->n_right->n_type, 0, MKSUE(INT));
-
-		if (r->n_right->n_type == ULONGLONG || r->n_right->n_type == LONGLONG) {
-			r->n_right->n_left->n_rval = R3R4 + (*reg) - R3;
-			(*reg) += 2;
-		} else {
-			r->n_right->n_left->n_rval = (*reg);
-			(*reg)++;
-		}
-
+	if (p->n_sp->sclass == EXTDEF) {
+		snprintf(buf2, 64, "-L%s$pb", cftnsp->soname);
+		sp = picsymtab("", exname(p->n_sp->soname), buf2);
 	} else {
-
-		if (r->n_op == STARG) {
-			assert(0);
-#if 0
-			copystructtostack(r->);
-			*r = *(r->n_left)
-			nfree(r->n_left);
-			return;
-#endif
-		}
-
-		NODE *l = talloc();
-		*l = *r;
-		r->n_op = ASSIGN;
-		r->n_left = block(REG, NIL, NIL, l->n_type, 0, MKSUE(INT));
-		r->n_right = l;
-		if (r->n_right->n_type == ULONGLONG || r->n_right->n_type == LONGLONG) {
-			r->n_left->n_rval = R3R4 + (*reg) - R3;
-			(*reg) += 2;
-		} else {
-			r->n_left->n_rval = (*reg);
-			(*reg)++;
-		}
+		snprintf(buf2, 64, "$non_lazy_ptr-L%s$pb", cftnsp->soname);
+		sp = picsymtab("L", p->n_sp->soname, buf2);
+		addstub(&nlplist, p->n_sp->soname);
 	}
+#if USE_GOTNR
+	q = tempnode(gotnr, PTR+VOID, 0, MKSUE(VOID));
+#else
+	q = block(REG, NIL, NIL, PTR+VOID, 0, MKSUE(VOID));
+	regno(q) = GOTREG;
+#endif
+	r = xbcon(0, sp, INT);
+	q = buildtree(PLUS, q, r);
+
+	if (p->n_sp->sclass != EXTDEF)
+		q = block(UMUL, q, 0, PTR+VOID, 0, MKSUE(VOID));
+
+#endif
+
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
+	q->n_sp = p->n_sp; /* for init */
+	nfree(p);
+
+	return q;
 }
+
+/*
+ * Create a reference for a static variable
+ */
+
+static NODE *
+picstatic(NODE *p)
+{
+	NODE *q;
+	struct symtab *sp;
+
+#if defined(ELFABI)
+
+	if (p->n_sp->slevel > 0 || p->n_sp->sclass == ILABEL) {
+		char buf[64];
+		snprintf(buf, 64, LABFMT, (int)p->n_sp->soffset);
+		sp = picsymtab("", buf, "@got(31)");
+		sp->sflags |= SNOUNDERSCORE;
+	} else  {
+		sp = picsymtab("", p->n_sp->soname, "@got(31)");
+	}
+	sp->sclass = STATIC;
+	sp->stype = p->n_sp->stype;
+	q = xbcon(0, sp, PTR+VOID);
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
+	q->n_sp = p->n_sp;
+	nfree(p);
+
+#elif defined(MACHOABI)
+
+	char buf2[64];
+	NODE *r;
+
+	snprintf(buf2, 64, "-L%s$pb", cftnsp->soname);
+
+	if (p->n_sp->slevel > 0 || p->n_sp->sclass == ILABEL) {
+		char buf1[64];
+		snprintf(buf1, 64, LABFMT, (int)p->n_sp->soffset);
+		sp = picsymtab("", buf1, buf2);
+		sp->sflags |= SNOUNDERSCORE;
+	} else  {
+		sp = picsymtab("", exname(p->n_sp->soname), buf2);
+	}
+	sp->sclass = STATIC;
+	sp->stype = p->n_sp->stype;
+#if USE_GOTNR
+	q = tempnode(gotnr, PTR+VOID, 0, MKSUE(VOID));
+#else
+	q = block(REG, NIL, NIL, PTR+VOID, 0, MKSUE(VOID));
+	regno(q) = GOTREG;
+#endif
+	r = xbcon(0, sp, INT);
+	q = buildtree(PLUS, q, r);
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_sue);
+	q->n_sp = p->n_sp;
+	nfree(p);
+
+#endif
+
+	return q;
+}
+
+static NODE *
+convert_ulltof(NODE *p)
+{
+	NODE *q, *r, *l, *t;
+	int ty;
+	int tmpnr;
+
+	ty = p->n_type;
+	l = p->n_left;
+	nfree(p);
+
+	q = tempnode(0, ULONGLONG, 0, MKSUE(ULONGLONG));
+	tmpnr = regno(q);
+	t = buildtree(ASSIGN, q, l);
+	ecomp(t);
+
+	//q = tempnode(tmpnr, ULONGLONG, 0, MKSUE(ULONGLONG));
+	//q = block(SCONV, q, NIL, LONGLONG, 0, MKSUE(LONGLONG));
+	q = tempnode(tmpnr, LONGLONG, 0, MKSUE(LONGLONG));
+	r = block(SCONV, q, NIL, ty, 0, MKSUE(ty));
+
+	q = tempnode(tmpnr, ULONGLONG, 0, MKSUE(ULONGLONG));
+	q = block(RS, q, bcon(1), ULONGLONG, 0, MKSUE(ULONGLONG));
+	q = block(SCONV, q, NIL, LONGLONG, 0, MKSUE(LONGLONG));
+	q = block(SCONV, q, NIL, ty, 0, MKSUE(ty));
+	t = block(FCON, NIL, NIL, ty, 0, MKSUE(ty));
+	t->n_dcon = 2;
+	l = block(MUL, q, t, ty, 0, MKSUE(ty));
+
+	r = buildtree(COLON, l, r);
+
+	q = tempnode(tmpnr, ULONGLONG, 0, MKSUE(ULONGLONG));
+	q = block(SCONV, q, NIL, LONGLONG, 0, MKSUE(LONGLONG));
+	l = block(LE, q, xbcon(0, NULL, LONGLONG), INT, 0, MKSUE(INT));
+
+	return clocal(buildtree(QUEST, l, r));
+
+}
+
 
 /* clocal() is called to do local transformations on
  * an expression tree preparitory to its being
@@ -154,6 +260,8 @@ clocal(NODE *p)
 	int o;
 	int m;
 	TWORD t;
+	int isptrvoid = 0;
+	int tmpnr;
 
 #ifdef PCC_DEBUG
 	if (xdebug) {
@@ -171,48 +279,21 @@ clocal(NODE *p)
 		}
 #endif
 
-		if (kflag && blevel > 0 && p->n_left->n_op == NAME) {
-
-#if 0
-			printf("sclass=%d, squal=%d, slevel=%d: ", p->n_left->n_sp->sclass, p->n_left->n_sp->squal, p->n_left->n_sp->slevel);
-			tprint(stdout, p->n_left->n_type, p->n_left->n_qual);
-			printf("\n");
-#endif
-
-			TWORD t = DECREF(p->n_type);
-
-			if (!ISFTN(t)) {
-
-				int isextern = (p->n_sp && p->n_sp->sclass == EXTERN);
-				int off = 0;
-
-				if (isextern) {
-					off = p->n_lval;
-					p->n_lval = 0;
-				}
-
-				r  = talloc();
-				*r = *p;
-
-				/* cast to pointer-to-char before adding offset */
-				l = block(REG, NIL, NIL, INT, p->n_df, p->n_sue);
-				l->n_lval = 0;
-				l->n_rval = R31;
-
-				r = block(SCONV, r, NIL, INCREF(UCHAR), p->n_df,p->n_sue);
-				r = block(PLUS, l, r, r->n_type, r->n_df, r->n_sue);
-
-				if (off)
-					r = block(PLUS, r, bcon(off), r->n_type, r->n_df, r->n_sue);
-
-				p->n_op = SCONV;
-				p->n_lval = 0;
-				p->n_left = r;
-				p->n_rval = 0;
-				p->n_right = 0;
-			}
-
-		}
+		if (kflag == 0 || blevel == 0)
+			break;
+		/* char arrays may end up here */
+		l = p->n_left;
+		if (l->n_op != NAME ||
+		    (l->n_type != ARY+CHAR && l->n_type != ARY+WCHAR_TYPE))
+			break;
+		l = p;
+		p = picstatic(p->n_left);
+		nfree(l);
+		if (p->n_op != UMUL)
+			cerror("ADDROF error");
+		l = p;
+		p = p->n_left;
+		nfree(l);
 		break;
 
 	case NAME:
@@ -230,82 +311,74 @@ clocal(NODE *p)
 			p = stref(block(STREF, r, p, 0, 0, 0));
 			break;
 
+		case USTATIC:
+			if (kflag == 0)
+				break;
+			/* FALLTHROUGH */
+
+		case STATIC:
+			if (kflag == 0) {
+				if (q->slevel == 0)
+					break;
+				p->n_lval = 0;
+			} else if (blevel > 0) {
+				p = picstatic(p);
+			}
+			break;
+
 		case REGISTER:
 			p->n_op = REG;
 			p->n_lval = 0;
 			p->n_rval = q->soffset;
 			break;
 
-		case STATIC:
-			if (q->slevel > 0) {
-				p->n_lval = 0;
-				p->n_sp = q;
-			}
-			/* FALLTHROUGH */
-		default:
-			if (kflag && blevel > 0 && !ISFTN(p->n_type)) {
-				TWORD t = p->n_type;
-				int isextern = p->n_sp->sclass == EXTERN;
-				int off = 0;
+		case EXTERN: 
+		case EXTDEF:
+			if (kflag == 0)
+				break;
+			if (blevel > 0)
+				p = picext(p);
+			break;
 
-				if (isextern)
-					t = INCREF(t);
-
-				l = block(REG, NIL, NIL, INCREF(t), p->n_df, p->n_sue);
-				l->n_lval = 0;
-				l->n_rval = R31;
-
-				p->n_op = ICON;
-				p->n_type = INCREF(t);
-				if (isextern) {
-					off = p->n_lval;
-					p->n_lval = 0;
-				}
-
-				p = block(PLUS, l, p, INCREF(t), p->n_df, p->n_sue);
-
-				if (isextern) {
-					p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
-					if (off)
-						p = block(PLUS, p, bcon(off), t, p->n_df, p->n_sue);
-					t = DECREF(t);
-				}
-				p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
-			}
+		case ILABEL:
+			if (kflag && blevel > 0)
+				p = picstatic(p);
+			break;
 		}
 		break;
 
-	case STCALL:
-	case CALL:
-
-		breaknestedcalls(p);
-
-		/* Fix function call arguments. */
-		/* move everything into the registers */
-		{
-		int reg = R3;
-		fixupfuncargs(p->n_right, &reg);
-		}
-		/* FALLTHOUGH */
-
-#if 0
 	case UCALL:
+	case CALL:
+	case USTCALL:
+	case STCALL:
+                if (p->n_type == VOID)
+                        break;
+                /*
+                 * if the function returns void*, ecode() invokes
+                 * delvoid() to convert it to uchar*.
+                 * We just let this happen on the ASSIGN to the temp,
+                 * and cast the pointer back to void* on access
+                 * from the temp.
+                 */
+                if (p->n_type == PTR+VOID)
+                        isptrvoid = 1;
+                r = tempnode(0, p->n_type, p->n_df, p->n_sue);
+                tmpnr = regno(r);
+		r = buildtree(ASSIGN, r, p);
 
-		/* check if it's an indirect call and offset with R30 */
-		if (p->n_left->n_op == REG) {
-			l = block(REG, NIL, NIL, INT, p->n_df, MKSUE(INT));
-			l->n_lval = 0;
-			l->n_rval = R31;
-			p->n_left = block(PLUS, p->n_left, l, p->n_type, p->n_df, p->n_sue);
-		}
+                p = tempnode(tmpnr, r->n_type, r->n_df, r->n_sue);
+                if (isptrvoid) {
+                        p = block(PCONV, p, NIL, PTR+VOID,
+                            p->n_df, MKSUE(PTR+VOID));
+                }
+#if 1
+                p = buildtree(COMOP, r, p);
+#else
+		/* XXX this doesn't work if the call is already in a COMOP */
+		r = clocal(r);
+		ecomp(r);
 #endif
-
-#if 0
-		r = tempnode(0, p->n_type, p->n_df, p->n_sue);
-		ecomp(buildtree(ASSIGN, r, p));
-		return r;
-#endif
-		break;
+                break;
 		
 	case CBRANCH:
 		l = p->n_left;
@@ -337,8 +410,7 @@ clocal(NODE *p)
 			l->n_lval = (unsigned)l->n_lval;
 			goto delp;
 		}
-		if (l->n_type < INT || l->n_type == LONGLONG || 
-		    l->n_type == ULONGLONG) {
+		if (l->n_type < INT || DEUNSIGN(l->n_type) == LONGLONG) {
 			/* float etc? */
 			p->n_left = block(SCONV, l, NIL,
 			    UNSIGNED, 0, MKSUE(UNSIGNED));
@@ -373,9 +445,6 @@ clocal(NODE *p)
 			return l;
 		}
 
-		if (xdebug)
-			printf("SCONV 1\n");
-
 		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
 		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
 			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
@@ -395,6 +464,15 @@ clocal(NODE *p)
 			l->n_type = p->n_type;
 			nfree(p);
 			return l;
+		}
+
+		/*
+		 * if converting ULONGLONG to FLOAT/(L)DOUBLE,
+		 * replace ___floatunsdidf() with ___floatdidf()
+		 */
+		if (l->n_type == ULONGLONG && p->n_type >= FLOAT &&
+		    p->n_type <= LDOUBLE) {
+			return convert_ulltof(p);
 		}
 
 		o = l->n_op;
@@ -449,16 +527,32 @@ clocal(NODE *p)
 			l->n_sue = MKSUE(m);
 			nfree(p);
 			return l;
+		} else if (o == FCON) {
+			l->n_lval = l->n_dcon;
+			l->n_sp = NULL;
+			l->n_op = ICON;
+			l->n_type = m;
+			l->n_sue = MKSUE(m);
+			nfree(p);
+			return clocal(l);
 		}
 		if (DEUNSIGN(p->n_type) == SHORT &&
 		    DEUNSIGN(l->n_type) == SHORT) {
 			nfree(p);
 			p = l;
 		}
-		if ((p->n_type == CHAR || p->n_type == UCHAR ||
-		    p->n_type == SHORT || p->n_type == USHORT) &&
+		if ((DEUNSIGN(p->n_type) == CHAR ||
+		    DEUNSIGN(p->n_type) == SHORT) &&
 		    (l->n_type == FLOAT || l->n_type == DOUBLE ||
 		    l->n_type == LDOUBLE)) {
+			p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_sue);
+			p->n_left->n_type = INT;
+			return p;
+		}
+		if ((DEUNSIGN(l->n_type) == CHAR ||
+		    DEUNSIGN(l->n_type) == SHORT) &&
+		    (p->n_type == FLOAT || p->n_type == DOUBLE ||
+		    p->n_type == LDOUBLE)) {
 			p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_sue);
 			p->n_left->n_type = INT;
 			return p;
@@ -485,6 +579,16 @@ clocal(NODE *p)
                 nfree(p);
                 return(buildtree(o==PMCONV?MUL:DIV, p->n_left, p->n_right));
 
+	case STNAME:
+		if ((q = p->n_sp) == NULL)
+			return p;
+		if (q->sclass != STNAME)
+			return p;
+		t = p->n_type;
+		p = block(ADDROF, p, NIL, INCREF(t), p->n_df, p->n_sue);
+		p = block(UMUL, p, NIL, t, p->n_df, p->n_sue);
+		break;
+
 	case FORCE:
 		/* put return value in return reg */
 		p->n_op = ASSIGN;
@@ -496,16 +600,14 @@ clocal(NODE *p)
 
 	case LS:
 	case RS:
-		/* unless longlong, where it must be int */
 		if (p->n_right->n_op == ICON)
 			break; /* do not do anything */
-		if (p->n_type == LONGLONG || p->n_type == ULONGLONG) {
-			if (p->n_right->n_type != INT)
-				p->n_right = block(SCONV, p->n_right, NIL,
-				    INT, 0, MKSUE(INT));
-		}
+		if (DEUNSIGN(p->n_right->n_type) == INT)
+			break;
+		p->n_right = block(SCONV, p->n_right, NIL, INT, 0, MKSUE(INT));
 		break;
 	}
+
 #ifdef PCC_DEBUG
 	if (xdebug) {
 		printf("clocal end: %p\n", p);
@@ -515,9 +617,114 @@ clocal(NODE *p)
 	return(p);
 }
 
+/*
+ * Change CALL references to either direct (static) or PLT.
+ */
+static void
+fixnames(NODE *p)
+{
+        struct symtab *sp;
+        struct suedef *sue;
+        NODE *q;
+        char *c;
+        int isu;
+
+        if ((cdope(p->n_op) & CALLFLG) == 0)
+                return;
+
+        isu = 0;
+        q = p->n_left;
+        sue = q->n_sue;
+        if (q->n_op == UMUL)
+                q = q->n_left, isu = 1;
+
+#if defined(ELFABI)
+
+        if (q->n_op == ICON) {
+                sp = q->n_sp;
+
+#elif defined(MACHOABI)
+
+#ifdef USE_GOTNR
+	if (q->n_op == PLUS && q->n_left->n_op == TEMP &&
+#else
+	if (q->n_op == PLUS && q->n_left->n_op == REG &&
+#endif
+	    q->n_right->n_op == ICON) {
+                sp = q->n_right->n_sp;
+#endif
+
+                if (sp == NULL)
+                        return; /* nothing to do */
+                if (sp->sclass == STATIC && !ISFTN(sp->stype))
+                        return; /* function pointer */
+
+                if (sp->sclass != STATIC && sp->sclass != EXTERN &&
+                    sp->sclass != EXTDEF)
+                        cerror("fixnames");
+
+#if defined(ELFABI)
+
+                if ((c = strstr(sp->soname, "@got(31)")) == NULL)
+                        cerror("fixnames2");
+                if (isu) {
+                        strcpy(c, "@plt");
+                } else
+                        *c = 0;
+
+#elif defined(MACHOABI)
+
+		if ((c = strstr(sp->soname, "$non_lazy_ptr")) == NULL &&
+		    (c = strstr(sp->soname, "-L")) == NULL)
+				cerror("fixnames2");
+		if (isu) {
+			*c = 0;
+			addstub(&stublist, sp->soname+1);
+			strcpy(c, "$stub");
+		} else 
+			*c = 0;
+
+		nfree(q->n_left);
+		q = q->n_right;
+		if (isu)
+			nfree(p->n_left->n_left);
+		nfree(p->n_left);
+		p->n_left = q;
+		q->n_sue = sue;
+
+#endif
+        }
+}
+
 void
 myp2tree(NODE *p)
 {
+	int o = p->n_op;
+	struct symtab *sp;
+
+	if (kflag)
+		walkf(p, fixnames);
+	if (o != FCON) 
+		return;
+
+	/* Write float constants to memory */
+	/* Should be voluntary per architecture */
+ 
+	sp = IALLOC(sizeof(struct symtab));
+	sp->sclass = STATIC;
+	sp->ssue = MKSUE(p->n_type);
+	sp->slevel = 1; /* fake numeric label */
+	sp->soffset = getlab();
+	sp->sflags = 0;
+	sp->stype = p->n_type;
+	sp->squal = (CON >> TSHIFT);
+
+	defloc(sp);
+	ninval(0, sp->ssue->suesize, p);
+
+	p->n_op = NAME;
+	p->n_lval = 0;	
+	p->n_sp = sp;
 }
 
 /*ARGSUSED*/
@@ -546,8 +753,6 @@ cendarg()
 int
 cisreg(TWORD t)
 {
-	if (t == FLOAT || t == DOUBLE || t == LDOUBLE)
-		return 0; /* not yet */
 	return 1;
 }
 
@@ -556,8 +761,6 @@ cisreg(TWORD t)
  * being added to a pointer of type t, in order to be off bits offset
  * into a structure
  * t, d, and s are the type, dimension offset, and sizeoffset
- * For pdp10, return the type-specific index number which calculation
- * is based on its size. For example, short a[3] would return 3.
  * Be careful about only handling first-level pointers, the following
  * indirections must be fullword.
  */
@@ -578,71 +781,85 @@ offcon(OFFSZ off, TWORD t, union dimfun *d, struct suedef *sue)
 }
 
 /*
- * Allocate off bits on the stack.  p is a tree that when evaluated
- * is the multiply count for off, t is a storeable node where to write
- * the allocated address.
+ * Allocate bits on the stack.
+ * 'off' is the number of bits to allocate
+ * 'p' is a tree that when evaluated is the multiply count for 'off'
+ * 't' is a storeable node where to write the allocated address
  */
 void
 spalloc(NODE *t, NODE *p, OFFSZ off)
 {
-#if 0
-	NODE *sp;
-#endif
+	NODE *q, *r;
+	int nbytes = off / SZCHAR;
+	int stacksize = 24+40; /* this should be p2stacksize */
 
-	p = buildtree(MUL, p, bcon(off/SZCHAR)); /* XXX word alignment? */
+	/*
+	 * After we subtract the requisite bytes
+	 * off the stack, we need to step back over
+	 * the 40 bytes for the arguments registers
+	 * *and* any other parameters which will get
+	 * saved to the stack.  Unfortunately, we
+	 * don't have that information in pass1 and
+	 * the parameters will stomp on the allocated
+	 * space for alloca().
+	 *
+	 * No fix yet.
+	 */
+	werror("parameters may stomp on alloca()");
 
-	assert(0);
-#if 0
-	/* sub the size from sp */
-	sp = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
-	sp->n_lval = 0;
-	sp->n_rval = STKREG;
-	ecomp(buildtree(MINUSEQ, sp, p));
+	/* compute size */
+	p = buildtree(MUL, p, bcon(nbytes));
+	p = buildtree(PLUS, p, bcon(ALSTACK/SZCHAR));
 
-	/* save the address of sp */
-	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
-	sp->n_lval = 0;
-	sp->n_rval = STKREG;
-	t->n_type = sp->n_type;
-	ecomp(buildtree(ASSIGN, t, sp)); /* Emit! */
-#endif
+	/* load the top-of-stack */
+	q = block(REG, NIL, NIL, PTR+INT, 0, MKSUE(INT));
+	regno(q) = SPREG;
+	q = block(UMUL, q, NIL, INT, 0, MKSUE(INT));
 
+	/* save old top-of-stack value to new top-of-stack position */
+	r = block(REG, NIL, NIL, PTR+INT, 0, MKSUE(INT));
+	regno(r) = SPREG;
+	r = block(MINUSEQ, r, p, INT, 0, MKSUE(INT));
+	r = block(UMUL, r, NIL, INT, 0, MKSUE(INT));
+	ecomp(buildtree(ASSIGN, r, q));
+
+	r = block(REG, NIL, NIL, PTR+INT, 0, MKSUE(INT));
+	regno(r) = SPREG;
+
+	/* skip over the arguments space and align to 16 bytes */
+	r = block(PLUS, r, bcon(stacksize + 15), INT, 0, MKSUE(INT));
+	r = block(RS, r, bcon(4), INT, 0, MKSUE(INT));
+	r = block(LS, r, bcon(4), INT, 0, MKSUE(INT));
+
+	t->n_type = p->n_type;
+	ecomp(buildtree(ASSIGN, t, r));
 }
 
-#if 0
-/*
- * Print out an integer constant of size size.
- * can only be sizes <= SZINT.
- */
-void
-indata(CONSZ val, int size)
-{
-	switch (size) {
-	case SZCHAR:
-		printf("\t.byte %d\n", (int)val & 0xff);
-		break;
-	case SZSHORT:
-		printf("\t.word %d\n", (int)val & 0xffff);
-		break;
-	case SZINT:
-		printf("\t.long %d\n", (int)val & 0xffffffff);
-		break;
-	default:
-		cerror("indata");
-	}
-}
-#endif
-
-#if 0
 /*
  * Print out a string of characters.
- * Assume that the assembler understands C-style escape
- * sequences.  Location is already set.
+ * Unfortunately, this code assumes that the assembler understands
+ * C-style escape sequences. (which it doesn't!)
+ * Location is already set.
  */
 void
-instring(char *str)
+instring(struct symtab *sp)
 {
-	char *s;
+	char *s, *str = sp->sname;
+
+#if defined(ELFABI)
+
+	defloc(sp);
+
+#elif defined(MACHOABI)
+
+	extern int lastloc;
+	if (lastloc != STRNG)
+		printf("	.cstring\n");
+	lastloc = STRNG;
+	printf("	.p2align 1\n");
+	printf(LABFMT ":\n", sp->soffset);
+
+#endif
 
 	/* be kind to assemblers and avoid long strings */
 	printf("\t.ascii \"");
@@ -659,7 +876,27 @@ instring(char *str)
 	fwrite(str, 1, s - str, stdout);
 	printf("\\0\"\n");
 }
-#endif
+
+/*
+ * Print out a wide string by calling ninval().
+ */
+void
+inwstring(struct symtab *sp)
+{
+	char *s = sp->sname;
+	NODE *p;
+
+	defloc(sp);
+	p = bcon(0);
+	do {
+		if (*s++ == '\\')
+			p->n_lval = esccon(&s);
+		else
+			p->n_lval = (unsigned char)s[-1];
+		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
+	} while (s[-1] != 0);
+	nfree(p);
+}
 
 static int inbits, inval;
 
@@ -673,6 +910,9 @@ zbits(OFFSZ off, int fsz)
 
 	if (idebug)
 		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+
+#if 0
+	/* little-endian */
 	if ((m = (inbits % SZCHAR))) {
 		m = SZCHAR - m;
 		if (fsz < m) {
@@ -684,6 +924,20 @@ zbits(OFFSZ off, int fsz)
 			inval = inbits = 0;
 		}
 	}
+#endif
+	/* big-endian */
+	if (inbits) {
+		m = SZCHAR - inbits;
+		if (fsz < m) {
+			inbits += fsz;
+			inval <<= fsz;
+		} else {
+			printf("\t.byte %d\n", inval << m);
+			fsz -= m;
+			inval = inbits = 0;
+		}
+	}
+
 	if (fsz >= SZCHAR) {
 		printf("\t.space %d\n", fsz/SZCHAR);
 		fsz -= (fsz/SZCHAR) * SZCHAR;
@@ -703,7 +957,11 @@ infld(CONSZ off, int fsz, CONSZ val)
 	if (idebug)
 		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
 		    off, fsz, val, inbits);
+
 	val &= (1 << fsz)-1;
+
+#if 0
+	/* little-endian */
 	while (fsz + inbits >= SZCHAR) {
 		inval |= (val << inbits);
 		printf("\t.byte %d\n", inval & 255);
@@ -714,6 +972,17 @@ infld(CONSZ off, int fsz, CONSZ val)
 	if (fsz) {
 		inval |= (val << inbits);
 		inbits += fsz;
+	}
+#endif
+
+	/* big-endian */
+	inval <<= fsz;
+	inval |= val;
+	inbits += fsz;
+	while (inbits >= SZCHAR) {
+		int pval = inval >> (inbits - SZCHAR);
+		printf("\t.byte %d\n", pval & 255);
+		inbits -= SZCHAR;
 	}
 }
 
@@ -728,6 +997,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 {
 	union { float f; double d; long double l; int i[3]; } u;
 	struct symtab *q;
+	char *c;
 	TWORD t;
 	int i;
 
@@ -735,8 +1005,39 @@ ninval(CONSZ off, int fsz, NODE *p)
 	if (t > BTMASK)
 		t = INT; /* pointer */
 
+	while (p->n_op == SCONV || p->n_op == PCONV) {
+		NODE *l = p->n_left;
+		l->n_type = p->n_type;
+		p = l;
+	}
+
+	if (kflag && (p->n_op == PLUS || p->n_op == UMUL)) {
+		if (p->n_op == UMUL)
+			p = p->n_left;
+		p = p->n_right;
+		q = p->n_sp;
+
+#if defined(ELFABI)
+
+		if ((c = strstr(q->soname, "@got(31)")) != NULL)
+			*c = 0; /* ignore GOT ref here */
+
+#elif defined(MACHOABI)
+
+		if  ((c = strstr(q->soname, "$non_lazy_ptr")) != NULL) {
+			q->soname++;	/* skip "L" */
+			*c = 0; /* ignore GOT ref here */
+		}
+		else if ((c = strstr(q->soname, "-L")) != NULL)
+			*c = 0; /* ignore GOT ref here */
+
+#endif
+
+	}
+
 	if (p->n_op != ICON && p->n_op != FCON)
-		cerror("ninval: init node not constant");
+		cerror("ninval: init node not constant: node %p [%s]",
+		     p, cftnsp->soname);
 
 	if (p->n_op == ICON && p->n_sp != NULL && DEUNSIGN(t) != INT)
 		uerror("element not constant");
@@ -744,28 +1045,46 @@ ninval(CONSZ off, int fsz, NODE *p)
 	switch (t) {
 	case LONGLONG:
 	case ULONGLONG:
+#if 0
+		/* little-endian */
 		i = (p->n_lval >> 32);
 		p->n_lval &= 0xffffffff;
 		p->n_type = INT;
 		ninval(off, 32, p);
 		p->n_lval = i;
 		ninval(off+32, 32, p);
+#endif
+		/* big-endian */
+		i = (p->n_lval & 0xffffffff);
+		p->n_lval >>= 32;
+		p->n_type = INT;
+		ninval(off, 32, p);
+		p->n_lval = i;
+		ninval(off+32, 32, p);
+
 		break;
 	case INT:
 	case UNSIGNED:
-		printf("\t.long 0x%x", (int)p->n_lval);
+		printf("\t.long %d", (int)p->n_lval);
 		if ((q = p->n_sp) != NULL) {
 			if ((q->sclass == STATIC && q->slevel > 0) ||
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
-			} else
-				printf("+%s", exname(q->sname));
+			} else {
+
+#if defined(MACHOABI)
+				if ((q->sflags & SNOUNDERSCORE) != 0)
+					printf("+%s", q->soname);
+				else
+#endif
+					printf("+%s", exname(q->soname));
+			}
 		}
 		printf("\n");
 		break;
 	case SHORT:
 	case USHORT:
-		printf("\t.short 0x%x\n", (int)p->n_lval & 0xffff);
+		printf("\t.short %d\n", (int)p->n_lval & 0xffff);
 		break;
 	case BOOL:
 		if (p->n_lval > 1)
@@ -778,62 +1097,36 @@ ninval(CONSZ off, int fsz, NODE *p)
 	case LDOUBLE:
 		u.i[2] = 0;
 		u.l = (long double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
+#if 0
+		/* little-endian */
+		printf("\t.long 0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
+#endif
+		/* big-endian */
+		printf("\t.long 0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
 		break;
 	case DOUBLE:
 		u.d = (double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
+		printf("\t.long 0x%x\n\t.long 0x%x\n", u.i[0], u.i[1]);
 		break;
 	case FLOAT:
 		u.f = (float)p->n_dcon;
-		printf("\t.long\t0x%x\n", u.i[0]);
+		printf("\t.long 0x%x\n", u.i[0]);
 		break;
 	default:
 		cerror("ninval");
 	}
 }
 
-#if 0
-/*
- * print out an integer.
- */
-void
-inval(CONSZ word)
-{
-	word &= 0xffffffff;
-	printf("	.long 0x%llx\n", word);
-}
-
-/* output code to initialize a floating point value */
-/* the proper alignment has been obtained */
-void
-finval(NODE *p)
-{
-	union { float f; double d; long double l; int i[3]; } u;
-
-	switch (p->n_type) {
-	case LDOUBLE:
-		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
-		break;
-	case DOUBLE:
-		u.d = (double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
-		break;
-	case FLOAT:
-		u.f = (float)p->n_dcon;
-		printf("\t.long\t0x%x\n", u.i[0]);
-		break;
-	}
-}
-#endif
-
 /* make a name look like an external name in the local machine */
 char *
 exname(char *p)
 {
-#ifndef ELFABI
+#if defined(ELFABI)
+
+	return (p == NULL ? "" : p);
+
+#elif defined(MACHOABI)
+
 #define NCHNAM	256
         static char text[NCHNAM+1];
 	int i;
@@ -849,8 +1142,7 @@ exname(char *p)
         text[NCHNAM] = '\0';  /* truncate */
 
         return (text);
-#else
-	return (p == NULL ? "" : p);
+
 #endif
 }
 
@@ -892,17 +1184,30 @@ extdec(struct symtab *q)
 
 /* make a common declaration for id, if reasonable */
 void
+defzero(struct symtab *sp)
+{
+	int off;
+
+	off = tsize(sp->stype, sp->sdf, sp->ssue);
+	off = (off+(SZCHAR-1))/SZCHAR;
+	printf("\t.%scomm ", sp->sclass == STATIC ? "l" : "");
+	if (sp->slevel == 0)
+		printf("%s,%d\n", exname(sp->soname), off);
+	else
+		printf(LABFMT ",%d\n", sp->soffset, off);
+}
+
+
+#ifdef notdef
+/* make a common declaration for id, if reasonable */
+void
 commdec(struct symtab *q)
 {
 	int off;
 
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
-#ifdef GCC_COMPAT
-	printf("	.comm %s,0%o\n", exname(gcc_findname(q)), off);
-#else
-	printf("	.comm %s,0%o\n", exname(q->sname), off);
-#endif
+	printf("\t.comm %s,0%o\n", exname(q->soname), off);
 }
 
 /* make a local common declaration for id, if reasonable */
@@ -914,13 +1219,9 @@ lcommdec(struct symtab *q)
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("	.lcomm %s,0%o\n", exname(gcc_findname(q)), off);
-#else
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
+		printf("\t.lcomm %s,%d\n", exname(q->soname), off);
 	else
-		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
+		printf("\t.lcomm " LABFMT ",%d\n", q->soffset, off);
 }
 
 /*
@@ -932,11 +1233,15 @@ deflab1(int label)
 	printf(LABFMT ":\n", label);
 }
 
-#ifdef ELFABI
+#if defined(ELFABI)
+
 static char *loctbl[] = { "text", "data", "section .rodata,",
     "section .rodata" };
-#else
+
+#elif defined(MACHOABI)
+
 static char *loctbl[] = { "text", "data", "section .rodata,", "cstring" };
+
 #endif
 
 void
@@ -951,36 +1256,6 @@ setloc1(int locc)
 		return;
 	lastloc = locc;
 	printf("	.%s\n", loctbl[locc]);
-}
-
-#if 0
-int
-ftoint(NODE *p, CONSZ **c)
-{
-	static CONSZ cc[3];
-	union { float f; double d; long double l; int i[3]; } u;
-	int n;
-
-	switch (p->n_type) {
-	case LDOUBLE:
-		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
-		n = SZLDOUBLE;
-		break;
-	case DOUBLE:
-		u.d = (double)p->n_dcon;
-		n = SZDOUBLE;
-		break;
-	case FLOAT:
-		u.f = (float)p->n_dcon;
-		n = SZFLOAT;
-		break;
-	}
-	cc[0] = u.i[0];
-	cc[1] = u.i[1];
-	cc[2] = u.i[2];
-	*c = cc;
-	return n;
 }
 #endif
 
@@ -1004,5 +1279,178 @@ simmod(NODE *p)
 #undef ISPOW2
 
 	/* other optimizations can go here */
-	
+}
+
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	return 0;
+}
+
+/*
+ * Called when a identifier has been declared, to give target last word.
+ */
+void
+fixdef(struct symtab *sp)
+{
+}
+
+/*
+ * There is very little different here to the standard builtins.
+ * It basically handles promotion of types smaller than INT.
+ */
+
+NODE *
+powerpc_builtin_stdarg_start(NODE *f, NODE *a)
+{
+        NODE *p, *q;
+        int sz = 1;
+
+        /* check num args and type */
+        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+            !ISPTR(a->n_left->n_type))
+                goto bad;
+
+        /* must first deal with argument size; use int size */
+        p = a->n_right;
+        if (p->n_type < INT) {
+                /* round up to word */
+                sz = SZINT / tsize(p->n_type, p->n_df, p->n_sue);
+        }
+
+        p = buildtree(ADDROF, p, NIL);  /* address of last arg */
+        p = optim(buildtree(PLUS, p, bcon(sz)));
+        q = block(NAME, NIL, NIL, PTR+VOID, 0, 0);
+        q = buildtree(CAST, q, p);
+        p = q->n_right;
+        nfree(q->n_left);
+        nfree(q);
+        p = buildtree(ASSIGN, a->n_left, p);
+        tfree(f);
+        nfree(a);
+
+        return p;
+
+bad:
+        uerror("bad argument to __builtin_stdarg_start");
+        return bcon(0);
+}
+
+NODE *
+powerpc_builtin_va_arg(NODE *f, NODE *a)
+{
+        NODE *p, *q, *r;
+        int sz, tmpnr;
+
+        /* check num args and type */
+        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+            !ISPTR(a->n_left->n_type) || a->n_right->n_op != TYPE)
+                goto bad;
+
+        r = a->n_right;
+
+        /* get type size */
+        sz = tsize(r->n_type, r->n_df, r->n_sue) / SZCHAR;
+        if (sz < SZINT/SZCHAR) {
+                werror("%s%s promoted to int when passed through ...",
+                        ISUNSIGNED(r->n_type) ? "unsigned " : "",
+                        DEUNSIGN(r->n_type) == SHORT ? "short" : "char");
+                sz = SZINT/SZCHAR;
+		r->n_type = INT;
+		r->n_sue = MKSUE(INT);
+        }
+
+        p = tcopy(a->n_left);
+
+#if defined(ELFABI)
+
+        /* alignment */
+        if (SZINT/SZCHAR && r->n_type != UNIONTY && r->n_type != STRTY) {
+                p = buildtree(PLUS, p, bcon(ALSTACK/8 - 1));
+                p = block(AND, p, bcon(-ALSTACK/8), p->n_type, p->n_df, p->n_sue);
+        }
+
+#endif
+
+        /* create a copy to a temp node */
+        q = tempnode(0, p->n_type, p->n_df, p->n_sue);
+        tmpnr = regno(q);
+        p = buildtree(ASSIGN, q, p);
+
+        q = tempnode(tmpnr, p->n_type, p->n_df, p->n_sue);
+        q = buildtree(PLUS, q, bcon(sz));
+        q = buildtree(ASSIGN, a->n_left, q);
+
+        q = buildtree(COMOP, p, q);
+
+        nfree(a->n_right);
+        nfree(a);
+        nfree(f);
+
+        p = tempnode(tmpnr, INCREF(r->n_type), r->n_df, r->n_sue);
+        p = buildtree(UMUL, p, NIL);
+        p = buildtree(COMOP, q, p);
+
+        return p;
+
+bad:
+        uerror("bad argument to __builtin_va_arg");
+        return bcon(0);
+}
+
+NODE *
+powerpc_builtin_va_end(NODE *f, NODE *a)
+{
+        tfree(f);
+        tfree(a);
+ 
+        return bcon(0);
+}
+
+NODE *
+powerpc_builtin_va_copy(NODE *f, NODE *a)
+{
+        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM)
+                goto bad;
+        tfree(f);
+        f = buildtree(ASSIGN, a->n_left, a->n_right);
+        nfree(a);
+        return f;
+
+bad:
+        uerror("bad argument to __buildtin_va_copy");
+        return bcon(0);
+}
+
+NODE *
+powerpc_builtin_return_address(NODE *f, NODE *a)
+{
+	int nframes;
+	int i = 0;
+
+	if (a == NULL || a->n_op != ICON)
+		goto bad;
+
+	nframes = a->n_lval;
+
+	tfree(f);
+	tfree(a);
+
+	f = block(REG, NIL, NIL, PTR+VOID, 0, MKSUE(PTR+VOID));
+	regno(f) = SPREG;
+
+	do {
+		f = buildtree(UMUL, f, NIL);
+	} while (i++ < nframes);
+
+	f = block(PLUS, f, bcon(8), INCREF(PTR+VOID), 0, MKSUE(VOID));
+	f = buildtree(UMUL, f, NIL);
+
+	return f;
+bad:
+        uerror("bad argument to __builtin_return_address");
+        return bcon(0);
 }

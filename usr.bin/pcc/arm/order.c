@@ -1,4 +1,4 @@
-/*      $OpenBSD: order.c,v 1.2 2007/12/22 12:38:56 stefan Exp $    */
+/*      $OpenBSD: order.c,v 1.3 2008/04/11 20:45:52 stefan Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -81,11 +81,27 @@ offstar(NODE *p, int shape)
 }
 
 /*
- * It is OK to do an OREG - Modify the expression tree to be an OREG.
+ * Unable to convert to OREG (notoff() returned failure).  Output
+ * suitable instructions to replace OREG.
  */
 void
 myormake(NODE *q)
 {
+        NODE *p, *r;
+
+	if (x2debug)
+		printf("myormake(%p)\n", q);
+
+	p = q->n_left;
+	if (p->n_op == PLUS && (r = p->n_right)->n_op == LS &&
+	    r->n_right->n_op == ICON && r->n_right->n_lval == 2 &&
+ 	    p->n_left->n_op == REG && r->n_left->n_op == REG) {
+		q->n_op = OREG;
+ 		q->n_lval = 0;
+		q->n_rval = R2PACK(p->n_left->n_rval, r->n_left->n_rval,
+				   r->n_right->n_lval);
+		tfree(p);
+	}
 }
 
 /*
@@ -298,5 +314,5 @@ livecall(NODE *p)
 int
 acceptable(struct optab *op)
 {
-	return 1;
+	return features(op->visit & 0xffff0000);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: node.h,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: node.h,v 1.3 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef NODE_H
+#define NODE_H
 
 /*
  * The node structure is the basic element in the compiler.
@@ -113,7 +116,7 @@ typedef struct node {
 #define REG	6
 #define OREG	7
 #define TEMP	8
-#define	MOVE	9	/* Special reg-reg move node */
+#define XARG	9
 
 /*
  * Arithmetic nodes.
@@ -184,7 +187,7 @@ typedef struct node {
 #define STASG	50
 #define STARG	51
 #define FORCE	52
-/* #define INIT	53 */
+#define XASM	53
 #define	GOTO	54
 #define	RETURN	55
 #define STREF	56
@@ -192,3 +195,5 @@ typedef struct node {
 #define	ADDROF	58
 
 #define	MAXOP	58
+
+#endif

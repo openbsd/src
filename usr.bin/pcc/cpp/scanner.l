@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.8 2008/01/12 17:58:29 ragge Exp $   */
+/*	$OpenBSD: scanner.l,v 1.9 2008/04/11 20:45:52 stefan Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "cpp.h"
 #include "y.tab.h"
@@ -198,7 +199,14 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
 {D}*"."{D}+({E})?{FS}?	{ PRTOUT(FPOINT); }
 {D}+"."{D}*({E})?{FS}?	{ PRTOUT(FPOINT); }
 
-^{WS}*#{WS}*		{ contr = 1; BEGIN CONTR; }
+^{WS}*#{WS}*		{	extern int inmac;
+
+				if (inmac)
+					error("preprocessor directive found "
+					    "while expanding macro");
+				contr = 1;
+				BEGIN CONTR;
+			}
 {WS}+			{ PRTOUT(WSPACE); }
 
 <CONTR>"ifndef"		{ contr = 0; ifndefstmt(); }
@@ -217,13 +225,13 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
 
 
 "//".*$			{ /* if (tflag) yyless(..) */
-				if (Cflag)
+				if (Cflag && !flslvl)
 					putstr((usch *)yytext);
 				else if (!flslvl)
 					putch(' ');
 			}
 "/*"			{	int c, wrn;
-				if (Cflag)
+				if (Cflag && !flslvl)
 					putstr((usch *)yytext);
 				wrn = 0;
 			more:	while ((c = input()) && c != '*') {
@@ -231,20 +239,20 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
 						putch(c), ifiles->lineno++;
 					else if (c == 1) /* WARN */
 						wrn = 1;
-					else if (Cflag)
+					else if (Cflag && !flslvl)
 						putch(c);
 				}
 				if (c == 0)
 					return 0;
-				if (Cflag)
+				if (Cflag && !flslvl)
 					putch(c);
 				if ((c = input()) && c != '/') {
-					if (Cflag)
+					if (Cflag && !flslvl)
 						putch('*');
 					unput(c);
 					goto more;
 				}
-				if (Cflag)
+				if (Cflag && !flslvl)
 					putch(c);
 				if (c == 0)
 					return 0;
@@ -580,15 +588,23 @@ charcon(void)
 }
 
 static void
-chknl(void)
+chknl(int ignore)
 {
 	int t;
 
 	slow = 1;
 	while ((t = yylex()) == WSPACE)
 		;
-	if (t != '\n')
-		error("newline expected, got \"%s\"", yytext);
+	if (t != '\n') {
+		if (ignore) {
+			warning("newline expected, got \"%s\"", yytext);
+			/* ignore rest of line */
+			while ((t = yylex()) && t != '\n')
+				;
+		}
+		else
+			error("newline expected, got \"%s\"", yytext);
+	}
 	slow = 0;
 }
 
@@ -612,7 +628,7 @@ elsestmt(void)
 	if (elslvl==trulvl+flslvl)
 		error("Too many else");
 	elslvl=trulvl+flslvl;
-	chknl();
+	chknl(1);
 }
 
 static void
@@ -640,7 +656,7 @@ ifdefstmt(void)
 		trulvl++;
 	else
 		flslvl++;
-	chknl();
+	chknl(0);
 }
 
 static void
@@ -659,7 +675,7 @@ ifndefstmt(void)
 		trulvl++;
 	else
 		flslvl++;
-	chknl();
+	chknl(0);
 }
 
 static void
@@ -676,7 +692,7 @@ endifstmt(void)
 	if (flslvl == 0)
 		elflvl = 0;
 	elslvl = 0;
-	chknl();
+	chknl(1);
 }
 
 /*
@@ -832,7 +848,7 @@ undefstmt(void)
 	if (flslvl == 0 && (np = lookup((usch *)yytext, FIND)))
 		np->value = 0;
 	slow = 0;
-	chknl();
+	chknl(0);
 }
 
 static void

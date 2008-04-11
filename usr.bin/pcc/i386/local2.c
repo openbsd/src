@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.7 2008/01/12 17:29:09 ragge Exp $	*/
+/*	$OpenBSD: local2.c,v 1.8 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -119,7 +119,7 @@ prologue(struct interpass_prolog *ipp)
 	int addto;
 
 	ftype = ipp->ipp_type;
-#if 0
+#ifdef LANG_F77
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", ipp->ipp_name);
 	printf("	.align 4\n");
@@ -775,7 +775,6 @@ adrput(FILE *io, NODE *p)
 		conput(io, p);
 		return;
 
-	case MOVE:
 	case REG:
 		switch (p->n_type) {
 		case LONGLONG:

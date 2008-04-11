@@ -1,31 +1,32 @@
-.\"	$OpenBSD: cc.1,v 1.3 2007/10/16 13:46:30 stefan Exp $
+.\"	$OpenBSD: cc.1,v 1.4 2008/04/11 20:45:52 stefan Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
-.\" 
-.\" Permission to use, copy, modify, and/or distribute this software for any 
-.\" purpose with or without fee is hereby granted, provided that the above 
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
-.\" 
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR AND CONTRIBUTORS DISCLAIM 
-.\" ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED 
-.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHOR AND 
-.\" CONTRIBUTORS BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL 
-.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR 
-.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS 
-.\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF 
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR AND CONTRIBUTORS DISCLAIM
+.\" ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHOR AND
+.\" CONTRIBUTORS BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+.\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
 .Dd September 14, 2007
-.Dt cc 1
+.Dt CC 1
 .Os
 .Sh NAME
 .Nm cc
 .Nd front-end to the C compiler
 .Sh SYNOPSIS
 .Nm
-.Op Fl cEgkLMPOStvxX
+.Op Fl cEgkLMPOStvXx
 .Op Fl fPIC
 .Op Fl fpic
+.Op Fl m Ns Ar option
 .Op Fl nostartfiles
 .Op Fl nostdinc
 .Op Fl nostdlib
@@ -41,12 +42,11 @@
 .Op Fl o Ar outfile
 .Op Fl Wl Ar flags
 .Op Ar
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
 utility provides a front-end to the
-.Dq portable C compiler.
+.Dq portable C compiler .
 Multiple files may be given on the command line.
 Unrecognized options are all sent directly to
 .Xr ld 1 .
@@ -55,22 +55,22 @@ Unrecognized options are all sent directly to
 Filenames that end with
 .Sy \&.c
 are passed via
-.Xr cpp 1 ->
-.Xr ccom 1 ->
-.Xr as 1 ->
+.Xr cpp 1 -\*[Gt]
+.Xr ccom 1 -\*[Gt]
+.Xr as 1 -\*[Gt]
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.i
 are passed via
-.Xr ccom 1 ->
-.Xr as 1 ->
+.Xr ccom 1 -\*[Gt]
+.Xr as 1 -\*[Gt]
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.s
 are passed via
-.Xr as 1 ->
+.Xr as 1 -\*[Gt]
 .Xr ld 1 .
 .Pp
 Filenames that end with
@@ -99,7 +99,7 @@ Only compile or assemble and then stop.
 Do not link.
 The resulting object output is saved
 as a filename with a
-.Dq .o
+.Dq \&.o
 suffix unless
 .Fl o
 option is used.
@@ -146,7 +146,7 @@ Passed to the
 preprocessor to add header search directory to override system defaults.
 .It Fl include Ar file
 Tells the
-.Xr cpp 1  
+.Xr cpp 1
 preprocessor to include the
 .Ar file
 during preprocessing.
@@ -162,7 +162,7 @@ See
 .Fl fpic
 option.
 .It Fl L
-.\" TODO
+TODO
 .It Fl M
 Pass
 .Fl M
@@ -170,12 +170,26 @@ flag to
 .Xr cpp 1
 to generate dependencies for
 .Xr make 1 .
+.It Fl m Ns options
+Target-dependent option.
+.Bl -tag -width PowerPC
+.It ARM
+-mlittle-endian -mbig-endian -mfpe=fpa -mfpe=vpf -msoft-float -march=armv1 -march=armv2 -march=armv2a -march=armv3 -march=armv4 -march=armv4t -march=armv4tej -march=armv5 -march=armv6 -march=armv6t2 -march=armv6kz -march=armv6k -march=armv7
+.It HPPA
+.It i386
+.It MIPS
+-mlittle-endian -mbig-endian -mhard-float -msoft-float
+.It PDP-10
+.It PowerPC
+.It Sparc64
+.It VAX
+.El
 .It Fl nostartfiles
-.\" TODO
+Do not link with the system startup files (crt0.c, etc.)
 .It Fl nostdinc
-.\" TODO
+Do not use the system include paths (/usr/include, etc.)
 .It Fl nostdlib
-.\" TODO
+Do not link with the system C library (libc).
 .\" implies -nostartfiles ??
 .It Fl O
 Enable optimizations.
@@ -185,17 +199,18 @@ and
 .Fl xtemps
 to
 .Xr ccom 1 .
-Note: this is unset if
+Note: this is unset if the
 .Fl g
-option is set.
+option is used.
 .It Fl o Ar outfile
 Save result to
 .Ar outfile .
 .It Fl P
-TODO: what is this?
+TODO
+.\" TODO: what is this?
 .\" TODO: Looks like it does cpp only, but I couldn't get it to work for me.
 .It Fl pg
-Not implemented.
+Enable profiling on the generated executable.
 .It Fl pthread
 Defines
 .Sy _PTHREADS
@@ -203,15 +218,16 @@ preprocessor directive for
 .Xr cpp 1 .
 Uses
 .Sy -lpthread
-for
-.Xr ld 1 linker.
+for the
+.Xr ld 1
+linker.
 .It Fl S
 Stop after compilation by
 .Xr ccom 1 .
 Do not assemble and do not link.
 The resulting assembler-language output is saved
 as a filename with a
-.Dq .s
+.Dq \&.s
 suffix unless the
 .Fl o
 option is used.
@@ -229,22 +245,22 @@ to
 .Xr cpp 1
 for traditional C preprocessor syntax.
 .It Fl U Ar macro
-Passes to the 
+Passes to the
 .Xr cpp 1
 preprocessor to remove the initial macro definition.
 .It Fl v
 Outputs the version of
 .Nm
-and shows what commands will be ran with their command line arguments.
+and shows what commands will be run with their command line arguments.
 .It Fl Wl Ar flags
-Options for the linker
+Options for the linker.
 .\" what is ignored? llist?
 .It Fl X
 Don't remove temporary files on exit.
 .It Fl x
 TODO
 .El
-.Sh Predefined Macros  
+.Ss Predefined Macros
 A few
 macros are predefined by
 .Nm
@@ -260,7 +276,7 @@ Set to the major version of
 These macros can be used to select code based on
 .Xr pcc 1
 compatibility.
-See
+See the
 .Fl v
 option.
 .It __PCC_MINOR__
@@ -287,8 +303,8 @@ and
 .Sh HISTORY
 The
 .Nm
-command comes from the original Portable C Compiler by S. C.
-Johnson, written in the late 70's.
+command comes from the original Portable C Compiler by S. C. Johnson,
+written in the late 70's.
 .Pp
 This product includes software developed or owned by Caldera
 International, Inc.

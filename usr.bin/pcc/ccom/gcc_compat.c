@@ -1,4 +1,4 @@
-/*      $OpenBSD: gcc_compat.c,v 1.4 2008/01/12 17:26:16 ragge Exp $     */
+/*      $OpenBSD: gcc_compat.c,v 1.5 2008/04/11 20:45:52 stefan Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -50,6 +50,7 @@ static struct kw {
 	{ "__const", NULL, 0 },
 	{ "__asm__", NULL, C_ASM },
 	{ "__inline__", NULL, C_FUNSPEC },
+	{ "__thread", NULL, 0 },
 	{ NULL, NULL, 0 },
 };
 
@@ -63,12 +64,15 @@ gcc_init()
 
 }
 
+#define	TS	"\n#pragma tls\n# %d\n"
+#define	TLLEN	sizeof(TS)+10
 /*
  * See if a string matches a gcc keyword.
  */
 int
 gcc_keyword(char *str, NODE **n)
 {
+	char tlbuf[TLLEN], *tw;
 	struct kw *kwp;
 	int i;
 
@@ -86,6 +90,12 @@ gcc_keyword(char *str, NODE **n)
 	case 3: /* __const */
 		*n = block(QUALIFIER, NIL, NIL, CON, 0, 0);
 		return C_QUALIFIER;
+	case 6: /* __thread */
+		snprintf(tlbuf, TLLEN, TS, lineno);
+		tw = &tlbuf[strlen(tlbuf)];
+		while (tw > tlbuf)
+			cunput(*--tw);
+		return -1;
 	}
 	cerror("gcc_keyword");
 	return 0;

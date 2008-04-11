@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.8 2008/01/12 17:58:29 ragge Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -101,7 +101,7 @@ int dflag;	/* debug printouts */
 
 int ofd;
 usch outbuf[CPPBUF];
-int obufp, istty;
+int obufp, istty, inmac;
 int Cflag, Mflag, dMflag;
 usch *Mfile;
 struct initar *initar;
@@ -983,7 +983,8 @@ expmac(struct recur *rp)
 				else
 					orgexp++;
 
-			DDPRINT(("id1: noexp %d orgexp %d\n", noexp, orgexp));
+			DDPRINT(("id1: typ %d noexp %d orgexp %d\n",
+			    c, noexp, orgexp));
 			if (c == IDENT) { /* XXX numbers? */
 				DDPRINT(("id2: str %s\n", yytext));
 				/* OK to always expand here? */
@@ -1118,12 +1119,19 @@ expdef(vp, rp, gotwarn)
 	 * read arguments and store them on heap.
 	 * will be removed just before return from this function.
 	 */
+	inmac = 1;
 	sptr = stringbuf;
+	instr = 0;
 	for (i = 0; i < narg && c != ')'; i++) {
 		args[i] = stringbuf;
 		plev = 0;
 		while ((c = yylex()) == WSPACE || c == '\n')
 			;
+		DDPRINT((":AAA (%d)", c));
+		if (instr == -1)
+			savch(NOEXP), instr = 1;
+		if (c == NOEXP)
+			instr = 1;
 		for (;;) {
 			if (plev == 0 && (c == ')' || c == ','))
 				break;
@@ -1134,10 +1142,14 @@ expdef(vp, rp, gotwarn)
 			savstr((usch *)yytext);
 			while ((c = yylex()) == '\n')
 				savch('\n');
+			if (c == EXPAND)
+				instr = 0;
 		}
 		while (args[i] < stringbuf &&
 		    (stringbuf[-1] == ' ' || stringbuf[-1] == '\t'))
 			stringbuf--;
+		if (instr == 1)
+			savch(EXPAND), instr = -1;
 		savch('\0');
 	}
 	if (ellips)
@@ -1145,8 +1157,12 @@ expdef(vp, rp, gotwarn)
 	if (ellips && c != ')') {
 		args[i] = stringbuf;
 		plev = 0;
+		instr = 0;
 		while ((c = yylex()) == WSPACE)
 			;
+		if (c == NOEXP)
+			instr++;
+		DDPRINT((":AAY (%d)", c));
 		for (;;) {
 			if (plev == 0 && c == ')')
 				break;
@@ -1154,9 +1170,16 @@ expdef(vp, rp, gotwarn)
 				plev++;
 			if (c == ')')
 				plev--;
-			savstr((usch *)yytext);
+			if (plev == 0 && c == ',' && instr) {
+				savch(EXPAND);
+				savch(',');
+				savch(NOEXP);
+			} else
+				savstr((usch *)yytext);
 			while ((c = yylex()) == '\n')
 				savch('\n');
+			if (c == EXPAND)
+				instr--;
 		}
 		while (args[i] < stringbuf &&
 		    (stringbuf[-1] == ' ' || stringbuf[-1] == '\t'))
@@ -1171,6 +1194,7 @@ expdef(vp, rp, gotwarn)
 	if (c != ')' || (i != narg && ellips == 0) || (i < narg && ellips == 1))
 		error("wrong arg count");
 
+	inmac = 0;
 	while (gotwarn--)
 		cunput(WARN);
 

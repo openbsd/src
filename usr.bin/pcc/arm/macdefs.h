@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.2 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.3 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -145,8 +145,17 @@ typedef long long OFFSZ;
 #define R8R9	24
 #define R9R10	25
 
-#define NUMCLASS 2
-#define	MAXREGS	26
+#define F0	26
+#define F1	27
+#define F2	28
+#define F3	29
+#define F4	30
+#define F5	31
+#define F6	32
+#define F7	33
+
+#define NUMCLASS 3
+#define	MAXREGS	34
 
 #define RSTATUS \
 	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
@@ -155,6 +164,8 @@ typedef long long OFFSZ;
 	0, 0, 0, 0, 0,							\
         SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG,		\
         SBREG, SBREG, SBREG, SBREG, SBREG, SBREG,			\
+	SCREG, SCREG, SCREG, SCREG,					\
+	SCREG, SCREG, SCREG, SCREG,					\
 
 #define ROVERLAP \
 	{ R0R1, -1 },					\
@@ -183,6 +194,14 @@ typedef long long OFFSZ;
 	{ R7, R8, R6R7, R8R9, -1 },			\
 	{ R8, R9, R7R8, R9R10, -1 },			\
 	{ R9, R10, R8R9, -1 },				\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
+	{ -1, },					\
 
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 #define BACKAUTO 		/* stack grows negatively for automatics */
@@ -190,35 +209,42 @@ typedef long long OFFSZ;
 #define ARGINIT		(4*8)	/* # bits above fp where arguments start */
 #define AUTOINIT	(12*8)	/* # bits above fp where automatics start */
 
+#undef	FIELDOPS		/* no bit-field instructions */
+#define RTOLBYTES 1		/* bytes are numbered right to left */
+
 /* XXX - to die */
 #define FPREG   FP	/* frame pointer */
 
 /* Return a register class based on the type of the node */
 #define PCLASS(p)	(1 << gclass((p)->n_type))
 
-#define GCLASS(x)	(x < 16 ? CLASSA : CLASSB)
+#define GCLASS(x)	(x < 16 ? CLASSA : x < 26 ? CLASSB : CLASSC)
 #define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
 #define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
 #define ENCRA1(x)       ((x) << 6)      /* A1 */
 #define ENCRA2(x)       ((x) << 12)     /* A2 */
 #define ENCRA(x,y)      ((x) << (6+y*6))        /* encode regs in int */
-
-#if defined(ARM_HAS_FPA) || defined(ARM_HAS_VFP)
-#define RETREG(x)       (DEUNSIGN(x) == LONGLONG ? R0R1 : \
-			    (x) == DOUBLE || (x) == LDOUBLE || (x) == FLOAT ? \
-			    F0 : R0)
-#else
-#define RETREG(x)       (DEUNSIGN(x) == LONGLONG || \
-			    (x) == DOUBLE || (x) == LDOUBLE ? R0R1 : R0)
-#endif
+#define RETREG(x)	retreg(x)
 
 int COLORMAP(int c, int *r);
+int retreg(int ty);
+int features(int f);
 
-#define TARGET_STDARGS						\
-	{ "__builtin_stdarg_start, arm_builtin_stdarg_start },	\
-	{ "__builtin_va_arg, arm_builtin_va_arg },		\
-	{ "__builtin_va_end, arm_builtin_va_end },		\
-	{ "__builtin_va_copy, arm_builtin_va_copy },
+#define FEATURE_BIGENDIAN	0x00010000
+#define FEATURE_HALFWORDS	0x00020000	/* ldrsh/ldrh, ldrsb */
+#define FEATURE_EXTEND		0x00040000	/* sxth, sxtb, uxth, uxtb */
+#define FEATURE_MUL		0x00080000
+#define FEATURE_MULL		0x00100000
+#define FEATURE_FPA		0x10000000
+#define FEATURE_VFP		0x20000000
+#define FEATURE_HARDFLOAT	(FEATURE_FPA|FEATURE_VFP)
+
+#define TARGET_STDARGS
+#define TARGET_BUILTINS						\
+	{ "__builtin_stdarg_start", arm_builtin_stdarg_start },	\
+	{ "__builtin_va_arg", arm_builtin_va_arg },		\
+	{ "__builtin_va_end", arm_builtin_va_end },		\
+	{ "__builtin_va_copy", arm_builtin_va_copy },
 
 #define NODE struct node
 struct node;
@@ -227,3 +253,6 @@ NODE *arm_builtin_va_arg(NODE *f, NODE *a);
 NODE *arm_builtin_va_end(NODE *f, NODE *a);
 NODE *arm_builtin_va_copy(NODE *f, NODE *a);
 #undef NODE
+
+#define COM     "\t@ "
+#define NARGREGS	4

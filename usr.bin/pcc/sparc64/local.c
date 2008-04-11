@@ -1,3 +1,4 @@
+/*	$OpenBSD: local.c,v 1.2 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 
@@ -50,9 +51,11 @@ clocal(NODE *p)
 			p = stref(block(STREF, l, r, 0, 0, 0));
 		}
 		break;
-	case PCONV:
-		if (p->n_type > BTMASK && l->n_type > BTMASK) {
-			/* Remove unnecessary pointer conversions. */
+	case PCONV: /* Remove what PCONVs we can. */
+		if (l->n_op == SCONV)
+			break;
+
+		if (l->n_op == ICON || (ISPTR(p->n_type) && ISPTR(l->n_type))) {
 			l->n_type = p->n_type;
 			l->n_qual = p->n_qual;
 			l->n_df = p->n_df;
@@ -68,7 +71,8 @@ clocal(NODE *p)
 			    (l->n_type & TMASK) == 0 &&
 			    btdims[p->n_type].suesize ==
 			    btdims[l->n_type].suesize) {
-				/* XXX: skip if FP? */
+				if (p->n_type == FLOAT || p->n_type == DOUBLE)
+					break;
 				l->n_type = p->n_type;
 				nfree(p);
 				p = l;
@@ -92,12 +96,18 @@ clocal(NODE *p)
 		case UCHAR:     l->n_lval = l->n_lval & 0377; break;
 		case SHORT:     l->n_lval = (short)l->n_lval; break;
 		case USHORT:    l->n_lval = l->n_lval & 0177777; break;
-		case UNSIGNED:
-		case ULONG:     l->n_lval = l->n_lval & 0xffffffff; break;
-		case LONG:
+		case UNSIGNED:  l->n_lval = l->n_lval & 0xffffffff; break;
 		case INT:       l->n_lval = (int)l->n_lval; break;
+		case ULONG:
 		case ULONGLONG: l->n_lval = l->n_lval; break;
+		case LONG:
 		case LONGLONG:	l->n_lval = (long long)l->n_lval; break;
+		case FLOAT:
+		case DOUBLE:
+		case LDOUBLE:
+			l->n_op = FCON;
+			l->n_dcon = l->n_lval;
+			break;
 		case VOID:
 			break;
 		default:
@@ -122,7 +132,7 @@ clocal(NODE *p)
 		p->n_op = ASSIGN;
 		p->n_right = p->n_left;
 		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
-		p->n_left->n_rval = I0; /* XXX adjust for float/double */
+		p->n_left->n_rval = RETREG_PRE(p->n_type);
 		break;
 	}
 
@@ -139,6 +149,25 @@ clocal(NODE *p)
 void
 myp2tree(NODE *p)
 {
+	struct symtab *sp;
+
+	if (p->n_op != FCON)
+		return;
+
+	sp = tmpalloc(sizeof(struct symtab));
+	sp->sclass = STATIC;
+	sp->slevel = 1;
+	sp->soffset = getlab();
+	sp->sflags = 0;
+	sp->stype = p->n_type;
+	sp->squal = (CON >> TSHIFT);
+
+	defloc(sp);
+	ninval(0, btdims[p->n_type].suesize, p);
+
+	p->n_op = NAME;
+	p->n_lval = 0;
+	p->n_sp = sp;
 }
 
 int
@@ -186,7 +215,7 @@ instring(struct symtab *sp)
 
 	printf("\t.ascii \"");
 	for (s = str; *s != 0; *s++) {
-		if (*s == '\\')
+		if (*s++ == '\\')
 			esccon(&s);
 		if (s - str > 60) {
 			fwrite(str, 1, s - str, stdout);
@@ -211,29 +240,58 @@ infld(CONSZ off, int fsz, CONSZ val)
 void
 ninval(CONSZ off, int fsz, NODE *p)
 {
+	TWORD t;
+	struct symtab *sp;
+	union { float f; double d; int i; long long l; } u;
+
+	t = p->n_type;
+	sp = p->n_sp;
+
+	if (ISPTR(t))
+		t = LONGLONG;
+
 	if (p->n_op != ICON && p->n_op != FCON)
 		cerror("ninval: not a constant");
-	if (p->n_op == ICON && p->n_sp != NULL && DEUNSIGN(p->n_type) != INT)
+	if (p->n_op == ICON && sp != NULL && DEUNSIGN(t) != LONGLONG)
 		cerror("ninval: not constant");
 
-	switch (DEUNSIGN(p->n_type)) {
+	switch (t) {
 		case CHAR:
-			printf("\t.align 1\n");
+		case UCHAR:
 			printf("\t.byte %d\n", (int)p->n_lval & 0xff);
 			break;
 		case SHORT:
-			printf("\t.align 2\n");
+		case USHORT:
 			printf("\t.half %d\n", (int)p->n_lval &0xffff);
 			break;
 		case BOOL:
 			p->n_lval = (p->n_lval != 0); /* FALLTHROUGH */
 		case INT:
-			printf("\t.align 4\n\t.long " CONFMT "\n", p->n_lval);
+		case UNSIGNED:
+			printf("\t.long " CONFMT "\n", p->n_lval);
 			break;
+		case LONG:
+		case ULONG:
 		case LONGLONG:
-			printf("\t.align 8\n\t.xword %lld\n", p->n_lval);
+		case ULONGLONG:
+			printf("\t.xword %lld", p->n_lval);
+			if (sp != 0) {
+				if ((sp->sclass == STATIC && sp->slevel > 0)
+				    || sp->sclass == ILABEL)
+					printf("+" LABFMT, sp->soffset);
+				else
+					printf("+%s", exname(sp->soname));
+			}
+			printf("\n");
 			break;
-		/* TODO FP float and double */
+		case FLOAT:
+			u.f = (float)p->n_dcon;
+			printf("\t.long %d\n", u.i);
+			break;
+		case DOUBLE:
+			u.d = (double)p->n_dcon;
+			printf("\t.xword %lld\n", u.l);
+			break;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.3 2007/12/22 14:05:04 stefan Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.4 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,6 +30,8 @@
  * Machine-dependent defines for both passes.
  */
 
+#define ELFABI
+
 /*
  * Convert (multi-)character constant to integer.
  */
@@ -59,11 +61,15 @@
 #define ALDOUBLE	32
 #define ALLDOUBLE	32
 #define ALLONG		32
+#ifdef ELFABI
+#define ALLONGLONG	64
+#else
 #define ALLONGLONG	32
+#endif
 #define ALSHORT		16
 #define ALPOINT		32
 #define ALSTRUCT	32
-#define ALSTACK		32 
+#define ALSTACK		(16*SZCHAR)
 
 /*
  * Min/max values.
@@ -85,11 +91,8 @@
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
 
 #define CHAR_UNSIGNED
-#define TARGET_STDARGS
 #define	BOOL_TYPE	INT	/* what used to store _Bool */
 #define	WCHAR_TYPE	INT	/* what used to store wchar_t */
-
-#define ELFABI
 
 /*
  * Use large-enough types.
@@ -99,33 +102,32 @@ typedef	unsigned long long U_CONSZ;
 typedef long long OFFSZ;
 
 #define CONFMT	"%lld"		/* format for printing constants */
-#ifdef ELFABI
+#if defined(ELFABI)
 #define LABFMT	".L%d"		/* format for printing labels */
-#else
+#define REGPREFIX	"%"	/* format for printing registers */
+#elif defined(MACHOABI)
 #define LABFMT	"L%d"		/* format for printing labels */
+#define REGPREFIX
+#else
+#error undefined ABI
 #endif
 #define	STABLBL	"LL%d"		/* format for stab (debugging) labels */
+
+#ifdef MACHOABI
 #define STAB_LINE_ABSOLUTE	/* S_LINE fields use absolute addresses */
+#endif
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#if 0
-#define	RTOLBYTES		/* bytes are numbered right to left */
-#endif
 
 #define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
 
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)
-#define wdal(k)		(BYTEOFF(k)==0)
 #define BITOOR(x)	(x)	/* bit offset to oreg offset XXX die! */
 
-#define STOARG(p)
-#define STOFARG(p)
-#define STOSTARG(p)
-
-#define	szty(t)	(((t) == DOUBLE || (t) == FLOAT || \
-	(t) == LONGLONG || (t) == ULONGLONG) ? 2 : (t) == LDOUBLE ? 3 : 1)
+#define	szty(t)	(((t) == DOUBLE || (t) == LDOUBLE || \
+	DEUNSIGN(t) == LONGLONG) ? 2 : 1)
 
 /*
  * The PPC register definition are taken from apple docs.
@@ -133,6 +135,7 @@ typedef long long OFFSZ;
  * The classes used are:
  *	A - general registers
  *	B - 64-bit register pairs
+ *	C - floating-point registers
  */
 
 #define R0	0	// scratch register
@@ -185,25 +188,110 @@ typedef long long OFFSZ;
 #define R28R29	46
 #define R30R31	47
 
-#define NUMCLASS 4		// XXX must always be 4
-#define	MAXREGS	48
+#define F0	48	// scratch register
+#define F1	49	// return value 0 / argument 0
+#define F2	50	// return value 1 / argument 1
+#define F3	51	// return value 2 / argument 2
+#define F4	52	// return value 3 / argument 3
+#define F5	53	// argument 4
+#define F6	54	// argument 5
+#define F7	55	// argument 6
+#define F8	56	// argument 7
+#define F9	57	// argument 8
+#define F10	58	// argument 9
+#define F11	59	// argument 10
+#define F12	60	// argument 11
+#define F13	61	// argument 12
+#define F14	62
+#define F15	63
+#define F16	64
+#define F17	65
+#define F18	66
+#define F19	67
+#define F20	68
+#define F21	69
+#define F22	70
+#define F23	71
+#define F24	72
+#define F25	73
+#define F26	74
+#define F27	75
+#define F28	76
+#define F29	77
+#define F30	78
+#define F31	79
 
-#define RSTATUS \
-	0, 0, SAREG|TEMPREG, SAREG|TEMPREG,			\
-	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
-	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG,	\
-	SAREG, SAREG, SAREG, SAREG,	\
-	SAREG, SAREG, SAREG, SAREG,	\
-	SAREG, SAREG, SAREG, SAREG,	\
-	SAREG, SAREG, SAREG, SAREG,	\
-	SAREG, SAREG, SAREG, SAREG,	\
-					\
-        SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
-        SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,			\
+#define NUMCLASS 3
+#define	MAXREGS	64		// XXX cannot have more than 64
+
+#define RSTATUS 				\
+	0,			/* R0 */	\
+	0,			/* R1 */	\
+	SAREG|TEMPREG,		/* R2 */	\
+	SAREG|TEMPREG,		/* R3 */	\
+	SAREG|TEMPREG,		/* R4 */	\
+	SAREG|TEMPREG,		/* R5 */	\
+	SAREG|TEMPREG,		/* R6 */	\
+	SAREG|TEMPREG,		/* R7 */	\
+	SAREG|TEMPREG,		/* R8 */	\
+	SAREG|TEMPREG,		/* R9 */	\
+	SAREG|TEMPREG,		/* R10 */	\
+	SAREG|TEMPREG,		/* R11 */	\
+	SAREG|TEMPREG,		/* R12 */	\
+	SAREG,			/* R13 */	\
+	SAREG,			/* R14 */	\
+	SAREG,			/* R15 */	\
+	SAREG,			/* R16 */	\
+	SAREG,			/* R17 */	\
+	SAREG,			/* R18 */	\
+	SAREG,			/* R19 */	\
+	SAREG,			/* R20 */	\
+	SAREG,			/* R21 */	\
+	SAREG,			/* R22 */	\
+	SAREG,			/* R23 */	\
+	SAREG,			/* R24 */	\
+	SAREG,			/* R25 */	\
+	SAREG,			/* R26 */	\
+	SAREG,			/* R27 */	\
+	SAREG,			/* R28 */	\
+	SAREG,			/* R29 */	\
+	SAREG,			/* R30 */	\
+	SAREG,			/* R31 */	\
 	\
-        SBREG, SBREG, SBREG, SBREG,	\
-        SBREG, SBREG, SBREG, SBREG,	\
-	SBREG, 
+        SBREG|TEMPREG,		/* R3R4 */	\
+	SBREG|TEMPREG,		/* R4R5 */	\
+	SBREG|TEMPREG,		/* R5R6 */	\
+	SBREG|TEMPREG,		/* R6R7 */	\
+        SBREG|TEMPREG,		/* R7R8 */	\
+	SBREG|TEMPREG,		/* R8R9 */	\
+	SBREG|TEMPREG,		/* R9R10 */	\
+	\
+	SBREG,			/* R14R15 */	\
+	SBREG,			/* R16R17 */	\
+	SBREG,			/* R18R19 */	\
+	SBREG,			/* R20R21 */	\
+	SBREG,			/* R22R23 */	\
+	SBREG,			/* R24R25 */	\
+	SBREG,			/* R26R2k */	\
+	SBREG,			/* R28R29 */	\
+	SBREG, 			/* R30R31 */	\
+	\
+	SCREG|TEMPREG,		/* F0 */	\
+	SCREG|TEMPREG,		/* F1 */	\
+	SCREG|TEMPREG,		/* F2 */	\
+	SCREG|TEMPREG,		/* F3 */	\
+	SCREG|TEMPREG,		/* F4 */	\
+	SCREG|TEMPREG,		/* F5 */	\
+	SCREG|TEMPREG,		/* F6 */	\
+	SCREG|TEMPREG,		/* F7 */	\
+	SCREG|TEMPREG,		/* F8 */	\
+	SCREG|TEMPREG,		/* F9 */	\
+	SCREG|TEMPREG,		/* F10 */	\
+	SCREG|TEMPREG,		/* F11 */	\
+	SCREG|TEMPREG,		/* F12 */	\
+	SCREG|TEMPREG,		/* F13 */	\
+	SCREG,			/* F14 */	\
+	SCREG,			/* F15 */	\
 
 #define ROVERLAP \
 	{ -1 }, { -1 }, { -1 },			\
@@ -230,43 +318,83 @@ typedef long long OFFSZ;
 	{ R18, R19, -1 }, { R20, R21, -1 }, 	\
 	{ R22, R23, -1 }, { R24, R25, -1 },	\
 	{ R26, R27, -1 }, { R28, R29, -1 }, 	\
-	{ R30, R31, -1 },
+	{ R30, R31, -1 },		\
+	\
+	{ -1 }, { -1 }, { -1 }, { -1 },		\
+	{ -1 }, { -1 }, { -1 }, { -1 },		\
+	{ -1 }, { -1 }, { -1 }, { -1 },		\
+	{ -1 }, { -1 }, { -1 }, { -1 },		\
 
-#if 0
+/*
+ * According to the ABI documents, there isn't really a frame pointer;
+ * all references to data on the stack (autos and parameters) are
+ * indexed relative to the stack pointer.  However, pcc isn't really
+ * capable of running in this manner, and expects a frame pointer.
+ */
+#define SPREG   R1	/* stack pointer */
+#define FPREG   R30	/* frame pointer */
+#define GOTREG	R31	/* global offset table (PIC) */
+
+#ifdef FPREG
+#define ARGINIT		(24*8)	/* # bits above fp where arguments start */
+#define AUTOINIT	(8*8)	/* # bits above fp where automatics start */
 #define BACKAUTO 		/* stack grows negatively for automatics */
 #define BACKTEMP 		/* stack grows negatively for temporaries */
-#endif
-
+#else
 #define ARGINIT		(24*8)	/* # bits above fp where arguments start */
 #define AUTOINIT	(56*8)	/* # bits above fp where automatics start */
-
-/* XXX - to die */
-#define FPREG   R1     /* frame pointer */
-#if 0
-#define STKREG  R30    /* stack pointer */
 #endif
 
 /* Return a register class based on the type of the node */
-#define PCLASS(p) (p->n_type == LONGLONG || p->n_type == ULONGLONG ? SBREG : \
-                  (p->n_type >= FLOAT && p->n_type <= LDOUBLE ? SCREG : SAREG))
+#define PCLASS(p)	(1 << gclass((p)->n_type))
 
-#define GCLASS(x)	(x < 32 ? CLASSA : CLASSB)
-#define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
-#define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
-#define ENCRA1(x)       ((x) << 6)      /* A1 */
-#define ENCRA2(x)       ((x) << 12)     /* A2 */
-#define ENCRA(x,y)      ((x) << (6+y*6))        /* encode regs in int */
-#define RETREG(x)       ((x) == ULONGLONG || (x) == LONGLONG ? R3R4 : R3)
+#define GCLASS(x)	((x) < 32 ? CLASSA : ((x) < 48 ? CLASSB : CLASSC))
+#define DECRA(x,y)	(((x) >> (y*6)) & 63)   /* decode encoded regs */
+#define ENCRA(x,y)	((x) << (6+y*6))        /* encode regs in int */
+#define ENCRD(x)	(x)		/* Encode dest reg in n_reg */
+#define RETREG(x)	retreg(x)
 
 int COLORMAP(int c, int *r);
+int retreg(int ty);
 
 #define	SHSTR		(MAXSPECIAL+1)	/* short struct */
 #define	SFUNCALL	(MAXSPECIAL+2)	/* struct assign after function call */
 #define SPCON		(MAXSPECIAL+3)  /* positive constant */
 
+int features(int f);
+#define FEATURE_BIGENDIAN	0x00010000
+#define FEATURE_PIC		0x00020000
+#define FEATURE_HARDFLOAT	0x00040000
+
 struct stub {
 	struct { struct stub *q_forw, *q_back; } link;
 	char *name;
 };
+extern struct stub stublist;
+extern struct stub nlplist;
+void addstub(struct stub *list, char *name);
 
-#define FIXEDSTACKSIZE	200 	/* in bytes */
+#define TARGET_STDARGS
+#define TARGET_BUILTINS							\
+	{ "__builtin_stdarg_start", powerpc_builtin_stdarg_start },	\
+	{ "__builtin_va_arg", powerpc_builtin_va_arg },			\
+	{ "__builtin_va_end", powerpc_builtin_va_end },			\
+	{ "__builtin_va_copy", powerpc_builtin_va_copy },		\
+	{ "__builtin_return_address", powerpc_builtin_return_address },
+
+#define NODE struct node
+struct node;
+NODE *powerpc_builtin_stdarg_start(NODE *f, NODE *a);
+NODE *powerpc_builtin_va_arg(NODE *f, NODE *a);
+NODE *powerpc_builtin_va_end(NODE *f, NODE *a);
+NODE *powerpc_builtin_va_copy(NODE *f, NODE *a);
+NODE *powerpc_builtin_return_address(NODE *f, NODE *a);
+#undef NODE
+
+#define NARGREGS	8
+
+#ifdef ELFABI
+#define COM     "       # "
+#else
+#define COM     "       ; "
+#endif

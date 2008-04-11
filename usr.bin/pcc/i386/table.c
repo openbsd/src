@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.5 2007/12/22 22:56:31 stefan Exp $	*/
+/*	$OpenBSD: table.c,v 1.6 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -133,7 +133,7 @@ struct optab table[] = {
 { SCONV,	INLL,
 	SHCH|SOREG|SNAME,	TCHAR,
 	SANY,	TLL,
-		NSPECIAL|NAREG|NASL,	RESC1,
+		NSPECIAL|NCREG|NCSL,	RESC1,
 		"	movsbl AL,%eax\n	cltd\n", },
 
 /* convert unsigned char to (u)long long */
@@ -275,14 +275,14 @@ struct optab table[] = {
 { SCONV,	INCH,
 	SOREG|SNAME,	TLL,
 	SANY,	TCHAR|TUCHAR,
-		NAREG|NASL,	RESC1,
+		NBREG|NBSL,	RESC1,
 		"	movb AL,A1\n", },
 
 /* convert (u)long long to (u)char (reg->reg, hopefully nothing) */
 { SCONV,	INCH,
 	SHLL,	TLL,
 	SANY,	TCHAR|TUCHAR,
-		NAREG|NASL,	RESC1,
+		NBREG|NBSL,	RESC1,
 		"ZS", },
 
 /* convert (u)long long to (u)short (mem->reg) */
@@ -1162,7 +1162,7 @@ struct optab table[] = {
 { UMUL,	INLL,
 	SANY,	TANY,
 	SOREG,	TLL,
-		NCREG|NCSL,	RESC1,
+		NCREG,	RESC1,
 		"	movl UL,U1\n	movl AL,A1\n", },
 
 { UMUL,	INAREG,

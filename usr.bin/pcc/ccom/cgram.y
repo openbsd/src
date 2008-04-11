@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.8 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -147,7 +147,9 @@ static int fun_inline;	/* Reading an inline function */
 int oldstyle;	/* Current function being defined */
 int noretype;
 static struct symtab *xnf;
-extern int enummer;
+extern int enummer, tvaloff;
+extern struct rstack *rpole;
+static int ctval;
 
 static NODE *bdty(int op, ...);
 static void fend(void);
@@ -161,9 +163,14 @@ static void adddef(void);
 static void savebc(void);
 static void swstart(int, TWORD);
 static void genswitch(int, TWORD, struct swents **, int);
-static NODE * structref(NODE *p, int f, char *name);
+static NODE *structref(NODE *p, int f, char *name);
 static char *mkpstr(char *str);
 static struct symtab *clbrace(NODE *);
+static NODE *cmop(NODE *l, NODE *r);
+static NODE *xcmop(NODE *out, NODE *in, NODE *str);
+static void mkxasm(char *str, NODE *p);
+static NODE *xasmop(char *str, NODE *p);
+
 
 /*
  * State for saving current switch state (when nested switches).
@@ -198,7 +205,7 @@ struct savbc {
 		declaration_specifiers pointer direct_abstract_declarator
 		specifier_qualifier_list merge_specifiers nocon_e
 		identifier_list arg_param_list arg_declaration arg_dcl_list
-		designator_list designator
+		designator_list designator xasm oplist oper cnstr
 %type <strp>	string wstring C_STRING C_WSTRING
 %type <rp>	str_head
 %type <symp>	xnfdeclarator clbrace enum_head
@@ -328,6 +335,9 @@ type_qualifier_list:
 direct_declarator: C_NAME { $$ = bdty(NAME, $1); }
 		|  '(' declarator ')' { $$ = $2; }
 		|  direct_declarator '[' nocon_e ']' { 
+			$3 = optim($3);
+			if (blevel == 0 && !nncon($3))
+				uerror("array size not constant");
 			if (!ISINTEGER($3->n_type))
 				werror("array size is not an integer");
 			else if ($3->n_op == ICON && $3->n_lval < 0) {
@@ -337,32 +347,43 @@ direct_declarator: C_NAME { $$ = bdty(NAME, $1); }
 			$$ = block(LB, $1, $3, INT, 0, MKSUE(INT));
 		}
 		|  direct_declarator '[' ']' { $$ = bdty(LB, $1, 0); }
-		|  direct_declarator '(' notype parameter_type_list ')' {
+		|  direct_declarator '(' fundcl parameter_type_list ')' {
+			if (blevel-- > 1)
+				symclear(blevel);
 			$$ = bdty(CALL, $1, $4);
 		}
-		|  direct_declarator '(' notype identifier_list ')' { 
+		|  direct_declarator '(' fundcl identifier_list ')' { 
+			if (blevel-- > 1)
+				symclear(blevel);
 			$$ = bdty(CALL, $1, $4);
 			if (blevel != 0)
 				uerror("function declaration in bad context");
 			oldstyle = 1;
 		}
-		|  direct_declarator '(' ')' { $$ = bdty(UCALL, $1); }
+		|  direct_declarator '(' ')' {
+			ctval = tvaloff;
+			$$ = bdty(UCALL, $1);
+		}
 		;
 
-notype:		   { /* extern int notype, doproto; notype = 0; doproto=1; printf("notype\n"); */ }
+fundcl:		   { if (++blevel == 1) argoff = ARGINIT; ctval = tvaloff; }
 		;
 
-identifier_list:   C_NAME { $$ = bdty(NAME, $1); $$->n_type = FARG; }
+identifier_list:   C_NAME {
+			$$ = mkty(FARG, NULL, MKSUE(INT));
+			$$->n_sp = lookup($1, 0);
+			defid($$, PARAM);
+		}
 		|  identifier_list ',' C_NAME { 
-			$$ = bdty(NAME, $3);
-			$$->n_type = FARG;
+			$$ = mkty(FARG, NULL, MKSUE(INT));
+			$$->n_sp = lookup($3, 0);
+			defid($$, PARAM);
 			$$ = block(CM, $1, $$, 0, 0, 0);
 		}
 		;
 
 /*
  * Returns as parameter_list, but can add an additional ELLIPSIS node.
- * Calls revert() to get the parameter list in the forward order.
  */
 parameter_type_list:
 		   parameter_list { $$ = $1; }
@@ -388,8 +409,18 @@ parameter_list:	   parameter_declaration { $$ = $1; }
  */
 parameter_declaration:
 		   declaration_specifiers declarator {
+			if ($1->n_lval == AUTO || $1->n_lval == TYPEDEF ||
+			    $1->n_lval == EXTERN || $1->n_lval == STATIC)
+				uerror("illegal parameter class");
 			$$ = tymerge($1, $2);
+			if (blevel == 1) {
+				$$->n_sp = lookup((char *)$$->n_sp, 0);/* XXX */
+				if (ISFTN($$->n_type))
+					$$->n_type = INCREF($$->n_type);
+				defid($$, PARAM);
+			}
 			nfree($1);
+		
 		}
 		|  declaration_specifiers abstract_declarator { 
 			$$ = tymerge($1, $2);
@@ -418,14 +449,14 @@ direct_abstract_declarator:
 			$$ = bdty(LB, $1, $3);
 		}
 		|  '(' ')' { $$ = bdty(UCALL, bdty(NAME, NULL)); }
-		|  '(' notype parameter_type_list ')' {
-			$$ = bdty(CALL, bdty(NAME, NULL), $3);
+		|  '(' parameter_type_list ')' {
+			$$ = bdty(CALL, bdty(NAME, NULL), $2);
 		}
 		|  direct_abstract_declarator '(' ')' {
 			$$ = bdty(UCALL, $1);
 		}
-		|  direct_abstract_declarator '(' notype parameter_type_list ')' {
-			$$ = bdty(CALL, $1, $4);
+		|  direct_abstract_declarator '(' parameter_type_list ')' {
+			$$ = bdty(CALL, $1, $3);
 		}
 		;
 
@@ -496,14 +527,15 @@ moe_list:	   moe
 		;
 
 moe:		   C_NAME {  moedef($1); }
+		|  C_TYPENAME {  moedef($1); }
 		|  C_NAME '=' con_e { enummer = $3; moedef($1); }
+		|  C_TYPENAME '=' con_e { enummer = $3; moedef($1); }
 		;
 
 struct_dcl:	   str_head '{' struct_dcl_list '}' empty {
 			$$ = dclstruct($1); 
 		}
 		|  C_STRUCT C_NAME {  $$ = rstruct($2,$1); }
-		|  C_STRUCT C_TYPENAME {  $$ = rstruct($2,$1); }
 		|  str_head '{' '}' {
 #ifndef GCC_COMPAT
 			werror("gcc extension");
@@ -518,7 +550,6 @@ empty:		   { /* Get yacc read the next token before reducing */ }
 
 str_head:	   C_STRUCT {  $$ = bstruct(NULL, $1);  }
 		|  C_STRUCT C_NAME {  $$ = bstruct($2,$1);  }
-		|  C_STRUCT C_TYPENAME {  $$ = bstruct($2,$1);  }
 		;
 
 struct_dcl_list:   struct_declaration
@@ -549,30 +580,21 @@ struct_declarator_list:
 
 struct_declarator: declarator {
 			tymerge($<nodep>0, $1);
-			$1->n_sp = getsymtab((char *)$1->n_sp, SMOSNAME); /* XXX */
-			defid($1, $<nodep>0->n_lval); 
+			soumemb($1, (char *)$1->n_sp,
+			    $<nodep>0->n_lval); /* XXX */
 			nfree($1);
 		}
 		|  ':' con_e {
-			if (!(instruct&INSTRUCT))
-				uerror( "field outside of structure" );
-			if ($2 < 0 || $2 >= FIELD) {
-				uerror("illegal field size");
+			if (fldchk($2))
 				$2 = 1;
-			}
 			falloc(NULL, $2, -1, $<nodep>0);
 		}
 		|  declarator ':' con_e {
-			if (!(instruct&INSTRUCT))
-				uerror( "field outside of structure" );
-			if( $3<0 || $3 >= FIELD ){
-				uerror( "illegal field size" );
+			if (fldchk($3))
 				$3 = 1;
-			}
 			if ($1->n_op == NAME) {
 				tymerge($<nodep>0, $1);
-				$1->n_sp = getsymtab((char *)$1->n_sp,SMOSNAME);
-				defid($1, FIELD|$3);
+				soumemb($1, (char *)$1->n_sp, FIELD | $3);
 				nfree($1);
 			} else
 				uerror("illegal declarator");
@@ -632,7 +654,11 @@ designator:	   '[' con_e ']' {
 			}
 			$$ = bdty(LB, NULL, $2);
 		}
-		|  C_STROP C_NAME { $$ = bdty(NAME, $2); }
+		|  C_STROP C_NAME {
+			if ($1 != DOT)
+				uerror("invalid designator");
+			$$ = bdty(NAME, $2);
+		}
 		;
 
 optcomma	:	/* VOID */
@@ -696,7 +722,7 @@ begin:		  '{' {
 		}
 		;
 
-statement:	   e ';' { ecomp( $1 ); }
+statement:	   e ';' { ecomp( $1 ); symclear(blevel); }
 		|  compoundstmt
 		|  ifprefix statement { plabel($1); reached = 1; }
 		|  ifelprefix statement {
@@ -799,7 +825,25 @@ statement:	   e ';' { ecomp( $1 ); }
 		;
 
 asmstatement:	   C_ASM '(' string ')' { send_passt(IP_ASM, mkpstr($3)); }
+		|  C_ASM '(' string xasm ')' { mkxasm($3, $4); }
 		;
+
+xasm:		   ':' oplist { $$ = xcmop($2, NIL, NIL); }
+		|  ':' oplist ':' oplist { $$ = xcmop($2, $4, NIL); }
+		|  ':' oplist ':' oplist ':' cnstr { $$ = xcmop($2, $4, $6); }
+		;
+
+oplist:		   /* nothing */ { $$ = NIL; }
+		|  oper { $$ = $1; }
+		;
+
+oper:		   string '(' e ')' { $$ = xasmop($1, $3); }
+		|  oper ',' string '(' e ')' { $$ = cmop($1, xasmop($3, $5)); }
+		;
+
+cnstr:		   string { $$ = xasmop($1, bcon(0)); }
+		|  cnstr ',' string { $$ = cmop($1, xasmop($3, bcon(0))); }
+                ;
 
 label:		   C_NAME ':' { deflabel($1); reached = 1; }
 		|  C_CASE e ':' { addcase($2); reached = 1; }
@@ -861,7 +905,23 @@ forprefix:	  C_FOR  '('  .e  ';' .e  ';' {
 			else
 				flostat |= FLOOP;
 		}
+		|  C_FOR '(' incblev declaration .e ';' {
+			blevel--;
+			savebc();
+			contlab = getlab();
+			brklab = getlab();
+			plabel( $$ = getlab());
+			reached = 1;
+			if ($5)
+				cbranch(buildtree(NOT, $5, NIL), bcon(brklab));
+			else
+				flostat |= FLOOP;
+		}
 		;
+
+incblev:	   { blevel++; }
+		;
+
 switchpart:	   C_SWITCH  '('  e  ')' {
 			NODE *p;
 			int num;
@@ -887,14 +947,14 @@ switchpart:	   C_SWITCH  '('  e  ')' {
 		}
 		;
 /*	EXPRESSIONS	*/
-con_e:		{ $<intval>$=instruct; instruct=0; } e %prec ',' {
-			$$ = icons( $2 );
-			instruct=$<intval>1;
+con_e:		{ $<rp>$ = rpole; rpole = NULL; } e %prec ',' {
+			$$ = icons($2);
+			rpole = $<rp>1;
 		}
 		;
 
-nocon_e:	{ $<intval>$=instruct; instruct=0; } e %prec ',' {
-			instruct=$<intval>1;
+nocon_e:	{ $<rp>$ = rpole; rpole = NULL; } e %prec ',' {
+			rpole = $<rp>1;
 			$$ = $2;
 		}
 		;
@@ -979,7 +1039,7 @@ term:		   term C_INCOP {  $$ = buildtree( $2, $1, bcon(1) ); }
 		|  C_SIZEOF '(' cast_type ')'  %prec C_SIZEOF {
 			$$ = doszof($3);
 		}
-		| '(' cast_type ')' clbrace init_list '}' {
+		| '(' cast_type ')' clbrace init_list optcomma '}' {
 			endinit();
 			spname = $4;
 			$$ = buildtree(NAME, NIL, NIL);
@@ -1294,6 +1354,8 @@ init_declarator(NODE *tn, NODE *p, int assign)
 		if (assign) {
 			defid(typ, class);
 			typ->n_sp->sflags |= SASG;
+			if (typ->n_sp->sflags & SDYNARRAY)
+				uerror("can't initialize dynamic arrays");
 			lcommdel(typ->n_sp);
 		} else {
 			nidcl(typ, class);
@@ -1315,10 +1377,18 @@ fundef(NODE *tp, NODE *p)
 {
 	extern int prolab;
 	struct symtab *s;
+	NODE *q = p;
 	int class = tp->n_lval, oclass;
 	char *c;
 
-	/* Enter function args before they are clobbered in tymerge() */
+	while (q->n_op == UMUL)
+		q = q->n_left;
+	if (q->n_op != CALL && q->n_op != UCALL) {
+		uerror("invalid function definition");
+		p = bdty(UCALL, p);
+	}
+
+	/* Save function args before they are clobbered in tymerge() */
 	/* Typecheck against prototype will be done in defid(). */
 	ftnarg(p);
 
@@ -1344,8 +1414,8 @@ fundef(NODE *tp, NODE *p)
 	prolab = getlab();
 	c = cftnsp->soname;
 	send_passt(IP_PROLOG, -1, -1, c, cftnsp->stype,
-	    cftnsp->sclass == EXTDEF, prolab);
-	blevel = 1;
+	    cftnsp->sclass == EXTDEF, prolab, ctval);
+	blevel++;
 #ifdef STABS
 	if (gflag)
 		stabs_func(s);
@@ -1409,9 +1479,10 @@ static char *
 mkpstr(char *str)
 {
 	char *s, *os;
-	int v, l = strlen(str)+1;
+	int v, l = strlen(str)+3; /* \t + \n + \0 */
 
 	os = s = isinlining ? permalloc(l) : tmpalloc(l);
+	*s++ = '\t';
 	for (; *str; ) {
 		if (*str++ == '\\')
 			v = esccon(&str);
@@ -1419,6 +1490,7 @@ mkpstr(char *str)
 			v = str[-1];
 		*s++ = v;
 	}
+	*s++ = '\n';
 	*s = 0;
 	return os;
 }
@@ -1444,4 +1516,91 @@ clbrace(NODE *p)
 	tfree(p);
 	beginit(sp);
 	return sp;
+}
+
+/* Support for extended assembler a' la' gcc style follows below */
+
+static NODE *
+cmop(NODE *l, NODE *r)
+{
+	return block(CM, l, r, INT, 0, MKSUE(INT));
+}
+
+static NODE *
+voidcon(void)
+{
+	return block(ICON, NIL, NIL, STRTY, 0, MKSUE(VOID));
+}
+
+static NODE *
+xmrg(NODE *out, NODE *in)
+{
+	NODE *p = in;
+
+	if (p->n_op == XARG) {
+		in = cmop(out, p);
+	} else {
+		while (p->n_left->n_op == CM)
+			p = p->n_left;
+		p->n_left = cmop(out, p->n_left);
+	}
+	return in;
+}
+
+/*
+ * Put together in and out node lists in one list, and balance it with
+ * the constraints on the right side of a CM node.
+ */
+static NODE *
+xcmop(NODE *out, NODE *in, NODE *str)
+{
+	NODE *p, *q;
+
+	if (out) {
+		/* D out-list sanity check */
+		for (p = out; p->n_op == CM; p = p->n_left) {
+			q = p->n_right;
+			if (q->n_name[0] != '=')
+				uerror("output missing =");
+		}
+		if (p->n_name[0] != '=')
+			uerror("output missing =");
+		if (in == NIL)
+			p = out;
+		else
+			p = xmrg(out, in);
+	} else if (in) {
+		p = in;
+	} else
+		p = voidcon();
+
+	if (str == NIL)
+		str = voidcon();
+	return cmop(p, str);
+}
+
+/*
+ * Generate a XARG node based on a string and an expression.
+ */
+static NODE *
+xasmop(char *str, NODE *p)
+{
+
+	p = block(XARG, p, NIL, INT, 0, MKSUE(INT));
+	p->n_name = str;
+	return p;
+}
+
+/*
+ * Generate a XASM node based on a string and an expression.
+ */
+static void
+mkxasm(char *str, NODE *p)
+{
+	NODE *q;
+
+	q = block(XASM, p->n_left, p->n_right, INT, 0, MKSUE(INT));
+	q->n_name = str;
+	nfree(p);
+	ecomp(q);
 }

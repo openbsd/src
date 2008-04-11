@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.3 2007/11/17 12:00:37 ragge Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.4 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -106,22 +106,14 @@ typedef long long OFFSZ;
 #define CONFMT	"%lld"		/* format for printing constants */
 #define LABFMT	".L%d"		/* format for printing labels */
 #define	STABLBL	".LL%d"		/* format for stab (debugging) labels */
-#ifdef FORTRAN
-#define XL 8
-#define	FLABELFMT "%s:\n"
-#define USETEXT ".text"
-#define USECONST ".data\t0" 	/* XXX - fix */
-#define USEBSS  ".data\t1" 	/* XXX - fix */
-#define USEINIT ".data\t2" 	/* XXX - fix */
-#define MAXREGVAR 3             /* XXX - fix */
+#ifdef LANG_F77
 #define BLANKCOMMON "_BLNK_"
 #define MSKIREG  (M(TYSHORT)|M(TYLONG))
 #define TYIREG TYLONG
 #define FSZLENG  FSZLONG
-#define FUDGEOFFSET 1
 #define	AUTOREG	EBP
 #define	ARGREG	EBP
-#define ARGOFFSET 4
+#define ARGOFFSET 8
 #endif
 
 #define BACKAUTO 		/* stack grows negatively for automatics */
@@ -304,3 +296,9 @@ int COLORMAP(int c, int *r);
 #define SMIXOR		(MAXSPECIAL+4)
 #define SMILWXOR	(MAXSPECIAL+5)
 #define SMIHWXOR	(MAXSPECIAL+6)
+
+/*
+ * i386-specific symbol table flags.
+ */
+#define	SSECTION	SLOCAL1
+#define	STLS		SLOCAL2

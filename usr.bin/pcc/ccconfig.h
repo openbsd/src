@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.3 2007/10/22 13:40:08 otto Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.4 2008/04/11 20:45:51 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -35,6 +35,7 @@
 #define	CPPADD	{ "-D__OpenBSD__", "-D__unix__", NULL }
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.so", NULL }
 #define CRT0FILE "/usr/lib/crt0.o"
+#define CRT0FILE_PROFILE "/usr/lib/gcrt0.o"
 #define STARTFILES { "/usr/lib/crtbegin.o", NULL }
 #define	ENDFILES { "/usr/lib/crtend.o", NULL }
 

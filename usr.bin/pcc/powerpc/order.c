@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.4 2007/12/22 14:05:04 stefan Exp $	*/
+/*	$OpenBSD: order.c,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -34,19 +34,26 @@
 
 int canaddr(NODE *);
 
-/* is it legal to make an OREG or NAME entry which has an
- * offset of off, (from a register of r), if the
- * resulting thing had type t */
+/*
+ * Check size of offset in OREG.  Called by oregok() to see if an
+ * OREG can be generated.
+ *
+ * returns 0 if it can, 1 otherwise.
+ */
 int
 notoff(TWORD t, int r, CONSZ off, char *cp)
 {
+#if 0
+	if (off >= 32767 || off <= -32768)
+		printf("; notoff %lld TOO BIG!\n", off);
+#endif
 	if (cp && cp[0]) return 1;
-	return !(off < 32768 && off > -32769);  /* YES */
+	return (off >= 32768 || off <= -32769);
 }
 
 /*
- * Turn a UMUL-referenced node into OREG.
- * Be careful about register classes, this is a place where classes change.
+ * Generate instructions for an OREG.
+ * Called by swmatch().
  */
 void
 offstar(NODE *p, int shape)
@@ -67,59 +74,28 @@ offstar(NODE *p, int shape)
 			/* Converted in ormake() */
 			return;
 		}
-		/* usually for arraying indexing: */
-		if (r->n_op == LS && r->n_right->n_op == ICON &&
-		    r->n_right->n_lval == 2 && p->n_op == PLUS) {
-			if (isreg(p->n_left) == 0)
-				(void)geninsn(p->n_left, INAREG);
-			if (isreg(r->n_left) == 0)
-				(void)geninsn(r->n_left, INAREG);
-			return;
-		}
 	}
 	(void)geninsn(p, INAREG);
 }
 
 /*
- * Do the actual conversion of offstar-found OREGs into real OREGs.
+ * Unable to convert to OREG (notoff() returned failure).  Output
+ * suitable instructions to replace OREG.
  */
 void
 myormake(NODE *q)
 {
-#if 1
-	NODE *p, *r;
-#endif
+	NODE *p;
 
 	if (x2debug)
 		printf("myormake(%p)\n", q);
 
-#if 1	/* XXX remove this and add UMUL(SAREG) to table.c !!! */
-	p = q->n_left;
-	if (q->n_op != OREG && p->n_op == REG) {
-		q->n_op = OREG;
-		q->n_lval = 0;
-		q->n_rval = p->n_rval;
-		tfree(p);
-		return;
-	}
-#endif
-
-#if 1
-	/* usually for array indexing */
         p = q->n_left;
-        if (p->n_op == PLUS && (r = p->n_right)->n_op == LS &&
-            r->n_right->n_op == ICON && r->n_right->n_lval == 2 &&
-            p->n_left->n_op == REG && r->n_left->n_op == REG) {
-		if (isreg(p->n_left) == 0)
-			(void)geninsn(p->n_left, INAREG);
-                q->n_op = OREG;
-                q->n_lval = 0;
-                q->n_rval = p->n_left->n_rval;
-                tfree(p);
-        }
-#endif
 
-#if 0
+	/*
+	 * This handles failed OREGs conversions, due to the offset
+	 * being too large for an OREG.
+	 */
 	if ((p->n_op == PLUS || p->n_op == MINUS) && p->n_right->n_op == ICON) {
 		if (isreg(p->n_left) == 0)
 			(void)geninsn(p->n_left, INAREG);
@@ -132,8 +108,6 @@ myormake(NODE *q)
 		q->n_rval = p->n_rval;
 		tfree(p);
 	}
-#endif
-	(void)geninsn(p, INAREG);
 }
 
 /*
@@ -186,11 +160,143 @@ setuni(NODE *p, int cookie)
 struct rspecial *
 nspecial(struct optab *q)
 {
-
 	if (x2debug)
 		printf("nspecial: op=%d, visit=0x%x: %s", q->op, q->visit, q->cstring);
 
 	switch (q->op) {
+
+	/* soft-float stuff */
+        case RS:
+        case LS:
+                if (q->lshape == SBREG) {
+                        static struct rspecial s[] = {
+                                { NLEFT, R3R4 },
+                                { NRIGHT, R5 },
+                                { NRES, R3R4 },
+                                { 0 },
+                        };
+                        return s;
+                } else if (q->lshape == SAREG) {
+                        static struct rspecial s[] = {
+                                { NLEFT, R3 },
+                                { NRIGHT, R4 },
+                                { NRES, R3 },
+                                { 0 },
+                        };
+                        return s;
+                }
+
+		cerror("nspecial LS/RS");
+		break;
+
+	case UMINUS:
+	case SCONV:
+		if (q->lshape == SBREG && q->rshape == SAREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3R4 },
+				{ NRES, R3 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SAREG && q->rshape == SBREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3 },
+				{ NRES, R3R4 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SAREG && q->rshape == SAREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3 },
+				{ NRES, R3 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SBREG && q->rshape == SBREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3R4 },
+				{ NRES, R3R4 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SCREG && q->rshape == SBREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, F1 },
+				{ NEVER, F0 }, /* stomped on */
+				{ NRES, R3R4 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SBREG && q->rshape == SCREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3R4 },
+				{ NEVER, F0 }, /* stomped on */
+				{ NRES, F1 },
+				{ 0 }
+			};
+			return s;
+		} else {
+			static struct rspecial s[] = {
+				{ NOLEFT, R0 },
+				{ 0 } };
+			return s;
+		}
+
+		break;
+
+	case OPLOG:
+		if (q->lshape == SBREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3R4 },
+				{ NRIGHT, R5R6 },
+				{ NRES, R3 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SAREG) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3 },
+				{ NRIGHT, R4 },
+				{ NRES, R3 },
+				{ 0 }
+			};
+			return s;
+		}
+
+		cerror("nspecial oplog");
+		break;
+
+	case PLUS:
+	case MINUS:
+	case MUL:
+	case DIV:
+	case MOD:
+		if (q->lshape == SBREG && 
+		    (q->ltype & (TDOUBLE|TLDOUBLE|TLONGLONG|TULONGLONG))) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3R4 },
+				{ NRIGHT, R5R6 },
+				{ NRES, R3R4 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SAREG && q->ltype & TFLOAT) {
+			static struct rspecial s[] = {
+				{ NLEFT, R3 },
+				{ NRIGHT, R4 },
+				{ NRES, R3 },
+				{ 0 }
+			};
+			return s;
+		} else if (q->lshape == SAREG) {
+			static struct rspecial s[] = {
+				{ NOLEFT, R0 },
+				{ 0 } };
+			return s;
+		}
+
+		cerror("nspecial mul");
+		break;
 
 	case STASG:
 		{
@@ -239,13 +345,10 @@ nspecial(struct optab *q)
 		}
 		/* fallthough */
 
-	case SCONV:
 	case UMUL:
-	case MINUS:
 	case AND:
 	case OR:
 	case ER:
-	case PLUS:
 		{
 			static struct rspecial s[] = {
 				{ NOLEFT, R0 },
@@ -269,6 +372,7 @@ setorder(NODE *p)
 {
 	return 0; /* nothing differs on x86 */
 }
+
 /*
  * Set registers "live" at function calls (like arguments in registers).
  * This is for liveness analysis of registers.
@@ -276,9 +380,19 @@ setorder(NODE *p)
 int *
 livecall(NODE *p)
 {
-	static int r[] = { R3, R4, R5, R6, R7, R8, R9, R10, -1 };
+	static int r[] = { R10, R9, R8, R7, R6, R5, R4, R3, R30, R31, -1 };
+	int num = 1;
 
-	return &r[0];
+        if (p->n_op != CALL && p->n_op != FORTCALL && p->n_op != STCALL)
+                return &r[8-0];
+
+        for (p = p->n_right; p->n_op == CM; p = p->n_left)
+                num += szty(p->n_right->n_type);
+        num += szty(p->n_right->n_type);
+
+        num = (num > 8 ? 8 : num);
+
+        return &r[8 - num];
 }
 
 /*
@@ -287,5 +401,7 @@ livecall(NODE *p)
 int
 acceptable(struct optab *op)
 {
-	return 1;
+	if ((op->visit & FEATURE_PIC) != 0)
+		return (kflag != 0);
+	return features(op->visit & 0xffff0000);
 }

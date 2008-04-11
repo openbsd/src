@@ -1,4 +1,4 @@
-/*	$OpenBSD: stabs.c,v 1.6 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: stabs.c,v 1.7 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -121,7 +121,7 @@ stabs_init()
 	ptype("double", ADDTYPE(DOUBLE)->num, INTNUM, 8, 0);
 	ptype("long double", ADDTYPE(LDOUBLE)->num, INTNUM, 12, 0);
 	st = ADDTYPE(VOID);
-	cprint(savestabs, ".stabs \"void:t%d=r%d\",%d,0,0,0\n",
+	cprint(savestabs, "\t.stabs \"void:t%d=r%d\",%d,0,0,0\n",
 	    st->num, st->num, N_LSYM);
 
 }
@@ -132,7 +132,7 @@ stabs_init()
 void
 ptype(char *name, int num, int inhnum, long long min, long long max)
 {
-	cprint(savestabs, ".stabs \"%s:t%d=r%d;%lld;%lld;\",%d,0,0,0",
+	cprint(savestabs, "\t.stabs \"%s:t%d=r%d;%lld;%lld;\",%d,0,0,0\n",
 	    name, num, inhnum, min, max, N_LSYM);
 }
 
@@ -196,11 +196,11 @@ void
 stabs_line(int line)
 {
 #ifdef STAB_LINE_ABSOLUTE
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL, N_SLINE, line, stablbl);
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "\n", N_SLINE, line, stablbl);
 #else
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s", N_SLINE, line, stablbl, exname(curfun));
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "-%s\n", N_SLINE, line, stablbl, exname(curfun));
 #endif
-	cprint(1, STABLBL ":", stablbl++);
+	cprint(1, STABLBL ":\n", stablbl++);
 }
 
 /*
@@ -210,12 +210,12 @@ void
 stabs_lbrac(int blklvl)
 {
 #ifdef STAB_LINE_ABSOLUTE
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL, N_LBRAC, blklvl, stablbl);
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "\n", N_LBRAC, blklvl, stablbl);
 #else
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s",
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "-%s\n",
 	    N_LBRAC, blklvl, stablbl, exname(curfun));
 #endif
-	cprint(1, STABLBL ":", stablbl++);
+	cprint(1, STABLBL ":\n", stablbl++);
 }
 
 /*
@@ -225,13 +225,13 @@ void
 stabs_rbrac(int blklvl)
 {
 #ifdef STAB_LINE_ABSOLUTE
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL "\n",
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "\n",
 	    N_RBRAC, blklvl, stablbl);
 #else
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s\n",
+	cprint(savestabs, "\t.stabn %d,0,%d," STABLBL "-%s\n",
 	    N_RBRAC, blklvl, stablbl, exname(curfun));
 #endif
-	cprint(1, STABLBL ":", stablbl++);
+	cprint(1, STABLBL ":\n", stablbl++);
 }
 
 /*
@@ -244,9 +244,9 @@ stabs_file(char *fname)
 
 	if (mainfile == NULL)
 		mainfile = fname; /* first call */
-	cprint(savestabs, ".stabs	\"%s\",%d,0,0," STABLBL,
+	cprint(savestabs, "\t.stabs	\"%s\",%d,0,0," STABLBL "\n",
 	    fname, fname == mainfile ? N_SO : N_SOL, stablbl);
-	cprint(savestabs, STABLBL ":", stablbl++);
+	cprint(savestabs, STABLBL ":\n", stablbl++);
 }
 
 /*
@@ -259,7 +259,7 @@ stabs_func(struct symtab *s)
 
 	curfun = s->soname;
 	printtype(s, str, sizeof(str));
-	cprint(savestabs, ".stabs	\"%s:%c%s\",%d,0,%d,%s",
+	cprint(savestabs, "\t.stabs	\"%s:%c%s\",%d,0,%d,%s\n",
 	    curfun, s->sclass == STATIC ? 'f' : 'F', str,
 	    N_FUN, BIT2BYTE(s->ssue->suesize), exname(curfun));
 }
@@ -330,32 +330,32 @@ stabs_newsym(struct symtab *s)
 	printtype(s, ostr, sizeof(ostr));
 	switch (s->sclass) {
 	case PARAM:
-		cprint(savestabs, ".stabs \"%s:p%s\",%d,0,%d,%d", sname, ostr,
+		cprint(savestabs, "\t.stabs \"%s:p%s\",%d,0,%d,%d\n", sname, ostr,
 		    N_PSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case AUTO:
-		cprint(savestabs, ".stabs \"%s:%s\",%d,0,%d,%d", sname, ostr,
+		cprint(savestabs, "\t.stabs \"%s:%s\",%d,0,%d,%d\n", sname, ostr,
 		    N_LSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case STATIC:
 		if (blevel)
-			cprint(savestabs, ".stabs \"%s:V%s\",%d,0,%d," LABFMT, sname, ostr,
+			cprint(savestabs, "\t.stabs \"%s:V%s\",%d,0,%d," LABFMT "\n", sname, ostr,
 			    N_LCSYM, suesize, s->soffset);
 		else
-			cprint(savestabs, ".stabs \"%s:S%s\",%d,0,%d,%s", sname, ostr,
+			cprint(savestabs, "\t.stabs \"%s:S%s\",%d,0,%d,%s\n", sname, ostr,
 			    N_LCSYM, suesize, exname(sname));
 		break;
 
 	case EXTERN:
 	case EXTDEF:
-		cprint(savestabs, ".stabs \"%s:G%s\",%d,0,%d,0", sname, ostr,
+		cprint(savestabs, "\t.stabs \"%s:G%s\",%d,0,%d,0\n", sname, ostr,
 		    N_GSYM, suesize);
 		break;
 
 	case REGISTER:
-		cprint(savestabs, ".stabs \"%s:r%s\",%d,0,%d,%d", sname, ostr,
+		cprint(savestabs, "\t.stabs \"%s:r%s\",%d,0,%d,%d\n", sname, ostr,
 		    N_RSYM, 1, s->soffset);
 		break;
 
@@ -377,9 +377,15 @@ stabs_struct(struct symtab *p, struct suedef *sue)
 {
 }
 
+static struct foo {
+	struct foo *next;
+	char *str;
+} *foopole;
+
 void    
 cprint(int p2, char *fmt, ...)
 {
+	extern int inftn;
 	va_list ap;  
 	char *str;
 
@@ -387,12 +393,19 @@ cprint(int p2, char *fmt, ...)
 	if (p2) {
 		str = tmpvsprintf(fmt, ap);
 		str = newstring(str, strlen(str)); /* XXX - for inlines */
-		send_passt(IP_ASM, str);
-	} else {
-		putchar('\t');
+		if (inftn == 0) {
+			struct foo *w = tmpalloc(sizeof(struct foo));
+			w->str = str;
+			w->next = foopole;
+			foopole = w;
+		} else {
+			while (foopole)
+				send_passt(IP_ASM, foopole->str), 
+				    foopole = foopole->next;
+			send_passt(IP_ASM, str);
+		}
+	} else
 		vprintf(fmt, ap);
-		putchar('\n');
-	}
 	va_end(ap);
 }
 

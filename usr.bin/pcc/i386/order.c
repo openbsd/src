@@ -1,4 +1,4 @@
-/*	$OpenBSD: order.c,v 1.4 2007/12/09 18:53:02 ragge Exp $	*/
+/*	$OpenBSD: order.c,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -280,9 +280,16 @@ setorder(NODE *p)
 int *
 livecall(NODE *p)
 {
-	static int r[2] = { EBX, -1 };
+	static int r[] = { EAX, EBX, -1 };
+	int off = 1;
 
-	return kflag ? &r[0] : &r[1];
+#ifdef TLS
+	if (p->n_left->n_op == ICON &&
+	    strcmp(p->n_left->n_name, "___tls_get_addr@PLT") == 0)
+		off--;
+#endif
+
+	return kflag ? &r[off] : &r[2];
 }
 
 /*

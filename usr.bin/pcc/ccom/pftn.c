@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.12 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.13 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -73,18 +73,16 @@
 
 struct symtab *spname;
 struct symtab *cftnsp;
-static int strunem;		/* currently parsed member type */
 int arglistcnt, dimfuncnt;	/* statistics */
 int symtabcnt, suedefcnt;	/* statistics */
 int autooff,		/* the next unused automatic offset */
     maxautooff,		/* highest used automatic offset in function */
-    argoff,		/* the next unused argument offset */
-    strucoff;		/* the next structure offset position */
+    argoff;		/* the next unused argument offset */
 int retlab = NOLAB;	/* return label for subroutine */
 int brklab;
 int contlab;
 int flostat;
-int instruct, blevel;
+int blevel;
 int reached, prolab;
 
 struct params;
@@ -99,12 +97,11 @@ struct params;
  */
 struct rstack {
 	struct	rstack *rnext;
-	int	rinstruct;
-	int	rclass;
-	int	rstrucoff;
-	struct	params *rlparam;
+	int	rsou;
+	int	rstr;
 	struct	symtab *rsym;
-};
+	struct	symtab *rb;
+} *rpole;
 
 /*
  * Linked list for parameter (and struct elements) declaration.
@@ -120,6 +117,7 @@ static int nparams;
 static NODE *arrstk[10];
 static int arrstkp;
 static int intcompare;
+static NODE *parlink;
 
 void fixtype(NODE *p, int class);
 int fixclass(int class, TWORD type);
@@ -187,14 +185,13 @@ defid(NODE *q, int class)
 	if (blevel == 1) {
 		switch (class) {
 		default:
-			if (!(class&FIELD))
+			if (!(class&FIELD) && !ISFTN(type))
 				uerror("declared argument %s missing",
 				    p->sname );
 		case MOS:
-		case STNAME:
 		case MOU:
-		case UNAME:
 		case TYPEDEF:
+		case PARAM:
 			;
 		}
 	}
@@ -242,9 +239,7 @@ defid(NODE *q, int class)
 #endif
 
 	/* check that redeclarations are to the same structure */
-	if ((temp == STRTY || temp == UNIONTY) &&
-	    p->ssue != q->n_sue &&
-	    class != STNAME && class != UNAME) {
+	if ((temp == STRTY || temp == UNIONTY) && p->ssue != q->n_sue) {
 		goto mismatch;
 	}
 
@@ -255,15 +250,9 @@ defid(NODE *q, int class)
 		printf("	previous class: %s\n", scnames(scl));
 #endif
 
-	if (class&FIELD) {
-		/* redefinition */
-		if (!falloc(p, class&FLDSIZ, 1, NIL)) {
-			/* successful allocation */
-			ssave(p);
-			return;
-		}
-		/* blew it: resume at end of switch... */
-	} else switch(class) {
+	if (class & FIELD)
+		return;
+	switch(class) {
 
 	case EXTERN:
 		switch( scl ){
@@ -312,15 +301,7 @@ defid(NODE *q, int class)
 
 	case MOU:
 	case MOS:
-		if (scl == class) {
-			if (oalloc(p, &strucoff))
-				break;
-			if (class == MOU)
-				strucoff = 0;
-			ssave(p);
-			return;
-		}
-		break;
+		return;
 
 	case EXTDEF:
 		switch (scl) {
@@ -333,16 +314,10 @@ defid(NODE *q, int class)
 		}
 		break;
 
-	case STNAME:
-	case UNAME:
-		if (scl != class)
-			break;
-		if (p->ssue->suesize == 0)
-			return;  /* previous entry just a mention */
-		break;
-
 	case AUTO:
 	case REGISTER:
+		if (blevel == slev)
+			goto redec;
 		;  /* mismatch.. */
 	}
 
@@ -354,12 +329,12 @@ defid(NODE *q, int class)
 	if (blevel == slev || class == EXTERN || class == FORTRAN ||
 	    class == UFORTRAN) {
 		if (ISSTR(class) && !ISSTR(p->sclass)) {
-			uerror("redeclaration of %s", p->sname);
+redec:			uerror("redeclaration of %s", p->sname);
 			return;
 		}
 	}
 	if (blevel == 0)
-		uerror("redeclaration of %s", p->sname);
+		goto redec;
 	q->n_sp = p = hide(p);
 
 	enter:  /* make a new entry */
@@ -373,27 +348,9 @@ defid(NODE *q, int class)
 	p->sclass = class;
 	p->slevel = blevel;
 	p->soffset = NOOFFSET;
-	if (class == STNAME || class == UNAME) {
-		p->ssue = permalloc(sizeof(struct suedef));
-		suedefcnt++;
-		p->ssue->suesize = 0;
-		p->ssue->suelem = NULL; 
-		p->ssue->suealign = ALSTRUCT;
-	} else {
-		if (q->n_sue == NULL)
-			cerror("q->n_sue == NULL");
-		p->ssue = q->n_sue;
-#if 0
-		switch (BTYPE(type)) {
-		case STRTY:
-		case UNIONTY:
-			p->ssue = q->n_sue;
-			break;
-		default:
-			p->ssue = MKSUE(BTYPE(type));
-		}
-#endif
-	}
+	if (q->n_sue == NULL)
+		cerror("q->n_sue == NULL");
+	p->ssue = q->n_sue;
 
 	/* copy dimensions */
 	p->sdf = q->n_df;
@@ -404,7 +361,6 @@ defid(NODE *q, int class)
 	/* allocate offsets */
 	if (class&FIELD) {
 		(void) falloc(p, class&FLDSIZ, 0, NIL);  /* new entry */
-		ssave(p);
 	} else switch (class) {
 
 	case REGISTER:
@@ -416,6 +372,18 @@ defid(NODE *q, int class)
 		else
 			oalloc(p, &autooff);
 		break;
+	case PARAM:
+		if (ISARY(p->stype)) {
+			/* remove array type on parameters before oalloc */
+			p->stype += (PTR-ARY);
+			p->sdf++;
+		}
+		if (arrstkp)
+			dynalloc(p, &argoff);
+		else
+			oalloc(p, &argoff);
+		break;
+		
 	case STATIC:
 	case EXTDEF:
 	case EXTERN:
@@ -429,10 +397,9 @@ defid(NODE *q, int class)
 
 	case MOU:
 	case MOS:
-		oalloc(p, &strucoff);
+		oalloc(p, &rpole->rstr);
 		if (class == MOU)
-			strucoff = 0;
-		ssave(p);
+			rpole->rstr = 0;
 		break;
 	}
 
@@ -458,13 +425,10 @@ ssave(struct symtab *sym)
 	p->next = NULL;
 	p->sym = sym;
 
-	if (lparam == NULL) {
-		p->prev = (struct params *)&lpole;
+	if ((p->prev = lparam) == NULL)
 		lpole = p;
-	} else {
+	else
 		lparam->next = p;
-		p->prev = lparam;
-	}
 	lparam = p;
 }
 
@@ -476,6 +440,7 @@ ftnend()
 {
 	extern struct savbc *savbc;
 	extern struct swdef *swpole;
+	extern int tvaloff;
 	char *c;
 
 	if (retlab != NOLAB && nerrors == 0) { /* inside a real function */
@@ -484,7 +449,7 @@ ftnend()
 		c = cftnsp->soname;
 		SETOFF(maxautooff, ALCHAR);
 		send_passt(IP_EPILOG, 0, maxautooff/SZCHAR, c,
-		    cftnsp->stype, cftnsp->sclass == EXTDEF, retlab);
+		    cftnsp->stype, cftnsp->sclass == EXTDEF, retlab, tvaloff);
 	}
 
 	tcheck();
@@ -510,6 +475,10 @@ ftnend()
 	tmpfree(); /* Release memory resources */
 }
 
+static struct symtab nulsym = {
+	{ NULL, 0, 0, 0, 0 }, "null", "null", INT, 0, NULL, NULL
+};
+
 void
 dclargs()
 {
@@ -517,15 +486,12 @@ dclargs()
 	union arglist *al, *al2, *alb;
 	struct params *a;
 	struct symtab *p, **parr = NULL; /* XXX gcc */
-	char *c;
 	int i;
-
-	argoff = ARGINIT;
 
 	/*
 	 * Deal with fun(void) properly.
 	 */
-	if (nparams == 1 && lparam->sym->stype == VOID)
+	if (nparams == 1 && lparam->sym && lparam->sym->stype == VOID)
 		goto done;
 
 	/*
@@ -536,11 +502,13 @@ dclargs()
 		parr = tmpalloc(sizeof(struct symtab *) * nparams);
 
 	if (nparams)
-	    for (a = lparam, i = 0; a != NULL && a != (struct params *)&lpole;
-	    a = a->prev) {
-
+	    for (a = lparam, i = 0; a != NULL; a = a->prev) {
 		p = a->sym;
 		parr[i++] = p;
+		if (p == NULL) {
+			uerror("parameter %d name missing", i);
+			p = &nulsym; /* empty symtab */
+		}
 		if (p->stype == FARG) {
 			p->stype = INT;
 			p->ssue = MKSUE(INT);
@@ -552,8 +520,6 @@ dclargs()
 			werror("function declared as argument");
 			p->stype = INCREF(p->stype);
 		}
-	  	/* always set aside space, even for register arguments */
-		oalloc(p, &argoff);
 #ifdef STABS
 		if (gflag)
 			stabs_newsym(p);
@@ -579,59 +545,47 @@ dclargs()
 		if (chkftn(al, alb))
 			uerror("function doesn't match prototype");
 		intcompare = 0;
+
 	}
+
+	if (oldstyle && nparams) {
+		/* Must recalculate offset for oldstyle args here */
+		argoff = ARGINIT;
+		for (i = 0; i < nparams; i++) {
+			parr[i]->soffset = NOOFFSET;
+			oalloc(parr[i], &argoff);
+		}
+	}
+
 done:	cendarg();
-	c = cftnsp->soname;
-#if 0
-	prolab = getlab();
-	send_passt(IP_PROLOG, -1, -1, c, cftnsp->stype, 
-	    cftnsp->sclass == EXTDEF, prolab);
-#endif
+
 	plabel(prolab); /* after prolog, used in optimization */
 	retlab = getlab();
 	bfcode(parr, nparams);
 	plabel(getlab()); /* used when spilling */
+	if (parlink)
+		ecomp(parlink);
+	parlink = NIL;
 	lparam = NULL;
 	nparams = 0;
+	symclear(1);	/* In case of function pointer args */
 }
 
 /*
- * reference to a structure or union, with no definition
+ * Struct/union/enum symtab construction.
  */
-NODE *
-rstruct(char *tag, int soru)
+static void
+defstr(struct symtab *sp, int class)
 {
-	struct symtab *p;
-	NODE *q;
-
-	p = (struct symtab *)lookup(tag, STAGNAME);
-	switch (p->stype) {
-
-	case UNDEF:
-	def:
-		q = block(NAME, NIL, NIL, 0, 0, 0);
-		q->n_sp = p;
-		q->n_type = (soru&INSTRUCT) ? STRTY :
-		    ((soru&INUNION) ? UNIONTY : 0);
-		defid(q, (soru&INSTRUCT) ? STNAME :
-		    ((soru&INUNION) ? UNAME : 0));
-		nfree(q);
-		break;
-
-	case STRTY:
-		if (soru & INSTRUCT)
-			break;
-		goto def;
-
-	case UNIONTY:
-		if (soru & INUNION)
-			break;
-		goto def;
-
-	}
-	q = mkty(p->stype, 0, p->ssue);
-	q->n_sue = p->ssue;
-	return q;
+	sp->ssue = permalloc(sizeof(struct suedef));
+	sp->ssue->suesize = 0;
+	sp->ssue->sylnk = NULL; 
+	sp->ssue->suealign = 0;
+	sp->sclass = class;
+	if (class == STNAME)
+		sp->stype = STRTY;
+	else if (class == UNAME)
+		sp->stype = UNIONTY;
 }
 
 /*
@@ -643,21 +597,24 @@ deftag(char *name, int class)
 {
 	struct symtab *sp;
 
-	sp = lookup(name, STAGNAME);
-	if (sp->ssue == NULL)
-		sp->ssue = permalloc(sizeof(struct suedef));
-	if (sp->sclass == SNULL) {
+	if ((sp = lookup(name, STAGNAME))->ssue == NULL) {
 		/* New tag */
-		sp->sclass = class;
-	} else if (sp->slevel < blevel) {
-		/* declared at different block level, hide it */
-		sp = hide(sp);
-		sp->sclass = class;
-	} else if (sp->sclass != class) {
-		/* redeclaration of tag */
+		defstr(sp, class);
+	} else if (sp->sclass != class)
 		uerror("tag %s redeclared", name);
-	}
 	return sp;
+}
+
+/*
+ * reference to a structure or union, with no definition
+ */
+NODE *
+rstruct(char *tag, int soru)
+{
+	struct symtab *sp;
+
+	sp = deftag(tag, soru);
+	return mkty(sp->stype, 0, sp->ssue);
 }
 
 static int enumlow, enumhigh;
@@ -701,8 +658,12 @@ enumhd(char *name)
 		return NULL;
 
 	sp = deftag(name, ENAME);
-	if (sp->stype != UNDEF) /* enum type already declared */
-		uerror("%s redeclared", name);
+	if (sp->stype != UNDEF) {
+		if (sp->slevel == blevel)
+			uerror("%s redeclared", name);
+		sp = hide(sp);
+		defstr(sp, ENAME);
+	}
 	return sp;
 }
 
@@ -759,39 +720,28 @@ struct rstack *
 bstruct(char *name, int soru)
 {
 	struct rstack *r;
-	struct symtab *s;
-	NODE *q;
+	struct symtab *sp;
 
-	if (name != NULL)
-		s = lookup(name, STAGNAME);
-	else
-		s = NULL;
+	if (name != NULL) {
+		sp = deftag(name, soru);
+		if (sp->ssue->suealign != 0) {
+			if (sp->slevel < blevel) {
+				sp = hide(sp);
+				defstr(sp, soru);
+			} else
+				uerror("%s redeclared", name);
+		}
+		sp->ssue->suealign = ALSTRUCT;
+	} else
+		sp = NULL;
 
 	r = tmpalloc(sizeof(struct rstack));
-	r->rinstruct = instruct;
-	r->rclass = strunem;
-	r->rstrucoff = strucoff;
-
-	strucoff = 0;
-	instruct = soru;
-	q = block(NAME, NIL, NIL, 0, 0, 0);
-	q->n_sp = s;
-	if (instruct==INSTRUCT) {
-		strunem = MOS;
-		q->n_type = STRTY;
-		if (s != NULL)
-			defid(q, STNAME);
-	} else if(instruct == INUNION) {
-		strunem = MOU;
-		q->n_type = UNIONTY;
-		if (s != NULL)
-			defid(q, UNAME);
-	} else {
-		cerror("bstruct");
-	}
-	r->rsym = q->n_sp;
-	r->rlparam = lparam;
-	nfree(q);
+	r->rsou = soru;
+	r->rstr = 0;
+	r->rsym = sp;
+	r->rb = NULL;
+	r->rnext = rpole;
+	rpole = r;
 
 	return r;
 }
@@ -803,12 +753,10 @@ NODE *
 dclstruct(struct rstack *r)
 {
 	NODE *n;
-	struct params *l, *m;
 	struct suedef *sue;
-	struct symtab *p;
+	struct symtab *sp;
 	int al, sa, sz, coff;
 	TWORD temp;
-	int i, high, low;
 
 	if (r->rsym == NULL) {
 		sue = permalloc(sizeof(struct suedef));
@@ -817,65 +765,49 @@ dclstruct(struct rstack *r)
 		sue->suealign = ALSTRUCT;
 	} else
 		sue = r->rsym->ssue;
+	if (sue->suealign == 0)  /* suealign == 0 is undeclared struct */
+		sue->suealign = ALSTRUCT;
 
 #ifdef PCC_DEBUG
 	if (ddebug)
 		printf("dclstruct(%s)\n", r->rsym ? r->rsym->sname : "??");
 #endif
-	temp = (instruct&INSTRUCT)?STRTY:((instruct&INUNION)?UNIONTY:0);
-	instruct = r->rinstruct;
-	strunem = r->rclass;
+	temp = r->rsou == STNAME ? STRTY : UNIONTY;
 	al = ALSTRUCT;
-
-	high = low = 0;
-
-	if ((l = r->rlparam) == NULL)
-		l = lpole;
-	else
-		l = l->next;
-
-	/* memory for the element array must be allocated first */
-	for (m = l, i = 1; m != NULL; m = m->next)
-		i++;
-	sue->suelem = permalloc(sizeof(struct symtab *) * i);
 
 	coff = 0;
 	if (pragma_packed || pragma_aligned)
-		strucoff = 0; /* must recount it */
+		rpole->rstr = 0; /* must recount it */
 
-	for (i = 0; l != NULL; l = l->next) {
-		sue->suelem[i++] = p = l->sym;
-
-		if (p == NULL)
-			cerror("gummy structure member");
-		sa = talign(p->stype, p->ssue);
-		if (p->sclass & FIELD)
-			sz = p->sclass&FLDSIZ;
+	sue->sylnk = r->rb;
+	for (sp = r->rb; sp; sp = sp->snext) {
+		sa = talign(sp->stype, sp->ssue);
+		if (sp->sclass & FIELD)
+			sz = sp->sclass&FLDSIZ;
 		else
-			sz = tsize(p->stype, p->sdf, p->ssue);
+			sz = tsize(sp->stype, sp->sdf, sp->ssue);
 
 		if (pragma_packed || pragma_aligned) {
 			/* XXX check pack/align sizes */
-			p->soffset = coff;
+			sp->soffset = coff;
 			if (pragma_aligned)
 				coff += ALLDOUBLE;
 			else
 				coff += sz;
-			strucoff = coff;
+			rpole->rstr = coff;
 		}
 
-		if (sz > strucoff)
-			strucoff = sz;  /* for use with unions */
+		if (sz > rpole->rstr)
+			rpole->rstr = sz;  /* for use with unions */
 		/*
 		 * set al, the alignment, to the lcm of the alignments
 		 * of the members.
 		 */
 		SETOFF(al, sa);
 	}
-	sue->suelem[i] = NULL;
-	SETOFF(strucoff, al);
+	SETOFF(rpole->rstr, al);
 
-	sue->suesize = strucoff;
+	sue->suesize = rpole->rstr;
 	sue->suealign = al;
 
 	pragma_packed = pragma_aligned = 0;
@@ -887,23 +819,45 @@ dclstruct(struct rstack *r)
 
 #ifdef PCC_DEBUG
 	if (ddebug>1) {
-		int i;
-
-		printf("\tsize %d align %d elem %p\n",
-		    sue->suesize, sue->suealign, sue->suelem);
-		for (i = 0; sue->suelem[i] != NULL; ++i) {
-			printf("\tmember %s(%p)\n",
-			    sue->suelem[i]->sname, sue->suelem[i]);
+		printf("\tsize %d align %d link %p\n",
+		    sue->suesize, sue->suealign, sue->sylnk);
+		for (sp = sue->sylnk; sp != NULL; sp = sp->snext) {
+			printf("\tmember %s(%p)\n", sp->sname, sp);
 		}
 	}
 #endif
 
-	strucoff = r->rstrucoff;
-	if ((lparam = r->rlparam) != NULL)
-		lparam->next = NULL;
+	rpole = r->rnext;
 	n = mkty(temp, 0, sue);
 	return n;
 }
+
+/*
+ * Add a new member to the current struct or union being declared.
+ */
+void
+soumemb(NODE *n, char *name, int class)
+{
+	struct symtab *sp, *lsp;
+ 
+	if (rpole == NULL)
+		cerror("soumemb");
+ 
+	lsp = NULL;
+	for (sp = rpole->rb; sp != NULL; lsp = sp, sp = sp->snext)
+		if (sp->sname == name)
+			uerror("redeclaration of %s", name);
+
+	sp = getsymtab(name, SMOSNAME);
+	if (rpole->rb == NULL)
+		rpole->rb = sp;
+	else
+		lsp->snext = sp;
+	n->n_sp = sp;
+	defid(n, class);
+}
+ 
+
 
 /*
  * error printing routine in parser
@@ -930,74 +884,44 @@ void
 ftnarg(NODE *p)
 {
 	NODE *q;
-	struct symtab *s;
 
 #ifdef PCC_DEBUG
 	if (ddebug > 2)
 		printf("ftnarg(%p)\n", p);
 #endif
 	/*
-	 * Enter argument onto param stack.
-	 * Do not declare parameters until later (in dclargs);
-	 * the function must be declared first.
-	 * put it on the param stack in reverse order, due to the
-	 * nature of the stack it will be reclaimed correct.
+	 * Push argument symtab entries onto param stack in reverse order,
+	 * due to the nature of the stack it will be reclaimed correct.
 	 */
 	for (; p->n_op != NAME; p = p->n_left) {
-		if (p->n_op == (UCALL) && p->n_left->n_op == NAME)
+		if (p->n_op == UCALL && p->n_left->n_op == NAME)
 			return;	/* Nothing to enter */
 		if (p->n_op == CALL && p->n_left->n_op == NAME)
 			break;
 	}
 
 	p = p->n_right;
-	blevel = 1;
-
 	while (p->n_op == CM) {
 		q = p->n_right;
 		if (q->n_op != ELLIPSIS) {
-			s = lookup((char *)q->n_sp, 0);
-			if (s->stype != UNDEF) {
-				if (s->slevel > 0)
-					uerror("parameter '%s' redefined",
-					    s->sname);
-				s = hide(s);
-			}
-			s->soffset = NOOFFSET;
-			s->sclass = PARAM;
-			s->stype = q->n_type;
-			s->sdf = q->n_df;
-			s->ssue = q->n_sue;
-			ssave(s);
+			ssave(q->n_sp);
 			nparams++;
 #ifdef PCC_DEBUG
 			if (ddebug > 2)
 				printf("	saving sym %s (%p) from (%p)\n",
-				    s->sname, s, q);
+				    q->n_sp->sname, q->n_sp, q);
 #endif
 		}
 		p = p->n_left;
 	}
-	s = lookup((char *)p->n_sp, 0);
-	if (s->stype != UNDEF) {
-		if (s->slevel > 0)
-			uerror("parameter '%s' redefined", s->sname);
-		s = hide(s);
-	}
-	s->soffset = NOOFFSET;
-	s->sclass = PARAM;
-	s->stype = p->n_type;
-	s->sdf = p->n_df;
-	s->ssue = p->n_sue;
-	ssave(s);
+	ssave(p->n_sp);
 	if (p->n_type != VOID)
 		nparams++;
-	blevel = 0;
 
 #ifdef PCC_DEBUG
 	if (ddebug > 2)
 		printf("	saving sym %s (%p) from (%p)\n",
-		    s->sname, s, p);
+		    nparams ? p->n_sp->sname : "<noname>", p->n_sp, p);
 #endif
 }
 
@@ -1103,7 +1027,7 @@ tsize(TWORD ty, union dimfun *d, struct suedef *sue)
 			return(SZINT);
 		}
 	} else {
-		if (sue->suelem == NULL)
+		if (sue->suealign == 0)
 			uerror("unknown structure/union/enum");
 	}
 
@@ -1221,7 +1145,7 @@ oalloc(struct symtab *p, int *poff )
 	} else
 #endif
 	if (p->sclass == PARAM && (p->stype == CHAR || p->stype == UCHAR ||
-	    p->stype == SHORT || p->stype == USHORT)) {
+	    p->stype == SHORT || p->stype == USHORT || p->stype == BOOL)) {
 		off = upoff(SZINT, ALINT, &noff);
 #ifndef RTOLBYTES
 		off = noff - tsz;
@@ -1243,7 +1167,24 @@ oalloc(struct symtab *p, int *poff )
 }
 
 /*
- * Allocate space on the stack for dynamic arrays.
+ * Delay emission of code generated in argument headers.
+ */
+static void
+edelay(NODE *p)
+{
+	if (blevel == 1) {
+		/* Delay until after declarations */
+		if (parlink == NULL)
+			parlink = p;
+		else
+			parlink = block(COMOP, parlink, p, 0, 0, 0);
+	} else
+		ecomp(p);
+}
+
+/*
+ * Allocate space on the stack for dynamic arrays (or at least keep track
+ * of the index).
  * Strategy is as follows:
  * - first entry is a pointer to the dynamic datatype.
  * - if it's a one-dimensional array this will be the only entry used.
@@ -1258,41 +1199,66 @@ dynalloc(struct symtab *p, int *poff)
 	union dimfun *df;
 	NODE *n, *nn, *tn, *pol;
 	TWORD t;
-	int i, no;
+	int astkp, no;
 
 	/*
-	 * The pointer to the array is stored in a TEMP node, which number
-	 * is in the soffset field;
+	 * The pointer to the array is not necessarily stored in a
+	 * TEMP node, but if it is, its number is in the soffset field;
 	 */
 	t = p->stype;
-	p->sflags |= (STNODE|SDYNARRAY);
-	p->stype = INCREF(p->stype);	/* Make this an indirect pointer */
-	tn = tempnode(0, p->stype, p->sdf, p->ssue);
-	p->soffset = regno(tn);
+	astkp = 0;
+	if (ISARY(t) && blevel == 1) {
+		/* must take care of side effects of dynamic arg arrays */
+		if (p->sdf->ddim < 0) {
+			/* first-level array will be indexed correct */
+			edelay(arrstk[astkp++]);
+		}
+		p->sdf++;
+		p->stype += (PTR-ARY);
+		t = p->stype;
+	}
+	if (ISARY(t)) {
+		p->sflags |= (STNODE|SDYNARRAY);
+		p->stype = INCREF(p->stype); /* Make this an indirect pointer */
+		tn = tempnode(0, p->stype, p->sdf, p->ssue);
+		p->soffset = regno(tn);
+	} else {
+		oalloc(p, poff);
+		tn = NIL;
+	}
 
 	df = p->sdf;
 
 	pol = NIL;
-	for (i = 0; ISARY(t); t = DECREF(t), df++) {
-		if (df->ddim >= 0)
+	for (; t > BTMASK; t = DECREF(t)) {
+		if (!ISARY(t))
 			continue;
-		n = arrstk[i++];
-		nn = tempnode(0, INT, 0, MKSUE(INT));
-		no = regno(nn);
-		ecomp(buildtree(ASSIGN, nn, n)); /* Save size */
+		if (df->ddim < 0) {
+			n = arrstk[astkp++];
+			nn = tempnode(0, INT, 0, MKSUE(INT));
+			no = regno(nn);
+			edelay(buildtree(ASSIGN, nn, n));
 
-		df->ddim = -no;
-		n = tempnode(no, INT, 0, MKSUE(INT));
-		if (pol == NIL)
-			pol = n;
-		else
-			pol = buildtree(MUL, pol, n);
+			df->ddim = -no;
+			n = tempnode(no, INT, 0, MKSUE(INT));
+		} else
+			n = bcon(df->ddim);
+
+		pol = (pol == NIL ? n : buildtree(MUL, pol, n));
+		df++;
 	}
 	/* Create stack gap */
-	if (pol == NIL)
-		uerror("aggregate dynamic array not allowed");
-	else
-		spalloc(tn, pol, tsize(t, 0, p->ssue));
+	if (blevel == 1) {
+		if (tn)
+			tfree(tn);
+		if (pol)
+			tfree(pol);
+	} else {
+		if (pol == NIL)
+			uerror("aggregate dynamic array not allowed");
+		if (tn)
+			spalloc(tn, pol, tsize(t, 0, p->ssue));
+	}
 	arrstkp = 0;
 }
 
@@ -1343,24 +1309,24 @@ falloc(struct symtab *p, int w, int new, NODE *pty)
 		}
 
 	if( w == 0 ){ /* align only */
-		SETOFF( strucoff, al );
+		SETOFF( rpole->rstr, al );
 		if( new >= 0 ) uerror( "zero size field");
 		return(0);
 		}
 
-	if( strucoff%al + w > sz ) SETOFF( strucoff, al );
+	if( rpole->rstr%al + w > sz ) SETOFF( rpole->rstr, al );
 	if( new < 0 ) {
-		strucoff += w;  /* we know it will fit */
+		rpole->rstr += w;  /* we know it will fit */
 		return(0);
 		}
 
 	/* establish the field */
 
 	if( new == 1 ) { /* previous definition */
-		if( p->soffset != strucoff || p->sclass != (FIELD|w) ) return(1);
+		if( p->soffset != rpole->rstr || p->sclass != (FIELD|w) ) return(1);
 		}
-	p->soffset = strucoff;
-	strucoff += w;
+	p->soffset = rpole->rstr;
+	rpole->rstr += w;
 	p->stype = type;
 	fldty( p );
 	return(0);
@@ -1382,7 +1348,7 @@ nidcl(NODE *p, int class)
 	if (class == SNULL) {
 		if (blevel > 1)
 			class = AUTO;
-		else if (blevel != 0 || instruct)
+		else if (blevel != 0 || rpole)
 			cerror( "nidcl error" );
 		else /* blevel = 0 */
 			commflag = 1, class = EXTERN;
@@ -1498,8 +1464,8 @@ typenode(NODE *p)
 	type = class = qual = sig = uns = 0;
 	saved = NIL;
 
-	if (strunem != 0)
-		class = strunem;
+	if (rpole != NULL)
+		class = rpole->rsou == STNAME ? MOS : MOU;
 
 	for (q = p; p; p = p->n_left) {
 		switch (p->n_op) {
@@ -2376,7 +2342,7 @@ fixtype(NODE *p, int class)
 		}
 
 	/* detect function arguments, watching out for structure declarations */
-	if (instruct && ISFTN(type)) {
+	if (rpole && ISFTN(type)) {
 		uerror("function illegal in structure or union");
 		type = INCREF(type);
 	}
@@ -2404,10 +2370,8 @@ fixclass(int class, TWORD type)
 {
 	/* first, fix null class */
 	if (class == SNULL) {
-		if (instruct&INSTRUCT)
-			class = MOS;
-		else if (instruct&INUNION)
-			class = MOU;
+		if (rpole)
+			class = rpole->rsou == STNAME ? MOS : MOU;
 		else if (blevel == 0)
 			class = EXTDEF;
 		else
@@ -2433,24 +2397,23 @@ fixclass(int class, TWORD type)
 			}
 		}
 
-	if( class&FIELD ){
-		if( !(instruct&INSTRUCT) ) uerror( "illegal use of field" );
-		return( class );
-		}
+	if (class & FIELD) {
+		if (rpole && rpole->rsou != STNAME)
+			uerror("illegal use of field");
+		return(class);
+	}
 
-	switch( class ){
-
-	case MOU:
-		if( !(instruct&INUNION) ) uerror( "illegal MOU class" );
-		return( class );
+	switch (class) {
 
 	case MOS:
-		if( !(instruct&INSTRUCT) ) uerror( "illegal MOS class" );
-		return( class );
+	case MOU:
+		if (rpole == NULL)
+			uerror("illegal member class");
+		return(class);
 
 	case REGISTER:
 		if (blevel == 0)
-			uerror( "illegal register declaration" );
+			uerror("illegal register declaration");
 		if (blevel == 1)
 			return(PARAM);
 		else
@@ -2472,13 +2435,12 @@ fixclass(int class, TWORD type)
 				uerror( "fortran function has wrong type" );
 				}
 			}
-	case STNAME:
-	case UNAME:
 	case EXTERN:
 	case STATIC:
 	case EXTDEF:
 	case TYPEDEF:
 	case USTATIC:
+	case PARAM:
 		return( class );
 
 	default:
@@ -2541,6 +2503,18 @@ getsymtab(char *name, int flags)
 	s->sdf = NULL;
 	s->ssue = NULL;
 	return s;
+}
+
+int
+fldchk(int sz)
+{
+	if (rpole->rsou != STNAME)
+		uerror("field outside of structure");
+	if (sz < 0 || sz >= FIELD) {
+		uerror("illegal field size");
+		return 1;
+	}
+	return 0;
 }
 
 #ifdef PCC_DEBUG

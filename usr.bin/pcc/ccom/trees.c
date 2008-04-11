@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.13 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: trees.c,v 1.14 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -76,6 +76,7 @@ static int opact(NODE *p);
 static int moditype(TWORD);
 static NODE *strargs(NODE *);
 static void rmcops(NODE *p);
+int inftn; /* currently between epilog/prolog */
 
 /*	some special actions, used in finding the type of nodes */
 # define NCVT 01
@@ -115,7 +116,6 @@ buildtree(int o, NODE *l, NODE *r)
 	struct symtab *sp = NULL; /* XXX gcc */
 	NODE *lr, *ll;
 	char *name;
-	struct symtab **elem;
 
 #ifdef PCC_DEBUG
 	if (bdebug) {
@@ -245,6 +245,8 @@ runtime:
 	if (actions & LVAL) { /* check left descendent */
 		if (notlval(p->n_left)) {
 			uerror("lvalue required");
+			nfree(p);
+			return l;
 #ifdef notyet
 		} else {
 			if ((l->n_type > BTMASK && ISCON(l->n_qual)) ||
@@ -350,16 +352,15 @@ runtime:
 				break;
 			}
 
-			if ((elem = l->n_sue->suelem) == NULL)
+			if ((sp = l->n_sue->sylnk) == NULL)
 				uerror("undefined struct or union");
 
 			name = r->n_name;
-			for (; *elem != NULL; elem++) {
-				sp = *elem;
+			for (; sp != NULL; sp = sp->snext) {
 				if (sp->sname == name)
 					break;
 			}
-			if (*elem == NULL)
+			if (sp == NULL)
 				uerror("member '%s' not declared", name);
 
 			r->n_sp = sp;
@@ -1591,6 +1592,8 @@ eprint(NODE *p, int down, int *a, int *b)
 	ty = coptype( p->n_op );
 
 	printf("%p) %s, ", p, copst(p->n_op));
+	if (p->n_op == XARG || p->n_op == XASM)
+		printf("id '%s', ", p->n_name);
 	if (ty == LTYPE) {
 		printf(CONFMT, p->n_lval);
 		printf(", %d, ", (p->n_op != NAME && p->n_op != ICON) ?
@@ -2058,6 +2061,10 @@ p2tree(NODE *p)
 		printf("\t%d\t\n", talign(STRTY, p->n_left->n_sue));
 		break;
 
+	case XARG:
+	case XASM:
+		break;
+
 	default:
 		printf(	 "\n" );
 	}
@@ -2123,6 +2130,10 @@ p2tree(NODE *p)
 		p->n_stsize = (tsize(STRTY, p->n_left->n_df,
 		    p->n_left->n_sue)+SZCHAR-1)/SZCHAR;
 		p->n_stalign = talign(STRTY,p->n_left->n_sue)/SZCHAR;
+		break;
+
+	case XARG:
+	case XASM:
 		break;
 
 	default:
@@ -2220,6 +2231,7 @@ send_passt(int type, ...)
 			defloc(cftnsp);
 		/* FALLTHROUGH */
 	case IP_PROLOG:
+		inftn = type == IP_PROLOG ? 1 : 0;
 		ipp = (struct interpass_prolog *)ip;
 		ipp->ipp_regs = va_arg(ap, int);
 		ipp->ipp_autos = va_arg(ap, int);
@@ -2227,7 +2239,7 @@ send_passt(int type, ...)
 		ipp->ipp_type = va_arg(ap, TWORD);
 		ipp->ipp_vis = va_arg(ap, int);
 		ip->ip_lbl = va_arg(ap, int);
-		ipp->ip_tmpnum = tvaloff;
+		ipp->ip_tmpnum = va_arg(ap, int);
 		ipp->ip_lblnum = crslab;
 		if (type == IP_PROLOG)
 			ipp->ip_lblnum--;

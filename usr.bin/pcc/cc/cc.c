@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.12 2007/11/22 21:47:24 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.13 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -96,6 +96,9 @@ char	*llist[MAXLIB];
 char	alist[20];
 char	*xlist[100];
 int	xnum;
+char	*mlist[100];
+char	*idirafter;
+int	nm;
 int	Cflag;
 int	dflag;
 int	pflag;
@@ -114,6 +117,7 @@ int	Mflag;	/* dependencies only */
 int	pgflag;
 int	exfail;
 int	Xflag;
+int	Werror;
 int	nostartfiles, Bstatic;
 int	nostdinc, nostdlib;
 int	onlyas;
@@ -125,6 +129,7 @@ char	*Bflag;
 char *cppadd[] = CPPADD;
 char *dynlinker[] = DYNLINKER;
 char *crt0file = CRT0FILE;
+char *crt0file_profile = CRT0FILE_PROFILE;
 char *startfiles[] = STARTFILES;
 char *endfiles[] = ENDFILES;
 char *mach = DEFMACH;
@@ -138,6 +143,11 @@ struct cppmd cppmds[] = CPPMDADDS;
 char *libclibs[] = LIBCLIBS;
 #else
 char *libclibs[] = { "-lc", NULL };
+#endif
+#ifdef LIBCLIBS_PROFILE
+char *libclibs_profile[] = LIBCLIBS_PROFILE;
+#else
+char *libclibs_profile[] = { "-lc_p", NULL };
 #endif
 #ifndef STARTLABEL
 #define STARTLABEL "__start"
@@ -158,7 +168,12 @@ main(int argc, char *argv[])
 			switch (argv[i][1]) {
 			default:
 				goto passa;
-				
+#ifdef notyet
+	/* must add library options first (-L/-l/...) */
+				error("unrecognized option `-%c'", argv[i][1]);
+				break;
+#endif
+
 			case 'B': /* other search paths for binaries */
 				Bflag = &argv[i][2];
 				break;
@@ -190,7 +205,9 @@ main(int argc, char *argv[])
 				Xflag++;
 				break;
 			case 'W': /* Ignore (most of) W-flags */
-				if (strncmp(argv[i], "-Wl,", 4) == 0) {
+				if (strncmp(argv[i], "-Werror", 7) == 0) {
+					Werror = 1;
+				} else if (strncmp(argv[i], "-Wl,", 4) == 0) {
 					/* options to the linker */
 					t = &argv[i][4];
 					while ((u = strchr(t, ','))) {
@@ -199,9 +216,13 @@ main(int argc, char *argv[])
 						t = u;
 					}
 					llist[nl++] = t;
+				} else if (strncmp(argv[i], "-Wp,", 4) == 0) {
+					/* preprocessor */
+					if (!strncmp(argv[i], "-Wp,-C", 6))
+						Cflag++;
 				}
 				break;
-				
+
 			case 'f': /* GCC compatibility flags */
 				if (strcmp(argv[i], "-fPIC") == 0)
 					kflag = F_PIC;
@@ -209,11 +230,11 @@ main(int argc, char *argv[])
 					kflag = F_pic;
 				/* silently ignore the rest */
 				break;
-				
+
 			case 'g': /* create debug output */
 				gflag++;
 				break;
-				
+
 			case 'i':
 				if (strcmp(argv[i], "-isystem") == 0) {
 					*pv++ = "-S";
@@ -221,14 +242,20 @@ main(int argc, char *argv[])
 				} else if (strcmp(argv[i], "-include") == 0) {
 					*pv++ = "-i";
 					*pv++ = argv[++i];
+				} else if (strcmp(argv[i], "-idirafter") == 0) {
+					idirafter = argv[++i];
 				} else
 					goto passa;
 				break;
-				
+
 			case 'k': /* generate PIC code */
 				kflag = F_pic;
 				break;
-				
+
+			case 'm': /* target-dependent options */
+				mlist[nm++] = argv[i];
+				break;
+
 			case 'n': /* handle -n flags */
 				if (strcmp(argv[i], "-nostdinc") == 0)
 					nostdinc++;
@@ -240,7 +267,7 @@ main(int argc, char *argv[])
 				else
 					goto passa;
 				break;
-				
+
 			case 'p':
 				if (strcmp(argv[i], "-pg") == 0)
 					pgflag++;
@@ -251,9 +278,19 @@ main(int argc, char *argv[])
 				else
 					errorx(1, "unknown option %s", argv[i]);
 				break;
-				
+
 			case 'x':
-				xlist[xnum++] = argv[i];
+				t = &argv[i][2];
+				if (*t == 0)
+					t = argv[++i];
+				if (strcmp(t, "c") == 0)
+					; /* default */
+#ifdef notyet
+				else if (strcmp(t, "c++"))
+					cxxflag;
+#endif
+				else
+					xlist[xnum++] = argv[i];
 				break;
 			case 't':
 				tflag++;
@@ -279,7 +316,7 @@ main(int argc, char *argv[])
 			case 'c':
 				cflag++;
 				break;
-				
+
 #if 0
 			case '2':
 				if(argv[i][2] == '\0')
@@ -298,17 +335,16 @@ main(int argc, char *argv[])
 				*pv++ = argv[i];
 				if (argv[i][2] == 0)
 					*pv++ = argv[++i];
-				if (pv >= ptemp+MAXOPT)
-				{
+				if (pv >= ptemp+MAXOPT) {
 					error("Too many DIU options");
 					--pv;
 				}
 				break;
-				
+
 			case 'M':
 				Mflag++;
 				break;
-				
+
 			case 'd':
 				dflag++;
 				strlcpy(alist, argv[i], sizeof (alist));
@@ -317,7 +353,7 @@ main(int argc, char *argv[])
 				printf("%s\n", VERSSTR);
 				vflag++;
 				break;
-				
+
 			case 's':
 				if (strcmp(argv[i], "-static") == 0)
 					Bstatic = 1;
@@ -333,11 +369,10 @@ main(int argc, char *argv[])
 			else if((c=getsuf(t))=='c' || c=='S' || c=='i' ||
 			    c=='s'|| Eflag) {
 				clist[nc++] = t;
-				if (nc>=MAXFIL)
-					{
+				if (nc>=MAXFIL) {
 					error("Too many source files");
 					exit(1);
-					}
+				}
 				t = setsuf(t, 'o');
 			}
 
@@ -348,11 +383,10 @@ main(int argc, char *argv[])
 			}
 			if (j == nl) {
 				llist[nl++] = t;
-				if (nl >= MAXLIB)
-					{
+				if (nl >= MAXLIB) {
 					error("Too many object/library files");
 					exit(1);
-					}
+				}
 				if (getsuf(t)=='o')
 					nxo++;
 			}
@@ -434,6 +468,10 @@ main(int argc, char *argv[])
 			av[na++] = *pv;
 		if (!nostdinc)
 			av[na++] = "-S", av[na++] = STDINC;
+		if (idirafter) {
+			av[na++] = "-I";
+			av[na++] = idirafter;
+		}
 		av[na++] = clist[i];
 		if (!Eflag && !Mflag)
 			av[na++] = tmp4;
@@ -457,16 +495,22 @@ main(int argc, char *argv[])
 		av[na++]= "ccom";
 		if (vflag)
 			av[na++] = "-v";
+		if (pgflag)
+			av[na++] = "-p";
 		if (gflag)
 			av[na++] = "-g";
 		if (kflag)
 			av[na++] = "-k";
+		if (Werror)
+			av[na++] = "-Werror";
 		if (Oflag) {
 			av[na++] = "-xtemps";
 			av[na++] = "-xdeljumps";
 		}
 		for (j = 0; j < xnum; j++)
 			av[na++] = xlist[j];
+		for (j = 0; j < nm; j++)
+			av[na++] = mlist[j];
 		if (getsuf(clist[i])=='i')
 			av[na++] = clist[i];
 		else
@@ -554,6 +598,7 @@ nocom:
 		}
 		if (!nostartfiles) {
 			av[j++] = crt0file;
+			av[j++] = pgflag ? crt0file_profile : crt0file;
 			for (i = 0; startfiles[i]; i++)
 				av[j++] = startfiles[i];
 		}
@@ -571,9 +616,17 @@ nocom:
 #endif
 		if (pthreads)
 			av[j++] = "-lpthread";
-		if (!nostdlib)
+		if (!nostdlib) {
+			if (pgflag) {
+				for (i = 0; libclibs_profile[i]; i++)
+					av[j++] = libclibs_profile[i];
+			} else {
+				for (i = 0; libclibs[i]; i++)
+					av[j++] = libclibs[i];
+			}
 			for (i = 0; libclibs[i]; i++)
 				av[j++] = libclibs[i];
+		}
 		if (!nostartfiles) {
 			for (i = 0; endfiles[i]; i++)
 				av[j++] = endfiles[i];

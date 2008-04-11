@@ -1,3 +1,4 @@
+/*	$OpenBSD: order.c,v 1.2 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 
@@ -74,6 +75,19 @@ setuni(NODE *p, int cookie)
 struct rspecial *
 nspecial(struct optab *q)
 {
+	switch (q->op) {
+	case STASG: {
+		static struct rspecial s[] = {
+			{ NEVER, O0 },
+			{ NRIGHT, O1 },
+			{ NEVER, O2 },
+			{ 0 }
+		};
+		return s;
+	}
+	}
+
+	comperr("unknown nspecial %d: %s", q - table, q->cstring);
 	return 0; /* XXX */
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -583,13 +583,13 @@ struct optab table[] = {
 
 { ASSIGN,	FOREFF|INAREG,
 	SOREG,	TBYTE,
-	SHINT,		TBYTE,
+	SHINT,	TBYTE,
 		0,	RDEST,
 		"\tstb\tAR,AL\n", },
 
 { ASSIGN,	FOREFF|INAREG,
 	SOREG,	THWORD,
-	SHINT,		THWORD,
+	SHINT,	THWORD,
 		0,	RDEST,
 		"\tsth\tAR,AL\n", },
 
@@ -601,7 +601,7 @@ struct optab table[] = {
 
 { ASSIGN,	FOREFF|INLL,
 	SOREG,	TLL,
-	SHLL,		TLL,
+	SHLL,	TLL,
 		0,	RDEST,
 		"\tstw\tAR,AL\n"
 		"\tstw\tUR,UL\n", },

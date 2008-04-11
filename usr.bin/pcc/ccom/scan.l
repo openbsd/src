@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.4 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: scan.l,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -58,7 +58,7 @@ int notype, parbal;
 #define	CPP_HASH	4
 
 #ifdef STABS
-#define	STABS_LINE(x) if (gflag && blevel) stabs_line(x)
+#define	STABS_LINE(x) if (gflag && blevel > 1) stabs_line(x)
 #else
 #define STABS_LINE(x)
 #endif
@@ -125,10 +125,10 @@ extern void yyset_lineno (int);
 			  notype=1; return(C_TYPE); }
 "sizeof"		{ return(C_SIZEOF); }
 "static"		{ yylval.intval = STATIC; return(C_CLASS); }
-"struct"		{ yylval.intval = INSTRUCT; notype=1; return(C_STRUCT); }
+"struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
 "switch"		{ return(C_SWITCH); }
 "typedef"		{ yylval.intval = TYPEDEF; return(C_CLASS); }
-"union"			{ yylval.intval = INUNION; notype=1; return(C_STRUCT); }
+"union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }
 "unsigned"		{ yylval.nodep = mkty((TWORD)UNSIGNED, 0, MKSUE(UNSIGNED));
 			  notype=1; return(C_TYPE); }
 "void"			{ yylval.nodep = mkty((TWORD)VOID, 0, MKSUE(VOID));
@@ -138,22 +138,22 @@ extern void yyset_lineno (int);
 			  return(C_QUALIFIER); }
 "while"			{ return(C_WHILE); }
 
-{L}({L}|{D})*		{ 	struct symtab *s;
-				int i;
+{L}({L}|{D})*	{ 	struct symtab *s;
+			int i = 0;
 
-				yylval.strp = addname(yytext);
+			yylval.strp = addname(yytext);
 #ifdef GCC_COMPAT
-				if ((i = gcc_keyword(yylval.strp,
-				    &yylval.nodep)) != 0)
-					return i;
+			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
+				return i;
 #endif
-				if (!notype) {
-					s = lookup(yylval.strp, SNOCREAT);
-					if (s && s->sclass == TYPEDEF)
-						return notype=1, C_TYPENAME;
-				}
-				return(C_NAME);
+			if (i == 0) {
+				if (notype)
+					return(C_NAME);
+				s = lookup(yylval.strp, SNOCREAT);
+				return s && s->sclass == TYPEDEF ?
+				    notype=1, C_TYPENAME : C_NAME;
 			}
+		}
 
 0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
 0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
@@ -204,7 +204,7 @@ L?\"(\\.|[^\\"])*\"	{
 "!="			{ yylval.intval = NE; return(C_EQUOP); }
 ";"			{ notype = 0; return(';'); }
 ("{"|"<%")		{ notype = 0; return('{'); }
-("}"|"%>")		{ return('}'); }
+("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
 ","			{ if (parbal) notype = 0; return(','); }
 ":"			{ return(':'); }
 "="			{ return('='); }
@@ -446,6 +446,8 @@ control(int t)
 		lineno = val - 1;
 		while (*wr && *wr != '\"')
 			wr++;
+		if (*wr == 0)
+			return;
 		if (*wr++ != '\"')
 			goto bad;
 		eptr = wr;
@@ -509,4 +511,10 @@ pragma()
 		return;
 	else
 bad:		werror("unknown pragma");
+}
+
+void
+cunput(char c)
+{
+	unput(c);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.3 2007/12/19 20:19:54 otto Exp $	*/
+/*	$OpenBSD: code.c,v 1.4 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -32,37 +32,45 @@
 # include "pass1.h"
 
 NODE *funarg(NODE *, int *);
+int argreg(TWORD, int *);
 
 /*
- * cause the alignment to become a multiple of n
- * never called for text segment.
+ * Define everything needed to print out some data (or text).
+ * This means segment, alignment, visibility, etc.
  */
 void
-defalign(int n)
+defloc(struct symtab *sp)
 {
-	n /= SZCHAR;
-	if (n == 1)
+	extern char *nextsect;
+	static char *loctbl[] = { "text", "data", "section .rodata" };
+	static int lastloc = -1;
+	TWORD t;
+	int s;
+
+	if (sp == NULL) {
+		lastloc = -1;
 		return;
-	printf("\t.align %d\n", n);
+	}
+	t = sp->stype;
+	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+	if (nextsect) {
+		printf("\t.section %s\n", nextsect);
+		nextsect = NULL;
+		s = -1;
+	} else if (s != lastloc)
+		printf("\t.%s\n", loctbl[s]);
+	lastloc = s;
+	while (ISARY(t))
+		t = DECREF(t);
+	if (t > UCHAR)
+		printf("\t.align\t%d\n", ISFTN(t)? 4 : talign(t, sp->ssue));
+	if (sp->sclass == EXTDEF)
+		printf("\t.export %s, data\n", sp->soname);
+	if (sp->slevel == 0)
+		printf("\t.label %s\n", sp->soname);
+	else
+		printf("\t.label\t" LABFMT "\n", sp->soffset);
 }
-
-/*
- * define the current location as the name p->sname
- * never called for text segment.
- */
-void
-defnam(struct symtab *p)
-{
-	char *c = p->sname;
-
-#ifdef GCC_COMPAT
-	c = gcc_findname(p);
-#endif
-	if (p->sclass == EXTDEF)
-		printf("\t.export %s, data\n", c);
-	printf("\t.label %s\n", c);
-}
-
 
 /*
  * code for the end of a function
@@ -94,20 +102,71 @@ efcode()
 	send_passt(IP_NODE, p);
 }
 
+int
+argreg(TWORD t, int *n)
+{
+	switch (t) {
+	case FLOAT:
+		return FR7L - 2 * (*n)++;
+	case DOUBLE:
+	case LDOUBLE:
+		*n += 2;
+		return FR6 - *n - 2;
+	case LONGLONG:
+	case ULONGLONG:
+		*n += 2;
+		return AD1 - (*n - 2) / 2;
+	default:
+		return ARG0 - (*n)++;
+	}
+}
+
 /*
  * code for the beginning of a function; 'a' is an array of
  * indices in symtab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **a, int cnt)
 {
-	int i;
+	struct symtab *sp;
+	NODE *p, *q;
+	int i, n, sz;
 
-	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
-		return;
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
 	/* Function returns struct, adjust arg offset */
 	for (i = 0; i < n; i++)
 		a[i]->soffset += SZPOINT(INT);
+	}
+
+	/* recalculate the arg offset and create TEMP moves */
+	for (n = 0, i = 0; i < cnt; i++) {
+		sp = a[i];
+
+		sz = szty(sp->stype);
+		if (n % sz)
+			n++;	/* XXX LDOUBLE */
+
+		if (n < 4) {
+			p = tempnode(0, sp->stype, sp->sdf, sp->ssue);
+			/* TODO p->n_left->n_lval = -(32 + n * 4); */
+			q = block(REG, NIL, NIL, sp->stype, sp->sdf, sp->ssue);
+			q->n_rval = argreg(sp->stype, &n);
+			p = buildtree(ASSIGN, p, q);
+			sp->soffset = regno(p->n_left);
+			sp->sflags |= STNODE;
+			ecomp(p);
+		} else {
+			sp->soffset += SZINT * n;
+			if (xtemps) {
+				/* put stack args in temps if optimizing */
+				p = tempnode(0, sp->stype, sp->sdf, sp->ssue);
+				p = buildtree(ASSIGN, p, buildtree(NAME, 0, 0));
+				sp->soffset = regno(p->n_left);
+				sp->sflags |= STNODE;
+				ecomp(p);
+			}
+		}
+	}
 }
 
 
@@ -135,40 +194,6 @@ void
 bjobcode(void)
 {
 	printf("\t.import $global$, data\n");
-}
-
-/*
- * Print character t at position i in one string, until t == -1.
- * Locctr & label is already defined.
- */
-void
-bycode(int t, int i)
-{
-	static	int	lastoctal = 0;
-
-	/* put byte i+1 in a string */
-
-	if (t < 0) {
-		if (i != 0)
-			puts("\"");
-	} else {
-		if (i == 0)
-			printf("\t.ascii\t\"");
-		if (t == '\\' || t == '"') {
-			lastoctal = 0;
-			putchar('\\');
-			putchar(t);
-		} else if (t < 040 || t >= 0177) {
-			lastoctal++;
-			printf("\\%o",t);
-		} else if (lastoctal && '0' <= t && t <= '9') {
-			lastoctal = 0;
-			printf("\"\n\t.ascii\t\"%c", t);
-		} else {	
-			lastoctal = 0;
-			putchar(t);
-		}
-	}
 }
 
 /*
@@ -210,7 +235,7 @@ funarg(NODE *p, int *n)
 
 	sz = szty(p->n_type);
 	if (*n % sz)
-		(*n)++;	/* XXX */
+		(*n)++;	/* XXX LDOUBLE */
 
 	if (*n >= 4) {
 		*n += sz;
@@ -221,25 +246,7 @@ funarg(NODE *p, int *n)
 	} else {
 		r = block(REG, NIL, NIL, p->n_type, 0, 0);
 		r->n_lval = 0;
-		switch (p->n_type) {
-		case FLOAT:
-			r->n_rval = FR7L - 2 * (*n)++;
-			break;
-		case DOUBLE:
-		case LDOUBLE:
-			*n = (*n + 1) & ~1;
-			r->n_rval = FR6 - *n;
-			*n += 2;
-			break;
-		case LONGLONG:
-		case ULONGLONG:
-			*n = (*n + 1) & ~1;
-			r->n_rval = AD1 - *n / 2;
-			*n += 2;
-			break;
-		default:
-			r->n_rval = ARG0 - (*n)++;
-		}
+		r->n_rval = argreg(p->n_type, n);
 	}
 	p = block(ASSIGN, r, p, p->n_type, 0, 0);
 	clocal(p);

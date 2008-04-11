@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.8 2008/01/12 17:26:16 ragge Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -90,6 +90,9 @@ extern	char *scnames(int);
 #define	SINLINE		00400
 #define	STNODE		01000
 #define	SASG		04000
+#define	SLOCAL1		010000
+#define	SLOCAL2		020000
+#define	SLOCAL3		040000
 
 	/* alignment of initialized quantities */
 #ifndef AL_INIT
@@ -116,7 +119,7 @@ union dimfun {
  */
 struct suedef {
 	int	suesize;	/* Size of the struct */
-	struct	symtab **suelem;/* points to the list of elements */
+	struct	symtab *sylnk;	/* the list of elements */
 	int	suealign;	/* Alignment of this struct */
 };
 
@@ -206,12 +209,6 @@ extern int pragma_packed, pragma_aligned;
 extern char *pragma_renamed;
 
 /*
- * Flags used in structures/unions
- */
-#define INSTRUCT	02
-#define INUNION		04
-
-/*
  * Flags used in the (elementary) flow analysis ...
  */
 #define FBRK		02
@@ -256,6 +253,7 @@ OFFSZ	tsize(TWORD, union dimfun *, struct suedef *),
 NODE *	typenode(NODE *new);
 void	spalloc(NODE *, NODE *, OFFSZ);
 char	*exname(char *);
+extern struct rstack *rpole;
 
 int oalloc(struct symtab *p, int *poff);
 void deflabel(char *);
@@ -278,6 +276,7 @@ char *addname(char *);
 char *newstring(char *, int len);
 void symclear(int level);
 struct symtab *hide(struct symtab *p);
+void soumemb(NODE *, char *, int);
 int talign(unsigned int, struct suedef *);
 void bfcode(struct symtab **, int);
 int chkftn(union arglist *, union arglist *);
@@ -305,7 +304,6 @@ void endinit(void);
 void ilbrace(void);
 void irbrace(void);
 void scalinit(NODE *p);
-int ftoint(NODE *, CONSZ **);
 void p1print(char *fmt, ...);
 char *copst(int);
 int cdope(int);
@@ -321,6 +319,10 @@ int mypragma(char **);
 void fixdef(struct symtab *);
 int cqual(TWORD t, TWORD q);
 void defloc(struct symtab *);
+int fldchk(int sz);
+int nncon(NODE *);
+void cunput(char c);
+
 
 #ifdef GCC_COMPAT
 void gcc_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2007/12/09 18:50:01 ragge Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -34,7 +34,7 @@
 #include "pass1.h"
 #include "pass2.h"
 
-int sflag, nflag, oflag, kflag;
+int sflag, nflag, oflag, kflag, pflag;
 int lflag, odebug, rdebug, s2debug, udebug, x2debug;
 #if !defined(MULTIPASS) || defined(PASST)
 int iTflag, oTflag;
@@ -92,6 +92,10 @@ Wflags(char *str)
 		Wimplicit_int = Wimplicit_function_declaration = 1;
 		return;
 	}
+	if (strcmp(str, "error") == 0) {
+		warniserr = 1;
+		return;
+	}
 	all = strcmp(str, "W") == 0;
 	for (i = 0; flagstr[i].n; i++)
 		if (all || strcmp(flagstr[i].n, str) == 0) {
@@ -112,7 +116,7 @@ main(int argc, char *argv[])
 
 	prgname = argv[0];
 
-	while ((ch = getopt(argc, argv, "VlwX:Z:W:sOT:gx:kvm:")) != -1)
+	while ((ch = getopt(argc, argv, "OT:VW:X:Z:gklm:psvwx:")) != -1)
 		switch (ch) {
 #if !defined(MULTIPASS) || defined(PASS1)
 		case 'X':
@@ -200,6 +204,10 @@ main(int argc, char *argv[])
 
 		case 'g': /* Debugging */
 			gflag = 1;
+			break;
+
+		case 'p': /* Profiling */
+			pflag = 1;
 			break;
 
 		case 's': /* Statistics */
