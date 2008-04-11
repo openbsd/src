@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.4 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.5 2008/04/11 11:23:50 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -217,14 +217,14 @@ int		uchcom_detach(struct device *, int);
 int		uchcom_activate(struct device *, enum devact);
 
 struct	ucom_methods uchcom_methods = {
-	.ucom_get_status	= uchcom_get_status,
-	.ucom_set		= uchcom_set,
-	.ucom_param		= uchcom_param,
-	.ucom_ioctl		= NULL,
-	.ucom_open		= uchcom_open,
-	.ucom_close		= uchcom_close,
-	.ucom_read		= NULL,
-	.ucom_write		= NULL,
+	uchcom_get_status,
+	uchcom_set,
+	uchcom_param,
+	NULL,
+	uchcom_open,
+	uchcom_close,
+	NULL,
+	NULL,
 };
 
 static const struct usb_devno uchcom_devs[] = {
