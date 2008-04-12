@@ -55,9 +55,6 @@ int	 drm_firstopen(drm_device_t *);
 int	 drm_lastclose(drm_device_t *);
 
 #ifdef __FreeBSD__
-#define DRIVER_SOFTC(unit) \
-	((drm_device_t *)devclass_get_softc(drm_devclass, unit))
-
 MODULE_VERSION(drm, 1);
 MODULE_DEPEND(drm, agp, 1, 1, 1);
 MODULE_DEPEND(drm, pci, 1, 1, 1);
@@ -65,11 +62,6 @@ MODULE_DEPEND(drm, pci, 1, 1, 1);
 MODULE_DEPEND(drm, mem, 1, 1, 1);
 #endif
 #endif /* __FreeBSD__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#define DRIVER_SOFTC(unit) \
-	((drm_device_t *)device_lookup(&drm_cd, unit))
-#endif /* __NetBSD__ || __OpenBSD__ */
 
 static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, 0),
@@ -696,6 +688,9 @@ drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 	int retcode = 0;
 
 	dev = drm_get_device_from_kdev(kdev);
+	if (dev == NULL)
+		return (ENXIO);
+
 #ifdef __OpenBSD__
 	dev->kdev = kdev; /* hack for now */
 #endif
@@ -846,6 +841,9 @@ drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags,
 	int nr = DRM_IOCTL_NR(cmd);
 	int is_driver_ioctl = 0;
 	drm_file_t *file_priv;
+
+	if (dev == NULL)
+		return ENODEV;
 
 	DRM_LOCK();
 	file_priv = drm_find_file_by_proc(dev, p);
