@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.13 2007/05/31 19:19:41 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.14 2008/04/12 17:41:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 12 2008 $
 .Dt SPAMLOGD 8
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ will whitelist the source of inbound SMTP connections, and the
 target of outbound SMTP connections.
 .It Fl i Ar interface
 Specify a network interface on which packets must arrive.
-The default is to watch for connections logged from any interfaces.
+The default is to watch for connections logged from all interfaces.
 .It Fl l Ar pflog_interface
 Specify a
 .Xr pflog 4
