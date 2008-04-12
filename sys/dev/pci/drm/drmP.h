@@ -653,19 +653,18 @@ typedef struct drm_device_dma {
 	} flags;
 } drm_device_dma_t;
 
-typedef struct drm_agp_mem {
+struct drm_agp_mem {
 	void               *handle;
 	unsigned long      bound; /* address */
 	int                pages;
-	struct drm_agp_mem *prev;
-	struct drm_agp_mem *next;
-} drm_agp_mem_t;
+	TAILQ_ENTRY(drm_agp_mem) link;
+};
 
 typedef struct drm_agp_head {
 	device_t	   agpdev;
 	struct agp_info    info;
 	const char         *chipset;
-	drm_agp_mem_t      *memory;
+	TAILQ_HEAD(agp_memlist, drm_agp_mem) memory;
 	unsigned long      mode;
 	int                enabled;
 	int                acquired;

@@ -41,7 +41,7 @@
 #endif
 
 int	drm_device_find_capability(drm_device_t *, int);
-drm_agp_mem_t *drm_agp_lookup_entry(drm_device_t *, void *);
+struct drm_agp_mem *drm_agp_lookup_entry(drm_device_t *, void *);
 
 /* Returns 1 if AGP or 0 if not. */
 int
@@ -223,7 +223,7 @@ int
 drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
 {
 #ifndef DRM_NO_AGP
-	drm_agp_mem_t *entry;
+	struct drm_agp_mem *entry;
 	void *handle;
 	unsigned long pages;
 	u_int32_t type;
@@ -250,11 +250,7 @@ drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
 	entry->handle = handle;
 	entry->bound = 0;
 	entry->pages = pages;
-	entry->prev = NULL;
-	entry->next = dev->agp->memory;
-	if (dev->agp->memory)
-		dev->agp->memory->prev = entry;
-	dev->agp->memory = entry;
+	TAILQ_INSERT_HEAD(&dev->agp->memory, entry, link);
 
 	agp_memory_info(dev->agp->agpdev, entry->handle, &info);
 
@@ -282,12 +278,12 @@ drm_agp_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	return retcode;
 }
 
-drm_agp_mem_t *
+struct drm_agp_mem *
 drm_agp_lookup_entry(drm_device_t *dev, void *handle)
 {
-	drm_agp_mem_t *entry;
+	struct drm_agp_mem *entry;
 
-	for (entry = dev->agp->memory; entry; entry = entry->next) {
+	TAILQ_FOREACH(entry, &dev->agp->memory, link) {
 		if (entry->handle == handle) return entry;
 	}
 	return NULL;
@@ -296,7 +292,7 @@ drm_agp_lookup_entry(drm_device_t *dev, void *handle)
 int
 drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request)
 {
-	drm_agp_mem_t *entry;
+	struct drm_agp_mem *entry;
 	int retcode;
 
 	if (!dev->agp || !dev->agp->acquired)
@@ -334,7 +330,7 @@ drm_agp_unbind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 int
 drm_agp_bind(drm_device_t *dev, drm_agp_binding_t *request)
 {
-	drm_agp_mem_t *entry;
+	struct drm_agp_mem *entry;
 	int retcode;
 	int page;
 	
@@ -376,7 +372,7 @@ drm_agp_bind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 int
 drm_agp_free(drm_device_t *dev, drm_agp_buffer_t *request)
 {
-	drm_agp_mem_t *entry;
+	struct drm_agp_mem *entry;
 	
 	if (!dev->agp || !dev->agp->acquired)
 		return EINVAL;
@@ -385,12 +381,7 @@ drm_agp_free(drm_device_t *dev, drm_agp_buffer_t *request)
 	if (entry == NULL)
 		return EINVAL;
    
-	if (entry->prev)
-		entry->prev->next = entry->next;
-	else
-		dev->agp->memory  = entry->next;
-	if (entry->next)
-		entry->next->prev = entry->prev;
+	TAILQ_REMOVE(&dev->agp->memory, entry, link);
 
 	DRM_UNLOCK();
 	if (entry->bound)
@@ -441,7 +432,7 @@ drm_agp_init(void)
 		agp_get_info(agpdev, &head->info);
 #endif
 		head->base = head->info.ai_aperture_base;
-		head->memory = NULL;
+		TAILQ_INIT(&head->memory);
 		DRM_INFO("AGP at 0x%08lx %dMB\n",
 		    (long)head->info.ai_aperture_base,
 		    (int)(head->info.ai_aperture_size >> 20));

@@ -446,20 +446,18 @@ drm_lastclose(drm_device_t *dev)
 
 				/* Clear AGP information */
 	if ( dev->agp ) {
-		drm_agp_mem_t *entry;
-		drm_agp_mem_t *nexte;
+		struct drm_agp_mem *entry;
 
 		/* Remove AGP resources, but leave dev->agp intact until
 		 * drm_unload is called.
 		 */
-		for ( entry = dev->agp->memory ; entry ; entry = nexte ) {
-			nexte = entry->next;
+		while ((entry = TAILQ_FIRST(&dev->agp->memory)) != NULL) {
 			if ( entry->bound )
 				drm_agp_unbind_memory(entry->handle);
 			drm_agp_free_memory(entry->handle);
+			TAILQ_REMOVE(&dev->agp->memory, entry, link);
 			free(entry, M_DRM);
 		}
-		dev->agp->memory = NULL;
 
 		if (dev->agp->acquired)
 			drm_agp_release(dev);

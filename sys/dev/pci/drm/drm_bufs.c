@@ -151,6 +151,10 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 {
 	drm_local_map_t *map;
 	int align;
+#if 0 /* disabled for now */
+	struct drm_agp_mem *entry;
+	int valid;
+#endif 
 
 	/* Only allow shared memory to be removable since we only keep enough
 	 * book keeping information about shared memory to allow for removal
@@ -259,8 +263,15 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			map->offset += dev->agp->base;
 		}
 		map->mtrr   = dev->agp->mtrr; /* for getmap */
-#if 0 /* disabled */
-		for (entry = dev->agp->memory; entry; entry = entry->next) {
+#if 0 /* disabled for now */
+		/*
+		 * If agp is in control of userspace (some intel drivers for
+		 * example. In which case ignore this loop.
+		 */
+		TAILQ_FOREACH(entry, &dev->agp->memory, link) {
+			DRM_DEBUG("bound = %p, pages = %p, %p\n",
+			    entry->bound, entry->pages,
+			    entry->pages * PAGE_SIZE);
 			if ((map->offset >= entry->bound) &&
 			    (map->offset + map->size <=
 			    entry->bound + entry->pages * PAGE_SIZE)) {
@@ -268,9 +279,10 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 				break;
 			}
 		}
-		if (!valid) {
+		if (!TAILQ_EMPTY(&dev->agp->memory) && !valid) {
 			free(map, M_DRM);
 			DRM_LOCK();
+			DRM_ERROR("invalid agp map requested\n");
 			return EACCES;
 		}
 #endif
@@ -478,6 +490,10 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	int byte_count;
 	int i;
 	drm_buf_t **temp_buflist;
+#if 0 /* disabled for now */
+	struct drm_agp_mem *agp_entry;
+	int valid;
+#endif
 
 	count = request->count;
 	order = drm_order(request->size);
@@ -500,14 +516,14 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	DRM_DEBUG( "total:      %d\n",  total );
 
 	/* Make sure buffers are located in AGP memory that we own */
+
 	/* Breaks MGA due to drm_alloc_agp not setting up entries for the
 	 * memory.  Safe to ignore for now because these ioctls are still
 	 * root-only.
 	 */
-#if 0 /* disabled */
+#if 0 /* disabled for now */
 	valid = 0;
-	for (agp_entry = dev->agp->memory; agp_entry;
-	    agp_entry = agp_entry->next) {
+	TAILQ_FOREACH(agp_entry, &dev->agp->memory, link) {
 		if ((agp_offset >= agp_entry->bound) &&
 		    (agp_offset + total * count <=
 		    agp_entry->bound + agp_entry->pages * PAGE_SIZE)) {
@@ -515,7 +531,7 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 			break;
 		}
 	}
-	if (!valid) {
+	if (!TAILQ_EMPTY(&dev->agp->memory) && !valid) {
 		DRM_DEBUG("zone invalid\n");
 		return EINVAL;
 	}
