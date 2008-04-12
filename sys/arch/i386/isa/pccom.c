@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.63 2008/03/29 15:26:47 krw Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.64 2008/04/12 10:47:22 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1571,11 +1571,7 @@ com_common_putc(bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 void
 comcninit(struct consdev *cp)
 {
-
-#if 0
-	XXX NEEDS TO BE FIXED XXX
-	comconsiot = ???;
-#endif
+	comconsiot = I386_BUS_SPACE_IO;
 
 #ifdef CONADDR_OVERRIDE
 	comconsaddr = CONADDR;
