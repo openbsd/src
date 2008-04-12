@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.4 2008/04/11 05:37:36 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.5 2008/04/12 10:09:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -516,7 +516,6 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	USETW(req.wLength, 26);
 
 	pc = (struct usb_video_probe_commit *)probe_data;
-	//USETW(pc->bmHint, 1);
 	pc->bFormatIndex = 1;
 	pc->bFrameIndex = 1;
 
@@ -535,8 +534,8 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
 	DPRINTF(1, "dwFrameInterval=%d (ns)\n", UGETDW(pc->dwFrameInterval));
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
-	DPRINTF(1, "wPFrameRate=0x%d\n", UGETW(pc->wPFrameRate));
-	DPRINTF(1, "wCompQuality=0x%d\n", UGETW(pc->wCompQuality));
+	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
+	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
 	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
@@ -580,8 +579,8 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
 	DPRINTF(1, "dwFrameInterval=%d (ns)\n", UGETDW(pc->dwFrameInterval));
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
-	DPRINTF(1, "wPFrameRate=0x%d\n", UGETW(pc->wPFrameRate));
-	DPRINTF(1, "wCompQuality=0x%d\n", UGETW(pc->wCompQuality));
+	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
+	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
 	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
@@ -643,7 +642,6 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		/* stream header without payload and no EOF */
 		return (-1);
 	}
-
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
 
