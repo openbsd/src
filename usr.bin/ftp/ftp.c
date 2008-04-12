@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.68 2008/03/10 22:56:43 espie Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.69 2008/04/12 21:20:58 ray Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.68 2008/03/10 22:56:43 espie Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.69 2008/04/12 21:20:58 ray Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -541,7 +541,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	volatile off_t hashbytes;
 	char * volatile lmode;
 	char buf[BUFSIZ], *bufp;
-	int oprogress;
+	int oprogress, serrno;
 
 	hashbytes = mark;
 	direction = "sent";
@@ -704,7 +704,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
 	case TYPE_I:
 	case TYPE_L:
-		errno = d = 0;
+		d = 0;
 		while ((c = read(fileno(fin), buf, sizeof(buf))) > 0) {
 			may_send_noop_char();
 			bytes += c;
@@ -720,6 +720,8 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 				(void)fflush(ttyout);
 			}
 		}
+		if (c == -1 || d == -1)
+			serrno = errno;
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void)putc('#', ttyout);
@@ -727,10 +729,10 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			(void)fflush(ttyout);
 		}
 		if (c < 0)
-			warn("local: %s", local);
+			warnx("local: %s: %s", local, strerror(serrno));
 		if (d < 0) {
-			if (errno != EPIPE)
-				warn("netout");
+			if (serrno != EPIPE)
+				warnx("netout: %s", strerror(serrno));
 			bytes = -1;
 		}
 		break;
@@ -759,6 +761,8 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			}
 #endif
 		}
+		if (ferror(fin) || ferror(dout))
+			serrno = errno;
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
@@ -766,10 +770,10 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			(void)fflush(ttyout);
 		}
 		if (ferror(fin))
-			warn("local: %s", local);
+			warnx("local: %s: %s", local, strerror(serrno));
 		if (ferror(dout)) {
 			if (errno != EPIPE)
-				warn("netout");
+				warnx("netout: %s", strerror(serrno));
 			bytes = -1;
 		}
 		break;
@@ -834,7 +838,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	FILE * volatile fout, * volatile din;
 	int (* volatile closefunc)(FILE *);
 	volatile sig_t oldinti, oldintr, oldintp;
-	int c, d;
+	int c, d, serrno;
 	volatile int is_retr, tcrflag, bare_lfs;
 	static size_t bufsize;
 	static char *buf;
@@ -890,7 +894,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	oldinti = signal(SIGINFO, psummary);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
 		if (access(local, W_OK) < 0) {
-			char *dir = strrchr(local, '/');
+			char *dir;
 
 			if (errno != ENOENT && errno != EACCES) {
 				warn("local: %s", local);
@@ -899,6 +903,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				code = -1;
 				return;
 			}
+			dir = strrchr(local, '/');
 			if (dir != NULL)
 				*dir = 0;
 			d = access(dir == local ? "/" : dir ? local : ".", W_OK);
@@ -1048,6 +1053,8 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				(void)fflush(ttyout);
 			}
 		}
+		if (c == -1 || d < c)
+			serrno = errno;
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void)putc('#', ttyout);
@@ -1055,13 +1062,13 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 			(void)fflush(ttyout);
 		}
 		if (c < 0) {
-			if (errno != EPIPE)
-				warn("netin");
+			if (serrno != EPIPE)
+				warnx("netin: %s", strerror(serrno));
 			bytes = -1;
 		}
 		if (d < c) {
 			if (d < 0)
-				warn("local: %s", local);
+				warnx("local: %s: %s", local, strerror(serrno));
 			else
 				warnx("%s: short write", local);
 		}
@@ -1075,14 +1082,20 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				goto done;
 			n = restart_point;
 			for (i = 0; i++ < n;) {
-				if ((ch = fgetc(fout)) == EOF)
+				if ((ch = fgetc(fout)) == EOF) {
+					if (!ferror(fout))
+						errno = 0;
 					goto done;
+				}
 				if (ch == '\n')
 					i++;
 			}
 			if (fseek(fout, 0L, SEEK_CUR) < 0) {
 done:
-				warn("local: %s", local);
+				if (errno)
+					warn("local: %s", local);
+				else
+					warnx("local: %s", local);
 				progress = oprogress;
 				preserve = opreserve;
 				if (closefunc != NULL)
@@ -1119,6 +1132,8 @@ done:
 	contin2:	;
 		}
 break2:
+		if (ferror(din) || ferror(fout))
+			serrno = errno;
 		if (bare_lfs) {
 			fprintf(ttyout,
 "WARNING! %d bare linefeeds received in ASCII mode.\n", bare_lfs);
@@ -1132,12 +1147,12 @@ break2:
 			(void)fflush(ttyout);
 		}
 		if (ferror(din)) {
-			if (errno != EPIPE)
-				warn("netin");
+			if (serrno != EPIPE)
+				warnx("netin: %s", strerror(serrno));
 			bytes = -1;
 		}
 		if (ferror(fout))
-			warn("local: %s", local);
+			warnx("local: %s: %s", local, strerror(serrno));
 		break;
 	}
 	progressmeter(1);
