@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.15 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.16 2008/04/12 12:49:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -118,7 +118,6 @@ int
 acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibtn_softc	*sc = arg;
-	extern int		acpi_s5;
 
 	dnprintf(10, "acpibtn_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->parent->name);
@@ -128,10 +127,8 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 	case ACPIBTN_SLEEP:
 		break;
 	case ACPIBTN_POWER:
-		if (notify_type == 0x80) {
-			acpi_s5 = 1;
-			psignal(initproc, SIGUSR1);
-		}
+		if (notify_type == 0x80)
+			psignal(initproc, SIGUSR2);
 		break;
 	default:
 		printf("%s: spurious acpi button interrupt %i\n", DEVNAME(sc),

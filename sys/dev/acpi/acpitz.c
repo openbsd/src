@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.22 2008/01/08 20:49:59 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.23 2008/04/12 12:49:28 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -250,7 +250,6 @@ acpitz_refresh(void *arg)
 {
 	struct acpitz_softc	*sc = arg;
 	int			i, perc;
-	extern int		acpi_s5;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
 	    sc->sc_devnode->parent->name);
@@ -266,8 +265,7 @@ acpitz_refresh(void *arg)
 		/* do critical shutdown */
 		printf("%s: Critical temperature, shutting down\n",
 		    DEVNAME(sc));
-		acpi_s5 = 1;
-		psignal(initproc, SIGUSR1);
+		psignal(initproc, SIGUSR2);
 	}
 	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp) {
 		printf("%s: _HOT temperature\n", DEVNAME(sc));
