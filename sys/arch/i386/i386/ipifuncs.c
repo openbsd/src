@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.9 2007/09/07 08:37:38 art Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.10 2008/04/12 09:46:06 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -96,7 +96,6 @@ i386_ipi_halt(struct cpu_info *ci)
 {
 	disable_intr();
 
-	printf("%s: shutting down\n", ci->ci_dev.dv_xname);
 	for(;;) {
 		asm volatile("hlt");
 	}
