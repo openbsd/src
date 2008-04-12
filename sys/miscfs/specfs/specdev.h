@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.22 2008/04/08 14:46:45 thib Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.23 2008/04/12 13:32:03 thib Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -94,8 +94,6 @@ int	spec_ebadf(void *);
 int	spec_getattr(void *);
 int	spec_setattr(void *);
 int	spec_access(void *);
-#define	spec_create	spec_badop
-#define	spec_mknod	spec_badop
 int	spec_open(void *);
 int	spec_close(void *);
 int	spec_read(void *);
@@ -104,28 +102,12 @@ int	spec_ioctl(void *);
 int	spec_poll(void *);
 int	spec_kqfilter(void *);
 int	spec_fsync(void *);
-#define	spec_remove	spec_badop
-#define	spec_link	spec_badop
-#define	spec_rename	spec_badop
-#define	spec_mkdir	spec_badop
-#define	spec_rmdir	spec_badop
-#define	spec_symlink	spec_badop
-#define	spec_readdir	spec_badop
-#define	spec_readlink	spec_badop
-#define	spec_abortop	spec_badop
-int spec_inactive(void *);
-#define	spec_reclaim	nullop
-#define spec_lock       vop_generic_lock
-#define spec_unlock     vop_generic_unlock
-#define spec_islocked   vop_generic_islocked
+int	spec_inactive(void *);
 int	spec_bmap(void *);
 int	spec_strategy(void *);
 int	spec_print(void *);
 int	spec_pathconf(void *);
 int	spec_advlock(void *);
-#define	spec_reallocblks spec_badop
-#define	spec_bwrite	vop_generic_bwrite
-#define spec_revoke     vop_generic_revoke
 
 int	spec_vnoperate(void *);
 
