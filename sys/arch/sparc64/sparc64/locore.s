@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.130 2008/04/02 20:23:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.131 2008/04/12 14:59:30 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -96,6 +96,11 @@
 #define NOTREACHED
 #endif	/* 1 */
 
+	.section	.sun4v_patch, "ax"
+	.globl _C_LABEL(sun4v_patch)
+_C_LABEL(sun4v_patch):
+	.previous
+
 #ifdef MULTIPROCESSOR
 	.section	.sun4v_mp_patch, "ax"
 	.globl _C_LABEL(sun4v_mp_patch)
@@ -130,6 +135,21 @@ _C_LABEL(sun4v_mp_patch):
 	ldxa	[mmfsa] ASI_PHYS_CACHED, mmfsa
 
 #endif
+
+#define GET_MMU_CONTEXTID(ctxid, ctx) \
+999:	ldxa	[ctx] ASI_DMMU, ctxid 		;\
+	.section	.sun4v_patch, "ax" 	;\
+	.word	999b				;\
+	ldxa	[ctx] ASI_MMU_CONTEXTID, ctxid 	;\
+	.previous
+
+#define SET_MMU_CONTEXTID(ctxid, ctx) \
+999:	stxa	ctxid, [ctx] ASI_DMMU 		;\
+	.section	.sun4v_patch, "ax" 	;\
+	.word	999b				;\
+	stxa	ctxid, [ctx] ASI_MMU_CONTEXTID 	;\
+	.previous
+
 
 /*
  * This macro will clear out a cache line before an explicit
@@ -1438,7 +1458,7 @@ intr_setup_msg:
 	_ALIGN
 	.text
 
-	.macro	TRAP_SETUP stackspace, label
+	.macro	TRAP_SETUP stackspace
 	GET_CPCB(%g6)
 	sethi	%hi((\stackspace)), %g5
 	sethi	%hi(USPACE), %g7		! Always multiple of page size
@@ -1478,8 +1498,7 @@ intr_setup_msg:
 	wrpr	%g0, WSTATE_KERN, %wstate	! Enable kernel mode window traps -- now we can trap again
 
 	mov	CTX_PRIMARY, %g7
-\label:
-	stxa	%g0, [%g7] ASI_DMMU		! Switch MMU to kernel primary context
+	SET_MMU_CONTEXTID(%g0, %g7)		! Switch MMU to kernel primary context
 	sethi	%hi(KERNBASE), %g5
 	membar	#Sync				! XXXX Should be taken care of by flush
 	flush	%g5				! Some convenient address that won't trap
@@ -1494,7 +1513,7 @@ intr_setup_msg:
  * We don't guarantee that any registers are preserved during this operation,
  * so we can be more efficient.
  */
-	.macro	INTR_SETUP stackspace, label
+	.macro	INTR_SETUP stackspace
 	rdpr	%wstate, %g7			! Find if we're from user mode
 
 	GET_CPUINFO_VA(%g6)
@@ -1547,8 +1566,7 @@ intr_setup_msg:
 	wrpr	%g0, WSTATE_KERN, %wstate	! Enable kernel mode window traps -- now we can trap again
 
 	mov	CTX_PRIMARY, %g7
-\label:
-	stxa	%g0, [%g7] ASI_DMMU		! Switch MMU to kernel primary context
+	SET_MMU_CONTEXTID(%g0, %g7)		! Switch MMU to kernel primary context
 	sethi	%hi(KERNBASE), %g5
 	membar	#Sync				! XXXX Should be taken care of by flush
 	flush	%g5				! Some convenient address that won't trap
@@ -1950,7 +1968,7 @@ winfixfill:
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, 99
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 	saved						! Blow away that one register window we didn't ever use.
 	ba,a,pt	%icc, Ldatafault_internal		! Now we should return directly to user mode
 	 nop
@@ -2277,7 +2295,7 @@ datafault:
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, 99
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 Ldatafault_internal:
 	INCR _C_LABEL(uvmexp)+V_FAULTS			! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
 !	ldx	[%sp + CC64FSZ + BIAS + TF_FAULT], %g1		! DEBUG make sure this has not changed
@@ -2519,7 +2537,7 @@ textfault:
 	stxa	%g0, [SFSR] %asi			! Clear out old info
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, 99
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 	INCR _C_LABEL(uvmexp)+V_FAULTS			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
 
 	mov	%g3, %o3
@@ -3256,7 +3274,7 @@ sun4v_datatrap:
 	add	%g3, 0x60, %g4
 	stxa	%sp, [%g4] ASI_PHYS_CACHED
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, ctxid_1
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 	or	%g1, %g2, %o3
 	mov	%g1, %o4
 
@@ -3359,7 +3377,7 @@ sun4v_texttrap:
 	add	%g3, 0x10, %g2
 	ldxa	[%g2] ASI_PHYS_CACHED, %g2
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, ctxid_2
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 
 	or	%g1, %g2, %o2
 	clr	%o3
@@ -3532,7 +3550,7 @@ slowtrap:
 	rdpr	%tpc, %g2
 	rdpr	%tnpc, %g3
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE, ctxid_3
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 Lslowtrap_reenter:
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
 	mov	%g4, %o1		! (type)
@@ -3700,7 +3718,7 @@ softtrap:
  *	ptrace...
  */
 syscall_setup:
-	TRAP_SETUP -CC64FSZ-TF_SIZE, ctxid_4
+	TRAP_SETUP -CC64FSZ-TF_SIZE
 
 #ifdef DEBUG
 	rdpr	%tt, %o1	! debug
@@ -4075,11 +4093,9 @@ ENTRY(ipi_save_fpstate)
 	bne,pn	%xcc, 3f
 
 	 mov	CTX_SECONDARY, %g2
-ctxid_9:
-	ldxa	[%g2] ASI_DMMU, %g6
+	GET_MMU_CONTEXTID(%g6, %g2)
 	membar	#LoadStore
-ctxid_10:
-	stxa	%g0, [%g2] ASI_DMMU
+	SET_MMU_CONTEXTID(%g0, %g2)
 	membar	#Sync
 
 	ldx	[%g3 + P_FPSTATE], %g3
@@ -4120,8 +4136,7 @@ ctxid_10:
 
 	stx	%g0, [%g1 + CI_FPPROC]	! fpproc = NULL
 	mov	CTX_SECONDARY, %g2
-ctxid_11:
-	stxa	%g6, [%g2] ASI_DMMU
+	SET_MMU_CONTEXTID(%g6, %g2)
 	membar	#Sync
 3:
 	ba	ret_from_intr_vector
@@ -4220,7 +4235,7 @@ _C_LABEL(sparc_interrupt):
 	ba,pt	%icc, setup_sparcintr
 	 ldx	[%g3 + 8], %g5	! intrlev[1] is reserved for %tick intr.
 0:
-	INTR_SETUP -CC64FSZ-TF_SIZE-8, ctxid_5
+	INTR_SETUP -CC64FSZ-TF_SIZE-8
 	! Switch to normal globals so we can save them
 	wrpr	%g0, PSTATE_KERN, %pstate
 gl0_3:	nop
@@ -4619,11 +4634,9 @@ rft_user_fault_end:
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
 
 	mov	CTX_SECONDARY, %g1		! Restore the user context
-ctxid_6:
-	ldxa	[%g1] ASI_DMMU, %g4
+	GET_MMU_CONTEXTID(%g4, %g1)
 	mov	CTX_PRIMARY, %g2
-ctxid_7:
-	stxa	%g4, [%g2] ASI_DMMU
+	SET_MMU_CONTEXTID(%g4, %g2)
 	sethi	%hi(KERNBASE), %g7		! Should not be needed due to retry
 	membar	#Sync				! Should not be needed due to retry
 	flush	%g7				! Should not be needed due to retry
@@ -6087,8 +6100,7 @@ Lsw_havectx:
 	/*
 	 * We probably need to flush the cache here.
 	 */
-ctxid_8:
-	stxa	%o0, [%l5] ASI_DMMU		! Maybe we should invalidate the old context?
+	SET_MMU_CONTEXTID(%o0, %l5)		! Maybe we should invalidate the old context?
 	membar	#Sync				! Maybe we should use flush here?
 	flush	%sp
 
@@ -9124,24 +9136,12 @@ _C_LABEL(gl0_start):
 _C_LABEL(gl1_start):
 	.xword	gl1_1
 	.xword	0
+#endif
 
-	.globl	_C_LABEL(ctxid_start)
-_C_LABEL(ctxid_start):
-	.xword	ctxid_1
-	.xword	ctxid_2
-	.xword	ctxid_3
-	.xword	ctxid_4
-	.xword	ctxid_5
-	.xword	ctxid_6
-	.xword	ctxid_7
-	.xword	ctxid_8
-#ifdef MULTIPROCESSOR
-	.xword	ctxid_9
-	.xword	ctxid_10
-	.xword	ctxid_11
-#endif
-	.xword	0	
-#endif
+	.section	.sun4v_patch, "ax"
+	.globl _C_LABEL(sun4v_patch_end)
+_C_LABEL(sun4v_patch_end):
+	.previous
 
 	/* XXX This is in mutex.S for now */
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.85 2008/03/31 22:14:01 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.86 2008/04/12 14:59:30 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -288,7 +288,7 @@ bootstrap(nctx)
 
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
-		extern vaddr_t dlflush_start, ctxid_start;
+		extern vaddr_t dlflush_start;
 		extern vaddr_t gl0_start, gl1_start;
 		vaddr_t *pva;
 		u_int32_t insn;
@@ -296,14 +296,6 @@ bootstrap(nctx)
 
 		for (pva = &dlflush_start; *pva; pva++) {
 			*(u_int32_t *)(*pva) = 0x01000000; /* nop */
-			flush((void *)(*pva));
-		}
-
-		for (pva = &ctxid_start; *pva; pva++) {
-			insn = *(u_int32_t *)(*pva);
-			insn &= ~(ASI_DMMU << 5);
-			insn |= (ASI_MMU_CONTEXTID << 5);
-			*(u_int32_t *)(*pva) = insn;
 			flush((void *)(*pva));
 		}
 
@@ -329,23 +321,30 @@ bootstrap(nctx)
 		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
 		((u_int32_t *)sp_tlb_flush_ctx)[1] = insn;
 
-#ifdef MULTIPROCESSOR
 	{
 		struct sun4v_patch {
 			u_int32_t addr;
 			u_int32_t insn;
-		};
+		} *p;
 
+		extern struct sun4v_patch sun4v_patch;
+		extern struct sun4v_patch sun4v_patch_end;
+
+		for (p = &sun4v_patch; p < &sun4v_patch_end; p++) {
+			*(u_int32_t *)(vaddr_t)p->addr = p->insn;
+			flush((void *)(vaddr_t)p->addr);
+		}
+
+#ifdef MULTIPROCESSOR
 		extern struct sun4v_patch sun4v_mp_patch;
 		extern struct sun4v_patch sun4v_mp_patch_end;
-		struct sun4v_patch *p;
 
 		for (p = &sun4v_mp_patch; p < &sun4v_mp_patch_end; p++) {
 			*(u_int32_t *)(vaddr_t)p->addr = p->insn;
 			flush((void *)(vaddr_t)p->addr);
 		}
-	}
 #endif
+	}
 
 		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
 	}
