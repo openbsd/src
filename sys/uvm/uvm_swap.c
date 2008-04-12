@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.76 2007/12/18 11:05:52 thib Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.77 2008/04/12 20:36:38 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -323,13 +323,17 @@ uvm_swap_initcrypt_all(void)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
+	int npages;
 
 	simple_lock(&uvm.swap_data_lock);
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next)
-			if (sdp->swd_decrypt == NULL)
-				uvm_swap_initcrypt(sdp, sdp->swd_npages);
+			if (sdp->swd_decrypt == NULL) {
+				npages = dbtob((uint64_t)sdp->swd_nblks) >>
+				    PAGE_SHIFT;
+				uvm_swap_initcrypt(sdp, npages);
+			}
 	}
 	simple_unlock(&uvm.swap_data_lock);
 }
@@ -1028,8 +1032,9 @@ swap_on(p, sdp)
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
 		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
-		rootpages = round_page(dbtob(rootblocks)) >> PAGE_SHIFT;
-		if (rootpages > size)
+		rootpages = round_page(dbtob((u_int64_t)rootblocks))
+		    >> PAGE_SHIFT;
+		if (rootpages >= size)
 			panic("swap_on: miniroot larger than swap?");
 
 		if (extent_alloc_region(sdp->swd_ex, addr, 
@@ -1200,7 +1205,7 @@ swstrategy(bp)
 	 * be yanked out from under us because we are holding resources
 	 * in it (i.e. the blocks we are doing I/O on).
 	 */
-	pageno = dbtob((int64_t)bp->b_blkno) >> PAGE_SHIFT;
+	pageno = dbtob((u_int64_t)bp->b_blkno) >> PAGE_SHIFT;
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(pageno);
 	simple_unlock(&uvm.swap_data_lock);
