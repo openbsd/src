@@ -426,6 +426,8 @@ drm_lastclose(drm_device_t *dev)
 		dev->unique = NULL;
 		dev->unique_len = 0;
 	}
+
+	drm_drawable_free_all(dev);
 				/* Clear pid list */
 	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
 		while ((pt = TAILQ_FIRST(&dev->magiclist[i])) != NULL) {

@@ -1095,6 +1095,7 @@ int	drm_getsareactx(drm_device_t *dev, void *data, struct drm_file *file_priv);
 int	drm_adddraw(drm_device_t *dev, void *data, struct drm_file *file_priv);
 int	drm_rmdraw(drm_device_t *dev, void *data, struct drm_file *file_priv);
 int	drm_update_draw(drm_device_t *dev, void *data, struct drm_file *file_priv);
+void	drm_drawable_free_all(struct drm_device *);
 struct drm_drawable_info *drm_get_drawable_info(drm_device_t *dev, int handle);
 
 /* Authentication IOCTL support (drm_auth.c) */
