@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.77 2008/04/12 20:36:38 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.78 2008/04/12 20:37:36 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ struct swapdev {
 #define SWD_DCRYPT_SIZE(x)	(SWD_DCRYPT_OFF((x) + SWD_DCRYPT_MASK) * sizeof(u_int32_t))
 	u_int32_t		*swd_decrypt;	/* bitmap for decryption */
 	struct swap_key		*swd_keys;	/* keys for different parts */
-	int			swd_nkeys;	/* active keys */
 #endif
 };
 
@@ -352,7 +351,6 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	    M_WAITOK|M_ZERO);
 	sdp->swd_keys = malloc((npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key),
 	    M_VMSWAP, M_WAITOK|M_ZERO);
-	sdp->swd_nkeys = 0;
 }
 
 boolean_t
@@ -442,7 +440,34 @@ uvm_swap_needdecrypt(struct swapdev *sdp, int off)
 	return sdp->swd_decrypt[SWD_DCRYPT_OFF(off)] & (1 << SWD_DCRYPT_BIT(off)) ?
 		TRUE : FALSE;
 }
+
+void
+uvm_swap_finicrypt_all(void)
+{
+	struct swapdev *sdp;
+	struct swappri *spp;
+	struct swap_key *key;
+	unsigned int nkeys;
+
+	simple_lock(&uvm.swap_data_lock);
+
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+			if (sdp->swd_decrypt == NULL)
+				continue;
+
+			nkeys = dbtob((uint64_t)sdp->swd_nblks) >> PAGE_SHIFT;
+			key = sdp->swd_keys + ((nkeys  >> SWD_KEY_SHIFT) - 1);
+			do {
+				if (key->refcount != 0)
+					swap_key_delete(key);
+			} while (key-- != sdp->swd_keys);
+		}
+	}
+	simple_unlock(&uvm.swap_data_lock);
+}
 #endif /* UVM_SWAP_ENCRYPT */
+
 /*
  * swaplist functions: functions that operate on the list of swap
  * devices on the system.
@@ -1708,8 +1733,13 @@ uvm_swap_free(startslot, nslots)
 		if (swap_encrypt_initialized) {
 			/* Dereference keys */
 			for (i = 0; i < nslots; i++)
-				if (uvm_swap_needdecrypt(sdp, startslot + i))
-					SWAP_KEY_PUT(sdp, SWD_KEY(sdp, startslot + i));
+				if (uvm_swap_needdecrypt(sdp, startslot + i)) {
+					struct swap_key *key;
+
+					key = SWD_KEY(sdp, startslot + i);
+					if (key->refcount != 0)
+						SWAP_KEY_PUT(sdp, key);
+				}
 
 			/* Mark range as not decrypt */
 			uvm_swap_markdecrypt(sdp, startslot, nslots, 0);
@@ -2013,12 +2043,16 @@ uvm_swap_io(pps, startslot, npages, flags)
 		int i;
 		caddr_t data = bp->b_data;
 		u_int64_t block = startblk;
-		struct swap_key *key = NULL;
+		struct swap_key *key;
 
 		for (i = 0; i < npages; i++) {
 			/* Check if we need to decrypt */
 			if (uvm_swap_needdecrypt(sdp, startslot + i)) {
 				key = SWD_KEY(sdp, startslot + i);
+				if (key->refcount == 0) {
+					result = VM_PAGER_ERROR;
+					break;
+				}
 				swap_decrypt(key, data, data, block,
 					     1 << PAGE_SHIFT);
 			}

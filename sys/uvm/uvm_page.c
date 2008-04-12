@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.65 2008/04/09 16:58:11 deraadt Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.66 2008/04/12 20:37:35 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -882,6 +882,9 @@ uvm_page_physdump()
 void
 uvm_shutdown(void)
 {
+#ifdef UVM_SWAP_ENCRYPT
+	uvm_swap_finicrypt_all();
+#endif
 }
 
 /*
