@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.19 2007/12/27 13:59:12 thib Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.20 2008/04/12 16:01:42 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -48,38 +48,15 @@
 int	dead_badop(void *);
 int	dead_ebadf(void *);
 
-#define dead_create	dead_badop
-#define dead_mknod	dead_badop
 int	dead_open(void *);
-#define dead_close	nullop
-#define dead_access	dead_ebadf
-#define dead_getattr	dead_ebadf
-#define dead_setattr	dead_ebadf
 int	dead_read(void *);
 int	dead_write(void *);
 int	dead_ioctl(void *);
 int	dead_poll(void *);
-#define dead_fsync	nullop
-#define dead_remove	dead_badop
-#define dead_link	dead_badop
-#define dead_rename	dead_badop
-#define dead_mkdir	dead_badop
-#define dead_rmdir	dead_badop
-#define dead_symlink	dead_badop
-#define dead_readdir	dead_ebadf
-#define dead_readlink	dead_ebadf
-#define dead_abortop	dead_badop
-#define dead_inactive	nullop
-#define dead_reclaim	nullop
 int	dead_lock(void *);
-#define dead_unlock	vop_generic_unlock
 int	dead_bmap(void *);
 int	dead_strategy(void *);
 int	dead_print(void *);
-#define dead_islocked	vop_generic_islocked
-#define dead_pathconf	dead_ebadf
-#define dead_advlock	dead_ebadf
-#define dead_bwrite	nullop
 
 int	chkvnlock(struct vnode *);
 
@@ -88,38 +65,38 @@ int (**dead_vnodeop_p)(void *);
 struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
-	{ &vop_create_desc, dead_create },	/* create */
-	{ &vop_mknod_desc, dead_mknod },	/* mknod */
+	{ &vop_create_desc, dead_badop },	/* create */
+	{ &vop_mknod_desc, dead_badop },	/* mknod */
 	{ &vop_open_desc, dead_open },		/* open */
-	{ &vop_close_desc, dead_close },	/* close */
-	{ &vop_access_desc, dead_access },	/* access */
-	{ &vop_getattr_desc, dead_getattr },	/* getattr */
-	{ &vop_setattr_desc, dead_setattr },	/* setattr */
+	{ &vop_close_desc, nullop },		/* close */
+	{ &vop_access_desc, dead_ebadf },	/* access */
+	{ &vop_getattr_desc, dead_ebadf },	/* getattr */
+	{ &vop_setattr_desc, dead_ebadf },	/* setattr */
 	{ &vop_read_desc, dead_read },		/* read */
 	{ &vop_write_desc, dead_write },	/* write */
 	{ &vop_ioctl_desc, dead_ioctl },	/* ioctl */
 	{ &vop_poll_desc, dead_poll },		/* poll */
-	{ &vop_fsync_desc, dead_fsync },	/* fsync */
-	{ &vop_remove_desc, dead_remove },	/* remove */
-	{ &vop_link_desc, dead_link },		/* link */
-	{ &vop_rename_desc, dead_rename },	/* rename */
-	{ &vop_mkdir_desc, dead_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, dead_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, dead_symlink },	/* symlink */
-	{ &vop_readdir_desc, dead_readdir },	/* readdir */
-	{ &vop_readlink_desc, dead_readlink },	/* readlink */
-	{ &vop_abortop_desc, dead_abortop },	/* abortop */
-	{ &vop_inactive_desc, dead_inactive },	/* inactive */
-	{ &vop_reclaim_desc, dead_reclaim },	/* reclaim */
+	{ &vop_fsync_desc, nullop },		/* fsync */
+	{ &vop_remove_desc, dead_badop },	/* remove */
+	{ &vop_link_desc, dead_badop },		/* link */
+	{ &vop_rename_desc, dead_badop },	/* rename */
+	{ &vop_mkdir_desc, dead_badop },	/* mkdir */
+	{ &vop_rmdir_desc, dead_badop },	/* rmdir */
+	{ &vop_symlink_desc, dead_badop },	/* symlink */
+	{ &vop_readdir_desc, dead_ebadf },	/* readdir */
+	{ &vop_readlink_desc, dead_ebadf },	/* readlink */
+	{ &vop_abortop_desc, dead_badop },	/* abortop */
+	{ &vop_inactive_desc, nullop },		/* inactive */
+	{ &vop_reclaim_desc, nullop },		/* reclaim */
 	{ &vop_lock_desc, dead_lock },		/* lock */
-	{ &vop_unlock_desc, dead_unlock },	/* unlock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
 	{ &vop_bmap_desc, dead_bmap },		/* bmap */
 	{ &vop_strategy_desc, dead_strategy },	/* strategy */
 	{ &vop_print_desc, dead_print },	/* print */
-	{ &vop_islocked_desc, dead_islocked },	/* islocked */
-	{ &vop_pathconf_desc, dead_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, dead_advlock },	/* advlock */
-	{ &vop_bwrite_desc, dead_bwrite },	/* bwrite */
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
+	{ &vop_pathconf_desc, dead_ebadf },	/* pathconf */
+	{ &vop_advlock_desc, dead_ebadf },	/* advlock */
+	{ &vop_bwrite_desc, nullop },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc dead_vnodeop_opv_desc =
