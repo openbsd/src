@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.7 2007/03/19 20:14:14 miod Exp $
+# $OpenBSD: RAMDISK,v 1.8 2008/04/12 19:24:49 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,7 +46,7 @@ pci0	at shpcic?
 # SH bus
 shb*	at mainbus?
 
-# ob-board I/O bus
+# on-board I/O bus
 obio0	at mainbus?
 
 # Serial Devices

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.15 2008/02/24 21:49:37 uwe Exp $
+# $OpenBSD: GENERIC,v 1.16 2008/04/12 19:24:49 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -37,7 +37,7 @@ pci0	at shpcic?
 # SH bus
 shb*	at mainbus?
 
-# ob-board I/O bus
+# on-board I/O bus
 obio0	at mainbus?
 
 # Serial Devices
