@@ -52,20 +52,20 @@ drm_hash_magic(drm_magic_t magic)
 drm_file_t *
 drm_find_file(drm_device_t *dev, drm_magic_t magic)
 {
-	drm_magic_entry_t *pt;
+	struct drm_magic_entry *pt;
 	int hash;
 
 	hash = drm_hash_magic(magic);
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
-	for (pt = dev->magiclist[hash].head; pt; pt = pt->next) {
+	TAILQ_FOREACH(pt, &dev->magiclist[hash], link) {
 		if (pt->magic == magic) {
-			return pt->priv;
+			return (pt->priv);
 		}
 	}
 
-	return NULL;
+	return (NULL);
 }
 
 /**
@@ -76,7 +76,7 @@ int
 drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 {
 	int hash;
-	drm_magic_entry_t *entry;
+	struct drm_magic_entry *entry;
 
 	DRM_DEBUG("%d\n", magic);
 
@@ -87,15 +87,7 @@ drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 	if (!entry) return ENOMEM;
 	entry->magic = magic;
 	entry->priv  = priv;
-	entry->next  = NULL;
-
-	if (dev->magiclist[hash].tail) {
-		dev->magiclist[hash].tail->next = entry;
-		dev->magiclist[hash].tail = entry;
-	} else {
-		dev->magiclist[hash].head = entry;
-		dev->magiclist[hash].tail = entry;
-	}
+	TAILQ_INSERT_TAIL(&dev->magiclist[hash], entry, link);
 
 	return 0;
 }
@@ -107,8 +99,8 @@ drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 int
 drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
 {
-	drm_magic_entry_t *prev = NULL;
-	drm_magic_entry_t *pt;
+	struct drm_magic_entry *prev = NULL;
+	struct drm_magic_entry *pt;
 	int hash;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
@@ -116,17 +108,11 @@ drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
 	DRM_DEBUG("%d\n", magic);
 	hash = drm_hash_magic(magic);
 
-	for (pt = dev->magiclist[hash].head; pt; prev = pt, pt = pt->next) {
+	for (pt = TAILQ_FIRST(&dev->magiclist[hash]);
+	    pt != TAILQ_END(&dev->magiclist[hash]);
+	    prev = pt, pt = TAILQ_NEXT(pt, link)) {
 		if (pt->magic == magic) {
-			if (dev->magiclist[hash].head == pt) {
-				dev->magiclist[hash].head = pt->next;
-			}
-			if (dev->magiclist[hash].tail == pt) {
-				dev->magiclist[hash].tail = prev;
-			}
-			if (prev) {
-				prev->next = pt->next;
-			}
+			TAILQ_REMOVE(&dev->magiclist[hash], pt, link);
 			return 0;
 		}
 	}

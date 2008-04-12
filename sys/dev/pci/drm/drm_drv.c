@@ -381,8 +381,7 @@ drm_firstopen(drm_device_t *dev)
 		atomic_set( &dev->counts[i], 0 );
 
 	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
-		dev->magiclist[i].head = NULL;
-		dev->magiclist[i].tail = NULL;
+		TAILQ_INIT(&dev->magiclist[i]);
 	}
 
 	dev->lock.lock_queue = 0;
@@ -405,7 +404,7 @@ drm_firstopen(drm_device_t *dev)
 int
 drm_lastclose(drm_device_t *dev)
 {
-	drm_magic_entry_t *pt, *next;
+	struct drm_magic_entry *pt;
 	drm_local_map_t *map;
 #ifdef __FreeBSD__
 	drm_local_map_t *mapsave;
@@ -429,11 +428,9 @@ drm_lastclose(drm_device_t *dev)
 	}
 				/* Clear pid list */
 	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
-		for ( pt = dev->magiclist[i].head ; pt ; pt = next ) {
-			next = pt->next;
-			free(pt, M_DRM);
+		while ((pt = TAILQ_FIRST(&dev->magiclist[i])) != NULL) {
+			TAILQ_REMOVE(&dev->magiclist[i], pt, link);
 		}
-		dev->magiclist[i].head = dev->magiclist[i].tail = NULL;
 	}
 
 				/* Clear AGP information */

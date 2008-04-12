@@ -540,16 +540,13 @@ typedef struct drm_ioctl_desc {
 #define DRM_IOCTL_DEF(ioctl, func, flags) \
 	[DRM_IOCTL_NR(ioctl)] = {ioctl, func, flags}
 
-typedef struct drm_magic_entry {
+typedef TAILQ_HEAD(drm_magic_list, drm_magic_entry) drm_magic_head_t;
+struct drm_magic_entry {
 	drm_magic_t	       magic;
 	struct drm_file	       *priv;
-	struct drm_magic_entry *next;
-} drm_magic_entry_t;
+	TAILQ_ENTRY(drm_magic_entry) link;
+};
 
-typedef struct drm_magic_head {
-	struct drm_magic_entry *head;
-	struct drm_magic_entry *tail;
-} drm_magic_head_t;
 
 typedef struct drm_buf {
 	int		  idx;	       /* Index into master buflist	     */
