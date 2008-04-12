@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.19 2007/11/30 07:52:06 miod Exp $
+#	$OpenBSD: Makefile.sgi,v 1.20 2008/04/12 21:04:17 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -49,7 +49,7 @@ INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__sgi__
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
-		-Wstack-larger-than-2047
+		-Wstack-larger-than-2047 -Wvariable-decl
 CMACHFLAGS+=	-mno-abicalls ${ABI} -msoft-float \
 		-fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}

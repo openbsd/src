@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.6 2007/11/30 07:52:06 miod Exp $
+#	$OpenBSD: Makefile.aviion,v 1.7 2008/04/12 21:04:16 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -38,7 +38,7 @@ INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Daviion -Dm88k
 CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes \
-		-Wstack-larger-than-2047
+		-Wstack-larger-than-2047 -Wvariable-decl
 CMACHFLAGS=	-mno-check-zero-division -mmemcpy \
 		-fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
