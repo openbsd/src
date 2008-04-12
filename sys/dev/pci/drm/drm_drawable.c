@@ -42,7 +42,7 @@ int	drm_drawable_compare(struct bsd_drm_drawable_info *,
 void	drm_drawable_free(struct drm_device *dev,
 	    struct bsd_drm_drawable_info *draw);
 struct bsd_drm_drawable_info *
-	drm_get_drawable(struct drm_device *, int);
+	drm_get_drawable(struct drm_device *, unsigned int);
 
 #ifdef __OpenBSD__
 RB_PROTOTYPE(drawable_tree, bsd_drm_drawable_info, tree,
@@ -51,7 +51,7 @@ RB_PROTOTYPE(drawable_tree, bsd_drm_drawable_info, tree,
 
 struct bsd_drm_drawable_info {
 	struct drm_drawable_info info;
-	int handle;
+	unsigned int handle;
 	RB_ENTRY(bsd_drm_drawable_info) tree;
 };
 
@@ -75,7 +75,7 @@ RB_GENERATE(drawable_tree, bsd_drm_drawable_info, tree,
 #endif
 
 struct bsd_drm_drawable_info *
-drm_get_drawable(struct drm_device *dev, int handle)
+drm_get_drawable(struct drm_device *dev, unsigned int handle)
 {
 	struct bsd_drm_drawable_info find;
 
@@ -84,7 +84,7 @@ drm_get_drawable(struct drm_device *dev, int handle)
 }
 
 struct drm_drawable_info *
-drm_get_drawable_info(drm_device_t *dev, int handle)
+drm_get_drawable_info(drm_device_t *dev, unsigned int handle)
 {
 	struct bsd_drm_drawable_info *result = NULL;
 
@@ -108,7 +108,7 @@ drm_adddraw(drm_device_t *dev, void *data, struct drm_file *file_priv)
 #ifdef __FreeBSD__
 	info->handle = alloc_unr(dev->drw_unrhdr);
 #else
-	info->handle = (int)&info; /* pointers should be unique. */
+	info->handle = ++dev->drw_no;
 #endif
 	DRM_SPINLOCK(&dev->drw_lock);
 	RB_INSERT(drawable_tree, &dev->drw_head, info);
