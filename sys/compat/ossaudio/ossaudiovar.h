@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudiovar.h,v 1.3 1999/11/20 18:52:00 espie Exp $	*/
+/*	$OpenBSD: ossaudiovar.h,v 1.4 2008/04/12 22:53:20 jakemsr Exp $	*/
 /*	$NetBSD: ossaudiovar.h,v 1.4 1997/10/16 16:49:40 augustss Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct oss_sys_ioctl_args {
 #define OSS_SNDCTL_DSP_SETSYNCRO	_OSS_IO  ('P', 21)
 #define OSS_SNDCTL_DSP_SETDUPLEX	_OSS_IO  ('P', 22)
 #define OSS_SNDCTL_DSP_PROFILE		_OSS_IOW ('P', 23, int)
+#define OSS_SNDCTL_DSP_GETODELAY	_OSS_IOR ('P', 24, int)
 #define	  OSS_APF_NORMAL		0	/* Normal applications */
 #define	  OSS_APF_NETWORK		1	/* "external" delays */
 #define   OSS_APF_CPUINTENS		2	/* CPU delays */
