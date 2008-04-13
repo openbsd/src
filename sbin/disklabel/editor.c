@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.166 2008/01/26 15:37:59 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.167 2008/04/13 15:54:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.166 2008/01/26 15:37:59 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.167 2008/04/13 15:54:59 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1543,33 +1543,22 @@ editor_help(char *arg)
 		break;
 	default:
 		puts("Available commands:");
-		puts("\t? [cmnd]  - this message or command specific help.");
-		puts("\ta [part]  - add new partition.");
-		puts("\tb         - set OpenBSD disk boundaries.");
-		puts("\tc [part]  - change partition size.");
-		puts("\tD         - set label to default.");
-		puts("\td [part]  - delete partition.");
-		puts("\te         - edit drive parameters.");
-		puts("\tg [d|u]   - use [d]isk or [u]ser geometry.");
-		puts("\tM         - show entire OpenBSD man page for disklabel.");
-		puts("\tm [part]  - modify existing partition.");
-		puts("\tn [part]  - set the mount point for a partition.");
-		puts("\tp [unit]  - print label.");
-		puts("\tq         - quit and save changes.");
-		puts("\tr         - recalculate & display free space details.");
-		puts("\ts [path]  - save label to file.");
-		puts("\tu         - undo last change.");
-		puts("\tw         - write label to disk.");
-		puts("\tX         - toggle expert mode.");
-		puts("\tx         - exit without saving changes.");
-		puts("\tz         - zero out partition table.");
 		puts(
-"Numeric parameters may use suffixes to indicate units:\n\t"
-"'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t"
-"'g' for gigabytes or no suffix for sectors (usually 512 bytes).\n\t"
-"'%' for percent of total disk size, '&' for percent of free space.\n\t"
-"Non-sector units will be rounded to the nearest cylinder.\n"
-"Entering '?' at most prompts will give you (simple) context sensitive help.");
+"  ? [command] - show help                   n [part] - set mount point\n"
+"  a [part]    - add partition               p [unit] - print label\n"
+"  b           - set OpenBSD boundaries      q        - quit & save changes\n"
+"  c [part]    - change partition size       r        - display free space\n"
+"  D           - reset label to default      s [path] - save label to file\n"
+"  d [part]    - delete partition            u        - undo last change\n"
+"  e           - edit drive parameters       w        - write label to disk\n"
+"  g [d|u]     - [d]isk or [u]ser geometry   X        - toggle expert mode\n"
+"  M           - disklabel(8) man page       x        - exit w/o saving changes\n"
+"  m [part]    - modify partition            z        - delete all partitions\n"
+"\n"
+"Suffixes can be used to indicate units other than sectors:\n"
+"\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
+"\t'c' (cylinders), '%' (% of total disk), '&' (% of free space).\n"
+"Values in non-sector units are truncated to the nearest cylinder boundary.");
 		break;
 	}
 }
