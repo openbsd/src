@@ -432,6 +432,7 @@ drm_lastclose(drm_device_t *dev)
 	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
 		while ((pt = TAILQ_FIRST(&dev->magiclist[i])) != NULL) {
 			TAILQ_REMOVE(&dev->magiclist[i], pt, link);
+			free(pt, M_DRM);
 		}
 	}
 
