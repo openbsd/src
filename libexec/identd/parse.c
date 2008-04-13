@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.45 2007/09/26 02:50:36 ray Exp $	*/
+/*	$OpenBSD: parse.c,v 1.46 2008/04/13 00:22:17 djm Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -105,9 +105,9 @@ gentoken(char *buf, int len)
 		return;
 	for (p = buf; len > 1; p++, len--) {
 		if (p == buf)
-			*p = token0cnv[arc4random() % (sizeof token0cnv-1)];
+			*p = token0cnv[arc4random_uniform(sizeof(token0cnv)-1)];
 		else
-			*p = tokencnv[arc4random() % (sizeof tokencnv-1)];
+			*p = tokencnv[arc4random_uniform(sizeof(tokencnv)-1)];
 	}
 	*p = '\0';
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.101 2007/08/28 17:57:16 jasper Exp $	*/
+/*	$OpenBSD: theo.c,v 1.102 2008/04/13 00:22:17 djm Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -158,7 +158,7 @@ theo_analyze(int f, int n)
 	const char	*str;
 	int		 len;
 
-	str = talk[arc4random() % ntalk];
+	str = talk[arc4random_uniform(ntalk)];
 	len = strlen(str);
 
 	newline(FFRAND, 2);

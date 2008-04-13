@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal-stress.c,v 1.2 2004/08/05 15:06:59 art Exp $	*/
+/*	$OpenBSD: signal-stress.c,v 1.3 2008/04/13 00:22:17 djm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2004 Public Domain.
  */
@@ -140,14 +140,14 @@ main()
 	 * Now all children are ready for action.
 	 * Send the first signals and wait until they all exit.
 	 */
-	kill(pids[arc4random() % nprocs], SIGUSR1);
-	kill(pids[arc4random() % nprocs], SIGUSR2);
+	kill(pids[arc4random_uniform(nprocs)], SIGUSR1);
+	kill(pids[arc4random_uniform(nprocs)], SIGUSR2);
 
 	/*
 	 * The signal game is running, now insert noise in the process.
 	 */
 	for (i = 0; i < nprocs; i++) {
-		pid_t pid = pids[arc4random() % nprocs];
+		pid_t pid = pids[arc4random_uniform(nprocs)];
 		kill(pid, SIGSTOP);
 		wait_stopped(pid);
 		kill(pid, SIGCONT);

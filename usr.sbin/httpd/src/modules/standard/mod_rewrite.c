@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.25 2006/07/28 13:52:30 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.26 2008/04/13 00:22:17 djm Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3171,13 +3171,7 @@ static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
 
 static int rewrite_rand(int l, int h)
 {
-    /* Get [0,1) and then scale to the appropriate range. Note that using
-     * a floating point value ensures that we use all bits of the arc4random()
-     * result. Doing an integer modulus would yield a non-uniformly distibuted
-     * result, because MAX_UINT may not be divisble by the size of the
-     * interval.
-     */
-    return (int)(arc4random() / ((double)0xffffffffU + 1) * (h - l + 1) + l);
+    return arc4random_uniform(1 + h - l) + l;
 }
 
 static char *select_random_value_part(request_rec *r, char *value)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rb-test.c,v 1.3 2003/07/31 21:48:10 deraadt Exp $	*/
+/*	$OpenBSD: rb-test.c,v 1.4 2008/04/13 00:22:17 djm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -67,7 +67,7 @@ main(int argc, char **argv)
 		tmp = malloc(sizeof(struct node));
 		if (tmp == NULL) err(1, "malloc");
 		do {
-			tmp->key = arc4random() % (MAX-MIN);
+			tmp->key = arc4random_uniform(MAX-MIN);
 			tmp->key += MIN;
 		} while (RB_FIND(tree, &root, tmp) != NULL);
 		if (i == 0)

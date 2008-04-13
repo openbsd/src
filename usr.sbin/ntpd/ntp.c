@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.103 2008/01/28 11:45:59 mpf Exp $ */
+/*	$OpenBSD: ntp.c,v 1.104 2008/04/13 00:22:17 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -659,7 +659,7 @@ scale_interval(time_t requested)
 	time_t interval, r;
 
 	interval = requested * conf->scale;
-	r = arc4random() % MAX(5, interval / 10);
+	r = arc4random_uniform(MAX(5, interval / 10));
 	return (interval + r);
 }
 
@@ -669,7 +669,7 @@ error_interval(void)
 	time_t interval, r;
 
 	interval = INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN;
-	r = arc4random() % (interval / 10);
+	r = arc4random_uniform(interval / 10);
 	return (interval + r);
 }
 

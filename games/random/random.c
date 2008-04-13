@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.10 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: random.c,v 1.11 2008/04/13 00:22:16 djm Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)random.c	8.5 (Berkeley) 4/5/94";
 #else
-static char rcsid[] = "$OpenBSD: random.c,v 1.10 2004/07/10 07:26:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: random.c,v 1.11 2008/04/13 00:22:16 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 
 	/* Compute a random exit status between 0 and denom - 1. */
 	if (random_exit)
-		return (arc4random() % (u_int32_t)denom);
+		return (arc4random_uniform(denom));
 
 	/*
 	 * Act as a filter, randomly choosing lines of the standard input
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 	 * 0 (which has a 1 / denom chance of being true), we select the
 	 * line.
 	 */
-	selected = (int)(arc4random() % (u_int32_t)denom) == 0;
+	selected = arc4random_uniform(denom) == 0;
 	while ((ch = getchar()) != EOF) {
 		if (selected)
 			(void)putchar(ch);
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 				err(2, "stdout");
 
 			/* Now see if the next line is to be printed. */
-			selected = (int)(arc4random() % (u_int32_t)denom) == 0;
+			selected = arc4random_uniform(denom) == 0;
 		}
 	}
 	if (ferror(stdin))

@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.5 2008/03/24 16:11:00 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.6 2008/04/13 00:22:17 djm Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -383,8 +383,8 @@ sock_ntop(struct sockaddr *sa)
 u_int16_t
 pick_proxy_port(void)
 {
-	return (IPPORT_HIFIRSTAUTO + (arc4random() %
-	    (IPPORT_HILASTAUTO - IPPORT_HIFIRSTAUTO)));
+	return (IPPORT_HIFIRSTAUTO +
+	    arc4random_uniform(IPPORT_HILASTAUTO - IPPORT_HIFIRSTAUTO));
 }
 
 static void

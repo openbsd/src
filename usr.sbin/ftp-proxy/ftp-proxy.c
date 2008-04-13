@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.16 2008/02/26 18:52:53 henning Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.17 2008/04/13 00:22:17 djm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -834,8 +834,8 @@ u_int16_t
 pick_proxy_port(void)
 {
 	/* Random should be good enough for avoiding port collisions. */
-	return (IPPORT_HIFIRSTAUTO + (arc4random() %
-	    (IPPORT_HILASTAUTO - IPPORT_HIFIRSTAUTO)));
+	return (IPPORT_HIFIRSTAUTO +
+	    arc4random_uniform(IPPORT_HILASTAUTO - IPPORT_HIFIRSTAUTO));
 }
 
 void

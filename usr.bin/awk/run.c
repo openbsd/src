@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.27 2008/02/27 17:19:34 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.28 2008/04/13 00:22:17 djm Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1515,7 +1515,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FRAND:
 		if (use_arc4)
-			u = (Awkfloat) (arc4random() % RAND_MAX) / RAND_MAX;
+			u = (Awkfloat)arc4random() / 0xffffffff;
 		else
 			u = (Awkfloat) (random() % RAND_MAX) / RAND_MAX;
 		break;

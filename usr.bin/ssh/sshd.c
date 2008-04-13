@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.355 2008/02/14 13:10:31 mbalmer Exp $ */
+/* $OpenBSD: sshd.c,v 1.356 2008/04/13 00:22:17 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -348,9 +348,6 @@ grace_alarm_handler(int sig)
 static void
 generate_ephemeral_server_key(void)
 {
-	u_int32_t rnd = 0;
-	int i;
-
 	verbose("Generating %s%d bit RSA key.",
 	    sensitive_data.server_key ? "new " : "", options.server_key_bits);
 	if (sensitive_data.server_key != NULL)
@@ -359,12 +356,7 @@ generate_ephemeral_server_key(void)
 	    options.server_key_bits);
 	verbose("RSA key generation complete.");
 
-	for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++) {
-		if (i % 4 == 0)
-			rnd = arc4random();
-		sensitive_data.ssh1_cookie[i] = rnd & 0xff;
-		rnd >>= 8;
-	}
+	arc4random_buf(sensitive_data.ssh1_cookie, SSH_SESSION_KEY_LENGTH);
 	arc4random_stir();
 }
 
@@ -566,14 +558,12 @@ privsep_preauth_child(void)
 	u_int32_t rnd[256];
 	gid_t gidset[1];
 	struct passwd *pw;
-	u_int i;
 
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
 
 	arc4random_stir();
-	for (i = 0; i < 256; i++)
-		rnd[i] = arc4random();
+	arc4random_buf(rnd, sizeof(rnd));
 	RAND_seed(rnd, sizeof(rnd));
 
 	/* Demote the private keys to public keys. */
@@ -653,7 +643,6 @@ static void
 privsep_postauth(Authctxt *authctxt)
 {
 	u_int32_t rnd[256];
-	u_int i;
 
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
@@ -683,8 +672,7 @@ privsep_postauth(Authctxt *authctxt)
 	demote_sensitive_data();
 
 	arc4random_stir();
-	for (i = 0; i < 256; i++)
-		rnd[i] = arc4random();
+	arc4random_buf(rnd, sizeof(rnd));
 	RAND_seed(rnd, sizeof(rnd));
 
 	/* Drop privileges */
@@ -786,7 +774,7 @@ drop_connection(int startups)
 	p *= startups - options.max_startups_begin;
 	p /= options.max_startups - options.max_startups_begin;
 	p += options.max_startups_rate;
-	r = arc4random() % 100;
+	r = arc4random_uniform(100);
 
 	debug("drop_connection: p %d, r %d", p, r);
 	return (r < p) ? 1 : 0;
@@ -1808,7 +1796,6 @@ do_ssh1_kex(void)
 	u_char session_key[SSH_SESSION_KEY_LENGTH];
 	u_char cookie[8];
 	u_int cipher_type, auth_mask, protocol_flags;
-	u_int32_t rnd = 0;
 
 	/*
 	 * Generate check bytes that the client must send back in the user
@@ -1819,12 +1806,7 @@ do_ssh1_kex(void)
 	 * cookie.  This only affects rhosts authentication, and this is one
 	 * of the reasons why it is inherently insecure.
 	 */
-	for (i = 0; i < 8; i++) {
-		if (i % 4 == 0)
-			rnd = arc4random();
-		cookie[i] = rnd & 0xff;
-		rnd >>= 8;
-	}
+	arc4random_buf(cookie, sizeof(cookie));
 
 	/*
 	 * Send our public key.  We include in the packet 64 bits of random

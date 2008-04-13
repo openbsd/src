@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.26 2008/03/17 09:17:56 sobrado Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.27 2008/04/13 00:22:16 djm Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.26 2008/03/17 09:17:56 sobrado Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.27 2008/04/13 00:22:16 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -909,7 +909,7 @@ get_fort(void)
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
 	else {
-		choice = arc4random() % 100;
+		choice = arc4random_uniform(100);
 		DPRINTF(1, (stderr, "choice = %d\n", choice));
 		for (fp = File_list; fp->percent != NO_PROB; fp = fp->next)
 			if (choice < fp->percent)
@@ -929,7 +929,7 @@ get_fort(void)
 	else {
 		if (fp->next != NULL) {
 			sum_noprobs(fp);
-			choice = arc4random() % Noprob_tbl.str_numstr;
+			choice = arc4random_uniform(Noprob_tbl.str_numstr);
 			DPRINTF(1, (stderr, "choice = %d (of %d) \n", choice,
 				    Noprob_tbl.str_numstr));
 			while (choice >= fp->tbl.str_numstr) {
@@ -971,7 +971,7 @@ pick_child(FILEDESC *parent)
 	int		choice;
 
 	if (Equal_probs) {
-		choice = arc4random() % parent->num_children;
+		choice = arc4random_uniform(parent->num_children);
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->num_children));
 		for (fp = parent->child; choice--; fp = fp->next)
@@ -981,7 +981,7 @@ pick_child(FILEDESC *parent)
 	}
 	else {
 		get_tbl(parent);
-		choice = arc4random() % parent->tbl.str_numstr;
+		choice = arc4random_uniform(parent->tbl.str_numstr);
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->tbl.str_numstr));
 		for (fp = parent->child; choice >= fp->tbl.str_numstr;
@@ -1065,7 +1065,7 @@ get_pos(FILEDESC *fp)
 #ifdef	OK_TO_WRITE_DISK
 		if ((fd = open(fp->posfile, 0)) < 0 ||
 		    read(fd, &fp->pos, sizeof fp->pos) != sizeof fp->pos)
-			fp->pos = arc4random() % fp->tbl.str_numstr;
+			fp->pos = arc4random_uniform(fp->tbl.str_numstr);
 		else if (ntohl(fp->pos) >= fp->tbl.str_numstr)
 			fp->pos %= fp->tbl.str_numstr;
 		else
@@ -1073,7 +1073,7 @@ get_pos(FILEDESC *fp)
 		if (fd >= 0)
 			(void) close(fd);
 #else
-		fp->pos = arc4random() % fp->tbl.str_numstr;
+		fp->pos = arc4random_uniform(fp->tbl.str_numstr);
 #endif /* OK_TO_WRITE_DISK */
 	}
 	if (++(fp->pos) >= fp->tbl.str_numstr)
