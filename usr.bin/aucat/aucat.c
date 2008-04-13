@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.13 2007/03/20 23:35:15 uwe Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.14 2008/04/13 22:39:29 jakemsr Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -46,11 +46,11 @@
  * uncompressed WAVE RIFF files
  */
 
-int 	playfile(int, char *, audio_info_t *);
-int	readwaveheader(int, audio_info_t *);
-void	usage(void) __attribute__((__noreturn__));
+int 		playfile(int, audio_info_t *);
+int		readwaveheader(int, audio_info_t *);
+__dead void	usage(void);
 
-int afd = -1;
+int afd;
 
 /*
  * function playfile: given a file which is positioned at the beginning
@@ -58,15 +58,10 @@ int afd = -1;
  * device.  Return 0 on success, -1 on failure.
  */
 int
-playfile(int fd, char *dev, audio_info_t *audioinfo)
+playfile(int fd, audio_info_t *audioinfo)
 {
 	ssize_t rd;
 	char buf[5120];
-
-	if (afd == -1 && (afd = open(dev, O_WRONLY)) < 0) {
-		warn("can't open %s", dev);
-		return(-1);
-	}
 
 	/*
 	 * If we don't wait here, the AUDIO_SETINFO ioctl interrupts
@@ -216,7 +211,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	if (afd == -1 && (afd = open(dev, O_WRONLY)) < 0)
+	if ((afd = open(dev, O_WRONLY)) < 0)
 		err(1, "can't open %s", dev);
 
 	if (ioctl(afd, AUDIO_GETINFO, &ai_defaults) == -1)
@@ -257,7 +252,7 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (playfile(fd, dev, &ai) < 0)
+		if (playfile(fd, &ai) < 0)
 			exit(1);
 		(void) close(fd);
 		argc--;
@@ -266,7 +261,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
