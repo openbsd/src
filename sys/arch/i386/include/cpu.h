@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.99 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.100 2008/04/13 11:35:55 thib Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ curcpu(void)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 extern struct cpu_info	*cpu_info[MAXCPUS];
-extern u_long		 cpus_running;
 
 extern void cpu_boot_secondary_processors(void);
 extern void cpu_init_idle_pcbs(void);

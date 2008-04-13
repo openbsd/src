@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2007/11/16 16:16:07 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2008/04/13 11:35:55 thib Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -150,8 +150,6 @@ u_int32_t cpus_attached = 0;
  * curproc, etc. are used early.
  */
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
-
-u_int32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -397,7 +395,6 @@ cpu_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= 1 << ci->ci_cpuid;
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.2 2008/04/13 11:35:55 thib Exp $	*/
 /* 	$NetBSD: cpuvar.h,v 1.1 2003/03/01 18:29:28 fvdl Exp $ */
 
 /*-
@@ -93,10 +93,6 @@ struct cpu_attach_args {
 #define MP_PICMODE	0x00000001      /* System booted in picmode */
 
 #ifdef _KERNEL
-
-#ifdef MULTIPROCESSOR
-extern u_int32_t cpus_running;
-#endif
 
 int x86_ipi(int,int,int);
 void x86_self_ipi(int);
