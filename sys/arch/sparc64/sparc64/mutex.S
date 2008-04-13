@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.2 2008/03/31 22:14:01 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.3 2008/04/13 16:32:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -27,15 +27,8 @@
 
 #ifdef MULTIPROCESSOR
 
-#include <machine/ctlreg.h>
-
 #define GET_CURCPU(ci) \
-	sethi	%hi(CPUINFO_VA + CI_SELF), ci		;\
-999:	ldx	[ci + %lo(CPUINFO_VA + CI_SELF)], ci	;\
-	.section	.sun4v_mp_patch, "ax"		;\
-	.word	999b					;\
-	ldxa	[%g0] ASI_SCRATCHPAD, ci		;\
-	.previous
+	ldx	[%g7 + CI_SELF], ci
 
 #else
 
@@ -88,13 +81,3 @@ ENTRY(mtx_leave)
 	stx	%g0, [%o0 + MTX_OWNER]
 	retl
 	 wrpr	%g1, %pil
-
-/*
- *	XXX Move this back to locore.s.
- */
-#ifdef MULTIPROCESSOR
-	.section	.sun4v_mp_patch, "ax"
-	.globl _C_LABEL(sun4v_mp_patch_end)
-_C_LABEL(sun4v_mp_patch_end):
-	.previous
-#endif

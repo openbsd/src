@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2008/03/31 22:14:01 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2008/04/13 16:32:55 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -162,12 +162,10 @@ extern __inline struct cpu_info *curcpu(void);
 extern __inline struct cpu_info *
 curcpu(void)
 {
-	if (CPU_ISSUN4V) {
-		__asm __volatile("nop" : : : "memory");
-		return (struct cpu_info *)ldxa(0, ASI_SCRATCHPAD);
-	}
+	struct cpu_info *ci;
 
-	return (((struct cpu_info *)CPUINFO_VA)->ci_self);
+	__asm __volatile("mov %%g7, %0" : "=r"(ci));
+	return (ci->ci_self);
 }
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)

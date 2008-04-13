@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.131 2008/04/12 14:59:30 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.132 2008/04/13 16:32:55 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2352,6 +2352,8 @@ Ldatafault_internal:
 	/* Finish stackframe, call C trap handler */
 	flushw						! Get this clean so we won't take any more user faults
 
+	GET_CPUINFO_VA(%g7)
+
 	/*
 	 * Right now the registers have the following values:
 	 *
@@ -2580,7 +2582,9 @@ textfault:
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	flushw						! Get rid of any user windows so we don't deadlock
-	
+
+	GET_CPUINFO_VA(%g7)
+
 	/* Use trap type to see what handler to call */
 	cmp	%o1, T_INST_ERROR
 	be,pn	%xcc, text_error
@@ -3318,20 +3322,19 @@ sun4v_datatrap:
 	 */
 	wrpr	%g0, 0, %tl
 
-#ifdef SUN4V
-	GET_CPUINFO_VA(%g1)
-	ldx	[%g1 + CI_RWSP], %g2
+	GET_CPUINFO_VA(%g7)
+	ldx	[%g7 + CI_RWSP], %g2
 	brz,pt	%g2, 1f
 	 nop
 
-	ldx	[%g1 + CI_RW + (0*8)], %l0
-	ldx	[%g1 + CI_RW + (1*8)], %l1
-	ldx	[%g1 + CI_RW + (2*8)], %l2
-	ldx	[%g1 + CI_RW + (3*8)], %l3
-	ldx	[%g1 + CI_RW + (4*8)], %l4
-	ldx	[%g1 + CI_RW + (5*8)], %l5
-	ldx	[%g1 + CI_RW + (6*8)], %l6
-	ldx	[%g1 + CI_RW + (7*8)], %l7
+	ldx	[%g7 + CI_RW + (0*8)], %l0
+	ldx	[%g7 + CI_RW + (1*8)], %l1
+	ldx	[%g7 + CI_RW + (2*8)], %l2
+	ldx	[%g7 + CI_RW + (3*8)], %l3
+	ldx	[%g7 + CI_RW + (4*8)], %l4
+	ldx	[%g7 + CI_RW + (5*8)], %l5
+	ldx	[%g7 + CI_RW + (6*8)], %l6
+	ldx	[%g7 + CI_RW + (7*8)], %l7
 	stx	%l0, [%g2 + BIAS + (0*8)]
 	stx	%l1, [%g2 + BIAS + (1*8)]
 	stx	%l2, [%g2 + BIAS + (2*8)]
@@ -3340,14 +3343,14 @@ sun4v_datatrap:
 	stx	%l5, [%g2 + BIAS + (5*8)]
 	stx	%l6, [%g2 + BIAS + (6*8)]
 	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g1 + CI_RW + (8*8)], %l0
-	ldx	[%g1 + CI_RW + (9*8)], %l1
-	ldx	[%g1 + CI_RW + (10*8)], %l2
-	ldx	[%g1 + CI_RW + (11*8)], %l3
-	ldx	[%g1 + CI_RW + (12*8)], %l4
-	ldx	[%g1 + CI_RW + (13*8)], %l5
-	ldx	[%g1 + CI_RW + (14*8)], %l6
-	ldx	[%g1 + CI_RW + (15*8)], %l7
+	ldx	[%g7 + CI_RW + (8*8)], %l0
+	ldx	[%g7 + CI_RW + (9*8)], %l1
+	ldx	[%g7 + CI_RW + (10*8)], %l2
+	ldx	[%g7 + CI_RW + (11*8)], %l3
+	ldx	[%g7 + CI_RW + (12*8)], %l4
+	ldx	[%g7 + CI_RW + (13*8)], %l5
+	ldx	[%g7 + CI_RW + (14*8)], %l6
+	ldx	[%g7 + CI_RW + (15*8)], %l7
 	stx	%l0, [%g2 + BIAS + (8*8)]
 	stx	%l1, [%g2 + BIAS + (9*8)]
 	stx	%l2, [%g2 + BIAS + (10*8)]
@@ -3357,9 +3360,8 @@ sun4v_datatrap:
 	stx	%l6, [%g2 + BIAS + (14*8)]
 	stx	%l7, [%g2 + BIAS + (15*8)]
 
-	stx	%g0, [%g1 + CI_RWSP]
+	stx	%g0, [%g7 + CI_RWSP]
 1:
-#endif
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3415,20 +3417,19 @@ sun4v_texttrap:
 	 */
 	wrpr	%g0, 0, %tl
 
-#ifdef SUN4V
-	GET_CPUINFO_VA(%g1)
-	ldx	[%g1 + CI_RWSP], %g2
+	GET_CPUINFO_VA(%g7)
+	ldx	[%g7 + CI_RWSP], %g2
 	brz,pt	%g2, 1f
 	 nop
 
-	ldx	[%g1 + CI_RW + (0*8)], %l0
-	ldx	[%g1 + CI_RW + (1*8)], %l1
-	ldx	[%g1 + CI_RW + (2*8)], %l2
-	ldx	[%g1 + CI_RW + (3*8)], %l3
-	ldx	[%g1 + CI_RW + (4*8)], %l4
-	ldx	[%g1 + CI_RW + (5*8)], %l5
-	ldx	[%g1 + CI_RW + (6*8)], %l6
-	ldx	[%g1 + CI_RW + (7*8)], %l7
+	ldx	[%g7 + CI_RW + (0*8)], %l0
+	ldx	[%g7 + CI_RW + (1*8)], %l1
+	ldx	[%g7 + CI_RW + (2*8)], %l2
+	ldx	[%g7 + CI_RW + (3*8)], %l3
+	ldx	[%g7 + CI_RW + (4*8)], %l4
+	ldx	[%g7 + CI_RW + (5*8)], %l5
+	ldx	[%g7 + CI_RW + (6*8)], %l6
+	ldx	[%g7 + CI_RW + (7*8)], %l7
 	stx	%l0, [%g2 + BIAS + (0*8)]
 	stx	%l1, [%g2 + BIAS + (1*8)]
 	stx	%l2, [%g2 + BIAS + (2*8)]
@@ -3437,14 +3438,14 @@ sun4v_texttrap:
 	stx	%l5, [%g2 + BIAS + (5*8)]
 	stx	%l6, [%g2 + BIAS + (6*8)]
 	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g1 + CI_RW + (8*8)], %l0
-	ldx	[%g1 + CI_RW + (9*8)], %l1
-	ldx	[%g1 + CI_RW + (10*8)], %l2
-	ldx	[%g1 + CI_RW + (11*8)], %l3
-	ldx	[%g1 + CI_RW + (12*8)], %l4
-	ldx	[%g1 + CI_RW + (13*8)], %l5
-	ldx	[%g1 + CI_RW + (14*8)], %l6
-	ldx	[%g1 + CI_RW + (15*8)], %l7
+	ldx	[%g7 + CI_RW + (8*8)], %l0
+	ldx	[%g7 + CI_RW + (9*8)], %l1
+	ldx	[%g7 + CI_RW + (10*8)], %l2
+	ldx	[%g7 + CI_RW + (11*8)], %l3
+	ldx	[%g7 + CI_RW + (12*8)], %l4
+	ldx	[%g7 + CI_RW + (13*8)], %l5
+	ldx	[%g7 + CI_RW + (14*8)], %l6
+	ldx	[%g7 + CI_RW + (15*8)], %l7
 	stx	%l0, [%g2 + BIAS + (8*8)]
 	stx	%l1, [%g2 + BIAS + (9*8)]
 	stx	%l2, [%g2 + BIAS + (10*8)]
@@ -3454,9 +3455,8 @@ sun4v_texttrap:
 	stx	%l6, [%g2 + BIAS + (14*8)]
 	stx	%l7, [%g2 + BIAS + (15*8)]
 
-	stx	%g0, [%g1 + CI_RWSP]
+	stx	%g0, [%g7 + CI_RWSP]
 1:
-#endif
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3582,20 +3582,20 @@ gl0_1:	nop
 	 */
 	wrpr	%g0, 0, %tl
 
+	GET_CPUINFO_VA(%g7)
 #ifdef SUN4V
-	GET_CPUINFO_VA(%g1)
-	ldx	[%g1 + CI_RWSP], %g2
+	ldx	[%g7 + CI_RWSP], %g2
 	brz,pt	%g2, 1f
 	 nop
 
-	ldx	[%g1 + CI_RW + (0*8)], %l0
-	ldx	[%g1 + CI_RW + (1*8)], %l1
-	ldx	[%g1 + CI_RW + (2*8)], %l2
-	ldx	[%g1 + CI_RW + (3*8)], %l3
-	ldx	[%g1 + CI_RW + (4*8)], %l4
-	ldx	[%g1 + CI_RW + (5*8)], %l5
-	ldx	[%g1 + CI_RW + (6*8)], %l6
-	ldx	[%g1 + CI_RW + (7*8)], %l7
+	ldx	[%g7 + CI_RW + (0*8)], %l0
+	ldx	[%g7 + CI_RW + (1*8)], %l1
+	ldx	[%g7 + CI_RW + (2*8)], %l2
+	ldx	[%g7 + CI_RW + (3*8)], %l3
+	ldx	[%g7 + CI_RW + (4*8)], %l4
+	ldx	[%g7 + CI_RW + (5*8)], %l5
+	ldx	[%g7 + CI_RW + (6*8)], %l6
+	ldx	[%g7 + CI_RW + (7*8)], %l7
 	stx	%l0, [%g2 + BIAS + (0*8)]
 	stx	%l1, [%g2 + BIAS + (1*8)]
 	stx	%l2, [%g2 + BIAS + (2*8)]
@@ -3604,14 +3604,14 @@ gl0_1:	nop
 	stx	%l5, [%g2 + BIAS + (5*8)]
 	stx	%l6, [%g2 + BIAS + (6*8)]
 	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g1 + CI_RW + (8*8)], %l0
-	ldx	[%g1 + CI_RW + (9*8)], %l1
-	ldx	[%g1 + CI_RW + (10*8)], %l2
-	ldx	[%g1 + CI_RW + (11*8)], %l3
-	ldx	[%g1 + CI_RW + (12*8)], %l4
-	ldx	[%g1 + CI_RW + (13*8)], %l5
-	ldx	[%g1 + CI_RW + (14*8)], %l6
-	ldx	[%g1 + CI_RW + (15*8)], %l7
+	ldx	[%g7 + CI_RW + (8*8)], %l0
+	ldx	[%g7 + CI_RW + (9*8)], %l1
+	ldx	[%g7 + CI_RW + (10*8)], %l2
+	ldx	[%g7 + CI_RW + (11*8)], %l3
+	ldx	[%g7 + CI_RW + (12*8)], %l4
+	ldx	[%g7 + CI_RW + (13*8)], %l5
+	ldx	[%g7 + CI_RW + (14*8)], %l6
+	ldx	[%g7 + CI_RW + (15*8)], %l7
 	stx	%l0, [%g2 + BIAS + (8*8)]
 	stx	%l1, [%g2 + BIAS + (9*8)]
 	stx	%l2, [%g2 + BIAS + (10*8)]
@@ -3621,7 +3621,7 @@ gl0_1:	nop
 	stx	%l6, [%g2 + BIAS + (14*8)]
 	stx	%l7, [%g2 + BIAS + (15*8)]
 
-	stx	%g0, [%g1 + CI_RWSP]
+	stx	%g0, [%g7 + CI_RWSP]
 1:
 #endif
 
@@ -3754,6 +3754,7 @@ gl0_2:	nop
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
+	GET_CPUINFO_VA(%g7)
 	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
@@ -4251,20 +4252,20 @@ gl0_3:	nop
 gl0_x:
 	flushw			! Do not remove this instruction -- causes interrupt loss
 
+	GET_CPUINFO_VA(%g7)
 #ifdef SUN4V
-	GET_CPUINFO_VA(%g1)
-	ldx	[%g1 + CI_RWSP], %g2
+	ldx	[%g7 + CI_RWSP], %g2
 	brz,pt	%g2, 1f
 	 nop
 
-	ldx	[%g1 + CI_RW + (0*8)], %l0
-	ldx	[%g1 + CI_RW + (1*8)], %l1
-	ldx	[%g1 + CI_RW + (2*8)], %l2
-	ldx	[%g1 + CI_RW + (3*8)], %l3
-	ldx	[%g1 + CI_RW + (4*8)], %l4
-	ldx	[%g1 + CI_RW + (5*8)], %l5
-	ldx	[%g1 + CI_RW + (6*8)], %l6
-	ldx	[%g1 + CI_RW + (7*8)], %l7
+	ldx	[%g7 + CI_RW + (0*8)], %l0
+	ldx	[%g7 + CI_RW + (1*8)], %l1
+	ldx	[%g7 + CI_RW + (2*8)], %l2
+	ldx	[%g7 + CI_RW + (3*8)], %l3
+	ldx	[%g7 + CI_RW + (4*8)], %l4
+	ldx	[%g7 + CI_RW + (5*8)], %l5
+	ldx	[%g7 + CI_RW + (6*8)], %l6
+	ldx	[%g7 + CI_RW + (7*8)], %l7
 	stx	%l0, [%g2 + BIAS + (0*8)]
 	stx	%l1, [%g2 + BIAS + (1*8)]
 	stx	%l2, [%g2 + BIAS + (2*8)]
@@ -4273,14 +4274,14 @@ gl0_x:
 	stx	%l5, [%g2 + BIAS + (5*8)]
 	stx	%l6, [%g2 + BIAS + (6*8)]
 	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g1 + CI_RW + (8*8)], %l0
-	ldx	[%g1 + CI_RW + (9*8)], %l1
-	ldx	[%g1 + CI_RW + (10*8)], %l2
-	ldx	[%g1 + CI_RW + (11*8)], %l3
-	ldx	[%g1 + CI_RW + (12*8)], %l4
-	ldx	[%g1 + CI_RW + (13*8)], %l5
-	ldx	[%g1 + CI_RW + (14*8)], %l6
-	ldx	[%g1 + CI_RW + (15*8)], %l7
+	ldx	[%g7 + CI_RW + (8*8)], %l0
+	ldx	[%g7 + CI_RW + (9*8)], %l1
+	ldx	[%g7 + CI_RW + (10*8)], %l2
+	ldx	[%g7 + CI_RW + (11*8)], %l3
+	ldx	[%g7 + CI_RW + (12*8)], %l4
+	ldx	[%g7 + CI_RW + (13*8)], %l5
+	ldx	[%g7 + CI_RW + (14*8)], %l6
+	ldx	[%g7 + CI_RW + (15*8)], %l7
 	stx	%l0, [%g2 + BIAS + (8*8)]
 	stx	%l1, [%g2 + BIAS + (9*8)]
 	stx	%l2, [%g2 + BIAS + (10*8)]
@@ -4290,7 +4291,7 @@ gl0_x:
 	stx	%l6, [%g2 + BIAS + (14*8)]
 	stx	%l7, [%g2 + BIAS + (15*8)]
 
-	stx	%g0, [%g1 + CI_RWSP]
+	stx	%g0, [%g7 + CI_RWSP]
 1:
 #endif
 
@@ -4319,24 +4320,21 @@ gl0_x:
 	mov	1, %l3			! Ack softint
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 
-	GET_CPUINFO_VA(%l4)
-
 	wrpr	%l6, %pil
 
 	/*
 	 * Set handled_intr_level and save the old one so we can restore it
 	 * later.
 	 */
-	ld	[%l4 + CI_HANDLED_INTR_LEVEL], %l7
-	st	%l6, [%l4 + CI_HANDLED_INTR_LEVEL]
+	ld	[%g7 + CI_HANDLED_INTR_LEVEL], %l7
+	st	%l6, [%g7 + CI_HANDLED_INTR_LEVEL]
 	st	%l7, [%sp + CC64FSZ + BIAS + TF_SIZE]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	sll	%l6, 3+3, %l2
-	GET_CPUINFO_VA(%l4)
-	add	%l4, CI_INTRPENDING, %l4
+	add	%g7, CI_INTRPENDING, %l4
 	mov	8, %l7
 	add	%l2, %l4, %l4
 
@@ -4420,9 +4418,8 @@ intrcmplt:
 #endif	/* DEBUG */
 
 	/* Restore old handled_intr_level */
-	GET_CPUINFO_VA(%l4)
 	ld	[%sp + CC64FSZ + BIAS + TF_SIZE], %l7
-	st	%l7, [%l4 + CI_HANDLED_INTR_LEVEL]
+	st	%l7, [%g7 + CI_HANDLED_INTR_LEVEL]
 
 	ldub	[%sp + CC64FSZ + BIAS + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
@@ -4486,7 +4483,10 @@ gl0_4:	nop
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (4*8)], %g4
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (5*8)], %g5
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (6*8)], %g6
+	bnz	%icc, 2f
+	 nop
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (7*8)], %g7
+2:
 	/* Switch to alternate globals and load outs */
 gl1_1:
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
@@ -4858,16 +4858,15 @@ _C_LABEL(cpu_initialize):
 	 * Switch to our initial stack.
 	 */
 
-	GET_CPUINFO_VA(%l0)
-	ldx	[%l0 + CI_INITSTACK], %l0
+	GET_CPUINFO_VA(%g7)
+	ldx	[%g7 + CI_INITSTACK], %l0
 	add	%l0, -BIAS-CC64FSZ, %sp
 
 	/*
 	 * Call our startup routine.
 	 */
 
-	GET_CPUINFO_VA(%l0)
-	ldx	[%l0 + CI_SPINUP], %o1
+	ldx	[%g7 + CI_SPINUP], %o1
 	call	%o1				! Call routine
 	 nop
 	NOTREACHED
@@ -5990,8 +5989,7 @@ ENTRY(cpu_switchto)
 	mov	%i0, %l4		! oldproc
 	mov	%i1, %l3		! newproc
 
-	GET_CPUINFO_VA(%l6)
-	ldx	[%l6 + CI_CPCB], %l5
+	ldx	[%g7 + CI_CPCB], %l5
 
 	/*
 	 * Register usage:
@@ -6001,7 +5999,6 @@ ENTRY(cpu_switchto)
 	 *	%l3 = p
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
-	 *	%l6 = curcpu
 	 *	%o0 = tmp 1
 	 *	%o1 = oldpstate
 	 *	%o2 = tmp 2
@@ -6026,14 +6023,14 @@ ENTRY(cpu_switchto)
 	/*
 	 * p->p_cpu = curcpu();
 	 */
-	ldx	[%l6 + CI_SELF], %o0
+	ldx	[%g7 + CI_SELF], %o0
 	stx	%o0, [%l3 + P_CPU]
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%l3 + P_STAT]
-	st	%g0, [%l6 + CI_WANT_RESCHED]	! want_resched = 0;
+	st	%g0, [%g7 + CI_WANT_RESCHED]	! want_resched = 0;
 	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
-	stx	%l4, [%l6 + CI_CURPROC]		! restore old proc so we can save it
+	stx	%l4, [%g7 + CI_CURPROC]		! restore old proc so we can save it
 
 	flushw				! save all register windows except this one
 
@@ -6059,8 +6056,8 @@ ENTRY(cpu_switchto)
 	 */
 Lsw_load:
 	/* set new cpcb */
-	stx	%l3, [%l6 + CI_CURPROC]	! curproc = p;
-	stx	%l1, [%l6 + CI_CPCB]	! cpcb = newpcb;
+	stx	%l3, [%g7 + CI_CURPROC]	! curproc = p;
+	stx	%l1, [%g7 + CI_CPCB]	! cpcb = newpcb;
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7
@@ -8840,9 +8837,7 @@ ENTRY(send_softint)
 	wrpr	%g1, 0, %pstate
 
 	brz,pn	%o2, 1f
-	 nop
-	GET_CPUINFO_VA(%o3)
-	add	%o3, CI_INTRPENDING, %o3
+	 add	%g7, CI_INTRPENDING, %o3
 
 	ldx	[%o2 + IH_PEND], %o5
 	brnz,pn	%o5, 1f
@@ -9143,12 +9138,9 @@ _C_LABEL(gl1_start):
 _C_LABEL(sun4v_patch_end):
 	.previous
 
-	/* XXX This is in mutex.S for now */
-#if 0
 #ifdef MULTIPROCESSOR
 	.section	.sun4v_mp_patch, "ax"
 	.globl _C_LABEL(sun4v_mp_patch_end)
 _C_LABEL(sun4v_mp_patch_end):
 	.previous
-#endif
 #endif
