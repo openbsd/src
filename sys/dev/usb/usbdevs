@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.347 2008/04/07 07:28:08 form Exp $
+$OpenBSD: usbdevs,v 1.348 2008/04/13 19:41:29 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1768,6 +1768,7 @@ product LOGITECH QUICKCAMDLXNB	0x08a9	QuickCam Notebook Deluxe
 product LOGITECH QUICKCAMPRO3k	0x08b0	QuickCam Pro 3000
 product LOGITECH QUICKCAMPRONB	0x08b1	QuickCam Notebook Pro
 product LOGITECH QUICKCAMPRO4K	0x08b2	QuickCam Pro 4000
+product LOGITECH QUICKCAMFUSION	0x08ca	QuickCam Fusion
 product LOGITECH QUICKCAMPRO5K	0x08ce	QuickCam Pro 5000
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
