@@ -1,13 +1,19 @@
-/* $OpenBSD: res_random.c,v 1.16 2005/03/25 13:24:12 otto Exp $ */
+/* $OpenBSD: res_random.c,v 1.17 2008/04/13 00:28:35 djm Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 2008 Damien Miller <djm@openbsd.org>
  * All rights reserved.
  *
  * Theo de Raadt <deraadt@openbsd.org> came up with the idea of using
  * such a mathematical system to generate more random (yet non-repeating)
  * ids to solve the resolver/named problem.  But Niels designed the
  * actual system based on the constraints.
+ *
+ * Later modified by Damien Miller to wrap the LCG output in a 15-bit
+ * permutation generator based on a Luby-Rackoff block cipher. This
+ * ensures the output is non-repeating and preserves the MSB twiddle
+ * trick, but makes it more resistant to LCG prediction.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,9 +55,8 @@
  * yielding two different cycles by toggling the msb on and off.
  * This avoids reuse issues caused by reseeding.
  *
- * The 16 bit space is very small and brute force attempts are
- * entirly feasible, we skip a random number of transaction ids
- * so that an attacker will not get sequential ids.
+ * The output of this generator is then randomly permuted though a
+ * custom 15 bit Luby-Rackoff block cipher.
  */
 
 #include <sys/types.h>
@@ -63,12 +68,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RU_OUT  180             /* Time after wich will be reseeded */
-#define RU_MAX	30000		/* Uniq cycle, avoid blackjack prediction */
-#define RU_GEN	2		/* Starting generator */
-#define RU_N	32749		/* RU_N-1 = 2*2*3*2729 */
-#define RU_AGEN	7               /* determine ru_a as RU_AGEN^(2*rand) */
-#define RU_M	31104           /* RU_M = 2^7*3^5 - don't change */
+#define RU_OUT  	180	/* Time after wich will be reseeded */
+#define RU_MAX		30000	/* Uniq cycle, avoid blackjack prediction */
+#define RU_GEN		2	/* Starting generator */
+#define RU_N		32749	/* RU_N-1 = 2*2*3*2729 */
+#define RU_AGEN		7	/* determine ru_a as RU_AGEN^(2*rand) */
+#define RU_M		31104	/* RU_M = 2^7*3^5 - don't change */
+#define RU_ROUNDS	11	/* Number of rounds for permute (odd) */
+
+struct prf_ctx {
+	/* PRF lookup table for odd rounds (7 bits input to 8 bits output) */
+	u_char prf7[(RU_ROUNDS / 2) * (1 << 7)];
+
+	/* PRF lookup table for even rounds (8 bits input to 7 bits output) */
+	u_char prf8[((RU_ROUNDS + 1) / 2) * (1 << 8)];
+};
 
 #define PFAC_N 3
 const static u_int16_t pfacts[PFAC_N] = {
@@ -83,9 +97,8 @@ static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
 static u_int16_t ru_msb = 0;
+static struct prf_ctx *ru_prf = NULL;
 static long ru_reseed;
-static u_int32_t tmp;                /* Storage for unused random */
-static struct timeval tv;
 
 static u_int16_t pmod(u_int16_t, u_int16_t, u_int16_t);
 static void res_initid(void);
@@ -94,7 +107,6 @@ static void res_initid(void);
  * Do a fast modular exponation, returned value will be in the range
  * of 0 - (mod-1)
  */
-
 static u_int16_t
 pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
 {
@@ -113,6 +125,39 @@ pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
 	return (s);
 }
 
+/*
+ * 15-bit permutation based on Luby-Rackoff block cipher
+ */
+u_int
+permute15(u_int in)
+{
+	int i;
+	u_int left, right, tmp;
+
+	if (ru_prf == NULL)
+		return in;
+
+	left = (in >> 8) & 0x7f;
+	right = in & 0xff;
+
+	/*
+	 * Each round swaps the width of left and right. Even rounds have
+	 * a 7-bit left, odd rounds have an 8-bit left.	Since this uses an
+	 * odd number of rounds, left is always 8 bits wide at the end.
+	 */
+	for (i = 0; i < RU_ROUNDS; i++) {
+		if ((i & 1) == 0)
+			tmp = ru_prf->prf8[(i << (8 - 1)) | right] & 0x7f;
+		else
+			tmp = ru_prf->prf7[((i - 1) << (7 - 1)) | right];
+		tmp ^= left;
+		left = right;
+		right = tmp;
+	}
+
+	return (right << 8) | left;
+}
+
 /* 
  * Initializes the seed and chooses a suitable generator. Also toggles 
  * the msb flag. The msb flag is used to generate two distinct
@@ -125,27 +170,25 @@ static void
 res_initid(void)
 {
 	u_int16_t j, i;
+	u_int32_t tmp;
 	int noprime = 1;
+	struct timeval tv;
 
-	tmp = arc4random();
-	ru_x = (tmp & 0xFFFF) % RU_M;
+	ru_x = arc4random_uniform(RU_M);
 
 	/* 15 bits of random seed */
-	ru_seed = (tmp >> 16) & 0x7FFF;
 	tmp = arc4random();
+	ru_seed = (tmp >> 16) & 0x7FFF;
 	ru_seed2 = tmp & 0x7FFF;
 
-	tmp = arc4random();
-
 	/* Determine the LCG we use */
+	tmp = arc4random();
 	ru_b = (tmp & 0xfffe) | 1;
 	ru_a = pmod(RU_AGEN, (tmp >> 16) & 0xfffe, RU_M);
 	while (ru_b % 3 == 0)
 		ru_b += 2;
 	
-	tmp = arc4random();
-	j = tmp % RU_N;
-	tmp = tmp >> 16;
+	j = arc4random_uniform(RU_N);
 
 	/* 
 	 * Do a fast gcd(j,RU_N-1), so we can find a j with
@@ -167,6 +210,12 @@ res_initid(void)
 	ru_g = pmod(RU_GEN, j, RU_N);
 	ru_counter = 0;
 
+	/* Initialise PRF for Luby-Rackoff permutation */
+	if (ru_prf == NULL)
+		ru_prf = malloc(sizeof(*ru_prf));
+	if (ru_prf != NULL)
+		arc4random_buf(ru_prf, sizeof(*ru_prf));
+
 	gettimeofday(&tv, NULL);
 	ru_reseed = tv.tv_sec + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000; 
@@ -175,35 +224,21 @@ res_initid(void)
 u_int
 res_randomid(void)
 {
-        int i, n;
+	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 	if (ru_counter >= RU_MAX || tv.tv_sec > ru_reseed)
 		res_initid();
 
-#if 0
-	if (!tmp)
-	        tmp = arc4random();
+	/* Linear Congruential Generator */
+	ru_x = (ru_a * ru_x + ru_b) % RU_M;
+	ru_counter++;
 
-	/* Skip a random number of ids */
-	n = tmp & 0x7; tmp = tmp >> 3;
-	if (ru_counter + n >= RU_MAX)
-                res_initid();
-#else
-	n = 0;
-#endif
-
-	for (i = 0; i <= n; i++)
-	        /* Linear Congruential Generator */
-	        ru_x = (ru_a * ru_x + ru_b) % RU_M;
-
-	ru_counter += i;
-
-	return (ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
+	return permute15(ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
 }
 
 #if 0
-void
+int
 main(int argc, char **argv)
 {
 	int i, n;
@@ -218,11 +253,12 @@ main(int argc, char **argv)
 	printf("Ru_A: %u\n", ru_a);
 	printf("Ru_B: %u\n", ru_b);
 
-	n = atoi(argv[1]);
+	n = argc > 1 ? atoi(argv[1]) : 60001;
 	for (i=0;i<n;i++) {
 		wert = res_randomid();
-		printf("%06d\n", wert);
+		printf("%u\n", wert);
 	}
+	return 0;
 }
 #endif
 
