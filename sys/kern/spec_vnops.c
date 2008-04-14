@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.46 2008/04/12 13:32:03 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.47 2008/04/14 10:15:50 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -678,17 +678,6 @@ spec_advlock(void *v)
 
 	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id,
 		ap->a_op, ap->a_fl, ap->a_flags));
-}
-
-/*
- * Special device failed operation
- */
-/*ARGSUSED*/
-int
-spec_ebadf(void *v)
-{
-
-	return (EBADF);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.23 2008/04/12 13:32:03 thib Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.24 2008/04/14 10:15:50 thib Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ struct	buf;
 struct	uio;
 
 int	spec_badop(void *);
-int	spec_ebadf(void *);
 int	spec_getattr(void *);
 int	spec_setattr(void *);
 int	spec_access(void *);
