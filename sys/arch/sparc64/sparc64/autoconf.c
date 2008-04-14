@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.86 2008/04/12 14:59:30 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.87 2008/04/14 21:04:56 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -289,23 +289,12 @@ bootstrap(nctx)
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
 		extern vaddr_t dlflush_start;
-		extern vaddr_t gl0_start, gl1_start;
 		vaddr_t *pva;
 		u_int32_t insn;
 		int32_t disp;
 
 		for (pva = &dlflush_start; *pva; pva++) {
 			*(u_int32_t *)(*pva) = 0x01000000; /* nop */
-			flush((void *)(*pva));
-		}
-
-		for (pva = &gl0_start; *pva; pva++) {
-			*(u_int32_t *)(*pva) = 0xa1902000; /* wr %g0, 0, %gl */
-			flush((void *)(*pva));
-		}
-
-		for (pva = &gl1_start; *pva; pva++) {
-			*(u_int32_t *)(*pva) = 0xa1902001; /* wr %g0, 1, %gl */
 			flush((void *)(*pva));
 		}
 

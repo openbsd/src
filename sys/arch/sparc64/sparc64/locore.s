@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.132 2008/04/13 16:32:55 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.133 2008/04/14 21:04:56 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -148,6 +148,20 @@ _C_LABEL(sun4v_mp_patch):
 	.section	.sun4v_patch, "ax" 	;\
 	.word	999b				;\
 	stxa	ctxid, [ctx] ASI_MMU_CONTEXTID 	;\
+	.previous
+
+#define NORMAL_GLOBALS() \
+999:	wrpr	%g0, PSTATE_KERN, %pstate	;\
+	.section	.sun4v_patch, "ax"	;\
+	.word	999b				;\
+	wrpr	%g0, 0, %gl			;\
+	.previous
+
+#define ALTERNATE_GLOBALS() \
+999:	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	;\
+	.section	.sun4v_patch, "ax"	;\
+	.word	999b				;\
+	wrpr	%g0, 1, %gl			;\
 	.previous
 
 
@@ -3562,8 +3576,7 @@ Lslowtrap_reenter:
 	mov	%g2, %o2		! (pc)
 	sth	%o1, [%sp + CC64FSZ + BIAS + TF_TT]! debug
 
-	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
-gl0_1:	nop
+	NORMAL_GLOBALS()
 
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_G + (1*8)]
 	stx	%g2, [%sp + CC64FSZ + BIAS + TF_G + (2*8)]
@@ -3725,8 +3738,7 @@ syscall_setup:
 	sth	%o1, [%sp + CC64FSZ + BIAS + TF_TT]! debug
 #endif	/* DEBUG */
 
-	wrpr	%g0, PSTATE_KERN, %pstate	! Get back to normal globals
-gl0_2:	nop
+	NORMAL_GLOBALS()
 
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_G + ( 1*8)]
 	mov	%g1, %o1			! code
@@ -4237,10 +4249,10 @@ _C_LABEL(sparc_interrupt):
 	 ldx	[%g3 + 8], %g5	! intrlev[1] is reserved for %tick intr.
 0:
 	INTR_SETUP -CC64FSZ-TF_SIZE-8
-	! Switch to normal globals so we can save them
-	wrpr	%g0, PSTATE_KERN, %pstate
-gl0_3:	nop
 
+	NORMAL_GLOBALS()
+
+	/* Save normal globals */
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + BIAS + TF_G + ( 2*8)]
 	stx	%g3, [%sp + CC64FSZ + BIAS + TF_G + ( 3*8)]
@@ -4249,8 +4261,11 @@ gl0_3:	nop
 	stx	%g6, [%sp + CC64FSZ + BIAS + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + BIAS + TF_G + ( 7*8)]
 
-gl0_x:
-	flushw			! Do not remove this instruction -- causes interrupt loss
+999:	flushw			! Do not remove this instruction -- causes interrupt loss
+	.section	.sun4v_patch, "ax"
+	.word	999b
+	nop
+	.previous
 
 	GET_CPUINFO_VA(%g7)
 #ifdef SUN4V
@@ -4473,8 +4488,7 @@ return_from_trap:
 	wrpr	%g0, PSTATE_INTR, %pstate
 	wrpr	%g0, %g0, %pil				! Lower IPL
 1:
-	wrpr	%g0, PSTATE_KERN, %pstate		! Make sure we have normal globals & no IRQs
-gl0_4:	nop
+	wrpr	%g0, PSTATE_KERN, %pstate		! Disable IRQs
 
 	/* Restore normal globals */
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (1*8)], %g1
@@ -4483,13 +4497,13 @@ gl0_4:	nop
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (4*8)], %g4
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (5*8)], %g5
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (6*8)], %g6
-	bnz	%icc, 2f
+	bnz,pn	%icc, 2f
 	 nop
 	ldx	[%sp + CC64FSZ + BIAS + TF_G + (7*8)], %g7
 2:
-	/* Switch to alternate globals and load outs */
-gl1_1:
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
+	ALTERNATE_GLOBALS()
+
+	/* Restore outs */
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (1*8)], %i1
 	ldx	[%sp + CC64FSZ + BIAS + TF_O + (2*8)], %i2
@@ -9116,22 +9130,6 @@ _C_LABEL(dlflush_start):
 	.xword	dlflush4
 	.xword	dlflush5
 	.xword	0
-
-#ifdef SUN4V
-	.globl	_C_LABEL(gl0_start)
-_C_LABEL(gl0_start):
-	.xword	gl0_1
-	.xword	gl0_2
-	.xword	gl0_3
-	.xword	gl0_4
-	.xword	gl0_x
-	.xword	0
-
-	.globl	_C_LABEL(gl1_start)
-_C_LABEL(gl1_start):
-	.xword	gl1_1
-	.xword	0
-#endif
 
 	.section	.sun4v_patch, "ax"
 	.globl _C_LABEL(sun4v_patch_end)
