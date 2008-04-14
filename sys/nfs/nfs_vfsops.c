@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.70 2008/03/16 19:42:57 otto Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.71 2008/04/14 13:46:13 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ nfs_statfs(mp, sbp, p)
 	struct nfs_statfs *sfp = NULL;
 	caddr_t cp;
 	u_int32_t *tl;
-	int32_t t1, t2;
+	int32_t t1;
 	caddr_t bpos, dpos, cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
@@ -186,7 +186,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 {
 	struct nfsv3_fsinfo *fsp;
 	caddr_t cp;
-	int32_t t1, t2;
+	int32_t t1;
 	u_int32_t *tl, pref, max;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;

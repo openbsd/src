@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.24 2008/01/06 17:38:23 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.25 2008/04/14 13:46:13 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -83,20 +83,8 @@
 
 #define nfsm_fhtom(v, v3) \
 	      { if (v3) { \
-			t2 = nfsm_rndup(VTONFS(v)->n_fhsize) + NFSX_UNSIGNED; \
-			if (t2 <= M_TRAILINGSPACE(mb)) { \
-				tl = nfsm_build(&mb, t2, &bpos); \
-				*tl++ = txdr_unsigned(VTONFS(v)->n_fhsize); \
-				*(tl + ((t2>>2) - 2)) = 0; \
-				bcopy((caddr_t)VTONFS(v)->n_fhp,(caddr_t)tl, \
-					VTONFS(v)->n_fhsize); \
-			} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, \
-				(caddr_t)VTONFS(v)->n_fhp, \
-				  VTONFS(v)->n_fhsize)) != 0) { \
-				error = t2; \
-				m_freem(mreq); \
-				goto nfsmout; \
-			} \
+			nfsm_strtombuf(&mb, VTONFS(v)->n_fhp, \
+			    VTONFS(v)->n_fhsize, &bpos); \
 		} else { \
 			cp = nfsm_build(&mb, NFSX_V2FH, &bpos); \
 			bcopy((caddr_t)VTONFS(v)->n_fhp, cp, NFSX_V2FH); \
@@ -256,17 +244,7 @@
 			error = ENAMETOOLONG; \
 			goto nfsmout; \
 		} \
-		t2 = nfsm_rndup(s)+NFSX_UNSIGNED; \
-		if (t2 <= M_TRAILINGSPACE(mb)) { \
-			tl = nfsm_build(&mb, t2, &bpos); \
-			*tl++ = txdr_unsigned(s); \
-			*(tl+((t2>>2)-2)) = 0; \
-			bcopy((caddr_t)(a), (caddr_t)tl, (s)); \
-		} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, (a), (s))) != 0) { \
-			error = t2; \
-			m_freem(mreq); \
-			goto nfsmout; \
-		}
+		nfsm_strtombuf(&mb, (a), (s), &bpos)
 
 #define	nfsm_reply(s) \
 		{ \

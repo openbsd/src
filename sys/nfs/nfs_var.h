@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.33 2008/01/06 17:38:23 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.34 2008/04/14 13:46:13 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -241,7 +241,9 @@ struct mbuf *nfsm_reqh(struct vnode *, u_long, int, caddr_t *);
 void nfsm_rpchead(struct nfsreq *, struct ucred *, int, struct mbuf *, int);
 void *nfsm_build(struct mbuf **, u_int, caddr_t *);
 int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
-int nfsm_uiotombuf(struct uio *, struct mbuf **, int, caddr_t *);
+void nfsm_uiotombuf(struct mbuf **, struct uio *, size_t, caddr_t *);
+void nfsm_strtombuf(struct mbuf **, void *, size_t, caddr_t *);
+void nfsm_buftombuf(struct mbuf **, void *, size_t, caddr_t *);
 int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
 int nfs_adv(struct mbuf **, caddr_t *, int, int);
 int nfsm_strtmbuf(struct mbuf **, char **, char *, long);
@@ -289,3 +291,6 @@ void nfs_getset_niothreads(int);
 /* nfs_kq.c */
 int  nfs_kqfilter(void *);
 
+/* Internal NFS utility macros */
+#define	mb_offset(m)	(mtod((m), caddr_t) + (m)->m_len)
+#define	nfsm_padlen(s)	(nfsm_rndup(s) - (s))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.69 2008/01/06 17:38:23 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.70 2008/04/14 13:46:13 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -724,87 +724,97 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 }
 
 /*
- * copies a uio scatter/gather list to an mbuf chain.
- * NOTE: can ony handle iovcnt == 1
+ * Copy a uio scatter/gather list to an mbuf chain.
  */
-int
-nfsm_uiotombuf(uiop, mq, siz, bpos)
-	struct uio *uiop;
-	struct mbuf **mq;
-	int siz;
-	caddr_t *bpos;
+void
+nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len, caddr_t *bposp)
 {
-	char *uiocp;
-	struct mbuf *mp, *mp2;
-	int xfer, left, mlen;
-	int uiosiz, clflg, rem;
-	char *cp;
+	struct mbuf *mb, *mb2;
+	size_t xfer, pad;
 
-#ifdef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1)
-		panic("nfsm_uiotombuf: iovcnt != 1");
-#endif
+	mb = *mp;
 
-	if (siz > MLEN)		/* or should it >= MCLBYTES ?? */
-		clflg = 1;
-	else
-		clflg = 0;
-	rem = nfsm_rndup(siz)-siz;
-	mp = mp2 = *mq;
-	while (siz > 0) {
-		left = uiop->uio_iov->iov_len;
-		uiocp = uiop->uio_iov->iov_base;
-		if (left > siz)
-			left = siz;
-		uiosiz = left;
-		while (left > 0) {
-			mlen = M_TRAILINGSPACE(mp);
-			if (mlen == 0) {
-				MGET(mp, M_WAIT, MT_DATA);
-				if (clflg)
-					MCLGET(mp, M_WAIT);
-				mp->m_len = 0;
-				mp2->m_next = mp;
-				mp2 = mp;
-				mlen = M_TRAILINGSPACE(mp);
-			}
-			xfer = (left > mlen) ? mlen : left;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
-			else
-#endif
-			if (uiop->uio_segflg == UIO_SYSSPACE)
-				bcopy(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
-			else
-				copyin(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
-			mp->m_len += xfer;
-			left -= xfer;
-			uiocp += xfer;
-			uiop->uio_offset += xfer;
-			uiop->uio_resid -= xfer;
+	pad = nfsm_padlen(len);
+
+	/* XXX -- the following should be done by the caller */
+	uiop->uio_resid = len;
+	uiop->uio_rw = UIO_WRITE;
+
+	while (len) {
+		xfer = min(len, M_TRAILINGSPACE(mb));
+		uiomove(mb_offset(mb), xfer, uiop);
+		mb->m_len += xfer;
+		len -= xfer;
+		if (len > 0) {
+			MGET(mb2, M_WAIT, MT_DATA);
+			if (len > MINCLSIZE)
+				MCLGET(mb2, M_WAIT);
+			mb2->m_len = 0;
+			mb->m_next = mb2;
+			mb = mb2;
 		}
-		(char *)uiop->uio_iov->iov_base += uiosiz;
-		uiop->uio_iov->iov_len -= uiosiz;
-		siz -= uiosiz;
 	}
-	if (rem > 0) {
-		if (rem > M_TRAILINGSPACE(mp)) {
-			MGET(mp, M_WAIT, MT_DATA);
-			mp->m_len = 0;
-			mp2->m_next = mp;
+
+	if (pad > 0) {
+		if (pad > M_TRAILINGSPACE(mb)) {
+			MGET(mb2, M_WAIT, MT_DATA);
+			mb2->m_len = 0;
+			mb->m_next = mb2;
+			mb = mb2;
 		}
-		cp = mtod(mp, caddr_t)+mp->m_len;
-		for (left = 0; left < rem; left++)
-			*cp++ = '\0';
-		mp->m_len += rem;
-		*bpos = cp;
-	} else
-		*bpos = mtod(mp, caddr_t)+mp->m_len;
-	*mq = mp;
-	return (0);
+		bzero(mb_offset(mb), pad);
+		mb->m_len += pad;
+	}
+
+	*bposp = mb_offset(mb);
+	*mp = mb;
+}
+
+/*
+ * Copy a buffer to an mbuf chain
+ */
+void
+nfsm_buftombuf(struct mbuf **mp, void *buf, size_t len, caddr_t *bposp)
+{
+	struct iovec iov;
+	struct uio io;
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+
+	io.uio_iov = &iov;
+	io.uio_iovcnt = 1;
+	io.uio_resid = len;
+	io.uio_segflg = UIO_SYSSPACE;
+	io.uio_rw = UIO_WRITE;
+
+	nfsm_uiotombuf(mp, &io, len, bposp);
+}
+
+/*
+ * Copy a string to an mbuf chain
+ */
+void
+nfsm_strtombuf(struct mbuf **mp, void *str, size_t len, caddr_t *bposp)
+{
+	struct iovec iov[2];
+	struct uio io;
+	uint32_t strlen;
+
+	strlen = txdr_unsigned(len);
+
+	iov[0].iov_base = &strlen;
+	iov[0].iov_len = sizeof(uint32_t);
+	iov[1].iov_base = str;
+	iov[1].iov_len = len;
+
+	io.uio_iov = iov;
+	io.uio_iovcnt = 2;
+	io.uio_resid = sizeof(uint32_t) + len;
+	io.uio_segflg = UIO_SYSSPACE;
+	io.uio_rw = UIO_WRITE;
+
+	nfsm_uiotombuf(mp, &io, io.uio_resid, bposp);
 }
 
 /*
@@ -897,72 +907,6 @@ nfs_adv(mdp, dposp, offs, left)
 	}
 	*mdp = m;
 	*dposp = mtod(m, caddr_t)+offs;
-	return (0);
-}
-
-/*
- * Copy a string into mbufs for the hard cases...
- */
-int
-nfsm_strtmbuf(mb, bpos, cp, siz)
-	struct mbuf **mb;
-	char **bpos;
-	char *cp;
-	long siz;
-{
-	struct mbuf *m1 = NULL, *m2;
-	long left, xfer, len, tlen;
-	u_int32_t *tl;
-	int putsize;
-
-	putsize = 1;
-	m2 = *mb;
-	left = M_TRAILINGSPACE(m2);
-	if (left > 0) {
-		tl = ((u_int32_t *)(*bpos));
-		*tl++ = txdr_unsigned(siz);
-		putsize = 0;
-		left -= NFSX_UNSIGNED;
-		m2->m_len += NFSX_UNSIGNED;
-		if (left > 0) {
-			bcopy(cp, (caddr_t) tl, left);
-			siz -= left;
-			cp += left;
-			m2->m_len += left;
-			left = 0;
-		}
-	}
-	/* Loop around adding mbufs */
-	while (siz > 0) {
-		MGET(m1, M_WAIT, MT_DATA);
-		if (siz > MLEN)
-			MCLGET(m1, M_WAIT);
-		m1->m_len = NFSMSIZ(m1);
-		m2->m_next = m1;
-		m2 = m1;
-		tl = mtod(m1, u_int32_t *);
-		tlen = 0;
-		if (putsize) {
-			*tl++ = txdr_unsigned(siz);
-			m1->m_len -= NFSX_UNSIGNED;
-			tlen = NFSX_UNSIGNED;
-			putsize = 0;
-		}
-		if (siz < m1->m_len) {
-			len = nfsm_rndup(siz);
-			xfer = siz;
-			if (xfer < len)
-				*(tl+(xfer>>2)) = 0;
-		} else {
-			xfer = len = m1->m_len;
-		}
-		bcopy(cp, (caddr_t) tl, xfer);
-		m1->m_len = len+tlen;
-		siz -= xfer;
-		cp += xfer;
-	}
-	*mb = m1;
-	*bpos = mtod(m1, caddr_t)+m1->m_len;
 	return (0);
 }
 
