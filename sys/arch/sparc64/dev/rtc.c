@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.4 2008/03/20 22:00:01 kettenis Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.5 2008/04/15 20:57:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,23 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+/*
+ * Register definitions for the Texas Instruments bq4802.
+ */
+
+#define BQ4802_SEC		0x00	/* Seconds. */
+#define BQ4802_MIN		0x02	/* Minutes. */
+#define BQ4802_HOUR		0x04	/* Hours. */
+#define BQ4802_DAY		0x06	/* Day (01-31). */
+#define BQ4802_DOW		0x08	/* Day of week (01-07). */
+#define BQ4802_MONTH		0x09	/* Month (01-12). */
+#define BQ4802_YEAR		0x0a	/* Year (00-99). */
+#define BQ4802_CENTURY		0x0f	/* Century (00-99). */
+
+#define BQ4802_CTRL		0x0e	/* Control. */
+#define   BQ4802_24HR		0x02	/* 24-hour mode. */
+#define   BQ4802_UTI		0x08	/* Update transfer inhibit. */
+
 extern todr_chip_handle_t todr_handle;
 
 struct rtc_softc {
@@ -100,6 +117,8 @@ void rtc_write_reg(struct rtc_softc *sc, bus_size_t, u_int8_t);
 
 int rtc_gettime(todr_chip_handle_t, struct timeval *);
 int rtc_settime(todr_chip_handle_t, struct timeval *);
+int rtc_bq4802_gettime(todr_chip_handle_t, struct timeval *);
+int rtc_bq4802_settime(todr_chip_handle_t, struct timeval *);
 int rtc_getcal(todr_chip_handle_t, int *);
 int rtc_setcal(todr_chip_handle_t, int);
 
@@ -120,6 +139,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	struct ebus_attach_args *ea = aux;
 	todr_chip_handle_t handle;
 	char *model;
+	u_int8_t csr;
 
 	if (ebus_bus_map(ea->ea_iotag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
@@ -135,11 +155,9 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	model = getpropstring(ea->ea_node, "model");
-#ifdef DIAGNOSTIC
 	if (model == NULL)
-		panic("rtc_attach: no model property");
-#endif
-	printf(": %s\n", model);
+		model = getpropstring(ea->ea_node, "compatible");
+	printf(": %s\n", model ? model : "unknown");
 
 	/* Setup our todr_handle */
 	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
@@ -154,6 +172,18 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
 	todr_handle = handle;
+
+	/* The bq4802 is not compatible with the mc146818. */
+	if (strcmp(model, "bq4802") == 0) {
+		handle->todr_gettime = rtc_bq4802_gettime;
+		handle->todr_settime = rtc_bq4802_settime;
+
+		/* Turn on 24-hour mode. */
+		csr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, BQ4802_CTRL);
+		csr |= BQ4802_24HR;
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BQ4802_CTRL, csr);
+		return;
+	}
 
 	/* 
 	 * Turn interrupts off, just in case. (Although they shouldn't
@@ -292,6 +322,86 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	csr = rtc_read_reg(sc, MC_REGB);
 	csr &= ~MC_REGB_SET;
 	rtc_write_reg(sc, MC_REGB, csr);
+	return (0);
+}
+
+/*
+ * Get time-of-day and convert to a `struct timeval'
+ * Return 0 on success; an error number otherwise.
+ */
+int
+rtc_bq4802_gettime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct rtc_softc *sc = handle->cookie;
+	struct clock_ymdhms dt;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t csr;
+
+	/* Stop updates. */
+	csr = bus_space_read_1(iot, ioh, BQ4802_CTRL);
+	csr |= BQ4802_UTI;
+	bus_space_write_1(iot, ioh, BQ4802_CTRL, csr);
+
+	/* Read time */
+	dt.dt_sec = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_SEC));
+	dt.dt_min = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_MIN));
+	dt.dt_hour = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_HOUR)); 
+	dt.dt_day = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_DAY));
+	dt.dt_wday = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_DOW));
+	dt.dt_mon = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_MONTH));
+	dt.dt_year = FROMBCD(bus_space_read_1(iot, ioh, BQ4802_YEAR)) +
+	    FROMBCD(bus_space_read_1(iot, ioh, BQ4802_CENTURY)) * 100;
+
+	/* time wears on */
+	csr = bus_space_read_1(iot, ioh, BQ4802_CTRL);
+	csr &= ~BQ4802_UTI;
+	bus_space_write_1(iot, ioh, BQ4802_CTRL, csr);
+
+	/* simple sanity checks */
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+		return (1);
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return (0);
+}
+
+/*
+ * Set the time-of-day clock based on the value of the `struct timeval' arg.
+ * Return 0 on success; an error number otherwise.
+ */
+int
+rtc_bq4802_settime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct rtc_softc *sc = handle->cookie;
+	struct clock_ymdhms dt;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t csr;
+
+	/* Note: we ignore `tv_usec' */
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+
+	/* enable write */
+	csr = bus_space_read_1(iot, ioh, BQ4802_CTRL);
+	csr |= BQ4802_UTI;
+	bus_space_write_1(iot, ioh, BQ4802_CTRL, csr);
+
+	bus_space_write_1(iot, ioh, BQ4802_SEC, TOBCD(dt.dt_sec));
+	bus_space_write_1(iot, ioh, BQ4802_MIN, TOBCD(dt.dt_min));
+	bus_space_write_1(iot, ioh, BQ4802_HOUR, TOBCD(dt.dt_hour));
+	bus_space_write_1(iot, ioh, BQ4802_DOW, TOBCD(dt.dt_wday));
+	bus_space_write_1(iot, ioh, BQ4802_DAY, TOBCD(dt.dt_day));
+	bus_space_write_1(iot, ioh, BQ4802_MONTH, TOBCD(dt.dt_mon));
+	bus_space_write_1(iot, ioh, BQ4802_YEAR, TOBCD(dt.dt_year % 100));
+	bus_space_write_1(iot, ioh, BQ4802_CENTURY, TOBCD(dt.dt_year / 100));
+
+	/* load them up */
+	csr = bus_space_read_1(iot, ioh, BQ4802_CTRL);
+	csr &= ~BQ4802_UTI;
+	bus_space_write_1(iot, ioh, BQ4802_CTRL, csr);
 	return (0);
 }
 
