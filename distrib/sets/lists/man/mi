@@ -2503,6 +2503,7 @@
 ./usr/share/man/cat8/vos.0
 ./usr/share/man/cat8/watchdogd.0
 ./usr/share/man/cat8/weekly.0
+./usr/share/man/cat8/wpa-psk.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
