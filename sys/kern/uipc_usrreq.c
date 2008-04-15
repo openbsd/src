@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.41 2008/04/10 17:50:46 kettenis Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.42 2008/04/15 19:01:45 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -731,13 +731,9 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	int i, error;
 	int nfds, *ip, fd, neededspace;
 
-	/* XXX
-	 * To be more strict with the API/ABI, the following check for
-	 *	cm->cmsg_len > control->m_len
-	 * should be changed to
-	 *	CMSG_ALIGN(cm->cmsg_len) != control->m_len
-	 * after 4.3 is released (and all callers correctly set msg_controllen
-	 * using CMSG_SPACE().  In particular, sparc64 alignment changes.
+	/*
+	 * Check for two potential msg_controllen values because
+	 * IETF stuck their nose in a place it does not belong.
 	 */ 
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    !(cm->cmsg_len == control->m_len ||
