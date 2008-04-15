@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.73 2008/02/23 10:36:27 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.74 2008/04/15 20:23:51 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -116,7 +116,7 @@ Supported devices {:-include-:}:
 	  + RasterFlex series (rfx) - 8/24-bit color, accelerated (currently
 	    only supported in 8-bit unaccelerated mode)
 	  + Southland Media Systems MGX and MGXPlus (mgx) - 24-bit color,
-	    accelerated (currently only supported in 8-bit unaccelerated mode)
+	    accelerated (currently only supported in 8-bit accelerated mode)
 	  + TCX - 8/24-bit color
 	  + Vigra VS10, VS11 and VS12 framebuffers (8-bit color, selectable
 	    VGA-compatible modes and connector)

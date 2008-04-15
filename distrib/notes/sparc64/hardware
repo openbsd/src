@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.131 2008/04/01 14:40:58 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.132 2008/04/15 20:23:53 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -795,7 +795,7 @@ Supported devices {:-include-:}:
 			    unaccelerated mode)
 			Southland Media Systems MGX and MGXPlus (mgx) -
 			    24-bit color, accelerated (currently only
-			    supported in 8-bit unaccelerated mode)
+			    supported in 8-bit accelerated mode)
 			Vigra VS10, VS11 and VS12 framebuffers (8-bit color,
 			    selectable VGA-compatible modes and connector)
 			ZX (aka Leo) - 8/24-bit color, overlay planes,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mgx.4,v 1.11 2008/03/31 08:12:22 jmc Exp $
+.\"	$OpenBSD: mgx.4,v 1.12 2008/04/15 20:23:53 miod Exp $
 .\"
 .\" Copyright (c) 2003, 2005 Miodrag Vallat
 .\"
@@ -23,7 +23,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2008 $
+.Dd $Mdocdate: April 15 2008 $
 .Dt MGX 4 sparc64
 .Os
 .Sh NAME
@@ -90,5 +90,5 @@ All other combinations are unsupported and may damage the hardware.
 .Xr wscons 4 ,
 .Xr wsdisplay 4
 .Sh CAVEATS
-This driver does not support any acceleration features at the moment, and
+This driver does not support mode switching at the moment, and
 drives the card in PROM-compatible, 8 bit, mode only.
