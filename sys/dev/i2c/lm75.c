@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.15 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.16 2008/04/15 20:47:52 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 /*
- * National Semiconductor LM75/LM77 temperature sensor.
+ * National Semiconductor LM75/LM76/LM77 temperature sensor.
  */
 
 #include <sys/param.h>
@@ -33,6 +33,7 @@
 #define	LM_MODEL_LM77	2
 #define	LM_MODEL_DS1775	3
 #define	LM_MODEL_LM75A	4
+#define	LM_MODEL_LM76	5
 
 #define LM_POLLTIME	3	/* 3s */
 
@@ -60,6 +61,7 @@ struct lmtemp_softc {
 	int	sc_addr;
 	int	sc_model;
 	int	sc_bits;
+	int	sc_ratio;
 
 	struct ksensor sc_sensor;
 	struct ksensordev sc_sensordev;
@@ -108,17 +110,9 @@ struct cfdriver lmtemp_cd = {
  *	-54.875C	110 0100 1001	0x649
  *	-55.000C	110 0100 1000	0x648
  *
- * Temperature on the LM77 is represented by a 10-bit two's complement
- * integer in steps of 0.5C:
- *
- *	+130C	01 0000 0100	0x104
- *	+125C	00 1111 1010	0x0fa
- *	+25C	00 0011 0010	0x032
- *	+0.5C	00 0000 0001	0x001
- *	0C	00 0000 0000	0x000
- *	-0.5C	11 1111 1111	0x3ff
- *	-25C	11 1100 1110	0x3ce
- *	-55C	11 1001 0010	0x392
+ * Temperature on the LM77 is represented by a 13-bit two's complement
+ * integer in steps of 0.5C.  The LM76 is similar, but the integer is
+ * in steps of 0.065C
  *
  * LM75 temperature word:
  *
@@ -147,6 +141,7 @@ lmtemp_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "lm75") == 0 ||
+	    strcmp(ia->ia_name, "lm76") == 0 ||
 	    strcmp(ia->ia_name, "lm77") == 0 ||
 	    strcmp(ia->ia_name, "ds1775") == 0 ||
 	    strcmp(ia->ia_name, "lm75a") == 0)
@@ -188,17 +183,20 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_model = LM_MODEL_LM75;
 	sc->sc_bits = 9;
+	sc->sc_ratio = 500000;		/* 0.5 degC for LSB */
 	if (strcmp(ia->ia_name, "lm77") == 0) {
 		sc->sc_model = LM_MODEL_LM77;
 		sc->sc_bits = 13;
+	} else if (strcmp(ia->ia_name, "lm76") == 0) {
+		sc->sc_model = LM_MODEL_LM76;
+		sc->sc_bits = 13;
+		sc->sc_ratio = 62500;	/* 0.0625 degC for LSB */
 	} else if (strcmp(ia->ia_name, "ds1775") == 0) {
 		sc->sc_model = LM_MODEL_DS1775;
-		sc->sc_bits = 9;
 		//sc->sc_bits = DS1755_CONFIG_RESOLUTION(data);
 	} else if (strcmp(ia->ia_name, "lm75a") == 0) {
 		/* For simplicity's sake, treat the LM75A as an LM75 */
 		sc->sc_model = LM_MODEL_LM75A;
-		sc->sc_bits = 9;
 	}
 
 	printf("\n");
@@ -254,6 +252,6 @@ lmtemp_refresh_sensor_data(void *aux)
 		return;
 	}
 
-	sc->sc_sensor.value = val * 500000 + 273150000;
+	sc->sc_sensor.value = val * sc->sc_ratio + 273150000;
 	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
 }
