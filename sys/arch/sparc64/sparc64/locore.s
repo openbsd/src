@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.133 2008/04/14 21:04:56 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.134 2008/04/15 22:39:26 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8937,6 +8937,19 @@ _C_LABEL(cpu_clockrate):
 	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
 	.xword	0
 	.text
+
+/*
+ * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
+ * The workaround is to do a read immediately after the write and make
+ * sure the same cache line.
+ */
+ENTRY(tickcmpr_set)
+	ba,a	1f
+	.align	64
+1:	wr	%o0, 0, %tick_cmpr
+	rd	%tick_cmpr, %g0
+	retl
+	 nop
 
 /*
  * delay function

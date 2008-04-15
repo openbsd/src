@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2008/03/29 20:07:36 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.40 2008/04/15 22:39:26 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -727,7 +727,7 @@ tickintr(cap)
 	 */
 	s = intr_disable();
 	base = sparc_rdpr(tick);
-	sparc_wr(tick_cmpr, (base + tick_increment) & TICK_TICKS, 0);
+	tickcmpr_set((base + tick_increment) & TICK_TICKS);
 	level0.ih_count.ec_count++;
 	intr_restore(s);
 

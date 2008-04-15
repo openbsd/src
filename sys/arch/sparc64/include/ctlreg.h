@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.16 2008/03/08 19:46:59 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.17 2008/04/15 22:39:26 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -718,7 +718,7 @@ void flush(void *p)
 /* read 64-bit %tick register */
 #define tick() (sparc_rdpr(tick) & TICK_TICKS)
 
-extern void next_tick(long);
+extern void tickcmpr_set(u_int64_t);
 
 #endif /* _LOCORE */
 #endif /* _SPARC64_CTLREG_ */
