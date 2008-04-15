@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.8 2007/02/18 18:38:55 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.9 2008/04/15 16:03:12 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -349,11 +349,11 @@ void
 mgx_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct mgx_softc *sc = v;
+	u_int i = index * 3;
 
-	index *= 3;
-	sc->sc_cmap[index++] = r;
-	sc->sc_cmap[index++] = g;
-	sc->sc_cmap[index] = b;
+	sc->sc_cmap[i++] = r;
+	sc->sc_cmap[i++] = g;
+	sc->sc_cmap[i] = b;
 
 	mgx_loadcmap(sc, index, 1);
 }
@@ -364,17 +364,8 @@ mgx_loadcmap(struct mgx_softc *sc, int start, int ncolors)
 	u_int8_t *color;
 	int i;
 
-#if 0
 	sc->sc_vidc[CMAP_WRITE_INDEX] = start;
 	color = sc->sc_cmap + start * 3;
-#else
-	/*
-	 * Apparently there is no way to load an incomplete cmap to this
-	 * DAC. What a waste.
-	 */
-	ncolors = 256;
-	color = sc->sc_cmap;
-#endif
 	for (i = ncolors * 3; i != 0; i--)
 		sc->sc_vidc[CMAP_DATA] = *color++;
 }
