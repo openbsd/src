@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.4 2008/04/16 12:19:11 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.5 2008/04/16 20:45:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -305,10 +305,8 @@ struct usb_video_frame_mjpeg_desc {
 /*
  * Driver specific private definitions.
  */
-//#define UVIDEO_NFRAMES		10	/* XXX calculate right value */
-//#define UVIDEO_NFRAMES		4	/* XXX calculate right value */
-#define UVIDEO_NFRAMES_MAX	10	/* XXX find optimal value */
-#define UVIDEO_SFRAMES_MAX	3200	/* XXX find optimal value */
+#define UVIDEO_NFRAMES_MAX	34	/* XXX find optimal value */
+#define UVIDEO_SFRAMES_MAX	6400	/* XXX find optimal value */
 
 struct uvideo_vs_iface {
 	struct uvideo_softc	*sc;
