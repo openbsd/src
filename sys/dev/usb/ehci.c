@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.77 2007/06/15 11:41:47 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.78 2008/04/16 16:08:39 mk Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -472,8 +472,8 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_async_head = sqh;
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR, sqh->physaddr | EHCI_LINK_QH);
 
-	timeout_set(&sc->sc_tmo_pcd, NULL, NULL);
-	timeout_set(&sc->sc_tmo_intrlist, NULL, NULL);
+	timeout_set(&sc->sc_tmo_pcd, ehci_pcd_enable, sc);
+	timeout_set(&sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 
 	rw_init(&sc->sc_doorbell_lock, "ehcidb");
 
@@ -587,8 +587,6 @@ ehci_intr1(ehci_softc_t *sc)
 		 */
 		ehci_pcd_able(sc, 0);
 		/* Do not allow RHSC interrupts > 1 per second */
-		timeout_del(&sc->sc_tmo_pcd);
-		timeout_set(&sc->sc_tmo_pcd, ehci_pcd_enable, sc);
 		timeout_add(&sc->sc_tmo_pcd, hz);
 		eintrs &= ~EHCI_STS_PCD;
 	}
@@ -679,8 +677,6 @@ ehci_softintr(void *v)
 	/* Schedule a callout to catch any dropped transactions. */
 	if ((sc->sc_flags & EHCIF_DROPPED_INTR_WORKAROUND) &&
 	    !LIST_EMPTY(&sc->sc_intrhead)) {
-		timeout_del(&sc->sc_tmo_intrlist);
-		timeout_set(&sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 		timeout_add(&sc->sc_tmo_intrlist, hz);
 	}
 
