@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.134 2008/04/15 22:39:26 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.135 2008/04/16 12:56:04 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8944,10 +8944,22 @@ _C_LABEL(cpu_clockrate):
  * sure the same cache line.
  */
 ENTRY(tickcmpr_set)
-	ba,a	1f
+	ba	1f
+	 mov	8, %o2			! Initial step size
 	.align	64
 1:	wr	%o0, 0, %tick_cmpr
 	rd	%tick_cmpr, %g0
+
+	rd	%tick, %o1		! Read current %tick
+	sllx	%o1, 1, %o1
+	srlx	%o1, 1, %o1
+
+	cmp	%o0, %o1		! Make sure the value we wrote to
+	bg,pt	%xcc, 2f		!   %tick_cmpr was in the future.
+	 add	%o0, %o2, %o0		! If not, add the step size, double
+	ba,pt	%xcc, 1b		!   the step size and try again.
+	 sllx	%o2, 1, %o2
+2:
 	retl
 	 nop
 
