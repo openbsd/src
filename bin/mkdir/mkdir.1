@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.1,v 1.24 2007/08/06 19:16:05 sobrado Exp $
+.\"	$OpenBSD: mkdir.1,v 1.25 2008/04/16 20:53:12 jmc Exp $
 .\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mkdir.1	8.2 (Berkeley) 1/25/94
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: April 16 2008 $
 .Dt MKDIR 1
 .Os
 .Sh NAME
@@ -56,8 +56,7 @@ as modified by the current
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl m Ar mode
-Set the file permission bits of the final created directory to
-the specified
+Set the file permission bits of the newly created directory to
 .Ar mode .
 The mode argument can be in any of the formats specified to the
 .Xr chmod 1
@@ -85,9 +84,7 @@ For an explanation of the directory hierarchy,
 see
 .Xr hier 7 .
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std mkdir
 .Sh EXAMPLES
 Create a directory named
 .Pa foobar :

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.1,v 1.9 2007/05/31 19:19:45 jmc Exp $
+.\"	$OpenBSD: mkfifo.1,v 1.10 2008/04/16 20:53:12 jmc Exp $
 .\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mkfifo.1	8.2 (Berkeley) 1/5/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 16 2008 $
 .Dt MKFIFO 1
 .Os
 .Sh NAME
@@ -54,15 +54,16 @@ It requires write permission in the parent directory.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl m Ar mode
-Set the file permission bits of newly created directories to
+Set the file permission bits of newly created fifos to
 .Ar mode .
-The mode is specified as in
-.Xr chmod 1 .
-In symbolic mode strings, the
-.Sq +
+The mode argument can be in any of the formats specified to the
+.Xr chmod 1
+utility.
+If a symbolic mode is specified, strings and the operators
+.Ql +
 and
-.Sq -
-operators are interpreted relative to an assumed initial mode of
+.Ql -
+are interpreted relative to an initial mode of
 .Dq a=rw .
 .El
 .Pp
