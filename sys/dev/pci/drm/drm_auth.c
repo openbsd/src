@@ -35,16 +35,9 @@
 
 #include "drmP.h"
 
-int	 drm_hash_magic(drm_magic_t);
 drm_file_t *drm_find_file(drm_device_t *, drm_magic_t);
 int	 drm_add_magic(drm_device_t *, drm_file_t *, drm_magic_t);
 int	 drm_remove_magic(drm_device_t *, drm_magic_t);
-
-int
-drm_hash_magic(drm_magic_t magic)
-{
-	return magic & (DRM_HASH_SIZE-1);
-}
 
 /**
  * Returns the file private associated with the given magic number.
@@ -53,18 +46,13 @@ drm_file_t *
 drm_find_file(drm_device_t *dev, drm_magic_t magic)
 {
 	struct drm_magic_entry *pt;
-	int hash;
-
-	hash = drm_hash_magic(magic);
+	struct drm_magic_entry	key;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
-	TAILQ_FOREACH(pt, &dev->magiclist[hash], link) {
-		if (pt->magic == magic) {
-			return (pt->priv);
-		}
-	}
-
+	key.magic = magic;
+	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) != NULL)
+		return (pt->priv);
 	return (NULL);
 }
 
@@ -75,19 +63,17 @@ drm_find_file(drm_device_t *dev, drm_magic_t magic)
 int
 drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 {
-	int hash;
 	struct drm_magic_entry *entry;
 
 	DRM_DEBUG("%d\n", magic);
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
-	hash = drm_hash_magic(magic);
 	entry = malloc(sizeof(*entry), M_DRM, M_ZERO | M_NOWAIT);
 	if (!entry) return ENOMEM;
 	entry->magic = magic;
 	entry->priv  = priv;
-	TAILQ_INSERT_TAIL(&dev->magiclist[hash], entry, link);
+	SPLAY_INSERT(drm_magic_tree, &dev->magiclist, entry);
 
 	return 0;
 }
@@ -99,26 +85,19 @@ drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 int
 drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
 {
-	struct drm_magic_entry *prev = NULL;
 	struct drm_magic_entry *pt;
-	int hash;
+	struct drm_magic_entry  key;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
 	DRM_DEBUG("%d\n", magic);
-	hash = drm_hash_magic(magic);
 
-	for (pt = TAILQ_FIRST(&dev->magiclist[hash]);
-	    pt != TAILQ_END(&dev->magiclist[hash]);
-	    prev = pt, pt = TAILQ_NEXT(pt, link)) {
-		if (pt->magic == magic) {
-			TAILQ_REMOVE(&dev->magiclist[hash], pt, link);
-			return 0;
-		}
-	}
-
+	key.magic = magic;
+	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) == NULL)
+		return EINVAL;
+	SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
 	free(pt, M_DRM);
-	return EINVAL;
+	return (0);
 }
 
 /**
@@ -181,3 +160,11 @@ drm_authmagic(drm_device_t *dev, void *data, struct drm_file *file_priv)
 		return EINVAL;
 	}
 }
+
+int
+drm_magic_cmp(struct drm_magic_entry *dme1, struct drm_magic_entry *dme2)
+{
+	return (dme1->magic - dme2->magic);
+}
+
+SPLAY_GENERATE(drm_magic_tree, drm_magic_entry, node, drm_magic_cmp);

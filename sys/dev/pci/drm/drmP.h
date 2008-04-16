@@ -157,7 +157,6 @@ typedef struct drm_file drm_file_t;
 #define DRM_LINUX 0
 #endif
 
-#define DRM_HASH_SIZE	      16 /* Size of key hash table		  */
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
 #define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
 
@@ -540,13 +539,11 @@ typedef struct drm_ioctl_desc {
 #define DRM_IOCTL_DEF(ioctl, func, flags) \
 	[DRM_IOCTL_NR(ioctl)] = {ioctl, func, flags}
 
-typedef TAILQ_HEAD(drm_magic_list, drm_magic_entry) drm_magic_head_t;
 struct drm_magic_entry {
 	drm_magic_t	       magic;
 	struct drm_file	       *priv;
-	TAILQ_ENTRY(drm_magic_entry) link;
+	SPLAY_ENTRY(drm_magic_entry) node;
 };
-
 
 typedef struct drm_buf {
 	int		  idx;	       /* Index into master buflist	     */
@@ -860,7 +857,7 @@ struct drm_device {
 
 				/* Authentication */
 	drm_file_list_t   files;
-	drm_magic_head_t  magiclist[DRM_HASH_SIZE];
+	SPLAY_HEAD(drm_magic_tree, drm_magic_entry)	magiclist;
 
 	/* Linked list of mappable regions. Protected by dev_lock */
 	drm_map_list_t	  maplist;
@@ -1102,6 +1099,8 @@ struct drm_drawable_info	*drm_get_drawable_info(drm_device_t *dev,
 /* Authentication IOCTL support (drm_auth.c) */
 int	drm_getmagic(drm_device_t *dev, void *data, struct drm_file *file_priv);
 int	drm_authmagic(drm_device_t *dev, void *data, struct drm_file *file_priv);
+int	drm_magic_cmp(struct drm_magic_entry *, struct drm_magic_entry *);
+SPLAY_PROTOTYPE(drm_magic_tree, drm_magic_entry, node, drm_magic_cmp);
 
 /* Buffer management support (drm_bufs.c) */
 int	drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv);

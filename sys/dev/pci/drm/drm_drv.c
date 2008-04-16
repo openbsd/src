@@ -380,9 +380,7 @@ drm_firstopen(drm_device_t *dev)
 	for ( i = 0 ; i < DRM_ARRAY_SIZE(dev->counts) ; i++ )
 		atomic_set( &dev->counts[i], 0 );
 
-	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
-		TAILQ_INIT(&dev->magiclist[i]);
-	}
+	SPLAY_INIT(&dev->magiclist);
 
 	dev->lock.lock_queue = 0;
 	dev->irq_enabled = 0;
@@ -409,7 +407,6 @@ drm_lastclose(drm_device_t *dev)
 #ifdef __FreeBSD__
 	drm_local_map_t *mapsave;
 #endif
-	int i;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
@@ -429,11 +426,9 @@ drm_lastclose(drm_device_t *dev)
 
 	drm_drawable_free_all(dev);
 				/* Clear pid list */
-	for ( i = 0 ; i < DRM_HASH_SIZE ; i++ ) {
-		while ((pt = TAILQ_FIRST(&dev->magiclist[i])) != NULL) {
-			TAILQ_REMOVE(&dev->magiclist[i], pt, link);
-			free(pt, M_DRM);
-		}
+	while ((pt = SPLAY_ROOT(&dev->magiclist)) != NULL) {
+		SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
+		free(pt, M_DRM);
 	}
 
 				/* Clear AGP information */
