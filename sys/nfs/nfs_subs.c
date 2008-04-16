@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.70 2008/04/14 13:46:13 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.71 2008/04/16 20:02:46 damien Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -747,7 +747,7 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len, caddr_t *bposp)
 		len -= xfer;
 		if (len > 0) {
 			MGET(mb2, M_WAIT, MT_DATA);
-			if (len > MINCLSIZE)
+			if (len > MLEN)
 				MCLGET(mb2, M_WAIT);
 			mb2->m_len = 0;
 			mb->m_next = mb2;
