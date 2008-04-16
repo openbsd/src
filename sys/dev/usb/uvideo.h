@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.3 2008/04/10 09:22:15 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.4 2008/04/16 12:19:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -153,21 +153,6 @@
 #define	COMPONENT_CONNECTOR				0x0403
 
 /* Table 3-3: VC Interface Header Descriptor */
-struct usb_video_header_descriptor {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uWord	bcdUVC;
-	uWord	wTotalLength;
-	uDWord	dwClockFrequency; /* XXX deprecated */
-	uByte	bInCollection;
-};
-
-struct usb_video_control {
-	struct usb_video_header_descriptor	*descr;
-	uByte					*baInterfaceNr;
-};
-
 struct usb_video_header_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
@@ -176,7 +161,11 @@ struct usb_video_header_desc {
 	uWord	wTotalLength;
 	uDWord	dwClockFrequency; /* XXX deprecated */
 	uByte	bInCollection;
-	uByte	baInterfaceNr;
+};
+
+struct usb_video_header_desc_all {
+	struct usb_video_header_desc	*fix;
+	uByte				*baInterfaceNr;
 };
 
 /* Table 3-4: Input Terminal Descriptor */
@@ -238,18 +227,18 @@ struct usb_video_color_matching_descr {
 
 /* Table 4-47: Video Probe and Commit Controls */
 struct usb_video_probe_commit {
-	uByte	bmHint[2];
+	uWord	bmHint;
 	uByte	bFormatIndex;
 	uByte	bFrameIndex;
-	uByte	dwFrameInterval[4];
-	uByte	wKeyFrameRate[2];
-	uByte	wPFrameRate[2];
-	uByte	wCompQuality[2];
-	uByte	wCompWindowSize[2];
-	uByte	wDelay[2];
-	uByte	dwMaxVideoFrameSize[4];
-	uByte	dwMaxPayloadTransferSize[4];
-	uByte	wClockFrequency[4];
+	uDWord	dwFrameInterval;
+	uWord	wKeyFrameRate;
+	uWord	wPFrameRate;
+	uWord	wCompQuality;
+	uWord	wCompWindowSize;
+	uWord	wDelay;
+	uDWord	dwMaxVideoFrameSize;
+	uDWord	dwMaxPayloadTransferSize;
+	uDWord	wClockFrequency;
 	uByte	bmFramingInfo;
 	uByte	bPreferedVersion;
 	uByte	bMinVersion;
@@ -282,7 +271,7 @@ struct usb_video_probe_commit {
 #define	UVIDEO_STREAM_EOH	(1 << 7)
 
 /* Table 3-1: Motion-JPEG Video Format Descriptor */
-struct usb_video_format_mjpeg_descriptor {
+struct usb_video_format_mjpeg_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
@@ -297,7 +286,7 @@ struct usb_video_format_mjpeg_descriptor {
 } __packed;
 
 /* Table 3-2: Motion-JPEG Video Frame Descriptor */
-struct usb_video_frame_descriptor {
+struct usb_video_frame_mjpeg_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
@@ -316,28 +305,23 @@ struct usb_video_frame_descriptor {
 /*
  * Driver specific private definitions.
  */
-#define UVIDEO_NFRAMES		10 /* XXX calculate right value */
+//#define UVIDEO_NFRAMES		10	/* XXX calculate right value */
+//#define UVIDEO_NFRAMES		4	/* XXX calculate right value */
+#define UVIDEO_NFRAMES_MAX	10	/* XXX find optimal value */
+#define UVIDEO_SFRAMES_MAX	3200	/* XXX find optimal value */
 
-struct uvideo_stream_if {
+struct uvideo_vs_iface {
 	struct uvideo_softc	*sc;
 	usbd_xfer_handle	 xfer;
 	void			*buf;
-	int			 busy;
-	int			 numalts;
-	usbd_interface_handle  	 in_ifaceh;
-	usbd_pipe_handle	 in_pipeh;
+	usbd_interface_handle  	 ifaceh;
 	int			 endpoint;
-	u_int16_t		 size[UVIDEO_NFRAMES];
-
-	u_int8_t		 fmtgrp_cnt;
-
-	usbd_interface_handle	 ifaceh;
-	usbd_interface_handle	*if_descr;
-	int			 curr_alt;
-	u_int32_t		 max_isoc_payload;
-
-	char			 start_polling;
-	char			 fid;
+	usbd_pipe_handle	 pipeh;
+	uint16_t		 size[UVIDEO_NFRAMES_MAX];
+	int			 numalts;
+	int			 curalt;
+	uint32_t		 max_packet_size;
+	int			 iface;
 };
 
 struct uvideo_sample_buffer {
@@ -380,6 +364,13 @@ struct uvideo_softc {
 	struct vnode				*sc_vp;
 	struct usb_task				 sc_task_write;
 
-	struct usb_video_control		*sc_vc_header;
-	struct uvideo_stream_if			 sc_curr_strm;
+	int					 sc_nframes;
+	struct usb_video_probe_commit		 sc_desc_probe;
+	struct usb_video_header_desc_all	 sc_desc_vc_header;
+	struct usb_video_format_mjpeg_desc	*sc_desc_format_mjpeg;
+	struct usb_video_frame_mjpeg_desc	*sc_desc_frame_mjpeg;
+
+#define	UVIDEO_MAX_VS_NUM			 8
+	struct uvideo_vs_iface			*sc_vs_curr;
+	struct uvideo_vs_iface			 sc_vs_coll[UVIDEO_MAX_VS_NUM];
 };
