@@ -792,6 +792,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/athvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/atwreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/atwvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/atxxreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/awireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/awivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ax88190reg.ph

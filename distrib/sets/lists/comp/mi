@@ -207,6 +207,7 @@
 ./usr/include/dev/ic/athvar.h
 ./usr/include/dev/ic/atwreg.h
 ./usr/include/dev/ic/atwvar.h
+./usr/include/dev/ic/atxxreg.h
 ./usr/include/dev/ic/awireg.h
 ./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
