@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.16 2008/04/15 20:47:52 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.17 2008/04/16 22:44:37 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -165,14 +165,15 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = LM75_REG_CONFIG;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, &data, 1, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
+		printf(", fails to respond\n");
 		return;
 	}
 	if (data & LM75_CONFIG_SHUTDOWN) {
 		data &= ~LM75_CONFIG_SHUTDOWN;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, 1, &data, 1, 0)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 			printf(", cannot wake up\n");
 			iic_release_bus(sc->sc_tag, 0);
 			return;
@@ -210,28 +211,28 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
 
-
 	sensor_task_register(sc, lmtemp_refresh_sensor_data, LM_POLLTIME);
 }
 
 int
 lmtemp_temp_read(struct lmtemp_softc *sc, uint8_t which, int *valp)
 {
-	u_int8_t cmd, buf[2];
+	u_int8_t cmd;
+	u_int16_t data = 0x0000;
 	int error;
 
 	cmd = which;
 	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, buf, 2, 0);
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0);
 	if (error)
 		return (error);
 
 	/* Some chips return transient 0's.. we try next time */
-	if (buf[0] == 0x00 && buf[1] == 0x00)
+	if (data == 0x0000)
 		return (1);
 
 	/* convert to half-degrees C */
-	*valp = ((buf[0] << 8) | buf[1]) / (1 << (16 - sc->sc_bits));
+	*valp = ntohs(data) / (1 << (16 - sc->sc_bits));
 	return (0);
 }
 
