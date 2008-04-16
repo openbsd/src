@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.37 2007/11/17 14:05:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.38 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -36,6 +36,8 @@
 /*
  * Definitions for IEEE 802.11 drivers.
  */
+
+#include <sys/timeout.h>
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
@@ -143,6 +145,19 @@ struct ieee80211_edca_ac_params {
 	u_int8_t	ac_acm;
 };
 
+#define IEEE80211_PROTO_NONE	0
+#define IEEE80211_PROTO_RSN	(1 << 0)
+#define IEEE80211_PROTO_WPA	(1 << 1)
+
+struct ieee80211_rsnparams {
+	u_int16_t		rsn_nakms;
+	u_int32_t		rsn_akms;
+	u_int16_t		rsn_nciphers;
+	u_int32_t		rsn_ciphers;
+	enum ieee80211_cipher	rsn_groupcipher;
+	u_int16_t		rsn_caps;
+};
+
 #define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
 
 #define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
@@ -171,9 +186,10 @@ struct ieee80211com {
 	void			(*ic_set_tim)(struct ieee80211com *, int, int);
 	int			(*ic_set_key)(struct ieee80211com *,
 				    struct ieee80211_node *,
-				    const struct ieee80211_key *);
+				    struct ieee80211_key *);
 	void			(*ic_delete_key)(struct ieee80211com *,
-				    struct ieee80211_node *, int);
+				    struct ieee80211_node *,
+				    struct ieee80211_key *);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
@@ -223,6 +239,7 @@ struct ieee80211com {
 	u_int16_t		ic_bmisstimeout;/* beacon miss threshold (ms) */
 	u_int16_t		ic_nonerpsta;	/* # non-ERP stations */
 	u_int16_t		ic_longslotsta;	/* # long slot time stations */
+	u_int16_t		ic_rsnsta;	/* # RSN stations */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_inact_timer;	/* inactivity timer wait */
 	int			ic_des_esslen;
@@ -230,8 +247,8 @@ struct ieee80211com {
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */
 	u_int8_t		ic_des_bssid[IEEE80211_ADDR_LEN];
 	struct ieee80211_key	ic_nw_keys[IEEE80211_WEP_NKID];
-	int			ic_wep_txkey;	/* default tx key index */
-	void			*ic_wep_ctx;	/* wep crypt context */
+	int			ic_def_txkey;	/* default tx key index */
+#define ic_wep_txkey	ic_def_txkey
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	struct ieee80211_stats	ic_stats;	/* statistics */
 	struct timeval		ic_last_merge_print;	/* for rate-limiting
@@ -240,8 +257,16 @@ struct ieee80211com {
 	struct ieee80211_edca_ac_params ic_edca_ac[EDCA_NUM_AC];
 	u_int			ic_edca_updtcount;
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
-	u_int64_t		ic_keyreplaycnt;
+	u_int8_t		ic_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
+	struct timeout		ic_rsn_timeout;
+	u_int16_t		ic_rsn_keydonesta;
+	int			ic_tkip_micfail;
+
+	u_int			ic_rsnprotos;
+	u_int			ic_rsnakms;
+	u_int			ic_rsnciphers;
+	enum ieee80211_cipher	ic_rsngroupcipher;
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
@@ -276,8 +301,9 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* STATUS: short preamble */
 #define IEEE80211_F_QOS		0x00080000	/* CONF: QoS enabled */
 #define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
-#define	IEEE80211_F_RSN		0x00200000	/* CONF: RSN enabled */
-#define	IEEE80211_F_WPA1	0x00400000	/* CONF: WPA1 enabled */
+#define	IEEE80211_F_RSNON	0x00200000	/* CONF: RSN enabled */
+#define	IEEE80211_F_PSK		0x00400000	/* CONF: pre-shared key set */
+#define IEEE80211_F_COUNTERM	0x00800000	/* STATUS: countermeasures */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_caps */

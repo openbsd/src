@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.65 2007/11/21 15:58:22 blambert Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.66 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2718,18 +2718,22 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
     struct rtw_txdesc_blk **tdbp, struct mbuf **mp,
     struct ieee80211_node **nip)
 {
+	struct ieee80211com *ic;
+	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct mbuf *m0;
 	struct rtw_softc *sc;
 	short *if_flagsp;
 
 	sc = (struct rtw_softc *)ifp->if_softc;
+	ic = &sc->sc_ic;
 
 	DPRINTF(sc, RTW_DEBUG_XMIT,
 	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 
 	if_flagsp = &ifp->if_flags;
 
-	if (sc->sc_ic.ic_state == IEEE80211_S_RUN &&
+	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (*mp = rtw_80211_dequeue(sc, &sc->sc_beaconq, RTW_TXPRIBCN, tsbp,
 	    tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue beacon frame\n",
@@ -2737,7 +2741,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		return 0;
 	}
 
-	if ((*mp = rtw_80211_dequeue(sc, &sc->sc_ic.ic_mgtq, RTW_TXPRIMD, tsbp,
+	if ((*mp = rtw_80211_dequeue(sc, &ic->ic_mgtq, RTW_TXPRIMD, tsbp,
 	    tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue mgt frame\n",
 		    __func__));
@@ -2749,14 +2753,14 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		return 0;
 	}
 
-	if ((*mp = rtw_80211_dequeue(sc, &sc->sc_ic.ic_pwrsaveq, RTW_TXPRIHI,
+	if ((*mp = rtw_80211_dequeue(sc, &ic->ic_pwrsaveq, RTW_TXPRIHI,
 	    tsbp, tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue pwrsave frame\n",
 		    __func__));
 		return 0;
 	}
 
-	if (sc->sc_ic.ic_state != IEEE80211_S_RUN) {
+	if (ic->ic_state != IEEE80211_S_RUN) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: not running\n", __func__));
 		return 0;
 	}
@@ -2797,8 +2801,10 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	}
 
 	/* XXX should do WEP in hardware */
-	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
-		if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL)
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		wh = mtod(m0, struct ieee80211_frame *);
+		k = ieee80211_get_txkey(ic, wh, *nip);
+		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
 			return -1;
 	}
 

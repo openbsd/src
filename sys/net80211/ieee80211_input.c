@@ -1,9 +1,10 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.72 2007/10/29 15:40:23 chl Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.73 2008/04/16 18:32:15 damien Exp $	*/
+
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
- * Copyright (c) 2007 Damien Bergamini
+ * Copyright (c) 2007, 2008 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +64,6 @@
 
 #include <dev/rndvar.h>
 
-
 int	ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
 	    const u_int8_t *, const u_int8_t *, int);
 void	ieee80211_auth_open(struct ieee80211com *,
@@ -75,30 +75,30 @@ int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
 int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
 enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t[]);
 enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
-int	ieee80211_parse_rsn_body(struct ieee80211com *,
-	    struct ieee80211_node *, const u_int8_t *, u_int);
-int	ieee80211_parse_rsn(struct ieee80211com *, struct ieee80211_node *,
-	    const u_int8_t *);
-int	ieee80211_parse_wpa1(struct ieee80211com *, struct ieee80211_node *,
-	    const u_int8_t *);
+int	ieee80211_parse_rsn_body(struct ieee80211com *, const u_int8_t *,
+	    u_int, struct ieee80211_rsnparams *);
+int	ieee80211_parse_rsn(struct ieee80211com *, const u_int8_t *,
+	    struct ieee80211_rsnparams *);
+int	ieee80211_parse_wpa(struct ieee80211com *, const u_int8_t *,
+	    struct ieee80211_rsnparams *);
 int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
 int	ieee80211_do_slow_print(struct ieee80211com *, int *);
 void	ieee80211_recv_probe_resp(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *, int, u_int32_t, int);
 void	ieee80211_recv_probe_req(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, u_int32_t);
 void	ieee80211_recv_auth(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, u_int32_t);
 void	ieee80211_recv_assoc_req(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *, int, u_int32_t, int);
 void	ieee80211_recv_assoc_resp(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *, int);
 void	ieee80211_recv_deauth(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *);
 void	ieee80211_recv_disassoc(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *);
 void	ieee80211_recv_4way_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg2(struct ieee80211com *,
@@ -156,7 +156,7 @@ ieee80211_get_hdrlen(const void *data)
  */
 void
 ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
-	int rssi, u_int32_t rstamp)
+    int rssi, u_int32_t rstamp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
@@ -167,7 +167,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	u_int16_t orxseq, nrxseq;
 
 	if (ni == NULL)
-		panic("null mode");
+		panic("null node");
 
 	/* trim CRC here so WEP can find its own CRC at the end of packet. */
 	if (m->m_flags & M_HASFCS) {
@@ -241,34 +241,35 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ni->ni_inact = 0;
 	}
 
-	if (ic->ic_set_tim != NULL &&
-	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-	    ni->ni_pwrsave == 0) {
-		/* turn on power save mode */
+	if ((ic->ic_opmode == IEEE80211_M_HOSTAP ||
+	     ic->ic_opmode == IEEE80211_M_IBSS) && ic->ic_set_tim != NULL) {
+		if ((wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
+		    ni->ni_pwrsave == 0) {
+			/* turn on power save mode */
 
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: power save mode on for %s\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: power save mode on for %s\n",
+				    ifp->if_xname, ether_sprintf(wh->i_addr2));
 
-		ni->ni_pwrsave = IEEE80211_PS_SLEEP;
-	}
-	if (ic->ic_set_tim != NULL &&
-	    !(wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-	    ni->ni_pwrsave != 0) {
-		/* turn off power save mode, dequeue stored packets */
+			ni->ni_pwrsave = IEEE80211_PS_SLEEP;
+		}
+		if (!(wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
+		    ni->ni_pwrsave != 0) {
+			/* turn off power save mode, dequeue stored packets */
 
-		ni->ni_pwrsave = 0;
-		(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
+			ni->ni_pwrsave = 0;
+			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: power save mode off for %s\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: power save mode off for %s\n",
+				    ifp->if_xname, ether_sprintf(wh->i_addr2));
 
-		while (!IF_IS_EMPTY(&ni->ni_savedq)) {
-			struct mbuf *m;
-			IF_DEQUEUE(&ni->ni_savedq, m);
-			IF_ENQUEUE(&ic->ic_pwrsaveq, m);
-			(*ifp->if_start)(ifp);
+			while (!IF_IS_EMPTY(&ni->ni_savedq)) {
+				struct mbuf *m;
+				IF_DEQUEUE(&ni->ni_savedq, m);
+				IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+				(*ifp->if_start)(ifp);
+			}
 		}
 	}
 
@@ -371,9 +372,10 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 		hdrlen = ieee80211_get_hdrlen(wh);
 
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-			if (ic->ic_flags & IEEE80211_F_WEPON) {
-				m = ieee80211_wep_crypt(ifp, m, 0);
+		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+			if (ic->ic_flags &
+			    (IEEE80211_F_WEPON | IEEE80211_F_RSNON)) {
+				m = ieee80211_decrypt(ic, m, ni);
 				if (m == NULL) {
 					ic->ic_stats.is_rx_wepfail++;
 					goto err;
@@ -384,6 +386,10 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				goto out;
 			}
 		}
+		/*
+		 * XXX else: drivers should pass a flag to indicate if the
+		 * frame was successfully decrypted or not.
+		 */
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
@@ -398,21 +404,24 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			goto err;
 		}
 		eh = mtod(m, struct ether_header *);
-#if 0
-		if (!ni->ni_port_valid &&
+
+		if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
 		    eh->ether_type != htons(ETHERTYPE_PAE)) {
 			IEEE80211_DPRINTF(("%s: port not valid: %s\n",
 			    __func__, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_unauth++;
 			goto err;
 		}
-#endif
 		ifp->if_ipackets++;
 
-		/* perform as a bridge within the AP */
+		/*
+		 * Perform as a bridge within the AP.  XXX we do not bridge
+		 * 802.1X frames as suggested in C.1.1 of IEEE Std 802.1X.
+		 */
 		m1 = NULL;
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
-		    (ic->ic_flags & IEEE80211_F_NOBRIDGE) == 0) {
+		    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
+		    eh->ether_type != htons(ETHERTYPE_PAE)) {
 			if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 				m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 				if (m1 == NULL)
@@ -420,6 +429,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				else
 					m1->m_flags |= M_MCAST;
 			} else {
+				struct ieee80211_node *ni;
 				ni = ieee80211_find_node(ic, eh->ether_dhost);
 				if (ni != NULL) {
 					if (ni->ni_associd != 0) {
@@ -449,7 +459,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ifp->if_bpf && m1 == NULL)
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
-			ether_input_mbuf(ifp, m);
+			if (eh->ether_type == htons(ETHERTYPE_PAE)) {
+				(*ic->ic_recv_eapol)(ic, m, ni);
+				m_freem(m);
+			} else
+				ether_input_mbuf(ifp, m);
 		}
 		return;
 
@@ -823,6 +837,13 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 			    ic->ic_state, seq));
 			return;
 		}
+		if (ic->ic_flags & IEEE80211_F_RSNON) {
+			/* XXX not here! */
+			ic->ic_bss->ni_port_valid = 0;
+			ic->ic_bss->ni_replaycnt_ok = 0;
+			(*ic->ic_delete_key)(ic, ic->ic_bss,
+			    &ic->ic_bss->ni_pairwise_key);
+		}
 		if (status != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: open authentication failed "
@@ -923,8 +944,8 @@ enum ieee80211_cipher
 ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 {
 	/* from IEEE Std 802.11i-2004 - Table 20da */
-	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA1 */
-	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN (aka WPA2) */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA */
+	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
 		switch (selector[3]) {
 		case 0:	/* use group cipher suite */
 			return IEEE80211_CIPHER_USEGROUP;
@@ -945,8 +966,8 @@ enum ieee80211_akm
 ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 {
 	/* from IEEE Std 802.11i-2004 - Table 20dc */
-	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA1 */
-	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN (aka WPA2) */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA */
+	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
 		switch (selector[3]) {
 		case 1:	/* IEEE 802.1X (RSNA default) */
 			return IEEE80211_AKM_IEEE8021X;
@@ -961,78 +982,79 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
  * Parse an RSN element (see 7.3.2.25).
  */
 int
-ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *frm, u_int len)
+ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
+    u_int len, struct ieee80211_rsnparams *rsn)
 {
 	const u_int8_t *efrm;
 	u_int16_t m, n, s;
-	u_int16_t rsncaps;
-	enum ieee80211_cipher group_cipher;
-	u_int akmset, pairwise_cipherset;
 
 	efrm = frm + len;
 
 	/* check Version field */
 	if (LE_READ_2(frm) != 1)
-		return IEEE80211_REASON_RSN_IE_VER_UNSUP;
+		return IEEE80211_STATUS_RSN_IE_VER_UNSUP;
 	frm += 2;
 
 	/* all fields after the Version field are optional */
 
 	/* if Cipher Suite missing, default to CCMP */
-	ni->ni_group_cipher = IEEE80211_CIPHER_CCMP;
-	ni->ni_pairwise_cipherset = IEEE80211_CIPHER_CCMP;
+	rsn->rsn_groupcipher = IEEE80211_CIPHER_CCMP;
+	rsn->rsn_nciphers = 1;
+	rsn->rsn_ciphers = IEEE80211_CIPHER_CCMP;
 	/* if AKM Suite missing, default to 802.1X */
-	ni->ni_akmset = IEEE80211_AKM_IEEE8021X;
+	rsn->rsn_nakms = 1;
+	rsn->rsn_akms = IEEE80211_AKM_IEEE8021X;
+	/* if RSN capabilities missing, default to 0 */
+	rsn->rsn_caps = 0;
 
 	/* read Group Cipher Suite field */
 	if (frm + 4 > efrm)
 		return 0;
-	group_cipher = ieee80211_parse_rsn_cipher(frm);
-	if (group_cipher == IEEE80211_CIPHER_USEGROUP)
-		return IEEE80211_REASON_BAD_GROUP_CIPHER;
+	rsn->rsn_groupcipher = ieee80211_parse_rsn_cipher(frm);
+	if (rsn->rsn_groupcipher == IEEE80211_CIPHER_USEGROUP)
+		return IEEE80211_STATUS_BAD_GROUP_CIPHER;
 	frm += 4;
 
 	/* read Pairwise Cipher Suite Count field */
 	if (frm + 2 > efrm)
 		return 0;
-	m = LE_READ_2(frm);
+	m = rsn->rsn_nciphers = LE_READ_2(frm);
 	frm += 2;
 
 	/* read Pairwise Cipher Suite List */
 	if (frm + m * 4 > efrm)
-		return IEEE80211_REASON_IE_INVALID;
-	pairwise_cipherset = IEEE80211_CIPHER_NONE;
+		return IEEE80211_STATUS_IE_INVALID;
+	rsn->rsn_ciphers = IEEE80211_CIPHER_NONE;
 	while (m-- > 0) {
-		pairwise_cipherset |= ieee80211_parse_rsn_cipher(frm);
+		rsn->rsn_ciphers |= ieee80211_parse_rsn_cipher(frm);
 		frm += 4;
 	}
-	if (pairwise_cipherset & IEEE80211_CIPHER_USEGROUP) {
-		if (pairwise_cipherset != IEEE80211_CIPHER_USEGROUP)
-			return IEEE80211_REASON_BAD_PAIRWISE_CIPHER;
-		if (group_cipher == IEEE80211_CIPHER_CCMP)
-			return IEEE80211_REASON_BAD_PAIRWISE_CIPHER;
+	if (rsn->rsn_ciphers & IEEE80211_CIPHER_USEGROUP) {
+		if (rsn->rsn_ciphers != IEEE80211_CIPHER_USEGROUP)
+			return IEEE80211_STATUS_BAD_PAIRWISE_CIPHER;
+		if (rsn->rsn_groupcipher == IEEE80211_CIPHER_CCMP)
+			return IEEE80211_STATUS_BAD_PAIRWISE_CIPHER;
 	}
 
 	/* read AKM Suite List Count field */
 	if (frm + 2 > efrm)
 		return 0;
-	n = LE_READ_2(frm);
+	n = rsn->rsn_nakms = LE_READ_2(frm);
 	frm += 2;
 
 	/* read AKM Suite List */
 	if (frm + n * 4 > efrm)
-		return IEEE80211_REASON_IE_INVALID;
-	akmset = IEEE80211_AKM_NONE;
+		return IEEE80211_STATUS_IE_INVALID;
+	rsn->rsn_akms = IEEE80211_AKM_NONE;
 	while (n-- > 0) {
-		akmset |= ieee80211_parse_rsn_akm(frm);
+		rsn->rsn_akms |= ieee80211_parse_rsn_akm(frm);
 		frm += 4;
 	}
 
 	/* read RSN Capabilities field */
 	if (frm + 2 > efrm)
 		return 0;
-	rsncaps = LE_READ_2(frm);
+	rsn->rsn_caps = LE_READ_2(frm);
 	frm += 2;
 
 	/* read PMKID Count field */
@@ -1043,50 +1065,45 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* read PMKID List */
 	if (frm + s * IEEE80211_PMKID_LEN > efrm)
-		return IEEE80211_REASON_IE_INVALID;
+		return IEEE80211_STATUS_IE_INVALID;
 	while (s-- > 0) {
 		/* ignore PMKIDs for now */
 		frm += IEEE80211_PMKID_LEN;
 	}
 
-	ni->ni_group_cipher = group_cipher;
-	ni->ni_pairwise_cipherset = pairwise_cipherset;
-	ni->ni_akmset = akmset;
-	ni->ni_rsncaps = rsncaps;
-
-	return 0;
+	return IEEE80211_STATUS_SUCCESS;
 }
 
 int
-ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *frm)
+ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm,
+    struct ieee80211_rsnparams *rsn)
 {
 	/* check IE length */
 	if (frm[1] < 2) {
 		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
 		    " length %u, expecting at least 2\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return IEEE80211_REASON_IE_INVALID;
+		return IEEE80211_STATUS_IE_INVALID;
 	}
-	return ieee80211_parse_rsn_body(ic, ni, frm + 2, frm[1]);
+	return ieee80211_parse_rsn_body(ic, frm + 2, frm[1], rsn);
 }
 
 int
-ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *frm)
+ieee80211_parse_wpa(struct ieee80211com *ic, const u_int8_t *frm,
+    struct ieee80211_rsnparams *rsn)
 {
 	/* check IE length */
 	if (frm[1] < 6) {
-		IEEE80211_DPRINTF(("%s: invalid WPA1 IE;"
+		IEEE80211_DPRINTF(("%s: invalid WPA IE;"
 		    " length %u, expecting at least 6\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return IEEE80211_REASON_IE_INVALID;
+		return IEEE80211_STATUS_IE_INVALID;
 	}
-	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 4);
+	return ieee80211_parse_rsn_body(ic, frm + 6, frm[1] - 4, rsn);
 }
 
 /*
- * Create a copy of an information element.
+ * Create (or update) a copy of an information element.
  */
 int
 ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
@@ -1119,15 +1136,12 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
  */
 void
 ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, int isprobe)
 {
-#define	ISPROBE(_wh)	(((_wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) == \
-	IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edca, *wmm;
-	const u_int8_t *rsn, *wpa;
+	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie;
+	const u_int8_t *rsnie, *wpaie;
 	u_int16_t capinfo, bintval, fhdwell;
 	u_int8_t chan, bchan, fhindex, erp;
 	int is_new;
@@ -1160,7 +1174,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	tstamp  = frm; frm += 8;
 	bintval = LE_READ_2(frm); frm += 2;
 	capinfo = LE_READ_2(frm); frm += 2;
-	ssid = rates = xrates = edca = wmm = rsn = wpa = NULL;
+	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	fhdwell = 0;
@@ -1213,10 +1227,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			erp = frm[2];
 			break;
 		case IEEE80211_ELEMID_RSN:
-			rsn = frm;
+			rsnie = frm;
 			break;
 		case IEEE80211_ELEMID_EDCAPARMS:
-			edca = frm;
+			edcaie = frm;
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
 			break;
@@ -1227,10 +1241,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
 				if (frm[5] == 1)
-					wpa = frm;
+					wpaie = frm;
 				else if (frm[1] >= 5 &&
 				    frm[5] == 2 && frm[6] == 1)
-					wmm = frm;
+					wmmie = frm;
 			}
 			break;
 		default:
@@ -1250,7 +1264,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 	    isclr(ic->ic_chan_active, chan)) {
 		IEEE80211_DPRINTF(("%s: ignore %s with invalid channel "
-		    "%u\n", __func__, ISPROBE(wh) ?
+		    "%u\n", __func__, isprobe ?
 		    "probe response" : "beacon", chan));
 		ic->ic_stats.is_rx_badchan++;
 		return;
@@ -1268,7 +1282,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		 *     different hop pattern in FH.
 		 */
 		IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
-		    "for channel %u\n", __func__, ISPROBE(wh) ?
+		    "for channel %u\n", __func__, isprobe ?
 		    "probe response" : "beacon", bchan, chan));
 		ic->ic_stats.is_rx_chanmismatch++;
 		return;
@@ -1290,7 +1304,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
 		printf("%s: %s%s on chan %u (bss chan %u) ",
 		    __func__, (ni == NULL ? "new " : ""),
-		    ISPROBE(wh) ? "probe response" : "beacon",
+		    isprobe ? "probe response" : "beacon",
 		    chan, bchan);
 		ieee80211_print_essid(ssid + 2, ssid[1]);
 		printf(" from %s\n", ether_sprintf((u_int8_t *)wh->i_addr2));
@@ -1313,11 +1327,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 * now.
 	 */
 	if (ic->ic_opmode == IEEE80211_M_STA &&
-	    ic->ic_state == IEEE80211_S_ASSOC &&
+	    ic->ic_state == IEEE80211_S_RUN &&
 	    ni->ni_state == IEEE80211_STA_BSS) {
 		/*
-		 * Check if protection mode has changed since last
-		 * beacon.
+		 * Check if protection mode has changed since last beacon.
 		 */
 		if (ni->ni_erp != erp) {
 			IEEE80211_DPRINTF((
@@ -1343,12 +1356,50 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			    (capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
 		}
 	}
+	/*
+	 * We do not try to update EDCA parameters if QoS was not negotiated
+	 * with the AP at association time.
+	 */
 	if (ni->ni_flags & IEEE80211_NODE_QOS) {
-		if (edca != NULL)
-			ieee80211_parse_edca_params(ic, edca);
-		else if (wmm != NULL)
-			ieee80211_parse_wmm_params(ic, edca);
+		/* always prefer EDCA IE over Wi-Fi Alliance WMM IE */
+		if (edcaie != NULL)
+			ieee80211_parse_edca_params(ic, edcaie);
+		else if (wmmie != NULL)
+			ieee80211_parse_wmm_params(ic, wmmie);
 	}
+
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		struct ieee80211_rsnparams rsn;
+		const u_int8_t *saveie = NULL;
+		/*
+		 * If the AP advertises both RSN and WPA IEs (WPA1+WPA2),
+		 * we only store the parameters of the highest protocol
+		 * version we support.
+		 */
+		if (rsnie != NULL &&
+		    (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)) {
+			if (ieee80211_parse_rsn(ic, rsnie, &rsn) == 0) {
+				ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
+				saveie = rsnie;
+			}
+		} else if (wpaie != NULL &&
+		    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)) {
+			if (ieee80211_parse_wpa(ic, wpaie, &rsn) == 0) {
+				ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
+				saveie = wpaie;
+			}
+		}
+		if (saveie != NULL &&
+		    ieee80211_save_ie(saveie, &ni->ni_rsnie) == 0) {
+			ni->ni_rsnakms = rsn.rsn_akms;
+			ni->ni_rsnciphers = rsn.rsn_ciphers;
+			ni->ni_rsngroupcipher = rsn.rsn_groupcipher;
+			ni->ni_rsncaps = rsn.rsn_caps;
+		} else
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
+	} else
+		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
+
 	if (ssid[1] != 0 && ni->ni_esslen == 0) {
 		/*
 		 * Update ESSID at probe response to adopt hidden AP by
@@ -1379,7 +1430,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 * Anything else can be discarded (XXX and should be handled
 	 * above so we don't do so much work).
 	 */
-	if (ic->ic_opmode == IEEE80211_M_IBSS || (is_new && ISPROBE(wh))) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS || (is_new && isprobe)) {
 		/*
 		 * Fake an association so the driver can setup it's
 		 * private state.  The rate set has been setup above;
@@ -1388,7 +1439,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		if (ic->ic_newassoc)
 			(*ic->ic_newassoc)(ic, ni, 1);
 	}
-#undef ISPROBE
 }
 
 /*-
@@ -1458,10 +1508,9 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	if (rate & IEEE80211_RATE_BASIC) {
 		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-	} else {
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
+		return;
 	}
+	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 }
 
 /*-
@@ -1518,16 +1567,14 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, int reassoc)
 {
-#define ISREASSOC(_wh)	(((_wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) == \
-	IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
-
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates, *rsn, *wpa;
+	const u_int8_t *ssid, *rates, *xrates, *rsnie, *wpaie;
 	u_int16_t capinfo, bintval;
-	int reassoc, resp, reason = 0;
+	int resp, status = 0;
+	struct ieee80211_rsnparams rsn;
 	u_int8_t rate;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
@@ -1538,13 +1585,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	frm = (const u_int8_t *)&wh[1];
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
-	if (ISREASSOC(wh)) {
-		reassoc = 1;
-		resp = IEEE80211_FC0_SUBTYPE_REASSOC_RESP;
-	} else {
-		reassoc = 0;
-		resp = IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
-	}
+	resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
+	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
 	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
@@ -1557,7 +1599,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	bintval = LE_READ_2(frm); frm += 2;
 	if (reassoc)
 		frm += IEEE80211_ADDR_LEN;	/* skip current AP address */
-	ssid = rates = xrates = rsn = wpa = NULL;
+	ssid = rates = xrates = rsnie = wpaie = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
@@ -1574,7 +1616,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			xrates = frm;
 			break;
 		case IEEE80211_ELEMID_RSN:
-			rsn = frm;
+			rsnie = frm;
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
 			break;
@@ -1585,7 +1627,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
 				if (frm[5] == 1)
-					wpa = frm;
+					wpaie = frm;
 			}
 			break;
 		}
@@ -1610,38 +1652,102 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_assoc_notauth++;
 		return;
 	}
-	if (rsn != NULL)
-		reason = ieee80211_parse_rsn(ic, ni, rsn);
-	else if (wpa != NULL)
-		reason = ieee80211_parse_wpa1(ic, ni, wpa);
-	if (reason != 0) {
-		IEEE80211_DPRINTF(("%s: invalid RSN IE for %s\n",
-		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
-		    reason);
-		ieee80211_node_leave(ic, ni);
-		ic->ic_stats.is_rx_assoc_badrsnie++;
-		return;
+	if (reassoc && ni->ni_state != IEEE80211_STA_ASSOC) {
+		IEEE80211_DPRINTF(("%s: deny reassoc from %s, not "
+		    "associated\n", __func__,
+		    ether_sprintf((u_int8_t *)wh->i_addr2)));
+		status = IEEE80211_STATUS_NOT_ASSOCED;
+		goto end;
 	}
+
 	if (!(capinfo & IEEE80211_CAPINFO_ESS)) {
-		IEEE80211_DPRINTF(("%s: capinfo mismatch for %s\n",
-		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_CAPINFO);
-		ieee80211_node_leave(ic, ni);
 		ic->ic_stats.is_rx_assoc_capmismatch++;
-		return;
+		status = IEEE80211_STATUS_CAPINFO;
+		goto end;
 	}
 	rate = ieee80211_setup_rates(ic, ni, rates, xrates,
 	    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO |
 	    IEEE80211_F_DODEL);
 	if (rate & IEEE80211_RATE_BASIC) {
-		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
-		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
-		ieee80211_node_leave(ic, ni);
 		ic->ic_stats.is_rx_assoc_norate++;
-		return;
+		status = IEEE80211_STATUS_BASIC_RATE;
+		goto end;
 	}
+
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		const u_int8_t *saveie;
+		/*
+		 * A station should never include both a WPA and an RSN IE
+		 * in its (Re)Association Requests, but if it does, we only
+		 * consider the IE of the highest version of the protocol
+		 * that is allowed (ie RSN over WPA).
+		 */
+		if (rsnie != NULL &&
+		    (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)) {
+			status = ieee80211_parse_rsn(ic, rsnie, &rsn);
+			if (status != 0)
+				goto end;
+			ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
+			saveie = rsnie;
+		} else if (wpaie != NULL &&
+		    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)) {
+			status = ieee80211_parse_wpa(ic, wpaie, &rsn);
+			if (status != 0)
+				goto end;
+			ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
+			saveie = wpaie;
+		} else {
+			/*
+			 * In an RSN, an AP shall not associate with STAs
+			 * that fail to include the RSN IE in the
+			 * (Re)Association Request.
+			 */
+			status = IEEE80211_STATUS_IE_INVALID;
+			goto end;
+		}
+		/*
+		 * The initiating STA's RSN IE shall include one authentication
+		 * and pairwise cipher suite among those advertised by the
+		 * targeted AP.  It shall also specify the group cipher suite
+		 * specified by the targeted AP.
+		 */
+		if (rsn.rsn_nakms != 1 ||
+		    !(rsn.rsn_akms & ic->ic_bss->ni_rsnakms)) {
+			status = IEEE80211_STATUS_BAD_AKMP;
+			goto end;
+		}
+		if (rsn.rsn_nciphers != 1 ||
+		    !(rsn.rsn_ciphers & ic->ic_bss->ni_rsnciphers)) {
+			status = IEEE80211_STATUS_BAD_PAIRWISE_CIPHER;
+			goto end;
+		}
+		if (rsn.rsn_groupcipher != ic->ic_bss->ni_rsngroupcipher) {
+			status = IEEE80211_STATUS_BAD_GROUP_CIPHER;
+			goto end;
+		}
+		/*
+		 * Disallow new associations using TKIP if countermeasures
+		 * are active.
+		 */
+		if ((ic->ic_flags & IEEE80211_F_COUNTERM) &&
+		    (rsn.rsn_ciphers == IEEE80211_CIPHER_TKIP ||
+		     rsn.rsn_groupcipher == IEEE80211_CIPHER_TKIP)) {
+			status = IEEE80211_STATUS_CIPHER_REJ_POLICY;
+			goto end;
+		}
+
+		/* everything looks fine, save IE and parameters */
+		if (ieee80211_save_ie(saveie, &ni->ni_rsnie) != 0) {
+			status = IEEE80211_STATUS_TOOMANY;
+			goto end;
+		}
+		ni->ni_rsnakms = rsn.rsn_akms;
+		ni->ni_rsnciphers = rsn.rsn_ciphers;
+		ni->ni_rsngroupcipher = ic->ic_bss->ni_rsngroupcipher;
+		ni->ni_rsncaps = rsn.rsn_caps;
+	} else
+		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
+
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
 	ni->ni_intval = bintval;
@@ -1649,9 +1755,12 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_chan = ic->ic_bss->ni_chan;
 	ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
 	ni->ni_fhindex = ic->ic_bss->ni_fhindex;
-
-	ieee80211_node_join(ic, ni, resp);
-#undef ISREASSOC
+ end:
+	if (status != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, resp, status);
+		ieee80211_node_leave(ic, ni);
+	} else
+		ieee80211_node_join(ic, ni, resp);
 }
 
 /*-
@@ -1665,15 +1774,12 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int reassoc)
 {
-#define ISREASSOC(_wh)	(((_wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) == \
-	IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
-
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rates, *xrates, *edca, *wmm;
+	const u_int8_t *rates, *xrates, *edcaie, *wmmie;
 	u_int16_t capinfo, status, associd;
 	u_int8_t rate;
 
@@ -1688,14 +1794,13 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
-	ni = ic->ic_bss;
 	capinfo = LE_READ_2(frm); frm += 2;
 	status =  LE_READ_2(frm); frm += 2;
 	if (status != 0) {
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: %sassociation failed (reason %d)"
 			    " for %s\n", ifp->if_xname,
-			    ISREASSOC(wh) ?  "re" : "",
+			    reassoc ?  "re" : "",
 			    status, ether_sprintf((u_int8_t *)wh->i_addr3));
 		if (ni != ic->ic_bss)
 			ni->ni_fails++;
@@ -1704,7 +1809,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	associd = LE_READ_2(frm); frm += 2;
 
-	rates = xrates = edca = wmm = NULL;
+	rates = xrates = edcaie = wmmie = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
@@ -1718,7 +1823,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			xrates = frm;
 			break;
 		case IEEE80211_ELEMID_EDCAPARMS:
-			edca = frm;
+			edcaie = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
@@ -1727,7 +1832,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
 				if (frm[1] >= 5 && frm[5] == 2 && frm[6] == 1)
-					wmm = frm;
+					wmmie = frm;
 			}
 			break;
 		}
@@ -1746,14 +1851,14 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	ni->ni_capinfo = capinfo;
 	ni->ni_associd = associd;
-	if (edca != NULL || wmm != NULL) {
+	if (edcaie != NULL || wmmie != NULL) {
 		/* force update of EDCA parameters */
 		ic->ic_edca_updtcount = -1;
 
-		if ((edca != NULL &&
-		     ieee80211_parse_edca_params(ic, edca) == 0) ||
-		    (wmm != NULL &&
-		     ieee80211_parse_wmm_params(ic, wmm) == 0))
+		if ((edcaie != NULL &&
+		     ieee80211_parse_edca_params(ic, edcaie) == 0) ||
+		    (wmmie != NULL &&
+		     ieee80211_parse_wmm_params(ic, wmmie) == 0))
 			ni->ni_flags |= IEEE80211_NODE_QOS;
 		else	/* for Reassociation */
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
@@ -1778,10 +1883,15 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_flags |= IEEE80211_F_USEPROT;
 	else
 		ic->ic_flags &= ~IEEE80211_F_USEPROT;
-
+	/*
+	 * If not an RSNA, mark the port as valid, otherwise wait for
+	 * 802.1X authentication and 4-way handshake to complete..
+	 */
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		/* XXX ic->ic_mgt_timer = 5; */
+	}
 	ieee80211_new_state(ic, IEEE80211_S_RUN,
-		wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-#undef ISREASSOC
+	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 }
 
 /*-
@@ -1790,7 +1900,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
@@ -1807,7 +1917,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		ieee80211_new_state(ic, IEEE80211_S_AUTH,
-		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		    IEEE80211_FC0_SUBTYPE_DEAUTH);
 		break;
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
@@ -1831,7 +1941,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
@@ -1848,7 +1958,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		    IEEE80211_FC0_SUBTYPE_DISASSOC);
 		break;
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
@@ -1871,9 +1981,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
 	switch (subtype) {
-	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		ieee80211_recv_probe_resp(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_probe_resp(ic, m0, ni, rssi, rstamp, 0);
+		break;
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+		ieee80211_recv_probe_resp(ic, m0, ni, rssi, rstamp, 1);
 		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
 		ieee80211_recv_probe_req(ic, m0, ni, rssi, rstamp);
@@ -1882,18 +1994,22 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_recv_auth(ic, m0, ni, rssi, rstamp);
 		break;
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
+		ieee80211_recv_assoc_req(ic, m0, ni, rssi, rstamp, 0);
+		break;
 	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
-		ieee80211_recv_assoc_req(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_assoc_req(ic, m0, ni, rssi, rstamp, 1);
 		break;
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
+		ieee80211_recv_assoc_resp(ic, m0, ni, 0);
+		break;
 	case IEEE80211_FC0_SUBTYPE_REASSOC_RESP:
-		ieee80211_recv_assoc_resp(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_assoc_resp(ic, m0, ni, 1);
 		break;
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
-		ieee80211_recv_deauth(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_deauth(ic, m0, ni);
 		break;
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
-		ieee80211_recv_disassoc(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_disassoc(ic, m0, ni);
 		break;
 	default:
 		IEEE80211_DPRINTF(("%s: mgmt frame with subtype 0x%x not "
@@ -1916,15 +2032,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	 (u_int64_t)(p)[4] << 24 | (u_int64_t)(p)[5] << 16 |	\
 	 (u_int64_t)(p)[6] <<  8 | (u_int64_t)(p)[7])
 
-#define BE_WRITE_2(p, v) do {	\
-	(p)[0] = (v) >> 8;	\
-	(p)[1] = (v) & 0xff;	\
-} while (0)
-
 /* unaligned little endian access */
-#define LE_READ_8(p)						\
-	((u_int64_t)(p)[7] << 56 | (u_int64_t)(p)[6] << 48 |	\
-	 (u_int64_t)(p)[5] << 40 | (u_int64_t)(p)[4] << 32 |	\
+#define LE_READ_6(p)						\
+	((u_int64_t)(p)[5] << 40 | (u_int64_t)(p)[4] << 32 |	\
 	 (u_int64_t)(p)[3] << 24 | (u_int64_t)(p)[2] << 16 |	\
 	 (u_int64_t)(p)[1] <<  8 | (u_int64_t)(p)[0])
 
@@ -1936,24 +2046,24 @@ void
 ieee80211_recv_4way_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	u_int8_t snonce[EAPOL_KEY_NONCE_LEN];
+	struct ieee80211_ptk tptk;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *pmkid;
 	const u_int8_t *pmk;
-	size_t pmk_len;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
 	if (ni->ni_replaycnt_ok &&
-	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
 		return;
-
+	}
 	/* save authenticator's nonce (ANonce) */
 	memcpy(ni->ni_nonce, key->nonce, EAPOL_KEY_NONCE_LEN);
 
-	/* parse key data field (shall contain an encapsulated PMKID) */
+	/* parse key data field (may contain an encapsulated PMKID) */
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
 
@@ -1976,32 +2086,29 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	/* check that the PMKID KDE is valid */
+	/* check that the PMKID KDE is valid (if present) */
 	if (pmkid != NULL && pmkid[1] < 4 + 16)
 		return;
 
-	/* generate a new nonce (SNonce) */
-	arc4random_bytes(snonce, EAPOL_KEY_NONCE_LEN);
+	/* generate a new supplicant's nonce (SNonce) */
+	arc4random_bytes(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
 
-	if (ni->ni_akm == IEEE80211_AKM_IEEE8021X) {
-		/* XXX find the PMK in the PMKSA cache using the PMKID */
-	} else {
-		/* the PMK is the PSK */
-		pmk = ic->ic_psk;
-		pmk_len = IEEE80211_PMK_LEN;
+	/* retrieve PMK and derive TPTK */
+	if ((pmk = ieee80211_get_pmk(ic, ni, pmkid)) == NULL) {
+		/* no PMK configured for this STA/PMKID */
+		return;
 	}
-
-	/* derive PTK from PMK */
-	ieee80211_derive_ptk(pmk, pmk_len, ni->ni_macaddr, ic->ic_myaddr,
-	    ni->ni_nonce, snonce, (u_int8_t *)&ni->ni_ptk, sizeof(ni->ni_ptk));
+	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ni->ni_macaddr,
+	    ic->ic_myaddr, key->nonce, ic->ic_nonce, (u_int8_t *)&tptk,
+	    sizeof(tptk));
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
 		    ic->ic_if.if_xname, 1, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	/* send message 2 to authenticator */
-	ieee80211_send_4way_msg2(ic, ni, snonce);
+	/* send message 2 to authenticator using TPTK */
+	(void)ieee80211_send_4way_msg2(ic, ni, key->replaycnt, &tptk);
 }
 
 /*
@@ -2015,24 +2122,43 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 {
 	struct ieee80211_ptk tptk;
 	const u_int8_t *pmk;
-	size_t pmk_len;
+
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+	    ic->ic_opmode != IEEE80211_M_IBSS)
+		return;
 
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_state != RSNA_PTKSTART &&
-	    ni->ni_rsn_state != RSNA_PTKCALCNEGOTIATING)
+	    ni->ni_rsn_state != RSNA_PTKCALCNEGOTIATING) {
+		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
+		    __func__, ni->ni_rsn_state));
 		return;
-
+	}
 	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING;
 
-	/* derive TPTK from PMK */
-	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
-	    ni->ni_nonce, key->nonce, (u_int8_t *)&tptk, sizeof(tptk));
+	/* replay counter has already been verified by caller */
+
+	/* retrieve PMK and derive TPTK */
+	if ((pmk = ieee80211_get_pmk(ic, ni, NULL)) == NULL) {
+		/* no PMK configured for this STA */
+		return;	/* will timeout.. */
+	}
+	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ic->ic_myaddr,
+	    ni->ni_macaddr, ni->ni_nonce, key->nonce, (u_int8_t *)&tptk,
+	    sizeof(tptk));
 
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0)
-		return;
+	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
+		return;	/* will timeout.. */
+	}
 
-	/* use TPTK as PTK now that MIC is verified */
+	timeout_del(&ni->ni_rsn_timeout);
+	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING_2;
+	ni->ni_rsn_retries = 0;
+
+	/* install TPTK as PTK now that MIC is verified */
 	memcpy(&ni->ni_ptk, &tptk, sizeof(tptk));
 
 	/*
@@ -2042,13 +2168,10 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	if (ni->ni_rsnie == NULL || rsn[1] != ni->ni_rsnie[1] ||
 	    memcmp(rsn, ni->ni_rsnie, 2 + rsn[1]) != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
-		    IEEE80211_REASON_IE_INVALID);
+		    IEEE80211_REASON_RSN_DIFFERENT_IE);
 		ieee80211_node_leave(ic, ni);
 		return;
 	}
-
-	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING_2;
-	ni->ni_rsn_tocnt = 0;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2056,7 +2179,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 3 to supplicant */
-	ieee80211_send_4way_msg3(ic, ni);
+	(void)ieee80211_send_4way_msg3(ic, ni);
 }
 
 /*
@@ -2067,48 +2190,71 @@ void
 ieee80211_recv_4way_msg3(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
+	struct ieee80211_ptk tptk;
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rsn1, *rsn2, *gtk;
-	u_int16_t info;
+	const u_int8_t *rsnie1, *rsnie2, *gtk;
+	const u_int8_t *pmk;
+	u_int16_t info, reason = 0;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	if (ni->ni_replaycnt_ok &&
+	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
 		return;
+	}
 
-	/* check that ANonce matches the one received in message 1 */
-	if (memcmp(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN) != 0)
+	/* check that ANonce matches that of message 1 */
+	if (memcmp(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN) != 0) {
+		IEEE80211_DPRINTF(("%s: ANonce does not match msg 1/4\n",
+		    __func__));
 		return;
+	}
+	/* retrieve PMK and derive TPTK */
+	if ((pmk = ieee80211_get_pmk(ic, ni, NULL)) == NULL) {
+		/* no PMK configured for this STA */
+		return;
+	}
+	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ni->ni_macaddr,
+	    ic->ic_myaddr, key->nonce, ic->ic_nonce, (u_int8_t *)&tptk,
+	    sizeof(tptk));
 
 	info = BE_READ_2(key->info);
 
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
+	}
+	/* install TPTK as PTK now that MIC is verified */
+	memcpy(&ni->ni_ptk, &tptk, sizeof(tptk));
 
 	/* if encrypted, decrypt Key Data field using KEK */
 	if ((info & EAPOL_KEY_ENCRYPTED) &&
-	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
+	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
+		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
 		return;
+	}
 
 	/* parse key data field */
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
 
-	rsn1 = rsn2 = gtk = NULL;
+	rsnie1 = rsnie2 = gtk = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm)
 			break;
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_RSN:
-			if (rsn1 == NULL)
-				rsn1 = frm;
-			else if (rsn2 == NULL)
-				rsn2 = frm;
-			/* ignore if more than two RSN IEs */
+			if (rsnie1 == NULL)
+				rsnie1 = frm;
+			else if (rsnie2 == NULL)
+				rsnie2 = frm;
+			/* ignore others if more than two RSN IEs */
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4)
@@ -2122,7 +2268,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			} else if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
 				switch (frm[5]) {
 				case 1:	/* WPA */
-					rsn1 = frm;
+					rsnie1 = frm;
 					break;
 				}
 			}
@@ -2131,33 +2277,47 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		frm += 2 + frm[1];
 	}
 	/* first WPA/RSN IE is mandatory */
-	if (rsn1 == NULL)
+	if (rsnie1 == NULL) {
+		IEEE80211_DPRINTF(("%s: missing RSN IE\n", __func__));
 		return;
+	}
 	/* key data must be encrypted if GTK is included */
-	if (gtk != NULL && !(info & EAPOL_KEY_ENCRYPTED))
+	if (gtk != NULL && !(info & EAPOL_KEY_ENCRYPTED)) {
+		IEEE80211_DPRINTF(("%s: GTK not encrypted\n", __func__));
 		return;
-
+	}
 	/*
 	 * Check that first WPA/RSN IE is identical to the one received in
 	 * the beacon or probe response frame.
 	 */
-	if (ni->ni_rsnie == NULL || rsn1[1] != ni->ni_rsnie[1] ||
-	    memcmp(rsn1, ni->ni_rsnie, 2 + rsn1[1]) != 0) {
-		/*ieee80211_new_state();*/
-		return;
+	if (ni->ni_rsnie == NULL || rsnie1[1] != ni->ni_rsnie[1] ||
+	    memcmp(rsnie1, ni->ni_rsnie, 2 + rsnie1[1]) != 0) {
+		reason = IEEE80211_REASON_RSN_DIFFERENT_IE;
+		goto deauth;
 	}
 
 	/*
 	 * If a second RSN information element is present, use its pairwise
 	 * cipher suite or deauthenticate.
 	 */
-	if (rsn2 != NULL) {
-		/* XXX ieee80211_parse_rsn(rsn2); */
-		/*ieee80211_new_state();*/
-		return;
+	if (rsnie2 != NULL && ni->ni_rsnprotos == IEEE80211_PROTO_RSN) {
+		struct ieee80211_rsnparams rsn;
+
+		if (ieee80211_parse_rsn(ic, rsnie2, &rsn) == 0) {
+			if (rsn.rsn_akms != ni->ni_rsnakms ||
+			    rsn.rsn_groupcipher != ni->ni_rsngroupcipher ||
+			    rsn.rsn_nciphers != 1 ||
+			    !(rsn.rsn_ciphers & ic->ic_rsnciphers)) {
+				reason = IEEE80211_REASON_BAD_PAIRWISE_CIPHER;
+				goto deauth;
+			}
+			/* use pairwise cipher suite of second RSN IE */
+			ni->ni_rsnciphers = rsn.rsn_ciphers;
+			ni->ni_rsncipher = ni->ni_rsnciphers;
+		}
 	}
 
-	/* update the last-seen value of the key replay counter field */
+	/* update the last seen value of the key replay counter field */
 	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
 	ni->ni_replaycnt_ok = 1;
 
@@ -2168,20 +2328,24 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* send message 4 to authenticator */
 	if (ieee80211_send_4way_msg4(ic, ni) != 0)
-		return;	/* ..authenticator will timeout */
+		return;	/* ..authenticator will retry */
 
 	if (info & EAPOL_KEY_INSTALL) {
+		u_int64_t prsc;
+
 		/* check that key length matches that of pairwise cipher */
 		if (BE_READ_2(key->keylen) !=
-		    ieee80211_cipher_keylen(ni->ni_pairwise_cipher))
-			return;
+		    ieee80211_cipher_keylen(ni->ni_rsncipher)) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
 		/* install the PTK */
+		prsc = (gtk == NULL) ? LE_READ_6(key->rsc) : 0;
 		k = &ni->ni_pairwise_key;
-		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
-		if (ic->ic_set_key != NULL &&
-		    (*ic->ic_set_key)(ic, ni, k) != 0) {
-			/* XXX deauthenticate */
-			return;
+		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_rsncipher, prsc, k);
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
 		}
 	}
 	if (gtk != NULL) {
@@ -2189,29 +2353,40 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		u_int8_t kid;
 
 		/* check that the GTK KDE is valid */
-		if (gtk[1] < 4 + 2)
-			return;
+		if (gtk[1] < 4 + 2) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
 		/* check that key length matches that of group cipher */
-		if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_group_cipher))
-			return;	/* XXX PTK already installed! */
+		if (gtk[1] - 6 !=
+		    ieee80211_cipher_keylen(ni->ni_rsngroupcipher)) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
 		/* install the GTK */
 		kid = gtk[6] & 3;
-		rsc = LE_READ_8(key->rsc);
+		rsc = LE_READ_6(key->rsc);
 		k = &ic->ic_nw_keys[kid];
-		ieee80211_map_gtk(&gtk[8], ni->ni_group_cipher, kid,
+		ieee80211_map_gtk(&gtk[8], ni->ni_rsngroupcipher, kid,
 		    gtk[6] & (1 << 2), rsc, k);
-		if (ic->ic_set_key != NULL &&
-		    (*ic->ic_set_key)(ic, ni, k) != 0) {
-			/* XXX deauthenticate */
-			return;
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
 		}
 	}
 	if (info & EAPOL_KEY_SECURE) {
-		if (ic->ic_opmode == IEEE80211_M_IBSS) {
-			if (++ni->ni_key_count == 2)
-				ni->ni_port_valid = 1;
-		} else
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ++ni->ni_key_count == 2) {
+			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
+			    __func__, ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
+		}
+	}
+ deauth:
+	if (reason != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    reason);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	}
 }
 
@@ -2223,41 +2398,58 @@ void
 ieee80211_recv_4way_msg4(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	struct ieee80211_key *k;
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+	    ic->ic_opmode != IEEE80211_M_IBSS)
+		return;
 
 	/* discard if we're not expecting this message */
-	if (ni->ni_rsn_state != RSNA_PTKINITNEGOTIATING)
+	if (ni->ni_rsn_state != RSNA_PTKINITNEGOTIATING) {
+		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
+		    __func__, ni->ni_rsn_state));
 		return;
+	}
+
+	/* replay counter has already been verified by caller */
 
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
-		return;
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
+		return;	/* will timeout.. */
+	}
 
+	timeout_del(&ni->ni_rsn_timeout);
 	ni->ni_rsn_state = RSNA_PTKINITDONE;
+	ni->ni_rsn_retries = 0;
 
-	/* empty key data field */
-
-	/* install the PTK */
-	k = &ni->ni_pairwise_key;
-	ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
-	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
-		return;
-
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		if (++ni->ni_key_count == 2)
-			ni->ni_port_valid = 1;
-	} else
+	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP) {
+		/* install the PTK */
+		struct ieee80211_key *k = &ni->ni_pairwise_key;
+		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_rsncipher, 0, k);
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			IEEE80211_SEND_MGMT(ic, ni,
+			    IEEE80211_FC0_SUBTYPE_DEAUTH,
+			    IEEE80211_REASON_ASSOC_TOOMANY);
+			ieee80211_node_leave(ic, ni);
+			return;
+		}
+	}
+	if (ic->ic_opmode != IEEE80211_M_IBSS || ++ni->ni_key_count == 2) {
+		IEEE80211_DPRINTF(("%s: marking port %s valid\n", __func__,
+		    ether_sprintf(ni->ni_macaddr)));
 		ni->ni_port_valid = 1;
-
-	/* increment the 64-bit Key Replay Counter */
-	ni->ni_replaycnt++;
+	}
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
 		    ic->ic_if.if_xname, 4, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	/* XXX start a group key handshake w/ WPA1 */
+	/* initiate a group key handshake for WPA */
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA)
+		(void)ieee80211_send_group_msg1(ic, ni);
+	else
+		ni->ni_rsn_gstate = RSNA_IDLE;
 }
 
 /*
@@ -2269,22 +2461,24 @@ ieee80211_recv_4way_msg2or4(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rsn;
+	const u_int8_t *rsnie;
 
-	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
+	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
 		return;
+	}
 
 	/* parse key data field (check if an RSN IE is present) */
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
 
-	rsn = NULL;
+	rsnie = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm)
 			break;
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_RSN:
-			rsn = frm;
+			rsnie = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4)
@@ -2292,15 +2486,15 @@ ieee80211_recv_4way_msg2or4(struct ieee80211com *ic,
 			if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
 				switch (frm[5]) {
 				case 1:	/* WPA */
-					rsn = frm;
+					rsnie = frm;
 					break;
 				}
 			}
 		}
 		frm += 2 + frm[1];
 	}
-	if (rsn != NULL)
-		ieee80211_recv_4way_msg2(ic, key, ni, rsn);
+	if (rsnie != NULL)
+		ieee80211_recv_4way_msg2(ic, key, ni, rsnie);
 	else
 		ieee80211_recv_4way_msg4(ic, key, ni);
 }
@@ -2324,19 +2518,24 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
 		return;
-
-	info = BE_READ_2(key->info);
-
+	}
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
+	}
+	info = BE_READ_2(key->info);
 
 	/* check that encrypted and decrypt Key Data field using KEK */
 	if (!(info & EAPOL_KEY_ENCRYPTED) ||
-	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
+	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
+		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
 		return;
+	}
 
 	/* parse key data field (shall contain a GTK KDE) */
 	frm = (const u_int8_t *)&key[1];
@@ -2361,24 +2560,37 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	if (gtk == NULL)
+	/* check that the GTK KDE is present and valid */
+	if (gtk == NULL || gtk[1] < 4 + 2) {
+		IEEE80211_DPRINTF(("%s: missing or invalid GTK KDE\n",
+		    __func__));
+		return;
+	}
+
+	/* check that key length matches that of group cipher */
+	if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_rsngroupcipher))
 		return;
 
-	/* check that the GTK KDE is valid */
-	if (gtk[1] < 4 + 2)
-		return;
-	/* check that key length matches that of group cipher */
-	if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_group_cipher))
-		return;
 	/* install the GTK */
 	kid = gtk[6] & 3;
-	rsc = LE_READ_8(key->rsc);
+	rsc = LE_READ_6(key->rsc);
 	k = &ic->ic_nw_keys[kid];
-	ieee80211_map_gtk(&gtk[8], ni->ni_group_cipher, kid,
+	ieee80211_map_gtk(&gtk[8], ni->ni_rsngroupcipher, kid,
 	    gtk[6] & (1 << 2), rsc, k);
-	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
+	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		return;
-
+	}
+	if (info & EAPOL_KEY_SECURE) {
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ++ni->ni_key_count == 2) {
+			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
+			    __func__, ether_sprintf(ni->ni_macaddr)));
+			ni->ni_port_valid = 1;
+		}
+	}
 	/* update the last seen value of the key replay counter field */
 	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
 
@@ -2388,7 +2600,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	ieee80211_send_group_msg2(ic, ni, k);
+	(void)ieee80211_send_group_msg2(ic, ni, k);
 }
 
 void
@@ -2396,43 +2608,68 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
+	const u_int8_t *frm;
 	u_int64_t rsc;
 	u_int16_t info;
 	u_int8_t kid;
+	int keylen;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
 		return;
-
+	}
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
-
+	}
 	/*
-	 * EAPOL-Key data field is encrypted even though WPA1 doesn't set
+	 * EAPOL-Key data field is encrypted even though WPA doesn't set
 	 * the ENCRYPTED bit in the info field.
 	 */
-	if (ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
+	if (ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
+		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
 		return;
-
+	}
 	info = BE_READ_2(key->info);
+	keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
 
 	/* check that key length matches that of group cipher */
-	if (BE_READ_2(key->keylen) !=
-	    ieee80211_cipher_keylen(ni->ni_group_cipher))
-		return;
-	/* install the GTK */
-	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
-	rsc = LE_READ_8(key->rsc);
-	k = &ic->ic_nw_keys[kid];
-	ieee80211_map_gtk((u_int8_t *)&key[1], ni->ni_group_cipher, kid,
-	    info & EAPOL_KEY_WPA_TX, rsc, k);
-	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
+	if (BE_READ_2(key->keylen) != keylen)
 		return;
 
+	/* check that the data length is large enough to hold the key */
+	if (BE_READ_2(key->paylen) < keylen)
+		return;
+
+	/* key data field contains the GTK */
+	frm = (const u_int8_t *)&key[1];
+
+	/* install the GTK */
+	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
+	rsc = LE_READ_6(key->rsc);
+	k = &ic->ic_nw_keys[kid];
+	ieee80211_map_gtk(frm, ni->ni_rsngroupcipher, kid,
+	    info & EAPOL_KEY_WPA_TX, rsc, k);
+	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		return;
+	}
+	if (info & EAPOL_KEY_SECURE) {
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ++ni->ni_key_count == 2) {
+			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
+			    __func__, ether_sprintf(ni->ni_macaddr)));
+			ni->ni_port_valid = 1;
+		}
+	}
 	/* update the last seen value of the key replay counter field */
 	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
 
@@ -2442,7 +2679,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	ieee80211_send_group_msg2(ic, ni, k);
+	(void)ieee80211_send_group_msg2(ic, ni, k);
 }
 
 /*
@@ -2457,20 +2694,34 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
+	/* discard if we're not expecting this message */
+	if (ni->ni_rsn_gstate != RSNA_REKEYNEGOTIATING) {
+		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
+		    __func__, ni->ni_rsn_state));
 		return;
-
-	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
-		return;
-
-	/* empty key data field */
-
-#ifdef notyet
-	if (--ic->ic_keydone_sta == 0) {
-		/* install GTK */
 	}
-#endif
+	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
+		return;
+	}
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
+		return;
+	}
+
+	timeout_del(&ni->ni_rsn_timeout);
+	ni->ni_rsn_gstate = RSNA_REKEYESTABLISHED;
+
+	if ((ni->ni_flags & IEEE80211_NODE_REKEY) &&
+	    --ic->ic_rsn_keydonesta == 0)
+		ieee80211_setkeysdone(ic);
+	ni->ni_flags &= ~IEEE80211_NODE_REKEY;
+
+	ni->ni_rsn_gstate = RSNA_IDLE;
+	ni->ni_rsn_retries = 0;
+
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
 		    ic->ic_if.if_xname, 2, 2, "group key",
@@ -2479,8 +2730,8 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 
 /*
  * EAPOL-Key Request frames are sent by the supplicant to request that the
- * authenticator initiate either a 4-Way Handshake or Group Key Handshake
- * and to report a MIC failure in a TKIP MSDU.
+ * authenticator initiates either a 4-Way Handshake or Group Key Handshake,
+ * or to report a MIC failure in a TKIP MSDU.
  */
 void
 ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
@@ -2494,11 +2745,36 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 
 	info = BE_READ_2(key->info);
 
-	if (info & EAPOL_KEY_ERROR) {
-		/* TKIP MIC failure */
+	/* enforce monotonicity of key request replay counter */
+	if (ni->ni_reqreplaycnt_ok &&
+	    BE_READ_8(key->replaycnt) <= ni->ni_reqreplaycnt) {
+		ic->ic_stats.is_rx_eapol_replay++;
+		return;
+	}
+	if (!(info & EAPOL_KEY_KEYMIC) ||
+	    ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
+		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		ic->ic_stats.is_rx_eapol_badmic++;
+		return;
+	}
+	/* update key request replay counter now that MIC is verified */
+	ni->ni_reqreplaycnt = BE_READ_8(key->replaycnt);
+	ni->ni_reqreplaycnt_ok = 1;
+
+	if (info & EAPOL_KEY_ERROR) {	/* TKIP MIC failure */
+		/* ignore reports from STAs not using TKIP */
+		if (ic->ic_bss->ni_rsngroupcipher != IEEE80211_CIPHER_TKIP &&
+		    ni->ni_rsncipher != IEEE80211_CIPHER_TKIP) {
+			IEEE80211_DPRINTF(("%s: MIC failure report from "
+			    "STA not using TKIP: %s\n", __func__,
+			    ether_sprintf(ni->ni_macaddr)));
+			return;
+		}
+		ic->ic_stats.is_rx_remmicfail++;
+		ieee80211_michael_mic_failure(ic, LE_READ_6(key->rsc));
 
 	} else if (info & EAPOL_KEY_PAIRWISE) {
-		/* initiate the 4-Way Handshake */
+		/* initiate a 4-Way Handshake */
 
 	} else {
 		/*
@@ -2508,89 +2784,64 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 	}
 }
 
-#ifdef IEEE80211_DEBUG
-static void
-ieee80211_print_eapol_key(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, const struct ieee80211_node *ni)
-{
-	int i;
-	printf("%s: received EAPOL-Key frame from %s\n",
-	    ic->ic_if.if_xname, ether_sprintf((u_int8_t *)ni->ni_macaddr));
-	printf("version=0x%02x type=0x%02x desc=0x%02x body length=%d "
-	    "data length=%d\n", key->version, key->type, key->desc,
-	    BE_READ_2(key->len), BE_READ_2(key->paylen));
-	printf("info=%b\n", BE_READ_2(key->info),
-	    "\20\x03PAIRWISE\x06INSTALL\x07KEYACK\x08KEYMIC\x09SECURE"
-	    "\x0aERROR\x0bREQUEST\x0cENCRYPTED\x0dSMK");
-	printf("Key Replay Counter=0x");
-	for (i = 0; i < 8; i++)
-		printf("%02x", key->replaycnt[i]);
-	printf("\n");
-	printf("Key Nonce=0x");
-	for (i = 0; i < EAPOL_KEY_NONCE_LEN; i++)
-		printf("%02x", key->nonce[i]);
-	printf("\n");
-	printf("Key IV=0x");
-	for (i = 0; i < EAPOL_KEY_IV_LEN; i++)
-		printf("%02x", key->iv[i]);
-	printf("\n");
-	printf("Key RSC=0x");
-	for (i = 0; i < 8; i++)
-		printf("%02x", key->rsc[i]);
-	printf("\n");
-	printf("Key MIC=0x");
-	for (i = 0; i < EAPOL_KEY_MIC_LEN; i++)
-		printf("%02x", key->mic[i]);
-	printf("\n");
-}
-#endif
-
 /*
  * Process an incoming EAPOL frame.  Notice that we are only interested in
- * EAPOL-Key frames with an IEEE 802.11 or WPA1 descriptor type.
+ * EAPOL-Key frames with an IEEE 802.11 or WPA descriptor type.
  */
 void
 ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
+	struct ifnet *ifp = &ic->ic_if;
+	struct ether_header *eh;
 	struct ieee80211_eapol_key *key;
 	u_int16_t info, desc;
 
-	if (m0->m_len < sizeof(struct ether_header) + sizeof(*key))
-		goto out;
+	ifp->if_ibytes += m0->m_pkthdr.len;
 
-	m_adj(m0, sizeof(struct ether_header));
+	if (m0->m_len < sizeof(*eh) + sizeof(*key))
+		return;
+	eh = mtod(m0, struct ether_header *);
+	if (IEEE80211_IS_MULTICAST(eh->ether_dhost)) {
+		ifp->if_imcasts++;
+		return;
+	}
+	m_adj(m0, sizeof(*eh));
 	key = mtod(m0, struct ieee80211_eapol_key *);
 
-	if (key->type != EAPOL_KEY || key->desc != ni->ni_eapol_desc)
-		goto out;
+	if (key->type != EAPOL_KEY)
+		return;
+	ic->ic_stats.is_rx_eapol_key++;
+
+	if ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN &&
+	     key->desc != EAPOL_KEY_DESC_IEEE80211) ||
+	    (ni->ni_rsnprotos == IEEE80211_PROTO_WPA &&
+	     key->desc != EAPOL_KEY_DESC_WPA))
+		return;
 
 	/* check packet body length */
 	if (m0->m_len < 4 + BE_READ_2(key->len))
-		goto out;
+		return;
 
 	/* check key data length */
 	if (m0->m_len < sizeof(*key) + BE_READ_2(key->paylen))
-		goto out;
+		return;
 
-#ifdef IEEE80211_DEBUG
-	if (ieee80211_debug > 0)
-		ieee80211_print_eapol_key(ic, key, ni);
-#endif
 	info = BE_READ_2(key->info);
 
 	/* discard EAPOL-Key frames with an unknown descriptor version */
 	desc = info & EAPOL_KEY_VERSION_MASK;
 	if (desc != EAPOL_KEY_DESC_V1 && desc != EAPOL_KEY_DESC_V2)
-		goto out;
+		return;
 
-	if (ni->ni_pairwise_cipher == IEEE80211_CIPHER_CCMP &&
+	if ((ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
+	     ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP) &&
 	    desc != EAPOL_KEY_DESC_V2)
-		goto out;
+		return;
 
 	/* determine message type (see 8.5.3.7) */
 	if (info & EAPOL_KEY_REQUEST) {
-		/* EAPOL-Key Request */
+		/* EAPOL-Key Request frame */
 		ieee80211_recv_eapol_key_req(ic, key, ni);
 
 	} else if (info & EAPOL_KEY_PAIRWISE) {
@@ -2600,22 +2851,20 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 				ieee80211_recv_4way_msg3(ic, key, ni);
 			else
 				ieee80211_recv_4way_msg2or4(ic, key, ni);
-		} else
+		} else if (info & EAPOL_KEY_KEYACK)
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
 		/* Group Key Handshake */
 		if (!(info & EAPOL_KEY_KEYMIC))
-			goto out;
+			return;
 		if (info & EAPOL_KEY_KEYACK) {
-			if (key->desc == EAPOL_KEY_DESC_WPA1)
+			if (key->desc == EAPOL_KEY_DESC_WPA)
 				ieee80211_recv_wpa_group_msg1(ic, key, ni);
 			else
 				ieee80211_recv_rsn_group_msg1(ic, key, ni);
 		} else
 			ieee80211_recv_group_msg2(ic, key, ni);
 	}
- out:
-	m_freem(m0);
 }
 
 void
@@ -2628,7 +2877,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	struct mbuf *m;
 	u_int16_t aid;
 
-	if (ic->ic_set_tim == NULL)  /* no powersaving functionality */
+	if (ic->ic_set_tim == NULL)	/* no powersaving functionality */
 		return;
 
 	wh = mtod(m0, struct ieee80211_frame *);

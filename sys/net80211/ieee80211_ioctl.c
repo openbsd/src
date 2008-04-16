@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.20 2007/11/25 16:47:44 brad Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.21 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	nr->nr_inact = ni->ni_inact;
 	nr->nr_txrate = ni->ni_txrate;
 	nr->nr_state = ni->ni_state;
+	/* XXX RSN */
 
 	/* Node flags */
 	nr->nr_flags = 0;
@@ -131,6 +132,192 @@ ieee80211_req2node(struct ieee80211com *ic, const struct ieee80211_nodereq *nr,
 	ni->ni_state = nr->nr_state;
 }
 
+static int
+ieee80211_ioctl_setnwkeys(struct ieee80211com *ic,
+    const struct ieee80211_nwkey *nwkey)
+{
+	struct ieee80211_key *k;
+	int error, i;
+
+	if (!(ic->ic_caps & IEEE80211_C_WEP))
+		return ENODEV;
+
+	if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN) {
+		if (!(ic->ic_flags & IEEE80211_F_WEPON))
+			return 0;
+		ic->ic_flags &= ~IEEE80211_F_WEPON;
+		return ENETRESET;
+	}
+	if (nwkey->i_defkid < 1 || nwkey->i_defkid > IEEE80211_WEP_NKID)
+		return EINVAL;
+
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keylen == 0 ||
+		    nwkey->i_key[i].i_keydat == NULL)
+			continue;	/* entry not set */
+		if (nwkey->i_key[i].i_keylen > IEEE80211_KEYBUF_SIZE)
+			return EINVAL;
+
+		/* map wep key to ieee80211_key */
+		k = &ic->ic_nw_keys[i];
+		if (k->k_cipher != IEEE80211_CIPHER_NONE)
+			(*ic->ic_delete_key)(ic, NULL, k);
+		memset(k, 0, sizeof(*k));
+		if (nwkey->i_key[i].i_keylen <= 5)
+			k->k_cipher = IEEE80211_CIPHER_WEP40;
+		else
+			k->k_cipher = IEEE80211_CIPHER_WEP104;
+		k->k_len = nwkey->i_key[i].i_keylen;
+		k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
+		error = copyin(nwkey->i_key[i].i_keydat, k->k_key,
+		    nwkey->i_key[i].i_keylen);
+		if (error != 0)
+			return error;
+		if ((error = (*ic->ic_set_key)(ic, NULL, k)) != 0)
+			return error;
+	}
+
+	ic->ic_def_txkey = nwkey->i_defkid - 1;
+	ic->ic_flags |= IEEE80211_F_WEPON;
+
+	return ENETRESET;
+}
+
+static int
+ieee80211_ioctl_getnwkeys(struct ieee80211com *ic,
+    struct ieee80211_nwkey *nwkey)
+{
+	struct ieee80211_key *k;
+	int error, i;
+
+	if (ic->ic_flags & IEEE80211_F_WEPON)
+		nwkey->i_wepon = IEEE80211_NWKEY_WEP;
+	else
+		nwkey->i_wepon = IEEE80211_NWKEY_OPEN;
+
+	nwkey->i_defkid = ic->ic_wep_txkey + 1;
+
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		/* do not show any keys to non-root user */
+		if ((error = suser(curproc, 0)) != 0)
+			return error;
+		k = &ic->ic_nw_keys[i];
+		if (k->k_cipher != IEEE80211_CIPHER_WEP40 &&
+		    k->k_cipher != IEEE80211_CIPHER_WEP104)
+			nwkey->i_key[i].i_keylen = 0;
+		else
+			nwkey->i_key[i].i_keylen = k->k_len;
+		error = copyout(k->k_key, nwkey->i_key[i].i_keydat,
+		    nwkey->i_key[i].i_keylen);
+		if (error != 0)
+			return error;
+	}
+	return 0;
+}
+
+static int
+ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
+    const struct ieee80211_wpaparams *wpa)
+{
+	if (!(ic->ic_caps & IEEE80211_C_RSN))
+		return ENODEV;
+
+	if (!wpa->i_enabled) {
+		if (!(ic->ic_flags & IEEE80211_F_RSNON))
+			return 0;
+		ic->ic_flags &= ~IEEE80211_F_RSNON;
+		return ENETRESET;
+	}
+
+	ic->ic_rsnprotos = 0;
+	if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA1)
+		ic->ic_rsnprotos |= IEEE80211_PROTO_WPA;
+	if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA2)
+		ic->ic_rsnprotos |= IEEE80211_PROTO_RSN;
+	if (ic->ic_rsnprotos == 0)	/* set to default (WPA+RSN) */
+		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
+
+	ic->ic_rsnakms = 0;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_PSK)
+		ic->ic_rsnakms |= IEEE80211_AKM_PSK;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_IEEE8021X)
+		ic->ic_rsnakms |= IEEE80211_AKM_IEEE8021X;
+	if (ic->ic_rsnakms == 0)	/* set to default (PSK+802.1X) */
+		ic->ic_rsnakms = IEEE80211_AKM_PSK | IEEE80211_AKM_IEEE8021X;
+
+	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_WEP40;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_TKIP)
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_CCMP)
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_CCMP;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP104)
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_WEP104;
+	else  {	/* set to default */
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)
+			ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+		else
+			ic->ic_rsngroupcipher = IEEE80211_CIPHER_CCMP;
+	}
+
+	ic->ic_rsnciphers = 0;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_TKIP)
+		ic->ic_rsnciphers |= IEEE80211_CIPHER_TKIP;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_CCMP)
+		ic->ic_rsnciphers |= IEEE80211_CIPHER_CCMP;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_USEGROUP)
+		ic->ic_rsnciphers = IEEE80211_CIPHER_USEGROUP;
+	if (ic->ic_rsnciphers == 0)	/* set to default (TKIP+CCMP) */
+		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
+		    IEEE80211_CIPHER_CCMP;
+
+	ic->ic_flags |= IEEE80211_F_RSNON;
+
+	return ENETRESET;
+}
+
+static int
+ieee80211_ioctl_getwpaparms(struct ieee80211com *ic,
+    struct ieee80211_wpaparams *wpa)
+{
+	wpa->i_enabled = (ic->ic_flags & IEEE80211_F_RSNON) ? 1 : 0;
+
+	wpa->i_protos = 0;
+	if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)
+		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA1;
+	if (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)
+		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA2;
+
+	wpa->i_akms = 0;
+	if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+		wpa->i_akms |= IEEE80211_WPA_AKM_PSK;
+	if (ic->ic_rsnakms & IEEE80211_AKM_IEEE8021X)
+		wpa->i_akms |= IEEE80211_WPA_AKM_IEEE8021X;
+
+	if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_WEP40)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_WEP40;
+	else if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_TKIP)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_TKIP;
+	else if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_CCMP)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_CCMP;
+	else if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_WEP104)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_WEP104;
+	else
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_NONE;
+
+	wpa->i_ciphers = 0;
+	if (ic->ic_rsnciphers & IEEE80211_CIPHER_TKIP)
+		wpa->i_ciphers |= IEEE80211_WPA_CIPHER_TKIP;
+	if (ic->ic_rsnciphers & IEEE80211_CIPHER_CCMP)
+		wpa->i_ciphers |= IEEE80211_WPA_CIPHER_CCMP;
+	if (ic->ic_rsnciphers & IEEE80211_CIPHER_USEGROUP)
+		wpa->i_ciphers = IEEE80211_WPA_CIPHER_USEGROUP;
+
+	return 0;
+}
+
 int
 ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -138,13 +325,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int i, error = 0;
 	struct ieee80211_nwid nwid;
-	struct ieee80211_nwkey *nwkey;
+	struct ieee80211_wpapsk *psk;
+	struct ieee80211_wmmparams *wmm;
 	struct ieee80211_power *power;
 	struct ieee80211_bssid *bssid;
 	struct ieee80211chanreq *chanreq;
 	struct ieee80211_channel *chan;
 	struct ieee80211_txpower *txpower;
-	struct ieee80211_key keys[IEEE80211_WEP_NKID];
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -194,81 +381,63 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCS80211NWKEY:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
-		nwkey = (struct ieee80211_nwkey *)data;
-		if ((ic->ic_caps & IEEE80211_C_WEP) == 0 &&
-		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
-			error = EINVAL;
+		error = ieee80211_ioctl_setnwkeys(ic, (void *)data);
+		break;
+	case SIOCG80211NWKEY:
+		error = ieee80211_ioctl_getnwkeys(ic, (void *)data);
+		break;
+	case SIOCS80211WMMPARMS:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		if (!(ic->ic_flags & IEEE80211_C_QOS)) {
+			error = ENODEV;
 			break;
 		}
-		/* check and copy keys */
-		memset(keys, 0, sizeof(keys));
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			keys[i].k_len = nwkey->i_key[i].i_keylen;
-			/*
-			 * Limit the maximal allowed key size to 
-			 * IEEE80211_KEYBUF_SIZE bytes.
-			 */
-			if (keys[i].k_len > sizeof(keys[i].k_key)) {
-				error = EINVAL;
-				break;
-			}
-			if (keys[i].k_len <= 0)
-				continue;
-			if ((error = copyin(nwkey->i_key[i].i_keydat,
-			    keys[i].k_key, keys[i].k_len)) != 0)
-				break;
-		}
-		if (error)
-			break;
-		i = nwkey->i_defkid - 1;
-		if (i < 0 || i >= IEEE80211_WEP_NKID ||
-		    keys[i].k_len == 0 ||
-		    (keys[i].k_len == -1 && ic->ic_nw_keys[i].k_len == 0)) {
-			if (nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
-				error = EINVAL;
-				break;
-			}
-		} else
-			ic->ic_wep_txkey = i;
-		/* save the key */
-		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN)
-			ic->ic_flags &= ~IEEE80211_F_WEPON;
+		wmm = (struct ieee80211_wmmparams *)data;
+		if (wmm->i_enabled)
+			ic->ic_flags |= IEEE80211_F_QOS;
 		else
-			ic->ic_flags |= IEEE80211_F_WEPON;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			struct ieee80211_key *k = &ic->ic_nw_keys[i];
-			if (keys[i].k_len < 0)
-				continue;
-			if (keys[i].k_len == 0)
-				k->k_cipher = IEEE80211_CIPHER_NONE;
-			else if (keys[i].k_len <= 5)
-				k->k_cipher = IEEE80211_CIPHER_WEP40;
-			else
-				k->k_cipher = IEEE80211_CIPHER_WEP104;
-			k->k_len = keys[i].k_len;
-			memcpy(k->k_key, keys[i].k_key, sizeof(keys[i].k_key));
+			ic->ic_flags &= ~IEEE80211_F_QOS;
+		error = ENETRESET;
+		break;
+	case SIOCG80211WMMPARMS:
+		wmm = (struct ieee80211_wmmparams *)data;
+		wmm->i_enabled = (ic->ic_flags & IEEE80211_F_QOS) ? 1 : 0;
+		break;
+	case SIOCS80211WPAPARMS:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		error = ieee80211_ioctl_setwpaparms(ic, (void *)data);
+		break;
+	case SIOCG80211WPAPARMS:
+		error = ieee80211_ioctl_getwpaparms(ic, (void *)data);
+		break;
+	case SIOCS80211WPAPSK:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		psk = (struct ieee80211_wpapsk *)data;
+		if (psk->i_enabled) {
+			ic->ic_flags |= IEEE80211_F_PSK;
+			memcpy(ic->ic_psk, psk->i_psk, sizeof(ic->ic_psk));
+		} else {
+			ic->ic_flags &= ~IEEE80211_F_PSK;
+			memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
 		}
 		error = ENETRESET;
 		break;
-	case SIOCG80211NWKEY:
-		nwkey = (struct ieee80211_nwkey *)data;
-		if (ic->ic_flags & IEEE80211_F_WEPON)
-			nwkey->i_wepon = IEEE80211_NWKEY_WEP;
-		else
-			nwkey->i_wepon = IEEE80211_NWKEY_OPEN;
-		nwkey->i_defkid = ic->ic_wep_txkey + 1;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			if (nwkey->i_key[i].i_keydat == NULL)
-				continue;
+	case SIOCG80211WPAPSK:
+		psk = (struct ieee80211_wpapsk *)data;
+		if (ic->ic_flags & IEEE80211_F_PSK) {
+			psk->i_enabled = 1;
 			/* do not show any keys to non-root user */
-			if ((error = suser(curproc, 0)) != 0)
-				break;
-			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].k_len;
-			if ((error = copyout(ic->ic_nw_keys[i].k_key,
-			    nwkey->i_key[i].i_keydat,
-			    ic->ic_nw_keys[i].k_len)) != 0)
-				break;
-		}
+			if (suser(curproc, 0) != 0) {
+				psk->i_enabled = 2;
+				memset(psk->i_psk, 0, sizeof(psk->i_psk));
+				break;	/* return ok but w/o key */
+			}
+			memcpy(psk->i_psk, ic->ic_psk, sizeof(psk->i_psk));
+		} else
+			psk->i_enabled = 0;
 		break;
 	case SIOCS80211POWER:
 		if ((error = suser(curproc, 0)) != 0)

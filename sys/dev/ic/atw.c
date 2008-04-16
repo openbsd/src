@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.56 2008/03/13 23:07:29 brad Exp $	*/
+/*	$OpenBSD: atw.c,v 1.57 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3614,6 +3614,7 @@ atw_start(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct atw_frame *hh;
 	struct mbuf *m0, *m;
 	struct atw_txsoft *txs, *last_txs;
@@ -3670,8 +3671,11 @@ atw_start(struct ifnet *ifp)
 				break;
 			}
 
-			if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
-				if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
+			if (ic->ic_flags & IEEE80211_F_WEPON) {
+				wh = mtod(m0, struct ieee80211_frame *);
+				k = ieee80211_get_txkey(ic, wh, ni);
+				m0 = ieee80211_encrypt(ic, m0, k);
+				if (m0 == NULL) {
 					ifp->if_oerrors++;
 					break;	
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.10 2007/08/14 20:33:47 bluhm Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.11 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -82,6 +82,13 @@ struct ieee80211_stats {
 	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
 	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
 	u_int32_t	is_rx_assoc_badrsnie;	/* rx assoc w/ bad RSN IE */
+	u_int32_t	is_rx_unauth;		/* rx port not valid */
+	u_int32_t	is_tx_noauth;		/* tx port not valid */
+	u_int32_t	is_rx_eapol_key;	/* rx eapol-key frames */
+	u_int32_t	is_rx_eapol_replay;	/* rx replayed eapol frames */
+	u_int32_t	is_rx_eapol_badmic;	/* rx eapol frames w/ bad mic */
+	u_int32_t	is_rx_remmicfail;	/* rx tkip remote mic fails */
+	u_int32_t	is_rx_locmicfail;	/* rx tkip local mic fails */
 };
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
@@ -171,6 +178,49 @@ struct ieee80211_txpower {
 #define IEEE80211_TXPOWER_MODE_FIXED	0	/* fixed tx power value */
 #define IEEE80211_TXPOWER_MODE_AUTO	1	/* auto level control */
 
+struct ieee80211_wpapsk {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_enabled;
+	u_int8_t	i_psk[32];
+};
+
+#define SIOCS80211WPAPSK	 _IOW('i', 245, struct ieee80211_wpapsk)
+#define SIOCG80211WPAPSK	_IOWR('i', 246, struct ieee80211_wpapsk)
+
+#define IEEE80211_WPA_PROTO_WPA1	0x01
+#define IEEE80211_WPA_PROTO_WPA2	0x02
+
+#define IEEE80211_WPA_CIPHER_NONE	0x00
+#define IEEE80211_WPA_CIPHER_USEGROUP	0x01
+#define IEEE80211_WPA_CIPHER_WEP40	0x02
+#define IEEE80211_WPA_CIPHER_TKIP	0x04
+#define IEEE80211_WPA_CIPHER_CCMP	0x08
+#define IEEE80211_WPA_CIPHER_WEP104	0x10
+
+#define IEEE80211_WPA_AKM_PSK		0x01
+#define IEEE80211_WPA_AKM_IEEE8021X	0x02
+
+struct ieee80211_wpaparams {
+	char	i_name[IFNAMSIZ];		/* if_name, e.g. "wi0" */
+	int	i_enabled;
+	u_int	i_protos;
+	u_int	i_akms;
+	u_int	i_ciphers;
+	u_int	i_groupcipher;
+};
+
+#define SIOCS80211WPAPARMS	 _IOW('i', 247, struct ieee80211_wpaparams)
+#define SIOCG80211WPAPARMS	_IOWR('i', 248, struct ieee80211_wpaparams)
+
+struct ieee80211_wmmparams {
+	char	i_name[IFNAMSIZ];		/* if_name, e.g. "wi0" */
+	int	i_enabled;
+	/* XXX more */
+};
+
+#define SIOCS80211WMMPARMS	 _IOW('i', 249, struct ieee80211_wmmparams)
+#define SIOCG80211WMMPARMS	_IOWR('i', 250, struct ieee80211_wmmparams)
+
 /* scan request (will block) */
 #define IEEE80211_SCAN_TIMEOUT	30	/* timeout in seconds */
 
@@ -209,6 +259,8 @@ struct ieee80211_nodereq {
 	u_int32_t	nr_inact;	/* inactivity mark count */
 	u_int8_t	nr_txrate;	/* index to nr_rates[] */
 	u_int16_t	nr_state;	/* node state in the cache */
+
+	/* XXX RSN */
 
 	/* Node flags */
 	u_int8_t	nr_flags;

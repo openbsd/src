@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.35 2007/11/17 14:29:11 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.36 2008/04/16 18:32:15 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -242,7 +242,8 @@ rt2560_attach(void *xsc, int id)
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_WEP;		/* s/w WEP */
+	    IEEE80211_C_WEP |		/* s/w WEP */
+	    IEEE80211_C_RSN;		/* WPA/RSN */
 
 	/* set supported .11b and .11g rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -1595,7 +1596,6 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1605,17 +1605,6 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 
 	desc = &sc->prioq.desc[sc->prioq.cur];
 	data = &sc->prioq.data[sc->prioq.cur];
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
-			return ENOBUFS;
-
-		/* packet header may have moved, reset our local pointer */
-		wh = mtod(m0, struct ieee80211_frame *);
-	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1691,11 +1680,11 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct rt2560_tx_ring *txq = &sc->txq;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
@@ -1703,9 +1692,10 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+		k = ieee80211_get_txkey(ic, wh, ni);
+
+		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
 			return ENOBUFS;
 
 		/* packet header may have moved, reset our local pointer */

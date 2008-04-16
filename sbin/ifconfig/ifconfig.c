@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.194 2008/03/29 18:56:43 damien Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.195 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -153,6 +153,13 @@ void	setifmtu(const char *, int);
 void	setifnwid(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
+void	setifwmm(const char *, int);
+void	setifwpa(const char *, int);
+void	setifwpaprotos(const char *, int);
+void	setifwpaakms(const char *, int);
+void	setifwpaciphers(const char *, int);
+void	setifwpagroupcipher(const char *, int);
+void	setifwpapsk(const char *, int);
 void	setifchan(const char *, int);
 void	setiftxpower(const char *, int);
 void	setifpowersave(const char *, int);
@@ -283,6 +290,16 @@ const struct	cmd {
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
+	{ "wmm",	1,		0,		setifwmm },
+	{ "-wmm",	0,		0,		setifwmm },
+	{ "wpa",	1,		0,		setifwpa },
+	{ "-wpa",	0,		0,		setifwpa },
+	{ "wpaakms",	NEXTARG,	0,		setifwpaakms },
+	{ "wpaciphers",	NEXTARG,	0,		setifwpaciphers },
+	{ "wpagroupcipher", NEXTARG,	0,		setifwpagroupcipher },
+	{ "wpaprotos",	NEXTARG,	0,		setifwpaprotos },
+	{ "wpapsk",	NEXTARG,	0,		setifwpapsk },
+	{ "-wpapsk",	-1,		0,		setifwpapsk },
 	{ "chan",	NEXTARG,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
 	{ "powersave",	1,		0,		setifpowersave },
@@ -1292,7 +1309,6 @@ print_string(const u_int8_t *buf, int len)
 	}
 }
 
-/* ARGSUSED */
 void
 setifnwid(const char *val, int d)
 {
@@ -1397,6 +1413,184 @@ setifnwkey(const char *val, int d)
 	(void)strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	if (ioctl(s, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
 		warn("SIOCS80211NWKEY");
+}
+
+/* ARGSUSED */
+void
+setifwmm(const char *val, int d)
+{
+	struct ieee80211_wmmparams wmm;
+
+	(void)strlcpy(wmm.i_name, name, sizeof(wmm.i_name));
+	wmm.i_enabled = d;
+	if (ioctl(s, SIOCS80211WMMPARMS, (caddr_t)&wmm) < 0)
+		err(1, "SIOCS80211WMMPARMS");
+}
+
+/* ARGSUSED */
+void
+setifwpa(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_enabled = d;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+/* ARGSUSED */
+void
+setifwpaprotos(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+	char *optlist, *str;
+	u_int rval = 0;
+
+	if ((optlist = strdup(val)) == NULL)
+		err(1, "strdup");
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		if (strcasecmp(str, "wpa1") == 0)
+			rval |= IEEE80211_WPA_PROTO_WPA1;
+		else if (strcasecmp(str, "wpa2") == 0)
+			rval |= IEEE80211_WPA_PROTO_WPA2;
+		else
+			errx(1, "wpaprotos: unknown protocol: %s", str);
+		str = strtok(NULL, ",");
+	}
+	free(optlist);
+
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_protos = rval;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+/* ARGSUSED */
+void
+setifwpaakms(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+	char *optlist, *str;
+	u_int rval = 0;
+
+	if ((optlist = strdup(val)) == NULL)
+		err(1, "strdup");
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		if (strcasecmp(str, "psk") == 0)
+			rval |= IEEE80211_WPA_AKM_PSK;
+		else if (strcasecmp(str, "802.1x") == 0)
+			rval |= IEEE80211_WPA_AKM_IEEE8021X;
+		else
+			errx(1, "wpaakms: unknown akm: %s", str);
+		str = strtok(NULL, ",");
+	}
+	free(optlist);
+
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_akms = rval;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+static const struct {
+	const char	*name;
+	u_int		cipher;
+} ciphers[] = {
+	{ "usegroup",	IEEE80211_WPA_CIPHER_USEGROUP },
+	{ "wep40",	IEEE80211_WPA_CIPHER_WEP40 },
+	{ "tkip",	IEEE80211_WPA_CIPHER_TKIP },
+	{ "ccmp",	IEEE80211_WPA_CIPHER_CCMP },
+	{ "wep104",	IEEE80211_WPA_CIPHER_WEP104 }
+};
+
+u_int
+getwpacipher(const char *name)
+{
+	int i;
+
+	for (i = 0; i < sizeof(ciphers) / sizeof(ciphers[0]); i++)
+		if (strcasecmp(name, ciphers[i].name) == 0)
+			return ciphers[i].cipher;
+	return IEEE80211_WPA_CIPHER_NONE;
+}
+
+/* ARGSUSED */
+void
+setifwpaciphers(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+	char *optlist, *str;
+	u_int rval = 0;
+
+	if ((optlist = strdup(val)) == NULL)
+		err(1, "strdup");
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		u_int cipher = getwpacipher(str);
+		if (cipher == IEEE80211_WPA_CIPHER_NONE)
+			errx(1, "wpaciphers: unknown cipher: %s", str);
+
+		rval |= cipher;
+		str = strtok(NULL, ",");
+	}
+	free(optlist);
+
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_ciphers = rval;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+/* ARGSUSED */
+void
+setifwpagroupcipher(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+	u_int cipher;
+
+	cipher = getwpacipher(val);
+	if (cipher == IEEE80211_WPA_CIPHER_NONE)
+		errx(1, "wpagroupcipher: unknown cipher: %s", val);
+
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_groupcipher = cipher;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+void
+setifwpapsk(const char *val, int d)
+{
+	struct ieee80211_wpapsk psk;
+	int len;
+
+	if (d != -1) {
+		len = sizeof(psk.i_psk);
+		val = get_string(val, NULL, psk.i_psk, &len);
+		if (val == NULL)
+			errx(1, "wpapsk: invalid pre-shared key\n");
+		if (len != sizeof(psk.i_psk))
+			errx(1, "wpapsk: bad pre-shared key length");
+		psk.i_enabled = 1;
+	} else
+		psk.i_enabled = 0;
+
+	(void)strlcpy(psk.i_name, name, sizeof(psk.i_name));
+	if (ioctl(s, SIOCS80211WPAPSK, (caddr_t)&psk) < 0)
+		err(1, "SIOCS80211WPAPSK");
 }
 
 void
@@ -1518,15 +1712,37 @@ setifpowersavesleep(const char *val, int d)
 }
 
 void
+print_cipherset(u_int32_t cipherset)
+{
+	const char *sep = "";
+	int i;
+
+	if (cipherset == IEEE80211_WPA_CIPHER_NONE) {
+		printf("none");
+		return;
+	}
+	for (i = 0; i < sizeof(ciphers) / sizeof(ciphers[0]); i++) {
+		if (cipherset & ciphers[i].cipher) {
+			printf("%s%s", sep, ciphers[i].name);
+			sep = ",";
+		}
+	}
+}
+
+void
 ieee80211_status(void)
 {
-	int len, i, nwkey_verbose, inwid, inwkey, ichan, ipwr, ibssid, itxpower;
+	int len, i, nwkey_verbose, inwid, inwkey, ipsk, ichan, ipwr;
+	int ibssid, itxpower, iwmm, iwpa;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
+	struct ieee80211_wpapsk psk;
 	struct ieee80211_power power;
 	struct ieee80211chanreq channel;
 	struct ieee80211_bssid bssid;
 	struct ieee80211_txpower txpower;
+	struct ieee80211_wmmparams wmm;
+	struct ieee80211_wpaparams wpa;
 	struct ieee80211_nodereq nr;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
@@ -1541,6 +1757,10 @@ ieee80211_status(void)
 	memset(&nwkey, 0, sizeof(nwkey));
 	strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	inwkey = ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey);
+
+	memset(&psk, 0, sizeof(psk));
+	strlcpy(psk.i_name, name, sizeof(psk.i_name));
+	ipsk = ioctl(s, SIOCG80211WPAPSK, (caddr_t)&psk);
 
 	memset(&power, 0, sizeof(power));
 	strlcpy(power.i_name, name, sizeof(power.i_name));
@@ -1558,9 +1778,18 @@ ieee80211_status(void)
 	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
 	itxpower = ioctl(s, SIOCG80211TXPOWER, &txpower);
 
+	memset(&wmm, 0, sizeof(wmm));
+	strlcpy(wmm.i_name, name, sizeof(wmm.i_name));
+	iwmm = ioctl(s, SIOCG80211WMMPARMS, &wmm);
+
+	memset(&wpa, 0, sizeof(wpa));
+	strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	iwpa = ioctl(s, SIOCG80211WPAPARMS, &wpa);
+
 	/* check if any ieee80211 option is active */
-	if (inwid == 0 || inwkey == 0 || ipwr == 0 ||
-	    ichan == 0 || ibssid == 0 || itxpower == 0)
+	if (inwid == 0 || inwkey == 0 || ipsk == 0 || ipwr == 0 ||
+	    ichan == 0 || ibssid == 0 || iwmm == 0 || iwpa == 0 ||
+	    itxpower == 0)
 		fputs("\tieee80211:", stdout);
 	else
 		return;
@@ -1652,6 +1881,41 @@ ieee80211_status(void)
 			}
 		}
 	}
+
+	if (ipsk == 0 && psk.i_enabled) {
+		fputs(" wpapsk ", stdout);
+		if (psk.i_enabled == 2)
+			fputs("<not displayed>", stdout);
+		else
+			print_string(psk.i_psk, sizeof(psk.i_psk));
+	}
+	if (iwpa == 0 && wpa.i_enabled) {
+		const char *sep;
+
+		fputs(" wpaprotos ", stdout); sep = "";
+		if (wpa.i_protos & IEEE80211_WPA_PROTO_WPA1) {
+			fputs("wpa1", stdout);
+			sep = ",";
+		}
+		if (wpa.i_protos & IEEE80211_WPA_PROTO_WPA2)
+			printf("%swpa2", sep);
+
+		fputs(" wpaakms ", stdout); sep = "";
+		if (wpa.i_akms & IEEE80211_WPA_AKM_PSK) {
+			fputs("psk", stdout);
+			sep = ",";
+		}
+		if (wpa.i_akms & IEEE80211_WPA_AKM_IEEE8021X)
+			printf("%s802.1x", sep);
+
+		fputs(" wpaciphers ", stdout);
+		print_cipherset(wpa.i_ciphers);
+
+		fputs(" wpagroupcipher ", stdout);
+		print_cipherset(wpa.i_groupcipher);
+	}
+	if (iwmm == 0 && wmm.i_enabled)
+		fputs(" wmm", stdout);
 
 	if (ipwr == 0 && power.i_enabled)
 		printf(" powersave on (%dms sleep)", power.i_maxsleep);
@@ -1761,6 +2025,7 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 		printb_status(nr->nr_capinfo, IEEE80211_CAPINFO_BITS);
 		putchar(' ');
 	}
+
 	if ((nr->nr_flags & IEEE80211_NODEREQ_AP) == 0)
 		printb_status(IEEE80211_NODEREQ_STATE(nr->nr_state),
 		    IEEE80211_NODEREQ_STATE_BITS);

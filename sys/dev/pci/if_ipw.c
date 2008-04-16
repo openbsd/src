@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipw.c,v 1.71 2008/02/23 20:38:08 hshoexer Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.72 2008/04/16 18:32:15 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004-2006
+ * Copyright (c) 2004-2008
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -496,7 +496,6 @@ ipw_dma_alloc(struct ipw_softc *sc)
 			error = ENOMEM;
 			goto fail;
 		}
-
 		MCLGET(sbuf->m, M_DONTWAIT);
 		if (!(sbuf->m->m_flags & M_EXT)) {
 			m_freem(sbuf->m);
@@ -645,15 +644,12 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
-
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_IBSS;
 		break;
-
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
-
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_HOSTAP:
 		/* should not get there */
@@ -835,7 +831,6 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 		ifp->if_ierrors++;
 		return;
 	}
-
 	MCLGET(mnew, M_DONTWAIT);
 	if (!(mnew->m_flags & M_EXT)) {
 		m_freem(mnew);
@@ -894,7 +889,6 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 #endif
 
 	wh = mtod(m, struct ieee80211_frame *);
-
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the upper layer */
@@ -1101,7 +1095,7 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->cmd_map, 0, sizeof (struct ipw_cmd),
 	    BUS_DMASYNC_PREWRITE);
-	
+
 	bus_dmamap_sync(sc->sc_dmat, sc->tbd_map,
 	    sc->txcur * sizeof (struct ipw_bd), sizeof (struct ipw_bd),
 	    BUS_DMASYNC_PREWRITE);
@@ -1122,6 +1116,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
@@ -1130,9 +1125,10 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 
 	wh = mtod(m, struct ieee80211_frame *);
 
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m = ieee80211_wep_crypt(ifp, m, 1);
-		if (m == NULL)
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+		k = ieee80211_get_txkey(ic, wh, ni);
+
+		if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 			return ENOBUFS;
 
 		/* packet header may have moved, reset our local pointer */
@@ -1163,7 +1159,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 
 	shdr->hdr.type = htole32(IPW_HDR_TYPE_SEND);
 	shdr->hdr.subtype = htole32(0);
-	shdr->hdr.encrypted = (wh->i_fc[1] & IEEE80211_FC1_WEP) ? 1 : 0;
+	shdr->hdr.encrypted = (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) ? 1 : 0;
 	shdr->hdr.encrypt = 0;
 	shdr->hdr.keyidx = 0;
 	shdr->hdr.keysz = 0;
@@ -1192,7 +1188,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 			m_freem(m);
 			return ENOMEM;
 		}
-
 		M_DUP_PKTHDR(mnew, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
@@ -1202,7 +1197,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 				return ENOMEM;
 			}
 		}
-
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
 		m_freem(m);
 		mnew->m_len = mnew->m_pkthdr.len;
@@ -1297,8 +1291,8 @@ ipw_start(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct mbuf *m;
 	struct ieee80211_node *ni;
+	struct mbuf *m;
 
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
@@ -1317,16 +1311,13 @@ ipw_start(struct ifnet *ifp)
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-
 		m = ieee80211_encap(ifp, m, &ni);
 		if (m == NULL)
 			continue;
-
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-
 		if (ipw_tx_start(ifp, m, ni) != 0) {
 			if (ni != NULL)
 				ieee80211_release_node(ic, ni);
@@ -1452,14 +1443,13 @@ ipw_read_table2(struct ipw_softc *sc, uint32_t off, void *buf, uint32_t *len)
 	info = MEM_READ_4(sc, sc->table2_base + off + 4);
 
 	count = info >> 16;
-	size = info & 0xffff;
+	size  = info & 0xffff;
 	total = count * size;
 
 	if (total > *len) {
 		*len = total;
 		return EINVAL;
 	}
-
 	*len = total;
 	ipw_read_mem_1(sc, addr, buf, total);
 
@@ -1469,6 +1459,7 @@ ipw_read_table2(struct ipw_softc *sc, uint32_t off, void *buf, uint32_t *len)
 void
 ipw_stop_master(struct ipw_softc *sc)
 {
+	uint32_t tmp;
 	int ntries;
 
 	/* disable interrupts */
@@ -1484,8 +1475,8 @@ ipw_stop_master(struct ipw_softc *sc)
 		printf("%s: timeout waiting for master\n",
 		    sc->sc_dev.dv_xname);
 
-	CSR_WRITE_4(sc, IPW_CSR_RST, CSR_READ_4(sc, IPW_CSR_RST) |
-	    IPW_RST_PRINCETON_RESET);
+	tmp = CSR_READ_4(sc, IPW_CSR_RST);
+	CSR_WRITE_4(sc, IPW_CSR_RST, tmp | IPW_RST_PRINCETON_RESET);
 
 	sc->flags &= ~IPW_FLAG_FW_INITED;
 }
@@ -1493,13 +1484,14 @@ ipw_stop_master(struct ipw_softc *sc)
 int
 ipw_reset(struct ipw_softc *sc)
 {
+	uint32_t tmp;
 	int ntries;
 
 	ipw_stop_master(sc);
 
 	/* move adapter to D0 state */
-	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
-	    IPW_CTL_INIT);
+	tmp = CSR_READ_4(sc, IPW_CSR_CTL);
+	CSR_WRITE_4(sc, IPW_CSR_CTL, tmp | IPW_CTL_INIT);
 
 	/* wait for clock stabilization */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -1510,13 +1502,13 @@ ipw_reset(struct ipw_softc *sc)
 	if (ntries == 1000)
 		return EIO;
 
-	CSR_WRITE_4(sc, IPW_CSR_RST, CSR_READ_4(sc, IPW_CSR_RST) |
-	    IPW_RST_SW_RESET);
+	tmp = CSR_READ_4(sc, IPW_CSR_RST);
+	CSR_WRITE_4(sc, IPW_CSR_RST, tmp | IPW_RST_SW_RESET);
 
 	DELAY(10);
 
-	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
-	    IPW_CTL_INIT);
+	tmp = CSR_READ_4(sc, IPW_CSR_CTL);
+	CSR_WRITE_4(sc, IPW_CSR_CTL, tmp | IPW_CTL_INIT);
 
 	return 0;
 }
@@ -1526,6 +1518,7 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 {
 	int ntries;
 
+	/* voodoo from the Intel Linux driver */
 	MEM_WRITE_4(sc, 0x3000e0, 0x80000000);
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
 
@@ -1577,7 +1570,7 @@ int
 ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 {
 	u_char *p, *end;
-	uint32_t dst;
+	uint32_t tmp, dst;
 	uint16_t len;
 	int error;
 
@@ -1605,8 +1598,8 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 
 	/* tell the adapter to initialize the firmware */
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
-	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
-	    IPW_CTL_ALLOW_STANDBY);
+	tmp = CSR_READ_4(sc, IPW_CSR_CTL);
+	CSR_WRITE_4(sc, IPW_CSR_CTL, tmp | IPW_CTL_ALLOW_STANDBY);
 
 	/* wait at most one second for firmware initialization to complete */
 	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
@@ -1615,8 +1608,9 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 		return error;
 	}
 
-	CSR_WRITE_4(sc, IPW_CSR_IO, CSR_READ_4(sc, IPW_CSR_IO) |
-	    IPW_IO_GPIO1_MASK | IPW_IO_GPIO3_MASK);
+	tmp = CSR_READ_4(sc, IPW_CSR_IO);
+	CSR_WRITE_4(sc, IPW_CSR_IO, tmp | IPW_IO_GPIO1_MASK |
+	    IPW_IO_GPIO3_MASK);
 
 	return 0;
 }
@@ -1624,52 +1618,42 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 int
 ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 {
-	struct ipw_firmware_hdr *hdr;
+	const struct ipw_firmware_hdr *hdr;
 	const char *name;
-	u_char *p;
 	size_t size;
 	int error;
 
 	switch (sc->sc_ic.ic_opmode) {
 	case IEEE80211_M_STA:
-	case IEEE80211_M_HOSTAP:
 		name = "ipw-bss";
 		break;
-
 	case IEEE80211_M_IBSS:
-	case IEEE80211_M_AHDEMO:
 		name = "ipw-ibss";
 		break;
-
 	case IEEE80211_M_MONITOR:
 		name = "ipw-monitor";
 		break;
+	default:
+		/* should not get there */
+		return ENODEV;
 	}
-
 	if ((error = loadfirmware(name, &fw->data, &size)) != 0)
 		return error;
 
-	if (size < sizeof (struct ipw_firmware_hdr)) {
+	if (size < sizeof (*hdr)) {
 		error = EINVAL;
 		goto fail;
 	}
-
-	p = fw->data;
-	hdr = (struct ipw_firmware_hdr *)p;
-	fw->main_size = letoh32(hdr->main_size);
+	hdr = (const struct ipw_firmware_hdr *)fw->data;
+	fw->main_size  = letoh32(hdr->main_size);
 	fw->ucode_size = letoh32(hdr->ucode_size);
 
-	p += sizeof (struct ipw_firmware_hdr);
-	size -= sizeof (struct ipw_firmware_hdr);
-
-	if (size < fw->main_size + fw->ucode_size) {
+	if (size < sizeof (*hdr) + fw->main_size + fw->ucode_size) {
 		error = EINVAL;
 		goto fail;
 	}
-
-	fw->main = p;
-	fw->ucode = p + fw->main_size;
-	sc->fw_data = fw->data;
+	fw->main  = fw->data + sizeof (*hdr);
+	fw->ucode = fw->main + fw->main_size;
 
 	return 0;
 
@@ -1692,18 +1676,17 @@ ipw_config(struct ipw_softc *sc)
 
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
-	case IEEE80211_M_HOSTAP:
 		data = htole32(IPW_MODE_BSS);
 		break;
-
 	case IEEE80211_M_IBSS:
-	case IEEE80211_M_AHDEMO:
 		data = htole32(IPW_MODE_IBSS);
 		break;
-
 	case IEEE80211_M_MONITOR:
 		data = htole32(IPW_MODE_MONITOR);
 		break;
+	default:
+		/* should not get there */
+		return ENODEV;
 	}
 	DPRINTF(("Setting mode to %u\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_MODE, &data, sizeof data);
@@ -1892,7 +1875,6 @@ ipw_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, error);
 		goto fail1;
 	}
-
 	if ((error = ipw_load_ucode(sc, fw.ucode, fw.ucode_size)) != 0) {
 		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
 		goto fail2;
@@ -1924,8 +1906,8 @@ ipw_init(struct ifnet *ifp)
 		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
-
 	sc->flags |= IPW_FLAG_FW_INITED;
+	free(fw.data, M_DEVBUF);
 
 	/* retrieve information tables base addresses */
 	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
@@ -1938,7 +1920,6 @@ ipw_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
-
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -1968,14 +1949,6 @@ ipw_stop(struct ifnet *ifp, int disable)
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
-
-	/*
-	 * Free memory claimed by firmware.
-	 */
-	if (sc->fw_data) {
-		free(sc->fw_data, M_DEVBUF);
-		sc->fw_data = NULL;
-	}
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }

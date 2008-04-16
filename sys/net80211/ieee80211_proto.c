@@ -1,9 +1,10 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.21 2007/10/08 17:31:24 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.22 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2008 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +63,8 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+
+#include <dev/rndvar.h>
 
 const char * const ieee80211_mgt_subtype_name[] = {
 	"assoc_req",	"assoc_resp",	"reassoc_req",	"reassoc_resp",
@@ -356,6 +359,77 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 		ic->ic_updateslot(ic);
 }
 
+/*
+ * Initiate a group key handshake with a node.
+ */
+static void
+ieee80211_node_gtk_rekey(void *arg, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = arg;
+
+	if (ni->ni_state != IEEE80211_STA_ASSOC ||
+	    ni->ni_rsn_gstate != RSNA_IDLE)
+		return;
+
+	/* initiate a group key handshake with STA */
+	if (ieee80211_send_group_msg1(ic, ni) == 0) {
+		ni->ni_flags |= IEEE80211_NODE_REKEY;
+		ic->ic_rsn_keydonesta++;
+	}
+}
+
+/*
+ * This function is called in HostAP mode when the group key needs to be
+ * changed.
+ */
+void
+ieee80211_setkeys(struct ieee80211com *ic)
+{
+	u_int8_t gtk[IEEE80211_PMK_LEN];
+	u_int8_t kid;
+
+	/* Swap(GM, GN) */
+	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
+
+	arc4random_bytes(gtk, sizeof(gtk));
+	ieee80211_map_gtk(gtk, ic->ic_bss->ni_rsngroupcipher, kid, 1, 0,
+	    &ic->ic_nw_keys[kid]);
+
+	ic->ic_rsn_keydonesta = 0;
+	ieee80211_iterate_nodes(ic, ieee80211_node_gtk_rekey, ic);
+}
+
+/*
+ * The group key handshake has been completed with all associated stations.
+ */
+void
+ieee80211_setkeysdone(struct ieee80211com *ic)
+{
+	u_int8_t kid;
+
+	/* install GTK */
+	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
+	if ((*ic->ic_set_key)(ic, ic->ic_bss, &ic->ic_nw_keys[kid]) == 0)
+		ic->ic_def_txkey = kid;
+}
+
+/*
+ * Group key lifetime has expired, update it.
+ */
+void
+ieee80211_gtk_rekey_timeout(void *arg)
+{
+	struct ieee80211com *ic = arg;
+	int s;
+
+	s = splnet();
+	ieee80211_setkeys(ic);
+	splx(s);
+
+	/* re-schedule a GTK rekeying after 3600s */
+	timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
+}
+
 int
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
     int mgt)
@@ -422,13 +496,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+				timeout_del(&ic->ic_rsn_timeout);
 			ic->ic_mgt_timer = 0;
 			IF_PURGE(&ic->ic_mgtq);
 			IF_PURGE(&ic->ic_pwrsaveq);
-			if (ic->ic_wep_ctx != NULL) {
-				free(ic->ic_wep_ctx, M_DEVBUF);
-				ic->ic_wep_ctx = NULL;
-			}
 			ieee80211_free_allnodes(ic);
 			break;
 		}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.154 2008/03/19 08:44:54 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.155 2008/04/16 18:32:15 damien Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 19 2008 $
+.Dd $Mdocdate: April 16 2008 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -547,6 +547,14 @@ will begin advertising as master.
 .Op Oo Fl Oc Cm powersave
 .Op Cm powersavesleep Ar duration
 .Op Oo Fl Oc Cm txpower Ar dBm
+.Op Oo Fl Oc Cm wmm
+.Op Oo Fl Oc Cm wpa
+.Op Cm wpaakms Ar akm,akm,...
+.Op Cm wpaciphers Ar cipher,cipher,...
+.Op Cm wpagroupcipher Ar cipher
+.Op Cm wpaprotos Ar proto,proto,...
+.Op Oo Fl Oc Cm wpapsk Ar psk
+.Op Cm wparekey Ar duration
 .Ek
 .Pp
 The options are as follows:
@@ -635,10 +643,8 @@ If a set of keys is specified, a comma
 within the key must be escaped with a backslash.
 Note that if multiple keys are used, their order must be the same within
 the network.
-For IEEE 802.11 wireless networks, the length of each key is restricted to
-40 bits, i.e. a 5-character string or 10 hexadecimal digits.
-WaveLAN/IEEE Gold and newer Prism cards will also accept a 104-bit
-(13-character) key.
+The length of each key must be either 40 bits, i.e. a 5-character string or
+10 hexadecimal digits or 104 bits (13-character).
 .It Fl nwkey
 Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
 .It Cm nwkey Cm persist
@@ -664,6 +670,131 @@ mode.
 .It Fl txpower
 Disable manual transmit power mode and enable any auto level and transmit
 power controls.
+.It Cm wmm
+Enable Wi-Fi Multimedia (WMM).
+WMM is a Wi-Fi Alliance protocol based on the IEEE 802.11e standard and
+provides basic Quality of Service (QoS) features to Wi-Fi networks.
+For a station, this option enables the use of QoS if the access point
+supports it but it does not prevent the association to an access point
+not supporting QoS.
+In Host AP mode, this option allows QoS stations to negotiate QoS during
+association.
+Notice that not all drivers support QoS.
+Check the driver's manual page to know if this option is supported.
+QoS priorities can be defined using VLANs (see the
+.Cm vlanprio
+option).
+Otherwise, the IEEE 802.11 layer will automatically affect priorities to
+frames based on the Differentiated Services Codepoint field of IP packets.
+.It Fl wmm
+Disable Wi-Fi Multimedia.
+.It Cm wpa
+Enable Wi-Fi Protected Access.
+WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
+It was designed to enhance the security of wireless networks.
+Notice that not all drivers support WPA.
+Check the driver's manual page to know if this option is supported.
+.It Fl wpa
+Disable Wi-Fi Protected Access.
+.It Cm wpaakms Ar akm,akm,...
+Set the comma-separated list of allowed authentication and key management
+protocols.
+.Pp
+The supported values are
+.Dq psk
+and
+.Dq 802.1x .
+.Ar psk
+authentication (also known as personal mode) uses a 256-bit pre-shared key.
+.Ar 802.1x
+authentication (also known as enterprise mode) is meant to be used with
+an external IEEE 802.1X authentication server.
+The default value is
+.Dq psk,802.1x .
+.Dq psk
+can only be used if a pre-shared key is configured using the
+.Cm wpapsk
+option.
+.It Cm wpaciphers Ar cipher,cipher,...
+Set the comma-separated list of allowed pairwise ciphers.
+.Pp
+The supported values are
+.Dq tkip ,
+.Dq ccmp ,
+and
+.Dq usegroup .
+.Ar usegroup
+specifies that no pairwise ciphers are supported and that only group keys
+should be used.
+The default value is
+.Dq tkip,ccmp .
+If multiple pairwise ciphers are specified, the pairwise cipher will
+be negotiated between the station and the access point at association
+time.
+A station will always try to use
+.Ar ccmp
+over
+.Ar tkip
+if both ciphers are allowed and supported by the access point.
+If the selected cipher is not supported by the hardware, software
+encryption will be used.
+Check the driver's manual page to know which ciphers are supported in
+hardware.
+.It Cm wpagroupcipher Ar cipher
+Set the group cipher to be used to encrypt broadcast and multicast traffic.
+.Pp
+The supported values are
+.Dq wep40 ,
+.Dq wep104 ,
+.Dq tkip ,
+and
+.Dq ccmp .
+The default value is
+.Dq tkip .
+The use of
+.Ar wep40
+or
+.Ar wep104
+as the group cipher is discouraged due to weaknesses in WEP.
+The
+.Cm wpagroupcipher
+option is available in Host AP mode only.
+A station will always use the group cipher of the BSS.
+.It Cm wpaprotos Ar proto,proto,...
+Set the comma-separated list of allowed WPA protocol versions.
+.Pp
+The supported values are
+.Dq wpa1
+and
+.Dq wpa2 .
+.Ar wpa1
+is based on draft 3 of the IEEE 802.11i standard whereas
+.Ar wpa2
+is based on the ratified standard.
+The default value is
+.Dq wpa1,wpa2 .
+If
+.Dq wpa1,wpa2
+is specified, a station will always use the
+.Ar wpa2
+protocol when supported by the access point.
+.It Cm wpapsk Ar psk
+Set the 256-bit pre-shared key.
+The pre-shared key must be specified using a series of 64 hexadecimal digits
+(preceded by
+.So 0x Sc ) .
+The pre-shared key will be used only if
+.Dq psk
+authentication is allowed using the
+.Cm wpaakms
+option.
+Pre-shared keys can be generated from pass-phrases using
+.Xr wpa-psk 1 .
+.It Fl wpapsk
+Delete the pre-shared key.
+This will prevent
+.Dq psk
+authentication.
 .El
 .\" INET6
 .Sh INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.25 2007/11/03 14:59:55 mglocker Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.26 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -65,8 +65,9 @@ enum ieee80211_node_state {
 		(__ni)->ni_state = (__state);	\
 	} while (0)
 
-/* RSNA Authenticator state machine (see 8.5.6). */
+/* Authenticator state machine: 4-Way Handshake (see 8.5.6.1.1) */
 enum {
+	RSNA_INITIALIZE,
 	RSNA_AUTHENTICATION,
 	RSNA_AUTHENTICATION_2,
 	RSNA_INITPMK,
@@ -77,15 +78,15 @@ enum {
 	RSNA_PTKINITNEGOTIATING,
 	RSNA_PTKINITDONE,
 	RSNA_DISCONNECT,
-	RSNA_DISCONNECTED,
-	RSNA_INITIALIZE,
+	RSNA_DISCONNECTED
+};
+
+/* Authenticator state machine: Group Key Handshake (see 8.5.6.1.2) */
+enum {
 	RSNA_IDLE,
 	RSNA_REKEYNEGOTIATING,
-	RSNA_KEYERROR,
 	RSNA_REKEYESTABLISHED,
-	RSNA_GTK_INIT,
-	RSNA_SETKEYSDONE,
-	RSNA_SETKEYS
+	RSNA_KEYERROR
 };
 
 /*
@@ -96,6 +97,8 @@ enum {
  */
 struct ieee80211_node {
 	RB_ENTRY(ieee80211_node)	ni_node;
+
+	struct ieee80211com	*ni_ic;		/* back-pointer */
 
 	u_int			ni_refcnt;
 	u_int			ni_scangen;	/* gen# for timeout scan */
@@ -137,22 +140,25 @@ struct ieee80211_node {
 
 	/* RSN */
 	u_int			ni_rsn_state;
-	u_int			ni_rsn_tocnt;
-	u_int			ni_group_cipher;
-	enum ieee80211_cipher	ni_pairwise_cipher;
-	u_int			ni_pairwise_cipherset;
-	enum ieee80211_akm	ni_akm;
-	u_int			ni_akmset;
+	u_int			ni_rsn_gstate;
+	u_int			ni_rsn_retries;
+	struct timeout		ni_rsn_timeout;
+	u_int			ni_rsnprotos;
+	u_int			ni_rsnakms;
+	u_int			ni_rsnciphers;
+	enum ieee80211_cipher	ni_rsngroupcipher;
 	u_int16_t		ni_rsncaps;
-	int			ni_port_valid;
-	u_int8_t		ni_eapol_desc;
+	enum ieee80211_cipher	ni_rsncipher;
 	u_int8_t		ni_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int64_t		ni_replaycnt;
 	u_int8_t		ni_replaycnt_ok;
+	u_int64_t		ni_reqreplaycnt;
+	u_int8_t		ni_reqreplaycnt_ok;
 	u_int8_t		*ni_rsnie;
 	struct ieee80211_key	ni_pairwise_key;
 	struct ieee80211_ptk	ni_ptk;
 	u_int8_t		ni_key_count;
+	int			ni_port_valid;
 
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
@@ -168,6 +174,7 @@ struct ieee80211_node {
 	u_int8_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP	0x01
 #define IEEE80211_NODE_QOS	0x02
+#define IEEE80211_NODE_REKEY	0x04
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);

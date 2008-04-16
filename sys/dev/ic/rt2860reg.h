@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.7 2007/12/14 21:28:49 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.8 2008/04/16 18:32:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -842,7 +842,8 @@ struct rt2860_rxwi {
 	{ RT2860_GF40_PROT_CFG,		0x03f44084 },	\
 	{ RT2860_MM20_PROT_CFG,		0x01744004 },	\
 	{ RT2860_MM40_PROT_CFG,		0x03f54084 },	\
-	{ RT2860_TXOP_CTRL_CFG,		0x0000243f },	\
+	{ RT2860_TXOP_CTRL_CFG,		0x0000583f },	\
+	{ RT2860_TXOP_HLDR_ET,		0x00000002 },	\
 	{ RT2860_TX_RTS_CFG,		0x00092b20 },	\
 	{ RT2860_EXP_ACK_TIME,		0x002400ca }
 

@@ -1,10 +1,10 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.58 2007/08/27 20:14:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.59 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
- * Copyright (c) 2007 Damien Bergamini
+ * Copyright (c) 2007, 2008 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,15 +65,13 @@
 
 #include <net80211/ieee80211_var.h>
 
-#include <dev/rndvar.h>
-
 enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
 u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
 	    const struct ieee80211_node *, int);
-struct	mbuf *ieee80211_getmbuf(int, int, u_int);
+struct	mbuf *ieee80211_getmgmt(int, int, u_int);
 struct	mbuf *ieee80211_get_probe_req(struct ieee80211com *,
 	    struct ieee80211_node *);
 struct	mbuf *ieee80211_get_probe_resp(struct ieee80211com *,
@@ -89,8 +87,9 @@ struct	mbuf *ieee80211_get_assoc_resp(struct ieee80211com *,
 struct	mbuf *ieee80211_get_disassoc(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t);
 int	ieee80211_send_eapol_key(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *);
-u_int8_t *ieee80211_add_gtk_kde(u_int8_t *, const struct ieee80211_key *);
+	    struct ieee80211_node *, const struct ieee80211_ptk *);
+u_int8_t *ieee80211_add_gtk_kde(u_int8_t *, struct ieee80211_node *,
+	    const struct ieee80211_key *);
 u_int8_t *ieee80211_add_pmkid_kde(u_int8_t *, const u_int8_t *);
 struct	mbuf *ieee80211_get_eapol_key(int, int, u_int);
 
@@ -507,14 +506,19 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
-#if 0
-	if (!ni->ni_port_valid && eh.ether_type != htons(ETHERTYPE_PAE)) {
+
+	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
+	    eh.ether_type != htons(ETHERTYPE_PAE)) {
 		IEEE80211_DPRINTF(("%s: port not valid: %s\n",
 		    __func__, ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_noauth++;
 		goto bad;
 	}
-#endif
+
+	if ((ic->ic_flags & IEEE80211_F_COUNTERM) &&
+	    ni->ni_rsncipher == IEEE80211_CIPHER_TKIP)
+		/* XXX TKIP countermeasures! */;
+
 	ni->ni_inact = 0;
 
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
@@ -581,8 +585,11 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	case IEEE80211_M_MONITOR:
 		goto bad;
 	}
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		wh->i_fc[1] |= IEEE80211_FC1_WEP;
+
+	if ((ic->ic_flags & IEEE80211_F_WEPON) ||
+	    ((ic->ic_flags & IEEE80211_F_RSNON) && ni->ni_port_valid))
+		wh->i_fc[1] |= IEEE80211_FC1_PROTECTED;
+
 	*pni = ni;
 	return m;
 bad:
@@ -615,7 +622,8 @@ ieee80211_add_capinfo(u_int8_t *frm, struct ieee80211com *ic,
 		capinfo = IEEE80211_CAPINFO_ESS;
 	else
 		capinfo = 0;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    (ic->ic_flags & (IEEE80211_F_WEPON | IEEE80211_F_RSNON)))
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	/* NB: some 11a AP's reject the request when short preamble is set */
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
@@ -814,9 +822,9 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
  */
 u_int8_t *
 ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
-    const struct ieee80211_node *ni, int wpa1)
+    const struct ieee80211_node *ni, int wpa)
 {
-	const u_int8_t *oui = wpa1 ? MICROSOFT_OUI : IEEE80211_OUI;
+	const u_int8_t *oui = wpa ? MICROSOFT_OUI : IEEE80211_OUI;
 	u_int8_t *pcount;
 	u_int16_t count;
 
@@ -825,11 +833,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 
 	/* write Group Cipher Suite field (see Table 20da) */
 	memcpy(frm, oui, 3); frm += 3;
-	switch (ni->ni_group_cipher) {
-	case IEEE80211_CIPHER_USEGROUP:
-		/* can't get there */
-		panic("invalid group cipher!");
-		break;
+	switch (ni->ni_rsngroupcipher) {
 	case IEEE80211_CIPHER_WEP40:
 		*frm++ = 1;
 		break;
@@ -842,22 +846,25 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	case IEEE80211_CIPHER_WEP104:
 		*frm++ = 5;
 		break;
+	default:
+		/* can't get there */
+		panic("invalid group cipher!");
 	}
 
 	pcount = frm; frm += 2;
 	count = 0;
 	/* write Pairwise Cipher Suite List */
-	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_USEGROUP) {
+	if (ni->ni_rsnciphers & IEEE80211_CIPHER_USEGROUP) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 0;
 		count++;
 	}
-	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_TKIP) {
+	if (ni->ni_rsnciphers & IEEE80211_CIPHER_TKIP) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 2;
 		count++;
 	}
-	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_CCMP) {
+	if (ni->ni_rsnciphers & IEEE80211_CIPHER_CCMP) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 4;
 		count++;
@@ -868,12 +875,12 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	pcount = frm; frm += 2;
 	count = 0;
 	/* write AKM Suite List (see Table 20dc) */
-	if (ni->ni_akmset & IEEE80211_AKM_IEEE8021X) {
+	if (ni->ni_rsnakms & IEEE80211_AKM_IEEE8021X) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 1;
 		count++;
 	}
-	if (ni->ni_akmset & IEEE80211_AKM_PSK) {
+	if (ni->ni_rsnakms & IEEE80211_AKM_PSK) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 2;
 		count++;
@@ -881,11 +888,12 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	/* write AKM Suite List Count field */
 	LE_WRITE_2(pcount, count);
 
-	/* write RSN Capabilities field */
-	LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
+	if (!wpa) {
+		/* write RSN Capabilities field */
+		LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
 
-	/* no PMKID List for now */
-
+		/* no PMKID List for now */
+	}
 	return frm;
 }
 
@@ -905,11 +913,11 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 }
 
 /*
- * Add a vendor specific WPA1 element to a frame.
- * This is required for compatibility with Wi-Fi Alliance WPA1/WPA1+WPA2.
+ * Add a vendor-specific WPA element to a frame.
+ * This is required for compatibility with Wi-Fi Alliance WPA.
  */
 u_int8_t *
-ieee80211_add_wpa1(u_int8_t *frm, struct ieee80211com *ic,
+ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic,
     const struct ieee80211_node *ni)
 {
 	u_int8_t *plen;
@@ -917,7 +925,7 @@ ieee80211_add_wpa1(u_int8_t *frm, struct ieee80211com *ic,
 	*frm++ = IEEE80211_ELEMID_VENDOR;
 	plen = frm++;	/* length filled in later */
 	memcpy(frm, MICROSOFT_OUI, 3); frm += 3;
-	*frm++ = 1;	/* WPA1 */
+	*frm++ = 1;	/* WPA */
 	frm = ieee80211_add_rsn_body(frm, ic, ni, 1);
 
 	/* write length field */
@@ -943,21 +951,24 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 }
 
 struct mbuf *
-ieee80211_getmbuf(int flags, int type, u_int pktlen)
+ieee80211_getmgmt(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
-	/* account for 802.11 header */
+	/* reserve space for 802.11 header */
 	pktlen += sizeof(struct ieee80211_frame);
 
 	if (pktlen > MCLBYTES)
-		panic("802.11 packet too large: %u", pktlen);
+		panic("management frame too large: %u", pktlen);
 	MGETHDR(m, flags, type);
-	if (m != NULL && pktlen > MHLEN) {
+	if (m == NULL)
+		return NULL;
+	if (pktlen >= MINCLSIZE) {
 		MCLGET(m, flags);
 		if (!(m->m_flags & M_EXT))
-			m = m_free(m);
+			return m_free(m);
 	}
+	m->m_data += sizeof(struct ieee80211_frame);
 	return m;
 }
 
@@ -975,15 +986,13 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int8_t *frm;
 
-	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    2 + ic->ic_des_esslen +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0));
 	if (m == NULL)
 		return NULL;
-
-	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
@@ -1017,7 +1026,7 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int8_t *frm;
 
-	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    8 + 2 + 2 +
 	    2 + ni->ni_esslen +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
@@ -1026,13 +1035,13 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((ic->ic_curmode == IEEE80211_MODE_11G) ? 2 + 1 : 0) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
-	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
-	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
-
-	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
 	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
@@ -1051,12 +1060,14 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_erp(frm, ic);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-	if (ic->ic_flags & IEEE80211_F_RSN)
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_RSN))
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
-	if (ic->ic_flags & IEEE80211_F_WPA1)
-		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_WPA))
+		frm = ieee80211_add_wpa(frm, ic, ic->ic_bss);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1131,7 +1142,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 	u_int16_t capinfo;
 
-	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    2 +	2 +
 	    ((reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
 		IEEE80211_ADDR_LEN : 0) +
@@ -1139,13 +1150,13 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
-	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 1 : 0) +
-	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
-
-	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
 	capinfo = IEEE80211_CAPINFO_ESS;
@@ -1159,7 +1170,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 	LE_WRITE_2(frm, capinfo); frm += 2;
 	LE_WRITE_2(frm, ic->ic_lintval); frm += 2;
-	if (reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+	if (reassoc) {
 		IEEE80211_ADDR_COPY(frm, ic->ic_bss->ni_bssid);
 		frm += IEEE80211_ADDR_LEN;
 	}
@@ -1167,13 +1178,15 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-	if (ic->ic_flags & IEEE80211_F_RSN)
-		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ni->ni_rsnprotos & IEEE80211_PROTO_RSN))
+		frm = ieee80211_add_rsn(frm, ic, ni);
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
 	    (ni->ni_flags & IEEE80211_NODE_QOS))
 		frm = ieee80211_add_qos_capability(frm, ic);
-	if (ic->ic_flags & IEEE80211_F_WPA1)
-		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
+		frm = ieee80211_add_wpa(frm, ic, ni);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1197,7 +1210,7 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m;
 	u_int8_t *frm;
 
-	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    2 +	2 + 2 +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
@@ -1205,8 +1218,6 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0));
 	if (m == NULL)
 		return NULL;
-
-	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_capinfo(frm, ic, ni);
@@ -1362,7 +1373,7 @@ ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	if (m == NULL)
 		return NULL;
 
-	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_rts);
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame_rts);
 
 	rts = mtod(m, struct ieee80211_frame_rts *);
 	rts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
@@ -1388,7 +1399,7 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 	if (m == NULL)
 		return NULL;
 
-	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_cts);
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame_cts);
 
 	cts = mtod(m, struct ieee80211_frame_cts *);
 	cts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
@@ -1424,7 +1435,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int8_t *frm;
 
-	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    8 +	2 + 2 +
 	    2 + ((ic->ic_flags & IEEE80211_F_HIDENWID) ? 0 : ni->ni_esslen) +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
@@ -1433,12 +1444,17 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((ic->ic_curmode == IEEE80211_MODE_11G) ? 2 + 1 : 0) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
-	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	     (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
-	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
+	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
 
+	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	if (m == NULL)
+		return NULL;
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_BEACON;
@@ -1470,12 +1486,14 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_erp(frm, ic);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-	if (ic->ic_flags & IEEE80211_F_RSN)
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ni->ni_rsnprotos & IEEE80211_PROTO_RSN))
 		frm = ieee80211_add_rsn(frm, ic, ni);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
-	if (ic->ic_flags & IEEE80211_F_WPA1)
-		frm = ieee80211_add_wpa1(frm, ic, ni);
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
+		frm = ieee80211_add_wpa(frm, ic, ni);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
@@ -1499,16 +1517,53 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 } while (0)
 
 /* unaligned little endian access */
-#define LE_WRITE_8(p, v) do {			\
-	(p)[7] = (v) >> 56; (p)[6] = (v) >> 48;	\
+#define LE_WRITE_6(p, v) do {			\
 	(p)[5] = (v) >> 40; (p)[4] = (v) >> 32;	\
 	(p)[3] = (v) >> 24; (p)[2] = (v) >> 16;	\
 	(p)[1] = (v) >>  8; (p)[0] = (v);	\
 } while (0)
 
+/*
+ * Handle EAPOL-Key timeouts (no answer from supplicant).
+ */
+void
+ieee80211_eapol_timeout(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	struct ieee80211com *ic = ni->ni_ic;
+	int s;
+
+	IEEE80211_DPRINTF(("%s: no answer from station %s in state %d\n",
+	    __func__, ether_sprintf(ni->ni_macaddr), ni->ni_rsn_state));
+
+	s = splnet();
+
+	switch (ni->ni_rsn_state) {
+	case RSNA_PTKSTART:
+	case RSNA_PTKCALCNEGOTIATING:
+		(void)ieee80211_send_4way_msg1(ic, ni);
+		break;
+	case RSNA_PTKINITNEGOTIATING:
+		(void)ieee80211_send_4way_msg3(ic, ni);
+		break;
+	}
+
+	switch (ni->ni_rsn_gstate) {
+	case RSNA_REKEYNEGOTIATING:
+		(void)ieee80211_send_group_msg1(ic, ni);
+		break;
+	}
+
+	splx(s);
+}
+
+/*
+ * Send an EAPOL-Key frame to node `ni'.  If MIC or encryption is required,
+ * the PTK must be passed (otherwise it can be set to NULL.)
+ */
 int
 ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni)
+    struct ieee80211_node *ni, const struct ieee80211_ptk *ptk)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ether_header *eh;
@@ -1519,6 +1574,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
+	/* no need to m_pullup here (ok by construction) */
 	eh = mtod(m, struct ether_header *);
 	eh->ether_type = htons(ETHERTYPE_PAE);
 	IEEE80211_ADDR_COPY(eh->ether_shost, ic->ic_myaddr);
@@ -1527,43 +1583,60 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	key = (struct ieee80211_eapol_key *)&eh[1];
 	key->version = EAPOL_VERSION;
 	key->type = EAPOL_KEY;
-	key->desc = ni->ni_eapol_desc;
+	key->desc = (ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ?
+	    EAPOL_KEY_DESC_IEEE80211 : EAPOL_KEY_DESC_WPA;
 
 	info = BE_READ_2(key->info);
-	/* use V2 descriptor iff pairwise cipher is CCMP */
-	info |= (ni->ni_pairwise_cipher != IEEE80211_CIPHER_CCMP) ?
-	    EAPOL_KEY_DESC_V1 : EAPOL_KEY_DESC_V2;
+	/* use V2 descriptor if pairwise or group cipher is CCMP */
+	if (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
+	    ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP)
+		info |= EAPOL_KEY_DESC_V2;
+	else
+		info |= EAPOL_KEY_DESC_V1;
 	BE_WRITE_2(key->info, info);
 
 	len = m->m_len - sizeof(struct ether_header);
 	BE_WRITE_2(key->paylen, len - sizeof(*key));
 	BE_WRITE_2(key->len, len - 4);
 
-	if (info & EAPOL_KEY_ENCRYPTED)
-		ieee80211_eapol_key_encrypt(ic, key, ni->ni_ptk.kek);
+	if (info & EAPOL_KEY_ENCRYPTED) {
+		if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
+			/* clear "Encrypted" bit for WPA */
+			info &= ~EAPOL_KEY_ENCRYPTED;
+			BE_WRITE_2(key->info, info);
+		}
+		ieee80211_eapol_key_encrypt(ic, key, ptk->kek);
 
+		if ((info & EAPOL_KEY_VERSION_MASK) == EAPOL_KEY_DESC_V2) {
+			/* AES Key Wrap adds 8 bytes + padding */
+			m->m_pkthdr.len = m->m_len =
+			    sizeof(*eh) + 4 + BE_READ_2(key->len);
+		}
+	}
 	if (info & EAPOL_KEY_KEYMIC)
-		ieee80211_eapol_key_mic(key, ni->ni_ptk.kck);
+		ieee80211_eapol_key_mic(key, ptk->kck);
 
 	s = splnet();
+	/* start a 100ms timeout if an answer is expected from supplicant */
+	if (info & EAPOL_KEY_KEYACK)
+		timeout_add(&ni->ni_rsn_timeout, hz / 10);
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		splx(s);
-		return error;
+	if (error == 0) {
+		ifp->if_obytes += m->m_pkthdr.len;
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			(*ifp->if_start)(ifp);
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
 	splx(s);
 
-	return 0;
+	return error;
 }
 
 /*
  * Add a GTK KDE to an EAPOL-Key frame (see Figure 144).
  */
 u_int8_t *
-ieee80211_add_gtk_kde(u_int8_t *frm, const struct ieee80211_key *k)
+ieee80211_add_gtk_kde(u_int8_t *frm, struct ieee80211_node *ni,
+    const struct ieee80211_key *k)
 {
 	KASSERT(k->k_flags & IEEE80211_KEY_GROUP);
 
@@ -1572,7 +1645,11 @@ ieee80211_add_gtk_kde(u_int8_t *frm, const struct ieee80211_key *k)
 	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
 	*frm++ = IEEE80211_KDE_GTK;
 	*frm = k->k_id & 3;
-	if (k->k_flags & IEEE80211_KEY_TX)
+	/*
+	 * The TxRx flag for sending a GTK is always the opposite of whether
+	 * the pairwise key is used for data encryption/integrity or not.
+	 */
+	if (ni->ni_rsncipher == IEEE80211_CIPHER_USEGROUP)
 		*frm |= 1 << 2;	/* set the Tx bit */
 	frm++;
 	*frm++ = 0;	/* reserved */
@@ -1599,18 +1676,21 @@ ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
-	pktlen += sizeof(struct ether_header) +
+	/* reserve space for 802.11 encapsulation and EAPOL-Key header */
+	pktlen += sizeof(struct ieee80211_frame) + sizeof(struct llc) +
 	    sizeof(struct ieee80211_eapol_key);
 
 	if (pktlen > MCLBYTES)
 		panic("EAPOL-Key frame too large: %u", pktlen);
 	MGETHDR(m, flags, type);
-	if (m != NULL && pktlen > MHLEN) {
+	if (m == NULL)
+		return NULL;
+	if (pktlen >= MINCLSIZE) {
 		MCLGET(m, flags);
 		if (!(m->m_flags & M_EXT))
-			m = m_free(m);
+			return m_free(m);
 	}
-	m->m_data += sizeof(struct ether_header);
+	m->m_data += sizeof(struct ieee80211_frame) + sizeof(struct llc);
 	return m;
 }
 
@@ -1624,15 +1704,17 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct ieee80211_eapol_key *key;
 	struct mbuf *m;
 	u_int16_t info, keylen;
-	u_int8_t *pmkid;
 	u_int8_t *frm;
 
 	ni->ni_rsn_state = RSNA_PTKSTART;
-	if (++ni->ni_rsn_tocnt == 3)
-		return 0;	/* XXX move to RSNA_DISCONNECT */
-
+	if (++ni->ni_rsn_retries > 3) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_4WAY_TIMEOUT);
+		ieee80211_node_leave(ic, ni);
+		return 0;
+	}
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) ? 2 + 20 : 0);
+	    (ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ? 2 + 20 : 0);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
@@ -1644,14 +1726,15 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* copy the authenticator's nonce (ANonce) */
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
-	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+	keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
 	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
-	/* WPA1 does not have PMKID KDE */
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) {
+	/* WPA does not have PMKID KDE */
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN &&
+	    ni->ni_rsnakms == IEEE80211_AKM_IEEE8021X) {
 		/* XXX retrieve PMKID from the PMKSA cache */
-		frm = ieee80211_add_pmkid_kde(frm, pmkid);
+		/* frm = ieee80211_add_pmkid_kde(frm, pmkid); */
 	}
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
@@ -1661,7 +1744,10 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 		    ic->ic_if.if_xname, 1, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	ni->ni_replaycnt++;
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	return ieee80211_send_eapol_key(ic, m, ni, NULL);
 }
 
 /*
@@ -1670,7 +1756,7 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
  */
 int
 ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *snonce)
+    const u_int8_t *replaycnt, const struct ieee80211_ptk *tptk)
 {
 	struct ieee80211_eapol_key *key;
 	struct mbuf *m;
@@ -1687,19 +1773,19 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYMIC;
 	BE_WRITE_2(key->info, info);
 
-	/* copy key replay counter from authenticator */
-	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+	/* copy key replay counter from Message 1/4 */
+	memcpy(key->replaycnt, replaycnt, 8);
 
 	/* copy the supplicant's nonce (SNonce) */
-	memcpy(key->nonce, snonce, EAPOL_KEY_NONCE_LEN);
+	memcpy(key->nonce, ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
 
 	frm = (u_int8_t *)&key[1];
 	/* add the WPA/RSN IE used in the (Re)Association Request */
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
 		u_int16_t keylen;
-		frm = ieee80211_add_wpa1(frm, ic, ni);
-		/* WPA1 sets the key length field here */
-		keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+		frm = ieee80211_add_wpa(frm, ic, ni);
+		/* WPA sets the key length field here */
+		keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
 		BE_WRITE_2(key->keylen, keylen);
 	} else	/* RSN */
 		frm = ieee80211_add_rsn(frm, ic, ni);
@@ -1711,7 +1797,7 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    ic->ic_if.if_xname, 2, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, tptk);
 }
 
 /*
@@ -1722,45 +1808,54 @@ int
 ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_eapol_key *key;
-	struct ieee80211_key *gtk;
+	struct ieee80211_key *k;
 	struct mbuf *m;
 	u_int16_t info, keylen;
 	u_int8_t *frm;
 
 	ni->ni_rsn_state = RSNA_PTKINITNEGOTIATING;
-	if (++ni->ni_rsn_tocnt == 3)
-		return 0;	/* XXX move to RSNA_KEYERROR */
+	if (++ni->ni_rsn_retries > 3) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_4WAY_TIMEOUT);
+		ieee80211_node_leave(ic, ni);
+		return 0;
+	}
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN)
+		k = &ic->ic_nw_keys[ic->ic_def_txkey];
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
 	    2 + 48 +
-	    ((ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) ?
-		2 + 6 + gtk->k_len : 0) +
+	    ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ?
+		2 + 6 + k->k_len : 0) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
 	memset(key, 0, sizeof(*key));
 
-	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_INSTALL | EAPOL_KEY_KEYACK |
-	    EAPOL_KEY_KEYMIC;
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYACK | EAPOL_KEY_KEYMIC;
+	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP)
+		info |= EAPOL_KEY_INSTALL;
 
-	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 	/* use same nonce as in Message 1 */
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
-	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+	ni->ni_replaycnt++;
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
 	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
 	/* add the WPA/RSN IE included in Beacon/Probe Response */
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) {
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN) {
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
-		/* RSN: encapsulate the GTK and ask for encryption */
-		frm = ieee80211_add_gtk_kde(frm, gtk);
-		LE_WRITE_8(key->rsc, gtk->k_rsc);
+		/* encapsulate the GTK and ask for encryption */
+		frm = ieee80211_add_gtk_kde(frm, ni, k);
+		LE_WRITE_6(key->rsc, k->k_tsc);
 		info |= EAPOL_KEY_ENCRYPTED | EAPOL_KEY_SECURE;
-	} else	/* WPA1 */
-		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
+	} else	/* WPA */
+		frm = ieee80211_add_wpa(frm, ic, ic->ic_bss);
 
 	/* write the key info field */
 	BE_WRITE_2(key->info, info);
@@ -1772,7 +1867,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 		    ic->ic_if.if_xname, 3, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, &ni->ni_ptk);
 }
 
 /*
@@ -1797,10 +1892,10 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
 		u_int16_t keylen;
-		/* WPA1 sets the key length field here */
-		keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+		/* WPA sets the key length field here */
+		keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
 		BE_WRITE_2(key->keylen, keylen);
 	} else
 		info |= EAPOL_KEY_SECURE;
@@ -1816,7 +1911,7 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 		    ic->ic_if.if_xname, 4, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, &ni->ni_ptk);
 }
 
 /*
@@ -1827,14 +1922,23 @@ int
 ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_eapol_key *key;
-	struct ieee80211_key *gtk;
+	const struct ieee80211_key *k;
 	struct mbuf *m;
 	u_int16_t info;
 	u_int8_t *frm;
 
+	ni->ni_rsn_gstate = RSNA_REKEYNEGOTIATING;
+	if (++ni->ni_rsn_retries > 3) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_GROUP_TIMEOUT);
+		ieee80211_node_leave(ic, ni);
+		return 0;
+	}
+	k = &ic->ic_nw_keys[ic->ic_def_txkey];
+
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    ((ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) ?
-		gtk->k_len : 2 + 6 + gtk->k_len) +
+	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
+		k->k_len : 2 + 6 + k->k_len) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
@@ -1844,26 +1948,23 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	info = EAPOL_KEY_KEYACK | EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE |
 	    EAPOL_KEY_ENCRYPTED;
 
+	ni->ni_replaycnt++;
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
-#if 0
-	/* use global counter as GNonce */
-	ieee80211_derive_gtk(ic->ic_gmk, IEEE80211_PMK_LEN, ic->ic_myaddr,
-	    ic->ic_globalcnt, &gtk, sizeof gtk);
-	/* XXX increment global counter */
-#endif
+
 	frm = (u_int8_t *)&key[1];
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
-		/* WPA1 does not have GTK KDE */
-		BE_WRITE_2(key->keylen, gtk->k_len);
-		memcpy(frm, gtk->k_key, gtk->k_len);
-		frm += gtk->k_len;
-		info |= gtk->k_id << EAPOL_KEY_WPA_KID_SHIFT;
-		if (gtk->k_flags & IEEE80211_KEY_TX)
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
+		/* WPA does not have GTK KDE */
+		BE_WRITE_2(key->keylen, k->k_len);
+		memcpy(frm, k->k_key, k->k_len);
+		frm += k->k_len;
+		info |= (k->k_id & 0x3) << EAPOL_KEY_WPA_KID_SHIFT;
+		if (ni->ni_rsncipher == IEEE80211_CIPHER_USEGROUP)
 			info |= EAPOL_KEY_WPA_TX;
 	} else	/* RSN */
-		frm = ieee80211_add_gtk_kde(frm, gtk);
+		frm = ieee80211_add_gtk_kde(frm, ni, k);
 
-	LE_WRITE_8(key->rsc, gtk->k_rsc);
+	/* RSC = last transmit sequence number for the GTK */
+	LE_WRITE_6(key->rsc, k->k_tsc);
 
 	/* write the key info field */
 	BE_WRITE_2(key->info, info);
@@ -1875,7 +1976,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 		    ic->ic_if.if_xname, 1, 2, "group key",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, &ni->ni_ptk);
 }
 
 /*
@@ -1884,7 +1985,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
  */
 int
 ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const struct ieee80211_key *gtk)
+    const struct ieee80211_key *k)
 {
 	struct ieee80211_eapol_key *key;
 	u_int16_t info;
@@ -1901,10 +2002,10 @@ ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
-	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
-		/* WPA1 sets the key length and key id fields here */
-		BE_WRITE_2(key->keylen, gtk->k_len);
-		info |= (gtk->k_id & 3) << EAPOL_KEY_WPA_KID_SHIFT;
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
+		/* WPA sets the key length and key id fields here */
+		BE_WRITE_2(key->keylen, k->k_len);
+		info |= (k->k_id & 3) << EAPOL_KEY_WPA_KID_SHIFT;
 	}
 
 	/* write the key info field */
@@ -1918,13 +2019,13 @@ ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    ic->ic_if.if_xname, 2, 2, "group key",
 		    ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, &ni->ni_ptk);
 }
 
 /*
  * EAPOL-Key Request frames are sent by the supplicant to request that the
- * authenticator initiate either a 4-Way Handshake or Group Key Handshake
- * and to report a MIC failure in a TKIP MSDU.
+ * authenticator initiates either a 4-Way Handshake or Group Key Handshake,
+ * or to report a MIC failure in a TKIP MSDU.
  */
 int
 ieee80211_send_eapol_key_req(struct ieee80211com *ic,
@@ -1939,21 +2040,22 @@ ieee80211_send_eapol_key_req(struct ieee80211com *ic,
 	key = mtod(m, struct ieee80211_eapol_key *);
 	memset(key, 0, sizeof(*key));
 
+	info |= EAPOL_KEY_REQUEST;
 	BE_WRITE_2(key->info, info);
 
 	/* in case of TKIP MIC failure, fill the RSC field */
 	if (info & EAPOL_KEY_ERROR)
-		LE_WRITE_8(key->rsc, tsc);
+		LE_WRITE_6(key->rsc, tsc);
 
 	/* use our separate key replay counter for key requests */
-	BE_WRITE_8(key->replaycnt, ic->ic_keyreplaycnt);
-	ic->ic_keyreplaycnt++;
+	BE_WRITE_8(key->replaycnt, ni->ni_reqreplaycnt);
+	ni->ni_reqreplaycnt++;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: sending EAPOL-Key request to %s\n",
 		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 
-	return ieee80211_send_eapol_key(ic, m, ni);
+	return ieee80211_send_eapol_key(ic, m, ni, &ni->ni_ptk);
 }
 
 void

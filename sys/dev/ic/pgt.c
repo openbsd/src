@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.47 2008/03/13 23:07:29 brad Exp $  */
+/*	$OpenBSD: pgt.c,v 1.48 2008/04/16 18:32:15 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2978,10 +2978,6 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ic->ic_if.if_timer = 0;
 		ic->ic_mgt_timer = 0;
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-		if (ic->ic_wep_ctx != NULL) {
-			free(ic->ic_wep_ctx, M_DEVBUF);  
-			ic->ic_wep_ctx = NULL;
-		}
 		ieee80211_free_allnodes(ic);
 		break;
 	case IEEE80211_S_SCAN:

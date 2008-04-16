@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.40 2007/11/17 14:29:11 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.41 2008/04/16 18:32:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -252,7 +252,8 @@ rt2661_attach(void *xsc, int id)
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_WEP;		/* s/w WEP */
+	    IEEE80211_C_WEP |		/* s/w WEP */
+	    IEEE80211_C_RSN;		/* WPA/RSN */
 
 	if (sc->rf_rev == RT2661_RF_5225 || sc->rf_rev == RT2661_RF_5325) {
 		/* set supported .11a rates */
@@ -1442,7 +1443,6 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct rt2661_tx_desc *desc;
 	struct rt2661_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1455,17 +1455,6 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 
 	/* send mgt frames at the lowest available rate */
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
-			return ENOBUFS;
-
-		/* packet header may have moved, reset our local pointer */
-		wh = mtod(m0, struct ieee80211_frame *);
-	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1498,6 +1487,8 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 
 	data->m = m0;
 	data->ni = ni;
+
+	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RT2661_TX_NEED_ACK;
@@ -1539,11 +1530,11 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni, int ac)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct rt2661_tx_ring *txq = &sc->txq[ac];
 	struct rt2661_tx_desc *desc;
 	struct rt2661_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
@@ -1551,9 +1542,10 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+		k = ieee80211_get_txkey(ic, wh, ni);
+
+		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
 			return ENOBUFS;
 
 		/* packet header may have moved, reset our local pointer */

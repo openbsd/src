@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.81 2008/03/13 23:07:28 brad Exp $ */
+/*	$OpenBSD: acx.c,v 1.82 2008/04/16 18:32:15 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -998,10 +998,11 @@ acx_start(struct ifnet *ifp)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) && !sc->chip_hw_crypt) {
-			m = ieee80211_wep_crypt(ifp, m, 1);
-			if (m == NULL) {
+			struct ieee80211_key *k;
+
+			k = ieee80211_get_txkey(ic, wh, ni);
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL) {
 				ieee80211_release_node(ic, ni);
-				m_freem(m);
 				ifp->if_oerrors++;
 				continue;
 			}

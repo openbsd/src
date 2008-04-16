@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.29 2007/11/17 14:05:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.30 2008/04/16 18:32:15 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -147,6 +147,18 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
 	ic->ic_dtim_period = 1;	/* all TIMs are DTIMs */
+
+	if (ic->ic_caps & IEEE80211_C_RSN) {
+		ic->ic_rsnprotos =
+		    IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
+		ic->ic_rsnakms =
+		    IEEE80211_AKM_PSK | IEEE80211_AKM_IEEE8021X;
+		ic->ic_rsnciphers =
+		    IEEE80211_CIPHER_TKIP | IEEE80211_CIPHER_CCMP;
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+	}
+	ic->ic_set_key = ieee80211_set_key;
+	ic->ic_delete_key = ieee80211_delete_key;
 
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);
@@ -993,4 +1005,3 @@ ieee80211_plcp2rate(u_int8_t plcp, enum ieee80211_phymode mode)
 
 	return 0;
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.75 2008/04/16 18:32:15 damien Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -864,6 +864,7 @@ bwi_attach(struct bwi_softc *sc)
 	ic->ic_caps = IEEE80211_C_SHSLOT |
 	    IEEE80211_C_SHPREAMBLE |
 	    IEEE80211_C_WEP |
+	    IEEE80211_C_RSN |
 	    IEEE80211_C_MONITOR;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_opmode = IEEE80211_M_STA;
@@ -7196,6 +7197,7 @@ bwi_start(struct ifnet *ifp)
 	while (tbd->tbd_buf[idx].tb_mbuf == NULL) {
 		struct ieee80211_frame *wh;
 		struct ieee80211_node *ni;
+		struct ieee80211_key *k;
 		struct mbuf *m;
 		int mgt_pkt = 0;
 
@@ -7249,9 +7251,9 @@ bwi_start(struct ifnet *ifp)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		wh = mtod(m, struct ieee80211_frame *);
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-			m = ieee80211_wep_crypt(ifp, m, 1);
-			if (m == NULL)
+		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+			k = ieee80211_get_txkey(ic, wh, ni);
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return;
 		}
 		wh = NULL;	/* Catch any invalid use */
