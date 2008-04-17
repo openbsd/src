@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.40 2008/04/15 22:39:26 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.41 2008/04/17 19:52:27 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -715,20 +715,22 @@ int
 tickintr(cap)
 	void *cap;
 {
-	u_int64_t base, s;
+	struct cpu_info *ci = curcpu();
+	u_int64_t s;
 
-	hardclock((struct clockframe *)cap);
-
-	/* 
-	 * Reset the interrupt.  We need to disable interrupts to
-	 * block out IPIs, otherwise a value that is in the past could
-	 * be written to the TICK_CMPR register, causing hardclock to
-	 * stop.
+	/*
+	 * No need to worry about overflow; %tick is architecturally
+	 * defined not to do that for at least 10 years.
 	 */
+	while (ci->ci_tick < tick()) {
+		ci->ci_tick += tick_increment;
+		hardclock((struct clockframe *)cap);
+		level0.ih_count.ec_count++;
+	}
+
+	/* Reset the interrupt. */
 	s = intr_disable();
-	base = sparc_rdpr(tick);
-	tickcmpr_set((base + tick_increment) & TICK_TICKS);
-	level0.ih_count.ec_count++;
+	tickcmpr_set(ci->ci_tick);
 	intr_restore(s);
 
 	return (1);
@@ -878,18 +880,17 @@ resettodr()
 void
 tick_start(void)
 {
-	u_int64_t base, s;
+	struct cpu_info *ci = curcpu();
+	u_int64_t s;
 
 	/*
 	 * Try to make the tick interrupts as synchronously as possible on
-	 * all CPUs to avoid inaccuracies for migrating processes.  Leave out
-	 * one tick to make sure that it is not missed.
+	 * all CPUs to avoid inaccuracies for migrating processes.
 	 */
 
 	s = intr_disable();
-	base = sparc_rdpr(tick) & TICK_TICKS;
-	base = roundup(base, tick_increment);
-	sparc_wr(tick_cmpr, (base + tick_increment) & TICK_TICKS, 0);
+	ci->ci_tick = roundup(tick(), tick_increment);
+	tickcmpr_set(ci->ci_tick);
 	intr_restore(s);
 }
 
