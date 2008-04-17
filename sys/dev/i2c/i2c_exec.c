@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_exec.c,v 1.1 2004/05/23 17:33:43 grange Exp $	*/
+/*	$OpenBSD: i2c_exec.c,v 1.2 2008/04/17 16:48:40 deraadt Exp $	*/
 /*	$NetBSD: i2c_exec.c,v 1.3 2003/10/29 00:34:58 mycroft Exp $	*/
 
 /*
@@ -124,8 +124,8 @@ iic_smbus_write_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
     uint8_t val, int flags)
 {
 
-	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1,
-			 &val, 1, flags));
+	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr,
+	    &cmd, sizeof cmd, &val, sizeof val, flags));
 }
 
 /*
@@ -138,8 +138,8 @@ iic_smbus_read_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
     uint8_t *valp, int flags)
 {
 
-	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &cmd, 1,
-			 valp, 1, flags));
+	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr,
+	    &cmd, sizeof cmd, valp, sizeof (*valp), flags));
 }
 
 /*
@@ -152,6 +152,6 @@ iic_smbus_receive_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t *valp,
     int flags)
 {
 
-	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0,
-			 valp, 1, flags));
+	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr,
+	    NULL, 0, valp, sizeof (*valp), flags));
 }

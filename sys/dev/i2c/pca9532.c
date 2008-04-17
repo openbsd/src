@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9532.c,v 1.2 2006/06/17 23:00:47 drahn Exp $ */
+/*	$OpenBSD: pca9532.c,v 1.3 2008/04/17 16:50:17 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -72,11 +72,11 @@ pcaled_match(struct device *parent, void *v, void *arg)
 	iic_acquire_bus(ia->ia_tag, I2C_F_POLL);
 	cmd = 0;
 	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
-	    &cmd, 1, &data, 1, I2C_F_POLL))
+	    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 		goto fail;
 	cmd = 9;
 	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
-	    &cmd, 1, &data, 1, I2C_F_POLL))
+	    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 		goto fail;
 	ok = 1;
 fail:
@@ -106,7 +106,7 @@ pcaled_attach(struct device *parent, struct device *self, void *arg)
 		else
 			cmd = 1;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, 1, &data, 1, I2C_F_POLL))
+		    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 			goto fail; /* XXX */
 		sc->sc_gpio_pin[i].pin_state = (data >> (i & 3)) & 1;
 	}
@@ -141,7 +141,7 @@ pcaled_gpio_pin_read(void *arg, int pin)
 	else
 		cmd = 1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, 1, &data, 1, I2C_F_POLL))
+	    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 		goto fail; /* XXX */
 
 fail:
@@ -163,13 +163,13 @@ pcaled_gpio_pin_write (void *arg, int pin, int value)
 	else
 		cmd = 9;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, 1, &data, 1, I2C_F_POLL))
+	    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 		goto fail; /* XXX */
 	data &= ~(0x3 << (2*(pin & 3)));
 	data |= (value << (2*(pin & 3)));
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    &cmd, 1, &data, 1, I2C_F_POLL))
+	    &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL))
 		goto fail; /* XXX */
 
 fail:
