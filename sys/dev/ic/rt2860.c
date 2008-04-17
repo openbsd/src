@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.12 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.13 2008/04/17 18:16:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -997,7 +997,6 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
-	u_int hdrlen;
 	uint8_t ant, rssi;
 	int error;
 #if NBPFILTER > 0
@@ -1081,10 +1080,10 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh16(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
-		hdrlen = ieee80211_get_hdrlen(wh);
 
 		/* HW may insert 2 padding bytes after 802.11 header */
 		if (letoh32(rxd->flags) & RT2860_RX_L2PAD) {
+			u_int hdrlen = ieee80211_get_hdrlen(wh);
 			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
 			m->m_data += 2;
 			wh = mtod(m, struct ieee80211_frame *);
