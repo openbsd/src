@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.23 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: ray.4,v 1.24 2008/04/17 14:01:22 jmc Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 17 2008 $
 .Dt RAY 4
 .Os
 .Sh NAME
@@ -82,73 +82,13 @@ This is the standardized method of operating without an access point.
 Stations associate with a service set.
 However, actual connections between stations are peer-to-peer.
 .El
-.Sh CONFIGURATION
+.Pp
 The
 .Nm
 driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5
-using the following parameters:
-.Bl -tag -width Ds
-.It Cm bssid Ar bssid
-Set the desired BSSID.
-.It Fl bssid
-Unset the desired BSSID.
-The interface will automatically select a BSSID in this mode, which is
-the default.
-.It Cm chan Ar n
-Set the channel (radio frequency) to be used by the driver based on
-the given channel ID
-.Ar n .
-.It Fl chan
-Unset the desired channel to be used by the driver.
-The driver will automatically select a channel in this mode, which is
-the default.
-.It Cm media Ar media
-The
-.Nm
-driver supports the following
-.Ar media
-types:
-.Pp
-.Bl -tag -width autoselect -compact
-.It Cm autoselect
-Enable autoselection of the media type and options.
-.It Cm FH1
-Set legacy 802.11 FH 1Mbps operation.
-.It Cm FH2
-Set legacy 802.11 FH 2Mbps operation.
-.El
-.It Cm mediaopt Ar opts
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width monitor -compact
-.It Cm ibss
-Select IBSS operation.
-.El
-.It Fl mediaopt Ar opts
-Disable the specified media options on the driver and return it to the
-default mode of operation (BSS).
-.It Cm nwid Ar id
-Set the network ID.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-An empty
-.Ar id
-string allows the interface to connect to any available access points.
-By default the
-.Nm
-driver uses an empty string.
-Note that network ID is synonymous with Extended Service Set ID (ESSID).
-.It Fl nwid
-Set the network ID to the empty string to allow the interface to connect
-to any available access point.
-.El
+.Xr hostname.if 5 .
 .Sh HARDWARE
 Cards supported by the
 .Nm

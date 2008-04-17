@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.88 2007/12/10 10:32:54 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.89 2008/04/17 14:01:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: wi.4,v 1.3 1999/05/22 16:12:43 wpaul Exp $
 .\"
-.Dd $Mdocdate: December 10 2007 $
+.Dd $Mdocdate: April 17 2008 $
 .Dt WI 4
 .Os
 .Sh NAME
@@ -123,157 +123,13 @@ The Lucent WaveLAN/IEEE Bronze cards do not support WEP at all.
 See also
 .Sx CAVEATS
 below.
-.Sh CONFIGURATION
+.Pp
 The
 .Nm
 driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5
-using the following parameters:
-.Bl -tag -width Ds
-.It Cm chan Ar n
-Set the channel (radio frequency) to be used by the driver based on
-the given channel ID
-.Ar n .
-.It Fl chan
-Unset the desired channel to be used by the driver.
-The driver will automatically select a channel in this mode, which is
-the default.
-.It Cm media Ar media
-The
-.Nm
-driver supports the following
-.Ar media
-types:
-.Pp
-.Bl -tag -width autoselect -compact
-.It Cm autoselect
-Enable autoselection of the media type and options.
-.It Cm DS1
-Set 802.11b DS 1Mbps operation.
-.It Cm DS2
-Set 802.11b DS 2Mbps operation.
-.It Cm DS5
-Set 802.11b DS 5.5Mbps operation.
-.It Cm DS11
-Set 802.11b DS 11Mbps operation.
-.El
-.It Cm mediaopt Ar opts
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width ibss-master -compact
-.It Cm adhoc
-Select ad-hoc demo mode.
-.It Cm hostap
-Select Host AP operation.
-.It Cm ibss
-Select IBSS operation.
-.It Cm ibss-master
-Select IBSS master operation.
-.El
-.It Fl mediaopt Ar opts
-Disable the specified media options on the driver and return it to the
-default mode of operation (BSS).
-.It Cm nwflag Ar flag
-Set a specified flag for the wireless network interface.
-The flag name can be either
-.Ql hidenwid
-or
-.Ql nobridge .
-The
-.Ql hidenwid
-flag will hide the network ID (ESSID) in beacon frames when operating
-in Host AP mode.
-It will also prevent responses to probe requests with an unspecified
-network ID.
-The
-.Ql nobridge
-flag will disable the direct bridging of frames between associated
-nodes when operating in Host AP mode.
-Setting this flag will block and filter direct inter-station
-communications.
-.Pp
-Note that the
-.Ql hidenwid
-and
-.Ql nobridge
-options do not provide any security.
-The hidden network ID will be sent in clear text by associating
-stations and can be easily discovered with tools like
-.Xr tcpdump 8
-and
-.Xr hostapd 8 .
-.It Fl nwflag Ar flag
-Remove a specified flag for the wireless network interface.
-.It Cm nwid Ar id
-Set the network ID.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-An empty
-.Ar id
-string allows the interface to connect to any available access points.
-By default the
-.Nm
-driver uses an empty string.
-Note that network ID is synonymous with Extended Service Set ID (ESSID).
-.It Fl nwid
-Set the network ID to the empty string to allow the interface to connect
-to any available access point.
-.It Cm nwkey Ar key
-Enable WEP encryption using the specified
-.Ar key .
-The
-.Ar key
-can either be a string, a series of hexadecimal digits (preceded by
-.Sq 0x ) ,
-or a set of keys of the form
-.Dq n:k1,k2,k3,k4 ,
-where
-.Sq n
-specifies which of the keys will be used for transmitted packets,
-and the four keys,
-.Dq k1
-through
-.Dq k4 ,
-are configured as WEP keys.
-If a set of keys is specified, a comma
-.Pq Sq \&,
-within the key must be escaped with a backslash.
-Note that if multiple keys are used, their order must be the same within
-the network.
-.Nm
-is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
-or 104-bit (13 characters or 26 hexadecimal digits) keys.
-.It Fl nwkey
-Disable WEP encryption.
-This is the default mode of operation.
-.It Cm nwkey persist
-Enable WEP encryption with the persistent key stored in the network card.
-.It Cm nwkey persist : Ns Ar key
-Write
-.Ar key
-to the persistent memory of the network card,
-and enable WEP encryption using that key.
-.It Cm powersave
-Enable power saving mode.
-.It Fl powersave
-Disable power saving mode.
-This is the default mode of operation.
-.It Cm powersavesleep Ar duration
-Set the receiver sleep duration (in milliseconds) for power saving mode.
-.It Cm txpower Ar dBm
-Set the transmit power
-(and disable any auto level and transmit power controls).
-.It Fl txpower
-Disable manual transmit power
-(and enable any auto level and transmit power controls).
-This is the default mode of operation.
-.El
+.Xr hostname.if 5 .
 .Sh HARDWARE
 Cards supported by the
 .Nm

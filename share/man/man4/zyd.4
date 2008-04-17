@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.26 2007/11/18 00:43:13 brad Exp $
+.\" $OpenBSD: zyd.4,v 1.27 2008/04/17 14:01:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 18 2007 $
+.Dd $Mdocdate: April 17 2008 $
 .Dt ZYD 4
 .Os
 .Sh NAME
@@ -72,104 +72,13 @@ Unfortunately, due to serious weaknesses in WEP protocol
 it is strongly recommended that it not be used as the
 sole mechanism to secure wireless communication.
 WEP is not enabled by default.
-.Sh CONFIGURATION
+.Pp
 The
 .Nm
 driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5
-using the following parameters:
-.Bl -tag -width Ds
-.It Cm bssid Ar bssid
-Set the desired BSSID.
-.It Fl bssid
-Unset the desired BSSID.
-The interface will automatically select a BSSID in this mode, which is
-the default.
-.It Cm chan Ar n
-Set the channel (radio frequency) to be used by the driver based on
-the given channel ID
-.Ar n .
-.It Fl chan
-Unset the desired channel to be used by the driver.
-The driver will automatically select a channel in this mode, which is
-the default.
-.It Cm media Ar media
-The
-.Nm
-driver supports the following
-.Ar media
-types:
-.Pp
-.Bl -tag -width autoselect -compact
-.It Cm autoselect
-Enable autoselection of the media type and options.
-.It Cm DS1
-Set 802.11b DS 1Mbps operation.
-.It Cm DS2
-Set 802.11b DS 2Mbps operation.
-.It Cm DS5
-Set 802.11b DS 5.5Mbps operation.
-.It Cm DS11
-Set 802.11b DS 11Mbps operation.
-.El
-.It Cm mediaopt Ar opts
-The
-.Nm
-driver supports the following media options:
-.Bl -tag -width ibss
-.It Cm ibss
-Select Independent Basic Service Set (IBSS) operation.
-.El
-.It Fl mediaopt Ar opts
-Disable the specified media options on the driver and return it to the
-default mode of operation (BSS).
-.It Cm nwid Ar id
-Set the network ID.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-An empty
-.Ar id
-string allows the interface to connect to any available access points.
-By default the
-.Nm
-driver uses an empty string.
-Note that network ID is synonymous with Extended Service Set ID (ESSID).
-.It Fl nwid
-Set the network ID to the empty string to allow the interface to connect
-to any available access point.
-.It Cm nwkey Ar key
-Enable WEP encryption using the specified
-.Ar key .
-The
-.Ar key
-can either be a string, a series of hexadecimal digits (preceded by
-.Sq 0x ) ,
-or a set of keys of the form
-.Dq n:k1,k2,k3,k4 ,
-where
-.Sq n
-specifies which of the keys will be used for transmitted packets,
-and the four keys,
-.Dq k1
-through
-.Dq k4 ,
-are configured as WEP keys.
-If a set of keys is specified, a comma
-.Pq Sq \&,
-within the key must be escaped with a backslash.
-Note that if multiple keys are used, their order must be the same within
-the network.
-.Nm
-is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
-or 104-bit (13 characters or 26 hexadecimal digits) keys.
-.It Fl nwkey
-Disable WEP encryption.
-This is the default mode of operation.
-.El
+.Xr hostname.if 5 .
 .Sh HARDWARE
 The following devices are known to be supported by the
 .Nm

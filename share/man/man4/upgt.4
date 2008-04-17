@@ -1,4 +1,4 @@
-.\" $OpenBSD: upgt.4,v 1.5 2008/01/20 00:14:41 mglocker Exp $
+.\" $OpenBSD: upgt.4,v 1.6 2008/04/17 14:01:22 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\" Copyright (c) 2005-2007
@@ -48,7 +48,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2008 $
+.Dd $Mdocdate: April 17 2008 $
 .Os
 .Dt UPGT 4
 .Sh NAME
@@ -107,136 +107,13 @@ WEP is not enabled by default.
 .\"The transmit speed is user-selectable or can be adapted automatically by the
 .\"driver depending on the received signal strength and on the number of hardware
 .\"transmission retries.
-.Sh CONFIGURATION
+.Pp
 The
 .Nm
 driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5
-using the following parameters:
-.Bl -tag -width Ds
-.It Cm bssid Ar bssid
-Set the desired BSSID.
-.It Fl bssid
-Unset the desired BSSID.
-The interface will automatically select a BSSID in this mode, which is
-the default.
-.It Cm chan Ar n
-Set the channel (radio frequency) to be used by the driver based on
-the given channel ID
-.Ar n .
-.It Fl chan
-Unset the desired channel to be used by the driver.
-The driver will automatically select a channel in this mode, which is
-the default.
-.It Cm media Ar media
-The
-.Nm
-driver supports the following
-.Ar media
-types:
-.Pp
-.Bl -tag -width autoselect -compact
-.It Cm autoselect
-Enable autoselection of the media type and options.
-.It Cm DS1
-Set 802.11b DS 1Mbps operation.
-.It Cm DS2
-Set 802.11b DS 2Mbps operation.
-.It Cm DS5
-Set 802.11b DS 5.5Mbps operation.
-.It Cm DS11
-Set 802.11b DS 11Mbps operation.
-.It Cm OFDM6
-Set 802.11g OFDM 6Mbps operation.
-.It Cm OFDM9
-Set 802.11g OFDM 9Mbps operation.
-.It Cm OFDM12
-Set 802.11g OFDM 12Mbps operation.
-.It Cm OFDM18
-Set 802.11g OFDM 18Mbps operation.
-.It Cm OFDM24
-Set 802.11g OFDM 24Mbps operation.
-.It Cm OFDM36
-Set 802.11g OFDM 36Mbps operation.
-.It Cm OFDM48
-Set 802.11g OFDM 48Mbps operation.
-.It Cm OFDM54
-Set 802.11g OFDM 54Mbps operation.
-.El
-.It Cm mediaopt Ar opts
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width monitor -compact
-.\".It Cm hostap
-.\"Select Host AP operation.
-.\".It Cm ibss
-.\"Select IBSS operation.
-.It Cm monitor
-Select monitor mode.
-.El
-.It Fl mediaopt Ar opts
-Disable the specified media options on the driver and return it to the
-default mode of operation (BSS).
-.It Cm mode Ar mode
-The
-.Nm
-driver supports the following modes:
-.Pp
-.Bl -tag -width 11b -compact
-.It Cm 11b
-Force 802.11b operation.
-.It Cm 11g
-Force 802.11g operation.
-.El
-.It Cm nwid Ar id
-Set the network ID.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-An empty
-.Ar id
-string allows the interface to connect to any available access points.
-By default the
-.Nm
-driver uses an empty string.
-Note that network ID is synonymous with Extended Service Set ID (ESSID).
-.It Fl nwid
-Set the network ID to the empty string to allow the interface to connect
-to any available access point.
-.It Cm nwkey Ar key
-Enable WEP encryption using the specified
-.Ar key .
-The
-.Ar key
-can either be a string, a series of hexadecimal digits (preceded by
-.Sq 0x ) ,
-or a set of keys of the form
-.Dq n:k1,k2,k3,k4 ,
-where
-.Sq n
-specifies which of the keys will be used for transmitted packets,
-and the four keys,
-.Dq k1
-through
-.Dq k4 ,
-are configured as WEP keys.
-If a set of keys is specified, a comma
-.Pq Sq \&,
-within the key must be escaped with a backslash.
-Note that if multiple keys are used, their order must be the same within
-the network.
-.Nm
-is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
-or 104-bit (13 characters or 26 hexadecimal digits) keys.
-.It Fl nwkey
-Disable WEP encryption.
-This is the default mode of operation.
-.El
+.Xr hostname.if 5 .
 .Sh FILES
 The driver needs a firmware file which is loaded when an interface is
 brought up:
