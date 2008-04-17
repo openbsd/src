@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.79 2007/10/23 11:19:58 sthen Exp $
+#	$OpenBSD: security,v 1.80 2008/04/17 19:49:16 sthen Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -298,6 +298,15 @@ fi
 if egrep 'uudecode|decode' /etc/mail/aliases; then
 	echo "\nThere is an entry for uudecode in the /etc/mail/aliases file."
 fi
+
+# hostname.if files may contain secrets and should not be
+# world-readable.
+
+for f in /etc/hostname.* ; do
+	if [ "$(stat -f "%SLp" $f)" != "---" ]; then
+		echo "\n$f is world readable."
+	fi
+done
 
 # Files that should not have + signs.
 list="/etc/hosts.equiv /etc/shosts.equiv /etc/hosts.lpd"
