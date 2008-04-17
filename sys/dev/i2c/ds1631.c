@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.9 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.10 2008/04/17 19:01:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -136,7 +136,8 @@ void
 maxds_refresh(void *arg)
 {
 	struct maxds_softc *sc = arg;
-	u_int8_t cmd, data[2];
+	u_int8_t cmd;
+	u_int16_t data;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
@@ -144,7 +145,7 @@ maxds_refresh(void *arg)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[MAXDS_TEMP].value = 273150000 +
-		    ((int)((u_int16_t)data[0] << 8 | data[1])) / 8 * 31250;
+		    (int)(betoh16(data)) / 8 * 31250;
 
 	iic_release_bus(sc->sc_tag, 0);
 }

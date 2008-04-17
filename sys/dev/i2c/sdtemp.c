@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.4 2008/04/10 17:14:09 deraadt Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.5 2008/04/17 19:01:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -100,22 +100,22 @@ void
 sdtemp_refresh(void *arg)
 {
 	struct sdtemp_softc *sc = arg;
-	u_int8_t cmd, data[2];
-	int16_t sdata;
+	u_int8_t cmd;
+	int16_t data, sdata;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd = JC_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, data, sizeof data, 0) == 0) {
-		sdata = ((data[0] << 8) | data[1]) & 0x0fff;
-		if (data[0] & JC_TEMP_SIGN)
+	    &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
+		sdata = betoh16(data) & 0x0fff;
+		if (betoh16(data) & JC_TEMP_SIGN)
 			sdata = -sdata;
 		sc->sc_sensor[JCTEMP_TEMP].value =
 		    273150000 + 62500 * sdata;
 		sc->sc_sensor[JCTEMP_TEMP].flags &= ~SENSOR_FINVALID;
 #if 0
-		printf("sdtemp %02x%02x %04x %d\n", data[0], data[1],
+		printf("sdtemp %04x %04x %d\n", data & 0xffff,
 		    (u_int)sdata & 0xffff,
 		    sc->sc_sensor[JCTEMP_TEMP].value);
 #endif

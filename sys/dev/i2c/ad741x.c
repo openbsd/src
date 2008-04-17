@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.13 2007/10/20 22:06:43 cnst Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.14 2008/04/17 19:01:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -158,7 +158,8 @@ void
 adc_refresh(void *arg)
 {
 	struct adc_softc *sc = arg;
-	u_int8_t cmd, data[2], reg;
+	u_int8_t cmd, reg;
+	u_int16_t data;
 	int i;
 
 	iic_acquire_bus(sc->sc_tag, 0);
@@ -173,7 +174,7 @@ adc_refresh(void *arg)
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0))
 		goto done;
 	sc->sc_sensor[ADC_TEMP].value = 273150000 +
-	    ((data[0] << 8 | data[1]) >> 6) * 250000;
+	    (betoh16(data) >> 6) * 250000;
 
 	if (sc->sc_chip == 0)
 		goto done;
@@ -188,8 +189,7 @@ adc_refresh(void *arg)
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0))
 			goto done;
-		sc->sc_sensor[ADC_ADC0].value =
-		    (data[0] << 8 | data[1]) >> 6;
+		sc->sc_sensor[ADC_ADC0].value = betoh16(data) >> 6;
 		goto done;
 	}
 
@@ -203,8 +203,7 @@ adc_refresh(void *arg)
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0))
 			goto done;
-		sc->sc_sensor[ADC_ADC0 + i].value =
-		    (data[0] << 8 | data[1]) >> 6;
+		sc->sc_sensor[ADC_ADC0 + i].value = betoh16(data) >> 6;
 	}
 
 done:

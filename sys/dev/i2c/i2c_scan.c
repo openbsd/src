@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.121 2008/04/10 17:14:09 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.122 2008/04/17 19:01:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -123,7 +123,7 @@ iicprobenc(u_int8_t cmd)
 		return (0xff);
 	iic_acquire_bus(probe_ic, 0);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
-	    probe_addr, &cmd, 1, &data, 1, 0) != 0)
+	    probe_addr, &cmd, sizeof cmd, &data, sizeof data, 0) != 0)
 		data = 0xff;
 	iic_release_bus(probe_ic, 0);
 	return (data);
@@ -132,7 +132,7 @@ iicprobenc(u_int8_t cmd)
 u_int16_t
 iicprobew(u_int8_t cmd)
 {
-	u_int8_t data[2];
+	u_int16_t data;
 
 	/*
 	 * If we think we are talking to an evil Maxim 1617 or clone,
@@ -142,10 +142,10 @@ iicprobew(u_int8_t cmd)
 		return (0xffff);
 	iic_acquire_bus(probe_ic, 0);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
-	    probe_addr, &cmd, 1, &data, 2, 0) != 0)
-		data[0] = data[1] = 0xff;
+	    probe_addr, &cmd, sizeof cmd, &data, sizeof data, 0) != 0)
+		data = 0xffff;
 	iic_release_bus(probe_ic, 0);
-	return ((data[0] << 8) | data[1]);
+	return betoh16(data);
 }
 
 u_int8_t
@@ -961,7 +961,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 				/* Perform RECEIVE BYTE command */
 				iic_acquire_bus(ic, 0);
 				if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
-				    &cmd, 1, NULL, 0, 0) == 0) {
+				    &cmd, sizeof cmd, NULL, 0, 0) == 0) {
 					iic_release_bus(ic, 0);
 
 					/* Some device exists */

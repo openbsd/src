@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.23 2007/11/26 17:40:56 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.24 2008/04/17 19:01:48 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -580,8 +580,8 @@ spdmem_read(struct spdmem_softc *sc, uint8_t reg)
 	uint8_t val;
 
 	iic_acquire_bus(sc->sc_tag,0);
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		 &val, 1, 0);
+	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	    &reg, sizeof reg, &val, sizeof val, 0);
 	iic_release_bus(sc->sc_tag, 0);
 
 	return val;
