@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.429 2008/03/15 05:28:31 jsing Exp $
+#	$OpenBSD: install.sub,v 1.430 2008/04/17 01:51:44 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -567,7 +567,7 @@ __EOT
 		v4_config "$_ifs" "$_media" "$_name" "$_hn"
 		v6_config "$_ifs" "$_media" "$_name" "$_hn"
 
-		[[ -f $_hn ]] && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
+		[[ -f $_hn ]] && chmod 600 $_hn && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
 	done
 }
 
