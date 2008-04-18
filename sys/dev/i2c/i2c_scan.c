@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.122 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.123 2008/04/18 18:51:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -520,7 +520,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 		else if (addr == 0x2e &&
 		    iicprobe(0x3d) == 0x68 && (iicprobe(0x3f) & 0xf0) == 0x70)
 			name = "adt7467"; /* or adt7468 */
-		else if (iicprobe(0x3d) == 0x33)
+		else if (iicprobe(0x3d) == 0x33 && iicprobe(0x3f) == 0x02)
 			name = "adm1033";
                 else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x30 &&
