@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.59 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.60 2008/04/18 21:35:11 djm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Id: tcpdump.c,v 1.59 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: tcpdump.c,v 1.60 2008/04/18 21:35:11 djm Exp $ (LBL)";
 #endif
 
 /*
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 	pcap_handler printer;
 	struct bpf_program *fcode;
 	u_char *pcap_userdata;
-	u_int dlt = (u_int) -1;
+	u_int dirfilt = 0, dlt = (u_int) -1;
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while ((op = getopt(argc, argv,
-	    "ac:deE:fF:i:IlLnNOopqr:s:StT:vw:xXy:Y")) != -1)
+	    "ac:D:deE:fF:i:IlLnNOopqr:s:StT:vw:xXy:Y")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -248,6 +248,15 @@ main(int argc, char **argv)
 			cnt = atoi(optarg);
 			if (cnt <= 0)
 				error("invalid packet count %s", optarg);
+			break;
+
+		case 'D':
+			if (strcasecmp(optarg, "in") == 0)
+				dirfilt = BPF_DIRECTION_OUT;
+			else if (strcasecmp(optarg, "out") == 0)
+				dirfilt = BPF_DIRECTION_IN;
+			else
+				error("invalid traffic direction %s", optarg);
 			break;
 
 		case 'd':
@@ -422,7 +431,8 @@ main(int argc, char **argv)
 			if (device == NULL)
 				error("%s", ebuf);
 		}
-		pd = priv_pcap_live(device, snaplen, !pflag, 1000, ebuf, dlt);
+		pd = priv_pcap_live(device, snaplen, !pflag, 1000, ebuf,
+		    dlt, dirfilt);
 		if (pd == NULL)
 			error("%s", ebuf);
 
@@ -669,11 +679,11 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-"Usage: %s [-adefILlNnOopqStvXx] [-c count] [-E [espalg:]espkey] [-F file]\n",
+"Usage: %s [-adefILlNnOopqStvXx] [-c count] [-D direction]\n",
 	    program_name);
 	(void)fprintf(stderr,
-"\t       [-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");
+"\t       [-E [espalg:]espkey] [-F file] [-i interface] [-r file]\n");
 	(void)fprintf(stderr,
-"\t       [-y datalinktype] [expression]\n");
+"\t       [-s snaplen] [-T type] [-w file] [-y datalinktype] [expression]\n");
 	exit(1);
 }

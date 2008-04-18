@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.26 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.27 2008/04/18 21:35:11 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -200,7 +200,7 @@ priv_init(int argc, char **argv)
 	/* parse the arguments for required options */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
-	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
+	    "ac:D:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
 		switch (i) {
 		case 'n':
 			nflag++;
@@ -319,7 +319,7 @@ static void
 impl_open_bpf(int fd, int *bpfd)
 {
 	int snaplen, promisc, err;
-	u_int dlt;
+	u_int dlt, dirfilt;
 	char device[IFNAMSIZ];
 	size_t iflen;
 
@@ -328,10 +328,11 @@ impl_open_bpf(int fd, int *bpfd)
 	must_read(fd, &snaplen, sizeof(int));
 	must_read(fd, &promisc, sizeof(int));
 	must_read(fd, &dlt, sizeof(u_int));
+	must_read(fd, &dirfilt, sizeof(u_int));
 	iflen = read_string(fd, device, sizeof(device), __func__);
 	if (iflen == 0)
 		errx(1, "Invalid interface size specified");
-	*bpfd = pcap_live(device, snaplen, promisc, dlt);
+	*bpfd = pcap_live(device, snaplen, promisc, dlt, dirfilt);
 	err = errno;
 	if (*bpfd < 0)
 		logmsg(LOG_DEBUG,
