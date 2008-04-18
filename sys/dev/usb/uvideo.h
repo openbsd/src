@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.5 2008/04/16 20:45:24 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.6 2008/04/18 21:19:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -213,6 +213,22 @@ struct usb_video_vc_endpoint_desc {
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
 	uWord	wMaxTransferSize;
+};
+
+/* Table 3-13: Interface Input Header Descriptor */
+struct usb_video_input_header_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bNumFormats;
+	uWord	wTotalLength;
+	uByte	bEndpointAddress;
+	uByte	bmInfo;
+	uByte	bTerminalLink;
+	uByte	bStillCaptureMethod;
+	uByte	bTriggerSupport;
+	uByte	bTriggerUsage;
+	uByte	bControlSize;
 };
 
 /* Table 3-18: Color Matching Descriptor */

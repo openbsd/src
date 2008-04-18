@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.8 2008/04/18 13:49:55 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.9 2008/04/18 21:19:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -93,7 +93,9 @@ int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int);
 
 void		uvideo_dump_desc_all(struct uvideo_softc *);
-void		uvideo_dump_desc_vcheader(struct uvideo_softc *,
+void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
+		    const usb_descriptor_t *);
+void		uvideo_dump_desc_input_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_input(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -114,7 +116,7 @@ void		uvideo_dump_desc_frame_mjpeg(struct uvideo_softc *,
 void		uvideo_dump_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 
-int		uvideo_desc_len(const usb_descriptor_t *, int, int, int);
+int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 
 int		uvideo_debug_file_open(struct uvideo_softc *);
 void		uvideo_debug_file_write_sample(void *);
@@ -369,7 +371,7 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VC_HEADER:
-			if (!uvideo_desc_len(desc, 12, 11, 1))
+			if (!uvideo_desc_len(desc, 12, 11, 1, 0))
 				break;
 			if (vc_header_found) {
 				printf("%s: too many VC_HEADERs!\n",
@@ -1106,10 +1108,16 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			case UDESCSUB_VC_HEADER:
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
-				if (uvideo_desc_len(desc, 12, 11, 1)) {
+				if (uvideo_desc_len(desc, 12, 11, 1, 0)) {
 					printf(" (UDESCSUB_VC_HEADER)\n");
 					printf("|\n");
-					uvideo_dump_desc_vcheader(sc, desc);
+					uvideo_dump_desc_vc_header(sc, desc);
+					break;
+				}
+				if (uvideo_desc_len(desc, 13, 3, 0, 12)) {
+					printf(" (UDESCSUB_VS_INPUT_HEADER)\n");
+					printf("|\n");
+					uvideo_dump_desc_input_header(sc, desc);
 					break;
 				}
 				printf(" (unknown)\n");
@@ -1220,7 +1228,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 }
 
 void
-uvideo_dump_desc_vcheader(struct uvideo_softc *sc,
+uvideo_dump_desc_vc_header(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
 	struct usb_video_header_desc *d;
@@ -1234,7 +1242,28 @@ uvideo_dump_desc_vcheader(struct uvideo_softc *sc,
 	printf("wTotalLength=%d\n", UGETW(d->wTotalLength));
 	printf("dwClockFrequency=%d\n", UGETDW(d->dwClockFrequency));
 	printf("bInCollection=0x%02x\n", d->bInCollection);
-	//printf("baInterfaceNr=0x%02x\n", d->baInterfaceNr[0]);
+}
+
+void
+uvideo_dump_desc_input_header(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	struct usb_video_input_header_desc *d;
+
+	d = (struct usb_video_input_header_desc *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
+	printf("bNumFormats=%d\n", d->bNumFormats);
+	printf("wTotalLength=%d\n", UGETW(d->wTotalLength));
+	printf("bEndpointAddress=0x%02x\n", d->bEndpointAddress);
+	printf("bmInfo=0x%02x\n", d->bmInfo);
+	printf("bTerminalLink=0x%02x\n", d->bTerminalLink);
+	printf("bStillCaptureMethod=0x%02x\n", d->bStillCaptureMethod);
+	printf("bTriggerSupport=0x%02x\n", d->bTriggerSupport);
+	printf("bTriggerUsage=0x%02x\n", d->bTriggerUsage);
+	printf("bControlSize=%d\n", d->bControlSize);
 }
 
 void
@@ -1429,10 +1458,12 @@ uvideo_dump_desc_format_mjpeg(struct uvideo_softc *sc,
  * size_fix:		total size of the fixed structure part
  * off_num_elements:	offset which tells the number of following elements
  * size_element:	size of a single element
+ * off_size_element:	if size_element is 0 the element size is taken from
+ *			this offset in the descriptor 
  */
 int
 uvideo_desc_len(const usb_descriptor_t *desc,
-    int size_fix, int off_num_elements, int size_element)
+    int size_fix, int off_num_elements, int size_element, int off_size_element)
 {
 	uint8_t *buf;
 	int size_elements, size_total;
@@ -1441,6 +1472,9 @@ uvideo_desc_len(const usb_descriptor_t *desc,
 		return (0);
 
 	buf = (uint8_t *)desc;
+
+	if (size_element == 0)
+		size_element = buf[off_size_element];
 
 	size_elements = buf[off_num_elements] * size_element;
 	size_total = size_fix + size_elements;
