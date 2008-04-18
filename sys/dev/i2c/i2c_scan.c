@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.123 2008/04/18 18:51:01 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.124 2008/04/18 19:28:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -522,7 +522,9 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 			name = "adt7467"; /* or adt7468 */
 		else if (iicprobe(0x3d) == 0x33 && iicprobe(0x3f) == 0x02)
 			name = "adm1033";
-                else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		else if (iicprobe(0x3d) == 0x34 && iicprobe(0x3f) == 0x02)
+			name = "adm1034";
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x30 &&
 		    (iicprobe(0x01) & 0x80) == 0x00 &&
 		    (iicprobe(0x0d) & 0x70) == 0x00 &&
@@ -533,8 +535,8 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 			 * cannot assume the reserved/unused bits of
 			 * register 0x03 and 0x06 are set to zero.
 			 */
-			name = "adm1030";       /* complete check */
-                else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+			name = "adm1030";	/* complete check */
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x31 &&
 		    (iicprobe(0x01) & 0x80) == 0x00 &&
 		    (iicprobe(0x0d) & 0x70) == 0x00 &&
@@ -845,7 +847,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 		 */
 		name = "gl518sm";
 	} else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-	      iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
+	    iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
 		name = "adm1026";
 	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x1131 &&
 	    iicprobew(0x07) == 0xa101 &&
