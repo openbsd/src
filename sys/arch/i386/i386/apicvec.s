@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.10 2007/05/25 15:55:26 art Exp $ */
+/* $OpenBSD: apicvec.s,v 1.11 2008/04/18 20:20:35 kettenis Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -66,26 +66,6 @@ XINTR(ipi):
 	cli
 	popl	CPL
 	INTRFASTEXIT
-
-	.globl XINTR(ipi_ast)
-XINTR(ipi_ast):
-	pushl	%eax
-	pushl	%ds
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	%eax, %ds
-
-	ioapic_asm_ack()
-
-	movl	$IPL_SOFTAST, %eax
-	orl	$(1 << SIR_AST), _C_LABEL(ipending)
-
-	orl	$(LAPIC_DLMODE_FIXED|LAPIC_LVL_ASSERT|LAPIC_DEST_SELF), %eax
-	movl	%eax, _C_LABEL(local_apic) + LAPIC_ICRLO
-
-	movl	_C_LABEL(local_apic) + LAPIC_ID, %eax
-	popl	%ds
-	popl	%eax
-	iret
 
 	.globl	XINTR(ipi_invltlb)
 	.p2align 4,0x90

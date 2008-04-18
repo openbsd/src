@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.11 2008/04/13 16:11:28 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.12 2008/04/18 20:20:35 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -71,9 +71,12 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 #define i386_ipi_flush_fpu 0
 #endif
 
+void i386_ipi_nop(struct cpu_info *);
+
 void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
+	i386_ipi_nop,
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
 #if 0
@@ -90,6 +93,11 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 #endif
 	i386_setperf_ipi,
 };
+
+void
+i386_ipi_nop(struct cpu_info *ci)
+{
+}
 
 void
 i386_ipi_halt(struct cpu_info *ci)

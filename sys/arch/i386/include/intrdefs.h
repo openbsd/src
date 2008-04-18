@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.9 2007/09/07 08:37:38 art Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.10 2008/04/18 20:20:35 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -108,16 +108,17 @@
 #define IDT_INTR_HIGH	0xef
 
 #define I386_IPI_HALT		0x00000001
-#define I386_IPI_FLUSH_FPU	0x00000002
-#define I386_IPI_SYNCH_FPU	0x00000004
-#define I386_IPI_MTRR		0x00000008
-#define I386_IPI_GDT		0x00000010
-#define I386_IPI_DDB		0x00000020	/* synchronize while in ddb */
-#define I386_IPI_SETPERF	0x00000040
+#define I386_IPI_NOP		0x00000002
+#define I386_IPI_FLUSH_FPU	0x00000004
+#define I386_IPI_SYNCH_FPU	0x00000008
+#define I386_IPI_MTRR		0x00000010
+#define I386_IPI_GDT		0x00000020
+#define I386_IPI_DDB		0x00000040	/* synchronize while in ddb */
+#define I386_IPI_SETPERF	0x00000080
 
-#define I386_NIPI	7
+#define I386_NIPI	8
 
-#define I386_IPI_NAMES { "halt IPI", "FPU flush IPI", \
+#define I386_IPI_NAMES { "halt IPI", "nop IPI", "FPU flush IPI", \
 			 "FPU synch IPI", \
 			 "MTRR update IPI", "GDT update IPI", \
 			 "DDB IPI", "setperf IPI" }

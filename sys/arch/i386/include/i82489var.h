@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.6 2007/05/26 22:09:17 weingart Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.7 2008/04/18 20:20:35 kettenis Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -108,12 +108,10 @@ extern void Xintrltimer(void);
  * Special IPI vectors. We can use IDT 0xf0 - 0xff for this.
  */
 #define LAPIC_IPI_OFFSET		0xf0
-#define LAPIC_IPI_AST			(LAPIC_IPI_OFFSET + 0)
-#define LAPIC_IPI_INVLTLB		(LAPIC_IPI_OFFSET + 1)
-#define LAPIC_IPI_INVLPG		(LAPIC_IPI_OFFSET + 2)
-#define LAPIC_IPI_INVLRANGE		(LAPIC_IPI_OFFSET + 3)
+#define LAPIC_IPI_INVLTLB		(LAPIC_IPI_OFFSET + 0)
+#define LAPIC_IPI_INVLPG		(LAPIC_IPI_OFFSET + 1)
+#define LAPIC_IPI_INVLRANGE		(LAPIC_IPI_OFFSET + 2)
 
-extern void Xintripi_ast(void);
 extern void Xintripi_invltlb(void);
 extern void Xintripi_invlpg(void);
 extern void Xintripi_invlrange(void);

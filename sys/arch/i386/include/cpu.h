@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.100 2008/04/13 11:35:55 thib Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.101 2008/04/18 20:20:35 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -219,6 +219,8 @@ extern void cpu_init_idle_pcbs(void);
 
 #endif
 
+#define aston(p)	((p)->p_md.md_astpending = 1)
+
 #define curpcb			curcpu()->ci_curpcb
 
 #define want_resched (curcpu()->ci_want_resched)
@@ -238,8 +240,6 @@ extern void need_resched(struct cpu_info *);
  */
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
 
-void aston(struct proc *);
-
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
@@ -251,7 +251,7 @@ void aston(struct proc *);
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define signotify(p)		aston(p)
+void signotify(struct proc *);
 
 /*
  * We need a machine-independent name for this.

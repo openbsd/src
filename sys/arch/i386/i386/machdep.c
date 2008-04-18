@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.423 2008/04/18 18:54:39 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.424 2008/04/18 20:20:35 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2135,29 +2135,6 @@ ibcs2_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 #endif
 
 /*
- * To send an AST to a process on another cpu we send an IPI to that cpu,
- * the IPI schedules a special soft interrupt (that does nothing) and then
- * returns through the normal interrupt return path which in turn handles
- * the AST.
- *
- * The IPI can't handle the AST because it usually requires grabbing the
- * biglock and we can't afford spinning in the IPI handler with interrupts
- * unlocked (so that we take further IPIs and grow our stack until it
- * overflows).
- */
-void
-aston(struct proc *p)
-{
-#ifdef MULTIPROCESSOR
-	if (i386_atomic_testset_i(&p->p_md.md_astpending, 1) == 0 &&
-	    p->p_cpu != curcpu())
-		i386_fast_ipi(p->p_cpu, LAPIC_IPI_AST);
-#else
-	p->p_md.md_astpending = 1;
-#endif
-}
-
-/*
  * Send an interrupt to process.
  *
  * Stack is set up to allow sigcode stored
@@ -2354,6 +2331,20 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
+}
+
+/*
+ * Notify the current process (p) that it has a signal pending,
+ * process as soon as possible.
+ */
+void
+signotify(struct proc *p)
+{
+	aston(p);
+#ifdef MULTIPROCESSOR
+	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
+		i386_send_ipi(p->p_cpu, I386_IPI_NOP);
+#endif
 }
 
 int	waittime = -1;
