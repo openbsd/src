@@ -1,4 +1,4 @@
-/*	$OpenBSD: kiic.c,v 1.2 2007/05/20 23:38:52 thib Exp $	*/
+/*	$OpenBSD: kiic.c,v 1.3 2008/04/18 17:59:37 deraadt Exp $	*/
 /*	$NetBSD: kiic.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -332,6 +332,8 @@ kiic_start(struct kiic_softc *sc, int addr, int subaddr, void *data, int len)
 		printf("I2C_ERROR\n");
 		return (-1);
 	}
+	if (sc->sc_resid != 0)
+		return (-1);
 	return (0);
 }
 
