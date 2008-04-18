@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1339 2008/04/07 10:13:19 dlg Exp $
+$OpenBSD: pcidevs,v 1.1340 2008/04/18 23:59:07 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4033,7 +4033,7 @@ product TI PCI2040		0xac60	PCI2040 DSP
 product TI PCI7420		0xac8e	PCI7420 CardBus
 
 /* TigerJet Network products */
-product TIGERJET TIGER320	0x0001	PCI interface
+product TIGERJET TIGER320	0x0001	PCI
 
 /* Topic */
 product TOPIC 5634PCV		0x0000	5634PCV SurfRider
