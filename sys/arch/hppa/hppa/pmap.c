@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.131 2007/09/22 09:57:40 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.132 2008/04/18 06:42:21 djm Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -639,7 +639,7 @@ pmap_create()
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
 
-	for (space = 1 + (arc4random() % hppa_sid_max);
+	for (space = 1 + arc4random_uniform(hppa_sid_max);
 	    pmap_sdir_get(space); space = (space + 1) % hppa_sid_max);
 
 	if ((pmap->pm_pdir_pg = pmap_pagealloc(NULL, 0)) == NULL)

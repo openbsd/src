@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.27 2006/07/07 12:42:13 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.28 2008/04/18 06:42:20 djm Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -72,7 +72,7 @@ db_random(size_t mod)
 {
 	if (cold)
 		return (random() % mod);
-	return (arc4random() % mod);
+	return (arc4random_uniform(mod));
 }
 
 struct db_hang_forall_arg {

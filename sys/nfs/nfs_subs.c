@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.71 2008/04/16 20:02:46 damien Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.72 2008/04/18 06:42:20 djm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 
 	/* Get a new (non-zero) xid */
 	do {
-		while ((xid = arc4random() % 256) == 0)
+		while ((xid = arc4random() & 0xff) == 0)
 			;
 		nfs_xid += xid;
 	} while (nfs_xid == 0);

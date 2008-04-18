@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.11 2007/10/01 16:39:30 krw Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.12 2008/04/18 06:42:20 djm Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -379,7 +379,7 @@ at_ifinit( ifp, aa, sat )
 	    if ( sat->sat_addr.s_net == ATADDR_ANYNET ) {
 		if ( nnets != 1 ) {
 		    net = ntohs( nr.nr_firstnet ) +
-		    	arc4random() % ( nnets - 1 );
+		    	arc4random_uniform( nnets - 1 );
 		} else {
 		    net = ntohs( nr.nr_firstnet );
 		}

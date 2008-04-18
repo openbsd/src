@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.170 2007/10/29 16:19:23 chl Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.171 2008/04/18 06:42:20 djm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -232,7 +232,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		if (sspi == tspi)  /* Specific SPI asked. */
 			spi = tspi;
 		else    /* Range specified */
-			spi = sspi + (arc4random() % (tspi - sspi));
+			spi = sspi + arc4random_uniform(tspi - sspi);
 
 		/* Don't allocate reserved SPIs.  */
 		if (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX)

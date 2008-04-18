@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.92 2007/12/30 21:13:27 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.93 2008/04/18 06:42:20 djm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ in_pcbbind(v, nam)
 			 */
 			count = first - last;
 			if (count)
-				*lastport = first - (arc4random() % count);
+				*lastport = first - arc4random_uniform(count);
 
 			do {
 				if (count-- < 0)	/* completely used? */
@@ -353,7 +353,7 @@ in_pcbbind(v, nam)
 			 */
 			count = last - first;
 			if (count)
-				*lastport = first + (arc4random() % count);
+				*lastport = first + arc4random_uniform(count);
 
 			do {
 				if (count-- < 0)	/* completely used? */

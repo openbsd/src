@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6_var.h,v 1.5 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: mld6_var.h,v 1.6 2008/04/18 06:42:20 djm Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 
-#define MLD_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
+#define MLD_RANDOM_DELAY(X)	(arc4random_uniform(X) + 1)
 
 /*
  * States for MLD stop-listening processing

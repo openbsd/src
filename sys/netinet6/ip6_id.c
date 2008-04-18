@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.5 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.6 2008/04/18 06:42:20 djm Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -176,7 +176,7 @@ initid(struct randomtab *p)
 	u_int32_t j, i;
 	int noprime = 1;
 
-	p->ru_x = arc4random() % p->ru_m;
+	p->ru_x = arc4random_uniform(p->ru_m);
 
 	/* (bits - 1) bits of random seed */
 	p->ru_seed = arc4random() & (~0U >> (32 - p->ru_bits + 1));
@@ -189,7 +189,7 @@ initid(struct randomtab *p)
 	while (p->ru_b % 3 == 0)
 		p->ru_b += 2;
 
-	j = arc4random() % p->ru_n;
+	j = arc4random_uniform(p->ru_n);
 
 	/*
 	 * Do a fast gcd(j, RU_N - 1), so we can find a j with

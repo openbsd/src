@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.43 2005/06/24 07:57:24 markus Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.44 2008/04/18 06:42:20 djm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -347,7 +347,7 @@ in6_pcbsetport(laddr, inp, p)
 		 */
 		count = first - last;
 		if (count)
-			*lastport = first - (arc4random() % count);
+			*lastport = first - arc4random_uniform(count);
 
 		do {
 			if (count-- < 0)	/* completely used? */
@@ -365,7 +365,7 @@ in6_pcbsetport(laddr, inp, p)
 		 */
 		count = last - first;
 		if (count)
-			*lastport = first + (arc4random() % count);
+			*lastport = first + arc4random_uniform(count);
 
 		do {
 			if (count-- < 0)	/* completely used? */
