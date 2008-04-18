@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1339 2008/04/07 10:13:19 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1340 2008/04/18 23:59:07 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4038,7 +4038,7 @@
 #define	PCI_PRODUCT_TI_PCI7420	0xac8e		/* PCI7420 CardBus */
 
 /* TigerJet Network products */
-#define	PCI_PRODUCT_TIGERJET_TIGER320	0x0001		/* PCI interface */
+#define	PCI_PRODUCT_TIGERJET_TIGER320	0x0001		/* PCI */
 
 /* Topic */
 #define	PCI_PRODUCT_TOPIC_5634PCV	0x0000		/* 5634PCV SurfRider */

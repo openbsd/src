@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1339 2008/04/07 10:13:19 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1340 2008/04/18 23:59:07 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12973,7 +12973,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TIGERJET, PCI_PRODUCT_TIGERJET_TIGER320,
-	    "PCI interface",
+	    "PCI",
 	},
 	{
 	    PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,
