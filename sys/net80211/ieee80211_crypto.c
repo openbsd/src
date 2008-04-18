@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.38 2008/04/17 18:05:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.39 2008/04/18 09:16:14 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -53,7 +53,6 @@ struct vector {
 	size_t		len;
 };
 
-void	ieee80211_crc_init(void);
 void	ieee80211_prf(const u_int8_t *, size_t, struct vector *, int,
 	    u_int8_t *, size_t);
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
@@ -64,7 +63,6 @@ void	ieee80211_derive_gtk(const u_int8_t *, size_t, const u_int8_t *,
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
-	ieee80211_crc_init();
 }
 
 void
@@ -217,53 +215,6 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		m0 = NULL;
 	}
 	return m0;
-}
-
-/*
- * CRC (Cyclic Redundancy Check) (routine from RFC 2083).
- */
-
-/* Table of CRCs of all 8-bit messages. */
-static u_int32_t ieee80211_crc_table[256];
-
-/* Make the table for a fast CRC. */
-void
-ieee80211_crc_init(void)
-{
-	/* Flag: has the table been computed? Initially false. */
-	static int crc_table_computed = 0;
-	u_int32_t c;
-	int n, k;
-
-	if (crc_table_computed)
-		return;
-
-	for (n = 0; n < 256; n++) {
-		c = (u_int32_t)n;
-		for (k = 0; k < 8; k++) {
-			if (c & 1)
-				c = 0xedb88320UL ^ (c >> 1);
-			else
-				c = c >> 1;
-		}
-		ieee80211_crc_table[n] = c;
-	}
-	crc_table_computed = 1;
-}
-
-/*
- * Update a running CRC with the bytes buf[0..len-1]--the CRC
- * should be initialized to all 1's, and the transmitted value
- * is the 1's complement of the final running CRC.
- */
-u_int32_t
-ieee80211_crc_update(u_int32_t crc, const u_int8_t *buf, int len)
-{
-	const u_int8_t *endbuf;
-
-	for (endbuf = buf + len; buf < endbuf; buf++)
-		crc = ieee80211_crc_table[(crc ^ *buf) & 0xff] ^ (crc >> 8);
-	return crc;
 }
 
 /*

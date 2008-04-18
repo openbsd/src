@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.139 2008/04/17 19:26:51 damien Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.140 2008/04/18 09:16:14 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.139 2008/04/17 19:26:51 damien Exp $";
+	"$OpenBSD: if_wi.c,v 1.140 2008/04/18 09:16:14 djm Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -209,7 +209,6 @@ struct wi_funcs wi_func_io = {
 int
 wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 {
-	extern void ieee80211_crc_init(void);
 	struct ieee80211com	*ic;
 	struct ifnet		*ifp;
 	struct wi_ltv_macaddr	mac;
@@ -222,9 +221,6 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 
 	sc->sc_funcs = funcs;
 	sc->wi_cmd_count = 500;
-
-	/* make use of the WEP CRC table from net80211 */
-	ieee80211_crc_init();
 
 	wi_reset(sc);
 
@@ -2306,9 +2302,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	dat += 4;
 
 	/* compute crc32 over data and encrypt */
-	crc = ~0;
-	crc = ieee80211_crc_update(crc, dat, len);
-	crc = ~crc;
+	crc = ~ether_crc32_le(dat, len);
 	rc4_crypt(&ctx, dat, dat, len);
 	dat += len;
 
@@ -2353,9 +2347,7 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 
 	/* decrypt and compute crc32 over data */
 	rc4_crypt(&ctx, dat, dat, len);
-	crc = ~0;
-	crc = ieee80211_crc_update(crc, dat, len);
-	crc = ~crc;
+	crc = ~ether_crc32_le(dat, len);
 	dat += len;
 
 	/* decrypt little-endian crc32 and verify */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.10 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.11 2008/04/18 09:16:14 djm Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -99,8 +99,6 @@ extern	struct mbuf *ieee80211_encrypt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_key *);
 extern	struct mbuf *ieee80211_decrypt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
-
-u_int32_t ieee80211_crc_update(u_int32_t, const u_int8_t *, int);
 
 int ieee80211_set_key(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_key *);

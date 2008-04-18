@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.1 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.2 2008/04/18 09:16:14 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -261,7 +261,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		len = min(m->m_len - moff, n->m_len - noff);
 
-		crc = ieee80211_crc_update(crc, mtod(m, caddr_t) + moff, len);
+		crc = ether_crc32_le_update(crc, mtod(m, caddr_t) + moff, len);
 		rc4_crypt(&ctx->rc4, mtod(m, caddr_t) + moff,
 		    mtod(n, caddr_t) + noff, len);
 
@@ -282,7 +282,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	/* compute TKIP MIC over clear text */
 	mic = mtod(n, caddr_t) + n->m_len;
 	ieee80211_tkip_mic(m0, hdrlen, ctx->txmic, mic);
-	crc = ieee80211_crc_update(crc, mic, IEEE80211_TKIP_MICLEN);
+	crc = ether_crc32_le_update(crc, mic, IEEE80211_TKIP_MICLEN);
 	rc4_crypt(&ctx->rc4, mic, mic, IEEE80211_TKIP_MICLEN);
 	n->m_len += IEEE80211_TKIP_MICLEN;
 
@@ -413,7 +413,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 		rc4_crypt(&ctx->rc4, mtod(m, caddr_t) + moff,
 		    mtod(n, caddr_t) + noff, len);
-		crc = ieee80211_crc_update(crc, mtod(n, caddr_t) + noff, len);
+		crc = ether_crc32_le_update(crc, mtod(n, caddr_t) + noff, len);
 
 		moff += len;
 		noff += len;
@@ -426,7 +426,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* include TKIP MIC in WEP ICV */
 	mic0 = buf;
-	crc = ieee80211_crc_update(crc, mic0, IEEE80211_TKIP_MICLEN);
+	crc = ether_crc32_le_update(crc, mic0, IEEE80211_TKIP_MICLEN);
 	crc = ~crc;
 
 	/* decrypt ICV and compare it with calculated ICV */

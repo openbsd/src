@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.39 2007/05/16 09:24:07 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.40 2008/04/18 09:16:14 djm Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -287,6 +287,8 @@ int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int revarpwhoami(struct in_addr *, struct ifnet *);
 int db_show_arptab(void);
 
+u_int32_t ether_crc32_le_update(u_int32_t crc, const u_int8_t *, size_t);
+u_int32_t ether_crc32_be_update(u_int32_t crc, const u_int8_t *, size_t);
 u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 u_int32_t ether_crc32_be(const u_int8_t *, size_t);
 
