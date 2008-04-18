@@ -30,11 +30,7 @@
 #define MAXMATCH 1000
 static char *mat[MAXMATCH];
 
-#ifdef APPLE_HYB
 int  add_match(fn)
-#else
-void add_match(fn)
-#endif /* APPLE_HYB */
 char * fn;
 {
   register int i;
@@ -75,11 +71,7 @@ char * fn;
 
 static char *i_mat[MAXMATCH];
 
-#ifdef APPLE_HYB
 int  i_add_match(fn)
-#else
-void i_add_match(fn)
-#endif /* APPLE_HYB */
 char * fn;
 {
   register int i;
@@ -87,17 +79,19 @@ char * fn;
   for (i=0; i_mat[i] && i<MAXMATCH; i++);
   if (i == MAXMATCH) {
     fprintf(stderr,"Can't exclude RE '%s' - too many entries in table\n",fn);
-    return;
+    return 1;
   }
 
  
   i_mat[i] = (char *) malloc(strlen(fn)+1);
   if (! i_mat[i]) {
     fprintf(stderr,"Can't allocate memory for excluded filename\n");
-    return;
+    return 1;
   }
 
   strcpy(i_mat[i],fn);
+
+  return 0;
 }
 
 int i_matches(fn)
@@ -123,11 +117,7 @@ intptr_t i_ishidden()
 
 static char *j_mat[MAXMATCH];
 
-#ifdef APPLE_HYB
 int  j_add_match(fn)
-#else
-void j_add_match(fn)
-#endif /* APPLE_HYB */
 char * fn;
 {
   register int i;
