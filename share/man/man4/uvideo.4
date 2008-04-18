@@ -1,4 +1,4 @@
-.\" $OpenBSD: uvideo.4,v 1.2 2008/04/13 14:10:07 jmc Exp $
+.\" $OpenBSD: uvideo.4,v 1.3 2008/04/18 04:50:23 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Ian Darwin.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2008 $
+.Dd $Mdocdate: April 18 2008 $
 .Dt UVIDEO 4
 .Os
 .Sh NAME
@@ -29,12 +29,14 @@ The
 driver supports a range of USB Video Class (UVC) devices including webcams,
 camcorders and other cameras.
 UVC is a generic specification and many USB video devices follow it.
-.\" The following models are known to work:
-.\" .Pp
-.\" .Bl -tag -width PronComLtd -offset indent -compact
-.\" .It SomeCompany
-.\" PronCam-100
-.\" .El
+The following models are known to work:
+.Pp
+.Bl -tag -width QuickCam Pro 9000 -offset indent -compact
+.It Logitech
+QuickCam Pro 5000
+.It Logitech
+QuickCam Pro 9000
+.El
 .Pp
 If the
 .Nm
