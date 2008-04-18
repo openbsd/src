@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cal.1,v 1.18 2008/04/10 15:07:04 pyr Exp $
+.\"	$OpenBSD: cal.1,v 1.19 2008/04/18 14:41:04 pyr Exp $
 .\"	$NetBSD: cal.1,v 1.6 1995/09/02 05:34:20 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cal.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: April 10 2008 $
+.Dd $Mdocdate: April 18 2008 $
 .Dt CAL 1
 .Os
 .Sh NAME
@@ -53,8 +53,23 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl j
 Display Julian dates (days one-based, numbered from January 1).
+The options
+.Fl j
+and
+.Fl w
+are mutually exclusive.
 .It Fl m
 Display weeks starting on Monday instead of Sunday.
+.It Fl w
+Display week numbers in the month display.
+If
+.Fl m
+is specified the ISO week format is assumed
+The options
+.Fl j
+and
+.Fl w
+are mutually exclusive.
 .It Fl y
 Display a calendar for the current year.
 .El
@@ -82,7 +97,7 @@ displayed.
 .Pp
 A year starts on January 1st.
 .Pp
-The Gregorian Reformation is assumed to have occurred in 1752 after the 2nd
+The Gregorian Reformation is assummed to have occurred in 1752 after the 2nd
 of September.
 By this time, most countries had recognized the reformation (although a
 few did not recognize it until the early 1900's).
@@ -98,8 +113,12 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl jmy
+.Op Fl jmwy
 are extensions to that specification.
+.Pp
+The week number computed by
+.Fl mw
+is compliant with the ISO 8601 specification.
 .Sh HISTORY
 A
 .Nm

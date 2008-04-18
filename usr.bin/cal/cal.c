@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.22 2008/04/10 15:07:04 pyr Exp $	*/
+/*	$OpenBSD: cal.c,v 1.23 2008/04/18 14:41:04 pyr Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.22 2008/04/10 15:07:04 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.23 2008/04/18 14:41:04 pyr Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,12 +138,14 @@ const char	*day_headings = NULL;
 
 int julian;
 int mflag = 0;
+int wflag = 0;
 
 void	ascii_day(char *, int);
 void	center(const char *, int, int);
 void	day_array(int, int, int *);
 int	day_in_week(int, int, int);
 int	day_in_year(int, int, int);
+int	week(int, int, int);
 void	j_yearly(int);
 void	monthly(int, int);
 void	trim_trailing_spaces(char *);
@@ -160,13 +162,16 @@ main(int argc, char *argv[])
 	const char *errstr;
 
 	yflag = year = 0;
-	while ((ch = getopt(argc, argv, "jmy")) != -1)
+	while ((ch = getopt(argc, argv, "jmwy")) != -1)
 		switch(ch) {
 		case 'j':
 			julian = 1;
 			break;
 		case 'm':
 			mflag = 1;
+			break;
+		case 'w':
+			wflag = 1;
 			break;
 		case 'y':
 			yflag = 1;
@@ -177,6 +182,9 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (julian && wflag)
+		usage();
 
 	day_headings = DAY_HEADINGS_S;
 	sep1752 = sep1752s;
@@ -235,14 +243,59 @@ main(int argc, char *argv[])
 #define	DAY_LEN		3		/* 3 spaces per day */
 #define	J_DAY_LEN	4		/* 4 spaces per day */
 #define	WEEK_LEN	20		/* 7 * 3 - one space at the end */
+#define WEEKNUMBER_LEN	5		/* 5 spaces per week number */
 #define	J_WEEK_LEN	27		/* 7 * 4 - one space at the end */
 #define	HEAD_SEP	2		/* spaces between day headings */
 #define	J_HEAD_SEP	2
 
+int
+week(int day, int month, int year)
+{
+	int	leap;
+	int	prevleap;
+	int	yearday;
+	int	firstweekday;
+	int	weekday;
+	int	firstday;
+	int	firstsunday;
+	int	shift;
+
+	yearday = day_in_year(day, month, year);
+	firstweekday = day_in_week(1, 1, year) + 1;
+	weekday = day_in_week(day, month, year) + 1;
+	leap = leap_year(year);
+	prevleap = leap_year(year - 1);
+	firstday = firstsunday = day_in_year(1, 1, year);
+	firstsunday = firstday + (8 - firstweekday);
+
+	if (!mflag)
+		goto sunbased;
+
+	if (yearday <= (8 - firstweekday) && firstweekday > 4) {
+		if (firstweekday == 5 || (firstweekday == 6 && prevleap))
+			return (53);
+		return (52);
+	}
+
+	if (((leap ? 366 : 365) - yearday) < (4 - weekday))
+		return (1);
+
+	return (((yearday + (7 - weekday) + (firstweekday - 1)) / 7)
+	    - (firstweekday > 4));
+
+sunbased:
+	shift = 1;
+	if (yearday < firstsunday)
+		return (1);
+	if (firstweekday > THURSDAY - 1) 
+		shift = 2;
+	return ((((yearday + 1) - (weekday - 1)) / 7) + shift);
+}
+
 void
 monthly(int month, int year)
 {
-	int col, row, len, days[MAXDAYS];
+	int col, row, len, days[MAXDAYS], firstday;
 	char *p, lineout[30];
 
 	day_array(month, year, days);
@@ -253,12 +306,19 @@ monthly(int month, int year)
 	    ((julian ? J_WEEK_LEN : WEEK_LEN) - len) / 2, "",
 	    lineout, day_headings);
 	for (row = 0; row < 6; row++) {
+		firstday = SPACE;
 		for (col = 0, p = lineout; col < 7; col++,
-		    p += julian ? J_DAY_LEN : DAY_LEN)
+		    p += julian ? J_DAY_LEN : DAY_LEN) {
+			if (firstday == SPACE && days[row * 7 + col] != SPACE)
+				firstday = days[row * 7 + col];
 			ascii_day(p, days[row * 7 + col]);
+		}
 		*p = '\0';
 		trim_trailing_spaces(lineout);
-		(void)printf("%s\n", lineout);
+		(void)printf("%-20s", lineout);
+		if (wflag && firstday != SPACE)
+			printf(" [%2d]", week(firstday - mflag, month, year));
+		printf("\n");
 	}
 }
 
@@ -300,30 +360,47 @@ j_yearly(int year)
 void
 yearly(int year)
 {
-	int col, *dp, i, month, row, which_cal;
+	int col, *dp, i, month, row, which_cal, week_len, wn, firstday;
 	int days[12][MAXDAYS];
-	char *p, lineout[80];
+	char *p, lineout[81];
 
+	week_len = WEEK_LEN;
+	if (wflag)
+		week_len += WEEKNUMBER_LEN;
 	(void)snprintf(lineout, sizeof(lineout), "%d", year);
-	center(lineout, WEEK_LEN * 3 + HEAD_SEP * 2, 0);
+	center(lineout, week_len * 3 + HEAD_SEP * 2, 0);
 	(void)printf("\n\n");
 	for (i = 0; i < 12; i++)
 		day_array(i + 1, year, days[i]);
 	(void)memset(lineout, ' ', sizeof(lineout) - 1);
 	lineout[sizeof(lineout) - 1] = '\0';
 	for (month = 0; month < 12; month += 3) {
-		center(month_names[month], WEEK_LEN, HEAD_SEP);
-		center(month_names[month + 1], WEEK_LEN, HEAD_SEP);
-		center(month_names[month + 2], WEEK_LEN, 0);
+		center(month_names[month], week_len, HEAD_SEP);
+		center(month_names[month + 1], week_len, HEAD_SEP);
+		center(month_names[month + 2], week_len, 0);
 		(void)printf("\n%s%*s%s%*s%s\n", day_headings,
-		    HEAD_SEP, "", day_headings, HEAD_SEP, "", day_headings);
+		    HEAD_SEP + (wflag ? WEEKNUMBER_LEN : 0), "", day_headings,
+		    HEAD_SEP + (wflag ? WEEKNUMBER_LEN : 0), "", day_headings);
 
 		for (row = 0; row < 6; row++) {
 			for (which_cal = 0; which_cal < 3; which_cal++) {
-				p = lineout + which_cal * (WEEK_LEN + 2);
+				p = lineout + which_cal * (week_len + 2);
+				
 				dp = &days[month + which_cal][row * 7];
-				for (col = 0; col < 7; col++, p += DAY_LEN)
+				firstday = SPACE;
+				for (col = 0; col < 7; col++, p += DAY_LEN) {
+					if (firstday == SPACE && *dp != SPACE)
+						firstday = *dp;
 					ascii_day(p, *dp++);
+				}
+				if (wflag && firstday != SPACE) {
+					wn = week(firstday - mflag,
+					    month + which_cal + 1, year);
+					(void)snprintf(p, 5, "[%2d]", wn);
+					p += strlen(p);
+					*p = ' ';
+				} else
+					memset(p, ' ', 4);
 			}
 			*p = '\0';
 			trim_trailing_spaces(lineout);
@@ -460,7 +537,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: cal [-jmy] [month] [year]\n");
+	(void)fprintf(stderr, "usage: cal [-jmwy] [month] [year]\n");
 	exit(1);
 }
 
