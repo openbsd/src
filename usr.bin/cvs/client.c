@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.111 2008/03/09 03:32:01 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.112 2008/04/18 20:26:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -313,13 +313,16 @@ cvs_client_connect_to_server(void)
 void
 cvs_client_send_request(char *fmt, ...)
 {
+	int i;
 	va_list ap;
 	char *data, *s;
 	struct cvs_req *req;
 
 	va_start(ap, fmt);
-	vasprintf(&data, fmt, ap);
+	i = vasprintf(&data, fmt, ap);
 	va_end(ap);
+	if (i == -1)
+		fatal("cvs_client_send_request: %s", strerror(errno));
 
 	if ((s = strchr(data, ' ')) != NULL)
 		*s = '\0';
