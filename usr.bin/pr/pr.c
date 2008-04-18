@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.25 2007/09/03 12:36:09 moritz Exp $	*/
+/*	$OpenBSD: pr.c,v 1.26 2008/04/18 20:18:21 tobias Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.25 2007/09/03 12:36:09 moritz Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.26 2008/04/18 20:18:21 tobias Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -850,8 +850,13 @@ ferrout(char *fmt, ...)
 	sigaddset(&block, SIGINT);
 	sigprocmask(SIG_BLOCK, &block, &oblock);
 
-        vasprintf(&p, fmt, ap);
-	f = (struct ferrlist *)malloc(sizeof(*f));
+	if (vasprintf(&p, fmt, ap) == -1 || (f = malloc(sizeof(*f))) == NULL) {
+		flsh_errs();
+		fprintf(stderr, fmt, ap);
+		fputs("pr: memory allocation failed\n", stderr);
+		exit(1);
+	}
+
 	f->next = NULL;
 	f->buf = p;
 	if (ferrhead == NULL)
