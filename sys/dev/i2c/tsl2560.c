@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsl2560.c,v 1.6 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: tsl2560.c,v 1.7 2008/04/18 01:17:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -81,7 +81,7 @@ tsl_attach(struct device *parent, struct device *self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = TSL2560_REG_CONTROL; data = TSL2560_CONTROL_POWER;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		     sc->sc_addr, &cmd, 1, &data, 1, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": power up failed\n");
 		return;
@@ -89,14 +89,14 @@ tsl_attach(struct device *parent, struct device *self, void *aux)
 	cmd = TSL2560_REG_TIMING;
 	data = TSL2560_TIMING_GAIN | TSL2560_TIMING_INTEG2;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot write timing register\n");
 		return;
 	}
 	cmd = TSL2560_REG_ID;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read ID register\n");
 		return;
@@ -141,7 +141,7 @@ tsl_refresh(void *arg)
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = TSL2560_REG_DATA0;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		sc->sc_sensor.flags |= SENSOR_FINVALID;
 		return;
@@ -149,7 +149,7 @@ tsl_refresh(void *arg)
 	chan0 = data[1] << 8 | data[0];
 	cmd = TSL2560_REG_DATA1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		sc->sc_sensor.flags |= SENSOR_FINVALID;
 		return;
