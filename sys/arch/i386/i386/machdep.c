@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.422 2008/04/12 12:49:28 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.423 2008/04/18 18:54:39 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2404,6 +2404,10 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
+
+#ifdef MULTIPROCESSOR
+	i386_broadcast_ipi(I386_IPI_HALT);
+#endif
 
 	if (howto & RB_HALT) {
 #if NACPI > 0 && !defined(SMALL_KERNEL)
