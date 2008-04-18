@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.7 2008/04/16 17:18:42 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.8 2008/04/18 13:49:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -114,7 +114,7 @@ void		uvideo_dump_desc_frame_mjpeg(struct uvideo_softc *,
 void		uvideo_dump_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 
-int		uvideo_desc_len(int, int, int);
+int		uvideo_desc_len(const usb_descriptor_t *, int, int, int);
 
 int		uvideo_debug_file_open(struct uvideo_softc *);
 void		uvideo_debug_file_write_sample(void *);
@@ -355,6 +355,8 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 	const usb_descriptor_t *desc;
 	int vc_header_found;
 
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
 	vc_header_found = 0;
 
 	usb_desc_iter_init(sc->sc_udev, &iter);
@@ -367,8 +369,7 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VC_HEADER:
-			/* XXX length can vary, do better calculation */
-			if (desc->bLength != 13)
+			if (!uvideo_desc_len(desc, 12, 11, 1))
 				break;
 			if (vc_header_found) {
 				printf("%s: too many VC_HEADERs!\n",
@@ -1105,11 +1106,13 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			case UDESCSUB_VC_HEADER:
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
-				printf(" (UDESCSUB_VC_HEADER)\n");
-				if (desc->bLength == 13) {
+				if (uvideo_desc_len(desc, 12, 11, 1)) {
+					printf(" (UDESCSUB_VC_HEADER)\n");
 					printf("|\n");
 					uvideo_dump_desc_vcheader(sc, desc);
+					break;
 				}
+				printf(" (unknown)\n");
 				break;
 			case UDESCSUB_VC_INPUT_TERMINAL:
 				printf("bDescriptorSubtype=0x%02x",
@@ -1422,24 +1425,28 @@ uvideo_dump_desc_format_mjpeg(struct uvideo_softc *sc,
  * descriptors types with the same bDescriptorSubtype which makes
  * it necessary to differ between those types by doing descriptor
  * size dances :-(
+ *
+ * size_fix:		total size of the fixed structure part
+ * off_num_elements:	offset which tells the number of following elements
+ * size_element:	size of a single element
  */
 int
-uvideo_desc_len(int size_total, int size_fix, int size_var_element)
+uvideo_desc_len(const usb_descriptor_t *desc,
+    int size_fix, int off_num_elements, int size_element)
 {
-	int size_var;
+	uint8_t *buf;
+	int size_elements, size_total;
 
-	if (size_total < size_fix)
+	if (desc->bLength < size_fix)
 		return (0);
 
-	if (size_total == size_fix)
+	buf = (uint8_t *)desc;
+
+	size_elements = buf[off_num_elements] * size_element;
+	size_total = size_fix + size_elements;
+
+	if (desc->bLength == size_total)
 		return (1);
-
-	if (size_total > size_fix) {
-		size_var = size_total - size_fix;
-
-		if (size_var % size_var_element == 0)
-			return (1);
-	}
 
 	return (0);
 }
