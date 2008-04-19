@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.29 2008/03/22 22:35:15 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.30 2008/04/19 14:22:04 chl Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -454,15 +454,14 @@ emit_1rule(FILE *fp, struct files *fi, const char *fpath, const char *suffix,
 		if (fprintf(fp, "\t%s\n\n", fi->fi_mkrule[ruleindex]) < 0)
 			return (1);
 	}
+	return (0);
 }
 
 static int
 emitrules(FILE *fp)
 {
 	struct files *fi;
-	const char *cp, *fpath;
-	int ch;
-	char buf[200];
+	const char *fpath;
 
 	/* write suffixes */
 	if (fprintf(fp,
