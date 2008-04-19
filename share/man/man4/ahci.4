@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahci.4,v 1.6 2007/07/02 03:37:40 dlg Exp $
+.\"	$OpenBSD: ahci.4,v 1.7 2008/04/19 01:18:39 djm Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2007 $
+.Dd $Mdocdate: April 19 2008 $
 .Dt AHCI 4
 .Os
 .Sh NAME
@@ -38,6 +38,11 @@ Although
 .Nm
 controllers are actual ATA controllers, the driver emulates SCSI via a
 translation layer.
+.Pp
+Setting the lowest bit (0x1) of the driver flags forces
+.Nm
+to negotiate SATA 1 (1.5 Gb/s) transfer speeds only.
+It may be useful where higher speeds are unstable.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr jmb 4 ,

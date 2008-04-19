@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.138 2008/04/08 19:30:09 kettenis Exp $ */
+/*	$OpenBSD: ahci.c,v 1.139 2008/04/19 01:18:39 djm Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1354,8 +1354,12 @@ ahci_port_portreset(struct ahci_port *ap)
 	/* Perform device detection */
 	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
 	delay(10000);
-	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_SPD_ANY |
-	    AHCI_PREG_SCTL_DET_INIT;
+	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_DET_INIT;
+	if ((ap->ap_sc->sc_dev.dv_cfdata->cf_flags & 0x01) != 0) {
+		DPRINTF(AHCI_D_VERBOSE, "%s: forcing GEN1\n", PORTNAME(ap));
+		r |= AHCI_PREG_SCTL_SPD_GEN1;
+	} else
+		r |= AHCI_PREG_SCTL_SPD_ANY;
 	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
 	delay(10000);	/* wait at least 1ms for COMRESET to be sent */
 	r &= ~AHCI_PREG_SCTL_DET_INIT;

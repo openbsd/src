@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.199 2008/04/02 22:32:43 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.200 2008/04/19 01:18:39 djm Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -96,9 +96,10 @@ scsibus* at mpi?
 arc*	at pci?			# Areca RAID Controllers
 scsibus* at arc?
 jmb*	at pci?			# JMicron JMB36x controllers
-ahci*	at jmb?
+ahci*	at jmb? flags 0x0000	# flags 0x0001 to force SATA 1 (1.5Gb/s)
 pciide*	at jmb?
-ahci*	at pci?			# AHCI SATA controllers
+ahci*	at pci? flags 0x0000	# AHCI SATA controllers
+				# flags 0x0001 to force SATA 1 (1.5Gb/s)
 scsibus* at ahci?
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
 scsibus* at sili?
