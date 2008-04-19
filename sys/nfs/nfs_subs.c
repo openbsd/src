@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.72 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.73 2008/04/19 19:38:00 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	caddr_t bpos;
 
 	MGET(mb, M_WAIT, MT_DATA);
-	if (hsiz >= MINCLSIZE)
+	if (hsiz > MLEN)
 		MCLGET(mb, M_WAIT);
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
