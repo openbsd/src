@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.54 2008/01/04 00:50:09 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.55 2008/04/19 09:22:31 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -433,9 +433,10 @@ send_file(const char *file, int dst)
 		return (-1);
 	lbuf = NULL;
 	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
+		if (buf[len - 1] == '\n') {
 			buf[len - 1] = '\0';
-		else {
+			--len;
+		} else {
 			/* EOF without EOL, copy and add the NUL */
 			if ((lbuf = malloc(len + 1)) == NULL)
 				goto end;
@@ -468,8 +469,7 @@ send_file(const char *file, int dst)
 				copylen = sp - buf;
 			else
 				copylen = len;
-			if (atomicio(vwrite, dst, buf, copylen) != copylen ||
-			    atomicio(vwrite, dst, "\n", 1) != 1)
+			if (atomicio(vwrite, dst, buf, copylen) != copylen)
 				goto end;
 			if (!ep)
 				break;
@@ -477,6 +477,8 @@ send_file(const char *file, int dst)
 			len -= ep - buf + 1;
 			buf = ep + 1;
 		}
+		if (atomicio(vwrite, dst, "\n", 1) != 1)
+			goto end;
 	}
 	rval = 0;
  end:
