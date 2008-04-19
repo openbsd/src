@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.1 2007/05/30 01:25:43 tom Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.2 2008/04/19 23:20:22 weingart Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				FREE(phdr, sz);
 				return 1;
 			}
-			if (READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz) !=
+			if (READ(fd, phdr[i].p_paddr, phdr[i].p_filesz) !=
 			    phdr[i].p_filesz) {
 				WARN(("read text"));
 				FREE(phdr, sz);
@@ -136,7 +136,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
 		    (IS_DATA(phdr[i]) && (flags & (LOAD_DATA|COUNT_TEXT)))) {
-			pos = phdr[i].p_vaddr;
+			pos = phdr[i].p_paddr;
 			if (minp > pos)
 				minp = pos;
 			pos += phdr[i].p_filesz;
@@ -148,7 +148,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		if (IS_BSS(phdr[i]) && (flags & LOAD_BSS)) {
 			PROGRESS(("+%lu",
 			    (u_long)(phdr[i].p_memsz - phdr[i].p_filesz)));
-			BZERO((phdr[i].p_vaddr + phdr[i].p_filesz),
+			BZERO((phdr[i].p_paddr + phdr[i].p_filesz),
 			    phdr[i].p_memsz - phdr[i].p_filesz);
 		}
 		if (IS_BSS(phdr[i]) && (flags & (LOAD_BSS|COUNT_BSS))) {

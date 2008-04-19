@@ -20,7 +20,7 @@
 #include <lib/libsa/stand.h>
 
 
-const char version[] = "1.0";
+const char version[] = "1.1";
 int     debug = 0;
 
 void ofc_probe(struct consdev *);
