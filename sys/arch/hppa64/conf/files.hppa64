@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.6 2008/04/20 16:56:20 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.7 2008/04/20 16:58:44 kettenis Exp $
 #
 # hppa64-specific configuration info
 
@@ -136,3 +136,16 @@ file	arch/hppa64/hppa64/vm_machdep.c
 file	arch/hppa64/hppa64/in_cksum.c		inet
 file	netinet/in4_cksum.c			inet
 file	arch/hppa64/dev/clock.c
+
+
+# hppa64 doesn't have multiplication or division instructions
+file	lib/libkern/divdi3.c
+file	lib/libkern/moddi3.c
+file	lib/libkern/muldi3.c
+file	lib/libkern/qdivrem.c
+file	lib/libkern/udivdi3.c
+file	lib/libkern/umoddi3.c
+
+# kern..
+file	lib/libkern/arch/hppa64/milli.S
+file	lib/libkern/arch/hppa64/spcopy.S
