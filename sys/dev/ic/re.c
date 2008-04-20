@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.78 2008/03/20 23:54:57 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.79 2008/04/20 00:42:27 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -610,7 +610,7 @@ re_reset(struct rl_softc *sc)
 	if (i == RL_TIMEOUT)
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
-	CSR_WRITE_1(sc, 0x82, 1);
+	CSR_WRITE_1(sc, RL_LDPS, 1);
 }
 
 #ifdef RE_DIAG

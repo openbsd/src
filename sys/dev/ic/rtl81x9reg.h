@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.44 2008/04/20 00:34:39 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.45 2008/04/20 00:42:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -123,14 +123,17 @@
 /*
  * Registers specific to the 8169 gigE chip
  */
+#define RL_GTXSTART		0x0038	/* 8 bits */
 #define RL_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RL_PHYAR		0x0060
 #define RL_TBICSR		0x0064
 #define RL_TBI_ANAR		0x0068
 #define RL_TBI_LPAR		0x006A
 #define RL_GMEDIASTAT		0x006C	/* 8 bits */
+#define RL_LDPS			0x0082	/* Link Down Power Saving */
 #define RL_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
-#define RL_GTXSTART		0x0038	/* 16 bits */
+#define RL_IM			0x00E2
+
 /*
  * TX config register bits
  */
@@ -434,7 +437,7 @@
 
 /*
  * The RealTek doesn't use a fragment-based descriptor mechanism.
- * Instead, there are only four register sets, each or which represents
+ * Instead, there are only four register sets, each of which represents
  * one 'descriptor.' Basically, each TX descriptor is just a contiguous
  * packet buffer (32-bit aligned!) and we place the buffer addresses in
  * the registers so the chip knows where they are.
