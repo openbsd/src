@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.225 2008/04/20 01:32:43 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.226 2008/04/20 01:37:35 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3170,15 +3170,18 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			 */
 			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 				u_int32_t sgdig;
-				CSR_WRITE_4(sc, BGE_TX_TBI_AUTONEG, 0);
-				sgdig = CSR_READ_4(sc, BGE_SGDIG_CFG);
-				sgdig |= BGE_SGDIGCFG_AUTO|
-				    BGE_SGDIGCFG_PAUSE_CAP|
-				    BGE_SGDIGCFG_ASYM_PAUSE;
-				CSR_WRITE_4(sc, BGE_SGDIG_CFG,
-				    sgdig|BGE_SGDIGCFG_SEND);
-				DELAY(5);
-				CSR_WRITE_4(sc, BGE_SGDIG_CFG, sgdig);
+				sgdig = CSR_READ_4(sc, BGE_SGDIG_STS);
+				if (sgdig & BGE_SGDIGSTS_DONE) {
+					CSR_WRITE_4(sc, BGE_TX_TBI_AUTONEG, 0);
+					sgdig = CSR_READ_4(sc, BGE_SGDIG_CFG);
+					sgdig |= BGE_SGDIGCFG_AUTO |
+					    BGE_SGDIGCFG_PAUSE_CAP |
+					    BGE_SGDIGCFG_ASYM_PAUSE;
+					CSR_WRITE_4(sc, BGE_SGDIG_CFG,
+					    sgdig | BGE_SGDIGCFG_SEND);
+					DELAY(5);
+					CSR_WRITE_4(sc, BGE_SGDIG_CFG, sgdig);
+				}
 			}
 			break;
 		case IFM_1000_SX:
