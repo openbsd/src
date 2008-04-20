@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.51 2007/08/22 19:32:11 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.52 2008/04/20 18:01:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -455,8 +455,6 @@ cpu_configure(void)
 	cpu_intr_init();
 	spl0();
 
-	print_devpath("bootpath", &PAGE0->mem_boot);
-
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_HOT);
 
@@ -470,6 +468,7 @@ cpu_configure(void)
 void
 diskconf(void)
 {
+	print_devpath("bootpath", &PAGE0->mem_boot);
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
 }
