@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.4 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.5 2008/04/20 01:46:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -131,37 +131,40 @@ com_probe(struct consdev *cn)
 	}
 }
 
+int com_speed = -1;  /* default speed is 9600 baud */
+
 void
 com_init(struct consdev *cn)
 {
-	register int unit = minor(cn->cn_dev);
+	int port = comports[minor(cn->cn_dev)];
 
-	/* let bios do necessary init first, 9600-N-1 */
-	__asm __volatile(DOINT(0x14) : : "a" (0xe3), "d" (unit) :
-	    "%ecx", "cc" );
+	outb(port + com_ier, 0);
+	if (com_speed == -1)
+		comspeed(cn->cn_dev, 9600);
+	outb(port + com_mcr, MCR_DTR | MCR_RTS);
+	outb(port + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+	    FIFO_TRIGGER_1);
+
+	/* drain the input buffer */
+	while (inb(port + com_lsr) & LSR_RXRDY)
+		(void)inb(port + com_data);
 }
 
 int
 com_getc(dev_t dev)
 {
-	register int rv;
+	int port = comports[minor(dev & 0x7f)];
 
-	if (dev & 0x80) {
-		__asm __volatile(DOINT(0x14) : "=a" (rv) :
-		    "0" (0x300), "d" (minor(dev&0x7f)) : "%ecx", "cc" );
-		return ((rv & 0x100) == 0x100);
-	}
+	if (dev & 0x80)
+		return (inb(port + com_lsr) & LSR_RXRDY);
 
-	do
-		__asm __volatile(DOINT(0x14) : "=a" (rv) :
-		    "0" (0x200), "d" (minor(dev)) : "%ecx", "cc" );
-	while (rv & 0x8000);
+	while ((inb(port + com_lsr) & LSR_RXRDY) == 0)
+		;
 
-	return (rv & 0xff);
+	return (inb(port + com_data) & 0xff);
 }
 
 /* call with sp == 0 to query the current speed */
-int com_speed = 9600;  /* default speed is 9600 baud */
 int
 comspeed(dev_t dev, int sp)
 {
@@ -195,7 +198,8 @@ comspeed(dev_t dev, int sp)
 		return -1;
 #undef  divrnd
 
-	if (cn_tab && cn_tab->cn_dev == dev && com_speed != sp) {
+	if (com_speed != -1 && cn_tab && cn_tab->cn_dev == dev &&
+	    com_speed != sp) {
 		printf("com%d: changing speed to %d baud in 5 seconds, "
 		    "change your terminal to match!\n\a",
 		    minor(dev), sp);
@@ -206,7 +210,8 @@ comspeed(dev_t dev, int sp)
 	outb(comports[minor(dev)] + com_dlbl, newsp);
 	outb(comports[minor(dev)] + com_dlbh, newsp>>8);
 	outb(comports[minor(dev)] + com_cfcr, LCR_8BITS);
-	printf("\ncom%d: %d baud\n", minor(dev), sp);
+	if (com_speed != -1)
+		printf("\ncom%d: %d baud\n", minor(dev), sp);
 
 	newsp = com_speed;
 	com_speed = sp;
@@ -216,18 +221,11 @@ comspeed(dev_t dev, int sp)
 void
 com_putc(dev_t dev, int c)
 {
-	register int rv;
+	int port = comports[minor(dev)];
 
-	dev = minor(dev) & 0x7f;
+	while ((inb(port + com_lsr) & LSR_TXRDY) == 0)
+		;
 
-	/* check online (DSR) */
-	__asm __volatile(DOINT(0x14) : "=a" (rv) :
-	    "0" (0x300), "d" (dev) : "%ecx", "cc" );
-	if ( !(rv & 0x20) )
-		return;
-
-	/* send character */
-	__asm __volatile(DOINT(0x14) : "=a" (rv) :
-	    "0" (c | 0x100), "d" (dev) : "%ecx", "cc" );
+	outb(port + com_data, c);
 }
 
