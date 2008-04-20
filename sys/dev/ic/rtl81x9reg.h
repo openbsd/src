@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.43 2008/02/17 05:29:25 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.44 2008/04/20 00:34:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -725,7 +725,6 @@ struct rl_softc {
 	void			*sc_sdhook;	/* shutdownhook */
 	void			*sc_pwrhook;
 	int			rl_txthresh;
-	int			sc_flags;	/* misc flags */
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;
 	int			if_flags;
@@ -756,11 +755,6 @@ struct rl_softc {
 #define RL_TXPADOFF		RL_RX_LIST_SZ
 #define RL_TXPADDADDR(sc)	\
 	((sc)->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr + RL_TXPADOFF)
-
-
-#define RL_ATTACHED	0x00000001	/* attach has succeeded */
-#define RL_ENABLED	0x00000002	/* chip is enabled      */
-#define RL_IS_ENABLED(sc)	((sc)->sc_flags & RL_ENABLED)
 
 /*
  * register space access macros

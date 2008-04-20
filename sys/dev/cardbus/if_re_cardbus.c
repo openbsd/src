@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.12 2008/02/17 05:29:25 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.13 2008/04/20 00:34:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -158,8 +158,6 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	snprintf(intrstr, sizeof(intrstr), "irq %d", ca->ca_intrline);
-
-	sc->sc_flags |= RL_ENABLED;
 
 	sc->sc_sdhook = shutdownhook_establish(re_cardbus_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(re_cardbus_powerhook, sc);

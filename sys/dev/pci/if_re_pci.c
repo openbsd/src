@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.20 2008/02/17 05:29:25 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.21 2008/04/20 00:34:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -186,8 +186,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	sc->sc_flags |= RL_ENABLED;
 
 	/* Call bus-independent attach routine */
 	re_attach(sc, intrstr);
