@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.10 2008/04/19 11:24:23 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.11 2008/04/20 09:14:05 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -68,6 +68,8 @@ int		uvideo_vc_parse_desc_header(struct uvideo_softc *,
 
 int		uvideo_vs_parse_desc(struct uvideo_softc *,
 		    struct usb_attach_arg *, usb_config_descriptor_t *);
+int		uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
+		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_format(struct uvideo_softc *);
 int		uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -365,7 +367,7 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 			vc_header_found = 1;
 			break;
 
-		/* TODO which VC descriptors do we need else? */
+		/* TODO: which VC descriptors do we need else? */
 		}
 
 		desc = usb_desc_iter_next(&iter);
@@ -403,6 +405,8 @@ int
 uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
     usb_config_descriptor_t *cdesc)
 {
+	usbd_desc_iter_t iter;
+	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	int i, iface, numalts;
 	usbd_status error;
@@ -412,7 +416,27 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	DPRINTF(1, "%s: number of VS interfaces=%d\n",
 	    DEVNAME(sc), sc->sc_desc_vc_header.fix->bInCollection);
 
-	/* TODO: loop through general VS descriptors */
+	usb_desc_iter_init(sc->sc_udev, &iter);
+	desc = usb_desc_iter_next(&iter);
+	while (desc) {
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
+			desc = usb_desc_iter_next(&iter);
+			continue;
+		}
+
+		switch (desc->bDescriptorSubtype) {
+		case UDESCSUB_VS_INPUT_HEADER:
+			if (!uvideo_desc_len(desc, 13, 3, 0, 12))
+				break;
+			if (uvideo_vs_parse_desc_input_header(sc, desc) != 0)
+				return (-1);
+			break;
+
+		/* TODO: which VS descriptors do we need else? */
+		}
+
+		desc = usb_desc_iter_next(&iter);
+	}
 
 	/* parse video stream format descriptors */
 	error = uvideo_vs_parse_desc_format(sc);
@@ -448,6 +472,26 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	sc->sc_vs_curr = &sc->sc_vs_coll[0];
 
 	return (USBD_NORMAL_COMPLETION);
+}
+
+int
+uvideo_vs_parse_desc_input_header(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	struct usb_video_input_header_desc *d;
+
+	d = (struct usb_video_input_header_desc *)(uint8_t *)desc;
+
+	/* on some devices bNumFormats is larger than the truth */
+	if (d->bNumFormats == 0) {
+		printf("%s: no INPUT FORMAT descriptors found!\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	sc->sc_desc_vs_input_header.fix = d;
+	sc->sc_desc_vs_input_header.bmaControls = (uByte *)(d + 1);
+
+	return (0);
 }
 
 int
@@ -676,7 +720,7 @@ uvideo_desc_len(const usb_descriptor_t *desc,
 	size_elements = buf[off_num_elements] * size_element;
 	size_total = size_fix + size_elements;
 
-	if (desc->bLength == size_total)
+	if (desc->bLength == size_total && size_elements != 0)
 		return (1);
 
 	return (0);

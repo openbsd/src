@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.6 2008/04/18 21:19:15 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.7 2008/04/20 09:14:05 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -231,6 +231,11 @@ struct usb_video_input_header_desc {
 	uByte	bControlSize;
 };
 
+struct usb_video_input_header_desc_all {
+	struct usb_video_input_header_desc	*fix;
+	uByte					*bmaControls;
+};
+
 /* Table 3-18: Color Matching Descriptor */
 struct usb_video_color_matching_descr {
 	uByte	bLength;
@@ -381,6 +386,7 @@ struct uvideo_softc {
 	int					 sc_nframes;
 	struct usb_video_probe_commit		 sc_desc_probe;
 	struct usb_video_header_desc_all	 sc_desc_vc_header;
+	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
 	struct usb_video_format_mjpeg_desc	*sc_desc_format_mjpeg;
 	struct usb_video_frame_mjpeg_desc	*sc_desc_frame_mjpeg;
 
