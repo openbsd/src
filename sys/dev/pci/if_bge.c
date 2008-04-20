@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.224 2008/04/03 22:50:24 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.225 2008/04/20 01:32:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1920,6 +1920,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 		sc->bge_flags |= BGE_NO_ETH_WIRE_SPEED;
 
+	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
+	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
+		sc->bge_flags |= BGE_PHY_CRC_BUG;
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5703_AX ||
 	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_AX)
 		sc->bge_flags |= BGE_PHY_ADC_BUG;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.75 2008/03/02 16:05:26 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.76 2008/04/20 01:32:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -91,6 +91,7 @@ void	brgphy_bcm54k2_dspcode(struct mii_softc *);
 void	brgphy_adc_bug(struct mii_softc *);
 void	brgphy_5704_a0_bug(struct mii_softc *);
 void	brgphy_ber_bug(struct mii_softc *);
+void	brgphy_crc_bug(struct mii_softc *);
 void	brgphy_jumbo_settings(struct mii_softc *);
 void	brgphy_eth_wirespeed(struct mii_softc *);
 
@@ -501,6 +502,8 @@ brgphy_reset(struct mii_softc *sc)
 
 			PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 		}
+		if (bge_sc->bge_flags & BGE_PHY_CRC_BUG)
+			brgphy_crc_bug(sc);
 
 		/* Set Jumbo frame settings in the PHY. */
 		if (bge_sc->bge_flags & BGE_JUMBO_CAP)
@@ -663,6 +666,26 @@ brgphy_ber_bug(struct mii_softc *sc)
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x401f },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x14e2 },
 		{ BRGPHY_MII_AUXCTL,		0x0400 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+/* BCM5701 A0/B0 CRC bug workaround */
+void
+brgphy_crc_bug(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x0a75 },
+		{ 0x1c,				0x8c68 },
+		{ 0x1c,				0x8d68 },
+		{ 0x1c,				0x8c68 },
 		{ 0,				0 },
 	};
 	int i;
