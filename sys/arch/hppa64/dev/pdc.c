@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.2 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.3 2008/04/20 11:53:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -45,8 +45,12 @@ int pdcret[32] PDC_ALIGNMENT;
 char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
-hppa_hpa_t conaddr;
-int conunit;
+
+int pdcngetc(dev_t);
+void pdcnputc(dev_t, char *);
+
+struct consdev pdccons = { NULL, NULL, pdccngetc, pdccnputc,
+     nullcnpollc, NULL, makedev(22, 0), CN_LOWPRI };
 
 int pdcmatch(struct device *, void *, void *);
 void pdcattach(struct device *, struct device *, void *);
@@ -93,9 +97,6 @@ pdc_init()
 	static int cn_iodc[IODC_MAXSIZE/sizeof(int)];
 	int err;
 
-	/* XXX make pdc current console */
-	cn_tab = &constab[0];
-
 	/* pdc = (pdcio_t)(long)PAGE0->mem_pdc; */
 	pz_kbd = &PAGE0->mem_kbd;
 	pz_cons = &PAGE0->mem_cons;
@@ -114,7 +115,10 @@ pdc_init()
 	pdc_cniodc = (iodcio_t)cn_iodc;
 	pdc_kbdiodc = (iodcio_t)kbd_iodc;
 
-	/* setup the console */
+	/* Start out with pdc as the console. */
+	cn_tab = &pdccons;
+
+	/* Figure out console settings. */
 #if NCOM_GSC > 0
 	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX) {
 		struct pz_device *pzd = &PAGE0->mem_cons;
@@ -130,8 +134,6 @@ pdc_init()
 		    pzd->pz_layers[3], pzd->pz_layers[4], pzd->pz_layers[5],
 		    pzd->pz_hpa);
 #endif
-		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
-		conunit = 0;
 
 		/* compute correct baud rate */
 		if (PZL_SPEED(pzd->pz_layers[0]) <
@@ -384,23 +386,6 @@ pdctty(dev)
 	return sc->sc_tty;
 }
 
-void
-pdccnprobe(cn)
-	struct consdev *cn;
-{
-	cn->cn_dev = makedev(22,0);
-	cn->cn_pri = CN_LOWPRI;
-}
-
-void
-pdccninit(cn)
-	struct consdev *cn;
-{
-#ifdef DEBUG
-	printf("pdc0: console init\n");
-#endif
-}
-
 int
 pdccnlookc(dev, cp)
 	dev_t dev;
@@ -458,12 +443,4 @@ pdccnputc(dev, c)
 		printf("pdccnputc: output error: %d\n", err);
 #endif
 	}
-}
-
-void
-pdccnpollc(dev, on)
-	dev_t dev;
-	int on;
-{
-
 }

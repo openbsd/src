@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2008/04/20 11:53:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1126,12 +1126,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 consinit(void)
 {
-	static int initted;
-
-	if (!initted) {
-		initted++;
-		cninit();
-	}
+	/*
+	 * Initial console setup has been done in pdc_init().
+	 */
 }
 
 #ifdef DIAGNOSTIC
