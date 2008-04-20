@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.23 2006/03/22 10:49:17 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.24 2008/04/20 11:36:48 rainer Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ init_prefix(struct in6_prefixreq *ipr)
 	}
 
 	if (ioctl(s, SIOCGIFPREFIX_IN6, (caddr_t)ipr) < 0) {
-		syslog(LOG_INFO, "<%s> ioctl:SIOCGIFPREFIX %s", __func__,
+		syslog(LOG_WARNING, "<%s> ioctl:SIOCGIFPREFIX %s", __func__,
 		       strerror(errno));
 
 		ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;

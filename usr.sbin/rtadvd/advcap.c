@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.11 2005/04/11 19:59:07 deraadt Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.12 2008/04/20 11:36:48 rainer Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ getent(bp, name, cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_INFO,
+		syslog(LOG_WARNING,
 		       "<%s> open: %s", __func__, strerror(errno));
 		return (-2);
 	}
