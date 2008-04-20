@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2007/06/20 17:29:35 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2008/04/20 17:11:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -181,8 +181,8 @@ cpu_exit(p)
 		fpu_curpcb = 0;
 	}
 
-	exit2(p);
-	cpu_switch(p);
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 void
