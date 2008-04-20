@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.57 2008/01/22 09:19:11 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.58 2008/04/20 00:23:28 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -819,9 +819,7 @@ int rl_intr(arg)
 			CSR_WRITE_2(sc, RL_ISR, status);
 		if ((status & RL_INTRS) == 0)
 			break;
-		if (status & RL_ISR_RX_OK)
-			rl_rxeof(sc);
-		if (status & RL_ISR_RX_ERR)
+		if ((status & RL_ISR_RX_OK) || (status & RL_ISR_RX_ERR))
 			rl_rxeof(sc);
 		if ((status & RL_ISR_TX_OK) || (status & RL_ISR_TX_ERR))
 			rl_txeof(sc);
