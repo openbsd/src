@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2008/04/20 16:56:20 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.15 2008/04/20 17:17:32 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,9 +30,9 @@ mem*	at mainbus0 flags 0x00	# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 #power0	at mainbus0		# power/fail manager (iv 30)
 cpu*	at mainbus0		# HP PA-RISC cpu
-plut0	at mainbus0		# Astro Runway-Ropes, MIOC and IOA
+astro*	at mainbus0		# Astro Runway-Ropes, MIOC and IOA
 
-elroy*	at plut0
+elroy*	at astro?
 pci*	at elroy?
 option	PCIVERBOSE
 

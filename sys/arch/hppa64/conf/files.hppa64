@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.7 2008/04/20 16:58:44 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.8 2008/04/20 17:17:32 kettenis Exp $
 #
 # hppa64-specific configuration info
 
@@ -86,9 +86,9 @@ attach	cpu at gedoens
 file	arch/hppa64/dev/cpu.c		cpu
 
 # Astro/Pluto, integrated Runway-Ropes bridge, MIOC and IOA
-device	plut: gedoens
-attach	plut at gedoens
-file	arch/hppa64/dev/pluto.c		plut
+device	astro: gedoens
+attach	astro at gedoens
+file	arch/hppa64/dev/astro.c		astro
 
 # Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
 # Mercury; QuickSilver is an AGP also
