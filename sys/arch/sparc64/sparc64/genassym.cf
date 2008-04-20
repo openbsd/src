@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.30 2008/03/30 12:30:01 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.31 2008/04/20 09:18:52 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -271,6 +271,8 @@ member	dbr_out
 member	dbr_local
 member	dbr_in
 endif
+
+export	TSB_TAG_LOCKED
 
 export	SUN4U_TLB_ACCESS
 export	SUN4U_TLB_MODIFY

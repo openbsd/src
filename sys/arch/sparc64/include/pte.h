@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2008/03/30 12:30:02 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2008/04/20 09:18:52 kettenis Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -140,8 +140,10 @@ void smp_tlb_flush_ctx(int);
 #define CTX_MASK		((1<<13)-1)
 #define TSB_TAG_CTX_SHIFT	48
 #define TSB_TAG_VA_SHIFT	22
-#define TSB_TAG_G		0x8000000000000000LL
 
+#define TSB_TAG_LOCKED		0x0000040000000000LL
+
+#define TSB_TAG_G		0x8000000000000000LL
 #define TSB_TAG_CTX(t)		((((int64_t)(t))>>TSB_TAG_CTX_SHIFT)&CTX_MASK)
 #define TSB_TAG_VA(t)		((((int64_t)(t))<<TSB_TAG_VA_SHIFT))
 #define TSB_TAG(g,ctx,va)	((((u_int64_t)((g)!=0))<<63)|(((u_int64_t)(ctx)&CTX_MASK)<<TSB_TAG_CTX_SHIFT)|(((u_int64_t)va)>>TSB_TAG_VA_SHIFT))

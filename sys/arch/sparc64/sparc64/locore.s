@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.135 2008/04/16 12:56:04 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.136 2008/04/20 09:18:52 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1669,9 +1669,22 @@ dmmu_write_fault:
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4U_TLB_MODIFY|SUN4U_TLB_ACCESS|SUN4U_TLB_W, %g4
 		! Update the modified bit
-	stx	%g1, [%g2]				! Update TSB entry tag
+
+1:
+#ifdef MULTIPROCESSOR
+	ld	[%g2], %g6
+	btst	(TSB_TAG_LOCKED >> 32), %g6
+	bnz,pn	%icc, 1b
+	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
+	casa	[%g2] ASI_NUCLEUS, %g6, %g5
+	cmp	%g6, %g5
+	bne,pn	%icc, 1b
+	 nop
+	membar  #StoreStore
+#endif
+	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	mov	SFSR, %g7
-	stx	%g4, [%g2+8]				! Update TSB entry data
+	stx	%g1, [%g2]				! Update TSB entry tag
 	nop
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
@@ -1776,10 +1789,22 @@ data_miss:
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update the modified bit
-1:	
+
+1:
+#ifdef MULTIPROCESSOR
+	ld	[%g2], %g6
+	btst	(TSB_TAG_LOCKED >> 32), %g6
+	bnz,pn	%icc, 1b
+	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
+	casa	[%g2] ASI_NUCLEUS, %g6, %g5
+	cmp	%g6, %g5
+	bne,pn	%icc, 1b
+	 nop
+	membar  #StoreStore
+#endif
+	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
-	
-	stx	%g4, [%g2+8]				! Update TSB entry data
+
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
 	stx	%g3, [%g6+8]	! debug
@@ -2496,9 +2521,21 @@ instr_miss:
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update accessed bit
-1:	
+
+1:
+#ifdef MULTIPROCESSOR
+	ld	[%g2], %g6
+	btst	(TSB_TAG_LOCKED >> 32), %g6
+	bnz,pn	%icc, 1b
+	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
+	casa	[%g2] ASI_NUCLEUS, %g6, %g5
+	cmp	%g6, %g5
+	bne,pn	%icc, 1b
+	 nop
+	membar	#StoreStore
+#endif
+	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
-	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
 	stx	%g3, [%g6+8]	! debug
@@ -2699,12 +2736,11 @@ sun4v_tl1_dtsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-#define TSBTAG_LOCKED	0x400
 3:
 	ld	[%g2], %g3
-	btst	TSBTAG_LOCKED, %g3
+	btst	(TSB_TAG_LOCKED >> 32), %g3
 	bnz,pn	%icc, 3b
-	 or	%g3, TSBTAG_LOCKED, %g5
+	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
 	casa	[%g2] ASI_NUCLEUS, %g3, %g5
 	cmp	%g3, %g5
 	bne,pn	%icc, 3b
@@ -2792,12 +2828,11 @@ sun4v_tl1_dtsb_prot:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-#define TSBTAG_LOCKED	0x400
 3:
 	ld	[%g2], %g3
-	btst	TSBTAG_LOCKED, %g3
+	btst	(TSB_TAG_LOCKED >> 32), %g3
 	bnz,pn	%icc, 3b
-	 or	%g3, TSBTAG_LOCKED, %g5
+	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
 	casa	[%g2] ASI_NUCLEUS, %g3, %g5
 	cmp	%g3, %g5
 	bne,pn	%icc, 3b
@@ -2983,12 +3018,11 @@ sun4v_tl0_dtsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-#define TSBTAG_LOCKED	0x400
 3:
 	ld	[%g2], %g3
-	btst	TSBTAG_LOCKED, %g3
+	btst	(TSB_TAG_LOCKED >> 32), %g3
 	bnz,pn	%icc, 3b
-	 or	%g3, TSBTAG_LOCKED, %g5
+	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
 	casa	[%g2] ASI_NUCLEUS, %g3, %g5
 	cmp	%g3, %g5
 	bne,pn	%icc, 3b
@@ -3076,12 +3110,11 @@ sun4v_tl0_dtsb_prot:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-#define TSBTAG_LOCKED	0x400
 3:
 	ld	[%g2], %g3
-	btst	TSBTAG_LOCKED, %g3
+	btst	(TSB_TAG_LOCKED >> 32), %g3
 	bnz,pn	%icc, 3b
-	 or	%g3, TSBTAG_LOCKED, %g5
+	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
 	casa	[%g2] ASI_NUCLEUS, %g3, %g5
 	cmp	%g3, %g5
 	bne,pn	%icc, 3b
@@ -3183,12 +3216,11 @@ sun4v_tl0_itsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-#define TSBTAG_LOCKED	0x400
 3:
 	ld	[%g2], %g3
-	btst	TSBTAG_LOCKED, %g3
+	btst	(TSB_TAG_LOCKED >> 32), %g3
 	bnz,pn	%icc, 3b
-	 or	%g3, TSBTAG_LOCKED, %g5
+	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
 	casa	[%g2] ASI_NUCLEUS, %g3, %g5
 	cmp	%g3, %g5
 	bne,pn	%icc, 3b
