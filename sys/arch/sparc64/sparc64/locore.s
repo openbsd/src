@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.136 2008/04/20 09:18:52 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.137 2008/04/20 10:35:57 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8905,72 +8905,6 @@ ENTRY(send_softint)
 	 wrpr	%g1, 0, %pstate		! restore interrupts
 
 /*
- * Here is a very good random number generator.  This implementation is
- * based on _Two Fast Implementations of the `Minimal Standard' Random
- * Number Generator_, David G. Carta, Communications of the ACM, Jan 1990,
- * Vol 33 No 1.
- */
-/*
- * This should be rewritten using the mulx instr. if I ever understand what it
- * does.
- */
-	.data
-randseed:
-	.word	1
-	.text
-ENTRY(random)
-	sethi	%hi(16807), %o1
-	wr	%o1, %lo(16807), %y
-	 sethi	%hi(randseed), %o5
-	 ld	[%o5 + %lo(randseed)], %o0
-	 andcc	%g0, 0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %g0, %o2
-	rd	%y, %o3
-	srl	%o2, 16, %o1
-	set	0xffff, %o4
-	and	%o4, %o2, %o0
-	sll	%o0, 15, %o0
-	srl	%o3, 17, %o3
-	or	%o3, %o0, %o0
-	addcc	%o0, %o1, %o0
-	bneg	1f
-	 sethi	%hi(0x7fffffff), %o1
-	retl
-	 st	%o0, [%o5 + %lo(randseed)]
-1:
-	or	%o1, %lo(0x7fffffff), %o1
-	add	%o0, 1, %o0
-	and	%o1, %o0, %o0
-	retl
-	 st	%o0, [%o5 + %lo(randseed)]
-
-#define MICROPERSEC	(1000000)
-	.data
-	.align	16
-	.globl	_C_LABEL(cpu_clockrate)
-_C_LABEL(cpu_clockrate):
-	!! Pretend we have a 200MHz clock -- cpu_attach will fix this
-	.xword	200000000
-	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
-	.xword	0
-	.text
-
-/*
  * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
  * The workaround is to do a read immediately after the write and make
  * sure the same cache line.
@@ -8994,6 +8928,17 @@ ENTRY(tickcmpr_set)
 2:
 	retl
 	 nop
+
+#define MICROPERSEC	(1000000)
+	.data
+	.align	16
+	.globl	_C_LABEL(cpu_clockrate)
+_C_LABEL(cpu_clockrate):
+	!! Pretend we have a 200MHz clock -- cpu_attach will fix this
+	.xword	200000000
+	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
+	.xword	0
+	.text
 
 /*
  * delay function

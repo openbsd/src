@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2008/04/18 06:42:21 djm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.109 2008/04/20 10:35:57 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -187,7 +187,6 @@ int	bufpages = 0;
 int	bufcachepercent = BUFCACHEPERCENT;
 
 int	physmem;
-u_long	_randseed;
 extern	caddr_t msgbufaddr;
 
 int sparc_led_blink;
