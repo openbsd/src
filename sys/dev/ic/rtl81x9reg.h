@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.46 2008/04/20 01:15:40 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.47 2008/04/20 01:18:02 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -460,7 +460,7 @@
 #define RL_MIN_FRAMELEN		60
 #define RL_TXTHRESH(x)		((x) << 11)
 #define RL_TX_THRESH_INIT	96
-#define RL_RX_FIFOTHRESH	RL_RXFIFO_256BYTES
+#define RL_RX_FIFOTHRESH	RL_RXFIFO_NOTHRESH
 #define RL_RX_MAXDMA		RL_RXDMA_UNLIMITED
 #define RL_TX_MAXDMA		RL_TXDMA_2048BYTES
 
