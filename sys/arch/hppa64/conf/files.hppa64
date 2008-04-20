@@ -1,11 +1,11 @@
-#	$OpenBSD: files.hppa64,v 1.5 2008/04/20 11:53:11 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.6 2008/04/20 16:56:20 kettenis Exp $
 #
 # hppa64-specific configuration info
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16
 
-maxusers 2 8 64
+maxusers 2 8 128
 
 # 
 # "workstation console" routines
