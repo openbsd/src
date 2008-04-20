@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.19 2007/10/17 22:03:47 brad Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.20 2008/04/20 20:51:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -295,10 +295,6 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
-	    "flags 0x%02x: timeout, status 0x%b\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
-	    st, ICH_SMB_HS_BITS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HC,
 	    ICH_SMB_HC_KILL);
 	DELAY(ICHIIC_DELAY);
