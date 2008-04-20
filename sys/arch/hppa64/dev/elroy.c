@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.4 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.5 2008/04/20 18:41:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -45,16 +45,12 @@
 #define	ELROY_MEM_CHUNK		0x800000
 #define	ELROY_MEM_WINDOW	(2 * ELROY_MEM_CHUNK)
 
-/* global interrupt masks */
-u_int64_t	cpu_maskfree;
-volatile u_int64_t	imask[NIPL];
-
-int	elroymatch(struct device *, void *, void *);
-void	elroyattach(struct device *, struct device *, void *);
+int	elroy_match(struct device *, void *, void *);
+void	elroy_attach(struct device *, struct device *, void *);
 int	elroy_intr(void *);
 
 struct cfattach elroy_ca = {
-	sizeof(struct elroy_softc), elroymatch, elroyattach
+	sizeof(struct elroy_softc), elroy_match, elroy_attach
 };
 
 struct cfdriver elroy_cd = {
@@ -62,10 +58,7 @@ struct cfdriver elroy_cd = {
 };
 
 int
-elroymatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+elroy_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -216,7 +209,6 @@ elroy_memmap(void *v, bus_addr_t bpa, bus_size_t size,
 	/* volatile struct elroy_regs *r = sc->sc_regs; */
 	int error;
 
-	bpa |= 0xffffffff00000000ULL;
 	if ((error = bus_space_map(sc->sc_bt, bpa, size, flags, bshp)))
 		return (error);
 
@@ -353,6 +345,12 @@ elroy_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
 #endif
 }
 #endif
+
+void *
+elroy_vaddr(void *v, bus_space_handle_t h)
+{
+	return ((void *)h);
+}
 
 u_int8_t
 elroy_r1(void *v, bus_space_handle_t h, bus_size_t o)
@@ -913,7 +911,7 @@ const struct hppa64_bus_space_tag elroy_iomemt = {
 	NULL,
 
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
-	elroy_barrier,
+	elroy_barrier, elroy_vaddr,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
 	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,  
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,
@@ -997,7 +995,7 @@ elroy_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamap_sync(sc->sc_dmat, map, off, len, ops));
+	bus_dmamap_sync(sc->sc_dmat, map, off, len, ops);
 }
 
 int
@@ -1070,7 +1068,7 @@ const struct hppa64_pci_chipset_tag elroy_pc = {
 };
 
 int
-elroyprint(void *aux, const char *pnp)
+elroy_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -1080,10 +1078,7 @@ elroyprint(void *aux, const char *pnp)
 }
 
 void
-elroyattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+elroy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct elroy_softc *sc = (struct elroy_softc *)self;
 	struct confargs *ca = (struct confargs *)aux;
@@ -1092,6 +1087,7 @@ elroyattach(parent, self, aux)
 	const char *p = NULL, *q;
 	int i;
 
+	sc->sc_hpa = ca->ca_hpa;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(sc->sc_bt, ca->ca_hpa, ca->ca_hpasz, 0, &sc->sc_bh)) {
@@ -1099,7 +1095,7 @@ elroyattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_regs = r = (void *)bus_space_vaddr(sc->sc_bt, sc->sc_bh);
+	sc->sc_regs = r = bus_space_vaddr(sc->sc_bt, sc->sc_bh);
 	elroy_write32(&r->pci_cmdstat, htole32(PCI_COMMAND_IO_ENABLE |
 	    PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE));
 
@@ -1148,8 +1144,12 @@ elroyattach(parent, self, aux)
 	apic_attach(sc);
 	printf("\n");
 
+	elroy_write32(&r->imask, htole32(0xffffffff << 30));
+	elroy_write32(&r->ibase, htole32(ELROY_BASE_RE));
+
 	/* TODO reserve elroy's pci space ? */
 
+#if 0
 printf("lmm %llx/%llx gmm %llx/%llx wlm %llx/%llx wgm %llx/%llx io %llx/%llx eio %llx/%llx\n",
 letoh64(r->lmmio_base), letoh64(r->lmmio_mask),
 letoh64(r->gmmio_base), letoh64(r->gmmio_mask),
@@ -1157,9 +1157,10 @@ letoh64(r->wlmmio_base), letoh64(r->wlmmio_mask),
 letoh64(r->wgmmio_base), letoh64(r->wgmmio_mask),
 letoh64(r->io_base), letoh64(r->io_mask),
 letoh64(r->eio_base), letoh64(r->eio_mask));
+#endif
 
 	/* XXX evil hack! */
-	sc->sc_iobase = 0xfee00000;
+	sc->sc_iobase = 0xfffee00000;
 
 	sc->sc_iot = elroy_iomemt;
 	sc->sc_iot.hbt_cookie = sc;
@@ -1182,8 +1183,5 @@ letoh64(r->eio_base), letoh64(r->eio_mask));
 	pba.pba_bridgetag = NULL;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; /* (letoh32(elroy_read32(&r->busnum)) & 0xff) >> 4; */
-	config_found(self, &pba, elroyprint);
-
-	/* enable interrupts now that all the devices are there */
-	/* r->imr = sc->sc_imr; */
+	config_found(self, &pba, elroy_print);
 }

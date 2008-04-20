@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroyvar.h,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: elroyvar.h,v 1.2 2008/04/20 18:41:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -17,10 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <machine/pdc.h>
+
 struct elroy_softc {
 	struct  device sc_dv;
 
 	int sc_ver;
+	hppa_hpa_t sc_hpa;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
@@ -29,6 +32,10 @@ struct elroy_softc {
 
 	u_int32_t sc_imr;
 	int sc_nints;
+	int *sc_irq;
+
+	struct pdc_pat_pci_rt *sc_int_tbl;
+	int sc_int_tbl_sz;
 
 	struct hppa64_pci_chipset_tag sc_pc;
 	struct hppa64_bus_space_tag sc_iot;

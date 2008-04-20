@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroyreg.h,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: elroyreg.h,v 1.2 2008/04/20 18:41:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -83,8 +83,10 @@ struct elroy_regs {
 	u_int64_t	res5;		/* 0x270 */
 	u_int64_t	dmac_ctrl;	/* 0x278 DMA connection control */
 	u_int64_t	res6[16];	/* 0x280 */
-	u_int64_t	ibase;		/* 0x300 */
-	u_int64_t	imask;		/* 0x308 */
+	u_int32_t	ibase;		/* 0x300 */
+	u_int32_t	pad300;
+	u_int32_t	imask;		/* 0x308 */
+	u_int32_t	pad308;
 	u_int64_t	hint_cfg;	/* 0x310 */
 	u_int64_t	res7[13];	/* 0x318 */
 	u_int64_t	hints[14];	/* 0x380 */
