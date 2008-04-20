@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2008/04/20 17:13:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -42,6 +42,8 @@ struct hppa64_bus_space_tag {
 	void	(*hbt_free)(void *, bus_space_handle_t, bus_size_t);
 	void	(*hbt_barrier)(void *v, bus_space_handle_t h,
 		    bus_size_t o, bus_size_t l, int op);
+	void *(*hbt_vaddr)(void *v, bus_space_handle_t h);
+
 	u_int8_t  (*hbt_r1)(void *, bus_space_handle_t, bus_size_t);
 	u_int16_t (*hbt_r2)(void *, bus_space_handle_t, bus_size_t);
 	u_int32_t (*hbt_r4)(void *, bus_space_handle_t, bus_size_t);
@@ -169,7 +171,8 @@ typedef struct hppa64_bus_space_tag *bus_space_tag_t;
 
 #define	bus_space_barrier(t,h,o,l,op) \
 	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
-#define	bus_space_vaddr(t,h)	((vaddr_t)(h))
+#define	bus_space_vaddr(t,h) \
+	((t)->hbt_vaddr((t)->hbt_cookie, (h)))
 
 #define	bus_space_read_1(t,h,o) (((t)->hbt_r1)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_2(t,h,o) (((t)->hbt_r2)((t)->hbt_cookie,(h),(o)))
