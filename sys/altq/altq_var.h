@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.14 2004/04/27 02:56:20 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.15 2008/04/20 07:05:52 deraadt Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <dev/rndvar.h>
 
 #ifndef ALTQ_RED
 #define ALTQ_RED		/* RED is enabled by default */

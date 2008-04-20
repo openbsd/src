@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cdnr.c,v 1.8 2007/09/13 20:40:02 chl Exp $	*/
+/*	$OpenBSD: altq_cdnr.c,v 1.9 2008/04/20 07:05:51 deraadt Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -846,7 +846,7 @@ tswtcm_input(cb, pktinfo)
 	 * marker
 	 */
 	if (avg_rate > tsw->cmtd_rate) {
-		u_int32_t randval = random() % avg_rate;
+		u_int32_t randval = arc4random_uniform(avg_rate);
 
 		if (avg_rate > tsw->peak_rate) {
 			if (randval < avg_rate - tsw->peak_rate) {
