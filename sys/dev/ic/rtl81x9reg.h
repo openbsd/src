@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.45 2008/04/20 00:42:27 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.46 2008/04/20 01:15:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -88,6 +88,9 @@
 					/* 005F reserved */
 #define RL_TXSTAT_ALL	0x0060		/* TX status of all descriptors */
 
+#define RL_CSIDR	0x0064
+#define RL_CSIAR	0x0068
+
 /* Direct PHY access registers only available on 8139 */
 #define RL_BMCR		0x0062		/* PHY basic mode control */
 #define RL_BMSR		0x0064		/* PHY basic mode status */
@@ -162,6 +165,7 @@
 #define RL_HWREV_8168_SPIN2	0x38000000
 #define RL_HWREV_8168_SPIN3	0x38400000
 #define RL_HWREV_8100E_SPIN2	0x38800000
+#define RL_HWREV_8168C		0x3C000000
 #define RL_HWREV_8139		0x60000000
 #define RL_HWREV_8139A		0x70000000
 #define RL_HWREV_8139AG		0x70800000
