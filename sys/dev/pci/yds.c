@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.28 2007/01/06 02:48:40 deraadt Exp $	*/
+/*	$OpenBSD: yds.c,v 1.29 2008/04/21 00:32:43 jakemsr Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -232,7 +232,8 @@ static struct audio_hw_if yds_hw_if = {
 	yds_mappage,
 	yds_get_props,
 	yds_trigger_output,
-	yds_trigger_input
+	yds_trigger_input,
+	NULL
 };
 
 struct audio_device yds_device = {

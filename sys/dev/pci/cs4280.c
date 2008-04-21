@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.29 2007/11/05 00:17:28 jakemsr Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.30 2008/04/21 00:32:43 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -270,6 +270,7 @@ struct audio_hw_if cs4280_hw_if = {
 	cs4280_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL
 };
 
 #if NMIDI > 0

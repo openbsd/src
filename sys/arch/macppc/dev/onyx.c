@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.7 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.8 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -108,6 +108,7 @@ struct audio_hw_if onyx_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
+	NULL
 };
 
 struct audio_device onyx_device = {

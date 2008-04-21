@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.47 2008/03/02 17:24:12 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.48 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -325,6 +325,7 @@ struct audio_hw_if azalia_hw_if = {
 	azalia_get_props,
 	azalia_trigger_output,
 	azalia_trigger_input,
+	NULL
 };
 
 static const char *pin_devices[16] = {

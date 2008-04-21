@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.26 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.27 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -168,7 +168,8 @@ struct audio_hw_if cs4231_sa_hw_if = {
 	0,
 	cs4231_get_props,
 	cs4231_trigger_output,
-	cs4231_trigger_input
+	cs4231_trigger_input,
+	0
 };
 
 struct cfattach audiocs_ca = {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.23 2008/01/14 01:23:53 jakemsr Exp $ */
+/*      $OpenBSD: sv.c,v 1.24 2008/04/21 00:32:43 jakemsr Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -184,6 +184,7 @@ struct audio_hw_if sv_hw_if = {
 	NULL,
 	sv_mappage,
 	sv_get_props,
+	NULL,
 	NULL,
 	NULL
 };

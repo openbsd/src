@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.56 2007/12/02 14:59:31 robert Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.57 2008/04/21 00:32:43 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -351,6 +351,7 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
+	NULL
 };
 
 struct audio_device uaudio_device = {

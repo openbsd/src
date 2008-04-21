@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.20 2007/11/05 00:17:28 jakemsr Exp $       */
+/*      $OpenBSD: neo.c,v 1.21 2008/04/21 00:32:43 jakemsr Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -280,6 +280,7 @@ struct audio_hw_if neo_hw_if = {
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
+	NULL
 
 };
 

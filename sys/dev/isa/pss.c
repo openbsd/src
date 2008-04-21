@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.22 2003/04/27 11:22:53 ho Exp $ */
+/*	$OpenBSD: pss.c,v 1.23 2008/04/21 00:32:42 jakemsr Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_round,
 	ad1848_mappage,
 	ad1848_get_props,
+	NULL,
 	NULL,
 	NULL
 };

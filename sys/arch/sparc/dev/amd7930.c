@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.30 2005/08/14 10:58:33 miod Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.31 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ struct audio_hw_if sa_hw_if = {
 	NULL,
 	NULL,
 	amd7930_get_props,
+	NULL,
 	NULL,
 	NULL
 };

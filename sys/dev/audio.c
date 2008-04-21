@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.94 2008/04/04 04:57:16 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.95 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -310,8 +310,14 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set default softc params
 	 */
-	sc->sc_pparams = audio_default;
-	sc->sc_rparams = audio_default;
+
+	if (hwp->get_default_params) {
+		hwp->get_default_params(sc, AUMODE_PLAY, &sc->sc_pparams);
+		hwp->get_default_params(sc, AUMODE_RECORD, &sc->sc_rparams);
+	} else {
+		sc->sc_pparams = audio_default;
+		sc->sc_rparams = audio_default;
+	}
 
 	/* Set up some default values */
 	sc->sc_rr.blkset = sc->sc_pr.blkset = 0;
@@ -1001,14 +1007,21 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	}
 
 	/*
-	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
-	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
+	 * Multiplex device: /dev/audio (default) and /dev/sound (last)
+	 * The /dev/audio is always (re)set to the default parameters.
 	 * For the other devices, you get what they were last set to.
 	 */
 	if (ISDEVAUDIO(dev)) {
 		/* /dev/audio */
-		sc->sc_rparams = audio_default;
-		sc->sc_pparams = audio_default;
+		if (sc->hw_if->get_default_params) {
+			sc->hw_if->get_default_params(sc, AUMODE_PLAY,
+			    &sc->sc_pparams);
+			sc->hw_if->get_default_params(sc, AUMODE_RECORD,
+			    &sc->sc_rparams);
+		} else {
+			sc->sc_rparams = audio_default;
+			sc->sc_pparams = audio_default;
+		}
 	}
 #ifdef DIAGNOSTIC
 	/*

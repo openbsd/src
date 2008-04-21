@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.25 2006/05/20 01:58:27 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.26 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -104,6 +104,7 @@ struct audio_hw_if harmony_sa_hw_if = {
 	harmony_get_props,
 	harmony_trigger_output,
 	harmony_trigger_input,
+	NULL
 };
 
 int harmony_match(struct device *, void *, void *);

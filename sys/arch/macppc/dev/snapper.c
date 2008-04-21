@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.28 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.29 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ struct audio_hw_if snapper_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
+	NULL
 };
 
 struct audio_device snapper_device = {

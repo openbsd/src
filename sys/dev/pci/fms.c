@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.17 2005/04/16 21:57:23 mickey Exp $ */
+/*	$OpenBSD: fms.c,v 1.18 2008/04/21 00:32:43 jakemsr Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -145,7 +145,8 @@ struct audio_hw_if fms_hw_if = {
 	fms_mappage,
 	fms_get_props,
 	fms_trigger_output,
-	fms_trigger_input
+	fms_trigger_input,
+	NULL
 };
 
 int	fms_attach_codec(void *, struct ac97_codec_if *);

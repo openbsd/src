@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.26 2008/03/10 21:25:53 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.27 2008/04/21 00:32:43 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -253,6 +253,7 @@ struct audio_hw_if emuxki_hw_if = {
 	emuxki_get_props,
 	emuxki_trigger_output,
 	emuxki_trigger_input,
+	NULL
 };
 
 #if 0

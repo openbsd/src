@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.71 2008/03/24 07:03:16 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.72 2008/04/21 00:32:43 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -333,7 +333,8 @@ struct audio_hw_if auich_hw_if = {
 	auich_mappage,
 	auich_get_props,
 	auich_trigger_output,
-	auich_trigger_input
+	auich_trigger_input,
+	NULL
 };
 
 int  auich_attach_codec(void *, struct ac97_codec_if *);

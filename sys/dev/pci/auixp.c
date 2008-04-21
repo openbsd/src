@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.17 2008/02/13 23:35:08 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.18 2008/04/21 00:32:42 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -200,7 +200,8 @@ struct audio_hw_if auixp_hw_if = {
 	auixp_mappage,
 	auixp_get_props,
 	auixp_trigger_output,
-	auixp_trigger_input
+	auixp_trigger_input,
+	NULL
 };
 
 int

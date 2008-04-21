@@ -1,5 +1,5 @@
-/*	$OpenBSD: daca.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
-/*	$Id: daca.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: daca.c,v 1.5 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$Id: daca.c,v 1.5 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -100,6 +100,7 @@ struct audio_hw_if daca_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
+	NULL
 };
 
 struct audio_device daca_device = {

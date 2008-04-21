@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.17 2008/01/09 02:17:52 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.18 2008/04/21 00:32:43 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -184,6 +184,7 @@ struct audio_hw_if cmpci_hw_if = {
 	cmpci_get_props,	/* get_props */
 	cmpci_trigger_output,	/* trigger_output */
 	cmpci_trigger_input,	/* trigger_input */
+	NULL
 };
 
 /*

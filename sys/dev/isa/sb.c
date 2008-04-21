@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.24 2006/04/07 22:41:33 jsg Exp $	*/
+/*	$OpenBSD: sb.c,v 1.25 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,8 @@ struct audio_hw_if sb_hw_if = {
         sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
-	sbdsp_trigger_input
+	sbdsp_trigger_input,
+	NULL
 };
 
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.17 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: audio.9,v 1.18 2008/04/21 00:32:42 jakemsr Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 21 2008 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -93,6 +93,7 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
+	void	(*get_default_params)(void *, int, struct audio_params *);
 };
 
 struct audio_params {
@@ -469,6 +470,21 @@ will be called with the argument
 Once started, the transfer may be stopped using
 .Fn halt_input .
 This function returns 0 on success, otherwise an error code.
+.It Fn "void (*get_default_params)" "void *hdl" "int direction" \
+"struct audio_params *param"
+This function is optional.
+If supplied, it is called to retrieve the default configuration
+for the given
+.Fa direction ,
+parameterized in
+.Fa param .
+.Fa direction
+is
+.Dv AUMODE_PLAY
+or
+.Dv AUMODE_RECORD .
+The default configuration should not include emulated formats, and should
+reflect the optimal operating configuration for the underlying hardware.
 .El
 .Pp
 The

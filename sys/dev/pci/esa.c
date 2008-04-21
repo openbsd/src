@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.13 2007/10/22 03:16:35 fgsch Exp $	*/
+/*	$OpenBSD: esa.c,v 1.14 2008/04/21 00:32:43 jakemsr Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -207,7 +207,8 @@ struct audio_hw_if esa_hw_if = {
 	esa_mappage,
 	esa_get_props,
 	esa_trigger_output,
-	esa_trigger_input
+	esa_trigger_input,
+	NULL
 };
 
 struct cfdriver esa_cd = {

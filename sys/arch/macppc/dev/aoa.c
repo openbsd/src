@@ -1,5 +1,5 @@
-/*	$OpenBSD: aoa.c,v 1.3 2005/11/19 00:44:38 kettenis Exp $	*/
-/*	$Id: aoa.c,v 1.3 2005/11/19 00:44:38 kettenis Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.4 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$Id: aoa.c,v 1.4 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -93,6 +93,7 @@ struct audio_hw_if aoa_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
+	NULL
 };
 
 struct audio_device aoa_device = {

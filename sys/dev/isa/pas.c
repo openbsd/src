@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.24 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: pas.c,v 1.25 2008/04/21 00:32:42 jakemsr Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,8 @@ struct audio_hw_if pas_hw_if = {
         sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
-	sbdsp_trigger_input
+	sbdsp_trigger_input,
+	NULL
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

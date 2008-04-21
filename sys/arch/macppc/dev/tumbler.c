@@ -1,4 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.5 2008/04/21 00:32:42 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -103,6 +103,7 @@ struct audio_hw_if tumbler_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
+	NULL
 };
 
 struct audio_device tumbler_device = {
