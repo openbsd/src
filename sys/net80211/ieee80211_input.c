@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.76 2008/04/21 19:27:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.77 2008/04/21 19:37:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -64,11 +64,6 @@
 
 #include <dev/rndvar.h>
 
-int	ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
-	    const u_int8_t *, const u_int8_t *, int);
-void	ieee80211_auth_open(struct ieee80211com *,
-	    const struct ieee80211_frame *, struct ieee80211_node *, int,
-	    u_int32_t, u_int16_t, u_int16_t);
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
@@ -661,130 +656,6 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 		eh->ether_type = htons(m->m_pkthdr.len - sizeof(*eh));
 	}
 	return m;
-}
-
-/*
- * Install received rate set information in the node's state block.
- */
-int
-ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *rates, const u_int8_t *xrates, int flags)
-{
-	struct ieee80211_rateset *rs = &ni->ni_rates;
-
-	memset(rs, 0, sizeof(*rs));
-	rs->rs_nrates = rates[1];
-	memcpy(rs->rs_rates, rates + 2, rs->rs_nrates);
-	if (xrates != NULL) {
-		u_int8_t nxrates;
-		/*
-		 * Tack on 11g extended supported rate element.
-		 */
-		nxrates = xrates[1];
-		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
-			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
-			IEEE80211_DPRINTF(("%s: extended rate set too large;"
-				" only using %u of %u rates\n",
-				__func__, nxrates, xrates[1]));
-			ic->ic_stats.is_rx_rstoobig++;
-		}
-		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
-		rs->rs_nrates += nxrates;
-	}
-	return ieee80211_fix_rate(ic, ni, flags);
-}
-
-void
-ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
-    u_int16_t status)
-{
-	struct ifnet *ifp = &ic->ic_if;
-	switch (ic->ic_opmode) {
-	case IEEE80211_M_IBSS:
-		if (ic->ic_state != IEEE80211_S_RUN ||
-		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
-			    ether_sprintf((u_int8_t *)wh->i_addr2),
-			    ic->ic_state, seq));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		ieee80211_new_state(ic, IEEE80211_S_AUTH,
-		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-		break;
-
-	case IEEE80211_M_AHDEMO:
-		/* should not come here */
-		break;
-
-	case IEEE80211_M_HOSTAP:
-		if (ic->ic_state != IEEE80211_S_RUN ||
-		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
-			    ether_sprintf((u_int8_t *)wh->i_addr2),
-			    ic->ic_state, seq));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		if (ni == ic->ic_bss) {
-			ni = ieee80211_alloc_node(ic, wh->i_addr2);
-			if (ni == NULL) {
-				ic->ic_stats.is_rx_nodealloc++;
-				return;
-			}
-			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
-			ni->ni_rssi = rssi;
-			ni->ni_rstamp = rstamp;
-			ni->ni_chan = ic->ic_bss->ni_chan;
-		}
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s %s authenticated (open)\n",
-			    ifp->if_xname,
-			    ether_sprintf((u_int8_t *)ni->ni_macaddr),
-			    ni->ni_state != IEEE80211_STA_CACHE ?
-			    "newly" : "already");
-		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
-		break;
-
-	case IEEE80211_M_STA:
-		if (ic->ic_state != IEEE80211_S_AUTH ||
-		    seq != IEEE80211_AUTH_OPEN_RESPONSE) {
-			ic->ic_stats.is_rx_bad_auth++;
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
-			    ether_sprintf((u_int8_t *)wh->i_addr2),
-			    ic->ic_state, seq));
-			return;
-		}
-		if (ic->ic_flags & IEEE80211_F_RSNON) {
-			/* XXX not here! */
-			ic->ic_bss->ni_port_valid = 0;
-			ic->ic_bss->ni_replaycnt_ok = 0;
-			(*ic->ic_delete_key)(ic, ic->ic_bss,
-			    &ic->ic_bss->ni_pairwise_key);
-		}
-		if (status != 0) {
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: open authentication failed "
-				    "(reason %d) for %s\n", ifp->if_xname,
-				    status,
-				    ether_sprintf((u_int8_t *)wh->i_addr3));
-			if (ni != ic->ic_bss)
-				ni->ni_fails++;
-			ic->ic_stats.is_rx_auth_fail++;
-			return;
-		}
-		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-		break;
-	case IEEE80211_M_MONITOR:
-		break;
-	}
 }
 
 /* unaligned little endian access */

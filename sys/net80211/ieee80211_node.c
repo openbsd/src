@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.31 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.32 2008/04/21 19:37:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1010,6 +1010,37 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 	RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 		(*f)(arg, ni);
 	splx(s);
+}
+
+/*
+ * Install received rate set information in the node's state block.
+ */
+int
+ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *rates, const u_int8_t *xrates, int flags)
+{
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+
+	memset(rs, 0, sizeof(*rs));
+	rs->rs_nrates = rates[1];
+	memcpy(rs->rs_rates, rates + 2, rs->rs_nrates);
+	if (xrates != NULL) {
+		u_int8_t nxrates;
+		/*
+		 * Tack on 11g extended supported rate element.
+		 */
+		nxrates = xrates[1];
+		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
+			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
+			IEEE80211_DPRINTF(("%s: extended rate set too large;"
+				" only using %u of %u rates\n",
+				__func__, nxrates, xrates[1]));
+			ic->ic_stats.is_rx_rstoobig++;
+		}
+		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
+		rs->rs_nrates += nxrates;
+	}
+	return ieee80211_fix_rate(ic, ni, flags);
 }
 
 /*

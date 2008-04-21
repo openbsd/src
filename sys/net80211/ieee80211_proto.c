@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.22 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.23 2008/04/21 19:37:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -428,6 +428,99 @@ ieee80211_gtk_rekey_timeout(void *arg)
 
 	/* re-schedule a GTK rekeying after 3600s */
 	timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
+}
+
+void
+ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
+    u_int16_t status)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_IBSS:
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+			    "state %u, seq %u\n", __func__,
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
+			    ic->ic_state, seq));
+			ic->ic_stats.is_rx_bad_auth++;
+			return;
+		}
+		ieee80211_new_state(ic, IEEE80211_S_AUTH,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+
+	case IEEE80211_M_AHDEMO:
+		/* should not come here */
+		break;
+
+	case IEEE80211_M_HOSTAP:
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+			    "state %u, seq %u\n", __func__,
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
+			    ic->ic_state, seq));
+			ic->ic_stats.is_rx_bad_auth++;
+			return;
+		}
+		if (ni == ic->ic_bss) {
+			ni = ieee80211_alloc_node(ic, wh->i_addr2);
+			if (ni == NULL) {
+				ic->ic_stats.is_rx_nodealloc++;
+				return;
+			}
+			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
+			ni->ni_rssi = rssi;
+			ni->ni_rstamp = rstamp;
+			ni->ni_chan = ic->ic_bss->ni_chan;
+		}
+		IEEE80211_SEND_MGMT(ic, ni,
+			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s %s authenticated (open)\n",
+			    ifp->if_xname,
+			    ether_sprintf((u_int8_t *)ni->ni_macaddr),
+			    ni->ni_state != IEEE80211_STA_CACHE ?
+			    "newly" : "already");
+		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
+		break;
+
+	case IEEE80211_M_STA:
+		if (ic->ic_state != IEEE80211_S_AUTH ||
+		    seq != IEEE80211_AUTH_OPEN_RESPONSE) {
+			ic->ic_stats.is_rx_bad_auth++;
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+			    "state %u, seq %u\n", __func__,
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
+			    ic->ic_state, seq));
+			return;
+		}
+		if (ic->ic_flags & IEEE80211_F_RSNON) {
+			/* XXX not here! */
+			ic->ic_bss->ni_port_valid = 0;
+			ic->ic_bss->ni_replaycnt_ok = 0;
+			(*ic->ic_delete_key)(ic, ic->ic_bss,
+			    &ic->ic_bss->ni_pairwise_key);
+		}
+		if (status != 0) {
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: open authentication failed "
+				    "(reason %d) for %s\n", ifp->if_xname,
+				    status,
+				    ether_sprintf((u_int8_t *)wh->i_addr3));
+			if (ni != ic->ic_bss)
+				ni->ni_fails++;
+			ic->ic_stats.is_rx_auth_fail++;
+			return;
+		}
+		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+	case IEEE80211_M_MONITOR:
+		break;
+	}
 }
 
 int

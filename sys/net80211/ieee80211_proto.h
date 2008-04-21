@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.28 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.29 2008/04/21 19:37:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -126,14 +126,9 @@ extern	int ieee80211_ibss_merge(struct ieee80211com *,
 		struct ieee80211_node *, u_int64_t);
 extern	void ieee80211_reset_erp(struct ieee80211com *);
 extern	void ieee80211_set_shortslottime(struct ieee80211com *, int);
-extern	void ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
-		const u_int8_t *);
-extern	int ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
-		const u_int8_t *);
-extern	void ieee80211_eapol_key_encrypt(struct ieee80211com *,
-		struct ieee80211_eapol_key *, const u_int8_t *);
-extern	int ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
-		const u_int8_t *);
+extern	void ieee80211_auth_open(struct ieee80211com *,
+	    const struct ieee80211_frame *, struct ieee80211_node *, int,
+	    u_int32_t, u_int16_t, u_int16_t);
 extern	void ieee80211_gtk_rekey_timeout(void *);
 extern	void ieee80211_setkeys(struct ieee80211com *);
 extern	void ieee80211_setkeysdone(struct ieee80211com *);

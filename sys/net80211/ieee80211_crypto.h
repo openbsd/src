@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.12 2008/04/21 19:01:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.13 2008/04/21 19:37:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -130,6 +130,15 @@ struct mbuf *ieee80211_ccmp_decrypt(struct ieee80211com *, struct mbuf *,
 extern	void ieee80211_tkip_mic(struct mbuf *, int, const u_int8_t *,
 	    u_int8_t[IEEE80211_TKIP_MICLEN]);
 extern	void ieee80211_michael_mic_failure(struct ieee80211com *, u_int64_t);
+
+extern	void ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
+		const u_int8_t *);
+extern	int ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
+		const u_int8_t *);
+extern	void ieee80211_eapol_key_encrypt(struct ieee80211com *,
+		struct ieee80211_eapol_key *, const u_int8_t *);
+extern	int ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
+		const u_int8_t *);
 
 extern	void ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
