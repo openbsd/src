@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.17 2006/11/16 16:08:15 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.18 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -46,9 +46,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include "rtadvd.h"
 #include "if.h"
+#include "log.h"
 
 #define ROUNDUP(a, size) \
 	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
@@ -161,15 +161,13 @@ if_getflags(int ifindex, int oifflags)
 	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
+		log_warn("socket");
 		return (oifflags & ~IFF_UP);
 	}
 
 	if_indextoname(ifindex, ifr.ifr_name);
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
-		       __func__, ifr.ifr_name);
+		log_warn("ioctl:SIOCGIFFLAGS: failed for %s", ifr.ifr_name);
 		close(s);
 		return (oifflags & ~IFF_UP);
 	}
@@ -205,8 +203,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	default:
-		syslog(LOG_ERR, "<%s> unsupported link type(%d)",
-		    __func__, sdl->sdl_type);
+		log_warn("unsupported link type(%d)", sdl->sdl_type);
 		exit(1);
 	}
 
@@ -242,9 +239,8 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 	     rtm = (struct rt_msghdr *)(((char *)rtm) + rtm->rtm_msglen)) {
 		/* just for safety */
 		if (!rtm->rtm_msglen) {
-			syslog(LOG_WARNING, "<%s> rtm_msglen is 0 "
-				"(buf=%p lim=%p rtm=%p)", __func__,
-				buf, lim, rtm);
+			log_warnx("rtm_msglen is 0 (buf=%p lim=%p rtm=%p)",
+			    buf, lim, rtm);
 			break;
 		}
 		if (FILTER_MATCH(rtm->rtm_type, filter) == 0) {
@@ -463,20 +459,12 @@ get_iflist(char **buf, size_t *size)
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;
 
-	if (sysctl(mib, 6, NULL, size, NULL, 0) < 0) {
-		syslog(LOG_ERR, "<%s> sysctl: iflist size get failed",
-		       __func__);
-		exit(1);
-	}
-	if ((*buf = malloc(*size)) == NULL) {
-		syslog(LOG_ERR, "<%s> malloc failed", __func__);
-		exit(1);
-	}
-	if (sysctl(mib, 6, *buf, size, NULL, 0) < 0) {
-		syslog(LOG_ERR, "<%s> sysctl: iflist get failed",
-		       __func__);
-		exit(1);
-	}
+	if (sysctl(mib, 6, NULL, size, NULL, 0) < 0)
+		fatal("sysctl: iflist size get failed");
+	if ((*buf = malloc(*size)) == NULL)
+		fatal("malloc");
+	if (sysctl(mib, 6, *buf, size, NULL, 0) < 0)
+		fatal("sysctl: iflist get failed");
 	return;
 }
 
@@ -499,29 +487,26 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 	iflentry_size = sizeof(struct if_msghdr);
 	/* roughly estimate max list size of pointers to each if_msghdr */
 	malloc_size = (bufsize/iflentry_size) * sizeof(size_t);
-	if ((*ifmlist_p = (struct if_msghdr **)malloc(malloc_size)) == NULL) {
-		syslog(LOG_ERR, "<%s> malloc failed", __func__);
-		exit(1);
-	}
+	if ((*ifmlist_p = (struct if_msghdr **)malloc(malloc_size)) == NULL)
+		fatal("malloc");
 
 	lim = buf + bufsize;
 	for (ifm = (struct if_msghdr *)buf; ifm < (struct if_msghdr *)lim;) {
 		if (ifm->ifm_msglen == 0) {
-			syslog(LOG_WARNING, "<%s> ifm_msglen is 0 "
-			       "(buf=%p lim=%p ifm=%p)", __func__,
-			       buf, lim, ifm);
+			log_warn("ifm_msglen is 0 (buf=%p lim=%p ifm=%p)",
+			    buf, lim, ifm);
 			return;
 		}
 
 		if (ifm->ifm_type == RTM_IFINFO) {
 			(*ifmlist_p)[ifm->ifm_index] = ifm;
 		} else {
-			syslog(LOG_ERR, "out of sync parsing NET_RT_IFLIST,"
-			       "expected %d, got %d, msglen = %d,"
-			       "buf:%p, ifm:%p, lim:%p",
-			       RTM_IFINFO, ifm->ifm_type, ifm->ifm_msglen,
-			       buf, ifm, lim);
-			exit (1);
+			log_warn("out of sync parsing NET_RT_IFLIST,"
+			    " expected %d, got %d, msglen = %d,"
+			    " buf:%p, ifm:%p, lim:%p",
+			    RTM_IFINFO, ifm->ifm_type, ifm->ifm_msglen,
+			    buf, ifm, lim);
+			exit(1);
 		}
 		for (ifam = (struct ifa_msghdr *)
 			((char *)ifm + ifm->ifm_msglen);
@@ -530,9 +515,9 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 		     	((char *)ifam + ifam->ifam_msglen)) {
 			/* just for safety */
 			if (!ifam->ifam_msglen) {
-				syslog(LOG_WARNING, "<%s> ifa_msglen is 0 "
-				       "(buf=%p lim=%p ifam=%p)", __func__,
-				       buf, lim, ifam);
+				log_warnx("ifa_msglen is 0 "
+				    "(buf=%p lim=%p ifam=%p)",
+				    buf, lim, ifam);
 				return;
 			}
 			if (ifam->ifam_type != RTM_NEWADDR)

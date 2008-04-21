@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.31 2008/04/13 00:22:17 djm Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.32 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <util.h>
 
 #include "rtadvd.h"
@@ -64,6 +63,7 @@
 #include "if.h"
 #include "config.h"
 #include "dump.h"
+#include "log.h"
 
 struct msghdr rcvmhdr;
 static u_char *rcvcmsgbuf;
@@ -84,6 +84,7 @@ int sock;
 int rtsock = -1;
 int accept_rr = 0;
 int dflag = 0, sflag = 0;
+int log_perror = 0;
 
 u_char *conffile = NULL;
 
@@ -151,10 +152,11 @@ main(argc, argv)
 	int maxfd = 0;
 	struct timeval *timeout;
 	int i, ch;
-	int fflag = 0, logopt;
+
+	log_init(1);		/* log to stderr until daemonized */
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dDfM:Rs"
+#define OPTIONS "c:dM:Rs"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -163,12 +165,6 @@ main(argc, argv)
 			break;
 		case 'd':
 			dflag = 1;
-			break;
-		case 'D':
-			dflag = 2;
-			break;
-		case 'f':
-			fflag = 1;
 			break;
 		case 'M':
 			mcastif = optarg;
@@ -188,21 +184,10 @@ main(argc, argv)
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-DdfMRs] [-c configfile] "
+			"usage: rtadvd [-dMRs] [-c configfile] "
 			"interface ...\n");
 		exit(1);
 	}
-
-	logopt = LOG_NDELAY | LOG_PID;
-	if (fflag)
-		logopt |= LOG_PERROR;
-	openlog("rtadvd", logopt, LOG_DAEMON);
-
-	/* set log level */
-	if (dflag == 0)
-		(void)setlogmask(LOG_UPTO(LOG_ERR));
-	if (dflag == 1)
-		(void)setlogmask(LOG_UPTO(LOG_INFO));
 
 	/* timer initialization */
 	rtadvd_timer_init();
@@ -213,22 +198,19 @@ main(argc, argv)
 	while (argc--)
 		getconfig(*argv++);
 
-	if (inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr) != 1) {
-		fprintf(stderr, "fatal: inet_pton failed\n");
-		exit(1);
-	}
+	if (inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr) != 1)
+		fatal("inet_pton failed");
 
-	if (!fflag)
+	log_init(dflag);
+
+	if (!dflag)
 		daemon(1, 0);
 
 	sock_open();
 
 	/* record the current PID */
-	if (pidfile(NULL) < 0) {
-		syslog(LOG_ERR,
-		    "<%s> failed to open the pid log file, run anyway.",
-		    __func__);
-	}
+	if (pidfile(NULL) < 0)
+		log_warnx("failed to open the pid log file, run anyway.");
 
 	maxfd = sock;
 	if (sflag == 0) {
@@ -271,24 +253,19 @@ main(argc, argv)
 		/* timer expiration check and reset the timer */
 		timeout = rtadvd_check_timer();
 
-		if (timeout != NULL) {
-			syslog(LOG_DEBUG,
-			    "<%s> set timer to %ld:%ld. waiting for "
-			    "inputs or timeout", __func__,
+		if (timeout != NULL)
+			log_debug("set timer to %ld:%ld. waiting for "
+			    "inputs or timeout",
 			    (long int)timeout->tv_sec,
 			    (long int)timeout->tv_usec);
-		} else {
-			syslog(LOG_DEBUG,
-			    "<%s> there's no timer. waiting for inputs",
-			    __func__);
-		}
+		else
+			log_debug("there's no timer. waiting for inputs");
 
 		if ((i = select(maxfd + 1, selectfdp, NULL, NULL,
 		    timeout)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
-				syslog(LOG_ERR, "<%s> select: %s",
-				    __func__, strerror(errno));
+				log_warn("select");
 			continue;
 		}
 		if (i == 0)	/* timeout */
@@ -320,10 +297,8 @@ die()
 	int i;
 	const int retrans = MAX_FINAL_RTR_ADVERTISEMENTS;
 
-	if (dflag > 1) {
-		syslog(LOG_DEBUG, "<%s> cease to be an advertising router",
-		    __func__);
-	}
+	if (dflag)
+		log_debug("cease to be an advertising router");
 
 	for (ra = ralist; ra; ra = ra->next) {
 		ra->lifetime = 0;
@@ -351,21 +326,19 @@ rtmsg_input()
 	char addrbuf[INET6_ADDRSTRLEN];
 
 	n = read(rtsock, msg, sizeof(msg));
-	if (dflag > 1) {
-		syslog(LOG_DEBUG, "<%s> received a routing message "
-		    "(type = %d, len = %d)", __func__, rtmsg_type(msg), n);
-	}
+	if (dflag)
+		log_debug("received a routing message "
+		    "(type = %d, len = %d)", rtmsg_type(msg), n);
 	if (n > rtmsg_len(msg)) {
 		/*
 		 * This usually won't happen for messages received on 
 		 * a routing socket.
 		 */
-		if (dflag > 1)
-			syslog(LOG_DEBUG,
-			    "<%s> received data length is larger than "
+		if (dflag)
+			log_debug("received data length is larger than "
 			    "1st routing message len. multiple messages? "
 			    "read %d bytes, but 1st msg len = %d",
-			    __func__, n, rtmsg_len(msg));
+			    n, rtmsg_len(msg));
 #if 0
 		/* adjust length */
 		n = rtmsg_len(msg);
@@ -399,23 +372,17 @@ rtmsg_input()
 			break;
 		default:
 			/* should not reach here */
-			if (dflag > 1) {
-				syslog(LOG_DEBUG,
-				       "<%s:%d> unknown rtmsg %d on %s",
-				       __func__, __LINE__, type,
-				       if_indextoname(ifindex, ifname));
-			}
+			if (dflag)
+				log_debug("unknown rtmsg %d on %s",
+				    type, if_indextoname(ifindex, ifname));
 			continue;
 		}
 
 		if ((rai = if_indextorainfo(ifindex)) == NULL) {
-			if (dflag > 1) {
-				syslog(LOG_DEBUG,
-				       "<%s> route changed on "
-				       "non advertising interface(%s)",
-				       __func__,
-				       if_indextoname(ifindex, ifname));
-			}
+			if (dflag)
+				log_debug("route changed on "
+				    "non advertising interface(%s)",
+				    if_indextoname(ifindex, ifname));
 			continue;
 		}
 		oldifflags = iflist[ifindex]->ifm_flags;
@@ -434,23 +401,19 @@ rtmsg_input()
 			/* sanity check for plen */
 			/* as RFC2373, prefixlen is at least 4 */
 			if (plen < 4 || plen > 127) {
-				syslog(LOG_INFO, "<%s> new interface route's"
-				    "plen %d is invalid for a prefix",
-				    __func__, plen);
+				log_info("new interface route's"
+				    " plen %d is invalid for a prefix", plen);
 				break;
 			}
 			prefix = find_prefix(rai, addr, plen);
 			if (prefix) {
-				if (dflag > 1) {
-					syslog(LOG_DEBUG,
-					    "<%s> new prefix(%s/%d) "
+				if (dflag)
+					log_debug("new prefix(%s/%d) "
 					    "added on %s, "
 					    "but it was already in list",
-					    __func__,
 					    inet_ntop(AF_INET6, addr,
 					    (char *)addrbuf, INET6_ADDRSTRLEN),
 					    plen, rai->ifname);
-				}
 				break;
 			}
 			make_prefix(rai, ifindex, addr, plen);
@@ -468,24 +431,19 @@ rtmsg_input()
 			/* sanity check for plen */
 			/* as RFC2373, prefixlen is at least 4 */
 			if (plen < 4 || plen > 127) {
-				syslog(LOG_INFO,
-				    "<%s> deleted interface route's "
-				    "plen %d is invalid for a prefix",
-				    __func__, plen);
+				log_info("deleted interface route's "
+				    "plen %d is invalid for a prefix", plen);
 				break;
 			}
 			prefix = find_prefix(rai, addr, plen);
 			if (prefix == NULL) {
-				if (dflag > 1) {
-					syslog(LOG_DEBUG,
-					    "<%s> prefix(%s/%d) was "
+				if (dflag)
+					log_debug("prefix(%s/%d) was "
 					    "deleted on %s, "
 					    "but it was not in list",
-					    __func__,
 					    inet_ntop(AF_INET6, addr,
 					    (char *)addrbuf, INET6_ADDRSTRLEN),
 					    plen, rai->ifname);
-				}
 				break;
 			}
 			delete_prefix(rai, prefix);
@@ -501,27 +459,22 @@ rtmsg_input()
 			break;
 		default:
 			/* should not reach here */
-			if (dflag > 1) {
-				syslog(LOG_DEBUG,
-				    "<%s:%d> unknown rtmsg %d on %s",
-				    __func__, __LINE__, type,
-				    if_indextoname(ifindex, ifname));
-			}
+			if (dflag)
+				log_debug("unknown rtmsg %d on %s",
+				    type, if_indextoname(ifindex, ifname));
 			return;
 		}
 
 		/* check if an interface flag is changed */
 		if ((oldifflags & IFF_UP) != 0 &&	/* UP to DOWN */
 		    (iflist[ifindex]->ifm_flags & IFF_UP) == 0) {
-			syslog(LOG_INFO,
-			    "<%s> interface %s becomes down. stop timer.",
-			    __func__, rai->ifname);
+			log_info("interface %s becomes down. stop timer.",
+			    rai->ifname);
 			rtadvd_remove_timer(&rai->timer);
 		} else if ((oldifflags & IFF_UP) == 0 && /* DOWN to UP */
 			 (iflist[ifindex]->ifm_flags & IFF_UP) != 0) {
-			syslog(LOG_INFO,
-			    "<%s> interface %s becomes up. restart timer.",
-			    __func__, rai->ifname);
+			log_info("interface %s becomes up. restart timer.",
+			    rai->ifname);
 
 			rai->initcounter = 0; /* reset the counter */
 			rai->waiting = 0; /* XXX */
@@ -573,15 +526,11 @@ rtadvd_input()
 			hlimp = (int *)CMSG_DATA(cm);
 	}
 	if (ifindex == 0) {
-		syslog(LOG_ERR,
-		       "<%s> failed to get receiving interface",
-		       __func__);
+		log_warnx("failed to get receiving interface");
 		return;
 	}
 	if (hlimp == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> failed to get receiving hop limit",
-		       __func__);
+		log_warnx("failed to get receiving hop limit");
 		return;
 	}
 
@@ -590,17 +539,13 @@ rtadvd_input()
 	 * just discard the data.
 	 */
 	if ((iflist[pi->ipi6_ifindex]->ifm_flags & IFF_UP) == 0) {
-		syslog(LOG_INFO,
-		       "<%s> received data on a disabled interface (%s)",
-		       __func__,
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_info("received data on a disabled interface (%s)",
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
 	if (i < sizeof(struct icmp6_hdr)) {
-		syslog(LOG_ERR,
-		       "<%s> packet size(%d) is too short",
-		       __func__, i);
+		log_warnx("packet size(%d) is too short", i);
 		return;
 	}
 
@@ -614,30 +559,26 @@ rtadvd_input()
 		 *      but we can't completely rely on them.
 		 */
 		if (*hlimp != 255) {
-			syslog(LOG_NOTICE,
-			    "<%s> RS with invalid hop limit(%d) "
+			log_info("RS with invalid hop limit(%d) "
 			    "received from %s on %s",
-			    __func__, *hlimp,
+			    *hlimp,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
 		if (icp->icmp6_code) {
-			syslog(LOG_NOTICE,
-			    "<%s> RS with invalid ICMP6 code(%d) "
+			log_info("RS with invalid ICMP6 code(%d) "
 			    "received from %s on %s",
-			    __func__, icp->icmp6_code,
+			    icp->icmp6_code,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
 		if (i < sizeof(struct nd_router_solicit)) {
-			syslog(LOG_NOTICE,
-			    "<%s> RS from %s on %s does not have enough "
+			log_info("RS from %s on %s does not have enough "
 			    "length (len = %d)",
-			    __func__,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
@@ -651,30 +592,26 @@ rtadvd_input()
 		 * XXX: there's a same dilemma as above... 
 		 */
 		if (*hlimp != 255) {
-			syslog(LOG_NOTICE,
-			    "<%s> RA with invalid hop limit(%d) "
+			log_info("RA with invalid hop limit(%d) "
 			    "received from %s on %s",
-			    __func__, *hlimp,
+			    *hlimp,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
 		if (icp->icmp6_code) {
-			syslog(LOG_NOTICE,
-			    "<%s> RA with invalid ICMP6 code(%d) "
+			log_info("RA with invalid ICMP6 code(%d) "
 			    "received from %s on %s",
-			    __func__, icp->icmp6_code,
+			    icp->icmp6_code,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
 		if (i < sizeof(struct nd_router_advert)) {
-			syslog(LOG_NOTICE,
-			    "<%s> RA from %s on %s does not have enough "
+			log_info("RA from %s on %s does not have enough "
 			    "length (len = %d)",
-			    __func__,
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
@@ -684,9 +621,8 @@ rtadvd_input()
 		break;
 	case ICMP6_ROUTER_RENUMBERING:
 		if (accept_rr == 0) {
-			syslog(LOG_ERR, "<%s> received a router renumbering "
-			    "message, but not allowed to be accepted",
-			    __func__);
+			log_warnx("received a router renumbering "
+			    "message, but not allowed to be accepted");
 			break;
 		}
 		rr_input(i, (struct icmp6_router_renum *)icp, pi, &from,
@@ -699,8 +635,7 @@ rtadvd_input()
 		 * could receive message after opening the socket and
 		 * before setting ICMP6 type filter(see sock_open()).
 		 */
-		syslog(LOG_ERR, "<%s> invalid icmp type(%d)",
-		    __func__, icp->icmp6_type);
+		log_warnx("invalid icmp type(%d)", icp->icmp6_type);
 		return;
 	}
 
@@ -715,24 +650,20 @@ rs_input(int len, struct nd_router_solicit *rs,
 	union nd_opts ndopts;
 	struct rainfo *ra;
 
-	syslog(LOG_DEBUG,
-	       "<%s> RS received from %s on %s",
-	       __func__,
-	       inet_ntop(AF_INET6, &from->sin6_addr,
-			 ntopbuf, INET6_ADDRSTRLEN),
-	       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+	log_debug("RS received from %s on %s",
+	    inet_ntop(AF_INET6, &from->sin6_addr,
+		ntopbuf, INET6_ADDRSTRLEN),
+	    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
 	if (nd6_options((struct nd_opt_hdr *)(rs + 1),
 			len - sizeof(struct nd_router_solicit),
 			&ndopts, NDOPT_FLAG_SRCLINKADDR)) {
-		syslog(LOG_DEBUG,
-		       "<%s> ND option check failed for an RS from %s on %s",
-		       __func__,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_debug("ND option check failed for an RS from %s on %s",
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
@@ -743,10 +674,8 @@ rs_input(int len, struct nd_router_solicit *rs,
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&from->sin6_addr) &&
 	    ndopts.nd_opts_src_lladdr) {
-		syslog(LOG_ERR,
-		       "<%s> RS from unspecified src on %s has a link-layer"
+		log_warnx("RS from unspecified src on %s has a link-layer"
 		       " address option",
-		       __func__,
 		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		goto done;
 	}
@@ -758,10 +687,8 @@ rs_input(int len, struct nd_router_solicit *rs,
 		ra = ra->next;
 	}
 	if (ra == NULL) {
-		syslog(LOG_INFO,
-		       "<%s> RS received on non advertising interface(%s)",
-		       __func__,
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_info("RS received on non advertising interface(%s)",
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		goto done;
 	}
 
@@ -807,10 +734,8 @@ rs_input(int len, struct nd_router_solicit *rs,
 		interval.tv_usec = delay;
 		rest = rtadvd_timer_rest(ra->timer);
 		if (TIMEVAL_LT(*rest, interval)) {
-			syslog(LOG_DEBUG,
-			       "<%s> random delay is larger than "
-			       "the rest of normal timer",
-			       __func__);
+			log_debug("random delay is larger than "
+			    "the rest of normal timer");
 			interval = *rest;
 		}
 
@@ -849,12 +774,10 @@ ra_input(int len, struct nd_router_advert *ra,
 	u_int32_t reachabletime, retranstimer, mtu;
 	int inconsistent = 0;
 
-	syslog(LOG_DEBUG,
-	       "<%s> RA received from %s on %s",
-	       __func__,
-	       inet_ntop(AF_INET6, &from->sin6_addr,
-			 ntopbuf, INET6_ADDRSTRLEN),
-	       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+	log_debug("RA received from %s on %s",
+	    inet_ntop(AF_INET6, &from->sin6_addr,
+		ntopbuf, INET6_ADDRSTRLEN),
+	    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 	
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
@@ -862,12 +785,10 @@ ra_input(int len, struct nd_router_advert *ra,
 			len - sizeof(struct nd_router_advert),
 			&ndopts, NDOPT_FLAG_SRCLINKADDR |
 			NDOPT_FLAG_PREFIXINFO | NDOPT_FLAG_MTU)) {
-		syslog(LOG_ERR,
-		       "<%s> ND option check failed for an RA from %s on %s",
-		       __func__,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_warnx("ND option check failed for an RA from %s on %s",
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
@@ -875,13 +796,10 @@ ra_input(int len, struct nd_router_advert *ra,
 	 * RA consistency check according to RFC-2461 6.2.7
 	 */
 	if ((rai = if_indextorainfo(pi->ipi6_ifindex)) == 0) {
-		syslog(LOG_INFO,
-		       "<%s> received RA from %s on non-advertising"
-		       " interface(%s)",
-		       __func__,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_info("received RA from %s on non-advertising interface(%s)",
+		    inet_ntop(AF_INET6, &from->sin6_addr, ntopbuf,
+			INET6_ADDRSTRLEN),
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		goto done;
 	}
 	rai->rainput++;		/* increment statistics */
@@ -889,87 +807,69 @@ ra_input(int len, struct nd_router_advert *ra,
 	/* Cur Hop Limit value */
 	if (ra->nd_ra_curhoplimit && rai->hoplimit &&
 	    ra->nd_ra_curhoplimit != rai->hoplimit) {
-		syslog(LOG_INFO,
-		       "<%s> CurHopLimit inconsistent on %s:"
-		       " %d from %s, %d from us",
-		       __func__,
-		       rai->ifname,
-		       ra->nd_ra_curhoplimit,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       rai->hoplimit);
+		log_info("CurHopLimit inconsistent on %s:  %d from %s,"
+		    " %d from us",
+		    rai->ifname,
+		    ra->nd_ra_curhoplimit,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    rai->hoplimit);
 		inconsistent++;
 	}
 	/* M flag */
 	if ((ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED) !=
 	    rai->managedflg) {
-		syslog(LOG_INFO,
-		       "<%s> M flag inconsistent on %s:"
-		       " %s from %s, %s from us",
-		       __func__,
-		       rai->ifname,
-		       on_off[!rai->managedflg],
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       on_off[rai->managedflg]);
+		log_info("M flag inconsistent on %s: %s from %s, %s from us",
+		    rai->ifname, on_off[!rai->managedflg],
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    on_off[rai->managedflg]);
 		inconsistent++;
 	}
 	/* O flag */
 	if ((ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER) !=
 	    rai->otherflg) {
-		syslog(LOG_INFO,
-		       "<%s> O flag inconsistent on %s:"
-		       " %s from %s, %s from us",
-		       __func__,
-		       rai->ifname,
-		       on_off[!rai->otherflg],
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       on_off[rai->otherflg]);
+		log_info("O flag inconsistent on %s: %s from %s, %s from us",
+		    rai->ifname, on_off[!rai->otherflg],
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    on_off[rai->otherflg]);
 		inconsistent++;
 	}
 	/* Reachable Time */
 	reachabletime = ntohl(ra->nd_ra_reachable);
 	if (reachabletime && rai->reachabletime &&
 	    reachabletime != rai->reachabletime) {
-		syslog(LOG_INFO,
-		       "<%s> ReachableTime inconsistent on %s:"
-		       " %d from %s, %d from us",
-		       __func__,
-		       rai->ifname,
-		       reachabletime,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       rai->reachabletime);
+		log_info("ReachableTime inconsistent on %s:"
+		    " %d from %s, %d from us",
+		    rai->ifname, reachabletime, 
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    rai->reachabletime);
 		inconsistent++;
 	}
 	/* Retrans Timer */
 	retranstimer = ntohl(ra->nd_ra_retransmit);
 	if (retranstimer && rai->retranstimer &&
 	    retranstimer != rai->retranstimer) {
-		syslog(LOG_INFO,
-		       "<%s> RetranceTimer inconsistent on %s:"
-		       " %d from %s, %d from us",
-		       __func__,
-		       rai->ifname,
-		       retranstimer,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       rai->retranstimer);
+		log_info("RetranceTimer inconsistent on %s:"
+		    " %d from %s, %d from us",
+		    rai->ifname, retranstimer,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    rai->retranstimer);
 		inconsistent++;
 	}
 	/* Values in the MTU options */
 	if (ndopts.nd_opts_mtu) {
 		mtu = ntohl(ndopts.nd_opts_mtu->nd_opt_mtu_mtu);
 		if (mtu && rai->linkmtu && mtu != rai->linkmtu) {
-			syslog(LOG_INFO,
-			       "<%s> MTU option value inconsistent on %s:"
-			       " %d from %s, %d from us",
-			       __func__,
-			       rai->ifname, mtu,
-			       inet_ntop(AF_INET6, &from->sin6_addr,
-					 ntopbuf, INET6_ADDRSTRLEN),
-			       rai->linkmtu);
+			log_info("MTU option value inconsistent on %s:"
+			    " %d from %s, %d from us",
+			    rai->ifname, mtu,
+			    inet_ntop(AF_INET6, &from->sin6_addr,
+				ntopbuf, INET6_ADDRSTRLEN),
+			    rai->linkmtu);
 			inconsistent++;
 		}
 	}
@@ -977,10 +877,9 @@ ra_input(int len, struct nd_router_advert *ra,
 	{
 		struct nd_optlist *optp = ndopts.nd_opts_list;
 
-		if (ndopts.nd_opts_pi) {
+		if (ndopts.nd_opts_pi)
 			if (prefix_check(ndopts.nd_opts_pi, rai, from))
 				inconsistent++;
-		}
 		while (optp) {
 			if (prefix_check((struct nd_opt_prefix_info *)optp->opt,
 					 rai, from))
@@ -1016,30 +915,25 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 	/*
 	 * log if the adveritsed prefix has link-local scope(sanity check?)
 	 */
-	if (IN6_IS_ADDR_LINKLOCAL(&pinfo->nd_opt_pi_prefix)) {
-		syslog(LOG_INFO,
-		       "<%s> link-local prefix %s/%d is advertised "
-		       "from %s on %s",
-		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-				 prefixbuf, INET6_ADDRSTRLEN),
-		       pinfo->nd_opt_pi_prefix_len,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       rai->ifname);
-	}
+	if (IN6_IS_ADDR_LINKLOCAL(&pinfo->nd_opt_pi_prefix))
+		log_info("link-local prefix %s/%d is advertised "
+		    "from %s on %s",
+		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			prefixbuf, INET6_ADDRSTRLEN),
+		    pinfo->nd_opt_pi_prefix_len,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    rai->ifname);
 
 	if ((pp = find_prefix(rai, &pinfo->nd_opt_pi_prefix,
 			      pinfo->nd_opt_pi_prefix_len)) == NULL) {
-		syslog(LOG_INFO,
-		       "<%s> prefix %s/%d from %s on %s is not in our list",
-		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-				 prefixbuf, INET6_ADDRSTRLEN),
-		       pinfo->nd_opt_pi_prefix_len,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       rai->ifname);
+		log_info("prefix %s/%d from %s on %s is not in our list",
+		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			prefixbuf, INET6_ADDRSTRLEN),
+		    pinfo->nd_opt_pi_prefix_len,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    rai->ifname);
 		return(0);
 	}
 
@@ -1057,34 +951,29 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 		if (rai->clockskew &&
 		    abs(preferred_time - pp->pltimeexpire) > rai->clockskew) {
-			syslog(LOG_INFO,
-			       "<%s> prefeerred lifetime for %s/%d"
-			       " (decr. in real time) inconsistent on %s:"
-			       " %d from %s, %ld from us",
-			       __func__,
-			       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-					 prefixbuf, INET6_ADDRSTRLEN),
-			       pinfo->nd_opt_pi_prefix_len,
-			       rai->ifname, preferred_time,
-			       inet_ntop(AF_INET6, &from->sin6_addr,
-					 ntopbuf, INET6_ADDRSTRLEN),
-			       pp->pltimeexpire);
+			log_info("prefeerred lifetime for %s/%d"
+			    " (decr. in real time) inconsistent on %s:"
+			    " %d from %s, %ld from us",
+			    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+				prefixbuf, INET6_ADDRSTRLEN),
+			    pinfo->nd_opt_pi_prefix_len,
+			    rai->ifname, preferred_time,
+			    inet_ntop(AF_INET6, &from->sin6_addr,
+				ntopbuf, INET6_ADDRSTRLEN),
+			    pp->pltimeexpire);
 			inconsistent++;
 		}
-	} else if (preferred_time != pp->preflifetime) {
-		syslog(LOG_INFO,
-		       "<%s> prefeerred lifetime for %s/%d"
-		       " inconsistent on %s:"
-		       " %d from %s, %d from us",
-		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-				 prefixbuf, INET6_ADDRSTRLEN),
-		       pinfo->nd_opt_pi_prefix_len,
-		       rai->ifname, preferred_time,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       pp->preflifetime);
-	}
+	} else if (preferred_time != pp->preflifetime)
+		log_info("prefeerred lifetime for %s/%d"
+		    " inconsistent on %s:"
+		    " %d from %s, %d from us",
+		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			prefixbuf, INET6_ADDRSTRLEN),
+		    pinfo->nd_opt_pi_prefix_len,
+		    rai->ifname, preferred_time,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    pp->preflifetime);
 
 	valid_time = ntohl(pinfo->nd_opt_pi_valid_time);
 	if (pp->vltimeexpire) {
@@ -1093,33 +982,29 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 		if (rai->clockskew &&
 		    abs(valid_time - pp->vltimeexpire) > rai->clockskew) {
-			syslog(LOG_INFO,
-			       "<%s> valid lifetime for %s/%d"
-			       " (decr. in real time) inconsistent on %s:"
-			       " %d from %s, %ld from us",
-			       __func__,
-			       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-					 prefixbuf, INET6_ADDRSTRLEN),
-			       pinfo->nd_opt_pi_prefix_len,
-			       rai->ifname, preferred_time,
-			       inet_ntop(AF_INET6, &from->sin6_addr,
-					 ntopbuf, INET6_ADDRSTRLEN),
-			       pp->vltimeexpire);
+			log_info("valid lifetime for %s/%d"
+			    " (decr. in real time) inconsistent on %s:"
+			    " %d from %s, %ld from us",
+			    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+				prefixbuf, INET6_ADDRSTRLEN),
+			    pinfo->nd_opt_pi_prefix_len,
+			    rai->ifname, preferred_time,
+			    inet_ntop(AF_INET6, &from->sin6_addr,
+				ntopbuf, INET6_ADDRSTRLEN),
+			    pp->vltimeexpire);
 			inconsistent++;
 		}
 	} else if (valid_time != pp->validlifetime) {
-		syslog(LOG_INFO,
-		       "<%s> valid lifetime for %s/%d"
-		       " inconsistent on %s:"
-		       " %d from %s, %d from us",
-		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
-				 prefixbuf, INET6_ADDRSTRLEN),
-		       pinfo->nd_opt_pi_prefix_len,
-		       rai->ifname, valid_time,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       pp->validlifetime);
+		log_info("valid lifetime for %s/%d"
+		    " inconsistent on %s:"
+		    " %d from %s, %d from us",
+		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			prefixbuf, INET6_ADDRSTRLEN),
+		    pinfo->nd_opt_pi_prefix_len,
+		    rai->ifname, valid_time,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf, INET6_ADDRSTRLEN),
+		    pp->validlifetime);
 		inconsistent++;
 	}
 
@@ -1183,33 +1068,32 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 
 	for (; limit > 0; limit -= optlen) {
 		if (limit < sizeof(struct nd_opt_hdr)) {
-			syslog(LOG_INFO, "<%s> short option header", __func__);
+			log_info("short option header");
 			goto bad;
 		}
 
 		hdr = (struct nd_opt_hdr *)((caddr_t)hdr + optlen);
 		if (hdr->nd_opt_len == 0) {
-			syslog(LOG_ERR,
-			    "<%s> bad ND option length(0) (type = %d)",
-			    __func__, hdr->nd_opt_type);
+			log_warnx("bad ND option length(0) (type = %d)",
+			    hdr->nd_opt_type);
 			goto bad;
 		}
 		optlen = hdr->nd_opt_len << 3;
 		if (optlen > limit) {
-			syslog(LOG_INFO, "<%s> short option", __func__);
+			log_info("short option");
 			goto bad;
 		}
 
 		if (hdr->nd_opt_type > ND_OPT_MTU)
 		{
-			syslog(LOG_INFO, "<%s> unknown ND option(type %d)",
-			    __func__, hdr->nd_opt_type);
+			log_info("unknown ND option(type %d)",
+			    hdr->nd_opt_type);
 			continue;
 		}
 
 		if ((ndopt_flags[hdr->nd_opt_type] & optflags) == 0) {
-			syslog(LOG_INFO, "<%s> unexpected ND option(type %d)",
-			    __func__, hdr->nd_opt_type);
+			log_info("unexpected ND option(type %d)",
+			    hdr->nd_opt_type);
 			continue;
 		}
 
@@ -1221,8 +1105,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		    (optlen != sizeof(struct nd_opt_mtu))) ||
 		    ((hdr->nd_opt_type == ND_OPT_PREFIX_INFORMATION &&
 		    optlen != sizeof(struct nd_opt_prefix_info)))) {
-			syslog(LOG_INFO, "<%s> invalid option length",
-			    __func__);
+			log_info("invalid option length");
 			continue;
 		}
 
@@ -1233,9 +1116,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			break;	/* we don't care about these options */
 		case ND_OPT_MTU:
 			if (ndopts->nd_opt_array[hdr->nd_opt_type]) {
-				syslog(LOG_INFO,
-				    "<%s> duplicated ND option (type = %d)",
-				    __func__, hdr->nd_opt_type);
+				log_info("duplicated ND option (type = %d)",
+				    hdr->nd_opt_type);
 			}
 			ndopts->nd_opt_array[hdr->nd_opt_type] = hdr;
 			break;
@@ -1249,8 +1131,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 				continue;
 			}
 			if ((pfxlist = malloc(sizeof(*pfxlist))) == NULL) {
-				syslog(LOG_ERR, "<%s> can't allocate memory",
-				    __func__);
+				log_warn("malloc");
 				goto bad;
 			}
 			pfxlist->next = ndopts->nd_opts_list;
@@ -1297,42 +1178,29 @@ sock_open()
 	rcvcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbuflen);
-	if (rcvcmsgbuf == NULL) {
-		syslog(LOG_ERR, "<%s> not enough core", __func__);
-		exit(1);
-	}
+	if (rcvcmsgbuf == NULL)
+		fatal("malloc");
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
 	    CMSG_SPACE(sizeof(int));
 	sndcmsgbuf = (u_char *)malloc(sndcmsgbuflen);
-	if (sndcmsgbuf == NULL) {
-		syslog(LOG_ERR, "<%s> not enough core", __func__);
-		exit(1);
-	}
+	if (sndcmsgbuf == NULL)
+		fatal("malloc");
 
-	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
-		exit(1);
-	}
+	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+		fatal("socket");
 
 	/* specify to tell receiving interface */
 	on = 1;
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %s",
-		       __func__, strerror(errno));
-		exit(1);
-	}
+		       sizeof(on)) < 0)
+		fatal("IPV6_RECVPKTINFO");
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
-		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %s",
-		       __func__, strerror(errno));
-		exit(1);
-	}
+		       sizeof(on)) < 0)
+		fatal("IPV6_RECVHOPLIMIT");
 
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filt);
@@ -1340,28 +1208,21 @@ sock_open()
 	if (accept_rr)
 		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
 	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
-		       sizeof(filt)) < 0) {
-		syslog(LOG_ERR, "<%s> IICMP6_FILTER: %s",
-		       __func__, strerror(errno));
-		exit(1);
-	}
+		       sizeof(filt)) < 0)
+		fatal("IICMP6_FILTER");
 
 	/*
 	 * join all routers multicast address on each advertising interface.
 	 */
 	if (inet_pton(AF_INET6, ALLROUTERS_LINK,
 		      &mreq.ipv6mr_multiaddr.s6_addr)
-	    != 1) {
-		syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
-		       __func__);
-		exit(1);
-	}
+	    != 1)
+		fatal("inet_pton failed(library bug?)");
 	while (ra) {
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
-			syslog(LOG_ERR, "<%s> IPV6_JOIN_GROUP(link) on %s: %s",
-			       __func__, ra->ifname, strerror(errno));
+			log_warn("IPV6_JOIN_GROUP(link) on %s", ra->ifname);
 			exit(1);
 		}
 		ra = ra->next;
@@ -1373,29 +1234,21 @@ sock_open()
 	 */
 	if (accept_rr) {
 		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
-			      &in6a_site_allrouters) != 1) {
-			syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
-			       __func__);
-			exit(1);
-		}
+			      &in6a_site_allrouters) != 1)
+			fatal("inet_pton failed(library bug?)");
 		mreq.ipv6mr_multiaddr = in6a_site_allrouters;
 		if (mcastif) {
 			if ((mreq.ipv6mr_interface = if_nametoindex(mcastif))
 			    == 0) {
-				syslog(LOG_ERR,
-				       "<%s> invalid interface: %s",
-				       __func__, mcastif);
+				log_warn("invalid interface: %s", mcastif);
 				exit(1);
 			}
 		} else
 			mreq.ipv6mr_interface = ralist->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
-			syslog(LOG_ERR,
-			       "<%s> IPV6_JOIN_GROUP(site) on %s: %s",
-			       __func__,
-			       mcastif ? mcastif : ralist->ifname,
-			       strerror(errno));
+			log_warn("IPV6_JOIN_GROUP(site) on %s",
+			    mcastif ? mcastif : ralist->ifname);
 			exit(1);
 		}
 	}
@@ -1424,11 +1277,8 @@ sock_open()
 static void
 rtsock_open()
 {
-	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
-		syslog(LOG_ERR,
-		       "<%s> socket: %s", __func__, strerror(errno));
-		exit(1);
-	}
+	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+		fatal("socket");
 }
 
 struct rainfo *
@@ -1454,8 +1304,7 @@ struct rainfo *rainfo;
 	struct soliciter *sol, *nextsol;
 
 	if ((iflist[rainfo->ifindex]->ifm_flags & IFF_UP) == 0) {
-		syslog(LOG_DEBUG, "<%s> %s is not up, skip sending RA",
-		       __func__, rainfo->ifname);
+		log_debug("%s is not up, skip sending RA", rainfo->ifname);
 		return;
 	}
 
@@ -1485,19 +1334,14 @@ struct rainfo *rainfo;
 		memcpy(CMSG_DATA(cm), &hoplimit, sizeof(int));
 	}
 
-	syslog(LOG_DEBUG,
-	       "<%s> send RA on %s, # of waitings = %d",
-	       __func__, rainfo->ifname, rainfo->waiting); 
+	log_debug("send RA on %s, # of waitings = %d",
+	    rainfo->ifname, rainfo->waiting); 
 
 	i = sendmsg(sock, &sndmhdr, 0);
 
-	if (i < 0 || i != rainfo->ra_datalen)  {
-		if (i < 0) {
-			syslog(LOG_ERR, "<%s> sendmsg on %s: %s",
-			       __func__, rainfo->ifname,
-			       strerror(errno));
-		}
-	}
+	if (i < 0 || i != rainfo->ra_datalen)
+		if (i < 0)
+			log_warn("sendmsg on %s", rainfo->ifname);
 
 	/*
 	 * unicast advertisements
@@ -1510,14 +1354,10 @@ struct rainfo *rainfo;
 #if 0
 		sndmhdr.msg_name = (caddr_t)&sol->addr;
 		i = sendmsg(sock, &sndmhdr, 0);
-		if (i < 0 || i != rainfo->ra_datalen)  {
-			if (i < 0) {
-				syslog(LOG_ERR,
-				    "<%s> unicast sendmsg on %s: %s",
-				    __func__, rainfo->ifname,
-				    strerror(errno));
-			}
-		}
+		if (i < 0 || i != rainfo->ra_datalen)
+			if (i < 0)
+				log_warn("unicast sendmsg on %s",
+				    rainfo->ifname);
 #endif
 
 		sol->next = NULL;
@@ -1547,9 +1387,7 @@ ra_timeout(void *data)
 	/* if necessary, reconstruct the packet. */
 #endif
 
-	syslog(LOG_DEBUG,
-	       "<%s> RA timer on %s is expired",
-	       __func__, rai->ifname);
+	log_debug("RA timer on %s is expired", rai->ifname);
 
 	ra_output(rai);
 }
@@ -1584,10 +1422,8 @@ ra_timer_update(void *data, struct timeval *tm)
 	tm->tv_sec = interval;
 	tm->tv_usec = 0;
 
-	syslog(LOG_DEBUG,
-	       "<%s> RA timer on %s is set to %ld:%ld",
-	       __func__, rai->ifname,
-	       (long int)tm->tv_sec, (long int)tm->tv_usec);
+	log_debug("RA timer on %s is set to %ld:%ld", rai->ifname,
+	    (long int)tm->tv_sec, (long int)tm->tv_usec);
 
 	return;
 }

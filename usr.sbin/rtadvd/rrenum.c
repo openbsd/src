@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.c,v 1.10 2002/06/10 19:57:35 espie Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.11 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -46,10 +46,10 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include "rtadvd.h"
 #include "rrenum.h"
 #include "if.h"
+#include "log.h"
 
 #define	RR_ISSET_SEGNUM(segnum_bits, segnum) \
 	((((segnum_bits)[(segnum) >> 5]) & (1 << ((segnum) & 31))) != 0)
@@ -84,8 +84,7 @@ rr_pco_check(int len, struct rr_pco_match *rpm)
 	/* rpm->rpm_len must be (4N * 3) as router-renum-05.txt */
 	if ((rpm->rpm_len - 3) < 0 || /* must be at least 3 */
 	    (rpm->rpm_len - 3) & 0x3) { /* must be multiple of 4 */
-		syslog(LOG_WARNING, "<%s> rpm_len %d is not 4N * 3",
-		       __func__, rpm->rpm_len);
+		log_warnx("rpm_len %d is not 4N * 3", rpm->rpm_len);
 		return 1;
 	}
 	/* rpm->rpm_code must be valid value */
@@ -95,14 +94,12 @@ rr_pco_check(int len, struct rr_pco_match *rpm)
 	case RPM_PCO_SETGLOBAL:
 		break;
 	default:
-		syslog(LOG_WARNING, "<%s> unknown rpm_code %d", __func__,
-		       rpm->rpm_code);
+		log_warnx("unknown rpm_code %d", rpm->rpm_code);
 		return 1;
 	}
 	/* rpm->rpm_matchlen must be 0 to 128 inclusive */
 	if (rpm->rpm_matchlen > 128) {
-		syslog(LOG_WARNING, "<%s> rpm_matchlen %d is over 128",
-		       __func__, rpm->rpm_matchlen);
+		log_warnx("rpm_matchlen %d is over 128", rpm->rpm_matchlen);
 		return 1;
 	}
 
@@ -124,11 +121,11 @@ rr_pco_check(int len, struct rr_pco_match *rpm)
 		 *  (rpu_uselen + rpu_keeplen > 0)
 		 */
 		if (checklen > 128) {
-			syslog(LOG_WARNING, "<%s> sum of rpu_uselen %d and"
-			       " rpu_keeplen %d is %d(over 128)",
-			       __func__, rpu->rpu_uselen,
-			       rpu->rpu_keeplen,
-			       rpu->rpu_uselen + rpu->rpu_keeplen);
+			log_warnx("sum of rpu_uselen %d and"
+			    " rpu_keeplen %d is %d(over 128)",
+			    rpu->rpu_uselen,
+			    rpu->rpu_keeplen,
+			    rpu->rpu_uselen + rpu->rpu_keeplen);
 			return 1;
 		}
 	}
@@ -162,8 +159,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 		irr->irr_useprefix.sin6_addr = in6addr_any;
 		if (ioctl(s, rrcmd2pco[rpm->rpm_code], (caddr_t)irr) < 0 &&
 		    errno != EADDRNOTAVAIL)
-			syslog(LOG_ERR, "<%s> ioctl: %s", __func__,
-			       strerror(errno));
+			log_warn("ioctl");
 		return;
 	}
 
@@ -194,8 +190,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 
 		if (ioctl(s, rrcmd2pco[rpm->rpm_code], (caddr_t)irr) < 0 &&
 		    errno != EADDRNOTAVAIL)
-			syslog(LOG_ERR, "<%s> ioctl: %s", __func__,
-			       strerror(errno));
+			log_warn("ioctl");
 
 		/* very adhoc: should be rewritten */
 		if (rpm->rpm_code == RPM_PCO_CHANGE &&
@@ -246,11 +241,8 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 	if ((rr_pco_check(len, rpm) != NULL))
 		return 1;
 
-	if (s == -1 && (s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
-		exit(1);
-	}
+	if (s == -1 && (s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		fatal("socket");
 
 	memset(&irr, 0, sizeof(irr));
 	irr.irr_origin = PR_ORIG_RR;
@@ -275,8 +267,7 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 	if (errno == ENXIO)
 		return 0;
 	else if (errno) {
-		syslog(LOG_ERR, "<%s> if_indextoname: %s", __func__,
-		       strerror(errno));
+		log_warn("if_indextoname");
 		return 1;
 	}
 	return 0;
@@ -306,8 +297,8 @@ do_rr(int len, struct icmp6_router_renum *rr)
 		rpm = (struct rr_pco_match *)cp;
 		if (len < sizeof(struct rr_pco_match)) {
 		    tooshort:
-			syslog(LOG_ERR, "<%s> pkt too short. left len = %d. "
-			       "gabage at end of pkt?", __func__, len);
+			log_warnx("pkt too short. left len = %d. "
+			    "gabage at end of pkt?", len);
 			return 1;
 		}
 		rpmlen = rpm->rpm_len << 3;
@@ -315,7 +306,7 @@ do_rr(int len, struct icmp6_router_renum *rr)
 			goto tooshort;
 
 		if (do_pco(rr, rpmlen, rpm)) {
-			syslog(LOG_WARNING, "<%s> invalid PCO", __func__);
+			log_warn("invalid PCO");
 			goto next;
 		}
 
@@ -341,37 +332,33 @@ rr_command_check(int len, struct icmp6_router_renum *rr, struct in6_addr *from,
 	/* rr_command length check */
 	if (len < (sizeof(struct icmp6_router_renum) +
 		   sizeof(struct rr_pco_match))) {
-		syslog(LOG_ERR,	"<%s> rr_command len %d is too short",
-		       __func__, len);
+		log_warnx("rr_command len %d is too short", len);
 		return 1;
 	}
 
 	/* destination check. only for multicast. omit unicast check. */
 	if (IN6_IS_ADDR_MULTICAST(dst) && !IN6_IS_ADDR_MC_LINKLOCAL(dst) &&
 	    !IN6_IS_ADDR_MC_SITELOCAL(dst)) {
-		syslog(LOG_ERR,	"<%s> dst mcast addr %s is illegal",
-		       __func__,
-		       inet_ntop(AF_INET6, dst, ntopbuf, INET6_ADDRSTRLEN));
+		log_warnx("dst mcast addr %s is illegal",
+		    inet_ntop(AF_INET6, dst, ntopbuf, INET6_ADDRSTRLEN));
 		return 1;
 	}
 
 	/* seqnum and segnum check */
 	if (rro.rro_seqnum > rr->rr_seqnum) {
-		syslog(LOG_WARNING,
-		       "<%s> rcvd old seqnum %d from %s",
-		       __func__, (u_int32_t)ntohl(rr->rr_seqnum),
-		       inet_ntop(AF_INET6, from, ntopbuf, INET6_ADDRSTRLEN));
+		log_warnx("rcvd old seqnum %d from %s",
+		    (u_int32_t)ntohl(rr->rr_seqnum),
+		    inet_ntop(AF_INET6, from, ntopbuf, INET6_ADDRSTRLEN));
 		return 1;
 	}
 	if (rro.rro_seqnum == rr->rr_seqnum &&
 	    (rr->rr_flags & ICMP6_RR_FLAGS_TEST) == 0 &&
 	    RR_ISSET_SEGNUM(rro.rro_segnum_bits, rr->rr_segnum)) {
 		if ((rr->rr_flags & ICMP6_RR_FLAGS_REQRESULT) != 0)
-			syslog(LOG_WARNING,
-			       "<%s> rcvd duped segnum %d from %s",
-			       __func__, rr->rr_segnum,
-			       inet_ntop(AF_INET6, from, ntopbuf,
-					 INET6_ADDRSTRLEN));
+			log_warnx("rcvd duped segnum %d from %s",
+			    rr->rr_segnum,
+			    inet_ntop(AF_INET6, from, ntopbuf,
+				INET6_ADDRSTRLEN));
 		return 0;
 	}
 
@@ -410,7 +397,7 @@ rr_command_input(int len, struct icmp6_router_renum *rr,
 	return;
 
     failed:
-	syslog(LOG_ERR, "<%s> received RR was invalid", __func__);
+	log_warnx("received RR was invalid");
 	return;
 }
 
@@ -420,23 +407,20 @@ rr_input(int len, struct icmp6_router_renum *rr, struct in6_pktinfo *pi,
 {
 	u_char ntopbuf[2][INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 
-	syslog(LOG_DEBUG,
-	       "<%s> RR received from %s to %s on %s",
-	       __func__,
-	       inet_ntop(AF_INET6, &from->sin6_addr,
-			 ntopbuf[0], INET6_ADDRSTRLEN),
-	       inet_ntop(AF_INET6, &dst, ntopbuf[1], INET6_ADDRSTRLEN),
-	       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+	log_debug("RR received from %s to %s on %s",
+	    inet_ntop(AF_INET6, &from->sin6_addr,
+		ntopbuf[0], INET6_ADDRSTRLEN),
+	   inet_ntop(AF_INET6, &dst, ntopbuf[1], INET6_ADDRSTRLEN),
+	   if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 
 	/* packet validation based on Section 4.1 of RFC2894 */
 	if (len < sizeof(struct icmp6_router_renum)) {
-		syslog(LOG_NOTICE,
-		       "<%s>: RR short message (size %d) from %s to %s on %s",
-		       __func__, len,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf[0], INET6_ADDRSTRLEN),
-		       inet_ntop(AF_INET6, &dst, ntopbuf[1], INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_info("RR short message (size %d) from %s to %s on %s",
+		    len,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf[0], INET6_ADDRSTRLEN),
+		    inet_ntop(AF_INET6, &dst, ntopbuf[1], INET6_ADDRSTRLEN),
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
@@ -450,14 +434,12 @@ rr_input(int len, struct icmp6_router_renum *rr, struct in6_pktinfo *pi,
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&pi->ipi6_addr) &&
 	    !IN6_ARE_ADDR_EQUAL(&in6a_site_allrouters, &pi->ipi6_addr)) {
-		syslog(LOG_NOTICE,
-		       "<%s>: RR message with invalid destination (%s) "
-		       "from %s on %s",
-		       __func__,
-		       inet_ntop(AF_INET6, &dst, ntopbuf[0], INET6_ADDRSTRLEN),
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf[1], INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		log_info("RR message with invalid destination (%s) "
+		    "from %s on %s",
+		    inet_ntop(AF_INET6, &dst, ntopbuf[0], INET6_ADDRSTRLEN),
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+			ntopbuf[1], INET6_ADDRSTRLEN),
+		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
@@ -475,8 +457,7 @@ rr_input(int len, struct icmp6_router_renum *rr, struct in6_pktinfo *pi,
 		/* TODO: sequence number reset */
 		break;
 	default:
-		syslog(LOG_ERR,	"<%s> received unknown code %d",
-		       __func__, rr->rr_code);
+		log_warnx("received unknown code %d", rr->rr_code);
 		break;
 
 	}

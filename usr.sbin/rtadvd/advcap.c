@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.12 2008/04/20 11:36:48 rainer Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.13 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <errno.h>
 #include <string.h>
 #include "pathnames.h"
+#include "log.h"
 
 #ifndef BUFSIZ
 #define	BUFSIZ		1024
@@ -64,7 +64,6 @@
 #define V_TERM		"HOST"
 #endif
 
-char	*RM;
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -131,11 +130,10 @@ getent(bp, name, cp)
 	 * has to already have the newlines crunched out.
 	 */
 	if (cp && *cp) {
-		tf = open(RM = cp, O_RDONLY);
+		tf = open(cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_WARNING,
-		       "<%s> open: %s", __func__, strerror(errno));
+		log_warn("open");
 		return (-2);
 	}
 	for (;;) {
@@ -211,6 +209,8 @@ tnchktc()
 		return (0);
 	}
 	if (getent(tcbuf, tcname, remotefile) != 1) {
+		log_warnx("Could not parse %s: "
+		    "Unresolvable reference to %s.", remotefile, tcname);
 		return (0);
 	}
 	for (q = tcbuf; *q++ != ':'; )

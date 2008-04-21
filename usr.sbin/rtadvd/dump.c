@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.6 2002/06/10 19:57:35 espie Exp $	*/
+/*	$OpenBSD: dump.c,v 1.7 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
@@ -56,6 +55,7 @@
 #include "timer.h"
 #include "if.h"
 #include "dump.h"
+#include "log.h"
 
 static FILE *fp;
 
@@ -207,8 +207,7 @@ rtadvd_dump_file(dumpfile)
 	char *dumpfile;
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		syslog(LOG_WARNING, "<%s> open a dump file(%s)",
-		       __func__, dumpfile);
+		log_warn("open a dump file(%s)", dumpfile);
 		return;
 	}
 

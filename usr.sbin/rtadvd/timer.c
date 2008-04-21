@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.8 2002/06/10 19:57:35 espie Exp $	*/
+/*	$OpenBSD: timer.c,v 1.9 2008/04/21 20:40:55 rainer Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -33,11 +33,11 @@
 #include <sys/time.h>
 
 #include <unistd.h>
-#include <syslog.h>
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
 #include "timer.h"
+#include "log.h"
 
 static struct rtadvd_timer timer_head;
 
@@ -63,24 +63,15 @@ rtadvd_add_timer(void (*timeout)(void *),
 {
 	struct rtadvd_timer *newtimer;
 
-	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> can't allocate memory", __func__);
-		exit(1);
-	}
+	if ((newtimer = malloc(sizeof(*newtimer))) == NULL)
+		fatal("malloc");
 
 	memset(newtimer, 0, sizeof(*newtimer));
 
-	if (timeout == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> timeout function unspecified", __func__);
-		exit(1);
-	}
-	if (update == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> update function unspecified", __func__);
-		exit(1);
-	}
+	if (timeout == NULL)
+		fatalx("timeout function unspecified");
+	if (update == NULL)
+		fatalx("update function unspecified");
 	newtimer->expire = timeout;
 	newtimer->update = update;
 	newtimer->expire_data = timeodata;
@@ -165,9 +156,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 
 	gettimeofday(&now, NULL);
 	if (TIMEVAL_LEQ(timer->tm, now)) {
-		syslog(LOG_DEBUG,
-		       "<%s> a timer must be expired, but not yet",
-		       __func__);
+		log_debug("a timer must be expired, but not yet");
 		returnval.tv_sec = returnval.tv_usec = 0;
 	}
 	else
