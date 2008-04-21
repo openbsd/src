@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7462.c,v 1.1 2008/04/21 04:48:25 deraadt Exp $	*/
+/*	$OpenBSD: adt7462.c,v 1.2 2008/04/21 06:13:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -97,7 +97,7 @@ adtfsm_refresh(void *arg)
 {
 	struct adtfsm_softc *sc = arg;
 	u_int8_t cmdh, cmdl, datah = 0x01, datal = 0x02;
-	short t;
+	u_short t;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
@@ -107,9 +107,7 @@ adtfsm_refresh(void *arg)
 	    sc->sc_addr, &cmdl, sizeof cmdl, &datal, sizeof datal, 0) == 0 &&
 	    iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmdh, sizeof cmdh, &datah, sizeof datah, 0) == 0) {
-		t = datah << 2;
-		t += (datah < 64 ? -1 : 1) * (datal >> 6);
-		t -= (64 << 2);
+		t = (((datah << 8) | datal) >> 6) - (64 << 2);
 		sc->sc_sensor[ADTFSM_INT].value = 273150000 + t * 250000;
 		sc->sc_sensor[ADTFSM_INT].flags &= ~SENSOR_FINVALID;
 	} else
