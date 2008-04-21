@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.73 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.74 2008/04/21 16:14:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2118,7 +2118,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 void
 ieee80211_recv_4way_msg2(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni,
-    const u_int8_t *rsn)
+    const u_int8_t *rsnie)
 {
 	struct ieee80211_ptk tptk;
 	const u_int8_t *pmk;
@@ -2165,8 +2165,8 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	 * The RSN IE must match bit-wise with what the STA included in its
 	 * (Re)Association Request.
 	 */
-	if (ni->ni_rsnie == NULL || rsn[1] != ni->ni_rsnie[1] ||
-	    memcmp(rsn, ni->ni_rsnie, 2 + rsn[1]) != 0) {
+	if (ni->ni_rsnie == NULL || rsnie[1] != ni->ni_rsnie[1] ||
+	    memcmp(rsnie, ni->ni_rsnie, 2 + rsnie[1]) != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_RSN_DIFFERENT_IE);
 		ieee80211_node_leave(ic, ni);
@@ -2244,12 +2244,19 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
 
+	/*
+	 * Some WPA1+WPA2 APs (like hostapd) appear to include both WPA and
+	 * RSN IEs in message 3/4.  We only take into account the IE of the
+	 * version of the protocol we negotiated at association time.
+	 */
 	rsnie1 = rsnie2 = gtk = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm)
 			break;
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_RSN:
+			if (ni->ni_rsnprotos != IEEE80211_PROTO_RSN)
+				break;
 			if (rsnie1 == NULL)
 				rsnie1 = frm;
 			else if (rsnie2 == NULL)
@@ -2268,6 +2275,9 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			} else if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
 				switch (frm[5]) {
 				case 1:	/* WPA */
+					if (ni->ni_rsnprotos !=
+					    IEEE80211_PROTO_WPA)
+						break;
 					rsnie1 = frm;
 					break;
 				}
@@ -2300,7 +2310,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	 * If a second RSN information element is present, use its pairwise
 	 * cipher suite or deauthenticate.
 	 */
-	if (rsnie2 != NULL && ni->ni_rsnprotos == IEEE80211_PROTO_RSN) {
+	if (rsnie2 != NULL) {
 		struct ieee80211_rsnparams rsn;
 
 		if (ieee80211_parse_rsn(ic, rsnie2, &rsn) == 0) {
