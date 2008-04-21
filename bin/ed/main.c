@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2006/04/25 15:41:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2008/04/21 11:22:14 tobias Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.30 2006/04/25 15:41:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.31 2008/04/21 11:22:14 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -1413,19 +1413,17 @@ signal_int(int signo)
 void
 handle_hup(int signo)
 {
-	char path[MAXPATHLEN];
-	char *hup = NULL;		/* hup filename */
+	char hup[MAXPATHLEN];
 
 	if (!sigactive)
 		quit(1);
 	sigflags &= ~(1 << (signo - 1));
 	/* XXX signal race */
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
-	    home != NULL &&
-	    strlen(home) + sizeof("/ed.hup") <= MAXPATHLEN) {
-		strlcpy(path, home, sizeof(path));
-		strlcat(path, "/ed.hup", sizeof(path));
-		write_file(hup, "w", 1, addr_last);
+	    home != NULL && home[0] == '/') {
+		if (strlcpy(hup, home, sizeof(hup)) < sizeof(hup) &&
+		    strlcat(hup, "/ed.hup", sizeof(hup)) < sizeof(hup))
+			write_file(hup, "w", 1, addr_last);
 	}
 	_exit(2);
 }
