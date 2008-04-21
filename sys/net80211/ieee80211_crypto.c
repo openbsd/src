@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.39 2008/04/18 09:16:14 djm Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.40 2008/04/21 19:01:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -57,8 +57,6 @@ void	ieee80211_prf(const u_int8_t *, size_t, struct vector *, int,
 	    u_int8_t *, size_t);
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
-void	ieee80211_derive_gtk(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, u_int8_t *, size_t);
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
