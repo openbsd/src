@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.9 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: freopen.c,v 1.10 2008/04/21 12:28:35 otto Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,6 +135,13 @@ freopen(const char *file, const char *mode, FILE *fp)
 			(void) close(f);
 			f = wantfd;
 		}
+	}
+
+	/* _file is only a short */
+	if (f > SHRT_MAX) {
+		fp->_flags = 0;		/* set it free */
+		errno = EMFILE;
+		return (NULL);
 	}
 
 	fp->_flags = flags;

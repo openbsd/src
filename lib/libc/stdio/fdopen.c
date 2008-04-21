@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdopen.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fdopen.c,v 1.6 2008/04/21 12:28:35 otto Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
@@ -43,6 +44,12 @@ fdopen(int fd, const char *mode)
 {
 	FILE *fp;
 	int flags, oflags, fdflags, tmp;
+
+	/* _file is only a short */
+	if (fd > SHRT_MAX) {
+		errno = EMFILE;
+		return (NULL);
+	}
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);
