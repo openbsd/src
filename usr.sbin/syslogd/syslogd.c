@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.100 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.101 2008/04/21 22:09:51 mpf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.100 2007/10/17 20:10:44 chl Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.101 2008/04/21 22:09:51 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,7 @@ struct filed {
 	int	f_prevcount;			/* repetition cnt of prevline */
 	unsigned int f_repeatcount;		/* number of "repeated" msgs */
 	int	f_quick;			/* abort when matched */
+	time_t	f_lasterrtime;			/* last error was reported */
 };
 
 /*
@@ -944,9 +945,20 @@ fprintlog(struct filed *f, int flags, char *msg)
 	again:
 		if (writev(f->f_file, iov, 6) < 0) {
 			int e = errno;
+
+			/* pipe is non-blocking. log and drop message if full */
+			if (e == EAGAIN && f->f_type == F_PIPE) {
+				if (now - f->f_lasterrtime > 120) {
+					f->f_lasterrtime = now;
+					logerror(f->f_un.f_fname);
+				}
+				break;
+			}
+
 			(void)close(f->f_file);
 			/*
-			 * Check for errors on TTY's due to loss of tty
+			 * Check for errors on TTY's or program pipes.
+			 * Errors happen due to loss of tty or died programs.
 			 */
 			if (e == EAGAIN) {
 				/*
