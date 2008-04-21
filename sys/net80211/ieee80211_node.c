@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.32 2008/04/21 19:37:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.33 2008/04/21 20:16:34 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1317,6 +1317,108 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		bridge_update(&ic->ic_if,
 		    (struct ether_addr *)ni->ni_macaddr, 1);
 #endif
+}
+
+static int
+ieee80211_do_slow_print(struct ieee80211com *ic, int *did_print)
+{
+	static const struct timeval merge_print_intvl = {
+		.tv_sec = 1, .tv_usec = 0
+	};
+	if ((ic->ic_if.if_flags & IFF_LINK0) == 0)
+		return 0;
+	if (!*did_print && (ic->ic_if.if_flags & IFF_DEBUG) == 0 &&
+	    !ratecheck(&ic->ic_last_merge_print, &merge_print_intvl))
+		return 0;
+
+	*did_print = 1;
+	return 1;
+}
+
+/* ieee80211_ibss_merge helps merge 802.11 ad hoc networks.  The
+ * convention, set by the Wireless Ethernet Compatibility Alliance
+ * (WECA), is that an 802.11 station will change its BSSID to match
+ * the "oldest" 802.11 ad hoc network, on the same channel, that
+ * has the station's desired SSID.  The "oldest" 802.11 network
+ * sends beacons with the greatest TSF timestamp.
+ *
+ * Return ENETRESET if the BSSID changed, 0 otherwise.
+ *
+ * XXX Perhaps we should compensate for the time that elapses
+ * between the MAC receiving the beacon and the host processing it
+ * in ieee80211_ibss_merge.
+ */
+int
+ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
+    u_int64_t local_tsft)
+{
+	u_int64_t beacon_tsft;
+	int did_print = 0, sign;
+	union {
+		u_int64_t	word;
+		u_int8_t	tstamp[8];
+	} u;
+
+	/* ensure alignment */
+	(void)memcpy(&u, &ni->ni_tstamp[0], sizeof(u));
+	beacon_tsft = letoh64(u.word);
+
+	/* we are faster, let the other guy catch up */
+	if (beacon_tsft < local_tsft)
+		sign = -1;
+	else
+		sign = 1;
+
+	if (IEEE80211_ADDR_EQ(ni->ni_bssid, ic->ic_bss->ni_bssid)) {
+		if (!ieee80211_do_slow_print(ic, &did_print))
+			return 0;
+		printf("%s: tsft offset %s%llu\n", ic->ic_if.if_xname,
+		    (sign < 0) ? "-" : "",
+		    (sign < 0)
+			? (local_tsft - beacon_tsft)
+			: (beacon_tsft - local_tsft));
+		return 0;
+	}
+
+	if (sign < 0)
+		return 0;
+
+	if (ieee80211_match_bss(ic, ni) != 0)
+		return 0;
+
+	if (ieee80211_do_slow_print(ic, &did_print)) {
+		printf("%s: ieee80211_ibss_merge: bssid mismatch %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
+		printf("%s: my tsft %llu beacon tsft %llu\n",
+		    ic->ic_if.if_xname, local_tsft, beacon_tsft);
+		printf("%s: sync TSF with %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+	}
+
+	ic->ic_flags &= ~IEEE80211_F_SIBSS;
+
+	/* negotiate rates with new IBSS */
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
+	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+	if (ni->ni_rates.rs_nrates == 0) {
+		if (ieee80211_do_slow_print(ic, &did_print)) {
+			printf("%s: rates mismatch, BSSID %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
+		}
+		return 0;
+	}
+
+	if (ieee80211_do_slow_print(ic, &did_print)) {
+		printf("%s: sync BSSID %s -> ",
+		    ic->ic_if.if_xname, ether_sprintf(ic->ic_bss->ni_bssid));
+		printf("%s ", ether_sprintf(ni->ni_bssid));
+		printf("(from %s)\n", ether_sprintf(ni->ni_macaddr));
+	}
+
+	ieee80211_node_newstate(ni, IEEE80211_STA_BSS);
+	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
+
+	return ENETRESET;
 }
 
 void
