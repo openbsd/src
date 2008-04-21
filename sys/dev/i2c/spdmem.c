@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.24 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.25 2008/04/21 05:38:30 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -577,7 +577,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 uint8_t
 spdmem_read(struct spdmem_softc *sc, uint8_t reg)
 {
-	uint8_t val;
+	uint8_t val = 0xff;
 
 	iic_acquire_bus(sc->sc_tag,0);
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
