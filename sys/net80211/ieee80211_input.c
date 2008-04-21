@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.75 2008/04/21 19:01:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.76 2008/04/21 19:27:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1606,9 +1606,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_DPRINTF(("%s: invalid SSID element\n", __func__));
 		return;
 	}
-	/* check that the specified SSID (if not wildcard) matches ours */
-	if (ssid[1] != 0 && (ssid[1] != ni->ni_esslen ||
-	    memcmp(&ssid[2], ni->ni_essid, ni->ni_esslen) != 0)) {
+	/* check that the specified SSID matches ours */
+	if (ssid[1] != ni->ni_esslen ||
+	    memcmp(&ssid[2], ni->ni_essid, ni->ni_esslen) != 0) {
 		IEEE80211_DPRINTF(("%s: SSID mismatch\n", __func__));
 		ic->ic_stats.is_rx_ssidmismatch++;
 		return;
