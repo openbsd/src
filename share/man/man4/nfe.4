@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.15 2008/01/10 10:22:19 brad Exp $
+.\"	$OpenBSD: nfe.4,v 1.16 2008/04/21 08:30:26 brad Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2008 $
+.Dd $Mdocdate: April 21 2008 $
 .Dt NFE 4
 .Os
 .Sh NAME
@@ -30,11 +30,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI Ethernet adapters based on the NVIDIA
-nForce Media and Communications Processors (MCP), such as
+driver supports Fast Ethernet and Gigabit Ethernet adapters based
+on the NVIDIA nForce Media and Communications Processors (MCP),
 the nForce, nForce 2, nForce 3, CK804, MCP04, MCP51, MCP55,
 MCP61, MCP65, MCP67, MCP73, MCP77 and MCP79 Ethernet
 controller chips.
+.Pp
+The
+.Nm
+driver supports VLAN tag insertion with the MCP55 chipset and
+IPv4 transmit/receive IP/TCP/UDP checksum offload with the
+nForce 3, CK804, MCP55, MCP77 and MCP79 chipsets.
 .Pp
 The
 .Nm
