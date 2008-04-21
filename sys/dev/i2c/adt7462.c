@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7462.c,v 1.2 2008/04/21 06:13:35 deraadt Exp $	*/
+/*	$OpenBSD: adt7462.c,v 1.3 2008/04/21 15:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -25,6 +25,12 @@
 
 #define ADT7462_INT_TEMPL	0x88
 #define ADT7462_INT_TEMPH	0x89
+#define ADT7462_INT_REM1L	0x8a
+#define ADT7462_INT_REM1H	0x8b
+#define ADT7462_INT_REM2L	0x8c
+#define ADT7462_INT_REM2H	0x8d
+#define ADT7462_INT_REM3L	0x8e
+#define ADT7462_INT_REM3H	0x8f
 
 /* Sensors */
 #define ADTFSM_INT		0
@@ -97,7 +103,7 @@ adtfsm_refresh(void *arg)
 {
 	struct adtfsm_softc *sc = arg;
 	u_int8_t cmdh, cmdl, datah = 0x01, datal = 0x02;
-	u_short t;
+	short t;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
