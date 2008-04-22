@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7462.c,v 1.3 2008/04/21 15:32:48 deraadt Exp $	*/
+/*	$OpenBSD: adt7462.c,v 1.4 2008/04/22 00:25:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -33,8 +33,11 @@
 #define ADT7462_INT_REM3H	0x8f
 
 /* Sensors */
-#define ADTFSM_INT		0
-#define ADTFSM_NUM_SENSORS	1
+#define ADTFSM_TEMP0		0
+#define ADTFSM_TEMP1		1
+#define ADTFSM_TEMP2		2
+#define ADTFSM_TEMP3		3
+#define ADTFSM_NUM_SENSORS	4
 
 struct adtfsm_softc {
 	struct device	sc_dev;
@@ -82,9 +85,12 @@ adtfsm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	sc->sc_sensor[ADTFSM_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADTFSM_INT].desc, "Internal",
-	    sizeof(sc->sc_sensor[ADTFSM_INT].desc));
+	for (i = 0; i < 4; i++) {
+		sc->sc_sensor[i].type = SENSOR_TEMP;
+		snprintf(sc->sc_sensor[i].desc,
+		    sizeof(sc->sc_sensor[i].desc),
+		    "Temperature%d", i);
+	}
 
 	if (sensor_task_register(sc, adtfsm_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
@@ -104,22 +110,26 @@ adtfsm_refresh(void *arg)
 	struct adtfsm_softc *sc = arg;
 	u_int8_t cmdh, cmdl, datah = 0x01, datal = 0x02;
 	short t;
+	int i;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
-	cmdl = ADT7462_INT_TEMPL;
-	cmdh = ADT7462_INT_TEMPH;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmdl, sizeof cmdl, &datal, sizeof datal, 0) == 0 &&
-	    iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmdh, sizeof cmdh, &datah, sizeof datah, 0) == 0) {
-		t = (((datah << 8) | datal) >> 6) - (64 << 2);
-		sc->sc_sensor[ADTFSM_INT].value = 273150000 + t * 250000;
-		sc->sc_sensor[ADTFSM_INT].flags &= ~SENSOR_FINVALID;
-	} else
-		sc->sc_sensor[ADTFSM_INT].flags |= SENSOR_FINVALID;
-
-	printf("val %02x %02x\n", datah, datal);
+	for (i = 0; i < 4; i++) {
+		cmdl = ADT7462_INT_TEMPL + i * 2;
+		cmdh = ADT7462_INT_TEMPH + i * 2;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmdl, sizeof cmdl, &datal,
+		    sizeof datal, 0) == 0 &&
+		    iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmdh, sizeof cmdh, &datah,
+		    sizeof datah, 0) == 0) {
+			t = (((datah << 8) | datal) >> 6) - (64 << 2);
+			sc->sc_sensor[i].value = 273150000 + t * 250000;
+			sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
+		} else
+			sc->sc_sensor[i].flags |= SENSOR_FINVALID;
+		printf("val %02x %02x\n", datah, datal);
+	}
 
 	iic_release_bus(sc->sc_tag, 0);
 }
