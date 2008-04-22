@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.73 2008/04/19 19:38:00 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.74 2008/04/22 18:53:34 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1221,7 +1221,7 @@ nfs_getattrcache(vp, vaper)
  * Set up nameidata for a lookup() call and do it
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
+nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p)
 	struct nameidata *ndp;
 	fhandle_t *fhp;
 	int len;
@@ -1231,7 +1231,6 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	caddr_t *dposp;
 	struct vnode **retdirp;
 	struct proc *p;
-	int kerbflag;
 {
 	int i, rem;
 	struct mbuf *md;
@@ -1285,7 +1284,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	 * Extract and set starting directory.
 	 */
 	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
-	    nam, &rdonly, kerbflag);
+	    nam, &rdonly);
 	if (error)
 		goto out;
 	if (dp->v_type != VDIR) {
@@ -1505,7 +1504,7 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
+nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 	fhandle_t *fhp;
 	int lockflag;
 	struct vnode **vpp;
@@ -1513,7 +1512,6 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	int *rdonlyp;
-	int kerbflag;
 {
 	struct proc *p = curproc;	/* XXX */
 	struct mount *mp;
@@ -1542,18 +1540,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
 	}
 
-	/*
-	 * Check/setup credentials.
-	 */
-	if (exflags & MNT_EXKERB) {
-		if (!kerbflag) {
-			vput(*vpp);
-			return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-		}
-	} else if (kerbflag) {
-		vput(*vpp);
-		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
+	/* Check/setup credentials. */
+	if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
 		cred->cr_uid = credanon->cr_uid;
 		cred->cr_gid = credanon->cr_gid;
 		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)

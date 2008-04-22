@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.49 2008/03/16 19:42:57 otto Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.50 2008/04/22 18:53:34 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -118,8 +118,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(1, (struct vattr *)0);
@@ -182,8 +181,7 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(0);
 		return (0);
@@ -274,8 +272,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	/*
 	 * Now that we have all the fields, lets do it.
 	 */
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc(nfsd, preat_ret, &preat, postat_ret, &va, &mb,
@@ -368,8 +365,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = LOOKUP;
 	nd.ni_cnd.cn_flags = LOCKLEAF | SAVESTART;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred,
@@ -468,8 +464,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uiop->uio_rw = UIO_READ;
 	uiop->uio_segflg = UIO_SYSSPACE;
 	uiop->uio_procp = (struct proc *)0;
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		m_freem(mp3);
 		nfsm_reply(2 * NFSX_UNSIGNED);
@@ -551,8 +546,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		off = (off_t)fxdr_unsigned(u_int32_t, *tl);
 	}
 	nfsm_srvstrsiz(reqlen, NFS_SRVMAXDATA(nfsd));
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(1, (struct vattr *)0);
@@ -763,8 +757,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		    &bpos);
 		return (0);
 	}
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va,  &mb,
@@ -1036,8 +1029,8 @@ loop1:
 		cred = &nfsd->nd_cr;
 		v3 = (nfsd->nd_flag & ND_NFSV3);
 		forat_ret = aftat_ret = 1;
-		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp, 
-		    nfsd->nd_nam, &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp,
+		    nfsd->nd_nam, &rdonly);
 		if (!error) {
 		    if (v3)
 			forat_ret = VOP_GETATTR(vp, &forat, cred, procp);
@@ -1268,8 +1261,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -1504,8 +1496,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp)
 		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
 	if (error) {
@@ -1654,8 +1645,7 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = DELETE;
 	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -1747,8 +1737,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	fromnd.ni_cnd.cn_cred = cred;
 	fromnd.ni_cnd.cn_nameiop = DELETE;
 	fromnd.ni_cnd.cn_flags = WANTPARENT | SAVESTART;
-	error = nfs_namei(&fromnd, ffhp, len, slp, nam, &md,
-		&dpos, &fdirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&fromnd, ffhp, len, slp, nam, &md, &dpos, &fdirp, procp);
 	if (fdirp) {
 		if (v3)
 			fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred,
@@ -1775,8 +1764,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
 	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
-	error = nfs_namei(&tond, tfhp, len2, slp, nam, &md,
-		&dpos, &tdirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&tond, tfhp, len2, slp, nam, &md, &dpos, &tdirp, procp);
 	if (tdirp) {
 		if (v3)
 			tdirfor_ret = VOP_GETATTR(tdirp, &tdirfor, cred,
@@ -1918,8 +1906,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	nfsm_srvmtofh(dfhp);
 	nfsm_srvnamesiz(len);
-	error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_WCCDATA(v3));
 		nfsm_srvpostop_attr(getret, &at);
@@ -1932,8 +1919,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT;
-	error = nfs_namei(&nd, dfhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, dfhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2020,8 +2006,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2160,8 +2145,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2273,8 +2257,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = DELETE;
 	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
-		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2417,8 +2400,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		toff = fxdr_unsigned(u_quad_t, *tl++);
 	}
 
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -2670,8 +2652,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	verf = fxdr_hyper(tl);
 	tl += 2;
 
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -2979,8 +2960,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &mb, &bpos);
@@ -3034,8 +3014,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -3106,8 +3085,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -3175,8 +3153,7 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);

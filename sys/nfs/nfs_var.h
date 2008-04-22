@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.34 2008/04/14 13:46:13 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.35 2008/04/22 18:53:34 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ int nfs_loadattrcache(struct vnode **, struct mbuf **, caddr_t *,
 int nfs_getattrcache(struct vnode *, struct vattr *);
 int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
-		   struct proc *, int);
+		   struct proc *);
 void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int, caddr_t *);
 void nfsm_adj(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
@@ -263,7 +263,7 @@ void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *);
 int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,
-		      struct nfssvc_sock *, struct mbuf *, int *, int);
+		      struct nfssvc_sock *, struct mbuf *, int *);
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
 void nfs_clearcommit(struct mount *);
 int nfs_in_committed_range(struct vnode *, struct buf *);
