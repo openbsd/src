@@ -1,0 +1,182 @@
+.\"	$OpenBSD: sysmerge.8,v 1.1 2008/04/22 20:53:16 ajacoutot Exp $
+.\"
+.\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 22 2008 $
+.Dt SYSMERGE 8
+.Os
+.Sh NAME
+.Nm sysmerge
+.Nd update system configuration files
+.Sh SYNOPSIS
+.Nm
+.Op Fl a
+.Op Fl s Ar src \*(Ba etcXX.tgz
+.Sh DESCRIPTION
+.Nm
+is a
+.Xr sh 1
+script designed to help the administrator update configuration files
+after upgrading to a new release or snapshot.
+The configuration files are typically those held in
+.Pa /etc ,
+though
+.Nm
+is also able to update files held in
+.Pa /dev ,
+.Pa /root ,
+and
+.Pa /var .
+.Pp
+It is
+.Sy HIGHLY
+recommended to back up the
+.Pa /etc
+directory before running this script.
+.Pp
+.Nm
+works by comparing a temporary reference root directory
+against locally installed files.
+All work is done under
+.Pa ${TMPDIR}/sysmerge.XXXXX
+(known as the
+.Em work directory ) .
+The temporary root directory
+.Pa temproot
+is created under the work directory.
+Each modified and/or replaced file is saved under the
+.Pa backup
+directory inside the work directory.
+.Pp
+When run in
+.Em automatic
+mode
+.Pq Fl a ,
+.Nm
+will skip files with identical CVS Id, install missing ones and run commands
+associated with the following special files if they were modified:
+.Xr aliases 5 ,
+.Xr login.conf 5 ,
+.Xr MAKEDEV 8 ,
+.Xr passwd 5 .
+In
+.Em manual
+mode (the default unless
+.Fl a
+is specified),
+.Nm
+will perform a strict comparison of files.
+.Pp
+.Nm
+will work through the fileset,
+offering the chance to merge any differences using
+.Xr sdiff 1 .
+Files may also be left to deal with at a later date.
+Should any problems occur,
+such as a failure to upgrade a file,
+the user will be notified and have to deal with the issue by hand.
+.Pp
+The following files will always be skipped from comparison:
+.Pa /etc/*.db ,
+.Pa /etc/mail/*.db ,
+.Pa /etc/passwd ,
+.Pa /etc/motd ,
+.Pa /etc/myname ,
+.Pa /var/mail/root .
+.Pp
+The
+.Xr sendmail 8
+configuration files
+.Pa /etc/mail/localhost.cf ,
+.Pa /etc/mail/sendmail.cf
+and
+.Pa /etc/mail/submit.cf
+will always differ because they include their build date.
+A special test was added to handle this
+and they are offered for comparison only if they really differ.
+.Pp
+.Nm
+will finish by running
+.Xr mtree 8
+to make sure your directory structure has correct permissions.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Automatic mode.
+If this option is specified,
+.Nm
+will automatically install missing files,
+create databases and device nodes,
+and will disable strict file comparison when possible (using CVS Ids).
+.It Fl s Ar src \*(Ba etcXX.tgz
+Specify a path to an
+.Ox
+top src directory or an etcXX.tgz tarball.
+The default is
+.Pa /usr/src .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "DESTDIRXXX"
+.It Ev DESTDIR
+Directory in which to merge and install files.
+If unset, this defaults to
+.Pa / .
+.It Ev TMPDIR
+Directory in which the work directory is created.
+If unset, this defaults to
+.Pa /var/tmp .
+.El
+.Sh FILES
+.Bl -tag -width "${TMPDIR}/sysmerge.XXXXXXXX" -compact
+.It ${TMPDIR}/sysmerge.XXXXX
+Default work directory.
+The
+.Sy temproot
+and
+.Sy backup
+directories are created relative to this.
+.El
+.Sh SEE ALSO
+.Xr cap_mkdb 1 ,
+.Xr diff 1 ,
+.Xr mktemp 1 ,
+.Xr more 1 ,
+.Xr sdiff 1 ,
+.Xr MAKEDEV 8 ,
+.Xr mtree 8 ,
+.Xr newaliases 8 ,
+.Xr pwd_mkdb 8
+.Pp
+.Pa /usr/src/etc/Makefile
+.Pp
+.Pa http://www.openbsd.org/faq/current.html
+.Pa http://www.openbsd.org/faq/upgradeXX.html
+.Sh HISTORY
+The
+.Nm
+script first appeared in
+.Ox 4.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+shell script was written by
+.An Antoine Jacoutot Aq ajacoutot@openbsd.org
+using
+.Fx
+mergemaster written by
+.An Douglas Barton Aq DougB@FreeBSD.org
+as a base.
