@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7462.c,v 1.4 2008/04/22 00:25:32 deraadt Exp $	*/
+/*	$OpenBSD: adt7462.c,v 1.5 2008/04/22 03:05:03 cnst Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -25,12 +25,12 @@
 
 #define ADT7462_INT_TEMPL	0x88
 #define ADT7462_INT_TEMPH	0x89
-#define ADT7462_INT_REM1L	0x8a
-#define ADT7462_INT_REM1H	0x8b
-#define ADT7462_INT_REM2L	0x8c
-#define ADT7462_INT_REM2H	0x8d
-#define ADT7462_INT_REM3L	0x8e
-#define ADT7462_INT_REM3H	0x8f
+#define ADT7462_EXT_TEMP1L	0x8a
+#define ADT7462_EXT_TEMP1H	0x8b
+#define ADT7462_EXT_TEMP2L	0x8c
+#define ADT7462_EXT_TEMP2H	0x8d
+#define ADT7462_EXT_TEMP3L	0x8e
+#define ADT7462_EXT_TEMP3H	0x8f
 
 /* Sensors */
 #define ADTFSM_TEMP0		0
@@ -85,12 +85,15 @@ adtfsm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++)
 		sc->sc_sensor[i].type = SENSOR_TEMP;
-		snprintf(sc->sc_sensor[i].desc,
-		    sizeof(sc->sc_sensor[i].desc),
-		    "Temperature%d", i);
-	}
+
+	for (i = 0; i < 1; i++)
+		strlcpy(sc->sc_sensor[i].desc, "Internal",
+		    sizeof(sc->sc_sensor[i].desc));
+	for (i = 1; i < 4; i++)
+		strlcpy(sc->sc_sensor[i].desc, "External",
+		    sizeof(sc->sc_sensor[i].desc));
 
 	if (sensor_task_register(sc, adtfsm_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
