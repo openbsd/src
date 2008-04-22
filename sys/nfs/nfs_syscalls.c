@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.57 2007/10/14 19:34:41 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.58 2008/04/22 19:18:24 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -554,7 +554,7 @@ nfsrv_zapsock(slp)
 	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
 	struct file *fp;
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	int s;
 
 	slp->ns_flag &= ~SLP_ALLFLAGS;
@@ -569,7 +569,12 @@ nfsrv_zapsock(slp)
 		if (slp->ns_nam)
 			MFREE(slp->ns_nam, m);
 		m_freem(slp->ns_raw);
-		m_freem(slp->ns_rec);
+		m = slp->ns_rec;
+		while (m) {
+			n = m->m_nextpkt;
+			m_freem(m);
+			m = n;
+		}
 		for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != NULL;
 		    nuidp = nnuidp) {
 			nnuidp = TAILQ_NEXT(nuidp, nu_lru);
