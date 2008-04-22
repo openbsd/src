@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.81 2008/04/14 13:46:13 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.82 2008/04/22 20:59:37 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1611,11 +1611,6 @@ nfsmout:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
-	/*
-	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
-	 */
-	if (error == EEXIST)
-		error = 0;
 	return (error);
 }
 
@@ -1674,11 +1669,6 @@ nfsmout:
 		VTONFS(dvp)->n_attrstamp = 0;
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vrele(dvp);
-	/*
-	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
-	 */
-	if (error == EEXIST)
-		error = 0;
 	return (error);
 }
 
@@ -1733,15 +1723,8 @@ nfsmout:
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
-	/*
-	 * Kludge: Map EEXIST => 0 assuming that you have a reply to a retry
-	 * if we can succeed in looking up the directory.
-	 */
-	if (error == EEXIST || (!error && !gotvp)) {
-		if (newvp) {
-			vrele(newvp);
-			newvp = (struct vnode *)0;
-		}
+
+	if (error == 0 && newvp == NULL) {
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, len, cnp->cn_cred,
 			cnp->cn_proc, &np);
 		if (!error) {
