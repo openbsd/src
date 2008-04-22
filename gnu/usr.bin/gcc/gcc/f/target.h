@@ -228,6 +228,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
      && (!defined(__hppa__) || !defined(__LP64__)) \
      && (!defined(__ia64__) || !defined(__LP64__)) \
      && !defined(__MMIX__) \
+     && !defined(__mips64__) \
      && (!defined (_ARCH_PPC) || !defined (__64BIT__)) \
      && !defined(__powerpc64__) \
      && !defined(__s390x__) \
