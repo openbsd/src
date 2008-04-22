@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.24 2008/04/21 20:40:55 rainer Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.25 2008/04/22 05:04:07 jmc Exp $
 .\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2008 $
+.Dd $Mdocdate: April 22 2008 $
 .Dt RTADVD 8
 .Os
 .Sh NAME
@@ -96,8 +96,11 @@ By default,
 .Pa /etc/rtadvd.conf
 is used.
 .It Fl d
-Do not daemonize.  If this option is specified, rtadvd will run
-in the foreground and log to stderr.
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
 .It Fl M
 Specify an interface to join the all-routers site-local multicast group.
 By default,
