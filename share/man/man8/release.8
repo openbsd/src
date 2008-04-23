@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.53 2008/04/08 14:59:07 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.54 2008/04/23 18:50:24 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 8 2008 $
+.Dd $Mdocdate: April 23 2008 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -212,8 +212,9 @@ Update
 .Pa /etc ,
 .Pa /var ,
 and
-.Pa /dev/MAKEDEV
-by hand.
+.Pa /dev/MAKEDEV ,
+either by hand or using
+.Xr sysmerge 8 .
 .Pp
 At this point your system is up-to-date and running the code that you
 are going to make into a release.
@@ -370,7 +371,8 @@ That's all there is to it.
 .Xr cvs 1 ,
 .Xr pkg_add 1 ,
 .Xr ports 7 ,
-.Xr sudo 8
+.Xr sudo 8 ,
+.Xr sysmerge 8
 .Sh HISTORY
 This document first appeared in
 .Ox 2.8 .
