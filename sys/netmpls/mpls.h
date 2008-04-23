@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.2 2008/04/23 11:22:23 norby Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.3 2008/04/23 12:28:49 norby Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -135,3 +135,21 @@ struct sockaddr_mpls {
 }
 
 #endif
+
+#ifdef _KERNEL
+extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
+			struct mbuf *, struct mbuf *);
+
+extern struct ifqueue	mplsintrq;	/* MPLS input queue */
+extern int		mplsqmaxlen;	/* MPLS input queue length */
+
+void	mpls_init(void);
+void	mplsintr(void);
+
+struct mbuf	*mpls_shim_pop(struct mbuf *);
+struct mbuf	*mpls_shim_swap(struct mbuf *, struct sockaddr_mpls *);
+struct mbuf	*mpls_shim_push(struct mbuf *, struct sockaddr_mpls *);
+
+int	mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+#endif /* _KERNEL */
