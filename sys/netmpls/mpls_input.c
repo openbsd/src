@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.2 2008/04/23 11:22:23 norby Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.3 2008/04/23 12:59:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -133,11 +133,13 @@ printf("smpls af %d len %d in_label %d in_ifindex %d\n", smpls->smpls_family,
 
 		rt->rt_use++;
 		smpls = satosmpls(rt_key(rt));
+#ifdef MPLS_DEBUG
 printf("route af %d len %d in_label %d in_ifindex %d\n", smpls->smpls_family,
     smpls->smpls_len, MPLS_LABEL_GET(smpls->smpls_in_label),
     smpls->smpls_in_ifindex);
 printf("\top %d out_label %d out_ifindex %d\n", smpls->smpls_operation,
     MPLS_LABEL_GET(smpls->smpls_out_label), smpls->smpls_out_ifindex);
+#endif
 
 		switch (smpls->smpls_operation) {
 		case MPLS_OP_POP:
@@ -164,10 +166,12 @@ printf("\top %d out_label %d out_ifindex %d\n", smpls->smpls_operation,
 	/* write back TTL */
 	shim->shim_label = (shim->shim_label & ~MPLS_TTL_MASK) | ttl;
 
+#ifdef MPLS_DEBUG
 printf("MPLS: sending on %s outlabel %x dst af %d in %d out %d\n",
     ifp->if_xname, ntohl(shim->shim_label), smpls->smpls_family,
     MPLS_LABEL_GET(smpls->smpls_in_label),
     MPLS_LABEL_GET(smpls->smpls_out_label));
+#endif
 
 	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);
 done:
