@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2007/06/01 05:37:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2008/04/23 10:55:14 norby Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
@@ -41,7 +41,7 @@ DGEN=	compat compat/common compat/freebsd compat/hpux compat/ibcs2 \
 	miscfs miscfs/deadfs miscfs/fifofs \
 	miscfs/portal miscfs/procfs miscfs/specfs \
 	msdosfs \
-	net netinet \
+	net netinet netmpls \
 	nfs \
 	scsi \
 	sys \

@@ -1,0 +1,337 @@
+/*	$OpenBSD: mpls_input.c,v 1.1 2008/04/23 11:00:35 norby Exp $	*/
+
+/*
+ * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/route.h>
+
+#include <netmpls/mpls.h>
+
+struct ifqueue	mplsintrq;
+int		mplsqmaxlen = IFQ_MAXLEN;
+extern int	mpls_inkloop;
+
+void	mpls_input(struct mbuf *);
+
+#ifdef MPLS_DEBUG
+#define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
+#define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
+#endif
+
+void
+mpls_init(void)
+{
+	mplsintrq.ifq_maxlen = mplsqmaxlen;
+}
+
+void
+mplsintr(void)
+{
+	struct mbuf *m;
+	int s;
+
+	while (mplsintrq.ifq_head) {
+		/* Get next datagram of input queue */
+		s = splnet();
+		IF_DEQUEUE(&mplsintrq, m);
+		splx(s);
+		if (m == NULL)
+			return;
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("ipintr no HDR");
+#endif
+		mpls_input(m);
+	}
+}
+
+void
+mpls_input(struct mbuf *m)
+{
+	struct route ro;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct sockaddr_mpls *smpls;
+	struct shim_hdr *shim;
+	struct rtentry *rt = NULL;
+	u_int32_t ttl;
+	int i;
+
+	if (m->m_len < sizeof(*shim))
+		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
+			return;
+
+	shim = mtod(m, struct shim_hdr *);
+
+#ifdef MPLS_DEBUG
+	printf("mpls_input: iface %s label=%d, ttl=%d BoS %d\n",
+	    ifp->if_xname, MPLS_LABEL_GET(shim->shim_label),
+	    MPLS_TTL_GET(shim->shim_label),
+	    MPLS_BOS_ISSET(shim->shim_label));
+#endif	/* MPLS_DEBUG */
+
+	/* check and decrement TTL */
+	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
+	if (ttl <= 1) {
+		/* TTL exceeded */
+		/*
+		 * XXX if possible hand packet up to network layer so that an
+		 * ICMP TTL exceeded can be sent back.
+		 */
+		m_freem(m);
+		return;
+	}
+	ttl = htonl(ttl - 1);
+
+	for (i = 0; i < mpls_inkloop; i++) {
+		/* XXX maybe this should be done later */
+		if (MPLS_BOS_ISSET(shim->shim_label)) {
+			/* no LER until now */
+			m_freem(m);
+			goto done;
+		}
+
+		bzero(&ro, sizeof(ro));
+		smpls = satosmpls(&ro.ro_dst);
+		smpls->smpls_family = AF_MPLS;
+		smpls->smpls_len = sizeof(*smpls);
+		smpls->smpls_in_ifindex = ifp->if_index;
+		smpls->smpls_in_label = shim->shim_label & MPLS_LABEL_MASK;
+
+printf("smpls af %d len %d in_label %d in_ifindex %d\n", smpls->smpls_family,
+    smpls->smpls_len, smpls->smpls_in_label, smpls->smpls_in_ifindex);
+
+		rtalloc(&ro);	/* XXX switch to rtalloc1() */
+		rt = ro.ro_rt;
+
+		if (rt == NULL) {
+			/* no entry for this label */
+#ifdef MPLS_DEBUG
+			printf("MPLS_DEBUG: label not found\n");
+#endif
+			m_freem(m);
+			goto done;
+		}
+
+		rt->rt_use++;
+		smpls = satosmpls(rt_key(rt));
+printf("route af %d len %d in_label %d in_ifindex %d\n", smpls->smpls_family,
+    smpls->smpls_len, MPLS_LABEL_GET(smpls->smpls_in_label),
+    smpls->smpls_in_ifindex);
+printf("\top %d out_label %d out_ifindex %d\n", smpls->smpls_operation,
+    MPLS_LABEL_GET(smpls->smpls_out_label), smpls->smpls_out_ifindex);
+
+		switch (smpls->smpls_operation) {
+		case MPLS_OP_POP:
+			m = mpls_shim_pop(m);
+			break;
+		case MPLS_OP_PUSH:
+			m = mpls_shim_push(m, smpls);
+			break;
+		case MPLS_OP_SWAP:
+			m = mpls_shim_swap(m, smpls);
+			break;
+		default:
+			break;
+		}
+
+		break;
+		/* not yet done with packet */
+		if (rt) {
+			RTFREE(rt);
+			rt = NULL;
+		}
+	}
+
+	/* write back TTL */
+	shim->shim_label = (shim->shim_label & ~MPLS_TTL_MASK) | ttl;
+
+printf("MPLS: sending on %s outlabel %x dst af %d in %d out %d\n",
+    ifp->if_xname, ntohl(shim->shim_label), smpls->smpls_family,
+    MPLS_LABEL_GET(smpls->smpls_in_label),
+    MPLS_LABEL_GET(smpls->smpls_out_label));
+
+	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);
+done:
+	if (rt)
+		RTFREE(rt);
+}
+/*	$OpenBSD: mpls_input.c,v 1.1 2008/04/23 11:00:35 norby Exp $	*/
+/*
+ * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/route.h>
+
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
+
+struct ifqueue mplsintrq;
+
+void	mpls_input(struct mbuf *);
+
+void
+mplsintr(void)
+{
+	struct mbuf *m;
+	int s;
+
+	while (mplsintrq.ifq_head) {
+		/* Get next datagram of input queue */
+		s = splnet();
+		IF_DEQUEUE(&mplsintrq, m);
+		splx(s);
+		if (m == NULL)
+			return;
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("ipintr no HDR");
+#endif
+		mpls_input(m);
+	}
+}
+
+void
+mpls_input(struct mbuf *m)
+{
+	struct route ro;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct sockaddr_mpls *smpls;
+	struct shim_hdr *shim;
+	struct rtentry *rt = NULL;
+	u_int32_t label, ttl;
+	int i, error;
+
+	printf("mpls_input: !! \n");
+
+	if (m->m_len < sizeof(label))
+		if ((m = m_pullup(m, sizeof(label))) == NULL)
+			return;
+
+	shim = mtod(m, struct shim_hdr *);
+	/* swap label to host byte order. */
+	label = ntohl(shim->shim_label);
+
+#ifdef MPLS_DEBUG
+	printf("mpls_input: iface %s label=%d, ttl=%d BoS %d\n",
+	    ifp->if_xname, MPLS_SHIM_LABEL_GET(label),
+	    MPLS_SHIM_TTL_GET(label), MPLS_SHIM_BOS_ISSET(label));
+#endif	/* MPLS_DEBUG */
+
+	/* check and decrement TTL */
+	ttl = MPLS_SHIM_TTL_GET(label);
+	if (ttl <= 1) {
+		/* ttl exceeded */
+		/*
+		 * XXX if possible hand packet up to network layer so that an
+		 * ICMP TTL exceeded can be sent back.
+		 */
+		m_freem(m);
+		return;
+	}
+	ttl--;
+
+	for (i = 0; i < MPLS_INKERNEL_LOOP_MAX; i++) {
+		/* XXX maybe this should be done later */
+		if (MPLS_SHIM_BOS_ISSET(label)) {
+			/* no LER until now */
+			error = EHOSTUNREACH;
+			goto done;
+		}
+
+		bzero(&ro, sizeof(ro));
+		smpls = satosmpls(&ro.ro_dst);
+		smpls->smpls_family = AF_MPLS;
+		smpls->smpls_len = sizeof(*smpls);
+		smpls->smpls_in_ifindex = ifp->if_index;
+		smpls->smpls_in_label = MPLS_SHIM_LABEL_GET(label);
+
+		rtalloc(&ro);	/* XXX switch to rtalloc1() */
+		rt = ro.ro_rt;
+
+		if (rt == NULL) {
+			/* no entry for this label */
+			error = EHOSTUNREACH;
+#ifdef MPLS_DEBUG
+			printf("MPLS_DEBUG: label not found\n");
+#endif
+			goto done;
+		}
+
+		rt->rt_use++;
+		smpls = satosmpls(rt_key(rt));
+
+		switch (smpls->smpls_operation) {
+		case MPLS_OP_POP:
+			printf("mpls_input: POP\n");
+			/* mpls_shim_pop() */
+			break;
+		case MPLS_OP_PUSH:
+			printf("mpls_input: PUSH\n");
+			/* mpls_shim_push() */
+			break;
+		case MPLS_OP_SWAP:
+			printf("mpls_input: SWAP\n");
+			/* mpls_shim_swap() */
+			break;
+		default:
+			break;
+		}
+
+		/* not yet done with packet */
+		/* reget current label */
+		shim = mtod(m, struct shim_hdr *);
+		label = ntohl(shim->shim_label);
+
+		if (rt) {
+			RTFREE(rt);
+			rt = NULL;
+		}
+	}
+
+	/* write back modified label */
+	shim->shim_label = htonl(MPLS_SHIM_TTL_SET(label, ttl));
+
+	error = (*ifp->if_output)(ifp, m, smplstosa(&smpls), rt);
+done:
+	if (error)
+		m_freem(m);
+	if (rt)
+		RTFREE(rt);
+}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.428 2008/04/16 18:32:14 damien Exp $
+#	$OpenBSD: files,v 1.429 2008/04/23 10:55:13 norby Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -867,6 +867,10 @@ file netbt/rfcomm_socket.c		bluetooth
 file netbt/rfcomm_upper.c		bluetooth
 file netbt/sco_socket.c			bluetooth
 file netbt/sco_upper.c			bluetooth
+file netmpls/mpls_input.c		mpls
+file netmpls/mpls_proto.c		mpls
+file netmpls/mpls_raw.c			mpls
+file netmpls/mpls_shim.c		mpls
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm
 file netnatm/natm.c			natm

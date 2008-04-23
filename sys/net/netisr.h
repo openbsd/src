@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.30 2008/04/10 23:15:45 dlg Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.31 2008/04/23 10:55:14 norby Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #define	NETISR_BRIDGE	29		/* for bridge processing */
 #define	NETISR_PPPOE	30		/* for pppoe processing */
 #define	NETISR_BT	31		/* same as AF_BLUETOOTH */
+#define	NETISR_MPLS	3		/* XXX AF_MPLS would overflow */
 
 #ifndef _LOCORE
 #ifdef _KERNEL
@@ -81,6 +82,7 @@ void	pppintr(void);
 void	bridgeintr(void);
 void	pppoeintr(void);
 void	btintr(void);
+void	mplsintr(void);
 
 #include <machine/atomic.h>
 #define	schednetisr(anisr)						\

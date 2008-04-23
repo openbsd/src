@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.117 2008/04/18 09:16:14 djm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.118 2008/04/23 10:55:14 norby Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -149,6 +149,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 extern u_char	at_org_code[ 3 ];
 extern u_char	aarp_org_code[ 3 ];
 #endif /* NETATALK */
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#endif /* MPLS */
 
 u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -325,6 +329,33 @@ ether_output(ifp0, m0, dst, rt0)
 		}
 		} break;
 #endif /* NETATALK */
+#ifdef MPLS
+       case AF_MPLS:
+		if (rt)
+			dst = (struct sockaddr *)rt->rt_gateway;
+		else
+			senderr(EHOSTUNREACH);
+
+		switch (dst->sa_family) {
+			case AF_LINK:
+				if (satosdl(dst)->sdl_alen < sizeof(edst))
+					senderr(EHOSTUNREACH);
+				bcopy(LLADDR(satosdl(dst)), edst, sizeof(edst));
+				break;
+			case AF_INET:
+				if (!arpresolve(ac, rt, m, dst, edst))
+					return (0); /* if not yet resolved */
+				break;
+			default:
+				senderr(EHOSTUNREACH);
+		}
+		/* XXX handling for simplex devices in case of M/BCAST ?? */
+		if (m->m_flags & (M_BCAST | M_MCAST))
+			etype = htons(ETHERTYPE_MPLS_MCAST);
+		else
+			etype = htons(ETHERTYPE_MPLS);
+		break;
+#endif /* MPLS */
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		eh = (struct ether_header *)dst->sa_data;
@@ -681,6 +712,13 @@ decapsulate:
 		schednetisr(NETISR_PPPOE);
 		break;
 #endif /* NPPPOE > 0 */
+#ifdef MPLS
+	case ETHERTYPE_MPLS:
+	case ETHERTYPE_MPLS_MCAST:
+		inq = &mplsintrq;
+		schednetisr(NETISR_MPLS);
+		break;
+#endif
 	default:
 		if (llcfound || etype > ETHERMTU)
 			goto dropanyway;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.26 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.27 2008/04/23 10:55:14 norby Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -90,6 +90,9 @@ domaininit(void)
 #endif /* KEY || IPSEC */
 #ifdef NETATALK
 	ADDDOMAIN(atalk);
+#endif
+#ifdef MPLS
+       ADDDOMAIN(mpls);
 #endif
 #ifdef NATM
 	ADDDOMAIN(natm);
@@ -202,6 +205,13 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	dp = pffinddomain(family);
 	if (dp == NULL)
 		return (ENOPROTOOPT);
+#ifdef MPLS
+	/* XXX WARNING: big fat ugly hack */
+	/* stupid net.mpls is special as it does not have a protocol */
+	if (family == PF_MPLS)
+		return (dp->dom_protosw[0].pr_sysctl(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen));
+#endif
 
 	if (namelen < 3)
 		return (EISDIR);		/* overloaded */
