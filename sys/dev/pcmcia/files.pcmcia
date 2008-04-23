@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.41 2007/05/25 05:33:51 mglocker Exp $
+#	$OpenBSD: files.pcmcia,v 1.42 2008/04/23 13:28:59 jsg Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -53,10 +53,6 @@ file	dev/pcmcia/if_xe.c			xe_pcmcia
 # PCMCIA Floppy controller
 #attach	fdc at pcmcia with fdc_pcmcia
 #file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
-
-# Proxim RangeLAN2 PC-Card
-attach	rln at pcmcia with rln_pcmcia
-file	dev/pcmcia/if_rln_pcmcia.c		rln_pcmcia
 
 # PCMCIA multi-port serial cards
 #device	pcmcom {[slave = -1]}

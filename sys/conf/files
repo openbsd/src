@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.429 2008/04/23 10:55:13 norby Exp $
+#	$OpenBSD: files,v 1.430 2008/04/23 13:28:58 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -245,11 +245,6 @@ file	dev/ic/if_wi_hostap.c		wi
 # Aironet 802.11 DS Ethernet controller
 device	an: ether, ifnet, ifmedia, wlan
 file	dev/ic/an.c			an
-
-# RangeLAN2
-device	rln: ether, ifnet
-file	dev/ic/rln.c			rln
-file	dev/ic/rlnsubr.c		rln
 
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet, ifmedia
