@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.2 2008/04/23 16:39:40 millert Exp $
+# $OpenBSD: sysmerge.sh,v 1.3 2008/04/23 16:50:33 deraadt Exp $
 #
 # This script is based on the FreeBSD mergemaster script which is
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -27,13 +27,7 @@ umask 0022
 PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 
 PAGER="${PAGER:=/usr/bin/more}"
-SWIDTH=`stty size | awk '{w=$2}END{if(w==0){w=80}print w}'`
-
-
-usage() {
-	echo "usage: ${0##*/} [-a] [-s src | etcXX.tgz]" >&2
-}
-
+SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 
 yesno() {
 	echo -n "${*}? (y|[n]) "
@@ -405,7 +399,7 @@ do_post() {
 
 ARGS=`getopt as: $*`
 if [ $? -ne 0 ]; then
-	usage
+	echo "usage: ${0##*/} [-a] [-s src | etcXX.tgz]" >&2
 	exit 1
 fi
 set -- ${ARGS}
