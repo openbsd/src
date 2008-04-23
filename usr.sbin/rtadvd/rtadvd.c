@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.32 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.33 2008/04/23 10:17:50 pyr Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -88,11 +88,13 @@ int log_perror = 0;
 
 u_char *conffile = NULL;
 
-struct rainfo *ralist = NULL;
-struct nd_optlist {
-	struct nd_optlist *next;
-	struct nd_opt_hdr *opt;
+struct ralist ralist;
+
+struct nd_opt {
+	SLIST_ENTRY(nd_opt)	 entry;
+	struct nd_opt_hdr	*opt;
 };
+
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
 	struct {
@@ -102,7 +104,7 @@ union nd_opts {
 		struct nd_opt_prefix_info *pi;
 		struct nd_opt_rd_hdr *rh;
 		struct nd_opt_mtu *mtu;
-		struct nd_optlist *list;
+		SLIST_HEAD(nd_optlist, nd_opt)	list;
 	} nd_opt_each;
 };
 #define nd_opts_src_lladdr	nd_opt_each.src_lladdr
@@ -188,6 +190,8 @@ main(argc, argv)
 			"interface ...\n");
 		exit(1);
 	}
+
+	SLIST_INIT(&ralist);
 
 	/* timer initialization */
 	rtadvd_timer_init();
@@ -300,12 +304,12 @@ die()
 	if (dflag)
 		log_debug("cease to be an advertising router");
 
-	for (ra = ralist; ra; ra = ra->next) {
+	SLIST_FOREACH(ra, &ralist, entry) {
 		ra->lifetime = 0;
 		make_packet(ra);
 	}
 	for (i = 0; i < retrans; i++) {
-		for (ra = ralist; ra; ra = ra->next)
+		SLIST_FOREACH(ra, &ralist, entry)
 			ra_output(ra);
 		sleep(MIN_DELAY_BETWEEN_RAS);
 	}
@@ -657,6 +661,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
+	SLIST_INIT(&ndopts.nd_opts_list);
 	if (nd6_options((struct nd_opt_hdr *)(rs + 1),
 			len - sizeof(struct nd_router_solicit),
 			&ndopts, NDOPT_FLAG_SRCLINKADDR)) {
@@ -680,11 +685,9 @@ rs_input(int len, struct nd_router_solicit *rs,
 		goto done;
 	}
 
-	ra = ralist;
-	while (ra != NULL) {
+	SLIST_FOREACH(ra, &ralist, entry) {
 		if (pi->ipi6_ifindex == ra->ifindex)
 			break;
-		ra = ra->next;
 	}
 	if (ra == NULL) {
 		log_info("RS received on non advertising interface(%s)",
@@ -711,8 +714,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 			sol->addr = *from;
 			/*XXX RFC2553 need clarification on flowinfo */
 			sol->addr.sin6_flowinfo = 0;	
-			sol->next = ra->soliciter;
-			ra->soliciter = sol;
+			SLIST_INSERT_HEAD(&ra->soliciters, sol, entry);
 		}
 
 		/*
@@ -781,6 +783,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
+	SLIST_INIT(&ndopts.nd_opts_list);
 	if (nd6_options((struct nd_opt_hdr *)(ra + 1),
 			len - sizeof(struct nd_router_advert),
 			&ndopts, NDOPT_FLAG_SRCLINKADDR |
@@ -875,16 +878,15 @@ ra_input(int len, struct nd_router_advert *ra,
 	}
 	/* Preferred and Valid Lifetimes for prefixes */
 	{
-		struct nd_optlist *optp = ndopts.nd_opts_list;
+		struct nd_opt 	*optp;
 
 		if (ndopts.nd_opts_pi)
 			if (prefix_check(ndopts.nd_opts_pi, rai, from))
 				inconsistent++;
-		while (optp) {
+		SLIST_FOREACH(optp, &ndopts.nd_opts_list, entry) {
 			if (prefix_check((struct nd_opt_prefix_info *)optp->opt,
 					 rai, from))
 				inconsistent++;
-			optp = optp->next;
 		}
 	}
 
@@ -1018,7 +1020,7 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 	int bytelen, bitlen;
 	u_char bitmask;
 
-	for (pp = rai->prefix.next; pp != &rai->prefix; pp = pp->next) {
+	TAILQ_FOREACH(pp, &rai->prefixes, entry) {
 		if (plen != pp->prefixlen)
 			continue;
 		bytelen = plen / 8;
@@ -1123,20 +1125,20 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			break;
 		case ND_OPT_PREFIX_INFORMATION:
 		{
-			struct nd_optlist *pfxlist;
-
+			struct nd_opt	*pfx;
+		
 			if (ndopts->nd_opts_pi == 0) {
 				ndopts->nd_opts_pi =
 				    (struct nd_opt_prefix_info *)hdr;
 				continue;
 			}
-			if ((pfxlist = malloc(sizeof(*pfxlist))) == NULL) {
+			if ((pfx = malloc(sizeof(*pfx))) == NULL) {
 				log_warn("malloc");
 				goto bad;
 			}
-			pfxlist->next = ndopts->nd_opts_list;
-			pfxlist->opt = hdr;
-			ndopts->nd_opts_list = pfxlist;
+			
+			pfx->opt = hdr;
+			SLIST_INSERT_HEAD(&ndopts->nd_opts_list, pfx, entry);
 
 			break;
 		}
@@ -1156,21 +1158,21 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 static void
 free_ndopts(union nd_opts *ndopts)
 {
-	struct nd_optlist *opt = ndopts->nd_opts_list, *next;
+	struct nd_opt *opt;
 
-	while (opt) {
-		next = opt->next;
+	while (!SLIST_EMPTY(&ndopts->nd_opts_list)) {
+		opt = SLIST_FIRST(&ndopts->nd_opts_list);
+		SLIST_REMOVE_HEAD(&ndopts->nd_opts_list, entry);
 		free(opt);
-		opt = next;
 	}
 }
 
 void
 sock_open()
 {
+	struct rainfo	*ra;
 	struct icmp6_filter filt;
 	struct ipv6_mreq mreq;
-	struct rainfo *ra = ralist;
 	int on;
 	/* XXX: should be max MTU attached to the node */
 	static u_char answer[1500];
@@ -1218,15 +1220,16 @@ sock_open()
 		      &mreq.ipv6mr_multiaddr.s6_addr)
 	    != 1)
 		fatal("inet_pton failed(library bug?)");
-	while (ra) {
+	SLIST_FOREACH(ra, &ralist, entry) {
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
 			log_warn("IPV6_JOIN_GROUP(link) on %s", ra->ifname);
 			exit(1);
 		}
-		ra = ra->next;
 	}
+
+	ra = SLIST_FIRST(&ralist);
 
 	/*
 	 * When attending router renumbering, join all-routers site-local
@@ -1244,11 +1247,11 @@ sock_open()
 				exit(1);
 			}
 		} else
-			mreq.ipv6mr_interface = ralist->ifindex;
+			mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
 			log_warn("IPV6_JOIN_GROUP(site) on %s",
-			    mcastif ? mcastif : ralist->ifname);
+			    mcastif ? mcastif : ra->ifname);
 			exit(1);
 		}
 	}
@@ -1284,9 +1287,9 @@ rtsock_open()
 struct rainfo *
 if_indextorainfo(int index)
 {
-	struct rainfo *rai = ralist;
+	struct rainfo *rai;
 
-	for (rai = ralist; rai; rai = rai->next) {
+	SLIST_FOREACH(rai, &ralist, entry) {
 		if (rai->ifindex == index)
 			return(rai);
 	}
@@ -1301,7 +1304,7 @@ struct rainfo *rainfo;
 	int i;
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi;
-	struct soliciter *sol, *nextsol;
+	struct soliciter *sol;
 
 	if ((iflist[rainfo->ifindex]->ifm_flags & IFF_UP) == 0) {
 		log_debug("%s is not up, skip sending RA", rainfo->ifname);
@@ -1348,9 +1351,9 @@ struct rainfo *rainfo;
 	 * XXX commented out.  reason: though spec does not forbit it, unicast
 	 * advert does not really help
 	 */
-	for (sol = rainfo->soliciter; sol; sol = nextsol) {
-		nextsol = sol->next;
-
+	while (!SLIST_EMPTY(&rainfo->soliciters)) {
+		sol = SLIST_FIRST(&rainfo->soliciters);
+		SLIST_REMOVE_HEAD(&rainfo->soliciters, entry);
 #if 0
 		sndmhdr.msg_name = (caddr_t)&sol->addr;
 		i = sendmsg(sock, &sndmhdr, 0);
@@ -1359,11 +1362,8 @@ struct rainfo *rainfo;
 				log_warn("unicast sendmsg on %s",
 				    rainfo->ifname);
 #endif
-
-		sol->next = NULL;
 		free(sol);
 	}
-	rainfo->soliciter = NULL;
 
 	/* update counter */
 	if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)

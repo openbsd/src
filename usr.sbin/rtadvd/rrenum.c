@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.c,v 1.11 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.12 2008/04/23 10:17:50 pyr Exp $	*/
 /*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -200,8 +200,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 			if ((rai = if_indextorainfo(ifindex)) == NULL)
 				continue; /* non-advertising IF */
 
-			for (pp = rai->prefix.next; pp != &rai->prefix;
-			     pp = pp->next) {
+			TAILQ_FOREACH(pp, &rai->prefixes, entry) {
 				struct timeval now;
 
 				if (prefix_match(&pp->prefix, pp->prefixlen,

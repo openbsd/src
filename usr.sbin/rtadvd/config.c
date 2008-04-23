@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: config.c,v 1.26 2008/04/23 10:17:50 pyr Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 static void makeentry(char *, size_t, int, char *);
 static int getinet6sysctl(int);
 
-extern struct rainfo *ralist;
+extern struct ralist ralist;
 
 void
 getconfig(intface)
@@ -105,12 +105,11 @@ getconfig(intface)
 		    " Treat it as default", intface);
 	}
 
-	tmp = (struct rainfo *)malloc(sizeof(*ralist));
-	if (tmp == NULL)
+	if ((tmp = calloc(1, sizeof(*tmp))) == NULL)
 		fatal("malloc");
 
-	memset(tmp, 0, sizeof(*tmp));
-	tmp->prefix.next = tmp->prefix.prev = &tmp->prefix;
+	TAILQ_INIT(&tmp->prefixes);
+	SLIST_INIT(&tmp->soliciters);
 
 	/* check if we are allowed to forward packets (if not determined) */
 	if (forwarding < 0) {
@@ -247,7 +246,7 @@ getconfig(intface)
 		memset(pfx, 0, sizeof(*pfx));
 
 		/* link into chain */
-		insque(pfx, &tmp->prefix);
+		TAILQ_INSERT_TAIL(&tmp->prefixes, pfx, entry);
 		tmp->pfxs++;
 
 		pfx->origin = PREFIX_FROM_CONFIG;
@@ -351,8 +350,7 @@ getconfig(intface)
 		log_info("route information option is not available");
 
 	/* okey */
-	tmp->next = ralist;
-	ralist = tmp;
+	SLIST_INSERT_HEAD(&ralist, tmp, entry);
 
 	/* construct the sending packet */
 	make_packet(tmp);
@@ -430,7 +428,7 @@ get_prefix(struct rainfo *rai)
 		pp->origin = PREFIX_FROM_KERNEL;
 
 		/* link into chain */
-		insque(pp, &rai->prefix);
+		TAILQ_INSERT_TAIL(&rai->prefixes, pp, entry);
 
 		/* counter increment */
 		rai->pfxs++;
@@ -479,7 +477,7 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 	prefix->autoconfflg = ipr->ipr_raf_auto;
 	prefix->origin = PREFIX_FROM_DYNAMIC;
 
-	insque(prefix, &rai->prefix);
+	TAILQ_INSERT_TAIL(&rai->prefixes, prefix, entry);
 
 	log_debug("new prefix %s/%d was added on %s",
 	    inet_ntop(AF_INET6, &ipr->ipr_prefix.sin6_addr,
@@ -512,7 +510,7 @@ delete_prefix(struct rainfo *rai, struct prefix *prefix)
 {
 	u_char ntopbuf[INET6_ADDRSTRLEN];
 
-	remque(prefix);
+	TAILQ_REMOVE(&rai->prefixes, prefix, entry);
 	log_debug("prefix %s/%d was deleted on %s",
 	    inet_ntop(AF_INET6, &prefix->prefix, ntopbuf, INET6_ADDRSTRLEN), 
 	    prefix->prefixlen, rai->ifname);
@@ -667,8 +665,7 @@ make_packet(struct rainfo *rainfo)
 
 	
 	
-	for (pfx = rainfo->prefix.next;
-	     pfx != &rainfo->prefix; pfx = pfx->next) {
+	TAILQ_FOREACH(pfx, &rainfo->prefixes, entry) {
 		u_int32_t vltime, pltime;
 		struct timeval now;
 

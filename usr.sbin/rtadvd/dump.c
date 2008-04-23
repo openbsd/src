@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.7 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: dump.c,v 1.8 2008/04/23 10:17:50 pyr Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 static FILE *fp;
 
-extern struct rainfo *ralist;
+extern struct ralist ralist;
 
 static char *ether_str(struct sockaddr_dl *);
 static void if_dump(void);
@@ -98,7 +98,7 @@ if_dump()
 	struct timeval now;
 
 	gettimeofday(&now, NULL); /* XXX: unused in most cases */
-	for (rai = ralist; rai; rai = rai->next) {
+	SLIST_FOREACH(rai, &ralist, entry) {
 		fprintf(fp, "%s:\n", rai->ifname);
 
 		fprintf(fp, "  Status: %s\n",
@@ -151,8 +151,8 @@ if_dump()
 		if (rai->clockskew)
 			fprintf(fp, "  Clock skew: %ldsec\n",
 			    rai->clockskew);
-		for (first = 1, pfx = rai->prefix.next; pfx != &rai->prefix;
-		     pfx = pfx->next) {
+		first = 1;
+		TAILQ_FOREACH(pfx, &rai->prefixes, entry) {
 			if (first) {
 				fprintf(fp, "  Prefixes:\n");
 				first = 0;

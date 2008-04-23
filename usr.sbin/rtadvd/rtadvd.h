@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.9 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.10 2008/04/23 10:17:50 pyr Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -67,8 +67,7 @@
 #define PREFIX_FROM_DYNAMIC 3
 
 struct prefix {
-	struct prefix *next;	/* forward link */
-	struct prefix *prev;	/* previous link */
+	TAILQ_ENTRY(prefix) entry;
 
 	u_int32_t validlifetime; /* AdvValidLifetime */
 	long	vltimeexpire;	/* expiration of vltime; decrement case only */
@@ -83,13 +82,13 @@ struct prefix {
 
 
 struct soliciter {
-	struct soliciter *next;
+	SLIST_ENTRY(soliciter) entry;
 	struct sockaddr_in6 addr;
 };
 
 struct	rainfo {
 	/* pointer for list */
-	struct	rainfo *next;
+	SLIST_ENTRY(rainfo) entry;
 
 	/* timer related parameters */
 	struct rtadvd_timer *timer;
@@ -115,7 +114,7 @@ struct	rainfo {
 	u_int32_t reachabletime; /* AdvReachableTime */
 	u_int32_t retranstimer;	/* AdvRetransTimer */
 	u_int	hoplimit;	/* AdvCurHopLimit */
-	struct prefix prefix;	/* AdvPrefixList(link head) */
+	TAILQ_HEAD(prefixlist, prefix) prefixes; /* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
 	long	clockskew;	/* used for consisitency check of lifetimes */
 
@@ -131,8 +130,9 @@ struct	rainfo {
 	u_quad_t rsinput;	/* number of RSs received */
 
 	/* info about soliciter */
-	struct soliciter *soliciter;	/* recent solication source */
+	SLIST_HEAD(, soliciter) soliciters; /* recent solication source */
 };
+SLIST_HEAD(ralist, rainfo);
 
 void ra_timeout(void *);
 void ra_timer_update(void *, struct timeval *);
