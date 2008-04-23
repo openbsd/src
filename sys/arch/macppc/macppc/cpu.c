@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.46 2008/02/15 17:33:51 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.47 2008/04/23 15:34:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -658,6 +658,9 @@ cpu_boot_secondary_processors(void)
 		ci = &cpu_info[i];
 		if (ci->ci_cpuid == 0)
 			continue;
+
+		sched_init_cpu(ci);
+
 		cpu_spinup(NULL, ci);
 	}
 
