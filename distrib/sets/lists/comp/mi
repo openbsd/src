@@ -1172,6 +1172,9 @@
 ./usr/include/netinet6/pim6_var.h
 ./usr/include/netinet6/raw_ip6.h
 ./usr/include/netinet6/tcpipv6.h
+./usr/include/netmpls
+./usr/include/netmpls/mpls.h
+./usr/include/netmpls/mpls_var.h
 ./usr/include/netnatm
 ./usr/include/netnatm/natm.h
 ./usr/include/nfs

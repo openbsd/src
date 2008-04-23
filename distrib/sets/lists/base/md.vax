@@ -1210,6 +1210,9 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/pim6_var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/tcpipv6.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netmpls
+./usr/libdata/perl5/site_perl/vax-openbsd/netmpls/mpls.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netmpls/mpls_var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/vax-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs
