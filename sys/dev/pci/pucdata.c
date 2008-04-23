@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.52 2007/11/09 02:05:16 fgsch Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.53 2008/04/23 18:40:01 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1146,6 +1146,20 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 6S PCI 16C650 : 6S, 0P */
+	{   /* "NetMos NM9845 6 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_6S, 0x1000, 0x0006},
+	    {	0xffff,	0xffff,				  0xffff, 0xffff},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
 	    },
 	},
 
