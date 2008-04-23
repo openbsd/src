@@ -1,13 +1,14 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.3 2008/04/23 16:50:33 deraadt Exp $
+# $OpenBSD: sysmerge.sh,v 1.4 2008/04/23 20:39:00 ajacoutot Exp $
 #
-# This script is based on the FreeBSD mergemaster script which is
-# Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
+# This script is based on the FreeBSD mergemaster script, written by
+# Douglas Barton <DougB@FreeBSD.org>
 #
 # Some ideas came from the NetBSD etcupdate script, written by
 # Martti Kuparinen <martti@NetBSD.org>
 #
+# Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
