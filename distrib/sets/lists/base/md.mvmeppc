@@ -922,10 +922,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rf3000reg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rln.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rlncmd.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rlnreg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rlnvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rt2560reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rt2560var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/rt2661reg.ph
@@ -1813,7 +1809,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netmpls
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netmpls/mpls.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netmpls/mpls_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/nfs

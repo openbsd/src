@@ -883,10 +883,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rf3000reg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rln.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rlncmd.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rlnreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rlnvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rt2560reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rt2560var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rt2661reg.ph
@@ -1857,7 +1853,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netmpls
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netmpls/mpls.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netmpls/mpls_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs

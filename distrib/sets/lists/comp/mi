@@ -337,10 +337,6 @@
 ./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/revar.h
 ./usr/include/dev/ic/rf3000reg.h
-./usr/include/dev/ic/rln.h
-./usr/include/dev/ic/rlncmd.h
-./usr/include/dev/ic/rlnreg.h
-./usr/include/dev/ic/rlnvar.h
 ./usr/include/dev/ic/rt2560reg.h
 ./usr/include/dev/ic/rt2560var.h
 ./usr/include/dev/ic/rt2661reg.h
@@ -1174,7 +1170,6 @@
 ./usr/include/netinet6/tcpipv6.h
 ./usr/include/netmpls
 ./usr/include/netmpls/mpls.h
-./usr/include/netmpls/mpls_var.h
 ./usr/include/netnatm
 ./usr/include/netnatm/natm.h
 ./usr/include/nfs

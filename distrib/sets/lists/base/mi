@@ -1932,6 +1932,7 @@
 ./usr/sbin/sysctl
 ./usr/sbin/syslogc
 ./usr/sbin/syslogd
+./usr/sbin/sysmerge
 ./usr/sbin/tcpdchk
 ./usr/sbin/tcpdmatch
 ./usr/sbin/tcpdrop
