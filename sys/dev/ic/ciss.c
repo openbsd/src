@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.29 2007/10/20 16:10:09 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.30 2008/04/24 09:04:14 jakob Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -331,7 +331,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
-	sc->ndrives = inq->buswidth;
+	sc->ndrives = inq->buswidth? inq->buswidth : 256;
 	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s\n",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
@@ -1039,6 +1039,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	struct ciss_blink *blink;
 	struct ciss_ld *ldp;
 	ciss_lock_t lock;
+	u_int8_t drv;
 	int ld, pd, error = 0;
 	u_int blks;
 
@@ -1107,7 +1108,8 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		if ((error = ciss_ldstat(sc, bd->bd_volid, ldstat)))
 			break;
 		bd->bd_status = -1;
-		if (ldstat->bigrebuild == ldp->tgts[pd])
+		if (ldstat->stat == CISS_LD_REBLD &&
+		    ldstat->bigrebuild == ldp->tgts[pd])
 			bd->bd_status = BIOC_SDREBUILD;
 		if (ciss_bitset(ldp->tgts[pd] & (~CISS_BIGBIT),
 		    ldstat->bigfailed)) {
@@ -1155,10 +1157,14 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 			ldp = sc->sc_lds[ld];
 			if (!ldp)
 				continue;
-			for (pd = 0; pd < ldp->ndrives; pd++)
-				if (ldp->tgts[pd] == (CISS_BIGBIT +
+			if (sc->ndrives == 256)
+				drv = bb->bb_target;
+			else
+				drv = CISS_BIGBIT +
 				    bb->bb_channel * sc->ndrives +
-				    bb->bb_target))
+				    bb->bb_target;
+			for (pd = 0; pd < ldp->ndrives; pd++)
+				if (ldp->tgts[pd] == drv)
 					error = ciss_blink(sc, ld, pd,
 					    bb->bb_status, blink);
 		}
@@ -1322,12 +1328,19 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	int i, j, k = 0;
 
 	pdid = sc->scratch;
-	for (i = 0; i < sc->nbus; i++)
-		for (j = 0; j < sc->ndrives; j++) {
-			drv = CISS_BIGBIT + i * sc->ndrives + j;
-			if (!ciss_pdid(sc, drv, pdid, SCSI_NOSLEEP|SCSI_POLL))
-				buf[k++] = drv;
-		}
+	if (sc->ndrives == 256) {
+		for (i = 0; i < CISS_BIGBIT; i++)
+			if (!ciss_pdid(sc, i, pdid, SCSI_NOSLEEP|SCSI_POLL) &&
+			    (pdid->present & CISS_PD_PRESENT))
+				buf[k++] = i;
+	} else
+		for (i = 0; i < sc->nbus; i++)
+			for (j = 0; j < sc->ndrives; j++) {
+				drv = CISS_BIGBIT + i * sc->ndrives + j;
+				if (!ciss_pdid(sc, drv, pdid,
+				    SCSI_NOSLEEP|SCSI_POLL))
+					buf[k++] = drv;
+			}
 
 	if (!k)
 		return NULL;
