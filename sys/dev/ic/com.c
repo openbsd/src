@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.125 2008/04/24 12:53:50 jsing Exp $	*/
+/*	$OpenBSD: com.c,v 1.126 2008/04/24 12:54:44 jsing Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1317,10 +1317,6 @@ cominit(bus_space_tag_t iot, bus_space_handle_t ioh, int rate, int frequency)
 void  
 comcnprobe(struct consdev *cp)
 {
-	/* XXX NEEDS TO BE FIXED XXX */
-#ifdef MD_ISA_IOT
-	comconsiot = MD_ISA_IOT;
-#endif
 	bus_space_handle_t ioh;
 	int found;
 
