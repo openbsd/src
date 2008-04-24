@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.14 2008/04/24 12:29:34 jsing Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.15 2008/04/24 13:12:59 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,12 +36,13 @@
 #include <machine/bus.h>
 
 /*
- *  Structure holding all misc config information.
+ * Structure holding all misc config information.
  */
 #define MAX_CPUS	4
 
 struct sys_rec {
 	int	system_type;
+
 	struct cpuinfo {
 		u_int16_t type;
 		u_int8_t  vers_maj;
@@ -54,7 +55,8 @@ struct sys_rec {
 		u_int32_t tlbsize;
 		u_int32_t tlbwired;
 	} cpu[MAX_CPUS];
-	/* Published Cache OPS */
+
+	/* Published cache operations. */
 	void    (*_SyncCache)(void);
 	void    (*_InvalidateICache)(vaddr_t, int);
 	void    (*_InvalidateICachePage)(vaddr_t);
@@ -62,11 +64,10 @@ struct sys_rec {
 	void    (*_HitSyncDCache)(vaddr_t, int);
 	void    (*_IOSyncDCache)(vaddr_t, int, int);
 	void    (*_HitInvalidateDCache)(vaddr_t, int);
-	/* Console/Serial configuration */
-	int	cons_baudclk;
+
+	/* Serial console configuration. */
 	struct mips_bus_space console_io;
 	struct mips_bus_space *cons_iot;
-	bus_addr_t cons_ioaddr;
 };
 
 extern struct sys_rec sys_config;
