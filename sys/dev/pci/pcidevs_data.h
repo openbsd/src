@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1341 2008/04/23 18:37:05 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1342 2008/04/24 21:29:02 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8676,20 +8676,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GA620T",
 	},
 	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_1P,
-	    "1P",
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9805,
+	    "Nm9805",
 	},
 	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_2S1P,
-	    "2S1P",
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
+	    "Nm9835",
 	},
 	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_4S,
-	    "4S",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_6S,
-	    "6S",
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,
+	    "Nm9845",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
