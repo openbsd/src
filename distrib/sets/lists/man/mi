@@ -959,6 +959,7 @@
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/acpi.0
 ./usr/share/man/cat4/acpiac.0
+./usr/share/man/cat4/acpiasus.0
 ./usr/share/man/cat4/acpibat.0
 ./usr/share/man/cat4/acpibtn.0
 ./usr/share/man/cat4/acpicpu.0
