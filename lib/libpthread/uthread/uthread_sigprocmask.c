@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigprocmask.c,v 1.4 2001/12/30 01:11:07 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sigprocmask.c,v 1.5 2008/04/24 03:31:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,6 +41,14 @@
 int
 sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
-	return (pthread_sigmask(how, set, oset));
+	int ret;
+
+	ret = pthread_sigmask(how, set, oset);
+	if (ret != 0)
+	{
+		errno = ret;
+		ret = -1;
+	}
+	return ret;
 }
 #endif

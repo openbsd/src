@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.7 2003/07/08 00:17:19 marc Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.8 2008/04/24 03:31:33 kurt Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -75,8 +75,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		/* Trap invalid actions: */
 		default:
 			/* Return an invalid argument: */
-			errno = EINVAL;
-			ret = -1;
+			ret = EINVAL;
 			break;
 		}
 

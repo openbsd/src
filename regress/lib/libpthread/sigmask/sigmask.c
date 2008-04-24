@@ -1,4 +1,4 @@
-/* $OpenBSD: sigmask.c,v 1.2 2003/07/14 22:01:42 marc Exp $ */
+/* $OpenBSD: sigmask.c,v 1.3 2008/04/24 03:31:33 kurt Exp $ */
 /* PUBLIC DOMAIN July 2003 Marco S Hyman <marc@snafu.org> */
 
 #include <sys/time.h>
@@ -29,7 +29,10 @@ int main (int argc, char *argv[])
 	/* mask sigalrm */
 	CHECKe(sigemptyset(&mask));
 	CHECKe(sigaddset(&mask, SIGALRM));
-	CHECKe(pthread_sigmask(SIG_BLOCK, &mask, NULL));
+	CHECKr(pthread_sigmask(SIG_BLOCK, &mask, NULL));
+
+	/* make sure pthread_sigmask() returns the right value on failure */
+	CHECKe(pthread_sigmask(-1, &mask, NULL));
 
 	/* now trigger sigalrm and wait for it */
 	printf("trigger sigalrm[2] [masked, test should not die]\n");
@@ -38,7 +41,7 @@ int main (int argc, char *argv[])
 
 	/* sigwait for sigalrm, it should be pending.   If it is not
 	   the test will hang. */
-	CHECKe(sigwait(&mask, &sig));
+	CHECKr(sigwait(&mask, &sig));
 	ASSERT(sig == SIGALRM);
 
 	/* make sure sigwait didn't muck with the mask by triggering
@@ -52,7 +55,7 @@ int main (int argc, char *argv[])
 	   is triggered. */
 	if (argc > 1) {
 		printf("trigger sigalrm[4] [unmasked, test should die]\n");
-		CHECKe(pthread_sigmask(SIG_UNBLOCK, &mask, NULL));
+		CHECKr(pthread_sigmask(SIG_UNBLOCK, &mask, NULL));
 		ualarm(100000, 0);
 		CHECKe(sleep(1));
 	}
