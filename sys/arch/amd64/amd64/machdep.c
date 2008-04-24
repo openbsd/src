@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2008/04/12 12:49:28 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2008/04/24 12:33:14 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1810,13 +1810,22 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 #endif
 #endif
 		case BOOTARG_CONSDEV:
-			if (q->ba_size >= sizeof(bios_consdev_t))
-			{
+			if (q->ba_size >= sizeof(bios_consdev_t)) {
 				bios_consdev_t *cdp =
 				    (bios_consdev_t*)q->ba_arg;
 #include "com.h"
 #if NCOM > 0
-				extern int comconsrate; /* ic/com.c */
+				static const int comports[] =
+				    { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+				int unit = minor(cdp->consdev);
+				/* ic/com.c */
+				extern int comconsrate;
+				extern int comconsaddr;
+
+				if (unit >= 0 && unit < (sizeof(comports) /
+				    sizeof(comports[0])))
+					comconsaddr = comports[unit];
+
 				comconsrate = cdp->conspeed;
 #endif
 #ifdef BOOTINFO_DEBUG
