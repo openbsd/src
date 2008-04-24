@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.129 2007/11/26 15:40:51 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.130 2008/04/24 14:51:12 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -681,10 +681,14 @@ scsibusprint(void *aux, const char *pnp)
 	scsi_strvis(product, inqbuf->product, 16);
 	scsi_strvis(revision, inqbuf->revision, 4);
 
-	printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
-	    target, lun, vendor, product, revision,
-	    SCSISPC(inqbuf->version), type, dtype,
-	    removable ? "removable" : "fixed", qtype);
+	printf(" targ %d lun %d: <%s, %s, %s> ", target, lun, vendor, product,
+	    revision);
+	if (sa->sa_sc_link->flags & SDEV_ATAPI)
+		printf("ATAPI");
+	else
+		printf("SCSI%d", SCSISPC(inqbuf->version));
+	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
+	    qtype);
 
 	return (UNCONF);
 }
