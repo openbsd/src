@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.112 2008/04/18 20:26:07 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.113 2008/04/24 19:13:56 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -322,7 +322,7 @@ cvs_client_send_request(char *fmt, ...)
 	i = vasprintf(&data, fmt, ap);
 	va_end(ap);
 	if (i == -1)
-		fatal("cvs_client_send_request: %s", strerror(errno));
+		fatal("cvs_client_send_request: could not allocate memory");
 
 	if ((s = strchr(data, ' ')) != NULL)
 		*s = '\0';

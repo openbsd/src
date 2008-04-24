@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.42 2008/01/10 10:05:40 tobias Exp $	*/
+/*	$OpenBSD: log.c,v 1.43 2008/04/24 19:13:56 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -131,7 +131,7 @@ cvs_printf(const char *fmt, ...)
 
 		ret = vasprintf(&nstr, fmt, vap);
 		if (ret == -1)
-			fatal("cvs_printf: %s", strerror(errno));
+			fatal("cvs_printf: could not allocate memory");
 		for (dp = nstr; *dp != '\0';) {
 			sp = strchr(dp, '\n');
 			if (sp == NULL)

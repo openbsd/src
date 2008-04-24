@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.85 2008/04/18 20:26:07 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.86 2008/04/24 19:13:56 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -150,7 +150,7 @@ cvs_server_send_response(char *fmt, ...)
 	i = vasprintf(&data, fmt, ap);
 	va_end(ap);
 	if (i == -1)
-		fatal("cvs_server_send_response: %s", strerror(errno));
+		fatal("cvs_server_send_response: could not allocate memory");
 
 	cvs_log(LP_TRACE, "%s", data);
 	cvs_remote_output(data);

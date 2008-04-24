@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.20 2008/03/08 11:53:36 joris Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.21 2008/04/24 19:13:56 tobias Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1454,7 +1454,7 @@ diff_output(const char *fmt, ...)
 	i = vasprintf(&str, fmt, vap);
 	va_end(vap);
 	if (i == -1)
-		fatal("diff_output: %s", strerror(errno));
+		fatal("diff_output: could not allocate memory");
 	if (diffbuf != NULL)
 		cvs_buf_append(diffbuf, str, strlen(str));
 	else
