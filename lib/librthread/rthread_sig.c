@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.4 2005/12/30 04:05:55 tedu Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.5 2008/04/24 11:44:26 kurt Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -39,7 +39,7 @@
 int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
-	return (sigprocmask(how, set, oset));
+	return (sigprocmask(how, set, oset) ? errno : 0);
 }
 
 /* 
