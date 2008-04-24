@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.157 2008/02/05 22:57:31 mpf Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.158 2008/04/24 11:36:38 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ ipintr()
 	struct mbuf *m;
 	int s;
 
-	while (ipintrq.ifq_head) {
+	for (;;) {
 		/*
 		 * Get next datagram off input queue and get IP header
 		 * in first mbuf.
@@ -234,7 +234,7 @@ ipintr()
 		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
-		if (m == 0)
+		if (m == NULL)
 			return;
 #ifdef	DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)

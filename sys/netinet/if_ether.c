@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.70 2008/02/05 22:57:30 mpf Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.71 2008/04/24 11:36:38 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ arpintr()
 	struct arphdr *ar;
 	int s, len;
 
-	while (arpintrq.ifq_head) {
+	for (;;) {
 		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
