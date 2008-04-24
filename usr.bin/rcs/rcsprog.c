@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.141 2008/03/04 16:43:51 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.142 2008/04/24 19:16:49 tobias Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -127,10 +127,8 @@ main(int argc, char **argv)
 	if ((rcsinit = getenv("RCSINIT")) != NULL) {
 		ret = rcs_init(rcsinit, cmd_argv + 1,
 		    RCS_CMD_MAXARG - 1);
-		if (ret < 0) {
-			warnx("failed to prepend RCSINIT options");
-			exit (1);
-		}
+		if (ret < 0)
+			errx(1, "failed to prepend RCSINIT options");
 
 		cmd_argc += ret;
 	}
@@ -138,6 +136,8 @@ main(int argc, char **argv)
 	if ((rcs_tmpdir = getenv("TMPDIR")) == NULL)
 		rcs_tmpdir = RCS_TMPDIR_DEFAULT;
 
+	if (argc + cmd_argc >= RCS_CMD_MAXARG)
+		errx(1, "too many arguments");
 	for (ret = 1; ret < argc; ret++)
 		cmd_argv[cmd_argc++] = argv[ret];
 
