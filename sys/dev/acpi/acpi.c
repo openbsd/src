@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.114 2008/04/12 12:49:28 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.115 2008/04/24 13:57:49 jsing Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1853,6 +1853,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	    !strcmp(dev, ACPI_DEV_PBD) ||
 	    !strcmp(dev, ACPI_DEV_SBD))
 		aaa.aaa_name = "acpibtn";
+	else if (!strcmp(dev, ACPI_DEV_ASUS))
+		aaa.aaa_name = "acpiasus";
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);

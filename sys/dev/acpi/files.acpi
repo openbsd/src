@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.16 2007/12/05 19:17:13 deraadt Exp $
+#	$OpenBSD: files.acpi,v 1.17 2008/04/24 13:57:49 jsing Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -66,3 +66,7 @@ device	acpidock
 attach	acpidock at acpi
 file	dev/acpi/acpidock.c		acpidock
 
+# ASUS ACPI Hotkeys
+device	acpiasus
+attach	acpiasus at acpi
+file	dev/acpi/acpiasus.c		acpiasus
