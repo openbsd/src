@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.17 2007/12/27 13:59:12 thib Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.18 2008/04/24 17:39:45 thib Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -39,44 +39,21 @@
 int	fifo_badop(void *);
 int	fifo_ebadf(void *);
 
-#define fifo_create	fifo_badop
-#define fifo_mknod	fifo_badop
 int	fifo_open(void *);
 int	fifo_close(void *);
-#define fifo_access	fifo_ebadf
-#define fifo_getattr	fifo_ebadf
-#define fifo_setattr	fifo_ebadf
 int	fifo_read(void *);
 int	fifo_write(void *);
 int	fifo_ioctl(void *);
 int	fifo_poll(void *);
 int	fifo_kqfilter(void *);
-#define fifo_fsync	nullop
-#define fifo_remove	fifo_badop
-#define fifo_revoke     vop_generic_revoke
-#define fifo_link	fifo_badop
-#define fifo_rename	fifo_badop
-#define fifo_mkdir	fifo_badop
-#define fifo_rmdir	fifo_badop
-#define fifo_symlink	fifo_badop
-#define fifo_readdir	fifo_badop
-#define fifo_readlink	fifo_badop
-#define fifo_abortop	fifo_badop
 int	fifo_inactive(void *);
 int	fifo_reclaim(void *);
-#define fifo_lock       vop_generic_lock
-#define fifo_unlock     vop_generic_unlock
 int	fifo_bmap(void *);
-#define fifo_strategy	fifo_badop
 int	fifo_print(void *);
-#define fifo_islocked	vop_generic_islocked
 int	fifo_pathconf(void *);
 int	fifo_advlock(void *);
-#define fifo_reallocblks fifo_badop
-#define fifo_bwrite	nullop
 
 void 	fifo_printinfo(struct vnode *);
-
 int	fifo_vnoperate(void *);
 
 extern int (**fifo_vnodeop_p)(void *);

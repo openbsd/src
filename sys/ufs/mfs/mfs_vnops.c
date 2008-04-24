@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.32 2007/12/16 21:21:25 otto Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.33 2008/04/24 17:39:45 thib Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -54,41 +54,41 @@
 int (**mfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, mfs_lookup },		/* lookup */
-	{ &vop_create_desc, mfs_create },		/* create */
-	{ &vop_mknod_desc, mfs_mknod },			/* mknod */
+	{ &vop_lookup_desc, mfs_badop },		/* lookup */
+	{ &vop_create_desc, mfs_badop },		/* create */
+	{ &vop_mknod_desc, mfs_badop },			/* mknod */
 	{ &vop_open_desc, mfs_open },			/* open */
 	{ &vop_close_desc, mfs_close },			/* close */
-	{ &vop_access_desc, mfs_access },		/* access */
-	{ &vop_getattr_desc, mfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, mfs_setattr },		/* setattr */
-	{ &vop_read_desc, mfs_read },			/* read */
-	{ &vop_write_desc, mfs_write },			/* write */
+	{ &vop_access_desc, mfs_badop },		/* access */
+	{ &vop_getattr_desc, mfs_badop },		/* getattr */
+	{ &vop_setattr_desc, mfs_badop },		/* setattr */
+	{ &vop_read_desc, mfs_badop },			/* read */
+	{ &vop_write_desc, mfs_badop },			/* write */
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
-	{ &vop_poll_desc, mfs_poll },			/* poll */
+	{ &vop_poll_desc, mfs_badop },			/* poll */
 	{ &vop_revoke_desc, mfs_revoke },               /* revoke */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_remove_desc, mfs_remove },		/* remove */
-	{ &vop_link_desc, mfs_link },			/* link */
-	{ &vop_rename_desc, mfs_rename },		/* rename */
-	{ &vop_mkdir_desc, mfs_mkdir },			/* mkdir */
-	{ &vop_rmdir_desc, mfs_rmdir },			/* rmdir */
-	{ &vop_symlink_desc, mfs_symlink },		/* symlink */
-	{ &vop_readdir_desc, mfs_readdir },		/* readdir */
-	{ &vop_readlink_desc, mfs_readlink },		/* readlink */
-	{ &vop_abortop_desc, mfs_abortop },		/* abortop */
+	{ &vop_remove_desc, mfs_badop },		/* remove */
+	{ &vop_link_desc, mfs_badop },			/* link */
+	{ &vop_rename_desc, mfs_badop },		/* rename */
+	{ &vop_mkdir_desc, mfs_badop },			/* mkdir */
+	{ &vop_rmdir_desc, mfs_badop },			/* rmdir */
+	{ &vop_symlink_desc, mfs_badop },		/* symlink */
+	{ &vop_readdir_desc, mfs_badop },		/* readdir */
+	{ &vop_readlink_desc, mfs_badop },		/* readlink */
+	{ &vop_abortop_desc, mfs_badop },		/* abortop */
 	{ &vop_inactive_desc, mfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, mfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, mfs_lock },			/* lock */
-	{ &vop_unlock_desc, mfs_unlock },		/* unlock */
+	{ &vop_lock_desc, vop_generic_lock },		/* lock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
 	{ &vop_bmap_desc, mfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, mfs_strategy },		/* strategy */
 	{ &vop_print_desc, mfs_print },			/* print */
-	{ &vop_islocked_desc, mfs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, mfs_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, mfs_advlock },		/* advlock */
-	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
+	{ &vop_pathconf_desc, mfs_badop },		/* pathconf */
+	{ &vop_advlock_desc, mfs_badop },		/* advlock */
+	{ &vop_bwrite_desc, vop_generic_bwrite },	/* bwrite */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc mfs_vnodeop_opv_desc =
 	{ &mfs_vnodeop_p, mfs_vnodeop_entries };

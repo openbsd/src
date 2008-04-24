@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.25 2007/10/29 15:38:00 chl Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.26 2008/04/24 17:39:45 thib Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -68,79 +68,58 @@ static void	portal_closefd(struct proc *, int);
 static int	portal_connect(struct socket *, struct socket *);
 
 
-int portal_badop(void *);
+int	portal_badop(void *);
 
 int	portal_lookup(void *);
-#define	portal_create	eopnotsupp
-#define	portal_mknod	eopnotsupp
 int	portal_open(void *);
-#define	portal_close	nullop
-#define	portal_access	nullop
 int	portal_getattr(void *);
 int	portal_setattr(void *);
-#define	portal_read	eopnotsupp
-#define	portal_write	eopnotsupp
-#define	portal_ioctl    (int (*)(void *))enoioctl
-#define	portal_fsync	nullop
-#define	portal_remove	eopnotsupp
 int	portal_link(void *);
-#define	portal_rename	eopnotsupp
-#define	portal_mkdir	eopnotsupp
-#define	portal_rmdir	eopnotsupp
 int	portal_symlink(void *);
 int	portal_readdir(void *);
-#define portal_revoke   vop_generic_revoke
-#define	portal_readlink	eopnotsupp
 int	portal_inactive(void *);
 int	portal_reclaim(void *);
-#define	portal_lock	vop_generic_lock
-#define	portal_unlock	vop_generic_unlock
-#define	portal_bmap	portal_badop
-#define	portal_strategy	portal_badop
 int	portal_print(void *);
-#define	portal_islocked	vop_generic_islocked
 int	portal_pathconf(void *);
-#define	portal_advlock	eopnotsupp
-#define	portal_bwrite	eopnotsupp
 int	portal_poll(void *);
 
 int (**portal_vnodeop_p)(void *);
 struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, portal_lookup },		/* lookup */
-	{ &vop_create_desc, portal_create },		/* create */
-	{ &vop_mknod_desc, portal_mknod },		/* mknod */
+	{ &vop_create_desc, eopnotsupp },		/* create */
+	{ &vop_mknod_desc, eopnotsupp },		/* mknod */
 	{ &vop_open_desc, portal_open },		/* open */
-	{ &vop_close_desc, portal_close },		/* close */
-	{ &vop_access_desc, portal_access },		/* access */
+	{ &vop_close_desc, nullop },			/* close */
+	{ &vop_access_desc, nullop },			/* access */
 	{ &vop_getattr_desc, portal_getattr },		/* getattr */
 	{ &vop_setattr_desc, portal_setattr },		/* setattr */
-	{ &vop_read_desc, portal_read },		/* read */
-	{ &vop_write_desc, portal_write },		/* write */
-	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
+	{ &vop_read_desc, eopnotsupp },			/* read */
+	{ &vop_write_desc, eopnotsupp },		/* write */
+	{ &vop_ioctl_desc, (int (*)(void *))enoioctl },	/* ioctl */
 	{ &vop_poll_desc, portal_poll },		/* poll */
-	{ &vop_revoke_desc, portal_revoke },            /* revoke */
-	{ &vop_fsync_desc, portal_fsync },		/* fsync */
-	{ &vop_remove_desc, portal_remove },		/* remove */
+	{ &vop_revoke_desc, vop_generic_revoke },	/* revoke */
+	{ &vop_fsync_desc, nullop },			/* fsync */
+	{ &vop_remove_desc, eopnotsupp },		/* remove */
 	{ &vop_link_desc, portal_link },		/* link */
-	{ &vop_rename_desc, portal_rename },		/* rename */
-	{ &vop_mkdir_desc, portal_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, portal_rmdir },		/* rmdir */
+	{ &vop_rename_desc, eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, portal_symlink },		/* symlink */
 	{ &vop_readdir_desc, portal_readdir },		/* readdir */
-	{ &vop_readlink_desc, portal_readlink },	/* readlink */
-	{ &vop_abortop_desc, vop_generic_abortop },		/* abortop */
+	{ &vop_readlink_desc, eopnotsupp },		/* readlink */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, portal_inactive },	/* inactive */
 	{ &vop_reclaim_desc, portal_reclaim },		/* reclaim */
-	{ &vop_lock_desc, portal_lock },		/* lock */
-	{ &vop_unlock_desc, portal_unlock },		/* unlock */
-	{ &vop_bmap_desc, portal_bmap },		/* bmap */
-	{ &vop_strategy_desc, portal_strategy },	/* strategy */
+	{ &vop_lock_desc, vop_generic_lock },		/* lock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
+	{ &vop_bmap_desc, portal_badop },		/* bmap */
+	{ &vop_strategy_desc, portal_badop },		/* strategy */
 	{ &vop_print_desc, portal_print },		/* print */
-	{ &vop_islocked_desc, portal_islocked },	/* islocked */
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
+	{ &vop_advlock_desc, eopnotsupp },		/* advlock */
+	{ &vop_bwrite_desc, eopnotsupp },		/* bwrite */
 	{ NULL, NULL }
 };
 struct vnodeopv_desc portal_vnodeop_opv_desc =

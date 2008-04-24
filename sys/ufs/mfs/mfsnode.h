@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfsnode.h,v 1.11 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: mfsnode.h,v 1.12 2008/04/24 17:39:45 thib Exp $	*/
 /*	$NetBSD: mfsnode.h,v 1.3 1996/02/09 22:31:31 christos Exp $	*/
 
 /*
@@ -50,36 +50,3 @@ struct mfsnode {
  */
 #define VTOMFS(vp)	((struct mfsnode *)(vp)->v_data)
 #define MFSTOV(mfsp)	((mfsp)->mfs_vnode)
-
-/* Prototypes for MFS operations on vnodes. */
-#define	mfs_lookup	mfs_badop
-#define	mfs_create	mfs_badop
-#define	mfs_mknod	mfs_badop
-#define	mfs_access	mfs_badop
-#define	mfs_getattr	mfs_badop
-#define	mfs_setattr	mfs_badop
-#define	mfs_read	mfs_badop
-#define	mfs_write	mfs_badop
-#define	mfs_poll	mfs_badop
-#define	mfs_mmap	mfs_badop
-#define	mfs_seek	mfs_badop
-#define	mfs_remove	mfs_badop
-#define	mfs_link	mfs_badop
-#define	mfs_rename	mfs_badop
-#define	mfs_mkdir	mfs_badop
-#define	mfs_rmdir	mfs_badop
-#define	mfs_symlink	mfs_badop
-#define	mfs_readdir	mfs_badop
-#define	mfs_readlink	mfs_badop
-#define	mfs_abortop	mfs_badop
-#define	mfs_lock	vop_generic_lock
-#define	mfs_unlock	vop_generic_unlock
-#define	mfs_islocked	vop_generic_islocked
-#define	mfs_pathconf	mfs_badop
-#define	mfs_advlock	mfs_badop
-#define	mfs_blkatoff	mfs_badop
-#define	mfs_valloc	mfs_badop
-#define	mfs_vfree	mfs_badop
-#define	mfs_truncate	mfs_badop
-#define	mfs_update	nullop
-#define	mfs_bwrite	vop_generic_bwrite
