@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.124 2008/04/24 12:49:40 jsing Exp $	*/
+/*	$OpenBSD: com.c,v 1.125 2008/04/24 12:53:50 jsing Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -81,7 +81,7 @@
 #endif
 
 #include <machine/bus.h>
-#if defined(__sparc64__) || !defined(__sparc__)
+#if !defined(__sparc__) || defined(__sparc64__)
 #include <machine/intr.h>
 #endif
 
