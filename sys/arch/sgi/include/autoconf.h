@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2008/04/07 22:32:46 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.14 2008/04/24 12:29:34 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,14 +70,6 @@ struct sys_rec {
 };
 
 extern struct sys_rec sys_config;
-
-/*
- *  Give com.c method to find console address and speeds
- */
-#define	COM_FREQ	(sys_config.cons_baudclk)
-#define	CONCOM_FREQ	(sys_config.cons_baudclk)
-#define	CONADDR		(sys_config.cons_ioaddr)
-
 
 /**/
 struct confargs;

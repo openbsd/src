@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.122 2008/04/09 19:50:38 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.123 2008/04/24 12:29:34 jsing Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ bus_addr_t comsiraddr;
 int	comconsfreq;
 int	comconsrate = TTYDEF_SPEED;
 int	comconsinit;
-bus_addr_t comconsaddr;
+bus_addr_t comconsaddr = CONADDR;
 int	comconsattached;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
@@ -1222,16 +1222,6 @@ comintr(void *arg)
 }
 
 /*
- * Following are all routines needed for COM to act as console
- */
-
-#if defined(__sgi__)
-#undef CONADDR
-#undef COM_FREQ
-#include <machine/autoconf.h>
-#endif
-
-/*
  * The following functions are polled getc and putc routines, shared
  * by the console and kgdb glue.
  */
@@ -1327,32 +1317,27 @@ comcnprobe(struct consdev *cp)
 {
 	/* XXX NEEDS TO BE FIXED XXX */
 #ifdef MD_ISA_IOT
-	bus_space_tag_t iot = MD_ISA_IOT;
-#elif defined(__sgi__)
-	bus_space_tag_t iot = sys_config.cons_iot;
-#else
-	bus_space_tag_t iot = 0;
+	comconsiot = MD_ISA_IOT;
 #endif
 	bus_space_handle_t ioh;
 	int found;
 
-	if (CONADDR == 0)
+	if (comconsaddr == 0)
 		return;
 
-	comconsiot = iot;
-	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh))
+	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &ioh))
 		return;
-	found = comprobe1(iot, ioh);
-	bus_space_unmap(iot, ioh, COM_NPORTS);
+	found = comprobe1(comconsiot, ioh);
+	bus_space_unmap(comconsiot, ioh, COM_NPORTS);
 	if (!found)
 		return;
 
-	/* locate the major number */
+	/* Locate the major number. */
 	for (commajor = 0; commajor < nchrdev; commajor++)
 		if (cdevsw[commajor].d_open == comopen)
 			break;
 
-	/* initialize required fields */
+	/* Initialize required fields. */
 	cp->cn_dev = makedev(commajor, CONUNIT);
 #if defined(COMCONSOLE) || defined(PCCOMCONSOLE) || !defined(__amd64__)
 	cp->cn_pri = CN_HIGHPRI;
@@ -1364,8 +1349,6 @@ comcnprobe(struct consdev *cp)
 void
 comcninit(struct consdev *cp)
 {
-	comconsaddr = CONADDR;
-
 	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
@@ -1375,7 +1358,6 @@ comcninit(struct consdev *cp)
 	cominit(comconsiot, comconsioh, comconsrate, comconsfreq);
 	comconsinit = 0;
 }
-
 
 int
 comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency, tcflag_t cflag)

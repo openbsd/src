@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.1 2008/04/07 22:32:46 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.2 2008/04/24 12:29:34 jsing Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,6 +47,10 @@
 void crime_configure_memory(void);
 
 extern int bootdriveoffs;
+
+extern bus_addr_t comconsaddr;
+extern bus_space_tag_t comconsiot;
+extern int comconsfreq;
 
 void
 crime_configure_memory(void)
@@ -134,7 +138,7 @@ ip32_setup()
 		break;
 	}
 
-	sys_config.cons_ioaddr = MACE_ISA_SER1_OFFS;
-	sys_config.cons_baudclk = 1843200;		/*XXX*/
-	sys_config.cons_iot = &macebus_tag;
+	comconsaddr = MACE_ISA_SER1_OFFS;
+	comconsfreq = 1843200;
+	comconsiot = &macebus_tag;
 }
