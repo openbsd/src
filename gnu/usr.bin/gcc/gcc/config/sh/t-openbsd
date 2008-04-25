@@ -6,7 +6,7 @@ LIB2FUNCS_EXTRA=
 EXTRA_MULTILIB_PARTS=
 
 # OpenBSD's C library includes a fast software FP library that
-# has support for setting/setting the rounding mode, exception
+# has support for getting/setting the rounding mode, exception
 # mask, etc.  Therefore, we don't want to include software FP
 # in libgcc.
 FPBIT =
