@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.348 2008/04/13 19:41:29 ckuethe Exp $
+$OpenBSD: usbdevs,v 1.349 2008/04/25 04:19:01 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2225,6 +2225,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N
 
 /* Qualcomm products */
 product QUALCOMM MSM_MODEM	0x3196	CDMA MSM modem
+product QUALCOMM MSM_HSDPA2	0x6000	HSDPA MSM
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM3 CDMA_MSM	0x0001	CDMA Technologies MSM modem
