@@ -1,13 +1,20 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2007/01/29 21:28:33 martin Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2008/04/25 04:04:15 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd bootblocks distrib gzip_bsd.rd
+snap_md: bsd bsd.mp bootblocks distrib gzip_bsd.rd
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
+	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC.MP/bsd \
+	    ${DESTDIR}/snapshot/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/macppc/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/macppc/compile/GENERIC && \
+	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+
+bsd.mp:
+	cd ${.CURDIR}/../sys/arch/macppc/conf && config GENERIC.MP
+	cd ${.CURDIR}/../sys/arch/macppc/compile/GENERIC.MP && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
