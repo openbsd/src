@@ -241,7 +241,7 @@ search_string_from_argsandvars (caller)
   tree blocks, parms;
   int string_p;
 
-  /* saves a latest search result as a cached infomation */
+  /* saves a latest search result as a cached information */
   static tree __latest_search_decl = 0;
   static int  __latest_search_result = FALSE;
 
@@ -993,7 +993,7 @@ copy_args_for_protection (void)
 	    int string_p;
 
 	    /*
-	      skip arguemnt protection if the last argument is used
+	      skip argument protection if the last argument is used
 	      for the variable argument
 	    */
 	    /*
@@ -1920,7 +1920,7 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
       push_frame_offset = push_allocated_offset;
       if (check_out_of_frame_access (get_insns (), starting_frame))
 	{
-	  /* if there is an access beyond frame, push dummy region to seperate
+	  /* if there is an access beyond frame, push dummy region to separate
 	     the address of instantiated variables */
 	  push_frame (GET_MODE_SIZE (DImode), 0);
 	  assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
@@ -1935,7 +1935,7 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
 	  if (STARTING_FRAME_OFFSET)
 	    {
 	      /* if there is an access beyond frame, push dummy region 
-		 to seperate the address of instantiated variables */
+		 to separate the address of instantiated variables */
 	      push_frame (GET_MODE_SIZE (DImode), 0);
 	      assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
 	    }
@@ -1972,7 +1972,7 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
 
 #if !defined(FRAME_GROWS_DOWNWARD) && defined(STACK_GROWS_DOWNWARD)
 /*
-  push frame infomation for instantiating pseudo register at the top of stack.
+  push frame information for instantiating pseudo register at the top of stack.
   This is only for the "frame grows upward", it means FRAME_GROWS_DOWNWARD is 
   not defined.
 
@@ -2312,12 +2312,12 @@ push_frame_in_operand (insn, orig, push_size, boundary)
 	  && fp_equiv[REGNO (XEXP (x, 0))])
 	fp_equiv[REGNO (XEXP (x, 0))] = 0;
 
-      /* propagete fp_equiv register */
+      /* propagate fp_equiv register */
       else if (GET_CODE (XEXP (x, 0)) == REG
 	       && GET_CODE (XEXP (x, 1)) == REG
 	       && fp_equiv[REGNO (XEXP (x, 1))])
 	if (REGNO (XEXP (x, 0)) <= LAST_VIRTUAL_REGISTER
-	    || reg_renumber[REGNO (XEXP (x, 0))] > 0)
+	    || reg_renumber != 0 && reg_renumber[REGNO (XEXP (x, 0))] >= 0)
 	  fp_equiv[REGNO (XEXP (x, 0))] = fp_equiv[REGNO (XEXP (x, 1))];
       break;
 
