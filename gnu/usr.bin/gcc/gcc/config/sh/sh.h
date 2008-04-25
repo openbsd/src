@@ -946,7 +946,7 @@ extern char sh_additional_register_names[ADDREGNAMES_SIZE] \
 /* Given FROM and TO register numbers, say whether this elimination
    is allowed.  */
 #define CAN_ELIMINATE(FROM, TO) \
-  (!((FROM) == FRAME_POINTER_REGNUM && FRAME_POINTER_REQUIRED))
+  (!((FROM) == FRAME_POINTER_REGNUM && ! frame_pointer_needed))
 
 /* Define the offset between two registers, one to be eliminated, and the other
    its replacement, at the start of a routine.  */
@@ -3127,6 +3127,7 @@ extern int rtx_equal_function_value_matters;
   {"arith_reg_or_0_operand", {SUBREG, REG, CONST_INT, CONST_VECTOR}},	\
   {"binary_float_operator", {PLUS, MINUS, MULT, DIV}},			\
   {"binary_logical_operator", {AND, IOR, XOR}},				\
+  {"cmpsi_operand", {SUBREG, REG, CONST_INT}},				\
   {"commutative_float_operator", {PLUS, MULT}},				\
   {"equality_comparison_operator", {EQ,NE}},				\
   {"extend_reg_operand", {SUBREG, REG, TRUNCATE}},			\
@@ -3245,10 +3246,7 @@ extern int rtx_equal_function_value_matters;
   (REGNO (hard_reg) == (TARGET_SH5 ? PR_MEDIA_REG : PR_REG) \
    ? (current_function_is_leaf && ! sh_pr_n_sets () \
       ? (hard_reg) \
-      : gen_rtx_MEM (Pmode, TARGET_SH5 \
-			    ? (plus_constant (arg_pointer_rtx, \
-					      TARGET_SHMEDIA64 ? -8 : -4)) \
-			    : frame_pointer_rtx)) \
+      : gen_rtx_MEM (Pmode, return_address_pointer_rtx)) \
    : NULL_RTX)
 
 #endif /* ! GCC_SH_H */

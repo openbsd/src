@@ -345,6 +345,9 @@ print_operand (stream, x, code)
      rtx x;
      int code;
 {
+  int regno;
+  enum machine_mode mode;
+
   switch (code)
     {
     case '.':
@@ -381,11 +384,66 @@ print_operand (stream, x, code)
       x = mark_constant_pool_use (x);
       output_addr_const (stream, x);
       break;
+    /* N.B.: %R / %S / %T adjust memory addresses by four.
+       For SHMEDIA, that means they can be used to access the first and
+       second 32 bit part of a 64 bit (or larger) value that
+       might be held in floating point registers or memory.
+       While they can be used to access 64 bit parts of a larger value
+       held in general purpose registers, that won't work with memory -
+       neither for fp registers, since the frxx names are used.  */
     case 'R':
-      fputs (reg_names[REGNO (x) + LSW], (stream));
+      if (REG_P (x) || GET_CODE (x) == SUBREG)
+	{
+	  regno = true_regnum (x);
+	  regno += FP_REGISTER_P (regno) ? 1 : LSW;
+	  fputs (reg_names[regno], (stream));
+	}
+      else if (GET_CODE (x) == MEM)
+	{
+	  x = adjust_address (x, SImode, 4 * LSW);
+	  print_operand_address (stream, XEXP (x, 0));
+	}
+      else
+	{
+	  rtx sub = NULL_RTX;
+
+	  mode = GET_MODE (x);
+	  if (mode == VOIDmode)
+	    mode = DImode;
+	  if (GET_MODE_SIZE (mode) >= 8)
+	    sub = simplify_subreg (SImode, x, mode, 4 * LSW);
+	  if (sub)
+	    print_operand (stream, sub, 0);
+	  else
+	    output_operand_lossage ("invalid operand to %%R");
+	}
       break;
     case 'S':
-      fputs (reg_names[REGNO (x) + MSW], (stream));
+      if (REG_P (x) || GET_CODE (x) == SUBREG)
+	{
+	  regno = true_regnum (x);
+	  regno += FP_REGISTER_P (regno) ? 0 : MSW;
+	  fputs (reg_names[regno], (stream));
+	}
+      else if (GET_CODE (x) == MEM)
+	{
+	  x = adjust_address (x, SImode, 4 * MSW);
+	  print_operand_address (stream, XEXP (x, 0));
+	}
+      else
+	{
+	  rtx sub = NULL_RTX;
+
+	  mode = GET_MODE (x);
+	  if (mode == VOIDmode)
+	    mode = DImode;
+	  if (GET_MODE_SIZE (mode) >= 8)
+	    sub = simplify_subreg (SImode, x, mode, 4 * MSW);
+	  if (sub)
+	    print_operand (stream, sub, 0);
+	  else
+	    output_operand_lossage ("invalid operand to %%S");
+	}
       break;
     case 'T':
       /* Next word of a double.  */
@@ -7889,6 +7947,13 @@ sh_register_move_cost (mode, srcclass, dstclass)
       && REGCLASS_HAS_FP_REG (dstclass))
     return 4;
 
+  if (REGCLASS_HAS_FP_REG (dstclass) && srcclass == T_REGS)
+    return ((TARGET_HARD_SH4 && !optimize_size) ? 10 : 7);
+
+  if ((REGCLASS_HAS_FP_REG (dstclass) && srcclass == MAC_REGS)
+      || (dstclass== MAC_REGS && REGCLASS_HAS_FP_REG (srcclass)))
+    return 9;
+
   if ((REGCLASS_HAS_FP_REG (dstclass)
        && REGCLASS_HAS_GENERAL_REG (srcclass))
       || (REGCLASS_HAS_GENERAL_REG (dstclass)
@@ -7935,6 +8000,15 @@ sh_register_operand (op, mode)
   if (op == CONST0_RTX (mode) && TARGET_SHMEDIA)
     return 1;
   return register_operand (op, mode);
+}
+
+int
+cmpsi_operand (rtx op, enum machine_mode mode)
+{
+  if (GET_CODE (op) == REG && REGNO (op) == T_REG
+      && GET_MODE (op) == SImode)
+    return 1;
+  return arith_operand (op, mode);
 }
 
 rtx
@@ -7990,6 +8064,35 @@ check_use_sfunc_addr (rtx insn, rtx reg)
     }
   abort ();
 }
+
+int
+sh_expand_t_scc (enum rtx_code code, rtx target)
+{
+  rtx result = target;
+  HOST_WIDE_INT val;
+
+  if (GET_CODE (sh_compare_op0) != REG || REGNO (sh_compare_op0) != T_REG
+      || GET_CODE (sh_compare_op1) != CONST_INT)
+    return 0;
+  if (GET_CODE (result) != REG)
+    result = gen_reg_rtx (SImode);
+  val = INTVAL (sh_compare_op1);
+  if ((code == EQ && val == 1) || (code == NE && val == 0))
+    emit_insn (gen_movt (result));   
+  else if ((code == EQ && val == 0) || (code == NE && val == 1))
+    {
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, result));
+      emit_insn (gen_subc (result, result, result));
+      emit_insn (gen_addsi3 (result, result, GEN_INT (1)));
+    }
+  else if (code == EQ || code == NE)
+    emit_insn (gen_move_insn (result, GEN_INT (code == NE)));
+  else
+    return 0; 
+  if (result != target)
+    emit_move_insn (target, result);
+  return 1;
+}      
 
 #include "gt-sh.h"
 

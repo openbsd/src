@@ -102,6 +102,7 @@ extern int sh_insn_length_adjustment PARAMS ((rtx));
 extern int sh_can_redirect_branch PARAMS ((rtx, rtx));
 extern void sh_expand_unop_v2sf PARAMS ((enum rtx_code, rtx, rtx));
 extern void sh_expand_binop_v2sf PARAMS ((enum rtx_code, rtx, rtx, rtx));
+extern int sh_expand_t_scc PARAMS ((enum rtx_code, rtx));
 #ifdef TREE_CODE
 extern void sh_va_start PARAMS ((tree, rtx));
 extern rtx sh_va_arg PARAMS ((tree, tree));
