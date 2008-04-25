@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.33 2007/09/07 08:37:38 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.34 2008/04/25 19:50:08 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 
 extern volatile u_int32_t lapic_tpr;	/* Current interrupt priority level. */
 
-extern volatile u_int32_t ipending;	/* Interrupts pending. */
 extern int imask[];	/* Bitmasks telling what interrupts are blocked. */
 extern int iunmask[];	/* Bitmasks telling what interrupts are accepted. */
 
@@ -99,7 +98,7 @@ void splassert_check(int, const char *);
 
 #define _SPLX(ncpl) 			\
 	lapic_tpr = ncpl;		\
-	if (ipending & IUNMASK(ncpl))	\
+	if (curcpu()->ci_ipending & IUNMASK(ncpl))	\
 		Xspllower()
 
 /*

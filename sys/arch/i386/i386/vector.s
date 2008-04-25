@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.10 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: vector.s,v 1.11 2008/04/25 19:50:08 kettenis Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ IDTVEC(stray_/**/name/**/num)						;\
 	addl	$4,%esp							;\
 	jmp	6b							;\
 IDTVEC(hold_/**/name/**/num)						;\
-	orb	$IRQ_BIT(num),_C_LABEL(ipending) + IRQ_BYTE(num)	;\
+	orb	$IRQ_BIT(num),CPUVAR(IPENDING) + IRQ_BYTE(num)	;\
 	INTRFASTEXIT
 
 #if defined(DEBUG)

@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.11 2008/04/18 20:20:35 kettenis Exp $ */
+/* $OpenBSD: apicvec.s,v 1.12 2008/04/25 19:50:07 kettenis Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -169,7 +169,7 @@ XINTR(softclock):
 	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTCLOCK,CPL
-	andl	$~(1<<SIR_CLOCK),_C_LABEL(ipending)
+	andl	$~(1<<SIR_CLOCK),CPUVAR(IPENDING)
 	ioapic_asm_ack()
 	sti
 #ifdef MULTIPROCESSOR
@@ -195,7 +195,7 @@ XINTR(softnet):
 	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTNET,CPL
-	andl	$~(1<<SIR_NET),_C_LABEL(ipending)
+	andl	$~(1<<SIR_NET),CPUVAR(IPENDING)
 	ioapic_asm_ack()
 	sti
 #ifdef MULTIPROCESSOR
@@ -217,7 +217,7 @@ XINTR(softtty):
 	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTTTY,CPL
-	andl	$~(1<<SIR_TTY),_C_LABEL(ipending)
+	andl	$~(1<<SIR_TTY),CPUVAR(IPENDING)
 	ioapic_asm_ack()
 	sti
 #ifdef MULTIPROCESSOR
@@ -236,7 +236,7 @@ XINTR(softast):
 	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTAST,CPL
-	andl	$~(1<<SIR_AST),_C_LABEL(ipending)
+	andl	$~(1<<SIR_AST),CPUVAR(IPENDING)
 	ioapic_asm_ack()
 	sti
 	jmp	_C_LABEL(Xdoreti)

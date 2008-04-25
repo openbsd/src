@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.425 2008/04/20 16:11:13 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.426 2008/04/25 19:50:07 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4228,7 +4228,9 @@ i386_softintunlock(void)
 void
 softintr(int sir, int vec)
 {
-	__asm __volatile("orl %1, %0" : "=m" (ipending) : "ir" (sir));
+	struct cpu_info *ci = curcpu();
+
+	__asm __volatile("orl %1, %0" : "=m" (ci->ci_ipending) : "ir" (sir));
 #ifdef MULTIPROCESSOR
 	i82489_writereg(LAPIC_ICRLO,
 	    vec | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
