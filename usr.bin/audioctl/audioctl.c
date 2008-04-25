@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.17 2008/03/22 11:05:31 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.18 2008/04/25 06:43:49 jakemsr Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ audio_info_t info;
 
 char encbuf[1000];
 
-int properties, fullduplex, rerror;
+int properties, fullduplex, perrors, rerrors;
 
 struct field {
 	const char *name;
@@ -118,6 +118,7 @@ struct field {
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
 	{ "play.buffer_size",	&info.play.buffer_size,	UINT,	0 },
 	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
+	{ "play.errors",	&perrors,		INT,	READONLY },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
@@ -137,7 +138,7 @@ struct field {
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
 	{ "record.buffer_size",	&info.record.buffer_size,UINT,	0 },
 	{ "record.block_size",	&info.record.block_size,UINT,	0 },
-	{ "record.errors",	&rerror,		INT,	READONLY },
+	{ "record.errors",	&rerrors,		INT,	READONLY },
 	{ 0 }
 };
 
@@ -313,7 +314,9 @@ getinfo(int fd)
 		err(1, "AUDIO_GETFD");
 	if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
 		err(1, "AUDIO_GETPROPS");
-	if (ioctl(fd, AUDIO_RERROR, &rerror) < 0)
+	if (ioctl(fd, AUDIO_PERROR, &perrors) < 0)
+		err(1, "AUDIO_PERROR");
+	if (ioctl(fd, AUDIO_RERROR, &rerrors) < 0)
 		err(1, "AUDIO_RERROR");
 	if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
 		err(1, "AUDIO_GETINFO");
