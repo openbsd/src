@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.20 2007/12/29 17:41:29 miod Exp $
+#	$OpenBSD: files.m88k,v 1.21 2008/04/25 14:51:35 jmc Exp $
 
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
@@ -26,7 +26,7 @@ file	arch/m88k/m88k/vm_machdep.c
 file	arch/m88k/m88k/m88110_fp.c			m88110
 file	lib/libkern/softfloat.c				m88110
 
-# quad support is neccessary for 32 bit architectures
+# quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
 file	lib/libkern/anddi3.c
 file	lib/libkern/ashldi3.c

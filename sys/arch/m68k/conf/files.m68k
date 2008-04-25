@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m68k,v 1.18 2007/11/25 18:25:28 deraadt Exp $
+#	$OpenBSD: files.m68k,v 1.19 2008/04/25 14:51:35 jmc Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/bcopy.s
@@ -29,7 +29,7 @@ include	"compat/m68k4k/files.m68k4k"
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
 
-# quad support is neccessary for 32 bit architectures
+# quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
 file	lib/libkern/anddi3.c
 file	lib/libkern/ashldi3.c

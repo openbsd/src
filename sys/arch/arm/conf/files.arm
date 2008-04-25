@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.12 2007/11/25 18:25:27 deraadt Exp $
+#	$OpenBSD: files.arm,v 1.13 2008/04/25 14:51:35 jmc Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # Floating point emulator
@@ -113,7 +113,7 @@ file	lib/libkern/arch/arm/divsi3.S
 file	lib/libkern/arch/arm/memcpy.S
 file	lib/libkern/arch/arm/memmove.S
 
-# quad support is neccessary for 32 bit architectures
+# quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
 file	lib/libkern/anddi3.c
 file	lib/libkern/ashldi3.c

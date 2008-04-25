@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.80 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.81 2008/04/25 14:51:35 jmc Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -391,7 +391,7 @@ file	arch/sparc/dev/com_obio.c	com_obio
 # machine-dependent libkern component
 file	lib/libkern/arch/sparc/saveregs.S
 
-# quad support is neccessary for 32 bit architectures
+# quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
 file	lib/libkern/anddi3.c
 file	lib/libkern/ashldi3.c

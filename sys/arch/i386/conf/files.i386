@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.176 2008/03/22 19:43:09 weingart Exp $
+#	$OpenBSD: files.i386,v 1.177 2008/04/25 14:51:35 jmc Exp $
 #
 # new style config file for i386 architecture
 #
@@ -448,7 +448,7 @@ include "dev/vesa/files.vesa"
 
 #include "dev/rasops/files.rasops"
 
-# quad support is neccessary for 32 bit architectures
+# quad support is necessary for 32 bit architectures
 file lib/libkern/adddi3.c
 file lib/libkern/anddi3.c
 file lib/libkern/ashldi3.c

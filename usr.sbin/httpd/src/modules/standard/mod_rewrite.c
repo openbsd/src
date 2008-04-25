@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.26 2008/04/13 00:22:17 djm Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.27 2008/04/25 14:51:35 jmc Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1611,7 +1611,7 @@ static int handler_redirect(request_rec *r)
                       "mod_rewrite: maximum number of internal redirects "
                       "reached. Assuming configuration error. Use "
                       "'RewriteOptions MaxRedirects' to increase the limit "
-                      "if neccessary.");
+                      "if necessary.");
         return HTTP_INTERNAL_SERVER_ERROR;
     }
 

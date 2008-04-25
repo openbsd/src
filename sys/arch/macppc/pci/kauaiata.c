@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.9 2007/03/01 21:28:56 drahn Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.10 2008/04/25 14:51:35 jmc Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -103,7 +103,7 @@ kauaiataattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
-	/* XXX not neccessarily the right device */
+	/* XXX not necessarily the right device */
 	node = OF_finddevice("uata");
 	if (node == -1)
 		node = OF_finddevice("/pci@f4000000/ata-6");
