@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.6 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: asms.c,v 1.7 2008/04/25 16:37:44 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -92,7 +92,7 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct asms_softc *sc = (struct asms_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data;
+	u_int8_t cmd, data, rev1, rev2, ver1, ver2;
 	int i, vflag = 0;
 
 	sc->sc_tag = ia->ia_tag;
@@ -144,21 +144,19 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = ASMS_REG_RDATA1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &rev1, sizeof rev1, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read data register\n");
 		return;
 	}
-	printf(", rev %x", data);
 
 	cmd = ASMS_REG_RDATA2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &rev2, sizeof rev2, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read data register\n");
 		return;
 	}
-	printf(".%x", data);
 
 	cmd = ASMS_REG_COMMAND; data = ASMS_CMD_READ_VER;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
@@ -171,21 +169,19 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = ASMS_REG_RDATA1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &ver1, sizeof ver1, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read data register\n");
 		return;
 	}
-	printf(", version %x", data);
 
 	cmd = ASMS_REG_RDATA2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &ver2, sizeof ver2, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read data register\n");
 		return;
 	}
-	printf(".%x", data);
 
 	cmd = ASMS_REG_VENDOR;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -246,6 +242,8 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
+
+	printf(": rev %x.%x, version %x.%x", rev1, rev2, ver1, ver2);
 
 	/* Initialize sensor data. */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
