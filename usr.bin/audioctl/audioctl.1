@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.24 2008/04/25 06:40:37 jakemsr Exp $
+.\" $OpenBSD: audioctl.1,v 1.25 2008/04/25 06:48:59 ratchov Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ This can be circumvented like so:
 .Dl $ (cat file.au; audioctl -f /dev/audioctl) \*(Gt /dev/audio
 or
 .Bd -literal -offset indent -compact
-$ (audioctl -f /dev/audioctl blocksize=1024; cat file.au) \e
+$ (audioctl -f /dev/audioctl play.block_size=1024; cat file.au) \e
 	\*(Gt /dev/audio
 .Ed
 .Sh SEE ALSO
