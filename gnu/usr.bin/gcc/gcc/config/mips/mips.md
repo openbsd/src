@@ -163,7 +163,8 @@
 
 ;; Describe a user's asm statement.
 (define_asm_attributes
-  [(set_attr "type" "multi")])
+  [(set_attr "type" "multi")
+   (set_attr "can_delay" "no")])
 
 ;; whether or not generating calls to position independent functions
 (define_attr "abicalls" "no,yes"
