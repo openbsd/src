@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.71 2008/04/14 13:46:13 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.72 2008/04/25 12:33:41 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ nfs_statfs(mp, sbp, p)
 		nfsm_postop_attr(vp, retattr);
 	if (error) {
 		if (mrep != NULL)
-			m_free(mrep);
+			m_freem(mrep);
 		goto nfsmout;
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
