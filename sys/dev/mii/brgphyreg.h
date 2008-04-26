@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.10 2008/03/21 21:29:21 brad Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.11 2008/04/26 21:26:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -162,6 +162,7 @@
 
 #define BRGPHY_MII_DSP_RW_PORT	0x15	/* DSP coefficient r/w port */
 
+#define BRGPHY_MII_EPHY_PTEST	0x17	/* 5906 PHY register */
 #define BRGPHY_MII_DSP_ADDR_REG	0x17	/* DSP coefficient addr register */
 
 #define BRGPHY_DSP_TAP_NUMBER_MASK		0x00
