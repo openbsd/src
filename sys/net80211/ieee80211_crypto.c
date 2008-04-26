@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.40 2008/04/21 19:01:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.41 2008/04/26 20:03:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -61,6 +61,17 @@ void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
+	struct ieee80211com *ic = (void *)ifp;
+
+	if (ic->ic_caps & IEEE80211_C_RSN) {
+		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
+		ic->ic_rsnakms = IEEE80211_AKM_PSK | IEEE80211_AKM_IEEE8021X;
+		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
+		    IEEE80211_CIPHER_CCMP;
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+	}
+	ic->ic_set_key = ieee80211_set_key;
+	ic->ic_delete_key = ieee80211_delete_key;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.30 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.31 2008/04/26 20:03:34 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -141,24 +141,12 @@ ieee80211_ifattach(struct ifnet *ifp)
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 
 	ieee80211_setbasicrates(ic);
-	(void) ieee80211_setmode(ic, ic->ic_curmode);
+	(void)ieee80211_setmode(ic, ic->ic_curmode);
 
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
 	ic->ic_dtim_period = 1;	/* all TIMs are DTIMs */
-
-	if (ic->ic_caps & IEEE80211_C_RSN) {
-		ic->ic_rsnprotos =
-		    IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
-		ic->ic_rsnakms =
-		    IEEE80211_AKM_PSK | IEEE80211_AKM_IEEE8021X;
-		ic->ic_rsnciphers =
-		    IEEE80211_CIPHER_TKIP | IEEE80211_CIPHER_CCMP;
-		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
-	}
-	ic->ic_set_key = ieee80211_set_key;
-	ic->ic_delete_key = ieee80211_delete_key;
 
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);
