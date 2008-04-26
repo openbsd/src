@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.36 2008/02/15 17:33:51 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.37 2008/04/26 22:37:41 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ _ENTRY(_C_LABEL(cpu_spinup_trampoline))
  * void cpu_switchto(struct proc *old, struct proc *new)
  * Switch from "old" proc to "new".
  */
-_ENTRY(_C_LABEL(cpu_switchto))
+_ENTRY(_C_LABEL(cpu_switchto_asm))
 	mflr	%r0			/* save lr */
 	stw	%r0,4(%r1)
 	stwu	%r1,-16(%r1)
@@ -158,12 +158,6 @@ _ENTRY(_C_LABEL(cpu_switchto))
 	li	%r31,0
 	/* just did this resched thing, clear resched */
 	stw	%r31,CI_WANT_RESCHED(%r5)
-
-#ifdef MULTIPROCESSOR
-	stw	%r5,P_CPU(%r4)
-#endif
-
-	stw	%r4,CI_CURPROC(%r5)	/* record new process */
 
 	li	%r31,SONPROC
 	stb	%r31,P_STAT(%r4)
@@ -184,6 +178,12 @@ switch_exited:
 	mfmsr	%r30
 	andi.	%r30,%r30,~PSL_EE@l
 	mtmsr	%r30
+
+	stw	%r4,CI_CURPROC(%r5)	/* record new process */
+
+#ifdef MULTIPROCESSOR
+	stw	%r5,P_CPU(%r4)
+#endif
 
 	lwz	%r31,P_ADDR(%r4)
 	stw	%r31,CI_CURPCB(%r5)	/* indicate new pcb */

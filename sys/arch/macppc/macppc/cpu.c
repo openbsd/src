@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.47 2008/04/23 15:34:18 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.48 2008/04/26 22:37:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -598,10 +598,6 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	h->sdr1 = ppc_mfsdr1();
 	cpu_hatch_data = h;
 
-#ifdef notyet
-	ci->ci_lasttb = curcpu()->ci_lasttb;
-#endif
-
 	__asm volatile ("sync; isync");
 
 	/* XXX OpenPIC */
@@ -668,10 +664,12 @@ cpu_boot_secondary_processors(void)
 	__asm volatile ("sync");
 }
 
+void cpu_startclock(void);
 void
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	int intrstate;
 	int scratch, i, s;
 
         /* Initialize timebase. */
@@ -759,6 +757,10 @@ cpu_hatch(void)
 	s = splhigh();
 	microuptime(&curcpu()->ci_schedstate.spc_runtime);
 	splx(s);
+
+	intrstate = ppc_intr_disable();
+	cpu_startclock();
+	ppc_intr_enable(intrstate);
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());

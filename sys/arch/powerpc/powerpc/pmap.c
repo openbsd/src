@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2007/11/04 13:43:39 martin Exp $ */
+/*	$OpenBSD: pmap.c,v 1.104 2008/04/26 22:37:41 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -47,6 +47,8 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+
+#include <powerpc/lock.h>
 
 struct pmap kernel_pmap_;
 static struct mem_region *pmap_mem, *pmap_avail;
@@ -153,6 +155,64 @@ struct pool pmap_pted_pool;
 int pmap_initialized = 0;
 int physmem;
 int physmaxaddr;
+
+void pmap_hash_lock_init(void);
+void pmap_hash_lock(int entry);
+void pmap_hash_unlock(int entry);
+int pmap_hash_lock_try(int entry);
+
+volatile unsigned int pmap_hash_lock_word = 0;
+
+void
+pmap_hash_lock_init()
+{
+	pmap_hash_lock_word = 0;
+}
+
+int
+pmap_hash_lock_try(int entry)
+{
+	int val = 1 << entry;
+	int success, tmp;
+	__asm volatile (
+	    "1: lwarx	%0, 0, %3	\n"
+	    "	and.	%1, %2, %0	\n"
+	    "	li	%1, 0		\n"
+	    "	bne 2f			\n"
+	    "	or	%0, %2, %0	\n"
+	    "	stwcx.  %0, 0, %3	\n"
+	    "	li	%1, 1		\n"
+	    "	bne-	1b		\n"
+	    "2:				\n"
+	    : "=&r" (tmp), "=&r" (success)
+	    : "r" (val), "r" (&pmap_hash_lock_word)
+	    : "memory");
+	return success;
+}
+
+
+void
+pmap_hash_lock(int entry)
+{
+	int attempt = 0;
+	int locked = 0;
+	do {
+		if (pmap_hash_lock_word & (1 << entry)) {
+			attempt++;
+			if(attempt >0x20000000)
+				panic("unable to obtain lock on entry %d\n",
+				    entry);
+			continue;
+		}
+		locked = pmap_hash_lock_try(entry);
+	} while (locked == 0);
+}
+
+void
+pmap_hash_unlock(int entry)
+{
+	atomic_clearbits_int(&pmap_hash_lock_word,  1 << entry);
+}
 
 /* virtual to physical helpers */
 static inline int
@@ -828,8 +888,10 @@ pmap_hash_remove(struct pte_desc *pted)
 	/* determine which pteg mapping is present in */
 
 	if (ppc_proc_is_64b) {
+		int entry = PTED_PTEGIDX(pted); 
 		ptp64 = pmap_ptable64 + (idx * 8);
-		ptp64 += PTED_PTEGIDX(pted); /* increment by index into pteg */
+		ptp64 += entry; /* increment by entry into pteg */
+		pmap_hash_lock(entry);
 		/*
 		 * We now have the pointer to where it will be, if it is
 		 * currently mapped. If the mapping was thrown away in
@@ -840,9 +902,12 @@ pmap_hash_remove(struct pte_desc *pted)
 		    (PTED_HID(pted) ? PTE_HID_64 : 0)) == ptp64->pte_hi) {
 			pte_zap((void*)ptp64, pted);
 		}
+		pmap_hash_unlock(entry);
 	} else {
+		int entry = PTED_PTEGIDX(pted); 
 		ptp32 = pmap_ptable32 + (idx * 8);
-		ptp32 += PTED_PTEGIDX(pted); /* increment by index into pteg */
+		ptp32 += entry; /* increment by entry into pteg */
+		pmap_hash_lock(entry);
 		/*
 		 * We now have the pointer to where it will be, if it is
 		 * currently mapped. If the mapping was thrown away in
@@ -853,6 +918,7 @@ pmap_hash_remove(struct pte_desc *pted)
 		    (PTED_HID(pted) ? PTE_HID_32 : 0)) == ptp32->pte_hi) {
 			pte_zap((void*)ptp32, pted);
 		}
+		pmap_hash_unlock(entry);
 	}
 }
 
@@ -2267,7 +2333,6 @@ pte_insert64(struct pte_desc *pted)
 	int sr, idx;
 	int i;
 
-	/* HASH lock? */
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
@@ -2293,6 +2358,8 @@ pte_insert64(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
+		if (pmap_hash_lock_try(i) == 0)
+			continue;
 
 		/* not valid, just load */
 		pted->pted_va |= i;
@@ -2302,12 +2369,16 @@ pte_insert64(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp64[i].pte_hi |= PTE_VALID_64;
 		__asm volatile ("sync");
+
+		pmap_hash_unlock(i);
 		return;
 	}
 	/* try fill of secondary hash */
 	ptp64 = pmap_ptable64 + (idx ^ pmap_ptab_mask) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
+			continue;
+		if (pmap_hash_lock_try(i) == 0)
 			continue;
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
@@ -2317,12 +2388,19 @@ pte_insert64(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp64[i].pte_hi |= PTE_VALID_64;
 		__asm volatile ("sync");
+
+		pmap_hash_unlock(i);
 		return;
 	}
 
 	/* need decent replacement algorithm */
+busy:
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
+
+	if (pmap_hash_lock_try(off & 7) == 0)
+		goto busy;
+
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
 	idx = (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0));
@@ -2362,6 +2440,8 @@ pte_insert64(struct pte_desc *pted)
 	ptp64->pte_lo = pted->p.pted_pte64.pte_lo;
 	__asm__ volatile ("sync");
 	ptp64->pte_hi |= PTE_VALID_64;
+
+	pmap_hash_unlock(off & 7);
 }
 
 void
@@ -2372,8 +2452,6 @@ pte_insert32(struct pte_desc *pted)
 	struct pte_32 *ptp32;
 	int sr, idx;
 	int i;
-
-	/* HASH lock? */
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
@@ -2401,6 +2479,8 @@ pte_insert32(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
+		if (pmap_hash_lock_try(i) == 0)
+			continue;
 
 		/* not valid, just load */
 		pted->pted_va |= i;
@@ -2409,12 +2489,16 @@ pte_insert32(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp32[i].pte_hi |= PTE_VALID_32;
 		__asm volatile ("sync");
+
+		pmap_hash_unlock(i);
 		return;
 	}
 	/* try fill of secondary hash */
 	ptp32 = pmap_ptable32 + (idx ^ pmap_ptab_mask) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
+			continue;
+		if (pmap_hash_lock_try(i) == 0)
 			continue;
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
@@ -2424,12 +2508,18 @@ pte_insert32(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp32[i].pte_hi |= PTE_VALID_32;
 		__asm volatile ("sync");
+
+		pmap_hash_unlock(i);
 		return;
 	}
 
 	/* need decent replacement algorithm */
+busy:
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
+	if (pmap_hash_lock_try(off & 7) == 0)
+		goto busy;
+
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
 	idx = (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0));
@@ -2460,6 +2550,7 @@ pte_insert32(struct pte_desc *pted)
 	__asm__ volatile ("sync");
 	ptp32->pte_hi |= PTE_VALID_32;
 
+	pmap_hash_unlock(off & 7);
 }
 
 #ifdef DEBUG_PMAP

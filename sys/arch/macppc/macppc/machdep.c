@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 2008/04/26 22:37:41 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -86,6 +86,9 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include <powerpc/reg.h>
+#include <powerpc/fpu.h>
 
 /*
  * Global variables used here and there
@@ -1435,4 +1438,24 @@ kcopy(const void *from, void *to, size_t size)
 	curproc->p_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
+}
+
+/* prototype for locore function */
+void cpu_switchto_asm(struct proc *oldproc, struct proc *newproc);
+
+void cpu_switchto( struct proc *oldproc, struct proc *newproc)
+{
+	/*
+	 * if this CPU is running a new process, flush the
+	 * FPU/Altivec context to avoid an IPI.
+	 */
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	if (ci->ci_fpuproc)
+		save_fpu();
+	if (ci->ci_vecproc)
+		save_vec(ci->ci_vecproc);
+#endif
+
+	cpu_switchto_asm(oldproc, newproc);
 }

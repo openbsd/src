@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.41 2007/10/27 22:37:03 kettenis Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.42 2008/04/26 22:37:41 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -484,8 +484,10 @@ openpic_do_pending_int()
 		while(ih) {
 			ppc_intr_enable(1);
 
+			KERNEL_LOCK();
 			if ((*ih->ih_fun)(ih->ih_arg))
 				ih->ih_count.ec_count++;
+			KERNEL_UNLOCK();
 
 			(void)ppc_intr_disable();
 			
@@ -498,7 +500,9 @@ openpic_do_pending_int()
 	do {
 		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_CLOCK;
+			KERNEL_LOCK();
 			softclock();
+			KERNEL_UNLOCK();
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
@@ -507,12 +511,16 @@ openpic_do_pending_int()
 			ci->ci_ipending &= ~SINT_NET;
 			while ((pisr = netisr) != 0) {
 				atomic_clearbits_int(&netisr, pisr);
+				KERNEL_LOCK();
 				softnet(pisr);
+				KERNEL_UNLOCK();
 			}
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;
+			KERNEL_LOCK();
 			softtty();
+			KERNEL_UNLOCK();
 		}
 	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
 	ci->ci_ipending &= pcpl;
