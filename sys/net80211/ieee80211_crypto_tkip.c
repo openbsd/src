@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.2 2008/04/18 09:16:14 djm Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.3 2008/04/26 19:59:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -184,7 +184,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	struct ieee80211_tkip_ctx *ctx = k->k_priv;
-	u_int8_t wepseed[16];
+	u_int16_t wepseed[8];	/* needs to be 16-bit aligned for Phase2 */
 	const struct ieee80211_frame *wh;
 	u_int8_t *ivp, *mic, *icvp;
 	struct mbuf *n0, *m, *n;
@@ -227,8 +227,8 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	if ((k->k_tsc & 0xffff) == 0)
 #endif
 		Phase1(ctx->TTAK1, k->k_key, wh->i_addr2, k->k_tsc >> 16);
-	Phase2(wepseed, k->k_key, ctx->TTAK1, k->k_tsc & 0xffff);
-	rc4_keysetup(&ctx->rc4, wepseed, 16);
+	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK1, k->k_tsc & 0xffff);
+	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
 	/* encrypt frame body and compute WEP ICV */
 	m = m0;
@@ -316,7 +316,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ieee80211_tkip_ctx *ctx = k->k_priv;
 	struct ieee80211_frame *wh;
-	u_int8_t wepseed[16];
+	u_int16_t wepseed[8];	/* needs to be 16-bit aligned for Phase2 */
 	u_int8_t buf[IEEE80211_TKIP_MICLEN + IEEE80211_WEP_CRCLEN];
 	u_int8_t mic[IEEE80211_TKIP_MICLEN];
 	u_int64_t tsc;
@@ -377,8 +377,8 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	if (k->k_rsc[0] == 0 || ((tsc >> 16) != (k->k_rsc[0] >> 16)))
 #endif
 		Phase1(ctx->TTAK2, k->k_key, wh->i_addr2, tsc >> 16);
-	Phase2(wepseed, k->k_key, ctx->TTAK2, tsc & 0xffff);
-	rc4_keysetup(&ctx->rc4, wepseed, 16);
+	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK2, tsc & 0xffff);
+	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
 	/* decrypt frame body and compute WEP ICV */
 	m = m0;
@@ -656,17 +656,20 @@ Phase1(u16b *P1K, const byte *TK, const byte *TA, u32b IV32)
  *     given value of TK[], this TKIP48 construction guarantees that
  *     the final RC4KEY value is unique across all frames.
  *
- * Suggested implementation optimization: if PPK[] is "overlaid"
- *     appropriately on RC4KEY[], there is no need for the final
- *     for loop below that copies the PPK[] result into RC4KEY[].
- *
  **********************************************************************
  */
 static void
 Phase2(byte *RC4KEY, const byte *TK, const u16b *P1K, u16b IV16)
 {
-	u16b PPK[6];	/* temporary key for mixing */
+	u16b *PPK;	/* temporary key for mixing */
 	int i;
+
+	/*
+	 * Suggested implementation optimization: if PPK[] is "overlaid"
+	 * appropriately on RC4KEY[], there is no need for the final for
+	 * loop that copies the PPK[] result into RC4KEY[].
+	 */
+	PPK = (u16b *)&RC4KEY[4];
 
 	/* all adds in the PPK[] equations below are mod 2**16 */
 	for (i = 0; i < 5; i++)
@@ -699,9 +702,9 @@ Phase2(byte *RC4KEY, const byte *TK, const u16b *P1K, u16b IV16)
 	RC4KEY[2] = Lo8(IV16);
 	RC4KEY[3] = Lo8((PPK[5] ^ TK16(0)) >> 1);
 
+#if BYTE_ORDER == BIG_ENDIAN
 	/* Copy 96 bits of PPK[0..5] to RC4KEY[4..15] (little-endian) */
-	for (i = 0; i < 6; i++) {
-		RC4KEY[4 + 2 * i] = Lo8(PPK[i]);
-		RC4KEY[5 + 2 * i] = Hi8(PPK[i]);
-	}
+	for (i = 0; i < 6; i++)
+		PPK[i] = swap16(PPK[i]);
+#endif
 }
