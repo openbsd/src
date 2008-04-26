@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.12 2008/04/12 14:57:16 kettenis Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.13 2008/04/26 17:35:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -75,7 +75,7 @@
 #endif
 
 #include <machine/bus.h>
-#if defined(__sparc64__) || !defined(__sparc__)
+#if !defined(__sparc__) || defined(__sparc64__)
 #include <machine/intr.h>
 #endif
 
