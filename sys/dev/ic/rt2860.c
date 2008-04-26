@@ -1,7 +1,7 @@
-/*	$OpenBSD: rt2860.c,v 1.13 2008/04/17 18:16:05 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.14 2008/04/26 20:08:01 damien Exp $	*/
 
 /*-
- * Copyright (c) 2007
+ * Copyright (c) 2007,2008
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -283,10 +283,8 @@ rt2860_attach(void *xsc, int id)
 	ic->ic_newassoc = rt2860_newassoc;
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
-#ifdef notyet
 	ic->ic_set_key = rt2860_set_key;
 	ic->ic_delete_key = rt2860_delete_key;
-#endif
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = rt2860_newstate;
@@ -1014,17 +1012,19 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		    sc->rxq.cur * sizeof (struct rt2860_rxd),
 		    sizeof (struct rt2860_rxd), BUS_DMASYNC_POSTREAD);
 
-		if (!(letoh16(rxd->sdl0) & RT2860_RX_DDONE))
+		if (!(rxd->sdl0 & htole16(RT2860_RX_DDONE)))
 			break;
 
-		if (letoh32(rxd->flags) &
-		    (RT2860_RX_CRCERR | RT2860_RX_ICVERR)) {
+		if (rxd->flags &
+		    htole32(RT2860_RX_CRCERR | RT2860_RX_ICVERR)) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
 
-		if (letoh32(rxd->flags) & RT2860_RX_MICERR) {
-			/* XXX report MIC failures to net80211 for TKIP */
+		if (rxd->flags & htole32(RT2860_RX_MICERR)) {
+			/* report MIC failures to net80211 for TKIP */
+			ic->ic_stats.is_rx_locmicfail++;
+			ieee80211_michael_mic_failure(ic, 0/* XXX */);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -1080,9 +1080,11 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh16(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
+		/* frame is decrypted by hardware */
+		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 
 		/* HW may insert 2 padding bytes after 802.11 header */
-		if (letoh32(rxd->flags) & RT2860_RX_L2PAD) {
+		if (rxd->flags & htole32(RT2860_RX_L2PAD)) {
 			u_int hdrlen = ieee80211_get_hdrlen(wh);
 			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
 			m->m_data += 2;
@@ -1328,7 +1330,9 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	struct rt2860_txd *txd;
 	struct rt2860_txwi *txwi;
 	struct ieee80211_frame *wh;
+#if 0
 	struct ieee80211_key *k;
+#endif
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
 	uint16_t dur;
@@ -1356,6 +1360,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	/* get MCS code from rate */
 	mcs = rt2860_rate2mcs(rate);
 
+#if 0
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		k = ieee80211_get_txkey(ic, wh, ni);
 
@@ -1365,6 +1370,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
+#endif
 
 	/* setup TX Wireless Information */
 	txwi = data->txwi;
@@ -2105,7 +2111,7 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct rt2860_softc *sc = ic->ic_softc;
 	bus_size_t base;
 	uint32_t attr;
-	uint8_t mode, wcid;
+	uint8_t mode, wcid, iv[8];
 
 	/* map net80211 cipher to RT2860 security mode */
 	switch (k->k_cipher) {
@@ -2128,19 +2134,61 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
 		/* install group key */
 		base = RT2860_SKEY(0, k->k_id);
-		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
-		/* XXX TKIP + HostAP: swap Tx/Rx MIC */
-
+		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
+			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+				RAL_WRITE_REGION_1(sc, base + 16,
+				    &k->k_key[16], 8);
+				RAL_WRITE_REGION_1(sc, base + 24,
+				    &k->k_key[24], 8);
+			} else {
+				RAL_WRITE_REGION_1(sc, base + 16,
+				    &k->k_key[24], 8);
+				RAL_WRITE_REGION_1(sc, base + 24,
+				    &k->k_key[16], 8);
+			}
+		} else
+			RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
 		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
 		attr &= ~(0xf << (k->k_id * 4));
 		attr |= mode << (k->k_id * 4);
 		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
+
 	} else {
 		/* install pairwise key */
 		wcid = RT2860_AID2WCID(ni->ni_associd);
 		base = RT2860_PKEY(wcid);
-		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
-		/* XXX TKIP + HostAP: swap Tx/Rx MIC */
+		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
+			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+				RAL_WRITE_REGION_1(sc, base + 16,
+				    &k->k_key[16], 8);
+				RAL_WRITE_REGION_1(sc, base + 24,
+				    &k->k_key[24], 8);
+			} else {
+				RAL_WRITE_REGION_1(sc, base + 16,
+				    &k->k_key[24], 8);
+				RAL_WRITE_REGION_1(sc, base + 24,
+				    &k->k_key[16], 8);
+			}
+		} else
+			RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
+		/* set initial packet number in IV+EIV */
+		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
+			iv[0] = k->k_tsc >> 8;
+			iv[1] = (iv[0] | 0x20) & 0x7f;
+			iv[2] = k->k_tsc;
+		} else /* CCMP */ {
+			iv[0] = k->k_tsc;
+			iv[1] = k->k_tsc >> 8;
+			iv[2] = 0;
+		}
+		iv[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
+		iv[4] = k->k_tsc >> 16;
+		iv[5] = k->k_tsc >> 24;
+		iv[6] = k->k_tsc >> 32;
+		iv[7] = k->k_tsc >> 40;
+		RAL_WRITE_REGION_1(sc, RT2860_IVEIV(wcid), iv, 8);
 
 		attr = RAL_READ(sc, RT2860_WCID_ATTR(wcid));
 		attr = (attr & ~0xf) | (mode << 1) | RT2860_RX_PKEY_EN;
@@ -2726,6 +2774,12 @@ rt2860_init(struct ifnet *ifp)
 
 	/* turn radio LED on */
 	rt2860_set_leds(sc, RT2860_LED_RADIO);
+
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		/* install WEP keys */
+		for (i = 0; i < IEEE80211_WEP_NKID; i++)
+			(void)rt2860_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+	}
 
 	/* set Rx filter */
 	tmp = RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR;
