@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.78 2008/04/21 20:16:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.79 2008/04/26 19:57:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1076,8 +1076,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_badchan++;
 		return;
 	}
-	if (!(ic->ic_caps & IEEE80211_C_SCANALL) &&
-	    (chan != bchan && ic->ic_phytype != IEEE80211_T_FH)) {
+	if ((ic->ic_state != IEEE80211_S_SCAN ||
+	     !(ic->ic_caps & IEEE80211_C_SCANALL)) &&
+	    chan != bchan && ic->ic_phytype != IEEE80211_T_FH) {
 		/*
 		 * Frame was received on a channel different from the
 		 * one indicated in the DS params element id;
@@ -1175,7 +1176,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_parse_wmm_params(ic, wmmie);
 	}
 
-	if (ic->ic_flags & IEEE80211_F_RSNON) {
+	if (ic->ic_state == IEEE80211_S_SCAN &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+	    (ic->ic_flags & IEEE80211_F_RSNON)) {
 		struct ieee80211_rsnparams rsn;
 		const u_int8_t *saveie = NULL;
 		/*
@@ -1204,17 +1207,14 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			ni->ni_rsncaps = rsn.rsn_caps;
 		} else
 			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
-	} else
+	} else if (ic->ic_state == IEEE80211_S_SCAN)
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 
 	if (ssid[1] != 0 && ni->ni_esslen == 0) {
-		/*
-		 * Update ESSID at probe response to adopt hidden AP by
-		 * Lucent/Cisco, which announces null ESSID in beacon.
-		 */
 		ni->ni_esslen = ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
-		memcpy(ni->ni_essid, ssid + 2, ssid[1]);
+		/* we know that ssid[1] <= IEEE80211_NWID_LEN */
+		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 	ni->ni_rssi = rssi;
@@ -1302,8 +1302,8 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 	/* check that the specified SSID (if not wildcard) matches ours */
-	if (ssid[1] != 0 && (ssid[1] != ni->ni_esslen ||
-	    memcmp(&ssid[2], ni->ni_essid, ni->ni_esslen) != 0)) {
+	if (ssid[1] != 0 && (ssid[1] != ic->ic_bss->ni_esslen ||
+	    memcmp(&ssid[2], ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen))) {
 		IEEE80211_DPRINTF(("%s: SSID mismatch\n", __func__));
 		ic->ic_stats.is_rx_ssidmismatch++;
 		return;
@@ -1477,8 +1477,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 	/* check that the specified SSID matches ours */
-	if (ssid[1] != ni->ni_esslen ||
-	    memcmp(&ssid[2], ni->ni_essid, ni->ni_esslen) != 0) {
+	if (ssid[1] != ic->ic_bss->ni_esslen ||
+	    memcmp(&ssid[2], ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen)) {
 		IEEE80211_DPRINTF(("%s: SSID mismatch\n", __func__));
 		ic->ic_stats.is_rx_ssidmismatch++;
 		return;
