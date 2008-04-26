@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.142 2008/04/24 19:16:49 tobias Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.143 2008/04/26 19:58:03 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -77,12 +77,10 @@ sighdlr(int sig)
 int
 rcs_init(char *envstr, char **argv, int argvlen)
 {
-	u_int i;
 	int argc, error;
-	char linebuf[256],  *lp, *cp;
+	char *linebuf, *lp, *cp;
 
-	if (strlcpy(linebuf, envstr, sizeof(linebuf)) >= sizeof(linebuf))
-		errx(1, "rcs_init: string truncation");
+	linebuf = xstrdup(envstr);
 	(void)memset(argv, 0, argvlen * sizeof(char *));
 
 	error = argc = 0;
@@ -98,13 +96,12 @@ rcs_init(char *envstr, char **argv, int argvlen)
 			break;
 		}
 
-		argv[argc] = xstrdup(cp);
+		argv[argc] = cp;
 		argc++;
 	}
 
 	if (error != 0) {
-		for (i = 0; i < (u_int)argc; i++)
-			xfree(argv[i]);
+		xfree(linebuf);
 		argc = -1;
 	}
 
