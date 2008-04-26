@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.12 2008/04/25 19:50:07 kettenis Exp $ */
+/* $OpenBSD: apicvec.s,v 1.13 2008/04/26 14:33:27 kettenis Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -161,7 +161,7 @@ XINTR(ltimer):
 #endif
 	jmp	_C_LABEL(Xdoreti)
 
-	.globl	XINTR(softclock), XINTR(softnet), XINTR(softtty), XINTR(softast)
+	.globl	XINTR(softclock), XINTR(softnet), XINTR(softtty)
 XINTR(softclock):
 	pushl	$0
 	pushl	$T_ASTFLT
@@ -227,18 +227,6 @@ XINTR(softtty):
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(i386_softintunlock)
 #endif
-	jmp	_C_LABEL(Xdoreti)
-
-XINTR(softast):
-	pushl	$0
-	pushl	$T_ASTFLT
-	INTRENTRY
-	MAKE_FRAME
-	pushl	CPL
-	movl	$IPL_SOFTAST,CPL
-	andl	$~(1<<SIR_AST),CPUVAR(IPENDING)
-	ioapic_asm_ack()
-	sti
 	jmp	_C_LABEL(Xdoreti)
 
 #if NIOAPIC > 0

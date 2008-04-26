@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.21 2008/04/18 20:20:35 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.22 2008/04/26 14:33:27 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -119,7 +119,6 @@ lapic_set_softvectors(void)
 	idt_vec_set(LAPIC_SOFTCLOCK_VECTOR, Xintrsoftclock);
 	idt_vec_set(LAPIC_SOFTNET_VECTOR, Xintrsoftnet);
 	idt_vec_set(LAPIC_SOFTTTY_VECTOR, Xintrsofttty);
-	idt_vec_set(LAPIC_SOFTAST_VECTOR, Xintrsoftast);
 }
 
 void

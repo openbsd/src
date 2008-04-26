@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.10 2008/04/18 20:20:35 kettenis Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.11 2008/04/26 14:33:27 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -56,7 +56,6 @@
  * The level numbers are picked to fit into APIC vector priorities.
  */
 #define	IPL_NONE	0		/* nothing */
-#define IPL_SOFTAST	MAKEIPL(0)	/* AST */
 #define	IPL_SOFTCLOCK	MAKEIPL(1)	/* timeouts */
 #define	IPL_SOFTNET	MAKEIPL(2)	/* protocol stacks */
 #define	IPL_BIO		MAKEIPL(3)	/* block I/O */
@@ -88,7 +87,6 @@
 #define	SIR_CLOCK	29
 #define	SIR_NET		28
 #define	SIR_TTY		27
-#define SIR_AST		26
 
 
 /*

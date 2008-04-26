@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.26 2008/04/25 19:50:08 kettenis Exp $	*/
+/*	$OpenBSD: icu.s,v 1.27 2008/04/26 14:33:27 kettenis Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -120,12 +120,6 @@ IDTVEC(doreti)
  */
 
 #include "pccom.h"
-
-IDTVEC(softast)
-	movl	$IPL_SOFTAST,%eax
-	movl	%eax,CPL
-	sti
-	jmp	*%esi
 
 IDTVEC(softtty)
 #if NPCCOM > 0
