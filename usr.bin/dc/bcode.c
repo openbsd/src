@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.35 2007/09/02 23:50:04 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.36 2008/04/26 20:13:22 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.35 2007/09/02 23:50:04 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.36 2008/04/26 20:13:22 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -1730,7 +1730,7 @@ eval(void)
 		(void)fprintf(stderr, "# %c\n", ch);
 		stack_print(stderr, &bmachine.stack, "* ",
 		    bmachine.obase);
-		(void)fprintf(stderr, "%d =>\n", bmachine.readsp);
+		(void)fprintf(stderr, "%zd =>\n", bmachine.readsp);
 #endif
 
 		if (0 <= ch && ch < UCHAR_MAX)
@@ -1741,7 +1741,7 @@ eval(void)
 #ifdef DEBUGGING
 		stack_print(stderr, &bmachine.stack, "* ",
 		    bmachine.obase);
-		(void)fprintf(stderr, "%d ==\n", bmachine.readsp);
+		(void)fprintf(stderr, "%zd ==\n", bmachine.readsp);
 #endif
 	}
 }
