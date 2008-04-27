@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2008/04/27 17:48:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -506,7 +506,7 @@ pmap_bootstrap(vstart)
 		kpm->pm_stats.resident_count++;	/* count PTP as resident */
 	}
 
-	pmap_maphys(0x1000000, ctob(physmem));
+	pmap_maphys(0x1000000, ptoa(physmem));
 
 	eaddr = physmem - atop(round_page(MSGBUFSIZE));
 	resvphysmem = atop(addr);

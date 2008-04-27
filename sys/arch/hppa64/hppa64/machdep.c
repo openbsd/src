@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2008/04/20 21:42:00 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2008/04/27 17:48:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -254,8 +254,8 @@ TODO hpmc/toc/pfr
 	avail_end = trunc_page(PAGE0->imm_max_mem);
 	if (avail_end > 0x4000000)
 		avail_end = 0x4000000;
-	physmem = btoc(avail_end);
-	resvmem = btoc(((vaddr_t)&kernel_text));
+	physmem = atop(avail_end);
+	resvmem = atop(((vaddr_t)&kernel_text));
 
 	/* we hope this won't fail */
 	hppa_ex = extent_create("mem", 0, HPPA_PHYSMAP, M_DEVBUF,
@@ -395,7 +395,7 @@ cpu_startup(void)
 	 */
 	printf("%s%s\n", version, cpu_model);
 	printf("real mem = %u (%u reserved for PROM, %u used by OpenBSD)\n",
-	    ctob(physmem), ctob(resvmem), ctob(resvphysmem - resvmem));
+	    ptoa(physmem), ptoa(resvmem), ptoa(resvphysmem - resvmem));
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -777,7 +777,7 @@ dumpsys(void)
 
 	if (!(error = cpu_dump())) {
 
-		bytes = ctob(physmem);
+		bytes = ptoa(physmem);
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
 		dump = bdevsw[major(dumpdev)].d_dump;
