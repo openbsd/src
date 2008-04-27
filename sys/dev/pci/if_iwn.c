@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwn.c,v 1.18 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.19 2008/04/27 19:01:59 damien Exp $	*/
 
 /*-
- * Copyright (c) 2007
+ * Copyright (c) 2007,2008
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -133,7 +133,9 @@ void		iwn_start(struct ifnet *);
 void		iwn_watchdog(struct ifnet *);
 int		iwn_ioctl(struct ifnet *, u_long, caddr_t);
 int		iwn_cmd(struct iwn_softc *, int, const void *, int, int);
-int		iwn_setup_node_mrr(struct iwn_softc *, uint8_t, int);
+int		iwn_setup_node_mrr(struct iwn_softc *,
+		    const struct ieee80211_node *, uint8_t);
+int		iwn_set_fixed_rate(struct iwn_softc *, uint8_t, uint8_t, int);
 int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		iwn_updateedca(struct ieee80211com *);
@@ -1806,9 +1808,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		if (!IWN_RATE_IS_OFDM(rate))
 			tx->rflags |= IWN_RFLAG_CCK;
 	} else {
-		tx->ridx = 0;
+		tx->ridx = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
 		/* tell adapter to ignore rflags */
-		tx->flags |= htole32(IWN_TX_USE_NODE_RATE);
+		tx->flags |= htole32(IWN_TX_MRR_INDEX);
 	}
 
 	/* copy and trim IEEE802.11 header */
@@ -2221,11 +2223,13 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
  * Configure hardware multi-rate retries for one node.
  */
 int
-iwn_setup_node_mrr(struct iwn_softc *sc, uint8_t id, int async)
+iwn_setup_node_mrr(struct iwn_softc *sc, const struct ieee80211_node *ni,
+    uint8_t id)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwn_cmd_mrr mrr;
-	int i, ridx;
+	uint8_t rate;
+	int i, r;
 
 	memset(&mrr, 0, sizeof mrr);
 	mrr.id = id;
@@ -2234,18 +2238,48 @@ iwn_setup_node_mrr(struct iwn_softc *sc, uint8_t id, int async)
 	mrr.ampdu_disable = 3;
 	mrr.ampdu_limit = 4000;
 
-	if (id == IWN_ID_BSS)
-		ridx = IWN_OFDM54;
-	else if (ic->ic_curmode == IEEE80211_MODE_11A)
-		ridx = IWN_OFDM6;
-	else
-		ridx = IWN_CCK1;
-	for (i = 0; i < IWN_MAX_TX_RETRIES; i++) {
-		mrr.table[i].rate = iwn_ridx_to_plcp[ridx];
+	r = rs->rs_nrates - 1;
+	for (i = 0; i < IWN_MAX_TX_RETRIES && r >= 0; i++, r--) {
+		rate = rs->rs_rates[r] & IEEE80211_RATE_VAL;
+		DPRINTF(("retry #%d: rate %d\n", i, rate));
+		mrr.table[i].rate = iwn_plcp_signal(rate);
 		mrr.table[i].rflags = IWN_RFLAG_ANT_B;
-		if (ridx <= IWN_CCK11)
+		if (!IWN_RATE_IS_OFDM(rate))
 			mrr.table[i].rflags |= IWN_RFLAG_CCK;
-		ridx = iwn_prev_ridx[ridx];
+	}
+	/* pad with the lowest available bit-rate */
+	for (; i < IWN_MAX_TX_RETRIES; i++) {
+		rate = rs->rs_rates[0] & IEEE80211_RATE_VAL;
+		DPRINTF(("retry #%d: rate %d\n", i, rate));
+		mrr.table[i].rate = iwn_plcp_signal(rate);
+		mrr.table[i].rflags = IWN_RFLAG_ANT_B;
+		if (!IWN_RATE_IS_OFDM(rate))
+			mrr.table[i].rflags |= IWN_RFLAG_CCK;
+	}
+	return iwn_cmd(sc, IWN_CMD_NODE_MRR_SETUP, &mrr, sizeof mrr, 1);
+}
+
+int
+iwn_set_fixed_rate(struct iwn_softc *sc, uint8_t id, uint8_t rate, int async)
+{
+	struct iwn_cmd_mrr mrr;
+	int i;
+
+	memset(&mrr, 0, sizeof mrr);
+	mrr.id = id;
+	mrr.ssmask = 2;
+	mrr.dsmask = 3;
+	mrr.ampdu_disable = 3;
+	mrr.ampdu_limit = 4000;
+
+	/* to setup a fixed rate, make all retries use the same rate.. */
+	mrr.table[0].rate = iwn_plcp_signal(rate);
+	mrr.table[0].rflags = IWN_RFLAG_ANT_B;
+	if (!IWN_RATE_IS_OFDM(rate))
+		mrr.table[0].rflags |= IWN_RFLAG_CCK;
+	for (i = 1; i < IWN_MAX_TX_RETRIES; i++) {
+		mrr.table[i].rate = mrr.table[0].rate;
+		mrr.table[i].rflags = mrr.table[0].rflags;
 	}
 	return iwn_cmd(sc, IWN_CMD_NODE_MRR_SETUP, &mrr, sizeof mrr, async);
 }
@@ -2876,6 +2910,7 @@ iwn_auth(struct iwn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct iwn_node_info node;
+	uint8_t rate;
 	int error;
 
 	/* update adapter's configuration */
@@ -2932,8 +2967,9 @@ iwn_auth(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
-	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 1)) != 0) {
+	DPRINTF(("setting fixed rate for node %d\n", node.id));
+	rate = (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2;
+	if ((error = iwn_set_fixed_rate(sc, node.id, rate, 1)) != 0) {
 		printf("%s: could not setup MRR for broadcast node\n",
 		    sc->sc_dev.dv_xname, node.id);
 		return error;
@@ -3002,7 +3038,7 @@ iwn_run(struct iwn_softc *sc)
 		return error;
 	}
 	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 1)) != 0) {
+	if ((error = iwn_setup_node_mrr(sc, ni, node.id)) != 0) {
 		printf("%s: could not setup MRR for node %d\n",
 		    sc->sc_dev.dv_xname, node.id);
 		return error;
@@ -3212,6 +3248,7 @@ iwn_config(struct iwn_softc *sc)
 	struct iwn_power power;
 	struct iwn_bluetooth bluetooth;
 	struct iwn_node_info node;
+	uint8_t rate;
 	int error;
 
 	/* set power mode */
@@ -3299,8 +3336,9 @@ iwn_config(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
-	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 0)) != 0) {
+	DPRINTF(("setting fixed rate for node %d\n", node.id));
+	rate = (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2;
+	if ((error = iwn_set_fixed_rate(sc, node.id, rate, 0)) != 0) {
 		printf("%s: could not setup MRR for node %d\n",
 		    sc->sc_dev.dv_xname, node.id);
 		return error;

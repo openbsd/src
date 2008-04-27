@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.10 2008/04/27 19:01:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -397,7 +397,7 @@ struct iwn_cmd_data {
 #define IWN_TX_NEED_RTS		(1 <<  1)
 #define IWN_TX_NEED_CTS		(1 <<  2)
 #define IWN_TX_NEED_ACK		(1 <<  3)
-#define IWN_TX_USE_NODE_RATE	(1 <<  4)
+#define IWN_TX_MRR_INDEX	(1 <<  4)
 #define IWN_TX_FULL_TXOP	(1 <<  7)
 #define IWN_TX_BT_DISABLE	(1 << 12)	/* bluetooth coexistence */
 #define IWN_TX_AUTO_SEQ		(1 << 13)
@@ -896,12 +896,6 @@ static const struct iwn_chan_band {
 static const uint8_t iwn_ridx_to_plcp[] = {
 	10, 20, 55, 110, /* CCK */
 	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3, 0x3 /* OFDM R1-R4 */
-};
-
-/* allow fallback from CCK11 to OFDM9 and from OFDM6 to CCK5 */
-static const uint8_t iwn_prev_ridx[] = {
-	0, 0, 1, 5, /* CCK */
-	2, 4, 3, 6, 7, 8, 9, 10, 10 /* OFDM */
 };
 
 #define IWN_MAX_PWR_INDEX	107
