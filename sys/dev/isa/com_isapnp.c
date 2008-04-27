@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isapnp.c,v 1.2 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: com_isapnp.c,v 1.3 2008/04/27 01:49:28 dlg Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -79,7 +79,7 @@ struct cfattach com_isapnp_ca = {
 #endif
 
 int com_isapnp_probe(struct device *, void *, void *);
-int com_isapnp_attach(struct device *, struct device *, void *);
+void com_isapnp_attach(struct device *, struct device *, void *);
 
 int
 com_isapnp_probe(struct device *parent, void *match, void *aux)
@@ -104,7 +104,7 @@ com_isapnp_probe(struct device *parent, void *match, void *aux)
 	return comprobe1(iot, ioh);
 }
 
-int
+void
 com_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
