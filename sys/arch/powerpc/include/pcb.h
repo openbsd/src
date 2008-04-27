@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.11 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.12 2008/04/27 16:01:47 drahn Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -57,6 +57,8 @@ struct pcb {
 		double fpcsr;	/* FPCSR stored as double for easier access */
 	} pcb_fpu;		/* Floating point processor */
 	struct vreg *pcb_vr;    /* Vector unit */
+	struct cpu_info *pcb_fpcpu;
+	struct cpu_info *pcb_veccpu;
 };
 
 struct md_coredump {

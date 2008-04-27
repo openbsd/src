@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.10 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.11 2008/04/27 16:01:47 drahn Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -50,6 +50,11 @@ enable_fpu(struct proc *p)
 		bzero(&pcb->pcb_fpu, sizeof pcb->pcb_fpu);
 		pcb->pcb_flags |= PCB_FPU;
 	}
+
+	if (pcb->pcb_fpcpu != NULL || ci->ci_fpuproc != NULL) {
+		printf("attempting to restore fpu state when in use pcb %x"
+		    " fpproc %x\n", pcb->pcb_fpcpu, ci->ci_fpuproc);
+	}
 	msr = ppc_mfmsr();
 	ppc_mtmsr((msr  & ~PSL_EE) | PSL_FP);
 	__asm volatile("isync");
@@ -88,6 +93,7 @@ enable_fpu(struct proc *p)
 	     "lfd 30,240(%0);"
 	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
 	ci->ci_fpuproc = p;
+	pcb->pcb_fpcpu = ci;
 	tf->srr1 |= PSL_FP;
 	ppc_mtmsr(msr);
 	__asm volatile("isync");
@@ -154,6 +160,7 @@ save_fpu()
 	tf = trapframe(ci->ci_fpuproc);
 	tf->srr1 &= ~PSL_FP;
 	ci->ci_fpuproc = NULL;
+	pcb->pcb_fpcpu = NULL;
 
 	ppc_mtmsr(msr);
 	__asm volatile("isync");

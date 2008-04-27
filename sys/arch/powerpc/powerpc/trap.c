@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.80 2008/04/27 15:59:49 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.81 2008/04/27 16:01:47 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ save_vec(struct proc *p)
 	 * in kernel mode
 	 */
 	oldmsr = ppc_mfmsr();
-	msr = oldmsr | PSL_VEC;
+	msr = (oldmsr & ~PSL_EE) | PSL_VEC;
 	ppc_mtmsr(msr);
 	__asm__ volatile ("sync;isync");
 
@@ -163,6 +163,9 @@ save_vec(struct proc *p)
 	__asm__ volatile ("mfvscr 0");
 	SAVE_VEC_REG(0,&pcb_vr->vscr);
 
+	curcpu()->ci_vecproc = NULL;
+	pcb->pcb_veccpu = NULL;
+
 	/* fix kernel msr back */
 	ppc_mtmsr(oldmsr);
 }
@@ -175,6 +178,7 @@ enable_vec(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vreg *pcb_vr = pcb->pcb_vr;
+	struct cpu_info *ci = curcpu();
 	u_int32_t oldmsr, msr;
 
 	/* If this is the very first altivec instruction executed
@@ -185,13 +189,19 @@ enable_vec(struct proc *p)
 		bzero(pcb->pcb_vr, sizeof *(pcb->pcb_vr));
 	}
 
+	if (curcpu()->ci_vecproc != NULL || pcb->pcb_veccpu != NULL)
+		printf("attempting to restore vector in use vecproc %x"
+		    " veccpu %x\n", curcpu()->ci_vecproc, pcb->pcb_veccpu);
+
 	/* first we enable vector so that we dont throw an exception
 	 * in kernel mode
 	 */
 	oldmsr = ppc_mfmsr();
-	msr = oldmsr | PSL_VEC;
+	msr = (oldmsr & ~PSL_EE) | PSL_VEC;
 	ppc_mtmsr(msr);
 	__asm__ volatile ("sync;isync");
+	ci->ci_vecproc = p;
+	pcb->pcb_veccpu = ci;
 
 #define LOAD_VEC_REG(reg, addr)   \
 	__asm__ volatile ("lvxl %0, 0, %1" :: "n"(reg), "r" (addr));
@@ -643,7 +653,6 @@ for (i = 0; i < errnum; i++) {
 		if (ci->ci_vecproc)
 			save_vec(ci->ci_vecproc);
 
-		ci->ci_vecproc = p;
 		enable_vec(p);
 		break;
 #else  /* ALTIVEC */
