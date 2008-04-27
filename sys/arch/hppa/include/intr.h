@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2007/05/16 19:37:06 thib Exp $	*/
+/*	$OpenBSD: intr.h,v 1.24 2008/04/27 14:36:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -125,9 +125,11 @@ splx(int ncpl)
     (1 << (IPL_SOFTNET - 1)) | (1 << (IPL_SOFTTTY - 1)))
 
 #define	setsoftast()	(astpending = 1)
-#define	setsoftclock()	softintr(1 << (IPL_SOFTCLOCK - 1))
 #define	setsoftnet()	softintr(1 << (IPL_SOFTNET - 1))
-#define	setsofttty()	softintr(1 << (IPL_SOFTTTY - 1))
+
+void	*softintr_establish(int, void (*)(void *), void *);
+void	 softintr_disestablish(void *);
+void	 softintr_schedule(void *);
 
 #endif /* !_LOCORE && _KERNEL */
 #endif /* _MACHINE_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.23 2007/05/27 16:36:07 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.24 2008/04/27 14:36:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -66,10 +66,10 @@ u_long cpu_mask;
 struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
     *intr_more = intr_store, *intr_list;
 struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(32))) = {
-	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softclock },
+	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, 0, NULL },
 	{ IPL_SOFTNET  , 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softnet },
 	{ 0 }, { 0 },
-	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softtty }
+	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, 0, NULL }
 };
 volatile u_long ipending, imask[NIPL] = {
 	0,
@@ -99,12 +99,6 @@ softnet(void)
 	    "ldcws	0(%2), %0": "=&r" (ni), "+m" (netisr): "r" (&netisr));
 #define DONETISR(m,c) if (ni & (1 << (m))) c()
 #include <net/netisr_dispatch.h>
-}
-
-void
-softtty(void)
-{
-
 }
 
 void
@@ -162,7 +156,8 @@ cpu_intr_findirq(void)
 	int irq;
 
 	for (irq = 0; irq < CPU_NINTS; irq++)
-		if (intr_table[irq].handler == NULL)
+		if (intr_table[irq].handler == NULL &&
+		    intr_table[irq].pri == 0)
 			return irq;
 
 	return -1;
@@ -326,4 +321,81 @@ cpu_intr(void *v)
 	}
 	cpu_inintr--;
 	cpl = s;
+}
+
+
+void *
+softintr_establish(int pri, void (*handler)(void *), void *arg)
+{
+	struct hppa_iv *iv;
+	int irq;
+
+	if (pri == IPL_TTY)
+		pri = IPL_SOFTTTY;
+
+	irq = pri - 1;
+	iv = &intr_table[irq];
+	if ((iv->flags & HPPA_IV_SOFT) == 0 || iv->pri != pri)
+		return (NULL);
+
+	if (iv->handler) {
+		iv->next = malloc(sizeof *iv, M_DEVBUF, M_NOWAIT);
+		iv = iv->next;
+	} else {
+		cpu_mask |= (1 << irq);
+		imask[pri] |= (1 << irq);
+	}
+
+	if (iv != NULL) {
+		iv->pri = pri;
+		iv->irq = 0;
+		iv->bit = 1 << irq;
+		iv->flags = HPPA_IV_SOFT;
+		iv->handler = (int (*)(void *))handler;	/* XXX */
+		iv->arg = arg;
+		iv->cnt = NULL;
+		iv->next = NULL;
+		iv->share = NULL;
+	}
+
+	return (iv);
+}
+
+void
+softintr_disestablish(void *cookie)
+{
+	struct hppa_iv *iv = cookie;
+	int irq = iv->pri - 1;
+
+	if (&intr_table[irq] == cookie) {
+		if (iv->next) {
+			struct hppa_iv *nv = iv->next;
+
+			iv->handler = nv->handler;
+			iv->arg = nv->arg;
+			iv->next = nv->next;
+			free(nv, M_DEVBUF);
+			return;
+		} else {
+			iv->handler = NULL;
+			iv->arg = NULL;
+			return;
+		}
+	}
+
+	for (iv = &intr_table[irq]; iv; iv = iv->next) {
+		if (iv->next == cookie) {
+			iv->next = iv->next->next;
+			free(cookie, M_DEVBUF);
+			return;
+		}
+	}
+}
+
+void
+softintr_schedule(void *cookie)
+{
+	struct hppa_iv *iv = cookie;
+
+	softintr(1 << (iv->pri - 1));
 }
