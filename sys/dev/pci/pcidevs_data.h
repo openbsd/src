@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1342 2008/04/24 21:29:02 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1343 2008/04/27 09:40:30 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4020,8 +4020,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DRAC 3 Add-in",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
-	    "PERC 3/Di",
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_3_VUART,
+	    "DRAC 3 Virtual UART",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_3_EMBD,

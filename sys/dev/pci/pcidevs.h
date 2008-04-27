@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1342 2008/04/24 21:29:02 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1343 2008/04/27 09:40:30 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1478,7 +1478,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_DRAC_3_ADDIN	0x0007		/* DRAC 3 Add-in */
-#define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_DRAC_3_VUART	0x0008		/* DRAC 3 Virtual UART */
 #define	PCI_PRODUCT_DELL_DRAC_3_EMBD	0x0009		/* DRAC 3 Embedded/Optional */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_DRAC_4_EMBD	0x000c		/* DRAC 4 Embedded/Optional */
