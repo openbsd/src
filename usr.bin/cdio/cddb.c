@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.14 2007/09/10 16:31:35 cloder Exp $ */
+/* $OpenBSD: cddb.c,v 1.15 2008/04/27 23:06:40 fgsch Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -295,8 +295,10 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 	}
 	if (strcmp(line, "211") == 0 || strcmp(line, "212") == 0) {
 		int number = strtonum(arg, 0, INT_MAX, &errstr);
-		if (errstr != NULL)
-			errx(1, "%s: %s", errstr, arg);
+		if (errstr != NULL && *arg != NULL) {
+			warnx("cddb: invalid index");
+			goto end;
+		}
 		if (number == 0) {
 			if (strcmp(line, "211") == 0)
 				printf("cddb: multiple matches\n");
