@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_commulti.c,v 1.3 2008/04/27 01:36:49 dlg Exp $	*/
+/*	$OpenBSD: com_commulti.c,v 1.4 2008/04/27 09:25:26 kettenis Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -107,7 +107,7 @@ com_commulti_probe(struct device *parent, void *match, void *aux)
 }
 
 void
-com_commulti_attach(struct device *self, struct device *parent, void *aux)
+com_commulti_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct commulti_attach_args *ca = aux;
 	struct com_softc *sc = (void *)self;
