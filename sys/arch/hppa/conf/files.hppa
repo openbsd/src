@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.77 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.hppa,v 1.78 2008/04/27 14:39:51 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -125,6 +125,11 @@ file	arch/hppa/dev/fpu.c			fpu
 device	phantomas: gedoens
 attach	phantomas at gedoens
 file	arch/hppa/dev/phantomas.c		phantomas
+
+# GeckoBOA BC GSC+ port
+device	gecko: gedoens
+attach	gecko at gedoens
+file	arch/hppa/dev/gecko.c			gecko
 
 # U2/Uturn, Runway to GSC Bus bridge & IOA
 device	uturn: gedoens
