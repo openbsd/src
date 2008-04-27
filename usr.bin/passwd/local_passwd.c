@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.37 2005/05/01 18:47:06 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.38 2008/04/27 10:01:53 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.37 2005/05/01 18:47:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.38 2008/04/27 10:01:53 jsing Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ local_passwd(char *uname, int authenticated)
 	pw_init();
 	for (i = 1; (tfd = pw_lock(0)) == -1; i++) {
 		if (i == 4)
-			(void)fputs("Attempting lock password file, "
+			(void)fputs("Attempting to lock password file, "
 			    "please wait or press ^C to abort", stderr);
 		(void)signal(SIGINT, kbintr);
 		if (i % 16 == 0)
