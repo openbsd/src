@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.37 2008/04/26 22:37:41 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.38 2008/04/27 15:59:49 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -920,7 +920,8 @@ trapexit:
 	mtcr	%r5
 	bc	4,17,1f			/* branch if PSL_PR is false */
 	GET_CPUINFO(%r3)
-	lwz	%r4,CI_ASTPENDING(%r3)
+	lwz	%r4,CI_CURPROC(%r3)
+	lwz	%r4,P_MD_ASTPENDING(%r4)
 	andi.	%r4,%r4,1
 	beq	1f
 	li	%r6,EXC_AST
@@ -1151,7 +1152,8 @@ intr_exit:
 	lwz	%r4,52(3);	mtsr 13,%r4;
 	lwz	%r4,56(3);	mtsr 14,%r4;
 	lwz	%r4,60(3);	mtsr 15,%r4;
-	lwz	%r4,CI_ASTPENDING(%r5)	/* Test AST pending */
+	lwz	%r4,CI_CURPROC(%r5)
+	lwz	%r4,P_MD_ASTPENDING(%r4)	/* Test AST pending */
 	andi.	%r4,%r4,1
 	beq	1f
 /* Setup for entry to realtrap: */

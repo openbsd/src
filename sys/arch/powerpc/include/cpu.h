@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2008/04/26 22:37:41 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2008/04/27 15:59:49 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -52,7 +52,6 @@ struct cpu_info {
 	struct proc *ci_vecproc;
 	int ci_cpuid;
 
-	volatile int ci_astpending;
 	volatile int ci_want_resched;
 	volatile int ci_cpl;
 	volatile int ci_iactive;
@@ -138,9 +137,10 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 void	delay(unsigned);
 #define	DELAY(n)		delay(n)
 
-#define	need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
-#define	need_proftick(p)	do { curcpu()->ci_astpending = 1; } while (0)
-#define	signotify(p)		(curcpu()->ci_astpending = 1)
+#define	need_resched(ci)	(ci->ci_want_resched = 1, \
+				    ci->ci_curproc->p_md.md_astpending = 1)
+#define	need_proftick(p)	do { p->p_md.md_astpending = 1; } while (0)
+#define	signotify(p)		(p->p_md.md_astpending = 1)
 
 extern char *bootpath;
 
