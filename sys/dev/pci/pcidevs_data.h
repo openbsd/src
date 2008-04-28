@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1345 2008/04/28 06:26:04 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1346 2008/04/28 07:10:56 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5684,8 +5684,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82845 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_DMA,
-	    "5000 DMA",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT,
+	    "I/OAT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR,
@@ -7396,6 +7396,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7525 Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_CNB,
+	    "I/OAT CNB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_SNB,
+	    "I/OAT SNB",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
 	    "PRO/Wireless 2200BG",
 	},
@@ -7438,6 +7446,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_SERVER,
 	    "PRO 100 Server",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_SCNB,
+	    "I/OAT SCNB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
