@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.48 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.49 2008/04/28 08:57:08 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -437,7 +437,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
  
 	/* enable PCIe snoop */
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_ATI_IXP_HDA_600:
+	case PCI_PRODUCT_ATI_IXP_HDA_X00:
 		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, ATI_PCIE_SNOOP_REG);
 		reg &= ATI_PCIE_SNOOP_MASK;
 		reg |= ATI_PCIE_SNOOP_ENABLE;
