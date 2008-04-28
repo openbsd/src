@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.16 2008/04/25 19:27:36 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.17 2008/04/28 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ intr_disestablish(struct intrhand *ih)
  */
 struct intrhand fake_softclock_intrhand;
 struct intrhand fake_softnet_intrhand;
-struct intrhand fake_softserial_intrhand;
+struct intrhand fake_softtty_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
@@ -586,12 +586,12 @@ cpu_intr_init(struct cpu_info *ci)
 	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftserial;
-	isp->is_resume = Xsoftserial;
-	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-	isp->is_handlers = &fake_softserial_intrhand;
+	isp->is_recurse = Xsofttty;
+	isp->is_resume = Xsofttty;
+	fake_softtty_intrhand.ih_level = IPL_SOFTTTY;
+	isp->is_handlers = &fake_softtty_intrhand;
 	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_SERIAL] = isp;
+	ci->ci_isources[SIR_TTY] = isp;
 #if NLAPIC > 0
 	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2008/04/28 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -140,7 +140,6 @@ void softintr(int);
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
-#define	splserial()	splraise(IPL_SERIAL)
 #define splipi()	splraise(IPL_IPI)
 
 #define spllpt()	spltty()
@@ -152,7 +151,7 @@ void softintr(int);
  */
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
-#define	splsoftserial()	splraise(IPL_SOFTSERIAL)
+#define	splsofttty()	splraise(IPL_SOFTTTY)
 
 /*
  * Miscellaneous
@@ -198,7 +197,7 @@ void splassert_check(int, const char *);
 
 extern void Xsoftclock(void);
 extern void Xsoftnet(void);
-extern void Xsoftserial(void);
+extern void Xsofttty(void);
 
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
@@ -244,7 +243,7 @@ extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
 
 #define	X86_SOFTINTR_SOFTCLOCK		0
 #define	X86_SOFTINTR_SOFTNET		1
-#define	X86_SOFTINTR_SOFTSERIAL		2
+#define	X86_SOFTINTR_SOFTTTY		2
 #define	X86_NSOFTINTR			3
 
 #ifndef _LOCORE

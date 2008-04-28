@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.2 2008/04/28 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ struct x86_soft_intr x86_soft_intrs[X86_NSOFTINTR];
 const int x86_soft_intr_to_ssir[X86_NSOFTINTR] = {
 	SIR_CLOCK,
 	SIR_NET,
-	SIR_SERIAL,
+	SIR_TTY,
 };
 
 /*
@@ -125,8 +125,8 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 		break;
 
 	case IPL_TTY:
-	case IPL_SOFTSERIAL:
-		which = X86_SOFTINTR_SOFTSERIAL;
+	case IPL_SOFTTTY:
+		which = X86_SOFTINTR_SOFTTTY;
 		break;
 
 	default:

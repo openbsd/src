@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.10 2007/06/01 21:01:51 art Exp $	*/
+/*	$OpenBSD: vector.S,v 1.11 2008/04/28 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -782,15 +782,15 @@ _C_LABEL(ioapic_level_stubs):
 _C_LABEL(netisr):
 	.word	0
 
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+IDTVEC(softtty)
+	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
-	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
-	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
+	movq	CPUVAR(ISOURCES) + SIR_TTY * 8, %r12
+	movl	$X86_SOFTINTR_SOFTTTY,%edi
 	call	_C_LABEL(softintr_dispatch)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintunlock)

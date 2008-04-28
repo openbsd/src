@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.5 2007/05/06 03:37:08 gwk Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.6 2008/04/28 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -15,9 +15,6 @@
  *
  * IPL_HIGH must block everything that can manipulate a run queue.
  *
- * We need serial drivers to run at the absolute highest priority to
- * avoid overruns, so serial > high.
- *
  * The level numbers are picked to fit into APIC vector priorities.
  *
  */
@@ -26,7 +23,7 @@
 #define	IPL_SOFTNET	0x5	/* protocol stacks */
 #define	IPL_BIO		0x6	/* block I/O */
 #define	IPL_NET		0x7	/* network */
-#define	IPL_SOFTSERIAL	0x8	/* serial */
+#define	IPL_SOFTTTY	0x8	/* delayed terminal handling */
 #define	IPL_TTY		0x9	/* terminal */
 #define	IPL_VM		0xa	/* memory allocation */
 #define	IPL_AUDIO	0xb	/* audio */
@@ -34,7 +31,6 @@
 #define IPL_SCHED	IPL_CLOCK
 #define IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	0xd	/* everything */
-#define	IPL_SERIAL	0xd	/* serial */
 #define IPL_IPI		0xe	/* inter-processor interrupts */
 #define	NIPL		16
 
@@ -54,7 +50,7 @@
 /* Soft interrupt masks. */
 #define	SIR_CLOCK	29
 #define	SIR_NET		28
-#define	SIR_SERIAL	27
+#define	SIR_TTY		27
 
 
 /*
