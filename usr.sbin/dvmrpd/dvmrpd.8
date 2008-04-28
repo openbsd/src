@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.8,v 1.3 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dvmrpd.8,v 1.4 2008/04/28 05:39:19 norby Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 28 2008 $
 .Dt DVMRPD 8
 .Os
 .Sh NAME
@@ -29,7 +29,48 @@
 is the Distance Vector Multicast Routing Protocol
 .Pq DVMRP
 daemon which manages multicast routing tables.
-Its main purpose is keeping multicast routing tables in sync.
+This implementation supports DVMRP version 3.255, thus it is
+only capable of maintaining IPv4 multicast routing tables.
+.Pp
+DVMRP is using a distance vector routing algorithm to build
+reverse path multicast delivery trees.
+A flood and prune approach is used to determine which branches in
+the network have multicast listeners.
+The usual drawbacks of a distance-vector route protocol applies
+to DVMRP, slow convergence and scalability issues.
+.Pp
+DVMRP routers communicate via the multicast group 224.0.0.4
+All DVMRP Routers. The IP protocol number 2
+.Pq IGMP
+is used, furthermore DVMRP packets omit the use of TCP and UDP.
+.Pp
+It is possible to interconnect multicast networks with the use of tunnels.
+Tunnels can traverse routers and networks not supporting multicast.
+.Nm
+does not support tunneling as described in
+RFC 1075
+since it has been abandoned.
+.Nm
+can tunnel multicast traffic using generic solutions, e.g.
+.Xr gre 4 .
+.Pp
+DVMRP is used for handling multicast routing exclusively.
+It is not required that a unicast routing protocol is used in
+conjunction with DVMRP.
+.Pp
+.Nm
+is usually started at boot time, and can be enabled by
+setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl dvmrpd_flags=\&"\&"
+.Pp
+See
+.Xr rc 8
+and
+.Xr rc.conf 8
+for more information on the boot process
+and enabling daemons.
 .Pp
 A running
 .Nm
