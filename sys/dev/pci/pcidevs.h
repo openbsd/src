@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1347 2008/04/28 07:16:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1348 2008/04/28 07:37:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -134,6 +134,7 @@
 #define	PCI_VENDOR_NEOMAGIC	0x10c8		/* Neomagic */
 #define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
 #define	PCI_VENDOR_ADVSYS	0x10cd		/* Advansys */
+#define	PCI_VENDOR_FUJITSU	0x10cf		/* Fujitsu */
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_MACRONIX	0x10d9		/* Macronix */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
@@ -4085,7 +4086,8 @@
 #define	PCI_PRODUCT_TOSHIBA2_SDCARD	0x0805		/* SD Controller */
 
 /* Transmeta products */
-#define	PCI_PRODUCT_TRANSMETA_NORTHBRIDGE	0x0395		/* Virtual Northbridge */
+#define	PCI_PRODUCT_TRANSMETA_NB	0x0295		/* Northbridge */
+#define	PCI_PRODUCT_TRANSMETA_LONGRUN_NB	0x0395		/* LongRun Northbridge */
 #define	PCI_PRODUCT_TRANSMETA_MEM1	0x0396		/* Mem1 */
 #define	PCI_PRODUCT_TRANSMETA_MEM2	0x0397		/* Mem2 */
 

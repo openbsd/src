@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1347 2008/04/28 07:16:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1348 2008/04/28 07:37:34 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13128,8 +13128,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SD Controller",
 	},
 	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
-	    "Virtual Northbridge",
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NB,
+	    "Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_LONGRUN_NB,
+	    "LongRun Northbridge",
 	},
 	{
 	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_MEM1,
@@ -15102,6 +15106,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ADVSYS,
 	    "Advansys",
+	},
+	{
+	    PCI_VENDOR_FUJITSU,
+	    "Fujitsu",
 	},
 	{
 	    PCI_VENDOR_MOLEX,
