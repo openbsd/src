@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2008/03/12 20:52:36 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2008/04/28 18:55:39 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -79,7 +79,7 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_SOFTNET	1		/* protocol stack */
 #define	IPL_BIO		PIL_BIO		/* block I/O */
 #define	IPL_NET		PIL_NET		/* network */
-#define	IPL_SOFTSERIAL	4		/* serial */
+#define	IPL_SOFTTTY	4		/* delayed terminal handling */
 #define	IPL_TTY		PIL_TTY		/* terminal */
 #define	IPL_VM		PIL_VM		/* memory allocation */
 #define	IPL_AUDIO	PIL_AUD		/* audio */
@@ -90,13 +90,8 @@ void    intr_establish(int, struct intrhand *);
 #define IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
-void *
-softintr_establish(int level, void (*fun)(void *), void *arg);
-
-void
-softintr_disestablish(void *cookie);
-
-void
-softintr_schedule(void *cookie);
+void	*softintr_establish(int, void (*)(void *), void *);
+void	 softintr_disestablish(void *);
+void	 softintr_schedule(void *);
 
 #endif /* _SPARC64_INTR_H_ */
