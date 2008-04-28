@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1347 2008/04/28 07:16:38 brad Exp $
+$OpenBSD: pcidevs,v 1.1348 2008/04/28 07:37:34 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ vendor	SURECOM		0x10bd	Surecom
 vendor	NEOMAGIC	0x10c8	Neomagic
 vendor	MENTOR		0x10cc	Mentor ARC
 vendor	ADVSYS		0x10cd	Advansys
+vendor	FUJITSU		0x10cf	Fujitsu
 vendor	MOLEX		0x10d2	Molex
 vendor	MACRONIX	0x10d9	Macronix
 vendor	ES		0x10dd	Evans & Sutherland
@@ -4080,7 +4081,8 @@ product TOSHIBA2 TFIRO		0x0701	Fast Infrared Type O
 product TOSHIBA2 SDCARD		0x0805	SD Controller
 
 /* Transmeta products */
-product TRANSMETA NORTHBRIDGE	0x0395	Virtual Northbridge
+product TRANSMETA NB		0x0295	Northbridge
+product TRANSMETA LONGRUN_NB	0x0395	LongRun Northbridge
 product TRANSMETA MEM1		0x0396	Mem1
 product TRANSMETA MEM2		0x0397	Mem2
 
