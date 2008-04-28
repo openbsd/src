@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.5 2007/11/25 16:43:39 jmc Exp $ */
+/* $OpenBSD: vesafb.c,v 1.6 2008/04/28 19:28:37 miod Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -231,7 +231,7 @@ vesafb_set_mode(struct vga_pci_softc *sc, int mode)
 
 	bzero(&tf, sizeof(struct trapframe));
 	tf.tf_eax = VBE_FUNC_SETMODE;
-	tf.tf_ebx = mode | 0x4000; /* flat */
+	tf.tf_ebx = mode;
 
 	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
 	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
@@ -269,7 +269,7 @@ vesafb_find_mode(struct vga_pci_softc *sc, int width, int height, int bpp)
 	if (i == vesabios_softc->sc_nmodes)
 		return -1;
 	else
-		return vesabios_softc->sc_modes[i];
+		return vesabios_softc->sc_modes[i] | 0x4000; /* flat */
 }
 
 int
