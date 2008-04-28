@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.61 2007/09/05 20:30:21 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.62 2008/04/28 11:36:14 norby Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
+#include <netmpls/mpls.h>
 #include <arpa/inet.h>
 
 #include <err.h>
@@ -59,6 +60,8 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
+char	*label_print_op(u_int8_t);
+char	*label_print(struct sockaddr *);
 
 extern int nflag;
 extern int Fflag;
@@ -211,15 +214,24 @@ p_rttables(int af, u_int tableid)
 void
 pr_rthdr(int af)
 {
-	if (af != PF_KEY)
+
+	switch (af) {
+	case PF_KEY:
+		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
+		    "Source", "Port", "Destination",
+		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
+		break;
+	case PF_MPLS:
+		printf("%-20s %-20s %-6s %-18s %-6.6s %6.6s %8.8s %6.6s  %s\n",
+		    "In label", "Out label", "Op", "Gateway",
+		    "Flags", "Refs", "Use", "Mtu", "Interface");
+		break;
+	default:
 		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
 		    WID_DST(af), WID_DST(af), "Destination",
 		    WID_GW(af), WID_GW(af), "Gateway",
 		    "Flags", "Refs", "Use", "Mtu", "Interface");
-	else
-		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
-		    "Source", "Port", "Destination",
-		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
+	}
 }
 
 static void
@@ -286,7 +298,7 @@ p_rtentry(struct rt_msghdr *rtm)
 void
 p_pfkentry(struct sadb_msg *msg)
 {
-	static int	 	 old = 0;
+	static int		 old = 0;
 	struct sadb_address	*saddr;
 	struct sadb_protocol	*sap, *saft;
 	struct sockaddr		*sa, *mask;
@@ -345,6 +357,9 @@ pr_family(int af)
 	case PF_KEY:
 		afname = "Encap";
 		break;
+	case AF_MPLS:
+		afname = "MPLS";
+		break;
 	case AF_APPLETALK:
 		afname = "AppleTalk";
 		break;
@@ -361,7 +376,7 @@ pr_family(int af)
 void
 p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
 {
-	char 		*cp;
+	char		*cp;
 	unsigned short	 port;
 
 	if (mask)
@@ -560,7 +575,8 @@ routename(struct sockaddr *sa)
 
 	case AF_LINK:
 		return (link_print(sa));
-
+	case AF_MPLS:
+		return (label_print(sa));
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
 			static char name[RTLABEL_LEN];
@@ -759,7 +775,6 @@ char *
 netname(struct sockaddr *sa, struct sockaddr *mask)
 {
 	switch (sa->sa_family) {
-
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
 		    (struct sockaddr_in *)mask);
@@ -768,6 +783,8 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 		    (struct sockaddr_in6 *)mask);
 	case AF_LINK:
 		return (link_print(sa));
+	case AF_MPLS:
+		return (label_print(sa));
 	default:
 		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
@@ -814,6 +831,47 @@ link_print(struct sockaddr *sa)
 	default:
 		return (link_ntoa(sdl));
 	}
+}
+
+char *
+label_print_op(u_int8_t type)
+{
+	switch (type) {
+	case MPLS_OP_POP:
+		return ("POP");
+	case MPLS_OP_SWAP:
+		return ("SWAP");
+	case MPLS_OP_PUSH:
+		return ("PUSH");
+	default:
+		return ("?");
+	}
+}
+
+char *
+label_print(struct sockaddr *sa)
+{
+	struct sockaddr_mpls	*smpls = (struct sockaddr_mpls *)sa;
+	char			 ifname_in[IF_NAMESIZE];
+	char			 ifname_out[IF_NAMESIZE];
+	char			*in_label;
+	char			*out_label;
+
+	if (asprintf(&in_label, "%u%%%s", ntohl(smpls->smpls_in_label),
+	    if_indextoname(smpls->smpls_in_ifindex, ifname_in)) == -1)
+		err(1, NULL);
+
+	if (asprintf(&out_label, "%u%%%s", ntohl(smpls->smpls_out_label),
+	    if_indextoname(smpls->smpls_out_ifindex, ifname_out)) == -1)
+		err(1, NULL);
+
+	(void)snprintf(line, sizeof(line), "%-20s %-20s %-6s", in_label,
+	    out_label, label_print_op(smpls->smpls_operation));
+
+	free(in_label);
+	free(out_label);
+
+	return (line);
 }
 
 void

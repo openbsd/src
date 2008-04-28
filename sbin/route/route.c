@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.112 2007/09/25 08:57:47 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.113 2008/04/28 11:36:14 norby Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <paths.h>
 #include <err.h>
 #include <net/if_media.h>
+#include <netmpls/mpls.h>
 
 #include "keywords.h"
 #include "show.h"
@@ -69,6 +70,7 @@ union	sockunion {
 	struct sockaddr_in6	sin6;
 	struct sockaddr_dl	sdl;
 	struct sockaddr_rtlabel	rtlabel;
+	struct sockaddr_mpls	smpls;
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
 
 typedef union sockunion *sup;
@@ -99,6 +101,7 @@ void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
+void	 getmplslabel(char *, int);
 int	 rtmsg(int, int, int);
 __dead void usage(char *);
 void	 set_metric(char *, int);
@@ -226,6 +229,9 @@ flushroutes(int argc, char **argv)
 				break;
 			case K_LINK:
 				af = AF_LINK;
+				break;
+			case K_MPLS:
+				af = AF_MPLS;
 				break;
 			default:
 				usage(*argv);
@@ -366,6 +372,24 @@ newroute(int argc, char **argv)
 			case K_SA:
 				af = PF_ROUTE;
 				aflen = sizeof(union sockunion);
+				break;
+			case K_MPLS:
+				af = AF_MPLS;
+				aflen = sizeof(struct sockaddr_mpls);
+				break;
+			case K_IN:
+				if (!--argc)
+					usage(1+*argv);
+				if (af != AF_MPLS)
+					errx(1, "-in requires -mpls");
+				getmplslabel(*++argv, 1);
+				break;
+			case K_OUT:
+				if (!--argc)
+					usage(1+*argv);
+				if (af != AF_MPLS)
+					errx(1, "-out requires -mpls");
+				getmplslabel(*++argv, 0);
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
@@ -584,6 +608,9 @@ show(int argc, char *argv[])
 			case K_LINK:
 				af = AF_LINK;
 				break;
+			case K_MPLS:
+				af = AF_MPLS;
+				break;
 			case K_ENCAP:
 				af = PF_KEY;
 				break;
@@ -771,7 +798,8 @@ getaddr(int which, char *s, struct hostent **hpp)
 	case AF_LINK:
 		link_addr(s, &su->sdl);
 		return (1);
-
+	case AF_MPLS:
+		errx(1, "mpls labels require -in or -out switch");
 	case PF_ROUTE:
 		su->sa.sa_len = sizeof(*su);
 		sockaddr(s, &su->sa);
@@ -814,6 +842,38 @@ getaddr(int which, char *s, struct hostent **hpp)
 	default:
 		errx(1, "%d: bad address family", afamily);
 		/* NOTREACHED */
+	}
+}
+
+void
+getmplslabel(char *s, int in)
+{
+	sup su = NULL;
+	const char *errstr;
+	char *ifname;
+	u_int32_t label;
+	u_int16_t ifindex = 0;
+
+	rtm_addrs |= RTA_DST;
+	su = &so_dst;
+	su->sa.sa_len = aflen;
+	su->sa.sa_family = af;
+
+	ifname = strchr(s, SCOPE_DELIMITER);
+	if (ifname) {
+		*ifname++ = '\0';
+		ifindex = if_nametoindex(ifname);
+	}
+
+	label = strtonum(s, 0, 0x000fffff, &errstr);
+	if (errstr)
+		errx(1, "bad label: %s is %s", s, errstr);
+	if (in) {
+		su->smpls.smpls_in_label = htonl(label);
+		su->smpls.smpls_in_ifindex = ifindex;
+	} else {
+		su->smpls.smpls_out_label = htonl(label);
+		su->smpls.smpls_out_ifindex = ifindex;
 	}
 }
 
