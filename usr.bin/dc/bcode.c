@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.36 2008/04/26 20:13:22 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.37 2008/04/28 06:35:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.36 2008/04/26 20:13:22 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.37 2008/04/28 06:35:09 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -822,7 +822,7 @@ load_stack(void)
 {
 	int		idx;
 	struct stack	*stack;
-	struct value	*value, copy;
+	struct value	*value;
 
 	idx = readreg();
 	if (idx >= 0) {
@@ -832,7 +832,7 @@ load_stack(void)
 			value = stack_pop(stack);
 		}
 		if (value != NULL)
-			push(stack_dup_value(value, &copy));
+			push(value);
 		else
 			warnx("stack register '%c' (0%o) is empty",
 			    idx, idx);
@@ -1550,6 +1550,7 @@ quitN(void)
 	if (n == NULL)
 		return;
 	i = get_ulong(n);
+	free_number(n);
 	if (i == BN_MASK2 || i == 0)
 		warnx("Q command requires a number >= 1");
 	else if (bmachine.readsp < i)

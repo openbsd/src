@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.9 2006/01/16 08:09:25 otto Exp $	*/
+/*	$OpenBSD: stack.c,v 1.10 2008/04/28 06:35:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: stack.c,v 1.9 2006/01/16 08:09:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: stack.c,v 1.10 2008/04/28 06:35:09 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -308,8 +308,10 @@ array_grow(struct array *array, size_t newsize)
 	size_t i;
 
 	array->data = brealloc(array->data, newsize * sizeof(*array->data));
-	for (i = array->size; i < newsize; i++)
+	for (i = array->size; i < newsize; i++) {
+		array->data[i].type = BCODE_NONE;
 		array->data[i].array = NULL;
+	}
 	array->size = newsize;
 }
 
@@ -318,6 +320,7 @@ array_assign(struct array *array, size_t index, const struct value *v)
 {
 	if (index >= array->size)
 		array_grow(array, index+1);
+	stack_free_value(&array->data[index]);
 	array->data[index] = *v;
 }
 
