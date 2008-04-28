@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.68 2008/03/23 08:36:41 damien Exp $ */
+/*	$OpenBSD: pchb.c,v 1.69 2008/04/28 06:17:47 brad Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			has_agp = 1; /* XXX is this detected otherwise */
 			break;
 #endif /* __i386__ */
-		case PCI_PRODUCT_AMD_AMD64_HT:
+		case PCI_PRODUCT_AMD_AMD64_0F_HT:
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
 				pchb_amd64ht_attach(self, pa, i);
 			break;
