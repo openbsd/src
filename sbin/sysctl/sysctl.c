@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.156 2008/03/14 19:19:57 sobrado Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.157 2008/04/28 11:52:53 norby Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.156 2008/03/14 19:19:57 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.157 2008/04/28 11:52:53 norby Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,8 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.156 2008/03/14 19:19:57 sobr
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
 #endif
+
+#include <netmpls/mpls.h>
 
 #include <uvm/uvm_swap_encrypt.h>
 
@@ -197,6 +199,7 @@ int sysctl_inet(char *, char **, int *, int, int *);
 int sysctl_inet6(char *, char **, int *, int, int *);
 #endif
 int sysctl_bpf(char *, char **, int *, int, int *);
+int sysctl_mpls(char *, char **, int *, int, int *);
 int sysctl_fs(char *, char **, int *, int, int *);
 static int sysctl_vfs(char *, char **, int[], int, int *);
 static int sysctl_vfsgen(char *, char **, int[], int, int *);
@@ -575,6 +578,12 @@ parse(char *string, int flags)
 #endif
 		if (mib[1] == PF_BPF) {
 			len = sysctl_bpf(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		}
+		if (mib[1] == PF_MPLS) {
+			len = sysctl_mpls(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -2036,6 +2045,41 @@ sysctl_bpf(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	*typep = CTLTYPE_INT;
+	return (3);
+}
+
+struct ctlname mplsname[] = MPLSCTL_NAMES;
+struct list mplslist = { mplsname, MPLSCTL_MAXID };
+
+/* handle MPLS requests */
+int
+sysctl_mpls(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &mplslist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &mplslist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = mplslist.list[indx].ctl_type;
+	if (*typep == CTLTYPE_NODE) {
+		int tindx;
+
+		if (*bufpp == NULL) {
+			listall(string, &ifqlist);
+			return(-1);
+		}
+		lp = &ifqlist;
+		if ((tindx = findname(string, "fourth", bufpp, lp)) == -1)
+			return (-1);
+		mib[3] = tindx;
+		*typep = lp->list[tindx].ctl_type;
+		return(4);
+	}
 	return (3);
 }
 
