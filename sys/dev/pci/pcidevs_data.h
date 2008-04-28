@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1343 2008/04/27 09:40:30 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1344 2008/04/28 06:14:40 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1076,20 +1076,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AC9100",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT,
-	    "AMD64 HyperTransport",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_0F_HT,
+	    "AMD64 0Fh HyperTransport",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_ADDR,
-	    "AMD64 Address Map",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_0F_ADDR,
+	    "AMD64 0Fh Address Map",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_DRAM,
-	    "AMD64 DRAM Cfg",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_0F_DRAM,
+	    "AMD64 0Fh DRAM Cfg",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_MISC,
-	    "AMD64 Misc Cfg",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_0F_MISC,
+	    "AMD64 0Fh Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_HT,
+	    "AMD64 10h HyperTransport",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_ADDR,
+	    "AMD64 10h Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_DRAM,
+	    "AMD64 10h DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_MISC,
+	    "AMD64 10h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_LINK,
+	    "AMD64 10h Link Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_HT,
+	    "AMD64 11h HyperTransport",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_ADDR,
+	    "AMD64 11h Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_DRAM,
+	    "AMD64 11h DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_MISC,
+	    "AMD64 11h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_LINK,
+	    "AMD64 11h Link Cfg",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1343 2008/04/27 09:40:30 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1344 2008/04/28 06:14:40 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -638,10 +638,20 @@
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 */
 
 /* AMD products */
-#define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* AMD64 HyperTransport */
-#define	PCI_PRODUCT_AMD_AMD64_ADDR	0x1101		/* AMD64 Address Map */
-#define	PCI_PRODUCT_AMD_AMD64_DRAM	0x1102		/* AMD64 DRAM Cfg */
-#define	PCI_PRODUCT_AMD_AMD64_MISC	0x1103		/* AMD64 Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_0F_HT	0x1100		/* AMD64 0Fh HyperTransport */
+#define	PCI_PRODUCT_AMD_AMD64_0F_ADDR	0x1101		/* AMD64 0Fh Address Map */
+#define	PCI_PRODUCT_AMD_AMD64_0F_DRAM	0x1102		/* AMD64 0Fh DRAM Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_0F_MISC	0x1103		/* AMD64 0Fh Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_10_HT	0x1200		/* AMD64 10h HyperTransport */
+#define	PCI_PRODUCT_AMD_AMD64_10_ADDR	0x1201		/* AMD64 10h Address Map */
+#define	PCI_PRODUCT_AMD_AMD64_10_DRAM	0x1202		/* AMD64 10h DRAM Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_10_MISC	0x1203		/* AMD64 10h Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_10_LINK	0x1204		/* AMD64 10h Link Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_11_HT	0x1300		/* AMD64 11h HyperTransport */
+#define	PCI_PRODUCT_AMD_AMD64_11_ADDR	0x1301		/* AMD64 11h Address Map */
+#define	PCI_PRODUCT_AMD_AMD64_11_DRAM	0x1302		/* AMD64 11h DRAM Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_11_MISC	0x1303		/* AMD64 11h Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_11_LINK	0x1304		/* AMD64 11h Link Cfg */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI */
 #define	PCI_PRODUCT_AMD_PCHOME_PCI	0x2001		/* 79c978 PChome-PCI */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI */
