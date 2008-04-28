@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1348 2008/04/28 07:37:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1349 2008/04/28 07:50:17 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13464,6 +13464,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8363 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894,
+	    "PT894 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CN700,
 	    "CN700 Host",
 	},
@@ -13600,6 +13604,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "K8HTB Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894_2,
+	    "PT894 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CN700_2,
 	    "CN700 Host",
 	},
@@ -13654,6 +13662,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_2,
 	    "K8HTB Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894_3,
+	    "PT894 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CN700_3,
@@ -13984,6 +13996,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "K8HTB Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894_4,
+	    "PT894 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CN700_4,
 	    "CN700 Host",
 	},
@@ -14010,6 +14026,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_IOAPIC,
 	    "K8T890 IOAPIC",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894_IOAPIC,
+	    "PT894 IOAPIC",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
@@ -14066,6 +14086,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_VGA,
 	    "VT8378 VGA",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT894_5,
+	    "PT894 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_7,
