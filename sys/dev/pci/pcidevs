@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1346 2008/04/28 07:10:56 brad Exp $
+$OpenBSD: pcidevs,v 1.1347 2008/04/28 07:16:38 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3820,6 +3820,7 @@ product SIS 655			0x0655	655 PCI
 product SIS 656			0x0656	656 PCI
 product SIS 658			0x0658	658 PCI
 product SIS 661			0x0661	661 PCI
+product SIS 662			0x0662	662 PCI
 product SIS 730			0x0730	730 PCI
 product SIS 733			0x0733	733 PCI
 product SIS 735			0x0735	735 PCI
