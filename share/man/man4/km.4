@@ -1,4 +1,4 @@
-.\"	$OpenBSD: km.4,v 1.1 2008/04/29 05:33:24 cnst Exp $
+.\"	$OpenBSD: km.4,v 1.2 2008/04/29 06:50:04 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -29,9 +29,9 @@ driver provides support for the temperature sensors available in the
 AMD Family 10h processors.
 .Pp
 Each chip reports one temperature sensor.
-Multiprocessor systems would have one instance of
+Multiprocessor systems have one instance of
 .Nm
-per each chip.
+per chip.
 .Pp
 Sensor values are made available through the
 .Xr sysctl 8
