@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.251 2008/03/27 01:44:23 cnst Exp $
+#	$OpenBSD: files.pci,v 1.252 2008/04/29 05:29:59 cnst Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -748,3 +748,8 @@ file	dev/pci/sdhc_pci.c		sdhc
 device	kate
 attach	kate at pci
 file	dev/pci/kate.c			kate
+
+# AMD Family 10h Processors, Function 3 -- Miscellaneous Control
+device	km
+attach	km at pci
+file	dev/pci/km.c			km
