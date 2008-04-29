@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.49 2008/04/29 00:26:11 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.50 2008/04/29 03:49:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -570,6 +570,8 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	int size = 0;
 	char *cp;
 	u_char *reset_cpu;
+	char cpuname[64];
+	u_int node;
 
         /*
          * Allocate some contiguous pages for the interrupt stack
@@ -603,18 +605,35 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	/* XXX OpenPIC */
 	{
 		uint64_t tb;
+		int off;
 
 		*(u_int *)EXC_RST = 0x48000002 | (u_int)cpu_spinup_trampoline;
 		syncicache((void *)EXC_RST, 0x100);
 
 		h->running = -1;
 
-		/* Start secondary CPU. */
-		reset_cpu = mapiodev(0x80000000 + 0x5c, 1);
-		*reset_cpu = 0x4;
-		__asm volatile ("eieio" ::: "memory");
-		*reset_cpu = 0x5;
-		__asm volatile ("eieio" ::: "memory");
+		snprintf(cpuname, sizeof(cpuname), "/cpus/@%x", ci->ci_cpuid);
+		node = OF_finddevice(cpuname);
+		if (node == -1) {
+			printf(": unable to locate OF node %s\n", cpuname);
+			return  -1;
+		}
+		if (OF_getprop(node, "soft-reset", &off, 4) == 4) {
+			printf(" soft-reset at %x:", off);
+			reset_cpu = mapiodev(0x80000000 + off, 1);
+			*reset_cpu = 0x4;
+			__asm volatile ("eieio" ::: "memory");
+			*reset_cpu = 0x0;
+			__asm volatile ("eieio" ::: "memory");
+		} else {
+			printf(" soft-reset not found:");
+			/* Start secondary CPU. */
+			reset_cpu = mapiodev(0x80000000 + 0x5c, 1);
+			*reset_cpu = 0x4;
+			__asm volatile ("eieio" ::: "memory");
+			*reset_cpu = 0x0;
+			__asm volatile ("eieio" ::: "memory");
+		}
 
 		/* Sync timebase. */
 		tb = ppc_mftb();
