@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2008/04/27 15:59:49 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2008/04/29 04:08:25 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ cpu_number(void)
 {
 	int pir;
 
-	__asm ("mfspr %0,1023" : "=r"(pir));
+	pir = curcpu()->ci_cpuid;
 	return pir;
 }
 
