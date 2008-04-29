@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.48 2008/04/26 22:37:41 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.49 2008/04/29 00:26:11 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -576,7 +576,7 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
          * from the lowest 256MB (because bat0 always maps it va == pa).
          */
         size += INTSTK;
-        size += 4096;   /* SPILLSTK */
+        size += 8192;   /* SPILLSTK(1k) + DDBSTK(7k) */
 
 	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);

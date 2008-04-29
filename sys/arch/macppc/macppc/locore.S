@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.38 2008/04/27 15:59:49 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.39 2008/04/29 00:26:11 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -44,7 +44,9 @@
 
 #define GET_CPUINFO(r)	mfsprg r,0
 
-#define	INTSTK	(8*1024)		/* 8K interrupt stack */
+#define	INTSTK		(8*1024)	/* 8K interrupt stack */
+#define	SPILLSTK	(1*1024)
+#define	DDBSTK		(7*1024)
 
 /*
  * Globals
@@ -115,6 +117,7 @@ start:
 	stw	%r8,CI_INTSTK(%r9)
 	li	%r0,-1
 	stw	%r0,CI_INTRDEPTH(%r9)
+	addi	%r8,%r8,SPILLSTK+DDBSTK	/* leave room for spillstk and ddbstk */
 	lis	%r9,_C_LABEL(proc0paddr)@ha
 	stw	%r8,_C_LABEL(proc0paddr)@l(%r9)
 	addi	%r1,%r8,USPACE-FRAMELEN	/* stackpointer for proc0 */
@@ -279,14 +282,7 @@ _ENTRY(_C_LABEL(cpu_idle_leave))
 	ori	%r3,%r3,PSL_EE@l
 	mtmsr	%r3
 	blr
-
-/*
- * Data used during primary/secondary traps/interrupts
- */
 
-	.data
-#define	SPILLSTK 1024			/* 1K spill stack */
-.lcomm	spillstk,SPILLSTK,8
 
 /*
  * This code gets copied to all the trap vectors
@@ -713,9 +709,6 @@ _C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
 /*
  * In case of DDB we want a separate trap catcher for it
  */
-	.local	ddbstk
-	.comm	ddbstk,INTSTK,8	/* ddb stack */
-
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg	1,%r1			/* save SP */
@@ -728,8 +721,9 @@ nop32_7e:
 	stmw	%r28,CI_DDBSAVE(%r1)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
-	lis	%r1,ddbstk+INTSTK@ha	/* get new SP */
-	addi	%r1,%r1,ddbstk+INTSTK@l
+	GET_CPUINFO(%r30)
+	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
+	addi	%r1,%r30,8192	 /* 7k for ddb */
 	bla	ddbtrap
 _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 #endif  /* DDB */
@@ -956,8 +950,9 @@ s_dsitrap:
 	mtcr	%r31
 	mtsprg	1,%r1			/* save SP */
 	bc	4,1,disitrap		/* branch if table miss is false */
-	lis	%r1,spillstk+SPILLSTK@ha
-	addi	%r1,%r1,spillstk+SPILLSTK@l	/* get spill stack */
+	GET_CPUINFO(%r30)
+	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
+	addi	%r1,%r30,1024
 	stwu	%r1,-52(%r1)
 	stw	%r0,48(%r1)		/* save non-volatile registers */
 	stw	%r3,44(%r1)
@@ -1017,8 +1012,9 @@ s_isitrap:
 	mtcr	%r31
 	mtsprg	1,%r1			/* save SP */
 	bc	4,%r1,disitrap		/* branch if table miss is false */
-	lis	%r1,spillstk+SPILLSTK@ha
-	addi	%r1,%r1,spillstk+SPILLSTK@l	/* get spill stack */
+	GET_CPUINFO(%r30)
+	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
+	addi	%r1,%r30,1024
 	stwu	%r1,-52(%r1)
 	stw	%r0,48(%r1)		/* save non-volatile registers */
 	stw	%r3,44(%r1)
