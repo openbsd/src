@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2008/04/09 16:58:10 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.58 2008/04/29 12:47:19 jsing Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -124,8 +124,7 @@ int	kbd_reset;
 int32_t *environment;
 struct sys_rec sys_config;
 
-
-/* ddb symbol init stuff */
+/* Pointers to the start and end of the symbol table. */
 caddr_t	ssym;
 caddr_t	esym;
 caddr_t	ekern;
@@ -134,7 +133,7 @@ struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
 void crime_configure_memory(void);
 
-caddr_t mips_init(int, void *);
+caddr_t mips_init(int, void *, caddr_t);
 void initcpu(void);
 void dumpsys(void);
 void dumpconf(void);
@@ -151,7 +150,7 @@ static int atoi(const char *, int, const char **);
  */
 
 caddr_t
-mips_init(int argc, void *argv)
+mips_init(int argc, void *argv, caddr_t boot_esym)
 {
 	char *cp;
 	int i;
@@ -184,23 +183,39 @@ mips_init(int argc, void *argv)
 	bzero(edata, end - edata);
 
 	/*
-	 *  Reserve symbol table space. If invalid pointers no table.
+	 * Reserve space for the symbol table, if it exists.
 	 */
 	ssym = (char *)*(u_int64_t *)end;
-	esym = (char *)*((u_int64_t *)end + 1);
-	ekern = esym;
-	if (((long)ssym - (long)end) < 0 ||
-	    ((long)ssym - (long)end) > 0x1000 ||
-	    ssym[0] != ELFMAG0 || ssym[1] != ELFMAG1 ||
-	    ssym[2] != ELFMAG2 || ssym[3] != ELFMAG3 ) {
+
+	/* Attempt to locate ELF header and symbol table after kernel. */
+	if (end[0] == ELFMAG0 && end[1] == ELFMAG1 &&
+	    end[2] == ELFMAG2 && end[3] == ELFMAG3 ) {
+
+		/* ELF header exists directly after kernel. */
+		ssym = end;
+		esym = boot_esym;
+		ekern = esym;
+
+	} else if (((long)ssym - (long)end) >= 0 &&
+	    ((long)ssym - (long)end) <= 0x1000 &&
+	    ssym[0] == ELFMAG0 && ssym[1] == ELFMAG1 &&
+	    ssym[2] == ELFMAG2 && ssym[3] == ELFMAG3 ) {
+
+		/* Pointers exist directly after kernel. */
+		esym = (char *)*((u_int64_t *)end + 1);
+		ekern = esym;
+
+	} else {
+
+		/* Pointers aren't setup either... */
 		ssym = NULL;
 		esym = NULL;
 		ekern = end;
 	}
 
 	/*
-	 *  Initialize the system type and set up memory layout.
-	 *  Note that some systems have a more complex memory setup.
+	 * Initialize the system type and set up memory layout.
+	 * Note that some systems have a more complex memory setup.
 	 */
 	bios_ident();
 
