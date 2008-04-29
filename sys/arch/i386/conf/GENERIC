@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.614 2008/04/27 16:23:16 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.615 2008/04/29 05:39:24 cnst Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -87,6 +87,7 @@ gpio*	at gscpcib?
 glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 gpio*	at glxpcib?
 kate*	at pci?			# AMD K8 temperature sensor
+km*	at pci?			# AMD K10 temperature sensor
 
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller
