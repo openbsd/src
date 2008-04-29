@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.281 2008/02/27 20:10:29 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.282 2008/04/29 11:40:58 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4659,7 +4659,9 @@ static struct sis_hostbr_type {
 	 * {PCI_PRODUCT_SIS_961, 0x00, 6, "961", SIS_TYPE_133NEW},
 	 */
 	{PCI_PRODUCT_SIS_962, 0x00, 6, "962", SIS_TYPE_133NEW},
-	{PCI_PRODUCT_SIS_963, 0x00, 6, "963", SIS_TYPE_133NEW}
+	{PCI_PRODUCT_SIS_963, 0x00, 6, "963", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_964, 0x00, 6, "964", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_965, 0x00, 6, "965", SIS_TYPE_133NEW}
 };
 
 static struct sis_hostbr_type *sis_hostbr_type_match;
@@ -4699,22 +4701,15 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int rev = sc->sc_rev;
 	bus_size_t cmdsize, ctlsize;
-	pcitag_t br_tag;
-	struct pci_attach_args br_pa;
 	struct pciide_sis *sis;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(*sis), M_DEVBUF, M_NOWAIT | M_ZERO);
 	sis = sc->sc_cookie;
 
-	/* Find PCI bridge (dev 0 func 0 on the same bus) */
-	br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
-	br_pa.pa_id = pci_conf_read(sc->sc_pc, br_tag, PCI_ID_REG);
-	br_pa.pa_class = pci_conf_read(sc->sc_pc, br_tag, PCI_CLASS_REG);
-	WDCDEBUG_PRINT(("%s: PCI bridge pa_id=0x%x pa_class=0x%x\n",
-	    __func__, br_pa.pa_id, br_pa.pa_class), DEBUG_PROBE);
+	pci_find_device(NULL, sis_hostbr_match);
 
-	if (sis_hostbr_match(&br_pa)) {
+	if (sis_hostbr_type_match) {
 		if (sis_hostbr_type_match->type == SIS_TYPE_SOUTH) {
 			pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_57,
 			    pciide_pci_read(sc->sc_pc, sc->sc_tag,
@@ -4724,19 +4719,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				sc->sc_wdcdev.UDMA_cap =
 				    sis_hostbr_type_match->udma_mode;
 			} else {
-				/* Find ISA bridge (func 0 of the same dev) */
-				br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus,
-				    pa->pa_device, 0);
-				br_pa.pa_id = pci_conf_read(sc->sc_pc,
-				    br_tag, PCI_ID_REG);
-				br_pa.pa_class = pci_conf_read(sc->sc_pc,
-				    br_tag, PCI_CLASS_REG);
-				WDCDEBUG_PRINT(("%s: ISA bridge "
-				    "pa_id=0x%x pa_class=0x%x\n",
-				    __func__, br_pa.pa_id, br_pa.pa_class),
-				    DEBUG_PROBE);
-
-				if (sis_south_match(&br_pa)) {
+				if (pci_find_device(NULL, sis_south_match)) {
 					sis->sis_type = SIS_TYPE_133OLD;
 					sc->sc_wdcdev.UDMA_cap =
 					    sis_hostbr_type_match->udma_mode;
