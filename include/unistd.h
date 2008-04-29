@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.60 2008/04/24 20:43:20 kurt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.61 2008/04/29 14:52:54 kurt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -218,7 +218,6 @@ int	 issetugid(void);
 char	*mkdtemp(char *);
 int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
-void	 psignal(unsigned int, const char *);
 int	 profil(char *, size_t, unsigned long, unsigned int)
 		__attribute__ ((__bounded__(__string__,1,2)));
 int	 quotactl(const char *, int, int, char *);
@@ -255,7 +254,6 @@ void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 int	 swapctl(int cmd, const void *arg, int misc);
 int	 syscall(int, ...);
-extern __const char *__const sys_siglist[]; /* XXX - also in signal.h */
 #endif /* __BSD_VISIBLE */
 __END_DECLS
 
