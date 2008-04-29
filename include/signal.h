@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2007/03/17 21:38:14 espie Exp $	*/
+/*	$OpenBSD: signal.h,v 1.12 2008/04/29 14:44:04 kettenis Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -42,12 +42,12 @@
 #include <sys/types.h>
 #endif
 
+__BEGIN_DECLS
 #if __BSD_VISIBLE
 extern __const char *__const sys_signame[_NSIG];
 extern __const char *__const sys_siglist[_NSIG];
 #endif
 
-__BEGIN_DECLS
 int	raise(int);
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 void	(*bsd_signal(int, void (*)(int)))(int);
