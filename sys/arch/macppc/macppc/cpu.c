@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.51 2008/04/29 04:08:25 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.52 2008/04/29 04:12:19 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -619,14 +619,12 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 			return  -1;
 		}
 		if (OF_getprop(node, "soft-reset", &off, 4) == 4) {
-			printf(" soft-reset at %x:", off);
 			reset_cpu = mapiodev(0x80000000 + off, 1);
 			*reset_cpu = 0x4;
 			__asm volatile ("eieio" ::: "memory");
 			*reset_cpu = 0x0;
 			__asm volatile ("eieio" ::: "memory");
 		} else {
-			printf(" soft-reset not found:");
 			/* Start secondary CPU. */
 			reset_cpu = mapiodev(0x80000000 + 0x5c, 1);
 			*reset_cpu = 0x4;
