@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.93 2008/04/02 22:06:12 kettenis Exp $
+$OpenBSD: miidevs,v 1.94 2008/04/30 21:47:29 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -193,6 +193,7 @@ model MARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model MARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model MARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model MARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
+model MARVELL E3016		0x0026 Marvell 88E3016 10/100 PHY
 model xxMARVELL E1000_5		0x0002 Marvell 88E1000 5 Gigabit PHY
 model xxMARVELL E1000_6		0x0003 Marvell 88E1000 6 Gigabit PHY
 model xxMARVELL E1000_7		0x0005 Marvell 88E1000 7 Gigabit PHY
