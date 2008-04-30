@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2008/04/26 22:37:41 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2008/04/30 17:59:33 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -177,7 +177,6 @@ resettodr(void)
 	}
 }
 
-
 void
 decr_intr(struct clockframe *frame)
 {
@@ -326,6 +325,7 @@ cpu_initclocks()
 	tc_init(&tb_timecounter);
 	ppc_intr_enable(intrstate);
 }
+
 void
 cpu_startclock()
 {
