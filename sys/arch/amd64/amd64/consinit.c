@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.3 2004/11/02 21:20:58 miod Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.4 2008/04/30 13:59:32 dlg Exp $	*/
 /*	$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $	*/
 
 /*
@@ -37,10 +37,5 @@
 void
 consinit()
 {
-	static int initted;
-
-	if (initted)
-		return;
-	initted = 1;
-	cninit();
+	/* already done in machdep.c */
 }

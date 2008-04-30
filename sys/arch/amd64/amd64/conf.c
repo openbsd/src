@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2008/04/08 14:31:54 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2008/04/30 13:59:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -446,7 +446,7 @@ struct	consdev constab[] = {
 #if 1 || NWSDISPLAY > 0
 	cons_init(ws),
 #endif
-#if NCOM + NPCCOM > 0
+#if NCOM > 0
 	cons_init(com),
 #endif
 	{ 0 },
