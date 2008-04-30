@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.2 2008/04/24 17:51:41 deraadt Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.3 2008/04/30 20:15:54 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2008 $
+.Dd $Mdocdate: April 30 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm
 .Op Fl a
 .Op Fl s Ar src \*(Ba etcXX.tgz
+.Op Fl x Ar xetcXX.tgz
 .Sh DESCRIPTION
 .Nm
 is a
@@ -103,7 +104,7 @@ configuration files
 .Pa /etc/mail/sendmail.cf
 and
 .Pa /etc/mail/submit.cf
-will always differ because they include their build date.
+will always differ because they include their build date and directories.
 A special test was added to handle this
 and they are offered for comparison only if they really differ.
 .Pp
@@ -127,6 +128,12 @@ Specify a path to an
 top src directory or an etcXX.tgz tarball.
 The default is
 .Pa /usr/src .
+.It Fl x Ar xetcXX.tgz
+Specify a path to an
+xetcXX.tgz tarball.
+If this option is specified, it will add
+.Xr X 7
+configuration files to the comparison.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width "DESTDIRXXX"

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.4 2008/04/23 20:39:00 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.5 2008/04/30 20:15:55 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -51,22 +51,24 @@ do_pre() {
 		exit 1
 	fi
 
+	if [ -z "${SRCDIR}" -a -z "${TGZ}" ]; then
+		if [ -f "/usr/src/etc/Makefile" ]; then
+			SRCDIR=/usr/src
+		else
+			echo " *** ERROR: please specify a valid path to src or etcXX.tgz"
+			exit 1
+		fi
+	fi
+
 	WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 	TEMPROOT="${WRKDIR}/temproot"
 	BKPDIR="${WRKDIR}/backups"
 
 	trap "rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
-	if [ -z "${SRCMODE}" -a -z "${TGZMODE}" ]; then
-		SRCMODE=1
-		SRCDIR=/usr/src
-	fi
-
 	echo "\n===> Running ${0##*/} with the following settings:\n"
-	if [ "${AUTOMODE}" ]; then
-		echo " auto-mode:            yes"
-	fi
-	echo " source:               ${SRCDIR}${TGZ}"
+	echo " auto-mode:            ${AUTOMODE:-no}"
+	echo " source(s):            ${SRCDIR}${TGZ} ${XTGZ}"
 	echo " base work directory:  ${WRKDIR}"
 	echo " temp root directory:  ${TEMPROOT}"
 	echo " backup directory:     ${BKPDIR}"
@@ -81,34 +83,32 @@ do_pre() {
 
 
 do_populate() {
-	if [ "${SRCMODE}" -o "${TGZMODE}" ]; then
-		echo "===> Creating and populating temporary root under ${TEMPROOT}"
-		mkdir -p ${TEMPROOT}
-		if [ "${SRCMODE}" ]; then
-			cd ${SRCDIR}/etc
-			make DESTDIR=${TEMPROOT} distribution-etc-root-var 2>&1 1> /dev/null \
-			  | tee | grep -v "WARNING\: World writable directory"
-		fi
+	echo "===> Creating and populating temporary root under ${TEMPROOT}"
+	mkdir -p ${TEMPROOT}
+	if [ "${SRCDIR}" ]; then
+		cd ${SRCDIR}/etc
+		make DESTDIR=${TEMPROOT} distribution-etc-root-var 2>&1 1> /dev/null \
+		  | tee | grep -v "WARNING\: World writable directory"
+	fi
 
-		if [ "${TGZMODE}" ]; then
-			for i in ${TGZ}; do
-				tar -xzphf ${i} -C ${TEMPROOT};
-			done
-		fi
-
-		# files we don't want/need to deal with
-		IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
-		CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
-		for cf in ${CF_FILES}; do
-			CF_DIFF=`diff -u -I "##### built by .* on" ${TEMPROOT}/${cf} ${DESTDIR}/${cf}`
-			if [ -z "${CF_DIFF}" ]; then
-				IGNORE_FILES="${IGNORE_FILES} ${cf}"
-			fi
-		done
-		for i in ${IGNORE_FILES}; do
-			rm -f ${TEMPROOT}/${i};
+	if [ "${TGZ}" -o "${XTGZ}" ]; then
+		for i in ${TGZ} ${XTGZ}; do
+			tar -xzphf ${i} -C ${TEMPROOT};
 		done
 	fi
+
+	# files we don't want/need to deal with
+	IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
+	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
+	for cf in ${CF_FILES}; do
+		CF_DIFF=`diff -u -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf}`
+		if [ -z "${CF_DIFF}" ]; then
+			IGNORE_FILES="${IGNORE_FILES} ${cf}"
+		fi
+	done
+	for i in ${IGNORE_FILES}; do
+		rm -f ${TEMPROOT}/${i};
+	done
 }
 
 
@@ -221,11 +221,13 @@ diff_loop() {
 			echo ""
 			fi
 		else
-			echo "===> ${COMPFILE} was not found on the target system\n"
+			echo "===> ${COMPFILE} was not found on the target system"
 			if [ -z "${AUTOMODE}" ]; then
+				echo ""
 				NO_INSTALLED=1
 			else
 				if mm_install "${COMPFILE}"; then
+					echo "===> ${COMPFILE} installed successfully"
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
 					echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
@@ -236,7 +238,7 @@ diff_loop() {
 
 		echo "  Use 'd' to delete the temporary ${COMPFILE}"
 		echo "  Use 'i' to install the temporary ${COMPFILE}"
-		if [ -z "${NO_INSTALLED}" ]; then
+		if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
 			echo "  Use 'm' to merge the temporary and installed versions"
 			echo "  Use 'v' to view the diff results again"
 		fi
@@ -260,15 +262,20 @@ diff_loop() {
 			fi
 			;;
 		[mM])
-			if [ -z "${NO_INSTALLED}" ]; then
+			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
 				merge_loop
 			else
+				echo "invalid choice: ${HANDLE_COMPFILE}\n"
 				HANDLE_COMPFILE="todo"
 			fi
 			;;
 		[vV])
-			HANDLE_COMPFILE="v"
-			continue
+			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
+				HANDLE_COMPFILE="v"
+			else
+				echo "invalid choice: ${HANDLE_COMPFILE}\n"
+				HANDLE_COMPFILE="todo"
+			fi
 			;;
 		'')
 			echo "\n===> ${COMPFILE} will remain for your consideration"
@@ -309,7 +316,12 @@ do_compare() {
 			# make sure files are different; if not, delete the one in temproot
 			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
 				rm "${COMPFILE}"
+			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
+			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" > /dev/null 2>&1; then
+				IS_BINFILE=1
+				diff_loop
 			else
+				unset IS_BINFILE
 				diff_loop
 			fi
 		fi
@@ -328,10 +340,10 @@ do_post() {
 		echo -n "===> You installed a new ${DESTDIR}/etc/login.conf file, "
 		if [ "${AUTOMODE}" ]; then
 			echo "running cap_mkdb"
-			/usr/bin/cap_mkdb ${DESTDIR}/etc/login.conf
+			cap_mkdb ${DESTDIR}/etc/login.conf
 		else
 			echo "\n    rebuild your login.conf database by running the following command as root:"
-			echo "    '/usr/bin/cap_mkdb ${DESTDIR}/etc/login.conf'"
+			echo "    'cap_mkdb ${DESTDIR}/etc/login.conf'"
 		fi
 	fi
 
@@ -339,10 +351,10 @@ do_post() {
 		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
 		if [ "${AUTOMODE}" ]; then
 			echo "running pwd_mkdb"
-			/usr/sbin/pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
+			pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 		else
 			echo "\n    rebuild your password files by running the following command as root:"
-			echo "    '/usr/sbin/pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd'"
+			echo "    'pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd'"
 		fi
 	fi
 
@@ -365,15 +377,15 @@ do_post() {
 			echo "    hand when your sendmail configuration is done."
 		elif [ "${AUTOMODE}" ]; then
 			echo "running newaliases"
-			/usr/bin/newaliases
+			newaliases
 		else
 			echo "\n    rebuild your aliases database by running the following command as root:"
-			echo "    '/usr/bin/newaliases'"
+			echo "    'newaliases'"
 		fi
 	fi
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
-	/usr/sbin/mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
+	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
 
 	FILES_IN_WRKDIR=`find ${WRKDIR} -type f -size +0 2>/dev/null`
 	if [ "${FILES_IN_WRKDIR}" ]; then
@@ -398,9 +410,9 @@ do_post() {
 }
 
 
-ARGS=`getopt as: $*`
+ARGS=`getopt as:x: $*`
 if [ $? -ne 0 ]; then
-	echo "usage: ${0##*/} [-a] [-s src | etcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-a] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
 	exit 1
 fi
 set -- ${ARGS}
@@ -408,19 +420,27 @@ while [ $# -ne 0 ]
 do
 	case "$1" in
 	-a)
-		AUTOMODE=1
+		AUTOMODE=yes
 		shift;;
 	-s)
 		WHERE="${2}"
 		shift 2
-		if [ -d "${WHERE}" ]; then
-			SRCMODE=1
+		if [ -f "${WHERE}/etc/Makefile" ]; then
 			SRCDIR=${WHERE}
 		elif [ -f "${WHERE}" ]; then
-			TGZMODE=1
 			TGZ=${WHERE}
 		else
 			echo " *** ERROR: ${WHERE} is not a path to src nor etcXX.tgz"
+			exit 1
+		fi
+		;;
+	-x)
+		WHERE="${2}"
+		shift 2
+		if [ -f "${WHERE}" ]; then
+			XTGZ=${WHERE}
+		else
+			echo " *** ERROR: ${WHERE} is not a path to xetcXX.tgz"
 			exit 1
 		fi
 		;;
