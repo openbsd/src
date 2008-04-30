@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2008/04/29 04:12:19 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.53 2008/04/30 17:19:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -250,6 +250,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	ci = &cpu_info[reg[0]];
 	ci->ci_cpuid = reg[0];
 	ci->ci_intrdepth = -1;
+	co->ci_randseed = 1;
 	ci->ci_dev = dev;
 
 	pvr = ppc_mfpvr();
