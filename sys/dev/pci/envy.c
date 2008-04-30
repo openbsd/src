@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.8 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: envy.c,v 1.9 2008/04/30 17:31:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -813,7 +813,7 @@ envy_halt_output(void *self)
 
 	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
 	st &= ~ENVY_MT_CTL_PSTART;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, 0);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
 	return 0;
 }
 
@@ -825,7 +825,7 @@ envy_halt_input(void *self)
 
 	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
 	st &= ~ENVY_MT_CTL_RSTART;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, 0);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
 	return 0;
 }
 
