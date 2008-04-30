@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.8 2006/08/26 14:10:21 krw Exp $ */
+/* $OpenBSD: extern.h,v 1.9 2008/04/30 17:10:55 fgsch Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -53,6 +53,8 @@ extern int		writetao(struct track_head *);
 extern int		writetrack(struct track_info *, int);
 extern int		mode_sense_write(unsigned char []);
 extern int		mode_select_write(unsigned char []);
+extern int		cdrip(char *);
+extern int		cdplay(char *);
 
 #define VERSION "2.1"
 #define WAVHDRLEN 44
