@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.4 2008/04/24 11:36:39 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.5 2008/04/30 07:39:48 norby Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -74,6 +74,11 @@ mpls_input(struct mbuf *m)
 	struct rtentry *rt = NULL;
 	u_int32_t ttl;
 	int i;
+
+	if (!mpls_enable) {
+		m_freem(m);
+		return;
+	}
 
 	if (m->m_len < sizeof(*shim))
 		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
