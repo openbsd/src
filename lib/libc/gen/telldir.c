@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.12 2008/04/04 21:26:07 okan Exp $ */
+/*	$OpenBSD: telldir.c,v 1.13 2008/05/01 19:49:18 otto Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 #include "thread_private.h"
 #include "telldir.h"
 
-int _readdir_unlocked(DIR *, struct dirent **);
+int _readdir_unlocked(DIR *, struct dirent **, int);
 
 /*
  * return a pointer into a directory
@@ -109,7 +109,7 @@ __seekdir(DIR *dirp, long loc)
 	dirp->dd_seek = lp->loc_seek;
 	dirp->dd_loc = 0;
 	while (dirp->dd_loc < lp->loc_loc) {
-		_readdir_unlocked(dirp, &dp);
+		_readdir_unlocked(dirp, &dp, 0);
 		if (dp == NULL)
 			break;
 	}
