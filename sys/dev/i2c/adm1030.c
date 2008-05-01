@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1030.c,v 1.8 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: adm1030.c,v 1.9 2008/05/01 23:02:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -82,7 +82,7 @@ admtmp_attach(struct device *parent, struct device *self, void *aux)
 	cmd = ADM1030_FANC;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		printf(", unable to read fan setting\n");
+		printf(": unable to read fan setting\n");
 		return;
 	}
 
@@ -103,7 +103,7 @@ admtmp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADMTMP_FAN].type = SENSOR_FANRPM;
 
 	if (sensor_task_register(sc, admtmp_refresh, 5) == NULL) {
-		printf(", unable to register update task\n");
+		printf(": unable to register update task\n");
 		return;
 	}
 
