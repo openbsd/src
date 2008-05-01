@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.54 2008/04/30 17:21:31 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.55 2008/05/01 08:25:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -683,6 +683,7 @@ cpu_boot_secondary_processors(void)
 }
 
 void cpu_startclock(void);
+
 void
 cpu_hatch(void)
 {
@@ -762,9 +763,6 @@ cpu_hatch(void)
 
 	printf("cpu%d: running\n", cpu_number());
 	printf("cpu%d: timebase %llx\n", cpu_number(), ppc_mftb());
-#ifdef notyet
-	ppc_mtdec(ticks_per_intr);
-#endif
 
 	curcpu()->ci_ipending = 0;
 	curcpu()->ci_cpl = 0;
@@ -776,6 +774,9 @@ cpu_hatch(void)
 	intrstate = ppc_intr_disable();
 	cpu_startclock();
 	ppc_intr_enable(intrstate);
+
+	/* Enable inter-processor interrupts. */
+	openpic_set_priority(curcpu()->ci_cpuid, 14);
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.42 2008/04/26 22:37:41 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.43 2008/05/01 08:25:32 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -74,6 +74,9 @@ void openpic_enable_irq_mask(int irq_mask);
 
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
+
+/* IRQ vector used for inter-processor interrupts. */
+#define IPI_VECTOR	64
 
 static __inline u_int openpic_read(int);
 static __inline void openpic_write(int, u_int);
@@ -624,6 +627,16 @@ openpic_eoi(int cpu)
 	openpic_read(OPENPIC_EOI(cpu));
 }
 
+#ifdef MULTIPROCESSOR
+
+void
+openpic_send_ipi(int cpu)
+{
+	openpic_write(OPENPIC_IPI(curcpu()->ci_cpuid, 0), 1 << cpu);
+}
+
+#endif
+
 void
 ext_intr_openpic()
 {
@@ -635,9 +648,17 @@ ext_intr_openpic()
 
 	pcpl = ci->ci_cpl;
 
-	realirq = openpic_read_irq(0);
+	realirq = openpic_read_irq(ci->ci_cpuid);
 
 	while (realirq != 255) {
+#ifdef MULTIPROCESSOR
+		if (realirq == IPI_VECTOR) {
+			openpic_eoi(ci->ci_cpuid);
+			realirq = openpic_read_irq(ci->ci_cpuid);
+			continue;
+		}
+#endif
+
 		irq = o_virq[realirq];
 
 		/* XXX check range */
@@ -648,10 +669,10 @@ ext_intr_openpic()
 			/* Masked! Mark this as pending. */
 			ci->ci_ipending |= r_imen;
 			openpic_disable_irq(realirq);
-			openpic_eoi(0);
+			openpic_eoi(ci->ci_cpuid);
 		} else {
 			openpic_disable_irq(realirq);
-			openpic_eoi(0);
+			openpic_eoi(ci->ci_cpuid);
 			ocpl = splraise(o_intrmask[irq]);
 
 			ih = o_intrhand[irq];
@@ -674,7 +695,7 @@ ext_intr_openpic()
 			openpic_enable_irq(realirq);
 		}
 
-		realirq = openpic_read_irq(0);
+		realirq = openpic_read_irq(ci->ci_cpuid);
 	}
 	ppc_intr_enable(1);
 
@@ -708,6 +729,14 @@ openpic_init()
 		x |= 8 << OPENPIC_PRIORITY_SHIFT;
 		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 	}
+
+#ifdef MULTIPROCESSOR
+	/* Set up inter-processor interrupts. */
+	x = openpic_read(OPENPIC_IPI_VECTOR(0));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR;
+	openpic_write(OPENPIC_IPI_VECTOR(0), x);
+#endif
 
 	/* XXX set spurious intr vector */
 

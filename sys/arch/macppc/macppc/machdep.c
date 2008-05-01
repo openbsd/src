@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2008/04/26 22:37:41 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.98 2008/05/01 08:25:32 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1006,6 +1006,20 @@ do_pending_int()
 	if (pending_int_f != NULL) {
 		(*pending_int_f)();
 	}
+}
+
+/*
+ * Notify the current process (p) that it has a signal pending,
+ * process as soon as possible.
+ */
+void
+signotify(struct proc *p)
+{
+	aston(p);
+#ifdef MULTIPROCESSOR
+	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
+		openpic_send_ipi(p->p_cpu->ci_cpuid);
+#endif
 }
 
 /*

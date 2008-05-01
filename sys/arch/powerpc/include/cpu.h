@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2008/04/29 04:08:25 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2008/05/01 08:25:32 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -137,10 +137,22 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 void	delay(unsigned);
 #define	DELAY(n)		delay(n)
 
-#define	need_resched(ci)	(ci->ci_want_resched = 1, \
-				    ci->ci_curproc->p_md.md_astpending = 1)
-#define	need_proftick(p)	do { p->p_md.md_astpending = 1; } while (0)
-#define	signotify(p)		(p->p_md.md_astpending = 1)
+#define	aston(p)		((p)->p_md.md_astpending = 1)
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+#define	need_resched(ci) \
+do {									\
+	ci->ci_want_resched = 1;					\
+	if (ci->ci_curproc != NULL)					\
+		aston(ci->ci_curproc);					\
+} while (0)
+
+#define	need_proftick(p)	aston(p)
+
+void	signotify(struct proc *);
 
 extern char *bootpath;
 
