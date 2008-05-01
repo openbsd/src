@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.10 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.11 2008/05/01 11:53:26 miod Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -514,6 +514,7 @@ svr4_sys_sigprocmask(p, v, retval)
 	svr4_sigset_t sss;
 	sigset_t bss;
 	int error = 0;
+	int s;
 
 	if (SCARG(uap, oset) != NULL) {
 		/* Fix the return value first if needed */
@@ -531,7 +532,7 @@ svr4_sys_sigprocmask(p, v, retval)
 
 	svr4_to_bsd_sigset(&sss, &bss);
 
-	(void) splhigh();
+	s = splhigh();
 
 	switch (SCARG(uap, how)) {
 	case SVR4_SIG_BLOCK:
@@ -551,7 +552,7 @@ svr4_sys_sigprocmask(p, v, retval)
 		break;
 	}
 
-	(void) spl0();
+	splx(s);
 
 	return error;
 }

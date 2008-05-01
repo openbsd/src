@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_signal.c,v 1.7 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: ibcs2_signal.c,v 1.8 2008/05/01 11:53:26 miod Exp $	*/
 /*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
@@ -390,6 +390,7 @@ ibcs2_sys_sigprocmask(p, v, retval)
 	ibcs2_sigset_t iss;
 	sigset_t bss;
 	int error = 0;
+	int s;
 
 	if (SCARG(uap, oset) != NULL) {
 		/* Fix the return value first if needed */
@@ -407,7 +408,7 @@ ibcs2_sys_sigprocmask(p, v, retval)
 
 	ibcs2_to_bsd_sigset(&iss, &bss);
 
-	(void) splhigh();
+	s = splhigh();
 
 	switch (SCARG(uap, how)) {
 	case IBCS2_SIG_BLOCK:
@@ -427,7 +428,7 @@ ibcs2_sys_sigprocmask(p, v, retval)
 		break;
 	}
 
-	(void) spl0();
+	splx(s);
 
 	return error;
 }

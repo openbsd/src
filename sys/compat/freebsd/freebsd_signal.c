@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_signal.c,v 1.3 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: freebsd_signal.c,v 1.4 2008/05/01 11:53:25 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -170,6 +170,7 @@ freebsd_sys_sigprocmask40(p, v, retval)
 	freebsd_sigset_t nss, oss;
 	sigset_t obnss;
 	int error = 0;
+	int s;
 
 	if (SCARG(uap, set)) {
 		error = copyin(SCARG(uap, set), &nss, sizeof(nss));
@@ -186,7 +187,7 @@ freebsd_sys_sigprocmask40(p, v, retval)
 	}
 	if (SCARG(uap, set)) {
 		bcopy(&nss.__bits[0], &obnss, sizeof(sigset_t));
-		(void)splhigh();
+		s = splhigh();
 		switch (SCARG(uap, how)) {
 		case SIG_BLOCK:
 			p->p_sigmask |= obnss &~ sigcantmask;
@@ -201,7 +202,7 @@ freebsd_sys_sigprocmask40(p, v, retval)
 			error = EINVAL;
 			break;
 		}
-		(void) spl0();
+		splx(s);
 	}
 	return (error);
 }

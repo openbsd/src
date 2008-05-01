@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.9 2000/08/04 15:47:55 ericj Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.10 2008/05/01 11:53:26 miod Exp $	*/
 /*	$NetBSD: osf1_signal.c,v 1.15 1999/05/05 00:57:43 cgd Exp $	*/
 
 /*
@@ -315,6 +315,7 @@ osf1_sys_sigprocmask(p, v, retval)
 	osf1_sigset_t oss;
 	sigset_t bss;
 	int error = 0;
+	int s;
 
 	if (SCARG(uap, oset) != NULL) {
 		/* Fix the return value first if needed */
@@ -332,7 +333,7 @@ osf1_sys_sigprocmask(p, v, retval)
 
 	osf1_cvt_sigset_to_native(&oss, &bss);
 
-	(void) splhigh();
+	s = splhigh();
 
 	switch (SCARG(uap, how)) {
 	case OSF1_SIG_BLOCK:
@@ -352,7 +353,7 @@ osf1_sys_sigprocmask(p, v, retval)
 		break;
 	}
 
-	(void) spl0();
+	splx(s);
 
 	return error;
 }

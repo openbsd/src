@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.10 2007/10/20 16:41:43 miod Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.11 2008/05/01 11:53:26 miod Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -139,11 +139,12 @@ hpux_sys_sigblock(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sigblock_args *uap = v;
+	int s;
 
-	(void) splhigh();
+	s = splhigh();
 	*retval = bsdtohpuxmask(p->p_sigmask);
 	p->p_sigmask |= hpuxtobsdmask(SCARG(uap, mask)) &~ sigcantmask;
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
@@ -154,11 +155,12 @@ hpux_sys_sigsetmask(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sigsetmask_args *uap = v;
+	int s;
 
-	(void) splhigh();
+	s = splhigh();
 	*retval = bsdtohpuxmask(p->p_sigmask);
 	p->p_sigmask = hpuxtobsdmask(SCARG(uap, mask)) &~ sigcantmask;
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
@@ -212,6 +214,7 @@ hpux_sys_sigprocmask(p, v, retval)
 	struct hpux_sys_sigprocmask_args *uap = v;
 	int mask, error = 0;
 	hpux_sigset_t sigset;
+	int s;
 
 	/*
 	 * Copy out old mask first to ensure no errors.
@@ -229,7 +232,7 @@ hpux_sys_sigprocmask(p, v, retval)
 		    sizeof(sigset)))
 			return (EFAULT);
 		mask = hpuxtobsdmask(sigset.sigset[0]);
-		(void) splhigh();
+		s = splhigh();
 		switch (SCARG(uap, how)) {
 		case HPUXSIG_BLOCK:
 			p->p_sigmask |= mask &~ sigcantmask;
@@ -244,7 +247,7 @@ hpux_sys_sigprocmask(p, v, retval)
 			error = EINVAL;
 			break;
 		}
-		(void) spl0();
+		splx(s);
 	}
 	return (error);
 }
