@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: diodevs,v 1.7 2005/09/27 22:05:36 miod Exp 
+ *	OpenBSD: diodevs,v 1.8 2008/05/01 14:29:01 miod Exp 
  */
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
@@ -126,9 +126,6 @@
 #define	DIO_DEVICE_SECID_HYPERION	0x0e
 #define	DIO_DEVICE_DESC_HYPERION	"A1096A (\"hyperion\") display"
 
-#define	DIO_DEVICE_SECID_FB3x2	0x11
-#define	DIO_DEVICE_DESC_FB3x2	"362/382 internal display"
-
 /* Unsupported framebuffers. */
 
 
@@ -140,6 +137,12 @@
 
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
+
+#define	DIO_DEVICE_SECID_FB3X2_A	0x10
+#define	DIO_DEVICE_DESC_FB3X2_A	"362/382 internal display #1"
+
+#define	DIO_DEVICE_SECID_FB3X2_B	0x11
+#define	DIO_DEVICE_DESC_FB3X2_B	"362/382 internal display #2"
 
 /* Devices not yet supported.  Descriptions are lacking. */
 
