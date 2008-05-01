@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.1 2008/04/07 22:53:55 miod Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.2 2008/05/01 13:36:08 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -64,6 +64,7 @@ com_ioc_probe(struct device *parent, void *match, void *aux)
 	if (!(console && !comconsattached)) {
 		bus_space_map(iot, iaa->iaa_base, COM_NPORTS, 0, &ioh);
 		rv = comprobe1(iot, ioh);
+		bus_space_unmap(iot, ioh, COM_NPORTS);
 	} else
 		rv = 1;
 

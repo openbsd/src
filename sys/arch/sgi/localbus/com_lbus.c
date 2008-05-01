@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.6 2008/03/27 14:38:17 jsing Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.7 2008/05/01 13:36:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,6 +55,7 @@ com_macebus_probe(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
+	int rv;
 
 	/* If it's in use as the console, then it's there. */
 	if (ca->ca_baseaddr == comconsaddr && !comconsattached)
@@ -63,7 +64,10 @@ com_macebus_probe(struct device *parent, void *match, void *aux)
 	if (bus_space_map(ca->ca_iot, ca->ca_baseaddr, COM_NPORTS, 0, &ioh))
 		return (0);
 
-	return comprobe1(ca->ca_iot, ioh);
+	rv = comprobe1(ca->ca_iot, ioh);
+	bus_space_unmap(ca->ca_iot, ioh, COM_NPORTS);
+
+	return rv;
 }
 
 void
