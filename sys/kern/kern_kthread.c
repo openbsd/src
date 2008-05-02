@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.28 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.29 2008/05/02 14:07:15 blambert Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -75,8 +75,8 @@ kthread_create(void (*func)(void *), void *arg,
 	 * descriptors and don't leave the exit status around for the
 	 * parent to wait for.
 	 */
-	error = fork1(&proc0, 0, FORK_SHAREVM |FORK_NOZOMBIE |FORK_SIGHAND,
-	    NULL, 0, func, arg, NULL, &p2);
+	error = fork1(&proc0, 0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
+	    FORK_SIGHAND, NULL, 0, func, arg, NULL, &p2);
 	if (error)
 		return (error);
 
