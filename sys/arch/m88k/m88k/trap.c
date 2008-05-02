@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2008/04/01 21:10:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2008/05/02 21:44:46 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1167,31 +1167,37 @@ m88100_syscall(register_t code, struct trapframe *tf)
 
 	if (error != 0)
 		goto bad;
+
 #ifdef SYSCALL_DEBUG
 	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
 	KERNEL_PROC_UNLOCK(p);
 #endif
-	nolock = (callp->sy_flags & SY_NOLOCK);
-	if (!nolock)
-		KERNEL_PROC_LOCK(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		if (nolock)
-			KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		if (nolock)
-			KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(p);
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		KERNEL_PROC_LOCK(p);
 		error = systrace_redirect(code, p, args, rval);
-	else
+		KERNEL_PROC_UNLOCK(p);
+	} else
 #endif
+	{
+		nolock = (callp->sy_flags & SY_NOLOCK);
+		if (!nolock)
+			KERNEL_PROC_LOCK(p);
 		error = (*callp->sy_call)(p, args, rval);
+		if (!nolock)
+			KERNEL_PROC_UNLOCK(p);
+	}
+
 	/*
 	 * system call will look like:
 	 *	 or r13, r0, <code>
@@ -1221,8 +1227,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	 *    any pointers.
 	 */
 
-	if (!nolock)
-		KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
@@ -1327,31 +1331,37 @@ m88110_syscall(register_t code, struct trapframe *tf)
 
 	if (error != 0)
 		goto bad;
+
 #ifdef SYSCALL_DEBUG
 	KERNEL_PROC_LOCK(p);
 	scdebug_call(p, code, args);
 	KERNEL_PROC_UNLOCK(p);
 #endif
-	nolock = (callp->sy_flags & SY_NOLOCK);
-	if (!nolock)
-		KERNEL_PROC_LOCK(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		if (nolock)
-			KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(p);
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		if (nolock)
-			KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(p);
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		KERNEL_PROC_LOCK(p);
 		error = systrace_redirect(code, p, args, rval);
-	else
+		KERNEL_PROC_UNLOCK(p);
+	} else
 #endif
+	{
+		nolock = (callp->sy_flags & SY_NOLOCK);
+		if (!nolock)
+			KERNEL_PROC_LOCK(p);
 		error = (*callp->sy_call)(p, args, rval);
+		if (!nolock)
+			KERNEL_PROC_UNLOCK(p);
+	}
+
 	/*
 	 * system call will look like:
 	 *	 or r13, r0, <code>
@@ -1377,8 +1387,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	 *    exip += 4
 	 */
 
-	if (!nolock)
-		KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
