@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.1 2007/12/29 17:41:34 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.2 2008/05/02 21:45:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -164,8 +164,14 @@ m88110_fpu_exception(struct trapframe *frame)
 		goto deliver;
 	case 0x21:
 		/*
-		 * ``real'' FPU instruction. We'll try to emulate it.
+		 * ``real'' FPU instruction. We'll try to emulate it,
+		 * unless FPU is disabled.
 		 */
+		if (frame->tf_epsr & PSR_SFD1) {	/* don't bother */
+			sig = SIGFPE;
+			fault_type = FPE_FLTINV;
+			goto deliver;
+		}
 		sig = fpu_emulate(frame, insn);
 		fault_type = SI_NOINFO;
 		/*
@@ -181,12 +187,6 @@ m88110_fpu_exception(struct trapframe *frame)
 		 */
 		sig = SIGILL;
 		fault_type = ILL_ILLOPC;
-		goto deliver;
-	}
-
-	if (frame->tf_epsr & PSR_SFD1) {	/* don't bother */
-		sig = SIGFPE;
-		fault_type = FPE_FLTINV;
 		goto deliver;
 	}
 
@@ -509,6 +509,7 @@ do_int:
 		fpu_fetch(frame, rs2, t2, t2, &dest);
 		fpu_store(frame, rd, t2, FTYPE_INT, &dest);
 		break;
+
 	case 0x0a:	/* nint */
 		/* round to nearest */
 		frame->tf_fpcr = (old_fpcr & ~(FPCR_RD_MASK << FPCR_RD_SHIFT)) |
@@ -575,16 +576,6 @@ do_int:
  *
  * If either operand is NaN, the result is unordered.  This causes an
  * reserved operand exception (except for nonsignalling NaNs for fcmpu).
- *
- * Everything else is ordered:
- *	|Inf| > |numbers| > |0|.
- * We already arranged for fp_class(Inf) > fp_class(numbers) > fp_class(0),
- * so we get this directly.  Note, however, that two zeros compare equal
- * regardless of sign, while everything else depends on sign.
- *
- * Incidentally, two Infs of the same sign compare equal. Since the 88110 
- * does infinity arithmetic on hardware, this codepath should never be
- * entered.
  */
 void
 fpu_compare(struct trapframe *frame, fparg *s1, fparg *s2, u_int width,
