@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.5 2008/04/30 07:39:48 norby Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.6 2008/05/02 12:40:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -157,15 +157,22 @@ printf("\top %d out_label %d out_ifindex %d\n", smpls->smpls_operation,
 			m = mpls_shim_swap(m, smpls);
 			break;
 		default:
-			break;
+			m_freem(m);
+			goto done;
 		}
 
-		break;
-		/* not yet done with packet */
-		if (rt) {
-			RTFREE(rt);
-			rt = NULL;
-		}
+		if (m == NULL)
+			goto done;
+
+		/* refetch label */
+		shim = mtod(m, struct shim_hdr *);
+		ifp = rt->rt_ifp;
+
+		if (smpls->smpls_out_ifindex)
+			break;
+
+		RTFREE(rt);
+		rt = NULL;
 	}
 
 	/* write back TTL */
