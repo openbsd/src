@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: log.h,v 1.5 2008/05/02 06:09:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@ void event_errx(int eval, const char *fmt, ...);
 void event_warnx(const char *fmt, ...);
 void event_msgx(const char *fmt, ...);
 void _event_debugx(const char *fmt, ...);
-#undef USE_DEBUG
+
 #ifdef USE_DEBUG
 #define event_debug(x) _event_debugx x
 #else

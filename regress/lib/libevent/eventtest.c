@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.10 2007/09/19 02:06:45 todd Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.11 2008/05/02 06:09:11 brad Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
@@ -430,6 +430,20 @@ test_simplesignal(void)
 }
 
 void
+test_immediatesignal(void)
+{
+	struct event ev;
+
+	printf("Immediate signal: ");
+	signal_set(&ev, SIGUSR1, signal_cb, &ev);
+	signal_add(&ev, NULL);
+	raise(SIGUSR1);
+	event_loop(EVLOOP_NONBLOCK);
+	signal_del(&ev);
+	cleanup_test();
+}
+
+void
 test_loopexit(void)
 {
 	struct timeval tv, tv_start, tv_end;
@@ -700,6 +714,8 @@ main (int argc, char **argv)
 	test_simpletimeout();
 
 	test_simplesignal();
+
+	test_immediatesignal();
 
 	test_loopexit();
 

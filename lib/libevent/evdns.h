@@ -1,4 +1,4 @@
-/*	$OpenBSD: evdns.h,v 1.1 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: evdns.h,v 1.2 2008/05/02 06:09:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
@@ -363,5 +363,7 @@ int evdns_server_request_add_cname_reply(struct evdns_server_request *req, const
 
 int evdns_server_request_respond(struct evdns_server_request *req, int err);
 int evdns_server_request_drop(struct evdns_server_request *req);
+struct sockaddr;
+int evdns_server_request_get_requesting_addr(struct evdns_server_request *_req, struct sockaddr *sa, int addr_len);
 
-#endif  // !EVENTDNS_H
+#endif  /* !EVENTDNS_H */

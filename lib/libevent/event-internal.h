@@ -1,4 +1,4 @@
-/*	$OpenBSD: event-internal.h,v 1.4 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: event-internal.h,v 1.5 2008/05/02 06:09:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -33,6 +33,8 @@
 extern "C" {
 #endif
 
+#include "evsignal.h"
+
 struct event_base {
 	const struct eventop *evsel;
 	void *evbase;
@@ -44,6 +46,9 @@ struct event_base {
 	/* active event management */
 	struct event_list **activequeues;
 	int nactivequeues;
+
+	/* signal handling info */
+	struct evsignal_info sig;
 
 	struct event_list eventqueue;
 	struct timeval event_tv;

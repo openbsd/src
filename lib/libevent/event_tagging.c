@@ -1,4 +1,4 @@
-/*	$OpenBSD: event_tagging.c,v 1.1 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: event_tagging.c,v 1.2 2008/05/02 06:09:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
@@ -60,7 +60,7 @@
 #include "event.h"
 #include "log.h"
 
-int decode_int(u_int32_t *pnumber, struct evbuffer *evbuf);
+int decode_int(uint32_t *pnumber, struct evbuffer *evbuf);
 
 static struct evbuffer *_buf;	/* not thread safe */
 
@@ -81,10 +81,10 @@ evtag_init()
  */
 
 void
-encode_int(struct evbuffer *evbuf, u_int32_t number)
+encode_int(struct evbuffer *evbuf, uint32_t number)
 {
 	int off = 1, nibbles = 0;
-	u_int8_t data[5];
+	uint8_t data[5];
 
 	memset(data, 0, sizeof(data));
 	while (number) {
@@ -113,8 +113,8 @@ encode_int(struct evbuffer *evbuf, u_int32_t number)
  */
 
 void
-evtag_marshal(struct evbuffer *evbuf, u_int8_t tag,
-    const void *data, u_int32_t len)
+evtag_marshal(struct evbuffer *evbuf, uint8_t tag,
+    const void *data, uint32_t len)
 {
 	evbuffer_add(evbuf, &tag, sizeof(tag));
 	encode_int(evbuf, len);
@@ -123,7 +123,7 @@ evtag_marshal(struct evbuffer *evbuf, u_int8_t tag,
 
 /* Marshaling for integers */
 void
-evtag_marshal_int(struct evbuffer *evbuf, u_int8_t tag, u_int32_t integer)
+evtag_marshal_int(struct evbuffer *evbuf, uint8_t tag, uint32_t integer)
 {
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
 	encode_int(_buf, integer);
@@ -134,13 +134,13 @@ evtag_marshal_int(struct evbuffer *evbuf, u_int8_t tag, u_int32_t integer)
 }
 
 void
-evtag_marshal_string(struct evbuffer *buf, u_int8_t tag, const char *string)
+evtag_marshal_string(struct evbuffer *buf, uint8_t tag, const char *string)
 {
 	evtag_marshal(buf, tag, string, strlen(string));
 }
 
 void
-evtag_marshal_timeval(struct evbuffer *evbuf, u_int8_t tag, struct timeval *tv)
+evtag_marshal_timeval(struct evbuffer *evbuf, uint8_t tag, struct timeval *tv)
 {
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
 
@@ -151,11 +151,11 @@ evtag_marshal_timeval(struct evbuffer *evbuf, u_int8_t tag, struct timeval *tv)
 	    EVBUFFER_LENGTH(_buf));
 }
 
-static int __inline
-decode_int_internal(u_int32_t *pnumber, struct evbuffer *evbuf, int dodrain)
+static int
+decode_int_internal(uint32_t *pnumber, struct evbuffer *evbuf, int dodrain)
 {
-	u_int32_t number = 0;
-	u_int8_t *data = EVBUFFER_DATA(evbuf);
+	uint32_t number = 0;
+	uint8_t *data = EVBUFFER_DATA(evbuf);
 	int len = EVBUFFER_LENGTH(evbuf);
 	int nibbles = 0, off;
 
@@ -186,13 +186,13 @@ decode_int_internal(u_int32_t *pnumber, struct evbuffer *evbuf, int dodrain)
 }
 
 int
-decode_int(u_int32_t *pnumber, struct evbuffer *evbuf)
+decode_int(uint32_t *pnumber, struct evbuffer *evbuf)
 {
 	return (decode_int_internal(pnumber, evbuf, 1) == -1 ? -1 : 0);
 }
 
 int
-evtag_peek(struct evbuffer *evbuf, u_int8_t *ptag)
+evtag_peek(struct evbuffer *evbuf, uint8_t *ptag)
 {
 	if (EVBUFFER_LENGTH(evbuf) < 2)
 		return (-1);
@@ -202,7 +202,7 @@ evtag_peek(struct evbuffer *evbuf, u_int8_t *ptag)
 }
 
 int
-evtag_peek_length(struct evbuffer *evbuf, u_int32_t *plength)
+evtag_peek_length(struct evbuffer *evbuf, uint32_t *plength)
 {
 	struct evbuffer tmp;
 	int res;
@@ -224,7 +224,7 @@ evtag_peek_length(struct evbuffer *evbuf, u_int32_t *plength)
 }
 
 int
-evtag_payload_length(struct evbuffer *evbuf, u_int32_t *plength)
+evtag_payload_length(struct evbuffer *evbuf, uint32_t *plength)
 {
 	struct evbuffer tmp;
 	int res;
@@ -246,7 +246,7 @@ evtag_payload_length(struct evbuffer *evbuf, u_int32_t *plength)
 int
 evtag_consume(struct evbuffer *evbuf)
 {
-	u_int32_t len;
+	uint32_t len;
 	evbuffer_drain(evbuf, 1);
 	if (decode_int(&len, evbuf) == -1)
 		return (-1);
@@ -258,11 +258,11 @@ evtag_consume(struct evbuffer *evbuf)
 /* Reads the data type from an event buffer */
 
 int
-evtag_unmarshal(struct evbuffer *src, u_int8_t *ptag, struct evbuffer *dst)
+evtag_unmarshal(struct evbuffer *src, uint8_t *ptag, struct evbuffer *dst)
 {
-	u_int8_t tag;
-	u_int32_t len;
-	u_int32_t integer;
+	uint8_t tag;
+	uint32_t len;
+	uint32_t integer;
 
 	if (evbuffer_remove(src, &tag, sizeof(tag)) != sizeof(tag))
 		return (-1);
@@ -285,12 +285,12 @@ evtag_unmarshal(struct evbuffer *src, u_int8_t *ptag, struct evbuffer *dst)
 /* Marshaling for integers */
 
 int
-evtag_unmarshal_int(struct evbuffer *evbuf, u_int8_t need_tag,
-    u_int32_t *pinteger)
+evtag_unmarshal_int(struct evbuffer *evbuf, uint8_t need_tag,
+    uint32_t *pinteger)
 {
-	u_int8_t tag;
-	u_int32_t len;
-	u_int32_t integer;
+	uint8_t tag;
+	uint32_t len;
+	uint32_t integer;
 
 	if (evbuffer_remove(evbuf, &tag, sizeof(tag)) != sizeof(tag) ||
 	    tag != need_tag)
@@ -314,10 +314,10 @@ evtag_unmarshal_int(struct evbuffer *evbuf, u_int8_t need_tag,
 /* Unmarshal a fixed length tag */
 
 int
-evtag_unmarshal_fixed(struct evbuffer *src, u_int8_t need_tag, void *data,
+evtag_unmarshal_fixed(struct evbuffer *src, uint8_t need_tag, void *data,
     size_t len)
 {
-	u_int8_t tag;
+	uint8_t tag;
 
 	/* Initialize this event buffer so that we can read into it */
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
@@ -334,10 +334,10 @@ evtag_unmarshal_fixed(struct evbuffer *src, u_int8_t need_tag, void *data,
 }
 
 int
-evtag_unmarshal_string(struct evbuffer *evbuf, u_int8_t need_tag,
+evtag_unmarshal_string(struct evbuffer *evbuf, uint8_t need_tag,
     char **pstring)
 {
-	u_int8_t tag;
+	uint8_t tag;
 
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
 
@@ -353,11 +353,11 @@ evtag_unmarshal_string(struct evbuffer *evbuf, u_int8_t need_tag,
 }
 
 int
-evtag_unmarshal_timeval(struct evbuffer *evbuf, u_int8_t need_tag,
+evtag_unmarshal_timeval(struct evbuffer *evbuf, uint8_t need_tag,
     struct timeval *ptv)
 {
-	u_int8_t tag;
-	u_int32_t integer;
+	uint8_t tag;
+	uint32_t integer;
 
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
 	if (evtag_unmarshal(evbuf, &tag, _buf) == -1 || tag != need_tag)

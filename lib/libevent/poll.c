@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.13 2006/11/26 15:24:34 brad Exp $	*/
+/*	$OpenBSD: poll.c,v 1.14 2008/05/02 06:09:11 brad Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -54,8 +54,6 @@
 #include "evsignal.h"
 #include "log.h"
 
-extern volatile sig_atomic_t evsignal_caught;
-
 struct pollop {
 	int event_count;		/* Highest number alloc */
 	int nfds;                       /* Size of event_* */
@@ -66,15 +64,14 @@ struct pollop {
 	int *idxplus1_by_fd; /* Index into event_set by fd; we add 1 so
 			      * that 0 (which is easy to memset) can mean
 			      * "no entry." */
-	sigset_t evsigmask;
 };
 
-void *poll_init	(void);
+void *poll_init	(struct event_base *);
 int poll_add		(void *, struct event *);
 int poll_del		(void *, struct event *);
 int poll_recalc		(struct event_base *, void *, int);
 int poll_dispatch	(struct event_base *, void *, struct timeval *);
-void poll_dealloc	(void *);
+void poll_dealloc	(struct event_base *, void *);
 
 const struct eventop pollops = {
 	"poll",
@@ -87,7 +84,7 @@ const struct eventop pollops = {
 };
 
 void *
-poll_init(void)
+poll_init(struct event_base *base)
 {
 	struct pollop *pollop;
 
@@ -98,7 +95,7 @@ poll_init(void)
 	if (!(pollop = calloc(1, sizeof(struct pollop))))
 		return (NULL);
 
-	evsignal_init(&pollop->evsigmask);
+	evsignal_init(base);
 
 	return (pollop);
 }
@@ -111,9 +108,7 @@ poll_init(void)
 int
 poll_recalc(struct event_base *base, void *arg, int max)
 {
-	struct pollop *pop = arg;
-
-	return (evsignal_recalc(&pop->evsigmask));
+	return (0);
 }
 
 #ifdef CHECK_INVARIANTS
@@ -153,19 +148,16 @@ poll_check_ok(struct pollop *pop)
 int
 poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i, sec, nfds;
+	int res, i, msec = -1, nfds;
 	struct pollop *pop = arg;
 
-	if (evsignal_deliver(&pop->evsigmask) == -1)
-		return (-1);
-
 	poll_check_ok(pop);
-	sec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
-	nfds = pop->nfds;
-	res = poll(pop->event_set, nfds, sec);
 
-	if (evsignal_recalc(&pop->evsigmask) == -1)
-		return (-1);
+	if (tv != NULL)
+		msec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
+
+	nfds = pop->nfds;
+	res = poll(pop->event_set, nfds, msec);
 
 	if (res == -1) {
 		if (errno != EINTR) {
@@ -173,10 +165,11 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		evsignal_process();
+		evsignal_process(base);
 		return (0);
-	} else if (evsignal_caught)
-		evsignal_process();
+	} else if (base->sig.evsignal_caught) {
+		evsignal_process(base);
+	}
 
 	event_debug(("%s: poll reports %d", __func__, res));
 
@@ -229,7 +222,7 @@ poll_add(void *arg, struct event *ev)
 	int i;
 
 	if (ev->ev_events & EV_SIGNAL)
-		return (evsignal_add(&pop->evsigmask, ev));
+		return (evsignal_add(ev));
 	if (!(ev->ev_events & (EV_READ|EV_WRITE)))
 		return (0);
 
@@ -334,7 +327,7 @@ poll_del(void *arg, struct event *ev)
 	int i;
 
 	if (ev->ev_events & EV_SIGNAL)
-		return (evsignal_del(&pop->evsigmask, ev));
+		return (evsignal_del(ev));
 
 	if (!(ev->ev_events & (EV_READ|EV_WRITE)))
 		return (0);
@@ -380,10 +373,11 @@ poll_del(void *arg, struct event *ev)
 }
 
 void
-poll_dealloc(void *arg)
+poll_dealloc(struct event_base *base, void *arg)
 {
 	struct pollop *pop = arg;
 
+	evsignal_dealloc(base);
 	if (pop->event_set)
 		free(pop->event_set);
 	if (pop->event_r_back)
