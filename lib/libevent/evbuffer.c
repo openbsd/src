@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.10 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.11 2008/05/02 18:26:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -290,7 +290,7 @@ bufferevent_free(struct bufferevent *bufev)
  */
 
 int
-bufferevent_write(struct bufferevent *bufev, void *data, size_t size)
+bufferevent_write(struct bufferevent *bufev, const void *data, size_t size)
 {
 	int res;
 

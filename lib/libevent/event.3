@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.38 2008/05/02 09:18:26 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.39 2008/05/02 18:26:42 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -194,7 +194,7 @@
 .Ft void
 .Fn "bufferevent_free" "struct bufferevent *bufev"
 .Ft int
-.Fn "bufferevent_write" "struct bufferevent *bufev" "void *data" "size_t size"
+.Fn "bufferevent_write" "struct bufferevent *bufev" "const void *data" "size_t size"
 .Ft int
 .Fn "bufferevent_write_buffer" "struct bufferevent *bufev" "struct evbuffer *buf"
 .Ft size_t

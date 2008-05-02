@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.19 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: event.h,v 1.20 2008/05/02 18:26:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -145,7 +145,7 @@ struct eventop {
 	void (*dealloc)(struct event_base *, void *);
 };
 
-void *event_init(void);
+struct event_base *event_init(void);
 int event_dispatch(void);
 int event_base_dispatch(struct event_base *);
 void event_base_free(struct event_base *);
@@ -262,7 +262,8 @@ struct bufferevent *bufferevent_new(int fd,
 int bufferevent_base_set(struct event_base *base, struct bufferevent *bufev);
 int bufferevent_priority_set(struct bufferevent *bufev, int pri);
 void bufferevent_free(struct bufferevent *bufev);
-int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_write(struct bufferevent *bufev,
+    const void *data, size_t size);
 int bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf);
 size_t bufferevent_read(struct bufferevent *bufev, void *data, size_t size);
 int bufferevent_enable(struct bufferevent *bufev, short event);

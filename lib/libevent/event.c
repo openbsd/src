@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.18 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.19 2008/05/02 18:26:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -182,7 +182,7 @@ RB_PROTOTYPE(event_tree, event, ev_timeout_node, compare);
 RB_GENERATE(event_tree, event, ev_timeout_node, compare);
 
 
-void *
+struct event_base *
 event_init(void)
 {
 	int i;
