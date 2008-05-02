@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.37 2008/05/02 06:09:11 brad Exp $
+.\"	$OpenBSD: event.3,v 1.38 2008/05/02 09:18:26 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -83,7 +83,7 @@
 .Nm evbuffer_write ,
 .Nm evbuffer_read ,
 .Nm evbuffer_find ,
-.Nm evbuffer_readline ,
+.Nm evbuffer_readline
 .\".Nm evhttp_start ,
 .\".Nm evhttp_free
 .\".Nm evtag_init ,
@@ -161,7 +161,6 @@
 .Fn "event_once" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
 .Ft int
 .Fn "event_base_once" "struct event_base *base" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
-
 .Ft int
 .Fn "event_pending" "struct event *ev" "short event" "struct timeval *tv"
 .Ft int
