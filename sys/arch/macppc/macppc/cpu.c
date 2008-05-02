@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.56 2008/05/02 06:46:07 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.57 2008/05/02 19:10:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -553,6 +553,7 @@ struct cpu_hatch_data {
 	struct cpu_info *ci;
 	int running;
 	int hid0;
+	int l2cr;
 	int sdr1;
 	int tbu, tbl;
 };
@@ -598,6 +599,7 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	h->ci = ci;
 	h->running = 0;
 	h->hid0 = ppc_mfhid0();
+	h->l2cr = ppc_mfl2cr();
 	h->sdr1 = ppc_mfsdr1();
 	cpu_hatch_data = h;
 
@@ -729,6 +731,21 @@ cpu_hatch(void)
 		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 
 	ppc_mthid0(h->hid0);
+	if (h->l2cr != 0) {
+		u_int x;
+		ppc_mtl2cr(h->l2cr & ~L2CR_L2E);
+
+		/* Wait for L2 clock to be stable (640 L2 clocks). */
+		delay(100);
+
+		/* Invalidate all L2 contents. */
+		ppc_mtl2cr((h->l2cr & ~L2CR_L2E)|L2CR_L2I);
+		do {
+			x = ppc_mfl2cr();
+		} while (x & L2CR_L2IP);
+		
+		ppc_mtl2cr(h->l2cr);
+	}
 	ppc_mtsdr1(h->sdr1);
 
 	/*
