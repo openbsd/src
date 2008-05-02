@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.40 2006/11/25 18:04:44 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.41 2008/05/02 06:49:32 ckuethe Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -141,7 +141,8 @@ rip_input(struct mbuf *m, ...)
 			struct mbuf *n;
 
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (last->inp_flags & INP_CONTROLOPTS)
+				if (last->inp_flags & INP_CONTROLOPTS ||
+				    last->inp_socket->so_options & SO_TIMESTAMP)
 					ip_savecontrol(last, &opts, ip, n);
 				if (sbappendaddr(&last->inp_socket->so_rcv,
 				    sintosa(&ripsrc), n, opts) == 0) {
@@ -157,7 +158,8 @@ rip_input(struct mbuf *m, ...)
 		last = inp;
 	}
 	if (last) {
-		if (last->inp_flags & INP_CONTROLOPTS)
+		if (last->inp_flags & INP_CONTROLOPTS ||
+		    last->inp_socket->so_options & SO_TIMESTAMP)
 			ip_savecontrol(last, &opts, ip, m);
 		if (sbappendaddr(&last->inp_socket->so_rcv, sintosa(&ripsrc), m,
 		    opts) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.115 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.116 2008/05/02 06:49:32 ckuethe Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -459,11 +459,15 @@ udp_input(struct mbuf *m, ...)
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
 #ifdef INET6
 					if (ip6 && (last->inp_flags &
-					    IN6P_CONTROLOPTS))
+					    IN6P_CONTROLOPTS ||
+					    last->inp_socket->so_options &
+					    SO_TIMESTAMP))
 						ip6_savecontrol(last, n, &opts);
 #endif /* INET6 */
 					if (ip && (last->inp_flags &
-					    INP_CONTROLOPTS))
+					    INP_CONTROLOPTS ||
+					    last->inp_socket->so_options &
+					    SO_TIMESTAMP))
 						ip_savecontrol(last, &opts,
 						    ip, n);
 
@@ -505,10 +509,12 @@ udp_input(struct mbuf *m, ...)
 		}
 
 #ifdef INET6
-		if (ip6 && (last->inp_flags & IN6P_CONTROLOPTS))
+		if (ip6 && (last->inp_flags & IN6P_CONTROLOPTS ||
+		    last->inp_socket->so_options & SO_TIMESTAMP))
 			ip6_savecontrol(last, m, &opts);
 #endif /* INET6 */
-		if (ip && (last->inp_flags & INP_CONTROLOPTS))
+		if (ip && (last->inp_flags & INP_CONTROLOPTS ||
+		    last->inp_socket->so_options & SO_TIMESTAMP))
 			ip_savecontrol(last, &opts, ip, m);
 
 		m_adj(m, iphlen);
@@ -623,10 +629,12 @@ udp_input(struct mbuf *m, ...)
 
 	opts = NULL;
 #ifdef INET6
-	if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
+	if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS ||
+	    inp->inp_socket->so_options & SO_TIMESTAMP))
 		ip6_savecontrol(inp, m, &opts);
 #endif /* INET6 */
-	if (ip && (inp->inp_flags & INP_CONTROLOPTS))
+	if (ip && (inp->inp_flags & INP_CONTROLOPTS ||
+	    inp->inp_socket->so_options & SO_TIMESTAMP))
 		ip_savecontrol(inp, &opts, ip, m);
 
 	iphlen += sizeof(struct udphdr);

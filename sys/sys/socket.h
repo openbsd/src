@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.56 2008/04/23 10:55:14 norby Exp $	*/
+/*	$OpenBSD: socket.h,v 1.57 2008/05/02 06:49:32 ckuethe Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define SO_JUMBO	0x0400		/* try to use jumbograms */
+#define SO_TIMESTAMP	0x0800		/* timestamp received dgram traffic */
 
 /*
  * Additional options, not kept in so_options.
@@ -417,6 +418,7 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #define SCM_CREDS	0x02		/* credentials (struct sockcred) */
+#define	SCM_TIMESTAMP	0x04		/* timestamp (struct timeval) */
 
 /*
  * 4.3 compat sockaddr, move to compat file later

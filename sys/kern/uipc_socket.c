@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.67 2007/12/20 17:16:50 chl Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.68 2008/05/02 06:49:32 ckuethe Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1001,6 +1001,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_REUSEPORT:
 		case SO_OOBINLINE:
 		case SO_JUMBO:
+		case SO_TIMESTAMP:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				goto bad;
@@ -1135,6 +1136,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 		case SO_JUMBO:
+		case SO_TIMESTAMP:
 			*mtod(m, int *) = so->so_options & optname;
 			break;
 

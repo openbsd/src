@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.22 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.23 2008/05/02 06:49:31 ckuethe Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 2 2008 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -147,6 +147,7 @@ and set with
 .It Dv SO_RCVLOWAT Ta "set minimum count for input"
 .It Dv SO_SNDTIMEO Ta "set timeout value for output"
 .It Dv SO_RCVTIMEO Ta "set timeout value for input"
+.It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
 .It Dv SO_TYPE Ta "get the type of the socket (get only)"
 .It Dv SO_ERROR Ta "get and clear error on the socket (get only)"
 .El
@@ -286,6 +287,23 @@ receiving additional data, it returns with a short count
 or with the error
 .Er EWOULDBLOCK
 if no data were received.
+.Pp
+If the
+.Dv SO_TIMESTAMP
+option is enabled on a
+.Dv SOCK_DGRAM
+socket, the
+.Xr recvmsg 2
+call will return a timestamp corresponding to when the datagram was
+received.
+The msg_control field in the msghdr structure points to a buffer
+that contains a cmsghdr structure followed by a struct timeval.
+The cmsghdr fields have the following values:
+.Bd -literal -offset indent
+cmsg_len = CMSG_LEN(sizeof(struct timeval))
+cmsg_level = SOL_SOCKET
+cmsg_type = SCM_TIMESTAMP
+.Ed
 .Pp
 Finally,
 .Dv SO_TYPE
