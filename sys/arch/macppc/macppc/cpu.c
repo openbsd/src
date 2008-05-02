@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.55 2008/05/01 08:25:32 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.56 2008/05/02 06:46:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -649,11 +649,9 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
                 delay(500000);
 	}
 
-	printf("cpu%d: timebase %llx\n", cpu_number(), ppc_mftb());
 
 	for (i = 0; i < 0x3fffffff; i++)
 		if (h->running) {
-			printf("running\n");
 			break;
 		}
 
@@ -760,9 +758,6 @@ cpu_hatch(void)
 		;
 
 	__asm volatile ("sync; isync");
-
-	printf("cpu%d: running\n", cpu_number());
-	printf("cpu%d: timebase %llx\n", cpu_number(), ppc_mftb());
 
 	curcpu()->ci_ipending = 0;
 	curcpu()->ci_cpl = 0;
