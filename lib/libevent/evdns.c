@@ -1,4 +1,4 @@
-/*	$OpenBSD: evdns.c,v 1.3 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: evdns.c,v 1.4 2008/05/02 15:55:58 brad Exp $	*/
 
 /* The original version of this module was written by Adam Langley; for
  * a history of modifications, check out the subversion logs.
@@ -139,7 +139,7 @@ typedef unsigned int uint;
 #define u16 uint16_t
 #define u8  uint8_t
 
-#define MAX_ADDRS 4  /* maximum number of addresses from a single packet */
+#define MAX_ADDRS 32  /* maximum number of addresses from a single packet */
 /* which we bother recording */
 
 #define TYPE_A         EVDNS_TYPE_A
@@ -850,7 +850,7 @@ reply_parse(u8 *packet, int length) {
 		 */
 		SKIP_NAME;
 		j += 4;
-		if (j >= length) goto err;
+		if (j > length) goto err;
 	}
 
 	/* now we have the answer section which looks like
@@ -2270,7 +2270,8 @@ int evdns_resolve_reverse(struct in_addr *in, int flags, evdns_callback_type cal
 }
 
 int evdns_resolve_reverse_ipv6(struct in6_addr *in, int flags, evdns_callback_type callback, void *ptr) {
-	char buf[64];
+	/* 32 nybbles, 32 periods, "ip6.arpa", NUL. */
+	char buf[73];
 	char *cp;
 	struct request *req;
 	int i;
