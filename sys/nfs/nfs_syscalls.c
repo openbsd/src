@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.58 2008/04/22 19:18:24 blambert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.59 2008/05/02 13:26:27 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -435,8 +435,13 @@ nfssvc_nfsd(nsd, argp, p)
 			else
 				error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
 				    slp, nfsd->nfsd_procp, &mreq);
-			if (mreq == NULL)
+			if (mreq == NULL) {
+				if (nd != NULL) {
+					m_freem(nd->nd_nam2);
+					m_freem(nd->nd_mrep);
+				}
 				break;
+			}
 			if (error) {
 				nfsstats.srv_errs++;
 				nfsrv_updatecache(nd, FALSE, mreq);
@@ -480,7 +485,7 @@ nfssvc_nfsd(nsd, argp, p)
 			if (nfsrtton)
 				nfsd_rt(sotype, nd, cacherep);
 			if (nd->nd_nam2)
-				MFREE(nd->nd_nam2, m);
+				m_freem(nd->nd_nam2);
 			if (nd->nd_mrep)
 				m_freem(nd->nd_mrep);
 			if (error == EPIPE)
