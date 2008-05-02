@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.1 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: lock.h,v 1.2 2008/05/02 22:00:07 drahn Exp $	*/
 /*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
@@ -109,4 +109,25 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
+#define rw_cas __cpu_cas
+static __inline int
+__cpu_cas(volatile unsigned long *addr, unsigned long old, unsigned long new)
+{
+        int success, scratch;
+        __asm volatile(
+            "1: lwarx   %0, 0,  %4      \n"
+            "   cmpw    0, %0, %2       \n"
+            "   li      %1, 1           \n"
+            "   bne     0,2f            \n"
+            "   stwcx.  %3, 0, %4       \n" 
+            "   li      %1, 0           \n" 
+            "   bne-    1b              \n"
+	    "2:				\n"
+            : "=&r" (scratch), "=&r" (success)
+            : "r" (old), "r" (new), "r" (addr)
+            : "memory");
+
+        return success;
+}
+	
 #endif /* _POWERPC_LOCK_H_ */
