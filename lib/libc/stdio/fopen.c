@@ -1,4 +1,4 @@
-/*	$OpenBSD: fopen.c,v 1.6 2008/04/21 12:28:35 otto Exp $ */
+/*	$OpenBSD: fopen.c,v 1.7 2008/05/03 18:46:41 chl Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include "local.h"
 
 FILE *
