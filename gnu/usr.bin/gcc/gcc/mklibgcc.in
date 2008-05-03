@@ -201,7 +201,7 @@ for file in $LIB2ADD; do
       flags="$flags -xassembler-with-cpp"
     fi
 
-    echo $out: $file
+    echo $out: stmp-dirs $file
     echo "	$gcc_compile" $flags -c $file -o $out
   done
   libgcc2_objs="$libgcc2_objs ${oname}${objext}"
