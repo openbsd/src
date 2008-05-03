@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2008/05/03 20:18:24 martin Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -168,7 +168,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %d\n", ptoa(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
