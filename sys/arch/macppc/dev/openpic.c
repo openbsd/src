@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.43 2008/05/01 08:25:32 kettenis Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.44 2008/05/03 22:44:56 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -58,7 +58,7 @@
 #define ICU_LEN 128
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
 
-int o_intrtype[ICU_LEN], o_intrmask[ICU_LEN], o_intrlevel[ICU_LEN];
+int o_intrtype[ICU_LEN], o_intrmaxlvl[ICU_LEN];
 struct intrhand *o_intrhand[ICU_LEN] = { 0 };
 int o_hwirq[ICU_LEN], o_virq[ICU_LEN];
 unsigned int imen_o = 0xffffffff;
@@ -66,7 +66,7 @@ int o_virq_max;
 
 static int fakeintr(void *);
 static char *intr_typename(int type);
-static void intr_calculatemasks(void);
+void openpic_calc_mask(void);
 static __inline int cntlzw(int x);
 static int mapirq(int irq);
 int openpic_prog_button(void *arg);
@@ -274,7 +274,7 @@ printf("vI %d ", irq);
 	fakehand.ih_level = level;
 	*p = &fakehand;
 
-	intr_calculatemasks();
+	openpic_calc_mask();
 
 	/*
 	 * Poke the real handler in now.
@@ -318,7 +318,7 @@ openpic_intr_disestablish(void *lcp, void *arg)
 	evcount_detach(&ih->ih_count);
 	free((void *)ih, M_DEVBUF);
 
-	intr_calculatemasks();
+	openpic_calc_mask();
 
 	if (o_intrhand[irq] == NULL)
 		o_intrtype[irq] = IST_NONE;
@@ -352,68 +352,48 @@ intr_typename(int type)
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-static void
-intr_calculatemasks()
+
+void
+openpic_calc_mask()
 {
-	int irq, level;
-	struct intrhand *q;
+	int irq;
+	struct intrhand *ih;
+	int i;
+	int imen_n = 0;
 
-	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
-		for (q = o_intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		o_intrlevel[irq] = levels;
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < IPL_NUM; level++) {
-		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (o_intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_MASK;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so vm > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCK;
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
-		for (q = o_intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		o_intrmask[irq] = irqs | SINT_MASK;
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++) {
-			if (o_intrhand[irq]) {
-				irqs |= 1 << irq;
-				openpic_enable_irq(o_hwirq[irq]);
-			} else {
-				openpic_disable_irq(o_hwirq[irq]);
+		int max = IPL_NONE;
+		int min = IPL_HIGH;
+		if (o_virq[irq] != 0) {
+			for (ih = o_intrhand[o_virq[irq]]; ih;
+			    ih = ih->ih_next) {
+				if (ih->ih_level > max)
+					max = ih->ih_level;
+				if (ih->ih_level < min)
+					min = ih->ih_level;
 			}
 		}
-		imen_o = ~irqs;
+
+		o_intrmaxlvl[irq] = max;
+
+		if (max == IPL_NONE)
+			min = IPL_NONE; /* Interrupt not enabled */
+
+		if (o_virq[irq] != 0) {
+			/* Enable (dont mask) interrupts at lower levels */ 
+			for (i = IPL_NONE; i < min; i++)
+				imask[i] &= ~(1 << o_virq[irq]);
+			for (; i <= IPL_HIGH; i++)
+				imask[i] |= (1 << o_virq[irq]);
+			imen_n |=  (1 << o_virq[irq]);
+		}
 	}
+	for (i = IPL_NONE; i <= IPL_HIGH; i++) {
+		if (i > IPL_NONE)
+			imask[i] |= SINT_MASK;
+	}
+	imask[IPL_HIGH] = 0xffffffff;
+	imen_o = ~imen_n;
 }
 
 /*
@@ -673,7 +653,7 @@ ext_intr_openpic()
 		} else {
 			openpic_disable_irq(realirq);
 			openpic_eoi(ci->ci_cpuid);
-			ocpl = splraise(o_intrmask[irq]);
+			ocpl = splraise(imask[o_intrmaxlvl[realirq]]);
 
 			ih = o_intrhand[irq];
 			while (ih) {
