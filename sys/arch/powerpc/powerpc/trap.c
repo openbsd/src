@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.81 2008/04/27 16:01:47 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.82 2008/05/03 17:27:04 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			size_t argsize;
 			register_t code, error;
 			register_t *params, rval[2];
-			int nsys, n;
+			int nsys, n, nolock;
 			register_t args[10];
 			
 			uvmexp.syscalls++;
@@ -470,27 +470,39 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 				params = args;
 			}
 
-			KERNEL_PROC_LOCK(p);
 #ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
+			if (KTRPOINT(p, KTR_SYSCALL)) {
+				KERNEL_PROC_LOCK(p);
 				ktrsyscall(p, code, argsize, params);
+				KERNEL_PROC_UNLOCK(p);
+			}
 #endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
 
 #ifdef SYSCALL_DEBUG
+			KERNEL_PROC_LOCK(p);
 			scdebug_call(p, code, params);
+			KERNEL_PROC_UNLOCK(p);
 #endif
 
 			
 #if NSYSTRACE > 0
-			if (ISSET(p->p_flag, P_SYSTRACE))
+			if (ISSET(p->p_flag, P_SYSTRACE)) {
+				KERNEL_PROC_LOCK(p);
 				error = systrace_redirect(code, p, params,
 				    rval);
-			else
+				KERNEL_PROC_UNLOCK(p);
+			} else
 #endif
+			{
+				nolock = (callp->sy_flags & SY_NOLOCK);
+				if (!nolock)
+					KERNEL_PROC_LOCK(p);
 				error = (*callp->sy_call)(p, params, rval);
-			KERNEL_PROC_UNLOCK(p);
+				if (!nolock)
+					KERNEL_PROC_UNLOCK(p);
+			}
 			switch (error) {
 			case 0:
 				frame->fixreg[0] = error;
