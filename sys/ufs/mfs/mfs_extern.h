@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.14 2007/12/04 19:32:13 otto Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.15 2008/05/03 14:41:29 thib Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@ int mfs_open(void *);
 int mfs_ioctl(void *);
 int mfs_strategy(void *);
 void mfs_doio(struct mfsnode *, struct buf *);
-int mfs_bmap(void *);
 int mfs_close(void *);
 int mfs_inactive(void *);
 int mfs_reclaim(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.27 2008/04/24 17:39:45 thib Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.28 2008/05/03 14:41:29 thib Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, fifo_reclaim },		/* reclaim */
 	{ &vop_lock_desc, vop_generic_lock },		/* lock */
 	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
-	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
+	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
 	{ &vop_strategy_desc, fifo_badop },		/* strategy */
 	{ &vop_print_desc, fifo_print },		/* print */
 	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
@@ -338,20 +338,6 @@ fifo_inactive(void *v)
 	return (0);
 }
 
-/*
- * This is a noop, simply returning what one has been given.
- */
-int
-fifo_bmap(void *v)
-{
-	struct vop_bmap_args *ap = v;
-
-	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ap->a_vp;
-	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
-	return (0);
-}
 
 /*
  * Device close routine

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.47 2008/04/14 10:15:50 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.48 2008/05/03 14:41:29 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, nullop },			/* reclaim */
 	{ &vop_lock_desc, vop_generic_lock },		/* lock */
 	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
-	{ &vop_bmap_desc, spec_bmap },			/* bmap */
+	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, spec_print },		/* print */
 	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
@@ -478,24 +478,6 @@ spec_strategy(void *v)
 		buf_start(bp);
 
 	(*bdevsw[maj].d_strategy)(bp);
-	return (0);
-}
-
-/*
- * This is a noop, simply returning what one has been given.
- */
-int
-spec_bmap(void *v)
-{
-	struct vop_bmap_args *ap = v;
-
-	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ap->a_vp;
-	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
-	if (ap->a_runp != NULL)
-		*ap->a_runp = 0;
-	
 	return (0);
 }
 

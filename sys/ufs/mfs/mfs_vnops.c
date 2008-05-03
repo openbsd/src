@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.33 2008/04/24 17:39:45 thib Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.34 2008/05/03 14:41:29 thib Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, mfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, vop_generic_lock },		/* lock */
 	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
-	{ &vop_bmap_desc, mfs_bmap },			/* bmap */
+	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
 	{ &vop_strategy_desc, mfs_strategy },		/* strategy */
 	{ &vop_print_desc, mfs_print },			/* print */
 	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
@@ -185,24 +185,6 @@ mfs_doio(struct mfsnode *mfsp, struct buf *bp)
 	s = splbio();
 	biodone(bp);
 	splx(s);
-}
-
-/*
- * This is a noop, simply returning what one has been given.
- */
-int
-mfs_bmap(void *v)
-{
-	struct vop_bmap_args *ap = v;
-
-	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ap->a_vp;
-	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
-	if (ap->a_runp != NULL)
-		*ap->a_runp = 0;
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.36 2007/12/27 13:59:12 thib Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.37 2008/05/03 14:41:29 thib Exp $  */
 
 /*
  * Portions of this code are:
@@ -116,6 +116,21 @@ vop_generic_revoke(void *v)
 	}
 
 	vgonel(vp, p);
+
+	return (0);
+}
+
+int
+vop_generic_bmap(void *v)
+{
+	struct vop_bmap_args *ap = v;
+
+	if (ap->a_vpp)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp)
+		*ap->a_runp = 0;
 
 	return (0);
 }

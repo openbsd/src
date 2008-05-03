@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.24 2008/04/14 10:15:50 thib Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.25 2008/05/03 14:41:29 thib Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ int	spec_poll(void *);
 int	spec_kqfilter(void *);
 int	spec_fsync(void *);
 int	spec_inactive(void *);
-int	spec_bmap(void *);
 int	spec_strategy(void *);
 int	spec_print(void *);
 int	spec_pathconf(void *);
