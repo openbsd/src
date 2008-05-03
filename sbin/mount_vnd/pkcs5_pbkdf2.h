@@ -42,6 +42,5 @@
 __BEGIN_DECLS
 int	pkcs5_pbkdf2(u_int8_t **, int, const u_int8_t *, int,
 		     const u_int8_t *, int, int, int);
-int	pkcs5_pbkdf2_calibrate(int, int);
 __END_DECLS
 #endif
