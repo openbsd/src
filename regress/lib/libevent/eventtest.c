@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.11 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.12 2008/05/04 21:14:32 brad Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
@@ -29,19 +29,24 @@
  */
 
 #include <sys/types.h>
+#include <sys/tree.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
-#include <sys/timeout.h>
+#include <unistd.h>
+#include <netdb.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
 
 #include <event.h>
+
+#include "event-internal.h"
 
 static int pair[2];
 static int test_ok;
@@ -444,6 +449,56 @@ test_immediatesignal(void)
 }
 
 void
+test_signal_dealloc(void)
+{
+	/* make sure that signal_event is event_del'ed and pipe closed */
+	struct event ev;
+	struct event_base *base = event_init();
+
+	printf("Signal dealloc: ");
+	signal_set(&ev, SIGUSR1, signal_cb, &ev);
+	signal_add(&ev, NULL);
+	signal_del(&ev);
+	event_base_free(base);
+	errno = EINTR;
+	if (base->sig.ev_signal_added) {
+		printf("ev_signal not removed (evsignal_dealloc needed) ");
+		test_ok = 0;
+	} else if (close(base->sig.ev_signal_pair[0]) != -1 ||
+	    errno != EBADF) {
+		/* fd must be closed, so second close gives -1, EBADF */
+		printf("signal pipe still open (evsignal_dealloc needed) ");
+		test_ok = 0;
+	} else {
+		test_ok = 1;
+	}
+	cleanup_test();
+}
+
+void
+test_signal_pipeloss(void)
+{
+	/* make sure that the base1 pipe is closed correctly. */
+	struct event_base *base1, *base2;
+	int pipe1;
+
+	printf("Signal pipeloss: ");
+	base1 = event_init();
+	pipe1 = base1->sig.ev_signal_pair[0];
+	base2 = event_init();
+	event_base_free(base2);
+	event_base_free(base1);
+	if (close(pipe1) != -1 || errno!=EBADF) {
+		/* fd must be closed, so second close gives -1, EBADF */
+		printf("signal pipe not closed. ");
+		test_ok = 0;
+	} else {
+		test_ok = 1;
+	}
+	cleanup_test();
+}
+
+void
 test_loopexit(void)
 {
 	struct timeval tv, tv_start, tv_end;
@@ -476,17 +531,72 @@ test_loopexit(void)
 void
 test_evbuffer(void) {
 	struct evbuffer *evb;
-	setup_test("Evbuffer: ");
 
 	evb = evbuffer_new();
+	setup_test("Evbuffer: ");
 
 	evbuffer_add_printf(evb, "%s/%d", "hello", 1);
 
 	if (EVBUFFER_LENGTH(evb) == 7 &&
-	    strcmp(EVBUFFER_DATA(evb), "hello/1") == 0)
+	    strcmp((char*)EVBUFFER_DATA(evb), "hello/1") == 0)
 	    test_ok = 1;
 	
 	cleanup_test();
+}
+
+void
+test_evbuffer_find(void)
+{
+	u_char* p;
+	char* test1 = "1234567890\r\n";
+	char* test2 = "1234567890\r";
+#define EVBUFFER_INITIAL_LENGTH 256
+	char test3[EVBUFFER_INITIAL_LENGTH];
+	unsigned int i;
+	struct evbuffer * buf = evbuffer_new();
+
+	/* make sure evbuffer_find doesn't match past the end of the buffer */
+	fprintf(stdout, "Testing evbuffer_find 1: ");
+	evbuffer_add(buf, (u_char*)test1, strlen(test1));
+	evbuffer_drain(buf, strlen(test1));	  
+	evbuffer_add(buf, (u_char*)test2, strlen(test2));
+	p = evbuffer_find(buf, (u_char*)"\r\n", 2);
+	if (p == NULL) {
+		fprintf(stdout, "OK\n");
+	} else {
+		fprintf(stdout, "FAILED\n");
+		exit(1);
+	}
+
+	/*
+	 * drain the buffer and do another find; in r309 this would
+	 * read past the allocated buffer causing a valgrind error.
+	 */
+	fprintf(stdout, "Testing evbuffer_find 2: ");
+	evbuffer_drain(buf, strlen(test2));
+	for (i = 0; i < EVBUFFER_INITIAL_LENGTH; ++i)
+		test3[i] = 'a';
+	test3[EVBUFFER_INITIAL_LENGTH - 1] = 'x';
+	evbuffer_add(buf, (u_char *)test3, EVBUFFER_INITIAL_LENGTH);
+	p = evbuffer_find(buf, (u_char *)"xy", 2);
+	if (p == NULL) {
+		printf("OK\n");
+	} else {
+		fprintf(stdout, "FAILED\n");
+		exit(1);
+	}
+
+	/* simple test for match at end of allocated buffer */
+	fprintf(stdout, "Testing evbuffer_find 3: ");
+	p = evbuffer_find(buf, (u_char *)"ax", 2);
+	if (p != NULL && strncmp((char*)p, "ax", 2) == 0) {
+		printf("OK\n");
+	} else {
+		fprintf(stdout, "FAILED\n");
+		exit(1);
+	}
+
+	evbuffer_free(buf);
 }
 
 void
@@ -701,6 +811,11 @@ main (int argc, char **argv)
 	/* Initalize the event library */
 	event_base = event_init();
 
+	test_evbuffer();
+	test_evbuffer_find();
+	
+	test_bufferevent();
+
 	test_simpleread();
 
 	test_simplewrite();
@@ -714,14 +829,9 @@ main (int argc, char **argv)
 	test_simpletimeout();
 
 	test_simplesignal();
-
 	test_immediatesignal();
 
 	test_loopexit();
-
-	test_evbuffer();
-
-	test_bufferevent();
 
 	test_priorities(1);
 	test_priorities(2);
@@ -730,6 +840,9 @@ main (int argc, char **argv)
 	test_multiple_events_for_same_fd();
 
 	test_want_only_once();
+
+	test_signal_dealloc();
+	test_signal_pipeloss();
 
 	return (0);
 }
