@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2007/05/28 21:02:49 thib Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2008/05/04 21:18:00 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*-
@@ -103,10 +103,6 @@
 #ifndef MSGBUFSIZE
 #define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
-
-/* pages to bytes */
-#define	btoc(x)		(((x) + PAGE_MASK) >> PAGE_SHIFT)
-#define	ctob(x)		((x) << PAGE_SHIFT)
 
 /* pages to disk blocks */
 #define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
