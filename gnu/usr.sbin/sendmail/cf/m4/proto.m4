@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.730 2007/02/01 18:50:03 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.734 2008/01/24 23:42:01 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
@@ -1956,7 +1956,7 @@ R<MX><$+><:$*<TEMP>:><$*>	$#error $@ 4.1.2 $: "450 MX lookup failure for "$1
 # Recursively run badmx check on each mx.
 R<MX><$*><:$+:$*><:$*>		<MX><$1><:$3><: $4 $(badmx $2 $):>
 # See if any of them fail.
-R<MX><$*><$*><$*<BADMX>:$*>	$#error $@ 5.1.2 $:"550 Illegal MX record for recipient host "$1
+R<MX><$*><$*><$*<BADMX>:$*>	$#error $@ 5.1.2 $:"550 Illegal MX record for host "$1
 # Reverse the mxlists so we can use the same argument order again.
 R<MX><$*><$*><$*>		$:<MX><$1><$3><$2>
 R<MX><$*><:$+:$*><:$*>		<MX><$1><:$3><:$4 $(dnsA $2 $) :>
@@ -1965,7 +1965,7 @@ R<MX><$*><:$+:$*><:$*>		<MX><$1><:$3><:$4 $(dnsA $2 $) :>
 R<MX><$*><$*><$*>		$:<MX><$1><$3><$2>
 R<MX><$*><:$+:$*><:$*>		<MX><$1><:$3><:$4 $(BadMXIP $2 $) :>
 
-R<MX><$*><$*><$*<BADMXIP>:$*>	$#error $@ 5.1.2 $:"550 Invalid MX record for recipient host "$1',
+R<MX><$*><$*><$*<BADMXIP>:$*>	$#error $@ 5.1.2 $:"550 Invalid MX record for host "$1',
 `dnl')
 
 
@@ -2686,9 +2686,9 @@ dnl MAIL: called from check_mail
 dnl STARTTLS: called from smtp() after STARTTLS has been accepted
 Stls_client
 ifdef(`_LOCAL_TLS_CLIENT_', `dnl
-R$*			$: $1 $| $>"Local_tls_client" $1
-R$* $| $#$*		$#$2
-R$* $| $*		$: $1', `dnl')
+R$*			$: $1 <?> $>"Local_tls_client" $1
+R$* <?> $#$*		$#$2
+R$* <?> $*		$: $1', `dnl')
 ifdef(`_ACCESS_TABLE_', `dnl
 dnl store name of other side
 R$*		$: $(macro {TLS_Name} $@ $&{server_name} $) $1
@@ -2962,9 +2962,9 @@ ifdef(`_ATMPF_', `dnl tempfail?
 R<$* _ATMPF_>	$#error $@ 4.3.0 $: "451 Temporary system failure. Please try again later."', `dnl')
 dnl use the generic routine (for now)
 R<0>		$@ OK		no limit
-R<$+>		$: <$1> $| $(arith l $@ $&{client_rate} $@ $1 $)
+R<$+>		$: <$1> $| $(arith l $@ $1 $@ $&{client_rate} $)
 dnl log this? Connection rate $&{client_rate} exceeds limit $1.
-R<$+> $| FALSE	$#error $@ 4.3.2 $: _RATE_CONTROL_REPLY Connection rate limit exceeded.
+R<$+> $| TRUE	$#error $@ 4.3.2 $: _RATE_CONTROL_REPLY Connection rate limit exceeded.
 ')')
 
 ifdef(`_CONN_CONTROL_',`dnl
@@ -2984,9 +2984,9 @@ ifdef(`_ATMPF_', `dnl tempfail?
 R<$* _ATMPF_>	$#error $@ 4.3.0 $: "451 Temporary system failure. Please try again later."', `dnl')
 dnl use the generic routine (for now)
 R<0>		$@ OK		no limit
-R<$+>		$: <$1> $| $(arith l $@ $&{client_connections} $@ $1 $)
+R<$+>		$: <$1> $| $(arith l $@ $1 $@ $&{client_connections} $)
 dnl log this: Open connections $&{client_connections} exceeds limit $1.
-R<$+> $| FALSE	$#error $@ 4.3.2 $: _CONN_CONTROL_REPLY Too many open connections.
+R<$+> $| TRUE	$#error $@ 4.3.2 $: _CONN_CONTROL_REPLY Too many open connections.
 ')')
 
 undivert(9)dnl LOCAL_RULESETS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2002, 2004 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002, 2004, 2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1992 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -20,7 +20,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.177 2004/08/03 23:57:24 ca Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.179 2008/04/14 02:06:16 ca Exp $")
 
 
 #include <sys/types.h>
@@ -42,7 +42,7 @@ uid_t	RealUid;
 gid_t	RealGid;
 char	*RealUserName;
 uid_t	RunAsUid;
-uid_t	RunAsGid;
+gid_t	RunAsGid;
 char	*RunAsUserName;
 int	Verbose = 2;
 bool	DontInitGroups = false;
@@ -381,7 +381,7 @@ main(argc, argv)
 					     "%.*s%c%.*s\n",
 					     (int) db_key.size,
 					     (char *) db_key.data,
-					     sep ? sep : '\t',
+					     (sep != '\0') ? sep : '\t',
 					     (int) db_val.size,
 					     (char *)db_val.data);
 

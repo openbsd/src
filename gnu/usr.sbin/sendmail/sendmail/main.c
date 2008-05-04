@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2006, 2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -26,7 +26,7 @@ SM_UNUSED(static char copyright[]) =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* ! lint */
 
-SM_RCSID("@(#)$Sendmail: main.c,v 8.962 2006/12/19 19:47:37 ca Exp $")
+SM_RCSID("@(#)$Sendmail: main.c,v 8.967 2008/03/31 16:32:13 ca Exp $")
 
 
 #if NETINET || NETINET6
@@ -302,6 +302,9 @@ main(argc, argv, envp)
 	ExitStat = EX_OK;
 
 	SubmitMode = SUBMIT_UNKNOWN;
+#if _FFR_LOCAL_DAEMON
+	LocalDaemon = false;
+#endif /* _FFR_LOCAL_DAEMON */
 #if XDEBUG
 	checkfd012("after openlog");
 #endif /* XDEBUG */
@@ -400,6 +403,13 @@ main(argc, argv, envp)
 			  case MD_ARPAFTP:
 				OpMode = j;
 				break;
+
+#if _FFR_LOCAL_DAEMON
+			  case MD_LOCAL:
+				OpMode = MD_DAEMON;
+				LocalDaemon = true;
+				break;
+#endif /* _FFR_LOCAL_DAEMON */
 
 			  case MD_FREEZE:
 				(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
@@ -2362,7 +2372,33 @@ main(argc, argv, envp)
 
 		if (QueueIntvl > 0)
 		{
-			(void) runqueue(true, false, queuepersistent, true);
+#if _FFR_RUNPQG
+			if (qgrp != NOQGRP)
+			{
+				int rwgflags = RWG_NONE;
+
+				/*
+				**  To run a specific queue group mark it to
+				**  be run, select the work group it's in and
+				**  increment the work counter.
+				*/
+
+				for (i = 0; i < NumQueue && Queue[i] != NULL;
+				     i++)
+					Queue[i]->qg_nextrun = (time_t) -1;
+				Queue[qgrp]->qg_nextrun = 0;
+				if (Verbose)
+					rwgflags |= RWG_VERBOSE;
+				if (queuepersistent)
+					rwgflags |= RWG_PERSISTENT;
+				rwgflags |= RWG_FORCE;
+				(void) run_work_group(Queue[qgrp]->qg_wgrp,
+						      rwgflags);
+			}
+			else
+#endif /* _FFR_RUNPQG */
+				(void) runqueue(true, false, queuepersistent,
+						true);
 
 			/*
 			**  If queuepersistent but not in daemon mode then
@@ -2517,12 +2553,9 @@ main(argc, argv, envp)
 		macdefine(&BlankEnvelope.e_macro, A_TEMP, '_', authinfo);
 
 		/* at this point we are in a child: reset state */
-		{
-			SM_RPOOL_T *opool = MainEnvelope.e_rpool;
-			(void) newenvelope(&MainEnvelope, &MainEnvelope,
-					   sm_rpool_new_x(NULL));
-			sm_rpool_free(opool);
-		}
+		sm_rpool_free(MainEnvelope.e_rpool);
+		(void) newenvelope(&MainEnvelope, &MainEnvelope,
+				   sm_rpool_new_x(NULL));
 	}
 
 	if (LogLevel > 9)

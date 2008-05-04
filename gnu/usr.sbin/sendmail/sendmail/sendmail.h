@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -52,7 +52,7 @@
 
 #ifdef _DEFINE
 # ifndef lint
-SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1042 2007/02/27 22:21:13 ca Exp $";
+SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1059 2008/02/15 23:19:58 ca Exp $";
 # endif /* ! lint */
 #endif /* _DEFINE */
 
@@ -324,7 +324,8 @@ typedef struct address ADDRESS;
 				 (s) == QS_RETRY)
 #define QS_IS_ATTEMPTED(s)	((s) == QS_QUEUEUP || \
 				 (s) == QS_RETRY || \
-				 (s) == QS_SENT)
+				 (s) == QS_SENT || \
+				 (s) == QS_DISCARDED)
 #define QS_IS_DEAD(s)		((s) >= QS_DONTSEND)
 
 
@@ -728,6 +729,7 @@ MCI
 #if _FFR_IGNORE_EXT_ON_HELO
 # define MCIF_HELO	0x00800000	/* we used HELO: ignore extensions */
 #endif /* _FFR_IGNORE_EXT_ON_HELO */
+#define MCIF_INLONGLINE 0x01000000	/* in the middle of a long line */
 #define MCIF_ONLY_EHLO	0x10000000	/* use only EHLO in smtpinit */
 
 /* states */
@@ -824,7 +826,7 @@ extern struct hdrinfo	HdrInfo[];
 /* functions */
 extern void	addheader __P((char *, char *, int, ENVELOPE *, bool));
 extern unsigned long	chompheader __P((char *, int, HDR **, ENVELOPE *));
-extern bool	commaize __P((HDR *, char *, bool, MCI *, ENVELOPE *));
+extern bool	commaize __P((HDR *, char *, bool, MCI *, ENVELOPE *, int));
 extern HDR	*copyheader __P((HDR *, SM_RPOOL_T *));
 extern void	eatheader __P((ENVELOPE *, bool, bool));
 extern char	*hvalue __P((char *, HDR *));
@@ -894,6 +896,9 @@ struct envelope
 	char		*e_bodytype;	/* type of message body */
 	SM_FILE_T	*e_dfp;		/* data file */
 	char		*e_id;		/* code for this entry in queue */
+#if _FFR_SESSID
+	char		*e_sessid;	/* session ID for this envelope */
+#endif /* _FFR_SESSID */
 	int		e_qgrp;		/* queue group (index into queues) */
 	int		e_qdir;		/* index into queue directories */
 	int		e_dfqgrp;	/* data file queue group index */
@@ -1546,6 +1551,7 @@ extern void	stabapply __P((void (*)(STAB *, int), int));
 #define MD_ARPAFTP	'a'		/* obsolete ARPANET mode (Grey Book) */
 #define MD_DAEMON	'd'		/* run as a daemon */
 #define MD_FGDAEMON	'D'		/* run daemon in foreground */
+#define MD_LOCAL	'l'		/* like daemon, but localhost only */
 #define MD_VERIFY	'v'		/* verify: don't collect or deliver */
 #define MD_TEST		't'		/* test mode: resolve addrs only */
 #define MD_INITALIAS	'i'		/* initialize alias database */
@@ -1555,6 +1561,12 @@ extern void	stabapply __P((void (*)(STAB *, int), int));
 #define MD_HOSTSTAT	'h'		/* print persistent host stat info */
 #define MD_PURGESTAT	'H'		/* purge persistent host stat info */
 #define MD_QUEUERUN	'q'		/* queue run */
+
+#if _FFR_LOCAL_DAEMON
+EXTERN bool	LocalDaemon;
+#else /* _FFR_LOCAL_DAEMON */
+# define LocalDaemon	false
+#endif /* _FFR_LOCAL_DAEMON */
 
 /* Note: see also include/sendmail/pathnames.h: GET_CLIENT_CF */
 
@@ -1724,6 +1736,17 @@ struct milter
 	mi_int32	mf_mta_actions;
 #endif /* _FFR_MILTER_CHECK */
 };
+
+struct milters
+{
+	mi_int32	mis_flags;	/* filter flags */
+};
+typedef struct milters	milters_T;
+
+#define MIS_FL_NONE	0x00000000	/* no requirements... */
+#define MIS_FL_DEL_RCPT	0x00000001	/* can delete rcpt */
+#define MIS_FL_REJ_RCPT	0x00000002	/* can reject rcpt */
+
 
 /* MTA flags */
 # define SMF_REJECT		'R'	/* Reject connection on filter fail */
@@ -2082,10 +2105,7 @@ extern unsigned char	tTdvect[100];	/* trace vector */
 **  The "no queue id" queue id for sm_syslog
 */
 
-#define NOQID		"*~*"
-
-/* use id or NOQID (to avoid NOQUEUE in logfile) */
-#define E_ID(id)	((id) == NULL ? NOQID : (id))
+#define NOQID		""
 
 #define CURHOSTNAME	(CurHostName == NULL ? "local" : CurHostName)
 
@@ -2161,6 +2181,9 @@ extern unsigned char	tTdvect[100];	/* trace vector */
 **  Global variables.
 */
 
+#if _FFR_ADDR_TYPE_MODES
+EXTERN bool	AddrTypeModes;	/* addr_type: extra "mode" information */
+#endif /* _FFR_ADDR_TYPE_MODES */
 EXTERN bool	AllowBogusHELO;	/* allow syntax errors on HELO command */
 EXTERN bool	CheckAliases;	/* parse addresses during newaliases */
 #if _FFR_QUEUE_RUN_PARANOIA
@@ -2213,6 +2236,10 @@ EXTERN char	InetMode;		/* default network for daemon mode */
 EXTERN char	OpMode;		/* operation mode, see below */
 EXTERN char	SpaceSub;	/* substitution for <lwsp> */
 EXTERN int	BadRcptThrottle; /* Throttle rejected RCPTs per SMTP message */
+#if _FFR_BADRCPT_SHUTDOWN
+EXTERN int	BadRcptShutdown; /* Shutdown connection for rejected RCPTs */
+EXTERN int	BadRcptShutdownGood; /* above even when there are good RCPTs */
+#endif /* _FFR_BADRCPT_SHUTDOWN */
 EXTERN int	CheckpointInterval;	/* queue file checkpoint interval */
 EXTERN int	ConfigLevel;	/* config file level */
 EXTERN int	ConnRateThrottle;	/* throttle for SMTP connection rate */
@@ -2435,8 +2462,7 @@ extern int	opencontrolsocket __P((void));
 extern void	milter_config __P((char *, struct milter **, int));
 extern void	milter_setup __P((char *));
 extern void	milter_set_option __P((char *, char *, bool));
-extern bool	milter_can_delrcpts __P((void));
-extern bool	milter_init __P((ENVELOPE *, char *));
+extern bool	milter_init __P((ENVELOPE *, char *, milters_T *));
 extern void	milter_quit __P((ENVELOPE *));
 extern void	milter_abort __P((ENVELOPE *));
 extern char	*milter_connect __P((char *, SOCKADDR, ENVELOPE *, char *));
@@ -2575,6 +2601,11 @@ extern void	setoption __P((int, char *, bool, bool, ENVELOPE *));
 extern sigfunc_t	setsignal __P((int, sigfunc_t));
 extern void	sm_setuserenv __P((const char *, const char *));
 extern void	settime __P((ENVELOPE *));
+#if STARTTLS
+extern void	set_tls_rd_tmo __P((int));
+#else /* STARTTLS */
+#define set_tls_rd_tmo(rd_tmo)
+#endif /* STARTTLS */
 extern char	*sfgets __P((char *, int, SM_FILE_T *, time_t, char *));
 extern char	*shortenstring __P((const char *, size_t));
 extern char	*shorten_hostname __P((char []));

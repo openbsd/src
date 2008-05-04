@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.400 2006/12/21 00:24:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.403 2008/02/08 02:27:35 ca Exp $")
 
 #include <sm/sendmail.h>
 #include "map.h"
@@ -217,7 +217,7 @@ parseaddr(addr, a, flags, delim, delimptr, e, isrcpt)
 		if (e->e_sendmode == SM_DEFER)
 			msg = "Deferring message until queue run";
 		if (tTd(20, 1))
-			sm_dprintf("parseaddr: queuing message\n");
+			sm_dprintf("parseaddr: queueing message\n");
 		message(msg);
 		if (e->e_message == NULL && e->e_sendmode != SM_DEFER)
 			e->e_message = sm_rpool_strdup_x(e->e_rpool, msg);
@@ -1460,6 +1460,7 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 			size_t trsize;
 			char *replac;
 			int endtoken;
+			bool external;
 			STAB *map;
 			char *mapname;
 			char **key_rvp;
@@ -1575,6 +1576,7 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 				true);
 			argvect[0] = cbuf;
 			replac = map_lookup(map, cbuf, argvect, &rstat, e);
+			external = replac != NULL;
 
 			/* if no replacement, use default */
 			if (replac == NULL && default_rvp != NULL)
@@ -1599,7 +1601,8 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 			{
 				/* scan the new replacement */
 				xpvp = prescan(replac, '\0', pvpbuf,
-					       sizeof(pvpbuf), NULL, NULL,
+					       sizeof(pvpbuf), NULL,
+					       external ? NULL : IntTokenTab,
 					       false);
 				if (xpvp == NULL)
 				{
@@ -2263,7 +2266,7 @@ cataddr(pvp, evp, buf, sz, spacesub, external)
 	{
 		char *q;
 
-		natomtok = (ExtTokenTab[**pvp & 0xff] == ATM);
+		natomtok = (IntTokenTab[**pvp & 0xff] == ATM);
 		if (oatomtok && natomtok)
 		{
 			*p++ = spacesub;

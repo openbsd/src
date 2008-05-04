@@ -1,4 +1,4 @@
-/*	$OpenBSD: tailq.h,v 1.1 2007/02/04 13:17:35 millert Exp $	*/
+/*	$OpenBSD: tailq.h,v 1.2 2008/05/04 18:34:04 millert Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -36,8 +36,12 @@
 #define	SM_TAILQ_H_
 
 /*
+ * $Sendmail: tailq.h,v 1.2 2007/06/29 23:09:57 ca Exp $
+ *
  * This file is a modified copy of queue.h from a BSD system:
  * we only need tail queues here.
+ * We do not use queue.h directly because there is a conflict with
+ * some versions of that file on some OSs.
  *
  * A tail queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly

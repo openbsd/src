@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sm/sem.h>
 
-SM_RCSID("@(#)$Sendmail: queue.c,v 8.972 2007/03/29 22:55:17 ca Exp $")
+SM_RCSID("@(#)$Sendmail: queue.c,v 8.977 2008/02/15 23:19:58 ca Exp $")
 
 #include <dirent.h>
 
@@ -427,7 +427,7 @@ queueup(e, announce, msync)
 						break;
 					if (LogLevel > 0 && (i % 32) == 0)
 						sm_syslog(LOG_ALERT, e->e_id,
-							  "queueup: cannot create %s, uid=%d: %s",
+							  "queueup: cannot create %s, euid=%d: %s",
 							  tf, (int) geteuid(),
 							  sm_errstring(errno));
 				}
@@ -845,8 +845,8 @@ queueup(e, announce, msync)
 
 			if (bitset(H_FROM, h->h_flags))
 				oldstyle = false;
-
-			commaize(h, h->h_value, oldstyle, &mcibuf, e);
+			commaize(h, h->h_value, oldstyle, &mcibuf, e,
+				 PXLF_HEADER);
 
 			TrafficLogFile = savetrace;
 		}
@@ -2146,6 +2146,14 @@ run_work_group(wgrp, flags)
 		*/
 
 		maxrunners = Queue[qgrp]->qg_maxqrun;
+
+		/*
+		**  If no runners are configured for this group but
+		**  the queue is "forced" then lets use 1 runner.
+		*/
+
+		if (maxrunners == 0 && bitset(RWG_FORCE, flags))
+			maxrunners = 1;
 
 		/* No need to have more runners then there are jobs */
 		if (maxrunners > njobs)
@@ -4506,7 +4514,7 @@ readqf(e, openonly)
 		(void) sm_io_close(qfp, SM_TIME_DEFAULT);
 		return false;
 	}
- 
+
 #if _FFR_QF_PARANOIA
 	/* Check to make sure key fields were read */
 	if (e->e_from.q_mailer == NULL)
@@ -6588,8 +6596,8 @@ init_sem(owner)
 	if (SemId < 0)
 	{
 		sm_syslog(LOG_ERR, NOQID,
-			"func=init_sem, sem_key=%ld, sm_sem_start=%d",
-			(long) SemKey, SemId);
+			"func=init_sem, sem_key=%ld, sm_sem_start=%d, error=%s",
+			(long) SemKey, SemId, sm_errstring(-SemId));
 		return;
 	}
 #endif /* SM_CONF_SEM */

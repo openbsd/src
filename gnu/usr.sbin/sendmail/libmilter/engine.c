@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2004, 2006 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2004, 2006-2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: engine.c,v 8.157 2007/03/26 18:10:04 ca Exp $")
+SM_RCSID("@(#)$Sendmail: engine.c,v 8.162 2008/02/27 01:34:14 ca Exp $")
 
 #include "libmilter.h"
 
@@ -855,6 +855,7 @@ st_optionneg(g)
 			;
 
 	if (g->a_ctx->ctx_smfi != NULL &&
+	    g->a_ctx->ctx_smfi->xxfi_version > 4 &&
 	    (fi_negotiate = g->a_ctx->ctx_smfi->xxfi_negotiate) != NULL)
 	{
 		int r;
@@ -1000,6 +1001,7 @@ st_optionneg(g)
 			(long) ctx->ctx_id, ctx->ctx_mta_pflags, i);
 		return _SMFIS_ABORT;
 	}
+	fix_stm(ctx);
 
 	if (ctx->ctx_dbg > 3)
 		sm_dprintf("[%ld] milter_negotiate:"
@@ -1177,6 +1179,7 @@ st_data(g)
 	if (g == NULL)
 		return _SMFIS_ABORT;
 	if (g->a_ctx->ctx_smfi != NULL &&
+	    g->a_ctx->ctx_smfi->xxfi_version > 3 &&
 	    (fi_data = g->a_ctx->ctx_smfi->xxfi_data) != NULL)
 		return (*fi_data)(g->a_ctx);
 	return SMFIS_CONTINUE;
@@ -1310,6 +1313,7 @@ st_unknown(g)
 	if (g == NULL)
 		return _SMFIS_ABORT;
 	if (g->a_ctx->ctx_smfi != NULL &&
+	    g->a_ctx->ctx_smfi->xxfi_version > 2 &&
 	    (fi_unknown = g->a_ctx->ctx_smfi->xxfi_unknown) != NULL)
 		return (*fi_unknown)(g->a_ctx, (const char *) g->a_buf);
 	return SMFIS_CONTINUE;
@@ -1722,9 +1726,9 @@ mi_rd_socket_ready (sd)
 	int n;
 	int nerr = 0;
 #if SM_CONF_POLL
-		struct pollfd pfd;
+	struct pollfd pfd;
 #else /* SM_CONF_POLL */
-		fd_set	rd_set, exc_set;
+	fd_set	rd_set, exc_set;
 #endif /* SM_CONF_POLL */
 
 	do

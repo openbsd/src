@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.1128 2007/04/03 21:32:29 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.1141 2008/04/14 02:09:35 ca Exp $")
 
 #include <sm/sendmail.h>
 #include <sendmail/pathnames.h>
@@ -5325,17 +5325,8 @@ sm_syslog(level, id, fmt, va_alist)
 
 	save_errno = errno;
 	if (id == NULL)
-	{
 		id = "NOQUEUE";
-		idlen = strlen(id) + SyslogPrefixLen;
-	}
-	else if (strcmp(id, NOQID) == 0)
-	{
-		id = "";
-		idlen = SyslogPrefixLen;
-	}
-	else
-		idlen = strlen(id) + SyslogPrefixLen;
+	idlen = strlen(id) + SyslogPrefixLen;
 
 	buf = buf0;
 	bufsize = sizeof(buf0);
@@ -6033,11 +6024,19 @@ char	*OsCompileOptions[] =
 
 char	*FFRCompileOptions[] =
 {
+#if _FFR_ADDR_TYPE_MODES
+	/* more info in {addr_type}, requires m4 changes! */
+	"_FFR_ADDR_TYPE_MODES",
+#endif /* _FFR_ADDR_TYPE_MODES */
 #if _FFR_ALLOW_SASLINFO
 	/* DefaultAuthInfo can be specified by user. */
 	/* DefaultAuthInfo doesn't really work in 8.13 anymore. */
 	"_FFR_ALLOW_SASLINFO",
 #endif /* _FFR_ALLOW_SASLINFO */
+#if _FFR_BADRCPT_SHUTDOWN
+	/* shut down connection (421) if there are too many bad RCPTs */
+	"_FFR_BADRCPT_SHUTDOWN",
+#endif /* _FFR_BADRCPT_SHUTDOWN */
 #if _FFR_BESTMX_BETTER_TRUNCATION
 	/* Better truncation of list of MX records for dns map. */
 	"_FFR_BESTMX_BETTER_TRUNCATION",
@@ -6103,6 +6102,10 @@ char	*FFRCompileOptions[] =
 
 	"_FFR_DPO_CS",
 #endif /* _FFR_DPO_CS */
+#if _FFR_DPRINTF_MAP
+	/* dprintf map for logging */
+	"_FFR_DPRINTF_MAP",
+#endif /* _FFR_DPRINTF_MAP */
 #if _FFR_DROP_TRUSTUSER_WARNING
 	/*
 	**  Don't issue this warning:
@@ -6174,6 +6177,10 @@ char	*FFRCompileOptions[] =
 	/* Ignore extensions offered in response to HELO */
 	"_FFR_IGNORE_EXT_ON_HELO",
 #endif /* _FFR_IGNORE_EXT_ON_HELO */
+#if _FFR_LOCAL_DAEMON
+	/* Local daemon mode (-bl) which only accepts loopback connections */
+	"_FFR_LOCAL_DAEMON",
+#endif /* _FFR_LOCAL_DAEMON */
 #if _FFR_MAXDATASIZE
 	/*
 	**  It is possible that a header is larger than MILTER_CHUNK_SIZE,
@@ -6231,6 +6238,10 @@ char	*FFRCompileOptions[] =
 	/* Old mime7to8 code, the new is broken for at least one example. */
 	"_FFR_MIME7TO8_OLD",
 #endif /* _FFR_MAX_SLEEP_TIME */
+#if _FFR_MORE_MACROS
+	/* allow more long macro names ("unprintable" characters). */
+	"_FFR_MORE_MACROS",
+#endif /* _FFR_MORE_MACROS */
 #if _FFR_MSG_ACCEPT
 	/* allow to override "Message accepted for delivery" */
 	"_FFR_MSG_ACCEPT",
@@ -6244,6 +6255,10 @@ char	*FFRCompileOptions[] =
 	/* Disable PIPELINING, delay client if used. */
 	"_FFR_NO_PIPE",
 #endif /* _FFR_NO_PIPE */
+#if _FFR_LDAP_NETWORK_TIMEOUT
+	/* set LDAP_OPT_NETWORK_TIMEOUT if available (-c) */
+	"_FFR_LDAP_NETWORK_TIMEOUT",
+#endif /* _FFR_LDAP_NETWORK_TIMEOUT */
 #if _FFR_LOG_NTRIES
 	/* log ntries=, from Nik Clayton of FreeBSD */
 	"_FFR_LOG_NTRIES",
@@ -6289,6 +6304,18 @@ char	*FFRCompileOptions[] =
 	/* Random shuffle for queue sorting. */
 	"_FFR_RHS",
 #endif /* _FFR_RHS */
+#if _FFR_RUNPQG
+	/*
+	**  allow -qGqueue_group -qp to work, i.e.,
+	**  restrict a persistent queue runner to a queue group.
+	*/
+
+	"_FFR_RUNPQG",
+#endif /* _FFR_RUNPQG */
+#if _FFR_SESSID
+	/* session id (for logging) */
+	"_FFR_SESSID",
+#endif /* _FFR_SESSID */
 #if _FFR_SHM_STATUS
 	/* Donated code (unused). */
 	"_FFR_SHM_STATUS",

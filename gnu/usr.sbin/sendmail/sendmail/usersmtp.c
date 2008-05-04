@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2006, 2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.469 2006/12/13 20:11:15 ca Exp $")
+SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.472 2008/01/31 18:48:29 ca Exp $")
 
 #include <sysexits.h>
 
@@ -2703,8 +2703,9 @@ smtpdata(m, mci, e, ctladdr, xstart)
 	}
 
 	/* terminate the message */
-	if (sm_io_fprintf(mci->mci_out, SM_TIME_DEFAULT, ".%s", m->m_eol) ==
-								SM_IO_EOF)
+	if (sm_io_fprintf(mci->mci_out, SM_TIME_DEFAULT, "%s.%s",
+			bitset(MCIF_INLONGLINE, mci->mci_flags) ? m->m_eol : "",
+			m->m_eol) == SM_IO_EOF)
 		goto writeerr;
 	if (TrafficLogFile != NULL)
 		(void) sm_io_fprintf(TrafficLogFile, SM_TIME_DEFAULT,
@@ -3076,6 +3077,7 @@ reply(m, mci, e, timeout, pfunc, enhstat, rtype)
 	*/
 
 	bufp = SmtpReplyBuffer;
+	set_tls_rd_tmo(timeout);
 	for (;;)
 	{
 		register char *p;

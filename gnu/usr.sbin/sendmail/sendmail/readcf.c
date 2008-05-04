@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2006, 2008 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sm/sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: readcf.c,v 8.663 2006/10/05 20:58:59 ca Exp $")
+SM_RCSID("@(#)$Sendmail: readcf.c,v 8.666 2008/02/14 17:25:14 ca Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -2245,6 +2245,16 @@ static struct optioninfo
 # define O_EIGHT_BIT_ADDR_OK	0xdf
 	{ "EightBitAddrOK",	O_EIGHT_BIT_ADDR_OK,	OI_NONE },
 #endif /* _FFR_EIGHT_BIT_ADDR_OK */
+#if _FFR_ADDR_TYPE_MODES
+# define O_ADDR_TYPE_MODES	0xe0
+	{ "AddrTypeModes",	O_ADDR_TYPE_MODES,	OI_NONE },
+#endif /* _FFR_ADDR_TYPE_MODES */
+#if _FFR_BADRCPT_SHUTDOWN
+# define O_RCPTSHUTD	0xe1
+	{ "BadRcptShutdown",		O_RCPTSHUTD,	OI_SAFE },
+# define O_RCPTSHUTDG	0xe2
+	{ "BadRcptShutdownGood",	O_RCPTSHUTDG,	OI_SAFE	},
+#endif /* _FFR_BADRCPT_SHUTDOWN */
 
 	{ NULL,				'\0',		OI_NONE	}
 };
@@ -3806,6 +3816,22 @@ setoption(opt, val, safe, sticky, e)
 		EightBitAddrOK = atobool(val);
 		break;
 #endif /* _FFR_EIGHT_BIT_ADDR_OK */
+
+#if _FFR_ADDR_TYPE_MODES
+	  case O_ADDR_TYPE_MODES:
+		AddrTypeModes = atobool(val);
+		break;
+#endif /* _FFR_ADDR_TYPE_MODES */
+
+#if _FFR_BADRCPT_SHUTDOWN
+	  case O_RCPTSHUTD:
+		BadRcptShutdown = atoi(val);
+		break;
+
+	  case O_RCPTSHUTDG:
+		BadRcptShutdownGood = atoi(val);
+		break;
+#endif /* _FFR_BADRCPT_SHUTDOWN */
 
 	  default:
 		if (tTd(37, 1))
