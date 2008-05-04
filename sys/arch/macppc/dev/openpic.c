@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.44 2008/05/03 22:44:56 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.45 2008/05/04 20:54:22 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -61,7 +61,6 @@
 int o_intrtype[ICU_LEN], o_intrmaxlvl[ICU_LEN];
 struct intrhand *o_intrhand[ICU_LEN] = { 0 };
 int o_hwirq[ICU_LEN], o_virq[ICU_LEN];
-unsigned int imen_o = 0xffffffff;
 int o_virq_max;
 
 static int fakeintr(void *);
@@ -359,11 +358,14 @@ openpic_calc_mask()
 	int irq;
 	struct intrhand *ih;
 	int i;
-	int imen_n = 0;
+
+	/* disable all openpic interrupts */
+	openpic_set_priority(0, 15);
 
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
+		int reg;
 		if (o_virq[irq] != 0) {
 			for (ih = o_intrhand[o_virq[irq]]; ih;
 			    ih = ih->ih_next) {
@@ -376,6 +378,14 @@ openpic_calc_mask()
 
 		o_intrmaxlvl[irq] = max;
 
+		/* adjust priority if it changes */
+		reg = openpic_read(OPENPIC_SRC_VECTOR(irq));
+		if (max != ((reg >> OPENPIC_PRIORITY_SHIFT) & 0xf)) {
+			openpic_write(OPENPIC_SRC_VECTOR(irq),
+				(reg & ~(0xf << OPENPIC_PRIORITY_SHIFT)) |
+				(max << OPENPIC_PRIORITY_SHIFT) );
+		}
+
 		if (max == IPL_NONE)
 			min = IPL_NONE; /* Interrupt not enabled */
 
@@ -385,15 +395,17 @@ openpic_calc_mask()
 				imask[i] &= ~(1 << o_virq[irq]);
 			for (; i <= IPL_HIGH; i++)
 				imask[i] |= (1 << o_virq[irq]);
-			imen_n |=  (1 << o_virq[irq]);
 		}
 	}
+
+	/* restore interrupts */
+	openpic_set_priority(0, 0);
+
 	for (i = IPL_NONE; i <= IPL_HIGH; i++) {
 		if (i > IPL_NONE)
 			imask[i] |= SINT_MASK;
 	}
 	imask[IPL_HIGH] = 0xffffffff;
-	imen_o = ~imen_n;
 }
 
 /*
@@ -438,6 +450,7 @@ cntlzw(int x)
 	return a;
 }
 
+void openpic_do_pending_softint(int pcpl);
 
 void
 openpic_do_pending_int()
@@ -447,69 +460,103 @@ openpic_do_pending_int()
 	int irq;
 	int pcpl;
 	int hwpend;
+	int pri, pripending;
 	int s;
 
-	if (ci->ci_iactive)
+	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_HARD)
 		return;
 
-	ci->ci_iactive = 1;
-	pcpl = splhigh();		/* Turn off all */
+	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_HARD);
 	s = ppc_intr_disable();
+	pcpl = ci->ci_cpl;
 
 	hwpend = ci->ci_ipending & ~pcpl;	/* Do now unmasked pendings */
-	imen_o &= ~hwpend;
-	openpic_enable_irq_mask(~imen_o);
 	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
-		irq = 31 - cntlzw(hwpend);
-		hwpend &= ~(1L << irq);
-		ih = o_intrhand[irq];
-		while(ih) {
-			ppc_intr_enable(1);
+		/* this still doesn't handle the interrupts in priority order */
+		for (pri = IPL_HIGH; pri >= IPL_NONE; pri--) {
+			pripending = hwpend & ~imask[pri];
+			irq = 31 - cntlzw(pripending);
+			ci->ci_ipending &= ~(1L << irq);
+			ci->ci_cpl = imask[o_intrmaxlvl[o_hwirq[irq]]];
+			openpic_enable_irq_mask(~ci->ci_cpl);
+			ih = o_intrhand[irq];
+			while(ih) {
+				ppc_intr_enable(1);
 
-			KERNEL_LOCK();
-			if ((*ih->ih_fun)(ih->ih_arg))
-				ih->ih_count.ec_count++;
-			KERNEL_UNLOCK();
+				KERNEL_LOCK();
+				if ((*ih->ih_fun)(ih->ih_arg))
+					ih->ih_count.ec_count++;
+				KERNEL_UNLOCK();
 
-			(void)ppc_intr_disable();
-			
-			ih = ih->ih_next;
+				(void)ppc_intr_disable();
+				
+				ih = ih->ih_next;
+			}
 		}
+		hwpend = ci->ci_ipending & ~pcpl;/* Catch new pendings */
+		hwpend &= HWIRQ_MASK;
 	}
+	ci->ci_cpl = pcpl | SINT_MASK;
+	openpic_enable_irq_mask(~ci->ci_cpl);
+	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_HARD);
 
-	/*out32rb(INT_ENABLE_REG, ~imen_o);*/
+	openpic_do_pending_softint(pcpl);
+
+	ppc_intr_enable(s);
+}
+
+void
+openpic_do_pending_softint(int pcpl)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT)
+		return;
+
+	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 
 	do {
 		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_CLOCK;
+			ci->ci_cpl = SINT_CLOCK|SINT_NET|SINT_TTY;
+			ppc_intr_enable(1);
 			KERNEL_LOCK();
 			softclock();
 			KERNEL_UNLOCK();
+			ppc_intr_disable();
+			continue;
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
 			int pisr;
 		       
 			ci->ci_ipending &= ~SINT_NET;
+			ci->ci_cpl = SINT_NET|SINT_TTY;
 			while ((pisr = netisr) != 0) {
 				atomic_clearbits_int(&netisr, pisr);
+				ppc_intr_enable(1);
 				KERNEL_LOCK();
 				softnet(pisr);
 				KERNEL_UNLOCK();
+				ppc_intr_disable();
 			}
+			continue;
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;
+			ci->ci_cpl = SINT_TTY;
+			ppc_intr_enable(1);
 			KERNEL_LOCK();
 			softtty();
 			KERNEL_UNLOCK();
+			ppc_intr_disable();
+			continue;
 		}
 	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
-	ci->ci_ipending &= pcpl;
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
-	ppc_intr_enable(s);
-	ci->ci_iactive = 0;
+
+	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 }
 
 u_int
@@ -648,10 +695,10 @@ ext_intr_openpic()
 		if ((pcpl & r_imen) != 0) {
 			/* Masked! Mark this as pending. */
 			ci->ci_ipending |= r_imen;
-			openpic_disable_irq(realirq);
+			openpic_enable_irq_mask(~imask[o_intrmaxlvl[realirq]]);
 			openpic_eoi(ci->ci_cpuid);
 		} else {
-			openpic_disable_irq(realirq);
+			openpic_enable_irq_mask(~imask[o_intrmaxlvl[realirq]]);
 			openpic_eoi(ci->ci_cpuid);
 			ocpl = splraise(imask[o_intrmaxlvl[realirq]]);
 
@@ -672,7 +719,7 @@ ext_intr_openpic()
 			__asm__ volatile("":::"memory"); /* don't reorder.... */
 			ci->ci_cpl = ocpl;
 			__asm__ volatile("":::"memory"); /* don't reorder.... */
-			openpic_enable_irq(realirq);
+			openpic_enable_irq_mask(~pcpl);
 		}
 
 		realirq = openpic_read_irq(ci->ci_cpuid);
@@ -733,7 +780,6 @@ openpic_init()
 
 	install_extint(ext_intr_openpic);
 }
-
 /*
  * programmer_button function to fix args to Debugger.
  * deal with any enables/disables, if necessary.

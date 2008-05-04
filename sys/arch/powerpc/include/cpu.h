@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2008/05/01 08:25:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2008/05/04 20:54:22 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -55,6 +55,8 @@ struct cpu_info {
 	volatile int ci_want_resched;
 	volatile int ci_cpl;
 	volatile int ci_iactive;
+#define		CI_IACTIVE_PROCESSING_SOFT	1
+#define		CI_IACTIVE_PROCESSING_HARD	2
 	volatile int ci_ipending;
 
 	int ci_intrdepth;
