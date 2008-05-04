@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2007/05/28 21:02:49 thib Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2008/05/04 09:57:47 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -156,11 +156,6 @@ void	delay (unsigned);
 #define	ctod(x)	((x) << (PAGE_SHIFT - DEV_BSHIFT))
 #define	dtoc(x)	((x) >> (PAGE_SHIFT - DEV_BSHIFT))
 /*#define	dtob(x)	((x) << DEV_BSHIFT)*/
-
-#define	ctob(x)	((x) << PAGE_SHIFT)
-
-/* bytes to pages */
-#define	btoc(x)	(((x) + PAGE_MASK) >> PAGE_SHIFT)
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
 	((bytes) >> DEV_BSHIFT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2008/04/29 12:47:19 jsing Exp $ */
+/*	$OpenBSD: machdep.c,v 1.59 2008/05/04 09:57:47 martin Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -863,10 +863,10 @@ dumpconf(void)
 		return;
 
 	dumpsize = ptoa(physmem);
-	if (dumpsize > btoc(dbtob(nblks - dumplo)))
-		dumpsize = btoc(dbtob(nblks - dumplo));
+	if (dumpsize > atop(round_page(dbtob(nblks - dumplo))))
+		dumpsize = atop(round_page(dbtob(nblks - dumplo)));
 	else if (dumplo == 0)
-		dumplo = nblks - btodb(ctob(physmem));
+		dumplo = nblks - btodb(ptoa(physmem));
 
 	/*
 	 * Don't dump on the first page in case the dump device includes a 

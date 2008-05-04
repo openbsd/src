@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.9 2006/03/04 19:33:21 miod Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.10 2008/05/04 09:57:47 martin Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs->sp - fsize);
-	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (vaddr_t)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||

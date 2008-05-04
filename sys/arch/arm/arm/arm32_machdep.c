@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.28 2008/03/23 17:05:41 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.29 2008/05/04 09:57:46 martin Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ cpu_startup()
 	 */
 
 	/* msgbufphys was setup during the secondary boot strap */
-	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
+	for (loop = 0; loop < atop(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
 		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
@@ -285,8 +285,8 @@ cpu_startup()
 	 */
 	printf(version);
 
-	printf("real mem  = %u (%uMB)\n", ctob(physmem),
-	    ctob(physmem)/1024/1024);
+	printf("real mem  = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
