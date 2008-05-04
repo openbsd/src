@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.2 2008/04/24 12:29:34 jsing Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.3 2008/05/04 12:27:46 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,26 +59,37 @@ crime_configure_memory(void)
 	volatile u_int64_t *bank_ctrl;
 	paddr_t addr;
 	psize_t size;
+	u_int64_t ctrl0, ctrl;
 	u_int32_t first_page, last_page;
 	int bank, i;
 
 	bank_ctrl = (void *)PHYS_TO_KSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
 	for (bank = 0; bank < CRIME_MAX_BANKS; bank++) {
-		addr = (bank_ctrl[bank] & CRIME_MEM_BANK_ADDR) << 25;
-		size = (bank_ctrl[bank] & CRIME_MEM_BANK_128MB) ? 128 : 32;
+		ctrl = bank_ctrl[bank];
+		addr = (ctrl & CRIME_MEM_BANK_ADDR) << 25;
+		size = (ctrl & CRIME_MEM_BANK_128MB) ? 128 : 32;
+
+		/*
+		 * Empty banks are reported as duplicates of bank #0.
+		 */
+		if (bank == 0)
+			ctrl0 = ctrl;
+		else if (ctrl == ctrl0)
+			continue;
+
 #ifdef DEBUG
-		bios_printf("crime: bank %d contains %ld MB at 0x%lx\n",
+		bios_printf("crime: bank %d contains %ld MB at %p\n",
 		    bank, size, addr);
 #endif
 
 		/*
-		 * Do not report memory regions below 256MB, since ARCBIOS will do.
-		 * Moreover, empty banks are reported at address zero.
+		 * Do not report memory regions below 256MB, since ARCBIOS
+		 * will do.
 		 */
 		if (addr < 256 * 1024 * 1024)
 			continue;
 
-		addr += 1024 * 1024 * 1024;
+		addr += CRIME_MEMORY_OFFSET;
 		size *= 1024 * 1024;
 		first_page = atop(addr);
 		last_page = atop(addr + size);
@@ -100,12 +111,13 @@ crime_configure_memory(void)
 				m->mem_last_page = last_page;
 			}
 		}
-		if (m != NULL && m->mem_last_page == 0) {
-			m->mem_first_page = first_page;
-			m->mem_last_page = last_page;
-		}
-		if (m != NULL)
+		if (m != NULL) {
+			if (m->mem_last_page == 0) {
+				m->mem_first_page = first_page;
+				m->mem_last_page = last_page;
+			}
 			physmem += atop(size);
+		}
 	}
 
 #ifdef DEBUG
