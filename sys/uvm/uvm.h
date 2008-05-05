@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.22 2007/11/29 00:26:41 tedu Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.23 2008/05/05 15:37:41 thib Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -157,8 +157,7 @@ extern UVMHIST_DECL(pghist);
 
 #define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
 do {									\
-	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
-	    msg, timo, slock);						\
+	tsleep(event, PVM|PNORELOCK|(intr ? PCATCH : 0), msg, timo);	\
 } while (0)
 
 /*

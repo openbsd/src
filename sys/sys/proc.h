@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.102 2007/11/28 20:07:36 oga Exp $	*/
+/*	$OpenBSD: proc.h,v 1.103 2008/05/05 15:37:41 thib Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -456,7 +456,6 @@ void	sleep_queue_init(void);
 
 int	tsleep(void *, int, const char *, int);
 int	msleep(void *, struct mutex *, int,  const char*, int);
-#define ltsleep(c, p, w, t, l) tsleep(c, p, w, t)
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */
