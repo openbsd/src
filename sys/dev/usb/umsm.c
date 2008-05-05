@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.21 2008/04/25 04:21:15 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.22 2008/05/05 12:19:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -32,8 +32,6 @@
 #include <dev/usb/ucomvar.h>
 
 #define UMSMBUFSZ	2048
-#define UMSM_CONFIG_NO	0
-#define UMSM_IFACE_NO	0
 
 struct umsm_softc {
 	struct device		 sc_dev;
@@ -66,6 +64,7 @@ static const struct usb_devno umsm_devs[] = {
 	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_U720 },
 	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_XU870 },
 	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_ES620 },
+	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_DRIVER },
 	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA },
 	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA2 },
 	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_EM5625 },
@@ -79,6 +78,7 @@ static const struct usb_devno umsm_devs[] = {
 	{ USB_VENDOR_SIERRA,    USB_PRODUCT_SIERRA_MC8755_3 },
 	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8765 },
 	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8775 },
+	{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E220 },
 };
 
 int umsm_match(struct device *, void *, void *); 
@@ -102,12 +102,21 @@ int
 umsm_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
+	usb_interface_descriptor_t *id;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
+		return UMATCH_NONE;
+
+	/*
+	 * Some devices(eg Huawei E220) have multiple interfaces and some
+	 * of them are of class umass. Don't claim ownership in such case.
+	 */
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id == NULL || id->bInterfaceClass == UICLASS_MASS)
 		return UMATCH_NONE;
 
 	return (usb_lookup(umsm_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	    UMATCH_VENDOR_IFACESUBCLASS : UMATCH_NONE;
 }
 
 void
@@ -118,28 +127,11 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	usbd_status error;
 	int i;
 
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
-
-	if (usbd_set_config_index(sc->sc_udev, UMSM_CONFIG_NO, 1) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
-		return;
-	}
-
-	/* get the first interface handle */
-	error = usbd_device2interface_handle(sc->sc_udev, UMSM_IFACE_NO,
-	    &sc->sc_iface);
-	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
-		return;
-	}
+	sc->sc_iface = uaa->iface;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
