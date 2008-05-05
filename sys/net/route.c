@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.87 2008/01/05 19:08:19 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.88 2008/05/05 13:06:37 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 struct radix_node_head *
 rt_gettable(sa_family_t af, u_int id)
 {
-	return (rt_tables[id][af2rtafidx[af]]);
+	return (rt_tables[id] ? rt_tables[id][af2rtafidx[af]] : NULL);
 }
 
 struct radix_node *
