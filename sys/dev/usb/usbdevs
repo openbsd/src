@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.349 2008/04/25 04:19:01 jsg Exp $
+$OpenBSD: usbdevs,v 1.350 2008/05/05 12:15:21 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2224,6 +2224,7 @@ product QCOM RT2573_3		0x6238	RT2573
 product QTRONIX 980N		0x2011	Scorpion-980N
 
 /* Qualcomm products */
+product QUALCOMM MSM_DRIVER	0x1000	MSM driver
 product QUALCOMM MSM_MODEM	0x3196	CDMA MSM modem
 product QUALCOMM MSM_HSDPA2	0x6000	HSDPA MSM
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
