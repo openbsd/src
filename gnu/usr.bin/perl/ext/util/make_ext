@@ -80,6 +80,10 @@ if test ! -d "ext/$pname"; then
     exit 0 # not an error ?
 fi
 
+# XXX should find the race and fix it
+case "$mname" in
+SDBM_File) makeopts="$makeopts -j1";;
+esac
 
 echo "	Making $mname ($target)"
 
