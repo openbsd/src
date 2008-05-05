@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.567 2008/02/20 23:40:13 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.568 2008/05/05 13:00:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2836,7 +2836,6 @@ void
 pf_attach_state(struct pf_state_key *sk, struct pf_state *s, int tail)
 {
 	s->state_key = sk;
-	sk->refcnt++;
 
 	/* list is sorted, if-bound states before floating */
 	if (tail)
@@ -2855,7 +2854,7 @@ pf_detach_state(struct pf_state *s, int flags)
 
 	s->state_key = NULL;
 	TAILQ_REMOVE(&sk->states, s, next);
-	if (--sk->refcnt == 0) {
+	if (TAILQ_EMPTY(&sk->states)) {
 		if (!(flags & PF_DT_SKIP_EXTGWY))
 			RB_REMOVE(pf_state_tree_ext_gwy,
 			    &pf_statetbl_ext_gwy, sk);
