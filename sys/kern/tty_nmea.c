@@ -1,7 +1,7 @@
-/*	$OpenBSD: tty_nmea.c,v 1.25 2008/01/28 20:32:50 stevesk Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.26 2008/05/05 19:57:01 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,7 @@ static int t_trust;
 struct nmea {
 	char			cbuf[NMEAMAX];	/* receive buffer */
 	struct ksensor		time;		/* the timedelta sensor */
+	struct ksensor		signal;		/* signal status */
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last '$' seen */
@@ -105,6 +106,14 @@ nmeaopen(dev_t dev, struct tty *tp)
 	np->time.type = SENSOR_TIMEDELTA;
 	np->time.value = 0LL;
 	sensor_attach(&np->timedev, &np->time);
+
+	np->signal.type = SENSOR_PERCENT;
+	np->signal.status = SENSOR_S_UNKNOWN;
+	np->signal.value = 100000LL;
+	np->signal.flags = 0;
+	strlcpy(np->signal.desc, "Signal", sizeof(np->signal.desc));
+	sensor_attach(&np->timedev, &np->signal);
+
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
 
@@ -350,15 +359,16 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	switch (*fld[2]) {
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
+		np->signal.status = SENSOR_S_OK;
 		timeout_add(&np->nmea_tout, t_trust);
 		break;
 	case 'V':	/*
 			 * The GPS indicates a warning status, do not add to
 			 * the timeout, if the condition persist, the sensor
-			 * will be degraded.
+			 * will be degraded.  Signal the condition through
+			 * the signal sensor.
 			 */
-			/* FALLTHROUGH */
-	default:
+		np->signal.status = SENSOR_S_WARN;
 		break;
 	}
 
