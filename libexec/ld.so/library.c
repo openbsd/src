@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.56 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.57 2008/05/05 02:29:02 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -243,7 +243,9 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + loff);
-	object = _dl_finalize_object(libname, dynp, 0, type, libaddr, loff);
+	object = _dl_finalize_object(libname, dynp,
+	    (Elf_Phdr *)((char *)libaddr + ehdr->e_phoff), ehdr->e_phnum,type,
+	    libaddr, loff);
 	if (object) {
 		object->prebind_data = prebind_data;
 		object->load_size = maxva - minva;	/*XXX*/

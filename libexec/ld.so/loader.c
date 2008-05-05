@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.112 2007/11/27 16:42:15 miod Exp $ */
+/*	$OpenBSD: loader.c,v 1.113 2008/05/05 02:29:02 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -362,6 +362,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Dyn *dynp;
 	Elf_Phdr *phdp;
+	Elf_Ehdr *ehdr;
 	char *us = "";
 	unsigned int loop;
 	int failed;
@@ -417,8 +418,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	for (loop = 0; loop < dl_data[AUX_phnum]; loop++) {
 		if (phdp->p_type == PT_DYNAMIC) {
 			exe_obj = _dl_finalize_object(argv[0] ? argv[0] : "",
-			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
-			    0, 0);
+			    (Elf_Dyn *)phdp->p_vaddr, (Elf_Phdr *)dl_data[AUX_phdr],
+			    dl_data[AUX_phnum], OBJTYPE_EXE, 0, 0);
 			_dl_add_object(exe_obj);
 		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
@@ -463,8 +464,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Intentionally left off the exe child_list.
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
-	dyn_obj = _dl_finalize_object(us, dynp, 0, OBJTYPE_LDR,
-	    dl_data[AUX_base], loff);
+	ehdr = (Elf_Ehdr *)dl_data[AUX_base];
+        dyn_obj = _dl_finalize_object(us, dynp,
+	    (Elf_Phdr *)((char *)dl_data[AUX_base] + ehdr->e_phoff),
+	    ehdr->e_phnum, OBJTYPE_LDR, dl_data[AUX_base], loff);
 	_dl_add_object(dyn_obj);
 
 	dyn_obj->refcount++;

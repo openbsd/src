@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.48 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.49 2008/05/05 02:29:02 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -70,13 +70,13 @@ _dl_add_object(elf_object_t *object)
  * Initialize a new dynamic object.
  */
 elf_object_t *
-_dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
-    const int objtype, const long lbase, const long obase)
+_dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
+    int phdrc, const int objtype, const long lbase, const long obase)
 {
 	elf_object_t *object;
 #if 0
-	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x lbase %lx, obase %lx\n",
-	    objname, dynp, dl_data, objtype, lbase, obase);
+	_dl_printf("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
+	    objname, dynp, objtype, lbase, obase);
 #endif
 	object = _dl_malloc(sizeof(elf_object_t));
 	object->prev = object->next = NULL;
@@ -134,10 +134,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 		object->chains = object->buckets + object->nbuckets;
 	}
 
-	if (dl_data) {
-		object->phdrp = (Elf_Phdr *) dl_data[AUX_phdr];
-		object->phdrc = dl_data[AUX_phnum];
-	}
+	object->phdrp = phdrp;
+	object->phdrc = phdrc;
 	object->obj_type = objtype;
 	object->load_base = lbase;
 	object->obj_base = obase;

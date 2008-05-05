@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.56 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.57 2008/05/05 02:29:02 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -152,7 +152,8 @@ void _dl_rt_resolve(void);
 
 void _dl_add_object(elf_object_t *object);
 elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
-    const long *, const int objtype, const long lbase, const long obase);
+    Elf_Phdr *phdrp, int phdrc, const int objtype, const long lbase,
+    const long obase);
 void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
 

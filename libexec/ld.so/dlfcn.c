@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.78 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.79 2008/05/05 02:29:02 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -541,24 +541,17 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *data),
 	void *data)
 {
 	elf_object_t *object;
-	Elf_Ehdr *ehdr;
 	struct dl_phdr_info info;
 	int retval = -1;
 
 	for (object = _dl_objects; object != NULL; object = object->next) {
-		ehdr = (Elf_Ehdr *)object->load_base;
-		if (object->phdrp == NULL && ehdr == NULL)
+		if (object->phdrp == NULL)
 			continue;
 
 		info.dlpi_addr = object->load_base;
 		info.dlpi_name = object->load_name;
 		info.dlpi_phdr = object->phdrp;
 		info.dlpi_phnum = object->phdrc;
-		if (info.dlpi_phdr == NULL) {
-		    info.dlpi_phdr = (Elf_Phdr *)
-			((char *)object->load_base + ehdr->e_phoff);
-		    info.dlpi_phnum = ehdr->e_phnum;
-		}
 		retval = callback(&info, sizeof (struct dl_phdr_info), data);
 		if (retval)
 			break;
@@ -571,33 +564,24 @@ static elf_object_t *
 obj_from_addr(const void *addr)
 {
 	elf_object_t *dynobj;
-	Elf_Ehdr *ehdr;
-	Elf_Phdr *phdr;
+	Elf_Phdr *phdrp;
 	int phdrc;
 	Elf_Addr start;
 	int i;
 
 	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
-		if (dynobj->load_base != NULL) {
-			ehdr = (Elf_Ehdr *)dynobj->load_base;
-			phdr = (Elf_Phdr *)((char *)dynobj->load_base + ehdr->e_phoff);
-			phdrc = ehdr->e_phnum;
-		} else if (dynobj->phdrp != NULL) {
-			phdr = dynobj->phdrp;
-			phdrc = dynobj->phdrc;
-		} else
+		if (dynobj->phdrp == NULL)
 			continue;
 
-		for (i = 0; i < phdrc; i++) {
-			switch (phdr[i].p_type) {
-			case PT_LOAD:
-				start = dynobj->obj_base + phdr[i].p_vaddr;
+		phdrp = dynobj->phdrp;
+		phdrc = dynobj->phdrc;
+
+		for (i = 0; i < phdrc; i++, phdrp++) {
+			if (phdrp->p_type == PT_LOAD) {
+				start = dynobj->obj_base + phdrp->p_vaddr;
 				if ((Elf_Addr)addr >= start &&
-				    (Elf_Addr)addr < start + phdr[i].p_memsz)
+				    (Elf_Addr)addr < start + phdrp->p_memsz)
 					return dynobj;
-				break;
-			default:
-				break;
 			}
 		}
 	}
