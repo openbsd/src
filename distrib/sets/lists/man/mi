@@ -1361,7 +1361,9 @@
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/memc.0
 ./usr/share/man/cat4/macppc/mesh.0
+./usr/share/man/cat4/macppc/mpcpcibr.0
 ./usr/share/man/cat4/macppc/onyx.0
+./usr/share/man/cat4/macppc/openpic.0
 ./usr/share/man/cat4/macppc/openprom.0
 ./usr/share/man/cat4/macppc/piic.0
 ./usr/share/man/cat4/macppc/smu.0

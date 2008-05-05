@@ -3052,6 +3052,7 @@
 ./usr/share/man/cat3/btoe.0
 ./usr/share/man/cat3/btowc.0
 ./usr/share/man/cat3/btree.0
+./usr/share/man/cat3/bufferevent_base_set.0
 ./usr/share/man/cat3/bufferevent_disable.0
 ./usr/share/man/cat3/bufferevent_enable.0
 ./usr/share/man/cat3/bufferevent_free.0
@@ -3393,6 +3394,7 @@
 ./usr/share/man/cat3/event_base_free.0
 ./usr/share/man/cat3/event_base_loop.0
 ./usr/share/man/cat3/event_base_loopexit.0
+./usr/share/man/cat3/event_base_once.0
 ./usr/share/man/cat3/event_base_set.0
 ./usr/share/man/cat3/event_del.0
 ./usr/share/man/cat3/event_dispatch.0
