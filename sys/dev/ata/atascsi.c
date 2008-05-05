@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.61 2008/03/26 14:00:28 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.62 2008/05/05 12:19:38 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -182,8 +182,8 @@ atascsi_probe(struct scsi_link *link)
 	case ATA_PORT_T_DISK:
 		break;
 	case ATA_PORT_T_ATAPI:
-		as->as_link.flags |= SDEV_ATAPI;
-		as->as_link.quirks |= SDEV_ONLYBIG;
+		link->flags |= SDEV_ATAPI;
+		link->quirks |= SDEV_ONLYBIG;
 		break;
 	default:
 		rv = ENODEV;
