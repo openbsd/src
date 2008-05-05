@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.20 2008/01/06 09:53:17 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.21 2008/05/05 20:04:11 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2008 $
+.Dd $Mdocdate: May 5 2008 $
 .Dt NMEA 4
 .Os
 .Sh NAME
@@ -73,6 +73,14 @@ GPS receiver indicated a warning condition for at least the last twenty
 minutes.
 Check your hardware.
 Some GPS units need PPS to be manually turned on.
+.El
+.Pp
+A second sensor is used to report the status of the device itself:
+.Bl -tag -width "CRITICALXX" -offset indent
+.It OK
+The clock is synchronized, e.g. a GPS receiver has a fix.
+.It WARN
+The device issued a warning condition, e.g. a GPS receiver has no fix.
 .El
 .Sh SEE ALSO
 .Xr tty 4 ,
