@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.54 2008/04/24 21:31:28 kettenis Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.55 2008/05/05 22:25:04 dlg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1474,6 +1474,21 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
+	    },
+	},
+
+	{   /* Dell DRAC 3 Virtual UART */
+	    {   PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_3_VUART,	0, 0 },
+	    {   0xffff, 0xffff, 				0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x0000, COM_FREQ * 128 },
+	    },
+	},
+	{   /* Dell DRAC 4 Virtual UART */
+	    {   PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_4_VUART,	0, 0 },
+	    {   0xffff, 0xffff, 				0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x0000, COM_FREQ * 128 },
 	    },
 	},
 
