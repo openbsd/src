@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.1 2008/02/11 10:42:50 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.2 2008/05/05 15:07:12 henning Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,7 @@ snmp_init(struct relayd *x_env, struct imsgbuf *ibuf)
 		ibuf_main = NULL;
 		return;
 	}
-	
+
 	snmp_sock(-1, -1, ibuf);
 }
 
@@ -258,7 +258,7 @@ snmp_hosttrap(struct table *table, struct host *host)
 	 */
 
 	imsg_compose(ibuf_snmp, IMSG_SNMP_TRAP, 0, 0, -1, NULL, 0);
-	
+
 	SNMP_ELEMENT(".1", SNMP_NULL, NULL, 0);
 	SNMP_ELEMENT(".1.1", SNMP_OCTETSTRING, host->conf.name, 0);
 	SNMP_ELEMENT(".1.2", SNMP_INTEGER32, NULL, host->up);
@@ -272,6 +272,6 @@ snmp_hosttrap(struct table *table, struct host *host)
 	SNMP_ELEMENT(".1.8", SNMP_INTEGER32, NULL, host->conf.retry);
 	SNMP_ELEMENT(".1.9", SNMP_INTEGER32, NULL, host->retry_cnt);
 
- done:	
+ done:
 	imsg_compose(ibuf_snmp, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
 }
