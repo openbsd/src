@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.53 2007/10/15 11:24:48 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.54 2008/05/05 23:56:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -84,8 +84,8 @@ int nxedebug = 0;
 
 #define NXE_DB			0x00000000
 #define  NXE_DB_PEGID			0x00000003
-#define  NXE_DB_PEGID_TX		0x00000001 /* rx unit */
-#define  NXE_DB_PEGID_RX		0x00000002 /* tx unit */
+#define  NXE_DB_PEGID_RX		0x00000001 /* rx unit */
+#define  NXE_DB_PEGID_TX		0x00000002 /* tx unit */
 #define  NXE_DB_PRIVID			0x00000004 /* must be set */
 #define  NXE_DB_COUNT(_c)		((_c)<<3) /* count */
 #define  NXE_DB_CTXID(_c)		((_c)<<18) /* context id */
