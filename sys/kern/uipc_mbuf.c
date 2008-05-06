@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.88 2008/01/16 19:28:23 thib Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.89 2008/05/06 02:16:26 krw Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -278,9 +278,9 @@ m_free(struct mbuf *m)
 			    m->m_ext.ext_size, m->m_ext.ext_arg);
 		else
 			free(m->m_ext.ext_buf,m->m_ext.ext_type);
-		m->m_flags &= ~(M_CLUSTER|M_EXT);
 		m->m_ext.ext_size = 0;
 	}
+	m->m_flags = 0;
 	n = m->m_next;
 	pool_put(&mbpool, m);
 	splx(s);
