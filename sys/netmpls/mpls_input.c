@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.7 2008/05/06 02:47:20 norby Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.8 2008/05/06 08:01:24 norby Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -67,9 +67,9 @@ mplsintr(void)
 void
 mpls_input(struct mbuf *m)
 {
-	struct route ro;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct sockaddr_mpls *smpls;
+	struct sockaddr_mpls sa_mpls;
 	struct shim_hdr *shim;
 	struct rtentry *rt = NULL;
 	u_int32_t ttl;
@@ -114,8 +114,8 @@ mpls_input(struct mbuf *m)
 			goto done;
 		}
 
-		bzero(&ro, sizeof(ro));
-		smpls = satosmpls(&ro.ro_dst);
+		bzero(&sa_mpls, sizeof(sa_mpls));
+		smpls = &sa_mpls;
 		smpls->smpls_family = AF_MPLS;
 		smpls->smpls_len = sizeof(*smpls);
 		smpls->smpls_in_ifindex = ifp->if_index;
@@ -126,8 +126,7 @@ mpls_input(struct mbuf *m)
 		    MPLS_LABEL_GET(smpls->smpls_in_label),
 		    smpls->smpls_in_ifindex);
 
-		rtalloc(&ro);	/* XXX switch to rtalloc1() */
-		rt = ro.ro_rt;
+		rt = rtalloc1(smplstosa(smpls),1, 0);
 
 		if (rt == NULL) {
 			/* no entry for this label */
