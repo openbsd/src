@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.27 2006/12/26 20:58:25 otto Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.28 2008/05/06 06:54:28 henning Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.27 2006/12/26 20:58:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.28 2008/05/06 06:54:28 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,7 @@ ftree_add(char *str, int chflg)
 		str[len] = '\0';
 	ft->fname = str;
 	ft->refcnt = 0;
+	ft->newercnt = 0;
 	ft->chflg = chflg;
 	ft->fow = NULL;
 	if (fthead == NULL) {
@@ -215,6 +216,19 @@ ftree_sel(ARCHD *arcn)
 }
 
 /*
+ * ftree_skipped_newer()
+ *	file has been skipped because a newer file exists and -u/-D given
+ */
+
+void
+ftree_skipped_newer(ARCHD *arcn)
+{
+	/* skipped due to -u/-D, mark accordingly */
+	if (ftcur != NULL)
+		ftcur->newercnt = 1;
+}
+
+/*
  * ftree_chk()
  *	called at end on pax execution. Prints all those file args that did not
  *	have a selected member (reference count still 0)
@@ -237,7 +251,7 @@ ftree_chk(void)
 	 * that never had a match
 	 */
 	for (ft = fthead; ft != NULL; ft = ft->fow) {
-		if ((ft->refcnt > 0) || ft->chflg)
+		if ((ft->refcnt > 0) || ft->newercnt > 0 || ft->chflg)
 			continue;
 		if (wban == 0) {
 			paxwarn(1,"WARNING! These file names were not selected:");
