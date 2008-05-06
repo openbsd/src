@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.113 2008/04/28 11:36:14 norby Exp $	*/
+/*	$OpenBSD: route.c,v 1.114 2008/05/06 03:44:14 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -869,10 +869,10 @@ getmplslabel(char *s, int in)
 	if (errstr)
 		errx(1, "bad label: %s is %s", s, errstr);
 	if (in) {
-		su->smpls.smpls_in_label = htonl(label);
+		su->smpls.smpls_in_label = htonl(label << MPLS_LABEL_OFFSET);
 		su->smpls.smpls_in_ifindex = ifindex;
 	} else {
-		su->smpls.smpls_out_label = htonl(label);
+		su->smpls.smpls_out_label = htonl(label << MPLS_LABEL_OFFSET);
 		su->smpls.smpls_out_ifindex = ifindex;
 	}
 }

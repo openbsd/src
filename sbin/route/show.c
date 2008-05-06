@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.64 2008/05/06 03:39:09 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.65 2008/05/06 03:44:14 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -877,11 +877,13 @@ label_print(struct sockaddr *sa)
 	char			*in_label;
 	char			*out_label;
 
-	if (asprintf(&in_label, "%u%%%s", ntohl(smpls->smpls_in_label),
+	if (asprintf(&in_label, "%u%%%s",
+	    ntohl(smpls->smpls_in_label) >> MPLS_LABEL_OFFSET,
 	    if_indextoname(smpls->smpls_in_ifindex, ifname_in)) == -1)
 		err(1, NULL);
 
-	if (asprintf(&out_label, "%u%%%s", ntohl(smpls->smpls_out_label),
+	if (asprintf(&out_label, "%u%%%s",
+	    ntohl(smpls->smpls_out_label) >> MPLS_LABEL_OFFSET,
 	    if_indextoname(smpls->smpls_out_ifindex, ifname_out)) == -1)
 		err(1, NULL);
 
