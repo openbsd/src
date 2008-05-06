@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.46 2008/05/06 05:47:39 djm Exp $
+.\"     $OpenBSD: nc.1,v 1.47 2008/05/06 16:21:03 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -35,9 +35,9 @@
 .Nm nc
 .Bk -words
 .Op Fl 46DdhklnrStUuvz
-.Op Fl I Ar receive_buffer_len
+.Op Fl I Ar length
 .Op Fl i Ar interval
-.Op Fl O Ar send_buffer_len
+.Op Fl O Ar length
 .Op Fl P Ar proxy_username
 .Op Fl p Ar source_port
 .Op Fl s Ar source_ip_address
@@ -103,7 +103,7 @@ Do not attempt to read from stdin.
 Prints out
 .Nm
 help.
-.It Fl I Ar receive_buffer_len
+.It Fl I Ar length
 Specifies the size of the TCP receive buffer.
 .It Fl i Ar interval
 Specifies a delay time interval between lines of text sent and received.
@@ -122,8 +122,6 @@ Used to specify that
 should listen for an incoming connection rather than initiate a
 connection to a remote host.
 It is an error to use this option in conjunction with the
-.It Fl O Ar send_buffer_len
-Specifies the size of the TCP send buffer.
 .Fl p ,
 .Fl s ,
 or
@@ -135,6 +133,8 @@ option are ignored.
 .It Fl n
 Do not do any DNS or service lookups on any specified addresses,
 hostnames or ports.
+.It Fl O Ar length
+Specifies the size of the TCP send buffer.
 .It Fl P Ar proxy_username
 Specifies a username to present to a proxy server that requires authentication.
 If no username is specified then authentication will not be attempted.
