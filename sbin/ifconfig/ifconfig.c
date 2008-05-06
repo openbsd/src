@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.196 2008/05/06 12:13:57 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.197 2008/05/06 13:33:50 pyr Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -99,6 +99,8 @@
 
 #include <net/if_vlan_var.h>
 
+#include <netmpls/mpls.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -189,10 +191,12 @@ void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
 void	timeslot_status(void);
+void	setmpelabel(const char *, int);
 void	setvlantag(const char *, int);
 void	setvlanprio(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
+void	mpe_status(void);
 void	vlan_status(void);
 void	getifgroups(void);
 void	carp_status(void);
@@ -322,6 +326,7 @@ const struct	cmd {
 	{ "-rtlabel",	-1,		0,		setifrtlabel },
 	{ "range",	NEXTARG,	0,		setatrange },
 	{ "phase",	NEXTARG,	0,		setatphase },
+	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
@@ -2558,6 +2563,7 @@ status(int link, struct sockaddr_dl *sdl)
 	timeslot_status();
 	sppp_status();
 	trunk_status();
+	mpe_status();
 #endif
 	getifgroups();
 
@@ -3026,6 +3032,35 @@ checkatrange(struct sockaddr_at *sat)
 	    (u_short) ntohs(sat->sat_addr.s_net))
 		errx(1, "AppleTalk address is not in range");
 	*((struct netrange *) &sat->sat_zero) = at_nr;
+}
+
+void
+mpe_status(void)
+{
+	struct shim_hdr	shim;
+
+	bzero(&shim, sizeof(shim));
+	ifr.ifr_data = (caddr_t)&shim;
+
+	if (ioctl(s, SIOCGETLABEL , (caddr_t)&ifr) == -1)
+		return;
+	printf("\tmpls label: %d\n", shim.shim_label);
+}
+
+void
+setmpelabel(const char *val, int d)
+{
+	struct shim_hdr	 shim;
+	const char	*estr;
+
+	bzero(&shim, sizeof(shim));
+	ifr.ifr_data = (caddr_t)&shim;
+	shim.shim_label = strtonum(val, 0, MPLS_LABEL_MAX, &estr);
+
+	if (estr)
+		errx(1, "mpls label %s is %s", val, estr);
+	if (ioctl(s, SIOCSETLABEL, (caddr_t)&ifr) == -1)
+		warn("SIOCSETLABEL");
 }
 
 static int __tag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.4 2008/04/30 07:39:48 norby Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.5 2008/05/06 13:33:50 pyr Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -44,6 +44,8 @@
 /*
  * Structure of a SHIM header.
  */
+#define MPLS_LABEL_MAX		((1 << 20) - 1)
+
 struct shim_hdr {
 	u_int32_t shim_label;	/* 20 bit label, 4 bit exp & BoS, 8 bit TTL */
 };
@@ -137,6 +139,16 @@ struct sockaddr_mpls {
 #endif
 
 #ifdef _KERNEL
+
+struct mpe_softc {
+	struct ifnet		sc_if;		/* the interface */
+	int			sc_unit;
+	struct shim_hdr		sc_shim;
+	LIST_ENTRY(mpe_softc)	sc_list;
+};
+
+#define MPE_HDRLEN	sizeof(struct shim_hdr)
+
 extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 			struct mbuf *, struct mbuf *);
 
@@ -152,5 +164,6 @@ struct mbuf	*mpls_shim_swap(struct mbuf *, struct sockaddr_mpls *);
 struct mbuf	*mpls_shim_push(struct mbuf *, struct sockaddr_mpls *);
 
 int	mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	mpls_input(struct mbuf *);
 
 #endif /* _KERNEL */

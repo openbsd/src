@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.9 2008/05/06 08:04:04 norby Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.10 2008/05/06 13:33:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -29,8 +29,6 @@
 struct ifqueue	mplsintrq;
 int		mplsqmaxlen = IFQ_MAXLEN;
 extern int	mpls_inkloop;
-
-void	mpls_input(struct mbuf *);
 
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)

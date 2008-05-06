@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.39 2007/06/14 18:31:50 reyk Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.40 2008/05/06 13:33:50 pyr Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -163,6 +163,9 @@
 
 #define SIOCSETVLANPRIO	 _IOW('i', 143, struct ifreq)	/* set VLAN priority */
 #define SIOCGETVLANPRIO	_IOWR('i', 144, struct ifreq)	/* get VLAN priority */
+
+#define SIOCSETLABEL	 _IOW('i', 153, struct ifreq)	/* set MPLS label */
+#define SIOCGETLABEL	 _IOW('i', 154, struct ifreq)	/* get MPLS label */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
