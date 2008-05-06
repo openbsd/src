@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.53 2007/12/14 18:33:41 deraadt Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.54 2008/05/06 08:47:36 markus Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -136,9 +136,9 @@ struct ip6protosw inet6sw[] = {
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp6_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
-  0,		0,		0,		tcp_drain,
+  0,		0,		0,		0,
 #else
-  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,
+  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	0,
 #endif
   tcp_sysctl,
 },
