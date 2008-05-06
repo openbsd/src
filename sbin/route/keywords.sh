@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.20 2008/04/28 11:36:14 norby Exp $
+# $OpenBSD: keywords.sh,v 1.21 2008/05/06 03:40:31 claudio Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -45,9 +45,11 @@ netmask
 nojumbo
 nostatic
 out
+pop
 prefixlen
 proto1
 proto2
+push
 recvpipe
 reject
 rtt
@@ -57,6 +59,7 @@ sendpipe
 show
 ssthresh
 static
+swap
 xresolve
 _EOF_
 
