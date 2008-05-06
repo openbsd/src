@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.30 2008/02/11 07:58:28 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.31 2008/05/06 15:12:00 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 11 2008 $
+.Dd $Mdocdate: May 6 2008 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -112,10 +112,13 @@ interfaces.
 See also the first example.
 Disabled by default.
 .It net.inet.carp.log
-Log bad
+Make
 .Nm
-packets.
-Disabled by default.
+log state changes, bad packets, and other errors.
+May be a value between 0 and 7 corresponding with
+.Xr syslog 3
+priorities.
+The default value is 2, which limits logging to changes in CARP state.
 .El
 .Sh LOAD BALANCING
 .Nm
