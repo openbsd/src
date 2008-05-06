@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.195 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.196 2008/05/06 12:13:57 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2818,6 +2818,8 @@ in6_alias(struct in6_ifreq *creq)
 			printf(" detached");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
 			printf(" deprecated");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_AUTOCONF)
+			printf(" autoconf");
 	}
 
 	if (scopeid)
