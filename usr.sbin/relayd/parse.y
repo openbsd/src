@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.111 2008/05/06 06:09:48 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.112 2008/05/06 12:58:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1106,7 +1106,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			tableport = h->port;
 		}
 		| FORWARD TO forwardspec
-		| FORWARD TIMEOUT NUMBER	{
+		| SESSION TIMEOUT NUMBER		{
 			if ((rlay->rl_conf.timeout.tv_sec = $3) < 0) {
 				yyerror("invalid timeout: %d", $3);
 				YYERROR;
