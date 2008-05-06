@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.2 2008/01/06 13:11:51 mbalmer Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.3 2008/05/06 08:51:44 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -58,6 +58,7 @@ static int t_trust;
 struct msts {
 	char			cbuf[MSTSMAX];	/* receive buffer */
 	struct ksensor		time;		/* the timedelta sensor */
+	struct ksensor		signal;		/* signal status */
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last <STX> */
@@ -108,6 +109,14 @@ mstsopen(dev_t dev, struct tty *tp)
 	np->time.flags = SENSOR_FINVALID;
 #endif
 	sensor_attach(&np->timedev, &np->time);
+
+	np->signal.type = SENSOR_PERCENT;
+	np->signal.status = SENSOR_S_UNKNOWN;
+	np->signal.value = 100000LL;
+	np->signal.flags = 0;
+	strlcpy(np->signal.desc, "Signal", sizeof(np->signal.desc));
+	sensor_attach(&np->timedev, &np->signal);
+
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
 
@@ -292,8 +301,11 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 	 */
 	if (fld[3][0] == ' ' && fld[3][1] == ' ') {
 		np->time.status = SENSOR_S_OK;
+		np->signal.status = SENSOR_S_OK;
 		timeout_add(&np->msts_tout, t_trust);
-	}
+	} else
+		np->signal.status = SENSOR_S_WARN;
+
 	/*
 	 * If tty timestamping is requested, but not PPS signal is present, set
 	 * the sensor state to CRITICAL.
