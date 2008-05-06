@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.14 2005/07/09 01:44:16 brad Exp $
+ * $OpenBSD: arp.c,v 1.15 2008/05/06 06:34:10 claudio Exp $
  *
  */
 
@@ -264,15 +264,19 @@ arp_EtherAddr(int s, struct in_addr ipaddr, struct sockaddr_dl *hwaddr,
     ifm = (struct if_msghdr *)ptr;		/* On if_msghdr */
     if (ifm->ifm_type != RTM_IFINFO)
       break;
+    ptr += ifm->ifm_msglen;
+    if (ifm->ifm_version != RTM_VERSION)
+      continue;
     dl = (struct sockaddr_dl *)(ifm + 1);	/* Single _dl at end */
     skip = (ifm->ifm_flags & (IFF_UP | IFF_BROADCAST | IFF_POINTOPOINT |
             IFF_NOARP | IFF_LOOPBACK)) != (IFF_UP | IFF_BROADCAST);
-    ptr += ifm->ifm_msglen;			/* First ifa_msghdr */
     while (ptr < end) {
       ifam = (struct ifa_msghdr *)ptr;	/* Next ifa_msghdr (alias) */
       if (ifam->ifam_type != RTM_NEWADDR)	/* finished ? */
         break;
       ptr += ifam->ifam_msglen;
+      if (ifam->ifam_version != RTM_VERSION)
+        continue;
       if (skip || (ifam->ifam_addrs & (RTA_NETMASK|RTA_IFA)) !=
           (RTA_NETMASK|RTA_IFA))
         continue;
