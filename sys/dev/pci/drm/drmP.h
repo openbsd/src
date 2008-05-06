@@ -668,12 +668,26 @@ typedef struct drm_agp_head {
 	unsigned long	   page_mask;
 } drm_agp_head_t;
 
+#ifdef __OpenBSD__
+struct drm_sg_dmamem {
+	bus_dma_tag_t		sg_tag;
+	bus_dmamap_t		sg_map;
+	bus_dma_segment_t	*sg_segs;
+	int			sg_nsegs;
+	size_t			sg_size;
+	caddr_t			sg_kva;
+};
+#endif
+
 typedef struct drm_sg_mem {
 	unsigned long   handle;
 	void            *virtual;
 	int             pages;
 	dma_addr_t	*busaddr;
 	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
+#ifdef __OpenBSD__
+	struct drm_sg_dmamem *mem;
+#endif
 } drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;

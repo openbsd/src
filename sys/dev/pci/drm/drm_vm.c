@@ -118,17 +118,25 @@ drm_mmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_AGP:
 		phys = offset;
 		break;
-	case _DRM_CONSISTENT:
 #ifdef __FreeBSD__
+	case _DRM_CONSISTENT:
 		phys = vtophys((char *)map->handle + (offset - map->offset));
-#else
-		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
-#endif
 		break;
 	case _DRM_SCATTER_GATHER:
 	case _DRM_SHM:
 		phys = vtophys(offset);
 		break;
+#else
+	/* XXX unify all the bus_dmamem_mmap bits */
+	case _DRM_SCATTER_GATHER:
+		return bus_dmamem_mmap(dev->pa.pa_dmat, dev->sg->mem->sg_segs,
+		    dev->sg->mem->sg_nsegs, offset - dev->sg->handle, prot,
+		    BUS_DMA_NOWAIT);
+	case _DRM_SHM:
+	case _DRM_CONSISTENT:
+		return bus_dmamem_mmap(dev->pa.pa_dmat, &map->dmah->seg, 1,
+		    offset - map->offset, prot, BUS_DMA_NOWAIT);
+#endif
 	default:
 		DRM_ERROR("bad map type %d\n", type);
 		return -1;	/* This should never happen. */

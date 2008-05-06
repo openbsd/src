@@ -207,6 +207,7 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			map->mtrr = 1;
 #endif
 		break;
+#ifndef __OpenBSD__
 	case _DRM_SHM:
 		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
 		DRM_DEBUG( "%lu %d %p\n",
@@ -224,12 +225,14 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 				DRM_UNLOCK();
 				free(map->handle, M_DRM);
 				free(map, M_DRM);
+				DRM_LOCK();
 				return EBUSY;
 			}
 			dev->lock.hw_lock = map->handle; /* Pointer to lock */
 			DRM_UNLOCK();
 		}
 		break;
+#endif
 	case _DRM_AGP:
 		/*valid = 0;*/
 		/* In some cases (i810 driver), user space may have already
@@ -276,6 +279,9 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		}
 		map->offset = map->offset + dev->sg->handle;
 		break;
+#ifdef __OpenBSD__
+	case _DRM_SHM:
+#endif
 	case _DRM_CONSISTENT:
 		/* Unfortunately, we don't get any alignment specification from
 		 * the caller, so we have to guess.  drm_pci_alloc requires
@@ -294,6 +300,22 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		}
 		map->handle = map->dmah->vaddr;
 		map->offset = map->dmah->busaddr;
+#ifdef __OpenBSD__
+		if (map->type == _DRM_SHM &&
+		    map->flags & _DRM_CONTAINS_LOCK) {
+			DRM_LOCK();
+			/* Prevent a 2nd X Server from creating a 2nd lock */
+			if (dev->lock.hw_lock != NULL) {
+				DRM_UNLOCK();
+				drm_pci_free(dev, map->dmah);
+				free(map, M_DRM);
+				DRM_LOCK();
+				return EBUSY;
+			}
+			dev->lock.hw_lock = map->handle;
+			DRM_UNLOCK();
+		}
+#endif
 		break;
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
@@ -343,9 +365,10 @@ drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	request->mtrr   = map->mtrr;
 	request->handle = map->handle;
 
-	if (request->type != _DRM_SHM) {
+#ifndef __OpenBSD__
+	if (request->type != _DRM_SHM) 
+#endif
 		request->handle = (void *)request->offset;
-	}
 
 	return 0;
 }
@@ -375,12 +398,17 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 		}
 #endif
 		break;
+#ifndef __OpenBSD__
 	case _DRM_SHM:
 		free(map->handle, M_DRM);
 		break;
+#endif
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:
 		break;
+#ifdef __OpenBSD__
+	case _DRM_SHM:
+#endif
 	case _DRM_CONSISTENT:
 		drm_pci_free(dev, map->dmah);
 		break;
