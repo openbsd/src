@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.24 2008/05/06 06:09:48 pyr Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.25 2008/05/06 11:52:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -256,8 +256,13 @@ flush_table(struct relayd *env, struct rdr *rdr)
 		goto toolong;
 	if (ioctl(env->sc_pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table addresses");
+
+	io.pfrio_esize = sizeof(io.pfrio_table);
+	io.pfrio_size = 1;
+	io.pfrio_buffer = &io.pfrio_table;
 	if (ioctl(env->sc_pf->dev, DIOCRCLRTSTATS, &io) == -1)
 		fatal("flush_table: cannot flush table stats");
+
 	log_debug("flush_table: flushed table %s", rdr->conf.name);
 	return;
 
