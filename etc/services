@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.67 2007/05/01 11:48:40 steven Exp $
+#	$OpenBSD: services,v 1.68 2008/05/06 22:52:03 sthen Exp $
 #
 # Network services, Internet style
 #
@@ -151,6 +151,8 @@ ipp		631/tcp				# Internet Printing Protocol
 ipp		631/udp				# Internet Printing Protocol
 ldaps		636/tcp				# LDAP over SSL
 ldaps		636/udp
+rsync		873/tcp				# rsync server
+cddb		888/tcp		cddbp		# Audio CD Database
 imaps		993/tcp				# imap4 protocol over TLS/SSL
 imaps		993/udp				# imap4 protocol over TLS/SSL
 pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
@@ -212,8 +214,11 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp			# Prospero non-privileged
 prospero-np	1525/udp
+sa-msg-port	1646/udp
 pptp		1723/tcp			# Point-to-Point Tunneling Protocol
 pptp		1723/udp			# Point-to-Point Tunneling Protocol
+radius		1812/udp			# radius authentication
+radacct		1813/udp	radius-acct	# radius accounting
 ssdp		1900/tcp			# SSDP
 ssdp		1900/udp			# SSDP
 nfsd		2049/udp	nfs		# NFS server
@@ -228,6 +233,7 @@ iprop		2121/tcp			# Kerberos incremental propagation
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
+mysql		3306/tcp			# MySQL
 iapp		3517/tcp	802-11-iapp	# IEEE 802.11f IAPP
 iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
@@ -240,6 +246,7 @@ rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
+postgresql	5432/tcp			# PostgreSQL
 #
 # AFS Services
 #
@@ -256,20 +263,15 @@ afs3-rmtsys		7009/udp	# AFS remote cache manager service
 #
 # Unofficial services
 #
+smtps		465/tcp			# SSL-wrapped SMTP
+conserver	782/tcp			# console server
 supfilesrv	871/tcp			# SUP server
-rsync		873/tcp			# rsync server
-cddb		888/tcp			# Audio CD Database
 supfiledbg	1127/tcp		# SUP debugging
 datametrics	1645/udp
-sa-msg-port	1646/udp
-radius		1812/udp		# radius authentication
-radacct		1813/udp		# radius accounting
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 cvspserver	2401/tcp		# cvs pserver
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
-mysql		3306/tcp		# MySQL
-postgresql	5432/tcp		# PostgreSQL
 canna		5680/tcp		# Kana->Kanji server
 icb		7326/tcp		# Internet Citizen's Band
 spamd		8025/tcp		# spamd(8)
