@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.63 2008/04/30 12:43:23 norby Exp $	*/
+/*	$OpenBSD: show.c,v 1.64 2008/05/06 03:39:09 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -235,7 +235,6 @@ WID_DST(int af)
 void
 pr_rthdr(int af)
 {
-
 	switch (af) {
 	case PF_KEY:
 		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
@@ -398,7 +397,7 @@ void
 p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
 {
 	char		*cp;
-	unsigned short	 port;
+	unsigned short	 port = 0;
 
 	if (mask)
 		cp = netname(sa, mask);
