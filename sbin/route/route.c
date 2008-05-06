@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.115 2008/05/06 03:45:33 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.116 2008/05/06 12:53:32 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -267,6 +267,8 @@ flushroutes(int argc, char **argv)
 	seqno = 0;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 		if (verbose)
 			print_rtmsg(rtm, rtm->rtm_msglen);
 		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
