@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.25 2007/06/21 12:05:14 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.26 2008/05/06 20:57:19 thib Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -345,8 +345,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	 * Free the cache slot at head of lru chain.
 	 */
 	if (numcache < desiredvnodes) {
-		ncp = pool_get(&nch_pool, PR_WAITOK);
-		bzero((char *)ncp, sizeof *ncp);
+		ncp = pool_get(&nch_pool, PR_WAITOK|PR_ZERO);
 		numcache++;
 	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);

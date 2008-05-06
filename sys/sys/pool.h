@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.25 2007/12/09 00:24:04 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.26 2008/05/06 20:57:19 thib Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -106,6 +106,7 @@ struct pool {
 #define PR_LOGGING	0x10
 #define PR_LIMITFAIL	0x20	/* even if waiting, fail if we hit limit */
 #define PR_DEBUG	0x40
+#define PR_ZERO		0x100
 
 	int			pr_ipl;
 

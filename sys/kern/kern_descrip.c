@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.77 2007/10/29 14:12:19 chl Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.78 2008/05/06 20:57:19 thib Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -809,8 +809,7 @@ restart:
 	 * the list of open files.
 	 */
 	nfiles++;
-	fp = pool_get(&file_pool, PR_WAITOK);
-	bzero(fp, sizeof(struct file));
+	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);

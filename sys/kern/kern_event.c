@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.32 2007/10/29 14:12:19 chl Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.33 2008/05/06 20:57:19 thib Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -390,8 +390,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
-	kq = pool_get(&kqueue_pool, PR_WAITOK);
-	bzero(kq, sizeof(*kq));
+	kq = pool_get(&kqueue_pool, PR_WAITOK|PR_ZERO);
 	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = (caddr_t)kq;
 	*retval = fd;
