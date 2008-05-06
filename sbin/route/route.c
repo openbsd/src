@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.114 2008/05/06 03:44:14 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.115 2008/05/06 03:45:33 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -390,6 +390,21 @@ newroute(int argc, char **argv)
 				if (af != AF_MPLS)
 					errx(1, "-out requires -mpls");
 				getmplslabel(*++argv, 0);
+				break;
+			case K_POP:
+				if (af != AF_MPLS)
+					errx(1, "-pop requires -mpls");
+				so_dst.smpls.smpls_operation = MPLS_OP_POP;
+				break;
+			case K_PUSH:
+				if (af != AF_MPLS)
+					errx(1, "-push requires -mpls");
+				so_dst.smpls.smpls_operation = MPLS_OP_PUSH;
+				break;
+			case K_SWAP:
+				if (af != AF_MPLS)
+					errx(1, "-swap requires -mpls");
+				so_dst.smpls.smpls_operation = MPLS_OP_SWAP;
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
