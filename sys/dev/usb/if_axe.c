@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.82 2008/02/22 12:42:40 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.83 2008/05/06 12:51:17 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -146,6 +146,7 @@ int	axedebug = 0;
 const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_UF200}, 0 },
 	{ { USB_VENDOR_ACERCM, USB_PRODUCT_ACERCM_EP1427X2}, 0 },
+	{ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ETHERNET }, AX772 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88772}, AX772 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178}, AX178 },
@@ -255,8 +256,10 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 
 	err = usbd_do_request(sc->axe_udev, &req, buf);
 
-	if (err)
+	if (err) {
+		DPRINTF(("axe_cmd err: cmd: %d\n", cmd));
 		return(-1);
+	}
 
 	return(0);
 }
@@ -302,8 +305,10 @@ axe_miibus_readreg(struct device *dev, int phy, int reg)
 		printf("axe%d: read PHY failed\n", sc->axe_unit);
 		return(-1);
 	}
+	DPRINTF(("axe_miibus_readreg: phy 0x%x reg 0x%x val 0x%x\n",
+	    phy, reg, UGETW(val)));
 
-	if (UGETW(val))
+	if (UGETW(val) && UGETW(val) != 0xffff)
 		sc->axe_phyaddrs[0] = phy;
 
 	return (UGETW(val));
