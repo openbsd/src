@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.8 2008/05/06 08:01:24 norby Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.9 2008/05/06 08:04:04 norby Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -76,6 +76,12 @@ mpls_input(struct mbuf *m)
 	int i;
 
 	if (!mpls_enable) {
+		m_freem(m);
+		return;
+	}
+
+	/* drop all broadcast and multicast packets */
+	if (m->m_flags & (M_BCAST | M_MCAST)) {
 		m_freem(m);
 		return;
 	}
