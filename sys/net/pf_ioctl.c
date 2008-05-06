@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.193 2007/12/02 12:08:04 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.194 2008/05/06 03:24:25 weingart Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -160,7 +160,7 @@ pfattach(int num)
 	pool_sethardlimit(pf_pool_limits[PF_LIMIT_STATES].pp,
 	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
 
-	if (ptoa(physmem) <= 100*1024*1024)
+	if (physmem <= atop(100*1024*1024))
 		pf_pool_limits[PF_LIMIT_TABLE_ENTRIES].limit =
 		    PFR_KENTRY_HIWAT_SMALL;
 
