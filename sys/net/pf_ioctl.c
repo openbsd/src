@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.194 2008/05/06 03:24:25 weingart Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.195 2008/05/06 03:45:22 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -309,7 +309,7 @@ void
 pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
 	if (rulequeue != NULL) {
-		if (rule->states <= 0) {
+		if (rule->states_cur <= 0) {
 			/*
 			 * XXX - we need to remove the table *before* detaching
 			 * the rule to make sure the table code does not delete
@@ -325,7 +325,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		rule->nr = -1;
 	}
 
-	if (rule->states > 0 || rule->src_nodes > 0 ||
+	if (rule->states_cur > 0 || rule->src_nodes > 0 ||
 	    rule->entries.tqe_prev != NULL)
 		return;
 	pf_tag_unref(rule->tag);
@@ -1148,7 +1148,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->kif = NULL;
 		TAILQ_INIT(&rule->rpool.list);
 		/* initialize refcounting */
-		rule->states = 0;
+		rule->states_cur = 0;
 		rule->src_nodes = 0;
 		rule->entries.tqe_prev = NULL;
 #ifndef INET
@@ -1335,6 +1335,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			rule->evaluations = 0;
 			rule->packets[0] = rule->packets[1] = 0;
 			rule->bytes[0] = rule->bytes[1] = 0;
+			rule->states_tot = 0;
 		}
 		break;
 	}
@@ -1395,7 +1396,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			newrule->cpid = p->p_pid;
 			TAILQ_INIT(&newrule->rpool.list);
 			/* initialize refcounting */
-			newrule->states = 0;
+			newrule->states_cur = 0;
 			newrule->entries.tqe_prev = NULL;
 #ifndef INET
 			if (newrule->af == AF_INET) {
@@ -1668,7 +1669,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 			break;
 		}
-		pf_default_rule.states++;
+		pf_default_rule.states_cur++;
 		break;
 	}
 

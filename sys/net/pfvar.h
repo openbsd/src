@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.260 2008/05/05 13:00:43 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.261 2008/05/06 03:45:22 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -538,7 +538,8 @@ struct pf_rule {
 
 	int			 rtableid;
 	u_int32_t		 timeout[PFTM_MAX];
-	u_int32_t		 states;
+	u_int32_t		 states_cur;
+	u_int32_t		 states_tot;
 	u_int32_t		 max_states;
 	u_int32_t		 src_nodes;
 	u_int32_t		 max_src_nodes;

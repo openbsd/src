@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.89 2008/01/12 17:08:33 mpf Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.90 2008/05/06 03:45:21 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -268,7 +268,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	else
 		r = &pf_default_rule;
 
-	if (!r->max_states || r->states < r->max_states)
+	if (!r->max_states || r->states_cur < r->max_states)
 		st = pool_get(&pf_state_pl, PR_NOWAIT);
 	if (st == NULL) {
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
@@ -297,7 +297,8 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	/* XXX get pointers to nat_rule and anchor */
 
 	/* XXX when we have nat_rule/anchors, use STATE_INC_COUNTERS */
-	r->states++;
+	r->states_cur++;
+	r->states_tot++;
 
 	/* fill in the rest of the state entry */
 	pf_state_host_ntoh(&sp->lan, &sk->lan);
@@ -325,7 +326,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	if (pf_insert_state(kif, st)) {
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
-		r->states--;
+		r->states_cur--;
 		if (st->dst.scrub)
 			pool_put(&pf_state_scrub_pl, st->dst.scrub);
 		if (st->src.scrub)

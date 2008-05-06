@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.568 2008/05/05 13:00:43 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.569 2008/05/06 03:45:21 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -267,20 +267,25 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 
 #define STATE_INC_COUNTERS(s)				\
 	do {						\
-		s->rule.ptr->states++;			\
-		if (s->anchor.ptr != NULL)		\
-			s->anchor.ptr->states++;	\
-		if (s->nat_rule.ptr != NULL)		\
-			s->nat_rule.ptr->states++;	\
+		s->rule.ptr->states_cur++;		\
+		s->rule.ptr->states_tot++;		\
+		if (s->anchor.ptr != NULL) {		\
+			s->anchor.ptr->states_cur++;	\
+			s->anchor.ptr->states_tot++;	\
+		}					\
+		if (s->nat_rule.ptr != NULL) {		\
+			s->nat_rule.ptr->states_cur++;	\
+			s->nat_rule.ptr->states_tot++;	\
+		}					\
 	} while (0)
 
 #define STATE_DEC_COUNTERS(s)				\
 	do {						\
 		if (s->nat_rule.ptr != NULL)		\
-			s->nat_rule.ptr->states--;	\
+			s->nat_rule.ptr->states_cur--;	\
 		if (s->anchor.ptr != NULL)		\
-			s->anchor.ptr->states--;	\
-		s->rule.ptr->states--;			\
+			s->anchor.ptr->states_cur--;	\
+		s->rule.ptr->states_cur--;		\
 	} while (0)
 
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
@@ -913,7 +918,7 @@ pf_state_expires(const struct pf_state *state)
 	start = state->rule.ptr->timeout[PFTM_ADAPTIVE_START];
 	if (start) {
 		end = state->rule.ptr->timeout[PFTM_ADAPTIVE_END];
-		states = state->rule.ptr->states;
+		states = state->rule.ptr->states_cur;
 	} else {
 		start = pf_default_rule.timeout[PFTM_ADAPTIVE_START];
 		end = pf_default_rule.timeout[PFTM_ADAPTIVE_END];
@@ -947,7 +952,7 @@ pf_purge_expired_src_nodes(int waslocked)
 			 }
 			 if (cur->rule.ptr != NULL) {
 				 cur->rule.ptr->src_nodes--;
-				 if (cur->rule.ptr->states <= 0 &&
+				 if (cur->rule.ptr->states_cur <= 0 &&
 				     cur->rule.ptr->max_src_nodes <= 0)
 					 pf_rm_rule(NULL, cur->rule.ptr);
 			 }
@@ -1023,15 +1028,15 @@ pf_free_state(struct pf_state *cur)
 		return;
 #endif
 	KASSERT(cur->timeout == PFTM_UNLINKED);
-	if (--cur->rule.ptr->states <= 0 &&
+	if (--cur->rule.ptr->states_cur <= 0 &&
 	    cur->rule.ptr->src_nodes <= 0)
 		pf_rm_rule(NULL, cur->rule.ptr);
 	if (cur->nat_rule.ptr != NULL)
-		if (--cur->nat_rule.ptr->states <= 0 &&
+		if (--cur->nat_rule.ptr->states_cur <= 0 &&
 			cur->nat_rule.ptr->src_nodes <= 0)
 			pf_rm_rule(NULL, cur->nat_rule.ptr);
 	if (cur->anchor.ptr != NULL)
-		if (--cur->anchor.ptr->states <= 0)
+		if (--cur->anchor.ptr->states_cur <= 0)
 			pf_rm_rule(NULL, cur->anchor.ptr);
 	pf_normalize_tcp_cleanup(cur);
 	pfi_kif_unref(cur->kif, PFI_KIF_REF_STATE);
@@ -3328,7 +3333,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		struct pf_src_node *sn = NULL;
 
 		/* check maximums */
-		if (r->max_states && (r->states >= r->max_states)) {
+		if (r->max_states && (r->states_cur >= r->max_states)) {
 			pf_status.lcounters[LCNT_STATES]++;
 			REASON_SET(&reason, PFRES_MAXSTATES);
 			goto cleanup;

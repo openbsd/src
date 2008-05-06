@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.273 2008/02/13 19:55:12 kettenis Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.274 2008/05/06 03:45:21 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -734,10 +734,12 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 			    (unsigned long long)(rule->packets[0] +
 			    rule->packets[1]),
 			    (unsigned long long)(rule->bytes[0] +
-			    rule->bytes[1]), rule->states);
+			    rule->bytes[1]), rule->states_cur);
 		if (!(opts & PF_OPT_DEBUG))
-			printf("  [ Inserted: uid %u pid %u ]\n",
-			    (unsigned)rule->cuid, (unsigned)rule->cpid);
+			printf("  [ Inserted: uid %u pid %u "
+			    "State Creations: %-6u]\n",
+			    (unsigned)rule->cuid, (unsigned)rule->cpid,
+			    rule->states_tot);
 	}
 }
 
@@ -804,19 +806,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
-			if (pr.rule.label[0]) {
-				printf("%s ", pr.rule.label);
-				printf("%llu %llu %llu %llu %llu %llu %llu\n",
-				    (unsigned long long)pr.rule.evaluations,
-				    (unsigned long long)(pr.rule.packets[0] +
-				    pr.rule.packets[1]),
-				    (unsigned long long)(pr.rule.bytes[0] +
-				    pr.rule.bytes[1]),
-				    (unsigned long long)pr.rule.packets[0],
-				    (unsigned long long)pr.rule.bytes[0],
-				    (unsigned long long)pr.rule.packets[1],
-				    (unsigned long long)pr.rule.bytes[1]);
-			}
 			break;
 		case PFCTL_SHOW_RULES:
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
@@ -850,8 +839,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
-				printf("%s ", pr.rule.label);
-				printf("%llu %llu %llu %llu %llu %llu %llu\n",
+				printf("%s %llu %llu %llu %llu"
+				    " %llu %llu %llu %llu\n",
+				    pr.rule.label,
 				    (unsigned long long)pr.rule.evaluations,
 				    (unsigned long long)(pr.rule.packets[0] +
 				    pr.rule.packets[1]),
@@ -860,7 +850,8 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 				    (unsigned long long)pr.rule.packets[0],
 				    (unsigned long long)pr.rule.bytes[0],
 				    (unsigned long long)pr.rule.packets[1],
-				    (unsigned long long)pr.rule.bytes[1]);
+				    (unsigned long long)pr.rule.bytes[1],
+				    (unsigned long long)pr.rule.states_tot);
 			}
 			break;
 		case PFCTL_SHOW_RULES:
