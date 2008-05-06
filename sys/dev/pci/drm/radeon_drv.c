@@ -143,7 +143,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	radeon_configure(dev);
-	return drm_attach(self, pa, radeon_pciidlist);
+	return drm_attach(parent, self, pa, radeon_pciidlist);
 }
 
 #if defined(__OpenBSD__)

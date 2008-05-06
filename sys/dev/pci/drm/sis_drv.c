@@ -121,7 +121,7 @@ sisdrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	sis_configure(dev);
-	return drm_attach(self, pa, sis_pciidlist);
+	return drm_attach(parent, self, pa, sis_pciidlist);
 }
 
 #if defined(__OpenBSD__)

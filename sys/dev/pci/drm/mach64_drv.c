@@ -138,7 +138,7 @@ mach64drm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	mach64_configure(dev);
-	return drm_attach(self, pa, mach64_pciidlist);
+	return drm_attach(parent, self, pa, mach64_pciidlist);
 }
 
 #if defined(__OpenBSD__)

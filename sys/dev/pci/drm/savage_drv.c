@@ -128,7 +128,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	savage_configure(dev);
-	return drm_attach(self, pa, savage_pciidlist);
+	return drm_attach(parent, self, pa, savage_pciidlist);
 }
 
 #if defined(__OpenBSD__)

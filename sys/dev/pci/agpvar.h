@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.12 2008/03/23 19:54:47 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.13 2008/05/06 19:19:02 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -146,6 +146,8 @@ struct agp_softc {
 	u_int32_t		sc_allocated;	/* amount allocated */
 	enum agp_acquire_state	sc_state;
 	struct agp_memory_list	sc_memory;	/* list of allocated memory */
+
+	struct vga_pci_softc	*vga_softc;	/* needed for shared mappings */
 };
 
 struct agp_gatt {

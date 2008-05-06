@@ -97,13 +97,48 @@ drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 #ifdef __FreeBSD__
 	return pmap_mapdev(map->offset, map->size);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	int ret;
-	if (!map->bst)
-	map->bst = dev->pa.pa_memt;
-	if ((ret = bus_space_map(map->bst, map->offset, map->size,
-	    BUS_SPACE_MAP_LINEAR, &map->bsh))) {
-		return NULL;
+	struct vga_pci_bar *bar = NULL;
+	int i;
+
+	DRM_DEBUG("offset: 0x%x size: 0x%x type: %d\n", map->offset, map->size,
+	    map->type);
+
+	if (map->type == _DRM_AGP || map->type == _DRM_FRAME_BUFFER) {
+	/*
+	 * there can be multiple agp maps in the same BAR, agp also
+	 * quite possibly isn't the same as the vga device, just try
+	 * to map it.
+	 */
+		DRM_DEBUG("AGP map\n");
+		map->bst = dev->pa.pa_memt;
+		if (bus_space_map(map->bst, map->offset,
+		    map->size, BUS_SPACE_MAP_LINEAR, &map->bsh)) {
+			DRM_ERROR("ioremap fail\n");
+			return (NULL);
+		}
+		goto done;
+	} else {
+		for (i = 0 ; i < DRM_MAX_PCI_RESOURCE; ++i) {
+			bar = vga_pci_bar_info(dev->vga_softc, i);
+			if (bar == NULL)
+				continue;
+
+			if (bar->base == map->offset) {
+				DRM_DEBUG("REGISTERS map\n");
+				map->bsr = vga_pci_bar_map(dev->vga_softc,
+				    bar->addr, map->size, BUS_SPACE_MAP_LINEAR);
+				if (map->bsr == NULL) {
+					DRM_ERROR("ioremap fail\n");
+					return (NULL);
+				}
+				map->bst = map->bsr->bst;
+				map->bsh = map->bsr->bsh;
+				goto done;
+			}
+		}
 	}
+done:
+	/* handles are still supposed to be kernel virtual addresses */
 	return bus_space_vaddr(map->bst, map->bsh);
 #endif
 }
@@ -114,7 +149,10 @@ drm_ioremapfree(drm_local_map_t *map)
 #ifdef __FreeBSD__
 	pmap_unmapdev((vm_offset_t) map->handle, map->size);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	bus_space_unmap(map->bst, map->bsh, map->size);
+	if (map != NULL && map->bsr != NULL)
+		vga_pci_bar_unmap(map->bsr);
+	else
+		bus_space_unmap(map->bst, map->bsh, map->size);
 #endif
 }
 

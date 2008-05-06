@@ -267,8 +267,8 @@ drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 }
 
 void
-drm_attach(struct device *kdev, struct pci_attach_args *pa,
-    drm_pci_id_list_t *idlist)
+drm_attach(struct device *parent, struct device *kdev,
+    struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 {
 	int unit;
 	drm_device_t *dev;
@@ -288,7 +288,9 @@ drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	dev = drm_units[unit] = (drm_device_t*)kdev;
 	dev->unit = unit;
 
+	/* needed for pci_mapreg_* */
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
+	dev->vga_softc = (struct vga_pci_softc *)parent;
 
 	dev->irq = pa->pa_intrline;
 	dev->pci_bus = pa->pa_bus;

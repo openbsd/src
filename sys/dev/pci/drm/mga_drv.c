@@ -188,7 +188,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	mga_configure(dev);
-	return drm_attach(self, pa, mga_pciidlist);
+	return drm_attach(parent, self, pa, mga_pciidlist);
 }
 
 #if defined(__OpenBSD__)

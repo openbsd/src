@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.9 2007/11/25 17:11:12 oga Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.10 2008/05/06 19:19:02 oga Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -37,13 +37,26 @@
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
+#define VGA_PCI_MAX_BARS 4
 
+struct vga_pci_bar {
+	int		addr;
+	u_int		mapped;
+	pcireg_t	maptype;
+	bus_addr_t	base;
+	bus_size_t	size;
+	bus_size_t	maxsize;
+	bus_space_tag_t	bst;
+	bus_space_handle_t bsh;
+	int		flags;
+	void		*vaddr;
+};
+	
 struct vga_pci_softc {
 	struct device sc_dev;
 
-#if 0
-	struct vga_config *sc_vc;	/* VGA configuration */
-#endif
+	struct pci_attach_args pa;
+	struct vga_pci_bar *bars[VGA_PCI_MAX_BARS];
 #ifdef VESAFB
 	int sc_width;
 	int sc_height;
@@ -60,8 +73,12 @@ struct vga_pci_softc {
 #endif
 };
 
-int vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
-			  pci_chipset_tag_t, int, int, int);
+int	vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, int, int, int);
+struct	vga_pci_bar *vga_pci_bar_info(struct vga_pci_softc *, int);
+struct	vga_pci_bar *vga_pci_bar_map(struct vga_pci_softc *, int,
+	    bus_size_t, int);
+void	vga_pci_bar_unmap(struct vga_pci_bar*);
 
 #ifdef VESAFB
 int vesafb_find_mode(struct vga_pci_softc *, int, int, int);

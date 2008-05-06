@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.20 2008/04/09 18:59:58 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.21 2008/05/06 19:19:02 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -175,6 +175,8 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 
 		pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
 		    &sc->sc_capoff, NULL);
+
+		sc->vga_softc = (struct vga_pci_softc *)parent;
 
 		printf(": ");
 		ret = (*ap->ap_attach)(sc, pa);

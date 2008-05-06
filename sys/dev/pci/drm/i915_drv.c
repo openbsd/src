@@ -129,7 +129,6 @@ i915drm_probe(struct device *parent, void *match, void *aux)
 i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
 #endif
 {
-	DRM_DEBUG("\n");
 	return drm_probe((struct pci_attach_args *)aux, i915_pciidlist);
 }
 
@@ -141,7 +140,7 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 
 	i915_configure(dev);
 
-	drm_attach(self, pa, i915_pciidlist);
+	drm_attach(parent, self, pa, i915_pciidlist);
 }
 
 #if defined(__OpenBSD__)

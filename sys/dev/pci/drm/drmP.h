@@ -676,18 +676,6 @@ typedef struct drm_sg_mem {
 	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
 } drm_sg_mem_t;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-typedef struct {
-	int			mapped;
-	int			maptype;
-	bus_addr_t		base;
-	bus_size_t		size;
-	bus_space_handle_t	bsh;
-	int			flags;
-	void *			vaddr;
-} pci_map_data_t;
-#endif
-
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
 typedef struct drm_local_map {
@@ -703,7 +691,7 @@ typedef struct drm_local_map {
 #ifdef __FreeBSD__
 	struct resource *bsr;
 #else
-	pci_map_data_t	*bsr;
+	struct vga_pci_bar	*bsr;
 #endif
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -832,6 +820,7 @@ struct drm_device {
 #endif
 #ifdef __OpenBSD__
 	dev_t		kdev; 		/* used by uvm_mmap, this is just a placeholder */
+	struct vga_pci_softc *vga_softc;
 #endif
 	
 	int		  if_version;	/* Highest interface version set */
@@ -885,10 +874,10 @@ struct drm_device {
 	/* Storage of resource pointers for drm_get_resource_* */
 #ifdef __FreeBSD__
 	struct resource   *pcir[DRM_MAX_PCI_RESOURCE];
-#else
-	pci_map_data_t	  *pcir[DRM_MAX_PCI_RESOURCE];
-#endif
 	int		  pcirid[DRM_MAX_PCI_RESOURCE];
+#else
+	struct vga_pci_bar	  *pcir[DRM_MAX_PCI_RESOURCE];
+#endif
 
 	int		  pci_domain;
 	int		  pci_bus;
@@ -950,8 +939,8 @@ d_poll_t drm_poll;
 d_mmap_t drm_mmap;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 int	drm_probe(struct pci_attach_args *, drm_pci_id_list_t * );
-void	drm_attach(struct device *kdev, struct pci_attach_args *pa,
-		drm_pci_id_list_t *idlist);
+void	drm_attach(struct device *kdev, struct device *parent,
+	    struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
 int	drm_detach(struct device *self, int flags);
 int	drm_activate(struct device *self, enum devact act);
 dev_type_ioctl(drm_ioctl);

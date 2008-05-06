@@ -138,7 +138,7 @@ r128drm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	r128_configure(dev);
-	return drm_attach(self, pa, r128_pciidlist);
+	return drm_attach(parent, self, pa, r128_pciidlist);
 }
 
 #if defined(__OpenBSD__)

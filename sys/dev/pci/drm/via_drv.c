@@ -130,7 +130,7 @@ viadrm_attach(struct device *parent, struct device *self, void *opaque)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	viadrm_configure(dev);
-	drm_attach(self, pa, via_pciidlist);
+	drm_attach(parent, self, pa, via_pciidlist);
 }
 
 #if defined(__OpenBSD__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.34 2008/03/23 19:54:47 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.35 2008/05/06 19:19:02 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	bus_addr_t mmaddr, gmaddr;
+	struct vga_pci_bar *map;
 	int error;
 	u_int memtype = 0;
 
@@ -251,26 +252,27 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 		return (error);
 	}
 
-	if (isc->chiptype == CHIP_I965) 
-		memtype = pci_mapreg_type(isc->vga_pa.pa_pc,
-		    isc->vga_pa.pa_tag, mmaddr);
-
-	error = pci_mapreg_map(&isc->vga_pa, mmaddr, memtype, 0,
-	    &isc->bst, &isc->bsh, NULL, &isc->bsz, 0);
-	if (error != 0) {
+	map = vga_pci_bar_map(sc->vga_softc, mmaddr, 0,
+	    BUS_SPACE_MAP_LINEAR);
+	if (map == NULL) {
 		printf("can't map mmadr registers\n");
 		agp_generic_detach(sc);
 		return (error);
 	}
+	isc->bst = map->bst;
+	isc->bsh = map->bsh;
+	isc->bsz = map->size;
 
 	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
-		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_GTTADR, memtype,
-		    0, &isc->gtt_bst, &isc->gtt_bsh, NULL, NULL, 0);
-		if (error != 0) {
+		map = vga_pci_bar_map(sc->vga_softc, AGP_I915_GTTADR,
+		    0, BUS_SPACE_MAP_LINEAR);
+		if (map == NULL) {
 			printf("can't map gatt registers\n");
 			agp_generic_detach(sc);
 			return (error);
 		}
+		isc->gtt_bst = map->bst;
+		isc->gtt_bsh =  map->bsh;
 	}
 
 	isc->initial_aperture = AGP_GET_APERTURE(sc);

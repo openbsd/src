@@ -67,9 +67,6 @@ drm_order(unsigned long size)
 int
 drm_alloc_resource(drm_device_t *dev, int resource)
 {
-#ifdef __OpenBSD__
-#define PCIR_BAR(x)     (PCI_MAPS + (x) * 4)
-#endif
 	if (resource >= DRM_MAX_PCI_RESOURCE) {
 		DRM_ERROR("Resource %d too large\n", resource);
 		return 1;
@@ -81,8 +78,8 @@ drm_alloc_resource(drm_device_t *dev, int resource)
 		return 0;
 	}
 
-	dev->pcirid[resource] = PCIR_BAR(resource);
 #if defined (__FreeBSD__)
+	dev->pcirid[resource] = PCIR_BAR(resource);
 	dev->pcir[resource] = bus_alloc_resource_any(dev->device,
 	    SYS_RES_MEMORY, &dev->pcirid[resource], RF_SHAREABLE);
 
@@ -92,27 +89,12 @@ drm_alloc_resource(drm_device_t *dev, int resource)
 		return 1;
 	}
 #elif defined (__OpenBSD__)
-	dev->pcir[resource] = malloc(sizeof(*(dev->pcir)), M_DRM, M_NOWAIT | M_ZERO);
+	dev->pcir[resource] = vga_pci_bar_info(dev->vga_softc, resource);
+	DRM_LOCK();
 	if (dev->pcir[resource] == NULL) {
-		DRM_ERROR("Couldn't allocate memory for resource 0x%x\n", resource);
-		DRM_LOCK();
+		DRM_ERROR("Can't get bar info for resource 0x%x\n", resource);
 		return 1;
 	}
-	dev->pcir[resource]->maptype = 
-		pci_mapreg_type(dev->pa.pa_pc, dev->pa.pa_tag, 
-		    dev->pcirid[resource]);
-	if(pci_mapreg_info(dev->pa.pa_pc, dev->pa.pa_tag,
-	    dev->pcirid[resource],
-	    dev->pcir[resource]->maptype,
-	    &(dev->pcir[resource]->base),
-	    &(dev->pcir[resource]->size),
-	    &(dev->pcir[resource]->flags))) {
-		dev->pcir[resource]->base = 0;
-		dev->pcir[resource]->size = 0;
-	}
-	if(dev->pcir[resource]->maptype == PCI_MAPREG_TYPE_MEM)
-		dev->pcir[resource]->flags |= BUS_SPACE_MAP_LINEAR;
-	DRM_LOCK();
 #endif
 
 	return 0;
@@ -141,7 +123,7 @@ drm_get_resource_len(drm_device_t *dev, unsigned int resource)
 #ifdef __FreeBSD__
 	return rman_get_size(dev->pcir[resource]);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	return dev->pcir[resource]->size;
+	return dev->pcir[resource]->maxsize;
 #endif
 }
 
@@ -211,7 +193,6 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 
 	switch ( map->type ) {
 	case _DRM_REGISTERS:
-		map->bst = dev->pa.pa_iot;
 		map->handle = drm_ioremap(dev, map);
 		if (!map->handle) {
 			DRM_LOCK();

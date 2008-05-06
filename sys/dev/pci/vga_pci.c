@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.30 2008/03/16 19:00:28 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.31 2008/05/06 19:19:02 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -101,6 +101,7 @@
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
+void	vga_pci_bar_init(struct vga_pci_softc *, struct pci_attach_args *);
 
 #if NAGP > 0
 int	agpsubmatch(struct device *, void *, void *);
@@ -169,9 +170,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct agpbus_attach_args aba;
 #endif
 	pcireg_t reg;
-#ifdef VESAFB
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
-#endif
 
 	/*
 	 * Enable bus master; X might need this for accelerated graphics.
@@ -192,6 +191,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
+
+	vga_pci_bar_init(sc, pa);
 
 #if NAGP > 0
 	/*
@@ -373,3 +374,106 @@ vga_pci_close(void *v)
 {
 }
 #endif
+
+/*
+ * Prepare dev->bars to be used for information. we do this at startup
+ * so we can do the whole array at once, dealing with 64-bit BARs correctly.
+ */
+void
+vga_pci_bar_init(struct vga_pci_softc *dev, struct pci_attach_args *pa)
+{
+	pcireg_t type;
+	int addr = PCI_MAPREG_START, i = 0;
+	memcpy(&dev->pa, pa, sizeof(dev->pa));
+
+	while (i < VGA_PCI_MAX_BARS) {
+		dev->bars[i] = malloc(sizeof((*dev->bars[i])), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
+		if (dev->bars[i] == NULL) {
+			return;
+		}
+
+		dev->bars[i]->addr = addr;
+
+		type = dev->bars[i]->maptype = pci_mapreg_type(pa->pa_pc,
+		    pa->pa_tag, addr);
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, addr,
+		    dev->bars[i]->maptype, &dev->bars[i]->base,
+		    &dev->bars[i]->maxsize, &dev->bars[i]->flags) != 0) {
+			free(dev->bars[i], M_DEVBUF);
+			dev->bars[i] = NULL;
+		}
+
+		addr+=4;
+		++i;
+	}
+}
+
+/*
+ * Get the vga_pci_bar struct for the address in question. returns NULL if
+ * invalid BAR is passed.
+ */
+struct vga_pci_bar*
+vga_pci_bar_info(struct vga_pci_softc *dev, int no)
+{
+	if (dev == NULL || no > VGA_PCI_MAX_BARS)
+		return (NULL);
+	return (dev->bars[no]);
+}
+
+/*
+ * map the BAR in question, returning the vga_pci_bar struct in case any more
+ * processing needs to be done. Returns NULL on failure. Can be called multiple
+ * times.
+ */
+struct vga_pci_bar*
+vga_pci_bar_map(struct vga_pci_softc *dev, int addr, bus_size_t size,
+    int busflags)
+{
+	struct vga_pci_bar *bar = NULL;
+	int i;
+
+	if (dev == NULL) 
+		return (NULL);
+
+	for (i = 0; i < VGA_PCI_MAX_BARS; i++) {
+		if (dev->bars[i] && dev->bars[i]->addr == addr) {
+			bar = dev->bars[i];
+			break;
+		}
+	}
+	if (bar == NULL) {
+		printf("vga_pci_bar_map: given invalid address 0x%x\n", addr);
+		return (NULL);
+	}
+
+	if (bar->mapped == 0) {
+		switch (bar->maptype) {
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+			if (pci_mapreg_map(&dev->pa, bar->addr, bar->maptype,
+			    bar->flags | busflags, &bar->bst, &bar->bsh, NULL,
+			    &bar->size, size) == 0)
+				break;
+		default:
+			printf("vga_pci_bar_map: can't map bar 0x%x\n", addr);
+			return (NULL);
+		}
+	}
+
+	bar->mapped++;
+	return (bar);
+}
+
+/*
+ * "unmap" the BAR referred to by argument. If more than one place has mapped it
+ * we just decrement the reference counter so nothing untoward happens.
+ */
+void
+vga_pci_bar_unmap(struct vga_pci_bar *bar)
+{
+	if (bar != NULL && bar->mapped != 0) {
+		if (--bar->mapped == 0)
+			bus_space_unmap(bar->bst, bar->bsh, bar->size);
+	}
+}

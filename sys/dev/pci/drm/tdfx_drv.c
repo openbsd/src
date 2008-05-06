@@ -122,7 +122,7 @@ tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_device_t *dev = (drm_device_t *)self;
 
 	tdfx_configure(dev);
-	return drm_attach(self, pa, tdfx_pciidlist);
+	return drm_attach(parent, self, pa, tdfx_pciidlist);
 }
 
 #if defined(__OpenBSD__)
