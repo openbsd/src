@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2008/03/03 16:47:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2008/05/06 06:09:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -316,6 +316,7 @@ loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 rdr		: REDIRECT STRING	{
 			struct rdr *srv;
 
+			conf->sc_flags |= F_NEEDPF;
 			TAILQ_FOREACH(srv, conf->sc_rdrs, entry)
 				if (!strcmp(srv->conf.name, $2))
 					break;
@@ -415,6 +416,7 @@ rdroptsl	: FORWARD TO tablespec		{
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
 		| STICKYADDR		{ rdr->conf.flags |= F_STICKY; }
 		| TAG STRING {
+			conf->sc_flags |= F_NEEDPF;
 			if (strlcpy(rdr->conf.tag, $2,
 			    sizeof(rdr->conf.tag)) >=
 			    sizeof(rdr->conf.tag)) {
@@ -428,6 +430,7 @@ rdroptsl	: FORWARD TO tablespec		{
 		;
 
 table		: '<' STRING '>'	{
+			conf->sc_flags |= F_NEEDPF;
 			if (strlen($2) >= TABLE_NAME_SIZE) {
 				yyerror("invalid table name");
 				free($2);
@@ -1166,6 +1169,7 @@ forwardspec	: tablespec	{
 			rlay->rl_conf.dstretry = $3;
 		}
 		| NAT LOOKUP retry		{
+			conf->sc_flags |= F_NEEDPF;
 			rlay->rl_conf.flags |= F_NATLOOK;
 			rlay->rl_conf.dstretry = $3;
 		}

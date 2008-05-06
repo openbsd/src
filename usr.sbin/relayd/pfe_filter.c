@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.23 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.24 2008/05/06 06:09:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,6 +54,9 @@ init_filter(struct relayd *env)
 {
 	struct pf_status	status;
 
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
+
 	if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
 		fatal("calloc");
 	if ((env->sc_pf->dev = open(PF_SOCKET, O_RDWR)) == -1)
@@ -72,6 +75,9 @@ init_tables(struct relayd *env)
 	struct rdr		*rdr;
 	struct pfr_table	*tables;
 	struct pfioc_table	 io;
+
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
 
 	if ((tables = calloc(env->sc_rdrcount, sizeof(*tables))) == NULL)
 		fatal("calloc");
@@ -125,6 +131,9 @@ kill_tables(struct relayd *env) {
 	struct pfioc_table	 io;
 	struct rdr		*rdr;
 
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
+
 	memset(&io, 0, sizeof(io));
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
@@ -152,6 +161,9 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sain6;
 	struct host		*host;
+
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
 
 	if (table == NULL)
 		return;
@@ -228,6 +240,9 @@ flush_table(struct relayd *env, struct rdr *rdr)
 {
 	struct pfioc_table	io;
 
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
+
 	memset(&io, 0, sizeof(io));
 	if (strlcpy(io.pfrio_table.pfrt_anchor, RELAYD_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
@@ -283,6 +298,9 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 	struct sockaddr_in6	*sain6;
 	struct address		*address;
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
+
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
 
 	bzero(anchor, sizeof(anchor));
 	if (strlcpy(anchor, RELAYD_ANCHOR "/", sizeof(anchor)) >=
@@ -378,6 +396,9 @@ flush_rulesets(struct relayd *env)
 	struct rdr	*rdr;
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
+	if (!(env->sc_flags & F_NEEDPF))
+		return;
+
 	kill_tables(env);
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
 		if (strlcpy(anchor, RELAYD_ANCHOR "/", sizeof(anchor)) >=
@@ -412,6 +433,9 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	struct sockaddr_in	*in, *out;
 	struct sockaddr_in6	*in6, *out6;
 	char			 ibuf[BUFSIZ], obuf[BUFSIZ];
+
+	if (!(env->sc_flags & F_NEEDPF))
+		return (0);
 
 	bzero(&pnl, sizeof(pnl));
 

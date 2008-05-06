@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.99 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.100 2008/05/06 06:09:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -318,6 +318,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_UDP			0x00010000
 #define F_RETURN		0x00020000
 #define F_TRAP			0x00040000
+#define F_NEEDPF		0x00080000
 
 struct host_config {
 	objid_t			 id;
