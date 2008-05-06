@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2007/08/01 21:42:44 deraadt Exp $
+# $OpenBSD: Makefile,v 1.7 2008/05/06 00:09:53 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -29,7 +29,7 @@ afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${.CURDIR}/zd1211-licence ${DESTDIR}/etc/firmware
+	    ${.CURDIR}/zd1211-license ${DESTDIR}/etc/firmware
 .endif
 
 .include <bsd.prog.mk>
