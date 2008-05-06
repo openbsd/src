@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.163 2008/03/23 12:32:44 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.164 2008/05/06 17:19:40 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -214,30 +214,6 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	*mpp = mp;
  	return (0);
  }
-
-/*
- * Find an appropriate filesystem to use for the root. If a filesystem
- * has not been preselected, walk through the list of known filesystems
- * trying those that have mountroot routines, and try them until one
- * works or we have tried them all.
- */
-int
-vfs_mountroot(void)
-{
-	struct vfsconf *vfsp;
-	int error;
-
-	if (mountroot != NULL)
-		return ((*mountroot)());
-	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
-		if (vfsp->vfc_mountroot == NULL)
-			continue;
-		if ((error = (*vfsp->vfc_mountroot)()) == 0)
-			return (0);
-		printf("%s_mountroot failed: %d\n", vfsp->vfc_name, error);
- 	}
-	return (ENODEV);
-}
 
 /*
  * Lookup a mount point by filesystem identifier.

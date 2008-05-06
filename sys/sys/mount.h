@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.82 2008/03/16 19:42:57 otto Exp $	*/
+/*	$OpenBSD: mount.h,v 1.83 2008/05/06 17:19:40 thib Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -597,7 +597,6 @@ int     vfs_mount_foreach_vnode(struct mount *, int (*func)(struct vnode *,
 void	vfs_getnewfsid(struct mount *);
 struct	mount *vfs_getvfs(fsid_t *);
 int	vfs_mountedon(struct vnode *);
-int	vfs_mountroot(void);
 int	vfs_rootmountalloc(char *, char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 void	vfs_unmountall(void);
