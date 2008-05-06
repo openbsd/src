@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.351 2008/05/06 05:59:49 deraadt Exp $
+$OpenBSD: usbdevs,v 1.352 2008/05/06 07:25:13 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -195,6 +195,7 @@ vendor AID		0x059d	Advanced Input Devices
 vendor LACIE		0x059f	LaCie
 vendor THRUSTMASTER	0x05a4	Thrustmaster
 vendor OMNIVISION	0x05a9	OmniVision
+vendor JINGMOLD		0x05af	Jing Mold
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor YCCABLE		0x05ad	Y.C. Cable
