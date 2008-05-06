@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.82 2008/05/06 12:58:00 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.83 2008/05/06 16:23:52 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -261,7 +261,9 @@ is specified, it is used as the
 header to query a specific hostname at the target host.
 The digest does not take the HTTP headers into account.
 Do not specify a binary object (such as a graphic) as the target of the
-request, as relayd expects the data returned to be a string.
+request, as
+.Nm
+expects the data returned to be a string.
 To compute the digest, use this simple command:
 .Bd -literal -offset indent
 $ ftp -o - http://host[:port]/path | sha1
