@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.34 2008/02/23 22:19:13 deraadt Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.35 2008/05/06 05:59:49 deraadt Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -137,6 +137,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_METAGEEK, USB_PRODUCT_METAGEEK_WISPY, ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX35F,       ANY,   { UQ_BAD_HID }},
+ { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX50F,       ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_TENX, USB_PRODUCT_TENX_MISSILE,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_APC, USB_PRODUCT_APC_UPSPRO500,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C550AVR, ANY,   { UQ_BAD_HID }},
