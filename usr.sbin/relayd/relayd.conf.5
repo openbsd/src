@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.80 2008/03/03 23:15:55 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.81 2008/05/06 12:24:12 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 3 2008 $
+.Dd $Mdocdate: May 6 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -250,7 +250,7 @@ This has the same effect as above but wraps the HTTP request in SSL.
 .Xc
 For each host in the table, verify that retrieving the URL
 .Ar path
-produces content whose message digest matches the defined string.
+produces non-binary content whose message digest matches the defined string.
 The algorithm used is determined by the string length of the
 .Ar digest
 argument, either SHA1 (40 characters) or MD5 (32 characters).
@@ -260,6 +260,8 @@ is specified, it is used as the
 .Dq Host:
 header to query a specific hostname at the target host.
 The digest does not take the HTTP headers into account.
+Do not specify a binary object (such as a graphic) as the target of the
+request, as relayd expects the data returned to be a string.
 To compute the digest, use this simple command:
 .Bd -literal -offset indent
 $ ftp -o - http://host[:port]/path | sha1
