@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.73 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.74 2008/05/06 09:52:47 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -393,6 +393,15 @@ reconfigure(void)
 	log_info("reloading configuration");
 	if ((new_env = parse_config(env->sc_confpath, env->sc_opts)) == NULL) {
 		log_warnx("configuration reloading FAILED");
+		return;
+	}
+
+	if (!(env->sc_flags & F_NEEDPF) && (new_env->sc_flags & F_NEEDPF)) {
+		log_warnx("new configuration requires pf while it "
+		    "was previously disabled."
+		    "configuration will not be reloaded");
+		purge_config(new_env, PURGE_EVERYTHING);
+		free(new_env);
 		return;
 	}
 
