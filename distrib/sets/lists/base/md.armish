@@ -25,7 +25,7 @@
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/zd1211
-./etc/firmware/zd1211-licence
+./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./usr/lib/apache/modules/libproxy.so
