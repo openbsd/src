@@ -10,6 +10,7 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
+#include <net/netisr.h>
 #include <net/route.h>
 
 #ifdef	INET
@@ -227,4 +228,35 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	return (error);
+}
+
+void
+mpe_input(struct mbuf *m)
+{
+	int		 s;
+	struct shim_hdr	*shim;
+
+	shim = mtod(m, struct shim_hdr *);
+	if (!(MPLS_BOS_ISSET(shim->shim_label))) {
+#ifdef MPLS_DEBUG
+		printf("mpe_input: invalid packet with non BoS label\n");
+#endif
+		m_free(m);
+	}
+
+	
+#ifdef MPLS_DEBUG
+		printf("mpe_input: got packet with label: %d\n",
+		    ((ntohl(shim->shim_label & MPLS_LABEL_MASK)) >>
+		    MPLS_LABEL_OFFSET));
+#endif
+	m_adj(m, sizeof(shim));
+	
+	s = splnet();
+	/*
+	 * assume we only get fed ipv4 packets for now.
+	 */
+	IF_ENQUEUE(&ipintrq, m);
+	schednetisr(NETISR_IP);
+	splx(s);
 }
