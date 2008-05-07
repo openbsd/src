@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.539 2008/05/07 07:07:29 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.540 2008/05/07 08:08:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2407,7 +2407,7 @@ reticmp6spec	: STRING			{
 		}
 		;
 
-dir		: /* empty */			{ $$ = 0; }
+dir		: /* empty */			{ $$ = PF_INOUT; }
 		| IN				{ $$ = PF_IN; }
 		| OUT				{ $$ = PF_OUT; }
 		;
