@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.570 2008/05/06 09:44:25 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.571 2008/05/07 06:15:26 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3794,22 +3794,6 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		}
-	}
-
-	if (((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN) &&
-	    dst->state >= TCPS_FIN_WAIT_2 &&
-	    src->state >= TCPS_FIN_WAIT_2) {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
-			printf("pf: state reuse ");
-			pf_print_state(*state);
-			pf_print_flags(th->th_flags);
-			printf("\n");
-		}
-		/* XXX make sure it's the same direction ?? */
-		(*state)->src.state = (*state)->dst.state = TCPS_CLOSED;
-		pf_unlink_state(*state);
-		*state = NULL;
-		return (PF_DROP);
 	}
 
 	if (((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN) &&
