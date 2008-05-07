@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.33 2007/06/04 14:59:45 henning Exp $
+.\" $OpenBSD: pppd.8,v 1.34 2008/05/07 12:16:32 claudio Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2007 $
+.Dd $Mdocdate: May 7 2008 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -749,8 +749,7 @@ seconds (0 means no limit).
 Specifies a packet filter to apply to data packets being sent or
 received to determine which packets should be allowed to pass.
 Packets which are rejected by the filter are silently discarded.
-This option can be used to prevent specific network daemons (such as
-.Xr routed 8 )
+This option can be used to prevent specific network protocols
 using up link bandwidth, or to provide a basic firewall capability.
 The
 .Ar filter-expression
