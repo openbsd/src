@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.43 2007/12/20 02:53:02 brad Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.44 2008/05/07 12:58:54 norby Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,10 @@
 #include <netinet/if_ether.h>
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
 #endif
 
 #if NBPFILTER > 0
@@ -299,6 +303,12 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_ATALK;
 		break;
 #endif /* NETATALK */
+#ifdef MPLS
+	case AF_MPLS:
+		ifq = &mplsintrq;
+		isr = NETISR_MPLS;
+		break;
+#endif /* MPLS */
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 			dst->sa_family);
@@ -353,6 +363,12 @@ lo_altqstart(ifp)
 			m->m_flags |= M_LOOP;
 			ifq = &ip6intrq;
 			isr = NETISR_IPV6;
+			break;
+#endif
+#ifdef MPLS
+		case AF_MPLS:
+			ifq = &mplsintrq;
+			isr = NETISR_MPLS;
 			break;
 #endif
 #ifdef NETATALK
