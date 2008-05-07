@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.27 2008/04/26 14:33:27 kettenis Exp $	*/
+/*	$OpenBSD: icu.s,v 1.28 2008/05/07 20:42:02 kettenis Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -152,7 +152,12 @@ IDTVEC(softnet)
 #endif
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
+
 #include <net/netisr_dispatch.h>
+
+	pushl	$I386_SOFTINTR_SOFTNET
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
 #endif
@@ -166,7 +171,9 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(i386_softintlock)
 #endif
-	call	_C_LABEL(softclock)
+	pushl	$I386_SOFTINTR_SOFTCLOCK
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
 #endif

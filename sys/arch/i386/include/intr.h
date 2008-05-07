@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.34 2008/04/25 19:50:08 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.35 2008/05/07 20:42:02 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ extern void Xspllower(void);
 extern int splraise(int);
 extern int spllower(int);
 extern void splx(int);
-extern void softintr(int, int);
+extern void softintr(int);
 
 /*
  * compiler barrier: prevent reordering of instructions.
@@ -128,9 +128,8 @@ void splassert_check(int, const char *);
 #define spllock() 	splhigh()
 #define	spl0()		spllower(IPL_NONE)
 
-#define	setsoftclock()	softintr(1 << SIR_CLOCK, IPL_SOFTCLOCK)
-#define	setsoftnet()	softintr(1 << SIR_NET, IPL_SOFTNET)
-#define	setsofttty()	softintr(1 << SIR_TTY, IPL_SOFTTTY)
+#define	setsoftnet()	softintr(SIR_NET)
+#define	setsofttty()	softintr(SIR_TTY)
 
 struct cpu_info;
 
@@ -150,5 +149,66 @@ extern void (*ipifunc[I386_NIPI])(struct cpu_info *);
 #endif
 
 #endif /* !_LOCORE */
+
+/*
+ * Generic software interrupt support.
+ */
+
+#define	I386_SOFTINTR_SOFTCLOCK		0
+#define	I386_SOFTINTR_SOFTNET		1
+#define	I386_SOFTINTR_SOFTTTY		2
+#define	I386_NSOFTINTR			3
+
+#ifndef _LOCORE
+#include <sys/queue.h>
+
+struct i386_soft_intrhand {
+	TAILQ_ENTRY(i386_soft_intrhand)
+		sih_q;
+	struct i386_soft_intr *sih_intrhead;
+	void	(*sih_fn)(void *);
+	void	*sih_arg;
+	int	sih_pending;
+};
+
+struct i386_soft_intr {
+	TAILQ_HEAD(, i386_soft_intrhand)
+		softintr_q;
+	int softintr_ssir;
+	struct simplelock softintr_slock;
+};
+
+#define	i386_softintr_lock(si, s)					\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&si->softintr_slock);				\
+} while (/*CONSTCOND*/ 0)
+
+#define	i386_softintr_unlock(si, s)					\
+do {									\
+	simple_unlock(&si->softintr_slock);				\
+	splx((s));							\
+} while (/*CONSTCOND*/ 0)
+
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_init(void);
+void	softintr_dispatch(int);
+
+#define	softintr_schedule(arg)						\
+do {									\
+	struct i386_soft_intrhand *__sih = (arg);			\
+	struct i386_soft_intr *__si = __sih->sih_intrhead;		\
+	int __s;							\
+									\
+	i386_softintr_lock(__si, __s);					\
+	if (__sih->sih_pending == 0) {					\
+		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
+		__sih->sih_pending = 1;					\
+		softintr(__si->softintr_ssir);				\
+	}								\
+	i386_softintr_unlock(__si, __s);					\
+} while (/*CONSTCOND*/ 0)
+#endif /* _LOCORE */
 
 #endif /* !_I386_INTR_H_ */

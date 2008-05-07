@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.426 2008/04/25 19:50:07 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.427 2008/05/07 20:42:02 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3139,6 +3139,8 @@ init386(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif /* KGDB */
+
+	softintr_init();
 }
 
 /*
@@ -4226,15 +4228,12 @@ i386_softintunlock(void)
  * We hand-code this to ensure that it's atomic.
  */
 void
-softintr(int sir, int vec)
+softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
 
-	__asm __volatile("orl %1, %0" : "=m" (ci->ci_ipending) : "ir" (sir));
-#ifdef MULTIPROCESSOR
-	i82489_writereg(LAPIC_ICRLO,
-	    vec | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
-#endif
+	__asm __volatile("orl %1, %0" :
+	    "=m" (ci->ci_ipending) : "ir" (1 << sir));
 }
 
 /*

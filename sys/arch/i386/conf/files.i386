@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.177 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.i386,v 1.178 2008/05/07 20:42:02 kettenis Exp $
 #
 # new style config file for i386 architecture
 #
@@ -39,6 +39,7 @@ file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
+file	arch/i386/i386/softintr.c
 file	arch/i386/i386/dkcsum.c		bios
 file	lib/libz/adler32.c		!ppp_deflate & !ipsec & !crypto
 file	dev/cninit.c
