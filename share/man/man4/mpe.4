@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpe.4,v 1.1 2008/05/07 02:43:45 pyr Exp $
+.\"	$OpenBSD: mpe.4,v 1.2 2008/05/07 07:16:01 jmc Exp $
 .\"
 .\" Copyright (C) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -41,31 +41,31 @@ The interface itself can be configured with
 see its manual page for more information.
 .Pp
 .Nm
-interfaces support the following unique
-.Xr ioctl 2 s:
+interfaces support the following unique ioctls:
 .Bl -tag -width "SIOCSETLABEL" -offset 3n
 .It SIOCSETLABEL
 Encapsulate packets entering this interface in MPLS using
 the specified label.
 .It SIOCGETLABEL
-Report the label packets entering this interface will be
+Report the label that packets entering this interface will be
 tagged with.
 .El
 .\"
 .Sh SEE ALSO
 .Xr sysctl 3 ,
-.Xr mpls 8 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
+.Xr mpls 8 ,
 .Xr netstart 8
-.Rs
 .\"
 .Sh HISTORY
 The
 .Nm
-device first appeared in OpenBSD 4.4 
+device first appeared in
+.Ox 4.4 .
 .\"
 .Sh AUTHORS
 The
 .Nm
-driver was written by Pierre-Yves Ritschard <pyr@openbsd.org>.
+driver was written by
+.An Pierre-Yves Ritschard Aq pyr@openbsd.org .
