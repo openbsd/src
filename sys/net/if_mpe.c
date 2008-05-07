@@ -64,12 +64,12 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	mpeif->sc_shim.shim_label = 0;
+	mpeif->sc_shim.shim_label = MPLS_BOS_MASK | htonl(mpls_defttl);
 	mpeif->sc_unit = unit;
 	ifp = &mpeif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
 	ifp->if_softc = mpeif;
-	ifp->if_mtu = 0;
+	ifp->if_mtu = 1500;
 	ifp->if_ioctl = mpeioctl;
 	ifp->if_output = mpeoutput;
 	ifp->if_start = mpestart;
@@ -137,6 +137,7 @@ mpestart(struct ifnet *ifp)
 			ifp->if_ierrors++;
 			continue;
 		}
+		m->m_pkthdr.rcvif = ifp;
 		mpls_input(m);
 	}
 }
@@ -169,6 +170,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
 	struct shim_hdr		 shim;
+	u_int32_t		 ttl = htonl(mpls_defttl);
 
 	ifr = (struct ifreq *)data;
 	error = 0;
@@ -183,19 +185,23 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGETLABEL:
 		ifm = ifp->if_softc;
-		error = copyout(&ifm->sc_shim, ifr->ifr_data,
-		    sizeof(ifm->sc_shim));
+		shim.shim_label =
+		    ((ntohl(ifm->sc_shim.shim_label & MPLS_LABEL_MASK)) >>
+		    MPLS_LABEL_OFFSET);
+		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
 	case SIOCSETLABEL:
 		ifm = ifp->if_softc;
 		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
 			break;
-		if (ifm->sc_shim.shim_label == shim.shim_label)
-			break;
 		if (shim.shim_label > MPLS_LABEL_MAX) {
 			error = EINVAL;
 			break;
 		}
+		shim.shim_label = (htonl(shim.shim_label << MPLS_LABEL_OFFSET))
+		    | MPLS_BOS_MASK | ttl;
+		if (ifm->sc_shim.shim_label == shim.shim_label)
+			break;
 		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
 			if (ifm != ifp->if_softc &&
 			    ifm->sc_shim.shim_label == shim.shim_label) {

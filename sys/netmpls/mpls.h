@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.5 2008/05/06 13:33:50 pyr Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.6 2008/05/07 06:53:42 pyr Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -155,6 +155,7 @@ extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 extern struct ifqueue	mplsintrq;	/* MPLS input queue */
 extern int		mplsqmaxlen;	/* MPLS input queue length */
 extern int		mpls_enable;
+extern int		mpls_defttl;
 
 void	mpls_init(void);
 void	mplsintr(void);
