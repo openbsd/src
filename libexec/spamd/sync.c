@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.4 2007/12/27 10:50:06 reyk Exp $	*/
+/*	$OpenBSD: sync.c,v 1.5 2008/05/07 08:50:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -297,7 +297,8 @@ sync_recv(void)
 	while (len) {
 		tlv = (struct spam_synctlv_hdr *)p;
 
-		if (len < ntohs(tlv->st_length))
+		if (len < sizeof(struct spam_synctlv_hdr) ||
+		    len < ntohs(tlv->st_length))
 			goto trunc;
 
 		switch (ntohs(tlv->st_type)) {
