@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.395 2008/05/07 06:23:30 markus Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.396 2008/05/07 07:32:37 markus Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1821,7 +1821,8 @@ or
 rules in addition to filter rules.
 Tags take the same macros as labels (see above).
 .It Ar tagged Aq Ar string
-Used with filter or translation rules to specify that packets must already
+Used with filter, translation or scrub rules
+to specify that packets must already
 be tagged with the given tag in order to match the rule.
 Inverse tag matching can also be done
 by specifying the
