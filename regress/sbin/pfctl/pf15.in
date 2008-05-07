@@ -16,3 +16,4 @@ scrub proto udp set-tos lowdelay
 scrub out proto esp set-tos throughput
 scrub out proto ah set-tos reliability
 scrub out proto icmp set-tos 0x12
+scrub out all tagged THROUGHPUT set-tos throughput

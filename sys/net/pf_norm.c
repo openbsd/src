@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.112 2008/05/07 06:23:30 markus Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.113 2008/05/07 07:07:29 markus Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -827,6 +827,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	u_int16_t		 max;
 	int			 ip_len;
 	int			 ip_off;
+	int			 tag = -1;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
@@ -847,6 +848,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET,
 		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
+		else if (r->match_tag && !pf_match_tag(m, r, &tag))
+			r = TAILQ_NEXT(r, entries);
 		else
 			break;
 	}

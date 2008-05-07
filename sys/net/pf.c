@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.571 2008/05/07 06:15:26 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.572 2008/05/07 07:07:29 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,7 +187,6 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 			    void *, struct pf_pdesc *, u_short *);
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct pfi_kif *, struct pf_pdesc *);
-int			 pf_match_tag(struct mbuf *, struct pf_rule *, int *);
 void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
 			    struct pf_rule **, struct pf_rule **,  int *);
 int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.538 2008/05/07 06:23:30 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.539 2008/05/07 07:07:29 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -252,6 +252,8 @@ struct scrub_opts {
 	int			fragcache;
 	int			randomid;
 	int			reassemble_tcp;
+	char		       *match_tag;
+	u_int8_t		match_tag_not;
 	u_int			rtableid;
 } scrub_opts;
 
@@ -1041,6 +1043,14 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 			}
 			if ($8.fragcache)
 				r.rule_flag |= $8.fragcache;
+			if ($8.match_tag)
+				if (strlcpy(r.match_tagname, $8.match_tag,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			r.match_tag_not = $8.match_tag_not;
 			r.rtableid = $8.rtableid;
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
@@ -1140,6 +1150,10 @@ scrub_opt	: NODF	{
 				YYERROR;
 			}
 			scrub_opts.rtableid = $2;
+		}
+		| not TAGGED string			{
+			scrub_opts.match_tag = $3;
+			scrub_opts.match_tag_not = $1;
 		}
 		;
 
