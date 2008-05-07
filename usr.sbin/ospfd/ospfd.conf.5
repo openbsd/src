@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.29 2008/01/31 20:00:08 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.30 2008/05/07 12:58:37 jsing Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2008 $
+.Dd $Mdocdate: May 7 2008 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -166,8 +166,8 @@ The default is
 .Ic no .
 .Pp
 .It Ic router-id Ar address
-Set the router ID; if not specified, the lowest IP address of the router
-will be used.
+Set the router ID; if not specified, the numerically highest IP address of
+the router will be used.
 .Pp
 .It Ic rtlabel Ar label Ic external-tag Ar number
 Map route labels to external route tags and vice versa.
