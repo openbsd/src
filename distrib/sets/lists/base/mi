@@ -150,7 +150,6 @@
 ./sbin/reboot
 ./sbin/restore
 ./sbin/route
-./sbin/routed
 ./sbin/rrestore
 ./sbin/rtquery
 ./sbin/rtsol

@@ -2381,7 +2381,6 @@
 ./usr/share/man/cat8/rotatelogs.0
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/route6d.0
-./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
 ./usr/share/man/cat8/rpc.lockd.0
 ./usr/share/man/cat8/rpc.rquotad.0
@@ -2395,7 +2394,6 @@
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rtadvd.0
-./usr/share/man/cat8/rtquery.0
 ./usr/share/man/cat8/rtsol.0
 ./usr/share/man/cat8/rtsold.0
 ./usr/share/man/cat8/rwalld.0
