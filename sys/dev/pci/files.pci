@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.252 2008/04/29 05:29:59 cnst Exp $
+#	$OpenBSD: files.pci,v 1.253 2008/05/07 02:31:01 krw Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -434,11 +434,6 @@ file	dev/pci/ubsec.c			ubsec
 device	noct: crypto
 attach	noct at pci
 file	dev/pci/noct.c			noct
-
-# Pijnenburg PCC-ISES
-device	ises: crypto
-attach	ises at pci
-file	dev/pci/ises.c			ises
 
 # Safenet SafeXcel 1141
 device	safe: crypto
