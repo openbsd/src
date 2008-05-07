@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.261 2008/05/06 03:45:22 mpf Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.262 2008/05/07 06:23:30 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -591,6 +591,7 @@ struct pf_rule {
 	u_int8_t		 rt;
 	u_int8_t		 return_ttl;
 	u_int8_t		 tos;
+	u_int8_t		 set_tos;
 	u_int8_t		 anchor_relative;
 	u_int8_t		 anchor_wildcard;
 
@@ -615,6 +616,7 @@ struct pf_rule {
 #define	PFRULE_FRAGDROP		0x0400	/* drop funny fragments */
 #define PFRULE_RANDOMID		0x0800
 #define PFRULE_REASSEMBLE_TCP	0x1000
+#define PFRULE_SET_TOS		0x2000
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */

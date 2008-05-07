@@ -12,3 +12,7 @@ scrub in from { lo0 10.1.1.1 } to any
 scrub in from { 10.0.0.1 lo0 } to any
 scrub in from !lo0 to any
 scrub in on !lo0
+scrub proto udp set-tos lowdelay
+scrub out proto esp set-tos throughput
+scrub out proto ah set-tos reliability
+scrub out proto icmp set-tos 0x12

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.17 2008/05/06 03:45:21 mpf Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.18 2008/05/07 06:23:30 markus Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -199,6 +199,7 @@ struct pf_rule_field {
     PF_RULE_FIELD(natpass,		NEVER),
     PF_RULE_FIELD(max_mss,		NEVER),
     PF_RULE_FIELD(min_ttl,		NEVER),
+    PF_RULE_FIELD(set_tos,		NEVER),
 };
 
 

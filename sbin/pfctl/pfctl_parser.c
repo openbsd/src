@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.235 2007/10/15 02:16:35 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.236 2008/05/07 06:23:30 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -953,6 +953,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf(" min-ttl %d", r->min_ttl);
 	if (r->max_mss)
 		printf(" max-mss %d", r->max_mss);
+	if (r->rule_flag & PFRULE_SET_TOS)
+		printf(" set-tos 0x%2.2x", r->set_tos);
 	if (r->allow_opts)
 		printf(" allow-opts");
 	if (r->action == PF_SCRUB) {

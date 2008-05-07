@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.537 2008/04/21 01:42:19 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.538 2008/05/07 06:23:30 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -244,9 +244,11 @@ struct scrub_opts {
 #define SOM_MINTTL	0x01
 #define SOM_MAXMSS	0x02
 #define SOM_FRAGCACHE	0x04
+#define SOM_SETTOS	0x08
 	int			nodf;
 	int			minttl;
 	int			maxmss;
+	int			settos;
 	int			fragcache;
 	int			randomid;
 	int			reassemble_tcp;
@@ -431,7 +433,7 @@ typedef struct {
 %token	LOAD RULESET_OPTIMIZATION
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
-%token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE
+%token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE SETTOS
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -1033,6 +1035,10 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 				r.min_ttl = $8.minttl;
 			if ($8.maxmss)
 				r.max_mss = $8.maxmss;
+			if ($8.marker & SOM_SETTOS) {
+				r.rule_flag |= PFRULE_SET_TOS;
+				r.set_tos = $8.settos;
+			}
 			if ($8.fragcache)
 				r.rule_flag |= $8.fragcache;
 			r.rtableid = $8.rtableid;
@@ -1090,6 +1096,14 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.marker |= SOM_MAXMSS;
 			scrub_opts.maxmss = $2;
+		}
+		| SETTOS tos {
+			if (scrub_opts.marker & SOM_SETTOS) {
+				yyerror("set-tos cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.marker |= SOM_SETTOS;
+			scrub_opts.settos = $2;
 		}
 		| fragcache {
 			if (scrub_opts.marker & SOM_FRAGCACHE) {
@@ -2194,13 +2208,13 @@ filter_opt	: USER uids {
 			filter_opts.marker |= FOM_ICMP;
 			filter_opts.icmpspec = $1;
 		}
-		| tos {
+		| TOS tos {
 			if (filter_opts.marker & FOM_TOS) {
 				yyerror("tos cannot be redefined");
 				YYERROR;
 			}
 			filter_opts.marker |= FOM_TOS;
-			filter_opts.tos = $1;
+			filter_opts.tos = $2;
 		}
 		| keep {
 			if (filter_opts.marker & FOM_KEEP) {
@@ -3256,28 +3270,28 @@ icmp6type	: STRING			{
 		}
 		;
 
-tos		: TOS STRING			{
-			if (!strcmp($2, "lowdelay"))
+tos	: STRING			{
+			if (!strcmp($1, "lowdelay"))
 				$$ = IPTOS_LOWDELAY;
-			else if (!strcmp($2, "throughput"))
+			else if (!strcmp($1, "throughput"))
 				$$ = IPTOS_THROUGHPUT;
-			else if (!strcmp($2, "reliability"))
+			else if (!strcmp($1, "reliability"))
 				$$ = IPTOS_RELIABILITY;
-			else if ($2[0] == '0' && $2[1] == 'x')
-				$$ = strtoul($2, NULL, 16);
+			else if ($1[0] == '0' && $1[1] == 'x')
+				$$ = strtoul($1, NULL, 16);
 			else
 				$$ = 0;		/* flag bad argument */
 			if (!$$ || $$ > 255) {
-				yyerror("illegal tos value %s", $2);
-				free($2);
+				yyerror("illegal tos value %s", $1);
+				free($1);
 				YYERROR;
 			}
-			free($2);
+			free($1);
 		}
-		| TOS NUMBER			{
-			$$ = $2;
+		| NUMBER			{
+			$$ = $1;
 			if (!$$ || $$ > 255) {
-				yyerror("illegal tos value %s", $2);
+				yyerror("illegal tos value %s", $1);
 				YYERROR;
 			}
 		}
@@ -5207,6 +5221,7 @@ lookup(char *s)
 		{ "ruleset-optimization",	RULESET_OPTIMIZATION},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},
+		{ "set-tos",		SETTOS},
 		{ "skip",		SKIP},
 		{ "source-hash",	SOURCEHASH},
 		{ "source-track",	SOURCETRACK},
