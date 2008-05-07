@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.57 2007/05/26 03:00:03 mjc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.58 2008/05/07 23:27:50 fgsch Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -1289,7 +1289,7 @@ prtrack(struct cd_toc_entry *e, int lastflag, char *name)
 	else
 		next = e[1].addr.lba;
 	len = next - block;
-	lba2msf(len, &m, &s, &f);
+	lba2msf(len - 150, &m, &s, &f);
 
 	if (name)
 		printf("%2d:%02d.%02d  %s\n", m, s, f, name);
