@@ -108,7 +108,6 @@ static struct vfsconf xfs_vfc = {
     0,
     0,
     0,
-    NULL,
     NULL
 };
 

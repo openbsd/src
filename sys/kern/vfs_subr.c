@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.165 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.166 2008/05/07 14:08:37 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1249,7 +1249,6 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		tmpvfsp = malloc(sizeof(*tmpvfsp), M_TEMP, M_WAITOK);
 		bcopy(vfsp, tmpvfsp, sizeof(*tmpvfsp));
 		tmpvfsp->vfc_vfsops = NULL;
-		tmpvfsp->vfc_mountroot = NULL;
 		tmpvfsp->vfc_next = NULL;
 
 		ret = sysctl_rdstruct(oldp, oldlenp, newp, tmpvfsp,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.34 2007/11/28 19:31:31 millert Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.35 2008/05/07 14:08:37 thib Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #endif
 
 #ifdef NFSCLIENT
-#include <sys/rwlock.h>		/*  XXX*/
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfsnode.h>
@@ -126,55 +125,55 @@ static struct vfsconf vfsconflist[] = {
 
         /* Fast Filesystem */
 #ifdef FFS
-        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, ffs_mountroot, NULL },
+        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, NULL },
 #endif
 
         /* Memory-based Filesystem */
 #ifdef MFS
-        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL, NULL },
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL },
 #endif
 
 #ifdef EXT2FS
-	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, ext2fs_mountroot, NULL },
+	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, NULL },
 #endif
         /* ISO9660 (aka CDROM) Filesystem */
 #ifdef CD9660
-        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, cd9660_mountroot, NULL },
+        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, NULL },
 #endif
 
         /* MSDOS Filesystem */
 #ifdef MSDOSFS
-        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL, NULL },
+        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL },
 #endif
 
         /* Sun-compatible Network Filesystem */
 #ifdef NFSCLIENT
-        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, nfs_mountroot, NULL },
+        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL },
 #endif
 
 	/* XFS */
 #ifdef XFS
-	{ &xfs_vfsops, MOUNT_XFS, 21, 0, 0, NULL, NULL },
+	{ &xfs_vfsops, MOUNT_XFS, 21, 0, 0, NULL },
 #endif
 	
         /* /proc Filesystem */
 #ifdef PROCFS
-        { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL, NULL },
+        { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL },
 #endif
 
         /* Portal Filesystem */
 #ifdef PORTAL
-        { &portal_vfsops, MOUNT_PORTAL, 8, 0, 0, NULL, NULL },
+        { &portal_vfsops, MOUNT_PORTAL, 8, 0, 0, NULL },
 #endif
 
 	/* NTFS Filesystem */
 #ifdef NTFS
-	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL, NULL },
+	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL },
 #endif
 
 	/* UDF Filesystem */
 #ifdef UDF
-	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL, NULL },
+	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL },
 #endif
 
 };
