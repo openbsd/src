@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.164 2008/05/06 17:19:40 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.165 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1424,7 +1424,7 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 		}
 	}
 	rn = (*rnh->rnh_addaddr)((caddr_t)saddr, (caddr_t)smask, rnh,
-		np->netc_rnodes);
+		np->netc_rnodes, 0);
 	if (rn == 0 || np != (struct netcred *)rn) { /* already exists */
 		error = EPERM;
 		goto out;

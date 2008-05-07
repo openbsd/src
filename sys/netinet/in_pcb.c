@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.93 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.94 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -634,7 +634,7 @@ in_losing(inp)
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, rt->rt_ifp, 0, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
-			(void)rtrequest1(RTM_DELETE, &info,
+			(void)rtrequest1(RTM_DELETE, &info, rt->rt_priority,
 				(struct rtentry **)0, 0);
 		/*
 		 * A new route can be allocated

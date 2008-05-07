@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.21 2006/06/18 11:47:45 pascoe Exp $	*/
+/*	$OpenBSD: radix.c,v 1.22 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #endif
 
 #ifndef SMALL_KERNEL
+#include <sys/socket.h>
+#include <net/route.h>
 #include <net/radix_mpath.h>
 #endif
 
@@ -503,13 +505,13 @@ rn_new_radix_mask(struct radix_node *tt, struct radix_mask *next)
 
 struct radix_node *
 rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
-    struct radix_node treenodes[2])
+    struct radix_node treenodes[2], u_int8_t prio)
 {
 	caddr_t v = (caddr_t)v_arg, netmask = (caddr_t)n_arg;
 	struct radix_node *t, *x = NULL, *tt;
 	struct radix_node *saved_tt, *top = head->rnh_treetop;
 	short b = 0, b_leaf = 0;
-	int keyduplicated;
+	int keyduplicated, prioinv = 0;
 	caddr_t mmask;
 	struct radix_mask *m, **mp;
 
@@ -536,19 +538,38 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 #ifndef SMALL_KERNEL
 			/* permit multipath, if enabled for the family */
 			if (rn_mpath_capable(head) && netmask == tt->rn_mask) {
+				int mid;
 				/*
 				 * Try to insert the new node in the middle
 				 * of the list of any preexisting multipaths,
 				 * to reduce the number of path disruptions
 				 * that occur as a result of an insertion,
 				 * per RFC2992.
+				 * Additionally keep the list sorted by route
+				 * priority.
 				 */
-				int mid = rn_mpath_count(tt) / 2;
+				tt = rn_mpath_prio(tt, prio);
+				if (((struct rtentry *)tt)->rt_priority !=
+				    prio) {
+					/*
+					 * rn_mpath_prio returns the previous
+					 * element if no element with the 
+					 * requested priority exists. It could
+					 * be that the previous element comes
+					 * with a bigger priority.
+					 */
+					if (((struct rtentry *)tt)->
+					    rt_priority > prio)
+						prioinv = 1;
+					t = tt;
+					break;
+				}
+
+				mid = rn_mpath_count(tt) / 2;
 				do {
 					t = tt;
-					tt = tt->rn_dupedkey;
-				} while (tt && t->rn_mask == tt->rn_mask
-				    && --mid > 0);
+					tt = rn_mpath_next(tt);
+				} while (tt && --mid > 0);
 				break;
 			}
 #endif
@@ -574,7 +595,7 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 		 * We also reverse, or doubly link the list through the
 		 * parent pointer.
 		 */
-		if (tt == saved_tt) {
+		if (tt == saved_tt && prioinv) {
 			struct	radix_node *xx = x;
 			/* link in at head of list */
 			(tt = treenodes)->rn_dupedkey = t;
@@ -587,6 +608,13 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 				x->rn_r = tt;
 			saved_tt = tt;
 			x = xx;
+		} else if (prioinv) {
+			(tt = treenodes)->rn_dupedkey = t;
+			if (t->rn_p == NULL)
+				panic("rn_addroute: t->rn_p is NULL");
+			t->rn_p->rn_dupedkey = tt;
+			tt->rn_p = t->rn_p;
+			t->rn_p = tt;
 		} else {
 			(tt = treenodes)->rn_dupedkey = t->rn_dupedkey;
 			t->rn_dupedkey = tt;
@@ -690,28 +718,11 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 	struct radix_node *dupedkey, *saved_tt, *top;
 	caddr_t v, netmask;
 	int b, head_off, vlen;
-#ifndef SMALL_KERNEL
-	int mpath_enable = 0;
-#endif
 
 	v = v_arg;
 	netmask = netmask_arg;
 	x = head->rnh_treetop;
-#ifndef SMALL_KERNEL
-	if (rn) {
-		tt = rn;
-		/*
-		 * Is this route(rn) a rn->dupedkey chain? 
-		 */
-		if (rn_mpath_next(tt->rn_p))
-			mpath_enable = 1;
-		else
-			tt = rn_search(v, x);
-	} else
-		tt = rn_search(v, x);
-#else
 	tt = rn_search(v, x);
-#endif
 	head_off = x->rn_off;
 	vlen =  *(u_char *)v;
 	saved_tt = tt;
@@ -730,6 +741,13 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 			if ((tt = tt->rn_dupedkey) == 0)
 				return (0);
 	}
+#ifndef SMALL_KERNEL
+	if (rn) {
+		while (tt != rn)
+			if ((tt = tt->rn_dupedkey) == 0)
+				return (0);
+	}
+#endif
 	if (tt->rn_mask == 0 || (saved_m = m = tt->rn_mklist) == 0)
 		goto on1;
 	if (tt->rn_flags & RNF_NORMAL) {
@@ -791,14 +809,10 @@ on1:
 			else
 				t->rn_r = x;
 		} else {
-			/* find node in front of tt on the chain */
-			for (x = p = saved_tt; p && p->rn_dupedkey != tt;)
-				p = p->rn_dupedkey;
-			if (p) {
-				p->rn_dupedkey = tt->rn_dupedkey;
-				if (tt->rn_dupedkey)
-					tt->rn_dupedkey->rn_p = p;
-			} else log(LOG_ERR, "rn_delete: couldn't find us\n");
+			x = saved_tt;
+			t->rn_dupedkey = tt->rn_dupedkey;
+			if (tt->rn_dupedkey)
+				tt->rn_dupedkey->rn_p = t;
 		}
 		t = tt + 1;
 		if  (t->rn_flags & RNF_ACTIVE) {
@@ -820,16 +834,6 @@ on1:
 		}
 		goto out;
 	}
-#ifndef SMALL_KERNEL
-	if (mpath_enable) {
-		/*
-		 * my parent dupedkey is NULL
-		 * end of mpath route.
-		 */
-		t->rn_dupedkey = NULL;
-		goto out;
-	}
-#endif
 	if (t->rn_l == tt)
 		x = t->rn_r;
 	else

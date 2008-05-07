@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.89 2008/05/07 02:45:24 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.90 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -497,7 +497,7 @@ create:
 			info.rti_ifa = ifa;
 			info.rti_flags = flags;
 			rt = NULL;
-			error = rtrequest1(RTM_ADD, &info, &rt, 0);
+			error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &rt, 0);
 			if (rt != NULL)
 				flags = rt->rt_flags;
 			stat = &rtstat.rts_dynamic;
@@ -554,7 +554,7 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
 	ifp = rt->rt_ifp;
-	error = rtrequest1(RTM_DELETE, &info, &rt, tableid);
+	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error, tableid);
 
@@ -671,7 +671,7 @@ rtrequest(int req, struct sockaddr *dst, struct sockaddr *gateway,
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
-	return (rtrequest1(req, &info, ret_nrt, tableid));
+	return (rtrequest1(req, &info, RTP_DEFAULT/*XXX*/, ret_nrt, tableid));
 }
 
 int
@@ -720,8 +720,8 @@ rt_getifa(struct rt_addrinfo *info)
 }
 
 int
-rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt,
-    u_int tableid)
+rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
+    struct rtentry **ret_nrt, u_int tableid)
 {
 	int			 s = splsoftnet(); int error = 0;
 	struct rtentry		*rt, *crt;
@@ -750,7 +750,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt,
 		 */
 		if (rn_mpath_capable(rnh)) {
 			rt = rt_mpath_matchgate(rt,
-			    info->rti_info[RTAX_GATEWAY]);
+			    info->rti_info[RTAX_GATEWAY], prio);
 			rn = (struct radix_node *)rt;
 			if (!rt)
 				senderr(ESRCH);
@@ -823,6 +823,7 @@ makeroute:
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | info->rti_flags;
+		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_GATEWAY], tableid)) {
@@ -868,14 +869,15 @@ makeroute:
 			rt->rt_parent->rt_refcnt++;
 		}
 		rn = rnh->rnh_addaddr((caddr_t)ndst,
-		    (caddr_t)info->rti_info[RTAX_NETMASK], rnh, rt->rt_nodes);
+		    (caddr_t)info->rti_info[RTAX_NETMASK], rnh, rt->rt_nodes,
+		    rt->rt_priority);
 		if (rn == NULL && (crt = rtalloc1(ndst, 0, tableid)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt, tableid);
 				rn = rnh->rnh_addaddr((caddr_t)ndst,
 				    (caddr_t)info->rti_info[RTAX_NETMASK],
-				    rnh, rt->rt_nodes);
+				    rnh, rt->rt_nodes, rt->rt_priority);
 			}
 			RTFREE(crt);
 		}
@@ -1046,7 +1048,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	 * change it to meet bsdi4 behavior.
 	 */
 	info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
-	error = rtrequest1(cmd, &info, &nrt, 0);
+	error = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, 0);
 	if (cmd == RTM_DELETE && error == 0 && (rt = nrt) != NULL) {
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
@@ -1389,8 +1391,7 @@ rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
 	if (rt->rt_ifp == ifp) {
 		int	cloning = (rt->rt_flags & RTF_CLONING);
 
-		if (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
-		    rt_mask(rt), 0, NULL, 0) == 0 && cloning)
+		if (rtdeletemsg(rt, 0) == 0 && cloning)
 			return (EAGAIN);
 	}
 

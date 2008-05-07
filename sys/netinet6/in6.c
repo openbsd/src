@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.73 2007/12/09 21:24:58 hshoexer Exp $	*/
+/*	$OpenBSD: in6.c,v 1.74 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1105,7 +1105,8 @@ in6_update_ifa(ifp, ifra, ia)
 			    (struct sockaddr *)&ia->ia_addr;
 			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
 			info.rti_flags = RTF_UP | RTF_CLONING;
-			error = rtrequest1(RTM_ADD, &info, NULL, 0);
+			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL,
+			    0);
 			if (error)
 				goto cleanup;
 		} else {
@@ -1173,7 +1174,8 @@ in6_update_ifa(ifp, ifra, ia)
 			info.rti_info[RTAX_IFA] =
 			    (struct sockaddr *)&ia->ia_addr;
 			info.rti_flags = RTF_UP | RTF_CLONING;
-			error = rtrequest1(RTM_ADD, &info, NULL, 0);
+			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
+			    NULL, 0);
 			if (error)
 				goto cleanup;
 		} else {

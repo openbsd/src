@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.163 2008/05/06 15:12:00 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.164 2008/05/07 05:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -420,10 +420,10 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = ifa->ifa_addr;
 			info.rti_flags = RTF_HOST;
-			error = rtrequest1(RTM_DELETE, &info, NULL, 0);
+			error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED,
+			    NULL, 0);
 			rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
 			    error, 0);
-
 
 			/* Check for our address on another interface */
 			/* XXX cries for proper API */
@@ -461,7 +461,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					info.rti_info[RTAX_DST] = ifa->ifa_addr;
 					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 					info.rti_flags = RTF_UP | RTF_HOST;
-					error = rtrequest1(RTM_ADD, &info, NULL, 0);
+					error = rtrequest1(RTM_ADD, &info,
+					    RTP_CONNECTED, NULL, 0);
 					rt_missmsg(RTM_ADD, &info, info.rti_flags,
 					    &sc->sc_if, error, 0);
 				}
@@ -471,7 +472,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 						bzero(&info, sizeof(info));
 						info.rti_info[RTAX_DST] = &sa;
 						info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
-						error = rtrequest1(RTM_DELETE, &info, NULL, 0);
+						error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, NULL, 0);
 						rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
 						    error, 0);
 					}
@@ -485,7 +486,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 					info.rti_info[RTAX_LABEL] =
 					    (struct sockaddr *)&sa_rl;
-					error = rtrequest1(RTM_ADD, &info, NULL, 0);
+					error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL, 0);
 					if (error == 0)
 						ifa->ifa_flags |= IFA_ROUTE;
 					rt_missmsg(RTM_ADD, &info, info.rti_flags,

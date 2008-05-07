@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.69 2008/04/23 10:55:14 norby Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.70 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ route_output(struct mbuf *m, ...)
 	const char		*label;
 	va_list			 ap;
 	u_int			 tableid;
+	u_int8_t		 prio;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -262,6 +263,20 @@ route_output(struct mbuf *m, ...)
 		}
 	}
 
+	if (rtm->rtm_priority != 0) {
+		if (rtm->rtm_priority > RTP_MAX) {
+			dst = 0;
+			error = EINVAL;
+			goto flush;
+		}
+		prio = rtm->rtm_priority;
+	} else if (rtm->rtm_type == RTM_DELETE)
+		prio = RTP_ANY;
+	else if (rtm->rtm_flags & RTF_STATIC)
+		prio = RTP_STATIC;
+	else
+		prio = RTP_DEFAULT;
+
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	rt_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
@@ -300,7 +315,8 @@ route_output(struct mbuf *m, ...)
 			error = EINVAL;
 			goto flush;
 		}
-		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt, tableid);
+		error = rtrequest1(rtm->rtm_type, &info, prio, &saved_nrt,
+		    tableid);
 		if (error == 0 && saved_nrt) {
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &saved_nrt->rt_rmx);
@@ -310,7 +326,8 @@ route_output(struct mbuf *m, ...)
 		}
 		break;
 	case RTM_DELETE:
-		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt, tableid);
+		error = rtrequest1(rtm->rtm_type, &info, prio, &saved_nrt,
+		    tableid);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
 			goto report;
@@ -339,8 +356,9 @@ route_output(struct mbuf *m, ...)
 		 * (no need to call rt_mpath_matchgate if gate == NULL)
 		 */
 		if (rn_mpath_capable(rnh) &&
-		    (rtm->rtm_type != RTM_GET || gate)) {
-			rt = rt_mpath_matchgate(rt, gate);
+		    (rtm->rtm_type != RTM_GET || gate ||
+		    rtm->rtm_priority != 0)) {
+			rt = rt_mpath_matchgate(rt, gate, prio);
 			rn = (struct radix_node *)rt;
 			if (!rt) {
 				error = ESRCH;
@@ -412,6 +430,7 @@ report:
 			    NULL);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_use = 0;
+			rtm->rtm_priority = rt->rt_priority;
 			rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 			rtm->rtm_addrs = info.rti_addrs;
 			break;
@@ -535,6 +554,7 @@ rt_setmetrics(u_long which, struct rt_metrics *in, struct rt_kmetrics *out)
 		out->rmx_mtu = in->rmx_mtu;
 	if (which & RTV_EXPIRE)
 		out->rmx_expire = in->rmx_expire;
+	/* RTV_PRIORITY handled befor */
 }
 
 void
@@ -916,6 +936,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
+		rtm->rtm_priority = rt->rt_priority;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;

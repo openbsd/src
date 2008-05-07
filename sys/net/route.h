@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.48 2008/04/23 10:55:14 norby Exp $	*/
+/*	$OpenBSD: route.h,v 1.49 2008/05/07 05:14:21 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct rtentry {
 	u_int	rt_flags;		/* up/down?, host/net */
 	int	rt_refcnt;		/* # held references */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
-	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
+	struct	ifaddr *rt_ifa;		/* the answer: interface addr to use */
 	struct	sockaddr *rt_genmask;	/* for generation of cloned routes */
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
@@ -120,6 +120,7 @@ struct rtentry {
 	struct	rtentry *rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	u_int16_t rt_labelid;		/* route label ID */
+	u_int8_t rt_priority;		/* routing priority to use */
 };
 #define	rt_use	rt_rmx.rmx_pksent
 
@@ -140,7 +141,6 @@ struct rtentry {
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_CLONED	0x10000		/* this is a cloned route */
-#define RTF_SOURCE	0x20000		/* this route has a source selector */
 #define RTF_MPATH	0x40000		/* multipath route or operation */
 #define RTF_JUMBO	0x80000		/* try to use jumbo frames */
 
@@ -151,8 +151,21 @@ struct rtentry {
 
 #ifndef _KERNEL
 /* obsoleted */
-#define	RTF_TUNNEL	0x100000	/* Tunnelling bit. */
+#define RTF_SOURCE	0x20000		/* this route has a source selector */
+#define RTF_TUNNEL	0x100000	/* Tunnelling bit. */
 #endif
+
+/* Routing priorities used by the different routing protocols */
+#define RTP_NONE	0	/* unset priority use sane default */
+#define RTP_CONNECTED	4	/* directly connected routes */
+#define RTP_STATIC	8	/* static routes */
+#define RTP_OSPF	16	/* OSPF routes */
+#define RTP_ISIS	20	/* IS-IS routes */
+#define RTP_RIP		24	/* RIP routes */
+#define RTP_BGP		32	/* BGP routes */
+#define RTP_DEFAULT	48	/* routes that have nothing set */
+#define RTP_MAX		63	/* maximum priority */
+#define RTP_ANY		64	/* any of the above */
 
 /*
  * Routing statistics.
@@ -175,7 +188,7 @@ struct rt_msghdr {
 	u_short	rtm_hdrlen;	/* sizeof(rt_msghdr) to skip over the header */
 	u_short	rtm_index;	/* index for associated ifp */
 	u_short rtm_tableid;	/* routing table id */
-	u_char	rtm_prio;	/* routing priority */
+	u_char	rtm_priority;	/* routing priority */
 	u_char	rtm_pad;
 	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
 	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
@@ -398,7 +411,8 @@ void	 rtredirect(struct sockaddr *, struct sockaddr *,
 int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **, u_int);
-int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **, u_int);
+int	 rtrequest1(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
+	     u_int);
 void	 rt_if_remove(struct ifnet *);
 
 struct radix_node_head	*rt_gettable(sa_family_t, u_int);
