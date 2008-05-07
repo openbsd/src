@@ -68,8 +68,9 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	mpeif->sc_unit = unit;
 	ifp = &mpeif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
+	ifp->if_flags = IFF_POINTOPOINT;
 	ifp->if_softc = mpeif;
-	ifp->if_mtu = 1500;
+	ifp->if_mtu = MPE_MTU;
 	ifp->if_ioctl = mpeioctl;
 	ifp->if_output = mpeoutput;
 	ifp->if_start = mpestart;
@@ -182,6 +183,13 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags |= IFF_RUNNING;
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < MPE_MTU_MIN ||
+		    ifr->ifr_mtu > MPE_MTU_MAX)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCGETLABEL:
 		ifm = ifp->if_softc;
