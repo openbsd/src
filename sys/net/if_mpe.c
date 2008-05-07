@@ -242,13 +242,13 @@ mpe_input(struct mbuf *m)
 		printf("mpe_input: invalid packet with non BoS label\n");
 #endif
 		m_free(m);
+		return;
 	}
 
 	
 #ifdef MPLS_DEBUG
-		printf("mpe_input: got packet with label: %d\n",
-		    ((ntohl(shim->shim_label & MPLS_LABEL_MASK)) >>
-		    MPLS_LABEL_OFFSET));
+	printf("mpe_input: got packet with label: %d\n",
+	    ((ntohl(shim->shim_label & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET));
 #endif
 	m_adj(m, sizeof(shim));
 	
