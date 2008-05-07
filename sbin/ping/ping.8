@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.35 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.36 2008/05/07 11:57:20 claudio Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 7 2008 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -158,8 +158,7 @@ Bypass the normal routing tables and send directly to a host on an attached
 network.
 If the host is not on a directly attached network, an error is returned.
 This option can be used to ping a local host through an interface
-that has no route through it (e.g., after the interface was dropped by
-.Xr routed 8 ) .
+that has no route through it.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56,
@@ -335,7 +334,6 @@ Others may use completely wild values.
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
 .Xr ping6 8 ,
-.Xr routed 8 ,
 .Xr spray 8
 .Sh HISTORY
 The

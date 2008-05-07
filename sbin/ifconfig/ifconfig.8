@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.159 2008/05/07 07:11:52 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.160 2008/05/07 11:57:19 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -326,12 +326,8 @@ Disable the specified media options on the interface.
 Set the routing metric of the interface to
 .Ar nhops ,
 default 0.
-The routing metric is used by the routing protocol
-(see
-.Xr routed 8 ) .
-Higher metrics have the effect of making a route
-less favorable; metrics are counted as addition hops
-to the destination network or host.
+The routing metric can be used by routing protocols.
+Higher metrics have the effect of making a route less favorable.
 .It Cm mode Ar mode
 If the driver for the interface supports the media selection system,
 set the specified operating mode on the interface to the given
