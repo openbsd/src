@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.65 2008/05/06 03:44:14 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.66 2008/05/07 06:06:25 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -247,10 +247,11 @@ pr_rthdr(int af)
 		    "Flags", "Refs", "Use", "Mtu", "Interface");
 		break;
 	default:
-		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
+		printf("%-*.*s %-*.*s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
 		    WID_DST(af), WID_DST(af), "Destination",
 		    WID_GW(af), WID_GW(af), "Gateway",
-		    "Flags", "Refs", "Use", "Mtu", "Interface");
+		    "Flags", "Refs", "Use", "Mtu", "Prio", "Iface");
+		break;
 	}
 }
 
@@ -301,14 +302,15 @@ p_rtentry(struct rt_msghdr *rtm)
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
-	printf("%6u %8llu ", rtm->rtm_rmx.rmx_refcnt,
+	printf("%5u %8llu ", rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
 	if (rtm->rtm_rmx.rmx_mtu)
-		printf("%6u ", rtm->rtm_rmx.rmx_mtu);
+		printf("%5u ", rtm->rtm_rmx.rmx_mtu);
 	else
-		printf("%6s ", "-");
+		printf("%5s ", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
-	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
+	printf("  %2d %.16s", rtm->rtm_priority,
+	    if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
 }
 

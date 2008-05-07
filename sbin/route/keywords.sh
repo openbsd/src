@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.21 2008/05/06 03:40:31 claudio Exp $
+# $OpenBSD: keywords.sh,v 1.22 2008/05/07 06:06:25 claudio Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -47,6 +47,7 @@ nostatic
 out
 pop
 prefixlen
+priority
 proto1
 proto2
 push

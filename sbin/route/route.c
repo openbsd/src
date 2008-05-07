@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.116 2008/05/06 12:53:32 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.117 2008/05/07 06:06:25 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
-int	 rtmsg(int, int, int);
+int	 rtmsg(int, int, int, u_short);
 __dead void usage(char *);
 void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
@@ -345,10 +345,12 @@ set_metric(char *value, int key)
 int
 newroute(int argc, char **argv)
 {
+	const char *errstr;
 	char *cmd, *dest = "", *gateway = "", *error;
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
 	int fmask = 0;
 	int key;
+	u_short prio = 0;
 	struct hostent *hp = NULL;
 
 	if (uid)
@@ -516,6 +518,14 @@ newroute(int argc, char **argv)
 					usage(1+*argv);
 				set_metric(*++argv, key);
 				break;
+			case K_PRIORITY:
+				if (!--argc)
+					usage(1+*argv);
+				prio = strtonum(*++argv, 0, RTP_MAX, &errstr);
+				if (errstr)
+					errx(1, "priority is %s: %s", errstr,
+					    *argv);
+				break;
 			default:
 				usage(1+*argv);
 				/* NOTREACHED */
@@ -564,7 +574,7 @@ newroute(int argc, char **argv)
 		flags |= RTF_GATEWAY;
 	for (attempts = 1; ; attempts++) {
 		errno = 0;
-		if ((ret = rtmsg(*cmd, flags, fmask)) == 0)
+		if ((ret = rtmsg(*cmd, flags, fmask, prio)) == 0)
 			break;
 		if (errno != ENETUNREACH && errno != ESRCH)
 			break;
@@ -1000,7 +1010,7 @@ struct {
 } m_rtmsg;
 
 int
-rtmsg(int cmd, int flags, int fmask)
+rtmsg(int cmd, int flags, int fmask, u_short prio)
 {
 	static int seq;
 	char *cp = m_rtmsg.m_space;
@@ -1040,6 +1050,7 @@ rtmsg(int cmd, int flags, int fmask)
 	rtm.rtm_rmx = rt_metrics;
 	rtm.rtm_inits = rtm_inits;
 	rtm.rtm_tableid = tableid;
+	rtm.rtm_priority = prio;
 
 	if (rtm_addrs & RTA_NETMASK)
 		mask_addr(&so_dst, &so_mask, RTA_DST);
@@ -1122,7 +1133,7 @@ char *msgtypes[] = {
 };
 
 char metricnames[] =
-"\011pksent\010rttvar\7rtt\6ssthresh\5sendpipe\4recvpipe\3expire\2hopcount\1mtu";
+"\011priority\010rttvar\7rtt\6ssthresh\5sendpipe\4recvpipe\3expire\2hopcount\1mtu";
 char routeflags[] =
 "\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE\010MASK_PRESENT\011CLONING"
 "\012XRESOLVE\013LLINFO\014STATIC\015BLACKHOLE\016PROTO3\017PROTO2\020PROTO1\021CLONED\022SOURCE\023MPATH\024JUMBO";
@@ -1130,7 +1141,7 @@ char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC"
 "\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
 char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\13LABEL";
+"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\013LABEL";
 
 const char *
 get_linkstate(int mt, int link_state)
@@ -1226,7 +1237,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	default:
-		printf("table: %u, pid: %ld, seq %d, errno %d, flags:",
+		printf("priority %d, ", rtm->rtm_priority);
+		printf("table %u, pid: %ld, seq %d, errno %d\nflags:",
 		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
 		    rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
@@ -1314,9 +1326,8 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 #define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
 
-	printf("%s\n", "     use  hopcount       mtu    expire");
+	printf("%s\n", "     use       mtu    expire");
 	printf("%8llu  ", rtm->rtm_rmx.rmx_pksent);
-	printf("%8u%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
 	printf("%8u%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
 		rtm->rtm_rmx.rmx_expire -= time(NULL);
