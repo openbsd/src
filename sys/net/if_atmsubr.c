@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.26 2006/03/04 22:40:15 brad Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.27 2008/05/07 13:45:35 dlg Exp $       */
 
 /*
  *
@@ -240,8 +240,7 @@ atm_output(ifp, m0, dst, rt0)
 		return (error);
 	}
 	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if_start(ifp);
 	splx(s);
 	return (error);
 

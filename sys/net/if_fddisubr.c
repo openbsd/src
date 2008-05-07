@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.53 2007/10/13 14:21:01 fgsch Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.54 2008/05/07 13:45:35 dlg Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -354,8 +354,7 @@ fddi_output(ifp0, m0, dst, rt0)
 #endif /* NCARP > 0 */
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if_start(ifp);
 	splx(s);
 	return (error);
 

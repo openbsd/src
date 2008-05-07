@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.30 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.31 2008/05/07 13:45:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -402,8 +402,8 @@ bstp_transmit_tcn(struct bstp_state *bs, struct bstp_port *bp)
 	s = splnet();
 	bp->bp_txcount++;
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if (error == 0)
+		if_start(ifp);
 	splx(s);
 }
 
@@ -535,8 +535,8 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 
 	bp->bp_txcount++;
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if (error == 0)
+		if_start(ifp);
  done:
 	splx(s);
 }

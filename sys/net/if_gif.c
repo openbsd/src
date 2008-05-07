@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.48 2008/04/26 01:24:01 brad Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.49 2008/05/07 13:45:35 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -308,8 +308,7 @@ gif_output(ifp, m, dst, rt)
 		splx(s);
 		return (error);
 	}
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if_start(ifp);
 	splx(s);
 	return (error);
 

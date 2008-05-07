@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.167 2008/04/24 11:36:38 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.168 2008/05/07 13:45:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2716,8 +2716,7 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	ifp->if_obytes += len;
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if_start(ifp);
 
 	return (0);
 }
