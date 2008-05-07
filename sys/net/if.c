@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.169 2008/04/10 23:15:45 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.170 2008/05/07 05:51:12 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -86,8 +86,6 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/netisr.h>
-
-#include <dev/rndvar.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -1997,10 +1995,4 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-void
-netrndintr(void)
-{
-	add_net_randomness(0);
 }

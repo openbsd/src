@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.118 2008/04/23 10:55:14 norby Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.119 2008/05/07 05:51:12 mpf Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
+
+#include <dev/rndvar.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -562,6 +564,11 @@ ether_input(ifp0, eh, m)
 #endif
 
 	etype = ntohs(eh->ether_type);
+
+	if (!(netisr & (1 << NETISR_RND_DONE))) {
+		add_net_randomness(etype);
+		atomic_setbits_int(&netisr, (1 << NETISR_RND_DONE));
+	}
 
 #if NVLAN > 0
 	if (etype == ETHERTYPE_VLAN && (vlan_input(eh, m) == 0))
