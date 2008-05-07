@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.112 2008/05/06 12:58:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.113 2008/05/07 01:49:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -130,12 +130,12 @@ typedef struct {
 %token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
 %token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
 %token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
-%token	VIRTUAL WITH ERROR
+%token	VIRTUAL WITH ERROR ROUTE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname table
 %type	<v.number>	port http_type loglevel sslcache optssl mark
-%type	<v.number>	proto_type dstmode retry log flag direction
+%type	<v.number>	proto_type dstmode retry log flag direction forwardmode
 %type	<v.host>	host
 %type	<v.tv>		timeout
 %type	<v.digest>	digest
@@ -337,6 +337,7 @@ rdr		: REDIRECT STRING	{
 			}
 			free($2);
 			srv->conf.id = last_rdr_id++;
+			srv->conf.timeout.tv_sec = RELAY_TIMEOUT;
 			if (last_rdr_id == INT_MAX) {
 				yyerror("too many redirections defined");
 				free(srv);
@@ -378,7 +379,20 @@ rdropts_l	: rdropts_l rdroptsl nl
 		| rdroptsl optnl
 		;
 
-rdroptsl	: FORWARD TO tablespec		{
+rdroptsl	: forwardmode TO tablespec interface	{
+			if ($4 != NULL) {
+				strlcpy($3->conf.ifname, $4,
+				    sizeof($3->conf.ifname));
+				free($4);
+				if (($1 & F_ROUTE) == 0) {
+					yyerror("superfluous interface");
+					YYERROR;
+				}
+			} else if ($1 & F_ROUTE) {
+				yyerror("missing interface to route to");
+				YYERROR;
+			}
+
 			if ($3->conf.check == CHECK_NOCHECK) {
 				yyerror("table %s has no check", $3->conf.name);
 				purge_table(conf->sc_tables, $3);
@@ -397,7 +411,7 @@ rdroptsl	: FORWARD TO tablespec		{
 				rdr->conf.table_id = $3->conf.id;
 			}
 			$3->conf.rdrid = rdr->conf.id;
-			$3->conf.flags |= F_USED;
+			$3->conf.flags |= F_USED | $1;
 		}
 		| LISTEN ON STRING port interface {
 			if (host($3, &rdr->virts,
@@ -426,7 +440,17 @@ rdroptsl	: FORWARD TO tablespec		{
 			}
 			free($2);
 		}
+		| SESSION TIMEOUT NUMBER		{
+			if ((rdr->conf.timeout.tv_sec = $3) < 0) {
+				yyerror("invalid timeout: %d", $3);
+				YYERROR;
+			}
+		}
 		| include
+		;
+
+forwardmode	: FORWARD		{ $$ = 0; }
+		| ROUTE			{ $$ = F_ROUTE; }
 		;
 
 table		: '<' STRING '>'	{
@@ -1344,6 +1368,7 @@ lookup(char *s)
 		{ "retry",		RETRY },
 		{ "return",		RETURN },
 		{ "roundrobin",		ROUNDROBIN },
+		{ "route",		ROUTE },
 		{ "sack",		SACK },
 		{ "script",		SCRIPT },
 		{ "send",		SEND },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.100 2008/05/06 06:09:48 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.101 2008/05/07 01:49:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -319,6 +319,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_RETURN		0x00020000
 #define F_TRAP			0x00040000
 #define F_NEEDPF		0x00080000
+#define F_ROUTE			0x00100000
 
 struct host_config {
 	objid_t			 id;
@@ -362,6 +363,7 @@ struct table_config {
 	u_int32_t		 flags;
 	int			 check;
 	char			 demote_group[IFNAMSIZ];
+	char			 ifname[IFNAMSIZ];
 	struct timeval		 timeout;
 	in_port_t		 port;
 	int			 retcode;
@@ -403,6 +405,7 @@ struct rdr_config {
 	objid_t			 backup_id;
 	char			 name[SRV_NAME_SIZE];
 	char			 tag[TAG_NAME_SIZE];
+	struct timeval		 timeout;
 };
 
 struct rdr {

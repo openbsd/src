@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.16 2007/12/12 14:55:12 jmc Exp $
+.\"	$OpenBSD: relayd.8,v 1.17 2008/05/07 01:49:29 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2007 $
+.Dd $Mdocdate: May 7 2008 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
@@ -49,10 +49,11 @@ To allow
 .Nm
 to properly set up
 .Xr pf 4
-rules, the following line is required in the NAT section of
+rules, the following lines are required in the NAT and filter sections of
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
 rdr-anchor "relayd/*"
+anchor "relayd/*"
 .Ed
 .Pp
 Layer 7 relaying happens at the application level and is
