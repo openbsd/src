@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.36 2008/04/10 19:55:41 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.37 2008/05/07 09:35:52 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -809,8 +809,7 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			tp->t_lflag &= ~EXTPROC;
 		}
 		return(0);
-	} else
-	if (cdevsw[major(dev)].d_open == ptcopen)
+	} else if (cdevsw[major(dev)].d_open == ptcopen)
 		switch (cmd) {
 
 		case TIOCGPGRP:
@@ -874,7 +873,8 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 
 		case TIOCSIG:
-			if (*(unsigned int *)data >= NSIG)
+			if (*(unsigned int *)data >= NSIG ||
+			    *(unsigned int *)data == 0)
 				return(EINVAL);
 			if ((tp->t_lflag&NOFLSH) == 0)
 				ttyflush(tp, FREAD|FWRITE);
