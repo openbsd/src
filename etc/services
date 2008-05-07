@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.68 2008/05/06 22:52:03 sthen Exp $
+#	$OpenBSD: services,v 1.69 2008/05/07 12:19:20 beck Exp $
 #
 # Network services, Internet style
 #
@@ -277,6 +277,7 @@ icb		7326/tcp		# Internet Citizen's Band
 spamd		8025/tcp		# spamd(8)
 spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
+dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
 hunt		26740/udp		# hunt(6)
 #
 # Appletalk

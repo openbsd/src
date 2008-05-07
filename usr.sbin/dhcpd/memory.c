@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.14 2006/08/09 22:23:53 cloder Exp $ */
+/*	$OpenBSD: memory.c,v 1.15 2008/05/07 12:19:20 beck Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -39,6 +39,7 @@
  */
 
 #include "dhcpd.h"
+#include "sync.h"
 
 struct subnet *subnets;
 static struct shared_network *shared_networks;
@@ -51,6 +52,8 @@ static struct lease *dangling_leases;
 
 static struct hash_table *vendor_class_hash;
 static struct hash_table *user_class_hash;
+
+extern int syncsend;
 
 void
 enter_host(struct host_decl *hd)
@@ -843,9 +846,12 @@ write_leases(void)
 	for (s = shared_networks; s; s = s->next) {
 		for (l = s->leases; l; l = l->next) {
 			if (l->hardware_addr.hlen || l->uid_len ||
-			    (l->flags & ABANDONED_LEASE))
+			    (l->flags & ABANDONED_LEASE)) {
 				if (!write_lease(l))
 					error("Can't rewrite lease database");
+				if (syncsend)
+					sync_lease(l);
+			}
 		}
 	}
 	if (!commit_leases())

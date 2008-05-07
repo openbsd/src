@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.34 2007/12/30 13:38:47 sobrado Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.35 2008/05/07 12:19:20 beck Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -40,7 +40,9 @@
  */
 
 #include "dhcpd.h"
+#include "sync.h"
 
+#include <err.h>
 #include <pwd.h>
 
 void usage(void);
@@ -56,24 +58,35 @@ int log_priority;
 int log_perror = 0;
 int pfpipe[2];
 int gotpipe = 0;
+int syncrecv;
+int syncsend;
+int syncfd = -1;
 pid_t pfproc_pid = -1;
+u_short sync_port;
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
 char *abandoned_tab = NULL;
 char *changedmac_tab = NULL;
 char *leased_tab = NULL;
+struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, cftest = 0, daemonize = 1;
 	extern char *__progname;
+	char *sync_iface = NULL;
+	char *sync_baddr = NULL;
+	struct servent *ent;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
-	setlogmask(LOG_UPTO(LOG_INFO));
+	openlog_r(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY, &sdata);
 
-	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:n")) != -1)
+	if ((ent = getservbyname("dhcpd-sync", "udp")) == NULL)
+		errx(1, "Can't find service \"dhcpd-sync\" in /etc/services");
+	sync_port = ntohs(ent->s_port);
+
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nY:y:")) != -1)
 		switch (ch) {
 		case 'A':
 			abandoned_tab = optarg;
@@ -101,6 +114,15 @@ main(int argc, char *argv[])
 			daemonize = 0;
 			cftest = 1;
 			log_perror = 1;
+			break;
+		case 'Y':
+			if (sync_addhost(optarg, sync_port) != 0)
+				sync_iface = optarg;
+			syncsend++;
+			break;
+		case 'y':
+			sync_baddr = optarg;
+			syncrecv++;
 			break;
 		default:
 			usage();
@@ -133,9 +155,16 @@ main(int argc, char *argv[])
 	if (cftest)
 		exit(0);
 
+	if (syncsend || syncrecv) {
+		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
+		if (syncfd == -1)
+			err(1, "sync init");
+	}
+
 	db_startup();
 	discover_interfaces();
 	icmp_startup(1, lease_pinged);
+
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("user \"_dhcp\" not found");
@@ -190,7 +219,7 @@ usage(void)
 	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]", __progname);
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
-	fprintf(stderr, " [-l lease-file]\n");
+	fprintf(stderr, " [-l lease-file] [-Y synctarget] [-y synclisten]\n");
 	fprintf(stderr, "\t[if0 [... ifN]]\n");
 	exit(1);
 }

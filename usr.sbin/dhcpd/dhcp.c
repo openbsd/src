@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.25 2006/12/15 16:03:16 stevesk Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.26 2008/05/07 12:19:20 beck Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -39,6 +39,7 @@
  */
 
 #include "dhcpd.h"
+#include "sync.h"
 
 int outstanding_pings;
 
@@ -334,6 +335,7 @@ dhcprequest(struct packet *packet)
 	    !memcmp(lease->hardware_addr.haddr, packet->raw->chaddr,
 	    packet->raw->hlen)))) {
 		ack_lease(packet, lease, DHCPACK, 0);
+		sync_lease(lease);
 		return;
 	}
 
@@ -346,8 +348,10 @@ dhcprequest(struct packet *packet)
 	 * The thing we probably should not do is to remain silent.
 	 * For now, we'll just assign the lease to the client anyway.
 	 */
-	if (lease)
+	if (lease) {
 		ack_lease(packet, lease, DHCPACK, 0);
+		sync_lease(lease);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.15 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.16 2008/05/07 12:19:20 beck Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 7 2008 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -51,6 +51,8 @@
 .Op Fl c Ar config-file
 .Op Fl L Ar leased_ip_table
 .Op Fl l Ar lease-file
+.Op Fl Y Ar synctarget
+.Op Fl y Ar synclisten
 .Op Ar if0 Op Ar ... ifN
 .Ek
 .Sh DESCRIPTION
@@ -237,6 +239,32 @@ for testing lease files in a non-production environment.
 .It Fl n
 Only test configuration, do not run
 .Nm .
+.It Fl Y Ar synctarget
+Add target
+.Ar synctarget
+to receive synchronisation messages.
+.Ar synctarget
+can be either an IPv4 address for unicast messages
+or a network interface name followed optionally by a colon and a numeric TTL
+value for multicast messages to the group 224.0.1.240.
+If the multicast TTL is not specified, a default value of 1 is used.
+This option can be specified multiple times.
+See also
+.Sx SYNCHRONISATION
+below.
+.It Fl y Ar synclisten
+Listen on
+.Ar synclisten
+for incoming synchronisation messages.
+The format for
+.Ar synclisten
+is the same as for
+.Ar synctarget ,
+above.
+This option can be specified only once.
+See also
+.Sx SYNCHRONISATION
+below.
 .El
 .Sh CONFIGURATION
 The syntax of the
@@ -366,6 +394,57 @@ A more complete description of the
 .Pa dhcpd.conf
 file syntax is provided in
 .Xr dhcpd.conf 5 .
+.Sh SYNCHRONISATION
+.Nm
+supports realtime synchronisation of the lease allocations to
+a number of
+.Nm
+daemons running on multiple machines,
+using the
+.Fl Y
+and
+.Fl y
+options.
+.Pp
+The following example will accept incoming multicast and unicast
+synchronisation messages, and send outgoing multicast messages through
+the network interface
+.Ar em0 :
+.Bd -literal -offset indent
+# /usr/sbin/dhcpd -y em0 -Y em0
+.Ed
+.Pp
+The second example will increase the multicast TTL to a value of 2,
+add the unicast targets
+.Ar foo.somewhere.org
+and
+.Ar bar.somewhere.org ,
+and accept incoming unicast messages sent to
+.Ar example.somewhere.org
+only.
+.Bd -literal -offset indent
+# /usr/sbin/dhcpd -y example.somewhere.org -Y em0:2 \e
+	-Y foo.somewhere.org -Y bar.somewhere.org
+.Ed
+.Pp
+If the file
+.Pa /var/db/dhcpd.key
+exists,
+.Nm
+will calculate the message-digest fingerprint (checksum) for the file
+and use it as a shared key to authenticate the synchronisation messages.
+The file itself can contain any data.
+For example, to create a secure random key:
+.Bd -literal -offset indent
+# dd if=/dev/arandom of=/var/db/dhcpd.key bs=2048 count=1
+.Ed
+.Pp
+The file needs to be copied to all hosts
+sending or receiving synchronisation messages.
+.Pp
+All hosts using synchronisation must use the same configuration in the
+.Pa /etc/dhcpd.conf
+file.
 .Sh FILES
 .Bl -tag -width "/var/db/dhcpd.leases~  " -compact
 .It /etc/dhcpd.conf

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.22 2006/12/12 19:38:55 stevesk Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.23 2008/05/07 12:19:20 beck Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -39,10 +39,13 @@
  */
 
 #include "dhcpd.h"
+#include "sync.h"
 #include <ifaddrs.h>
 #include <sys/ioctl.h>
 #include <poll.h>
 #include <net/if_media.h>
+
+extern int syncfd;
 
 struct interface_info *interfaces;
 struct protocol *protocols;
@@ -273,6 +276,8 @@ dispatch(void)
 
 	for (nfds = 0, l = protocols; l; l = l->next)
 		nfds++;
+	if (syncfd != -1)
+		nfds++;
 	if (nfds > nfds_max) {
 		fds = realloc(fds, nfds * sizeof(struct pollfd));
 		if (fds == NULL)
@@ -321,8 +326,15 @@ another:
 				++i;
 			}
 		}
+
 		if (i == 0)
 			error("No live interfaces to poll on - exiting.");
+
+		if (syncfd != -1) {
+			/* add syncer */
+			fds[i].fd = syncfd;
+			fds[i].events = POLLIN;
+		}
 
 		/* Wait for a packet or a timeout... */
 		switch (poll(fds, nfds, to_msec)) {
@@ -346,6 +358,8 @@ another:
 			}
 			++i;
 		}
+		if ((syncfd != -1) && (fds[i].revents & (POLLIN | POLLHUP)))
+			sync_recv();
 		interfaces_invalidated = 0;
 	}
 }
