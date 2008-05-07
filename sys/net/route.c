@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.88 2008/05/05 13:06:37 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.89 2008/05/07 02:45:24 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1028,7 +1028,8 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	info.rti_ifa = ifa;
 	info.rti_flags = flags | ifa->ifa_flags;
 	info.rti_info[RTAX_DST] = dst;
-	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	if (cmd == RTM_ADD)
+		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	if (ifa->ifa_ifp->if_rtlabelid &&
 	    (label = rtlabel_id2name(ifa->ifa_ifp->if_rtlabelid)) != NULL) {
 		bzero(&sa_rl, sizeof(sa_rl));
