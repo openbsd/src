@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.24 2007/12/20 02:53:02 brad Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.25 2008/05/07 02:11:34 claudio Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,6 @@
 static int faithioctl(struct ifnet *, u_long, caddr_t);
 int faithoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *);
-static void faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 void	faithattach(int);
 int	faith_clone_create(struct if_clone *, int);
@@ -194,17 +193,6 @@ faithoutput(ifp, m, dst, rt)
 	return (0);
 }
 
-/* ARGSUSED */
-static void
-faithrtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
-{
-	if (rt)
-		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
-}
-
 /*
  * Process an ioctl request.
  */
@@ -224,7 +212,6 @@ faithioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		ifa = (struct ifaddr *)data;
-		ifa->ifa_rtrequest = faithrtrequest;
 		/*
 		 * Everything else is done at a higher level.
 		 */
