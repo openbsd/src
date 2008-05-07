@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.177 2008/02/10 10:54:28 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.178 2008/05/07 05:49:37 pyr Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -92,6 +92,7 @@ initialize_server_options(ServerOptions *options)
 	options->use_login = -1;
 	options->compression = -1;
 	options->allow_tcp_forwarding = -1;
+	options->allow_agent_forwarding = -1;
 	options->num_allow_users = 0;
 	options->num_deny_users = 0;
 	options->num_allow_groups = 0;
@@ -211,6 +212,8 @@ fill_default_server_options(ServerOptions *options)
 		options->compression = COMP_DELAYED;
 	if (options->allow_tcp_forwarding == -1)
 		options->allow_tcp_forwarding = 1;
+	if (options->allow_agent_forwarding == -1)
+		options->allow_agent_forwarding = 1;
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->max_startups == -1)
@@ -268,7 +271,7 @@ typedef enum {
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
 	sGssAuthentication, sGssCleanupCreds, sAcceptEnv, sPermitTunnel,
 	sMatch, sPermitOpen, sForceCommand, sChrootDirectory,
-	sUsePrivilegeSeparation,
+	sUsePrivilegeSeparation, sAllowAgentForwarding,
 	sDeprecated, sUnsupported
 } ServerOpCodes;
 
@@ -342,6 +345,7 @@ static struct {
 	{ "tcpkeepalive", sTCPKeepAlive, SSHCFG_GLOBAL },
 	{ "keepalive", sTCPKeepAlive, SSHCFG_GLOBAL },	/* obsolete alias */
 	{ "allowtcpforwarding", sAllowTcpForwarding, SSHCFG_ALL },
+	{ "allowagentforwarding", sAllowAgentForwarding, SSHCFG_ALL },
 	{ "allowusers", sAllowUsers, SSHCFG_GLOBAL },
 	{ "denyusers", sDenyUsers, SSHCFG_GLOBAL },
 	{ "allowgroups", sAllowGroups, SSHCFG_GLOBAL },
@@ -962,6 +966,10 @@ parse_flag:
 		intptr = &options->allow_tcp_forwarding;
 		goto parse_flag;
 
+	case sAllowAgentForwarding:
+		intptr = &options->allow_agent_forwarding;
+		goto parse_flag;
+
 	case sUsePrivilegeSeparation:
 		intptr = &use_privsep;
 		goto parse_flag;
@@ -1325,6 +1333,7 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	M_CP_INTOPT(permit_root_login);
 
 	M_CP_INTOPT(allow_tcp_forwarding);
+	M_CP_INTOPT(allow_agent_forwarding);
 	M_CP_INTOPT(gateway_ports);
 	M_CP_INTOPT(x11_display_offset);
 	M_CP_INTOPT(x11_forwarding);
