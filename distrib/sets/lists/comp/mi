@@ -599,8 +599,6 @@
 ./usr/include/dev/pci/if_wpireg.h
 ./usr/include/dev/pci/if_wpivar.h
 ./usr/include/dev/pci/if_xgereg.h
-./usr/include/dev/pci/isesreg.h
-./usr/include/dev/pci/isesvar.h
 ./usr/include/dev/pci/ixgb_ee.h
 ./usr/include/dev/pci/ixgb_hw.h
 ./usr/include/dev/pci/ixgb_ids.h
