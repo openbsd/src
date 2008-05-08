@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1350 2008/04/30 21:07:26 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1351 2008/05/08 20:22:32 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -298,6 +298,7 @@
 #define	PCI_VENDOR_SILAN	0x1904		/* Silan */
 #define	PCI_VENDOR_SANGOMA	0x1923		/* Sangoma */
 #define	PCI_VENDOR_OPTION	0x1931		/* Option */
+#define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technology */
 #define	PCI_VENDOR_AGEIA	0x1971		/* Ageia */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
@@ -1643,6 +1644,16 @@
 
 /* Forte Media products */
 #define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* 801 Sound */
+
+/* Freescale products */
+#define	PCI_PRODUCT_FREESCALE_MPC8349E	0x0080		/* MPC8349E */
+#define	PCI_PRODUCT_FREESCALE_MPC8349	0x0081		/* MPC8349 */
+#define	PCI_PRODUCT_FREESCALE_MPC8347E_TBGA	0x0082		/* MPC8347E TBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347_TBGA	0x0083		/* MPC8347 TBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347E_PBGA	0x0084		/* MPC8347E PBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347_PBGA	0x0085		/* MPC8347 PBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8343E	0x0086		/* MPC8343E */
+#define	PCI_PRODUCT_FREESCALE_MPC8343	0x0087		/* MPC8343 */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */

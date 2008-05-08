@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1350 2008/04/30 21:07:26 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1351 2008/05/08 20:22:32 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4506,6 +4506,38 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
 	    "801 Sound",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8349E,
+	    "MPC8349E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8349,
+	    "MPC8349",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8347E_TBGA,
+	    "MPC8347E TBGA",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8347_TBGA,
+	    "MPC8347 TBGA",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8347E_PBGA,
+	    "MPC8347E PBGA",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8347_PBGA,
+	    "MPC8347 PBGA",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8343E,
+	    "MPC8343E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8343,
+	    "MPC8343",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -15814,6 +15846,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_OPTION,
 	    "Option",
+	},
+	{
+	    PCI_VENDOR_FREESCALE,
+	    "Freescale",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC,
