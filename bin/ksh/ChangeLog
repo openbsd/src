@@ -41,7 +41,7 @@ Tue May 18 11:24:12 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
 
 Thu May 13 17:23:17 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
 
-	* emacs.c(x_bound,bind_if_not_bound): new variable/fucntion.
+	* emacs.c(x_bound,bind_if_not_bound): new variable/function.
 	* emacs.c(x_bind): set bit in x_bound[].
 	* emacs.c(x_emacs_keys): call bind_if_not_bound.
 
@@ -527,7 +527,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.14 2003/03/10 03:48:16 david Exp $
+$OpenBSD: ChangeLog,v 1.15 2008/05/08 16:51:30 sobrado Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

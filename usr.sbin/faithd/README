@@ -1,7 +1,7 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$OpenBSD: README,v 1.10 2004/02/25 09:51:32 jmc Exp $
+$OpenBSD: README,v 1.11 2008/05/08 16:51:30 sobrado Exp $
 $KAME: README,v 1.9 2002/05/09 14:10:06 itojun Exp $
 
 
@@ -95,7 +95,7 @@ There are two ways to translate IPv4 address to IPv6 address:
 (5.a) Install "newbie" and set up FAITH mode. See kit/ports/newbie.
 
 (5.b) Add an entry into /etc/hosts so that you can resolve hostname into
-faked IPv6 addrss.  For example, add the following line for www.netbsd.org:
+faked IPv6 address.  For example, add the following line for www.netbsd.org:
 
 	3ffe:0501:ffff:0000::140.160.140.252	www.netbsd.org
 

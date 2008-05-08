@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.17 2007/11/25 16:40:04 jmc Exp $
+$OpenBSD: BUG-REPORTS,v 1.18 2008/05/08 16:51:30 sobrado Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -490,7 +490,7 @@ x pdksh 5.1.3, - (reported by Roberto Zacheo): when set -u, variable trimming
   [see Mail.6:21]
   [fixed in 5.2.0 - fixed varsub() to test if variable is null]
 
-x pdksh 5.1.3, - (reported by David Tamkin): when a fucntion is autoloaded,
+x pdksh 5.1.3, - (reported by David Tamkin): when a function is autoloaded,
   ksh complains the definition file didn't define the function, even if it did.
   [see Mail.6:52]
   [fixed in 5.2.0 - exec.c(comexec): when checking if defined, use cp,
