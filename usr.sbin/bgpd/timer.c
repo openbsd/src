@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.5 2008/05/08 06:52:13 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.6 2008/05/08 07:40:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -88,7 +88,7 @@ timer_set(struct peer *p, enum Timer timer, u_int offset)
 	pt->val = time(NULL) + offset;
 
 	TAILQ_FOREACH(t, &p->timers, entry)
-		if (t->val > pt->val)
+		if (t->val == 0 || t->val > pt->val)
 			break;
 	if (t != NULL)
 		TAILQ_INSERT_BEFORE(t, pt, entry);
