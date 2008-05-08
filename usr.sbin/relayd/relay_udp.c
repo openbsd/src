@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.10 2008/03/03 16:43:42 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.11 2008/05/08 02:27:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -61,8 +61,8 @@ void		 relay_udp_request(struct session *);
 void		 relay_udp_timeout(int, short, void *);
 
 void		 relay_dns_log(struct session *, u_int8_t *);
-int		 relay_dns_validate(struct relay *, struct sockaddr_storage *,
-		    u_int8_t *, size_t, u_int32_t *);
+void		*relay_dns_validate(struct relay *, struct sockaddr_storage *,
+		    u_int8_t *, size_t);
 int		 relay_dns_request(struct session *);
 void		 relay_dns_response(struct session *, u_int8_t *, size_t);
 int		 relay_dns_cmp(struct session *, struct session *);
@@ -173,7 +173,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	struct timeval tv;
 	struct sockaddr_storage ss;
 	u_int8_t buf[READ_BUF_SIZE];
-	u_int32_t key = 0;
+	void *priv = NULL;
 	ssize_t len;
 
 	if (relay_sessions >= RELAY_MAX_SESSIONS ||
@@ -187,17 +187,19 @@ relay_udp_server(int fd, short sig, void *arg)
 
 	/* Parse and validate the packet header */
 	if (proto->validate != NULL &&
-	    (*proto->validate)(rlay, &ss, buf, len, &key) != 0)
+	    (priv = (*proto->validate)(rlay, &ss, buf, len)) == NULL)
 		return;
 
 	if ((con = (struct session *)
-	    calloc(1, sizeof(struct session))) == NULL)
+	    calloc(1, sizeof(struct session))) == NULL) {
+		free(priv);
 		return;
+	}
 
 	/*
 	 * Replace the DNS request Id with a random Id.
 	 */
-	con->se_key = arc4random() & 0xffff;
+	con->se_priv = priv;
 	con->se_in.s = -1;
 	con->se_out.s = -1;
 	con->se_in.dst = &con->se_out;
@@ -205,8 +207,8 @@ relay_udp_server(int fd, short sig, void *arg)
 	con->se_in.con = con;
 	con->se_out.con = con;
 	con->se_relay = rlay;
+	con->se_hashkey = rlay->rl_dstkey;
 	con->se_id = ++relay_conid;
-	con->se_outkey = key;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
 	con->se_in.dir = RELAY_DIR_REQUEST;
@@ -297,6 +299,11 @@ relay_udp_timeout(int fd, short sig, void *arg)
  * Domain Name System support
  */
 
+struct relay_dns_priv {
+	u_int16_t	dp_inkey;
+	u_int16_t	dp_outkey;
+};
+
 struct relay_dnshdr {
 	u_int16_t	dns_id;
 
@@ -338,52 +345,62 @@ relay_dns_log(struct session *con, u_int8_t *buf)
 	    ntohs(hdr->dns_arcount));
 }
 
-int
+void *
 relay_dns_validate(struct relay *rlay, struct sockaddr_storage *ss,
-    u_int8_t *buf, size_t len, u_int32_t *key)
+    u_int8_t *buf, size_t len)
 {
 	struct relay_dnshdr	*hdr = (struct relay_dnshdr *)buf;
 	struct session		*con, lookup;
+	u_int16_t		 key;
+	struct relay_dns_priv	*priv, lpriv;
 
 	/* Validate the header length */
 	if (len < sizeof(*hdr))
-		return (-1);
+		return (NULL);
 
-	*key = ntohs(hdr->dns_id);
+	key = ntohs(hdr->dns_id);
 
 	/*
 	 * Check if the header has the response flag set, otherwise
 	 * return 0 to tell the UDP server to create a new session.
 	 */
-	if ((hdr->dns_flags0 & DNS_F0_QR) == 0)
-		return (0);
+	if ((hdr->dns_flags0 & DNS_F0_QR) == 0) {
+		priv = malloc(sizeof(struct relay_dns_priv));
+		if (priv == NULL)
+			return (NULL);
+		priv->dp_inkey = arc4random() & 0xffff;
+		priv->dp_outkey = key;
+		return ((void *)priv);
+	}
 
 	/*
 	 * Lookup if this response is for a known session and if the
 	 * remote host matches the original destination of the request.
 	 */
-	lookup.se_key = *key;
+	lpriv.dp_inkey = key;
+	lookup.se_priv = &lpriv;
 	if ((con = SPLAY_FIND(session_tree,
-	    &rlay->rl_sessions, &lookup)) != NULL &&
+	    &rlay->rl_sessions, &lookup)) != NULL && con->se_priv != NULL &&
 	    relay_cmp_af(ss, &con->se_out.ss) == 0)
 		relay_dns_response(con, buf, len);
 
 	/*
 	 * This is not a new session, ignore it in the UDP server.
 	 */
-	return (-1);
+	return (NULL);
 }
 
 int
 relay_dns_request(struct session *con)
 {
 	struct relay		*rlay = (struct relay *)con->se_relay;
+	struct relay_dns_priv	*priv = (struct relay_dns_priv *)con->se_priv;
 	u_int8_t		*buf = EVBUFFER_DATA(con->se_out.output);
 	size_t			 len = EVBUFFER_LENGTH(con->se_out.output);
 	struct relay_dnshdr	*hdr;
 	socklen_t		 slen;
 
-	if (buf == NULL || len < 1)
+	if (buf == NULL || priv == NULL || len < 1)
 		return (-1);
 	if (debug)
 		relay_dns_log(con, buf);
@@ -404,7 +421,7 @@ relay_dns_request(struct session *con)
 	slen = con->se_out.ss.ss_len;
 
 	hdr = (struct relay_dnshdr *)buf;
-	hdr->dns_id = htons(con->se_key);
+	hdr->dns_id = htons(priv->dp_inkey);
 
  retry:
 	if (sendto(rlay->rl_s, buf, len, 0,
@@ -432,8 +449,12 @@ void
 relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 {
 	struct relay		*rlay = (struct relay *)con->se_relay;
+	struct relay_dns_priv	*priv = (struct relay_dns_priv *)con->se_priv;
 	struct relay_dnshdr	*hdr;
 	socklen_t		 slen;
+
+	if (priv == NULL)
+		fatalx("relay_dns_response: response to invalid session");
 
 	if (debug)
 		relay_dns_log(con, buf);
@@ -442,7 +463,7 @@ relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 	 * Replace the random DNS request Id with the original Id
 	 */
 	hdr = (struct relay_dnshdr *)buf;
-	hdr->dns_id = htons(con->se_outkey);
+	hdr->dns_id = htons(priv->dp_outkey);
 
 	slen = con->se_out.ss.ss_len;
 	if (sendto(rlay->rl_s, buf, len, 0,
@@ -457,5 +478,11 @@ relay_dns_response(struct session *con, u_int8_t *buf, size_t len)
 int
 relay_dns_cmp(struct session *a, struct session *b)
 {
-	return (memcmp(&a->se_key, &b->se_key, sizeof(a->se_key)));
+	struct relay_dns_priv	*ap = (struct relay_dns_priv *)a->se_priv;
+	struct relay_dns_priv	*bp = (struct relay_dns_priv *)b->se_priv;
+
+	if (ap == NULL || bp == NULL)
+		fatalx("relay_dns_cmp: invalid session");
+
+	return (memcmp(&ap->dp_inkey, &bp->dp_inkey, sizeof(u_int16_t)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.101 2008/05/07 01:49:29 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.102 2008/05/08 02:27:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -421,11 +421,11 @@ TAILQ_HEAD(rdrlist, rdr);
 struct relay;
 struct session {
 	objid_t				 se_id;
-	u_int32_t			 se_key;
 	objid_t				 se_relayid;
 	struct ctl_relay_event		 se_in;
 	struct ctl_relay_event		 se_out;
-	u_int32_t			 se_outkey;
+	void				*se_priv;
+	u_int32_t			 se_hashkey;
 	struct event			 se_ev;
 	struct timeval			 se_timeout;
 	struct timeval			 se_tv_start;
@@ -541,9 +541,9 @@ struct protocol {
 	struct proto_tree	 response_tree;
 
 	int			(*cmp)(struct session *, struct session *);
-	int			(*validate)(struct relay *,
+	void			*(*validate)(struct relay *,
 				    struct sockaddr_storage *,
-				    u_int8_t *, size_t, u_int32_t *);
+				    u_int8_t *, size_t);
 	int			(*request)(struct session *);
 
 	TAILQ_ENTRY(protocol)	 entry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.88 2008/05/05 12:33:55 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.89 2008/05/08 02:27:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1085,7 +1085,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 	case NODE_ACTION_HASH:
 		DPRINTF("relay_handle_http: hash '%s: %s'",
 		    pn->key, pk->value);
-		con->se_outkey = hash32_str(pk->value, con->se_outkey);
+		con->se_hashkey = hash32_str(pk->value, con->se_hashkey);
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_LOG:
@@ -1902,7 +1902,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->se_relay = rlay;
 	con->se_id = ++relay_conid;
 	con->se_relayid = rlay->rl_conf.id;
-	con->se_outkey = rlay->rl_dstkey;
+	con->se_hashkey = rlay->rl_dstkey;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
 	con->se_in.dir = RELAY_DIR_REQUEST;
@@ -2003,7 +2003,7 @@ relay_from_table(struct session *con)
 	struct relay		*rlay = (struct relay *)con->se_relay;
 	struct host		*host;
 	struct table		*table = rlay->rl_dsttable;
-	u_int32_t		 p = con->se_outkey;
+	u_int32_t		 p = con->se_hashkey;
 	int			 idx = 0;
 
 	if (table->conf.check && !table->up) {
@@ -2188,6 +2188,8 @@ relay_close(struct session *con, const char *msg)
 			free(ptr);
 	}
 
+	if (con->se_priv != NULL)
+		free(con->se_priv);
 	if (con->se_in.bev != NULL)
 		bufferevent_free(con->se_in.bev);
 	else if (con->se_in.output != NULL)
