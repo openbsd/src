@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.7 2008/05/08 07:43:03 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.8 2008/05/08 07:45:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,8 @@ timer_set(struct peer *p, enum Timer timer, u_int offset)
 			fatal("timer_set");
 		pt->type = timer;
 	} else {
+		if (pt->val == time(NULL) + offset)
+			return;
 		TAILQ_REMOVE(&p->timers, pt, entry);
 	}
 
