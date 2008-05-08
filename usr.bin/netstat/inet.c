@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.105 2008/02/05 16:14:31 sthen Exp $	*/
+/*	$OpenBSD: inet.c,v 1.106 2008/05/08 03:13:55 mpf Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ carp_stats(char *name)
 	p(carps_badver,	"\t\t%llu discarded packet%s with a bad version\n");
 	p2(carps_badlen, "\t\t%llu discarded because packet too short\n");
 	p2(carps_badauth, "\t\t%llu discarded for bad authentication\n");
-	p2(carps_badvhid, "\t\t%llu discarded for bad vhid\n");
+	p2(carps_badvhid, "\t\t%llu discarded for unknown vhid\n");
 	p2(carps_badaddrs, "\t\t%llu discarded because of a bad address list\n");
 	p(carps_opackets, "\t%llu packet%s sent (IPv4)\n");
 	p(carps_opackets6, "\t%llu packet%s sent (IPv6)\n");
