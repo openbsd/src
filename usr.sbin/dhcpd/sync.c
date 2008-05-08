@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.2 2008/05/08 05:38:26 beck Exp $	*/
+/*	$OpenBSD: sync.c,v 1.3 2008/05/08 07:28:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -52,7 +52,7 @@
 int sync_debug;
 
 u_int32_t sync_counter;
-int syncfd;
+int syncfd = -1;
 int sendmcast;
 
 struct sockaddr_in sync_in;
