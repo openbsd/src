@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wb.4,v 1.17 2007/05/31 19:19:53 jmc Exp $
+.\"	$OpenBSD: wb.4,v 1.18 2008/05/08 03:30:17 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: wb.4,v 1.2 1998/12/05 09:31:25 rnordier Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 8 2008 $
 .Dt WB 4
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nd Winbond W89C840F 10/100 Ethernet device
 .Sh SYNOPSIS
 .Cd "wb* at pci?"
+.Cd "amphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -141,6 +142,7 @@ If the system is powered down prior to booting
 the card should be configured correctly.
 .El
 .Sh SEE ALSO
+.Xr amphy 4 ,
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
