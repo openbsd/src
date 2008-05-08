@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.27 2008/05/08 13:57:43 miod Exp $ */
+/*	$OpenBSD: ums.c,v 1.28 2008/05/08 15:02:01 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -91,10 +91,10 @@ struct ums_softc {
 	int sc_enabled;
 
 	int flags;		/* device configuration */
-#define UMS_Z		0x01	/* z direction available */
+#define UMS_Z		0x01	/* Z direction available */
 #define UMS_SPUR_BUT_UP	0x02	/* spurious button up events */
 #define UMS_REVZ	0x04	/* Z-axis is reversed */
-#define UMS_W		0x08	/* w direction available */
+#define UMS_W		0x08	/* W direction available */
 #define UMS_REVW	0x10	/* W-axis is reversed */
 #define UMS_LEADINGBYTE	0x20	/* Unknown leading byte */
 
@@ -300,6 +300,26 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_loc_btn[2].pos = 10;
 	}
 
+	/*
+	 * The Microsoft Wireless Notebook Optical Mouse 3000 Model 1049 has
+	 * five Report IDs: 19, 23, 24, 17, 18 (in the order they appear in
+	 * report descriptor), it seems that report 17 contains the necessary
+	 * mouse information (3-buttons, X, Y, wheel) so we specify it
+	 * manually.
+	 */
+	if (uaa->vendor == USB_VENDOR_MICROSOFT &&
+	    uaa->product == USB_PRODUCT_MICROSOFT_WLNOTEBOOK3) {
+		sc->flags = UMS_Z;
+		sc->nbuttons = 3;
+		/* XXX change sc_hdev isize to 5? */
+		sc->sc_loc_x.pos = 8;
+		sc->sc_loc_y.pos = 16;
+		sc->sc_loc_z.pos = 24;
+		sc->sc_loc_btn[0].pos = 0;
+		sc->sc_loc_btn[1].pos = 1;
+		sc->sc_loc_btn[2].pos = 2;
+	}
+
 	printf(": %d button%s",
 	    sc->nbuttons, sc->nbuttons <= 1 ? "" : "s");
 	switch (sc->flags & (UMS_Z | UMS_W)) {
@@ -406,8 +426,7 @@ ums_intr(struct uhidev *addr, void *buf, u_int len)
 	if (sc->flags & UMS_LEADINGBYTE) {
 		if (*ibuf++ == 0x02)
 			return;
-		/* else
-			len--; */
+		/* len--; */
 	} else if (sc->flags & UMS_SPUR_BUT_UP) {
 		if (*ibuf == 0x14 || *ibuf == 0x15)
 			return;
