@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1350 2008/04/30 21:07:26 brad Exp $
+$OpenBSD: pcidevs,v 1.1351 2008/05/08 20:22:32 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -293,6 +293,7 @@ vendor	XGI		0x18ca	XGI Technology
 vendor	SILAN		0x1904	Silan
 vendor	SANGOMA		0x1923	Sangoma
 vendor	OPTION		0x1931	Option
+vendor	FREESCALE	0x1957	Freescale
 vendor	ATTANSIC	0x1969	Attansic Technology
 vendor	AGEIA		0x1971	Ageia
 vendor	JMICRON		0x197b	JMicron
@@ -1638,6 +1639,16 @@ product FORE PCA200E		0x0300	ATM PCA-200e
 
 /* Forte Media products */
 product FORTEMEDIA FM801	0x0801	801 Sound
+
+/* Freescale products */
+product FREESCALE MPC8349E	0x0080	MPC8349E
+product FREESCALE MPC8349	0x0081	MPC8349
+product FREESCALE MPC8347E_TBGA	0x0082	MPC8347E TBGA
+product FREESCALE MPC8347_TBGA	0x0083	MPC8347 TBGA
+product FREESCALE MPC8347E_PBGA	0x0084	MPC8347E PBGA
+product FREESCALE MPC8347_PBGA	0x0085	MPC8347 PBGA
+product FREESCALE MPC8343E	0x0086	MPC8343E
+product FREESCALE MPC8343	0x0087	MPC8343
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
