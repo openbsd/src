@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.h,v 1.1 2008/05/07 12:19:20 beck Exp $	*/
+/*	$OpenBSD: sync.h,v 1.2 2008/05/08 05:38:26 beck Exp $	*/
 
 /*
  * Copyright (c) 2008, Bob Beck <beck@openbsd.org>
@@ -64,6 +64,7 @@ struct dhcp_synctlv_lease {
 #define DHCP_SYNC_END		0x0000
 #define DHCP_SYNC_LEASE		0x0001
 
+extern int	 syncfd;
 extern int	 sync_init(const char *, const char *, u_short);
 extern int	 sync_addhost(const char *, u_short);
 extern void	 sync_recv(void);

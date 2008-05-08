@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.1 2008/05/07 12:19:20 beck Exp $	*/
+/*	$OpenBSD: sync.c,v 1.2 2008/05/08 05:38:26 beck Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -375,6 +375,9 @@ sync_send(struct iovec *iov, int iovlen)
 {
 	struct sync_host *shost;
 	struct msghdr msg;
+	
+	if (syncfd == -1)
+		return;
 
 	/* setup buffer */
 	bzero(&msg, sizeof(msg));
