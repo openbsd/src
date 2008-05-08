@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.158 2008/05/08 07:40:03 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.159 2008/05/08 13:07:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2030,8 +2030,6 @@ fetchtable(u_int rtableid, int connected_only)
 
 			kr->r.flags = F_KERNEL;
 			kr->r.ifindex = rtm->rtm_index;
-			if (rtm->rtm_index)
-				kr->r.flags |= F_CONNECTED;
 			kr->r.prefix.s_addr =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
@@ -2064,8 +2062,6 @@ fetchtable(u_int rtableid, int connected_only)
 
 			kr6->r.flags = F_KERNEL;
 			kr6->r.ifindex = rtm->rtm_index;
-			if (rtm->rtm_index)
-				kr6->r.flags |= F_CONNECTED;
 			memcpy(&kr6->r.prefix,
 			    &((struct sockaddr_in6 *)sa)->sin6_addr,
 			    sizeof(kr6->r.prefix));
@@ -2108,6 +2104,10 @@ fetchtable(u_int rtableid, int connected_only)
 				    sizeof(kr6->r.nexthop));
 				break;
 			case AF_LINK:
+				if (sa->sa_family == AF_INET)
+					kr->r.flags |= F_CONNECTED;
+				else if (sa->sa_family == AF_INET6)
+					kr6->r.flags |= F_CONNECTED;
 				break;
 			}
 
