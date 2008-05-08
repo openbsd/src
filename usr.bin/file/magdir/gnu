@@ -1,5 +1,7 @@
-#	$OpenBSD: gnu,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: gnu,v 1.2 2008/05/08 01:40:57 chl Exp $
 
+#------------------------------------------------------------------------------
+# gnu:  file(1) magic for various GNU tools
 #
 # GNU nlsutils message catalog file format
 #
@@ -12,33 +14,23 @@
 # message catalogs, from Mitchum DSouza <m.dsouza@mrc-apu.cam.ac.uk>
 0	string		*nazgul*	Nazgul style compiled message catalog
 >8	lelong		>0		\b, version %ld
+
 # GnuPG
 # The format is very similar to pgp
 0	string          \001gpg                 GPG key trust database
 >4	byte            x                       version %d
-0       beshort         0x9901                  GPG key public ring
+0	beshort		0x8502			GPG encrypted data
 # This magic is not particularly good, as the keyrings don't have true
 # magic. Nevertheless, it covers many keyrings.
+0       beshort         0x9901                  GPG key public ring
 
 # Gnumeric spreadsheet
 # This entry is only semi-helpful, as Gnumeric compresses its files, so
 # they will ordinarily reported as "compressed", but at least -z helps
 39      string          =<gmr:Workbook           Gnumeric spreadsheet
 
-#------------------------------------------------------------------------------
-# gcc:  file(1) magic for GCC special files
-#
-0       string          gpch            GCC precompiled header
-
-# The version field is annoying.  It's 3 characters, not zero-terminated.
->5      byte            x                       (version %c
->6      byte            x                       \b%c
->7      byte            x                       \b%c)
-
-# 67 = 'C', 111 = 'o', 43 = '+', 79 = 'O'
->4      byte            67                      for C
->4      byte            111                     for Objective C
->4      byte            43                      for C++
->4      byte            79                      for Objective C++
-
-
+# From: James Youngman <jay@gnu.org> 
+# gnu find magic
+0	string	\0LOCATE	GNU findutils locate database data
+>7	string	>\0		\b, format %s
+>7	string	02		\b (frcode)

@@ -1,5 +1,3 @@
-#	$OpenBSD: alpha,v 1.3 2004/06/03 03:14:19 tedu Exp $
-
 #------------------------------------------------------------------------------
 # alpha architecture description
 #
@@ -19,5 +17,14 @@
 
 # Basic recognition of Digital UNIX core dumps - Mike Bremford <mike@opac.bl.uk>
 #
+# The actual magic number is just "Core", followed by a 2-byte version
+# number; however, treating any file that begins with "Core" as a Digital
+# UNIX core dump file may produce too many false hits, so we include one
+# byte of the version number as well; DU 5.0 appears only to be up to
+# version 2.
+#
 0	string		Core\001	Alpha COFF format core dump (Digital UNIX)
 >24	string		>\0		\b, from '%s'
+0	string		Core\002	Alpha COFF format core dump (Digital UNIX)
+>24	string		>\0		\b, from '%s'
+

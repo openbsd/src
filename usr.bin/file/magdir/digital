@@ -1,8 +1,8 @@
-#	$OpenBSD: digital,v 1.3 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: digital,v 1.4 2008/05/08 01:40:57 chl Exp $
 
 #  Digital UNIX - Info
 #
-0	string	!<arch>\n________64E	Alpha archive
+0	string	=!<arch>\n________64E	Alpha archive
 >22	string	X			-- out of date
 #
 # Alpha COFF Based Executables
@@ -34,7 +34,7 @@
 0	string	\033c\033		LN03 output
 0	long	04553207		X image
 #
-0	string	!<PDF>!\n		profiling data file
+0	string	=!<PDF>!\n		profiling data file
 #
 # Locale data tables (MIPS and Alpha).
 #

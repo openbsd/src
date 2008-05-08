@@ -1,4 +1,4 @@
-#	$OpenBSD: mail.news,v 1.4 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: mail.news,v 1.5 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # mail.news:  file(1) magic for mail and news
@@ -37,5 +37,6 @@
 
 # Squish Fidonet message area databases
 # SQD file (requires at least one message in the area)
-256	leshort	0xAFAE4453		Squish message area data file
->4	leshort	>0			(%d messages)
+# XXX: Weak magic
+#256	leshort	0xAFAE4453		Squish message area data file
+#>4	leshort	>0			(%d messages)

@@ -1,4 +1,4 @@
-#	$OpenBSD: flash,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: flash,v 1.2 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # flash:	file(1) magic for Macromedia Flash file format
@@ -11,6 +11,9 @@
 >3	byte		x		version %d
 0	string		CWS		Macromedia Flash data (compressed),
 >3	byte		x		version %d
+# From: Cal Peake <cp@absolutedigital.net>
+0	string		FLV		Macromedia Flash Video
+
 #
 # From Dave Wilson
 0	string AGD4\xbe\xb8\xbb\xcb\x00	Macromedia Freehand 9 Document

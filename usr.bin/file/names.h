@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.h,v 1.6 2004/05/19 02:32:35 tedu Exp $ */
+/*	$OpenBSD: names.h,v 1.7 2008/05/08 01:40:56 chl Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -33,7 +33,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * $Id: names.h,v 1.6 2004/05/19 02:32:35 tedu Exp $
+ * $Id: names.h,v 1.7 2008/05/08 01:40:56 chl Exp $
  */
 
 /*
@@ -168,6 +168,8 @@ static struct names {
 	{".text",	L_MACH},
 	{"clr",		L_MACH},
 	{"(input,",	L_PAS},
+	{"program",	L_PAS},
+	{"record",	L_PAS},
 	{"dcl",		L_PLI},
 	{"Received:",	L_MAIL},
 	{">From",	L_MAIL},

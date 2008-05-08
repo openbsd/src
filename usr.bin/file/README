@@ -1,4 +1,4 @@
-@(#) $OpenBSD: README,v 1.3 2006/07/18 15:08:27 ian Exp $
+@(#) $OpenBSD: README,v 1.4 2008/05/08 01:40:56 chl Exp $
 ** README for file(1) Command **
 
 This is Release 4.x of Ian Darwin's (copyright but distributable)
@@ -89,9 +89,15 @@ E-mail: christos@astron.com
 
 Phone: Do not even think of telephoning me about this program. Send cash first!
 
-Parts of this software were developed at the University of Toronto Computing Services
-and at SoftQuad Inc., developers of SGML/HTML/XML publishing software, in Toronto, Canada.
-SoftQuad was swallowed up by Corel in 2002 and does not exist any longer.
+Parts of this software were developed at SoftQuad Inc., developers
+of SGML/HTML/XML publishing software, in Toronto, Canada.
+SoftQuad was swallowed up by Corel in 2002
+and does not exist any longer.
 
-Kees Zeelenberg reports that an MS-Windows (Win32) port of file(1)
-is available from http://gnuwin32.sourceforge.net/
+From: Kees Zeelenberg
+
+An MS-Windows (Win32) port of File-4.17 is available from
+http://gnuwin32.sourceforge.net/
+
+File is an implementation of the Unix File(1) command.
+It knows the 'magic number' of several thousands of file types.

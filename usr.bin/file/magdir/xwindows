@@ -1,4 +1,3 @@
-#	$OpenBSD: xwindows,v 1.1 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # xwindows:  file(1) magic for various X/Window system file formats.
@@ -14,7 +13,7 @@
 
 # xfsdump archive
 0	string	xFSdump0			xfsdump archive
->8	long	x	(version %d)
+>8	belong	x	(version %d)
 
 # Jaleo XFS files
 0	long	395726				Jaleo XFS file

@@ -1,13 +1,12 @@
-#	$OpenBSD: amigaos,v 1.4 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: amigaos,v 1.5 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # amigaos:  file(1) magic for AmigaOS binary formats:
 
 #
 # From ignatios@cs.uni-bonn.de (Ignatios Souvatzis)
-# Some formats are still missing: AmigaOS special IFF's, e.g.: FORM....CTLG
-# (the others should be separate, anyway)
 #
+0	belong		0x000003fa	AmigaOS shared library
 0	belong		0x000003f3	AmigaOS loadseg()ble executable/binary
 0	belong		0x000003e7	AmigaOS object/library data
 #
@@ -45,19 +44,9 @@
 0	beshort		0x0f03		AmigaOS outline font
 0	belong		0x80001001	AmigaOS outline tag
 0	string		##\ version	catalog translation
-
-0	string		FORM		IFF data
->8	string		CTLG		\b, CTLG message catalog
->8	string		PREF		\b, PREF preferences
-
-0	string		Rar!		RAR archive data,
->44	byte		x		v%0x,
->35	byte		0		os: MS-DOS
->35	byte		1		os: OS/2
->35	byte		2		os: Win32
->35	byte		3		os: Unix
-
-0	belong		0x000003fa	AmigaOS shared library
+0	string		EMOD\0		Amiga E module
+8	string		ECXM\0		ECX module
+0	string/c	@database	AmigaGuide file
 
 # Amiga disk types
 # 
@@ -70,3 +59,7 @@
 0	string		DOS\4		Amiga Fastdir DOS disk
 0	string		DOS\5		Amiga Fastdir FFS disk
 0	string		KICK		Kickstart disk
+
+# From: Alex Beregszaszi <alex@fsn.hu>
+0	string		LZX		LZX compressed archive (Amiga)
+

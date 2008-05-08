@@ -1,5 +1,6 @@
-#	$OpenBSD: tuxedo,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: tuxedo,v 1.2 2008/05/08 01:40:57 chl Exp $
 
+#
 #------------------------------------------------------------------------------
 # tuxedo:	file(1) magic for BEA TUXEDO data files
 #

@@ -1,4 +1,4 @@
-#	$OpenBSD: console,v 1.1 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: console,v 1.2 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # Console game magic
@@ -155,3 +155,41 @@
 # Microsoft Xbox data file formats
 0       string          XIP0            XIP, Microsoft Xbox data
 0       string          XTF0            XTF, Microsoft Xbox data
+
+# Atari Lynx cartridge dump (EXE/BLL header)
+# From: "Stefan A. Haubenthal" <polluks@web.de>
+
+0	beshort		0x8008		Lynx cartridge,
+>2	beshort		x		RAM start $%04x
+>6	string		BS93
+
+# Opera file system that is used on the 3DO console
+# From: Serge van den Boom <svdb@stack.nl>
+0	string		\x01ZZZZZ\x01	3DO "Opera" file system
+
+# From Gürkan Sengün <gurkan@linuks.mine.nu>, www.linuks.mine.nu
+0	string		GBS		Nintendo Gameboy Music/Audio Data
+12	string		GameBoy\ Music\ Module	Nintendo Gameboy Music Module
+
+# Playstations Patch Files from: From: Thomas Klausner <tk@giga.or.at>
+0	string	PPF30			Playstation Patch File version 3.0
+>5	byte	0			\b, PPF 1.0 patch
+>5	byte	1			\b, PPF 2.0 patch
+>5	byte	2			\b, PPF 3.0 patch
+>>56	byte	0			\b, Imagetype BIN (any)
+>>56	byte	1			\b, Imagetype GI (PrimoDVD)
+>>57	byte	0			\b, Blockcheck disabled
+>>57	byte	1			\b, Blockcheck enabled
+>>58	byte	0			\b, Undo data not available
+>>58	byte	1			\b, Undo data available
+>6	string	x			\b, description: %s
+
+0	string	PPF20			Playstation Patch File version 2.0
+>5	byte	0			\b, PPF 1.0 patch
+>5	byte	1			\b, PPF 2.0 patch
+>>56	lelong	>0			\b, size of file to patch %d
+>6	string	x			\b, description: %s
+
+0	string	PPF10			Playstation Patch File version 1.0
+>5	byte	0			\b, Simple Encoding
+>6	string	x			\b, description: %s

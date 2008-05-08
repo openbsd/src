@@ -1,4 +1,4 @@
-#	$OpenBSD: ncr,v 1.2 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: ncr,v 1.3 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # ncr:  file(1) magic for NCR Tower objects
@@ -35,14 +35,14 @@
 0	beshort		000640	Tower32/800 68020
 >18	   beshort		&020000	w/68881 object
 >18	   beshort		&040000	compatible object
->18	   beshort		&~060000	object
+>18	   beshort		&060000	object
 >20	   beshort		0407	executable
 >20	   beshort		0413	pure executable
 >12	   belong		>0	not stripped
 >22	   beshort		>0	- version %ld
 0	beshort		000645	Tower32/800 68010
 >18	   beshort		&040000	compatible object
->18	   beshort		&~060000 object
+>18	   beshort		&060000 object
 >20	   beshort		0407	executable
 >20	   beshort		0413	pure executable
 >12	   belong		>0	not stripped

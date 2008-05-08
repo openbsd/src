@@ -1,4 +1,4 @@
-#	$OpenBSD: mathematica,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: mathematica,v 1.2 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # mathematica:  file(1) magic for mathematica files
@@ -25,7 +25,7 @@
 
 # generic:
 0	string	(*^\r\r::[\011	Mathematica notebook version 2.x
-0	string	\(\*\^\r\n\r\n\:\:\[\011	Mathematica notebook version 2.x
+0	string	(*^\r\n\r\n::[\011	Mathematica notebook version 2.x
 0	string	(*^\015			Mathematica notebook version 2.x
 0	string	(*^\n\r\n\r::[\011	Mathematica notebook version 2.x
 0	string	(*^\r::[\011	Mathematica notebook version 2.x

@@ -1,5 +1,3 @@
-#	$OpenBSD: bFLT,v 1.1 2004/06/03 03:14:19 tedu Exp $
-
 #------------------------------------------------------------------------------
 # bFLT: file(1) magic for BFLT uclinux binary files
 #

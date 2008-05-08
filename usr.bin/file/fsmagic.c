@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.11 2005/05/18 03:11:18 jaredy Exp $ */
+/*	$OpenBSD: fsmagic.c,v 1.12 2008/05/08 01:40:56 chl Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -58,7 +58,7 @@
 #undef HAVE_MAJOR
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: fsmagic.c,v 1.11 2005/05/18 03:11:18 jaredy Exp $")
+FILE_RCSID("@(#)$Id: fsmagic.c,v 1.12 2008/05/08 01:40:56 chl Exp $")
 #endif	/* lint */
 
 protected int
@@ -90,8 +90,8 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			file_error(ms, errno, "cannot stat `%s'", fn);
 			return -1;
 		}
-		if (file_printf(ms, "cannot open (%s)",
-		    strerror(errno)) == -1)
+		if (file_printf(ms, "cannot open `%s' (%s)",
+		    fn, strerror(errno)) == -1)
 			return -1;
 		return 1;
 	}
@@ -182,6 +182,8 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	/* TODO add code to handle V7 MUX and Blit MUX files */
 #ifdef	S_IFIFO
 	case S_IFIFO:
+		if((ms->flags & MAGIC_DEVICES) != 0)
+			break;
 		if (file_printf(ms, "fifo (named pipe)") == -1)
 			return -1;
 		return 1;

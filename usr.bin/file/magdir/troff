@@ -1,4 +1,4 @@
-#	$OpenBSD: troff,v 1.2 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: troff,v 1.3 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # troff:  file(1) magic for *roff
@@ -10,9 +10,10 @@
 0	string		'\\"		troff or preprocessor input text
 0	string		'.\\"		troff or preprocessor input text
 0	string		\\"		troff or preprocessor input text
+0	string		'''		troff or preprocessor input text
 
 # ditroff intermediate output text
-0	string		x\ T		ditroff text
+0	string		x\ T		ditroff output text
 >4	string		cat		for the C/A/T phototypesetter
 >4	string		ps		for PostScript
 >4	string		dvi		for DVI

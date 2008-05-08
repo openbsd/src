@@ -1,4 +1,4 @@
-/*	$OpenBSD: readelf.h,v 1.5 2004/05/19 02:32:36 tedu Exp $ */
+/*	$OpenBSD: readelf.h,v 1.6 2008/05/08 01:40:56 chl Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -53,6 +51,7 @@ typedef	uint32_t 	Elf64_Addr[2];
 typedef	uint32_t 	Elf64_Off[2];
 typedef uint32_t 	Elf64_Xword[2];
 #else
+#undef USE_ARRAY_FOR_64BIT_TYPES
 typedef	uint64_t 	Elf64_Addr;
 typedef	uint64_t 	Elf64_Off;
 typedef uint64_t 	Elf64_Xword;
@@ -226,6 +225,7 @@ typedef struct {
 #define NT_NETBSD_EMULATION	2
 #define NT_FREEBSD_VERSION	1
 #define NT_OPENBSD_VERSION	1
+#define NT_DRAGONFLY_VERSION	1
 /* GNU executables (name = "GNU") */
 #define NT_GNU_VERSION		1
 

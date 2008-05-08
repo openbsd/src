@@ -1,76 +1,57 @@
-#	$OpenBSD: commands,v 1.3 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: commands,v 1.4 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # commands:  file(1) magic for various shells and interpreters
 #
-0	string		:\ shell archive or commands for antique kernel text
-0	string		#!/bin/sh		Bourne shell script text
-0	string		#!\ /bin/sh		Bourne shell script text
-0	string		#!/bin/csh		C shell script text
-0	string		#!\ /bin/csh		C shell script text
+0	string		:			shell archive or script for antique kernel text
+0	string/b	#!\ /bin/sh		Bourne shell script text executable
+0	string/b	#!\ /bin/csh		C shell script text executable
 # korn shell magic, sent by George Wu, gwu@clyde.att.com
-0	string		#!/bin/ksh		Korn shell script text
-0	string		#!\ /bin/ksh		Korn shell script text
-0	string	 	#!/bin/tcsh		Tenex C shell script text
-0	string	 	#!\ /bin/tcsh		Tenex C shell script text
-0	string		#!/usr/local/tcsh	Tenex C shell script text
-0	string	 	#!\ /usr/local/tcsh	Tenex C shell script text
-0	string		#!/usr/local/bin/tcsh	Tenex C shell script text
-0	string		#!\ /usr/local/bin/tcsh	Tenex C shell script text
+0	string/b	#!\ /bin/ksh		Korn shell script text executable
+0	string/b 	#!\ /bin/tcsh		Tenex C shell script text executable
+0	string/b 	#!\ /usr/local/tcsh	Tenex C shell script text executable
+0	string/b	#!\ /usr/local/bin/tcsh	Tenex C shell script text executable
+
 #
 # zsh/ash/ae/nawk/gawk magic from cameron@cs.unsw.oz.au (Cameron Simpson)
-0	string		#!/usr/local/bin/zsh	Paul Falstad's zsh
-0	string		#!\ /usr/local/bin/zsh	Paul Falstad's zsh
-0	string		#!/usr/local/bin/ash	Neil Brown's ash
-0	string		#!\ /usr/local/bin/ash	Neil Brown's ash
-0	string		#!/usr/local/bin/ae	Neil Brown's ae
-0	string		#!\ /usr/local/bin/ae	Neil Brown's ae
-0	string		#!/bin/nawk		new awk script text
-0	string		#!\ /bin/nawk		new awk script text
-0	string		#!/usr/bin/nawk		new awk script text
-0	string		#!\ /usr/bin/nawk	new awk script text
-0	string		#!/usr/local/bin/nawk	new awk script text
-0	string		#!\ /usr/local/bin/nawk	new awk script text
-0	string		#!/bin/gawk		GNU awk script text
-0	string		#!\ /bin/gawk		GNU awk script text
-0	string		#!/usr/bin/gawk		GNU awk script text
-0	string		#!\ /usr/bin/gawk	GNU awk script text
-0	string		#!/usr/local/bin/gawk	GNU awk script text
-0	string		#!\ /usr/local/bin/gawk	GNU awk script text
+0	string/b	#!\ /bin/zsh		Paul Falstad's zsh script text executable
+0	string/b	#!\ /usr/bin/zsh	Paul Falstad's zsh script text executable
+0	string/b	#!\ /usr/local/bin/zsh	Paul Falstad's zsh script text executable
+0	string/b	#!\ /usr/local/bin/ash	Neil Brown's ash script text executable
+0	string/b	#!\ /usr/local/bin/ae	Neil Brown's ae script text executable
+0	string/b	#!\ /bin/nawk		new awk script text executable
+0	string/b	#!\ /usr/bin/nawk	new awk script text executable
+0	string/b	#!\ /usr/local/bin/nawk	new awk script text executable
+0	string/b	#!\ /bin/gawk		GNU awk script text executable
+0	string/b	#!\ /usr/bin/gawk	GNU awk script text executable
+0	string/b	#!\ /usr/local/bin/gawk	GNU awk script text executable
 #
-0	string		#!/bin/awk		awk commands text
-0	string		#!\ /bin/awk		awk commands text
-0	string		#!/usr/bin/awk		awk commands text
-0	string		#!\ /usr/bin/awk	awk commands text
-0	string		BEGIN			awk commands text
-
-# For Larry Wall's perl language.  The ``eval'' line recognizes an
-# outrageously clever hack for USG systems.
-#				Keith Waclena <keith@cerberus.uchicago.edu>
-0	string		#!/bin/perl			perl commands text
-0	string		#!\ /bin/perl			perl commands text
-0	string		eval\ "exec\ /bin/perl		perl commands text
-0	string		#!/usr/bin/perl			perl commands text
-0	string		#!\ /usr/bin/perl		perl commands text
-0	string		eval\ "exec\ /usr/bin/perl	perl commands text
-0	string		#!/usr/local/bin/perl		perl commands text
-0	string		#!\ /usr/local/bin/perl		perl commands text
-0	string		eval\ "exec\ /usr/local/bin/perl	perl commands text
+0	string/b	#!\ /bin/awk		awk script text executable
+0	string/b	#!\ /usr/bin/awk	awk script text executable
+# update to distinguish from *.vcf files
+0	regex		BEGIN[[:space:]]*[{]	awk script text
 
 # AT&T Bell Labs' Plan 9 shell
-0	string		#!/bin/rc	Plan 9 rc shell script text
-0	string		#!\ /bin/rc	Plan 9 rc shell script text
+0	string/b	#!\ /bin/rc	Plan 9 rc shell script text executable
 
 # bash shell magic, from Peter Tobias (tobias@server.et-inf.fho-emden.de)
-0	string		#!/bin/bash	Bourne-Again shell script text
-0	string		#!\ /bin/bash	Bourne-Again shell script text
-0	string		#!/usr/local/bin/bash	Bourne-Again shell script text
-0	string		#!\ /usr/local/bin/bash	Bourne-Again shell script text
+0	string/b	#!\ /bin/bash	Bourne-Again shell script text executable
+0	string/b	#!\ /usr/local/bin/bash	Bourne-Again shell script text executable
 
-# generic shell magic
-0	string		#!\ /			a
->3	string		>\0			%s script text
-0	string		#!/			a
->2	string		>\0			%s script text
-0	string		#!\ 			commands text
->3	string		>\0			for %s
+# using env
+0	string		#!/usr/bin/env		a
+>15	string		>\0			%s script text executable
+0	string		#!\ /usr/bin/env	a
+>16	string		>\0			%s script text executable
+
+# PHP scripts
+# Ulf Harnhammar <ulfh@update.uu.se>
+0	string/c	=<?php			PHP script text
+0	string		=<?\n			PHP script text
+0	string		=<?\r			PHP script text
+0	string/b	#!\ /usr/local/bin/php	PHP script text executable
+0	string/b	#!\ /usr/bin/php	PHP script text executable
+
+0	string		Zend\x00		PHP script Zend Optimizer data
+
+0	string		$!			DCL command file

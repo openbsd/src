@@ -1,6 +1,6 @@
-#	$OpenBSD: ctags,v 1.1 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: ctags,v 1.2 2008/05/08 01:40:57 chl Exp $
 
 # ----------------------------------------------------------------------------
 # ctags:  file (1) magic for Exuberant Ctags files
 # From: Alexander Mai <mai@migdal.ikp.physik.tu-darmstadt.de>
-0       string  !_TAG   Exuberant Ctags tag file text
+0       string  =!_TAG   Exuberant Ctags tag file text

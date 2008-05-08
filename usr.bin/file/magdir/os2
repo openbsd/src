@@ -1,4 +1,4 @@
-#	$OpenBSD: os2,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: os2,v 1.2 2008/05/08 01:40:57 chl Exp $
 
 #------------------------------------------------------------------------------
 # os2:  file(1) magic for OS/2 files
@@ -7,7 +7,7 @@
 # Provided 1998/08/22 by
 # David Mediavilla <davidme.news@REMOVEIFNOTSPAMusa.net>
 1	string	InternetShortcut	MS Windows 95 Internet shortcut text
->24	string	>\			(URL=<%s>)
+>24	string	>\ 			(URL=<%s>)
 
 # OS/2 URL objects
 # Provided 1998/08/22 by

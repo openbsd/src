@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2007/02/19 13:02:08 tom Exp $ */
+/*	$OpenBSD: file.c,v 1.18 2008/05/08 01:40:56 chl Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -40,7 +40,6 @@
 #include <sys/types.h>
 #include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
-#include <fcntl.h>	/* for open() */
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
 #  include <sys/utime.h>
@@ -73,18 +72,18 @@
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: file.c,v 1.17 2007/02/19 13:02:08 tom Exp $")
+FILE_RCSID("@(#)$Id: file.c,v 1.18 2008/05/08 01:40:56 chl Exp $")
 #endif	/* lint */
 
 
 #ifdef S_IFLNK
-#define SYMLINKFLAG "L"
+#define SYMLINKFLAG "Lh"
 #else
 #define SYMLINKFLAG ""
 #endif
 
-#define USAGE	"Usage: %s [-bck" SYMLINKFLAG "Nnrsvz] [-F separator] [-f namefile] [-m magicfiles] file ...\n" \
-		"       %s [-m magicfiles] -C\n"
+# define USAGE  "Usage: %s [-bck" SYMLINKFLAG "nNrsvz0] [-e test] [-f namefile] [-F separator] [-m magicfiles] file...\n" \
+		" 	%s [-m magicfiles] -C\n"
 
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512
@@ -93,15 +92,15 @@ FILE_RCSID("@(#)$Id: file.c,v 1.17 2007/02/19 13:02:08 tom Exp $")
 private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
-	nobuffer = 0;   /* Do not buffer stdout 		*/
+	nobuffer = 0,   /* Do not buffer stdout 		*/
+	nulsep = 0;	/* Append '\0' to the separator		*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
-private char *separator = ":";	/* Default field separator	*/
-
-private char *progname;		/* used throughout 		*/
+private const char *separator = ":";	/* Default field separator	*/
 
 private struct magic_set *magic;
+extern char *__progname;
 
 private void unwrap(char *);
 private void usage(void);
@@ -124,26 +123,29 @@ private void load(const char *, int);
 int
 main(int argc, char *argv[])
 {
-	int c;
+	int c, i;
 	int action = 0, didsomefiles = 0, errflg = 0;
 	int flags = 0;
 	char *home, *usermagic;
 	struct stat sb;
-#define OPTSTRING	"bcCdf:F:kLm:nNprsvz"
+	static const char hmagic[] = "/.magic";
+#define OPTSTRING	"bcCde:f:F:hkLm:nNprsvz0"
 #ifdef HAVE_GETOPT_LONG
 	int longindex;
-	private struct option long_options[] =
+	static const struct option long_options[] =
 	{
 		{"version", 0, 0, 'v'},
 		{"help", 0, 0, 0},
 		{"brief", 0, 0, 'b'},
 		{"checking-printout", 0, 0, 'c'},
 		{"debug", 0, 0, 'd'},
+		{"exclude", 1, 0, 'e' },
 		{"files-from", 1, 0, 'f'},
 		{"separator", 1, 0, 'F'},
 		{"keep-going", 0, 0, 'k'},
 #ifdef S_IFLNK
 		{"dereference", 0, 0, 'L'},
+		{"no-dereference", 0, 0, 'h'},
 #endif
 		{"magic-file", 1, 0, 'm'},
 #if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
@@ -155,12 +157,29 @@ main(int argc, char *argv[])
 		{"no-pad", 0, 0, 'N'},
 		{"special-files", 0, 0, 's'},
 		{"compile", 0, 0, 'C'},
+		{"print0", 0, 0, '0'},
 		{0, 0, 0, 0},
 	};
 #endif
 
+	static const struct {
+		const char *name;
+		int value;
+	} nv[] = {
+		{ "apptype",	MAGIC_NO_CHECK_APPTYPE },
+		{ "ascii",	MAGIC_NO_CHECK_ASCII },
+		{ "compress",	MAGIC_NO_CHECK_COMPRESS },
+		{ "elf",	MAGIC_NO_CHECK_ELF },
+		{ "fortran",	MAGIC_NO_CHECK_FORTRAN },
+		{ "soft",	MAGIC_NO_CHECK_SOFT },
+		{ "tar",	MAGIC_NO_CHECK_TAR },
+		{ "tokens",	MAGIC_NO_CHECK_TOKENS },
+		{ "troff",	MAGIC_NO_CHECK_TROFF },
+	};
+
 #ifdef LC_CTYPE
-	setlocale(LC_CTYPE, ""); /* makes islower etc work for other langs */
+	/* makes islower etc work for other langs */
+	(void)setlocale(LC_CTYPE, "");
 #endif
 
 #ifdef __EMX__
@@ -168,20 +187,15 @@ main(int argc, char *argv[])
 	_wildcard(&argc, &argv);
 #endif
 
-	if ((progname = strrchr(argv[0], '/')) != NULL)
-		progname++;
-	else
-		progname = argv[0];
-
 	magicfile = default_magicfile;
 	if ((usermagic = getenv("MAGIC")) != NULL)
 		magicfile = usermagic;
 	else
 		if ((home = getenv("HOME")) != NULL) {
-			size_t len = strlen(home) + 8;
+			size_t len = strlen(home) + sizeof(hmagic);
 			if ((usermagic = malloc(len)) != NULL) {
 				(void)strlcpy(usermagic, home, len);
-				(void)strlcat(usermagic, "/.magic", len);
+				(void)strlcat(usermagic, hmagic, len);
 				if (stat(usermagic, &sb)<0) 
 					free(usermagic);
 				else
@@ -189,6 +203,9 @@ main(int argc, char *argv[])
 			}
 		}
 
+#ifdef S_IFLNK
+	flags |= getenv("POSIXLY_CORRECT") ? MAGIC_SYMLINK : 0;
+#endif
 #ifndef HAVE_GETOPT_LONG
 	while ((c = getopt(argc, argv, OPTSTRING)) != -1)
 #else
@@ -202,6 +219,9 @@ main(int argc, char *argv[])
 				help();
 			break;
 #endif
+		case '0':
+			nulsep = 1;
+			break;
 		case 'b':
 			++bflag;
 			break;
@@ -214,6 +234,17 @@ main(int argc, char *argv[])
 		case 'd':
 			flags |= MAGIC_DEBUG|MAGIC_CHECK;
 			break;
+		case 'e':
+			for (i = 0; i < sizeof(nv) / sizeof(nv[0]); i++)
+				if (strcmp(nv[i].name, optarg) == 0)
+					break;
+
+			if (i == sizeof(nv) / sizeof(nv[0]))
+				errflg++;
+			else
+				flags |= nv[i].value;
+			break;
+			
 		case 'f':
 			if(action)
 				usage();
@@ -248,9 +279,9 @@ main(int argc, char *argv[])
 			flags |= MAGIC_DEVICES;
 			break;
 		case 'v':
-			(void) fprintf(stdout, "%s-%d.%.2d\n", progname,
+			(void)fprintf(stdout, "%s-%d.%.2d\n", __progname,
 				       FILE_VERSION_MAJOR, patchlevel);
-			(void) fprintf(stdout, "magic file from %s\n",
+			(void)fprintf(stdout, "magic file from %s\n",
 				       magicfile);
 			return 1;
 		case 'z':
@@ -259,6 +290,9 @@ main(int argc, char *argv[])
 #ifdef S_IFLNK
 		case 'L':
 			flags |= MAGIC_SYMLINK;
+			break;
+		case 'h':
+			flags &= ~MAGIC_SYMLINK;
 			break;
 #endif
 		case '?':
@@ -276,14 +310,14 @@ main(int argc, char *argv[])
 	case FILE_COMPILE:
 		magic = magic_open(flags|MAGIC_CHECK);
 		if (magic == NULL) {
-			(void)fprintf(stderr, "%s: %s\n", progname,
+			(void)fprintf(stderr, "%s: %s\n", __progname,
 			    strerror(errno));
 			return 1;
 		}
 		c = action == FILE_CHECK ? magic_check(magic, magicfile) :
 		    magic_compile(magic, magicfile);
 		if (c == -1) {
-			(void)fprintf(stderr, "%s: %s\n", progname,
+			(void)fprintf(stderr, "%s: %s\n", __progname,
 			    magic_error(magic));
 			return -1;
 		}
@@ -309,23 +343,25 @@ main(int argc, char *argv[])
 			process(argv[optind], wid);
 	}
 
+	magic_close(magic);
 	return 0;
 }
 
 
 private void
+/*ARGSUSED*/
 load(const char *m, int flags)
 {
-	if (magic)
+	if (magic || m == NULL)
 		return;
 	magic = magic_open(flags);
 	if (magic == NULL) {
-		(void)fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+		(void)fprintf(stderr, "%s: %s\n", __progname, strerror(errno));
 		exit(1);
 	}
 	if (magic_load(magic, magicfile) == -1) {
 		(void)fprintf(stderr, "%s: %s\n",
-		    progname, magic_error(magic));
+		    __progname, magic_error(magic));
 		exit(1);
 	}
 }
@@ -346,12 +382,13 @@ unwrap(char *fn)
 	} else {
 		if ((f = fopen(fn, "r")) == NULL) {
 			(void)fprintf(stderr, "%s: Cannot open `%s' (%s).\n",
-			    progname, fn, strerror(errno));
+			    __progname, fn, strerror(errno));
 			exit(1);
 		}
 
 		while (fgets(buf, sizeof(buf), f) != NULL) {
-			cwid = file_mbswidth(buf) - 1;
+			buf[strcspn(buf, "\n")] = '\0';
+			cwid = file_mbswidth(buf);
 			if (cwid > wid)
 				wid = cwid;
 		}
@@ -360,30 +397,39 @@ unwrap(char *fn)
 	}
 
 	while (fgets(buf, sizeof(buf), f) != NULL) {
-		buf[file_mbswidth(buf)-1] = '\0';
+		buf[strcspn(buf, "\n")] = '\0';
 		process(buf, wid);
 		if(nobuffer)
-			(void) fflush(stdout);
+			(void)fflush(stdout);
 	}
 
-	(void) fclose(f);
+	(void)fclose(f);
 }
 
+/*
+ * Called for each input file on the command line (or in a list of files)
+ */
 private void
 process(const char *inname, int wid)
 {
 	const char *type;
 	int std_in = strcmp(inname, "-") == 0;
 
-	if (wid > 0 && !bflag)
-		(void) printf("%s%s%*s ", std_in ? "/dev/stdin" : inname,
-		    separator, (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
+	if (wid > 0 && !bflag) {
+		(void)printf("%s", std_in ? "/dev/stdin" : inname);
+		if (nulsep)
+			(void)putc('\0', stdout);
+		else
+			(void)printf("%s", separator);
+		(void)printf("%*s ",
+		    (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
+	}
 
 	type = magic_file(magic, std_in ? NULL : inname);
 	if (type == NULL)
-		printf("ERROR: %s\n", magic_error(magic));
+		(void)printf("ERROR: %s\n", magic_error(magic));
 	else
-		printf("%s\n", type);
+		(void)printf("%s\n", type);
 }
 
 
@@ -447,7 +493,7 @@ byteconv2(int from, int same, int big_endian)
 size_t
 file_mbswidth(const char *s)
 {
-#ifdef HAVE_WCHAR_H
+#if defined(HAVE_WCHAR_H) && defined(HAVE_MBRTOWC) && defined(HAVE_WCWIDTH)
 	size_t bytesconsumed, old_n, n, width = 0;
 	mbstate_t state;
 	wchar_t nextchar;
@@ -481,7 +527,7 @@ file_mbswidth(const char *s)
 private void
 usage(void)
 {
-	(void)fprintf(stderr, USAGE, progname, progname);
+	(void)fprintf(stderr, USAGE, __progname, __progname);
 #ifdef HAVE_GETOPT_LONG
 	(void)fputs("Try `file --help' for more information.\n", stderr);
 #endif
@@ -492,7 +538,7 @@ usage(void)
 private void
 help(void)
 {
-	puts(
+	(void)puts(
 "Usage: file [OPTION]... [FILE]...\n"
 "Determine file type of FILEs.\n"
 "\n"
@@ -503,6 +549,9 @@ help(void)
 "  -c, --checking-printout    print the parsed form of the magic file, use in\n"
 "                               conjunction with -m to debug a new magic file\n"
 "                               before installing it\n"
+"  -e, --exclude              exclude test from the list of test to be\n"
+"                               performed for file. Valid tests are:\n"
+"                               ascii, apptype, elf, compress, soft, tar\n"
 "  -f, --files-from FILE      read the filenames to be examined from FILE\n"
 "  -F, --separator string     use string as separator instead of `:'\n"
 "  -k, --keep-going           don't stop at the first match\n"
@@ -513,8 +562,12 @@ help(void)
 "  -r, --raw                  don't translate unprintable chars to \\ooo\n"
 "  -s, --special-files        treat special (block/char devices) files as\n"
 "                             ordinary ones\n"
+"or\n"
 "      --help                 display this help and exit\n"
+"or\n"
 "      --version              output version information and exit\n"
+"or\n"
+"  -C, --compile              compile file specified by -m\n"
 );
 	exit(0);
 }
