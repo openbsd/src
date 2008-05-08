@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.540 2008/05/07 08:08:39 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.541 2008/05/08 00:17:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -466,7 +466,8 @@ typedef struct {
 %type	<v.gid>			gids gid_list gid_item
 %type	<v.route>		route
 %type	<v.redirection>		redirection redirpool
-%type	<v.string>		label string stringall tag anchorname
+%type	<v.string>		label stringall tag anchorname
+%type	<v.string>		string varstring numberstring
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick quick log logopts logopt
@@ -670,7 +671,7 @@ stringall	: STRING	{ $$ = $1; }
 		}
 		;
 
-string		: string STRING				{
+string		: STRING string				{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
 				err(1, "string: asprintf");
 			free($1);
@@ -679,26 +680,33 @@ string		: string STRING				{
 		| STRING
 		;
 
-varset		: STRING '=' string		{
+varstring	: numberstring varstring 		{
+			if (asprintf(&$$, "%s %s", $1, $2) == -1)
+				err(1, "string: asprintf");
+			free($1);
+			free($2);
+		}
+		| numberstring
+		;
+
+numberstring	: NUMBER				{
+			char	*s;
+			if (asprintf(&s, "%lld", $1) == -1) {
+				yyerror("string: asprintf");
+				YYERROR;
+			}
+			$$ = s;
+		}
+		| STRING
+		;
+
+varset		: STRING '=' varstring	{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				err(1, "cannot store variable %s", $1);
 			free($1);
 			free($3);
-		}
-		| STRING '=' NUMBER	{
-			char	*s;
-			if (asprintf(&s, "%lld", $3) == -1) {
-				yyerror("string: asprintf");
-				YYERROR;
-			}
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("%s = \"%s\"\n", $1, s);
-			if (symset($1, s, 0) == -1)
-				err(1, "cannot store variable %s", $1);
-			free($1);
-			free(s);
 		}
 		;
 
