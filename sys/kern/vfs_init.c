@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.20 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.21 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -72,18 +72,6 @@ extern struct vnodeop_desc *vfs_op_descs[];
 int vfs_opv_numops;
 
 typedef int (*PFI)(void *);
-
-/*
- * A miscellaneous routine.
- * A generic "default" routine that just returns an error.
- */
-/*ARGSUSED*/
-int
-vn_default_error(void *v)
-{
-
-	return (EOPNOTSUPP);
-}
 
 /*
  * vfs_init.c

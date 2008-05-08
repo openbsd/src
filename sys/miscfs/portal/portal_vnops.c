@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.26 2008/04/24 17:39:45 thib Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.27 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ int	portal_poll(void *);
 
 int (**portal_vnodeop_p)(void *);
 struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, portal_lookup },		/* lookup */
 	{ &vop_create_desc, eopnotsupp },		/* create */
 	{ &vop_mknod_desc, eopnotsupp },		/* mknod */

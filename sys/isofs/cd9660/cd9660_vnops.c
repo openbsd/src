@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.44 2007/10/29 13:02:19 chl Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.45 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -935,7 +935,7 @@ cd9660_pathconf(v)
  */
 int (**cd9660_vnodeop_p)(void *);
 struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, cd9660_lookup },	/* lookup */
 	{ &vop_create_desc, cd9660_create },	/* create */
 	{ &vop_mknod_desc, cd9660_mknod },	/* mknod */

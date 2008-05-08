@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.49 2007/09/23 20:15:07 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.50 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1257,7 +1257,7 @@ ext2fs_reclaim(void *v)
 /* Global vfs data structures for ext2fs. */
 int (**ext2fs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, ext2fs_lookup },	/* lookup */
 	{ &vop_create_desc, ext2fs_create },	/* create */
 	{ &vop_mknod_desc, ext2fs_mknod },		/* mknod */

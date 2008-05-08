@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.34 2008/05/03 14:41:29 thib Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.35 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  */
 int (**mfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, mfs_badop },		/* lookup */
 	{ &vop_create_desc, mfs_badop },		/* create */
 	{ &vop_mknod_desc, mfs_badop },			/* mknod */

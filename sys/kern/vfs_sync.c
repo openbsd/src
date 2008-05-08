@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.43 2007/06/01 23:47:56 deraadt Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.44 2008/05/08 17:45:45 thib Exp $  */
 
 /*
  *  Portions of this code are:
@@ -268,7 +268,7 @@ int   sync_print(void *);
 
 int (**sync_vnodeop_p)(void *);
 struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
-      { &vop_default_desc, vn_default_error },
+      { &vop_default_desc, eopnotsupp },
       { &vop_close_desc, sync_close },                /* close */
       { &vop_fsync_desc, sync_fsync },                /* fsync */
       { &vop_inactive_desc, sync_inactive },          /* inactive */

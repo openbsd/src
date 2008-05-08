@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.28 2008/05/03 14:41:29 thib Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.29 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct fifoinfo {
 
 int (**fifo_vnodeop_p)(void *);
 struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, fifo_badop },		/* create */
 	{ &vop_mknod_desc, fifo_badop },		/* mknod */

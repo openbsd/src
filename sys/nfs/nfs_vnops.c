@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.82 2008/04/22 20:59:37 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.83 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 int (**nfsv2_vnodeop_p)(void *);
 struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, nfs_lookup },	/* lookup */
 	{ &vop_create_desc, nfs_create },	/* create */
 	{ &vop_mknod_desc, nfs_mknod },		/* mknod */

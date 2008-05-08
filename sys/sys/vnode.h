@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.93 2008/05/03 14:41:29 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.94 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -298,11 +298,6 @@ struct vnodeopv_desc {
 	int (***opv_desc_vector_p)(void *);
 	struct vnodeopv_entry_desc *opv_desc_ops;   /* null terminated list */
 };
-
-/*
- * A default routine which just returns an error.
- */
-int vn_default_error(void *);
 
 /*
  * A generic structure.

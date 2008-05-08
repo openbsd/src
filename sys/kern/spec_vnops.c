@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.48 2008/05/03 14:41:29 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.49 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct vnode *speclisth[SPECHSZ];
 
 int (**spec_vnodeop_p)(void *);
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, spec_badop },		/* create */
 	{ &vop_mknod_desc, spec_badop },		/* mknod */

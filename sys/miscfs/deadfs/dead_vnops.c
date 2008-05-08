@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.20 2008/04/12 16:01:42 thib Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.21 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ int	chkvnlock(struct vnode *);
 int (**dead_vnodeop_p)(void *);
 
 struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
 	{ &vop_create_desc, dead_badop },	/* create */
 	{ &vop_mknod_desc, dead_badop },	/* mknod */

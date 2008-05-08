@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.30 2007/12/09 20:54:01 jmc Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.31 2008/05/08 17:45:45 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -59,7 +59,7 @@ int udf_bmap_internal(struct unode *, off_t, daddr64_t *, uint32_t *);
 
 int (**udf_vnodeop_p)(void *);
 struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_access_desc, udf_access },		/* access */
 	{ &vop_bmap_desc, udf_bmap },			/* bmap */
 	{ &vop_lookup_desc, udf_lookup },		/* lookup */

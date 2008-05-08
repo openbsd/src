@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.65 2007/10/29 15:39:01 chl Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.66 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1844,7 +1844,7 @@ fileidhash(uint64_t fileid)
 /* Global vfs data structures for msdosfs */
 int (**msdosfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
 	{ &vop_mknod_desc, msdosfs_mknod },		/* mknod */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.42 2008/04/24 17:39:45 thib Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.43 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ static pid_t atopid(const char *, u_int);
  */
 int (**procfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, procfs_lookup },		/* lookup */
 	{ &vop_create_desc, procfs_badop },		/* create */
 	{ &vop_mknod_desc, procfs_badop },		/* mknod */

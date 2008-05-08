@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.47 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.48 2008/05/08 17:45:45 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
+	{ &vop_default_desc, eopnotsupp },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
 	{ &vop_create_desc, ufs_create },		/* create */
 	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
