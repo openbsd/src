@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.h,v 1.2 2008/05/08 05:38:26 beck Exp $	*/
+/*	$OpenBSD: sync.h,v 1.3 2008/05/08 14:15:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008, Bob Beck <beck@openbsd.org>
@@ -39,13 +39,16 @@
 #define DHCP_SYNC_MAXSIZE	1408
 #define DHCP_SYNC_KEY		"/var/db/dhcpd.key"
 
+#define DHCP_ALIGNBYTES		(15)
+#define DHCP_ALIGN(p)		(((u_int)(p) + DHCP_ALIGNBYTES) &~ DHCP_ALIGNBYTES)
+
 struct dhcp_synchdr {
 	u_int8_t	sh_version;
 	u_int8_t	sh_af;
 	u_int16_t	sh_length;
 	u_int32_t	sh_counter;
 	u_int8_t	sh_hmac[DHCP_SYNC_HMAC_LEN];
-	u_int16_t	sh_pad[2];
+	u_int8_t	sh_pad[4];
 } __packed;
 
 struct dhcp_synctlv_hdr {
