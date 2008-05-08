@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.179 2008/05/08 12:02:23 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.180 2008/05/08 12:21:16 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -107,6 +107,7 @@ initialize_server_options(ServerOptions *options)
 	options->max_startups_rate = -1;
 	options->max_startups = -1;
 	options->max_authtries = -1;
+	options->max_sessions = -1;
 	options->banner = NULL;
 	options->use_dns = -1;
 	options->client_alive_interval = -1;
@@ -225,6 +226,8 @@ fill_default_server_options(ServerOptions *options)
 		options->max_startups_begin = options->max_startups;
 	if (options->max_authtries == -1)
 		options->max_authtries = DEFAULT_AUTH_FAIL_MAX;
+	if (options->max_sessions == -1)
+		options->max_sessions = DEFAULT_SESSIONS_MAX;
 	if (options->use_dns == -1)
 		options->use_dns = 1;
 	if (options->client_alive_interval == -1)
@@ -266,7 +269,7 @@ typedef enum {
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem,
-	sMaxStartups, sMaxAuthTries,
+	sMaxStartups, sMaxAuthTries, sMaxSessions,
 	sBanner, sUseDNS, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
@@ -358,6 +361,7 @@ static struct {
 	{ "subsystem", sSubsystem, SSHCFG_GLOBAL },
 	{ "maxstartups", sMaxStartups, SSHCFG_GLOBAL },
 	{ "maxauthtries", sMaxAuthTries, SSHCFG_GLOBAL },
+	{ "maxsessions", sMaxSessions, SSHCFG_ALL },
 	{ "banner", sBanner, SSHCFG_ALL },
 	{ "usedns", sUseDNS, SSHCFG_GLOBAL },
 	{ "verifyreversemapping", sDeprecated, SSHCFG_GLOBAL },
@@ -652,7 +656,7 @@ process_server_config_line(ServerOptions *options, char *line,
 
 	case sServerKeyBits:
 		intptr = &options->server_key_bits;
-parse_int:
+ parse_int:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing integer value.",
@@ -664,7 +668,7 @@ parse_int:
 
 	case sLoginGraceTime:
 		intptr = &options->login_grace_time;
-parse_time:
+ parse_time:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing time value.",
@@ -733,7 +737,7 @@ parse_time:
 			fatal("%s line %d: too many host keys specified (max %d).",
 			    filename, linenum, MAX_HOSTKEYS);
 		charptr = &options->host_key_files[*intptr];
-parse_filename:
+ parse_filename:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing file name.",
@@ -776,7 +780,7 @@ parse_filename:
 
 	case sIgnoreRhosts:
 		intptr = &options->ignore_rhosts;
-parse_flag:
+ parse_flag:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing yes/no argument.",
@@ -1112,6 +1116,10 @@ parse_flag:
 		intptr = &options->max_authtries;
 		goto parse_int;
 
+	case sMaxSessions:
+		intptr = &options->max_sessions;
+		goto parse_int;
+
 	case sBanner:
 		charptr = &options->banner;
 		goto parse_filename;
@@ -1339,6 +1347,7 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	M_CP_INTOPT(x11_display_offset);
 	M_CP_INTOPT(x11_forwarding);
 	M_CP_INTOPT(x11_use_localhost);
+	M_CP_INTOPT(max_sessions);
 
 	M_CP_STROPT(banner);
 	if (preauth)
