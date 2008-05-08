@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.2 2008/04/19 23:20:22 weingart Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.3 2008/05/08 14:03:09 jsing Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	/*
 	 * Copy the ELF and section headers.
 	 */
-	elfp = maxp = roundup(maxp, sizeof(long));
+	elfp = maxp = roundup(maxp, sizeof(Elf_Addr));
 	if (flags & (LOAD_HDR|COUNT_HDR))
 		maxp += sizeof(Elf_Ehdr);
 
@@ -181,14 +181,14 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 
 		shpp = maxp;
-		maxp += roundup(sz, sizeof(long));
+		maxp += roundup(sz, sizeof(Elf_Addr));
 
 		/*
 		 * Now load the symbol sections themselves.  Make sure the
 		 * sections are aligned. Don't bother with string tables if
 		 * there are no symbol sections.
 		 */
-		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
+		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 
 		for (havesyms = i = 0; i < elf->e_shnum; i++)
 			if (shp[i].sh_type == SHT_SYMTAB)
@@ -214,9 +214,9 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 					}
 				}
 				maxp += roundup(shp[i].sh_size,
-				    sizeof(long));
+				    sizeof(Elf_Addr));
 				shp[i].sh_offset = off;
-				off += roundup(shp[i].sh_size, sizeof(long));
+				off += roundup(shp[i].sh_size, sizeof(Elf_Addr));
 				first = 0;
 			}
 		}
