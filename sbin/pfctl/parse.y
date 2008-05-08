@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.542 2008/05/08 07:29:30 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.543 2008/05/08 08:08:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -457,7 +457,7 @@ typedef struct {
 %type	<v.number>		reticmpspec reticmp6spec
 %type	<v.fromto>		fromto
 %type	<v.peer>		ipportspec from to
-%type	<v.host>		ipspec xhost host dynaddr host_list
+%type	<v.host>		ipspec toipspec xhost host dynaddr host_list
 %type	<v.host>		redir_host_list redirspec
 %type	<v.host>		route_host route_host_list routespec
 %type	<v.os>			os xos os_list
@@ -2646,6 +2646,10 @@ ipspec		: ANY				{ $$ = NULL; }
 		| '{' optnl host_list '}'	{ $$ = $3; }
 		;
 
+toipspec	: TO ipspec			{ $$ = $2; }
+		| /* empty */			{ $$ = NULL; }
+		;
+
 host_list	: ipspec optnl			{ $$ = $1; }
 		| host_list comma ipspec optnl	{
 			if ($3 == NULL)
@@ -3925,7 +3929,7 @@ natrule		: nataction interface af proto fromto tag tagged rtable
 		}
 		;
 
-binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
+binatrule	: no BINAT natpasslog interface af proto FROM host toipspec tag
 		    tagged rtable redirection
 		{
 			struct pf_rule		binat;
@@ -3933,7 +3937,7 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			if (disallow_urpf_failed($10, "\"urpf-failed\" is not "
+			if (disallow_urpf_failed($9, "\"urpf-failed\" is not "
 			    "permitted as a binat destination"))
 				YYERROR;
 
@@ -3953,11 +3957,11 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 			binat.af = $5;
 			if (!binat.af && $8 != NULL && $8->af)
 				binat.af = $8->af;
-			if (!binat.af && $10 != NULL && $10->af)
-				binat.af = $10->af;
+			if (!binat.af && $9 != NULL && $9->af)
+				binat.af = $9->af;
 
-			if (!binat.af && $14 != NULL && $14->host)
-				binat.af = $14->host->af;
+			if (!binat.af && $13 != NULL && $13->host)
+				binat.af = $13->host->af;
 			if (!binat.af) {
 				yyerror("address family (inet/inet6) "
 				    "undefined");
@@ -3971,22 +3975,22 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 				free($4);
 			}
 
-			if ($11 != NULL)
-				if (strlcpy(binat.tagname, $11,
+			if ($10 != NULL)
+				if (strlcpy(binat.tagname, $10,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			if ($12.name)
-				if (strlcpy(binat.match_tagname, $12.name,
+			if ($11.name)
+				if (strlcpy(binat.match_tagname, $11.name,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			binat.match_tag_not = $12.neg;
-			binat.rtableid = $13;
+			binat.match_tag_not = $11.neg;
+			binat.rtableid = $12;
 
 			if ($6 != NULL) {
 				binat.proto = $6->proto;
@@ -4000,12 +4004,12 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 			    "interface (%s) as the source address of a binat "
 			    "rule"))
 				YYERROR;
-			if ($14 != NULL && $14->host != NULL && disallow_table(
-			    $14->host, "invalid use of table <%s> as the "
+			if ($13 != NULL && $13->host != NULL && disallow_table(
+			    $13->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
-			if ($14 != NULL && $14->host != NULL && disallow_alias(
-			    $14->host, "invalid use of interface (%s) as the "
+			if ($13 != NULL && $13->host != NULL && disallow_alias(
+			    $13->host, "invalid use of interface (%s) as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
@@ -4026,51 +4030,51 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 				    sizeof(binat.src.addr));
 				free($8);
 			}
-			if ($10 != NULL) {
-				if ($10->next) {
+			if ($9 != NULL) {
+				if ($9->next) {
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($10->af != binat.af && $10->af) {
+				if ($9->af != binat.af && $9->af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				if (check_netmask($10, binat.af))
+				if (check_netmask($9, binat.af))
 					YYERROR;
-				memcpy(&binat.dst.addr, &$10->addr,
+				memcpy(&binat.dst.addr, &$9->addr,
 				    sizeof(binat.dst.addr));
-				binat.dst.neg = $10->not;
-				free($10);
+				binat.dst.neg = $9->not;
+				free($9);
 			}
 
 			if (binat.action == PF_NOBINAT) {
-				if ($14 != NULL) {
+				if ($13 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
 					YYERROR;
 				}
 			} else {
-				if ($14 == NULL || $14->host == NULL) {
+				if ($13 == NULL || $13->host == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
 
-				remove_invalid_hosts(&$14->host, &binat.af);
-				if (invalid_redirect($14->host, binat.af))
+				remove_invalid_hosts(&$13->host, &binat.af);
+				if (invalid_redirect($13->host, binat.af))
 					YYERROR;
-				if ($14->host->next != NULL) {
+				if ($13->host->next != NULL) {
 					yyerror("binat rule must redirect to "
 					    "a single address");
 					YYERROR;
 				}
-				if (check_netmask($14->host, binat.af))
+				if (check_netmask($13->host, binat.af))
 					YYERROR;
 
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
-				    &$14->host->addr.v.a.mask, binat.af)) {
+				    &$13->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -4080,12 +4084,12 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr = $14->host->addr;
+				pa->addr = $13->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
 
-				free($14);
+				free($13);
 			}
 
 			pfctl_add_rule(pf, &binat, "");
