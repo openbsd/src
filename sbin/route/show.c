@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.66 2008/05/07 06:06:25 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.67 2008/05/08 05:41:59 norby Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -890,7 +890,8 @@ label_print(struct sockaddr *sa)
 		err(1, NULL);
 
 	(void)snprintf(line, sizeof(line), "%-20s %-20s %-6s", in_label,
-	    out_label, label_print_op(smpls->smpls_operation));
+	    smpls->smpls_operation == MPLS_OP_POP ? "-" : out_label,
+	    label_print_op(smpls->smpls_operation));
 
 	free(in_label);
 	free(out_label);
