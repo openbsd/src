@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.25 2007/09/13 20:40:02 chl Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.26 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -155,14 +155,8 @@ hfsc_add_altq(struct pf_altq *a)
 		return (ENODEV);
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (hif == NULL)
-		return (ENOMEM);
 
 	hif->hif_eligible = ellist_alloc();
-	if (hif->hif_eligible == NULL) {
-		free(hif, M_DEVBUF);
-		return (ENOMEM);
-	}
 
 	hif->hif_ifq = &ifp->if_snd;
 
@@ -348,16 +342,10 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 #endif
 
 	cl = malloc(sizeof(struct hfsc_class), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cl == NULL)
-		return (NULL);
 
 	cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cl->cl_q == NULL)
-		goto err_ret;
 
 	cl->cl_actc = actlist_alloc();
-	if (cl->cl_actc == NULL)
-		goto err_ret;
 
 	if (qlimit == 0)
 		qlimit = 50;  /* use default */
@@ -395,15 +383,13 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 			    qlimit(cl->cl_q) * 10/100,
 			    qlimit(cl->cl_q) * 30/100,
 			    red_flags, red_pkttime);
-			if (cl->cl_red != NULL)
-				qtype(cl->cl_q) = Q_RED;
+			qtype(cl->cl_q) = Q_RED;
 		}
 #ifdef ALTQ_RIO
 		else {
 			cl->cl_red = (red_t *)rio_alloc(0, NULL,
 			    red_flags, red_pkttime);
-			if (cl->cl_red != NULL)
-				qtype(cl->cl_q) = Q_RIO;
+			qtype(cl->cl_q) = Q_RIO;
 		}
 #endif
 	}
@@ -412,8 +398,6 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0)) {
 		cl->cl_rsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
-		if (cl->cl_rsc == NULL)
-			goto err_ret;
 		sc2isc(rsc, cl->cl_rsc);
 		rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
 		rtsc_init(&cl->cl_eligible, cl->cl_rsc, 0, 0);
@@ -421,16 +405,12 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0)) {
 		cl->cl_fsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
-		if (cl->cl_fsc == NULL)
-			goto err_ret;
 		sc2isc(fsc, cl->cl_fsc);
 		rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
 	}
 	if (usc != NULL && (usc->m1 != 0 || usc->m2 != 0)) {
 		cl->cl_usc = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
-		if (cl->cl_usc == NULL)
-			goto err_ret;
 		sc2isc(usc, cl->cl_usc);
 		rtsc_init(&cl->cl_ulimit, cl->cl_usc, 0, 0);
 	}

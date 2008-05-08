@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.14 2008/04/20 07:05:52 deraadt Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.15 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -201,14 +201,8 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 #endif
 
 	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cl == NULL)
-		return (NULL);
 	CALLOUT_INIT(&cl->callout_);
 	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cl->q_ == NULL) {
-		free(cl, M_DEVBUF);
-		return (NULL);
-	}
 
 	/*
 	 * Class initialization.
@@ -270,15 +264,13 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 			    qlimit(cl->q_) * 10/100,
 			    qlimit(cl->q_) * 30/100,
 			    red_flags, red_pkttime);
-			if (cl->red_ != NULL)
-				qtype(cl->q_) = Q_RED;
+			qtype(cl->q_) = Q_RED;
 		}
 #ifdef ALTQ_RIO
 		else {
 			cl->red_ = (red_t *)rio_alloc(0, NULL,
 						      red_flags, red_pkttime);
-			if (cl->red_ != NULL)
-				qtype(cl->q_) = Q_RIO;
+			qtype(cl->q_) = Q_RIO;
 		}
 #endif
 	}

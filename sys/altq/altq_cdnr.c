@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cdnr.c,v 1.9 2008/04/20 07:05:51 deraadt Exp $	*/
+/*	$OpenBSD: altq_cdnr.c,v 1.10 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -285,8 +285,6 @@ cdnr_cballoc(top, type, input_func)
 	}
 
 	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cb == NULL)
-		return (NULL);
 
 	cb->cb_len = size;
 	cb->cb_type = type;

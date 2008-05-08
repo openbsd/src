@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.24 2007/12/11 00:30:14 mikeb Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.25 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -274,8 +274,6 @@ tbr_set(ifq, profile)
 	}
 
 	tbr = malloc(sizeof(struct tb_regulator), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (tbr == NULL)
-		return (ENOMEM);
 
 	tbr->tbr_rate = TBR_SCALE(profile->rate / 8) / machclk_freq;
 	tbr->tbr_depth = TBR_SCALE(profile->depth);

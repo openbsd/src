@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.23 2007/09/13 20:40:02 chl Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.24 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -215,8 +215,6 @@ cbq_add_altq(struct pf_altq *a)
 
 	/* allocate and initialize cbq_state_t */
 	cbqp = malloc(sizeof(cbq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (cbqp == NULL)
-		return (ENOMEM);
 	CALLOUT_INIT(&cbqp->cbq_callout);
 	cbqp->cbq_qlen = 0;
 	cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */

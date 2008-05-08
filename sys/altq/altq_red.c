@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.15 2008/04/20 07:05:52 deraadt Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.16 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -163,8 +163,6 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 	int	 npkts_per_sec;
 
 	rp = malloc(sizeof(red_t), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (rp == NULL)
-		return (NULL);
 
 	rp->red_avg = 0;
 	rp->red_idle = 1;
@@ -534,8 +532,6 @@ wtab_alloc(int weight)
 		}
 
 	w = malloc(sizeof(struct wtab), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (w == NULL)
-		panic("wtab_alloc: malloc failed!");
 	w->w_weight = weight;
 	w->w_refcount = 1;
 	w->w_next = wtab_list;

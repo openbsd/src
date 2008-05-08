@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.21 2007/09/13 20:40:02 chl Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.22 2008/05/08 15:22:02 chl Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -94,8 +94,6 @@ priq_add_altq(struct pf_altq *a)
 		return (ENODEV);
 
 	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (pif == NULL)
-		return (ENOMEM);
 	pif->pif_bandwidth = a->ifbandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = &ifp->if_snd;
@@ -266,13 +264,9 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 	} else {
 		cl = malloc(sizeof(struct priq_class), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		if (cl == NULL)
-			return (NULL);
 
 		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		if (cl->cl_q == NULL)
-			goto err_ret;
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -310,8 +304,7 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 		if (flags & PRCF_RIO) {
 			cl->cl_red = (red_t *)rio_alloc(0, NULL,
 						red_flags, red_pkttime);
-			if (cl->cl_red != NULL)
-				qtype(cl->cl_q) = Q_RIO;
+			qtype(cl->cl_q) = Q_RIO;
 		} else
 #endif
 		if (flags & PRCF_RED) {
@@ -319,29 +312,12 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 			    qlimit(cl->cl_q) * 10/100,
 			    qlimit(cl->cl_q) * 30/100,
 			    red_flags, red_pkttime);
-			if (cl->cl_red != NULL)
-				qtype(cl->cl_q) = Q_RED;
+			qtype(cl->cl_q) = Q_RED;
 		}
 	}
 #endif /* ALTQ_RED */
 
 	return (cl);
-
- err_ret:
-	if (cl->cl_red != NULL) {
-#ifdef ALTQ_RIO
-		if (q_is_rio(cl->cl_q))
-			rio_destroy((rio_t *)cl->cl_red);
-#endif
-#ifdef ALTQ_RED
-		if (q_is_red(cl->cl_q))
-			red_destroy(cl->cl_red);
-#endif
-	}
-	if (cl->cl_q != NULL)
-		free(cl->cl_q, M_DEVBUF);
-	free(cl, M_DEVBUF);
-	return (NULL);
 }
 
 static int
