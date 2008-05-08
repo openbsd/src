@@ -8104,9 +8104,6 @@ sh_override_options (void)
 #if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
   /* disable stack protection for now */
   flag_propolice_protection = 0;
-
-  /* -fregmove is known to produce bad code on SuperH */
-  flag_regmove = 0;
 #endif
 
   sh_cpu = CPU_SH1;
