@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.263 2008/05/07 07:07:29 markus Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.264 2008/05/08 08:05:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -677,16 +677,16 @@ struct pf_state_host {
 };
 
 struct pf_state_peer {
+	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
 	u_int32_t	seqlo;		/* Max sequence number sent	*/
 	u_int32_t	seqhi;		/* Max the other end ACKd + win	*/
 	u_int32_t	seqdiff;	/* Sequence number modulator	*/
 	u_int16_t	max_win;	/* largest window (pre scaling)	*/
+	u_int16_t	mss;		/* Maximum segment size option	*/
 	u_int8_t	state;		/* active state level		*/
 	u_int8_t	wscale;		/* window scaling factor	*/
-	u_int16_t	mss;		/* Maximum segment size option	*/
 	u_int8_t	tcp_est;	/* Did we reach TCPS_ESTABLISHED */
-	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
-	u_int8_t	pad[3];
+	u_int8_t	pad[1];
 };
 
 TAILQ_HEAD(pf_state_queue, pf_state);
