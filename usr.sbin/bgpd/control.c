@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.58 2008/01/31 12:17:35 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.59 2008/05/08 04:05:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -257,14 +257,17 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				p = getpeerbyaddr(&neighbor->addr);
 				if (p == NULL)
 					p = getpeerbydesc(neighbor->descr);
-				if (p != NULL && !neighbor->show_timers) {
+				if (p == NULL) {
+					control_result(c, CTL_RES_NOSUCHPEER);
+					break;
+				}
+				if (!neighbor->show_timers) {
 					imsg_compose_rde(imsg.hdr.type,
 					    imsg.hdr.pid,
 					    p, sizeof(struct peer));
 					imsg_compose_rde(IMSG_CTL_END,
 					    imsg.hdr.pid, NULL, 0);
-				}
-				if (p != NULL && neighbor->show_timers) {
+				} else {
 					u_int			 i;
 					time_t			 d;
 					struct ctl_timer	 ct;
