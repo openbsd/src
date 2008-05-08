@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.4 2007/12/23 18:56:17 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.5 2008/05/08 06:52:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -18,39 +18,29 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #include "bgpd.h"
 #include "session.h"
 
-time_t *
+struct peer_timer *
 timer_get(struct peer *p, enum Timer timer)
 {
-	switch (timer) {
-	case Timer_None:
-		fatal("timer_get called with Timer_None");
-	case Timer_ConnectRetry:
-		return (&p->ConnectRetryTimer);
-	case Timer_Keepalive:
-		return (&p->KeepaliveTimer);
-	case Timer_Hold:
-		return (&p->HoldTimer);
-	case Timer_IdleHold:
-		return (&p->IdleHoldTimer);
-	case Timer_IdleHoldReset:
-		return (&p->IdleHoldResetTimer);
-	case Timer_Max:
-		fatal("timer_get called with Timer_Max");
-	}
+	struct peer_timer *pt;
 
-	fatal("King Bula lost in time");
+	TAILQ_FOREACH(pt, &p->timers, entry)
+		if (pt->type == timer)
+				break;
+
+	return (pt);
 }
 
 int
 timer_due(struct peer *p, enum Timer timer)
 {
-	time_t	*t = timer_get(p, timer);
+	struct peer_timer	*pt = timer_get(p, timer);
 
-	if (t != NULL && *t > 0 && *t <= time(NULL))
+	if (pt != NULL && pt->val > 0 && pt->val <= time(NULL))
 		return (1);
 	return (0);
 }
@@ -72,11 +62,11 @@ timer_nextduein(struct peer *p)
 int
 timer_running(struct peer *p, enum Timer timer, time_t *left)
 {
-	time_t	*t = timer_get(p, timer);
+	struct peer_timer	*pt = timer_get(p, timer);
 
-	if (t != NULL && *t > 0) {
+	if (pt != NULL && pt->val > 0) {
 		if (left != NULL)
-			*left = *t - time(NULL);
+			*left = pt->val - time(NULL);
 		return (1);
 	}
 	return (0);
@@ -85,16 +75,57 @@ timer_running(struct peer *p, enum Timer timer, time_t *left)
 void
 timer_set(struct peer *p, enum Timer timer, u_int offset)
 {
-	time_t	*t = timer_get(p, timer);
+	struct peer_timer	*t, *pt = timer_get(p, timer);
 
-	*t = time(NULL) + offset;
+	if (pt == NULL) {	/* have to create */
+		if ((pt = malloc(sizeof(*pt))) == NULL)
+			fatal("timer_set");
+		pt->type = timer;
+	} else {
+		TAILQ_REMOVE(&p->timers, pt, entry);
+	}
+
+	pt->val = time(NULL) + offset;
+
+	TAILQ_FOREACH(t, &p->timers, entry)
+		if (t->val > pt->val)
+			break;
+	if (t != NULL)
+		TAILQ_INSERT_BEFORE(t, pt, entry);
+	else
+		TAILQ_INSERT_TAIL(&p->timers, pt, entry);
 }
 
 void
 timer_stop(struct peer *p, enum Timer timer)
 {
-	time_t	*t = timer_get(p, timer);
+	struct peer_timer	*pt = timer_get(p, timer);
 
-	if (t != NULL)
-		*t = 0;
+	if (pt != NULL) {
+		pt->val = 0;
+		TAILQ_REMOVE(&p->timers, pt, entry);
+		TAILQ_INSERT_TAIL(&p->timers, pt, entry);
+	}
+}
+
+void
+timer_remove(struct peer *p, enum Timer timer)
+{
+	struct peer_timer	*pt = timer_get(p, timer);
+
+	if (pt != NULL) {
+		TAILQ_REMOVE(&p->timers, pt, entry);
+		free (pt);
+	}
+}
+
+void
+timer_remove_all(struct peer *p)
+{
+	struct peer_timer	*pt;
+
+	while ((pt = TAILQ_FIRST(&p->timers)) != NULL) {
+		TAILQ_REMOVE(&p->timers, pt, entry);
+		free(pt);
+	}
 }

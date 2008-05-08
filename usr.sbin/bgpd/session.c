@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.279 2007/12/23 18:56:17 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.280 2008/05/08 06:52:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -317,6 +317,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 						last->next = next;
 					else
 						peers = next;
+					timer_remove_all(p);
 					free(p);
 					peer_cnt--;
 					continue;
@@ -586,6 +587,7 @@ init_conf(struct bgpd_config *c)
 void
 init_peer(struct peer *p)
 {
+	TAILQ_INIT(&p->timers);
 	p->fd = p->wbuf.fd = -1;
 
 	if (p->conf.if_depend[0])

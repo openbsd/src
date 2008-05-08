@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.95 2007/12/23 18:56:17 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.96 2008/05/08 06:52:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,24 @@ struct peer_stats {
 	u_int8_t		 last_sent_suberr;
 };
 
+enum Timer {
+	Timer_None,
+	Timer_ConnectRetry,
+	Timer_Keepalive,
+	Timer_Hold,
+	Timer_IdleHold,
+	Timer_IdleHoldReset,
+	Timer_Max
+};
+
+struct peer_timer {
+	TAILQ_ENTRY(peer_timer)	entry;
+	enum Timer		type;
+	time_t			val;
+};
+
+TAILQ_HEAD(peer_timer_head, peer_timer);
+
 struct peer {
 	struct peer_config	 conf;
 	struct peer_stats	 stats;
@@ -180,14 +198,10 @@ struct peer {
 	} auth;
 	struct sockaddr_storage	 sa_local;
 	struct sockaddr_storage	 sa_remote;
+	struct peer_timer_head	 timers;
 	struct msgbuf		 wbuf;
 	struct buf_read		*rbuf;
 	struct peer		*next;
-	time_t			 ConnectRetryTimer;
-	time_t			 KeepaliveTimer;
-	time_t			 HoldTimer;
-	time_t			 IdleHoldTimer;
-	time_t			 IdleHoldResetTimer;
 	int			 fd;
 	int			 lasterr;
 	u_int			 errcnt;
@@ -203,16 +217,6 @@ struct peer {
 };
 
 struct peer	*peers;
-
-enum Timer {
-	Timer_None,
-	Timer_ConnectRetry,
-	Timer_Keepalive,
-	Timer_Hold,
-	Timer_IdleHold,
-	Timer_IdleHoldReset,
-	Timer_Max
-};
 
 struct ctl_timer {
 	enum Timer	type;
@@ -276,9 +280,11 @@ int	 carp_demote_get(char *);
 int	 carp_demote_set(char *, int);
 
 /* timer.c */
-time_t		*timer_get(struct peer *, enum Timer);
-int		 timer_due(struct peer *, enum Timer);
-time_t		 timer_nextduein(struct peer *);
-int		 timer_running(struct peer *, enum Timer, time_t *);
-void		 timer_set(struct peer *, enum Timer, u_int);
-void		 timer_stop(struct peer *, enum Timer);
+struct peer_timer	*timer_get(struct peer *, enum Timer);
+int			 timer_due(struct peer *, enum Timer);
+time_t			 timer_nextduein(struct peer *);
+int			 timer_running(struct peer *, enum Timer, time_t *);
+void			 timer_set(struct peer *, enum Timer, u_int);
+void			 timer_stop(struct peer *, enum Timer);
+void			 timer_remove(struct peer *, enum Timer);
+void			 timer_remove_all(struct peer *);
