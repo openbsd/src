@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.97 2008/05/08 07:43:03 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.98 2008/05/08 09:53:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -281,7 +281,6 @@ int	 carp_demote_set(char *, int);
 
 /* timer.c */
 struct peer_timer	*timer_get(struct peer *, enum Timer);
-int			 timer_due(struct peer *, enum Timer);
 struct peer_timer	*timer_nextisdue(struct peer *);
 time_t			 timer_nextduein(struct peer *);
 int			 timer_running(struct peer *, enum Timer, time_t *);
