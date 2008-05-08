@@ -1,4 +1,4 @@
-/* $OpenBSD: nchan.c,v 1.57 2006/08/03 03:34:42 deraadt Exp $ */
+/* $OpenBSD: nchan.c,v 1.58 2008/05/08 12:02:23 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 
 #include <errno.h>
 #include <string.h>

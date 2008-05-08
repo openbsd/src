@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.188 2008/02/22 20:44:02 dtucker Exp $ */
+/* $OpenBSD: clientloop.c,v 1.189 2008/05/08 12:02:23 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -66,6 +66,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -692,7 +693,7 @@ client_extra_session2_setup(int id, void *arg)
 	    cctx->term, &cctx->tio, c->rfd, &cctx->cmd, cctx->env,
 	    client_subsystem_reply);
 
-	c->confirm_ctx = NULL;
+	c->open_confirm_ctx = NULL;
 	buffer_free(&cctx->cmd);
 	xfree(cctx->term);
 	if (cctx->env != NULL) {
@@ -932,7 +933,8 @@ client_process_control(fd_set *readset)
 	debug3("%s: channel_new: %d", __func__, c->self);
 
 	channel_send_open(c->self);
-	channel_register_confirm(c->self, client_extra_session2_setup, cctx);
+	channel_register_open_confirm(c->self,
+	    client_extra_session2_setup, cctx);
 }
 
 static void
@@ -2054,6 +2056,8 @@ client_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &client_input_channel_req);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
+	dispatch_set(SSH2_MSG_CHANNEL_SUCCESS, &channel_input_status_confirm);
+	dispatch_set(SSH2_MSG_CHANNEL_FAILURE, &channel_input_status_confirm);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &client_input_global_request);
 
 	/* rekeying */

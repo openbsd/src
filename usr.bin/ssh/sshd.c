@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.356 2008/04/13 00:22:17 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.357 2008/05/08 12:02:23 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/queue.h>
 
 #include <errno.h>
 #include <fcntl.h>

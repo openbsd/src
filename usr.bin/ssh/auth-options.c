@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-options.c,v 1.41 2008/03/26 21:28:14 djm Exp $ */
+/* $OpenBSD: auth-options.c,v 1.42 2008/05/08 12:02:23 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,6 +11,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include <netdb.h>
 #include <pwd.h>
