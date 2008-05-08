@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttycom.h,v 1.9 2008/01/05 17:33:28 mbalmer Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.10 2008/05/08 01:17:54 fgsch Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ struct tstamps {
 #define	TIOCCONS	_IOW('t', 98, int)	/* become virtual console */
 #define	TIOCSCTTY	 _IO('t', 97)		/* become controlling tty */
 #define	TIOCEXT		_IOW('t', 96, int)	/* pty: external processing */
-#define	TIOCSIG		 _IO('t', 95)		/* pty: generate signal */
+#define	TIOCSIG		_IOW('t', 95, int)	/* pty: generate signal */
 #define	TIOCDRAIN	 _IO('t', 94)		/* wait till output drained */
 #define	TIOCGFLAGS	_IOR('t', 93, int)	/* get device flags */
 #define	TIOCSFLAGS	_IOW('t', 92, int)	/* set device flags */
