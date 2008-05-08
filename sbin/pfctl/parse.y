@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.541 2008/05/08 00:17:26 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.542 2008/05/08 07:29:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -568,9 +568,9 @@ option		: SET OPTIMIZATION STRING		{
 			}
 		}
 		| SET TIMEOUT timeout_spec
-		| SET TIMEOUT '{' timeout_list '}'
+		| SET TIMEOUT '{' optnl timeout_list '}'
 		| SET LIMIT limit_spec
-		| SET LIMIT '{' limit_list '}'
+		| SET LIMIT '{' optnl limit_list '}'
 		| SET LOGINTERFACE stringall		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($3);
@@ -1257,11 +1257,11 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 		;
 
 antispoof_ifspc	: FOR antispoof_if		{ $$ = $2; }
-		| FOR '{' antispoof_iflst '}'	{ $$ = $3; }
+		| FOR '{' optnl antispoof_iflst '}'	{ $$ = $4; }
 		;
 
-antispoof_iflst	: antispoof_if				{ $$ = $1; }
-		| antispoof_iflst comma antispoof_if	{
+antispoof_iflst	: antispoof_if optnl			{ $$ = $1; }
+		| antispoof_iflst comma antispoof_if optnl {
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -1372,12 +1372,12 @@ table_opt	: STRING		{
 			}
 			free($1);
 		}
-		| '{' '}'		{ table_opts.init_addr = 1; }
-		| '{' host_list '}'	{
+		| '{' optnl '}'		{ table_opts.init_addr = 1; }
+		| '{' optnl host_list '}'	{
 			struct node_host	*n;
 			struct node_tinit	*ti;
 
-			for (n = $2; n != NULL; n = n->next) {
+			for (n = $3; n != NULL; n = n->next) {
 				switch (n->addr.type) {
 				case PF_ADDR_ADDRMASK:
 					continue; /* ok */
@@ -1408,7 +1408,7 @@ table_opt	: STRING		{
 			}
 			if (!(ti = calloc(1, sizeof(*ti))))
 				err(1, "table_opt: calloc");
-			ti->host = $2;
+			ti->host = $3;
 			SIMPLEQ_INSERT_TAIL(&table_opts.init_nodes, ti,
 			    entries);
 			table_opts.init_addr = 1;
@@ -1782,11 +1782,11 @@ hfscopts_item	: LINKSHARE bandwidth				{
 
 qassign		: /* empty */		{ $$ = NULL; }
 		| qassign_item		{ $$ = $1; }
-		| '{' qassign_list '}'	{ $$ = $2; }
+		| '{' optnl qassign_list '}'	{ $$ = $3; }
 		;
 
-qassign_list	: qassign_item			{ $$ = $1; }
-		| qassign_list comma qassign_item	{
+qassign_list	: qassign_item optnl		{ $$ = $1; }
+		| qassign_list comma qassign_item optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -2473,11 +2473,11 @@ logopt		: ALL		{ $$.log = PF_LOG_ALL; $$.logif = 0; }
 
 interface	: /* empty */			{ $$ = NULL; }
 		| ON if_item_not		{ $$ = $2; }
-		| ON '{' if_list '}'		{ $$ = $3; }
+		| ON '{' optnl if_list '}'	{ $$ = $4; }
 		;
 
-if_list		: if_item_not			{ $$ = $1; }
-		| if_list comma if_item_not	{
+if_list		: if_item_not optnl		{ $$ = $1; }
+		| if_list comma if_item_not optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -2516,13 +2516,13 @@ af		: /* empty */			{ $$ = 0; }
 		| INET6				{ $$ = AF_INET6; }
 		;
 
-proto		: /* empty */			{ $$ = NULL; }
-		| PROTO proto_item		{ $$ = $2; }
-		| PROTO '{' proto_list '}'	{ $$ = $3; }
+proto		: /* empty */				{ $$ = NULL; }
+		| PROTO proto_item			{ $$ = $2; }
+		| PROTO '{' optnl proto_list '}'	{ $$ = $4; }
 		;
 
-proto_list	: proto_item			{ $$ = $1; }
-		| proto_list comma proto_item	{
+proto_list	: proto_item optnl		{ $$ = $1; }
+		| proto_list comma proto_item optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -2582,7 +2582,7 @@ fromto		: ALL				{
 
 os		: /* empty */			{ $$ = NULL; }
 		| OS xos			{ $$ = $2; }
-		| OS '{' os_list '}'		{ $$ = $3; }
+		| OS '{' optnl os_list '}'	{ $$ = $4; }
 		;
 
 xos		: STRING {
@@ -2594,8 +2594,8 @@ xos		: STRING {
 		}
 		;
 
-os_list		: xos				{ $$ = $1; }
-		| os_list comma xos		{
+os_list		: xos optnl 			{ $$ = $1; }
+		| os_list comma xos optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -2637,13 +2637,17 @@ ipportspec	: ipspec			{
 		}
 		;
 
-ipspec		: ANY				{ $$ = NULL; }
-		| xhost				{ $$ = $1; }
-		| '{' host_list '}'		{ $$ = $2; }
+optnl		: '\n' optnl
+		|
 		;
 
-host_list	: ipspec			{ $$ = $1; }
-		| host_list comma ipspec	{
+ipspec		: ANY				{ $$ = NULL; }
+		| xhost				{ $$ = $1; }
+		| '{' optnl host_list '}'	{ $$ = $3; }
+		;
+
+host_list	: ipspec optnl			{ $$ = $1; }
+		| host_list comma ipspec optnl	{
 			if ($3 == NULL)
 				$$ = $1;
 			else if ($1 == NULL)
@@ -2875,11 +2879,11 @@ dynaddr		: '(' STRING ')'		{
 		;
 
 portspec	: port_item			{ $$ = $1; }
-		| '{' port_list '}'		{ $$ = $2; }
+		| '{' optnl port_list '}'	{ $$ = $3; }
 		;
 
-port_list	: port_item			{ $$ = $1; }
-		| port_list comma port_item	{
+port_list	: port_item optnl		{ $$ = $1; }
+		| port_list comma port_item optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -2966,11 +2970,11 @@ port		: STRING			{
 		;
 
 uids		: uid_item			{ $$ = $1; }
-		| '{' uid_list '}'		{ $$ = $2; }
+		| '{' optnl uid_list '}'	{ $$ = $3; }
 		;
 
-uid_list	: uid_item			{ $$ = $1; }
-		| uid_list comma uid_item	{
+uid_list	: uid_item optnl		{ $$ = $1; }
+		| uid_list comma uid_item optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -3044,11 +3048,11 @@ uid		: STRING			{
 		;
 
 gids		: gid_item			{ $$ = $1; }
-		| '{' gid_list '}'		{ $$ = $2; }
+		| '{' optnl gid_list '}'	{ $$ = $3; }
 		;
 
-gid_list	: gid_item			{ $$ = $1; }
-		| gid_list comma gid_item	{
+gid_list	: gid_item optnl		{ $$ = $1; }
+		| gid_list comma gid_item optnl	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -3139,22 +3143,22 @@ flags		: FLAGS flag '/' flag	{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
 		| FLAGS ANY		{ $$.b1 = 0; $$.b2 = 0; }
 		;
 
-icmpspec	: ICMPTYPE icmp_item		{ $$ = $2; }
-		| ICMPTYPE '{' icmp_list '}'	{ $$ = $3; }
-		| ICMP6TYPE icmp6_item		{ $$ = $2; }
-		| ICMP6TYPE '{' icmp6_list '}'	{ $$ = $3; }
+icmpspec	: ICMPTYPE icmp_item			{ $$ = $2; }
+		| ICMPTYPE '{' optnl icmp_list '}'	{ $$ = $4; }
+		| ICMP6TYPE icmp6_item			{ $$ = $2; }
+		| ICMP6TYPE '{' optnl icmp6_list '}'	{ $$ = $4; }
 		;
 
-icmp_list	: icmp_item			{ $$ = $1; }
-		| icmp_list comma icmp_item	{
+icmp_list	: icmp_item optnl		{ $$ = $1; }
+		| icmp_list comma icmp_item optnl {
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
 		}
 		;
 
-icmp6_list	: icmp6_item			{ $$ = $1; }
-		| icmp6_list comma icmp6_item	{
+icmp6_list	: icmp6_item optnl		{ $$ = $1; }
+		| icmp6_list comma icmp6_item optnl {
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
@@ -3574,11 +3578,11 @@ rport		: STRING			{
 		;
 
 redirspec	: host				{ $$ = $1; }
-		| '{' redir_host_list '}'	{ $$ = $2; }
+		| '{' optnl redir_host_list '}'	{ $$ = $3; }
 		;
 
-redir_host_list	: host				{ $$ = $1; }
-		| redir_host_list comma host	{
+redir_host_list	: host optnl			{ $$ = $1; }
+		| redir_host_list comma host optnl {
 			$1->tail->next = $3;
 			$1->tail = $3->tail;
 			$$ = $1;
@@ -4121,8 +4125,8 @@ route_host	: STRING			{
 		}
 		;
 
-route_host_list	: route_host				{ $$ = $1; }
-		| route_host_list comma route_host	{
+route_host_list	: route_host optnl			{ $$ = $1; }
+		| route_host_list comma route_host optnl {
 			if ($1->af == 0)
 				$1->af = $3->af;
 			if ($1->af != $3->af) {
@@ -4137,7 +4141,7 @@ route_host_list	: route_host				{ $$ = $1; }
 		;
 
 routespec	: route_host			{ $$ = $1; }
-		| '{' route_host_list '}'	{ $$ = $2; }
+		| '{' optnl route_host_list '}'	{ $$ = $3; }
 		;
 
 route		: /* empty */			{
@@ -4192,8 +4196,8 @@ timeout_spec	: STRING NUMBER
 		}
 		;
 
-timeout_list	: timeout_list comma timeout_spec
-		| timeout_spec
+timeout_list	: timeout_list comma timeout_spec optnl
+		| timeout_spec optnl
 		;
 
 limit_spec	: STRING NUMBER
@@ -4215,8 +4219,8 @@ limit_spec	: STRING NUMBER
 		}
 		;
 
-limit_list	: limit_list comma limit_spec
-		| limit_spec
+limit_list	: limit_list comma limit_spec optnl
+		| limit_spec optnl
 		;
 
 comma		: ','
