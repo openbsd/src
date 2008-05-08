@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.8 2008/05/08 07:45:21 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.9 2008/05/08 07:59:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,6 @@ timer_nextisdue(struct peer *p)
 	struct peer_timer *pt;
 
 	pt = TAILQ_FIRST(&p->timers);
-
 	if (pt != NULL && pt->val > 0 && pt->val <= time(NULL))
 		return (pt);
 	return (NULL);
@@ -60,15 +59,11 @@ timer_nextisdue(struct peer *p)
 time_t
 timer_nextduein(struct peer *p)
 {
-	u_int	i;
-	time_t	d, r = -1;
+	struct peer_timer *pt;
 
-	for (i = 1; i < Timer_Max; i++)
-		if (timer_running(p, i, &d))
-			if (r == -1 || d < r)
-				r = d;
-
-	return (r);
+	if ((pt = TAILQ_FIRST(&p->timers)) != NULL && pt->val > 0)
+		return (pt->val);
+	return (-1);
 }
 
 int
@@ -94,7 +89,7 @@ timer_set(struct peer *p, enum Timer timer, u_int offset)
 			fatal("timer_set");
 		pt->type = timer;
 	} else {
-		if (pt->val == time(NULL) + offset)
+		if (pt->val == time(NULL) + (time_t)offset)
 			return;
 		TAILQ_REMOVE(&p->timers, pt, entry);
 	}
