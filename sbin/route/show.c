@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.67 2008/05/08 05:41:59 norby Exp $	*/
+/*	$OpenBSD: show.c,v 1.68 2008/05/08 06:13:09 norby Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ WID_DST(int af)
 	if (nflag)
 		switch (af) {
 		case AF_MPLS:
-			return 48;
+			return 34;
 		case AF_INET6:
 			return 34;
 		default:
@@ -223,7 +223,7 @@ WID_DST(int af)
 	else
 		switch (af) {
 		case AF_MPLS:
-			return 48;
+			return 34;
  		default:
 			return 18;
 		}
@@ -242,9 +242,9 @@ pr_rthdr(int af)
 		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
 		break;
 	case PF_MPLS:
-		printf("%-20s %-20s %-6s %-18s %-6.6s %6.6s %8.8s %6.6s  %s\n",
+		printf("%-16s %-10s %-6s %-18s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
 		    "In label", "Out label", "Op", "Gateway",
-		    "Flags", "Refs", "Use", "Mtu", "Interface");
+		    "Flags", "Refs", "Use", "Mtu", "Prio", "Interface");
 		break;
 	default:
 		printf("%-*.*s %-*.*s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
@@ -884,12 +884,11 @@ label_print(struct sockaddr *sa)
 	    if_indextoname(smpls->smpls_in_ifindex, ifname_in)) == -1)
 		err(1, NULL);
 
-	if (asprintf(&out_label, "%u%%%s",
-	    ntohl(smpls->smpls_out_label) >> MPLS_LABEL_OFFSET,
-	    if_indextoname(smpls->smpls_out_ifindex, ifname_out)) == -1)
+	if (asprintf(&out_label, "%u",
+	    ntohl(smpls->smpls_out_label) >> MPLS_LABEL_OFFSET) == -1)
 		err(1, NULL);
 
-	(void)snprintf(line, sizeof(line), "%-20s %-20s %-6s", in_label,
+	(void)snprintf(line, sizeof(line), "%-16s %-10s %-6s", in_label,
 	    smpls->smpls_operation == MPLS_OP_POP ? "-" : out_label,
 	    label_print_op(smpls->smpls_operation));
 
