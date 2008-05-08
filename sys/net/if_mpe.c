@@ -178,6 +178,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	error = 0;
 	switch (cmd) {
 	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP)
