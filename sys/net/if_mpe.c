@@ -152,6 +152,15 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	int	error;
 
 	error = 0;
+	/*
+	 * drop MPLS packets entering here. This is a hack to prevent
+	 * loops because of misconfiguration.
+	 */
+	if (dst->sa_family == AF_MPLS) {
+		m_freem(m);
+		error = ENETUNREACH;
+		return (error);
+	}
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
@@ -232,26 +241,13 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-mpe_input(struct mbuf *m)
+mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
+    u_int32_t ttl)
 {
 	int		 s;
-	struct shim_hdr	*shim;
 
-	shim = mtod(m, struct shim_hdr *);
-	if (!(MPLS_BOS_ISSET(shim->shim_label))) {
-#ifdef MPLS_DEBUG
-		printf("mpe_input: invalid packet with non BoS label\n");
-#endif
-		m_free(m);
-		return;
-	}
-
-	
-#ifdef MPLS_DEBUG
-	printf("mpe_input: got packet with label: %d\n",
-	    ((ntohl(shim->shim_label & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET));
-#endif
-	m_adj(m, sizeof(shim));
+	/* fixup ttl */
+	/* label -> AF lookup */
 	
 	s = splnet();
 	/*

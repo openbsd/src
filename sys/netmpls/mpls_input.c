@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.10 2008/05/06 13:33:50 pyr Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.11 2008/05/08 03:18:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netmpls/mpls.h>
@@ -71,7 +72,7 @@ mpls_input(struct mbuf *m)
 	struct shim_hdr *shim;
 	struct rtentry *rt = NULL;
 	u_int32_t ttl;
-	int i;
+	int i, hasbos;
 
 	if (!mpls_enable) {
 		m_freem(m);
@@ -111,13 +112,6 @@ mpls_input(struct mbuf *m)
 	ttl = htonl(ttl - 1);
 
 	for (i = 0; i < mpls_inkloop; i++) {
-		/* XXX maybe this should be done later */
-		if (MPLS_BOS_ISSET(shim->shim_label)) {
-			/* no LER until now */
-			m_freem(m);
-			goto done;
-		}
-
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		smpls = &sa_mpls;
 		smpls->smpls_family = AF_MPLS;
@@ -156,7 +150,17 @@ mpls_input(struct mbuf *m)
 
 		switch (smpls->smpls_operation) {
 		case MPLS_OP_POP:
+			hasbos = MPLS_BOS_ISSET(shim->shim_label);
 			m = mpls_shim_pop(m);
+			if (hasbos) {
+				if (rt->rt_ifp->if_type == IFT_MPLS) {
+					mpe_input(m, rt->rt_ifp, smpls, ttl);
+					goto done;
+				}
+				/* last label but we have no clue so drop */
+				m_freem(m);
+				goto done;
+			}
 			break;
 		case MPLS_OP_PUSH:
 			m = mpls_shim_push(m, smpls);
