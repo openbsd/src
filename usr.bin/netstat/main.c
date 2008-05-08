@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2008/01/03 21:01:40 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.75 2008/05/08 07:18:47 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -187,6 +187,8 @@ main(int argc, char *argv[])
 				af = PF_KEY;
 			else if (strcmp(optarg, "atalk") == 0)
 				af = AF_APPLETALK;
+			else if (strcmp(optarg, "mpls") == 0)
+				af = AF_MPLS;
 			else if (strcmp(optarg, "mask") == 0)
 				af = 0xff;
 			else {
