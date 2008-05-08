@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.12 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.13 2008/05/08 07:19:42 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
+#include <netmpls/mpls.h>
 #include <arpa/inet.h>
 
 #include <err.h>
@@ -59,6 +60,8 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
+char	*label_print_op(u_int8_t);
+char	*label_print(struct sockaddr *);
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -100,7 +103,7 @@ void	 p_pfkentry(struct sadb_msg *);
 void	 pr_family(int);
 void	 p_encap(struct sockaddr *, struct sockaddr *, int);
 void	 p_protocol(struct sadb_protocol *, struct sockaddr *, struct
-	    sadb_protocol *, int);
+	     sadb_protocol *, int);
 void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
@@ -196,8 +199,29 @@ p_rttables(int af, u_int tableid)
  * width of destination/gateway column
  * strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4
  */
-#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
 #define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+
+int
+WID_DST(int af)
+{
+
+	if (nflag)
+		switch (af) {
+		case AF_MPLS:
+			return 34;
+		case AF_INET6:
+			return 34;
+		default:
+			return 18;
+		}
+	else
+		switch (af) {
+		case AF_MPLS:
+			return 34;
+ 		default:
+			return 18;
+		}
+}
 
 /*
  * Print header for routing table columns.
@@ -207,15 +231,24 @@ pr_rthdr(int af, int Aflag)
 {
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
-	if (af != PF_KEY)
-		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
-		    WID_DST(af), WID_DST(af), "Destination",
-		    WID_GW(af), WID_GW(af), "Gateway",
-		    "Flags", "Refs", "Use", "Mtu", "Interface");
-	else
+	switch (af) {
+	case PF_KEY:
 		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
 		    "Source", "Port", "Destination",
 		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
+		break;
+	case PF_MPLS:
+		printf("%-16s %-10s %-6s %-18s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
+		    "In label", "Out label", "Op", "Gateway",
+		    "Flags", "Refs", "Use", "Mtu", "Prio", "Interface");
+		break;
+	default:
+		printf("%-*.*s %-*.*s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
+		    WID_DST(af), WID_DST(af), "Destination",
+		    WID_GW(af), WID_GW(af), "Gateway",
+		    "Flags", "Refs", "Use", "Mtu", "Prio", "Iface");
+		break;
+	}
 }
 
 static void
@@ -265,14 +298,15 @@ p_rtentry(struct rt_msghdr *rtm)
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
-	printf("%6u %8llu ", rtm->rtm_rmx.rmx_refcnt,
+	printf("%5u %8llu ", rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
 	if (rtm->rtm_rmx.rmx_mtu)
-		printf("%6u ", rtm->rtm_rmx.rmx_mtu);
+		printf("%5u ", rtm->rtm_rmx.rmx_mtu);
 	else
-		printf("%6s ", "-");
+		printf("%5s ", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
-	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
+	printf("  %2d %.16s", rtm->rtm_priority,
+	    if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
 }
 
@@ -282,7 +316,7 @@ p_rtentry(struct rt_msghdr *rtm)
 void
 p_pfkentry(struct sadb_msg *msg)
 {
-	static int	 	 old = 0;
+	static int		 old = 0;
 	struct sadb_address	*saddr;
 	struct sadb_protocol	*sap, *saft;
 	struct sockaddr		*sa, *mask;
@@ -341,6 +375,9 @@ pr_family(int af)
 	case PF_KEY:
 		afname = "Encap";
 		break;
+	case AF_MPLS:
+		afname = "MPLS";
+		break;
 	case AF_APPLETALK:
 		afname = "AppleTalk";
 		break;
@@ -369,8 +406,8 @@ p_gwaddr(struct sockaddr *sa, int af)
 void
 p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
 {
-	char 		*cp;
-	unsigned short	 port;
+	char		*cp;
+	unsigned short	 port = 0;
 
 	if (mask)
 		cp = netname(sa, mask);
@@ -568,7 +605,8 @@ routename(struct sockaddr *sa)
 
 	case AF_LINK:
 		return (link_print(sa));
-
+	case AF_MPLS:
+		return (label_print(sa));
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
 			static char name[RTLABEL_LEN];
@@ -775,6 +813,8 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 		    (struct sockaddr_in6 *)mask);
 	case AF_LINK:
 		return (link_print(sa));
+	case AF_MPLS:
+		return (label_print(sa));
 	default:
 		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
@@ -821,6 +861,49 @@ link_print(struct sockaddr *sa)
 	default:
 		return (link_ntoa(sdl));
 	}
+}
+
+char *
+label_print_op(u_int8_t type)
+{
+	switch (type) {
+	case MPLS_OP_POP:
+		return ("POP");
+	case MPLS_OP_SWAP:
+		return ("SWAP");
+	case MPLS_OP_PUSH:
+		return ("PUSH");
+	default:
+		return ("?");
+	}
+}
+
+char *
+label_print(struct sockaddr *sa)
+{
+	struct sockaddr_mpls	*smpls = (struct sockaddr_mpls *)sa;
+	char			 ifname_in[IF_NAMESIZE];
+	char			 ifname_out[IF_NAMESIZE];
+	char			*in_label;
+	char			*out_label;
+
+	if (asprintf(&in_label, "%u%%%s",
+	    ntohl(smpls->smpls_in_label) >> MPLS_LABEL_OFFSET,
+	    if_indextoname(smpls->smpls_in_ifindex, ifname_in)) == -1)
+		err(1, NULL);
+
+	if (asprintf(&out_label, "%u",
+	    ntohl(smpls->smpls_out_label) >> MPLS_LABEL_OFFSET) == -1)
+		err(1, NULL);
+
+	(void)snprintf(line, sizeof(line), "%-16s %-10s %-6s", in_label,
+	    smpls->smpls_operation == MPLS_OP_POP ? "-" : out_label,
+	    label_print_op(smpls->smpls_operation));
+
+	free(in_label);
+	free(out_label);
+
+	return (line);
 }
 
 void
