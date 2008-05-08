@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.280 2008/05/08 06:52:13 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.281 2008/05/08 07:43:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -407,29 +407,41 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		for (p = peers; p != NULL; p = p->next) {
 			time_t	nextaction;
+			struct peer_timer *pt;
 
 			/* check timers */
-			if (timer_due(p, Timer_Hold))
-				bgp_fsm(p, EVNT_TIMER_HOLDTIME);
-			if (timer_due(p, Timer_ConnectRetry))
-				bgp_fsm(p, EVNT_TIMER_CONNRETRY);
-			if (timer_due(p, Timer_Keepalive))
-				bgp_fsm(p, EVNT_TIMER_KEEPALIVE);
-			if (timer_due(p, Timer_IdleHold))
-				bgp_fsm(p, EVNT_START);
-			if (timer_due(p, Timer_IdleHoldReset)) {
-				p->IdleHoldTime /= 2;
-				if (p->IdleHoldTime <=
-				    INTERVAL_IDLE_HOLD_INITIAL) {
-					p->IdleHoldTime =
-					    INTERVAL_IDLE_HOLD_INITIAL;
-					timer_stop(p, Timer_IdleHoldReset);
-					p->errcnt = 0;
-				} else
-					timer_set(p, Timer_IdleHoldReset,
-					    p->IdleHoldTime);
+			if ((pt = timer_nextisdue(p)) != NULL) {
+				switch (pt->type) {
+				case Timer_Hold:
+					bgp_fsm(p, EVNT_TIMER_HOLDTIME);
+					break;
+				case Timer_ConnectRetry:
+					bgp_fsm(p, EVNT_TIMER_CONNRETRY);
+					break;
+				case Timer_Keepalive:
+					bgp_fsm(p, EVNT_TIMER_KEEPALIVE);
+					break;
+				case Timer_IdleHold:
+					bgp_fsm(p, EVNT_START);
+					break;
+				case Timer_IdleHoldReset:
+					p->IdleHoldTime /= 2;
+					if (p->IdleHoldTime <=
+					    INTERVAL_IDLE_HOLD_INITIAL) {
+						p->IdleHoldTime =
+						    INTERVAL_IDLE_HOLD_INITIAL;
+						timer_stop(p,
+						    Timer_IdleHoldReset);
+						p->errcnt = 0;
+					} else
+						timer_set(p,
+						    Timer_IdleHoldReset,
+						    p->IdleHoldTime);
+					break;
+				default:
+					fatalx("King Bula lost in time");
+				}
 			}
-
 			if ((nextaction = timer_nextduein(p)) != -1 &&
 			    nextaction < timeout)
 				timeout = nextaction;
