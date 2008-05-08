@@ -27,6 +27,11 @@
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
+
 #include <netmpls/mpls.h>
 
 #ifdef MPLS_DEBUG
@@ -82,9 +87,8 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-
 #if NBPFILTER > 0
-	bpfattach(&mpeif->sc_if.if_bpf, ifp, DLT_MPLS, MPE_HDRLEN);
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, MPE_HDRLEN);
 #endif
 
 	s = splnet();
@@ -125,12 +129,16 @@ mpestart(struct ifnet *ifp)
 
 	for (;;) {
 		s = splnet();
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 
 		if (m == NULL)
 			return;
 
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
+#endif
 		ifm = ifp->if_softc;
 		shim.shim_label = ifm->sc_shim.shim_label;
 		M_PREPEND(m, sizeof(shim), M_DONTWAIT);
@@ -152,14 +160,20 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	int	error;
 
 	error = 0;
-	/*
-	 * drop MPLS packets entering here. This is a hack to prevent
-	 * loops because of misconfiguration.
-	 */
-	if (dst->sa_family == AF_MPLS) {
+	switch (dst->sa_family) {
+	case AF_INET:
+		break;
+	case AF_MPLS:
+		/*
+		 * drop MPLS packets entering here. This is a hack to prevent
+		 * loops because of misconfiguration.
+		 */
 		m_freem(m);
 		error = ENETUNREACH;
 		return (error);
+	default:
+		error = ENETDOWN;
+		goto out;
 	}
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
@@ -168,8 +182,11 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		splx(s);
 		return (error);
 	}
-	splx(s);
 	if_start(ifp);
+	splx(s);
+out:
+	if (error)
+		ifp->if_oerrors++;
 	return (error);
 }
 
@@ -249,6 +266,10 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	/* fixup ttl */
 	/* label -> AF lookup */
 	
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 	s = splnet();
 	/*
 	 * assume we only get fed ipv4 packets for now.
