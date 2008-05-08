@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.35 2008/05/06 05:59:49 deraadt Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.36 2008/05/08 13:57:43 miod Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -143,6 +143,14 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C550AVR, ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS1,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_BAD_HID }},
+
+  /* MS keyboards do weird things */
+  { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLNOTEBOOK,
+	ANY, { UQ_MS_BAD_CLASS | UQ_MS_LEADING_BYTE }},
+  { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLNOTEBOOK2,
+	ANY, { UQ_MS_BAD_CLASS | UQ_MS_LEADING_BYTE }},
+  { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLINTELLIMOUSE,
+	ANY, { UQ_MS_LEADING_BYTE }},
 
  /* SISPM devices */
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_OLD,	    ANY,   { UQ_BAD_HID }},

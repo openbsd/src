@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.10 2007/09/01 17:06:26 xsa Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.11 2008/05/08 13:57:43 miod Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -124,6 +124,7 @@ typedef struct usb_hid_descriptor {
 #define HUG_VBRY		0x0044
 #define HUG_VBRZ		0x0045
 #define HUG_VNO			0x0046
+#define HUG_TWHEEL		0x0048
 #define HUG_SYSTEM_CONTROL	0x0080
 #define HUG_SYSTEM_POWER_DOWN	0x0081
 #define HUG_SYSTEM_SLEEP	0x0082
