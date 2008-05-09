@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.90 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.91 2008/05/09 07:33:13 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -865,6 +865,7 @@ makeroute:
 			 * route's parent.
 			 */
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
+			rt->rt_priority = (*ret_nrt)->rt_priority;
 			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
 			rt->rt_parent->rt_refcnt++;
 		}
