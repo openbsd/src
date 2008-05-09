@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.95 2008/05/09 02:44:54 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.96 2008/05/09 02:52:15 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -284,7 +284,8 @@ in_pcbbind(v, nam)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
-			if (in_iawithaddr(sin->sin_addr, NULL) == 0)
+			if (!(so->so_options & SO_BINDANY) &&
+			    in_iawithaddr(sin->sin_addr, NULL) == 0)
 				return (EADDRNOTAVAIL);
 		}
 		if (lport) {

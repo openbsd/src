@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.57 2008/05/02 06:49:32 ckuethe Exp $	*/
+/*	$OpenBSD: socket.h,v 1.58 2008/05/09 02:52:15 markus Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define SO_JUMBO	0x0400		/* try to use jumbograms */
 #define SO_TIMESTAMP	0x0800		/* timestamp received dgram traffic */
+#define	SO_BINDANY	0x1000		/* allow bind to any address */
 
 /*
  * Additional options, not kept in so_options.

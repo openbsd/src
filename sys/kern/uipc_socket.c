@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.68 2008/05/02 06:49:32 ckuethe Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.69 2008/05/09 02:52:15 markus Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -981,6 +981,13 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		error = ENOPROTOOPT;
 	} else {
 		switch (optname) {
+		case SO_BINDANY:
+			if ((error = suser(curproc, 0)) != 0)	/* XXX */
+				goto bad;
+			break;
+		}
+
+		switch (optname) {
 
 		case SO_LINGER:
 			if (m == NULL || m->m_len != sizeof (struct linger) ||
@@ -992,6 +999,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			so->so_linger = mtod(m, struct linger *)->l_linger;
 			/* FALLTHROUGH */
 
+		case SO_BINDANY:
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
 		case SO_DONTROUTE:
@@ -1127,6 +1135,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			mtod(m, struct linger *)->l_linger = so->so_linger;
 			break;
 
+		case SO_BINDANY:
 		case SO_USELOOPBACK:
 		case SO_DONTROUTE:
 		case SO_DEBUG:
