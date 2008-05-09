@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.118 2008/05/09 06:52:47 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.119 2008/05/09 07:14:56 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1344,7 +1344,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	if (ifa)
 		printf(" if address: %s\n", routename(ifa));
 	printf("   priority: %u (%s)\n", rtm->rtm_priority,
-	   priorityname(rtm->rtm_version)); 
+	   priorityname(rtm->rtm_priority)); 
 	printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
 	printf("\n");
