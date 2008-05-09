@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.544 2008/05/09 02:44:54 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.545 2008/05/09 05:41:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2182,7 +2182,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				free($9.queues.pqname);
 			}
-			if ((r.divert.port = htons($9.divert.port))) {
+			if ((r.divert.port = $9.divert.port)) {
 				if (r.direction == PF_OUT) {
 					if ($9.divert.addr) {
 						yyerror("address specified "
@@ -2322,7 +2322,7 @@ filter_opt	: USER uids {
 			}
 			filter_opts.rtableid = $2;
 		}
-		| DIVERTTO STRING number {
+		| DIVERTTO STRING PORT number {
 			if ((filter_opts.divert.addr = host($2)) == NULL) {
 				yyerror("could not parse divert address: %s",
 				    $2);
@@ -2330,9 +2330,9 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			free($2);
-			filter_opts.divert.port = $3;
+			filter_opts.divert.port = htons($4);
 			if (!filter_opts.divert.port) {
-				yyerror("invalid divert port: %d", $3);
+				yyerror("invalid divert port: %d", $4);
 				YYERROR;
 			}
 		}
