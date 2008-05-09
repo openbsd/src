@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.80 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: st.c,v 1.81 2008/05/09 00:25:41 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -383,14 +383,14 @@ stdetach(struct device *self, int flags)
 	mn = STUNIT(self->dv_unit);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == sdopen) {
+		if (bdevsw[bmaj].d_open == stopen) {
 			vdevgone(bmaj, mn, mn + 0, VBLK);
 			vdevgone(bmaj, mn, mn + 1, VBLK);
 			vdevgone(bmaj, mn, mn + 2, VBLK);
 			vdevgone(bmaj, mn, mn + 3, VBLK);
 		}
 	for (cmaj = 0; cmaj < nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == sdopen) {
+		if (cdevsw[cmaj].d_open == stopen) {
 			vdevgone(cmaj, mn, mn + 0, VCHR);
 			vdevgone(cmaj, mn, mn + 1, VCHR);
 			vdevgone(cmaj, mn, mn + 2, VCHR);
