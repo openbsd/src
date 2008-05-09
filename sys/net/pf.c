@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.572 2008/05/07 07:07:29 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.573 2008/05/09 02:44:54 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -218,6 +218,7 @@ void			 pf_set_rt_ifp(struct pf_state *,
 			    struct pf_addr *);
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
+struct pf_divert	*pf_get_divert(struct mbuf *);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 struct pf_state		*pf_find_state(struct pfi_kif *,
@@ -2653,7 +2654,8 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
-			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0);
+			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0,
+			    NULL);
 			if (inp == NULL)
 				return (-1);
 		}
@@ -5456,6 +5458,34 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	return (0);
 }
 
+struct pf_divert *
+pf_find_divert(struct mbuf *m)
+{
+        struct m_tag    *mtag;
+
+        if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL)
+                return (NULL);
+
+        return ((struct pf_divert *)(mtag + 1));
+}
+
+struct pf_divert *
+pf_get_divert(struct mbuf *m)
+{
+        struct m_tag    *mtag;
+
+        if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL) {
+                mtag = m_tag_get(PACKET_TAG_PF_DIVERT, sizeof(struct pf_divert),
+                    M_NOWAIT);
+                if (mtag == NULL)
+                        return (NULL);
+                bzero(mtag + 1, sizeof(struct pf_divert));
+                m_tag_prepend(m, mtag);
+        }
+
+        return ((struct pf_divert *)(mtag + 1));
+}
+
 #ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
@@ -5673,6 +5703,16 @@ done:
 	    s->nat_rule.ptr->action == PF_BINAT) &&
 	    (ntohl(pd.dst->v4.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
 		m->m_pkthdr.pf.flags |= PF_TAG_TRANSLATE_LOCALHOST;
+
+	if (dir == PF_IN && action == PF_PASS && r->divert.port) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_get_divert(m))) {
+			m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
+			divert->port = r->divert.port;
+			divert->addr.ipv4 = r->divert.addr.v4;
+		}
+	}
 
 	if (log) {
 		struct pf_rule *lr;
@@ -6049,6 +6089,16 @@ done:
 	    s->nat_rule.ptr->action == PF_BINAT) &&
 	    IN6_IS_ADDR_LOOPBACK(&pd.dst->v6))
 		m->m_pkthdr.pf.flags |= PF_TAG_TRANSLATE_LOCALHOST;
+
+	if (dir == PF_IN && action == PF_PASS && r->divert.port) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_get_divert(m))) {
+			m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
+			divert->port = r->divert.port;
+			divert->addr.ipv6 = r->divert.addr.v6;
+		}
+	}
 
 	if (log) {
 		struct pf_rule *lr;

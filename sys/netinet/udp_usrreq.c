@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.116 2008/05/02 06:49:32 ckuethe Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.117 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ udp_input(struct mbuf *m, ...)
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
-		    ip->ip_dst, uh->uh_dport, inpl_reverse);
+		    ip->ip_dst, uh->uh_dport, inpl_reverse, m);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {

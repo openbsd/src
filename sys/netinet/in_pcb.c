@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.94 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.95 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
  * Research Laboratory (NRL).
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -80,6 +82,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1009,17 +1012,24 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
  *		*.*     <->     *.lport
  */
 struct inpcb *
-in_pcblookup_listen(table, laddr, lport_arg, reverse)
-	struct inpcbtable *table;
-	struct in_addr laddr;
-	u_int lport_arg;
-	int reverse;
+in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
+    u_int lport_arg, int reverse, struct mbuf *m)
 {
 	struct inpcbhead *head;
 	struct in_addr *key1, *key2;
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
+#if NPF
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_find_divert(m)) == NULL)
+			return (NULL);
+		key1 = key2 = &divert->addr.ipv4;
+		lport = divert->port;
+	} else
+#endif
 	if (reverse) {
 		key1 = &zeroin_addr;
 		key2 = &laddr;

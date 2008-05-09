@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.41 2008/05/02 06:49:32 ckuethe Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.42 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -131,6 +132,16 @@ rip_input(struct mbuf *m, ...)
 #endif
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
+#if NPF
+		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+			struct pf_divert *divert;
+
+			if ((divert = pf_find_divert(m)) == NULL)
+				continue;
+			if (inp->inp_laddr.s_addr != divert->addr.ipv4.s_addr)
+				continue;
+		} else
+#endif
 		if (inp->inp_laddr.s_addr &&
 		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
 			continue;

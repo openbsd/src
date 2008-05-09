@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.95 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.96 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 #endif
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable, 
-			    lin->sin_addr, lin->sin_port, 0);
+			    lin->sin_addr, lin->sin_port, 0, NULL);
 			break;
 		}
 	}

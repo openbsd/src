@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.543 2008/05/08 08:08:36 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.544 2008/05/09 02:44:54 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -232,6 +232,10 @@ struct filter_opts {
 	char			*match_tag;
 	u_int8_t		 match_tag_not;
 	u_int			 rtableid;
+	struct {
+		struct node_host	*addr;
+		u_int16_t		port;
+	}			 divert;
 } filter_opts;
 
 struct antispoof_opts {
@@ -436,6 +440,7 @@ typedef struct {
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE SETTOS
+%token	DIVERTTO DIVERTREPLY
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -2177,6 +2182,30 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				free($9.queues.pqname);
 			}
+			if ((r.divert.port = htons($9.divert.port))) {
+				if (r.direction == PF_OUT) {
+					if ($9.divert.addr) {
+						yyerror("address specified "
+						    "for outgoing divert");
+						YYERROR;
+					}
+					bzero(&r.divert.addr,
+					    sizeof(r.divert.addr));
+				} else {
+					if (!$9.divert.addr) {
+						yyerror("no address specified "
+						    "for incoming divert");
+						YYERROR;
+					}
+					if ($9.divert.addr->af != r.af) {
+						yyerror("address family "
+						    "mismatch for divert");
+						YYERROR;
+					}
+					r.divert.addr =
+					    $9.divert.addr->addr.v.a.addr;
+				}
+			}	
 
 			expand_rule(&r, $4, $5.host, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
@@ -2292,6 +2321,23 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			filter_opts.rtableid = $2;
+		}
+		| DIVERTTO STRING number {
+			if ((filter_opts.divert.addr = host($2)) == NULL) {
+				yyerror("could not parse divert address: %s",
+				    $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			filter_opts.divert.port = $3;
+			if (!filter_opts.divert.port) {
+				yyerror("invalid divert port: %d", $3);
+				YYERROR;
+			}
+		}
+		| DIVERTREPLY {
+			filter_opts.divert.port = 1;	/* some random value */
 		}
 		;
 
@@ -5173,6 +5219,8 @@ lookup(char *s)
 		{ "code",		CODE},
 		{ "crop",		FRAGCROP},
 		{ "debug",		DEBUG},
+		{ "divert-reply",	DIVERTREPLY},
+		{ "divert-to",		DIVERTTO},
 		{ "drop",		DROP},
 		{ "drop-ovl",		FRAGDROP},
 		{ "dup-to",		DUPTO},

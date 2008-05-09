@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.96 2007/11/28 14:04:26 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.97 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct pkthdr_pf {
 #define	PF_TAG_GENERATED		0x01
 #define	PF_TAG_FRAGCACHE		0x02
 #define	PF_TAG_TRANSLATE_LOCALHOST	0x04
+#define	PF_TAG_DIVERTED			0x08
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
@@ -507,6 +508,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_GRE				9  /* GRE processing done */
 #define PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
 #define PACKET_TAG_DLT				17 /* data link layer type */
+#define PACKET_TAG_PF_DIVERT			18 /* pf(4) diverted packet */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

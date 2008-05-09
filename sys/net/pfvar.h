@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.264 2008/05/08 08:05:16 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.265 2008/05/09 02:44:54 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -598,6 +598,11 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
+
+	struct {
+		struct pf_addr		addr;
+		u_int16_t		port;
+	}			divert;
 };
 
 /* rule flags */
@@ -1284,6 +1289,14 @@ struct pf_tagname {
 	int			ref;
 };
 
+struct pf_divert {
+	union {
+		struct in_addr   ipv4;
+		struct in6_addr  ipv6;
+	}               addr;
+	u_int16_t       port;
+};
+
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 #define PFFRAG_FRCENT_HIWAT	50000	/* Number of fragment cache entries */
@@ -1592,6 +1605,7 @@ extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    u_int8_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
+struct pf_divert		*pf_find_divert(struct mbuf *);
 
 #ifdef INET
 int	pf_test(int, struct ifnet *, struct mbuf **, struct ether_header *);

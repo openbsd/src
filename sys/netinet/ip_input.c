@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.158 2008/04/24 11:36:38 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.159 2008/05/09 02:44:54 markus Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -387,6 +387,9 @@ ipv4_input(m)
 	 */
 	if ((ia = in_iawithaddr(ip->ip_dst, m)) != NULL &&
 	    (ia->ia_ifp->if_flags & IFF_UP))
+		goto ours;
+
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED)
 		goto ours;
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
