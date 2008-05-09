@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.117 2008/05/07 06:06:25 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.118 2008/05/09 06:52:47 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ void	 monitor(void);
 int	 prefixlen(char *);
 void	 sockaddr(char *, struct sockaddr *);
 void	 sodump(sup, char *);
+char	*priorityname(u_int8_t);
 void	 print_getmsg(struct rt_msghdr *, int);
 void	 print_rtmsg(struct rt_msghdr *, int);
 void	 pmsg_common(struct rt_msghdr *);
@@ -1246,6 +1247,31 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	}
 }
 
+char *
+priorityname(u_int8_t prio)
+{
+	switch (prio) {
+	case 0:
+		return ("none");
+	case 4:
+		return ("connected");
+	case 8:
+		return ("static");
+	case 16:
+		return ("ospf");
+	case 20:
+		return ("is-is");
+	case 24:
+		return ("rip");
+	case 32:
+		return ("bgp");
+	case 48:
+		return ("default");
+	default:
+		return ("");
+	}
+}
+
 void
 print_getmsg(struct rt_msghdr *rtm, int msglen)
 {
@@ -1317,6 +1343,8 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    ifp->sdl_nlen, ifp->sdl_data);
 	if (ifa)
 		printf(" if address: %s\n", routename(ifa));
+	printf("   priority: %u (%s)\n", rtm->rtm_priority,
+	   priorityname(rtm->rtm_version)); 
 	printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
 	printf("\n");
