@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.312 2008/05/09 14:18:44 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.313 2008/05/09 14:26:08 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -159,6 +159,11 @@ static int client_global_request_id = 0;
 
 /* pid of proxycommand child process */
 pid_t proxy_command_pid = 0;
+
+/* mux.c */
+extern int muxserver_sock;
+extern u_int muxclient_command;
+
 
 /* Prints a help message to the user.  This function never returns. */
 
