@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.134 2008/05/06 03:50:03 mpf Exp $
+.\" $OpenBSD: pfctl.8,v 1.135 2008/05/09 13:59:31 mpf Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 6 2008 $
+.Dd $Mdocdate: May 9 2008 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -41,7 +41,10 @@
 .Op Fl f Ar file
 .Op Fl i Ar interface
 .Op Fl K Ar host | network
-.Op Fl k Ar host | network
+.Xo
+.Oo Fl k
+.Ar host | network | label | id
+.Oc Xc
 .Op Fl o Ar level
 .Op Fl p Ar device
 .Op Fl s Ar modifier
@@ -249,22 +252,28 @@ or
 .Fl K Ar network
 option may be specified, which will kill all the source tracking
 entries from the first host/network to the second.
-.It Fl k Ar host | network
-Kill all of the state entries originating from the specified
-.Ar host
+.It Xo
+.Fl k
+.Ar host | network | label | id
+.Xc
+Kill all of the state entries matching the specified
+.Ar host ,
+.Ar network ,
+.Ar label ,
 or
-.Ar network .
+.Ar id .
+.Pp
+For example, to kill all of the state entries originating from
+.Dq host :
+.Pp
+.Dl # pfctl -k host
+.Pp
 A second
 .Fl k Ar host
 or
 .Fl k Ar network
 option may be specified, which will kill all the state entries
 from the first host/network to the second.
-For example, to kill all of the state entries originating from
-.Dq host :
-.Pp
-.Dl # pfctl -k host
-.Pp
 To kill all of the state entries from
 .Dq host1
 to
@@ -281,6 +290,32 @@ To kill all states with the target
 .Dq host2 :
 .Pp
 .Dl # pfctl -k 0.0.0.0/0 -k host2
+.Pp
+It is also possible to kill states by rule label or state ID.
+In this mode the first
+.Fl k
+argument is used to specify the type
+of the second argument.
+The following command would kill all states that have been created
+from rules carrying the label
+.Dq foobar :
+.Pp
+.Dl # pfctl -k label -k foobar
+.Pp
+To kill one specific state by its unique state ID
+(as shown by pfctl -s state -vv),
+use the
+.Ar id
+modifier and as a second argument the state ID and optional creator ID.
+To kill a state with ID 4823e84500000003 use:
+.Pp
+.Dl # pfctl -k id -k 4823e84500000003
+.Pp
+To kill a state with ID 4823e84500000018 created from a backup
+firewall with hostid 00000002 use:
+.Pp
+.Dl # pfctl -k id -k 4823e84500000018/2
+.Pp
 .It Fl m
 Merge in explicitly given options without resetting those
 which are omitted.

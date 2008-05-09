@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.195 2008/05/06 03:45:22 mpf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.196 2008/05/09 13:59:31 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1557,7 +1557,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCCLRSTATES: {
 		struct pf_state		*s, *nexts;
 		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
-		int			 killed = 0;
+		u_int			 killed = 0;
 
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
@@ -1572,7 +1572,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				killed++;
 			}
 		}
-		psk->psk_af = killed;
+		psk->psk_killed = killed;
 #if NPFSYNC
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
 #endif
@@ -1584,7 +1584,22 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state_key	*sk;
 		struct pf_state_host	*src, *dst;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
-		int			 killed = 0;
+		u_int			 killed = 0;
+
+		if (psk->psk_pfcmp.id) {
+			if (psk->psk_pfcmp.creatorid == 0)
+				psk->psk_pfcmp.creatorid = pf_status.hostid;
+			if ((s = pf_find_state_byid(&psk->psk_pfcmp))) {
+#if NPFSYNC > 0
+				/* send immediate delete of state */
+				pfsync_delete_state(s);
+				s->sync_flags |= PFSTATE_NOSYNC;
+#endif
+				pf_unlink_state(s);
+				psk->psk_killed = 1;
+			}
+			break;
+		}
 
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
 		    s = nexts) {
@@ -1617,6 +1632,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
 			    dst->port)) &&
+			    (!psk->psk_label[0] || (s->rule.ptr->label[0] &&
+			    !strcmp(psk->psk_label, s->rule.ptr->label))) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    s->kif->pfik_name))) {
 #if NPFSYNC > 0
@@ -1628,7 +1645,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				killed++;
 			}
 		}
-		psk->psk_af = killed;
+		psk->psk_killed = killed;
 		break;
 	}
 
@@ -2852,7 +2869,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*s;
 		struct pfioc_src_node_kill *psnk = \
 			(struct pfioc_src_node_kill *) addr;
-		int			killed = 0;
+		u_int			killed = 0;
 
 		RB_FOREACH(sn, pf_src_tree, &tree_src_tracking) {
         		if (PF_MATCHA(psnk->psnk_src.neg, \
@@ -2882,7 +2899,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (killed > 0)
 			pf_purge_expired_src_nodes(1);
 
-		psnk->psnk_af = killed;
+		psnk->psnk_killed = killed;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.265 2008/05/09 02:44:54 markus Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.266 2008/05/09 13:59:31 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1351,19 +1351,21 @@ struct pfioc_state {
 };
 
 struct pfioc_src_node_kill {
-	/* XXX returns the number of src nodes killed in psnk_af */
 	sa_family_t psnk_af;
 	struct pf_rule_addr psnk_src;
 	struct pf_rule_addr psnk_dst;
+	u_int		    psnk_killed;
 };
 
 struct pfioc_state_kill {
-	/* XXX returns the number of states killed in psk_af */
+	struct pf_state_cmp	psk_pfcmp;
 	sa_family_t		psk_af;
 	int			psk_proto;
 	struct pf_rule_addr	psk_src;
 	struct pf_rule_addr	psk_dst;
 	char			psk_ifname[IFNAMSIZ];
+	char			psk_label[PF_RULE_LABEL_SIZE];
+	u_int			psk_killed;
 };
 
 struct pfioc_states {
