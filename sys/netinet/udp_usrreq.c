@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.117 2008/05/09 02:44:54 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.118 2008/05/09 02:56:36 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -636,6 +636,14 @@ udp_input(struct mbuf *m, ...)
 	if (ip && (inp->inp_flags & INP_CONTROLOPTS ||
 	    inp->inp_socket->so_options & SO_TIMESTAMP))
 		ip_savecontrol(inp, &opts, ip, m);
+	if (ip && (inp->inp_flags & INP_RECVDSTPORT)) {
+		struct mbuf **mp = &opts;
+
+		while (*mp)
+			mp = &(*mp)->m_next;
+		*mp = sbcreatecontrol((caddr_t)&uh->uh_dport, sizeof(u_int16_t),
+		    IP_RECVDSTPORT, IPPROTO_IP);
+	}
 
 	iphlen += sizeof(struct udphdr);
 	m_adj(m, iphlen);
