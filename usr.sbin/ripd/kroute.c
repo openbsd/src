@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2007/10/24 20:29:30 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2008/05/09 12:47:42 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -739,6 +739,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_flags = RTF_PROTO3;
+	hdr.rtm_priority = RTP_RIP;
 	if (action == RTM_CHANGE)	/* force PROTO3 reset the other flags */
 		hdr.rtm_fmask =
 		    RTF_PROTO3|RTF_PROTO2|RTF_PROTO1|RTF_REJECT|RTF_BLACKHOLE;
