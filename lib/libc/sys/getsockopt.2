@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.23 2008/05/02 06:49:31 ckuethe Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.24 2008/05/09 08:24:06 markus Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 2 2008 $
+.Dd $Mdocdate: May 9 2008 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -141,6 +141,7 @@ and set with
 .It Dv SO_LINGER Ta "linger on close if data present"
 .It Dv SO_BROADCAST Ta "enables permission to transmit broadcast messages"
 .It Dv SO_OOBINLINE Ta "enables reception of out-of-band data in band"
+.It Dv SO_BINDANY Ta "enables binding to any address"
 .It Dv SO_SNDBUF Ta "set buffer size for output"
 .It Dv SO_RCVBUF Ta "set buffer size for input"
 .It Dv SO_SNDLOWAT Ta "set minimum count for output"
@@ -215,6 +216,22 @@ calls without the
 .Dv MSG_OOB
 flag.
 Some protocols always behave as if this option is set.
+.Pp
+.Dv SO_BINDANY 
+allows the socket to be bound to addresses
+which are not local to the machine, so it
+can be used to make a transparent proxy.
+Note that this option is limited to the super-user.
+In order to receive packets for these addresses,
+.Dv SO_BINDANY
+needs to be combined with matching outgoing
+.Xr pf 4
+divert rules.
+For example, with the following rule the socket receives packets
+for 192.168.0.10 even if it is not a local address:
+.Pp
+.Dl pass out inet from 192.168.0.10 divert-reply
+.Pp
 .Dv SO_SNDBUF
 and
 .Dv SO_RCVBUF
@@ -351,6 +368,7 @@ is not in a valid part of the process address space.
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
+.Xr pf.conf 5 ,
 .Xr protocols 5
 .Sh STANDARDS
 .Dv SO_PEERCRED
