@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.118 2007/11/24 12:59:28 jmc Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.119 2008/05/09 15:48:15 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1723,12 +1723,17 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		/* Flow type */
 		if (!exists) {
 			/* Add SPD entry */
-			if ((rval = rtrequest(RTM_ADD,
-				 (struct sockaddr *) &encapdst,
-				 (struct sockaddr *) &encapgw,
-				 (struct sockaddr *) &encapnetmask,
-				 RTF_UP | RTF_GATEWAY | RTF_STATIC,
-				 (struct rtentry **) 0, 0)) != 0) {
+			struct rt_addrinfo info;
+
+			bzero(&info, sizeof(info));
+			info.rti_info[RTAX_DST] = (struct sockaddr *)&encapdst;
+			info.rti_info[RTAX_GATEWAY] =
+			    (struct sockaddr *)&encapgw;
+			info.rti_info[RTAX_NETMASK] =
+			    (struct sockaddr *)&encapnetmask;
+			info.rti_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+			if ((rval = rtrequest1(RTM_ADD, &info, RTP_DEFAULT,
+			    NULL, 0)) != 0) {
 				/* Remove from linked list of policies on TDB */
 				if (ipo->ipo_tdb)
 					TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,

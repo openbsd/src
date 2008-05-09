@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.91 2008/05/09 07:33:13 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.92 2008/05/09 15:48:15 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -281,13 +281,16 @@ rtalloc2(struct sockaddr *dst, int report, int howstrict)
 	struct rt_addrinfo	 info;
 	int			 s = splnet(), err = 0, msgtype = RTM_MISS;
 
+	bzero(&info, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+
 	rnh = rt_gettable(dst->sa_family, 0);
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
 		if (report && (rt->rt_flags & RTF_CLONING) &&
 		    okaytoclone(rt->rt_flags, howstrict)) {
-			err = rtrequest(RTM_RESOLVE, dst, SA(0), SA(0), 0,
+			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &newrt, 0);
 			if (err) {
 				newrt = rt;
@@ -304,8 +307,6 @@ rtalloc2(struct sockaddr *dst, int report, int howstrict)
 		rtstat.rts_unreach++;
 miss:
 		if (report) {
-			bzero((caddr_t)&info, sizeof(info));
-			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, NULL, err, 0);
 		}
 	}
@@ -335,13 +336,16 @@ rtalloc1(struct sockaddr *dst, int report, u_int tableid)
 	struct rt_addrinfo	 info;
 	int			 s = splsoftnet(), err = 0, msgtype = RTM_MISS;
 
+	bzero(&info, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+
 	rnh = rt_gettable(dst->sa_family, tableid);
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
 		if (report && (rt->rt_flags & RTF_CLONING)) {
-			err = rtrequest(RTM_RESOLVE, dst, SA(NULL),
-			    SA(NULL), 0, &newrt, tableid);
+			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
+			    &newrt, tableid);
 			if (err) {
 				newrt = rt;
 				rt->rt_refcnt++;
@@ -1092,9 +1096,11 @@ static int			rt_init_done = 0;
 	if (r->rtt_func != NULL) {				\
 		(*r->rtt_func)(r->rtt_rt, r);			\
 	} else {						\
-		rtrequest((int) RTM_DELETE,			\
-		    (struct sockaddr *)rt_key(r->rtt_rt),	\
-		    0, 0, 0, 0, 0);				\
+		struct rt_addrinfo info;			\
+		bzero(&info, sizeof(info));			\
+		info.rti_info[RTAX_DST] = rt_key(r->rtt_rt);	\
+		rtrequest1(RTM_DELETE, &info,			\
+		    r->rtt_rt->rt_priority, NULL, 0 /* XXX */);	\
 	}							\
 }
 
