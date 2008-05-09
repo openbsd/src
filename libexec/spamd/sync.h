@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.h,v 1.1 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: sync.h,v 1.2 2008/05/09 07:09:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,9 @@
 #define SPAM_SYNC_HMAC_LEN	20	/* SHA1 */
 #define SPAM_SYNC_MAXSIZE	1408
 #define SPAM_SYNC_KEY		"/etc/mail/spamd.key"
+
+#define SPAM_ALIGNBYTES      (15)
+#define SPAM_ALIGN(p)        (((u_int)(p) + SPAM_ALIGNBYTES) &~ SPAM_ALIGNBYTES)
 
 struct spam_synchdr {
 	u_int8_t	sh_version;
