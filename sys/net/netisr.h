@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.32 2008/05/07 05:51:12 mpf Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.33 2008/05/09 12:54:52 dlg Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define	NETISR_RND_DONE	1
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_TX	3		/* for if_snd processing */
+#define	NETISR_MPLS	4		/* AF_MPLS would overflow */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
@@ -64,7 +65,6 @@
 #define	NETISR_BRIDGE	29		/* for bridge processing */
 #define	NETISR_PPPOE	30		/* for pppoe processing */
 #define	NETISR_BT	31		/* same as AF_BLUETOOTH */
-#define	NETISR_MPLS	3		/* XXX AF_MPLS would overflow */
 
 #ifndef _LOCORE
 #ifdef _KERNEL
