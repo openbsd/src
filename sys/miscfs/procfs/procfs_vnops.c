@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.43 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.44 2008/05/09 10:22:50 thib Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ int	procfs_readdir(void *);
 int	procfs_readlink(void *);
 int	procfs_inactive(void *);
 int	procfs_reclaim(void *);
-int	procfs_bmap(void *);
 int	procfs_print(void *);
 int	procfs_pathconf(void *);
 
@@ -168,7 +167,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, procfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, nullop },			/* lock */
 	{ &vop_unlock_desc, nullop },			/* unlock */
-	{ &vop_bmap_desc, procfs_bmap },		/* bmap */
+	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
 	{ &vop_strategy_desc, procfs_badop },		/* strategy */
 	{ &vop_print_desc, procfs_print },		/* print */
 	{ &vop_islocked_desc, nullop },			/* islocked */
@@ -270,28 +269,6 @@ procfs_ioctl(void *v)
 {
 
 	return (ENOTTY);
-}
-
-/*
- * do block mapping for pfsnode (vp).
- * since we don't use the buffer cache
- * for procfs this function should never
- * be called.  in any case, it's not clear
- * what part of the kernel ever makes use
- * of this function.  for sanity, this is the
- * usual no-op bmap, although returning
- * (EIO) would be a reasonable alternative.
- */
-int
-procfs_bmap(void *v)
-{
-	struct vop_bmap_args *ap = v;
-
-	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ap->a_vp;
-	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
-	return (0);
 }
 
 /*
