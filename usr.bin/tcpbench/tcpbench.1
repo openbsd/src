@@ -1,0 +1,97 @@
+.\" $OpenBSD: tcpbench.1,v 1.1.1.1 2008/05/09 00:54:07 djm Exp $
+.\"
+.\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 9 2008 $
+.Os
+.Dt TCPBENCH 1
+.Sh NAME
+.Nm tcpbench
+.Nd TCP benchmarking and measurement tool
+.Sh SYNOPSIS
+.Nm
+.Fl l
+.Nm
+.Op Fl v
+.Op Fl k Ar kvars
+.Op Fl p Ar port
+.Op Fl r Ar rate
+.Op Fl B Ar buf
+.Op Fl S Ar space
+.Ar hostname
+.Nm
+.Fl s
+.Op Fl v
+.Op Fl k Ar kvars
+.Op Fl p Ar port
+.Op Fl r Ar rate
+.Op Fl B Ar buf
+.Op Fl S Ar space
+.Sh DESCRIPTION
+.Nm
+is a small tool that performs throughput benchmarking and concurrent
+sampling of kernel network variables.
+.Pp
+.Nm
+is run as a client/server pair.
+The server must be invoked with the
+.Fl s
+flag, which will cause it to listen for incoming connections.
+The client must be invoked with the
+.Ar hostname
+of a listening server to connect to.
+.Pp
+Once connected, the client will send TCP traffic as fast as possible to
+the server.
+Both the client and server will periodically display throughput
+statistics along with any kernel variables the user has selected to
+sample (using the
+.Fl k
+option).
+A list of available kernel variables may be obtained using the
+.Fl l
+option.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl B
+Specify the size of the internal write buffer used by
+.Nm .
+.It Fl l
+List the name of kernel variables available for monitoring and exit.
+.It Fl k Ar kvars
+Specify one or more kernel variables to monitor; multiple variables must be 
+separated with commas.
+The default is not to monitor any variables.
+.It Fl p Ar port
+Specify the port used for the TCP test stream (default: 12345).
+.It Fl s
+Place
+.Nm
+in server mode, where it will listen on all interfaces for incoming
+connections.
+.It Fl r Ar rate
+Specify the statistics reporting rate in milliseconds (default: 1000).
+.It Fl S Ar space
+Set the size of the socket buffer used for the TCP test stream.
+On the client this option will resize the send buffer, on the server
+it will resize the receive buffer.
+.It Fl v
+Display verbose output.
+If specified more than once, increase the detail of information displayed.
+.El
+.Sh SEE ALSO
+.Xr netstat 1
+.Xr pstat 8
