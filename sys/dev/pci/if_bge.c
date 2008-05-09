@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.226 2008/04/20 01:37:35 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.227 2008/05/09 06:30:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3522,15 +3522,14 @@ bge_link_upd(struct bge_softc *sc)
 			timeout_del(&sc->bge_timeout);
 			bge_tick(sc);
 
-			if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
-			    mii->mii_media_status & IFM_ACTIVE &&
-			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-				BGE_STS_SETBIT(sc, BGE_STS_LINK);
-			} else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
-			    (!(mii->mii_media_status & IFM_ACTIVE) ||
-			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)) {
+			if (BGE_STS_BIT(sc, BGE_STS_LINK))
 				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
-			}
+
+			else if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
+			    mii->mii_media_status & IFM_ACTIVE &&
+			    (IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) &&
+			    (IFM_SUBTYPE(mii->mii_media_active) != (IFM_ETHER|IFM_NONE)))
+				BGE_STS_SETBIT(sc, BGE_STS_LINK);
 
 			/* Clear the interrupt */
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
@@ -3582,14 +3581,14 @@ bge_link_upd(struct bge_softc *sc)
 			timeout_del(&sc->bge_timeout);
 			bge_tick(sc);
 
-			if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
-			    mii->mii_media_status & IFM_ACTIVE &&
-			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
-				BGE_STS_SETBIT(sc, BGE_STS_LINK);
-			else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
-			    (!(mii->mii_media_status & IFM_ACTIVE) ||
-			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
+			if (BGE_STS_BIT(sc, BGE_STS_LINK))
 				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
+
+			else if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
+			    mii->mii_media_status & IFM_ACTIVE &&
+			    (IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) &&
+			    (IFM_SUBTYPE(mii->mii_media_active) != (IFM_ETHER|IFM_NONE)))
+				BGE_STS_SETBIT(sc, BGE_STS_LINK);
 		}
 	}
 
