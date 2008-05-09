@@ -484,6 +484,7 @@
 ./usr/share/man/cat1/tar.0
 ./usr/share/man/cat1/tbl.0
 ./usr/share/man/cat1/tcopy.0
+./usr/share/man/cat1/tcpbench.0
 ./usr/share/man/cat1/tee.0
 ./usr/share/man/cat1/telnet.0
 ./usr/share/man/cat1/test.0

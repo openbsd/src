@@ -213,6 +213,7 @@
 ./var/www/htdocs/manual/images/sub.gif
 ./var/www/htdocs/manual/index.html
 ./var/www/htdocs/manual/invoking.html
+./var/www/htdocs/manual/ipv6.html
 ./var/www/htdocs/manual/keepalive.html
 ./var/www/htdocs/manual/location.html
 ./var/www/htdocs/manual/logs.html

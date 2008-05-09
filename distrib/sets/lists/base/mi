@@ -151,7 +151,6 @@
 ./sbin/restore
 ./sbin/route
 ./sbin/rrestore
-./sbin/rtquery
 ./sbin/rtsol
 ./sbin/savecore
 ./sbin/scan_ffs
@@ -461,6 +460,7 @@
 ./usr/bin/talk
 ./usr/bin/tbl
 ./usr/bin/tcopy
+./usr/bin/tcpbench
 ./usr/bin/tee
 ./usr/bin/telnet
 ./usr/bin/texi2dvi
