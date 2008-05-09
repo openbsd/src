@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.142 2008/03/21 19:57:44 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.143 2008/05/09 06:19:33 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -209,6 +209,14 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
+	/*
+	 * Some devices (e.g. Blackberry Pearl) won't admit they have
+	 * media loaded unless its been locked in.
+	 */
+	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
+		scsi_prevent(sc_link, PR_PREVENT, SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE);
+
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES,
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
@@ -219,6 +227,11 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	else
 		result = sd_get_parms(sd, &sd->params,
 		    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE);
+
+	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
+		scsi_prevent(sc_link, PR_ALLOW,
+		    SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE);
 
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
@@ -361,6 +374,16 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 */
 		sc_link->flags |= SDEV_OPEN;
 
+		/*
+		 * Try to prevent the unloading of a removable device while
+		 * it's open. But allow the open to proceed if the device can't
+		 * be locked in.
+		 */
+		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
+			scsi_prevent(sc_link, PR_PREVENT,
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE);
+
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
 		    TEST_READY_RETRIES, (rawopen ? SCSI_SILENT : 0) |
@@ -373,16 +396,6 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			} else
 				goto bad;
 		}
-
-		/*
-		 * Try to prevent the unloading of a removable device while
-		 * it's open. But allow the open to proceed if the device can't
-		 * be locked in.
-		 */
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-			scsi_prevent(sc_link, PR_PREVENT,
-			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Load the physical device parameters. */
 		sc_link->flags |= SDEV_MEDIA_LOADED;
