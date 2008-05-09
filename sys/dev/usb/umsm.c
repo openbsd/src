@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.22 2008/05/05 12:19:22 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.23 2008/05/09 13:09:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -31,7 +32,18 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
-#define UMSMBUFSZ	2048
+#define UMSMBUFSZ	4096
+#define	UMSM_INTR_INTERVAL	100	/* ms */
+
+int umsm_match(struct device *, void *, void *); 
+void umsm_attach(struct device *, struct device *, void *); 
+int umsm_detach(struct device *, int); 
+int umsm_activate(struct device *, enum devact); 
+
+int umsm_open(void *, int);
+void umsm_close(void *, int);
+void umsm_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void umsm_get_status(void *, int, u_char *, u_char *);
 
 struct umsm_softc {
 	struct device		 sc_dev;
@@ -39,15 +51,24 @@ struct umsm_softc {
 	usbd_interface_handle	 sc_iface;
 	struct device		*sc_subdev;
 	u_char			 sc_dying;
+
+	/* interrupt ep */
+	int			 sc_intr_number;
+	usbd_pipe_handle	 sc_intr_pipe;
+	u_char			*sc_intr_buf;
+	int			 sc_isize;
+
+	u_char			 sc_lsr;	/* Local status register */
+	u_char			 sc_msr;	/* status register */
 };
 
 struct ucom_methods umsm_methods = {
+	umsm_get_status,
 	NULL,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
-	NULL,
+	umsm_open,
+	umsm_close,
 	NULL,
 	NULL,
 };
@@ -81,10 +102,6 @@ static const struct usb_devno umsm_devs[] = {
 	{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E220 },
 };
 
-int umsm_match(struct device *, void *, void *); 
-void umsm_attach(struct device *, struct device *, void *); 
-int umsm_detach(struct device *, int); 
-int umsm_activate(struct device *, enum devact); 
 
 struct cfdriver umsm_cd = { 
 	NULL, "umsm", DV_DULL 
@@ -146,6 +163,12 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
+			sc->sc_intr_number = ed->bEndpointAddress;
+			sc->sc_isize = UGETW(ed->wMaxPacketSize);
+			printf("%s: find interrupt endpoint for %s\n", 
+				__func__, sc->sc_dev.dv_xname);
+		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
 			uca.bulkin = ed->bEndpointAddress;
 		else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
@@ -210,4 +233,100 @@ umsm_activate(struct device *self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+int
+umsm_open(void *addr, int portno)
+{
+	struct umsm_softc *sc = addr;
+	int err;
+
+	if (sc->sc_dying)
+		return (ENXIO);
+
+	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
+		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		err = usbd_open_pipe_intr(sc->sc_iface,
+		    sc->sc_intr_number,
+		    USBD_SHORT_XFER_OK,
+		    &sc->sc_intr_pipe,
+		    sc,
+		    sc->sc_intr_buf,
+		    sc->sc_isize,
+		    umsm_intr,
+		    UMSM_INTR_INTERVAL);
+		if (err) {
+			printf("%s: cannot open interrupt pipe (addr %d)\n",
+			    sc->sc_dev.dv_xname,
+			    sc->sc_intr_number);
+			return (EIO);
+		}
+	}
+
+	return (0);
+}
+
+void
+umsm_close(void *addr, int portno)
+{
+	struct umsm_softc *sc = addr;
+	int err;
+
+	if (sc->sc_dying)
+		return;
+
+	if (sc->sc_intr_pipe != NULL) {
+		err = usbd_abort_pipe(sc->sc_intr_pipe);
+       		if (err)
+			printf("%s: abort interrupt pipe failed: %s\n",
+			    sc->sc_dev.dv_xname,
+			    usbd_errstr(err));
+		err = usbd_close_pipe(sc->sc_intr_pipe);
+		if (err)
+			printf("%s: close interrupt pipe failed: %s\n",
+			    sc->sc_dev.dv_xname,
+			    usbd_errstr(err));
+		free(sc->sc_intr_buf, M_USBDEV);
+		sc->sc_intr_pipe = NULL;
+	}
+
+}
+
+void
+umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+	usbd_status status)
+{
+	struct umsm_softc *sc = priv;
+	u_char *buf;
+
+	buf = sc->sc_intr_buf;
+	if (sc->sc_dying)
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
+			return;
+
+		printf("%s: umsm_intr: abnormal status: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(status));
+		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
+		return;
+	}
+
+	/* XXX */
+	sc->sc_lsr = buf[2];
+	sc->sc_msr = buf[3];
+
+	ucom_status_change((struct ucom_softc *)sc->sc_subdev);
+}
+
+void
+umsm_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+{
+	struct umsm_softc *sc = addr;
+
+	if (lsr != NULL)
+		*lsr = sc->sc_lsr;
+	if (msr != NULL)
+		*msr = sc->sc_msr;
 }
