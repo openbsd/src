@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.4 2007/05/31 04:16:26 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.5 2008/05/09 11:57:52 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -243,12 +243,13 @@ print_state(struct pfsync_state *s, int opts)
 	if (opts & PF_OPT_VERBOSE) {
 		u_int64_t packets[2];
 		u_int64_t bytes[2];
+		u_int32_t creation = ntohl(s->creation);
 
-		sec = s->creation % 60;
-		s->creation /= 60;
-		min = s->creation % 60;
-		s->creation /= 60;
-		printf("\n   age %.2u:%.2u:%.2u", ntohl(s->creation), min, sec);
+		sec = creation % 60;
+		creation /= 60;
+		min = creation % 60;
+		creation /= 60;
+		printf("\n   age %.2u:%.2u:%.2u", creation, min, sec);
 		sec = s->expire % 60;
 		s->expire /= 60;
 		min = s->expire % 60;
