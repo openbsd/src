@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.72 2008/05/09 07:32:39 henning Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.73 2008/05/09 15:48:59 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -752,6 +752,7 @@ arptfree(la)
 {
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
+	struct rt_addrinfo info;
 
 	if (rt == 0)
 		panic("arptfree");
@@ -762,8 +763,11 @@ arptfree(la)
 		rt->rt_flags &= ~RTF_REJECT;
 		return;
 	}
-	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0, rt_mask(rt),
-	    0, (struct rtentry **)0, 0);
+	bzero(&info, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+
+	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
 }
 
 /*
@@ -791,10 +795,15 @@ arplookup(addr, create, proxy)
 		if (create) {
 			if (rt->rt_refcnt <= 0 &&
 			    (rt->rt_flags & RTF_CLONED) != 0) {
-				rtrequest(RTM_DELETE,
-				    (struct sockaddr *)rt_key(rt),
-				    rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-				    0, 0);
+				struct rt_addrinfo info;
+
+				bzero(&info, sizeof(info));
+				info.rti_info[RTAX_DST] = rt_key(rt);
+				info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+				info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+
+				rtrequest1(RTM_DELETE, &info, rt->rt_priority,
+				    NULL, 0);
 			}
 		}
 		return (0);
