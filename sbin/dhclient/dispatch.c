@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.40 2007/11/12 10:14:40 dlg Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.41 2008/05/09 05:19:14 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -133,6 +133,9 @@ dispatch(void)
 		 * a timeout registered, time out the select call then.
 		 */
 another:
+		if (!ifi->linkstat)
+			interfaces_invalidated = 0;
+
 		if (timeouts) {
 			struct timeout *t;
 
@@ -181,7 +184,8 @@ another:
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
-			if (ifi && ifi->rfdesc != -1)
+			if (ifi->linkstat &&
+			    ifi && ifi->rfdesc != -1)
 				got_one();
 		}
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
@@ -321,16 +325,10 @@ interface_status(void)
 		goto active;
 	}
 	if (ifmr.ifm_status & IFM_AVALID) {
-		switch (ifmr.ifm_active & IFM_NMASK) {
-		case IFM_ETHER:
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				goto active;
-			else
-				goto inactive;
-			break;
-		default:
+		if (ifmr.ifm_status & IFM_ACTIVE)
+			goto active;
+		else
 			goto inactive;
-		}
 	}
 inactive:
 	return (0);
@@ -442,12 +440,10 @@ interface_link_status(char *ifname)
 	close(sock);
 
 	if (ifmr.ifm_status & IFM_AVALID) {
-		if ((ifmr.ifm_active & IFM_NMASK) == IFM_ETHER) {
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				return (1);
-			else
-				return (0);
-		}
+		if (ifmr.ifm_status & IFM_ACTIVE)
+			return (1);
+		else
+			return (0);
 	}
 	return (1);
 }
