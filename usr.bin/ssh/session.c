@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.237 2008/05/08 12:21:16 djm Exp $ */
+/* $OpenBSD: session.c,v 1.238 2008/05/09 16:16:06 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -411,6 +411,7 @@ do_authenticated1(Authctxt *authctxt)
 	}
 }
 
+#define USE_PIPES
 /*
  * This is called to fork and execute a command when we have no tty.  This
  * will call do_child from the child, and server_loop from the parent after
@@ -420,6 +421,29 @@ int
 do_exec_no_pty(Session *s, const char *command)
 {
 	pid_t pid;
+#ifdef USE_PIPES
+	int pin[2], pout[2], perr[2];
+
+	/* Allocate pipes for communicating with the program. */
+	if (pipe(pin) < 0) {
+		error("%s: pipe in: %.100s", __func__, strerror(errno));
+		return -1;
+	}
+	if (pipe(pout) < 0) {
+		error("%s: pipe out: %.100s", __func__, strerror(errno));
+		close(pin[0]);
+		close(pin[1]);
+		return -1;
+	}
+	if (pipe(perr) < 0) {
+		error("%s: pipe err: %.100s", __func__, strerror(errno));
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		return -1;
+	}
+#else
 	int inout[2], err[2];
 
 	/* Uses socket pairs to communicate with the program. */
@@ -433,6 +457,7 @@ do_exec_no_pty(Session *s, const char *command)
 		close(inout[1]);
 		return -1;
 	}
+#endif
 
 	if (s == NULL)
 		fatal("do_exec_no_pty: no session");
@@ -443,10 +468,19 @@ do_exec_no_pty(Session *s, const char *command)
 	switch ((pid = fork())) {
 	case -1:
 		error("%s: fork: %.100s", __func__, strerror(errno));
+#ifdef USE_PIPES
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		close(perr[0]);
+		close(perr[1]);
+#else
 		close(inout[0]);
 		close(inout[1]);
 		close(err[0]);
 		close(err[1]);
+#endif
 		return -1;
 	case 0:
 		is_child = 1;
@@ -462,6 +496,28 @@ do_exec_no_pty(Session *s, const char *command)
 		if (setsid() < 0)
 			error("setsid failed: %.100s", strerror(errno));
 
+#ifdef USE_PIPES
+		/*
+		 * Redirect stdin.  We close the parent side of the socket
+		 * pair, and make the child side the standard input.
+		 */
+		close(pin[1]);
+		if (dup2(pin[0], 0) < 0)
+			perror("dup2 stdin");
+		close(pin[0]);
+
+		/* Redirect stdout. */
+		close(pout[0]);
+		if (dup2(pout[1], 1) < 0)
+			perror("dup2 stdout");
+		close(pout[1]);
+
+		/* Redirect stderr. */
+		close(perr[0]);
+		if (dup2(perr[1], 2) < 0)
+			perror("dup2 stderr");
+		close(perr[1]);
+#else
 		/*
 		 * Redirect stdin, stdout, and stderr.  Stdin and stdout will
 		 * use the same socket, as some programs (particularly rdist)
@@ -473,8 +529,11 @@ do_exec_no_pty(Session *s, const char *command)
 			perror("dup2 stdin");
 		if (dup2(inout[0], 1) < 0)	/* stdout (same as stdin) */
 			perror("dup2 stdout");
+		close(inout[0]);
 		if (dup2(err[0], 2) < 0)	/* stderr */
 			perror("dup2 stderr");
+		close(err[0]);
+#endif
 
 		/* Do processing for the child (exec command etc). */
 		do_child(s, command);
@@ -487,6 +546,24 @@ do_exec_no_pty(Session *s, const char *command)
 	/* Set interactive/non-interactive mode. */
 	packet_set_interactive(s->display != NULL);
 
+#ifdef USE_PIPES
+	/* We are the parent.  Close the child sides of the pipes. */
+	close(pin[0]);
+	close(pout[1]);
+	close(perr[1]);
+
+	if (compat20) {
+		if (s->is_subsystem) {
+			close(perr[0]);
+			perr[0] = -1;
+		}
+		session_set_fds(s, pin[1], pout[0], perr[0]);
+	} else {
+		/* Enter the interactive session. */
+		server_loop(pid, pin[1], pout[0], perr[0]);
+		/* server_loop has closed pin[1], pout[0], and perr[0]. */
+	}
+#else
 	/* We are the parent.  Close the child sides of the socket pairs. */
 	close(inout[0]);
 	close(err[0]);
@@ -504,6 +581,7 @@ do_exec_no_pty(Session *s, const char *command)
 		server_loop(pid, inout[1], inout[1], err[1]);
 		/* server_loop has closed inout[1] and err[1]. */
 	}
+#endif
 	return 0;
 }
 
