@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.22 2007/08/24 11:31:29 mbalmer Exp $ */
+/* $OpenBSD: http_core.c,v 1.23 2008/05/09 08:06:28 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -536,7 +536,7 @@ API_EXPORT(const char *) ap_auth_nonce(request_rec *r)
      * file if you care. So the adhoc value should do.
      */
     return ap_psprintf(r->pool,"%pp%pp%pp%pp%pp",
-           (void *)&((r->connection->local_addr).sin_addr ),
+           (void *)&(r->connection->local_host),
            (void *)ap_user_name,
            (void *)ap_listeners,
            (void *)ap_server_argv0,
@@ -617,7 +617,9 @@ API_EXPORT(char *) ap_response_code_string(request_rec *r, int error_index)
  */
 static ap_inline void do_double_reverse (conn_rec *conn)
 {
-    struct hostent *hptr;
+    struct addrinfo hints, *res, *res0;
+    char hostbuf1[128], hostbuf2[128]; /* INET6_ADDRSTRLEN(=46) is enough */
+    int ok = 0;
 
     if (conn->double_reverse) {
 	/* already done */
@@ -629,30 +631,49 @@ static ap_inline void do_double_reverse (conn_rec *conn)
         conn->remote_host = ""; /* prevent another lookup */
 	return;
     }
-    hptr = gethostbyname(conn->remote_host);
-    if (hptr) {
-	char **haddr;
-
-	for (haddr = hptr->h_addr_list; *haddr; haddr++) {
-	    if (((struct in_addr *)(*haddr))->s_addr
-		== conn->remote_addr.sin_addr.s_addr) {
-		conn->double_reverse = 1;
-		return;
-	    }
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(conn->remote_host, NULL, &hints, &res0)) {
+	conn->double_reverse = -1;
+	return;
+    }
+    for (res = res0; res; res = res->ai_next) {
+	if (res->ai_addr->sa_family != conn->remote_addr.ss_family ||
+	    !(res->ai_family == AF_INET 
+	      || res->ai_family == AF_INET6
+	      )
+	    )
+	    continue;
+#ifndef HAVE_SOCKADDR_LEN
+	if (res->ai_addrlen != SA_LEN((struct sockaddr *)&conn->remote_addr))
+#else
+	if (res->ai_addr->sa_len != conn->remote_addr.ss_len)
+#endif
+	    continue;
+	if (getnameinfo(res->ai_addr, res->ai_addrlen,
+            hostbuf1, sizeof(hostbuf1), NULL, 0,
+            NI_NUMERICHOST))
+	    continue;
+	if (getnameinfo(((struct sockaddr *)&conn->remote_addr), res->ai_addrlen,
+            hostbuf2, sizeof(hostbuf2), NULL, 0,
+            NI_NUMERICHOST))
+	    continue;
+	if (strcmp(hostbuf1, hostbuf2) == 0){
+	    ok = 1;
+	    break;
 	}
     }
-    conn->double_reverse = -1;
-    /* invalidate possible reverse-resolved hostname if forward lookup fails */
-    conn->remote_host = "";
+    conn->double_reverse = ok ? 1 : -1;
+    freeaddrinfo(res0);
 }
 
 API_EXPORT(const char *) ap_get_remote_host(conn_rec *conn, void *dir_config,
 					    int type)
 {
-    struct in_addr *iaddr;
-    struct hostent *hptr;
     int hostname_lookups;
     int old_stat = SERVER_DEAD;	/* we shouldn't ever be in this state */
+    char hostnamebuf[MAXHOSTNAMELEN];
 
     /* If we haven't checked the host name, and we want to */
     if (dir_config) {
@@ -674,10 +695,14 @@ API_EXPORT(const char *) ap_get_remote_host(conn_rec *conn, void *dir_config,
 	    || hostname_lookups != HOSTNAME_LOOKUP_OFF)) {
 	old_stat = ap_update_child_status(conn->child_num, SERVER_BUSY_DNS,
 					  (request_rec*)NULL);
-	iaddr = &(conn->remote_addr.sin_addr);
-	hptr = gethostbyaddr((char *)iaddr, sizeof(struct in_addr), AF_INET);
-	if (hptr != NULL) {
-	    conn->remote_host = ap_pstrdup(conn->pool, (void *)hptr->h_name);
+	if (!getnameinfo((struct sockaddr *)&conn->remote_addr,
+#ifndef SIN6_LEN
+		SA_LEN((struct sockaddr *)&conn->remote_addr),
+#else
+		conn->remote_addr.ss_len,
+#endif
+		hostnamebuf, sizeof(hostnamebuf), NULL, 0, 0)) {
+	    conn->remote_host = ap_pstrdup(conn->pool, (void *)hostnamebuf);
 	    ap_str_tolower(conn->remote_host);
 	   
 	    if (hostname_lookups == HOSTNAME_LOOKUP_DOUBLE) {
@@ -755,6 +780,7 @@ API_EXPORT(const char *) ap_get_server_name(request_rec *r)
 {
     conn_rec *conn = r->connection;
     core_dir_config *d;
+    char hbuf[MAXHOSTNAMELEN];
 
     d = (core_dir_config *)ap_get_module_config(r->per_dir_config,
 						&core_module);
@@ -764,23 +790,22 @@ API_EXPORT(const char *) ap_get_server_name(request_rec *r)
     }
     if (d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
         if (conn->local_host == NULL) {
-	    struct in_addr *iaddr;
-	    struct hostent *hptr;
             int old_stat;
 	    old_stat = ap_update_child_status(conn->child_num,
 					      SERVER_BUSY_DNS, r);
-	    iaddr = &(conn->local_addr.sin_addr);
-	    hptr = gethostbyaddr((char *)iaddr, sizeof(struct in_addr),
-				 AF_INET);
-	    if (hptr != NULL) {
-	        conn->local_host = ap_pstrdup(conn->pool,
-					      (void *)hptr->h_name);
-		ap_str_tolower(conn->local_host);
+	    if (getnameinfo((struct sockaddr *)&conn->local_addr,
+#ifndef SIN6_LEN
+		    SA_LEN((struct sockaddr *)&conn->local_addr),
+#else
+		    conn->local_addr.ss_len,
+#endif
+		    hbuf, sizeof(hbuf), NULL, 0, 0) == 0) {
+		conn->local_host = ap_pstrdup(conn->pool, hbuf);
+	    } else {
+		conn->local_host = ap_pstrdup(conn->pool,
+		    r->server->server_hostname);
 	    }
-	    else {
-	        conn->local_host = ap_pstrdup(conn->pool,
-					      r->server->server_hostname);
-	    }
+	    ap_str_tolower(conn->local_host);
 	    (void) ap_update_child_status(conn->child_num, old_stat, r);
 	}
 	return conn->local_host;
@@ -792,29 +817,20 @@ API_EXPORT(const char *) ap_get_server_name(request_rec *r)
 API_EXPORT(unsigned) ap_get_server_port(const request_rec *r)
 {
     unsigned port;
-    unsigned cport = ntohs(r->connection->local_addr.sin_port);
     core_dir_config *d =
       (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
+
+    port = r->server->port ? r->server->port : ap_default_port(r);
     
     if (d->use_canonical_name == USE_CANONICAL_NAME_OFF
-        || d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
-        
-        /* With UseCanonicalName Off Apache will form self-referential
-         * URLs using the hostname and port supplied by the client if
-         * any are supplied (otherwise it will use the canonical name).
-         */
-        port = r->parsed_uri.port_str ? r->parsed_uri.port : 
-          cport ? cport :
-            r->server->port ? r->server->port :
-              ap_default_port(r);
-    } else { /* d->use_canonical_name == USE_CANONICAL_NAME_ON */
-        port = r->server->port ? r->server->port : 
-          cport ? cport :
-            ap_default_port(r);
+	|| d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+	return r->hostname
+	    ?  ntohs(((struct sockaddr_in *)&r->connection->local_addr)->sin_port)
+	    : port;
     }
-
-    /* default */
-    return port;
+    return r->hostname
+	? ntohs(((struct sockaddr_in *)&r->connection->local_addr)->sin_port)
+	: port;
 }
 
 API_EXPORT(char *) ap_construct_url(pool *p, const char *uri,
@@ -2380,12 +2396,25 @@ static const char *set_limit_nofile(cmd_parms *cmd, core_dir_config *conf,
 
 static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg) 
 {
+    struct addrinfo hints, *res;
+    struct sockaddr *sa;
+    size_t sa_len;
+    int error;
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
     }
 
-    ap_bind_address.s_addr = ap_get_virthost_addr(arg, NULL);
+    if (strcmp(arg, "*") == 0)
+      arg = NULL;
+
+    sa = ap_get_virthost_addr(arg, NULL);
+#ifdef HAVE_SOCKADDR_LEN
+    sa_len = sa->sa_len;
+#else
+    sa_len = SA_LEN(sa);
+#endif
+    memcpy(&ap_bind_address, &sa, sa_len);
     return NULL;
 }
 
@@ -2402,48 +2431,78 @@ static const char *set_acceptfilter(cmd_parms *cmd, void *dummy, int flag)
     return NULL;
 }
 
-static const char *set_listener(cmd_parms *cmd, void *dummy, char *ips)
+static const char *set_listener(cmd_parms *cmd, void *dummy, char *h, char *p)
 {
     listen_rec *new;
-    char *ports, *endptr;
-    long port;
+    char *host, *port, *endptr;
+    struct addrinfo hints, *res;
+    int error;
     
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
     }
 
-    ports = strchr(ips, ':');
-    if (ports != NULL) {
-	if (ports == ips) {
+    host = port = NULL;
+    if (!p) {
+      port = strrchr(h, ':');
+      if (port != NULL) {
+	if (port == h) {
 	    return "Missing IP address";
 	}
-	else if (ports[1] == '\0') {
+	else if (port[1] == '\0') {
 	    return "Address must end in :<port-number>";
 	}
-	*(ports++) = '\0';
-    }
-    else {
-	ports = ips;
+	*(port++) = '\0';
+	if (*h)
+	    host = h;
+      } else {
+	host = NULL;
+	port = h;
+      }
+    } else {
+      host = h;
+      port = p;
     }
 
-    new=ap_pcalloc(cmd->pool, sizeof(listen_rec));
-    new->local_addr.sin_family = AF_INET;
-    if (ports == ips) { /* no address */
-	new->local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    /* strip [] for ipv6 before calling getaddrinfo */
+    if (host && host[0] == '[') {
+      if (strlen(host) < 2 || host[strlen(host) - 1] != ']')
+        return "Malformed IPv6 Address in :<host>";
+      host[strlen(host) - 1] = 0;
+      host++;
     }
-    else {
-	new->local_addr.sin_addr.s_addr = ap_get_virthost_addr(ips, NULL);
+
+    if (host && strcmp(host, "*") == 0)
+      host = NULL;
+
+    new = ap_pcalloc(cmd->pool, sizeof(listen_rec));
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = host ? PF_UNSPEC : ap_default_family;
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(host, port, &hints, &res);
+    if (error || !res) {
+      fprintf(stderr, "could not resolve ");
+      if (host)
+	fprintf(stderr, "host \"%s\" ", host);
+      if (port)
+        fprintf(stderr, "port \"%s\" ", port);
+      fprintf(stderr, "--- %s\n", gai_strerror(error));
+      exit(1);
     }
-    errno = 0; /* clear errno before calling strtol */
-    port = ap_strtol(ports, &endptr, 10);
-    if (errno /* some sort of error */
-       || (endptr && *endptr) /* make sure no trailing characters */
-       || port < 1 || port > 65535) /* underflow/overflow */
-    {
-	return "Missing, invalid, or non-numeric port";
+    if (res->ai_next) {
+	if (host)
+	  fprintf(stderr, "host \"%s\" ", host);
+	if (port)
+	  fprintf(stderr, "port \"%s\" ", port);
+	fprintf(stderr, "resolved to multiple addresses, ambiguous.\n");
+	exit(1);
     }
-    new->local_addr.sin_port = htons((unsigned short)port);
+
+    memcpy(&new->local_addr, res->ai_addr, res->ai_addrlen);
+
     new->fd = -1;
     new->used = 0;
     new->next = ap_listeners;
@@ -3198,7 +3257,7 @@ static const command_rec core_cmds[] = {
    OR_ALL, TAKE12, "soft/hard limits for max number of files per process" },
 { "BindAddress", set_bind_address, NULL, RSRC_CONF, TAKE1,
   "'*', a numeric IP address, or the name of a host with a unique IP address"},
-{ "Listen", set_listener, NULL, RSRC_CONF, TAKE1,
+{ "Listen", set_listener, NULL, RSRC_CONF, TAKE12,
   "A port number or a numeric IP address and a port number"},
 { "SendBufferSize", set_send_buffer_size, NULL, RSRC_CONF, TAKE1,
   "Send buffer size in bytes"},
@@ -3226,7 +3285,7 @@ static const command_rec core_cmds[] = {
   "Name of the config file to be included" },
 { "LogLevel", set_loglevel, NULL, RSRC_CONF, TAKE1,
   "Level of verbosity in error logging" },
-{ "NameVirtualHost", ap_set_name_virtual_host, NULL, RSRC_CONF, TAKE1,
+{ "NameVirtualHost", ap_set_name_virtual_host, NULL, RSRC_CONF, TAKE12,
   "A numeric IP address:port, or the name of a host" },
 { "CGICommandArgs", set_cgi_command_args, NULL, OR_OPTIONS, FLAG,
   "Allow or Disallow CGI requests to pass args on the command line" },

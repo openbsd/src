@@ -74,7 +74,8 @@ enum allowdeny_type {
     T_ALL,
     T_IP,
     T_HOST,
-    T_FAIL
+    T_FAIL,
+    T_IP6,
 };
 
 typedef struct {
@@ -85,6 +86,10 @@ typedef struct {
 	    struct in_addr net;
 	    struct in_addr mask;
 	} ip;
+	struct {
+	    struct in6_addr net6;
+	    struct in6_addr mask6;
+	} ip6;
     } x;
     enum allowdeny_type type;
 } allowdeny;
@@ -167,93 +172,222 @@ static const char *allow_cmd(cmd_parms *cmd, void *dv, char *from, char *where)
 
     }
     else if ((s = strchr(where, '/'))) {
-	struct in_addr mask;
+	struct addrinfo hints, *resnet, *resmask;
+	struct sockaddr_storage net, mask;
+	int error;
+	char *p;
+	int justdigits;
 
-	a->type = T_IP;
+	a->type = T_FAIL;	/*just in case*/
 	/* trample on where, we won't be using it any more */
 	*s++ = '\0';
 
-	if (!is_ip(where)
-	    || (a->x.ip.net.s_addr = ap_inet_addr(where)) == INADDR_NONE) {
+	justdigits = 0;
+	for (p = s; *p; p++) {
+	    if (!isdigit(*p))
+		break;
+	}
+	if (!*p)
+	    justdigits++;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;	/*dummy*/
+#ifdef AI_NUMERICHOST
+	hints.ai_flags = AI_NUMERICHOST;	/*don't resolve*/
+#endif
+	resnet = NULL;
+	error = getaddrinfo(where, NULL, &hints, &resnet);
+	if (error || !resnet) {
+	    if (resnet)
+		freeaddrinfo(resnet);
 	    a->type = T_FAIL;
 	    return "syntax error in network portion of network/netmask";
 	}
-
-	/* is_ip just tests if it matches [\d.]+ */
-	if (!is_ip(s)) {
+	if (resnet->ai_next) {
+	    freeaddrinfo(resnet);
 	    a->type = T_FAIL;
-	    return "syntax error in mask portion of network/netmask";
+	    return "network/netmask resolved to multiple addresses";
 	}
-	/* is it in /a.b.c.d form? */
-	if (strchr(s, '.')) {
-	    mask.s_addr = ap_inet_addr(s);
-	    if (mask.s_addr == INADDR_NONE) {
+	memcpy(&net, resnet->ai_addr, resnet->ai_addrlen);
+	freeaddrinfo(resnet);
+
+	switch (net.ss_family) {
+	case AF_INET:
+	    a->type = T_IP;
+	    a->x.ip.net.s_addr = ((struct sockaddr_in *)&net)->sin_addr.s_addr;
+	    break;
+	case AF_INET6:
+	    a->type = T_IP6;
+	    memcpy(&a->x.ip6.net6, &((struct sockaddr_in6 *)&net)->sin6_addr,
+		sizeof(a->x.ip6.net6));
+	    break;
+	default:
+	    a->type = T_FAIL;
+	    return "unknown address family for network";
+	}
+
+	if (!justdigits) {
+	    memset(&hints, 0, sizeof(hints));
+	    hints.ai_family = PF_UNSPEC;
+	    hints.ai_socktype = SOCK_STREAM;	/*dummy*/ 
+#ifdef AI_NUMERICHOST
+	    hints.ai_flags = AI_NUMERICHOST;	/*don't resolve*/
+#endif
+	    resmask = NULL;
+	    error = getaddrinfo(s, NULL, &hints, &resmask);
+	    if (error || !resmask) {
+		if (resmask)
+		    freeaddrinfo(resmask);
 		a->type = T_FAIL;
 		return "syntax error in mask portion of network/netmask";
 	    }
-	}
-	else {
-	    int i;
+	    if (resmask->ai_next) {
+		freeaddrinfo(resmask);
+		a->type = T_FAIL;
+		return "network/netmask resolved to multiple addresses";
+	    }
+	    memcpy(&mask, resmask->ai_addr, resmask->ai_addrlen);
+	    freeaddrinfo(resmask);
 
-	    /* assume it's in /nnn form */
-	    i = atoi(s);
-	    if (i > 32 || i <= 0) {
+	    if (net.ss_family != mask.ss_family) {
 		a->type = T_FAIL;
-		return "invalid mask in network/netmask";
+		return "network/netmask resolved to different address family";
 	    }
-	    mask.s_addr = 0xFFFFFFFFUL << (32 - i);
-	    mask.s_addr = htonl(mask.s_addr);
-	}
-	a->x.ip.mask = mask;
-        a->x.ip.net.s_addr  = (a->x.ip.net.s_addr & mask.s_addr);   /* pjr - This fixes PR 4770 */
-    }
-    else if (ap_isdigit(*where) && is_ip(where)) {
-	/* legacy syntax for ip addrs: a.b.c. ==> a.b.c.0/24 for example */
-	int shift;
-	char *t;
-	int octet;
 
-	a->type = T_IP;
-	/* parse components */
-	s = where;
-	a->x.ip.net.s_addr = 0;
-	a->x.ip.mask.s_addr = 0;
-	shift = 24;
-	while (*s) {
-	    t = s;
-	    if (!ap_isdigit(*t)) {
-		a->type = T_FAIL;
-		return "invalid ip address";
+	    switch (a->type) {
+	    case T_IP:
+		a->x.ip.mask.s_addr =
+		    ((struct sockaddr_in *)&mask)->sin_addr.s_addr;
+		break;
+	    case T_IP6:
+		memcpy(&a->x.ip6.mask6,
+		    &((struct sockaddr_in6 *)&mask)->sin6_addr,
+		    sizeof(a->x.ip6.mask6));
+		break;
 	    }
-	    while (ap_isdigit(*t)) {
-		++t;
+	} else {
+	    int mask;
+	    mask = atoi(s);
+	    switch (a->type) {
+	    case T_IP:
+		if (mask < 0 || 32 < mask) {
+		    a->type = T_FAIL;
+		    return "netmask out of range";
+		}
+		a->x.ip.mask.s_addr = htonl(0xFFFFFFFFUL << (32 - mask));
+		break;
+	    case T_IP6:
+	      {
+		int i;
+		if (mask < 0 || 128 < mask) {
+		    a->type = T_FAIL;
+		    return "netmask out of range";
+		}
+		for (i = 0; i < mask / 8; i++) {
+		    a->x.ip6.mask6.s6_addr[i] = 0xff;
+		}
+		if (mask % 8)
+		    a->x.ip6.mask6.s6_addr[i] = 0xff << (8 - (mask % 8));
+		break;
+	      }
 	    }
-	    if (*t == '.') {
-		*t++ = 0;
-	    }
-	    else if (*t) {
-		a->type = T_FAIL;
-		return "invalid ip address";
-	    }
-	    if (shift < 0) {
-		a->type = T_FAIL;
-		return "invalid ip address, only 4 octets allowed";
-	    }
-	    octet = atoi(s);
-	    if (octet < 0 || octet > 255) {
-		a->type = T_FAIL;
-		return "each octet must be between 0 and 255 inclusive";
-	    }
-	    a->x.ip.net.s_addr |= (unsigned int)octet << shift;
-	    a->x.ip.mask.s_addr |= 0xFFUL << shift;
-	    s = t;
-	    shift -= 8;
 	}
-	a->x.ip.net.s_addr = htonl(a->x.ip.net.s_addr);
-	a->x.ip.mask.s_addr = htonl(a->x.ip.mask.s_addr);
     }
     else {
-	a->type = T_HOST;
+	struct addrinfo hints, *res;
+	struct sockaddr_storage ss;
+	int error;
+
+	a->type = T_FAIL;	/*just in case*/
+
+	/* First, try using the old apache code to match */
+	/* legacy syntax for ip addrs: a.b.c. ==> a.b.c.0/24 for example */
+	if (ap_isdigit(*where) && is_ip(where)) {
+	    int shift;
+	    char *t;
+	    int octet;
+
+	    a->type = T_IP;
+	    /* parse components */
+	    s = where;
+	    a->x.ip.net.s_addr = 0;
+	    a->x.ip.mask.s_addr = 0;
+	    shift = 24;
+	    while (*s) {
+		t = s;
+		if (!ap_isdigit(*t)) {
+		    a->type = T_FAIL;
+		    return "invalid ip address";
+		}
+		while (ap_isdigit(*t)) {
+		    ++t;
+		}
+		if (*t == '.') {
+		    *t++ = 0;
+		}
+		else if (*t) {
+		    a->type = T_FAIL;
+		    return "invalid ip address";
+		}
+		if (shift < 0) {
+		    return "invalid ip address, only 4 octets allowed";
+		}
+		octet = atoi(s);
+		if (octet < 0 || octet > 255) {
+		    a->type = T_FAIL;
+		    return "each octet must be between 0 and 255 inclusive";
+		}
+		a->x.ip.net.s_addr |= octet << shift;
+		a->x.ip.mask.s_addr |= 0xFFUL << shift;
+		s = t;
+		shift -= 8;
+	    }
+	    a->x.ip.net.s_addr = ntohl(a->x.ip.net.s_addr);
+	    a->x.ip.mask.s_addr = ntohl(a->x.ip.mask.s_addr);
+
+	    return NULL;
+	}
+
+	/* IPv4/v6 numeric address */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;	/*dummy*/
+#ifdef AI_NUMERICHOST
+	hints.ai_flags = AI_NUMERICHOST;	/*don't resolve*/
+#endif
+	res = NULL;
+	error = getaddrinfo(where, NULL, &hints, &res);
+	if (error || !res) {
+	    if (res)
+		freeaddrinfo(res);
+	    a->type = T_HOST;
+	    return NULL;
+	}
+	if (res->ai_next) {
+	    freeaddrinfo(res);
+	    a->type = T_FAIL;
+	    return "network/netmask resolved to multiple addresses";
+	}
+	memcpy(&ss, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
+
+	switch (ss.ss_family) {
+	case AF_INET:
+	    a->type = T_IP;
+	    a->x.ip.net.s_addr = ((struct sockaddr_in *)&ss)->sin_addr.s_addr;
+	    memset(&a->x.ip.mask, 0xff, sizeof(a->x.ip.mask));
+	    break;
+	case AF_INET6:
+	    a->type = T_IP6;
+	    memcpy(&a->x.ip6.net6, &((struct sockaddr_in6 *)&ss)->sin6_addr,
+		sizeof(a->x.ip6.net6));
+	    memset(&a->x.ip6.mask6, 0xff, sizeof(a->x.ip6.mask6));
+	    break;
+	default:
+	    a->type = T_FAIL;
+	    return "unknown address family for network";
+	}
     }
 
     return NULL;
@@ -318,12 +452,59 @@ static int find_allowdeny(request_rec *r, array_header *a, int method)
 	    return 1;
 
 	case T_IP:
-	    if (ap[i].x.ip.net.s_addr != INADDR_NONE
-		&& (r->connection->remote_addr.sin_addr.s_addr
-		    & ap[i].x.ip.mask.s_addr) == ap[i].x.ip.net.s_addr) {
-		return 1;
+	    if (ap[i].x.ip.net.s_addr == INADDR_NONE)
+		break;
+	    switch (r->connection->remote_addr.ss_family) {
+	    case AF_INET:
+		if ((((struct sockaddr_in *)&r->connection->remote_addr)->sin_addr.s_addr
+			& ap[i].x.ip.mask.s_addr) == ap[i].x.ip.net.s_addr) {
+		    return 1;
+		}
+		break;
+	    case AF_INET6:
+		if (!IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&r->connection->remote_addr)->sin6_addr))	/*XXX*/
+		    break;
+		if ((*(uint32_t *)&((struct sockaddr_in6 *)&r->connection->remote_addr)->sin6_addr.s6_addr[12]
+			& ap[i].x.ip.mask.s_addr) == ap[i].x.ip.net.s_addr) {
+		    return 1;
+		}
+		break;
 	    }
 	    break;
+
+	case T_IP6:
+	  {
+	    struct in6_addr masked;
+	    int j;
+	    if (IN6_IS_ADDR_UNSPECIFIED(&ap[i].x.ip6.net6))
+		break;
+	    switch (r->connection->remote_addr.ss_family) {
+	    case AF_INET:
+		if (!IN6_IS_ADDR_V4MAPPED(&ap[i].x.ip6.net6))	/*XXX*/
+		    break;
+		memset(&masked, 0, sizeof(masked));
+		masked.s6_addr[10] = masked.s6_addr[11] = 0xff;
+		memcpy(&masked.s6_addr[12],
+		    &((struct sockaddr_in *)&r->connection->remote_addr)->sin_addr.s_addr,
+		    sizeof(struct sockaddr_in));
+		for (j = 0; j < sizeof(struct in6_addr); j++)
+			masked.s6_addr[j] &= ap[i].x.ip6.mask6.s6_addr[j];
+		if (memcmp(&masked, &ap[i].x.ip6.net6, sizeof(masked)) == 0)
+		    return 1;
+		break;
+	    case AF_INET6:
+		memset(&masked, 0, sizeof(masked));
+		memcpy(&masked,
+		    &((struct sockaddr_in6 *)&r->connection->remote_addr)->sin6_addr,
+		    sizeof(masked));
+		for (j = 0; j < sizeof(struct in6_addr); j++)
+		    masked.s6_addr[j] &= ap[i].x.ip6.mask6.s6_addr[j];
+		if (memcmp(&masked, &ap[i].x.ip6.net6, sizeof(masked)) == 0)
+		    return 1;
+		break;
+	    }
+	    break;
+	  }
 
 	case T_HOST:
 	    if (!gothost) {

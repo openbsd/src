@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.18 2007/11/19 14:59:10 robert Exp $ */
+/* $OpenBSD: http_config.c,v 1.19 2008/05/09 08:06:28 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1556,7 +1556,6 @@ static void init_config_globals(pool *p)
     ap_max_nofile_per_child = DEFAULT_MAX_NOFILE_PER_CHILD;
     ap_max_rss_per_child = DEFAULT_MAX_RSS_PER_CHILD;
     ap_max_stack_per_child = DEFAULT_MAX_STACK_PER_CHILD;
-    ap_bind_address.s_addr = htonl(INADDR_ANY);
     ap_listeners = NULL;
     ap_listenbacklog = DEFAULT_LISTENBACKLOG;
     ap_extended_status = 0;
@@ -1589,7 +1588,13 @@ static server_rec *init_server_config(pool *p)
     s->next = NULL;
     s->addrs = ap_pcalloc(p, sizeof(server_addr_rec));
     /* NOT virtual host; don't match any real network interface */
-    s->addrs->host_addr.s_addr = htonl(INADDR_ANY);
+    memset(&s->addrs->host_addr, 0, sizeof(s->addrs->host_addr));
+#if 0
+    s->addrs->host_addr.ss_family = ap_default_family; /* XXX: needed?, XXX: PF_xxx can be different from AF_xxx */
+#endif
+#ifdef HAVE_SOCKADDR_LEN
+    s->addrs->host_addr.ss_len = sizeof(s->addrs->host_addr); /* XXX: needed ? */
+#endif
     s->addrs->host_port = 0;	/* matches any port */
     s->addrs->virthost = "";	/* must be non-NULL */
     s->names = s->wild_names = NULL;
@@ -1606,21 +1611,33 @@ static server_rec *init_server_config(pool *p)
 static void default_listeners(pool *p, server_rec *s)
 {
     listen_rec *new;
+    struct addrinfo hints, *res0, *res;
+    int gai;
+    char servbuf[NI_MAXSERV];
 
     if (ap_listeners != NULL) {
 	return;
     }
+    ap_snprintf(servbuf, sizeof(servbuf), "%d", s->port ? s->port : DEFAULT_HTTP_PORT);
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_family = ap_default_family;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+    gai = getaddrinfo(NULL, servbuf, &hints, &res0);
+    if (gai){
+	fprintf(stderr, "default_listeners(): getaddrinfo(PASSIVE) for family %u: %s\n",
+		ap_default_family, gai_strerror(gai));
+	exit (1);
+    }
     /* allocate a default listener */
     new = ap_pcalloc(p, sizeof(listen_rec));
-    new->local_addr.sin_family = AF_INET;
-    new->local_addr.sin_addr = ap_bind_address;
-    /* Buck ugly cast to get around terniary op bug in some (MS) compilers */
-    new->local_addr.sin_port = htons((unsigned short)(s->port ? s->port 
-                                                        : DEFAULT_HTTP_PORT));
+    memcpy(&new->local_addr, res0->ai_addr, res0->ai_addrlen);
     new->fd = -1;
     new->used = 0;
     new->next = NULL;
     ap_listeners = new;
+
+    freeaddrinfo(res0);
 }
 
 

@@ -109,14 +109,15 @@ int ap_proxy_connect_handler(request_rec *r, cache_req *c, char *url,
                                  const char *proxyhost, int proxyport)
 {
     struct sockaddr_in server;
-    struct in_addr destaddr;
-    struct hostent server_hp;
-    const char *host, *err;
+    struct addrinfo hints, *res, *res0;
+    const char *hoststr;
+    const char *portstr = NULL;
     char *p;
     int port, sock;
     char buffer[HUGE_STRING_LEN];
-    int nbytes, i, j;
+    int nbytes, i;
     fd_set fds;
+    int error;
 
     void *sconf = r->server->module_config;
     proxy_server_conf *conf =
@@ -124,27 +125,60 @@ int ap_proxy_connect_handler(request_rec *r, cache_req *c, char *url,
     struct noproxy_entry *npent = (struct noproxy_entry *) conf->noproxies->elts;
 
     memset(&server, '\0', sizeof(server));
+#ifdef HAVE_SOCKADDR_LEN
+    server.sin_len = sizeof(server);
+#endif
     server.sin_family = AF_INET;
 
     /* Break the URL into host:port pairs */
 
-    host = url;
+    hoststr = url;
     p = strchr(url, ':');
-    if (p == NULL)
-        port = DEFAULT_HTTPS_PORT;
-    else {
-        port = atoi(p + 1);
-        *p = '\0';
+    if (p == NULL) {
+	char pbuf[32];
+	ap_snprintf(pbuf, sizeof(pbuf), "%d", DEFAULT_HTTPS_PORT);
+	portstr = pbuf;
+    } else {
+	portstr = p + 1;
+	*p = '\0';
+    }
+    port = atoi(portstr);
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    error = getaddrinfo(hoststr, portstr, &hints, &res0);
+    if (error && proxyhost == NULL) {
+	return ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR,
+		    gai_strerror(error));       /* give up */
     }
 
 /* check if ProxyBlock directive on this host */
-    destaddr.s_addr = ap_inet_addr(host);
     for (i = 0; i < conf->noproxies->nelts; i++) {
-        if ((npent[i].name != NULL && strstr(host, npent[i].name) != NULL)
-            || destaddr.s_addr == npent[i].addr.s_addr
-            || npent[i].name[0] == '*')
-            return ap_proxyerror(r, HTTP_FORBIDDEN,
-                                 "Connect to remote machine blocked");
+	int fail;
+	struct sockaddr_in *sin;
+
+	fail = 0;
+	if (npent[i].name != NULL && strstr(hoststr, npent[i].name))
+	    fail++;
+	if (npent[i].name != NULL && strcmp(npent[i].name, "*") == 0)
+	    fail++;
+	for (res = res0; res; res = res->ai_next) {
+	    switch (res->ai_family) {
+	    case AF_INET:
+		sin = (struct sockaddr_in *)res->ai_addr;
+		if (sin->sin_addr.s_addr == npent[i].addr.s_addr)
+		    fail++;
+		break;
+	    }
+	}
+	if (fail) {
+	    if (res0 != NULL)
+		freeaddrinfo(res0);
+	    return ap_proxyerror(r, HTTP_FORBIDDEN,
+				 "Connect to remote machine blocked");
+	}
     }
 
     /* Check if it is an allowed port */
@@ -155,54 +189,60 @@ int ap_proxy_connect_handler(request_rec *r, cache_req *c, char *url,
         case DEFAULT_SNEWS_PORT:
             break;
         default:
+	    if (res0 != NULL)
+		freeaddrinfo(res0);
             return HTTP_FORBIDDEN;
         }
     }
-    else if (!allowed_port(conf, port))
+    else if(!allowed_port(conf, port)) {
+	if (res0 != NULL)
+		freeaddrinfo(res0);
         return HTTP_FORBIDDEN;
+    }
 
     if (proxyhost) {
+	char pbuf[10];
+
+	if (res0 != NULL)
+		freeaddrinfo(res0);
+	ap_snprintf(pbuf, sizeof(pbuf), "%d", proxyport);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	error = getaddrinfo(proxyhost, pbuf, &hints, &res0);
+	if (error)
+		return HTTP_INTERNAL_SERVER_ERROR;  /* XXX */
+
         ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server,
-             "CONNECT to remote proxy %s on port %d", proxyhost, proxyport);
+		"CONNECT to remote proxy %s on port %d", proxyhost, proxyport);
     }
     else {
         ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server,
-                     "CONNECT to %s on port %d", host, port);
+                     "CONNECT to %s on port %d", hoststr, port);
     }
 
-    /* Nasty cast to work around broken terniary expressions on MSVC */
-    server.sin_port = htons((unsigned short)(proxyport ? proxyport : port));
-    err = ap_proxy_host2addr(proxyhost ? proxyhost : host, &server_hp);
+    sock = i = -1;
+    for (res = res0; res; res = res->ai_next) {
+      sock = ap_psocket(r->pool, res->ai_family, res->ai_socktype, res->ai_protocol);
+      if (sock == -1)
+	continue;
 
-    if (err != NULL)
-        return ap_proxyerror(r,
-            proxyhost ? HTTP_BAD_GATEWAY : HTTP_INTERNAL_SERVER_ERROR, err);
+	if (sock >= FD_SETSIZE) {
+		ap_log_error(APLOG_MARK, APLOG_NOERRNO | APLOG_WARNING, NULL,
+			"proxy_connect_handler: filedescriptor (%u) "
+			"larger than FD_SETSIZE (%u) "
+			"found, you probably need to rebuild Apache with a "
+			"larger FD_SETSIZE", sock, FD_SETSIZE);
+		ap_pclosesocket(r->pool, sock);
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
 
-    sock = ap_psocket_ex(r->pool, PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
-    if (sock == -1) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, r, "proxy: error creating socket");
-        return HTTP_INTERNAL_SERVER_ERROR;
+      i = ap_proxy_doconnect(sock, res->ai_addr, r);
+      if (i == 0)
+	break;
     }
-
-    if (sock >= FD_SETSIZE) {
-        ap_log_error(APLOG_MARK, APLOG_NOERRNO | APLOG_WARNING, NULL,
-                     "proxy_connect_handler: filedescriptor (%u) "
-                     "larger than FD_SETSIZE (%u) "
-                     "found, you probably need to rebuild Apache with a "
-                     "larger FD_SETSIZE", sock, FD_SETSIZE);
-        ap_pclosesocket(r->pool, sock);
-        return HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    j = 0;
-    while (server_hp.h_addr_list[j] != NULL) {
-        memcpy(&server.sin_addr, server_hp.h_addr_list[j],
-               sizeof(struct in_addr));
-        i = ap_proxy_doconnect(sock, &server, r);
-        if (i == 0)
-            break;
-        j++;
-    }
+    freeaddrinfo(res0);
     if (i == -1) {
         ap_pclosesocket(r->pool, sock);
         return ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR, ap_pstrcat(r->pool,

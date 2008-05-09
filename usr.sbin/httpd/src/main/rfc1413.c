@@ -110,12 +110,13 @@ static void ident_timeout(int sig)
 
 /* bind_connect - bind both ends of a socket */
 /* Ambarish fix this. Very broken */
-static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
-		       const struct sockaddr_in *rmt_sin, 
+static int get_rfc1413(int sock, const struct sockaddr *our_sin,
+		       const struct sockaddr *rmt_sin, 
 		       char user[RFC1413_USERLEN+1], server_rec *srv)
 {
-    struct sockaddr_in rmt_query_sin, our_query_sin;
-    unsigned int rmt_port, our_port;
+    struct sockaddr_storage rmt_query_sin, our_query_sin;
+    unsigned int o_rmt_port, o_our_port;	/* original port pair */
+    unsigned int rmt_port, our_port;		/* replied port pair */
     int i;
     char *cp;
     char buffer[RFC1413_MAXDATA + 1];
@@ -130,13 +131,38 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
      * addresses from the query socket.
      */
 
-    our_query_sin = *our_sin;
-    our_query_sin.sin_port = htons(ANY_PORT);
-    rmt_query_sin = *rmt_sin;
-    rmt_query_sin.sin_port = htons(RFC1413_PORT);
+#ifndef SIN6_LEN
+    memcpy(&our_query_sin, our_sin, SA_LEN(our_sin));
+    memcpy(&rmt_query_sin, rmt_sin, SA_LEN(rmt_sin));
+#else
+    memcpy(&our_query_sin, our_sin, our_sin->sa_len);
+    memcpy(&rmt_query_sin, rmt_sin, rmt_sin->sa_len);
+#endif
+    switch (our_sin->sa_family) {
+    case AF_INET:
+      ((struct sockaddr_in *)&our_query_sin)->sin_port = htons(ANY_PORT);
+      o_our_port = ntohs(((struct sockaddr_in *)our_sin)->sin_port);
+      ((struct sockaddr_in *)&rmt_query_sin)->sin_port = htons(RFC1413_PORT);
+      o_rmt_port = ntohs(((struct sockaddr_in *)rmt_sin)->sin_port);
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)&our_query_sin)->sin6_port = htons(ANY_PORT);
+      o_our_port = ntohs(((struct sockaddr_in6 *)our_sin)->sin6_port);
+      ((struct sockaddr_in6 *)&rmt_query_sin)->sin6_port = htons(RFC1413_PORT);
+      o_rmt_port = ntohs(((struct sockaddr_in6 *)rmt_sin)->sin6_port);
+      break;
+    default:
+      /* unsupported AF */
+      return -1;
+    }
 
     if (bind(sock, (struct sockaddr *) &our_query_sin,
-	     sizeof(struct sockaddr_in)) < 0) {
+#ifndef SIN6_LEN
+	     SA_LEN((struct sockaddr *) &our_query_sin)
+#else
+	     our_query_sin.ss_len
+#endif
+	     ) < 0) {
 	ap_log_error(APLOG_MARK, APLOG_CRIT, srv,
 		    "bind: rfc1413: Error binding to local port");
 	return -1;
@@ -147,12 +173,18 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
  * the service
  */
     if (connect(sock, (struct sockaddr *) &rmt_query_sin,
-		sizeof(struct sockaddr_in)) < 0)
-	            return -1;
+#ifndef SIN6_LEN
+		SA_LEN((struct sockaddr *) &rmt_query_sin)
+#else
+		rmt_query_sin.ss_len
+#endif
+		) < 0) {
+	return -1;
+    }
 
 /* send the data */
-    buflen = ap_snprintf(buffer, sizeof(buffer), "%u,%u\r\n", ntohs(rmt_sin->sin_port),
-		ntohs(our_sin->sin_port));
+    buflen = ap_snprintf(buffer, sizeof(buffer), "%u,%u\r\n", o_rmt_port,
+		o_our_port);
 
     /* send query to server. Handle short write. */
     i = 0;
@@ -197,9 +229,9 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
 
 /* RFC1413_USERLEN = 512 */
     if (sscanf(buffer, "%u , %u : USERID :%*[^:]:%512s", &rmt_port, &our_port,
-	       user) != 3 || ntohs(rmt_sin->sin_port) != rmt_port
-	|| ntohs(our_sin->sin_port) != our_port)
+	       user) != 3 || o_rmt_port != rmt_port || o_our_port != our_port) {
 	return -1;
+    }
 
     /*
      * Strip trailing carriage return. It is part of the
@@ -221,7 +253,7 @@ API_EXPORT(char *) ap_rfc1413(conn_rec *conn, server_rec *srv)
 
     result = FROM_UNKNOWN;
 
-    sock = ap_psocket_ex(conn->pool, AF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
+    sock = ap_psocket_ex(conn->pool, conn->remote_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, 1);
     if (sock < 0) {
     	ap_log_error(APLOG_MARK, APLOG_CRIT, srv,
     		    "socket: rfc1413: error creating socket");
@@ -234,8 +266,10 @@ API_EXPORT(char *) ap_rfc1413(conn_rec *conn, server_rec *srv)
     if (ap_setjmp(timebuf) == 0) {
 	ap_set_callback_and_alarm(ident_timeout, ap_rfc1413_timeout);
 
-	if (get_rfc1413(sock, &conn->local_addr, &conn->remote_addr, user, srv) >= 0)
+	if (get_rfc1413(sock, (struct sockaddr *)&conn->local_addr,
+		(struct sockaddr *)&conn->remote_addr, user, srv) >= 0) {
 	    result = user;
+	}
     }
     ap_set_callback_and_alarm(NULL, 0);
     ap_pclosesocket(conn->pool, sock);

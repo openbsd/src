@@ -1,0 +1,127 @@
+$OpenBSD: README.v6,v 1.1 2008/05/09 08:06:27 mbalmer Exp $
+$Id: README.v6,v 1.1 2008/05/09 08:06:27 mbalmer Exp $
+
+IPv6 support for the OpenBSD httpd(8)
+
+To support IPv6 the apache module API/ABI had to be changed, to avoid
+IPv4-dependent structure member variables (like use of u_long to hold
+an IPv4 address, or whatever).  Keep this in mind when writing new
+modules or adding modules to the ports collection.
+
+Basically you can write IPv6 address where IPv4 address fits.
+
+extra command-line argument:
+	-4	Assume IPv4 address on ambiguous directives (default)
+	-6	Assume IPv6 address on ambiguous directives
+
+	The above two can be used, for example, to disambiguate
+	"BindAddress *".
+
+base commands:
+    Listen
+	Listen is expanded to take one or two arguments.
+		Listen port
+		Listen address:port
+		Listen address port
+	This is to let you specify "Listen :: 80", since "Listen :::80"
+	won't work.
+
+mod_access:
+    deny from
+    allow from
+	"deny from" and "allow from" supports IPv6 addresses, under the
+	following forms:
+		{deny,allow} from v6addr
+		{deny,allow} from v6addr/v6mask
+		{deny,allow} from v6addr/prefixlen
+	Also, wildcard ("*") and string hostname matches IPv6 hosts as well.
+
+mod_proxy:
+    ProxyRequests on
+	http/ftp proxying for both IPv4 and IPv6 is possible.
+	Access control functions (NoProxy) are not updated yet.
+
+	NOTE: for security reasons, we recommend you to filter out
+	outsider's access to your proxy, by directives like below:
+		<Directory proxy:*>
+		order deny,allow
+		deny from all
+		allow from 10.0.0.0/8
+		allow from 3ffe:9999:8888:7777::/64
+		</Directory>
+
+virtual host:
+	If you would like to this feature, you must describe 'Listen'
+	part on configuration file explicitly. like below:
+		Listen :: 80
+		Listen 0.0.0.0 80
+
+    NameVirtualHost
+	NameVirtualHost is expanded to take one more two arguments.
+		NameVirtualHost address
+		NameVirtualHost address:port
+		NameVirtualHost address port
+	This is to let you specify IPv6 address into address part.
+
+	Note that, if a colon is found in the specified address string,
+	the code will to resolve the address in the following way:
+	1. try to resolve as address:port (most of IPv6 address fails)
+	2. if (1) is failed, try to resolve as address only
+	If there's ambiguity, i.e. 3ffe:0501::1:2, the address may not be
+	parsed as you expect (3ffe:0501::1 with port 2, or 3ffe:0501::1:2
+	with default port).  To get the right effect you are encouraged
+	to specify it without ambiguity.  In IPv6 case "address port"
+	(specify address and port separated by a space) is the safest way.
+
+    <VirtualHost host:port [host:port ...]>
+	If you would like to specify IPv6 numeric address in host part,
+	use bracketed format like below:
+		<VirtualHost [::1]:80>
+	Note: Now we DO NOT handle old non-bracketed format, 
+		<VirtualHost 0:0:0:0:0:0:0:1:80>
+	      so configuration file must be updated.
+	Note: The following is bad example to specify host ::1 port 80.
+	      This will treated as host ::1:80.
+		<VirtualHost ::1:80>
+
+logresolve (src/support)
+	error statistics in nameserver cache code is omitted.
+
+mod_unique_id
+	Originally mod_unique_id used IPv4 address as a seed for UNIQUE_ID,
+	and took IPv4 address registered onto DNS for the hostname (UNIX
+	hostname taken by gethostname(3)).  Therefore, this does not work
+	for IPv6-only hosts as they do not have IPv4 address for them.
+
+	Now, UNIQUE_ID can be generated using IPv6 address.  IPv6 address can
+	be used as the seed for UNIQUE_ID.
+	Because of this, UNIQUE_ID will be longer than normal apache.  This
+	may cause problem with some of the CGI scripts.
+	The preference of the addresses is based on the order returned
+	by getaddrinfo().  If your getaddrinfo() returns IPv4 address, IPv4
+	adderss will be used as a seed.
+	Note that some of IPv6 addresses are "scoped"; If you happened to use
+	link-local or site-local address as a seed, the UNIQUE_ID may not be
+	worldwide unique.
+
+	If longer UNIQUE_ID causes a problem, define SHORT_UNIQUE_ID in
+	mod_unique_id.c.  In this case, length of UNIQUE_ID will be kept the
+	same.  However, for IPv6 addresses mod_unique_id.c will use the last
+	32bit (not the whole 128bit) as the seed.  Therefore, there can be
+	collision in UNIQUE_ID.
+
+	The behavior should be improved in the near future; we welcome your
+	inputs.
+
+configuration file
+	We do not support IPv4 mapped addresses (IPv6 address format like
+	::ffff:10.1.1.1) in configuration file. 
+
+Credit:
+
+This file is derived from the README.v6 file that accompanied the
+original patchkit for Apache 1.3.9 from the KAME project.  It was
+written by Jun-ichiro itojun Hagino.
+
+	 http://www.kame.net/
+	 mailto:core@kame.net

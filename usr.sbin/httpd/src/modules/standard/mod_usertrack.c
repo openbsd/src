@@ -147,13 +147,17 @@ static char * make_cookie_id(char * buffer, int bufsize, request_rec *r,
 {
     struct timeval tv;
     struct timezone tz = {0, 0};
+    char hbuf[NI_MAXHOST];
 
     cookie_dir_rec *dcfg;
 
     long reqtime = (long) r->request_time;
     long clocktime;
 
-    unsigned long ipaddr = ntohl(r->connection->remote_addr.sin_addr.s_addr);
+    getnameinfo((struct sockaddr *)&r->connection->remote_addr,
+        r->connection->remote_addr.ss_len,
+        hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+
     const char *rname = ap_get_remote_host(r->connection, r->per_dir_config,
 					   REMOTE_NAME);
     dcfg = ap_get_module_config(r->per_dir_config, &usertrack_module);
@@ -167,8 +171,8 @@ static char * make_cookie_id(char * buffer, int bufsize, request_rec *r,
 	clocktime = (long) (tv.tv_usec / 1000);
 
     if (cformat == CF_COMPACT)
-	ap_snprintf(buffer, bufsize, "%s%lx%x%lx%lx", 
-		    dcfg->prefix_string, ipaddr, (int) getpid(),
+	ap_snprintf(buffer, bufsize, "%s%s%x%lx%lx", 
+		    dcfg->prefix_string, hbuf, (int) getpid(),
                     reqtime, clocktime);
     else
 	ap_snprintf(buffer, bufsize, "%s%s.%d%ld%ld", 

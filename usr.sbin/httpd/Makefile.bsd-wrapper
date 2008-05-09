@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.64 2008/01/08 10:08:31 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.65 2008/05/09 08:06:27 mbalmer Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -93,7 +93,8 @@ DSO_MODULE_ARGS=  \
 	--enable-module=usertrack \
 	--enable-shared=usertrack \
 	--enable-module=vhost_alias \
-	--enable-shared=vhost_alias 
+	--enable-shared=vhost_alias \
+	--enable-rule=INET6
 
 INSTALL_MODULES=
 
@@ -252,6 +253,7 @@ MANUALFILES= \
 	manual/handler.html \
 	manual/index.html \
 	manual/invoking.html \
+	manual/ipv6.html \
 	manual/keepalive.html \
 	manual/location.html \
 	manual/logs.html \
@@ -738,6 +740,14 @@ maninstall:
 cleanman:
 	@echo NOMAN is set
 .endif
+
+man:
+	@-for i in ${MANUALFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_HTDOCSDIR}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    htdocs/$$i ${DESTDIR}${HTTPD_HTDOCSDIR}/$$j/; \
+	done
 
 distribution:
 	@-for i in ${MODCONFDIR}; do \

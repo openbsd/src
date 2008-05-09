@@ -410,45 +410,50 @@ API_EXPORT(int) ap_parse_uri_components(pool *p, const char *uri,
      * &hostinfo[-1] < &hostinfo[0] ... and this loop is valid C.
      */
     do {
-        --s;
+	--s;
     } while (s >= hostinfo && *s != '@');
     if (s < hostinfo) {
-        /* again we want the common case to be fall through */
-      deal_with_host:
-        /* We expect hostinfo to point to the first character of
-         * the hostname.  If there's a port it is the first colon.
-         */
-        s = memchr(hostinfo, ':', uri - hostinfo);
-        if (s == NULL) {
-            /* we expect the common case to have no port */
-            uptr->hostname = ap_pstrndup(p, hostinfo, uri - hostinfo);
-            goto deal_with_path;
-        }
-        uptr->hostname = ap_pstrndup(p, hostinfo, s - hostinfo);
-        ++s;
-        uptr->port_str = ap_pstrndup(p, s, uri - s);
-        if (uri != s) {
-            port = ap_strtol(uptr->port_str, &endstr, 10);
-            uptr->port = port;
-            if (*endstr == '\0') {
-                goto deal_with_path;
-            }
-            /* Invalid characters after ':' found */
-            return HTTP_BAD_REQUEST;
-        }
-        uptr->port = ap_default_port_for_scheme(uptr->scheme);
-        goto deal_with_path;
+	/* again we want the common case to be fall through */
+deal_with_host:
+	/* We expect hostinfo to point to the first character of
+	 * the hostname.  If there's a port it is the first colon.
+	 */
+	if (*hostinfo == '[') {
+	    s = memchr(hostinfo+1, ']', uri - hostinfo - 1);
+	    if (s)
+		s = strchr(s, ':');
+	} else
+	    s = memchr(hostinfo, ':', uri - hostinfo);
+	if (s == NULL) {
+	    /* we expect the common case to have no port */
+	    uptr->hostname = ap_pstrndup(p, hostinfo, uri - hostinfo);
+	    goto deal_with_path;
+	}
+	uptr->hostname = ap_pstrndup(p, hostinfo, s - hostinfo);
+	++s;
+	uptr->port_str = ap_pstrndup(p, s, uri - s);
+	if (uri != s) {
+	    port = ap_strtol(uptr->port_str, &endstr, 10);
+	    uptr->port = port;
+	    if (*endstr == '\0') {
+		goto deal_with_path;
+	    }
+	    /* Invalid characters after ':' found */
+	    return HTTP_BAD_REQUEST;
+	}
+	uptr->port = ap_default_port_for_scheme(uptr->scheme);
+	goto deal_with_path;
     }
 
     /* first colon delimits username:password */
     s1 = memchr(hostinfo, ':', s - hostinfo);
     if (s1) {
-        uptr->user = ap_pstrndup(p, hostinfo, s1 - hostinfo);
-        ++s1;
-        uptr->password = ap_pstrndup(p, s1, s - s1);
+	uptr->user = ap_pstrndup(p, hostinfo, s1 - hostinfo);
+	++s1;
+	uptr->password = ap_pstrndup(p, s1, s - s1);
     }
     else {
-        uptr->user = ap_pstrndup(p, hostinfo, s - hostinfo);
+	uptr->user = ap_pstrndup(p, hostinfo, s - hostinfo);
     }
     hostinfo = s + 1;
     goto deal_with_host;
@@ -475,7 +480,12 @@ API_EXPORT(int) ap_parse_hostinfo_components(pool *p, const char *hostinfo,
     /* We expect hostinfo to point to the first character of
      * the hostname.  There must be a port, separated by a colon
      */
-    s = strchr(hostinfo, ':');
+    if (*hostinfo == '[') {
+        s = strchr(hostinfo+1, ']');
+        if (s)
+            s = strchr(s, ':');
+    } else
+        s = strchr(hostinfo, ':');
     if (s == NULL) {
         return HTTP_BAD_REQUEST;
     }

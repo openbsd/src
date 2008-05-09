@@ -165,78 +165,108 @@ API_EXPORT(void) ap_init_vhost_config(pool *p)
  * *paddr is the variable used to keep track of **paddr between calls
  * port is the default port to assume
  */
-static const char *get_addresses(pool *p, char *w, server_addr_rec ***paddr,
-			    unsigned port)
+static const char *get_addresses(pool *p, char *w, char *pstr,
+	server_addr_rec ***paddr, unsigned port)
 {
-    struct hostent *hep;
-    unsigned long my_addr;
+    struct addrinfo hints, *res, *res0;
     server_addr_rec *sar;
-    char *t;
-    int i, is_an_ip_addr;
+    char *t = NULL, *u = NULL, *v = NULL;
+    char *hoststr = NULL, *portstr = NULL;
+    char portpool[10];
+    int error;
+    char servbuf[NI_MAXSERV];
 
-    if (*w == 0)
+    if (w == 0 || *w == 0)
 	return NULL;
 
-    t = strchr(w, ':');
-    if (t) {
-	if (strcmp(t + 1, "*") == 0) {
-	    port = 0;
+    portstr = portpool;
+    ap_snprintf(portpool, sizeof(portpool), "%u", port);
+    if (!pstr) {
+	v = w;
+	u = NULL;
+	if (*w == '['){
+	    u = strrchr(w, ']');
+	    if (u) {	/* [host]:port or [host] */
+		w++;
+		*u = '\0';
+		v = u + 1;
+	    }
 	}
-	else if ((i = atoi(t + 1))) {
-	    port = i;
+	/*        w   uv     ,       w=v        , w=v  */  
+	/* u!=0: [host]:port , u==0: [host:port , host */
+	t = strchr(v, ':');
+	if (t != NULL && strchr(t+1, ':') == NULL) {
+	    /* [host]:port-w/o-colons, host-without-colons:port-w/o-colons */
+	    *t = '\0';
+	    portstr = t + 1;
 	}
 	else {
-	    return ":port must be numeric";
+	    portstr = "0";
 	}
-	*t = 0;
+    } else {
+	portstr = pstr;
     }
 
-    is_an_ip_addr = 0;
-    if (strcmp(w, "*") == 0) {
-	my_addr = htonl(INADDR_ANY);
-	is_an_ip_addr = 1;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    if (strcmp(w, "*") == 0 || strlen(w) == 0) {
+	hoststr = NULL;
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_PASSIVE;
     }
-    else if (strcasecmp(w, "_default_") == 0
-	     || strcmp(w, "255.255.255.255") == 0) {
-	my_addr = DEFAULT_VHOST_ADDR;
-	is_an_ip_addr = 1;
+    else if (strcasecmp(w, "_default4_") == 0 ||
+	     ((ap_default_family == PF_INET
+	       || ap_default_family == PF_UNSPEC
+	       ) && strcasecmp(w, "_default_") == 0)){
+	hoststr = "255.255.255.255";
+	hints.ai_family = PF_INET;
     }
-    else if ((my_addr = ap_inet_addr(w)) != INADDR_NONE) {
-	is_an_ip_addr = 1;
+    else if (strcasecmp(w, "_default6_") == 0 ||
+	     ((ap_default_family == PF_INET6
+	       || ap_default_family == PF_UNSPEC
+	       ) && strcasecmp(w, "_default_") == 0)){
+	hoststr = "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+	hints.ai_family = PF_INET6;
     }
-    if (is_an_ip_addr) {
-	sar = ap_pcalloc(p, sizeof(server_addr_rec));
-	**paddr = sar;
-	*paddr = &sar->next;
-	sar->host_addr.s_addr = my_addr;
-	sar->host_port = port;
-	sar->virthost = ap_pstrdup(p, w);
-	if (t != NULL)
-	    *t = ':';
-	return NULL;
+    else{
+	hoststr = w;
+	hints.ai_family = PF_UNSPEC;
     }
 
-    hep = gethostbyname(w);
-
-    if ((!hep) || (hep->h_addrtype != AF_INET || !hep->h_addr_list[0])) {
+    error = getaddrinfo(hoststr, portstr, &hints, &res0);
+    if (error || !res0) {
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
-	    "Cannot resolve host name %s --- ignoring!", w);
-	if (t != NULL)
-	    *t = ':';
+	    "Cannot resolve host %s port %s --- ignoring!", hoststr, portstr);
+	if (t != NULL) *t = ':';
+	if (u != NULL) *u = ']';
 	return NULL;
     }
-
-    for (i = 0; hep->h_addr_list[i]; ++i) {
+    for (res=res0; res; res=res->ai_next) {
+	switch (res->ai_addr->sa_family) {
+	case AF_INET:
+	case AF_INET6:
+	    break;
+	default:
+	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
+			 "Unsupported address family %u, for host %s port %s --- ignoring!",
+			 res->ai_addr->sa_family, hoststr, portstr);
+	    continue;
+	}
 	sar = ap_pcalloc(p, sizeof(server_addr_rec));
 	**paddr = sar;
 	*paddr = &sar->next;
-	sar->host_addr = *(struct in_addr *) hep->h_addr_list[i];
-	sar->host_port = port;
+	memcpy(&sar->host_addr, res->ai_addr, res->ai_addrlen);
+	if (getnameinfo(res->ai_addr, res->ai_addrlen, NULL, 0, servbuf,
+			sizeof(servbuf), NI_NUMERICSERV) == 0)
+		sar->host_port = atoi(servbuf);
+	else
+		sar->host_port = 0;
 	sar->virthost = ap_pstrdup(p, w);
     }
 
-    if (t != NULL)
-	*t = ':';
+    freeaddrinfo(res0);
+    if (t != NULL) *t = ':';
+    if (u != NULL) *u = ']';
     return NULL;
 }
 
@@ -250,7 +280,8 @@ API_EXPORT(const char *) ap_parse_vhost_addrs(pool *p, const char *hostname, ser
     /* start the list of addreses */
     addrs = &s->addrs;
     while (hostname[0]) {
-	err = get_addresses(p, ap_getword_conf(p, &hostname), &addrs, s->port);
+	err = get_addresses(p, ap_getword_conf(p, &hostname), NULL,
+		&addrs, s->port);
 	if (err) {
 	    *addrs = NULL;
 	    return err;
@@ -268,10 +299,11 @@ API_EXPORT(const char *) ap_parse_vhost_addrs(pool *p, const char *hostname, ser
 }
 
 
-API_EXPORT_NONSTD(const char *) ap_set_name_virtual_host (cmd_parms *cmd, void *dummy, char *arg)
+API_EXPORT_NONSTD(const char *) ap_set_name_virtual_host (cmd_parms *cmd, void *dummy, char *h,
+	char *p)
 {
     /* use whatever port the main server has at this point */
-    return get_addresses(cmd->pool, arg, &name_vhost_list_tail,
+    return get_addresses(cmd->pool, h, p, &name_vhost_list_tail,
 			    cmd->server->port);
 }
 
@@ -345,6 +377,17 @@ static ap_inline unsigned hash_inaddr(unsigned key)
     return ((key >> 8) ^ key) % IPHASH_TABLE_SIZE;
 }
 
+static unsigned hash_addr(struct sockaddr *sa)
+{
+    switch (sa->sa_family) {
+    case AF_INET:
+	return hash_inaddr(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+    case AF_INET6:
+	return hash_inaddr(((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[12]);
+    default:
+	return hash_inaddr(sa->sa_family);
+    }
+}
 
 
 static ipaddr_chain *new_ipaddr_chain(pool *p,
@@ -372,25 +415,52 @@ static name_chain *new_name_chain(pool *p, server_rec *s, server_addr_rec *sar)
     return new;
 }
 
-
-static ap_inline ipaddr_chain *find_ipaddr(struct in_addr *server_ip,
-    unsigned port)
+static ap_inline ipaddr_chain *find_ipaddr(struct sockaddr *sa)
 {
     unsigned bucket;
     ipaddr_chain *trav;
-    unsigned addr;
+    char a[NI_MAXHOST], b[NI_MAXHOST];
 
     /* scan the hash table for an exact match first */
-    addr = server_ip->s_addr;
-    bucket = hash_inaddr(addr);
+    bucket = hash_addr(sa);
     for (trav = iphash_table[bucket]; trav; trav = trav->next) {
 	server_addr_rec *sar = trav->sar;
-	if ((sar->host_addr.s_addr == addr)
-	    && (sar->host_port == 0 || sar->host_port == port
-		|| port == 0)) {
-	    return trav;
+	if (sar->host_addr.ss_family != sa->sa_family)
+	    continue;
+	switch (sa->sa_family) {
+	case AF_INET:
+	  {
+	    struct sockaddr_in *sin1, *sin2;
+	    sin1 = (struct sockaddr_in *)&sar->host_addr;
+	    sin2 = (struct sockaddr_in *)sa;
+	    if (sin1->sin_port == 0 || sin2->sin_port == 0
+	     || sin1->sin_port == sin2->sin_port) {
+		if (memcmp(&sin1->sin_addr, &sin2->sin_addr,
+			sizeof(sin1->sin_addr)) == 0) {
+		    return trav;
+		}
+	    }
+	    break;
+	  }
+	case AF_INET6:
+	  {
+	    struct sockaddr_in6 *sin1, *sin2;
+	    sin1 = (struct sockaddr_in6 *)&sar->host_addr;
+	    sin2 = (struct sockaddr_in6 *)sa;
+	    if (sin1->sin6_port == 0 || sin2->sin6_port == 0
+	     || sin1->sin6_port == sin2->sin6_port) {
+		if (memcmp(&sin1->sin6_addr, &sin2->sin6_addr,
+			sizeof(sin1->sin6_addr)) == 0) {
+		    return trav;
+		}
+	    }
+	    break;
+	  }
+	default: /*unsupported*/
+	    break;
 	}
     }
+
     return NULL;
 }
 
@@ -416,21 +486,7 @@ static void dump_a_vhost(FILE *f, ipaddr_chain *ic)
     int len;
     char buf[MAX_STRING_LEN];
 
-    if (ic->sar->host_addr.s_addr == DEFAULT_VHOST_ADDR) {
-	len = ap_snprintf(buf, sizeof(buf), "_default_:%u",
-		ic->sar->host_port);
-    }
-    else if (ic->sar->host_addr.s_addr == INADDR_ANY) {
-	len = ap_snprintf(buf, sizeof(buf), "*:%u",
-		ic->sar->host_port);
-    }
-    else {
-	len = ap_snprintf(buf, sizeof(buf), "%pA:%u",
-		&ic->sar->host_addr, ic->sar->host_port);
-    }
-    if (ic->sar->host_port == 0) {
-	buf[len-1] = '*';
-    }
+    len = ap_snprintf(buf, sizeof(buf), "%pI", &ic->sar->host_addr);
     if (ic->names == NULL) {
 	if (ic->server == NULL)
 	    fprintf(f, "%-22s WARNING: No <VirtualHost> defined for this NameVirtualHost!\n", buf);
@@ -558,10 +614,35 @@ API_EXPORT(void) ap_fini_vhost_config(pool *p, server_rec *main_s)
      * occured in the config file, we'll copy it in that order.
      */
     for (sar = name_vhost_list; sar; sar = sar->next) {
-	unsigned bucket = hash_inaddr(sar->host_addr.s_addr);
+	unsigned bucket = hash_addr((struct sockaddr *)&sar->host_addr);
 	ipaddr_chain *ic = new_ipaddr_chain(p, NULL, sar);
+	int wildcard;
 
-	if (sar->host_addr.s_addr != INADDR_ANY) {
+	wildcard = 0;
+	switch (sar->host_addr.ss_family) {
+	case AF_INET:
+	  {
+	    struct sockaddr_in *sin;
+	    sin = (struct sockaddr_in *)&sar->host_addr;
+	    if (sin->sin_addr.s_addr == INADDR_ANY)
+		wildcard++;
+	    break;
+	  }
+	case AF_INET6:
+	  {
+	    struct sockaddr_in6 *sin6;
+	    sin6 = (struct sockaddr_in6 *)&sar->host_addr;
+	    if (*(uint32_t *)&sin6->sin6_addr.s6_addr[0] == 0
+	     && *(uint32_t *)&sin6->sin6_addr.s6_addr[4] == 0
+	     && *(uint32_t *)&sin6->sin6_addr.s6_addr[8] == 0
+	     && *(uint32_t *)&sin6->sin6_addr.s6_addr[12] == 0) {
+		wildcard++;
+	    }
+	    break;
+	  }
+	}
+
+	if (!wildcard) {
 	    *iphash_table_tail[bucket] = ic;
 	    iphash_table_tail[bucket] = &ic->next;
 	}
@@ -588,12 +669,43 @@ API_EXPORT(void) ap_fini_vhost_config(pool *p, server_rec *main_s)
 	has_default_vhost_addr = 0;
 	for (sar = s->addrs; sar; sar = sar->next) {
 	    ipaddr_chain *ic;
+	    int wildcard;
 
-	    if (sar->host_addr.s_addr == DEFAULT_VHOST_ADDR
-		|| sar->host_addr.s_addr == INADDR_ANY) {
-		ic = find_default_server(sar->host_port);
-		if (!ic || !add_name_vhost_config(p, main_s, s, sar, ic)) {
-		    if (ic && ic->sar->host_port != 0) {
+	    wildcard = 0;
+	    switch (sar->host_addr.ss_family) {
+	    case AF_INET:
+	      {
+		struct sockaddr_in *sin;
+		sin = (struct sockaddr_in *)&sar->host_addr;
+		if (sin->sin_addr.s_addr == DEFAULT_VHOST_ADDR)
+		    wildcard++;
+		else if (sin->sin_addr.s_addr == INADDR_ANY)
+		    wildcard++;
+		break;
+	      }
+	    case AF_INET6:
+	      {
+		struct sockaddr_in6 *sin6;
+		sin6 = (struct sockaddr_in6 *)&sar->host_addr;
+		if (*(uint32_t *)&sin6->sin6_addr.s6_addr[0] == ~0
+		 && *(uint32_t *)&sin6->sin6_addr.s6_addr[4] == ~0
+		 && *(uint32_t *)&sin6->sin6_addr.s6_addr[8] == ~0
+		 && *(uint32_t *)&sin6->sin6_addr.s6_addr[12] == ~0) {
+		    wildcard++;
+		}
+		break;
+	      }
+	    }
+
+	    if (wildcard) {
+		/* add it to default bucket for each appropriate sar
+		 * since we need to do a port test
+		 */
+		ipaddr_chain *other;
+
+		other = find_default_server(sar->host_port);
+		if (!other || !add_name_vhost_config(p, main_s, s, sar, other)) {
+		    if (other && other->sar->host_port != 0) {
 			ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING,
 			    main_s, "_default_ VirtualHost overlap on port %u,"
 			    " the first has precedence", sar->host_port);
@@ -606,10 +718,11 @@ API_EXPORT(void) ap_fini_vhost_config(pool *p, server_rec *main_s)
 	    }
 	    else {
 		/* see if it matches something we've already got */
-		ic = find_ipaddr(&sar->host_addr, sar->host_port);
+		ic = find_ipaddr((struct sockaddr *)&sar->host_addr);
 
 		if (!ic) {
-		    unsigned bucket = hash_inaddr(sar->host_addr.s_addr);
+		    unsigned bucket =
+		        hash_addr((struct sockaddr *)&sar->host_addr);
 
 		    ic = new_ipaddr_chain(p, s, sar);
 		    ic->next = *iphash_table_tail[bucket];
@@ -646,19 +759,33 @@ API_EXPORT(void) ap_fini_vhost_config(pool *p, server_rec *main_s)
 	    }
 	    else {
 		struct hostent *h;
+		char hostnamebuf[MAXHOSTNAMELEN];
 
-		if ((h = gethostbyaddr((char *) &(s->addrs->host_addr),
-					sizeof(struct in_addr), AF_INET))) {
-		    s->server_hostname = ap_pstrdup(p, (char *) h->h_name);
+		if (!getnameinfo((struct sockaddr *)&s->addrs->host_addr,
+#ifndef SIN6_LEN
+			SA_LEN((struct sockaddr *)&s->addrs->host_addr),
+#else	
+			s->addrs->host_addr.ss_len,
+#endif
+			hostnamebuf, sizeof(hostnamebuf),
+			NULL, 0, 0)) {
+		    s->server_hostname = ap_pstrdup(p, hostnamebuf);
 		}
 		else {
 		    /* again, what can we do?  They didn't specify a
 		       ServerName, and their DNS isn't working. -djg */
+		    getnameinfo((struct sockaddr *)&s->addrs->host_addr,
+#ifndef SIN6_LEN
+			SA_LEN((struct sockaddr *)&s->addrs->host_addr),
+#else	
+			s->addrs->host_addr.ss_len,
+#endif
+			hostnamebuf, sizeof(hostnamebuf),
+			NULL, 0, NI_NUMERICHOST);
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, main_s,
 			    "Failed to resolve server name "
 			    "for %s (check DNS) -- or specify an explicit "
-			    "ServerName",
-			    inet_ntoa(s->addrs->host_addr));
+			    "ServerName", hostnamebuf);
 		    s->server_hostname =
 			ap_pstrdup(p, "bogus_host_without_reverse_dns");
 		}
@@ -705,35 +832,58 @@ static void fix_hostname(request_rec *r)
     char *host = ap_palloc(r->pool, strlen(r->hostname) + 1);
     const char *src;
     char *dst;
+    const char *u = NULL, *v = NULL;
 
     /* check and copy the host part */
-    src = r->hostname;
+    u = src = r->hostname;
 
     dst = host;
-    while (*src) {
-	if (*src == '.') {
-	    *dst++ = *src++;
-	    if (*src == '.')
+    if (*u == '[') { /* IPv6 numeral address in brackets */
+        v = strchr(u, ']');
+	if (v == NULL) {
+	    /* missing closing bracket */
+            goto bad;
+	}
+        if (v == (u + 1)) {
+            /* bad empty address */
+            goto bad;
+	}
+	for (src = u+1; src < v; src++)  /* copy IPv6 adress */
+	    *dst = *src;
+	v++;
+	if (*v == ':') {
+	   v++;
+	   while (*v) {  /* check if portnum is correct */
+	       if (!ap_isdigit(*v++))
+		   goto bad;
+	   }
+	}
+    } else {
+        while (*src) {
+	    if (*src == '.') {
+		*dst++ = *src++;
+		if (*src == '.')
+		    goto bad;
+		else
+		    continue;
+	    }
+	    if (*src == '/' || *src == '\\') {
 		goto bad;
-	    else
-		continue;
-	}
-	if (*src == '/' || *src == '\\') {
-	    goto bad;
-	}
-        if (*src == ':') {
-            /* check the port part */
-            while (*++src) {
-                if (!ap_isdigit(*src)) {
-                    goto bad;
-                }
-            }
-            if (src[-1] == ':')
-                goto bad;
-            else
-                break;
+	    }
+	    if (*src == ':') {
+		/* sheck the port part */
+		while (*++src) {
+		    if (!ap_isdigit(*src)) {
+			goto bad;
+		    }
+		}
+		if (src[-1] == ':')
+		    goto bad;
+		else
+		    break;
+	    }
+	    *dst++ = *src++;
         }
-	*dst++ = *src++;
     }
     /* strip trailing gubbins */
     if (dst > host && dst[-1] == '.') {
@@ -748,7 +898,7 @@ static void fix_hostname(request_rec *r)
 bad:
     r->status = HTTP_BAD_REQUEST;
     ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-		  "Client sent malformed Host header");
+		  "Client sent malformed Host header <<%s>>",u);
     return;
 }
 
@@ -851,11 +1001,23 @@ static void check_hostalias(request_rec *r)
      *   names we'll match have ports associated with them
      */
     const char *host = r->hostname;
-    unsigned port = ntohs(r->connection->local_addr.sin_port);
+    unsigned port;
     server_rec *s;
     server_rec *last_s;
     name_chain *src;
 
+    switch (r->connection->local_addr.ss_family) {
+    case AF_INET:
+    	port = ntohs(((struct sockaddr_in *)
+		    &r->connection->local_addr)->sin_port);
+	break;
+    case AF_INET6:
+    	port = ntohs(((struct sockaddr_in6 *)
+		    &r->connection->local_addr)->sin6_port);
+	break;
+    default:
+	port = 0;	/*XXX*/
+    }
     last_s = NULL;
 
     /* Recall that the name_chain is a list of server_addr_recs, some of
@@ -910,7 +1072,20 @@ static void check_serverpath(request_rec *r)
     server_rec *s;
     server_rec *last_s;
     name_chain *src;
-    unsigned port = ntohs(r->connection->local_addr.sin_port);
+    unsigned port;
+
+    switch (r->connection->local_addr.ss_family) {
+    case AF_INET:
+    	port = ntohs(((struct sockaddr_in *)
+		    &r->connection->local_addr)->sin_port);
+	break;
+    case AF_INET6:
+    	port = ntohs(((struct sockaddr_in6 *)
+		    &r->connection->local_addr)->sin6_port);
+	break;
+    default:
+	port = 0;	/*XXX*/
+    }
 
     /*
      * This is in conjunction with the ServerPath code in http_core, so we
@@ -970,10 +1145,22 @@ API_EXPORT(void) ap_update_vhost_from_headers(request_rec *r)
 API_EXPORT(void) ap_update_vhost_given_ip(conn_rec *conn)
 {
     ipaddr_chain *trav;
-    unsigned port = ntohs(conn->local_addr.sin_port);
+    char portbuf[NI_MAXSERV];
+    unsigned port;
+
+    if (getnameinfo((struct sockaddr *)&conn->local_addr,
+#ifndef SIN6_LEN
+	SA_LEN((struct sockaddr *)&conn->local_addr),
+#else	
+	conn->local_addr.ss_len,
+#endif
+	NULL, 0, portbuf, sizeof(portbuf), NI_NUMERICSERV) != 0) {
+	goto fail;
+    }
+    port = atoi(portbuf);
 
     /* scan the hash table for an exact match first */
-    trav = find_ipaddr(&conn->local_addr.sin_addr, port);
+    trav = find_ipaddr((struct sockaddr *)&conn->local_addr);
     if (trav) {
 	/* save the name_chain for later in case this is a name-vhost */
 	conn->vhost_lookup_data = trav->names;
@@ -991,6 +1178,7 @@ API_EXPORT(void) ap_update_vhost_given_ip(conn_rec *conn)
 	return;
     }
 
+fail:
     /* otherwise we're stuck with just the main server
      * and no name-based vhosts
      */

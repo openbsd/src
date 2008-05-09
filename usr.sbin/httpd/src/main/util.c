@@ -1854,52 +1854,87 @@ API_EXPORT(gid_t) ap_gname2id(const char *name)
  * Parses a host of the form <address>[:port]
  * :port is permitted if 'port' is not NULL
  */
-API_EXPORT(unsigned long) ap_get_virthost_addr(char *w, unsigned short *ports)
+API_EXPORT(struct sockaddr *) ap_get_virthost_addr(char *w, unsigned short *ports)
 {
-    struct hostent *hep;
-    unsigned long my_addr;
-    char *p;
+    static struct sockaddr_storage ss;
+    struct addrinfo hints, *res;
+    char *p, *r;
+    char *host;
+    char *port = "0";
+    int error;
+    char servbuf[NI_MAXSERV];
 
-    p = strchr(w, ':');
+    if (w == NULL)
+	w = "*";
+    p = r = NULL;
+    if (*w == '['){
+	if (r = strrchr(w+1, ']')){
+	    *r = '\0';
+	    p = r + 1;
+	    switch(*p){
+	    case ':':
+	      p++;
+	      /* nobreak; */
+	    case '\0':
+	      w++;
+	      break;
+	    default:
+	      p = NULL;
+	    }
+	}
+    }
+    else{
+	p = strchr(w, ':');
+	if (p != NULL && strchr(p+1, ':') != NULL)
+	    p = NULL;
+    }
     if (ports != NULL) {
-	*ports = 0;
-	if (p != NULL && strcmp(p + 1, "*") != 0)
-	    *ports = atoi(p + 1);
+	if (p != NULL && *p && strcmp(p + 1, "*") != 0)
+	    port = p + 1;
     }
 
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
     if (p != NULL)
 	*p = '\0';
     if (strcmp(w, "*") == 0) {
-	if (p != NULL)
-	    *p = ':';
-	return htonl(INADDR_ANY);
+	host = NULL;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = ap_default_family;
+    } else {
+	host = w;
+	hints.ai_family = PF_UNSPEC;
     }
 
-    my_addr = ap_inet_addr((char *)w);
-    if (my_addr != INADDR_NONE) {
-	if (p != NULL)
-	    *p = ':';
-	return my_addr;
-    }
+    error = getaddrinfo(host, port, &hints, &res);
 
-    hep = gethostbyname(w);
-
-    if ((!hep) || (hep->h_addrtype != AF_INET || !hep->h_addr_list[0])) {
-	fprintf(stderr, "Cannot resolve host name %s --- exiting!\n", w);
+    if (error || !res) {
+	fprintf(stderr, "ap_get_vitrhost_addr(): getaddrinfo(%s):%s --- exiting!\n", w, gai_strerror(error));
 	exit(1);
     }
 
-    if (hep->h_addr_list[1]) {
-	fprintf(stderr, "Host %s has multiple addresses ---\n", w);
+    if (res->ai_next) {
+	fprintf(stderr, "ap_get_vitrhost_addr(): Host %s has multiple addresses ---\n", w);
 	fprintf(stderr, "you must choose one explicitly for use as\n");
 	fprintf(stderr, "a virtual host.  Exiting!!!\n");
 	exit(1);
     }
 
+    if (r != NULL)
+	*r = ']';
     if (p != NULL)
 	*p = ':';
 
-    return ((struct in_addr *) (hep->h_addr))->s_addr;
+    memcpy(&ss, res->ai_addr, res->ai_addrlen);
+    if (getnameinfo(res->ai_addr, res->ai_addrlen,
+		    NULL, 0, servbuf, sizeof(servbuf),
+		    NI_NUMERICSERV)){
+	fprintf(stderr, "ap_get_virthost_addr(): getnameinfo() failed --- Exiting!!!\n");
+	exit(1);
+    }
+    if (ports) *ports = atoi(servbuf);
+    freeaddrinfo(res);
+    return (struct sockaddr *)&ss;
 }
 
 
@@ -1927,7 +1962,8 @@ API_EXPORT(char *) ap_get_local_host(pool *a)
 #endif
     char str[MAXHOSTNAMELEN];
     char *server_hostname = NULL;
-    struct hostent *p;
+    struct addrinfo hints, *res;
+    int error;
 
     if (gethostname(str, sizeof(str) - 1) != 0) {
 	ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
@@ -1936,23 +1972,25 @@ API_EXPORT(char *) ap_get_local_host(pool *a)
     }
     else 
     {
-        str[sizeof(str) - 1] = '\0';
-        if ((!(p = gethostbyname(str))) 
-            || (!(server_hostname = find_fqdn(a, p)))) {
-           if (p == NULL || p->h_addr_list == NULL)
-              server_hostname=NULL;
-           else {
-              /* Recovery - return the default servername by IP: */
-              if (p->h_addr_list[0]) {
-		      ap_snprintf(str, sizeof(str), "%pA", p->h_addr_list[0]);
-		      server_hostname = ap_pstrdup(a, str);
-                    /* We will drop through to report the IP-named server */
-	      }
-	   }
-        }
+	str[sizeof(str) - 1] = '\0';
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_CANONNAME;
+	res = NULL;
+	error = getaddrinfo(str, NULL, &hints, &res);
+	if (error == 0 && res)
+	{
+		/* Since we found a fqdn, rturn it with no logged message. */
+		server_hostname = ap_pstrdup(a, res->ai_canonname);
+		freeaddrinfo(res);
+		return server_hostname;
+	}
 	else
-            /* Since we found a fqdn, return it with no logged message. */
-            return server_hostname;
+	{
+		/* Recovery - return the default server by IP: */
+		server_hostname = ap_pstrdup(a, str);
+		/* We will drop through to report the IP-named server */
+	}
     }
 
     /* If we don't have an fqdn or IP, fall back to the loopback addr */
@@ -1964,6 +2002,8 @@ API_EXPORT(char *) ap_get_local_host(pool *a)
                  "domain name, using %s for ServerName",
                  ap_server_argv0, server_hostname);
     
+    if (res)
+	freeaddrinfo(res);
     return server_hostname;
 }
 

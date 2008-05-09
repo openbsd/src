@@ -185,6 +185,11 @@ MaxSTACKPerChild 0
 #Listen 3000
 #Listen 12.34.56.78:80
 
+# Listen can take two arguments.
+# (this is an extension for supporting IPv6 addresses)
+#Listen :: 80
+#Listen 0.0.0.0 80
+
 #
 # BindAddress: You can support virtual hosts with this option. This directive
 # is used to tell the server which IP address to listen to. It can either
@@ -945,7 +950,7 @@ ServerSignature On
 #
 # Use name-based virtual hosting.
 #
-#NameVirtualHost *:80
+#NameVirtualHost 0.0.0.0:80
 
 #
 # VirtualHost example:
@@ -953,7 +958,7 @@ ServerSignature On
 # The first VirtualHost section is used for requests without a known
 # server name.
 #
-#<VirtualHost *:80>
+#<VirtualHost 0.0.0.0:80>
 #    ServerAdmin webmaster@dummy-host.example.com
 #    DocumentRoot /www/docs/dummy-host.example.com
 #    ServerName dummy-host.example.com

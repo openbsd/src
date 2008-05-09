@@ -235,6 +235,9 @@ Rule SHARED_CHAIN=default
 #  implementation and uses the Win32 native calls. Should be faster
 #  and more reliable for high-load systems.  
 # 
+# INET6:
+#  IPv6 support.
+#
 
 Rule SOCKS4=no
 Rule SOCKS5=no
@@ -243,6 +246,7 @@ Rule IRIXN32=yes
 Rule PARANOID=no
 Rule EXPAT=default
 Rule CYGWIN_WINSOCK=no 
+Rule INET6=yes
 
 # DEV_RANDOM:
 #  Note: this rule is only used when compiling mod_auth_digest.

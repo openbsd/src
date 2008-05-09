@@ -46,7 +46,7 @@
 
 #include <arpa/inet.h>
 
-static void cgethost(struct in_addr ipnum, char *string, int check);
+static void cgethost(struct sockaddr *sa, char *string, int check);
 static int getline(char *s, int n);
 static void stats(FILE *output);
 static void usage(void);
@@ -71,7 +71,7 @@ static void usage(void);
  */
 
 struct nsrec {
-    struct in_addr ipnum;
+    struct sockaddr_storage addr;
     char *hostname;
     int noname;
     struct nsrec *next;
@@ -102,17 +102,44 @@ static int errors[MAX_ERR + 3];
  * IP numbers with their IP number as hostname, setting noname flag
  */
 
-static void cgethost (struct in_addr ipnum, char *string, int check)
+static void cgethost (struct sockaddr *sa, char *string, int check)
 {
+    uint32_t hashval;
+    struct sockaddr_in *sin;
+    struct sockaddr_in6 *sin6;
     struct nsrec **current, *new;
-    struct hostent *hostdata;
     char *name;
+    char hostnamebuf[MAXHOSTNAMELEN];
 
-    current = &nscache[((ipnum.s_addr + (ipnum.s_addr >> 8) +
-			 (ipnum.s_addr >> 16) + (ipnum.s_addr >> 24)) % BUCKETS)];
+    switch (sa->sa_family) {
+    case AF_INET:
+	hashval = ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+	break;
+    case AF_INET6:
+	hashval = *(uint32_t *)&((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[12];
+	break;
+    default:
+	hashval = 0;
+	break;
+    }
 
-    while (*current != NULL && ipnum.s_addr != (*current)->ipnum.s_addr)
+    current = &nscache[((hashval + (hashval >> 8) +
+			 (hashval >> 16) + (hashval >> 24)) % BUCKETS)];
+
+    while (*current) {
+#ifndef SIN6_LEN
+	if (SA_LEN(sa) == SA_LEN((struct sockaddr *)&(*current)->addr)
+	 && memcmp(sa, &(*current)->addr, SA_LEN(sa)) == 0)
+#else
+	if (sa->sa_len == (*current)->addr.ss_len
+	 && memcmp(sa, &(*current)->addr, sa->sa_len) == 0)
+#endif
+	{
+	    break;
+	}
+
 	current = &(*current)->next;
+    }
 
     if (*current == NULL) {
 	cachesize++;
@@ -125,45 +152,55 @@ static void cgethost (struct in_addr ipnum, char *string, int check)
 	*current = new;
 	new->next = NULL;
 
-	new->ipnum = ipnum;
+#ifndef SIN6_LEN
+	memcpy(&new->addr, sa, SA_LEN(sa));
+#else
+	memcpy(&new->addr, sa, sa->sa_len);
+#endif
 
-	hostdata = gethostbyaddr((const char *) &ipnum, sizeof(struct in_addr),
-				 AF_INET);
-	if (hostdata == NULL) {
-	    if (h_errno > MAX_ERR)
-		errors[UNKNOWN_ERR]++;
-	    else
-		errors[h_errno]++;
-	    new->noname = h_errno;
-	    name = strdup(inet_ntoa(ipnum));
-	}
-	else {
-	    new->noname = 0;
-	    name = strdup(hostdata->h_name);
-	    if (check) {
-		if (name == NULL) {
-		    perror("strdup");
-		    fprintf(stderr, "Insufficient memory\n");
-		    exit(1);
+	new->noname = getnameinfo(sa,
+#ifndef SIN6_LEN
+		SA_LEN(sa),
+#else
+		sa->sa_len,
+#endif
+		    hostnamebuf, sizeof(hostnamebuf), NULL, 0, 0);
+	name = strdup(hostnamebuf);
+	if (check) {
+	    struct addrinfo hints, *res;
+	    int error;
+	    memset(&hints, 0, sizeof(hints));
+	    hints.ai_family = PF_UNSPEC;
+	    error = getaddrinfo(hostnamebuf, NULL, &hints, &res);
+	    if (!error) {
+		while (res) {
+#ifndef SIN6_LEN
+		    if (SA_LEN(sa) == res->ai_addrlen
+		     && memcmp(sa, res->ai_addr, SA_LEN(sa)) == 0)
+#else
+		    if (sa->sa_len == res->ai_addrlen
+		     && memcmp(sa, res->ai_addr, sa->sa_len) == 0)
+#endif
+		    {
+			break;
+		    }
+		    res = res->ai_next;
 		}
-		hostdata = gethostbyname(name);
-		if (hostdata != NULL) {
-		    char **hptr;
-
-		    for (hptr = hostdata->h_addr_list; *hptr != NULL; hptr++)
-			if (((struct in_addr *) (*hptr))->s_addr == ipnum.s_addr)
-			    break;
-		    if (*hptr == NULL)
-			hostdata = NULL;
-		}
-		if (hostdata == NULL) {
-		    fprintf(stderr, "Bad host: %s != %s\n", name,
-			    inet_ntoa(ipnum));
-		    new->noname = NO_REVERSE;
-		    free(name);
-		    name = strdup(inet_ntoa(ipnum));
-		    errors[NO_REVERSE]++;
-		}
+		if (!res)
+		    error++;
+	    }
+	    if (error) {
+		getnameinfo(sa,
+#ifndef SIN6_LEN
+		    SA_LEN(sa),
+#else
+		    sa->sa_len,
+#endif
+		    hostnamebuf, sizeof(hostnamebuf), NULL, 0, NI_NUMERICHOST);
+		fprintf(stderr, "Bad host: %s != %s\n", name, hostnamebuf);
+		new->noname = NO_REVERSE;
+		free(name);
+		name = strdup(hostnamebuf);
 	    }
 	}
 	new->hostname = name;
@@ -191,6 +228,7 @@ static void stats (FILE *output)
     char *ipstring;
     struct nsrec *current;
     char *errstring[MAX_ERR + 3];
+    char hostnamebuf[MAXHOSTNAMELEN];
 
     for (i = 0; i < MAX_ERR + 3; i++)
 	errstring[i] = "Unknown error";
@@ -222,7 +260,14 @@ static void stats (FILE *output)
 
     for (i = 0; i < BUCKETS; i++)
 	for (current = nscache[i]; current != NULL; current = current->next) {
-	    ipstring = inet_ntoa(current->ipnum);
+	    getnameinfo((struct sockaddr *)&current->addr,
+#ifndef SIN6_LEN
+		    SA_LEN((struct sockaddr *)&current->addr),
+#else
+		    current->addr.ss_len,
+#endif
+		    hostnamebuf, sizeof(hostnamebuf), NULL, 0, NI_NUMERICHOST);
+	    ipstring = hostnamebuf;
 	    if (current->noname == 0)
 		fprintf(output, "  %3d  %15s - %s\n", i, ipstring,
 			current->hostname);
@@ -259,9 +304,10 @@ static void usage(void)
 
 int main (int argc, char *argv[])
 {
-    struct in_addr ipnum;
     char *bar, hoststring[MAXDNAME + 1], line[MAXLINE], *statfile;
     int i, check;
+    struct addrinfo hints, *res;
+    int error;
     int ch;
 
     check = 0;
@@ -301,8 +347,10 @@ int main (int argc, char *argv[])
 	bar = strchr(line, ' ');
 	if (bar != NULL)
 	    *bar = '\0';
-	ipnum.s_addr = inet_addr(line);
-	if (ipnum.s_addr == 0xffffffffu) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	error = getaddrinfo(line, NULL, &hints, &res);
+	if (error) {
 	    if (bar != NULL)
 		*bar = ' ';
 	    puts(line);
@@ -312,11 +360,12 @@ int main (int argc, char *argv[])
 
 	resolves++;
 
-	cgethost(ipnum, hoststring, check);
+	cgethost(res->ai_addr, hoststring, check);
 	if (bar != NULL)
 	    printf("%s %s\n", hoststring, bar + 1);
 	else
 	    puts(hoststring);
+	freeaddrinfo(res);
     }
 
     if (statfile != NULL) {

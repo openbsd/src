@@ -66,6 +66,26 @@
 #define AP_OFF_T_IS_QUAD 1
 #endif
 
+/* build flag: -DINET6 */
+#ifndef INET6
+#define INET6 1
+#endif
+
+/* build flag: -Dss_family=__ss_family */
+#ifndef ss_family
+#define ss_family __ss_family
+#endif
+
+/* build flag: -Dss_len=__ss_len */
+#ifndef ss_len
+#define ss_len __ss_len
+#endif
+
+/* build flag: -DHAVE_SOCKADDR_LEN */
+#ifndef HAVE_SOCKADDR_LEN
+#define HAVE_SOCKADDR_LEN 1
+#endif
+
 /* build flag: -DMOD_SSL=208116 */
 #ifndef MOD_SSL
 #define MOD_SSL 208116

@@ -218,7 +218,7 @@ static int   ssl_ext_mp_handler(request_rec *, void *, char *, char *, int, char
 static int   ssl_ext_mp_set_destport(request_rec *);
 static char *ssl_ext_mp_new_connection(request_rec *, BUFF *, char *);
 static void  ssl_ext_mp_close_connection(void *);
-static int   ssl_ext_mp_write_host_header(request_rec *, BUFF *, char *, int, char *);
+static int   ssl_ext_mp_write_host_header(request_rec *, BUFF *, char *, char *, char *);
 #ifdef SSL_EXPERIMENTAL_PROXY
 static void  ssl_ext_mp_init(server_rec *, pool *);
 static int   ssl_ext_mp_verify_cb(int, X509_STORE_CTX *);
@@ -559,7 +559,7 @@ static void ssl_ext_mp_close_connection(void *_fb)
 }
 
 static int ssl_ext_mp_write_host_header(
-    request_rec *r, BUFF *fb, char *host, int port, char *portstr)
+    request_rec *r, BUFF *fb, char *host, char *port, char *portstr)
 {
     if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PFALSE)
         return DECLINED;

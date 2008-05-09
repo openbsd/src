@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
+
+    <title>IPv6 Support for the OpenBSD Apache HTTP Server</title>
+  </head>
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+
+  <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+  vlink="#000080" alink="#FF0000">
+        <div align="CENTER">
+      <img src="images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
+
+      <h3>Apache HTTP Server</h3>
+    </div>
+
+
+
+    <h1 align="center">IPv6 Support for the OpenBSD Apache HTTP Server</h1>
+
+    <p>This document explains how OpenBSD Apache makes use of IPv6.</p>
+
+
+<p>
+To support IPv6 the apache module API/ABI had to be changed, to avoid
+IPv4-dependent structure member variables (like use of u_long to hold
+an IPv4 address, or whatever).  Keep this in mind when writing new
+modules or adding modules to the ports collection.
+</p>
+
+Basically you can write IPv6 address where IPv4 address fits.
+
+<h2>extra command-line argument</h2>
+
+<dl>
+<dt>-4</dt><dd>Assume IPv4 address on ambiguous directives (default)</dd>
+<dt>-6</dt><dd>Assume IPv6 address on ambiguous directives</dd>
+</dl>
+
+<p>
+The above two can be used, for example, to disambiguate "BindAddress *".
+</p>
+
+<h2>base commands</h2>
+<h3>Listen</h3>
+<p>
+Listen is expanded to take one or two arguments.
+</p>
+<pre>
+	Listen port
+	Listen address:port
+	Listen address port
+</pre>
+<p>
+This is to let you specify "Listen :: 80", since "Listen :::80"
+won't work.
+</p>
+<p>
+If you want httpd to listen on port 80 of all IPv4 and IPv6 addresses
+simultaneously, you would specify this using the following commands in
+your main server configuration:
+<pre>
+	Listen 0.0.0.0 80
+	Listen :: 80
+</pre>
+
+
+<h2>mod_access</h2>
+
+deny from<br>
+allow from
+
+<p>
+"deny from" and "allow from" supports IPv6 addresses, under the
+following forms:
+</p>
+
+<pre>
+	{deny,allow} from v6addr
+	{deny,allow} from v6addr/v6mask
+	{deny,allow} from v6addr/prefixlen
+</pre>
+
+<p>
+Also, wildcard ("*") and string hostname matches IPv6 hosts as well.
+</p>
+
+<h2>mod_proxy</h2>
+
+ProxyRequests on<br>
+
+<p>
+http/ftp proxying for both IPv4 and IPv6 is possible.
+Access control functions (NoProxy) are not updated yet.
+</p>
+<p>
+NOTE: for security reasons, we recommend you to filter out
+outsider's access to your proxy, by directives like below:
+</p>
+<pre>
+	<Directory proxy:*>
+	order deny,allow
+	deny from all
+	allow from 10.0.0.0/8
+	allow from 3ffe:9999:8888:7777::/64
+	</Directory>
+</pre>
+
+<h2>virtual host</h2>
+<p>
+If you would like to this feature, you must describe 'Listen'
+part on configuration file explicitly. like below:
+</p>
+<pre>
+	Listen :: 80
+	Listen 0.0.0.0 80
+</pre>
+
+NameVirtualHost<br>
+<p>
+NameVirtualHost is expanded to take one or two arguments.
+</p>
+<pre>
+	NameVirtualHost address
+	NameVirtualHost address:port
+	NameVirtualHost address port
+</pre>
+<p>
+This is to let you specify IPv6 address into address part.
+</p>
+<p>
+Note that, if a colon is found in the specified address string,
+the code will try to resolve the address in the following way:
+<ol>
+	<li>try to resolve as address:port (most of IPv6 address fails)
+	<li>if (1) is failed, try to resolve as address only
+</ol>
+</p>
+<p>
+If there's ambiguity, i.e. 3ffe:0501::1:2, the address may not be
+parsed as you expect (3ffe:0501::1 with port 2, or 3ffe:0501::1:2
+with default port).  To get the right effect you are encouraged
+to specify it without ambiguity.  In IPv6 case "address port"
+(specify address and port separated by a space) is the safest way.
+</p>
+
+<pre>
+&lt;VirtualHost host:port [host:port ...]&gt;<br>
+</pre>
+<p>
+If you would like to specify IPv6 numeric address in host part,
+use bracketed format like below:
+<p>
+<pre>
+	&lt;VirtualHost [::1]:80&gt;
+</pre>
+<p>
+Note: Now we DO NOT handle old non-bracketed format, 
+</p>
+<pre>
+	&lt;VirtualHost 0:0:0:0:0:0:0:1:80&gt;
+</pre>
+<p>
+so configuration file must be updated.
+</p>
+<p>
+Note: The following is bad example to specify host ::1 port 80.
+This will treated as host ::1:80.
+</p>
+<pre>
+	&lt;VirtualHost ::1:80&gt;
+</pre>
+
+<h2>logresolve (src/support)</h2>
+<p>
+error statistics in nameserver cache code is omitted.
+</p>
+
+<h2>mod_unique_id</h2>
+<p>
+Originally mod_unique_id used IPv4 address as a seed for UNIQUE_ID,
+and took IPv4 address registered onto DNS for the hostname (UNIX
+hostname taken by gethostname(3)).  Therefore, this does not work
+for IPv6-only hosts as they do not have IPv4 address for them.
+</p>
+<p>
+Now, UNIQUE_ID can be generated using IPv6 address.  IPv6 address can
+be used as the seed for UNIQUE_ID.
+Because of this, UNIQUE_ID will be longer than normal apache.  This
+may cause problem with some of the CGI scripts.
+The preference of the addresses is based on the order returned
+by getaddrinfo().  If your getaddrinfo() returns IPv4 address, IPv4
+adderss will be used as a seed.
+</p>
+<p>
+Note that some of IPv6 addresses are "scoped"; If you happened to use
+link-local or site-local address as a seed, the UNIQUE_ID may not be
+worldwide unique.
+</p>
+<p>
+If longer UNIQUE_ID causes a problem, define SHORT_UNIQUE_ID in
+mod_unique_id.c.  In this case, length of UNIQUE_ID will be kept the
+same.  However, for IPv6 addresses mod_unique_id.c will use the last
+32bit (not the whole 128bit) as the seed.  Therefore, there can be
+collision in UNIQUE_ID.
+</p>
+<p>
+The behavior should be improved in the near future; we welcome your
+inputs.
+</p>
+
+<h2>configuration file</h2>
+<p>
+We do not support IPv4 mapped addresses (IPv6 address format like
+::ffff:10.1.1.1) in configuration file. 
+</p>
+
+        <hr />
+
+    <h3 align="CENTER">Apache HTTP Server</h3>
+    <a href="./"><img src="images/index.gif" alt="Index" /></a>
+
+  </body>
+</html>
+

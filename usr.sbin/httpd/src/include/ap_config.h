@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.21 2006/04/04 11:39:28 henning Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.22 2008/05/09 08:06:27 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -330,6 +330,19 @@ Sigfunc *signal(int signo, Sigfunc * func);
 
 #ifndef ap_wait_t
 #define ap_wait_t int
+#endif
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN	46
+#endif
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN		16
+#endif
+#ifndef NI_MAXHOST
+#define NI_MAXHOST		1025
+#endif
+#ifndef NI_MAXSERV
+#define	NI_MAXSERV		32
 #endif
 
 #ifdef __cplusplus

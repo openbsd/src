@@ -2867,7 +2867,8 @@ Syntax OK
     <blockquote>
       <code>NameVirtualHost 111.22.33.44:8080</code>
     </blockquote>
-    In Apache 1.3.13 and greater you can specify a <code>*</code>
+    In OpenBSD Apache you can specify a <code>0.0.0.0</code>(IPv4)
+    or <code>::</code>(IPv6)
     for the <em>addr</em>. This creates a wildcard NameVirtualHost
     which will match connections to any address that isn't
     configured with a more specific NameVirtualHost directive or <a

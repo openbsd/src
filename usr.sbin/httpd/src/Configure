@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.27 2007/02/14 20:11:09 millert Exp $
+# $OpenBSD: Configure,v 1.28 2008/05/09 08:06:27 mbalmer Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -240,6 +240,7 @@ RULE_EXPAT=`${SHELL} helpers/CutRule EXPAT $file`
 RULE_CYGWIN_WINSOCK=`${SHELL} helpers/CutRule CYGWIN_WINSOCK $file` 
 RULE_SHARED_CORE=`${SHELL} helpers/CutRule SHARED_CORE $file`
 RULE_SHARED_CHAIN=`${SHELL} helpers/CutRule SHARED_CHAIN $file`
+RULE_INET6=`${SHELL} helpers/CutRule INET6 $file`
 
 ####################################################################
 ## Rule SHARED_CORE implies required DSO support
@@ -1670,7 +1671,7 @@ case "$PLAT" in
 	# Test for the presence of the "union semun":
 	if TCADDINCL='#include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>' ./helpers/TestCompile sizeof "union semun"; then
+#include <sys/sem.h>' ${SHELL} helpers/TestCompile sizeof "union semun"; then
             : Okay, union semun is defined
 	else
 	    CFLAGS="$CFLAGS -DNEED_UNION_SEMUN"
@@ -1725,6 +1726,62 @@ if [ "x$RULE_SOCKS5" = "xyes" ]; then
 	    ;;
     esac
 fi
+
+# INET6 support.
+if [ "$RULE_INET6" = "yes" ]; then
+    echo " + enabling INET6 support"
+    CFLAGS="$CFLAGS -DINET6"
+    CFLAGS="$CFLAGS -Dss_family=__ss_family -Dss_len=__ss_len"
+    IPV6_STACKTYPE=KAME
+fi
+
+echo '#include <sys/types.h>' >testfunc.c
+echo '#include <sys/socket.h>' >>testfunc.c
+echo 'int testfunc(){ struct sockaddr sa; int i = sa.sa_len; };' >>testfunc.c
+rm -f testfunc.o
+eval "${MAKE-make} -f Makefile.config testfunc.o >/dev/null 2>/dev/null"
+if [ -f testfunc.o ]; then
+    echo " + you have sa_len in struct sockaddr."
+    CFLAGS="$CFLAGS -DHAVE_SOCKADDR_LEN"
+else
+    echo " + you don't have sa_len in struct sockaddr."
+fi
+rm -f testfunc.c testfunc.o
+
+echo '#include <sys/types.h>' >testfunc.c
+echo '#include <sys/socket.h>' >>testfunc.c
+echo 'struct sockaddr_storage sockaddr_storage;' >>testfunc.c
+rm -f testfunc.o
+eval "${MAKE-make} -f Makefile.config testfunc.o >/dev/null 2>/dev/null"
+if [ -f testfunc.o ]; then
+    echo " + assuming you have struct sockaddr_storage"
+else
+    CFLAGS="$CFLAGS -DNEED_SOCKADDR_STORAGE"
+    echo " + you need struct sockaddr_storage"
+fi
+rm -f testfunc.c testfunc.o
+
+echo '#include <sys/types.h>' >testfunc.c
+echo '#include <sys/socket.h>' >>testfunc.c
+echo 'int testfunc(){ socklen_t t; }' >>testfunc.c
+rm -f testfunc.o
+eval "${MAKE-make} -f Makefile.config testfunc.o >/dev/null 2>/dev/null"
+if [ ! -f testfunc.o ]; then
+    CFLAGS="$CFLAGS -Dsocklen_t=int"
+fi
+rm -f testfunc.c testfunc.o
+
+echo '#include <sys/types.h>' >testfunc.c
+echo '#include <sys/socket.h>' >>testfunc.c
+echo 'struct sockaddr_in sin;' >>testfunc.c
+echo 'int main(){ int i = sin.sin_len; }' >>testfunc.c
+rm -f testfunc.o
+eval "${MAKE-make} -f Makefile.config testfunc.o >/dev/null 2>/dev/null"
+if [ -f testfunc.o ]; then
+    CFLAGS="$CFLAGS -DSIN_LEN"
+fi
+rm -f testfunc.c testfunc.o
+
 
 ####################################################################
 ## Find out what modules we want and try and configure things for them

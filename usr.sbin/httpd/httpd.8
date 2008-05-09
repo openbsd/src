@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.27 2007/05/31 19:20:24 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.28 2008/05/09 08:06:27 mbalmer Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -50,7 +50,7 @@
 .\" Supercomputing Applications, University of Illinois, Urbana-Champaign.
 .\" For more information on the Apache Group and the Apache HTTP server
 .\" project, please see <http://www.apache.org/>.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 9 2008 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@
 .Sh SYNOPSIS
 .Nm httpd
 .Bk -words
-.Op Fl FhLlSTtuVvX
+.Op Fl 46FhLlSTtuVvX
 .Op Fl C Ar directive
 .Op Fl c Ar directive
 .Op Fl D Ar parameter
@@ -159,6 +159,12 @@ by default with
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4
+Assume IPv4 address on ambiguous directives (default)
+.It Fl 6
+Assume IPv6 address on ambiguous directives
+.Pp
+The above two can be used, for example, to disambiguate "BindAddress *".
 .It Fl C Ar directive
 Process the configuration
 .Ar directive

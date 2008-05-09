@@ -1,4 +1,4 @@
-/* $OpenBSD: httpd.h,v 1.27 2006/02/22 15:07:12 henning Exp $ */
+/* $OpenBSD: httpd.h,v 1.28 2008/05/09 08:06:28 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -64,6 +64,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Define APACHE6 so that additional modules depending on Apache can
+ * tell if this a pacthed apache-1.3.*. With this definition apache6
+ * is working together with e.g. the ap-perl module in NetBSD.
+ */
+#define APACHE6 1
 
 /*
  * httpd.h: header for simple (ha! not anymore) http daemon
@@ -847,8 +854,8 @@ struct conn_rec {
 
 	/* Who is the client? */
 
-	struct sockaddr_in local_addr;	/* local address */
-	struct sockaddr_in remote_addr;	/* remote address */
+	struct sockaddr_storage local_addr;	/* local address */
+	struct sockaddr_storage remote_addr;	/* remote address */
 	char *remote_ip;		/* Client's IP address */
 	char *remote_host;		/* Client's DNS name, if known.
 				 * NULL if DNS hasn't been checked,
@@ -888,9 +895,9 @@ struct conn_rec {
 typedef struct server_addr_rec server_addr_rec;
 struct server_addr_rec {
 	server_addr_rec *next;
-	struct in_addr host_addr;	/* The bound address, for this server */
+	struct sockaddr_storage host_addr;	/* The bound address, for this server */
 	unsigned short host_port;	/* The bound port, for this server */
-	char *virthost;		/* The name given in <VirtualHost> */
+	char *virthost;			/* The name given in <VirtualHost> */
 };
 
 struct server_rec {
@@ -942,7 +949,7 @@ struct server_rec {
 	array_header *names;	/* Normal names for ServerAlias servers */
 	array_header *wild_names;/* Wildcarded names for ServerAlias servers */
 
-	uid_t server_uid;      /* effective user id when calling exec wrapper */
+	uid_t server_uid;     /* effective user id when calling exec wrapper */
 	gid_t server_gid;    /* effective group id when calling exec wrapper */
 
 	int limit_req_line;      /* limit on size of the HTTP request line    */
@@ -950,20 +957,18 @@ struct server_rec {
 	int limit_req_fields;    /* limit on number of request header fields  */
 
 	ap_ctx *ctx;
-	};
+};
 
-	/* These are more like real hosts than virtual hosts */
-	struct listen_rec {
+/* These are more like real hosts than virtual hosts */
+struct listen_rec {
 	listen_rec *next;
-	struct sockaddr_in local_addr;	/* local IP address and port */
+	struct sockaddr_storage local_addr;	/* local IP address and port */
 	int fd;
 	int used;			/* Only used during restart */
 	/* more stuff here, like which protocol is bound to the port */
 };
 
-/* Prototypes for utilities... util.c.
- */
-
+/* Prototypes for utilities... util.c.  */
 extern void ap_util_init(void);
 
 /* Time */
@@ -1098,7 +1103,7 @@ API_EXPORT(char *) ap_os_canonical_filename(pool *p, const char *file);
 
 
 API_EXPORT(char *) ap_get_local_host(pool *);
-API_EXPORT(unsigned long) ap_get_virthost_addr(char *hostname,
+API_EXPORT(struct sockaddr *) ap_get_virthost_addr(char *hostname,
     unsigned short *port);
 
 extern API_VAR_EXPORT time_t ap_restart_time;

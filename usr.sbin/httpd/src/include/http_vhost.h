@@ -1,4 +1,4 @@
-/* $OpenBSD: http_vhost.h,v 1.7 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: http_vhost.h,v 1.8 2008/05/09 08:06:28 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -77,7 +77,7 @@ API_EXPORT(const char *) ap_parse_vhost_addrs(pool *p, const char *hostname,
 
 /* handle NameVirtualHost directive */
 API_EXPORT_NONSTD(const char *) ap_set_name_virtual_host (cmd_parms *cmd,
-    void *dummy, char *arg);
+    void *dummy, char *h, char *p);
 
 /* given an ip address only, give our best guess as to what vhost it is */
 API_EXPORT(void) ap_update_vhost_given_ip(conn_rec *conn);

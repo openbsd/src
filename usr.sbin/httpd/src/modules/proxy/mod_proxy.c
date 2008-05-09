@@ -565,11 +565,31 @@ static const char *
     struct proxy_remote *new;
     char *p, *q;
     int port;
+    char *bl = NULL, *br = NULL;
 
     p = strchr(r, ':');
     if (p == NULL || p[1] != '/' || p[2] != '/' || p[3] == '\0')
-        return "ProxyRemote: Bad syntax for a remote proxy server";
-    q = strchr(p + 3, ':');
+	return "ProxyRemote: Bad syntax for a remote proxy server";
+    bl = p + 3;
+    if (*bl == '['){
+	br = strrchr(bl+1, ']');
+	if (br){
+	    bl++;
+	    *br = '\0';
+	    if (*(br+1) == ':'){	/* [host]:xx */
+		q = br+1;
+	    }
+	    else if (*(br+1) == '\0'){	/* [host] */
+		q = NULL;
+	    }
+	    else
+		q = strrchr(br, ':');	/* XXX */
+	}
+	else
+	    q = strrchr(bl, ':');	/* XXX */
+    }
+    else
+	q = strrchr(bl, ':');
     if (q != NULL) {
         if (sscanf(q + 1, "%u", &port) != 1 || port > 65535)
             return "ProxyRemote: Bad syntax for a remote proxy server (bad port number)";
@@ -580,7 +600,7 @@ static const char *
     *p = '\0';
     if (strchr(f, ':') == NULL)
         ap_str_tolower(f);      /* lowercase scheme */
-    ap_str_tolower(p + 3);      /* lowercase hostname */
+    ap_str_tolower(bl);         /* lowercase hostname */
 
     if (port == -1) {
         int i;
@@ -593,7 +613,7 @@ static const char *
     new = ap_push_array(conf->proxies);
     new->scheme = f;
     new->protocol = r;
-    new->hostname = p + 3;
+    new->hostname = bl;
     new->port = port;
     return NULL;
 }
