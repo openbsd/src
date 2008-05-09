@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.28 2008/05/09 08:06:27 mbalmer Exp $
+.\"	$OpenBSD: httpd.8,v 1.29 2008/05/09 12:59:59 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -160,11 +160,12 @@ by default with
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
-Assume IPv4 address on ambiguous directives (default)
+Assume IPv4 addresses on ambiguous directives (default).
+Along with
+.Fl 6 ,
+this can be used to remove ambiguities in cases such as "BindAddress *".
 .It Fl 6
-Assume IPv6 address on ambiguous directives
-.Pp
-The above two can be used, for example, to disambiguate "BindAddress *".
+Assume IPv6 addresses on ambiguous directives.
 .It Fl C Ar directive
 Process the configuration
 .Ar directive
