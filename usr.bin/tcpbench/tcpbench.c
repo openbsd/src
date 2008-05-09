@@ -112,9 +112,9 @@ usage(void)
 {
 	fprintf(stderr,
 "Usage:\n"
-"    bench -l\n"
-"    bench [-v] [-p port] [-r rate] [host]\n"
-"    bench [-v] [-p port] [-r rate] -s\n"
+"    tcpbench -l\n"
+"    tcpbench [-v] [-p port] [-r rate] [host]\n"
+"    tcpbench [-v] [-p port] [-r rate] -s\n"
 "Options:\n"
 "    -B buf       Set read/write buffer space (default: %u)\n"
 "    -h           Display this help\n"
