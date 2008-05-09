@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.545 2008/05/09 05:41:01 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.546 2008/05/09 08:16:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -418,6 +418,10 @@ typedef struct {
 	int lineno;
 } YYSTYPE;
 
+#define PPORT_RANGE	1
+#define PPORT_STAR	2
+int	parseport(char *, struct range *r, int);
+
 #define DYNIF_MULTIADDR(addr) ((addr).type == PF_ADDR_DYNIFTL && \
 	(!((addr).iflags & PFI_AFLAG_NOALIAS) ||		 \
 	!isdigit((addr).v.ifname[strlen((addr).v.ifname)-1])))
@@ -452,7 +456,7 @@ typedef struct {
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action nataction natpasslog scrubaction
 %type	<v.b>			flags flag blockspec
-%type	<v.range>		port rport
+%type	<v.range>		portplain portstar portrange
 %type	<v.hashkey>		hashkey
 %type	<v.proto>		proto proto_list proto_item
 %type	<v.number>		protoval
@@ -2322,7 +2326,7 @@ filter_opt	: USER uids {
 			}
 			filter_opts.rtableid = $2;
 		}
-		| DIVERTTO STRING PORT number {
+		| DIVERTTO STRING PORT portplain {
 			if ((filter_opts.divert.addr = host($2)) == NULL) {
 				yyerror("could not parse divert address: %s",
 				    $2);
@@ -2330,9 +2334,9 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			free($2);
-			filter_opts.divert.port = htons($4);
+			filter_opts.divert.port = $4.a;
 			if (!filter_opts.divert.port) {
-				yyerror("invalid divert port: %d", $4);
+				yyerror("invalid divert port: %u", ntohs($4.a));
 				YYERROR;
 			}
 		}
@@ -2940,7 +2944,7 @@ port_list	: port_item optnl		{ $$ = $1; }
 		}
 		;
 
-port_item	: port				{
+port_item	: portrange			{
 			$$ = calloc(1, sizeof(struct node_port));
 			if ($$ == NULL)
 				err(1, "port_item: calloc");
@@ -2953,7 +2957,7 @@ port_item	: port				{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| unaryop port		{
+		| unaryop portrange	{
 			if ($2.t) {
 				yyerror("':' cannot be used with an other "
 				    "port operator");
@@ -2968,7 +2972,7 @@ port_item	: port				{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| port PORTBINARY port		{
+		| portrange PORTBINARY portrange	{
 			if ($1.t || $3.t) {
 				yyerror("':' cannot be used with an other "
 				    "port operator");
@@ -2985,37 +2989,21 @@ port_item	: port				{
 		}
 		;
 
-port		: STRING			{
-			char	*p = strchr($1, ':');
-
-			if (p == NULL) {
-				if (($$.a = getservice($1)) == -1) {
-					free($1);
-					YYERROR;
-				}
-				$$.b = $$.t = 0;
-			} else {
-				int port[2];
-
-				*p++ = 0;
-				if ((port[0] = getservice($1)) == -1 ||
-				    (port[1] = getservice(p)) == -1) {
-					free($1);
-					YYERROR;
-				}
-				$$.a = port[0];
-				$$.b = port[1];
-				$$.t = PF_OP_RRG;
+portplain	: numberstring			{
+			if (parseport($1, &$$, 0) == -1) {
+				free($1);
+				YYERROR;
 			}
 			free($1);
 		}
-		| NUMBER			{
-			if ($1 < 0 || $1 > 65535) {
-				yyerror("illegal port value %lu", $1);
+		;
+
+portrange	: numberstring			{
+			if (parseport($1, &$$, PPORT_RANGE) == -1) {
+				free($1);
 				YYERROR;
 			}
-			$$.a = ntohs($1);
-			$$.b = $$.t = 0;
+			free($1);
 		}
 		;
 
@@ -3587,43 +3575,12 @@ no		: /* empty */			{ $$ = 0; }
 		| NO				{ $$ = 1; }
 		;
 
-rport		: STRING			{
-			char	*p = strchr($1, ':');
-
-			if (p == NULL) {
-				if (($$.a = getservice($1)) == -1) {
-					free($1);
-					YYERROR;
-				}
-				$$.b = $$.t = 0;
-			} else if (!strcmp(p+1, "*")) {
-				*p = 0;
-				if (($$.a = getservice($1)) == -1) {
-					free($1);
-					YYERROR;
-				}
-				$$.b = 0;
-				$$.t = 1;
-			} else {
-				*p++ = 0;
-				if (($$.a = getservice($1)) == -1 ||
-				    ($$.b = getservice(p)) == -1) {
-					free($1);
-					YYERROR;
-				}
-				if ($$.a == $$.b)
-					$$.b = 0;
-				$$.t = 0;
-			}
-			free($1);
-		}
-		| NUMBER			{
-			if ($1 < 0 || $1 > 65535) {
-				yyerror("illegal port value %ld", $1);
+portstar	: numberstring			{
+			if (parseport($1, &$$, PPORT_RANGE|PPORT_STAR) == -1) {
+				free($1);
 				YYERROR;
 			}
-			$$.a = ntohs($1);
-			$$.b = $$.t = 0;
+			free($1);
 		}
 		;
 
@@ -3647,7 +3604,7 @@ redirpool	: /* empty */			{ $$ = NULL; }
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
-		| ARROW redirspec PORT rport	{
+		| ARROW redirspec PORT portstar	{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
@@ -3773,7 +3730,7 @@ redirection	: /* empty */			{ $$ = NULL; }
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
-		| ARROW host PORT rport	{
+		| ARROW host PORT portstar	{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
@@ -5948,6 +5905,41 @@ parseicmpspec(char *w, sa_family_t af)
 		return (0);
 	}
 	return (icmptype << 8 | ulval);
+}
+
+int
+parseport(char *port, struct range *r, int extensions)
+{
+	char	*p = strchr(port, ':');
+
+	if (p == NULL) {
+		if ((r->a = getservice(port)) == -1)
+			return (-1);
+		r->b = 0;
+		r->t = PF_OP_NONE;
+		return (0);
+	}
+	if ((extensions & PPORT_STAR) && !strcmp(p+1, "*")) {
+		*p = 0;
+		if ((r->a = getservice(port)) == -1)
+			return (-1);
+		r->b = 0;
+		r->t = PF_OP_IRG;
+		return (0);
+	}
+	if ((extensions & PPORT_RANGE)) {
+		*p++ = 0;
+		if ((r->a = getservice(port)) == -1 ||
+		    (r->b = getservice(p)) == -1)
+			return (-1);
+		if (r->a == r->b) {
+			r->b = 0;
+			r->t = PF_OP_NONE;
+		} else
+			r->t = PF_OP_RRG;
+		return (0);
+	}
+	return (-1);
 }
 
 int
