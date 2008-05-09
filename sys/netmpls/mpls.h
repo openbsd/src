@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.9 2008/05/08 03:18:39 claudio Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.10 2008/05/09 15:08:36 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -108,8 +108,6 @@ struct sockaddr_mpls {
 
 #define satosmpls(sa)		((struct sockaddr_mpls *)(sa))
 #define smplstosa(smpls)	((struct sockaddr *)(smpls))
-#define satosdl(sa)		((struct sockaddr_dl *)(sa))
-#define sdltosa(sdl)		((struct sockaddr *)(sdl))
 
 /*
  * Names for MPLS sysctl objects
