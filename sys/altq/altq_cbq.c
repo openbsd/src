@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.24 2008/05/08 15:22:02 chl Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.25 2008/05/09 14:10:05 dlg Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -511,9 +511,8 @@ cbqrestart(struct ifaltq *ifq)
 		return;
 
 	ifp = ifq->altq_ifp;
-	if (ifp->if_start &&
-	    cbqp->cbq_qlen > 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+	if (ifp->if_start && cbqp->cbq_qlen > 0)
+		if_start(ifp);
 }
 
 static void cbq_purge(cbq_state_t *cbqp)
