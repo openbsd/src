@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.21 2008/04/09 21:47:36 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.22 2008/05/10 13:39:01 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -326,7 +326,7 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 	if ((rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
 	    &base, &size, &flags)) != 0)
 		return (rv);
-#ifndef __sparc64__
+#if !defined(__sparc64__) && !defined(__socppc__)
 	if (base == 0)
 		return (EINVAL);	/* disabled because of invalid BAR */
 #endif
