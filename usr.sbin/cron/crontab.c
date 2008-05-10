@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.55 2007/11/17 16:09:29 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.56 2008/05/10 15:11:08 okan Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.55 2007/11/17 16:09:29 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.56 2008/05/10 15:11:08 okan Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
@@ -60,6 +60,7 @@ static	void		list_cmd(void),
 			parse_args(int c, char *v[]),
 			die(int);
 static	int		replace_cmd(void);
+static	int		ignore_comments(FILE *);
 
 static void
 usage(const char *msg) {
@@ -250,6 +251,11 @@ list_cmd(void) {
 	/* file is open. copy to stdout, close.
 	 */
 	Set_LineNum(1)
+
+	/* ignore the top few comments since we probably put them there.
+	 */
+	ch = ignore_comments(f);
+
 	while (EOF != (ch = get_char(f)))
 		putchar(ch);
 	fclose(f);
@@ -284,7 +290,7 @@ static void
 edit_cmd(void) {
 	char n[MAX_FNAME], q[MAX_TEMPSTR];
 	FILE *f;
-	int ch, t, x;
+	int ch, t;
 	struct stat statbuf, xstatbuf;
 	struct timespec mtimespec;
 	struct timeval tv[2];
@@ -342,18 +348,7 @@ edit_cmd(void) {
 
 	/* ignore the top few comments since we probably put them there.
 	 */
-	x = 0;
-	while (EOF != (ch = get_char(f))) {
-		if ('#' != ch) {
-			putc(ch, NewCrontab);
-			break;
-		}
-		while (EOF != (ch = get_char(f)))
-			if (ch == '\n')
-				break;
-		if (++x >= NHEADER_LINES)
-			break;
-	}
+	ch = ignore_comments(f);
 
 	/* copy the rest of the crontab (if any) to the temp file.
 	 */
@@ -651,4 +646,24 @@ die(int x) {
 	if (TempFilename[0])
 		(void) unlink(TempFilename);
 	_exit(ERROR_EXIT);
+}
+
+static int
+ignore_comments(FILE *f) {
+	int ch, x;
+
+	x = 0;
+	while (EOF != (ch = get_char(f))) {
+		if ('#' != ch) {
+			putc(ch, NewCrontab);
+			break;
+		}
+		while (EOF != (ch = get_char(f)))
+			if (ch == '\n')
+				break;
+		if (++x >= NHEADER_LINES)
+			break;
+	}
+
+	return ch;
 }
