@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1351 2008/05/08 20:22:32 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1352 2008/05/10 12:50:48 maja Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2400,6 +2400,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon XPRESS 200M",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD780_HT_GFX,
+	    "RD780 HT-PCIE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_PRO,
 	    "Radeon 9200 PRO",
 	},
@@ -2422,6 +2426,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482_B,
 	    "Radeon XPRESS 200M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PCIE_1,
+	    "RD790 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PCIE_2,
+	    "RD790 PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX200_HB,
