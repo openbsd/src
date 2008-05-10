@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.11 2008/05/08 03:18:39 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.12 2008/05/10 01:56:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "mpe.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -153,10 +155,12 @@ mpls_input(struct mbuf *m)
 			hasbos = MPLS_BOS_ISSET(shim->shim_label);
 			m = mpls_shim_pop(m);
 			if (hasbos) {
+#if NMPE > 0
 				if (rt->rt_ifp->if_type == IFT_MPLS) {
 					mpe_input(m, rt->rt_ifp, smpls, ttl);
 					goto done;
 				}
+#endif
 				/* last label but we have no clue so drop */
 				m_freem(m);
 				goto done;
