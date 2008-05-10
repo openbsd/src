@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.60 2007/06/30 08:23:49 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.61 2008/05/10 19:54:58 tobias Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -116,7 +116,7 @@ int	rcsmerge_main(int, char **);
 void	rcsmerge_usage(void);
 
 /* rcsprog.c */
-int	rcs_init(char *, char **, int);
+int	build_cmd(char ***, char **, int);
 int	rcs_getopt(int, char **, const char *);
 int	rcs_main(int, char **);
 void	rcs_usage(void);
