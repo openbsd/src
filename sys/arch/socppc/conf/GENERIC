@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2008/05/10 12:02:20 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.2 2008/05/10 15:31:30 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,7 +48,7 @@ pci*		at socpcic?
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
 
-# Ob-board USB
+# On-board USB
 ehci0		at obio? addr 0x22100 ivec 39
 usb*		at ehci?
 
