@@ -1,0 +1,93 @@
+#	$OpenBSD: files.socppc,v 1.1 2008/05/10 12:02:20 kettenis Exp $
+
+#
+# macppc-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	arch/socppc/socppc/autoconf.c
+file	arch/socppc/socppc/clock.c
+file	arch/socppc/socppc/conf.c
+file	arch/socppc/socppc/disksubr.c			disk
+file	arch/socppc/socppc/machdep.c
+file	arch/socppc/socppc/mem.c
+file	arch/socppc/socppc/dma.c
+file	dev/cninit.c
+file	arch/socppc/socppc/db_interface.c		ddb
+
+
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+file	arch/socppc/socppc/mainbus.c			mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/socppc/socppc/cpu.c
+
+# MPC8349E on-board devices
+device	obio {addr, [ivec = -1]}
+attach	obio at mainbus
+file	arch/socppc/dev/obio.c
+
+# On-board IPIC
+device	ipic
+attach	ipic at obio
+file	arch/socppc/dev/ipic.c
+
+# On-board I2C
+device	sociic: i2cbus
+attach	sociic at obio
+file	arch/socppc/dev/sociic.c
+
+# On-board DUART
+attach	com at obio with com_obio
+file	arch/socppc/dev/com_obio.c
+
+#
+# Media Independent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
+
+major	{rd = 17}
+major	{wd = 0}
+major	{sd = 2}
+major	{cd = 3}
+
+include "../../../scsi/files.scsi"
+
+#
+# I2O
+#
+include "../../../dev/i2o/files.i2o"
+
+include "dev/pci/files.pci"
+file	arch/socppc/dev/pciide_machdep.c		pciide
+
+# On-board PCI
+device	socpcic: pcibus
+attach	socpcic at obio
+file	arch/socppc/dev/socpcic.c
+
+#
+# Machine-independent ATAPI drivers
+#
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
+
+# On-board USB
+attach	ehci at obio with ehci_obio
+file	arch/socppc/dev/ehci_obio.c
+
+#
+# Machine-independent I2C drivers
+#
+include "dev/i2c/files.i2c"

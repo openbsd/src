@@ -1,0 +1,63 @@
+#	$OpenBSD: GENERIC,v 1.1 2008/05/10 12:02:20 kettenis Exp $g
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		socppc powerpc
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		USB_DEBUG
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		USER_PCICONF	# user-space PCI configuration
+option		APERTURE
+
+config		bsd	swap generic
+
+mainbus0	at root
+cpu0		at mainbus0
+obio0		at mainbus0
+
+# On-board IPIC
+ipic0		at obio? addr 0x00700
+
+# On-board I2C
+sociic0		at obio? addr 0x03000 ivec 14
+sociic1		at obio? addr 0x03100 ivec 15
+iic*		at sociic?
+ricohrtc0	at iic? addr 0x32	# Ricoh RTC
+fintek0		at iic?	flags 0x0001	# temp/fan controller
+
+# On-board DUART
+com0		at obio? addr 0x04500 ivec 9
+com1		at obio? addr 0x04600 ivec 10
+
+# On-board PCI
+socpcic0	at obio? addr 0x08300
+socpcic1	at obio? addr 0x08380
+pci*		at socpcic?
+
+pciide*		at pci?
+wd*		at pciide? flags 0x0000
+
+# Ob-board USB
+ehci0		at obio? addr 0x22100 ivec 39
+usb*		at ehci?
+
+# USB devices
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+umass*	at uhub?		# USB Mass Storage devices
+scsibus* at umass?
+ural*	at uhub?		# Ralink RT2500USB
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+
+sd*		at scsibus?
