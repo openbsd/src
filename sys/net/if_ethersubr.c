@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.120 2008/05/09 00:37:43 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.121 2008/05/10 01:52:34 claudio Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -340,9 +340,11 @@ ether_output(ifp0, m0, dst, rt0)
 
 		switch (dst->sa_family) {
 			case AF_LINK:
-				if (satosdl(dst)->sdl_alen < sizeof(edst))
+				if (((struct sockaddr_dl *)dst)->sdl_alen <
+				    sizeof(edst))
 					senderr(EHOSTUNREACH);
-				bcopy(LLADDR(satosdl(dst)), edst, sizeof(edst));
+				bcopy(LLADDR(((struct sockaddr_dl *)dst)), edst,
+				    sizeof(edst));
 				break;
 			case AF_INET:
 				if (!arpresolve(ac, rt, m, dst, edst))
