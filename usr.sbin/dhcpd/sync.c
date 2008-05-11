@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.4 2008/05/08 14:15:40 deraadt Exp $	*/
+/*	$OpenBSD: sync.c,v 1.5 2008/05/11 08:50:54 beck Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -416,6 +416,9 @@ sync_lease(struct lease *lease)
 	int i = 0;
 	HMAC_CTX ctx;
 	u_int hmac_len;
+
+	if (sync_key == NULL)
+		return;
 
 	bzero(&hdr, sizeof(hdr));
 	bzero(&ld, sizeof(ld));
