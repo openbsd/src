@@ -559,6 +559,11 @@ admin_fileproc (callerdat, finfo)
     }
 
     rcs = vers->srcfile;
+    if (rcs == NULL)
+    {
+	error (0, 0, "lost revision control file for `%s'", finfo->file);
+	goto exitfunc;
+    }
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs, (FILE **) NULL, (struct rcsbuffer *) NULL);
 

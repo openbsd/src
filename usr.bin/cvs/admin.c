@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.57 2008/03/09 03:14:52 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.58 2008/05/11 12:16:00 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -219,6 +219,11 @@ cvs_admin_local(struct cvs_file *cf)
 	else if (cf->file_status == FILE_ADDED) {
 		cvs_log(LP_ERR, "cannot admin newly added file `%s'",
 		    cf->file_name);
+		return;
+	}
+
+	if (cf->file_rcs == NULL) {
+		cvs_log(LP_ERR, "lost RCS file for `%s'", cf->file_path);
 		return;
 	}
 
