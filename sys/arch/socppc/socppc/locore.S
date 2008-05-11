@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2008/05/10 12:18:30 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2008/05/11 19:59:38 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -82,18 +82,11 @@ _ENTRY(_ASM_LABEL(start))
 start:
 	lis	%r3, fwargsave@ha
 	stw	%r29, fwargsave@l(%r3)
-#if 0
-	li	%r0,0
-	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
-	isync
-#endif
 
 /* compute end of kernel memory */
 	lis	%r8,_end@ha
 	addi	%r8,%r8,_end@l
-	lis	%r3, fwargsave@ha
-	lwz	%r6, fwargsave@l(%r3)
-#if defined(NOTDEF_DDB)
+#if defined(DDB)
 	cmpwi	%r6, 0
 	beq	1f
 	add	%r9,%r6,%r7
