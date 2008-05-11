@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2008/05/10 20:06:26 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/05/11 19:58:24 kettenis Exp $
 
 NOMAN=
 
@@ -23,7 +23,6 @@ SRCS+=		clock.c ns16550.c wd.c wdc.c pciide.c
 SRCS+=		ctime.c strtol.c
 
 .PATH:	${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
-#SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c ashrdi3.c
 SRCS+=	strlcpy.c strlen.c ashrdi3.c
 
 ### find out what to use for libsa

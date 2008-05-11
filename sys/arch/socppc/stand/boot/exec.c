@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2008/05/10 20:06:26 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2008/05/11 19:58:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -18,46 +18,56 @@
 
 #include <sys/param.h>
 
+#include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
-
-#ifdef BOOT_ELF
-#include <sys/exec_elf.h>
-#endif
 
 #include <sys/reboot.h>
 #include <stand/boot/cmd.h>
-#include <machine/bootconfig.h>
 
-typedef void (*startfuncp)(void) __attribute__ ((noreturn));
+typedef void (*startfuncp)(int, int, u_int32_t, char *, int) __dead;
 
 void
 run_loadfile(u_long *marks, int howto)
 {
+	char args[512];			/* Should check size? */
+	u_int32_t entry;
 	char *cp;
+	void *ssym, *esym;
+	int l;
 
-	cp = (char *)0x00200000 - MAX_BOOT_STRING - 1;
+	snprintf(args, sizeof(args), "%s:%s -", cmd.bootdev, cmd.image);
+	cp = args + strlen(args);
 
-#define      BOOT_STRING_MAGIC 0x4f425344
+	*cp++ = ' ';
+        *cp = '-';
+        if (howto & RB_ASKNAME)
+                *++cp = 'a';
+        if (howto & RB_CONFIG)
+                *++cp = 'c';
+        if (howto & RB_SINGLE)
+                *++cp = 's';
+        if (howto & RB_KDB)
+                *++cp = 'd';
+        if (*cp == '-')
+		*--cp = 0;
+	else
+		*++cp = 0;
 
-	*(int *)cp = BOOT_STRING_MAGIC;
+	entry = marks[MARK_ENTRY];
+	ssym = (void *)marks[MARK_SYM];
+	esym = (void *)marks[MARK_END];
 
-	cp += sizeof(int);
-	snprintf(cp, MAX_BOOT_STRING, "%s:%s -", cmd.bootdev, cmd.image);
+	/*
+	 * Stash pointer to end of symbol table after the argument
+	 * strings.
+	 */
+	l = strlen(args) + 1;
+	bcopy(&ssym, args + l, sizeof(ssym));
+	l += sizeof(ssym);
+	bcopy(&esym, args + l, sizeof(esym));
+	l += sizeof(esym);
 
-	while (*cp != '\0')
-		cp++;
-	if (howto & RB_ASKNAME)
-		*cp++ = 'a';
-	if (howto & RB_CONFIG)
-		*cp++ = 'c';
-	if (howto & RB_KDB)
-		*cp++ = 'd';
-	if (howto & RB_SINGLE)
-		*cp++ = 's';
-
-	*cp = '\0';
-
-	(*(startfuncp)(marks[MARK_ENTRY]))();
+	(*(startfuncp)(marks[MARK_ENTRY]))(0, 0, entry, args, l);
 
 	/* NOTREACHED */
 }
