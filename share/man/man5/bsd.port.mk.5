@@ -1,6 +1,6 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.211 2008/04/25 14:41:35 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.212 2008/05/11 10:28:44 espie Exp $
 .\"
-.\" Copyright (c) 2000 Marc Espie
+.\" Copyright (c) 2000-2008 Marc Espie
 .\"
 .\" All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2008 $
+.Dd $Mdocdate: May 11 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -311,10 +311,10 @@ Verify that the
 .Ev LIB_DEPENDS
 and
 .Ev WANTLIB
-hold all shared libraries used for the port.
-Applies to all packages in a multi-packages port.
+are accurate for the port.
 See
-.Xr library-specs 7 .
+.Ar port-lib-depends-check ,
+which is quicker.
 .It Ar license-check
 Check that
 .Ev PERMIT_PACKAGE_*
@@ -418,6 +418,22 @@ clean-up.
 Connect to the first site in
 .Ev MASTER_SITES ,
 in the right directory, and leaves user at ftp prompt.
+.It Ar port-lib-depends-check
+Verify that the
+.Ev LIB_DEPENDS
+and
+.Ev WANTLIB
+hold all shared libraries used for every package in the port.
+See
+.Xr library-specs 7 .
+This makes use of
+.Ar print-plist-with-depends
+to avoid actually building the packages, it only needs the
+completion of the 
+.Ar fake
+stage, and thus is quicker than
+.Ar lib-depends-check ,
+unless you already have all binary packages.
 .It Ar print-package-signature
 Print the package signature, in the same format used for
 .Xr pkg_info 1
@@ -434,6 +450,16 @@ the package contents only consists of files, all tagged with category
 markers such as @file.
 See
 .Xr pkg_create 1 .
+.It Ar print-plist-with-depends
+Like
+.Ar print-plist ,
+but slower.
+It also handles
+.Ev LIB_DEPENDS ,
+.Ev RUN_DEPENDS ,
+and
+.Ev WANTLIB ,
+so that the packing-list is complete.
 .It Ar readmes
 Create an html description of packages, including comments, description,
 and dependencies.
