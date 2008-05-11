@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.75 2007/10/01 16:39:30 krw Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.76 2008/05/11 03:50:23 krw Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -446,6 +446,11 @@ nd6_llinfo_timer(void *arg)
 
 				icmp6_error(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
+				if (ln->ln_hold == m) {
+					/* m is back in ln_hold. Discard. */
+					m_freem(ln->ln_hold);
+					ln->ln_hold = NULL;
+				}
 			}
 			(void)nd6_free(rt, 0);
 			ln = NULL;
@@ -1579,13 +1584,19 @@ fail:
 			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 
 			if (ln->ln_hold) {
+				struct mbuf *n = ln->ln_hold;
+				ln->ln_hold = NULL;
 				/*
 				 * we assume ifp is not a p2p here, so just
 				 * set the 2nd argument as the 1st one.
 				 */
-				nd6_output(ifp, ifp, ln->ln_hold,
+				nd6_output(ifp, ifp, n,
 				    (struct sockaddr_in6 *)rt_key(rt), rt);
-				ln->ln_hold = NULL;
+				if (ln->ln_hold == n) {
+					/* n is back in ln_hold. Discard. */
+					m_freem(ln->ln_hold);
+					ln->ln_hold = NULL;
+				}
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */

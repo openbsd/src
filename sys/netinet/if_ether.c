@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.73 2008/05/09 15:48:59 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.74 2008/05/11 03:50:23 krw Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -696,9 +696,14 @@ in_arpinput(m)
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 		if (la->la_hold) {
-			(*ac->ac_if.if_output)(&ac->ac_if, la->la_hold,
-				rt_key(rt), rt);
-			la->la_hold = 0;
+			struct mbuf *n = la->la_hold;
+			la->la_hold = NULL;
+			(*ac->ac_if.if_output)(&ac->ac_if, n, rt_key(rt), rt);
+			if (la->la_hold == n) {
+				/* n is back in la_hold. Discard. */
+				m_freem(la->la_hold);
+				la->la_hold = NULL;
+			}
 		}
 	}
 reply:

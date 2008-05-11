@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.49 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.50 2008/05/11 03:50:23 krw Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -803,13 +803,18 @@ nd6_na_input(m, off, icmp6len)
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
 	if (ln->ln_hold) {
+		struct mbuf *n = ln->ln_hold;
+		ln->ln_hold = NULL;
 		/*
 		 * we assume ifp is not a loopback here, so just set the 2nd
 		 * argument as the 1st one.
 		 */
-		nd6_output(ifp, ifp, ln->ln_hold,
-			   (struct sockaddr_in6 *)rt_key(rt), rt);
-		ln->ln_hold = NULL;
+		nd6_output(ifp, ifp, n, (struct sockaddr_in6 *)rt_key(rt), rt);
+		if (ln->ln_hold == n) {
+			/* n is back in ln_hold. Discard. */
+			m_freem(ln->ln_hold);
+			ln->ln_hold = NULL;
+		}
 	}
 
  freeit:
