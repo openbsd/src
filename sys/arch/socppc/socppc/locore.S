@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2008/05/11 19:59:38 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2008/05/11 21:03:29 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -87,6 +87,8 @@ start:
 	lis	%r8,_end@ha
 	addi	%r8,%r8,_end@l
 #if defined(DDB)
+	cmpwi	%r4, 0
+	bne	1f
 	cmpwi	%r6, 0
 	beq	1f
 	add	%r9,%r6,%r7
