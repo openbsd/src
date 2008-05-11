@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2008/03/31 13:15:53 jmc Exp $
+#	$OpenBSD: Makefile,v 1.20 2008/05/11 22:19:09 millert Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 CMSG_DATA.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
@@ -64,13 +64,13 @@ MLINKS+=tree.3 SPLAY_PROTOTYPE.3 tree.3 SPLAY_GENERATE.3 \
 	tree.3 SPLAY_LEFT.3 tree.3 SPLAY_RIGHT.3 tree.3 SPLAY_INIT.3 \
 	tree.3 SPLAY_INSERT.3 tree.3 SPLAY_REMOVE.3 \
 	tree.3 SPLAY_FOREACH.3
-MLINKS+=tree.3 RB_PROTOTYPE.3 tree.3 RB_GENERATE.3 \
-	tree.3 RB_ENTRY.3 tree.3 RB_HEAD.3 \
-	tree.3 RB_INITIALIZER.3 tree.3 RB_ROOT.3 \
-	tree.3 RB_EMPTY.3 tree.3 RB_NEXT.3 \
-	tree.3 RB_MIN.3 tree.3 RB_MAX.3 tree.3 RB_FIND.3 \
+MLINKS+=tree.3 RB_PROTOTYPE.3 tree.3 RB_PROTOTYPE_STATIC.3 \
+	tree.3 RB_GENERATE.3 tree.3 RB_GENERATE_STATIC.3 tree.3 RB_ENTRY.3 \
+	tree.3 RB_HEAD.3 tree.3 RB_INITIALIZER.3 tree.3 RB_ROOT.3 \
+	tree.3 RB_EMPTY.3 tree.3 RB_NEXT.3 tree.3 RB_PREV.3 \
+	tree.3 RB_MIN.3 tree.3 RB_MAX.3 tree.3 RB_FIND.3 tree.3 RB_NFIND.3 \
 	tree.3 RB_LEFT.3 tree.3 RB_RIGHT.3 tree.3 RB_PARENT.3 \
 	tree.3 RB_INIT.3 tree.3 RB_INSERT.3 tree.3 RB_REMOVE.3 \
-	tree.3 RB_FOREACH.3
+	tree.3 RB_FOREACH.3 tree.3 RB_FOREACH_REVERSE.3
 
 .include <bsd.prog.mk>
