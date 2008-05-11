@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.76 2008/05/11 03:50:23 krw Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.77 2008/05/11 08:13:02 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -698,6 +698,7 @@ nd6_lookup(addr6, create, ifp)
 	}
 	if (!rt) {
 		if (create && ifp) {
+			struct rt_addrinfo info;
 			int e;
 
 			/*
@@ -716,12 +717,17 @@ nd6_lookup(addr6, create, ifp)
 			 * Create a new route.  RTF_LLINFO is necessary
 			 * to create a Neighbor Cache entry for the
 			 * destination in nd6_rtrequest which will be
-			 * called in rtrequest via ifa->ifa_rtrequest.
+			 * called in rtrequest1 via ifa->ifa_rtrequest.
 			 */
-			if ((e = rtrequest(RTM_ADD, (struct sockaddr *)&sin6,
-			    ifa->ifa_addr, (struct sockaddr *)&all1_sa,
-			    (ifa->ifa_flags | RTF_HOST | RTF_LLINFO) &
-			    ~RTF_CLONING, &rt, 0)) != 0) {
+			bzero(&info, sizeof(info));
+			info.rti_flags = (ifa->ifa_flags | RTF_HOST |
+			    RTF_LLINFO) & ~RTF_CLONING;
+			info.rti_info[RTAX_DST] = (struct sockaddr *)&sin6;
+			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+			info.rti_info[RTAX_NETMASK] =
+			    (struct sockaddr *)&all1_sa;
+			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
+			    &rt, 0)) != 0) {
 #if 0
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
@@ -837,6 +843,7 @@ nd6_free(rt, gc)
 	struct rtentry *rt;
 	int gc;
 {
+	struct rt_addrinfo info;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
@@ -929,8 +936,10 @@ nd6_free(rt, gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
-	    rt_mask(rt), 0, (struct rtentry **)0, 0);
+	bzero(&info, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
 
 	return (next);
 }

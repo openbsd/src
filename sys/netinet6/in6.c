@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.74 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.75 2008/05/11 08:13:02 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct multi6_kludge {
 static void
 in6_ifloop_request(int cmd, struct ifaddr *ifa)
 {
+	struct rt_addrinfo info;
 	struct sockaddr_in6 lo_sa;
 	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
@@ -162,8 +163,12 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * which changes the outgoing interface to the loopback interface.
 	 * XXX only table 0 for now
 	 */
-	e = rtrequest(cmd, ifa->ifa_addr, ifa->ifa_addr,
-	    (struct sockaddr *)&all1_sa, RTF_UP|RTF_HOST|RTF_LLINFO, &nrt, 0);
+	bzero(&info, sizeof(info));
+	info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
+	info.rti_info[RTAX_DST] = ifa->ifa_addr;
+	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&all1_sa;
+	e = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, 0);
 	if (e != 0) {
 		log(LOG_ERR, "in6_ifloop_request: "
 		    "%s operation failed for %s (errno=%d)\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.96 2008/03/08 01:52:35 sthen Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.97 2008/05/11 08:13:02 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2783,12 +2783,14 @@ icmp6_mtudisc_clone(dst)
 
 	/* If we didn't get a host route, allocate one */
 	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rt_addrinfo info;
 		struct rtentry *nrt;
 
-		error = rtrequest((int) RTM_ADD, dst,
-		    (struct sockaddr *) rt->rt_gateway,
-		    (struct sockaddr *) 0,
-		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt, 0);
+		bzero(&info, sizeof(info));
+		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
+		info.rti_info[RTAX_DST] = dst;
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt, 0);
 		if (error) {
 			rtfree(rt);
 			return NULL;
@@ -2816,8 +2818,14 @@ icmp6_mtudisc_timeout(rt, r)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
+		struct rt_addrinfo info;
+
+		bzero(&info, sizeof(info));
+		info.rti_flags = rt->rt_flags;
+		info.rti_info[RTAX_DST] = rt_key(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 			rt->rt_rmx.rmx_mtu = 0;
@@ -2833,8 +2841,14 @@ icmp6_redirect_timeout(rt, r)
 		panic("icmp6_redirect_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
+		struct rt_addrinfo info;
+
+		bzero(&info, sizeof(info));
+		info.rti_flags = rt->rt_flags;
+		info.rti_info[RTAX_DST] = rt_key(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
 	}
 }
 
