@@ -1,0 +1,69 @@
+#	$OpenBSD: RAMDISK,v 1.1 2008/05/11 20:57:56 kettenis Exp $
+
+machine		socppc powerpc
+
+maxusers	32			# estimated number of users
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		FFS		# UFS
+option		NFSCLIENT	# Network File System client
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		UDF		# UDF (DVD) file system
+option		MSDOSFS		# MS-DOS file system
+option		INET		# IP + ICMP + TCP + UDP
+option		INET6		# IPv6 (needs INET)
+option		DDB		# kernel debugger
+
+config		bsd	root on rd0a swap on rd0b
+
+mainbus0	at root
+cpu0		at mainbus0
+obio0		at mainbus0
+
+# On-board IPIC
+ipic0		at obio? addr 0x00700
+
+# On-board I2C
+sociic0		at obio? addr 0x03000 ivec 14
+sociic1		at obio? addr 0x03100 ivec 15
+iic*		at sociic?
+ricohrtc0	at iic? addr 0x32	# Ricoh RTC
+fintek0		at iic?	flags 0x0001	# temp/fan controller
+
+# On-board DUART
+com0		at obio? addr 0x04500 ivec 9
+com1		at obio? addr 0x04600 ivec 10
+
+# On-board PCI
+socpcic0	at obio? addr 0x08300
+socpcic1	at obio? addr 0x08380
+pci*		at socpcic?
+
+pciide*		at pci?
+wd*		at pciide? flags 0x0000
+
+# On-board USB
+ehci0		at obio? addr 0x22100 ivec 39
+usb*		at ehci?
+
+# USB devices
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+umass*	at uhub?		# USB Mass Storage devices
+scsibus* at umass?
+ural*	at uhub?		# Ralink RT2500USB
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+
+sd*		at scsibus?
+
+pseudo-device	loop	1	# network loopback
+pseudo-device	bpfilter 1	# packet filter
+pseudo-device	rd	1	# ram disk
+
+option		BOOT_CONFIG	# boot-time kernel config
+
+# RAMDISK stuff
+option          MINIROOTSIZE=8192
+option          RAMDISK_HOOKS
