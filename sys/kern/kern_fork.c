@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.93 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.94 2008/05/11 23:50:32 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 		flags |= FORK_SHAREVM;
 #ifdef RTHREADS
 	if (rforkflags & RFTHREAD)
-		flags |= FORK_THREAD;
+		flags |= FORK_THREAD | FORK_SIGHAND;
 #endif
 
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
