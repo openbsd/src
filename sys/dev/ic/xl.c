@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.78 2007/05/19 16:51:57 kettenis Exp $	*/
+/*	$OpenBSD: xl.c,v 1.79 2008/05/11 03:01:29 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2230,7 +2230,7 @@ xl_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 			if (CSR_READ_1(sc, XL_W3_MAC_CTRL) & XL_MACCTRL_DUPLEX)
 				ifmr->ifm_active |= IFM_FDX;
 			else
-				ifmr->ifm_active |= IFM_FDX;
+				ifmr->ifm_active |= IFM_HDX;
 		} else
 			ifmr->ifm_active = IFM_ETHER|IFM_10_5;
 		break;
