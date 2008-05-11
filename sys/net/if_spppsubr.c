@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.65 2007/12/04 19:49:52 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.66 2008/05/11 02:28:16 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -2622,7 +2622,7 @@ sppp_lcp_scr(struct sppp *sp)
 	}
 
 	sp->confid[IDX_LCP] = ++sp->pp_seq;
-	sppp_cp_send (sp, PPP_LCP, CONF_REQ, sp->confid[IDX_LCP], i, &opt);
+	sppp_cp_send (sp, PPP_LCP, CONF_REQ, sp->confid[IDX_LCP], i, opt);
 }
 
 /*
@@ -3103,7 +3103,7 @@ sppp_ipcp_scr(struct sppp *sp)
 	}
 
 	sp->confid[IDX_IPCP] = ++sp->pp_seq;
-	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->confid[IDX_IPCP], i, &opt);
+	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->confid[IDX_IPCP], i, opt);
 }
 
 /*
@@ -3520,7 +3520,7 @@ p		opt[i++] = 0;   /* TBD */
 #endif
 
 	sp->confid[IDX_IPV6CP] = ++sp->pp_seq;
-	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, &opt);
+	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, opt);
 }
 #else /*INET6*/
 HIDE void
