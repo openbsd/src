@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.59 2008/05/08 04:05:37 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.60 2008/05/11 01:08:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -236,6 +236,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			case IMSG_CTL_SHOW_RIB_COMMUNITY:
 			case IMSG_CTL_SHOW_NETWORK:
 			case IMSG_CTL_SHOW_TERSE:
+			case IMSG_CTL_SHOW_TIMER:
 				break;
 			default:
 				/* clear imsg type to prevent processing */
