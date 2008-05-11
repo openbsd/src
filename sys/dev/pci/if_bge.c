@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.228 2008/05/11 05:12:56 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.229 2008/05/11 09:56:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1713,8 +1713,7 @@ bge_blockinit(struct bge_softc *sc)
  	} else {
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2)
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -2645,8 +2644,7 @@ bge_intr(void *xsc)
 		/* clear status word */
 		sc->bge_rdata->bge_status_block.bge_status = 0;
 
-		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2) ||
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 		    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
 		    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
 			bge_link_upd(sc);
@@ -3511,12 +3509,8 @@ bge_link_upd(struct bge_softc *sc)
 	 * changes, thereby adding an additional register access to
 	 * the interrupt handler.
 	 *
-	 * XXX: perhaps link state detection procedure used for
-	 * BGE_CHIPID_BCM5700_B2 can be used for other BCM5700 revisions.
 	 */
-
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-	    sc->bge_chipid != BGE_CHIPID_BCM5700_B2) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_MI_INTERRUPT) {
 			timeout_del(&sc->bge_timeout);
@@ -3576,8 +3570,7 @@ bge_link_upd(struct bge_softc *sc)
 		link = (CSR_READ_4(sc, BGE_MI_STS) & BGE_MISTS_LINK)?
 		    BGE_STS_LINK : 0;
 
-		if (BGE_STS_BIT(sc, BGE_STS_LINK) != link ||
-		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700) {
+		if (BGE_STS_BIT(sc, BGE_STS_LINK) != link) {
 			timeout_del(&sc->bge_timeout);
 			bge_tick(sc);
 
