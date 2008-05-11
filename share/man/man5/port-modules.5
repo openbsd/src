@@ -1,0 +1,325 @@
+.\"	$OpenBSD: port-modules.5,v 1.1 2008/05/11 18:50:58 espie Exp $
+.\"
+.\" Copyright (c) 2008 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: May 11 2008 $
+.Dt PORT-MODULES 5
+.Os
+.Sh NAME
+.Nm port-modules
+.Nd format and conventions used in port modules
+.Sh DESCRIPTION
+The
+.Ox
+Ports framework is based on a gigantic makefile named
+.Xr bsd.port.mk 5 .
+.Pp
+In order to curb unwieldy growth, parts of the framework
+that are not always needed have been set apart in optional
+files called
+.Nm port modules ,
+which are retrieved as needed through the
+.Ev MODULES
+variable of
+.Xr bsd.port.mk 5 .
+.Pp
+Some of these modules correspond to basic mechanisms which are not
+always needed, such as GNU autoconf, or perl5.
+.Pp
+Other modules correspond to shortcuts for using some other ports as
+dependencies without needing to hardcode too much, such as libiconv or
+the qt ports.
+.Sh THE MODULES LOOK-UP MECHANISM
+The variable
+.Ev MODULES
+should contain a list of module names.
+Some core modules are a single word, all other modules should be
+${PKGPATH}.
+If the module is
+.Pa some/dir/portname ,
+the ports framework will look for a file named
+.Pa ${PORTSDIR}/some/dir/portname/portname.mk
+and include it.
+.Pp
+Most modules should conform to this syntax.
+The historic practice of having a redirection file directly under
+.Pa ${PORTSDIR}/infrastructure/mk
+is deprecated for new modules.
+.Pp
+Modules may refer to each other.
+The modules mechanism has specific recursion handling such that
+adding
+.Li MODULES += foo/bar
+to a module will work as expected.
+.Sh NAMING CONVENTIONS
+Since there is no actual scope in makefiles, everything defined within
+a module will be global to the ports framework, and thus may interfere
+with other ports.
+.Pp
+As far as possible, all variables and targets belonging to a module named
+.Pa some/dir/foo
+should be named
+.Ev MODFOO_*
+and
+.Ar modfoo_* .
+.Pp
+Following the same conventions as
+.Xr bsd.port.mk 5 ,
+internal variables and targets not intended for user consumption should be
+named
+.Ev _MODFOO_*
+and
+.Ar _modfoo_* .
+.Pp
+For instance, if a module wants some value to be available for the rest
+of the world, it should define
+.Ev MODFOO_VARNAME ,
+with a name matching the basic infrastructure as far as possible.
+That is, a port that defines specific dependencies will usually
+define
+.Ev MODFOO_WANTLIB ,
+.Ev MODFOO_LIB_DEPENDS ,
+and
+.Ev MODFOO_RUN_DEPENDS ,
+as appropriate.
+.Pp
+As an exception to the naming mechanism, some ports have several distinct
+versions in the ports tree, say
+.Pa x11/qt2 ,
+.Pa x11/qt3 ,
+and
+.Pa x11/qt4 .
+Instead of using the namespace
+.Ev MODQT2* ,
+variables will usually drop the version suffix and be simply called
+.Ev MODQT_*
+so that a port using the module can be switched from version to version
+without needing to change everything.
+.Pp
+It is highly desirable to define names in both namespaces for such ports,
+for example to define both
+.Ev MODQT3_LIB_DEPENDS
+and
+.Ev MODQT_LIB_DEPENDS .
+Normal client ports will use
+.Ev MODQT_LIB_DEPENDS ,
+but a port may exceptionally import both modules with
+.Li MODULES += x11/qt3 x11/qt4
+and differentiate between qt3 and qt4 needs with
+.Ev MODQT3_LIB_DEPENDS
+and
+.Ev MODQT4_LIB_DEPENDS .
+See
+.Pa print/poppler
+for an example.
+.Sh OVERRIDING TARGET BEHAVIOR
+The main framework contains several hooks that allow ports to override
+normal behavior.
+This evolved as an ad-hoc framework, where only hooks that turned out
+to be needed were added.
+If several modules define the same hook, hook behaviors will be
+invoked in sequence.
+.Bl -tag -width do-configure
+.It Ar patch
+There is a
+.Ar post-patch
+hook that can be activated by defining
+.Ev MODFOO_post-patch .
+It will be run right after
+.Ar post-patch
+and before
+.Ev REORDER_DEPENDENCIES
+touches things.
+.It Ar configure
+The normal
+.Ar do-configure
+behavior is to invoke all
+.Ev MODFOO_configure
+contents that are defined in
+.Ev CONFIGURE_STYLE .
+By default,
+.Ar configure
+will do nothing.
+Some
+.Ev CONFIGURE_STYLE
+values, namely perl, gnu, imake, automake, autoconf, and autoupdate
+will automatically import the correct module.
+User-defined modules must both add to
+.Ev CONFIGURE_STYLE
+and import the correct module to override behavior.
+Contrary to other hooks, module behavior is not invoked in
+addition to
+.Ar do-configure ,
+but as the normal configure process.
+If
+.Ar do-configure
+is overriden, normal hook processing will not happen.
+.It Ar fake
+There is a
+.Ar pre-fake
+hook that can be activated by defining
+.Ev MODFOO_pre-fake .
+This will be invoked right after
+.Xr mtree 8 ,
+and before the normal
+.Ar pre-fake
+behavior.
+.It Ar install
+There is a
+.Ar pre-install
+hook that can be activated by defining
+.Ev MODFOO_pre-install .
+It will be run right before installing the package with
+.Xr pkg_add 1 .
+.El
+.Sh OVERRIDING VARIABLE BEHAVIOR
+Some variables can be overriden by modules.
+Be very cautious, as this can make the module difficult to use,
+or interact badly with other modules.
+As a rule, always provide the override as:
+.Pp
+.Dl VARIABLE ?= value
+.Pp
+and provide a module-specific variable with the same value:
+.Pp
+.Dl MODFOO_VARIABLE = value .
+.Pp
+The following variables can be overriden in a relatively safe fashion:
+.Ev CONFIGURE_SCRIPT ,
+.Ev DESTDIRNAME ,
+.Ev DIST_SUBDIR ,
+.Ev EXTRACT_SUFX ,
+.Ev FAKE_FLAGS ,
+.Ev FETCH_MANUALLY ,
+.Ev IS_INTERACTIVE ,
+.Ev LIBTOOL_FLAGS ,
+.Ev MAKE_FLAGS ,
+.Ev MASTER_SITES ,
+.Ev PKG_ARCH ,
+.Ev PREFIX ,
+.Ev REGRESS_IS_INTERACTIVE ,
+.Ev REORDER_DEPENDENCIES ,
+.Ev SEPARATE_BUILD ,
+.Ev SHARED_ONLY ,
+.Ev USE_GMAKE ,
+.Ev USE_LIBTOOL ,
+.Ev USE_MOTIF .
+.Pp
+The following variables can be added to in a relatively safe fashion:
+.Ev BUILD_DEPENDS ,
+.Ev CATEGORIES ,
+.Ev FLAVOR ,
+.Ev FLAVORS ,
+.Ev LIB_DEPENDS ,
+.Ev PSEUDO_FLAVORS ,
+.Ev RUN_DEPENDS ,
+.Ev WANTLIB .
+.Sh SPECIFIC MODULE INTERACTIONS
+Some modules correspond to extra ports that will be used mostly as
+.Ev BUILD_DEPENDS
+or
+.Ev RUN_DEPENDS .
+Such modules can safely append values directly to the
+.Ev BUILD_DEPENDS ,
+.Ev RUN_DEPENDS ,
+.Ev LIB_DEPENDS ,
+and
+.Ev WANTLIB
+variables, as long as they also define module-specific variables for
+all runtime dependencies.
+.Pp
+Simple client ports will use the module directly, and thus inherit extra
+build and runtime dependencies.
+.Pp
+More sophisticated ports can use
+.Ev MULTI_PACKAGES
+to select specific behavior: build-time dependencies will always be
+needed.
+Runtime dependencies will be selected on a subpackage basis,
+since runtime dependencies such as
+.Ev LIB_DEPENDS-sub
+do not inherit the default
+.Ev LIB_DEPENDS
+value.
+The client port's author must only bear in mind that external modules
+may add values to the default
+.Ev WANTLIB ,
+.Ev LIB_DEPENDS ,
+and
+.Ev RUN_DEPENDS ,
+and thus that it is not safe to inherit from it blindly.
+.Pp
+Modules are imported during
+.Pp
+.Dl .include <bsd.port.mk>
+.Pp
+Thus they can be affected by user choices such as setting a variable
+to Yes or No.
+Modules may make decisions based on documented
+.Ev MODFOO_BEHAVIOR
+values.
+.Pp
+When modules are processed, only a few
+.Xr bsd.port.mk 5
+variables are already defined.
+Modules may depend upon the following variables already having a sane
+value:
+.Ev ARCH ,
+.Ev LP64_ARCHS ,
+.Ev NO_BUILD ,
+.Ev NO_DEPENDS ,
+.Ev NO_REGRESS ,
+.Ev NO_SHARED_ARCHS ,
+.Ev NO_SHARED_LIBS ,
+.Ev PORTSDIR ,
+.Ev USE_X11 .
+Note that this is only relevant for tests.
+It is perfectly okay to define variables or targets that depend on the
+basic ports framework without having to care whether that variable is
+already defined, since
+.Xr make 1
+performs lazy evaluation.
+.Sh CORE MODULES DOCUMENTATION
+The following modules are available.
+.Bl -tag -width do-configure
+.It cpan
+.It gcc3
+.It gcc4
+.It ghc
+.It gnu
+.It imake
+.It java
+.It ocaml
+.It pear
+.It perl
+.It python
+.It ruby
+.El
+.Pp
+They will be documented soon.
+.Sh SEE ALSO
+.Xr make 1 ,
+.Xr bsd.port.mk 5 ,
+.Xr ports 7
