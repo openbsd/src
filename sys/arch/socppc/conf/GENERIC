@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2008/05/10 15:31:30 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.3 2008/05/11 20:35:10 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,7 +13,6 @@ machine		socppc powerpc
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
-option		USB_DEBUG
 option		PCIVERBOSE
 option		USBVERBOSE
 
