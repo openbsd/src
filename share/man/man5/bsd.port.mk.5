@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.212 2008/05/11 10:28:44 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.213 2008/05/11 18:48:21 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -429,7 +429,7 @@ See
 This makes use of
 .Ar print-plist-with-depends
 to avoid actually building the packages, it only needs the
-completion of the 
+completion of the
 .Ar fake
 stage, and thus is quicker than
 .Ar lib-depends-check ,
@@ -1266,6 +1266,10 @@ tedious.
 .It Ev MODGNU_CONFIG_GUESS_DIRS
 If a port uses config.guess outside WRKSRC, the directories
 containing the other copies must be set here.
+.It Ev MODULES
+External modules mechanism, documented separately.
+See
+.Xr port-modules 5 .
 .It Ev MOTIFLIB
 Read-only.
 Correct incantation to link with motif.
@@ -2612,6 +2616,7 @@ non-flavor version if there is no flavor-specific file around.
 .Xr ftp 1 ,
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
+.Xr port-modules 5 ,
 .Xr library-specs 7 ,
 .Xr mirroring-ports 7 ,
 .Xr packages-specs 7 ,
