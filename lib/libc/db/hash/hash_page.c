@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.18 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.19 2008/05/11 22:21:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -148,6 +148,14 @@ __delpair(HTAB *hashp, BUFHEAD *bufp, int ndx)
 				bp[i - 2] = bp[i] + pairlen;
 				bp[i - 1] = bp[i + 1] + pairlen;
 			}
+		}
+		if (ndx == hashp->cndx) {
+			/*
+			 * We just removed pair we were "pointing" to.
+			 * By moving back the cndx we ensure subsequent
+			 * hash_seq() calls won't skip over any entries.
+			 */
+			hashp->cndx -= 2;
 		}
 	}
 	/* Finally adjust the page data */

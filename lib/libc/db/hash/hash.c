@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.21 2006/03/19 19:51:53 otto Exp $	*/
+/*	$OpenBSD: hash.c,v 1.22 2008/05/11 22:21:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -705,7 +705,7 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, u_int32_t flag)
 		hashp->cndx = 1;
 		hashp->cpage = NULL;
 	}
-
+ next_bucket:
 	for (bp = NULL; !bp || !bp[0]; ) {
 		if (!(bufp = hashp->cpage)) {
 			for (bucket = hashp->cbucket;
@@ -724,8 +724,18 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, u_int32_t flag)
 				hashp->cbucket = -1;
 				return (ABNORMAL);
 			}
-		} else
+		} else {
 			bp = (u_int16_t *)hashp->cpage->page;
+			if (flag == R_NEXT) {
+				hashp->cndx += 2;
+				if (hashp->cndx > bp[0]) {
+					hashp->cpage = NULL;
+					hashp->cbucket++;
+					hashp->cndx = 1;
+					goto next_bucket;
+				}
+			}
+		}
 
 #ifdef DEBUG
 		assert(bp);
@@ -755,13 +765,6 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, u_int32_t flag)
 		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
 		data->data = (u_char *)hashp->cpage->page + bp[ndx + 1];
 		data->size = bp[ndx] - bp[ndx + 1];
-		ndx += 2;
-		if (ndx > bp[0]) {
-			hashp->cpage = NULL;
-			hashp->cbucket++;
-			hashp->cndx = 1;
-		} else
-			hashp->cndx = ndx;
 	}
 	return (SUCCESS);
 }
