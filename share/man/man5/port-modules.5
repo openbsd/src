@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.5 2008/05/12 10:48:09 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.6 2008/05/12 13:08:33 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -357,8 +357,8 @@ This module is documented in the main
 manpage.
 .It java
 Set MODJAVA_VER=x.y to use exactly the jdk x.y, MODJAVA_VER=x.y+ to
-use any x.y or higher version.  Set MODJAVA_JRERUN=Yes if the port only
-needs the jre at runtime.
+use any x.y or higher version.
+Set MODJAVA_JRERUN=Yes if the port only needs the jre at runtime.
 The module sets JAVA_HOME, ONLY_FOR_ARCHS, MODJAVA_RUN_DEPENDS, and
 appends to BUILD_DEPENDS and RUN_DEPENDS.
 It heeds NO_BUILD.
@@ -367,7 +367,7 @@ Sets ONLY_FOR_ARCHS, MODGHC_VERSION, BUILD_DEPENDS, and RUN_DEPENDS.
 .It lang/ocaml
 Sets OCAML_VERSIOn, MODOCAM_NATIVE.
 Appends to BUILD_DEPENDS and MAKE_ENV.
-This also selects a %%native%% plist fragment depending whether
+This also selects a %%native%% plist fragment depending on whether
 the arch supports native compilation or not.
 .It lang/python
 .It lang/ruby
@@ -378,7 +378,6 @@ manpage.
 .It www/pear
 .It www/zope
 .El
-.Pp
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr bsd.port.mk 5 ,
