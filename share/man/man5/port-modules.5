@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.3 2008/05/11 19:45:41 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.4 2008/05/12 10:27:30 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2008 $
+.Dd $Mdocdate: May 12 2008 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -207,17 +207,27 @@ and provide a module-specific variable with the same value:
 .Dl MODFOO_VARIABLE = value .
 .Pp
 The following variables can be overriden in a relatively safe fashion:
+.Ev ALL_TARGET ,
 .Ev CONFIGURE_SCRIPT ,
 .Ev DESTDIRNAME ,
 .Ev DIST_SUBDIR ,
+.Ev DISTNAME ,
+.Ev DISTFILES ,
 .Ev EXTRACT_SUFX ,
 .Ev FAKE_FLAGS ,
 .Ev FETCH_MANUALLY ,
+.Ev HOMEPAGE ,
+.Ev IGNORE ,
 .Ev IS_INTERACTIVE ,
 .Ev LIBTOOL_FLAGS ,
-.Ev MAKE_FLAGS ,
+.Ev MAKE_FILE ,
 .Ev MASTER_SITES ,
+.Ev MULTI_PACKAGES ,
+.Ev NO_BUILD ,
+.Ev NO_REGRESS ,
+.Ev PATCH_LIST ,
 .Ev PKG_ARCH ,
+.Ev PKGNAME* ,
 .Ev PREFIX ,
 .Ev REGRESS_IS_INTERACTIVE ,
 .Ev REORDER_DEPENDENCIES ,
@@ -230,11 +240,22 @@ The following variables can be overriden in a relatively safe fashion:
 The following variables can be added to in a relatively safe fashion:
 .Ev BUILD_DEPENDS ,
 .Ev CATEGORIES ,
+.Ev CONFIGURE_ARGS ,
+.Ev CONFIGURE_ENV ,
+.Ev ERRORS ,
+.Ev FAKE_FLAGS ,
 .Ev FLAVOR ,
 .Ev FLAVORS ,
+.Ev INSTALL_TARGET ,
 .Ev LIB_DEPENDS ,
+.Ev MAKE_ENV ,
+.Ev MAKE_FLAGS ,
+.Ev PKG_ARGS ,
 .Ev PSEUDO_FLAVORS ,
+.Ev REGRESS_DEPENDS ,
+.Ev REORDER_DEPENDENCIES ,
 .Ev RUN_DEPENDS ,
+.Ev SUBST_VARS ,
 .Ev WANTLIB .
 .Sh SPECIFIC MODULE INTERACTIONS
 Some modules correspond to extra ports that will be used mostly as
@@ -287,14 +308,16 @@ variables are already defined.
 Modules may depend upon the following variables already having a sane
 value:
 .Ev ARCH ,
+.Ev DISTDIR ,
+.Ev LOCALBASE ,
 .Ev LP64_ARCHS ,
-.Ev NO_BUILD ,
 .Ev NO_DEPENDS ,
-.Ev NO_REGRESS ,
 .Ev NO_SHARED_ARCHS ,
 .Ev NO_SHARED_LIBS ,
+.Ev PKGPATH ,
 .Ev PORTSDIR ,
-.Ev USE_X11 .
+.Ev USE_X11 ,
+.Ev X11BASE .
 Note that this is only relevant for tests.
 It is perfectly okay to define variables or targets that depend on the
 basic ports framework without having to care whether that variable is
