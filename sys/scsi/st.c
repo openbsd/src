@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.81 2008/05/09 00:25:41 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.82 2008/05/12 22:14:46 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -287,6 +287,8 @@ struct scsi_device st_switch = {
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN | \
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
+#define stlookup(unit) (struct st_softc *)device_lookup(&st_cd, (unit))
+
 const struct scsi_inquiry_pattern st_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
 	 "",         "",                 ""},
@@ -457,30 +459,27 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct scsi_link *sc_link;
 	struct st_softc *st;
-	int error = 0, unit;
+	int error = 0;
 
-	unit = STUNIT(dev);
-	if (unit >= st_cd.cd_ndevs)
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
 		return (ENXIO);
-	st = st_cd.cd_devs[unit];
-	if (!st)
-		return (ENXIO);
-	if ((st->flags & ST_DYING)) {
-		device_unref(&st->sc_dev);
-		return (ENXIO);
+	if (st->flags & ST_DYING) {
+		error = ENXIO;
+		goto done;
 	}
-
 	sc_link = st->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
-	    unit, st_cd.cd_ndevs));
+	    STUNIT(dev), st_cd.cd_ndevs));
 
 	/*
 	 * Tape is an exclusive media. Only one open at a time.
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
 		SC_DEBUG(sc_link, SDEV_DB4, ("already open\n"));
-		return (EBUSY);
+		error = EBUSY;
+		goto done;
 	}
 
 	/* Use st_interpret_sense() now. */
@@ -502,14 +501,14 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 	if (error) {
 		sc_link->flags &= ~SDEV_OPEN;
-		return (error);
+		goto done;
 	}
 
 	if ((st->flags & ST_MOUNTED) == 0) {
 		error = st_mount_tape(dev, flags);
 		if (error) {
 			sc_link->flags &= ~SDEV_OPEN;
-			return (error);
+			goto done;
 		}
 	}
 
@@ -521,8 +520,10 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if ((flags & O_ACCMODE) == FWRITE)
 		st->flags |= ST_WRITTEN;
 
+done:
 	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
-	return (0);
+	device_unref(&st->sc_dev);
+	return (error);
 }
 
 /*
@@ -532,15 +533,24 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 int
 stclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct scsi_link *sc_link;
+	struct st_softc *st;
+	int error;
 
-	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
-	if (st->flags & ST_DYING) {
-		device_unref(&st->sc_dev);
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
 		return (ENXIO);
+	if (st->flags & ST_DYING) {
+		error = ENXIO;
+		goto done;
 	}
+	sc_link = st->sc_link;
+
+	SC_DEBUG(sc_link, SDEV_DB1, ("closing\n"));
+
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
+
 	switch (STMODE(dev)) {
 	case 0:		/* normal */
 		st_unmount(st, NOEJECT, DOREWIND);
@@ -550,17 +560,19 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		break;
 	case 1:		/* no rewind */
 		/* leave mounted unless media seems to have been removed */
-		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
+		if (!(sc_link->flags & SDEV_MEDIA_LOADED))
 			st_unmount(st, NOEJECT, NOREWIND);
 		break;
 	case 2:		/* rewind, eject */
 		st_unmount(st, EJECT, DOREWIND);
 		break;
 	}
-	st->sc_link->flags &= ~SDEV_OPEN;
+	sc_link->flags &= ~SDEV_OPEN;
 	timeout_del(&st->sc_timeout);
 
-	return 0;
+done:
+	device_unref(&st->sc_dev);
+	return (error);
 }
 
 /*
@@ -571,28 +583,32 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 st_mount_tape(dev_t dev, int flags)
 {
-	int unit;
-	u_int mode;
 	struct st_softc *st;
 	struct scsi_link *sc_link;
 	int error = 0;
 
-	unit = STUNIT(dev);
-	mode = STMODE(dev);
-	st = st_cd.cd_devs[unit];
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
+		return (ENXIO);
+	if (st->flags & ST_DYING) {
+		error = ENXIO;
+		goto done;
+	}
 	sc_link = st->sc_link;
 
-	if (st->flags & ST_MOUNTED)
-		return 0;
-
 	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n"));
+
+	if (st->flags & ST_MOUNTED)
+		goto done;
+
 	st->quirks = st->drive_quirks | st->modes.quirks;
 	/*
 	 * If the media is new, then make sure we give it a chance to
 	 * to do a 'load' instruction.  (We assume it is new.)
 	 */
 	if ((error = st_load(st, LD_LOAD, 0)) != 0)
-		return error;
+		goto done;
+
 	/*
 	 * Throw another dummy instruction to catch
 	 * 'Unit attention' errors. Some drives appear to give
@@ -614,9 +630,8 @@ st_mount_tape(dev_t dev, int flags)
 	 * loads: blkmin, blkmax
 	 */
 	if (!(sc_link->flags & SDEV_ATAPI) &&
-	    (error = st_read_block_limits(st, 0)) != 0) {
-		return error;
-	}
+	    (error = st_read_block_limits(st, 0)) != 0)
+		goto done;
 
 	/*
 	 * Load the media dependent parameters
@@ -625,7 +640,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * If not you may need the "quirk" above.
 	 */
 	if ((error = st_mode_sense(st, 0)) != 0)
-		return error;
+		goto done;
 
 	/*
 	 * If we have gained a permanent density from somewhere,
@@ -648,18 +663,20 @@ st_mount_tape(dev_t dev, int flags)
 			st->flags |= ST_FIXEDBLOCKS;
 	} else {
 		if ((error = st_decide_mode(st, FALSE)) != 0)
-			return error;
+			goto done;
 	}
 	if ((error = st_mode_select(st, 0)) != 0) {
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
-		return error;
+		goto done;
 	}
 	scsi_prevent(sc_link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
 
-	return 0;
+done:
+	device_unref(&st->sc_dev);
+	return (error);
 }
 
 /*
@@ -812,11 +829,21 @@ done:
 void
 ststrategy(struct buf *bp)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
+	struct scsi_link *sc_link;
+	struct st_softc *st;
 	struct buf *dp;
-	int s;
+	int error, s;
 
-	SC_DEBUG(st->sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %d\n",
+	st = stlookup(STUNIT(bp->b_dev));
+	if (st == NULL)
+		return;
+	if (st->flags & ST_DYING) {
+		error = ENXIO;
+		goto done;
+	}
+	sc_link = st->sc_link;
+
+	SC_DEBUG(sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %d\n",
 	    bp->b_bcount, bp->b_blkno));
 
 	if (st->flags & ST_DYING) {
@@ -870,10 +897,12 @@ ststrategy(struct buf *bp)
 	ststart(st);
 
 	splx(s);
+	device_unref(&st->sc_dev);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;
 done:
+	device_unref(&st->sc_dev);
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
@@ -1063,7 +1092,16 @@ strestart(void *v)
 int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st;
+
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
+		return (ENXIO);
+
+	if (st->flags & ST_DYING) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 	    st->sc_link->adapter->scsi_minphys, uio));
@@ -1072,7 +1110,16 @@ stread(dev_t dev, struct uio *uio, int iomode)
 int
 stwrite(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st;
+
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
+		return (ENXIO);
+
+	if (st->flags & ST_DYING) {
+		device_unref(&st->sc_dev);
+		return (ENXIO);
+	}
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 	    st->sc_link->adapter->scsi_minphys, uio));
@@ -1086,9 +1133,8 @@ int
 stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 {
 	int error = 0;
-	int unit;
 	int nmarks;
-	int flags;
+	int flags = 0;
 	struct st_softc *st;
 	int hold_blksize;
 	u_int8_t hold_density;
@@ -1098,13 +1144,13 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	/*
 	 * Find the device that the user is talking about
 	 */
-	flags = 0;		/* give error messages, act on errors etc. */
-	unit = STUNIT(dev);
-	st = st_cd.cd_devs[unit];
+	st = stlookup(STUNIT(dev));
+	if (st == NULL)
+		return (ENXIO);
 
 	if (st->flags & ST_DYING) {
-		device_unref(&st->sc_dev);
-		return (ENXIO);
+		error = ENXIO;
+		goto done;
 	}
 
 	hold_blksize = st->blksize;
@@ -1251,7 +1297,8 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		error = scsi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
 		break;
 	}
-	return error;
+	goto done;
+
 try_new_value:
 	/*
 	 * Check that the mode being asked for is aggreeable to the
@@ -1265,7 +1312,7 @@ try_new_value:
 			st->flags |= ST_FIXEDBLOCKS;
 		else
 			st->flags &= ~ST_FIXEDBLOCKS;
-		return error;
+		goto done;
 	}
 	/*
 	 * As the drive liked it, if we are setting a new default,
@@ -1282,7 +1329,9 @@ try_new_value:
 		break;
 	}
 
-	return 0;
+done:
+	device_unref(&st->sc_dev);
+	return (error);
 }
 
 /*
