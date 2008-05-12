@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.115 2008/05/12 06:59:19 canacar Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.116 2008/05/12 10:02:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1736,7 +1736,7 @@ tht_fw_load(struct tht_softc *sc)
 		buf += wrlen;
 	}
 
-	timeout_set(&ticker, tht_fw_tick, &ok);
+	timeout_set(&ticker, tht_fw_tick, (void *)&ok);
 	timeout_add(&ticker, 2*hz);
 	while (ok) {
 		if (tht_read(sc, THT_REG_INIT_STATUS) != 0) {
