@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.6 2008/05/12 13:08:33 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.7 2008/05/12 13:56:21 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -365,10 +365,10 @@ It heeds NO_BUILD.
 .It lang/ghc
 Sets ONLY_FOR_ARCHS, MODGHC_VERSION, BUILD_DEPENDS, and RUN_DEPENDS.
 .It lang/ocaml
-Sets OCAML_VERSIOn, MODOCAM_NATIVE.
+Sets OCAML_VERSION, MODOCAML_NATIVE.
 Appends to BUILD_DEPENDS and MAKE_ENV.
 This also selects a %%native%% plist fragment depending on whether
-the arch supports native compilation or not.
+the architecture supports native compilation or not.
 .It lang/python
 .It lang/ruby
 .It perl
