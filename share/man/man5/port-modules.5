@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.4 2008/05/12 10:27:30 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.5 2008/05/12 10:48:09 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -229,6 +229,7 @@ The following variables can be overriden in a relatively safe fashion:
 .Ev PKG_ARCH ,
 .Ev PKGNAME* ,
 .Ev PREFIX ,
+.Ev REGRESS_TARGET ,
 .Ev REGRESS_IS_INTERACTIVE ,
 .Ev REORDER_DEPENDENCIES ,
 .Ev SEPARATE_BUILD ,
@@ -328,21 +329,56 @@ performs lazy evaluation.
 The following modules are available.
 .Bl -tag -width do-configure
 .It cpan
+For perl ports coming from CPAN.
+Wrapper around the normal perl module that fetches the file from
+the correct location depending on DISTNAME, and sets a default
+PKGNAME.
+Also affects REGRESS_DEPENDS, CONFIGURE_STYLE, PKG_ARCH, and CATEGORIES.
+.Pp
+Some CPAN modules are only indexed by author, set CPAN_AUTHOR=ID
+to locate the right directory.
+.Pp
+User settings: set CPAN_REPORT to Yes, CPAN_REPORT_DB to a valid directory,
+and CPAN_REPORT_FROM to a valid email adress to automate the reporting
+of regress tests to CPAN.
 .It gcc3
+If USE_GCC3=Yes, and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
+compilers will be put at the front of the path.
 .It gcc4
+If USE_GCC4=Yes, and architecture is in MODGCC4_ARCHES, then the gcc 4.2
+compilers will be put at the front of the path.
 .It gnu
+This module is documented in the main
+.Xr bsd.port.mk 5
+manpage.
 .It imake
+This module is documented in the main
+.Xr bsd.port.mk 5
+manpage.
 .It java
+Set MODJAVA_VER=x.y to use exactly the jdk x.y, MODJAVA_VER=x.y+ to
+use any x.y or higher version.  Set MODJAVA_JRERUN=Yes if the port only
+needs the jre at runtime.
+The module sets JAVA_HOME, ONLY_FOR_ARCHS, MODJAVA_RUN_DEPENDS, and
+appends to BUILD_DEPENDS and RUN_DEPENDS.
+It heeds NO_BUILD.
 .It lang/ghc
+Sets ONLY_FOR_ARCHS, MODGHC_VERSION, BUILD_DEPENDS, and RUN_DEPENDS.
 .It lang/ocaml
+Sets OCAML_VERSIOn, MODOCAM_NATIVE.
+Appends to BUILD_DEPENDS and MAKE_ENV.
+This also selects a %%native%% plist fragment depending whether
+the arch supports native compilation or not.
 .It lang/python
 .It lang/ruby
 .It perl
+This module is documented in the main
+.Xr bsd.port.mk 5
+manpage.
 .It www/pear
 .It www/zope
 .El
 .Pp
-They will be documented soon.
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr bsd.port.mk 5 ,
