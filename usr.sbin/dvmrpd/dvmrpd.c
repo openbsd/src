@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.5 2007/10/20 13:26:50 pyr Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.6 2008/05/12 19:15:02 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -151,6 +151,11 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	log_init(debug);
 

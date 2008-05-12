@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.74 2008/05/06 09:52:47 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.75 2008/05/12 19:15:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -162,6 +162,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	if ((env = parse_config(conffile, opts)) == NULL)
 		exit(1);

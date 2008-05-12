@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.6 2008/03/16 00:14:47 dlg Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.7 2008/05/12 19:15:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -133,6 +133,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	if ((env = parse_config(conffile, flags)) == NULL)
 		exit(1);

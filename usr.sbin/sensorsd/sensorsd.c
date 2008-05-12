@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.41 2008/03/16 23:54:01 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.42 2008/05/12 19:15:02 pyr Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -126,6 +126,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;

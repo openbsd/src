@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.32 2007/11/27 18:50:00 stevesk Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.33 2008/05/12 19:15:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -121,6 +121,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	if (opts & IFSD_OPT_NOACTION) {
 		if ((newconf = parse_config(configfile, opts)) == NULL)
