@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.33 2008/05/12 19:15:02 pyr Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.34 2008/05/12 23:49:28 millert Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -423,7 +423,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc > 0)
-		usage();
+		hostapd_usage();
 
 	if (config == NULL)
 		ret = strlcpy(cfg->c_config, HOSTAPD_CONFIG, sizeof(cfg->c_config));
