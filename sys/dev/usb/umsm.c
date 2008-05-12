@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.24 2008/05/09 13:31:47 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.25 2008/05/12 12:24:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -32,8 +32,23 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
+#ifdef USB_DEBUG
+#define UMSM_DEBUG
+#endif
+
+#ifdef UMSM_DEBUG
+int     umsmdebug = 1;
+#define DPRINTFN(n, x)  do { if (umsmdebug > (n)) printf x; } while (0)
+#else
+#define DPRINTFN(n, x)
+#endif
+
+#define DPRINTF(x) DPRINTFN(0, x)
+
+
 #define UMSMBUFSZ	4096
 #define	UMSM_INTR_INTERVAL	100	/* ms */
+#define E220_MODE_CHANGE_REQUEST 0x2
 
 int umsm_match(struct device *, void *, void *); 
 void umsm_attach(struct device *, struct device *, void *); 
@@ -44,6 +59,8 @@ int umsm_open(void *, int);
 void umsm_close(void *, int);
 void umsm_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void umsm_get_status(void *, int, u_char *, u_char *);
+
+usbd_status umsm_e220_changemode(usbd_device_handle);
 
 struct umsm_softc {
 	struct device		 sc_dev;
@@ -130,8 +147,20 @@ umsm_match(struct device *parent, void *match, void *aux)
 	 * of them are of class umass. Don't claim ownership in such case.
 	 */
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL || id->bInterfaceClass == UICLASS_MASS)
-		return UMATCH_NONE;
+	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
+		/*
+		 * E220 is a dual mode device, so we have to deal with
+		 * it differently.
+		 */
+		if (uaa->vendor  == USB_VENDOR_HUAWEI &&
+                    uaa->product == USB_PRODUCT_HUAWEI_E220) {
+			if  (uaa->ifaceno != 2) 
+				return UMATCH_VENDOR_IFACESUBCLASS;
+			else
+				return UMATCH_NONE;
+		} else
+			return UMATCH_NONE;
+	}
 
 	return (usb_lookup(umsm_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_IFACESUBCLASS : UMATCH_NONE;
@@ -153,7 +182,23 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
+	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
+		/* Huawei E220 require special command to change its mode to modem */
+		if (uaa->vendor  == USB_VENDOR_HUAWEI &&
+                    uaa->product == USB_PRODUCT_HUAWEI_E220 && uaa->ifaceno == 0) {
+                        umsm_e220_changemode(uaa->device);
+			/*
+			 * the device will reset its own bus from device side, therefore
+			 * we only return from this device probe process. 
+			 */
+			printf("%s: umass only mode. need to reattach\n", 
+				sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
 	uca.bulkin = uca.bulkout = -1;
+	sc->sc_intr_number = sc->sc_isize = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
@@ -167,8 +212,8 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->sc_intr_number = ed->bEndpointAddress;
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
-			printf("%s: find interrupt endpoint for %s\n", 
-				__func__, sc->sc_dev.dv_xname);
+			DPRINTF(("%s: find interrupt endpoint for %s\n", 
+				__func__, sc->sc_dev.dv_xname));
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
 			uca.bulkin = ed->bEndpointAddress;
@@ -308,8 +353,8 @@ umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 
-		printf("%s: umsm_intr: abnormal status: %s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(status));
+		DPRINTF(("%s: umsm_intr: abnormal status: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(status)));
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
@@ -330,4 +375,23 @@ umsm_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 		*lsr = sc->sc_lsr;
 	if (msr != NULL)
 		*msr = sc->sc_msr;
+}
+
+usbd_status
+umsm_e220_changemode(usbd_device_handle dev)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UF_DEVICE_REMOTE_WAKEUP);
+	USETW(req.wIndex, E220_MODE_CHANGE_REQUEST);
+	USETW(req.wLength, 0);
+
+	err = usbd_do_request(dev, &req, 0);
+	if (err) 
+		return (EIO);
+
+	return (0);
 }
