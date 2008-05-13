@@ -86,125 +86,132 @@
  */
 #define TEST_CHAR(c, f)	(test_char_table[(unsigned)(c)] & (f))
 
-void ap_util_init(void)
+void
+ap_util_init(void)
 {
-    /* nothing to do... previously there was run-time initialization of
-     * test_char_table here
-     */
+	/* nothing to do... previously there was run-time initialization of
+	 * test_char_table here
+	 */
 }
 
 
 API_VAR_EXPORT const char ap_month_snames[12][4] =
 {
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+	    "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 API_VAR_EXPORT const char ap_day_snames[7][4] =
 {
     "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
-API_EXPORT(char *) ap_get_time(void)
+API_EXPORT(char *)
+ap_get_time(void)
 {
-    time_t t;
-    char *time_string;
+	time_t t;
+	char *time_string;
 
-    t = time(NULL);
-    time_string = ctime(&t);
-    time_string[strlen(time_string) - 1] = '\0';
-    return (time_string);
+	t = time(NULL);
+	time_string = ctime(&t);
+	time_string[strlen(time_string) - 1] = '\0';
+	return (time_string);
 }
 
 /*
  * Examine a field value (such as a media-/content-type) string and return
  * it sans any parameters; e.g., strip off any ';charset=foo' and the like.
  */
-API_EXPORT(char *) ap_field_noparam(pool *p, const char *intype)
+API_EXPORT(char *)
+ap_field_noparam(pool *p, const char *intype)
 {
-    const char *semi;
+	const char *semi;
 
-    if (intype == NULL) return NULL;
+	if (intype == NULL) return NULL;
 
-    semi = strchr(intype, ';');
-    if (semi == NULL) {
-	return ap_pstrdup(p, intype);
-    } 
-    else {
-	while ((semi > intype) && ap_isspace(semi[-1])) {
-	    semi--;
+	semi = strchr(intype, ';');
+	if (semi == NULL)
+		return ap_pstrdup(p, intype);
+	else {
+		while ((semi > intype) && ap_isspace(semi[-1]))
+			semi--;
+
+		return ap_pstrndup(p, intype, semi - intype);
 	}
-	return ap_pstrndup(p, intype, semi - intype);
-    }
 }
 
-API_EXPORT(char *) ap_ht_time(pool *p, time_t t, const char *fmt, int gmt)
+API_EXPORT(char *)
+ap_ht_time(pool *p, time_t t, const char *fmt, int gmt)
 {
-    char ts[MAX_STRING_LEN];
-    char tf[MAX_STRING_LEN];
-    struct tm *tms;
+	char ts[MAX_STRING_LEN];
+	char tf[MAX_STRING_LEN];
+	struct tm *tms;
 
-    tms = (gmt ? gmtime(&t) : localtime(&t));
-    if(gmt) {
-	/* Convert %Z to "GMT" and %z to "+0000";
-	 * on hosts that do not have a time zone string in struct tm,
-	 * strftime must assume its argument is local time.
-	 */
-	const char *f;
-	char *strp;
-	for(strp = tf, f = fmt; strp < tf + sizeof(tf) - 6 && (*strp = *f)
-	    ; f++, strp++) {
-	    if (*f != '%') continue;
-	    switch (f[1]) {
-	    case '%':
-		*++strp = *++f;
-		break;
-	    case 'Z':
-		*strp++ = 'G';
-		*strp++ = 'M';
-		*strp = 'T';
-		f++;
-		break;
-	    case 'z': /* common extension */
-		*strp++ = '+';
-		*strp++ = '0';
-		*strp++ = '0';
-		*strp++ = '0';
-		*strp = '0';
-		f++;
-		break;
-	    }
+	tms = (gmt ? gmtime(&t) : localtime(&t));
+	if(gmt) {
+		/* Convert %Z to "GMT" and %z to "+0000";
+		 * on hosts that do not have a time zone string in struct tm,
+		 * strftime must assume its argument is local time.
+		 */
+		const char *f;
+		char *strp;
+		for(strp = tf, f = fmt; strp < tf + sizeof(tf) - 6
+		    && (*strp = *f); f++, strp++) {
+			if (*f != '%')
+				continue;
+			switch (f[1]) {
+			case '%':
+				*++strp = *++f;
+				break;
+			case 'Z':
+				*strp++ = 'G';
+				*strp++ = 'M';
+				*strp = 'T';
+				f++;
+				break;
+			case 'z': /* common extension */
+				*strp++ = '+';
+				*strp++ = '0';
+				*strp++ = '0';
+				*strp++ = '0';
+				*strp = '0';
+				f++;
+				break;
+			}
+		}
+		*strp = '\0';
+		fmt = tf;
 	}
-	*strp = '\0';
-	fmt = tf;
-    }
 
-    /* check return code? */
-    strftime(ts, MAX_STRING_LEN, fmt, tms);
-    ts[MAX_STRING_LEN - 1] = '\0';
-    return ap_pstrdup(p, ts);
+	/* check return code? */
+	strftime(ts, MAX_STRING_LEN, fmt, tms);
+	ts[MAX_STRING_LEN - 1] = '\0';
+	return ap_pstrdup(p, ts);
 }
 
-API_EXPORT(char *) ap_gm_timestr_822(pool *p, time_t sec)
+API_EXPORT(char *)
+ap_gm_timestr_822(pool *p, time_t sec)
 {
-    struct tm *tms;
+	struct tm *tms;
 
-    tms = gmtime(&sec);
+	tms = gmtime(&sec);
 
-    /* RFC date format; as strftime '%a, %d %b %Y %T GMT' */
-    return ap_psprintf(p,
-		"%s, %.2d %s %d %.2d:%.2d:%.2d GMT", ap_day_snames[tms->tm_wday],
-		tms->tm_mday, ap_month_snames[tms->tm_mon], tms->tm_year + 1900,
-		tms->tm_hour, tms->tm_min, tms->tm_sec);
+	/* RFC date format; as strftime '%a, %d %b %Y %T GMT' */
+	return ap_psprintf(p, "%s, %.2d %s %d %.2d:%.2d:%.2d GMT",
+	    ap_day_snames[tms->tm_wday], tms->tm_mday,
+	    ap_month_snames[tms->tm_mon], tms->tm_year + 1900,
+	    tms->tm_hour, tms->tm_min, tms->tm_sec);
 }
 
 /* What a pain in the ass. */
-API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
+API_EXPORT(struct tm *)
+ap_get_gmtoff(int *tz)
 {
-    time_t tt = time(NULL);
-    struct tm *t;
+	time_t tt = time(NULL);
+	struct tm *t;
 
-    t = localtime(&tt);
-    *tz = (int) (t->tm_gmtoff / 60);
-    return t;
+	t = localtime(&tt);
+	*tz = (int)(t->tm_gmtoff / 60);
+	return t;
 }
 
 /* Roy owes Rob beer. */
@@ -220,95 +227,103 @@ API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
  * Based loosely on sections of wildmat.c by Rich Salz
  * Hmmm... shouldn't this really go component by component?
  */
-API_EXPORT(int) ap_strcmp_match(const char *str, const char *exp)
+API_EXPORT(int)
+ap_strcmp_match(const char *str, const char *exp)
 {
-    int x, y;
+	int x, y;
 
-    for (x = 0, y = 0; exp[y]; ++y, ++x) {
-	if ((!str[x]) && (exp[y] != '*'))
-	    return -1;
-	if (exp[y] == '*') {
-	    while (exp[++y] == '*');
-	    if (!exp[y])
-		return 0;
-	    while (str[x]) {
-		int ret;
-		if ((ret = ap_strcmp_match(&str[x++], &exp[y])) != 1)
-		    return ret;
-	    }
-	    return -1;
+	for (x = 0, y = 0; exp[y]; ++y, ++x) {
+		if ((!str[x]) && (exp[y] != '*'))
+			return -1;
+		if (exp[y] == '*') {
+			while (exp[++y] == '*');
+				if (!exp[y])
+					return 0;
+			while (str[x]) {
+				int ret;
+				if ((ret = ap_strcmp_match(&str[x++],
+				    &exp[y])) != 1)
+					return ret;
+			}
+			return -1;
+		} else if ((exp[y] != '?') && (str[x] != exp[y]))
+			return 1;
 	}
-	else if ((exp[y] != '?') && (str[x] != exp[y]))
-	    return 1;
-    }
-    return (str[x] != '\0');
+	return (str[x] != '\0');
 }
 
-API_EXPORT(int) ap_strcasecmp_match(const char *str, const char *exp)
+API_EXPORT(int)
+ap_strcasecmp_match(const char *str, const char *exp)
 {
-    int x, y;
+	int x, y;
 
-    for (x = 0, y = 0; exp[y]; ++y, ++x) {
-	if ((!str[x]) && (exp[y] != '*'))
-	    return -1;
-	if (exp[y] == '*') {
-	    while (exp[++y] == '*');
-	    if (!exp[y])
-		return 0;
-	    while (str[x]) {
-		int ret;
-		if ((ret = ap_strcasecmp_match(&str[x++], &exp[y])) != 1)
-		    return ret;
-	    }
-	    return -1;
+	for (x = 0, y = 0; exp[y]; ++y, ++x) {
+		if ((!str[x]) && (exp[y] != '*'))
+			return -1;
+		if (exp[y] == '*') {
+			while (exp[++y] == '*');
+				if (!exp[y])
+					return 0;
+			while (str[x]) {
+				int ret;
+				if ((ret = ap_strcasecmp_match(&str[x++],
+				    &exp[y])) != 1)
+					return ret;
+			}
+			return -1;
+		} else if ((exp[y] != '?') &&
+		    (ap_tolower(str[x]) != ap_tolower(exp[y])))
+			return 1;
 	}
-	else if ((exp[y] != '?') && (ap_tolower(str[x]) != ap_tolower(exp[y])))
-	    return 1;
-    }
-    return (str[x] != '\0');
+	return (str[x] != '\0');
 }
 
-API_EXPORT(int) ap_is_matchexp(const char *str)
+API_EXPORT(int)
+ap_is_matchexp(const char *str)
 {
-    register int x;
+	register int x;
 
-    for (x = 0; str[x]; x++)
-	if ((str[x] == '*') || (str[x] == '?'))
-	    return 1;
-    return 0;
+	for (x = 0; str[x]; x++)
+		if ((str[x] == '*') || (str[x] == '?'))
+			return 1;
+	return 0;
 }
 
 /*
  * Similar to standard strstr() but we ignore case in this version.
  * Based on the strstr() implementation further below.
  */
-API_EXPORT(char *) ap_strcasestr(const char *s1, const char *s2)
+API_EXPORT(char *)
+ap_strcasestr(const char *s1, const char *s2)
 {
-    char *p1, *p2;
-    if (*s2 == '\0') {
-	/* an empty s2 */
-        return((char *)s1);
-    }
-    while(1) {
-	for ( ; (*s1 != '\0') && (ap_tolower(*s1) != ap_tolower(*s2)); s1++);
-	if (*s1 == '\0') return(NULL);
-	/* found first character of s2, see if the rest matches */
-        p1 = (char *)s1;
-        p2 = (char *)s2;
-        while (ap_tolower(*++p1) == ap_tolower(*++p2)) {
-            if (*p1 == '\0') {
-                /* both strings ended together */
-                return((char *)s1);
-            }
-        }
-        if (*p2 == '\0') {
-            /* second string ended, a match */
-            break;
-        }
-	/* didn't find a match here, try starting at next character in s1 */
-        s1++;
-    }
-    return((char *)s1);
+	char *p1, *p2;
+	if (*s2 == '\0') {
+		/* an empty s2 */
+		return((char *)s1);
+	}
+	while(1) {
+		for ( ; (*s1 != '\0') && (ap_tolower(*s1) != ap_tolower(*s2));
+		    s1++);
+		if (*s1 == '\0')
+			return(NULL);
+		/* found first character of s2, see if the rest matches */
+		p1 = (char *)s1;
+		p2 = (char *)s2;
+		while (ap_tolower(*++p1) == ap_tolower(*++p2)) {
+			if (*p1 == '\0')
+				/* both strings ended together */
+				return((char *)s1);
+		}
+		if (*p2 == '\0')
+			/* second string ended, a match */
+			break;
+
+		/* didn't find a match here, try starting at next character
+		 * in s1
+		 */
+		s1++;
+	}
+	return((char *)s1);
 }
 
 /*
@@ -319,21 +334,22 @@ API_EXPORT(char *) ap_strcasestr(const char *s1, const char *s2)
  * can use standard pointer comparisons in the calling function
  * (eg: test if ap_stripprefix(a,b) == a)
  */
-API_EXPORT(char *) ap_stripprefix(const char *bigstring, const char *prefix)
+API_EXPORT(char *)
+ap_stripprefix(const char *bigstring, const char *prefix)
 {
-    char *p1;
-    if (*prefix == '\0') {
-        return( (char *)bigstring);
-    }
-    p1 = (char *)bigstring;
-    while(*p1 && *prefix) {
-        if (*p1++ != *prefix++)
-            return( (char *)bigstring);
-    }
-    if (*prefix == '\0')
-        return(p1);
-    else /* hit the end of bigstring! */
-        return( (char *)bigstring);
+	char *p1;
+	if (*prefix == '\0')
+		return( (char *)bigstring);
+
+	p1 = (char *)bigstring;
+	while(*p1 && *prefix)
+		if (*p1++ != *prefix++)
+			return( (char *)bigstring);
+
+	if (*prefix == '\0')
+		return(p1);
+	else /* hit the end of bigstring! */
+		return((char *)bigstring);
 }
 
 /* 
@@ -342,15 +358,17 @@ API_EXPORT(char *) ap_stripprefix(const char *bigstring, const char *prefix)
  * This is especially important for the DSO situations of modules.
  * DO NOT MAKE A MACRO OUT OF THIS FUNCTION!
  */
-API_EXPORT(int) ap_regexec(const regex_t *preg, const char *string,
-                           size_t nmatch, regmatch_t pmatch[], int eflags)
+API_EXPORT(int)
+ap_regexec(const regex_t *preg, const char *string, size_t nmatch,
+    regmatch_t pmatch[], int eflags)
 {
-    return regexec(preg, string, nmatch, pmatch, eflags);
+	return regexec(preg, string, nmatch, pmatch, eflags);
 }
 
-API_EXPORT(size_t) ap_regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
+API_EXPORT(size_t)
+ap_regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 {
-    return regerror(errcode, preg, errbuf, errbuf_size);
+	return regerror(errcode, preg, errbuf, errbuf_size);
 }
 
 
@@ -368,72 +386,68 @@ API_EXPORT(size_t) ap_regerror(int errcode, const regex_t *preg, char *errbuf, s
  * AT&T V8 regexp package.
  */
 
-API_EXPORT(char *) ap_pregsub(pool *p, const char *input, const char *source,
-			   size_t nmatch, regmatch_t pmatch[])
+API_EXPORT(char *)
+ap_pregsub(pool *p, const char *input, const char *source, size_t nmatch,
+regmatch_t pmatch[])
 {
-    const char *src = input;
-    char *dest, *dst;
-    char c;
-    size_t no;
-    int len;
+	const char *src = input;
+	char *dest, *dst;
+	char c;
+	size_t no;
+	int len;
 
-    if (!source)
+	if (!source)
 	return NULL;
-    if (!nmatch)
+	if (!nmatch)
 	return ap_pstrdup(p, src);
 
-    /* First pass, find the size */
+	/* First pass, find the size */
 
-    len = 0;
+	len = 0;
 
-    while ((c = *src++) != '\0') {
-	if (c == '&')
-	    no = 0;
-	else if (c == '$' && ap_isdigit(*src))
-	    no = *src++ - '0';
-	else
-	    no = 10;
+	while ((c = *src++) != '\0') {
+		if (c == '&')
+			no = 0;
+		else if (c == '$' && ap_isdigit(*src))
+			no = *src++ - '0';
+		else
+			no = 10;
 
-	if (no > 9) {		/* Ordinary character. */
-	    if (c == '\\' && (*src == '$' || *src == '&'))
-		c = *src++;
-	    len++;
-	}
-	else if (no < nmatch && pmatch[no].rm_so < pmatch[no].rm_eo) {
-	    len += pmatch[no].rm_eo - pmatch[no].rm_so;
-	}
-
-    }
-
-    dest = dst = ap_pcalloc(p, len + 1);
-
-    /* Now actually fill in the string */
-
-    src = input;
-
-    while ((c = *src++) != '\0') {
-	if (c == '&')
-	    no = 0;
-	else if (c == '$' && ap_isdigit(*src))
-	    no = *src++ - '0';
-	else
-	    no = 10;
-
-	if (no > 9) {		/* Ordinary character. */
-	    if (c == '\\' && (*src == '$' || *src == '&'))
-		c = *src++;
-	    *dst++ = c;
-	}
-	else if (no < nmatch && pmatch[no].rm_so < pmatch[no].rm_eo) {
-	    len = pmatch[no].rm_eo - pmatch[no].rm_so;
-	    memcpy(dst, source + pmatch[no].rm_so, len);
-	    dst += len;
+		if (no > 9) {		/* Ordinary character. */
+			if (c == '\\' && (*src == '$' || *src == '&'))
+				c = *src++;
+			len++;
+		} else if (no < nmatch && pmatch[no].rm_so < pmatch[no].rm_eo)
+			len += pmatch[no].rm_eo - pmatch[no].rm_so;
 	}
 
-    }
-    *dst = '\0';
+	dest = dst = ap_pcalloc(p, len + 1);
 
-    return dest;
+	/* Now actually fill in the string */
+	src = input;
+
+	while ((c = *src++) != '\0') {
+		if (c == '&')
+			no = 0;
+		else if (c == '$' && ap_isdigit(*src))
+			no = *src++ - '0';
+		else
+			no = 10;
+
+		if (no > 9) {		/* Ordinary character. */
+			if (c == '\\' && (*src == '$' || *src == '&'))
+				c = *src++;
+			*dst++ = c;
+		} else if (no < nmatch && pmatch[no].rm_so <
+		    pmatch[no].rm_eo) {
+			len = pmatch[no].rm_eo - pmatch[no].rm_so;
+			memcpy(dst, source + pmatch[no].rm_so, len);
+			dst += len;
+		}
+	}
+	*dst = '\0';
+
+	return dest;
 }
 
 /*
@@ -2124,12 +2138,13 @@ API_EXPORT(char *) ap_escape_quotes (pool *p, const char *instring)
 /* dest = src with whitespace removed
  * length of dest assumed >= length of src
  */
-API_EXPORT(void) ap_remove_spaces(char *dest, char *src)
+API_EXPORT(void)
+ap_remove_spaces(char *dest, char *src)
 {
-    while (*src) {
-        if (!ap_isspace(*src)) 
-            *dest++ = *src;
-        src++;
-    }
-    *dest = 0;
+	while (*src) {
+		if (!ap_isspace(*src)) 
+			*dest++ = *src;
+		src++;
+	}
+	*dest = 0;
 }

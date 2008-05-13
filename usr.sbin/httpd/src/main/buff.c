@@ -78,7 +78,8 @@
 #define CHUNK_HEADER_SIZE (5)
 #endif
 
-#define ascii_CRLF "\015\012" /* A CRLF which won't pass the conversion machinery */
+#define ascii_CRLF "\015\012"	/* A CRLF which won't pass the conversion
+				 * machinery */
 
 /* bwrite()s of greater than this size can result in a large_write() call,
  * which can result in a writev().  It's a little more work to set up the
@@ -118,135 +119,145 @@
 
 
 /* the lowest level reading primitive */
-static int ap_read(BUFF *fb, void *buf, int nbyte)
+static int
+ap_read(BUFF *fb, void *buf, int nbyte)
 {
-    int rv;
-    
+	int rv;
+
 	if (!ap_hook_call("ap::buff::read", &rv, fb, buf, nbyte))
-	rv = read(fb->fd_in, buf, nbyte);
-    
-    return rv;
+		rv = read(fb->fd_in, buf, nbyte);
+
+	return rv;
 }
 
-static ap_inline int buff_read(BUFF *fb, void *buf, int nbyte)
+static ap_inline int
+buff_read(BUFF *fb, void *buf, int nbyte)
 {
-    int rv;
+	int rv;
 
-    rv = ap_read(fb, buf, nbyte);
-    return rv;
+	rv = ap_read(fb, buf, nbyte);
+	return rv;
 }
 
 /* the lowest level writing primitive */
-static int ap_write(BUFF *fb, const void *buf, int nbyte)
+static int
+ap_write(BUFF *fb, const void *buf, int nbyte)
 {
-    int rv;
-    
+	int rv;
+
 	if (!ap_hook_call("ap::buff::write", &rv, fb, buf, nbyte))
-	rv = write(fb->fd, buf, nbyte);
-    return rv;
+		rv = write(fb->fd, buf, nbyte);
+	return rv;
 }
 
-static ap_inline int buff_write(BUFF *fb, const void *buf, int nbyte)
+static ap_inline int
+buff_write(BUFF *fb, const void *buf, int nbyte)
 {
-    int rv;
+	int rv;
 
-    if (fb->filter_callback != NULL) {
-        fb->filter_callback(fb, buf, nbyte);
-    }
-   
-    rv = ap_write(fb, buf, nbyte);
-    return rv;
+	if (fb->filter_callback != NULL)
+		fb->filter_callback(fb, buf, nbyte);
+
+	rv = ap_write(fb, buf, nbyte);
+	return rv;
 }
 
-static void doerror(BUFF *fb, int direction)
+static void
+doerror(BUFF *fb, int direction)
 {
-    int errsave = errno;	/* Save errno to prevent overwriting it below */
+	int errsave = errno;	/* Save errno to prevent overwriting it below */
 
-    fb->flags |= (direction == B_RD ? B_RDERR : B_WRERR);
-    if (fb->error != NULL)
-	(*fb->error) (fb, direction, fb->error_data);
+	fb->flags |= (direction == B_RD ? B_RDERR : B_WRERR);
+	if (fb->error != NULL)
+		(*fb->error)(fb, direction, fb->error_data);
 
-    errno = errsave;
+	errno = errsave;
 }
 
 /* Buffering routines */
 /*
  * Create a new buffered stream
  */
-API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
+API_EXPORT(BUFF *)
+ap_bcreate(pool *p, int flags)
 {
-    BUFF *fb;
+	BUFF *fb;
 
-    fb = ap_palloc(p, sizeof(BUFF));
-    fb->pool = p;
-    fb->bufsiz = DEFAULT_BUFSIZE;
-    fb->flags = flags & (B_RDWR | B_SOCKET);
+	fb = ap_palloc(p, sizeof(BUFF));
+	fb->pool = p;
+	fb->bufsiz = DEFAULT_BUFSIZE;
+	fb->flags = flags & (B_RDWR | B_SOCKET);
 
-    if (flags & B_RD)
-	fb->inbase = ap_palloc(p, fb->bufsiz);
-    else
-	fb->inbase = NULL;
+	if (flags & B_RD)
+		fb->inbase = ap_palloc(p, fb->bufsiz);
+	else
+		fb->inbase = NULL;
 
-    /* overallocate so that we can put a chunk trailer of CRLF into this
-     * buffer */
-    if (flags & B_WR)
-	fb->outbase = ap_palloc(p, fb->bufsiz + 2);
-    else
-	fb->outbase = NULL;
+	/* overallocate so that we can put a chunk trailer of CRLF into this
+	 * buffer
+	 */
+	if (flags & B_WR)
+		fb->outbase = ap_palloc(p, fb->bufsiz + 2);
+	else
+		fb->outbase = NULL;
 
-    fb->inptr = fb->inbase;
+	fb->inptr = fb->inbase;
 
-    fb->incnt = 0;
-    fb->outcnt = 0;
-    fb->outchunk = -1;
-    fb->error = NULL;
-    fb->bytes_sent = 0L;
+	fb->incnt = 0;
+	fb->outcnt = 0;
+	fb->outchunk = -1;
+	fb->error = NULL;
+	fb->bytes_sent = 0L;
 
-    fb->fd = -1;
-    fb->fd_in = -1;
+	fb->fd = -1;
+	fb->fd_in = -1;
 
-    fb->callback_data = NULL;
-    fb->filter_callback = NULL;
+	fb->callback_data = NULL;
+	fb->filter_callback = NULL;
 
-    fb->ctx = ap_ctx_new(p);
+	fb->ctx = ap_ctx_new(p);
 
-    return fb;
+	return fb;
 }
 
 /*
  * Push some I/O file descriptors onto the stream
  */
-API_EXPORT(void) ap_bpushfd(BUFF *fb, int fd_in, int fd_out)
+API_EXPORT(void)
+ap_bpushfd(BUFF *fb, int fd_in, int fd_out)
 {
-    fb->fd = fd_out;
-    fb->fd_in = fd_in;
+	fb->fd = fd_out;
+	fb->fd_in = fd_in;
 }
 
-API_EXPORT(int) ap_bsetopt(BUFF *fb, int optname, const void *optval)
+API_EXPORT(int)
+ap_bsetopt(BUFF *fb, int optname, const void *optval)
 {
-    if (optname == BO_BYTECT) {
-	fb->bytes_sent = *(const long int *) optval - (long int) fb->outcnt;
-	return 0;
-    }
-    else {
-	errno = EINVAL;
-	return -1;
-    }
+	if (optname == BO_BYTECT) {
+		fb->bytes_sent = *(const long int *)optval -
+		    (long int)fb->outcnt;
+		return 0;
+	}
+	else {
+		errno = EINVAL;
+		return -1;
+	}
 }
 
-API_EXPORT(int) ap_bgetopt(BUFF *fb, int optname, void *optval)
+API_EXPORT(int)
+ap_bgetopt(BUFF *fb, int optname, void *optval)
 {
-    if (optname == BO_BYTECT) {
-	long int bs = fb->bytes_sent + fb->outcnt;
-	if (bs < 0L)
-	    bs = 0L;
-	*(long int *) optval = bs;
-	return 0;
-    }
-    else {
-	errno = EINVAL;
-	return -1;
-    }
+	if (optname == BO_BYTECT) {
+		long int bs = fb->bytes_sent + fb->outcnt;
+		if (bs < 0L)
+			bs = 0L;
+		*(long int *)optval = bs;
+		return 0;
+	}
+	else {
+		errno = EINVAL;
+		return -1;
+	}
 }
 
 static int bflush_core(BUFF *fb);
@@ -260,108 +271,110 @@ static int bflush_core(BUFF *fb);
  * and writes something on the wire, then it has to call start_chunk() or set
  * an error condition before returning.
  */
-static void start_chunk(BUFF *fb)
+static void
+start_chunk(BUFF *fb)
 {
-    if (fb->outchunk != -1) {
-	/* already chunking */
-	return;
-    }
-    if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR) {
-	/* unbuffered writes */
-	return;
-    }
+	if (fb->outchunk != -1) {
+		/* already chunking */
+		return;
+	}
+	if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR) {
+		/* unbuffered writes */
+		return;
+	}
 
-    /* we need at least the header_len + at least 1 data byte
-     * remember that we've overallocated fb->outbase so that we can always
-     * fit the two byte CRLF trailer
-     */
-    if (fb->bufsiz - fb->outcnt < CHUNK_HEADER_SIZE + 1) {
-	bflush_core(fb);
-    }
-    fb->outchunk = fb->outcnt;
-    fb->outcnt += CHUNK_HEADER_SIZE;
+	/* we need at least the header_len + at least 1 data byte
+	 * remember that we've overallocated fb->outbase so that we can always
+	 * fit the two byte CRLF trailer
+	 */
+	if (fb->bufsiz - fb->outcnt < CHUNK_HEADER_SIZE + 1)
+		bflush_core(fb);
+
+	fb->outchunk = fb->outcnt;
+	fb->outcnt += CHUNK_HEADER_SIZE;
 }
 
 
 /*
  * end a chunk -- tweak the chunk_header from start_chunk, and add a trailer
  */
-static void end_chunk(BUFF *fb)
+static void
+end_chunk(BUFF *fb)
 {
-    int i;
-    unsigned char *strp;
+	int i;
+	unsigned char *strp;
 
-    if (fb->outchunk == -1) {
-	/* not chunking */
-	return;
-    }
+	if (fb->outchunk == -1) {
+		/* not chunking */
+		return;
+	}
 
-    if (fb->outchunk + CHUNK_HEADER_SIZE == fb->outcnt) {
-	/* nothing was written into this chunk, and we can't write a 0 size
-	 * chunk because that signifies EOF, so just erase it
+	if (fb->outchunk + CHUNK_HEADER_SIZE == fb->outcnt) {
+		/* nothing was written into this chunk, and we can't write a
+		 * 0 size chunk because that signifies EOF, so just erase it
+		 */
+		fb->outcnt = fb->outchunk;
+		fb->outchunk = -1;
+		return;
+	}
+
+	/* we know this will fit because of how we wrote it in start_chunk() */
+	i = ap_snprintf((char *)&fb->outbase[fb->outchunk], CHUNK_HEADER_SIZE,
+	    "%x", fb->outcnt - fb->outchunk - CHUNK_HEADER_SIZE);
+
+	/* we may have to tack some trailing spaces onto the number we just
+	 * wrote in case it was smaller than our estimated size.  We've also
+	 * written a \0 into the buffer with ap_snprintf so we might have to
+	 * put a \r back in.
 	 */
-	fb->outcnt = fb->outchunk;
+	strp = &fb->outbase[fb->outchunk + i];
+	while (i < CHUNK_HEADER_SIZE - 2) {
+		*strp++ = ' ';
+		++i;
+	}
+	*strp++ = CR;
+	*strp = LF;
+
+	/* tack on the trailing CRLF, we've reserved room for this */
+	fb->outbase[fb->outcnt++] = CR;
+	fb->outbase[fb->outcnt++] = LF;
+
 	fb->outchunk = -1;
-	return;
-    }
-
-    /* we know this will fit because of how we wrote it in start_chunk() */
-    i = ap_snprintf((char *) &fb->outbase[fb->outchunk], CHUNK_HEADER_SIZE,
-		"%x", fb->outcnt - fb->outchunk - CHUNK_HEADER_SIZE);
-
-    /* we may have to tack some trailing spaces onto the number we just wrote
-     * in case it was smaller than our estimated size.  We've also written
-     * a \0 into the buffer with ap_snprintf so we might have to put a
-     * \r back in.
-     */
-    strp = &fb->outbase[fb->outchunk + i];
-    while (i < CHUNK_HEADER_SIZE - 2) {
-	*strp++ = ' ';
-	++i;
-    }
-    *strp++ = CR;
-    *strp = LF;
-
-    /* tack on the trailing CRLF, we've reserved room for this */
-    fb->outbase[fb->outcnt++] = CR;
-    fb->outbase[fb->outcnt++] = LF;
-
-    fb->outchunk = -1;
 }
 
 
 /*
  * Set a flag on (1) or off (0).
  */
-API_EXPORT(int) ap_bsetflag(BUFF *fb, int flag, int value)
+API_EXPORT(int)
+ap_bsetflag(BUFF *fb, int flag, int value)
 {
-    if (value) {
-	fb->flags |= flag;
-	if (flag & B_CHUNK) {
-	    start_chunk(fb);
+	if (value) {
+		fb->flags |= flag;
+		if (flag & B_CHUNK)
+			start_chunk(fb);
+	} else {
+		fb->flags &= ~flag;
+		if (flag & B_CHUNK)
+			end_chunk(fb);
 	}
-    }
-    else {
-	fb->flags &= ~flag;
-	if (flag & B_CHUNK) {
-	    end_chunk(fb);
-	}
-    }
-    return value;
+	return value;
 }
 
 
-API_EXPORT(int) ap_bnonblock(BUFF *fb, int direction)
+API_EXPORT(int)
+ap_bnonblock(BUFF *fb, int direction)
 {
-    int fd;
+	int fd;
 
-    fd = (direction == B_RD) ? fb->fd_in : fb->fd;
-    return fcntl(fd, F_SETFL, O_NONBLOCK);
+	fd = (direction == B_RD) ? fb->fd_in : fb->fd;
+	return fcntl(fd, F_SETFL, O_NONBLOCK);
 }
 
-API_EXPORT(int) ap_bfileno(BUFF *fb, int direction)
+API_EXPORT(int)
+ap_bfileno(BUFF *fb, int direction)
 {
-    return (direction == B_RD) ? fb->fd_in : fb->fd;
+	return (direction == B_RD) ? fb->fd_in : fb->fd;
 }
 
 /*
@@ -378,45 +391,46 @@ API_EXPORT(int) ap_bfileno(BUFF *fb, int direction)
  *
  * Note we assume the caller has ensured that fb->fd_in <= FD_SETSIZE
  */
-API_EXPORT(void) ap_bhalfduplex(BUFF *fb)
+API_EXPORT(void)
+ap_bhalfduplex(BUFF *fb)
 {
-    int rv;
-    fd_set fds;
-    struct timeval tv;
+	int rv;
+	fd_set fds;
+	struct timeval tv;
 
-    /* We don't need to do anything if the connection has been closed
-     * or there is something readable in the incoming buffer
-     * or there is nothing flushable in the output buffer.
-     */
-    if (fb == NULL || fb->fd_in < 0 || fb->incnt > 0 || fb->outcnt == 0) {
-	return;
-    }
-    /* test for a block */
-    do {
-	FD_ZERO(&fds);
-	FD_SET(fb->fd_in, &fds);
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	rv = ap_select(fb->fd_in + 1, &fds, NULL, NULL, &tv);
-    } while (rv < 0 && errno == EINTR && !(fb->flags & B_EOUT));
+	/* We don't need to do anything if the connection has been closed
+	* or there is something readable in the incoming buffer
+	* or there is nothing flushable in the output buffer.
+	*/
+	if (fb == NULL || fb->fd_in < 0 || fb->incnt > 0 || fb->outcnt == 0)
+		return;
 
-    /* treat any error as if it would block as well */
-    if (rv != 1) {
-	ap_bflush(fb);
-    }
+	/* test for a block */
+	do {
+		FD_ZERO(&fds);
+		FD_SET(fb->fd_in, &fds);
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		rv = ap_select(fb->fd_in + 1, &fds, NULL, NULL, &tv);
+	} while (rv < 0 && errno == EINTR && !(fb->flags & B_EOUT));
+
+	/* treat any error as if it would block as well */
+	if (rv != 1)
+		ap_bflush(fb);
 }
 
-static ap_inline int saferead_guts(BUFF *fb, void *buf, int nbyte)
+static ap_inline int
+saferead_guts(BUFF *fb, void *buf, int nbyte)
 {
-    int rv;
+	int rv;
 
-    if (fb->flags & B_SAFEREAD) {
-	ap_bhalfduplex(fb);
-    }
-    do {
-	rv = buff_read(fb, buf, nbyte);
-    } while (rv == -1 && errno == EINTR && !(fb->flags & B_EOUT));
-    return (rv);
+	if (fb->flags & B_SAFEREAD)
+		ap_bhalfduplex(fb);
+
+	do {
+		rv = buff_read(fb, buf, nbyte);
+	} while (rv == -1 && errno == EINTR && !(fb->flags & B_EOUT));
+	return (rv);
 }
 
 
@@ -425,18 +439,17 @@ static ap_inline int saferead_guts(BUFF *fb, void *buf, int nbyte)
  * and then there's the SFIO case.  Note that saferead takes care
  * of EINTR.
  */
-static int read_with_errors(BUFF *fb, void *buf, int nbyte)
+static int
+read_with_errors(BUFF *fb, void *buf, int nbyte)
 {
-    int rv;
+	int rv;
 
-    rv = saferead(fb, buf, nbyte);
-    if (rv == 0) {
-	fb->flags |= B_EOF;
-    }
-    else if (rv == -1 && errno != EAGAIN) {
-	doerror(fb, B_RD);
-    }
-    return rv;
+	rv = saferead(fb, buf, nbyte);
+	if (rv == 0)
+		fb->flags |= B_EOF;
+	else if (rv == -1 && errno != EAGAIN)
+		doerror(fb, B_RD);
+	return rv;
 }
 
 
@@ -448,70 +461,69 @@ static int read_with_errors(BUFF *fb, void *buf, int nbyte)
  * Only when the caller retrieves data from the buffer (calls bread)
  * is a conversion done, if the conversion flag is set at that time.
  */
-API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
+API_EXPORT(int)
+ap_bread(BUFF *fb, void *buf, int nbyte)
 {
-    int i, nrd;
+	int i, nrd;
 
-    if (fb->flags & B_RDERR)
-	return -1;
-    if (nbyte == 0)
-	return 0;
+	if (fb->flags & B_RDERR)
+		return -1;
+	if (nbyte == 0)
+		return 0;
 
-    if (!(fb->flags & B_RD)) {
-	/* Unbuffered reading.  First check if there was something in the
-	 * buffer from before we went unbuffered. */
-	if (fb->incnt) {
-	    i = (fb->incnt > nbyte) ? nbyte : fb->incnt;
-	    memcpy(buf, fb->inptr, i);
-	    fb->incnt -= i;
-	    fb->inptr += i;
-	    return i;
+	if (!(fb->flags & B_RD)) {
+		/* Unbuffered reading.  First check if there was something in
+		 * the buffer from before we went unbuffered. */
+		if (fb->incnt) {
+			i = (fb->incnt > nbyte) ? nbyte : fb->incnt;
+			memcpy(buf, fb->inptr, i);
+			fb->incnt -= i;
+			fb->inptr += i;
+			return i;
+		}
+		i = read_with_errors(fb, buf, nbyte);
+		return i;
 	}
-	i = read_with_errors(fb, buf, nbyte);
-	return i;
-    }
 
-    nrd = fb->incnt;
-/* can we fill the buffer */
-    if (nrd >= nbyte) {
-	memcpy(buf, fb->inptr, nbyte);
-	fb->incnt = nrd - nbyte;
-	fb->inptr += nbyte;
-	return nbyte;
-    }
-
-    if (nrd > 0) {
-	memcpy(buf, fb->inptr, nrd);
-	nbyte -= nrd;
-	buf = nrd + (char *) buf;
-	fb->incnt = 0;
-    }
-    if (fb->flags & B_EOF)
-	return nrd;
-
-/* do a single read */
-    if (nbyte >= fb->bufsiz) {
-/* read directly into caller's buffer */
-	i = read_with_errors(fb, buf, nbyte);
-	if (i == -1) {
-	    return nrd ? nrd : -1;
+	nrd = fb->incnt;
+	/* can we fill the buffer */
+	if (nrd >= nbyte) {
+		memcpy(buf, fb->inptr, nbyte);
+		fb->incnt = nrd - nbyte;
+		fb->inptr += nbyte;
+		return nbyte;
 	}
-    }
-    else {
-/* read into hold buffer, then memcpy */
-	fb->inptr = fb->inbase;
-	i = read_with_errors(fb, fb->inptr, fb->bufsiz);
-	if (i == -1) {
-	    return nrd ? nrd : -1;
+
+	if (nrd > 0) {
+		memcpy(buf, fb->inptr, nrd);
+		nbyte -= nrd;
+		buf = nrd + (char *)buf;
+		fb->incnt = 0;
 	}
-	fb->incnt = i;
-	if (i > nbyte)
-	    i = nbyte;
-	memcpy(buf, fb->inptr, i);
-	fb->incnt -= i;
-	fb->inptr += i;
-    }
-    return nrd + i;
+	if (fb->flags & B_EOF)
+		return nrd;
+
+	/* do a single read */
+	if (nbyte >= fb->bufsiz) {
+		/* read directly into caller's buffer */
+		i = read_with_errors(fb, buf, nbyte);
+		if (i == -1)
+			return nrd ? nrd : -1;
+	}
+	else {
+		/* read into hold buffer, then memcpy */
+		fb->inptr = fb->inbase;
+		i = read_with_errors(fb, fb->inptr, fb->bufsiz);
+		if (i == -1)
+			return nrd ? nrd : -1;
+		fb->incnt = i;
+		if (i > nbyte)
+			i = nbyte;
+		memcpy(buf, fb->inptr, i);
+		fb->incnt -= i;
+		fb->inptr += i;
+	}
+	return nrd + i;
 }
 
 
@@ -533,64 +545,65 @@ API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
  *  CR characters in the byte stream not immediately followed by a LF
  * will be preserved.
  */
-API_EXPORT(int) ap_bgets(char *buff, int n, BUFF *fb)
+API_EXPORT(int)
+ap_bgets(char *buff, int n, BUFF *fb)
 {
-    int i, ch, ct;
+	int i, ch, ct;
 
-/* Can't do bgets on an unbuffered stream */
-    if (!(fb->flags & B_RD)) {
-	errno = EINVAL;
-	return -1;
-    }
-    if (fb->flags & B_RDERR)
-	return -1;
-
-    ct = 0;
-    i = 0;
-    for (;;) {
-	if (i == fb->incnt) {
-/* no characters left */
-	    fb->inptr = fb->inbase;
-	    fb->incnt = 0;
-	    if (fb->flags & B_EOF)
-		break;
-	    i = read_with_errors(fb, fb->inptr, fb->bufsiz);
-	    if (i == -1) {
-		buff[ct] = '\0';
-		return ct ? ct : -1;
-	    }
-	    fb->incnt = i;
-	    if (i == 0)
-		break;		/* EOF */
-	    i = 0;
-	    continue;		/* restart with the new data */
+	/* Can't do bgets on an unbuffered stream */
+	if (!(fb->flags & B_RD)) {
+		errno = EINVAL;
+		return -1;
 	}
+	if (fb->flags & B_RDERR)
+		return -1;
 
-	ch = fb->inptr[i++];
-	if (ch == LF) {  /* got LF */
-	    if (ct == 0)
-		buff[ct++] = '\n';
-/* if just preceded by CR, replace CR with LF */
-	    else if (buff[ct - 1] == CR)
-		buff[ct - 1] = '\n';
-	    else if (ct < n - 1)
-		buff[ct++] = '\n';
-	    else
-		i--;		/* no room for LF */
-	    break;
+	ct = 0;
+	i = 0;
+	for (;;) {
+		if (i == fb->incnt) {
+			/* no characters left */
+			fb->inptr = fb->inbase;
+			fb->incnt = 0;
+			if (fb->flags & B_EOF)
+				break;
+			i = read_with_errors(fb, fb->inptr, fb->bufsiz);
+			if (i == -1) {
+				buff[ct] = '\0';
+				return ct ? ct : -1;
+			}
+			fb->incnt = i;
+			if (i == 0)
+				break;		/* EOF */
+			i = 0;
+			continue;		/* restart with the new data */
+		}
+
+		ch = fb->inptr[i++];
+		if (ch == LF) {  /* got LF */
+			if (ct == 0)
+				buff[ct++] = '\n';
+			/* if just preceded by CR, replace CR with LF */
+			else if (buff[ct - 1] == CR)
+				buff[ct - 1] = '\n';
+			else if (ct < n - 1)
+				buff[ct++] = '\n';
+			else
+				i--;		/* no room for LF */
+			break;
+		}
+		if (ct == n - 1) {
+			i--;		/* push back ch */
+			break;
+		}
+
+		buff[ct++] = ch;
 	}
-	if (ct == n - 1) {
-	    i--;		/* push back ch */
-	    break;
-	}
+	fb->incnt -= i;
+	fb->inptr += i;
 
-	buff[ct++] = ch;
-    }
-    fb->incnt -= i;
-    fb->inptr += i;
-
-    buff[ct] = '\0';
-    return ct;
+	buff[ct] = '\0';
+	return ct;
 }
 
 /*
@@ -600,99 +613,103 @@ API_EXPORT(int) ap_bgets(char *buff, int n, BUFF *fb)
  * Returns 1 on success, zero on end of transmission, or -1 on an error.
  *
  */
-API_EXPORT(int) ap_blookc(char *buff, BUFF *fb)
+API_EXPORT(int)
+ap_blookc(char *buff, BUFF *fb)
 {
-    int i;
+	int i;
 
-    *buff = '\0';
+	*buff = '\0';
 
-    if (!(fb->flags & B_RD)) {	/* Can't do blookc on an unbuffered stream */
-	errno = EINVAL;
-	return -1;
-    }
-    if (fb->flags & B_RDERR)
-	return -1;
-
-    if (fb->incnt == 0) {	/* no characters left in stream buffer */
-	fb->inptr = fb->inbase;
-	if (fb->flags & B_EOF)
-	    return 0;
-
-	i = read_with_errors(fb, fb->inptr, fb->bufsiz);
-	if (i <= 0) {
-	    return i;
+	if (!(fb->flags & B_RD)) {	/* Can't do blookc on an unbuffered
+					 * stream */
+		errno = EINVAL;
+		return -1;
 	}
-	fb->incnt = i;
-    }
+	if (fb->flags & B_RDERR)
+		return -1;
 
-    *buff = fb->inptr[0];
-    return 1;
+	if (fb->incnt == 0) {	/* no characters left in stream buffer */
+		fb->inptr = fb->inbase;
+		if (fb->flags & B_EOF)
+			return 0;
+
+		i = read_with_errors(fb, fb->inptr, fb->bufsiz);
+		if (i <= 0)
+			return i;
+		fb->incnt = i;
+	}
+
+	*buff = fb->inptr[0];
+	return 1;
 }
 
 /*
  * Skip data until a linefeed character is read
  * Returns 1 on success, 0 if no LF found, or -1 on error
  */
-API_EXPORT(int) ap_bskiplf(BUFF *fb)
+API_EXPORT(int)
+ap_bskiplf(BUFF *fb)
 {
-    unsigned char *x;
-    int i;
+	unsigned char *x;
+	int i;
 
-/* Can't do bskiplf on an unbuffered stream */
-    if (!(fb->flags & B_RD)) {
-	errno = EINVAL;
-	return -1;
-    }
-    if (fb->flags & B_RDERR)
-	return -1;
-
-    for (;;) {
-	x = (unsigned char *) memchr(fb->inptr, '\012', fb->incnt);
-	if (x != NULL) {
-	    x++;
-	    fb->incnt -= x - fb->inptr;
-	    fb->inptr = x;
-	    return 1;
+	/* Can't do bskiplf on an unbuffered stream */
+	if (!(fb->flags & B_RD)) {
+		errno = EINVAL;
+		return -1;
 	}
+	if (fb->flags & B_RDERR)
+		return -1;
 
-	fb->inptr = fb->inbase;
-	fb->incnt = 0;
-	if (fb->flags & B_EOF)
-	    return 0;
-	i = read_with_errors(fb, fb->inptr, fb->bufsiz);
-	if (i <= 0)
-	    return i;
-	fb->incnt = i;
-    }
+	for (;;) {
+		x = (unsigned char *)memchr(fb->inptr, '\012', fb->incnt);
+		if (x != NULL) {
+			x++;
+			fb->incnt -= x - fb->inptr;
+			fb->inptr = x;
+			return 1;
+		}
+
+		fb->inptr = fb->inbase;
+		fb->incnt = 0;
+		if (fb->flags & B_EOF)
+			return 0;
+		i = read_with_errors(fb, fb->inptr, fb->bufsiz);
+		if (i <= 0)
+			return i;
+		fb->incnt = i;
+	}
 }
 
 /*
  * output a single character.  Used by ap_bputs when the buffer
  * is full... and so it'll cause the buffer to be flushed first.
  */
-API_EXPORT(int) ap_bflsbuf(int c, BUFF *fb)
+API_EXPORT(int)
+ap_bflsbuf(int c, BUFF *fb)
 {
-    char ss[1];
+	char ss[1];
 
-    ss[0] = c;
-    return ap_bwrite(fb, ss, 1);
+	ss[0] = c;
+	return ap_bwrite(fb, ss, 1);
 }
 
 /*
  * Fill the buffer and read a character from it
  */
-API_EXPORT(int) ap_bfilbuf(BUFF *fb)
+API_EXPORT(int)
+ap_bfilbuf(BUFF *fb)
 {
-    int i;
-    char buf[1];
+	int i;
+	char buf[1];
 
-    i = ap_bread(fb, buf, 1);
-    if (i == 0)
-	errno = 0;		/* no error; EOF */
-    if (i != 1)
-	return EOF;
-    else
-	return buf[0];
+	i = ap_bread(fb, buf, 1);
+	if (i == 0)
+		errno = 0;		/* no error; EOF */
+	if (i != 1)
+		return EOF;
+	else
+		return buf[0];
 }
 
 
@@ -705,30 +722,31 @@ API_EXPORT(int) ap_bfilbuf(BUFF *fb)
  *
  * Deals with calling doerror and setting bytes_sent.
  */
-static int write_it_all(BUFF *fb, const void *buf, int nbyte)
+static int
+write_it_all(BUFF *fb, const void *buf, int nbyte)
 {
-    int i;
+	int i;
 
-    if (fb->flags & (B_WRERR | B_EOUT))
-	return -1;
-
-    while (nbyte > 0) {
-	i = buff_write(fb, buf, nbyte);
-	if (i < 0) {
-	    if (errno != EAGAIN && errno != EINTR) {
-		doerror(fb, B_WR);
+	if (fb->flags & (B_WRERR | B_EOUT))
 		return -1;
-	    }
+
+	while (nbyte > 0) {
+		i = buff_write(fb, buf, nbyte);
+		if (i < 0) {
+			if (errno != EAGAIN && errno != EINTR) {
+				doerror(fb, B_WR);
+				return -1;
+			}
+		}
+		else {
+			nbyte -= i;
+			buf = i + (const char *) buf;
+			fb->bytes_sent += i;
+		}
+		if (fb->flags & B_EOUT)
+			return -1;
 	}
-	else {
-	    nbyte -= i;
-	    buf = i + (const char *) buf;
-	    fb->bytes_sent += i;
-	}
-	if (fb->flags & B_EOUT)
-	    return -1;
-    }
-    return 0;
+	return 0;
 }
 
 
@@ -737,74 +755,74 @@ static int write_it_all(BUFF *fb, const void *buf, int nbyte)
  *
  * Deals with doerror() and bytes_sent.
  */
-static int writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
+static int
+writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
 {
-    int i, rv;
-    
-    if (fb->filter_callback != NULL) {
-        for (i = 0; i < nvec; i++) {
-            fb->filter_callback(fb, vec[i].iov_base, vec[i].iov_len);
-        }
-    }
+	int i, rv;
 
-    /* while it's nice an easy to build the vector and crud, it's painful
-     * to deal with a partial writev()
-     */
-    i = 0;
-    while (i < nvec) {
-	do
-	    if (!ap_hook_call("ap::buff::writev", &rv, fb, &vec[i], nvec -i))
-	    rv = writev(fb->fd, &vec[i], nvec - i);
-	while (rv == -1 && (errno == EINTR || errno == EAGAIN)
-	       && !(fb->flags & B_EOUT));
-	if (rv == -1) {
-	    if (errno != EINTR && errno != EAGAIN) {
-		doerror(fb, B_WR);
-	    }
-	    return -1;
+	if (fb->filter_callback != NULL) {
+		for (i = 0; i < nvec; i++)
+			fb->filter_callback(fb, vec[i].iov_base,
+			    vec[i].iov_len);
 	}
-	fb->bytes_sent += rv;
-	/* recalculate vec to deal with partial writes */
-	while (rv > 0) {
-	    if (rv < vec[i].iov_len) {
-		vec[i].iov_base = (char *) vec[i].iov_base + rv;
-		vec[i].iov_len -= rv;
-		rv = 0;
-	    }
-	    else {
-		rv -= vec[i].iov_len;
-		++i;
-	    }
+
+	/* while it's nice an easy to build the vector and crud, it's painful
+	 * to deal with a partial writev()
+	 */
+	i = 0;
+	while (i < nvec) {
+		do
+			if (!ap_hook_call("ap::buff::writev", &rv, fb, &vec[i],
+			    nvec -i))
+				rv = writev(fb->fd, &vec[i], nvec - i);
+		while (rv == -1 && (errno == EINTR || errno == EAGAIN)
+		    && !(fb->flags & B_EOUT));
+		if (rv == -1) {
+			if (errno != EINTR && errno != EAGAIN)
+				doerror(fb, B_WR);
+
+			return -1;
+		}
+		fb->bytes_sent += rv;
+		/* recalculate vec to deal with partial writes */
+		while (rv > 0) {
+			if (rv < vec[i].iov_len) {
+				vec[i].iov_base = (char *)vec[i].iov_base + rv;
+				vec[i].iov_len -= rv;
+				rv = 0;
+			} else {
+				rv -= vec[i].iov_len;
+				++i;
+			}
+		}
+		if (fb->flags & B_EOUT)
+			return -1;
 	}
-	if (fb->flags & B_EOUT)
-	    return -1;
-    }
-    /* if we got here, we wrote it all */
-    return 0;
+	/* if we got here, we wrote it all */
+	return 0;
 }
 
 /* A wrapper for buff_write which deals with error conditions and
  * bytes_sent.  Also handles non-blocking writes.
  */
-static int write_with_errors(BUFF *fb, const void *buf, int nbyte)
+static int
+write_with_errors(BUFF *fb, const void *buf, int nbyte)
 {
-    int rv;
+	int rv;
 
-    do
-	rv = buff_write(fb, buf, nbyte);
-    while (rv == -1 && errno == EINTR && !(fb->flags & B_EOUT));
-    if (rv == -1) {
-	if (errno != EAGAIN) {
-	    doerror(fb, B_WR);
+	do
+		rv = buff_write(fb, buf, nbyte);
+	while (rv == -1 && errno == EINTR && !(fb->flags & B_EOUT));
+	if (rv == -1) {
+		if (errno != EAGAIN)
+			doerror(fb, B_WR);
+		return -1;
+	} else if (rv == 0) {
+		errno = EAGAIN;
+		return -1;
 	}
-	return -1;
-    }
-    else if (rv == 0) {
-	errno = EAGAIN;
-	return -1;
-    }
-    fb->bytes_sent += rv;
-    return rv;
+	fb->bytes_sent += rv;
+	return rv;
 }
 
 
@@ -817,27 +835,28 @@ static int write_with_errors(BUFF *fb, const void *buf, int nbyte)
  * Can be used on non-blocking descriptors, but only if they're not chunked.
  * Deals with doerror() and bytes_sent.
  */
-static int bcwrite(BUFF *fb, const void *buf, int nbyte)
+static int
+bcwrite(BUFF *fb, const void *buf, int nbyte)
 {
-    char chunksize[16];		/* Big enough for practically anything */
-    struct iovec vec[3];
+	char chunksize[16];		/* Big enough for practically anything */
+	struct iovec vec[3];
 
-    if (fb->flags & (B_WRERR | B_EOUT))
-	return -1;
+	if (fb->flags & (B_WRERR | B_EOUT))
+		return -1;
 
-    if (!(fb->flags & B_CHUNK)) {
-	return write_with_errors(fb, buf, nbyte);
-    }
+	if (!(fb->flags & B_CHUNK))
+		return write_with_errors(fb, buf, nbyte);
 
-    vec[0].iov_base = chunksize;
-    vec[0].iov_len = ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF,
-				 nbyte);
-    vec[1].iov_base = (void *) buf;	/* cast is to avoid const warning */
-    vec[1].iov_len = nbyte;
-    vec[2].iov_base = ascii_CRLF;
-    vec[2].iov_len = 2;
+	vec[0].iov_base = chunksize;
+	vec[0].iov_len = ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF,
+	    nbyte);
+	vec[1].iov_base = (void *)buf;	/* cast is to avoid const warning */
+	vec[1].iov_len = nbyte;
+	vec[2].iov_base = ascii_CRLF;
+	vec[2].iov_len = 2;
 
-    return writev_it_all(fb, vec, (sizeof(vec) / sizeof(vec[0]))) ? -1 : nbyte;
+	return writev_it_all(fb, vec,
+	    (sizeof(vec) / sizeof(vec[0]))) ? -1 : nbyte;
 }
 
 
@@ -845,48 +864,47 @@ static int bcwrite(BUFF *fb, const void *buf, int nbyte)
  * Used to combine the contents of the fb buffer, and a large buffer
  * passed in.
  */
-static int large_write(BUFF *fb, const void *buf, int nbyte)
+static int
+large_write(BUFF *fb, const void *buf, int nbyte)
 {
-    struct iovec vec[4];
-    int nvec;
-    char chunksize[16];
+	struct iovec vec[4];
+	int nvec;
+	char chunksize[16];
 
-    /* it's easiest to end the current chunk */
-    if (fb->flags & B_CHUNK) {
-	end_chunk(fb);
-    }
-    nvec = 0;
-    if (fb->outcnt > 0) {
-	vec[nvec].iov_base = (void *) fb->outbase;
-	vec[nvec].iov_len = fb->outcnt;
-	++nvec;
-    }
-    if (fb->flags & B_CHUNK) {
-	vec[nvec].iov_base = chunksize;
-	vec[nvec].iov_len = ap_snprintf(chunksize, sizeof(chunksize),
-					"%x" CRLF, nbyte);
-	++nvec;
-	vec[nvec].iov_base = (void *) buf;
-	vec[nvec].iov_len = nbyte;
-	++nvec;
-	vec[nvec].iov_base = ascii_CRLF;
-	vec[nvec].iov_len = 2;
-	++nvec;
-    }
-    else {
-	vec[nvec].iov_base = (void *) buf;
-	vec[nvec].iov_len = nbyte;
-	++nvec;
-    }
+	/* it's easiest to end the current chunk */
+	if (fb->flags & B_CHUNK)
+		end_chunk(fb);
 
-    fb->outcnt = 0;
-    if (writev_it_all(fb, vec, nvec)) {
-	return -1;
-    }
-    else if (fb->flags & B_CHUNK) {
-	start_chunk(fb);
-    }
-    return nbyte;
+	nvec = 0;
+	if (fb->outcnt > 0) {
+		vec[nvec].iov_base = (void *)fb->outbase;
+		vec[nvec].iov_len = fb->outcnt;
+		++nvec;
+	}
+	if (fb->flags & B_CHUNK) {
+		vec[nvec].iov_base = chunksize;
+		vec[nvec].iov_len = ap_snprintf(chunksize, sizeof(chunksize),
+		"%x" CRLF, nbyte);
+		++nvec;
+		vec[nvec].iov_base = (void *)buf;
+		vec[nvec].iov_len = nbyte;
+		++nvec;
+		vec[nvec].iov_base = ascii_CRLF;
+		vec[nvec].iov_len = 2;
+		++nvec;
+	} else {
+		vec[nvec].iov_base = (void *)buf;
+		vec[nvec].iov_len = nbyte;
+		++nvec;
+	}
+
+	fb->outcnt = 0;
+	if (writev_it_all(fb, vec, nvec))
+		return -1;
+	else if (fb->flags & B_CHUNK)
+		start_chunk(fb);
+
+	return nbyte;
 }
 
 
@@ -897,176 +915,176 @@ static int large_write(BUFF *fb, const void *buf, int nbyte)
  * It is worth noting that if an error occurs, the buffer is in an unknown
  * state.
  */
-API_EXPORT(int) ap_bwrite(BUFF *fb, const void *buf, int nbyte)
+API_EXPORT(int)
+ap_bwrite(BUFF *fb, const void *buf, int nbyte)
 {
-    int i, nwr, useable_bufsiz;
+	int i, nwr, useable_bufsiz;
 
-    if (fb->flags & (B_WRERR | B_EOUT))
-	return -1;
-    if (nbyte == 0)
-	return 0;
-
-    if (!(fb->flags & B_WR)) {
-/* unbuffered write -- have to use bcwrite since we aren't taking care
- * of chunking any other way */
-	return bcwrite(fb, buf, nbyte);
-    }
-
-/*
- * Detect case where we're asked to write a large buffer, and combine our
- * current buffer with it in a single writev().  Note we don't consider
- * the case nbyte == 1 because modules which use rputc() loops will cause
- * us to use writev() too frequently.  In those cases we really should just
- * start a new buffer.
- */
-    if (fb->outcnt > 0 && nbyte > LARGE_WRITE_THRESHOLD
-	&& nbyte + fb->outcnt >= fb->bufsiz) {
-	return large_write(fb, buf, nbyte);
-    }
-
-/*
- * Whilst there is data in the buffer, keep on adding to it and writing it
- * out
- */
-    nwr = 0;
-    while (fb->outcnt > 0) {
-/* can we accept some data? */
-	i = fb->bufsiz - fb->outcnt;
-	if (i > 0) {
-	    if (i > nbyte)
-		i = nbyte;
-	    memcpy(fb->outbase + fb->outcnt, buf, i);
-	    fb->outcnt += i;
-	    nbyte -= i;
-	    buf = i + (const char *) buf;
-	    nwr += i;
-	    if (nbyte == 0)
-		return nwr;	/* return if none left */
-	}
-
-/* the buffer must be full */
-	if (fb->flags & B_CHUNK) {
-	    end_chunk(fb);
-	    /* it is just too painful to try to re-cram the buffer while
-	     * chunking
-	     */
-	    if (write_it_all(fb, fb->outbase, fb->outcnt) == -1) {
-		/* we cannot continue after a chunked error */
+	if (fb->flags & (B_WRERR | B_EOUT))
 		return -1;
-	    }
-	    fb->outcnt = 0;
-	    break;
-	}
-	i = write_with_errors(fb, fb->outbase, fb->outcnt);
-	if (i <= 0) {
-	    return nwr ? nwr : -1;
-	}
+	if (nbyte == 0)
+		return 0;
 
-	/* deal with a partial write */
-	if (i < fb->outcnt) {
-	    int j, n = fb->outcnt;
-	    unsigned char *x = fb->outbase;
-	    for (j = i; j < n; j++)
-		x[j - i] = x[j];
-	    fb->outcnt -= i;
-	}
-	else
-	    fb->outcnt = 0;
-
-	if (fb->flags & B_EOUT)
-	    return -1;
-    }
-/* we have emptied the file buffer. Now try to write the data from the
- * original buffer until there is less than bufsiz left.  Note that we
- * use bcwrite() to do this for us, it will do the chunking so that
- * we don't have to dink around building a chunk in our own buffer.
- *
- * Note also that bcwrite never does a partial write if we're chunking,
- * so we're guaranteed to either end in an error state, or make it
- * out of this loop and call start_chunk() below.
- *
- * Remember we may not be able to use the entire buffer if we're
- * chunking.
- */
-    useable_bufsiz = fb->bufsiz;
-    if (fb->flags & B_CHUNK) useable_bufsiz -= CHUNK_HEADER_SIZE;
-    while (nbyte >= useable_bufsiz) {
-	i = bcwrite(fb, buf, nbyte);
-	if (i <= 0) {
-	    return nwr ? nwr : -1;
+	if (!(fb->flags & B_WR)) {
+		/* unbuffered write -- have to use bcwrite since we aren't
+		 * taking care of chunking any other way
+		 */
+		return bcwrite(fb, buf, nbyte);
 	}
 
-	buf = i + (const char *) buf;
-	nwr += i;
-	nbyte -= i;
+	/*
+	 * Detect case where we're asked to write a large buffer, and combine our
+	 * current buffer with it in a single writev().  Note we don't consider
+	 * the case nbyte == 1 because modules which use rputc() loops will cause
+	 * us to use writev() too frequently.  In those cases we really should just
+	 * start a new buffer.
+	 */
+	if (fb->outcnt > 0 && nbyte > LARGE_WRITE_THRESHOLD
+	     && nbyte + fb->outcnt >= fb->bufsiz)
+		return large_write(fb, buf, nbyte);
 
-	if (fb->flags & B_EOUT)
-	    return -1;
-    }
-/* copy what's left to the file buffer */
-    fb->outcnt = 0;
-    if (fb->flags & B_CHUNK)
-	start_chunk(fb);
-    if (nbyte > 0)
-	memcpy(fb->outbase + fb->outcnt, buf, nbyte);
-    fb->outcnt += nbyte;
-    nwr += nbyte;
-    return nwr;
+
+	/*
+	 * Whilst there is data in the buffer, keep on adding to it and
+	 * writing it out
+	 */
+	nwr = 0;
+	while (fb->outcnt > 0) {
+		/* can we accept some data? */
+		i = fb->bufsiz - fb->outcnt;
+		if (i > 0) {
+			if (i > nbyte)
+				i = nbyte;
+			memcpy(fb->outbase + fb->outcnt, buf, i);
+			fb->outcnt += i;
+			nbyte -= i;
+			buf = i + (const char *)buf;
+			nwr += i;
+			if (nbyte == 0)
+				return nwr;	/* return if none left */
+		}
+
+		/* the buffer must be full */
+		if (fb->flags & B_CHUNK) {
+			end_chunk(fb);
+			/* it is just too painful to try to re-cram the buffer while
+			* chunking
+			*/
+			if (write_it_all(fb, fb->outbase, fb->outcnt) == -1) {
+				/* we cannot continue after a chunked error */
+				return -1;
+			}
+			fb->outcnt = 0;
+			break;
+		}
+		i = write_with_errors(fb, fb->outbase, fb->outcnt);
+		if (i <= 0)
+			return nwr ? nwr : -1;
+
+		/* deal with a partial write */
+		if (i < fb->outcnt) {
+			int j, n = fb->outcnt;
+			unsigned char *x = fb->outbase;
+			for (j = i; j < n; j++)
+			x[j - i] = x[j];
+			fb->outcnt -= i;
+		} else
+			fb->outcnt = 0;
+
+		if (fb->flags & B_EOUT)
+		return -1;
+	}
+	/* we have emptied the file buffer. Now try to write the data from the
+	 * original buffer until there is less than bufsiz left.  Note that we
+	 * use bcwrite() to do this for us, it will do the chunking so that
+	 * we don't have to dink around building a chunk in our own buffer.
+	 *
+	 * Note also that bcwrite never does a partial write if we're chunking,
+	 * so we're guaranteed to either end in an error state, or make it
+	 * out of this loop and call start_chunk() below.
+	 *
+	 * Remember we may not be able to use the entire buffer if we're
+	 * chunking.
+	 */
+	useable_bufsiz = fb->bufsiz;
+	if (fb->flags & B_CHUNK)
+		useable_bufsiz -= CHUNK_HEADER_SIZE;
+	while (nbyte >= useable_bufsiz) {
+		i = bcwrite(fb, buf, nbyte);
+		if (i <= 0)
+			return nwr ? nwr : -1;
+
+		buf = i + (const char *)buf;
+		nwr += i;
+		nbyte -= i;
+
+		if (fb->flags & B_EOUT)
+			return -1;
+	}
+	/* copy what's left to the file buffer */
+	fb->outcnt = 0;
+	if (fb->flags & B_CHUNK)
+		start_chunk(fb);
+	if (nbyte > 0)
+		memcpy(fb->outbase + fb->outcnt, buf, nbyte);
+	fb->outcnt += nbyte;
+	nwr += nbyte;
+	return nwr;
 }
 
 
-static int bflush_core(BUFF *fb)
+static int
+bflush_core(BUFF *fb)
 {
-    int i;
+	int i;
 
-    while (fb->outcnt > 0) {
-	i = write_with_errors(fb, fb->outbase, fb->outcnt);
-	if (i <= 0)
-	    return -1;
+	while (fb->outcnt > 0) {
+		i = write_with_errors(fb, fb->outbase, fb->outcnt);
+		if (i <= 0)
+			return -1;
 
-	/*
-	 * We should have written all the data, but if the fd was in a
-	 * strange (non-blocking) mode, then we might not have done so.
-	 */
-	if (i < fb->outcnt) {
-	    int j, n = fb->outcnt;
-	    unsigned char *x = fb->outbase;
-	    for (j = i; j < n; j++)
-		x[j - i] = x[j];
+		/*
+		 * We should have written all the data, but if the fd was in a
+		 * strange (non-blocking) mode, then we might not have done so.
+		 */
+		if (i < fb->outcnt) {
+			int j, n = fb->outcnt;
+			unsigned char *x = fb->outbase;
+			for (j = i; j < n; j++)
+			x[j - i] = x[j];
+		}
+		fb->outcnt -= i;
+
+		/* If a soft timeout occurs while flushing, the handler should
+		 * have set the buffer flag B_EOUT.
+		 */
+		if (fb->flags & B_EOUT)
+			return -1;
 	}
-	fb->outcnt -= i;
-
-	/* If a soft timeout occurs while flushing, the handler should
-	 * have set the buffer flag B_EOUT.
-	 */
-	if (fb->flags & B_EOUT)
-	    return -1;
-    }
-
-    return 0;
+	return 0;
 }
 
 /*
  * Flushes the buffered stream.
  * Returns 0 on success or -1 on error
  */
-API_EXPORT(int) ap_bflush(BUFF *fb)
+API_EXPORT(int)
+ap_bflush(BUFF *fb)
 {
-    int ret;
+	int ret;
 
-    if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
-	return -1;
+	if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
+		return -1;
 
-    if (fb->flags & B_CHUNK)
-	end_chunk(fb);
+	if (fb->flags & B_CHUNK)
+		end_chunk(fb);
 
-    ret = bflush_core(fb);
+	ret = bflush_core(fb);
 
-    if (ret == 0 && (fb->flags & B_CHUNK)) {
-	start_chunk(fb);
-    }
+	if (ret == 0 && (fb->flags & B_CHUNK))
+		start_chunk(fb);
 
-    return ret;
+	return ret;
 }
 
 /*
@@ -1075,153 +1093,152 @@ API_EXPORT(int) ap_bflush(BUFF *fb)
  * Sets the EOF flag to indicate no further data can be read,
  * and the EOUT flag to indicate no further data can be written.
  */
-API_EXPORT(int) ap_bclose(BUFF *fb)
+API_EXPORT(int)
+ap_bclose(BUFF *fb)
 {
-    int rc1, rc2, rc3;
+	int rc1, rc2, rc3;
 
-    if (fb->flags & B_WR)
-	rc1 = ap_bflush(fb);
-    else
-	rc1 = 0;
-    if (fb->flags & B_SOCKET) {
-	rc2 = ap_pclosesocket(fb->pool, fb->fd);
-	if (fb->fd_in != fb->fd) {
-	    rc3 = ap_pclosesocket(fb->pool, fb->fd_in);
+	if (fb->flags & B_WR)
+		rc1 = ap_bflush(fb);
+	else
+		rc1 = 0;
+	if (fb->flags & B_SOCKET) {
+		rc2 = ap_pclosesocket(fb->pool, fb->fd);
+		if (fb->fd_in != fb->fd)
+			rc3 = ap_pclosesocket(fb->pool, fb->fd_in);
+		else
+			rc3 = 0;
+	} else {
+		rc2 = ap_pclosef(fb->pool, fb->fd);
+		if (fb->fd_in != fb->fd)
+			rc3 = ap_pclosef(fb->pool, fb->fd_in);
+		else
+			rc3 = 0;
 	}
-	else {
-	    rc3 = 0;
-	}
-    } else {
-	rc2 = ap_pclosef(fb->pool, fb->fd);
-	if (fb->fd_in != fb->fd) {
-	    rc3 = ap_pclosef(fb->pool, fb->fd_in);
-	}
-	else {
-	    rc3 = 0;
-	}
-    }
 
-    fb->inptr = fb->inbase;
-    fb->incnt = 0;
-    fb->outcnt = 0;
+	fb->inptr = fb->inbase;
+	fb->incnt = 0;
+	fb->outcnt = 0;
 
-    fb->flags |= B_EOF | B_EOUT;
-    fb->fd = -1;
-    fb->fd_in = -1;
+	fb->flags |= B_EOF | B_EOUT;
+	fb->fd = -1;
+	fb->fd_in = -1;
 
-    if (rc1 != 0)
-	return rc1;
-    else if (rc2 != 0)
-	return rc2;
-    else
-	return rc3;
+	if (rc1 != 0)
+		return rc1;
+	else if (rc2 != 0)
+		return rc2;
+	else
+		return rc3;
 }
 
 /*
  * returns the number of bytes written or -1 on error
  */
-API_EXPORT(int) ap_bputs(const char *x, BUFF *fb)
+API_EXPORT(int)
+ap_bputs(const char *x, BUFF *fb)
 {
-    int i, j = strlen(x);
-    i = ap_bwrite(fb, x, j);
-    if (i != j)
-	return -1;
-    else
-	return j;
-}
-
-/*
- * returns the number of bytes written or -1 on error
- */
-API_EXPORT_NONSTD(int) ap_bvputs(BUFF *fb,...)
-{
-    int i, j, k;
-    va_list v;
-    const char *x;
-
-    va_start(v, fb);
-    for (k = 0;;) {
-	x = va_arg(v, const char *);
-	if (x == NULL)
-	    break;
-	j = strlen(x);
+	int i, j = strlen(x);
 	i = ap_bwrite(fb, x, j);
-	if (i != j) {
-	    va_end(v);
-	    return -1;
-	}
-	k += i;
-    }
-
-    va_end(v);
-
-    return k;
+	if (i != j)
+		return -1;
+	else
+		return j;
 }
 
-API_EXPORT(void) ap_bonerror(BUFF *fb, void (*error) (BUFF *, int, void *),
-			  void *data)
+/*
+ * returns the number of bytes written or -1 on error
+ */
+API_EXPORT_NONSTD(int)
+ap_bvputs(BUFF *fb,...)
 {
-    fb->error = error;
-    fb->error_data = data;
+	int i, j, k;
+	va_list v;
+	const char *x;
+
+	va_start(v, fb);
+	for (k = 0;;) {
+		x = va_arg(v, const char *);
+		if (x == NULL)
+			break;
+		j = strlen(x);
+		i = ap_bwrite(fb, x, j);
+		if (i != j) {
+			va_end(v);
+			return -1;
+		}
+		k += i;
+	}
+
+	va_end(v);
+
+	return k;
+}
+
+API_EXPORT(void)
+ap_bonerror(BUFF *fb, void (*error) (BUFF *, int, void *), void *data)
+{
+	fb->error = error;
+	fb->error_data = data;
 }
 
 struct bprintf_data {
-    ap_vformatter_buff vbuff;
-    BUFF *fb;
+    ap_vformatter_buff	 vbuff;
+    BUFF		*fb;
 };
 
-static int bprintf_flush(ap_vformatter_buff *vbuff)
+static int
+bprintf_flush(ap_vformatter_buff *vbuff)
 {
-    struct bprintf_data *b = (struct bprintf_data *)vbuff;
-    BUFF *fb = b->fb;
+	struct bprintf_data *b = (struct bprintf_data *)vbuff;
+	BUFF *fb = b->fb;
 
-    fb->outcnt += b->vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
-    if (fb->outcnt == fb->bufsiz) {
-	if (ap_bflush(fb)) {
-	    return -1;
-	}
-    }
-    vbuff->curpos = (char *)&fb->outbase[fb->outcnt];
-    vbuff->endpos = (char *)&fb->outbase[fb->bufsiz];
-    return 0;
+	fb->outcnt += b->vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
+	if (fb->outcnt == fb->bufsiz)
+		if (ap_bflush(fb))
+			return -1;
+
+	vbuff->curpos = (char *)&fb->outbase[fb->outcnt];
+	vbuff->endpos = (char *)&fb->outbase[fb->bufsiz];
+	return 0;
 }
 
-API_EXPORT_NONSTD(int) ap_bprintf(BUFF *fb, const char *fmt, ...)
+API_EXPORT_NONSTD(int)
+ap_bprintf(BUFF *fb, const char *fmt, ...)
 {
-    va_list ap;
-    int res;
-    struct bprintf_data b;
+	va_list ap;
+	int res;
+	struct bprintf_data b;
 
-    /* XXX: only works with buffered writes */
-    if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
-	return -1;
-    b.vbuff.curpos = (char *)&fb->outbase[fb->outcnt];
-    b.vbuff.endpos = (char *)&fb->outbase[fb->bufsiz];
-    b.fb = fb;
-    va_start(ap, fmt);
-    res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
-    va_end(ap);
-    if (res != -1) {
-	fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
-    }
-    return res;
+	/* XXX: only works with buffered writes */
+	if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
+		return -1;
+	b.vbuff.curpos = (char *)&fb->outbase[fb->outcnt];
+	b.vbuff.endpos = (char *)&fb->outbase[fb->bufsiz];
+	b.fb = fb;
+	va_start(ap, fmt);
+	res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
+	va_end(ap);
+	if (res != -1)
+		fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
+	return res;
 }
 
-API_EXPORT(int) ap_vbprintf(BUFF *fb, const char *fmt, va_list ap)
+API_EXPORT(int) 
+ap_vbprintf(BUFF *fb, const char *fmt, va_list ap)
 {
-    struct bprintf_data b;
-    int res;
+	struct bprintf_data b;
+	int res;
 
-    /* XXX: only works with buffered writes */
-    if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
-	return -1;
-    b.vbuff.curpos = (char *)&fb->outbase[fb->outcnt];
-    b.vbuff.endpos = (char *)&fb->outbase[fb->bufsiz];
-    b.fb = fb;
-    res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
-    if (res != -1) {
-	fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
-    }
-    return res;
+	/* XXX: only works with buffered writes */
+	if ((fb->flags & (B_WRERR | B_EOUT | B_WR)) != B_WR)
+		return -1;
+	b.vbuff.curpos = (char *)&fb->outbase[fb->outcnt];
+	b.vbuff.endpos = (char *)&fb->outbase[fb->bufsiz];
+	b.fb = fb;
+	res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
+	if (res != -1)
+		fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
+	return res;
 }
  

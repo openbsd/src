@@ -88,34 +88,35 @@
 #include "httpd.h"
 #include "util_md5.h"
 
-API_EXPORT(char *) ap_md5_binary(pool *p, const unsigned char *buf, int length)
+API_EXPORT(char *)
+ap_md5_binary(pool *p, const unsigned char *buf, int length)
 {
-    const char *hex = "0123456789abcdef";
-    AP_MD5_CTX my_md5;
-    unsigned char hash[16];
-    char *r, result[33];
-    int i;
+	const char *hex = "0123456789abcdef";
+	AP_MD5_CTX my_md5;
+	unsigned char hash[16];
+	char *r, result[33];
+	int i;
 
-    /*
-     * Take the MD5 hash of the string argument.
-     */
+	/*
+	 * Take the MD5 hash of the string argument.
+	 */
+	ap_MD5Init(&my_md5);
+	ap_MD5Update(&my_md5, buf, (unsigned int)length);
+	ap_MD5Final(hash, &my_md5);
 
-    ap_MD5Init(&my_md5);
-    ap_MD5Update(&my_md5, buf, (unsigned int)length);
-    ap_MD5Final(hash, &my_md5);
+	for (i = 0, r = result; i < 16; i++) {
+		*r++ = hex[hash[i] >> 4];
+		*r++ = hex[hash[i] & 0xF];
+	}
+	*r = '\0';
 
-    for (i = 0, r = result; i < 16; i++) {
-	*r++ = hex[hash[i] >> 4];
-	*r++ = hex[hash[i] & 0xF];
-    }
-    *r = '\0';
-
-    return ap_pstrdup(p, result);
+	return ap_pstrdup(p, result);
 }
 
-API_EXPORT(char *) ap_md5(pool *p, const unsigned char *string)
+API_EXPORT(char *)
+ap_md5(pool *p, const unsigned char *string)
 {
-    return ap_md5_binary(p, string, (int) strlen((char *)string));
+	return ap_md5_binary(p, string, (int) strlen((char *)string));
 }
 
 /* these portions extracted from mpack, John G. Myers - jgm+@cmu.edu */
@@ -163,41 +164,45 @@ API_EXPORT(char *) ap_md5(pool *p, const unsigned char *string)
 static char basis_64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-API_EXPORT(char *) ap_md5contextTo64(pool *a, AP_MD5_CTX * context)
+API_EXPORT(char *)
+ap_md5contextTo64(pool *a, AP_MD5_CTX * context)
 {
-    unsigned char digest[18];
-    char *encodedDigest;
-    int i;
-    char *p;
+	unsigned char digest[18];
+	char *encodedDigest;
+	int i;
+	char *p;
 
-    encodedDigest = (char *) ap_pcalloc(a, 25 * sizeof(char));
+	encodedDigest = (char *)ap_pcalloc(a, 25 * sizeof(char));
 
-    ap_MD5Final(digest, context);
-    digest[sizeof(digest) - 1] = digest[sizeof(digest) - 2] = 0;
+	ap_MD5Final(digest, context);
+	digest[sizeof(digest) - 1] = digest[sizeof(digest) - 2] = 0;
 
-    p = encodedDigest;
-    for (i = 0; i < sizeof(digest); i += 3) {
-	*p++ = basis_64[digest[i] >> 2];
-	*p++ = basis_64[((digest[i] & 0x3) << 4) | ((int) (digest[i + 1] & 0xF0) >> 4)];
-	*p++ = basis_64[((digest[i + 1] & 0xF) << 2) | ((int) (digest[i + 2] & 0xC0) >> 6)];
-	*p++ = basis_64[digest[i + 2] & 0x3F];
-    }
-    *p-- = '\0';
-    *p-- = '=';
-    *p-- = '=';
-    return encodedDigest;
+	p = encodedDigest;
+	for (i = 0; i < sizeof(digest); i += 3) {
+		*p++ = basis_64[digest[i] >> 2];
+		*p++ = basis_64[((digest[i] & 0x3) << 4) |
+		    ((int)(digest[i + 1] & 0xF0) >> 4)];
+		*p++ = basis_64[((digest[i + 1] & 0xF) << 2) |
+		    ((int)(digest[i + 2] & 0xC0) >> 6)];
+		*p++ = basis_64[digest[i + 2] & 0x3F];
+	}
+	*p-- = '\0';
+	*p-- = '=';
+	*p-- = '=';
+	return encodedDigest;
 }
 
-API_EXPORT(char *) ap_md5digest(pool *p, FILE *infile)
+API_EXPORT(char *)
+ap_md5digest(pool *p, FILE *infile)
 {
-    AP_MD5_CTX context;
-    unsigned char buf[1000];
-    unsigned int nbytes;
+	AP_MD5_CTX context;
+	unsigned char buf[1000];
+	unsigned int nbytes;
 
-    ap_MD5Init(&context);
-    while ((nbytes = fread(buf, 1, sizeof(buf), infile))) {
-	ap_MD5Update(&context, buf, nbytes);
-    }
-    rewind(infile);
-    return ap_md5contextTo64(p, &context);
+	ap_MD5Init(&context);
+	while ((nbytes = fread(buf, 1, sizeof(buf), infile)))
+		ap_MD5Update(&context, buf, nbytes);
+
+	rewind(infile);
+	return ap_md5contextTo64(p, &context);
 }
