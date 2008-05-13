@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.7 2006/10/14 20:36:40 deraadt Exp $
+# $OpenBSD: Makefile,v 1.8 2008/05/13 21:12:43 miod Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "hppa" || ${MACHINE} == "macppc" || \
-    ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus" || \
-    ${MACHINE} == "landisk"
+    ${MACHINE} == "hppa" || ${MACHINE} == "landisk" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "socppc" || \
+    ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus"
 
 PROG=	hotplugd
 SRCS=	hotplugd.c
@@ -21,6 +21,6 @@ NOPROG=	yes
 .endif
 
 MAN=	hotplugd.8
-MANSUBDIR=alpha amd64 armish i386 hppa macppc sparc64 zaurus landisk
+MANSUBDIR=alpha amd64 armish i386 hppa landisk macppc socppc sparc64 zaurus
 
 .include <bsd.prog.mk>
