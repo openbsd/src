@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.14 2007/09/17 17:34:22 brad Exp $ */
+/*	$OpenBSD: if_art.c,v 1.15 2008/05/13 01:37:26 brad Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -336,7 +336,7 @@ art_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmreq)
 	ac = (struct art_softc *)
 	    ((struct channel_softc *)ifp->if_softc)->cc_parent;
 	ifmreq->ifm_status = IFM_AVALID;
-	if (ifp->if_link_state == LINK_STATE_UP)
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
 		ifmreq->ifm_status |= IFM_ACTIVE;
 	ifmreq->ifm_active = ac->art_media;
 
@@ -401,7 +401,7 @@ art_onesec(void *arg)
 
 	if (link_state != ifp->if_link_state) {
 		s = splsoftnet();
-		if (link_state == LINK_STATE_UP)
+		if (LINK_STATE_IS_UP(link_state))
 			ppp->pp_up(ppp);
 		else
 			ppp->pp_down(ppp);
@@ -425,7 +425,7 @@ art_linkstate(void *arg)
 	struct art_softc	*ac = arg;
 	struct ifnet		*ifp = ac->art_channel->cc_ifp;
 
-	if (ifp->if_link_state == LINK_STATE_UP)
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
 		/* turn red led off */
 		ebus_set_led(ac->art_channel, 0, MUSYCC_LED_RED);
 	else
