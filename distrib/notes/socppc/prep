@@ -1,0 +1,137 @@
+dnl	$OpenBSD: prep,v 1.1 2008/05/13 20:47:32 kettenis Exp $
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to learn a bit about Das U-Boot, the low-level process that controls
+the microprocessor after hardware initialization.
+
+Talking to the Thecus
+
+The Thecus N2100 needs a serial cable. On the back of the disk drive
+circuit board, there is either a 10-pin header (with one pin removed),
+or 9 holes for you to solder in your own header.  The ribbon cable
+that connects from there to your serial cable or the serial port on
+your computer is of the same type as used on older i386 PCs, but
+be aware that there are two different types of 10-pin IDC to DB-9M
+ribbon cable in use, which look identical (the differences are hidden
+inside the DB-9 connector). The cable you need is wired using the
+"AT-Everex" or "Asus" pinout, as described here:
+
+    http://www.pccables.com/07120.htm
+
+and *not* the more straightforward to solder "crossed" type:
+
+    http://www.pccables.com/07121.htm.
+
+If you wish to check a cable, or make your own, the pinouts are:
+
+    DB9           IDC10
+    ===           =====
+    1 2 3 4 5     1 3 5 7 9
+     6 7 8 9      2 4 6 8 10
+
+Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
+
+
+Booting Thecus N2100
+
+When you have connected your computer, a command like "tip -115200 tty00"
+(assuming you're using the first serial port on your machine) should 
+connect you to the Thecus console. Now apply power to the Thecus
+and start it.
+
+After some device probe information, you should see this prompt:
+
+    Hit any key to stop autoboot:  1
+
+You have exactly one second to press a key and enter interactive
+U-Boot.  Fortunately it will typically accept a key typed during the
+diagnostics that precede thus prompt.
+
+The recommended way to boot OpenBSD on Thecus is to configure networking and
+load bsd.rd from a tftp server or http server. First networking must be
+configured using the setenv command.
+
+    => setenv ipaddr 10.0.0.21
+    => setenv serverip 10.0.0.7
+
+Once you have done this, and have set up your TFTP server on
+the gateway machine (10.0.0.7 in the above example), you can
+boot manually.
+
+    => tftpboot 200000 bsd.rd
+    Speed: 1000, full duplex
+    Using Freescale TSEC0 device
+    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
+    Filename 'bsd.rd'.
+    Load address: 0x200000
+    Loading: ##########################################################
+          #############################################################
+          ...
+          ######
+    done
+    Bytes transferred = 295148 (480ec hex)
+    => go 200000
+
+Copyright (c) 1982, 1986, 1989, 1991, 1993
+     The Regents of the University of California.  All rights reserved.
+Copyright (c) 1995-2008 OpenBSD. All rights reserved.  http://www.OpenBSD.org
+
+OpenBSD 4.3 (RAMDISK) #175: Tue Mar  4 21:54:34 MST 2008
+    deraadt@socppc.openbsd.org:/usr/src/sys/arch/socppc/compile/RAMDISK
+real mem = 67108864 (64MB)
+avail mem = 63012864 (60MB)
+...
+Install(I), Upgrade(U) or Shell(S)?
+
+If you then install to your hard disk, in future you can
+load the OpenBSD/socppc boot loader
+
+    => tftpboot 100000 boot
+    => bootm
+
+and just hit "return" to boot OpenBSD.
+
+
+Automatic Booting
+
+However, for easier booting, you may wish to modify the flash
+memory so that the Thecus will boot automatically into OpenBSD
+when it is powered up.
+
+    => erase fe780000 fe800000
+    
+    .... done
+    Erased 4 sectors
+    => tftpboot 200000 boot
+    Speed: 1000, full duplex
+    Using Freescale TSEC0 device
+    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
+    Filename 'boot'.
+    Load address: 0x200000
+    Loading: ##########################################################
+    done
+    Bytes transferred = 295148 (480ec hex)
+    => cp 200000 fe780000 20000
+    Copy to Flash... 
+    512 KBdone
+    => setenv bootcmd bootm FE780000
+    => saveenv
+    Saving Environment to Flash...
+    Un-Protected 2 sectors
+    Erasing Flash...
+    .. done
+    Erased 2 sectors
+    Writing to Flash... 
+    256 KBdone
+    Protected 2 sectors
+    => reset
+
+This configuration can easily be set back to the default, as the
+Linux system does not get erased from the flash memory. To set it
+back, just change the boot script with fconfig back to what it was,
+for example:
+
+    => setenv bootcmd flashboot
+    => savenv
+
+The bootloader is command driven with timeout like many other OpenBSD
+architectures.

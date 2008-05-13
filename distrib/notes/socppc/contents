@@ -1,0 +1,34 @@
+dnl	$OpenBSD: contents,v 1.1 2008/05/13 20:47:32 kettenis Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+
+	boot		The OpenBSD/MACHINE secondary boot loader.
+
+DistributionDescription(eleven)
+
+OpenBSDbase(56910063,164264180,shared)
+
+OpenBSDcomp(98847624,255348473,shared)
+
+OpenBSDetc(1222181,4031284)
+
+OpenBSDgame(2749879,6226456)
+
+OpenBSDman(7710862,27896382)
+
+OpenBSDmisc(2306611,7714263)
+
+OpenBSDxbase(11134588,32455021)
+
+OpenBSDxetc(80630,301140)
+
+OpenBSDxfont(35581491,43728442)
+
+OpenBSDxserv(8299743,23973793)
+
+OpenBSDxshare(2743002,14575889)
