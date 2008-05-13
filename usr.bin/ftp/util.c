@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2008/05/13 02:09:38 ray Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.47 2007/09/11 15:47:17 gilles Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.48 2008/05/13 02:09:38 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -128,26 +128,8 @@ setpeer(int argc, char *argv[])
 		port = gateport;
 	else
 		port = ftpport;
-#if 0
-	if (argc > 2) {
-		char *ep;
-		long nport;
-
-		nport = strtol(argv[2], &ep, 10);
-		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
-			fprintf(ttyout, "%s: bad port number '%s'.\n",
-			    argv[1], argv[2]);
-			fprintf(ttyout, "usage: %s host-name [port]\n",
-			    argv[0]);
-			code = -1;
-			return;
-		}
-		port = htons((in_port_t)nport);
-	}
-#else
 	if (argc > 2)
 		port = argv[2];
-#endif
 
 	if (gatemode) {
 		if (gateserver == NULL || *gateserver == '\0')

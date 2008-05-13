@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.57 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.58 2008/05/13 02:09:38 ray Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.57 2007/09/11 15:47:17 gilles Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.58 2008/05/13 02:09:38 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -867,24 +867,9 @@ setgate(int argc, char *argv[])
 			gatemode = 0;
 		else {
 			if (argc == 3) {
-#if 0
-				char *ep;
-				long port;
-
-				port = strtol(argv[2], &ep, 10);
-				if (port < 0 || port > USHRT_MAX || *ep != '\0') {
-					fprintf(ttyout,
-					    "%s: bad gateport value.\n",
-					    argv[2]);
-					code = -1;
-					return;
-				}
-				gateport = htons(port);
-#else
 				gateport = strdup(argv[2]);
 				if (gateport == NULL)
 					err(1, NULL);
-#endif
 			}
 			strlcpy(gsbuf, argv[1], sizeof(gsbuf));
 			gateserver = gsbuf;
