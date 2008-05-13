@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.1 2008/05/10 12:02:20 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.2 2008/05/13 21:53:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -220,10 +220,10 @@ intr_establish(int ivec, int type, int level,
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
-		panic("xxx");
+		panic("%s: malloc failed", __func__);
 
 	if (ivec < 0 || ivec >= IPIC_NVEC)
-		panic("xxx");
+		panic("%s: invalid vector %d", __func__, ivec);
 
 	for (p = &ipic_intrhand[ivec]; (q = *p) != NULL; p = &q->ih_next)
 		;
