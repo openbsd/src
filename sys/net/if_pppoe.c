@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.20 2008/04/24 11:36:38 dlg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.21 2008/05/13 02:24:08 brad Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -36,11 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $");
-*/
 
 #include "pppoe.h"
 #include "bpfilter.h"

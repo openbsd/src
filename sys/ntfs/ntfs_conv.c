@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_conv.c,v 1.3 2005/04/20 21:02:41 brad Exp $	*/
+/*	$OpenBSD: ntfs_conv.c,v 1.4 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -39,11 +39,6 @@
  *
  * The utf-8 routines were derived from src/lib/libc/locale/utf2.c.
  */
-
-#include <sys/cdefs.h>
-#ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

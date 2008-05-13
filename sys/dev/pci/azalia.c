@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.49 2008/04/28 08:57:08 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.50 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -48,11 +48,6 @@
  *  - multiple codecs (needed?)
  *  - multiple streams (needed?)
  */
-
-#include <sys/cdefs.h>
-#ifdef NETBSD_GOOP
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.15 2005/09/29 04:14:03 kent Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/device.h>

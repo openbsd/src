@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.12 2007/12/09 21:28:53 hshoexer Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.13 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
  *	Id: ntfs_vnops.c,v 1.5 1999/05/12 09:43:06 semenu Exp
  *
  */
-
-#include <sys/cdefs.h>
-#ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

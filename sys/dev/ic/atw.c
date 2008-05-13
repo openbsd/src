@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.57 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: atw.c,v 1.58 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -40,11 +40,6 @@
 /*
  * Device driver for the ADMtek ADM8211 802.11 MAC/BBP.
  */
-
-#include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
-#endif
 
 #include "bpfilter.h"
 

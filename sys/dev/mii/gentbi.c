@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.4 2008/03/12 11:32:17 brad Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.5 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -73,11 +73,6 @@
  *
  * All we have to do here is correctly report speed and duplex.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.17 2007/10/22 23:00:45 fgsch Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.18 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -64,11 +64,6 @@
  *	  The core could also be used for the ILACC (Am79900) 32-bit
  *	  Ethernet chip (XXX only if we use an ILACC-compatible SWSTYLE).
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $");
-#endif
 
 #include "bpfilter.h"
 

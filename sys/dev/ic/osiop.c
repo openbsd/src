@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.31 2007/11/05 00:21:36 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.32 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -68,9 +68,6 @@
  *
  * bus_space/bus_dma'fied by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  */
-
-#include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $"); */
 
 #include <sys/param.h>
 #include <sys/systm.h>

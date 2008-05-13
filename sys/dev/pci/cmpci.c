@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.18 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.19 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -41,11 +41,6 @@
  *   - Joystick support.
  *
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $");
-#endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x

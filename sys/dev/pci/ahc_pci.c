@@ -1,4 +1,6 @@
-/*	$OpenBSD: ahc_pci.c,v 1.52 2007/09/07 18:07:06 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.53 2008/05/13 02:24:08 brad Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.52 2007/09/07 18:07:06 krw Exp $
+ * $Id: ahc_pci.c,v 1.53 2008/05/13 02:24:08 brad Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -49,9 +51,6 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
-
-#include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $"); */
 
 #include <sys/param.h>
 #include <sys/systm.h>

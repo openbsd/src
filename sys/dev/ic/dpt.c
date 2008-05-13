@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.13 2007/11/05 20:30:44 krw Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.14 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -68,11 +68,6 @@
  * o An interface to userland applications.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
  */
-
-#include <sys/cdefs.h>
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $");
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

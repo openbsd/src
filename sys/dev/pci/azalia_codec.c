@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.47 2008/04/10 17:55:17 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.48 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -36,11 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#ifdef NETBSD_GOOP
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/device.h>

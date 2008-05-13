@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.7 2007/10/22 23:00:45 fgsch Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.8 2008/05/13 02:24:08 brad Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -42,11 +42,6 @@
  * PCI bus front-end for the Standard Microsystems Corp. 83C170
  * Ethernet PCI Integrated Controller (EPIC/100) driver.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
