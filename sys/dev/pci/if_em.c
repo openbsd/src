@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.181 2008/04/09 12:50:11 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.182 2008/05/13 01:40:39 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1407,10 +1407,8 @@ em_update_link_status(struct em_softc *sc)
 			ifp->if_baudrate = sc->link_speed * 1000000;
 			if (sc->link_duplex == FULL_DUPLEX)
 				ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
-			else if (sc->link_duplex == HALF_DUPLEX)
-				ifp->if_link_state = LINK_STATE_HALF_DUPLEX;
 			else
-				ifp->if_link_state = LINK_STATE_UP;
+				ifp->if_link_state = LINK_STATE_HALF_DUPLEX;
 			if_link_state_change(ifp);
 		}
 	} else {
