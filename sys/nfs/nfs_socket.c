@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.57 2008/01/06 17:38:23 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.58 2008/05/13 17:47:42 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -681,12 +681,8 @@ nfs_reply(myrep)
 		 */
 		error = nfs_rcvlock(myrep);
 		if (error)
-			return (error);
-		/* Already received, bye bye */
-		if (myrep->r_mrep != NULL) {
-			nfs_rcvunlock(&nmp->nm_flag);
-			return (0);
-		}
+			return (error == EALREADY ? 0 : error);
+
 		/*
 		 * Get the next Rpc reply off the socket
 		 */
@@ -1381,6 +1377,13 @@ nfs_rcvlock(rep)
 		*flagp |= NFSMNT_WANTRCV;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsrcvlk",
 			slptimeo);
+		if (rep->r_mrep != NULL) {
+			/*
+			 * Don't take the lock if our reply has been received
+			 * while we where sleeping.
+			 */
+			 return (EALREADY);
+		}
 		if (slpflag == PCATCH) {
 			slpflag = 0;
 			slptimeo = 2 * hz;
