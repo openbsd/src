@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.10 2008/04/03 16:39:54 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.11 2008/05/13 13:20:44 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -77,7 +77,7 @@
 #define DPRINTF(x)
 #endif
 
-struct atl2_softc {
+struct lii_softc {
 	struct device		sc_dev;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
@@ -116,14 +116,14 @@ struct atl2_softc {
 	struct mii_data		sc_mii;
 	struct timeout		sc_tick;
 
-	int			(*sc_memread)(struct atl2_softc *, uint32_t,
+	int			(*sc_memread)(struct lii_softc *, uint32_t,
 				     uint32_t *);
 };
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
-int	atl2_match(struct device *, void *, void *);
-void	atl2_attach(struct device *, struct device *, void *);
+int	lii_match(struct device *, void *, void *);
+void	lii_attach(struct device *, struct device *, void *);
 
 struct cfdriver lii_cd = {
 	0,
@@ -132,40 +132,40 @@ struct cfdriver lii_cd = {
 };
 
 struct cfattach lii_ca = {
-	sizeof(struct atl2_softc),
-	atl2_match,
-	atl2_attach
+	sizeof(struct lii_softc),
+	lii_match,
+	lii_attach
 };
 
-int	atl2_reset(struct atl2_softc *);
-int	atl2_eeprom_present(struct atl2_softc *);
-int	atl2_read_macaddr(struct atl2_softc *, uint8_t *);
-int	atl2_eeprom_read(struct atl2_softc *, uint32_t, uint32_t *);
-void	atl2_spi_configure(struct atl2_softc *);
-int	atl2_spi_read(struct atl2_softc *, uint32_t, uint32_t *);
-void	atl2_setmulti(struct atl2_softc *);
-void	atl2_tick(void *);
+int	lii_reset(struct lii_softc *);
+int	lii_eeprom_present(struct lii_softc *);
+int	lii_read_macaddr(struct lii_softc *, uint8_t *);
+int	lii_eeprom_read(struct lii_softc *, uint32_t, uint32_t *);
+void	lii_spi_configure(struct lii_softc *);
+int	lii_spi_read(struct lii_softc *, uint32_t, uint32_t *);
+void	lii_setmulti(struct lii_softc *);
+void	lii_tick(void *);
 
-int	atl2_alloc_rings(struct atl2_softc *);
-int	atl2_free_tx_space(struct atl2_softc *);
-void	atl2_tx_put(struct atl2_softc *, struct mbuf *);
+int	lii_alloc_rings(struct lii_softc *);
+int	lii_free_tx_space(struct lii_softc *);
+void	lii_tx_put(struct lii_softc *, struct mbuf *);
 
-int	atl2_mii_readreg(struct device *, int, int);
-void	atl2_mii_writereg(struct device *, int, int, int);
-void	atl2_mii_statchg(struct device *);
+int	lii_mii_readreg(struct device *, int, int);
+void	lii_mii_writereg(struct device *, int, int, int);
+void	lii_mii_statchg(struct device *);
 
-int	atl2_media_change(struct ifnet *);
-void	atl2_media_status(struct ifnet *, struct ifmediareq *);
+int	lii_media_change(struct ifnet *);
+void	lii_media_status(struct ifnet *, struct ifmediareq *);
 
-int	atl2_init(struct ifnet *);
-void	atl2_start(struct ifnet *);
-void	atl2_stop(struct ifnet *);
-void	atl2_watchdog(struct ifnet *);
-int	atl2_ioctl(struct ifnet *, u_long, caddr_t);
+int	lii_init(struct ifnet *);
+void	lii_start(struct ifnet *);
+void	lii_stop(struct ifnet *);
+void	lii_watchdog(struct ifnet *);
+int	lii_ioctl(struct ifnet *, u_long, caddr_t);
 
-int	atl2_intr(void *);
-void	atl2_rxintr(struct atl2_softc *);
-void	atl2_txintr(struct atl2_softc *);
+int	lii_intr(void *);
+void	lii_rxintr(struct lii_softc *);
+void	lii_txintr(struct lii_softc *);
 
 #define AT_READ_4(sc,reg) \
     bus_space_read_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
@@ -192,7 +192,7 @@ void	atl2_txintr(struct atl2_softc *);
 #define AT_RXD_PADDING		120
 
 int
-atl2_match(struct device *parent, void *match, void *aux)
+lii_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -201,9 +201,9 @@ atl2_match(struct device *parent, void *match, void *aux)
 }
 
 void
-atl2_attach(struct device *parent, struct device *self, void *aux)
+lii_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct atl2_softc *sc = (struct atl2_softc *)self;
+	struct lii_softc *sc = (struct lii_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	pci_intr_handle_t ih;
@@ -229,17 +229,17 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (atl2_reset(sc))
+	if (lii_reset(sc))
 		return;
 
-	atl2_spi_configure(sc);
+	lii_spi_configure(sc);
 
-	if (atl2_eeprom_present(sc))
-		sc->sc_memread = atl2_eeprom_read;
+	if (lii_eeprom_present(sc))
+		sc->sc_memread = lii_eeprom_read;
 	else
-		sc->sc_memread = atl2_spi_read;
+		sc->sc_memread = lii_spi_read;
 
-	if (atl2_read_macaddr(sc, sc->sc_ac.ac_enaddr))
+	if (lii_read_macaddr(sc, sc->sc_ac.ac_enaddr))
 		return;
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -248,14 +248,14 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET,
-	    atl2_intr, sc, DEVNAME(sc));
+	    lii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": failed to establish interrupt\n");
 		/* XXX cleanup */
 		return;
 	}
 
-	if (atl2_alloc_rings(sc)) {
+	if (lii_alloc_rings(sc)) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		return;
 	}
@@ -263,14 +263,14 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, address %s\n", pci_intr_string(sc->sc_pc, ih),
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	timeout_set(&sc->sc_tick, atl2_tick, sc);
+	timeout_set(&sc->sc_tick, lii_tick, sc);
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = atl2_mii_readreg;
-	sc->sc_mii.mii_writereg = atl2_mii_writereg;
-	sc->sc_mii.mii_statchg = atl2_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, atl2_media_change,
-	    atl2_media_status);
+	sc->sc_mii.mii_readreg = lii_mii_readreg;
+	sc->sc_mii.mii_writereg = lii_mii_writereg;
+	sc->sc_mii.mii_statchg = lii_mii_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, lii_media_change,
+	    lii_media_status);
 	mii_attach(self, &sc->sc_mii, 0xffffffff, 1,
 	    MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
@@ -279,10 +279,10 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	ifp->if_ioctl = atl2_ioctl;
-	ifp->if_start = atl2_start;
-	ifp->if_watchdog = atl2_watchdog;
-	ifp->if_init = atl2_init;
+	ifp->if_ioctl = lii_ioctl;
+	ifp->if_start = lii_start;
+	ifp->if_watchdog = lii_watchdog;
+	ifp->if_init = lii_init;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -290,11 +290,11 @@ atl2_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-atl2_reset(struct atl2_softc *sc)
+lii_reset(struct lii_softc *sc)
 {
 	int i;
 
-	DPRINTF(("atl2_reset\n"));
+	DPRINTF(("lii_reset\n"));
 
 	AT_WRITE_4(sc, ATL2_SMC, SMC_SOFT_RST);
 	DELAY(1000);
@@ -323,7 +323,7 @@ atl2_reset(struct atl2_softc *sc)
 }
 
 int
-atl2_eeprom_present(struct atl2_softc *sc)
+lii_eeprom_present(struct lii_softc *sc)
 {
 	uint32_t val;
 
@@ -336,13 +336,13 @@ atl2_eeprom_present(struct atl2_softc *sc)
 }
 
 int
-atl2_eeprom_read(struct atl2_softc *sc, uint32_t reg, uint32_t *val)
+lii_eeprom_read(struct lii_softc *sc, uint32_t reg, uint32_t *val)
 {
 	return pci_vpd_read(sc->sc_pc, sc->sc_tag, reg, 1, (pcireg_t *)val);
 }
 
 void
-atl2_spi_configure(struct atl2_softc *sc)
+lii_spi_configure(struct lii_softc *sc)
 {
 	/*
 	 * We don't offer a way to configure the SPI Flash vendor parameter, so
@@ -412,7 +412,7 @@ atl2_spi_configure(struct atl2_softc *sc)
 #define CUSTOM_SPI_CS_HI	3
 
 int
-atl2_spi_read(struct atl2_softc *sc, uint32_t reg, uint32_t *val)
+lii_spi_read(struct lii_softc *sc, uint32_t reg, uint32_t *val)
 {
 	uint32_t v;
 	int i;
@@ -441,7 +441,7 @@ atl2_spi_read(struct atl2_softc *sc, uint32_t reg, uint32_t *val)
 }
 
 int
-atl2_read_macaddr(struct atl2_softc *sc, uint8_t *ea)
+lii_read_macaddr(struct lii_softc *sc, uint8_t *ea)
 {
 	uint32_t offset = 0x100;
 	uint32_t val, val1, addr0 = 0, addr1 = 0;
@@ -498,9 +498,9 @@ atl2_read_macaddr(struct atl2_softc *sc, uint8_t *ea)
 }
 
 int
-atl2_mii_readreg(struct device *dev, int phy, int reg)
+lii_mii_readreg(struct device *dev, int phy, int reg)
 {
-	struct atl2_softc *sc = (struct atl2_softc *)dev;
+	struct lii_softc *sc = (struct lii_softc *)dev;
 	uint32_t val;
 	int i;
 
@@ -529,9 +529,9 @@ atl2_mii_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-atl2_mii_writereg(struct device *dev, int phy, int reg, int data)
+lii_mii_writereg(struct device *dev, int phy, int reg, int data)
 {
-	struct atl2_softc *sc = (struct atl2_softc *)dev;
+	struct lii_softc *sc = (struct lii_softc *)dev;
 	uint32_t val;
 	int i;
 
@@ -559,12 +559,12 @@ atl2_mii_writereg(struct device *dev, int phy, int reg, int data)
 }
 
 void
-atl2_mii_statchg(struct device *dev)
+lii_mii_statchg(struct device *dev)
 {
-	struct atl2_softc *sc = (struct atl2_softc *)dev;
+	struct lii_softc *sc = (struct lii_softc *)dev;
 	uint32_t val;
 
-	DPRINTF(("atl2_mii_statchg\n"));
+	DPRINTF(("lii_mii_statchg\n"));
 
 	val = AT_READ_4(sc, ATL2_MACC);
 
@@ -577,11 +577,11 @@ atl2_mii_statchg(struct device *dev)
 }
 
 int
-atl2_media_change(struct ifnet *ifp)
+lii_media_change(struct ifnet *ifp)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 
-	DPRINTF(("atl2_media_change\n"));
+	DPRINTF(("lii_media_change\n"));
 
 	if (ifp->if_flags & IFF_UP)
 		mii_mediachg(&sc->sc_mii);
@@ -589,11 +589,11 @@ atl2_media_change(struct ifnet *ifp)
 }
 
 void
-atl2_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+lii_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 
-	DPRINTF(("atl2_media_status\n"));
+	DPRINTF(("lii_media_status\n"));
 
 	mii_pollstat(&sc->sc_mii);
 	imr->ifm_status = sc->sc_mii.mii_media_status;
@@ -601,14 +601,14 @@ atl2_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 int
-atl2_init(struct ifnet *ifp)
+lii_init(struct ifnet *ifp)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 	int error;
 
-	DPRINTF(("atl2_init\n"));
+	DPRINTF(("lii_init\n"));
 
-	atl2_stop(ifp);
+	lii_stop(ifp);
 
 	memset(sc->sc_ring, 0, sc->sc_ringsize);
 
@@ -684,7 +684,7 @@ atl2_init(struct ifnet *ifp)
 		goto out;
 	}
 
-	atl2_setmulti(sc);
+	lii_setmulti(sc);
 	mii_mediachg(&sc->sc_mii);
 
 	AT_WRITE_4(sc, ATL2_IMR, IMR_NORMAL_MASK);
@@ -699,7 +699,7 @@ out:
 }
 
 void
-atl2_tx_put(struct atl2_softc *sc, struct mbuf *m)
+lii_tx_put(struct lii_softc *sc, struct mbuf *m)
 {
 	int left;
 	struct tx_pkt_header *tph =
@@ -734,7 +734,7 @@ atl2_tx_put(struct atl2_softc *sc, struct mbuf *m)
 }
 
 int
-atl2_free_tx_space(struct atl2_softc *sc)
+lii_free_tx_space(struct lii_softc *sc)
 {
 	int space;
 
@@ -749,12 +749,12 @@ atl2_free_tx_space(struct atl2_softc *sc)
 }
 
 void
-atl2_start(struct ifnet *ifp)
+lii_start(struct ifnet *ifp)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 
-	DPRINTF(("atl2_start\n"));
+	DPRINTF(("lii_start\n"));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -765,14 +765,14 @@ atl2_start(struct ifnet *ifp)
 			break;
 
 		if (!sc->sc_free_tx_slots ||
-		    atl2_free_tx_space(sc) < m0->m_pkthdr.len) {
+		    lii_free_tx_space(sc) < m0->m_pkthdr.len) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		atl2_tx_put(sc, m0);
+		lii_tx_put(sc, m0);
 
-		DPRINTF(("atl2_start: put %d\n", sc->sc_txs_cur));
+		DPRINTF(("lii_start: put %d\n", sc->sc_txs_cur));
 
 		sc->sc_txs[sc->sc_txs_cur].txps_update = 0;
 		sc->sc_txs_cur = (sc->sc_txs_cur + 1) % AT_TXD_NUM;
@@ -792,9 +792,9 @@ atl2_start(struct ifnet *ifp)
 }
 
 void
-atl2_stop(struct ifnet *ifp)
+lii_stop(struct ifnet *ifp)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 
 	timeout_del(&sc->sc_tick);
 
@@ -803,22 +803,22 @@ atl2_stop(struct ifnet *ifp)
 
 	mii_down(&sc->sc_mii);
 
-	atl2_reset(sc);
+	lii_reset(sc);
 
 	AT_WRITE_4(sc, ATL2_IMR, 0);
 }
 
 int
-atl2_intr(void *v)
+lii_intr(void *v)
 {
-	struct atl2_softc *sc = v;
+	struct lii_softc *sc = v;
 	uint32_t status;
 
 	status = AT_READ_4(sc, ATL2_ISR);
 	if (status == 0)
 		return 0;
 
-	DPRINTF(("atl2_intr (%x)\n", status));
+	DPRINTF(("lii_intr (%x)\n", status));
 
 	/* Clear the interrupt and disable them */
 	AT_WRITE_4(sc, ATL2_ISR, status | ISR_DIS_INT);
@@ -826,12 +826,12 @@ atl2_intr(void *v)
 	if (status & (ISR_PHY | ISR_MANUAL)) {
 		/* Ack PHY interrupt.  Magic register */
 		if (status & ISR_PHY)
-			(void)atl2_mii_readreg(&sc->sc_dev, 1, 19);
+			(void)lii_mii_readreg(&sc->sc_dev, 1, 19);
 		mii_mediachg(&sc->sc_mii);
 	}
 
 	if (status & (ISR_DMAR_TO_RST | ISR_DMAW_TO_RST | ISR_PHY_LINKDOWN)) {
-		atl2_init(&sc->sc_ac.ac_if);
+		lii_init(&sc->sc_ac.ac_if);
 		return 1;
 	}
 
@@ -840,11 +840,11 @@ atl2_intr(void *v)
 		if (!(status & ISR_RS_UPDATE))
 			printf("rxintr %08x\n", status);
 #endif
-		atl2_rxintr(sc);
+		lii_rxintr(sc);
 	}
 
 	if (status & ISR_TX_EVENT)
-		atl2_txintr(sc);
+		lii_txintr(sc);
 
 	/* Re-enable interrupts */
 	AT_WRITE_4(sc, ATL2_ISR, 0);
@@ -853,21 +853,21 @@ atl2_intr(void *v)
 }
 
 void
-atl2_rxintr(struct atl2_softc *sc)
+lii_rxintr(struct lii_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct rx_pkt *rxp;
 	struct mbuf *m;
 	uint16_t size;
 
-	DPRINTF(("atl2_rxintr\n"));
+	DPRINTF(("lii_rxintr\n"));
 
 	for (;;) {
 		rxp = &sc->sc_rxp[sc->sc_rxcur];
 		if (rxp->rxp_update == 0)
 			break;
 
-		DPRINTF(("atl2_rxintr: getting %u (%u) [%x]\n", sc->sc_rxcur,
+		DPRINTF(("lii_rxintr: getting %u (%u) [%x]\n", sc->sc_rxcur,
 		    rxp->rxp_size, rxp->rxp_flags));
 		sc->sc_rxcur = (sc->sc_rxcur + 1) % AT_RXD_NUM;
 		rxp->rxp_update = 0;
@@ -909,19 +909,19 @@ atl2_rxintr(struct atl2_softc *sc)
 }
 
 void
-atl2_txintr(struct atl2_softc *sc)
+lii_txintr(struct lii_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct tx_pkt_status *txs;
 	struct tx_pkt_header *txph;
 
-	DPRINTF(("atl2_txintr\n"));
+	DPRINTF(("lii_txintr\n"));
 
 	for (;;) {
 		txs = &sc->sc_txs[sc->sc_txs_ack];
 		if (txs->txps_update == 0)
 			break;
-		DPRINTF(("atl2_txintr: ack'd %d\n", sc->sc_txs_ack));
+		DPRINTF(("lii_txintr: ack'd %d\n", sc->sc_txs_ack));
 		sc->sc_txs_ack = (sc->sc_txs_ack + 1) % AT_TXD_NUM;
 		sc->sc_free_tx_slots = 1;
 
@@ -951,11 +951,11 @@ atl2_txintr(struct atl2_softc *sc)
 	}
 
 	if (sc->sc_free_tx_slots)
-		atl2_start(ifp);
+		lii_start(ifp);
 }
 
 int
-atl2_alloc_rings(struct atl2_softc *sc)
+lii_alloc_rings(struct lii_softc *sc)
 {
 	int nsegs;
 	bus_size_t bs;
@@ -1022,19 +1022,19 @@ fail:
 }
 
 void
-atl2_watchdog(struct ifnet *ifp)
+lii_watchdog(struct ifnet *ifp)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", DEVNAME(sc));
 	++ifp->if_oerrors;
-	atl2_init(ifp);
+	lii_init(ifp);
 }
 
 int
-atl2_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
-	struct atl2_softc *sc = ifp->if_softc;
+	struct lii_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)addr;
 	struct ifaddr *ifa;
 	int s, error;
@@ -1059,10 +1059,10 @@ atl2_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = ENETRESET;
 			else
-				atl2_init(ifp);
+				lii_init(ifp);
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
-				atl2_stop(ifp);
+				lii_stop(ifp);
 		}
 		break;
 
@@ -1085,7 +1085,7 @@ atl2_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 err:
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			atl2_setmulti(sc);
+			lii_setmulti(sc);
 		error = 0;
 	}
 	splx(s);
@@ -1094,12 +1094,12 @@ err:
 }
 
 void
-atl2_setmulti(struct atl2_softc *sc)
+lii_setmulti(struct lii_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t val;
 
-	/* XXX That should be done atl2_init */
+	/* XXX That should be done lii_init */
 	val = AT_READ_4(sc, ATL2_MACC) & MACC_FDX;
 
 	val |= MACC_RX_EN | MACC_TX_EN | MACC_MACLP_CLK_PHY |
@@ -1124,9 +1124,9 @@ atl2_setmulti(struct atl2_softc *sc)
 }
 
 void
-atl2_tick(void *v)
+lii_tick(void *v)
 {
-	struct atl2_softc *sc = v;
+	struct lii_softc *sc = v;
 	int s;
 
 	s = splnet();
