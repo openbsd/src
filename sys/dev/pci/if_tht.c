@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.116 2008/05/12 10:02:42 kettenis Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.117 2008/05/13 00:52:12 brad Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1775,14 +1775,14 @@ tht_link_state(struct tht_softc *sc)
 		return;
 
 	if (tht_read(sc, THT_REG_MAC_LNK_STAT) & THT_REG_MAC_LNK_STAT_LINK)
-		link_state = LINK_STATE_UP;
+		link_state = LINK_STATE_FULL_DUPLEX;
 
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
 	}
 
-	if (ifp->if_link_state == LINK_STATE_UP)
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
 		ifp->if_baudrate = IF_Gbps(10);
 	else
 		ifp->if_baudrate = 0;
