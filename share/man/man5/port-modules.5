@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.7 2008/05/12 13:56:21 steven Exp $
+.\"	$OpenBSD: port-modules.5,v 1.8 2008/05/13 20:10:50 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 12 2008 $
+.Dd $Mdocdate: May 13 2008 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -370,6 +370,15 @@ Appends to BUILD_DEPENDS and MAKE_ENV.
 This also selects a %%native%% plist fragment depending on whether
 the architecture supports native compilation or not.
 .It lang/python
+Sets MODPY_VERSION, MODPY_BIN, MODPY_INCDIR, MODPY_LIBDIR, MODPY_SITEPKG,
+MODPY_SETUP, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS, MODPY_BUILD_DEPENDS.
+Adds to RUN_DEPENDS unless MODPY_RUNDEP is set to "no".
+MODPY_VERSION is the default version used by all python modules.
+Ports which use the setuptools module should set MODPY_SETUPTOOLS to "yes".
+Extra arguments to the build and install commands can be passed via
+MODPY_DISTUTILS_BUILDARGS and MODPY_DISTUTILS_INSTALLARGS.
+Also affects CATEGORIES, MAKE_ENV, SHARED_ONLY, and SUBST_VARS.
+May affect regress target.
 .It lang/ruby
 .It perl
 This module is documented in the main
