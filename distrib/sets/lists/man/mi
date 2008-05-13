@@ -457,6 +457,7 @@
 ./usr/share/man/cat1/skeyinit.0
 ./usr/share/man/cat1/sleep.0
 ./usr/share/man/cat1/slogin.0
+./usr/share/man/cat1/socppc
 ./usr/share/man/cat1/soelim.0
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/sparc
@@ -580,6 +581,7 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/sgi
+./usr/share/man/cat3/socppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
 ./usr/share/man/cat3/vax
@@ -1529,6 +1531,7 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sli.0
 ./usr/share/man/cat4/sm.0
+./usr/share/man/cat4/socppc
 ./usr/share/man/cat4/softraid.0
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc/agten.0
@@ -1966,6 +1969,7 @@
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/skey.0
 ./usr/share/man/cat5/snmpd.conf.0
+./usr/share/man/cat5/socppc
 ./usr/share/man/cat5/spamd.conf.0
 ./usr/share/man/cat5/sparc
 ./usr/share/man/cat5/sparc64
@@ -2424,6 +2428,7 @@
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/snmpctl.0
 ./usr/share/man/cat8/snmpd.0
+./usr/share/man/cat8/socppc
 ./usr/share/man/cat8/spamd-setup.0
 ./usr/share/man/cat8/spamd.0
 ./usr/share/man/cat8/spamdb.0
@@ -2555,6 +2560,7 @@
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
 ./usr/share/man/cat9/sgi
+./usr/share/man/cat9/socppc
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
@@ -2576,6 +2582,7 @@
 ./usr/share/man/man1/mvme88k
 ./usr/share/man/man1/mvmeppc
 ./usr/share/man/man1/sgi
+./usr/share/man/man1/socppc
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc64
 ./usr/share/man/man1/vax
@@ -2600,6 +2607,7 @@
 ./usr/share/man/man4/mvme88k
 ./usr/share/man/man4/mvmeppc
 ./usr/share/man/man4/sgi
+./usr/share/man/man4/socppc
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man4/vax
@@ -2624,6 +2632,7 @@
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/mvmeppc
 ./usr/share/man/man8/sgi
+./usr/share/man/man8/socppc
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/vax
@@ -2646,6 +2655,7 @@
 ./usr/share/man/ps1/mvme88k
 ./usr/share/man/ps1/mvmeppc
 ./usr/share/man/ps1/sgi
+./usr/share/man/ps1/socppc
 ./usr/share/man/ps1/sparc
 ./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/vax
@@ -2674,6 +2684,7 @@
 ./usr/share/man/ps3/mvme88k
 ./usr/share/man/ps3/mvmeppc
 ./usr/share/man/ps3/sgi
+./usr/share/man/ps3/socppc
 ./usr/share/man/ps3/sparc
 ./usr/share/man/ps3/sparc64
 ./usr/share/man/ps3/vax
@@ -2696,6 +2707,7 @@
 ./usr/share/man/ps4/mvme88k
 ./usr/share/man/ps4/mvmeppc
 ./usr/share/man/ps4/sgi
+./usr/share/man/ps4/socppc
 ./usr/share/man/ps4/sparc
 ./usr/share/man/ps4/sparc64
 ./usr/share/man/ps4/vax
@@ -2717,6 +2729,7 @@
 ./usr/share/man/ps5/mvme88k
 ./usr/share/man/ps5/mvmeppc
 ./usr/share/man/ps5/sgi
+./usr/share/man/ps5/socppc
 ./usr/share/man/ps5/sparc
 ./usr/share/man/ps5/sparc64
 ./usr/share/man/ps5/vax
@@ -2740,6 +2753,7 @@
 ./usr/share/man/ps8/mvme88k
 ./usr/share/man/ps8/mvmeppc
 ./usr/share/man/ps8/sgi
+./usr/share/man/ps8/socppc
 ./usr/share/man/ps8/sparc
 ./usr/share/man/ps8/sparc64
 ./usr/share/man/ps8/vax
@@ -2761,6 +2775,7 @@
 ./usr/share/man/ps9/mvme88k
 ./usr/share/man/ps9/mvmeppc
 ./usr/share/man/ps9/sgi
+./usr/share/man/ps9/socppc
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/vax
