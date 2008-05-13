@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1354 2008/05/13 08:09:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1355 2008/05/13 09:19:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -638,6 +638,7 @@
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 */
 #define	PCI_PRODUCT_ALTIMA_AC1001	0x03e9		/* AC1001 */
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 */
+#define	PCI_PRODUCT_ALTIMA_AC1003	0x03eb		/* AC1003 */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_AMD64_0F_HT	0x1100		/* AMD64 0Fh HyperTransport */
