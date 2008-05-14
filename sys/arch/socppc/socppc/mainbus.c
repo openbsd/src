@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 2008/05/14 20:54:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -50,7 +50,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_search(mainbus_search, self, self);
 }
 
-struct ppc_bus_space mainbus_bus_space = { 0xe0000000, 0x1000000, 1 };
+struct ppc_bus_space mainbus_bus_space = { 0xff400000, 0x00100000, 0 };
 
 int
 mainbus_search(struct device *parent, void *cfdata, void *aux)

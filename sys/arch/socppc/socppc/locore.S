@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2008/05/11 21:03:29 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2008/05/14 20:54:36 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -58,8 +58,9 @@
 _C_LABEL(esym):		.long	0	/* end of symbol table */
 _C_LABEL(proc0paddr):	.long	0	/* proc0 p_addr */
 
-fwargsave:
-			.long 0
+	.globl	_C_LABEL(fwargsave)
+	.type	_C_LABEL(fwargsave),@object
+_C_LABEL(fwargsave):	.long	0
 
        .globl  _C_LABEL(hid0_idle),
        .type   _C_LABEL(hid0_idle),@object

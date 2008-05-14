@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2008/05/14 19:29:46 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2008/05/14 20:54:36 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -91,6 +91,19 @@ struct vm_map *phys_map = NULL;
 
 int ppc_malloc_ok = 0;
 
+struct bd_info {
+	unsigned long	bi_memstart;
+	unsigned long	bi_memsize;
+	unsigned long	bi_flashstart;
+	unsigned long	bi_flashsize;
+	unsigned long	bi_flashoffset;
+	unsigned long	bi_sramstart;
+	unsigned long	bi_sramsize;
+	unsigned long	bi_immr_base;
+};
+
+extern struct bd_info **fwargsave;
+
 void uboot_mem_regions(struct mem_region **, struct mem_region **);
 void uboot_vmon(void);
 
@@ -164,18 +177,10 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 
 	ppc_check_procid();
 
-#if 0
-	{
-		prom_printf("AER:   0x%08x\n", *(uint32_t *)0xe000080c);
-		prom_printf("AIDR:  0x%08x\n", *(uint32_t *)0xe0000810);
-		prom_printf("AEATR: 0x%08x\n", *(uint32_t *)0xe0000818);
-		prom_printf("AEADR: 0x%08x\n", *(uint32_t *)0xe000081c);
-		*(uint32_t *)0xe0000810 = 0x00000001;
-		*(uint32_t *)0xe0000814 = 0x00000001;
-		*(uint32_t *)0xe0000818 = 0x00000000;
-		*(uint32_t *)0xe000081c = 0x00000000;
-	}
-#endif
+	/*
+	 * Adjust base of internal memory mapped registers.
+	 */
+	mainbus_bus_space.bus_base = (*fwargsave)->bi_immr_base;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -301,11 +306,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
 	(fw->vmon)();
-
-#if 0
-	ppc_mtdbat1l(BATL(0xe0000000, BAT_M | BAT_I | BAT_G));
-	ppc_mtdbat1u(0xe000000e);
-#endif
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
@@ -1116,19 +1116,21 @@ kcopy(const void *from, void *to, size_t size)
 	return 0;
 }
 
-struct mem_region uboot_mem[2] = {
-	{ 0x00000000, 0x08000000 },
-	{ 0, 0 }
-};
-
-struct mem_region uboot_avail[4] = {
-	{ 0x00003000, 0x07ffd000 },
-	{ 0, 0 }
-};
+struct mem_region uboot_mem[2], uboot_avail[4];
 
 void
 uboot_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
+	uboot_mem[0].start = (*fwargsave)->bi_memstart;
+	uboot_mem[0].size = (*fwargsave)->bi_memsize;
+
+	/* Reserve memory used for exception vectors. */
+	uboot_avail[0] = uboot_mem[0];
+	if (uboot_mem[0].start < EXC_LAST + 0x100) {
+		uboot_avail[0].size -= (EXC_LAST + 0x100 - uboot_mem[0].start);
+		uboot_avail[0].start = EXC_LAST + 0x100;
+	}
+
 	*memp = uboot_mem;
 	*availp = uboot_avail;
 }
