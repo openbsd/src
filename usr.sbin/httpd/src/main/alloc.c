@@ -1,3 +1,5 @@
+/*	$OpenBSD: alloc.c,v 1.18 2008/05/14 08:42:20 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
