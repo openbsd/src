@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.10 2003/07/18 21:16:37 david Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.11 2008/05/14 13:47:05 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer
@@ -39,9 +39,9 @@
 #include <unistd.h>
 
 struct fdcache {
-    char *fname;
-    int  fd;
-    struct fdcache *next;
+	char		*fname;
+	int		 fd;
+	struct fdcache	*next;
 };
 
 struct fdcache	*fdc;
@@ -49,38 +49,38 @@ struct fdcache	*fdc;
 int
 fdcache_open(char *fn, int flags, mode_t mode)
 {
-    struct fdcache *fdcp = NULL, *tmp = NULL;
+	struct fdcache *fdcp = NULL, *tmp = NULL;
 
-    for (fdcp = fdc; fdcp && strcmp(fn, fdcp->fname); fdcp = fdcp->next);
-	/* nothing */
+	for (fdcp = fdc; fdcp && strcmp(fn, fdcp->fname); fdcp = fdcp->next);
+		/* nothing */
 
-    if (fdcp == NULL) {
-	/* need to open */
-	if ((tmp = calloc(1, sizeof(struct fdcache))) == NULL)
-	    err(1, "calloc");
-	if ((tmp->fname = strdup(fn)) == NULL)
-	    err(1, "strdup");
-	if ((tmp->fd = open(fn, flags, mode)) < 0)
-	    err(1, "Cannot open %s", tmp->fname);
-	tmp->next = fdc;
-	fdc = tmp;
-	return(fdc->fd);
-    } else
-	return(fdcp->fd);	/* fd cached */
+	if (fdcp == NULL) {
+		/* need to open */
+		if ((tmp = calloc(1, sizeof(struct fdcache))) == NULL)
+			err(1, "calloc");
+		if ((tmp->fname = strdup(fn)) == NULL)
+			err(1, "strdup");
+		if ((tmp->fd = open(fn, flags, mode)) < 0)
+			err(1, "Cannot open %s", tmp->fname);
+		tmp->next = fdc;
+		fdc = tmp;
+		return(fdc->fd);
+	} else
+		return(fdcp->fd);	/* fd cached */
 }
 
 void
 fdcache_closeall(void)
 {
-    struct fdcache *fdcp = NULL, *tmp = NULL;
+	struct fdcache *fdcp = NULL, *tmp = NULL;
 
-    for (fdcp = fdc; fdcp != NULL; ) {
-	tmp = fdcp;
-	fdcp = tmp->next;
-	if (tmp->fd > 0)
-	    close(tmp->fd);
-	free(tmp->fname);
-	free(tmp);
-    }
+	for (fdcp = fdc; fdcp != NULL; ) {
+		tmp = fdcp;
+		fdcp = tmp->next;
+		if (tmp->fd > 0)
+			close(tmp->fd);
+		free(tmp->fname);
+		free(tmp);
+	}
 }
 
