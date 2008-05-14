@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.230 2008/05/12 03:50:55 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.231 2008/05/14 03:52:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -209,6 +209,7 @@ const struct pci_matchid bge_devices[] = {
 
 	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000 },
 	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1001 },
+	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1003 },
 	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100 },
 
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701 },
