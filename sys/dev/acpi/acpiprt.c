@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.20 2007/11/12 21:58:14 deraadt Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.21 2008/05/14 05:24:36 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,6 +45,7 @@ int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
 int	acpiprt_getirq(union acpi_resource *crs, void *arg);
 int	acpiprt_getminbus(union acpi_resource *, void *);
+int     acpiprt_showprs(union acpi_resource *, void *);
 
 
 struct acpiprt_softc {
@@ -119,6 +120,37 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+acpiprt_showprs(union acpi_resource *crs, void *arg)
+{
+	int *irq = (int *)arg;
+	int typ;
+
+	typ = AML_CRSTYPE(crs);
+	switch (typ) {
+	case SR_IRQ:
+		printf("possible irq:[ ");
+		for (typ=0; typ<sizeof(crs->sr_irq.irq_mask)*8; typ++) {
+			if (crs->sr_irq.irq_mask & (1L << typ)) {
+				printf("%d%s ", typ, (typ == *irq) ? "*" : "");
+			}
+		}
+		printf("]\n");
+		break;
+	case LR_EXTIRQ:
+		printf("possible irq: [ ");
+		for (typ=0; typ<crs->lr_extirq.irq_count; typ++) {
+			printf("%d%s ", crs->lr_extirq.irq[typ],
+			       crs->lr_extirq.irq[typ] == *irq ? "*" : "");
+		}
+		printf("]\n");
+		break;
+	default:
+		printf("Unknown interrupt : %x\n", typ);
+	}
+	return (0);
+}
+
+int
 acpiprt_getirq(union acpi_resource *crs, void *arg)
 {
 	int *irq = (int *)arg;
@@ -166,8 +198,17 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 
 	pp = v->v_package[2];
+	if (pp->type == AML_OBJTYPE_STRING) {
+		printf("STRING: %s\n", pp->v_string);
+		node = aml_searchrel(sc->sc_devnode, pp->v_string);
+		if (node == NULL) {
+			printf("Invalid device\n");
+			return;
+		}
+		pp = node->value;
+	}
 	if (pp->type == AML_OBJTYPE_NAMEREF) {
-		node = aml_searchname(sc->sc_devnode, pp->v_nameref);
+		node = aml_searchrel(sc->sc_devnode, pp->v_nameref);
 		if (node == NULL) {
 			printf("Invalid device\n");
 			return;
@@ -198,6 +239,16 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		aml_parse_resource(res.length, res.v_buffer,
 		    acpiprt_getirq, &irq);
 		aml_freevalue(&res);
+
+		if (!aml_evalname(sc->sc_acpi, node, "_PRS.", 0, NULL, &res)){
+			if (res.type == AML_OBJTYPE_BUFFER &&
+			    res.length >= 6)
+			{
+				aml_parse_resource(res.length, res.v_buffer,
+				    acpiprt_showprs, &irq);
+			}
+			aml_freevalue(&res);
+		}
 	} else {
 		irq = aml_val2int(v->v_package[3]);
 	}
@@ -340,6 +391,5 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 			return (PPB_BUSINFO_SECONDARY(reg));
 		}
 	}
-
 	return (0);
 }

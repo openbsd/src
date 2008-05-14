@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.2 2008/05/14 02:02:05 jcs Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.3 2008/05/14 05:24:36 jordan Exp $ */
 
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
@@ -112,7 +112,7 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 	    aa->aaa_table != NULL)
 		return (0);
 
-	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node->child,
+	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node,
 	    "MHKV", 0, NULL, &res))
 		goto fail;
 
@@ -134,7 +134,7 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args		*aa = aux;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
 
 	printf("\n");
 
@@ -142,7 +142,7 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	thinkpad_enable_events(sc);
 
 	/* run thinkpad_hotkey on button presses */
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 		thinkpad_hotkey, sc, ACPIDEV_NOPOLL);
 
 	return;

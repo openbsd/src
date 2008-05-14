@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.116 2008/04/27 16:23:16 jcs Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.117 2008/05/14 05:24:36 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -87,6 +87,8 @@ void	acpi_enable_onegpe(struct acpi_softc *, int, int);
 int	acpi_gpe_level(struct acpi_softc *, int, void *);
 int	acpi_gpe_edge(struct acpi_softc *, int, void *);
 
+struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
+
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
 
@@ -173,6 +175,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 					*(uint32_t *)(pb+reg) = bus_space_read_4(
 					    sc->sc_iot, ioh, reg);
 					break;
+				default:
+					printf("rdio: invalid size %d\n", access_size);
+					break;
 				}
 			} else {
 				switch (access_size) {
@@ -191,6 +196,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				case 4:
 					bus_space_write_4(sc->sc_iot, ioh, reg,
 					    *(uint32_t *)(pb+reg));
+					break;
+				default:
+					printf("wrio: invalid size %d\n", access_size);
 					break;
 				}
 			}
@@ -266,7 +274,7 @@ acpi_inidev(struct aml_node *node, void *arg)
 	 */
 
 	/* Evaluate _STA to decide _INI fate and walk fate */
-	if (!aml_evalname(sc, node, "_STA", 0, NULL, &res))
+	if (!aml_evalname(sc, node->parent, "_STA", 0, NULL, &res))
 		st = (int)aml_val2int(&res);
 	aml_freevalue(&res);
 
@@ -304,7 +312,7 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	st |= STA_BATTERY;
 
 	/* Evaluate _STA to decide _PRT fate and walk fate */
-	if (!aml_evalname(sc, node, "_STA", 0, NULL, &res))
+	if (!aml_evalname(sc, node->parent, "_STA", 0, NULL, &res))
 		st = (int)aml_val2int(&res);
 	aml_freevalue(&res);
 
@@ -612,22 +620,22 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_softc = sc;
 
 	/* initialize runtime environment */
-	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
+	aml_find_node(&aml_root, "_INI", acpi_inidev, sc);
 
 	/* attach pci interrupt routing tables */
-	aml_find_node(aml_root.child, "_PRT", acpi_foundprt, sc);
+	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
 
 #ifndef SMALL_KERNEL
 	 /* XXX EC needs to be attached first on some systems */
-	aml_find_node(aml_root.child, "_HID", acpi_foundec, sc);
+	aml_find_node(&aml_root, "_HID", acpi_foundec, sc);
 
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
 
 	/* attach battery, power supply and button devices */
-	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
+	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
 
 	/* attach docks */
-	aml_find_node(aml_root.child, "_DCK", acpi_founddock, sc);
+	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
 
 	/* create list of devices we want to query when APM come in */
 	SLIST_INIT(&sc->sc_ac);
@@ -1138,6 +1146,9 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
+void
+acpi_add_gpeblock(struct acpi_softc *sc, int reg, int len, int gpe);
+
 int
 acpi_interrupt(void *arg)
 {
@@ -1145,6 +1156,12 @@ acpi_interrupt(void *arg)
 	u_int32_t processed, sts, en, idx, jdx;
 
 	processed = 0;
+
+#if 0
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
+	    sc->sc_fadt->gpe1_base);
+#endif
 
 	dnprintf(40, "ACPI Interrupt\n");
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
@@ -1244,19 +1261,18 @@ int
 acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
     (struct acpi_softc *, int, void *), void *arg, const char *label)
 {
-	if (gpe >= sc->sc_lastgpe || handler == NULL)
-		return -EINVAL;
+	struct gpe_block *ptbl;
 
-	if (sc->gpe_table[gpe].handler != NULL) {
+	ptbl = acpi_find_gpe(sc, gpe);
+	if (ptbl == NULL || handler == NULL)
+		return -EINVAL;
+	if (ptbl->handler != NULL) {
 		dnprintf(10, "error: GPE %.2x already enabled\n", gpe);
 		return -EBUSY;
 	}
-
 	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe, label);
-	sc->gpe_table[gpe].handler = handler;
-	sc->gpe_table[gpe].arg = arg;
-
-	/* Defer enabling GPEs */
+	ptbl->handler = handler;
+	ptbl->arg = arg;
 
 	return (0);
 }
@@ -1341,12 +1357,124 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	return 0;
 }
 
+struct gpe_block *
+acpi_find_gpe(struct acpi_softc *sc, int gpe)
+{
+#if 1
+	if (gpe >= sc->sc_lastgpe)
+		return NULL;
+	return &sc->gpe_table[gpe];
+#else
+	SIMPLEQ_FOREACH(pgpe, &sc->sc_gpes, gpe_link) {
+		if (gpe >= pgpe->start && gpe <= (pgpe->start+7))
+			return &pgpe->table[gpe & 7];
+	}
+	return NULL;
+#endif
+}
+
+#if 0
+/* New GPE handling code: Create GPE block */
+void
+acpi_init_gpeblock(struct acpi_softc *sc, int reg, int len, int base)
+{
+	int i, j;
+
+	if (!reg || !len)
+		return;
+	for (i=0; i<len; i++) {
+		pgpe = acpi_os_malloc(sizeof(gpeblock));
+		if (pgpe == NULL)
+			return;
+
+		/* Allocate GPE Handler Block */
+		pgpe->start = base + i;
+		acpi_bus_space_map(sc->sc_iot, reg+i,     1, 0, &pgpe->sts_ioh);
+		acpi_bus_space_map(sc->sc_iot, reg+i+len, 1, 0, &pgpe->en_ioh);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_gpes, gpe, gpe_link);
+
+		/* Clear pending GPEs */
+		bus_space_write_1(sc->sc_iot, pgpe->sts_ioh, 0, 0xFF);
+		bus_space_write_1(sc->sc_iot, pgpe->en_ioh,  0, 0x00);
+	}
+
+	/* Search for GPE handlers */
+	for (i=0; i<len*8; i++) {
+		char gpestr[32];
+		struct aml_node *h;
+
+		snprintf(gpestr, sizeof(gpestr), "\\_GPE._L%.2X", base+i);
+		h = aml_searchnode(&aml_root, gpestr);
+		if (acpi_set_gpehandler(sc, base+i, acpi_gpe_level, h, "level") != 0) {
+			snprintf(gpestr, sizeof(gpestr), "\\_GPE._E%.2X", base+i);
+			h = aml_searchnode(&aml_root, gpestr);
+			acpi_set_gpehandler(sc, base+i, acpi_gpe_edge, h, "edge");
+		}
+	}
+}
+
+/* Process GPE interrupts */
+int
+acpi_handle_gpes(struct acpi_softc *sc)
+{
+	uint8_t en, sts;
+	int processed, i;
+
+	processed=0;
+	SIMPLEQ_FOREACH(pgpe, &sc->sc_gpes, gpe_link) {
+		sts = bus_space_read_1(sc->sc_iot, pgpe->sts_ioh, 0);
+		en = bus_space_read_1(sc->sc_iot, pgpe->en_ioh, 0);
+		for (i=0; i<8; i++) {
+			if (en & sts & (1L << i)) {
+				pgpe->table[i].active = 1;
+				processed=1;
+			}
+		}
+	}
+	return processed;
+}
+#endif
+
+void
+acpi_add_gpeblock(struct acpi_softc *sc, int reg, int len, int gpe)
+{
+	int idx, jdx;
+	u_int8_t en, sts;
+
+	if (!reg || !len)
+		return;
+	for (idx=0; idx<len; idx++) {
+		sts = inb(reg + idx);
+		en  = inb(reg + len + idx);
+		printf("-- gpe %.2x-%.2x : en:%.2x sts:%.2x  %.2x\n",
+		    gpe+idx*8, gpe+idx*8+7, en, sts, en&sts);
+		for (jdx=0; jdx<8; jdx++) {
+			char gpestr[32];
+			struct aml_node *l, *e;
+
+			if (en & sts & (1L << jdx)) {
+				snprintf(gpestr,sizeof(gpestr), "\\_GPE._L%.2X", gpe+idx*8+jdx);
+				l = aml_searchname(&aml_root, gpestr);
+				snprintf(gpestr,sizeof(gpestr), "\\_GPE._E%.2X", gpe+idx*8+jdx);
+				e = aml_searchname(&aml_root, gpestr);
+				printf("  GPE %.2x active L%x E%x\n", gpe+idx*8+jdx, l, e);
+			}
+		}
+	}
+}
+
 void
 acpi_init_gpes(struct acpi_softc *sc)
 {
 	struct aml_node *gpe;
 	char name[12];
 	int  idx, ngpe;
+
+#if 0
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
+	    sc->sc_fadt->gpe1_base);
+#endif
 
 	sc->sc_lastgpe = sc->sc_fadt->gpe0_blk_len << 2;
 	if (sc->sc_fadt->gpe1_blk_len) {
@@ -1380,7 +1508,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 				    "edge");
 		}
 	}
-	aml_find_node(aml_root.child, "_PRW", acpi_foundprw, sc);
+	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);
 	sc->sc_maxgpe = ngpe;
 }
 
@@ -1395,7 +1523,7 @@ acpi_init_states(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
 		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_evalname(sc, aml_root.child, name, 0, NULL, &res) == 0) {
+		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
 			if (res.type == AML_OBJTYPE_PACKAGE) {
 				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
 				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
@@ -1408,11 +1536,11 @@ acpi_init_states(struct acpi_softc *sc)
 void
 acpi_init_pm(struct acpi_softc *sc)
 {
-	sc->sc_tts = aml_searchname(aml_root.child, "_TTS");
-	sc->sc_pts = aml_searchname(aml_root.child, "_PTS");
-	sc->sc_wak = aml_searchname(aml_root.child, "_WAK");
-	sc->sc_bfs = aml_searchname(aml_root.child, "_BFS");
-	sc->sc_gts = aml_searchname(aml_root.child, "_GTS");
+	sc->sc_tts = aml_searchname(&aml_root, "_TTS");
+	sc->sc_pts = aml_searchname(&aml_root, "_PTS");
+	sc->sc_wak = aml_searchname(&aml_root, "_WAK");
+	sc->sc_bfs = aml_searchname(&aml_root, "_BFS");
+	sc->sc_gts = aml_searchname(&aml_root, "_GTS");
 }
 
 void
@@ -1431,6 +1559,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		return;
 	}
 
+	memset(&env, 0, sizeof(env));
 	env.type = AML_OBJTYPE_INTEGER;
 	env.v_integer = state;
 	/* _TTS(state) */
@@ -1508,6 +1637,7 @@ acpi_resume(struct acpi_softc *sc)
 {
 	struct aml_value env;
 
+	memset(&env, 0, sizeof(env));
 	env.type = AML_OBJTYPE_INTEGER;
 	env.v_integer = sc->sc_state;
 
@@ -1540,6 +1670,8 @@ acpi_powerdown(void)
 {
 	acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 }
+
+extern int aml_busy;
 
 void
 acpi_isr_thread(void *arg)
@@ -1585,6 +1717,8 @@ acpi_isr_thread(void *arg)
 			tsleep(sc, PWAIT, "acpi_idle", 0);
 		sc->sc_wakeup = 1;
 		dnprintf(10, "wakeup..\n");
+		if (aml_busy)
+			continue;
 
 		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
 			struct gpe_block *pgpe = &sc->gpe_table[gpe];

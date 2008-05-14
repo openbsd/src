@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.1 2008/04/24 13:57:49 jsing Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.2 2008/05/14 05:24:36 jordan Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 
 /*-
@@ -115,7 +115,7 @@ acpiasus_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
 
 	sc->sc_powerhook = powerhook_establish(acpiasus_power, sc);
 
@@ -123,7 +123,7 @@ acpiasus_attach(struct device *parent, struct device *self, void *aux)
 
 	acpiasus_init(self);
 
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 	    acpiasus_notify, sc, ACPIDEV_NOPOLL);
 }
 
