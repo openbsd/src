@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2008/04/08 14:31:54 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.54 2008/05/14 20:49:48 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -459,7 +459,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 2 */
 	NODEV,	/* 3 */
 	0,	/* 4 */
-	1,	/* 5 */
+	NODEV,	/* 5 */
 	NODEV,	/* 6 */
 	NODEV,	/* 7 */
 	NODEV,	/* 8 */
@@ -486,7 +486,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 29 */
 	12,	/* 30 */
 	NODEV,	/* 31 */
-	14,	/* 32 */
+	NODEV,	/* 32 */
 	NODEV,	/* 33 */
 	NODEV,	/* 34 */
 	NODEV,	/* 35 */
@@ -506,7 +506,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 49 */
 	NODEV,	/* 50 */
 	NODEV,	/* 51 */
-	16,	/* 52 */
+	NODEV,	/* 52 */
 	NODEV,	/* 53 */
 	17,	/* 54 */
 	18,	/* 55 */
@@ -525,7 +525,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 68 */
 	NODEV,	/* 69 */
 	NODEV,	/* 70 */
-	NODEV,	/* 71 */
+	24,	/* 71 */
 	NODEV,	/* 72 */
 	25,	/* 73 */
 	NODEV,	/* 74 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.42 2008/04/08 14:31:54 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.43 2008/05/14 20:49:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -270,8 +270,8 @@ int chrtoblktbl[] = {
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	4,		/* SCSI disk */
-	/*  9 */	8,		/* SCSI CD-ROM */
+	/*  8 */	4,		/* sd */
+	/*  9 */	8,		/* cd */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -279,16 +279,16 @@ int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	NODEV,
-	/* 18 */	9,
-	/* 19 */	6,		/* vnode disk */
-	/* 20 */	NODEV,
+	/* 17 */	5,		/* ccd */
+	/* 18 */	9,		/* rd */
+	/* 19 */	6,		/* vnd */
+	/* 20 */	7,		/* st */
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
-	/* 26 */	10,		/* XD disk */
+	/* 26 */	10,		/* xd */
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 

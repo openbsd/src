@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.42 2008/04/08 14:31:54 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.43 2008/05/14 20:49:48 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -213,12 +213,12 @@ int chrtoblktbl[] = {
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	1,
-	/*  8 */	2,
-	/*  9 */	3,
-	/* 10 */	4,
-	/* 11 */	5,
-	/* 12 */	6,
+	/*  7 */	1,		/* ccd */
+	/*  8 */	2,		/* vnd */
+	/*  9 */	3,		/* rd */
+	/* 10 */	4,		/* sd */
+	/* 11 */	5,		/* st */
+	/* 12 */	6,		/* cd */
 	/* 13 */	NODEV,
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
@@ -230,7 +230,7 @@ int chrtoblktbl[] = {
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
-	/* 24 */	7,
+	/* 24 */	7,		/* fd */
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	NODEV,
@@ -245,14 +245,7 @@ int chrtoblktbl[] = {
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
-	/* 39 */	NODEV,
-	/* 40 */	NODEV,
-	/* 41 */	NODEV,
-	/* 42 */	NODEV,
-	/* 43 */	NODEV,
-	/* 44 */	NODEV,
-	/* 45 */	NODEV,
-	/* 46 */	NODEV
+	/* 39 */	8,		/* wd */
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
