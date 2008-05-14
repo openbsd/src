@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.6 2008/05/14 07:48:36 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.7 2008/05/14 15:31:41 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -124,7 +124,7 @@ mm_install() {
 
 	if [ -z "${INSTDIR}" ]; then INSTDIR=/; fi
 
-	DIR_OWN=`stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}"`
+	DIR_MODE=`stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}"`
 	eval `stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1}`
 
 	if [ -n "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ]; then
