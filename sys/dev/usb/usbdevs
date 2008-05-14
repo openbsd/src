@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.357 2008/05/14 01:26:04 brad Exp $
+$OpenBSD: usbdevs,v 1.358 2008/05/14 01:39:48 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -982,9 +982,6 @@ product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 
 /* CONWISE Technology products */
 product CTC CW6622		0x6622	CW6622
-
-/* Billionton products */
-product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
 
 /* CMOTECH CDMA Technologies products */
 product CMOTECH CM5100P		0x5523	CM-5100P EVDO
