@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.22 2008/05/14 07:52:52 brad Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.23 2008/05/14 16:26:44 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -197,7 +197,6 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 
 	pp = v->v_package[2];
 	if (pp->type == AML_OBJTYPE_STRING) {
-		printf("STRING: %s\n", pp->v_string);
 		node = aml_searchrel(sc->sc_devnode, pp->v_string);
 		if (node == NULL) {
 			printf("Invalid device\n");
@@ -238,6 +237,8 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		    acpiprt_getirq, &irq);
 		aml_freevalue(&res);
 
+#if 0
+		/* Get Possible IRQs */
 		if (!aml_evalname(sc->sc_acpi, node, "_PRS.", 0, NULL, &res)){
 			if (res.type == AML_OBJTYPE_BUFFER &&
 			    res.length >= 6)
@@ -247,6 +248,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			}
 			aml_freevalue(&res);
 		}
+#endif
 	} else {
 		irq = aml_val2int(v->v_package[3]);
 	}
