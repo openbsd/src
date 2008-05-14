@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.20 2008/05/14 13:47:05 mbalmer Exp $ */
+/* $OpenBSD: http_config.c,v 1.21 2008/05/14 16:11:22 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1651,7 +1651,7 @@ static server_rec *init_server_config(pool *p)
 #endif
 #ifdef HAVE_SOCKADDR_LEN
 	s->addrs->host_addr.ss_len = sizeof(s->addrs->host_addr); 
-	* XXX: needed ? */
+	/* XXX: needed ? */
 #endif
 	s->addrs->host_port = 0;	/* matches any port */
 	s->addrs->virthost = "";	/* must be non-NULL */
