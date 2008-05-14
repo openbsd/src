@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2008/05/14 22:34:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -54,8 +54,15 @@ diskconf(void)
 {
 	struct device *dv;
 	dev_t tmpdev;
+	int len;
+	char *p;
 
-	dv = parsedisk("wd0a", strlen("wd0a"), 0, &tmpdev);
+	if ((p = strchr(bootpath, ':')) != NULL)
+		len = p - bootpath;
+	else
+		len = strlen(bootpath);
+
+	dv = parsedisk(bootpath, len, 0, &tmpdev);
 	setroot(dv, 0, RB_USERREQ);
 	dumpconf();
 }
