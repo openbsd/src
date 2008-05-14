@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1355 2008/05/13 09:19:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1356 2008/05/14 03:45:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -297,6 +297,7 @@
 #define	PCI_VENDOR_XGI	0x18ca		/* XGI Technology */
 #define	PCI_VENDOR_SILAN	0x1904		/* Silan */
 #define	PCI_VENDOR_SANGOMA	0x1923		/* Sangoma */
+#define	PCI_VENDOR_SOLARFLARE	0x1924		/* Solarflare */
 #define	PCI_VENDOR_OPTION	0x1931		/* Option */
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technology */
@@ -2928,6 +2929,11 @@
 #define	PCI_PRODUCT_SIIG_2062	0x2062		/* I/O */
 #define	PCI_PRODUCT_SIIG_2081	0x2081		/* I/O */
 #define	PCI_PRODUCT_SIIG_2082	0x2081		/* I/O */
+
+/* Solarflare products */
+#define	PCI_PRODUCT_SOLARFLARE_FALCON_P	0x0703		/* Falcon P */
+#define	PCI_PRODUCT_SOLARFLARE_FALCON_S	0x6703		/* Falcon S */
+#define	PCI_PRODUCT_SOLARFLARE_EF1002	0xc101		/* EF1002 */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */

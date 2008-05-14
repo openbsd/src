@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1355 2008/05/13 09:19:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1356 2008/05/14 03:45:18 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9060,6 +9060,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I/O",
 	},
 	{
+	    PCI_VENDOR_SOLARFLARE, PCI_PRODUCT_SOLARFLARE_FALCON_P,
+	    "Falcon P",
+	},
+	{
+	    PCI_VENDOR_SOLARFLARE, PCI_PRODUCT_SOLARFLARE_FALCON_S,
+	    "Falcon S",
+	},
+	{
+	    PCI_VENDOR_SOLARFLARE, PCI_PRODUCT_SOLARFLARE_EF1002,
+	    "EF1002",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
 	    "53c810",
 	},
@@ -15862,6 +15874,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SANGOMA,
 	    "Sangoma",
+	},
+	{
+	    PCI_VENDOR_SOLARFLARE,
+	    "Solarflare",
 	},
 	{
 	    PCI_VENDOR_OPTION,
