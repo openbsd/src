@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.111 2008/05/14 21:13:40 miod Exp $ */
+/* $OpenBSD: dsdt.c,v 1.112 2008/05/14 21:47:00 miod Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -542,6 +542,7 @@ done:
  * @@@: Misc utility functions
  */
 
+#ifdef ACPI_DEBUG
 void
 aml_dump(int len, u_int8_t *buf)
 {
@@ -553,6 +554,7 @@ aml_dump(int len, u_int8_t *buf)
 	}
 	dnprintf(50, " }\n");
 }
+#endif
 
 /* Bit mangling code */
 int
