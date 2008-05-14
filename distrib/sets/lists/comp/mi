@@ -2496,7 +2496,9 @@
 ./usr/share/man/cat3/RB_ENTRY.0
 ./usr/share/man/cat3/RB_FIND.0
 ./usr/share/man/cat3/RB_FOREACH.0
+./usr/share/man/cat3/RB_FOREACH_REVERSE.0
 ./usr/share/man/cat3/RB_GENERATE.0
+./usr/share/man/cat3/RB_GENERATE_STATIC.0
 ./usr/share/man/cat3/RB_HEAD.0
 ./usr/share/man/cat3/RB_INIT.0
 ./usr/share/man/cat3/RB_INITIALIZER.0
@@ -2505,8 +2507,11 @@
 ./usr/share/man/cat3/RB_MAX.0
 ./usr/share/man/cat3/RB_MIN.0
 ./usr/share/man/cat3/RB_NEXT.0
+./usr/share/man/cat3/RB_NFIND.0
 ./usr/share/man/cat3/RB_PARENT.0
+./usr/share/man/cat3/RB_PREV.0
 ./usr/share/man/cat3/RB_PROTOTYPE.0
+./usr/share/man/cat3/RB_PROTOTYPE_STATIC.0
 ./usr/share/man/cat3/RB_REMOVE.0
 ./usr/share/man/cat3/RB_RIGHT.0
 ./usr/share/man/cat3/RB_ROOT.0
