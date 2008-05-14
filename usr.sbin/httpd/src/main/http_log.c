@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_log.c,v 1.18 2008/05/14 08:42:20 mbalmer Exp $ */
+/*	$OpenBSD: http_log.c,v 1.19 2008/05/14 09:25:38 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -20,8 +20,8 @@
  *
  * 3. The end-user documentation included with the redistribution,
  *    if any, must include the following acknowledgment:
- *        "This product includes software developed by the
- *         Apache Software Foundation (http://www.apache.org/)."
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
  *    Alternately, this acknowledgment may appear in the software itself,
  *    if and wherever such third-party acknowledgments normally appear.
  *
