@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1355 2008/05/13 09:19:11 brad Exp $
+$OpenBSD: pcidevs,v 1.1356 2008/05/14 03:45:18 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -292,6 +292,7 @@ vendor	RALINK		0x1814	Ralink
 vendor	XGI		0x18ca	XGI Technology
 vendor	SILAN		0x1904	Silan
 vendor	SANGOMA		0x1923	Sangoma
+vendor	SOLARFLARE	0x1924	Solarflare
 vendor	OPTION		0x1931	Option
 vendor	FREESCALE	0x1957	Freescale
 vendor	ATTANSIC	0x1969	Attansic Technology
@@ -2923,6 +2924,11 @@ product SIIG	2061		0x2061	I/O
 product SIIG	2062		0x2062	I/O
 product SIIG	2081		0x2081	I/O
 product SIIG	2082		0x2081	I/O
+
+/* Solarflare products */
+product SOLARFLARE FALCON_P	0x0703	Falcon P
+product SOLARFLARE FALCON_S	0x6703	Falcon S
+product SOLARFLARE EF1002	0xc101	EF1002
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810		0x0001	53c810
