@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2008/05/14 20:54:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2008/05/14 22:23:48 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -87,19 +87,21 @@ start:
 /* compute end of kernel memory */
 	lis	%r8,_end@ha
 	addi	%r8,%r8,_end@l
-#if defined(DDB)
-	cmpwi	%r4, 0
-	bne	1f
-	cmpwi	%r6, 0
+	cmpwi	%r4,0
 	beq	1f
+	li	%r6,0
+1:
+#if defined(DDB)
+	cmpwi	%r6, 0
+	beq	2f
 	add	%r9,%r6,%r7
 	lwz	%r9, -4(%r9)
 	cmpwi   %r9,0
-	beq	1f
+	beq	2f
 	lis	%r8,_C_LABEL(esym)@ha
 	stw	%r9,_C_LABEL(esym)@l(%r8)
 	mr	%r8, %r9
-1:
+2:
 #endif
 	li	%r9,PGOFSET
 	add	%r8,%r8,%r9

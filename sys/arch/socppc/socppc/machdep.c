@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2008/05/14 20:54:36 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2008/05/14 22:23:48 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -65,6 +65,11 @@
 
 #include <dev/ic/comvar.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
+
 /*
  * Global variables used here and there
  */
@@ -90,6 +95,9 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int ppc_malloc_ok = 0;
+
+char *bootpath;
+char bootpathbuf[512];
 
 struct bd_info {
 	unsigned long	bi_memstart;
@@ -166,6 +174,9 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 
 	extern char __bss_start[], __end[];
 	bzero(__bss_start, __end - __bss_start);
+
+	/* Make a copy of the args! */
+	strlcpy(bootpathbuf, args ? args : "wd0a", sizeof bootpathbuf);
 
 	proc0.p_cpu = &cpu_info[0];
 	proc0.p_addr = proc0paddr;
@@ -320,6 +331,38 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	 */
 	boothowto = RB_AUTOBOOT;
 
+	/*
+	 * Parse arg string.
+	 */
+	bootpath = &bootpathbuf[0];
+	while (*++bootpath && *bootpath != ' ');
+	if (*bootpath) {
+		*bootpath++ = 0;
+		while (*bootpath) {
+			switch (*bootpath++) {
+			case 'a':
+				boothowto |= RB_ASKNAME;
+				break;
+			case 's':
+				boothowto |= RB_SINGLE;
+				break;
+			case 'd':
+				boothowto |= RB_KDB;
+				break;
+			case 'c':
+				boothowto |= RB_CONFIG;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	bootpath = &bootpathbuf[0];
+
+#ifdef DDB
+	ddb_init();
+#endif
+
 	devio_ex = extent_create("devio", 0x80000000, 0xffffffff, M_DEVBUF,
 		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
 		EX_NOCOALESCE|EX_NOWAIT);
@@ -333,6 +376,19 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	comconsaddr = 0x00004500;
 	comconsiot = &mainbus_bus_space;
 	consinit();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 }
 
 void
