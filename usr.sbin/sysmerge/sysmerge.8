@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.3 2008/04/30 20:15:54 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.4 2008/05/14 07:48:35 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2008 $
+.Dd $Mdocdate: May 14 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd update system configuration files
 .Sh SYNOPSIS
 .Nm
-.Op Fl a
+.Op Fl ab
 .Op Fl s Ar src \*(Ba etcXX.tgz
 .Op Fl x Ar xetcXX.tgz
 .Sh DESCRIPTION
@@ -122,6 +122,12 @@ If this option is specified,
 will automatically install missing files,
 create databases and device nodes,
 and will disable strict file comparison when possible (using CVS Ids).
+.It Fl b
+Batch mode.
+If this option is specified,
+.Nm
+will run unattended (non-interactively), saving differing files for
+later manual processing.
 .It Fl s Ar src \*(Ba etcXX.tgz
 Specify a path to an
 .Ox

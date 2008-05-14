@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.5 2008/04/30 20:15:55 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.6 2008/05/14 07:48:36 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -29,20 +29,6 @@ PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 
 PAGER="${PAGER:=/usr/bin/more}"
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
-
-yesno() {
-	echo -n "${*}? (y|[n]) "
-	read ANSWER
-	case "${ANSWER}" in
-	y|Y)
-		echo ""
-		return 0
-		;;
-	*)
-		return 1
-		;;
-	esac
-}
 
 
 do_pre() {
@@ -73,11 +59,19 @@ do_pre() {
 	echo " temp root directory:  ${TEMPROOT}"
 	echo " backup directory:     ${BKPDIR}"
 	echo ""
-	if yesno "Continue"; then
-		echo -n ""
-	else
-		rmdir ${WRKDIR} 2> /dev/null
-		exit 1
+
+	if [ -z "${BATCHMODE}" ]; then
+		echo -n "Continue? (y|[n]) "
+		read ANSWER
+		case "${ANSWER}" in
+			y|Y)
+				echo ""
+				;;
+			*)
+				rmdir ${WRKDIR} 2> /dev/null
+				exit 1
+				;;
+		esac
 	fi
 }
 
@@ -205,7 +199,11 @@ merge_loop() {
 
 
 diff_loop() {
-	HANDLE_COMPFILE=v
+	if [ "${BATCHMODE}" ]; then
+		HANDLE_COMPFILE=todo
+	else
+		HANDLE_COMPFILE=v
+	fi
 
 	while [ "${HANDLE_COMPFILE}" = "v" -o "${HANDLE_COMPFILE}" = "todo" ]; do
 		if [ "${HANDLE_COMPFILE}" = "v" ]; then
@@ -236,17 +234,21 @@ diff_loop() {
 			fi
 		fi
 
-		echo "  Use 'd' to delete the temporary ${COMPFILE}"
-		echo "  Use 'i' to install the temporary ${COMPFILE}"
-		if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
-			echo "  Use 'm' to merge the temporary and installed versions"
-			echo "  Use 'v' to view the diff results again"
+		if [ -z "${BATCHMODE}" ]; then
+			echo "  Use 'd' to delete the temporary ${COMPFILE}"
+			echo "  Use 'i' to install the temporary ${COMPFILE}"
+			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
+				echo "  Use 'm' to merge the temporary and installed versions"
+				echo "  Use 'v' to view the diff results again"
+			fi
+			echo ""
+			echo "  Default is to leave the temporary file to deal with by hand"
+			echo ""
+			echo -n "How should I deal with this? [Leave it for later] "
+			read HANDLE_COMPFILE
+		else
+			unset HANDLE_COMPFILE
 		fi
-		echo ""
-		echo "  Default is to leave the temporary file to deal with by hand"
-		echo ""
-		echo -n "How should I deal with this? [Leave it for later] "
-		read HANDLE_COMPFILE
 
 		case "${HANDLE_COMPFILE}" in
 		[dD])
@@ -410,9 +412,9 @@ do_post() {
 }
 
 
-ARGS=`getopt as:x: $*`
+ARGS=`getopt abs:x: $*`
 if [ $? -ne 0 ]; then
-	echo "usage: ${0##*/} [-a] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
 	exit 1
 fi
 set -- ${ARGS}
@@ -421,6 +423,9 @@ do
 	case "$1" in
 	-a)
 		AUTOMODE=yes
+		shift;;
+	-b)
+		BATCHMODE=1
 		shift;;
 	-s)
 		WHERE="${2}"
