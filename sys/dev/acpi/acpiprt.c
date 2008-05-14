@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.21 2008/05/14 05:24:36 jordan Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.22 2008/05/14 07:52:52 brad Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,7 +45,7 @@ int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
 int	acpiprt_getirq(union acpi_resource *crs, void *arg);
 int	acpiprt_getminbus(union acpi_resource *, void *);
-int     acpiprt_showprs(union acpi_resource *, void *);
+int	acpiprt_showprs(union acpi_resource *, void *);
 
 
 struct acpiprt_softc {
@@ -129,19 +129,17 @@ acpiprt_showprs(union acpi_resource *crs, void *arg)
 	switch (typ) {
 	case SR_IRQ:
 		printf("possible irq:[ ");
-		for (typ=0; typ<sizeof(crs->sr_irq.irq_mask)*8; typ++) {
-			if (crs->sr_irq.irq_mask & (1L << typ)) {
+		for (typ = 0; typ < sizeof(crs->sr_irq.irq_mask) * 8; typ++) {
+			if (crs->sr_irq.irq_mask & (1L << typ))
 				printf("%d%s ", typ, (typ == *irq) ? "*" : "");
-			}
 		}
 		printf("]\n");
 		break;
 	case LR_EXTIRQ:
 		printf("possible irq: [ ");
-		for (typ=0; typ<crs->lr_extirq.irq_count; typ++) {
+		for (typ = 0; typ < crs->lr_extirq.irq_count; typ++)
 			printf("%d%s ", crs->lr_extirq.irq[typ],
 			       crs->lr_extirq.irq[typ] == *irq ? "*" : "");
-		}
 		printf("]\n");
 		break;
 	default:
