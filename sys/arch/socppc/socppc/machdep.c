@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2008/05/14 19:29:46 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1117,12 +1117,12 @@ kcopy(const void *from, void *to, size_t size)
 }
 
 struct mem_region uboot_mem[2] = {
-	{ 0x00000000, 0x04000000 },
+	{ 0x00000000, 0x08000000 },
 	{ 0, 0 }
 };
 
-struct mem_region uboot_avail[2] = {
-	{ 0x00800000, 0x04000000 },
+struct mem_region uboot_avail[4] = {
+	{ 0x00003000, 0x07ffd000 },
 	{ 0, 0 }
 };
 
