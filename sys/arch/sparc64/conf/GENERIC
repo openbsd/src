@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.200 2008/04/19 01:18:39 djm Exp $
+#	$OpenBSD: GENERIC,v 1.201 2008/05/14 18:47:10 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -112,6 +112,7 @@ ubsec*	at pci?			# Broadcom 580[125]/582[012]
 
 # PCI sound
 autri*	at pci? flags 0x0000	# Trident 4D WAVE
+cmpci*  at pci?			# C-Media CMI8338/8738
 eap*	at pci?			# Ensoniq AudioPCI S5016
 eso*	at pci?			# ESS Solo-1 PCI AudioDrive
 
@@ -123,16 +124,18 @@ com*	at puc?
 audio*	at audioce?
 audio*	at audiocs?
 audio*	at autri?
+audio*	at cmpci?
 audio*	at eap?
 audio*	at eso?
 
 # OPL[23] FM synthesizers
+opl*	at cmpci?
 opl*	at eso?
 
 # MIDI support
 midi*	at autri?
 midi*	at opl?
-#midi*	at eap?
+midi*	at eap?
 
 # PCI USB Controllers
 ohci*	at pci?			# Open Host Controller
