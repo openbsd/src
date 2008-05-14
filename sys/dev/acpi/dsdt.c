@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.110 2008/05/14 05:24:36 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.111 2008/05/14 21:13:40 miod Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -33,6 +33,10 @@
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+
+#ifdef SMALL_KERNEL
+#undef ACPI_DEBUG
+#endif
 
 #define opsize(opcode) (((opcode) & 0xFF00) ? 2 : 1)
 
@@ -3772,6 +3776,7 @@ aml_xfindscope(struct aml_scope *scope, int type, int endscope)
 	return scope;
 }
 
+#ifdef ACPI_DEBUG
 /* Dump AML Stack */
 void 
 aml_showstack(struct aml_scope *scope)
@@ -3796,6 +3801,7 @@ aml_showstack(struct aml_scope *scope)
 		}
 	}
 }
+#endif
 
 /* Create a new scope object */
 struct aml_scope *
@@ -4098,7 +4104,9 @@ aml_xconvert(struct aml_value *a, struct aml_value **b, int ctype, int mode)
 		break;
 	}
 	if (c == NULL) {
+#ifndef SMALL_KERNEL
 		aml_showvalue(a, 0);
+#endif
 		aml_die("Could not convert!!!\n");
 	}
 	*b = c;
@@ -4428,8 +4436,10 @@ aml_xfldio(struct aml_scope *scope, struct aml_value *fld,
 			break;
 		}
 		if (slen < blen) {
+#ifndef SMALL_KERNEL
 			aml_showvalue(fld, 0);
 			aml_showvalue(buf, 0);
+#endif
 			aml_die("BIG SOURCE %d %d %s", buf->length, blen>>3, "");
 		}
 		if (buf->type != AML_OBJTYPE_INTEGER)
@@ -5147,7 +5157,9 @@ aml_xeval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 		break;
 	}
 	if (ret_type == 'i' && my_ret && my_ret->type != AML_OBJTYPE_INTEGER) {
+#ifndef SMALL_KERNEL
 		aml_showvalue(my_ret, 8-100);
+#endif
 		aml_die("Not Integer");
 	}
 	return my_ret;
@@ -5670,7 +5682,9 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		/* Index: tir => ObjRef */
 		idx = opargs[1]->v_integer;
 		if (idx >= opargs[0]->length || idx < 0) {
+#ifndef SMALL_KERNEL
 			aml_showvalue(opargs[0], 0);
+#endif
 			aml_die("Index out of bounds %d/%d\n", idx, 
 			    opargs[0]->length);
 		}
