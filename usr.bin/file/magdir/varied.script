@@ -1,3 +1,5 @@
+#	$OpenBSD: varied.script,v 1.2 2008/05/14 20:45:35 chl Exp $
+
 #------------------------------------------------------------------------------
 # varied.script:  file(1) magic for various interpreter scripts
 

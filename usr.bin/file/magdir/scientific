@@ -1,3 +1,4 @@
+#	$OpenBSD: scientific,v 1.2 2008/05/14 20:45:35 chl Exp $
 
 #------------------------------------------------------------------------------
 # scientific:  file(1) magic for scientific formats 

@@ -1,3 +1,5 @@
+#	$OpenBSD: basis,v 1.2 2008/05/14 20:45:35 chl Exp $
+
 #----------------------------------------------------------------
 # basis: file(1) magic for BBx/Pro5-files
 #      Oliver Dammer <dammer@olida.de>	 2005/11/07

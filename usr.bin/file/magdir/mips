@@ -1,3 +1,4 @@
+#	$OpenBSD: mips,v 1.2 2008/05/14 20:45:35 chl Exp $
 
 #------------------------------------------------------------------------------
 # mips:  file(1) magic for Silicon Graphics (MIPS, IRIS, IRIX, etc.)

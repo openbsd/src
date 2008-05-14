@@ -1,3 +1,5 @@
+#	$OpenBSD: tgif,v 1.2 2008/05/14 20:45:35 chl Exp $
+
 #------------------------------------------------------------------------------
 # file(1) magic for tgif(1) files
 # From Hendrik Scholz <hendrik@scholz.net>

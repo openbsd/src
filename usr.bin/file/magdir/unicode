@@ -1,3 +1,4 @@
+#	$OpenBSD: unicode,v 1.2 2008/05/14 20:45:35 chl Exp $
 
 #---------------------------------------------------------------------------
 # Unicode:  BOM prefixed text files - Adrian Havill <havill@turbolinux.co.jp>
