@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.22 2008/04/02 06:49:59 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.23 2008/05/14 04:12:57 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -1494,9 +1494,11 @@ void
 bce_tick(void *v)
 {
 	struct bce_softc *sc = v;
+	int s;
 
-	/* Tick the MII. */
+	s = splnet();
 	mii_tick(&sc->bce_mii);
+	splx(s);
 
 	timeout_add(&sc->bce_timeout, hz);
 }
