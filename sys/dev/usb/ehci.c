@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.78 2008/04/16 16:08:39 mk Exp $ */
+/*	$OpenBSD: ehci.c,v 1.79 2008/05/15 08:10:03 kettenis Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1971,7 +1971,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				goto ret;
 			}
 			/* Terminate reset sequence. */
-			EOWRITE4(sc, port, v);
+			v = EOREAD4(sc, port);
+			EOWRITE4(sc, port, v & ~EHCI_PS_PR);
 			/* Wait for HC to complete reset. */
 			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
 			if (sc->sc_dying) {
