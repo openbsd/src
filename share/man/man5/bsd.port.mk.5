@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.213 2008/05/11 18:48:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.214 2008/05/15 10:03:32 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2008 $
+.Dd $Mdocdate: May 15 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -136,7 +136,7 @@ target that simulates invoking
 Check distribution archives and distribution patches control sum against
 the results recorded in ${CHECKSUM_FILE},
 using the cryptographic signature utilities listed in ${PREFERRED_CIPHERS}.
-All the files needed to recreate a port should be in ${ALLFILES} and
+All the files needed to recreate a port should be in ${CHECKSUMFILES} and
 checksummed.
 Invoking
 .Ar checksum
@@ -280,7 +280,7 @@ which will also retrieve
 to fill with supplementary distribution files which are not needed for
 every configuration.
 See
-.Ev ALLFILES ,
+.Ev CHECKSUMFILES ,
 .Ev CDROM_SITE ,
 .Ev DISTDIR ,
 .Ev DISTFILES ,
@@ -289,6 +289,7 @@ See
 .Ev FETCH_MANUALLY ,
 .Ev FETCH_SYMLINK_DISTFILES ,
 .Ev FULLDISTDIR ,
+.Ev MAKESUMFILES ,
 .Ev MASTER_SITES ,
 .Ev MASTER_SITES0 , ... ,
 .Ev MASTER_SITES9 ,
@@ -340,7 +341,7 @@ Seldom used, see
 for details.
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
-cryptographic fingerprints sha256, sha1, md5 and rmd160 on ${ALLFILES}.
+cryptographic fingerprints sha256, sha1, md5 and rmd160 on ${MAKESUMFILES}.
 .Ev NO_CHECKSUM
 can be used to avoid all checksumming steps.
 .It Ar manpages-check
@@ -606,11 +607,6 @@ Invoked as make show=name, show the contents of ${name}.
 Invoked as make show="name1 name2 ...", show the contents of
 ${name1} ${name2} ...,
 one variable value per line.
-.It Ev ALLFILES
-List of all files that need to be retrieved by
-.Ar fetch ,
-with master site selection extension removed.
-Read-only.
 .It Ev ALL_FAKE_FLAGS
 Flags passed to ${MAKE} invocations during the fake process.
 Equals
@@ -777,6 +773,15 @@ registered.
 Defaults to
 .Sq \&No ,
 as this can be a big performance hit.
+.It Ev CHECKSUMFILES
+List of all files that need to be retrieved by
+.Ar fetch ,
+with
+.Ev DIST_SUBDIR
+prepended and with master site selection extension removed.
+Read-only.
+See also
+.Ev MAKESUMFILES .
 .It Ev CHECKSUM_FILE
 Location for this port's checksums, used by
 .Ar addsum ,
@@ -1227,6 +1232,15 @@ Used after changing directory to ${WRKBUILD}.
 The make program that is used for building the port.
 Set to ${MAKE} or ${GMAKE} depending on USE_GMAKE.
 Read-only.
+.It Ev MAKESUMFILES
+List of all files that need to be retrieved by
+.Ar fetch-all ,
+with
+.Ev DIST_SUBDIR
+prepende and with master site selection extension removed.
+Read-only.
+See also
+.Ev CHECKSUMFILES .
 .It Ev MASTER_SITES
 List of primary location from which distribution files and patchfiles are
 retrieved.
@@ -1887,8 +1901,10 @@ Holds the output of
 using ${PREFERRED_CIPHERS},
 for the port's ${DISTFILES} and ${PATCHFILES},
 as well as the sizes of these files.
-.It Pa ${FULLDISTDIR}/${ALLFILES}
-cache of distribution files for a given port.
+.It Pa ${DISTDIR}/${CHECKSUMFILES}
+cache of normal distribution files for a given port.
+.It Pa ${DISTDIR}/${MAKESUMFILES}
+cache of all distribution files for a given port.
 .It Pa ${PKGDIR}/DESCR
 Description for the port.
 Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
