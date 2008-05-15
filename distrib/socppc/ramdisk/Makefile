@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2008/05/11 22:29:14 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/05/15 22:10:46 kettenis Exp $
 
 REV=	${OSrev}
 
@@ -72,7 +72,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} cd${REV}.iso ${DESTDIR}/snapshot/
+	cp ${BSD_RD} ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -97,7 +97,7 @@ clean cleandir:
 	rm -rf cd-dir
 
 beforeinstall:
-	cp ${BSD.RD} cd${REV}.iso ${DESTDIR}/snapshot
+	cp ${BSD.RD} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
