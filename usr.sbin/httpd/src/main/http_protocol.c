@@ -1,4 +1,5 @@
-/*	$OpenBSD: http_protocol.c,v 1.32 2008/01/24 11:56:29 krw Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.33 2008/05/15 06:05:43 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: util_script.c,v 1.18 2008/05/15 06:05:43 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

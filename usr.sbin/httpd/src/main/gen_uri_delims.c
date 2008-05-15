@@ -1,3 +1,5 @@
+/*	$OpenBSD: gen_uri_delims.c,v 1.3 2008/05/15 06:05:43 mbalmer Exp $ */
+
 #include <stdio.h>
 
 /* generate a table of 256 values, where certain characters are

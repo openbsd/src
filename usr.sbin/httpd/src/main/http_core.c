@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.23 2008/05/09 08:06:28 mbalmer Exp $ */
+/* $OpenBSD: http_core.c,v 1.24 2008/05/15 06:05:43 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -104,289 +104,269 @@
  * the http_conf_globals.
  */
 
-static void *create_core_dir_config(pool *a, char *dir)
+static void *
+create_core_dir_config(pool *a, char *dir)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_pcalloc(a, sizeof(core_dir_config));
-    if (!dir || dir[strlen(dir) - 1] == '/') {
-        conf->d = dir;
-    }
-    else if (strncmp(dir, "proxy:", 6) == 0) {
-        conf->d = ap_pstrdup(a, dir);
-    }
-    else {
-        conf->d = ap_pstrcat(a, dir, "/", NULL);
-    }
-    conf->d_is_fnmatch = conf->d ? (ap_is_fnmatch(conf->d) != 0) : 0;
-    conf->d_components = conf->d ? ap_count_dirs(conf->d) : 0;
+	conf = (core_dir_config *)ap_pcalloc(a, sizeof(core_dir_config));
+	if (!dir || dir[strlen(dir) - 1] == '/')
+		conf->d = dir;
+	else if (strncmp(dir, "proxy:", 6) == 0)
+		conf->d = ap_pstrdup(a, dir);
+	else
+		conf->d = ap_pstrcat(a, dir, "/", NULL);
 
-    conf->opts = dir ? OPT_UNSET : OPT_UNSET|OPT_ALL;
-    conf->opts_add = conf->opts_remove = OPT_NONE;
-    conf->override = dir ? OR_UNSET : OR_UNSET|OR_ALL;
+	conf->d_is_fnmatch = conf->d ? (ap_is_fnmatch(conf->d) != 0) : 0;
+	conf->d_components = conf->d ? ap_count_dirs(conf->d) : 0;
 
-    conf->content_md5 = 2;
+	conf->opts = dir ? OPT_UNSET : OPT_UNSET|OPT_ALL;
+	conf->opts_add = conf->opts_remove = OPT_NONE;
+	conf->override = dir ? OR_UNSET : OR_UNSET|OR_ALL;
 
-    conf->use_canonical_name = USE_CANONICAL_NAME_UNSET;
+	conf->content_md5 = 2;
 
-    conf->hostname_lookups = HOSTNAME_LOOKUP_UNSET;
-    conf->do_rfc1413 = DEFAULT_RFC1413 | 2; /* set bit 1 to indicate default */
-    conf->satisfy = SATISFY_NOSPEC;
+	conf->use_canonical_name = USE_CANONICAL_NAME_UNSET;
 
-    conf->limit_cpu = NULL;
-    conf->limit_mem = NULL;
-    conf->limit_nproc = NULL;
-    conf->limit_nofile = NULL;
+	conf->hostname_lookups = HOSTNAME_LOOKUP_UNSET;
+	conf->do_rfc1413 = DEFAULT_RFC1413 | 2; /* set bit 1 to indicate
+						 * default
+						 */
+	conf->satisfy = SATISFY_NOSPEC;
 
-    conf->limit_req_body = 0;
-    conf->sec = ap_make_array(a, 2, sizeof(void *));
+	conf->limit_cpu = NULL;
+	conf->limit_mem = NULL;
+	conf->limit_nproc = NULL;
+	conf->limit_nofile = NULL;
 
-    conf->server_signature = srv_sig_unset;
+	conf->limit_req_body = 0;
+	conf->sec = ap_make_array(a, 2, sizeof(void *));
 
-    conf->add_default_charset = ADD_DEFAULT_CHARSET_UNSET;
-    conf->add_default_charset_name = DEFAULT_ADD_DEFAULT_CHARSET_NAME;
+	conf->server_signature = srv_sig_unset;
 
-    /*
-     * Flag for use of inodes in ETags.
-     */
-    conf->etag_bits = ETAG_UNSET;
-    conf->etag_add = ETAG_UNSET;
-    conf->etag_remove = ETAG_UNSET;
+	conf->add_default_charset = ADD_DEFAULT_CHARSET_UNSET;
+	conf->add_default_charset_name = DEFAULT_ADD_DEFAULT_CHARSET_NAME;
 
-    return (void *)conf;
+	/* Flag for use of inodes in ETags. */
+	conf->etag_bits = ETAG_UNSET;
+	conf->etag_add = ETAG_UNSET;
+	conf->etag_remove = ETAG_UNSET;
+
+	return (void *)conf;
 }
 
-static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
+static void *
+merge_core_dir_configs(pool *a, void *basev, void *newv)
 {
-    core_dir_config *base = (core_dir_config *)basev;
-    core_dir_config *new = (core_dir_config *)newv;
-    core_dir_config *conf;
-    int i;
-  
-    conf = (core_dir_config *)ap_palloc(a, sizeof(core_dir_config));
-    memcpy((char *)conf, (const char *)base, sizeof(core_dir_config));
-    if (base->response_code_strings) {
-	conf->response_code_strings =
-	    ap_palloc(a, sizeof(*conf->response_code_strings)
-		      * RESPONSE_CODES);
-	memcpy(conf->response_code_strings, base->response_code_strings,
-	       sizeof(*conf->response_code_strings) * RESPONSE_CODES);
-    }
-    
-    conf->d = new->d;
-    conf->d_is_fnmatch = new->d_is_fnmatch;
-    conf->d_components = new->d_components;
-    conf->r = new->r;
+	core_dir_config *base = (core_dir_config *)basev;
+	core_dir_config *new = (core_dir_config *)newv;
+	core_dir_config *conf;
+	int i;
 
-    if (new->opts & OPT_UNSET) {
-	/* there was no explicit setting of new->opts, so we merge
-	 * preserve the invariant (opts_add & opts_remove) == 0
-	 */
-	conf->opts_add = (conf->opts_add & ~new->opts_remove) | new->opts_add;
-	conf->opts_remove = (conf->opts_remove & ~new->opts_add)
-	                    | new->opts_remove;
-	conf->opts = (conf->opts & ~conf->opts_remove) | conf->opts_add;
-        if ((base->opts & OPT_INCNOEXEC) && (new->opts & OPT_INCLUDES)) {
-            conf->opts = (conf->opts & ~OPT_INCNOEXEC) | OPT_INCLUDES;
+	conf = (core_dir_config *)ap_palloc(a, sizeof(core_dir_config));
+	memcpy((char *)conf, (const char *)base, sizeof(core_dir_config));
+	if (base->response_code_strings) {
+		conf->response_code_strings =
+		ap_palloc(a, sizeof(*conf->response_code_strings)
+		    * RESPONSE_CODES);
+		memcpy(conf->response_code_strings, base->response_code_strings,
+		    sizeof(*conf->response_code_strings) * RESPONSE_CODES);
 	}
-    }
-    else {
-	/* otherwise we just copy, because an explicit opts setting
-	 * overrides all earlier +/- modifiers
-	 */
-	conf->opts = new->opts;
-	conf->opts_add = new->opts_add;
-	conf->opts_remove = new->opts_remove;
-    }
 
-    if (!(new->override & OR_UNSET)) {
-        conf->override = new->override;
-    }
-    if (new->ap_default_type) {
-        conf->ap_default_type = new->ap_default_type;
-    }
-    
-    if (new->ap_auth_type) {
-        conf->ap_auth_type = new->ap_auth_type;
-    }
-    if (new->ap_auth_name) {
-        conf->ap_auth_name = new->ap_auth_name;
-    }
-    if (new->ap_auth_nonce) {
-        conf->ap_auth_nonce = new->ap_auth_nonce;
-    }
-    if (new->ap_requires) {
-        conf->ap_requires = new->ap_requires;
-    }
+	conf->d = new->d;
+	conf->d_is_fnmatch = new->d_is_fnmatch;
+	conf->d_components = new->d_components;
+	conf->r = new->r;
 
-    if (new->response_code_strings) {
-	if (conf->response_code_strings == NULL) {
-	    conf->response_code_strings = ap_palloc(a,
-		sizeof(*conf->response_code_strings) * RESPONSE_CODES);
-	    memcpy(conf->response_code_strings, new->response_code_strings,
-		   sizeof(*conf->response_code_strings) * RESPONSE_CODES);
+	if (new->opts & OPT_UNSET) {
+		/* there was no explicit setting of new->opts, so we merge
+		* preserve the invariant (opts_add & opts_remove) == 0
+		*/
+		conf->opts_add = (conf->opts_add & ~new->opts_remove) |
+		    new->opts_add;
+		conf->opts_remove = (conf->opts_remove & ~new->opts_add) |
+		    new->opts_remove;
+		conf->opts = (conf->opts & ~conf->opts_remove) | conf->opts_add;
+		if ((base->opts & OPT_INCNOEXEC) && (new->opts & OPT_INCLUDES))
+			conf->opts = (conf->opts & ~OPT_INCNOEXEC) |
+			    OPT_INCLUDES;
+	} else {
+		/* otherwise we just copy, because an explicit opts setting
+		* overrides all earlier +/- modifiers
+		*/
+		conf->opts = new->opts;
+		conf->opts_add = new->opts_add;
+		conf->opts_remove = new->opts_remove;
 	}
-	else {
-	    for (i = 0; i < RESPONSE_CODES; ++i) {
-	        if (new->response_code_strings[i] != NULL) {
-		    conf->response_code_strings[i]
-		        = new->response_code_strings[i];
+
+	if (!(new->override & OR_UNSET))
+		conf->override = new->override;
+	if (new->ap_default_type)
+		conf->ap_default_type = new->ap_default_type;
+	if (new->ap_auth_type)
+		conf->ap_auth_type = new->ap_auth_type;
+	if (new->ap_auth_name)
+		conf->ap_auth_name = new->ap_auth_name;
+	if (new->ap_auth_nonce)
+		conf->ap_auth_nonce = new->ap_auth_nonce;
+	if (new->ap_requires)
+		conf->ap_requires = new->ap_requires;
+
+	if (new->response_code_strings) {
+		if (conf->response_code_strings == NULL) {
+			conf->response_code_strings = ap_palloc(a,
+			    sizeof(*conf->response_code_strings) *
+			    RESPONSE_CODES);
+			memcpy(conf->response_code_strings,
+			    new->response_code_strings,
+			    sizeof(*conf->response_code_strings) *
+			    RESPONSE_CODES);
+		} else {
+			for (i = 0; i < RESPONSE_CODES; ++i) {
+				if (new->response_code_strings[i] != NULL)
+					conf->response_code_strings[i]
+					    = new->response_code_strings[i];
+			}
 		}
-	    }
 	}
-    }
-    if (new->hostname_lookups != HOSTNAME_LOOKUP_UNSET) {
-	conf->hostname_lookups = new->hostname_lookups;
-    }
-    if ((new->do_rfc1413 & 2) == 0) {
-        conf->do_rfc1413 = new->do_rfc1413;
-    }
-    if ((new->content_md5 & 2) == 0) {
-        conf->content_md5 = new->content_md5;
-    }
-    if (new->use_canonical_name != USE_CANONICAL_NAME_UNSET) {
-	conf->use_canonical_name = new->use_canonical_name;
-    }
+	if (new->hostname_lookups != HOSTNAME_LOOKUP_UNSET)
+		conf->hostname_lookups = new->hostname_lookups;
+	if ((new->do_rfc1413 & 2) == 0)
+		conf->do_rfc1413 = new->do_rfc1413;
+	if ((new->content_md5 & 2) == 0)
+		conf->content_md5 = new->content_md5;
+	if (new->use_canonical_name != USE_CANONICAL_NAME_UNSET)
+		conf->use_canonical_name = new->use_canonical_name;
 
-    if (new->limit_cpu) {
-        conf->limit_cpu = new->limit_cpu;
-    }
-    if (new->limit_mem) {
-        conf->limit_mem = new->limit_mem;
-    }
-    if (new->limit_nproc) {
-        conf->limit_nproc = new->limit_nproc;
-    }
-    if (new->limit_nofile) {
-        conf->limit_nofile = new->limit_nofile;
-    }
+	if (new->limit_cpu)
+		conf->limit_cpu = new->limit_cpu;
+	if (new->limit_mem)
+		conf->limit_mem = new->limit_mem;
+	if (new->limit_nproc)
+		conf->limit_nproc = new->limit_nproc;
+	if (new->limit_nofile)
+		conf->limit_nofile = new->limit_nofile;
 
-    if (new->limit_req_body) {
-        conf->limit_req_body = new->limit_req_body;
-    }
-    conf->sec = ap_append_arrays(a, base->sec, new->sec);
+	if (new->limit_req_body)
+		conf->limit_req_body = new->limit_req_body;
 
-    if (new->satisfy != SATISFY_NOSPEC) {
-        conf->satisfy = new->satisfy;
-    }
+	conf->sec = ap_append_arrays(a, base->sec, new->sec);
 
+	if (new->satisfy != SATISFY_NOSPEC)
+		conf->satisfy = new->satisfy;
 
-    if (new->server_signature != srv_sig_unset) {
-	conf->server_signature = new->server_signature;
-    }
+	if (new->server_signature != srv_sig_unset)
+		conf->server_signature = new->server_signature;
 
-    if (new->add_default_charset != ADD_DEFAULT_CHARSET_UNSET) {
-	conf->add_default_charset = new->add_default_charset;
-	if (new->add_default_charset_name) {
-	    conf->add_default_charset_name = new->add_default_charset_name;
+	if (new->add_default_charset != ADD_DEFAULT_CHARSET_UNSET) {
+		conf->add_default_charset = new->add_default_charset;
+		if (new->add_default_charset_name)
+			conf->add_default_charset_name =
+			    new->add_default_charset_name;
 	}
-    }
 
-    /*
-     * Now merge the setting of the FileETag directive.
-     */
-    if (new->etag_bits == ETAG_UNSET) {
-        conf->etag_add =
-            (conf->etag_add & (~ new->etag_remove)) | new->etag_add;
-        conf->etag_remove =
-            (conf->opts_remove & (~ new->etag_add)) | new->etag_remove;
-        conf->etag_bits =
-            (conf->etag_bits & (~ conf->etag_remove)) | conf->etag_add;
-    }
-    else {
-        conf->etag_bits = new->etag_bits;
-        conf->etag_add = new->etag_add;
-        conf->etag_remove = new->etag_remove;
-    }
-    if (conf->etag_bits != ETAG_NONE) {
-        conf->etag_bits &= (~ ETAG_NONE);
-    }
+	/* Now merge the setting of the FileETag directive. */
+	if (new->etag_bits == ETAG_UNSET) {
+		conf->etag_add =
+		    (conf->etag_add & (~ new->etag_remove)) | new->etag_add;
+		conf->etag_remove =
+		    (conf->opts_remove & (~ new->etag_add)) | new->etag_remove;
+		conf->etag_bits =
+		    (conf->etag_bits & (~ conf->etag_remove)) | conf->etag_add;
+	} else {
+		conf->etag_bits = new->etag_bits;
+		conf->etag_add = new->etag_add;
+		conf->etag_remove = new->etag_remove;
+	}
+	if (conf->etag_bits != ETAG_NONE)
+		conf->etag_bits &= (~ ETAG_NONE);
 
-    if (new->cgi_command_args != AP_FLAG_UNSET) {
-        conf->cgi_command_args = new->cgi_command_args;
-    }
-    ap_server_strip_chroot(conf->d, 0);
+	if (new->cgi_command_args != AP_FLAG_UNSET)
+		conf->cgi_command_args = new->cgi_command_args;
+	ap_server_strip_chroot(conf->d, 0);
 
-    return (void*)conf;
+	return (void*)conf;
 }
 
-static void *create_core_server_config(pool *a, server_rec *s)
+static void *
+create_core_server_config(pool *a, server_rec *s)
 {
-    core_server_config *conf;
-    int is_virtual = s->is_virtual;
-  
-    conf = (core_server_config *)ap_pcalloc(a, sizeof(core_server_config));
+	core_server_config *conf;
+	int is_virtual = s->is_virtual;
+
+	conf = (core_server_config *)ap_pcalloc(a, sizeof(core_server_config));
 #ifdef GPROF
-    conf->gprof_dir = NULL;
+	conf->gprof_dir = NULL;
 #endif
-    conf->access_name = is_virtual ? NULL : DEFAULT_ACCESS_FNAME;
-    conf->ap_document_root = is_virtual ? NULL : DOCUMENT_LOCATION;
-    conf->sec = ap_make_array(a, 40, sizeof(void *));
-    conf->sec_url = ap_make_array(a, 40, sizeof(void *));
+	conf->access_name = is_virtual ? NULL : DEFAULT_ACCESS_FNAME;
+	conf->ap_document_root = is_virtual ? NULL : DOCUMENT_LOCATION;
+	conf->sec = ap_make_array(a, 40, sizeof(void *));
+	conf->sec_url = ap_make_array(a, 40, sizeof(void *));
 
-    /* recursion stopper */
-    conf->redirect_limit = 0;
-    conf->subreq_limit = 0;
-    conf->recursion_limit_set = 0;
+	/* recursion stopper */
+	conf->redirect_limit = 0;
+	conf->subreq_limit = 0;
+	conf->recursion_limit_set = 0;
 
-    return (void *)conf;
+	return (void *)conf;
 }
 
-static void *merge_core_server_configs(pool *p, void *basev, void *virtv)
+static void *
+merge_core_server_configs(pool *p, void *basev, void *virtv)
 {
-    core_server_config *base = (core_server_config *)basev;
-    core_server_config *virt = (core_server_config *)virtv;
-    core_server_config *conf;
+	core_server_config *base = (core_server_config *)basev;
+	core_server_config *virt = (core_server_config *)virtv;
+	core_server_config *conf;
 
-    conf = (core_server_config *)ap_pcalloc(p, sizeof(core_server_config));
-    *conf = *virt;
-    if (!conf->access_name) {
-        conf->access_name = base->access_name;
-    }
-    if (!conf->ap_document_root) {
-        conf->ap_document_root = base->ap_document_root;
-    }
-    conf->sec = ap_append_arrays(p, base->sec, virt->sec);
-    conf->sec_url = ap_append_arrays(p, base->sec_url, virt->sec_url);
+	conf = (core_server_config *)ap_pcalloc(p, sizeof(core_server_config));
+	*conf = *virt;
+	if (!conf->access_name)
+		conf->access_name = base->access_name;
+	if (!conf->ap_document_root)
+		conf->ap_document_root = base->ap_document_root;
 
-    conf->redirect_limit = virt->recursion_limit_set
-                           ? virt->redirect_limit
-                           : base->redirect_limit;
+	conf->sec = ap_append_arrays(p, base->sec, virt->sec);
+	conf->sec_url = ap_append_arrays(p, base->sec_url, virt->sec_url);
 
-    conf->subreq_limit = virt->recursion_limit_set
-                         ? virt->subreq_limit
-                         : base->subreq_limit;
+	conf->redirect_limit = virt->recursion_limit_set
+	    ? virt->redirect_limit : base->redirect_limit;
 
-    return conf;
+	conf->subreq_limit = virt->recursion_limit_set
+	    ? virt->subreq_limit : base->subreq_limit;
+
+	return conf;
 }
 
 /* Add per-directory configuration entry (for <directory> section);
  * these are part of the core server config.
  */
 
-CORE_EXPORT(void) ap_add_per_dir_conf(server_rec *s, void *dir_config)
+CORE_EXPORT(void)
+ap_add_per_dir_conf(server_rec *s, void *dir_config)
 {
-    core_server_config *sconf = ap_get_module_config(s->module_config,
-						     &core_module);
-    void **new_space = (void **)ap_push_array(sconf->sec);
-    
-    *new_space = dir_config;
+	core_server_config *sconf = ap_get_module_config(s->module_config,
+	    &core_module);
+	void **new_space = (void **)ap_push_array(sconf->sec);
+
+	*new_space = dir_config;
 }
 
-CORE_EXPORT(void) ap_add_per_url_conf(server_rec *s, void *url_config)
+CORE_EXPORT(void)
+ap_add_per_url_conf(server_rec *s, void *url_config)
 {
-    core_server_config *sconf = ap_get_module_config(s->module_config,
-						     &core_module);
-    void **new_space = (void **)ap_push_array(sconf->sec_url);
-    
-    *new_space = url_config;
+	core_server_config *sconf = ap_get_module_config(s->module_config,
+	    &core_module);
+	void **new_space = (void **)ap_push_array(sconf->sec_url);
+
+	*new_space = url_config;
 }
 
-CORE_EXPORT(void) ap_add_file_conf(core_dir_config *conf, void *url_config)
+CORE_EXPORT(void)
+ap_add_file_conf(core_dir_config *conf, void *url_config)
 {
-    void **new_space = (void **)ap_push_array(conf->sec);
-    
-    *new_space = url_config;
+	void **new_space = (void **)ap_push_array(conf->sec);
+
+	*new_space = url_config;
 }
 
 /* core_reorder_directories reorders the directory sections such that the
@@ -406,73 +386,69 @@ CORE_EXPORT(void) ap_add_file_conf(core_dir_config *conf, void *url_config)
  * components (where a "special" section has infinite components).
  */
 struct reorder_sort_rec {
-    void *elt;
-    int orig_index;
+	void	*elt;
+	int	 orig_index;
 };
 
-static int reorder_sorter(const void *va, const void *vb)
+static int
+reorder_sorter(const void *va, const void *vb)
 {
-    const struct reorder_sort_rec *a = va;
-    const struct reorder_sort_rec *b = vb;
-    core_dir_config *core_a;
-    core_dir_config *core_b;
+	const struct reorder_sort_rec *a = va;
+	const struct reorder_sort_rec *b = vb;
+	core_dir_config *core_a;
+	core_dir_config *core_b;
 
-    core_a = (core_dir_config *)ap_get_module_config(a->elt, &core_module);
-    core_b = (core_dir_config *)ap_get_module_config(b->elt, &core_module);
-    if (IS_SPECIAL(core_a)) {
-	if (!IS_SPECIAL(core_b)) {
-	    return 1;
+	core_a = (core_dir_config *)ap_get_module_config(a->elt, &core_module);
+	core_b = (core_dir_config *)ap_get_module_config(b->elt, &core_module);
+	if (IS_SPECIAL(core_a)) {
+		if (!IS_SPECIAL(core_b))
+			return 1;
+	} else if (IS_SPECIAL(core_b))
+		return -1;
+	else {
+		/* we know they're both not special */
+		if (core_a->d_components < core_b->d_components)
+			return -1;
+		else if (core_a->d_components > core_b->d_components)
+			return 1;
 	}
-    }
-    else if (IS_SPECIAL(core_b)) {
-	return -1;
-    }
-    else {
-	/* we know they're both not special */
-	if (core_a->d_components < core_b->d_components) {
-	    return -1;
-	}
-	else if (core_a->d_components > core_b->d_components) {
-	    return 1;
-	}
-    }
-    /* Either they're both special, or they're both not special and have the
-     * same number of components.  In any event, we now have to compare
-     * the minor key. */
-    return a->orig_index - b->orig_index;
+	/* Either they're both special, or they're both not special and have the
+	* same number of components.  In any event, we now have to compare
+	* the minor key. */
+	return a->orig_index - b->orig_index;
 }
 
-CORE_EXPORT(void) ap_core_reorder_directories(pool *p, server_rec *s)
+CORE_EXPORT(void)
+ap_core_reorder_directories(pool *p, server_rec *s)
 {
-    core_server_config *sconf;
-    array_header *sec;
-    struct reorder_sort_rec *sortbin;
-    int nelts;
-    void **elts;
-    int i;
-    pool *tmp;
+	core_server_config *sconf;
+	array_header *sec;
+	struct reorder_sort_rec *sortbin;
+	int nelts;
+	void **elts;
+	int i;
+	pool *tmp;
 
-    sconf = ap_get_module_config(s->module_config, &core_module);
-    sec = sconf->sec;
-    nelts = sec->nelts;
-    elts = (void **)sec->elts;
+	sconf = ap_get_module_config(s->module_config, &core_module);
+	sec = sconf->sec;
+	nelts = sec->nelts;
+	elts = (void **)sec->elts;
 
-    /* we have to allocate tmp space to do a stable sort */
-    tmp = ap_make_sub_pool(p);
-    sortbin = ap_palloc(tmp, sec->nelts * sizeof(*sortbin));
-    for (i = 0; i < nelts; ++i) {
-	sortbin[i].orig_index = i;
-	sortbin[i].elt = elts[i];
-    }
+	/* we have to allocate tmp space to do a stable sort */
+	tmp = ap_make_sub_pool(p);
+	sortbin = ap_palloc(tmp, sec->nelts * sizeof(*sortbin));
+	for (i = 0; i < nelts; ++i) {
+		sortbin[i].orig_index = i;
+		sortbin[i].elt = elts[i];
+	}
 
-    qsort(sortbin, nelts, sizeof(*sortbin), reorder_sorter);
+	qsort(sortbin, nelts, sizeof(*sortbin), reorder_sorter);
 
-    /* and now copy back to the original array */
-    for (i = 0; i < nelts; ++i) {
-      elts[i] = sortbin[i].elt;
-    }
+	/* and now copy back to the original array */
+	for (i = 0; i < nelts; ++i)
+		elts[i] = sortbin[i].elt;
 
-    ap_destroy_pool(tmp);
+	ap_destroy_pool(tmp);
 }
 
 /*****************************************************************
@@ -483,121 +459,131 @@ CORE_EXPORT(void) ap_core_reorder_directories(pool *p, server_rec *s)
  * here...
  */
 
-API_EXPORT(int) ap_allow_options(request_rec *r)
+API_EXPORT(int)
+ap_allow_options(request_rec *r)
 {
-    core_dir_config *conf = 
-      (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module); 
+	core_dir_config *conf = 
+	    (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
 
-    return conf->opts; 
+	return conf->opts; 
 } 
 
-API_EXPORT(int) ap_allow_overrides(request_rec *r) 
+API_EXPORT(int)
+ap_allow_overrides(request_rec *r) 
 { 
-    core_dir_config *conf;
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
+	core_dir_config *conf;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
 
-    return conf->override; 
+	return conf->override; 
 } 
 
-API_EXPORT(const char *) ap_auth_type(request_rec *r)
+API_EXPORT(const char *)
+ap_auth_type(request_rec *r)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
-    return conf->ap_auth_type;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
+	return conf->ap_auth_type;
 }
 
-API_EXPORT(const char *) ap_auth_name(request_rec *r)
+API_EXPORT(const char *)
+ap_auth_name(request_rec *r)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
-    return conf->ap_auth_name;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
+	return conf->ap_auth_name;
 }
 
-API_EXPORT(const char *) ap_auth_nonce(request_rec *r)
+API_EXPORT(const char *)
+ap_auth_nonce(request_rec *r)
 {
-    core_dir_config *conf;
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-                                                   &core_module);
-    if (conf->ap_auth_nonce)
-       return conf->ap_auth_nonce;
+	core_dir_config *conf;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
+	if (conf->ap_auth_nonce)
+		return conf->ap_auth_nonce;
 
-    /* Ideally we'd want to mix in some per-directory style
-     * information; as we are likely to want to detect replay
-     * across those boundaries and some randomness. But that
-     * is harder due to the adhoc nature of .htaccess memory
-     * structures, restarts and forks.
-     *
-     * But then again - you should use AuthDigestRealmSeed in your config
-     * file if you care. So the adhoc value should do.
-     */
-    return ap_psprintf(r->pool,"%pp%pp%pp%pp%pp",
-           (void *)&(r->connection->local_host),
-           (void *)ap_user_name,
-           (void *)ap_listeners,
-           (void *)ap_server_argv0,
-           (void *)ap_pid_fname);
+	/* Ideally we'd want to mix in some per-directory style
+	 * information; as we are likely to want to detect replay
+	 * across those boundaries and some randomness. But that
+	 * is harder due to the adhoc nature of .htaccess memory
+	 * structures, restarts and forks.
+	 *
+	 * But then again - you should use AuthDigestRealmSeed in your config
+	 * file if you care. So the adhoc value should do.
+	 */
+	return ap_psprintf(r->pool,"%pp%pp%pp%pp%pp",
+	    (void *)&(r->connection->local_host),
+	    (void *)ap_user_name,
+	    (void *)ap_listeners,
+	    (void *)ap_server_argv0,
+	    (void *)ap_pid_fname);
 }
 
-API_EXPORT(const char *) ap_default_type(request_rec *r)
+API_EXPORT(const char *)
+ap_default_type(request_rec *r)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
-    return conf->ap_default_type 
-               ? conf->ap_default_type 
-               : DEFAULT_CONTENT_TYPE;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
+	return conf->ap_default_type 
+	    ? conf->ap_default_type : DEFAULT_CONTENT_TYPE;
 }
 
-API_EXPORT(const char *) ap_document_root(request_rec *r) /* Don't use this! */
+API_EXPORT(const char *)
+ap_document_root(request_rec *r) /* Don't use this! */
 {
-    core_server_config *conf;
+	core_server_config *conf;
 
-    conf = (core_server_config *)ap_get_module_config(r->server->module_config,
-						      &core_module); 
-    return conf->ap_document_root;
+	conf =
+	    (core_server_config *)ap_get_module_config(r->server->module_config,
+	    &core_module); 
+	return conf->ap_document_root;
 }
 
-API_EXPORT(const array_header *) ap_requires(request_rec *r)
+API_EXPORT(const array_header *)
+ap_requires(request_rec *r)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
-    return conf->ap_requires;
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
+	return conf->ap_requires;
 }
 
-API_EXPORT(int) ap_satisfies(request_rec *r)
+API_EXPORT(int)
+ap_satisfies(request_rec *r)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module);
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
 
-    return conf->satisfy;
+	return conf->satisfy;
 }
 
 /* Should probably just get rid of this... the only code that cares is
  * part of the core anyway (and in fact, it isn't publicised to other
  * modules).
  */
-
-API_EXPORT(char *) ap_response_code_string(request_rec *r, int error_index)
+API_EXPORT(char *)
+ap_response_code_string(request_rec *r, int error_index)
 {
-    core_dir_config *conf;
+	core_dir_config *conf;
 
-    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						   &core_module); 
+	conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module); 
 
-    if (conf->response_code_strings == NULL) {
-	return NULL;
-    }
-    return conf->response_code_strings[error_index];
+	if (conf->response_code_strings == NULL)
+		return NULL;
+
+	return conf->response_code_strings[error_index];
 }
 
 
@@ -615,152 +601,140 @@ API_EXPORT(char *) ap_response_code_string(request_rec *r, int error_index)
  *       a setting of NULL would allow another reverse lookup,
  *       depending on the flags given to ap_get_remote_host().
  */
-static ap_inline void do_double_reverse (conn_rec *conn)
+static ap_inline void
+do_double_reverse(conn_rec *conn)
 {
-    struct addrinfo hints, *res, *res0;
-    char hostbuf1[128], hostbuf2[128]; /* INET6_ADDRSTRLEN(=46) is enough */
-    int ok = 0;
+	struct addrinfo hints, *res, *res0;
+	char hostbuf1[128], hostbuf2[128]; /* INET6_ADDRSTRLEN(=46) is enough */
+	int ok = 0;
 
-    if (conn->double_reverse) {
-	/* already done */
-	return;
-    }
-    if (conn->remote_host == NULL || conn->remote_host[0] == '\0') {
-	/* single reverse failed, so don't bother */
-	conn->double_reverse = -1;
-        conn->remote_host = ""; /* prevent another lookup */
-	return;
-    }
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    if (getaddrinfo(conn->remote_host, NULL, &hints, &res0)) {
-	conn->double_reverse = -1;
-	return;
-    }
-    for (res = res0; res; res = res->ai_next) {
-	if (res->ai_addr->sa_family != conn->remote_addr.ss_family ||
-	    !(res->ai_family == AF_INET 
-	      || res->ai_family == AF_INET6
-	      )
-	    )
-	    continue;
+	if (conn->double_reverse)
+		/* already done */
+		return;
+
+	if (conn->remote_host == NULL || conn->remote_host[0] == '\0') {
+		/* single reverse failed, so don't bother */
+		conn->double_reverse = -1;
+		conn->remote_host = ""; /* prevent another lookup */
+		return;
+	}
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	if (getaddrinfo(conn->remote_host, NULL, &hints, &res0)) {
+		conn->double_reverse = -1;
+		return;
+	}
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_addr->sa_family != conn->remote_addr.ss_family ||
+		    !(res->ai_family == AF_INET 
+		    || res->ai_family == AF_INET6))
+			continue;
 #ifndef HAVE_SOCKADDR_LEN
-	if (res->ai_addrlen != SA_LEN((struct sockaddr *)&conn->remote_addr))
+		if (res->ai_addrlen !=
+		    SA_LEN((struct sockaddr *)&conn->remote_addr))
 #else
-	if (res->ai_addr->sa_len != conn->remote_addr.ss_len)
+		if (res->ai_addr->sa_len != conn->remote_addr.ss_len)
 #endif
-	    continue;
-	if (getnameinfo(res->ai_addr, res->ai_addrlen,
-            hostbuf1, sizeof(hostbuf1), NULL, 0,
-            NI_NUMERICHOST))
-	    continue;
-	if (getnameinfo(((struct sockaddr *)&conn->remote_addr), res->ai_addrlen,
-            hostbuf2, sizeof(hostbuf2), NULL, 0,
-            NI_NUMERICHOST))
-	    continue;
-	if (strcmp(hostbuf1, hostbuf2) == 0){
-	    ok = 1;
-	    break;
+			continue;
+		if (getnameinfo(res->ai_addr, res->ai_addrlen,
+		    hostbuf1, sizeof(hostbuf1), NULL, 0, NI_NUMERICHOST))
+			continue;
+		if (getnameinfo(((struct sockaddr *)&conn->remote_addr),
+		    res->ai_addrlen, hostbuf2, sizeof(hostbuf2), NULL, 0,
+		    NI_NUMERICHOST))
+			continue;
+		if (strcmp(hostbuf1, hostbuf2) == 0){
+			ok = 1;
+			break;
+		}
 	}
-    }
-    conn->double_reverse = ok ? 1 : -1;
-    freeaddrinfo(res0);
+	conn->double_reverse = ok ? 1 : -1;
+	freeaddrinfo(res0);
 }
 
-API_EXPORT(const char *) ap_get_remote_host(conn_rec *conn, void *dir_config,
-					    int type)
+API_EXPORT(const char *)
+ap_get_remote_host(conn_rec *conn, void *dir_config, int type)
 {
-    int hostname_lookups;
-    int old_stat = SERVER_DEAD;	/* we shouldn't ever be in this state */
-    char hostnamebuf[MAXHOSTNAMELEN];
+	int hostname_lookups;
+	int old_stat = SERVER_DEAD;	/* we shouldn't ever be in this state */
+	char hostnamebuf[MAXHOSTNAMELEN];
 
-    /* If we haven't checked the host name, and we want to */
-    if (dir_config) {
-	hostname_lookups =
-	    ((core_dir_config *)ap_get_module_config(dir_config, &core_module))
-		->hostname_lookups;
-	if (hostname_lookups == HOSTNAME_LOOKUP_UNSET) {
-	    hostname_lookups = HOSTNAME_LOOKUP_OFF;
-	}
-    }
-    else {
-	/* the default */
-	hostname_lookups = HOSTNAME_LOOKUP_OFF;
-    }
+	/* If we haven't checked the host name, and we want to */
+	if (dir_config) {
+		hostname_lookups =
+		    ((core_dir_config *)ap_get_module_config(dir_config,
+		    &core_module))->hostname_lookups;
+		if (hostname_lookups == HOSTNAME_LOOKUP_UNSET)
+			hostname_lookups = HOSTNAME_LOOKUP_OFF;
 
-    if (type != REMOTE_NOLOOKUP
-	&& conn->remote_host == NULL
-	&& (type == REMOTE_DOUBLE_REV
+	} else
+		/* the default */
+		hostname_lookups = HOSTNAME_LOOKUP_OFF;
+
+	if (type != REMOTE_NOLOOKUP && conn->remote_host == NULL
+	    && (type == REMOTE_DOUBLE_REV
 	    || hostname_lookups != HOSTNAME_LOOKUP_OFF)) {
-	old_stat = ap_update_child_status(conn->child_num, SERVER_BUSY_DNS,
-					  (request_rec*)NULL);
-	if (!getnameinfo((struct sockaddr *)&conn->remote_addr,
+		old_stat = ap_update_child_status(conn->child_num,
+		    SERVER_BUSY_DNS, (request_rec*)NULL);
+		if (!getnameinfo((struct sockaddr *)&conn->remote_addr,
 #ifndef SIN6_LEN
-		SA_LEN((struct sockaddr *)&conn->remote_addr),
+		    SA_LEN((struct sockaddr *)&conn->remote_addr),
 #else
-		conn->remote_addr.ss_len,
+		    conn->remote_addr.ss_len,
 #endif
-		hostnamebuf, sizeof(hostnamebuf), NULL, 0, 0)) {
-	    conn->remote_host = ap_pstrdup(conn->pool, (void *)hostnamebuf);
-	    ap_str_tolower(conn->remote_host);
-	   
-	    if (hostname_lookups == HOSTNAME_LOOKUP_DOUBLE) {
-		do_double_reverse(conn);
-	    }
-	}
-	/* if failed, set it to the NULL string to indicate error */
-	if (conn->remote_host == NULL) {
-	    conn->remote_host = "";
-	}
-    }
-    if (type == REMOTE_DOUBLE_REV) {
-	do_double_reverse(conn);
-	if (conn->double_reverse == -1) {
-	    return NULL;
-	}
-    }
-    if (old_stat != SERVER_DEAD) {
-	(void)ap_update_child_status(conn->child_num, old_stat,
-				     (request_rec*)NULL);
-    }
+		    hostnamebuf, sizeof(hostnamebuf), NULL, 0, 0)) {
+			conn->remote_host = ap_pstrdup(conn->pool,
+			    (void *)hostnamebuf);
+			ap_str_tolower(conn->remote_host);
 
-/*
- * Return the desired information; either the remote DNS name, if found,
- * or either NULL (if the hostname was requested) or the IP address
- * (if any identifier was requested).
- */
-    if (conn->remote_host != NULL && conn->remote_host[0] != '\0') {
-	return conn->remote_host;
-    }
-    else {
-	if (type == REMOTE_HOST || type == REMOTE_DOUBLE_REV) {
-	    return NULL;
+			if (hostname_lookups == HOSTNAME_LOOKUP_DOUBLE)
+				do_double_reverse(conn);
+		}
+		/* if failed, set it to the NULL string to indicate error */
+		if (conn->remote_host == NULL)
+			conn->remote_host = "";
 	}
+	if (type == REMOTE_DOUBLE_REV) {
+		do_double_reverse(conn);
+		if (conn->double_reverse == -1)
+			return NULL;
+	}
+	if (old_stat != SERVER_DEAD)
+		(void)ap_update_child_status(conn->child_num, old_stat,
+		    (request_rec*)NULL);
+
+	/*
+	 * Return the desired information; either the remote DNS name, if found,
+	 * or either NULL (if the hostname was requested) or the IP address
+	 * (if any identifier was requested).
+	 */
+	if (conn->remote_host != NULL && conn->remote_host[0] != '\0')
+		return conn->remote_host;
 	else {
-	    return conn->remote_ip;
+		if (type == REMOTE_HOST || type == REMOTE_DOUBLE_REV)
+			return NULL;
+		else
+			return conn->remote_ip;
 	}
-    }
 }
 
-API_EXPORT(const char *) ap_get_remote_logname(request_rec *r)
+API_EXPORT(const char *)
+ap_get_remote_logname(request_rec *r)
 {
-    core_dir_config *dir_conf;
+	core_dir_config *dir_conf;
 
-    if (r->connection->remote_logname != NULL) {
-	return r->connection->remote_logname;
-    }
+	if (r->connection->remote_logname != NULL)
+		return r->connection->remote_logname;
 
-/* If we haven't checked the identity, and we want to */
-    dir_conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						       &core_module);
+	/* If we haven't checked the identity, and we want to */
+	dir_conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
 
-    if (dir_conf->do_rfc1413 & 1) {
-	return ap_rfc1413(r->connection, r->server);
-    }
-    else {
-	return NULL;
-    }
+	if (dir_conf->do_rfc1413 & 1)
+		return ap_rfc1413(r->connection, r->server);
+	else
+		return NULL;
 }
 
 /* There are two options regarding what the "name" of a server is.  The
@@ -776,81 +750,88 @@ API_EXPORT(const char *) ap_get_remote_logname(request_rec *r)
  * The assumption is that DNS lookups are sufficiently quick...
  * -- fanf 1998-10-03
  */
-API_EXPORT(const char *) ap_get_server_name(request_rec *r)
+API_EXPORT(const char *)
+ap_get_server_name(request_rec *r)
 {
-    conn_rec *conn = r->connection;
-    core_dir_config *d;
-    char hbuf[MAXHOSTNAMELEN];
+	conn_rec *conn = r->connection;
+	core_dir_config *d;
+	char hbuf[MAXHOSTNAMELEN];
 
-    d = (core_dir_config *)ap_get_module_config(r->per_dir_config,
-						&core_module);
+	d = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
 
-    if (d->use_canonical_name == USE_CANONICAL_NAME_OFF) {
-        return r->hostname ? r->hostname : r->server->server_hostname;
-    }
-    if (d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
-        if (conn->local_host == NULL) {
-            int old_stat;
-	    old_stat = ap_update_child_status(conn->child_num,
-					      SERVER_BUSY_DNS, r);
-	    if (getnameinfo((struct sockaddr *)&conn->local_addr,
+	if (d->use_canonical_name == USE_CANONICAL_NAME_OFF)
+		return r->hostname ? r->hostname : r->server->server_hostname;
+
+	if (d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+		if (conn->local_host == NULL) {
+			int old_stat;
+			old_stat = ap_update_child_status(conn->child_num,
+			    SERVER_BUSY_DNS, r);
+			if (getnameinfo((struct sockaddr *)&conn->local_addr,
 #ifndef SIN6_LEN
-		    SA_LEN((struct sockaddr *)&conn->local_addr),
+			    SA_LEN((struct sockaddr *)&conn->local_addr),
 #else
-		    conn->local_addr.ss_len,
+			    conn->local_addr.ss_len,
 #endif
-		    hbuf, sizeof(hbuf), NULL, 0, 0) == 0) {
-		conn->local_host = ap_pstrdup(conn->pool, hbuf);
-	    } else {
-		conn->local_host = ap_pstrdup(conn->pool,
-		    r->server->server_hostname);
-	    }
-	    ap_str_tolower(conn->local_host);
-	    (void) ap_update_child_status(conn->child_num, old_stat, r);
+			    hbuf, sizeof(hbuf), NULL, 0, 0) == 0)
+				conn->local_host = ap_pstrdup(conn->pool, hbuf);
+			else
+				conn->local_host = ap_pstrdup(conn->pool,
+				    r->server->server_hostname);
+			ap_str_tolower(conn->local_host);
+			(void)ap_update_child_status(conn->child_num, old_stat,
+			    r);
+		}
+		return conn->local_host;
 	}
-	return conn->local_host;
-    }
-    /* default */
-    return r->server->server_hostname;
+	/* default */
+	return r->server->server_hostname;
 }
 
-API_EXPORT(unsigned) ap_get_server_port(const request_rec *r)
+API_EXPORT(unsigned)
+ap_get_server_port(const request_rec *r)
 {
-    unsigned port;
-    core_dir_config *d =
-      (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
+	unsigned port;
+	core_dir_config *d =
+	    (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
 
-    port = r->server->port ? r->server->port : ap_default_port(r);
-    
-    if (d->use_canonical_name == USE_CANONICAL_NAME_OFF
-	|| d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+	port = r->server->port ? r->server->port : ap_default_port(r);
+
+	if (d->use_canonical_name == USE_CANONICAL_NAME_OFF
+	    || d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+		return r->hostname
+		    ? ntohs(((struct sockaddr_in *)
+		    &r->connection->local_addr)->sin_port)
+		    : port;
+	}
 	return r->hostname
-	    ?  ntohs(((struct sockaddr_in *)&r->connection->local_addr)->sin_port)
+	    ? ntohs(((struct sockaddr_in *)
+	    &r->connection->local_addr)->sin_port)
 	    : port;
-    }
-    return r->hostname
-	? ntohs(((struct sockaddr_in *)&r->connection->local_addr)->sin_port)
-	: port;
 }
 
-API_EXPORT(char *) ap_construct_url(pool *p, const char *uri,
-				    request_rec *r)
+API_EXPORT(char *)
+ap_construct_url(pool *p, const char *uri, request_rec *r)
 {
-    unsigned port = ap_get_server_port(r);
-    const char *host = ap_get_server_name(r);
+	unsigned port = ap_get_server_port(r);
+	const char *host = ap_get_server_name(r);
 
-    if (ap_is_default_port(port, r)) {
-	return ap_pstrcat(p, ap_http_method(r), "://", host, uri, NULL);
-    }
-    return ap_psprintf(p, "%s://%s:%u%s", ap_http_method(r), host, port, uri);
+	if (ap_is_default_port(port, r))
+		return ap_pstrcat(p, ap_http_method(r), "://", host, uri, NULL);
+	return ap_psprintf(p, "%s://%s:%u%s", ap_http_method(r), host, port,
+	    uri);
 }
 
-API_EXPORT(unsigned long) ap_get_limit_req_body(const request_rec *r)
+API_EXPORT(unsigned long)
+ap_get_limit_req_body(const request_rec *r)
 {
-    core_dir_config *d =
-      (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
-    
-    return d->limit_req_body;
+	core_dir_config *d =
+	    (core_dir_config *)ap_get_module_config(r->per_dir_config,
+	    &core_module);
+
+	return d->limit_req_body;
 }
 
 

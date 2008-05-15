@@ -1,3 +1,5 @@
+/*	$OpenBSD: gen_test_char.c,v 1.6 2008/05/15 06:05:43 mbalmer Exp $ */
+
 /* we need some of the portability definitions... for strchr */
 #include "httpd.h"
 
