@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.112 2008/05/14 21:47:00 miod Exp $ */
+/* $OpenBSD: dsdt.c,v 1.113 2008/05/15 22:15:54 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -5529,6 +5529,10 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_NAMECHAR:
 		/* opargs[0] = named object (node != NULL), or nameref */
 		my_ret = opargs[0];
+		if (my_ret->type == AML_OBJTYPE_OBJREF) {
+			my_ret = my_ret->v_objref.ref;
+			aml_xaddref(my_ret, "de-alias");
+		}
 		if (ret_type == 'i' || ret_type == 't' || ret_type == 'T') {
 			/* Return TermArg or Integer: Evaluate object */
 			my_ret = aml_xeval(scope, my_ret, ret_type, 0, NULL);
@@ -6175,6 +6179,8 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	
 	if (node == NULL || node->value == NULL)
 		return (ACPI_E_BADVALUE);
+	if (res)
+		memset(res, 0, sizeof(*res));
 	dnprintf(12,"EVALNODE: %s %d\n", aml_nodename(node), acpi_nalloc);
 	switch (node->value->type) {
 	case AML_OBJTYPE_INTEGER:
@@ -6201,14 +6207,6 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	default:
 		return (-1);
 	}
-	return (0);
-
-	/* Pass object off to Eval Function */
-	xres = aml_xeval(NULL, node->value, 't', argc, argv);
-	aml_copyvalue(res, xres);
-	if (xres != node->value)
-		aml_xdelref(&xres, "EvalNode");
-
 	return (0);
 }
 
