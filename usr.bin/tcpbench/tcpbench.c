@@ -138,8 +138,8 @@ saddr_ntop(const struct sockaddr *addr, socklen_t alen, char *buf, size_t len)
 	char hbuf[NI_MAXHOST], pbuf[NI_MAXSERV];
 	int herr;
 
-	if (getnameinfo(addr, alen, hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-	    NI_NUMERICHOST|NI_NUMERICSERV) != 0) {
+	if ((herr = getnameinfo(addr, alen, hbuf, sizeof(hbuf),
+	    pbuf, sizeof(pbuf), NI_NUMERICHOST|NI_NUMERICSERV)) != 0) {
 		if (herr == EAI_SYSTEM)
 			err(1, "getnameinfo");
 		else
@@ -734,7 +734,7 @@ main(int argc, char **argv)
 	const char *errstr;
 	int ch, herr;
 	struct addrinfo *aitop, hints;
-	kvm_t *kvmh;
+	kvm_t *kvmh = NULL;
 
 	const char *host = NULL, *port = DEFAULT_PORT;
 	char **kflag = NULL;
