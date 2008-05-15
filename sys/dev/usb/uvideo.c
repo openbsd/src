@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.11 2008/04/20 09:14:05 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.12 2008/05/15 07:50:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -95,6 +95,7 @@ void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int);
 
+#ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -121,6 +122,7 @@ void		uvideo_dump_desc_format_mjpeg(struct uvideo_softc *,
 void		uvideo_hexdump(void *, int);
 int		uvideo_debug_file_open(struct uvideo_softc *);
 void		uvideo_debug_file_write_sample(void *);
+#endif
 
 int		uvideo_querycap(void *, struct v4l2_capability *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
@@ -300,8 +302,8 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 int
 uvideo_detach(struct device * self, int flags)
 {
-	struct uvideo_softc *sc = (struct uvideo_softc *) self;
-	int             rv = 0;
+	struct uvideo_softc *sc = (struct uvideo_softc *)self;
+	int rv = 0;
 
 	sc->sc_dying = 1;
 
@@ -1108,6 +1110,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 	return (0);
 }
 
+#ifdef UVIDEO_DEBUG
 void
 uvideo_dump_desc_all(struct uvideo_softc *sc)
 {
@@ -1530,6 +1533,7 @@ uvideo_debug_file_write_sample(void *arg)
 	if (error)
 		DPRINTF(1, "vn_rdwr error!\n");
 }
+#endif
 
 int
 uvideo_querycap(void *v, struct v4l2_capability * caps)
