@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.11 2008/05/13 13:20:44 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.12 2008/05/15 04:37:59 brad Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -167,6 +167,10 @@ int	lii_intr(void *);
 void	lii_rxintr(struct lii_softc *);
 void	lii_txintr(struct lii_softc *);
 
+const struct pci_matchid lii_devices[] = {
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2 }
+};
+
 #define AT_READ_4(sc,reg) \
     bus_space_read_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
 #define AT_READ_2(sc,reg) \
@@ -194,10 +198,8 @@ void	lii_txintr(struct lii_softc *);
 int
 lii_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATTANSIC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATTANSIC_L2);
+	return (pci_matchbyid((struct pci_attach_args *)aux, lii_devices,   
+	    sizeof(lii_devices)/sizeof(lii_devices[0])));
 }
 
 void
@@ -207,25 +209,16 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	pci_intr_handle_t ih;
-	pcireg_t mem;
+	pcireg_t memtype;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	mem = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
-	switch (mem) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		break;
-	default:
-		printf(": invalid base address register\n");
-		return;
-	}
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, mem, 0,
-	    &sc->sc_mmiot, &sc->sc_mmioh, NULL, NULL, 0) != 0) {
-		printf(": failed to map registers\n");
+	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,  &sc->sc_mmiot, 
+	    &sc->sc_mmioh, NULL, NULL, 0)) {
+		printf(": failed to map mem space\n");
 		return;
 	}
 
