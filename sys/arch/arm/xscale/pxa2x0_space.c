@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_space.c,v 1.3 2005/07/18 02:43:24 fgsch Exp $ */
+/*	$OpenBSD: pxa2x0_space.c,v 1.4 2008/05/15 22:17:08 brad Exp $ */
 /*	$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $ */
 
 /*
@@ -75,11 +75,6 @@
  * bus_space functions for Intel PXA2[51]0 application processor.
  * Derived from i80321_space.c.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $");
-*/
 
 #include <sys/param.h>
 #include <sys/systm.h>

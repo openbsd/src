@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.7 2005/07/18 00:50:19 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.8 2008/05/15 22:17:08 brad Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $");
-*/
 
 #ifndef COM_PXA2X0
 #error "You must use options COM_PXA2X0 to get PXA2x0 serial port support"

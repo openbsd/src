@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.7 2005/05/02 02:39:45 brad Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.8 2008/05/15 22:17:08 brad Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

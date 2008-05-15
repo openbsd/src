@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_ost.c,v 1.7 2007/01/11 07:24:52 robert Exp $ */
+/*	$OpenBSD: sa11x0_ost.c,v 1.8 2008/05/15 22:17:08 brad Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
@@ -37,11 +37,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $");
-*/
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_dma.c,v 1.3 2005/04/14 23:40:34 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0_dma.c,v 1.4 2008/05/15 22:17:08 brad Exp $ */
 /*	$NetBSD: pxa2x0_dma.c,v 1.3 2003/08/07 16:58:35 bsh Exp $ */
 
 /*
@@ -37,11 +37,6 @@
 /*
  * bus dma tag for PXA2[15]0 processor.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.3 2003/08/07 16:58:35 bsh Exp $");
-*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
