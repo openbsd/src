@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.573 2008/05/09 02:44:54 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.574 2008/05/15 19:40:37 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2666,7 +2666,8 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport);
 		if (inp == NULL) {
-			inp = in6_pcblookup_listen(tb, &daddr->v6, dport, 0);
+			inp = in6_pcblookup_listen(tb, &daddr->v6, dport, 0,
+			    NULL);
 			if (inp == NULL)
 				return (-1);
 		}

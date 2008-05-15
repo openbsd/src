@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.83 2008/04/24 11:36:39 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.84 2008/05/15 19:40:38 markus Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -398,6 +398,12 @@ ip6_input(m)
 			return;
 		}
 
+		ours = 1;
+		deliverifp = m->m_pkthdr.rcvif;
+		goto hbhcheck;
+	}
+
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		ours = 1;
 		deliverifp = m->m_pkthdr.rcvif;
 		goto hbhcheck;

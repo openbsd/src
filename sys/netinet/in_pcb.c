@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.97 2008/05/09 03:14:07 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.98 2008/05/15 19:40:38 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1083,17 +1083,24 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 
 #ifdef INET6
 struct inpcb *
-in6_pcblookup_listen(table, laddr, lport_arg, reverse)
-	struct inpcbtable *table;
-	struct in6_addr *laddr;
-	u_int lport_arg;
-	int reverse;
+in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
+    u_int lport_arg, int reverse, struct mbuf *m)
 {
 	struct inpcbhead *head;
 	struct in6_addr *key1, *key2;
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
+#if NPF
+	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_find_divert(m)) == NULL)
+			return (NULL);
+		key1 = key2 = &divert->addr.ipv6;
+		lport = divert->port;
+	} else
+#endif
 	if (reverse) {
 		key1 = &zeroin6_addr;
 		key2 = laddr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.118 2008/05/09 02:56:36 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.119 2008/05/15 19:40:38 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
-			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse);
+			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse, m);
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,

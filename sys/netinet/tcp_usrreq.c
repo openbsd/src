@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.96 2008/05/09 02:44:54 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.97 2008/05/15 19:40:38 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -862,7 +862,7 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 #ifdef INET6
 		case AF_INET6:
 			inp = in6_pcblookup_listen(&tcbtable,
-			    &l6, lin6->sin6_port, 0);
+			    &l6, lin6->sin6_port, 0, NULL);
 			break;
 #endif
 		case AF_INET:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.61 2008/05/09 02:56:36 markus Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.62 2008/05/15 19:40:38 markus Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ struct inpcb *
 			       u_int, struct in6_addr *, u_int);
 struct inpcb *
 	 in6_pcblookup_listen(struct inpcbtable *,
-			       struct in6_addr *, u_int, int);
+			       struct in6_addr *, u_int, int, struct mbuf *);
 int	 in6_pcbbind(struct inpcb *, struct mbuf *);
 int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
 int	 in6_setsockaddr(struct inpcb *, struct mbuf *);
