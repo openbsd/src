@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.21 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.22 2008/05/16 17:37:52 thib Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -50,19 +50,14 @@
 #include <sys/pool.h>
 #include <sys/systm.h>
 
-/*
- * Sigh, such primitive tools are these...
- */
-#if 0
-#define DODEBUG(A) A
-#else
-#define DODEBUG(A)
-#endif
-
+/* a list of lists of vnodeops defns */
 extern struct vnodeopv_desc *vfs_opv_descs[];
-				/* a list of lists of vnodeops defns */
+
+/* and the operations they perform */
 extern struct vnodeop_desc *vfs_op_descs[];
-				/* and the operations they perform */
+
+struct pool namei_pool;
+
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
  * The problem is because of the compiler sometimes putting in an
@@ -107,8 +102,6 @@ vfs_opv_init_explicit(struct vnodeopv_desc *vfs_opv_desc)
 		opv_desc_vector = malloc(vfs_opv_numops * sizeof(PFI),
 		    M_VNODE, M_WAITOK|M_ZERO);
 		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
-		DODEBUG(printf("vector at %p allocated\n",
-		    opv_desc_vector));
 	}
 
 	for (opve_descp = vfs_opv_desc->opv_desc_ops;
@@ -192,7 +185,6 @@ vfs_op_init(void)
 {
 	int i;
 
-	DODEBUG(printf("Vnode_interface_init.\n"));
 	/*
 	 * Set all vnode vectors to a well known value.
 	 */
@@ -206,13 +198,8 @@ vfs_op_init(void)
 		vfs_op_descs[i]->vdesc_offset = vfs_opv_numops;
 		vfs_opv_numops++;
 	}
-	DODEBUG(printf ("vfs_opv_numops=%d\n", vfs_opv_numops));
 }
 
-/*
- * Routines having to do with the management of the vnode table.
- */
-struct pool namei_pool;
 
 /*
  * Initialize the vnode structures and initialize each file system type.
