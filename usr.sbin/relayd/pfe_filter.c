@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.26 2008/05/07 01:49:29 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.27 2008/05/16 14:47:58 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -224,7 +224,11 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 
 	if (ioctl(env->sc_pf->dev, DIOCRSETADDRS, &io) == -1)
 		fatal("sync_table: cannot set address list");
-
+	if (rdr->conf.flags & F_STICKY) {
+		if (ioctl(env->sc_pf->dev, DIOCCLRSRCNODES, 0) == -1)
+			fatal("sync_table: cannot clear the tree of "
+			    "source tracking nodes");
+	}
 	free(addlist);
 
 	log_debug("sync_table: table %s: %d added, %d deleted, %d changed",
