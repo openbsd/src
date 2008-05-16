@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.13 2008/05/16 08:01:39 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.14 2008/05/16 12:01:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -87,6 +87,7 @@ usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_alloc_sample(struct uvideo_softc *);
+void		uvideo_vs_free_sample(struct uvideo_softc *);
 usbd_status	uvideo_vs_alloc(struct uvideo_softc *);
 usbd_status	uvideo_vs_open(struct uvideo_softc *, struct usb_attach_arg *);
 void		uvideo_vs_start(struct uvideo_softc *);
@@ -307,6 +308,8 @@ uvideo_detach(struct device * self, int flags)
 
 	/* Wait for outstanding requests to complete */
 	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
+
+	uvideo_vs_free_sample(sc);
 
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
@@ -885,7 +888,7 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	fb->buf = malloc(32000, M_TEMP, M_NOWAIT); /* XXX find proper size */
+	fb->buf = malloc(32000, M_DEVBUF, M_NOWAIT); /* XXX find proper size */
 	if (fb->buf == NULL) {
 		printf("%s: can't allocate sample buffer!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
@@ -896,6 +899,17 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 	fb->offset = 0;
 
 	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+uvideo_vs_free_sample(struct uvideo_softc *sc)
+{
+	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
+
+	if (fb->buf != NULL) {
+		free(fb->buf, M_DEVBUF);
+		fb->buf = NULL;
+	}
 }
 
 usbd_status
