@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2008/05/15 22:10:46 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2008/05/16 22:55:49 kettenis Exp $
 
 REV=	${OSrev}
 
 TOP=		${.CURDIR}/..
 
 BSD_RD=		bsd.rd
+BSD_BIN=	bsd.bin
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
@@ -33,11 +34,14 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${BSD_RD}
+all:	${BSD_RD} ${BSD_BIN}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+
+${BSD_BIN}: ${BSD_RD}
+	objcopy -O binary ${BSD_RD} ${BSD_BIN}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
@@ -72,7 +76,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} ${DESTDIR}/snapshot/
+	cp ${BSD_RD} ${BSD_BIN} ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -97,7 +101,7 @@ clean cleandir:
 	rm -rf cd-dir
 
 beforeinstall:
-	cp ${BSD.RD} ${DESTDIR}/snapshot
+	cp ${BSD.RD} ${BSD_BIN} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
