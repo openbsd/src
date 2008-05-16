@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.9 2008/05/16 18:29:18 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.10 2008/05/16 22:01:27 jmc Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -21,6 +21,7 @@
 .Nd create a locate database for packages
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
+.Bk -words
 .Op Fl anPq
 .Op Fl d Ar repository
 .Op Fl p Ar portsdir
@@ -28,6 +29,7 @@
 .Op Fl s Ar src
 .Op Fl x Ar X11src
 .Op Ar pkg-name Op Ar ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
