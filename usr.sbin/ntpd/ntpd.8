@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.23 2007/12/11 11:26:27 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.24 2008/05/16 06:13:24 ckuethe Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2007 $
+.Dd $Mdocdate: May 16 2008 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -60,8 +60,7 @@ Only check the configuration file for validity.
 Do not set the time immediately at startup.
 This is the default.
 .It Fl s
-Set the time immediately at startup if the local clock is off by more
-than 180 seconds.
+Set the time immediately at startup.
 Allows for a large time correction,
 eliminating the need to run
 .Xr rdate 8

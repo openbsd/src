@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.91 2008/01/28 11:45:59 mpf Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.92 2008/05/16 06:13:25 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,6 @@
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
 #define	SENSOR_OFFSETS		7
-#define	SETTIME_MIN_OFFSET	180	/* min offset for settime at start */
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
 #define	LOG_NEGLIGEE		32	/* negligible drift to not log (ms) */
 #define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
