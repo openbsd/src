@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.8 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.9 2008/05/16 18:29:18 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 16 2008 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
 .Op Fl anPq
+.Op Fl d Ar repository
 .Op Fl p Ar portsdir
 .Op Fl r Ar release
 .Op Fl s Ar src
@@ -47,7 +48,12 @@ Otherwise,
 .Nm
 will build database entries for every file object for each
 .Ar pkg-name
-given on the command line.
+given on the command line,
+or for every package in a
+.Ar repository
+specified as the
+.Fl d
+option.
 If no package name is given,
 .Nm
 will build database entries for all currently installed packages.
@@ -67,6 +73,10 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Prepend file names with pkgpath information and package names.
+.It Fl d Ar repository
+Scan directory
+.Ar repository
+for packages.
 .It Fl n
 Do not pipe output to
 .Pa /usr/libexec/locate.mklocatedb
