@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.159 2008/05/14 22:28:13 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.160 2008/05/16 06:55:46 dlg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -60,7 +60,7 @@ isa0	at glxpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
-#option		PCIVERBOSE
+option		PCIVERBOSE
 #option		EISAVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
