@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.12 2008/05/15 07:50:41 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.13 2008/05/16 08:01:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -305,7 +305,8 @@ uvideo_detach(struct device * self, int flags)
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	int rv = 0;
 
-	sc->sc_dying = 1;
+	/* Wait for outstanding requests to complete */
+	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
 
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
@@ -980,6 +981,9 @@ uvideo_vs_start(struct uvideo_softc *sc)
 	int i;
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
+
+	if (sc->sc_dying)
+		return;
 
 	for (i = 0; i < sc->sc_nframes; i++)
 		sc->sc_vs_curr->size[i] = sc->sc_vs_curr->max_packet_size;
