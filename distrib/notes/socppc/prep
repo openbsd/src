@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.1 2008/05/13 20:47:32 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.2 2008/05/16 22:56:42 kettenis Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about Das U-Boot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -47,8 +47,8 @@ U-Boot.  Fortunately it will typically accept a key typed during the
 diagnostics that precede thus prompt.
 
 The recommended way to boot OpenBSD on Thecus is to configure networking and
-load bsd.rd from a tftp server or http server. First networking must be
-configured using the setenv command.
+load bsd.bin from a TFTP server. First networking must be configured
+using the setenv command.
 
     => setenv ipaddr 10.0.0.21
     => setenv serverip 10.0.0.7
@@ -57,11 +57,11 @@ Once you have done this, and have set up your TFTP server on
 the gateway machine (10.0.0.7 in the above example), you can
 boot manually.
 
-    => tftpboot 200000 bsd.rd
+    => tftpboot 200000 bsd.bin
     Speed: 1000, full duplex
     Using Freescale TSEC0 device
     TFTP from server 10.0.0.7; our IP address is 10.0.0.21
-    Filename 'bsd.rd'.
+    Filename 'bsd.bin'.
     Load address: 0x200000
     Loading: ##########################################################
           #############################################################
@@ -77,15 +77,15 @@ Copyright (c) 1995-2008 OpenBSD. All rights reserved.  http://www.OpenBSD.org
 
 OpenBSD 4.3 (RAMDISK) #175: Tue Mar  4 21:54:34 MST 2008
     deraadt@socppc.openbsd.org:/usr/src/sys/arch/socppc/compile/RAMDISK
-real mem = 67108864 (64MB)
-avail mem = 63012864 (60MB)
+real mem = 134217728 (128MB)
+avail mem = 122384384 (116MB)
 ...
 Install(I), Upgrade(U) or Shell(S)?
 
 If you then install to your hard disk, in future you can
 load the OpenBSD/socppc boot loader
 
-    => tftpboot 100000 boot
+    => tftpboot 200000 boot
     => bootm
 
 and just hit "return" to boot OpenBSD.

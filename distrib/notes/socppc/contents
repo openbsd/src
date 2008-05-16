@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.1 2008/05/13 20:47:32 kettenis Exp $
+dnl	$OpenBSD: contents,v 1.2 2008/05/16 22:56:42 kettenis Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,6 +6,9 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+	bsd.bin		A RAMDISK kernel that can be loaded directly
+			by the U-Boot firmware.  Used for installation.
 
 	boot		The OpenBSD/MACHINE secondary boot loader.
 
