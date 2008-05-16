@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2008/05/11 19:58:24 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2008/05/16 18:57:01 kettenis Exp $
 
 NOMAN=
 
@@ -32,10 +32,16 @@ USE_LOADFILE=	yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=          ${SALIB}
 
-LDFLAGS=	-Ttext 0x100000
+STANDIR=	${.CURDIR}/..
+
+RELOC=		0x100000
+LDFLAGS=	-Ttext ${RELOC}
+OBJCOPY?=	objcopy
 
 ${PROG}: ${OBJS} ${LIBSA}
-	${LD} ${LDFLAGS} -o boot ${OBJS} ${LIBSA} ${LIBSA}
+	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBSA} ${LIBSA}
+	${OBJCOPY} -O binary ${PROG}.elf ${PROG}.bin
+	${MKBOOT} -e ${RELOC} -l ${RELOC} ${PROG}.bin ${PROG}
 
 .if !make(obj)
 .BEGIN:
