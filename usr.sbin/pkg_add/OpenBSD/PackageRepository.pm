@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.51 2008/03/04 19:18:37 ckuethe Exp $
+# $OpenBSD: PackageRepository.pm,v 1.52 2008/05/16 18:31:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -659,7 +659,7 @@ sub get_ftp_list
 
 	my $fullname = $self->url;
 	return $self->_list("echo 'nlist *.tgz'| ".OpenBSD::Paths->ftp
-	    ." -o - $fullname 2>$error");
+	    ." $fullname 2>$error");
 }
 
 sub obtain_list
