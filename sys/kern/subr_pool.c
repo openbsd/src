@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.59 2008/05/06 20:57:19 thib Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.60 2008/05/16 17:21:36 thib Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -868,7 +868,7 @@ pool_sethiwat(struct pool *pp, int n)
 }
 
 int
-pool_sethardlimit(struct pool *pp, unsigned n, const char *warnmess, int ratecap)
+pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
 {
 	int error = 0;
 
@@ -878,7 +878,7 @@ pool_sethardlimit(struct pool *pp, unsigned n, const char *warnmess, int ratecap
 	}
 
 	pp->pr_hardlimit = n;
-	pp->pr_hardlimit_warning = warnmess;
+	pp->pr_hardlimit_warning = warnmsg;
 	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;

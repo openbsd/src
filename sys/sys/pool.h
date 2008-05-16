@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.26 2008/05/06 20:57:19 thib Exp $	*/
+/*	$OpenBSD: pool.h,v 1.27 2008/05/16 17:21:36 thib Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -153,7 +153,7 @@ void		pool_destroy(struct pool *);
 void		pool_setipl(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
-int		pool_sethardlimit(struct pool *, unsigned, const char *, int);
+int		pool_sethardlimit(struct pool *, u_int, const char *, int);
 void		pool_set_ctordtor(struct pool *, int (*)(void *, void *, int),
 		    void(*)(void *, void *), void *);
 
