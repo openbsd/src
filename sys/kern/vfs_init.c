@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.22 2008/05/16 17:37:52 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.23 2008/05/16 17:45:37 thib Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -158,14 +158,26 @@ vfs_opv_init_default(struct vnodeopv_desc *vfs_opv_desc)
 			    opv_desc_vector[VOFFSET(vop_default)];
 }
 
+/* Initialize known vnode operations vectors. */
 void
-vfs_opv_init(void)
+vfs_op_init(void)
 {
 	int i;
 
+	/* Set all vnode vectors to a well known value. */
+	for (i = 0; vfs_opv_descs[i]; i++)
+		*(vfs_opv_descs[i]->opv_desc_vector_p) = NULL;
+
 	/*
-	 * Allocate the dynamic vectors and fill them in.
+	 * Figure out how many ops there are by counting the table,
+	 * and assign each its offset.
 	 */
+	for (vfs_opv_numops = 0, i = 0; vfs_op_descs[i]; i++) {
+		vfs_op_descs[i]->vdesc_offset = vfs_opv_numops;
+		vfs_opv_numops++;
+	}
+
+	/* Allocate the dynamic vectors and fill them in. */
 	for (i = 0; vfs_opv_descs[i]; i++)
 		vfs_opv_init_explicit(vfs_opv_descs[i]);
 
@@ -175,29 +187,7 @@ vfs_opv_init(void)
 	 */
 	for (i = 0; vfs_opv_descs[i]; i++)
 		vfs_opv_init_default(vfs_opv_descs[i]);
-}
 
-/*
- * Initialize known vnode operations vectors.
- */
-void
-vfs_op_init(void)
-{
-	int i;
-
-	/*
-	 * Set all vnode vectors to a well known value.
-	 */
-	for (i = 0; vfs_opv_descs[i]; i++)
-		*(vfs_opv_descs[i]->opv_desc_vector_p) = NULL;
-	/*
-	 * Figure out how many ops there are by counting the table,
-	 * and assign each its offset.
-	 */
-	for (vfs_opv_numops = 0, i = 0; vfs_op_descs[i]; i++) {
-		vfs_op_descs[i]->vdesc_offset = vfs_opv_numops;
-		vfs_opv_numops++;
-	}
 }
 
 
@@ -226,7 +216,6 @@ vfsinit(void)
 	 * Build vnode operation vectors.
 	 */
 	vfs_op_init();
-	vfs_opv_init();   /* finish the job */
 
 	/*
 	 * Stop using vfsconf and maxvfsconf as a temporary storage,
