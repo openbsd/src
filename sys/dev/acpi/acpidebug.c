@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.17 2008/05/14 05:24:36 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.18 2008/05/16 06:50:55 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -165,21 +165,21 @@ db_aml_showvalue(struct aml_value *value)
 		    AML_FIELD_UPDATE(value->v_field.flags),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
-		if (value->v_field.ref2)
-			db_printf("  index: %.3x %s\n",
-			    value->v_field.ref3,
-			    aml_nodename(value->v_field.ref2->node));
-		if (value->v_field.ref1)
-			db_printf("  data: %s\n",
-			    aml_nodename(value->v_field.ref1->node));
+
+		db_aml_showvalue(value->v_field.ref1);
+		db_aml_showvalue(value->v_field.ref2);
 		break;
 	case AML_OBJTYPE_BUFFERFIELD:
-		db_printf("%s: pos=%.4x len=%.4x\n",
+		db_printf("%s: pos=%.4x len=%.4x ",
 		    aml_mnem(value->v_field.type, NULL),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
-		db_printf("  buffer: %s\n", 
-		    aml_nodename(value->v_field.ref1->node));
+
+		db_aml_dump(aml_bytelen(value->v_field.bitlen),
+		    value->v_field.ref1->v_buffer +
+		    aml_bytepos(value->v_field.bitpos));
+
+		db_aml_showvalue(value->v_field.ref1);
 		break;
 	case AML_OBJTYPE_OPREGION:
 		db_printf("opregion: %s,0x%llx,0x%x\n",
@@ -306,24 +306,6 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 }
 
 void
-aml_disasm(struct aml_scope *scope, int lvl, 
-    void (*dbprintf)(void *, const char *, ...), 
-    void *arg);
-void db_disprint(void *, const char *, ...);
-
-void db_disprint(void *arg, const char *fmt, ...)
-{
-	va_list ap;
-	char    stre[64];
-	
-	va_start(ap,fmt);
-	vsnprintf(stre, sizeof(stre), fmt, ap);
-	va_end(ap);
-
-	db_printf(stre);
-}
-
-void
 db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	struct aml_node *node;
@@ -333,24 +315,10 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 	node = aml_searchname(&aml_root, scope);
 	if (node && node->value && node->value->type == AML_OBJTYPE_METHOD) {
-		struct aml_scope ns;
-
-		memset(&ns, 0, sizeof(ns));
-		ns.pos   = node->value->v_method.start;
-		ns.end   = node->value->v_method.end;
-		ns.node  = node;
-		while (ns.pos < ns.end)
-			aml_disasm(&ns, 0, db_disprint, 0);
-	}
-	else
-		db_printf("Not a valid method\n");
-#if 0
-	if (node && node->value && node->value->type == AML_OBJTYPE_METHOD) {
 		db_aml_disasm(node, node->value->v_method.start,
 		    node->value->v_method.end, -1, 0);
 	} else
 		db_printf("Not a valid method\n");
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.28 2008/05/14 05:24:36 jordan Exp $ */
+/* $OpenBSD: acpidock.c,v 1.29 2008/05/16 06:50:55 dlg Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -76,9 +76,9 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	extern struct aml_node	aml_root;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node;
+	sc->sc_devnode = aa->aaa_node->child;
 
-	printf(": %s", sc->sc_devnode->name);
+	printf(": %s", sc->sc_devnode->parent->name);
 
 	acpidock_status(sc);
 	if (sc->sc_docked == ACPIDOCK_STATUS_DOCKED) {
@@ -111,7 +111,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->sc_deps_h);
 	aml_find_node(aml_root.child, "_EJD", acpidock_foundejd, sc);
 
-	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
 }
 
@@ -270,7 +270,7 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 	struct acpidock_softc *sc = (struct acpidock_softc *)arg;
 	struct aml_value res;
 
-	dnprintf(15, "%s: %s", DEVNAME(sc), node->name);
+	dnprintf(15, "%s: %s", DEVNAME(sc), node->parent->name);
 
 	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1) {
 		printf(": error\n");
@@ -279,11 +279,11 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 
 		/* XXX debug */
 		dnprintf(10, "%s: %s depends on %s\n", DEVNAME(sc),
-		    node->name, res.v_string);
+		    node->parent->name, res.v_string);
 
 		/* XXX more than one dock? */
 		n = malloc(sizeof(struct aml_nodelist), M_DEVBUF, M_WAITOK);
-		n->node = node;
+		n->node = node->parent;
 
 		TAILQ_INSERT_TAIL(&sc->sc_deps_h, n, entries);
 	}

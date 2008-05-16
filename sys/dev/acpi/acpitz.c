@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.24 2008/05/14 05:24:36 jordan Exp $ */
+/* $OpenBSD: acpitz.c,v 1.25 2008/05/16 06:50:55 dlg Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -104,7 +104,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	char			name[8];
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node;
+	sc->sc_devnode = aa->aaa_node->child;
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
@@ -142,7 +142,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensdev);
 	sc->sc_sens.value = 0;
 
-	aml_register_notify(sc->sc_devnode, NULL,
+	aml_register_notify(sc->sc_devnode->parent, NULL,
 	    acpitz_notify, sc, ACPIDEV_POLL);
 }
 
@@ -252,12 +252,12 @@ acpitz_refresh(void *arg)
 	int			i, perc;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
-	    sc->sc_devnode->name);
+	    sc->sc_devnode->parent->name);
 
 	/* get _TMP and debounce the value */
 	if (-1 == (sc->sc_tmp = acpitz_gettempreading(sc, "_TMP"))) {
 		printf("%s: %s: failed to read temp\n", DEVNAME(sc),
-		    sc->sc_devnode->name);
+		    sc->sc_devnode->parent->name);
 		return;
 	}
 	/* critical trip points */
@@ -351,7 +351,7 @@ acpitz_gettempreading(struct acpitz_softc *sc, char *name)
 	}
 	if (i >= ACPITZ_TMP_RETRY) {
 		printf("%s: %s: failed to read %s\n", DEVNAME(sc),
-		    sc->sc_devnode->name, name);
+		    sc->sc_devnode->parent->name, name);
 		goto out;
 	}
  out:
@@ -367,7 +367,7 @@ acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 	int			crt;
 
 	dnprintf(10, "%s notify: %.2x %s\n", DEVNAME(sc), notify_type,
-	    sc->sc_devnode->name);
+	    sc->sc_devnode->parent->name);
 
 	switch (notify_type) {
 	case 0x80:	/* hardware notifications */
