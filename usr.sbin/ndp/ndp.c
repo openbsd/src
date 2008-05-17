@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.40 2008/05/05 13:53:48 markus Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.41 2008/05/17 23:31:52 sobrado Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -830,7 +830,7 @@ usage(void)
 #ifdef SIOCSDEFIFACE_IN6
 	printf("[-I [interface | delete]] ");
 #endif
-	printf("[-i interface [flags...]]\n");
+	printf("[-i interface [flag ...]]\n");
 	printf("\t[-s nodename etheraddr [temp] [proxy]] [hostname]\n");
 	exit(1);
 }

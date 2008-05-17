@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.20 2007/05/31 19:19:40 jmc Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.21 2008/05/17 23:31:52 sobrado Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 17 2008 $
 .Dt RPC.YPPASSWDD 8
 .Os
 .Sh NAME
@@ -34,11 +34,11 @@
 .Sh SYNOPSIS
 .Nm rpc.yppasswdd
 .Bk -words
-.Op Fl d Ar directory
-.Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
-.Op Fl m Ar arg1 arg2 ...
+.Op Fl noshell
+.Op Fl d Ar directory
+.Op Fl m Ar arg ...
 .Ek
 .Sh DESCRIPTION
 .Nm rpc.yppasswdd
@@ -65,18 +65,18 @@ The options are as follows:
 Use the specified directory to get at the password-related files instead
 of
 .Pa /etc .
-.It Fl noshell
-Don't allow changes of the shell field in the passwd file.
-.It Fl nogecos
-Don't allow changes of the gecos field in the passwd file.
-.It Fl nopw
-Don't allow changes of the password in the passwd file.
-.It Fl m Ar arg1 arg2 ...
+.It Fl m Ar arg ...
 Pass the specified arguments to
 .Xr make 1
 when invoking it in
 .Pa /var/yp
 to rebuild the passwd maps.
+.It Fl nogecos
+Don't allow changes of the gecos field in the passwd file.
+.It Fl nopw
+Don't allow changes of the password in the passwd file.
+.It Fl noshell
+Don't allow changes of the shell field in the passwd file.
 .El
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact

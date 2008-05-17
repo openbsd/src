@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.7 2006/03/17 17:12:36 otto Exp $	*/
+/*	$OpenBSD: error.c,v 1.8 2008/05/17 23:31:52 sobrado Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.7 2006/03/17 17:12:36 otto Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.8 2008/05/17 23:31:52 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ static char *errorlist[] =
 #define ERR_STRING	56
     "%s",
 #define ERR_JOBS	57
-    "Usage: jobs [ -l ]",
+    "usage: jobs [-l]",
 #define ERR_JOBARGS	58
     "Arguments should be jobs or process id's",
 #define ERR_JOBCUR	59
@@ -194,7 +194,7 @@ static char *errorlist[] =
 #define ERR_BADDIR	68
     "Bad directory",
 #define ERR_DIRUS	69
-    "Usage: %s [-lvn]%s",
+    "usage: %s [-lnv]%s",
 #define ERR_HFLAG	70
     "No operand for -h flag",
 #define ERR_NOTLOGIN	71
@@ -212,7 +212,7 @@ static char *errorlist[] =
 #define ERR_NOHOME	77
     "No $home variable set",
 #define ERR_HISTUS	78
-    "Usage: history [-rh] [# number of events]",
+    "usage: history [-hr] [n]",
 #define ERR_SPDOLLT	79
     "$, ! or < not allowed with $# or $?",
 #define ERR_NEWLINE	80

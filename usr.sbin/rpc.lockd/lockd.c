@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.7 2003/07/06 21:26:14 deraadt Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.8 2008/05/17 23:31:52 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -63,7 +63,8 @@ main(int argc, char *argv[])
 
 	if (argc > 1) {
 		if (strncmp(argv[1], "-d", 2)) {
-			fprintf(stderr, "Usage: rpc.lockd [-d debuglevel]\n");
+			fprintf(stderr,
+			    "usage: rpc.lockd [-d [debug_level]]\n");
 			exit(1);
 		}
 		if (argc > 2)

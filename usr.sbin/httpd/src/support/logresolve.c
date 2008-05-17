@@ -6,7 +6,7 @@
  *
  * Rewritten by David Robinson. (drtr@ast.cam.ac.uk)
  *
- * Usage: logresolve [-s filename] [-c] < access_log > new_log
+ * usage: logresolve [-c] [-s filename] < access_log > access_log.new
  *
  * Arguments:
  *    -s filename     name of a file to record statistics
@@ -297,8 +297,8 @@ static int getline (char *s, int n)
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage: logresolve [-s statfile] [-c]");
-    fprintf(stderr, " < input > output\n");
+    fprintf(stderr,
+        "usage: logresolve [-c] [-s filename] < access_log > access_log.new\n");
     exit(1);
 }
 

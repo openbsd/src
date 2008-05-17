@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.19 2006/04/02 01:29:29 deraadt Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.20 2008/05/17 23:31:52 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.19 2006/04/02 01:29:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.20 2008/05/17 23:31:52 sobrado Exp $";
 #endif
 
 #include <sys/types.h>
@@ -59,8 +59,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: rpc.yppasswdd [-d dir] [-noshell] [-nogecos] [-nopw]\n"
-	    "       [-m arg1 arg2 ... ]\n");
+	    "usage: rpc.yppasswdd [-nogecos] [-nopw] [-noshell] [-d directory] "
+	    "[-m arg ...]\n");
 	exit(1);
 }
 

@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	int nblks, fd;
 
 	if (argc <= 2) {
-		fprintf(stderr, "usage: rdconfig <device> <%d-byte-blocks>\n",
+		fprintf(stderr, "usage: rdconfig special_file %d-byte-blocks\n",
 		    DEV_BSIZE);
 		exit(1);
 	}

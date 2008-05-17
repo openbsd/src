@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.9 2006/12/20 01:50:30 ray Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.10 2008/05/17 23:31:52 sobrado Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.9 2006/12/20 01:50:30 ray Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.10 2008/05/17 23:31:52 sobrado Exp $";
 #endif
 #endif
 
@@ -188,7 +188,7 @@ int     main(int argc, char *argv[])
 
 static void usage()
 {
-    fprintf(stderr, "usage: %s [-a] [-d] [-i inet_conf] [-v]\n", myname);
+    fprintf(stderr, "usage: %s [-adv] [-i inet_conf]\n", myname);
     fprintf(stderr, "	-a: report rules with implicit \"ALLOW\" at end\n");
     fprintf(stderr, "	-d: use allow/deny files in current directory\n");
     fprintf(stderr, "	-i: location of inetd.conf file\n");

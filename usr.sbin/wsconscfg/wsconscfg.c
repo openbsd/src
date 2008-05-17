@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.12 2005/05/27 05:01:28 millert Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.13 2008/05/17 23:31:52 sobrado Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -58,8 +58,8 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-		      "Usage: %s [-dFkm] [-e emul] [-f ctldev] "
-		      "[-t type] index\n", __progname);
+	    "usage: %s [-dFkm] [-e emul] [-f ctldev] [-t type] index\n",
+	    __progname);
 	exit(1);
 }
 

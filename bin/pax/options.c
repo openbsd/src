@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.67 2007/02/24 09:50:55 jmc Exp $	*/
+/*	$OpenBSD: options.c,v 1.68 2008/05/17 23:31:52 sobrado Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.67 2007/02/24 09:50:55 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.68 2008/05/17 23:31:52 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -1537,15 +1537,15 @@ pax_usage(void)
 {
 	(void)fputs(
 	    "usage: pax [-0cdnOvz] [-E limit] [-f archive] [-G group] [-s replstr]\n"
-	    "\t  [-T range] [-U user] [pattern ...]\n"
+	    "           [-T range] [-U user] [pattern ...]\n"
 	    "       pax -r [-0cDdiknOuvYZz] [-E limit] [-f archive] [-G group]\n"
-	    "\t  [-o options] [-p string] [-s replstr] [-T range]\n"
-	    "\t  [-U user] [pattern ...]\n"
+	    "           [-o options] [-p string] [-s replstr] [-T range]\n"
+	    "           [-U user] [pattern ...]\n"
 	    "       pax -w [-0adHiLOPtuvXz] [-B bytes] [-b blocksize] [-f archive]\n"
-	    "\t  [-G group] [-o options] [-s replstr]\n"
-	    "\t  [-T range] [-U user] [-x format] [file ...]\n"
+	    "           [-G group] [-o options] [-s replstr]\n"
+	    "           [-T range] [-U user] [-x format] [file ...]\n"
 	    "       pax -rw [-0DdHikLlnOPtuvXYZ] [-G group] [-p string] [-s replstr]\n"
-	    "\t  [-T range] [-U user] [file ...] directory\n",
+	    "           [-T range] [-U user] [file ...] directory\n",
 	    stderr);
 	exit(1);
 }
@@ -1560,10 +1560,10 @@ tar_usage(void)
 {
 	(void)fputs(
 	    "usage: tar {crtux}[014578befHhLmOoPpqsvwXZz]\n"
-	    "\t  [blocking-factor | archive | replstr] [-C directory] [-I file]\n"
-	    "\t  [file ...]\n"
+	    "           [blocking-factor | archive | replstr] [-C directory] [-I file]\n"
+	    "           [file ...]\n"
 	    "       tar {-crtux} [-014578eHhLmOoPpqvwXZz] [-b blocking-factor]\n"
-	    "\t  [-C directory] [-f archive] [-I file] [-s replstr] [file ...]\n",
+	    "           [-C directory] [-f archive] [-I file] [-s replstr] [file ...]\n",
 	    stderr);
 	exit(1);
 }

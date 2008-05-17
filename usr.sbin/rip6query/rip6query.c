@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.12 2004/07/09 16:22:04 deraadt Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.13 2008/05/17 23:31:52 sobrado Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -183,7 +183,8 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: rip6query [-I iface] [-w wait] address\n");
+	fprintf(stderr,
+	    "usage: rip6query [-I interface] [-w time] destination\n");
 }
 
 /* getnameinfo() is preferred as we may be able to show ifindex as ifname */

@@ -31,10 +31,7 @@ int main (int argc, char **argv)
 
 
     if (argc < 3) {
-        fprintf(stderr,
-                "Usage: %s <logfile> <rotation time in seconds> "
-                "[offset minutes from UTC]\n\n",
-                argv[0]);
+        fprintf(stderr, "usage: %s logfile rotationtime [offset]\n\n", argv[0]);
         fprintf(stderr,
                 "Add this:\n\nTransferLog \"|%s /some/where 86400\"\n\n",
                 argv[0]);
