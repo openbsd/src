@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.132 2008/03/09 03:14:52 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.133 2008/05/17 21:06:44 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -365,28 +365,31 @@ cvs_commit_local(struct cvs_file *cf)
 
 		if (tag != NULL) {
 			rcsnum_free(crev);
+			rcsnum_free(rrev);
+			brev = rcs_sym_getrev(cf->file_rcs, tag);
 			crev = rcs_translate_tag(tag, cf->file_rcs);
-			if (crev == NULL) {
+			if (brev == NULL || crev == NULL) {
 				fatal("failed to resolve existing tag: %s",
 				    tag);
 			}
 
-			if (RCSNUM_ISBRANCHREV(crev)) {
+			rrev = rcsnum_alloc();
+			rcsnum_cpy(brev, rrev, brev->rn_len - 1);
+
+			if (RCSNUM_ISBRANCHREV(crev) &&
+			    rcsnum_cmp(crev, rrev, 0)) {
 				nrev = rcsnum_alloc();
 				rcsnum_cpy(crev, nrev, 0);
 				rcsnum_inc(nrev);
 			} else if (!RCSNUM_ISBRANCH(crev)) {
-				brev = rcs_sym_getrev(cf->file_rcs, tag);
-				if (brev == NULL)
-					fatal("no more tag?");
 				nrev = rcsnum_brtorev(brev);
 				if (nrev == NULL)
 					fatal("failed to create branch rev");
-				rcsnum_free(brev);
 			} else {
 				fatal("this isnt suppose to happen, honestly");
 			}
 
+			rcsnum_free(brev);
 			rcsnum_free(rrev);
 			rrev = rcsnum_branch_root(nrev);
 
