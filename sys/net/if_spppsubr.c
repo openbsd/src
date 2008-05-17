@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.67 2008/05/11 02:55:45 brad Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.68 2008/05/17 04:50:54 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -900,6 +900,7 @@ void
 sppp_attach(struct ifnet *ifp)
 {
 	struct sppp *sp = (struct sppp*) ifp;
+	int i;
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
@@ -929,6 +930,11 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_phase = PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
+
+
+	for (i = 0; i < IDX_COUNT; i++)
+		timeout_set(&sp->ch[i], (cps[i])->TO, (void *)sp);
+	timeout_set(&sp->pap_my_to_ch, sppp_pap_my_TO, (void *)sp);
 
 	sppp_lcp_init(sp);
 	sppp_ipcp_init(sp);
@@ -1885,7 +1891,6 @@ sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
 	sp->ch[cp->protoidx] = 
 	    timeout(cp->TO, (void *)sp, timo * sp->lcp.timeout);
 #elif defined(__OpenBSD__)
-	timeout_set(&sp->ch[cp->protoidx], cp->TO, (void *)sp);
 	timeout_add(&sp->ch[cp->protoidx], timo * sp->lcp.timeout);
 #endif
 }
@@ -4005,7 +4010,6 @@ sppp_chap_tlu(struct sppp *sp)
 #if defined (__FreeBSD__)
 		sp->ch[IDX_CHAP] = timeout(chap.TO, (void *)sp, i * hz);
 #elif defined(__OpenBSD__)
-		timeout_set(&sp->ch[IDX_CHAP], chap.TO, (void *)sp);
 		timeout_add(&sp->ch[IDX_CHAP], i * hz);
 #endif
 	}
@@ -4262,7 +4266,6 @@ sppp_pap_open(struct sppp *sp)
 		sp->pap_my_to_ch =
 		    timeout(sppp_pap_my_TO, (void *)sp, sp->lcp.timeout);
 #elif defined (__OpenBSD__)
-		timeout_set(&sp->pap_my_to_ch, sppp_pap_my_TO, (void *)sp);
 		timeout_add(&sp->pap_my_to_ch, sp->lcp.timeout);
 #endif
 	}
