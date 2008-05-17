@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.2 2008/05/17 15:49:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -64,23 +64,6 @@ int	 socpcic_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
 int	 socpcic_print(void *, const char *);
 
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	NULL,
-	_dmamap_create,
-	_dmamap_destroy,
-	_dmamap_load,
-	_dmamap_load_mbuf,
-	_dmamap_load_uio,
-	_dmamap_load_raw,
-	_dmamap_unload,
-	_dmamap_sync,
-	_dmamem_alloc,
-	_dmamem_free,
-	_dmamem_map,
-	_dmamem_unmap,
-	_dmamem_mmap
-};
-
 int
 socpcic_match(struct device *parent, void *cfdata, void *aux)
 {
@@ -122,7 +105,7 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_io_bus_space;
 	pba.pba_memt = &sc->sc_mem_bus_space;
-	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat = oa->oa_dmat;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;

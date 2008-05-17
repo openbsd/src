@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.2 2008/05/17 15:49:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -23,11 +23,13 @@
 
 struct mainbus_attach_args {
 	bus_space_tag_t	ma_iot;
+	bus_dma_tag_t	ma_dmat;
 	char		*ma_name;
 };
 
 struct obio_attach_args {
 	bus_space_tag_t	oa_iot;
+	bus_dma_tag_t	oa_dmat;
 	bus_addr_t	oa_offset;
 	int		oa_ivec;
 	char		*oa_name;
