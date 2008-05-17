@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.59 2007/10/17 22:14:41 brad Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.60 2008/05/17 18:35:12 jcs Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -218,6 +218,8 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237_ISA,
 	  via8231_init },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237A_ISA,
+	  via8231_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237S_ISA,
 	  via8231_init },
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
