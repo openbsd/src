@@ -1,3 +1,4 @@
+.\"	$OpenBSD: rarpd.8,v 1.16 2008/05/18 06:51:25 jmc Exp $
 .\"	$NetBSD: rarpd.8,v 1.7 1998/04/15 15:06:06 mrg Exp $
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
@@ -18,9 +19,9 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.15 2008/05/17 23:31:52 sobrado Exp $
+.\" @(#) $Id: rarpd.8,v 1.16 2008/05/18 06:51:25 jmc Exp $
 .\"
-.Dd $Mdocdate: May 17 2008 $
+.Dd $Mdocdate: May 18 2008 $
 .Dt RARPD 8
 .Os
 .Sh NAME
@@ -72,23 +73,25 @@ Log all requests to
 .Xr syslog 3 .
 .It Fl t
 Only honour a request if the server
-(i.e., the host that rarpd is running on)
+(the host that
+.Nm
+is running on)
 can "boot" the target; that is, if a file or directory called
-.Pa /tftpboot/ Ns Em ipaddr
+.Pa /tftpboot/ipaddr
 exists, where
 .Pa ipaddr
 is the target IP address expressed in uppercase hexidecimal
 (only the first 8 characters of filenames are checked).
 .El
 .Sh FILES
-.Bl -tag -width /var/run/rarpd.pid -compact
+.Bl -tag -width "/var/run/rarpd.pidXXX" -compact
 .It Pa /etc/ethers
-Ethernet host name database
+Ethernet host name database.
 .It Pa /etc/hosts
-host name database
+Host name database.
 .It Pa /var/run/rarpd.pid
-process id of
-.Nm
+Process ID of
+.Nm .
 .\" .It Pa /tftpboot
 .El
 .Sh SEE ALSO
