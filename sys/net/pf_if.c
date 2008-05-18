@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.51 2007/11/07 17:28:40 mpf Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.52 2008/05/18 11:54:04 mcbride Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -606,7 +606,7 @@ void
 pfi_update_status(const char *name, struct pf_status *pfs)
 {
 	struct pfi_kif		*p;
-	struct pfi_kif_cmp 	 key;
+	struct pfi_kif_cmp	 key;
 	struct ifg_member	 p_member, *ifgm;
 	TAILQ_HEAD(, ifg_member) ifg_members;
 	int			 i, j, k, s;

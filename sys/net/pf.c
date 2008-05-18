@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.574 2008/05/15 19:40:37 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.575 2008/05/18 11:54:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -531,7 +531,7 @@ struct pf_state *
 pf_find_state_byid(struct pf_state_cmp *key)
 {
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	
+
 	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
@@ -700,12 +700,12 @@ pf_src_connlimit(struct pf_state **state)
 				if (sk->af ==
 				    (*state)->state_key->af &&
 				    (((*state)->state_key->direction ==
-				        PF_OUT &&
+					PF_OUT &&
 				    PF_AEQ(&(*state)->src_node->addr,
-				        &sk->lan.addr, sk->af)) ||
+					&sk->lan.addr, sk->af)) ||
 				    ((*state)->state_key->direction == PF_IN &&
 				    PF_AEQ(&(*state)->src_node->addr,
-				        &sk->ext.addr, sk->af))) &&
+					&sk->ext.addr, sk->af))) &&
 				    ((*state)->rule.ptr->flush &
 				    PF_FLUSH_GLOBAL ||
 				    (*state)->rule.ptr == st->rule.ptr)) {
@@ -937,33 +937,33 @@ pf_state_expires(const struct pf_state *state)
 void
 pf_purge_expired_src_nodes(int waslocked)
 {
-	 struct pf_src_node		*cur, *next;
-	 int				 locked = waslocked;
+	struct pf_src_node		*cur, *next;
+	int				 locked = waslocked;
 
-	 for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
-		 next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
+	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
+	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
-		 if (cur->states <= 0 && cur->expire <= time_second) {
-			 if (! locked) {
-				 rw_enter_write(&pf_consistency_lock);
-			 	 next = RB_NEXT(pf_src_tree,
-				     &tree_src_tracking, cur);
-				 locked = 1;
-			 }
-			 if (cur->rule.ptr != NULL) {
-				 cur->rule.ptr->src_nodes--;
-				 if (cur->rule.ptr->states_cur <= 0 &&
-				     cur->rule.ptr->max_src_nodes <= 0)
-					 pf_rm_rule(NULL, cur->rule.ptr);
-			 }
-			 RB_REMOVE(pf_src_tree, &tree_src_tracking, cur);
-			 pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
-			 pf_status.src_nodes--;
-			 pool_put(&pf_src_tree_pl, cur);
-		 }
-	 }
+		if (cur->states <= 0 && cur->expire <= time_second) {
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				next = RB_NEXT(pf_src_tree,
+				    &tree_src_tracking, cur);
+				locked = 1;
+			}
+			if (cur->rule.ptr != NULL) {
+				cur->rule.ptr->src_nodes--;
+				if (cur->rule.ptr->states_cur <= 0 &&
+				    cur->rule.ptr->max_src_nodes <= 0)
+					pf_rm_rule(NULL, cur->rule.ptr);
+			}
+			RB_REMOVE(pf_src_tree, &tree_src_tracking, cur);
+			pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
+			pf_status.src_nodes--;
+			pool_put(&pf_src_tree_pl, cur);
+		}
+	}
 
-	 if (locked && !waslocked)
+	if (locked && !waslocked)
 		rw_exit_write(&pf_consistency_lock);
 }
 
@@ -1053,7 +1053,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 {
 	static struct pf_state	*cur = NULL;
 	struct pf_state		*next;
-	int 			 locked = 0;
+	int			 locked = 0;
 
 	while (maxcheck--) {
 		/* wrap to start of list when we hit the end */
@@ -5462,29 +5462,29 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 struct pf_divert *
 pf_find_divert(struct mbuf *m)
 {
-        struct m_tag    *mtag;
+	struct m_tag    *mtag;
 
-        if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL)
-                return (NULL);
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL)
+		return (NULL);
 
-        return ((struct pf_divert *)(mtag + 1));
+	return ((struct pf_divert *)(mtag + 1));
 }
 
 struct pf_divert *
 pf_get_divert(struct mbuf *m)
 {
-        struct m_tag    *mtag;
+	struct m_tag    *mtag;
 
-        if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL) {
-                mtag = m_tag_get(PACKET_TAG_PF_DIVERT, sizeof(struct pf_divert),
-                    M_NOWAIT);
-                if (mtag == NULL)
-                        return (NULL);
-                bzero(mtag + 1, sizeof(struct pf_divert));
-                m_tag_prepend(m, mtag);
-        }
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_DIVERT, NULL)) == NULL) {
+		mtag = m_tag_get(PACKET_TAG_PF_DIVERT, sizeof(struct pf_divert),
+		    M_NOWAIT);
+		if (mtag == NULL)
+			return (NULL);
+		bzero(mtag + 1, sizeof(struct pf_divert));
+		m_tag_prepend(m, mtag);
+	}
 
-        return ((struct pf_divert *)(mtag + 1));
+	return ((struct pf_divert *)(mtag + 1));
 }
 
 #ifdef INET

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.90 2008/05/06 03:45:21 mpf Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.91 2008/05/18 11:54:04 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -590,7 +590,7 @@ pfsync_input(struct mbuf *m, ...)
 				}
 				continue;
 			}
-	    		pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
+			pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
 			pf_state_peer_ntoh(&sp->src, &st->src);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
 			st->expire = ntohl(sp->expire) + time_second;
@@ -717,7 +717,7 @@ pfsync_input(struct mbuf *m, ...)
 					    PFSYNC_FLAG_STALE);
 				continue;
 			}
-	    		pfsync_alloc_scrub_memory(&up->dst, &st->dst);
+			pfsync_alloc_scrub_memory(&up->dst, &st->dst);
 			pf_state_peer_ntoh(&up->src, &st->src);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
 			st->expire = ntohl(up->expire) + time_second;
@@ -1716,7 +1716,7 @@ pfsync_update_tdb(struct tdb *tdb, int output)
 			for (i = 0; !pt && i < h->count; i++) {
 				if (tdb->tdb_spi == u->spi &&
 				    tdb->tdb_sproto == u->sproto &&
-			            !bcmp(&tdb->tdb_dst, &u->dst,
+				    !bcmp(&tdb->tdb_dst, &u->dst,
 				    SA_LEN(&u->dst.sa))) {
 					pt = u;
 					pt->updates++;

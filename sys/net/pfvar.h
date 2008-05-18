@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.266 2008/05/09 13:59:31 mpf Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.267 2008/05/18 11:54:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -328,10 +328,10 @@ struct pfi_dynaddr {
 		((aw)->type == PF_ADDR_TABLE &&				\
 		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||		\
 		((aw)->type == PF_ADDR_DYNIFTL &&			\
-		    !pfi_match_addr((aw)->p.dyn, (x), (af))) || 	\
+		    !pfi_match_addr((aw)->p.dyn, (x), (af))) ||		\
 		((aw)->type == PF_ADDR_RANGE &&				\
 		    !pf_match_addr_range(&(aw)->v.a.addr,		\
-		    &(aw)->v.a.mask, (x), (af))) || 			\
+		    &(aw)->v.a.mask, (x), (af))) ||			\
 		((aw)->type == PF_ADDR_ADDRMASK &&			\
 		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&			\
 		    !PF_MATCHA(0, &(aw)->v.a.addr,			\
@@ -772,7 +772,7 @@ struct pf_state {
 struct pfsync_state_scrub {
 	u_int16_t	pfss_flags;
 	u_int8_t	pfss_ttl;	/* stashed TTL		*/
-#define PFSYNC_SCRUB_FLAG_VALID 	0x01
+#define PFSYNC_SCRUB_FLAG_VALID		0x01
 	u_int8_t	scrub_flag;
 	u_int32_t	pfss_ts_mod;	/* timestamp modulation	*/
 } __packed;
@@ -822,7 +822,7 @@ struct pfsync_state {
 	u_int8_t	 updates;
 } __packed;
 
-#define PFSYNC_FLAG_COMPRESS 	0x01
+#define PFSYNC_FLAG_COMPRESS	0x01
 #define PFSYNC_FLAG_STALE	0x02
 #define PFSYNC_FLAG_SRCNODE	0x04
 #define PFSYNC_FLAG_NATSRCNODE	0x08
@@ -837,7 +837,7 @@ struct pfsync_state {
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
 	if ((s)->scrub) {						\
-		(d)->scrub.pfss_flags = 				\
+		(d)->scrub.pfss_flags =					\
 		    (s)->scrub->pfss_flags & PFSS_TIMESTAMP;		\
 		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
 		(d)->scrub.pfss_ts_mod = (s)->scrub->pfss_ts_mod;	\
@@ -853,7 +853,7 @@ struct pfsync_state {
 	(d)->mss = ntohs((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
-	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID && 	\
+	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID &&		\
 	    (d)->scrub != NULL) {					\
 		(d)->scrub->pfss_flags =				\
 		    ntohs((s)->scrub.pfss_flags) & PFSS_TIMESTAMP;	\

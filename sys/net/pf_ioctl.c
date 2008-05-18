@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.196 2008/05/09 13:59:31 mpf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.197 2008/05/18 11:54:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -147,7 +147,7 @@ pfattach(int num)
 	    "pfsrctrpl", NULL);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
-	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0, 
+	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
 	    "pfstatekeypl", NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
 	    &pool_allocator_nointr);
@@ -843,7 +843,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 
 void
 pf_state_export(struct pfsync_state *sp, struct pf_state_key *sk,
-   struct pf_state *s) 
+    struct pf_state *s)
 {
 	int secs = time_second;
 	bzero(sp, sizeof(struct pfsync_state));
@@ -894,7 +894,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state_key *sk,
 
 void
 pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
-   struct pf_state *s) 
+    struct pf_state *s)
 {
 	/* copy to state key */
 	sk->lan.addr = sp->lan.addr;
@@ -1067,7 +1067,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			return (EACCES);
 		case DIOCGETRULE:
-			if (((struct pfioc_rule *)addr)->action == PF_GET_CLR_CNTR)
+			if (((struct pfioc_rule *)addr)->action ==
+			    PF_GET_CLR_CNTR)
 				return (EACCES);
 			break;
 		default:
@@ -1651,7 +1652,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCADDSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
-		struct pfsync_state 	*sp = &ps->state;
+		struct pfsync_state	*sp = &ps->state;
 		struct pf_state		*s;
 		struct pf_state_key	*sk;
 		struct pfi_kif		*kif;
@@ -2867,22 +2868,22 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCKILLSRCNODES: {
 		struct pf_src_node	*sn;
 		struct pf_state		*s;
-		struct pfioc_src_node_kill *psnk = \
-			(struct pfioc_src_node_kill *) addr;
+		struct pfioc_src_node_kill *psnk =
+		    (struct pfioc_src_node_kill *)addr;
 		u_int			killed = 0;
 
 		RB_FOREACH(sn, pf_src_tree, &tree_src_tracking) {
-        		if (PF_MATCHA(psnk->psnk_src.neg, \
-				      &psnk->psnk_src.addr.v.a.addr, \
-				      &psnk->psnk_src.addr.v.a.mask, \
-				      &sn->addr, sn->af) &&
-			    PF_MATCHA(psnk->psnk_dst.neg, \
-				      &psnk->psnk_dst.addr.v.a.addr, \
-				      &psnk->psnk_dst.addr.v.a.mask, \
-				      &sn->raddr, sn->af)) {
+			if (PF_MATCHA(psnk->psnk_src.neg,
+				&psnk->psnk_src.addr.v.a.addr,
+				&psnk->psnk_src.addr.v.a.mask,
+				&sn->addr, sn->af) &&
+			    PF_MATCHA(psnk->psnk_dst.neg,
+				&psnk->psnk_dst.addr.v.a.addr,
+				&psnk->psnk_dst.addr.v.a.mask,
+				&sn->raddr, sn->af)) {
 				/* Handle state to src_node linkage */
 				if (sn->states != 0) {
-					RB_FOREACH(s, pf_state_tree_id, 
+					RB_FOREACH(s, pf_state_tree_id,
 					    &tree_id) {
 						if (s->src_node == sn)
 							s->src_node = NULL;
