@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.14 2008/05/16 12:01:51 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.15 2008/05/18 07:20:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -78,8 +78,8 @@ int		uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
 		    struct usb_attach_arg *uaa, int, int, int);
-int		uvideo_vs_set_alt(struct uvideo_softc *,
-		    struct usb_attach_arg *, int, int);
+int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
+		    int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 
 usbd_status	uvideo_vs_negotation(struct uvideo_softc *);
@@ -89,7 +89,7 @@ usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_alloc_sample(struct uvideo_softc *);
 void		uvideo_vs_free_sample(struct uvideo_softc *);
 usbd_status	uvideo_vs_alloc(struct uvideo_softc *);
-usbd_status	uvideo_vs_open(struct uvideo_softc *, struct usb_attach_arg *);
+usbd_status	uvideo_vs_open(struct uvideo_softc *);
 void		uvideo_vs_start(struct uvideo_softc *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
@@ -275,7 +275,7 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 		return;
 
 	/* open video stream pipe */
-	error = uvideo_vs_open(sc, uaa);
+	error = uvideo_vs_open(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
@@ -655,8 +655,8 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 }
 
 int
-uvideo_vs_set_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
-    int iface, int max_packet_size)
+uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
+    int max_packet_size)
 {
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -664,18 +664,18 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	usbd_status error;
 
 	for (i = 0; i < sc->sc_vs_curr->numalts; i++) {
-		error = usbd_set_interface(uaa->ifaces[iface], i);
+		error = usbd_set_interface(ifaceh, i);
 		if (error) {
 			printf("%s: could not set alternate interface %d!\n",
 			    DEVNAME(sc), i);
 			return (USBD_INVAL);
 		}
 
-		id = usbd_get_interface_descriptor(uaa->ifaces[iface]);
+		id = usbd_get_interface_descriptor(ifaceh);
 		if (id == NULL)
 			continue;
 
-		ed = usbd_interface2endpoint_descriptor(uaa->ifaces[iface], 0);
+		ed = usbd_interface2endpoint_descriptor(ifaceh, 0);
 		if (ed == NULL)
 			continue;
 
@@ -941,14 +941,14 @@ uvideo_vs_alloc(struct uvideo_softc *sc)
 }
 
 usbd_status
-uvideo_vs_open(struct uvideo_softc *sc, struct usb_attach_arg *uaa)
+uvideo_vs_open(struct uvideo_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	error = uvideo_vs_set_alt(sc, uaa, sc->sc_vs_curr->iface,
+	error = uvideo_vs_set_alt(sc, sc->sc_vs_curr->ifaceh,
 	    UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize));
 	if (error != USBD_NORMAL_COMPLETION) {
 		printf("%s: could not set alternate interface!\n",
