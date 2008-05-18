@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.55 2008/02/03 00:36:29 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.56 2008/05/18 17:15:41 fgsch Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -644,10 +644,8 @@ umass_detach(struct device *self, int flags)
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL) {
+		if (sc->sc_pipe[i] != NULL)
 			usbd_abort_pipe(sc->sc_pipe[i]);
-			sc->sc_pipe[i] = NULL;
-		}
 	}
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
