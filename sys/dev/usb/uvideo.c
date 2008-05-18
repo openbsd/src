@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.15 2008/05/18 07:20:09 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.16 2008/05/18 09:35:35 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -89,7 +89,9 @@ usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_alloc_sample(struct uvideo_softc *);
 void		uvideo_vs_free_sample(struct uvideo_softc *);
 usbd_status	uvideo_vs_alloc(struct uvideo_softc *);
+void		uvideo_vs_free(struct uvideo_softc *);
 usbd_status	uvideo_vs_open(struct uvideo_softc *);
+void		uvideo_vs_close(struct uvideo_softc *);
 void		uvideo_vs_start(struct uvideo_softc *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
@@ -198,23 +200,56 @@ int
 uvideo_open(void *addr, int flags)
 {
 	struct uvideo_softc *sc = addr;
+	usbd_status error;
+	int r;
 
-	DPRINTF(1, "uvideo_open: sc=%p\n", sc);
+	DPRINTF(1, "%s: uvideo_open: sc=%p\n", DEVNAME(sc), sc);
 
 	if (sc->sc_dying)
 		return (EIO);
+
+	/* open video stream pipe */
+	error = uvideo_vs_open(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EIO);
+
+	/* allocate video stream xfer buffer */
+	error = uvideo_vs_alloc(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EIO);
+
+	/* allocate video stream sample buffer */
+	error = uvideo_vs_alloc_sample(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EIO);
+#ifdef UVIDEO_DEBUG
+	r = uvideo_debug_file_open(sc);
+	if (r != 0)
+		return(EIO);
+	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
+#endif
+	uvideo_vs_start(sc);
 
 	return (0);
 }
 
 int
-
 uvideo_close(void *addr)
 {
-#if 0
 	struct uvideo_softc *sc = addr;
 
-	DPRINTF(1, "uvideo_close: sc=%p\n", sc);
+	DPRINTF(1, "%s: uvideo_close: sc=%p\n", DEVNAME(sc), sc);
+
+	/* close video stream pipe */
+	uvideo_vs_close(sc);
+
+	/* free video stream xfer buffer */
+	uvideo_vs_free(sc);
+
+	/* free video stream sample buffer */
+	uvideo_vs_free_sample(sc);
+#ifdef UVIDEO_DEBUG
+	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 #endif
 	return (0);
 }
@@ -273,26 +308,6 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 	error = uvideo_vs_negotation(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
-
-	/* open video stream pipe */
-	error = uvideo_vs_open(sc);
-	if (error != USBD_NORMAL_COMPLETION)
-		return;
-
-	/* allocate video stream xfer buffer */
-	error = uvideo_vs_alloc(sc);
-	if (error != USBD_NORMAL_COMPLETION)
-		return;
-
-	/* allocate video stream sample buffer */
-	error = uvideo_vs_alloc_sample(sc);
-	if (error != USBD_NORMAL_COMPLETION)
-		return;
-#ifdef UVIDEO_DEBUG
-	uvideo_debug_file_open(sc);
-	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
-#endif
-	uvideo_vs_start(sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 
@@ -940,6 +955,22 @@ uvideo_vs_alloc(struct uvideo_softc *sc)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+void
+uvideo_vs_free(struct uvideo_softc *sc)
+{
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
+	if (sc->sc_vs_curr->buf != NULL) {
+		usbd_free_buffer(sc->sc_vs_curr->xfer);
+		sc->sc_vs_curr->buf = NULL;
+	}
+
+	if (sc->sc_vs_curr->xfer != NULL) {
+		usbd_free_xfer(sc->sc_vs_curr->xfer);
+		sc->sc_vs_curr->xfer = NULL;
+	}
+}
+
 usbd_status
 uvideo_vs_open(struct uvideo_softc *sc)
 {
@@ -987,6 +1018,16 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	DPRINTF(1, "%s: nframes=%d\n", DEVNAME(sc), sc->sc_nframes);
 
 	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+uvideo_vs_close(struct uvideo_softc *sc)
+{
+	if (sc->sc_vs_curr->pipeh) {
+		usbd_abort_pipe(sc->sc_vs_curr->pipeh);
+		usbd_close_pipe(sc->sc_vs_curr->pipeh);
+		sc->sc_vs_curr->pipeh = NULL;
+	}
 }
 
 void
@@ -1510,12 +1551,14 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 {
 	struct proc *p = curproc;
 	struct nameidata nd;
-	char name[] = "/uvideo.mjpeg";
+	char name[] = "/tmp/uvideo.mjpeg";
 	int error;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 	if (error) {
+		DPRINTF(1, "%s: %s: can't creat debug file %s!\n",
+		    DEVNAME(sc), __func__, name);
 		return (-1);
 	}
 
