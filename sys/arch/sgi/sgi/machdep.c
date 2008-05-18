@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2008/05/04 09:57:47 martin Exp $ */
+/*	$OpenBSD: machdep.c,v 1.60 2008/05/18 07:36:10 jsing Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -82,6 +82,7 @@
 extern char kernel_text[];
 extern int makebootdev(const char *, int);
 extern void stacktrace(void);
+extern bus_addr_t comconsaddr;
 
 #ifdef DEBUG
 void dump_tlb(void);
@@ -273,6 +274,10 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	cp = Bios_GetEnvironmentVariable("ConsoleOut");
 	if (cp != NULL && *cp != '\0')
 		strlcpy(bios_console, cp, sizeof bios_console);
+
+	/* Disable serial console if ARCS is telling us to use video. */
+	if (strncmp(bios_console, "video", 5) == 0)
+		comconsaddr = 0;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
