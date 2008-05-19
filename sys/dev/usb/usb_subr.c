@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.64 2007/11/04 05:52:36 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.65 2008/05/19 14:05:43 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -979,6 +979,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	usbd_device_handle dev, adev;
 	struct usbd_device *hub;
 	usb_device_descriptor_t *dd;
+	usb_port_status_t ps;
 	usbd_status err;
 	int addr;
 	int i;
@@ -1049,15 +1050,40 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		return (err);
 	}
 
+	/* Set the address. Do this early; some devices need that. */
+	/* Try a few times in case the device is slow (i.e. outside specs.) */
+	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
+	for (i = 0; i < 15; i++) {
+		err = usbd_set_address(dev, addr);
+		if (!err)
+			break;
+		if ((i % 4) == 0)
+			usbd_reset_port(up->parent, port, &ps);
+		else
+			usbd_delay_ms(dev, 200);
+	}
+	if (err) {
+		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
+		err = USBD_SET_ADDR_FAILED;
+		usbd_remove_device(dev, up);
+		return (err);
+	}
+	/* Allow device time to set new address */
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+	dev->address = addr;	/* New device address now */
+	bus->devices[addr] = dev;
+
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 15; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (!err)
 			break;
-		/* progressively increase the delay */
-		usbd_delay_ms(dev, 200 * (i + 1));
+		if ((i % 4) == 0)
+			usbd_reset_port(up->parent, port, &ps);
+		else
+			usbd_delay_ms(dev, 200);
 	}
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
@@ -1106,21 +1132,6 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
-
-	/* Set the address */
-	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
-	err = usbd_set_address(dev, addr);
-	if (err) {
-		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
-		err = USBD_SET_ADDR_FAILED;
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-	/* Allow device time to set new address */
-	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
-
-	dev->address = addr;	/* New device address now */
-	bus->devices[addr] = dev;
 
 	/* Assume 100mA bus powered for now. Changed when configured. */
 	dev->power = USB_MIN_POWER;
