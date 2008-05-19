@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.44 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.45 2008/05/19 14:58:29 markus Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -237,8 +237,9 @@ in6_pcbbind(inp, nam)
 					       * well.  (What about flow?)
 					       */
 			sin6->sin6_flowinfo = 0;
-			if ((ia = ifa_ifwithaddr((struct sockaddr *)sin6))
-			    == NULL)
+			if (!(so->so_options & SO_BINDANY) &&
+			    ((ia = ifa_ifwithaddr((struct sockaddr *)sin6))
+			    == NULL))
 				return EADDRNOTAVAIL;
 
 			/*
