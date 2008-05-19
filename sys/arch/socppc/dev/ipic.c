@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.2 2008/05/13 21:53:32 miod Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.3 2008/05/19 19:11:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -128,6 +128,18 @@ ipic_simsr_h(int ivec)
 		return 0x00000080;
 	case 10:
 		return 0x00000040;
+	case 32:
+		return 0x80000000;
+	case 33:
+		return 0x40000000;
+	case 34:
+		return 0x20000000;
+	case 35:
+		return 0x10000000;
+	case 36:
+		return 0x0800000;
+	case 37:
+		return 0x04000000;
 	case 39:
 		return 0x01000000;
 	}
@@ -194,20 +206,20 @@ intr_calculatemasks(void)
 	sc->sc_simsr_h[IPL_NET] |= sc->sc_simsr_h[IPL_BIO];
 	sc->sc_simsr_h[IPL_TTY] |= sc->sc_simsr_h[IPL_NET];
 	sc->sc_simsr_h[IPL_VM] |= sc->sc_simsr_h[IPL_TTY];
-	sc->sc_simsr_h[IPL_NET] |= sc->sc_simsr_h[IPL_VM];
-	sc->sc_simsr_h[IPL_HIGH] |= sc->sc_simsr_h[IPL_NET];
+	sc->sc_simsr_h[IPL_CLOCK] |= sc->sc_simsr_h[IPL_VM];
+	sc->sc_simsr_h[IPL_HIGH] |= sc->sc_simsr_h[IPL_CLOCK];
 
 	sc->sc_simsr_l[IPL_NET] |= sc->sc_simsr_l[IPL_BIO];
 	sc->sc_simsr_l[IPL_TTY] |= sc->sc_simsr_l[IPL_NET];
 	sc->sc_simsr_l[IPL_VM] |= sc->sc_simsr_l[IPL_TTY];
-	sc->sc_simsr_l[IPL_NET] |= sc->sc_simsr_l[IPL_VM];
-	sc->sc_simsr_l[IPL_HIGH] |= sc->sc_simsr_l[IPL_NET];
+	sc->sc_simsr_l[IPL_CLOCK] |= sc->sc_simsr_l[IPL_VM];
+	sc->sc_simsr_l[IPL_HIGH] |= sc->sc_simsr_l[IPL_CLOCK];
 
 	sc->sc_semsr[IPL_NET] |= sc->sc_semsr[IPL_BIO];
 	sc->sc_semsr[IPL_TTY] |= sc->sc_semsr[IPL_NET];
 	sc->sc_semsr[IPL_VM] |= sc->sc_semsr[IPL_TTY];
-	sc->sc_semsr[IPL_NET] |= sc->sc_semsr[IPL_VM];
-	sc->sc_semsr[IPL_HIGH] |= sc->sc_semsr[IPL_NET];
+	sc->sc_semsr[IPL_CLOCK] |= sc->sc_semsr[IPL_VM];
+	sc->sc_semsr[IPL_HIGH] |= sc->sc_semsr[IPL_CLOCK];
 }
 
 void *
