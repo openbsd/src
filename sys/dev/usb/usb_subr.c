@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.65 2008/05/19 14:05:43 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.66 2008/05/19 15:51:43 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -709,7 +709,8 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
 		DPRINTF(("usbd_set_config_index: No power source?\n"));
-		return (USBD_IOERROR);
+		err = USBD_IOERROR;
+		goto bad;
 	}
 #endif
 	power = cdp->bMaxPower * 2;
