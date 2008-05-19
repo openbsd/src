@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.7 2007/06/17 07:53:11 mbalmer Exp $
+#	$OpenBSD: makemap.awk,v 1.8 2008/05/19 18:09:06 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,12 +31,13 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.7 2007/06/17 07:53:11 mbalmer Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.8 2008/05/19 18:09:06 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
 	haskeys = 0
 	kbfr = 0
+	nmaps = 0
 
 	# PS/2 id -> UKBD conversion table, or "sanity lossage 102"
 	# (101 is for GSC keyboards!)
@@ -305,6 +306,29 @@ $1 == "#define" || $1 == "#undef" {
 		if (!lines[49]) {
 			lines[49] = lines[50]
 			sub("50", "49", lines[49])
+		}
+
+		#
+		# Sun USB keyboards extra keys do not appear in the PS/2
+		# maps. We add them here, except for the Compose key (101)
+		# which conflicts with the ``menu'' key.
+		#
+		if (nmaps++ == 0) {
+			# 102 Suspend
+			lines[116] = "    KC(116),\tKS_Open,"
+			lines[117] = "    KC(117),\tKS_Help,"
+			lines[118] = "    KC(118),\tKS_Props,"
+			lines[119] = "    KC(119),\tKS_Front,"
+			lines[120] = "    KC(120),\tKS_Cmd,"
+			lines[121] = "    KC(121),\tKS_Again,"
+			lines[122] = "    KC(122),\tKS_Undo,"
+			lines[123] = "    KC(123),\tKS_Cut,"
+			lines[124] = "    KC(124),\tKS_Copy,"
+			lines[125] = "    KC(125),\tKS_Paste,"
+			lines[126] = "    KC(126),\tKS_Find,"
+			lines[127] = "    KC(127),\tKS_AudioMute,"
+			lines[128] = "    KC(128),\tKS_AudioRaise,"
+			lines[129] = "    KC(129),\tKS_AudioLower,"
 		}
 
 		for (i = 0; i < 256; i++)
