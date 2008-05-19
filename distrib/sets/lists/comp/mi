@@ -4901,7 +4901,6 @@
 ./usr/share/man/cat3/readskey.0
 ./usr/share/man/cat3/realloc.0
 ./usr/share/man/cat3/realpath.0
-./usr/share/man/cat3/recalloc.0
 ./usr/share/man/cat3/recno.0
 ./usr/share/man/cat3/redrawwin.0
 ./usr/share/man/cat3/refresh.0

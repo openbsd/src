@@ -1539,8 +1539,12 @@
 ./usr/share/man/cat4/socppc
 ./usr/share/man/cat4/socppc/autoconf.0
 ./usr/share/man/cat4/socppc/intro.0
+./usr/share/man/cat4/socppc/ipic.0
 ./usr/share/man/cat4/socppc/kmem.0
 ./usr/share/man/cat4/socppc/mem.0
+./usr/share/man/cat4/socppc/obio.0
+./usr/share/man/cat4/socppc/sociic.0
+./usr/share/man/cat4/socppc/socpcic.0
 ./usr/share/man/cat4/softraid.0
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc/agten.0
