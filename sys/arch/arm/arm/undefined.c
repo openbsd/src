@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.3 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.4 2008/05/19 18:42:11 miod Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(handler != NULL); /* Used to be legal. */
 
 	/* XXX: M_TEMP??? */
-	MALLOC(uh, struct undefined_handler *, sizeof(*uh), M_TEMP, M_WAITOK);
+	uh = (struct undefined_handler *)malloc(sizeof(*uh), M_TEMP, M_WAITOK);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;
@@ -102,7 +102,7 @@ remove_coproc_handler(void *cookie)
 	struct undefined_handler *uh = cookie;
 
 	LIST_REMOVE(uh, uh_link);
-	FREE(uh, M_TEMP);
+	free(uh, M_TEMP);
 }
 
 

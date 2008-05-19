@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.51 2007/07/11 04:53:42 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.52 2008/05/19 18:42:12 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -267,8 +267,8 @@ read_mac_label(char *dlbuf, struct disklabel *lp)
 	int i, num_parts, maxslot = RAW_PART;
 	struct partmapentry *pmap;
 
-	MALLOC(pmap, struct partmapentry *,
-	    NUM_PARTS_PROBED * sizeof(struct partmapentry), M_DEVBUF, M_NOWAIT);
+	pmap = (struct partmapentry *)malloc(NUM_PARTS_PROBED *
+	    sizeof(struct partmapentry), M_DEVBUF, M_NOWAIT);
 	if (pmap == NULL)
 		return ("out of memory");
 
@@ -317,7 +317,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp)
 	lp->d_version = 1;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-	FREE(pmap, M_DEVBUF);
+	free(pmap, M_DEVBUF);
 	return NULL;
 }
 

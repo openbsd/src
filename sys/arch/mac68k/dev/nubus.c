@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.33 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.34 2008/05/19 18:42:12 miod Exp $	*/
 /*	$NetBSD: nubus.c,v 1.53 2002/04/13 17:49:41 briggs Exp $	*/
 
 /*
@@ -771,7 +771,7 @@ nubus_get_smem_addr_rangelist(bst, bsh, fmt, dirent, data_return)
 	 * malloc a block of (blocklen) bytes
 	 * caller must recycle block after use
 	 */
-	MALLOC(blocklist,caddr_t,blocklen,M_TEMP,M_WAITOK);
+	blocklist = (caddr_t)malloc(blocklen, M_TEMP, M_WAITOK);
 
 	/* read ((blocklen - 4) / 8) (length,offset) pairs into block */
 	nubus_get_ind_data(bst, bsh, fmt, dirent, blocklist, blocklen);

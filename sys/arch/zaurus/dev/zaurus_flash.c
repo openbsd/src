@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.7 2008/04/18 06:42:21 djm Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.8 2008/05/19 18:42:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -650,7 +650,7 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	phyuse = (u_int16_t *)malloc(sp->sp_pblks * sizeof(u_int16_t),
 	    M_DEVBUF, M_NOWAIT);
 	if (phyuse == NULL) {
-		FREE(sp, M_DEVBUF);
+		free(sp, M_DEVBUF);
 		return ENOMEM;
 	}
 	sp->sp_phyuse = phyuse;
@@ -659,8 +659,8 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	logmap = (u_int *)malloc(sp->sp_lblks * sizeof(u_int),
 	    M_DEVBUF, M_NOWAIT);
 	if (logmap == NULL) {
-		FREE(phyuse, M_DEVBUF);
-		FREE(sp, M_DEVBUF);
+		free(phyuse, M_DEVBUF);
+		free(sp, M_DEVBUF);
 		return ENOMEM;
 	}
 	sp->sp_logmap = logmap;

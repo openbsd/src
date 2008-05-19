@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.24 2008/04/27 14:36:38 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.25 2008/05/19 18:42:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -173,14 +173,14 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 	if (irq < 0 || irq >= CPU_NINTS)
 		return (NULL);
 
-	MALLOC(cnt, struct evcount *, sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	cnt = (struct evcount *)malloc(sizeof *cnt, M_DEVBUF, M_NOWAIT);
 	if (!cnt)
 		return (NULL);
 
 	iv = &ivb[irq];
 	if (iv->handler) {
 		if (!pv->share) {
-			FREE(cnt, M_DEVBUF);
+			free(cnt, M_DEVBUF);
 			return (NULL);
 		} else {
 			iv = pv->share;
@@ -213,7 +213,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	if (irq < 0 || irq >= CPU_NINTS || intr_table[irq].handler)
 		return (NULL);
 
-	MALLOC(cnt, struct evcount *, sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	cnt = (struct evcount *)malloc(sizeof *cnt, M_DEVBUF, M_NOWAIT);
 	if (!cnt)
 		return (NULL);
 
@@ -237,7 +237,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 		intr_more += 2 * CPU_NINTS;
 		for (ev = iv->next + CPU_NINTS; ev < intr_more; ev++)
 			ev->share = iv->share, iv->share = ev;
-		FREE(cnt, M_DEVBUF);
+		free(cnt, M_DEVBUF);
 		iv->cnt = NULL;
 	} else
 		evcount_attach(cnt, name, NULL, &evcount_intr);
