@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.1 2008/05/10 12:02:20 kettenis Exp $
+#	$OpenBSD: files.socppc,v 1.2 2008/05/19 19:57:23 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -50,6 +50,11 @@ file	arch/socppc/dev/com_obio.c
 # Media Independent Interface (mii)
 #
 include "../../../dev/mii/files.mii"
+
+# On-board TSEC
+device	tsec: ether, ifnet, mii, ifmedia
+attach	tsec at obio
+file	arch/socppc/dev/if_tsec.c
 
 major	{rd = 17}
 major	{wd = 0}
