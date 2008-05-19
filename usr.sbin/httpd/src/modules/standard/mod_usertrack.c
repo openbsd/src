@@ -148,7 +148,7 @@ static char * make_cookie_id(char * buffer, int bufsize, request_rec *r,
     struct timeval tv;
     struct timezone tz = {0, 0};
     char hbuf[NI_MAXHOST];
-
+    const char *rname;
     cookie_dir_rec *dcfg;
 
     long reqtime = (long) r->request_time;
@@ -158,7 +158,7 @@ static char * make_cookie_id(char * buffer, int bufsize, request_rec *r,
         r->connection->remote_addr.ss_len,
         hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 
-    const char *rname = ap_get_remote_host(r->connection, r->per_dir_config,
+    rname = ap_get_remote_host(r->connection, r->per_dir_config,
 					   REMOTE_NAME);
     dcfg = ap_get_module_config(r->per_dir_config, &usertrack_module);
 
