@@ -1392,6 +1392,7 @@
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mixer.0
 ./usr/share/man/cat4/moscom.0
+./usr/share/man/cat4/mpe.0
 ./usr/share/man/cat4/mpi.0
 ./usr/share/man/cat4/mpu.0
 ./usr/share/man/cat4/msk.0
@@ -1956,8 +1957,8 @@
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
 ./usr/share/man/cat5/phones.0
-./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/port-modules.0
+./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
