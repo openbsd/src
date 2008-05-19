@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.72 2008/03/21 18:47:26 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.73 2008/05/19 09:44:31 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -213,11 +213,9 @@ ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 
-#UNTESTED:  the following drivers are untested.
-en*	at pci?				# ENI PCI ATM (untested)
+#en*	at pci?				# ENI PCI ATM (untested)
 wb*	at pci?				# Winbond W89C840F ethernet
 an*	at pci?				# Cisco/Aironet 802.11DS
-##
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
