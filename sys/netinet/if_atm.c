@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.14 2008/05/09 15:48:59 claudio Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.15 2008/05/19 12:25:12 claudio Exp $       */
 
 /*
  *
@@ -83,7 +83,7 @@ atm_rtrequest(req, rt, info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct atm_pseudoioctl api;
-	struct rt_addrinfo info;
+	struct rt_addrinfo rtinfo;
 #ifdef NATM
 	struct sockaddr_in *sin;
 	struct natmpcb *npcb = NULL;
@@ -174,12 +174,12 @@ failed:
 			rt->rt_flags &= ~RTF_LLINFO;
 		}
 #endif
-		bzero(&info, sizeof(info));
-		info.rti_flags = rt->rt_flags;
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		bzero(&rtinfo, sizeof(rtinfo));
+		rtinfo.rti_flags = rt->rt_flags;
+		rtinfo.rti_info[RTAX_DST] = rt_key(rt);
+		rtinfo.rti_info[RTAX_NETMASK] = rt_mask(rt);
 
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+		rtrequest1(RTM_DELETE, &rtinfo, rt->rt_priority, NULL, 0);
 		break;
 
 	case RTM_DELETE:
