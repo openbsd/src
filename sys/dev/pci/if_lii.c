@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.12 2008/05/15 04:37:59 brad Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.13 2008/05/20 18:21:56 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -143,7 +143,7 @@ int	lii_read_macaddr(struct lii_softc *, uint8_t *);
 int	lii_eeprom_read(struct lii_softc *, uint32_t, uint32_t *);
 void	lii_spi_configure(struct lii_softc *);
 int	lii_spi_read(struct lii_softc *, uint32_t, uint32_t *);
-void	lii_setmulti(struct lii_softc *);
+void	lii_iff(struct lii_softc *);
 void	lii_tick(void *);
 
 int	lii_alloc_rings(struct lii_softc *);
@@ -597,6 +597,7 @@ int
 lii_init(struct ifnet *ifp)
 {
 	struct lii_softc *sc = ifp->if_softc;
+	uint32_t val;
 	int error;
 
 	DPRINTF(("lii_init\n"));
@@ -677,7 +678,23 @@ lii_init(struct ifnet *ifp)
 		goto out;
 	}
 
-	lii_setmulti(sc);
+	/*
+	 * Initialise MAC. 
+	 */
+	val = AT_READ_4(sc, ATL2_MACC) & MACC_FDX;
+
+	val |= MACC_RX_EN | MACC_TX_EN | MACC_MACLP_CLK_PHY |
+	    MACC_TX_FLOW_EN | MACC_RX_FLOW_EN |
+	    MACC_ADD_CRC | MACC_PAD | MACC_BCAST_EN;
+
+	val |= 7 << MACC_PREAMBLE_LEN_SHIFT;
+	val |= 2 << MACC_HDX_LEFT_BUF_SHIFT;
+
+	AT_WRITE_4(sc, ATL2_MACC, val);
+
+	/* Program promiscuous mode and multicast filters. */
+	lii_iff(sc);
+
 	mii_mediachg(&sc->sc_mii);
 
 	AT_WRITE_4(sc, ATL2_IMR, IMR_NORMAL_MASK);
@@ -1078,7 +1095,7 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 err:
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			lii_setmulti(sc);
+			lii_iff(sc);
 		error = 0;
 	}
 	splx(s);
@@ -1087,33 +1104,47 @@ err:
 }
 
 void
-lii_setmulti(struct lii_softc *sc)
+lii_iff(struct lii_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	uint32_t val;
+	struct arpcom *ac = &sc->sc_ac;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t hashes[2] = { 0, 0 };
+	uint32_t crc, val;
 
-	/* XXX That should be done lii_init */
-	val = AT_READ_4(sc, ATL2_MACC) & MACC_FDX;
+	val = AT_READ_4(sc, ATL2_MACC);
+	val &= ~(MACC_PROMISC_EN | MACC_ALLMULTI_EN);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	val |= MACC_RX_EN | MACC_TX_EN | MACC_MACLP_CLK_PHY |
-	    MACC_TX_FLOW_EN | MACC_RX_FLOW_EN |
-	    MACC_ADD_CRC | MACC_PAD | MACC_BCAST_EN;
-
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp ->if_flags |= IFF_ALLMULTI;
 		val |= MACC_PROMISC_EN;
-	else if (ifp->if_flags & IFF_ALLMULTI)
+	} else if (ac->ac_multirangecnt > 0) {
+		ifp ->if_flags |= IFF_ALLMULTI;
 		val |= MACC_ALLMULTI_EN;
+	} else {
+		/* Clear multicast hash table. */
+		AT_WRITE_4(sc, ATL2_MHT, 0);
+		AT_WRITE_4(sc, ATL2_MHT + 4, 0);
 
-	val |= 7 << MACC_PREAMBLE_LEN_SHIFT;
-	val |= 2 << MACC_HDX_LEFT_BUF_SHIFT;
+		/* Calculate multicast hashes. */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN);
+			hashes[((crc >> 31) & 0x1)] |=
+			    (1 << ((crc >> 26) & 0x1f));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	/* Write new hashes to multicast hash table. */
+	AT_WRITE_4(sc, ATL2_MHT, hashes[0]);
+	AT_WRITE_4(sc, ATL2_MHT + 4, hashes[1]);
 
 	AT_WRITE_4(sc, ATL2_MACC, val);
-
-	/* XXX actual setmulti needed */
-
-	/* Clear multicast hash table */
-	AT_WRITE_4(sc, ATL2_MHT, 0);
-	AT_WRITE_4(sc, ATL2_MHT + 4, 0);
 }
 
 void
