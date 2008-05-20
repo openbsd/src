@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.51 2008/05/19 19:36:15 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.52 2008/05/20 11:25:26 jmc Exp $
 .\"
-.Dd $Mdocdate: May 19 2008 $
+.Dd $Mdocdate: May 20 2008 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -375,9 +375,7 @@ to return
 .Dv NULL .
 .It Dq mmap(2) failed, check limits.
 This is a rather weird condition that is most likely to indicate a
-seriously overloaded system or a
-.Xr ulimit 1
-restriction.
+seriously overloaded system or a ulimit restriction.
 .It Dq freelist is destroyed.
 .Fn malloc Ns 's
 internal freelist has been stomped on.
