@@ -1297,7 +1297,6 @@
 ./usr/share/man/cat4/landisk
 ./usr/share/man/cat4/landisk/intro.0
 ./usr/share/man/cat4/landisk/kmem.0
-./usr/share/man/cat4/landisk/mainbus.0
 ./usr/share/man/cat4/landisk/mem.0
 ./usr/share/man/cat4/landisk/obio.0
 ./usr/share/man/cat4/landisk/power.0
@@ -1333,7 +1332,6 @@
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
 ./usr/share/man/cat4/mac68k/macfb.0
-./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mc.0
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/ncrscsi.0
@@ -1523,7 +1521,6 @@
 ./usr/share/man/cat4/sgi/intro.0
 ./usr/share/man/cat4/sgi/macebus.0
 ./usr/share/man/cat4/sgi/macepcibr.0
-./usr/share/man/cat4/sgi/mainbus.0
 ./usr/share/man/cat4/sgi/mavb.0
 ./usr/share/man/cat4/sgi/mec.0
 ./usr/share/man/cat4/sgi/mkbc.0
@@ -1545,6 +1542,7 @@
 ./usr/share/man/cat4/socppc/obio.0
 ./usr/share/man/cat4/socppc/sociic.0
 ./usr/share/man/cat4/socppc/socpcic.0
+./usr/share/man/cat4/socppc/tsec.0
 ./usr/share/man/cat4/softraid.0
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc/agten.0
