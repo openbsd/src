@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.35 2006/05/29 18:22:24 otto Exp $	*/
+/*	$OpenBSD: history.c,v 1.36 2008/05/20 00:30:30 fgsch Exp $	*/
 
 /*
  * command history
@@ -352,7 +352,7 @@ hist_get(const char *str, int approx, int allow_cur)
 
 	if (getn(str, &n)) {
 		hp = histptr + (n < 0 ? n : (n - hist_source->line));
-		if (hp < history) {
+		if ((long)hp < (long)history) {
 			if (approx)
 				hp = hist_get_oldest();
 			else {
