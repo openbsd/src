@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsec.4,v 1.1 2008/05/19 20:47:09 kettenis Exp $
+.\"	$OpenBSD: tsec.4,v 1.2 2008/05/20 11:39:12 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2008 $
+.Dd $Mdocdate: May 20 2008 $
 .Dt TSEC 4 socppc
 .Os
 .Sh NAME
 .Nm tsec
-.Nd Three-Speed Ethernet Controller device
+.Nd three-speed 10/100/Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "tsec0 at obio? addr 0x24000 ivec 32"
 .Cd "tsec1 at obio? addr 0x25000 ivec 35"
@@ -30,7 +30,7 @@ The
 .Nm
 driver provides support for the three-speed Ethernet controller (TSEC)
 found on the Freescale MPC8349E processor family.
-It uses an external PHY or an interbal 10-bit interface.
+It uses an external PHY or an internal 10-bit interface.
 .Pp
 The
 .Nm
@@ -78,7 +78,7 @@ first appeared in
 The
 .Nm
 driver was written by
-.An Mark Kettenis Aq kettenis@openbsd.org
+.An Mark Kettenis Aq kettenis@openbsd.org .
 .Sh BUGS
 The
 .Nm
