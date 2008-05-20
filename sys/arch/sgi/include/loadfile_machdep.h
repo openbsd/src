@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: loadfile_machdep.h,v 1.2 2008/05/20 18:12:19 jsing Exp $ */
 /*	$NetBSD: loadfile_machdep.h,v 1.2 2001/10/31 17:20:49 thorpej Exp $	 */
 
 /*-
@@ -37,15 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SGIMIPS_LOADFILE_MACHDEP_H_
-#define _SGIMIPS_LOADFILE_MACHDEP_H_
+#define BOOT_ELF
+#define ELFSIZE	64
 
-#define BOOT_AOUT
-#define BOOT_ECOFF
-#define BOOT_ELF32
-
-#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
-#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
+#define LOAD_KERNEL		(LOAD_ALL & ~LOAD_TEXTA)
+#define COUNT_KERNEL		(COUNT_ALL & ~COUNT_TEXTA)
 
 #define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
@@ -59,5 +55,3 @@
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
 #define OKMAGIC(a)		((a) == OMAGIC)
-
-#endif	/* !_SGIMIPS_LOADFILE_MACHDEP_H_ */

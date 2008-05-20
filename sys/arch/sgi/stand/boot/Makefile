@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/11/30 14:02:00 jsing Exp $
-
+#	$OpenBSD: Makefile,v 1.10 2008/05/20 18:12:19 jsing Exp $
 
 PROG=		boot
 NOMAN=		noman
@@ -17,11 +16,14 @@ LDFLAGS+=	${SALDFLAGS} -T ${.CURDIR}/ld.script -e __start
 S=		${.CURDIR}/../../../..
 SRCS=		start.S boot.c filesystem.c conf.c diskio.c arcbios.c strstr.c
 
-CLEANFILES+= machine mips64
+.PATH:		${S}/lib/libsa
+SRCS+=		loadfile.c
 
 .PATH:		${S}/lib/libkern/arch/mips64 ${S}/lib/libkern
 SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c ashrdi3.c strncmp.c \
 		strcmp.S udivdi3.c umoddi3.c qdivrem.c
+
+CLEANFILES+=	machine mips64
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
@@ -32,7 +34,6 @@ SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c ashrdi3.c strncmp.c \
 ${PROG}: $(OBJS) $(LDADD)
 	$(LD) $(LDFLAGS) -o boot $(OBJS) -L${LIBSADIR} ${LIBSA} \
 	-L${LIBZDIR} ${LIBZ}
-
 
 install:
 	install -c -m 555 -g bin -o bin ${PROG} ${DESTDIR}/usr/mdec
