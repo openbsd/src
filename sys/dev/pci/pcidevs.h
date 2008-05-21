@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1361 2008/05/21 19:19:47 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1362 2008/05/21 22:24:25 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1659,6 +1659,9 @@
 #define	PCI_PRODUCT_FREESCALE_MPC8347_PBGA	0x0085		/* MPC8347 PBGA */
 #define	PCI_PRODUCT_FREESCALE_MPC8343E	0x0086		/* MPC8343E */
 #define	PCI_PRODUCT_FREESCALE_MPC8343	0x0087		/* MPC8343 */
+
+/* Fujitsu products */
+#define	PCI_PRODUCT_FUJITSU_PP250_450_LAN	0x11cc		/* PRIMEPOWER250/450 LAN */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
