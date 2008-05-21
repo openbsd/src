@@ -23,6 +23,8 @@
 
 #include <config.h>
 
+#include <machine/asm.h>
+
 #undef RCSID
 
 /*
@@ -32,7 +34,6 @@
 #
 #
 */
-	.data
 
 /*
 #
@@ -40,8 +41,6 @@
 #	Algorithm: "Monkey see, monkey do"
 #
 */
-
-	.text
 
 /*
 #
@@ -65,12 +64,8 @@
 	.set	area1,8
 	.set	newsp,12
 
-.globl	_PRE_Block
-.globl	_savecontext
-
-_savecontext:
-	.word 0x0ffc	# Save regs R2-R11
-	movl	$1,_PRE_Block		# Critical section for preemption code
+ENTRY(savecontext, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
+	movl	$1,_C_LABEL(PRE_Block)	# Critical section for preemption code
    	pushl	ap			# save old ap
 	pushl	fp			# save old fp    
 	movl	area1(ap),r0		# r0 = base of savearea
@@ -84,7 +79,7 @@ L1:
 
 /* It is impossible to be here, so abort() */
 
-	calls	$0,_abort
+	calls	$0,_C_LABEL(abort)
 
 /*
 # returnto(area2)
@@ -94,15 +89,13 @@ L1:
 /* Stack offset of argument */
 	.set	area2,4
 
-	.globl _returnto
-_returnto:
-	.word	0x0			# Who cares about these regs?
+ENTRY(returnto, 0)
 	movl	area2(ap),r0		# r0 = address of area2
 	movl	topstack(r0),sp		# Restore sp
 	movl	(sp)+,fp		# Restore fp
 	movl	(sp)+,ap		# ,,,,
-	clrl	_PRE_Block		# End of preemption critical section
+	clrl	_C_LABEL(PRE_Block)	# End of preemption critical section
 	ret
 
 	pushl	$1234			# I will gloat, Kazar
-	calls	$0,_abort
+	calls	$0,_C_LABEL(abort)
