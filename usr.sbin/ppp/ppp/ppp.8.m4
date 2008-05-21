@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.39 2008/05/21 19:10:44 miod Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.40 2008/05/21 20:10:54 jmc Exp $
 .\"
 .Dd $Mdocdate: May 21 2008 $
 .Dt PPP 8
@@ -2174,7 +2174,7 @@ set speed 115200
 .Pp
 The first serial port is cua00.
 The modem will attach at either
-.Xr com 4 ,
+.Xr com 4
 or
 .Xr ucom 4 .
 So, for example, if the modem attaches at
