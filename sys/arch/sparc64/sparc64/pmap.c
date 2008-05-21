@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2008/04/03 23:10:25 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2008/05/21 19:23:15 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1318,7 +1318,7 @@ remap_data:
 	
 	BDPRINTF(PDB_BOOT1, ("Inserting PROM mappings into pmap_kernel()\r\n"));
 	data = 0;
-	if (CPU_ISSUN4U)
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
 		data = SUN4U_TLB_EXEC;
 	for (i = 0; i < prom_map_size; i++)
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0))
@@ -3535,7 +3535,7 @@ pmap_page_cache(pm, pa, mode)
 	pv_entry_t pv;
 	int s;
 
-	if (CPU_ISSUN4V)
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
 		return;
 
 #ifdef DEBUG

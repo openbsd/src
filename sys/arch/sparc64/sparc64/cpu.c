@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2008/03/24 11:49:25 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2008/05/21 19:23:15 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -233,7 +233,7 @@ cpu_attach(parent, dev, aux)
 	u_int64_t ver = 0;
 	extern u_int64_t cpu_clockrate[];
 
-	if (CPU_ISSUN4U)
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
 		ver = getver();
 	impl = IU_IMPL(ver);
 	vers = IU_VERS(ver);
@@ -404,7 +404,7 @@ cpu_init(struct cpu_info *ci)
 	paddr_t pa = ci->ci_paddr;
 	int err;
 
-	if (CPU_ISSUN4U)
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
 		return;
 
 #define MONDO_QUEUE_SIZE	32

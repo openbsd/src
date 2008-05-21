@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.87 2008/04/14 21:04:56 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.88 2008/05/21 19:23:15 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -256,7 +256,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#ifdef SUN4V
+#if defined(SUN4US) || defined(SUN4V)
 	char buf[32];
 #endif
 	int ncpus;
@@ -280,23 +280,33 @@ bootstrap(nctx)
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
 #endif
 
-#ifdef SUN4V
-	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "sun4v") == 0)
-		cputyp = CPU_SUN4V;
+#if defined (SUN4US) || defined(SUN4V)
+	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0) {
+		if (strcmp(buf, "sun4us") == 0)
+			cputyp = CPU_SUN4US;
+		if (strcmp(buf, "sun4v") == 0)
+			cputyp = CPU_SUN4V;
+}
 #endif
 
-#ifdef SUN4V
-	if (CPU_ISSUN4V) {
+#if defined (SUN4US) || defined(SUN4V)
+	if (CPU_ISSUN4US || CPU_ISSUN4V) {
 		extern vaddr_t dlflush_start;
 		vaddr_t *pva;
-		u_int32_t insn;
-		int32_t disp;
 
 		for (pva = &dlflush_start; *pva; pva++) {
 			*(u_int32_t *)(*pva) = 0x01000000; /* nop */
 			flush((void *)(*pva));
 		}
+
+		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
+	}
+#endif
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		u_int32_t insn;
+		int32_t disp;
 
 		disp = (vaddr_t)hv_mmu_demap_page - (vaddr_t)sp_tlb_flush_pte;
 		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_page */
@@ -335,7 +345,6 @@ bootstrap(nctx)
 #endif
 	}
 
-		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
 	}
 #endif
 
