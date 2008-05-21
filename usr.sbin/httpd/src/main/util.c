@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2008/05/15 06:05:43 mbalmer Exp $ */
+/*	$OpenBSD: util.c,v 1.25 2008/05/21 11:54:52 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -455,84 +455,83 @@ regmatch_t pmatch[])
 /*
  * Parse .. so we don't compromise security
  */
-API_EXPORT(void) ap_getparents(char *name)
+API_EXPORT(void)
+ap_getparents(char *name)
 {
-    int l, w;
+	int l, w;
 
-    /* Four passes, as per RFC 1808 */
-    /* a) remove ./ path segments */
+	/* Four passes, as per RFC 1808 */
+	/* a) remove ./ path segments */
 
-    for (l = 0, w = 0; name[l] != '\0';) {
-	if (name[l] == '.' && name[l + 1] == '/' && (l == 0 || name[l - 1] == '/'))
-	    l += 2;
-	else
-	    name[w++] = name[l++];
-    }
-
-    /* b) remove trailing . path, segment */
-    if (w == 1 && name[0] == '.')
-	w--;
-    else if (w > 1 && name[w - 1] == '.' && name[w - 2] == '/')
-	w--;
-    name[w] = '\0';
-
-    /* c) remove all xx/../ segments. (including leading ../ and /../) */
-    l = 0;
-
-    while (name[l] != '\0') {
-	if (name[l] == '.' && name[l + 1] == '.' && name[l + 2] == '/' &&
-	    (l == 0 || name[l - 1] == '/')) {
-	    register int m = l + 3, n;
-
-	    l = l - 2;
-	    if (l >= 0) {
-		while (l >= 0 && name[l] != '/')
-		    l--;
-		l++;
-	    }
-	    else
-		l = 0;
-	    n = l;
-	    while ((name[n] = name[m]))
-		(++n, ++m);
+	for (l = 0, w = 0; name[l] != '\0';) {
+		if (name[l] == '.' && name[l + 1] == '/' &&
+		    (l == 0 || name[l - 1] == '/'))
+			l += 2;
+		else
+			name[w++] = name[l++];
 	}
-	else
-	    ++l;
-    }
 
-    /* d) remove trailing xx/.. segment. */
-    if (l == 2 && name[0] == '.' && name[1] == '.')
-	name[0] = '\0';
-    else if (l > 2 && name[l - 1] == '.' && name[l - 2] == '.' && name[l - 3] == '/') {
-	l = l - 4;
-	if (l >= 0) {
-	    while (l >= 0 && name[l] != '/')
-		l--;
-	    l++;
+	/* b) remove trailing . path, segment */
+	if (w == 1 && name[0] == '.')
+		w--;
+	else if (w > 1 && name[w - 1] == '.' && name[w - 2] == '/')
+		w--;
+	name[w] = '\0';
+
+	/* c) remove all xx/../ segments. (including leading ../ and /../) */
+	l = 0;
+
+	while (name[l] != '\0') {
+		if (name[l] == '.' && name[l + 1] == '.' && name[l + 2] == '/'
+		    && (l == 0 || name[l - 1] == '/')) {
+			register int m = l + 3, n;
+
+			l = l - 2;
+			if (l >= 0) {
+				while (l >= 0 && name[l] != '/')
+					l--;
+				l++;
+			} else
+				l = 0;
+			n = l;
+			while ((name[n] = name[m]))
+				(++n, ++m);
+		} else
+			++l;
 	}
-	else
-	    l = 0;
-	name[l] = '\0';
-    }
+
+	/* d) remove trailing xx/.. segment. */
+	if (l == 2 && name[0] == '.' && name[1] == '.')
+		name[0] = '\0';
+	else if (l > 2 && name[l - 1] == '.' && name[l - 2] == '.'
+	    && name[l - 3] == '/') {
+		l = l - 4;
+		if (l >= 0) {
+			while (l >= 0 && name[l] != '/')
+				l--;
+			l++;
+		} else
+			l = 0;
+		name[l] = '\0';
+	}
 }
 
-API_EXPORT(void) ap_no2slash(char *name)
+API_EXPORT(void)
+ap_no2slash(char *name)
 {
-    char *d, *s;
+	char *d, *s;
 
-    s = d = name;
+	s = d = name;
 
-    while (*s) {
-	if ((*d++ = *s) == '/') {
-	    do {
-		++s;
-	    } while (*s == '/');
+	while (*s) {
+		if ((*d++ = *s) == '/') {
+			do {
+				++s;
+			} while (*s == '/');
+		} else
+			++s;
 	}
-	else {
-	    ++s;
-	}
-    }
-    *d = '\0';
+	*d = '\0';
 }
 
 
@@ -553,42 +552,44 @@ API_EXPORT(void) ap_no2slash(char *name)
  * and s == "e:/test.html", "e:/" is returned in d
  * *** See also directory_walk in src/main/http_request.c
  */
-API_EXPORT(char *) ap_make_dirstr_prefix(char *d, const char *s, int n)
+API_EXPORT(char *)
+ap_make_dirstr_prefix(char *d, const char *s, int n)
 {
-    for (;;) {
-	*d = *s;
-	if (*d == '\0') {
-	    *d = '/';
-	    break;
+	for (;;) {
+		*d = *s;
+		if (*d == '\0') {
+			*d = '/';
+			break;
+		}
+		if (*d == '/' && (--n) == 0)
+			break;
+		++d;
+		++s;
 	}
-	if (*d == '/' && (--n) == 0)
-	    break;
-	++d;
-	++s;
-    }
-    *++d = 0;
-    return (d);
+	*++d = 0;
+	return (d);
 }
 
 
 /*
  * return the parent directory name including trailing / of the file s
  */
-API_EXPORT(char *) ap_make_dirstr_parent(pool *p, const char *s)
+API_EXPORT(char *)
+ap_make_dirstr_parent(pool *p, const char *s)
 {
-    char *last_slash = strrchr(s, '/');
-    char *d;
-    int l;
+	char *last_slash = strrchr(s, '/');
+	char *d;
+	int l;
 
-    if (last_slash == NULL) {
-	/* XXX: well this is really broken if this happens */
-	return (ap_pstrdup(p, "/"));
-    }
-    l = (last_slash - s) + 1;
-    d = ap_palloc(p, l + 1);
-    memcpy(d, s, l);
-    d[l] = 0;
-    return (d);
+	if (last_slash == NULL) {
+		/* XXX: well this is really broken if this happens */
+		return (ap_pstrdup(p, "/"));
+	}
+	l = (last_slash - s) + 1;
+	d = ap_palloc(p, l + 1);
+	memcpy(d, s, l);
+	d[l] = 0;
+	return (d);
 }
 
 
@@ -596,471 +597,501 @@ API_EXPORT(char *) ap_make_dirstr_parent(pool *p, const char *s)
  * This function is deprecated.  Use one of the preceding two functions
  * which are faster.
  */
-API_EXPORT(char *) ap_make_dirstr(pool *p, const char *s, int n)
+API_EXPORT(char *)
+ap_make_dirstr(pool *p, const char *s, int n)
 {
-    register int x, f;
-    char *res;
+	register int x, f;
+	char *res;
 
-    for (x = 0, f = 0; s[x]; x++) {
-	if (s[x] == '/')
-	    if ((++f) == n) {
-		res = ap_palloc(p, x + 2);
-		memcpy(res, s, x);
-		res[x] = '/';
-		res[x + 1] = '\0';
-		return res;
-	    }
-    }
-
-    if (s[strlen(s) - 1] == '/')
-	return ap_pstrdup(p, s);
-    else
-	return ap_pstrcat(p, s, "/", NULL);
-}
-
-API_EXPORT(int) ap_count_dirs(const char *path)
-{
-    register int x, n;
-
-    for (x = 0, n = 0; path[x]; x++)
-	if (path[x] == '/')
-	    n++;
-    return n;
-}
-
-
-API_EXPORT(void) ap_chdir_file(const char *file)
-{
-    const char *x;
-    char buf[HUGE_STRING_LEN];
-
-    x = strrchr(file, '/');
-    if (x == NULL) {
-	chdir(file);
-    }
-    else if (x - file < sizeof(buf) - 1) {
-	memcpy(buf, file, x - file);
-	buf[x - file] = '\0';
-	chdir(buf);
-    }
-    /* XXX: well, this is a silly function, no method of reporting an
-     * error... ah well. */
-}
-
-API_EXPORT(char *) ap_getword_nc(pool *atrans, char **line, char stop)
-{
-    return ap_getword(atrans, (const char **) line, stop);
-}
-
-API_EXPORT(char *) ap_getword(pool *atrans, const char **line, char stop)
-{
-    char *pos = strchr(*line, stop);
-    char *res;
-
-    if (!pos) {
-	res = ap_pstrdup(atrans, *line);
-	*line += strlen(*line);
-	return res;
-    }
-
-    res = ap_pstrndup(atrans, *line, pos - *line);
-
-    while (*pos == stop) {
-	++pos;
-    }
-
-    *line = pos;
-
-    return res;
-}
-
-API_EXPORT(char *) ap_getword_white_nc(pool *atrans, char **line)
-{
-    return ap_getword_white(atrans, (const char **) line);
-}
-
-API_EXPORT(char *) ap_getword_white(pool *atrans, const char **line)
-{
-    int pos = -1, x;
-    char *res;
-
-    for (x = 0; (*line)[x]; x++) {
-	if (ap_isspace((*line)[x])) {
-	    pos = x;
-	    break;
+	for (x = 0, f = 0; s[x]; x++) {
+		if (s[x] == '/')
+			if ((++f) == n) {
+				res = ap_palloc(p, x + 2);
+				memcpy(res, s, x);
+				res[x] = '/';
+				res[x + 1] = '\0';
+				return res;
+			}
 	}
-    }
 
-    if (pos == -1) {
-	res = ap_pstrdup(atrans, *line);
-	*line += strlen(*line);
+	if (s[strlen(s) - 1] == '/')
+		return ap_pstrdup(p, s);
+	else
+		return ap_pstrcat(p, s, "/", NULL);
+}
+
+API_EXPORT(int)
+ap_count_dirs(const char *path)
+{
+	register int x, n;
+
+	for (x = 0, n = 0; path[x]; x++)
+		if (path[x] == '/')
+			n++;
+	return n;
+}
+
+
+API_EXPORT(void)
+ap_chdir_file(const char *file)
+{
+	const char *x;
+	char buf[HUGE_STRING_LEN];
+
+	x = strrchr(file, '/');
+	if (x == NULL)
+		chdir(file);
+	else if (x - file < sizeof(buf) - 1) {
+		memcpy(buf, file, x - file);
+		buf[x - file] = '\0';
+		chdir(buf);
+	}
+	/* XXX: well, this is a silly function, no method of reporting an
+	* error... ah well. */
+}
+
+API_EXPORT(char *)
+ap_getword_nc(pool *atrans, char **line, char stop)
+{
+	return ap_getword(atrans, (const char **)line, stop);
+}
+
+API_EXPORT(char *)
+ap_getword(pool *atrans, const char **line, char stop)
+{
+	char *pos = strchr(*line, stop);
+	char *res;
+
+	if (!pos) {
+		res = ap_pstrdup(atrans, *line);
+		*line += strlen(*line);
+		return res;
+	}
+
+	res = ap_pstrndup(atrans, *line, pos - *line);
+
+	while (*pos == stop)
+		++pos;
+
+	*line = pos;
+
 	return res;
-    }
+}
 
-    res = ap_palloc(atrans, pos + 1);
-    ap_cpystrn(res, *line, pos + 1);
+API_EXPORT(char *)
+ap_getword_white_nc(pool *atrans, char **line)
+{
+	return ap_getword_white(atrans, (const char **)line);
+}
 
-    while (ap_isspace((*line)[pos]))
+API_EXPORT(char *)
+ap_getword_white(pool *atrans, const char **line)
+{
+	int pos = -1, x;
+	char *res;
+
+	for (x = 0; (*line)[x]; x++) {
+		if (ap_isspace((*line)[x])) {
+			pos = x;
+			break;
+		}
+	}
+
+	if (pos == -1) {
+		res = ap_pstrdup(atrans, *line);
+		*line += strlen(*line);
+		return res;
+	}
+
+	res = ap_palloc(atrans, pos + 1);
+	ap_cpystrn(res, *line, pos + 1);
+
+	while (ap_isspace((*line)[pos]))
+		++pos;
+
+	*line += pos;
+
+	return res;
+}
+
+API_EXPORT(char *)
+ap_getword_nulls_nc(pool *atrans, char **line, char stop)
+{
+	return ap_getword_nulls(atrans, (const char **)line, stop);
+}
+
+API_EXPORT(char *)
+ap_getword_nulls(pool *atrans, const char **line, char stop)
+{
+	char *pos = strchr(*line, stop);
+	char *res;
+
+	if (!pos) {
+		res = ap_pstrdup(atrans, *line);
+		*line += strlen(*line);
+		return res;
+	}
+
+	res = ap_pstrndup(atrans, *line, pos - *line);
+
 	++pos;
 
-    *line += pos;
+	*line = pos;
 
-    return res;
-}
-
-API_EXPORT(char *) ap_getword_nulls_nc(pool *atrans, char **line, char stop)
-{
-    return ap_getword_nulls(atrans, (const char **) line, stop);
-}
-
-API_EXPORT(char *) ap_getword_nulls(pool *atrans, const char **line, char stop)
-{
-    char *pos = strchr(*line, stop);
-    char *res;
-
-    if (!pos) {
-	res = ap_pstrdup(atrans, *line);
-	*line += strlen(*line);
 	return res;
-    }
-
-    res = ap_pstrndup(atrans, *line, pos - *line);
-
-    ++pos;
-
-    *line = pos;
-
-    return res;
 }
 
 /* Get a word, (new) config-file style --- quoted strings and backslashes
  * all honored
  */
 
-static char *substring_conf(pool *p, const char *start, int len, char quote)
+static char
+*substring_conf(pool *p, const char *start, int len, char quote)
 {
-    char *result = ap_palloc(p, len + 2);
-    char *resp = result;
-    int i;
+	char *result = ap_palloc(p, len + 2);
+	char *resp = result;
+	int i;
 
-    for (i = 0; i < len; ++i) {
-	if (start[i] == '\\' && (start[i + 1] == '\\'
-				 || (quote && start[i + 1] == quote)))
-	    *resp++ = start[++i];
-	else
-	    *resp++ = start[i];
-    }
-
-    *resp++ = '\0';
-    return result;
-}
-
-API_EXPORT(char *) ap_getword_conf_nc(pool *p, char **line)
-{
-    return ap_getword_conf(p, (const char **) line);
-}
-
-API_EXPORT(char *) ap_getword_conf(pool *p, const char **line)
-{
-    const char *str = *line, *strend;
-    char *res;
-    char quote;
-
-    while (ap_isspace(*str))
-	++str;
-
-    if (!*str) {
-	*line = str;
-	return "";
-    }
-
-    if ((quote = *str) == '"' || quote == '\'') {
-	strend = str + 1;
-	while (*strend && *strend != quote) {
-	    if (*strend == '\\' && strend[1] && strend[1] == quote)
-		strend += 2;
-	    else
-		++strend;
+	for (i = 0; i < len; ++i) {
+		if (start[i] == '\\' && (start[i + 1] == '\\'
+		    || (quote && start[i + 1] == quote)))
+			*resp++ = start[++i];
+		else
+		*resp++ = start[i];
 	}
-	res = substring_conf(p, str + 1, strend - str - 1, quote);
 
-	if (*strend == quote)
-	    ++strend;
-    }
-    else {
-	if (*str == '#')
-	    ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, NULL, 
-			 "Apache does not support line-end comments. Consider using quotes around argument: \"%s\"", str);
-	strend = str;
-	while (*strend && !ap_isspace(*strend))
-	    ++strend;
-
-	res = substring_conf(p, str, strend - str, 0);
-    }
-
-    while (ap_isspace(*strend))
-	++strend;
-    *line = strend;
-    return res;
+	*resp++ = '\0';
+	return result;
 }
 
-API_EXPORT(int) ap_cfg_closefile(configfile_t *cfp)
+API_EXPORT(char *)
+ap_getword_conf_nc(pool *p, char **line)
+{
+	return ap_getword_conf(p, (const char **)line);
+}
+
+API_EXPORT(char *)
+ap_getword_conf(pool *p, const char **line)
+{
+	const char *str = *line, *strend;
+	char *res;
+	char quote;
+
+	while (ap_isspace(*str))
+		++str;
+
+	if (!*str) {
+		*line = str;
+		return "";
+	}
+
+	if ((quote = *str) == '"' || quote == '\'') {
+		strend = str + 1;
+		while (*strend && *strend != quote) {
+			if (*strend == '\\' && strend[1] && strend[1] == quote)
+				strend += 2;
+			else
+				++strend;
+		}
+		res = substring_conf(p, str + 1, strend - str - 1, quote);
+
+		if (*strend == quote)
+			++strend;
+	} else {
+		if (*str == '#')
+			ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO,
+			    NULL, "Apache does not support line-end comments. "
+			    "Consider using quotes around argument: \"%s\"",
+			    str);
+		strend = str;
+		while (*strend && !ap_isspace(*strend))
+			++strend;
+
+		res = substring_conf(p, str, strend - str, 0);
+	}
+
+	while (ap_isspace(*strend))
+		++strend;
+	*line = strend;
+	return res;
+}
+
+API_EXPORT(int)
+ap_cfg_closefile(configfile_t *cfp)
 {
 #ifdef DEBUG
-    ap_log_error(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, NULL, 
-        "Done with config file %s", cfp->name);
+	ap_log_error(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, NULL, 
+	    "Done with config file %s", cfp->name);
 #endif
-    return (cfp->close == NULL) ? 0 : cfp->close(cfp->param);
+	return (cfp->close == NULL) ? 0 : cfp->close(cfp->param);
 }
 
 /* Common structure that holds the file and pool for ap_pcfg_openfile */
 typedef struct {
-    struct pool *pool;
-    FILE *file;
+	struct pool	*pool;
+	FILE		*file;
 } poolfile_t;
 
-static int cfg_close(void *param)
+static int
+cfg_close(void *param)
 {
-    poolfile_t *cfp = (poolfile_t *) param;
-    return (ap_pfclose(cfp->pool, cfp->file));
+	poolfile_t *cfp = (poolfile_t *)param;
+	return (ap_pfclose(cfp->pool, cfp->file));
 }
 
-static int cfg_getch(void *param)
+static int
+cfg_getch(void *param)
 {
-    poolfile_t *cfp = (poolfile_t *) param;
-    return (fgetc(cfp->file));
+	poolfile_t *cfp = (poolfile_t *)param;
+	return (fgetc(cfp->file));
 }
 
-static void *cfg_getstr(void *buf, size_t bufsiz, void *param)
+static void
+*cfg_getstr(void *buf, size_t bufsiz, void *param)
 {
-    poolfile_t *cfp = (poolfile_t *) param;
-    return (fgets(buf, bufsiz, cfp->file));
+	poolfile_t *cfp = (poolfile_t *)param;
+	return (fgets(buf, bufsiz, cfp->file));
 }
 
 /* Open a configfile_t as FILE, return open configfile_t struct pointer */
-API_EXPORT(configfile_t *) ap_pcfg_openfile(pool *p, const char *name)
+API_EXPORT(configfile_t *)
+ap_pcfg_openfile(pool *p, const char *name)
 {
-    configfile_t *new_cfg;
-    poolfile_t *new_pfile;
-    FILE *file;
-    struct stat stbuf;
-    int saved_errno;
+	configfile_t *new_cfg;
+	poolfile_t *new_pfile;
+	FILE *file;
+	struct stat stbuf;
+	int saved_errno;
 
-    if (name == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
-               "Internal error: pcfg_openfile() called with NULL filename");
-        return NULL;
-    }
+	if (name == NULL) {
+		ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
+		    "Internal error: pcfg_openfile() called with NULL "
+		    "filename");
+		return NULL;
+	}
 
-    if (!ap_os_is_filename_valid(name)) {
-        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
-                    "Access to config file %s denied: not a valid filename",
-                    name);
-	errno = EACCES;
-        return NULL;
-    }
+	if (!ap_os_is_filename_valid(name)) {
+		ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
+		    "Access to config file %s denied: not a valid filename",
+		    name);
+		errno = EACCES;
+		return NULL;
+	}
 
-    file = ap_pfopen(p, name, "r");
+	file = ap_pfopen(p, name, "r");
 #ifdef DEBUG
-    saved_errno = errno;
-    ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, NULL,
-                "Opening config file %s (%s)",
-                name, (file == NULL) ? strerror(errno) : "successful");
-    errno = saved_errno;
-#endif
-    if (file == NULL)
-        return NULL;
-
-    if (fstat(fileno(file), &stbuf) == 0 &&
-        !S_ISREG(stbuf.st_mode) &&
-        strcmp(name, "/dev/null") != 0) {
 	saved_errno = errno;
-        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
-                    "Access to file %s denied by server: not a regular file",
-                    name);
-        ap_pfclose(p, file);
+	ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, NULL,
+	    "Opening config file %s (%s)",
+	    name, (file == NULL) ? strerror(errno) : "successful");
 	errno = saved_errno;
-        return NULL;
-    }
+#endif
+	if (file == NULL)
+		return NULL;
 
-    new_cfg = ap_palloc(p, sizeof(*new_cfg));
-    new_pfile = ap_palloc(p, sizeof(*new_pfile));
-    new_pfile->file = file;
-    new_pfile->pool = p;
-    new_cfg->param = new_pfile;
-    new_cfg->name = ap_pstrdup(p, name);
-    new_cfg->getch = (int (*)(void *)) cfg_getch;
-    new_cfg->getstr = (void *(*)(void *, size_t, void *)) cfg_getstr;
-    new_cfg->close = (int (*)(void *)) cfg_close;
-    new_cfg->line_number = 0;
-    return new_cfg;
+	if (fstat(fileno(file), &stbuf) == 0 &&
+	    !S_ISREG(stbuf.st_mode) &&
+	    strcmp(name, "/dev/null") != 0) {
+		saved_errno = errno;
+		ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
+		    "Access to file %s denied by server: not a regular file",
+		    name);
+		ap_pfclose(p, file);
+		errno = saved_errno;
+		return NULL;
+	}
+
+	new_cfg = ap_palloc(p, sizeof(*new_cfg));
+	new_pfile = ap_palloc(p, sizeof(*new_pfile));
+	new_pfile->file = file;
+	new_pfile->pool = p;
+	new_cfg->param = new_pfile;
+	new_cfg->name = ap_pstrdup(p, name);
+	new_cfg->getch = (int (*)(void *))cfg_getch;
+	new_cfg->getstr = (void *(*)(void *, size_t, void *))cfg_getstr;
+	new_cfg->close = (int (*)(void *))cfg_close;
+	new_cfg->line_number = 0;
+	return new_cfg;
 }
 
 
 /* Allocate a configfile_t handle with user defined functions and params */
-API_EXPORT(configfile_t *) ap_pcfg_open_custom(pool *p, const char *descr,
-    void *param,
-    int(*getch)(void *param),
-    void *(*getstr) (void *buf, size_t bufsiz, void *param),
-    int(*close_func)(void *param))
+API_EXPORT(configfile_t *)
+ap_pcfg_open_custom(pool *p, const char *descr, void *param,
+    int(*getch)(void *param), void *(*getstr) (void *buf, size_t bufsiz,
+    void *param), int(*close_func)(void *param))
 {
-    configfile_t *new_cfg = ap_palloc(p, sizeof(*new_cfg));
+	configfile_t *new_cfg = ap_palloc(p, sizeof(*new_cfg));
 #ifdef DEBUG
-    ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, NULL, "Opening config handler %s", descr);
+	ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, NULL,
+	    "Opening config handler %s", descr);
 #endif
-    new_cfg->param = param;
-    new_cfg->name = descr;
-    new_cfg->getch = getch;
-    new_cfg->getstr = getstr;
-    new_cfg->close = close_func;
-    new_cfg->line_number = 0;
-    return new_cfg;
+	new_cfg->param = param;
+	new_cfg->name = descr;
+	new_cfg->getch = getch;
+	new_cfg->getstr = getstr;
+	new_cfg->close = close_func;
+	new_cfg->line_number = 0;
+	return new_cfg;
 }
 
 
 /* Read one character from a configfile_t */
-API_EXPORT(int) ap_cfg_getc(configfile_t *cfp)
+API_EXPORT(int)
+ap_cfg_getc(configfile_t *cfp)
 {
-    register int ch = cfp->getch(cfp->param);
-    if (ch == LF) 
-	++cfp->line_number;
-    return ch;
+	register int ch = cfp->getch(cfp->param);
+	if (ch == LF) 
+		++cfp->line_number;
+	return ch;
 }
 
 
 /* Read one line from open configfile_t, strip LF, increase line number */
 /* If custom handler does not define a getstr() function, read char by char */
-API_EXPORT(int) ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
+API_EXPORT(int)
+ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 {
-    /* If a "get string" function is defined, use it */
-    if (cfp->getstr != NULL) {
-	char *src, *dst;
-	char *cp;
-	char *cbuf = buf;
-	size_t cbufsize = bufsize;
+	/* If a "get string" function is defined, use it */
+	if (cfp->getstr != NULL) {
+		char *src, *dst;
+		char *cp;
+		char *cbuf = buf;
+		size_t cbufsize = bufsize;
 
-	while (1) {
-	    ++cfp->line_number;
-	    if (cfp->getstr(cbuf, cbufsize, cfp->param) == NULL)
-		return 1;
+		while (1) {
+			++cfp->line_number;
+			if (cfp->getstr(cbuf, cbufsize, cfp->param) == NULL)
+				return 1;
 
-	    /*
-	     *  check for line continuation,
-	     *  i.e. match [^\\]\\[\r]\n only
-	     */
-	    cp = cbuf;
-	    while (cp < cbuf+cbufsize && *cp != '\0')
-		cp++;
-	    if (cp > cbuf && cp[-1] == LF) {
-		cp--;
-		if (cp > cbuf && cp[-1] == CR)
-		    cp--;
-		if (cp > cbuf && cp[-1] == '\\') {
-		    cp--;
-		    if (!(cp > cbuf && cp[-1] == '\\')) {
 			/*
-			 * line continuation requested -
-			 * then remove backslash and continue
+			 *  check for line continuation,
+			 *  i.e. match [^\\]\\[\r]\n only
 			 */
-			cbufsize -= (cp-cbuf);
-			cbuf = cp;
-			continue;
-		    }
-		    else {
-			/* 
-			 * no real continuation because escaped -
-			 * then just remove escape character
-			 */
-			for ( ; cp < cbuf+cbufsize && *cp != '\0'; cp++)
-			    cp[0] = cp[1];
-		    }   
+			cp = cbuf;
+			while (cp < cbuf+cbufsize && *cp != '\0')
+				cp++;
+			if (cp > cbuf && cp[-1] == LF) {
+				cp--;
+				if (cp > cbuf && cp[-1] == CR)
+					cp--;
+				if (cp > cbuf && cp[-1] == '\\') {
+					cp--;
+					if (!(cp > cbuf && cp[-1] == '\\')) {
+						/*
+						 * line continuation
+						 * requested -
+						 * then remove backslash and
+						 * continue
+						 */
+						cbufsize -= (cp-cbuf);
+						cbuf = cp;
+						continue;
+					} else {
+						/* 
+						 * no real continuation because
+						 * escaped - then just remove
+						 * escape character
+						 */
+						for ( ; cp < cbuf+cbufsize &&
+						    *cp != '\0'; cp++)
+							cp[0] = cp[1];
+					}   
+				}
+			}
+			break;
 		}
-	    }
-	    break;
-	}
 
-	/*
-	 * Leading and trailing white space is eliminated completely
-	 */
-	src = buf;
-	while (ap_isspace(*src))
-	    ++src;
-	/* blast trailing whitespace */
-	dst = &src[strlen(src)];
-	while (--dst >= src && ap_isspace(*dst))
-	    *dst = '\0';
-        /* Zap leading whitespace by shifting */
-        if (src != buf)
-	    for (dst = buf; (*dst++ = *src++) != '\0'; )
-	        ;
-
-#ifdef DEBUG_CFG_LINES
-	ap_log_error(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, NULL, "Read config: %s", buf);
-#endif
-	return 0;
-    } else {
-	/* No "get string" function defined; read character by character */
-	register int c;
-	register size_t i = 0;
-
-	buf[0] = '\0';
-	/* skip leading whitespace */
-	do {
-	    c = cfp->getch(cfp->param);
-	} while (c == '\t' || c == ' ');
-
-	if (c == EOF)
-	    return 1;
-	
-	if(bufsize < 2) {
-	    /* too small, assume caller is crazy */
-	    return 1;
-	}
-
-	while (1) {
-	    if ((c == '\t') || (c == ' ')) {
-		buf[i++] = ' ';
-		while ((c == '\t') || (c == ' '))
-		    c = cfp->getch(cfp->param);
-	    }
-	    if (c == CR) {
-		/* silently ignore CR (_assume_ that a LF follows) */
-		c = cfp->getch(cfp->param);
-	    }
-	    if (c == LF) {
-		/* increase line number and return on LF */
-		++cfp->line_number;
-	    }
-	    if (c == EOF || c == 0x4 || c == LF || i >= (bufsize - 2)) {
-		/* 
-		 *  check for line continuation
+		/*
+		 * Leading and trailing white space is eliminated completely
 		 */
-		if (i > 0 && buf[i-1] == '\\') {
-		    i--;
-		    if (!(i > 0 && buf[i-1] == '\\')) {
-			/* line is continued */
-			c = cfp->getch(cfp->param);
-			continue;
-		    }
-		    /* else nothing needs be done because
-		     * then the backslash is escaped and
-		     * we just strip to a single one
-		     */
-		}
+		src = buf;
+		while (ap_isspace(*src))
+			++src;
 		/* blast trailing whitespace */
-		while (i > 0 && ap_isspace(buf[i - 1]))
-		    --i;
-		buf[i] = '\0';
+		dst = &src[strlen(src)];
+		while (--dst >= src && ap_isspace(*dst))
+			*dst = '\0';
+		/* Zap leading whitespace by shifting */
+		if (src != buf)
+			for (dst = buf; (*dst++ = *src++) != '\0'; )
+			;
+
 #ifdef DEBUG_CFG_LINES
-		ap_log_error(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, NULL, "Read config: %s", buf);
+		ap_log_error(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, NULL,
+		    "Read config: %s", buf);
 #endif
 		return 0;
-	    }
-	    buf[i] = c;
-	    ++i;
-	    c = cfp->getch(cfp->param);
+	} else {
+		/*
+		 * No "get string" function defined; read character by
+		 * character
+		 */
+		register int c;
+		register size_t i = 0;
+
+		buf[0] = '\0';
+		/* skip leading whitespace */
+		do {
+			c = cfp->getch(cfp->param);
+		} while (c == '\t' || c == ' ');
+
+		if (c == EOF)
+			return 1;
+
+		if(bufsize < 2)
+			/* too small, assume caller is crazy */
+			return 1;
+
+		while (1) {
+			if ((c == '\t') || (c == ' ')) {
+				buf[i++] = ' ';
+				while ((c == '\t') || (c == ' '))
+					c = cfp->getch(cfp->param);
+			}
+			if (c == CR)
+				/* silently ignore CR (_assume_ that a LF
+				 * follows)
+				 */
+				c = cfp->getch(cfp->param);
+
+			if (c == LF)
+				/* increase line number and return on LF */
+				++cfp->line_number;
+
+			if (c == EOF || c == 0x4 || c == LF
+			    || i >= (bufsize - 2)) {
+				/* 
+				 *  check for line continuation
+				 */
+				if (i > 0 && buf[i-1] == '\\') {
+					i--;
+					if (!(i > 0 && buf[i-1] == '\\')) {
+						/* line is continued */
+						c = cfp->getch(cfp->param);
+						continue;
+					}
+					/* else nothing needs be done because
+					 * then the backslash is escaped and
+					 * we just strip to a single one
+					 */
+				}
+				/* blast trailing whitespace */
+				while (i > 0 && ap_isspace(buf[i - 1]))
+					--i;
+				buf[i] = '\0';
+#ifdef DEBUG_CFG_LINES
+				ap_log_error(APLOG_MARK,
+				    APLOG_DEBUG|APLOG_NOERRNO, NULL,
+				    "Read config: %s", buf);
+#endif
+				return 0;
+			}
+			buf[i] = c;
+			++i;
+			c = cfp->getch(cfp->param);
+		}
 	}
-    }
 }
 
 /* Size an HTTP header field list item, as separated by a comma.
