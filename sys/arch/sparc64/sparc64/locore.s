@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.137 2008/04/20 10:35:57 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.138 2008/05/21 19:42:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9002,18 +9002,11 @@ ENTRY(setjmp)
 	ret
 	 restore	%g0, 0, %o0
 
-	.data
-Lpanic_ljmp:
-	.asciz	"longjmp botch"
-	_ALIGN
-	.text
-
 ENTRY(longjmp)
 	save	%sp, -CC64FSZ, %sp	! prepare to restore to (old) frame
 	flushw
 	mov	1, %i2
 	ldx	[%i0+0], %fp	! get return stack
-	movrz	%i1, %i1, %i2	! compute v ? v : 1
 	ldx	[%i0+8], %i7	! get rpc
 	ret
 	 restore	%i2, 0, %o0

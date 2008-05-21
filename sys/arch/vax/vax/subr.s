@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.27 2007/10/10 15:53:53 art Exp $     */
+/*	$OpenBSD: subr.s,v 1.28 2008/05/21 19:42:07 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -232,7 +232,7 @@ ENTRY(setjmp, 0)
 
 ENTRY(longjmp, 0)
 	movl	4(ap), r1
-	movl	8(ap), r0
+	movl	$1, r0
 	movl	(r1), ap
 	movl	4(r1), fp
 	movl	12(r1), sp

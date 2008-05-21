@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.8 2003/10/15 02:41:50 drahn Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.9 2008/05/21 19:42:07 miod Exp $	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
@@ -121,5 +121,5 @@ ENTRY(_C_LABEL(longjmp))
 	lwz %r0, JMP_xer(%r3)
 	mtxer %r0
 	/* f14-f31, fpscr */
-	mr %r3, %r4
+	li %r3, 1
 	blr

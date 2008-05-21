@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.S,v 1.1 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: str.S,v 1.2 2008/05/21 19:42:07 miod Exp $ */
 /*	$NetBSD: str.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -157,9 +157,8 @@ ENTRY(setjmp, 0)
 
 ENTRY(longjmp, 0)
 	movl	4(ap), r1
-	movl	8(ap), r0
+	movl	$1, r0
 	movl	(r1), ap
 	movl	4(r1), fp
 	movl	12(r1), sp
 	jmp	*8(r1)
-

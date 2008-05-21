@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.156 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.157 2008/05/21 19:42:05 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2711,7 +2711,7 @@ LEAF_ENTRY(longjmp)
 	ldwm	4(arg0),sp	/* stack pointer, */
 
 	bv	0(rp)
-	copy	arg1,ret0	/* Move return value to where it belongs. */
+	ldi	1, ret0
 EXIT(longjmp)
 
 

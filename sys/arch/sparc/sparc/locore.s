@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.77 2008/03/23 12:06:45 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.78 2008/05/21 19:42:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -6116,10 +6116,7 @@ Lpanic_ljmp:
 	_ALIGN
 
 ENTRY(longjmp)
-	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
-	be,a	0f
-	 mov	1, %g6
-0:
+	mov	1, %g6
 	mov	%o0, %g1	! save a in another global register
 	ld	[%g1+8], %g7	/* get caller's frame */
 1:
