@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_vhost.c,v 1.9 2008/05/14 08:42:20 mbalmer Exp $ */
+/*	$OpenBSD: http_vhost.c,v 1.10 2008/05/21 08:44:19 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -215,21 +215,21 @@ get_addresses(pool *p, char *w, char *pstr, server_addr_rec ***paddr,
 	hints.ai_socktype = SOCK_STREAM;
 	if (strcmp(w, "*") == 0 || strlen(w) == 0) {
 		hoststr = NULL;
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = ap_default_family; /* XXX was PF_UNSPEC */
 		hints.ai_flags = AI_PASSIVE;
 	} else if (strcasecmp(w, "_default4_") == 0 ||
 	    ((ap_default_family == PF_INET || ap_default_family == PF_UNSPEC)
-	    && strcasecmp(w, "_default_") == 0)){
+	    && strcasecmp(w, "_default_") == 0)) {
 		hoststr = "255.255.255.255";
 		hints.ai_family = PF_INET;
 	} else if (strcasecmp(w, "_default6_") == 0 ||
 	    ((ap_default_family == PF_INET6 || ap_default_family == PF_UNSPEC)
-	    && strcasecmp(w, "_default_") == 0)){
+	    && strcasecmp(w, "_default_") == 0)) {
 		hoststr = "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
 		hints.ai_family = PF_INET6;
-	} else{
+	} else {
 		hoststr = w;
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = ap_default_family; /* XXX was PF_UNSPEC */
 	}
 
 	error = getaddrinfo(hoststr, portstr, &hints, &res0);
@@ -431,6 +431,10 @@ find_ipaddr(struct sockaddr *sa)
 	ipaddr_chain *trav;
 	char a[NI_MAXHOST], b[NI_MAXHOST];
 
+#ifdef CFGDEBUG
+	printf("looking for an %s address\n", sa->sa_family == AF_INET ?
+	    "IPv4" : "IPv6");
+#endif
 	/* scan the hash table for an exact match first */
 	bucket = hash_addr(sa);
 	for (trav = iphash_table[bucket]; trav; trav = trav->next) {
@@ -454,6 +458,9 @@ find_ipaddr(struct sockaddr *sa)
 		case AF_INET6:
 		{
 			struct sockaddr_in6 *sin1, *sin2;
+#ifdef CFGDEBUG
+			printf("comparing two IPv6 addresses\n");
+#endif
 			sin1 = (struct sockaddr_in6 *)&sar->host_addr;
 			sin2 = (struct sockaddr_in6 *)sa;
 			if (sin1->sin6_port == 0 || sin2->sin6_port == 0
@@ -468,7 +475,9 @@ find_ipaddr(struct sockaddr *sa)
 			break;
 		}
 	}
-
+#ifdef CFGDEBUG
+	printf("no matching address found\n");
+#endif
 	return NULL;
 }
 
@@ -540,25 +549,37 @@ dump_vhost_config(FILE *f)
 	}
 }
 
-/*
- * Helper functions for ap_fini_vhost_config()
- */
+/* Helper functions for ap_fini_vhost_config() */
 static int
 add_name_vhost_config(pool *p, server_rec *main_s, server_rec *s,
     server_addr_rec *sar, ipaddr_chain *ic)
 {
-	/* the first time we encounter a NameVirtualHost address
+	/*
+	 * the first time we encounter a NameVirtualHost address
 	 * ic->server will be NULL, on subsequent encounters
 	 * ic->names will be non-NULL.
 	 */
+#ifdef CFGDEBUG
+	printf("add_name_vhost_config: ic: %p\n", ic);
+	printf("add_name_vhost_config: sar->virhost: %s, sar->host_port: %u\n",
+	    sar->virthost, sar->host_port);
+	printf("add_name_vhost_config: ic->names: %s, ic->server: %s\n",
+	    ic->names != NULL ? "set" : "null",
+	    ic->server != NULL ? "set" : "null");
+#endif
 	if (ic->names || ic->server == NULL) {
 		name_chain *nc = new_name_chain(p, s, sar);
+#ifdef CFGDEBUG
+		printf("new_name_chain returns %s\n", nc == NULL ? "null" :
+		    "non-null");
+#endif
 		nc->next = ic->names;
 		ic->names = nc;
 		ic->server = s;
 		if (sar->host_port != ic->sar->host_port) {
 			/* one of the two is a * port, the other isn't */
-			ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, main_s,
+			ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR,
+			    main_s,
 			    "VirtualHost %s:%u -- mixing * ports and non-* "
 			    "ports with a NameVirtualHost address is not "
 			    "supported, proceeding with undefined results",
@@ -650,8 +671,10 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 			*iphash_table_tail[bucket] = ic;
 			iphash_table_tail[bucket] = &ic->next;
 		} else {
-			/* A wildcard NameVirtualHost goes on the default_list so
-			 * that it can catch incoming requests on any address.
+			/*
+			 * A wildcard NameVirtualHost goes on the default_list
+			 * so that it can catch incoming requests on any
+			 * address.
 			 */
 			ic->next = default_list;
 			default_list = ic;
@@ -679,6 +702,9 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 			case AF_INET:
 			{
 				struct sockaddr_in *sin;
+#ifdef CFGDEBUG
+				printf("adding an IPv4 vhost\n");
+#endif
 				sin = (struct sockaddr_in *)&sar->host_addr;
 				if (sin->sin_addr.s_addr == DEFAULT_VHOST_ADDR)
 					wildcard++;
@@ -689,6 +715,9 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 			case AF_INET6:
 			{
 				struct sockaddr_in6 *sin6;
+#ifdef CFGDEBUG
+				printf("adding an IPv6 vhost\n");
+#endif
 				sin6 = (struct sockaddr_in6 *)&sar->host_addr;
 				if (*(uint32_t *)&sin6->sin6_addr.s6_addr[0]
 				    == ~0
@@ -727,10 +756,11 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 					default_list = ic;
 				}
 				has_default_vhost_addr = 1;
-			}
-			else {
-				/* see if it matches something we've already
-				 * got */
+			} else {
+				/*
+				 * see if it matches something we've already
+				 * got
+				 */
 				ic = find_ipaddr(
 				    (struct sockaddr *)&sar->host_addr);
 
@@ -742,8 +772,7 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 					ic = new_ipaddr_chain(p, s, sar);
 					ic->next = *iphash_table_tail[bucket];
 					*iphash_table_tail[bucket] = ic;
-				}
-				else if (!add_name_vhost_config(p, main_s, s,
+				} else if (!add_name_vhost_config(p, main_s, s,
 				    sar, ic)) {
 					ap_log_error(APLOG_MARK,
 					    APLOG_NOERRNO|APLOG_WARNING, main_s,
@@ -760,7 +789,8 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 			}
 		}
 
-		/* Ok now we want to set up a server_hostname if the user was
+		/*
+		 * Ok now we want to set up a server_hostname if the user was
 		 * silly enough to forget one.
 		 * XXX: This is silly we should just crash and burn.
 		 */
@@ -821,7 +851,8 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 		}
 	}
 
-	/* now go through and delete any NameVirtualHosts that didn't have any
+	/*
+	 * now go through and delete any NameVirtualHosts that didn't have any
 	 * hosts associated with them.  Lamers.
 	 */
 	for (i = 0; i < IPHASH_TABLE_SIZE; ++i)
