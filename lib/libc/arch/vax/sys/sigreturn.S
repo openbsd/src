@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.6 2005/08/07 16:40:16 espie Exp $ */
+/*	$OpenBSD: sigreturn.S,v 1.7 2008/05/21 20:38:10 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,9 +35,11 @@
  */
 #ifdef PROF
 #undef ENTRY
-#define	ENTRY(x, y) \
-	.globl _ ## x; .align 2; _ ## x ## : .word 0; pushr $0x3f; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount; popr $0x3f;
+#define	ENTRY(x, y)							\
+	_ENTRY(_C_LABEL(x), 0);						\
+	pushr $0x3f;							\
+	_PROF_PROLOGUE;							\
+	popr $0x3f
 #endif /* PROF */
 
 SYSCALL(sigreturn)
