@@ -127,7 +127,6 @@
 ./usr/include/powerpc/cpu.h
 ./usr/include/powerpc/db_machdep.h
 ./usr/include/powerpc/disklabel.h
-./usr/include/powerpc/elf_abi.h
 ./usr/include/powerpc/endian.h
 ./usr/include/powerpc/exec.h
 ./usr/include/powerpc/float.h

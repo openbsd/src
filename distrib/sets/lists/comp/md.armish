@@ -17,7 +17,6 @@
 ./usr/include/arm/cpufunc.h
 ./usr/include/arm/db_machdep.h
 ./usr/include/arm/disklabel.h
-./usr/include/arm/elf_abi.h
 ./usr/include/arm/endian.h
 ./usr/include/arm/exec.h
 ./usr/include/arm/fiq.h
@@ -67,7 +66,6 @@
 ./usr/include/armish/cpu.h
 ./usr/include/armish/db_machdep.h
 ./usr/include/armish/disklabel.h
-./usr/include/armish/elf_abi.h
 ./usr/include/armish/endian.h
 ./usr/include/armish/exec.h
 ./usr/include/armish/float.h

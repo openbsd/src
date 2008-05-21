@@ -637,7 +637,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/cpufunc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/db_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/disklabel.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/elf_abi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fiq.ph
@@ -687,7 +686,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/cpu.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/db_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/disklabel.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/armish/elf_abi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/float.ph

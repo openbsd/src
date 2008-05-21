@@ -166,7 +166,6 @@
 ./usr/include/sparc64/ctlreg.h
 ./usr/include/sparc64/db_machdep.h
 ./usr/include/sparc64/disklabel.h
-./usr/include/sparc64/elf_abi.h
 ./usr/include/sparc64/endian.h
 ./usr/include/sparc64/exec.h
 ./usr/include/sparc64/fbvar.h

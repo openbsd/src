@@ -17,7 +17,6 @@
 ./usr/include/arm/cpufunc.h
 ./usr/include/arm/db_machdep.h
 ./usr/include/arm/disklabel.h
-./usr/include/arm/elf_abi.h
 ./usr/include/arm/endian.h
 ./usr/include/arm/exec.h
 ./usr/include/arm/fiq.h
@@ -218,7 +217,6 @@
 ./usr/include/zaurus/cpu.h
 ./usr/include/zaurus/db_machdep.h
 ./usr/include/zaurus/disklabel.h
-./usr/include/zaurus/elf_abi.h
 ./usr/include/zaurus/endian.h
 ./usr/include/zaurus/exec.h
 ./usr/include/zaurus/float.h
