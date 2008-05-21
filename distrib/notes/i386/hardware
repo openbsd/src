@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.260 2008/04/02 03:01:38 cnst Exp $
+dnl	$OpenBSD: hardware,v 1.261 2008/05/21 19:01:36 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -230,7 +230,7 @@ dnl		flawed motherboard designs) is the Cyrix 386DLC.
 		8250/16450-based ports
 		16550-based ports
 		ST16660-base ports
-		XR16850-based ports (only in the pccom driver)
+dnl		XR16850-based ports (only in the pccom driver)
 		AST-style 4-port serial boards [G]
 		BOCA 8-port serial cards [*]
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [G]
@@ -1620,9 +1620,9 @@ be configured with specific settings.  Here's their list:
 
 Device		Name	Port	IRQ	DRQ	Misc
 ------		----	----	---	---	----
-Serial ports	pccom0	0x3f8	4		[8250/16450/16550/clones]
-		pccom1	0x2f8	3		[8250/16450/16550/clones]
-		pccom2	0x3e8	5		[8250/16450/16550/clones]
+Serial ports	com0	0x3f8	4		[8250/16450/16550/clones]
+		com1	0x2f8	3		[8250/16450/16550/clones]
+		com2	0x3e8	5		[8250/16450/16550/clones]
 		ast0	0x1a0	5		[AST 4-port serial card]
 		cy0		12		iomem 0xd4000 [Cyclom
 						serial card]
