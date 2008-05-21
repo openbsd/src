@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.31 2008/05/07 13:45:35 dlg Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.32 2008/05/21 21:10:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1986,8 +1986,7 @@ bstp_stop(struct bstp_state *bs)
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next)
 		bstp_set_port_state(bp, BSTP_IFSTATE_DISCARDING);
 
-	if (timeout_initialized(&bs->bs_bstptimeout) &&
-	    timeout_pending(&bs->bs_bstptimeout))
+	if (timeout_initialized(&bs->bs_bstptimeout))
 		timeout_del(&bs->bs_bstptimeout);
 }
 
