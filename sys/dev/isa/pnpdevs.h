@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.109 2003/05/20 04:22:17 mickey Exp 
+ *	#	OpenBSD: pnpdevs,v 1.110 2008/05/21 19:20:08 miod Exp 
  */
 
 const struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -11,9 +11,7 @@ const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"ADP1520"}, {"aic"} },
 	{ {"ADP2015"}, {"aic"} },
 	{ {"PNP0500"}, {"com"} },
-	{ {"PNP0500"}, {"pccom"} },
 	{ {"PNP0501"}, {"com"} },
-	{ {"PNP0501"}, {"pccom"} },
 	{ {"PNP0600"}, {"wdc"} },
 	{ {"PNP0E00"}, {"pcic"} },
 	{ {"SCM0469"}, {"pcic"} },
@@ -50,9 +48,7 @@ const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"PNPB006"}, {"mpu"} },
 	{ {"PNPB02F"}, {"joy"} },
 	{ {"PNPC000"}, {"com"} },
-	{ {"PNPC000"}, {"pccom"} },
 	{ {"PNPC001"}, {"com"} },
-	{ {"PNPC001"}, {"pccom"} },
 	{ {"CSI2203"}, {"le"} },
 	{ {"UMC9008"}, {"ne"} },
 	{ {"@@@1980"}, {"ne"} },
