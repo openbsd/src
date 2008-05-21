@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.107 2008/05/09 06:52:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.108 2008/05/21 19:48:50 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -33,10 +33,6 @@ SUBDIR+=ypcat ypmatch ypwhich
 
 .if (${ELF_TOOLCHAIN:L} == "no")
 SUBDIR+= strip strings
-.endif
-
-.if   make(clean) || make(cleandir) || make(obj)
-SUBDIR+= elf2ecoff elf2aout
 .endif
 
 .include <bsd.subdir.mk>
