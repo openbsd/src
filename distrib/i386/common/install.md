@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2008/03/23 14:03:55 krw Exp $
+#	$OpenBSD: install.md,v 1.32 2008/05/21 18:52:45 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ md_congrats() {
 }
 
 md_consoleinfo () {
-	local _u _d=pccom
+	local _u _d=com
 
 	for _u in $(scan_dmesg "/^$_d\([0-9]\) .*/s//\1/p"); do
 		if [[ $_d$_u == $CONSOLE || -z $CONSOLE ]]; then
