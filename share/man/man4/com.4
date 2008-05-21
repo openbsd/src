@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.32 2008/05/21 19:05:51 kettenis Exp $
+.\"	$OpenBSD: com.4,v 1.33 2008/05/21 19:32:28 miod Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -62,6 +62,9 @@
 .Cd "com0 at isa? port 0x3f8 irq 4"
 .Cd "com1 at isa? port 0x2f8 irq 3"
 .Pp
+.Cd "# armish"
+.Cd "com0 at obio? addr 0xfe800000 xint 3"
+.Pp
 .Cd "# hppa"
 .Cd "com0 at gsc? offset 0x5000 irq 5"
 .Cd "com0 at gsc? offset 0x823000 irq 5"
@@ -72,12 +75,17 @@
 .Cd "com1 at ssio? irq 3"
 .Pp
 .Cd "# macppc"
+.Cd "com* at puc?"
 .Cd "com* at pcmcia?"
 .Cd "com* at cardbus?"
 .Pp
 .Cd "# sgi"
-.Cd "com0 at macebus0 sys 0x18 base 0x00390000 irq 5"
-.Cd "com1 at macebus0 sys 0x18 base 0x00398000 irq 5"
+.Cd "com0 at macebus0 base 0x00390000 irq 5"
+.Cd "com1 at macebus0 base 0x00398000 irq 5"
+.Pp
+.Cd "# socppc"
+.Cd "com0 at obio? addr 0x04500 ivec 9"
+.Cd "com1 at obio? addr 0x04600 ivec 10"
 .Pp
 .Cd "# sparc"
 .Cd "com* at obio?                            " Pq "built-in modem on SPARCbook"
@@ -85,6 +93,7 @@
 .Cd "# sparc64"
 .Cd "com* at asio?"
 .Cd "com* at ebus?"
+.Cd "com* at puc?"
 .Pp
 .Cd "# zaurus"
 .Cd "com0 at pxaip? addr 0x40100000 intr 22           " Pq "full function UART"
