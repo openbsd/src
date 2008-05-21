@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.7 2005/08/07 16:40:16 espie Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,12 +32,14 @@
 
 
 	.globl	_end
-	.globl	minbrk
+	.globl	_C_LABEL(minbrk)
 	.globl	__curbrk
 
 	.data
-minbrk: .long	_end
-__curbrk:.long	_end
+_C_LABEL(minbrk):
+	.long	_end
+__curbrk:
+	.long	_end
 	.text
 
 ENTRY(sbrk, R3)
@@ -51,4 +53,4 @@ ENTRY(sbrk, R3)
 	addl2	4(r3),__curbrk
 	ret
 err:
-	jmp	__cerror
+	jmp	_C_LABEL(_cerror)

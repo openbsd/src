@@ -1,4 +1,4 @@
-/* $OpenBSD: ldexp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: ldexp.S,v 1.6 2008/05/21 20:39:32 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 #define	ERANGE	34
 
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 
 ENTRY(ldexp, R2)
 	movd	4(ap),r0	/* fetch "value" */
@@ -72,7 +72,7 @@ ENTRY(ldexp, R2)
 	jbc	$15,4(ap),1f	/* jump if argument was positive */
 	mnegd	r0,r0		/* if arg < 0, make result negative */
 1:
-	movl	$ ERANGE,_errno
+	movl	$ ERANGE,_C_LABEL(errno)
 	ret
 
 	.data

@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.5 2008/05/21 20:39:32 miod Exp $ */
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ done:
 	jmp	*4(r1)			# done, return....
 
 botch:
-	calls	$0,_longjmperror
+	calls	$0,_C_LABEL(longjmperror)
 	halt
 
 	.data
