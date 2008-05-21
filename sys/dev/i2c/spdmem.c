@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.25 2008/04/21 05:38:30 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.26 2008/05/21 12:51:45 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -66,6 +66,7 @@
 #define	SPDMEM_MEMTYPE_DDRSGRAM		0x06
 #define	SPDMEM_MEMTYPE_DDRSDRAM		0x07
 #define	SPDMEM_MEMTYPE_DDR2SDRAM	0x08
+#define	SPDMEM_MEMTYPE_NONE		0xff
 
 #define SPDMEM_MEMTYPE_DIRECT_RAMBUS	0x01
 #define SPDMEM_MEMTYPE_RAMBUS		0x11
@@ -560,6 +561,9 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case SPDMEM_MEMTYPE_DDR2SDRAM:
 			spdmem_ddr2_decode(sc, s);
+			break;
+		case SPDMEM_MEMTYPE_NONE:
+			printf(" no EEPROM found");
 			break;
 		default:
 			if (s->sm_type <= 10)
