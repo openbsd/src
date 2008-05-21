@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.24 2008/05/15 06:05:43 mbalmer Exp $ */
+/* $OpenBSD: http_core.c,v 1.25 2008/05/21 11:28:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -678,11 +678,7 @@ ap_get_remote_host(conn_rec *conn, void *dir_config, int type)
 		old_stat = ap_update_child_status(conn->child_num,
 		    SERVER_BUSY_DNS, (request_rec*)NULL);
 		if (!getnameinfo((struct sockaddr *)&conn->remote_addr,
-#ifndef SIN6_LEN
-		    SA_LEN((struct sockaddr *)&conn->remote_addr),
-#else
 		    conn->remote_addr.ss_len,
-#endif
 		    hostnamebuf, sizeof(hostnamebuf), NULL, 0, 0)) {
 			conn->remote_host = ap_pstrdup(conn->pool,
 			    (void *)hostnamebuf);
@@ -769,11 +765,7 @@ ap_get_server_name(request_rec *r)
 			old_stat = ap_update_child_status(conn->child_num,
 			    SERVER_BUSY_DNS, r);
 			if (getnameinfo((struct sockaddr *)&conn->local_addr,
-#ifndef SIN6_LEN
-			    SA_LEN((struct sockaddr *)&conn->local_addr),
-#else
 			    conn->local_addr.ss_len,
-#endif
 			    hbuf, sizeof(hbuf), NULL, 0, 0) == 0)
 				conn->local_host = ap_pstrdup(conn->pool, hbuf);
 			else

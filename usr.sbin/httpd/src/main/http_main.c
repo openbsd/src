@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.51 2008/05/21 08:57:38 mbalmer Exp $ */
+/* $OpenBSD: http_main.c,v 1.52 2008/05/21 11:28:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1826,11 +1826,7 @@ static conn_rec *new_connection(pool *p, server_rec *server, BUFF *inout,
     conn->child_num = child_num;
 
     conn->pool = p;
-#ifndef SIN6_LEN
-    addr_len = SA_LEN(saddr);
-#else
     addr_len = saddr->sa_len;
-#endif
     memcpy(&conn->local_addr, saddr, addr_len);
     getnameinfo((struct sockaddr *)&conn->local_addr, addr_len,
 	hostnamebuf, sizeof(hostnamebuf), NULL, 0, NI_NUMERICHOST);
@@ -1840,11 +1836,7 @@ static conn_rec *new_connection(pool *p, server_rec *server, BUFF *inout,
     conn->base_server = conn->server;
     conn->client = inout;
 
-#ifndef SIN6_LEN
-    addr_len = SA_LEN(remaddr);
-#else
     addr_len = remaddr->sa_len;
-#endif
     memcpy(&conn->remote_addr, remaddr, addr_len);
     getnameinfo((struct sockaddr *)&conn->remote_addr, addr_len,
       hostnamebuf, sizeof(hostnamebuf), NULL, 0, NI_NUMERICHOST);
@@ -1914,13 +1906,8 @@ static int make_sock(pool *p, const struct sockaddr *server)
       exit(1);
     }
     
-    getnameinfo(server,
-#ifndef SIN6_LEN
-		SA_LEN(server),
-#else
-		server->sa_len,
-#endif
-		a0, sizeof(a0), p0, sizeof(p0), NI_NUMERICHOST | NI_NUMERICSERV);
+    getnameinfo(server, server->sa_len, a0, sizeof(a0), p0, sizeof(p0),
+   	NI_NUMERICHOST | NI_NUMERICSERV);
     ap_snprintf(addr, sizeof(addr), "address %s port %s", a0, p0);
 #ifdef MPE
     if (atoi(p0) < 1024)
@@ -1990,12 +1977,7 @@ static int make_sock(pool *p, const struct sockaddr *server)
 	}
     }
 
-#ifndef SIN6_LEN
-    if (bind(s, server, SA_LEN(server)) == -1)
-#else
-    if (bind(s, server, server->sa_len) == -1)
-#endif
-    {
+    if (bind(s, server, server->sa_len) == -1) {
 	ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 	    "make_sock: could not bind to %s", addr);
 

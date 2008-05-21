@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc1413.c,v 1.13 2008/05/15 06:05:43 mbalmer Exp $ */
+/*	$OpenBSD: rfc1413.c,v 1.14 2008/05/21 11:28:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -135,13 +135,8 @@ get_rfc1413(int sock, const struct sockaddr *our_sin,
 	 * addresses from the query socket.
 	 */
 
-#ifndef SIN6_LEN
-	memcpy(&our_query_sin, our_sin, SA_LEN(our_sin));
-	memcpy(&rmt_query_sin, rmt_sin, SA_LEN(rmt_sin));
-#else
 	memcpy(&our_query_sin, our_sin, our_sin->sa_len);
 	memcpy(&rmt_query_sin, rmt_sin, rmt_sin->sa_len);
-#endif
 	switch (our_sin->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *)&our_query_sin)->sin_port =
@@ -167,12 +162,7 @@ get_rfc1413(int sock, const struct sockaddr *our_sin,
 	}
 
 	if (bind(sock, (struct sockaddr *) &our_query_sin,
-#ifndef SIN6_LEN
-	    SA_LEN((struct sockaddr *) &our_query_sin)
-#else
-	    our_query_sin.ss_len
-#endif
-	    ) < 0) {
+	    our_query_sin.ss_len) < 0) {
 		ap_log_error(APLOG_MARK, APLOG_CRIT, srv,
 		    "bind: rfc1413: Error binding to local port");
 		return -1;
@@ -183,12 +173,7 @@ get_rfc1413(int sock, const struct sockaddr *our_sin,
 	 * support the service
 	 */
 	if (connect(sock, (struct sockaddr *) &rmt_query_sin,
-#ifndef SIN6_LEN
-	    SA_LEN((struct sockaddr *) &rmt_query_sin)
-#else
-	    rmt_query_sin.ss_len
-#endif
-	    ) < 0)
+	    rmt_query_sin.ss_len) < 0)
 		return -1;
 
 	/* send the data */

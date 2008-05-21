@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_vhost.c,v 1.10 2008/05/21 08:44:19 mbalmer Exp $ */
+/*	$OpenBSD: http_vhost.c,v 1.11 2008/05/21 11:28:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -813,11 +813,7 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 
 				if (!getnameinfo(
 				    (struct sockaddr *)&s->addrs->host_addr,
-#ifndef SIN6_LEN
-				    SA_LEN((struct sockaddr *)&s->addrs->host_addr),
-#else		
 				    s->addrs->host_addr.ss_len,
-#endif
 				    hostnamebuf, sizeof(hostnamebuf),
 				    NULL, 0, 0))
 					s->server_hostname =
@@ -828,12 +824,7 @@ ap_fini_vhost_config(pool *p, server_rec *main_s)
 					 * isn't working. -djg */
 					getnameinfo((struct sockaddr *)
 					    &s->addrs->host_addr,
-#ifndef SIN6_LEN
-					    SA_LEN((struct sockaddr *)
-					    &s->addrs->host_addr),
-#else		
 					    s->addrs->host_addr.ss_len,
-#endif
 					    hostnamebuf,
 					    sizeof(hostnamebuf),
 					    NULL, 0, NI_NUMERICHOST);
@@ -1204,11 +1195,7 @@ ap_update_vhost_given_ip(conn_rec *conn)
 	unsigned port;
 
 	if (getnameinfo((struct sockaddr *)&conn->local_addr,
-#ifndef SIN6_LEN
-	    SA_LEN((struct sockaddr *)&conn->local_addr),
-#else		
 	    conn->local_addr.ss_len,
-#endif
 	    NULL, 0, portbuf, sizeof(portbuf), NI_NUMERICSERV) != 0)
 		goto fail;
 
