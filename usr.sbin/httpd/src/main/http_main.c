@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.50 2008/05/09 08:06:28 mbalmer Exp $ */
+/* $OpenBSD: http_main.c,v 1.51 2008/05/21 08:57:38 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -694,13 +694,15 @@ static void usage(char *bin)
     for (i = 0; i < strlen(bin); i++)
 	pad[i] = ' ';
     pad[i] = '\0';
-    fprintf(stderr, "Usage: %s [-FhLlSTtuVvX] [-C directive] [-c directive] [-D parameter]\n", bin);
+    fprintf(stderr, "Usage: %s [-46FhLlSTtUuVvX] [-C directive] [-c directive] [-D parameter]\n", bin);
     fprintf(stderr, "       %s [-d serverroot] [-f config]\n", pad);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -C directive     : process directive before reading config files\n");
     fprintf(stderr, "  -c directive     : process directive after  reading config files\n");
     fprintf(stderr, "  -D parameter     : define a parameter for use in <IfDefine name> directives\n");
     fprintf(stderr, "  -d serverroot    : specify an alternate initial ServerRoot\n");
+    fprintf(stderr, "  -4               : assume IPv4 for ambigous directirves (default)\n");
+    fprintf(stderr, "  -6               : assume IPv6 for ambigous directives\n");
     fprintf(stderr, "  -F               : run main process in foreground, for process supervisors\n");
     fprintf(stderr, "  -f config        : specify an alternate ServerConfigFile\n");
     fprintf(stderr, "  -h               : list available command line options (this page)\n");
@@ -709,6 +711,7 @@ static void usage(char *bin)
     fprintf(stderr, "  -S               : show parsed settings (currently only vhost settings)\n");
     fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
     fprintf(stderr, "  -t               : run syntax check for config files (with docroot check)\n");
+    fprintf(stderr, "  -U               : unspecified address family for ambigous directives\n"); 
     fprintf(stderr, "  -u               : unsecure mode: do not chroot into ServerRoot\n");
     fprintf(stderr, "  -V               : show compile settings\n");
     fprintf(stderr, "  -v               : show version number\n");
@@ -3248,7 +3251,7 @@ int REALMAIN(int argc, char *argv[])
     ap_setup_prelinked_modules();
 
     while ((c = getopt(argc, argv,
-				    "D:C:c:xXd:Ff:vVlLR:StThu46"
+				    "D:C:c:xXd:Ff:vVlLR:StThUu46"
 #ifdef DEBUG_SIGSTOP
 				    "Z:"
 #endif
@@ -3323,6 +3326,9 @@ int REALMAIN(int argc, char *argv[])
 	    break;
 	case 'u':
 	    ap_server_chroot = 0;
+	    break;
+	case 'U':
+	    ap_default_family = PF_UNSPEC;
 	    break;
 	case '?':
 	    usage(argv[0]);

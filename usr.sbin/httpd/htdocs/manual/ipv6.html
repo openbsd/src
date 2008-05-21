@@ -38,10 +38,13 @@ Basically you can write IPv6 address where IPv4 address fits.
 <dl>
 <dt>-4</dt><dd>Assume IPv4 address on ambiguous directives (default)</dd>
 <dt>-6</dt><dd>Assume IPv6 address on ambiguous directives</dd>
+<dt>-U</dt><dd>Don't assume a specific address family on ambiguous
+directives</dd>
 </dl>
 
 <p>
-The above two can be used, for example, to disambiguate "BindAddress *".
+The above options can be used to remove ambiguities in directives,
+for example "BindAddress *".
 </p>
 
 <h2>base commands</h2>

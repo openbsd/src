@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.29 2008/05/09 12:59:59 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.30 2008/05/21 08:57:38 mbalmer Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -50,7 +50,7 @@
 .\" Supercomputing Applications, University of Illinois, Urbana-Champaign.
 .\" For more information on the Apache Group and the Apache HTTP server
 .\" project, please see <http://www.apache.org/>.
-.Dd $Mdocdate: May 9 2008 $
+.Dd $Mdocdate: May 21 2008 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@
 .Sh SYNOPSIS
 .Nm httpd
 .Bk -words
-.Op Fl 46FhLlSTtuVvX
+.Op Fl 46FhLlSTtUuVvX
 .Op Fl C Ar directive
 .Op Fl c Ar directive
 .Op Fl D Ar parameter
@@ -162,7 +162,9 @@ The options are as follows:
 .It Fl 4
 Assume IPv4 addresses on ambiguous directives (default).
 Along with
-.Fl 6 ,
+.Fl 6
+and
+.Fl U ,
 this can be used to remove ambiguities in cases such as "BindAddress *".
 .It Fl 6
 Assume IPv6 addresses on ambiguous directives.
@@ -231,6 +233,8 @@ code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 Run syntax tests for configuration files only, including DocumentRoot checks.
 The program immediately exits after this syntax parsing with either a return
 code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
+.It Fl U
+Do not assume a specific address familiy for ambiguous specifications.
 .It Fl u
 By default
 .Nm

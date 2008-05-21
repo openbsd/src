@@ -1,4 +1,4 @@
-$OpenBSD: README.IPv6,v 1.1 2008/05/13 20:09:19 mbalmer Exp $
+$OpenBSD: README.IPv6,v 1.2 2008/05/21 08:57:38 mbalmer Exp $
 
 IPv6 support for the OpenBSD httpd(8)
 
@@ -12,8 +12,10 @@ Basically you can write IPv6 address where IPv4 address fits.
 extra command-line argument:
 	-4	Assume IPv4 address on ambiguous directives (default)
 	-6	Assume IPv6 address on ambiguous directives
+	-U	Don't assume a specific address family on ambigous
+		directives
 
-	The above two can be used, for example, to disambiguate
+	The above options can be used, for example, to disambiguate
 	"BindAddress *".
 
 base commands:
