@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.35 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.36 2008/05/21 19:20:08 miod Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -575,7 +575,7 @@ isapnp_print(aux, str)
 
 /* isapnp_submatch():
  * Special case.
- * A lot of com/pccom devices do not have the PNPxxx identifiers
+ * A lot of com devices do not have the PNPxxx identifiers
  * they should have.  If it looks like a modem..... let's try it.
  */
 int
@@ -586,8 +586,7 @@ isapnp_com_submatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct isa_attach_args *ipa = aux;
 
-	if ((strcmp("com", cf->cf_driver->cd_name) == 0 ||
-	    strcmp("pccom", cf->cf_driver->cd_name) == 0) &&
+	if (strcmp("com", cf->cf_driver->cd_name) == 0 &&
 	    ipa->ipa_nio == 1 && ipa->ipa_nirq == 1 &&
 	    ipa->ipa_ndrq == 0 && ipa->ipa_nmem == 0 &&
 	    ipa->ipa_io[0].length == 8) {
