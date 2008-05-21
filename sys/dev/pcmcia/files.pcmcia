@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.42 2008/04/23 13:28:59 jsg Exp $
+#	$OpenBSD: files.pcmcia,v 1.43 2008/05/21 18:49:47 kettenis Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -31,7 +31,7 @@ attach	esp at pcmcia with esp_pcmcia
 file	dev/pcmcia/esp_pcmcia.c			esp_pcmcia
 
 attach	com at pcmcia with com_pcmcia
-file	dev/pcmcia/com_pcmcia.c			com_pcmcia | pccom_pcmcia
+file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 
 # PCMCIA IDE controller
 attach	wdc at pcmcia with wdc_pcmcia

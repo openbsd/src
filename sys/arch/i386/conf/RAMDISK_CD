@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.151 2008/03/31 04:17:22 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.152 2008/05/21 18:49:47 kettenis Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -158,18 +158,18 @@ pcdisplay0	at isa?		# CGA, MDA, EGA, HGA
 wsdisplay*	at vga?
 wsdisplay*	at pcdisplay?
 
-pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-pccom1	at isa? port 0x2f8 irq 3
-pccom2	at isa? port 0x3e8 irq 5
-#pccom3	at isa? port 0x2e8 irq 9
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#pccom*	at ast?
+#com*	at ast?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#pccom*	at boca?
+#com*	at boca?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#pccom*	at rtfps?
-pccom*	at pcmcia?			# PCMCIA modem cards
-pccom*	at isapnp?
+#com*	at rtfps?
+com*	at pcmcia?			# PCMCIA modem cards
+com*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines

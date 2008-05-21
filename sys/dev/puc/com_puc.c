@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.15 2007/12/04 21:49:35 kettenis Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.16 2008/05/21 18:49:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -48,17 +48,9 @@
 #include <dev/pci/pucvar.h>
 
 #include "com.h"
-#ifdef i386
-#include "pccom.h"
-#endif
 
 #include <dev/ic/comreg.h>
-#if NPCCOM > 0
-#include <i386/isa/pccomvar.h>
-#endif
-#if NCOM > 0
 #include <dev/ic/comvar.h>
-#endif
 #include <dev/ic/ns16550reg.h>
 
 #define	com_lcr		com_cfcr
@@ -67,17 +59,9 @@ int com_puc_match(struct device *, void *, void *);
 void com_puc_attach(struct device *, struct device *, void *);
 int com_puc_detach(struct device *, int );
 
-#if NCOM > 0
 struct cfattach com_puc_ca = {
 	sizeof(struct com_softc), com_puc_match, com_puc_attach, com_puc_detach
 };
-#endif
-
-#if NPCCOM > 0
-struct cfattach pccom_puc_ca = {
-	sizeof(struct com_softc), com_puc_match, com_puc_attach, com_puc_detach
-};
-#endif
 
 int
 com_puc_match(parent, match, aux)

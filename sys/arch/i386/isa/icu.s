@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.28 2008/05/07 20:42:02 kettenis Exp $	*/
+/*	$OpenBSD: icu.s,v 1.29 2008/05/21 18:49:47 kettenis Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -119,20 +119,18 @@ IDTVEC(doreti)
  * Soft interrupt handlers
  */
 
-#include "pccom.h"
-
 IDTVEC(softtty)
-#if NPCCOM > 0
 	movl	$IPL_SOFTTTY,%eax
 	movl	%eax,CPL
 	sti
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(i386_softintlock)
 #endif
-	call	_C_LABEL(comsoft)
+	pushl	$I386_SOFTINTR_SOFTTTY
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
-#endif
 #endif
 	jmp	*%esi
 

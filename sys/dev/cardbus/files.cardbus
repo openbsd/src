@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.26 2007/09/12 12:59:55 mglocker Exp $
+#	$OpenBSD: files.cardbus,v 1.27 2008/05/21 18:49:47 kettenis Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -17,7 +17,7 @@ file	dev/cardbus/rbus.c			cardbus
 
 # Com ports
 attach	com at cardbus with com_cardbus
-file	dev/cardbus/com_cardbus.c		com_cardbus | pccom_cardbus
+file	dev/cardbus/com_cardbus.c		com_cardbus
 
 # PCI "universal" communication device driver, for com, lpt, etc. ports
 attach	puc at cardbus with puc_cardbus

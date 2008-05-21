@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.178 2008/05/07 20:42:02 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.179 2008/05/21 18:49:47 kettenis Exp $
 #
 # new style config file for i386 architecture
 #
@@ -187,12 +187,6 @@ file	arch/i386/isa/npx.c		npx needs-flag
 # XXX should be a real device
 define pckbcport {[irq = -1], [port = -1]}
 
-# 8250/16[45]50-based "com" ports, optimized for the i386 interrupt system
-#device	pccom: tty
-attach	pccom at isa with pccom_isa
-attach	pccom at commulti with pccom_commulti
-file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_cardbus | pccom_puc) needs-flag
-
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms: wsmousedev
 attach	lms at isa
@@ -243,8 +237,6 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 
 include "../../../dev/isa/files.isapnp"
 file	arch/i386/isa/isapnp_machdep.c	isapnp
-
-attach	pccom at isapnp with pccom_isapnp
 
 # Game adapter (joystick)
 device	joy
@@ -383,21 +375,12 @@ file	dev/isa/tcic2_isa.c		tcic_isa
 #
 include "dev/puc/files.puc"
 
-# i386-specific PUC drivers
-attach	pccom at puc with pccom_puc
-
 # PCMCIA wants to be probed as late as possible.
 
 #
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
-
-# i386-specific PCMCIA drivers
-attach	pccom at pcmcia with pccom_pcmcia
-
-# i386-specific Cardbus drivers
-attach	pccom at cardbus with pccom_cardbus
 
 #
 # Machine-independent USB drivers

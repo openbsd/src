@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.427 2008/05/07 20:42:02 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.428 2008/05/21 18:49:47 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -163,17 +163,12 @@ extern struct proc *npxproc;
 
 #include "bios.h"
 #include "com.h"
-#include "pccom.h"
 
-#if (NCOM > 0 || NPCCOM > 0)
+#if NCOM > 0
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
-#if NCOM > 0
 #include <dev/ic/comvar.h>
-#elif NPCCOM > 0
-#include <arch/i386/isa/pccomvar.h>
-#endif
-#endif /* NCOM > 0 || NPCCOM > 0 */
+#endif /* NCOM > 0 */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
@@ -290,14 +285,10 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
-#ifdef __i386__
-#define KGDB_DEVNAME "pccom"
-#else
 #define KGDB_DEVNAME "com"
-#endif
 #endif /* KGDB_DEVNAME */
 char kgdb_devname[] = KGDB_DEVNAME;
-#if (NCOM > 0 || NPCCOM > 0)
+#if NCOM > 0
 #ifndef KGDBADDR
 #define KGDBADDR 0x3f8
 #endif
@@ -310,7 +301,7 @@ int comkgdbrate = KGDBRATE;
 #define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 int comkgdbmode = KGDBMODE;
-#endif /* NCOM  || NPCCOM */
+#endif /* NCOM > 0 */
 void kgdb_port_init(void);
 #endif /* KGDB */
 
@@ -2912,8 +2903,10 @@ init386(paddr_t first_avail)
 	isa_defaultirq();
 #endif
 
-	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-			/* XXX here, until we can use bios for printfs */
+	/*
+	 * Attach the glass console early in case we need to display a panic.
+	 */
+	cninit();
 
 	/*
 	 * Saving SSE registers won't work if the save area isn't
@@ -3159,18 +3152,11 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 /*
  * consinit:
  * initialize the system console.
- * XXX - shouldn't deal with this initted thing, but then,
- * it shouldn't be called from init386 either.
  */
 void
 consinit()
 {
-	static int initted;
-
-	if (initted)
-		return;
-	initted = 1;
-	cninit();
+	/* Already done in init386(). */
 }
 
 #ifdef KGDB
@@ -3178,8 +3164,8 @@ void
 kgdb_port_init()
 {
 
-#if (NCOM > 0 || NPCCOM > 0)
-	if (!strcmp(kgdb_devname, "com") || !strcmp(kgdb_devname, "pccom")) {
+#if NCOM > 0
+	if (!strcmp(kgdb_devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ,
 		    comkgdbmode);

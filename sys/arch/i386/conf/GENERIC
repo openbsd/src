@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.616 2008/05/07 02:31:01 krw Exp $
+#	$OpenBSD: GENERIC,v 1.617 2008/05/21 18:49:47 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,7 +21,7 @@ option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
-#option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
+#option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
@@ -332,25 +332,25 @@ agp*		at vga?			# AGP bridges
 
 pcppi0		at isa?
 
-pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-pccom1	at isa? port 0x2f8 irq 3
-pccom2	at isa? port 0x3e8 irq 5
-#pccom3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
-pccom*	at ast?
+com*	at ast?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#pccom*	at boca?
+#com*	at boca?
 #addcom0	at isa? port 0x108 irq 5	# Addonics FlexPort
-#pccom*	at addcom?
+#com*	at addcom?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#pccom*	at rtfps?
+#com*	at rtfps?
 #hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
-#pccom*	at hsq?
-pccom*	at pcmcia?			# PCMCIA modems/serial ports
-pccom*	at isapnp?
-pccom*	at puc?
-pccom*	at cardbus?
+#com*	at hsq?
+com*	at pcmcia?			# PCMCIA modems/serial ports
+com*	at isapnp?
+com*	at puc?
+com*	at cardbus?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines

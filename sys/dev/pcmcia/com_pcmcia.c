@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.46 2006/05/28 16:49:46 fkr Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.47 2008/05/21 18:49:47 kettenis Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -118,17 +118,9 @@
 #include <dev/pcmcia/pcmciadevs.h>
 
 #include "com.h"
-#ifdef i386
-#include "pccom.h"
-#endif
 
 #include <dev/ic/comreg.h>
-#if NPCCOM > 0
-#include <i386/isa/pccomvar.h>
-#endif
-#if NCOM > 0
 #include <dev/ic/comvar.h>
-#endif
 #include <dev/ic/ns16550reg.h>
 
 #include <dev/isa/isareg.h>
@@ -164,17 +156,10 @@ struct com_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-#if NCOM
 struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
 	com_pcmcia_detach, com_pcmcia_activate
 };
-#elif NPCCOM
-struct cfattach pccom_pcmcia_ca = {
-	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
-	com_pcmcia_detach, com_pcmcia_activate
-};
-#endif
 
 int
 com_pcmcia_match(parent, match, aux)
