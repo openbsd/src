@@ -1,3 +1,4 @@
+/*	$OpenBSD: n_argred.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
 /*	$NetBSD: n_argred.S,v 1.1 1995/10/10 23:40:21 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -30,22 +31,21 @@
  *	@(#)argred.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+
 /*
- *  libm$argred implements Bob Corbett's argument reduction and
- *  libm$sincos implements Peter Tang's double precision sin/cos.
+ *  __libm_argred implements Bob Corbett's argument reduction and
+ *  __libm_sincos implements Peter Tang's double precision sin/cos.
  *  
- *  Note: The two entry points libm$argred and libm$sincos are meant
- *        to be used only by _sin, _cos and _tan.
+ *  Note: The two entry points __libm_argred and __libm_sincos are meant
+ *        to be used only by sin, cos and tan.
  *
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.globl	libm$argred
-	.globl	libm$sincos
 	.text
-	.align	1
-
-libm$argred:
+	_ALIGN_TEXT
+_ALTENTRY(__libm_argred)
 /*
  *  Compare the argument with the largest possible that can
  *  be reduced by table lookup.  r3 := |x|  will be used in  table_lookup .
@@ -66,9 +66,9 @@ small_arg:
  *	   r0  contains the quadrant number, 0, 1, 2, or 3;
  *	r2/r1  contains the reduced argument as a D-format number;
  *  	   r3  contains a F-format extension to the reduced argument;
- *          r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
+ *         r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
  */
-libm$sincos:
+_ALTENTRY(__libm_sincos)
 /*
  *  Compensate for a cosine entry by adding one to the quadrant number.
  */
@@ -121,7 +121,7 @@ even:
 	rsb
 
 .data
-.align	2
+	.align 2
 
 sin_coef:
 	.double	0d-7.53080332264191085773e-13	# s7 = 2^-29 -1.a7f2504ffc49f8..
@@ -258,8 +258,9 @@ leading:
 
 twoOverPi:
 	.double	0d+6.36619772367581343076e-01
+
 	.text
-	.align	1
+	_ALIGN_TEXT
 
 table_lookup:
 	muld3	r3,twoOverPi,r0
@@ -292,7 +293,7 @@ abs2:
  *						p.0
  */
 	.text
-	.align	2
+	_ALIGN_TEXT
 /*
  * Only 256 (actually 225) bits of 2/pi are needed for VAX double
  * precision; this was determined by enumerating all the nearest

@@ -1,3 +1,4 @@
+/*	$OpenBSD: n_sqrt.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -30,39 +31,33 @@
  *	@(#)sqrt.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+#include <sys/errno.h>
+
 /*
  * double sqrt(arg)   revised August 15,1982
  * double arg;
- * if(arg<0.0) { _errno = EDOM; return(<a reserved operand>); }
+ * if(arg<0.0) { errno = EDOM; return(<a reserved operand>); }
  * if arg is a reserved operand it is returned as it is
  * W. Kahan's magic square root
  * coded by Heidi Stettner and revised by Emile LeBlanc 8/18/82
  *
- * entry points:_d_sqrt		address of double arg is on the stack
- *		_sqrt		double arg is on the stack
+ * entry points:d_sqrt		address of double arg is on the stack
+ *		sqrt		double arg is on the stack
  */
-	.text
-	.align	1
-	.globl	_sqrt
-	.globl	_d_sqrt
-	.globl	libm$dsqrt_r5
-	.set	EDOM,33
-
-_d_sqrt:
-	.word	0x003c          # save r5,r4,r3,r2
+ENTRY(d_sqrt, R2|R3|R4|R5)
 	movq	*4(ap),r0
 	jmp  	dsqrt2
-_sqrt:
-	.word	0x003c          # save r5,r4,r3,r2
+ENTRY(sqrt, R2|R3|R4|R5)
 	movq    4(ap),r0
 dsqrt2:	bicw3	$0x807f,r0,r2	# check exponent of input
 	jeql	noexp		# biased exponent is zero -> 0.0 or reserved
-	bsbb	libm$dsqrt_r5
+	bsbb	__libm_dsqrt_r5
 noexp:	ret
 
 /* **************************** internal procedure */
 
-libm$dsqrt_r5:			/* ENTRY POINT FOR cdabs and cdsqrt	*/
+_ALTENTRY(__libm_dsqrt_r5)	/* ENTRY POINT FOR cdabs and cdsqrt	*/
 				/* returns double square root scaled by	*/
 				/* 2^r6	*/
 
@@ -113,5 +108,5 @@ nonpos:
 	ret			# argument and root are zero
 negarg:
 	pushl	$EDOM
-	calls	$1,_infnan	# generate the reserved op fault
+	calls	$1,_C_LABEL(infnan)	# generate the reserved op fault
 	ret

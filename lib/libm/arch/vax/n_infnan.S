@@ -1,3 +1,4 @@
+/*	$OpenBSD: n_infnan.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
 /*      $NetBSD: n_infnan.S,v 1.1 1995/10/10 23:40:27 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
@@ -29,10 +30,9 @@
  *
  *	@(#)infnan.s	8.1 (Berkeley) 6/4/93
  */
-	.data
-	.align	2
-_sccsid:
-.asciz	"@(#)infnan.s	1.1 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
+
+#include <machine/asm.h>
+#include <sys/errno.h>
 
 /*
  * infnan(arg) int arg;
@@ -42,17 +42,11 @@ _sccsid:
  *
  * The Reserved Operand Fault is generated inside of this routine.
  */	
-	.globl	_infnan
-	.set	EDOM,33
-	.set	ERANGE,34
-	.text
-	.align 1
-_infnan:
-	.word	0x0
+ENTRY(infnan,0)
 	cmpl	4(ap),$ERANGE
 	bneq	1f
-	movl	$ERANGE,_errno
+	movl	$ERANGE,_C_LABEL(errno)
 	brb	2f
-1:	movl	$EDOM,_errno
+1:	movl	$EDOM,_C_LABEL(errno)
 2:	emodd	$0,$0,$0x8000,r0,r0	# generates the reserved operand fault
 	ret
