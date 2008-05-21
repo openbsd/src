@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.455 2008/05/19 12:49:06 pyr Exp $
+#	$OpenBSD: Makefile,v 1.456 2008/05/21 19:05:51 kettenis Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -63,7 +63,6 @@ MLINKS+=adv.4 advansys.4 adv.4 adw.4
 MLINKS+=art.4 musycc.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=cardbus.4 cbb.4
-MLINKS+=com.4 pccom.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=isapnp.4 pnp.4

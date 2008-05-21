@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.31 2007/06/20 14:26:09 jmc Exp $
+.\"	$OpenBSD: com.4,v 1.32 2008/05/21 19:05:51 kettenis Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,31 +33,30 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: May 21 2008 $
 .Dt COM 4
 .Os
 .Sh NAME
-.Nm com ,
-.Nm pccom
+.Nm com
 .Nd serial communications interface
 .Sh SYNOPSIS
-.Cd "# pccom or com attachments"
+.Cd "# com attachments"
 .Cd "#"
 .Cd "# i386"
-.Cd "pccom0 at isa? port 0x3f8 irq 4"
-.Cd "pccom1 at isa? port 0x2f8 irq 3"
-.Cd "pccom2 at isa? port 0x3e8 irq 5"
-.Cd "pccom3 at isa? port 0x2e8 irq 9"
-.Cd "pccom* at isapnp?"
-.Cd "pccom* at pcmcia?"
-.Cd "pccom* at puc?"
-.Cd "pccom* at cardbus?"
+.Cd "com0 at isa? port 0x3f8 irq 4"
+.Cd "com1 at isa? port 0x2f8 irq 3"
+.Cd "com2 at isa? port 0x3e8 irq 5"
+.Cd "com3 at isa? port 0x2e8 irq 9"
+.Cd "com* at isapnp?"
+.Cd "com* at pcmcia?"
+.Cd "com* at puc?"
+.Cd "com* at cardbus?"
 .Pp
-.Cd "pccom* at addcom?"
-.Cd "pccom* at ast?"
-.Cd "pccom* at boca?"
-.Cd "pccom* at hsq?"
-.Cd "pccom* at rtfps?"
+.Cd "com* at addcom?"
+.Cd "com* at ast?"
+.Cd "com* at boca?"
+.Cd "com* at hsq?"
+.Cd "com* at rtfps?"
 .Pp
 .Cd "# alpha and amd64"
 .Cd "com0 at isa? port 0x3f8 irq 4"
@@ -95,32 +94,20 @@
 .Sh DESCRIPTION
 The
 .Nm com
-and
-.Nm pccom
-drivers provide support for NS8250-, NS16450-, NS16550-, ST16650-,
+driver provides support for NS8250-, NS16450-, NS16550-, ST16650-,
 ST16C654-, and TI16750-based
+.\" XR16850-
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
 communications interfaces.
-The
-.Nm pccom
-driver (i386-only) also supports the XR16850 UART.
 .Pp
 The NS8250 and NS16450 have single
 character buffers, the NS16550 has a 16 character buffer, while
 the ST16650 has a 32 character buffer, and the TI16750 has a 64 character
 buffer.
-The XR16850 has a 128 character buffer.
-.Pp
-The
-.Nm com
-and
-.Nm pccom
-drivers are mutually exclusive; both may not be present in the same system at
-the same time.
-Attempting to compile such a system will fail.
+.\" The XR16850 has a 128 character buffer.
 .Pp
 Input and output for each line may be set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
