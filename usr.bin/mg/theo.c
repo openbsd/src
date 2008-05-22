@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.102 2008/04/13 00:22:17 djm Exp $	*/
+/*	$OpenBSD: theo.c,v 1.103 2008/05/22 23:15:13 beck Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -147,6 +147,7 @@ static const char *talk[] = {
 	"cache aliasing is a problem that would have stopped in 1992 if someone had killed about 5 people who worked at Sun.",
 	"Don't spread rumours about me being gentle.",
 	"If municipal water filtering equipment was built by the gcc developers, the western world would be dead by now.",
+	"kettenis supported a new machine in my basement and all I got to do was fix a 1 character typo in his html page commit.",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
