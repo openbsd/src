@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.58 2008/05/11 12:16:00 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.59 2008/05/22 15:45:01 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -89,7 +89,7 @@ cvs_admin(int argc, char **argv)
 			kflag = rcs_kflag_get(koptstr);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
-				    "invalid RCS keyword expension mode");
+				    "invalid RCS keyword expansion mode");
 				fatal("%s", cvs_cmd_admin.cmd_synopsis);
 			}
 			break;

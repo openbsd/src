@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.97 2008/03/09 03:41:55 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.98 2008/05/22 15:45:01 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -64,7 +64,7 @@ cvs_add(int argc, char **argv)
 			kflag = rcs_kflag_get(optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
-				    "invalid RCS keyword expension mode");
+				    "invalid RCS keyword expansion mode");
 				fatal("%s", cvs_cmd_add.cmd_synopsis);
 			}
 			(void)xsnprintf(kbuf, sizeof(kbuf), "-k%s", optarg);

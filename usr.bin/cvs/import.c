@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.88 2008/05/22 06:48:27 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.89 2008/05/22 15:45:01 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -76,7 +76,7 @@ cvs_import(int argc, char **argv)
 			kflag = rcs_kflag_get(koptstr);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
-				    "invalid RCS keyword expension mode");
+				    "invalid RCS keyword expansion mode");
 				fatal("%s", cvs_cmd_import.cmd_synopsis);
 			}
 			break;

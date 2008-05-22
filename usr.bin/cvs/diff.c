@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.134 2008/03/13 19:54:34 sthen Exp $	*/
+/*	$OpenBSD: diff.c,v 1.135 2008/05/22 15:45:01 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -88,7 +88,7 @@ cvs_diff(int argc, char **argv)
 			kflag = rcs_kflag_get(koptstr);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
-				    "invalid RCS keyword expension mode");
+				    "invalid RCS keyword expansion mode");
 				fatal("%s", cvs_cmdop == CVS_OP_DIFF ?
 				    cvs_cmd_diff.cmd_synopsis :
 				    cvs_cmd_rdiff.cmd_synopsis);
