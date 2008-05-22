@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.87 2008/03/01 20:49:44 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.88 2008/05/22 06:48:27 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -247,10 +247,10 @@ import_new(struct cvs_file *cf)
 	rcs_branch_set(cf->file_rcs, branch);
 
 	if (rcs_sym_add(cf->file_rcs, vendor_tag, branch) == -1)
-		fatal("import_new: failed to add release tag");
+		fatal("import_new: failed to add vendor tag");
 
 	if (rcs_sym_add(cf->file_rcs, release_tag, brev) == -1)
-		fatal("import_new: failed to add vendor tag");
+		fatal("import_new: failed to add release tag");
 
 	if (rcs_rev_add(cf->file_rcs, brev, logmsg, tstamp, NULL) == -1)
 		fatal("import_new: failed to create first branch revision");
