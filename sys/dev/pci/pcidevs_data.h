@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1363 2008/05/22 00:13:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1364 2008/05/22 20:31:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2877,11 +2877,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_PCI2S,
-	    "PCI 2 Serial",
+	    "Dual Serial",
 	},
 	{
 	    PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S,
-	    "LP-PCI 4 Serial",
+	    "Quad Serial",
 	},
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
@@ -8013,7 +8013,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLELB,
-	    "Dual Parallel B",
+	    "Dual Parallel",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -14913,7 +14913,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PPB,
-	    "Virtual PCI-PCI bridge",
+	    "Virtual PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
@@ -16185,7 +16185,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_DCI,
-	    "Decision Computer Inc",
+	    "Decision Computer",
 	},
 	{
 	    PCI_VENDOR_QUANCOM,

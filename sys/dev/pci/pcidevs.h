@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1363 2008/05/22 00:13:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1364 2008/05/22 20:31:31 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -318,7 +318,7 @@
 #define	PCI_VENDOR_TURTLEBEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
-#define	PCI_VENDOR_DCI	0x6666		/* Decision Computer Inc */
+#define	PCI_VENDOR_DCI	0x6666		/* Decision Computer */
 #define	PCI_VENDOR_QUANCOM	0x8008		/* Quancom Informationssysteme */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_INNOTEK	0x80ee		/* InnoTek */
@@ -1130,8 +1130,8 @@
 #define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 */
 
 /* AVlab products */
-#define	PCI_PRODUCT_AVLAB_PCI2S	0x2130		/* PCI 2 Serial */
-#define	PCI_PRODUCT_AVLAB_LPPCI4S	0x2150		/* LP-PCI 4 Serial */
+#define	PCI_PRODUCT_AVLAB_PCI2S	0x2130		/* Dual Serial */
+#define	PCI_PRODUCT_AVLAB_LPPCI4S	0x2150		/* Quad Serial */
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* BRI ISDN */
@@ -2585,7 +2585,7 @@
 #define	PCI_PRODUCT_LAVA_TWOSP_1P	0x8000		/* Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLEL2	0x8001		/* Dual Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLEL2A	0x8002		/* Dual Parallel */
-#define	PCI_PRODUCT_LAVA_PARALLELB	0x8003		/* Dual Parallel B */
+#define	PCI_PRODUCT_LAVA_PARALLELB	0x8003		/* Dual Parallel */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
@@ -4570,7 +4570,7 @@
 #define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
 #define	PCI_PRODUCT_VMWARE_NET	0x0720		/* Virtual NIC */
 #define	PCI_PRODUCT_VMWARE_EHCI	0x0770		/* Virtual EHCI */
-#define	PCI_PRODUCT_VMWARE_PPB	0x0790		/* Virtual PCI-PCI bridge */
+#define	PCI_PRODUCT_VMWARE_PPB	0x0790		/* Virtual PCI-PCI */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
