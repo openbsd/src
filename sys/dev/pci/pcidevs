@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1363 2008/05/22 00:13:21 jsg Exp $
+$OpenBSD: pcidevs,v 1.1364 2008/05/22 20:31:31 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ vendor	GEMTEK		0x5046	Gemtek
 vendor	TURTLEBEACH	0x5053	Turtle Beach
 vendor	S3		0x5333	S3
 vendor	C4T		0x6374	c't Magazin
-vendor	DCI		0x6666	Decision Computer Inc
+vendor	DCI		0x6666	Decision Computer
 vendor	QUANCOM		0x8008	Quancom Informationssysteme
 vendor	INTEL		0x8086	Intel
 vendor	INNOTEK		0x80ee	InnoTek
@@ -1125,8 +1125,8 @@ product AVANCE2 ALG2302		0x2302	ALG2302
 product AVANCE2 ALS4000		0x4000	ALS4000
 
 /* AVlab products */
-product	AVLAB PCI2S		0x2130	PCI 2 Serial
-product	AVLAB LPPCI4S		0x2150	LP-PCI 4 Serial
+product	AVLAB PCI2S		0x2130	Dual Serial
+product	AVLAB LPPCI4S		0x2150	Quad Serial
 
 /* AVM products */
 product AVM B1			0x0700	BRI ISDN
@@ -1470,9 +1470,9 @@ product DAVICOM DM9102		0x9102	DM9102
 product DAVICOM DM9132		0x9132	DM9132
 
 /* Decision Computer Inc */
-product DCI APCI2			0x0004	PCCOM 2-port
-product DCI APCI4			0x0001	PCCOM 4-port
-product DCI APCI8			0x0002	PCCOM 8-port
+product DCI APCI2		0x0004	PCCOM 2-port
+product DCI APCI4		0x0001	PCCOM 4-port
+product DCI APCI8		0x0002	PCCOM 8-port
 
 /* DEC products */
 product DEC 21050		0x0001	21050 PCI-PCI
@@ -2580,7 +2580,7 @@ product LAVA 650		0x0600	Serial
 product LAVA TWOSP_1P		0x8000	Parallel
 product LAVA PARALLEL2		0x8001	Dual Parallel
 product LAVA PARALLEL2A		0x8002	Dual Parallel
-product LAVA PARALLELB		0x8003	Dual Parallel B
+product LAVA PARALLELB		0x8003	Dual Parallel
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
@@ -4565,7 +4565,7 @@ product VMWARE VIRTUAL2		0x0405	Virtual SVGA II
 product VMWARE VIRTUAL		0x0710	Virtual SVGA
 product VMWARE NET		0x0720	Virtual NIC
 product VMWARE EHCI		0x0770	Virtual EHCI
-product VMWARE PPB		0x0790	Virtual PCI-PCI bridge
+product VMWARE PPB		0x0790	Virtual PCI-PCI
 
 /* Weitek products */
 product WEITEK P9000		0x9001	P9000
