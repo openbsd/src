@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.138 2008/05/21 19:42:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.139 2008/05/22 22:29:14 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3879,6 +3879,9 @@ interrupt_vector:
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 	membar	#Sync
 
+#ifndef MULTIPROCESSOR
+	and	%g2, MAXINTNUM-1,%g2	! XXX make sun4us work
+#endif
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! Spurious interrupt
 	 cmp	%g2, MAXINTNUM
