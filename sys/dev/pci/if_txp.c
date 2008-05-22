@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.88 2008/05/22 06:48:56 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.89 2008/05/22 19:23:04 mk Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1773,8 +1773,7 @@ txp_stop(sc)
 	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
 	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
 
-	if (timeout_pending(&sc->sc_tick))
-		timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_tick);
 }
 
 void

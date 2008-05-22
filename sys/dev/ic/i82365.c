@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.26 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.27 2008/05/22 19:23:04 mk Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -838,8 +838,7 @@ pcic_power(why, arg)
 	struct pcic_event *pe;
 
 	if (why != PWR_RESUME) {
-		if (timeout_pending(&sc->poll_timeout))
-			timeout_del(&sc->poll_timeout);
+		timeout_del(&sc->poll_timeout);
 	}
 	else {
 		pcic_intr_socket(h);

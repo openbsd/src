@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
+/*	$OpenBSD: aps.c,v 1.16 2008/05/22 19:23:04 mk Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -392,8 +392,7 @@ aps_power(int why, void *arg)
 	bus_space_handle_t ioh = sc->aps_ioh;
 
 	if (why != PWR_RESUME) {
-		if (timeout_pending(&aps_timeout))
-			timeout_del(&aps_timeout);
+		timeout_del(&aps_timeout);
 	} else {
 		/*
 		 * Redo the init sequence on resume, because APS is 

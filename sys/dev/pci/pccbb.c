@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.59 2007/12/20 13:59:27 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.60 2008/05/22 19:23:04 mk Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -1011,9 +1011,6 @@ pccbbintr(arg)
 		     * insertion/removal during suspension.
 		     */
 		    (sc->sc_flags & CBB_CARDEXIST) == 0) {
-			if (sc->sc_flags & CBB_INSERTING) {
-				timeout_del(&sc->sc_ins_tmo);
-			}
 			timeout_add(&sc->sc_ins_tmo, hz / 10);
 			sc->sc_flags |= CBB_INSERTING;
 		}

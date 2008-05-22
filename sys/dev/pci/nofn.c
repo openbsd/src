@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.15 2006/06/29 21:34:51 deraadt Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.16 2008/05/22 19:23:04 mk Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -281,8 +281,7 @@ nofn_rng_disable(sc)
 
 	switch (sc->sc_revid) {
 	case REVID_7814_7854_1:
-		if (timeout_pending(&sc->sc_rngto))
-			timeout_del(&sc->sc_rngto);
+		timeout_del(&sc->sc_rngto);
 		break;
 	case REVID_8154_1:
 	case REVID_8065_1:
