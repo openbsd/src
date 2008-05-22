@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.87 2008/05/22 02:32:29 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.88 2008/05/22 06:48:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -196,8 +196,6 @@ txp_attachhook(void *vsc)
 		splx(s);
 		return;
 	}
-
-	txp_set_filter(sc);
 
 	p1 = htole16(p1);
 	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
