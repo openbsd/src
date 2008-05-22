@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.41 2008/04/17 19:52:27 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.42 2008/05/22 21:39:04 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -469,13 +469,13 @@ timerattach(parent, self, aux)
 	timerreg_4u.t_mapintr = (int64_t *)(u_long)va[2];
 
 	/* Install the appropriate interrupt vector here */
-	level10.ih_number = ma->ma_interrupts[0];
+	level10.ih_number = INTVEC(ma->ma_interrupts[0]);
 	level10.ih_clr = (void *)&timerreg_4u.t_clrintr[0];
 	level10.ih_map = (void *)&timerreg_4u.t_mapintr[0];
 	strlcpy(level10.ih_name, "clock", sizeof(level10.ih_name));
 	intr_establish(10, &level10);
 
-	level14.ih_number = ma->ma_interrupts[1];
+	level14.ih_number = INTVEC(ma->ma_interrupts[1]);
 	level14.ih_clr = (void *)&timerreg_4u.t_clrintr[1];
 	level14.ih_map = (void *)&timerreg_4u.t_mapintr[1];
 	strlcpy(level14.ih_name, "prof", sizeof(level14.ih_name));
