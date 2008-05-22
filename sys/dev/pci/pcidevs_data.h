@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1362 2008/05/21 22:24:25 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1363 2008/05/22 00:13:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2012,8 +2012,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP700 IDE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_PCI_700,
-	    "IXP700 PCI",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_ISA,
+	    "SB700 ISA",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
@@ -2632,6 +2632,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS690 Host",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS740_HB,
+	    "RS740 Host",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PCIE_1,
 	    "RS690 PCIE",
 	},
@@ -2658,6 +2662,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1250,
 	    "Radeon X1250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_2100,
+	    "Radeon 2100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_XT,
@@ -10036,6 +10044,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 7300 Go",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7400GO,
+	    "GeForce 7400 Go",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7300GS,
 	    "GeForce 7300 GS",
 	},
@@ -10106,6 +10118,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6100,
 	    "GeForce 6100",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEGO6100,
+	    "GeForce Go 6100",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4600,
@@ -10728,7 +10744,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro FX 570M",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8400_GS,
+	    "GeForce 8400 GS",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
+	    "MCP65 ISA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA2,
 	    "MCP65 ISA",
 	},
 	{
@@ -10916,8 +10940,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP67 IDE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_EHCI,
+	    "MCP73 USB",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_IDE,
 	    "MCP73 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_PPB_1,
+	    "MCP73 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_PPB_2,
+	    "MCP73 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_PPB_3,
+	    "MCP73 PCIE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_IDE,
@@ -10960,8 +11000,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP77 HD Audio",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HB_1,
+	    "MCP73 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM11,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM2,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM3,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM4,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM5,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM6,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM7,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM8,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM9,
+	    "MCP73 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_ISA,
+	    "MCP73 ISA",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_SMB,
 	    "MCP73 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM10,
+	    "MCP73 Memory",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1,
@@ -10978,6 +11070,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4,
 	    "MCP73 LAN",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7050,
+	    "GeForce 7050",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_1,
@@ -11034,6 +11130,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HDA_2,
 	    "MCP73 HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_OHCI,
+	    "MCP73 USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_SMB,
@@ -12410,6 +12510,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300,
 	    "300/305/630 VGA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_315PRO_VGA,
+	    "315 Pro VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
