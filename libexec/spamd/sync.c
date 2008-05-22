@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.6 2008/05/09 07:09:17 deraadt Exp $	*/
+/*	$OpenBSD: sync.c,v 1.7 2008/05/22 19:54:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -311,7 +311,7 @@ sync_recv(void)
 			    ntohs(tlv->st_length))
 				goto trunc;
 
-			ip.s_addr = (u_int32_t)ntohl(sg->sg_ip);
+			ip.s_addr = sg->sg_ip;
 			from = (char *)(sg + 1);
 			to = from + ntohs(sg->sg_from_length);
 			helo = to + ntohs(sg->sg_to_length);
@@ -336,7 +336,7 @@ sync_recv(void)
 			if (sizeof(*sd) != ntohs(tlv->st_length))
 				goto trunc;
 
-			ip.s_addr = (u_int32_t)ntohl(sd->sd_ip);
+			ip.s_addr = sd->sd_ip;
 			expire = ntohl(sd->sd_expire);
 			if (debug) {
 				fprintf(stderr, "%s(sync): "
@@ -357,7 +357,7 @@ sync_recv(void)
 			if (sizeof(*sd) != ntohs(tlv->st_length))
 				goto trunc;
 
-			ip.s_addr = (u_int32_t)ntohl(sd->sd_ip);
+			ip.s_addr = sd->sd_ip;
 			expire = ntohl(sd->sd_expire);
 			if (debug) {
 				fprintf(stderr, "%s(sync): "
@@ -456,7 +456,7 @@ sync_update(time_t now, char *helo, char *ip, char *from, char *to)
 	/* Add SPAM sync packet header */
 	hdr.sh_version = SPAM_SYNC_VERSION;
 	hdr.sh_af = AF_INET;
-	hdr.sh_counter = sync_counter++;
+	hdr.sh_counter = htonl(sync_counter++);
 	hdr.sh_length = htons(sizeof(hdr) + sglen + padlen + sizeof(end));
 	iov[i].iov_base = &hdr;
 	iov[i].iov_len = sizeof(hdr);
@@ -467,7 +467,7 @@ sync_update(time_t now, char *helo, char *ip, char *from, char *to)
 	sg.sg_type = htons(SPAM_SYNC_GREY);
 	sg.sg_length = htons(sglen + padlen);
 	sg.sg_timestamp = htonl(now);
-	sg.sg_ip = htonl((u_int32_t)inet_addr(ip));
+	sg.sg_ip = inet_addr(ip);
 	sg.sg_from_length = htons(fromlen);
 	sg.sg_to_length = htons(tolen);
 	sg.sg_helo_length = htons(helolen);
@@ -534,7 +534,7 @@ sync_addr(time_t now, time_t expire, char *ip, u_int16_t type)
 	/* Add SPAM sync packet header */
 	hdr.sh_version = SPAM_SYNC_VERSION;
 	hdr.sh_af = AF_INET;
-	hdr.sh_counter = sync_counter++;
+	hdr.sh_counter = htonl(sync_counter++);
 	hdr.sh_length = htons(sizeof(hdr) + sizeof(sd) + sizeof(end));
 	iov[i].iov_base = &hdr;
 	iov[i].iov_len = sizeof(hdr);
@@ -546,7 +546,7 @@ sync_addr(time_t now, time_t expire, char *ip, u_int16_t type)
 	sd.sd_length = htons(sizeof(sd));
 	sd.sd_timestamp = htonl(now);
 	sd.sd_expire = htonl(expire);
-	sd.sd_ip = htonl((u_int32_t)inet_addr(ip));
+	sd.sd_ip = inet_addr(ip);
 	iov[i].iov_base = &sd;
 	iov[i].iov_len = sizeof(sd);
 	HMAC_Update(&ctx, iov[i].iov_base, iov[i].iov_len);
