@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.15 2007/11/26 17:15:29 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.16 2008/05/22 14:07:14 thib Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ scheduler_start(void)
 /*
  * Force switch among equal priority processes every 100ms.
  */
-/* ARGSUSED */
 void
 roundrobin(struct cpu_info *ci)
 {
@@ -204,7 +203,6 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
 /*
  * Recompute process priorities, every hz ticks.
  */
-/* ARGSUSED */
 void
 schedcpu(void *arg)
 {
@@ -224,7 +222,7 @@ schedcpu(void *arg)
 	phz = stathz ? stathz : profhz;
 	KASSERT(phz);
 
-	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
