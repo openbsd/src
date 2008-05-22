@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.16 2007/02/16 13:29:04 jmc Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.17 2008/05/22 08:06:57 otto Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.16 2007/02/16 13:29:04 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.17 2008/05/22 08:06:57 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,11 +168,14 @@ ckqueue(char *cap)
 	struct dirent *d;
 	DIR *dirp;
 	char *spooldir;
+	int free_spooldir = 1;
 
-	if (cgetstr(cap, "sd", &spooldir) == -1)
+	if (cgetstr(cap, "sd", &spooldir) == -1) {
 		spooldir = _PATH_DEFSPOOL;
+		free_spooldir = 0;
+	}
 	dirp = opendir(spooldir);
-	if (spooldir != _PATH_DEFSPOOL)
+	if (free_spooldir)
 		free(spooldir);
 	if (dirp == NULL)
 		return (-1);
