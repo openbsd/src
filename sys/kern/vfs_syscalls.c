@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.145 2008/01/22 14:33:40 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.146 2008/05/22 17:04:59 thib Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		fdp = p->p_fd;
 		if (fdp->fd_cdir == olddp) {
 			vrele(fdp->fd_cdir);
