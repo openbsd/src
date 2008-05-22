@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.264 2008/05/17 21:06:44 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.265 2008/05/22 07:57:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2612,10 +2612,18 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
 	/*
 	 * If it was not a branch, thats ok the symbolic
 	 * name refered to a revision, so return the resolved
-	 * revision for the given name if it is not newer than HEAD.
-	 */
+	 * revision for the given name. */
 	if (!RCSNUM_ISBRANCH(rev)) {
-		if (rcsnum_cmp(rev, rfp->rf_head, 0) < 0) {
+		/* Sanity check: The first two elements of any
+		 * revision (be it on a branch or on trunk) cannot
+		 * be greater than HEAD.
+		 *
+		 * XXX: To avoid comparing to uninitialized memory,
+		 * the minimum of both revision lengths is taken
+		 * instead of just 2.
+		 */
+		if (rcsnum_cmp(rev, rfp->rf_head,
+		    MIN(rfp->rf_head->rn_len, rev->rn_len)) < 0) {
 			rcsnum_free(rev);
 			return NULL;
 		}
