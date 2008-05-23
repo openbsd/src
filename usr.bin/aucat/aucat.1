@@ -1,92 +1,304 @@
-.\"	$OpenBSD: aucat.1,v 1.15 2007/05/31 19:20:07 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.16 2008/05/23 07:15:46 ratchov Exp $
 .\"
-.\" Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
+.\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
-.\" This code is derived from software contributed to Berkeley by
-.\" the Institute of Electrical and Electronics Engineers, Inc.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 23 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
 .Nm aucat
-.Nd concatenate and play audio files
+.Nd manipulate linear audio streams
 .Sh SYNOPSIS
 .Nm aucat
+.Bk -words
+.Op Fl u
+.Op Fl C Ar min : Ns Ar max
+.Op Fl c Ar min : Ns Ar max
+.Op Fl d Ar level
+.Op Fl E Ar enc
+.Op Fl e Ar enc
 .Op Fl f Ar device
-.Ar
+.Op Fl H Ar fmt
+.Op Fl h Ar fmt
+.Op Fl i Ar file
+.Op Fl o Ar file
+.Op Fl R Ar rate
+.Op Fl r Ar rate
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
-utility reads files sequentially, writing them to the specified device.
-By default,
+utility can record one input stream
+and store it on multiple destination files,
+doing the necessary conversions on the fly.
+Simultaneously, it can play, convert, and mix multiple input files.
 .Nm
-plays audio through the
-.Pa /dev/audio
-device.
-The
-.Ar file
-operands are processed in command line order.
-.Pp
-If a Sun .au header is
-detected it is skipped over and not copied to
-.Pa /dev/audio .
-If a Microsoft .wav header (RIFF) is detected it is interpreted to
-select the right audio encoding for playback and the data chunk of the
-file is copied to
-.Pa /dev/audio ,
-given that the audio driver directly supports the encoding.
-Otherwise, the entire file is copied to
-.Pa /dev/audio .
-.Pp
+also has a legacy mode that works like previous versions of
+.Nm ,
+which does not convert on the fly and supports playback of .au files.
 The options are as follows:
-.Bl -tag -width "-f deviceXX"
+.Bl -tag -width "-m mmmmmmmm "
+.It Fl C Ar min : Ns Ar max
+Range of channel numbers on the output stream specified by
+.Fl o
+options that follow (the default is 0:1, i.e. stereo).
+.It Fl c Ar min : Ns Ar max
+Range of channel numbers in the input stream specified by
+.Fl i
+options that follow (the default is 0:1, i.e. stereo).
+.It Fl d Ar level
+The debug level:
+may be a value between 0 and 4.
+.It Fl E Ar enc
+Encoding of the output stream specified by the
+.Fl o
+options that follow (the default is signed, 16-bit, native byte order).
+.It Fl e Ar enc
+Encoding of the input stream specified by
+.Fl i
+options that follow (the default is signed, 16-bit, native byte order).
+.It Fl H Ar fmt
+File format of the output stream specified by the
+.Fl o
+options that follow (the default is auto).
+.It Fl h Ar fmt
+File format of the input stream specified by
+.Fl i
+options that follow (the default is auto).
 .It Fl f Ar device
-Specifies an alternate audio device.
+.Xr audio 4
+device to use for playing and/or recording (the default is
+.Pa /dev/audio ) .
+.It Fl i Ar file
+Add this file to the list of files to play.
+The format of the file is specified by the last
+.Fl e ,
+.Fl c ,
+and
+.Fl r
+options.
+If the option argument is
+.Sq -
+then standard input will be used.
+.It Fl o Ar file
+Add this file to the list of files in which to store recorded samples.
+The format of the file is specified by the last
+.Fl E ,
+.Fl C ,
+and
+.Fl R
+options.
+If the option argument is
+.Sq -
+then standard output will be used.
+.It Fl R Ar rate
+Sample rate in Hertz of the output stream specified by the
+.Fl o
+options that follow (the default is 44100Hz).
+.It Fl r Ar rate
+Sample rate in Hertz of the input stream specified by
+.Fl i
+options that follow (the default is 44100Hz).
+.It Fl u
+Don't try to automatically determine the optimal parameters for the
+audio device;
+instead use the parameters specified by the last
+.Fl E ,
+.Fl C ,
+.Fl R ,
+.Fl e ,
+.Fl c ,
+and
+.Fl r
+options.
+As for
+.Fl i
+and
+.Fl o
+options, if the
+.Fl f
+option is used, then parameters must be specified before it.
 .El
 .Pp
-.Ex -std aucat
+The following file formats are supported:
+.Pp
+.Bl -tag -width s32lexxx -offset -indent
+.It raw
+Headerless file.
+It's recommended to use this format since it has no limitations.
+.It wav
+Microsoft WAVE file format.
+There are limitations inherent to the file format itself:
+not all encodings are supported,
+file sizes are limited to 2GB,
+the file must support the
+.Xr lseek 2
+operation (eg. pipes do not support it).
+.It auto
+Try to guess, depending on the file name.
+.El
+.Pp
+The following encodings are supported:
+.Pp
+.Bl -tag -width s32lexxx -offset -indent -compact
+.It s8
+signed 8-bit
+.It u8
+unsigned 8-bit
+.It s16le
+signed 16-bit, little endian
+.It u16le
+unsigned 16-bit, little endian
+.It s16be
+signed 16-bit, big endian
+.It u16be
+unsigned 16-bit, big endian
+.It s24le
+signed 24-bit, stored in 4 bytes, little endian
+.It u24le
+unsigned 24-bit, stored in 4 bytes, little endian
+.It s24be
+signed 24-bit, stored in 4 bytes, big endian
+.It u24be
+unsigned 24-bit, stored in 4 bytes, big endian
+.It s32le
+signed 32-bit, little endian
+.It u32le
+unsigned 32-bit, little endian
+.It s32be
+signed 32-bit, big endian
+.It u32be
+unsigned 32-bit, big endian
+.It s24le3
+signed 24-bit, packed in 3 bytes, little endian
+.It u24le3
+unsigned 24-bit, packed in 3 bytes, big endian
+.It s24be3
+signed 24-bit, packed in 3 bytes, little endian
+.It u24be3
+unsigned 24-bit, packed in 3 bytes, big endian
+.It s20le3
+signed 20-bit, packed in 3 bytes, little endian
+.It u20le3
+unsigned 20-bit, packed in 3 bytes, big endian
+.It s20be3
+signed 20-bit, packed in 3 bytes, little endian
+.It u20be3
+unsigned 20-bit, packed in 3 bytes, big endian
+.It s18le3
+signed 18-bit, packed in 3 bytes, little endian
+.It u18le3
+unsigned 18-bit, packed in 3 bytes, big endian
+.It s18be3
+signed 18-bit, packed in 3 bytes, little endian
+.It u18be3
+unsigned 18-bit, packed in 3 bytes, big endian
+.El
+.Sh LEGACY MODE
+If neither
+.Fl i
+nor
+.Fl o
+options are specified,
+.Nm
+will run in legacy mode, in which case
+.Nm
+does not convert sample formats or sampling rates. 
+In legacy mode, all options except
+.Fl f Ar device
+are ignored and all other arguments are assumed to be names of files.
+In legacy mode
+.Nm
+reads files sequentially, and writes them to the specified device.
+If a Sun .au header is detected it is skipped over and not copied to
+the audio device.
+.Nm
+will attempt to play data from Sun .au files as monaural 8-bit ulaw
+samples with a sampling frequency of 8000 Hz.
+However,
+.Nm
+will not fail if the audio device cannot be configured for these
+parameters.
+If a Microsoft .wav header (RIFF) is detected it is interpreted
+to select the right audio encoding for playback and the data chunk of the
+file is copied to the audio device.
+If the device does not support the encoding,
+.Nm
+will exit with an error.
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIODEVICE
 .It Ev AUDIODEVICE
 The audio device to use.
 .El
+.Sh EXAMPLES
+The following command will record a stereo s16le stream at
+44100Hz from the default device.
+If necesseary, the stream will be converted and/or resampled
+to match parameters supported by the device:
+.Bd -literal -offset indent
+$ aucat -o file.raw
+.Ed
+.Pp
+The following command will play a stereo s16le stream at
+44100Hz on the default device, doing any necessary conversions:
+.Bd -literal -offset indent
+$ aucat -i file.raw
+.Ed
+.Pp
+The following will mix and play two stereo streams,
+the first at 48kHz and the second at 44.1kHz:
+.Bd -literal -offset indent
+$ aucat -r 48000 -i file1.raw -r 44100 -i file2.raw
+.Ed
+.Pp
+The following will record channels 2 and 3 into one stereo file and
+channels 6 and 7 into another stereo file using a 96kHz sampling rate for
+both:
+.Bd -literal -offset indent
+$ aucat -R 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
+.Ed
+.Pp
+The following will play two s18le mono files, one on each channel:
+.Bd -literal -offset indent
+$ aucat -e s18le -c 0:0 -i f1.raw -c 1:1 -i f2.raw
+.Ed
+.Pp
+The following will mix and play two files and record a third one in
+full-duplex:
+.Bd -literal -offset indent
+$ aucat -i drums.raw -i bass.raw -o guitar.raw
+.Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,
-.Xr cdio 1 ,
 .Xr mixerctl 1 ,
 .Xr audio 4
-.Sh HISTORY
-An
+.Sh BUGS
+The
 .Nm
-utility appeared in
-.Ox 2.0 .
+utility assumes non-blocking I/O for input and output streams.
+It will not work reliably on files that may block
+(ordinary files block, pipes don't).
+.Pp
+Resampling is low quality; down-sampling especially should be avoided
+when recording.
+.Pp
+CPU usage is the same for all conversions.
+It should be smaller for simpler ones.
+.Pp
+Buffer overruns and underruns are not handled.
+.Pp
+Processing is done using 16-bit arithmetic,
+thus samples with more than 16 bits are rounded.
+16 bits (ie 97dB dynamic) are largely enough for most applications though.

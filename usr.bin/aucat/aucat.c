@@ -1,271 +1,669 @@
-/*	$OpenBSD: aucat.c,v 1.14 2008/04/13 22:39:29 jakemsr Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.15 2008/05/23 07:15:46 ratchov Exp $	*/
 /*
- * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
+ * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Kenneth Stailey.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * TODO:
+ *
+ *	(not yet)add a silent/quiet/verbose/whatever flag, but be sure
+ *	that by default the user is notified when one of the following
+ *	(cpu consuming) aproc is created: mix, sub, conv
+ *
+ *	(hard) use parsable encoding names instead of the lookup
+ *	table. For instance, [s|u]bits[le|be][/bytes{msb|lsb}], example
+ *	s8, s16le, s24le/3msb. This would give names that correspond to
+ *	what use most linux-centric apps, but for which we have an
+ *	algorithm to convert the name to a aparams structure.
+ *
+ *	(easy) uses {chmin-chmax} instead of chmin:chmax notation for
+ *	channels specification to match the notation used in rmix.
+ *
+ *	(easy) use comma-separated parameters syntax, example:
+ *	s24le/3msb,{3-6},48000 so we don't have to use three -e, -r, -c
+ *	flags, but only one -p flag that specify one or more parameters.
+ *
+ *	(hard) dont create mix (sub) if there's only one input (output)
+ *
+ *	(hard) if all inputs are over, the mixer terminates and closes
+ *	the write end of the device. It should continue writing zeros
+ *	until the recording is over (or be able to stop write end of
+ *	the device)
+ *
+ *	(hard) implement -n flag (no device) to connect all inputs to
+ *	the outputs.
+ *
+ *	(hard) ignore input files that are not audible (because channels
+ *	they provide are not used on the output). Similarly ignore
+ *	outputs that are zero filled (because channels they consume are
+ *	not provided).
+ *
+ *	(easy) do we need -d flag ?
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/audioio.h>
-#include <sys/ioctl.h>
+#include <sys/queue.h>
 
+#include <err.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
+#include <varargs.h>
 
-#define _PATH_AUDIO "/dev/audio"
-
-/*
- * aucat: concatenate and play Sun 8-bit .au files or 8/16-bit
- * uncompressed WAVE RIFF files
- */
-
-int 		playfile(int, audio_info_t *);
-int		readwaveheader(int, audio_info_t *);
-__dead void	usage(void);
-
-int afd;
+#include "conf.h"
+#include "aparams.h"
+#include "aproc.h"
+#include "abuf.h"
+#include "file.h"
+#include "dev.h"
 
 /*
- * function playfile: given a file which is positioned at the beginning
- * of what is assumed to be an .au data stream copy it out to the audio
- * device.  Return 0 on success, -1 on failure.
+ * Format for file headers.
  */
-int
-playfile(int fd, audio_info_t *audioinfo)
+#define HDR_AUTO	0	/* guess by looking at the file name */
+#define HDR_RAW		1	/* no headers, ie openbsd native ;-) */
+#define HDR_WAV		2	/* microsoft riff wave */
+
+int debug_level = 0;
+volatile int quit_flag = 0;
+/*
+ * List of allowed encodings and their names.
+ */
+struct enc {
+	char *name;
+	struct aparams par;
+} enc_list[] = {
+	/* name		bps,	bits,	le,	sign,	msb,	unused  */
+	{ "s8",		{ 1, 	8,	1,	1,	1,	0, 0, 0 } },
+	{ "u8",		{ 1,	8,	1,	0,	1,	0, 0, 0 } },
+	{ "s16le",	{ 2,	16,	1,	1,	1,	0, 0, 0 } },
+	{ "u16le",	{ 2,	16,	1,	0,	1,	0, 0, 0 } },
+	{ "s16be",	{ 2,	16,	0,	1,	1,	0, 0, 0 } },
+	{ "u16be",	{ 2,	16,	0,	0,	1,	0, 0, 0 } },
+	{ "s24le",	{ 4,	24,	1,	1,	1,	0, 0, 0 } },
+	{ "u24le",	{ 4,	24,	1,	0,	1,	0, 0, 0 } },
+	{ "s24be",	{ 4,	24,	0,	1,	1,	0, 0, 0 } },
+	{ "u24be",	{ 4,	24,	0,	0,	1,	0, 0, 0 } },
+	{ "s32le",	{ 4,	32,	1,	1,	1,	0, 0, 0 } },
+	{ "u32le",	{ 4,	32,	1,	0,	1,	0, 0, 0 } },
+	{ "s32be",	{ 4,	32,	0,	1,	1,	0, 0, 0 } },
+	{ "u32be",	{ 4,	32,	0,	0,	1,	0, 0, 0 } },
+	{ "s24le3",	{ 3,	24,	1,	1,	1,	0, 0, 0 } },
+	{ "u24le3",	{ 3,	24,	1,	0,	1,	0, 0, 0 } },
+	{ "s24be3",	{ 3,	24,	0,	1,	1,	0, 0, 0 } },
+	{ "u24be3",	{ 3,	24,	0,	0,	1,	0, 0, 0 } },
+	{ "s20le3",	{ 3,	20,	1,	1,	1,	0, 0, 0 } },
+	{ "u20le3",	{ 3,	20,	1,	0,	1,	0, 0, 0 } },
+	{ "s20be3",	{ 3,	20,	0,	1,	1,	0, 0, 0 } },
+	{ "u20be3",	{ 3,	20,	0,	0,	1,	0, 0, 0 } },
+	{ "s18le3",	{ 3,	18,	1,	1,	1,	0, 0, 0 } },
+	{ "u18le3",	{ 3,	18,	1,	0,	1,	0, 0, 0 } },
+	{ "s18be3",	{ 3,	18,	0,	1,	1,	0, 0, 0 } },
+	{ "u18be3",	{ 3,	18,	0,	0,	1,	0, 0, 0 } },
+	{ NULL,		{ 0,	0,	0,	0,	0,	0, 0, 0 } }
+};
+
+/*
+ * Search an encoding in the above table. On success fill encoding
+ * part of "par" and return 1, otherwise return 0.
+ */
+unsigned
+enc_lookup(char *name, struct aparams *par)
 {
-	ssize_t rd;
-	char buf[5120];
+	struct enc *e;
 
-	/*
-	 * If we don't wait here, the AUDIO_SETINFO ioctl interrupts
-	 * the playback of the previous file.
-	 */
-	if (ioctl(afd, AUDIO_DRAIN, NULL) == -1)
-		warn("AUDIO_DRAIN");
-
-	if (ioctl(afd, AUDIO_SETINFO, audioinfo) == -1) {
-		warn("AUDIO_SETINFO");
-		return -1;
-	}
-
-	while ((rd = read(fd, buf, sizeof(buf))) > 0)
-		if (write(afd, buf, rd) != rd)
-			warn("write");
-	if (rd == -1)
-		warn("read");
-
-	return (0);
-}
-
-/*
- * function readwaveheader: given a file which is positioned at four
- * bytes into a RIFF file header, read the rest of the header, check
- * to see if it is a simple WAV file that we can handle, seek to the
- * beginning of the audio data, and set the playback parameters in
- * the audio_info_t structure.  Return 0 on success, -1 on failure.
- */
-int
-readwaveheader(int fd, audio_info_t *audioinfo)
-{
-	/*
-	 * The simplest form of a RIFF file...
-	 */
-	struct {
-	/*	u_int32_t riff_chunkid; -- this is read before in main()! */
-		u_int32_t riff_chunksize;
-		u_int32_t riff_format;
-
-		u_int32_t fmt_subchunkid;
-		u_int32_t fmt_subchunksize;
-
-		u_int16_t fmt_format;		/* 1 = PCM uncompressed */
-		u_int16_t fmt_channels;		/* 1 = mono, 2 = stereo */
-		u_int32_t fmt_samplespersec;	/* 8000, 22050, 44100 etc. */
-		u_int32_t fmt_byterate;		/* total bytes per second */
-		u_int16_t fmt_blockalign;	/* channels * bitspersample/8 */
-		u_int16_t fmt_bitspersample;	/* 8 = 8 bits, 16 = 16 bits etc. */
-	} header;
-	u_int datatag;
-	char c;
-
-	/*
-	 * Is it an uncompressed wave file?
-	 */
-	if (read(fd, &header, sizeof(header)) != sizeof(header)) {
-		warn("read");
-		return -1;
-	}
-	if (strncmp((char *) &header.riff_format, "WAVE", 4) ||
-	    letoh16(header.fmt_format) != 1 ||
-	    strncmp((char *) &header.fmt_subchunkid, "fmt ", 4) ||
-	    (letoh16(header.fmt_bitspersample) != 8 &&
-	     letoh16(header.fmt_bitspersample) != 16))
-		return -1;
-
-	/*
-	 * Seek to the data chunk.
-	 */
-	for (datatag = 0; datatag < 4; ) {
-		if (read(fd, &c, 1) != 1) {
-			warn("read");
-			return -1;
-		}
-
-		switch(datatag) {
-		case 0:
-			if (c == 'd')
-				++datatag;
-			break;
-		case 1:
-			if (c == 'a')
-				++datatag;
-			break;
-		case 2:
-			if (c == 't')
-				++datatag;
-			break;
-		case 3:
-			if (c == 'a')
-				++datatag;
-			break;
-		default:
-			datatag = 0;
-			break;
+	for (e = enc_list; e->name != NULL; e++) {
+		if (strcmp(e->name, name) == 0) {
+			par->bps = e->par.bps;
+			par->bits = e->par.bits;
+			par->sig = e->par.sig;
+			par->le = e->par.le;
+			par->msb = e->par.msb;
+			return 1;
 		}
 	}
-	if (datatag != 4) {
-		warnx("no data chunk found in wave file");
-		return -1;
-	}
-
-	/*
-	 * Ignore the size of the data chunk.
-	 */
-	if (lseek(fd, 4, SEEK_CUR) == -1) {
-		warn("lseek");
-		return -1;
-	}
-
-	audioinfo->play.sample_rate = letoh32(header.fmt_samplespersec);
-	audioinfo->play.channels    = letoh16(header.fmt_channels);
-	audioinfo->play.precision   = letoh16(header.fmt_bitspersample);
-	audioinfo->play.encoding    = audioinfo->play.precision == 8 ?
-	    AUDIO_ENCODING_ULINEAR : AUDIO_ENCODING_SLINEAR_LE;
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+void
+usage(void)
 {
-	int fd, ch;
-	u_int32_t data;
-	char magic[4];
-	char *dev;
-	audio_info_t ai;
-	audio_info_t ai_defaults;
+	extern char *__progname;
 
-	dev = getenv("AUDIODEVICE");
-	if (dev == NULL)
-		dev = _PATH_AUDIO;
+	fprintf(stderr,
+	    "usage: %s [-u] [-d level] [-f device]\n"
+	    "\t[-C min:max] [-E enc] [-R rate] [-H fmt] [-o file]\n"
+	    "\t[-c min:max] [-e enc] [-r rate] [-h fmt] [-i file]\n"
+	    "\t-C: range of channel numbers stored in the output file\n"
+	    "\t-c: range of channel numbers provided by the input file\n"
+	    "\t-d: debug level, between 0 and 4\n"
+	    "\t-E: output file encoding (eg. s8, u8, s16le, u32be...)\n"
+	    "\t-e: input file encoding (eg. s8, u8, s16le, u32be...)\n"
+	    "\t-f: use this device instead of /dev/audio\n"
+	    "\t-H: output file header format (eg. auto, wav, raw)\n"
+	    "\t-h: input file header format (eg. auto, wav, raw)\n"
+	    "\t-i: read samples from file (\"-\" means stdin)\n"
+	    "\t-R: sample rate in Hz of the output file\n"
+	    "\t-r: sample rate in Hz of the input file\n"
+	    "\t-o: write samples to file (\"-\" means stdout)\n"
+	    "\t-u: use last -C, -c, -E, -e, -R, -r options "
+	    "for device parameters\n",
+	    __progname);
+}
 
-	while ((ch = getopt(argc, argv, "f:")) != -1) {
-		switch (ch) {
+void
+opt_ch(struct aparams *par)
+{
+	if (sscanf(optarg, "%u:%u", &par->cmin, &par->cmax) != 2 ||
+	    par->cmin > CHAN_MAX || par->cmax > CHAN_MAX ||
+	    par->cmin > par->cmax)
+		err(1, "%s: bad channel range", optarg);
+}
+
+void
+opt_rate(struct aparams *par)
+{
+	if (sscanf(optarg, "%u", &par->rate) != 1 ||
+	    par->rate < RATE_MIN || par->rate > RATE_MAX)
+		err(1, "%s: bad sample rate", optarg);
+}
+
+void
+opt_enc(struct aparams *par)
+{
+	if (!enc_lookup(optarg, par))
+		err(1, "%s: bad encoding", optarg);
+}
+
+int
+opt_hdr(void)
+{
+	if (strcmp("auto", optarg) == 0)
+		return HDR_AUTO;
+	if (strcmp("raw", optarg) == 0)
+		return HDR_RAW;
+	if (strcmp("wav", optarg) == 0)
+		return HDR_WAV;
+	err(1, "%s: bad header specification", optarg);
+}
+
+/*
+ * Arguments of -i and -o opations are stored in a list.
+ */
+struct farg {
+	SLIST_ENTRY(farg) entry;
+	struct aparams par;	/* last requested format */
+	unsigned vol;		/* last requested volume */
+	char *name;		/* optarg pointer (no need to copy it */
+	int hdr;		/* header format */
+	int fd;			/* file descriptor for I/O */
+	struct aproc *proc;	/* rpipe_xxx our wpipe_xxx */
+	struct abuf *buf;
+};
+
+SLIST_HEAD(farglist, farg);
+
+/*
+ * Add a farg entry to the given list, corresponding
+ * to the given file name.
+ */
+void
+opt_file(struct farglist *list, 
+    struct aparams *par, unsigned vol, int hdr, char *optarg)
+{
+	struct farg *fa;
+	size_t namelen;
+	
+	fa = malloc(sizeof(struct farg));
+	if (fa == NULL)
+		err(1, "%s", optarg);
+
+	if (hdr == HDR_AUTO) {
+		namelen = strlen(optarg);
+		if (namelen >= 4 && 
+		    strcasecmp(optarg + namelen - 4, ".wav") == 0) {
+			fa->hdr = HDR_WAV;
+			DPRINTF("%s: assuming wav file format\n", optarg);
+		} else {
+			fa->hdr = HDR_RAW;
+			DPRINTF("%s: assuming headerless file\n", optarg);
+		}
+	} else 
+		fa->hdr = hdr;
+	fa->par = *par;
+	fa->vol = vol;
+	fa->name = optarg;
+	fa->proc = NULL;
+	SLIST_INSERT_HEAD(list, fa, entry);
+}
+
+/*
+ * Open an input file and setup converter if necessary.
+ */
+void
+newinput(struct farg *fa, struct aparams *npar, unsigned nfr)
+{
+	int fd;
+	struct file *f;
+	struct aproc *p, *c;
+	struct abuf *buf, *nbuf;
+
+	if (strcmp(fa->name, "-") == 0) {
+		fd = STDIN_FILENO;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			warn("stdin");
+		fa->name = "stdin";
+	} else {
+		fd = open(fa->name, O_RDONLY | O_NONBLOCK, 0666);
+		if (fd < 0)
+			err(1, "%s", fa->name);
+	}
+	f = file_new(fd, fa->name);
+	if (fa->hdr == HDR_WAV) {
+		if (!wav_readhdr(fd, &fa->par, &f->rbytes))
+			exit(1);
+	}
+	buf = abuf_new(nfr, aparams_bpf(&fa->par));
+	p = rpipe_new(f);
+	aproc_setout(p, buf);
+	if (!aparams_eq(&fa->par, npar)) {
+		fprintf(stderr, "%s: ", fa->name);
+		aparams_print2(&fa->par, npar);
+		fprintf(stderr, "\n");
+		nbuf = abuf_new(nfr, aparams_bpf(npar));
+		c = conv_new(fa->name, &fa->par, npar);
+		aproc_setin(c, buf);
+		aproc_setout(c, nbuf);
+		fa->buf = nbuf;
+	} else
+		fa->buf = buf;
+	fa->proc = p;
+	fa->fd = fd;
+}
+
+/*
+ * Open an output file and setup converter if necessary.
+ */
+void
+newoutput(struct farg *fa, struct aparams *npar, unsigned nfr)
+{
+	int fd;
+	struct file *f;
+	struct aproc *p, *c;
+	struct abuf *buf, *nbuf;
+
+	if (strcmp(fa->name, "-") == 0) {
+		fd = STDOUT_FILENO;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			warn("stdout");
+		fa->name = "stdout";
+	} else {
+		fd = open(fa->name,
+		    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
+		if (fd < 0)
+			err(1, "%s", fa->name);
+	}
+	f = file_new(fd, fa->name);
+	if (fa->hdr == HDR_WAV) {
+		f->wbytes = WAV_DATAMAX;
+		if (!wav_writehdr(fd, &fa->par))
+			exit(1);
+	}
+	buf = abuf_new(nfr, aparams_bpf(&fa->par));
+	p = wpipe_new(f);
+	aproc_setin(p, buf);
+	if (!aparams_eq(&fa->par, npar)) {
+		fprintf(stderr, "%s: ", fa->name);
+		aparams_print2(npar, &fa->par);
+		fprintf(stderr, "\n");
+		c = conv_new(fa->name, npar, &fa->par);
+		nbuf = abuf_new(nfr, aparams_bpf(npar));
+		aproc_setin(c, nbuf);
+		aproc_setout(c, buf);
+		fa->buf = nbuf;
+	} else
+		fa->buf = buf;
+	fa->proc = p;
+	fa->fd = fd;
+}
+
+void
+sighdl(int s)
+{
+	if (quit_flag)
+		_exit(1);
+	quit_flag = 1;
+}
+
+int
+main(int argc, char **argv)
+{
+	struct sigaction sa;
+	int c, u_flag, ohdr, ihdr;
+	struct farg *fa;
+	struct farglist  ifiles, ofiles;
+	struct aparams ipar, opar, dipar, dopar, cipar, copar;
+	unsigned ivol, ovol;
+	unsigned dinfr, donfr, cinfr, confr;
+	char *devpath;
+	unsigned n;
+	struct aproc *rec, *play, *mix, *sub, *conv;
+	struct file *dev, *f;
+	struct abuf *buf, *cbuf;
+	int fd;
+
+	aparams_init(&ipar, 0, 1, 44100);
+	aparams_init(&opar, 0, 1, 44100);
+
+	u_flag = 0;
+	devpath = NULL;
+	SLIST_INIT(&ifiles);
+	SLIST_INIT(&ofiles);
+	ihdr = ohdr = HDR_AUTO;
+	ivol = ovol = MIDI_TO_ADATA(127);
+
+	while ((c = getopt(argc, argv, "d:c:C:e:E:r:R:h:H:i:o:f:u")) != -1) {
+		switch (c) {
+		case 'd':
+			if (sscanf(optarg, "%u", &debug_level) != 1 ||
+			    debug_level > 4)
+				err(1, "%s: not an integer in the 0..4 range",
+				    optarg);
+			break;
+		case 'h':
+			ihdr = opt_hdr();
+			break;
+		case 'H':
+			ohdr = opt_hdr();
+			break;
+		case 'c':
+			opt_ch(&ipar);
+			break;
+		case 'C':
+			opt_ch(&opar);
+			break;
+		case 'e':
+			opt_enc(&ipar);
+			break;
+		case 'E':
+			opt_enc(&opar);
+			break;
+		case 'r':
+			opt_rate(&ipar);
+			break;
+		case 'R':
+			opt_rate(&opar);
+			break;
+		case 'i':
+			opt_file(&ifiles, &ipar, 127, ihdr, optarg);
+			break;
+		case 'o':
+			opt_file(&ofiles, &opar, 127, ohdr, optarg);
+			break;
 		case 'f':
-			dev = optarg;
+			if (devpath)
+				err(1, "only one -f allowed");
+			devpath = optarg;
+			dipar = ipar;
+			dopar = opar;
+			break;
+		case 'u':
+			u_flag = 1;
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
+			exit(1);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
-		usage();
-
-	if ((afd = open(dev, O_WRONLY)) < 0)
-		err(1, "can't open %s", dev);
-
-	if (ioctl(afd, AUDIO_GETINFO, &ai_defaults) == -1)
-		err(1, "AUDIO_GETINFO");
-
-	while (argc) {
-		if ((fd = open(*argv, O_RDONLY)) < 0)
-			err(1, "cannot open %s", *argv);
-
-		AUDIO_INITINFO(&ai);
-
-		ai.play.sample_rate = ai_defaults.play.sample_rate;
-		ai.play.channels    = ai_defaults.play.channels;
-		ai.play.encoding    = ai_defaults.play.encoding;
-		ai.play.precision   = ai_defaults.play.precision;
-
-		if (read(fd, magic, sizeof(magic)) != sizeof(magic) ||
-		    strncmp(magic, ".snd", 4)) {
-			/*
-			 * not an .au file, bad header.
-			 * Check if it could be a .wav file and set
-			 * the playback parameters in ai.
-			 */
-			if (strncmp(magic, "RIFF", 4) ||
-			    readwaveheader(fd, &ai)) {
-				/*
-				 * Assume raw audio data since that's
-				 * what /dev/audio generates by default.
-				 */
-				if (lseek(fd, 0, SEEK_SET) == -1)
-					warn("lseek");
-			}
-		} else {
-			if (read(fd, &data, sizeof(data)) == sizeof(data)) {
-				data = ntohl(data);
-				if (lseek(fd, (off_t)data, SEEK_SET) == -1)
-					warn("lseek");
-			}
-		}
-
-		if (playfile(fd, &ai) < 0)
-			exit(1);
-		(void) close(fd);
-		argc--;
-		argv++;
+	if (!devpath) {
+		devpath = getenv("AUDIODEVICE");
+		if (devpath == NULL)
+			devpath = DEFAULT_DEVICE;
+		dipar = ipar;
+		dopar = opar;
 	}
-	exit(0);
-}
 
-__dead void
-usage(void)
-{
-	extern char *__progname;
+	if (SLIST_EMPTY(&ifiles) && SLIST_EMPTY(&ofiles) && argc > 0) {
+		/*
+		 * Legacy mode: if no -i or -o options are provided, and
+		 * there are arguments then assume the arguments are files
+		 * to play.
+		 */
+		for (c = 0; c < argc; c++)
+			if (legacy_play(devpath, argv[c]) != 0) {
+				fprintf(stderr, "%s: could not play\n",
+				    argv[c]);
+				exit(1);
+			}
+		exit(0);
+	} else if (argc > 0) {
+		usage();
+		exit(1);
+	}
 
-	fprintf(stderr, "usage: %s [-f device] file ...\n", __progname);
-	exit(1);
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sighdl;
+	if (sigaction(SIGINT, &sa, NULL) < 0)
+		err(1, "sigaction");
+	
+	file_start();
+	play = rec = mix = sub = NULL;
+
+	aparams_init(&cipar, CHAN_MAX, 0, RATE_MIN);
+	aparams_init(&copar, CHAN_MAX, 0, RATE_MAX);
+
+	/*
+	 * Iterate over all inputs and outputs and find the maximum
+	 * sample rate and channel number.
+	 */
+	SLIST_FOREACH(fa, &ifiles, entry) {
+		if (cipar.cmin > fa->par.cmin)
+			cipar.cmin = fa->par.cmin;
+		if (cipar.cmax < fa->par.cmax)
+			cipar.cmax = fa->par.cmax;
+		if (cipar.rate < fa->par.rate)
+			cipar.rate = fa->par.rate;
+	}	
+	SLIST_FOREACH(fa, &ofiles, entry) {
+		if (copar.cmin > fa->par.cmin)
+			copar.cmin = fa->par.cmin;
+		if (copar.cmax < fa->par.cmax)
+			copar.cmax = fa->par.cmax;
+		if (copar.rate > fa->par.rate)
+			copar.rate = fa->par.rate;
+	}
+
+	/*
+	 * Open the device and increase the maximum sample rate.
+	 * channel number to include those used by the device
+	 */
+	if (!u_flag) {
+		dipar = copar;
+		dopar = cipar;
+	}
+	fd = dev_init(devpath,
+	    !SLIST_EMPTY(&ofiles) ? &dipar : NULL,
+	    !SLIST_EMPTY(&ifiles) ? &dopar : NULL, &dinfr, &donfr);
+	if (fd < 0)
+		exit(1);
+	if (!SLIST_EMPTY(&ofiles)) {
+		fprintf(stderr, "%s: recording ", devpath);
+		aparams_print(&dipar);
+		fprintf(stderr, "\n");
+		if (copar.cmin > dipar.cmin)
+			copar.cmin = dipar.cmin;
+		if (copar.cmax < dipar.cmax)
+			copar.cmax = dipar.cmax;
+		if (copar.rate > dipar.rate)
+			copar.rate = dipar.rate;
+		dinfr *= DEFAULT_NBLK;
+		DPRINTF("%s: using %ums rec buffer\n", devpath,
+		    1000 * dinfr / dipar.rate);
+	}
+	if (!SLIST_EMPTY(&ifiles)) {
+		fprintf(stderr, "%s: playing ", devpath);
+		aparams_print(&dopar);
+		fprintf(stderr, "\n");
+		if (cipar.cmin > dopar.cmin)
+			cipar.cmin = dopar.cmin;
+		if (cipar.cmax < dopar.cmax)
+			cipar.cmax = dopar.cmax;
+		if (cipar.rate < dopar.rate)
+			cipar.rate = dopar.rate;
+		donfr *= DEFAULT_NBLK;
+		DPRINTF("%s: using %ums play buffer\n", devpath,
+		    1000 * donfr / dopar.rate);
+	}
+	
+	/*
+	 * Create buffers for the device.
+	 */
+	dev = file_new(fd, devpath);
+	if (!SLIST_EMPTY(&ofiles)) {
+		rec = rpipe_new(dev);
+		sub = sub_new();
+	}
+	if (!SLIST_EMPTY(&ifiles)) {
+		play = wpipe_new(dev);
+		mix = mix_new();
+	}
+
+	/*
+	 * Calculate sizes of buffers using "common" parameters, to
+	 * have roughly the same duration as device buffers.
+	 */
+	cinfr = donfr * cipar.rate / dopar.rate;
+	confr = dinfr * copar.rate / dipar.rate;
+
+	/*
+	 * Create buffers for all input and output pipes.
+	 */
+	SLIST_FOREACH(fa, &ifiles, entry) {
+		newinput(fa, &cipar, cinfr);
+		if (mix)
+			aproc_setin(mix, fa->buf);
+		fprintf(stderr, "%s: reading ", fa->name);
+		aparams_print(&fa->par);
+		fprintf(stderr, "\n");
+	}
+	SLIST_FOREACH(fa, &ofiles, entry) {
+		newoutput(fa, &copar, confr);
+		if (sub)
+			aproc_setout(sub, fa->buf);
+		fprintf(stderr, "%s: writing ", fa->name);
+		aparams_print(&fa->par);
+		fprintf(stderr, "\n");
+	}
+
+	/*
+	 * Connect the multiplexer to the device input.
+	 */
+	if (sub) {
+		buf = abuf_new(dinfr, aparams_bpf(&dipar));
+		aproc_setout(rec, buf);
+		if (!aparams_eq(&copar, &dipar)) {
+			fprintf(stderr, "%s: ", devpath);
+			aparams_print2(&dipar, &copar);
+			fprintf(stderr, "\n");
+			conv = conv_new("subconv", &dipar, &copar);
+			cbuf = abuf_new(confr, aparams_bpf(&copar));
+			aproc_setin(conv, buf);
+			aproc_setout(conv, cbuf);
+			aproc_setin(sub, cbuf);
+		} else
+			aproc_setin(sub, buf);
+	}
+
+	/*
+	 * Normalize input levels and connect the mixer to the device
+	 * output.
+	 */
+	if (mix) {
+		n = 0;
+		SLIST_FOREACH(fa, &ifiles, entry)
+			n++;
+		SLIST_FOREACH(fa, &ifiles, entry)
+			fa->buf->mixvol /= n;
+		buf = abuf_new(donfr, aparams_bpf(&dopar));
+		aproc_setin(play, buf);
+		if (!aparams_eq(&cipar, &dopar)) {
+			fprintf(stderr, "%s: ", devpath);
+			aparams_print2(&cipar, &dopar);
+			fprintf(stderr, "\n");
+			conv = conv_new("mixconv", &cipar, &dopar);
+			cbuf = abuf_new(cinfr, aparams_bpf(&cipar));
+			aproc_setout(conv, buf);
+			aproc_setin(conv, cbuf);
+			aproc_setout(mix, cbuf);
+		} else
+			aproc_setout(mix, buf);
+	}
+
+	/*
+	 * start audio
+	 */
+	if (play != NULL) {
+		fprintf(stderr, "filling buffers...\n");
+		while (!quit_flag) {
+			/* no more devices to poll */
+			if (!file_poll())
+				break;
+			/* device is blocked */
+			if (dev->events & POLLOUT)
+				break;
+			/* eof */
+			if (dev->state & FILE_EOF)
+				break;
+		}
+	}
+	fprintf(stderr, "starting device...\n");
+	dev_start(dev->fd);
+	dev->state &= ~(FILE_RFLOW | FILE_WFLOW);
+	while (!quit_flag) {
+		if (!file_poll())
+			break;
+	}
+
+	fprintf(stderr, "draining buffers...\n");
+
+	/*
+	 * generate EOF on all files that do input, so
+	 * once buffers are drained, everything will be cleaned
+	 */
+	LIST_FOREACH(f, &file_list, entry) {
+		if ((f->events) & POLLIN || (f->state & FILE_ROK))
+			file_eof(f);
+	}
+	for (;;) {
+		if (!file_poll())
+			break;
+	}
+	SLIST_FOREACH(fa, &ofiles, entry) {
+		if (fa->hdr == HDR_WAV)
+			wav_writehdr(fa->fd, &fa->par);
+		close(fa->fd);
+		DPRINTF("%s: closed\n", fa->name);
+	}
+	dev_stop(dev->fd);
+	file_stop();
+	return 0;
 }
