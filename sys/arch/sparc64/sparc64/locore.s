@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.139 2008/05/22 22:29:14 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.140 2008/05/23 13:19:43 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3879,15 +3879,13 @@ interrupt_vector:
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 	membar	#Sync
 
-#ifndef MULTIPROCESSOR
-	and	%g2, MAXINTNUM-1,%g2	! XXX make sun4us work
-#endif
+	sethi	%hi(KERNBASE), %g3
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! Spurious interrupt
-	 cmp	%g2, MAXINTNUM
+	 cmp	%g2, %g3
 #ifdef MULTIPROCESSOR
 	blu,pt	%xcc, Lsoftint_regular
-	 sllx	%g2, 3, %g5		! Calculate entry number
+	 and	%g2, MAXINTNUM-1, %g5	! XXX make sun4us work
 	mov	IRDR_1H, %g3
 	ldxa	[%g3] ASI_IRDR, %g3     ! Get IPI handler arg0
 	mov	IRDR_2H, %g5
@@ -3902,7 +3900,7 @@ interrupt_vector:
 	NOTREACHED
 #else
 	bgeu,pn	%xcc, 3f
-	 sllx	%g2, 3, %g5		! Calculate entry number
+	 and	%g2, MAXINTNUM-1, %g5	! XXX make sun4us work
 #endif
 
 Lsoftint_regular:
@@ -3911,6 +3909,7 @@ Lsoftint_regular:
 
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	sllx	%g5, 3, %g5		! Calculate entry number
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
 #ifdef DEBUG
 	brnz,pt %g5, 1f
