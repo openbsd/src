@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.23 2008/05/14 04:12:57 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.24 2008/05/23 08:49:27 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -248,13 +248,8 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BCE_PCI_BAR0);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BCE_PCI_BAR0, memtype, 0, &sc->bce_btag,
-		    &sc->bce_bhandle, &memaddr, &memsize, 0) == 0)
-			break;
-	default:
+	if (pci_mapreg_map(pa, BCE_PCI_BAR0, memtype, 0, &sc->bce_btag,
+	    &sc->bce_bhandle, &memaddr, &memsize, 0)) {
 		printf(": unable to find mem space\n");
 		return;
 	}

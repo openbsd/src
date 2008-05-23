@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.6 2008/01/16 19:30:19 thib Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.7 2008/05/23 08:49:27 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -212,19 +212,10 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
 
-	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MYXBAR0);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		break;
-	default:
-		printf(": invalid memory type: 0x%x\n", memtype);
-		return;
-	}
-
 	/* Map the PCI memory space */
+	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MYXBAR0);
 	if (pci_mapreg_map(pa, MYXBAR0, memtype, 0, &sc->sc_memt,
-	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
+	    &sc->sc_memh, NULL, &sc->sc_mems, 0)) {
 		printf(": unable to map register memory\n");
 		return;
 	}

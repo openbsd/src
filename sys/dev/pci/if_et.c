@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.7 2008/02/08 04:42:05 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.8 2008/05/23 08:49:27 brad Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -206,14 +206,8 @@ et_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_timer = et_timer;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ET_PCIR_BAR);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, ET_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
-		    &sc->sc_mem_bh, NULL, &memsize, 0) == 0)
-			break;
-		/* FALLTHROUGH */
-	default:
+	if (pci_mapreg_map(pa, ET_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
+	    &sc->sc_mem_bh, NULL, &memsize, 0)) {
 		printf(": could not map mem space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.57 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.58 2008/05/23 08:49:27 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -782,14 +782,8 @@ nge_attach(parent, self, aux)
 #else
 	DPRINTFN(5, ("%s: pci_mapreg_map\n", sc->sc_dv.dv_xname));
 	memtype = pci_mapreg_type(pc, pa->pa_tag, NGE_PCI_LOMEM);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, NGE_PCI_LOMEM,
-				   memtype, 0, &sc->nge_btag, &sc->nge_bhandle,
-				   NULL, &size, 0) == 0)
-			break;
-	default:
+	if (pci_mapreg_map(pa, NGE_PCI_LOMEM, memtype, 0, &sc->nge_btag,
+	    &sc->nge_bhandle, NULL, &size, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.58 2008/02/28 02:02:43 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.59 2008/05/23 08:49:27 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -627,14 +627,8 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	*/
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BNX_PCI_BAR0);  
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BNX_PCI_BAR0,
-		    memtype, 0, &sc->bnx_btag, &sc->bnx_bhandle,
-		    NULL, &sc->bnx_size, 0) == 0)
-			break;
-	default:
+	if (pci_mapreg_map(pa, BNX_PCI_BAR0, memtype, 0, &sc->bnx_btag,
+	    &sc->bnx_bhandle, NULL, &sc->bnx_size, 0)) {
 		printf(": can't find mem space\n");
 		return;
 	}
