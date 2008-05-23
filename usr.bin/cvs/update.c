@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.144 2008/05/22 15:46:30 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.145 2008/05/23 09:46:45 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -185,14 +185,19 @@ void
 cvs_update_enterdir(struct cvs_file *cf)
 {
 	CVSENTRIES *entlist;
-	char *entry, fpath[MAXPATHLEN];
+	char *dirtag, *entry, fpath[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_update_enterdir(%s)", cf->file_path);
 
-	cvs_file_classify(cf, cvs_directory_tag);
+	cvs_file_classify(cf, NULL);
 
 	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
-		cvs_mkpath(cf->file_path, cvs_specified_tag);
+		cvs_parse_tagfile(cf->file_wd, &dirtag, NULL, NULL);
+		cvs_mkpath(cf->file_path, cvs_specified_tag != NULL ?
+		    cvs_specified_tag : dirtag);
+		if (dirtag != NULL)
+			xfree(dirtag);
+
 		if ((cf->fd = open(cf->file_path, O_RDONLY)) == -1)
 			fatal("cvs_update_enterdir: `%s': %s",
 			    cf->file_path, strerror(errno));
