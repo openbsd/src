@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.75 2008/04/10 19:55:41 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.76 2008/05/23 16:42:03 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2192,8 +2192,8 @@ tputchar(int c, struct tty *tp)
 	int s;
 
 	s = spltty();
-	if (ISSET(tp->t_state,
-	    TS_CARR_ON | TS_ISOPEN) != (TS_CARR_ON | TS_ISOPEN)) {
+	if (ISSET(tp->t_state, TS_ISOPEN) == 0 ||
+	    !(ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))) {
 		splx(s);
 		return (-1);
 	}
