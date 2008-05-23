@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.15 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.16 2008/05/23 12:56:27 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -146,23 +146,10 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-u] [-d level] [-f device]\n"
-	    "\t[-C min:max] [-E enc] [-R rate] [-H fmt] [-o file]\n"
-	    "\t[-c min:max] [-e enc] [-r rate] [-h fmt] [-i file]\n"
-	    "\t-C: range of channel numbers stored in the output file\n"
-	    "\t-c: range of channel numbers provided by the input file\n"
-	    "\t-d: debug level, between 0 and 4\n"
-	    "\t-E: output file encoding (eg. s8, u8, s16le, u32be...)\n"
-	    "\t-e: input file encoding (eg. s8, u8, s16le, u32be...)\n"
-	    "\t-f: use this device instead of /dev/audio\n"
-	    "\t-H: output file header format (eg. auto, wav, raw)\n"
-	    "\t-h: input file header format (eg. auto, wav, raw)\n"
-	    "\t-i: read samples from file (\"-\" means stdin)\n"
-	    "\t-R: sample rate in Hz of the output file\n"
-	    "\t-r: sample rate in Hz of the input file\n"
-	    "\t-o: write samples to file (\"-\" means stdout)\n"
-	    "\t-u: use last -C, -c, -E, -e, -R, -r options "
-	    "for device parameters\n",
+	    "usage: %s [-u] [-C min:max] [-c min:max] [-d level] "
+	    "[-E enc] [-e enc]\n"
+	    "\t[-f device] [-H fmt] [-h fmt] [-i file] [-o file] [-R rate]\n"
+	    "\t[-r rate]\n",
 	    __progname);
 }
 

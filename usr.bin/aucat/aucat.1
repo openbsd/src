@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.16 2008/05/23 07:15:46 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.17 2008/05/23 12:56:27 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -43,49 +43,47 @@ The
 utility can record one input stream
 and store it on multiple destination files,
 doing the necessary conversions on the fly.
-Simultaneously, it can play, convert, and mix multiple input files.
+It can play, convert, and mix multiple input files simultaneously.
 .Nm
 also has a legacy mode that works like previous versions of
 .Nm ,
 which does not convert on the fly and supports playback of .au files.
+.Pp
 The options are as follows:
 .Bl -tag -width "-m mmmmmmmm "
 .It Fl C Ar min : Ns Ar max
-Range of channel numbers on the output stream specified by
-.Fl o
-options that follow (the default is 0:1, i.e. stereo).
+The range of channel numbers on the output stream.
+The default is 0:1, i.e. stereo.
 .It Fl c Ar min : Ns Ar max
-Range of channel numbers in the input stream specified by
-.Fl i
-options that follow (the default is 0:1, i.e. stereo).
+The range of channel numbers on the input stream.
+The default is 0:1, i.e. stereo.
 .It Fl d Ar level
 The debug level:
 may be a value between 0 and 4.
 .It Fl E Ar enc
-Encoding of the output stream specified by the
-.Fl o
-options that follow (the default is signed, 16-bit, native byte order).
+Encoding of the output stream.
+The default is signed, 16-bit, native byte order.
 .It Fl e Ar enc
-Encoding of the input stream specified by
-.Fl i
-options that follow (the default is signed, 16-bit, native byte order).
-.It Fl H Ar fmt
-File format of the output stream specified by the
-.Fl o
-options that follow (the default is auto).
-.It Fl h Ar fmt
-File format of the input stream specified by
-.Fl i
-options that follow (the default is auto).
+Encoding of the input stream.
+The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
+The
 .Xr audio 4
-device to use for playing and/or recording (the default is
-.Pa /dev/audio ) .
+device to use for playing and/or recording.
+The default is
+.Pa /dev/audio .
+.It Fl H Ar fmt
+File format of the output stream (see below).
+The default is auto.
+.It Fl h Ar fmt
+File format of the input stream (see below).
+The default is auto.
 .It Fl i Ar file
 Add this file to the list of files to play.
 The format of the file is specified by the last
-.Fl e ,
 .Fl c ,
+.Fl e ,
+.Fl h ,
 and
 .Fl r
 options.
@@ -95,8 +93,9 @@ then standard input will be used.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 The format of the file is specified by the last
-.Fl E ,
 .Fl C ,
+.Fl E ,
+.Fl H ,
 and
 .Fl R
 options.
@@ -104,48 +103,47 @@ If the option argument is
 .Sq -
 then standard output will be used.
 .It Fl R Ar rate
-Sample rate in Hertz of the output stream specified by the
-.Fl o
-options that follow (the default is 44100Hz).
+Sample rate in Hertz of the output stream.
+The default is 44100Hz.
 .It Fl r Ar rate
-Sample rate in Hertz of the input stream specified by
-.Fl i
-options that follow (the default is 44100Hz).
+Sample rate in Hertz of the input stream.
+The default is 44100Hz.
 .It Fl u
 Don't try to automatically determine the optimal parameters for the
 audio device;
 instead use the parameters specified by the last
-.Fl E ,
 .Fl C ,
-.Fl R ,
-.Fl e ,
 .Fl c ,
+.Fl E ,
+.Fl e ,
+.Fl H ,
+.Fl h ,
+.Fl R ,
 and
 .Fl r
 options.
-As for
+For the
 .Fl i
 and
 .Fl o
-options, if the
+options, if
 .Fl f
-option is used, then parameters must be specified before it.
+is used then parameters must be specified before it.
 .El
 .Pp
 The following file formats are supported:
-.Pp
 .Bl -tag -width s32lexxx -offset -indent
 .It raw
 Headerless file.
-It's recommended to use this format since it has no limitations.
+This format is recommended since it has no limitations.
 .It wav
 Microsoft WAVE file format.
 There are limitations inherent to the file format itself:
 not all encodings are supported,
 file sizes are limited to 2GB,
-the file must support the
+and the file must support the
 .Xr lseek 2
-operation (eg. pipes do not support it).
+operation (e.g. pipes do not support it).
 .It auto
 Try to guess, depending on the file name.
 .El
@@ -211,14 +209,12 @@ If neither
 .Fl i
 nor
 .Fl o
-options are specified,
+are specified,
 .Nm
-will run in legacy mode, in which case
-.Nm
-does not convert sample formats or sampling rates. 
+will run in legacy mode, and won't convert sample formats or sampling rates.
 In legacy mode, all options except
-.Fl f Ar device
-are ignored and all other arguments are assumed to be names of files.
+.Fl f
+are ignored, and all other arguments are assumed to be names of files.
 In legacy mode
 .Nm
 reads files sequentially, and writes them to the specified device.
@@ -245,7 +241,7 @@ The audio device to use.
 .Sh EXAMPLES
 The following command will record a stereo s16le stream at
 44100Hz from the default device.
-If necesseary, the stream will be converted and/or resampled
+If necessary, the stream will be converted and/or resampled
 to match parameters supported by the device:
 .Bd -literal -offset indent
 $ aucat -o file.raw
@@ -282,6 +278,7 @@ $ aucat -i drums.raw -i bass.raw -o guitar.raw
 .Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,
+.Xr cdio 1 ,
 .Xr mixerctl 1 ,
 .Xr audio 4
 .Sh BUGS
@@ -301,4 +298,4 @@ Buffer overruns and underruns are not handled.
 .Pp
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
-16 bits (ie 97dB dynamic) are largely enough for most applications though.
+16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
