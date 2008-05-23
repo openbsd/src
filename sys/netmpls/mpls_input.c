@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.12 2008/05/10 01:56:32 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.13 2008/05/23 16:06:29 thib Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -121,10 +121,12 @@ mpls_input(struct mbuf *m)
 		smpls->smpls_in_ifindex = ifp->if_index;
 		smpls->smpls_in_label = shim->shim_label & MPLS_LABEL_MASK;
 
+#ifdef MPLS_DEBUG
 		printf("smpls af %d len %d in_label %d in_ifindex %d\n",
 		    smpls->smpls_family, smpls->smpls_len,
 		    MPLS_LABEL_GET(smpls->smpls_in_label),
 		    smpls->smpls_in_ifindex);
+#endif
 
 		rt = rtalloc1(smplstosa(smpls),1, 0);
 
