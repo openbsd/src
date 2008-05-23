@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2007/05/11 10:06:55 pedro Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -263,22 +263,6 @@ copyfault:
 			vframe = (void *)((u_int64_t)&frame.tf_rsp - 44);
 			resume = resume_iret;
 			break;
-/*
- * XXXfvdl these are illegal in long mode (not in compat mode, though)
- * and we do not take back the descriptors from the signal context anyway,
- * but may do so later for USER_LDT, in which case we need to intercept
- * other instructions (movl %eax, %Xs).
- */
-#if 0
-		case 0x1f:	/* popl %ds */
-			vframe = (void *)((u_int64_t)&frame.tf_rsp - 4);
-			resume = resume_pop_ds;
-			break;
-		case 0x07:	/* popl %es */
-			vframe = (void *)((u_int64_t)&frame.tf_rsp - 0);
-			resume = resume_pop_es;
-			break;
-#endif
 		default:
 			goto we_re_toast;
 		}

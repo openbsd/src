@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2007/09/10 18:49:44 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.18 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -332,9 +332,6 @@ struct pmap {
 	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.
  */
@@ -559,11 +556,6 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_invlpg		(1)
 
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
-
-#if 0   /* XXXfvdl was USER_LDT, need to check if that can be supported */
-void	pmap_ldt_cleanup(struct proc *);
-#define	PMAP_FORK
-#endif /* USER_LDT */
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)

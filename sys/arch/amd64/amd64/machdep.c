@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2008/04/30 13:59:33 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1051,10 +1051,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
 
-#ifdef USER_LDT
-	pmap_ldt_cleanup(p);
-#endif
-
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
@@ -1740,11 +1736,7 @@ idt_vec_free(int vec)
 int
 cpu_maxproc(void)
 {
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - DYNSEL_START) / 32);
-#else
 	return (MAXGDTSIZ - DYNSEL_START) / 16;
-#endif
 }
 
 #ifdef DIAGNOSTIC

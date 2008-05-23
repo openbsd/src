@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.229 2008/05/23 14:04:18 brad Exp $
+#	$OpenBSD: GENERIC,v 1.230 2008/05/23 15:39:43 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -16,7 +16,6 @@ maxusers	80			# estimated number of users
 option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
-#option		USER_LDT	# user-settable LDT; see amd64_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
 #option		MTRR		# CPU memory range attributes control
 

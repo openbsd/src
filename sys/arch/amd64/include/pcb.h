@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 2006/05/10 01:39:04 krw Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
 
 /*-
@@ -109,7 +109,6 @@ struct pcb {
 	struct	savefpu pcb_savefpu;	/* floating point state */
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_flags;
-#define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	unsigned pcb_iomap[NIOPORTS/32];	/* I/O bitmap */

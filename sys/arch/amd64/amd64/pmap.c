@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2007/12/09 00:24:04 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1136,21 +1136,6 @@ pmap_destroy(struct pmap *pmap)
 	/* XXX: need to flush it out of other processor's APTE space? */
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 
-#ifdef USER_LDT
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		/*
-		 * no need to switch the LDT; this address space is gone,
-		 * nothing is using it.
-		 *
-		 * No need to lock the pmap for ldt_free (or anything else),
-		 * we're the last one to use it.
-		 */
-		ldt_free(pmap);
-		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
-			    pmap->pm_ldt_len);
-	}
-#endif
-
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
@@ -1163,65 +1148,6 @@ pmap_reference(struct pmap *pmap)
 {
 	pmap->pm_obj[0].uo_refs++;
 }
-
-#if defined(PMAP_FORK)
-/*
- * pmap_fork: perform any necessary data structure manipulation when
- * a VM space is forked.
- */
-
-void
-pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
-{
-#ifdef USER_LDT
-	/* Copy the LDT, if necessary. */
-	if (pmap1->pm_flags & PMF_USER_LDT) {
-		char *new_ldt;
-		size_t len;
-
-		len = pmap1->pm_ldt_len;
-		new_ldt = (char *)uvm_km_alloc(kernel_map, len);
-		memcpy(new_ldt, pmap1->pm_ldt, len);
-		pmap2->pm_ldt = new_ldt;
-		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
-		pmap2->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap2, new_ldt, len);
-	}
-#endif /* USER_LDT */
-}
-#endif /* PMAP_FORK */
-
-#ifdef USER_LDT
-/*
- * pmap_ldt_cleanup: if the pmap has a local LDT, deallocate it, and
- * restore the default.
- */
-
-void
-pmap_ldt_cleanup(struct proc *p)
-{
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->->p_vmspace->vm_map.pmap;
-	char *old_ldt = NULL;
-	size_t len = 0;
-
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap);
-		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-		old_ldt = pmap->pm_ldt;
-		len = pmap->pm_ldt_len;
-		pmap->pm_ldt = NULL;
-		pmap->pm_ldt_len = 0;
-		pmap->pm_flags &= ~PMF_USER_LDT;
-	}
-
-	if (old_ldt != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len);
-}
-#endif /* USER_LDT */
 
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)

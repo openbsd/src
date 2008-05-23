@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.12 2008/05/14 21:53:08 weingart Exp $	*/
+/*	$OpenBSD: vector.S,v 1.13 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -197,22 +197,9 @@ IDTVEC(exceptions)
  * change %eip to point to one of these labels.  We clean up the stack, if
  * necessary, and resume as if we were handling a general protection fault.
  * This will cause the process to get a SIGBUS.
- *
- * XXXfvdl currently unused, as pop %ds and pop %es are illegal in long
- * mode. However, if the x86-64 port is going to support USER_LDT, we
- * may need something like this after all.
  */
 NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
-#if 0
-NENTRY(resume_pop_ds)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%es
-NENTRY(resume_pop_es)
-	movl	$T_PROTFLT,TF_TRAPNO(%rsp)
-	jmp	calltrap
-#endif
-
 /*
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.

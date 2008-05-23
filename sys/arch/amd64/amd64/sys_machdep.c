@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2008/05/23 15:39:43 jasper Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -35,10 +35,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * XXXfvdl check USER_LDT
  */
 
 #include <sys/param.h>
@@ -79,201 +75,6 @@ int amd64_set_ioperm(struct proc *, void *, register_t *);
 int amd64_iopl(struct proc *, void *, register_t *);
 int amd64_get_mtrr(struct proc *, void *, register_t *);
 int amd64_set_mtrr(struct proc *, void *, register_t *);
-
-/* XXXfvdl disabled USER_LDT stuff until I check this stuff */
-
-#if defined(USER_LDT) && 0
-int
-amd64_get_ldt(struct proc *p, void *args, register_t *retval)
-{
-	int error;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	int nldt, num;
-	union descriptor *lp;
-	struct amd64_get_ldt_args ua;
-
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-#ifdef	LDT_DEBUG
-	printf("amd64_get_ldt: start=%d num=%d descs=%p\n", ua.start,
-	    ua.num, ua.desc);
-#endif
-
-	if (ua.start < 0 || ua.num < 0)
-		return (EINVAL);
-
-	/*
-	 * XXX LOCKING.
-	 */
-
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		nldt = pmap->pm_ldt_len;
-		lp = pmap->pm_ldt;
-	} else {
-		nldt = NLDT;
-		lp = ldt;
-	}
-
-	if (ua.start > nldt)
-		return (EINVAL);
-
-	lp += ua.start;
-	num = min(ua.num, nldt - ua.start);
-
-	error = copyout(lp, ua.desc, num * sizeof(union descriptor));
-	if (error)
-		return (error);
-
-	*retval = num;
-	return (0);
-}
-
-int
-amd64_set_ldt(struct proc *p, void *args, register_t *retval)
-{
-	int error, i, n;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct amd64_set_ldt_args ua;
-	union descriptor desc;
-
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-#ifdef	LDT_DEBUG
-	printf("amd64_set_ldt: start=%d num=%d descs=%p\n", ua.start,
-	    ua.num, ua.desc);
-#endif
-
-	if (ua.start < 0 || ua.num < 0)
-		return (EINVAL);
-	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
-		return (EINVAL);
-
-	/*
-	 * XXX LOCKING
-	 */
-
-	/* allocate user ldt */
-	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
-		size_t old_len, new_len;
-		union descriptor *old_ldt, *new_ldt;
-
-		if (pmap->pm_flags & PMF_USER_LDT) {
-			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
-			old_ldt = pmap->pm_ldt;
-		} else {
-			old_len = NLDT * sizeof(union descriptor);
-			old_ldt = ldt;
-			pmap->pm_ldt_len = 512;
-		}
-		while ((ua.start + ua.num) > pmap->pm_ldt_len)
-			pmap->pm_ldt_len *= 2;
-		new_len = pmap->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len);
-		memcpy(new_ldt, old_ldt, old_len);
-		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
-		pmap->pm_ldt = new_ldt;
-
-		if (pmap->pm_flags & PCB_USER_LDT)
-			ldt_free(pmap);
-		else
-			pmap->pm_flags |= PCB_USER_LDT;
-		ldt_alloc(pmap, new_ldt, new_len);
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-
-		/*
-		 * XXX Need to notify other processors which may be
-		 * XXX currently using this pmap that they need to
-		 * XXX re-load the LDT.
-		 */
-
-		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
-#ifdef LDT_DEBUG
-		printf("amd64_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
-#endif
-	}
-
-	if (pcb == curpcb)
-		savectx(curpcb);
-	error = 0;
-
-	/* Check descriptors for access violations. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
-			return (error);
-
-		switch (desc.sd.sd_type) {
-		case SDT_SYSNULL:
-			desc.sd.sd_p = 0;
-			break;
-		case SDT_SYS286CGT:
-		case SDT_SYS386CGT:
-			/*
-			 * Only allow call gates targeting a segment
-			 * in the LDT or a user segment in the fixed
-			 * part of the gdt.  Segments in the LDT are
-			 * constrained (below) to be user segments.
-			 */
-			if (desc.gd.gd_p != 0 && !ISLDT(desc.gd.gd_selector) &&
-			    ((IDXSEL(desc.gd.gd_selector) >= NGDT) ||
-			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
-				 SEL_UPL)))
-				return (EACCES);
-			break;
-		case SDT_MEMEC:
-		case SDT_MEMEAC:
-		case SDT_MEMERC:
-		case SDT_MEMERAC:
-			/* Must be "present" if executable and conforming. */
-			if (desc.sd.sd_p == 0)
-				return (EACCES);
-			break;
-		case SDT_MEMRO:
-		case SDT_MEMROA:
-		case SDT_MEMRW:
-		case SDT_MEMRWA:
-		case SDT_MEMROD:
-		case SDT_MEMRODA:
-		case SDT_MEMRWD:
-		case SDT_MEMRWDA:
-		case SDT_MEME:
-		case SDT_MEMEA:
-		case SDT_MEMER:
-		case SDT_MEMERA:
-			break;
-		default:
-			/* Only care if it's present. */
-			if (desc.sd.sd_p != 0)
-				return (EACCES);
-			break;
-		}
-
-		if (desc.sd.sd_p != 0) {
-			/* Only user (ring-3) descriptors may be present. */
-			if (desc.sd.sd_dpl != SEL_UPL)
-				return (EACCES);
-		}
-	}
-
-	/* Now actually replace the descriptors. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
-			goto out;
-
-		pmap->pm_ldt[n] = desc;
-	}
-
-	*retval = ua.start;
-
-out:
-	return (error);
-}
-#endif	/* USER_LDT */
 
 #ifdef APERTURE
 extern int allowaperture;
@@ -411,15 +212,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-#if defined(USER_LDT) && 0
-	case AMD64_GET_LDT: 
-		error = amd64_get_ldt(p, SCARG(uap, parms), retval);
-		break;
-
-	case AMD64_SET_LDT: 
-		error = amd64_set_ldt(p, SCARG(uap, parms), retval);
-		break;
-#endif
 	case AMD64_IOPL: 
 		error = amd64_iopl(p, SCARG(uap, parms), retval);
 		break;
