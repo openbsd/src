@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.11 2007/12/14 18:33:40 deraadt Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.12 2008/05/23 16:03:03 thib Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -73,7 +73,7 @@
 #include <netatalk/at_extern.h>
 
 int ddp_usrreq(struct socket *, int, struct mbuf *,
-			struct mbuf *, struct mbuf * );
+			struct mbuf *, struct mbuf *, struct proc *);
 static void at_sockaddr( struct ddpcb *, struct mbuf * );
 static int at_pcbsetaddr( struct ddpcb *, struct mbuf *,
 			struct proc * );
@@ -99,13 +99,12 @@ u_long		ddp_recvspace = 10 * ( 587 + sizeof( struct sockaddr_at ));
 
 /*ARGSUSED*/
 int
-ddp_usrreq( so, req, m, addr, rights )
+ddp_usrreq( so, req, m, addr, rights, p )
     struct socket	*so;
     int			req;
     struct mbuf		*m, *addr, *rights;
+    struct proc		*p;
 {
-    /* XXX Need to pass p into this routine */
-    struct proc *p = curproc;
     struct ddpcb	*ddp;
     int			error = 0;
 

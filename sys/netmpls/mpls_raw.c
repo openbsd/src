@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.2 2008/04/23 11:22:23 norby Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.3 2008/05/23 16:03:03 thib Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -78,7 +78,7 @@ mpls_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 int
 mpls_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control)
+    struct mbuf *control, struct proc *p)
 {
 	int error = 0;
 

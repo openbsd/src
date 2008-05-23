@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_extern.h,v 1.3 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: at_extern.h,v 1.4 2008/05/23 16:03:03 thib Exp $	*/
 /*      $NetBSD: at_extern.h,v 1.3 1997/04/03 18:38:23 christos Exp $   */
 
 /*
@@ -97,7 +97,7 @@ int		at_control(u_long, caddr_t, struct ifnet *,
 u_int16_t	at_cksum(struct mbuf *, int);
 int		ddp_usrreq(struct socket *, int,
 				struct mbuf *, struct mbuf *,
-				struct mbuf *);
+				struct mbuf *, struct proc *);
 void		ddp_init(void );
 struct ifaddr 	*at_ifawithnet(struct sockaddr_at *, struct ifaddr *);
 int		ddp_output(struct mbuf *, ...);
