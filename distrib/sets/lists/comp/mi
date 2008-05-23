@@ -190,8 +190,6 @@
 ./usr/include/dev/ic/am79900reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
-./usr/include/dev/ic/am79c930reg.h
-./usr/include/dev/ic/am79c930var.h
 ./usr/include/dev/ic/amireg.h
 ./usr/include/dev/ic/amivar.h
 ./usr/include/dev/ic/anreg.h
@@ -208,8 +206,6 @@
 ./usr/include/dev/ic/atwreg.h
 ./usr/include/dev/ic/atwvar.h
 ./usr/include/dev/ic/atxxreg.h
-./usr/include/dev/ic/awireg.h
-./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
 ./usr/include/dev/ic/ax88190var.h
 ./usr/include/dev/ic/bhareg.h
@@ -1885,11 +1881,9 @@
 ./usr/share/man/cat2/alpha/writel.0
 ./usr/share/man/cat2/alpha/writew.0
 ./usr/share/man/cat2/amd64/amd64_get_ioperm.0
-./usr/share/man/cat2/amd64/amd64_get_ldt.0
 ./usr/share/man/cat2/amd64/amd64_get_mtrr.0
 ./usr/share/man/cat2/amd64/amd64_iopl.0
 ./usr/share/man/cat2/amd64/amd64_set_ioperm.0
-./usr/share/man/cat2/amd64/amd64_set_ldt.0
 ./usr/share/man/cat2/amd64/amd64_set_mtrr.0
 ./usr/share/man/cat2/armish/arm_drain_writebuf.0
 ./usr/share/man/cat2/armish/arm_sync_icache.0
