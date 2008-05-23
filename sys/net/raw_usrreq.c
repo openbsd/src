@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.10 2004/01/03 14:08:53 espie Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.11 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -147,10 +147,11 @@ raw_ctlinput(cmd, arg, d)
 
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control)
+raw_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	struct rawcb *rp = sotorawcb(so);
 	int error = 0;

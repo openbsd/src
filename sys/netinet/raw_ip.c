@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.43 2008/05/09 02:52:15 markus Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.44 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ u_long	rip_recvspace = RIPRCVQ;
 /*ARGSUSED*/
 int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control)
+    struct mbuf *control, struct proc *p)
 {
 	int error = 0;
 	struct inpcb *inp = sotoinpcb(so);

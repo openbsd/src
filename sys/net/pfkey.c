@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.17 2007/09/13 21:00:14 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.18 2008/05/23 15:51:12 thib Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -92,7 +92,7 @@ struct sockaddr pfkey_addr = { 2, PF_KEY, };
 
 /* static struct domain pfkey_domain; */
 static int pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
-    struct mbuf *nam, struct mbuf *control);
+    struct mbuf *nam, struct mbuf *control, struct proc *);
 static int pfkey_output(struct mbuf *mbuf, struct socket *socket);
 
 int pfkey_register(struct pfkey_version *version);
@@ -195,7 +195,7 @@ ret:
 }
 
 static int
-pfkey_attach(struct socket *socket, struct mbuf *proto)
+pfkey_attach(struct socket *socket, struct mbuf *proto, struct proc *p)
 {
 	int rval;
 	int s;
@@ -205,7 +205,7 @@ pfkey_attach(struct socket *socket, struct mbuf *proto)
 		return (ENOMEM);
 
 	s = splnet();
-	rval = raw_usrreq(socket, PRU_ATTACH, NULL, proto, NULL);
+	rval = raw_usrreq(socket, PRU_ATTACH, NULL, proto, NULL, p);
 	splx(s);
 	if (rval)
 		goto ret;
@@ -226,13 +226,13 @@ ret:
 }
 
 static int
-pfkey_detach(struct socket *socket)
+pfkey_detach(struct socket *socket, struct proc *p)
 {
 	int rval, i, s;
 
 	rval = pfkey_versions[socket->so_proto->pr_protocol]->release(socket);
 	s = splnet();
-	i = raw_usrreq(socket, PRU_DETACH, NULL, NULL, NULL);
+	i = raw_usrreq(socket, PRU_DETACH, NULL, NULL, NULL, p);
 	splx(s);
 
 	if (!rval)
@@ -243,7 +243,7 @@ pfkey_detach(struct socket *socket)
 
 static int
 pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
-    struct mbuf *nam, struct mbuf *control)
+    struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
 	int rval;
 	int s;
@@ -255,14 +255,14 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 
 	switch (req) {
 	case PRU_ATTACH:
-		return (pfkey_attach(socket, nam));
+		return (pfkey_attach(socket, nam, p));
 
 	case PRU_DETACH:
-		return (pfkey_detach(socket));
+		return (pfkey_detach(socket, p));
 
 	default:
 		s = splnet();
-		rval = raw_usrreq(socket, req, mbuf, nam, control);
+		rval = raw_usrreq(socket, req, mbuf, nam, control, p);
 		splx(s);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.14 2007/02/27 19:09:56 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.15 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ krpc_call(sa, prog, vers, func, data, from_p, retries)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(0);
-	error = sobind(so, m);
+	error = sobind(so, m, &proc0);
 	m_freem(m);
 	if (error) {
 		printf("bind failed\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.45 2008/05/19 14:58:29 markus Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.46 2008/05/23 15:51:12 thib Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,15 +162,15 @@ u_char inet6ctlerrmap[PRC_NCMDS] = {
  * Bind an address (or at least a port) to an PF_INET6 socket.
  */
 int
-in6_pcbbind(inp, nam)
+in6_pcbbind(inp, nam, p)
 	struct inpcb *inp;
 	struct mbuf *nam;
+	struct proc *p;
 {
 	struct socket *so = inp->inp_socket;
 
 	struct inpcbtable *head = inp->inp_table;
 	struct sockaddr_in6 *sin6;
-	struct proc *p = curproc;		/* XXX */
 	u_short lport = 0;
 	int wild = INPLOOKUP_IPV6, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
@@ -465,7 +465,7 @@ in6_pcbconnect(inp, nam)
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
 		if (inp->inp_lport == 0)
-			(void)in6_pcbbind(inp, (struct mbuf *)0);
+			(void)in6_pcbbind(inp, NULL, curproc);
 		inp->inp_laddr6 = *in6a;
 	}
 	inp->inp_faddr6 = sin6->sin6_addr;

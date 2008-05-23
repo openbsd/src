@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.58 2008/05/13 17:47:42 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.59 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ nfs_connect(nmp, rep)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);
-		error = sobind(so, m);
+		error = sobind(so, m, &proc0);
 		m_freem(m);
 		if (error)
 			goto bad;
@@ -1239,10 +1239,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0);
+			    (struct mbuf *)0, (struct mbuf *)0, curproc);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0);
+			    nmp->nm_nam, (struct mbuf *)0, curproc);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
 					so->so_error = 0;

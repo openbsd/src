@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.17 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.18 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -118,6 +118,6 @@ int	 udp6_output(struct inpcb *, struct mbuf *, struct mbuf *,
 int	 udp_output(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 udp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif /* _KERNEL */
 #endif /* _NETINET_UDP_VAR_H_ */

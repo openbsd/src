@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.70 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.71 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct rt_msghdr *rtmsg_3to4(struct mbuf *, int *);
 
 int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control)
+    struct mbuf *control, struct proc *p)
 {
 	int		 error = 0;
 	struct rawcb	*rp = sotorawcb(so);
@@ -141,7 +141,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		else
 			error = raw_attach(so, (int)(long)nam);
 	} else
-		error = raw_usrreq(so, req, m, nam, control);
+		error = raw_usrreq(so, req, m, nam, control, p);
 
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {

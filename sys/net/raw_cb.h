@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.6 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.7 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ void	 raw_disconnect(struct rawcb *);
 void	 raw_init(void);
 void	 raw_input(struct mbuf *, ...);
 int	 raw_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 
 #endif /* _KERNEL */
 #endif /* _NET_RAW_CB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.97 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.98 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ tcp6_usrreq(so, req, m, nam, control, p)
 	struct proc *p;
 {
 
-	return tcp_usrreq(so, req, m, nam, control);
+	return tcp_usrreq(so, req, m, nam, control, p);
 }
 #endif
 
@@ -145,10 +145,11 @@ tcp6_usrreq(so, req, m, nam, control, p)
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control)
+tcp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	struct sockaddr_in *sin;
 	struct inpcb *inp;
@@ -239,10 +240,10 @@ tcp_usrreq(so, req, m, nam, control)
 	case PRU_BIND:
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
-			error = in6_pcbbind(inp, nam);
+			error = in6_pcbbind(inp, nam, p);
 		else
 #endif
-			error = in_pcbbind(inp, nam);
+			error = in_pcbbind(inp, nam, p);
 		if (error)
 			break;
 		break;
@@ -254,10 +255,10 @@ tcp_usrreq(so, req, m, nam, control)
 		if (inp->inp_lport == 0) {
 #ifdef INET6
 			if (inp->inp_flags & INP_IPV6)
-				error = in6_pcbbind(inp, NULL);
+				error = in6_pcbbind(inp, NULL, p);
 			else
 #endif
-				error = in_pcbbind(inp, NULL);
+				error = in_pcbbind(inp, NULL, p);
 		}
 		/* If the in_pcbbind() above is called, the tp->pf
 		   should still be whatever it was before. */
@@ -291,7 +292,7 @@ tcp_usrreq(so, req, m, nam, control)
 			}
 
 			if (inp->inp_lport == 0) {
-				error = in6_pcbbind(inp, NULL);
+				error = in6_pcbbind(inp, NULL, p);
 				if (error)
 					break;
 			}
@@ -307,7 +308,7 @@ tcp_usrreq(so, req, m, nam, control)
 			}
 
 			if (inp->inp_lport == 0) {
-				error = in_pcbbind(inp, NULL);
+				error = in_pcbbind(inp, NULL, p);
 				if (error)
 					break;
 			}

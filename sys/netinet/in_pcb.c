@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.98 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.99 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -232,23 +232,23 @@ in_pcballoc(so, v)
 }
 
 int
-in_pcbbind(v, nam)
+in_pcbbind(v, nam, p)
 	void *v;
 	struct mbuf *nam;
+	struct proc *p;
 {
 	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
 	struct sockaddr_in *sin;
-	struct proc *p = curproc;		/* XXX */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
 
 #ifdef INET6
 	if (sotopf(so) == PF_INET6)
-		return in6_pcbbind(inp, nam);
+		return in6_pcbbind(inp, nam, p);
 #endif /* INET6 */
 
 	if (TAILQ_EMPTY(&in_ifaddr))
@@ -434,7 +434,7 @@ in_pcbconnect(v, nam)
 		return (EADDRINUSE);
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		if (inp->inp_lport == 0 &&
-		    in_pcbbind(inp, (struct mbuf *)0) == EADDRNOTAVAIL)
+		    in_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
 			return (EADDRNOTAVAIL);
 		inp->inp_laddr = ifaddr->sin_addr;
 	}

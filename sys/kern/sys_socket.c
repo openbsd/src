@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.11 2007/02/26 23:53:33 kurt Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.12 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	if (IOCGROUP(cmd) == 'r')
 		return (rtioctl(cmd, data, p));
 	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0));
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
 }
 
 int
@@ -169,7 +169,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, (struct mbuf *)0, 
-	    (struct mbuf *)0));
+	    (struct mbuf *)0, p));
 }
 
 /* ARGSUSED */

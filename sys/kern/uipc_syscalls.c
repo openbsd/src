@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.67 2008/04/06 19:42:16 stefan Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.68 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error == 0) {
-		error = sobind(fp->f_data, nam);
+		error = sobind(fp->f_data, nam, p);
 		m_freem(nam);
 	}
 	FRELE(fp);
@@ -934,7 +934,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	so = fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
 	if (error)
 		goto bad;
 	if (len > m->m_len)
@@ -978,7 +978,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0, p);
 	if (error)
 		goto bad;
 	if (len > m->m_len)
@@ -1022,7 +1022,7 @@ sys_getpeereid(struct proc *p, void *v, register_t *retval)
 		error = ENOBUFS;
 		goto bad;
 	}	
-	error = (*so->so_proto->pr_usrreq)(so, PRU_PEEREID, 0, m, 0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_PEEREID, 0, m, 0, p);
 	if (!error && m->m_len != sizeof(struct unpcbid))
 		error = EOPNOTSUPP;
 	if (error)

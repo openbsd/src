@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.62 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.63 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ struct baddynamicports {
 
 void	 in_losing(struct inpcb *);
 int	 in_pcballoc(struct socket *, void *);
-int	 in_pcbbind(void *, struct mbuf *);
+int	 in_pcbbind(void *, struct mbuf *, struct proc *);
 int	 in_pcbconnect(void *, struct mbuf *);
 void	 in_pcbdetach(void *);
 void	 in_pcbdisconnect(void *);
@@ -257,7 +257,7 @@ struct inpcb *
 struct inpcb *
 	 in6_pcblookup_listen(struct inpcbtable *,
 			       struct in6_addr *, u_int, int, struct mbuf *);
-int	 in6_pcbbind(struct inpcb *, struct mbuf *);
+int	 in6_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
 int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
 int	 in6_setsockaddr(struct inpcb *, struct mbuf *);
 int	 in6_setpeeraddr(struct inpcb *, struct mbuf *);

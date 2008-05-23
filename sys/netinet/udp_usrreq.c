@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.119 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.120 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1011,16 +1011,17 @@ udp6_usrreq(so, req, m, addr, control, p)
 	struct proc *p;
 {
 
-	return udp_usrreq(so, req, m, addr, control);
+	return udp_usrreq(so, req, m, addr, control, p);
 }
 #endif
 
 /*ARGSUSED*/
 int
-udp_usrreq(so, req, m, addr, control)
+udp_usrreq(so, req, m, addr, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *addr, *control;
+	struct proc *p;
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -1076,10 +1077,10 @@ udp_usrreq(so, req, m, addr, control)
 		s = splsoftnet();
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
-			error = in6_pcbbind(inp, addr);
+			error = in6_pcbbind(inp, addr, p);
 		else
 #endif
-			error = in_pcbbind(inp, addr);
+			error = in_pcbbind(inp, addr, p);
 		splx(s);
 		break;
 

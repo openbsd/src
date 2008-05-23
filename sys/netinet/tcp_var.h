@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.87 2008/05/06 08:47:36 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.88 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -600,7 +600,7 @@ int	 tcp6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif
 int	 tcp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 #ifdef TCP_SACK

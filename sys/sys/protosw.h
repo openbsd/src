@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.10 2007/09/12 18:45:14 mk Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.11 2008/05/23 15:51:12 thib Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ struct protosw {
 /* user-protocol hook */
 					/* user request: see list below */
 	int	(*pr_usrreq)(struct socket *, int, struct mbuf *,
-		    struct mbuf *, struct mbuf *);
+		    struct mbuf *, struct mbuf *, struct proc *);
 
 /* utility hooks */
 	void	(*pr_init)(void);	/* initialization hook */
