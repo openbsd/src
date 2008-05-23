@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1364 2008/05/22 20:31:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1365 2008/05/23 22:46:33 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4562,6 +4562,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8343,
 	    "MPC8343",
+	},
+	{
+	    PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PW008GE5,
+	    "PW008GE5",
 	},
 	{
 	    PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PP250_450_LAN,

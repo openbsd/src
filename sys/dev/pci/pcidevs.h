@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1364 2008/05/22 20:31:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1365 2008/05/23 22:46:33 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1663,6 +1663,7 @@
 #define	PCI_PRODUCT_FREESCALE_MPC8343	0x0087		/* MPC8343 */
 
 /* Fujitsu products */
+#define	PCI_PRODUCT_FUJITSU_PW008GE5	0x11a1		/* PW008GE5 */
 #define	PCI_PRODUCT_FUJITSU_PP250_450_LAN	0x11cc		/* PRIMEPOWER250/450 LAN */
 
 /* Future Domain products */
