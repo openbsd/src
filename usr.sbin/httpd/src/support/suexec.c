@@ -1,3 +1,5 @@
+/*	$OpenBSD: suexec.c,v 1.13 2008/05/23 12:12:01 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -112,482 +114,463 @@ static FILE *log = NULL;
 
 char *safe_env_lst[] =
 {
-    /* variable name starts with */
-    "HTTP_",
+	/* variable name starts with */
+	"HTTP_",
 #ifdef MOD_SSL
-    "HTTPS=",
-    "HTTPS_",
-    "SSL_",
+	"HTTPS=",
+	"HTTPS_",
+	"SSL_",
 #endif
 
-    /* variable name is */
-    "AUTH_TYPE=",
-    "CONTENT_LENGTH=",
-    "CONTENT_TYPE=",
-    "DATE_GMT=",
-    "DATE_LOCAL=",
-    "DOCUMENT_NAME=",
-    "DOCUMENT_PATH_INFO=",
-    "DOCUMENT_ROOT=",
-    "DOCUMENT_URI=",
-    "FILEPATH_INFO=",
-    "GATEWAY_INTERFACE=",
-    "LAST_MODIFIED=",
-    "PATH_INFO=",
-    "PATH_TRANSLATED=",
-    "QUERY_STRING=",
-    "QUERY_STRING_UNESCAPED=",
-    "REMOTE_ADDR=",
-    "REMOTE_HOST=",
-    "REMOTE_IDENT=",
-    "REMOTE_PORT=",
-    "REMOTE_USER=",
-    "REDIRECT_QUERY_STRING=",
-    "REDIRECT_STATUS=",
-    "REDIRECT_URL=",
-    "REQUEST_METHOD=",
-    "REQUEST_URI=",
-    "SCRIPT_FILENAME=",
-    "SCRIPT_NAME=",
-    "SCRIPT_URI=",
-    "SCRIPT_URL=",
-    "SERVER_ADMIN=",
-    "SERVER_NAME=",
-    "SERVER_ADDR=",
-    "SERVER_PORT=",
-    "SERVER_PROTOCOL=",
-    "SERVER_SOFTWARE=",
-    "UNIQUE_ID=",
-    "USER_NAME=",
-    "TZ=",
-    NULL
+	/* variable name is */
+	"AUTH_TYPE=",
+	"CONTENT_LENGTH=",
+	"CONTENT_TYPE=",
+	"DATE_GMT=",
+	"DATE_LOCAL=",
+	"DOCUMENT_NAME=",
+	"DOCUMENT_PATH_INFO=",
+	"DOCUMENT_ROOT=",
+	"DOCUMENT_URI=",
+	"FILEPATH_INFO=",
+	"GATEWAY_INTERFACE=",
+	"LAST_MODIFIED=",
+	"PATH_INFO=",
+	"PATH_TRANSLATED=",
+	"QUERY_STRING=",
+	"QUERY_STRING_UNESCAPED=",
+	"REMOTE_ADDR=",
+	"REMOTE_HOST=",
+	"REMOTE_IDENT=",
+	"REMOTE_PORT=",
+	"REMOTE_USER=",
+	"REDIRECT_QUERY_STRING=",
+	"REDIRECT_STATUS=",
+	"REDIRECT_URL=",
+	"REQUEST_METHOD=",
+	"REQUEST_URI=",
+	"SCRIPT_FILENAME=",
+	"SCRIPT_NAME=",
+	"SCRIPT_URI=",
+	"SCRIPT_URL=",
+	"SERVER_ADMIN=",
+	"SERVER_NAME=",
+	"SERVER_ADDR=",
+	"SERVER_PORT=",
+	"SERVER_PROTOCOL=",
+	"SERVER_SOFTWARE=",
+	"UNIQUE_ID=",
+	"USER_NAME=",
+	"TZ=",
+	NULL
 };
 
 
-static void err_output(const char *fmt, va_list ap)
+static void
+err_output(const char *fmt, va_list ap)
 {
 #ifdef LOG_EXEC
-    time_t timevar;
-    struct tm *lt;
+	time_t timevar;
+	struct tm *lt;
 
-    if (!log) {
-	if ((log = fopen(LOG_EXEC, "a")) == NULL) {
-	    fprintf(stderr, "failed to open log file\n");
-	    perror("fopen");
-	    exit(1);
+	if (!log) {
+		if ((log = fopen(LOG_EXEC, "a")) == NULL) {
+			fprintf(stderr, "failed to open log file\n");
+			perror("fopen");
+			exit(1);
+		}
 	}
-    }
 
-    time(&timevar);
-    lt = localtime(&timevar);
+	time(&timevar);
+	lt = localtime(&timevar);
 
-    fprintf(log, "[%d-%.2d-%.2d %.2d:%.2d:%.2d]: ",
-	    lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-	    lt->tm_hour, lt->tm_min, lt->tm_sec);
+	fprintf(log, "[%d-%.2d-%.2d %.2d:%.2d:%.2d]: ",
+	lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+	lt->tm_hour, lt->tm_min, lt->tm_sec);
 
-    vfprintf(log, fmt, ap);
+	vfprintf(log, fmt, ap);
 
-    fflush(log);
+	fflush(log);
 #endif /* LOG_EXEC */
-    return;
+	return;
 }
 
-static void log_err(const char *fmt,...)
+static void
+log_err(const char *fmt,...)
 {
 #ifdef LOG_EXEC
-    va_list ap;
+	va_list ap;
 
-    va_start(ap, fmt);
-    err_output(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	err_output(fmt, ap);
+	va_end(ap);
 #endif /* LOG_EXEC */
-    return;
+	return;
 }
 
-static void clean_env(void)
+static void
+clean_env(void)
 {
-    char pathbuf[512];
-    char **cleanenv;
-    char **ep;
-    int cidx = 0;
-    int idx;
+	char pathbuf[512];
+	char **cleanenv;
+	char **ep;
+	int cidx = 0;
+	int idx;
 
-    /* While cleaning the environment, the environment should be clean.
-     * (e.g. malloc() may get the name of a file for writing debugging info.
-     * Bad news if MALLOC_DEBUG_FILE is set to /etc/passwd.  Sprintf() may be
-     * susceptible to bad locale settings....)
-     * (from PR 2790)
-     */
-    char **envp = environ;
-    char *empty_ptr = NULL;
+	/*
+	 *While cleaning the environment, the environment should be clean.
+	 * (e.g. malloc() may get the name of a file for writing debugging info.
+	 * Bad news if MALLOC_DEBUG_FILE is set to /etc/passwd.  Sprintf()
+	 * may be susceptible to bad locale settings....)
+	 * (from Apache 1.3 PR 2790)
+	 */
+	char **envp = environ;
+	char *empty_ptr = NULL;
 
-    environ = &empty_ptr; /* VERY safe environment */
+	environ = &empty_ptr; /* VERY safe environment */
 
-    if ((cleanenv = (char **) calloc(AP_ENVBUF, sizeof(char *))) == NULL) {
-        log_err("emerg: failed to malloc memory for environment\n");
-	exit(120);
-    }
+	if ((cleanenv = (char **)calloc(AP_ENVBUF, sizeof(char *))) == NULL) {
+		log_err("emerg: failed to malloc memory for environment\n");
+		exit(120);
+	}
 
-    snprintf(pathbuf, sizeof(pathbuf), "PATH=%s", SAFE_PATH);
-    cleanenv[cidx] = strdup(pathbuf);
-    cidx++;
+	snprintf(pathbuf, sizeof(pathbuf), "PATH=%s", SAFE_PATH);
+	cleanenv[cidx] = strdup(pathbuf);
+	cidx++;
 
-    for (ep = envp; *ep && cidx < AP_ENVBUF-1; ep++) {
-        for (idx = 0; safe_env_lst[idx]; idx++) {
-            if (!strncmp(*ep, safe_env_lst[idx],
-                         strlen(safe_env_lst[idx]))) {
-		cleanenv[cidx] = *ep;
-		cidx++;
-                break;
-            }
-        }
-    }
+	for (ep = envp; *ep && cidx < AP_ENVBUF-1; ep++) {
+		for (idx = 0; safe_env_lst[idx]; idx++) {
+			if (!strncmp(*ep, safe_env_lst[idx],
+			    strlen(safe_env_lst[idx]))) {
+				cleanenv[cidx] = *ep;
+				cidx++;
+				break;
+			}
+		}
+	}
 
-    cleanenv[cidx] = NULL;
+	cleanenv[cidx] = NULL;
 
-    environ = cleanenv;
+	environ = cleanenv;
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
-    int userdir = 0;		/* ~userdir flag             */
-    uid_t uid;			/* user information          */
-    gid_t gid;			/* target group placeholder  */
-    char *target_uname;		/* target user name          */
-    char *target_gname;		/* target group name         */
-    char *target_homedir;	/* target home directory     */
-    char *actual_uname;		/* actual user name          */
-    char *actual_gname;		/* actual group name         */
-    char *prog;			/* name of this program      */
-    char *cmd;			/* command to be executed    */
-    char cwd[AP_MAXPATH];	/* current working directory */
-    char dwd[AP_MAXPATH];	/* docroot working directory */
-    struct passwd *pw;		/* password entry holder     */
-    struct group *gr;		/* group entry holder        */
-    struct stat dir_info;	/* directory info holder     */
-    struct stat prg_info;	/* program info holder       */
+	int userdir = 0;	/* ~userdir flag             */
+	uid_t uid;		/* user information          */
+	gid_t gid;		/* target group placeholder  */
+	char *target_uname;	/* target user name          */
+	char *target_gname;	/* target group name         */
+	char *target_homedir;	/* target home directory     */
+	char *actual_uname;	/* actual user name          */
+	char *actual_gname;	/* actual group name         */
+	char *prog;		/* name of this program      */
+	char *cmd;		/* command to be executed    */
+	char cwd[AP_MAXPATH];	/* current working directory */
+	char dwd[AP_MAXPATH];	/* docroot working directory */
+	struct passwd *pw;	/* password entry holder     */
+	struct group *gr;	/* group entry holder        */
+	struct stat dir_info;	/* directory info holder     */
+	struct stat prg_info;	/* program info holder       */
 
-    /*
-     * Start with a "clean" environment
-     */
-    clean_env();
+	/* Start with a "clean" environment */
+	clean_env();
 
-    prog = argv[0];
-    /*
-     * Check existence/validity of the UID of the user
-     * running this program.  Error out if invalid.
-     */
-    uid = getuid();
-    if ((pw = getpwuid(uid)) == NULL) {
-	log_err("crit: invalid uid: (%u)\n", uid);
-	exit(102);
-    }
-    /*
-     * See if this is a 'how were you compiled' request, and
-     * comply if so.
-     */
-    if ((argc > 1)
-        && (! strcmp(argv[1], "-V"))
-        && ((uid == 0)
-            || (! strcmp(HTTPD_USER, pw->pw_name)))
-        ) {
+	prog = argv[0];
+	/*
+	 * Check existence/validity of the UID of the user
+	 * running this program.  Error out if invalid.
+	 */
+	uid = getuid();
+	if ((pw = getpwuid(uid)) == NULL) {
+		log_err("crit: invalid uid: (%u)\n", uid);
+		exit(102);
+	}
+	/*
+	 * See if this is a 'how were you compiled' request, and
+	 * comply if so.
+	 */
+	if ((argc > 1) && (! strcmp(argv[1], "-V")) && ((uid == 0)
+	    || (! strcmp(HTTPD_USER, pw->pw_name)))) {
 #ifdef DOC_ROOT
-        fprintf(stderr, " -D DOC_ROOT=\"%s\"\n", DOC_ROOT);
+		fprintf(stderr, " -D DOC_ROOT=\"%s\"\n", DOC_ROOT);
 #endif
 #ifdef GID_MIN
-        fprintf(stderr, " -D GID_MIN=%d\n", GID_MIN);
+		fprintf(stderr, " -D GID_MIN=%d\n", GID_MIN);
 #endif
 #ifdef HTTPD_USER
-        fprintf(stderr, " -D HTTPD_USER=\"%s\"\n", HTTPD_USER);
+		fprintf(stderr, " -D HTTPD_USER=\"%s\"\n", HTTPD_USER);
 #endif
 #ifdef LOG_EXEC
-        fprintf(stderr, " -D LOG_EXEC=\"%s\"\n", LOG_EXEC);
+		fprintf(stderr, " -D LOG_EXEC=\"%s\"\n", LOG_EXEC);
 #endif
 #ifdef SAFE_PATH
-        fprintf(stderr, " -D SAFE_PATH=\"%s\"\n", SAFE_PATH);
+		fprintf(stderr, " -D SAFE_PATH=\"%s\"\n", SAFE_PATH);
 #endif
 #ifdef SUEXEC_UMASK
-        fprintf(stderr, " -D SUEXEC_UMASK=%03o\n", SUEXEC_UMASK);
+		fprintf(stderr, " -D SUEXEC_UMASK=%03o\n", SUEXEC_UMASK);
 #endif
 #ifdef UID_MIN
-        fprintf(stderr, " -D UID_MIN=%d\n", UID_MIN);
+		fprintf(stderr, " -D UID_MIN=%d\n", UID_MIN);
 #endif
 #ifdef USERDIR_SUFFIX
-        fprintf(stderr, " -D USERDIR_SUFFIX=\"%s\"\n", USERDIR_SUFFIX);
+		fprintf(stderr, " -D USERDIR_SUFFIX=\"%s\"\n", USERDIR_SUFFIX);
 #endif
-        exit(0);
-    }
-    /*
-     * If there are a proper number of arguments, set
-     * all of them to variables.  Otherwise, error out.
-     */
-    if (argc < 4) {
-	log_err("alert: too few arguments\n");
-	exit(101);
-    }
-    target_uname = argv[1];
-    target_gname = argv[2];
-    cmd = argv[3];
-
-    /*
-     * Check to see if the user running this program
-     * is the user allowed to do so as defined in
-     * suexec.h.  If not the allowed user, error out.
-     */
-    if (strcmp(HTTPD_USER, pw->pw_name)) {
-        log_err("crit: calling user mismatch (%s instead of %s)\n",
-		pw->pw_name, HTTPD_USER);
-	exit(103);
-    }
-
-    /*
-     * Check for a leading '/' (absolute path) in the command to be executed,
-     * or attempts to back up out of the current directory,
-     * to protect against attacks.  If any are
-     * found, error out.  Naughty naughty crackers.
-     */
-    if ((cmd[0] == '/') || (!strncmp(cmd, "../", 3))
-	|| (strstr(cmd, "/../") != NULL)) {
-        log_err("error: invalid command (%s)\n", cmd);
-	exit(104);
-    }
-
-    /*
-     * Check to see if this is a ~userdir request.  If
-     * so, set the flag, and remove the '~' from the
-     * target username.
-     */
-    if (!strncmp("~", target_uname, 1)) {
-	target_uname++;
-	userdir = 1;
-    }
-
-    /*
-     * Error out if the target username is invalid.
-     */
-    if ((pw = getpwnam(target_uname)) == NULL) {
-	log_err("crit: invalid target user name: (%s)\n", target_uname);
-	exit(105);
-    }
-
-    /*
-     * Error out if the target group name is invalid.
-     */
-    if (strspn(target_gname, "1234567890") != strlen(target_gname)) {
-	if ((gr = getgrnam(target_gname)) == NULL) {
-	    log_err("crit: invalid target group name: (%s)\n", target_gname);
-	    exit(106);
+		exit(0);
 	}
-	gid = gr->gr_gid;
-	actual_gname = strdup(gr->gr_name);
-    }
-    else {
-	gid = atoi(target_gname);
-	actual_gname = strdup(target_gname);
-    }
+	/*
+	 * If there are a proper number of arguments, set
+	 * all of them to variables.  Otherwise, error out.
+	 */
+	if (argc < 4) {
+		log_err("alert: too few arguments\n");
+		exit(101);
+	}
+	target_uname = argv[1];
+	target_gname = argv[2];
+	cmd = argv[3];
+
+	/*
+	 * Check to see if the user running this program
+	 * is the user allowed to do so as defined in
+	 * suexec.h.  If not the allowed user, error out.
+	 */
+	if (strcmp(HTTPD_USER, pw->pw_name)) {
+		log_err("crit: calling user mismatch (%s instead of %s)\n",
+		    pw->pw_name, HTTPD_USER);
+		exit(103);
+	}
+
+	/*
+	 * Check for a leading '/' (absolute path) in the command to be
+	 * executed, or attempts to back up out of the current directory,
+	 * to protect against attacks.  If any are
+	 * found, error out.  Naughty naughty crackers.
+	 */
+	if ((cmd[0] == '/') || (!strncmp(cmd, "../", 3))
+	    || (strstr(cmd, "/../") != NULL)) {
+		log_err("error: invalid command (%s)\n", cmd);
+		exit(104);
+	}
+
+	/*
+	 * Check to see if this is a ~userdir request.  If
+	 * so, set the flag, and remove the '~' from the
+	 * target username.
+	 */
+	if (!strncmp("~", target_uname, 1)) {
+		target_uname++;
+		userdir = 1;
+	}
+
+	/* Error out if the target username is invalid.	*/
+	if ((pw = getpwnam(target_uname)) == NULL) {
+		log_err("crit: invalid target user name: (%s)\n", target_uname);
+		exit(105);
+	}
+
+	/* Error out if the target group name is invalid. */
+	if (strspn(target_gname, "1234567890") != strlen(target_gname)) {
+		if ((gr = getgrnam(target_gname)) == NULL) {
+			log_err("crit: invalid target group name: (%s)\n",
+			    target_gname);
+			exit(106);
+		}
+		gid = gr->gr_gid;
+		actual_gname = strdup(gr->gr_name);
+	} else {
+		gid = atoi(target_gname);
+		actual_gname = strdup(target_gname);
+	}
 
 
-    /*
-     * Save these for later since initgroups will hose the struct
-     */
-    uid = pw->pw_uid;
-    actual_uname = strdup(pw->pw_name);
-    target_homedir = strdup(pw->pw_dir);
+	/* Save these for later since initgroups will hose the struct */
+	uid = pw->pw_uid;
+	actual_uname = strdup(pw->pw_name);
+	target_homedir = strdup(pw->pw_dir);
 
-    /*
-     * Log the transaction here to be sure we have an open log 
-     * before we setuid().
-     */
-    log_err("info: (target/actual) uid: (%s/%s) gid: (%s/%s) cmd: %s\n",
-	    target_uname, actual_uname,
-	    target_gname, actual_gname,
-	    cmd);
+	/*
+	 * Log the transaction here to be sure we have an open log 
+	 * before we setuid().
+	 */
+	log_err("info: (target/actual) uid: (%s/%s) gid: (%s/%s) cmd: %s\n",
+	    target_uname, actual_uname,	target_gname, actual_gname, cmd);
 
-    /*
-     * Error out if attempt is made to execute as root or as
-     * a UID less than UID_MIN.  Tsk tsk.
-     */
-    if ((uid == 0) || (uid < UID_MIN)) {
-	log_err("crit: cannot run as forbidden uid (%u/%s)\n", uid, cmd);
-	exit(107);
-    }
+	/*
+	 * Error out if attempt is made to execute as root or as
+	 * a UID less than UID_MIN.  Tsk tsk.
+	 */
+	if ((uid == 0) || (uid < UID_MIN)) {
+		log_err("crit: cannot run as forbidden uid (%u/%s)\n", uid,
+		    cmd);
+		exit(107);
+	}
 
-    /*
-     * Error out if attempt is made to execute as root group
-     * or as a GID less than GID_MIN.  Tsk tsk.
-     */
-    if ((gid == 0) || (gid < GID_MIN)) {
-	log_err("crit: cannot run as forbidden gid (%u/%s)\n", gid, cmd);
-	exit(108);
-    }
+	/*
+	 * Error out if attempt is made to execute as root group
+	 * or as a GID less than GID_MIN.  Tsk tsk.
+	 */
+	if ((gid == 0) || (gid < GID_MIN)) {
+		log_err("crit: cannot run as forbidden gid (%u/%s)\n", gid,
+		    cmd);
+		exit(108);
+	}
 
 #if defined(USE_SETUSERCONTEXT)
-    if (setusercontext(NULL, pw, uid,
-	LOGIN_SETALL & ~(LOGIN_SETLOGIN | LOGIN_SETPATH)) != 0) {
-	log_err("emerg: failed to setusercontext (%u: %s)\n", uid, cmd);
-	exit(110);
-    }
+	if (setusercontext(NULL, pw, uid,
+	    LOGIN_SETALL & ~(LOGIN_SETLOGIN | LOGIN_SETPATH)) != 0) {
+		log_err("emerg: failed to setusercontext (%u: %s)\n", uid, cmd);
+		exit(110);
+	}
 #else
-    /*
-     * Change UID/GID here so that the following tests work over NFS.
-     *
-     * Initialize the group access list for the target user,
-     * and setgid() to the target group. If unsuccessful, error out.
-     */
-    if (((setgid(gid)) != 0) || (initgroups(actual_uname, gid) != 0)) {
-	log_err("emerg: failed to setgid (%u: %s)\n", gid, cmd);
-	exit(109);
-    }
+	/*
+	 * Change UID/GID here so that the following tests work over NFS.
+	 *
+	 * Initialize the group access list for the target user,
+	 * and setgid() to the target group. If unsuccessful, error out.
+	 */
+	if (((setgid(gid)) != 0) || (initgroups(actual_uname, gid) != 0)) {
+		log_err("emerg: failed to setgid (%u: %s)\n", gid, cmd);
+		exit(109);
+	}
 
-    /*
-     * setuid() to the target user.  Error out on fail.
-     */
-    if ((setuid(uid)) != 0) {
-	log_err("emerg: failed to setuid (%u: %s)\n", uid, cmd);
-	exit(110);
-    }
+	/* setuid() to the target user.  Error out on fail. */
+	if ((setuid(uid)) != 0) {
+		log_err("emerg: failed to setuid (%u: %s)\n", uid, cmd);
+		exit(110);
+	}
 #endif
 
-    /*
-     * Get the current working directory, as well as the proper
-     * document root (dependant upon whether or not it is a
-     * ~userdir request).  Error out if we cannot get either one,
-     * or if the current working directory is not in the docroot.
-     * Use chdir()s and getcwd()s to avoid problems with symlinked
-     * directories.  Yuck.
-     */
-    if (getcwd(cwd, AP_MAXPATH) == NULL) {
-	log_err("emerg: cannot get current working directory\n");
-	exit(111);
-    }
-
-    if (userdir) {
-	if (((chdir(target_homedir)) != 0) ||
-	    ((chdir(USERDIR_SUFFIX)) != 0) ||
-	    ((getcwd(dwd, AP_MAXPATH)) == NULL) ||
-	    ((chdir(cwd)) != 0)) {
-	    log_err("emerg: cannot get docroot information (%s)\n",
-		    target_homedir);
-	    exit(112);
+	/*
+	 * Get the current working directory, as well as the proper
+	 * document root (dependant upon whether or not it is a
+	 * ~userdir request).  Error out if we cannot get either one,
+	 * or if the current working directory is not in the docroot.
+	 * Use chdir()s and getcwd()s to avoid problems with symlinked
+	 * directories.  Yuck.
+	 */
+	if (getcwd(cwd, AP_MAXPATH) == NULL) {
+		log_err("emerg: cannot get current working directory\n");
+		exit(111);
 	}
-    }
-    else {
-	if (((chdir(DOC_ROOT)) != 0) ||
-	    ((getcwd(dwd, AP_MAXPATH)) == NULL) ||
-	    ((chdir(cwd)) != 0)) {
-	    log_err("emerg: cannot get docroot information (%s)\n", DOC_ROOT);
-	    exit(113);
+
+	if (userdir) {
+		if (((chdir(target_homedir)) != 0) ||
+		    ((chdir(USERDIR_SUFFIX)) != 0) ||
+		    ((getcwd(dwd, AP_MAXPATH)) == NULL) ||
+		    ((chdir(cwd)) != 0)) {
+			log_err("emerg: cannot get docroot information (%s)\n",
+			    target_homedir);
+			exit(112);
+		}
+	} else {
+		if (((chdir(DOC_ROOT)) != 0) ||
+		    ((getcwd(dwd, AP_MAXPATH)) == NULL) ||
+		    ((chdir(cwd)) != 0)) {
+			log_err("emerg: cannot get docroot information (%s)\n",
+			    DOC_ROOT);
+			exit(113);
+		}
 	}
-    }
 
-    if ((strncmp(cwd, dwd, strlen(dwd))) != 0) {
-	log_err("error: command not in docroot (%s/%s)\n", cwd, cmd);
-	exit(114);
-    }
+	if ((strncmp(cwd, dwd, strlen(dwd))) != 0) {
+		log_err("error: command not in docroot (%s/%s)\n", cwd, cmd);
+		exit(114);
+	}
 
-    /*
-     * Stat the cwd and verify it is a directory, or error out.
-     */
-    if (((lstat(cwd, &dir_info)) != 0) || !(S_ISDIR(dir_info.st_mode))) {
-	log_err("error: cannot stat directory: (%s)\n", cwd);
-	exit(115);
-    }
+	/* Stat the cwd and verify it is a directory, or error out. */
+	if (((lstat(cwd, &dir_info)) != 0) || !(S_ISDIR(dir_info.st_mode))) {
+		log_err("error: cannot stat directory: (%s)\n", cwd);
+		exit(115);
+	}
 
-    /*
-     * Error out if cwd is writable by others.
-     */
-    if ((dir_info.st_mode & S_IWOTH) || (dir_info.st_mode & S_IWGRP)) {
-	log_err("error: directory is writable by others: (%s)\n", cwd);
-	exit(116);
-    }
+	/* Error out if cwd is writable by others. */
+	if ((dir_info.st_mode & S_IWOTH) || (dir_info.st_mode & S_IWGRP)) {
+		log_err("error: directory is writable by others: (%s)\n", cwd);
+		exit(116);
+	}
 
-    /*
-     * Error out if we cannot stat the program.
-     */
-    if (((lstat(cmd, &prg_info)) != 0) || (S_ISLNK(prg_info.st_mode))) {
-	log_err("error: cannot stat program: (%s)\n", cmd);
-	exit(117);
-    }
+	/* Error out if we cannot stat the program. */
+	if (((lstat(cmd, &prg_info)) != 0) || (S_ISLNK(prg_info.st_mode))) {
+		log_err("error: cannot stat program: (%s)\n", cmd);
+		exit(117);
+	}
 
-    /*
-     * Error out if the program is writable by others.
-     */
-    if ((prg_info.st_mode & S_IWOTH) || (prg_info.st_mode & S_IWGRP)) {
-	log_err("error: file is writable by others: (%s/%s)\n", cwd, cmd);
-	exit(118);
-    }
+	/* Error out if the program is writable by others. */
+	if ((prg_info.st_mode & S_IWOTH) || (prg_info.st_mode & S_IWGRP)) {
+		log_err("error: file is writable by others: (%s/%s)\n", cwd,
+		    cmd);
+		exit(118);
+	}
 
-    /*
-     * Error out if the file is setuid or setgid.
-     */
-    if ((prg_info.st_mode & S_ISUID) || (prg_info.st_mode & S_ISGID)) {
-	log_err("error: file is either setuid or setgid: (%s/%s)\n", cwd, cmd);
-	exit(119);
-    }
+	/* Error out if the file is setuid or setgid. */
+	if ((prg_info.st_mode & S_ISUID) || (prg_info.st_mode & S_ISGID)) {
+		log_err("error: file is either setuid or setgid: (%s/%s)\n",
+		    cwd, cmd);
+		exit(119);
+	}
 
-    /*
-     * Error out if the target name/group is different from
-     * the name/group of the cwd or the program.
-     */
-    if ((uid != dir_info.st_uid) ||
-	(gid != dir_info.st_gid) ||
-	(uid != prg_info.st_uid) ||
-	(gid != prg_info.st_gid)) {
-	log_err("error: target uid/gid (%u/%u) mismatch "
-		"with directory (%u/%u) or program (%u/%u)\n",
-		uid, gid,
-		dir_info.st_uid, dir_info.st_gid,
-		prg_info.st_uid, prg_info.st_gid);
-	exit(120);
-    }
-    /*
-     * Error out if the program is not executable for the user.
-     * Otherwise, she won't find any error in the logs except for
-     * "[error] Premature end of script headers: ..."
-     */
-    if (!(prg_info.st_mode & S_IXUSR)) {
-	log_err("error: file has no execute permission: (%s/%s)\n", cwd, cmd);
-	exit(121);
-    }
+	/*
+	 * Error out if the target name/group is different from
+	 * the name/group of the cwd or the program.
+	 */
+	if ((uid != dir_info.st_uid) ||
+	    (gid != dir_info.st_gid) ||
+	    (uid != prg_info.st_uid) ||
+	    (gid != prg_info.st_gid)) {
+		log_err("error: target uid/gid (%u/%u) mismatch "
+		    "with directory (%u/%u) or program (%u/%u)\n",
+		    uid, gid,
+		    dir_info.st_uid, dir_info.st_gid,
+		    prg_info.st_uid, prg_info.st_gid);
+		exit(120);
+	}
+	/*
+	 * Error out if the program is not executable for the user.
+	 * Otherwise, she won't find any error in the logs except for
+	 * "[error] Premature end of script headers: ..."
+	 */
+	if (!(prg_info.st_mode & S_IXUSR)) {
+		log_err("error: file has no execute permission: (%s/%s)\n",
+		    cwd, cmd);
+		exit(121);
+	}
 
 #ifdef SUEXEC_UMASK
-    /*
-     * umask() uses inverse logic; bits are CLEAR for allowed access.
-     */
-    if ((~SUEXEC_UMASK) & 0022) {
-	log_err("notice: SUEXEC_UMASK of %03o allows "
-		"write permission to group and/or other\n", SUEXEC_UMASK);
-    }
-    umask(SUEXEC_UMASK);
+	/* umask() uses inverse logic; bits are CLEAR for allowed access. */
+	if ((~SUEXEC_UMASK) & 0022)
+		log_err("notice: SUEXEC_UMASK of %03o allows "
+		    "write permission to group and/or other\n", SUEXEC_UMASK);
+	umask(SUEXEC_UMASK);
 #endif /* SUEXEC_UMASK */
 
-    /* 
-     * Be sure to close the log file so the CGI can't
-     * mess with it.  If the exec fails, it will be reopened 
-     * automatically when log_err is called.  Note that the log
-     * might not actually be open if LOG_EXEC isn't defined.
-     * However, the "log" cell isn't ifdef'd so let's be defensive
-     * and assume someone might have done something with it
-     * outside an ifdef'd LOG_EXEC block.
-     */
-    if (log != NULL) {
-	fclose(log);
-	log = NULL;
-    }
+	/* 
+	 * Be sure to close the log file so the CGI can't
+	 * mess with it.  If the exec fails, it will be reopened 
+	 * automatically when log_err is called.  Note that the log
+	 * might not actually be open if LOG_EXEC isn't defined.
+	 * However, the "log" cell isn't ifdef'd so let's be defensive
+	 * and assume someone might have done something with it
+	 * outside an ifdef'd LOG_EXEC block.
+	 */
+	if (log != NULL) {
+		fclose(log);
+		log = NULL;
+	}
 
-    /*
-     * Execute the command, replacing our image with its own.
-     */
-    execv(cmd, &argv[3]);
+	/* Execute the command, replacing our image with its own. */
+	execv(cmd, &argv[3]);
 
-    /*
-     * (I can't help myself...sorry.)
-     *
-     * Uh oh.  Still here.  Where's the kaboom?  There was supposed to be an
-     * EARTH-shattering kaboom!
-     *
-     * Oh well, log the failure and error out.
-     */
-    log_err("emerg: (%d)%s: exec failed (%s)\n", errno, strerror(errno), cmd);
-    exit(255);
+	/*
+	 * (I can't help myself...sorry.)
+	 *
+	 * Uh oh.  Still here.  Where's the kaboom?  There was supposed to be an
+	 * EARTH-shattering kaboom!
+	 *
+	 * Oh well, log the failure and error out.
+	 */
+	log_err("emerg: (%d)%s: exec failed (%s)\n", errno, strerror(errno),
+	    cmd);
+	exit(255);
 }

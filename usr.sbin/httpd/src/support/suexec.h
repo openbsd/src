@@ -1,3 +1,5 @@
+/*	$OpenBSD: suexec.h,v 1.8 2008/05/23 12:12:01 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

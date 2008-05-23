@@ -1,3 +1,5 @@
+/*	$OpenBSD: htdigest.c,v 1.11 2008/05/23 12:12:01 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -67,11 +69,12 @@
  * by Alexei Kosut, based on htpasswd.c, by Rob McCool
  */
 
-#include "ap_config.h"
 #include <sys/types.h>
+#include <sys/signal.h>
+
+#include "ap_config.h"
 #include "ap.h"
 #include "ap_md5.h"
-#include <sys/signal.h>
 
 #define LF 10
 #define CR 13
@@ -80,101 +83,106 @@
 
 static char tn[MAX_STRING_LEN];
 
-
-static void getword(char *word, char *line, char stop)
+static void
+getword(char *word, char *line, char stop)
 {
-    int x = 0, y;
+	int x = 0, y;
 
-    for (x = 0; ((line[x]) && (line[x] != stop)); x++)
-	word[x] = line[x];
+	for (x = 0; ((line[x]) && (line[x] != stop)); x++)
+		word[x] = line[x];
 
-    word[x] = '\0';
-    if (line[x])
-	++x;
-    y = 0;
+	word[x] = '\0';
+	if (line[x])
+		++x;
+	y = 0;
 
-    while ((line[y++] = line[x++]));
+	while ((line[y++] = line[x++]));
 }
 
-static int getline(char *s, int n, FILE *f)
+static int
+getline(char *s, int n, FILE *f)
 {
-    register int i = 0;
+	int i = 0;
 
-    while (1) {
-	s[i] = (char) fgetc(f);
+	while (1) {
+		s[i] = (char) fgetc(f);
 
-	if (s[i] == CR)
-	    s[i] = fgetc(f);
+		if (s[i] == CR)
+			s[i] = fgetc(f);
 
-	if ((s[i] == 0x4) || (s[i] == LF) || (i == (n - 1))) {
-	    s[i] = '\0';
-	    return (feof(f) ? 1 : 0);
+		if ((s[i] == 0x4) || (s[i] == LF) || (i == (n - 1))) {
+			s[i] = '\0';
+			return (feof(f) ? 1 : 0);
+		}
+		++i;
 	}
-	++i;
-    }
 }
 
-static void putline(FILE *f, char *l)
+static void
+putline(FILE *f, char *l)
 {
-    int x;
+	int x;
 
-    for (x = 0; l[x]; x++)
-	fputc(l[x], f);
-    fputc('\n', f);
+	for (x = 0; l[x]; x++)
+		fputc(l[x], f);
+	fputc('\n', f);
 }
 
 
-static void add_password(char *user, char *realm, FILE *f)
+static void
+add_password(char *user, char *realm, FILE *f)
 {
-    char *pw;
-    AP_MD5_CTX context;
-    unsigned char digest[16];
-    char string[MAX_STRING_LEN];
-    char pwin[MAX_STRING_LEN];
-    char pwv[MAX_STRING_LEN];
-    unsigned int i;
+	char *pw;
+	AP_MD5_CTX context;
+	unsigned char digest[16];
+	char string[MAX_STRING_LEN];
+	char pwin[MAX_STRING_LEN];
+	char pwv[MAX_STRING_LEN];
+	unsigned int i;
 
-    if (ap_getpass("New password: ", pwin, sizeof(pwin)) != 0) {
-	fprintf(stderr, "password too long");
-	exit(5);
-    }
-    ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
-    if (strcmp(pwin, pwv) != 0) {
-	fprintf(stderr, "They don't match, sorry.\n");
-	if (tn[0] != '\0') {
-	    unlink(tn);
+	if (ap_getpass("New password: ", pwin, sizeof(pwin)) != 0) {
+		fprintf(stderr, "password too long");
+		exit(5);
 	}
+	ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
+	if (strcmp(pwin, pwv) != 0) {
+		fprintf(stderr, "They don't match, sorry.\n");
+		if (tn[0] != '\0')
+			unlink(tn);
+
+		exit(1);
+	}
+	pw = pwin;
+	fprintf(f, "%s:%s:", user, realm);
+
+	/* Do MD5 stuff */
+	snprintf(string, sizeof(string), "%s:%s:%s", user, realm, pw);
+
+	ap_MD5Init(&context);
+	ap_MD5Update(&context, (unsigned char *) string, strlen(string));
+	ap_MD5Final(digest, &context);
+
+	for (i = 0; i < 16; i++)
+		fprintf(f, "%02x", digest[i]);
+
+	fprintf(f, "\n");
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "Usage: htdigest [-c] passwordfile realm username\n");
+	fprintf(stderr, "The -c flag creates a new file.\n");
 	exit(1);
-    }
-    pw = pwin;
-    fprintf(f, "%s:%s:", user, realm);
-
-    /* Do MD5 stuff */
-    snprintf(string, sizeof(string), "%s:%s:%s", user, realm, pw);
-
-    ap_MD5Init(&context);
-    ap_MD5Update(&context, (unsigned char *) string, strlen(string));
-    ap_MD5Final(digest, &context);
-
-    for (i = 0; i < 16; i++)
-	fprintf(f, "%02x", digest[i]);
-
-    fprintf(f, "\n");
 }
 
-static void usage(void)
+static void
+interrupted(void)
 {
-    fprintf(stderr, "Usage: htdigest [-c] passwordfile realm username\n");
-    fprintf(stderr, "The -c flag creates a new file.\n");
-    exit(1);
-}
-
-static void interrupted(void)
-{
-    fprintf(stderr, "Interrupted.\n");
-    if (tn[0] != '\0')
-	unlink(tn);
-    exit(1);
+	fprintf(stderr, "Interrupted.\n");
+	if (tn[0] != '\0')
+		unlink(tn);
+	exit(1);
 }
 
 

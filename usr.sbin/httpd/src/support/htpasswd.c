@@ -1,3 +1,5 @@
+/*	$OpenBSD: htpasswd.c,v 1.17 2008/05/23 12:12:01 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -126,33 +128,34 @@ static char *tname_buf = NULL;
  * Get a line of input from the user, not including any terminating
  * newline.
  */
-static int getline(char *s, int n, FILE *f)
+static int
+getline(char *s, int n, FILE *f)
 {
-    register int i = 0;
+	int i = 0;
 
-    while (1) {
-	s[i] = (char) fgetc(f);
+	while (1) {
+		s[i] = (char) fgetc(f);
 
-	if (s[i] == CR) {
-	    s[i] = fgetc(f);
+		if (s[i] == CR)
+			s[i] = fgetc(f);
+
+		if ((s[i] == 0x4) || (s[i] == LF) || (i == (n - 1))) {
+			s[i] = '\0';
+			return (feof(f) ? 1 : 0);
+		}
+		++i;
 	}
-
-	if ((s[i] == 0x4) || (s[i] == LF) || (i == (n - 1))) {
-	    s[i] = '\0';
-	    return (feof(f) ? 1 : 0);
-	}
-	++i;
-    }
 }
 
-static void putline(FILE *f, char *l)
+static void
+putline(FILE *f, char *l)
 {
-    int x;
+	int x;
 
-    for (x = 0; l[x]; x++) {
-	fputc(l[x], f);
-    }
-    fputc('\n', f);
+	for (x = 0; l[x]; x++)
+		fputc(l[x], f);
+
+	fputc('\n', f);
 }
 
 /*
@@ -160,415 +163,404 @@ static void putline(FILE *f, char *l)
  * indicates success; failure means that the output buffer contains an
  * error message instead.
  */
-static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
-		    int alg)
+static int
+mkrecord(char *user, char *record, size_t rlen, char *passwd, int alg)
 {
-    char *pw;
-    char cpw[120];
-    char pwin[MAX_STRING_LEN];
-    char pwv[MAX_STRING_LEN];
-    char salt[33];
+	char *pw;
+	char cpw[120];
+	char pwin[MAX_STRING_LEN];
+	char pwv[MAX_STRING_LEN];
+	char salt[33];
 
-    if (passwd != NULL) {
-	pw = passwd;
-    }
-    else {
-	if (ap_getpass("New password: ", pwin, sizeof(pwin)) != 0) {
-	    ap_snprintf(record, (rlen - 1), "password too long (>%lu)",
-			(unsigned long) (sizeof(pwin) - 1));
-	    return ERR_OVERFLOW;
+	if (passwd != NULL)
+		pw = passwd;
+	else {
+		if (ap_getpass("New password: ", pwin, sizeof(pwin)) != 0) {
+			ap_snprintf(record, (rlen - 1), "password too long "
+			    "(>%lu)", (unsigned long)(sizeof(pwin) - 1));
+			return ERR_OVERFLOW;
+		}
+		ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
+		if (strcmp(pwin, pwv) != 0) {
+			ap_cpystrn(record, "password verification error",
+			    (rlen - 1));
+			return ERR_PWMISMATCH;
+		}
+		pw = pwin;
+		memset(pwv, '\0', sizeof(pwin));
 	}
-	ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
-	if (strcmp(pwin, pwv) != 0) {
-	    ap_cpystrn(record, "password verification error", (rlen - 1));
-	    return ERR_PWMISMATCH;
+	switch (alg) {
+	case ALG_APSHA:
+		/* XXX cpw >= 28 + strlen(sha1) chars - fixed len SHA */
+		ap_sha1_base64(pw, strlen(pw), cpw);
+		break;
+	case ALG_APMD5: 
+		ap_to64(&salt[0], arc4random(), 8);
+		salt[8] = '\0';
+
+		ap_MD5Encode((const unsigned char *)pw,
+		    (const unsigned char *)salt, cpw, sizeof(cpw));
+		break;
+	case ALG_PLAIN:
+		/* XXX this len limitation is not in sync with any HTTPd len. */
+		ap_cpystrn(cpw ,pw, sizeof(cpw));
+		break;
+	case ALG_CRYPT:
+		ap_to64(&salt[0], arc4random(), 8);
+		salt[8] = '\0';
+
+		ap_cpystrn(cpw, (char *)crypt(pw, salt), sizeof(cpw) - 1);
+		break;
+	case ALG_APBLF:
+	default:
+		strlcpy(salt, bcrypt_gensalt(6), sizeof(salt));
+		strlcpy(cpw, (char *)crypt(pw, salt), sizeof(cpw));
+		break;
 	}
-	pw = pwin;
-        memset(pwv, '\0', sizeof(pwin));
-    }
-    switch (alg) {
+	memset(pw, '\0', strlen(pw));
 
-    case ALG_APSHA:
-	/* XXX cpw >= 28 + strlen(sha1) chars - fixed len SHA */
- 	ap_sha1_base64(pw,strlen(pw),cpw);
-	break;
-
-    case ALG_APMD5: 
-        ap_to64(&salt[0], arc4random(), 8);
-        salt[8] = '\0';
-
-	ap_MD5Encode((const unsigned char *)pw, (const unsigned char *)salt,
-		     cpw, sizeof(cpw));
-	break;
-
-    case ALG_PLAIN:
-	/* XXX this len limitation is not in sync with any HTTPd len. */
-	ap_cpystrn(cpw,pw,sizeof(cpw));
-	break;
-
-    case ALG_CRYPT:
-        ap_to64(&salt[0], arc4random(), 8);
-        salt[8] = '\0';
-
-	ap_cpystrn(cpw, (char *)crypt(pw, salt), sizeof(cpw) - 1);
-	break;
-    case ALG_APBLF:
-    default:
-	strlcpy(salt, bcrypt_gensalt(6), sizeof(salt));
-	strlcpy(cpw, (char *)crypt(pw, salt), sizeof(cpw));
-	break;
-    }
-    memset(pw, '\0', strlen(pw));
-
-    /*
-     * Check to see if the buffer is large enough to hold the username,
-     * hash, and delimiters.
-     */
-    if ((strlen(user) + 1 + strlen(cpw)) > (rlen - 1)) {
-	ap_cpystrn(record, "resultant record too long", (rlen - 1));
-	return ERR_OVERFLOW;
-    }
-    snprintf(record, rlen, "%s:%s", user, cpw);
-    return 0;
+	/*
+	 * Check to see if the buffer is large enough to hold the username,
+	 * hash, and delimiters.
+	 */
+	if ((strlen(user) + 1 + strlen(cpw)) > (rlen - 1)) {
+		ap_cpystrn(record, "resultant record too long", (rlen - 1));
+		return ERR_OVERFLOW;
+	}
+	snprintf(record, rlen, "%s:%s", user, cpw);
+	return 0;
 }
 
-static int usage(void)
+static int
+usage(void)
 {
-    fprintf(stderr, "Usage:\thtpasswd [-c] [-d | -l | -m | -p | -s ] passwordfile username\n");
-    fprintf(stderr, "\thtpasswd -b [-c] [-d | -l | -m | -p | -s] passwordfile username password\n");
-    fprintf(stderr, "\thtpasswd -n [-d | -l | -m | -p | -s] username\n");
-    fprintf(stderr, "\thtpasswd -bn [-d | -l | -m | -p | -s] username password\n");
-    return ERR_SYNTAX;
+	fprintf(stderr, "Usage:\thtpasswd [-c] [-d | -l | -m | -p | -s ] "
+	    "passwordfile username\n");
+	fprintf(stderr, "\thtpasswd -b [-c] [-d | -l | -m | -p | -s] "
+	    "passwordfile username password\n");
+	fprintf(stderr, "\thtpasswd -n [-d | -l | -m | -p | -s] username\n");
+	fprintf(stderr, "\thtpasswd -bn [-d | -l | -m | -p | -s] username "
+	    "password\n");
+	return ERR_SYNTAX;
 }
 
-static void interrupted(void)
+static void
+interrupted(void)
 {
-    fprintf(stderr, "Interrupted.\n");
-    if (tempfilename[0] != '\0') {
-	unlink(tempfilename);
-    }
-    exit(ERR_INTERRUPTED);
+	fprintf(stderr, "Interrupted.\n");
+	if (tempfilename[0] != '\0')
+		unlink(tempfilename);
+
+	exit(ERR_INTERRUPTED);
 }
 
 /*
  * Check to see if the specified file can be opened for the given
  * access.
  */
-static int accessible(char *fname, char *mode)
+static int
+accessible(char *fname, char *mode)
 {
-    FILE *s;
+	FILE *s;
 
-    s = fopen(fname, mode);
-    if (s == NULL) {
-	return 0;
-    }
-    fclose(s);
-    return 1;
+	s = fopen(fname, mode);
+	if (s == NULL)
+		return 0;
+
+	fclose(s);
+	return 1;
 }
 
-/*
- * Return true if a file is readable.
- */
-static int readable(char *fname)
+/* Return true if a file is readable. */
+static int
+readable(char *fname)
 {
-    return accessible(fname, "r");
+	return accessible(fname, "r");
 }
 
-/*
- * Return true if the specified file can be opened for write access.
- */
-static int writable(char *fname)
+/* Return true if the specified file can be opened for write access. */
+static int
+writable(char *fname)
 {
-    return accessible(fname, "a");
+	return accessible(fname, "a");
 }
 
-/*
- * Return true if the named file exists, regardless of permissions.
- */
-static int exists(char *fname)
+/* Return true if the named file exists, regardless of permissions. */
+static int
+exists(char *fname)
 {
-    struct stat sbuf;
-    int check;
+	struct stat sbuf;
+	int check;
 
-    check = stat(fname, &sbuf);
-    return ((check == -1) && (errno == ENOENT)) ? 0 : 1;
+	check = stat(fname, &sbuf);
+	return ((check == -1) && (errno == ENOENT)) ? 0 : 1;
 }
 
 /*
  * Copy from the current position of one file to the current position
  * of another.
  */
-static void copy_file(FILE *target, FILE *source)
+static void
+copy_file(FILE *target, FILE *source)
 {
-    static char line[MAX_STRING_LEN];
+	static char line[MAX_STRING_LEN];
 
-    while (fgets(line, sizeof(line), source) != NULL) {
-	fputs(line, target);
-    }
+	while (fgets(line, sizeof(line), source) != NULL)
+		fputs(line, target);
 }
 
 /*
  * Let's do it.  We end up doing a lot of file opening and closing,
  * but what do we care?  This application isn't run constantly.
  */
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
-    FILE *ftemp = NULL;
-    FILE *fpw = NULL;
-    char user[MAX_STRING_LEN];
-    char password[MAX_STRING_LEN];
-    char record[MAX_STRING_LEN];
-    char line[MAX_STRING_LEN];
-    char pwfilename[MAX_STRING_LEN];
-    char *arg;
-    int found = 0;
-    int alg = ALG_APBLF;
-    int newfile = 0;
-    int nofile = 0;
-    int noninteractive = 0;
-    int i;
-    int args_left = 2;
-    int tfd;
-    int ch;
-    
-    signal(SIGINT, (void (*)(int)) interrupted);
+	FILE *ftemp = NULL;
+	FILE *fpw = NULL;
+	char user[MAX_STRING_LEN];
+	char password[MAX_STRING_LEN];
+	char record[MAX_STRING_LEN];
+	char line[MAX_STRING_LEN];
+	char pwfilename[MAX_STRING_LEN];
+	char *arg;
+	int found = 0;
+	int alg = ALG_APBLF;
+	int newfile = 0;
+	int nofile = 0;
+	int noninteractive = 0;
+	int i;
+	int args_left = 2;
+	int tfd;
+	int ch;
 
-    /*
-     * Preliminary check to make sure they provided at least
-     * three arguments, we'll do better argument checking as 
-     * we parse the command line.
-     */
-    if (argc < 3) {
-	return usage();
-    }
+	signal(SIGINT, (void (*)(int)) interrupted);
 
-    /*
-     * Go through the argument list and pick out any options.  They
-     * have to precede any other arguments.
-     */
-    while ((ch = getopt(argc, argv, "bcdlnmsp")) != -1) {
-	    switch (ch) {
-	    case 'b':
-		    noninteractive++;
-		    args_left++;
-		    break;
-	    case 'c':
-		    newfile++;
-		    break;
-	    case 'd':
-		    alg = ALG_CRYPT;
-		    break;
-	    case 'l':
-		    alg = ALG_APBLF;
-		    break;
-	    case 'n':
-		    nofile++;
-		    args_left--;
-		    break;
-	    case 'm':
-		    alg = ALG_APMD5;
-		    break;
-	    case 's':
-		    alg = ALG_APSHA;
-		    break;
-	    case 'p':
-		    alg = ALG_PLAIN;
-		    break;
-	    default:
-		    usage();
-	    }
-    }
-    argc -= optind;
-    argv += optind;
-
-    i = argc - args_left;
-    
-    /*
-     * Make sure we still have exactly the right number of arguments left
-     * (the filename, the username, and possibly the password if -b was
-     * specified).
-     */
-    if (argc != args_left) {
-	return usage();
-    }
-    if (newfile && nofile) {
-	fprintf(stderr, "%s: -c and -n options conflict\n", argv[0]);
-	return ERR_SYNTAX;
-    }
-    if (nofile) {
-	i--;
-    }
-    else {
-	if (strlen(argv[i]) > (sizeof(pwfilename) - 1)) {
-	    fprintf(stderr, "%s: filename too long\n", argv[0]);
-	    return ERR_OVERFLOW;
-	}
-	strlcpy(pwfilename, argv[i], sizeof(pwfilename));
-	if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
-	    fprintf(stderr, "%s: username too long (>%lu)\n", argv[0],
-		    (unsigned long)(sizeof(user) - 1));
-	    return ERR_OVERFLOW;
-	}
-    }
-    strlcpy(user, argv[i + 1], sizeof(user));
-    if ((arg = strchr(user, ':')) != NULL) {
-	fprintf(stderr, "%s: username contains illegal character '%c'\n",
-		argv[0], *arg);
-	return ERR_BADUSER;
-    }
-    if (noninteractive) {
-	if (strlen(argv[i + 2]) > (sizeof(password) - 1)) {
-	    fprintf(stderr, "%s: password too long (>%lu)\n", argv[0],
-		    (unsigned long)(sizeof(password) - 1));
-	    return ERR_OVERFLOW;
-	}
-	strlcpy(password, argv[i + 2], sizeof(password));
-    }
-
-    if (alg == ALG_PLAIN) {
-	fprintf(stderr,"Warning: storing passwords as plain text might "
-		"just not work on this platform.\n");
-    }
-    if (! nofile) {
 	/*
-	 * Only do the file checks if we're supposed to frob it.
-	 *
-	 * Verify that the file exists if -c was omitted.  We give a special
-	 * message if it doesn't.
+	 * Preliminary check to make sure they provided at least
+	 * three arguments, we'll do better argument checking as 
+	 * we parse the command line.
 	 */
-	if ((! newfile) && (! exists(pwfilename))) {
-	    fprintf(stderr,
-		    "%s: cannot modify file %s; use '-c' to create it\n",
-		    argv[0], pwfilename);
-	    perror("fopen");
-	    exit(ERR_FILEPERM);
+	if (argc < 3)
+		return usage();
+
+	/*
+	* Go through the argument list and pick out any options.  They
+	* have to precede any other arguments.
+	*/
+	while ((ch = getopt(argc, argv, "bcdlnmsp")) != -1) {
+		switch (ch) {
+		case 'b':
+			noninteractive++;
+			args_left++;
+			break;
+		case 'c':
+			newfile++;
+			break;
+		case 'd':
+			alg = ALG_CRYPT;
+			break;
+		case 'l':
+			alg = ALG_APBLF;
+			break;
+		case 'n':
+			nofile++;
+			args_left--;
+			break;
+		case 'm':
+			alg = ALG_APMD5;
+			break;
+		case 's':
+			alg = ALG_APSHA;
+			break;
+		case 'p':
+			alg = ALG_PLAIN;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	i = argc - args_left;
+
+	/*
+	 * Make sure we still have exactly the right number of arguments left
+	 * (the filename, the username, and possibly the password if -b was
+	 * specified).
+	 */
+	if (argc != args_left)
+		return usage();
+
+	if (newfile && nofile) {
+		fprintf(stderr, "%s: -c and -n options conflict\n", argv[0]);
+		return ERR_SYNTAX;
+	}
+	if (nofile)
+		i--;
+	else {
+		if (strlen(argv[i]) > (sizeof(pwfilename) - 1)) {
+			fprintf(stderr, "%s: filename too long\n", argv[0]);
+			return ERR_OVERFLOW;
+		}
+		strlcpy(pwfilename, argv[i], sizeof(pwfilename));
+		if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
+			fprintf(stderr, "%s: username too long (>%lu)\n",
+			    argv[0], (unsigned long)(sizeof(user) - 1));
+			return ERR_OVERFLOW;
+		}
+	}
+	strlcpy(user, argv[i + 1], sizeof(user));
+	if ((arg = strchr(user, ':')) != NULL) {
+		fprintf(stderr, "%s: username contains illegal character '%c'"
+		    "\n", argv[0], *arg);
+		return ERR_BADUSER;
+	}
+	if (noninteractive) {
+		if (strlen(argv[i + 2]) > (sizeof(password) - 1)) {
+			fprintf(stderr, "%s: password too long (>%lu)\n",
+			    argv[0], (unsigned long)(sizeof(password) - 1));
+			return ERR_OVERFLOW;
+		}
+		strlcpy(password, argv[i + 2], sizeof(password));
+	}
+
+	if (alg == ALG_PLAIN) {
+		fprintf(stderr,"Warning: storing passwords as plain text might "
+		    "just not work on this platform.\n");
+	}
+	if (!nofile) {
+		/*
+		 * Only do the file checks if we're supposed to frob it.
+		 *
+		 * Verify that the file exists if -c was omitted.  We give a
+		 * special message if it doesn't.
+		 */
+		if ((!newfile) && (!exists(pwfilename))) {
+			fprintf(stderr, "%s: cannot modify file %s; use '-c' "
+			    "to create it\n", argv[0], pwfilename);
+			perror("fopen");
+			exit(ERR_FILEPERM);
+		}
+		/*
+		 * Verify that we can read the existing file in the case of an
+		 * update to it (rather than creation of a new one).
+		 */
+		if ((! newfile) && (! readable(pwfilename))) {
+			fprintf(stderr, "%s: cannot open file %s for read "
+			    "access\n", argv[0], pwfilename);
+			perror("fopen");
+			exit(ERR_FILEPERM);
+		}
+		/*
+		 * Now check to see if we can preserve an existing file in case
+		 * of password verification errors on a -c operation.
+		 */
+		if (newfile && exists(pwfilename) && (! readable(pwfilename))) {
+			fprintf(stderr, "%s: cannot open file %s for read "
+			    "access\n%s: existing auth data would be lost on "
+			    "password mismatch", argv[0], pwfilename, argv[0]);
+			perror("fopen");
+			exit(ERR_FILEPERM);
+		}
+		/* Now verify that the file is writable! */
+		if (! writable(pwfilename)) {
+			fprintf(stderr, "%s: cannot open file %s for write "
+			    "access\n",	argv[0], pwfilename);
+			perror("fopen");
+			exit(ERR_FILEPERM);
+		}
+	}
+
+	/*
+	 * All the file access checks (if any) have been made.  Time to go to
+	 * work; try to create the record for the username in question.  If
+	 * that fails, there's no need to waste any time on file manipulations.
+	 * Any error message text is returned in the record buffer, since
+	 * the mkrecord() routine doesn't have access to argv[].
+	 */
+	i = mkrecord(user, record, sizeof(record) - 1,
+	    noninteractive ? password : NULL, alg);
+	if (i != 0) {
+		fprintf(stderr, "%s: %s\n", argv[0], record);
+		exit(i);
+	}
+	if (nofile) {
+		printf("%s\n", record);
+		exit(0);
+	}
+
+	/*
+	 * We can access the files the right way, and we have a record
+	 * to add or update.  Let's do it..
+	 */
+	errno = 0;
+	strlcpy(tempfilename, "/tmp/htpasswd-XXXXXXXXXX", sizeof(tempfilename));
+	tfd = mkstemp(tempfilename);
+	if (tfd == -1 || (ftemp = fdopen(tfd, "w+")) == NULL) {
+		fprintf(stderr, "%s: unable to create temporary file '%s'\n",
+		    argv[0], tempfilename);
+		perror("open");
+		exit(ERR_FILEPERM);
 	}
 	/*
-	 * Verify that we can read the existing file in the case of an update
-	 * to it (rather than creation of a new one).
+	 * If we're not creating a new file, copy records from the existing
+	 * one to the temporary file until we find the specified user.
 	 */
-	if ((! newfile) && (! readable(pwfilename))) {
-	    fprintf(stderr, "%s: cannot open file %s for read access\n",
-		    argv[0], pwfilename);
-	    perror("fopen");
-	    exit(ERR_FILEPERM);
+	if (! newfile) {
+		char scratch[MAX_STRING_LEN];
+
+		fpw = fopen(pwfilename, "r");
+		while (! (getline(line, sizeof(line), fpw))) {
+			char *colon;
+
+			if ((line[0] == '#') || (line[0] == '\0')) {
+				putline(ftemp, line);
+				continue;
+			}
+			strlcpy(scratch, line, sizeof(scratch));
+			/* See if this is our user. */
+			colon = strchr(scratch, ':');
+			if (colon != NULL)
+				*colon = '\0';
+
+			if (strcmp(user, scratch) != 0) {
+				putline(ftemp, line);
+				continue;
+			}
+			found++;
+			break;
+		}
+	}
+	if (found)
+		fprintf(stderr, "Updating ");
+	else
+		fprintf(stderr, "Adding ");
+	fprintf(stderr, "password for user %s\n", user);
+	/*
+	 * Now add the user record we created.
+	 */
+	putline(ftemp, record);
+	/*
+	 * If we're updating an existing file, there may be additional
+	 * records beyond the one we're updating, so copy them.
+	 */
+	if (! newfile) {
+		copy_file(ftemp, fpw);
+		fclose(fpw);
 	}
 	/*
-	 * Now check to see if we can preserve an existing file in case
-	 * of password verification errors on a -c operation.
+	 * The temporary file now contains the information that should be
+	 * in the actual password file.  Close the open files, re-open them
+	 * in the appropriate mode, and copy them file to the real one.
 	 */
-	if (newfile && exists(pwfilename) && (! readable(pwfilename))) {
-	    fprintf(stderr, "%s: cannot open file %s for read access\n"
-		    "%s: existing auth data would be lost on "
-		    "password mismatch",
-		    argv[0], pwfilename, argv[0]);
-	    perror("fopen");
-	    exit(ERR_FILEPERM);
-	}
-	/*
-	 * Now verify that the file is writable!
-	 */
-	if (! writable(pwfilename)) {
-	    fprintf(stderr, "%s: cannot open file %s for write access\n",
-		    argv[0], pwfilename);
-	    perror("fopen");
-	    exit(ERR_FILEPERM);
-	}
-    }
-
-    /*
-     * All the file access checks (if any) have been made.  Time to go to work;
-     * try to create the record for the username in question.  If that
-     * fails, there's no need to waste any time on file manipulations.
-     * Any error message text is returned in the record buffer, since
-     * the mkrecord() routine doesn't have access to argv[].
-     */
-    i = mkrecord(user, record, sizeof(record) - 1,
-		 noninteractive ? password : NULL,
-		 alg);
-    if (i != 0) {
-	fprintf(stderr, "%s: %s\n", argv[0], record);
-	exit(i);
-    }
-    if (nofile) {
-	printf("%s\n", record);
-	exit(0);
-    }
-
-    /*
-     * We can access the files the right way, and we have a record
-     * to add or update.  Let's do it..
-     */
-    errno = 0;
-    strlcpy(tempfilename, "/tmp/htpasswd-XXXXXXXXXX", sizeof(tempfilename));
-    tfd = mkstemp(tempfilename);
-    if (tfd == -1 || (ftemp = fdopen(tfd, "w+")) == NULL) {
-	fprintf(stderr, "%s: unable to create temporary file '%s'\n", argv[0],
-		tempfilename);
-	perror("open");
-	exit(ERR_FILEPERM);
-    }
-    /*
-     * If we're not creating a new file, copy records from the existing
-     * one to the temporary file until we find the specified user.
-     */
-    if (! newfile) {
-	char scratch[MAX_STRING_LEN];
-
-	fpw = fopen(pwfilename, "r");
-	while (! (getline(line, sizeof(line), fpw))) {
-	    char *colon;
-
-	    if ((line[0] == '#') || (line[0] == '\0')) {
-		putline(ftemp, line);
-		continue;
-	    }
-	    strlcpy(scratch, line, sizeof(scratch));
-	    /*
-	     * See if this is our user.
-	     */
-	    colon = strchr(scratch, ':');
-	    if (colon != NULL) {
-		*colon = '\0';
-	    }
-	    if (strcmp(user, scratch) != 0) {
-		putline(ftemp, line);
-		continue;
-	    }
-	    found++;
-	    break;
-	}
-    }
-    if (found) {
-	fprintf(stderr, "Updating ");
-    }
-    else {
-	fprintf(stderr, "Adding ");
-    }
-    fprintf(stderr, "password for user %s\n", user);
-    /*
-     * Now add the user record we created.
-     */
-    putline(ftemp, record);
-    /*
-     * If we're updating an existing file, there may be additional
-     * records beyond the one we're updating, so copy them.
-     */
-    if (! newfile) {
-	copy_file(ftemp, fpw);
+	fclose(ftemp);
+	fpw = fopen(pwfilename, "w+");
+	ftemp = fopen(tempfilename, "r");
+	copy_file(fpw, ftemp);
 	fclose(fpw);
-    }
-    /*
-     * The temporary file now contains the information that should be
-     * in the actual password file.  Close the open files, re-open them
-     * in the appropriate mode, and copy them file to the real one.
-     */
-    fclose(ftemp);
-    fpw = fopen(pwfilename, "w+");
-    ftemp = fopen(tempfilename, "r");
-    copy_file(fpw, ftemp);
-    fclose(fpw);
-    fclose(ftemp);
-    unlink(tempfilename);
-    return 0;
+	fclose(ftemp);
+	unlink(tempfilename);
+	return 0;
 }
