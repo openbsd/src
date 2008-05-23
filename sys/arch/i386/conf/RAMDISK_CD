@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.152 2008/05/21 18:49:47 kettenis Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.153 2008/05/23 14:04:18 brad Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -373,7 +373,6 @@ bwi*	at pci?				# Broadcom AirForce (802.11b/g)
 bwi*	at cardbus?			# Broadcom AirForce (802.11b/g)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
-#awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
 an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH

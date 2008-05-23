@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.617 2008/05/21 18:49:47 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.618 2008/05/23 14:04:18 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -581,7 +581,6 @@ bwi*	at pci?				# Broadcom AirForce (802.11b/g)
 bwi*	at cardbus?			# Broadcom AirForce (802.11b/g)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
-#awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
 an*	at pci?				# Aironet IEEE 802.11DS
 an*	at isapnp?			# Aironet IEEE 802.11DS
 an*	at pcmcia?			# Aironet IEEE 802.11DS
