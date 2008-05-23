@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.35 2007/10/14 23:08:04 fgsch Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.36 2008/05/23 20:14:45 djm Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -714,6 +714,8 @@ done:
 		semptr = &semaptr->sem_base[sopptr->sem_num];
 		semptr->sempid = p->p_pid;
 	}
+
+	semaptr->sem_otime = time_second;
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
