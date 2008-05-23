@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2008/05/22 13:54:06 mbalmer Exp $ */
+/*	$OpenBSD: util.c,v 1.27 2008/05/23 08:38:51 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -66,7 +66,8 @@
  * 
  */
 
-/* Debugging aid:
+/* 
+ * Debugging aid:
  * #define DEBUG            to trace all cfg_open*()/cfg_closefile() calls
  * #define DEBUG_CFG_LINES  to trace every line read from the config files
  */
@@ -75,13 +76,15 @@
 #include "http_conf_globals.h"	/* for user_id & group_id */
 #include "http_log.h"
 
-/* A bunch of functions in util.c scan strings looking for certain characters.
+/* 
+ * A bunch of functions in util.c scan strings looking for certain characters.
  * To make that more efficient we encode a lookup table.  The test_char_table
  * is generated automatically by gen_test_char.c.
  */
 #include "test_char.h"
 
-/* we assume the folks using this ensure 0 <= c < 256... which means
+/*
+ * we assume the folks using this ensure 0 <= c < 256... which means
  * you need a cast to (unsigned char) first, you can't just plug a
  * char in here and get it to work, because if char is signed then it
  * will first be sign extended.
@@ -91,7 +94,8 @@
 void
 ap_util_init(void)
 {
-	/* nothing to do... previously there was run-time initialization of
+	/* 
+	 * nothing to do... previously there was run-time initialization of
 	 * test_char_table here
 	 */
 }
@@ -150,7 +154,8 @@ ap_ht_time(pool *p, time_t t, const char *fmt, int gmt)
 
 	tms = (gmt ? gmtime(&t) : localtime(&t));
 	if(gmt) {
-		/* Convert %Z to "GMT" and %z to "+0000";
+		/*
+		 * Convert %Z to "GMT" and %z to "+0000";
 		 * on hosts that do not have a time zone string in struct tm,
 		 * strftime must assume its argument is local time.
 		 */
@@ -219,13 +224,15 @@ ap_get_gmtoff(int *tz)
 /* Roy owes Rob beer. */
 /* Rob owes Roy dinner. */
 
-/* These legacy comments would make a lot more sense if Roy hadn't
+/*
+ * These legacy comments would make a lot more sense if Roy hadn't
  * replaced the old later_than() routine with util_date.c.
  *
  * Well, okay, they still wouldn't make any sense.
  */
 
-/* Match = 0, NoMatch = 1, Abort = -1
+/*
+ * Match = 0, NoMatch = 1, Abort = -1
  * Based loosely on sections of wildmat.c by Rich Salz
  * Hmmm... shouldn't this really go component by component?
  */
@@ -320,7 +327,8 @@ ap_strcasestr(const char *s1, const char *s2)
 			/* second string ended, a match */
 			break;
 
-		/* didn't find a match here, try starting at next character
+		/*
+		 * didn't find a match here, try starting at next character
 		 * in s1
 		 */
 		s1++;
@@ -374,7 +382,8 @@ ap_regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 }
 
 
-/* This function substitutes for $0-$9, filling in regular expression
+/*
+ * This function substitutes for $0-$9, filling in regular expression
  * submatches. Pass it the same nmatch and pmatch arguments that you
  * passed ap_regexec(). pmatch should not be greater than the maximum number
  * of subexpressions - i.e. one more than the re_nsub member of regex_t.
@@ -387,7 +396,6 @@ ap_regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
  * Parts of this code are based on Henry Spencer's regsub(), from his
  * AT&T V8 regexp package.
  */
-
 API_EXPORT(char *)
 ap_pregsub(pool *p, const char *input, const char *source, size_t nmatch,
 regmatch_t pmatch[])
@@ -452,9 +460,7 @@ regmatch_t pmatch[])
 	return dest;
 }
 
-/*
- * Parse .. so we don't compromise security
- */
+/* Parse .. so we don't compromise security */
 API_EXPORT(void)
 ap_getparents(char *name)
 {
@@ -571,9 +577,7 @@ ap_make_dirstr_prefix(char *d, const char *s, int n)
 }
 
 
-/*
- * return the parent directory name including trailing / of the file s
- */
+/* return the parent directory name including trailing / of the file s */
 API_EXPORT(char *)
 ap_make_dirstr_parent(pool *p, const char *s)
 {
@@ -646,8 +650,10 @@ ap_chdir_file(const char *file)
 		buf[x - file] = '\0';
 		chdir(buf);
 	}
-	/* XXX: well, this is a silly function, no method of reporting an
-	* error... ah well. */
+	/*
+	 * XXX: well, this is a silly function, no method of reporting an
+	 * error... ah well.
+	 */
 }
 
 API_EXPORT(char *)
@@ -741,10 +747,10 @@ ap_getword_nulls(pool *atrans, const char **line, char stop)
 	return res;
 }
 
-/* Get a word, (new) config-file style --- quoted strings and backslashes
+/*
+ * Get a word, (new) config-file style --- quoted strings and backslashes
  * all honored
  */
-
 static char
 *substring_conf(pool *p, const char *start, int len, char quote)
 {
@@ -965,8 +971,8 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 				return 1;
 
 			/*
-			 *  check for line continuation,
-			 *  i.e. match [^\\]\\[\r]\n only
+			 * check for line continuation,
+			 * i.e. match [^\\]\\[\r]\n only
 			 */
 			cp = cbuf;
 			while (cp < cbuf+cbufsize && *cp != '\0')
@@ -1002,9 +1008,7 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 			break;
 		}
 
-		/*
-		 * Leading and trailing white space is eliminated completely
-		 */
+		/* Leading and trailing white space is eliminated completely */
 		src = buf;
 		while (ap_isspace(*src))
 			++src;
@@ -1050,7 +1054,8 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 					c = cfp->getch(cfp->param);
 			}
 			if (c == CR)
-				/* silently ignore CR (_assume_ that a LF
+				/*
+				 * silently ignore CR (_assume_ that a LF
 				 * follows)
 				 */
 				c = cfp->getch(cfp->param);
@@ -1071,7 +1076,8 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 						c = cfp->getch(cfp->param);
 						continue;
 					}
-					/* else nothing needs be done because
+					/*
+					 * else nothing needs be done because
 					 * then the backslash is escaped and
 					 * we just strip to a single one
 					 */
@@ -1094,7 +1100,8 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 	}
 }
 
-/* Size an HTTP header field list item, as separated by a comma.
+/*
+ * Size an HTTP header field list item, as separated by a comma.
  * The return value is a pointer to the beginning of the non-empty list item
  * within the original string (or NULL if there is none) and the address
  * of field is shifted to the next non-comma, non-whitespace character.
@@ -1108,14 +1115,12 @@ ap_size_list_item(const char **field, int *len)
 	int in_qpair, in_qstr, in_com;
 
 	/* Find first non-comma, non-whitespace byte */
-
 	while (*ptr == ',' || ap_isspace(*ptr))
 		++ptr;
 
 	token = ptr;
 
 	/* Find the end of this item, skipping over dead bits */
-
 	for (in_qpair = in_qstr = in_com = 0;
 	    *ptr && (in_qpair || in_qstr || in_com || *ptr != ',');
 	    ++ptr) {
@@ -1149,7 +1154,6 @@ ap_size_list_item(const char **field, int *len)
 	}
 
 	/* Advance field pointer to the next non-comma, non-white byte */
-
 	while (*ptr == ',' || ap_isspace(*ptr))
 		++ptr;
 
@@ -1157,7 +1161,8 @@ ap_size_list_item(const char **field, int *len)
 	return (const char *)token;
 }
 
-/* Retrieve an HTTP header field list item, as separated by a comma,
+/*
+ * Retrieve an HTTP header field list item, as separated by a comma,
  * while stripping insignificant whitespace and lowercasing anything not in
  * a quoted string or comment.  The return value is a new string containing
  * the converted list item (or NULL if none) and the address pointed to by
@@ -1257,7 +1262,8 @@ ap_get_list_item(pool *p, const char **field)
 	return token;
 }
 
-/* Find an item in canonical form (lowercase, no extra spaces) within
+/*
+ * Find an item in canonical form (lowercase, no extra spaces) within
  * an HTTP field value list.  Returns 1 if found, 0 if not found.
  * This would be much more efficient if we stored header fields as
  * an array of list items as they are received instead of a plain string.
@@ -1275,7 +1281,6 @@ ap_find_list_item(pool *p, const char *line, const char *tok)
 	do {  /* loop for each item in line's list */
 
 		/* Find first non-comma, non-whitespace byte */
-
 		while (*ptr == ',' || ap_isspace(*ptr))
 		++ptr;
 
@@ -1284,7 +1289,8 @@ ap_find_list_item(pool *p, const char *line, const char *tok)
 		else
 		break;     /* no items left and nothing good found */
 
-		/* We skip extra whitespace and whitespace around a '=', '/',
+		/*
+		 * We skip extra whitespace and whitespace around a '=', '/',
 		 * or ';' and lowercase normal characters not within a comment,
 		 * quoted-string or quoted-pair.
 		 */
@@ -1367,12 +1373,12 @@ ap_find_list_item(pool *p, const char *line, const char *tok)
 }
 
 
-/* Retrieve a token, spacing over it and returning a pointer to
+/*
+ * Retrieve a token, spacing over it and returning a pointer to
  * the first non-white byte afterwards.  Note that these tokens
  * are delimited by semis and commas; and can also be delimited
  * by whitespace at the caller's option.
  */
-
 API_EXPORT(char *)
 ap_get_token(pool *p, const char **accept_line, int accept_white)
 {
@@ -1424,7 +1430,8 @@ ap_find_token(pool *p, const char *line, const char *tok)
 
 	s = (const unsigned char *)line;
 	for (;;) {
-		/* find start of token, skip all stop characters, note NUL
+		/*
+		 * find start of token, skip all stop characters, note NUL
 		 * isn't a token stop, so we don't need to test for it
 		 */
 		while (TEST_CHAR(*s, T_HTTP_TOKEN_STOP))
@@ -1467,7 +1474,8 @@ ap_find_last_token(pool *p, const char *line, const char *tok)
 	return (strncasecmp(&line[lidx], tok, tlen) == 0);
 }
 
-/* c2x takes an unsigned, and expects the caller has guaranteed that
+/*
+ * c2x takes an unsigned, and expects the caller has guaranteed that
  * 0 <= what < 256... which usually means that you have to cast to
  * unsigned char first, because (unsigned)(char)(x) first goes through
  * signed extension to an int before the unsigned cast.
@@ -1700,7 +1708,6 @@ ap_construct_server(pool *p, const char *hostname, unsigned port,
  * If partial is set, os_escape_path() assumes that the path will be appended to
  * something with a '/' in it (and thus does not prefix "./").
  */
-
 API_EXPORT(char *)
 ap_escape_path_segment(pool *p, const char *segment)
 {
@@ -1749,7 +1756,6 @@ ap_os_escape_path(pool *p, const char *path, int partial)
 }
 
 /* ap_escape_uri is now a macro for os_escape_path */
-
 API_EXPORT(char *)
 ap_escape_html(pool *p, const char *s)
 {
@@ -1830,9 +1836,7 @@ ap_make_full_path(pool *a, const char *src1, const char *src2)
 		return ap_pstrcat(a, src1, src2, NULL);
 }
 
-/*
- * Check for an absoluteURI syntax (see section 3.2 in RFC2068).
- */
+/* Check for an absoluteURI syntax (see section 3.2 in RFC2068). */
 API_EXPORT(int)
 ap_is_url(const char *u)
 {
@@ -1845,7 +1849,8 @@ ap_is_url(const char *u)
 			return 0;
 	}
 
-	return (x ? 1 : 0);	/* If the first character is ':',
+	return (x ? 1 : 0);	/*
+				 * If the first character is ':',
 				 * it's broken, too
 				 */
 }
@@ -1935,223 +1940,227 @@ ap_gname2id(const char *name)
 API_EXPORT(struct sockaddr *)
 ap_get_virthost_addr(char *w, unsigned short *ports)
 {
-    static struct sockaddr_storage ss;
-    struct addrinfo hints, *res;
-    char *p, *r;
-    char *host;
-    char *port = "0";
-    int error;
-    char servbuf[NI_MAXSERV];
+	static struct sockaddr_storage ss;
+	struct addrinfo hints, *res;
+	char *p, *r;
+	char *host;
+	char *port = "0";
+	int error;
+	char servbuf[NI_MAXSERV];
 
-    if (w == NULL)
-	w = "*";
-    p = r = NULL;
-    if (*w == '['){
-	if (r = strrchr(w+1, ']')){
-	    *r = '\0';
-	    p = r + 1;
-	    switch(*p){
-	    case ':':
-	      p++;
-	      /* nobreak; */
-	    case '\0':
-	      w++;
-	      break;
-	    default:
-	      p = NULL;
-	    }
+	if (w == NULL)
+		w = "*";
+	p = r = NULL;
+	if (*w == '['){
+		if (r = strrchr(w+1, ']')){
+			*r = '\0';
+			p = r + 1;
+			switch(*p){
+			case ':':
+				p++;
+				/* fallthrough; */
+			case '\0':
+				w++;
+				break;
+			default:
+				p = NULL;
+			}
+		}
+	} else {
+		p = strchr(w, ':');
+		if (p != NULL && strchr(p+1, ':') != NULL)
+			p = NULL;
 	}
-    }
-    else{
-	p = strchr(w, ':');
-	if (p != NULL && strchr(p+1, ':') != NULL)
-	    p = NULL;
-    }
-    if (ports != NULL) {
-	if (p != NULL && *p && strcmp(p + 1, "*") != 0)
-	    port = p + 1;
-    }
+	if (ports != NULL)
+		if (p != NULL && *p && strcmp(p + 1, "*") != 0)
+			port = p + 1;
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_socktype = SOCK_STREAM;
-    if (p != NULL)
-	*p = '\0';
-    if (strcmp(w, "*") == 0) {
-	host = NULL;
-	hints.ai_flags = AI_PASSIVE;
-	hints.ai_family = ap_default_family;
-    } else {
-	host = w;
-	hints.ai_family = PF_UNSPEC;
-    }
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	if (p != NULL)
+		*p = '\0';
+	if (strcmp(w, "*") == 0) {
+		host = NULL;
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_family = ap_default_family;
+	} else {
+		host = w;
+		hints.ai_family = PF_UNSPEC;
+	}
 
-    error = getaddrinfo(host, port, &hints, &res);
+	error = getaddrinfo(host, port, &hints, &res);
 
-    if (error || !res) {
-	fprintf(stderr, "ap_get_vitrhost_addr(): getaddrinfo(%s):%s --- exiting!\n", w, gai_strerror(error));
-	exit(1);
-    }
+	if (error || !res) {
+		fprintf(stderr, "ap_get_vitrhost_addr(): getaddrinfo(%s):%s "
+		    "--- exiting!\n", w, gai_strerror(error));
+		exit(1);
+	}
 
-    if (res->ai_next) {
-	fprintf(stderr, "ap_get_vitrhost_addr(): Host %s has multiple addresses ---\n", w);
-	fprintf(stderr, "you must choose one explicitly for use as\n");
-	fprintf(stderr, "a virtual host.  Exiting!!!\n");
-	exit(1);
-    }
+	if (res->ai_next) {
+		fprintf(stderr, "ap_get_vitrhost_addr(): Host %s has multiple "
+		    "addresses ---\n", w);
+		fprintf(stderr, "you must choose one explicitly for use as\n");
+		fprintf(stderr, "a virtual host.  Exiting!!!\n");
+		exit(1);
+	}
 
-    if (r != NULL)
-	*r = ']';
-    if (p != NULL)
-	*p = ':';
+	if (r != NULL)
+		*r = ']';
+	if (p != NULL)
+		*p = ':';
 
-    memcpy(&ss, res->ai_addr, res->ai_addrlen);
-    if (getnameinfo(res->ai_addr, res->ai_addrlen,
-		    NULL, 0, servbuf, sizeof(servbuf),
-		    NI_NUMERICSERV)){
-	fprintf(stderr, "ap_get_virthost_addr(): getnameinfo() failed --- Exiting!!!\n");
-	exit(1);
-    }
-    if (ports) *ports = atoi(servbuf);
-    freeaddrinfo(res);
-    return (struct sockaddr *)&ss;
+	memcpy(&ss, res->ai_addr, res->ai_addrlen);
+	if (getnameinfo(res->ai_addr, res->ai_addrlen,
+	    NULL, 0, servbuf, sizeof(servbuf),
+	    NI_NUMERICSERV)){
+		fprintf(stderr, "ap_get_virthost_addr(): getnameinfo() failed "
+		    "--- Exiting!!!\n");
+		exit(1);
+	}
+	if (ports) *ports = atoi(servbuf);
+		freeaddrinfo(res);
+	return (struct sockaddr *)&ss;
 }
 
 
-static char *find_fqdn(pool *a, struct hostent *p)
+static char *
+find_fqdn(pool *a, struct hostent *p)
 {
-    int x;
+	int x;
 
-    if (!strchr(p->h_name, '.')) {
-        if (p->h_aliases) {
-        	for (x = 0; p->h_aliases[x]; ++x) {
-                if (p->h_aliases[x] && strchr(p->h_aliases[x], '.') &&
-            		(!strncasecmp(p->h_aliases[x], p->h_name, strlen(p->h_name))))
-		            return ap_pstrdup(a, p->h_aliases[x]);
-            }
-	    }
-	    return NULL;
-    }
-    return ap_pstrdup(a, (void *) p->h_name);
+	if (!strchr(p->h_name, '.')) {
+		if (p->h_aliases) {
+			for (x = 0; p->h_aliases[x]; ++x) {
+				if (p->h_aliases[x]
+				    && strchr(p->h_aliases[x], '.')
+				    && (!strncasecmp(p->h_aliases[x],
+				    p->h_name, strlen(p->h_name))))
+					return ap_pstrdup(a, p->h_aliases[x]);
+			}
+		}
+		return NULL;
+	}
+	return ap_pstrdup(a, (void *)p->h_name);
 }
 
-API_EXPORT(char *) ap_get_local_host(pool *a)
+API_EXPORT(char *)
+ap_get_local_host(pool *a)
 {
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
-    char str[MAXHOSTNAMELEN];
-    char *server_hostname = NULL;
-    struct addrinfo hints, *res;
-    int error;
+	char str[MAXHOSTNAMELEN];
+	char *server_hostname = NULL;
+	struct addrinfo hints, *res;
+	int error;
 
-    if (gethostname(str, sizeof(str) - 1) != 0) {
-	ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
-	             "%s: gethostname() failed to determine ServerName\n",
-                     ap_server_argv0);
-    }
-    else 
-    {
-	str[sizeof(str) - 1] = '\0';
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_flags = AI_CANONNAME;
-	res = NULL;
-	error = getaddrinfo(str, NULL, &hints, &res);
-	if (error == 0 && res)
-	{
-		/* Since we found a fqdn, rturn it with no logged message. */
-		server_hostname = ap_pstrdup(a, res->ai_canonname);
+	if (gethostname(str, sizeof(str) - 1) != 0) {
+		ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
+		    "%s: gethostname() failed to determine ServerName\n",
+		    ap_server_argv0);
+	} else {
+		str[sizeof(str) - 1] = '\0';
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_flags = AI_CANONNAME;
+		res = NULL;
+		error = getaddrinfo(str, NULL, &hints, &res);
+		if (error == 0 && res) {
+			/*
+			 * Since we found a fqdn, return it with no
+			 * logged message.
+			 */
+			server_hostname = ap_pstrdup(a, res->ai_canonname);
+			freeaddrinfo(res);
+			return server_hostname;
+		} else {
+			/* Recovery - return the default server by IP: */
+			server_hostname = ap_pstrdup(a, str);
+			/* We will drop through to report the IP-named server */
+		}
+	}
+
+	/* If we don't have an fqdn or IP, fall back to the loopback addr */
+	if (!server_hostname) 
+		server_hostname = ap_pstrdup(a, "127.0.0.1");
+
+	ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, NULL,
+	    "%s: Could not determine the server's fully qualified "
+	    "domain name, using %s for ServerName",
+	    ap_server_argv0, server_hostname);
+
+	if (res)
 		freeaddrinfo(res);
-		return server_hostname;
-	}
-	else
-	{
-		/* Recovery - return the default server by IP: */
-		server_hostname = ap_pstrdup(a, str);
-		/* We will drop through to report the IP-named server */
-	}
-    }
-
-    /* If we don't have an fqdn or IP, fall back to the loopback addr */
-    if (!server_hostname) 
-        server_hostname = ap_pstrdup(a, "127.0.0.1");
-    
-    ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, NULL,
-	         "%s: Could not determine the server's fully qualified "
-                 "domain name, using %s for ServerName",
-                 ap_server_argv0, server_hostname);
-    
-    if (res)
-	freeaddrinfo(res);
-    return server_hostname;
+	return server_hostname;
 }
 
-/* simple 'pool' alloc()ing glue to ap_base64.c
- */
-API_EXPORT(char *) ap_pbase64decode(pool *p, const char *bufcoded)
+/* simple 'pool' alloc()ing glue to ap_base64.c */
+API_EXPORT(char *)
+ap_pbase64decode(pool *p, const char *bufcoded)
 {
-    char *decoded;
-    int l;
+	char *decoded;
+	int l;
 
-    decoded = (char *) ap_palloc(p, 1 + ap_base64decode_len(bufcoded));
-    l = ap_base64decode(decoded, bufcoded);
-    decoded[l] = '\0'; /* make binary sequence into string */
+	decoded = (char *)ap_palloc(p, 1 + ap_base64decode_len(bufcoded));
+	l = ap_base64decode(decoded, bufcoded);
+	decoded[l] = '\0'; /* make binary sequence into string */
 
-    return decoded;
+	return decoded;
 }
 
-API_EXPORT(char *) ap_pbase64encode(pool *p, char *string) 
+API_EXPORT(char *)
+ap_pbase64encode(pool *p, char *string) 
 { 
-    char *encoded;
-    int l = strlen(string);
+	char *encoded;
+	int l = strlen(string);
 
-    encoded = (char *) ap_palloc(p, 1 + ap_base64encode_len(l));
-    l = ap_base64encode(encoded, string, l);
-    encoded[l] = '\0'; /* make binary sequence into string */
+	encoded = (char *) ap_palloc(p, 1 + ap_base64encode_len(l));
+	l = ap_base64encode(encoded, string, l);
+	encoded[l] = '\0'; /* make binary sequence into string */
 
-    return encoded;
+	return encoded;
 }
 
-/* deprecated names for the above two functions, here for compatibility
- */
-API_EXPORT(char *) ap_uudecode(pool *p, const char *bufcoded)
+/* deprecated names for the above two functions, here for compatibility */
+API_EXPORT(char *)
+ap_uudecode(pool *p, const char *bufcoded)
 {
-    return ap_pbase64decode(p, bufcoded);
+	return ap_pbase64decode(p, bufcoded);
 }
 
-API_EXPORT(char *) ap_uuencode(pool *p, char *string) 
+API_EXPORT(char *)
+ap_uuencode(pool *p, char *string) 
 { 
-    return ap_pbase64encode(p, string);
+	return ap_pbase64encode(p, string);
 }
 
 
-/* we want to downcase the type/subtype for comparison purposes
+/*
+ * we want to downcase the type/subtype for comparison purposes
  * but nothing else because ;parameter=foo values are case sensitive.
  * XXX: in truth we want to downcase parameter names... but really,
  * apache has never handled parameters and such correctly.  You
  * also need to compress spaces and such to be able to compare
  * properly. -djg
  */
-API_EXPORT(void) ap_content_type_tolower(char *str)
+API_EXPORT(void)
+ap_content_type_tolower(char *str)
 {
-    char *semi;
+	char *semi;
 
-    semi = strchr(str, ';');
-    if (semi) {
-	*semi = '\0';
-    }
-    while (*str) {
-	*str = ap_tolower(*str);
-	++str;
-    }
-    if (semi) {
-	*semi = ';';
-    }
+	semi = strchr(str, ';');
+	if (semi)
+		*semi = '\0';
+
+	while (*str) {
+		*str = ap_tolower(*str);
+		++str;
+	}
+	if (semi)
+		*semi = ';';
 }
 
-/*
- * Given a string, replace any bare " with \" .
- */
+/* Given a string, replace any bare " with \" . */
 API_EXPORT(char *)
 ap_escape_quotes (pool *p, const char *instring)
 {
@@ -2199,7 +2208,8 @@ ap_escape_quotes (pool *p, const char *instring)
 	return outstring;
 }
 
-/* dest = src with whitespace removed
+/*
+ * dest = src with whitespace removed
  * length of dest assumed >= length of src
  */
 API_EXPORT(void)
