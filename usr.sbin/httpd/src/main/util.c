@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2008/05/23 08:38:51 mbalmer Exp $ */
+/*	$OpenBSD: util.c,v 1.28 2008/05/23 08:41:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -290,7 +290,7 @@ ap_strcasecmp_match(const char *str, const char *exp)
 API_EXPORT(int)
 ap_is_matchexp(const char *str)
 {
-	register int x;
+	int x;
 
 	for (x = 0; str[x]; x++)
 		if ((str[x] == '*') || (str[x] == '?'))
@@ -490,7 +490,7 @@ ap_getparents(char *name)
 	while (name[l] != '\0') {
 		if (name[l] == '.' && name[l + 1] == '.' && name[l + 2] == '/'
 		    && (l == 0 || name[l - 1] == '/')) {
-			register int m = l + 3, n;
+			int m = l + 3, n;
 
 			l = l - 2;
 			if (l >= 0) {
@@ -604,7 +604,7 @@ ap_make_dirstr_parent(pool *p, const char *s)
 API_EXPORT(char *)
 ap_make_dirstr(pool *p, const char *s, int n)
 {
-	register int x, f;
+	int x, f;
 	char *res;
 
 	for (x = 0, f = 0; s[x]; x++) {
@@ -627,7 +627,7 @@ ap_make_dirstr(pool *p, const char *s, int n)
 API_EXPORT(int)
 ap_count_dirs(const char *path)
 {
-	register int x, n;
+	int x, n;
 
 	for (x = 0, n = 0; path[x]; x++)
 		if (path[x] == '/')
@@ -946,7 +946,7 @@ ap_pcfg_open_custom(pool *p, const char *descr, void *param,
 API_EXPORT(int)
 ap_cfg_getc(configfile_t *cfp)
 {
-	register int ch = cfp->getch(cfp->param);
+	int ch = cfp->getch(cfp->param);
 	if (ch == LF) 
 		++cfp->line_number;
 	return ch;
@@ -1031,8 +1031,8 @@ ap_cfg_getline(char *buf, size_t bufsize, configfile_t *cfp)
 		 * No "get string" function defined; read character by
 		 * character
 		 */
-		register int c;
-		register size_t i = 0;
+		int c;
+		size_t i = 0;
 
 		buf[0] = '\0';
 		/* skip leading whitespace */
@@ -1633,7 +1633,7 @@ ap_escape_shell_cmd(pool *p, const char *str)
 static char
 x2c(const char *what)
 {
-	register char digit;
+	char digit;
 
 	digit = ((what[0] >= 'A') ?
 	    ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
@@ -1656,7 +1656,7 @@ x2c(const char *what)
 API_EXPORT(int)
 ap_unescape_url(char *url)
 {
-	register int x, y, badesc, badpath;
+	int x, y, badesc, badpath;
 
 	badesc = 0;
 	badpath = 0;
@@ -1824,7 +1824,7 @@ ap_is_rdirectory(const char *path)
 API_EXPORT(char *)
 ap_make_full_path(pool *a, const char *src1, const char *src2)
 {
-	register int x;
+	int x;
 
 	x = strlen(src1);
 	if (x == 0)
@@ -1840,7 +1840,7 @@ ap_make_full_path(pool *a, const char *src1, const char *src2)
 API_EXPORT(int)
 ap_is_url(const char *u)
 {
-	register int x;
+	int x;
 
 	for (x = 0; u[x] != ':'; x++) {
 		if ((!u[x]) ||
@@ -1870,7 +1870,7 @@ ap_can_exec(const struct stat *finfo)
 API_EXPORT(int)
 ap_ind(const char *s, char c)
 {
-	register int x;
+	int x;
 
 	for (x = 0; s[x]; x++)
 		if (s[x] == c)
@@ -1882,7 +1882,7 @@ ap_ind(const char *s, char c)
 API_EXPORT(int)
 ap_rind(const char *s, char c)
 {
-	register int x;
+	int x;
 
 	for (x = strlen(s) - 1; x != -1; x--)
 		if (s[x] == c)

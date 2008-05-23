@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.18 2008/05/14 08:42:20 mbalmer Exp $ */
+/*	$OpenBSD: alloc.c,v 1.19 2008/05/23 08:41:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1471,7 +1471,7 @@ ap_table_get(const table *t, const char *key)
 API_EXPORT(void)
 ap_table_set(table *t, const char *key, const char *val)
 {
-	register int i, j, k;
+	int i, j, k;
 	table_entry *elts = (table_entry *) t->a.elts;
 	int done = 0;
 
@@ -1503,7 +1503,7 @@ ap_table_set(table *t, const char *key, const char *val)
 API_EXPORT(void)
 ap_table_setn(table *t, const char *key, const char *val)
 {
-	register int i, j, k;
+	int i, j, k;
 	table_entry *elts = (table_entry *) t->a.elts;
 	int done = 0;
 
@@ -1546,7 +1546,7 @@ ap_table_setn(table *t, const char *key, const char *val)
 API_EXPORT(void)
 ap_table_unset(table *t, const char *key)
 {
-	register int i, j, k;
+	int i, j, k;
 	table_entry *elts = (table_entry *) t->a.elts;
 
 	for (i = 0; i < t->a.nelts;) {

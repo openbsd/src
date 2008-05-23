@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.33 2008/05/15 06:05:43 mbalmer Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.34 2008/05/23 08:41:48 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2268,7 +2268,7 @@ API_EXPORT(long) ap_send_fd_length(FILE *f, request_rec *r, long length)
 {
     char buf[IOBUFSIZE];
     long total_bytes_sent = 0;
-    register int n, w, o, len;
+    int n, w, o, len;
 
     if (length == 0)
         return 0;
@@ -2327,7 +2327,7 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
 {
     char buf[IOBUFSIZE];
     long total_bytes_sent = 0;
-    register int n, w, o, len, fd;
+    int n, w, o, len, fd;
     fd_set fds;
 
     if (length == 0)
