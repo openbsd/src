@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1368 2008/05/24 05:44:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1369 2008/05/24 06:00:56 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1800,36 +1800,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP200 AC97",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_PPB,
-	    "SB200 PCI-PCI",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_PCI_200,
+	    "IXP200 PCI",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_EHCI,
-	    "SB200 USB2",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_EHCI_200,
+	    "IXP200 USB2",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_1,
-	    "SB200 USB",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_200_1,
+	    "IXP200 USB",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_2,
-	    "SB200 USB",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_200_2,
+	    "IXP200 USB",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
 	    "IXP200 IDE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
-	    "SB200 PCI-ISA",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_200,
+	    "IXP200 ISA",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_200,
 	    "IXP200 Modem",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB,
-	    "SB200 SMBus",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_200,
+	    "IXP200 SMBus",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -1844,12 +1844,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP300 AC97",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_PCI_300,
+	    "IXP300 PCI",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_300,
 	    "IXP300 SMBus",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_EHCI_300,
+	    "IXP300 USB2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_300_1,
+	    "IXP300 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_300_2,
+	    "IXP300 USB",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
 	    "IXP300 IDE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_300,
+	    "IXP300 ISA",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_300,
+	    "IXP300 Modem",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SATA_300,
@@ -1952,8 +1976,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP600 IDE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_LPC_600,
-	    "IXP600 LPC",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_600,
+	    "IXP600 ISA",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_600,
@@ -2012,8 +2036,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP700 IDE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_ISA,
-	    "SB700 ISA",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_700,
+	    "IXP700 ISA",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
