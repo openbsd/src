@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.24 2008/03/01 16:03:04 kettenis Exp $	*/
+/*	$OpenBSD: sab.c,v 1.25 2008/05/24 00:11:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -213,7 +213,8 @@ sab_match(parent, match, aux)
 	struct ebus_attach_args *ea = aux;
 	char *compat;
 
-	if (strcmp(ea->ea_name, "se") == 0)
+	if (strcmp(ea->ea_name, "se") == 0 ||
+	    strcmp(ea->ea_name, "FJSV,se") == 0)
 		return (1);
 	compat = getpropstring(ea->ea_node, "compatible");
 	if (compat != NULL && !strcmp(compat, "sab82532"))
