@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.56 2008/03/16 22:19:57 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.57 2008/05/24 20:57:46 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -187,6 +187,8 @@ struct psycho_type {
 	{ "SUNW,sabre",         PSYCHO_MODE_SABRE       },
 	{ "pci108e,a000",       PSYCHO_MODE_SABRE       },
 	{ "pci108e,a001",       PSYCHO_MODE_SABRE       },
+	{ "pci10cf,138f",	PSYCHO_MODE_PSYCHO	},
+	{ "pci10cf,1390",	PSYCHO_MODE_PSYCHO	},
 	{ NULL, 0 }
 };
 
