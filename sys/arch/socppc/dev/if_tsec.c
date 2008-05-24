@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.2 2008/05/24 08:56:16 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.3 2008/05/24 09:49:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -51,6 +51,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
+
+extern void myetheraddr(u_char *);
 
 /*
  * TSEC registers.
@@ -324,6 +326,7 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_dmat = oa->oa_dmat;
 
+	myetheraddr(sc->sc_lladdr);
 	printf(": address %s\n", ether_sprintf(sc->sc_lladdr));
 
 	timeout_set(&sc->sc_tick, tsec_tick, sc);

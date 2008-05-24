@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2008/05/14 22:23:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2008/05/24 09:49:55 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -108,7 +108,11 @@ struct bd_info {
 	unsigned long	bi_sramstart;
 	unsigned long	bi_sramsize;
 	unsigned long	bi_immr_base;
-};
+	unsigned long	bi_bootflags;
+	unsigned long	bi_ip_addr;
+	unsigned char	bi_enetaddr[6];
+	unsigned long	bi_ethspeed;
+} bootinfo;
 
 extern struct bd_info **fwargsave;
 
@@ -135,6 +139,8 @@ int allowaperture = 0;
 caddr_t allocsys(caddr_t);
 void dumpsys(void);
 int lcsplx(int ipl);
+void myetheraddr(u_char *);
+
 int bus_mem_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 bus_addr_t bus_space_unmap_p(bus_space_tag_t, bus_space_handle_t,  bus_size_t);
 void bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -177,6 +183,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 
 	/* Make a copy of the args! */
 	strlcpy(bootpathbuf, args ? args : "wd0a", sizeof bootpathbuf);
+	memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
 
 	proc0.p_cpu = &cpu_info[0];
 	proc0.p_addr = proc0paddr;
@@ -187,11 +194,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
 	ppc_check_procid();
-
-	/*
-	 * Adjust base of internal memory mapped registers.
-	 */
-	mainbus_bus_space.bus_base = (*fwargsave)->bi_immr_base;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -363,12 +365,17 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	ddb_init();
 #endif
 
+	/*
+	 * Adjust base of internal memory mapped registers.
+	 */
+	mainbus_bus_space.bus_base = bootinfo.bi_immr_base;
+
 	devio_ex = extent_create("devio", 0x80000000, 0xffffffff, M_DEVBUF,
 		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
 		EX_NOCOALESCE|EX_NOWAIT);
 
 	/*
-	 * Replace with real console.
+	 * Initialize console.
 	 */
 	extern int comconsrate;
 	comconsfreq = 266666666;
@@ -389,6 +396,11 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+
+	printf("%02x:%02x:%02x:%02x:%02x:%02x\n", bootinfo.bi_enetaddr[0],
+	    bootinfo.bi_enetaddr[1], bootinfo.bi_enetaddr[2],
+	    bootinfo.bi_enetaddr[3],  bootinfo.bi_enetaddr[4],
+	    bootinfo.bi_enetaddr[5]);
 }
 
 void
@@ -1177,8 +1189,8 @@ struct mem_region uboot_mem[2], uboot_avail[4];
 void
 uboot_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	uboot_mem[0].start = (*fwargsave)->bi_memstart;
-	uboot_mem[0].size = (*fwargsave)->bi_memsize;
+	uboot_mem[0].start = bootinfo.bi_memstart;
+	uboot_mem[0].size = bootinfo.bi_memsize;
 
 	/* Reserve memory used for exception vectors. */
 	uboot_avail[0] = uboot_mem[0];
@@ -1194,6 +1206,13 @@ uboot_mem_regions(struct mem_region **memp, struct mem_region **availp)
 void
 uboot_vmon(void)
 {
+}
+
+void
+myetheraddr(u_char *cp)
+{
+	bcopy(bootinfo.bi_enetaddr, cp, sizeof bootinfo.bi_enetaddr);
+	bootinfo.bi_enetaddr[5]++;
 }
 
 /* prototype for locore function */
