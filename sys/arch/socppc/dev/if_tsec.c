@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.1 2008/05/19 19:56:44 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.2 2008/05/24 08:56:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -887,6 +887,9 @@ tsec_up(struct tsec_softc *sc)
 
 	tsec_write(sc, TSEC_TSTAT, TSEC_TSTAT_THLT);
 	tsec_write(sc, TSEC_RSTAT, TSEC_RSTAT_QHLT);
+
+	/* Configure media. */
+	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
