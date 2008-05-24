@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.358 2008/05/14 01:39:48 brad Exp $
+$OpenBSD: usbdevs,v 1.359 2008/05/24 04:54:10 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -139,6 +139,7 @@ vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
+vendor ITUNER		0x04d8	Ituner
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
@@ -1630,6 +1631,9 @@ product IRIVER IFP_5XX		0x1105	iFP-5xx
 
 /* iTegno products */
 product ITEGNO WM1080A		0x1080	WM1080A
+
+/* Ituner (mini-box.com) products */
+product ITUNER USBLCD20x2	0x0002	USB-LCD-20x2
 
 /* Jablotron products */
 product JABLOTRON PC60B		0x0001	PC-60B
