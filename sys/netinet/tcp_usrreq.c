@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.98 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.99 2008/05/24 19:48:32 thib Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -124,19 +124,6 @@ int *tcpctl_vars[TCPCTL_MAXID] = TCPCTL_VARS;
 struct	inpcbtable tcbtable;
 
 int tcp_ident(void *, size_t *, void *, size_t, int);
-
-#ifdef INET6
-int
-tcp6_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
-{
-
-	return tcp_usrreq(so, req, m, nam, control, p);
-}
-#endif
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request

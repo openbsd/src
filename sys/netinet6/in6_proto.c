@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.54 2008/05/06 08:47:36 markus Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.55 2008/05/24 19:48:32 thib Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -128,13 +128,13 @@ struct ip6protosw inet6sw[] = {
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
-  udp6_usrreq,	0,
+  udp_usrreq,	0,
   0,		0,		0,
   udp_sysctl,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
-  tcp6_usrreq,
+  tcp_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
   0,		0,		0,		0,
 #else

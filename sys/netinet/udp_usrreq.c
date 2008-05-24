@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.120 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.121 2008/05/24 19:48:32 thib Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1000,20 +1000,6 @@ release:
 		m_freem(control);
 	return (error);
 }
-
-#ifdef INET6
-/*ARGSUSED*/
-int
-udp6_usrreq(so, req, m, addr, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *addr, *control;
-	struct proc *p;
-{
-
-	return udp_usrreq(so, req, m, addr, control, p);
-}
-#endif
 
 /*ARGSUSED*/
 int

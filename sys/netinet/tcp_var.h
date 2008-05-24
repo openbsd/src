@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.88 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.89 2008/05/24 19:48:32 thib Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -595,10 +595,6 @@ void	 tcp_trace(short, short, struct tcpcb *, caddr_t, int, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-#if defined(INET6) && !defined(TCP6)
-int	 tcp6_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
-#endif
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
