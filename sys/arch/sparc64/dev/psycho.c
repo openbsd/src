@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.57 2008/05/24 20:57:46 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.58 2008/05/24 23:31:37 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -187,8 +187,8 @@ struct psycho_type {
 	{ "SUNW,sabre",         PSYCHO_MODE_SABRE       },
 	{ "pci108e,a000",       PSYCHO_MODE_SABRE       },
 	{ "pci108e,a001",       PSYCHO_MODE_SABRE       },
-	{ "pci10cf,138f",	PSYCHO_MODE_PSYCHO	},
-	{ "pci10cf,1390",	PSYCHO_MODE_PSYCHO	},
+	{ "pci10cf,138f",	PSYCHO_MODE_CMU_CH	},
+	{ "pci10cf,1390",	PSYCHO_MODE_CMU_CH	},
 	{ NULL, 0 }
 };
 
@@ -272,7 +272,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	/* Register layouts are different.  stuupid. */
-	if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO ||
+	    sc->sc_mode == PSYCHO_MODE_CMU_CH) {
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[2].ur_paddr;
 
 		if (ma->ma_naddress > 2) {
@@ -308,7 +309,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 
 	csr = psycho_psychoreg_read(sc, psy_csr);
 	sc->sc_ign = INTMAP_IGN; /* APB IGN is always 0x1f << 6 = 0x7c */
-	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO ||
+	    sc->sc_mode == PSYCHO_MODE_CMU_CH)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
 
 	printf(": %s, impl %d, version %d, ign %x\n", ptype->p_name,
@@ -376,7 +378,10 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	/* allocate our tags */
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
 	pp->pp_iot = psycho_alloc_io_tag(pp);
-	pp->pp_dmat = psycho_alloc_dma_tag(pp);
+	if (sc->sc_mode == PSYCHO_MODE_CMU_CH)
+		pp->pp_dmat = ma->ma_dmatag;
+	else
+		pp->pp_dmat = psycho_alloc_dma_tag(pp);
 	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
 	                (pp->pp_iot ? PCI_FLAGS_IO_ENABLED  : 0);
 
@@ -422,7 +427,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		    psycho_psychoreg_vaddr(sc, power_int_map),
 		    psycho_psychoreg_vaddr(sc, power_clr_int), "powerfail");
 #endif
-		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO ||
+		    sc->sc_mode == PSYCHO_MODE_CMU_CH) {
 			psycho_set_intr(sc, 15, psycho_bus_b,
 			    psycho_psychoreg_vaddr(sc, pciberr_int_map),
 			    psycho_psychoreg_vaddr(sc, pciberr_clr_int),
@@ -489,8 +495,11 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		/* Point out iommu at the strbuf_ctl. */
 		sc->sc_is->is_sb[0] = &pp->pp_sb;
 
-		printf("%s: ", sc->sc_dev.dv_xname);
-		psycho_iommu_init(sc, 2);
+		/* CMU-CH doesn't have an IOMMU. */
+		if (sc->sc_mode != PSYCHO_MODE_CMU_CH) {
+			printf("%s: ", sc->sc_dev.dv_xname);
+			psycho_iommu_init(sc, 2);
+		}
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map(sc->sc_configtag,
@@ -557,7 +566,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc->conf_write = psycho_conf_write;
 	pba.pba_pc->intr_map = psycho_intr_map;
 
-	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO ||
+	    sc->sc_mode == PSYCHO_MODE_CMU_CH)
 		psycho_identify_pbm(sc, pp, &pba);
 	else
 		pp->pp_id = PSYCHO_PBM_UNKNOWN;
