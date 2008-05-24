@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.36 2008/05/08 13:57:43 miod Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.37 2008/05/24 20:39:18 ckuethe Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -131,6 +131,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_HP, USB_PRODUCT_HP_816C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_959C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_ITUNER, USB_PRODUCT_ITUNER_USBLCD20x2,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY900,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY760,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY920,	    ANY,   { UQ_BROKEN_BIDIR }},
