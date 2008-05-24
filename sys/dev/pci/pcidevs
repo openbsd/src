@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1366 2008/05/24 01:30:45 brad Exp $
+$OpenBSD: pcidevs,v 1.1367 2008/05/24 02:18:46 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1659,6 +1659,7 @@ product FREESCALE MPC8343	0x0087	MPC8343
 
 /* Fujitsu products */
 product FUJITSU PW008GE5	0x11a1	PW008GE5
+product FUJITSU PW008GE4	0x11a2	PW008GE4
 product FUJITSU PP250_450_LAN	0x11cc	PRIMEPOWER250/450 LAN
 
 /* Future Domain products */
