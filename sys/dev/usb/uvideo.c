@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.16 2008/05/18 09:35:35 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.17 2008/05/24 19:37:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -54,7 +54,8 @@ int uvideo_debug = 1;
 
 int		uvideo_enable(void *);
 void		uvideo_disable(void *);
-int		uvideo_open(void *, int);
+int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
+		    void *arg);
 int		uvideo_close(void *);
 
 int             uvideo_match(struct device *, void *, void *);
@@ -197,7 +198,8 @@ uvideo_disable(void *v)
 }
 
 int
-uvideo_open(void *addr, int flags)
+uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
+    void (*intr)(void *), void *arg)
 {
 	struct uvideo_softc *sc = addr;
 	usbd_status error;
@@ -207,6 +209,12 @@ uvideo_open(void *addr, int flags)
 
 	if (sc->sc_dying)
 		return (EIO);
+
+	/* pointers to upper layer which we need */
+	sc->sc_uplayer_arg = arg;
+	sc->sc_uplayer_fsize = size;
+	sc->sc_uplayer_fbuffer = buffer;
+	sc->sc_uplayer_intr = intr;
 
 	/* open video stream pipe */
 	error = uvideo_vs_open(sc);
@@ -1161,6 +1169,15 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 		usb_add_task(sc->sc_udev, &sc->sc_task_write);
 #endif
+		/*
+		 * Copy video frame to upper layer buffer and call
+		 * upper layer interrupt.
+		 */
+		bzero(sc->sc_uplayer_fbuffer, 32000);
+		*sc->sc_uplayer_fsize = fb->offset;
+		bcopy(fb->buf, sc->sc_uplayer_fbuffer, fb->offset);
+		sc->sc_uplayer_intr(sc->sc_uplayer_arg);
+
 		fb->fragment = 0;
 		fb->fid = 0;
 //		fb->offset = 0;

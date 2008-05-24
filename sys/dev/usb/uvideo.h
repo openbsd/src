@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.7 2008/04/20 09:14:05 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.8 2008/05/24 19:37:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -393,4 +393,9 @@ struct uvideo_softc {
 #define	UVIDEO_MAX_VS_NUM			 8
 	struct uvideo_vs_iface			*sc_vs_curr;
 	struct uvideo_vs_iface			 sc_vs_coll[UVIDEO_MAX_VS_NUM];
+
+	void					*sc_uplayer_arg;
+	int					*sc_uplayer_fsize;
+	uint8_t					*sc_uplayer_fbuffer;
+	void					 (*sc_uplayer_intr)(void *);
 };

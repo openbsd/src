@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.1 2008/04/09 19:49:55 robert Exp $	*/
+/*	$OpenBSD: video.c,v 1.2 2008/05/24 19:37:34 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -23,6 +23,8 @@
 #include <sys/fcntl.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/videoio.h>
 
@@ -36,6 +38,8 @@ void	videoattach(struct device *, struct device *, void *);
 int	videodetach(struct device *, int);
 int	videoactivate(struct device *, enum devact);
 int	videoprint(void *, const char *);
+
+void	video_intr(void *);
 
 struct cfattach video_ca = {
 	sizeof(struct video_softc), videoprobe, videoattach,
@@ -76,8 +80,15 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	     sc->hw_if == NULL)
 		return (ENXIO);
 
+	sc->sc_fsize = 0;
+	/* XXX find proper size */
+	sc->sc_fbuffer = malloc(32000, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_fbuffer == NULL)
+		return (ENOMEM);
+
 	if (sc->hw_if->open != NULL)
-		return (sc->hw_if->open(sc->hw_hdl, flags));
+		return (sc->hw_if->open(sc->hw_hdl, flags, &sc->sc_fsize,
+		    sc->sc_fbuffer, video_intr, sc));
 	else
 		return (0);
 }
@@ -89,10 +100,48 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 
 	sc = video_cd.cd_devs[VIDEOUNIT(dev)];
 
+	if (sc->sc_fbuffer != NULL)
+		free(sc->sc_fbuffer, M_DEVBUF);
+
 	if (sc->hw_if->close != NULL)
 		return (sc->hw_if->close(sc->hw_hdl));
 	else
 		return (0);
+}
+
+int
+videoread(dev_t dev, struct uio *uio, int ioflag)
+{
+	struct video_softc *sc;
+	int unit, error, size;
+
+	unit = VIDEOUNIT(dev);
+	if (unit >= video_cd.cd_ndevs ||
+	    (sc = video_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	DPRINTF(("resid=%d\n", uio->uio_resid));
+
+	/* block userland read until a frame is ready */
+	error = tsleep(sc, PWAIT | PCATCH, "vid_rd", 0);
+	if (error)
+		return (error);
+
+	/* move the frame to userland */
+	if (sc->sc_fsize < uio->uio_resid)
+		size = sc->sc_fsize;
+	else
+		size = uio->uio_resid;
+	error = uiomove(sc->sc_fbuffer, size, uio);
+	if (error)
+		return (error);
+
+	DPRINTF(("uiomove successfully done (%d bytes)\n", size));
+
+	return (0);
 }
 
 int
@@ -142,6 +191,25 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (error);
 }
 
+paddr_t
+videommap(dev_t dev, off_t off, int prot)
+{
+	struct video_softc *sc;
+	int unit;
+
+	unit = VIDEOUNIT(dev);
+	if (unit >= video_cd.cd_ndevs ||
+	    (sc = video_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	/* TODO */
+
+	return (0);
+}
+
 /*
  * Called from hardware driver. This is where the MI video driver gets
  * probed/attached to the hardware driver
@@ -154,6 +222,15 @@ video_attach_mi(struct video_hw_if *rhwp, void *hdlp, struct device *dev)
 	arg.hwif = rhwp;
 	arg.hdl = hdlp;
 	return (config_found(dev, &arg, videoprint));
+}
+
+void
+video_intr(void *addr)
+{
+	struct video_softc *sc = (struct video_softc *)addr;
+
+	printf("video_intr sc=%p\n", sc);
+	wakeup(sc);
 }
 
 int
