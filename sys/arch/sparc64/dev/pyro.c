@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.11 2008/01/19 11:13:43 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.12 2008/05/24 14:54:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -97,7 +97,8 @@ pyro_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	str = getpropstring(ma->ma_node, "compatible");
-	if (strcmp(str, "pciex108e,80f0") == 0)
+	if (strcmp(str, "pciex108e,80f0") == 0 ||
+	    strcmp(str, "pciex108e,80f8") == 0)
 		return (1);
 
 	return (0);
@@ -108,6 +109,7 @@ pyro_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pyro_softc *sc = (struct pyro_softc *)self;
 	struct mainbus_attach_args *ma = aux;
+	char *str;
 	int busa;
 
 	sc->sc_node = ma->ma_node;
@@ -133,6 +135,10 @@ pyro_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to map xbc registers\n");
 		return;
 	}
+
+	str = getpropstring(ma->ma_node, "compatible");
+	if (strcmp(str, "pciex108e,80f8") == 0)
+		sc->sc_oberon = 1;
 
 	pyro_init(sc, busa);
 }
