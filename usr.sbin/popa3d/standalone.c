@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.11 2007/05/11 01:47:48 ray Exp $ */
+/* $OpenBSD: standalone.c,v 1.12 2008/05/24 02:39:23 brad Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -146,7 +146,6 @@ int main(void)
 		if ((pfds[i].fd = socket(res->ai_family, res->ai_socktype,
 		    res->ai_protocol)) < 0)
 			continue;
-		pfds[i].events = POLLIN;
 
 		if (setsockopt(pfds[i].fd, SOL_SOCKET, SO_REUSEADDR,
 		    (void *)&true, sizeof(true))) {
@@ -170,6 +169,7 @@ int main(void)
 			continue;
 		}
 
+		pfds[i].events = POLLIN;
 		i++;
 	}
 	freeaddrinfo(res0);
