@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.4 2008/05/24 10:51:46 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.5 2008/05/24 11:50:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -747,6 +747,10 @@ tsec_rx_proc(struct tsec_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, rxb->tb_map, 0,
 		    len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
+
+		/* Strip off CRC. */
+		len -= ETHER_CRC_LEN;
+		KASSERT(len > 0);
 
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
