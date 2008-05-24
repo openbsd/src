@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.3 2008/05/24 09:49:55 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.4 2008/05/24 10:51:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -213,7 +213,7 @@ struct tsec_buf {
 };
 
 #define TSEC_NTXDESC	256
-#define TSEC_NTXSEGS	4
+#define TSEC_NTXSEGS	16
 
 #define TSEC_NRXDESC	256
 
