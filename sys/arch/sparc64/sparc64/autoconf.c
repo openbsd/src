@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.88 2008/05/21 19:23:15 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.89 2008/05/24 20:02:19 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -259,6 +259,7 @@ bootstrap(nctx)
 #if defined(SUN4US) || defined(SUN4V)
 	char buf[32];
 #endif
+	int impl = 0;
 	int ncpus;
 
 	/* Initialize the PROM console so printf will not panic. */
@@ -286,11 +287,30 @@ bootstrap(nctx)
 			cputyp = CPU_SUN4US;
 		if (strcmp(buf, "sun4v") == 0)
 			cputyp = CPU_SUN4V;
-}
+	}
 #endif
 
-#if defined (SUN4US) || defined(SUN4V)
-	if (CPU_ISSUN4US || CPU_ISSUN4V) {
+	/* We cannot read %ver on sun4v systems. */
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
+		impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
+
+	if (impl >= IMPL_CHEETAH) {
+		extern vaddr_t dlflush_start;
+		vaddr_t *pva;
+		u_int32_t insn;
+
+		for (pva = &dlflush_start; *pva; pva++) {
+			insn = *(u_int32_t *)(*pva);
+			insn &= ~(ASI_DCACHE_TAG << 5);
+			insn |= (ASI_DCACHE_INVALIDATE << 5);
+			*(u_int32_t *)(*pva) = insn;
+			flush((void *)(*pva));
+		}
+
+		cacheinfo.c_dcache_flush_page = us3_dcache_flush_page;
+	}
+
+	if ((impl >= IMPL_ZEUS && impl <= IMPL_JUPITER) || CPU_ISSUN4V) {
 		extern vaddr_t dlflush_start;
 		vaddr_t *pva;
 
@@ -301,7 +321,6 @@ bootstrap(nctx)
 
 		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
 	}
-#endif
 
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
