@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.69 2008/04/12 21:20:58 ray Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.70 2008/05/24 00:42:35 pyr Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.69 2008/04/12 21:20:58 ray Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.70 2008/05/24 00:42:35 pyr Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -179,7 +179,8 @@ hookup(char *host, char *port)
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "unknown", sizeof(hbuf));
-			fprintf(ttyout, "Trying %s...\n", hbuf);
+			if (verbose)
+				fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s < 0) {
