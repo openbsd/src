@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.26 2007/09/25 14:21:30 jmc Exp $
+.\"	$OpenBSD: identd.8,v 1.27 2008/05/24 02:33:05 brad Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.Dd $Mdocdate: September 25 2007 $
+.Dd $Mdocdate: May 24 2008 $
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Sh SYNOPSIS
 .Nm identd
 .Bk -words
-.Op Fl dehlmNnoUv
+.Op Fl 46dehlmNnoUv
 .Op Fl b | i | w
 .Op Fl a Ar address
 .Op Fl c Ar charset
@@ -58,6 +58,18 @@ process owning the connection.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4
+When
+.Fl b
+is specified, forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+When
+.Fl b
+is specified, forces
+.Nm
+to use IPv6 addresses only.
 .It Fl a Ar address
 Specify a local IP address in dotted quad format
 to bind the listen socket to if running as a stand-alone daemon.
