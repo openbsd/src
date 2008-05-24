@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.143 2008/05/09 06:19:33 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.144 2008/05/24 18:53:46 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1346,7 +1346,7 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	struct page_rigid_geometry *rigid;
 	struct page_flex_geometry *flex;
 	struct page_reduced_geometry *reduced;
-	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize, ssblksize;
+	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize = 0, ssblksize;
 	u_int16_t rpm = 0;
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &ssblksize);
