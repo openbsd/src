@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.17 2008/05/24 19:37:34 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.18 2008/05/25 07:47:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -97,8 +97,7 @@ void		uvideo_vs_start(struct uvideo_softc *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
-		    uint8_t *, int);
-
+		    uint8_t *, int); 
 #ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
@@ -128,6 +127,9 @@ int		uvideo_debug_file_open(struct uvideo_softc *);
 void		uvideo_debug_file_write_sample(void *);
 #endif
 
+/*
+ * IOCTL's
+ */
 int		uvideo_querycap(void *, struct v4l2_capability *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
 int		uvideo_g_fmt(void *, struct v4l2_format *);
@@ -1613,28 +1615,30 @@ uvideo_debug_file_write_sample(void *arg)
 }
 #endif
 
+/*
+ * IOCTL's
+ */
 int
-uvideo_querycap(void *v, struct v4l2_capability * caps)
+uvideo_querycap(void *v, struct v4l2_capability *caps)
 {
 	struct uvideo_softc *sc = v;
 
 	bzero(caps, sizeof(caps));
-	strlcpy(caps->driver, DEVNAME(sc),
-		sizeof(caps->driver));
-	strncpy(caps->card, "Generic USB video class device",
-		sizeof(caps->card));
-	strncpy(caps->bus_info, "usb", sizeof(caps->bus_info));
+	strlcpy(caps->driver, DEVNAME(sc), sizeof(caps->driver));
+	strlcpy(caps->card, "Generic USB video class device",
+	    sizeof(caps->card));
+	strlcpy(caps->bus_info, "usb", sizeof(caps->bus_info));
 
 	caps->version = 1;
 	caps->capabilities = V4L2_CAP_VIDEO_CAPTURE
-		| V4L2_CAP_STREAMING
-		| V4L2_CAP_READWRITE;
+	    | V4L2_CAP_STREAMING
+	    | V4L2_CAP_READWRITE;
 
 	return (0);
 }
 
 int
-uvideo_s_fmt(void *v, struct v4l2_format * fmt)
+uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 {
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
@@ -1643,7 +1647,7 @@ uvideo_s_fmt(void *v, struct v4l2_format * fmt)
 }
 
 int
-uvideo_g_fmt(void *v, struct v4l2_format * fmt)
+uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 {
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
@@ -1652,7 +1656,7 @@ uvideo_g_fmt(void *v, struct v4l2_format * fmt)
 }
 
 int
-uvideo_reqbufs(void *v, struct v4l2_requestbuffers * rb)
+uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 {
 	return (0);
 }

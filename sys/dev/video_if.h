@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.2 2008/05/24 19:37:34 mglocker Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.3 2008/05/25 07:47:47 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -32,6 +32,7 @@ struct video_hw_if {
 	/* close hardware */
 	int	(*close)(void *);
 
+	/* ioctl's */
 	int	(*querycap)(void *, struct v4l2_capability *);
 	int	(*s_fmt)(void *, struct v4l2_format *);
 	int	(*g_fmt)(void *, struct v4l2_format *);

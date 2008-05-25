@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.2 2008/05/24 19:37:34 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.3 2008/05/25 07:47:47 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -163,24 +163,24 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case VIDIOC_QUERYCAP:
 		if (sc->hw_if->querycap)
 			error = (sc->hw_if->querycap)(sc->hw_hdl,
-				(struct v4l2_capability *)data);
+			    (struct v4l2_capability *)data);
 		break;
 	case VIDIOC_S_FMT:
 		if (!(flags & FWRITE))
 			return (EACCES);
 		if (sc->hw_if->s_fmt)
 			error = (sc->hw_if->s_fmt)(sc->hw_hdl,
-				(struct v4l2_format *)data);
+			    (struct v4l2_format *)data);
 		break;
 	case VIDIOC_G_FMT:
 		if (sc->hw_if->g_fmt)
 			error = (sc->hw_if->g_fmt)(sc->hw_hdl,
-				(struct v4l2_format *)data);
+			    (struct v4l2_format *)data);
 		break;
 	case VIDIOC_REQBUFS:
 		if (sc->hw_if->reqbufs)
 			error = (sc->hw_if->reqbufs)(sc->hw_hdl,
-				(struct v4l2_requestbuffers *)data);
+			    (struct v4l2_requestbuffers *)data);
 		break;
 	case VIDIOC_QUERYBUF:
 	case VIDIOC_QBUF:

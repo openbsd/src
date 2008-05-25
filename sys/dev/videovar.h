@@ -1,4 +1,4 @@
-/*	$OpenBSD: videovar.h,v 1.2 2008/05/24 19:37:34 mglocker Exp $	*/
+/*	$OpenBSD: videovar.h,v 1.3 2008/05/25 07:47:47 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -19,14 +19,14 @@
 #define _SYS_DEV_VIDEOVAR_H
 
 struct video_softc {
-	struct device	dev;
-	void		*hw_hdl;	/* hardware driver handle */
-	struct device	*sc_dev;	/* hardware device struct */
-	struct video_hw_if *hw_if;	/* hardware interface */
-	char		sc_dying;	/* device detached */
+	struct device		 dev;
+	void			*hw_hdl;	/* hardware driver handle */
+	struct device		*sc_dev;	/* hardware device struct */
+	struct video_hw_if	*hw_if;		/* hardware interface */
+	char			 sc_dying;	/* device detached */
 
-	int		 sc_fsize;
-	uint8_t		*sc_fbuffer;
+	int			 sc_fsize;
+	uint8_t			*sc_fbuffer;
 };
 
 #endif /* _SYS_DEV_VIDEOVAR_H */
