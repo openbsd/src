@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.17 2008/01/26 08:13:09 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.18 2008/05/25 23:45:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -104,6 +104,7 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_ih = NULL;
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_ios = 0;
+	sc->sc_target = -1;
 
 	/* find the appropriate memory base */
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {

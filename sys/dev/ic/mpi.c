@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.92 2007/12/27 02:29:00 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.93 2008/05/25 23:45:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -81,6 +81,7 @@ int			mpi_complete(struct mpi_softc *, struct mpi_ccb *, int);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
 int			mpi_reply(struct mpi_softc *, u_int32_t);
 
+int			mpi_cfg_spi_port(struct mpi_softc *);
 void			mpi_squash_ppr(struct mpi_softc *);
 void			mpi_run_ppr(struct mpi_softc *);
 int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
@@ -214,8 +215,11 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI)
+	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI) {
+		if (mpi_cfg_spi_port(sc) != 0)
+			goto free_replies;
 		mpi_squash_ppr(sc);
+	}
 
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.device = &mpi_dev;
@@ -255,6 +259,46 @@ free_ccbs:
 	free(sc->sc_ccbs, M_DEVBUF);
 
 	return(1);
+}
+
+int
+mpi_cfg_spi_port(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_spi_port_pg1	port;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT, 1, 0x0,
+	    &hdr) != 0)
+		return (1);
+
+	if (mpi_cfg_page(sc, 0x0, &hdr, 1, &port, sizeof(port)) != 0)
+		return (1);
+
+	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_spi_port_pg1\n", DEVNAME(sc));
+	DNPRINTF(MPI_D_MISC, "%s:  port_scsi_id: %d port_resp_ids 0x%04x\n",
+	    DEVNAME(sc), port.port_scsi_id, letoh16(port.port_resp_ids));
+	DNPRINTF(MPI_D_MISC, "%s:  on_bus_timer_value: 0x%08x\n", DEVNAME(sc),
+	    letoh32(port.port_scsi_id));
+	DNPRINTF(MPI_D_MISC, "%s:  target_config: 0x%02x id_config: 0x%04x\n",
+	    DEVNAME(sc), port.target_config, letoh16(port.id_config));
+
+	if (port.port_scsi_id == sc->sc_target &&
+	    port.port_resp_ids == htole16(1 << sc->sc_target) &&
+	    port.on_bus_timer_value != htole32(0x0))
+		return (0);
+
+	DNPRINTF(MPI_D_MISC, "%s: setting port scsi id to %d\n", DEVNAME(sc),
+	    sc->sc_target);
+	port.port_scsi_id = sc->sc_target;
+	port.port_resp_ids = htole16(1 << sc->sc_target);
+	port.on_bus_timer_value = htole32(0x07000000); /* XXX magic */
+
+	if (mpi_cfg_page(sc, 0x0, &hdr, 0, &port, sizeof(port)) != 0) {
+		printf("%s: unable to configure port scsi id\n", DEVNAME(sc));
+		return (1);
+	}
+
+	return (0);
 }
 
 void
@@ -1834,7 +1878,8 @@ mpi_portfacts(struct mpi_softc *sc)
 	    letoh16(pfp->max_lan_buckets));
 
 	sc->sc_porttype = pfp->port_type;
-	sc->sc_target = letoh16(pfp->port_scsi_id);
+	if (sc->sc_target == -1)
+		sc->sc_target = letoh16(pfp->port_scsi_id);
 
 	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	rv = 0;
