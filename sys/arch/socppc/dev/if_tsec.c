@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.5 2008/05/24 11:50:09 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.6 2008/05/25 15:25:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -167,6 +167,9 @@ extern void myetheraddr(u_char *);
 #define  TSEC_ATTR_RDSEN	0x00000080
 #define  TSEC_ATTR_RBDSEN	0x00000040
 
+/*
+ * TSEC descriptors.
+ */
 
 struct tsec_desc {
 	uint16_t td_status;
@@ -345,8 +348,7 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_writereg = tsec_mii_writereg;
 	sc->sc_mii.mii_statchg = tsec_mii_statchg;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, tsec_media_change,
-	    tsec_media_status);
+	ifmedia_init(&sc->sc_media, 0, tsec_media_change, tsec_media_status);
 
 	tsec_reset(sc);
 
@@ -358,8 +360,7 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, /*MII_PHY_ANY*/ 17,
-	    MII_OFFSET_ANY, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, 17, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -524,7 +525,9 @@ tsec_media_change(struct ifnet *ifp)
 {
 	struct tsec_softc *sc = ifp->if_softc;
 
-	mii_mediachg(&sc->sc_mii);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys))
+		mii_mediachg(&sc->sc_mii);
+
 	return (0);
 }
 
@@ -533,9 +536,11 @@ tsec_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct tsec_softc *sc = ifp->if_softc;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	if (LIST_FIRST(&sc->sc_mii.mii_phys)) {
+		mii_pollstat(&sc->sc_mii);
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	}
 }
 
 int
@@ -796,7 +801,7 @@ tsec_up(struct tsec_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct tsec_desc *txd, *rxd;
 	struct tsec_buf *txb, *rxb;
-	uint32_t maccfg1, maccfg2, dmactrl, attr;
+	uint32_t maccfg1, maccfg2, ecntrl, dmactrl, attr;
 	int i;
 
 	/* Allocate Tx descriptor ring. */
@@ -876,8 +881,19 @@ tsec_up(struct tsec_softc *sc)
 	maccfg1 |= TSEC_MACCFG1_RXEN;
 	tsec_write(sc, TSEC_MACCFG1, maccfg1);
 
+	/*
+	 * Default to full-duplex MII mode, which is the mode most
+	 * likely used by a directly connected integrated switch.  For
+	 * a real PHY the mode will be set later, based on the
+	 * parameters negotiaded by the PHY.
+	 */
 	maccfg2 = tsec_read(sc, TSEC_MACCFG2);
+	maccfg2 &= ~TSEC_MACCFG2_IF_MODE;
+	maccfg2 |= TSEC_MACCFG2_IF_MII | TSEC_MACCFG2_FDX;
 	tsec_write(sc, TSEC_MACCFG2, maccfg2 | TSEC_MACCFG2_PAD);
+
+	ecntrl = tsec_read(sc, TSEC_ECNTRL);
+	tsec_write(sc, TSEC_ECNTRL, ecntrl | TSEC_ECNTRL_R100M);
 
 	dmactrl = tsec_read(sc, TSEC_DMACTRL);
 	dmactrl |= TSEC_DMACTRL_TDSEN;
@@ -896,7 +912,8 @@ tsec_up(struct tsec_softc *sc)
 	tsec_write(sc, TSEC_RSTAT, TSEC_RSTAT_QHLT);
 
 	/* Configure media. */
-	mii_mediachg(&sc->sc_mii);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys))
+		mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
