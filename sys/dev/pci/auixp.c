@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.18 2008/04/21 00:32:42 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.19 2008/05/25 23:59:33 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -133,6 +133,7 @@ int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
     struct auixp_dma *);
 int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
 paddr_t	auixp_mappage(void *, void *, off_t, int);
+void	auixp_get_default_params(void *, int, struct audio_params *);
 
 
 /* power management (do we support that already?) */
@@ -201,7 +202,7 @@ struct audio_hw_if auixp_hw_if = {
 	auixp_get_props,
 	auixp_trigger_output,
 	auixp_trigger_input,
-	NULL
+	auixp_get_default_params
 };
 
 int
@@ -214,6 +215,12 @@ auixp_open(void *v, int flags)
 void
 auixp_close(void *v)
 {
+}
+
+void
+auixp_get_default_params(void *v, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
 }
 
 int

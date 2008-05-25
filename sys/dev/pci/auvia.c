@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.37 2008/04/21 00:32:42 jakemsr Exp $ */
+/*	$OpenBSD: auvia.c,v 1.38 2008/05/25 23:59:33 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ void	auvia_set_params_sub(struct auvia_softc *, struct auvia_softc_chan *,
 	struct audio_params *);
 int	auvia_set_params(void *, int, int, struct audio_params *,
 	struct audio_params *);
+void	auvia_get_default_params(void *, int, struct audio_params *);
 int	auvia_round_blocksize(void *, int);
 int	auvia_halt_output(void *);
 int	auvia_halt_input(void *);
@@ -211,7 +212,7 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_get_props,
 	auvia_trigger_output,
 	auvia_trigger_input,
-	NULL
+	auvia_get_default_params
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -577,6 +578,11 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	}
 }
 
+void
+auvia_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
+}
 
 int
 auvia_set_params(void *addr, int setmode, int usemode,
