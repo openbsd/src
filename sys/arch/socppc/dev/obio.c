@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.2 2008/05/17 15:49:05 kettenis Exp $	*/
+/*	$OpenBSD: obio.c,v 1.3 2008/05/25 16:23:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -62,6 +62,7 @@ obio_search(struct device *parent, void *cfdata, void *aux)
 	oa.oa_dmat = ma->ma_dmat;
 	oa.oa_offset = cf->cf_offset;
 	oa.oa_ivec = cf->cf_ivec;
+	oa.oa_phy = cf->cf_phy;
 	oa.oa_name = cf->cf_driver->cd_name;
 	config_found(parent, &oa, obio_print);
 

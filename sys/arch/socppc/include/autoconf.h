@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 2008/05/17 15:49:05 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.3 2008/05/25 16:23:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -32,11 +32,13 @@ struct obio_attach_args {
 	bus_dma_tag_t	oa_dmat;
 	bus_addr_t	oa_offset;
 	int		oa_ivec;
+	int		oa_phy;
 	char		*oa_name;
 };
 
 #define cf_offset	cf_loc[0]
 #define cf_ivec		cf_loc[1]
+#define cf_phy		cf_loc[2]
 
 typedef int (time_read_t)(time_t *sec);
 typedef int (time_write_t)(time_t sec);

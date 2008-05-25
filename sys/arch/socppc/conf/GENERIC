@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2008/05/19 19:57:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.5 2008/05/25 16:23:58 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,8 +62,10 @@ rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 sd*		at scsibus?
 
 # On-board TSEC
-tsec0		at obio? addr 0x24000 ivec 32
-tsec1		at obio? addr 0x25000 ivec 35
+tsec0		at obio? addr 0x24000 ivec 32 phy 17
+tsec1		at obio? addr 0x25000 ivec 35 phy 5
 
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
+eephy*		at mii?		# Marvell 88E1000 series PHY
+gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# generic unknown PHYs

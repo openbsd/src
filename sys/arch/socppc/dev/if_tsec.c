@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.6 2008/05/25 15:25:30 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.7 2008/05/25 16:23:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -360,7 +360,8 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, 17, MII_OFFSET_ANY, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, oa->oa_phy,
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
