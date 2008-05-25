@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.2 2008/05/25 21:16:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -352,7 +352,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	obuf->mixtodo -= ocount;
 	abuf_flush(obuf);
 	mix_bzero(p);
-	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(); i = inext) {
+	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(&p->ibuflist); i = inext) {
 		inext = LIST_NEXT(i, ient);
 		i->mixdone -= ocount;
 		if (i != ibuf && i->mixdone < obuf->mixtodo) {
@@ -383,7 +383,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	 */
 	mix_bzero(p);
 	ocount = obuf->mixtodo;
-	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(); i = inext) {
+	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(&p->ibuflist); i = inext) {
 		inext = LIST_NEXT(i, ient);
 		mix_badd(i, obuf);
 		if (ocount > i->mixdone)
@@ -511,7 +511,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 
 	again = 1;
 	done = ibuf->used;
-	for (i = LIST_FIRST(&p->obuflist); i != LIST_END(); i = inext) {
+	for (i = LIST_FIRST(&p->obuflist); i != LIST_END(&p->obuflist); i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (ABUF_WOK(i)) {
 			sub_bcopy(ibuf, i);
@@ -565,7 +565,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	if (ABUF_EOF(ibuf)) {
 		abuf_hup(ibuf);
 		for (i = LIST_FIRST(&p->obuflist);
-		     i != LIST_END();
+		     i != LIST_END(&p->obuflist);
 		     i = inext) {
 			inext = LIST_NEXT(i, oent);
 			if (i != ibuf)

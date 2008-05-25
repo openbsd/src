@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.2 2008/05/25 21:16:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,7 +42,7 @@ struct abuf {
 	unsigned len;		/* size of the ring */
 	struct aproc *rproc;	/* reader */
 	struct aproc *wproc;	/* writer */
-	unsigned char data[];	/* actual data */
+	unsigned char *data;	/* pointer to actual data (immediately following) */
 };
 
 /*
