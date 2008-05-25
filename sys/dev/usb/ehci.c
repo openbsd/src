@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.79 2008/05/15 08:10:03 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.80 2008/05/25 21:00:17 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -87,10 +87,6 @@
 struct cfdriver ehci_cd = {
 	NULL, "ehci", DV_DULL
 };
-
-#ifdef USB_DEBUG
-#define EHCI_DEBUG
-#endif
 
 #ifdef EHCI_DEBUG
 #define DPRINTF(x)	do { if (ehcidebug) printf x; } while(0)
