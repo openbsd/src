@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.18 2008/05/13 02:13:46 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.19 2008/05/25 22:33:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -36,7 +36,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: server.c,v 1.10 1999/08/04 15:57:33 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: server.c,v 1.18 2008/05/13 02:13:46 ray Exp $";
+"$OpenBSD: server.c,v 1.19 2008/05/25 22:33:56 millert Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -74,7 +74,7 @@ static void docmdspecial(void);
 static void query(char *);
 static int chkparent(char *, opt_t);
 static char *savetarget(char *, opt_t);
-static void recvfile(char *, int, opt_t, int, char *, char *, time_t, time_t, off_t);
+static void recvfile(char *, opt_t, int, char *, char *, time_t, time_t, off_t);
 static void recvdir(opt_t, int, char *, char *);
 static void recvlink(char *, opt_t, int, off_t);
 static void hardlink(char *);
@@ -784,14 +784,25 @@ savetarget(char *file, opt_t opts)
  * Receive a file
  */
 static void
-recvfile(char *new, int f, opt_t opts, int mode, char *owner,
-    char *group, time_t mtime, time_t atime, off_t size)
+recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
+	 time_t mtime, time_t atime, off_t size)
 {
-	int wrerr, olderrno;
+	int f, wrerr, olderrno;
 	off_t i;
 	char *cp;
 	char *savefile = NULL;
 	static struct stat statbuff;
+
+	/*
+	 * Create temporary file
+	 */
+	if ((f = mkstemp(new)) < 0) {
+		if (errno != ENOENT || chkparent(new, opts) < 0 ||
+		    (f = mkstemp(new)) < 0) {
+			error("%s: create failed: %s", new, SYSERR);
+			return;
+		}
+	}
 
 	/*
 	 * Receive the file itself
@@ -1193,11 +1204,10 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 	/*
 	 * Make new symlink using a temporary name
 	 */
-	if (symlink(buf, new) < 0) {
+	if (mktemp(new) == NULL || symlink(buf, new) < 0) {
 		if (errno != ENOENT || chkparent(new, opts) < 0 ||
-		    symlink(buf, new) < 0) {
-			error("%s -> %s: symlink failed: %s", new, buf,SYSERR);
-			(void) unlink(new);
+		    mktemp(new) == NULL || symlink(buf, new) < 0) {
+			error("%s -> %s: symlink failed: %s", new, buf, SYSERR);
 			return;
 		}
 	}
@@ -1390,7 +1400,7 @@ setconfig(char *cmd)
 static void
 recvit(char *cmd, int type)
 {
-	int f, mode;
+	int mode;
 	opt_t opts;
 	off_t size;
 	time_t mtime, atime;
@@ -1516,10 +1526,6 @@ recvit(char *cmd, int type)
 					tempname);
 			*file = '/';
 		}
-		if ((f = mkstemp(new)) == -1) {
-			error("%s: create failed: %s", new, SYSERR);
-			return;
-		}
 	}
 
 	/*
@@ -1566,7 +1572,7 @@ recvit(char *cmd, int type)
 		break;
 
 	case S_IFREG:
-		recvfile(new, f, opts, mode, owner, group, mtime, atime, size);
+		recvfile(new, opts, mode, owner, group, mtime, atime, size);
 		break;
 
 	default:
