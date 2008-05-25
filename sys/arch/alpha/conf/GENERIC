@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.201 2008/05/22 17:53:28 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.202 2008/05/25 07:54:04 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -388,16 +388,16 @@ atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 # Audio devices
+cmpci*	at pci?				# C-Media CMI8338/8738
 eap*	at pci?				# Ensoniq AudioPCI S5016
 emu*	at pci?				# SB Live!
+eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 
 puc*	at pci?				# PCI "universal" comm device
 com*	at puc?
 
 # UNTESTED.  The following drivers are untested
-eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 sv*	at pci?				# S3 SonicVibes (S3 617)
-cmpci*	at pci?				# C-Media CMI8338/8738
 fms*	at pci?				# Forte Media FM801
 auvia*	at pci?				# VIA VT82C686A
 ##
