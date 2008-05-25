@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.69 2008/05/08 07:10:51 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.70 2008/05/25 17:57:42 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
