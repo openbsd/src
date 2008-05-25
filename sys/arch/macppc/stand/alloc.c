@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.5 2007/05/28 22:17:21 pyr Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.6 2008/05/25 16:55:31 miod Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -86,9 +86,6 @@ struct ml {
 	LIST_ENTRY(ml)	list;
 };
 
-/* XXX - this is from NetBSD  */
-#define LIST_HEAD_INITIALIZER(head) { NULL }
-
 LIST_HEAD(, ml) freelist = LIST_HEAD_INITIALIZER(freelist);
 LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 
@@ -97,7 +94,7 @@ LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 void *
 alloc(unsigned size)
 {
-	struct ml *f, *bestf;
+	struct ml *f, *bestf = NULL;
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
 	char *help;
 	int failed;

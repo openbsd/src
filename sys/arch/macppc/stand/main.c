@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2008/05/25 16:55:31 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -135,7 +135,10 @@ static void
 chain(void (*entry)(), char *args, void *ssym, void *esym)
 {
 	extern char end[];
-	int l, machine_tag;
+	int l;
+#ifdef __notyet__
+	int machine_tag;
+#endif
 
 	freeall();
 
@@ -175,9 +178,6 @@ int
 main()
 {
 	int chosen;
-	u_long marks[MARK_MAX];
-	int fd;
-
 
 	/*
 	 * Get the boot arguments from Openfirmware
@@ -224,6 +224,7 @@ devboot(dev_t dev, char *p)
 	strlcpy(p, bootdev, BOOTDEVLEN);
 }
 
+int
 run_loadfile(u_long *marks, int howto)
 {
 	char bootline[512];		/* Should check size? */
@@ -261,7 +262,6 @@ run_loadfile(u_long *marks, int howto)
 
 	_rtt();
 	return 0;
-
 }
 
 int
@@ -276,7 +276,7 @@ char *
 ttyname(int fd)
 {
         snprintf(ttyname_buf, sizeof ttyname_buf, "ofc0");
-
+	return ttyname_buf;
 }
 
 dev_t

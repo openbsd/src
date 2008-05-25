@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.4 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.5 2008/05/25 16:55:31 miod Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ netif_open(void *machdep_hint)
 {
 	struct of_dev *op = machdep_hint;
 	struct iodesc *io;
-	int fd, error;
-	char addr[32];
 
 #ifdef	NETIF_DEBUG
 	printf("netif_open...");
