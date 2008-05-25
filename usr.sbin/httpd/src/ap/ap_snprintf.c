@@ -1,4 +1,4 @@
-/* $OpenBSD: ap_snprintf.c,v 1.16 2007/02/03 18:01:52 espie Exp $ */
+/* $OpenBSD: ap_snprintf.c,v 1.17 2008/05/25 11:46:27 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -125,9 +125,9 @@ typedef int bool_int;
 static char *
 ap_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, char *buf)
 {
-	register int r2;
+	int r2;
 	double fi, fj;
-	register char *p, *p1;
+	char *p, *p1;
 
 	if (ndigits >= NDIG - 1)
 		ndigits = NDIG - 2;
@@ -217,8 +217,8 @@ static char
 *ap_gcvt(double number, int ndigit, char *buf, boolean_e altform)
 {
 	int sign, decpt;
-	register char *p1, *p2;
-	register int i;
+	char *p1, *p2;
+	int i;
 	char buf1[NDIG];
 
 	p1 = ap_ecvt(number, ndigit, &decpt, &sign, buf1);
@@ -362,11 +362,11 @@ static char
  * latter is faster.
  */
 static char *
-conv_10(register wide_int num, register bool_int is_unsigned,
-    register bool_int *is_negative, char *buf_end, register int *len)
+conv_10(wide_int num, bool_int is_unsigned,
+    bool_int *is_negative, char *buf_end, int *len)
 {
-	register char *p = buf_end;
-	register u_wide_int magnitude;
+	char *p = buf_end;
+	u_wide_int magnitude;
 
 	if (is_unsigned) {
 		magnitude = (u_wide_int) num;
@@ -398,7 +398,7 @@ conv_10(register wide_int num, register bool_int is_unsigned,
 	* We use a do-while loop so that we write at least 1 digit 
 	*/
 	do {
-		register u_wide_int new_magnitude = magnitude / 10;
+		u_wide_int new_magnitude = magnitude / 10;
 
 		*--p = (char) (magnitude - new_magnitude * 10 + '0');
 		magnitude = new_magnitude;
@@ -410,10 +410,10 @@ conv_10(register wide_int num, register bool_int is_unsigned,
 }
 
 static char *
-conv_10_quad(widest_int num, register bool_int is_unsigned,
-    register bool_int *is_negative, char *buf_end, register int *len)
+conv_10_quad(widest_int num, bool_int is_unsigned,
+    bool_int *is_negative, char *buf_end, int *len)
 {
-	register char *p = buf_end;
+	char *p = buf_end;
 	u_widest_int magnitude;
 
 	/*
@@ -515,11 +515,11 @@ conv_sockaddr_in(struct sockaddr_in *si, char *buf_end, int *len)
  * in buf).
  */
 static char *
-conv_fp(register char format, register double num, boolean_e add_dp,
+conv_fp(char format, double num, boolean_e add_dp,
     int precision, bool_int *is_negative, char *buf, int *len, int buflen)
 {
-	register char *s = buf;
-	register char *p;
+	char *s = buf;
+	char *p;
 	int decimal_point;
 	char buf1[NDIG];
 
@@ -614,14 +614,14 @@ conv_fp(register char format, register double num, boolean_e add_dp,
  * the number isn't quad size.
  */
 static char *
-conv_p2(register u_wide_int num, register int nbits, char format, char *buf_end,
-    register int *len)
+conv_p2(u_wide_int num, int nbits, char format, char *buf_end,
+    int *len)
 {
-	register int mask = (1 << nbits) - 1;
-	register char *p = buf_end;
+	int mask = (1 << nbits) - 1;
+	char *p = buf_end;
 	static const char low_digits[] = "0123456789abcdef";
 	static const char upper_digits[] = "0123456789ABCDEF";
-	register const char *digits = (format == 'X') ? upper_digits :
+	const char *digits = (format == 'X') ? upper_digits :
 	    low_digits;
 
 	do {
@@ -635,14 +635,14 @@ conv_p2(register u_wide_int num, register int nbits, char format, char *buf_end,
 }
 
 static char *
-conv_p2_quad(u_widest_int num, register int nbits, char format,
-    char *buf_end, register int *len)
+conv_p2_quad(u_widest_int num, int nbits, char format,
+    char *buf_end, int *len)
 {
-	register int mask = (1 << nbits) - 1;
-	register char *p = buf_end;
+	int mask = (1 << nbits) - 1;
+	char *p = buf_end;
 	static const char low_digits[] = "0123456789abcdef";
 	static const char upper_digits[] = "0123456789ABCDEF";
-	register const char *digits = (format == 'X') ? upper_digits :
+	const char *digits = (format == 'X') ? upper_digits :
 	    low_digits;
 
 	if (num <= ULONG_MAX)
@@ -666,16 +666,16 @@ API_EXPORT(int)
 ap_vformatter(int (*flush_func)(ap_vformatter_buff *),
     ap_vformatter_buff *vbuff, const char *fmt, va_list ap)
 {
-	register char *sp;
-	register char *bep;
-	register int cc = 0;
-	register int i;
+	char *sp;
+	char *bep;
+	int cc = 0;
+	int i;
 
-	register char *s = NULL;
+	char *s = NULL;
 	char *q;
 	int s_len;
 
-	register int min_width = 0;
+	int min_width = 0;
 	int precision = 0;
 	enum {
 	LEFT, RIGHT

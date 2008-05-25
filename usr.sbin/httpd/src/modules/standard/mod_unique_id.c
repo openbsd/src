@@ -1,3 +1,5 @@
+/*	$OpenBSD */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -240,11 +242,7 @@ static void unique_id_global_init(server_rec *s, pool *p)
     }
 
     getnameinfo((struct sockaddr *)&global_addr,
-#ifndef SIN6_LEN
-	SA_LEN((struct sockaddr *)&global_addr),
-#else
 	global_addr.ss_len,
-#endif
 	str, sizeof(str), NULL, 0, NI_NUMERICHOST);
     ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, s,
                  "mod_unique_id: using ip addr %s", str);

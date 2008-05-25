@@ -1,4 +1,4 @@
-/* $OpenBSD: ap_base64.c,v 1.8 2005/03/28 21:03:33 niallo Exp $ */
+/* $OpenBSD: ap_base64.c,v 1.9 2008/05/25 11:46:27 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -96,8 +96,8 @@ API_EXPORT(int)
 ap_base64decode_len(const char *bufcoded)
 {
 	int nbytesdecoded;
-	register const unsigned char *bufin;
-	register int nprbytes;
+	const unsigned char *bufin;
+	int nprbytes;
 
 	bufin = (const unsigned char *) bufcoded;
 	while (pr2six[*(bufin++)] <= 63);
@@ -125,9 +125,9 @@ API_EXPORT(int)
 ap_base64decode_binary(unsigned char *bufplain, const char *bufcoded)
 {
 	int nbytesdecoded;
-	register const unsigned char *bufin;
-	register unsigned char *bufout;
-	register int nprbytes;
+	const unsigned char *bufin;
+	unsigned char *bufout;
+	int nprbytes;
 	bufin = (const unsigned char *) bufcoded;
 	while (pr2six[*(bufin++)] <= 63);
 	nprbytes = (bufin - (const unsigned char *) bufcoded) - 1;

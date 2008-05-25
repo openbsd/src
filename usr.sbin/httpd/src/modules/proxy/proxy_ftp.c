@@ -1,3 +1,5 @@
+/*	$OpenBSD: proxy_ftp.c,v 1.16 2008/05/25 11:46:27 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -270,7 +272,7 @@ static long int send_dir(BUFF *data, request_rec *r, cache_req *c, char *cwd)
     char *searchptr = NULL;
     int firstfile = 1;
     unsigned long total_bytes_sent = 0;
-    register int n;
+    int n;
     conn_rec *con = r->connection;
     pool *p = r->pool;
     char *dir, *path, *reldir, *site, *type = NULL;
@@ -1018,9 +1020,7 @@ lpsvagain:
                          h3, h2, h1, h0, pport);
             sin = (struct sockaddr_in *)&data_addr;
             sin->sin_family = AF_INET;
-#ifdef SIN6_LEN
             sin->sin_len = sizeof(*sin);
-#endif
             sin->sin_addr.s_addr = htonl(paddr);
             sin->sin_port = htons(pport);
             i = ap_proxy_doconnect(dsock, (struct sockaddr *)&data_addr, r);
@@ -1043,9 +1043,7 @@ lpsvagain:
 	    int i;
 	    sin6 = (struct sockaddr_in6 *)&data_addr;
 	    sin6->sin6_family = AF_INET6;
-#ifdef SIN6_LEN
 	    sin6->sin6_len = sizeof(*sin6);
-#endif
 	    for (i = 0; i < 16; i++)
 		sin6->sin6_addr.s6_addr[i] = ho[i] & 0xff;
 	    sin6->sin6_port = htons(((po[0] & 0xff) << 8) | (po[1] & 0xff));
@@ -1063,11 +1061,7 @@ lpsvagain:
 		&& pstr[0] == pstr[1] && pstr[0] == pstr[2]
 		&& pstr[0] == pstr[strlen(pstr) - 1]) {
 	    /* expect "|||port|" */
-#ifndef SIN6_LEN
-	    memcpy(&data_addr, &server, SA_LEN((struct sockaddr *)&server));
-#else
 	    memcpy(&data_addr, &server, server.ss_len);
-#endif
 	    switch (data_addr.ss_family) {
 	    case AF_INET:
 		sin = (struct sockaddr_in *)&data_addr;
@@ -1120,20 +1114,12 @@ lpsvagain:
                                   "proxy: error setting reuseaddr option"));
         }
 
-#ifndef SIN6_LEN
-	if (bind(dsock, (struct sockaddr *) &server, SA_LEN((struct sockaddr *)&server)) == -1)
-#else
 	if (bind(dsock, (struct sockaddr *) &server, server.ss_len) == -1)
-#endif
 	{
 	    char hostnamebuf[MAXHOSTNAMELEN], portnamebuf[MAXHOSTNAMELEN];
 
 	    getnameinfo((struct sockaddr *)&server,
-#ifndef SIN6_LEN
-		    SA_LEN((struct sockaddr *)&server),
-#else
 		    server.ss_len,
-#endif
 		hostnamebuf, sizeof(hostnamebuf),
 		portnamebuf, sizeof(portnamebuf),
 		NI_NUMERICHOST | NI_NUMERICSERV);

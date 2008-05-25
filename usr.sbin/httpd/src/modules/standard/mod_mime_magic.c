@@ -1,3 +1,5 @@
+/*	$OpenBSD */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -1289,13 +1291,13 @@ static int getvalue(server_rec *s, struct magic *m, char **p)
  * space or tab. Copy the converted version to "p", returning its length in
  * *slen. Return updated scan pointer as function result.
  */
-static char *getstr(server_rec *serv, register char *s, register char *p,
+static char *getstr(server_rec *serv, char *s, char *p,
 		    int plen, int *slen)
 {
     char *origs = s, *origp = p;
     char *pmax = p + plen - 1;
-    register int c;
-    register int val;
+    int c;
+    int val;
 
     while ((c = *s++) != '\0') {
 	if (ap_isspace((unsigned char) c))
@@ -1802,8 +1804,8 @@ static int mget(request_rec *r, union VALUETYPE *p, unsigned char *s,
 
 static int mcheck(request_rec *r, union VALUETYPE *p, struct magic *m)
 {
-    register unsigned long l = m->value.l;
-    register unsigned long v;
+    unsigned long l = m->value.l;
+    unsigned long v;
     int matched;
 
     if ((m->value.s[0] == 'x') && (m->value.s[1] == '\0')) {
@@ -1841,9 +1843,9 @@ static int mcheck(request_rec *r, union VALUETYPE *p, struct magic *m)
 	 */
 	v = 0;
 	{
-	    register unsigned char *a = (unsigned char *) m->value.s;
-	    register unsigned char *b = (unsigned char *) p->s;
-	    register int len = m->vallen;
+	    unsigned char *a = (unsigned char *) m->value.s;
+	    unsigned char *b = (unsigned char *) p->s;
+	    int len = m->vallen;
 
 	    while (--len >= 0)
 		if ((v = *b++ - *a++) != 0)
@@ -1955,7 +1957,7 @@ static int ascmagic(request_rec *r, unsigned char *buf, int nbytes)
     unsigned char *s;
     char nbuf[HOWMANY + 1];	/* one extra for terminating '\0' */
     char *token;
-    register struct names *p;
+    struct names *p;
     int small_nbytes;
 
     /* these are easy, do them first */
@@ -2177,10 +2179,10 @@ static int uncompress(request_rec *r, int method,
 
 static int is_tar(unsigned char *buf, int nbytes)
 {
-    register union record *header = (union record *) buf;
-    register int i;
-    register long sum, recsum;
-    register char *p;
+    union record *header = (union record *) buf;
+    int i;
+    long sum, recsum;
+    char *p;
 
     if (nbytes < sizeof(union record))
 	       return 0;
@@ -2218,7 +2220,7 @@ static int is_tar(unsigned char *buf, int nbytes)
  */
 static long from_oct(int digs, char *where)
 {
-    register long value;
+    long value;
 
     while (ap_isspace(*where)) {	/* Skip spaces */
 	where++;

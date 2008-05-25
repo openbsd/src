@@ -1,3 +1,5 @@
+/*	$OpenBSD: mod_auth_digest.c,v 1.22 2008/05/25 11:46:27 mbalmer Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -1316,7 +1318,7 @@ static int digest_check_auth(request_rec *r)
     const char *user = r->connection->user;
     int m = r->method_number;
     int method_restricted = 0;
-    register int x;
+    int x;
     const char *t, *w;
     table *grpstatus;
     const array_header *reqs_arr;
