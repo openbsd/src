@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.3 2008/05/19 19:11:42 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.4 2008/05/25 14:29:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -137,7 +137,7 @@ ipic_simsr_h(int ivec)
 	case 35:
 		return 0x10000000;
 	case 36:
-		return 0x0800000;
+		return 0x08000000;
 	case 37:
 		return 0x04000000;
 	case 39:
