@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2008/05/11 20:57:56 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2008/05/26 12:37:23 kettenis Exp $
 
 machine		socppc powerpc
 
@@ -57,6 +57,15 @@ ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 
 sd*		at scsibus?
+
+# On-board TSEC
+tsec0		at obio? addr 0x24000 ivec 32 phy 17
+tsec1		at obio? addr 0x25000 ivec 35 phy 5
+
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+eephy*		at mii?		# Marvell 88E1000 series PHY
+gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
+ukphy*		at mii?		# Generic unknown PHY
 
 pseudo-device	loop	1	# network loopback
 pseudo-device	bpfilter 1	# packet filter
