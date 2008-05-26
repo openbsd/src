@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.18 2008/05/25 07:47:47 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.19 2008/05/26 17:51:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -131,9 +131,13 @@ void		uvideo_debug_file_write_sample(void *);
  * IOCTL's
  */
 int		uvideo_querycap(void *, struct v4l2_capability *);
+int		uvideo_enum_fmt(void *, struct v4l2_fmtdesc *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
 int		uvideo_g_fmt(void *, struct v4l2_format *);
 int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
+int		uvideo_enum_input(void *, struct v4l2_input *);
+int		uvideo_s_input(void *, int);
+int		uvideo_try_fmt(void *, struct v4l2_format *);
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -159,11 +163,15 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_open,		/* open */
 	uvideo_close,		/* close */
 	uvideo_querycap,	/* VIDIOC_QUERYCAP */
+	uvideo_enum_fmt,	/* VIDIOC_ENUM_FMT */
 	uvideo_s_fmt,		/* VIDIOC_S_FMT */
 	uvideo_g_fmt,		/* VIDIOC_G_FMT */
 	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
+	uvideo_enum_input,	/* VIDIOC_ENUMINPUT */
+	uvideo_s_input,		/* VIDIOC_S_INPUT */
 	NULL,			/* VIDIOC_QBUF */
-	NULL			/* VIDIOC_DQBUF */
+	NULL,			/* VIDIOC_DQBUF */
+	uvideo_try_fmt		/* VIDIOC_TRY_FMT */
 };
 
 int
@@ -1638,10 +1646,41 @@ uvideo_querycap(void *v, struct v4l2_capability *caps)
 }
 
 int
+uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
+{
+	struct uvideo_softc *sc = v;
+
+	if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	    fmtdesc->index > 0)
+		return (EINVAL);
+
+	/*
+	 * XXX We need to create a sc->sc_desc_format pointer array
+	 * which containts all available format descriptors.
+	 */
+	switch (sc->sc_desc_format_mjpeg->bDescriptorSubtype) {
+	case UDESCSUB_VS_FORMAT_MJPEG:
+		fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
+		(void)strlcpy(fmtdesc->description, "MJPEG",
+		    sizeof(fmtdesc->description));
+		break;
+	default:
+		fmtdesc->flags = 0;
+		(void)strlcpy(fmtdesc->description, "Unknown Format",
+		    sizeof(fmtdesc->description));
+		break;
+	}
+
+	return (0);
+}
+
+int
 uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 {
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
+
+	fmt->fmt.pix.sizeimage = 32000;
 
 	return (0);
 }
@@ -1658,5 +1697,37 @@ uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 int
 uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 {
+	return (0);
+}
+
+int
+uvideo_enum_input(void *v, struct v4l2_input *input)
+{
+	if (input->index != 0)
+		/* XXX we just support one input for now */
+		return (EINVAL);
+
+	strlcpy(input->name, "Camera Terminal", sizeof(input->name));
+	input->type = V4L2_INPUT_TYPE_CAMERA;
+
+	return (0);
+}
+
+int
+uvideo_s_input(void *v, int input)
+{
+	if (input != 0)
+		/* XXX we just support one input for now */
+		return (EINVAL);
+
+	return (0);
+}
+
+int
+uvideo_try_fmt(void *v, struct v4l2_format *fmt)
+{
+	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return (EINVAL);
+
 	return (0);
 }

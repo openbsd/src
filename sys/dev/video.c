@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.3 2008/05/25 07:47:47 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.4 2008/05/26 17:51:18 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -165,6 +165,11 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = (sc->hw_if->querycap)(sc->hw_hdl,
 			    (struct v4l2_capability *)data);
 		break;
+	case VIDIOC_ENUM_FMT:
+		if (sc->hw_if->enum_fmt)
+			error = (sc->hw_if->enum_fmt)(sc->hw_hdl,
+			    (struct v4l2_fmtdesc *)data);
+		break;
 	case VIDIOC_S_FMT:
 		if (!(flags & FWRITE))
 			return (EACCES);
@@ -182,8 +187,25 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = (sc->hw_if->reqbufs)(sc->hw_hdl,
 			    (struct v4l2_requestbuffers *)data);
 		break;
+	case VIDIOC_ENUMINPUT:
+		if (sc->hw_if->enum_input)
+			error = (sc->hw_if->enum_input)(sc->hw_hdl,
+			    (struct v4l2_input *)data);
+		break;
+	case VIDIOC_S_INPUT:
+		if (sc->hw_if->s_input)
+			error = (sc->hw_if->s_input)(sc->hw_hdl,
+			    (int)*data);
+		break;
 	case VIDIOC_QUERYBUF:
+		break;
 	case VIDIOC_QBUF:
+		break;
+	case VIDIOC_TRY_FMT:
+		if (sc->hw_if->try_fmt)
+			error = (sc->hw_if->try_fmt)(sc->hw_hdl,
+			    (struct v4l2_format *)data);
+		break;
 	default:
 		error = (ENOTTY);
 	}
