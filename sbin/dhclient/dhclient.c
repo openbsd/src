@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.118 2008/05/09 05:19:14 reyk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.119 2008/05/26 03:11:48 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -319,25 +319,27 @@ main(int argc, char *argv[])
 
 	read_client_conf();
 
-	if (!(ifi->linkstat = interface_link_status(ifi->name))) {
-		fprintf(stderr, "%s: no link ...", ifi->name);
-		if (config->link_timeout == 0) {
+	if (interface_status(ifi->name) == 0) {
+		interface_link_forceup(ifi->name);
+		/* Give it up to 4 seconds of silent grace to find link */
+		i = -4;
+	} else
+		i = 0;
+
+	while (!(ifi->linkstat = interface_link_status(ifi->name))) {
+		if (i == 0)
+			fprintf(stderr, "%s: no link ...", ifi->name);
+		else if (i > 0)
+			fprintf(stderr, ".");
+		fflush(stderr);
+		if (++i > config->link_timeout) {
 			fprintf(stderr, " sleeping\n");
 			goto dispatch;
 		}
-		fflush(stderr);
 		sleep(1);
-		while (!(ifi->linkstat = interface_link_status(ifi->name))) {
-			fprintf(stderr, ".");
-			fflush(stderr);
-			if (++i > config->link_timeout) {
-				fprintf(stderr, " sleeping\n");
-				goto dispatch;
-			}
-			sleep(1);
-		}
-		fprintf(stderr, " got link\n");
 	}
+	if (i >= 0)
+		fprintf(stderr, " got link\n");
 
  dispatch:
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
