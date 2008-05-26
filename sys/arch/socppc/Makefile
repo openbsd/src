@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2008/05/15 20:17:20 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2008/05/26 18:19:46 kettenis Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
@@ -6,9 +6,7 @@ S=${.CURDIR}/../..
 NOPROG=	noprog
 NOMAN=	noman
 
-.if ${MACHINE} == "socppc"
 SUBDIR= stand
-.endif
 
 TSOCPPC=	$S/arch/socppc/tags
 SSOCPPC=	$S/arch/socppc/socppc/*.[ch]	\
