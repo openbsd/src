@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.130 2008/04/24 14:51:12 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.131 2008/05/26 17:58:40 kettenis Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -158,7 +158,8 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	if (sb->adapter_link->luns == 0)
 		sb->adapter_link->luns = 8;
 
-	printf(": %d targets\n", sb->sc_buswidth);
+	printf(": %d targets, initiator %d\n", sb->sc_buswidth,
+	    sb->adapter_link->adapter_target);
 
 	/* Initialize shared data. */
 	scsi_init();
