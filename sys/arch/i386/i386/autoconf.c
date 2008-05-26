@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.79 2008/03/19 05:47:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.80 2008/05/26 22:49:57 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -207,7 +207,6 @@ diskconf(void)
 #if defined(NFSCLIENT)
 			printf("PXE boot MAC address %s, interface %s\n",
 			    ether_sprintf(bios_bootmac->mac), ifp->if_xname);
-			mountroot = nfs_mountroot;	/* potentially */
 			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
 			    0, &tmpdev);
 			part = 0;
