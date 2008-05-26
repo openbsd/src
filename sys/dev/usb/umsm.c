@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.26 2008/05/26 11:20:39 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.27 2008/05/26 11:29:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -183,13 +183,18 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
 	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
-		/* Huawei E220 require special command to change its mode to modem */
+		/*
+		 * Huawei E220 requires a special command to change into
+		 * modem mode
+		 */
 		if (uaa->vendor  == USB_VENDOR_HUAWEI &&
-                    uaa->product == USB_PRODUCT_HUAWEI_E220 && uaa->ifaceno == 0) {
+		    uaa->product == USB_PRODUCT_HUAWEI_E220 &&
+		    uaa->ifaceno == 0) {
                         umsm_e220_changemode(uaa->device);
 			/*
-			 * the device will reset its own bus from device side, therefore
-			 * we only return from this device probe process. 
+			 * The device will reset its own bus from the
+			 * device side, so we just return from this device
+			 * probe process. 
 			 */
 			printf("%s: umass only mode. need to reattach\n", 
 				sc->sc_dev.dv_xname);
