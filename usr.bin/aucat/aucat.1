@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.17 2008/05/23 12:56:27 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.18 2008/05/26 07:56:17 jakemsr Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2008 $
+.Dd $Mdocdate: May 26 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl u
+.Op Fl uq
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
 .Op Fl d Ar level
@@ -108,6 +108,8 @@ The default is 44100Hz.
 .It Fl r Ar rate
 Sample rate in Hertz of the input stream.
 The default is 44100Hz.
+.It Fl q
+Do not print progress information; run quietly.
 .It Fl u
 Don't try to automatically determine the optimal parameters for the
 audio device;

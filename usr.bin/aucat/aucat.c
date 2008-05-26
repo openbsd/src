@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.16 2008/05/23 12:56:27 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.17 2008/05/26 07:56:17 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -146,7 +146,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-u] [-C min:max] [-c min:max] [-d level] "
+	    "usage: %s [-uq] [-C min:max] [-c min:max] [-d level] "
 	    "[-E enc] [-e enc]\n"
 	    "\t[-f device] [-H fmt] [-h fmt] [-i file] [-o file] [-R rate]\n"
 	    "\t[-r rate]\n",
@@ -243,7 +243,7 @@ opt_file(struct farglist *list,
  * Open an input file and setup converter if necessary.
  */
 void
-newinput(struct farg *fa, struct aparams *npar, unsigned nfr)
+newinput(struct farg *fa, struct aparams *npar, unsigned nfr, int quiet_flag)
 {
 	int fd;
 	struct file *f;
@@ -269,9 +269,11 @@ newinput(struct farg *fa, struct aparams *npar, unsigned nfr)
 	p = rpipe_new(f);
 	aproc_setout(p, buf);
 	if (!aparams_eq(&fa->par, npar)) {
-		fprintf(stderr, "%s: ", fa->name);
-		aparams_print2(&fa->par, npar);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: ", fa->name);
+			aparams_print2(&fa->par, npar);
+			fprintf(stderr, "\n");
+		}
 		nbuf = abuf_new(nfr, aparams_bpf(npar));
 		c = conv_new(fa->name, &fa->par, npar);
 		aproc_setin(c, buf);
@@ -287,7 +289,7 @@ newinput(struct farg *fa, struct aparams *npar, unsigned nfr)
  * Open an output file and setup converter if necessary.
  */
 void
-newoutput(struct farg *fa, struct aparams *npar, unsigned nfr)
+newoutput(struct farg *fa, struct aparams *npar, unsigned nfr, int quiet_flag)
 {
 	int fd;
 	struct file *f;
@@ -315,9 +317,11 @@ newoutput(struct farg *fa, struct aparams *npar, unsigned nfr)
 	p = wpipe_new(f);
 	aproc_setin(p, buf);
 	if (!aparams_eq(&fa->par, npar)) {
-		fprintf(stderr, "%s: ", fa->name);
-		aparams_print2(npar, &fa->par);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: ", fa->name);
+			aparams_print2(npar, &fa->par);
+			fprintf(stderr, "\n");
+		}
 		c = conv_new(fa->name, npar, &fa->par);
 		nbuf = abuf_new(nfr, aparams_bpf(npar));
 		aproc_setin(c, nbuf);
@@ -341,7 +345,7 @@ int
 main(int argc, char **argv)
 {
 	struct sigaction sa;
-	int c, u_flag, ohdr, ihdr;
+	int c, u_flag, quiet_flag, ohdr, ihdr;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar, cipar, copar;
@@ -357,14 +361,14 @@ main(int argc, char **argv)
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
 
-	u_flag = 0;
+	u_flag = quiet_flag = 0;
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
 	ihdr = ohdr = HDR_AUTO;
 	ivol = ovol = MIDI_TO_ADATA(127);
 
-	while ((c = getopt(argc, argv, "d:c:C:e:E:r:R:h:H:i:o:f:u")) != -1) {
+	while ((c = getopt(argc, argv, "d:c:C:e:E:r:R:h:H:i:o:f:qu")) != -1) {
 		switch (c) {
 		case 'd':
 			if (sscanf(optarg, "%u", &debug_level) != 1 ||
@@ -409,6 +413,9 @@ main(int argc, char **argv)
 			dipar = ipar;
 			dopar = opar;
 			break;
+		case 'q':
+			quiet_flag = 1;
+			break;
 		case 'u':
 			u_flag = 1;
 			break;
@@ -436,9 +443,7 @@ main(int argc, char **argv)
 		 */
 		for (c = 0; c < argc; c++)
 			if (legacy_play(devpath, argv[c]) != 0) {
-				fprintf(stderr, "%s: could not play\n",
-				    argv[c]);
-				exit(1);
+				errx(1, "%s: could not play\n", argv[c]);
 			}
 		exit(0);
 	} else if (argc > 0) {
@@ -493,9 +498,11 @@ main(int argc, char **argv)
 	if (fd < 0)
 		exit(1);
 	if (!SLIST_EMPTY(&ofiles)) {
-		fprintf(stderr, "%s: recording ", devpath);
-		aparams_print(&dipar);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: recording ", devpath);
+			aparams_print(&dipar);
+			fprintf(stderr, "\n");
+		}
 		if (copar.cmin > dipar.cmin)
 			copar.cmin = dipar.cmin;
 		if (copar.cmax < dipar.cmax)
@@ -507,9 +514,11 @@ main(int argc, char **argv)
 		    1000 * dinfr / dipar.rate);
 	}
 	if (!SLIST_EMPTY(&ifiles)) {
-		fprintf(stderr, "%s: playing ", devpath);
-		aparams_print(&dopar);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: playing ", devpath);
+			aparams_print(&dopar);
+			fprintf(stderr, "\n");
+		}
 		if (cipar.cmin > dopar.cmin)
 			cipar.cmin = dopar.cmin;
 		if (cipar.cmax < dopar.cmax)
@@ -545,20 +554,24 @@ main(int argc, char **argv)
 	 * Create buffers for all input and output pipes.
 	 */
 	SLIST_FOREACH(fa, &ifiles, entry) {
-		newinput(fa, &cipar, cinfr);
+		newinput(fa, &cipar, cinfr, quiet_flag);
 		if (mix)
 			aproc_setin(mix, fa->buf);
-		fprintf(stderr, "%s: reading ", fa->name);
-		aparams_print(&fa->par);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: reading ", fa->name);
+			aparams_print(&fa->par);
+			fprintf(stderr, "\n");
+		}
 	}
 	SLIST_FOREACH(fa, &ofiles, entry) {
-		newoutput(fa, &copar, confr);
+		newoutput(fa, &copar, confr, quiet_flag);
 		if (sub)
 			aproc_setout(sub, fa->buf);
-		fprintf(stderr, "%s: writing ", fa->name);
-		aparams_print(&fa->par);
-		fprintf(stderr, "\n");
+		if (!quiet_flag) {
+			fprintf(stderr, "%s: writing ", fa->name);
+			aparams_print(&fa->par);
+			fprintf(stderr, "\n");
+		}
 	}
 
 	/*
@@ -568,9 +581,11 @@ main(int argc, char **argv)
 		buf = abuf_new(dinfr, aparams_bpf(&dipar));
 		aproc_setout(rec, buf);
 		if (!aparams_eq(&copar, &dipar)) {
-			fprintf(stderr, "%s: ", devpath);
-			aparams_print2(&dipar, &copar);
-			fprintf(stderr, "\n");
+			if (!quiet_flag) {
+				fprintf(stderr, "%s: ", devpath);
+				aparams_print2(&dipar, &copar);
+				fprintf(stderr, "\n");
+			}
 			conv = conv_new("subconv", &dipar, &copar);
 			cbuf = abuf_new(confr, aparams_bpf(&copar));
 			aproc_setin(conv, buf);
@@ -593,9 +608,11 @@ main(int argc, char **argv)
 		buf = abuf_new(donfr, aparams_bpf(&dopar));
 		aproc_setin(play, buf);
 		if (!aparams_eq(&cipar, &dopar)) {
-			fprintf(stderr, "%s: ", devpath);
-			aparams_print2(&cipar, &dopar);
-			fprintf(stderr, "\n");
+			if (!quiet_flag) {
+				fprintf(stderr, "%s: ", devpath);
+				aparams_print2(&cipar, &dopar);
+				fprintf(stderr, "\n");
+			}
 			conv = conv_new("mixconv", &cipar, &dopar);
 			cbuf = abuf_new(cinfr, aparams_bpf(&cipar));
 			aproc_setout(conv, buf);
@@ -609,7 +626,8 @@ main(int argc, char **argv)
 	 * start audio
 	 */
 	if (play != NULL) {
-		fprintf(stderr, "filling buffers...\n");
+		if (!quiet_flag)
+			fprintf(stderr, "filling buffers...\n");
 		while (!quit_flag) {
 			/* no more devices to poll */
 			if (!file_poll())
@@ -622,7 +640,8 @@ main(int argc, char **argv)
 				break;
 		}
 	}
-	fprintf(stderr, "starting device...\n");
+	if (!quiet_flag)
+		fprintf(stderr, "starting device...\n");
 	dev_start(dev->fd);
 	dev->state &= ~(FILE_RFLOW | FILE_WFLOW);
 	while (!quit_flag) {
@@ -630,7 +649,8 @@ main(int argc, char **argv)
 			break;
 	}
 
-	fprintf(stderr, "draining buffers...\n");
+	if (!quiet_flag)
+		fprintf(stderr, "draining buffers...\n");
 
 	/*
 	 * generate EOF on all files that do input, so
