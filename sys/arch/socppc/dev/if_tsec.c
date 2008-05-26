@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.7 2008/05/25 16:23:58 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.8 2008/05/26 20:22:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -826,6 +826,9 @@ tsec_up(struct tsec_softc *sc)
 	    (TSEC_NTXDESC - 1) * sizeof(*txd), sizeof(*txd),
 	    BUS_DMASYNC_PREWRITE);
 
+	sc->sc_tx_prod = sc->sc_tx_cons = 0;
+	sc->sc_tx_cnt = 0;
+
 	tsec_write(sc, TSEC_TBASE, TSEC_DMA_DVA(sc->sc_txring));
 
 	/* Allocate Rx descriptor ring. */
@@ -853,6 +856,8 @@ tsec_up(struct tsec_softc *sc)
 	rxd->td_status |= TSEC_RX_W;
 	bus_dmamap_sync(sc->sc_dmat, TSEC_DMA_MAP(sc->sc_rxring),
 	    0, TSEC_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
+
+	sc->sc_rx_nextidx = 0;
 
 	tsec_write(sc, TSEC_MRBLR, MCLBYTES);
 
@@ -930,14 +935,22 @@ void
 tsec_down(struct tsec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint32_t maccfg1;
 
 	timeout_del(&sc->sc_tick);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	tsec_stop_dma(sc);
 
+	maccfg1 = tsec_read(sc, TSEC_MACCFG1);
+	maccfg1 &= ~TSEC_MACCFG1_TXEN;
+	maccfg1 &= ~TSEC_MACCFG1_RXEN;
+	tsec_write(sc, TSEC_MACCFG1, maccfg1);
+
 	tsec_dmamem_free(sc, sc->sc_txring);
+	free (sc->sc_txbuf, M_DEVBUF);
 }
 
 void
