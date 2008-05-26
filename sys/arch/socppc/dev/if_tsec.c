@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.8 2008/05/26 20:22:35 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.9 2008/05/26 20:57:59 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -703,6 +703,7 @@ tsec_tx_proc(struct tsec_softc *sc)
 
 			m_freem(txb->tb_m);
 			txb->tb_m = NULL;
+			ifp->if_opacket++;
 		}
 
 		ifp->if_flags &= ~IFF_OACTIVE;
