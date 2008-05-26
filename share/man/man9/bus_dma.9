@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.25 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.26 2008/05/26 04:14:31 brad Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 26 2008 $
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ for each DMA xfer {
         bus_dmamap_load();   /* initialize the segments of dmamap    */
         bus_dmamap_sync();   /* synchronize/flush any DMA cache      */
 
-        for (i=0; i<dm_nsegs; i++) {
+        for (i = 0; i < dm_nsegs; i++) {
                 /*
                  * Tell the DMA device the physical address
                  * (dmamap->dm_segs[i].ds_addr) and the length
