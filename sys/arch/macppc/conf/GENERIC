@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.180 2008/03/21 18:44:14 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.181 2008/05/26 07:27:32 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -174,8 +174,10 @@ bktr0		at pci?		# Bt8[47][89] tv/fmradio/video
 radio*		at bktr?
 
 # PCI audio devices
+cmpci*		at pci?		# C-Media CMI8338/8738
 eap*		at pci?		# Ensoniq AudioPCI S5016
 emu*		at pci?		# SB Live!
+eso*		at pci?		# ESS Solo-1 PCI AudioDrive
 
 puc*		at pci?		# PCI "universal" comm device
 #puc*		at cardbus?
@@ -344,19 +346,26 @@ bwi*		at cardbus?	# Broadcom AirForce (802.11b/g)
 
 wsdisplay*	at vgafb?
 
-# MIDI support
-midi*		at eap?
-
 # Audio support
 audio*		at awacs?
 audio*		at snapper?
 audio*		at tumbler?
 audio*		at onyx?
+audio*		at cmpci?
 audio*		at eap?
 audio*		at emu?
+audio*		at eso?
 audio*		at uaudio?
 audio*		at aoa?
 audio*		at daca?
+
+# OPL[23] FM synthesizers
+opl*		at cmpci?
+opl*		at eso?
+
+# MIDI support
+midi*		at eap?
+midi*		at opl?
 
 sd*		at scsibus?
 st*		at scsibus?
