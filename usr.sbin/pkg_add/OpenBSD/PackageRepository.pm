@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.52 2008/05/16 18:31:47 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.53 2008/05/26 17:38:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -645,8 +645,8 @@ sub _list
 	open(my $fh, '-|', "$cmd") or return;
 	while(<$fh>) {
 		chomp;
-		next if m/^d.*\s+\S/;
-		next unless m/([^\s]+)\.tgz\s*$/;
+		next if m/^\d\d\d\s+\S/;
+		next unless m/(\S+)\.tgz\s*$/;
 		push(@$l, $1);
 	}
 	close($fh);
@@ -658,7 +658,7 @@ sub get_ftp_list
 	my ($self, $error) = @_;
 
 	my $fullname = $self->url;
-	return $self->_list("echo 'nlist *.tgz'| ".OpenBSD::Paths->ftp
+	return $self->_list("echo 'nlist'| ".OpenBSD::Paths->ftp
 	    ." $fullname 2>$error");
 }
 
