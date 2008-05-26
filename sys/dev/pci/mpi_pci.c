@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.18 2008/05/25 23:45:53 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.19 2008/05/26 12:48:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -28,6 +28,10 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -98,6 +102,9 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	int				r;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
+#ifdef __sparc64__
+	int node;
+#endif
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
@@ -105,6 +112,21 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_ios = 0;
 	sc->sc_target = -1;
+
+#ifdef __sparc64__
+	/*
+	 * Walk up the Open Firmware device tree until we find a
+	 * "scsi-initiator-id" property.
+	 */
+	node = PCITAG_NODE(pa->pa_tag);
+	while (node) {
+		if (OF_getprop(node, "scsi-initiator-id",  &sc->sc_target,
+		    sizeof(sc->sc_target)) == sizeof(sc->sc_target))
+			break;
+
+		node = OF_parent(node);
+	}
+#endif
 
 	/* find the appropriate memory base */
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
