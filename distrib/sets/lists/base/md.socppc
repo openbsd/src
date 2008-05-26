@@ -2085,6 +2085,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/ieeefp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/intr.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/lock.ph
