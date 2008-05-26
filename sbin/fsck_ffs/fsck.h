@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.21 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.22 2008/05/26 11:51:20 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -77,9 +77,9 @@ union dinode {
  * buffer cache structure.
  */
 struct bufarea {
+	daddr64_t	b_bno;
 	struct bufarea	*b_next;		/* free list queue */
 	struct bufarea	*b_prev;		/* free list queue */
-	daddr64_t	b_bno;
 	int	b_size;
 	int	b_errs;
 	int	b_flags;
@@ -131,18 +131,18 @@ struct bufarea *getdatablk(daddr64_t, long);
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
 struct inodesc {
-	enum fixstate id_fix;	/* policy on fixing errors */
+	daddr64_t id_blkno;	/* current block number being examined */
+	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int (*id_func)		/* function to be applied to blocks of inode */
 (struct inodesc *);
-	ino_t id_number;	/* inode number described */
-	ino_t id_parent;	/* for DATA nodes, their parent */
-	daddr64_t id_blkno;	/* current block number being examined */
-	int id_numfrags;	/* number of frags contained in block */
-	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
-	int id_loc;		/* for DATA nodes, current location in dir */
-	int id_entryno;		/* for DATA nodes, current entry number */
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	char *id_name;		/* for DATA nodes, name to find or enter */
+	ino_t id_number;	/* inode number described */
+	ino_t id_parent;	/* for DATA nodes, their parent */
+	enum fixstate id_fix;	/* policy on fixing errors */
+	int id_numfrags;	/* number of frags contained in block */
+	int id_loc;		/* for DATA nodes, current location in dir */
+	int id_entryno;		/* for DATA nodes, current entry number */
 	char id_type;		/* type of descriptor, DATA or ADDR */
 };
 /* file types */
@@ -192,10 +192,10 @@ struct zlncnt *zlnhead;		/* head of zero link count list */
 struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
 	struct	inoinfo	*i_child, *i_sibling, *i_parentp;
+	size_t	i_isize;		/* size of inode */
 	ino_t	i_number;		/* inode number of this entry */
 	ino_t	i_parent;		/* inode number of parent */
 	ino_t	i_dotdot;		/* inode number of `..' */
-	size_t	i_isize;		/* size of inode */
 	u_int	i_numblks;		/* size of block array in bytes */
 	daddr64_t	i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
