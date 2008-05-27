@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.275 2008/05/09 13:59:31 mpf Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.276 2008/05/27 08:14:57 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -378,7 +378,7 @@ pfctl_clear_states(int dev, const char *iface, int opts)
 	if (ioctl(dev, DIOCCLRSTATES, &psk))
 		err(1, "DIOCCLRSTATES");
 	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "%d states cleared\n", psk.psk_af);
+		fprintf(stderr, "%d states cleared\n", psk.psk_killed);
 	return (0);
 }
 
