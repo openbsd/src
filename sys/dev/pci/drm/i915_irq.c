@@ -109,14 +109,8 @@ i915_dispatch_vsync_flip(struct drm_device *dev, struct drm_drawable_info *drw,
  *
  * This function will be called with the HW lock held.
  */
-#ifdef __OpenBSD__
-static void i915_vblank_tasklet(void * kdev, void * unused)
-{
-	struct drm_device *dev = (struct drm_device *)kdev;
-#else
 static void i915_vblank_tasklet(struct drm_device *dev)
 {
-#endif
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	struct list_head *list, *tmp, hits, *hit;
 	int nhits, nrects, slice[2], upper[2], lower[2], i, num_pages;

@@ -931,12 +931,8 @@ struct drm_device {
 
 #if defined(__FreeBSD__)
 	struct task	  locked_task;
-	void		  (*locked_task_call)(drm_device_t *dev);
-#elif defined(__OpenBSD__)
-	void		  (*locked_task_call)(void*, void*);
-#else
-	/* add for other OSen */
 #endif
+	void		  (*locked_task_call)(drm_device_t *dev);
 };
 
 extern int	drm_debug_flag;
@@ -1121,13 +1117,7 @@ int	drm_dma(drm_device_t *dev, void *data, struct drm_file *file_priv);
 /* IRQ support (drm_irq.c) */
 int	drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv);
 int	drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv);
-#ifdef __FreeBSD__
-void	drm_locked_tasklet(drm_device_t *dev,
-			   void (*tasklet)(drm_device_t *dev));
-#else
-void 	drm_locked_tasklet(drm_device_t *dev,
-		void (*tasklet)(void *dev, void*));
-#endif
+void	drm_locked_tasklet(drm_device_t *dev, void (*tasklet)(drm_device_t *dev));
 
 /* AGP/GART support (drm_agpsupport.c) */
 int	drm_agp_acquire_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv);

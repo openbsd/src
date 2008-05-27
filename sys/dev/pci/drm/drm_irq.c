@@ -37,9 +37,11 @@
 
 irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
 
-#if 0
-void drm_locked_task(void *context, int pending __unused);
-#endif /* 0 */
+#ifdef __OpenBSD__
+void	drm_locked_task(void *context, void *pending);
+#else
+void	drm_locked_task(void *context, int pending __unused);
+#endif
 
 int
 drm_irq_by_busid(drm_device_t *dev, void *data, struct drm_file *file_priv)
@@ -344,9 +346,12 @@ drm_vbl_send_signals( drm_device_t *dev )
 }
 #endif
 
-#if 0 /* disabled while it's unused anywhere */
 void
+#ifdef __OpenBSD__
+drm_locked_task(void *context, void *pending)
+#else
 drm_locked_task(void *context, int pending __unused)
+#endif
 {
 	drm_device_t *dev = context;
 
@@ -373,29 +378,19 @@ drm_locked_task(void *context, int pending __unused)
 	}
 	DRM_UNLOCK();
 
-#ifdef __FreeBSD__
 	dev->locked_task_call(dev);
-#elif defined (__OpenBSD__)
-	dev->locked_task_call(dev,NULL);
-#endif
 
 	drm_lock_free(dev, &dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT);
 }
 
-#endif /* disabled due to lack of use */
-
 void
-#ifdef __FreeBSD__
 drm_locked_tasklet(drm_device_t *dev, void (*tasklet)(drm_device_t *dev))
-#else
-drm_locked_tasklet(drm_device_t *dev, void (*tasklet)(void* dev, void*))
-#endif
 {
 	dev->locked_task_call = tasklet;
 #ifdef __FreeBSD__
 	taskqueue_enqueue(taskqueue_swi, &dev->locked_task);
 #else
-	workq_add_task(NULL, WQ_WAITOK, dev->locked_task_call,
-	    dev, NULL);
+	if (workq_add_task(NULL, 0, drm_locked_task, dev, NULL) == ENOMEM)
+		DRM_ERROR("error adding task to workq\n");
 #endif
 }
