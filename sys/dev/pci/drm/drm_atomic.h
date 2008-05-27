@@ -65,7 +65,7 @@ typedef u_int32_t atomic_t;
 #endif /* !__FreeBSD__ */
 
 #if !defined(__FreeBSD_version) || (__FreeBSD_version < 500000)
-#if defined(__i386__)
+#if defined(__i386__) || defined(__amd64__)
 /* The extra atomic functions from 5.0 haven't been merged to 4.x */
 static __inline int
 atomic_cmpset_int(volatile u_int *dst, u_int exp, u_int src)

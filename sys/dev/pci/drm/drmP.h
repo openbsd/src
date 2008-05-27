@@ -130,6 +130,10 @@ typedef struct drm_file drm_file_t;
 #include "drm_linux_list.h"
 #include "drm_atomic.h"
 
+#ifdef __amd64__
+#define DRM_NO_MTRR
+#endif /* Until the mtrr apis are merged. */
+
 #if defined(__FreeBSD__) || defined(__NetBSD__) 
 #include <opt_drm.h>
 #endif

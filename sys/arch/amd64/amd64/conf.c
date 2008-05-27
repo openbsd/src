@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2008/05/14 20:49:46 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 2008/05/27 19:45:29 oga Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -173,6 +173,8 @@ cdev_decl(cztty);
 cdev_decl(nvram);
 #include "agp.h"
 cdev_decl(agp);
+#include "drmbase.h"
+cdev_decl(drm);
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -296,6 +298,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bthub_init(NBTHUB,bthub),	/* 84: bthub */
 	cdev_nvram_init(NNVRAM,nvram),	/* 85: NVRAM interface */
 	cdev_agp_init(NAGP,agp),	/* 86: agp */
+	cdev_drm_init(NDRMBASE,drm),	/* 87: drm */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
