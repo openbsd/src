@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.261 2008/05/21 19:01:36 miod Exp $
+dnl	$OpenBSD: hardware,v 1.262 2008/05/27 07:11:22 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1126,6 +1126,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    X-Micro XWL-11GUZX
 		    Yakumo QuickWLAN USB
 		    Zonet ZEW2501
+		    ZyXEL G-202
 		    ZyXEL ZyAIR G-220
 		
 	Gigabit Ethernet Adapters

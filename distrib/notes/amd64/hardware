@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.86 2008/05/21 19:01:34 miod Exp $
+dnl	$OpenBSD: hardware,v 1.87 2008/05/27 07:11:22 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -1009,6 +1009,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    X-Micro XWL-11GUZX
 		    Yakumo QuickWLAN USB
 		    Zonet ZEW2501
+		    ZyXEL G-202
 		    ZyXEL ZyAIR G-220
 	Gigabit Ethernet Adapters
 		Agere/LSI ET1310 based adapters
