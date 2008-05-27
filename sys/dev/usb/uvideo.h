@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.8 2008/05/24 19:37:34 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.9 2008/05/27 17:47:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -347,6 +347,7 @@ struct uvideo_sample_buffer {
 	int		 fragment;
 	uint8_t		 fid;
 	int		 offset;
+	int		 buf_size;
 	uint8_t		*buf;
 };
 

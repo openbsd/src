@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.19 2008/05/26 17:51:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.20 2008/05/27 17:47:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -919,13 +919,16 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 {
 	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
 
-	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
-	fb->buf = malloc(32000, M_DEVBUF, M_NOWAIT); /* XXX find proper size */
+	fb->buf = malloc(fb->buf_size, M_DEVBUF, M_NOWAIT);
 	if (fb->buf == NULL) {
 		printf("%s: can't allocate sample buffer!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
+
+	DPRINTF(1, "%s: %s: allocated %d bytes sample buffer\n",
+	    DEVNAME(sc), __func__, fb->buf_size);
 
 	fb->fragment = 0;
 	fb->fid = 0;
@@ -1167,30 +1170,37 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	/* save sample fragment */
 	fragment_len = frame_size - header_len;
-	bcopy(frame + header_len, fb->buf + fb->offset, fragment_len);
-	fb->offset += fragment_len;
+	if ((fb->offset + fragment_len) <= fb->buf_size) {
+		bcopy(frame + header_len, fb->buf + fb->offset, fragment_len);
+		fb->offset += fragment_len;
+	}
 
 	if (header_flags & UVIDEO_STREAM_EOF) {
 		/* got a full sample */
 		DPRINTF(2, "%s: %s: EOF (sample size = %d bytes)\n",
 		    DEVNAME(sc), __func__, fb->offset);
+
+		if (fb->offset <= fb->buf_size) {
 #ifdef UVIDEO_DEBUG
-		/* do the file write in process context */
-		usb_rem_task(sc->sc_udev, &sc->sc_task_write);
-		usb_add_task(sc->sc_udev, &sc->sc_task_write);
+			/* do the file write in process context */
+			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
+			usb_add_task(sc->sc_udev, &sc->sc_task_write);
 #endif
-		/*
-		 * Copy video frame to upper layer buffer and call
-		 * upper layer interrupt.
-		 */
-		bzero(sc->sc_uplayer_fbuffer, 32000);
-		*sc->sc_uplayer_fsize = fb->offset;
-		bcopy(fb->buf, sc->sc_uplayer_fbuffer, fb->offset);
-		sc->sc_uplayer_intr(sc->sc_uplayer_arg);
+			/*
+			 * Copy video frame to upper layer buffer and call
+			 * upper layer interrupt.
+			 */
+			*sc->sc_uplayer_fsize = fb->offset;
+			bcopy(fb->buf, sc->sc_uplayer_fbuffer, fb->offset);
+			sc->sc_uplayer_intr(sc->sc_uplayer_arg);
+		} else {
+			DPRINTF(1, "%s: %s: sample too large, skipped!\n",
+			    DEVNAME(sc), __func__);
+		}
 
 		fb->fragment = 0;
 		fb->fid = 0;
-//		fb->offset = 0;
+		//fb->offset = 0;
 	}
 
 	return (0);
@@ -1677,10 +1687,12 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 int
 uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 {
+	struct uvideo_softc *sc = v;
+
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
 
-	fmt->fmt.pix.sizeimage = 32000;
+	fmt->fmt.pix.sizeimage = sc->sc_sample_buffer.buf_size;
 
 	return (0);
 }
