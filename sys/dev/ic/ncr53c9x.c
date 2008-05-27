@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.36 2007/11/05 22:30:25 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.37 2008/05/27 09:43:26 kettenis Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -220,8 +220,8 @@ ncr53c9x_attach(sc, adapter, dev)
 		return;
 	}
 
-	printf(": %s, %dMHz, SCSI ID %d\n",
-	    ncr53c9x_variant_names[sc->sc_rev], sc->sc_freq, sc->sc_id);
+	printf(": %s, %dMHz\n", ncr53c9x_variant_names[sc->sc_rev],
+	    sc->sc_freq);
 
 	sc->sc_ccf = FREQTOCCF(sc->sc_freq);
 
