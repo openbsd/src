@@ -1637,6 +1637,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka820.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/kcore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/limits.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/lock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/macros.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/mtpr.ph
