@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.32 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.33 2008/05/27 21:08:48 kettenis Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -324,8 +324,8 @@ osiop_attach(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 	}
 
-	printf(": NCR53C710 rev %d, %dMHz, SCSI ID %d\n",
-	    osiop_read_1(sc, OSIOP_CTEST8) >> 4, sc->sc_clock_freq, sc->sc_id);
+	printf(": NCR53C710 rev %d, %dMHz\n",
+	    osiop_read_1(sc, OSIOP_CTEST8) >> 4, sc->sc_clock_freq);
 
 	/*
 	 * Initialize all
