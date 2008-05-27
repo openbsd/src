@@ -1,5 +1,5 @@
 /* An expandable hash tables datatype.  
-   Copyright (C) 1999, 2000, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov (vmakarov@cygnus.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 /* This package implements basic hash table functionality.  It is possible
    to search for an entry, create an entry and destroy an entry.
@@ -81,6 +81,15 @@ typedef void (*htab_free) PARAMS ((PTR));
 typedef PTR (*htab_alloc_with_arg) PARAMS ((void *, size_t, size_t));
 typedef void (*htab_free_with_arg) PARAMS ((void *, void *));
 
+/* This macro defines reserved value for empty table entry.  */
+
+#define HTAB_EMPTY_ENTRY    ((PTR) 0)
+
+/* This macro defines reserved value for table entry which contained
+   a deleted element. */
+
+#define HTAB_DELETED_ENTRY  ((PTR) 1)
+
 /* Hash tables are of the following type.  The structure
    (implementation) of this type is not needed for using the hash
    tables.  All work with hash table should be executed only through
@@ -101,13 +110,13 @@ struct htab GTY(())
   /* Table itself.  */
   PTR * GTY ((use_param (""), length ("%h.size"))) entries;
 
-  /* Current size (in entries) of the hash table */
+  /* Current size (in entries) of the hash table.  */
   size_t size;
 
-  /* Current number of elements including also deleted elements */
+  /* Current number of elements including also deleted elements.  */
   size_t n_elements;
 
-  /* Current number of deleted elements in the table */
+  /* Current number of deleted elements in the table.  */
   size_t n_deleted;
 
   /* The following member is used for debugging. Its value is number
@@ -126,6 +135,10 @@ struct htab GTY(())
   PTR GTY((skip (""))) alloc_arg;
   htab_alloc_with_arg alloc_with_arg_f;
   htab_free_with_arg free_with_arg_f;
+
+  /* Current size (in entries) of the hash table, as an index into the
+     table of primes.  */
+  unsigned int size_prime_index;
 };
 
 typedef struct htab *htab_t;
@@ -135,44 +148,42 @@ enum insert_option {NO_INSERT, INSERT};
 
 /* The prototypes of the package functions. */
 
-extern htab_t	htab_create_alloc	PARAMS ((size_t, htab_hash,
-						 htab_eq, htab_del,
-						 htab_alloc, htab_free));
+extern htab_t	htab_create_alloc  (size_t, htab_hash,
+                                    htab_eq, htab_del,
+                                    htab_alloc, htab_free);
 
-extern htab_t	htab_create_alloc_ex	PARAMS ((size_t, htab_hash,
-						    htab_eq, htab_del,
-						    PTR, htab_alloc_with_arg,
-						    htab_free_with_arg));
+extern htab_t	htab_create_alloc_ex (size_t, htab_hash,
+                                      htab_eq, htab_del,
+                                      void *, htab_alloc_with_arg,
+                                      htab_free_with_arg);
 
 /* Backward-compatibility functions.  */
-extern htab_t htab_create PARAMS ((size_t, htab_hash, htab_eq, htab_del));
-extern htab_t htab_try_create PARAMS ((size_t, htab_hash, htab_eq, htab_del));
+extern htab_t htab_create (size_t, htab_hash, htab_eq, htab_del);
+extern htab_t htab_try_create (size_t, htab_hash, htab_eq, htab_del);
 
-extern void	htab_set_functions_ex	PARAMS ((htab_t, htab_hash,
-						 htab_eq, htab_del,
-						 PTR, htab_alloc_with_arg,
-						 htab_free_with_arg));
+extern void	htab_set_functions_ex (htab_t, htab_hash,
+                                       htab_eq, htab_del,
+                                       void *, htab_alloc_with_arg,
+                                       htab_free_with_arg);
 
-extern void	htab_delete	PARAMS ((htab_t));
-extern void	htab_empty	PARAMS ((htab_t));
+extern void	htab_delete (htab_t);
+extern void	htab_empty (htab_t);
 
-extern PTR	htab_find	PARAMS ((htab_t, const void *));
-extern PTR     *htab_find_slot	PARAMS ((htab_t, const void *,
-					 enum insert_option));
-extern PTR	htab_find_with_hash	  PARAMS ((htab_t, const void *,
-						   hashval_t));
-extern PTR     *htab_find_slot_with_hash  PARAMS ((htab_t, const void *,
-						   hashval_t,
-						   enum insert_option));
-extern void	htab_clear_slot	PARAMS ((htab_t, void **));
-extern void	htab_remove_elt	PARAMS ((htab_t, void *));
+extern void *	htab_find (htab_t, const void *);
+extern void **	htab_find_slot (htab_t, const void *, enum insert_option);
+extern void *	htab_find_with_hash (htab_t, const void *, hashval_t);
+extern void **	htab_find_slot_with_hash (htab_t, const void *,
+					  hashval_t, enum insert_option);
+extern void	htab_clear_slot	(htab_t, void **);
+extern void	htab_remove_elt	(htab_t, void *);
+extern void	htab_remove_elt_with_hash (htab_t, void *, hashval_t);
 
-extern void	htab_traverse	PARAMS ((htab_t, htab_trav, void *));
-extern void	htab_traverse_noresize	PARAMS ((htab_t, htab_trav, void *));
+extern void	htab_traverse (htab_t, htab_trav, void *);
+extern void	htab_traverse_noresize (htab_t, htab_trav, void *);
 
-extern size_t	htab_size	PARAMS ((htab_t));
-extern size_t	htab_elements	PARAMS ((htab_t));
-extern double	htab_collisions	PARAMS ((htab_t));
+extern size_t	htab_size (htab_t);
+extern size_t	htab_elements (htab_t);
+extern double	htab_collisions	(htab_t);
 
 /* A hash function for pointers.  */
 extern htab_hash htab_hash_pointer;
@@ -181,7 +192,12 @@ extern htab_hash htab_hash_pointer;
 extern htab_eq htab_eq_pointer;
 
 /* A hash function for null-terminated strings.  */
-extern hashval_t htab_hash_string PARAMS ((const PTR));
+extern hashval_t htab_hash_string (const void *);
+
+/* An iterative hash function for arbitrary data.  */
+extern hashval_t iterative_hash (const void *, size_t, hashval_t);
+/* Shorthand for hashing something with an intrinsic size.  */
+#define iterative_hash_object(OB,INIT) iterative_hash (&OB, sizeof (OB), INIT)
 
 /* XXX Old hash table functions, kept for compatibility */
 
@@ -210,10 +226,10 @@ typedef struct
   int collisions;
   /* Pointer to function for evaluation of hash value (any unsigned value).
      This function has one parameter of type hash_table_entry_t. */
-  unsigned (*hash_function) PARAMS ((hash_table_entry_t));
+  unsigned (*hash_function) (hash_table_entry_t);
   /* Pointer to function for test on equality of hash table elements (two
      parameter of type hash_table_entry_t. */
-  int (*eq_function) PARAMS ((hash_table_entry_t, hash_table_entry_t));
+  int (*eq_function) (hash_table_entry_t, hash_table_entry_t);
   /* Table itself */
   hash_table_entry_t *entries;
 } *hash_table_t;
@@ -222,26 +238,26 @@ typedef struct
 /* The prototypes of the package functions. */
 
 extern hash_table_t create_hash_table
-  PARAMS ((size_t, unsigned (*) (hash_table_entry_t),
-	   int (*) (hash_table_entry_t, hash_table_entry_t)));
+  (size_t, unsigned (*) (hash_table_entry_t),
+	   int (*) (hash_table_entry_t, hash_table_entry_t));
 
-extern void delete_hash_table PARAMS ((hash_table_t));
+extern void delete_hash_table (hash_table_t);
 
-extern void empty_hash_table PARAMS ((hash_table_t));
+extern void empty_hash_table (hash_table_t);
 
 extern hash_table_entry_t *find_hash_table_entry
-  PARAMS ((hash_table_t, hash_table_entry_t, int));
+  (hash_table_t, hash_table_entry_t, int);
 
-extern void remove_element_from_hash_table_entry PARAMS ((hash_table_t,
-							  hash_table_entry_t));
+extern void remove_element_from_hash_table_entry (hash_table_t,
+							  hash_table_entry_t);
 
-extern size_t hash_table_size PARAMS ((hash_table_t));
+extern size_t hash_table_size (hash_table_t);
 
-extern size_t hash_table_elements_number PARAMS ((hash_table_t));
+extern size_t hash_table_elements_number (hash_table_t);
 
-extern int hash_table_collisions PARAMS ((hash_table_t));
+extern int hash_table_collisions (hash_table_t);
 
-extern int all_hash_table_collisions PARAMS ((void));
+extern int all_hash_table_collisions (void);
 
 #ifdef __cplusplus
 }

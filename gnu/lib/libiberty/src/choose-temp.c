@@ -14,8 +14,8 @@ Library General Public License for more details.
 
 You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If not,
-write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "libiberty.h"
-extern char *choose_tmpdir PARAMS ((void));
+extern char *choose_tmpdir (void);
 
 /* Name of temporary file.
    mktemp requires 6 trailing X's.  */
@@ -53,16 +53,15 @@ not recommended.
 
 */
 
-#if defined(__MSDOS__) && !defined(__GO32__)
 char *
-choose_temp_base ()
+choose_temp_base (void)
 {
   const char *base = choose_tmpdir ();
   char *temp_filename;
   int len;
 
   len = strlen (base);
-  temp_filename = xmalloc (len + TEMP_FILE_LEN + 1);
+  temp_filename = XNEWVEC (char, len + TEMP_FILE_LEN + 1);
   strcpy (temp_filename, base);
   strcpy (temp_filename + len, TEMP_FILE);
 
@@ -71,4 +70,3 @@ choose_temp_base ()
     abort ();
   return temp_filename;
 }
-#endif

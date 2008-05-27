@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2006/07/12 23:00:07 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2008/05/27 18:52:40 miod Exp $
 
 LIB=		iberty
-CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
+CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR)/src -I$(.CURDIR)/include -I$(.OBJDIR)
 
 NOLINT=
 
@@ -9,6 +9,7 @@ HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
 
 .PATH: ${.CURDIR}/src
 
+# XXX remove oldhashtab.c once gcc 2.95 is no longer used
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
 		dyn-string.c \
 		fdmatch.c getopt.c getopt1.c getpwd.c getruntime.c \
@@ -16,19 +17,13 @@ SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
 		floatformat.c make-temp-file.c make-relative-prefix.c \
 		objalloc.c obstack.c oldhashtab.c \
 		pexecute.c regex.c safe-ctype.c spaces.c splay-tree.c \
-		strerror.c strsignal.c \
+		strerror.c strsignal.c strverscmp.c \
 		xatexit.c xexit.c xmalloc.c xmemdup.c xstrerror.c xstrdup.c \
 		physmem.c lbasename.c lrealpath.c \
 		$(HOST_FILES)
 
-#		choose-temp.c fnmatch.c objalloc.c pexecute.c xstrdup.c \
-#		basename.c vasprintf.c 
-
 # XXX -- These files are generated during the PREREQ variable assignment.
 CLEANFILES+=	config.h config.status needed-list 
-
-# XXX -- Why are these not removed by the generated Makefile?
-CLEANFILES+=	insque.o insque.go insque.po insque.so 
 
 # and more
 CLEANFILES+=	Makefile config.cache config.log stamp-h xhost-mkfrag \

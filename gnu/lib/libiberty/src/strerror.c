@@ -2,9 +2,6 @@
    Written by Fred Fish.  fnf@cygnus.com
    This file is in the public domain.  --Per Bothner.  */
 
-#include "ansidecl.h"
-#include "libiberty.h"
-
 #include "config.h"
 
 #ifdef HAVE_SYS_ERRLIST
@@ -16,6 +13,9 @@
 #define sys_nerr sys_nerr__
 #define sys_errlist sys_errlist__
 #endif
+
+#include "ansidecl.h"
+#include "libiberty.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -43,7 +43,7 @@ extern PTR memset ();
 #  define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-static void init_error_tables PARAMS ((void));
+static void init_error_tables (void);
 
 /* Translation table for errno values.  See intro(2) in most UNIX systems
    Programmers Reference Manuals.
@@ -462,6 +462,8 @@ static int num_error_names = 0;
 
 #ifndef HAVE_SYS_ERRLIST
 
+#define sys_nerr sys_nerr__
+#define sys_errlist sys_errlist__
 static int sys_nerr;
 static const char **sys_errlist;
 
@@ -471,7 +473,6 @@ extern int sys_nerr;
 extern char *sys_errlist[];
 
 #endif
-
 
 /*
 
@@ -502,7 +503,7 @@ BUGS
 */
 
 static void
-init_error_tables ()
+init_error_tables (void)
 {
   const struct error_info *eip;
   int nbytes;
@@ -583,7 +584,7 @@ symbolic name or message.
 */
 
 int
-errno_max ()
+errno_max (void)
 {
   int maxsize;
 
@@ -622,8 +623,7 @@ next call to @code{strerror}.
 */
 
 char *
-strerror (errnoval)
-  int errnoval;
+strerror (int errnoval)
 {
   const char *msg;
   static char buf[32];
@@ -650,7 +650,7 @@ strerror (errnoval)
   else if ((sys_errlist == NULL) || (sys_errlist[errnoval] == NULL))
     {
       /* In range, but no sys_errlist or no entry at this index. */
-      snprintf (buf, sizeof buf, "Error %d", errnoval);
+      sprintf (buf, "Error %d", errnoval);
       msg = buf;
     }
   else
@@ -689,8 +689,7 @@ valid until the next call to @code{strerrno}.
 */
 
 const char *
-strerrno (errnoval)
-  int errnoval;
+strerrno (int errnoval)
 {
   const char *name;
   static char buf[32];
@@ -713,7 +712,7 @@ strerrno (errnoval)
   else if ((error_names == NULL) || (error_names[errnoval] == NULL))
     {
       /* In range, but no error_names or no entry at this index. */
-      snprintf (buf, sizeof buf, "Error %d", errnoval);
+      sprintf (buf, "Error %d", errnoval);
       name = (const char *) buf;
     }
   else
@@ -737,8 +736,7 @@ to an errno value.  If no translation is found, returns 0.
 */
 
 int
-strtoerrno (name)
-     const char *name;
+strtoerrno (const char *name)
 {
   int errnoval = 0;
 
@@ -778,7 +776,7 @@ strtoerrno (name)
 #include <stdio.h>
 
 int
-main ()
+main (void)
 {
   int errn;
   int errnmax;

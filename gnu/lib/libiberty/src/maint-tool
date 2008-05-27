@@ -17,8 +17,8 @@
 #
 # You should have received a copy of the GNU Library General Public
 # License along with libiberty; see the file COPYING.LIB.  If not,
-# write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+# write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+# Boston, MA 02110-1301, USA.
 #
 # Originally written by DJ Delorie <dj@redhat.com>
 
@@ -145,7 +145,6 @@ sub undoc {
 	    next unless /^\# *define/;
 	    s/\# *define *//;
 	}
-	next if $filename =~ /mpw\.c/;
 
 	s/ VPARAMS//;
 	s/ *\177.*//;
@@ -213,6 +212,12 @@ sub locals_first {
 
 sub deps {
 
+    $crule  = "\tif [ x\"\$(PICFLAG)\" != x ]; then \\\n";
+    $crule .= "\t  \$(COMPILE.c) \$(PICFLAG) \$< -o pic/\$@; \\\n";
+    $crule .= "\telse true; fi\n";
+    $crule .= "\t\$(COMPILE.c) \$< \$(OUTPUT_OPTION)\n";
+    $crule .= "\n";
+
     $incdir = shift @ARGV;
 
     opendir(INC, $incdir);
@@ -260,10 +265,10 @@ sub deps {
 	    @deps = sort { &locals_first($a,$b) } keys %scanned;
 	    $obj = $f;
 	    $obj =~ s/\.c$/.o/;
-	    $obj = "$obj:";
+	    $obj = "./$obj:";
 	    if ($#deps >= 0) {
-		print OUT $obj;
-		$len = length($obj);
+		print OUT "$obj \$(srcdir)/$f";
+		$len = length("$obj $f");
 		for $dt (@deps) {
 		    $d = $mine{$dt};
 		    if ($len + length($d) > 70) {
@@ -275,7 +280,12 @@ sub deps {
 		    }
 		}
 		print OUT "\n";
+	    } else {
+		print OUT "$obj \$(srcdir)/$f\n";
 	    }
+	    $c = $crule;
+	    $c =~ s@\$\<@\$\(srcdir\)\/$f@g;
+	    print OUT $c;
 	}
     }
     closedir(S);

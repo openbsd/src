@@ -345,7 +345,7 @@ So instead we use the macro below and test it against specific values.  */
 
 /* Attribute `sentinel' was valid as of gcc 3.5.  */
 #ifndef ATTRIBUTE_SENTINEL
-# if (GCC_VERSION >= 3005)
+# if (GCC_VERSION >= 3005) || defined(__OpenBSD__)
 #  define ATTRIBUTE_SENTINEL __attribute__ ((__sentinel__))
 # else
 #  define ATTRIBUTE_SENTINEL
