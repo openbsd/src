@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.20 2008/05/27 17:47:28 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.21 2008/05/27 18:19:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -213,7 +213,6 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 {
 	struct uvideo_softc *sc = addr;
 	usbd_status error;
-	int r;
 
 	DPRINTF(1, "%s: uvideo_open: sc=%p\n", DEVNAME(sc), sc);
 
@@ -241,8 +240,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 	if (error != USBD_NORMAL_COMPLETION)
 		return (EIO);
 #ifdef UVIDEO_DEBUG
-	r = uvideo_debug_file_open(sc);
-	if (r != 0)
+	if (uvideo_debug_file_open(sc) != 0)
 		return(EIO);
 	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
 #endif
