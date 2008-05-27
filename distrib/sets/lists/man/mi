@@ -2441,6 +2441,7 @@
 ./usr/share/man/cat8/socppc
 ./usr/share/man/cat8/socppc/MAKEDEV.0
 ./usr/share/man/cat8/socppc/hotplugd.0
+./usr/share/man/cat8/socppc/mkboot.0
 ./usr/share/man/cat8/spamd-setup.0
 ./usr/share/man/cat8/spamd.0
 ./usr/share/man/cat8/spamdb.0
