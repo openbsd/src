@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.19 2008/05/26 12:48:28 kettenis Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.20 2008/05/27 21:52:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -113,21 +113,6 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ios = 0;
 	sc->sc_target = -1;
 
-#ifdef __sparc64__
-	/*
-	 * Walk up the Open Firmware device tree until we find a
-	 * "scsi-initiator-id" property.
-	 */
-	node = PCITAG_NODE(pa->pa_tag);
-	while (node) {
-		if (OF_getprop(node, "scsi-initiator-id",  &sc->sc_target,
-		    sizeof(sc->sc_target)) == sizeof(sc->sc_target))
-			break;
-
-		node = OF_parent(node);
-	}
-#endif
-
 	/* find the appropriate memory base */
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
 		memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag, r);
@@ -165,8 +150,23 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	if (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG) ==
-	    PCI_ID_CODE(PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030))
+	    PCI_ID_CODE(PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030)) {
 		sc->sc_flags |= MPI_F_SPI;
+#ifdef __sparc64__
+		/*
+		 * Walk up the Open Firmware device tree until we find a
+		 * "scsi-initiator-id" property.
+		 */
+		node = PCITAG_NODE(pa->pa_tag);
+		while (node) {
+			if (OF_getprop(node, "scsi-initiator-id",
+			    &sc->sc_target, sizeof(sc->sc_target)) ==
+			    sizeof(sc->sc_target))
+				break;
+			node = OF_parent(node);
+		}
+#endif
+	}
 
 	if (mpi_attach(sc) != 0) {
 		/* error printed by mpi_attach */
