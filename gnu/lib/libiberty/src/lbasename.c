@@ -15,8 +15,8 @@ Library General Public License for more details.
 
 You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If
-not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+not, write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /*
 
@@ -37,32 +37,16 @@ and a path ending in @code{/} returns the empty string after it.
 
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "ansidecl.h"
 #include "libiberty.h"
 #include "safe-ctype.h"
-
-#ifndef DIR_SEPARATOR
-#  define DIR_SEPARATOR '/'
-#endif
-
-#if defined (_WIN32) || defined (__MSDOS__) \
-    || defined (__DJGPP__) || defined (__OS2__)
-#  define HAVE_DOS_BASED_FILE_SYSTEM
-#  ifndef DIR_SEPARATOR_2 
-#    define DIR_SEPARATOR_2 '\\'
-#  endif
-#endif
-
-#ifndef DIR_SEPARATOR_2
-#  define IS_DIR_SEPARATOR(ch) ((ch) == DIR_SEPARATOR)
-#else
-#  define IS_DIR_SEPARATOR(ch) \
-	(((ch) == DIR_SEPARATOR) || ((ch) == DIR_SEPARATOR_2))
-#endif
+#include "filenames.h"
 
 const char *
-lbasename (name)
-     const char *name;
+lbasename (const char *name)
 {
   const char *base;
 

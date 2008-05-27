@@ -35,10 +35,9 @@ extern int errno;
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-/* Prototype these in case the system headers don't provide them. */
-extern char *getpwd ();
-extern char *getwd ();
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #include "libiberty.h"
 
@@ -47,6 +46,8 @@ extern char *getwd ();
    the few exceptions to the general rule here.  */
 
 #if !defined(HAVE_GETCWD) && defined(HAVE_GETWD)
+/* Prototype in case the system headers doesn't provide it. */
+extern char *getwd ();
 #define getcwd(buf,len) getwd(buf)
 #endif
 
@@ -64,7 +65,7 @@ extern char *getwd ();
    yield 0 and set errno.  */
 
 char *
-getpwd ()
+getpwd (void)
 {
   static char *pwd;
   static int failure_errno;
@@ -83,7 +84,7 @@ getpwd ()
 	     && dotstat.st_dev == pwdstat.st_dev))
 
 	/* The shortcut didn't work.  Try the slow, ``sure'' way.  */
-	for (s = GUESSPATHLEN;  ! getcwd (p = xmalloc (s), s);  s *= 2)
+	for (s = GUESSPATHLEN;  !getcwd (p = XNEWVEC (char, s), s);  s *= 2)
 	  {
 	    int e = errno;
 	    free (p);
@@ -111,12 +112,12 @@ getpwd ()
 #endif
 
 char *
-getpwd ()
+getpwd (void)
 {
   static char *pwd = 0;
 
   if (!pwd)
-    pwd = getcwd (xmalloc (MAXPATHLEN + 1), MAXPATHLEN + 1
+    pwd = getcwd (XNEWVEC (char, MAXPATHLEN + 1), MAXPATHLEN + 1
 #ifdef VMS
 		  , 0
 #endif

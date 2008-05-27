@@ -1,6 +1,7 @@
 /* <ctype.h> replacement macros.
 
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004,
+   2005 Free Software Foundation, Inc.
    Contributed by Zack Weinberg <zackw@stanford.edu>.
 
 This file is part of the libiberty library.
@@ -16,22 +17,111 @@ Library General Public License for more details.
 
 You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If
-not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+not, write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
-/* This is a compatible replacement of the standard C library's <ctype.h>
-   with the following properties:
+/*
 
-   - Implements all isxxx() macros required by C99.
-   - Also implements some character classes useful when
-     parsing C-like languages.
-   - Does not change behavior depending on the current locale.
-   - Behaves properly for all values in the range of a signed or
-     unsigned char.  */
+@defvr Extension HOST_CHARSET
+This macro indicates the basic character set and encoding used by the
+host: more precisely, the encoding used for character constants in
+preprocessor @samp{#if} statements (the C "execution character set").
+It is defined by @file{safe-ctype.h}, and will be an integer constant
+with one of the following values:
+
+@ftable @code
+@item HOST_CHARSET_UNKNOWN
+The host character set is unknown - that is, not one of the next two
+possibilities.
+
+@item HOST_CHARSET_ASCII
+The host character set is ASCII.
+
+@item HOST_CHARSET_EBCDIC
+The host character set is some variant of EBCDIC.  (Only one of the
+nineteen EBCDIC varying characters is tested; exercise caution.)
+@end ftable
+@end defvr
+
+@deffn  Extension ISALPHA  (@var{c})
+@deffnx Extension ISALNUM  (@var{c})
+@deffnx Extension ISBLANK  (@var{c})
+@deffnx Extension ISCNTRL  (@var{c})
+@deffnx Extension ISDIGIT  (@var{c})
+@deffnx Extension ISGRAPH  (@var{c})
+@deffnx Extension ISLOWER  (@var{c})
+@deffnx Extension ISPRINT  (@var{c})
+@deffnx Extension ISPUNCT  (@var{c})
+@deffnx Extension ISSPACE  (@var{c})
+@deffnx Extension ISUPPER  (@var{c})
+@deffnx Extension ISXDIGIT (@var{c})
+
+These twelve macros are defined by @file{safe-ctype.h}.  Each has the
+same meaning as the corresponding macro (with name in lowercase)
+defined by the standard header @file{ctype.h}.  For example,
+@code{ISALPHA} returns true for alphabetic characters and false for
+others.  However, there are two differences between these macros and
+those provided by @file{ctype.h}:
+
+@itemize @bullet
+@item These macros are guaranteed to have well-defined behavior for all 
+values representable by @code{signed char} and @code{unsigned char}, and
+for @code{EOF}.
+
+@item These macros ignore the current locale; they are true for these
+fixed sets of characters:
+@multitable {@code{XDIGIT}} {yada yada yada yada yada yada yada yada}
+@item @code{ALPHA}  @tab @kbd{A-Za-z}
+@item @code{ALNUM}  @tab @kbd{A-Za-z0-9}
+@item @code{BLANK}  @tab @kbd{space tab}
+@item @code{CNTRL}  @tab @code{!PRINT}
+@item @code{DIGIT}  @tab @kbd{0-9}
+@item @code{GRAPH}  @tab @code{ALNUM || PUNCT}
+@item @code{LOWER}  @tab @kbd{a-z}
+@item @code{PRINT}  @tab @code{GRAPH ||} @kbd{space}
+@item @code{PUNCT}  @tab @kbd{`~!@@#$%^&*()_-=+[@{]@}\|;:'",<.>/?}
+@item @code{SPACE}  @tab @kbd{space tab \n \r \f \v}
+@item @code{UPPER}  @tab @kbd{A-Z}
+@item @code{XDIGIT} @tab @kbd{0-9A-Fa-f}
+@end multitable
+
+Note that, if the host character set is ASCII or a superset thereof,
+all these macros will return false for all values of @code{char} outside
+the range of 7-bit ASCII.  In particular, both ISPRINT and ISCNTRL return
+false for characters with numeric values from 128 to 255.
+@end itemize
+@end deffn
+
+@deffn  Extension ISIDNUM         (@var{c})
+@deffnx Extension ISIDST          (@var{c})
+@deffnx Extension IS_VSPACE       (@var{c})
+@deffnx Extension IS_NVSPACE      (@var{c})
+@deffnx Extension IS_SPACE_OR_NUL (@var{c})
+@deffnx Extension IS_ISOBASIC     (@var{c})
+These six macros are defined by @file{safe-ctype.h} and provide
+additional character classes which are useful when doing lexical
+analysis of C or similar languages.  They are true for the following
+sets of characters:
+
+@multitable {@code{SPACE_OR_NUL}} {yada yada yada yada yada yada yada yada}
+@item @code{IDNUM}        @tab @kbd{A-Za-z0-9_}
+@item @code{IDST}         @tab @kbd{A-Za-z_}
+@item @code{VSPACE}       @tab @kbd{\r \n}
+@item @code{NVSPACE}      @tab @kbd{space tab \f \v \0}
+@item @code{SPACE_OR_NUL} @tab @code{VSPACE || NVSPACE}
+@item @code{ISOBASIC}     @tab @code{VSPACE || NVSPACE || PRINT}
+@end multitable
+@end deffn
+
+*/
 
 #include "ansidecl.h"
 #include <safe-ctype.h>
 #include <stdio.h>  /* for EOF */
+
+#if EOF != -1
+ #error "<safe-ctype.h> requires EOF == -1"
+#endif
 
 /* Shorthand */
 #define bl _sch_isblank
@@ -64,9 +154,7 @@ Boston, MA 02111-1307, USA.  */
 #define S  (const unsigned short) (nv|sp|bl|pr)	/* space */
 
 /* Are we ASCII? */
-#if '\n' == 0x0A && ' ' == 0x20 && '0' == 0x30 \
-  && 'A' == 0x41 && 'a' == 0x61 && '!' == 0x21 \
-  && EOF == -1
+#if HOST_CHARSET == HOST_CHARSET_ASCII
 
 const unsigned short _sch_istable[256] =
 {
@@ -159,5 +247,9 @@ const unsigned char _sch_toupper[256] =
 };
 
 #else
- #error "Unsupported host character set"
-#endif /* not ASCII */
+# if HOST_CHARSET == HOST_CHARSET_EBCDIC
+  #error "FIXME: write tables for EBCDIC"
+# else
+  #error "Unrecognized host character set"
+# endif
+#endif
