@@ -111,10 +111,13 @@ C_COMPILE = \
 
 cxa_demangle.c:
 	rm -f $@
-	$(LN_S) $(toplevel_srcdir)/libiberty/cp-demangle.c $@
-cxa_demangle.lo: cxa_demangle.c
+	$(LN_S) $(LIBIBERTY_SRCDIR)/cp-demangle.c $@
+cp-demangle.h:
+	rm -f $@
+	$(LN_S) $(LIBIBERTY_SRCDIR)/cp-demangle.h $@
+cxa_demangle.lo: cxa_demangle.c cp-demangle.h
 	$(LTCOMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
-cxa_demangle.o: cxa_demangle.c
+cxa_demangle.o: cxa_demangle.c cp-demangle.h
 	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 dyn-string.c:
 	rm -f $@
