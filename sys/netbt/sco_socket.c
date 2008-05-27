@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco_socket.c,v 1.1 2007/06/01 02:46:12 uwe Exp $	*/
+/*	$OpenBSD: sco_socket.c,v 1.2 2008/05/27 19:41:14 thib Exp $	*/
 /*	$NetBSD: sco_socket.c,v 1.9 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ int sco_recvspace = 4096;
  */
 int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl)
+    struct mbuf *nam, struct mbuf *ctl, struct proc *p)
 {
 	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;

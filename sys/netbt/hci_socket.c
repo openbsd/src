@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_socket.c,v 1.5 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.6 2008/05/27 19:41:14 thib Exp $	*/
 /*	$NetBSD: hci_socket.c,v 1.14 2008/02/10 17:40:54 plunky Exp $	*/
 
 /*-
@@ -543,7 +543,7 @@ bad:
  */
 int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl)
+    struct mbuf *nam, struct mbuf *ctl, struct proc *p)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
