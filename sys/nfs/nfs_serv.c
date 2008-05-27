@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.50 2008/04/22 18:53:34 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.51 2008/05/27 19:06:28 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2324,8 +2324,6 @@ nfsmout:
  * - calls VOP_READDIR()
  * - loops around building the reply
  *	if the output generated exceeds count break out of loop
- *	The nfsm_clget macro is used here so that the reply will be packed
- *	tightly in mbuf clusters.
  * - it only knows that it has encountered eof when the VOP_READDIR()
  *	reads nothing
  * - as such one readdir rpc will return eof false although you are there
@@ -2366,14 +2364,11 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	char *bp, *be;
-	struct mbuf *mp;
 	struct dirent *dp;
-	caddr_t cp;
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	struct mbuf *mb, *mreq, *mp2;
+	struct mbuf *mb, *mreq;
 	char *cpos, *cend, *cp2, *rbuf;
 	struct vnode *vp;
 	struct vattr at;
@@ -2381,7 +2376,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	struct uio io;
 	struct iovec iv;
-	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
+	int len, nlen, pad, xfer, error = 0, getret = 1;
 	int siz, cnt, fullsiz, eofflag, rdonly, ncookies;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	u_quad_t off, toff, verf;
@@ -2521,16 +2516,13 @@ again:
 		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 		txdr_hyper(at.va_filerev, tl);
 	}
-	mp = mp2 = mb;
-	bp = bpos;
-	be = bp + M_TRAILINGSPACE(mp);
 
 	/* Loop through the records and build reply */
 	while (cpos < cend && ncookies > 0) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
-			rem = nfsm_rndup(nlen)-nlen;
-			len += (4 * NFSX_UNSIGNED + nlen + rem);
+			pad = nfsm_rndup(nlen) - nlen;
+			len += (4 * NFSX_UNSIGNED + nlen + pad);
 			if (v3)
 				len += 2 * NFSX_UNSIGNED;
 			if (len > cnt) {
@@ -2541,49 +2533,24 @@ again:
 			 * Build the directory record xdr from
 			 * the dirent entry.
 			 */
-			nfsm_clget;
-			*tl = nfs_true;
-			bp += NFSX_UNSIGNED;
+			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+			*tl++ = nfs_true;
 			if (v3) {
-				nfsm_clget;
 				*tl = 0;
-				bp += NFSX_UNSIGNED;
+				tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 			}
-			nfsm_clget;
 			*tl = txdr_unsigned(dp->d_fileno);
-			bp += NFSX_UNSIGNED;
-			nfsm_clget;
-			*tl = txdr_unsigned(nlen);
-			bp += NFSX_UNSIGNED;
 	
-			/* And loop around copying the name */
-			xfer = nlen;
-			cp = dp->d_name;
-			while (xfer > 0) {
-				nfsm_clget;
-				if ((bp+xfer) > be)
-					tsiz = be-bp;
-				else
-					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
-				bp += tsiz;
-				xfer -= tsiz;
-				if (xfer > 0)
-					cp += tsiz;
-			}
-			/* And null pad to an int32_t boundary */
-			for (i = 0; i < rem; i++)
-				*bp++ = '\0';
-			nfsm_clget;
+			/* And copy the name */
+			nfsm_strtombuf(&mb, dp->d_name, nlen, &bpos);
 	
 			/* Finish off the record */
 			if (v3) {
+				tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 				*tl = 0;
-				bp += NFSX_UNSIGNED;
-				nfsm_clget;
 			}
+			tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
 			*tl = txdr_unsigned(*cookiep);
-			bp += NFSX_UNSIGNED;
 		}
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
@@ -2591,20 +2558,12 @@ again:
 		ncookies--;
 	}
 	vrele(vp);
-	nfsm_clget;
-	*tl = nfs_false;
-	bp += NFSX_UNSIGNED;
-	nfsm_clget;
+	tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+	*tl++ = nfs_false;
 	if (eofflag)
 		*tl = nfs_true;
 	else
 		*tl = nfs_false;
-	bp += NFSX_UNSIGNED;
-	if (mp != mb) {
-		if (bp < be)
-			mp->m_len = bp - mtod(mp, caddr_t);
-	} else
-		mp->m_len += bp - bpos;
 	free(rbuf, M_TEMP);
 	free(cookies, M_TEMP);
 nfsmout:
@@ -2622,14 +2581,11 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	char *bp, *be;
-	struct mbuf *mp;
 	struct dirent *dp;
-	caddr_t cp;
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	struct mbuf *mb, *mreq, *mp2;
+	struct mbuf *mb, *mreq;
 	char *cpos, *cend, *cp2, *rbuf;
 	struct vnode *vp, *nvp;
 	struct flrep fl;
@@ -2639,7 +2595,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	struct iovec iv;
 	struct vattr va, at, *vap = &va;
 	struct nfs_fattr *fp;
-	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
+	int len, nlen, pad, xfer, error = 0, getret = 1;
 	int siz, cnt, fullsiz, eofflag, rdonly, dirlen, ncookies;
 	u_quad_t off, toff, verf;
 	u_long *cookies = NULL, *cookiep;
@@ -2780,16 +2736,13 @@ again:
 	nfsm_srvpostop_attr(getret, &at);
 	tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
 	txdr_hyper(at.va_filerev, tl);
-	mp = mp2 = mb;
-	bp = bpos;
-	be = bp + M_TRAILINGSPACE(mp);
 
 	/* Loop through the records and build reply */
 	while (cpos < cend && ncookies > 0) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
-			rem = nfsm_rndup(nlen)-nlen;
-	
+			pad = nfsm_rndup(nlen) - nlen;
+
 			/*
 			 * For readdir_and_lookup get the vnode using
 			 * the file number.
@@ -2818,7 +2771,7 @@ again:
 			 * Each entry:
 			 * 2 * NFSX_UNSIGNED for fileid3
 			 * 1 * NFSX_UNSIGNED for length of name
-			 * nlen + rem == space the name takes up
+			 * nlen + pad == space the name takes up
 			 * 2 * NFSX_UNSIGNED for the cookie
 			 * 1 * NFSX_UNSIGNED to indicate if file handle present
 			 * 1 * NFSX_UNSIGNED for the file handle length
@@ -2826,13 +2779,21 @@ again:
 			 * NFSX_V3POSTOPATTR == space the attributes take up
 			 * 1 * NFSX_UNSIGNED for next pointer
 			 */
-			len += (8 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
+			len += (8 * NFSX_UNSIGNED + nlen + pad + NFSX_V3FH +
 				NFSX_V3POSTOPATTR);
-			dirlen += (6 * NFSX_UNSIGNED + nlen + rem);
+			dirlen += (6 * NFSX_UNSIGNED + nlen + pad);
 			if (len > cnt || dirlen > fullsiz) {
 				eofflag = 0;
 				break;
 			}
+
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
+			*tl++ = nfs_true;
+			*tl++ = 0;
+			*tl = txdr_unsigned(dp->d_fileno);
+
+			/* And copy the name */
+			nfsm_strtombuf(&mb, dp->d_name, nlen, &bpos);
 
 			/*
 			 * Build the directory record xdr from
@@ -2846,55 +2807,8 @@ again:
 			fl.fl_off.nfsuquad[0] = 0;
 			fl.fl_off.nfsuquad[1] = txdr_unsigned(*cookiep);
 
-			nfsm_clget;
-			*tl = nfs_true;
-			bp += NFSX_UNSIGNED;
-			nfsm_clget;
-			*tl = 0;
-			bp += NFSX_UNSIGNED;
-			nfsm_clget;
-			*tl = txdr_unsigned(dp->d_fileno);
-			bp += NFSX_UNSIGNED;
-			nfsm_clget;
-			*tl = txdr_unsigned(nlen);
-			bp += NFSX_UNSIGNED;
-	
-			/* And loop around copying the name */
-			xfer = nlen;
-			cp = dp->d_name;
-			while (xfer > 0) {
-				nfsm_clget;
-				if ((bp + xfer) > be)
-					tsiz = be - bp;
-				else
-					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
-				bp += tsiz;
-				xfer -= tsiz;
-				if (xfer > 0)
-					cp += tsiz;
-			}
-			/* And null pad to an int32_t boundary */
-			for (i = 0; i < rem; i++)
-				*bp++ = '\0';
-	
-			/*
-			 * Now copy the flrep structure out.
-			 */
-			xfer = sizeof (struct flrep);
-			cp = (caddr_t)&fl;
-			while (xfer > 0) {
-				nfsm_clget;
-				if ((bp + xfer) > be)
-					tsiz = be - bp;
-				else
-					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
-				bp += tsiz;
-				xfer -= tsiz;
-				if (xfer > 0)
-					cp += tsiz;
-			}
+			/* Now copy the flrep structure out. */
+			nfsm_buftombuf(&mb, &fl, sizeof(struct flrep), &bpos);
 		}
 invalid:
 		cpos += dp->d_reclen;
@@ -2903,20 +2817,12 @@ invalid:
 		ncookies--;
 	}
 	vrele(vp);
-	nfsm_clget;
-	*tl = nfs_false;
-	bp += NFSX_UNSIGNED;
-	nfsm_clget;
+	tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+	*tl++ = nfs_false;
 	if (eofflag)
 		*tl = nfs_true;
 	else
 		*tl = nfs_false;
-	bp += NFSX_UNSIGNED;
-	if (mp != mb) {
-		if (bp < be)
-			mp->m_len = bp - mtod(mp, caddr_t);
-	} else
-		mp->m_len += bp - bpos;
 	free(cookies, M_TEMP);
 	free(rbuf, M_TEMP);
 nfsmout:

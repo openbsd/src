@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.25 2008/04/14 13:46:13 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.26 2008/05/27 19:06:28 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -299,20 +299,6 @@
 		if ((nfsd->nd_flag & ND_NFSV3) == 0) \
 			nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
 		}
-
-#define	nfsm_clget \
-		if (bp >= be) { \
-			if (mp == mb) \
-				mp->m_len += bp-bpos; \
-			MGET(mp, M_WAIT, MT_DATA); \
-			MCLGET(mp, M_WAIT); \
-			mp->m_len = NFSMSIZ(mp); \
-			mp2->m_next = mp; \
-			mp2 = mp; \
-			bp = mtod(mp, caddr_t); \
-			be = bp+mp->m_len; \
-		} \
-		tl = (u_int32_t *)bp
 
 #define nfsm_srvpostop_attr(r, a) \
 		nfsm_srvpostopattr(nfsd, (r), (a), &mb, &bpos)
