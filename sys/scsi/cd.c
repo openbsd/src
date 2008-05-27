@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.134 2007/09/16 01:30:24 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.135 2008/05/27 11:39:22 fgsch Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #define	CDOUTSTANDING	4
 
 #define MAXTRACK	99
-#define CD_BLOCK_OFFSET	150
 #define CD_FRAMES	75
 #define CD_SECS		60
 
@@ -101,8 +100,6 @@ void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 void	cddone(struct scsi_xfer *);
 u_long	cd_size(struct cd_softc *, int);
 void	cd_kill_buffers(struct cd_softc *);
-void	lba2msf(u_long, u_char *, u_char *, u_char *);
-u_long	msf2lba(u_char, u_char, u_char);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
 int	cd_setvol(struct cd_softc *, const struct ioc_vol *, int);
@@ -731,34 +728,6 @@ cdwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
-
-/*
- * conversion between minute-seconde-frame and logical block address
- * addresses format
- */
-void
-lba2msf (lba, m, s, f)
-	u_long lba;
-	u_char *m, *s, *f;
-{
-	u_long tmp;
-
-	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
-	tmp &= 0xffffff;		/* negative lbas use only 24 bits */
-	*m = tmp / (CD_SECS * CD_FRAMES);
-	tmp %= (CD_SECS * CD_FRAMES);
-	*s = tmp / CD_FRAMES;
-	*f = tmp % CD_FRAMES;
-}
-
-u_long
-msf2lba (m, s, f)
-	u_char m, s, f;
-{
-
-	return ((((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET);
-}
-
 
 /*
  * Perform special action on behalf of the user.
