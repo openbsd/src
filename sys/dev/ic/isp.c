@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.41 2008/01/21 20:00:33 sobrado Exp $ */
+/* 	$OpenBSD: isp.c,v 1.42 2008/05/28 18:40:21 kettenis Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the QLogic ISP SCSI adapters.
@@ -273,6 +273,15 @@ isp_reset(struct ispsoftc *isp)
 		/*
 		 * XXX: Should probably do some bus sensing.
 		 */
+	} else if (IS_ULTRA3(isp)) {
+		isp->isp_clock = 100;
+
+		if (IS_10160(isp))
+			btype = "10160";
+		else if (IS_12160(isp))
+			btype = "12160";
+		else
+			btype = "<UNKLVD>";
 	} else if (IS_ULTRA2(isp)) {
 		static const char m[] = "bus %d is in %s Mode";
 		u_int16_t l;
@@ -284,10 +293,6 @@ isp_reset(struct ispsoftc *isp)
 			btype = "1280";
 		else if (IS_1080(isp))
 			btype = "1080";
-		else if (IS_10160(isp))
-			btype = "10160";
-		else if (IS_12160(isp))
-			btype = "12160";
 		else
 			btype = "<UNKLVD>";
 
