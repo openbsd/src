@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.1 2008/05/28 21:16:43 miod Exp $
+.\"	$OpenBSD: boot.8,v 1.2 2008/05/28 21:26:09 miod Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -188,10 +188,11 @@ Address at which to load the kernel.
 Debug flag if
 .Nm
 was compiled with DEBUG defined.
-.It Nm device
-Boot device name (e.g.,
-.Li fd0a ,
-.Li hd0a ) .
+.\" XXX Useless until partitions are supported.
+.\" .It Nm device
+.\" Boot device name (e.g.,
+.\" .Li cf0a ,
+.\" .Li cf0d ) .
 .It Nm howto
 Options to pass to the loaded kernel.
 .It Nm image
