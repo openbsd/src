@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmail.8,v 1.18 2007/08/06 19:16:05 sobrado Exp $
+.\"	$OpenBSD: rmail.8,v 1.19 2008/05/28 16:01:42 sobrado Exp $
 .\"	$NetBSD: rmail.8,v 1.8 1995/03/21 07:08:21 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rmail.8	6.10 (Berkeley) 4/29/93
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: May 28 2008 $
 .Dt RMAIL 8
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@
 .Nd handle remote mail received via uucp
 .Sh SYNOPSIS
 .Nm rmail
+.Op Fl T
+.Op Fl D Ar domain
 .Ar user ...
 .Sh DESCRIPTION
 The
@@ -56,6 +58,15 @@ and passing the processed mail on to
 is explicitly designed for use with
 uucp and
 .Xr sendmail 8 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D Ar domain
+Change the domain.
+The default domain is UUCP.
+.It Fl T
+Enter debugging mode.
+.El
 .Pp
 .Sy Note:
 uucp is not part of the base

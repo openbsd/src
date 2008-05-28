@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.22 2008/02/25 18:52:39 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.23 2008/05/28 16:01:42 sobrado Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.22 2008/02/25 18:52:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.23 2008/05/28 16:01:42 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	args[i] = 0;
 
 	if (debug) {
-		(void)fprintf(stderr, "Sendmail arguments:\n");
+		(void)fprintf(stderr, "sendmail arguments:\n");
 		for (i = 0; args[i]; i++)
 			(void)fprintf(stderr, "\t%s\n", args[i]);
 	}
