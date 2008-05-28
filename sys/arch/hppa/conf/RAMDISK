@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.79 2008/03/09 19:15:03 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.80 2008/05/28 22:45:57 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -277,6 +277,7 @@ sk*	at skc?			#  each port of above
 mskc*	at pci?			# Marvell Yukon-2
 msk*	at mskc?		#  each port of above
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
+hme*	at pci?			# Sun Happy Meal
 
 dcphy*		at mii?		# Digital Clone PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
@@ -288,7 +289,7 @@ lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs
 nsphyter*	at mii?		# NS83843 PHYs
 #mtdphy*	at mii?		# Myson MTD972 PHYs
-#qsphy*		at mii?		# Quality Semi QS6612 PHYs
+qsphy*		at mii?		# Quality Semi QS6612 PHYs
 #sqphy*		at mii?		# Seeq 8022[013] PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 tqphy*		at mii?		# TDK Semiconductor PHYs

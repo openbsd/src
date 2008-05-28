@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.78 2008/04/27 14:39:51 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.79 2008/05/28 22:45:57 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -51,6 +51,11 @@ include "dev/eisa/files.eisa"
 # PCI Bus support
 #
 include "dev/pci/files.pci"
+
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c			hme
+attach	hme at pci with hme_pci
+file	dev/pci/if_hme_pci.c		hme_pci
 
 #
 # CardBus support
