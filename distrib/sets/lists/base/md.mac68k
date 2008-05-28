@@ -40,7 +40,7 @@
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.0
 ./usr/lib/libgssapi.so.5.0
-./usr/lib/libiberty.so.8.0
+./usr/lib/libiberty.so.8.1
 ./usr/lib/libkafs.so.16.0
 ./usr/lib/libkrb5.so.16.0
 ./usr/lib/libkvm.so.9.0
