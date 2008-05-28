@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.68 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: options.c,v 1.69 2008/05/28 20:04:59 sobrado Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.68 2008/05/17 23:31:52 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.69 2008/05/28 20:04:59 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -1538,12 +1538,11 @@ pax_usage(void)
 	(void)fputs(
 	    "usage: pax [-0cdnOvz] [-E limit] [-f archive] [-G group] [-s replstr]\n"
 	    "           [-T range] [-U user] [pattern ...]\n"
-	    "       pax -r [-0cDdiknOuvYZz] [-E limit] [-f archive] [-G group]\n"
-	    "           [-o options] [-p string] [-s replstr] [-T range]\n"
-	    "           [-U user] [pattern ...]\n"
+	    "       pax -r [-0cDdiknOuvYZz] [-E limit] [-f archive] [-G group] [-o options]\n"
+	    "           [-p string] [-s replstr] [-T range] [-U user] [pattern ...]\n"
 	    "       pax -w [-0adHiLOPtuvXz] [-B bytes] [-b blocksize] [-f archive]\n"
-	    "           [-G group] [-o options] [-s replstr]\n"
-	    "           [-T range] [-U user] [-x format] [file ...]\n"
+	    "           [-G group] [-o options] [-s replstr] [-T range] [-U user]\n"
+	    "           [-x format] [file ...]\n"
 	    "       pax -rw [-0DdHikLlnOPtuvXYZ] [-G group] [-p string] [-s replstr]\n"
 	    "           [-T range] [-U user] [file ...] directory\n",
 	    stderr);
@@ -1576,10 +1575,12 @@ tar_usage(void)
 void
 cpio_usage(void)
 {
-	(void)fputs("usage: cpio -o [-AaBcLvZz] [-C bytes] [-F archive] [-H format]\n", stderr);
-	(void)fputs("               [-O archive] < name-list [> archive]\n", stderr);
-	(void)fputs("       cpio -i [-6BbcdfmrSstuvZz] [-C bytes] [-E file] [-F archive]\n", stderr);
-	(void)fputs("               [-H format] [-I archive] [pattern...] [< archive]\n", stderr);
-	(void)fputs("       cpio -p [-adLlmuv] destination-directory < name-list\n", stderr);
+	(void)fputs(
+	    "usage: cpio -o [-AaBcLvZz] [-C bytes] [-F archive] [-H format]\n"
+	    "            [-O archive] < name-list [> archive]\n"
+	    "       cpio -i [-6BbcdfmrSstuvZz] [-C bytes] [-E file] [-F archive] [-H format]\n"
+	    "            [-I archive] [pattern ...] [< archive]\n"
+	    "       cpio -p [-adLlmuv] destination-directory < name-list\n",
+	    stderr);
 	exit(1);
 }
