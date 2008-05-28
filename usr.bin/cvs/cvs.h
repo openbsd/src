@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.164 2008/03/09 03:14:52 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.165 2008/05/28 17:12:00 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,6 @@
 #define CVS_CMD_MAXNAMELEN	16
 #define CVS_CMD_MAXALIAS	2
 #define CVS_CMD_MAXDESCRLEN	64
-#define CVS_CMD_MAXARG		128
 
 /* flags */
 #define CVS_USE_WDIR		0x01
@@ -366,6 +365,7 @@ extern struct cvs_cmd cvs_cmd_watchers;
 struct cvs_cmd	*cvs_findcmd(const char *);
 
 /* cvs.c */
+int		 cvs_build_cmd(char ***, char **, int);
 int		 cvs_var_set(const char *, const char *);
 int		 cvs_var_unset(const char *);
 const char	*cvs_var_get(const char *);

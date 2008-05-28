@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.144 2008/03/08 20:52:36 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.145 2008/05/28 17:12:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -124,9 +124,56 @@ usage(void)
 }
 
 int
+cvs_build_cmd(char ***cmd_argv, char **argv, int argc)
+{
+	int cmd_argc, i, cur;
+	char *cp, *linebuf, *lp;
+
+	if (cmdp->cmd_defargs == NULL) {
+		*cmd_argv = argv;
+		return argc;
+	}
+
+	cur = argc + 2;
+	cmd_argc = 0;
+	*cmd_argv = xcalloc(cur, sizeof(char *));
+	(*cmd_argv)[cmd_argc++] = argv[0];
+
+	linebuf = xstrdup(cmdp->cmd_defargs);
+	for (lp = linebuf; lp != NULL;) {
+		cp = strsep(&lp, " \t\b\f\n\r\t\v");
+		if (cp == NULL)
+			break;
+		if (*cp == '\0')
+			continue;
+
+		if (cmd_argc == cur) {
+			cur += 8;
+			*cmd_argv = xrealloc(*cmd_argv, cur,
+			    sizeof(char *));
+		}
+
+		(*cmd_argv)[cmd_argc++] = cp;
+	}
+
+	if (cmd_argc + argc > cur) {
+		cur = cmd_argc + argc + 1;
+		*cmd_argv = xrealloc(*cmd_argv, cur,
+		    sizeof(char *));
+        }
+
+	for (i = 1; i < argc; i++)
+		(*cmd_argv)[cmd_argc++] = argv[i];
+
+	(*cmd_argv)[cmd_argc] = NULL;
+
+	return cmd_argc;
+}
+
+int
 main(int argc, char **argv)
 {
-	char *envstr, *cmd_argv[CVS_CMD_MAXARG], **targv;
+	char *envstr, **cmd_argv, **targv;
 	int i, ret, cmd_argc;
 	struct passwd *pw;
 	struct stat st;
@@ -214,24 +261,7 @@ main(int argc, char **argv)
 
 	cvs_cmdop = cmdp->cmd_op;
 
-	cmd_argc = 0;
-	memset(cmd_argv, 0, sizeof(cmd_argv));
-
-	cmd_argv[cmd_argc++] = argv[0];
-	if (cmdp->cmd_defargs != NULL) {
-		/* transform into a new argument vector */
-		ret = cvs_getargv(cmdp->cmd_defargs, cmd_argv + 1,
-		    CVS_CMD_MAXARG - 1);
-		if (ret < 0)
-			fatal("main: cvs_getargv failed");
-
-		cmd_argc += ret;
-	}
-
-	if (argc + cmd_argc >= CVS_CMD_MAXARG)
-		fatal("main: too many arguments for `%s'", cmd_argv[0]);
-	for (ret = 1; ret < argc; ret++)
-		cmd_argv[cmd_argc++] = argv[ret];
+	cmd_argc = cvs_build_cmd(&cmd_argv, argv, argc);
 
 	cvs_file_init();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.87 2008/05/06 10:37:30 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.88 2008/05/28 17:12:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -72,7 +72,7 @@ int	cvs_server(int, char **);
 char	*cvs_server_path = NULL;
 
 static char *server_currentdir = NULL;
-static char *server_argv[CVS_CMD_MAXARG];
+static char **server_argv;
 static int server_argc = 1;
 
 struct cvs_cmd cvs_cmd_server = {
@@ -102,6 +102,7 @@ cvs_server(int argc, char **argv)
 
 	cvs_server_active = 1;
 
+	server_argv = xcalloc(server_argc + 1, sizeof(*server_argv));
 	server_argv[0] = xstrdup("server");
 
 	(void)xasprintf(&cvs_server_path, "%s/cvs-serv%d", cvs_tmpdir,
@@ -465,13 +466,13 @@ cvs_server_questionable(char *data)
 void
 cvs_server_argument(char *data)
 {
-	if (server_argc >= CVS_CMD_MAXARG)
-		fatal("cvs_server_argument: too many arguments sent");
-
 	if (data == NULL)
 		fatal("Missing argument for Argument");
 
-	server_argv[server_argc++] = xstrdup(data);
+	server_argv = xrealloc(server_argv, server_argc + 2,
+	    sizeof(*server_argv));
+	server_argv[server_argc] = xstrdup(data);
+	server_argv[++server_argc] = NULL;
 }
 
 void
