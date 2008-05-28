@@ -1,5 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2007/11/25 18:25:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2008/05/28 21:16:43 miod Exp $
 
+MAN=	boot.8
+MLINKS=	boot.8 boot.conf.5
+
+.if ${MACHINE} == "landisk"
 PROG=	boot
 SRCS=	srt0.S conf.c devs.c getsecs.c scifcons.c delay.c
 LDFLAGS=-nostdlib -Ttext 0x8ff00000 -N -x -Bstatic -e start
@@ -42,6 +46,8 @@ ${PROG}: ${OBJS} ${DPADD}
 		-Map ${PROG}.map -cref ${OBJS} ${LDADD}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 
-NOMAN=
+.else
+NOPROG=
+.endif
 
 .include <bsd.prog.mk>

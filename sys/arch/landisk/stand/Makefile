@@ -1,9 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2006/11/08 17:46:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/05/28 21:16:42 miod Exp $
 
-SUBDIR=		mbr xxboot
-.if ${MACHINE} == "landisk"
-SUBDIR+=	boot
-.endif
+SUBDIR=		mbr xxboot boot
 
 
 .include <bsd.subdir.mk>
