@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2008/05/28 07:36:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,7 +48,7 @@ extern int debug_level;
 #define MIDI_TO_ADATA(m)	((ADATA_UNIT * (m) + 64) / 127)
 
 #define DEFAULT_NFR	0x400		/* buf size in frames */
-#define DEFAULT_NBLK	0x8		/* blocks per buffer */
+#define DEFAULT_NBLK	0x2		/* blocks per buffer */
 #define DEFAULT_DEVICE	"/dev/audio"	/* defaul device */
 
 #endif /* !defined(CONF_H) */

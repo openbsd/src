@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sun.c,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: dev_sun.c,v 1.2 2008/05/28 07:36:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -108,6 +108,7 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 	int fd;
 	int fullduplex;
 	struct audio_info aui;	
+	struct audio_bufinfo aubi;
 
 	if (!ipar && !opar)
 		errx(1, "%s: must at least play or record", path);
@@ -140,7 +141,6 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 	 */
 	AUDIO_INITINFO(&aui);
 	aui.mode = 0;
-	aui.lowat = UINT_MAX / 2; /* will set lowat = hiwat - 1 */
 	if (opar) {
 		sun_partoinfo(&aui.play, opar);
 		aui.play.pause = 1;
@@ -170,30 +170,16 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 		return -1;
 	}
 	if (opar) {
-		/*
-		 * We _must_ ensure that write() will accept at most
-		 * one block when it unblocks. Here is our definition
-		 * of the block size: the minimum amount of data
-		 * write() accepts immediately when it unblocks. If
-		 * write() accepts more that 1 block, then this means
-		 * that we failed to provide the first block early
-		 * enough thus underrun happened.
-		 *
-		 * If we fail to ensure that lowat = hiwat - 1, then
-		 * we will trigger the underrun detection mechanism.
-		 * Recording doesn't use the water mark non-sense.
-		 */
-		if (aui.lowat != aui.hiwat - 1) {
-			warnx("%s: failed to disable lowat: hiwat = %u, "
-			    "lowat = %u", path, aui.hiwat, aui.lowat);
-			close(fd);
-			return -1;
-		}
 		if (!sun_infotopar(&aui.play, opar)) {
 			close(fd);
 			return -1;
 		}
-		*onfr = aui.play.block_size /
+		if (ioctl(fd, AUDIO_GETPRINFO, &aubi) < 0) {
+			warn("%s: AUDIO_GETPRINFO", path);
+			close(fd);
+			return -1;
+		}
+		*onfr = aubi.blksize * aubi.hiwat /
 		    (aui.play.channels * aui.play.precision / 8);
 	}
 	if (ipar) {
@@ -201,7 +187,12 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 			close(fd);
 			return -1;
 		}
-		*infr = aui.record.block_size /
+		if (ioctl(fd, AUDIO_GETRRINFO, &aubi) < 0) {
+			warn("%s: AUDIO_GETRRINFO", path);
+			close(fd);
+			return -1;
+		}
+		*infr = aubi.blksize * aubi.hiwat /
 		    (aui.record.channels * aui.record.precision / 8);
 	}
 	return fd;
