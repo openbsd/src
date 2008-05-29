@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.360 2008/05/28 13:33:44 pyr Exp $
+$OpenBSD: usbdevs,v 1.361 2008/05/29 09:08:08 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1858,6 +1858,7 @@ product MSI RT2573_2		0x6877	RT2573
 product MSI RT2573_3		0xa861	RT2573
 product MSI RT2573_4		0xa874	RT2573
 product MSI BLUETOOTH_2		0xa970	Bluetooth
+product MSI BLUETOOTH_3		0xa97a	Bluetooth
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
