@@ -1864,6 +1864,7 @@
 ./usr/share/man/cat5/armish
 ./usr/share/man/cat5/aviion
 ./usr/share/man/cat5/bgpd.conf.0
+./usr/share/man/cat5/boot.conf.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
@@ -1924,6 +1925,7 @@
 ./usr/share/man/cat5/keynote.0
 ./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/landisk
+./usr/share/man/cat5/landisk/boot.conf.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
@@ -2095,6 +2097,7 @@
 ./usr/share/man/cat8/bgplg.0
 ./usr/share/man/cat8/bgplgsh.0
 ./usr/share/man/cat8/bioctl.0
+./usr/share/man/cat8/boot.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bos.0
@@ -2228,6 +2231,7 @@
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/landisk
 ./usr/share/man/cat8/landisk/MAKEDEV.0
+./usr/share/man/cat8/landisk/boot.0
 ./usr/share/man/cat8/landisk/hotplugd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/landisk/xxboot.0
