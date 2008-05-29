@@ -1,11 +1,11 @@
-dnl	$OpenBSD: prep,v 1.2 2008/05/16 22:56:42 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.3 2008/05/29 19:26:36 maja Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about Das U-Boot, the low-level process that controls
 the microprocessor after hardware initialization.
 
 Talking to the Thecus
 
-The Thecus N2100 needs a serial cable. On the back of the disk drive
+The Thecus N1200 needs a serial cable. On the back of the disk drive
 circuit board, there is either a 10-pin header (with one pin removed),
 or 9 holes for you to solder in your own header.  The ribbon cable
 that connects from there to your serial cable or the serial port on
@@ -31,7 +31,7 @@ If you wish to check a cable, or make your own, the pinouts are:
 Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
 
 
-Booting Thecus N2100
+Booting Thecus N1200
 
 When you have connected your computer, a command like "tip -115200 tty00"
 (assuming you're using the first serial port on your machine) should 
