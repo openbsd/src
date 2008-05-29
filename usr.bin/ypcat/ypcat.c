@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.12 2006/04/02 01:49:18 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.13 2008/05/29 07:42:08 sobrado Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.12 2006/04/02 01:49:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.13 2008/05/29 07:42:08 sobrado Exp $";
 #endif
 
 #include <sys/param.h>
@@ -66,9 +66,9 @@ int key;
 void
 usage(void)
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typcat [-k] [-d domainname] [-t] mapname\n");
-	fprintf(stderr, "\typcat -x\n");
+	fprintf(stderr,
+	    "usage: ypcat [-kt] [-d domainname] mapname\n"
+	    "       ypcat -x\n");
 	exit(1);
 }
 
