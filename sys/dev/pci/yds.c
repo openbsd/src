@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.29 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: yds.c,v 1.30 2008/05/29 02:10:01 jakemsr Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ void	yds_close(void *);
 int	yds_query_encoding(void *, struct audio_encoding *);
 int	yds_set_params(void *, int, int,
 	    struct audio_params *, struct audio_params *);
+void	yds_get_default_params(void *, int, struct audio_params *);
 int	yds_round_blocksize(void *, int);
 int	yds_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
@@ -233,7 +234,7 @@ static struct audio_hw_if yds_hw_if = {
 	yds_get_props,
 	yds_trigger_output,
 	yds_trigger_input,
-	NULL
+	yds_get_default_params
 };
 
 struct audio_device yds_device = {
@@ -1186,6 +1187,12 @@ yds_query_encoding(addr, fp)
 	default:
 		return (EINVAL);
 	}
+}
+
+void
+yds_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
 }
 
 int

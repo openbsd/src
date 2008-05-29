@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.32 2008/04/21 00:32:43 jakemsr Exp $ */
+/*      $OpenBSD: eap.c,v 1.33 2008/05/29 02:10:01 jakemsr Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -176,6 +176,7 @@ int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	eap_halt_output(void *);
 int	eap_halt_input(void *);
+void	eap_get_default_params(void *, int, struct audio_params *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
 int	eap_getdev(void *, struct audio_device *);
 int	eap1370_mixer_set_port(void *, mixer_ctrl_t *);
@@ -234,7 +235,7 @@ struct audio_hw_if eap1370_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
-	NULL
+	eap_get_default_params
 };
 
 struct audio_hw_if eap1371_hw_if = {
@@ -264,7 +265,7 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
-	NULL
+	eap_get_default_params
 };
 
 #if NMIDI > 0
@@ -909,6 +910,12 @@ eap_query_encoding(void *addr, struct audio_encoding *fp)
 	default:
 		return (EINVAL);
 	}
+}
+
+void
+eap_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
 }
 
 int

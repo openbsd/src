@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.30 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.31 2008/05/29 02:10:01 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -201,6 +201,7 @@ void	cs4280_close(void *);
 int	cs4280_query_encoding(void *, struct audio_encoding *);
 int	cs4280_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	cs4280_round_blocksize(void *, int);
+void	cs4280_get_default_params(void *, int, struct audio_params *);
 
 int	cs4280_halt_output(void *);
 int	cs4280_halt_input(void *);
@@ -270,7 +271,7 @@ struct audio_hw_if cs4280_hw_if = {
 	cs4280_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
-	NULL
+	cs4280_get_default_params
 };
 
 #if NMIDI > 0
@@ -1222,6 +1223,12 @@ cs4280_round_buffersize(addr, direction, size)
 	 * ( suggested by Lennart Augustsson. )
 	 */
 	return (size);
+}
+
+void
+cs4280_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
 }
 
 int

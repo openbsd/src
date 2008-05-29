@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.27 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.28 2008/05/29 02:10:01 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -173,6 +173,7 @@ int	emuxki_query_encoding(void *, struct audio_encoding *);
 int	emuxki_set_params(void *, int, int,
 				      struct audio_params *,
 				      struct audio_params *);
+void	emuxki_get_default_params(void *, int, struct audio_params *);
 
 int	emuxki_round_blocksize(void *, int);
 size_t	emuxki_round_buffersize(void *, int, size_t);
@@ -253,7 +254,7 @@ struct audio_hw_if emuxki_hw_if = {
 	emuxki_get_props,
 	emuxki_trigger_output,
 	emuxki_trigger_input,
-	NULL
+	emuxki_get_default_params
 };
 
 #if 0
@@ -2224,6 +2225,12 @@ emuxki_set_params(void *addr, int setmode, int usemode,
 	}
 
 	return (0);
+}
+
+void
+emuxki_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	ac97_get_default_params(params);
 }
 
 int
