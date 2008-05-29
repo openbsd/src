@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.59 2008/05/23 08:49:27 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.60 2008/05/29 05:36:48 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -38,13 +38,15 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
 /*
  * The following controllers are supported by this driver:
  *   BCM5706C A2, A3
+ *   BCM5706S A2, A3
  *   BCM5708C B1, B2
+ *   BCM5708S B1, B2
  *
  * The following controllers are not supported by this driver:
  *   BCM5706C A0, A1
- *   BCM5706S A0, A1, A2, A3
+ *   BCM5706S A0, A1
  *   BCM5708C A0, B0
- *   BCM5708S A0, B0, B1, B2
+ *   BCM5708S A0, B0
  */
 
 #include <dev/pci/if_bnxreg.h>
@@ -817,10 +819,21 @@ bnx_attachhook(void *xsc)
 			sc->bnx_phy_addr = 2;
 			val = REG_RD_IND(sc, sc->bnx_shmem_base +
 					 BNX_SHARED_HW_CFG_CONFIG);
-			if (val & BNX_SHARED_HW_CFG_PHY_2_5G)
+			if (val & BNX_SHARED_HW_CFG_PHY_2_5G) {
 				sc->bnx_phy_flags |= BNX_PHY_2_5G_CAPABLE_FLAG;
+				DBPRINT(sc, BNX_WARN, "Found 2.5Gb capable adapter\n");
+			}
 		}
 	}
+
+	/*
+	 * Store config data needed by the PHY driver for
+	 * backplane applications
+	 */
+	sc->bnx_shared_hw_cfg = REG_RD_IND(sc, sc->bnx_shmem_base +
+		BNX_SHARED_HW_CFG_CONFIG);
+	sc->bnx_port_hw_cfg = REG_RD_IND(sc, sc->bnx_shmem_base +
+		BNX_PORT_HW_CFG_CONFIG);
 
 	/* Allocate DMA memory resources. */
 	sc->bnx_dmatag = pa->pa_dmat;
@@ -1128,7 +1141,7 @@ bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 
 	/* Make sure we are accessing the correct PHY address. */
 	if (phy != sc->bnx_phy_addr) {
-		DBPRINT(sc, BNX_WARN, "Invalid PHY address %d for PHY write!\n",
+		DBPRINT(sc, BNX_VERBOSE, "Invalid PHY address %d for PHY write!\n",
 		    phy);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.23 2008/02/28 02:02:43 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.24 2008/05/29 05:36:49 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4625,6 +4625,10 @@ struct bnx_softc
 #define BNX_PHY_INT_MODE_MASK_FLAG			0x300
 #define BNX_PHY_INT_MODE_AUTO_POLLING_FLAG	0x100
 #define BNX_PHY_INT_MODE_LINK_READY_FLAG	0x200
+
+	/* Values that need to be shared with the PHY driver. */
+	u_int32_t					bnx_shared_hw_cfg;
+	u_int32_t					bnx_port_hw_cfg;
 
 	int					bnx_if_flags;
 
