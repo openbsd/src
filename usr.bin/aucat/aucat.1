@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.20 2008/05/26 08:36:35 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.21 2008/05/29 13:53:47 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2008 $
+.Dd $Mdocdate: May 29 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -111,27 +111,61 @@ The default is 44100Hz.
 Sample rate in Hertz of the input stream.
 The default is 44100Hz.
 .It Fl u
-Don't try to automatically determine the optimal parameters for the
-audio device;
-instead use the parameters specified by the last
-.Fl C ,
-.Fl c ,
-.Fl E ,
-.Fl e ,
-.Fl H ,
-.Fl h ,
-.Fl R ,
-and
-.Fl r
+Normally
+.Nm
+tries to automatically determine the optimal parameters for the audio device;
+if this option is specified,
+it will instead use the parameters specified by the
+.Fl CcEeRr
 options.
-For the
-.Fl i
-and
-.Fl o
-options, if
-.Fl f
-is used then parameters must be specified before it.
 .El
+.Pp
+Settings for input
+.Pq Fl i
+and output
+.Pq Fl o
+files can be changed using the
+.Fl CcEeHhRr
+options.
+The last
+.Fl CcEeHhRr
+option specified before an
+.Fl i
+or
+.Fl o
+is applied to
+.Ar file .
+.Pp
+Settings for the audio device
+can be changed using the
+.Fl CcEeRr
+options.
+They apply to the audio device only if the
+.Fl u
+option is given as well.
+The last
+.Fl CcEeRr
+option specified before an
+.Fl f
+is applied to
+.Ar device .
+.Pp
+If no audio device
+.Pq Fl f
+is specified but
+.Fl u
+is given anyway,
+any
+.Fl CcEeRr
+options specified before
+.Fl io
+options are applied both to
+.Ar file
+and the default audio device;
+if they are specified after
+.Fl io
+options,
+they will be applied only to the default audio device.
 .Pp
 File formats are specified using the
 .Fl H
