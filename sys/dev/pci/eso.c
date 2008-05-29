@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.25 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: eso.c,v 1.26 2008/05/29 07:20:15 jakemsr Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ void	eso_close(void *);
 int	eso_query_encoding(void *, struct audio_encoding *);
 int	eso_set_params(void *, int, int, struct audio_params *,
 		    struct audio_params *);
+void	eso_get_default_params(void *, int, struct audio_params *);
 int	eso_round_blocksize(void *, int);
 int	eso_halt_output(void *);
 int	eso_halt_input(void *);
@@ -158,7 +159,7 @@ struct audio_hw_if eso_hw_if = {
 	eso_get_props,
 	eso_trigger_output,
 	eso_trigger_input,
-	NULL
+	eso_get_default_params
 };
 
 const char * const eso_rev2model[] = {
@@ -678,6 +679,17 @@ eso_query_encoding(void *hdl, struct audio_encoding *fp)
 	}
 
 	return (0);
+}
+
+void
+eso_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	params->sample_rate = 48000;
+	params->encoding = AUDIO_ENCODING_ULINEAR_LE;
+	params->precision = 16;
+	params->channels = 2;
+	params->sw_code = NULL;
+	params->factor = 1;
 }
 
 int
