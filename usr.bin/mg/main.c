@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2007/02/20 04:39:45 cloder Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2008/05/29 19:58:15 sobrado Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -34,7 +34,7 @@ extern char	*__progname;
 static __dead void
 usage()
 {
-	fprintf(stderr, "usage: %s [+line] [-n] [-f mode] [file ...]\n",
+	fprintf(stderr, "usage: %s [-n] [-f mode] [+number] [file ...]\n",
 	    __progname);
 	exit(1);
 }
