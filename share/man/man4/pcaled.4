@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcaled.4,v 1.3 2007/11/17 10:19:20 jmc Exp $
+.\"	$OpenBSD: pcaled.4,v 1.4 2008/05/29 15:45:19 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,20 +14,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: May 29 2008 $
 .Dt PCALED 4
 .Os
 .Sh NAME
 .Nm pcaled
-.Nd Philips PCA9532 GPIO LED dimmer
+.Nd Philips PCA9532/PCA9552 GPIO LED dimmer
 .Sh SYNOPSIS
 .Cd "pcaled* at iic?"
 .Cd "gpio* at pcaled?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Philips PCA9532 GPIO controller
-which is specifically optimized to dim LEDs in 256 discrete steps.
+driver provides support for the Philips PCA9532 and PCA9552 GPIO controllers
+which are specifically optimized to dim LEDs in 256 discrete steps.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr iic 4 ,
