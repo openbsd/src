@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.37 2008/05/25 22:36:17 millert Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.38 2008/05/29 19:02:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	extern char *__progname;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
-	u_short sync_port;
+	u_short sync_port = 0;
 	struct servent *ent;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
