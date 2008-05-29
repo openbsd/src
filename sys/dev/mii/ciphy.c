@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.18 2006/12/31 15:04:33 krw Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.19 2008/05/29 06:20:02 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -92,6 +92,8 @@ static const struct mii_phydesc ciphys[] = {
 	  MII_STR_CICADA_CS8201A },
 	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
 	  MII_STR_CICADA_CS8201B },
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8204,
+	  MII_STR_CICADA_CS8204 },
 	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
 	  MII_STR_xxCICADA_CS8201B },
 
@@ -333,6 +335,7 @@ ciphy_fixup(struct mii_softc *sc)
 
 	switch (model) {
 	case MII_MODEL_CICADA_CS8201:
+	case MII_MODEL_CICADA_CS8204:
 
 		/* Turn off "aux mode" (whatever that means) */
 		PHY_SETBIT(sc, CIPHY_MII_AUXCSR, CIPHY_AUXCSR_MDPPS);
