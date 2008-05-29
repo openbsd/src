@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.267 2008/05/18 11:54:04 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.268 2008/05/29 00:28:08 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,6 +69,7 @@ enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
 enum	{ PF_GET_NONE, PF_GET_CLR_CNTR };
+enum	{ PF_SK_NONE, PF_SK_WIRE, PF_SK_STACK, PF_SK_BOTH };
 
 /*
  * Note about PFTM_*: real indices into pf_rule.timeout[] come before
@@ -698,46 +699,50 @@ TAILQ_HEAD(pf_state_queue, pf_state);
 
 /* keep synced with struct pf_state_key, used in RB_FIND */
 struct pf_state_key_cmp {
-	struct pf_state_host lan;
-	struct pf_state_host gwy;
-	struct pf_state_host ext;
+	struct pf_addr	 addr1;
+	struct pf_addr	 addr2;
+	u_int16_t	 port1;
+	u_int16_t	 port2;
 	sa_family_t	 af;
 	u_int8_t	 proto;
-	u_int8_t	 direction;
-	u_int8_t	 pad;
+	u_int8_t	 pad[2];
 };
 
-TAILQ_HEAD(pf_statelist, pf_state);
+struct pf_state_item {
+	TAILQ_ENTRY(pf_state_item)	 entry;
+	struct pf_state			*s;
+};
+
+TAILQ_HEAD(pf_statelisthead, pf_state_item);
 
 struct pf_state_key {
-	struct pf_state_host lan;
-	struct pf_state_host gwy;
-	struct pf_state_host ext;
+	struct pf_addr	 addr1;
+	struct pf_addr	 addr2;
+	u_int16_t	 port1;
+	u_int16_t	 port2;
 	sa_family_t	 af;
 	u_int8_t	 proto;
-	u_int8_t	 direction;
-	u_int8_t	 pad;
+	u_int8_t	 pad[2];
 
-	RB_ENTRY(pf_state_key)	 entry_lan_ext;
-	RB_ENTRY(pf_state_key)	 entry_ext_gwy;
-	struct pf_statelist	 states;
+	RB_ENTRY(pf_state_key)	 entry;
+	struct pf_statelisthead	 states;
 };
-
 
 /* keep synced with struct pf_state, used in RB_FIND */
 struct pf_state_cmp {
-	u_int64_t	 id;
-	u_int32_t	 creatorid;
-	u_int32_t	 pad;
+	u_int64_t		 id;
+	u_int32_t		 creatorid;
+	u_int8_t		 direction;
+	u_int8_t		 pad[3];
 };
 
 struct pf_state {
 	u_int64_t		 id;
 	u_int32_t		 creatorid;
-	u_int32_t		 pad;
+	u_int8_t		 direction;
+	u_int8_t		 pad[3];
 
 	TAILQ_ENTRY(pf_state)	 entry_list;
-	TAILQ_ENTRY(pf_state)	 next;
 	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
@@ -745,7 +750,8 @@ struct pf_state {
 	union pf_rule_ptr	 anchor;
 	union pf_rule_ptr	 nat_rule;
 	struct pf_addr		 rt_addr;
-	struct pf_state_key	*state_key;
+	struct pf_state_key	*key_wire;	/* addresses wire-side */
+	struct pf_state_key	*key_stack;	/* addresses stack-side */
 	struct pfi_kif		*kif;
 	struct pfi_kif		*rt_kif;
 	struct pf_src_node	*src_node;
@@ -1013,9 +1019,8 @@ struct pfr_ktable {
 #define pfrkt_nomatch	pfrkt_ts.pfrts_nomatch
 #define pfrkt_tzero	pfrkt_ts.pfrts_tzero
 
-RB_HEAD(pf_state_tree_lan_ext, pf_state_key);
-RB_PROTOTYPE(pf_state_tree_lan_ext, pf_state_key,
-    entry_lan_ext, pf_state_compare_lan_ext);
+RB_HEAD(pf_state_tree, pf_state_key);
+RB_PROTOTYPE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
 
 RB_HEAD(pf_state_tree_ext_gwy, pf_state_key);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
@@ -1024,8 +1029,7 @@ RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
 RB_HEAD(pfi_ifhead, pfi_kif);
 
 /* state tables */
-extern struct pf_state_tree_lan_ext	 pf_statetbl_lan_ext;
-extern struct pf_state_tree_ext_gwy	 pf_statetbl_ext_gwy;
+extern struct pf_state_tree	 pf_statetbl;
 
 /* keep synced with pfi_kif, used in RB_FIND */
 struct pfi_kif_cmp {
@@ -1579,16 +1583,16 @@ extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern struct pool		 pf_src_tree_pl, pf_rule_pl;
-extern struct pool		 pf_state_pl, pf_state_key_pl, pf_altq_pl,
-				    pf_pooladdr_pl;
+extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
+				    pf_altq_pl, pf_pooladdr_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
 extern void			 pf_purge_expired_states(u_int32_t);
 extern void			 pf_unlink_state(struct pf_state *);
 extern void			 pf_free_state(struct pf_state *);
-extern int			 pf_insert_state(struct pfi_kif *,
-				    struct pf_state *);
+extern int			 pf_state_insert(struct pfi_kif *,
+				    struct pf_state_key *, struct pf_state *);
 extern int			 pf_insert_src_node(struct pf_src_node **,
 				    struct pf_rule *, struct pf_addr *,
 				    sa_family_t);
@@ -1654,8 +1658,8 @@ void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *);
 int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
 int	pf_socket_lookup(int, struct pf_pdesc *);
-struct pf_state_key *
-	pf_alloc_state_key(struct pf_state *);
+struct pf_state_key *pf_alloc_state_key(void);
+void	pf_attach_state(struct pf_state_key *, struct pf_state *, int, int);
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,

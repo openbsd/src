@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.197 2008/05/18 11:54:04 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.198 2008/05/29 00:28:08 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -110,7 +110,7 @@ void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
 void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
 int			 pf_commit_rules(u_int32_t, int, char *);
 void			 pf_state_export(struct pfsync_state *,
-			    struct pf_state_key *, struct pf_state *);
+			    struct pf_state *);
 void			 pf_state_import(struct pfsync_state *,
 			    struct pf_state_key *, struct pf_state *);
 
@@ -149,6 +149,8 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
 	    "pfstatekeypl", NULL);
+	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0, 
+	    "pfstateitempl", NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
 	    &pool_allocator_nointr);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
@@ -842,22 +844,22 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 }
 
 void
-pf_state_export(struct pfsync_state *sp, struct pf_state_key *sk,
-    struct pf_state *s)
+pf_state_export(struct pfsync_state *sp, struct pf_state *s) 
 {
 	int secs = time_second;
 	bzero(sp, sizeof(struct pfsync_state));
 
+/* XXX_RYAN_NAT */
 	/* copy from state key */
-	sp->lan.addr = sk->lan.addr;
-	sp->lan.port = sk->lan.port;
-	sp->gwy.addr = sk->gwy.addr;
-	sp->gwy.port = sk->gwy.port;
-	sp->ext.addr = sk->ext.addr;
-	sp->ext.port = sk->ext.port;
-	sp->proto = sk->proto;
-	sp->af = sk->af;
-	sp->direction = sk->direction;
+	sp->lan.addr = s->key_wire->addr2;
+	sp->lan.port = s->key_wire->port2;
+	sp->gwy.addr = s->key_wire->addr2;
+	sp->gwy.port = s->key_wire->port2;
+	sp->ext.addr = s->key_wire->addr1;
+	sp->ext.port = s->key_wire->port1;
+	sp->proto = s->key_wire->proto;
+	sp->af = s->key_wire->af;
+	sp->direction = s->direction;
 
 	/* copy from state */
 	memcpy(&sp->id, &s->id, sizeof(sp->id));
@@ -897,22 +899,23 @@ pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
     struct pf_state *s)
 {
 	/* copy to state key */
+#ifdef XXX_RYAN_HENNING_PFSYNC_FIXED
 	sk->lan.addr = sp->lan.addr;
 	sk->lan.port = sp->lan.port;
 	sk->gwy.addr = sp->gwy.addr;
 	sk->gwy.port = sp->gwy.port;
 	sk->ext.addr = sp->ext.addr;
 	sk->ext.port = sp->ext.port;
+#endif
 	sk->proto = sp->proto;
 	sk->af = sp->af;
-	sk->direction = sp->direction;
-
 	/* copy to state */
 	memcpy(&s->id, &sp->id, sizeof(sp->id));
 	s->creatorid = sp->creatorid;
 	pf_state_peer_from_pfsync(&sp->src, &s->src);
 	pf_state_peer_from_pfsync(&sp->dst, &s->dst);
 
+	s->direction = sp->direction;
 	s->rule.ptr = &pf_default_rule;
 	s->nat_rule.ptr = NULL;
 	s->anchor.ptr = NULL;
@@ -1583,7 +1586,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCKILLSTATES: {
 		struct pf_state		*s, *nexts;
 		struct pf_state_key	*sk;
-		struct pf_state_host	*src, *dst;
+		struct pf_addr		*srcaddr, *dstaddr;
+		u_int16_t		 srcport, dstport;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		u_int			 killed = 0;
 
@@ -1605,14 +1609,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
 		    s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
-			sk = s->state_key;
+			sk = s->key_wire;
 
-			if (sk->direction == PF_OUT) {
-				src = &sk->lan;
-				dst = &sk->ext;
+			if (s->direction == PF_OUT) {
+				srcaddr = &sk->addr2;
+				dstaddr = &sk->addr1;
+				srcport = sk->port2;
+				dstport = sk->port1;
 			} else {
-				src = &sk->ext;
-				dst = &sk->lan;
+				srcaddr = &sk->addr1;
+				dstaddr = &sk->addr2;
+				srcport = sk->port2;
+				dstport = sk->port1;
 			}
 			if ((!psk->psk_af || sk->af == psk->psk_af)
 			    && (!psk->psk_proto || psk->psk_proto ==
@@ -1620,19 +1628,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    PF_MATCHA(psk->psk_src.neg,
 			    &psk->psk_src.addr.v.a.addr,
 			    &psk->psk_src.addr.v.a.mask,
-			    &src->addr, sk->af) &&
+			    srcaddr, sk->af) &&
 			    PF_MATCHA(psk->psk_dst.neg,
 			    &psk->psk_dst.addr.v.a.addr,
 			    &psk->psk_dst.addr.v.a.mask,
-			    &dst->addr, sk->af) &&
+			    dstaddr, sk->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
 			    psk->psk_src.port[0], psk->psk_src.port[1],
-			    src->port)) &&
+			    srcport)) &&
 			    (psk->psk_dst.port_op == 0 ||
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
-			    dst->port)) &&
+			    dstport)) &&
 			    (!psk->psk_label[0] || (s->rule.ptr->label[0] &&
 			    !strcmp(psk->psk_label, s->rule.ptr->label))) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
@@ -1668,12 +1676,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bzero(s, sizeof(struct pf_state));
-		if ((sk = pf_alloc_state_key(s)) == NULL) {
+		if ((sk = pf_alloc_state_key()) == NULL) {
 			pool_put(&pf_state_pl, s);
 			error = ENOMEM;
 			break;
 		}
 		pf_state_import(sp, sk, s);
+/* RYAN NAT */	pf_attach_state(sk, s, 0, PF_SK_BOTH);
 		kif = pfi_kif_get(sp->ifname);
 		if (kif == NULL) {
 			pool_put(&pf_state_pl, s);
@@ -1681,7 +1690,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 			break;
 		}
-		if (pf_insert_state(kif, s)) {
+		if (pf_state_insert(kif, sk, s)) {
 			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 			pool_put(&pf_state_pl, s);
 			error = EEXIST;
@@ -1705,7 +1714,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		pf_state_export(&ps->state, s->state_key, s);
+		pf_state_export(&ps->state, s);
 		break;
 	}
 
@@ -1730,9 +1739,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (state->timeout != PFTM_UNLINKED) {
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
-
-				pf_state_export(pstore,
-				    state->state_key, state);
+				pf_state_export(pstore, state);
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
 					free(pstore, M_TEMP);
@@ -1803,33 +1810,33 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			 * state tree.
 			 */
 			if (direction == PF_IN) {
-				PF_ACPY(&key.ext.addr, &pnl->daddr, pnl->af);
-				key.ext.port = pnl->dport;
-				PF_ACPY(&key.gwy.addr, &pnl->saddr, pnl->af);
-				key.gwy.port = pnl->sport;
+				PF_ACPY(&key.addr1, &pnl->daddr, pnl->af);
+				key.port1 = pnl->dport;
+				PF_ACPY(&key.addr2, &pnl->saddr, pnl->af);
+				key.port2 = pnl->sport;
 				state = pf_find_state_all(&key, PF_IN, &m);
 			} else {
-				PF_ACPY(&key.lan.addr, &pnl->daddr, pnl->af);
-				key.lan.port = pnl->dport;
-				PF_ACPY(&key.ext.addr, &pnl->saddr, pnl->af);
-				key.ext.port = pnl->sport;
+				PF_ACPY(&key.addr2, &pnl->daddr, pnl->af);
+				key.port2 = pnl->dport;
+				PF_ACPY(&key.addr1, &pnl->saddr, pnl->af);
+				key.port1 = pnl->sport;
 				state = pf_find_state_all(&key, PF_OUT, &m);
 			}
 			if (m > 1)
 				error = E2BIG;	/* more than one state */
 			else if (state != NULL) {
-				sk = state->state_key;
+				sk = state->key_wire; /* XXX which side? */
 				if (direction == PF_IN) {
-					PF_ACPY(&pnl->rsaddr, &sk->lan.addr,
+					PF_ACPY(&pnl->rsaddr, &sk->addr1,
 					    sk->af);
-					pnl->rsport = sk->lan.port;
+					pnl->rsport = sk->port1;
 					PF_ACPY(&pnl->rdaddr, &pnl->daddr,
 					    pnl->af);
 					pnl->rdport = pnl->dport;
 				} else {
-					PF_ACPY(&pnl->rdaddr, &sk->gwy.addr,
+					PF_ACPY(&pnl->rdaddr, &sk->addr2,
 					    sk->af);
-					pnl->rdport = sk->gwy.port;
+					pnl->rdport = sk->port2;
 					PF_ACPY(&pnl->rsaddr, &pnl->saddr,
 					    pnl->af);
 					pnl->rsport = pnl->sport;
