@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.198 2008/05/29 00:28:08 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.199 2008/05/29 01:00:53 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,6 +112,7 @@ int			 pf_commit_rules(u_int32_t, int, char *);
 void			 pf_state_export(struct pfsync_state *,
 			    struct pf_state *);
 void			 pf_state_import(struct pfsync_state *,
+			    struct pf_state_key *,
 			    struct pf_state_key *, struct pf_state *);
 
 struct pf_rule		 pf_default_rule;
@@ -849,16 +850,17 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *s)
 	int secs = time_second;
 	bzero(sp, sizeof(struct pfsync_state));
 
-/* XXX_RYAN_NAT */
 	/* copy from state key */
-	sp->lan.addr = s->key_wire->addr2;
-	sp->lan.port = s->key_wire->port2;
-	sp->gwy.addr = s->key_wire->addr2;
-	sp->gwy.port = s->key_wire->port2;
-	sp->ext.addr = s->key_wire->addr1;
-	sp->ext.port = s->key_wire->port1;
-	sp->proto = s->key_wire->proto;
-	sp->af = s->key_wire->af;
+	sp->key[PF_SK_WIRE].addr[0] = s->key[PF_SK_WIRE]->addr[0];
+	sp->key[PF_SK_WIRE].addr[1] = s->key[PF_SK_WIRE]->addr[1];
+	sp->key[PF_SK_WIRE].port[0] = s->key[PF_SK_WIRE]->port[0];
+	sp->key[PF_SK_WIRE].port[1] = s->key[PF_SK_WIRE]->port[1];
+	sp->key[PF_SK_STACK].addr[0] = s->key[PF_SK_STACK]->addr[0];
+	sp->key[PF_SK_STACK].addr[1] = s->key[PF_SK_STACK]->addr[1];
+	sp->key[PF_SK_STACK].port[0] = s->key[PF_SK_STACK]->port[0];
+	sp->key[PF_SK_STACK].port[1] = s->key[PF_SK_STACK]->port[1];
+	sp->proto = s->key[PF_SK_WIRE]->proto;
+	sp->af = s->key[PF_SK_WIRE]->af;
 	sp->direction = s->direction;
 
 	/* copy from state */
@@ -895,20 +897,24 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *s)
 }
 
 void
-pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
-    struct pf_state *s)
+pf_state_import(struct pfsync_state *sp, struct pf_state_key *skw,
+   struct pf_state_key *sks, struct pf_state *s) 
 {
-	/* copy to state key */
-#ifdef XXX_RYAN_HENNING_PFSYNC_FIXED
-	sk->lan.addr = sp->lan.addr;
-	sk->lan.port = sp->lan.port;
-	sk->gwy.addr = sp->gwy.addr;
-	sk->gwy.port = sp->gwy.port;
-	sk->ext.addr = sp->ext.addr;
-	sk->ext.port = sp->ext.port;
-#endif
-	sk->proto = sp->proto;
-	sk->af = sp->af;
+	/* copy to state key(s) */
+	skw->addr[0] = sp->key[PF_SK_WIRE].addr[0];
+	skw->addr[1] = sp->key[PF_SK_WIRE].addr[1];
+	skw->port[0] = sp->key[PF_SK_WIRE].port[0];
+	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
+	skw->proto = sp->proto;
+	skw->af = sp->af;
+	if (sks != skw) {
+		sks->addr[0] = sp->key[PF_SK_STACK].addr[0];
+		sks->addr[1] = sp->key[PF_SK_STACK].addr[1];
+		sks->port[0] = sp->key[PF_SK_STACK].port[0];
+		sks->port[1] = sp->key[PF_SK_STACK].port[1];
+		sks->proto = sp->proto;
+		sks->af = sp->af;
+	}
 	/* copy to state */
 	memcpy(&s->id, &sp->id, sizeof(sp->id));
 	s->creatorid = sp->creatorid;
@@ -1609,18 +1615,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
 		    s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
-			sk = s->key_wire;
+			sk = s->key[PF_SK_WIRE];
 
 			if (s->direction == PF_OUT) {
-				srcaddr = &sk->addr2;
-				dstaddr = &sk->addr1;
-				srcport = sk->port2;
-				dstport = sk->port1;
+				srcaddr = &sk->addr[1];
+				dstaddr = &sk->addr[0];
+				srcport = sk->port[0];
+				dstport = sk->port[0];
 			} else {
-				srcaddr = &sk->addr1;
-				dstaddr = &sk->addr2;
-				srcport = sk->port2;
-				dstport = sk->port1;
+				srcaddr = &sk->addr[0];
+				dstaddr = &sk->addr[1];
+				srcport = sk->port[0];
+				dstport = sk->port[0];
 			}
 			if ((!psk->psk_af || sk->af == psk->psk_af)
 			    && (!psk->psk_proto || psk->psk_proto ==
@@ -1662,7 +1668,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pfsync_state	*sp = &ps->state;
 		struct pf_state		*s;
-		struct pf_state_key	*sk;
+		struct pf_state_key	*skw, *sks;
 		struct pfi_kif		*kif;
 
 		if (sp->timeout >= PFTM_MAX &&
@@ -1676,21 +1682,37 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bzero(s, sizeof(struct pf_state));
-		if ((sk = pf_alloc_state_key()) == NULL) {
+		if ((skw = pf_alloc_state_key()) == NULL) {
 			pool_put(&pf_state_pl, s);
 			error = ENOMEM;
 			break;
 		}
-		pf_state_import(sp, sk, s);
-/* RYAN NAT */	pf_attach_state(sk, s, 0, PF_SK_BOTH);
+		if ((PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
+		    &sp->key[PF_SK_STACK].addr[0], sp->af) ||
+		    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[1],
+		    &sp->key[PF_SK_STACK].addr[1], sp->af) ||
+		    sp->key[PF_SK_WIRE].port[0] !=
+		    sp->key[PF_SK_STACK].port[0] ||
+		    sp->key[PF_SK_WIRE].port[1] !=
+		    sp->key[PF_SK_STACK].port[1]) &&
+		    (sks = pf_alloc_state_key()) == NULL) {
+			pool_put(&pf_state_pl, s);
+			pool_put(&pf_state_key_pl, skw);
+			error = ENOMEM;
+			break;
+		} else
+			sks = skw;
+		pf_state_import(sp, skw, sks, s);
 		kif = pfi_kif_get(sp->ifname);
 		if (kif == NULL) {
 			pool_put(&pf_state_pl, s);
-			pool_put(&pf_state_key_pl, sk);
+			pool_put(&pf_state_key_pl, skw);
+			if (skw != sks)
+				pool_put(&pf_state_key_pl, sks);
 			error = ENOENT;
 			break;
 		}
-		if (pf_state_insert(kif, sk, s)) {
+		if (pf_state_insert(kif, skw, sks, s)) {
 			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 			pool_put(&pf_state_pl, s);
 			error = EEXIST;
@@ -1791,9 +1813,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*state;
 		struct pf_state_key_cmp	 key;
 		int			 m = 0, direction = pnl->direction;
+		int			 sidx, didx;
 
-		key.af = pnl->af;
-		key.proto = pnl->proto;
+		/* NATLOOK src and dst are reversed, so reverse sidx/didx */
+		sidx = (direction == PF_IN) ? 1 : 0;
+		didx = (direction == PF_IN) ? 0 : 1;
 
 		if (!pnl->proto ||
 		    PF_AZERO(&pnl->saddr, pnl->af) ||
@@ -1803,44 +1827,23 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    (!pnl->dport || !pnl->sport)))
 			error = EINVAL;
 		else {
-			/*
-			 * userland gives us source and dest of connection,
-			 * reverse the lookup so we ask for what happens with
-			 * the return traffic, enabling us to find it in the
-			 * state tree.
-			 */
-			if (direction == PF_IN) {
-				PF_ACPY(&key.addr1, &pnl->daddr, pnl->af);
-				key.port1 = pnl->dport;
-				PF_ACPY(&key.addr2, &pnl->saddr, pnl->af);
-				key.port2 = pnl->sport;
-				state = pf_find_state_all(&key, PF_IN, &m);
-			} else {
-				PF_ACPY(&key.addr2, &pnl->daddr, pnl->af);
-				key.port2 = pnl->dport;
-				PF_ACPY(&key.addr1, &pnl->saddr, pnl->af);
-				key.port1 = pnl->sport;
-				state = pf_find_state_all(&key, PF_OUT, &m);
-			}
+			key.af = pnl->af;
+			key.proto = pnl->proto;
+			PF_ACPY(&key.addr[sidx], &pnl->saddr, pnl->af);
+			key.port[sidx] = pnl->sport;
+			PF_ACPY(&key.addr[didx], &pnl->daddr, pnl->af);
+			key.port[didx] = pnl->dport;
+
+			state = pf_find_state_all(&key, direction, &m);
+
 			if (m > 1)
 				error = E2BIG;	/* more than one state */
 			else if (state != NULL) {
-				sk = state->key_wire; /* XXX which side? */
-				if (direction == PF_IN) {
-					PF_ACPY(&pnl->rsaddr, &sk->addr1,
-					    sk->af);
-					pnl->rsport = sk->port1;
-					PF_ACPY(&pnl->rdaddr, &pnl->daddr,
-					    pnl->af);
-					pnl->rdport = pnl->dport;
-				} else {
-					PF_ACPY(&pnl->rdaddr, &sk->addr2,
-					    sk->af);
-					pnl->rdport = sk->port2;
-					PF_ACPY(&pnl->rsaddr, &pnl->saddr,
-					    pnl->af);
-					pnl->rsport = pnl->sport;
-				}
+				sk = state->key[sidx];
+				PF_ACPY(&pnl->rsaddr, &sk->addr[sidx], sk->af);
+				pnl->rsport = sk->port[sidx];
+				PF_ACPY(&pnl->rdaddr, &sk->addr[didx], sk->af);
+				pnl->rdport = sk->port[didx];
 			} else
 				error = ENOENT;
 		}

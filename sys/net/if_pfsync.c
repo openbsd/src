@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.92 2008/05/29 00:28:07 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.93 2008/05/29 01:00:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -237,7 +237,7 @@ int
 pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 {
 	struct pf_state	*st = NULL;
-	struct pf_state_key *sk = NULL;
+	struct pf_state_key *skw = NULL, *sks = NULL;
 	struct pf_rule *r = NULL;
 	struct pfi_kif	*kif;
 
@@ -276,11 +276,24 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	}
 	bzero(st, sizeof(*st));
 
-	if ((sk = pf_alloc_state_key()) == NULL) {
+	if ((skw = pf_alloc_state_key()) == NULL) {
 		pool_put(&pf_state_pl, st);
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
+	if ((PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
+	    &sp->key[PF_SK_STACK].addr[0], sp->af) ||
+	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[1],
+	    &sp->key[PF_SK_STACK].addr[1], sp->af) ||
+	    sp->key[PF_SK_WIRE].port[0] != sp->key[PF_SK_STACK].port[0] ||
+	    sp->key[PF_SK_WIRE].port[1] != sp->key[PF_SK_STACK].port[1]) &&
+	    (sks = pf_alloc_state_key()) == NULL) {
+		pool_put(&pf_state_pl, st);
+		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+		pool_put(&pf_state_key_pl, skw);
+		return (ENOMEM);
+	} else
+		sks = skw;
 
 	/* allocate memory for scrub info */
 	if (pfsync_alloc_scrub_memory(&sp->src, &st->src) ||
@@ -289,11 +302,15 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 		if (st->src.scrub)
 			pool_put(&pf_state_scrub_pl, st->src.scrub);
 		pool_put(&pf_state_pl, st);
-		pool_put(&pf_state_key_pl, sk);
+		if (skw == sks)
+			sks = NULL;
+		if (skw != NULL)
+			pool_put(&pf_state_key_pl, skw);
+		if (sks != NULL)
+			pool_put(&pf_state_key_pl, sks);
 		return (ENOMEM);
 	}
 
-	pf_attach_state(sk, st, 0, PF_SK_BOTH); /* XXX RYAN NAT */
 	st->rule.ptr = r;
 	/* XXX get pointers to nat_rule and anchor */
 
@@ -301,21 +318,28 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	r->states_cur++;
 	r->states_tot++;
 
-#ifdef XXX_HENNING_RYAN_FIXED_PFSYNC
 	/* fill in the rest of the state entry */
-	pf_state_host_ntoh(&sp->lan, &sk->lan);
-	pf_state_host_ntoh(&sp->gwy, &sk->gwy);
-	pf_state_host_ntoh(&sp->ext, &sk->ext);
-#endif
+	skw->addr[0] = sp->key[PF_SK_WIRE].addr[0];
+	skw->addr[1] = sp->key[PF_SK_WIRE].addr[1];
+	skw->port[0] = sp->key[PF_SK_WIRE].port[0];
+	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
+	skw->proto = sp->proto;
+	skw->af = sp->af;
+	if (sks != skw) {
+		sks->addr[0] = sp->key[PF_SK_STACK].addr[0];
+		sks->addr[1] = sp->key[PF_SK_STACK].addr[1];
+		sks->port[0] = sp->key[PF_SK_STACK].port[0];
+		sks->port[1] = sp->key[PF_SK_STACK].port[1];
+		sks->proto = sp->proto;
+		sks->af = sp->af;
+	}
+
 	pf_state_peer_ntoh(&sp->src, &st->src);
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
 	st->creation = time_second - ntohl(sp->creation);
 	st->expire = ntohl(sp->expire) + time_second;
-
-	sk->af = sp->af;
-	sk->proto = sp->proto;
 	st->direction = sp->direction;
 	st->log = sp->log;
 	st->timeout = sp->timeout;
@@ -325,7 +349,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	st->creatorid = sp->creatorid;
 	st->sync_flags = PFSTATE_FROMSYNC;
 
-	if (pf_state_insert(kif, sk, st)) {
+	if (pf_state_insert(kif, skw, sks, st)) {
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
@@ -533,7 +557,7 @@ pfsync_input(struct mbuf *m, ...)
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			sk = st->key_wire;	/* XXX right one? */
+			sk = st->key[PF_SK_WIRE];	/* XXX right one? */
 			sfail = 0;
 			if (sk->proto == IPPROTO_TCP) {
 				/*
@@ -670,7 +694,7 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			sk = st->key_wire; /* XXX right one? */
+			sk = st->key[PF_SK_WIRE]; /* XXX right one? */
 			sfail = 0;
 			if (sk->proto == IPPROTO_TCP) {
 				/*
@@ -1122,7 +1146,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 	struct pfsync_state *sp = NULL;
 	struct pfsync_state_upd *up = NULL;
 	struct pfsync_state_del *dp = NULL;
-	struct pf_state_key *sk = st->key_wire;
+	struct pf_state_key *sk = st->key[PF_SK_WIRE];
 	struct pf_rule *r;
 	u_long secs;
 	int s, ret = 0;
@@ -1208,11 +1232,16 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		sp->creatorid = st->creatorid;
 
 		strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
-#ifdef XXX_HENNING_RYAN_FIXED_PFSYNC
-		pf_state_host_hton(&sk->lan, &sp->lan);
-		pf_state_host_hton(&sk->gwy, &sp->gwy);
-		pf_state_host_hton(&sk->ext, &sp->ext);
-#endif
+
+		sp->key[PF_SK_WIRE].addr[0] = st->key[PF_SK_WIRE]->addr[0];
+		sp->key[PF_SK_WIRE].addr[1] = st->key[PF_SK_WIRE]->addr[1];
+		sp->key[PF_SK_WIRE].port[0] = st->key[PF_SK_WIRE]->port[0];
+		sp->key[PF_SK_WIRE].port[1] = st->key[PF_SK_WIRE]->port[1];
+		sp->key[PF_SK_STACK].addr[0] = st->key[PF_SK_STACK]->addr[0];
+		sp->key[PF_SK_STACK].addr[1] = st->key[PF_SK_STACK]->addr[1];
+		sp->key[PF_SK_STACK].port[0] = st->key[PF_SK_STACK]->port[0];
+		sp->key[PF_SK_STACK].port[1] = st->key[PF_SK_STACK]->port[1];
+
 		bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
 
 		sp->creation = htonl(secs - st->creation);

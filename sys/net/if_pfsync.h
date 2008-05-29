@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.32 2007/12/14 18:33:37 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.33 2008/05/29 01:00:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -241,16 +241,6 @@ struct pfsyncreq {
 	}								\
 } while (0)
 
-#define pf_state_host_hton(s,d) do {				\
-	bcopy(&(s)->addr, &(d)->addr, sizeof((d)->addr));	\
-	(d)->port = (s)->port;					\
-} while (0)
-
-#define pf_state_host_ntoh(s,d) do {				\
-	bcopy(&(s)->addr, &(d)->addr, sizeof((d)->addr));	\
-	(d)->port = (s)->port;					\
-} while (0)
-
 #define pf_state_counter_hton(s,d) do {				\
 	d[0] = htonl((s>>32)&0xffffffff);			\
 	d[1] = htonl(s&0xffffffff);				\
@@ -270,7 +260,7 @@ int pfsync_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
 
 #define pfsync_insert_state(st)	do {				\
 	if ((st->rule.ptr->rule_flag & PFRULE_NOSYNC) ||	\
-	    (st->state_key->proto == IPPROTO_PFSYNC))			\
+	    (st->key[PF_SK_WIRE]->proto == IPPROTO_PFSYNC))	\
 		st->sync_flags |= PFSTATE_NOSYNC;		\
 	else if (!st->sync_flags)				\
 		pfsync_pack_state(PFSYNC_ACT_INS, (st), 	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.47 2008/05/09 13:59:31 mpf Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.48 2008/05/29 01:00:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,17 +165,15 @@ print_name(struct pf_addr *addr, sa_family_t af)
 }
 
 void
-print_host(struct pfsync_state_host *h, sa_family_t af, int opts)
+print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, int opts)
 {
-	u_int16_t p = ntohs(h->port);
-
 	if (opts & PF_OPT_USEDNS)
-		print_name(&h->addr, af);
+		print_name(addr, af);
 	else {
 		struct pf_addr_wrap aw;
 
 		memset(&aw, 0, sizeof(aw));
-		aw.v.a.addr = h->addr;
+		aw.v.a.addr = *addr;
 		if (af == AF_INET)
 			aw.v.a.mask.addr32[0] = 0xffffffff;
 		else {
@@ -185,11 +183,11 @@ print_host(struct pfsync_state_host *h, sa_family_t af, int opts)
 		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
-	if (p) {
+	if (port) {
 		if (af == AF_INET)
-			printf(":%u", p);
+			printf(":%u", ntohs(port));
 		else
-			printf("[%u]", p);
+			printf("[%u]", ntohs(port));
 	}
 }
 
@@ -207,35 +205,49 @@ void
 print_state(struct pfsync_state *s, int opts)
 {
 	struct pfsync_state_peer *src, *dst;
+	struct pfsync_state_key *sk, *nk;
 	struct protoent *p;
 	int min, sec;
 
 	if (s->direction == PF_OUT) {
 		src = &s->src;
 		dst = &s->dst;
+		sk = &s->key[PF_SK_STACK];
+		nk = &s->key[PF_SK_WIRE];
+		if (s->proto == IPPROTO_ICMP || s->proto == IPPROTO_ICMPV6) 
+			sk->port[0] = nk->port[0];
 	} else {
 		src = &s->dst;
 		dst = &s->src;
+		sk = &s->key[PF_SK_WIRE];
+		nk = &s->key[PF_SK_STACK];
+		if (s->proto == IPPROTO_ICMP || s->proto == IPPROTO_ICMPV6) 
+			sk->port[1] = nk->port[1];
 	}
 	printf("%s ", s->ifname);
 	if ((p = getprotobynumber(s->proto)) != NULL)
 		printf("%s ", p->p_name);
 	else
 		printf("%u ", s->proto);
-	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
-	    (s->lan.port != s->gwy.port)) {
-		print_host(&s->lan, s->af, opts);
-		if (s->direction == PF_OUT)
-			printf(" -> ");
-		else
-			printf(" <- ");
+
+	print_host(&nk->addr[1], nk->port[1], s->af, opts);
+	if (PF_ANEQ(&nk->addr[1], &sk->addr[1], s->af) ||
+	    nk->port[1] != sk->port[1]) {
+		printf(" (");
+		print_host(&sk->addr[1], sk->port[1], s->af, opts);
+		printf(")");
 	}
-	print_host(&s->gwy, s->af, opts);
 	if (s->direction == PF_OUT)
 		printf(" -> ");
 	else
 		printf(" <- ");
-	print_host(&s->ext, s->af, opts);
+	print_host(&nk->addr[0], nk->port[0], s->af, opts);
+	if (PF_ANEQ(&nk->addr[0], &sk->addr[0], s->af) ||
+	    nk->port[0] != sk->port[0]) {
+		printf(" (");
+		print_host(&sk->addr[0], sk->port[0], s->af, opts);
+		printf(")");
+	}
 
 	printf("    ");
 	if (s->proto == IPPROTO_TCP) {

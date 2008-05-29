@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.268 2008/05/29 00:28:08 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.269 2008/05/29 01:00:53 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,7 +69,7 @@ enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
 enum	{ PF_GET_NONE, PF_GET_CLR_CNTR };
-enum	{ PF_SK_NONE, PF_SK_WIRE, PF_SK_STACK, PF_SK_BOTH };
+enum	{ PF_SK_WIRE, PF_SK_STACK, PF_SK_BOTH };
 
 /*
  * Note about PFTM_*: real indices into pf_rule.timeout[] come before
@@ -699,10 +699,8 @@ TAILQ_HEAD(pf_state_queue, pf_state);
 
 /* keep synced with struct pf_state_key, used in RB_FIND */
 struct pf_state_key_cmp {
-	struct pf_addr	 addr1;
-	struct pf_addr	 addr2;
-	u_int16_t	 port1;
-	u_int16_t	 port2;
+	struct pf_addr	 addr[2];
+	u_int16_t	 port[2];
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 pad[2];
@@ -716,10 +714,8 @@ struct pf_state_item {
 TAILQ_HEAD(pf_statelisthead, pf_state_item);
 
 struct pf_state_key {
-	struct pf_addr	 addr1;
-	struct pf_addr	 addr2;
-	u_int16_t	 port1;
-	u_int16_t	 port2;
+	struct pf_addr	 addr[2];
+	u_int16_t	 port[2];
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 pad[2];
@@ -750,8 +746,7 @@ struct pf_state {
 	union pf_rule_ptr	 anchor;
 	union pf_rule_ptr	 nat_rule;
 	struct pf_addr		 rt_addr;
-	struct pf_state_key	*key_wire;	/* addresses wire-side */
-	struct pf_state_key	*key_stack;	/* addresses stack-side */
+	struct pf_state_key	*key[2];	/* addresses stack and wire  */
 	struct pfi_kif		*kif;
 	struct pfi_kif		*rt_kif;
 	struct pf_src_node	*src_node;
@@ -783,12 +778,6 @@ struct pfsync_state_scrub {
 	u_int32_t	pfss_ts_mod;	/* timestamp modulation	*/
 } __packed;
 
-struct pfsync_state_host {
-	struct pf_addr	addr;
-	u_int16_t	port;
-	u_int16_t	pad[3];
-} __packed;
-
 struct pfsync_state_peer {
 	struct pfsync_state_scrub scrub;	/* state is scrubbed	*/
 	u_int32_t	seqlo;		/* Max sequence number sent	*/
@@ -801,12 +790,15 @@ struct pfsync_state_peer {
 	u_int8_t	pad[6];
 } __packed;
 
+struct pfsync_state_key {
+	struct pf_addr	 addr[2];
+	u_int16_t	 port[2];
+};
+
 struct pfsync_state {
 	u_int32_t	 id[2];
 	char		 ifname[IFNAMSIZ];
-	struct pfsync_state_host lan;
-	struct pfsync_state_host gwy;
-	struct pfsync_state_host ext;
+	struct pfsync_state_key	key[2];
 	struct pfsync_state_peer src;
 	struct pfsync_state_peer dst;
 	struct pf_addr	 rt_addr;
@@ -1076,15 +1068,19 @@ struct pf_pdesc {
 #endif /* INET6 */
 		void			*any;
 	} hdr;
-	struct pf_addr	 baddr;		/* address before translation */
-	struct pf_addr	 naddr;		/* address after translation */
+
 	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
-	struct pf_addr	*src;
-	struct pf_addr	*dst;
-	struct ether_header
+	struct ether_header	
 			*eh;
-	u_int16_t	*ip_sum;
+	struct pf_addr	*src;		/* src address */
+	struct pf_addr	*dst;		/* dst address */
+	u_int16_t *sport;
+	u_int16_t *dport;
+
 	u_int32_t	 p_len;		/* total length of payload */
+
+	u_int16_t	*ip_sum;
+	u_int16_t	*proto_sum;
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
 #define PFDESC_TCP_NORM	0x0001		/* TCP shall be statefully scrubbed */
@@ -1092,6 +1088,9 @@ struct pf_pdesc {
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
+	u_int8_t	 dir;		/* direction */
+	u_int8_t	 sidx;		/* key index for source */
+	u_int8_t	 didx;		/* key index for destination */
 };
 
 /* flags for RDR options */
@@ -1295,10 +1294,10 @@ struct pf_tagname {
 
 struct pf_divert {
 	union {
-		struct in_addr   ipv4;
-		struct in6_addr  ipv6;
-	}               addr;
-	u_int16_t       port;
+		struct in_addr	ipv4;
+		struct in6_addr	ipv6;
+	}		addr;
+	u_int16_t	port;
 };
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
@@ -1592,7 +1591,9 @@ extern void			 pf_purge_expired_states(u_int32_t);
 extern void			 pf_unlink_state(struct pf_state *);
 extern void			 pf_free_state(struct pf_state *);
 extern int			 pf_state_insert(struct pfi_kif *,
-				    struct pf_state_key *, struct pf_state *);
+				    struct pf_state_key *,
+				    struct pf_state_key *,
+				    struct pf_state *);
 extern int			 pf_insert_src_node(struct pf_src_node **,
 				    struct pf_rule *, struct pf_addr *,
 				    sa_family_t);
