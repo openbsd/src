@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1369 2008/05/24 06:00:56 brad Exp $
+$OpenBSD: pcidevs,v 1.1370 2008/05/30 13:26:12 thib Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2516,6 +2516,7 @@ product INTEL RCU31		0x9641	RCU31 I2O RAID
 product INTEL RCU31L		0x96a1	RCU31L I2O RAID
 product INTEL 21152		0xb152	S21152BB PCI-PCI
 product INTEL 21154		0xb154	S21154AE/BE PCI-PCI
+product INTEL TURBOMEM 		0x444e	Intel Turbo Memory 
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
