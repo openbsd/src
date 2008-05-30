@@ -1,5 +1,6 @@
-/*	$OpenBSD: diff.c,v 1.135 2008/05/22 15:45:01 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.136 2008/05/30 10:12:12 tobias Exp $	*/
 /*
+ * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -102,6 +103,7 @@ cvs_diff(int argc, char **argv)
 			diff_format = D_RCSDIFF;
 			break;
 		case 'N':
+			strlcat(diffargs, " -N", sizeof(diffargs));
 			Nflag = 1;
 			break;
 		case 'p':
@@ -144,6 +146,9 @@ cvs_diff(int argc, char **argv)
 	if (cvs_cmdop == CVS_OP_RDIFF) {
 		if (rev1 == NULL)
 			fatal("must specify at least one revision/date!");
+
+		if (!argc)
+			fatal("%s", cvs_cmd_rdiff.cmd_synopsis);
 
 		if (!diff_format) {
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -223,15 +228,15 @@ cvs_diff(int argc, char **argv)
 void
 cvs_diff_local(struct cvs_file *cf)
 {
-	RCSNUM *r1;
 	BUF *b1;
 	int fd1, fd2;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
 	char rbuf[CVS_REV_BUFSZ], *p1, *p2;
 
-	r1 = NULL;
 	b1 = NULL;
+	fd1 = fd2 = -1;
+	p1 = p2 = NULL;
 
 	cvs_log(LP_TRACE, "cvs_diff_local(%s)", cf->file_path);
 
@@ -243,155 +248,181 @@ cvs_diff_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, cvs_directory_tag);
 
-	if (cf->file_status == FILE_LOST) {
-		cvs_log(LP_ERR, "cannot find file %s", cf->file_path);
-		return;
-	} else if (cf->file_status == FILE_UNKNOWN) {
-		cvs_log(LP_ERR, "I know nothing about %s", cf->file_path);
-		return;
-	} else if (cf->file_status == FILE_ADDED && Nflag == 0) {
-		cvs_log(LP_ERR, "%s is a new entry, no comparison available",
-		    cf->file_path);
-		return;
-	} else if (cf->file_status == FILE_REMOVED && Nflag == 0) {
-		cvs_log(LP_ERR, "%s was removed, no comparison available",
-		    cf->file_path);
-		return;
-	} else if (cf->file_status == FILE_UPTODATE && rev1 == NULL &&
-	     rev2 == NULL) {
-		return;
+	if (cvs_cmdop == CVS_OP_DIFF) {
+		if (cf->file_ent == NULL) {
+			cvs_log(LP_ERR, "I know nothing about %s",
+			    cf->file_path);
+			return;
+		}
+
+		switch (cf->file_ent->ce_status) {
+		case CVS_ENT_ADDED:
+			if (Nflag == 0) {
+				cvs_log(LP_ERR, "%s is a new entry, no "
+				    "comparison available", cf->file_path);
+				return;
+			}
+			if (cf->fd == -1) {
+				cvs_log(LP_ERR, "cannot find %s",
+				    cf->file_path);
+				return;
+			}
+			break;
+		case CVS_ENT_REMOVED:
+			if (Nflag == 0) {
+				cvs_log(LP_ERR, "%s was removed, no "
+				    "comparison available", cf->file_path);
+				return;
+			}
+			if (cf->file_rcs == NULL) {
+				cvs_log(LP_ERR, "cannot find RCS file for %s",
+				    cf->file_path);
+				return;
+			}
+			break;
+		default:
+			if (cf->fd == -1) {
+				cvs_log(LP_ERR, "cannot find %s",
+				    cf->file_path);
+				return;
+			}
+			break;
+			if (cf->file_rcs == NULL) {
+				cvs_log(LP_ERR, "cannot find RCS file for %s",
+				    cf->file_path);
+				return;
+			}
+			break;
+		}
 	}
 
-	if (kflag)
-		rcs_kwexp_set(cf->file_rcs, kflag);
-
-	if (rev1 != NULL)
-		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) ==
-		    NULL) {
-			if (cvs_cmdop == CVS_OP_DIFF) {
-				cvs_log(LP_ERR, "tag %s is not in file %s",
-				    rev1, cf->file_path);
-				return;
-			}
-			if (force_head) {
-				/* -f is not allowed for unknown symbols */
-				diff_rev1 = rcsnum_parse(rev1);
-				if (diff_rev1 == NULL)
-					fatal("no such tag %s", rev1);
-				rcsnum_free(diff_rev1);
-
-				diff_rev1 = rcsnum_alloc();
-				rcsnum_cpy(cf->file_rcs->rf_head, diff_rev1, 0);
-			}
-		}
-
-	if (rev2 != NULL)
-		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) ==
-		    NULL) {
-			if (cvs_cmdop == CVS_OP_DIFF) {
-				rcsnum_free(diff_rev1);
-				cvs_log(LP_ERR, "tag %s is not in file %s",
-				    rev2, cf->file_path);
-				return;
-			}
-			if (force_head) {
-				/* -f is not allowed for unknown symbols */
-				diff_rev2 = rcsnum_parse(rev2);
-				if (diff_rev2 == NULL)
-					fatal("no such tag %s", rev2);
-				rcsnum_free(diff_rev2);
-
-				diff_rev2 = rcsnum_alloc();
-				rcsnum_cpy(cf->file_rcs->rf_head, diff_rev2, 0);
-			}
-		}
-
-	if (cvs_cmdop == CVS_OP_RDIFF && diff_rev1 == NULL && diff_rev2 == NULL)
+	if (cf->file_status == FILE_UPTODATE && rev1 == NULL && rev2 == NULL)
 		return;
 
-	diff_file = cf->file_path;
+	if (kflag && cf->file_rcs != NULL)
+		rcs_kwexp_set(cf->file_rcs, kflag);
+
+	if (cf->file_rcs == NULL)
+		diff_rev1 = NULL;
+	else if (rev1 != NULL) {
+		diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs);
+		if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_DIFF) {
+			cvs_log(LP_ERR, "tag %s not in file %s", rev1,
+			    cf->file_path);
+			goto cleanup;
+		} else if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
+		    force_head) {
+			/* -f is not allowed for unknown symbols */
+			if ((diff_rev1 = rcsnum_parse(rev1)) == NULL)
+				fatal("no such tag %s", rev1);
+			rcsnum_free(diff_rev1);
+
+			diff_rev1 = cf->file_rcs->rf_head;
+		}
+	} else if (cvs_cmdop == CVS_OP_DIFF) {
+		if (cf->file_ent->ce_status == CVS_ENT_ADDED)
+			diff_rev1 = NULL;
+		else
+			diff_rev1 = cf->file_ent->ce_rev;
+	}
+
+	if (cf->file_rcs == NULL)
+		diff_rev2 = NULL;
+	else if (rev2 != NULL) {
+		diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs);
+		if (diff_rev2 == NULL && cvs_cmdop == CVS_OP_DIFF) {
+			cvs_log(LP_ERR, "tag %s not in file %s", rev2,
+			    cf->file_path);
+			goto cleanup;
+		} else if (diff_rev2 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
+		    force_head) {
+			/* -f is not allowed for unknown symbols */
+			if ((diff_rev2 = rcsnum_parse(rev2)) == NULL)
+				fatal("no such tag %s", rev2);
+			rcsnum_free(diff_rev2);
+
+			diff_rev2 = cf->file_rcs->rf_head;
+		}
+	} else if (cvs_cmdop == CVS_OP_RDIFF)
+		diff_rev2 = cf->file_rcs->rf_head;
+	else if (cf->file_ent->ce_status == CVS_ENT_REMOVED)
+		diff_rev2 = NULL;
+
+	if (diff_rev1 != NULL && diff_rev2 != NULL &&
+	    rcsnum_cmp(diff_rev1, diff_rev2, 0) == 0)
+		goto cleanup;
+
+	switch (cvs_cmdop) {
+	case CVS_OP_DIFF:
+		if (cf->file_status == FILE_UPTODATE &&
+		    rcsnum_cmp(diff_rev1, cf->file_rcsrev, 0) == 0)
+			goto cleanup;
+		break;
+	case CVS_OP_RDIFF:
+		if (diff_rev1 == NULL && diff_rev2 == NULL)
+			goto cleanup;
+		break;
+	}
 
 	cvs_printf("Index: %s\n", cf->file_path);
 	if (cvs_cmdop == CVS_OP_DIFF)
-		cvs_printf("%s\nRCS file: %s\n", RCS_DIFF_DIV, cf->file_rpath);
+		cvs_printf("%s\nRCS file: %s\n", RCS_DIFF_DIV,
+		    cf->file_rcs != NULL ? cf->file_rpath : cf->file_path);
 
-	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-
-	if (cf->file_status != FILE_ADDED) {
-		if (diff_rev1 != NULL)
-			r1 = diff_rev1;
-		else if (cf->file_ent != NULL)
-			r1 = cf->file_ent->ce_rev;
-		else
-			r1 = NULL;
-
-		diff_rev1 = r1;
-
-		if (diff_rev1 != NULL) {
-			(void)rcsnum_tostr(r1, rbuf, sizeof(rbuf));
-
-			tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
-			tv[0].tv_usec = 0;
-			tv[1] = tv[0];
-
-			if (cvs_cmdop == CVS_OP_DIFF)
-				cvs_printf("retrieving revision %s\n", rbuf);
-			fd1 = rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
-			if (futimes(fd1, tv) == -1)
-				fatal("cvs_diff_local: utimes failed");
+	if (diff_rev1 != NULL) {
+		if (cvs_cmdop == CVS_OP_DIFF && diff_rev1 != NULL) {
+			(void)rcsnum_tostr(diff_rev1, rbuf, sizeof(rbuf));
+			cvs_printf("retrieving revision %s\n", rbuf);
 		}
+
+		tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev1);
+		tv[0].tv_usec = 0;
+		tv[1] = tv[0];
+
+		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+		fd1 = rcs_rev_write_stmp(cf->file_rcs, diff_rev1, p1, 0);
+		if (futimes(fd1, tv) == -1)
+			fatal("cvs_diff_local: utimes failed");
 	}
 
-	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED &&
-	    cf->file_status != FILE_REMOVED) {
-		(void)rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+	if (diff_rev2 != NULL) {
+		if (cvs_cmdop == CVS_OP_DIFF && rev2 != NULL) {
+			(void)rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+			cvs_printf("retrieving revision %s\n", rbuf);
+		}
 
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
 
-		if (cvs_cmdop == CVS_OP_DIFF)
-			cvs_printf("retrieving revision %s\n", rbuf);
+		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
 		fd2 = rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
 		if (futimes(fd2, tv2) == -1)
 			fatal("cvs_diff_local: utimes failed");
-	} else if (cf->file_status != FILE_REMOVED) {
-		if (cvs_cmdop == CVS_OP_RDIFF || (cvs_server_active == 1 &&
-		    cf->file_status != FILE_MODIFIED)) {
-			if (diff_rev2 != NULL) {
-				tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs,
-				    cf->file_rcsrev);
-				tv2[0].tv_usec = 0;
-				tv2[1] = tv2[0];
+	} else if (cvs_cmdop == CVS_OP_DIFF && cf->fd != -1 &&
+	    cf->file_ent->ce_status != CVS_ENT_REMOVED) {
+		if (fstat(cf->fd, &st) == -1)
+			fatal("fstat failed %s", strerror(errno));
+		b1 = cvs_buf_load_fd(cf->fd);
 
-				fd2 = rcs_rev_write_stmp(cf->file_rcs,
-				    cf->file_rcsrev, p2, 0);
-				if (futimes(fd2, tv2) == -1)
-					fatal("cvs_diff_local: utimes failed");
-			}
-		} else {
-			if (fstat(cf->fd, &st) == -1)
-				fatal("fstat failed %s", strerror(errno));
-			b1 = cvs_buf_load_fd(cf->fd);
+		tv2[0].tv_sec = st.st_mtime;
+		tv2[0].tv_usec = 0;
+		tv2[1] = tv2[0];
 
-			tv2[0].tv_sec = st.st_mtime;
-			tv2[0].tv_usec = 0;
-			tv2[1] = tv2[0];
-
-			fd2 = cvs_buf_write_stmp(b1, p2, tv2);
-			cvs_buf_free(b1);
-		}
+		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+		fd2 = cvs_buf_write_stmp(b1, p2, tv2);
+		cvs_buf_free(b1);
 	}
 
-	if (cvs_cmdop == CVS_OP_DIFF) {
+	switch (cvs_cmdop) {
+	case CVS_OP_DIFF:
 		cvs_printf("%s", diffargs);
 
-		if (cf->file_status != FILE_ADDED) {
-			(void)rcsnum_tostr(r1, rbuf, sizeof(rbuf));
+		if (rev1 != NULL && diff_rev1 != NULL) {
+			(void)rcsnum_tostr(diff_rev1, rbuf, sizeof(rbuf));
 			cvs_printf(" -r%s", rbuf);
 
-			if (diff_rev2 != NULL) {
+			if (rev2 != NULL && diff_rev2 != NULL) {
 				(void)rcsnum_tostr(diff_rev2, rbuf,
 				    sizeof(rbuf));
 				cvs_printf(" -r%s", rbuf);
@@ -399,9 +430,10 @@ cvs_diff_local(struct cvs_file *cf)
 		}
 
 		if (diff_rev2 == NULL)
-			cvs_printf(" %s", cf->file_name);
+			cvs_printf(" %s", cf->file_path);
 		cvs_printf("\n");
-	} else {
+		break;
+	case CVS_OP_RDIFF:
 		cvs_printf("diff ");
 		switch (diff_format) {
 		case D_CONTEXT:
@@ -430,27 +462,21 @@ cvs_diff_local(struct cvs_file *cf)
 			    cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
 			cvs_printf("%s:%s\n", cf->file_path, rbuf);
 		}
+		break;
 	}
 
-	if (cf->file_status == FILE_ADDED ||
-	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev1 == NULL)) {
-		xfree(p1);
-		close(fd1);
-		(void)xasprintf(&p1, "%s", CVS_PATH_DEVNULL);
-		if ((fd1 = open(p1, O_RDONLY)) == -1)
-			fatal("cvs_diff_local: cannot open %s",
-			    CVS_PATH_DEVNULL);
-	} else if (cf->file_status == FILE_REMOVED ||
-	    (cvs_cmdop == CVS_OP_RDIFF && diff_rev2 == NULL)) {
-		xfree(p2);
-		close(fd2);
-		(void)xasprintf(&p2, "%s", CVS_PATH_DEVNULL);
-		if ((fd2 = open(p2, O_RDONLY)) == -1)
-			fatal("cvs_diff_local: cannot open %s",
-			    CVS_PATH_DEVNULL);
+	if (fd1 == -1) {
+		if ((fd1 = open(CVS_PATH_DEVNULL, O_RDONLY, 0)) == -1)
+			fatal("cannot open %s", CVS_PATH_DEVNULL);
+	}
+	if (fd2 == -1) {
+		if ((fd2 = open(CVS_PATH_DEVNULL, O_RDONLY, 0)) == -1)
+			fatal("cannot open %s", CVS_PATH_DEVNULL);
 	}
 
-	if (cvs_diffreg(p1, p2, fd1, fd2, NULL) == D_ERROR)
+	if (cvs_diffreg(p1 != NULL ? cf->file_path : CVS_PATH_DEVNULL,
+	    p2 != NULL ? cf->file_path : CVS_PATH_DEVNULL, fd1, fd2, NULL)
+	    == D_ERROR)
 		fatal("cvs_diff_local: failed to get RCS patch");
 
 	close(fd1);
@@ -463,11 +489,15 @@ cvs_diff_local(struct cvs_file *cf)
 	if (p2 != NULL)
 		xfree(p2);
 
-	if (diff_rev1 != NULL && diff_rev1 != cf->file_rcs->rf_head &&
-	    (cf->file_ent != NULL && diff_rev1 != cf->file_ent->ce_rev))
-		rcsnum_free(diff_rev1);
-	if (diff_rev2 != NULL)
-		rcsnum_free(diff_rev2);
+cleanup:
+	if (diff_rev1 != NULL &&
+	    (cf->file_rcs == NULL || diff_rev1 != cf->file_rcs->rf_head) &&
+	    (cf->file_ent == NULL || diff_rev1 != cf->file_ent->ce_rev))
+		xfree(diff_rev1);
+	diff_rev1 = NULL;
 
-	diff_rev1 = diff_rev2 = NULL;
+	if (diff_rev2 != NULL &&
+	    (cf->file_rcs == NULL || diff_rev2 != cf->file_rcs->rf_head))
+		xfree(diff_rev2);
+	diff_rev2 = NULL;
 }
