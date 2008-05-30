@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.199 2008/05/29 01:00:53 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.200 2008/05/30 14:22:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -150,7 +150,7 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
 	    "pfstatekeypl", NULL);
-	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0, 
+	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0,
 	    "pfstateitempl", NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
 	    &pool_allocator_nointr);
@@ -845,7 +845,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 }
 
 void
-pf_state_export(struct pfsync_state *sp, struct pf_state *s) 
+pf_state_export(struct pfsync_state *sp, struct pf_state *s)
 {
 	int secs = time_second;
 	bzero(sp, sizeof(struct pfsync_state));
@@ -898,7 +898,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *s)
 
 void
 pf_state_import(struct pfsync_state *sp, struct pf_state_key *skw,
-   struct pf_state_key *sks, struct pf_state *s) 
+    struct pf_state_key *sks, struct pf_state *s)
 {
 	/* copy to state key(s) */
 	skw->addr[0] = sp->key[PF_SK_WIRE].addr[0];

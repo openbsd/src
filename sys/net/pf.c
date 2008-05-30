@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.577 2008/05/29 01:00:53 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.578 2008/05/30 14:22:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2945,7 +2945,8 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	if (pf_tcp_secret_init == 0) {
 		arc4random_bytes(pf_tcp_secret, sizeof(pf_tcp_secret));
 		MD5Init(&pf_tcp_secret_ctx);
-		MD5Update(&pf_tcp_secret_ctx, pf_tcp_secret, sizeof(pf_tcp_secret));
+		MD5Update(&pf_tcp_secret_ctx, pf_tcp_secret,
+		    sizeof(pf_tcp_secret));
 		pf_tcp_secret_init = 1;
 	}
 	ctx = pf_tcp_secret_ctx;
@@ -5147,13 +5148,13 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (!(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m0);
-			m0->m_pkthdr.csum_flags &= ~M_TCPV4_CSUM_OUT; /* Clear */
+			m0->m_pkthdr.csum_flags &= ~M_TCPV4_CSUM_OUT; /* Clr */
 		}
 	} else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 		if (!(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m0);
-			m0->m_pkthdr.csum_flags &= ~M_UDPV4_CSUM_OUT; /* Clear */
+			m0->m_pkthdr.csum_flags &= ~M_UDPV4_CSUM_OUT; /* Clr */
 		}
 	}
 

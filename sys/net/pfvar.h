@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.269 2008/05/29 01:00:53 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.270 2008/05/30 14:22:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1070,7 +1070,7 @@ struct pf_pdesc {
 	} hdr;
 
 	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
-	struct ether_header	
+	struct ether_header
 			*eh;
 	struct pf_addr	*src;		/* src address */
 	struct pf_addr	*dst;		/* dst address */
