@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1369 2008/05/24 06:00:56 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1370 2008/05/30 13:26:12 thib Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2521,6 +2521,7 @@
 #define	PCI_PRODUCT_INTEL_RCU31L	0x96a1		/* RCU31L I2O RAID */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21154AE/BE PCI-PCI */
+#define	PCI_PRODUCT_INTEL_TURBOMEM	0x444e		/* Intel Turbo Memory */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
