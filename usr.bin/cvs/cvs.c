@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.145 2008/05/28 17:12:00 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.146 2008/05/30 16:11:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -217,16 +217,6 @@ main(int argc, char **argv)
 	if (argc == 0)
 		usage();
 
-	/*
-	 * check the tmp dir, either specified through
-	 * the environment variable TMPDIR, or via
-	 * the global option -T <dir>
-	 */
-	if (stat(cvs_tmpdir, &st) == -1)
-		fatal("stat failed on `%s': %s", cvs_tmpdir, strerror(errno));
-	else if (!S_ISDIR(st.st_mode))
-		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
-
 	cmdp = cvs_findcmd(argv[0]);
 	if (cmdp == NULL) {
 		fprintf(stderr, "Unknown command: `%s'\n\n", argv[0]);
@@ -236,6 +226,16 @@ main(int argc, char **argv)
 			    cvs_cdt[i]->cmd_name, cvs_cdt[i]->cmd_descr);
 		exit(1);
 	}
+
+	/*
+	 * check the tmp dir, either specified through
+	 * the environment variable TMPDIR, or via
+	 * the global option -T <dir>
+	 */
+	if (stat(cvs_tmpdir, &st) == -1)
+		fatal("stat failed on `%s': %s", cvs_tmpdir, strerror(errno));
+	else if (!S_ISDIR(st.st_mode))
+		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
 
 	if (cvs_readrc == 1 && cvs_homedir != NULL) {
 		cvs_read_rcfile();
