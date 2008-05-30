@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.60 2007/12/01 11:05:25 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.61 2008/05/30 19:06:50 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: December 1 2007 $
+.Dd $Mdocdate: May 30 2008 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2528,10 +2528,13 @@ Disable standard block padding.
 Don't use a
 .Ar salt
 in the key derivation routines.
-This is the default for compatibility with previous versions of
+This option should
+.Em NEVER
+be used unless compatibility with previous versions of
 .Nm OpenSSL
-and
-.Nm SSLeay .
+or
+.Nm SSLeay
+is required.
 .It Fl out Ar file
 The output
 .Ar file ,
@@ -2567,16 +2570,7 @@ this must be represented as a string comprised only of hex digits.
 Use a
 .Ar salt
 in the key derivation routines.
-This option should
-.Em ALWAYS
-be used unless compatibility with previous versions of
-.Nm OpenSSL
-or
-.Nm SSLeay
-is required.
-This option is only present on
-.Nm OpenSSL
-versions 0.9.5 or above.
+This is the default.
 .El
 .Sh ENC NOTES
 The program can be called either as
@@ -2591,28 +2585,24 @@ and
 if necessary.
 .Pp
 The
-.Fl salt
+.Fl nosalt
 option should
-.Em ALWAYS
-be used if the key is being derived from a password unless compatibility
-with previous versions of
+.Em NEVER
+be used unless compatibility with previous versions of
 .Nm OpenSSL
-and
+or
 .Nm SSLeay
-is necessary.
+is required.
 .Pp
-Without the
-.Fl salt
+With the
+.Fl nosalt
 option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data.
-The reason for this is that without the
-.Ar salt
+The reason for this is that without the salt
 the same password always generates the same encryption key.
-When the
-.Ar salt
+When the salt
 is being used the first eight bytes of the encrypted data are reserved
-for the
-.Ar salt :
+for the salt:
 it is generated at random when encrypting a file and read from the
 encrypted file when it is decrypted.
 .Pp
