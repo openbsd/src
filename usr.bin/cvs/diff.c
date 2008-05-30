@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.136 2008/05/30 10:12:12 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.137 2008/05/30 11:06:17 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -36,6 +36,8 @@ static int	 force_head = 0;
 static char	*koptstr;
 static char	*rev1 = NULL;
 static char	*rev2 = NULL;
+static time_t	 date1 = -1;
+static time_t	 date2 = -1;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_USE_WDIR, "diff",
@@ -77,6 +79,16 @@ cvs_diff(int argc, char **argv)
 			strlcat(diffargs, " -c", sizeof(diffargs));
 			diff_format = D_CONTEXT;
 			break;
+		case 'D':
+			if (date1 == -1 && rev1 == NULL) {
+				date1 = cvs_date_parse(optarg);
+			} else if (date2 == -1 && rev2 == NULL) {
+				date2 = cvs_date_parse(optarg);
+			} else {
+				fatal("no more than 2 revisions/dates can"
+				    " be specified");
+			}
+			break;
 		case 'f':
 			force_head = 1;
 			break;
@@ -114,9 +126,9 @@ cvs_diff(int argc, char **argv)
 			flags |= CR_RECURSE_DIRS;
 			break;
 		case 'r':
-			if (rev1 == NULL) {
+			if (date1 == -1 && rev1 == NULL) {
 				rev1 = optarg;
-			} else if (rev2 == NULL) {
+			} else if (date2 == -1 && rev2 == NULL) {
 				rev2 = optarg;
 			} else {
 				fatal("no more than 2 revisions/dates can"
@@ -232,7 +244,8 @@ cvs_diff_local(struct cvs_file *cf)
 	int fd1, fd2;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
-	char rbuf[CVS_REV_BUFSZ], *p1, *p2;
+	struct tm *datetm;
+	char rbuf[CVS_REV_BUFSZ], tbuf[CVS_TIME_BUFSZ], *p1, *p2;
 
 	b1 = NULL;
 	fd1 = fd2 = -1;
@@ -286,7 +299,6 @@ cvs_diff_local(struct cvs_file *cf)
 				    cf->file_path);
 				return;
 			}
-			break;
 			if (cf->file_rcs == NULL) {
 				cvs_log(LP_ERR, "cannot find RCS file for %s",
 				    cf->file_path);
@@ -296,7 +308,8 @@ cvs_diff_local(struct cvs_file *cf)
 		}
 	}
 
-	if (cf->file_status == FILE_UPTODATE && rev1 == NULL && rev2 == NULL)
+	if (cf->file_status == FILE_UPTODATE && rev1 == NULL && rev2 == NULL &&
+	    date1 == -1 && date2 == -1)
 		return;
 
 	if (kflag && cf->file_rcs != NULL)
@@ -304,11 +317,20 @@ cvs_diff_local(struct cvs_file *cf)
 
 	if (cf->file_rcs == NULL)
 		diff_rev1 = NULL;
-	else if (rev1 != NULL) {
+	else if (rev1 != NULL || date1 != -1) {
+		cvs_specified_date = date1;
 		diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs);
 		if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_DIFF) {
-			cvs_log(LP_ERR, "tag %s not in file %s", rev1,
-			    cf->file_path);
+			if (rev1 != NULL)
+				cvs_log(LP_ERR, "tag %s not in file %s", rev1,
+				    cf->file_path);
+			else {
+				datetm = gmtime(&cvs_specified_date);
+				strftime(tbuf, sizeof(tbuf),
+				    "%Y.%m.%d.%H.%M.%S", datetm);
+				cvs_log(LP_ERR, "no revision for date %s in "
+				    "file %s", tbuf, cf->file_path);
+			}
 			goto cleanup;
 		} else if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
 		    force_head) {
@@ -319,6 +341,7 @@ cvs_diff_local(struct cvs_file *cf)
 
 			diff_rev1 = cf->file_rcs->rf_head;
 		}
+		cvs_specified_date = -1;
 	} else if (cvs_cmdop == CVS_OP_DIFF) {
 		if (cf->file_ent->ce_status == CVS_ENT_ADDED)
 			diff_rev1 = NULL;
@@ -328,11 +351,20 @@ cvs_diff_local(struct cvs_file *cf)
 
 	if (cf->file_rcs == NULL)
 		diff_rev2 = NULL;
-	else if (rev2 != NULL) {
+	else if (rev2 != NULL || date2 != -1) {
+		cvs_specified_date = date2;
 		diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs);
 		if (diff_rev2 == NULL && cvs_cmdop == CVS_OP_DIFF) {
-			cvs_log(LP_ERR, "tag %s not in file %s", rev2,
-			    cf->file_path);
+			if (rev2 != NULL) {
+				cvs_log(LP_ERR, "tag %s not in file %s", rev2,
+				    cf->file_path);
+			} else {
+				datetm = gmtime(&cvs_specified_date);
+				strftime(tbuf, sizeof(tbuf),
+				    "%Y.%m.%d.%H.%M.%S", datetm);
+				cvs_log(LP_ERR, "no revision for date %s in "
+				    "file %s", tbuf, cf->file_path);
+			}
 			goto cleanup;
 		} else if (diff_rev2 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
 		    force_head) {
@@ -343,6 +375,7 @@ cvs_diff_local(struct cvs_file *cf)
 
 			diff_rev2 = cf->file_rcs->rf_head;
 		}
+		cvs_specified_date = -1;
 	} else if (cvs_cmdop == CVS_OP_RDIFF)
 		diff_rev2 = cf->file_rcs->rf_head;
 	else if (cf->file_ent->ce_status == CVS_ENT_REMOVED)
