@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.17 2007/07/31 21:21:11 deraadt Exp $ */
+/* $OpenBSD: mmc.c,v 1.18 2008/05/30 17:41:30 av Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -56,8 +56,8 @@ blank(void)
 		fd = -1;
 		if (!open_cd(cdname, 1))
 			return (-1);
+		r = ioctl(fd, SCIOCCOMMAND, &scr);
 	}
-	r = ioctl(fd, SCIOCCOMMAND, &scr);
 	return (r == 0 ? scr.retsts : -1);
 }
 
