@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.5 2008/05/11 08:50:54 beck Exp $	*/
+/*	$OpenBSD: sync.c,v 1.6 2008/05/30 05:58:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -407,7 +407,7 @@ sync_send(struct iovec *iov, int iovlen)
 void
 sync_lease(struct lease *lease)
 {
-	struct iovec iov[3];
+	struct iovec iov[4];
 	struct dhcp_synchdr hdr;
 	struct dhcp_synctlv_lease ld;
 	struct dhcp_synctlv_hdr end;
