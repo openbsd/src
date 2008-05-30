@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.106 2008/05/23 14:04:18 brad Exp $
+#	$OpenBSD: RAMDISKB,v 1.107 2008/05/30 20:53:14 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -15,7 +15,7 @@ option		DST=0		# daylight saving time used by RTC
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 option		FFS		# UFS
-option		EXT2FS		# Linux ext2fs
+#option		EXT2FS		# Linux ext2fs
 
 #option		NFSCLIENT	# Network File System client
 
