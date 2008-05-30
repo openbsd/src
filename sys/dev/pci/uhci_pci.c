@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.25 2007/03/22 05:53:36 pascoe Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.26 2008/05/30 04:59:34 brad Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -99,13 +99,6 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	int s;
-
-#if defined(__NetBSD__)
-	char devinfo[256];
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
-#endif
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
