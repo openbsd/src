@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.21 2008/05/27 18:19:37 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.22 2008/05/30 06:37:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -918,6 +918,12 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
 
 	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+
+	/* don't overflow the upper layer sample buffer */
+	if (VIDEO_BUF_SIZE < fb->buf_size) {
+		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
+		return (USBD_NOMEM);
+	}
 
 	fb->buf = malloc(fb->buf_size, M_DEVBUF, M_NOWAIT);
 	if (fb->buf == NULL) {

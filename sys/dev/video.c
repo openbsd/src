@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.4 2008/05/26 17:51:18 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.5 2008/05/30 06:37:38 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -66,6 +66,12 @@ videoattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_if = sa->hwif;
 	sc->hw_hdl = sa->hdl;
 	sc->sc_dev = parent;
+
+	sc->sc_fbuffer = malloc(VIDEO_BUF_SIZE, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_fbuffer == NULL) {
+		printf("video: could not allocate frame buffer\n");
+		return;
+	}
 }
 
 int
@@ -80,12 +86,6 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	     sc->hw_if == NULL)
 		return (ENXIO);
 
-	sc->sc_fsize = 0;
-	/* XXX find proper size */
-	sc->sc_fbuffer = malloc(32000, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_fbuffer == NULL)
-		return (ENOMEM);
-
 	if (sc->hw_if->open != NULL)
 		return (sc->hw_if->open(sc->hw_hdl, flags, &sc->sc_fsize,
 		    sc->sc_fbuffer, video_intr, sc));
@@ -99,9 +99,6 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 	struct video_softc *sc;
 
 	sc = video_cd.cd_devs[VIDEOUNIT(dev)];
-
-	if (sc->sc_fbuffer != NULL)
-		free(sc->sc_fbuffer, M_DEVBUF);
 
 	if (sc->hw_if->close != NULL)
 		return (sc->hw_if->close(sc->hw_hdl));
@@ -266,8 +263,11 @@ videoprint(void *aux, const char *pnp)
 int
 videodetach(struct device *self, int flags)
 {
-	/*struct video_softc *sc = (struct video_softc *)self;*/
+	struct video_softc *sc = (struct video_softc *)self;
 	int maj, mn;
+
+	if (sc->sc_fbuffer != NULL)
+		free(sc->sc_fbuffer, M_DEVBUF);
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
