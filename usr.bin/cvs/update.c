@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.145 2008/05/23 09:46:45 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.146 2008/05/30 16:14:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -339,7 +339,7 @@ cvs_update_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, tag);
 
-	if (kflag)
+	if (kflag && cf->file_rcs != NULL)
 		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	if ((cf->file_status == FILE_UPTODATE ||
