@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.17 2008/05/31 02:44:11 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.18 2008/05/31 17:03:52 kettenis Exp $	*/
 
 /*
  *
@@ -1308,7 +1308,9 @@ cas_add_rxbuf(struct cas_softc *sc, int idx)
 	if ((sc->sc_rxdptr % 4) == 0)
 		bus_space_write_4(t, h, CAS_RX_KICK, sc->sc_rxdptr);
 
-	sc->sc_rxdptr++;
+	if (++sc->sc_rxdptr == CAS_NRXDESC)
+		sc->sc_rxdptr = 0;
+
 	return (0);
 }
 
