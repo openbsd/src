@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.16 2006/10/29 22:18:32 otto Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.17 2008/05/31 21:10:36 sobrado Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: get_names.c,v 1.16 2006/10/29 22:18:32 otto Exp $";
+static const char rcsid[] = "$OpenBSD: get_names.c,v 1.17 2008/05/31 21:10:36 sobrado Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -75,8 +75,7 @@ get_names(argc, argv)
 	}
 
 	if ((argc < 2 ) || ('@' == argv[1][0])) {
-		fprintf(stderr, "usage: talk [-Hs] user [ttyname]\n"
-				"       talk [-Hs] user@hostname [ttyname]\n");
+		fprintf(stderr, "usage: talk [-Hs] person [ttyname]\n");
 		exit(1);
 	}
 	if (!isatty(STDIN_FILENO))
