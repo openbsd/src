@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1370 2008/05/30 13:26:12 thib Exp 
+ *	OpenBSD: pcidevs,v 1.1371 2008/05/31 08:53:16 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4356,12 +4356,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Light Pulse FibreChannel",
 	},
 	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
+	    "Light Pulse 982",
+	},
+	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
 	    "Light Pulse 8000",
 	},
 	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
-	    "Light Pulse 982",
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP10000,
+	    "Light Pulse 10000",
 	},
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG35,

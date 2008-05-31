@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1370 2008/05/30 13:26:12 thib Exp 
+ *	OpenBSD: pcidevs,v 1.1371 2008/05/31 08:53:16 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1585,8 +1585,9 @@
 
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* Light Pulse FibreChannel */
-#define	PCI_PRODUCT_EMULEX_LP8000	0xf800		/* Light Pulse 8000 */
 #define	PCI_PRODUCT_EMULEX_LP982	0xf098		/* Light Pulse 982 */
+#define	PCI_PRODUCT_EMULEX_LP8000	0xf800		/* Light Pulse 8000 */
+#define	PCI_PRODUCT_EMULEX_LP10000	0xfa00		/* Light Pulse 10000 */
 
 /* Endace Measurement Systems */
 #define	PCI_PRODUCT_ENDACE_DAG35	0x3500		/* Endace Dag3.5 */
