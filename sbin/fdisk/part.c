@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.46 2008/02/18 21:33:05 sobrado Exp $	*/
+/*	$OpenBSD: part.c,v 1.47 2008/05/31 09:45:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -118,6 +118,7 @@ static const struct part_type {
 	{ 0xA8, "MacOS X     "},   /* MacOS X main partition */
 	{ 0xA9, "NetBSD      "},   /* NetBSD */
 	{ 0xAB, "MacOS X boot"},   /* MacOS X boot partition */
+	{ 0xAF, "MacOS X HFS+"},   /* MacOS X HFS+ partition */
 	{ 0xB7, "BSDI filesy*"},   /* BSDI BSD/386 filesystem */
 	{ 0xB8, "BSDI swap   "},   /* BSDI BSD/386 swap */
 	{ 0xBF, "Solaris     "},   /* Solaris */
