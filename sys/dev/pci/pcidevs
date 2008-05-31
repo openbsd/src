@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1370 2008/05/30 13:26:12 thib Exp $
+$OpenBSD: pcidevs,v 1.1371 2008/05/31 08:53:16 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1580,8 +1580,9 @@ product ELSA QS1PCI		0x1000	QuickStep 1000 ISDN
 
 /* Emulex products */
 product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
-product EMULEX LP8000		0xf800	Light Pulse 8000
 product EMULEX LP982		0xf098	Light Pulse 982
+product EMULEX LP8000		0xf800	Light Pulse 8000
+product EMULEX LP10000		0xfa00	Light Pulse 10000
 
 /* Endace Measurement Systems */
 product ENDACE DAG35		0x3500	Endace Dag3.5
