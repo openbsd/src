@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.74 2008/05/09 21:22:44 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.75 2008/05/31 02:41:25 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1680,10 +1680,12 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 	}
 	sc->sc_tx_cons = cons;
 
-	gem_start(ifp);
-
+	if (sc->sc_tx_cnt < GEM_NTXDESC - 2)
+		ifp->if_flags &= ~IFF_OACTIVE;
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
+
+	gem_start(ifp);
 
 	return (1);
 }
@@ -1718,7 +1720,7 @@ gem_start(struct ifnet *ifp)
 		 * or fail...
 		 */
 		if (gem_encap(sc, m, &bix)) {
-			ifp->if_timer = 2;
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
