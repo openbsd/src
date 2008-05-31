@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.90 2008/05/22 21:03:41 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.91 2008/05/31 02:08:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1294,7 +1294,6 @@ txp_init(struct txp_softc *sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_timer = 0;
 
 	if (!timeout_pending(&sc->sc_tick))
 		timeout_add(&sc->sc_tick, hz);
@@ -1726,10 +1725,16 @@ txp_cmd_desc_numfree(struct txp_softc *sc)
 void
 txp_stop(struct txp_softc *sc)
 {
-	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	timeout_del(&sc->sc_tick);
+
+	/* Mark the interface as down and cancel the watchdog timer. */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
+	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
 }
 
 void
