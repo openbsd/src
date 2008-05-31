@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.144 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.145 2008/05/31 11:53:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -529,6 +529,12 @@ package OpenBSD::PackingElement::LibtoolLib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 sub keyword() { "ltlib" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::Binary;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
+sub keyword() { "bin" }
 __PACKAGE__->register_with_factory;
 
 # Comment is very special
