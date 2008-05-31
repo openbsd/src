@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.139 2008/04/19 01:18:39 djm Exp $ */
+/*	$OpenBSD: ahci.c,v 1.140 2008/05/31 23:50:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1427,12 +1427,12 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 		if (addr & 1) {
 			printf("%s: requested DMA at an odd address %llx\n",
 			    PORTNAME(ap), (unsigned long long)addr);
-			return (1);
+			goto diagerr;
 		}
 		if (dmap->dm_segs[i].ds_len & 1) {
 			printf("%s: requested DMA length %d is not even\n",
 			    PORTNAME(ap), (int)dmap->dm_segs[i].ds_len);
-			return (1);
+			goto diagerr;
 		}
 #endif
 		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
@@ -1447,6 +1447,12 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
+
+#ifdef DIAGNOSTIC
+diagerr:
+	bus_dmamap_unload(sc->sc_dmat, dmap);
+	return (1);
+#endif
 }
 
 void
