@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.16 2008/04/08 23:41:56 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.17 2008/05/31 02:44:11 brad Exp $	*/
 
 /*
  *
@@ -1943,10 +1943,12 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 	}
 	sc->sc_tx_cons = cons;
 
-	cas_start(ifp);
-
+	if (sc->sc_tx_cnt < CAS_NTXDESC - 2)
+		ifp->if_flags &= ~IFF_OACTIVE;
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
+
+	cas_start(ifp);
 
 	return (1);
 }
@@ -1981,7 +1983,7 @@ cas_start(struct ifnet *ifp)
 		 * or fail...
 		 */
 		if (cas_encap(sc, m, &bix)) {
-			ifp->if_timer = 2;
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
