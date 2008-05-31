@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1371 2008/05/31 08:53:16 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1372 2008/05/31 09:04:53 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11810,6 +11810,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1077,
 	    "I/O 1077",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_6520_PCIX,
+	    "6520 PCIX-PCIX",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8114_PCI,

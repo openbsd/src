@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1371 2008/05/31 08:53:16 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1372 2008/05/31 09:04:53 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3675,6 +3675,7 @@
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O 1076 */
 #define	PCI_PRODUCT_PLX_1077	0x1077		/* I/O 1077 */
+#define	PCI_PRODUCT_PLX_6520_PCIX	0x6520		/* 6520 PCIX-PCIX */
 #define	PCI_PRODUCT_PLX_8114_PCI	0x8114		/* 8114 PCIE-PCI */
 #define	PCI_PRODUCT_PLX_8518_PCIE	0x8518		/* 8518 PCIE */
 #define	PCI_PRODUCT_PLX_8524_PCIE	0x8524		/* 8524 PCIE */
