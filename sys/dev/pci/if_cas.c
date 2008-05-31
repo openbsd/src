@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.18 2008/05/31 17:03:52 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.19 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
  *
@@ -1925,11 +1925,11 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct cas_sxd *sd;
-	u_int32_t cons, hwcons;
+	u_int32_t cons, comp;
 
-	hwcons = status >> 19;
+	comp = bus_space_read_4(sc->sc_memt, sc->sc_memh, CAS_TX_COMPLETION);
 	cons = sc->sc_tx_cons;
-	while (cons != hwcons) {
+	while (cons != comp) {
 		sd = &sc->sc_txd[cons];
 		if (sd->sd_mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
