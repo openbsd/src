@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.5 2008/05/29 18:24:51 jcs Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.6 2008/06/01 17:59:55 marco Exp $ */
 
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
@@ -112,7 +112,7 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 	    aa->aaa_table != NULL)
 		return (0);
 
-	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node->child,
+	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node,
 	    "MHKV", 0, NULL, &res))
 		goto fail;
 
@@ -134,7 +134,7 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args		*aa = aux;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
 
 	printf("\n");
 
@@ -142,7 +142,7 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	thinkpad_enable_events(sc);
 
 	/* run thinkpad_hotkey on button presses */
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 		thinkpad_hotkey, sc, ACPIDEV_NOPOLL);
 
 	return;
@@ -173,7 +173,7 @@ thinkpad_enable_events(struct acpithinkpad_softc *sc)
 		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "MHKM", 2, args,
 		    NULL)) {
 			printf("%s: couldn't toggle MHKM\n", DEVNAME(sc));
-			return (1);
+			goto fail;
 		}
 	}
 
@@ -183,10 +183,24 @@ thinkpad_enable_events(struct acpithinkpad_softc *sc)
 	arg.v_integer = 1;
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "MHKC", 1, &arg, NULL)) {
 		printf("%s: couldn't enable hotkeys\n", DEVNAME(sc));
-		return (1);
+		goto fail;
 	}
 
+	aml_freevalue(&res);
+	aml_freevalue(&args[0]);
+	aml_freevalue(&args[1]);
+	aml_freevalue(&args[2]);
+	aml_freevalue(&arg);
+
 	return (0);
+
+fail:
+	aml_freevalue(&res);
+	aml_freevalue(&args[0]);
+	aml_freevalue(&args[1]);
+	aml_freevalue(&args[2]);
+	aml_freevalue(&arg);
+	return (1);
 }
 
 int
@@ -314,8 +328,11 @@ thinkpad_toggle_bluetooth(struct acpithinkpad_softc *sc)
 	arg.v_integer = bluetooth ^= THINKPAD_BLUETOOTH_ENABLED;
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "SBDC", 1, &arg, NULL)) {
 		printf("%s: couldn't toggle bluetooth\n", DEVNAME(sc));
+		aml_freevalue(&arg);
 		return (1);
 	}
+
+	aml_freevalue(&arg);
 
 	return (0);
 }
@@ -339,8 +356,11 @@ thinkpad_toggle_wan(struct acpithinkpad_softc *sc)
 	arg.v_integer = wan ^= THINKPAD_WAN_ENABLED;
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "SWAN", 1, &arg, NULL)) {
 		printf("%s: couldn't toggle wan\n", DEVNAME(sc));
+		aml_freevalue(&arg);
 		return (1);
 	}
+
+	aml_freevalue(&arg);
 
 	return (0);
 }
@@ -357,8 +377,11 @@ thinkpad_cmos(struct acpithinkpad_softc *sc, uint8_t cmd)
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "\\UCMS", 1, &arg,
 	NULL)) {
 		printf("%s: cmos command 0x%x failed\n", DEVNAME(sc), cmd);
+		aml_freevalue(&arg);
 		return (1);
 	}
+
+	aml_freevalue(&arg);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.25 2008/05/16 06:50:55 dlg Exp $ */
+/* $OpenBSD: acpitz.c,v 1.26 2008/06/01 17:59:55 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -75,7 +75,9 @@ int	acpitz_notify(struct aml_node *, int, void *);
 int	acpitz_gettempreading(struct acpitz_softc *, char *);
 int	acpitz_getreading(struct acpitz_softc *, char *);
 int	acpitz_setfan(struct acpitz_softc *, int, char *);
+#if 0
 int	acpitz_setcpu(struct acpitz_softc *, int);
+#endif
 
 int
 acpitz_match(struct device *parent, void *match, void *aux)
@@ -104,7 +106,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	char			name[8];
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
@@ -142,10 +144,11 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensdev);
 	sc->sc_sens.value = 0;
 
-	aml_register_notify(sc->sc_devnode->parent, NULL,
+	aml_register_notify(sc->sc_devnode, NULL,
 	    acpitz_notify, sc, ACPIDEV_POLL);
 }
 
+#if 0
 int
 acpitz_setcpu(struct acpitz_softc *sc, int perc)
 {
@@ -174,6 +177,7 @@ acpitz_setcpu(struct acpitz_softc *sc, int perc)
 	aml_freevalue(&res0);
 	return (0);
 }
+#endif
 
 int
 acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
@@ -252,12 +256,12 @@ acpitz_refresh(void *arg)
 	int			i, perc;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
-	    sc->sc_devnode->parent->name);
+	    sc->sc_devnode->name);
 
 	/* get _TMP and debounce the value */
 	if (-1 == (sc->sc_tmp = acpitz_gettempreading(sc, "_TMP"))) {
 		printf("%s: %s: failed to read temp\n", DEVNAME(sc),
-		    sc->sc_devnode->parent->name);
+		    sc->sc_devnode->name);
 		return;
 	}
 	/* critical trip points */
@@ -351,7 +355,7 @@ acpitz_gettempreading(struct acpitz_softc *sc, char *name)
 	}
 	if (i >= ACPITZ_TMP_RETRY) {
 		printf("%s: %s: failed to read %s\n", DEVNAME(sc),
-		    sc->sc_devnode->parent->name, name);
+		    sc->sc_devnode->name, name);
 		goto out;
 	}
  out:
@@ -367,7 +371,7 @@ acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 	int			crt;
 
 	dnprintf(10, "%s notify: %.2x %s\n", DEVNAME(sc), notify_type,
-	    sc->sc_devnode->parent->name);
+	    sc->sc_devnode->name);
 
 	switch (notify_type) {
 	case 0x80:	/* hardware notifications */
