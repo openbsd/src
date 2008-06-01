@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.33 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: tip.c,v 1.34 2008/06/01 18:38:29 sobrado Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.33 2007/05/15 19:42:05 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.34 2008/06/01 18:38:29 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	}
 
 	if (argc > 4) {
-		fprintf(stderr, "usage: tip [-v] [-speed] [system-name]\n");
+		fprintf(stderr, "usage: tip [-nv] [-speed] [system-name]\n");
 		exit(1);
 	}
 	if (!isatty(0)) {

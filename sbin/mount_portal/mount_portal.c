@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.27 2005/04/08 20:09:37 jaredy Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.28 2008/06/01 18:38:29 sobrado Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.27 2005/04/08 20:09:37 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.28 2008/06/01 18:38:29 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,6 +295,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: %s [-o options] config mount-point\n", __progname);
+		"usage: %s [-o options] config mount_point\n", __progname);
 	exit(1);
 }
