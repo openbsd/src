@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yp.8,v 1.25 2008/04/03 07:01:28 jmc Exp $
+.\"	$OpenBSD: yp.8,v 1.26 2008/06/01 21:45:08 sobrado Exp $
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2008 $
+.Dd $Mdocdate: June 1 2008 $
 .Dt YP 8
 .Os
 .Sh NAME
@@ -33,26 +33,25 @@
 .Nd description of the YP subsystem
 .Sh SYNOPSIS
 .Nm ypinit
-.Op Fl m
-.Ar domain
+.Fl m Op Ar domainname
 .Nm ypinit
-.Op Fl s
-.Ar server
-.Ar domain
+.Fl s Ar master_server Op Ar domainname
+.Nm ypinit
+.Fl u Op Ar domainname
 .Pp
 .Nm ypbind
+.Op Fl insecure
 .Op Fl ypset
-.Nm ypbind
 .Op Fl ypsetme
 .Pp
 .Nm ypset
-.Op Fl h Ar host
 .Op Fl d Ar domain
+.Op Fl h Ar host
 .Ar server
 .Pp
 .Nm yppoll
-.Op Fl h Ar host
 .Op Fl d Ar domain
+.Op Fl h Ar host
 .Ar mapname
 .Pp
 .Nm ypcat
@@ -81,33 +80,32 @@
 .Fl x
 .Pp
 .Nm ypserv
+.Op Fl 1dx
 .Op Fl a Ar aclfile
-.Op Fl d
-.Op Fl x
 .Pp
 .Nm ypxfr
-.Op Fl bcf
+.Op Fl cf
+.Op Fl C Ar tid prog ipadd port
 .Op Fl d Ar domain
 .Op Fl h Ar host
 .Op Fl s Ar domain
-.Op Fl C Ar tid prog ipadd port
 .Ar mapname
 .Pp
 .Nm yppush
+.Op Fl v
 .Op Fl d Ar domainname
 .Op Fl h Ar hostname
 .\" .Op Fl p Ar paralleljobs
 .\" .Op Fl t Ar timeout
-.Op Fl v
 .Ar mapname
 .Pp
 .Nm rpc.yppasswdd
 .Bk -words
-.Op Fl d Ar directory
-.Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
-.Op Fl m Ar arg1 Ar arg2 Ar ...
+.Op Fl noshell
+.Op Fl d Ar directory
+.Op Fl m Ar arg ...
 .Ek
 .Sh DESCRIPTION
 The

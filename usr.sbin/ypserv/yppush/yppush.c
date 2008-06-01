@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.25 2006/09/25 05:59:28 otto Exp $ */
+/*	$OpenBSD: yppush.c,v 1.26 2008/06/01 21:45:08 sobrado Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.25 2006/09/25 05:59:28 otto Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.26 2008/06/01 21:45:08 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,8 @@ extern bool_t xdr_ypreq_xfr(XDR *, struct ypreq_xfr *);
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: yppush [-d domainname] [-h host] [-v] mapname\n");
+	fprintf(stderr,
+	    "usage: yppush [-v] [-d domainname] [-h hostname] mapname\n");
 	exit(1);
 }
 

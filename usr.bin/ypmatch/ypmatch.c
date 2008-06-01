@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.12 2006/04/02 01:49:19 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.13 2008/06/01 21:45:08 sobrado Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.12 2006/04/02 01:49:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.13 2008/06/01 21:45:08 sobrado Exp $";
 #endif
 
 #include <sys/param.h>
@@ -63,14 +63,15 @@ struct ypalias {
 void
 usage(void)
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typmatch [-d domain] [-t] [-k] key [key ...] mname\n");
-	fprintf(stderr, "\typmatch -x\n");
-	fprintf(stderr, "where\n");
-	fprintf(stderr, "\tmname may be either a mapname or a nickname for a map\n");
-	fprintf(stderr, "\t-t inhibits map nickname translation\n");
-	fprintf(stderr, "\t-k prints keys as well as values.\n");
-	fprintf(stderr, "\t-x dumps the map nickname translation table.\n");
+	fprintf(stderr,
+	    "usage: ypmatch [-kt] [-d domain] key ... mapname\n"
+	    "       ypmatch -x\n");
+	fprintf(stderr,
+	    "where\n"
+	    "\tmapname may be either a mapname or a nickname for a map.\n"
+	    "\t-k prints keys as well as values.\n"
+	    "\t-t inhibits map nickname translation.\n"
+	    "\t-x dumps the map nickname translation table.\n");
 	exit(1);
 }
 
