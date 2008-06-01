@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.140 2008/05/23 13:19:43 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.141 2008/06/01 12:13:47 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8874,10 +8874,6 @@ ENTRY(cecc_catch)
  * -2 send it to any CPU, otherwise send it to a particular CPU.
  *
  * XXXX Dispatching to different CPUs is not implemented yet.
- *
- * XXXX We do not block interrupts here so it's possible that another
- *	interrupt of the same level is dispatched before we get to
- *	enable the softint, causing a spurious interrupt.
  */
 ENTRY(send_softint)
 	rdpr	%pstate, %g1
