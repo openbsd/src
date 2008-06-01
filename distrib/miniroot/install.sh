@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.156 2008/03/02 21:18:58 krw Exp $
+#	$OpenBSD: install.sh,v 1.157 2008/06/01 02:45:59 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -398,11 +398,12 @@ mv hosts.new hosts
 save_comments hosts
 save_comments dhclient.conf
 
-# Possible files: fstab, kbdtype, myname, mygate, sysctl.conf
-#                 dhclient.conf resolv.conf resolv.conf.tail
-#		  hostname.* hosts
-for _f in fstab kbdtype my* *.conf *.tail host* ttys; do
-	[[ -f $_f ]] && mv $_f /mnt/etc/.
+# Possible files: fstab hostname.* hosts kbdtype mygate myname ttys
+#		  boot.conf dhclient.conf resolv.conf sysctl.conf 
+#		  resolv.conf.tail
+# Save only non-empty (-s) regular (-f) files.
+for _f in fstab host* kbdtype my* ttys *.conf *.tail; do
+	[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
 done )
 
 _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
