@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.119 2008/06/01 17:59:55 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.120 2008/06/01 18:14:25 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -519,11 +519,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
-
-	printf("\n");
 #endif /* SMALL_KERNEL */
 
-	printf("%s: tables", DEVNAME(sc));
+	printf("\n%s: tables", DEVNAME(sc));
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		printf(" %.4s", entry->q_table);
 	}
