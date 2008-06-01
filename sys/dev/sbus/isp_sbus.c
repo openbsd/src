@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.11 2008/01/21 20:00:33 sobrado Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.12 2008/06/01 15:49:25 kettenis Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -76,7 +76,6 @@
 #include <dev/microcode/isp/asm_sbus.h>
 #endif
 #include <dev/sbus/sbusvar.h>
-#include <sys/reboot.h>
 
 static int isp_sbus_intr(void *);
 static int
@@ -196,6 +195,8 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 	sbc->sbus_mdvec.dv_clock = freq;
+
+	DEFAULT_IID(isp) = getpropint(sa->sa_node, "scsi-initiator-id", 7);
 
 	/*
 	 * Now figure out what the proper burst sizes, etc., to use.

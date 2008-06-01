@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.27 2008/01/21 20:00:33 sobrado Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.28 2008/06/01 15:49:25 kettenis Exp $ */
 /*
  * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
@@ -89,6 +89,7 @@ struct isposinfo {
 		rtpend		: 1,
 		no_mbox_ints	: 1,
 		blocked		: 2;
+	int			_iid;
 	union {
 		u_int64_t 	_wwn;
 		u_int16_t	_discovered[2];
@@ -246,7 +247,7 @@ default:							\
 
 #define	XS_SET_STATE_STAT(a, b, c)
 
-#define	DEFAULT_IID(x)		7
+#define	DEFAULT_IID(isp)	(isp)->isp_osinfo._iid
 #define	DEFAULT_LOOPID(x)	107
 #define	DEFAULT_NODEWWN(isp)	(isp)->isp_osinfo.un._wwn
 #define	DEFAULT_PORTWWN(isp)	(isp)->isp_osinfo.un._wwn
