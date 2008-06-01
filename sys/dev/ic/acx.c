@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.82 2008/04/16 18:32:15 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.83 2008/06/01 10:08:35 brad Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2502,7 +2502,7 @@ acx_join_bss(struct acx_softc *sc, uint8_t mode, struct ieee80211_node *node)
 	dtim_intvl = sc->sc_ic.ic_opmode == IEEE80211_M_IBSS ? 1 : 10;
 	sc->chip_set_bss_join_param(sc, bj->chip_spec, dtim_intvl);
 
-	bj->ndata_txrate = ACX_NDATA_TXRATE_2;
+	bj->ndata_txrate = ACX_NDATA_TXRATE_1;
 	bj->ndata_txopt = 0;
 	bj->mode = mode;
 	bj->channel = ieee80211_chan2ieee(&sc->sc_ic, node->ni_chan);
