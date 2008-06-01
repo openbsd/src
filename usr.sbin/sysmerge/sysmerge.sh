@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.7 2008/05/14 15:31:41 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.8 2008/06/01 15:07:00 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -37,11 +37,11 @@ do_pre() {
 		exit 1
 	fi
 
-	if [ -z "${SRCDIR}" -a -z "${TGZ}" ]; then
+	if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 		if [ -f "/usr/src/etc/Makefile" ]; then
 			SRCDIR=/usr/src
 		else
-			echo " *** ERROR: please specify a valid path to src or etcXX.tgz"
+			echo " *** ERROR: please specify a valid path to src or (x)etcXX.tgz"
 			exit 1
 		fi
 	fi
@@ -95,7 +95,7 @@ do_populate() {
 	IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
-		CF_DIFF=`diff -u -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf}`
+		CF_DIFF=`diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2> /dev/null`
 		if [ -z "${CF_DIFF}" ]; then
 			IGNORE_FILES="${IGNORE_FILES} ${cf}"
 		fi

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.4 2008/05/14 07:48:35 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.5 2008/06/01 15:07:00 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2008 $
+.Dd $Mdocdate: June 1 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -50,6 +50,14 @@ directory before running this script.
 .Nm
 works by comparing a temporary reference root directory
 against locally installed files.
+The reference files are created from a
+.Xr cvs 1
+source tree or a
+.Dq .tgz
+release or snapshot file.
+The default, if no source is specified on the command line,
+is to use
+.Pa /usr/src .
 All work is done under
 .Pa ${TMPDIR}/sysmerge.XXXXX
 (known as the
@@ -132,8 +140,6 @@ later manual processing.
 Specify a path to an
 .Ox
 top src directory or an etcXX.tgz tarball.
-The default is
-.Pa /usr/src .
 .It Fl x Ar xetcXX.tgz
 Specify a path to an
 xetcXX.tgz tarball.
