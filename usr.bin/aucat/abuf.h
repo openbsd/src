@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.3 2008/06/02 17:03:25 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.4 2008/06/02 17:06:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,12 @@ struct aproc;
 
 struct abuf {
 	/*
-	 * misc aproc-specific per-buffer parameters
+	 * Misc aproc-specific per-buffer parameters.
+	 * since the buffer can connect any pair of aproc structure,
+	 * each aproc must have it's own specific data. Thus we cannot 
+	 * use an union. The only exception is the xrun field, because
+	 * there can be only one aproc that absorbs xruns in any 
+	 * intput->output path.
 	 */
 	int mixvol;		/* input gain */
 	unsigned mixdone;	/* input of mixer */
@@ -32,6 +37,10 @@ struct abuf {
 	unsigned mixdrop;	/* frames mix_in() will discard */
 	unsigned subdone;	/* output if sub */
 	unsigned subdrop;	/* silence frames sub_out() will insert */ 
+#define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
+#define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
+#define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
+	unsigned xrun;		/* common to mix and sub */
 	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
 	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
 

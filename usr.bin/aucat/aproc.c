@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.4 2008/06/02 17:05:12 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.5 2008/06/02 17:06:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -388,11 +388,20 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	ocount = obuf->mixtodo;
 	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(&p->ibuflist); i = inext) {
 		inext = LIST_NEXT(i, ient);
-		if (!ABUF_ROK(i) && i->mixdone == 0) {
-			drop = obuf->mixtodo;
-			i->mixdone += drop;
-			i->mixdrop += drop;
-			DPRINTF("mix_out: xrun, drop = %u\n", i->mixdrop);
+		if (!ABUF_ROK(i)) {
+			if ((p->u.mix.flags & MIX_DROP) && i->mixdone == 0) {
+				if (i->xrun == XRUN_ERROR) {
+					mix_rm(p, i);
+					abuf_hup(i);
+					continue;
+				}
+				drop = obuf->mixtodo;
+				i->mixdone += drop;
+				if (i->xrun == XRUN_SYNC)
+					i->mixdrop += drop;
+				DPRINTF("mix_out: xrun, drop = %u\n", 
+				    i->mixdrop);
+			}
 		} else
 			mix_badd(i, obuf);
 		if (ocount > i->mixdone)
@@ -455,6 +464,7 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 	ibuf->mixdone = 0;
 	ibuf->mixdrop = 0;
 	ibuf->mixvol = ADATA_UNIT;
+	ibuf->xrun = XRUN_IGNORE;
 }
 
 void
@@ -474,6 +484,7 @@ mix_new(void)
 	struct aproc *p;
 
 	p = aproc_new(&mix_ops, "softmix");
+	p->u.mix.flags = 0;
 	return p;
 }
 
@@ -523,19 +534,26 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	done = ibuf->used;
 	for (i = LIST_FIRST(&p->obuflist); i != LIST_END(&p->obuflist); i = inext) {
 		inext = LIST_NEXT(i, oent);
-		if (!ABUF_WOK(i) && i->subdone == 0) {
-			drop = ibuf->used;
-			i->subdrop += drop;
-			i->subdone += drop;
-			DPRINTF("sub_in: xrun, drop =  %u\n", i->subdrop);
+		if (!ABUF_WOK(i)) {
+			if ((p->u.sub.flags & SUB_DROP) && i->subdone == 0) {
+				if (i->xrun == XRUN_ERROR) {
+					sub_rm(p, i);
+					abuf_eof(i);
+					continue;
+				}
+				drop = ibuf->used;
+				if (i->xrun == XRUN_SYNC)
+					i->subdrop += drop;
+				i->subdone += drop;
+				DPRINTF("sub_in: xrun, drop =  %u\n",
+				    i->subdrop);
+			}
 		} else {
 			sub_bcopy(ibuf, i);
 			abuf_flush(i);
 		}
-#ifdef sub_xrun_disabled		
 		if (!ABUF_WOK(i))
 			again = 0;
-#endif
 		if (done > i->subdone)
 			done = i->subdone;
 	}
@@ -570,7 +588,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 		memset(odata, 0, ocount);
 		obuf->used += ocount;
 		obuf->subdrop -= ocount;
-		DPRINTF("sub_out: catched, drop = %u\n", obuf->subdrop);
+		DPRINTF("sub_out: catch, drop = %u\n", obuf->subdrop);
 	}
 
 	if (obuf->subdone >= ibuf->used)
@@ -646,6 +664,7 @@ sub_newout(struct aproc *p, struct abuf *obuf)
 {
 	obuf->subdone = 0;
 	obuf->subdrop = 0;
+	obuf->xrun = XRUN_IGNORE;
 }
 
 struct aproc_ops sub_ops = {
@@ -658,6 +677,7 @@ sub_new(void)
 	struct aproc *p;
 
 	p = aproc_new(&sub_ops, "copy");
+	p->u.sub.flags = 0;
 	return p;
 }
 

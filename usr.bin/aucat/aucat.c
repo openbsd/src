@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.21 2008/06/02 17:05:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.22 2008/06/02 17:06:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -81,6 +81,7 @@
 
 int debug_level = 0;
 volatile int quit_flag = 0;
+
 /*
  * List of allowed encodings and their names.
  */
@@ -189,6 +190,18 @@ opt_hdr(void)
 	err(1, "%s: bad header specification", optarg);
 }
 
+int
+opt_xrun(void)
+{
+	if (strcmp("ignore", optarg) == 0)
+		return XRUN_IGNORE;
+	if (strcmp("sync", optarg) == 0)
+		return XRUN_SYNC;
+	if (strcmp("error", optarg) == 0)
+		return XRUN_ERROR;
+	errx(1, "%s: onderrun/overrun policy", optarg);
+}
+
 /*
  * Arguments of -i and -o opations are stored in a list.
  */
@@ -198,6 +211,7 @@ struct farg {
 	unsigned vol;		/* last requested volume */
 	char *name;		/* optarg pointer (no need to copy it */
 	int hdr;		/* header format */
+	int xrun;		/* overrun/underrun policy */
 	int fd;			/* file descriptor for I/O */
 	struct aproc *proc;	/* rpipe_xxx our wpipe_xxx */
 	struct abuf *buf;
@@ -211,7 +225,7 @@ SLIST_HEAD(farglist, farg);
  */
 void
 opt_file(struct farglist *list, 
-    struct aparams *par, unsigned vol, int hdr, char *optarg)
+    struct aparams *par, unsigned vol, int hdr, int xrun, char *optarg)
 {
 	struct farg *fa;
 	size_t namelen;
@@ -232,6 +246,7 @@ opt_file(struct farglist *list,
 		}
 	} else 
 		fa->hdr = hdr;
+	fa->xrun = xrun;
 	fa->par = *par;
 	fa->vol = vol;
 	fa->name = optarg;
@@ -345,7 +360,7 @@ int
 main(int argc, char **argv)
 {
 	struct sigaction sa;
-	int c, u_flag, quiet_flag, ohdr, ihdr;
+	int c, u_flag, quiet_flag, ohdr, ihdr, ixrun, oxrun;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar, cipar, copar;
@@ -374,15 +389,23 @@ main(int argc, char **argv)
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
 	ihdr = ohdr = HDR_AUTO;
+	ixrun = oxrun = XRUN_IGNORE;
 	ivol = ovol = MIDI_TO_ADATA(127);
 
-	while ((c = getopt(argc, argv, "c:C:e:E:r:R:h:H:i:o:f:qu")) != -1) {
+	while ((c = getopt(argc, argv, "c:C:e:E:r:R:h:H:x:X:i:o:f:qu"))
+	    != -1) {
 		switch (c) {
 		case 'h':
 			ihdr = opt_hdr();
 			break;
 		case 'H':
 			ohdr = opt_hdr();
+			break;
+		case 'x':
+			ixrun = opt_xrun();
+			break;
+		case 'X':
+			oxrun = opt_xrun();
 			break;
 		case 'c':
 			opt_ch(&ipar);
@@ -403,10 +426,10 @@ main(int argc, char **argv)
 			opt_rate(&opar);
 			break;
 		case 'i':
-			opt_file(&ifiles, &ipar, 127, ihdr, optarg);
+			opt_file(&ifiles, &ipar, 127, ihdr, ixrun, optarg);
 			break;
 		case 'o':
-			opt_file(&ofiles, &opar, 127, ohdr, optarg);
+			opt_file(&ofiles, &opar, 127, ohdr, oxrun, optarg);
 			break;
 		case 'f':
 			if (devpath)
@@ -557,8 +580,10 @@ main(int argc, char **argv)
 	 */
 	SLIST_FOREACH(fa, &ifiles, entry) {
 		newinput(fa, &cipar, cinfr, quiet_flag);
-		if (mix)
+		if (mix) {
 			aproc_setin(mix, fa->buf);
+			fa->buf->xrun = fa->xrun;
+		}
 		if (!quiet_flag) {
 			fprintf(stderr, "%s: reading ", fa->name);
 			aparams_print(&fa->par);
@@ -567,8 +592,10 @@ main(int argc, char **argv)
 	}
 	SLIST_FOREACH(fa, &ofiles, entry) {
 		newoutput(fa, &copar, confr, quiet_flag);
-		if (sub)
+		if (sub) {
 			aproc_setout(sub, fa->buf);
+			fa->buf->xrun = fa->xrun;
+		}
 		if (!quiet_flag) {
 			fprintf(stderr, "%s: writing ", fa->name);
 			aparams_print(&fa->par);
@@ -645,6 +672,10 @@ main(int argc, char **argv)
 	if (!quiet_flag)
 		fprintf(stderr, "starting device...\n");
 	dev_start(dev->fd);
+	if (mix)
+		mix->u.mix.flags |= MIX_DROP;
+	if (sub)
+		sub->u.sub.flags |= SUB_DROP;
 	while (!quit_flag) {
 		if (!file_poll())
 			break;
