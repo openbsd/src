@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.21 2008/05/29 13:53:47 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.22 2008/06/02 17:09:51 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2008 $
+.Dd $Mdocdate: June 2 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -26,7 +26,6 @@
 .Op Fl qu
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
-.Op Fl d Ar level
 .Op Fl E Ar enc
 .Op Fl e Ar enc
 .Op Fl f Ar device
@@ -36,6 +35,8 @@
 .Op Fl o Ar file
 .Op Fl R Ar rate
 .Op Fl r Ar rate
+.Op Fl X Ar policy
+.Op Fl x Ar policy
 .Ek
 .Sh DESCRIPTION
 The
@@ -57,9 +58,6 @@ The default is 0:1, i.e. stereo.
 .It Fl c Ar min : Ns Ar max
 The range of channel numbers on the input stream.
 The default is 0:1, i.e. stereo.
-.It Fl d Ar level
-The debug level:
-may be a value between 0 and 4.
 .It Fl E Ar enc
 Encoding of the output stream (see below).
 The default is signed, 16-bit, native byte order.
@@ -118,6 +116,33 @@ if this option is specified,
 it will instead use the parameters specified by the
 .Fl CcEeRr
 options.
+.It Fl X Ar policy
+Action when the output stream cannot accept
+recorded data fast enough.
+If the policy
+is
+.Ar ignore
+(the default) then samples that cannot be written are discarded.
+If the policy is
+.Ar sync
+then samples are discarded, but the same amount of silence will be written
+once the stream is unblocked, in order to reach the right position in time.
+If the policy is
+.Ar error
+then the stream is closed permanenty.
+.It Fl x Ar policy
+Action when the input stream cannot provide
+data to play fast enough.
+If the policy is
+.Ar ignore
+(the default) then silence is played.
+If the policy is
+.Ar sync
+then silence is played, but the same amount of samples will be discarded
+once the stream is unblocked, in order to reach the right position in time.
+If the policy is
+.Ar error
+then the stream is closed permanenty.
 .El
 .Pp
 Settings for input
@@ -125,10 +150,10 @@ Settings for input
 and output
 .Pq Fl o
 files can be changed using the
-.Fl CcEeHhRr
+.Fl CcEeHhRrXx
 options.
 The last
-.Fl CcEeHhRr
+.Fl CcEeHhRrXx
 option specified before an
 .Fl i
 or
@@ -283,6 +308,9 @@ will exit with an error.
 .Bl -tag -width AUDIODEVICE
 .It Ev AUDIODEVICE
 The audio device to use.
+.It Ev AUCAT_DEBUG
+The debug level:
+may be a value between 0 and 4.
 .El
 .Sh EXAMPLES
 The following command will record a stereo s16le stream at
@@ -339,8 +367,6 @@ when recording.
 .Pp
 CPU usage is the same for all conversions.
 It should be smaller for simpler ones.
-.Pp
-Buffer overruns and underruns are not handled.
 .Pp
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
