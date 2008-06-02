@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sun.c,v 1.2 2008/05/28 07:36:23 ratchov Exp $	*/
+/*	$OpenBSD: dev_sun.c,v 1.3 2008/06/02 17:08:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -202,6 +202,7 @@ void
 dev_done(int fd)
 {
 	close(fd);
+	DPRINTF("dev_done: closed\n");
 }
 
 /*

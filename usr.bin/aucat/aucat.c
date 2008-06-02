@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.22 2008/06/02 17:06:36 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.23 2008/06/02 17:08:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -359,6 +359,7 @@ sighdl(int s)
 int
 main(int argc, char **argv)
 {
+	sigset_t sigset;
 	struct sigaction sa;
 	int c, u_flag, quiet_flag, ohdr, ihdr, ixrun, oxrun;
 	struct farg *fa;
@@ -481,6 +482,12 @@ main(int argc, char **argv)
 	sa.sa_handler = sighdl;
 	if (sigaction(SIGINT, &sa, NULL) < 0)
 		err(1, "sigaction");
+
+	sigemptyset(&sigset);
+	(void)sigaddset(&sigset, SIGTSTP);
+	(void)sigaddset(&sigset, SIGCONT);
+	if (sigprocmask(SIG_BLOCK, &sigset, NULL))
+		err(1, "sigprocmask");
 	
 	file_start();
 	play = rec = mix = sub = NULL;
