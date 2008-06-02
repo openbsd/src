@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.144 2008/05/24 18:53:46 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.145 2008/06/02 17:01:13 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 		scsi_prevent(sc_link, PR_PREVENT, SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES,
@@ -229,9 +229,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE);
 
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE);
+		scsi_prevent(sc_link, PR_ALLOW, SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
