@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.361 2008/05/29 09:08:08 robert Exp $
+$OpenBSD: usbdevs,v 1.362 2008/06/02 12:05:40 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1280,6 +1280,15 @@ product FTDI ATK16C		0xdf30	ATK-16C Camera
 product FTDI ATK16HR		0xdf30	ATK-16HR Camera
 product FTDI ATK16HRC		0xdf30	ATK-16HRC Camera
 product FTDI YEI_SC31		0xe050	ServoCenter3.1
+product FTDI ELV_FHZ1300PC	0xe0e8	FHZ 1300 PC
+product FTDI ELV_WS500		0xe0e9	WS 500
+product FTDI ELV_EM1010PC	0xe0ef	EM 1010 PC
+product FTDI ELV_CSI8		0xe0f0	CSI 8
+product FTDI ELV_EM1000DL	0xe0f1	EM 1000 DL
+product FTDI ELV_PCK100		0xe0f2	PCK 100
+product FTDI ELV_RFP500		0xe0f3	RFP 500
+product FTDI ELV_FS20SIG	0xe0f4	FS 20 SIG
+product FTDI ELV_WS300PC	0xe0f6	WS 300 PC
 product FTDI ECO_PRO		0xe520	EVER Eco Pro UPS
 product FTDI ACTROBOTS		0xe548	Active Robots comms
 product FTDI PYRAMID		0xe6c8	Pyramid Display
@@ -1312,6 +1321,12 @@ product FTDI MHAM_IC		0xeeec	IC
 product FTDI MHAM_DB9		0xeeed	DB9
 product FTDI MHAM_RS232		0xeeee	RS232
 product FTDI MHAM_Y9		0xeeef	Y9
+product FTDI ELV_UAD8		0xf068	UAD 8
+product FTDI ELV_UAD7		0xf069	UAD 7
+product FTDI ELV_USI2		0xf06a	USI 2
+product FTDI ELV_T1100		0xf06b	T 1100
+product FTDI ELV_PCD200		0xf06c	PCD 200
+product FTDI ELV_ULA200		0xf06d	ULA 200
 product FTDI ELV_ALC8500	0xf06e	ALC 8500 Expert
 product FTDI ELV_FHZ1000PC	0xf06f	FHZ 1000 PC
 product	FTDI PERLE_UP		0xf0c0	UltraPort
@@ -1340,8 +1355,13 @@ product FTDI PCDJ_DAC2		0xfa88	DAC-2
 product FTDI ACCESSO		0xfad0	Accesso reader
 product FTDI THORLABS		0xfaf0	Serial
 product FTDI ELV_UR100		0xfb58	UR 100
+product FTDI ELV_CLI7000	0xfb59	CLI 7000
 product FTDI ELV_UM100		0xfb5a	UM 100
 product FTDI ELV_UO100		0xfb5b	UO 100
+product FTDI ELV_PPS7330	0xfb5c	PPS 7330
+product FTDI ELV_TFM100		0xfb5d	TFM 100
+product FTDI ELV_UDF77		0xfb5e	UDF 77
+product FTDI ELV_UIO88		0xfb5f	UIO 88
 product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
 product FTDI LCD_CFA_634	0xfc09  Crystalfontz CFA-634 LCD
 product FTDI LCD_CFA_547	0xfc0a	Crystalfontz CFA-547 LCD
