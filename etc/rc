@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.313 2008/05/07 11:58:14 claudio Exp $
+#	$OpenBSD: rc,v 1.314 2008/06/02 16:33:39 jasper Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -531,7 +531,7 @@ if [ -f /sbin/ldconfig ]; then
 fi
 
 if [ -x /usr/libexec/vi.recover ]; then
-	echo 'preserving editor files';	/usr/libexec/vi.recover
+	echo 'preserving editor files.';	/usr/libexec/vi.recover
 fi
 
 if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
