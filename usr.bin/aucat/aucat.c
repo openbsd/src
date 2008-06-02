@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.20 2008/06/02 17:05:12 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.21 2008/06/02 17:05:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -356,13 +356,14 @@ main(int argc, char **argv)
 	struct aproc *rec, *play, *mix, *sub, *conv;
 	struct file *dev, *f;
 	struct abuf *buf, *cbuf;
+	const char *errstr;
 	int fd;
 
 	dbgenv = getenv("AUCAT_DEBUG");
 	if (dbgenv) {
-		if (sscanf(dbgenv, "%u", &debug_level) != 1 ||
-		    debug_level > 4)
-			err(1, "%s: not an integer in the 0..4 range", dbgenv);
+		debug_level = strtonum(dbgenv, 0, 4, &errstr);
+		if (errstr)
+			errx(1, "AUCAT_DEBUG is %s: %s", errstr, dbgenv);
 	}
 
 	aparams_init(&ipar, 0, 1, 44100);
