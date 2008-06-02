@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.3 2008/06/02 17:03:25 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.4 2008/06/02 17:05:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,9 +104,6 @@ rpipe_in(struct aproc *p, struct abuf *ibuf_dummy)
 	unsigned char *data;
 	unsigned count;
 
-	if (!(f->state & FILE_RFLOW) && ABUF_FULL(obuf))
-		errx(1, "%s: overrun, unimplemented", f->name);
-
 	if (ABUF_FULL(obuf))
 		return 0;
 	data = abuf_wgetblk(obuf, &count, 0);
@@ -167,7 +164,6 @@ rpipe_new(struct file *f)
 	p->u.io.file = f;
 	f->rproc = p;
 	f->events |= POLLIN;
-	f->state |= FILE_RFLOW;
 	return p;
 }
 
@@ -207,9 +203,6 @@ wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
 	struct file *f = p->u.io.file;
 	unsigned char *data;
 	unsigned count;
-
-	if (!(f->state & FILE_WFLOW) && ABUF_EMPTY(ibuf))
-		errx(1, "%s: underrun, unimplemented", f->name);
 
 	if (ABUF_EMPTY(ibuf))
 		return 0;
@@ -256,7 +249,6 @@ wpipe_new(struct file *f)
 	p->u.io.file = f;
 	f->wproc = p;
 	f->events |= POLLOUT;
-	f->state |= FILE_WFLOW;
 	return p;
 }
 

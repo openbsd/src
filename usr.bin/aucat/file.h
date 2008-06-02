@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.2 2008/06/02 17:05:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,8 +36,6 @@ struct file {
 #define FILE_WOK	0x2		/* file writable */
 #define FILE_EOF	0x4		/* eof on the read end */
 #define FILE_HUP	0x8		/* eof on the write end */
-#define FILE_RFLOW	0x10		/* has flow control on read() */
-#define FILE_WFLOW	0x20		/* has flow control on write() */
 	int state;			/* one of above */
 	char *name;			/* for debug purposes */
 	struct aproc *rproc, *wproc;	/* reader and/or writer */
