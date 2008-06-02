@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.28 2008/05/28 13:33:44 pyr Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.29 2008/06/02 09:42:22 yuo Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -255,6 +255,14 @@ umsm_detach(struct device *self, int flags)
 {
 	struct umsm_softc *sc = (struct umsm_softc *)self;
 	int rv = 0;
+
+	/* close the interrupt endpoint if that is opened */
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
+		free(sc->sc_intr_buf, M_USBDEV);
+		sc->sc_intr_pipe = NULL;
+	}
 
 	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
