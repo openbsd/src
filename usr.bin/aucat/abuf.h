@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.2 2008/05/25 21:16:37 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.3 2008/06/02 17:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,7 +29,9 @@ struct abuf {
 	int mixvol;		/* input gain */
 	unsigned mixdone;	/* input of mixer */
 	unsigned mixtodo;	/* output of mixer */
+	unsigned mixdrop;	/* frames mix_in() will discard */
 	unsigned subdone;	/* output if sub */
+	unsigned subdrop;	/* silence frames sub_out() will insert */ 
 	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
 	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.2 2008/05/25 21:16:37 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.3 2008/06/02 17:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -332,11 +332,26 @@ int
 mix_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
-	unsigned ocount;
+	unsigned icount, ocount;
 
 	DPRINTFN(4, "mix_in: used = %u, done = %u, zero = %u\n",
 	    ibuf->used, ibuf->mixdone, obuf->mixtodo);
 
+	/* 
+	 * discard data already sent as silence
+	 */
+	if (ibuf->mixdrop > 0) {
+		icount = ibuf->mixdrop;
+		if (icount > ibuf->used)
+			icount = ibuf->used;
+		ibuf->used -= icount;
+		ibuf->start += icount;
+		if (ibuf->start >= ibuf->len)
+			ibuf->start -= ibuf->len;
+		ibuf->mixdrop -= icount;
+		DPRINTF("mix_in: catched xruns, drop = %u\n", ibuf->mixdrop);
+	}
+		
 	if (ibuf->mixdone >= obuf->mixtodo)
 		return 0;
 	mix_badd(ibuf, obuf);
@@ -372,20 +387,22 @@ int
 mix_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *i, *inext;
-	unsigned ocount;
+	unsigned ocount, drop;
 
 	DPRINTFN(4, "mix_out: used = %u, zero = %u\n",
 	    obuf->used, obuf->mixtodo);
 
-	/*
-	 * XXX: should handle underruns here, currently if one input is
-	 * blocked, then the output block can underrun.
-	 */
 	mix_bzero(p);
 	ocount = obuf->mixtodo;
 	for (i = LIST_FIRST(&p->ibuflist); i != LIST_END(&p->ibuflist); i = inext) {
 		inext = LIST_NEXT(i, ient);
-		mix_badd(i, obuf);
+		if (!ABUF_ROK(i) && i->mixdone == 0) {
+			drop = obuf->mixtodo;
+			i->mixdone += drop;
+			i->mixdrop += drop;
+			DPRINTF("mix_out: xrun, drop = %u\n", i->mixdrop);
+		} else
+			mix_badd(i, obuf);
 		if (ocount > i->mixdone)
 			ocount = i->mixdone;
 		if (ABUF_EOF(i)) {
@@ -444,6 +461,7 @@ void
 mix_newin(struct aproc *p, struct abuf *ibuf)
 {
 	ibuf->mixdone = 0;
+	ibuf->mixdrop = 0;
 	ibuf->mixvol = ADATA_UNIT;
 }
 
@@ -506,19 +524,26 @@ int
 sub_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext;
-	unsigned done;
+	unsigned done, drop;
 	int again;
 
 	again = 1;
 	done = ibuf->used;
 	for (i = LIST_FIRST(&p->obuflist); i != LIST_END(&p->obuflist); i = inext) {
 		inext = LIST_NEXT(i, oent);
-		if (ABUF_WOK(i)) {
+		if (!ABUF_WOK(i) && i->subdone == 0) {
+			drop = ibuf->used;
+			i->subdrop += drop;
+			i->subdone += drop;
+			DPRINTF("sub_in: xrun, drop =  %u\n", i->subdrop);
+		} else {
 			sub_bcopy(ibuf, i);
 			abuf_flush(i);
 		}
+#ifdef sub_xrun_disabled		
 		if (!ABUF_WOK(i))
 			again = 0;
+#endif
 		if (done > i->subdone)
 			done = i->subdone;
 	}
@@ -537,7 +562,24 @@ sub_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	struct abuf *i, *inext;
+	unsigned char *odata;
+	unsigned ocount;
 	unsigned done;
+
+	/*
+	 * generate silence for dropped samples
+	 */
+	while (obuf->subdrop > 0) {
+		odata = abuf_wgetblk(obuf, &ocount, 0);
+		if (ocount >= obuf->subdrop)
+			ocount = obuf->subdrop;
+		if (ocount == 0)
+			break;
+		memset(odata, 0, ocount);
+		obuf->used += ocount;
+		obuf->subdrop -= ocount;
+		DPRINTF("sub_out: catched, drop = %u\n", obuf->subdrop);
+	}
 
 	if (obuf->subdone >= ibuf->used)
 		return 0;
@@ -611,6 +653,7 @@ void
 sub_newout(struct aproc *p, struct abuf *obuf)
 {
 	obuf->subdone = 0;
+	obuf->subdrop = 0;
 }
 
 struct aproc_ops sub_ops = {
