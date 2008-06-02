@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.58 2008/05/24 23:31:37 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.59 2008/06/02 19:39:08 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -657,7 +657,6 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	    ih->ih_pil));
 
 	intr_establish(ipl, ih);
-	*(ih->ih_map) |= INTMAP_V;
 }
 
 /*
