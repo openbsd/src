@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.11 2007/03/26 23:36:26 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.12 2008/06/02 23:31:33 jmc Exp $
 
 =head1 NAME
 
@@ -46,7 +46,7 @@ For the time being, it can only handle the USTAR archive format.
 
 A filehandle C<$fh> is associated with an C<OpenBSD::Ustar> object through
 C<new>. For archive reading, the filehandle should support 
-C<read>. C<OpenBSD::UStar> does not rely on C<seek> or C<rewind> in order 
+C<read>. C<OpenBSD::Ustar> does not rely on C<seek> or C<rewind> in order 
 to be usable on pipe outputs. For archive writing, the filehandle should 
 support C<print>.
 
