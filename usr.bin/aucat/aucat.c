@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.18 2008/05/26 08:32:11 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.19 2008/06/02 17:04:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -351,12 +351,19 @@ main(int argc, char **argv)
 	struct aparams ipar, opar, dipar, dopar, cipar, copar;
 	unsigned ivol, ovol;
 	unsigned dinfr, donfr, cinfr, confr;
-	char *devpath;
+	char *devpath, *dbgenv;
 	unsigned n;
 	struct aproc *rec, *play, *mix, *sub, *conv;
 	struct file *dev, *f;
 	struct abuf *buf, *cbuf;
 	int fd;
+
+	dbgenv = getenv("AUCAT_DEBUG");
+	if (dbgenv) {
+		if (sscanf(dbgenv, "%u", &debug_level) != 1 ||
+		    debug_level > 4)
+			err(1, "%s: not an integer in the 0..4 range", dbgenv);
+	}
 
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
@@ -368,14 +375,8 @@ main(int argc, char **argv)
 	ihdr = ohdr = HDR_AUTO;
 	ivol = ovol = MIDI_TO_ADATA(127);
 
-	while ((c = getopt(argc, argv, "d:c:C:e:E:r:R:h:H:i:o:f:qu")) != -1) {
+	while ((c = getopt(argc, argv, "c:C:e:E:r:R:h:H:i:o:f:qu")) != -1) {
 		switch (c) {
-		case 'd':
-			if (sscanf(optarg, "%u", &debug_level) != 1 ||
-			    debug_level > 4)
-				err(1, "%s: not an integer in the 0..4 range",
-				    optarg);
-			break;
 		case 'h':
 			ihdr = opt_hdr();
 			break;
