@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.45 2008/04/10 13:18:07 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.46 2008/06/02 15:43:59 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -435,8 +435,10 @@ struct scsi_mode_header_big {
 union scsi_mode_sense_buf {
 	struct scsi_mode_header hdr;
 	struct scsi_mode_header_big hdr_big;
-	u_char buf[255];	/* 256 bytes breaks some devices. */
-} __packed;			/* Ensure sizeof() is 255! */
+	u_char buf[254];	/* 255 & 256 bytes breaks some devices. */
+				/* ahci doesn't like 255, various don't like */
+				/* 256 because length must fit in 8 bits. */
+} __packed;			/* Ensure sizeof() is 254! */
 
 struct scsi_report_luns_data {
 	u_int8_t length[4];	/* length of LUN inventory, in bytes */
