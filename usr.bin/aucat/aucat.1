@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.22 2008/06/02 17:09:51 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.23 2008/06/02 23:18:28 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -78,25 +78,11 @@ File format of the input stream (see below).
 The default is auto.
 .It Fl i Ar file
 Add this file to the list of files to play.
-The format of the file is specified by the last
-.Fl c ,
-.Fl e ,
-.Fl h ,
-and
-.Fl r
-options.
 If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
-The format of the file is specified by the last
-.Fl C ,
-.Fl E ,
-.Fl H ,
-and
-.Fl R
-options.
 If the option argument is
 .Sq -
 then standard output will be used.
@@ -121,28 +107,28 @@ Action when the output stream cannot accept
 recorded data fast enough.
 If the policy
 is
-.Ar ignore
+.Dq ignore
 (the default) then samples that cannot be written are discarded.
 If the policy is
-.Ar sync
+.Dq sync
 then samples are discarded, but the same amount of silence will be written
 once the stream is unblocked, in order to reach the right position in time.
 If the policy is
-.Ar error
-then the stream is closed permanenty.
+.Dq error
+then the stream is closed permanently.
 .It Fl x Ar policy
 Action when the input stream cannot provide
 data to play fast enough.
 If the policy is
-.Ar ignore
+.Dq ignore
 (the default) then silence is played.
 If the policy is
-.Ar sync
+.Dq sync
 then silence is played, but the same amount of samples will be discarded
 once the stream is unblocked, in order to reach the right position in time.
 If the policy is
-.Ar error
-then the stream is closed permanenty.
+.Dq error
+then the stream is closed permanently.
 .El
 .Pp
 Settings for input
@@ -154,11 +140,11 @@ files can be changed using the
 options.
 The last
 .Fl CcEeHhRrXx
-option specified before an
+options specified before an
 .Fl i
 or
 .Fl o
-is applied to
+are applied to
 .Ar file .
 .Pp
 Settings for the audio device
