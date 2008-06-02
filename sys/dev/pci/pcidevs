@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1373 2008/06/01 21:13:54 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1374 2008/06/02 03:45:52 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1579,11 +1579,40 @@ product EFFICIENTNETS SS1023	0x1023	SpeedStream 1023
 product ELSA QS1PCI		0x1000	QuickStep 1000 ISDN
 
 /* Emulex products */
-product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
+product EMULEX LPFC		0x10df	Light Pulse FibreChannel
+product EMULEX LP6000		0x1ae5	Light Pulse 6000
+product EMULEX LPE121		0xf011	Light Pulse e 121
+product EMULEX LPE1250		0xf015	Light Pulse e 1250
+product EMULEX LP952		0xf095	Light Pulse 952
 product EMULEX LP982		0xf098	Light Pulse 982
+product EMULEX LP101		0xf0a1	Light Pulse 101
+product EMULEX LP1050		0xf0a5	Light Pulse 1050
+product EMULEX LP111		0xf0d1	Light Pulse 111
+product EMULEX LP1150		0xf0d5	Light Pulse 1150
+product EMULEX LPE111		0xf0e1	Light Pulse e 111
+product EMULEX LPE1150		0xf0e5	Light Pulse e 1150
+product EMULEX LPE1000		0xf0f5	Light Pulse e 1000
+product EMULEX LPE1000_SP	0xf0f6	Light Pulse e 1000-SP
+product EMULEX LPE1002_SP	0xf0f7	Light Pulse e 1002-SP
+product EMULEX LPE12000		0xf100	Light Pulse e 12000
+product EMULEX LPE12000_SP	0xf111	Light Pulse e 12000-SP
+product EMULEX LPE12002_SP	0xf112	Light Pulse e 12002-SP
+product EMULEX LP7000		0xf700	Light Pulse 7000
 product EMULEX LP8000		0xf800	Light Pulse 8000
 product EMULEX LP9000		0xf900	Light Pulse 9000
+product EMULEX LP9802		0xf980	Light Pulse 9802
 product EMULEX LP10000		0xfa00	Light Pulse 10000
+product EMULEX LPX10000		0xfb00	Light Pulse X 10000
+product EMULEX LP10000_S	0xfc00	Light Pulse 10000-S
+product EMULEX LP11000_S	0xfc10	Light Pulse 11000-S
+product EMULEX LPE11000_S	0xfc20	Light Pulse e 11000-S
+product EMULEX LPE12000_S	0xfc40	Light Pulse e 12000-S
+product EMULEX LP11000		0xfd00	Light Pulse 11000
+product EMULEX LP11000_SP	0xfd11	Light Pulse 11000-SP
+product EMULEX LP11002_SP	0xfd12	Light Pulse 11002-SP
+product EMULEX LPE11000		0xfe00	Light Pulse e 11000
+product EMULEX LPE11000_SP	0xfe11	Light Pulse e 11000-SP
+product EMULEX LPE11002_SP	0xfe12	Light Pulse e 11002-SP
 
 /* Endace Measurement Systems */
 product ENDACE DAG35		0x3500	Endace Dag3.5
@@ -3734,13 +3763,20 @@ product QLOGIC ISP2312		0x2312	ISP2312
 product QLOGIC ISP2322		0x2322	ISP2322
 product QLOGIC ISP2422		0x2422	ISP2422
 product QLOGIC ISP2432		0x2432	ISP2432
+product QLOGIC ISP2512		0x2512	ISP2512
+product QLOGIC ISP2522		0x2522	ISP2522
+product QLOGIC ISP2532		0x2532	ISP2532
+product QLOGIC ISP4010_TOE	0x3010	ISP4010 iSCSI TOE
+product QLOGIC ISP4022_TOE	0x3022	ISP4022 iSCSI TOE
+product QLOGIC ISP4032_TOE	0x3032	ISP4032 iSCSI TOE
+product QLOGIC ISP4010_HBA	0x4010	ISP4010 iSCSI HBA
+product QLOGIC ISP4022_HBA	0x4022	ISP4022 iSCSI HBA
+product QLOGIC ISP4032_HBA	0x4032	ISP4032 iSCSI HBA
+product QLOGIC ISP5422		0x5422	ISP5422
+product QLOGIC ISP5432		0x5432	ISP5432
 product QLOGIC ISP6312		0x6312	ISP6312
 product QLOGIC ISP6322		0x6322	ISP6322
-product QLOGIC ISP4010_TOE	0x3010	ISP4010 iSCSI TOE
-product QLOGIC ISP4010_HBA	0x4010	ISP4010 iSCSI HBA
-product QLOGIC ISP4022_TOE	0x3022	ISP4022 iSCSI TOE
-product QLOGIC ISP4022_HBA	0x4022	ISP4022 iSCSI HBA
-product QLOGIC ISP6312		0x6312	ISP6312
+product QLOGIC ISP8432		0x8432	ISP8432
 
 /* Quancom products */
 product QUANCOM PWDOG1		0x0010	PWDOG1
