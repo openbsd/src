@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.78 2008/04/12 20:37:36 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.79 2008/06/02 15:42:21 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ struct swapdev {
 #ifdef UVM_SWAP_ENCRYPT
 #define SWD_KEY_SHIFT		7		/* One key per 0.5 MByte */
 #define SWD_KEY(x,y)		&((x)->swd_keys[((y) - (x)->swd_drumoffset) >> SWD_KEY_SHIFT])
+#define	SWD_KEY_SIZE(x)	(((x) + (1 << SWD_KEY_SHIFT) - 1) >> SWD_KEY_SHIFT)
 
 #define SWD_DCRYPT_SHIFT	5
 #define SWD_DCRYPT_BITS		32
@@ -349,7 +350,7 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	 */
 	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP,
 	    M_WAITOK|M_ZERO);
-	sdp->swd_keys = malloc((npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key),
+	sdp->swd_keys = malloc(SWD_KEY_SIZE(npages) * sizeof(struct swap_key),
 	    M_VMSWAP, M_WAITOK|M_ZERO);
 }
 
@@ -457,7 +458,7 @@ uvm_swap_finicrypt_all(void)
 				continue;
 
 			nkeys = dbtob((uint64_t)sdp->swd_nblks) >> PAGE_SHIFT;
-			key = sdp->swd_keys + ((nkeys  >> SWD_KEY_SHIFT) - 1);
+			key = sdp->swd_keys + (SWD_KEY_SIZE(nkeys) - 1);
 			do {
 				if (key->refcount != 0)
 					swap_key_delete(key);
