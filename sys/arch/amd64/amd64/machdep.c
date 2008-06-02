@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2008/05/23 15:39:43 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2008/06/02 11:46:19 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1561,6 +1561,12 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_idt();
 
+	intr_default_setup();
+
+	softintr_init();
+	splraise(IPL_IPI);
+	enable_intr();
+
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
@@ -1574,12 +1580,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-	intr_default_setup();
-
-	softintr_init();
-	splraise(IPL_IPI);
-	enable_intr();
 
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
