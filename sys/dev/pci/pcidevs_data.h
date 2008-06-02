@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1373 2008/06/01 21:13:54 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1374 2008/06/02 03:45:52 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4352,12 +4352,80 @@ static const struct pci_known_product pci_known_products[] = {
 	    "QuickStep 1000 ISDN",
 	},
 	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPFC,
 	    "Light Pulse FibreChannel",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000,
+	    "Light Pulse 6000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE121,
+	    "Light Pulse e 121",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1250,
+	    "Light Pulse e 1250",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP952,
+	    "Light Pulse 952",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
 	    "Light Pulse 982",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP101,
+	    "Light Pulse 101",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP1050,
+	    "Light Pulse 1050",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP111,
+	    "Light Pulse 111",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP1150,
+	    "Light Pulse 1150",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE111,
+	    "Light Pulse e 111",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1150,
+	    "Light Pulse e 1150",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1000,
+	    "Light Pulse e 1000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1000_SP,
+	    "Light Pulse e 1000-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1002_SP,
+	    "Light Pulse e 1002-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000,
+	    "Light Pulse e 12000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000_SP,
+	    "Light Pulse e 12000-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12002_SP,
+	    "Light Pulse e 12002-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP7000,
+	    "Light Pulse 7000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
@@ -4368,8 +4436,56 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Light Pulse 9000",
 	},
 	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
+	    "Light Pulse 9802",
+	},
+	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP10000,
 	    "Light Pulse 10000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPX10000,
+	    "Light Pulse X 10000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP10000_S,
+	    "Light Pulse 10000-S",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000_S,
+	    "Light Pulse 11000-S",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000_S,
+	    "Light Pulse e 11000-S",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000_S,
+	    "Light Pulse e 12000-S",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000,
+	    "Light Pulse 11000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000_SP,
+	    "Light Pulse 11000-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11002_SP,
+	    "Light Pulse 11002-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000,
+	    "Light Pulse e 11000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000_SP,
+	    "Light Pulse e 11000-SP",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11002_SP,
+	    "Light Pulse e 11002-SP",
 	},
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG35,
@@ -12052,6 +12168,50 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISP2432",
 	},
 	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2512,
+	    "ISP2512",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2522,
+	    "ISP2522",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2532,
+	    "ISP2532",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4010_TOE,
+	    "ISP4010 iSCSI TOE",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4022_TOE,
+	    "ISP4022 iSCSI TOE",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4032_TOE,
+	    "ISP4032 iSCSI TOE",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4010_HBA,
+	    "ISP4010 iSCSI HBA",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4022_HBA,
+	    "ISP4022 iSCSI HBA",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4032_HBA,
+	    "ISP4032 iSCSI HBA",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP5422,
+	    "ISP5422",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP5432,
+	    "ISP5432",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312,
 	    "ISP6312",
 	},
@@ -12060,24 +12220,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISP6322",
 	},
 	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4010_TOE,
-	    "ISP4010 iSCSI TOE",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4010_HBA,
-	    "ISP4010 iSCSI HBA",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4022_TOE,
-	    "ISP4022 iSCSI TOE",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP4022_HBA,
-	    "ISP4022 iSCSI HBA",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312,
-	    "ISP6312",
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP8432,
+	    "ISP8432",
 	},
 	{
 	    PCI_VENDOR_QUANCOM, PCI_PRODUCT_QUANCOM_PWDOG1,
