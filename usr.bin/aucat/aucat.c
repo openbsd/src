@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.23 2008/06/02 17:08:11 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.24 2008/06/02 17:08:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -664,15 +664,16 @@ main(int argc, char **argv)
 	if (play != NULL) {
 		if (!quiet_flag)
 			fprintf(stderr, "filling buffers...\n");
+		buf = LIST_FIRST(&play->ibuflist);
 		while (!quit_flag) {
 			/* no more devices to poll */
 			if (!file_poll())
 				break;
-			/* device is blocked */
-			if (dev->events & POLLOUT)
-				break;
 			/* eof */
 			if (dev->state & FILE_EOF)
+				break;
+			/* device is blocked and play buffer is full */
+			if ((dev->events & POLLOUT) && !ABUF_WOK(buf))
 				break;
 		}
 	}
