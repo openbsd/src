@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.23 2008/06/02 23:18:28 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.24 2008/06/02 23:38:05 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -291,12 +291,12 @@ If the device does not support the encoding,
 .Nm
 will exit with an error.
 .Sh ENVIRONMENT
-.Bl -tag -width AUDIODEVICE
-.It Ev AUDIODEVICE
-The audio device to use.
+.Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUCAT_DEBUG
 The debug level:
 may be a value between 0 and 4.
+.It Ev AUDIODEVICE
+The audio device to use.
 .El
 .Sh EXAMPLES
 The following command will record a stereo s16le stream at
