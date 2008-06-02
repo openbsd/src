@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.6 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.7 2008/06/02 15:30:35 jcs Exp $ */
 
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
@@ -66,6 +66,7 @@
 #define	THINKPAD_LID_CLOSED		0x002
 #define	THINKPAD_TABLET_SCREEN_NORMAL	0x00a
 #define	THINKPAD_TABLET_SCREEN_ROTATED	0x009
+#define	THINKPAD_BRIGHTNESS_CHANGED	0x010
 #define	THINKPAD_TABLET_PEN_INSERTED	0x00b
 #define	THINKPAD_TABLET_PEN_REMOVED	0x00c
 
@@ -279,10 +280,11 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case 5:
 			switch (event) {
-			case THINKPAD_TABLET_SCREEN_NORMAL:
-			case THINKPAD_TABLET_SCREEN_ROTATED:
 			case THINKPAD_LID_OPEN:
 			case THINKPAD_LID_CLOSED:
+			case THINKPAD_TABLET_SCREEN_NORMAL:
+			case THINKPAD_TABLET_SCREEN_ROTATED:
+			case THINKPAD_BRIGHTNESS_CHANGED:
 			case THINKPAD_TABLET_PEN_INSERTED:
 			case THINKPAD_TABLET_PEN_REMOVED:
 				handled = 1;
