@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1374 2008/06/02 03:45:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1375 2008/06/03 03:25:12 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4353,139 +4353,139 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPFC,
-	    "Light Pulse FibreChannel",
+	    "LPFC",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000,
-	    "Light Pulse 6000",
+	    "LP6000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE121,
-	    "Light Pulse e 121",
+	    "LPe121",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1250,
-	    "Light Pulse e 1250",
+	    "LPe1250",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP952,
-	    "Light Pulse 952",
+	    "LP952",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
-	    "Light Pulse 982",
+	    "LP982",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP101,
-	    "Light Pulse 101",
+	    "LP101",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP1050,
-	    "Light Pulse 1050",
+	    "LP1050",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP111,
-	    "Light Pulse 111",
+	    "LP111",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP1150,
-	    "Light Pulse 1150",
+	    "LP1150",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE111,
-	    "Light Pulse e 111",
+	    "LPe111",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1150,
-	    "Light Pulse e 1150",
+	    "LPe1150",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1000,
-	    "Light Pulse e 1000",
+	    "LPe1000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1000_SP,
-	    "Light Pulse e 1000-SP",
+	    "LPe1000-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE1002_SP,
-	    "Light Pulse e 1002-SP",
+	    "LPe1002-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000,
-	    "Light Pulse e 12000",
+	    "LPe12000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000_SP,
-	    "Light Pulse e 12000-SP",
+	    "LPe12000-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12002_SP,
-	    "Light Pulse e 12002-SP",
+	    "LPe12002-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP7000,
-	    "Light Pulse 7000",
+	    "LP7000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
-	    "Light Pulse 8000",
+	    "LP8000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9000,
-	    "Light Pulse 9000",
+	    "LP9000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
-	    "Light Pulse 9802",
+	    "LP9802",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP10000,
-	    "Light Pulse 10000",
+	    "LP10000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPX10000,
-	    "Light Pulse X 10000",
+	    "LPX10000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP10000_S,
-	    "Light Pulse 10000-S",
+	    "LP10000-S",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000_S,
-	    "Light Pulse 11000-S",
+	    "LP11000-S",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000_S,
-	    "Light Pulse e 11000-S",
+	    "LPe11000-S",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE12000_S,
-	    "Light Pulse e 12000-S",
+	    "LPe12000-S",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000,
-	    "Light Pulse 11000",
+	    "LP11000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11000_SP,
-	    "Light Pulse 11000-SP",
+	    "LP11000-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP11002_SP,
-	    "Light Pulse 11002-SP",
+	    "LP11002-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000,
-	    "Light Pulse e 11000",
+	    "LPe11000",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11000_SP,
-	    "Light Pulse e 11000-SP",
+	    "LPe11000-SP",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE11002_SP,
-	    "Light Pulse e 11002-SP",
+	    "LPe11002-SP",
 	},
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG35,
@@ -7974,10 +7974,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21154,
 	    "S21154AE/BE PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TURBOMEM,
-	    "Intel Turbo Memory",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
