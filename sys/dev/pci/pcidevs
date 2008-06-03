@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1374 2008/06/02 03:45:52 brad Exp $
+$OpenBSD: pcidevs,v 1.1375 2008/06/03 03:25:12 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1579,40 +1579,40 @@ product EFFICIENTNETS SS1023	0x1023	SpeedStream 1023
 product ELSA QS1PCI		0x1000	QuickStep 1000 ISDN
 
 /* Emulex products */
-product EMULEX LPFC		0x10df	Light Pulse FibreChannel
-product EMULEX LP6000		0x1ae5	Light Pulse 6000
-product EMULEX LPE121		0xf011	Light Pulse e 121
-product EMULEX LPE1250		0xf015	Light Pulse e 1250
-product EMULEX LP952		0xf095	Light Pulse 952
-product EMULEX LP982		0xf098	Light Pulse 982
-product EMULEX LP101		0xf0a1	Light Pulse 101
-product EMULEX LP1050		0xf0a5	Light Pulse 1050
-product EMULEX LP111		0xf0d1	Light Pulse 111
-product EMULEX LP1150		0xf0d5	Light Pulse 1150
-product EMULEX LPE111		0xf0e1	Light Pulse e 111
-product EMULEX LPE1150		0xf0e5	Light Pulse e 1150
-product EMULEX LPE1000		0xf0f5	Light Pulse e 1000
-product EMULEX LPE1000_SP	0xf0f6	Light Pulse e 1000-SP
-product EMULEX LPE1002_SP	0xf0f7	Light Pulse e 1002-SP
-product EMULEX LPE12000		0xf100	Light Pulse e 12000
-product EMULEX LPE12000_SP	0xf111	Light Pulse e 12000-SP
-product EMULEX LPE12002_SP	0xf112	Light Pulse e 12002-SP
-product EMULEX LP7000		0xf700	Light Pulse 7000
-product EMULEX LP8000		0xf800	Light Pulse 8000
-product EMULEX LP9000		0xf900	Light Pulse 9000
-product EMULEX LP9802		0xf980	Light Pulse 9802
-product EMULEX LP10000		0xfa00	Light Pulse 10000
-product EMULEX LPX10000		0xfb00	Light Pulse X 10000
-product EMULEX LP10000_S	0xfc00	Light Pulse 10000-S
-product EMULEX LP11000_S	0xfc10	Light Pulse 11000-S
-product EMULEX LPE11000_S	0xfc20	Light Pulse e 11000-S
-product EMULEX LPE12000_S	0xfc40	Light Pulse e 12000-S
-product EMULEX LP11000		0xfd00	Light Pulse 11000
-product EMULEX LP11000_SP	0xfd11	Light Pulse 11000-SP
-product EMULEX LP11002_SP	0xfd12	Light Pulse 11002-SP
-product EMULEX LPE11000		0xfe00	Light Pulse e 11000
-product EMULEX LPE11000_SP	0xfe11	Light Pulse e 11000-SP
-product EMULEX LPE11002_SP	0xfe12	Light Pulse e 11002-SP
+product EMULEX LPFC		0x10df	LPFC
+product EMULEX LP6000		0x1ae5	LP6000
+product EMULEX LPE121		0xf011	LPe121
+product EMULEX LPE1250		0xf015	LPe1250
+product EMULEX LP952		0xf095	LP952
+product EMULEX LP982		0xf098	LP982
+product EMULEX LP101		0xf0a1	LP101
+product EMULEX LP1050		0xf0a5	LP1050
+product EMULEX LP111		0xf0d1	LP111
+product EMULEX LP1150		0xf0d5	LP1150
+product EMULEX LPE111		0xf0e1	LPe111
+product EMULEX LPE1150		0xf0e5	LPe1150
+product EMULEX LPE1000		0xf0f5	LPe1000
+product EMULEX LPE1000_SP	0xf0f6	LPe1000-SP
+product EMULEX LPE1002_SP	0xf0f7	LPe1002-SP
+product EMULEX LPE12000		0xf100	LPe12000
+product EMULEX LPE12000_SP	0xf111	LPe12000-SP
+product EMULEX LPE12002_SP	0xf112	LPe12002-SP
+product EMULEX LP7000		0xf700	LP7000
+product EMULEX LP8000		0xf800	LP8000
+product EMULEX LP9000		0xf900	LP9000
+product EMULEX LP9802		0xf980	LP9802
+product EMULEX LP10000		0xfa00	LP10000
+product EMULEX LPX10000		0xfb00	LPX10000
+product EMULEX LP10000_S	0xfc00	LP10000-S
+product EMULEX LP11000_S	0xfc10	LP11000-S
+product EMULEX LPE11000_S	0xfc20	LPe11000-S
+product EMULEX LPE12000_S	0xfc40	LPe12000-S
+product EMULEX LP11000		0xfd00	LP11000
+product EMULEX LP11000_SP	0xfd11	LP11000-SP
+product EMULEX LP11002_SP	0xfd12	LP11002-SP
+product EMULEX LPE11000		0xfe00	LPe11000
+product EMULEX LPE11000_SP	0xfe11	LPe11000-SP
+product EMULEX LPE11002_SP	0xfe12	LPe11002-SP
 
 /* Endace Measurement Systems */
 product ENDACE DAG35		0x3500	Endace Dag3.5
@@ -2547,7 +2547,6 @@ product INTEL RCU31		0x9641	RCU31 I2O RAID
 product INTEL RCU31L		0x96a1	RCU31L I2O RAID
 product INTEL 21152		0xb152	S21152BB PCI-PCI
 product INTEL 21154		0xb154	S21154AE/BE PCI-PCI
-product INTEL TURBOMEM 		0x444e	Intel Turbo Memory 
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
