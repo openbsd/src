@@ -31,14 +31,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.40 2008/03/02 08:42:42 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.41 2008/06/03 12:27:23 reyk Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
+#ifdef IXGB_DEBUG
 /*********************************************************************
  *  Set this to one to display debug statistics
  *********************************************************************/
 int             ixgb_display_debug_stats = 0;
+#endif
 
 /*********************************************************************
  *  Driver version
@@ -101,7 +103,9 @@ ixgb_transmit_checksum_setup(struct ixgb_softc *,
 			     u_int8_t *);
 void ixgb_set_promisc(struct ixgb_softc *);
 void ixgb_set_multi(struct ixgb_softc *);
+#ifdef IXGB_DEBUG
 void ixgb_print_hw_stats(struct ixgb_softc *);
+#endif
 void ixgb_update_link_status(struct ixgb_softc *);
 int
 ixgb_get_buf(struct ixgb_softc *, int i,
@@ -823,8 +827,10 @@ ixgb_local_timer(void *arg)
 	ixgb_check_for_link(&sc->hw);
 	ixgb_update_link_status(sc);
 	ixgb_update_stats_counters(sc);
+#ifdef IXGB_DEBUG
 	if (ixgb_display_debug_stats && ifp->if_flags & IFF_RUNNING)
 		ixgb_print_hw_stats(sc);
+#endif
 
 	timeout_add(&sc->timer_handle, hz);
 
@@ -2035,6 +2041,7 @@ ixgb_update_stats_counters(struct ixgb_softc *sc)
 		sc->watchdog_events;
 }
 
+#ifdef IXGB_DEBUG
 /**********************************************************************
  *
  *  This routine is called only when ixgb_display_debug_stats is enabled.
@@ -2109,3 +2116,4 @@ ixgb_print_hw_stats(struct ixgb_softc *sc)
 	printf("%s: Jumbo frames Xmtd = %lld\n", unit,
 		(long long)sc->stats.jptcl);
 }
+#endif
