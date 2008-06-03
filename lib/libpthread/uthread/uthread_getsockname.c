@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_getsockname.c,v 1.4 1999/11/25 07:01:36 d Exp $	*/
+/*	$OpenBSD: uthread_getsockname.c,v 1.5 2008/06/03 14:45:05 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -32,6 +32,7 @@
  *
  * $FreeBSD: uthread_getsockname.c,v 1.5 1999/08/28 00:03:36 peter Exp $
  */
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifdef _THREAD_SAFE
@@ -39,14 +40,25 @@
 #include "pthread_private.h"
 
 int
-getsockname(int s, struct sockaddr * name, socklen_t *namelen)
+getsockname(int fd, struct sockaddr * name, socklen_t *namelen)
 {
 	int             ret;
+	struct fd_table_entry *entry;
 
-	if ((ret = _FD_LOCK(s, FD_READ, NULL)) == 0) {
-		ret = _thread_sys_getsockname(s, name, namelen);
-		_FD_UNLOCK(s, FD_READ);
+	ret = _thread_fd_table_init(fd, FD_INIT_UNKNOWN, NULL);
+	if (ret == 0) {
+		entry = _thread_fd_table[fd];
+		 
+		_SPINLOCK(&entry->lock);
+		if (entry->state == FD_ENTRY_OPEN) {
+			ret = _thread_sys_getsockname(fd, name, namelen);
+		} else {
+			ret = -1;
+			errno = EBADF;
+		}
+		_SPINUNLOCK(&entry->lock);
 	}
+
 	return ret;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_getpeername.c,v 1.4 1999/11/25 07:01:36 d Exp $	*/
+/*	$OpenBSD: uthread_getpeername.c,v 1.5 2008/06/03 14:45:05 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -32,6 +32,7 @@
  *
  * $FreeBSD: uthread_getpeername.c,v 1.5 1999/08/28 00:03:34 peter Exp $
  */
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifdef _THREAD_SAFE
@@ -41,12 +42,23 @@
 int
 getpeername(int fd, struct sockaddr * peer, socklen_t *paddrlen)
 {
-	int             ret;
+	int ret;
+	struct fd_table_entry *entry;
 
-	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
-		ret = _thread_sys_getpeername(fd, peer, paddrlen);
-		_FD_UNLOCK(fd, FD_READ);
+	ret = _thread_fd_table_init(fd, FD_INIT_UNKNOWN, NULL);
+	if (ret == 0) {
+		entry = _thread_fd_table[fd];
+		 
+		_SPINLOCK(&entry->lock);
+		if (entry->state == FD_ENTRY_OPEN) {
+			ret = _thread_sys_getpeername(fd, peer, paddrlen);
+		} else {
+			ret = -1;
+			errno = EBADF;
+		}
+		_SPINUNLOCK(&entry->lock);
 	}
+
 	return ret;
 }
 #endif
