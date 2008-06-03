@@ -36,6 +36,23 @@
 
 #include "drmP.h"
 
+#ifdef __OpenBSD__
+
+drm_file_t *
+drm_find_file_by_minor(struct drm_device *dev, int minor)
+{
+	drm_file_t *priv;
+
+	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+
+	TAILQ_FOREACH(priv, &dev->files, link)
+		if (priv->minor == minor)
+			return (priv);
+	return (NULL);
+}
+
+#else
+
 drm_file_t *
 drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 {
@@ -51,6 +68,7 @@ drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 			return priv;
 	return NULL;
 }
+#endif
 
 /* drm_open_helper is called whenever a process opens /dev/drm. */
 int
@@ -68,7 +86,11 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 	DRM_DEBUG("pid = %d, minor = %d\n", DRM_CURRENTPID, m);
 
 	DRM_LOCK();
+#ifdef __OpenBSD__
+	priv = drm_find_file_by_minor(dev, m);
+#else
 	priv = drm_find_file_by_proc(dev, p);
+#endif
 	if (priv) {
 		priv->refs++;
 	} else {
@@ -97,7 +119,15 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 			}
 		}
 
-		/* first opener automatically becomes master */
+		/* first opener automatically becomes master if root */
+#ifdef __OpenBSD__
+		if (TAILQ_EMPTY(&dev->files) && !DRM_SUSER(p)) {
+			free(priv, M_DRM);
+			DRM_UNLOCK();
+			return (EPERM);
+		}
+#endif
+
 		priv->master = TAILQ_EMPTY(&dev->files);
 
 		TAILQ_INSERT_TAIL(&dev->files, priv, link);

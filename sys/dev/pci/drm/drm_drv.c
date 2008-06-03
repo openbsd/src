@@ -580,14 +580,15 @@ error:
 void
 drm_unload(drm_device_t *dev)
 {
+#ifdef __FreeBSD__
 	int i;
 
-	DRM_DEBUG( "\n" );
 
-#ifdef __FreeBSD__
 	drm_sysctl_cleanup(dev);
 	destroy_dev(dev->devnode);
 #endif
+
+	DRM_DEBUG( "\n" );
 
 	drm_ctxbitmap_cleanup(dev);
 
@@ -618,21 +619,6 @@ drm_unload(drm_device_t *dev)
 		    dev->pcirid[i], dev->pcir[i]);
 		dev->pcir[i] = NULL;
 	}
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	for (i = 0; i < DRM_MAX_PCI_RESOURCE; i++) {
-		if (dev->pcir[i] == NULL)
-			continue;
-		if (dev->pcir[i]->mapped)
-		{
-			bus_space_unmap(dev->pa.pa_memt,
-			    dev->pcir[i]->bsh,
-			    dev->pcir[i]->size);
-			dev->pcir[i]->mapped = 0;
-		}
-		free(dev->pcir[i], M_DRM);
-		dev->pcir[i] = NULL;
-	}
-#endif
 
 	if ( dev->agp ) {
 		free(dev->agp, M_DRM);
@@ -721,7 +707,11 @@ drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 
 	DRM_LOCK();
 
+#ifdef __OpenBSD__
+	file_priv = drm_find_file_by_minor(dev, minor(kdev));
+#else
 	file_priv = drm_find_file_by_proc(dev, p);
+#endif
 	if (!file_priv) {
 		DRM_UNLOCK();
 		DRM_ERROR("can't find authenticator\n");
@@ -843,7 +833,11 @@ drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags,
 		return ENODEV;
 
 	DRM_LOCK();
+#ifdef __OpenBSD__
+	file_priv = drm_find_file_by_minor(dev, minor(kdev));
+#else
 	file_priv = drm_find_file_by_proc(dev, p);
+#endif
 	DRM_UNLOCK();
 	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
@@ -926,9 +920,18 @@ drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags,
 		return EINVAL;
 	}
 
+#ifdef __OpenBSD__
+	/* 
+	 * master must be root, and all ioctls that are ROOT_ONLY are
+	 * also DRM_MASTER.
+	 */
+	if (((ioctl->flags & DRM_AUTH) && !file_priv->authenticated) ||
+	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
+#else
 	if (((ioctl->flags & DRM_ROOT_ONLY) && !DRM_SUSER(p)) ||
 	    ((ioctl->flags & DRM_AUTH) && !file_priv->authenticated) ||
 	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
+#endif
 		return EACCES;
 
 	if (is_driver_ioctl) {

@@ -51,7 +51,11 @@ drm_mmap(dev_t kdev, off_t offset, int prot)
 #endif
 
 	DRM_LOCK();
+#ifdef __OpenBSD__
+	priv = drm_find_file_by_minor(dev, minor(kdev));
+#else
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
+#endif
 	DRM_UNLOCK();
 	if (priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
@@ -104,7 +108,11 @@ drm_mmap(dev_t kdev, off_t offset, int prot)
 		DRM_DEBUG("can't find map\n");
 		return -1;
 	}
+#ifdef __OpenBSD__
+	if (((map->flags&_DRM_RESTRICTED) && priv->master == 0)) {
+#else
 	if (((map->flags&_DRM_RESTRICTED) && !DRM_SUSER(DRM_CURPROC))) {
+#endif
 		DRM_UNLOCK();
 		DRM_DEBUG("restricted map\n");
 		return -1;

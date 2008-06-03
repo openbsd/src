@@ -348,9 +348,6 @@ drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	if (!(dev->flags & (FREAD|FWRITE)))
 		return EACCES; /* Require read/write */
 
-	if (!DRM_SUSER(DRM_CURPROC) && request->type != _DRM_AGP)
-		return EACCES;
-
 	DRM_LOCK();
 	err = drm_addmap(dev, request->offset, request->size, request->type,
 	    request->flags, &map);
@@ -944,11 +941,6 @@ drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 
 	DRM_SPINLOCK(&dev->dma_lock);
 
-	if (!DRM_SUSER(DRM_CURPROC)) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
-		return EACCES;
-	}
-
 	if (request->count < 0 || request->count > 4096) {
 		DRM_SPINUNLOCK(&dev->dma_lock);
 		return EINVAL;
@@ -984,11 +976,6 @@ drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 	int order, ret;
 
 	DRM_SPINLOCK(&dev->dma_lock);
-
-	if (!DRM_SUSER(DRM_CURPROC)) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
-		return EACCES;
-	}
 
 	if (request->count < 0 || request->count > 4096) {
 		DRM_SPINUNLOCK(&dev->dma_lock);

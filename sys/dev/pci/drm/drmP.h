@@ -322,10 +322,17 @@ enum {
 #elif defined(__NetBSD__)
 #define drm_get_device_from_kdev(_kdev) device_lookup(&drm_cd, minor(_kdev))
 #elif defined(__OpenBSD__)
+/* D_CLONE only supports one device, this will be fixed eventually */
+#define drm_get_device_from_kdev(_kdev)			\
+	drm_units[0]
+
+#if 0 /* D_CLONE only supports on device for now */
 #define drm_get_device_from_kdev(_kdev) 		\
 	(minor(kdev) < DRM_MAXUNITS) ?			\
 	    drm_units[minor(kdev)] : NULL
 #endif
+
+#endif /* __FreeBSD__ / __NetBSD__ / __OpenBSD__ */
 
 #ifdef __FreeBSD__
 #define PAGE_ALIGN(addr) round_page(addr)
@@ -968,10 +975,13 @@ dev_type_mmap(drm_mmap);
 extern drm_local_map_t	*drm_getsarea(drm_device_t *dev);
 
 /* File operations helpers (drm_fops.c) */
-int		drm_open_helper(DRM_CDEV kdev, int flags, int fmt, 
-					 DRM_STRUCTPROC *p, drm_device_t *dev);
-extern drm_file_t	*drm_find_file_by_proc(drm_device_t *dev, 
-					 DRM_STRUCTPROC *p);
+int		drm_open_helper(DRM_CDEV, int, int, 
+		    DRM_STRUCTPROC *, drm_device_t *);
+#ifdef __OpenBSD__
+drm_file_t	*drm_find_file_by_minor(drm_device_t *, int);
+#else
+drm_file_t	*drm_find_file_by_proc(drm_device_t *, DRM_STRUCTPROC *);
+#endif
 
 /* Memory management support (drm_memory.c) */
 void	drm_mem_init(void);
