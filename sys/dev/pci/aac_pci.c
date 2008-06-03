@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.20 2008/05/06 12:20:45 mpf Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.21 2008/06/03 10:32:19 brad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -220,6 +220,7 @@ aac_pci_attach(parent, self, aux)
 	struct aac_ident *m;
 	struct aac_sub_ident *subid;
 	u_int32_t subsysid;
+	pcireg_t memtype;
 
 	printf(": ");
 	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -238,8 +239,8 @@ aac_pci_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	if (pci_mapreg_map(pa, PCI_MAPREG_START,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->aac_memt,
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->aac_memt,
 	    &sc->aac_memh, &membase, &memsize, AAC_REGSIZE)) {
 		printf("can't find mem space\n");
 		goto bail_out;
