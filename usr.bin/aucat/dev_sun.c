@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sun.c,v 1.3 2008/06/02 17:08:11 ratchov Exp $	*/
+/*	$OpenBSD: dev_sun.c,v 1.4 2008/06/03 14:36:20 drahn Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -107,13 +107,21 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 {
 	int fd;
 	int fullduplex;
+	int flags;
 	struct audio_info aui;	
 	struct audio_bufinfo aubi;
 
 	if (!ipar && !opar)
 		errx(1, "%s: must at least play or record", path);
 
-	fd = open(path, O_RDWR | O_NONBLOCK);
+	if (ipar && opar) {
+		flags = O_RDWR;
+	} else  if (ipar) {
+		flags = O_RDONLY;
+	} else {
+		flags = O_WRONLY;
+	}
+	fd = open(path, flags | O_NONBLOCK);
 	if (fd < 0) {
 		warn("%s", path);
 		return -1;
