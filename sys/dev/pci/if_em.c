@@ -31,15 +31,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.182 2008/05/13 01:40:39 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.183 2008/06/03 12:45:27 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
 
+#ifdef EM_DEBUG
 /*********************************************************************
  *  Set this to one to display debug statistics
  *********************************************************************/
 int             em_display_debug_stats = 0;
+#endif
 
 /*********************************************************************
  *  Driver version
@@ -171,7 +173,9 @@ void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
 #endif
 void em_set_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
+#ifdef EM_DEBUG
 void em_print_hw_stats(struct em_softc *);
+#endif
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(struct em_softc *, int);
 int  em_encap(struct em_softc *, struct mbuf *);
@@ -1372,9 +1376,11 @@ em_local_timer(void *arg)
 
 	em_check_for_link(&sc->hw);
 	em_update_link_status(sc);
-	em_update_stats_counters(sc);	
+	em_update_stats_counters(sc);
+#ifdef EM_DEBUG
 	if (em_display_debug_stats && ifp->if_flags & IFF_RUNNING)
 		em_print_hw_stats(sc);
+#endif
 	em_smartspeed(sc);
 
 	timeout_add(&sc->timer_handle, hz);
@@ -3041,6 +3047,7 @@ em_update_stats_counters(struct em_softc *sc)
 	    sc->watchdog_events;
 }
 
+#ifdef EM_DEBUG
 /**********************************************************************
  *
  *  This routine is called only when em_display_debug_stats is enabled.
@@ -3098,3 +3105,4 @@ em_print_hw_stats(struct em_softc *sc)
 	printf("%s: Good Packets Xmtd = %lld\n", unit,
 		(long long)sc->stats.gptc);
 }
+#endif
