@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.24 2008/06/02 23:38:05 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.25 2008/06/03 19:27:42 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2008 $
+.Dd $Mdocdate: June 3 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -52,17 +52,14 @@ which does not convert on the fly and supports playback of .au files.
 .Pp
 The options are as follows:
 .Bl -tag -width "-m mmmmmmmm "
-.It Fl C Ar min : Ns Ar max
-The range of channel numbers on the output stream.
+.It Xo
+.Fl C Ar min : Ns Ar max ,
+.Fl c Ar min : Ns Ar max
+.Xc
+The range of channel numbers on the output or input stream, respectively.
 The default is 0:1, i.e. stereo.
-.It Fl c Ar min : Ns Ar max
-The range of channel numbers on the input stream.
-The default is 0:1, i.e. stereo.
-.It Fl E Ar enc
-Encoding of the output stream (see below).
-The default is signed, 16-bit, native byte order.
-.It Fl e Ar enc
-Encoding of the input stream (see below).
+.It Fl E Ar enc , Fl e Ar enc
+Encoding of the output or input stream, respectively (see below).
 The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
 The
@@ -70,11 +67,8 @@ The
 device to use for playing and/or recording.
 The default is
 .Pa /dev/audio .
-.It Fl H Ar fmt
-File format of the output stream (see below).
-The default is auto.
-.It Fl h Ar fmt
-File format of the input stream (see below).
+.It Fl H Ar fmt , Fl h Ar fmt
+File format of the output or input stream, respectively (see below).
 The default is auto.
 .It Fl i Ar file
 Add this file to the list of files to play.
@@ -88,11 +82,8 @@ If the option argument is
 then standard output will be used.
 .It Fl q
 Do not print progress information; run quietly.
-.It Fl R Ar rate
-Sample rate in Hertz of the output stream.
-The default is 44100Hz.
-.It Fl r Ar rate
-Sample rate in Hertz of the input stream.
+.It Fl R Ar rate , Fl r Ar rate
+Sample rate in Hertz of the output or input stream, respectively.
 The default is 44100Hz.
 .It Fl u
 Normally
