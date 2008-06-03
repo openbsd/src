@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.31 2008/05/06 19:19:02 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.32 2008/06/03 17:14:21 brad Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -448,14 +448,9 @@ vga_pci_bar_map(struct vga_pci_softc *dev, int addr, bus_size_t size,
 	}
 
 	if (bar->mapped == 0) {
-		switch (bar->maptype) {
-		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-			if (pci_mapreg_map(&dev->pa, bar->addr, bar->maptype,
-			    bar->flags | busflags, &bar->bst, &bar->bsh, NULL,
-			    &bar->size, size) == 0)
-				break;
-		default:
+		if (pci_mapreg_map(&dev->pa, bar->addr, bar->maptype,
+		    bar->flags | busflags, &bar->bst, &bar->bsh, NULL,
+		    &bar->size, size)) {
 			printf("vga_pci_bar_map: can't map bar 0x%x\n", addr);
 			return (NULL);
 		}
