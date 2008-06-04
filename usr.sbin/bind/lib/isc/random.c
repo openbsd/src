@@ -115,7 +115,7 @@ isc_random_uniform(isc_uint32_t upper_bound)
 		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
 	else {
 		/* (2**32 - (x * 2)) % x == 2**32 % x when x <= 2**31 */
-		min = ((0xffffffff - (upper_bound << 2)) + 1) % upper_bound;
+		min = ((0xffffffff - (upper_bound * 2)) + 1) % upper_bound;
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.18 2008/03/16 19:47:43 otto Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.19 2008/06/04 00:50:23 djm Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -231,7 +231,7 @@ arc4random_uniform(u_int32_t upper_bound)
 		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
 	else {
 		/* (2**32 - (x * 2)) % x == 2**32 % x when x <= 2**31 */
-		min = ((0xffffffff - (upper_bound << 2)) + 1) % upper_bound;
+		min = ((0xffffffff - (upper_bound * 2)) + 1) % upper_bound;
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.87 2008/03/02 21:29:07 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.88 2008/06/04 00:50:23 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -626,7 +626,7 @@ arc4random_uniform(u_int32_t upper_bound)
 		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
 	else {
 		/* (2**32 - (x * 2)) % x == 2**32 % x when x <= 2**31 */
-		min = ((0xffffffff - (upper_bound << 2)) + 1) % upper_bound;
+		min = ((0xffffffff - (upper_bound * 2)) + 1) % upper_bound;
 	}
 #endif
 
