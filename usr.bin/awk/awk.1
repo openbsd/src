@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.28 2007/06/27 21:10:39 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.29 2008/06/04 14:04:42 pyr Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -23,7 +23,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2007 $
+.Dd $Mdocdate: June 4 2008 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -678,6 +678,21 @@ Executes
 .Fa cmd
 and returns its exit status.
 .El
+.Ss Bit-Operation functions
+.Bl -tag -width "lshift(a, b)"
+.It Fn compl x
+Returns the bitwise complement of integer argument x.
+.It Fn and x y
+Performs a bitwise AND on integer arguments x and y
+.It Fn or x y
+Performs a bitwise OR on integer arguments x and y
+.It Fn xor x y
+Performs a bitwise Exclusive-OR on integer arguments x and y
+.It Fn lshift x n
+Returns x shifted by n bits to the left.
+.It Fn rshift x n
+Returns y shifted by n bits to the right.
+.El
 .Pp
 Functions may be defined (at the position of a pattern-action statement)
 thusly:
@@ -756,7 +771,7 @@ The flags
 and
 .Op Fl safe ,
 as well as the command
-.Cm fflush ,
+.Cm fflush , compl , and , or , xor , lshift , rshift
 are extensions to that specification.
 .Sh HISTORY
 An

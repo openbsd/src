@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.9 2006/04/16 02:10:18 hugh Exp $	*/
+/*	$OpenBSD: lex.c,v 1.10 2008/06/04 14:04:42 pyr Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -48,9 +48,11 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
+	{ "and",	FAND,		BLTIN },
 	{ "atan2",	FATAN,		BLTIN },
 	{ "break",	BREAK,		BREAK },
 	{ "close",	CLOSE,		CLOSE },
+	{ "compl",	FCOMPL,		BLTIN },
 	{ "continue",	CONTINUE,	CONTINUE },
 	{ "cos",	FCOS,		BLTIN },
 	{ "delete",	DELETE,		DELETE },
@@ -70,13 +72,16 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "int",	FINT,		BLTIN },
 	{ "length",	FLENGTH,	BLTIN },
 	{ "log",	FLOG,		BLTIN },
+	{ "lshift",	FLSHIFT,	BLTIN },
 	{ "match",	MATCHFCN,	MATCHFCN },
 	{ "next",	NEXT,		NEXT },
 	{ "nextfile",	NEXTFILE,	NEXTFILE },
+	{ "or",		FFOR,		BLTIN },
 	{ "print",	PRINT,		PRINT },
 	{ "printf",	PRINTF,		PRINTF },
 	{ "rand",	FRAND,		BLTIN },
 	{ "return",	RETURN,		RETURN },
+	{ "rshift",	FRSHIFT,	BLTIN },
 	{ "sin",	FSIN,		BLTIN },
 	{ "split",	SPLIT,		SPLIT },
 	{ "sprintf",	SPRINTF,	SPRINTF },
@@ -88,6 +93,7 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "tolower",	FTOLOWER,	BLTIN },
 	{ "toupper",	FTOUPPER,	BLTIN },
 	{ "while",	WHILE,		WHILE },
+	{ "xor",	FXOR,		BLTIN },
 };
 
 #define DEBUG
