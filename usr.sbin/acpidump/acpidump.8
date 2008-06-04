@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.7 2007/10/17 18:58:23 deraadt Exp $
+.\"	$OpenBSD: acpidump.8,v 1.8 2008/06/04 17:23:24 kettenis Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: October 17 2007 $
+.Dd $Mdocdate: June 4 2008 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ Interpret AML data in DSDT from a file specified in
 .Ar dsdt_file_for_input
 and dumps them in ASL to standard output.
 .It Fl o Ar prefix_for_output
-Additionally store ACPI tables from physical memory into files specified by
+Store ACPI tables from physical memory into files specified by
 .Ar prefix_for_output .
 The files generated will
 be of the form <prefix>.<sig>.<id>.
@@ -131,13 +131,6 @@ RSDP, FACP, DSDT, SSDT, HPET, MCFG, SPMI, APIC, SPCR, SRAT, XSDT.
 .Bl -tag -width /dev/mem
 .It Pa /dev/mem
 .El
-.Sh EXAMPLES
-This is an example to get a dump of SDTs and a DSDT data file
-simultaneously on a machine that supports ACPI BIOS:
-.Pp
-.Dl # acpidump -o foo \*(Gt foo.asl
-.Pp
-This will generate foo.RSDP.x, foo.FACP.x, foo.DSDT.x, etc.
 .Sh SEE ALSO
 .\" .Xr acpi 4 ,
 .Xr mem 4
