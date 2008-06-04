@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.29 2008/06/04 14:04:42 pyr Exp $
+.\"	$OpenBSD: awk.1,v 1.30 2008/06/04 17:14:07 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -425,7 +425,18 @@ Separates multiple subscripts (default 034).
 .El
 .Sh FUNCTIONS
 The awk language has a variety of built-in functions:
-arithmetic, string, input/output and general.
+arithmetic, string, input/output, general, and bit-operation.
+.Pp
+Functions may be defined (at the position of a pattern-action statement)
+thusly:
+.Pp
+.Dl function foo(a, b, c) { ...; return x }
+.Pp
+Parameters are passed by value if scalar, and by reference if array name;
+functions may be called recursively.
+Parameters are local to the function; all other variables are global.
+Thus local variables may be created by providing excess parameters in
+the function definition.
 .Ss Arithmetic Functions
 .Bl -tag -width "atan2(y, x)"
 .It Fn atan2 y x
@@ -678,32 +689,21 @@ Executes
 .Fa cmd
 and returns its exit status.
 .El
-.Ss Bit-Operation functions
+.Ss Bit-Operation Functions
 .Bl -tag -width "lshift(a, b)"
 .It Fn compl x
 Returns the bitwise complement of integer argument x.
 .It Fn and x y
-Performs a bitwise AND on integer arguments x and y
+Performs a bitwise AND on integer arguments x and y.
 .It Fn or x y
-Performs a bitwise OR on integer arguments x and y
+Performs a bitwise OR on integer arguments x and y.
 .It Fn xor x y
-Performs a bitwise Exclusive-OR on integer arguments x and y
+Performs a bitwise Exclusive-OR on integer arguments x and y.
 .It Fn lshift x n
 Returns x shifted by n bits to the left.
 .It Fn rshift x n
 Returns y shifted by n bits to the right.
 .El
-.Pp
-Functions may be defined (at the position of a pattern-action statement)
-thusly:
-.Pp
-.Dl function foo(a, b, c) { ...; return x }
-.Pp
-Parameters are passed by value if scalar, and by reference if array name;
-functions may be called recursively.
-Parameters are local to the function; all other variables are global.
-Thus local variables may be created by providing excess parameters in
-the function definition.
 .Sh EXAMPLES
 Print lines longer than 72 characters:
 .Pp
@@ -770,8 +770,9 @@ The flags
 .Op Fl \&dV
 and
 .Op Fl safe ,
-as well as the command
-.Cm fflush , compl , and , or , xor , lshift , rshift
+as well as the commands
+.Cm fflush , compl , and , or ,
+.Cm xor , lshift , rshift ,
 are extensions to that specification.
 .Sh HISTORY
 An
