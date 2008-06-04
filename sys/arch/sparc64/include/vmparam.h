@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2007/04/21 13:43:38 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.17 2008/06/04 18:11:34 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for sun4u and sun4v UltraSPARC
  */
 
 #ifndef VMPARAM_H
@@ -66,7 +66,7 @@
  * Since the compiler generates `call' instructions we can't
  * have more than 4GB in a single text segment.
  *
- * And since we only have a 40-bit adderss space, allow half
+ * And since we only have a 40-bit address space, allow half
  * of that for data and the other half for stack.
  */
 #ifndef MAXTSIZ

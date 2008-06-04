@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.126 2008/01/25 13:52:20 espie Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.127 2008/06/04 18:11:35 miod Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.126 2008/01/25 13:52:20 espie Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.127 2008/06/04 18:11:35 miod Exp $";
 #endif /* not lint */
 
 /*
@@ -571,7 +571,7 @@ dg_badinput(struct sockaddr *sa)
 		if (IN6_IS_ADDR_MULTICAST(in6) || IN6_IS_ADDR_UNSPECIFIED(in6))
 			goto bad;
 		/*
-		 * OpenBSD does not support IPv4 mapped adderss (RFC2553
+		 * OpenBSD does not support IPv4 mapped address (RFC2553
 		 * inbound behavior) at all.  We should drop it.
 		 */
 		if (IN6_IS_ADDR_V4MAPPED(in6))
