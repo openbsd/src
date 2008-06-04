@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.116 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.117 2008/06/04 18:20:09 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2940,6 +2940,10 @@ aml_xstore(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 		aml_xfldio(scope, rhs, &tmp, ACPI_IOREAD);
 		rhs = &tmp;
 	}
+	/* Store to LocalX: free value */
+	if (lhs->stack >= AMLOP_LOCAL0 && lhs->stack <= AMLOP_LOCAL7)
+		aml_freevalue(lhs);
+
 	while (lhs->type == AML_OBJTYPE_OBJREF) {
 		lhs = lhs->v_objref.ref;
 	}
@@ -3758,17 +3762,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_LOCAL7:
 		my_ret = opargs[0];
 		aml_xaddref(my_ret, htab->mnem);
-		if (ret_type == AML_ARG_INTEGER) {
-			/* Return copy of integer value */
-			aml_xconvert(my_ret, &my_ret, AML_OBJTYPE_INTEGER, 0);
-			ival = my_ret->v_integer;
-			aml_xdelref(&my_ret, "local.int");
-			my_ret = NULL;
-		}
-		else if (ret_type == AML_ARG_TARGET) {
-			/* Store to LocalX: free object */
-			aml_freevalue(my_ret);
-		}
 		break;
 	case AMLOP_ARG0:
 	case AMLOP_ARG1:
@@ -4369,6 +4362,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	if (ret_type == 'i' && my_ret && my_ret->type != AML_OBJTYPE_INTEGER) {
 		dnprintf(10,"quick: %.4x convert to integer %s -> %s\n", 
 		    pc, htab->mnem, stype);
+		aml_xconvert(my_ret, &my_ret, AML_OBJTYPE_INTEGER, 0);
 	}
 	if (my_ret != NULL) {
 		/* Display result */
