@@ -619,6 +619,7 @@ drm_unload(drm_device_t *dev)
 		    dev->pcirid[i], dev->pcir[i]);
 		dev->pcir[i] = NULL;
 	}
+#endif
 
 	if ( dev->agp ) {
 		free(dev->agp, M_DRM);
