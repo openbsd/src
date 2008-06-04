@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.3 2007/04/10 17:47:54 miod Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.4 2008/06/04 21:12:50 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.3 2007/04/10 17:47:54 miod Exp $";
 
 #ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
-#include <olf_abi.h>
 #endif
 
 #ifdef _NLIST_DO_ECOFF
@@ -290,7 +289,7 @@ __elf_is_okay__(ehdr)
 	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independent fashion.
 	 */
-	if ((IS_ELF(*ehdr) || IS_OLF(*ehdr)) &&
+	if (IS_ELF(*ehdr) &&
 	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {

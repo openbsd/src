@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.52 2005/11/28 17:50:32 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.53 2008/06/04 21:12:50 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,6 @@
 
 #ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
-#include <olf_abi.h>
 #endif
 
 #ifdef _NLIST_DO_ECOFF
@@ -282,7 +281,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independent fashion.
 	 */
-	if ((IS_ELF(*ehdr) || IS_OLF(*ehdr)) &&
+	if (IS_ELF(*ehdr) &&
 	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
