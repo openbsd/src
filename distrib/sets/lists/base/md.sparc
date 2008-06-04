@@ -1299,7 +1299,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/aes.ph

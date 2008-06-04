@@ -1920,7 +1920,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/aes.ph

@@ -103,7 +103,6 @@
 ./usr/share/man/cat1/ed.0
 ./usr/share/man/cat1/egrep.0
 ./usr/share/man/cat1/eject.0
-./usr/share/man/cat1/elf2olf.0
 ./usr/share/man/cat1/enc2xs.0
 ./usr/share/man/cat1/encrypt.0
 ./usr/share/man/cat1/env.0
@@ -257,7 +256,6 @@
 ./usr/share/man/cat1/nslookup.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/oldrdist.0
-./usr/share/man/cat1/olf2elf.0
 ./usr/share/man/cat1/openssl.0
 ./usr/share/man/cat1/otp-md4.0
 ./usr/share/man/cat1/otp-md5.0

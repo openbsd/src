@@ -233,7 +233,6 @@
 ./usr/bin/dprofpp
 ./usr/bin/du
 ./usr/bin/egrep
-./usr/bin/elf2olf
 ./usr/bin/enc2xs
 ./usr/bin/encrypt
 ./usr/bin/env
@@ -358,7 +357,6 @@
 ./usr/bin/nroff
 ./usr/bin/od
 ./usr/bin/oldrdist
-./usr/bin/olf2elf
 ./usr/bin/opencvs
 ./usr/bin/otp-md4
 ./usr/bin/otp-md5

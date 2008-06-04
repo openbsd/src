@@ -1951,7 +1951,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/aes.ph

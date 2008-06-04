@@ -1899,7 +1899,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/aes.ph

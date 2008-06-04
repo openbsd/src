@@ -1878,7 +1878,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/aes.ph

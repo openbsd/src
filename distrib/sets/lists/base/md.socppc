@@ -1865,7 +1865,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ohash.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/aes.ph
