@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.5 2008/05/30 06:37:38 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.6 2008/06/05 20:50:28 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -27,6 +27,8 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/videoio.h>
+#include <uvm/uvm.h>
+#include <uvm/uvm_pmap.h>
 
 #include <dev/video_if.h>
 #include <dev/videovar.h>
@@ -179,11 +181,6 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = (sc->hw_if->g_fmt)(sc->hw_hdl,
 			    (struct v4l2_format *)data);
 		break;
-	case VIDIOC_REQBUFS:
-		if (sc->hw_if->reqbufs)
-			error = (sc->hw_if->reqbufs)(sc->hw_hdl,
-			    (struct v4l2_requestbuffers *)data);
-		break;
 	case VIDIOC_ENUMINPUT:
 		if (sc->hw_if->enum_input)
 			error = (sc->hw_if->enum_input)(sc->hw_hdl,
@@ -194,9 +191,17 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = (sc->hw_if->s_input)(sc->hw_hdl,
 			    (int)*data);
 		break;
-	case VIDIOC_QUERYBUF:
+	case VIDIOC_REQBUFS:
+		if (sc->hw_if->reqbufs)
+			error = (sc->hw_if->reqbufs)(sc->hw_hdl,
+			    (struct v4l2_requestbuffers *)data);
 		break;
-	case VIDIOC_QBUF:
+	case VIDIOC_QUERYBUF:
+		if (sc->hw_if->querybuf)
+			error = (sc->hw_if->querybuf)(sc->hw_hdl,
+			    (struct v4l2_buffer *)data);
+		break;
+	case VIDIOC_DQBUF:
 		break;
 	case VIDIOC_TRY_FMT:
 		if (sc->hw_if->try_fmt)
@@ -215,18 +220,34 @@ videommap(dev_t dev, off_t off, int prot)
 {
 	struct video_softc *sc;
 	int unit;
+	caddr_t p;
+	paddr_t pa;
+
+	DPRINTF(("%s: off=%d, prot=%d\n", __func__, off, prot));
 
 	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
 	    (sc = video_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+		return (-1);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (-1);
 
-	/* TODO */
+	if (sc->hw_if->mappage == NULL)
+		return (-1);
 
-	return (0);
+	p = sc->hw_if->mappage(sc->hw_hdl, off, prot);
+	if (p == NULL)
+		return (-1);
+	if (pmap_extract(pmap_kernel(), (vaddr_t)p, &pa) == FALSE)
+		panic("videommap: invalid page");
+	pmap_update(pmap_kernel());
+
+#if defined(__powerpc__) || defined(__sparc64__)
+	return (pa);
+#else
+	return (atop(pa));
+#endif
 }
 
 /*

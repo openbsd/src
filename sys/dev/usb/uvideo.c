@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.22 2008/05/30 06:37:38 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.23 2008/06/05 20:50:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <uvm/uvm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -134,10 +135,12 @@ int		uvideo_querycap(void *, struct v4l2_capability *);
 int		uvideo_enum_fmt(void *, struct v4l2_fmtdesc *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
 int		uvideo_g_fmt(void *, struct v4l2_format *);
-int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
 int		uvideo_enum_input(void *, struct v4l2_input *);
 int		uvideo_s_input(void *, int);
+int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
+int		uvideo_querybuf(void *, struct v4l2_buffer *);
 int		uvideo_try_fmt(void *, struct v4l2_format *);
+caddr_t		uvideo_mappage(void *, off_t, int);
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -166,12 +169,13 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_enum_fmt,	/* VIDIOC_ENUM_FMT */
 	uvideo_s_fmt,		/* VIDIOC_S_FMT */
 	uvideo_g_fmt,		/* VIDIOC_G_FMT */
-	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
 	uvideo_enum_input,	/* VIDIOC_ENUMINPUT */
 	uvideo_s_input,		/* VIDIOC_S_INPUT */
-	NULL,			/* VIDIOC_QBUF */
+	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
+	uvideo_querybuf,	/* VIDIOC_QUERYBUF */
 	NULL,			/* VIDIOC_DQBUF */
-	uvideo_try_fmt		/* VIDIOC_TRY_FMT */
+	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
+	uvideo_mappage		/* mmap */
 };
 
 int
@@ -1711,12 +1715,6 @@ uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 }
 
 int
-uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
-{
-	return (0);
-}
-
-int
 uvideo_enum_input(void *v, struct v4l2_input *input)
 {
 	if (input->index != 0)
@@ -1740,10 +1738,92 @@ uvideo_s_input(void *v, int input)
 }
 
 int
+uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
+{
+	struct uvideo_softc *sc = v;
+	int i, buf_count, buf_size, buf_size_total;
+
+	DPRINTF(1, "%s: count=%d\n", __func__, rb->count);
+
+	/* limit the buffers */
+	if (rb->count > UVIDEO_MAX_BUFFERS)
+		buf_count = UVIDEO_MAX_BUFFERS;
+	else
+		buf_count = rb->count;
+
+	/* allocate the total mmap buffer */	
+	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+	buf_size_total = buf_count * buf_size;
+	buf_size_total = round_page(buf_size_total); /* page align buffer */
+	sc->sc_mmap_buffer.buf = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_mmap_buffer.buf == NULL) {
+		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
+		return (EINVAL);
+	}
+	DPRINTF(1, "%s: allocated %d bytes mmap buffer\n",
+	    DEVNAME(sc), buf_size_total);
+
+	/* fill the v4l2_buffer structure */
+	for (i = 0; i < buf_count; i++) {
+		sc->sc_mmap_buffer.v4l2_buf[i].index = i;
+		sc->sc_mmap_buffer.v4l2_buf[i].m.offset = i * buf_size;
+		sc->sc_mmap_buffer.v4l2_buf[i].length = buf_size;
+		sc->sc_mmap_buffer.v4l2_buf[i].type =
+		    V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		sc->sc_mmap_buffer.v4l2_buf[i].sequence = 0;
+		sc->sc_mmap_buffer.v4l2_buf[i].field = V4L2_FIELD_NONE;
+		sc->sc_mmap_buffer.v4l2_buf[i].memory = V4L2_MEMORY_MMAP;
+		sc->sc_mmap_buffer.v4l2_buf[i].flags = V4L2_MEMORY_MMAP;
+		DPRINTF(1, "%s: %s: index=%d, offset=%d, length=%d\n",
+		    DEVNAME(sc), __func__,
+		    sc->sc_mmap_buffer.v4l2_buf[i].index,
+		    sc->sc_mmap_buffer.v4l2_buf[i].m.offset,
+		    sc->sc_mmap_buffer.v4l2_buf[i].length);
+	}
+
+	/* tell how many buffers we have really allocated */
+	rb->count = buf_count;
+
+	return (0);
+}
+
+int
+uvideo_querybuf(void *v, struct v4l2_buffer *qb)
+{
+	struct uvideo_softc *sc = v;
+
+	if (qb->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	    qb->memory != V4L2_MEMORY_MMAP)
+		return (EINVAL);
+
+	bcopy(&sc->sc_mmap_buffer.v4l2_buf[qb->index], qb,
+	    sizeof(struct v4l2_buffer));
+
+	DPRINTF(1, "%s: %s: index=%d, offset=%d, length=%d\n",
+	    DEVNAME(sc), __func__,
+	    qb->index,
+	    qb->m.offset,
+	    qb->length);
+
+	return (0);
+}
+
+int
 uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 {
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
 
 	return (0);
+}
+
+caddr_t
+uvideo_mappage(void *v, off_t off, int prot)
+{
+	struct uvideo_softc *sc = v;
+	caddr_t p;
+
+	p = sc->sc_mmap_buffer.buf + off;
+
+	return (p);
 }

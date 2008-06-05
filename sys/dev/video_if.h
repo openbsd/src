@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.5 2008/05/30 06:37:38 mglocker Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.6 2008/06/05 20:50:28 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -38,12 +38,13 @@ struct video_hw_if {
 	int	(*enum_fmt)(void *, struct v4l2_fmtdesc *);
 	int	(*s_fmt)(void *, struct v4l2_format *);
 	int	(*g_fmt)(void *, struct v4l2_format *);
-	int	(*reqbufs)(void *, struct v4l2_requestbuffers *);
 	int	(*enum_input)(void *, struct v4l2_input *);
 	int	(*s_input)(void *, int);
-	int	(*qbuf)(void *, struct v4l2_buffer *);
+	int	(*reqbufs)(void *, struct v4l2_requestbuffers *);
+	int	(*querybuf)(void *, struct v4l2_buffer *);
 	int	(*dqbuf)(void *, struct v4l2_buffer *);
 	int	(*try_fmt)(void *, struct v4l2_format *);
+	caddr_t	(*mappage)(void *, off_t, int);
 };
 
 struct video_attach_args {
