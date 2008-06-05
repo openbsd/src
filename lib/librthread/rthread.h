@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.17 2006/01/05 04:06:48 marc Exp $ */
+/*	$OpenBSD: rthread.h,v 1.18 2008/06/05 21:06:11 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -150,6 +150,11 @@ void	_rthread_debug(int, const char *, ...)
 void	_rthread_debug_init(void);
 void	_rthread_add_to_reaper(pid_t, struct stack *);
 void 	_rthread_reaper(void);
+int	_rthread_open_kqueue(void);
+#if defined(__ELF__) && defined(PIC)
+void	_rthread_dl_lock(int what);
+void	_rthread_bind_lock(int);
+#endif
 
 
 void	_thread_dump_info(void);
