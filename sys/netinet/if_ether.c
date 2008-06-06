@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.74 2008/05/11 03:50:23 krw Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.75 2008/06/06 13:29:43 henning Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -794,7 +794,6 @@ arplookup(addr, create, proxy)
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;
-	rt->rt_priority = RTP_CONNECTED;
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		if (create) {
