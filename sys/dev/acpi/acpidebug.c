@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.20 2008/06/06 09:15:32 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.21 2008/06/06 20:10:21 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -589,4 +589,4 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 	aml_popscope(scope);
 	return pos;
 }
-#endif
+#endif /* DDB */
