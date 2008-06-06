@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.18 2008/05/30 17:41:30 av Exp $ */
+/* $OpenBSD: mmc.c,v 1.19 2008/06/06 10:16:52 av Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -51,13 +51,6 @@ blank(void)
 	scr.senselen = SENSEBUFLEN;
 
 	r = ioctl(fd, SCIOCCOMMAND, &scr);
-	if (r == -1 && errno == EPERM) {
-		close(fd);
-		fd = -1;
-		if (!open_cd(cdname, 1))
-			return (-1);
-		r = ioctl(fd, SCIOCCOMMAND, &scr);
-	}
 	return (r == 0 ? scr.retsts : -1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.58 2008/05/07 23:27:50 fgsch Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.59 2008/06/06 10:16:52 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -148,6 +148,7 @@ struct cd_toc_entry *toc_buffer;
 
 char		*cdname;
 int		fd = -1;
+int		writeperm = 0;
 int		verbose = 1;
 int		msf = 1;
 const char	*cddb_host;
@@ -387,42 +388,42 @@ run(int cmd, char *arg)
 		exit(0);
 
 	case CMD_INFO:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return info(arg);
 
 	case CMD_CDDB:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return cddbinfo(arg);
 
 	case CMD_CDID:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 		return cdid();
 
 	case CMD_STATUS:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return pstatus(arg);
 
 	case CMD_PAUSE:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return ioctl(fd, CDIOCPAUSE);
 
 	case CMD_RESUME:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return ioctl(fd, CDIOCRESUME);
 
 	case CMD_STOP:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		rc = ioctl(fd, CDIOCSTOP);
@@ -432,7 +433,7 @@ run(int cmd, char *arg)
 		return (rc);
 
 	case CMD_RESET:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		rc = ioctl(fd, CDIOCRESET);
@@ -443,7 +444,7 @@ run(int cmd, char *arg)
 		return (0);
 
 	case CMD_DEBUG:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		if (!strcasecmp(arg, "on"))
@@ -477,7 +478,7 @@ run(int cmd, char *arg)
 		return (1);
 
 	case CMD_EJECT:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		(void) ioctl(fd, CDIOCALLOW);
@@ -495,7 +496,7 @@ run(int cmd, char *arg)
 
 	case CMD_CLOSE:
 #if defined(CDIOCCLOSE)
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		(void) ioctl(fd, CDIOCALLOW);
@@ -511,7 +512,7 @@ run(int cmd, char *arg)
 #endif
 
 	case CMD_PLAY:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		while (isspace(*arg))
@@ -529,7 +530,7 @@ run(int cmd, char *arg)
 		return (0);
 
 	case CMD_VOLUME:
-		if (fd < 0 && !open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		if (!strncasecmp(arg, "left", strlen(arg)))
@@ -555,29 +556,29 @@ run(int cmd, char *arg)
 		return setvol(l, r);
 
 	case CMD_NEXT:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return play_next(arg);
 
 	case CMD_PREV:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		return play_prev(arg);
 
 	case CMD_REPLAY:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return 0;
 
 		return play_same(arg);
 	case CMD_BLANK:
-		if (fd < 0 && ! open_cd(cdname, 1))
+		if (!open_cd(cdname, 1))
 			return 0;
 
 		return blank();
 	case CMD_CDRIP:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		while (isspace(*arg))
@@ -585,7 +586,7 @@ run(int cmd, char *arg)
 
 		return cdrip(arg);
 	case CMD_CDPLAY:
-		if (fd < 0 && ! open_cd(cdname, 0))
+		if (!open_cd(cdname, 0))
 			return (0);
 
 		while (isspace(*arg))
@@ -1499,8 +1500,13 @@ open_cd(char *dev, int needwrite)
 	char *realdev;
 	int tries;
 
-	if (fd > -1)
-		return (1);
+	if (fd > -1) {
+		if (needwrite && !writeperm) {
+			close(fd);
+			fd = -1;
+		} else
+			return (1);
+	}
 
 	for (tries = 0; fd < 0 && tries < 10; tries++) {
 		if (needwrite)
@@ -1527,6 +1533,7 @@ open_cd(char *dev, int needwrite)
 		warn("Can't open %s", realdev);
 		return (0);
 	}
+	writeperm = needwrite;
 	return (1);
 }
 
