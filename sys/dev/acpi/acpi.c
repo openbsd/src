@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.120 2008/06/01 18:14:25 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.121 2008/06/06 09:15:32 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -371,12 +371,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_rsdp *rsdp;
 	struct acpi_q *entry;
 	struct acpi_dsdt *p_dsdt;
+	int idx;
 #ifndef SMALL_KERNEL
 	struct acpi_wakeq *wentry;
 	struct device *dev;
 	struct acpi_ac *ac;
 	struct acpi_bat *bat;
-#endif
+#endif /* SMALL_KERNEL */
 	paddr_t facspa;
 
 	sc->sc_iot = ba->ba_iot;
@@ -394,12 +395,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_tables);
 	SIMPLEQ_INIT(&sc->sc_wakedevs);
 
+#ifndef SMALL_KERNEL
 	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_note == NULL) {
 		printf(", can't allocate memory\n");
 		acpi_unmap(&handle);
 		return;
 	}
+#endif /* SMALL_KERNEL */
 
 	if (acpi_loadtables(sc, rsdp)) {
 		printf(", can't load tables\n");
@@ -490,15 +493,18 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
+#endif /* SMALL_KERNEL */
 
 	/* Map Power Management registers */
 	acpi_map_pmregs(sc);
 
+#ifndef SMALL_KERNEL
 	/* Initialize GPE handlers */
 	acpi_init_gpes(sc);
 
 	/* some devices require periodic polling */
 	timeout_set(&sc->sc_dev_timeout, acpi_poll, sc);
+#endif /* SMALL_KERNEL */
 
 	/*
 	 * Take over ACPI control.  Note that once we do this, we
@@ -509,8 +515,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * This may prevent thermal control on some systems where
 	 * that actually does work
 	 */
-	int idx;
-
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, 0, sc->sc_fadt->acpi_enable);
 	idx = 0;
 	do {
@@ -519,7 +523,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
-#endif /* SMALL_KERNEL */
 
 	printf("\n%s: tables", DEVNAME(sc));
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
@@ -980,96 +983,6 @@ acpikqfilter(dev_t dev, struct knote *kn)
 #endif
 }
 
-/* move all stuff that doesn't go on the boot media in here */
-#ifndef SMALL_KERNEL
-void
-acpi_reset(void)
-{
-	struct acpi_fadt	*fadt;
-	u_int32_t		 reset_as, reset_len;
-	u_int32_t		 value;
-
-	fadt = acpi_softc->sc_fadt;
-
-	/*
-	 * RESET_REG_SUP is not properly set in some implementations,
-	 * but not testing against it breaks more machines than it fixes
-	 */
-	if (acpi_softc->sc_revision <= 1 ||
-	    !(fadt->flags & FADT_RESET_REG_SUP) || fadt->reset_reg.address == 0)
-		return;
-
-	value = fadt->reset_value;
-
-	reset_as = fadt->reset_reg.register_bit_width / 8;
-	if (reset_as == 0)
-		reset_as = 1;
-
-	reset_len = fadt->reset_reg.access_size;
-	if (reset_len == 0)
-		reset_len = reset_as;
-
-	acpi_gasio(acpi_softc, ACPI_IOWRITE,
-	    fadt->reset_reg.address_space_id,
-	    fadt->reset_reg.address, reset_as, reset_len, &value);
-
-	delay(100000);
-}
-
-int
-acpi_interrupt(void *arg)
-{
-	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t processed, sts, en, idx, jdx;
-
-	processed = 0;
-
-#if 0
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
-	    sc->sc_fadt->gpe1_base);
-#endif
-
-	dnprintf(40, "ACPI Interrupt\n");
-	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
-		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
-		en  = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  idx>>3);
-		if (en & sts) {
-			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts,
-			    en);
-			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
-			for (jdx = 0; jdx < 8; jdx++) {
-				if (en & sts & (1L << jdx)) {
-					/* Signal this GPE */
-					sc->gpe_table[idx+jdx].active = 1;
-					processed = 1;
-				}
-			}
-		}
-	}
-
-	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS, 0);
-	en  = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
-	if (sts & en) {
-		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
-		acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
-		if (sts & ACPI_PM1_PWRBTN_STS)
-			sc->sc_powerbtn = 1;
-		if (sts & ACPI_PM1_SLPBTN_STS)
-			sc->sc_sleepbtn = 1;
-		processed = 1;
-	}
-
-	if (processed) {
-		sc->sc_wakeup = 0;
-		wakeup(sc);
-	}
-
-	return (processed);
-}
-
 /* Read from power management register */
 int
 acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
@@ -1206,6 +1119,201 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
+/* Map Power Management registers */
+void
+acpi_map_pmregs(struct acpi_softc *sc)
+{
+	bus_addr_t addr;
+	bus_size_t size;
+	const char *name;
+	int reg;
+
+	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
+		size = 0;
+		switch (reg) {
+		case ACPIREG_SMICMD:
+			name = "smi";
+			size = 1;
+			addr = sc->sc_fadt->smi_cmd;
+			break;
+		case ACPIREG_PM1A_STS:
+		case ACPIREG_PM1A_EN:
+			name = "pm1a_sts";
+			size = sc->sc_fadt->pm1_evt_len >> 1;
+			addr = sc->sc_fadt->pm1a_evt_blk;
+			if (reg == ACPIREG_PM1A_EN && addr) {
+				addr += size;
+				name = "pm1a_en";
+			}
+			break;
+		case ACPIREG_PM1A_CNT:
+			name = "pm1a_cnt";
+			size = sc->sc_fadt->pm1_cnt_len;
+			addr = sc->sc_fadt->pm1a_cnt_blk;
+			break;
+		case ACPIREG_PM1B_STS:
+		case ACPIREG_PM1B_EN:
+			name = "pm1b_sts";
+			size = sc->sc_fadt->pm1_evt_len >> 1;
+			addr = sc->sc_fadt->pm1b_evt_blk;
+			if (reg == ACPIREG_PM1B_EN && addr) {
+				addr += size;
+				name = "pm1b_en";
+			}
+			break;
+		case ACPIREG_PM1B_CNT:
+			name = "pm1b_cnt";
+			size = sc->sc_fadt->pm1_cnt_len;
+			addr = sc->sc_fadt->pm1b_cnt_blk;
+			break;
+		case ACPIREG_PM2_CNT:
+			name = "pm2_cnt";
+			size = sc->sc_fadt->pm2_cnt_len;
+			addr = sc->sc_fadt->pm2_cnt_blk;
+			break;
+#if 0
+		case ACPIREG_PM_TMR:
+			/* Allocated in acpitimer */
+			name = "pm_tmr";
+			size = sc->sc_fadt->pm_tmr_len;
+			addr = sc->sc_fadt->pm_tmr_blk;
+			break;
+#endif
+		case ACPIREG_GPE0_STS:
+		case ACPIREG_GPE0_EN:
+			name = "gpe0_sts";
+			size = sc->sc_fadt->gpe0_blk_len >> 1;
+			addr = sc->sc_fadt->gpe0_blk;
+
+			dnprintf(20, "gpe0 block len : %x\n",
+			    sc->sc_fadt->gpe0_blk_len >> 1);
+			dnprintf(20, "gpe0 block addr: %x\n",
+			    sc->sc_fadt->gpe0_blk);
+			if (reg == ACPIREG_GPE0_EN && addr) {
+				addr += size;
+				name = "gpe0_en";
+			}
+			break;
+		case ACPIREG_GPE1_STS:
+		case ACPIREG_GPE1_EN:
+			name = "gpe1_sts";
+			size = sc->sc_fadt->gpe1_blk_len >> 1;
+			addr = sc->sc_fadt->gpe1_blk;
+
+			dnprintf(20, "gpe1 block len : %x\n",
+			    sc->sc_fadt->gpe1_blk_len >> 1);
+			dnprintf(20, "gpe1 block addr: %x\n",
+			    sc->sc_fadt->gpe1_blk);
+			if (reg == ACPIREG_GPE1_EN && addr) {
+				addr += size;
+				name = "gpe1_en";
+			}
+			break;
+		}
+		if (size && addr) {
+			dnprintf(50, "mapping: %.4x %.4x %s\n",
+			    addr, size, name);
+
+			/* Size and address exist; map register space */
+			bus_space_map(sc->sc_iot, addr, size, 0,
+			    &sc->sc_pmregs[reg].ioh);
+
+			sc->sc_pmregs[reg].name = name;
+			sc->sc_pmregs[reg].size = size;
+			sc->sc_pmregs[reg].addr = addr;
+		}
+	}
+}
+
+/* move all stuff that doesn't go on the boot media in here */
+#ifndef SMALL_KERNEL
+void
+acpi_reset(void)
+{
+	struct acpi_fadt	*fadt;
+	u_int32_t		 reset_as, reset_len;
+	u_int32_t		 value;
+
+	fadt = acpi_softc->sc_fadt;
+
+	/*
+	 * RESET_REG_SUP is not properly set in some implementations,
+	 * but not testing against it breaks more machines than it fixes
+	 */
+	if (acpi_softc->sc_revision <= 1 ||
+	    !(fadt->flags & FADT_RESET_REG_SUP) || fadt->reset_reg.address == 0)
+		return;
+
+	value = fadt->reset_value;
+
+	reset_as = fadt->reset_reg.register_bit_width / 8;
+	if (reset_as == 0)
+		reset_as = 1;
+
+	reset_len = fadt->reset_reg.access_size;
+	if (reset_len == 0)
+		reset_len = reset_as;
+
+	acpi_gasio(acpi_softc, ACPI_IOWRITE,
+	    fadt->reset_reg.address_space_id,
+	    fadt->reset_reg.address, reset_as, reset_len, &value);
+
+	delay(100000);
+}
+
+int
+acpi_interrupt(void *arg)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)arg;
+	u_int32_t processed, sts, en, idx, jdx;
+
+	processed = 0;
+
+#if 0
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
+	    sc->sc_fadt->gpe1_base);
+#endif
+
+	dnprintf(40, "ACPI Interrupt\n");
+	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
+		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
+		en  = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  idx>>3);
+		if (en & sts) {
+			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts,
+			    en);
+			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
+			for (jdx = 0; jdx < 8; jdx++) {
+				if (en & sts & (1L << jdx)) {
+					/* Signal this GPE */
+					sc->gpe_table[idx+jdx].active = 1;
+					processed = 1;
+				}
+			}
+		}
+	}
+
+	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS, 0);
+	en  = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+	if (sts & en) {
+		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
+		acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, en);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
+		if (sts & ACPI_PM1_PWRBTN_STS)
+			sc->sc_powerbtn = 1;
+		if (sts & ACPI_PM1_SLPBTN_STS)
+			sc->sc_sleepbtn = 1;
+		processed = 1;
+	}
+
+	if (processed) {
+		sc->sc_wakeup = 0;
+		wakeup(sc);
+	}
+
+	return (processed);
+}
 
 int
 acpi_add_device(struct aml_node *node, void *arg)
@@ -1819,112 +1927,6 @@ acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
 		return -1;
 
 	return 0;
-}
-
-/* Map Power Management registers */
-void
-acpi_map_pmregs(struct acpi_softc *sc)
-{
-	bus_addr_t addr;
-	bus_size_t size;
-	const char *name;
-	int reg;
-
-	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
-		size = 0;
-		switch (reg) {
-		case ACPIREG_SMICMD:
-			name = "smi";
-			size = 1;
-			addr = sc->sc_fadt->smi_cmd;
-			break;
-		case ACPIREG_PM1A_STS:
-		case ACPIREG_PM1A_EN:
-			name = "pm1a_sts";
-			size = sc->sc_fadt->pm1_evt_len >> 1;
-			addr = sc->sc_fadt->pm1a_evt_blk;
-			if (reg == ACPIREG_PM1A_EN && addr) {
-				addr += size;
-				name = "pm1a_en";
-			}
-			break;
-		case ACPIREG_PM1A_CNT:
-			name = "pm1a_cnt";
-			size = sc->sc_fadt->pm1_cnt_len;
-			addr = sc->sc_fadt->pm1a_cnt_blk;
-			break;
-		case ACPIREG_PM1B_STS:
-		case ACPIREG_PM1B_EN:
-			name = "pm1b_sts";
-			size = sc->sc_fadt->pm1_evt_len >> 1;
-			addr = sc->sc_fadt->pm1b_evt_blk;
-			if (reg == ACPIREG_PM1B_EN && addr) {
-				addr += size;
-				name = "pm1b_en";
-			}
-			break;
-		case ACPIREG_PM1B_CNT:
-			name = "pm1b_cnt";
-			size = sc->sc_fadt->pm1_cnt_len;
-			addr = sc->sc_fadt->pm1b_cnt_blk;
-			break;
-		case ACPIREG_PM2_CNT:
-			name = "pm2_cnt";
-			size = sc->sc_fadt->pm2_cnt_len;
-			addr = sc->sc_fadt->pm2_cnt_blk;
-			break;
-#if 0
-		case ACPIREG_PM_TMR:
-			/* Allocated in acpitimer */
-			name = "pm_tmr";
-			size = sc->sc_fadt->pm_tmr_len;
-			addr = sc->sc_fadt->pm_tmr_blk;
-			break;
-#endif
-		case ACPIREG_GPE0_STS:
-		case ACPIREG_GPE0_EN:
-			name = "gpe0_sts";
-			size = sc->sc_fadt->gpe0_blk_len >> 1;
-			addr = sc->sc_fadt->gpe0_blk;
-
-			dnprintf(20, "gpe0 block len : %x\n",
-			    sc->sc_fadt->gpe0_blk_len >> 1);
-			dnprintf(20, "gpe0 block addr: %x\n",
-			    sc->sc_fadt->gpe0_blk);
-			if (reg == ACPIREG_GPE0_EN && addr) {
-				addr += size;
-				name = "gpe0_en";
-			}
-			break;
-		case ACPIREG_GPE1_STS:
-		case ACPIREG_GPE1_EN:
-			name = "gpe1_sts";
-			size = sc->sc_fadt->gpe1_blk_len >> 1;
-			addr = sc->sc_fadt->gpe1_blk;
-
-			dnprintf(20, "gpe1 block len : %x\n",
-			    sc->sc_fadt->gpe1_blk_len >> 1);
-			dnprintf(20, "gpe1 block addr: %x\n",
-			    sc->sc_fadt->gpe1_blk);
-			if (reg == ACPIREG_GPE1_EN && addr) {
-				addr += size;
-				name = "gpe1_en";
-			}
-			break;
-		}
-		if (size && addr) {
-			dnprintf(50, "mapping: %.4x %.4x %s\n",
-			    addr, size, name);
-
-			/* Size and address exist; map register space */
-			bus_space_map(sc->sc_iot, addr, size, 0,
-			    &sc->sc_pmregs[reg].ioh);
-
-			sc->sc_pmregs[reg].name = name;
-			sc->sc_pmregs[reg].size = size;
-			sc->sc_pmregs[reg].addr = addr;
-		}
-	}
 }
 
 int

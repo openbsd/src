@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.19 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.20 2008/06/06 09:15:32 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <dev/acpi/acpidebug.h>
 #include <dev/acpi/dsdt.h>
 
+#ifdef DDB
 void db_aml_disline(uint8_t *, int, const char *, ...);
 void db_aml_disint(struct aml_scope *, int, int);
 uint8_t *db_aml_disasm(struct aml_node *, uint8_t *, uint8_t *, int, int);
@@ -588,3 +589,4 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 	aml_popscope(scope);
 	return pos;
 }
+#endif
