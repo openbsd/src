@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.23 2008/06/05 20:50:28 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.24 2008/06/06 19:14:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1755,8 +1755,8 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 	buf_size_total = buf_count * buf_size;
 	buf_size_total = round_page(buf_size_total); /* page align buffer */
-	sc->sc_mmap_buffer.buf = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mmap_buffer.buf == NULL) {
+	sc->sc_mmap_buffer = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
 		return (EINVAL);
 	}
@@ -1765,20 +1765,22 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* fill the v4l2_buffer structure */
 	for (i = 0; i < buf_count; i++) {
-		sc->sc_mmap_buffer.v4l2_buf[i].index = i;
-		sc->sc_mmap_buffer.v4l2_buf[i].m.offset = i * buf_size;
-		sc->sc_mmap_buffer.v4l2_buf[i].length = buf_size;
-		sc->sc_mmap_buffer.v4l2_buf[i].type =
-		    V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		sc->sc_mmap_buffer.v4l2_buf[i].sequence = 0;
-		sc->sc_mmap_buffer.v4l2_buf[i].field = V4L2_FIELD_NONE;
-		sc->sc_mmap_buffer.v4l2_buf[i].memory = V4L2_MEMORY_MMAP;
-		sc->sc_mmap_buffer.v4l2_buf[i].flags = V4L2_MEMORY_MMAP;
+		sc->sc_mmap[i].buf = sc->sc_mmap_buffer + (i * buf_size);
+
+		sc->sc_mmap[i].v4l2_buf.index = i;
+		sc->sc_mmap[i].v4l2_buf.m.offset = i * buf_size;
+		sc->sc_mmap[i].v4l2_buf.length = buf_size;
+		sc->sc_mmap[i].v4l2_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		sc->sc_mmap[i].v4l2_buf.sequence = 0;
+		sc->sc_mmap[i].v4l2_buf.field = V4L2_FIELD_NONE;
+		sc->sc_mmap[i].v4l2_buf.memory = V4L2_MEMORY_MMAP;
+		sc->sc_mmap[i].v4l2_buf.flags = V4L2_MEMORY_MMAP;
+
 		DPRINTF(1, "%s: %s: index=%d, offset=%d, length=%d\n",
 		    DEVNAME(sc), __func__,
-		    sc->sc_mmap_buffer.v4l2_buf[i].index,
-		    sc->sc_mmap_buffer.v4l2_buf[i].m.offset,
-		    sc->sc_mmap_buffer.v4l2_buf[i].length);
+		    sc->sc_mmap[i].v4l2_buf.index,
+		    sc->sc_mmap[i].v4l2_buf.m.offset,
+		    sc->sc_mmap[i].v4l2_buf.length);
 	}
 
 	/* tell how many buffers we have really allocated */
@@ -1796,7 +1798,7 @@ uvideo_querybuf(void *v, struct v4l2_buffer *qb)
 	    qb->memory != V4L2_MEMORY_MMAP)
 		return (EINVAL);
 
-	bcopy(&sc->sc_mmap_buffer.v4l2_buf[qb->index], qb,
+	bcopy(&sc->sc_mmap[qb->index].v4l2_buf, qb,
 	    sizeof(struct v4l2_buffer));
 
 	DPRINTF(1, "%s: %s: index=%d, offset=%d, length=%d\n",
@@ -1823,7 +1825,7 @@ uvideo_mappage(void *v, off_t off, int prot)
 	struct uvideo_softc *sc = v;
 	caddr_t p;
 
-	p = sc->sc_mmap_buffer.buf + off;
+	p = sc->sc_mmap_buffer + off;
 
 	return (p);
 }
