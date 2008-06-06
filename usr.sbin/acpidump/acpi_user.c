@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_user.c,v 1.5 2007/04/03 10:43:33 jsg Exp $	*/
+/*	$OpenBSD: acpi_user.c,v 1.6 2008/06/06 10:16:03 marco Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi_user.c,v 1.5 2007/04/03 10:43:33 jsg Exp $
+ *	$Id: acpi_user.c,v 1.6 2008/06/06 10:16:03 marco Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -107,6 +107,7 @@ acpi_find_rsd_ptr()
 
 	acpi_user_init();
 	for (i = 0; i < 1024 * 1024; i += 16) {
+		lseek(acpi_mem_fd, i, SEEK_SET);
 		read(acpi_mem_fd, buf, 16);
 		if (!memcmp(buf, "RSD PTR ", 8)) {
 			/* Read the rest of the structure */
@@ -115,6 +116,7 @@ acpi_find_rsd_ptr()
 			/* Verify checksum before accepting it. */
 			if (acpi_checksum(buf, sizeof(struct ACPIrsdp)))
 				continue;
+
 			return (acpi_map_physical(i, sizeof(struct ACPIrsdp)));
 		}
 	}
