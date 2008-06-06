@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.25 2008/06/01 17:59:55 marco Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.26 2008/06/06 09:13:02 marco Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -68,6 +68,7 @@ struct cfdriver acpiprt_cd = {
 
 void	acpiprt_prt_add(struct acpiprt_softc *, struct aml_value *);
 int	acpiprt_getpcibus(struct acpiprt_softc *, struct aml_node *);
+void	acpiprt_route_interrupt(struct acpiprt_softc *, struct aml_node *);
 
 int
 acpiprt_match(struct device *parent, void *match, void *aux)
@@ -166,7 +167,7 @@ acpiprt_getirq(union acpi_resource *crs, void *arg)
 		*irq = aml_letohost32(crs->lr_extirq.irq[0]);
 		break;
 	default:
-		printf("Unknown interrupt : %x\n", typ);
+		printf("Unknown interrupt: %x\n", typ);
 	}
 	return (0);
 }
@@ -220,16 +221,30 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 	if (pp->type == AML_OBJTYPE_DEVICE) {
 		node = pp->node;
-		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res))
+		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
 			printf("no _STA method\n");
-
-		sta = aml_val2int(&res) & STA_ENABLED;
-		aml_freevalue(&res);
-		if (sta == 0)
 			return;
+		}
 
-		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res))
+		sta = aml_val2int(&res);
+		aml_freevalue(&res);
+		if ((sta & STA_ENABLED) == 0) {
+			if ((sta & STA_PRESENT) == 0)
+				return;
+
+			acpiprt_route_interrupt(sc, node);
+
+			aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res);
+			sta = aml_val2int(&res);
+			aml_freevalue(&res);
+			if ((sta & STA_ENABLED) == 0)
+				return;
+		}
+
+		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {
 			printf("no _CRS method\n");
+			return;
+		}
 
 		if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
 			printf("invalid _CRS object\n");
@@ -395,4 +410,54 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 		}
 	}
 	return (0);
+}
+
+void
+acpiprt_route_interrupt(struct acpiprt_softc *sc, struct aml_node *node)
+{
+	struct aml_value res, res2;
+	union acpi_resource *crs;
+	int irq;
+
+	if (aml_evalname(sc->sc_acpi, node, "_PRS", 0, NULL, &res)) {
+		printf("no _PRS method\n");
+		return;
+	}
+
+	if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
+		printf("invalid _PRS object\n");
+		aml_freevalue(&res);
+		return;
+	}
+	aml_parse_resource(res.length, res.v_buffer, acpiprt_getirq, &irq);
+	aml_freevalue(&res);
+
+	if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {
+		printf("no _PRS method\n");
+		return;
+	}
+
+	if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
+		printf("invalid _CRS object\n");
+		aml_freevalue(&res);
+		return;
+	}
+
+	crs = (union acpi_resource *)res.v_buffer;
+	switch (AML_CRSTYPE(crs)) {
+	case SR_IRQ:
+		crs->sr_irq.irq_mask = htole16(1 << irq);
+		break;
+	case LR_EXTIRQ:
+		crs->lr_extirq.irq[0] = htole32(irq);
+		break;
+	}
+
+	if (aml_evalname(sc->sc_acpi, node, "_SRS", 1, &res, &res2)) {
+		printf("no _SRS method\n");
+		aml_freevalue(&res);
+		return;
+	}
+	aml_freevalue(&res);
+	aml_freevalue(&res2);
 }
