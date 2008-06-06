@@ -1,4 +1,4 @@
-/*	$OpenBSD: asl_dump.c,v 1.7 2007/12/07 18:27:07 fgsch Exp $	*/
+/*	$OpenBSD: asl_dump.c,v 1.8 2008/06/06 10:16:47 marco Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asl_dump.c,v 1.7 2007/12/07 18:27:07 fgsch Exp $
+ *	$Id: asl_dump.c,v 1.8 2008/06/06 10:16:47 marco Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.5 2001/10/23 14:53:58 takawata Exp $
  */
 
@@ -757,6 +757,37 @@ asl_dump_defwhile(u_int8_t **dpp, int indent)
 	*dpp = dp;
 }
 
+static void
+asl_dump_oparg(u_int8_t **dpp, int indent, const char *mnem, 
+    const char *fmt)
+{
+	int idx;
+	const char *pfx="";
+
+	printf("%s(", mnem);
+	for (idx=0; fmt[idx]; idx++) {
+		if (fmt[idx] == 'N') {
+			ASL_CREATE_LOCALNAMEOBJ(*dpp);
+		}
+		else if (fmt[idx] == 'o' && **dpp == 0x00) {
+			/* Optional Argument */
+			(*dpp)++;
+			continue;
+		}
+
+		printf(pfx);
+		if (fmt[idx] == 'b')
+			printf("0x%x", asl_dump_bytedata(dpp));
+		else if (fmt[idx] == 'w')
+			printf("0x%x", asl_dump_worddata(dpp));
+		else if (fmt[idx] == 'd')
+			printf("0x%x", asl_dump_dworddata(dpp));
+		else
+			asl_dump_termobj(dpp, indent);
+		pfx = ", ";
+	}
+	printf(")");
+}
 /*
  * Public interfaces
  */
@@ -837,20 +868,10 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		printf("Ones");
 		break;
 	case 0x06:		/* AliasOp */
-		printf("Alias(");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Alias", "tN");
 		break;
 	case 0x08:		/* NameOp */
-		printf("Name(");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Name", "Nt");
 		break;
 	case 0x10:		/* ScopeOp */
 		asl_dump_defscope(&dp, indent);
@@ -874,90 +895,49 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 			printf(", %d)", *dp++);
 			break;
 		case 0x02:	/* EventOp */
-			printf("Event(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Event", "t");
 			break;
 		case 0x12:	/* CondRefOfOp */
-			printf("CondRefOf(");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "CondRefOf", "tt");
 			break;
 		case 0x13:	/* CreateFieldOp */
-			printf("CreateField(");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			ASL_CREATE_LOCALNAMEOBJ(dp);
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "CreateField", "tiiN");
+			break;
+		case 0x1F:      /* LoadTableOp */
+			asl_dump_oparg(&dp, indent, "LoadTable", "tttttt");
 			break;
 		case 0x20:	/* LoadOp */
-			printf("Load(");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Load", "tt");
 			break;
 		case 0x21:	/* StallOp */
-			printf("Stall(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Stall", "i");
 			break;
 		case 0x22:	/* SleepOp */
-			printf("Sleep(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Sleep", "i");
 			break;
 		case 0x23:	/* AcquireOp */
-			printf("Acquire(");
-			asl_dump_termobj(&dp, indent);
-			printf(", 0x%x)", asl_dump_worddata(&dp));
+			asl_dump_oparg(&dp, indent, "Acquire", "tw");
 			break;
 		case 0x24:	/* SignalOp */
-			printf("Signal(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Signal", "t");
 			break;
 		case 0x25:	/* WaitOp */
-			printf("Wait(");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Wait", "ti");
 			break;
 		case 0x26:	/* ResetOp */
-			printf("Reset(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Reset", "t");
 			break;
 		case 0x27:	/* ReleaseOp */
-			printf("Release(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Release", "t");
 			break;
 		case 0x28:	/* FromBCDOp */
-			printf("FromBCD(");
-			asl_dump_termobj(&dp, indent);
-			printf(", ");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "FromBCD", "io");
 			break;
 		case 0x29:	/* ToBCDOp */
-			printf("ToBCD(");
-			asl_dump_termobj(&dp, indent);
-			OPTARG();
-			printf(")");
+			asl_dump_oparg(&dp, indent, "ToBCD", "io");
 			break;
 		case 0x2a:	/* UnloadOp */
-			printf("Unload(");
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Unload", "t");
 			break;
 		case 0x30:
 			printf("Revision");
@@ -966,11 +946,10 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 			printf("Debug");
 			break;
 		case 0x32:	/* FatalOp */
-			printf("Fatal(");
-			printf("0x%x, ", asl_dump_bytedata(&dp));
-			printf("0x%x, ", asl_dump_dworddata(&dp));
-			asl_dump_termobj(&dp, indent);
-			printf(")");
+			asl_dump_oparg(&dp, indent, "Fatal", "bdi");
+			break;
+		case 0x33:      /* TimerOp */
+			printf("Timer");
 			break;
 		case 0x80:	/* OpRegionOp */
 			asl_dump_defopregion(&dp, indent);
@@ -996,6 +975,9 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		case 0x87:	/* BankFieldOp */
 			asl_dump_defbankfield(&dp, indent);
 			break;
+		case 0x88:      /* DataRegionOp */
+			asl_dump_oparg(&dp, indent, "DataRegion", "Nttt");
+			break;
 		default:
 			errx(1, "strange opcode 0x5b, 0x%x", opcode);
 		}
@@ -1020,169 +1002,79 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		printf("Local%d", opcode - 0x60);
 		break;
 	case 0x70:		/* StoreOp */
-		printf("Store(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Store", "tt");
 		break;
 	case 0x71:		/* RefOfOp */
-		printf("RefOf(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "RefOf", "t");
 		break;
 	case 0x72:		/* AddOp */
-		printf("Add(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Add", "iio");
 		break;
 	case 0x73:		/* ConcatenateOp */
-		printf("Concatenate(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Concatenate", "ttt");
 		break;
 	case 0x74:		/* SubtractOp */
-		printf("Subtract(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Subtract", "iio");
 		break;
 	case 0x75:		/* IncrementOp */
-		printf("Increment(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Increment", "t");
 		break;
 	case 0x76:		/* DecrementOp */
-		printf("Decrement(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Decrement", "t");
 		break;
 	case 0x77:		/* MultiplyOp */
-		printf("Multiply(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Multiply", "iio");
 		break;
 	case 0x78:		/* DivideOp */
-		printf("Divide(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Divide", "iioo");
 		break;
 	case 0x79:		/* ShiftLeftOp */
-		printf("ShiftLeft(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ShiftLeft", "iio");
 		break;
 	case 0x7a:		/* ShiftRightOp */
-		printf("ShiftRight(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ShiftRight", "iio");
 		break;
 	case 0x7b:		/* AndOp */
-		printf("And(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "And", "iio");
 		break;
 	case 0x7c:		/* NAndOp */
-		printf("NAnd(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "NAnd", "iio");
 		break;
 	case 0x7d:		/* OrOp */
-		printf("Or(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Or", "iio");
 		break;
 	case 0x7e:		/* NOrOp */
-		printf("NOr(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "NOr", "iio");
 		break;
 	case 0x7f:		/* XOrOp */
-		printf("XOr(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "XOr", "iio");
 		break;
 	case 0x80:		/* NotOp */
-		printf("Not(");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Not", "io");
 		break;
 	case 0x81:		/* FindSetLeftBitOp */
-		printf("FindSetLeftBit(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "FindSetLeftBit", "it");
 		break;
 	case 0x82:		/* FindSetRightBitOp */
-		printf("FindSetRightBit(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "FindSetRightBit", "it");
 		break;
 	case 0x83:		/* DerefOp */
-		printf("DerefOf(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "DerefOf", "t");
+		break;
+	case 0x84:              /* ConcatResTemplateOp */
+		asl_dump_oparg(&dp, indent, "ConcatResTemplate", "ttt");
+		break;
+	case 0x85:              /* ModOp */
+		asl_dump_oparg(&dp, indent, "Mod", "iio");
 		break;
 	case 0x86:		/* NotifyOp */
-		printf("Notify(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Notify", "tt");
 		break;
 	case 0x87:		/* SizeOfOp */
-		printf("SizeOf(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "SizeOf", "t");
 		break;
 	case 0x88:		/* IndexOp */
-		printf("Index(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Index", "tio");
 		break;
 	case 0x89:		/* MatchOp */
 		printf("Match(");
@@ -1196,119 +1088,64 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		printf(")");
 		break;
 	case 0x8a:		/* CreateDWordFieldOp */
-		printf("CreateDWordField(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "CreateDWordField", "tiN");
 		break;
 	case 0x8b:		/* CreateWordFieldOp */
-		printf("CreateWordField(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "CreateWordField", "tiN");
 		break;
 	case 0x8c:		/* CreateByteFieldOp */
-		printf("CreateByteField(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "CreateByteField", "tiN");
 		break;
 	case 0x8d:		/* CreateBitFieldOp */
-		printf("CreateBitField(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "CreateBitField", "tiN");
 		break;
 	case 0x8e:		/* ObjectTypeOp */
-		printf("ObjectType(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ObjectType", "t");
 		break;
 	case 0x8f:		/* CreateQWordFieldOp */
-		printf("CreateQWordField(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		ASL_CREATE_LOCALNAMEOBJ(dp);
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "CreateQWordField", "tiN");
 		break;
 	case 0x90:
-		printf("LAnd(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LAnd", "ii");
 		break;
 	case 0x91:
-		printf("LOr(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LOr", "ii");
 		break;
 	case 0x92:
-		printf("LNot(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LNot", "i");
 		break;
 	case 0x93:
-		printf("LEqual(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LEqual", "tt");
 		break;
 	case 0x94:
-		printf("LGreater(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LGreater", "tt");
 		break;
 	case 0x95:
-		printf("LLess(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "LLess", "tt");
 		break;
 	case 0x96:		/* ToBufferOp */
-		printf("ToBuffer(");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ToBuffer", "to");
+		break;
+	case 0x97:		/* ToDecStringOp */
+		asl_dump_oparg(&dp, indent, "ToDecString", "to");
+		break;
+	case 0x98:		/* ToHexStringOp */
+		asl_dump_oparg(&dp, indent, "ToHexString", "to");
 		break;
 	case 0x99:		/* ToIntegerOp */
-		printf("ToInteger(");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ToInteger", "to");
 		break;
 	case 0x9c:		/* ToStringOp */
-		printf("ToString(");
-		asl_dump_termobj(&dp, indent);
-		printf(", ");
-		asl_dump_termobj(&dp, indent);
-		OPTARG();
-		printf(")");
+		asl_dump_oparg(&dp, indent, "ToString", "tto");
+		break;
+	case 0x9d:               /* CopyObjectOp */
+		asl_dump_oparg(&dp, indent, "CopyObject", "tt");
+		break;
+	case 0x9e:              /* MidOp */
+		asl_dump_oparg(&dp, indent, "Mid", "tiio");
+		break;
+	case 0x9f:
+		printf("Continue");
 		break;
 	case 0xa0:		/* IfOp */
 		asl_dump_defif(&dp, indent);
@@ -1326,9 +1163,7 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		printf("Break");
 		break;
 	case 0xa4:		/* ReturnOp */
-		printf("Return(");
-		asl_dump_termobj(&dp, indent);
-		printf(")");
+		asl_dump_oparg(&dp, indent, "Return", "t");
 		break;
 	case 0xcc:		/* BreakPointOp */
 		printf("BreakPoint");
