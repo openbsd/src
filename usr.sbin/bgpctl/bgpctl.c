@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.133 2008/06/07 18:14:41 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.134 2008/06/07 20:23:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -89,8 +89,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-s socket] [-n] "
-	    "<command> [arg [...]]\n", __progname);
+	fprintf(stderr, "usage: %s [-n] [-s socket] "
+	    "command [arguments ...]\n", __progname);
 	exit(1);
 }
 
