@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.85 2008/01/23 16:37:55 jsing Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.86 2008/06/07 20:34:36 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -621,7 +621,16 @@ wsdisplay_common_detach(struct wsdisplay_softc *sc, int flags)
 #if NWSKBD > 0
 	if (sc->sc_input != NULL) {
 #if NWSMUX > 0
-		wsmux_detach_sc(sc->sc_input);	/* XXX not exactly correct */
+		/*
+		 * If we are the display of the mux we are attached to,
+		 * disconnect all input devices from us.
+		 */
+		if (sc->sc_input->me_dispdv == &sc->sc_dv) {
+			if ((rc = wsmux_set_display((struct wsmux_softc *)
+						    sc->sc_input, NULL)) != 0)
+				return (rc);
+		}
+
 		/*
 		 * XXX
 		 * If we created a standalone mux (dmux), we should destroy it
@@ -676,7 +685,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (mux == NULL)
 		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
-	mux->sc_displaydv = &sc->sc_dv;
+
 	if (kbdmux >= 0)
 		printf(" mux %d", kbdmux);
 #else
@@ -718,7 +727,12 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	printf("\n");
 
 #if NWSKBD > 0 && NWSMUX > 0
-	wsmux_set_display(mux, &sc->sc_dv);
+	/*
+	 * If this mux did not have a display device yet, volunteer for
+	 * the job.
+	 */
+	if (mux->sc_displaydv == NULL)
+		wsmux_set_display(mux, &sc->sc_dv);
 #endif
 
 	sc->sc_accessops = accessops;
@@ -1839,12 +1853,12 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	if (!(scr->scr_flags & SCR_GRAPHICS) &&
 	    (sc->sc_scr[no]->scr_flags & SCR_GRAPHICS)) {
 		/* switching from a text console to a graphic console */
-	
+
 		/* remove a potential wsmoused(8) selection */
 		mouse_remove(sc);
 		wsmoused_release(sc);
 	}
-	
+
 	if ((scr->scr_flags & SCR_GRAPHICS) &&
 	    !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS)) {
 		/* switching from a graphic console to a text console */
@@ -3286,10 +3300,9 @@ wsmoused_release(struct wsdisplay_softc *sc)
 		}
 
 		/* inject event to notify wsmoused(8) to close mouse device */
-		if (wsms_dev != NULL) 
+		if (wsms_dev != NULL)
 			wsmouse_input(wsms_dev, 0, 0, 0, 0, 0,
 				      WSMOUSE_INPUT_WSMOUSED_CLOSE);
-		
 	}
 #endif /* NWSMOUSE > 0 */
 }
