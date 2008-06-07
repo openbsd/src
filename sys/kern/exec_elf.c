@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.62 2008/06/04 21:12:50 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.63 2008/06/07 17:19:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -70,21 +70,18 @@
 struct ELFNAME(probe_entry) {
 	int (*func)(struct proc *, struct exec_package *, char *,
 	    u_long *, u_int8_t *);
-	int os_mask;
 } ELFNAME(probes)[] = {
 	/* XXX - bogus, shouldn't be size independent.. */
 #ifdef COMPAT_FREEBSD
-	{ freebsd_elf_probe, 1 << OOS_FREEBSD },
+	{ freebsd_elf_probe },
 #endif
 #ifdef COMPAT_SVR4
-	{ svr4_elf_probe,
-	    1 << OOS_SVR4 | 1 << OOS_ESIX | 1 << OOS_SOLARIS | 1 << OOS_SCO |
-	    1 << OOS_DELL | 1 << OOS_NCR },
+	{ svr4_elf_probe },
 #endif
 #ifdef COMPAT_LINUX
-	{ linux_elf_probe, 1 << OOS_LINUX },
+	{ linux_elf_probe },
 #endif
-	{ 0, 1 << OOS_OPENBSD }
+	{ NULL }
 };
 
 int ELFNAME(load_file)(struct proc *, char *, struct exec_package *,
@@ -555,10 +552,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	for (i = 0;
 	    i < sizeof(ELFNAME(probes)) / sizeof(ELFNAME(probes)[0]) && error;
 	    i++) {
-		if (os == OOS_NULL || ((1 << os) & ELFNAME(probes)[i].os_mask))
-			error = ELFNAME(probes)[i].func ?
-			    (*ELFNAME(probes)[i].func)(p, epp, interp, &pos, &os) :
-			    0;
+		error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos, &os);
 	}
 	if (!error)
 		p->p_os = os;
@@ -689,7 +683,7 @@ native:
 		epp->ep_interp_pos = pos;
 	}
 
-#if defined(COMPAT_SVR4) && defined(i386)
+#if defined(COMPAT_SVR4) && defined(i386) && 0	/* nothing sets OOS_DELL... */
 #ifndef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
 	if (p->p_os == OOS_DELL)
