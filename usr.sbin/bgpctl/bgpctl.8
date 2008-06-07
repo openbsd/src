@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.46 2007/05/31 19:20:22 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.47 2008/06/07 18:14:41 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 7 2008 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -23,7 +23,6 @@
 .Sh SYNOPSIS
 .Nm bgpctl
 .Op Fl n
-.Op Fl o Ar directory
 .Op Fl s Ar socket
 .Ar command
 .Op Ar arguments ...
@@ -43,10 +42,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Show neighbors' IP addresses instead of their description.
-.It Fl o Ar directory
-Use
-.Ar directory
-to write the filter files to in irrfilter mode.
 .It Fl s Ar socket
 Use
 .Ar socket
@@ -66,8 +61,9 @@ Remove the learned routes from the Forwarding Information Base
 a.k.a. the kernel routing table.
 .It Xo
 .Cm irrfilter
-.Ar as
 .Op Ar options
+.Ar as
+.Op Ar arguments
 .Xc
 Get the
 .Em aut-num
@@ -76,6 +72,14 @@ object from the
 and generate bgpd filters from the policy specified therein.
 The aut-num object as well as the associated as-set and route objects
 have to be in RPSL format.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl o Ar directory
+Use
+.Ar directory
+to write the filter files to.
+.El
 .It Cm neighbor Ar peer Cm up
 Take the BGP session to the specified neighbor up.
 .Ar peer
