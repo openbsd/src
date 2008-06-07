@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.7 2006/12/31 15:04:33 krw Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.8 2008/06/07 19:39:25 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -331,7 +331,7 @@ ipgphy_status(struct mii_softc *sc)
 }
 
 int
-ipgphy_mii_phy_auto(struct mii_softc *mii)
+ipgphy_mii_phy_auto(struct mii_softc *sc)
 {
 	uint32_t reg;
 
@@ -341,11 +341,11 @@ ipgphy_mii_phy_auto(struct mii_softc *mii)
 	if (sc->mii_flags & MIIF_DOPAUSE)
 		reg |= IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE;
 
-	PHY_WRITE(mii, IPGPHY_MII_ANAR, reg);
+	PHY_WRITE(sc, IPGPHY_MII_ANAR, reg);
 	reg = IPGPHY_1000CR_1000T | IPGPHY_1000CR_1000T_FDX;
 	reg |= IPGPHY_1000CR_MASTER;
-	PHY_WRITE(mii, IPGPHY_MII_1000CR, reg);
-	PHY_WRITE(mii, IPGPHY_MII_BMCR, (IPGPHY_BMCR_FDX |
+	PHY_WRITE(sc, IPGPHY_MII_1000CR, reg);
+	PHY_WRITE(sc, IPGPHY_MII_BMCR, (IPGPHY_BMCR_FDX |
 	    IPGPHY_BMCR_AUTOEN | IPGPHY_BMCR_STARTNEG));
 
 	return (EJUSTRETURN);
