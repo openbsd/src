@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.117 2008/05/28 22:45:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.118 2008/06/07 19:12:32 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -302,6 +302,7 @@ bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 hme*	at pci?			# Sun Happy Meal
 
 dcphy*		at mii?		# Digital Clone PHYs
+acphy*		at mii?		# Altima AC101 PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
 exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
@@ -310,9 +311,10 @@ icsphy*		at mii?		# ICS1890 PHYs
 lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs
 nsphyter*	at mii?		# NS83843 PHYs
-#mtdphy*	at mii?		# Myson MTD972 PHYs
+mtdphy*		at mii?		# Myson MTD972 PHYs
 qsphy*		at mii?		# Quality Semi QS6612 PHYs
-#sqphy*		at mii?		# Seeq 8022[013] PHYs
+luphy*		at mii?		# Lucent LU6612 PHY
+sqphy*		at mii?		# Seeq 8022[013] PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 tqphy*		at mii?		# TDK Semiconductor PHYs
 brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
