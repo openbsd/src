@@ -274,7 +274,7 @@
     datadir:       $prefix
     iconsdir:      $prefix/icons
     htdocsdir:     $prefix/htdocs
-    manualdir:     $htdocsdir/manual
+    manualdir:     $exec_prefix/share/doc/html/httpd
     cgidir:        $prefix/cgi-bin
     includedir:    $exec_prefix/lib/apache/include
     localstatedir: $prefix

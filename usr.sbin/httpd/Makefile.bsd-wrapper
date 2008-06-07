@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.65 2008/05/09 08:06:27 mbalmer Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.66 2008/06/07 01:59:36 jdixon Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -19,6 +19,7 @@ LNDIR=	/usr/bin/lndir
 #    datadir:       $prefix
 #    iconsdir:      $prefix/icons
 #    htdocsdir:     $prefix/htdocs
+#    manualdir:     $exec_prefix/share/doc/html/httpd
 #    cgidir:        $prefix/cgi-bin
 #    includedir:    $exec_prefix/lib/apache/include
 #    localstatedir: $prefix
@@ -35,6 +36,7 @@ HTTPD_LIBEXECDIR=	${HTTPD_EXEC_PREFIX}/lib/apache/modules
 HTTPD_SYSCONFDIR=	${HTTPD_PREFIX}/conf
 HTTPD_ICONSDIR=		${HTTPD_PREFIX}/icons
 HTTPD_HTDOCSDIR=	${HTTPD_PREFIX}/htdocs
+HTTPD_MANUALDIR=	${HTTPD_EXEC_PREFIX}/share/doc/html/httpd
 HTTPD_INCLUDEDIR=	${HTTPD_EXEC_PREFIX}/lib/apache/include
 HTTPD_RUNDIR=		${HTTPD_PREFIX}/logs
 HTTPD_LOGDIR=		${HTTPD_PREFIX}/logs
@@ -660,7 +662,7 @@ includes:
 		    ${.CURDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}/xml; \
 	done
 
-install: maninstall
+install: maninstall htmlinstall
 	@-for i in ${BINFILES}; do \
 		j=`basename $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_BINDIR}/$$j"; \
@@ -741,12 +743,13 @@ cleanman:
 	@echo NOMAN is set
 .endif
 
-man:
+htmlinstall:
 	@-for i in ${MANUALFILES}; do \
-		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${HTTPD_HTDOCSDIR}/$$i"; \
+		j=`dirname $$i | sed 's;^manual/*;;'`; \
+		k=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_MANUALDIR}/$$j/$$k"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    htdocs/$$i ${DESTDIR}${HTTPD_HTDOCSDIR}/$$j/; \
+		    ${.OBJDIR}/htdocs/$$i ${DESTDIR}${HTTPD_MANUALDIR}/$$j/; \
 	done
 
 distribution:
@@ -765,12 +768,6 @@ distribution:
 		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
 		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_PREFIX}/$$j/; \
-	done
-	@-for i in ${MANUALFILES}; do \
-		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${HTTPD_HTDOCSDIR}/$$i"; \
-		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/htdocs/$$i ${DESTDIR}${HTTPD_HTDOCSDIR}/$$j/; \
 	done
 	@-for i in ${CGIFILES}; do \
 		j=`dirname $$i`; \

@@ -4574,15 +4574,6 @@
 ./var/www/conf/modules
 ./var/www/conf/modules.sample
 ./var/www/htdocs
-./var/www/htdocs/manual
-./var/www/htdocs/manual/howto
-./var/www/htdocs/manual/images
-./var/www/htdocs/manual/misc
-./var/www/htdocs/manual/mod
-./var/www/htdocs/manual/mod/mod_ssl
-./var/www/htdocs/manual/programs
-./var/www/htdocs/manual/search
-./var/www/htdocs/manual/vhosts
 ./var/www/icons
 ./var/www/icons/small
 ./var/www/logs

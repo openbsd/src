@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.4 2004/07/29 10:50:02 jmc Exp $
+#	$OpenBSD: README,v 1.5 2008/06/07 01:59:36 jdixon Exp $
 # 
 #  Copyright (c) 2004 Jason McIntyre <jmc@openbsd.org>
 # 
@@ -17,7 +17,7 @@
 
 The documents in this directory consist of various, miscellaneous, system docs:
 
-	html/		HTML documents for bind, curses, lynx, and milter
+	html/		HTML documents for bind, curses, httpd, lynx, and milter
 	psd/		UNIX Programmer's Supplementary Documents
 	smm/		UNIX System Manager's Manuals
 	usd/		UNIX User's Supplementary Documents
