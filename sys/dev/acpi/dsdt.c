@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.118 2008/06/06 09:15:32 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.119 2008/06/07 17:30:50 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1607,6 +1607,7 @@ aml_eisaid(u_int32_t pid)
 	return id;
 }
 
+#if 0
 /*
  * @@@: Fixup DSDT code
  */
@@ -1627,7 +1628,6 @@ struct aml_blacklist {
 	{ NULL },
 };
 
-#if 0
 void
 aml_fixup_dsdt(u_int8_t *acpi_hdr, u_int8_t *base, int len)
 {
