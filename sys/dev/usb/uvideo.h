@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.11 2008/06/06 19:14:45 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.12 2008/06/07 22:14:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
 #include <sys/videoio.h>
 
 /*
@@ -353,15 +354,16 @@ struct uvideo_sample_buffer {
 
 #define UVIDEO_MAX_BUFFERS	256
 struct uvideo_mmap {
+	SIMPLEQ_ENTRY(uvideo_mmap)	q_frames;
 	/*
 	 * TODO
 	 * Complete buffer so we can queue/dequeue video frames.
 	 * Maybe we should use some queue macros for this?
 	 */
-	uint8_t			*buf;
-
-	struct v4l2_buffer	 v4l2_buf;
+	uint8_t				*buf;
+	struct v4l2_buffer		 v4l2_buf;
 };
+typedef SIMPLEQ_HEAD(, uvideo_mmap) q_mmap;
 
 struct uvideo_softc {
 	struct device				 sc_dev;
@@ -392,8 +394,12 @@ struct uvideo_softc {
 	u_int32_t				 quirks;
 
 	struct uvideo_sample_buffer		 sc_sample_buffer;
+
 	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
 	uint8_t					*sc_mmap_buffer;
+	q_mmap					 sc_mmap_q;
+	int					 sc_mmap_count;
+	int					 sc_mmap_cur;
 
 	struct vnode				*sc_vp;
 	struct usb_task				 sc_task_write;

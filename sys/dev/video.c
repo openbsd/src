@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.6 2008/06/05 20:50:28 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.7 2008/06/07 22:14:57 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -201,7 +201,20 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = (sc->hw_if->querybuf)(sc->hw_hdl,
 			    (struct v4l2_buffer *)data);
 		break;
+	case VIDIOC_QBUF:
+		if (sc->hw_if->qbuf)
+			error = (sc->hw_if->qbuf)(sc->hw_hdl,
+			    (struct v4l2_buffer *)data);
+		break;
 	case VIDIOC_DQBUF:
+		if (sc->hw_if->dqbuf)
+			error = (sc->hw_if->dqbuf)(sc->hw_hdl,
+			    (struct v4l2_buffer *)data);
+		break;
+	case VIDIOC_STREAMON:
+		if (sc->hw_if->streamon)
+			error = (sc->hw_if->streamon)(sc->hw_hdl,
+			    (int)*data);
 		break;
 	case VIDIOC_TRY_FMT:
 		if (sc->hw_if->try_fmt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.24 2008/06/06 19:14:45 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.25 2008/06/07 22:14:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -99,6 +99,7 @@ void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
+int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
 #ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
@@ -139,6 +140,9 @@ int		uvideo_enum_input(void *, struct v4l2_input *);
 int		uvideo_s_input(void *, int);
 int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
 int		uvideo_querybuf(void *, struct v4l2_buffer *);
+int		uvideo_qbuf(void *, struct v4l2_buffer *);
+int		uvideo_dqbuf(void *, struct v4l2_buffer *);
+int		uvideo_streamon(void *, int);
 int		uvideo_try_fmt(void *, struct v4l2_format *);
 caddr_t		uvideo_mappage(void *, off_t, int);
 
@@ -173,7 +177,9 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_s_input,		/* VIDIOC_S_INPUT */
 	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
 	uvideo_querybuf,	/* VIDIOC_QUERYBUF */
-	NULL,			/* VIDIOC_DQBUF */
+	uvideo_qbuf,		/* VIDIOC_QBUF */
+	uvideo_dqbuf,		/* VIDIOC_DQBUF */
+	uvideo_streamon,	/* VIDIOC_STREAMON */
 	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
 	uvideo_mappage		/* mmap */
 };
@@ -248,7 +254,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 		return(EIO);
 	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
 #endif
-	uvideo_vs_start(sc);
+	//uvideo_vs_start(sc);
 
 	return (0);
 }
@@ -328,6 +334,11 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 	error = uvideo_vs_negotation(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
+
+	/* init mmap queue */
+	SIMPLEQ_INIT(&sc->sc_mmap_q);
+	sc->sc_mmap_cur = 0;
+	sc->sc_mmap_count = 0;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 
@@ -1194,6 +1205,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 			usb_add_task(sc->sc_udev, &sc->sc_task_write);
 #endif
+#if 0
 			/*
 			 * Copy video frame to upper layer buffer and call
 			 * upper layer interrupt.
@@ -1201,6 +1213,8 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			*sc->sc_uplayer_fsize = fb->offset;
 			bcopy(fb->buf, sc->sc_uplayer_fbuffer, fb->offset);
 			sc->sc_uplayer_intr(sc->sc_uplayer_arg);
+#endif
+			uvideo_mmap_queue(sc, fb->buf, fb->offset);
 		} else {
 			DPRINTF(1, "%s: %s: sample too large, skipped!\n",
 			    DEVNAME(sc), __func__);
@@ -1210,6 +1224,35 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->fid = 0;
 		//fb->offset = 0;
 	}
+
+	return (0);
+}
+
+int
+uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
+{
+	/* find a buffer which is ready for queueing */
+	while (sc->sc_mmap_cur < sc->sc_mmap_count) {
+		if (sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.flags &
+		    V4L2_BUF_FLAG_QUEUED)
+			break;
+		/* not ready for queueing, try next */
+		sc->sc_mmap_cur++;
+	}
+	if (sc->sc_mmap_cur == sc->sc_mmap_count)
+		panic("uvideo_mmap_queue: mmap queue is full!");
+
+	/* copy frame to mmap buffer */
+	bcopy(buf, sc->sc_mmap[sc->sc_mmap_cur].buf, len);
+
+	/* queue it */
+	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[sc->sc_mmap_cur],
+	    q_frames);
+
+	/* point to next mmap buffer */
+	sc->sc_mmap_cur++;
+
+	wakeup(sc);
 
 	return (0);
 }
@@ -1741,19 +1784,19 @@ int
 uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 {
 	struct uvideo_softc *sc = v;
-	int i, buf_count, buf_size, buf_size_total;
+	int i, buf_size, buf_size_total;
 
 	DPRINTF(1, "%s: count=%d\n", __func__, rb->count);
 
 	/* limit the buffers */
 	if (rb->count > UVIDEO_MAX_BUFFERS)
-		buf_count = UVIDEO_MAX_BUFFERS;
+		sc->sc_mmap_count = UVIDEO_MAX_BUFFERS;
 	else
-		buf_count = rb->count;
+		sc->sc_mmap_count = rb->count;
 
 	/* allocate the total mmap buffer */	
 	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
-	buf_size_total = buf_count * buf_size;
+	buf_size_total = sc->sc_mmap_count * buf_size;
 	buf_size_total = round_page(buf_size_total); /* page align buffer */
 	sc->sc_mmap_buffer = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
@@ -1764,7 +1807,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	    DEVNAME(sc), buf_size_total);
 
 	/* fill the v4l2_buffer structure */
-	for (i = 0; i < buf_count; i++) {
+	for (i = 0; i < sc->sc_mmap_count; i++) {
 		sc->sc_mmap[i].buf = sc->sc_mmap_buffer + (i * buf_size);
 
 		sc->sc_mmap[i].v4l2_buf.index = i;
@@ -1784,7 +1827,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	}
 
 	/* tell how many buffers we have really allocated */
-	rb->count = buf_count;
+	rb->count = sc->sc_mmap_count;
 
 	return (0);
 }
@@ -1806,6 +1849,55 @@ uvideo_querybuf(void *v, struct v4l2_buffer *qb)
 	    qb->index,
 	    qb->m.offset,
 	    qb->length);
+
+	return (0);
+}
+
+int
+uvideo_qbuf(void *v, struct v4l2_buffer *qb)
+{
+	struct uvideo_softc *sc = v;
+
+	sc->sc_mmap[qb->index].v4l2_buf.flags &= ~V4L2_BUF_FLAG_DONE;
+	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED;
+	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_QUEUED;
+
+	return (0);
+}
+
+int
+uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
+{
+	struct uvideo_softc *sc = v;
+	struct uvideo_mmap *mmap;
+	int error;
+
+	if (SIMPLEQ_EMPTY(&sc->sc_mmap_q)) {
+		/* mmap queue is empty, block until first frame is queued */
+		error = tsleep(sc, PWAIT | PCATCH, "vid_mmap", 0);
+		if (error)
+			return (EINVAL);
+	}
+
+	mmap = SIMPLEQ_FIRST(&sc->sc_mmap_q);
+	if (mmap == NULL)
+		panic("uvideo_dqbuf: NULL pointer!");
+
+	bcopy(&mmap->v4l2_buf, dqb, sizeof(struct v4l2_buffer));
+
+	mmap->v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_DONE;
+
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
+
+	return (0);
+}
+
+int
+uvideo_streamon(void *v, int type)
+{
+	struct uvideo_softc *sc = v;
+
+	uvideo_vs_start(sc);
 
 	return (0);
 }
