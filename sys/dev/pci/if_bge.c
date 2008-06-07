@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.235 2008/05/24 02:21:50 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.236 2008/06/07 19:05:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2064,7 +2064,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = bge_ioctl;
 	ifp->if_start = bge_start;
 	ifp->if_watchdog = bge_watchdog;
-	ifp->if_baudrate = 1000000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
@@ -3543,11 +3542,13 @@ bge_link_upd(struct bge_softc *sc)
 				    LINK_STATE_HALF_DUPLEX :
 				    LINK_STATE_FULL_DUPLEX;
 				if_link_state_change(ifp);
+				ifp->if_baudrate = IF_Gbps(1);
 			}
 		} else if (BGE_STS_BIT(sc, BGE_STS_LINK)) {
 			BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 			ifp->if_link_state = LINK_STATE_DOWN;
 			if_link_state_change(ifp);
+			ifp->if_baudrate = 0;
 		}
         /*
 	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
