@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.21 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.22 2008/06/07 20:32:16 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -762,7 +762,7 @@ wsmux_evsrc_set_display(struct device *dv, struct device *displaydv)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 
-	DPRINTF(("wsmux_set_display: %s: displaydv=%p\n",
+	DPRINTF(("wsmux_evsrc_set_display: %s: displaydv=%p\n",
 		 sc->sc_base.me_dv.dv_xname, displaydv));
 
 	if (displaydv != NULL) {
@@ -801,7 +801,8 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 		}
 #endif
 		if (me->me_ops->dsetdisplay != NULL) {
-			error = wsevsrc_set_display(me, nsc->sc_displaydv);
+			error = wsevsrc_set_display(me,
+			    nsc ? nsc->sc_displaydv : NULL);
 			DPRINTF(("wsmux_set_display: m=%p dev=%s error=%d\n",
 				 me, me->me_dv.dv_xname, error));
 			if (!error) {
