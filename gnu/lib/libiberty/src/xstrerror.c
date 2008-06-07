@@ -72,7 +72,7 @@ xstrerror (int errnum)
   /* If `errnum' is out of range, result might be NULL.  We'll fix that.  */
   if (!errstr)
     {
-      sprintf (xstrerror_buf, ERRSTR_FMT, errnum);
+      snprintf (xstrerror_buf, sizeof xstrerror_buf, ERRSTR_FMT, errnum);
       errstr = xstrerror_buf;
     }
   return errstr;
