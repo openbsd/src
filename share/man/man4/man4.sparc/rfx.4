@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfx.4,v 1.4 2008/03/31 07:44:30 jmc Exp $
+.\"	$OpenBSD: rfx.4,v 1.5 2008/06/07 20:42:27 miod Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2008 $
+.Dd $Mdocdate: June 7 2008 $
 .Dt RFX 4 sparc
 .Os
 .Sh NAME
@@ -78,9 +78,11 @@ In the following tables, left
 .Pq L
 and right
 .Pq R
-Jumper positions are described looking at the board with the video connector
+jumper positions are described looking at the board with the video connector
 on top.
-If the jumper position is not specified, it means it has to be removed
+If the jumper position is not specified
+.Pq _ ,
+it means it has to be removed
 .Pq open .
 .Ss RasterFlex-24 and RasterFlex-32 Jumper Settings:
 .Bl -column "Jumpers" "Resolution" "Refresh"
@@ -88,8 +90,8 @@ If the jumper position is not specified, it means it has to be removed
 .It " "
 .It Li " R  R  R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
 .It Li "L  L  L " Ta 1024x768 Ta 76Hz Ta "SVGA"
-.It Li "L       " Ta 1152x900 Ta 66Hz
-.It Li "   L  L " Ta 1152x900 Ta 76Hz
+.It Li "L  _  _ " Ta 1152x900 Ta 66Hz
+.It Li "_  L  L " Ta 1152x900 Ta 76Hz
 .El
 .Ss RasterFlex-HR Jumper Settings:
 .Bl -column "Jumpers" "Resolution" "Refresh"
@@ -97,11 +99,11 @@ If the jumper position is not specified, it means it has to be removed
 .It " "
 .It Li " R  R  R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
 .It Li "L  L  L " Ta 1024x768 Ta 76Hz Ta "SVGA"
-.It Li "L       " Ta 1152x900 Ta 66Hz
-.It Li "L  L    " Ta 1152x900 Ta 76Hz
-.It Li "   L    " Ta 1280x1024 Ta 60Hz
-.It Li "   L  L " Ta 1280x1024 Ta 67Hz
-.It Li "L     L " Ta 1280x1024 Ta 76Hz
+.It Li "L  _  _ " Ta 1152x900 Ta 66Hz
+.It Li "L  L  _ " Ta 1152x900 Ta 76Hz
+.It Li "_  L  _ " Ta 1280x1024 Ta 60Hz
+.It Li "_  L  L " Ta 1280x1024 Ta 67Hz
+.It Li "L  _  L " Ta 1280x1024 Ta 76Hz
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
