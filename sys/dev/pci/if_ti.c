@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.84 2006/11/20 22:49:32 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.85 2008/06/07 19:03:13 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -516,6 +516,7 @@ void
 ti_handle_events(struct ti_softc *sc)
 {
 	struct ti_event_desc	*e;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 
 	if (sc->ti_rdata->ti_event_ring == NULL)
 		return;
@@ -525,6 +526,35 @@ ti_handle_events(struct ti_softc *sc)
 		switch (TI_EVENT_EVENT(e)) {
 		case TI_EV_LINKSTAT_CHANGED:
 			sc->ti_linkstat = TI_EVENT_CODE(e);
+			switch (sc->ti_linkstat) {
+			case TI_EV_CODE_LINK_UP:
+			case TI_EV_CODE_GIG_LINK_UP:
+			    {
+				struct ifmediareq ifmr;
+
+				bzero(&ifmr, sizeof(ifmr));
+				ti_ifmedia_sts(ifp, &ifmr);
+				if (ifmr.ifm_active & IFM_FDX) {
+					ifp->if_link_state =
+					    LINK_STATE_FULL_DUPLEX;
+				} else {
+					ifp->if_link_state =
+					    LINK_STATE_HALF_DUPLEX;
+				}
+				if_link_state_change(ifp);
+				ifp->if_baudrate =
+				    ifmedia_baudrate(ifmr.ifm_active);
+				break;
+			    }
+			case TI_EV_CODE_LINK_DOWN:
+				ifp->if_link_state = LINK_STATE_DOWN;
+				if_link_state_change(ifp);
+				ifp->if_baudrate = 0;
+				break;
+			default:
+				printf("%s: unknown link state code %d\n",
+				    sc->sc_dv.dv_xname, sc->ti_linkstat);
+			}
 			break;
 		case TI_EV_ERROR:
 			if (TI_EVENT_CODE(e) == TI_EV_CODE_ERR_INVAL_CMD)
