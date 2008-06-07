@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.119 2008/05/26 03:11:48 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.120 2008/06/07 03:22:26 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -338,7 +338,7 @@ main(int argc, char *argv[])
 		}
 		sleep(1);
 	}
-	if (i >= 0)
+	if (i > 0)
 		fprintf(stderr, " got link\n");
 
  dispatch:
