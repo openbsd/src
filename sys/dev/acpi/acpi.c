@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.121 2008/06/06 09:15:32 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.122 2008/06/07 17:00:38 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -636,30 +636,14 @@ acpi_submatch(struct device *parent, void *match, void *aux)
 int
 acpi_print(void *aux, const char *pnp)
 {
-	/* XXX ACPIVERBOSE should be replaced with dnprintf */
 	struct acpi_attach_args *aa = aux;
-#ifdef ACPIVERBOSE
-	struct acpi_table_header *hdr =
-		(struct acpi_table_header *)aa->aaa_table;
-#endif
 
 	if (pnp) {
 		if (aa->aaa_name)
 			printf("%s at %s", aa->aaa_name, pnp);
-#ifdef ACPIVERBOSE
-		else
-			printf("acpi device at %s from", pnp);
-#else
 		else
 			return (QUIET);
-#endif
 	}
-#ifdef ACPIVERBOSE
-	if (hdr)
-		printf(" table %c%c%c%c",
-		    hdr->signature[0], hdr->signature[1],
-		    hdr->signature[2], hdr->signature[3]);
-#endif
 
 	return (UNCONF);
 }
