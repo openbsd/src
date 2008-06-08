@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.239 2008/06/08 03:03:08 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.240 2008/06/08 13:34:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -899,8 +899,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 					    cf->file_path);
 				}
 				cf->file_status = FILE_LOST;
-			} else if (cf->file_rcsrev == NULL) {
-				cf->file_status = FILE_UNLINK;
 			} else {
 				if (ismodified == 1)
 					cf->file_status = FILE_MODIFIED;
