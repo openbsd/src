@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.3 2008/06/08 20:36:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -116,7 +116,6 @@ int	ixgbe_encap(struct tx_ring *, struct mbuf *);
 void	ixgbe_enable_hw_vlans(struct ix_softc * sc);
 #endif
 #if 0
-void	ixgbe_print_debug_info(struct ix_softc *);
 int	ixgbe_set_flowcntl(SYSCTL_HANDLER_ARGS);
 #endif
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
@@ -132,15 +131,6 @@ uint8_t	*ixgbe_mc_array_itr(struct ixgbe_hw *, uint8_t **, uint32_t *);
 
 /* Legacy (single vector interrupt handler */
 int	ixgbe_legacy_irq(void *);
-
-#if 0
-/* The MSI/X Interrupt handlers */
-int	ixgbe_allocate_msix(struct ix_softc *);
-int	ixgbe_setup_msix(struct ix_softc *);
-void	ixgbe_msix_tx(void *);
-void	ixgbe_msix_rx(void *);
-void	ixgbe_msix_link(void *);
-#endif
 
 #ifndef NO_82598_A0_SUPPORT
 void	desc_flip(void *);
@@ -1280,156 +1270,6 @@ ixgbe_allocate_legacy(struct ix_softc *sc)
 	return (0);
 }
 
-#if 0
-/*********************************************************************
- *
- *  Setup MSIX Interrupt resources and handlers 
- *
- **********************************************************************/
-int
-ixgbe_allocate_msix(struct ix_softc *sc)
-{
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	struct 		tx_ring *txr = sc->tx_rings;
-	struct		rx_ring *rxr = sc->rx_rings;
-	int 		error, vector = 0, i;
-
-	/* TX setup: the code is here for multi tx,
-	   there are other parts of the driver not ready for it */
-	for (i = 0; i < sc->num_tx_queues; i++, vector++, txr++) {
-		sc->res[vector] = bus_alloc_resource_any(dev,
-	    	    SYS_RES_IRQ, &sc->rid[vector],
-		    RF_SHAREABLE | RF_ACTIVE);
-		if (!sc->res[vector]) {
-			printf("%s: Unable to allocate"
-		    	    " bus resource: tx interrupt [%d]\n", ifp->if_xname, vector);
-			return (ENXIO);
-		}
-		/* Set the handler function */
-		error = bus_setup_intr(dev, sc->res[vector],
-		    INTR_TYPE_NET | INTR_MPSAFE, NULL,
-		    ixgbe_msix_tx, txr, &sc->tag[vector]);
-		if (error) {
-			sc->res[vector] = NULL;
-			printf("%s: Failed to register TX handler");
-			return (error);
-		}
-		txr->msix = vector;
-		txr->eims = IXGBE_IVAR_TX_QUEUE(vector);
-		/* Make tasklet for deferred handling - one per queue */
-		txr->tx_task = ixgbe_handle_tx;
-		txr->tq = workq_create("ix_txq", sc->num_tx_queues + 1);
-	}
-
-	/* RX setup */
-	for (i = 0; i < sc->num_rx_queues; i++, vector++, rxr++) {
-		sc->res[vector] = bus_alloc_resource_any(dev,
-	    	    SYS_RES_IRQ, &sc->rid[vector],
-		    RF_SHAREABLE | RF_ACTIVE);
-		if (!sc->res[vector]) {
-			printf("%s: Unable to allocate"
-		    	    " bus resource: rx interrupt [%d],"
-			    "rid = %d\n", ifp->if_xname, i, sc->rid[vector]);
-			return (ENXIO);
-		}
-		/* Set the handler function */
-		error = bus_setup_intr(dev, sc->res[vector],
-		    INTR_TYPE_NET | INTR_MPSAFE, NULL, ixgbe_msix_rx,
-		    rxr, &sc->tag[vector]);
-		if (error) {
-			sc->res[vector] = NULL;
-			printf("%s: Failed to register RX handler");
-			return (error);
-		}
-		rxr->msix = vector;
-		rxr->eims = IXGBE_IVAR_RX_QUEUE(vector);
-		rxr->rx_task = ixgbe_handle_rx;
-		rxr->tq = workq_create("ix_rxq", sc->num_rx_queues + 1);
-	}
-
-	/* Now for Link changes */
-	sc->res[vector] = bus_alloc_resource_any(dev,
-    	    SYS_RES_IRQ, &sc->rid[vector], RF_SHAREABLE | RF_ACTIVE);
-	if (!sc->res[vector]) {
-		printf("%s: Unable to allocate"
-    	    " bus resource: Link interrupt [%d]\n", ifp->if_xname, sc->rid[vector]);
-		return (ENXIO);
-	}
-	/* Set the link handler function */
-	error = bus_setup_intr(dev, sc->res[vector],
-	    INTR_TYPE_NET | INTR_MPSAFE, NULL, ixgbe_msix_link,
-	    sc, &sc->tag[vector]);
-	if (error) {
-		sc->res[vector] = NULL;
-		printf("%s: Failed to register LINK handler");
-		return (error);
-	}
-	sc->linkvec = vector;
-	sc->link_task = ixgbe_handle_link;
-
-	return (0);
-}
-
-/*
- * Setup Either MSI/X or MSI
- */
-int
-ixgbe_setup_msix(struct ix_softc *sc)
-{
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	int rid, want, queues, msgs;
-
-	/* First try MSI/X */
-	rid = PCIR_BAR(IXGBE_MSIX_BAR);
-	sc->msix_mem = bus_alloc_resource_any(dev,
-	    SYS_RES_MEMORY, &rid, RF_ACTIVE);
-       	if (!sc->msix_mem) {
-		/* May not be enabled */
-		printf("%s: Unable to map MSIX table \n", ifp->if_xname);
-		goto msi;
-	}
-
-	msgs = pci_msix_count(dev); 
-	if (msgs == 0) { /* system has msix disabled */
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    PCIR_BAR(IXGBE_MSIX_BAR), sc->msix_mem);
-		sc->msix_mem = NULL;
-		goto msi;
-	}
-
-	/* Figure out a reasonable auto config value */
-	queues = (mp_ncpus > ((msgs-1)/2)) ? (msgs-1)/2 : mp_ncpus;
-
-	if (ixgbe_tx_queues == 0)
-		ixgbe_tx_queues = queues;
-	if (ixgbe_rx_queues == 0)
-		ixgbe_rx_queues = queues;
-	want = ixgbe_tx_queues + ixgbe_rx_queues + 1;
-	if (msgs >= want)
-		msgs = want;
-	else {
-		printf("%s: MSIX Configuration Problem, "
-		    "%d vectors but %d queues wanted!\n", ifp->if_xname,
-		    msgs, want);
-		return (ENXIO);
-	}
-	if ((msgs) && pci_alloc_msix(dev, &msgs) == 0) {
-		printf("%s: Using MSIX interrupts with %d vectors\n",
-		    ifp->if_xname, msgs);
-		sc->num_tx_queues = ixgbe_tx_queues;
-		sc->num_rx_queues = ixgbe_rx_queues;
-		return (msgs);
-	}
-msi:
-       	msgs = pci_msi_count(dev);
-       	if (msgs == 1 && pci_alloc_msi(dev, &msgs) == 0)
-               	printf("%s: Using MSI interrupt\n", ifp->if_xname);
-	return (msgs);
-	/* MSI is not supported yet */
-	return (0);
-}
-#endif
-
 int
 ixgbe_allocate_pci_resources(struct ix_softc *sc)
 {
@@ -1479,47 +1319,11 @@ ixgbe_free_pci_resources(struct ix_softc * sc)
 	struct ixgbe_osdep	*os = &sc->osdep;
 	struct pci_attach_args	*pa = os->os_pa;
 
-#if 0
-	int			 i;
-
-	/*
-	 * Legacy has this set to 0, but we need
-	 * to run this once, so reset it.
-	 */
-	if (sc->msix == 0)
-		sc->msix = 1;
-
-	/*
-	 * First release all the interrupt resources:
-	 * 	notice that since these are just kept
-	 *	in an array we can do the same logic
-	 * 	whether its MSIX or just legacy.
-	 */
-	for (i = 0; i < sc->msix; i++) {
-		if (sc->tag[i] != NULL) {
-			pci_intr_disestablish(pa->pa_pc, sc->tag[0]);
-			sc->tag[i] = NULL;
-		}
-		if (sc->res[i] != NULL) {
-			bus_release_resource(dev, SYS_RES_IRQ,
-			    sc->rid[i], sc->res[i]);
-		}
-	}
-
-	if (sc->msix)
-		pci_release_msi(dev);
-
-	if (sc->msix_mem != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    PCIR_BAR(IXGBE_MSIX_BAR), sc->msix_mem);
-#else
 	pci_intr_disestablish(pa->pa_pc, sc->tag[0]);
 	sc->tag[0] = NULL;
-#endif
-
 	if (os->os_membase != NULL)
 		bus_space_unmap(os->os_memt, os->os_memh, os->os_memsize);
-	os->os_membase = 0;
+	os->os_membase = NULL;
 
 	return;
 }
@@ -2060,12 +1864,7 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 	if (txr->tx_buffers != NULL)
 		free(txr->tx_buffers, M_DEVBUF);
 	txr->tx_buffers = NULL;
-#if 0
-	if (txr->txtag != NULL)
-		bus_dma_tag_destroy(txr->txtag);
-#endif
 	txr->txtag = NULL;
-	return;
 }
 
 #ifdef IX_CSUM_OFFLOAD
@@ -2924,12 +2723,8 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 		rxr->rx_buffers = NULL;
 	}
 	for (s = 0; s < 2; s++) {
-		if (rxr->rxtag[s] != NULL) {
-#if 0
-			bus_dma_tag_destroy(rxr->rxtag[s]);
-#endif
+		if (rxr->rxtag[s] != NULL)
 			rxr->rxtag[s] = NULL;
-		}
 	}
 	return;
 }
