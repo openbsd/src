@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.119 2008/06/07 17:30:50 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.120 2008/06/08 02:52:40 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -40,8 +41,6 @@
 
 #define opsize(opcode) (((opcode) & 0xFF00) ? 2 : 1)
 
-#define AML_CHECKSTACK()
-
 #define AML_FIELD_RESERVED	0x00
 #define AML_FIELD_ATTRIB	0x01
 
@@ -49,13 +48,6 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-#define aml_valid(pv)	 ((pv) != NULL)
-
-#define aml_ipaddr(n) ((n)-aml_root.start)
-
-extern int hz;
-
-struct aml_scope;
 #if 0
 int			aml_cmpvalue(struct aml_value *, struct aml_value *, int);
 #endif
@@ -114,7 +106,7 @@ struct aml_value	*aml_callmethod(struct aml_scope *, struct aml_value *);
 struct aml_value	*aml_evalmethod(struct aml_scope *, struct aml_node *,
 			    int, struct aml_value *, struct aml_value *);
 
-const char *aml_getname(const char *);
+const char		*aml_getname(const char *);
 void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
