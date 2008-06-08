@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.14 2006/04/25 15:41:07 deraadt Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.15 2008/06/08 13:58:10 tobias Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -40,7 +40,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.14 2006/04/25 15:41:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.15 2008/06/08 13:58:10 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ get_keyword(void)
 	/*
 	 * get the key
 	 */
-	if (*(p = getpass("Enter key: "))) {
+	if ((p = getpass("Enter key: ")) != NULL && *p != '\0') {
 
 		/*
 		 * copy it, nul-padded, into the key area
