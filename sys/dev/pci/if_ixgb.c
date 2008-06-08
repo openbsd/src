@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.42 2008/06/08 16:20:27 reyk Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.43 2008/06/08 16:53:23 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -303,6 +303,7 @@ ixgb_start(struct ifnet *ifp)
 {
 	struct mbuf    *m_head;
 	struct ixgb_softc *sc = ifp->if_softc;
+	int		post = 0;
 
 	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
@@ -310,9 +311,12 @@ ixgb_start(struct ifnet *ifp)
 	if (!sc->link_active)
 		return;
 
+	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m_head);
-
 		if (m_head == NULL)
 			break;
 
@@ -331,7 +335,20 @@ ixgb_start(struct ifnet *ifp)
 
 		/* Set timeout in case hardware has problems transmitting */
 		ifp->if_timer = IXGB_TX_TIMEOUT;
+
+		post = 1;
 	}
+
+	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	/*
+	 * Advance the Transmit Descriptor Tail (Tdt),
+	 * this tells the E1000 that this frame
+	 * is available to transmit.
+	 */
+	if (post)
+		IXGB_WRITE_REG(&sc->hw, TDT, sc->next_avail_tx_desc);
 }
 
 /*********************************************************************
@@ -725,15 +742,6 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	 * Last Descriptor of Packet needs End Of Packet (EOP)
 	 */
 	current_tx_desc->cmd_type_len |= htole32(IXGB_TX_DESC_CMD_EOP);
-
-	/*
-	 * Advance the Transmit Descriptor Tail (Tdt), this tells the E1000
-	 * that this frame is available to transmit.
-	 */
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	IXGB_WRITE_REG(&sc->hw, TDT, i);
 
 	return (0);
 
