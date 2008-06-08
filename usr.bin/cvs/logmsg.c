@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.48 2008/05/22 15:46:30 tobias Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.49 2008/06/08 20:08:43 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -92,14 +93,19 @@ cvs_logmsg_read(const char *path)
 }
 
 char *
-cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
-	struct cvs_flisthead *modified)
+cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
+    struct cvs_flisthead *removed, struct cvs_flisthead *modified)
 {
 	FILE *fp;
 	int c, fd, saved_errno;
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
 	char *fpath, *logmsg;
+	static int reuse = 0;
+	static char *prevmsg = NULL;
+
+	if (reuse)
+		return xstrdup(prevmsg);
 
 	(void)xasprintf(&fpath, "%s/cvsXXXXXXXXXX", cvs_tmpdir);
 
@@ -114,31 +120,44 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		fatal("cvs_logmsg_create: fdopen %s", strerror(saved_errno));
 	}
 
-	fprintf(fp, "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
+	if (prevmsg != NULL && prevmsg[0] != '\0')
+		fprintf(fp, "%s", prevmsg);
+	else
+		fputc('\n', fp);
+
+	fprintf(fp, "%s %s\n%s Enter Log.  Lines beginning with `%s' are "
 	    "removed automatically\n%s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE,
 	    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX);
+
+	if (cvs_cmdop == CVS_OP_COMMIT) {
+		fprintf(fp, "%s Committing in %s\n%s\n", CVS_LOGMSG_PREFIX,
+		    dir != NULL ? dir : ".", CVS_LOGMSG_PREFIX);
+	}
 
 	if (added != NULL && !TAILQ_EMPTY(added)) {
 		fprintf(fp, "%s Added Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, added, flist)
-			fprintf(fp, "\n%s\t%s",
-			    CVS_LOGMSG_PREFIX, cf->file_path);
+			fprintf(fp, "\n%s\t%s", CVS_LOGMSG_PREFIX,
+			    dir != NULL ? basename(cf->file_path) :
+			    cf->file_path);
 		fputs("\n", fp);
 	}
 
 	if (removed != NULL && !TAILQ_EMPTY(removed)) {
 		fprintf(fp, "%s Removed Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, removed, flist)
-			fprintf(fp, "\n%s\t%s",
-			    CVS_LOGMSG_PREFIX, cf->file_path);
+			fprintf(fp, "\n%s\t%s", CVS_LOGMSG_PREFIX,
+			    dir != NULL ? basename(cf->file_path) :
+			    cf->file_path);
 		fputs("\n", fp);
 	}
 
 	if (modified != NULL && !TAILQ_EMPTY(modified)) {
 		fprintf(fp, "%s Modified Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, modified, flist)
-			fprintf(fp, "\n%s\t%s",
-			    CVS_LOGMSG_PREFIX, cf->file_path);
+			fprintf(fp, "\n%s\t%s", CVS_LOGMSG_PREFIX,
+			    dir != NULL ? basename(cf->file_path) :
+			    cf->file_path);
 		fputs("\n", fp);
 	}
 
@@ -166,21 +185,33 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 
 		if (st1.st_mtime != st2.st_mtime) {
 			logmsg = cvs_logmsg_read(fpath);
+			if (prevmsg != NULL)
+				xfree(prevmsg);
+			prevmsg = xstrdup(logmsg);
 			break;
 		}
 
 		printf("\nLog message unchanged or not specified\n"
-		    "a)bort, c)ontinue, e)dit\nAction: (continue) ");
+		    "a)bort, c)ontinue, e)dit, !)reuse this message "
+		    "unchanged for remaining dirs\nAction: (continue) ");
 		(void)fflush(stdout);
 
 		c = getc(stdin);
 		if (c == EOF || c == 'a') {
 			fatal("Aborted by user");
 		} else if (c == '\n' || c == 'c') {
-			logmsg = xstrdup("");
+			if (prevmsg == NULL)
+				prevmsg = xstrdup("");
+			logmsg = xstrdup(prevmsg);
 			break;
 		} else if (c == 'e') {
 			continue;
+		} else if (c == '!') {
+			reuse = 1;
+			if (prevmsg == NULL)
+				prevmsg = xstrdup("");
+			logmsg = xstrdup(prevmsg);
+			break;
 		} else {
 			cvs_log(LP_ERR, "invalid input");
 			continue;

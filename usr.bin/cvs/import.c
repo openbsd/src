@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.91 2008/06/08 13:35:47 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.92 2008/06/08 20:08:43 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -113,7 +113,7 @@ cvs_import(int argc, char **argv)
 	}
 
 	if (logmsg == NULL)
-		logmsg = cvs_logmsg_create(NULL, NULL, NULL);
+		logmsg = cvs_logmsg_create(NULL, NULL, NULL, NULL);
 
 	if (logmsg == NULL)
 		fatal("This shouldnt happen, honestly!");
