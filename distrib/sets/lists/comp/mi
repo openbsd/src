@@ -561,6 +561,7 @@
 ./usr/include/dev/pci/if_iwivar.h
 ./usr/include/dev/pci/if_iwnreg.h
 ./usr/include/dev/pci/if_iwnvar.h
+./usr/include/dev/pci/if_ix.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
 ./usr/include/dev/pci/if_lgereg.h
@@ -598,6 +599,8 @@
 ./usr/include/dev/pci/ixgb_ee.h
 ./usr/include/dev/pci/ixgb_hw.h
 ./usr/include/dev/pci/ixgb_ids.h
+./usr/include/dev/pci/ixgbe.h
+./usr/include/dev/pci/ixgbe_type.h
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
 ./usr/include/dev/pci/musyccreg.h

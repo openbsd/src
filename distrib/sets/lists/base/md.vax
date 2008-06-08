@@ -542,6 +542,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_iwivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_iwnreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_iwnvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_ix.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_ixgb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_ixgb_osdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_lgereg.ph
@@ -579,6 +580,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ixgb_ee.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ixgb_hw.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ixgb_ids.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ixgbe.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ixgbe_type.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/musyccreg.ph
