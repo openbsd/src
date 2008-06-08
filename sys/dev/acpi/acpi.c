@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.122 2008/06/07 17:00:38 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.123 2008/06/08 02:53:14 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -306,7 +306,6 @@ acpi_foundprt(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
-	const char		*dev;
 	struct acpi_attach_args	aaa;
 	struct aml_value	res;
 	int st = 0;
@@ -328,7 +327,6 @@ acpi_foundprt(struct aml_node *node, void *arg)
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
 		aaa.aaa_node = node;
-		aaa.aaa_dev = dev;
 		aaa.aaa_name = "acpiprt";
 
 		config_found(self, &aaa, acpi_print);
@@ -1313,7 +1311,6 @@ acpi_add_device(struct aml_node *node, void *arg)
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_node = node;
-	aaa.aaa_dev = "";
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
 	if (node == NULL || node->value == NULL)
@@ -2010,7 +2007,6 @@ acpi_founddock(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
-	const char		*dev;
 	struct acpi_attach_args	aaa;
 
 	dnprintf(10, "found dock entry: %s\n", node->parent->name);
@@ -2019,7 +2015,6 @@ acpi_founddock(struct aml_node *node, void *arg)
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
 	aaa.aaa_node = node->parent;
-	aaa.aaa_dev = dev;
 	aaa.aaa_name = "acpidock";
 
 	config_found(self, &aaa, acpi_print);
