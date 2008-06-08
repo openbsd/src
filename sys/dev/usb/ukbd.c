@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.41 2008/05/19 18:09:06 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.42 2008/06/08 20:59:29 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -843,31 +843,12 @@ ukbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
 	}
 }
 
-/*
- * This is a hack to work around some broken ports that don't call
- * cnpollc() before cngetc().
- */
-static int pollenter, warned;
-
 /* Console interface. */
 void
 ukbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct ukbd_softc *sc = v;
 	int c;
-	int broken;
-
-	if (pollenter == 0) {
-		if (!warned) {
-			printf("\n"
-"This port is broken, it does not call cnpollc() before calling cngetc().\n"
-"This should be fixed, but it will work anyway (for now).\n");
-			warned = 1;
-		}
-		broken = 1;
-		ukbd_cnpollc(v, 1);
-	} else
-		broken = 0;
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	sc->sc_polling = 1;
@@ -881,8 +862,6 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
-	if (broken)
-		ukbd_cnpollc(v, 0);
 }
 
 void
@@ -894,13 +873,10 @@ ukbd_cnpollc(void *v, int on)
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
 	usbd_interface2device_handle(sc->sc_hdev.sc_parent->sc_iface, &dev);
-	if (on) {
+	if (on)
 		sc->sc_spl = splusb();
-		pollenter++;
-	} else {
+	else
 		splx(sc->sc_spl);
-		pollenter--;
-	}
 	usbd_set_polling(dev, on);
 }
 
