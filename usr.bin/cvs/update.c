@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.146 2008/05/30 16:14:34 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.147 2008/06/08 16:32:34 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -525,7 +525,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "update_has_conflict_markers(%s)", cf->file_path);
 
-	if (cf->fd == -1)
+	if (cf->fd == -1 || cf->file_ent == NULL)
 		return (0);
 
 	bp = cvs_buf_load_fd(cf->fd);
