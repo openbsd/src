@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.89 2008/05/22 15:45:01 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.90 2008/06/08 13:22:46 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -95,15 +95,20 @@ cvs_import(int argc, char **argv)
 	if (argc < 3)
 		fatal("%s", cvs_cmd_import.cmd_synopsis);
 
+	import_repository = argv[0];
+	vendor_tag = argv[1];
+	release_tag = argv[2];
+
+	if (!rcs_sym_check(vendor_tag))
+		fatal("invalid symbol: %s", vendor_tag);
+	if (!rcs_sym_check(release_tag))
+		fatal("invalid symbol: %s", release_tag);
+
 	if (logmsg == NULL)
 		logmsg = cvs_logmsg_create(NULL, NULL, NULL);
 
 	if (logmsg == NULL)
 		fatal("This shouldnt happen, honestly!");
-
-	import_repository = argv[0];
-	vendor_tag = argv[1];
-	release_tag = argv[2];
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
