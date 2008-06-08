@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.133 2008/05/17 21:06:44 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.134 2008/06/08 02:54:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -617,8 +617,8 @@ commit_desc_set(struct cvs_file *cf)
 	int fd;
 	char desc_path[MAXPATHLEN], *desc;
 
-	(void)xsnprintf(desc_path, MAXPATHLEN, "%s/%s%s",
-	    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
+	(void)xsnprintf(desc_path, MAXPATHLEN, "%s/%s/%s%s",
+	    cf->file_wd, CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
 
 	if ((fd = open(desc_path, O_RDONLY)) == -1)
 		return;

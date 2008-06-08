@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.98 2008/05/22 15:45:01 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.99 2008/06/08 02:54:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -408,8 +408,9 @@ add_entry(struct cvs_file *cf)
 		    0, 0, entry, CVS_ENT_MAXLINELEN);
 	} else {
 		if (logmsg != NULL) {
-			(void)xsnprintf(path, MAXPATHLEN, "%s/%s%s",
-			    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
+			(void)xsnprintf(path, MAXPATHLEN, "%s/%s/%s%s",
+			    cf->file_wd, CVS_PATH_CVSDIR, cf->file_name,
+			    CVS_DESCR_FILE_EXT);
 
 			if ((fp = fopen(path, "w+")) == NULL)
 				fatal("add_entry: fopen `%s': %s",
