@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.264 2008/05/25 14:17:51 sobrado Exp $
+#	$OpenBSD: Makefile,v 1.265 2008/06/08 03:03:37 jdixon Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -13,10 +13,10 @@ NOOBJ=	oobj
 BINOWN= root
 BINGRP= wheel
 BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
-	dhcpd.interfaces exports ftpusers ftpchroot gettytab group hosts \
-	hosts.lpd inetd.conf ksh.kshrc locate.rc man.conf monthly motd \
-	mrouted.conf myname netstart networks newsyslog.conf phones printcap \
-	protocols rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
+	exports ftpusers ftpchroot gettytab group hosts hosts.lpd inetd.conf \
+	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf myname \
+	netstart networks newsyslog.conf phones printcap protocols \
+	rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc security services shells syslog.conf weekly \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf

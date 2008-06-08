@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.23 2007/05/31 19:19:59 jmc Exp $
+.\"     $OpenBSD: dhcp.8,v 1.24 2008/06/08 03:03:37 jdixon Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 8 2008 $
 .Dt DHCP 8
 .Os
 .Sh NAME
@@ -90,14 +90,6 @@ and
 for details.
 .It
 Edit
-.Pa /etc/dhcpd.interfaces .
-This file should contain a list of interfaces you wish to serve by
-.Xr dhcpd 8 .
-If you have only one broadcast network interface or you wish to serve all
-interfaces, this step is not required.
-Be sure to leave this file empty (or even delete it) if this is the case.
-.It
-Edit
 .Pa /etc/rc.conf.local
 and set
 .Cm dhcpd_flags="" .
@@ -127,9 +119,6 @@ Note, however, that most of the flags are useful only for debugging purposes.
 .Bl -tag -width /etc/dhcpd.interfaces -compact
 .It Pa /etc/dhcpd.conf
 DHCP server configuration file
-.It Pa /etc/dhcpd.interfaces
-list of network interfaces served by
-.Xr dhcpd 8
 .It Pa /etc/rc.conf.local
 configuration file where
 .Cm dhcpd_flags

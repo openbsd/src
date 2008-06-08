@@ -16,7 +16,6 @@
 ./etc/daily
 ./etc/dhclient.conf
 ./etc/dhcpd.conf
-./etc/dhcpd.interfaces
 ./etc/disktab
 ./etc/dumpdates
 ./etc/dvmrpd.conf

@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.56 2008/01/31 14:18:03 reyk Exp $
+#	$OpenBSD: changelist,v 1.57 2008/06/08 03:03:37 jdixon Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -25,7 +25,6 @@
 /etc/defaultdomain
 /etc/dhclient.conf
 /etc/dhcpd.conf
-/etc/dhcpd.interfaces
 /etc/disktab
 /etc/distfile
 /etc/dvmrpd.conf
