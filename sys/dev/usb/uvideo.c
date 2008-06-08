@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.25 2008/06/07 22:14:57 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.26 2008/06/08 00:18:33 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -45,6 +45,7 @@
 #include <dev/video_if.h>
 
 #define UVIDEO_DEBUG
+#undef UVIDEO_DUMP
 
 #ifdef UVIDEO_DEBUG
 int uvideo_debug = 1;
@@ -249,7 +250,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 	error = uvideo_vs_alloc_sample(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (EIO);
-#ifdef UVIDEO_DEBUG
+#ifdef UVIDEO_DUMP
 	if (uvideo_debug_file_open(sc) != 0)
 		return(EIO);
 	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
@@ -274,7 +275,7 @@ uvideo_close(void *addr)
 
 	/* free video stream sample buffer */
 	uvideo_vs_free_sample(sc);
-#ifdef UVIDEO_DEBUG
+#ifdef UVIDEO_DUMP
 	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 #endif
 	return (0);
@@ -1200,7 +1201,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		    DEVNAME(sc), __func__, fb->offset);
 
 		if (fb->offset <= fb->buf_size) {
-#ifdef UVIDEO_DEBUG
+#ifdef UVIDEO_DUMP
 			/* do the file write in process context */
 			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 			usb_add_task(sc->sc_udev, &sc->sc_task_write);
@@ -1888,6 +1889,7 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 	mmap->v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_DONE;
 
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
+	sc->sc_mmap_cur--;
 
 	return (0);
 }
