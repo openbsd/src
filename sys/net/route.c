@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.92 2008/05/09 15:48:15 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.93 2008/06/08 19:12:28 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -662,21 +662,6 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway)
 }
 
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
-int
-rtrequest(int req, struct sockaddr *dst, struct sockaddr *gateway,
-    struct sockaddr *netmask, int flags, struct rtentry **ret_nrt,
-    u_int tableid)
-{
-	struct rt_addrinfo	info;
-
-	bzero(&info, sizeof(info));
-	info.rti_flags = flags;
-	info.rti_info[RTAX_DST] = dst;
-	info.rti_info[RTAX_GATEWAY] = gateway;
-	info.rti_info[RTAX_NETMASK] = netmask;
-	return (rtrequest1(req, &info, RTP_DEFAULT/*XXX*/, ret_nrt, tableid));
-}
 
 int
 rt_getifa(struct rt_addrinfo *info)
