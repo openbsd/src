@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.29 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: amltypes.h,v 1.30 2008/06/08 02:51:55 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -183,7 +183,7 @@ enum aml_objecttype {
 	AML_OBJTYPE_OBJREF,
 	AML_OBJTYPE_SCOPE,
 	AML_OBJTYPE_NOTARGET,
-	AML_OBJTYPE_STATICINT=AML_OBJTYPE_INTEGER|AML_STATIC,
+	AML_OBJTYPE_STATICINT = AML_OBJTYPE_INTEGER|AML_STATIC,
 };
 
 /* AML Opcode Arguments */
@@ -252,8 +252,7 @@ enum aml_objecttype {
 struct aml_scope;
 struct aml_node;
 
-struct aml_waitq
-{
+struct aml_waitq {
 	struct aml_scope          *scope;
 	SIMPLEQ_ENTRY(aml_waitq)   link;
 };
@@ -366,9 +365,6 @@ struct aml_node {
 
 	int		depth;
 };
-
-#define AML_FALSE		(0)
-#define AML_TRUE		(1)
 
 #define aml_bitmask(n)		(1L << ((n) & 0x7))
 #define aml_bitpos(n)		((n)&0x7)
