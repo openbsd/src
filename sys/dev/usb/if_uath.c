@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.33 2008/04/17 21:09:36 brad Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.34 2008/06/08 20:43:31 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -118,6 +118,8 @@ static const struct uath_type {
 	UATH_DEV_UG(GIGASET,		SMCWUSBTG),
 	UATH_DEV_UG(GLOBALSUN,		AR5523_1),
 	UATH_DEV_UX(GLOBALSUN,		AR5523_2),
+	UATH_DEV_UG(IODATA,		USBWNG54US),
+	UATH_DEV_UG(MELCO,		WLIU2KAMG54),
 	UATH_DEV_UX(NETGEAR,		WG111U),
 	UATH_DEV_UG(NETGEAR3,		WG111T),
 	UATH_DEV_UG(NETGEAR3,		WPN111),
