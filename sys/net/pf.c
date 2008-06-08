@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.579 2008/06/02 11:38:22 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.580 2008/06/08 17:23:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3058,7 +3058,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		}
 
-		bip_sum = *pd->ip_sum;
+		if (pd->ip_sum)
+			bip_sum = *pd->ip_sum;
 
 		switch (pd->proto) {
 		case IPPROTO_TCP:
