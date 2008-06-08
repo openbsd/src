@@ -1,5 +1,5 @@
 
-/* $OpenBSD: dsdt.c,v 1.120 2008/06/08 02:52:40 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.121 2008/06/08 15:36:57 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -846,7 +846,7 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 /*
  * @@@: Value set/compare/alloc/free routines
  */
-int64_t aml_str2int(const char *, int);
+int64_t aml_str2int(const char *);
 
 #ifndef SMALL_KERNEL
 void
@@ -936,11 +936,25 @@ aml_showvalue(struct aml_value *val, int lvl)
 #endif /* SMALL_KERNEL */
 
 int64_t
-aml_str2int(const char *str, int radix)
+aml_str2int(const char *str)
 {
-	/* XXX: fixme */
-	aml_die("aml_str2int not implemented\n");
-	return 0;
+	int64_t val = 0;
+	int n;
+
+	/* process max 64 bit [0-9a-zA-Z] */
+	for (n = 0; n < 16; n++) {
+		int ch = str[n];
+		if (ch >= '0' && ch <= '9')
+			val = (val << 4) + ch - '0';
+		else if (ch >= 'a' && ch <= 'f')
+			val = (val << 4) + ch - 'a' + 10;
+		else if (ch >= 'A' && ch <= 'F')
+			val = (val << 4) + ch - 'A' + 10;
+		else	/* first non-digit ends conversion */
+			break;
+	}
+
+	return val;
 }
 
 int64_t
@@ -962,9 +976,7 @@ aml_val2int(struct aml_value *rval)
 		    min(aml_intlen, rval->length*8));
 		break;
 	case AML_OBJTYPE_STRING:
-		ival = (strncmp(rval->v_string, "0x", 2) == 0) ?
-		    aml_str2int(rval->v_string+2, 16) :
-		    aml_str2int(rval->v_string, 10);
+		aml_str2int(rval->v_string);
 		break;
 	}
 	return (ival);
