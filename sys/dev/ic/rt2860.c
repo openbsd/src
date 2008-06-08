@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.14 2008/04/26 20:08:01 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.15 2008/06/08 19:34:14 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -142,6 +142,7 @@ int		rt2860_load_microcode(struct rt2860_softc *);
 void		rt2860_calib(struct rt2860_softc *);
 int		rt2860_setup_beacon(struct rt2860_softc *);
 void		rt2860_enable_tsf_sync(struct rt2860_softc *);
+void		rt2860_power(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -302,6 +303,20 @@ rt2860_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2860_TX_RADIOTAP_PRESENT);
 #endif
+	/*
+	 * Make sure the interface is shutdown during reboot.
+	 */
+	sc->sc_sdhook = shutdownhook_establish(rt2860_shutdown, sc);
+	if (sc->sc_sdhook == NULL) {
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+	}
+
+	sc->sc_powerhook = powerhook_establish(rt2860_power, sc);
+	if (sc->sc_powerhook == NULL) {
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+	}
 
 	return 0;
 
@@ -324,6 +339,12 @@ rt2860_detach(void *xsc)
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	for (qid = 0; qid < 6; qid++)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);
@@ -3020,6 +3041,37 @@ rt2860_enable_tsf_sync(struct rt2860_softc *sc)
 	}
 
 	RAL_WRITE(sc, RT2860_BCN_TIME_CFG, tmp);
+}
+
+void
+rt2860_power(int why, void *arg)
+{
+	struct rt2860_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
+	DPRINTF(("%s: rt2860_power(%d)\n", sc->sc_dev.dv_xname, why));
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		rt2860_stop(ifp, 1);
+		sc->sc_flags &= ~RT2860_FWLOADED; 
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			rt2860_init(ifp);	
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			if (ifp->if_flags & IFF_RUNNING)
+				rt2860_start(ifp);
+		}
+		break;
+	}
+	splx(s);
 }
 
 void
