@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -1463,7 +1463,7 @@ static int32_t ixgbe_mta_vector(struct ixgbe_hw *hw, uint8_t *mc_addr)
 		break;
 	default:  /* Invalid mc_filter_type */
 		DEBUGOUT("MC filter type param set incorrectly\n");
-		ASSERT(0);
+		panic("ixgbe");
 		break;
 	}
 

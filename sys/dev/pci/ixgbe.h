@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -34,8 +34,8 @@
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_osdep.h,v 1.4 2008/05/16 18:46:30 jfv Exp $*/
 
-#ifndef _IXGBE_OS_H_
-#define _IXGBE_OS_H_
+#ifndef _IXGBE_H_
+#define _IXGBE_H_
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -76,19 +76,12 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/rndvar.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/rndvar.h>
-
 #include <dev/pci/ixgbe_type.h>
-
-#define ASSERT(x) if(!(x)) panic("IXGBE: x")
-
-/* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
-#define usec_delay(x) DELAY(x)
-#define msec_delay(x) DELAY(1000*(x))
 
 #define DBG 0 
 #define MSGOUT(S, A, B)     printf(S "\n", A, B)
@@ -108,18 +101,21 @@
 #define DEBUGOUT7(S,A,B,C,D,E,F,G)
 #endif
 
-#define FALSE               0
-#define TRUE                1
+#define FALSE               		0
+#define TRUE                		1
 #define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
 #define PCI_COMMAND_REGISTER            PCIR_COMMAND
 
-typedef struct device device_t;
-#define TUNABLE_INT(x...)
-#define DRIVER_MODULE(x...)
-#define MODULE_DEPEND(x...)
+/* Compat glue */
+#define MJUMPAGESIZE	MCLBYTES
+#define PCIR_BAR(_x)	(0x10 + (_x) * 4)
+#define roundup2(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
+#define usec_delay(x) delay(x)
+#define msec_delay(x) delay(1000 * (x))
 
 /* This is needed by the shared code */
 struct ixgbe_hw; 
+
 extern uint16_t ixgbe_read_pci_cfg(struct ixgbe_hw *, uint32_t);
 #define IXGBE_READ_PCIE_WORD ixgbe_read_pci_cfg
 
@@ -135,8 +131,8 @@ struct ixgbe_osdep {
 	struct pci_attach_args	*os_pa;
 };
 
-#define IXGBE_WRITE_FLUSH(a) IXGBE_READ_REG(a, IXGBE_STATUS)
-
+#define IXGBE_WRITE_FLUSH(a)						\
+	IXGBE_READ_REG(a, IXGBE_STATUS)
 #define IXGBE_READ_REG(a, reg)						\
 	bus_space_read_4(((struct ixgbe_osdep *)(a)->back)->os_memt,	\
 	((struct ixgbe_osdep *)(a)->back)->os_memh, reg)
@@ -149,11 +145,6 @@ struct ixgbe_osdep {
 #define IXGBE_WRITE_REG_ARRAY(a, reg, offset, value)			\
 	bus_space_write_4(((struct ixgbe_osdep *)(a)->back)->os_memt,	\
 	((struct ixgbe_osdep *)(a)->back)->os_memh, (reg + ((offset) << 2)), value)
-
-/* FreeBSD compat glue */
-#define MJUMPAGESIZE	MCLBYTES
-#define PCIR_BAR(_x)	(0x10 + (_x) * 4)
-#define roundup2(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
 int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_init_hw_generic(struct ixgbe_hw *hw);
@@ -225,5 +216,4 @@ int32_t ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
                                        uint16_t *firmware_version);
 
 int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw);
-
-#endif /* _IXGBE_OS_H_ */
+#endif /* _IXGBE_H_ */

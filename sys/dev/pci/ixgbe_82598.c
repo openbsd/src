@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -288,7 +288,7 @@ int32_t ixgbe_setup_fc_82598(struct ixgbe_hw *hw, int32_t packetbuf_num)
 	if (packetbuf_num < 0 || packetbuf_num > 7) {
 		DEBUGOUT1("Invalid packet buffer number [%d], expected range is"
 		          " 0-7\n", packetbuf_num);
-		ASSERT(0);
+		panic("ixgbe");
 	}
 
 	frctl_reg = IXGBE_READ_REG(hw, IXGBE_FCTRL);
@@ -349,7 +349,7 @@ int32_t ixgbe_setup_fc_82598(struct ixgbe_hw *hw, int32_t packetbuf_num)
 	default:
 		/* We should never get here.  The value should be 0-3. */
 		DEBUGOUT("Flow control param set incorrectly\n");
-		ASSERT(0);
+		panic("ixgbe");
 		break;
 	}
 

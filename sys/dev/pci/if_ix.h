@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -34,8 +34,8 @@
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.4 2008/05/16 18:46:30 jfv Exp $*/
 
-#ifndef _IXGBE_H_
-#define _IXGBE_H_
+#ifndef _IX_H_
+#define _IX_H_
 
 #include <dev/pci/ixgbe.h>
 
@@ -309,4 +309,4 @@ struct ix_softc {
 	struct ixgbe_hw_stats stats;
 };
 
-#endif /* _IXGBE_H_ */
+#endif /* _IX_H_ */

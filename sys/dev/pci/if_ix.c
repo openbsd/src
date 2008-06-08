@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.4 2008/06/08 20:58:42 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.5 2008/06/08 21:15:34 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -114,9 +114,6 @@ int	ixgbe_get_buf(struct rx_ring *, int, struct mbuf *);
 int	ixgbe_encap(struct tx_ring *, struct mbuf *);
 #if NVLAN > 0
 void	ixgbe_enable_hw_vlans(struct ix_softc * sc);
-#endif
-#if 0
-int	ixgbe_set_flowcntl(SYSCTL_HANDLER_ARGS);
 #endif
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
 		    struct ixgbe_dma_alloc *, int);
@@ -1312,8 +1309,8 @@ ixgbe_allocate_pci_resources(struct ix_softc *sc)
 	sc->num_tx_queues = 1;
 	sc->num_rx_queues = 1;
 
+#ifdef notyet
 	/* Now setup MSI or MSI/X */
-#if 0
 	sc->msix = ixgbe_setup_msix(sc);
 #endif
 	sc->hw.back = os;
@@ -1392,9 +1389,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
 	ifp->if_baudrate = IF_Gbps(10);
-#if 0
-	ifp->if_init = ixgbe_init;
-#endif
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixgbe_ioctl;
@@ -2013,7 +2007,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
         return (offload);
 }
 
-#if 0
+#ifdef notyet
 /**********************************************************************
  *
  *  Setup work for hardware segmentation offload (TSO) on
@@ -2258,7 +2252,7 @@ ixgbe_get_buf(struct rx_ring *rxr, int i, struct mbuf *nmp)
 	int		size = MCLBYTES;
 	struct ixgbe_rx_buf	*rxbuf;
 
-#if 0
+#ifdef notyet
 	/* Are we going to Jumbo clusters? */
 	if (sc->bigbufs) {
 		size = MJUMPAGESIZE;
@@ -2415,10 +2409,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 {
 	struct ix_softc		*sc = rxr->sc;
 	struct ixgbe_rx_buf	*rxbuf;
-#if 0
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	struct lro_ctrl		*lro = &rxr->lro;
-#endif
 	int			j, rsize, s = 0, i;
 
 	rsize = roundup2(sc->num_rx_desc *
@@ -2461,19 +2451,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    0, rxr->rxdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-#if 0
-	/* Now set up the LRO interface */
-	if (ixgbe_enable_lro) {
-		int err = tcp_lro_init(lro);
-		if (err) {
-			printf("%s: LRO Initialization failed!\n", ifp->if_xname);
-			goto fail;
-		}
-		printf("%s: RX LRO Initialized\n", ifp->if_xname);
-		lro->ifp = &sc->arpcom.ac_if;
-	}
-#endif
 
 	return (0);
 fail:
@@ -2655,11 +2632,9 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
 
-#if 0
-	if (ifp->if_capenable & IFCAP_RXCSUM)
-		rxcsum |= IXGBE_RXCSUM_PCSD;
+#if defined(IX_CSUM_OFFLOAD)
+	rxcsum |= IXGBE_RXCSUM_PCSD;
 #endif
-
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
@@ -2684,11 +2659,6 @@ ixgbe_free_receive_structures(struct ix_softc *sc)
 	int		i;
 
 	for (i = 0; i < sc->num_rx_queues; i++, rxr++) {
-#if 0
-		struct lro_ctrl		*lro = &rxr->lro;
-		/* Free LRO memory */
-		tcp_lro_free(lro);
-#endif
 		ixgbe_free_receive_buffers(rxr);
 		/* Free the ring memory as well */
 		ixgbe_dma_free(sc, &rxr->rxdma);
@@ -2752,10 +2722,6 @@ ixgbe_rxeof(struct rx_ring *rxr, int count)
 {
 	struct ix_softc 	*sc = rxr->sc;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
-#if 0
-	struct lro_ctrl		*lro = &rxr->lro;
-	struct lro_entry	*queued;
-#endif
 	struct mbuf    		*mp;
 	int             	 len, i, eop = 0;
 	uint8_t		 accept_frame = 0;
@@ -2876,19 +2842,12 @@ discard:
 		/* Now send up to the stack */
                 if (m != NULL) {
                         rxr->next_to_check = i;
-#ifdef notyet
-			/* Use LRO if possible */
-			if ((!lro->lro_cnt) || (tcp_lro_rx(lro, m, 0))) {
-#endif
 #if NBPFILTER > 0
-				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
-				ether_input_mbuf(ifp, m);
-				i = rxr->next_to_check;
-#ifdef notyet
-			}
-#endif
+			ether_input_mbuf(ifp, m);
+			i = rxr->next_to_check;
                 }
 		/* Get next descriptor */
 		cur = &rxr->rx_base[i];
@@ -2898,19 +2857,6 @@ discard:
 
 	/* Advance the IXGB's Receive Queue "Tail Pointer" */
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(rxr->me), rxr->last_cleaned);
-
-#if 0
-	/*
-	** Flush any outstanding LRO work
-	** this may call into the stack and
-	** must not hold a driver lock.
-	*/
-	while(!SLIST_EMPTY(&lro->lro_active)) {
-		queued = SLIST_FIRST(&lro->lro_active);
-		SLIST_REMOVE_HEAD(&lro->lro_active, next);
-		tcp_lro_flush(lro, queued);
-	}
-#endif
 
 	if (!(staterr & IXGBE_RXD_STAT_DD))
 		return FALSE;
@@ -3183,41 +3129,6 @@ ixgbe_print_hw_stats(struct ix_softc * sc)
 	    (long long)sc->stats.gprc,
 	    (long long)sc->stats.gptc,
 	    sc->tso_tx);
-}
-
-/*
- * Set flow control using sysctl:
- * Flow control values:
- * 	0 - off
- *	1 - rx pause
- *	2 - tx pause
- *	3 - full
- */
-int
-ixgbe_set_flowcntl(SYSCTL_HANDLER_ARGS)
-{
-	int error;
-	struct ix_softc *sc;
-
-	error = sysctl_handle_int(oidp, &ixgbe_flow_control, 0, req);
-
-	if (error)
-		return (error);
-
-	sc = (struct ix_softc *) arg1;
-	switch (ixgbe_flow_control) {
-		case ixgbe_fc_rx_pause:
-		case ixgbe_fc_tx_pause:
-		case ixgbe_fc_full:
-			sc->hw.fc.type = ixgbe_flow_control;
-			break;
-		case ixgbe_fc_none:
-		default:
-			sc->hw.fc.type = ixgbe_fc_none;
-	}
-
-	ixgbe_setup_fc(&sc->hw, 0);
-	return error;
 }
 #endif
 
