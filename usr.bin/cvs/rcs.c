@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.265 2008/05/22 07:57:58 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.266 2008/06/08 13:36:30 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3494,7 +3494,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		return (NULL);
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
-		fatal("rcs_translate_tag: cannot find revision");
+		return (NULL);
 
 	/* let's see if we must follow a branch */
 	if (!strcmp(revstr, RCS_HEAD_BRANCH))
