@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.9 2008/06/08 21:51:25 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.10 2008/06/08 21:54:25 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -385,6 +385,11 @@ do_post() {
 			echo "\n    rebuild your aliases database by running the following command as root:"
 			echo "    'newaliases'"
 		fi
+	fi
+
+	# clean leftovers created by make in src
+	if [ "${SRCDIR}" ]; then
+		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir 1> /dev/null
 	fi
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
