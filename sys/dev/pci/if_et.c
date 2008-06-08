@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.10 2008/06/08 05:53:30 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -193,7 +193,6 @@ et_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_size_t memsize;
 	pcireg_t memtype;
 	int error;
 
@@ -207,7 +206,7 @@ et_attach(struct device *parent, struct device *self, void *aux)
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ET_PCIR_BAR);
 	if (pci_mapreg_map(pa, ET_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
-	    &sc->sc_mem_bh, NULL, &memsize, 0)) {
+	    &sc->sc_mem_bh, NULL, &sc->sc_mem_size, 0)) {
 		printf(": could not map mem space\n");
 		return;
 	}
@@ -310,7 +309,12 @@ et_detach(struct device *self, int flags)
 	if_detach(ifp);
 	et_dma_free(sc);
 
-	pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
+	if (sc->sc_irq_handle != NULL) {
+		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
+		sc->sc_irq_handle = NULL;
+	}
+
+	bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, sc->sc_mem_size);
 
 	return 0;
 }
