@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.26 2008/06/08 00:18:33 robert Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.27 2008/06/08 20:11:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1243,15 +1243,21 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 	if (sc->sc_mmap_cur == sc->sc_mmap_count)
 		panic("uvideo_mmap_queue: mmap queue is full!");
 
-	/* copy frame to mmap buffer */
+	/* copy frame to mmap buffer and report length */
 	bcopy(buf, sc->sc_mmap[sc->sc_mmap_cur].buf, len);
+	sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.bytesused = len;
 
 	/* queue it */
 	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[sc->sc_mmap_cur],
 	    q_frames);
+	DPRINTF(1, "%s: %s: frame queued on index %d\n",
+	    DEVNAME(sc), __func__, sc->sc_mmap_cur);
 
 	/* point to next mmap buffer */
 	sc->sc_mmap_cur++;
+	if (sc->sc_mmap_cur == sc->sc_mmap_count)
+		/* we reached the end of the mmap buffer, start over */
+		sc->sc_mmap_cur = 0;
 
 	wakeup(sc);
 
@@ -1863,6 +1869,9 @@ uvideo_qbuf(void *v, struct v4l2_buffer *qb)
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED;
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_QUEUED;
 
+	DPRINTF(1, "%s: %s: buffer on index %d ready for queueing\n",
+	    DEVNAME(sc), __func__, qb->index);
+
 	return (0);
 }
 
@@ -1888,8 +1897,9 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 
 	mmap->v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_DONE;
 
+	DPRINTF(1, "%s: %s: frame dequeued from index %d\n",
+	    DEVNAME(sc), __func__, mmap->v4l2_buf.index);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
-	sc->sc_mmap_cur--;
 
 	return (0);
 }
