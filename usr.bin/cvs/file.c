@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.237 2008/05/22 06:50:18 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.238 2008/06/08 02:52:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -625,7 +625,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
-	char r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s, %s)", cf->file_path,
 	    (tag != NULL) ? tag : "none");
@@ -725,9 +724,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	cf->file_flags |= FILE_HAS_TAG;
 	if (tag != NULL && cf->file_rcs != NULL) {
 		if ((cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs))
-		    != NULL) {
-			rcsnum_tostr(cf->file_rcsrev, r1, sizeof(r1));
-		} else {
+		    == NULL) {
 			cf->file_rcsrev = rcs_translate_tag(NULL, cf->file_rcs);
 			if (cf->file_rcsrev != NULL) {
 				notag = 1;
@@ -742,11 +739,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	} else {
 		cf->file_rcsrev = NULL;
 	}
-
-	if (cf->file_ent != NULL)
-		rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
-	if (cf->file_rcsrev != NULL)
-		rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
 
 	ismodified = rcsdead = 0;
 	if (cf->fd != -1 && cf->file_ent != NULL) {
@@ -850,7 +842,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		} else if (cf->file_rcs == NULL || rcsdead == 1) {
 			cf->file_status = FILE_REMOVE_ENTRY;
 		} else {
-			if (strcmp(r1, r2)) {
+			if (rcsnum_differ(cf->file_ent->ce_rev,
+			    cf->file_rcsrev) && cvs_cmdop != CVS_OP_ADD) {
 				cvs_log(LP_NOTICE,
 				    "conflict: removed %s was modified"
 				    " by a second party",
@@ -907,7 +900,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 				else
 					cf->file_status = FILE_UPTODATE;
 
-				if (strcmp(r1, r2)) {
+				if (rcsnum_differ(cf->file_ent->ce_rev,
+				    cf->file_rcsrev)) {
 					if (cf->file_status == FILE_MODIFIED)
 						cf->file_status = FILE_MERGE;
 					else
