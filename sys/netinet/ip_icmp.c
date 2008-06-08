@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.80 2008/05/09 15:48:59 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.81 2008/06/08 18:56:12 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -876,7 +876,7 @@ icmp_mtudisc_clone(struct sockaddr *dst)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 
-		error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &nrt, 0);
+		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt, 0);
 		if (error) {
 			rtfree(rt);
 			return (NULL);
