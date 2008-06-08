@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.3 2008/06/08 20:36:34 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.4 2008/06/08 20:58:42 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -341,6 +341,7 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 {
 	struct mbuf  		*m_head;
 	struct ix_softc		*sc = txr->sc;
+	int			 post = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -348,9 +349,12 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 	if (!sc->link_active)
 		return;
 
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
+	    txr->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m_head);
-
 		if (m_head == NULL)
 			break;
 
@@ -369,8 +373,21 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 		/* Set timeout in case hardware has problems transmitting */
 		txr->watchdog_timer = IXGBE_TX_TIMEOUT;
 		ifp->if_timer = IXGBE_TX_TIMEOUT;
+
+		post = 1;
 	}
-	return;
+
+        bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+	    0, txr->txdma.dma_map->dm_mapsize, 
+            BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Advance the Transmit Descriptor Tail (Tdt), this tells the
+	 * hardware that this frame is available to transmit.
+	 */
+	if (post)
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_TDT(txr->me),
+		    txr->next_avail_tx_desc);
 }
 
 
@@ -941,15 +958,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
         /* Set the index of the descriptor that will be marked done */
         txbuf = &txr->tx_buffers[first];
 
-        bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
-	    0, txr->txdma.dma_map->dm_mapsize, 
-            BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	/*
-	 * Advance the Transmit Descriptor Tail (Tdt), this tells the
-	 * hardware that this frame is available to transmit.
-	 */
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_TDT(txr->me), i);
 	++txr->tx_packets;
 	return (0);
 
