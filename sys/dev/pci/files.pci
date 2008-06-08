@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.253 2008/05/07 02:31:01 krw Exp $
+#	$OpenBSD: files.pci,v 1.254 2008/06/08 20:01:02 reyk Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -354,6 +354,14 @@ attach	ixgb at pci
 file	dev/pci/if_ixgb.c		ixgb   
 file	dev/pci/ixgb_ee.c		ixgb
 file	dev/pci/ixgb_hw.c		ixgb
+
+# Intel 82598 10GbE
+device	ix: ether, ifnet, ifmedia
+attach	ix at pci
+file	dev/pci/if_ix.c			ix
+file	dev/pci/ixgbe.c			ix
+file	dev/pci/ixgbe_82598.c		ix
+file	dev/pci/ixgbe_phy.c		ix
 
 # Neterion Xframe 10 Gigabit ethernet 
 device	xge: ether, ifnet, ifmedia
