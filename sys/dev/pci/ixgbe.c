@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.1 2008/06/08 20:01:02 reyk Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -36,25 +36,25 @@
 
 #include <dev/pci/ixgbe.h>
 
-static s32 ixgbe_poll_eeprom_eerd_done(struct ixgbe_hw *hw);
-static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw);
-static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw);
+static int32_t ixgbe_poll_eeprom_eerd_done(struct ixgbe_hw *hw);
+static int32_t ixgbe_acquire_eeprom(struct ixgbe_hw *hw);
+static int32_t ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw);
 static void ixgbe_release_eeprom_semaphore(struct ixgbe_hw *hw);
-static s32 ixgbe_ready_eeprom(struct ixgbe_hw *hw);
+static int32_t ixgbe_ready_eeprom(struct ixgbe_hw *hw);
 static void ixgbe_standby_eeprom(struct ixgbe_hw *hw);
-static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
-                                        u16 count);
-static u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count);
-static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, u32 *eec);
-static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, u32 *eec);
+static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, uint16_t data,
+                                        uint16_t count);
+static uint16_t ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, uint16_t count);
+static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec);
+static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec);
 static void ixgbe_release_eeprom(struct ixgbe_hw *hw);
-static u16 ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw);
+static uint16_t ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw);
 
-static void ixgbe_enable_rar(struct ixgbe_hw *hw, u32 index);
-static void ixgbe_disable_rar(struct ixgbe_hw *hw, u32 index);
-static s32 ixgbe_mta_vector(struct ixgbe_hw *hw, u8 *mc_addr);
-void ixgbe_add_mc_addr(struct ixgbe_hw *hw, u8 *mc_addr);
-void ixgbe_add_uc_addr(struct ixgbe_hw *hw, u8 *addr, u32 vmdq);
+static void ixgbe_enable_rar(struct ixgbe_hw *hw, uint32_t index);
+static void ixgbe_disable_rar(struct ixgbe_hw *hw, uint32_t index);
+static int32_t ixgbe_mta_vector(struct ixgbe_hw *hw, uint8_t *mc_addr);
+void ixgbe_add_mc_addr(struct ixgbe_hw *hw, uint8_t *mc_addr);
+void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 
 /**
  *  ixgbe_init_ops_generic - Inits function ptrs
@@ -62,11 +62,11 @@ void ixgbe_add_uc_addr(struct ixgbe_hw *hw, u8 *addr, u32 vmdq);
  *
  *  Initialize the function pointers.
  **/
-s32 ixgbe_init_ops_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 {
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
 	struct ixgbe_mac_info *mac = &hw->mac;
-	u32 eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	uint32_t eec = IXGBE_READ_REG(hw, IXGBE_EEC);
 
 	/* EEPROM */
 	eeprom->ops.init_params = &ixgbe_init_eeprom_params_generic;
@@ -130,9 +130,9 @@ s32 ixgbe_init_ops_generic(struct ixgbe_hw *hw)
  *  table, VLAN filter table, calls routine to set up link and flow control
  *  settings, and leaves transmit and receive units disabled and uninitialized
  **/
-s32 ixgbe_start_hw_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_start_hw_generic(struct ixgbe_hw *hw)
 {
-	u32 ctrl_ext;
+	uint32_t ctrl_ext;
 
 	/* Set the media type */
 	hw->phy.media_type = hw->mac.ops.get_media_type(hw);
@@ -180,7 +180,7 @@ s32 ixgbe_start_hw_generic(struct ixgbe_hw *hw)
  *  up link and flow control settings, and leaves transmit and receive units
  *  disabled and uninitialized
  **/
-s32 ixgbe_init_hw_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_init_hw_generic(struct ixgbe_hw *hw)
 {
 	/* Reset the hardware */
 	hw->mac.ops.reset_hw(hw);
@@ -198,9 +198,9 @@ s32 ixgbe_init_hw_generic(struct ixgbe_hw *hw)
  *  Clears all hardware statistics counters by reading them from the hardware
  *  Statistics counters are clear on read.
  **/
-s32 ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
 {
-	u16 i = 0;
+	uint16_t i = 0;
 
 	IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 	IXGBE_READ_REG(hw, IXGBE_ILLERRC);
@@ -276,10 +276,10 @@ s32 ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
  *
  *  Reads the part number from the EEPROM.
  **/
-s32 ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, u32 *pba_num)
+int32_t ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, uint32_t *pba_num)
 {
-	s32 ret_val;
-	u16 data;
+	int32_t ret_val;
+	uint16_t data;
 
 	DEBUGFUNC("ixgbe_read_pba_num_generic");
 
@@ -288,7 +288,7 @@ s32 ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, u32 *pba_num)
 		DEBUGOUT("NVM Read Error\n");
 		return ret_val;
 	}
-	*pba_num = (u32)(data << 16);
+	*pba_num = (uint32_t)(data << 16);
 
 	ret_val = hw->eeprom.ops.read(hw, IXGBE_PBANUM1_PTR, &data);
 	if (ret_val) {
@@ -309,20 +309,20 @@ s32 ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, u32 *pba_num)
  *  A reset of the adapter must be performed prior to calling this function
  *  in order for the MAC address to have been loaded from the EEPROM into RAR0
  **/
-s32 ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, u8 *mac_addr)
+int32_t ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *mac_addr)
 {
-	u32 rar_high;
-	u32 rar_low;
-	u16 i;
+	uint32_t rar_high;
+	uint32_t rar_low;
+	uint16_t i;
 
 	rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(0));
 	rar_low = IXGBE_READ_REG(hw, IXGBE_RAL(0));
 
 	for (i = 0; i < 4; i++)
-		mac_addr[i] = (u8)(rar_low >> (i*8));
+		mac_addr[i] = (uint8_t)(rar_low >> (i*8));
 
 	for (i = 0; i < 2; i++)
-		mac_addr[i+4] = (u8)(rar_high >> (i*8));
+		mac_addr[i+4] = (uint8_t)(rar_high >> (i*8));
 
 	return IXGBE_SUCCESS;
 }
@@ -333,9 +333,9 @@ s32 ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, u8 *mac_addr)
  *
  *  Sets the PCI bus info (speed, width, type) within the ixgbe_hw structure
  **/
-s32 ixgbe_get_bus_info_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_get_bus_info_generic(struct ixgbe_hw *hw)
 {
-	u16 link_status;
+	uint16_t link_status;
 
 	hw->bus.type = ixgbe_bus_type_pci_express;
 
@@ -384,11 +384,11 @@ s32 ixgbe_get_bus_info_generic(struct ixgbe_hw *hw)
  *  the shared code and drivers to determine if the adapter is in a stopped
  *  state and should not touch the hardware.
  **/
-s32 ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
 {
-	u32 number_of_queues;
-	u32 reg_val;
-	u16 i;
+	uint32_t number_of_queues;
+	uint32_t reg_val;
+	uint16_t i;
 
 	/*
 	 * Set the adapter_stopped flag so other driver functions stop touching
@@ -435,9 +435,9 @@ s32 ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
  *  @hw: pointer to hardware structure
  *  @index: led number to turn on
  **/
-s32 ixgbe_led_on_generic(struct ixgbe_hw *hw, u32 index)
+int32_t ixgbe_led_on_generic(struct ixgbe_hw *hw, uint32_t index)
 {
-	u32 led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
+	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 
 	/* To turn on the LED, set mode to ON. */
 	led_reg &= ~IXGBE_LED_MODE_MASK(index);
@@ -453,9 +453,9 @@ s32 ixgbe_led_on_generic(struct ixgbe_hw *hw, u32 index)
  *  @hw: pointer to hardware structure
  *  @index: led number to turn off
  **/
-s32 ixgbe_led_off_generic(struct ixgbe_hw *hw, u32 index)
+int32_t ixgbe_led_off_generic(struct ixgbe_hw *hw, uint32_t index)
 {
-	u32 led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
+	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 
 	/* To turn off the LED, set mode to OFF. */
 	led_reg &= ~IXGBE_LED_MODE_MASK(index);
@@ -473,11 +473,11 @@ s32 ixgbe_led_off_generic(struct ixgbe_hw *hw, u32 index)
  *  Initializes the EEPROM parameters ixgbe_eeprom_info within the
  *  ixgbe_hw struct in order to set up EEPROM access.
  **/
-s32 ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
 {
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
-	u32 eec;
-	u16 eeprom_size;
+	uint32_t eec;
+	uint16_t eeprom_size;
 
 	if (eeprom->type == ixgbe_eeprom_uninitialized) {
 		eeprom->type = ixgbe_eeprom_none;
@@ -494,7 +494,7 @@ s32 ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
 			 * SPI EEPROM is assumed here.  This code would need to
 			 * change if a future EEPROM is not SPI.
 			 */
-			eeprom_size = (u16)((eec & IXGBE_EEC_SIZE) >>
+			eeprom_size = (uint16_t)((eec & IXGBE_EEC_SIZE) >>
 					    IXGBE_EEC_SIZE_SHIFT);
 			eeprom->word_size = 1 << (eeprom_size +
 						  IXGBE_EEPROM_WORD_SIZE_SHIFT);
@@ -521,10 +521,10 @@ s32 ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
  *  If ixgbe_eeprom_update_checksum is not called after this function, the
  *  EEPROM will most likely contain an invalid checksum.
  **/
-s32 ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, u16 offset, u16 data)
+int32_t ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data)
 {
-	s32 status;
-	u8 write_opcode = IXGBE_EEPROM_WRITE_OPCODE_SPI;
+	int32_t status;
+	uint8_t write_opcode = IXGBE_EEPROM_WRITE_OPCODE_SPI;
 
 	hw->eeprom.ops.init_params(hw);
 
@@ -562,7 +562,7 @@ s32 ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, u16 offset, u16 data)
 		/* Send the Write command (8-bit opcode + addr) */
 		ixgbe_shift_out_eeprom_bits(hw, write_opcode,
 		                            IXGBE_EEPROM_OPCODE_BITS);
-		ixgbe_shift_out_eeprom_bits(hw, (u16)(offset*2),
+		ixgbe_shift_out_eeprom_bits(hw, (uint16_t)(offset*2),
 		                            hw->eeprom.address_bits);
 
 		/* Send the data */
@@ -588,12 +588,12 @@ out:
  *
  *  Reads 16 bit value from EEPROM through bit-bang method
  **/
-s32 ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, u16 offset,
-                                       u16 *data)
+int32_t ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, uint16_t offset,
+                                       uint16_t *data)
 {
-	s32 status;
-	u16 word_in;
-	u8 read_opcode = IXGBE_EEPROM_READ_OPCODE_SPI;
+	int32_t status;
+	uint16_t word_in;
+	uint8_t read_opcode = IXGBE_EEPROM_READ_OPCODE_SPI;
 
 	hw->eeprom.ops.init_params(hw);
 
@@ -625,7 +625,7 @@ s32 ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, u16 offset,
 		/* Send the READ command (opcode + addr) */
 		ixgbe_shift_out_eeprom_bits(hw, read_opcode,
 		                            IXGBE_EEPROM_OPCODE_BITS);
-		ixgbe_shift_out_eeprom_bits(hw, (u16)(offset*2),
+		ixgbe_shift_out_eeprom_bits(hw, (uint16_t)(offset*2),
 		                            hw->eeprom.address_bits);
 
 		/* Read the data. */
@@ -648,10 +648,10 @@ out:
  *
  *  Reads a 16 bit word from the EEPROM using the EERD register.
  **/
-s32 ixgbe_read_eeprom_generic(struct ixgbe_hw *hw, u16 offset, u16 *data)
+int32_t ixgbe_read_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t *data)
 {
-	u32 eerd;
-	s32 status;
+	uint32_t eerd;
+	int32_t status;
 
 	hw->eeprom.ops.init_params(hw);
 
@@ -682,11 +682,11 @@ out:
  *
  *  Polls the status bit (bit 1) of the EERD to determine when the read is done.
  **/
-static s32 ixgbe_poll_eeprom_eerd_done(struct ixgbe_hw *hw)
+static int32_t ixgbe_poll_eeprom_eerd_done(struct ixgbe_hw *hw)
 {
-	u32 i;
-	u32 reg;
-	s32 status = IXGBE_ERR_EEPROM;
+	uint32_t i;
+	uint32_t reg;
+	int32_t status = IXGBE_ERR_EEPROM;
 
 	for (i = 0; i < IXGBE_EERD_ATTEMPTS; i++) {
 		reg = IXGBE_READ_REG(hw, IXGBE_EERD);
@@ -706,11 +706,11 @@ static s32 ixgbe_poll_eeprom_eerd_done(struct ixgbe_hw *hw)
  *  Prepares EEPROM for access using bit-bang method. This function should
  *  be called before issuing a command to the EEPROM.
  **/
-static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
+static int32_t ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_SUCCESS;
-	u32 eec;
-	u32 i;
+	int32_t status = IXGBE_SUCCESS;
+	uint32_t eec;
+	uint32_t i;
 
 	if (ixgbe_acquire_swfw_sync(hw, IXGBE_GSSR_EEP_SM) != IXGBE_SUCCESS)
 		status = IXGBE_ERR_SWFW_SYNC;
@@ -757,12 +757,12 @@ static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
  *
  *  Sets the hardware semaphores so EEPROM access can occur for bit-bang method
  **/
-static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
+static int32_t ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_ERR_EEPROM;
-	u32 timeout;
-	u32 i;
-	u32 swsm;
+	int32_t status = IXGBE_ERR_EEPROM;
+	uint32_t timeout;
+	uint32_t i;
+	uint32_t swsm;
 
 	/* Set timeout value based on size of EEPROM */
 	timeout = hw->eeprom.word_size + 1;
@@ -824,7 +824,7 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
  **/
 static void ixgbe_release_eeprom_semaphore(struct ixgbe_hw *hw)
 {
-	u32 swsm;
+	uint32_t swsm;
 
 	swsm = IXGBE_READ_REG(hw, IXGBE_SWSM);
 
@@ -838,11 +838,11 @@ static void ixgbe_release_eeprom_semaphore(struct ixgbe_hw *hw)
  *  ixgbe_ready_eeprom - Polls for EEPROM ready
  *  @hw: pointer to hardware structure
  **/
-static s32 ixgbe_ready_eeprom(struct ixgbe_hw *hw)
+static int32_t ixgbe_ready_eeprom(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_SUCCESS;
-	u16 i;
-	u8 spi_stat_reg;
+	int32_t status = IXGBE_SUCCESS;
+	uint16_t i;
+	uint8_t spi_stat_reg;
 
 	/*
 	 * Read "Status Register" repeatedly until the LSB is cleared.  The
@@ -853,7 +853,7 @@ static s32 ixgbe_ready_eeprom(struct ixgbe_hw *hw)
 	for (i = 0; i < IXGBE_EEPROM_MAX_RETRY_SPI; i += 5) {
 		ixgbe_shift_out_eeprom_bits(hw, IXGBE_EEPROM_RDSR_OPCODE_SPI,
 		                            IXGBE_EEPROM_OPCODE_BITS);
-		spi_stat_reg = (u8)ixgbe_shift_in_eeprom_bits(hw, 8);
+		spi_stat_reg = (uint8_t)ixgbe_shift_in_eeprom_bits(hw, 8);
 		if (!(spi_stat_reg & IXGBE_EEPROM_STATUS_RDY_SPI))
 			break;
 
@@ -879,7 +879,7 @@ static s32 ixgbe_ready_eeprom(struct ixgbe_hw *hw)
  **/
 static void ixgbe_standby_eeprom(struct ixgbe_hw *hw)
 {
-	u32 eec;
+	uint32_t eec;
 
 	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
 
@@ -900,12 +900,12 @@ static void ixgbe_standby_eeprom(struct ixgbe_hw *hw)
  *  @data: data to send to the EEPROM
  *  @count: number of bits to shift out
  **/
-static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
-                                        u16 count)
+static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, uint16_t data,
+                                        uint16_t count)
 {
-	u32 eec;
-	u32 mask;
-	u32 i;
+	uint32_t eec;
+	uint32_t mask;
+	uint32_t i;
 
 	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
 
@@ -953,11 +953,11 @@ static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
  *  ixgbe_shift_in_eeprom_bits - Shift data bits in from the EEPROM
  *  @hw: pointer to hardware structure
  **/
-static u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count)
+static uint16_t ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, uint16_t count)
 {
-	u32 eec;
-	u32 i;
-	u16 data = 0;
+	uint32_t eec;
+	uint32_t i;
+	uint16_t data = 0;
 
 	/*
 	 * In order to read a register from the EEPROM, we need to shift
@@ -991,7 +991,7 @@ static u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count)
  *  @hw: pointer to hardware structure
  *  @eec: EEC register's current value
  **/
-static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
+static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec)
 {
 	/*
 	 * Raise the clock input to the EEPROM
@@ -1008,7 +1008,7 @@ static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
  *  @hw: pointer to hardware structure
  *  @eecd: EECD's current value
  **/
-static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
+static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec)
 {
 	/*
 	 * Lower the clock input to the EEPROM (clearing the SK bit), then
@@ -1026,7 +1026,7 @@ static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
  **/
 static void ixgbe_release_eeprom(struct ixgbe_hw *hw)
 {
-	u32 eec;
+	uint32_t eec;
 
 	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
 
@@ -1049,14 +1049,14 @@ static void ixgbe_release_eeprom(struct ixgbe_hw *hw)
  *  ixgbe_calc_eeprom_checksum - Calculates and returns the checksum
  *  @hw: pointer to hardware structure
  **/
-static u16 ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw)
+static uint16_t ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw)
 {
-	u16 i;
-	u16 j;
-	u16 checksum = 0;
-	u16 length = 0;
-	u16 pointer = 0;
-	u16 word = 0;
+	uint16_t i;
+	uint16_t j;
+	uint16_t checksum = 0;
+	uint16_t length = 0;
+	uint16_t pointer = 0;
+	uint16_t word = 0;
 
 	/* Include 0x0-0x3F in the checksum */
 	for (i = 0; i < IXGBE_EEPROM_CHECKSUM; i++) {
@@ -1084,7 +1084,7 @@ static u16 ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw)
 		}
 	}
 
-	checksum = (u16)IXGBE_EEPROM_SUM - checksum;
+	checksum = (uint16_t)IXGBE_EEPROM_SUM - checksum;
 
 	return checksum;
 }
@@ -1097,12 +1097,12 @@ static u16 ixgbe_calc_eeprom_checksum(struct ixgbe_hw *hw)
  *  Performs checksum calculation and validates the EEPROM checksum.  If the
  *  caller does not need checksum_val, the value can be NULL.
  **/
-s32 ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
-                                           u16 *checksum_val)
+int32_t ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
+                                           uint16_t *checksum_val)
 {
-	s32 status;
-	u16 checksum;
-	u16 read_checksum = 0;
+	int32_t status;
+	uint16_t checksum;
+	uint16_t read_checksum = 0;
 
 	/*
 	 * Read the first word from the EEPROM. If this times out or fails, do
@@ -1137,10 +1137,10 @@ s32 ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
  *  ixgbe_update_eeprom_checksum_generic - Updates the EEPROM checksum
  *  @hw: pointer to hardware structure
  **/
-s32 ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw)
 {
-	s32 status;
-	u16 checksum;
+	int32_t status;
+	uint16_t checksum;
 
 	/*
 	 * Read the first word from the EEPROM. If this times out or fails, do
@@ -1166,9 +1166,9 @@ s32 ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw)
  *
  *  Tests a MAC address to ensure it is a valid Individual Address
  **/
-s32 ixgbe_validate_mac_addr(u8 *mac_addr)
+int32_t ixgbe_validate_mac_addr(uint8_t *mac_addr)
 {
-	s32 status = IXGBE_SUCCESS;
+	int32_t status = IXGBE_SUCCESS;
 
 	/* Make sure it is not a multicast address */
 	if (IXGBE_IS_MULTICAST(mac_addr)) {
@@ -1197,11 +1197,11 @@ s32 ixgbe_validate_mac_addr(u8 *mac_addr)
  *
  *  Puts an ethernet address into a receive address register.
  **/
-s32 ixgbe_set_rar_generic(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
-                          u32 enable_addr)
+int32_t ixgbe_set_rar_generic(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr, uint32_t vmdq,
+                          uint32_t enable_addr)
 {
-	u32 rar_low, rar_high;
-	u32 rar_entries = hw->mac.num_rar_entries;
+	uint32_t rar_low, rar_high;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
 
 	/* setup VMDq pool selection before this RAR gets enabled */
 	hw->mac.ops.set_vmdq(hw, index, vmdq);
@@ -1212,10 +1212,10 @@ s32 ixgbe_set_rar_generic(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
 		 * HW expects these in little endian so we reverse the byte
 		 * order from network order (big endian) to little endian
 		 */
-		rar_low = ((u32)addr[0] |
-		           ((u32)addr[1] << 8) |
-		           ((u32)addr[2] << 16) |
-		           ((u32)addr[3] << 24));
+		rar_low = ((uint32_t)addr[0] |
+		           ((uint32_t)addr[1] << 8) |
+		           ((uint32_t)addr[2] << 16) |
+		           ((uint32_t)addr[3] << 24));
 		/*
 		 * Some parts put the VMDq setting in the extra RAH bits,
 		 * so save everything except the lower 16 bits that hold part
@@ -1223,7 +1223,7 @@ s32 ixgbe_set_rar_generic(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
 		 */
 		rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(index));
 		rar_high &= ~(0x0000FFFF | IXGBE_RAH_AV);
-		rar_high |= ((u32)addr[4] | ((u32)addr[5] << 8));
+		rar_high |= ((uint32_t)addr[4] | ((uint32_t)addr[5] << 8));
 
 		if (enable_addr != 0)
 			rar_high |= IXGBE_RAH_AV;
@@ -1244,9 +1244,9 @@ s32 ixgbe_set_rar_generic(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
  *
  *  Enables the select receive address register.
  **/
-static void ixgbe_enable_rar(struct ixgbe_hw *hw, u32 index)
+static void ixgbe_enable_rar(struct ixgbe_hw *hw, uint32_t index)
 {
-	u32 rar_high;
+	uint32_t rar_high;
 
 	rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(index));
 	rar_high |= IXGBE_RAH_AV;
@@ -1260,9 +1260,9 @@ static void ixgbe_enable_rar(struct ixgbe_hw *hw, u32 index)
  *
  *  Disables the select receive address register.
  **/
-static void ixgbe_disable_rar(struct ixgbe_hw *hw, u32 index)
+static void ixgbe_disable_rar(struct ixgbe_hw *hw, uint32_t index)
 {
-	u32 rar_high;
+	uint32_t rar_high;
 
 	rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(index));
 	rar_high &= (~IXGBE_RAH_AV);
@@ -1277,10 +1277,10 @@ static void ixgbe_disable_rar(struct ixgbe_hw *hw, u32 index)
  *  of the receive address registers. Clears the multicast table. Assumes
  *  the receiver is in reset when the routine is called.
  **/
-s32 ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw)
 {
-	u32 i;
-	u32 rar_entries = hw->mac.num_rar_entries;
+	uint32_t i;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
 
 	/*
 	 * If the current mac address is valid, assume it is a software override
@@ -1338,10 +1338,10 @@ s32 ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw)
  *
  *  Adds it to unused receive address register or goes into promiscuous mode.
  **/
-void ixgbe_add_uc_addr(struct ixgbe_hw *hw, u8 *addr, u32 vmdq)
+void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq)
 {
-	u32 rar_entries = hw->mac.num_rar_entries;
-	u32 rar;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
+	uint32_t rar;
 
 	DEBUGOUT6(" UC Addr = %.2X %.2X %.2X %.2X %.2X %.2X\n",
 	          addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
@@ -1377,15 +1377,15 @@ void ixgbe_add_uc_addr(struct ixgbe_hw *hw, u8 *addr, u32 vmdq)
  *  Drivers using secondary unicast addresses must set user_set_promisc when
  *  manually putting the device into promiscuous mode.
  **/
-s32 ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, u8 *addr_list,
-                                      u32 addr_count, ixgbe_mc_addr_itr next)
+int32_t ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *addr_list,
+                                      uint32_t addr_count, ixgbe_mc_addr_itr next)
 {
-	u8 *addr;
-	u32 i;
-	u32 old_promisc_setting = hw->addr_ctrl.overflow_promisc;
-	u32 uc_addr_in_use;
-	u32 fctrl;
-	u32 vmdq;
+	uint8_t *addr;
+	uint32_t i;
+	uint32_t old_promisc_setting = hw->addr_ctrl.overflow_promisc;
+	uint32_t uc_addr_in_use;
+	uint32_t fctrl;
+	uint32_t vmdq;
 
 	/*
 	 * Clear accounting of old secondary address list,
@@ -1444,22 +1444,22 @@ s32 ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, u8 *addr_list,
  *  by the MO field of the MCSTCTRL. The MO field is set during initialization
  *  to mc_filter_type.
  **/
-static s32 ixgbe_mta_vector(struct ixgbe_hw *hw, u8 *mc_addr)
+static int32_t ixgbe_mta_vector(struct ixgbe_hw *hw, uint8_t *mc_addr)
 {
-	u32 vector = 0;
+	uint32_t vector = 0;
 
 	switch (hw->mac.mc_filter_type) {
 	case 0:   /* use bits [47:36] of the address */
-		vector = ((mc_addr[4] >> 4) | (((u16)mc_addr[5]) << 4));
+		vector = ((mc_addr[4] >> 4) | (((uint16_t)mc_addr[5]) << 4));
 		break;
 	case 1:   /* use bits [46:35] of the address */
-		vector = ((mc_addr[4] >> 3) | (((u16)mc_addr[5]) << 5));
+		vector = ((mc_addr[4] >> 3) | (((uint16_t)mc_addr[5]) << 5));
 		break;
 	case 2:   /* use bits [45:34] of the address */
-		vector = ((mc_addr[4] >> 2) | (((u16)mc_addr[5]) << 6));
+		vector = ((mc_addr[4] >> 2) | (((uint16_t)mc_addr[5]) << 6));
 		break;
 	case 3:   /* use bits [43:32] of the address */
-		vector = ((mc_addr[4]) | (((u16)mc_addr[5]) << 8));
+		vector = ((mc_addr[4]) | (((uint16_t)mc_addr[5]) << 8));
 		break;
 	default:  /* Invalid mc_filter_type */
 		DEBUGOUT("MC filter type param set incorrectly\n");
@@ -1479,12 +1479,12 @@ static s32 ixgbe_mta_vector(struct ixgbe_hw *hw, u8 *mc_addr)
  *
  *  Sets the bit-vector in the multicast table.
  **/
-void ixgbe_set_mta(struct ixgbe_hw *hw, u8 *mc_addr)
+void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr)
 {
-	u32 vector;
-	u32 vector_bit;
-	u32 vector_reg;
-	u32 mta_reg;
+	uint32_t vector;
+	uint32_t vector_bit;
+	uint32_t vector_reg;
+	uint32_t mta_reg;
 
 	hw->addr_ctrl.mta_in_use++;
 
@@ -1514,10 +1514,10 @@ void ixgbe_set_mta(struct ixgbe_hw *hw, u8 *mc_addr)
  *
  *  Adds it to unused receive address register or to the multicast table.
  **/
-void ixgbe_add_mc_addr(struct ixgbe_hw *hw, u8 *mc_addr)
+void ixgbe_add_mc_addr(struct ixgbe_hw *hw, uint8_t *mc_addr)
 {
-	u32 rar_entries = hw->mac.num_rar_entries;
-	u32 rar;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
+	uint32_t rar;
 
 	DEBUGOUT6(" MC Addr =%.2X %.2X %.2X %.2X %.2X %.2X\n",
 	          mc_addr[0], mc_addr[1], mc_addr[2],
@@ -1553,12 +1553,12 @@ void ixgbe_add_mc_addr(struct ixgbe_hw *hw, u8 *mc_addr)
  *  registers for the first multicast addresses, and hashes the rest into the
  *  multicast table.
  **/
-s32 ixgbe_update_mc_addr_list_generic(struct ixgbe_hw *hw, u8 *mc_addr_list,
-                                      u32 mc_addr_count, ixgbe_mc_addr_itr next)
+int32_t ixgbe_update_mc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *mc_addr_list,
+                                      uint32_t mc_addr_count, ixgbe_mc_addr_itr next)
 {
-	u32 i;
-	u32 rar_entries = hw->mac.num_rar_entries;
-	u32 vmdq;
+	uint32_t i;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
+	uint32_t vmdq;
 
 	/*
 	 * Set the new number of MC addresses that we are being requested to
@@ -1603,10 +1603,10 @@ s32 ixgbe_update_mc_addr_list_generic(struct ixgbe_hw *hw, u8 *mc_addr_list,
  *
  *  Enables multicast address in RAR and the use of the multicast hash table.
  **/
-s32 ixgbe_enable_mc_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_enable_mc_generic(struct ixgbe_hw *hw)
 {
-	u32 i;
-	u32 rar_entries = hw->mac.num_rar_entries;
+	uint32_t i;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
 	struct ixgbe_addr_filter_info *a = &hw->addr_ctrl;
 
 	if (a->mc_addr_in_rar_count > 0)
@@ -1627,10 +1627,10 @@ s32 ixgbe_enable_mc_generic(struct ixgbe_hw *hw)
  *
  *  Disables multicast address in RAR and the use of the multicast hash table.
  **/
-s32 ixgbe_disable_mc_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_disable_mc_generic(struct ixgbe_hw *hw)
 {
-	u32 i;
-	u32 rar_entries = hw->mac.num_rar_entries;
+	uint32_t i;
+	uint32_t rar_entries = hw->mac.num_rar_entries;
 	struct ixgbe_addr_filter_info *a = &hw->addr_ctrl;
 
 	if (a->mc_addr_in_rar_count > 0)
@@ -1650,10 +1650,10 @@ s32 ixgbe_disable_mc_generic(struct ixgbe_hw *hw)
  *
  *  Clears the VLAN filer table, and the VMDq index associated with the filter
  **/
-s32 ixgbe_clear_vfta_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_clear_vfta_generic(struct ixgbe_hw *hw)
 {
-	u32 offset;
-	u32 vlanbyte;
+	uint32_t offset;
+	uint32_t vlanbyte;
 
 	for (offset = 0; offset < hw->mac.vft_size; offset++)
 		IXGBE_WRITE_REG(hw, IXGBE_VFTA(offset), 0);
@@ -1671,17 +1671,17 @@ s32 ixgbe_clear_vfta_generic(struct ixgbe_hw *hw)
  *  @hw: pointer to hardware structure
  *  @vlan: VLAN id to write to VLAN filter
  *  @vind: VMDq output index that maps queue to VLAN id in VFTA
- *  @vlan_on: boolean flag to turn on/off VLAN in VFTA
+ *  @vlan_on: intean flag to turn on/off VLAN in VFTA
  *
  *  Turn on/off specified VLAN in the VLAN filter table.
  **/
-s32 ixgbe_set_vfta_generic(struct ixgbe_hw *hw, u32 vlan, u32 vind,
-                           bool vlan_on)
+int32_t ixgbe_set_vfta_generic(struct ixgbe_hw *hw, uint32_t vlan, uint32_t vind,
+                           int vlan_on)
 {
-	u32 VftaIndex;
-	u32 BitOffset;
-	u32 VftaReg;
-	u32 VftaByte;
+	uint32_t VftaIndex;
+	uint32_t BitOffset;
+	uint32_t VftaReg;
+	uint32_t VftaByte;
 
 	/* Determine 32-bit word position in array */
 	VftaIndex = (vlan >> 5) & 0x7F;   /* upper seven bits */
@@ -1720,11 +1720,11 @@ s32 ixgbe_set_vfta_generic(struct ixgbe_hw *hw, u32 vlan, u32 vind,
  *  bit hasn't caused the master requests to be disabled, else IXGBE_SUCCESS
  *  is returned signifying master requests disabled.
  **/
-s32 ixgbe_disable_pcie_master(struct ixgbe_hw *hw)
+int32_t ixgbe_disable_pcie_master(struct ixgbe_hw *hw)
 {
-	u32 ctrl;
-	s32 i;
-	s32 status = IXGBE_ERR_MASTER_REQUESTS_PENDING;
+	uint32_t ctrl;
+	int32_t i;
+	int32_t status = IXGBE_ERR_MASTER_REQUESTS_PENDING;
 
 	ctrl = IXGBE_READ_REG(hw, IXGBE_CTRL);
 	ctrl |= IXGBE_CTRL_GIO_DIS;
@@ -1750,12 +1750,12 @@ s32 ixgbe_disable_pcie_master(struct ixgbe_hw *hw)
  *  Acquires the SWFW semaphore thought the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
-s32 ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, u16 mask)
+int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
 {
-	u32 gssr;
-	u32 swmask = mask;
-	u32 fwmask = mask << 5;
-	s32 timeout = 200;
+	uint32_t gssr;
+	uint32_t swmask = mask;
+	uint32_t fwmask = mask << 5;
+	int32_t timeout = 200;
 
 	while (timeout) {
 		if (ixgbe_get_eeprom_semaphore(hw))
@@ -1794,10 +1794,10 @@ s32 ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, u16 mask)
  *  Releases the SWFW semaphore thought the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
-void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, u16 mask)
+void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
 {
-	u32 gssr;
-	u32 swmask = mask;
+	uint32_t gssr;
+	uint32_t swmask = mask;
 
 	ixgbe_get_eeprom_semaphore(hw);
 
@@ -1816,15 +1816,15 @@ void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, u16 mask)
  *
  *  Performs read operation to Atlas analog register specified.
  **/
-s32 ixgbe_read_analog_reg8_generic(struct ixgbe_hw *hw, u32 reg, u8 *val)
+int32_t ixgbe_read_analog_reg8_generic(struct ixgbe_hw *hw, uint32_t reg, uint8_t *val)
 {
-	u32  atlas_ctl;
+	uint32_t  atlas_ctl;
 
 	IXGBE_WRITE_REG(hw, IXGBE_ATLASCTL, IXGBE_ATLASCTL_WRITE_CMD | (reg << 8));
 	IXGBE_WRITE_FLUSH(hw);
 	usec_delay(10);
 	atlas_ctl = IXGBE_READ_REG(hw, IXGBE_ATLASCTL);
-	*val = (u8)atlas_ctl;
+	*val = (uint8_t)atlas_ctl;
 
 	return IXGBE_SUCCESS;
 }
@@ -1837,9 +1837,9 @@ s32 ixgbe_read_analog_reg8_generic(struct ixgbe_hw *hw, u32 reg, u8 *val)
  *
  *  Performs write operation to Atlas analog register specified.
  **/
-s32 ixgbe_write_analog_reg8_generic(struct ixgbe_hw *hw, u32 reg, u8 val)
+int32_t ixgbe_write_analog_reg8_generic(struct ixgbe_hw *hw, uint32_t reg, uint8_t val)
 {
-	u32  atlas_ctl;
+	uint32_t  atlas_ctl;
 
 	atlas_ctl = (reg << 8) | val;
 	IXGBE_WRITE_REG(hw, IXGBE_ATLASCTL, atlas_ctl);

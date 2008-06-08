@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.1 2008/06/08 20:01:02 reyk Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -37,37 +37,37 @@
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
 
-s32 ixgbe_init_ops_82598(struct ixgbe_hw *hw);
-s32 ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
+int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
                                       ixgbe_link_speed *speed,
-                                      bool *autoneg);
-s32 ixgbe_get_copper_link_capabilities_82598(struct ixgbe_hw *hw,
+                                      int *autoneg);
+int32_t ixgbe_get_copper_link_capabilities_82598(struct ixgbe_hw *hw,
                                              ixgbe_link_speed *speed,
-                                             bool *autoneg);
+                                             int *autoneg);
 enum ixgbe_media_type ixgbe_get_media_type_82598(struct ixgbe_hw *hw);
-s32 ixgbe_setup_fc_82598(struct ixgbe_hw *hw, s32 packetbuf_num);
-s32 ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw);
-s32 ixgbe_check_mac_link_82598(struct ixgbe_hw *hw,
+int32_t ixgbe_setup_fc_82598(struct ixgbe_hw *hw, int32_t packetbuf_num);
+int32_t ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_check_mac_link_82598(struct ixgbe_hw *hw,
                                ixgbe_link_speed *speed,
-                               bool *link_up, bool link_up_wait_to_complete);
-s32 ixgbe_setup_mac_link_speed_82598(struct ixgbe_hw *hw,
+                               int *link_up, int link_up_wait_to_complete);
+int32_t ixgbe_setup_mac_link_speed_82598(struct ixgbe_hw *hw,
                                      ixgbe_link_speed speed,
-                                     bool autoneg,
-                                     bool autoneg_wait_to_complete);
-s32 ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw);
-s32 ixgbe_setup_copper_link_speed_82598(struct ixgbe_hw *hw,
+                                     int autoneg,
+                                     int autoneg_wait_to_complete);
+int32_t ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_setup_copper_link_speed_82598(struct ixgbe_hw *hw,
                                         ixgbe_link_speed speed,
-                                        bool autoneg,
-                                        bool autoneg_wait_to_complete);
+                                        int autoneg,
+                                        int autoneg_wait_to_complete);
 #ifndef NO_82598_A0_SUPPORT
-s32 ixgbe_reset_hw_rev_0_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_reset_hw_rev_0_82598(struct ixgbe_hw *hw);
 #endif
-s32 ixgbe_reset_hw_82598(struct ixgbe_hw *hw);
-s32 ixgbe_configure_fiber_serdes_fc_82598(struct ixgbe_hw *hw);
-s32 ixgbe_setup_fiber_serdes_link_82598(struct ixgbe_hw *hw);
-s32 ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, u32 rar, u32 vmdq);
-s32 ixgbe_blink_led_stop_82598(struct ixgbe_hw *hw, u32 index);
-s32 ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, u32 index);
+int32_t ixgbe_reset_hw_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_configure_fiber_serdes_fc_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_setup_fiber_serdes_link_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
+int32_t ixgbe_blink_led_stop_82598(struct ixgbe_hw *hw, uint32_t index);
+int32_t ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, uint32_t index);
 
 /**
  *  ixgbe_init_ops_82598 - Inits func ptrs and MAC type
@@ -76,11 +76,11 @@ s32 ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, u32 index);
  *  Initialize the function pointers and assign the MAC type for 82598.
  *  Does not touch the hardware.
  **/
-s32 ixgbe_init_ops_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 {
 	struct ixgbe_mac_info *mac = &hw->mac;
 	struct ixgbe_phy_info *phy = &hw->phy;
-	s32 ret_val;
+	int32_t ret_val;
 
 	ret_val = ixgbe_init_phy_ops_generic(hw);
 	ret_val = ixgbe_init_ops_generic(hw);
@@ -151,16 +151,16 @@ s32 ixgbe_init_ops_82598(struct ixgbe_hw *hw)
  *  ixgbe_get_link_capabilities_82598 - Determines link capabilities
  *  @hw: pointer to hardware structure
  *  @speed: pointer to link speed
- *  @autoneg: boolean auto-negotiation value
+ *  @autoneg: intean auto-negotiation value
  *
  *  Determines the link capabilities by reading the AUTOC register.
  **/
-s32 ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
+int32_t ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
                                       ixgbe_link_speed *speed,
-                                      bool *autoneg)
+                                      int *autoneg)
 {
-	s32 status = IXGBE_SUCCESS;
-	s32 autoc_reg;
+	int32_t status = IXGBE_SUCCESS;
+	int32_t autoc_reg;
 
 	autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 
@@ -209,16 +209,16 @@ s32 ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
  *  ixgbe_get_copper_link_capabilities_82598 - Determines link capabilities
  *  @hw: pointer to hardware structure
  *  @speed: pointer to link speed
- *  @autoneg: boolean auto-negotiation value
+ *  @autoneg: intean auto-negotiation value
  *
  *  Determines the link capabilities by reading the AUTOC register.
  **/
-s32 ixgbe_get_copper_link_capabilities_82598(struct ixgbe_hw *hw,
+int32_t ixgbe_get_copper_link_capabilities_82598(struct ixgbe_hw *hw,
                                              ixgbe_link_speed *speed,
-                                             bool *autoneg)
+                                             int *autoneg)
 {
-	s32 status = IXGBE_ERR_LINK_SETUP;
-	u16 speed_ability;
+	int32_t status = IXGBE_ERR_LINK_SETUP;
+	uint16_t speed_ability;
 
 	*speed = 0;
 	*autoneg = TRUE;
@@ -280,10 +280,10 @@ enum ixgbe_media_type ixgbe_get_media_type_82598(struct ixgbe_hw *hw)
  *  Configures the flow control settings based on SW configuration.  This
  *  function is used for 802.3x flow control configuration only.
  **/
-s32 ixgbe_setup_fc_82598(struct ixgbe_hw *hw, s32 packetbuf_num)
+int32_t ixgbe_setup_fc_82598(struct ixgbe_hw *hw, int32_t packetbuf_num)
 {
-	u32 frctl_reg;
-	u32 rmcs_reg;
+	uint32_t frctl_reg;
+	uint32_t rmcs_reg;
 
 	if (packetbuf_num < 0 || packetbuf_num > 7) {
 		DEBUGOUT1("Invalid packet buffer number [%d], expected range is"
@@ -397,14 +397,14 @@ s32 ixgbe_setup_fc_82598(struct ixgbe_hw *hw, s32 packetbuf_num)
  *  Configures link settings based on values in the ixgbe_hw struct.
  *  Restarts the link.  Performs autonegotiation if needed.
  **/
-s32 ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw)
 {
 	ixgbe_link_speed speed;
-	bool link_up;
-	u32 autoc_reg;
-	u32 links_reg;
-	u32 i;
-	s32 status = IXGBE_SUCCESS;
+	int link_up;
+	uint32_t autoc_reg;
+	uint32_t links_reg;
+	uint32_t i;
+	int32_t status = IXGBE_SUCCESS;
 
 	autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 
@@ -468,16 +468,16 @@ s32 ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw)
  *  @hw: pointer to hardware structure
  *  @speed: pointer to link speed
  *  @link_up: TRUE is link is up, FALSE otherwise
- *  @link_up_wait_to_complete: bool used to wait for link up or not
+ *  @link_up_wait_to_complete: int used to wait for link up or not
  *
  *  Reads the links register to determine if link is up and the current speed
  **/
-s32 ixgbe_check_mac_link_82598(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
-                               bool *link_up, bool link_up_wait_to_complete)
+int32_t ixgbe_check_mac_link_82598(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
+                               int *link_up, int link_up_wait_to_complete)
 {
-	u32 links_reg;
-	u32 i;
-	u16 link_reg, adapt_comp_reg;
+	uint32_t links_reg;
+	uint32_t i;
+	uint16_t link_reg, adapt_comp_reg;
 
 	if (hw->phy.type == ixgbe_phy_nl) {
 		hw->phy.ops.read_reg(hw, 1, IXGBE_TWINAX_DEV, &link_reg);
@@ -547,10 +547,10 @@ out:
  *  Reads PCS registers and sets flow control settings, based on
  *  link-partner's abilities.
  **/
-s32 ixgbe_configure_fiber_serdes_fc_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_configure_fiber_serdes_fc_82598(struct ixgbe_hw *hw)
 {
-	s32 ret_val = IXGBE_SUCCESS;
-	u32 pcs_anadv_reg, pcs_lpab_reg, pcs_lstat_reg, i;
+	int32_t ret_val = IXGBE_SUCCESS;
+	uint32_t pcs_anadv_reg, pcs_lpab_reg, pcs_lstat_reg, i;
 	DEBUGFUNC("ixgbe_configure_fiber_serdes_fc_82598");
 
 	/* Check that autonegotiation has completed */
@@ -639,10 +639,10 @@ out:
  *  Sets up PCS registers and sets flow control settings, based on
  *  link-partner's abilities.
  **/
-s32 ixgbe_setup_fiber_serdes_link_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_setup_fiber_serdes_link_82598(struct ixgbe_hw *hw)
 {
-	u32 reg;
-	s32 ret_val;
+	uint32_t reg;
+	int32_t ret_val;
 
 	DEBUGFUNC("ixgbe_setup_fiber_serdes_link_82598");
 
@@ -739,11 +739,11 @@ out:
  *
  *  Set the link speed in the AUTOC register and restarts link.
  **/
-s32 ixgbe_setup_mac_link_speed_82598(struct ixgbe_hw *hw,
-                                     ixgbe_link_speed speed, bool autoneg,
-                                     bool autoneg_wait_to_complete)
+int32_t ixgbe_setup_mac_link_speed_82598(struct ixgbe_hw *hw,
+                                     ixgbe_link_speed speed, int autoneg,
+                                     int autoneg_wait_to_complete)
 {
-	s32 status = IXGBE_SUCCESS;
+	int32_t status = IXGBE_SUCCESS;
 
 	/* If speed is 10G, then check for CX4 or XAUI. */
 	if ((speed == IXGBE_LINK_SPEED_10GB_FULL) &&
@@ -786,9 +786,9 @@ s32 ixgbe_setup_mac_link_speed_82598(struct ixgbe_hw *hw,
  *  phy and wait for autonegotiate to finish.  Then synchronize the
  *  MAC and PHY.
  **/
-s32 ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw)
 {
-	s32 status;
+	int32_t status;
 
 	/* Restart autonegotiation on PHY */
 	status = hw->phy.ops.setup_link(hw);
@@ -812,12 +812,12 @@ s32 ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw)
  *
  *  Sets the link speed in the AUTOC register in the MAC and restarts link.
  **/
-s32 ixgbe_setup_copper_link_speed_82598(struct ixgbe_hw *hw,
+int32_t ixgbe_setup_copper_link_speed_82598(struct ixgbe_hw *hw,
                                         ixgbe_link_speed speed,
-                                        bool autoneg,
-                                        bool autoneg_wait_to_complete)
+                                        int autoneg,
+                                        int autoneg_wait_to_complete)
 {
-	s32 status;
+	int32_t status;
 
 	/* Setup the PHY according to input speed */
 	status = hw->phy.ops.setup_link_speed(hw, speed, autoneg,
@@ -842,14 +842,14 @@ s32 ixgbe_setup_copper_link_speed_82598(struct ixgbe_hw *hw,
  *  clears all interrupts, performing a PHY reset, and performing a link (MAC)
  *  reset.
  **/
-s32 ixgbe_reset_hw_rev_0_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_reset_hw_rev_0_82598(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_SUCCESS;
-	u32 ctrl;
-	u32 gheccr;
-	u32 autoc;
-	u32 i;
-	u32 resets;
+	int32_t status = IXGBE_SUCCESS;
+	uint32_t ctrl;
+	uint32_t gheccr;
+	uint32_t autoc;
+	uint32_t i;
+	uint32_t resets;
 
 	/* Call adapter stop to disable tx/rx and clear interrupts */
 	hw->mac.ops.stop_adapter(hw);
@@ -934,14 +934,14 @@ s32 ixgbe_reset_hw_rev_0_82598(struct ixgbe_hw *hw)
  *  clears all interrupts, performing a PHY reset, and performing a link (MAC)
  *  reset.
  **/
-s32 ixgbe_reset_hw_82598(struct ixgbe_hw *hw)
+int32_t ixgbe_reset_hw_82598(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_SUCCESS;
-	u32 ctrl;
-	u32 gheccr;
-	u32 i;
-	u32 autoc;
-	u8  analog_val;
+	int32_t status = IXGBE_SUCCESS;
+	uint32_t ctrl;
+	uint32_t gheccr;
+	uint32_t i;
+	uint32_t autoc;
+	uint8_t  analog_val;
 
 	/* Call adapter stop to disable tx/rx and clear interrupts */
 	hw->mac.ops.stop_adapter(hw);
@@ -1051,9 +1051,9 @@ s32 ixgbe_reset_hw_82598(struct ixgbe_hw *hw)
  *  @rar: receive address register index to associate with a VMDq index
  *  @vmdq: VMDq set index
  **/
-s32 ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, u32 rar, u32 vmdq)
+int32_t ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq)
 {
-	u32 rar_high;
+	uint32_t rar_high;
 
 	rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(rar));
 	rar_high &= ~IXGBE_RAH_VIND_MASK;
@@ -1067,12 +1067,12 @@ s32 ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, u32 rar, u32 vmdq)
  *  @hw: pointer to hardware structure
  *  @index: led number to blink
  **/
-s32 ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, u32 index)
+int32_t ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, uint32_t index)
 {
 	ixgbe_link_speed speed = 0;
-	bool link_up = 0;
-	u32 autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
-	u32 led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
+	int link_up = 0;
+	uint32_t autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 
 	/*
 	 * Link must be up to auto-blink the LEDs on the 82598EB MAC;
@@ -1099,10 +1099,10 @@ s32 ixgbe_blink_led_start_82598(struct ixgbe_hw *hw, u32 index)
  *  @hw: pointer to hardware structure
  *  @index: led number to stop blinking
  **/
-s32 ixgbe_blink_led_stop_82598(struct ixgbe_hw *hw, u32 index)
+int32_t ixgbe_blink_led_stop_82598(struct ixgbe_hw *hw, uint32_t index)
 {
-	u32 autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
-	u32 led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
+	uint32_t autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 
 	autoc_reg &= ~IXGBE_AUTOC_FLU;
 	IXGBE_WRITE_REG(hw, IXGBE_AUTOC, autoc_reg);

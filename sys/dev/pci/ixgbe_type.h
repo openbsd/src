@@ -913,12 +913,12 @@
 
 /* Check whether address is multicast.  This is little-endian specific check.*/
 #define IXGBE_IS_MULTICAST(Address) \
-                (bool)(((u8 *)(Address))[0] & ((u8)0x01))
+                (int)(((uint8_t *)(Address))[0] & ((uint8_t)0x01))
 
 /* Check whether an address is broadcast. */
 #define IXGBE_IS_BROADCAST(Address)                      \
-                ((((u8 *)(Address))[0] == ((u8)0xff)) && \
-                (((u8 *)(Address))[1] == ((u8)0xff)))
+                ((((uint8_t *)(Address))[0] == ((uint8_t)0xff)) && \
+                (((uint8_t *)(Address))[1] == ((uint8_t)0xff)))
 
 /* RAH */
 #define IXGBE_RAH_VIND_MASK     0x003C0000
@@ -1101,17 +1101,17 @@
 
 #ifndef __le16
 /* Little Endian defines */
-#define __le8   u8
-#define __le16  u16
-#define __le32  u32
-#define __le64  u64
+#define __le8   uint8_t
+#define __le16  uint16_t
+#define __le32  uint32_t
+#define __le64  uint64_t
 
 #endif
 
 
 /* Transmit Descriptor - Legacy */
 struct ixgbe_legacy_tx_desc {
-	u64 buffer_addr;       /* Address of the descriptor's data buffer */
+	uint64_t buffer_addr;       /* Address of the descriptor's data buffer */
 	union {
 		__le32 data;
 		struct {
@@ -1233,9 +1233,9 @@ struct ixgbe_adv_tx_context_desc {
 #define IXGBE_ADVTXD_MSS_SHIFT       16  /* Adv ctxt MSS shift */
 
 /* Autonegotiation advertised speeds */
-typedef u32 ixgbe_autoneg_advertised;
+typedef uint32_t ixgbe_autoneg_advertised;
 /* Link speed */
-typedef u32 ixgbe_link_speed;
+typedef uint32_t ixgbe_link_speed;
 #define IXGBE_LINK_SPEED_UNKNOWN   0
 #define IXGBE_LINK_SPEED_100_FULL  0x0008
 #define IXGBE_LINK_SPEED_1GB_FULL  0x0020
@@ -1316,12 +1316,12 @@ enum ixgbe_bus_width {
 };
 
 struct ixgbe_addr_filter_info {
-	u32 num_mc_addrs;
-	u32 rar_used_count;
-	u32 mc_addr_in_rar_count;
-	u32 mta_in_use;
-	u32 overflow_promisc;
-	bool user_set_promisc;
+	uint32_t num_mc_addrs;
+	uint32_t rar_used_count;
+	uint32_t mc_addr_in_rar_count;
+	uint32_t mta_in_use;
+	uint32_t overflow_promisc;
+	int user_set_promisc;
 };
 
 /* Bus parameters */
@@ -1333,184 +1333,184 @@ struct ixgbe_bus_info {
 
 /* Flow control parameters */
 struct ixgbe_fc_info {
-	u32 high_water; /* Flow Control High-water */
-	u32 low_water; /* Flow Control Low-water */
-	u16 pause_time; /* Flow Control Pause timer */
-	bool send_xon; /* Flow control send XON */
-	bool strict_ieee; /* Strict IEEE mode */
+	uint32_t high_water; /* Flow Control High-water */
+	uint32_t low_water; /* Flow Control Low-water */
+	uint16_t pause_time; /* Flow Control Pause timer */
+	int send_xon; /* Flow control send XON */
+	int strict_ieee; /* Strict IEEE mode */
 	enum ixgbe_fc_type type; /* Type of flow control */
 	enum ixgbe_fc_type original_type;
 };
 
 /* Statistics counters collected by the MAC */
 struct ixgbe_hw_stats {
-	u64 crcerrs;
-	u64 illerrc;
-	u64 errbc;
-	u64 mspdc;
-	u64 mpctotal;
-	u64 mpc[8];
-	u64 mlfc;
-	u64 mrfc;
-	u64 rlec;
-	u64 lxontxc;
-	u64 lxonrxc;
-	u64 lxofftxc;
-	u64 lxoffrxc;
-	u64 pxontxc[8];
-	u64 pxonrxc[8];
-	u64 pxofftxc[8];
-	u64 pxoffrxc[8];
-	u64 prc64;
-	u64 prc127;
-	u64 prc255;
-	u64 prc511;
-	u64 prc1023;
-	u64 prc1522;
-	u64 gprc;
-	u64 bprc;
-	u64 mprc;
-	u64 gptc;
-	u64 gorc;
-	u64 gotc;
-	u64 rnbc[8];
-	u64 ruc;
-	u64 rfc;
-	u64 roc;
-	u64 rjc;
-	u64 mngprc;
-	u64 mngpdc;
-	u64 mngptc;
-	u64 tor;
-	u64 tpr;
-	u64 tpt;
-	u64 ptc64;
-	u64 ptc127;
-	u64 ptc255;
-	u64 ptc511;
-	u64 ptc1023;
-	u64 ptc1522;
-	u64 mptc;
-	u64 bptc;
-	u64 xec;
-	u64 rqsmr[16];
-	u64 tqsmr[8];
-	u64 qprc[16];
-	u64 qptc[16];
-	u64 qbrc[16];
-	u64 qbtc[16];
+	uint64_t crcerrs;
+	uint64_t illerrc;
+	uint64_t errbc;
+	uint64_t mspdc;
+	uint64_t mpctotal;
+	uint64_t mpc[8];
+	uint64_t mlfc;
+	uint64_t mrfc;
+	uint64_t rlec;
+	uint64_t lxontxc;
+	uint64_t lxonrxc;
+	uint64_t lxofftxc;
+	uint64_t lxoffrxc;
+	uint64_t pxontxc[8];
+	uint64_t pxonrxc[8];
+	uint64_t pxofftxc[8];
+	uint64_t pxoffrxc[8];
+	uint64_t prc64;
+	uint64_t prc127;
+	uint64_t prc255;
+	uint64_t prc511;
+	uint64_t prc1023;
+	uint64_t prc1522;
+	uint64_t gprc;
+	uint64_t bprc;
+	uint64_t mprc;
+	uint64_t gptc;
+	uint64_t gorc;
+	uint64_t gotc;
+	uint64_t rnbc[8];
+	uint64_t ruc;
+	uint64_t rfc;
+	uint64_t roc;
+	uint64_t rjc;
+	uint64_t mngprc;
+	uint64_t mngpdc;
+	uint64_t mngptc;
+	uint64_t tor;
+	uint64_t tpr;
+	uint64_t tpt;
+	uint64_t ptc64;
+	uint64_t ptc127;
+	uint64_t ptc255;
+	uint64_t ptc511;
+	uint64_t ptc1023;
+	uint64_t ptc1522;
+	uint64_t mptc;
+	uint64_t bptc;
+	uint64_t xec;
+	uint64_t rqsmr[16];
+	uint64_t tqsmr[8];
+	uint64_t qprc[16];
+	uint64_t qptc[16];
+	uint64_t qbrc[16];
+	uint64_t qbtc[16];
 };
 
 /* forward declaration */
 struct ixgbe_hw;
 
 /* iterator type for walking multicast address lists */
-typedef u8* (*ixgbe_mc_addr_itr) (struct ixgbe_hw *hw, u8 **mc_addr_ptr,
-                                  u32 *vmdq);
+typedef uint8_t* (*ixgbe_mc_addr_itr) (struct ixgbe_hw *hw, uint8_t **mc_addr_ptr,
+                                  uint32_t *vmdq);
 
 /* Function pointer table */
 struct ixgbe_eeprom_operations {
-	s32 (*init_params)(struct ixgbe_hw *);
-	s32 (*read)(struct ixgbe_hw *, u16, u16 *);
-	s32 (*write)(struct ixgbe_hw *, u16, u16);
-	s32 (*validate_checksum)(struct ixgbe_hw *, u16 *);
-	s32 (*update_checksum)(struct ixgbe_hw *);
+	int32_t (*init_params)(struct ixgbe_hw *);
+	int32_t (*read)(struct ixgbe_hw *, uint16_t, uint16_t *);
+	int32_t (*write)(struct ixgbe_hw *, uint16_t, uint16_t);
+	int32_t (*validate_checksum)(struct ixgbe_hw *, uint16_t *);
+	int32_t (*update_checksum)(struct ixgbe_hw *);
 };
 
 struct ixgbe_mac_operations {
-	s32 (*init_hw)(struct ixgbe_hw *);
-	s32 (*reset_hw)(struct ixgbe_hw *);
-	s32 (*start_hw)(struct ixgbe_hw *);
-	s32 (*clear_hw_cntrs)(struct ixgbe_hw *);
+	int32_t (*init_hw)(struct ixgbe_hw *);
+	int32_t (*reset_hw)(struct ixgbe_hw *);
+	int32_t (*start_hw)(struct ixgbe_hw *);
+	int32_t (*clear_hw_cntrs)(struct ixgbe_hw *);
 	enum ixgbe_media_type (*get_media_type)(struct ixgbe_hw *);
-	s32 (*get_mac_addr)(struct ixgbe_hw *, u8 *);
-	s32 (*stop_adapter)(struct ixgbe_hw *);
-	s32 (*get_bus_info)(struct ixgbe_hw *);
-	s32 (*read_analog_reg8)(struct ixgbe_hw*, u32, u8*);
-	s32 (*write_analog_reg8)(struct ixgbe_hw*, u32, u8);
+	int32_t (*get_mac_addr)(struct ixgbe_hw *, uint8_t *);
+	int32_t (*stop_adapter)(struct ixgbe_hw *);
+	int32_t (*get_bus_info)(struct ixgbe_hw *);
+	int32_t (*read_analog_reg8)(struct ixgbe_hw*, uint32_t, uint8_t*);
+	int32_t (*write_analog_reg8)(struct ixgbe_hw*, uint32_t, uint8_t);
 
 	/* Link */
-	s32 (*setup_link)(struct ixgbe_hw *);
-	s32 (*setup_link_speed)(struct ixgbe_hw *, ixgbe_link_speed, bool,
-	                        bool);
-	s32 (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, bool *, bool);
-	s32 (*get_link_capabilities)(struct ixgbe_hw *, ixgbe_link_speed *,
-	                             bool *);
+	int32_t (*setup_link)(struct ixgbe_hw *);
+	int32_t (*setup_link_speed)(struct ixgbe_hw *, ixgbe_link_speed, int,
+	                        int);
+	int32_t (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, int *, int);
+	int32_t (*get_link_capabilities)(struct ixgbe_hw *, ixgbe_link_speed *,
+	                             int *);
 
 	/* LED */
-	s32 (*led_on)(struct ixgbe_hw *, u32);
-	s32 (*led_off)(struct ixgbe_hw *, u32);
-	s32 (*blink_led_start)(struct ixgbe_hw *, u32);
-	s32 (*blink_led_stop)(struct ixgbe_hw *, u32);
+	int32_t (*led_on)(struct ixgbe_hw *, uint32_t);
+	int32_t (*led_off)(struct ixgbe_hw *, uint32_t);
+	int32_t (*blink_led_start)(struct ixgbe_hw *, uint32_t);
+	int32_t (*blink_led_stop)(struct ixgbe_hw *, uint32_t);
 
 	/* RAR, Multicast, VLAN */
-	s32 (*set_rar)(struct ixgbe_hw *, u32, u8 *, u32, u32);
-	s32 (*set_vmdq)(struct ixgbe_hw *, u32, u32);
-	s32 (*init_rx_addrs)(struct ixgbe_hw *);
-	s32 (*update_uc_addr_list)(struct ixgbe_hw *, u8 *, u32,
+	int32_t (*set_rar)(struct ixgbe_hw *, uint32_t, uint8_t *, uint32_t, uint32_t);
+	int32_t (*set_vmdq)(struct ixgbe_hw *, uint32_t, uint32_t);
+	int32_t (*init_rx_addrs)(struct ixgbe_hw *);
+	int32_t (*update_uc_addr_list)(struct ixgbe_hw *, uint8_t *, uint32_t,
 	                           ixgbe_mc_addr_itr);
-	s32 (*update_mc_addr_list)(struct ixgbe_hw *, u8 *, u32,
+	int32_t (*update_mc_addr_list)(struct ixgbe_hw *, uint8_t *, uint32_t,
 	                           ixgbe_mc_addr_itr);
-	s32 (*enable_mc)(struct ixgbe_hw *);
-	s32 (*disable_mc)(struct ixgbe_hw *);
-	s32 (*clear_vfta)(struct ixgbe_hw *);
-	s32 (*set_vfta)(struct ixgbe_hw *, u32, u32, bool);
+	int32_t (*enable_mc)(struct ixgbe_hw *);
+	int32_t (*disable_mc)(struct ixgbe_hw *);
+	int32_t (*clear_vfta)(struct ixgbe_hw *);
+	int32_t (*set_vfta)(struct ixgbe_hw *, uint32_t, uint32_t, int);
 
 	/* Flow Control */
-	s32 (*setup_fc)(struct ixgbe_hw *, s32);
+	int32_t (*setup_fc)(struct ixgbe_hw *, int32_t);
 };
 
 struct ixgbe_phy_operations {
-	s32 (*identify)(struct ixgbe_hw *);
-	s32 (*reset)(struct ixgbe_hw *);
-	s32 (*read_reg)(struct ixgbe_hw *, u32, u32, u16 *);
-	s32 (*write_reg)(struct ixgbe_hw *, u32, u32, u16);
-	s32 (*setup_link)(struct ixgbe_hw *);
-	s32 (*setup_link_speed)(struct ixgbe_hw *, ixgbe_link_speed, bool,
-	                        bool);
-	s32 (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, bool *);
-	s32 (*get_firmware_version)(struct ixgbe_hw *, u16 *);
+	int32_t (*identify)(struct ixgbe_hw *);
+	int32_t (*reset)(struct ixgbe_hw *);
+	int32_t (*read_reg)(struct ixgbe_hw *, uint32_t, uint32_t, uint16_t *);
+	int32_t (*write_reg)(struct ixgbe_hw *, uint32_t, uint32_t, uint16_t);
+	int32_t (*setup_link)(struct ixgbe_hw *);
+	int32_t (*setup_link_speed)(struct ixgbe_hw *, ixgbe_link_speed, int,
+	                        int);
+	int32_t (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, int *);
+	int32_t (*get_firmware_version)(struct ixgbe_hw *, uint16_t *);
 };
 
 struct ixgbe_eeprom_info {
 	struct ixgbe_eeprom_operations  ops;
 	enum ixgbe_eeprom_type          type;
-	u16                             word_size;
-	u16                             address_bits;
+	uint16_t			word_size;
+	uint16_t			address_bits;
 };
 
 struct ixgbe_mac_info {
 	struct ixgbe_mac_operations     ops;
 	enum ixgbe_mac_type             type;
-	u8                              addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8                              perm_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	s32                             mc_filter_type;
-	u32                             mcft_size;
-	u32                             vft_size;
-	u32                             num_rar_entries;
-	u32                             max_tx_queues;
-	u32                             max_rx_queues;
-	u32                             link_attach_type;
-	u32                             link_mode_select;
-	bool                            link_settings_loaded;
-	bool                            autoneg;
-	bool                            autoneg_failed;
+	uint8_t                        addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	uint8_t                        perm_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	int32_t                         mc_filter_type;
+	uint32_t                       mcft_size;
+	uint32_t                       vft_size;
+	uint32_t                       num_rar_entries;
+	uint32_t                       max_tx_queues;
+	uint32_t                       max_rx_queues;
+	uint32_t                       link_attach_type;
+	uint32_t                       link_mode_select;
+	int                             link_settings_loaded;
+	int                             autoneg;
+	int                             autoneg_failed;
 };
 
 struct ixgbe_phy_info {
 	struct ixgbe_phy_operations     ops;
 	enum ixgbe_phy_type             type;
-	u32                             addr;
-	u32                             id;
-	u32                             revision;
+	uint32_t                       addr;
+	uint32_t                       id;
+	uint32_t                       revision;
 	enum ixgbe_media_type           media_type;
-	bool                            reset_disable;
+	int                             reset_disable;
 	ixgbe_autoneg_advertised        autoneg_advertised;
-	bool                            autoneg_wait_to_complete;
+	int                             autoneg_wait_to_complete;
 };
 
 struct ixgbe_hw {
-	u8                              *hw_addr;
+	uint8_t                        *hw_addr;
 	void                            *back;
 	struct ixgbe_mac_info           mac;
 	struct ixgbe_addr_filter_info   addr_ctrl;
@@ -1518,12 +1518,12 @@ struct ixgbe_hw {
 	struct ixgbe_phy_info           phy;
 	struct ixgbe_eeprom_info        eeprom;
 	struct ixgbe_bus_info           bus;
-	u16                             device_id;
-	u16                             vendor_id;
-	u16                             subsystem_device_id;
-	u16                             subsystem_vendor_id;
-	u8                              revision_id;
-	bool                            adapter_stopped;
+	uint16_t                       device_id;
+	uint16_t                       vendor_id;
+	uint16_t                       subsystem_device_id;
+	uint16_t                       subsystem_vendor_id;
+	uint8_t                        revision_id;
+	int                             adapter_stopped;
 };
 
 #define ixgbe_hw(hw, func, ...)						\

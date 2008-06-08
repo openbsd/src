@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.1 2008/06/08 20:01:02 reyk Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -42,7 +42,7 @@
  *
  *  Initialize the function pointers.
  **/
-s32 ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw)
 {
 	struct ixgbe_phy_info *phy = &hw->phy;
 
@@ -65,10 +65,10 @@ s32 ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw)
  *
  *  Determines the physical layer module found on the current adapter.
  **/
-s32 ixgbe_identify_phy_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_identify_phy_generic(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_ERR_PHY_ADDR_INVALID;
-	u32 phy_addr;
+	int32_t status = IXGBE_ERR_PHY_ADDR_INVALID;
+	uint32_t phy_addr;
 
 	if (hw->phy.type == ixgbe_phy_unknown) {
 		for (phy_addr = 0; phy_addr < IXGBE_MAX_PHY_ADDR; phy_addr++) {
@@ -93,10 +93,10 @@ s32 ixgbe_identify_phy_generic(struct ixgbe_hw *hw)
  *  @hw: pointer to hardware structure
  *
  **/
-bool ixgbe_validate_phy_addr(struct ixgbe_hw *hw, u32 phy_addr)
+int ixgbe_validate_phy_addr(struct ixgbe_hw *hw, uint32_t phy_addr)
 {
-	u16 phy_id = 0;
-	bool valid = FALSE;
+	uint16_t phy_id = 0;
+	int valid = FALSE;
 
 	hw->phy.addr = phy_addr;
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_HIGH,
@@ -113,23 +113,23 @@ bool ixgbe_validate_phy_addr(struct ixgbe_hw *hw, u32 phy_addr)
  *  @hw: pointer to hardware structure
  *
  **/
-s32 ixgbe_get_phy_id(struct ixgbe_hw *hw)
+int32_t ixgbe_get_phy_id(struct ixgbe_hw *hw)
 {
-	u32 status;
-	u16 phy_id_high = 0;
-	u16 phy_id_low = 0;
+	uint32_t status;
+	uint16_t phy_id_high = 0;
+	uint16_t phy_id_low = 0;
 
 	status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_HIGH,
 	                              IXGBE_MDIO_PMA_PMD_DEV_TYPE,
 	                              &phy_id_high);
 
 	if (status == IXGBE_SUCCESS) {
-		hw->phy.id = (u32)(phy_id_high << 16);
+		hw->phy.id = (uint32_t)(phy_id_high << 16);
 		status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_LOW,
 		                              IXGBE_MDIO_PMA_PMD_DEV_TYPE,
 		                              &phy_id_low);
-		hw->phy.id |= (u32)(phy_id_low & IXGBE_PHY_REVISION_MASK);
-		hw->phy.revision = (u32)(phy_id_low & ~IXGBE_PHY_REVISION_MASK);
+		hw->phy.id |= (uint32_t)(phy_id_low & IXGBE_PHY_REVISION_MASK);
+		hw->phy.revision = (uint32_t)(phy_id_low & ~IXGBE_PHY_REVISION_MASK);
 	}
 
 	return status;
@@ -140,7 +140,7 @@ s32 ixgbe_get_phy_id(struct ixgbe_hw *hw)
  *  @hw: pointer to hardware structure
  *
  **/
-enum ixgbe_phy_type ixgbe_get_phy_type_from_id(u32 phy_id)
+enum ixgbe_phy_type ixgbe_get_phy_type_from_id(uint32_t phy_id)
 {
 	enum ixgbe_phy_type phy_type;
 
@@ -167,7 +167,7 @@ enum ixgbe_phy_type ixgbe_get_phy_type_from_id(u32 phy_id)
  *  ixgbe_reset_phy_generic - Performs a PHY reset
  *  @hw: pointer to hardware structure
  **/
-s32 ixgbe_reset_phy_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_reset_phy_generic(struct ixgbe_hw *hw)
 {
 	/*
 	 * Perform soft PHY reset to the PHY_XS.
@@ -184,14 +184,14 @@ s32 ixgbe_reset_phy_generic(struct ixgbe_hw *hw)
  *  @reg_addr: 32 bit address of PHY register to read
  *  @phy_data: Pointer to read data from PHY register
  **/
-s32 ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
-                               u32 device_type, u16 *phy_data)
+int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
+                               uint32_t device_type, uint16_t *phy_data)
 {
-	u32 command;
-	u32 i;
-	u32 data;
-	s32 status = IXGBE_SUCCESS;
-	u16 gssr;
+	uint32_t command;
+	uint32_t i;
+	uint32_t data;
+	int32_t status = IXGBE_SUCCESS;
+	uint16_t gssr;
 
 	if (IXGBE_READ_REG(hw, IXGBE_STATUS) & IXGBE_STATUS_LAN_ID_1)
 		gssr = IXGBE_GSSR_PHY1_SM;
@@ -266,7 +266,7 @@ s32 ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
 				 */
 				data = IXGBE_READ_REG(hw, IXGBE_MSRWD);
 				data >>= IXGBE_MSRWD_READ_DATA_SHIFT;
-				*phy_data = (u16)(data);
+				*phy_data = (uint16_t)(data);
 			}
 		}
 
@@ -283,13 +283,13 @@ s32 ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
  *  @device_type: 5 bit device type
  *  @phy_data: Data to write to the PHY register
  **/
-s32 ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
-                                u32 device_type, u16 phy_data)
+int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
+                                uint32_t device_type, uint16_t phy_data)
 {
-	u32 command;
-	u32 i;
-	s32 status = IXGBE_SUCCESS;
-	u16 gssr;
+	uint32_t command;
+	uint32_t i;
+	int32_t status = IXGBE_SUCCESS;
+	uint16_t gssr;
 
 	if (IXGBE_READ_REG(hw, IXGBE_STATUS) & IXGBE_STATUS_LAN_ID_1)
 		gssr = IXGBE_GSSR_PHY1_SM;
@@ -301,7 +301,7 @@ s32 ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
 
 	if (status == IXGBE_SUCCESS) {
 		/* Put the data in the MDI single read and write data register*/
-		IXGBE_WRITE_REG(hw, IXGBE_MSRWD, (u32)phy_data);
+		IXGBE_WRITE_REG(hw, IXGBE_MSRWD, (uint32_t)phy_data);
 
 		/* Setup and write the address cycle command */
 		command = ((reg_addr << IXGBE_MSCA_NP_ADDR_SHIFT)  |
@@ -374,12 +374,12 @@ s32 ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, u32 reg_addr,
  *
  *  Restart autonegotiation and PHY and waits for completion.
  **/
-s32 ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 {
-	s32 status = IXGBE_NOT_IMPLEMENTED;
-	u32 time_out;
-	u32 max_time_out = 10;
-	u16 autoneg_reg = IXGBE_MII_AUTONEG_REG;
+	int32_t status = IXGBE_NOT_IMPLEMENTED;
+	uint32_t time_out;
+	uint32_t max_time_out = 10;
+	uint16_t autoneg_reg = IXGBE_MII_AUTONEG_REG;
 
 	/*
 	 * Set advertisement settings in PHY based on autoneg_advertised
@@ -434,10 +434,10 @@ s32 ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
  *  @speed: new link speed
  *  @autoneg: TRUE if autonegotiation enabled
  **/
-s32 ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
+int32_t ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
                                        ixgbe_link_speed speed,
-                                       bool autoneg,
-                                       bool autoneg_wait_to_complete)
+                                       int autoneg,
+                                       int autoneg_wait_to_complete)
 {
 	UNREFERENCED_PARAMETER(autoneg);
 	UNREFERENCED_PARAMETER(autoneg_wait_to_complete);
@@ -468,15 +468,15 @@ s32 ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
  *  Reads the VS1 register to determine if link is up and the current speed for
  *  the PHY.
  **/
-s32 ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
-                             bool *link_up)
+int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
+                             int *link_up)
 {
-	s32 status = IXGBE_SUCCESS;
-	u32 time_out;
-	u32 max_time_out = 10;
-	u16 phy_link = 0;
-	u16 phy_speed = 0;
-	u16 phy_data = 0;
+	int32_t status = IXGBE_SUCCESS;
+	uint32_t time_out;
+	uint32_t max_time_out = 10;
+	uint16_t phy_link = 0;
+	uint16_t phy_speed = 0;
+	uint16_t phy_data = 0;
 
 	/* Initialize speed and link to default case */
 	*link_up = FALSE;
@@ -514,10 +514,10 @@ s32 ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
  *  @hw: pointer to hardware structure
  *  @firmware_version: pointer to the PHY Firmware Version
  **/
-s32 ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
-                                       u16 *firmware_version)
+int32_t ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
+                                       uint16_t *firmware_version)
 {
-	s32 status = IXGBE_SUCCESS;
+	int32_t status = IXGBE_SUCCESS;
 
 	status = hw->phy.ops.read_reg(hw, TNX_FW_REV,
 	                              IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
@@ -530,14 +530,14 @@ s32 ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
  *  ixgbe_reset_phy_nl - Performs a PHY reset
  *  @hw: pointer to hardware structure
  **/
-s32 ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
+int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 {
-	u16 phy_offset, control, eword, edata, list_crc, block_crc, id, sfp_id;
-	bool end_data = FALSE;
-	u16 list_offset, data_offset;
-	u16 phy_data = 0;
-	s32 ret_val = IXGBE_SUCCESS;
-	u32 i;
+	uint16_t phy_offset, control, eword, edata, list_crc, block_crc, id, sfp_id;
+	int end_data = FALSE;
+	uint16_t list_offset, data_offset;
+	uint16_t phy_data = 0;
+	int32_t ret_val = IXGBE_SUCCESS;
+	uint32_t i;
 
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
 	                     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.1 2008/06/08 20:01:02 reyk Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.2 2008/06/08 20:33:51 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -123,8 +123,8 @@
 #else
 #define IXGBE_TSO_SIZE			IXGBE_MAX_FRAME_SIZE
 #endif
-#define IXGBE_TX_BUFFER_SIZE		((u32) 1514)
-#define IXGBE_RX_HDR_SIZE		((u32) 256)
+#define IXGBE_TX_BUFFER_SIZE		((uint32_t) 1514)
+#define IXGBE_RX_HDR_SIZE		((uint32_t) 256)
 #define CSUM_OFFLOAD			7	/* Bits in csum flags */
 
 /* The number of MSIX messages the 82598 supports */
@@ -158,9 +158,9 @@ struct ixgbe_tx_buf {
 
 struct ixgbe_rx_buf {
 	struct mbuf	*m_head;
-	boolean_t	bigbuf;
+	int		 bigbuf;
 	/* one small and one large map */
-	bus_dmamap_t	map[2];
+	bus_dmamap_t	 map[2];
 };
 
 /*
@@ -181,25 +181,25 @@ struct ixgbe_dma_alloc {
 struct tx_ring {
         struct ix_softc		*sc;
 	struct mutex		tx_mtx;
-	u32			me;
-	u32			msix;
-	u32			eims;
-	u32			watchdog_timer;
+	uint32_t		me;
+	uint32_t		msix;
+	uint32_t		eims;
+	uint32_t		watchdog_timer;
 	union ixgbe_adv_tx_desc	*tx_base;
-	u_int32_t		*tx_hwb;
+	uint32_t		*tx_hwb;
 	struct ixgbe_dma_alloc	txdma;
 	struct ixgbe_dma_alloc	txwbdma;
-	u32			next_avail_tx_desc;
-	u32			next_tx_to_clean;
+	uint32_t		next_avail_tx_desc;
+	uint32_t		next_tx_to_clean;
 	struct ixgbe_tx_buf	*tx_buffers;
-	volatile u16		tx_avail;
-	u32			txd_cmd;
+	volatile uint16_t	tx_avail;
+	uint32_t		txd_cmd;
 	bus_dma_tag_t		txtag;
 	/* Soft Stats */
-	u32			no_tx_desc_avail;
-	u32			no_tx_desc_late;
-	u64			tx_irq;
-	u64			tx_packets;
+	uint32_t		no_tx_desc_avail;
+	uint32_t		no_tx_desc_late;
+	uint64_t		tx_irq;
+	uint64_t		tx_packets;
 };
 
 
@@ -209,10 +209,10 @@ struct tx_ring {
 struct rx_ring {
         struct ix_softc		*sc;
 	struct mutex		rx_mtx;
-	u32			me;
-	u32			msix;
-	u32			eims;
-	u32			payload;
+	uint32_t		me;
+	uint32_t		msix;
+	uint32_t		eims;
+	uint32_t		payload;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
 #if 0
@@ -226,9 +226,9 @@ struct rx_ring {
 	struct mbuf		*fmp;
 	struct mbuf		*lmp;
 	/* Soft stats */
-	u64			rx_irq;
-	u64			packet_count;
-	u64 			byte_count;
+	uint64_t		rx_irq;
+	uint64_t		packet_count;
+	uint64_t 		byte_count;
 };
 
 /* Our adapter structure */
@@ -252,7 +252,7 @@ struct ix_softc {
 	void		*tag[IXGBE_MSGS];
 	struct resource *res[IXGBE_MSGS];
 	int		rid[IXGBE_MSGS];
-	u32		eims_mask;
+	uint32_t	eims_mask;
 
 	struct ifmedia	media;
 	struct timeout	timer;
@@ -265,17 +265,17 @@ struct ix_softc {
 	workq_fn	link_task;
 
 	/* Info about the board itself */
-	u32		part_num;
-	bool		link_active;
-	u16		max_frame_size;
-	u32		link_speed;
-	u32		tx_int_delay;
-	u32		tx_abs_int_delay;
-	u32		rx_int_delay;
-	u32		rx_abs_int_delay;
+	uint32_t	part_num;
+	int		link_active;
+	uint16_t	max_frame_size;
+	uint32_t	link_speed;
+	uint32_t	tx_int_delay;
+	uint32_t	tx_abs_int_delay;
+	uint32_t	rx_int_delay;
+	uint32_t	rx_abs_int_delay;
 
 	/* Indicates the cluster size to use */
-	bool		bigbufs;
+	int		bigbufs;
 
 	/*
 	 * Transmit rings:
@@ -292,8 +292,8 @@ struct ix_softc {
 	struct rx_ring	*rx_rings;
 	int		num_rx_desc;
 	int		num_rx_queues;
-	u32		rx_process_limit;
-	u_int		optics;
+	uint32_t	rx_process_limit;
+	uint		optics;
 
 	/* Misc stats maintained by the driver */
 	unsigned long   dropped_pkts;
