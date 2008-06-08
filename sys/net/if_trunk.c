@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.42 2008/05/07 13:45:35 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.43 2008/06/08 17:25:46 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -913,7 +913,7 @@ trunk_start(struct ifnet *ifp)
 		if (tr->tr_proto != TRUNK_PROTO_NONE)
 			error = (*tr->tr_start)(tr, m);
 		else
-			m_free(m);
+			m_freem(m);
 
 		if (error == 0)
 			ifp->if_opackets++;
