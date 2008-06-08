@@ -1,0 +1,69 @@
+.\" $OpenBSD: ix.4,v 1.1 2008/06/08 20:50:46 reyk Exp $
+.\"
+.\" Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 8 2008 $
+.Dt IX 4
+.Os
+.Sh NAME
+.Nm ix
+.Nd Intel 82598 PCI Express 10Gb Ethernet device
+.Sh SYNOPSIS
+.Cd "ix* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for PCI Express 10Gb Ethernet adapters based
+on the Intel 82598EB Ethernet controller chips, including the
+following:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Intel 82598AF 10GbE Adapter (10GbaseSR)
+.It
+Intel 82598AF Dual Port 10GbE Adapter (10GbaseSR)
+.It
+Intel 82598EB 10GbE Adapter (10GbaseCX4)
+.It
+Intel 82598EB Dual Port 10GbE Adapter (10GbaseCX4)
+.It
+Intel 82598EB XF 10GbE Adapter (10GbaseLR)
+.It
+Intel 82598AT 10GbE Adapter
+.It
+Intel 82598AT Dual Port 10GbE Adapter
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Intel Corporation
+and ported to OpenBSD by
+.An Reyk Floeter Aq reyk@openbsd.org .
+
