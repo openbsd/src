@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.59 2008/06/06 10:16:52 av Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.60 2008/06/08 21:40:58 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -235,6 +235,7 @@ main(int argc, char **argv)
 	u_int blklen;
 	u_int ntracks = 0;
 	char type;
+	int cap;
 
 	cdname = getenv("DISC");
 	if (!cdname)
@@ -322,6 +323,12 @@ main(int argc, char **argv)
 		}
 		if (!open_cd(cdname, 1))
 			exit(1);
+
+		if (get_media_capabilities(&cap) == -1)
+			errx(1, "Can't determine media type");
+		if ((cap & MEDIACAP_TAO) == 0)
+			errx(1, "The media can't be written in TAO mode");
+
 		get_disc_size(&availblk);
 		SLIST_FOREACH(tr, &tracks, track_list) {
 			needblk += tr->sz/tr->blklen;
@@ -378,7 +385,7 @@ main(int argc, char **argv)
 int
 run(int cmd, char *arg)
 {
-	int l, r, rc;
+	int l, r, rc, cap;
 	static char newcdname[MAXPATHLEN];
 
 	switch (cmd) {
@@ -575,6 +582,15 @@ run(int cmd, char *arg)
 	case CMD_BLANK:
 		if (!open_cd(cdname, 1))
 			return 0;
+
+		if (get_media_capabilities(&cap) == -1) {
+			warnx("Can't determine media type");
+			return (0);
+		}
+		if ((cap & MEDIACAP_CDRW_WRITE) == 0) {
+			warnx("The media doesn't support blanking");
+			return (0);
+		}
 
 		return blank();
 	case CMD_CDRIP:
