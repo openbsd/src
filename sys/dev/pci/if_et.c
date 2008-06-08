@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.9 2008/05/26 03:56:38 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.10 2008/06/08 05:53:30 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -170,7 +170,7 @@ const struct pci_matchid et_devices[] = {
 };
 
 struct cfattach et_ca = {
-	sizeof (struct et_softc), et_match, et_attach
+	sizeof (struct et_softc), et_match, et_attach, et_detach
 };
 
 struct cfdriver et_cd = {
@@ -301,8 +301,16 @@ et_detach(struct device *self, int flags)
 	et_stop(sc);
 	splx(s);
 
+	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
+
 	ether_ifdetach(ifp);
+	if_detach(ifp);
 	et_dma_free(sc);
+
+	pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
 
 	return 0;
 }
@@ -945,9 +953,11 @@ et_intr(void *xsc)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (0);
 
-	et_disable_intrs(sc);
-
 	intrs = CSR_READ_4(sc, ET_INTR_STATUS);
+	if (intrs == 0 || intrs == 0xffffffff)
+		return (0);
+
+	et_disable_intrs(sc);
 	intrs &= ET_INTRS;
 	if (intrs == 0)	/* Not interested */
 		goto back;
