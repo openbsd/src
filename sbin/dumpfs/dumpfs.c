@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.24 2008/01/22 09:01:44 otto Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.25 2008/06/08 03:00:20 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.24 2008/01/22 09:01:44 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.25 2008/06/08 03:00:20 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -441,7 +441,7 @@ marshal(const char *name)
 		break;
 	}
 	/* -S unimplemented */
-	printf("-s %jd ", (intmax_t)afs.fs_size);
+	printf("-s %jd ", (intmax_t)afs.fs_size * (afs.fs_fsize / DEV_BSIZE));
 	printf("%s ", name);
 	printf("\n");
 
