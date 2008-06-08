@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.29 2008/04/22 18:31:12 blambert Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.30 2008/06/08 18:23:03 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ struct nfsd_srvargs {
 	u_char		*nsd_verfstr;
 	struct timeval	nsd_timestamp;	/* timestamp from verifier */
 	u_int32_t	nsd_ttl;	/* credential ttl (sec) */
-	NFSKERBKEY_T	nsd_key;	/* Session key */
 };
 
 struct nfsd_cargs {
@@ -164,7 +163,6 @@ struct nfsd_cargs {
 	u_char		*ncd_authstr;	/* Authenticator string */
 	u_int		ncd_verflen;	/* and the verifier */
 	u_char		*ncd_verfstr;
-	NFSKERBKEY_T	ncd_key;	/* Session key */
 };
 
 /*
@@ -331,7 +329,6 @@ struct nfsuid {
 	int		nu_expire;	/* Expiry time (sec) */
 	struct timeval	nu_timestamp;	/* Kerb. timestamp */
 	u_int32_t	nu_nickname;	/* Nickname on server */
-	NFSKERBKEY_T	nu_key;		/* and session key */
 };
 
 #define	nu_inetaddr	nu_haddr.had_inetaddr

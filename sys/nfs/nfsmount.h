@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.14 2007/06/13 18:05:27 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.15 2008/06/08 18:23:03 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ struct	nfsmount {
 	char	*nm_verfstr;		/* and the verifier */
 	int	nm_verflen;
 	u_char	nm_verf[NFSX_V3WRITEVERF]; /* V3 write verifier */
-	NFSKERBKEY_T nm_key;		/* and the session key */
 	int	nm_numuids;		/* Number of nfsuid mappings */
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
 	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];

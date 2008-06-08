@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcv2.h,v 1.6 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: rpcv2.h,v 1.7 2008/06/08 18:23:03 thib Exp $	*/
 /*	$NetBSD: rpcv2.h,v 1.8 1996/02/18 11:54:11 fvdl Exp $	*/
 
 /*
@@ -98,45 +98,5 @@
 #define	RPCMNT_NAMELEN	255
 #define	RPCMNT_PATHLEN	1024
 #define	RPCPROG_NFS	100003
- 
-/* Structs for common parts of the rpc's */
-struct rpcv2_time {
-	u_int32_t rpc_sec;
-	u_int32_t rpc_usec;
-};
 
-/*
- * Structures used for RPCAUTH_KERB4.
- */
-struct nfsrpc_fullverf {
-	u_int32_t t1;
-	u_int32_t t2;
-	u_int32_t w2;
-};
-
-struct nfsrpc_fullblock {
-	u_int32_t t1;
-	u_int32_t t2;
-	u_int32_t w1;
-	u_int32_t w2;
-};
-
-struct nfsrpc_nickverf {
-	u_int32_t kind;
-	struct nfsrpc_fullverf	verf;
-};
-
-/*
- * and their sizes in bytes.. If sizeof (struct nfsrpc_xx) != these
- * constants, well then things will break in mount_nfs and nfsd.
- */
-#define RPCX_FULLVERF	12
-#define RPCX_FULLBLOCK	16
-#define RPCX_NICKVERF	16
-
-typedef u_char			NFSKERBKEY_T[2];
-typedef u_char			NFSKERBKEYSCHED_T[2];
-#define NFS_KERBTTL	(30 * 60)	/* Credential ttl (sec) */
-#define NFS_KERBCLOCKSKEW (5 * 60)	/* Clock skew (sec) */
-#define NFS_KERBW1(t)	(*((u_long *)(&((t).dat[((t).length + 3) & ~0x3]))))
-#endif
+#endif	/* _NFS_RPCV2_H_ */
