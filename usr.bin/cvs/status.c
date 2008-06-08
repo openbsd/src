@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.83 2008/02/13 17:05:13 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.84 2008/06/08 16:17:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -230,7 +230,7 @@ cvs_status_local(struct cvs_file *cf)
 			cvs_printf("   Sticky Options:\t(none)\n");
 	}
 
-	if (show_sym == 1) {
+	if (cf->file_status != FILE_UNKNOWN && show_sym == 1) {
 		cvs_printf("\n");
 		cvs_printf("   Existing Tags:\n");
 
