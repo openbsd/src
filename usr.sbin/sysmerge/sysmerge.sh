@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.8 2008/06/01 15:07:00 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.9 2008/06/08 21:51:25 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -77,7 +77,8 @@ do_pre() {
 
 
 do_populate() {
-	echo "===> Creating and populating temporary root under ${TEMPROOT}"
+	echo "===> Creating and populating temporary root under"
+	echo "     ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
 	if [ "${SRCDIR}" ]; then
 		cd ${SRCDIR}/etc
@@ -402,9 +403,10 @@ do_post() {
 			find "${TEMPROOT}" -type f -size +0 -exec echo "     {}" \;
 		fi
 		if [ "${FILES_IN_BKPDIR}" ]; then
-			echo "===> Backup of replaced file(s) can be found under ${BKPDIR}"
+			echo "===> Backup of replaced file(s) can be found under"
+			echo "     ${BKPDIR}"
 		fi
-		echo "===> When done, ${WRKDIR} and its sub-directories should be removed"
+		echo "===> When done, ${WRKDIR} and its subdirectories should be removed"
 	else
 		echo "===> Removing ${WRKDIR}"
 		rm -rf "${WRKDIR}"
