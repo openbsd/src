@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.25 2008/04/22 05:04:07 jmc Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.26 2008/06/08 21:08:57 rainer Exp $
 .\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2008 $
+.Dd $Mdocdate: June 8 2008 $
 .Dt RTADVD 8
 .Os
 .Sh NAME
@@ -133,8 +133,7 @@ Only statically configured prefixes, if any, will be advertised.
 Upon receipt of signal
 .Dv SIGUSR1 ,
 .Nm
-will dump the current internal state into
-.Pa /var/run/rtadvd.dump .
+will dump the current internal state into syslog.
 .Pp
 Use
 .Dv SIGTERM
@@ -149,16 +148,12 @@ to all the interfaces
 .Pp
 .Ex -std rtadvd
 .Sh FILES
-.Bl -tag -width "/var/run/rtadvd.dumpXX" -compact
+.Bl -tag -width "/var/run/rtadvd.pidXX" -compact
 .It Pa /etc/rtadvd.conf
 The default configuration file.
 .It Pa /var/run/rtadvd.pid
 Contains the PID of the currently running
 .Nm .
-.It Pa /var/run/rtadvd.dump
-The file in which
-.Nm
-dumps its internal state.
 .El
 .Sh SEE ALSO
 .Xr rtadvd.conf 5 ,

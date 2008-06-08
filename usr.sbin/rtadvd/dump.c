@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.8 2008/04/23 10:17:50 pyr Exp $	*/
+/*	$OpenBSD: dump.c,v 1.9 2008/06/08 21:08:57 rainer Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
@@ -54,15 +55,12 @@
 #include "rtadvd.h"
 #include "timer.h"
 #include "if.h"
-#include "dump.h"
 #include "log.h"
-
-static FILE *fp;
+#include "dump.h"
 
 extern struct ralist ralist;
 
 static char *ether_str(struct sockaddr_dl *);
-static void if_dump(void);
 
 static char *rtpref_str[] = {
 	"medium",		/* 00 */
@@ -88,130 +86,132 @@ ether_str(sdl)
 	return(hbuf);
 }
 
-static void
-if_dump()
+char*
+lifetime(int lt)
+{
+	char *str;
+
+	if (lt == ND6_INFINITE_LIFETIME)
+		asprintf(&str, "infinity");
+	else
+		asprintf(&str, "%ld", (long)lt);
+	return str;
+}
+
+void
+rtadvd_dump()
 {
 	struct rainfo *rai;
 	struct prefix *pfx;
 	char prefixbuf[INET6_ADDRSTRLEN];
 	int first;
 	struct timeval now;
+	char *origin, *vltime, *pltime, *flags;
+	char *vltimexpire=NULL, *pltimexpire=NULL;
 
 	gettimeofday(&now, NULL); /* XXX: unused in most cases */
 	SLIST_FOREACH(rai, &ralist, entry) {
-		fprintf(fp, "%s:\n", rai->ifname);
+		log_info("%s:", rai->ifname);
 
-		fprintf(fp, "  Status: %s\n",
-			(iflist[rai->ifindex]->ifm_flags & IFF_UP) ? "UP" :
-			"DOWN");
+		log_info("  Status: %s",
+		    (iflist[rai->ifindex]->ifm_flags & IFF_UP) ? "UP" : "DOWN");
 
 		/* control information */
 		if (rai->lastsent.tv_sec) {
 			/* note that ctime() appends CR by itself */
-			fprintf(fp, "  Last RA sent: %s",
-				ctime((time_t *)&rai->lastsent.tv_sec));
+			log_info("  Last RA sent: %s",
+			    ctime((time_t *)&rai->lastsent.tv_sec));
+
 		}
 		if (rai->timer) {
-			fprintf(fp, "  Next RA will be sent: %s",
-				ctime((time_t *)&rai->timer->tm.tv_sec));
+			log_info("  Next RA will be sent: %s",
+			    ctime((time_t *)&rai->timer->tm.tv_sec));
+
 		}
 		else
-			fprintf(fp, "  RA timer is stopped");
-		fprintf(fp, "  waits: %d, initcount: %d\n",
+			log_info("  RA timer is stopped");
+		log_info("  waits: %d, initcount: %d",
+
 			rai->waiting, rai->initcounter);
 
 		/* statistics */
-		fprintf(fp, "  statistics: RA(out/in/inconsistent): "
-		    "%llu/%llu/%llu, ",
+		log_info("  statistics: RA(out/in/inconsistent): "
+		    "%llu/%llu/%llu, RS(input): %llu",
 		    (unsigned long long)rai->raoutput,
 		    (unsigned long long)rai->rainput,
-		    (unsigned long long)rai->rainconsistent);
-		fprintf(fp, "RS(input): %llu\n",
+		    (unsigned long long)rai->rainconsistent,
 		    (unsigned long long)rai->rsinput);
 
 		/* interface information */
 		if (rai->advlinkopt)
-			fprintf(fp, "  Link-layer address: %s\n",
+			log_info("  Link-layer address: %s",
 			    ether_str(rai->sdl));
-		fprintf(fp, "  MTU: %d\n", rai->phymtu);
+		log_info("  MTU: %d", rai->phymtu);
 
 		/* Router configuration variables */
-		fprintf(fp, "  DefaultLifetime: %d, MaxAdvInterval: %d, "
-		    "MinAdvInterval: %d\n", rai->lifetime, rai->maxinterval,
-		    rai->mininterval);
-		fprintf(fp, "  Flags: %s%s%s, ",
+		log_info("  DefaultLifetime: %d, MaxAdvInterval: %d, "
+		    "MinAdvInterval: %d"
+		    "Flags: %s%s, Preference: %s, MTU: %d",
+		    rai->lifetime, rai->maxinterval, rai->mininterval,
 		    rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
-		    "");
-		fprintf(fp, "Preference: %s, ",
-			rtpref_str[(rai->rtpref >> 3) & 0xff]);
-		fprintf(fp, "MTU: %d\n", rai->linkmtu);
-		fprintf(fp, "  ReachableTime: %d, RetransTimer: %d, "
-			"CurHopLimit: %d\n", rai->reachabletime,
-			rai->retranstimer, rai->hoplimit);
+		    rtpref_str[(rai->rtpref >> 3) & 0xff], rai->linkmtu);
+		log_info("  ReachableTime: %d, RetransTimer: %d, "
+		    "CurHopLimit: %d", rai->reachabletime,
+		    rai->retranstimer, rai->hoplimit);
 		if (rai->clockskew)
-			fprintf(fp, "  Clock skew: %ldsec\n",
+			log_info("  Clock skew: %ldsec",
 			    rai->clockskew);
 		first = 1;
 		TAILQ_FOREACH(pfx, &rai->prefixes, entry) {
 			if (first) {
-				fprintf(fp, "  Prefixes:\n");
+				log_info("  Prefixes:");
 				first = 0;
 			}
-			fprintf(fp, "    %s/%d(",
-			    inet_ntop(AF_INET6, &pfx->prefix, prefixbuf,
-			    sizeof(prefixbuf)), pfx->prefixlen);
 			switch (pfx->origin) {
 			case PREFIX_FROM_KERNEL:
-				fprintf(fp, "KERNEL, ");
+				origin = "KERNEL";
 				break;
 			case PREFIX_FROM_CONFIG:
-				fprintf(fp, "CONFIG, ");
+				origin = "CONFIG";
 				break;
 			case PREFIX_FROM_DYNAMIC:
-				fprintf(fp, "DYNAMIC, ");
+				origin = "DYNAMIC";
 				break;
+			default:
+				origin = "";
 			}
-			if (pfx->validlifetime == ND6_INFINITE_LIFETIME)
-				fprintf(fp, "vltime: infinity");
-			else
-				fprintf(fp, "vltime: %ld",
-					(long)pfx->validlifetime);
 			if (pfx->vltimeexpire != 0)
-				fprintf(fp, "(decr,expire %ld), ", (long)
-					pfx->vltimeexpire > now.tv_sec ?
-					pfx->vltimeexpire - now.tv_sec : 0);
-			else
-				fprintf(fp, ", ");
-			if (pfx->preflifetime ==  ND6_INFINITE_LIFETIME)
-				fprintf(fp, "pltime: infinity");
-			else
-				fprintf(fp, "pltime: %ld",
-					(long)pfx->preflifetime);
+				asprintf(&vltimexpire, "(decr,expire %ld)", (long)
+				    pfx->vltimeexpire > now.tv_sec ?
+				    pfx->vltimeexpire - now.tv_sec : 0);
 			if (pfx->pltimeexpire != 0)
-				fprintf(fp, "(decr,expire %ld), ", (long)
-					pfx->pltimeexpire > now.tv_sec ?
-					pfx->pltimeexpire - now.tv_sec : 0);
-			else
-				fprintf(fp, ", ");
-			fprintf(fp, "flags: %s%s%s",
-				pfx->onlinkflg ? "L" : "",
-				pfx->autoconfflg ? "A" : "",
-				"");
-			fprintf(fp, ")\n");
+				asprintf(&pltimexpire, "(decr,expire %ld)", (long)
+				    pfx->pltimeexpire > now.tv_sec ?
+				    pfx->pltimeexpire - now.tv_sec : 0);
+
+			vltime = lifetime(pfx->validlifetime);
+			pltime = lifetime(pfx->preflifetime);
+			asprintf(&flags, "%s%s",
+			    pfx->onlinkflg ? "L" : "",
+			    pfx->autoconfflg ? "A" : "");
+			log_info("    %s/%d(%s, vltime: %s%s, "
+			    "pltime: %s%s, flags: %s)",
+			    inet_ntop(AF_INET6, &pfx->prefix, prefixbuf,
+			    sizeof(prefixbuf)), pfx->prefixlen, origin,
+			    vltime, (vltimexpire)? vltimexpire : "",
+			    pltime, (pltimexpire)? pltimexpire : "", flags);
+
+			if (vltimexpire) {
+				free(vltimexpire);
+				vltimexpire = NULL;
+			}
+			if (pltimexpire) {
+				free(pltimexpire);
+				pltimexpire = NULL;
+			}
+			free(vltime);
+			free(pltime);
+			free(flags);
 		}
 	}
-}
-
-void
-rtadvd_dump_file(dumpfile)
-	char *dumpfile;
-{
-	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		log_warn("open a dump file(%s)", dumpfile);
-		return;
-	}
-
-	if_dump();
-
-	fclose(fp);
 }

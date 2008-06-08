@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.2 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: dump.h,v 1.3 2008/06/08 21:08:57 rainer Exp $	*/
 /*	$KAME: dump.h,v 1.1 2000/05/23 11:31:26 itojun Exp $	*/
 
 /*
@@ -30,4 +30,4 @@
  * SUCH DAMAGE.
  */
 
-extern void rtadvd_dump_file(char *);
+void rtadvd_dump();

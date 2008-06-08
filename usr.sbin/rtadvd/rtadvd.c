@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.34 2008/05/02 04:28:51 pyr Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.35 2008/06/08 21:08:57 rainer Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ struct iovec sndiov[2];
 struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 struct in6_addr in6a_site_allrouters;
-static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurable */
 static char *mcastif;
 int sock;
 int rtsock = -1;
@@ -142,7 +141,7 @@ static int nd6_options(struct nd_opt_hdr *, int,
 static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
 static void rtmsg_input(void);
-static void rtadvd_set_dump_file(int);
+static void rtadvd_set_dump(int);
 
 int
 main(argc, argv)
@@ -243,14 +242,14 @@ main(argc, argv)
 		FD_SET(rtsock, fdsetp);
 
 	signal(SIGTERM, set_die);
-	signal(SIGUSR1, rtadvd_set_dump_file);
+	signal(SIGUSR1, rtadvd_set_dump);
 
 	while (1) {
 		memcpy(selectfdp, fdsetp, fdmasks); /* reinitialize */
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
-			rtadvd_dump_file(dumpfilename);
+			rtadvd_dump();
 		}
 
 		if (do_die) {
@@ -287,7 +286,7 @@ main(argc, argv)
 }
 
 static void
-rtadvd_set_dump_file(int signo)
+rtadvd_set_dump(int signo)
 {
 	do_dump = 1;
 }
