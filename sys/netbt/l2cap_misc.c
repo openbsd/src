@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.3 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.4 2008/06/08 21:10:28 claudio Exp $	*/
 /*	$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
@@ -168,9 +168,9 @@ l2cap_request_free(struct l2cap_req *req)
 {
 	struct hci_link *link = req->lr_link;
 
-	timeout_del(&req->lr_rtx);
 	if (timeout_triggered(&req->lr_rtx))
 		return;
+	timeout_del(&req->lr_rtx);
 
 	TAILQ_REMOVE(&link->hl_reqs, req, lr_next);
 	pool_put(&l2cap_req_pool, req);
@@ -193,9 +193,9 @@ l2cap_rtx(void *arg)
 	s = splsoftnet();
 
 	chan = req->lr_chan;
-	l2cap_request_free(req);
-
 	DPRINTF("cid %d, ident %d\n", (chan ? chan->lc_lcid : 0), req->lr_id);
+
+	l2cap_request_free(req);
 
 	if (chan && chan->lc_state != L2CAP_CLOSED)
 		l2cap_close(chan, ETIMEDOUT);
