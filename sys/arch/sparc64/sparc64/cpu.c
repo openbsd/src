@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2008/05/24 20:02:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.40 2008/06/08 02:21:34 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -109,9 +109,11 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
 
-	portid = getpropint(ma->ma_node, "portid", -1);
+	portid = getpropint(ma->ma_node, "upa-portid", -1);
 	if (portid == -1)
-		portid = getpropint(ma->ma_node, "upa-portid", -1);
+		portid = getpropint(ma->ma_node, "portid", -1);
+	if (portid == -1)
+		portid = getpropint(ma->ma_node, "cpuid", -1);
 	if (portid == -1 && ma->ma_nreg > 0)
 		portid = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 	if (portid == -1)
