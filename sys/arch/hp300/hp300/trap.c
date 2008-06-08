@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2008/06/08 20:57:16 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -307,7 +307,8 @@ dopanic:
 			printf("trap during panic!\n");
 #ifdef DEBUG
 			/* XXX should be a machine-dependent hook */
-			printf("(press a key)\n"); (void)cngetc();
+			printf("(press a key)\n");
+			cnpollc(1); (void)cngetc(); cnpollc(0);
 #endif
 		}
 		regdump(&(frame.F_t), 128);

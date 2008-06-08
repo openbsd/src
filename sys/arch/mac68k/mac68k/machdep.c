@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.144 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.145 2008/06/08 20:57:18 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -598,7 +598,9 @@ haltsys:
 		}
 		printf("\nThe operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		(void)cngetc();
+		cnpollc(0);
 	}
 
 	/* Map the last physical page VA = PA for doboot() */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2008/06/08 20:57:18 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -231,7 +231,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");

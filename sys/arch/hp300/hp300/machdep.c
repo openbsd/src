@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2008/06/08 20:57:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -692,7 +692,9 @@ haltsys:
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
 		printf("System halted.  Hit any key to reboot.\n\n");
+		cnpollc(1);
 		while (cngetc() == 0);
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");

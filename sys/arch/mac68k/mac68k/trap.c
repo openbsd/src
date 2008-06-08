@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2008/06/08 20:57:19 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -267,7 +267,8 @@ kgdb_cont:
 			printf("trap during panic!\n");
 #ifdef DEBUG
 			/* XXX should be a machine-dependent hook */
-			printf("(press a key)\n"); (void)cngetc();
+			printf("(press a key)\n");
+			cnpollc(1); (void)cngetc(); cnpollc(0);
 #endif
 		}
 		regdump(&(frame.F_t), 128);

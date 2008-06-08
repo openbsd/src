@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.429 2008/05/30 23:10:16 fgsch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.430 2008/06/08 20:57:18 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3044,7 +3044,9 @@ init386(paddr_t first_avail)
 	if (physmem < atop(4 * 1024 * 1024)) {
 		printf("\awarning: too little memory available;"
 		    "running in degraded mode\npress a key to confirm\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 #ifdef DEBUG

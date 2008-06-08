@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.147 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.148 2008/06/08 20:57:19 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6594,7 +6594,9 @@ debug_pagetables()
 	printf("Testing kernel region 0x%x: ", VA_VREG(VM_MIN_KERNEL_ADDRESS));
 	test_region(VA_VREG(VM_MIN_KERNEL_ADDRESS), 4096, avail_start);
 #endif
+	cnpollc(1);
 	cngetc();
+	cnpollc(0);
 
 	for (i = 0; i < SRMMU_L1SIZE; i++) {
 		te = regtbl[i];
@@ -6609,8 +6611,10 @@ debug_pagetables()
 		       pmap_kernel()->pm_regmap[i].rg_seg_ptps);
 	}
 	printf("Press q to halt...\n");
+	cnpollc(1);
 	if (cngetc()=='q')
 	    callrom();
+	cnpollc(0);
 }
 
 static u_int
@@ -6695,6 +6699,7 @@ void test_region(reg, start, stop)
 /*	int cnt=0;
 */
 
+	cnpollc(1);
 	for (i = start; i < stop; i+= NBPG) {
 		addr = (reg << RGSHIFT) | i;
 		pte=lda(((u_int)(addr)) | ASI_SRMMUFP_LN, ASI_SRMMUFP);
@@ -6720,6 +6725,7 @@ void test_region(reg, start, stop)
 			}
 		}
 	}
+	cnpollc(0);
 	printf("done.\n");
 }
 

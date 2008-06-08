@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.211 2008/04/09 16:58:10 deraadt Exp $	*/
+/* $OpenBSD: machdep.c,v 1.212 2008/06/08 20:57:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -506,7 +506,9 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("System halted. Press any key to reboot...\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 	doboot();
