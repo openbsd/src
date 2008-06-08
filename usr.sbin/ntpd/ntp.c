@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.104 2008/04/13 00:22:17 djm Exp $ */
+/*	$OpenBSD: ntp.c,v 1.105 2008/06/08 19:14:40 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -230,7 +230,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 					sent_cnt++;
 			}
 			if (p->deadline > 0 && p->deadline <= getmonotime()) {
-				timeout = error_interval();
+				timeout = 300;
 				log_debug("no reply from %s received in time, "
 				    "next query %ds", log_sockaddr(
 				    (struct sockaddr *)&p->addr->ss), timeout);
