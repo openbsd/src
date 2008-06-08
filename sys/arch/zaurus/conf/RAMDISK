@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.36 2007/03/18 21:47:25 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.37 2008/06/08 20:37:39 deraadt Exp $
 
 machine	zaurus	arm
 
@@ -11,7 +11,6 @@ options	INET		# IP + ICMP + TCP + UDP
 options	INET6		# IPv6 (needs INET)
 options	DDB		# kernel debugger
 options	EXT2FS		# Second Extended Filesystem
-options	FIFO		# FIFOs; RECOMMENDED
 
 options		ARM32
 options		PXAGPIO_HAS_GPION_INTRS

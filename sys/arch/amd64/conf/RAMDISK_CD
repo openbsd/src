@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.84 2008/05/23 14:04:18 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.85 2008/06/08 20:37:39 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -20,7 +20,6 @@ option		NFSCLIENT	# Network File System client
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF
 option		MSDOSFS		# MS-DOS file system
-option		FIFO		# FIFOs; RECOMMENDED
 
 option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)

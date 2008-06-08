@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.30 2006/05/28 11:09:56 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.31 2008/06/08 20:37:39 deraadt Exp $
 
 machine		mvme88k m88k
 
@@ -27,7 +27,6 @@ option		DST=0
 option		FFS
 option		NFSCLIENT
 option		CD9660
-option		FIFO
 option		INET
 option		INET6
 option		BOOT_CONFIG

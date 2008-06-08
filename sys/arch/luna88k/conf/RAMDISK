@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2007/01/14 13:53:28 aoyama Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2008/06/08 20:37:39 deraadt Exp $
 
 machine		luna88k m88k
 
@@ -27,7 +27,6 @@ option		DST=0
 option		FFS
 option		NFSCLIENT
 option		CD9660
-option		FIFO
 option		INET
 option		INET6
 option		BOOT_CONFIG

@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.8 2008/04/12 19:24:49 miod Exp $
+# $OpenBSD: RAMDISK,v 1.9 2008/06/08 20:37:39 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -31,8 +31,6 @@ option		INET			# IP + ICMP + TCP + UDP
 option		INET6			# IPv6 (needs INET)
 option		DDB			# kernel debugger
 option		EXT2FS			# Second Extended Filesystem
-option		FIFO			# FIFOs; RECOMMENDED
-
 
 config		bsd	root on rd0a swap on rd0b
 

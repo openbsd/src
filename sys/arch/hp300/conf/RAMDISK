@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2007/05/01 15:22:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2008/06/08 20:37:39 deraadt Exp $
 #
 # Ram disk kernel.
 #
@@ -31,7 +31,6 @@ option		NFSCLIENT	# Network File System client
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
 #option		MSDOSFS		# MS-DOS file system
-option		FIFO		# FIFOs; RECOMMENDED
 
 option		INET		# IP + ICMP + TCP + UDP
 
