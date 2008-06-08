@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.43 2008/06/08 16:53:23 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.44 2008/06/08 16:54:34 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1450,15 +1450,16 @@ ixgb_txeof(struct ixgb_softc *sc)
 	 * clear the timeout. Otherwise, if some descriptors have been freed,
 	 * restart the timeout.
 	 */
-	if (num_avail > IXGB_TX_CLEANUP_THRESHOLD) {
+	if (num_avail > IXGB_TX_CLEANUP_THRESHOLD)
 		ifp->if_flags &= ~IFF_OACTIVE;
-		/* All clean, turn off the timer */
-		if (num_avail == sc->num_tx_desc)
-			ifp->if_timer = 0;
-		/* Some cleaned, reset the timer */
-		else if (num_avail != sc->num_tx_desc_avail)
-			ifp->if_timer = IXGB_TX_TIMEOUT;
-	}
+
+	/* All clean, turn off the timer */
+	if (num_avail == sc->num_tx_desc)
+		ifp->if_timer = 0;
+	/* Some cleaned, reset the timer */
+	else if (num_avail != sc->num_tx_desc_avail)
+		ifp->if_timer = IXGB_TX_TIMEOUT;
+
 	sc->num_tx_desc_avail = num_avail;
 }
 
