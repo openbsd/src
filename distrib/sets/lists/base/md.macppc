@@ -1753,7 +1753,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vmparam.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/z8530var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/math.ph
@@ -2040,7 +2039,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/dumprestore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/routed.ph
