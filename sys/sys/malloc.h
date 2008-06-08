@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.90 2007/11/28 23:37:34 oga Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.91 2008/06/08 17:20:52 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -90,7 +90,7 @@
 #define	M_VMMAP		30	/* VM map structures */
 #define	M_SEM		31	/* SVID compatible semaphores */
 #define	M_DIRHASH	32	/* UFS dirhash */
-/* 33 - free */
+#define M_ACPI		33	/* ACPI */
 #define	M_VMPMAP	34	/* VM pmap */
 /* 35-37 - free */
 #define	M_FILE		38	/* Open file structure */
@@ -219,7 +219,7 @@
 	"VM map",	/* 30 M_VMMAP */ \
 	"sem",		/* 31 M_SEM */ \
 	"dirhash",	/* 32 M_DIRHASH */ \
-	NULL, \
+	"ACPI", 	/* 33 M_ACPI */ \
 	"VM pmap",	/* 34 M_VMPMAP */ \
 	NULL,	/* 35 */ \
 	NULL,	/* 36 */ \
