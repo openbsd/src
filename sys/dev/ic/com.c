@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.127 2008/04/25 11:30:22 dlg Exp $	*/
+/*	$OpenBSD: com.c,v 1.128 2008/06/08 13:55:06 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ bus_addr_t comconsaddr = 0;
 int	comconsattached;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
+int	comconsunit;
 tcflag_t comconscflag = TTYDEF_CFLAG;
 #endif
 
@@ -1336,7 +1337,7 @@ comcnprobe(struct consdev *cp)
 			break;
 
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(commajor, CONUNIT);
+	cp->cn_dev = makedev(commajor, comconsunit);
 #if defined(COMCONSOLE) || defined(PCCOMCONSOLE) || !defined(__amd64__)
 	cp->cn_pri = CN_HIGHPRI;
 #else

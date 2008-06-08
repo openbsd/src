@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.15 2006/07/31 11:06:30 mickey Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.16 2008/06/08 13:55:06 kettenis Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -188,13 +188,9 @@
 
 /*
  * WARNING: Serial console is assumed to be at COM1 address
- * and CONUNIT must be 0.
  */
 #ifndef CONADDR
 #define	CONADDR	(0x3f8)
 #else
 #define CONADDR_OVERRIDE
-#endif
-#ifndef CONUNIT
-#define	CONUNIT	(0)
 #endif
