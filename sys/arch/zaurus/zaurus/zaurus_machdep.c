@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.28 2008/03/23 17:05:42 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.29 2008/06/08 20:56:33 miod Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -283,29 +283,15 @@ int comcnmode = CONMODE;
 void
 boot(int howto)
 {
-	/*
-	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
-	 */
 	if (cold) {
-		doshutdownhooks();
-		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
-			printf("The operating system has halted.\n");
-			printf("Please press any key to reboot.\n\n");
-			cngetc();
-		}
-		printf("rebooting...\n");
-		delay(6000000);
-#if NAPM > 0
-		zapm_restart();
-#endif
-		printf("reboot failed; spinning\n");
-		while(1);
-		/*NOTREACHED*/
+		/*
+		 * If the system is cold, just halt, unless the user
+		 * explicitely asked for reboot.
+		 */
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
 	}
-
-	/* Disable console buffering */
-/*	cnpollc(1);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -324,7 +310,7 @@ boot(int howto)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 	
-	/* Run any shutdown hooks */
+haltsys:
 	doshutdownhooks();
 
 	/* Make sure IRQ's are disabled */
@@ -342,7 +328,9 @@ boot(int howto)
 
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");
