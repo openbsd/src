@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.9 2008/06/06 23:31:42 marco Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.10 2008/06/08 02:52:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
@@ -112,18 +112,16 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 	if (aa->aaa_name == NULL ||
 	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
 	    aa->aaa_table != NULL)
-		goto fail;
+		return (0);
 
 	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node,
 	    "MHKV", 0, NULL, &res))
-		goto fail;
+		return (0);
 
-	rv = 1;
-	if (aml_val2int(&res) != THINKPAD_HKEY_VERSION)
-		rv = 0;
+	if (aml_val2int(&res) == THINKPAD_HKEY_VERSION)
+		rv = 1;
 
 	aml_freevalue(&res);
-fail:
 	return (rv);
 }
 
