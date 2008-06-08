@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.9 2008/04/30 17:10:55 fgsch Exp $ */
+/* $OpenBSD: extern.h,v 1.10 2008/06/08 21:01:24 av Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -37,12 +37,17 @@ struct track_info {
 };
 SLIST_HEAD(track_head, track_info) tracks;
 
+/* Media capabilities */
+#define MEDIACAP_TAO			0x01
+#define MEDIACAP_CDRW_WRITE		0x02
+
 extern unsigned long 	entry2time(struct cd_toc_entry *);
 extern unsigned long 	entry2frames(struct cd_toc_entry *);
 extern int              open_cd(char *, int);
 extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
+extern int		get_media_capabilities(int *cap);
 extern int		blank(void);
 extern int		unit_ready(void);
 extern int		synchronize_cache(void);
