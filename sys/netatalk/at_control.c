@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.12 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.13 2008/06/08 19:10:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -634,9 +634,11 @@ aa_dosingleroute(struct ifaddr *ifa,
 	struct at_addr *at_addr, struct at_addr *at_mask, int cmd, int flags)
 {
   struct sockaddr_at	addr, mask;
+  struct rt_addrinfo	info;
 
   bzero(&addr, sizeof(addr));
   bzero(&mask, sizeof(mask));
+  bzero(&info, sizeof(info));
   addr.sat_family = AF_APPLETALK;
   addr.sat_len = sizeof(struct sockaddr_at);
   addr.sat_addr.s_net = at_addr->s_net;
@@ -645,9 +647,14 @@ aa_dosingleroute(struct ifaddr *ifa,
   mask.sat_len = sizeof(struct sockaddr_at);
   mask.sat_addr.s_net = at_mask->s_net;
   mask.sat_addr.s_node = at_mask->s_node;
+  info.rti_info[RTAX_DST] = (struct sockaddr *)&addr;
+  info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
   if (at_mask->s_node)
     flags |= RTF_HOST;
-  return(rtrequest(cmd, (struct sockaddr *) &addr,
-	(flags & RTF_HOST)?(ifa->ifa_dstaddr):(ifa->ifa_addr),
-	(struct sockaddr *) &mask, flags, NULL, 0));
+  info.rti_flags = flags;
+  if (flags & RTF_HOST)
+    info.rti_info[RTAX_GATEWAY] = ifa->ifa_dstaddr;
+  else
+    info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+  return(rtrequest1(cmd, &info, RTP_DEFAULT, NULL, 0));
 }
