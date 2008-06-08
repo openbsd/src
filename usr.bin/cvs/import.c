@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.90 2008/06/08 13:22:46 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.91 2008/06/08 13:35:47 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -38,9 +38,10 @@ static BUF *import_get_rcsdiff(struct cvs_file *, RCSNUM *);
 static char *import_branch = IMPORT_DEFAULT_BRANCH;
 static char *logmsg = NULL;
 static char *vendor_tag = NULL;
-static char *release_tag = NULL;
+static char **release_tags;
 static char *koptstr;
 static int dflag = 0;
+static int tagcount = 0;
 
 char *import_repository = NULL;
 int import_conflicts = 0;
@@ -59,7 +60,7 @@ struct cvs_cmd cvs_cmd_import = {
 int
 cvs_import(int argc, char **argv)
 {
-	int ch;
+	int i, ch;
 	char repo[MAXPATHLEN], *arg = ".";
 	struct cvs_recursion cr;
 
@@ -97,12 +98,19 @@ cvs_import(int argc, char **argv)
 
 	import_repository = argv[0];
 	vendor_tag = argv[1];
-	release_tag = argv[2];
+	argc -= 2;
+	argv += 2;
+
+	release_tags = argv;
+	tagcount = argc;
 
 	if (!rcs_sym_check(vendor_tag))
 		fatal("invalid symbol: %s", vendor_tag);
-	if (!rcs_sym_check(release_tag))
-		fatal("invalid symbol: %s", release_tag);
+
+	for (i = 0; i < tagcount; i++) {
+		if (!rcs_sym_check(release_tags[i]))
+			fatal("invalid symbol: %s", release_tags[i]);
+	}
 
 	if (logmsg == NULL)
 		logmsg = cvs_logmsg_create(NULL, NULL, NULL);
@@ -121,7 +129,8 @@ cvs_import(int argc, char **argv)
 		cvs_client_send_logmsg(logmsg);
 		cvs_client_send_request("Argument %s", import_repository);
 		cvs_client_send_request("Argument %s", vendor_tag);
-		cvs_client_send_request("Argument %s", release_tag);
+		for (i = 0; i < tagcount; i++)
+			cvs_client_send_request("Argument %s", release_tags[i]);
 
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
@@ -209,6 +218,7 @@ cvs_import_local(struct cvs_file *cf)
 static void
 import_new(struct cvs_file *cf)
 {
+	int i;
 	BUF *bp;
 	time_t tstamp;
 	struct stat st;
@@ -254,8 +264,10 @@ import_new(struct cvs_file *cf)
 	if (rcs_sym_add(cf->file_rcs, vendor_tag, branch) == -1)
 		fatal("import_new: failed to add vendor tag");
 
-	if (rcs_sym_add(cf->file_rcs, release_tag, brev) == -1)
-		fatal("import_new: failed to add release tag");
+	for (i = 0; i < tagcount; i++) {
+		if (rcs_sym_add(cf->file_rcs, release_tags[i], brev) == -1)
+			fatal("import_new: failed to add release tag");
+	}
 
 	if (rcs_rev_add(cf->file_rcs, brev, logmsg, tstamp, NULL) == -1)
 		fatal("import_new: failed to create first branch revision");
@@ -353,14 +365,13 @@ import_update(struct cvs_file *cf)
 static void
 import_tag(struct cvs_file *cf, RCSNUM *branch, RCSNUM *newrev)
 {
-	char b[CVS_REV_BUFSZ];
+	int i;
 
 	if (cvs_noexec != 1) {
-		rcsnum_tostr(branch, b, sizeof(b));
 		rcs_sym_add(cf->file_rcs, vendor_tag, branch);
 
-		rcsnum_tostr(newrev, b, sizeof(b));
-		rcs_sym_add(cf->file_rcs, release_tag, newrev);
+		for (i = 0; i < tagcount; i++)
+			rcs_sym_add(cf->file_rcs, release_tags[i], newrev);
 	}
 }
 
