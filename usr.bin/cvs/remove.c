@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.74 2008/06/08 02:54:08 tobias Exp $	*/
+/*	$OpenBSD: remove.c,v 1.75 2008/06/08 18:08:34 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -186,7 +186,8 @@ cvs_remove_local(struct cvs_file *cf)
 				    cf->file_name);
 			}
 			return;
-		default:
+		case FILE_LOST:
+			printf("%d\n", cf->file_status);
 			rcsnum_tostr(cf->file_ent->ce_rev, rbuf, sizeof(rbuf));
 
 			ctime_r(&cf->file_ent->ce_mtime, tbuf);
