@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.119 2008/04/17 19:03:25 deraadt Exp $
+#	$OpenBSD: netstart,v 1.120 2008/06/09 22:46:42 deraadt Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -36,9 +36,10 @@ ifstart() {
 	fi
 
 	file=/etc/hostname.$if
-	if [ "$(stat -f "%SLp" $file)" != "---" ]; then
+	if [ "$(stat -f "%SLp %u %g" $file)" != "--- 0 0" ]; then
 		echo "WARNING: $file is insecure, fixing permissions"
 		chmod o-rwx $file
+		chown root.wheel $file
 	fi
 	ifconfig $if > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
