@@ -21,7 +21,8 @@ Boston, MA 02111-1307, USA.  */
 /* Controlling the compilation driver.  */
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_FP | MASK_FPREGS | MASK_GAS)
+#define TARGET_DEFAULT \
+	(MASK_FP | MASK_FPREGS | MASK_IEEE | MASK_IEEE_CONFORMANT | MASK_GAS)
 
 /* alpha needs __start.  */
 #undef LINK_SPEC
