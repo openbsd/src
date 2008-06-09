@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.100 2008/03/31 21:15:20 deraadt Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.101 2008/06/09 22:47:42 djm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -88,6 +88,8 @@
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 
+#include <crypto/idgen.h>
+
 #if NPF > 0
 #include <net/pfvar.h>
 #endif
@@ -131,6 +133,9 @@ static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 static int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 	struct ifnet *, struct in6_addr *, u_long *, int *);
 static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
+
+/* Context for non-repeating IDs */
+struct idgen32_ctx ip6_id_ctx;
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -3225,3 +3230,16 @@ ip6_optlen(inp)
 	return len;
 #undef elen
 }
+
+u_int32_t
+ip6_randomid(void)
+{
+	return idgen32(&ip6_id_ctx);
+}
+
+void
+ip6_randomid_init(void)
+{
+	idgen32_init(&ip6_id_ctx);
+}
+

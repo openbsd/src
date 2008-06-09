@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.6 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.7 2008/06/09 22:47:42 djm Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -111,17 +111,6 @@ struct randomtab {
 	u_int32_t ru_a, ru_b;
 	u_int32_t ru_g;
 	long ru_reseed;
-};
-
-static struct randomtab randomtab_32 = {
-	32,			/* resulting bits */
-	180,			/* Time after wich will be reseeded */
-	1000000000,		/* Uniq cycle, avoid blackjack prediction */
-	2,			/* Starting generator */
-	2147483629,		/* RU_N-1 = 2^2*3^2*59652323 */
-	7,			/* determine ru_a as RU_AGEN^(2*rand) */
-	1836660096,		/* RU_M = 2^7*3^15 - don't change */
-	{ 2, 3, 59652323, 0 },	/* factors of ru_n */
 };
 
 static struct randomtab randomtab_20 = {
@@ -239,15 +228,8 @@ randomid(struct randomtab *p)
 }
 
 u_int32_t
-ip6_randomid(void)
-{
-
-	return randomid(&randomtab_32);
-}
-
-u_int32_t
 ip6_randomflowlabel(void)
 {
-
 	return randomid(&randomtab_20) & 0xfffff;
 }
+

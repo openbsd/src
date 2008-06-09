@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.74 2008/04/22 18:53:34 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.75 2008/06/09 22:47:42 djm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <netinet/in.h>
 
 #include <dev/rndvar.h>
+#include <crypto/idgen.h>
 
 int	nfs_attrtimeo(struct nfsnode *np);
 
@@ -547,6 +548,22 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 }
 
 /*
+ * Return an unpredictable XID.
+ */
+u_int32_t
+nfsm_get_xid(void)
+{
+	static struct idgen32_ctx nfs_xid_ctx;
+	static int called = 0;
+
+	if (!called) {
+		called = 1;
+		idgen32_init(&nfs_xid_ctx);
+	}
+	return idgen32(&nfs_xid_ctx);
+}
+
+/*
  * Build the RPC header and fill in the authorization info.
  * Right now we are pretty centric around RPCAUTH_UNIX, in the
  * future, this function will need some love to be able to handle
@@ -558,7 +575,6 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 {
 	struct mbuf	*mb;
 	u_int32_t	*tl;
-	u_int32_t	xid;
 	caddr_t		bpos;
 	int		i, authsiz, auth_len, ngroups;
 
@@ -602,12 +618,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED, &bpos);
 
 	/* Get a new (non-zero) xid */
-	do {
-		while ((xid = arc4random() & 0xff) == 0)
-			;
-		nfs_xid += xid;
-	} while (nfs_xid == 0);
-
+	nfs_xid = nfsm_get_xid();
 
 	*tl++ = req->r_xid = txdr_unsigned(nfs_xid);
 	*tl++ = rpc_call;

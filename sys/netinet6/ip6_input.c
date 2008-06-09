@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.84 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.85 2008/06/09 22:47:42 djm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ ip6_init()
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
+	ip6_randomid_init();
 	nd6_init();
 	frag6_init();
 	ip6_init2((void *)0);
