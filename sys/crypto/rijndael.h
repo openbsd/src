@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.h,v 1.12 2007/05/27 05:43:17 tedu Exp $ */
+/*	$OpenBSD: rijndael.h,v 1.13 2008/06/09 07:49:45 djm Exp $ */
 
 /**
  * rijndael-alg-fst.h
@@ -45,10 +45,10 @@ typedef struct {
 	u32	dk[4*(AES_MAXROUNDS + 1)];	/* decrypt key schedule */
 } rijndael_ctx;
 
-int	 rijndael_set_key(rijndael_ctx *, u_char *, int);
-int	 rijndael_set_key_enc_only(rijndael_ctx *, u_char *, int);
-void	 rijndael_decrypt(rijndael_ctx *, u_char *, u_char *);
-void	 rijndael_encrypt(rijndael_ctx *, u_char *, u_char *);
+int	 rijndael_set_key(rijndael_ctx *, const u_char *, int);
+int	 rijndael_set_key_enc_only(rijndael_ctx *, const u_char *, int);
+void	 rijndael_decrypt(rijndael_ctx *, const u_char *, u_char *);
+void	 rijndael_encrypt(rijndael_ctx *, const u_char *, u_char *);
 
 int	rijndaelKeySetupEnc(unsigned int [], const unsigned char [], int);
 int	rijndaelKeySetupDec(unsigned int [], const unsigned char [], int);
