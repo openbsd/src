@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.10 2008/06/08 21:54:25 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.11 2008/06/09 23:57:58 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -439,7 +439,7 @@ do
 		shift 2
 		if [ -f "${WHERE}/etc/Makefile" ]; then
 			SRCDIR=${WHERE}
-		elif [ -f "${WHERE}" ]; then
+		elif [ -f "${WHERE}" -a "`echo ${WHERE} | sed -e 's,.*\/,,g'`" = etc??.tgz ]; then
 			TGZ=${WHERE}
 		else
 			echo " *** ERROR: ${WHERE} is not a path to src nor etcXX.tgz"
@@ -449,7 +449,7 @@ do
 	-x)
 		WHERE="${2}"
 		shift 2
-		if [ -f "${WHERE}" ]; then
+		if [ -f "${WHERE}" -a "`echo ${WHERE} | sed -e 's,.*\/,,g'`" = xetc??.tgz ]; then
 			XTGZ=${WHERE}
 		else
 			echo " *** ERROR: ${WHERE} is not a path to xetcXX.tgz"
