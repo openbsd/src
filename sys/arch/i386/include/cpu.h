@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.101 2008/04/18 20:20:35 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.102 2008/06/09 20:43:43 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -359,7 +359,6 @@ void	cpuid(u_int32_t, u_int32_t *);
 /* locore.s */
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
-void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);

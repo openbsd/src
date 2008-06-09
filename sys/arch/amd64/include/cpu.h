@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2008/05/26 07:47:19 jasper Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2008/06/09 20:43:43 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -278,7 +278,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
-void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);

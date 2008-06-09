@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.122 2008/03/22 16:25:08 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.123 2008/06/09 20:43:43 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -781,30 +781,6 @@ _C_LABEL(freebsd_esigcode):
 /*
  * The following primitives are used to fill and copy regions of memory.
  */
-
-/*
- * fillw(short pattern, caddr_t addr, size_t len);
- * Write len copies of pattern at addr.
- */
-ENTRY(fillw)
-	pushl	%edi
-	movl	8(%esp),%eax
-	movl	12(%esp),%edi
-	movw	%ax,%cx
-	rorl	$16,%eax
-	movw	%cx,%ax
-	cld
-	movl	16(%esp),%ecx
-	shrl	%ecx			# do longwords
-	rep
-	stosl
-	movl	16(%esp),%ecx
-	andl	$1,%ecx			# do remainder
-	rep
-	stosw
-	popl	%edi
-	ret
-
 
 /* Frame pointer reserve on stack. */
 #ifdef DDB

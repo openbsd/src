@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.14 2008/04/07 22:37:18 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.15 2008/06/09 20:43:43 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,20 +156,6 @@ LEAF(lp32_write8, 0)
 	sd	a2, 0(a0)
 END(lp32_write8)
 #endif
-
-/*
- * fillw(pat, addr, count)
- */
-LEAF(fillw, 0)
-1:
-	PTR_ADDU a2, a2, -1
-	sh	a0, 0(a1)
-	bne	a2,zero, 1b
-	PTR_ADDU a1, a1, 2
-
-	jr	ra
-	nop
-END(fillw)
 
 /*
  * Optimized memory zero code.
