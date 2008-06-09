@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.8 2008/06/09 05:49:10 robert Exp $	*/
+/*	$OpenBSD: video.c,v 1.9 2008/06/09 17:13:35 robert Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -258,7 +258,6 @@ videommap(dev_t dev, off_t off, int prot)
 		return (-1);
 	if (pmap_extract(pmap_kernel(), (vaddr_t)p, &pa) == FALSE)
 		panic("videommap: invalid page");
-	pmap_update(pmap_kernel());
 
 #if defined(__powerpc__) || defined(__sparc64__)
 	return (pa);
