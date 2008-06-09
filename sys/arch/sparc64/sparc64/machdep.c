@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2008/04/20 10:35:57 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 2008/06/09 07:07:15 djm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -332,7 +332,7 @@ setregs(p, pack, stack, retval)
 	 * Setup the process StackGhost cookie which will be XORed into
 	 * the return pointer as register windows are over/underflowed.
 	 */
-	arc4random_bytes(&p->p_addr->u_pcb.pcb_wcookie,
+	arc4random_buf(&p->p_addr->u_pcb.pcb_wcookie,
 	    sizeof(p->p_addr->u_pcb.pcb_wcookie));
 
 	/* The cookie needs to guarantee invalid alignment after the XOR. */

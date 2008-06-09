@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.160 2008/02/09 15:10:58 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.161 2008/06/09 07:07:16 djm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (*oldlenp > sizeof(buf))
 			*oldlenp = sizeof(buf);
 		if (oldp) {
-			arc4random_bytes(buf, *oldlenp);
+			arc4random_buf(buf, *oldlenp);
 			if ((error = copyout(buf, oldp, *oldlenp)))
 				return (error);
 		}

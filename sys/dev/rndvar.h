@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.20 2008/03/02 21:29:07 djm Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.21 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -31,7 +31,7 @@
 #ifndef __RNDVAR_H__
 #define __RNDVAR_H__
 
-#define POOLWORDS 1024	/* Power of 2 - note that this is 32-bit words */
+#define POOLWORDS 2048	/* Power of 2 - note that this is 32-bit words */
 
 #define	RND_RND		0	/* real randomness like nuclear chips */
 #define	RND_SRND	1	/* strong random source */
@@ -85,7 +85,7 @@ extern struct rndstats rndstats;
 
 void enqueue_randomness(int, int);
 void get_random_bytes(void *, size_t);
-void arc4random_bytes(void *, size_t);
+void arc4random_buf(void *, size_t);
 u_int32_t arc4random(void);
 u_int32_t arc4random_uniform(u_int32_t);
 

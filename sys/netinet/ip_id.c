@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_id.c,v 1.21 2008/03/15 04:55:25 djm Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.22 2008/06/09 07:07:17 djm Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
@@ -67,7 +67,7 @@ ip_randomid(void)
 	}
 
 	do {
-		arc4random_bytes(&si, sizeof(si));
+		arc4random_buf(&si, sizeof(si));
 		i = isindex & 0xFFFF;
 		i2 = (isindex - (si & 0x7FFF)) & 0xFFFF;
 		r = ip_shuffle[i];

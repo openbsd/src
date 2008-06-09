@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.33 2008/04/21 20:16:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.34 2008/06/09 07:07:16 djm Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -307,7 +307,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		u_int8_t gtk[IEEE80211_PMK_LEN];
 
 		/* initialize 256-bit global key counter to a random value */
-		arc4random_bytes(ic->ic_globalcnt, EAPOL_KEY_NONCE_LEN);
+		arc4random_buf(ic->ic_globalcnt, EAPOL_KEY_NONCE_LEN);
 
 		ni->ni_rsnprotos = ic->ic_rsnprotos;
 		ni->ni_rsnakms = ic->ic_rsnakms;
@@ -317,7 +317,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 
 		ic->ic_def_txkey = 1;
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
-		arc4random_bytes(gtk, sizeof(gtk));
+		arc4random_buf(gtk, sizeof(gtk));
 		ieee80211_map_gtk(gtk, ni->ni_rsngroupcipher,
 		    ic->ic_def_txkey, 1, 0, k);
 		(*ic->ic_set_key)(ic, ni, k);	/* XXX */
@@ -1094,7 +1094,7 @@ ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_rsn_state = RSNA_AUTHENTICATION_2;
 
 	/* generate a new authenticator nonce (ANonce) */
-	arc4random_bytes(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+	arc4random_buf(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
 	/* initiate 4-way handshake */
 	if (ni->ni_rsnakms == IEEE80211_AKM_PSK)

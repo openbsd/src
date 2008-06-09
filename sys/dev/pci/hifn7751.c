@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.154 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.155 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1868,7 +1868,7 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
-			arc4random_bytes(ses->hs_iv,
+			arc4random_buf(ses->hs_iv,
 			    (c->cri_alg == CRYPTO_AES_CBC ?
 			    HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH));
 			/*FALLTHROUGH*/

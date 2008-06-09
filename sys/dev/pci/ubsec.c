@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.140 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.141 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -620,7 +620,7 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	ses->ses_used = 1;
 	if (encini) {
 		/* get an IV, network byte order */
-		arc4random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
 
 		/* Go ahead and compute key in ubsec's byte order */
 		if (encini->cri_alg == CRYPTO_DES_CBC) {

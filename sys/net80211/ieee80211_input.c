@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.79 2008/04/26 19:57:49 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.80 2008/06/09 07:07:16 djm Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1960,7 +1960,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		return;
 
 	/* generate a new supplicant's nonce (SNonce) */
-	arc4random_bytes(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
+	arc4random_buf(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
 
 	/* retrieve PMK and derive TPTK */
 	if ((pmk = ieee80211_get_pmk(ic, ni, pmkid)) == NULL) {

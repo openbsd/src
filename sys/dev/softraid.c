@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.105 2008/04/02 21:32:03 martin Exp $ */
+/* $OpenBSD: softraid.c,v 1.106 2008/06/09 07:07:16 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1597,7 +1597,7 @@ sr_checksum(char *s, u_int32_t *p, u_int32_t size)
 void
 sr_get_uuid(struct sr_uuid *uuid)
 {
-	arc4random_bytes(uuid->sui_id, sizeof(uuid->sui_id));
+	arc4random_buf(uuid->sui_id, sizeof(uuid->sui_id));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.22 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: safe.c,v 1.23 2008/06/09 07:07:16 djm Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1358,7 +1358,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 	if (encini) {
 		/* get an IV */
-		arc4random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
 
 		ses->ses_klen = encini->cri_klen;
 		bcopy(encini->cri_key, ses->ses_key, ses->ses_klen / 8);

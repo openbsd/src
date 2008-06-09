@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.104 2008/05/06 08:47:36 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.105 2008/06/09 07:07:17 djm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -986,7 +986,7 @@ tcp_set_iss_tsm(struct tcpcb *tp)
 	u_int32_t digest[4];
 
 	if (tcp_secret_init == 0) {
-		arc4random_bytes(tcp_secret, sizeof(tcp_secret));
+		arc4random_buf(tcp_secret, sizeof(tcp_secret));
 		MD5Init(&tcp_secret_ctx);
 		MD5Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
 		tcp_secret_init = 1;

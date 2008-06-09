@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.5 2008/06/08 21:15:34 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.6 2008/06/09 07:07:16 djm Exp $	*/
 
 /******************************************************************************
 
@@ -2587,7 +2587,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 
 	if (sc->num_rx_queues > 1) {
 		/* set up random bits */
-		arc4random_bytes(&random, sizeof(random));
+		arc4random_buf(&random, sizeof(random));
 		switch (sc->num_rx_queues) {
 			case 8:
 			case 4:

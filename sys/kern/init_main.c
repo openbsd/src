@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.149 2008/05/06 17:19:40 thib Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.150 2008/06/09 07:07:16 djm Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ main(void *framep)
 	{
 		volatile long newguard[8];
 
-		arc4random_bytes((long *)newguard, sizeof(newguard));
+		arc4random_buf((long *)newguard, sizeof(newguard));
 
 		for (i = sizeof(__guard)/sizeof(__guard[0]) - 1; i; i--)
 			__guard[i] = newguard[i];

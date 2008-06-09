@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.19 2008/01/02 04:48:37 brad Exp $	*/
+/*	$OpenBSD: noct.c,v 1.20 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -1139,7 +1139,7 @@ noct_ea_start_des(sc, q, crp, crd)
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, iv, 8);
 		else
-			arc4random_bytes(iv, sizeof(iv));
+			arc4random_buf(iv, sizeof(iv));
 
 		if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)

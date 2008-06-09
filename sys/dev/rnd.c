@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.88 2008/06/04 00:50:23 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.89 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -564,7 +564,7 @@ arc4random(void)
 }
 
 static void
-arc4random_bytes_large(void *buf, size_t n)
+arc4random_buf_large(void *buf, size_t n)
 {
 	u_char lbuf[ARC4_SUB_KEY_BYTES];
 	struct rc4_ctx lctx;
@@ -583,13 +583,13 @@ arc4random_bytes_large(void *buf, size_t n)
 }
 
 void
-arc4random_bytes(void *buf, size_t n)
+arc4random_buf(void *buf, size_t n)
 {
 	arc4maybeinit();
 
 	/* Satisfy large requests via an independent ARC4 instance */
 	if (n > ARC4_MAIN_MAX_BYTES) {
-		arc4random_bytes_large(buf, n);
+		arc4random_buf_large(buf, n);
 		return;
 	}
 
@@ -1035,7 +1035,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 				buf[i] = random() << 16 | (random() & 0xFFFF);
 			break;
 		case RND_ARND:
-			arc4random_bytes(buf, n);
+			arc4random_buf(buf, n);
 			break;
 		default:
 			ret = ENXIO;

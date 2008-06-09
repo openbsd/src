@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.164 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.165 2008/06/09 07:07:16 djm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1009,7 +1009,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_vhost_entry *vhe,
     struct carp_header *ch)
 {
 	if (!vhe->vhe_replay_cookie) {
-		arc4random_bytes(&vhe->vhe_replay_cookie,
+		arc4random_buf(&vhe->vhe_replay_cookie,
 		    sizeof(vhe->vhe_replay_cookie));
 	}
 

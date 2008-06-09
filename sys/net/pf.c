@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.581 2008/06/08 21:30:44 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.582 2008/06/09 07:07:16 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2947,7 +2947,7 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	u_int32_t digest[4];
 
 	if (pf_tcp_secret_init == 0) {
-		arc4random_bytes(pf_tcp_secret, sizeof(pf_tcp_secret));
+		arc4random_buf(pf_tcp_secret, sizeof(pf_tcp_secret));
 		MD5Init(&pf_tcp_secret_ctx);
 		MD5Update(&pf_tcp_secret_ctx, pf_tcp_secret,
 		    sizeof(pf_tcp_secret));

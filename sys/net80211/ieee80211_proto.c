@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.23 2008/04/21 19:37:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.24 2008/06/09 07:07:16 djm Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -391,7 +391,7 @@ ieee80211_setkeys(struct ieee80211com *ic)
 	/* Swap(GM, GN) */
 	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
 
-	arc4random_bytes(gtk, sizeof(gtk));
+	arc4random_buf(gtk, sizeof(gtk));
 	ieee80211_map_gtk(gtk, ic->ic_bss->ni_rsngroupcipher, kid, 1, 0,
 	    &ic->ic_nw_keys[kid]);
 
