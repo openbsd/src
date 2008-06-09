@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.19 2007/09/13 07:28:32 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.20 2008/06/09 16:37:35 ckuethe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2007 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -73,6 +73,7 @@ listen on ::1
 .It Xo Ic sensor Ar device
 .Op Ic correction Ar microseconds
 .Op Ic weight Ar weight-value
+.Op Ic refid Ar string
 .Xc
 Specify a timedelta sensor device
 .Xr ntpd 8
@@ -101,6 +102,18 @@ For example, if a DCF77 receiver is lagging 15ms behind
 actual time:
 .Bd -literal -offset indent
 sensor udcf0 correction 15000
+.Ed
+.Pp
+An optional reference ID string - up to 4 ASCII characters - can be
+given to publish the sensor type to clients.
+RFC 2030 suggests some common reference identifiers, but new identifiers
+"can be contrived as appropriate."
+If an ID string is not given,
+.Xr ntpd 8
+will use a generic reference ID.
+For example:
+.Bd -literal -offset indent
+sensor msts0 refid GPS
 .Ed
 .It Xo Ic server Ar address
 .Op Ic weight Ar weight-value

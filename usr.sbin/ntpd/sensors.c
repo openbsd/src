@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.35 2008/03/02 20:36:42 ckuethe Exp $ */
+/*	$OpenBSD: sensors.c,v 1.36 2008/06/09 16:37:35 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -108,7 +109,7 @@ sensor_add(int sensordev, char *dxname)
 		if (!strcmp(s->device, dxname))
 			return;
 
-	/* check wether it is requested in the config file */
+	/* check whether it is requested in the config file */
 	for (cs = TAILQ_FIRST(&conf->ntp_conf_sensors); cs != NULL &&
 	    strcmp(cs->device, dxname) && strcmp(cs->device, "*");
 	    cs = TAILQ_NEXT(cs, entry))
@@ -126,10 +127,16 @@ sensor_add(int sensordev, char *dxname)
 		fatal("sensor_add strdup");
 	s->sensordevid = sensordev;
 
+	if (cs->refstr == NULL)
+		memcpy(&s->refstr, "HARD", sizeof(s->refstr));
+	else
+		memcpy(&s->refstr, cs->refstr, sizeof(s->refstr));
+
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
-	log_debug("sensor %s added (weight %d, correction %.6f)",
-	    s->device, s->weight, s->correction / 1e6);
+	log_debug("sensor %s added (weight %d, correction %.6f, refstr %-4s)",
+		  s->device, s->weight, s->correction / 1e6, &s->refstr);
+	s->refstr = htonl(s->refstr);
 }
 
 void
@@ -145,7 +152,6 @@ sensor_query(struct ntp_sensor *s)
 {
 	char		 dxname[MAXDEVNAMLEN];
 	struct sensor	 sensor;
-	u_int32_t	 refid;
 
 	s->next = getmonotime() + SENSOR_QUERY_INTERVAL;
 
@@ -171,7 +177,6 @@ sensor_query(struct ntp_sensor *s)
 		return;
 
 	s->last = sensor.tv.tv_sec;
-	memcpy(&refid, "HARD", sizeof(refid));
 	/*
 	 * TD = device time
 	 * TS = system time
@@ -183,8 +188,8 @@ sensor_query(struct ntp_sensor *s)
 	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
 	s->offsets[s->shift].good = 1;
 
-	s->offsets[s->shift].status.refid = htonl(refid);
-	s->offsets[s->shift].status.refid4 = htonl(refid);
+	s->offsets[s->shift].status.refid = s->refstr;
+	s->offsets[s->shift].status.refid4 = s->refstr;
 	s->offsets[s->shift].status.stratum = 0;	/* increased when sent out */
 	s->offsets[s->shift].status.rootdelay = 0;
 	s->offsets[s->shift].status.rootdispersion = 0;
