@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.147 2008/06/08 16:32:34 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.148 2008/06/09 22:31:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -477,14 +477,10 @@ update_clear_conflict(struct cvs_file *cf)
 {
 	time_t now;
 	CVSENTRIES *entlist;
-	char *entry, revbuf[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ];
+	char *entry, revbuf[CVS_REV_BUFSZ];
 	char sticky[CVS_ENT_MAXLINELEN], opt[4];
 
 	cvs_log(LP_TRACE, "update_clear_conflict(%s)", cf->file_path);
-
-	time(&now);
-	ctime_r(&now, timebuf);
-	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	rcsnum_tostr(cf->file_rcsrev, revbuf, sizeof(revbuf));
 
@@ -498,7 +494,7 @@ update_clear_conflict(struct cvs_file *cf)
 		strlcpy(opt, cf->file_ent->ce_opts, sizeof(opt));
 
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	cvs_ent_line_str(cf->file_name, revbuf, timebuf,
+	cvs_ent_line_str(cf->file_name, revbuf, "Result of merge",
 	    opt[0] != '\0' ? opt : "", sticky, 0, 0,
 	    entry, CVS_ENT_MAXLINELEN);
 

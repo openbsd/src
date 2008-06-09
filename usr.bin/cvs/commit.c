@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.135 2008/06/08 20:08:43 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.136 2008/06/09 22:31:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -244,7 +244,6 @@ cvs_commit_check_files(struct cvs_file *cf)
 {
 	char *tag;
 	RCSNUM *branch, *brev;
-	char rev[CVS_REV_BUFSZ];
 	struct cvs_dirlist *d;
 
 	branch = brev = NULL;
@@ -262,28 +261,33 @@ cvs_commit_check_files(struct cvs_file *cf)
 		return;
 	}
 
-	if (cf->file_status == FILE_CONFLICT ||
+	if (cf->file_status == FILE_UPTODATE)
+		return;
+
+	if (cf->file_status == FILE_MERGE ||
+	    cf->file_status == FILE_PATCH ||
+	    cf->file_status == FILE_CHECKOUT ||
+	    cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNLINK) {
+		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
+		    cf->file_path);
 		conflicts_found++;
 		return;
 	}
 
-	if (cf->file_status != FILE_REMOVED &&
-	    update_has_conflict_markers(cf)) {
+	if (cf->file_status == FILE_CONFLICT &&
+	   cf->file_ent->ce_conflict != NULL) {
 		cvs_log(LP_ERR, "conflict: unresolved conflicts in %s from "
 		    "merging, please fix these first", cf->file_path);
 		conflicts_found++;
 		return;
 	}
 
-	if (cf->file_status == FILE_MERGE ||
-	    cf->file_status == FILE_PATCH ||
-	    cf->file_status == FILE_CHECKOUT ||
-	    cf->file_status == FILE_LOST) {
-		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
-		    cf->file_path);
-		conflicts_found++;
-		return;
+	if (cf->file_status == FILE_MODIFIED &&
+	    cf->file_ent->ce_conflict != NULL &&
+	    update_has_conflict_markers(cf)) {
+		cvs_log(LP_ERR, "warning: file %s seems to still contain "
+		    "conflict indicators", cf->file_path);
 	}
 
 	if (cf->file_ent != NULL && cf->file_ent->ce_date != -1) {
@@ -313,28 +317,29 @@ cvs_commit_check_files(struct cvs_file *cf)
 				    cf->file_ent->ce_tag);
 			}
 
-			rcsnum_tostr(brev, rev, sizeof(rev));
 			if ((branch = rcsnum_revtobr(brev)) == NULL) {
-				cvs_log(LP_ERR, "%s is not a branch revision",
-				    rev);
+				cvs_log(LP_ERR, "sticky tag %s is not "
+				    "a branch for file %s", tag,
+				    cf->file_path);
 				conflicts_found++;
 				rcsnum_free(brev);
 				return;
 			}
 
 			if (!RCSNUM_ISBRANCHREV(brev)) {
-				cvs_log(LP_ERR, "%s is not a branch revision",
-				    rev);
+				cvs_log(LP_ERR, "sticky tag %s is not "
+				    "a branch for file %s", tag,
+				    cf->file_path);
 				conflicts_found++;
 				rcsnum_free(branch);
 				rcsnum_free(brev);
 				return;
 			}
 
-			rcsnum_tostr(branch, rev, sizeof(rev));
 			if (!RCSNUM_ISBRANCH(branch)) {
-				cvs_log(LP_ERR, "%s (%s) is not a branch",
-				    cf->file_ent->ce_tag, rev);
+				cvs_log(LP_ERR, "sticky tag %s is not "
+				    "a branch for file %s", tag,
+				    cf->file_path);
 				conflicts_found++;
 				rcsnum_free(branch);
 				rcsnum_free(brev);

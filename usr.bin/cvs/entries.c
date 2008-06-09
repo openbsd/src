@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.95 2008/03/01 21:29:36 deraadt Exp $	*/
+/*	$OpenBSD: entries.c,v 1.96 2008/06/09 22:31:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -109,7 +109,7 @@ cvs_ent_parse(const char *entry)
 	int i;
 	struct tm t, dt;
 	struct cvs_ent *ent;
-	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
+	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp, *p;
 
 	buf = sp = xstrdup(entry);
 	i = 0;
@@ -156,16 +156,20 @@ cvs_ent_parse(const char *entry)
 		if (fields[3][0] == '\0' ||
 		    strncmp(fields[3], CVS_DATE_DUMMY, sizeof(CVS_DATE_DUMMY) - 1) == 0 ||
 		    strncmp(fields[3], "Initial ", 8) == 0 ||
-		    strncmp(fields[3], "Result of merge", 15) == 0) {
+		    strcmp(fields[3], "Result of merge") == 0) {
 			ent->ce_mtime = CVS_DATE_DMSEC;
 		} else if (cvs_server_active == 1 &&
 		    strncmp(fields[3], CVS_SERVER_UNCHANGED,
 		    strlen(CVS_SERVER_UNCHANGED)) == 0) {
 			ent->ce_mtime = CVS_SERVER_UPTODATE;
 		} else {
+			p = fields[3];
+			if (strncmp(fields[3], "Result of merge+", 16) == 0)
+				p += 16;
+
 			/* Date field can be a '+=' with remote to indicate
 			 * conflict.  In this case do nothing. */
-			if (strptime(fields[3], "%a %b %d %T %Y", &t) != NULL) {
+			if (strptime(p, "%a %b %d %T %Y", &t) != NULL) {
 
 				t.tm_isdst = -1;	/* Figure out DST. */
 				t.tm_gmtoff = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.241 2008/06/09 17:05:49 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.242 2008/06/09 22:31:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -879,7 +879,10 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 					    "in the repository but is "
 					    "locally modified",
 					    cf->file_path);
-					cf->file_status = FILE_CONFLICT;
+					if (cvs_cmdop == CVS_OP_COMMIT)
+						cf->file_status = FILE_UNLINK;
+					else
+						cf->file_status = FILE_CONFLICT;
 				} else if (cvs_cmdop != CVS_OP_IMPORT) {
 					cvs_log(LP_NOTICE,
 					    "%s is no longer in the "
@@ -904,13 +907,15 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 					cf->file_status = FILE_MODIFIED;
 				else
 					cf->file_status = FILE_UPTODATE;
-
 				if (rcsnum_differ(cf->file_ent->ce_rev,
 				    cf->file_rcsrev)) {
 					if (cf->file_status == FILE_MODIFIED)
 						cf->file_status = FILE_MERGE;
 					else
 						cf->file_status = FILE_PATCH;
+				} else if (cf->file_ent->ce_conflict != NULL &&
+				    cf->file_status != FILE_MODIFIED) {
+					cf->file_status = FILE_CONFLICT;
 				}
 			}
 		}
