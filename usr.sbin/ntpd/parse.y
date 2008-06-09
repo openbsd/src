@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2008/06/09 16:37:35 ckuethe Exp $ */
+/*	$OpenBSD: parse.y,v 1.44 2008/06/09 18:26:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -261,11 +261,11 @@ correction	: CORRECTION NUMBER {
 		;
 
 refid		: REFID STRING {
-			size_t l;
-			l = strlen($2);
+			size_t l = strlen($2);
+
 			if (l < 1 || l > 4) {
-				yyerror("refid must be a string of 1 to 4 "
-					"characters");
+				yyerror("refid must be 1 to 4 characters");
+				free($2);
 				YYERROR;
 			}
 			opts.refstr = $2;
