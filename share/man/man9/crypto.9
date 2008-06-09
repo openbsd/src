@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.29 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.30 2008/06/09 16:14:00 djm Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt CRYPTO 9
 .Os
 .Sh NAME
@@ -172,6 +172,8 @@ CRYPTO_RIPEMD160_HMAC
 CRYPTO_MD5_KPDK
 CRYPTO_SHA1_KPDK
 CRYPTO_AES_CBC
+CRYPTO_AES_CTR
+CRYPTO_AES_XTS
 CRYPTO_ARC4
 CRYPTO_MD5
 CRYPTO_SHA1
@@ -191,6 +193,9 @@ the data.
 This field is ignored during initialization.
 If no IV is explicitly passed (see below on details), a random IV is used
 by the device driver processing the request.
+.Pp
+In the case of the CRYPTO_AES_XTS transform, the IV should be provided
+as 64 bit block number in host byte order.
 .It Fa cri_next
 Contains a pointer to another
 .Fa cryptoini
