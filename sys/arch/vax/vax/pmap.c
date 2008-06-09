@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2008/03/30 18:25:13 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.43 2008/06/09 20:31:49 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -427,7 +427,9 @@ pmap_remove_holes(struct vm_map *map)
 	if (ehole <= shole)
 		return;
 
-	uvm_map_reserve(map, ehole - shole, UVM_UNKNOWN_OFFSET, 0, &shole);
+	(void)uvm_map(map, &shole, ehole - shole, NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	      UVM_ADV_RANDOM, UVM_FLAG_NOMERGE | UVM_FLAG_HOLE));
 }
 
 void
