@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2008/05/16 18:57:01 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2008/06/09 15:01:56 deraadt Exp $
 
 .if exists(${STANDIR}/mkboot/mkboot)
 MKBOOT=${STANDIR}/mkboot/mkboot
@@ -7,3 +7,4 @@ MKBOOT=${STANDIR}/mkboot/${__objdir}/mkboot
 .endif
 
 BINDIR=/usr/mdec
+MANSUBDIR=socppc

@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2008/05/28 21:36:11 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2008/06/09 15:01:56 deraadt Exp $
+
+.include "${.CURDIR}/../Makefile.inc"
 
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.5
