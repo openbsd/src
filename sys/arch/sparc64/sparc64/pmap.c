@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2008/05/21 19:23:15 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2008/06/09 16:55:20 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -287,7 +287,6 @@ vaddr_t ekdata;
 paddr_t ekdatap;
 
 static int npgs;
-static u_int nextavail;
 static struct mem_region memlist[8]; /* Pick a random size here */
 
 vaddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
@@ -1454,8 +1453,7 @@ remap_data:
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
 	 */
-	nextavail = avail->start;
-	avail_start = nextavail;
+	avail_start = avail->start;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
