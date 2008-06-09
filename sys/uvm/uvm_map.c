@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.99 2007/09/15 10:10:37 martin Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.100 2008/06/09 20:30:23 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -897,6 +897,8 @@ step3:
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			new_entry->etype |= UVM_ET_NEEDSCOPY;
 	}
+	if (flags & UVM_FLAG_HOLE)
+		new_entry->etype |= UVM_ET_HOLE;
 
 	new_entry->protection = prot;
 	new_entry->max_protection = maxprot;
@@ -1451,7 +1453,9 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 * special case: handle mappings to anonymous kernel objects.
 		 * we want to free these pages right away...
 		 */
-		if (map->flags & VM_MAP_INTRSAFE) {
+		if (UVM_ET_ISHOLE(entry)) {
+			/* nothing to do! */
+		} else if (map->flags & VM_MAP_INTRSAFE) {
 			uvm_km_pgremove_intrsafe(entry->start, entry->end);
 			pmap_kremove(entry->start, len);
 		} else if (UVM_ET_ISOBJ(entry) &&

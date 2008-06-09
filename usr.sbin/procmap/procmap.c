@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.27 2007/10/02 14:50:49 kettenis Exp $ */
+/*	$OpenBSD: procmap.c,v 1.28 2008/06/09 20:30:25 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -552,11 +552,12 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		printf(" end = %lx,", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
 		printf("    offset = %lx,", (unsigned long)vme->offset);
-		printf(" etype = %x <%s%s%s%s >,", vme->etype,
+		printf(" etype = %x <%s%s%s%s%s >,", vme->etype,
 		    vme->etype & UVM_ET_OBJ ? " OBJ" : "",
 		    vme->etype & UVM_ET_SUBMAP ? " SUBMAP" : "",
 		    vme->etype & UVM_ET_COPYONWRITE ? " COW" : "",
-		    vme->etype & UVM_ET_NEEDSCOPY ? " NEEDSCOPY" : "");
+		    vme->etype & UVM_ET_NEEDSCOPY ? " NEEDSCOPY" : "",
+		    vme->etype & UVM_ET_HOLE ? " HOLE" : "");
 		printf(" protection = %x,\n", vme->protection);
 		printf("    max_protection = %x,", vme->max_protection);
 		printf(" inheritance = %d,", vme->inheritance);
@@ -811,7 +812,9 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	    D(vmspace, vmspace)->vm_dsize * getpagesize() / 2 <
 	    (vme->end - vme->start)) {
 		name = "  [ heap ]";
-	} else
+	} else if (UVM_ET_ISHOLE(vme))
+		name = "  [ hole ]";
+	else
 		name = "  [ anon ]";
 
 	return (name);

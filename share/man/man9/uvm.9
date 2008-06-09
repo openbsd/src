@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.34 2008/05/06 16:26:07 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.35 2008/06/09 20:30:22 miod Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: May 6 2008 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -257,6 +257,7 @@ can take are:
 #define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
 #define UVM_FLAG_AMAPPAD 0x100000 /* bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
+#define UVM_FLAG_HOLE    0x400000 /* no backend */
 .Ed
 .Pp
 The
