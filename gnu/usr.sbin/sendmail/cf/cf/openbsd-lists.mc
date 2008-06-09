@@ -8,7 +8,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.17 2008/04/02 15:03:01 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.18 2008/06/09 14:47:01 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -20,6 +20,9 @@ define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
 define(`confQUEUE_LA', `6')dnl
 define(`confREFUSE_LA', `20')dnl
+dnl
+dnl Disable ident queries
+define(`confTO_IDENT', `0')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.

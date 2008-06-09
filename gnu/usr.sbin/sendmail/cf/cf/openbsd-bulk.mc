@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-bulk.mc,v 1.3 2008/04/02 15:03:01 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-bulk.mc,v 1.4 2008/06/09 14:47:01 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -17,6 +17,9 @@ define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
 define(`confQUEUE_LA', `25')dnl
 define(`confREFUSE_LA', `100')dnl
+dnl
+dnl Disable ident queries
+define(`confTO_IDENT', `0')dnl
 dnl
 dnl Some alternate paths so we don't conflict with sendmail on port 25
 define(`confPID_FILE', `/var/run/bulkmail.pid')dnl
@@ -34,10 +37,9 @@ define(`confWORK_RECIPIENT_FACTOR', `0')dnl
 define(`confWORK_CLASS_FACTOR', `0')dnl
 define(`confRETRY_FACTOR', `90000')dnl
 dnl
-dnl One queue group, many dirs, max 80 runners
-define(`confMAX_QUEUE_CHILDREN', `80')
+dnl One queue group, many dirs, max 90 runners
+define(`confMAX_QUEUE_CHILDREN', `90')
 QUEUE_GROUP(`mqueue', `P=/var/spool/mqueue/bulk*, R=5, r=10, F=f I=1')dnl
-dnl QUEUE_GROUP(`retry', `P=/var/spool/mqueue/fail*, R=5, r=10, F=f I=5 N=4')dnl
 dnl
 dnl Add a prefix to differentiate outgoing bulk messages from incoming ones
 define(`confPROCESS_TITLE_PREFIX', `bulk')dnl
@@ -55,9 +57,6 @@ define(`confTO_HOSTSTATUS', `30m')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)dnl
-dnl
-dnl No need to do DNS lookups on addresses, they've already been done
-FEATURE(nocanonify)dnl
 dnl
 dnl Wait a day before sending mail about deferred messages
 define(`confTO_QUEUEWARN', `1d')dnl
@@ -96,8 +95,8 @@ MAILER(local)dnl
 MAILER(smtp)dnl
 dnl
 dnl Only accept connections from localhost on port 24, use ipv6 or ipv4
-dnl for delivery.
-DAEMON_OPTIONS(`Family=inet6, address=::1, Name=MTA6, Port=24, M=OS')dnl
-DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Name=MTA, Port=24, M=S')dnl
+dnl for delivery and disable canonification.
+DAEMON_OPTIONS(`Family=inet6, address=::1, Name=MTA6, Port=24, M=COS')dnl
+DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Name=MTA, Port=24, M=CS')dnl
 CLIENT_OPTIONS(`Family=inet6, Address=::')dnl
 CLIENT_OPTIONS(`Family=inet, Address=0.0.0.0')dnl
