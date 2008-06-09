@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.37 2007/06/01 23:42:35 pedro Exp $	*/
+/*	$OpenBSD: setup.c,v 1.38 2008/06/09 21:56:06 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.37 2007/06/01 23:42:35 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.38 2008/06/09 21:56:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ long numdirs, listmax, inplast;
  * Possible locations for the superblock.
  */
 static const int sbtry[] = SBLOCKSEARCH;
+/* locations the 1st alternate sb can be at */
+static const int altsbtry[] = { 32, 64, 128, 144, 160, 192, 256 };
 
 int
 setup(char *dev)
@@ -132,6 +134,14 @@ setup(char *dev)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
+		for (i = 0; i < sizeof(altsbtry) / sizeof(altsbtry[0]); i++) {
+			bflag = altsbtry[i];
+			/* proto partially setup by calcsb */
+			if (readsb(0) != 0 &&
+			    proto.fs_fsize == sblock.fs_fsize &&
+			    proto.fs_bsize == sblock.fs_bsize)
+				goto found;
+		}
 		for (cg = 0; cg < proto.fs_ncg; cg++) {
 			bflag = fsbtodb(&proto, cgsblock(&proto, cg));
 			if (readsb(0) != 0)
@@ -147,6 +157,7 @@ setup(char *dev)
 			    "INFORMATION; SEE fsck_ffs(8).");
 			return(0);
 		}
+found:
 		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
@@ -577,7 +588,7 @@ readsb(int listerr)
 			}
 		}
 		badsb(listerr,
-		    "VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
+		    "VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN LAST ALTERNATE");
 		return (0);
 	}
 out:
