@@ -1,4 +1,4 @@
-/*	$OpenBSD: videovar.h,v 1.3 2008/05/25 07:47:47 mglocker Exp $	*/
+/*	$OpenBSD: videovar.h,v 1.4 2008/06/09 20:51:31 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -27,6 +27,7 @@ struct video_softc {
 
 	int			 sc_fsize;
 	uint8_t			*sc_fbuffer;
+	int			 sc_start_read;
 };
 
 #endif /* _SYS_DEV_VIDEOVAR_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.28 2008/06/09 05:49:10 robert Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.29 2008/06/09 20:51:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -101,6 +101,7 @@ void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
 int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
+int		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 #ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
@@ -151,6 +152,7 @@ caddr_t		uvideo_mappage(void *, off_t, int);
  * Other hardware interface related functions
  */
 int		uvideo_get_bufsize(void *);
+void		uvideo_start_read(void *);
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -188,7 +190,8 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_streamon,	/* VIDIOC_STREAMON */
 	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
 	uvideo_mappage,		/* mmap */
-	uvideo_get_bufsize	/* read */
+	uvideo_get_bufsize,	/* read */
+	uvideo_start_read	/* start stream for read */
 };
 
 int
@@ -261,7 +264,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 		return(EIO);
 	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
 #endif
-	//uvideo_vs_start(sc);
+	sc->sc_mmap_flag = 0;
 
 	return (0);
 }
@@ -1214,16 +1217,13 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 			usb_add_task(sc->sc_udev, &sc->sc_task_write);
 #endif
-#if 0
-			/*
-			 * Copy video frame to upper layer buffer and call
-			 * upper layer interrupt.
-			 */
-			*sc->sc_uplayer_fsize = fb->offset;
-			bcopy(fb->buf, sc->sc_uplayer_fbuffer, fb->offset);
-			sc->sc_uplayer_intr(sc->sc_uplayer_arg);
-#endif
-			uvideo_mmap_queue(sc, fb->buf, fb->offset);
+			if (sc->sc_mmap_flag) {
+				/* mmap */
+				uvideo_mmap_queue(sc, fb->buf, fb->offset);
+			} else {
+				/* read */
+				uvideo_read(sc, fb->buf, fb->offset);
+			}
 		} else {
 			DPRINTF(1, "%s: %s: sample too large, skipped!\n",
 			    DEVNAME(sc), __func__);
@@ -1268,6 +1268,20 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 		sc->sc_mmap_cur = 0;
 
 	wakeup(sc);
+
+	return (0);
+}
+
+int
+uvideo_read(struct uvideo_softc *sc, uint8_t *buf, int len)
+{
+	/*
+	 * Copy video frame to upper layer buffer and call
+	 * upper layer interrupt.
+	 */
+	*sc->sc_uplayer_fsize = len;
+	bcopy(buf, sc->sc_uplayer_fbuffer, len);
+	sc->sc_uplayer_intr(sc->sc_uplayer_arg);
 
 	return (0);
 }
@@ -1939,11 +1953,25 @@ uvideo_get_bufsize(void *v)
 	return (sc->sc_video_buf_size);
 }
 
+void
+uvideo_start_read(void *v)
+{
+	struct uvideo_softc *sc = v;
+
+	if (sc->sc_mmap_flag)
+		sc->sc_mmap_flag = 0;
+
+	uvideo_vs_start(sc);
+}
+
 caddr_t
 uvideo_mappage(void *v, off_t off, int prot)
 {
 	struct uvideo_softc *sc = v;
 	caddr_t p;
+
+	if (!sc->sc_mmap_flag)
+		sc->sc_mmap_flag = 1;
 
 	p = sc->sc_mmap_buffer + off;
 

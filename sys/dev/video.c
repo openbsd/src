@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.9 2008/06/09 17:13:35 robert Exp $	*/
+/*	$OpenBSD: video.c,v 1.10 2008/06/09 20:51:31 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -92,6 +92,8 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	     sc->hw_if == NULL)
 		return (ENXIO);
 
+	sc->sc_start_read = 0;
+
 	if (sc->hw_if->open != NULL)
 		return (sc->hw_if->open(sc->hw_hdl, flags, &sc->sc_fsize,
 		    sc->sc_fbuffer, video_intr, sc));
@@ -125,6 +127,12 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->sc_dying)
 		return (EIO);
+
+	/* start the stream */
+	if (sc->hw_if->start_read && !sc->sc_start_read) {
+		sc->sc_start_read = 1;
+		sc->hw_if->start_read(sc->hw_hdl);
+	}
 
 	DPRINTF(("resid=%d\n", uio->uio_resid));
 
