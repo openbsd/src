@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.27 2008/06/08 20:11:30 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.28 2008/06/09 05:49:10 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -147,6 +147,11 @@ int		uvideo_streamon(void *, int);
 int		uvideo_try_fmt(void *, struct v4l2_format *);
 caddr_t		uvideo_mappage(void *, off_t, int);
 
+/*
+ * Other hardware interface related functions
+ */
+int		uvideo_get_bufsize(void *);
+
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
 const struct cfattach uvideo_ca = {
@@ -182,7 +187,8 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_dqbuf,		/* VIDIOC_DQBUF */
 	uvideo_streamon,	/* VIDIOC_STREAMON */
 	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
-	uvideo_mappage		/* mmap */
+	uvideo_mappage,		/* mmap */
+	uvideo_get_bufsize	/* read */
 };
 
 int
@@ -885,6 +891,8 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
 
+	sc->sc_video_buf_size = UGETDW(pc->dwMaxVideoFrameSize);
+
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
@@ -895,7 +903,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
-	    UGETDW(pc->dwMaxVideoFrameSize));
+	    sc->sc_video_buf_size);
 	DPRINTF(1, "dwMaxPayloadTransferSize=%d (bytes)\n",
 	    UGETDW(pc->dwMaxPayloadTransferSize));
 
@@ -936,7 +944,7 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	/* don't overflow the upper layer sample buffer */
-	if (VIDEO_BUF_SIZE < fb->buf_size) {
+	if (sc->sc_video_buf_size < fb->buf_size) {
 		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
@@ -1921,6 +1929,14 @@ uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 		return (EINVAL);
 
 	return (0);
+}
+
+int
+uvideo_get_bufsize(void *v)
+{
+	struct uvideo_softc *sc = v;
+
+	return (sc->sc_video_buf_size);
 }
 
 caddr_t

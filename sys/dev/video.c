@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.7 2008/06/07 22:14:57 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.8 2008/06/09 05:49:10 robert Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -63,13 +63,17 @@ videoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct video_softc *sc = (void *) self;
 	struct video_attach_args *sa = aux;
+	int video_buf_size = 0;
 
 	printf("\n");
 	sc->hw_if = sa->hwif;
 	sc->hw_hdl = sa->hdl;
 	sc->sc_dev = parent;
 
-	sc->sc_fbuffer = malloc(VIDEO_BUF_SIZE, M_DEVBUF, M_NOWAIT);
+	if (sc->hw_if->get_bufsize)
+		video_buf_size = (sc->hw_if->get_bufsize)(sc->hw_hdl);
+
+	sc->sc_fbuffer = malloc(video_buf_size, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_fbuffer == NULL) {
 		printf("video: could not allocate frame buffer\n");
 		return;
