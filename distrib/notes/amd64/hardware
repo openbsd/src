@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.87 2008/05/27 07:11:22 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.88 2008/06/09 06:18:38 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -496,6 +496,8 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Compex WLU108AG
 		    Compex WLU108G
 		    D-Link DWL-G132
+		    IODATA WN-G54/US
+		    MELCO WLI-U2-KAMG54
 		    Netgear WG111T
 		    Netgear WG111U
 		    Netgear WPN111

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.132 2008/04/15 20:23:53 miod Exp $
+dnl	$OpenBSD: hardware,v 1.133 2008/06/09 06:18:38 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -322,6 +322,8 @@ Supported devices {:-include-:}:
 		    Compex WLU108AG
 		    Compex WLU108G
 		    D-Link DWL-G132
+		    IODATA WN-G54/US
+		    MELCO WLI-U2-KAMG54
 		    Netgear WG111T
 		    Netgear WG111U
 		    Netgear WPN111

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.92 2008/04/01 14:40:58 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.93 2008/06/09 06:18:38 jmc Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -406,6 +406,8 @@ Supported Peripherals:
 		    Compex WLU108AG
 		    Compex WLU108G
 		    D-Link DWL-G132
+		    IODATA WN-G54/US
+		    MELCO WLI-U2-KAMG54
 		    Netgear WG111T
 		    Netgear WG111U
 		    Netgear WPN111
