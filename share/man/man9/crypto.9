@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.30 2008/06/09 16:14:00 djm Exp $
+.\"	$OpenBSD: crypto.9,v 1.31 2008/06/09 18:55:58 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -195,7 +195,7 @@ If no IV is explicitly passed (see below on details), a random IV is used
 by the device driver processing the request.
 .Pp
 In the case of the CRYPTO_AES_XTS transform, the IV should be provided
-as 64 bit block number in host byte order.
+as a 64-bit block number in host byte order.
 .It Fa cri_next
 Contains a pointer to another
 .Fa cryptoini
