@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2008/06/09 16:55:20 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2008/06/09 20:32:56 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -3624,6 +3624,31 @@ pmap_free_page(paddr_t pa, struct pmap *pm)
 
 	pg->wire_count = 0;
 	uvm_pagefree(pg);
+}
+
+void
+pmap_remove_holes(struct vm_map *map)
+{
+	vaddr_t shole, ehole;
+
+	/*
+	 * Although the hardware only supports 44-bit virtual addresses
+	 * (and thus a hole from 1 << 43 to -1 << 43), this pmap
+	 * implementation itself only supports 43-bit virtual addresses,
+	 * so we have to narrow the hole a bit more.
+	 */
+	shole = 1L << (HOLESHIFT - 1);
+	ehole = -1L << (HOLESHIFT - 1);
+
+	shole = ulmax(vm_map_min(map), shole);
+	ehole = ulmin(vm_map_max(map), ehole);
+
+	if (ehole <= shole)
+		return;
+
+	(void)uvm_map(map, &shole, ehole - shole, NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	      UVM_ADV_RANDOM, UVM_FLAG_NOMERGE | UVM_FLAG_HOLE));
 }
 
 #ifdef DDB
