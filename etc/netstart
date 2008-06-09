@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.120 2008/06/09 22:46:42 deraadt Exp $
+#	$OpenBSD: netstart,v 1.121 2008/06/09 22:56:42 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -36,6 +36,10 @@ ifstart() {
 	fi
 
 	file=/etc/hostname.$if
+	if ! [ -f $file ]; then
+		echo "netstart: $file: No such file or directory"
+		return
+	fi
 	if [ "$(stat -f "%SLp %u %g" $file)" != "--- 0 0" ]; then
 		echo "WARNING: $file is insecure, fixing permissions"
 		chmod o-rwx $file
