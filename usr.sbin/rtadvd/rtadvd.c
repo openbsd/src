@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.35 2008/06/08 21:08:57 rainer Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.36 2008/06/09 22:53:24 rainer Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <util.h>
+#include <pwd.h>
 
 #include "rtadvd.h"
 #include "rrenum.h"
@@ -153,6 +154,7 @@ main(argc, argv)
 	int maxfd = 0;
 	struct timeval *timeout;
 	int i, ch;
+	struct passwd *pw;
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -226,6 +228,17 @@ main(argc, argv)
 			maxfd = rtsock;
 	} else
 		rtsock = -1;
+
+	if ((pw = getpwnam(RTADVD_USER)) == NULL)
+		fatal("getpwnam");
+	if (chroot(pw->pw_dir) == -1)
+		fatal("chroot");
+	if (chdir("/") == -1)
+		fatal("chdir(\"/\")");
+	if (setgroups(1, &pw->pw_gid) == -1 ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("cannot drop privileges");
 
 	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdsetp = malloc(fdmasks)) == NULL) {
