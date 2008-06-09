@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.81 2008/06/02 09:58:15 yuo Exp $ */
+/*	$OpenBSD: ehci.c,v 1.82 2008/06/09 23:21:48 kettenis Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -190,8 +190,6 @@ void		ehci_noop(usbd_pipe_handle pipe);
 
 int		ehci_str(usb_string_descriptor_t *, int, const char *);
 void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
-void		ehci_pcd_able(ehci_softc_t *, int);
-void		ehci_pcd_enable(void *);
 void		ehci_disown(ehci_softc_t *, int, int);
 
 ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
@@ -468,7 +466,6 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_async_head = sqh;
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR, sqh->physaddr | EHCI_LINK_QH);
 
-	timeout_set(&sc->sc_tmo_pcd, ehci_pcd_enable, sc);
 	timeout_set(&sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 
 	rw_init(&sc->sc_doorbell_lock, "ehcidb");
@@ -577,13 +574,6 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 	if (eintrs & EHCI_STS_PCD) {
 		ehci_pcd(sc, sc->sc_intrxfer);
-		/*
-		 * Disable PCD interrupt for now, because it will be
-		 * on until the port has been reset.
-		 */
-		ehci_pcd_able(sc, 0);
-		/* Do not allow RHSC interrupts > 1 per second */
-		timeout_add(&sc->sc_tmo_pcd, hz);
 		eintrs &= ~EHCI_STS_PCD;
 	}
 
@@ -598,25 +588,6 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 
 	return (1);
-}
-
-void
-ehci_pcd_able(ehci_softc_t *sc, int on)
-{
-	DPRINTFN(4, ("ehci_pcd_able: on=%d\n", on));
-	if (on)
-		sc->sc_eintrs |= EHCI_STS_PCD;
-	else
-		sc->sc_eintrs &= ~EHCI_STS_PCD;
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
-}
-
-void
-ehci_pcd_enable(void *v_sc)
-{
-	ehci_softc_t *sc = v_sc;
-
-	ehci_pcd_able(sc, 1);
 }
 
 void
@@ -897,7 +868,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 		return (rv);
 
 	timeout_del(&sc->sc_tmo_intrlist);
-	timeout_del(&sc->sc_tmo_pcd);
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
@@ -1855,21 +1825,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			err = USBD_IOERROR;
 			goto ret;
 		}
-#if 0
-		switch(value) {
-		case UHF_C_PORT_CONNECTION:
-		case UHF_C_PORT_ENABLE:
-		case UHF_C_PORT_SUSPEND:
-		case UHF_C_PORT_OVER_CURRENT:
-		case UHF_C_PORT_RESET:
-			/* Enable RHSC interrupt if condition is cleared. */
-			if ((OREAD4(sc, port) >> 16) == 0)
-				ehci_pcd_able(sc, 1);
-			break;
-		default:
-			break;
-		}
-#endif
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 		if ((value & 0xff) != 0) {
