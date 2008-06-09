@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slattach.8,v 1.16 2008/06/09 22:06:59 mbalmer Exp $
+.\"	$OpenBSD: slattach.8,v 1.17 2008/06/09 23:01:22 jmc Exp $
 .\"	$NetBSD: slattach.8,v 1.12 1995/03/18 15:01:12 cgd Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -42,17 +42,17 @@
 .Op Fl s Ar baudrate
 .Ar ttyname
 .Sh DESCRIPTION
-.Nm
-is used to assign a tty line to a network interface,
-and will attach the named tty line to the first
-available slipdevice that is configured and up.
-.Pp
 The
 .Nm
 command is deprecated.
 Please use the
 .Xr ldattach 8
 command instead.
+.Pp
+.Nm
+is used to assign a tty line to a network interface,
+and will attach the named tty line to the first
+available slipdevice that is configured and up.
 .Pp
 The following operands are supported by
 .Nm slattach :
@@ -116,10 +116,10 @@ Messages indicating the specified interface does not exist, the
 requested address is unknown, the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
-.Xr ldattach 8 ,
 .Xr netstat 1 ,
 .Xr netintro 4 ,
 .Xr ifconfig 8 ,
+.Xr ldattach 8 ,
 .Xr rc 8
 .Sh HISTORY
 The
