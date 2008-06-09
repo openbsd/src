@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.10 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.11 2008/06/09 16:21:33 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -142,10 +142,10 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot get fan0123div register\n");
 		return;
 	}
-	sc->sc_fanmul[0] = (1 << (data >> 0) & 0x3);
-	sc->sc_fanmul[1] = (1 << (data >> 2) & 0x3);
-	sc->sc_fanmul[2] = (1 << (data >> 4) & 0x3);
-	sc->sc_fanmul[3] = (1 << (data >> 6) & 0x3);
+	sc->sc_fanmul[0] = (1 << ((data >> 0) & 0x3));
+	sc->sc_fanmul[1] = (1 << ((data >> 2) & 0x3));
+	sc->sc_fanmul[2] = (1 << ((data >> 4) & 0x3));
+	sc->sc_fanmul[3] = (1 << ((data >> 6) & 0x3));
 
 	cmd = ADM1026_FAN4567DIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -154,10 +154,10 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot get fan0123div register\n");
 		return;
 	}
-	sc->sc_fanmul[4] = (1 << (data >> 0) & 0x3);
-	sc->sc_fanmul[5] = (1 << (data >> 2) & 0x3);
-	sc->sc_fanmul[6] = (1 << (data >> 4) & 0x3);
-	sc->sc_fanmul[7] = (1 << (data >> 6) & 0x3);
+	sc->sc_fanmul[4] = (1 << ((data >> 0) & 0x3));
+	sc->sc_fanmul[5] = (1 << ((data >> 2) & 0x3));
+	sc->sc_fanmul[6] = (1 << ((data >> 4) & 0x3));
+	sc->sc_fanmul[7] = (1 << ((data >> 6) & 0x3));
 
 	iic_release_bus(sc->sc_tag, 0);
 
@@ -233,7 +233,7 @@ fanval(struct ksensor *sens, int mul, u_int8_t data)
 	if (tmp == 0)
 		sens->flags |= SENSOR_FINVALID;
 	else
-		sens->value = 1350000 / tmp;
+		sens->value = 1630000 / tmp;
 }
 
 void
