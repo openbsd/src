@@ -2202,3 +2202,4 @@
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/idgen.ph

@@ -2337,3 +2337,4 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/idgen.ph

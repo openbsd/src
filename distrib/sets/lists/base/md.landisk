@@ -2350,3 +2350,4 @@
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
+./usr/libdata/perl5/site_perl/sh-openbsd/crypto/idgen.ph

@@ -2385,3 +2385,4 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/idgen.ph

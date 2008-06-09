@@ -2239,3 +2239,4 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/idgen.ph

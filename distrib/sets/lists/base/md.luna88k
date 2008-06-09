@@ -2224,3 +2224,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/idgen.ph

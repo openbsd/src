@@ -2340,7 +2340,6 @@
 ./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
-./usr/share/man/cat8/nmeaattach.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0

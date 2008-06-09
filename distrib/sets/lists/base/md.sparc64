@@ -2338,3 +2338,4 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/idgen.ph

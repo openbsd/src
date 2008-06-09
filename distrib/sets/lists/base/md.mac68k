@@ -2289,3 +2289,4 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/idgen.ph

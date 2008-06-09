@@ -68,6 +68,7 @@
 ./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
+./usr/include/crypto/idgen.h
 ./usr/include/crypto/md5.h
 ./usr/include/crypto/michael.h
 ./usr/include/crypto/podd.h
@@ -5809,6 +5810,9 @@
 ./usr/share/man/cat9/hook_establish.0
 ./usr/share/man/cat9/hz.0
 ./usr/share/man/cat9/hzto.0
+./usr/share/man/cat9/idgen.0
+./usr/share/man/cat9/idgen32.0
+./usr/share/man/cat9/idgen32_init.0
 ./usr/share/man/cat9/ieee80211.0
 ./usr/share/man/cat9/ieee80211_add_rates.0
 ./usr/share/man/cat9/ieee80211_add_xrates.0
