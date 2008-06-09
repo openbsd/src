@@ -1,6 +1,6 @@
-.\"	$OpenBSD: nmeaattach.8,v 1.6 2007/05/31 19:19:46 jmc Exp $
+.\"	$OpenBSD: nmeaattach.8,v 1.7 2008/06/09 22:07:29 mbalmer Exp $
 .\"
-.\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+.\" Copyright (c) 2006 - 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt NMEAATTACH 8
 .Os
 .Sh NAME
@@ -30,6 +30,15 @@
 .Nm
 is used to designate a serial line with a device that outputs NMEA 0183 data as
 a source of timedelta sensors.
+.Pp
+The
+.Nm
+command is deprecated and might be removed from a later version of
+.Ox .
+Please use the
+.Xr ldattach 8
+command instead.
+.Pp
 The following operands are supported by
 .Nm nmeaattach :
 .Bl -tag -width Ar
@@ -84,6 +93,7 @@ To detach the interface, kill off the
 .Nm
 process.
 .Sh SEE ALSO
+.Xr ldattach 8,
 .Xr nmea 4 ,
 .Xr tty 4
 .Sh HISTORY
