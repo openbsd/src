@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.19 2006/03/24 22:27:07 otto Exp $	*/
+/*	$OpenBSD: if.c,v 1.20 2008/06/09 21:53:57 reyk Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ interface_status(struct ifinfo *ifinfo)
 	if (ifmr.ifm_status & IFM_AVALID) {
 		switch (ifmr.ifm_active & IFM_NMASK) {
 		case IFM_ETHER:
+		case IFM_IEEE80211:
 			if (ifmr.ifm_status & IFM_ACTIVE)
 				goto active;
 			else
