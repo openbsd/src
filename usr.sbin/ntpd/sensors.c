@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.37 2008/06/09 16:52:04 deraadt Exp $ */
+/*	$OpenBSD: sensors.c,v 1.38 2008/06/09 18:30:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -129,8 +129,10 @@ sensor_add(int sensordev, char *dxname)
 
 	if (cs->refstr == NULL)
 		memcpy(&s->refstr, "HARD", sizeof(s->refstr));
-	else
-		memcpy(&s->refstr, cs->refstr, sizeof(s->refstr));
+	else {
+		s->refstr = 0;
+		strncpy((char *)&s->refstr, cs->refstr, sizeof(s->refstr));
+	}
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
