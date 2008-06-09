@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.10 2008/02/28 11:22:12 mbalmer Exp $
+.\"	$OpenBSD: ldattach.8,v 1.11 2008/06/09 21:06:10 mbalmer Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2008 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt LDATTACH 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd attach a line discipline to a serial line
 .Sh SYNOPSIS
 .Nm ldattach
-.Op Fl 27dehmo
+.Op Fl 27dehmop
 .Op Fl s Ar baudrate
 .Op Fl t Ar cond
 .Ar discipline
@@ -59,6 +59,13 @@ Maintain modem control signals after closing the line.
 Specifically, this disables HUPCL.
 .It Fl o
 Use odd parity.
+.It Fl p 
+Pass the data received from
+.Ar device
+to the master device of a 
+.Xr pty 4
+pair and vice versa.
+The name of the slave device is written to standard output.
 .It Fl s Ar baudrate
 Specifies the speed of the connection.
 If not specified, the default of 9600 baud is used
@@ -153,6 +160,7 @@ tty01	"/sbin/ldattach nmea"	unknown	on softcar
 .Sh SEE ALSO
 .Xr msts 4 ,
 .Xr nmea 4 ,
+.Xr pty 4 ,
 .Xr sl 4 ,
 .Xr tty 4 ,
 .Xr ttys 5 ,

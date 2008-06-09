@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.5 2008/02/28 11:22:12 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.6 2008/06/09 21:06:10 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -21,14 +21,18 @@
  * the commandline or from init(8) (using entries in /etc/ttys).
  */
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/limits.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/ttycom.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +40,12 @@
 #include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
+#include <util.h>
+
+#include "atomicio.h"
 
 __dead void	usage(void);
+void		relay(int, int);
 void		coroner(int);
 
 volatile sig_atomic_t dying = 0;
@@ -47,9 +55,51 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-27dehmo] [-s baudrate] "
+	fprintf(stderr, "usage: %s [-27dehmop] [-s baudrate] "
 	    "[-t cond] discipline device\n", __progname);
 	exit(1);
+}
+
+/* relay data between two file descriptors */
+void
+relay(int device, int pty)
+{
+	struct pollfd pfd[2];
+	int nfds, n, nread;
+	char buf[128];
+
+	pfd[0].fd = device;
+	pfd[0].events = POLLRDNORM;
+	pfd[1].fd = pty;
+	pfd[1].events = POLLRDNORM;
+
+	while (!dying) {
+		nfds = poll(pfd, 2, INFTIM);
+		if (nfds == -1) {
+			syslog(LOG_ERR, "polling error");
+			exit(1);
+		} 
+		if (nfds == 0)
+			continue;
+
+		for (n = 0; n < 2; n++) {
+			if (!(pfd[n].revents & POLLRDNORM))
+				continue;
+
+			nread = read(pfd[n].fd, buf, sizeof(buf));
+			if (nread == -1) {
+				syslog(LOG_ERR, "error reading from %s: %m",
+				    n ? "pty" : "device");
+				exit(1);
+			}
+			if (nread == 0) {
+				syslog(LOG_ERR, "eof during read from %s: %m",
+				     n ? "pty" : "device");
+				exit(1);
+			}
+			atomicio(vwrite, pfd[1 - n].fd, buf, nread);
+		}
+	}
 }
 
 int
@@ -60,17 +110,17 @@ main(int argc, char *argv[])
 	const char *errstr;
 	sigset_t sigset;
 	pid_t ppid;
-	int ch, fd, ldisc, nodaemon = 0;
-	int  bits = 0, parity = 0, stop = 0, flowcl = 0, hupcl = 1;
+	int ch, fd, master = -1, slave, pty = 0, ldisc, nodaemon = 0;
+	int bits = 0, parity = 0, stop = 0, flowcl = 0, hupcl = 1;
 	speed_t speed = 0;
-	char devn[32], *dev, *disc;
+	char devn[32], ptyn[32], *dev, *disc;
 
 	tstamps.ts_set = tstamps.ts_clr = 0;
 
 	if ((ppid = getppid()) == 1)
 		nodaemon = 1;
 
-	while ((ch = getopt(argc, argv, "27dehmos:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "27dehmops:t:")) != -1) {
 		switch (ch) {
 		case '2':
 			stop = 2;
@@ -92,6 +142,9 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			parity = 'o';
+			break;
+		case 'p':
+			pty = 1;
 			break;
 		case 's':
 			speed = (speed_t)strtonum(optarg, 0, UINT_MAX, &errstr);
@@ -134,8 +187,7 @@ main(int argc, char *argv[])
 	disc = *argv++;
 	dev = *argv;
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
-		(void)snprintf(devn, sizeof(devn),
-		    "%s%s", _PATH_DEV, dev);
+		(void)snprintf(devn, sizeof(devn), "%s%s", _PATH_DEV, dev);
 		dev = devn;
 	}
 
@@ -204,7 +256,7 @@ main(int argc, char *argv[])
 	if (ioctl(fd, TIOCSDTR, 0) < 0)
 		warn("TIOCSDTR");
 	if (ioctl(fd, TIOCSETD, &ldisc) < 0) {
-		syslog(LOG_ERR, "can't set the %s line discipline on %s", disc,
+		syslog(LOG_ERR, "can't attach %s line discipline on %s", disc,
 		    dev);
 		goto bail_out;
 	}
@@ -233,16 +285,38 @@ main(int argc, char *argv[])
 		goto bail_out;
 	}
 
-	if (!nodaemon && daemon(0, 0))
-		errx(1, "can't daemonize");
+	/*
+	 * open a pty(4) pair to pass the data if the -p option has been
+	 * given on the commandline.
+	 */
+	if (pty) {
+		if (openpty(&master, &slave, ptyn, NULL, NULL))
+			errx(1, "can't open a pty");
+		close(slave);
+		printf("%s\n", ptyn);
+	}
+	if (nodaemon)
+		openlog("ldattach", LOG_PID | LOG_CONS | LOG_PERROR,
+		    LOG_DAEMON);
+	else {
+		openlog("ldattach", LOG_PID | LOG_CONS, LOG_DAEMON);
+		if (daemon(0, 0))
+			errx(1, "can't daemonize");
+	}
 
 	syslog(LOG_INFO, "attach %s on %s", disc, dev);
 	signal(SIGHUP, coroner);
 	signal(SIGTERM, coroner);
 
-	sigemptyset(&sigset);
-	while (!dying)
-		sigsuspend(&sigset);
+	if (master != -1) {
+		syslog(LOG_INFO, "passing data to %s", ptyn);
+		relay(fd, master);
+	} else {
+		sigemptyset(&sigset);
+
+		while (!dying)
+			sigsuspend(&sigset);
+	}
 
 bail_out:
 	if (ppid == 1)
