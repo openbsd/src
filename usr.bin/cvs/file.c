@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.240 2008/06/08 13:34:22 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.241 2008/06/09 17:05:49 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -596,17 +596,17 @@ walkrepo:
 	    (cmdp->cmd_flags & CVS_LOCK_REPO))
 		cvs_repository_unlock(repo);
 
-	cvs_file_walklist(&dl, cr);
-	cvs_file_freelist(&dl);
-
-	if (cr->leavedir != NULL)
-		cr->leavedir(cf);
-
 	if (cvs_directory_tag != NULL && cmdp->cmd_flags & CVS_USE_WDIR) {
 		cvs_write_tagfile(cf->file_path, cvs_directory_tag, NULL);
 		xfree(cvs_directory_tag);
 		cvs_directory_tag = NULL;
 	}
+
+	cvs_file_walklist(&dl, cr);
+	cvs_file_freelist(&dl);
+
+	if (cr->leavedir != NULL)
+		cr->leavedir(cf);
 }
 
 void
