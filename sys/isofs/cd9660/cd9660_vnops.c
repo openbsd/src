@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.45 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.46 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -215,8 +215,8 @@ cd9660_access(v)
 	struct vop_access_args *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
 
-	return (vaccess(ip->inode.iso_mode & ALLPERMS, ip->inode.iso_uid,
-	    ip->inode.iso_gid, ap->a_mode, ap->a_cred));
+	return (vaccess(ap->a_vp->v_type, ip->inode.iso_mode & ALLPERMS,
+	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
 }
 
 int

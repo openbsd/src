@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.83 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.84 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3001,8 +3001,8 @@ nfsspec_access(v)
 	if (error)
 		return (error);
 
-	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
-	    ap->a_cred));
+	return (vaccess(vp->v_type, va.va_mode, va.va_uid, va.va_gid,
+	    ap->a_mode, ap->a_cred));
 }
 
 /* ARGSUSED */

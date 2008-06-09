@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.44 2008/05/09 10:22:50 thib Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.45 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -620,8 +620,8 @@ procfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_p)) != 0)
 		return (error);
 
-	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
-			ap->a_cred));
+	return (vaccess(ap->a_vp->v_type, va.va_mode, va.va_uid, va.va_gid,
+			ap->a_mode, ap->a_cred));
 }
 
 /*

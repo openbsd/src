@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_ipc.c,v 1.5 2005/12/13 10:33:14 jsg Exp $	*/
+/*	$OpenBSD: sysv_ipc.c,v 1.6 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
 
 /*
@@ -54,8 +54,8 @@ ipcperm(struct ucred *cred, struct ipc_perm *perm, int mode)
 		return (EPERM);
 	}
 
-	if (vaccess(perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
-	    vaccess(perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
+	if (vaccess(VNON, perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
+	    vaccess(VNON, perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
 		return (0);
 	return (EACCES);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.94 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.95 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ int	cdevvp(dev_t, struct vnode **);
 struct vnode *checkalias(struct vnode *, dev_t, struct mount *);
 int	getnewvnode(enum vtagtype, struct mount *, int (**vops)(void *),
 	    struct vnode **);
-int	vaccess(mode_t, uid_t, gid_t, mode_t, struct ucred *);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
 void	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
 int	vcount(struct vnode *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.66 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.67 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -230,8 +230,8 @@ msdosfs_access(v)
 		dosmode |= (dosmode & S_IROTH) ? S_IXOTH : 0;
 	}
 
-	return (vaccess(dosmode, pmp->pm_uid, pmp->pm_gid, ap->a_mode,
-	    ap->a_cred));
+	return (vaccess(ap->a_vp->v_type, dosmode, pmp->pm_uid, pmp->pm_gid,
+	    ap->a_mode, ap->a_cred));
 }
 
 int

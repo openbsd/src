@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.166 2008/05/07 14:08:37 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.167 2008/06/09 23:38:37 millert Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1520,14 +1520,19 @@ vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
  * while acc_mode and cred are from the VOP_ACCESS parameter list
  */
 int
-vaccess(mode_t file_mode, uid_t uid, gid_t gid, mode_t acc_mode,
-    struct ucred *cred)
+vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
+    mode_t acc_mode, struct ucred *cred)
 {
 	mode_t mask;
 
-	/* User id 0 always gets access. */
-	if (cred->cr_uid == 0)
+	/* User id 0 always gets read/write access. */
+	if (cred->cr_uid == 0) {
+		/* For VEXEC, at least one of the execute bits must be set. */
+		if ((acc_mode & VEXEC) && type != VDIR &&
+		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
+			return EACCES;
 		return 0;
+	}
 
 	mask = 0;
 

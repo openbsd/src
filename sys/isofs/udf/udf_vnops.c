@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.31 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.32 2008/06/09 23:38:37 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -222,8 +222,8 @@ udf_access(void *v)
 
 	mode = udf_permtomode(up);
 
-	return (vaccess(mode, up->u_fentry->uid, up->u_fentry->gid, a_mode,
-	    ap->a_cred));
+	return (vaccess(vp->v_type, mode, up->u_fentry->uid, up->u_fentry->gid,
+	    a_mode, ap->a_cred));
 }
 
 static int mon_lens[2][12] = {
