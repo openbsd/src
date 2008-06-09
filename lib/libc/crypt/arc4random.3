@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.25 2008/06/08 18:37:09 deraadt Exp $
+.\" $OpenBSD: arc4random.3,v 1.26 2008/06/09 06:04:02 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 8 2008 $
+.Dd $Mdocdate: June 9 2008 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -97,9 +97,9 @@ as it avoids "modulo bias" when the upper bound is not a power of two.
 The
 .Fn arc4random_stir
 function reads data using
-.Xr sysctl 2
+.Xr sysctl 3
 from
-.Pa kern.arandom
+.Va kern.arandom
 and uses it to permute the S-Boxes via
 .Fn arc4random_addrandom .
 .Pp
