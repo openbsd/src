@@ -1861,9 +1861,9 @@
 ./usr/share/man/cat5/amd64/boot.conf.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/armish
+./usr/share/man/cat5/armish/boot.conf.0
 ./usr/share/man/cat5/aviion
 ./usr/share/man/cat5/bgpd.conf.0
-./usr/share/man/cat5/boot.conf.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
@@ -1981,6 +1981,7 @@
 ./usr/share/man/cat5/skey.0
 ./usr/share/man/cat5/snmpd.conf.0
 ./usr/share/man/cat5/socppc
+./usr/share/man/cat5/socppc/boot.conf.0
 ./usr/share/man/cat5/spamd.conf.0
 ./usr/share/man/cat5/sparc
 ./usr/share/man/cat5/sparc64
@@ -2082,6 +2083,7 @@
 ./usr/share/man/cat8/apxs.0
 ./usr/share/man/cat8/armish
 ./usr/share/man/cat8/armish/MAKEDEV.0
+./usr/share/man/cat8/armish/boot.0
 ./usr/share/man/cat8/armish/hotplugd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
@@ -2096,7 +2098,6 @@
 ./usr/share/man/cat8/bgplg.0
 ./usr/share/man/cat8/bgplgsh.0
 ./usr/share/man/cat8/bioctl.0
-./usr/share/man/cat8/boot.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bos.0
@@ -2443,6 +2444,7 @@
 ./usr/share/man/cat8/snmpd.0
 ./usr/share/man/cat8/socppc
 ./usr/share/man/cat8/socppc/MAKEDEV.0
+./usr/share/man/cat8/socppc/boot.0
 ./usr/share/man/cat8/socppc/hotplugd.0
 ./usr/share/man/cat8/socppc/mkboot.0
 ./usr/share/man/cat8/spamd-setup.0
