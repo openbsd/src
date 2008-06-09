@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.75 2008/06/09 22:47:42 djm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.76 2008/06/09 22:49:15 djm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
  * Return an unpredictable XID.
  */
 u_int32_t
-nfsm_get_xid(void)
+nfs_get_xid(void)
 {
 	static struct idgen32_ctx nfs_xid_ctx;
 	static int called = 0;
@@ -618,7 +618,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED, &bpos);
 
 	/* Get a new (non-zero) xid */
-	nfs_xid = nfsm_get_xid();
+	nfs_xid = nfs_get_xid();
 
 	*tl++ = req->r_xid = txdr_unsigned(nfs_xid);
 	*tl++ = rpc_call;
