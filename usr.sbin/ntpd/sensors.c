@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.38 2008/06/09 18:30:03 deraadt Exp $ */
+/*	$OpenBSD: sensors.c,v 1.39 2008/06/09 18:30:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -128,17 +128,17 @@ sensor_add(int sensordev, char *dxname)
 	s->sensordevid = sensordev;
 
 	if (cs->refstr == NULL)
-		memcpy(&s->refstr, "HARD", sizeof(s->refstr));
+		memcpy(&s->refid, "HARD", sizeof(s->refid));
 	else {
-		s->refstr = 0;
-		strncpy((char *)&s->refstr, cs->refstr, sizeof(s->refstr));
+		s->refid = 0;
+		strncpy((char *)&s->refid, cs->refstr, sizeof(s->refid));
 	}
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
 	log_debug("sensor %s added (weight %d, correction %.6f, refstr %-4s)",
-	    s->device, s->weight, s->correction / 1e6, &s->refstr);
-	s->refstr = htonl(s->refstr);
+	    s->device, s->weight, s->correction / 1e6, &s->refid);
+	s->refid = htonl(s->refid);
 }
 
 void
@@ -190,8 +190,8 @@ sensor_query(struct ntp_sensor *s)
 	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
 	s->offsets[s->shift].good = 1;
 
-	s->offsets[s->shift].status.refid = s->refstr;
-	s->offsets[s->shift].status.refid4 = s->refstr;
+	s->offsets[s->shift].status.refid = s->refid;
+	s->offsets[s->shift].status.refid4 = s->refid;
 	s->offsets[s->shift].status.stratum = 0;	/* increased when sent out */
 	s->offsets[s->shift].status.rootdelay = 0;
 	s->offsets[s->shift].status.rootdispersion = 0;
