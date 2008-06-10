@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.74 2008/06/10 20:55:02 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.75 2008/06/10 21:25:29 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -843,6 +843,8 @@ pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 void
 pfr_destroy_kentry(struct pfr_kentry *ke)
 {
+	if (ke->pfrke_counters)
+		pool_put(&pfr_kcounters_pl, ke->pfrke_counters);
 	if (ke->pfrke_intrpool)
 		pool_put(&pfr_kentry_pl2, ke);
 	else
