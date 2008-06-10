@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.89 2008/05/24 20:02:19 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.90 2008/06/10 00:02:09 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -733,7 +733,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char buf[32], *p;
 	const char *const *ssp, *sp = NULL;
-	int node0, node, rv, len, ncpus;
+	int node0, node, rv, len;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -781,30 +781,30 @@ extern bus_space_tag_t mainbus_space_tag;
 
 	node = findroot();
 
-	ncpus = 0;
-	for (node = OF_child(node), node0 = 0; node; node = OF_peer(node)) {
+	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (!checkstatus(node))
 			continue;
 
 		/* 
 		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
-		 * a "cmp" node.  Go down one level, but remember
-		 * where we came from, such that we can go up again
-		 * after we've handled both "cpu" nodes.
+		 * a "cmp" node.
 		 */
 		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
 			continue;
 		if (strcmp(buf, "cmp") == 0) {
-			node0 = node;
-			node = OF_child(node0);
+			bzero(&ma, sizeof(ma));
+			ma.ma_node = node;
+			ma.ma_name = buf;
+			getprop(node, "reg", sizeof(*ma.ma_reg),
+			    &ma.ma_nreg, (void **)&ma.ma_reg);
+			config_found(dev, &ma, mbprint);
+			continue;
 		}
 
 		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
 			continue;
 		if (strcmp(buf, "cpu") == 0) {
 			bzero(&ma, sizeof(ma));
-			ma.ma_bustag = mainbus_space_tag;
-			ma.ma_dmatag = &mainbus_dma_tag;
 			ma.ma_node = node;
 			OF_getprop(node, "name", buf, sizeof(buf));
 			if (strcmp(buf, "cpu") == 0)
@@ -813,17 +813,9 @@ extern bus_space_tag_t mainbus_space_tag;
 			getprop(node, "reg", sizeof(*ma.ma_reg),
 			    &ma.ma_nreg, (void **)&ma.ma_reg);
 			config_found(dev, &ma, mbprint);
-			ncpus++;
-		}
-
-		if (node0 && OF_peer(node) == 0) {
-			node = node0;
-			node0 = 0;
+			continue;
 		}
 	}
-
-	if (ncpus == 0)
-		panic("None of the CPUs found");
 
 	node = findroot();	/* re-init root node */
 
@@ -845,7 +837,9 @@ extern bus_space_tag_t mainbus_space_tag;
 		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
 		    strcmp(buf, "cpu") == 0)
 			continue;
-		OF_getprop(node, "name", buf, sizeof(buf));
+		if (OF_getprop(node, "name", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cmp") == 0)
+			continue;
 		DPRINTF(ACDB_PROBE, (" name %s\n", buf));
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
 			if (strcmp(buf, sp) == 0)

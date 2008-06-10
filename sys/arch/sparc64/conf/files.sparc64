@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.105 2008/04/21 04:50:22 deraadt Exp $
+#	$OpenBSD: files.sparc64,v 1.106 2008/06/10 00:02:09 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -148,6 +148,10 @@ file	arch/sparc64/sparc64/clock.c
 device	cpu
 attach	cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
+
+device	cmp: mainbus
+attach	cmp at mainbus
+file	arch/sparc64/dev/cmp.c			cmp
 
 device	auxio
 attach	auxio at ebus with auxio_ebus
