@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.28 2006/12/20 21:21:09 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.29 2008/06/10 23:23:52 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -393,6 +393,21 @@ setmark(int f, int n)
 {
 	isetmark();
 	ewprintf("Mark set");
+	return (TRUE);
+}
+
+/* Clear the mark, if set. */
+/* ARGSUSED */
+int
+clearmark(int f, int n)
+{
+	if (!curwp->w_markp)
+		return (FALSE);
+
+	curwp->w_markp = NULL;
+	curwp->w_marko = 0;
+	curwp->w_markline = 0;
+
 	return (TRUE);
 }
 
