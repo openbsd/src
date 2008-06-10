@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.11 2008/06/09 23:57:58 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.12 2008/06/10 00:36:46 pyr Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -439,7 +439,9 @@ do
 		shift 2
 		if [ -f "${WHERE}/etc/Makefile" ]; then
 			SRCDIR=${WHERE}
-		elif [ -f "${WHERE}" -a "`echo ${WHERE} | sed -e 's,.*\/,,g'`" = etc??.tgz ]; then
+		elif [ -f "${WHERE}" ] && echo -n ${WHERE} |		\
+		    awk -F/ '{print $NF}' | 				\
+		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
 			TGZ=${WHERE}
 		else
 			echo " *** ERROR: ${WHERE} is not a path to src nor etcXX.tgz"
@@ -449,7 +451,9 @@ do
 	-x)
 		WHERE="${2}"
 		shift 2
-		if [ -f "${WHERE}" -a "`echo ${WHERE} | sed -e 's,.*\/,,g'`" = xetc??.tgz ]; then
+		if [ -f "${WHERE}" ] && echo -n ${WHERE} | 		\
+		    awk -F/ '{print $NF}' | 				\
+		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
 			XTGZ=${WHERE}
 		else
 			echo " *** ERROR: ${WHERE} is not a path to xetcXX.tgz"
