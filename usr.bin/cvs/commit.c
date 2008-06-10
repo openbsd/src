@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.139 2008/06/10 14:49:50 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.140 2008/06/10 19:00:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -666,6 +666,8 @@ cvs_commit_local(struct cvs_file *cf)
 		fi->file_path = xstrdup(cf->file_path);
 		fi->crevstr = xstrdup(rbuf);
 		fi->nrevstr = xstrdup(nbuf);
+		if (tag != NULL)
+			fi->tag_new = xstrdup(tag);
 		TAILQ_INSERT_TAIL(&files_info, fi, flist);
 	}
 
