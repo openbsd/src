@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.16 2008/06/09 22:47:42 djm Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.17 2008/06/10 23:15:32 blambert Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -266,12 +266,6 @@ krpc_call(sa, prog, vers, func, data, from_p, retries)
 	 * because some NFS servers refuse requests from
 	 * non-reserved (non-privileged) ports.
 	 */
-	m = m_getclr(M_WAIT, MT_SONAME);
-	sin = mtod(m, struct sockaddr_in *);
-	sin->sin_len = m->m_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-
 	MGET(mopt, M_WAIT, MT_SOOPTS);
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
