@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.60 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.61 2008/06/10 10:52:52 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -170,7 +170,7 @@ sub find_in_new_source
 			$self->{known_tags}->{$t} = $dep;
 		}
 	}
-	return $self->find_in_already_dony($solver, $state, $obj);
+	return $self->find_in_already_done($solver, $state, $obj);
 }
 
 package OpenBSD::Dependencies::Solver;
