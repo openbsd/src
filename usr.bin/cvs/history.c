@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.36 2008/06/10 15:55:54 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.37 2008/06/10 16:32:35 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -61,9 +61,12 @@ const char historytab[] = {
 void
 cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 {
+	BUF *buf;
 	FILE *fp;
-	char *cwd;
+	char *cwd, *rev;
 	char revbuf[CVS_REV_BUFSZ], repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char timebuf[CVS_TIME_BUFSZ];
+	struct tm datetm;
 
 	if (cvs_nolog == 1)
 		return;
@@ -94,25 +97,41 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 
 	/* construct revision field */
 	revbuf[0] = '\0';
-	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_EXPORT) {
-		switch (type) {
-		case CVS_HISTORY_TAG:
-			strlcpy(revbuf, argument, sizeof(revbuf));
-			break;
-		case CVS_HISTORY_CHECKOUT:
-		case CVS_HISTORY_EXPORT:
-			/* copy TAG or DATE to revbuf */
-			break;
-		case CVS_HISTORY_UPDATE_MERGED:
-		case CVS_HISTORY_UPDATE_MERGED_ERR:
-		case CVS_HISTORY_COMMIT_MODIFIED:
-		case CVS_HISTORY_COMMIT_ADDED:
-		case CVS_HISTORY_COMMIT_REMOVED:
-		case CVS_HISTORY_UPDATE_CO:
-			rcsnum_tostr(cf->file_rcs->rf_head,
-			    revbuf, sizeof(revbuf));
-			break;
+	rev = revbuf;
+	switch (type) {
+	case CVS_HISTORY_TAG:
+		strlcpy(revbuf, argument, sizeof(revbuf));
+		break;
+	case CVS_HISTORY_CHECKOUT:
+	case CVS_HISTORY_EXPORT:
+		/*
+		 * cvs_buf_alloc uses xcalloc(), so we are safe even
+		 * if neither cvs_specified_tag nor cvs_specified_date
+		 * have been supplied.
+		 */
+		buf = cvs_buf_alloc(128);
+		if (cvs_specified_tag != NULL) {
+			cvs_buf_puts(buf, cvs_specified_tag);
+			if (cvs_specified_date != -1)
+				cvs_buf_putc(buf, ':');
 		}
+		if (cvs_specified_date != -1) {
+			gmtime_r(&cvs_specified_date, &datetm);
+			strftime(timebuf, sizeof(timebuf),
+			    "%Y.%m.%d.%H.%M.%S", &datetm);
+			cvs_buf_puts(buf, timebuf);
+		}
+		rev = cvs_buf_release(buf);
+		break;
+	case CVS_HISTORY_UPDATE_MERGED:
+	case CVS_HISTORY_UPDATE_MERGED_ERR:
+	case CVS_HISTORY_COMMIT_MODIFIED:
+	case CVS_HISTORY_COMMIT_ADDED:
+	case CVS_HISTORY_COMMIT_REMOVED:
+	case CVS_HISTORY_UPDATE_CO:
+		rcsnum_tostr(cf->file_rcs->rf_head,
+			revbuf, sizeof(revbuf));
+		break;
 	}
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
@@ -121,13 +140,15 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	if ((fp = fopen(fpath, "a")) != NULL) {
 		fprintf(fp, "%c%x|%s|%s|%s|%s|%s\n",
 		    historytab[type], time(NULL), getlogin(), cwd, repo,
-		    revbuf, (cf != NULL) ? cf->file_name : argument);
+		    rev, (cf != NULL) ? cf->file_name : argument);
 
 		(void)fclose(fp);
 	} else {
 		cvs_log(LP_ERR, "failed to add entry to history file");
 	}
 
+	if (rev != revbuf)
+		xfree(rev);
 	if (cvs_server_active != 1)
 		xfree(cwd);
 }
