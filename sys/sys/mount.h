@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.84 2008/05/07 14:09:36 thib Exp $	*/
+/*	$OpenBSD: mount.h,v 1.85 2008/06/10 20:14:37 beck Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -465,10 +465,13 @@ struct mount {
 #define VFS_MAXTYPENUM	1	/* int: highest defined filesystem type */
 #define VFS_CONF	2	/* struct: vfsconf for filesystem given
 				   as next argument */
+#define VFS_BCACHESTAT	3	/* struct: buffer cache statistics given 
+				   as next argument */
 #define	CTL_VFSGENCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maxtypenum", CTLTYPE_INT }, \
-	{ "conf", CTLTYPE_NODE } \
+	{ "conf", CTLTYPE_NODE }, \
+	{ "bcachestat", CTLTYPE_STRUCT } \
 }
 
 /*
@@ -484,6 +487,24 @@ struct vfsconf {
 	int	vfc_flags;		/* permanent flags */
 	struct	vfsconf *vfc_next;	/* next in list */
 };
+
+/* buffer cache statistics */
+struct bcachestats {
+	long numbufs; 		/* number of buffers allocated */
+	long freebufs;		/* number of free buffers */
+	long numbufpages; 	/* number of pages in buffer cache */
+	long numfreepages; 	/* number of free pages */
+	long numdirtypages; 	/* number of dirty free pages */
+	long numcleanpages; 	/* number of clean free pages */
+	long pendingwrites;	/* number of pending writes */
+	long pendingreads;	/* number of pending reads */
+	long numwrites;		/* total writes started */
+	long numreads;		/* total reads started */
+	long cachehits;		/* total reads found in cache */
+};
+#ifdef _KERNEL
+extern struct bcachestats bcstats;
+#endif
 
 /*
  * Operations supported on mounted file system.

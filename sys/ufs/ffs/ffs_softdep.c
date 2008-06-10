@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.94 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.95 2008/06/10 20:14:37 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4691,9 +4691,9 @@ softdep_fsync_mountdev(vp, waitfor)
 		/* 
 		 * If it is already scheduled, skip to the next buffer.
 		 */
+		splassert(IPL_BIO);
 		if (bp->b_flags & B_BUSY)
 			continue;
-		bp->b_flags |= B_BUSY;
 
 		if ((bp->b_flags & B_DELWRI) == 0) {
 			FREE_LOCK(&lk);
@@ -4705,10 +4705,10 @@ softdep_fsync_mountdev(vp, waitfor)
 		 */
 		if ((wk = LIST_FIRST(&bp->b_dep)) == NULL ||
 		    wk->wk_type != D_BMSAFEMAP) {
-			bp->b_flags &= ~B_BUSY;
 			continue;
 		}
 		bremfree(bp);
+		buf_acquire(bp);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
 		ACQUIRE_LOCK(&lk);
@@ -5616,7 +5616,7 @@ getdirtybuf(bp, waitfor)
 	if ((bp->b_flags & B_DELWRI) == 0)
 		return (0);
 	bremfree(bp);
-	bp->b_flags |= B_BUSY;
+	buf_acquire(bp);
 	return (1);
 }
 

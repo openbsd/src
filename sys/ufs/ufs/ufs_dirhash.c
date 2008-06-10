@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.17 2007/10/08 19:26:48 krw Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.18 2008/06/10 20:14:37 beck Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -211,7 +211,6 @@ ufsdirhash_build(struct inode *ip)
 			if (UFS_BUFATOFF(ip, (off_t)pos, NULL, &bp) != 0)
 				goto fail;
 		}
-
 		/* Add this entry to the hash. */
 		ep = (struct direct *)((char *)bp->b_data + (pos & bmask));
 		if (ep->d_reclen == 0 || ep->d_reclen >
