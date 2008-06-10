@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.200 2008/05/30 14:22:48 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.201 2008/06/10 04:24:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -882,6 +882,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *s)
 	sp->expire = pf_state_expires(s);
 	sp->log = s->log;
 	sp->allow_opts = s->allow_opts;
+	sp->sloppy = s->sloppy;
 	sp->timeout = s->timeout;
 
 	if (s->src_node)

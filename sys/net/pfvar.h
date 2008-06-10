@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.270 2008/05/30 14:22:48 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.271 2008/06/10 04:24:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -626,6 +626,7 @@ struct pf_rule {
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
+#define PFRULE_STATESLOPPY	0x00020000	/* sloppy state tracking */
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
@@ -761,6 +762,8 @@ struct pf_state {
 	u_int8_t		 allow_opts;
 	u_int8_t		 timeout;
 	u_int8_t		 sync_flags;
+	u_int8_t		 sloppy;	/* fold into flag w allow_opts*/
+	u_int8_t		 pad2[3];
 #define	PFSTATE_NOSYNC	 0x01
 #define	PFSTATE_FROMSYNC 0x02
 #define	PFSTATE_STALE	 0x04
@@ -818,6 +821,8 @@ struct pfsync_state {
 	u_int8_t	 timeout;
 	u_int8_t	 sync_flags;
 	u_int8_t	 updates;
+	u_int8_t	 sloppy;	/* fold into flag with allow_opts */
+	u_int8_t	 pad[3];
 } __packed;
 
 #define PFSYNC_FLAG_COMPRESS	0x01

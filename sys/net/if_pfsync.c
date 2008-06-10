@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.93 2008/05/29 01:00:53 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.94 2008/06/10 04:24:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -344,6 +344,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	st->log = sp->log;
 	st->timeout = sp->timeout;
 	st->allow_opts = sp->allow_opts;
+	st->sloppy = sp->sloppy;
 
 	bcopy(sp->id, &st->id, sizeof(st->id));
 	st->creatorid = sp->creatorid;
@@ -1262,6 +1263,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		sp->direction = st->direction;
 		sp->log = st->log;
 		sp->allow_opts = st->allow_opts;
+		sp->sloppy = st->sloppy;
 		sp->timeout = st->timeout;
 
 		if (flags & PFSYNC_FLAG_STALE)
