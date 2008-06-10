@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.99 2008/06/08 02:54:08 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.100 2008/06/10 01:00:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -27,6 +27,7 @@
 
 extern char *__progname;
 
+void	cvs_add_loginfo(char *);
 void	cvs_add_entry(struct cvs_file *);
 void	cvs_add_remote(struct cvs_file *);
 
@@ -37,7 +38,8 @@ static void add_entry(struct cvs_file *);
 int		kflag = 0;
 static char	kbuf[8];
 
-char	*logmsg;
+extern char	*logmsg;
+extern char	*loginfo;
 
 struct cvs_cmd cvs_cmd_add = {
 	CVS_OP_ADD, CVS_USE_WDIR, "add",
@@ -97,6 +99,9 @@ cvs_add(int argc, char **argv)
 		if (logmsg != NULL)
 			cvs_client_send_logmsg(logmsg);
 	} else {
+		if (logmsg != NULL && cvs_logmsg_verify(logmsg))
+			return (0);
+
 		cr.fileproc = cvs_add_local;
 	}
 
@@ -189,6 +194,30 @@ cvs_add_remote(struct cvs_file *cf)
 	}
 }
 
+void
+cvs_add_loginfo(char *repo)
+{
+	BUF *buf;
+	char pwd[MAXPATHLEN];
+
+	if (getcwd(pwd, sizeof(pwd)) == NULL)
+		fatal("Can't get working directory");
+
+	buf = cvs_buf_alloc(1024);
+
+	cvs_trigger_loginfo_header(buf, repo);
+
+	cvs_buf_puts(buf, "Log Message:\nDirectory ");
+	cvs_buf_puts(buf, current_cvsroot->cr_dir);
+	cvs_buf_putc(buf, '/');
+	cvs_buf_puts(buf, repo);
+	cvs_buf_puts(buf, " added to the repository\n");
+
+	cvs_buf_putc(buf, '\0');
+
+	loginfo = cvs_buf_release(buf);
+}
+
 static void
 add_directory(struct cvs_file *cf)
 {
@@ -196,6 +225,9 @@ add_directory(struct cvs_file *cf)
 	struct stat st;
 	CVSENTRIES *entlist;
 	char *date, entry[MAXPATHLEN], msg[1024], repo[MAXPATHLEN], *tag, *p;
+	struct file_info_list files_info;
+	struct file_info *fi;
+	struct trigger_list *line_list;
 
 	cvs_log(LP_TRACE, "add_directory(%s)", cf->file_path);
 
@@ -277,6 +309,24 @@ add_directory(struct cvs_file *cf)
 			xfree(tag);
 		if (date != NULL)
 			xfree(date);
+
+		cvs_get_repository_name(cf->file_path, repo, MAXPATHLEN);
+		line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, repo);
+		if (line_list != NULL) {
+			TAILQ_INIT(&files_info);
+			fi = xcalloc(1, sizeof(*fi));
+			fi->file_path = xstrdup(cf->file_path);
+			TAILQ_INSERT_TAIL(&files_info, fi, flist);
+
+			cvs_add_loginfo(repo);
+			cvs_trigger_handle(CVS_TRIGGER_LOGINFO, repo,
+			    loginfo, line_list, &files_info);
+
+			cvs_trigger_freeinfo(&files_info);
+			cvs_trigger_freelist(line_list);
+			if (loginfo != NULL)
+				xfree(loginfo);
+		}
 	}
 
 	cf->file_status = FILE_SKIP;

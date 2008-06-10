@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.143 2008/03/09 12:52:33 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.144 2008/06/10 01:00:35 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -849,20 +849,57 @@ cvs_yesno(void)
 	return (ret);
 }
 
-void
-cvs_exec(const char *prog)
+/*
+ * cvs_exec()
+ *
+ * Execute <prog> and send <in> to the STDIN if not NULL.
+ * If <needwait> == 1, return the result of <prog>, 
+ * else, 0 or -1 if an error occur.
+ */
+int
+cvs_exec(const char *prog, const char *in, int needwait)
 {
 	pid_t pid;
-	char *argp[] = { "sh", "-c", NULL, NULL };
+	int fds[2], size, st;
+	char *argp[4] = { "sh", "-c", prog, NULL };
 
-	argp[2] = prog;
+	if (in != NULL && pipe(fds) < 0) {
+		cvs_log(LP_ERR, "cvs_exec: pipe failed");
+		return (-1);
+	}
 
 	if ((pid = fork()) == -1) {
 		cvs_log(LP_ERR, "cvs_exec: fork failed");
-		return;
+		return (-1);
 	} else if (pid == 0) {
+		if (in != NULL) {
+			close(fds[1]);
+			dup2(fds[0], STDIN_FILENO);
+		}
+
+		setenv("CVSROOT", current_cvsroot->cr_dir, 1);
 		execv(_PATH_BSHELL, argp);
-		cvs_log(LP_ERR, "failed to run '%s'", prog);
+		cvs_log(LP_ERR, "cvs_exec: failed to run '%s'", prog);
 		_exit(127);
 	}
+
+	if (in != NULL) {
+		close(fds[0]);
+		size = strlen(in);
+		if (atomicio(vwrite, fds[1], in, size) != size)
+			cvs_log(LP_ERR, "cvs_exec: failed to write on STDIN");
+		close(fds[1]);
+	}
+
+	if (needwait == 1) {
+		while (waitpid(pid, &st, 0) == -1)
+			;
+		if (!WIFEXITED(st)) {
+			errno = EINTR;
+			return (-1);
+		}
+		return (WEXITSTATUS(st));
+	}
+
+	return (0);
 }

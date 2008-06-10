@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.92 2008/06/08 20:08:43 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.93 2008/06/10 01:00:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -28,20 +28,25 @@
 
 void	cvs_import_local(struct cvs_file *);
 
+static void import_loginfo(char *);
 static void import_new(struct cvs_file *);
+static void import_printf(const char *, ...);
 static void import_update(struct cvs_file *);
 static void import_tag(struct cvs_file *, RCSNUM *, RCSNUM *);
 static BUF *import_get_rcsdiff(struct cvs_file *, RCSNUM *);
 
 #define IMPORT_DEFAULT_BRANCH	"1.1.1"
 
+extern char *loginfo;
+extern char *logmsg;
+
 static char *import_branch = IMPORT_DEFAULT_BRANCH;
-static char *logmsg = NULL;
 static char *vendor_tag = NULL;
 static char **release_tags;
 static char *koptstr;
 static int dflag = 0;
 static int tagcount = 0;
+static BUF *logbuf;
 
 char *import_repository = NULL;
 int import_conflicts = 0;
@@ -63,6 +68,7 @@ cvs_import(int argc, char **argv)
 	int i, ch;
 	char repo[MAXPATHLEN], *arg = ".";
 	struct cvs_recursion cr;
+	struct trigger_list *line_list;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_import.cmd_opts)) != -1) {
 		switch (ch) {
@@ -145,8 +151,13 @@ cvs_import(int argc, char **argv)
 		return (0);
 	}
 
+	if (cvs_logmsg_verify(logmsg))
+		return (0);
+
 	(void)xsnprintf(repo, sizeof(repo), "%s/%s",
 	    current_cvsroot->cr_dir, import_repository);
+
+	import_loginfo(import_repository);
 
 	if (cvs_noexec != 1) {
 		if (mkdir(repo, 0755) == -1 && errno != EEXIST)
@@ -160,17 +171,43 @@ cvs_import(int argc, char **argv)
 	cvs_file_run(1, &arg, &cr);
 
 	if (import_conflicts != 0) {
-		cvs_printf("\n%d conflicts created by this import.\n\n",
+		import_printf("\n%d conflicts created by this import.\n\n",
 		    import_conflicts);
-		cvs_printf("Use the following command to help the merge:\n");
-		cvs_printf("\topencvs checkout ");
-		cvs_printf("-j%s:yesterday -j%s %s\n\n", vendor_tag,
+		import_printf("Use the following command to help the merge:\n");
+		import_printf("\topencvs checkout ");
+		import_printf("-j%s:yesterday -j%s %s\n\n", vendor_tag,
 		    vendor_tag, import_repository);
 	} else {
-		cvs_printf("\nNo conflicts created by this import.\n\n");
+		import_printf("\nNo conflicts created by this import.\n\n");
 	}
 
+	loginfo = cvs_buf_release(logbuf);
+	logbuf = NULL;
+
+	line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, import_repository);
+	if (line_list != NULL) {
+		cvs_trigger_handle(CVS_TRIGGER_LOGINFO, import_repository,
+		    loginfo, line_list, NULL);
+		cvs_trigger_freelist(line_list);
+	}
+
+	xfree(loginfo);
 	return (0);
+}
+
+static void
+import_printf(const char *fmt, ...)
+{
+	char *str;
+	va_list vap;
+
+	va_start(vap, fmt);
+	if (vasprintf(&str, fmt, vap) == -1)
+		fatal("import_printf: could not allocate memory");
+	va_end(vap);
+
+	cvs_printf("%s", str);
+	cvs_buf_puts(logbuf, str);
 }
 
 void
@@ -216,6 +253,40 @@ cvs_import_local(struct cvs_file *cf)
 }
 
 static void
+import_loginfo(char *repo)
+{
+	int i;
+	char pwd[MAXPATHLEN];
+
+	if (getcwd(pwd, sizeof(pwd)) == NULL)
+		fatal("Can't get working directory");
+
+	logbuf = cvs_buf_alloc(1024);
+	cvs_trigger_loginfo_header(logbuf, repo);
+
+	cvs_buf_puts(logbuf, "Log Message:\n");
+	cvs_buf_puts(logbuf, logmsg);
+	if (logmsg[0] != '\0' && logmsg[strlen(logmsg) - 1] != '\n')
+		cvs_buf_putc(logbuf, '\n');
+	cvs_buf_putc(logbuf, '\n');
+
+	cvs_buf_puts(logbuf, "Status:\n\n");
+
+	cvs_buf_puts(logbuf, "Vendor Tag:\t");
+	cvs_buf_puts(logbuf, vendor_tag);
+	cvs_buf_putc(logbuf, '\n');
+	cvs_buf_puts(logbuf, "Release Tags:\t");
+
+	for (i = 0; i < tagcount ; i++) {
+		cvs_buf_puts(logbuf, "\t\t");
+		cvs_buf_puts(logbuf, release_tags[i]);
+		cvs_buf_putc(logbuf, '\n');
+	}
+	cvs_buf_putc(logbuf, '\n');
+	cvs_buf_putc(logbuf, '\n');
+}
+
+static void
 import_new(struct cvs_file *cf)
 {
 	int i;
@@ -231,7 +302,7 @@ import_new(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "import_new(%s)", cf->file_name);
 
 	if (cvs_noexec == 1) {
-		cvs_printf("N %s/%s\n", import_repository, cf->file_path);
+		import_printf("N %s/%s\n", import_repository, cf->file_path);
 		return;
 	}
 
@@ -292,7 +363,7 @@ import_new(struct cvs_file *cf)
 		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	rcs_write(cf->file_rcs);
-	cvs_printf("N %s/%s\n", import_repository, cf->file_path);
+	import_printf("N %s/%s\n", import_repository, cf->file_path);
 
 	rcsnum_free(branch);
 	rcsnum_free(brev);
@@ -326,7 +397,7 @@ import_update(struct cvs_file *cf)
 		rcsnum_free(brev);
 		if (cvs_noexec != 1)
 			rcs_write(cf->file_rcs);
-		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
+		import_printf("U %s/%s\n", import_repository, cf->file_path);
 		return;
 	}
 
@@ -336,9 +407,9 @@ import_update(struct cvs_file *cf)
 	if (cf->file_rcs->rf_branch == NULL || cf->in_attic == 1 ||
 	    strcmp(branch, import_branch)) {
 		import_conflicts++;
-		cvs_printf("C %s/%s\n", import_repository, cf->file_path);
+		import_printf("C %s/%s\n", import_repository, cf->file_path);
 	} else {
-		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
+		import_printf("U %s/%s\n", import_repository, cf->file_path);
 	}
 
 	if (cvs_noexec == 1)

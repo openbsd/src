@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.166 2008/06/08 20:08:43 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.167 2008/06/10 01:00:34 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include "log.h"
 #include "worklist.h"
 #include "repository.h"
+#include "trigger.h"
 #include "util.h"
 #include "xmalloc.h"
 
@@ -391,9 +392,10 @@ void		cvs_write_tagfile(const char *, char *, char *);
 struct cvsroot	*cvsroot_get(const char *);
 
 /* logmsg.c */
-char *	cvs_logmsg_read(const char *path);
-char *	cvs_logmsg_create(char *, struct cvs_flisthead *,
-	    struct cvs_flisthead *, struct cvs_flisthead *);
+char	*cvs_logmsg_read(const char *);
+char	*cvs_logmsg_create(char *, struct cvs_flisthead *,
+	     struct cvs_flisthead *, struct cvs_flisthead *);
+int	 cvs_logmsg_verify(char *);
 
 /* misc stuff */
 void	cvs_update_local(struct cvs_file *);

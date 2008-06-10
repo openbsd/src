@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.71 2008/03/09 01:02:38 tobias Exp $	*/
+/*	$OpenBSD: buf.c,v 1.72 2008/06/10 01:00:34 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,6 +174,17 @@ cvs_buf_putc(BUF *b, int c)
 	}
 	*bp = (u_char)c;
 	b->cb_len++;
+}
+
+/*
+ * cvs_buf_puts()
+ *
+ * Wrapper function for constant strings to cvs_buf_append.
+ */
+void
+cvs_buf_puts(BUF *b, const char *str)
+{
+	cvs_buf_append(b, str, strlen(str));
 }
 
 /*
