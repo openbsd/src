@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2007/11/16 16:16:07 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2008/06/10 02:55:39 weingart Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -939,7 +939,7 @@ bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 #define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_32BIT		0x040
 #define	BUS_DMA_24BIT		0x080	/* isadma map */
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */

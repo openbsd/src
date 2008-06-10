@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 2007/11/03 22:23:35 mikeb Exp $ */
+/*	$OpenBSD: mem.c,v 1.10 2008/06/10 02:55:39 weingart Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -205,7 +205,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if ((paddr_t)off > (paddr_t)ptoa(physmem) && suser(p, 0) != 0)
+		if (suser(p, 0) != 0 && amd64_pa_used(off))
 			return -1;
 		return atop(off);
 
@@ -216,22 +216,21 @@ mmmmap(dev_t dev, off_t off, int prot)
 		case 1:
 			/* Allow mapping of the VGA framebuffer & BIOS only */
 			if ((off >= VGA_START && off <= BIOS_END) ||
-			    (unsigned)off > (unsigned)ptoa(physmem))
+				!amd64_pa_used(off))
 				return atop(off);
 			else
 				return -1;
 		case 2:
 			/* Allow mapping of the whole 1st megabyte 
 			   for x86emu */
-			if (off <= BIOS_END || 
-			    (unsigned)off > (unsigned)ptoa(physmem))
+			if (off <= BIOS_END || !amd64_pa_used(off))
 				return atop(off);
-			else 
+			else
 				return -1;
 		default:
 			return -1;
 		}
-			
+
 #endif
 	default:
 		return -1;

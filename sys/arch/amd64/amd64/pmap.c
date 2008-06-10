@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2008/05/23 15:39:43 jasper Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2008/06/10 02:55:39 weingart Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -515,10 +515,10 @@ pmap_kremove(vaddr_t sva, vsize_t len)
  * => kva_start is the first free virtual address in kernel space
  */
 
-void
-pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
+paddr_t
+pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 {
-	vaddr_t kva, kva_end;
+	vaddr_t kva, kva_end, kva_start = VM_MIN_KERNEL_ADDRESS;
 	struct pmap *kpm;
 	int i;
 	unsigned long p1i;
@@ -611,7 +611,7 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 
 	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & PG_FRAME;
 
-	dmpd = avail_start; avail_start += ndmpdp * PAGE_SIZE;
+	dmpd = first_avail; first_avail += ndmpdp * PAGE_SIZE;
 
 	for (i = NDML2_ENTRIES; i < NPDPG * ndmpdp; i++) {
 		paddr_t pdp;
@@ -646,8 +646,8 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	if (ndmpdp < NDML2_ENTRIES)
 		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
 
-	dmpdp = avail_start;	avail_start += PAGE_SIZE;
-	dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
+	dmpdp = first_avail;	first_avail += PAGE_SIZE;
+	dmpd = first_avail;	first_avail += ndmpdp * PAGE_SIZE;
 
 	for (i = 0; i < NPDPG * ndmpdp; i++) {
 		paddr_t pdp;
@@ -682,8 +682,8 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 
 	idt_vaddr = virtual_avail;
 	virtual_avail += 2 * PAGE_SIZE;
-	idt_paddr = avail_start;			/* steal a page */
-	avail_start += 2 * PAGE_SIZE;
+	idt_paddr = first_avail;			/* steal a page */
+	first_avail += 2 * PAGE_SIZE;
 
 #ifdef _LP64
 	/*
@@ -692,8 +692,8 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	 */
 	lo32_vaddr = virtual_avail;
 	virtual_avail += PAGE_SIZE;
-	lo32_paddr = avail_start;
-	avail_start += PAGE_SIZE;
+	lo32_paddr = first_avail;
+	first_avail += PAGE_SIZE;
 #endif
 
 	/*
@@ -731,14 +731,16 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	 */
 
 	tlbflush();
+
+	return first_avail;
 }
 
 /*
  * Pre-allocate PTPs for low memory, so that 1:1 mappings for various
  * trampoline code can be entered.
  */
-void
-pmap_prealloc_lowmem_ptps(void)
+paddr_t
+pmap_prealloc_lowmem_ptps(paddr_t first_avail)
 {
 	pd_entry_t *pdes;
 	int level;
@@ -747,8 +749,7 @@ pmap_prealloc_lowmem_ptps(void)
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
-		newp = avail_start;
-		avail_start += PAGE_SIZE;
+		newp = first_avail; first_avail += PAGE_SIZE;
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
 		level--;
@@ -756,6 +757,8 @@ pmap_prealloc_lowmem_ptps(void)
 			break;
 		pdes = normal_pdes[level - 2];
 	}
+
+	return first_avail;
 }
 
 /*

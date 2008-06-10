@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.18 2008/05/23 15:39:43 jasper Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.19 2008/06/10 02:55:39 weingart Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ extern pd_entry_t *pdes[];
  * prototypes
  */
 
-void		pmap_bootstrap(vaddr_t, paddr_t);
+paddr_t		pmap_bootstrap(paddr_t, paddr_t);
 boolean_t	pmap_clear_attrs(struct vm_page *, unsigned long);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove (struct vm_page *);
@@ -427,7 +427,7 @@ void	pmap_tlb_shootwait(void);
 #define	pmap_tlb_shootwait()
 #endif
 
-void	pmap_prealloc_lowmem_ptps(void);
+paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 
 void	pagezero(vaddr_t);
 

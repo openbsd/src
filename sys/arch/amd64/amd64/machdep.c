@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2008/06/08 13:55:06 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 2008/06/10 02:55:39 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -258,6 +258,7 @@ int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
+void	cpu_init_extents(void);
 void	init_x86_64(paddr_t);
 void	(*cpuresetfn)(void);
 
@@ -1162,6 +1163,39 @@ void cpu_init_idt(void)
 	lidt(&region); 
 }
 
+#define	KBTOB(x)	((size_t)(x) * 1024UL)
+
+void
+cpu_init_extents(void)
+{
+	extern struct extent *iomem_ex;
+	static int already_done;
+
+	/* We get called for each CPU, only first should do this */
+	if (already_done)
+		return;
+
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem
+	 * extent map.  This is done before the addresses are
+	 * page rounded just to make sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
+	    EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
+		    "IOMEM EXTENT MAP!\n");
+	}
+	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
+	    EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
+		    "IOMEM EXTENT MAP!\n");
+	}
+
+	already_done = 1;
+}
+
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
@@ -1171,17 +1205,17 @@ extern vector IDTVEC(osyscall);
 extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
-#define	KBTOB(x)	((size_t)(x) * 1024UL)
+/* Tweakable by config(8) */
+int bigmem = 1;
 
 void
 init_x86_64(paddr_t first_avail)
 {
-	extern struct extent *iomem_ex;
+	extern void consinit(void);
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
-	int x, first16q, ist;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	bios_memmap_t *bmp;
+	int x, ist;
 
 	cpu_init_msrs(&cpu_info_primary);
 
@@ -1217,6 +1251,37 @@ init_x86_64(paddr_t first_avail)
 	} else
 		panic("invalid /boot");
 
+/*
+ * Memory on the AMD64 port is described by three different things.
+ *
+ * 1. biosbasemem, biosextmem - These are outdated, and should realy
+ *    only be used to santize the other values.  They are the things
+ *    we get back from the BIOS using the legacy routines, usually
+ *    only describing the lower 4GB of memory.
+ *
+ * 2. bios_memmap[] - This is the memory map as the bios has returned
+ *    it to us.  It includes memory the kernel occupies, etc.
+ *
+ * 3. mem_cluster[] - This is the massaged free memory segments after
+ *    taking into account the contents of bios_memmap, biosbasemem,
+ *    biosextmem, and locore/machdep/pmap kernel allocations of physical
+ *    pages.
+ *
+ * The other thing is that the physical page *RANGE* is described by
+ * three more variables:
+ *
+ * avail_start - This is a physical address of the start of available
+ *               pages, until IOM_BEGIN.  This is basically the start
+ *               of the UVM managed range of memory, with some holes...
+ *
+ * avail_end - This is the end of physical pages.  All physical pages
+ *             that UVM manages are between avail_start and avail_end.
+ *             There are holes...
+ *
+ * first_avail - This is the first available physical page after the
+ *               kernel, page tables, etc.
+ */
+
 	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
 				 /* and VM system doesn't work with phys 0 */
 #ifdef MULTIPROCESSOR
@@ -1224,81 +1289,116 @@ init_x86_64(paddr_t first_avail)
 		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
 #endif
 
+	/* Let us know if we're supporting > 4GB ram load */
+	if (bigmem)
+		printf("Bigmem = %d\n", bigmem);
+
+	/*
+	 * We need to go through the BIOS memory map given, and
+	 * fill out mem_clusters and mem_cluster_cnt stuff, taking
+	 * into account all the points listed above.
+	 */ 
+	avail_end = mem_cluster_cnt = 0;
+	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
+		paddr_t s1, s2, e1, e2, s3, e3, s4, e4;
+
+		/* Ignore non-free memory */
+		if (bmp->type != BIOS_MAP_FREE)
+			continue;
+		if (bmp->size < PAGE_SIZE)
+			continue;
+
+		/* Init our segment(s), round/trunc to pages */
+		s1 = round_page(bmp->addr);
+		e1 = trunc_page(bmp->addr + bmp->size);
+		s2 = e2 = 0; s3 = e3 = 0; s4 = e4 = 0;
+
+		/* Check and adjust our segment(s) */
+		/* Nuke page zero */
+		if (s1 < avail_start) {
+			s1 = avail_start;
+		}
+
+		/* Crop to fit below 4GB for now */
+		if (!bigmem && (e1 >= (1UL<<32))) {
+			printf("Ignoring %dMB above 4GB\n", (e1-(1UL<<32))>>20);
+			e1 = (1UL << 32) - 1;
+			if (s1 > e1)
+				continue;
+		}
+
+		/* Crop stuff into "640K hole" */
+		if (s1 < IOM_BEGIN && e1 > IOM_BEGIN)
+			e1 = IOM_BEGIN;
+		if (s1 < biosbasemem && e1 > biosbasemem)
+			e1 = biosbasemem;
+
+/* XXX - This is sooo GROSS! */
+#define KERNEL_START IOM_END
+		/* Crop stuff into kernel from bottom */
+		if (s1 < KERNEL_START && e1 > KERNEL_START &&
+		    e1 < first_avail) {
+			e1 = KERNEL_START;
+		}
+		/* Crop stuff into kernel from top */
+		if (s1 > KERNEL_START && s1 < first_avail &&
+		    e1 > first_avail) {
+			s1 = first_avail;
+		}
+		/* Split stuff straddling kernel */
+		if (s1 <= KERNEL_START && e1 >= first_avail) {
+			s2 = first_avail; e2 = e1;
+			e1 = KERNEL_START;
+		}
+
+		/* Split any segments straddling the 16MB boundary */
+		if (s1 < 16*1024*1024 && e1 > 16*1024*1024) {
+			e3 = e1;
+			s3 = e1 = 16*1024*1024;
+		}
+		if (s2 < 16*1024*1024 && e2 > 16*1024*1024) {
+			e4 = e2;
+			s4 = e2 = 16*1024*1024;
+		}
+
+		/* Store segment(s) */
+		if (e1 - s1 >= PAGE_SIZE) {
+			mem_clusters[mem_cluster_cnt].start = s1;
+			mem_clusters[mem_cluster_cnt].size = e1 - s1;
+			mem_cluster_cnt++;
+		}
+		if (e2 - s2 >= PAGE_SIZE) {
+			mem_clusters[mem_cluster_cnt].start = s2;
+			mem_clusters[mem_cluster_cnt].size = e2 - s2;
+			mem_cluster_cnt++;
+		}
+		if (e3 - s3 >= PAGE_SIZE) {
+			mem_clusters[mem_cluster_cnt].start = s3;
+			mem_clusters[mem_cluster_cnt].size = e3 - s3;
+			mem_cluster_cnt++;
+		}
+		if (e4 - s4 >= PAGE_SIZE) {
+			mem_clusters[mem_cluster_cnt].start = s4;
+			mem_clusters[mem_cluster_cnt].size = e4 - s4;
+			mem_cluster_cnt++;
+		}
+		if (avail_end < e1) avail_end = e1;
+		if (avail_end < e2) avail_end = e2;
+		if (avail_end < e3) avail_end = e3;
+		if (avail_end < e4) avail_end = e4;
+	}
+
 	/*
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
 	 */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS,
-	    IOM_END + trunc_page(KBTOB(biosextmem)));
+	first_avail = pmap_bootstrap(first_avail, trunc_page(avail_end));
 
+	/* Allocate these out of the 640KB base memory */
 	if (avail_start != PAGE_SIZE)
-		pmap_prealloc_lowmem_ptps();
+		avail_start = pmap_prealloc_lowmem_ptps(avail_start);
 
-	if (mem_cluster_cnt == 0) {
-		/*
-		 * Allocate the physical addresses used by RAM from the iomem
-		 * extent map.  This is done before the addresses are
-		 * page rounded just to make sure we get them all.
-		 */
-		if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = trunc_page(KBTOB(biosbasemem));
-		physmem += atop(mem_clusters[0].size);
-		if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-#if 0
-#if NISADMA > 0
-		/*
-		 * Some motherboards/BIOSes remap the 384K of RAM that would
-		 * normally be covered by the ISA hole to the end of memory
-		 * so that it can be used.  However, on a 16M system, this
-		 * would cause bounce buffers to be allocated and used.
-		 * This is not desirable behaviour, as more than 384K of
-		 * bounce buffers might be allocated.  As a work-around,
-		 * we round memory down to the nearest 1M boundary if
-		 * we're using any isadma devices and the remapped memory
-		 * is what puts us over 16M.
-		 */
-		if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
-			char pbuf[9];
-
-			format_bytes(pbuf, sizeof(pbuf),
-			    biosextmem - (15*1024));
-			printf("Warning: ignoring %s of remapped memory\n",
-			    pbuf);
-			biosextmem = (15*1024);
-		}
-#endif
-#endif
-		mem_clusters[1].start = IOM_END;
-		mem_clusters[1].size = trunc_page(KBTOB(biosextmem));
-		physmem += atop(mem_clusters[1].size);
-
-		mem_cluster_cnt = 2;
-
-		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
-	}
-
-	/*
-	 * If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first
-	 * 16M of RAM on a lower priority free list (so that
-	 * all of the ISA DMA'able memory won't be eaten up
-	 * first-off).
-	 */
-	if (avail_end <= (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
+	cpu_init_extents();
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
@@ -1311,122 +1411,39 @@ init_x86_64(paddr_t first_avail)
 
 	/*
 	 * Now, load the memory clusters (which have already been
-	 * rounded and truncated) into the VM system.
-	 *
-	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
-	 * IS LOADED AT IOM_END (1M).
+	 * fleensed) into the VM system.
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
-		seg_start = mem_clusters[x].start;
-		seg_end = mem_clusters[x].start + mem_clusters[x].size;
-		seg_start1 = 0;
-		seg_end1 = 0;
+		paddr_t seg_start = mem_clusters[x].start;
+		paddr_t seg_end = seg_start + mem_clusters[x].size;
+		int seg_type;
 
-		if (seg_start > 0xffffffffULL) {
-			printf("skipping %lld bytes of memory above 4GB\n",
-			    seg_end - seg_start);
-			continue;
-		}
-		if (seg_end > 0x100000000ULL) {
-			printf("skipping %lld bytes of memory above 4GB\n",
-			    seg_end - 0x100000000ULL);
-			seg_end = 0x100000000ULL;
-		}
+		if (seg_start < first_avail) seg_start = first_avail;
+		if (seg_start > seg_end) continue;
+		if (seg_end - seg_start < PAGE_SIZE) continue;
 
-		/*
-		 * Skip memory before our available starting point.
-		 */
-		if (seg_end <= avail_start)
-			continue;
+		physmem += atop(mem_clusters[x].size);
 
-		if (avail_start >= seg_start && avail_start < seg_end) {
-			if (seg_start != 0)
-				panic("init_x86_64: memory doesn't start at 0");
-			seg_start = avail_start;
-			if (seg_start == seg_end)
-				continue;
-		}
+		/* XXX - Should deal with 4GB boundary */
+		if (seg_start >= (1UL<<32))
+			seg_type = VM_FREELIST_HIGH;
+		else if (seg_end <= 16*1024*1024)
+			seg_type = VM_FREELIST_LOW;
+		else
+			seg_type = VM_FREELIST_DEFAULT;
 
-		/*
-		 * If this segment contains the kernel, split it
-		 * in two, around the kernel.
-		 */
-		if (seg_start <= IOM_END && first_avail <= seg_end) {
-			seg_start1 = first_avail;
-			seg_end1 = seg_end;
-			seg_end = IOM_END;
-		}
-
-		/* First hunk */
-		if (seg_start != seg_end) {
-			if (seg_start <= (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
-
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end;
 #if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start,
-				    (unsigned long long)tmp,
-				    atop(seg_start), atop(tmp));
+		printf("loading 0x%lx-0x%lx (0x%lx-0x%lx)\n",
+		    seg_start, seg_end, atop(seg_start), atop(seg_end));
 #endif
-				uvm_page_physload(atop(seg_start),
-				    atop(tmp), atop(seg_start),
-				    atop(tmp), first16q);
-				seg_start = tmp;
-			}
-
-			if (seg_start != seg_end) {
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start,
-				    (unsigned long long)seg_end,
-				    atop(seg_start), atop(seg_end));
-#endif
-				uvm_page_physload(atop(seg_start),
-				    atop(seg_end), atop(seg_start),
-				    atop(seg_end), VM_FREELIST_DEFAULT);
-			}
-		}
-
-		/* Second hunk */
-		if (seg_start1 != seg_end1) {
-			if (seg_start1 <= (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
-
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end1;
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start1,
-				    (unsigned long long)tmp,
-				    atop(seg_start1), atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(tmp), atop(seg_start1),
-				    atop(tmp), first16q);
-				seg_start1 = tmp;
-			}
-
-			if (seg_start1 != seg_end1) {
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start1,
-				    (unsigned long long)seg_end1,
-				    atop(seg_start1), atop(seg_end1));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(seg_end1), atop(seg_start1),
-				    atop(seg_end1), VM_FREELIST_DEFAULT);
-			}
-		}
+		uvm_page_physload(atop(seg_start), atop(seg_end),
+		    atop(seg_start), atop(seg_end), seg_type);
 	}
+#if DEBUG_MEMLOAD
+	printf("avail_start = 0x%lx\n", avail_start);
+	printf("avail_end = 0x%lx\n", avail_end);
+	printf("first_avail = 0x%lx\n", first_avail);
+#endif
 
 	/*
 	 * Steal memory for the message buffer (at end of core).
@@ -1666,6 +1683,42 @@ cpu_dump_mempagecnt(void)
 	for (i = 0; i < mem_cluster_cnt; i++)
 		n += atop(mem_clusters[i].size);
 	return (n);
+}
+
+/*
+ * Figure out which portions of memory are used by the kernel/system.
+ */
+int
+amd64_pa_used(paddr_t addr)
+{
+	bios_memmap_t *bmp;
+
+	/* Kernel manages these */
+	if (PHYS_TO_VM_PAGE(addr))
+		return 1;
+
+	/* Kernel is loaded here */
+	if (addr > IOM_END && addr < (kern_end - KERNBASE))
+		return 1;
+
+	/* Memory is otherwise reserved */
+	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
+		if (addr > bmp->addr && addr < (bmp->addr + bmp->size) &&
+			bmp->type != BIOS_MAP_FREE)
+			return 1;
+	}
+
+	/* Low memory used for various bootstrap things */
+	if (addr >= 0 && addr < avail_start)
+		return 1;
+
+	/*
+	 * The only regions I can think of that are left are the things
+	 * we steal away from UVM.  The message buffer?
+	 * XXX - ignore these for now.
+	 */
+
+	return 0;
 }
 
 void
