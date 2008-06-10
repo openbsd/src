@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.30 2008/06/10 06:08:22 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.31 2008/06/10 23:39:01 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -189,6 +189,7 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_dqbuf,		/* VIDIOC_DQBUF */
 	uvideo_streamon,	/* VIDIOC_STREAMON */
 	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
+	NULL,			/* VIDIOC_QUERYCTRL */
 	uvideo_mappage,		/* mmap */
 	uvideo_get_bufsize,	/* read */
 	uvideo_start_read	/* start stream for read */
