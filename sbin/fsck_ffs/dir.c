@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.22 2007/09/16 17:42:40 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.22 2007/09/16 17:42:40 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.23 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,11 @@ propagate(ino_t inumber)
 	char	state;
 
 	inp = getinoinfo(inumber);
-	state = statemap[inp->i_number];
+	state = GET_ISTATE(inp->i_number);
 	for (;;) {
-		statemap[inp->i_number] = state;
+		SET_ISTATE(inp->i_number, state);
 		if (inp->i_child &&
-		    statemap[inp->i_child->i_number] != state)
+		    GET_ISTATE(inp->i_child->i_number) != state)
 			inp = inp->i_child;
 		else if (inp->i_number == inumber)
 			break;
@@ -343,7 +343,7 @@ mkentry(struct inodesc *idesc)
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
 	dirp->d_reclen = newent.d_reclen;
 	if (newinofmt)
-		dirp->d_type = typemap[idesc->id_parent];
+		dirp->d_type = GET_ITYPE(idesc->id_parent);
 	else
 		dirp->d_type = 0;
 	dirp->d_namlen = newent.d_namlen;
@@ -375,7 +375,7 @@ chgino(struct inodesc *idesc)
 		return (KEEPON);
 	dirp->d_ino = idesc->id_parent;
 	if (newinofmt)
-		dirp->d_type = typemap[idesc->id_parent];
+		dirp->d_type = GET_ITYPE(idesc->id_parent);
 	else
 		dirp->d_type = 0;
 	return (ALTERED|STOP);
@@ -455,7 +455,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		lncntp[oldlfdir] = 0;
 		dp = ginode(lfdir);
 	}
-	if (statemap[lfdir] != DFOUND) {
+	if (GET_ISTATE(lfdir) != DFOUND) {
 		pfatal("SORRY. NO lost+found DIRECTORY\n\n");
 		return (0);
 	}
@@ -648,7 +648,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 		cacheino(dp, ino);
 		return(ino);
 	}
-	if (statemap[parent] != DSTATE && statemap[parent] != DFOUND) {
+	if (GET_ISTATE(parent) != DSTATE && GET_ISTATE(parent) != DFOUND) {
 		freeino(ino);
 		return (0);
 	}
@@ -656,8 +656,8 @@ allocdir(ino_t parent, ino_t request, int mode)
 	inp = getinoinfo(ino);
 	inp->i_parent = parent;
 	inp->i_dotdot = parent;
-	statemap[ino] = statemap[parent];
-	if (statemap[ino] == DSTATE) {
+	SET_ISTATE(ino, GET_ISTATE(parent));
+	if (GET_ISTATE(ino) == DSTATE) {
 		lncntp[ino] = DIP(dp, di_nlink);
 		lncntp[parent]++;
 	}

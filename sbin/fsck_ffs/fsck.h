@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.22 2008/05/26 11:51:20 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.23 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,13 @@ union dinode {
 #define	DFOUND	04		/* directory found during descent */
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
+
+#define GET_ISTATE(ino)		(stmap[(ino)] & 0xf)
+#define GET_ITYPE(ino)		(stmap[(ino)] >> 4)
+#define SET_ISTATE(ino, v)	do { stmap[(ino)] = (stmap[(ino)] & 0xf0) | \
+				    ((v) & 0xf); } while (0)
+#define SET_ITYPE(ino, v)	do { stmap[(ino)] = (stmap[(ino)] & 0x0f) | \
+				    ((v) << 4); } while (0)
 
 /*
  * buffer cache structure.
@@ -226,8 +233,7 @@ daddr64_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
-char	*statemap;		/* ptr to inode state table */
-char	*typemap;		/* ptr to inode type table */
+u_char	*stmap;			/* ptr to inode state and type table */
 int16_t	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */

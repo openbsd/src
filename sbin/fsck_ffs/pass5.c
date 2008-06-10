@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.36 2007/07/17 18:54:40 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.37 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.36 2007/07/17 18:54:40 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.37 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ pass5(void)
 			ocg->cg_magic = CG_MAGIC;
 		j = fs->fs_ipg * c;
 		for (i = 0; i < cginosused[c]; j++, i++) {
-			switch (statemap[j]) {
+			switch (GET_ISTATE(j)) {
 
 			case USTATE:
 				break;
@@ -260,7 +260,7 @@ pass5(void)
 				if (j < ROOTINO)
 					break;
 				errexit("BAD STATE %d FOR INODE I=%ld\n",
-				    statemap[j], j);
+				    GET_ISTATE(j), j);
 			}
 		}
 		if (c == 0)

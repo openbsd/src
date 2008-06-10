@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.15 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.16 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.15 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.16 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ pass1b(void)
 			if (dp == NULL)
 				continue;
 			idesc.id_number = inumber;
-			if (statemap[inumber] != USTATE &&
+			if (GET_ISTATE(inumber) != USTATE &&
 			    (ckinode(dp, &idesc) & STOP))
 				return;
 		}

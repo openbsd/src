@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.27 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.28 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.27 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.28 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ pass2(void)
 	char pathbuf[MAXPATHLEN + 1];
 	int i;
 
-	switch (statemap[ROOTINO]) {
+	switch (GET_ISTATE(ROOTINO)) {
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
@@ -136,9 +136,9 @@ pass2(void)
 		break;
 
 	default:
-		errexit("BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
+		errexit("BAD STATE %d FOR ROOT INODE\n", GET_ISTATE(ROOTINO));
 	}
-	statemap[ROOTINO] = DFOUND;
+	SET_ISTATE(ROOTINO, DFOUND);
 	/*
 	 * Sort the directory list into disk block order.
 	 */
@@ -270,7 +270,7 @@ pass2check(struct inodesc *idesc)
 	 * If converting, set directory entry type.
 	 */
 	if (doinglevel2 && dirp->d_ino > 0 && dirp->d_ino < maxino) {
-		dirp->d_type = typemap[dirp->d_ino];
+		dirp->d_type = GET_ITYPE(dirp->d_ino);
 		ret |= ALTERED;
 	}
 	/*
@@ -428,7 +428,7 @@ chk2:
 		n = reply("REMOVE");
 	} else {
 again:
-		switch (statemap[dirp->d_ino]) {
+		switch (GET_ISTATE(dirp->d_ino)) {
 		case USTATE:
 			if (idesc->id_entryno <= 2)
 				break;
@@ -440,7 +440,7 @@ again:
 		case FCLEAR:
 			if (idesc->id_entryno <= 2)
 				break;
-			if (statemap[dirp->d_ino] == FCLEAR)
+			if (GET_ISTATE(dirp->d_ino) == FCLEAR)
 				errmsg = "DUP/BAD";
 			else if (!preen && !usedsoftdep)
 				errmsg = "ZERO LENGTH DIRECTORY";
@@ -452,8 +452,8 @@ again:
 			if ((n = reply("REMOVE")) == 1)
 				break;
 			dp = ginode(dirp->d_ino);
-			statemap[dirp->d_ino] =
-			    (DIP(dp, di_mode) & IFMT) == IFDIR ? DSTATE : FSTATE;
+			SET_ISTATE(dirp->d_ino, (DIP(dp, di_mode) & IFMT) ==
+			    IFDIR ? DSTATE : FSTATE);
 			lncntp[dirp->d_ino] = DIP(dp, di_nlink);
 			goto again;
 
@@ -481,10 +481,11 @@ again:
 			/* FALLTHROUGH */
 
 		case FSTATE:
-			if (newinofmt && dirp->d_type != typemap[dirp->d_ino]) {
+			if (newinofmt && dirp->d_type !=
+			    GET_ITYPE(dirp->d_ino)) {
 				fileerror(idesc->id_number, dirp->d_ino,
 				    "BAD TYPE VALUE");
-				dirp->d_type = typemap[dirp->d_ino];
+				dirp->d_type = GET_ITYPE(dirp->d_ino);
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
 			}
@@ -493,7 +494,7 @@ again:
 
 		default:
 			errexit("BAD STATE %d FOR INODE I=%d\n",
-			    statemap[dirp->d_ino], dirp->d_ino);
+			    GET_ISTATE(dirp->d_ino), dirp->d_ino);
 		}
 	}
 	if (n == 0)

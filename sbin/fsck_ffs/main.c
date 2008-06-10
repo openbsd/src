@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.32 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.33 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,10 +316,8 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	ckfini(resolved); /* Don't mark fs clean if fsck needs to be re-run */
 	free(blockmap);
 	blockmap = NULL;
-	free(statemap);
-	statemap = NULL;
-	free(typemap);
-	typemap = NULL;
+	free(stmap);
+	stmap = NULL;
 	free(lncntp);
 	lncntp = NULL;
 	free(sblock.fs_csp);

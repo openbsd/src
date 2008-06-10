@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.30 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.31 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.30 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.31 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -490,7 +490,7 @@ clri(struct inodesc *idesc, char *type, int flag)
 		n_files--;
 		(void)ckinode(dp, idesc);
 		clearinode(dp);
-		statemap[idesc->id_number] = USTATE;
+		SET_ISTATE(idesc->id_number, USTATE);
 		inodirty();
 	}
 }
@@ -555,14 +555,14 @@ blkerror(ino_t ino, char *type, daddr64_t blk)
 
 	pfatal("%lld %s I=%u", blk, type, ino);
 	printf("\n");
-	switch (statemap[ino]) {
+	switch (GET_ISTATE(ino)) {
 
 	case FSTATE:
-		statemap[ino] = FCLEAR;
+		SET_ISTATE(ino, FCLEAR);
 		return;
 
 	case DSTATE:
-		statemap[ino] = DCLEAR;
+		SET_ISTATE(ino, DCLEAR);
 		return;
 
 	case FCLEAR:
@@ -570,7 +570,7 @@ blkerror(ino_t ino, char *type, daddr64_t blk)
 		return;
 
 	default:
-		errexit("BAD STATE %d TO BLKERR\n", statemap[ino]);
+		errexit("BAD STATE %d TO BLKERR\n", GET_ISTATE(ino));
 		/* NOTREACHED */
 	}
 }
@@ -589,10 +589,10 @@ allocino(ino_t request, int type)
 
 	if (request == 0)
 		request = ROOTINO;
-	else if (statemap[request] != USTATE)
+	else if (GET_ISTATE(request) != USTATE)
 		return (0);
 	for (ino = request; ino < maxino; ino++)
-		if (statemap[ino] == USTATE)
+		if (GET_ISTATE(ino) == USTATE)
 			break;
 	if (ino == maxino)
 		return (0);
@@ -605,12 +605,12 @@ allocino(ino_t request, int type)
 
 	switch (type & IFMT) {
 	case IFDIR:
-		statemap[ino] = DSTATE;
+		SET_ISTATE(ino, DSTATE);
 		cgp->cg_cs.cs_ndir++;
 		break;
 	case IFREG:
 	case IFLNK:
-		statemap[ino] = FSTATE;
+		SET_ISTATE(ino, FSTATE);
 		break;
 	default:
 		return (0);
@@ -619,7 +619,7 @@ allocino(ino_t request, int type)
 	dp = ginode(ino);
 	DIP_SET(dp, di_db[0],  allocblk(1));
 	if (DIP(dp, di_db[0]) == 0) {
-		statemap[ino] = USTATE;
+		SET_ISTATE(ino, USTATE);
 		return (0);
 	}
 	DIP_SET(dp, di_mode, type);
@@ -638,7 +638,7 @@ allocino(ino_t request, int type)
 	n_files++;
 	inodirty();
 	if (newinofmt)
-		typemap[ino] = IFTODT(type);
+		SET_ITYPE(ino, IFTODT(type));
 	return (ino);
 }
 
@@ -659,6 +659,6 @@ freeino(ino_t ino)
 	(void)ckinode(dp, &idesc);
 	clearinode(dp);
 	inodirty();
-	statemap[ino] = USTATE;
+	SET_ISTATE(ino, USTATE);
 	n_files--;
 }

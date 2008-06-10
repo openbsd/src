@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.34 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.35 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.34 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.35 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -456,7 +456,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 		return;
 	}
 	if (busy ||
-	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
+	    (GET_ISTATE(curdir) != DSTATE && GET_ISTATE(curdir) != DFOUND)) {
 		(void)strlcpy(namebuf, "?", namebuflen);
 		return;
 	}

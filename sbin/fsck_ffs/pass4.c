@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.17 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.18 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.17 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.18 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ pass4(void)
 			if (inumber < ROOTINO)
 				continue;
  			idesc.id_number = inumber;
-			switch (statemap[inumber]) {
+			switch (GET_ISTATE(inumber)) {
 
 			case FSTATE:
 			case DFOUND:
@@ -118,7 +118,7 @@ pass4(void)
 
 			default:
 				errexit("BAD STATE %d FOR INODE I=%d\n",
-			    	statemap[inumber], inumber);
+			    	GET_ISTATE(inumber), inumber);
 			}
 		}
 	}

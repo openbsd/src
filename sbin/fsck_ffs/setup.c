@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.39 2008/06/10 13:49:24 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.40 2008/06/10 23:10:29 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.39 2008/06/10 13:49:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.40 2008/06/10 23:10:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -419,15 +419,9 @@ found:
 		    (unsigned)bmapsize);
 		goto badsblabel;
 	}
-	statemap = calloc((unsigned)(maxino + 1), sizeof(char));
-	if (statemap == NULL) {
-		printf("cannot alloc %u bytes for statemap\n",
-		    (unsigned)(maxino + 1));
-		goto badsblabel;
-	}
-	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
-	if (typemap == NULL) {
-		printf("cannot alloc %u bytes for typemap\n",
+	stmap = calloc((unsigned)(maxino + 1), sizeof(char));
+	if (stmap == NULL) {
+		printf("cannot alloc %u bytes for stmap\n",
 		    (unsigned)(maxino + 1));
 		goto badsblabel;
 	}
@@ -449,7 +443,7 @@ found:
 	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
 	if (inpsort == NULL) {
 		printf("cannot alloc %zu bytes for inpsort\n",
-		    (unsigned)numdirs * sizeof(struct inoinfo *));
+		    (unsigned)listmax * sizeof(struct inoinfo *));
 		goto badsblabel;
 	}
 	inphead = calloc((unsigned)numdirs, sizeof(struct inoinfo *));
