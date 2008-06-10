@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2007/12/31 09:23:53 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2008/06/10 21:12:14 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -96,7 +96,7 @@ extern vaddr_t	last_addr;
 #define CD_FREE		0x0000200	/* pmap_release */
 #define CD_DESTR	0x0000400	/* pmap_destroy */
 #define CD_RM		0x0000800	/* pmap_remove */
-#define CD_RMAL		0x0001000	/* pmap_remove_all */
+#define CD_RMPG		0x0001000	/* pmap_remove_page */
 #define CD_PROT		0x0002000	/* pmap_protect */
 #define CD_EXP		0x0004000	/* pmap_expand */
 #define CD_ENT		0x0008000	/* pmap_enter */
@@ -168,7 +168,7 @@ void	pmap_expand(pmap_t, vaddr_t);
 void	pmap_release(pmap_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
-void	pmap_remove_all(struct vm_page *);
+void	pmap_remove_page(struct vm_page *);
 void	pmap_changebit(struct vm_page *, int, int);
 boolean_t pmap_testbit(struct vm_page *, int);
 
@@ -1259,7 +1259,7 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
  * will be null.
  */
 void
-pmap_remove_all(struct vm_page *pg)
+pmap_remove_page(struct vm_page *pg)
 {
 	pt_entry_t *pte;
 	pv_entry_t pvl;
@@ -1270,15 +1270,15 @@ pmap_remove_all(struct vm_page *pg)
 	if (pg == NULL) {
 		/* not a managed page. */
 #ifdef PMAPDEBUG
-		if (pmap_debug & CD_RMAL)
-			printf("pmap_remove_all(%p): not a managed page\n", pg);
+		if (pmap_debug & CD_RMPG)
+			printf("pmap_remove_page(%p): not a managed page\n", pg);
 #endif
 		return;
 	}
 
 #ifdef PMAPDEBUG
-	if (pmap_debug & CD_RMAL)
-		printf("pmap_remove_all(%p)\n", pg);
+	if (pmap_debug & CD_RMPG)
+		printf("pmap_remove_page(%p)\n", pg);
 #endif
 
 	spl = splvm();
@@ -1311,8 +1311,8 @@ remove_all_Retry:
 		}
 		if (pmap_pte_w(pte)) {
 #ifdef PMAPDEBUG
-			if (pmap_debug & CD_RMAL)
-				printf("pmap_remove_all(%p): wired mapping not removed\n",
+			if (pmap_debug & CD_RMPG)
+				printf("pmap_remove_page(%p): wired mapping not removed\n",
 				    pg);
 #endif
 			pvl = pvl->pv_next;
@@ -2437,7 +2437,7 @@ pmap_is_referenced(struct vm_page *pg)
  *
  * Calls:
  *	pmap_changebit
- *	pmap_remove_all
+ *	pmap_remove_page
  *
  *	Lower the permission for all mappings to a given page.
  */
@@ -2445,7 +2445,7 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE)
-		pmap_remove_all(pg);
+		pmap_remove_page(pg);
 	else if ((prot & VM_PROT_WRITE) == VM_PROT_NONE)
 		pmap_changebit(pg, PG_RO, ~0);
 }
