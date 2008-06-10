@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.137 2008/05/30 11:06:17 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.138 2008/06/10 17:34:36 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -276,8 +276,9 @@ cvs_diff_local(struct cvs_file *cf)
 				return;
 			}
 			if (cf->fd == -1) {
-				cvs_log(LP_ERR, "cannot find %s",
-				    cf->file_path);
+				if (!cvs_server_active)
+					cvs_log(LP_ERR, "cannot find %s",
+					    cf->file_path);
 				return;
 			}
 			break;
@@ -295,8 +296,9 @@ cvs_diff_local(struct cvs_file *cf)
 			break;
 		default:
 			if (cf->fd == -1) {
-				cvs_log(LP_ERR, "cannot find %s",
-				    cf->file_path);
+				if (!cvs_server_active)
+					cvs_log(LP_ERR, "cannot find %s",
+					    cf->file_path);
 				return;
 			}
 			if (cf->file_rcs == NULL) {
