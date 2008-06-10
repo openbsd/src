@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.584 2008/06/10 04:26:31 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.585 2008/06/10 19:32:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3405,9 +3405,10 @@ cleanup:
 		s->nat_rule.ptr = nr;
 		s->anchor.ptr = a;
 		STATE_INC_COUNTERS(s);
-		s->allow_opts = r->allow_opts;
+		if (r->allow_opts)
+			s->state_flags |= PFSTATE_ALLOWOPTS;
 		if (r->rule_flag & PFRULE_STATESLOPPY)
-			s->sloppy = 1;
+			s->state_flags |= PFSTATE_SLOPPY;
 		s->log = r->log & PF_LOG_ALL;
 		if (nr != NULL)
 			s->log |= nr->log & PF_LOG_ALL;
@@ -4162,7 +4163,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		return (PF_DROP);
 	}
 
-	if ((*state)->sloppy) {
+	if ((*state)->state_flags & PFSTATE_SLOPPY) {
 		if (pf_tcp_track_sloppy(src, dst, state, pd, reason) == PF_DROP)
 			return (PF_DROP);
 	} else {
@@ -4539,7 +4540,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				copyback = 1;
 			}
 
-			if (!(*state)->sloppy && (!SEQ_GEQ(src->seqhi, seq) ||
+			if (!((*state)->state_flags & PFSTATE_SLOPPY) &&
+			    (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)))) {
 				if (pf_status.debug >= PF_DEBUG_MISC) {
 					printf("pf: BAD ICMP %d:%d ",
@@ -5720,7 +5722,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 
 done:
 	if (action == PF_PASS && h->ip_hl > 5 &&
-	    !((s && s->allow_opts) || r->allow_opts)) {
+	    !((s && s->state_flags & PFSTATE_ALLOWOPTS) || r->allow_opts)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_IPOPTIONS);
 		log = 1;
@@ -6096,7 +6098,7 @@ done:
 
 	/* handle dangerous IPv6 extension headers. */
 	if (action == PF_PASS && rh_cnt &&
-	    !((s && s->allow_opts) || r->allow_opts)) {
+	    !((s && s->state_flags & PFSTATE_ALLOWOPTS) || r->allow_opts)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_IPOPTIONS);
 		log = 1;
