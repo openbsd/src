@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.29 2008/06/09 20:51:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.30 2008/06/10 06:08:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -146,11 +146,11 @@ int		uvideo_qbuf(void *, struct v4l2_buffer *);
 int		uvideo_dqbuf(void *, struct v4l2_buffer *);
 int		uvideo_streamon(void *, int);
 int		uvideo_try_fmt(void *, struct v4l2_format *);
-caddr_t		uvideo_mappage(void *, off_t, int);
 
 /*
  * Other hardware interface related functions
  */
+caddr_t		uvideo_mappage(void *, off_t, int);
 int		uvideo_get_bufsize(void *);
 void		uvideo_start_read(void *);
 
@@ -1945,6 +1945,20 @@ uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 	return (0);
 }
 
+caddr_t
+uvideo_mappage(void *v, off_t off, int prot)
+{
+	struct uvideo_softc *sc = v;
+	caddr_t p;
+
+	if (!sc->sc_mmap_flag)
+		sc->sc_mmap_flag = 1;
+
+	p = sc->sc_mmap_buffer + off;
+
+	return (p);
+}
+
 int
 uvideo_get_bufsize(void *v)
 {
@@ -1962,18 +1976,4 @@ uvideo_start_read(void *v)
 		sc->sc_mmap_flag = 0;
 
 	uvideo_vs_start(sc);
-}
-
-caddr_t
-uvideo_mappage(void *v, off_t off, int prot)
-{
-	struct uvideo_softc *sc = v;
-	caddr_t p;
-
-	if (!sc->sc_mmap_flag)
-		sc->sc_mmap_flag = 1;
-
-	p = sc->sc_mmap_buffer + off;
-
-	return (p);
 }
