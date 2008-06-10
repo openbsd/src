@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.138 2008/06/10 02:07:57 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.139 2008/06/10 14:49:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -28,30 +28,21 @@
 #include "diff.h"
 #include "remote.h"
 
-struct	cvs_dirlist {
-	char	*file_path;
-	struct	cvs_flisthead files_affected;
-	struct	cvs_flisthead files_added;
-	struct	cvs_flisthead files_removed;
-	struct	cvs_flisthead files_modified;
-	TAILQ_ENTRY(cvs_dirlist) dlist;
-};
-
-TAILQ_HEAD(cvs_dlisthead, cvs_dirlist);
-
 void			 cvs_commit_local(struct cvs_file *);
 void			 cvs_commit_check_files(struct cvs_file *);
-void			 cvs_commit_loginfo(char *, struct cvs_dirlist *);
+void			 cvs_commit_loginfo(char *);
 void			 cvs_commit_lock_dirs(struct cvs_file *);
-struct cvs_dirlist	*cvs_commit_getdir(char *dir);
-void			 cvs_commit_freedirlist(void);
 
 static BUF *commit_diff(struct cvs_file *, RCSNUM *, int);
 static void commit_desc_set(struct cvs_file *);
 
-struct	cvs_dlisthead	 directory_list;
 struct	file_info_list	 files_info;
 struct	trigger_list	*line_list;
+
+struct cvs_flisthead	files_affected;
+struct cvs_flisthead	files_added;
+struct cvs_flisthead	files_removed;
+struct cvs_flisthead	files_modified;
 
 int	conflicts_found;
 char	*logmsg = NULL;
@@ -74,7 +65,6 @@ cvs_commit(int argc, char **argv)
 	int ch, Fflag, mflag;
 	struct module_checkout *mc;
 	struct cvs_recursion cr;
-	struct cvs_dirlist *d;
 	struct cvs_filelist *l;
 	struct file_info *fi;
 	char *arg = ".", repo[MAXPATHLEN];
@@ -120,7 +110,11 @@ cvs_commit(int argc, char **argv)
 	if (Fflag && mflag)
 		fatal("cannot specify both a log file and a message");
 
-	TAILQ_INIT(&directory_list);
+	TAILQ_INIT(&files_affected);
+	TAILQ_INIT(&files_added);
+	TAILQ_INIT(&files_removed);
+	TAILQ_INIT(&files_modified);
+
 	TAILQ_INIT(&files_info);
 	conflicts_found = 0;
 
@@ -138,20 +132,18 @@ cvs_commit(int argc, char **argv)
 		fatal("%d conflicts found, please correct these first",
 		    conflicts_found);
 
-	if (TAILQ_EMPTY(&directory_list))
+	if (TAILQ_EMPTY(&files_affected))
 		return (0);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
-		d = TAILQ_FIRST(&directory_list);
-
-		if (logmsg == NULL) {
-			logmsg = cvs_logmsg_create(NULL, &d->files_added,
-			    &d->files_removed, &d->files_modified);
-		}
+	if (logmsg == NULL && cvs_server_active == 0) {
+		logmsg = cvs_logmsg_create(NULL, &files_added, &files_removed,
+		    &files_modified);
 
 		if (logmsg == NULL)
 			fatal("This shouldnt happen, honestly!");
+	}
 
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -172,125 +164,68 @@ cvs_commit(int argc, char **argv)
 		if (cvs_server_active && logmsg == NULL)
 			fatal("no log message specified");
 
-		TAILQ_FOREACH(d, &directory_list, dlist) {
-			cvs_get_repository_name(d->file_path, repo,
-			    MAXPATHLEN);
+		cvs_get_repository_name(".", repo, MAXPATHLEN);
 
-			if (!Fflag && !mflag) {
-				if (logmsg != NULL)
-					xfree(logmsg);
-				logmsg = cvs_logmsg_create(d->file_path,
-				    &d->files_added, &d->files_removed,
-				    &d->files_modified);
+		line_list = cvs_trigger_getlines(CVS_PATH_COMMITINFO, repo);
+		if (line_list != NULL) {
+			TAILQ_FOREACH(l, &files_affected, flist) {
+				fi = xcalloc(1, sizeof(*fi));
+				fi->file_path = xstrdup(l->file_path);
+				TAILQ_INSERT_TAIL(&files_info, fi,
+				    flist);
 			}
 
-			line_list = cvs_trigger_getlines(CVS_PATH_COMMITINFO,
-			    repo);
-			if (line_list != NULL) {
-				TAILQ_FOREACH(l, &d->files_affected, flist) {
-					fi = xcalloc(1, sizeof(*fi));
-					fi->file_path = xstrdup(l->file_path);
-					TAILQ_INSERT_TAIL(&files_info, fi,
-					    flist);
-				}
-				if (cvs_trigger_handle(CVS_TRIGGER_COMMITINFO,
-				    repo, NULL, line_list, &files_info)) {
-					cvs_log(LP_ERR,
-					    "Pre-commit check failed");
-					cvs_trigger_freelist(line_list);
-					goto end;
-				}
+			if (cvs_trigger_handle(CVS_TRIGGER_COMMITINFO,
+			    repo, NULL, line_list, &files_info)) {
+				cvs_log(LP_ERR,
+				    "Pre-commit check failed");
 				cvs_trigger_freelist(line_list);
-				cvs_trigger_freeinfo(&files_info);
-			}
-	
-			if (logmsg == NULL) {
-				if (cvs_server_active)
-					fatal("no log message specified");
-				logmsg = cvs_logmsg_create(d->file_path,
-				    &d->files_added, &d->files_removed,
-				    &d->files_modified);
-			}
-
-			if (cvs_logmsg_verify(logmsg))
 				goto end;
-
-			cr.fileproc = cvs_commit_lock_dirs;
-			cvs_file_walklist(&d->files_affected, &cr);
-
-			line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO,
-			    repo);
-
-			cr.fileproc = cvs_commit_local;
-			cvs_file_walklist(&d->files_affected, &cr);
-
-			if (line_list != NULL) {
-				cvs_commit_loginfo(repo, d);
-
-				cvs_trigger_handle(CVS_TRIGGER_LOGINFO, repo,
-				    loginfo, line_list, &files_info);
-
-				xfree(loginfo);
-				cvs_trigger_freelist(line_list);
-				cvs_trigger_freeinfo(&files_info);
 			}
 
-			mc = cvs_module_lookup(repo);
-			if (mc->mc_prog != NULL &&
-			    (mc->mc_flags & MODULE_RUN_ON_COMMIT))
-				cvs_exec(mc->mc_prog, NULL, 0);
+			cvs_trigger_freelist(line_list);
+			cvs_trigger_freeinfo(&files_info);
 		}
+
+		if (cvs_logmsg_verify(logmsg))
+			goto end;
+
+		cr.fileproc = cvs_commit_lock_dirs;
+		cvs_file_walklist(&files_affected, &cr);
+
+		line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, repo);
+
+		cr.fileproc = cvs_commit_local;
+		cvs_file_walklist(&files_affected, &cr);
+
+		if (line_list != NULL) {
+			cvs_commit_loginfo(repo);
+
+			cvs_trigger_handle(CVS_TRIGGER_LOGINFO, repo,
+			    loginfo, line_list, &files_info);
+
+			xfree(loginfo);
+			cvs_trigger_freelist(line_list);
+			cvs_trigger_freeinfo(&files_info);
+		}
+
+		mc = cvs_module_lookup(repo);
+		if (mc->mc_prog != NULL &&
+		    (mc->mc_flags & MODULE_RUN_ON_COMMIT))
+			cvs_exec(mc->mc_prog, NULL, 0);
 	}
 
 end:
-	cvs_commit_freedirlist();
 	cvs_trigger_freeinfo(&files_info);
 	xfree(logmsg);
 	return (0);
 }
 
 void
-cvs_commit_freedirlist(void)
-{
-	struct cvs_dirlist *d;
-
-	while ((d = TAILQ_FIRST(&directory_list)) != NULL) {
-		TAILQ_REMOVE(&directory_list, d, dlist);
-		xfree(d->file_path);
-		cvs_file_freelist(&d->files_affected);
-		cvs_file_freelist(&d->files_added);
-		cvs_file_freelist(&d->files_modified);
-		cvs_file_freelist(&d->files_removed);
-		xfree(d);
-	}
-}
-
-struct cvs_dirlist *
-cvs_commit_getdir(char *dir)
-{
-	struct cvs_dirlist *dp;
-
-	TAILQ_FOREACH(dp, &directory_list, dlist) {
-		if (strcmp(dp->file_path, dir) == 0)
-			return dp;
-	}
-
-	dp = xmalloc(sizeof(*dp));
-	dp->file_path = xstrdup(dir);
-	TAILQ_INIT(&dp->files_affected);
-	TAILQ_INIT(&dp->files_added);
-	TAILQ_INIT(&dp->files_modified);
-	TAILQ_INIT(&dp->files_removed);
-
-	TAILQ_INSERT_TAIL(&directory_list, dp, dlist);
-	return dp;
-}
-
-void
-cvs_commit_loginfo(char *repo, struct cvs_dirlist *d)
+cvs_commit_loginfo(char *repo)
 {
 	BUF *buf;
-	char pwd[MAXPATHLEN], *p;
+	char pwd[MAXPATHLEN];
 	struct cvs_filelist *cf;
 
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
@@ -300,46 +235,37 @@ cvs_commit_loginfo(char *repo, struct cvs_dirlist *d)
 
 	cvs_trigger_loginfo_header(buf, repo);
 
-	if (!TAILQ_EMPTY(&d->files_added)) {
+	if (!TAILQ_EMPTY(&files_added)) {
 		cvs_buf_puts(buf, "Added Files:");
 
-		TAILQ_FOREACH(cf, &d->files_added, flist) {
-			if ((p = basename(cf->file_path)) == NULL)
-				p = cf->file_path;
-
+		TAILQ_FOREACH(cf, &files_added, flist) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, p);
+			cvs_buf_puts(buf, cf->file_path);
 		}
 
 		cvs_buf_putc(buf, '\n');
 	}
 
-	if (!TAILQ_EMPTY(&d->files_modified)) {
+	if (!TAILQ_EMPTY(&files_modified)) {
 		cvs_buf_puts(buf, "Modified Files:");
 
-		TAILQ_FOREACH(cf, &d->files_modified, flist) {
-			if ((p = basename(cf->file_path)) == NULL)
-				p = cf->file_path;
-
+		TAILQ_FOREACH(cf, &files_modified, flist) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, p);
+			cvs_buf_puts(buf, cf->file_path);
 		}
 
 		cvs_buf_putc(buf, '\n');
 	}
 
-	if (!TAILQ_EMPTY(&d->files_removed)) {
+	if (!TAILQ_EMPTY(&files_removed)) {
 		cvs_buf_puts(buf, "Removed Files:");
 
-		TAILQ_FOREACH(cf, &d->files_removed, flist) {
-			if ((p = basename(cf->file_path)) == NULL)
-				p = cf->file_path;
-
+		TAILQ_FOREACH(cf, &files_removed, flist) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, p);
+			cvs_buf_puts(buf, cf->file_path);
 		}
 
 		cvs_buf_putc(buf, '\n');
@@ -372,7 +298,6 @@ cvs_commit_check_files(struct cvs_file *cf)
 {
 	char *tag;
 	RCSNUM *branch, *brev;
-	struct cvs_dirlist *d;
 
 	branch = brev = NULL;
 
@@ -487,23 +412,17 @@ next:
 	    cf->file_status != FILE_MODIFIED)
 		return;
 
-	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
-		d = cvs_commit_getdir(cf->file_wd);
-	} else {
-		d = cvs_commit_getdir("remote");
-	}
-
-	cvs_file_get(cf->file_path, 0, &d->files_affected);
+	cvs_file_get(cf->file_path, 0, &files_affected);
 
 	switch (cf->file_status) {
 	case FILE_ADDED:
-		cvs_file_get(cf->file_path, 0, &d->files_added);
+		cvs_file_get(cf->file_path, 0, &files_added);
 		break;
 	case FILE_REMOVED:
-		cvs_file_get(cf->file_path, 0, &d->files_removed);
+		cvs_file_get(cf->file_path, 0, &files_removed);
 		break;
 	case FILE_MODIFIED:
-		cvs_file_get(cf->file_path, 0, &d->files_modified);
+		cvs_file_get(cf->file_path, 0, &files_modified);
 		break;
 	}
 }
