@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.75 2008/06/10 21:25:29 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.76 2008/06/10 22:39:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -811,12 +811,11 @@ pfr_create_kentry(struct pfr_addr *ad, int intr)
 	struct pfr_kentry	*ke;
 
 	if (intr)
-		ke = pool_get(&pfr_kentry_pl2, PR_NOWAIT);
+		ke = pool_get(&pfr_kentry_pl2, PR_NOWAIT | PR_ZERO);
 	else
-		ke = pool_get(&pfr_kentry_pl, PR_NOWAIT);
+		ke = pool_get(&pfr_kentry_pl, PR_NOWAIT | PR_ZERO);
 	if (ke == NULL)
 		return (NULL);
-	bzero(ke, sizeof(*ke));
 
 	if (ad->pfra_af == AF_INET)
 		FILLIN_SIN(ke->pfrke_sa.sin, ad->pfra_ip4addr);
@@ -1901,10 +1900,9 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero, int attachruleset)
 	struct pfr_ktable	*kt;
 	struct pf_ruleset	*rs;
 
-	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT);
+	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT | PR_ZERO);
 	if (kt == NULL)
 		return (NULL);
-	bzero(kt, sizeof(*kt));
 	kt->pfrkt_t = *tbl;
 
 	if (attachruleset) {
@@ -2060,7 +2058,7 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 	    (kt->pfrkt_flags & PFR_TFLAG_COUNTERS)) {
 		if (ke->pfrke_counters == NULL)
 			ke->pfrke_counters = pool_get(&pfr_kcounters_pl,
-			    PR_NOWAIT|PR_ZERO);
+			    PR_NOWAIT | PR_ZERO);
 		if (ke->pfrke_counters != NULL) {
 			ke->pfrke_counters->pfrkc_packets[dir_out][op_pass]++;
 			ke->pfrke_counters->pfrkc_bytes[dir_out][op_pass] += len;

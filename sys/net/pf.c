@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.587 2008/06/10 21:14:39 reyk Exp $ */
+/*	$OpenBSD: pf.c,v 1.588 2008/06/10 22:39:31 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -527,12 +527,11 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 	if (*sn == NULL) {
 		if (!rule->max_src_nodes ||
 		    rule->src_nodes < rule->max_src_nodes)
-			(*sn) = pool_get(&pf_src_tree_pl, PR_NOWAIT);
+			(*sn) = pool_get(&pf_src_tree_pl, PR_NOWAIT | PR_ZERO);
 		else
 			pf_status.lcounters[LCNT_SRCNODES]++;
 		if ((*sn) == NULL)
 			return (-1);
-		bzero(*sn, sizeof(struct pf_src_node));
 
 		pf_init_threshold(&(*sn)->conn_rate,
 		    rule->max_src_conn_rate.limit,
@@ -728,9 +727,8 @@ pf_alloc_state_key(void)
 {
 	struct pf_state_key	*sk;
 
-	if ((sk = pool_get(&pf_state_key_pl, PR_NOWAIT)) == NULL)
+	if ((sk = pool_get(&pf_state_key_pl, PR_NOWAIT | PR_ZERO)) == NULL)
 		return (NULL);
-	bzero(sk, sizeof(*sk));
 	TAILQ_INIT(&sk->states);
 
 	return (sk);
@@ -3375,7 +3373,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
-		s = pool_get(&pf_state_pl, PR_NOWAIT);
+		s = pool_get(&pf_state_pl, PR_NOWAIT | PR_ZERO);
 		if (s == NULL) {
 			REASON_SET(&reason, PFRES_MEMORY);
 cleanup:
@@ -3398,7 +3396,6 @@ cleanup:
 				pool_put(&pf_state_key_pl, nk);
 			return (PF_DROP);
 		}
-		bzero(s, sizeof(*s));
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
 		s->anchor.ptr = a;
