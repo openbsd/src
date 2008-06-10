@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.90 2008/06/10 00:02:09 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.91 2008/06/10 16:49:01 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -195,42 +195,46 @@ str2hex(char *str, long *vp)
 	return (str);
 }
 
+/*
+ * Hunt through the device tree for CPUs.  There should be no need to
+ * go more than four levels deep; an UltraSPARC-IV on Seregeti shows
+ * up as /ssm@0,0/cmp@0,0/cpu@0 and a SPARC64-VI will show up as
+ * /cmp@0,0/core@0/cpu@0.
+ */
 int
 get_ncpus(void)
 {
 #ifdef MULTIPROCESSOR
-	int node0, node,ncpus;
+	int node, child, stack[4], depth, ncpus;
 	char buf[32];
 
-	node = findroot();
+	stack[0] = findroot();
+	depth = 0;
 
 	ncpus = 0;
-	for (node = OF_child(node), node0 = 0; node; node = OF_peer(node)) {
-		/* 
-		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
-		 * a "cmp" node.  Go down one level, but remember
-		 * where we came from, such that we can go up again
-		 * after we've handled both "cpu" nodes.
-		 */
-		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
+	for (;;) {
+		node = stack[depth];
+
+		if (node == 0 || node == -1) {
+			if (--depth < 0)
+				return (ncpus);
+			
+			stack[depth] = OF_peer(stack[depth]);
 			continue;
-		if (strcmp(buf, "cmp") == 0) {
-			node0 = node;
-			node = OF_child(node0);
 		}
 
-		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
-			continue;
-		if (strcmp(buf, "cpu") == 0)
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
 			ncpus++;
 
-		if (node0 && OF_peer(node) == 0) {
-			node = node0;
-			node0 = 0;
-		}
+		child = OF_child(node);
+		if (child != 0 && child != -1 && depth < 3)
+			stack[++depth] = child;
+		else
+			stack[depth] = OF_peer(stack[depth]);
 	}
 
-	return (ncpus);
+	return (0);
 #else
 	return (1);
 #endif
