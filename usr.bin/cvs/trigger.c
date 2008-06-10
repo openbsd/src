@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.5 2008/06/10 03:18:59 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.6 2008/06/10 03:33:21 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -105,8 +105,13 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 			case 'l':
 			case 'S':
 			case 's':
-				if (fi != NULL)
-					val = fi->file_path;
+				if (fi != NULL) {
+					val = basename(fi->file_path);
+					if (val == NULL) {
+						fatal("basename: %s",
+						    strerror(errno));
+					}
+				}
 				break;
 			case 't':
 				if (fi != NULL)
