@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.18 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.19 2008/06/10 20:50:22 beck Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ mtcommand(dev, cmd, cnt)
 	bp->b_cmd = cmd;
 	bp->b_dev = dev;
 	do {
-		bp->b_flags = B_BUSY | B_CMD;
+		bp->b_flags = B_BUSY | B_CMD | B_RAW;
 		mtstrategy(bp);
 		biowait(bp);
 		if (bp->b_flags & B_ERROR) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/11/17 05:32:42 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2008/06/10 20:50:22 beck Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;
-	bp->b_flags = B_BUSY | B_WRITE;
+	bp->b_flags = B_BUSY | B_WRITE | B_RAW;
 	(*strat)(bp);
 	error = biowait(bp);
 
