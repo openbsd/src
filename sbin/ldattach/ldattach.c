@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.8 2008/06/10 00:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.9 2008/06/10 18:28:58 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -80,8 +80,13 @@ relay(int device, int pty)
 			syslog(LOG_ERR, "polling error");
 			exit(1);
 		} 
-		if (nfds == 0)
+		if (nfds == 0)	/* should not happen */
 			continue;
+
+		if (pfd[1].revents & POLLHUP) {	/* slave device not connected */
+			sleep(1);
+			continue;
+		}
 
 		for (n = 0; n < 2; n++) {
 			if (!(pfd[n].revents & POLLRDNORM))
@@ -269,7 +274,7 @@ main(int argc, char *argv[])
 			warnx("TIOCSTSTAMP");
 			goto bail_out;
 		}
-		tty.c_cc[VMIN] = tty.c_cc[VTIME] = 0;
+		/* tty.c_cc[VMIN] = tty.c_cc[VTIME] = 0; */
 		tty.c_iflag = 0;
 		tty.c_lflag = 0;
 		tty.c_oflag = 0;
