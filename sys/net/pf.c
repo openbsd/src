@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.586 2008/06/10 20:05:13 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.587 2008/06/10 21:14:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4000,8 +4000,23 @@ pf_tcp_track_sloppy(struct pf_state_peer *src, struct pf_state_peer *dst,
 				REASON_SET(reason, PFRES_SRCLIMIT);
 				return (PF_DROP);
 			}
-		} else if (dst->state == TCPS_CLOSING)
+		} else if (dst->state == TCPS_CLOSING) {
 			dst->state = TCPS_FIN_WAIT_2;
+		} else if (src->state == TCPS_SYN_SENT &&
+		    dst->state < TCPS_SYN_SENT) {
+			/*
+			 * Handle a special sloppy case where we only see one
+			 * half of the connection. If there is a ACK after
+			 * the initial SYN without ever seeing a packet from
+			 * the destination, set the connection to established.
+			 */
+			dst->state = src->state = TCPS_ESTABLISHED;
+			if ((*state)->src_node != NULL &&
+			    pf_src_connlimit(state)) {
+				REASON_SET(reason, PFRES_SRCLIMIT);
+				return (PF_DROP);
+			}
+		}
 	}
 	if (th->th_flags & TH_RST)
 		src->state = dst->state = TCPS_TIME_WAIT;
