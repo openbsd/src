@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.547 2008/06/10 04:28:54 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.548 2008/06/10 20:55:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1374,6 +1374,8 @@ table_opt	: STRING		{
 				table_opts.flags |= PFR_TFLAG_CONST;
 			else if (!strcmp($1, "persist"))
 				table_opts.flags |= PFR_TFLAG_PERSIST;
+			else if (!strcmp($1, "counters"))
+				table_opts.flags |= PFR_TFLAG_COUNTERS;
 			else {
 				yyerror("invalid table option '%s'", $1);
 				free($1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.239 2008/06/10 04:28:54 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.240 2008/06/10 20:55:02 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1027,6 +1027,8 @@ print_tabledef(const char *name, int flags, int addrs,
 		printf(" const");
 	if (flags & PFR_TFLAG_PERSIST)
 		printf(" persist");
+	if (flags & PFR_TFLAG_COUNTERS)
+		printf(" counters");
 	SIMPLEQ_FOREACH(ti, nodes, entries) {
 		if (ti->file) {
 			printf(" file \"%s\"", ti->file);

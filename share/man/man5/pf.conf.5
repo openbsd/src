@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.400 2008/06/10 16:52:10 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.401 2008/06/10 20:55:01 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -183,6 +183,11 @@ can be used to add or remove addresses from the table at any time, even
 when running with
 .Xr securelevel 7
 = 2.
+.It Ar counters
+The
+.Ar counters
+flag enables per-address packet and byte counters which can be displayed with 
+.Xr pfctl 8 .
 .El
 .Pp
 For example,
@@ -2864,7 +2869,7 @@ antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
 
 table-rule     = "table" "\*(Lt" string "\*(Gt" [ tableopts-list ]
 tableopts-list = tableopts-list tableopts | tableopts
-tableopts      = "persist" | "const" | "file" string |
+tableopts      = "persist" | "const" | "counters" | "file" string |
                  "{" [ tableaddr-list ] "}"
 tableaddr-list = tableaddr-list [ "," ] tableaddr-spec | tableaddr-spec
 tableaddr-spec = [ "!" ] tableaddr [ "/" mask-bits ]

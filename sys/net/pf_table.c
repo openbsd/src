@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.73 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.74 2008/06/10 20:55:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -127,6 +127,7 @@ struct pfr_walktree {
 struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
 struct pool		 pfr_kentry_pl2;
+struct pool		 pfr_kcounters_pl;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
 union sockaddr_union	 pfr_mask;
@@ -195,6 +196,8 @@ pfr_initialize(void)
 	    "pfrkentry", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry2", NULL);
+	pool_init(&pfr_kcounters_pl, sizeof(struct pfr_kcounters), 0, 0, 0,
+	    "pfrkcounters", NULL);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -924,8 +927,10 @@ pfr_clstats_kentries(struct pfr_kentryworkq *workq, long tzero, int negchange)
 		s = splsoftnet();
 		if (negchange)
 			p->pfrke_not = !p->pfrke_not;
-		bzero(p->pfrke_packets, sizeof(p->pfrke_packets));
-		bzero(p->pfrke_bytes, sizeof(p->pfrke_bytes));
+		if (p->pfrke_counters) {
+			pool_put(&pfr_kcounters_pl, p->pfrke_counters);
+			p->pfrke_counters = NULL;
+		}
 		splx(s);
 		p->pfrke_tzero = tzero;
 	}
@@ -1075,10 +1080,16 @@ pfr_walktree(struct radix_node *rn, void *arg)
 			pfr_copyout_addr(&as.pfras_a, ke);
 
 			s = splsoftnet();
-			bcopy(ke->pfrke_packets, as.pfras_packets,
-			    sizeof(as.pfras_packets));
-			bcopy(ke->pfrke_bytes, as.pfras_bytes,
-			    sizeof(as.pfras_bytes));
+			if (ke->pfrke_counters) {
+				bcopy(ke->pfrke_counters->pfrkc_packets,
+				    as.pfras_packets, sizeof(as.pfras_packets));
+				bcopy(ke->pfrke_counters->pfrkc_bytes,
+				    as.pfras_bytes, sizeof(as.pfras_bytes));
+			} else {
+				bzero(as.pfras_packets, sizeof(as.pfras_packets));
+				bzero(as.pfras_bytes, sizeof(as.pfras_bytes));
+				as.pfras_a.pfra_fback = PFR_FB_NOCOUNT;
+			}
 			splx(s);
 			as.pfras_tzero = ke->pfrke_tzero;
 
@@ -2043,9 +2054,15 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 	}
 	kt->pfrkt_packets[dir_out][op_pass]++;
 	kt->pfrkt_bytes[dir_out][op_pass] += len;
-	if (ke != NULL && op_pass != PFR_OP_XPASS) {
-		ke->pfrke_packets[dir_out][op_pass]++;
-		ke->pfrke_bytes[dir_out][op_pass] += len;
+	if (ke != NULL && op_pass != PFR_OP_XPASS &&
+	    (kt->pfrkt_flags & PFR_TFLAG_COUNTERS)) {
+		if (ke->pfrke_counters == NULL)
+			ke->pfrke_counters = pool_get(&pfr_kcounters_pl,
+			    PR_NOWAIT|PR_ZERO);
+		if (ke->pfrke_counters != NULL) {
+			ke->pfrke_counters->pfrkc_packets[dir_out][op_pass]++;
+			ke->pfrke_counters->pfrkc_bytes[dir_out][op_pass] += len;
+		}
 	}
 }
 
