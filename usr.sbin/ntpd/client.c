@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.79 2008/01/28 11:45:59 mpf Exp $ */
+/*	$OpenBSD: client.c,v 1.80 2008/06/10 03:46:09 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,7 +263,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].status.rootdelay = sfp_to_d(msg.rootdelay);
 	p->reply[p->shift].status.rootdispersion = sfp_to_d(msg.dispersion);
 	p->reply[p->shift].status.refid = ntohl(msg.refid);
-	p->reply[p->shift].status.refid4 = msg.xmttime.fractionl;
 	p->reply[p->shift].status.reftime = lfp_to_d(msg.reftime);
 	p->reply[p->shift].status.poll = msg.ppoll;
 	p->reply[p->shift].status.stratum = msg.stratum;

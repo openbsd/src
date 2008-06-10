@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.94 2008/06/09 18:30:48 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.95 2008/06/10 03:46:09 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,6 @@ struct ntp_status {
 	double		rootdispersion;
 	double		reftime;
 	u_int32_t	refid;
-	u_int32_t	refid4;
 	u_int32_t	send_refid;
 	u_int8_t	synced;
 	u_int8_t	leap;
