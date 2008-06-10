@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.585 2008/06/10 19:32:13 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.586 2008/06/10 20:05:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -712,8 +712,6 @@ pf_state_key_detach(struct pf_state_key *sk, struct pf_state *s, int flags)
 
 	for (si = TAILQ_FIRST(&sk->states); si->s != s;
 	    si = TAILQ_NEXT(si, entry));
-
-/* XXX DEBUG */ if (!si) { printf("pf_state_key_detach, si NULL\n"); }
 
 	TAILQ_REMOVE(&sk->states, si, entry);
 	pool_put(&pf_state_item_pl, si);
