@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.7 2008/06/09 23:15:55 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.8 2008/06/10 00:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -269,6 +269,10 @@ main(int argc, char *argv[])
 			warnx("TIOCSTSTAMP");
 			goto bail_out;
 		}
+		tty.c_cc[VMIN] = tty.c_cc[VTIME] = 0;
+		tty.c_iflag = 0;
+		tty.c_lflag = 0;
+		tty.c_oflag = 0;
 		break;
 	case SLIPDISC:
 		tty.c_iflag = 0;
