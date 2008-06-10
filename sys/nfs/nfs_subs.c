@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.76 2008/06/09 22:49:15 djm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.77 2008/06/10 22:59:09 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1015,6 +1015,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	struct timespec mtime;
 	struct vnode *nvp;
 	int v3 = NFS_ISV3(vp);
+	uid_t uid;
+	gid_t gid;
 
 	md = *mdp;
 	t1 = (mtod(md, caddr_t) + md->m_len) - *dposp;
@@ -1091,6 +1093,15 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+
+	uid = fxdr_unsigned(uid_t, fp->fa_uid);
+	gid = fxdr_unsigned(gid_t, fp->fa_gid);
+	/* Invalidate access cache if uid, gid or mode changed. */
+	if (np->n_accstamp != -1 &&
+	    (gid != vap->va_gid || uid != vap->va_uid ||
+	    vmode != vap->va_mode))
+		np->n_accstamp = -1;
+
 	switch (vtyp) {
 	case VBLK:
 		vap->va_blocksize = BLKDEV_IOSIZE;
@@ -1132,6 +1143,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		vap->va_gen = fxdr_unsigned(u_int32_t,fp->fa2_ctime.nfsv2_usec);
 		vap->va_filerev = 0;
 	}
+
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
 			if (np->n_flag & NMODIFIED) {

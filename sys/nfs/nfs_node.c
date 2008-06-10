@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.37 2007/12/13 22:32:55 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.38 2008/06/10 22:59:09 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	np->n_accstamp = -1;
 	rw_exit(&nfs_hashlock);
 	*npp = np;
 	return (0);

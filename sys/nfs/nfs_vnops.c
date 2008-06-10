@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.85 2008/06/10 20:14:37 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.86 2008/06/10 22:59:09 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -81,6 +81,8 @@
 /* Defs */
 #define	TRUE	1
 #define	FALSE	0
+
+void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
 /*
  * Global vfs data structures for nfs
@@ -186,6 +188,24 @@ extern nfstype nfsv3_type[9];
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
 
+
+void
+nfs_cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
+{
+	struct nfsnode *np;
+
+	if (vp != NULL) {
+		np = VTONFS(vp);
+		np->n_ctime = np->n_vattr.va_ctime.tv_sec;
+	} else {
+		np = VTONFS(dvp);
+		if (!np->n_ctime)
+			np->n_ctime = np->n_vattr.va_mtime.tv_sec;
+	}
+
+	cache_enter(dvp, vp, cnp);
+}
+
 /*
  * nfs null call from vfs.
  */
@@ -226,6 +246,9 @@ nfs_access(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int32_t mode, rmode;
 	int v3 = NFS_ISV3(vp);
+	int cachevalid;
+
+	struct nfsnode *np = VTONFS(vp);
 
 	/*
 	 * Disallow write attempts on filesystems mounted read-only;
@@ -242,6 +265,23 @@ nfs_access(v)
 			break;
 		}
 	}
+
+	/*
+	 * Check access cache first. If a request has been made for this uid
+	 * shortly before, use the cached result.
+	 */
+	 cachevalid = (np->n_accstamp != -1 &&
+	     (time_second - np->n_accstamp) < nfs_attrtimeo(np) &&
+	     np->n_accuid == ap->a_cred->cr_uid);
+
+	if (cachevalid) {
+		if (!np->n_accerror) {
+			if ((np->n_accmode & ap->a_mode) == ap->a_mode)
+				return (np->n_accerror);
+		} else if ((np->n_accmode & ap->a_mode) == np->n_accmode)
+			return (np->n_accerror);
+	}
+
 	/*
 	 * For nfs v3, do an access rpc, otherwise you are stuck emulating
 	 * ufs_access() locally using the vattr. This may not be correct,
@@ -285,11 +325,33 @@ nfs_access(v)
 			if ((rmode & mode) != mode)
 				error = EACCES;
 		}
-	m_freem(mrep);
-nfsmout: 
-		return (error);
+		m_freem(mrep);
 	} else
 		return (nfsspec_access(ap));
+
+	
+	/*
+	 * If we got the same result as for a previous, different request, OR
+	 * it in. Don't update the timestamp in that case.
+	 */
+	 if (!error || error == EACCES) {
+	 	if (cachevalid && np->n_accstamp != -1 &&
+		    error == np->n_accerror) {
+		    	if (!error)
+				np->n_accmode |= ap->a_mode;
+			else {
+				if ((np->n_accmode & ap->a_mode) == ap->a_mode)
+					np->n_accmode = ap->a_mode;
+			}
+		} else {
+			np->n_accstamp = time_second;
+			np->n_accuid = ap->a_cred->cr_uid;
+			np->n_accmode = ap->a_mode;
+			np->n_accerror = error;
+		}
+	}
+nfsmout:
+	return (error);
 }
 
 /*
@@ -813,8 +875,7 @@ dorpc:
 		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
-		np->n_ctime = np->n_vattr.va_ctime.tv_sec;
-		cache_enter(dvp, newvp, cnp);
+		nfs_cache_enter(dvp, newvp, cnp);
 	}
 	*vpp = newvp;
 	m_freem(mrep);
@@ -828,10 +889,7 @@ nfsmout:
 		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
 		    cnp->cn_nameiop != CREATE) {
-			if (VTONFS(dvp)->n_ctime == 0)
-				VTONFS(dvp)->n_ctime =
-				    VTONFS(dvp)->n_vattr.va_mtime.tv_sec;
-			cache_enter(dvp, NULL, cnp);
+			nfs_cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
 			vrele(newvp);
@@ -1170,7 +1228,7 @@ nfsmout:
 			vrele(newvp);
 	} else {
 		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, newvp, cnp);
+			nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -1294,7 +1352,7 @@ nfsmout:
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
 	if (!error) {
 		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, newvp, cnp);
+			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -1738,6 +1796,8 @@ nfsmout:
 			vrele(newvp);
 	} else {
 		VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
+		if (cnp->cn_flags & MAKEENTRY)
+			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -1788,7 +1848,6 @@ nfsmout:
 	VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
 	VN_KNOTE(vp, NOTE_DELETE);
 
-	cache_purge(dvp);
 	cache_purge(vp);
 	vrele(vp);
 	vrele(dvp);
@@ -2320,7 +2379,8 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 					cnp->cn_hash =
 					    hash32_str(cnp->cn_nameptr,
 					        HASHINIT);
-					cache_enter(ndp->ni_dvp, ndp->ni_vp,
+					cache_purge(ndp->ni_dvp);
+					nfs_cache_enter(ndp->ni_dvp, ndp->ni_vp,
 					    cnp);
 				}
 			    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.29 2007/12/13 22:32:55 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.30 2008/06/10 22:59:09 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -92,6 +92,10 @@ struct nfsnode {
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	time_t			n_accstamp;	/* Access cache timestamp */
+	uid_t			n_accuid;	/* Last access requester */
+	int			n_accmode;	/* Last mode requested */
+	int			n_accerror;	/* Last returned error */
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
 

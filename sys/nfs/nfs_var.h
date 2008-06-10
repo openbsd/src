@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.37 2008/06/09 22:49:15 djm Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.38 2008/06/10 22:59:09 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
 int nfs_adv(struct mbuf **, caddr_t *, int, int);
 int nfsm_strtmbuf(struct mbuf **, char **, char *, long);
 int nfs_vfs_init(struct vfsconf *);
+int nfs_attrtimeo(struct nfsnode *);
 int nfs_loadattrcache(struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *);
 int nfs_getattrcache(struct vnode *, struct vattr *);
