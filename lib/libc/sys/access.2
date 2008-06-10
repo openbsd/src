@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.14 2008/06/10 03:19:12 otto Exp $
+.\"	$OpenBSD: access.2,v 1.15 2008/06/10 16:37:57 otto Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -119,6 +119,10 @@ than the owner have permission checked with respect to the
 mode bits, and all others have permissions checked with respect to the
 .Dq other
 mode bits.
+.It Bq Er EPERM
+Write access has been requested and the named file has its immutable
+flag set (see
+.Xr chflags 2 ) .
 .It Bq Er EFAULT
 .Fa path
 points outside the process's allocated address space.
