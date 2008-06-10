@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.140 2008/06/09 22:50:12 djm Exp $
+#	$OpenBSD: Makefile,v 1.141 2008/06/10 09:16:15 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -10,8 +10,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 file.9 \
 	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
-	hardclock.9 hook_establish.9 hz.9 hzto.9 \
-	idgen.9 \
+	hardclock.9 hook_establish.9 hz.9 hzto.9 idgen32.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
 	ieee80211_radiotap.9 \
@@ -128,8 +127,7 @@ MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 MLINKS+=getdevvp.9 bdevvp.9 getdevvp.9 cdevvp.9
 MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
-MLINKS+=idgen.9 idgen32_init.9 \
-	idgen.9 idgen32.9
+MLINKS+=idgen32.9 idgen32_init.9 \
 MLINKS+=ieee80211.9 ieee80211_ifattach.9 \
 	ieee80211.9 ieee80211_ifdetach.9 \
 	ieee80211.9 ieee80211_mhz2ieee.9 \
