@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.98 2008/05/22 17:04:59 thib Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.99 2008/06/10 20:41:52 hshoexer Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -127,24 +127,16 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 		case SIGUSR1:
 		case SIGUSR2:
 			if (pc->p_ruid == q->p_cred->p_ruid ||
-			    pc->pc_ucred->cr_uid == q->p_cred->p_ruid ||
-			    pc->p_ruid == q->p_ucred->cr_uid ||
-			    pc->pc_ucred->cr_uid == q->p_ucred->cr_uid)
+			    pc->pc_ucred->cr_uid == q->p_cred->p_ruid)
 				return (1);
 		}
 		return (0);
 	}
 
-	/* XXX
-	 * because the P_SUGID test exists, this has extra tests which
-	 * could be removed.
-	 */
 	if (pc->p_ruid == q->p_cred->p_ruid ||
 	    pc->p_ruid == q->p_cred->p_svuid ||
 	    pc->pc_ucred->cr_uid == q->p_cred->p_ruid ||
-	    pc->pc_ucred->cr_uid == q->p_cred->p_svuid ||
-	    pc->p_ruid == q->p_ucred->cr_uid ||
-	    pc->pc_ucred->cr_uid == q->p_ucred->cr_uid)
+	    pc->pc_ucred->cr_uid == q->p_cred->p_svuid)
 		return (1);
 	return (0);
 }
