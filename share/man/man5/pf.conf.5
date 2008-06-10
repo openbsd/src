@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.398 2008/06/10 04:33:04 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.399 2008/06/10 08:04:05 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2087,11 +2087,11 @@ For a list of all valid timeout names, see
 .Sx OPTIONS
 above.
 .It Ar sloppy
-Uses a sloppy tcp connection tracker that does not check sequence
-numbers at all, which makes insertion and icmp teardown attacks way
+Uses a sloppy TCP connection tracker that does not check sequence
+numbers at all, which makes insertion and ICMP teardown attacks way
 easier.
 This is intended to be used in situations where one does not see all
-packets of a connection, i. e. in asymmetric routing situations.
+packets of a connection, i.e. in asymmetric routing situations.
 Cannot be used with modulate or synproxy state.
 .El
 .Pp
