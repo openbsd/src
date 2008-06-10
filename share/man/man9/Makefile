@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.141 2008/06/10 09:16:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.142 2008/06/10 10:31:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -127,7 +127,7 @@ MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 MLINKS+=getdevvp.9 bdevvp.9 getdevvp.9 cdevvp.9
 MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
-MLINKS+=idgen32.9 idgen32_init.9 \
+MLINKS+=idgen32.9 idgen32_init.9
 MLINKS+=ieee80211.9 ieee80211_ifattach.9 \
 	ieee80211.9 ieee80211_ifdetach.9 \
 	ieee80211.9 ieee80211_mhz2ieee.9 \
