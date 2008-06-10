@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2008/06/10 05:23:32 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.46 2008/06/10 23:13:43 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -26,6 +26,7 @@ LTESTS= 	connect \
 		agent-ptrace \
 		keyscan \
 		keygen-change \
+		key-options \
 		scp \
 		sftp \
 		sftp-cmds \
@@ -41,6 +42,7 @@ LTESTS= 	connect \
 		cfgmatch \
 		addrmatch \
 		localcommand \
+		cipher-speed \
 		forcecommand
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex
