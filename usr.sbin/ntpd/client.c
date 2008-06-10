@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.80 2008/06/10 03:46:09 naddy Exp $ */
+/*	$OpenBSD: client.c,v 1.81 2008/06/10 03:51:53 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <errno.h>
+#include <md5.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -267,10 +268,20 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].status.poll = msg.ppoll;
 	p->reply[p->shift].status.stratum = msg.stratum;
 
-	if (p->addr->ss.ss_family == AF_INET)
+	if (p->addr->ss.ss_family == AF_INET) {
 		p->reply[p->shift].status.send_refid =
 		    ((struct sockaddr_in *)&p->addr->ss)->sin_addr.s_addr;
-	else
+	} else if (p->addr->ss.ss_family == AF_INET6) {
+		MD5_CTX		context;
+		u_int8_t	digest[MD5_DIGEST_LENGTH];
+
+		MD5Init(&context);
+		MD5Update(&context, ((struct sockaddr_in6 *)&p->addr->ss)->
+		    sin6_addr.s6_addr, sizeof(struct in6_addr));
+		MD5Final(digest, &context);
+		memcpy((char *)&p->reply[p->shift].status.send_refid, digest,
+		    sizeof(u_int32_t));
+	} else
 		p->reply[p->shift].status.send_refid = msg.xmttime.fractionl;
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
