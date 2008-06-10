@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.53 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: ui.c,v 1.54 2008/06/10 22:14:02 bluhm Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -109,9 +109,9 @@ ui_init(void)
 static void
 ui_connect(char *cmd)
 {
-	char	name[81];
+	char	name[201];
 
-	if (sscanf(cmd, "c %80s", name) != 1) {
+	if (sscanf(cmd, "c %200s", name) != 1) {
 		log_print("ui_connect: command \"%s\" malformed", cmd);
 		return;
 	}
@@ -127,15 +127,15 @@ ui_teardown(char *cmd)
 	struct sockaddr_in6	 addr6;
 	struct sa		*sa;
 	int			 phase;
-	char            	 name[81];
+	char			 name[201];
 
 	/* If no phase is given, we default to phase 2. */
 	phase = 2;
-	if (sscanf(cmd, "t main %80s", name) == 1)
+	if (sscanf(cmd, "t main %200s", name) == 1)
 		phase = 1;
-	else if (sscanf(cmd, "t quick %80s", name) == 1)
+	else if (sscanf(cmd, "t quick %200s", name) == 1)
 		phase = 2;
-	else if (sscanf(cmd, "t %80s", name) != 1) {
+	else if (sscanf(cmd, "t %200s", name) != 1) {
 		log_print("ui_teardown: command \"%s\" malformed", cmd);
 		return;
 	}
@@ -214,24 +214,23 @@ ui_conn_reinit(void)
 
 /*
  * Call the configuration API.
- * XXX Error handling!  How to do multi-line transactions?  Too short arbitrary
- * limit on the parameters?
+ * XXX Error handling!  How to do multi-line transactions?
  */
 static void
 ui_config(char *cmd)
 {
 	struct conf_list *vlist;
 	struct conf_list_node *vnode;
-	char	 subcmd[81], section[81], tag[81], value[81], tmp[81];
+	char	 subcmd[201], section[201], tag[201], value[201], tmp[201];
 	char	*v, *nv;
 	int	 trans = 0, items, skip = 0, ret;
 	FILE	*fp;
 
-	if (sscanf(cmd, "C %80s", subcmd) != 1)
+	if (sscanf(cmd, "C %200s", subcmd) != 1)
 		goto fail;
 
 	if (strcasecmp(subcmd, "get") == 0) {
-		if (sscanf(cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
+		if (sscanf(cmd, "C %*s [%200[^]]]:%200s", section, tag) != 2)
 			goto fail;
 		v = conf_get_str(section, tag);
 		fp = ui_open_result();
@@ -246,7 +245,7 @@ ui_config(char *cmd)
 
 	trans = conf_begin();
 	if (strcasecmp(subcmd, "set") == 0) {
-		items = sscanf(cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s",
+		items = sscanf(cmd, "C %*s [%200[^]]]:%200[^=]=%200s %200s",
 		    section, tag, value, tmp);
 		if (!(items == 3 || items == 4))
 			goto fail;
@@ -256,7 +255,7 @@ ui_config(char *cmd)
 			strcasecmp(tag, "Passive-connections") == 0))
 			ui_conn_reinit();
 	} else if (strcasecmp(subcmd, "add") == 0) {
-		items = sscanf(cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s",
+		items = sscanf(cmd, "C %*s [%200[^]]]:%200[^=]=%200s %200s",
 		    section, tag, value, tmp);
 		if (!(items == 3 || items == 4))
 			goto fail;
@@ -295,7 +294,7 @@ ui_config(char *cmd)
 			strcasecmp(tag, "Passive-connections") == 0))
 			ui_conn_reinit();
 	} else if (strcasecmp(subcmd, "rmv") == 0) {
-		items = sscanf(cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s",
+		items = sscanf(cmd, "C %*s [%200[^]]]:%200[^=]=%200s %200s",
 		    section, tag, value, tmp);
 		if (!(items == 3 || items == 4))
 			goto fail;
@@ -332,11 +331,11 @@ ui_config(char *cmd)
 			strcasecmp(tag, "Passive-connections") == 0))
 			ui_conn_reinit();
 	} else if (strcasecmp(subcmd, "rm") == 0) {
-		if (sscanf(cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
+		if (sscanf(cmd, "C %*s [%200[^]]]:%200s", section, tag) != 2)
 			goto fail;
 		conf_remove(trans, section, tag);
 	} else if (strcasecmp(subcmd, "rms") == 0) {
-		if (sscanf(cmd, "C %*s [%80[^]]]", section) != 1)
+		if (sscanf(cmd, "C %*s [%200[^]]]", section) != 1)
 			goto fail;
 		conf_remove_section(trans, section);
 	} else
@@ -416,9 +415,9 @@ ui_debug(char *cmd)
 static void
 ui_packetlog(char *cmd)
 {
-	char            subcmd[81];
+	char	subcmd[201];
 
-	if (sscanf(cmd, "p %80s", subcmd) != 1)
+	if (sscanf(cmd, "p %200s", subcmd) != 1)
 		goto fail;
 
 	if (strncasecmp(subcmd, "on=", 3) == 0) {
@@ -477,9 +476,9 @@ ui_report_sa(char *cmd)
 static void
 ui_setmode(char *cmd)
 {
-	char	arg[81];
+	char	arg[11];
 
-	if (sscanf(cmd, "M %80s", arg) != 1)
+	if (sscanf(cmd, "M %10s", arg) != 1)
 		goto fail;
 	if (strncmp(arg, "active", 6) == 0) {
 		if (ui_daemon_passive) 
