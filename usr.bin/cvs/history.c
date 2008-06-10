@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.35 2008/01/31 10:15:05 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.36 2008/06/10 15:55:54 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -86,7 +86,8 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 
 	/* construct repository field */
 	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_EXPORT) {
-		cvs_get_repository_name(".", repo, sizeof(repo));
+		cvs_get_repository_name((cf != NULL) ? cf->file_wd : ".",
+		    repo, sizeof(repo));
 	} else {
 		strlcpy(repo, argument, sizeof(repo));
 	}
