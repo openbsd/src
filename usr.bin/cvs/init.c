@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.33 2008/02/11 20:33:11 tobias Exp $	*/
+/*	$OpenBSD: init.c,v 1.34 2008/06/10 15:50:31 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "atomicio.h"
 #include "cvs.h"
 #include "init.h"
 #include "remote.h"
@@ -39,11 +40,11 @@
 void	cvs_init_local(void);
 
 static void init_mkdir(const char *, mode_t);
-static void init_mkfile(char *, const char *const *);
+static void init_mkfile(char *, const char **);
 
 struct cvsroot_file {
 	char			*cf_path;
-	const char *const	*cf_content;
+	const char		**cf_content;
 };
 
 static const struct cvsroot_file cvsroot_files[] = {
@@ -137,17 +138,15 @@ init_mkdir(const char *path, mode_t mode)
 }
 
 static void
-init_mkfile(char *path, const char *const *content)
+init_mkfile(char *path, const char **content)
 {
 	BUF *b;
 	size_t len;
 	int fd, openflags, rcsflags;
 	char rpath[MAXPATHLEN];
-	const char *const *p;
+	const char **p;
 	RCSFILE *file;
 
-	len = 0;
-	fd = -1;
 	openflags = O_WRONLY|O_CREAT|O_EXCL;
 	rcsflags = RCS_RDWR|RCS_CREATE;
 
@@ -157,14 +156,8 @@ init_mkfile(char *path, const char *const *content)
 	if (content != NULL) {
 		for (p = content; *p != NULL; ++p) {
 			len = strlen(*p);
-			b = cvs_buf_alloc(len);
-
-			cvs_buf_append(b, *p, strlen(*p));
-
-			if (cvs_buf_write_fd(b, fd) < 0)
-				fatal("init_mkfile: cvs_buf_write_fd");
-
-			cvs_buf_free(b);
+			if (atomicio(vwrite, fd, *p, len) != len)
+				fatal("init_mkfile: atomicio failed");
 		}
 	}
 
@@ -175,7 +168,8 @@ init_mkfile(char *path, const char *const *content)
 	if (strcmp(strrchr(CVS_PATH_HISTORY, '/'), strrchr(path, '/')) == 0 ||
 	    strcmp(strrchr(CVS_PATH_VALTAGS, '/'), strrchr(path, '/')) == 0) {
 		(void)fchmod(fd, 0666);
-		goto out;
+		(void)close(fd);
+		return;
 	}
 
 	(void)xsnprintf(rpath, MAXPATHLEN, "%s%s", path, RCS_FILE_EXT);
@@ -194,6 +188,5 @@ init_mkfile(char *path, const char *const *content)
 
 	file->rf_flags &= ~RCS_SYNCED;
 	rcs_close(file);
-out:
 	(void)close(fd);
 }
