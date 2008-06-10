@@ -138,7 +138,6 @@
 ./sbin/newfs
 ./sbin/newfs_msdos
 ./sbin/nfsd
-./sbin/nmeaattach
 ./sbin/nologin
 ./sbin/pfctl
 ./sbin/pflogd
