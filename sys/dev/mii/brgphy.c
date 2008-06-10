@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.78 2008/06/10 21:15:14 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.79 2008/06/10 21:18:41 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -458,7 +458,7 @@ brgphy_reset(struct mii_softc *sc)
 	switch (sc->mii_model) {
 	case MII_MODEL_BROADCOM_BCM5400:
 		brgphy_bcm5401_dspcode(sc);
-			break;
+		break;
 	case MII_MODEL_BROADCOM_BCM5401:
 		if (sc->mii_rev == 1 || sc->mii_rev == 3)
 			brgphy_bcm5401_dspcode(sc);

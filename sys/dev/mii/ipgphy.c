@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.9 2008/06/10 21:15:14 brad Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.10 2008/06/10 21:18:41 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -229,6 +229,7 @@ done:
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
+
 		/*
 		 * Is the interface even up?
 		 */
