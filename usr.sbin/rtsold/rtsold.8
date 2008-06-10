@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.25 2008/06/10 04:49:11 reyk Exp $
+.\"	$OpenBSD: rtsold.8,v 1.26 2008/06/10 10:42:23 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,18 +141,15 @@ includes a Source Link-layer address option if the interface
 has a link-layer address.
 .Pp
 .Nm
-manages a per-interface parameter to detect if a separate protocol is
-needed for configuration parameters other than host's addresses.
-At the invocation time, the flag is FALSE, and becomes TRUE when the
-daemon receives a router advertisement with the Other Configuration
-flag being set.
-A script file can be specified to deal with the case
-.Pq see below .
-When
-.Nm
-start resending router solicitation messages by one of the conditions
-events, the daemon resets the parameter because the event may indicate
-a change on the attached link.
+is able to do some additional configuration for interfaces
+where more than setting the host's address is needed.
+When the daemon receives a router advertisement
+with the
+.Dq Other Configuration
+flag set,
+the script specified using the
+.Fl O
+option is run.
 .Pp
 Upon receipt of signal
 .Dv SIGUSR1 ,
@@ -216,17 +213,16 @@ periodically sends Router Solicitation on an interface that does not support
 .Dv SIOCGIFMEDIA
 ioctl.
 .It Fl O Ar script-name
-Specifies a supplement script file to handle the Other Configuration
-flag of the router advertisement.
-When the flag changes from FALSE to TRUE,
-.Nm
-will invoke
+Specifies a script to handle the Other Configuration
+flag of the router advertisement (see above).
 .Ar script-name
-with a single argument of the receiving interface name, expecting the
-script will then start a protocol for the other configuration.
+is invoked with a single argument of the receiving interface name,
+expecting the script will then start a protocol
+to provide additional configuration.
 .Ar script-name
-must be the absolute path from root to the script file, be a regular
-file, and be created by the same owner who runs
+should be specified as the absolute path from root to the script file,
+and the file itself should be a regular file
+and owned by the same user running
 .Nm .
 .El
 .Pp
