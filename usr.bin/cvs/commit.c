@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.137 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.138 2008/06/10 02:07:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -211,7 +211,7 @@ cvs_commit(int argc, char **argv)
 				    &d->files_added, &d->files_removed,
 				    &d->files_modified);
 			}
-	
+
 			if (cvs_logmsg_verify(logmsg))
 				goto end;
 
@@ -226,10 +226,10 @@ cvs_commit(int argc, char **argv)
 
 			if (line_list != NULL) {
 				cvs_commit_loginfo(repo, d);
-	
+
 				cvs_trigger_handle(CVS_TRIGGER_LOGINFO, repo,
 				    loginfo, line_list, &files_info);
-	
+
 				xfree(loginfo);
 				cvs_trigger_freelist(line_list);
 				cvs_trigger_freeinfo(&files_info);

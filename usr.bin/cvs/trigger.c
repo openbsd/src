@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.1 2008/06/10 01:00:35 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.2 2008/06/10 02:07:58 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -310,8 +310,7 @@ cvs_trigger_getlines(char * file, char * repo)
 
 	lineno = 0;
 	nline = NULL;
-	while ((currentline = fgetln(fp, &len)) != NULL)
-	{
+	while ((currentline = fgetln(fp, &len)) != NULL) {
 		if (currentline[len - 1] == '\n') {
 			currentline[len - 1] = '\0';
 		} else {
@@ -369,6 +368,7 @@ cvs_trigger_getlines(char * file, char * repo)
 			regfree(&preg);
 		}
 	}
+
 	if (nline != NULL)
 		xfree(nline);
 
