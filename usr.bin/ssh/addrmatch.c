@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrmatch.c,v 1.1 2008/06/10 03:57:27 djm Exp $ */
+/*	$OpenBSD: addrmatch.c,v 1.2 2008/06/10 05:22:45 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -374,8 +374,10 @@ addr_match_list(const char *addr, const char *_list)
 	u_int masklen, neg;
 	int ret = 0, r;
 
-	if (addr != NULL && addr_pton(addr, &try_addr) != 0)
-		fatal("%s: addr_pton(%s)", __func__, addr);
+	if (addr != NULL && addr_pton(addr, &try_addr) != 0) {
+		debug2("%s: couldn't parse address %.100s", __func__, addr);
+		return 0;
+	}
 	if ((o = list = strdup(_list)) == NULL)
 		return -1;
 	while ((cp = strsep(&list, ",")) != NULL) {
