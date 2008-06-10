@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.7 2008/06/10 03:55:50 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.8 2008/06/10 04:01:41 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -84,6 +84,14 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	if (cvs_cmdop == CVS_OP_ADD) {
 		cvs_buf_append(buf, "- New directory",
 		    strlen("- New directory"));
+		if (quote)
+			cvs_buf_putc(buf, '"');
+		return (0);
+	}
+
+	if (cvs_cmdop == CVS_OP_IMPORT) {
+		cvs_buf_append(buf, "- Imported sources",
+		    strlen("- Imported sources"));
 		if (quote)
 			cvs_buf_putc(buf, '"');
 		return (0);
