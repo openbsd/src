@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.38 2008/06/09 21:56:06 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.39 2008/06/10 13:49:24 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.38 2008/06/09 21:56:06 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.39 2008/06/10 13:49:24 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -433,8 +433,8 @@ found:
 	}
 	lncntp = calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
-		printf("cannot alloc %lu bytes for lncntp\n",
-		    (unsigned long)(maxino + 1) * sizeof(int16_t));
+		printf("cannot alloc %zu bytes for lncntp\n",
+		    (maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
 	cginosused = calloc((unsigned)sblock.fs_ncg, sizeof(long));
@@ -447,10 +447,15 @@ found:
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
+	if (inpsort == NULL) {
+		printf("cannot alloc %zu bytes for inpsort\n",
+		    (unsigned)numdirs * sizeof(struct inoinfo *));
+		goto badsblabel;
+	}
 	inphead = calloc((unsigned)numdirs, sizeof(struct inoinfo *));
-	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %lu bytes for inphead\n",
-		    (unsigned long)numdirs * sizeof(struct inoinfo *));
+	if (inphead == NULL) {
+		printf("cannot alloc %zu bytes for inphead\n",
+		    (unsigned)numdirs * sizeof(struct inoinfo *));
 		goto badsblabel;
 	}
 	bufinit();
