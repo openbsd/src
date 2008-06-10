@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.8 2008/06/10 04:01:41 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.9 2008/06/10 04:38:46 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -185,7 +185,7 @@ parse_cmd(int type, char *cmd, const char *repo,
 {
 	int expanded = 0;
 	char argbuf[2] = { '\0', '\0' };
-	char *allowed_args, *default_args, *args, *p, *q = NULL;
+	char *allowed_args, *default_args, *args, *file, *p, *q = NULL;
 	size_t pos;
 	BUF *buf;
 
@@ -193,18 +193,22 @@ parse_cmd(int type, char *cmd, const char *repo,
 	case CVS_TRIGGER_COMMITINFO:
 		allowed_args = "prsS{}";
 		default_args = " %p/%r %S";
+		file = CVS_PATH_COMMITINFO;
 		break;
 	case CVS_TRIGGER_LOGINFO:
 		allowed_args = "prsSvVt{}";
 		default_args = NULL;
+		file = CVS_PATH_LOGINFO;
 		break;
 	case CVS_TRIGGER_VERIFYMSG:
 		allowed_args = "l";
 		default_args = " %l";
+		file = CVS_PATH_VERIFYMSG;
 		break;
 	case CVS_TRIGGER_TAGINFO:
 		allowed_args = "btoprsSvV{}";
 		default_args = " %t %o %p/%r %{sv}";
+		file = CVS_PATH_TAGINFO;
 		break;
 	default:
 		return (NULL);
@@ -235,7 +239,6 @@ again:
 		case '\0':
 			goto bad;
 		case '{':
-			/* XXX do we realy have to check for { in there? */
 			if (strchr(allowed_args, '{') == NULL)
 				goto bad;
 			pos = strcspn(++p, "}");
@@ -273,7 +276,7 @@ again:
 bad:
 	if (q != NULL)
 		xfree(q);
-	cvs_log(LP_NOTICE, "CVSROOT: malformed line %s", cmd);
+	cvs_log(LP_NOTICE, "%s contains malformed command '%s'", file, cmd);
 	cvs_buf_free(buf);
 	return (NULL);
 }
