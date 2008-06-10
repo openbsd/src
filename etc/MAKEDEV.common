@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -157,6 +157,7 @@ target(all, joy, 0, 1)dnl
 twrget(all, rnd, random)dnl
 target(all, uk, 0)dnl
 twrget(all, au, audio, 0)dnl
+twrget(all, vi, video, 0)dnl
 twrget(all, speak, speaker)dnl
 target(all, asc, 0)dnl
 target(all, music, 0)dnl
@@ -471,6 +472,9 @@ _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
 	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
+__devitem(vi, video*, Video V4L devices,video)dnl
+_mkdev(vi, video*, {-M video$U  c major_vi_c $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"-})dnl
 __devitem(asc, asc*, ASC Audio device)dnl
 _mkdev(asc, asc*, {-M asc$U major_asc_c 0-})dnl
 __devitem(bio, bio, {-ioctl tunnel pseudo-device-})dnl

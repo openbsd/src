@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2008/05/27 19:45:29 oga Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2008/06/10 07:12:24 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -146,6 +146,7 @@ cdev_decl(cy);
 cdev_decl(mcd);
 #include "tun.h"
 #include "audio.h"
+#include "video.h"
 #include "midi.h"
 #include "sequencer.h"
 cdev_decl(music);
@@ -244,7 +245,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 43 */
 #endif
-	cdev_notdef(),			/* 44 */
+	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_ocis_init(NPCTR,pctr),	/* 46: performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
