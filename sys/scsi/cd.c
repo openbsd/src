@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.136 2008/06/10 20:14:37 beck Exp $	*/
+/*	$OpenBSD: cd.c,v 1.137 2008/06/10 20:27:31 art Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -81,8 +81,6 @@
 #define MAXTRACK	99
 #define CD_FRAMES	75
 #define CD_SECS		60
-
-#define CD_LOCKED	0x0800
 
 struct cd_toc {
 	struct ioc_toc_header header;
