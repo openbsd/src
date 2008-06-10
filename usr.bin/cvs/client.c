@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.113 2008/04/24 19:13:56 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.114 2008/06/10 05:01:36 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -140,11 +140,10 @@ client_get_supported_responses(void)
 			continue;
 
 		if (first != 0)
-			cvs_buf_append(bp, " ", 1);
+			cvs_buf_putc(bp, ' ');
 		else
 			first++;
-		cvs_buf_append(bp, cvs_responses[i].name,
-		    strlen(cvs_responses[i].name));
+		cvs_buf_puts(bp, cvs_responses[i].name);
 	}
 
 	cvs_buf_putc(bp, '\0');

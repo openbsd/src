@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.9 2008/06/10 04:38:46 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.10 2008/06/10 05:01:36 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -71,7 +71,7 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	if (quote)
 		cvs_buf_putc(buf, '"');
 	if (oldstyle) {
-		cvs_buf_append(buf, repo, strlen(repo));
+		cvs_buf_puts(buf, repo);
 		cvs_buf_putc(buf, ' ');
 	}
 
@@ -82,16 +82,14 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	 * check like this, add only uses loginfo for directories anyway
 	 */
 	if (cvs_cmdop == CVS_OP_ADD) {
-		cvs_buf_append(buf, "- New directory",
-		    strlen("- New directory"));
+		cvs_buf_puts(buf, "- New directory");
 		if (quote)
 			cvs_buf_putc(buf, '"');
 		return (0);
 	}
 
 	if (cvs_cmdop == CVS_OP_IMPORT) {
-		cvs_buf_append(buf, "- Imported sources",
-		    strlen("- Imported sources"));
+		cvs_buf_puts(buf, "- Imported sources");
 		if (quote)
 			cvs_buf_putc(buf, '"');
 		return (0);
@@ -155,7 +153,7 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 			}
 
 			if (val != NULL)
-				cvs_buf_append(buf, val, strlen(val));
+				cvs_buf_puts(buf, val);
 
 			if (*(++p) != '\0')
 				cvs_buf_putc(buf, ',');

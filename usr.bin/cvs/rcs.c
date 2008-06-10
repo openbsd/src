@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.266 2008/06/08 13:36:30 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.267 2008/06/10 05:01:36 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3448,7 +3448,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 		cvs_buf_append(tmpbuf, line->l_line,
 		    start - line->l_line);
 		/* Append keyword. */
-		cvs_buf_append(tmpbuf, expbuf, strlen(expbuf));
+		cvs_buf_puts(tmpbuf, expbuf);
 		/* Point c to end of keyword. */
 		tlen = cvs_buf_len(tmpbuf) - 1;
 		/* Append everything after keyword. */

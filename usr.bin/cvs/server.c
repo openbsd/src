@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.88 2008/05/28 17:12:00 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.89 2008/06/10 05:01:36 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -221,12 +221,11 @@ cvs_server_validreq(char *data)
 			continue;
 
 		if (first != 0)
-			cvs_buf_append(bp, " ", 1);
+			cvs_buf_putc(bp, ' ');
 		else
 			first++;
 
-		cvs_buf_append(bp, cvs_requests[i].name,
-		    strlen(cvs_requests[i].name));
+		cvs_buf_puts(bp, cvs_requests[i].name);
 	}
 
 	cvs_buf_putc(bp, '\0');
