@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.4 2008/06/10 02:36:31 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.5 2008/06/10 03:18:59 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -113,8 +113,13 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 					val = fi->tag_new;
 				break;
 			case 'V':
-				if (fi != NULL)
-					val = fi->crevstr;
+				if (fi != NULL) {
+					if (!strcmp(fi->crevstr,
+					    "Non-existent"))
+						val = "NONE";
+					else
+						val = fi->crevstr;
+				}
 				break;
 			case 'v':
 				if (fi != NULL)
