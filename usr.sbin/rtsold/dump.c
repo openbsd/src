@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.11 2003/10/05 15:29:28 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.12 2008/06/10 04:49:11 reyk Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -74,6 +74,10 @@ dump_interface_status(void)
 		}
 		fprintf(fp, "  interface status: %s\n",
 		    ifinfo->active > 0 ? "active" : "inactive");
+#ifndef SMALL
+		fprintf(fp, "  other config: %s\n",
+		    ifinfo->otherconfig ? "on" : "off");
+#endif
 		fprintf(fp, "  rtsold status: %s\n", ifstatstr[ifinfo->state]);
 		fprintf(fp, "  carrier detection: %s\n",
 		    ifinfo->mediareqok ? "available" : "unavailable");

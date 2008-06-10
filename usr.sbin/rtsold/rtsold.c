@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.41 2008/04/13 00:22:17 djm Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.42 2008/06/10 04:49:11 reyk Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -65,6 +65,8 @@ static int Fflag = 0;	/* force setting sysctl parameters */
 int aflag = 0;
 int dflag = 0;
 
+char *otherconf_script;
+
 /* protocol constants */
 #define MAX_RTR_SOLICITATION_DELAY	1 /* second */
 #define RTR_SOLICITATION_INTERVAL	4 /* seconds */
@@ -117,9 +119,9 @@ main(int argc, char *argv[])
 	if (argv0 && argv0[0] != '\0' && argv0[strlen(argv0) - 1] != 'd') {
 		fflag = 1;
 		once = 1;
-		opts = "adDF";
+		opts = "adDFO:";
 	} else
-		opts = "adDfFm1";
+		opts = "adDfFm1O:";
 
 	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
@@ -144,6 +146,11 @@ main(int argc, char *argv[])
 		case '1':
 			once = 1;
 			break;
+#ifndef SMALL
+		case 'O':
+			otherconf_script = optarg;
+			break;
+#endif
 		default:
 			usage(argv0);
 			/*NOTREACHED*/
@@ -172,6 +179,13 @@ main(int argc, char *argv[])
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
 	}
+
+#ifndef SMALL
+	if (otherconf_script && *otherconf_script != '/') {
+		errx(1, "configuration script (%s) must be an absolute path",
+		    otherconf_script);
+	}
+#endif
 
 	if (Fflag) {
 		setinet6sysctl(IPV6CTL_ACCEPT_RTADV, 1);
@@ -507,6 +521,15 @@ rtsol_check_timer(void)
 					ifinfo->state = IFS_PROBE;
 				}
 
+#ifndef SMALL
+				/*
+				 * If we need a probe, clear the previous
+				 * status wrt the "other" configuration.
+				 */
+				if (probe)
+					ifinfo->otherconfig = 0;
+#endif
+
 				if (probe && mobile_node)
 					defrouter_probe(ifinfo);
 				break;
@@ -637,11 +660,13 @@ static void
 usage(char *progname)
 {
 	if (progname && progname[0] != '\0' && progname[strlen(progname) - 1] != 'd') {
-		fprintf(stderr, "usage: rtsol [-DdF] interface ...\n");
-		fprintf(stderr, "usage: rtsol [-DdF] -a\n");
+		fprintf(stderr, "usage: rtsol [-DdF] [-O script] "
+		    "interface ...\n");
+		fprintf(stderr, "usage: rtsol [-DdF] [-O script] -a\n");
 	} else {
-		fprintf(stderr, "usage: rtsold [-1DdFfm] interface ...\n");
-		fprintf(stderr, "usage: rtsold [-1DdFfm] -a\n");
+		fprintf(stderr, "usage: rtsold [-1DdFfm] [-O script] "
+		    "interface ...\n");
+		fprintf(stderr, "usage: rtsold [-1DdFfm] [-O script] -a\n");
 	}
 	exit(1);
 }

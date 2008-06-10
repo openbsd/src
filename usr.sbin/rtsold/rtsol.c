@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsol.c,v 1.14 2008/03/24 16:11:05 deraadt Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.15 2008/06/10 04:49:11 reyk Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -55,6 +56,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <fcntl.h>
+
 #include "rtsold.h"
 
 #define ALLROUTER "ff02::2"
@@ -68,6 +71,11 @@ static struct sockaddr_in6 from;
 int rssock;
 
 static struct sockaddr_in6 sin6_allrouters = {sizeof(sin6_allrouters), AF_INET6};
+
+#ifndef SMALL
+void	 call_script(char *, char *);
+int	 safefile(const char *);
+#endif
 
 int
 sockopen(void)
@@ -214,6 +222,9 @@ rtsol_input(int s)
 	struct icmp6_hdr *icp;
 	struct cmsghdr *cm;
 	ssize_t i;
+#ifndef SMALL
+	struct nd_router_advert *nd_ra;
+#endif
 
 	/* get message */
 	if ((i = recvmsg(s, &rcvmhdr, 0)) < 0) {
@@ -308,6 +319,25 @@ rtsol_input(int s)
 	    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf, INET6_ADDRSTRLEN),
 	    ifi->ifname, ifi->state);
 
+#ifndef SMALL
+	nd_ra = (struct nd_router_advert *)icp;
+
+	/*
+	 * Process the "O bit."
+	 * If the value of OtherConfigFlag changes from FALSE to TRUE, the
+	 * host should invoke the stateful autoconfiguration protocol,
+	 * requesting information.
+	 * [RFC 2462 Section 5.5.3]
+	 */
+	if (((nd_ra->nd_ra_flags_reserved) & ND_RA_FLAG_OTHER) &&
+	    !ifi->otherconfig) {
+		warnmsg(LOG_DEBUG, __func__,
+		    "OtherConfigFlag on %s is turned on", ifi->ifname);
+		ifi->otherconfig = 1;
+		call_script(otherconf_script, ifi->ifname);
+	}
+#endif
+
 	ifi->racnt++;
 
 	switch (ifi->state) {
@@ -321,3 +351,106 @@ rtsol_input(int s)
 		break;
 	}
 }
+
+#ifndef SMALL
+void
+call_script(char *scriptpath, char *ifname)
+{
+	pid_t pid, wpid;
+
+	if (scriptpath == NULL)
+		return;
+
+	/* launch the script */
+	pid = fork();
+	if (pid < 0) {
+		warnmsg(LOG_ERR, __func__,
+		    "failed to fork: %s", strerror(errno));
+		return;
+	} else if (pid) {
+		int wstatus;
+
+		do {
+			wpid = wait(&wstatus);
+		} while (wpid != pid && wpid > 0);
+
+		if (wpid < 0)
+			warnmsg(LOG_ERR, __func__,
+			    "wait: %s", strerror(errno));
+		else {
+			warnmsg(LOG_DEBUG, __func__,
+			    "script \"%s\" terminated", scriptpath);
+		}
+	} else {
+		char *argv[3];
+		int fd;
+
+		argv[0] = scriptpath;
+		argv[1] = ifname;
+		argv[2] = NULL;
+
+		if (safefile(scriptpath) != 0) {
+			warnmsg(LOG_ERR, __func__,
+			    "script \"%s\" cannot be executed safely",
+			    scriptpath);
+			exit(1);
+		}
+
+		if ((fd = open("/dev/null", O_RDWR)) != -1) {
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > STDERR_FILENO)
+				close(fd);
+		}
+
+		execv(scriptpath, argv);
+
+		warnmsg(LOG_ERR, __func__, "child: exec failed: %s",
+		    strerror(errno));
+		exit(1);
+	}
+
+	return;
+}
+
+int
+safefile(const char *path)
+{
+	struct stat s;
+	uid_t myuid;
+
+	/* no setuid */
+	if (getuid() != geteuid()) {
+		warnmsg(LOG_NOTICE, __func__,
+		    "setuid'ed execution not allowed\n");
+		return (-1);
+	}
+
+	if (lstat(path, &s) != 0) {
+		warnmsg(LOG_NOTICE, __func__, "lstat failed: %s",
+		    strerror(errno));
+		return (-1);
+	}
+
+	/* the file must be owned by the running uid */
+	myuid = getuid();
+	if (s.st_uid != myuid) {
+		warnmsg(LOG_NOTICE, __func__,
+		    "%s has invalid owner uid\n", path);
+		return (-1);
+	}
+
+	switch (s.st_mode & S_IFMT) {
+	case S_IFREG:
+		break;
+	default:
+		warnmsg(LOG_NOTICE, __func__,
+		    "%s is an invalid file type 0x%o\n",
+		    path, (s.st_mode & S_IFMT));
+		return (-1);
+	}
+
+	return (0);
+}
+#endif
