@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.20 2007/04/10 17:17:25 millert Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.21 2008/06/10 16:08:08 otto Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.20 2007/04/10 17:17:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.21 2008/06/10 16:08:08 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -625,7 +625,7 @@ CMDFUNCSTART(newtype)
 		return 1;
 	type = DIP(curinode, di_mode) & IFMT;
 	for (tp = typenamemap;
-	    tp < &typenamemap[sizeof(typemap)/sizeof(*typemap)];
+	    tp < &typenamemap[sizeof(typenamemap)/sizeof(*typenamemap)];
 	    tp++) {
 		if (!strcmp(argv[1], tp->typename)) {
 			printf("setting type to %s\n", tp->typename);
@@ -633,7 +633,7 @@ CMDFUNCSTART(newtype)
 			break;
 		}
 	}
-	if (tp == &typenamemap[sizeof(typemap)/sizeof(*typemap)]) {
+	if (tp == &typenamemap[sizeof(typenamemap)/sizeof(*typenamemap)]) {
 		warnx("type `%s' not known", argv[1]);
 		warnx("try one of `file', `dir', `socket', `fifo'");
 		return 1;
