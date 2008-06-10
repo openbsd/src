@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.6 2008/06/10 03:33:21 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.7 2008/06/10 03:55:50 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -78,6 +78,17 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	if (*format == '\0')
 		return 0;
 
+	/*
+	 * check like this, add only uses loginfo for directories anyway
+	 */
+	if (cvs_cmdop == CVS_OP_ADD) {
+		cvs_buf_append(buf, "- New directory",
+		    strlen("- New directory"));
+		if (quote)
+			cvs_buf_putc(buf, '"');
+		return (0);
+	}
+
 	for (;;) {
 		for (p = format; *p != '\0';) {
 			val = NULL;
@@ -119,7 +130,8 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 				break;
 			case 'V':
 				if (fi != NULL) {
-					if (!strcmp(fi->crevstr,
+					if (fi->crevstr != NULL &&
+					    !strcmp(fi->crevstr,
 					    "Non-existent"))
 						val = "NONE";
 					else
