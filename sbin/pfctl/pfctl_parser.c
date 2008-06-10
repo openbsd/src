@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.238 2008/05/09 05:41:01 markus Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.239 2008/06/10 04:28:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -860,6 +860,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		opts = 1;
 	if (r->rule_flag & PFRULE_IFBOUND)
 		opts = 1;
+	if (r->rule_flag & PFRULE_STATESLOPPY)
+		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
 			opts = 1;
@@ -924,6 +926,12 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("if-bound");
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_STATESLOPPY) {
+			if (!opts)
+				printf(", ");
+			printf("sloppy");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)
