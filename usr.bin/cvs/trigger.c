@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.10 2008/06/10 05:01:36 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.11 2008/06/10 14:40:54 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -122,13 +122,8 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 			case 'l':
 			case 'S':
 			case 's':
-				if (fi != NULL) {
-					val = basename(fi->file_path);
-					if (val == NULL) {
-						fatal("basename: %s",
-						    strerror(errno));
-					}
-				}
+				if (fi != NULL)
+					val = fi->file_path;
 				break;
 			case 't':
 				if (fi != NULL)
@@ -145,8 +140,13 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 				}
 				break;
 			case 'v':
-				if (fi != NULL)
-					val = fi->nrevstr;
+				if (fi != NULL) {
+					if (fi->nrevstr != NULL &&
+					    !strcmp(fi->nrevstr, "Removed"))
+						val = "NONE";
+					else
+						val = fi->nrevstr;
+				}
 				break;
 			default:
 				return 1;
