@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.39 2008/04/29 00:26:11 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.40 2008/06/10 18:38:59 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -723,7 +723,7 @@ nop32_7e:
 	mfcr	%r29			/* save CR */
 	GET_CPUINFO(%r30)
 	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
-	addi	%r1,%r30,8192	 /* 7k for ddb */
+	addi	%r1,%r30,(SPILLSTK+DDBSTK)
 	bla	ddbtrap
 _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 #endif  /* DDB */
@@ -952,7 +952,7 @@ s_dsitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	GET_CPUINFO(%r30)
 	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
-	addi	%r1,%r30,1024
+	addi	%r1,%r30,SPILLSTK
 	stwu	%r1,-52(%r1)
 	stw	%r0,48(%r1)		/* save non-volatile registers */
 	stw	%r3,44(%r1)
@@ -1014,7 +1014,7 @@ s_isitrap:
 	bc	4,%r1,disitrap		/* branch if table miss is false */
 	GET_CPUINFO(%r30)
 	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
-	addi	%r1,%r30,1024
+	addi	%r1,%r30,SPILLSTK
 	stwu	%r1,-52(%r1)
 	stw	%r0,48(%r1)		/* save non-volatile registers */
 	stw	%r3,44(%r1)
