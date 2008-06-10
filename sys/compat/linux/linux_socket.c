@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.36 2007/06/06 09:59:21 henning Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.37 2008/06/10 16:40:49 matthieu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/domain.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -41,7 +42,9 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/mbuf.h>
 #include <sys/selinfo.h>
+#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <net/if.h>
@@ -905,18 +908,19 @@ linux_setsockopt(p, v, retval)
 		syscallarg(int) optlen;
 	} */ *uap = v;
 	struct linux_setsockopt_args lsa;
-	struct sys_setsockopt_args bsa;
-	int error, name;
+	struct file *fp;
+	struct mbuf *m = NULL;
+	struct socket *so;
+	int error, level, name;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
 
-	SCARG(&bsa, s) = lsa.s;
-	SCARG(&bsa, level) = linux_to_bsd_sopt_level(lsa.level);
-	SCARG(&bsa, val) = lsa.optval;
-	SCARG(&bsa, valsize) = lsa.optlen;
-
-	switch (SCARG(&bsa, level)) {
+	if ((error = getsock(p->p_fd, lsa.s, &fp)) != 0)
+		return error;
+	
+	level = linux_to_bsd_sopt_level(lsa.level);
+	switch (level) {
 	case SOL_SOCKET:
 		name = linux_to_bsd_so_sockopt(lsa.optname);
 		break;
@@ -930,14 +934,38 @@ linux_setsockopt(p, v, retval)
 		name = linux_to_bsd_udp_sockopt(lsa.optname);
 		break;
 	default:
-		return EINVAL;
+		error = EINVAL;
+		goto bad;
 	}
-
-	if (name == -1)
-		return EINVAL;
-	SCARG(&bsa, name) = name;
-
-	return sys_setsockopt(p, &bsa, retval);
+	if (name == -1) {
+		error = EINVAL;
+		goto bad;
+	}
+	if (lsa.optlen > MLEN) {
+		error = EINVAL;
+		goto bad;
+	}
+	if (lsa.optval != NULL) {
+		m = m_get(M_WAIT, MT_SOOPTS);
+		error = copyin(lsa.optval, mtod(m, caddr_t), lsa.optlen);
+		if (error) {
+			(void) m_free(m);
+			goto bad;
+		}
+		m->m_len = lsa.optlen;
+	}
+	so = (struct socket *)fp->f_data;
+	if (so->so_proto && level == IPPROTO_TCP && name == TCP_NODELAY && 
+	    so->so_proto->pr_domain->dom_family == AF_LOCAL &&
+	    so->so_proto->pr_protocol == PF_LOCAL) {
+		/* ignore it */
+		error = 0;
+		goto bad;
+	}
+	error = sosetopt(so, level, name, m);
+bad:
+	FRELE(fp);
+	return (error);
 }
 
 /*
