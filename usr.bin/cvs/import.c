@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.94 2008/06/10 02:11:19 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.95 2008/06/10 20:30:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -292,6 +292,7 @@ import_new(struct cvs_file *cf)
 {
 	int i;
 	BUF *bp;
+	mode_t mode;
 	time_t tstamp;
 	struct stat st;
 	struct rcs_branch *brp;
@@ -307,12 +308,13 @@ import_new(struct cvs_file *cf)
 		return;
 	}
 
-	if (dflag == 1) {
-		if (fstat(cf->fd, &st) == -1)
-			fatal("import_new: %s", strerror(errno));
+	if (fstat(cf->fd, &st) == -1)
+		fatal("import_new: %s", strerror(errno));
 
+	mode = st.st_mode;
+
+	if (dflag == 1)
 		tstamp = st.st_mtime;
-	}
 
 	if ((branch = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_new: failed to parse branch");
@@ -326,7 +328,8 @@ import_new(struct cvs_file *cf)
 	if (cf->repo_fd < 0)
 		fatal("import_new: %s: %s", cf->file_rpath, strerror(errno));
 
-	cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, RCS_CREATE, 0444);
+	cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, RCS_CREATE,
+	    (mode & ~(S_IWUSR | S_IWGRP | S_IWOTH)));
 	if (cf->file_rcs == NULL)
 		fatal("import_new: failed to create RCS file for %s",
 		    cf->file_path);

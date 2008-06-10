@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.147 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.148 2008/06/10 20:30:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -430,6 +430,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
+	mode_t mode;
 	int cf_kflag, exists, fd;
 	time_t rcstime;
 	CVSENTRIES *ent;
@@ -475,7 +476,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			cvs_merge_file(cf, (cvs_join_rev1 == NULL));
 		}
 
-		if (fchmod(cf->fd, 0644) == -1)
+		mode = cf->file_rcs->rf_mode;
+		mode |= S_IWUSR;
+
+		if (fchmod(cf->fd, mode) == -1)
 			fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
 
 		if ((exists == 0) && (cf->file_ent == NULL) &&
@@ -570,6 +574,16 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 
 				fd = rcs_rev_write_stmp(cf->file_rcs, rnum,
 				    template, 0);
+
+				mode = cf->file_rcs->rf_mode;
+				mode |= S_IWUSR;
+
+				if (fchmod(fd, mode) == -1) {
+					cvs_log(LP_ERR,
+					    "failed to set mode for %s",
+					    cf->file_path);
+				}
+
 				tosend = template;
 			}
 

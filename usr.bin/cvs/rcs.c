@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.268 2008/06/10 16:05:04 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.269 2008/06/10 20:30:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -244,6 +244,7 @@ rcs_open(const char *path, int fd, int flags, ...)
 	mode_t fmode;
 	RCSFILE *rfp;
 	va_list vap;
+	struct stat st;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkr;
 
@@ -255,6 +256,10 @@ rcs_open(const char *path, int fd, int flags, ...)
 		mode = va_arg(vap, int);
 		va_end(vap);
 		fmode = (mode_t)mode;
+	} else {
+		if (fstat(fd, &st) == -1)
+			fatal("rcs_open: %s: fstat: %s", path, strerror(errno));
+		fmode = st.st_mode;
 	}
 
 	fmode &= ~cvs_umask;
@@ -498,6 +503,7 @@ rcs_write(RCSFILE *rfp)
 		}
 		fputs("@\n", fp);
 	}
+
 	if (fchmod(fd, rfp->rf_mode) == -1) {
 		saved_errno = errno;
 		(void)unlink(fn);
