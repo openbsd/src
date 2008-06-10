@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.12 2007/03/29 17:37:15 kjell Exp $	*/
+/*	$OpenBSD: macro.c,v 1.13 2008/06/10 02:39:22 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,8 +11,8 @@
 #include "key.h"
 #include "macro.h"
 
-int inmacro = FALSE;
-int macrodef = FALSE;
+int inmacro = FALSE;	/* Macro playback in progess */
+int macrodef = FALSE;	/* Macro recording in progress */
 int macrocount = 0;
 
 struct line *maclhead = NULL;
@@ -70,8 +70,11 @@ executemacro(int f, int n)
 	PF	 funct;
 
 	if (macrodef ||
-	    (macrocount >= MAXMACRO && macro[MAXMACRO].m_funct != finishmacro))
+	    (macrocount >= MAXMACRO && macro[MAXMACRO - 1].m_funct
+	    != finishmacro)) {
+		ewprintf("Macro too long. Aborting.");
 		return (FALSE);
+	}
 
 	if (macrocount == 0)
 		return (TRUE);
