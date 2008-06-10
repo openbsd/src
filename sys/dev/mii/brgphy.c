@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.77 2008/04/26 21:26:42 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.78 2008/06/10 21:15:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -44,7 +44,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
-#include <sys/timeout.h>
 #include <sys/errno.h>
 
 #include <machine/bus.h>
@@ -52,10 +51,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 

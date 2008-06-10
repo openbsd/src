@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.27 2007/01/27 20:55:14 miod Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.28 2008/06/10 21:15:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -37,18 +37,20 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
-#include <sys/timeout.h>
 #include <sys/errno.h>
+
+#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
+
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <machine/bus.h>
+
 #include <dev/ic/rtl81x9reg.h>
 
 int	rlphymatch(struct device *, void *, void *);

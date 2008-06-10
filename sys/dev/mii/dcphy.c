@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.18 2006/12/27 19:11:08 kettenis Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.19 2008/06/10 21:15:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -44,27 +44,23 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/socket.h>
-#include <sys/timeout.h>
 #include <sys/errno.h>
 
+#include <machine/bus.h>
+
 #include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/if_media.h>
+
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
-#include <machine/bus.h>
-
-#include <dev/pci/pcivar.h>
 
 #include <dev/ic/dcreg.h>
 

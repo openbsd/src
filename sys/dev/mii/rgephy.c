@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.27 2008/05/24 01:08:21 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.28 2008/06/10 21:15:14 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -42,26 +42,21 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
-#include <sys/timeout.h>
 #include <sys/errno.h>
+
+#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
-
-#include <dev/pci/pcivar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
 #include <dev/mii/rgephyreg.h>
-
-#include <machine/bus.h>
 
 #include <dev/ic/rtl81x9reg.h>
 

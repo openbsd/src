@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.19 2008/05/29 06:20:02 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.20 2008/06/10 21:15:14 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -43,23 +43,16 @@
 #include <sys/socket.h>
 #include <sys/errno.h>
 
+#include <machine/bus.h>
+
 #include <net/if.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
-#endif
-
-#include <dev/pci/pcivar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
 #include <dev/mii/ciphyreg.h>
-
-#include <machine/bus.h>
 
 int	ciphymatch(struct device *, void *, void *);
 void	ciphyattach(struct device *, struct device *, void *);
