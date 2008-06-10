@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.13 2008/06/09 23:38:37 millert Exp $
+.\"	$OpenBSD: access.2,v 1.14 2008/06/10 03:19:12 otto Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: June 10 2008 $
 .Dt ACCESS 2
 .Os
 .Sh NAME
@@ -81,7 +81,7 @@ Likewise, for
 if the file has any of the execute bits set and
 .Fa path
 is not a directory,
-.Fn
+.Fn access
 will indicate success.
 .Sh RETURN VALUES
 If
