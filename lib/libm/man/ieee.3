@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: ieee.3,v 1.12 2008/06/10 23:56:21 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 10 2008 $
 .Dt IEEE 3
 .Os
 .Sh NAME
@@ -188,3 +188,10 @@ The
 .Nm ieee
 functions appeared in
 .Bx 4.3 .
+.Sh BUGS
+.Tn VAX
+floating point does not have distinguished values
+for either infinity or not-a-number.
+The
+.Fn finite
+function always returns 1 on that architecture.
