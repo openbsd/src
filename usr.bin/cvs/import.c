@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.93 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.94 2008/06/10 02:11:19 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -118,11 +118,12 @@ cvs_import(int argc, char **argv)
 			fatal("invalid symbol: %s", release_tags[i]);
 	}
 
-	if (logmsg == NULL)
-		logmsg = cvs_logmsg_create(NULL, NULL, NULL, NULL);
-
-	if (logmsg == NULL)
-		fatal("This shouldnt happen, honestly!");
+	if (logmsg == NULL) {
+		if (cvs_server_active)
+			fatal("no log message specified");
+		else
+			logmsg = cvs_logmsg_create(NULL, NULL, NULL, NULL);
+	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
