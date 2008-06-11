@@ -97,6 +97,8 @@ typedef struct drm_r128_private {
 	u32 crtc_offset;
 	u32 crtc_offset_cntl;
 
+	atomic_t vbl_received;
+
 	u32 color_fmt;
 	unsigned int front_offset;
 	unsigned int front_pitch;
@@ -118,7 +120,7 @@ typedef struct drm_r128_private {
 	drm_local_map_t *cce_ring;
 	drm_local_map_t *ring_rptr;
 	drm_local_map_t *agp_textures;
-	struct ati_pcigart_info gart_info;
+	struct drm_ati_pcigart_info gart_info;
 } drm_r128_private_t;
 
 typedef struct drm_r128_buf_priv {
@@ -149,11 +151,12 @@ extern int r128_wait_ring(drm_r128_private_t * dev_priv, int n);
 extern int r128_do_cce_idle(drm_r128_private_t * dev_priv);
 extern int r128_do_cleanup_cce(struct drm_device * dev);
 
-extern int r128_driver_vblank_wait(struct drm_device * dev, unsigned int *sequence);
-
+extern int r128_enable_vblank(struct drm_device *dev, int crtc);
+extern void r128_disable_vblank(struct drm_device *dev, int crtc);
+extern u32 r128_get_vblank_counter(struct drm_device *dev, int crtc);
 extern irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS);
 extern void r128_driver_irq_preinstall(struct drm_device * dev);
-extern void r128_driver_irq_postinstall(struct drm_device * dev);
+extern int r128_driver_irq_postinstall(struct drm_device * dev);
 extern void r128_driver_irq_uninstall(struct drm_device * dev);
 extern void r128_driver_lastclose(struct drm_device * dev);
 extern void r128_driver_preclose(struct drm_device * dev,
@@ -462,8 +465,7 @@ do {									\
 
 #define BEGIN_RING( n ) do {						\
 	if ( R128_VERBOSE ) {						\
-		DRM_INFO( "BEGIN_RING( %d ) in %s\n",			\
-			   (n), __FUNCTION__ );				\
+		DRM_INFO( "BEGIN_RING( %d )\n", (n));			\
 	}								\
 	if ( dev_priv->ring.space <= (n) * sizeof(u32) ) {		\
 		COMMIT_RING();						\

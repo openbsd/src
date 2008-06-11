@@ -51,7 +51,9 @@ mach64_configure(drm_device_t *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 	dev->driver.lastclose		= mach64_driver_lastclose;
-	dev->driver.vblank_wait		= mach64_driver_vblank_wait;
+	dev->driver.get_vblank_counter	= mach64_get_vblank_counter;
+	dev->driver.enable_vblank	= mach64_enable_vblank;
+	dev->driver.disable_vblank	= mach64_disable_vblank;
 	dev->driver.irq_preinstall	= mach64_driver_irq_preinstall;
 	dev->driver.irq_postinstall	= mach64_driver_irq_postinstall;
 	dev->driver.irq_uninstall	= mach64_driver_irq_uninstall;

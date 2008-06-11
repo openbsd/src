@@ -27,7 +27,7 @@
  * Authors:
  *    Gareth Hughes <gareth@valinux.com>
  *    Leif Delgass <ldelgass@retinalburn.net>
- *    Jos�Fonseca <j_r_fonseca@yahoo.co.uk>
+ *    José Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
 #include "drmP.h"
@@ -95,7 +95,7 @@ static int mach64_emit_cliprect(struct drm_file *file_priv,
 	drm_mach64_context_regs_t *regs = &sarea_priv->context_state;
 	DMALOCALS;
 
-	DRM_DEBUG("%s: box=%p\n", __FUNCTION__, box);
+	DRM_DEBUG("box=%p\n", box);
 
 	/* Get GL scissor */
 	/* FIXME: store scissor in SAREA as a cliprect instead of in
@@ -146,7 +146,7 @@ static __inline__ int mach64_emit_state(struct drm_file *file_priv,
 	if (MACH64_VERBOSE) {
 		mach64_print_dirty(__FUNCTION__, dirty);
 	} else {
-		DRM_DEBUG("%s: dirty=0x%08x\n", __FUNCTION__, dirty);
+		DRM_DEBUG("dirty=0x%08x\n", dirty);
 	}
 
 	DMAGETPTR(file_priv, dev_priv, 17);	/* returns on failure to get buffer */
@@ -229,7 +229,7 @@ static int mach64_dma_dispatch_clear(struct drm_device * dev,
 	int i;
 	DMALOCALS;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	switch (dev_priv->fb_bpp) {
 	case 16:
@@ -368,7 +368,7 @@ static int mach64_dma_dispatch_swap(struct drm_device * dev,
 	int i;
 	DMALOCALS;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	switch (dev_priv->fb_bpp) {
 	case 16:
@@ -445,7 +445,7 @@ static int mach64_do_get_frames_queued(drm_mach64_private_t * dev_priv)
 	int i, start;
 	u32 head, tail, ofs;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	if (sarea_priv->frames_queued == 0)
 		return 0;
@@ -525,15 +525,14 @@ static __inline__ int copy_from_user_vertex(u32 *to,
 				from += count;
 				to += count;
 			} else {
-				DRM_ERROR("%s: Got bad command: 0x%04x\n",
-					  __FUNCTION__, reg);
+				DRM_ERROR("Got bad command: 0x%04x\n", reg);
 				drm_free(orig_from, bytes, DRM_MEM_DRIVER);
 				return -EACCES;
 			}
 		} else {
 			DRM_ERROR
-			    ("%s: Got bad command count(=%u) dwords remaining=%lu\n",
-			     __FUNCTION__, count, n);
+			    ("Got bad command count(=%u) dwords remaining=%lu\n",
+			     count, n);
 			drm_free(orig_from, bytes, DRM_MEM_DRIVER);
 			return -EINVAL;
 		}
@@ -543,7 +542,7 @@ static __inline__ int copy_from_user_vertex(u32 *to,
 	if (n == 0)
 		return 0;
 	else {
-		DRM_ERROR("%s: Bad buf->used(=%lu)\n", __FUNCTION__, bytes);
+		DRM_ERROR("Bad buf->used(=%lu)\n", bytes);
 		return -EINVAL;
 	}
 }
@@ -563,18 +562,22 @@ static int mach64_dma_dispatch_vertex(struct drm_device * dev,
 	int verify_ret = 0;
 	DMALOCALS;
 
-	DRM_DEBUG("%s: buf=%p used=%lu nbox=%d\n",
-		  __FUNCTION__, buf, used, sarea_priv->nbox);
+	DRM_DEBUG("buf=%p used=%lu nbox=%d\n",
+		  buf, used, sarea_priv->nbox);
 
 	if (!used)
 		goto _vertex_done;
 
 	copy_buf = mach64_freelist_get(dev_priv);
 	if (copy_buf == NULL) {
-		DRM_ERROR("%s: couldn't get buffer\n", __FUNCTION__);
+		DRM_ERROR("couldn't get buffer\n");
 		return -EAGAIN;
 	}
 
+	/* Mach64's vertex data is actually register writes. To avoid security
+	 * compromises these register writes have to be verified and copied from
+	 * user space into a private DMA buffer.
+	 */
 	verify_ret = copy_from_user_vertex(GETBUFPTR(copy_buf), buf, used);
 
 	if (verify_ret != 0) {
@@ -694,10 +697,20 @@ static int mach64_dma_dispatch_blit(struct drm_device * dev,
 
 	copy_buf = mach64_freelist_get(dev_priv);
 	if (copy_buf == NULL) {
-		DRM_ERROR("%s: couldn't get buffer\n", __FUNCTION__);
+		DRM_ERROR("couldn't get buffer\n");
 		return -EAGAIN;
 	}
 
+	/* Copy the blit data from userspace.
+	 * 
+	 * XXX: This is overkill. The most efficient solution would be having 
+	 * two sets of buffers (one set private for vertex data, the other set 
+	 * client-writable for blits). However that would bring more complexity 
+	 * and would break backward compatability. The solution currently 
+	 * implemented is keeping all buffers private, allowing to secure the
+	 * driver, without increasing complexity at the expense of some speed 
+	 * transfering data.
+	 */
 	verify_ret = copy_from_user_blit(GETBUFPTR(copy_buf), blit->buf, used);
 
 	if (verify_ret != 0) {
@@ -745,7 +758,7 @@ static int mach64_dma_dispatch_blit(struct drm_device * dev,
 	DMAOUTREG(MACH64_DST_X_Y, (blit->y << 16) | blit->x);
 	DMAOUTREG(MACH64_DST_WIDTH_HEIGHT, (blit->height << 16) | blit->width);
 
-	DRM_DEBUG("%s: %lu bytes\n", __FUNCTION__, used);
+	DRM_DEBUG("%lu bytes\n", used);
 
 	/* Add the buffer to the queue */
 	DMAADVANCEHOSTDATA(dev_priv);
@@ -766,7 +779,7 @@ int mach64_dma_clear(struct drm_device *dev, void *data,
 	drm_mach64_clear_t *clear = data;
 	int ret;
 
-	DRM_DEBUG("%s: pid=%d\n", __FUNCTION__, DRM_CURRENTPID);
+	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -791,7 +804,7 @@ int mach64_dma_swap(struct drm_device *dev, void *data,
 	drm_mach64_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	int ret;
 
-	DRM_DEBUG("%s: pid=%d\n", __FUNCTION__, DRM_CURRENTPID);
+	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -816,12 +829,12 @@ int mach64_dma_vertex(struct drm_device *dev, void *data,
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
-	DRM_DEBUG("%s: pid=%d buf=%p used=%lu discard=%d\n",
-		  __FUNCTION__, DRM_CURRENTPID,
+	DRM_DEBUG("pid=%d buf=%p used=%lu discard=%d\n",
+		  DRM_CURRENTPID,
 		  vertex->buf, vertex->used, vertex->discard);
 
 	if (vertex->prim < 0 || vertex->prim > MACH64_PRIM_POLYGON) {
@@ -868,10 +881,10 @@ int mach64_get_param(struct drm_device *dev, void *data,
 	drm_mach64_getparam_t *param = data;
 	int value;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 

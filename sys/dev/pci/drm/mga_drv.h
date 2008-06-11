@@ -113,13 +113,14 @@ typedef struct drm_mga_private {
 	 * \sa drm_mga_private_t::mmio
 	 */
 	/*@{*/
-	u32 mmio_base;             /**< Bus address of base of MMIO. */
-	u32 mmio_size;             /**< Size of the MMIO region. */
+	u32 mmio_base;			/**< Bus address of base of MMIO. */
+	u32 mmio_size;			/**< Size of the MMIO region. */
 	/*@}*/
 
 	u32 clear_cmd;
 	u32 maccess;
 
+	atomic_t vbl_received;		/**< Number of vblanks received. */
 	wait_queue_head_t fence_queue;
 	atomic_t last_fence_retired;
 	u32 next_fence_to_post;
@@ -181,11 +182,14 @@ extern int mga_warp_install_microcode(drm_mga_private_t * dev_priv);
 extern int mga_warp_init(drm_mga_private_t * dev_priv);
 
 				/* mga_irq.c */
+extern int mga_enable_vblank(struct drm_device *dev, int crtc);
+extern void mga_disable_vblank(struct drm_device *dev, int crtc);
+extern u32 mga_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mga_driver_fence_wait(struct drm_device * dev, unsigned int *sequence);
 extern int mga_driver_vblank_wait(struct drm_device * dev, unsigned int *sequence);
 extern irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS);
 extern void mga_driver_irq_preinstall(struct drm_device * dev);
-extern void mga_driver_irq_postinstall(struct drm_device * dev);
+extern int mga_driver_irq_postinstall(struct drm_device * dev);
 extern void mga_driver_irq_uninstall(struct drm_device * dev);
 extern long mga_compat_ioctl(struct file *filp, unsigned int cmd,
 			     unsigned long arg);
@@ -249,7 +253,7 @@ do {									\
 		} else if ( dev_priv->prim.space <			\
 			    dev_priv->prim.high_mark ) {		\
 			if ( MGA_DMA_DEBUG )				\
-				DRM_INFO( "%s: wrap...\n", __FUNCTION__ );	\
+				DRM_INFO( "wrap...\n");		\
 			return -EBUSY;			\
 		}							\
 	}								\
@@ -260,7 +264,7 @@ do {									\
 	if ( test_bit( 0, &dev_priv->prim.wrapped ) ) {			\
 		if ( mga_do_wait_for_idle( dev_priv ) < 0 ) {		\
 			if ( MGA_DMA_DEBUG )				\
-				DRM_INFO( "%s: wrap...\n", __FUNCTION__ );	\
+				DRM_INFO( "wrap...\n");		\
 			return -EBUSY;			\
 		}							\
 		mga_do_dma_wrap_end( dev_priv );			\
@@ -280,8 +284,7 @@ do {									\
 #define BEGIN_DMA( n )							\
 do {									\
 	if ( MGA_VERBOSE ) {						\
-		DRM_INFO( "BEGIN_DMA( %d ) in %s\n",			\
-			  (n), __FUNCTION__ );				\
+		DRM_INFO( "BEGIN_DMA( %d )\n", (n) );		\
 		DRM_INFO( "   space=0x%x req=0x%Zx\n",			\
 			  dev_priv->prim.space, (n) * DMA_BLOCK_SIZE );	\
 	}								\
@@ -292,7 +295,7 @@ do {									\
 #define BEGIN_DMA_WRAP()						\
 do {									\
 	if ( MGA_VERBOSE ) {						\
-		DRM_INFO( "BEGIN_DMA() in %s\n", __FUNCTION__ );		\
+		DRM_INFO( "BEGIN_DMA()\n" );				\
 		DRM_INFO( "   space=0x%x\n", dev_priv->prim.space );	\
 	}								\
 	prim = dev_priv->prim.start;					\
@@ -311,7 +314,7 @@ do {									\
 #define FLUSH_DMA()							\
 do {									\
 	if ( 0 ) {							\
-		DRM_INFO( "%s:\n", __FUNCTION__ );				\
+		DRM_INFO( "\n" );					\
 		DRM_INFO( "   tail=0x%06x head=0x%06lx\n",		\
 			  dev_priv->prim.tail,				\
 			  MGA_READ( MGA_PRIMADDRESS ) -			\

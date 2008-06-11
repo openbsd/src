@@ -30,23 +30,23 @@ void savage_emit_clip_rect_s3d(drm_savage_private_t *dev_priv,
 			       const struct drm_clip_rect *pbox)
 {
 	uint32_t scstart = dev_priv->state.s3d.new_scstart;
-	uint32_t scend   = dev_priv->state.s3d.new_scend;
+	uint32_t scend = dev_priv->state.s3d.new_scend;
 	scstart = (scstart & ~SAVAGE_SCISSOR_MASK_S3D) |
 		((uint32_t)pbox->x1 & 0x000007ff) |
 		(((uint32_t)pbox->y1 << 16) & 0x07ff0000);
-	scend   = (scend   & ~SAVAGE_SCISSOR_MASK_S3D) |
-		(((uint32_t)pbox->x2-1) & 0x000007ff) |
-		((((uint32_t)pbox->y2-1) << 16) & 0x07ff0000);
+	scend   = (scend & ~SAVAGE_SCISSOR_MASK_S3D) |
+		(((uint32_t)pbox->x2 - 1) & 0x000007ff) |
+		((((uint32_t)pbox->y2 - 1) << 16) & 0x07ff0000);
 	if (scstart != dev_priv->state.s3d.scstart ||
 	    scend   != dev_priv->state.s3d.scend) {
 		DMA_LOCALS;
 		BEGIN_DMA(4);
-		DMA_WRITE(BCI_CMD_WAIT|BCI_CMD_WAIT_3D);
+		DMA_WRITE(BCI_CMD_WAIT | BCI_CMD_WAIT_3D);
 		DMA_SET_REGISTERS(SAVAGE_SCSTART_S3D, 2);
 		DMA_WRITE(scstart);
 		DMA_WRITE(scend);
 		dev_priv->state.s3d.scstart = scstart;
-		dev_priv->state.s3d.scend   = scend;
+		dev_priv->state.s3d.scend = scend;
 		dev_priv->waiting = 1;
 		DMA_COMMIT();
 	}
@@ -61,13 +61,13 @@ void savage_emit_clip_rect_s4(drm_savage_private_t *dev_priv,
 		((uint32_t)pbox->x1 & 0x000007ff) |
 		(((uint32_t)pbox->y1 << 12) & 0x00fff000);
 	drawctrl1 = (drawctrl1 & ~SAVAGE_SCISSOR_MASK_S4) |
-		(((uint32_t)pbox->x2-1) & 0x000007ff) |
-		((((uint32_t)pbox->y2-1) << 12) & 0x00fff000);
+		(((uint32_t)pbox->x2 - 1) & 0x000007ff) |
+		((((uint32_t)pbox->y2 - 1) << 12) & 0x00fff000);
 	if (drawctrl0 != dev_priv->state.s4.drawctrl0 ||
 	    drawctrl1 != dev_priv->state.s4.drawctrl1) {
 		DMA_LOCALS;
 		BEGIN_DMA(4);
-		DMA_WRITE(BCI_CMD_WAIT|BCI_CMD_WAIT_3D);
+		DMA_WRITE(BCI_CMD_WAIT | BCI_CMD_WAIT_3D);
 		DMA_SET_REGISTERS(SAVAGE_DRAWCTRL0_S4, 2);
 		DMA_WRITE(drawctrl0);
 		DMA_WRITE(drawctrl1);
@@ -87,8 +87,8 @@ static int savage_verify_texaddr(drm_savage_private_t *dev_priv, int unit,
 	}
 	if (!(addr & 1)) { /* local */
 		addr &= ~7;
-		if (addr <  dev_priv->texture_offset ||
-		    addr >= dev_priv->texture_offset+dev_priv->texture_size) {
+		if (addr < dev_priv->texture_offset ||
+		    addr >= dev_priv->texture_offset + dev_priv->texture_size) {
 			DRM_ERROR
 			    ("bad texAddr%d %08x (local addr out of range)\n",
 			     unit, addr);
@@ -114,10 +114,10 @@ static int savage_verify_texaddr(drm_savage_private_t *dev_priv, int unit,
 }
 
 #define SAVE_STATE(reg,where)			\
-	if(start <= reg && start+count > reg)	\
+	if(start <= reg && start + count > reg)	\
 		dev_priv->state.where = regs[reg - start]
 #define SAVE_STATE_MASK(reg,where,mask) do {			\
-	if(start <= reg && start+count > reg) {			\
+	if(start <= reg && start + count > reg) {			\
 		uint32_t tmp;					\
 		tmp = regs[reg - start];			\
 		dev_priv->state.where = (tmp & (mask)) |	\
@@ -129,9 +129,9 @@ static int savage_verify_state_s3d(drm_savage_private_t *dev_priv,
 				   const uint32_t *regs)
 {
 	if (start < SAVAGE_TEXPALADDR_S3D ||
-	    start+count-1 > SAVAGE_DESTTEXRWWATERMARK_S3D) {
+	    start + count - 1 > SAVAGE_DESTTEXRWWATERMARK_S3D) {
 		DRM_ERROR("invalid register range (0x%04x-0x%04x)\n",
-			  start, start+count-1);
+			  start, start + count - 1);
 		return -EINVAL;
 	}
 
@@ -142,7 +142,7 @@ static int savage_verify_state_s3d(drm_savage_private_t *dev_priv,
 
 	/* if any texture regs were changed ... */
 	if (start <= SAVAGE_TEXCTRL_S3D &&
-	    start+count > SAVAGE_TEXPALADDR_S3D) {
+	    start + count > SAVAGE_TEXPALADDR_S3D) {
 		/* ... check texture state */
 		SAVE_STATE(SAVAGE_TEXCTRL_S3D, s3d.texctrl);
 		SAVE_STATE(SAVAGE_TEXADDR_S3D, s3d.texaddr);
@@ -161,9 +161,9 @@ static int savage_verify_state_s4(drm_savage_private_t *dev_priv,
 	int ret = 0;
 
 	if (start < SAVAGE_DRAWLOCALCTRL_S4 ||
-	    start+count-1 > SAVAGE_TEXBLENDCOLOR_S4) {
+	    start + count - 1 > SAVAGE_TEXBLENDCOLOR_S4) {
 		DRM_ERROR("invalid register range (0x%04x-0x%04x)\n",
-			  start, start+count-1);
+			  start, start + count - 1);
 		return -EINVAL;
 	}
 
@@ -212,14 +212,14 @@ static int savage_dispatch_state(drm_savage_private_t *dev_priv,
 			return ret;
 		/* scissor regs are emitted in savage_dispatch_draw */
 		if (start < SAVAGE_SCSTART_S3D) {
-			if (start+count > SAVAGE_SCEND_S3D+1)
-				count2 = count - (SAVAGE_SCEND_S3D+1 - start);
-			if (start+count > SAVAGE_SCSTART_S3D)
+			if (start + count > SAVAGE_SCEND_S3D + 1)
+				count2 = count - (SAVAGE_SCEND_S3D + 1 - start);
+			if (start + count > SAVAGE_SCSTART_S3D)
 				count = SAVAGE_SCSTART_S3D - start;
 		} else if (start <= SAVAGE_SCEND_S3D) {
-			if (start+count > SAVAGE_SCEND_S3D+1) {
-				count -= SAVAGE_SCEND_S3D+1 - start;
-				start = SAVAGE_SCEND_S3D+1;
+			if (start + count > SAVAGE_SCEND_S3D + 1) {
+				count -= SAVAGE_SCEND_S3D + 1 - start;
+				start = SAVAGE_SCEND_S3D + 1;
 			} else
 				return 0;
 		}
@@ -229,24 +229,24 @@ static int savage_dispatch_state(drm_savage_private_t *dev_priv,
 			return ret;
 		/* scissor regs are emitted in savage_dispatch_draw */
 		if (start < SAVAGE_DRAWCTRL0_S4) {
-			if (start+count > SAVAGE_DRAWCTRL1_S4+1)
+			if (start + count > SAVAGE_DRAWCTRL1_S4 + 1)
 				count2 = count -
 					 (SAVAGE_DRAWCTRL1_S4 + 1 - start);
-			if (start+count > SAVAGE_DRAWCTRL0_S4)
+			if (start + count > SAVAGE_DRAWCTRL0_S4)
 				count = SAVAGE_DRAWCTRL0_S4 - start;
 		} else if (start <= SAVAGE_DRAWCTRL1_S4) {
-			if (start+count > SAVAGE_DRAWCTRL1_S4+1) {
-				count -= SAVAGE_DRAWCTRL1_S4+1 - start;
-				start = SAVAGE_DRAWCTRL1_S4+1;
+			if (start + count > SAVAGE_DRAWCTRL1_S4 + 1) {
+				count -= SAVAGE_DRAWCTRL1_S4 + 1 - start;
+				start = SAVAGE_DRAWCTRL1_S4 + 1;
 			} else
 				return 0;
 		}
 	}
 
-	bci_size = count + (count+254)/255 + count2 + (count2+254)/255;
+	bci_size = count + (count + 254) / 255 + count2 + (count2 + 254) / 255;
 
 	if (cmd_header->state.global) {
-		BEGIN_DMA(bci_size+1);
+		BEGIN_DMA(bci_size + 1);
 		DMA_WRITE(BCI_CMD_WAIT | BCI_CMD_WAIT_3D);
 		dev_priv->waiting = 1;
 	} else {
@@ -286,8 +286,8 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 	BCI_LOCALS;
 
 	if (!dmabuf) {
-	    DRM_ERROR("called without dma buffers!\n");
-	    return -EINVAL;
+		DRM_ERROR("called without dma buffers!\n");
+		return -EINVAL;
 	}
 
 	if (!n)
@@ -337,9 +337,9 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 		}
 	}
 
-	if (start + n > dmabuf->total/32) {
+	if (start + n > dmabuf->total / 32) {
 		DRM_ERROR("vertex indices (%u-%u) out of range (0-%u)\n",
-			  start, start + n - 1, dmabuf->total/32);
+			  start, start + n - 1, dmabuf->total / 32);
 		return -EINVAL;
 	}
 
@@ -374,33 +374,33 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 			/* Need to reorder indices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int reorder[3] = {-1, -1, -1};
-			reorder[start%3] = 2;
+			int reorder[3] = { -1, -1, -1 };
+			reorder[start % 3] = 2;
 
-			BEGIN_BCI((count+1+1)/2);
-			BCI_DRAW_INDICES_S3D(count, prim, start+2);
+			BEGIN_BCI((count + 1 + 1) / 2);
+			BCI_DRAW_INDICES_S3D(count, prim, start + 2);
 
-			for (i = start+1; i+1 < start+count; i += 2)
+			for (i = start + 1; i + 1 < start + count; i += 2)
 				BCI_WRITE((i + reorder[i % 3]) |
 					  ((i + 1 +
 					    reorder[(i + 1) % 3]) << 16));
-			if (i < start+count)
-				BCI_WRITE(i + reorder[i%3]);
+			if (i < start + count)
+				BCI_WRITE(i + reorder[i % 3]);
 		} else if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
-			BEGIN_BCI((count+1+1)/2);
+			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, start);
 
-			for (i = start+1; i+1 < start+count; i += 2)
-				BCI_WRITE(i | ((i+1) << 16));
-			if (i < start+count)
+			for (i = start + 1; i + 1 < start + count; i += 2)
+				BCI_WRITE(i | ((i + 1) << 16));
+			if (i < start + count)
 				BCI_WRITE(i);
 		} else {
-			BEGIN_BCI((count+2+1)/2);
+			BEGIN_BCI((count + 2 + 1) / 2);
 			BCI_DRAW_INDICES_S4(count, prim, skip);
 
-			for (i = start; i+1 < start+count; i += 2)
-				BCI_WRITE(i | ((i+1) << 16));
-			if (i < start+count)
+			for (i = start; i + 1 < start + count; i += 2)
+				BCI_WRITE(i | ((i + 1) << 16));
+			if (i < start + count)
 				BCI_WRITE(i);
 		}
 
@@ -479,9 +479,9 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 		return -EINVAL;
 	}
 
-	if (start + n > vb_size / (vb_stride*4)) {
+	if (start + n > vb_size / (vb_stride * 4)) {
 		DRM_ERROR("vertex indices (%u-%u) out of range (0-%u)\n",
-			  start, start + n - 1, vb_size / (vb_stride*4));
+			  start, start + n - 1, vb_size / (vb_stride * 4));
 		return -EINVAL;
 	}
 
@@ -493,28 +493,28 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 			/* Need to reorder vertices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int reorder[3] = {-1, -1, -1};
-			reorder[start%3] = 2;
+			int reorder[3] = { -1, -1, -1 };
+			reorder[start % 3] = 2;
 
-			BEGIN_DMA(count*vtx_size+1);
+			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
-			for (i = start; i < start+count; ++i) {
+			for (i = start; i < start + count; ++i) {
 				unsigned int j = i + reorder[i % 3];
-				DMA_COPY(&vtxbuf[vb_stride*j], vtx_size);
+				DMA_COPY(&vtxbuf[vb_stride * j], vtx_size);
 			}
 
 			DMA_COMMIT();
 		} else {
-			BEGIN_DMA(count*vtx_size+1);
+			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
 			if (vb_stride == vtx_size) {
-				DMA_COPY(&vtxbuf[vb_stride*start],
-					 vtx_size*count);
+				DMA_COPY(&vtxbuf[vb_stride * start],
+					 vtx_size * count);
 			} else {
-				for (i = start; i < start+count; ++i) {
-					DMA_COPY(&vtxbuf[vb_stride*i],
+				for (i = start; i < start + count; ++i) {
+					DMA_COPY(&vtxbuf[vb_stride * i],
 						 vtx_size);
 				}
 			}
@@ -544,8 +544,8 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 	BCI_LOCALS;
 
 	if (!dmabuf) {
-	    DRM_ERROR("called without dma buffers!\n");
-	    return -EINVAL;
+		DRM_ERROR("called without dma buffers!\n");
+		return -EINVAL;
 	}
 
 	if (!n)
@@ -623,9 +623,9 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 
 		/* check indices */
 		for (i = 0; i < count; ++i) {
-			if (idx[i] > dmabuf->total/32) {
+			if (idx[i] > dmabuf->total / 32) {
 				DRM_ERROR("idx[%u]=%u out of range (0-%u)\n",
-					  i, idx[i], dmabuf->total/32);
+					  i, idx[i], dmabuf->total / 32);
 				return -EINVAL;
 			}
 		}
@@ -634,31 +634,31 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 			/* Need to reorder indices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int reorder[3] = {2, -1, -1};
+			int reorder[3] = { 2, -1, -1 };
 
-			BEGIN_BCI((count+1+1)/2);
+			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, idx[2]);
 
-			for (i = 1; i+1 < count; i += 2)
+			for (i = 1; i + 1 < count; i += 2)
 				BCI_WRITE(idx[i + reorder[i % 3]] |
 					  (idx[i + 1 +
 					   reorder[(i + 1) % 3]] << 16));
 			if (i < count)
-				BCI_WRITE(idx[i + reorder[i%3]]);
+				BCI_WRITE(idx[i + reorder[i % 3]]);
 		} else if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
-			BEGIN_BCI((count+1+1)/2);
+			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, idx[0]);
 
-			for (i = 1; i+1 < count; i += 2)
-				BCI_WRITE(idx[i] | (idx[i+1] << 16));
+			for (i = 1; i + 1 < count; i += 2)
+				BCI_WRITE(idx[i] | (idx[i + 1] << 16));
 			if (i < count)
 				BCI_WRITE(idx[i]);
 		} else {
-			BEGIN_BCI((count+2+1)/2);
+			BEGIN_BCI((count + 2 + 1) / 2);
 			BCI_DRAW_INDICES_S4(count, prim, skip);
 
-			for (i = 0; i+1 < count; i += 2)
-				BCI_WRITE(idx[i] | (idx[i+1] << 16));
+			for (i = 0; i + 1 < count; i += 2)
+				BCI_WRITE(idx[i] | (idx[i + 1] << 16));
 			if (i < count)
 				BCI_WRITE(idx[i]);
 		}
@@ -743,9 +743,9 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 
 		/* Check indices */
 		for (i = 0; i < count; ++i) {
-			if (idx[i] > vb_size / (vb_stride*4)) {
+			if (idx[i] > vb_size / (vb_stride * 4)) {
 				DRM_ERROR("idx[%u]=%u out of range (0-%u)\n",
-					  i, idx[i],  vb_size / (vb_stride*4));
+					  i, idx[i],  vb_size / (vb_stride * 4));
 				return -EINVAL;
 			}
 		}
@@ -754,24 +754,24 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 			/* Need to reorder vertices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int reorder[3] = {2, -1, -1};
+			int reorder[3] = { 2, -1, -1 };
 
-			BEGIN_DMA(count*vtx_size+1);
+			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
 			for (i = 0; i < count; ++i) {
 				unsigned int j = idx[i + reorder[i % 3]];
-				DMA_COPY(&vtxbuf[vb_stride*j], vtx_size);
+				DMA_COPY(&vtxbuf[vb_stride * j], vtx_size);
 			}
 
 			DMA_COMMIT();
 		} else {
-			BEGIN_DMA(count*vtx_size+1);
+			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
 			for (i = 0; i < count; ++i) {
 				unsigned int j = idx[i];
-				DMA_COPY(&vtxbuf[vb_stride*j], vtx_size);
+				DMA_COPY(&vtxbuf[vb_stride * j], vtx_size);
 			}
 
 			DMA_COMMIT();
@@ -823,12 +823,12 @@ static int savage_dispatch_clear(drm_savage_private_t *dev_priv,
 		x = boxes[i].x1, y = boxes[i].y1;
 		w = boxes[i].x2 - boxes[i].x1;
 		h = boxes[i].y2 - boxes[i].y1;
-		BEGIN_DMA(nbufs*6);
+		BEGIN_DMA(nbufs * 6);
 		for (buf = SAVAGE_FRONT; buf <= SAVAGE_DEPTH; buf <<= 1) {
 			if (!(flags & buf))
 				continue;
 			DMA_WRITE(clear_cmd);
-			switch(buf) {
+			switch (buf) {
 			case SAVAGE_FRONT:
 				DMA_WRITE(dev_priv->front_offset);
 				DMA_WRITE(dev_priv->front_bd);
@@ -880,8 +880,8 @@ static int savage_dispatch_swap(drm_savage_private_t *dev_priv,
 		DMA_WRITE(dev_priv->back_bd);
 		DMA_WRITE(BCI_X_Y(boxes[i].x1, boxes[i].y1));
 		DMA_WRITE(BCI_X_Y(boxes[i].x1, boxes[i].y1));
-		DMA_WRITE(BCI_W_H(boxes[i].x2-boxes[i].x1,
-				  boxes[i].y2-boxes[i].y1));
+		DMA_WRITE(BCI_W_H(boxes[i].x2 - boxes[i].x1,
+				  boxes[i].y2 - boxes[i].y1));
 		DMA_COMMIT();
 	}
 
@@ -973,7 +973,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 		if (cmdbuf->dma_idx > dma->buf_count) {
 			DRM_ERROR
 			    ("vertex buffer index %u out of range (0-%u)\n",
-			     cmdbuf->dma_idx, dma->buf_count-1);
+			     cmdbuf->dma_idx, dma->buf_count - 1);
 			return -EINVAL;
 		}
 		dmabuf = dma->buflist[cmdbuf->dma_idx];
@@ -1064,15 +1064,15 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 		case SAVAGE_CMD_DMA_PRIM:
 		case SAVAGE_CMD_VB_PRIM:
 			if (!first_draw_cmd)
-				first_draw_cmd = cmdbuf->cmd_addr-1;
+				first_draw_cmd = cmdbuf->cmd_addr - 1;
 			cmdbuf->cmd_addr += j;
 			i += j;
 			break;
 		default:
 			if (first_draw_cmd) {
-				ret = savage_dispatch_draw (
+				ret = savage_dispatch_draw(
 					dev_priv, first_draw_cmd,
-					cmdbuf->cmd_addr-1,
+					cmdbuf->cmd_addr - 1,
 					dmabuf, cmdbuf->vb_addr,
 					cmdbuf->vb_size,
 					cmdbuf->vb_stride,
@@ -1134,7 +1134,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 	}
 
 	if (first_draw_cmd) {
-		ret = savage_dispatch_draw (
+		ret = savage_dispatch_draw(
 			dev_priv, first_draw_cmd, cmdbuf->cmd_addr, dmabuf,
 			cmdbuf->vb_addr, cmdbuf->vb_size, cmdbuf->vb_stride,
 			cmdbuf->nbox, cmdbuf->box_addr);

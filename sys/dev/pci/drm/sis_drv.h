@@ -84,8 +84,6 @@ extern int sis_final_context(struct drm_device * dev, int context);
 
 #endif
 
-
-
 extern struct drm_ioctl_desc sis_ioctls[];
 extern int sis_max_ioctl;
 

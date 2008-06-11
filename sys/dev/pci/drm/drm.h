@@ -249,7 +249,8 @@ enum drm_map_flags {
 	_DRM_KERNEL = 0x08,	     /**< kernel requires access */
 	_DRM_WRITE_COMBINING = 0x10, /**< use write-combining if available */
 	_DRM_CONTAINS_LOCK = 0x20,   /**< SHM page that contains lock */
-	_DRM_REMOVABLE = 0x40	     /**< Removable mapping */
+	_DRM_REMOVABLE = 0x40,	     /**< Removable mapping */
+	_DRM_DRIVER = 0x80	     /**< Managed by driver */
 };
 
 struct drm_ctx_priv_map {
@@ -554,6 +555,20 @@ union drm_wait_vblank {
 	struct drm_wait_vblank_reply reply;
 };
 
+
+#define _DRM_PRE_MODESET 1
+#define _DRM_POST_MODESET 2
+
+/**
+ * DRM_IOCTL_MODESET_CTL ioctl argument type
+ *
+ * \sa drmModesetCtl().
+ */
+struct drm_modeset_ctl {
+	uint32_t crtc;
+	uint32_t cmd;
+};
+
 /**
  * DRM_IOCTL_AGP_ENABLE ioctl argument type.
  *
@@ -629,8 +644,14 @@ struct drm_set_version {
 
 #define DRM_FENCE_FLAG_EMIT                0x00000001
 #define DRM_FENCE_FLAG_SHAREABLE           0x00000002
+/**
+ * On hardware with no interrupt events for operation completion,
+ * indicates that the kernel should sleep while waiting for any blocking
+ * operation to complete rather than spinning.
+ *
+ * Has no effect otherwise.
+ */
 #define DRM_FENCE_FLAG_WAIT_LAZY           0x00000004
-#define DRM_FENCE_FLAG_WAIT_IGNORE_SIGNALS 0x00000008
 #define DRM_FENCE_FLAG_NO_USER             0x00000010
 
 /* Reserved for driver use */
@@ -646,7 +667,7 @@ struct drm_fence_arg {
 	unsigned int signaled;
 	unsigned int error;
 	unsigned int sequence;
-        unsigned int pad64;
+	unsigned int pad64;
 	uint64_t expand_pad[2]; /*Future expansion */
 };
 
@@ -660,6 +681,10 @@ struct drm_fence_arg {
 #define DRM_BO_FLAG_WRITE       (1ULL << 1)
 #define DRM_BO_FLAG_EXE         (1ULL << 2)
 
+/*
+ * All of the bits related to access mode
+ */
+#define DRM_BO_MASK_ACCESS	(DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE)
 /*
  * Status flags. Can be read to determine the actual state of a buffer.
  * Can also be set in the buffer mask before validation.
@@ -700,7 +725,14 @@ struct drm_fence_arg {
  */
 #define DRM_BO_FLAG_NO_MOVE     (1ULL << 8)
 
-/* Mask: Make sure the buffer is in cached memory when mapped
+/* Mask: Make sure the buffer is in cached memory when mapped.  In conjunction
+ * with DRM_BO_FLAG_CACHED it also allows the buffer to be bound into the GART
+ * with unsnooped PTEs instead of snooped, by using chipset-specific cache
+ * flushing at bind time.  A better name might be DRM_BO_FLAG_TT_UNSNOOPED,
+ * as the eviction to local memory (TTM unbind) on map is just a side effect
+ * to prevent aggressive cache prefetch from the GPU disturbing the cache
+ * management that the DRM is doing.
+ *
  * Flags: Acknowledge.
  * Buffers allocated with this flag should not be used for suballocators
  * This type may have issues on CPUs with over-aggressive caching
@@ -740,18 +772,49 @@ struct drm_fence_arg {
 #define DRM_BO_FLAG_MEM_PRIV4  (1ULL << 31)
 /* We can add more of these now with a 64-bit flag type */
 
-/* Memory flag mask */
+/*
+ * This is a mask covering all of the memory type flags; easier to just
+ * use a single constant than a bunch of | values. It covers
+ * DRM_BO_FLAG_MEM_LOCAL through DRM_BO_FLAG_MEM_PRIV4
+ */
 #define DRM_BO_MASK_MEM         0x00000000FF000000ULL
-#define DRM_BO_MASK_MEMTYPE     0x00000000FF0800A0ULL
-
+/*
+ * This adds all of the CPU-mapping options in with the memory
+ * type to label all bits which change how the page gets mapped
+ */
+#define DRM_BO_MASK_MEMTYPE     (DRM_BO_MASK_MEM | \
+				 DRM_BO_FLAG_CACHED_MAPPED | \
+				 DRM_BO_FLAG_CACHED | \
+				 DRM_BO_FLAG_MAPPABLE)
+				 
 /* Driver-private flags */
 #define DRM_BO_MASK_DRIVER      0xFFFF000000000000ULL
 
-/* Don't block on validate and map */
+/*
+ * Don't block on validate and map. Instead, return EBUSY.
+ */
 #define DRM_BO_HINT_DONT_BLOCK  0x00000002
-/* Don't place this buffer on the unfenced list.*/
+/*
+ * Don't place this buffer on the unfenced list. This means
+ * that the buffer will not end up having a fence associated
+ * with it as a result of this operation
+ */
 #define DRM_BO_HINT_DONT_FENCE  0x00000004
+/**
+ * On hardware with no interrupt events for operation completion,
+ * indicates that the kernel should sleep while waiting for any blocking
+ * operation to complete rather than spinning.
+ *
+ * Has no effect otherwise.
+ */
 #define DRM_BO_HINT_WAIT_LAZY   0x00000008
+/*
+ * The client has compute relocations refering to this buffer using the
+ * offset in the presumed_offset field. If that offset ends up matching
+ * where this buffer lands, the kernel is free to skip executing those
+ * relocations
+ */
+#define DRM_BO_HINT_PRESUMED_OFFSET 0x00000010
 
 #define DRM_BO_INIT_MAGIC 0xfe769812
 #define DRM_BO_INIT_MAJOR 1
@@ -768,10 +831,11 @@ struct drm_bo_info_req {
 	unsigned int desired_tile_stride;
 	unsigned int tile_info;
 	unsigned int pad64;
+	uint64_t presumed_offset;
 };
 
 struct drm_bo_create_req {
-	uint64_t mask;
+	uint64_t flags;
 	uint64_t size;
 	uint64_t buffer_start;
 	unsigned int hint;
@@ -787,7 +851,7 @@ struct drm_bo_create_req {
 
 struct drm_bo_info_rep {
 	uint64_t flags;
-	uint64_t mask;
+	uint64_t proposed_flags;
 	uint64_t size;
 	uint64_t offset;
 	uint64_t arg_handle;
@@ -878,7 +942,7 @@ struct drm_bo_version_arg {
 
 struct drm_mm_type_arg {
 	unsigned int mem_type;
-        unsigned int lock_flags;
+	unsigned int lock_flags;
 };
 
 struct drm_mm_init_arg {
@@ -887,6 +951,11 @@ struct drm_mm_init_arg {
 	unsigned int minor;
 	unsigned int mem_type;
 	uint64_t p_offset;
+	uint64_t p_size;
+};
+
+struct drm_mm_info_arg {
+	unsigned int mem_type;
 	uint64_t p_size;
 };
 
@@ -909,6 +978,7 @@ struct drm_mm_init_arg {
 #define DRM_IOCTL_GET_CLIENT            DRM_IOWR(0x05, struct drm_client)
 #define DRM_IOCTL_GET_STATS             DRM_IOR( 0x06, struct drm_stats)
 #define DRM_IOCTL_SET_VERSION		DRM_IOWR(0x07, struct drm_set_version)
+#define DRM_IOCTL_MODESET_CTL           DRM_IOW(0x08, struct drm_modeset_ctl)
 
 #define DRM_IOCTL_SET_UNIQUE		DRM_IOW( 0x10, struct drm_unique)
 #define DRM_IOCTL_AUTH_MAGIC		DRM_IOW( 0x11, struct drm_auth)
@@ -950,7 +1020,7 @@ struct drm_mm_init_arg {
 #define DRM_IOCTL_AGP_BIND		DRM_IOW( 0x36, struct drm_agp_binding)
 #define DRM_IOCTL_AGP_UNBIND		DRM_IOW( 0x37, struct drm_agp_binding)
 
-#define DRM_IOCTL_SG_ALLOC		DRM_IOW( 0x38, struct drm_scatter_gather)
+#define DRM_IOCTL_SG_ALLOC		DRM_IOWR( 0x38, struct drm_scatter_gather)
 #define DRM_IOCTL_SG_FREE		DRM_IOW( 0x39, struct drm_scatter_gather)
 
 #define DRM_IOCTL_WAIT_VBLANK		DRM_IOWR(0x3a, union drm_wait_vblank)
@@ -980,7 +1050,7 @@ struct drm_mm_init_arg {
 #define DRM_IOCTL_BO_INFO               DRM_IOWR(0xd4, struct drm_bo_reference_info_arg)
 #define DRM_IOCTL_BO_WAIT_IDLE          DRM_IOWR(0xd5, struct drm_bo_map_wait_idle_arg)
 #define DRM_IOCTL_BO_VERSION          DRM_IOR(0xd6, struct drm_bo_version_arg)
-
+#define DRM_IOCTL_MM_INFO               DRM_IOWR(0xd7, struct drm_mm_info_arg)
 
 /*@}*/
 

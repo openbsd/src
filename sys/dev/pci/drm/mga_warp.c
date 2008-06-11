@@ -35,6 +35,7 @@
 #include "mga_ucode.h"
 
 #define MGA_WARP_CODE_ALIGN		256	/* in bytes */
+
 #define WARP_UCODE_SIZE( which )					\
 	((sizeof(which) / MGA_WARP_CODE_ALIGN + 1) * MGA_WARP_CODE_ALIGN)
 

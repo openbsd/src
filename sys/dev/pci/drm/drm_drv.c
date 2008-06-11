@@ -121,6 +121,7 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
 	DRM_IOCTL_DEF(DRM_IOCTL_WAIT_VBLANK, drm_wait_vblank, 0),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODESET_CTL, drm_modeset_ctl, 0),
 	DRM_IOCTL_DEF(DRM_IOCTL_UPDATE_DRAW, drm_update_draw, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 };
 
@@ -405,10 +406,7 @@ int
 drm_lastclose(drm_device_t *dev)
 {
 	struct drm_magic_entry *pt;
-	drm_local_map_t *map;
-#ifdef __FreeBSD__
-	drm_local_map_t *mapsave;
-#endif
+	drm_local_map_t *map, *mapsave;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
@@ -462,9 +460,12 @@ drm_lastclose(drm_device_t *dev)
 #ifdef __FreeBSD__
 	TAILQ_FOREACH_SAFE(map, &dev->maplist, link, mapsave) {
 #else
-	while ((map = TAILQ_FIRST(&dev->maplist)) != NULL) {
+	for (map = TAILQ_FIRST(&dev->maplist); map != TAILQ_END(&dev->maplist);
+	    map = mapsave) {
+		mapsave = TAILQ_NEXT(map, link);
 #endif
-		drm_rmmap(dev, map);
+		if (!(map->flags & _DRM_DRIVER))
+			drm_rmmap(dev, map);
 	}
 
 	drm_dma_takedown(dev);

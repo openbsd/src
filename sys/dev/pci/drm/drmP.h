@@ -129,6 +129,7 @@ typedef struct drm_file drm_file_t;
 #include "drm.h"
 #include "drm_linux_list.h"
 #include "drm_atomic.h"
+#include "drm_internal.h"
 
 #ifdef __amd64__
 #define DRM_NO_MTRR
@@ -494,12 +495,16 @@ do {									\
 #if defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD_version > 500000)
 /* Returns -errno to shared code */
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
-for ( ret = 0 ; !ret && !(condition) ; ) {			\
+ret = 0;								\
+while ( ret == 0 ) {						\
 	DRM_UNLOCK();						\
 	DRM_SPINLOCK(&dev->irq_lock);				\
-	if (!(condition))					\
-	   ret = -msleep(&(queue), &dev->irq_lock, 		\
-			 PZERO | PCATCH, "drmwtq", (timeout));	\
+	if (condition) {					\
+		DRM_SPINUNLOCK(&dev->irq_lock);			\
+		break;						\
+	}							\
+	ret = -msleep(&(queue), &dev->irq_lock,		 	\
+	     PZERO | PCATCH, "drmwtq", (timeout));		\
 	DRM_SPINUNLOCK(&dev->irq_lock);				\
 	DRM_LOCK();						\
 }
@@ -733,11 +738,6 @@ typedef struct drm_vbl_sig {
 	int		pid;
 } drm_vbl_sig_t;
 
-struct drm_drawable_info {
-        unsigned int num_rects;
-	struct drm_clip_rect *rects;
-};
-
 /* location of GART table */
 #define DRM_ATI_GART_MAIN 1
 #define DRM_ATI_GART_FB   2
@@ -746,14 +746,18 @@ struct drm_drawable_info {
 #define DRM_ATI_GART_PCIE 2
 #define DRM_ATI_GART_IGP  3
 
-typedef struct ati_pcigart_info {
+#define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
+#define upper_32_bits(_val) (((u64)(_val)) >> 32)
+
+struct drm_ati_pcigart_info {
 	int gart_table_location;
 	int gart_reg_if;
 	void *addr;
 	dma_addr_t bus_addr;
+	dma_addr_t table_mask;
 	drm_local_map_t mapping;
 	int table_size;
-} drm_ati_pcigart_info;
+};
 
 struct drm_driver_info {
 	int	(*load)(struct drm_device *, unsigned long flags);
@@ -778,10 +782,12 @@ struct drm_driver_info {
 					 int new);
 	int	(*kernel_context_switch_unlock)(struct drm_device *dev);
 	void	(*irq_preinstall)(drm_device_t *dev);
-	void	(*irq_postinstall)(drm_device_t *dev);
+	int	(*irq_postinstall)(drm_device_t *dev);
 	void	(*irq_uninstall)(drm_device_t *dev);
 	irqreturn_t	(*irq_handler)(DRM_IRQ_ARGS);
-	int	(*vblank_wait)(drm_device_t *dev, unsigned int *sequence);
+	u_int32_t (*get_vblank_counter)(struct drm_device *, int);
+	int	(*enable_vblank)(struct drm_device *, int);
+	void	(*disable_vblank)(struct drm_device *, int);
 
 	drm_pci_id_list_t *id_entry;	/* PCI ID, name, and chipset private */
 
@@ -912,9 +918,24 @@ struct drm_device {
 
 	atomic_t	  context_flag;	/* Context swapping flag	   */
 	int		  last_context;	/* Last current context		   */
-   	int		  vbl_queue;	/* vbl wait channel */
-   	atomic_t          vbl_received;
-   	atomic_t          vbl_received2;
+
+	/* VBLANK support */
+	int		*vbl_queue;	/* vbl wait channel */
+	atomic_t	*_vblank_count;	/* no vblank interrupts */
+	DRM_SPINTYPE	vbl_lock;	/* locking for vblank operations */
+#if 0 /* unneeded for now */
+	TAILQ_HEAD(vbl_sigs);
+#endif
+	atomic_t	vbl_signal_pending; /* sigs pending on all crtcs */
+	atomic_t	*vblank_refcount; /* no. users for vlank interrupts */
+	u_int32_t	*last_vblank;	/* locked, used for overflow handling*/
+	int		*vblank_enabled; /* make sure we only disable once */
+	u_int32_t	*vblank_premodeset; /* compensation for wraparounds */
+	int		*vblank_suspend; /* Don't wait while crtc is disabled */
+	struct timeout	vblank_disable_timer;
+	int		num_crtcs;	/* number of crtcs on device */
+
+	u_int32_t	max_vblank_count; /* size of counter reg */
 
 #ifdef __FreeBSD__
 	struct sigio      *buf_sigio;	/* Processes waiting for SIGIO     */
@@ -1040,8 +1061,15 @@ irqreturn_t drm_irq_handler(DRM_IRQ_ARGS);
 void	drm_driver_irq_preinstall(drm_device_t *dev);
 void	drm_driver_irq_postinstall(drm_device_t *dev);
 void	drm_driver_irq_uninstall(drm_device_t *dev);
-int	drm_vblank_wait(drm_device_t *dev, unsigned int *vbl_seq);
-void	drm_vbl_send_signals(drm_device_t *dev);
+void	drm_vbl_send_signals(drm_device_t *dev, int crtc);
+void	drm_vblank_cleanup(struct drm_device *);
+int	drm_vblank_init(struct drm_device *, int);
+u_int32_t drm_vblank_count(struct drm_device *, int);
+void	drm_update_vblank_count(struct drm_device *, int);
+int	drm_vblank_get(struct drm_device *, int);
+void	drm_vblank_put(struct drm_device *, int);
+int	drm_modeset_ctl(struct drm_device *dev, void *, struct drm_file *);
+void	drm_handle_vblank(struct drm_device *, int);
 
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(drm_device_t *dev);
@@ -1071,10 +1099,8 @@ extern int		drm_sysctl_cleanup(drm_device_t *dev);
 #endif /* __FreeBSD__ */
 
 /* ATI PCIGART support (ati_pcigart.c) */
-int	drm_ati_pcigart_init(drm_device_t *dev,
-			     drm_ati_pcigart_info *gart_info);
-int	drm_ati_pcigart_cleanup(drm_device_t *dev,
-				drm_ati_pcigart_info *gart_info);
+int	drm_ati_pcigart_init(drm_device_t *, struct drm_ati_pcigart_info *);
+int	drm_ati_pcigart_cleanup(drm_device_t *, struct drm_ati_pcigart_info *);
 
 /* Locking IOCTL support (drm_drv.c) */
 int	drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv);

@@ -62,8 +62,7 @@ static void mga_emit_clip_rect(drm_mga_private_t * dev_priv,
 	}
 	DMA_BLOCK(MGA_DMAPAD, 0x00000000,
 		  MGA_CXBNDRY, ((box->x2 - 1) << 16) | box->x1,
-		  MGA_YTOP, box->y1 * pitch,
-		  MGA_YBOT, (box->y2 - 1) * pitch);
+		  MGA_YTOP, box->y1 * pitch, MGA_YBOT, (box->y2 - 1) * pitch);
 
 	ADVANCE_DMA();
 }
@@ -78,18 +77,15 @@ static __inline__ void mga_g200_emit_context(drm_mga_private_t * dev_priv)
 
 	DMA_BLOCK(MGA_DSTORG, ctx->dstorg,
 		  MGA_MACCESS, ctx->maccess,
-		  MGA_PLNWT, ctx->plnwt,
-		  MGA_DWGCTL, ctx->dwgctl);
+		  MGA_PLNWT, ctx->plnwt, MGA_DWGCTL, ctx->dwgctl);
 
 	DMA_BLOCK(MGA_ALPHACTRL, ctx->alphactrl,
 		  MGA_FOGCOL, ctx->fogcolor,
-		  MGA_WFLAG, ctx->wflag,
-		  MGA_ZORG, dev_priv->depth_offset);
+		  MGA_WFLAG, ctx->wflag, MGA_ZORG, dev_priv->depth_offset);
 
 	DMA_BLOCK(MGA_FCOL, ctx->fcol,
 		  MGA_DMAPAD, 0x00000000,
-		  MGA_DMAPAD, 0x00000000,
-		  MGA_DMAPAD, 0x00000000);
+		  MGA_DMAPAD, 0x00000000, MGA_DMAPAD, 0x00000000);
 
 	ADVANCE_DMA();
 }
@@ -648,7 +644,7 @@ static void mga_dma_dispatch_swap(struct drm_device * dev)
 
 	FLUSH_DMA();
 
-	DRM_DEBUG("%s... done.\n", __FUNCTION__);
+	DRM_DEBUG("... done.\n");
 }
 
 static void mga_dma_dispatch_vertex(struct drm_device * dev, struct drm_buf * buf)
@@ -660,7 +656,7 @@ static void mga_dma_dispatch_vertex(struct drm_device * dev, struct drm_buf * bu
 	u32 length = (u32) buf->used;
 	int i = 0;
 	DMA_LOCALS;
-	DRM_DEBUG("vertex: buf=%d used=%d\n", buf->idx, buf->used);
+	DRM_DEBUG("buf=%d used=%d\n", buf->idx, buf->used);
 
 	if (buf->used) {
 		buf_priv->dispatched = 1;
@@ -707,7 +703,7 @@ static void mga_dma_dispatch_indices(struct drm_device * dev, struct drm_buf * b
 	u32 address = (u32) buf->bus_address;
 	int i = 0;
 	DMA_LOCALS;
-	DRM_DEBUG("indices: buf=%d start=%d end=%d\n", buf->idx, start, end);
+	DRM_DEBUG("buf=%d start=%d end=%d\n", buf->idx, start, end);
 
 	if (start != end) {
 		buf_priv->dispatched = 1;
@@ -992,7 +988,7 @@ static int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *fi
 #if 0
 	if (mga_do_wait_for_idle(dev_priv) < 0) {
 		if (MGA_DMA_DEBUG)
-			DRM_INFO("%s: -EBUSY\n", __FUNCTION__);
+			DRM_INFO("-EBUSY\n");
 		return -EBUSY;
 	}
 #endif
@@ -1051,7 +1047,7 @@ static int mga_getparam(struct drm_device *dev, void *data, struct drm_file *fil
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
@@ -1083,7 +1079,7 @@ static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *fi
 	DMA_LOCALS;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
@@ -1112,7 +1108,7 @@ static int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *f
 	u32 *fence = data;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 

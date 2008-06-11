@@ -74,12 +74,11 @@ drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long phys = dma->pagelist[page];
 
+			DRM_SPINUNLOCK(&dev->dma_lock);
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
 			*paddr = phys;
-			DRM_SPINUNLOCK(&dev->dma_lock);
 			return 0;
 #else
-			DRM_SPINUNLOCK(&dev->dma_lock);
 			return atop(phys);
 #endif
 		} else {

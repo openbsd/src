@@ -37,7 +37,7 @@
 
 #define DRIVER_NAME		"i915"
 #define DRIVER_DESC		"Intel Graphics"
-#define DRIVER_DATE		"20070209"
+#define DRIVER_DATE		"20080312"
 
 #if defined(__linux__)
 #define I915_HAVE_FENCE
@@ -57,10 +57,11 @@
  * 1.9: Usable page flipping and triple buffering
  * 1.10: Plane/pipe disentangling
  * 1.11: TTM superioctl
+ * 1.12: TTM relocation optimization
  */
 #define DRIVER_MAJOR		1
 #if defined(I915_HAVE_FENCE) && defined(I915_HAVE_BUFFER)
-#define DRIVER_MINOR		11
+#define DRIVER_MINOR		13
 #else
 #define DRIVER_MINOR		6
 #endif
@@ -68,6 +69,7 @@
 
 #ifdef I915_HAVE_BUFFER
 #define I915_MAX_VALIDATE_BUFFERS 4096
+struct drm_i915_validate_buffer;
 #endif
 
 typedef struct _drm_i915_ring_buffer {
@@ -140,16 +142,22 @@ typedef struct drm_i915_private {
 	void *agp_iomap;
 	unsigned int max_validate_buffers;
 	struct mutex cmdbuf_mutex;
+	struct drm_i915_validate_buffer *val_bufs;
 #endif
 
 	DRM_SPINTYPE swaps_lock;
 	drm_i915_vbl_swap_t vbl_swaps;
 	unsigned int swaps_pending;
-
+#if defined(I915_HAVE_BUFFER)
+	/* DRI2 sarea */
+	struct drm_buffer_object *sarea_bo;
+	struct drm_bo_kmap_obj sarea_kmap;
+#endif
 	/* Register state */
 	u8 saveLBB;
 	u32 saveDSPACNTR;
 	u32 saveDSPBCNTR;
+	u32 saveDSPARB;
 	u32 savePIPEACONF;
 	u32 savePIPEBCONF;
 	u32 savePIPEASRC;
@@ -165,6 +173,7 @@ typedef struct drm_i915_private {
 	u32 saveVBLANK_A;
 	u32 saveVSYNC_A;
 	u32 saveBCLRPAT_A;
+	u32 savePIPEASTAT;
 	u32 saveDSPASTRIDE;
 	u32 saveDSPASIZE;
 	u32 saveDSPAPOS;
@@ -185,6 +194,7 @@ typedef struct drm_i915_private {
 	u32 saveVBLANK_B;
 	u32 saveVSYNC_B;
 	u32 saveBCLRPAT_B;
+	u32 savePIPEBSTAT;
 	u32 saveDSPBSTRIDE;
 	u32 saveDSPBSIZE;
 	u32 saveDSPBPOS;
@@ -213,17 +223,24 @@ typedef struct drm_i915_private {
 	u32 saveFBC_LL_BASE;
 	u32 saveFBC_CONTROL;
 	u32 saveFBC_CONTROL2;
+	u32 saveIER;
+	u32 saveIIR;
+	u32 saveIMR;
+	u32 saveCACHE_MODE_0;
+	u32 saveD_STATE;
+	u32 saveDSPCLK_GATE_D;
+	u32 saveMI_ARB_STATE;
 	u32 saveSWF0[16];
 	u32 saveSWF1[16];
 	u32 saveSWF2[3];
 	u8 saveMSR;
 	u8 saveSR[8];
-	u8 saveGR[24];
+	u8 saveGR[25];
 	u8 saveAR_INDEX;
-	u8 saveAR[20];
+	u8 saveAR[21];
 	u8 saveDACMASK;
 	u8 saveDACDATA[256*3]; /* 256 3-byte colors */
-	u8 saveCR[36];
+	u8 saveCR[37];
 } drm_i915_private_t;
 
 enum intel_chip_family {
@@ -250,6 +267,9 @@ extern void i915_emit_breadcrumb(struct drm_device *dev);
 extern void i915_dispatch_flip(struct drm_device * dev, int pipes, int sync);
 extern int i915_emit_mi_flush(struct drm_device *dev, uint32_t flush);
 extern int i915_driver_firstopen(struct drm_device *dev);
+extern int i915_dispatch_batchbuffer(struct drm_device * dev,
+				     drm_i915_batchbuffer_t * batch);
+extern int i915_quiescent(struct drm_device *dev);
 
 /* i915_irq.c */
 extern int i915_irq_emit(struct drm_device *dev, void *data,
@@ -257,21 +277,22 @@ extern int i915_irq_emit(struct drm_device *dev, void *data,
 extern int i915_irq_wait(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 
-extern int i915_driver_vblank_wait(struct drm_device *dev, unsigned int *sequence);
-extern int i915_driver_vblank_wait2(struct drm_device *dev, unsigned int *sequence);
 extern irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS);
 extern void i915_driver_irq_preinstall(struct drm_device * dev);
-extern void i915_driver_irq_postinstall(struct drm_device * dev);
+extern int i915_driver_irq_postinstall(struct drm_device * dev);
 extern void i915_driver_irq_uninstall(struct drm_device * dev);
 extern int i915_vblank_pipe_set(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
-extern int i915_emit_irq(struct drm_device *dev);
-extern void i915_user_irq_on(drm_i915_private_t *dev_priv);
-extern void i915_user_irq_off(drm_i915_private_t *dev_priv);
+extern int i915_emit_irq(struct drm_device * dev);
+extern int i915_enable_vblank(struct drm_device *dev, int crtc);
+extern void i915_disable_vblank(struct drm_device *dev, int crtc);
+extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int i915_vblank_swap(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
+extern void i915_user_irq_on(drm_i915_private_t *dev_priv);
+extern void i915_user_irq_off(drm_i915_private_t *dev_priv);
 
 /* i915_mem.c */
 extern int i915_mem_alloc(struct drm_device *dev, void *data,
@@ -288,34 +309,34 @@ extern void i915_mem_release(struct drm_device * dev,
 			     struct mem_block *heap);
 #ifdef I915_HAVE_FENCE
 /* i915_fence.c */
-
-
 extern void i915_fence_handler(struct drm_device *dev);
-extern int i915_fence_emit_sequence(struct drm_device *dev, uint32_t class,
-				    uint32_t flags,
-				    uint32_t *sequence,
-				    uint32_t *native_type);
-extern void i915_poke_flush(struct drm_device *dev, uint32_t class);
-extern int i915_fence_has_irq(struct drm_device *dev, uint32_t class, uint32_t flags);
+extern void i915_invalidate_reported_sequence(struct drm_device *dev);
+
 #endif
 
 #ifdef I915_HAVE_BUFFER
 /* i915_buffer.c */
 extern struct drm_ttm_backend *i915_create_ttm_backend_entry(struct drm_device *dev);
-extern int i915_fence_types(struct drm_buffer_object *bo, uint32_t *fclass,
-			    uint32_t *type);
+extern int i915_fence_type(struct drm_buffer_object *bo, uint32_t *fclass,
+			   uint32_t *type);
 extern int i915_invalidate_caches(struct drm_device *dev, uint64_t buffer_flags);
 extern int i915_init_mem_type(struct drm_device *dev, uint32_t type,
 			       struct drm_mem_type_manager *man);
-extern uint32_t i915_evict_mask(struct drm_buffer_object *bo);
+extern uint64_t i915_evict_flags(struct drm_buffer_object *bo);
 extern int i915_move(struct drm_buffer_object *bo, int evict,
 		int no_wait, struct drm_bo_mem_reg *new_mem);
 void i915_flush_ttm(struct drm_ttm *ttm);
+/* i915_execbuf.c */
+int i915_execbuffer(struct drm_device *dev, void *data,
+				   struct drm_file *file_priv);
+
 #endif
 
+#ifdef __linux__
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
 extern void intel_init_chipset_flush_compat(struct drm_device *dev);
 extern void intel_fini_chipset_flush_compat(struct drm_device *dev);
+#endif
 #endif
 
 #define I915_READ(reg)          DRM_READ32(dev_priv->mmio_map, (reg))
@@ -330,8 +351,8 @@ extern void intel_fini_chipset_flush_compat(struct drm_device *dev);
 
 #define BEGIN_LP_RING(n) do {				\
 	if (I915_VERBOSE)				\
-		DRM_DEBUG("BEGIN_LP_RING(%d) in %s\n",	\
-	                         (n), __FUNCTION__);           \
+		DRM_DEBUG("BEGIN_LP_RING(%d)\n",	\
+	                         (n));		        \
 	if (dev_priv->ring.space < (n)*4)                      \
 		i915_wait_ring(dev, (n)*4, __FUNCTION__);      \
 	outcount = 0;					\
@@ -404,6 +425,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define GFX_OP_USER_INTERRUPT		((0<<29)|(2<<23))
 #define GFX_OP_BREAKPOINT_INTERRUPT	((0<<29)|(1<<23))
 #define CMD_REPORT_HEAD			(7<<23)
+#define CMD_STORE_DWORD_IMM             ((0x20<<23) | (0x1 << 22) | 0x1)
 #define CMD_STORE_DWORD_IDX		((0x21<<23) | 0x1)
 #define CMD_OP_BATCH_BUFFER  ((0x0<<29)|(0x30<<23)|0x1)
 
@@ -456,10 +478,23 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 
 /* Interrupt bits:
  */
-#define USER_INT_FLAG    (1<<1)
-#define VSYNC_PIPEB_FLAG (1<<5)
-#define VSYNC_PIPEA_FLAG (1<<7)
-#define HWB_OOM_FLAG     (1<<13) /* binner out of memory */
+#define I915_PIPE_CONTROL_NOTIFY_INTERRUPT		(1<<18)
+#define I915_DISPLAY_PORT_INTERRUPT			(1<<17)
+#define I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT	(1<<15)
+#define I915_GMCH_THERMAL_SENSOR_EVENT_INTERRUPT	(1<<14)
+#define I915_HWB_OOM_INTERRUPT				(1<<13) /* binner out of memory */
+#define I915_SYNC_STATUS_INTERRUPT			(1<<12)
+#define I915_DISPLAY_PLANE_A_FLIP_PENDING_INTERRUPT	(1<<11)
+#define I915_DISPLAY_PLANE_B_FLIP_PENDING_INTERRUPT	(1<<10)
+#define I915_OVERLAY_PLANE_FLIP_PENDING_INTERRUPT	(1<<9)
+#define I915_DISPLAY_PLANE_C_FLIP_PENDING_INTERRUPT	(1<<8)
+#define I915_DISPLAY_PIPE_A_VBLANK_INTERRUPT		(1<<7)
+#define I915_DISPLAY_PIPE_A_EVENT_INTERRUPT		(1<<6)
+#define I915_DISPLAY_PIPE_B_VBLANK_INTERRUPT		(1<<5)
+#define I915_DISPLAY_PIPE_B_EVENT_INTERRUPT		(1<<4)
+#define I915_DEBUG_INTERRUPT				(1<<2)
+#define I915_USER_INTERRUPT				(1<<1)
+
 
 #define I915REG_HWSTAM		0x02098
 #define I915REG_INT_IDENTITY_R	0x020a4
@@ -467,11 +502,67 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define I915REG_INT_ENABLE_R	0x020a0
 #define I915REG_INSTPM	        0x020c0
 
+#define PIPEADSL		0x70000
+#define PIPEBDSL		0x71000
+
 #define I915REG_PIPEASTAT	0x70024
 #define I915REG_PIPEBSTAT	0x71024
+/*
+ * The two pipe frame counter registers are not synchronized, so
+ * reading a stable value is somewhat tricky. The following code 
+ * should work:
+ *
+ *  do {
+ *    high1 = ((INREG(PIPEAFRAMEHIGH) & PIPE_FRAME_HIGH_MASK) >>
+ *             PIPE_FRAME_HIGH_SHIFT;
+ *    low1 =  ((INREG(PIPEAFRAMEPIXEL) & PIPE_FRAME_LOW_MASK) >>
+ *             PIPE_FRAME_LOW_SHIFT);
+ *    high2 = ((INREG(PIPEAFRAMEHIGH) & PIPE_FRAME_HIGH_MASK) >>
+ *             PIPE_FRAME_HIGH_SHIFT);
+ *  } while (high1 != high2);
+ *  frame = (high1 << 8) | low1;
+ */
+#define PIPEAFRAMEHIGH          0x70040
+#define PIPEBFRAMEHIGH		0x71040
+#define PIPE_FRAME_HIGH_MASK    0x0000ffff
+#define PIPE_FRAME_HIGH_SHIFT   0
+#define PIPEAFRAMEPIXEL         0x70044
+#define PIPEBFRAMEPIXEL		0x71044
 
-#define I915_VBLANK_INTERRUPT_ENABLE	(1UL<<17)
-#define I915_VBLANK_CLEAR		(1UL<<1)
+#define PIPE_FRAME_LOW_MASK     0xff000000
+#define PIPE_FRAME_LOW_SHIFT    24
+/*
+ * Pixel within the current frame is counted in the PIPEAFRAMEPIXEL register
+ * and is 24 bits wide.
+ */
+#define PIPE_PIXEL_MASK         0x00ffffff
+#define PIPE_PIXEL_SHIFT        0
+
+#define I915_FIFO_UNDERRUN_STATUS		(1UL<<31)
+#define I915_CRC_ERROR_ENABLE			(1UL<<29)
+#define I915_CRC_DONE_ENABLE			(1UL<<28)
+#define I915_GMBUS_EVENT_ENABLE			(1UL<<27)
+#define I915_VSYNC_INTERRUPT_ENABLE		(1UL<<25)
+#define I915_DISPLAY_LINE_COMPARE_ENABLE	(1UL<<24)
+#define I915_DPST_EVENT_ENABLE			(1UL<<23)
+#define I915_LEGACY_BLC_EVENT_ENABLE		(1UL<<22)
+#define I915_ODD_FIELD_INTERRUPT_ENABLE		(1UL<<21)
+#define I915_EVEN_FIELD_INTERRUPT_ENABLE	(1UL<<20)
+#define I915_START_VBLANK_INTERRUPT_ENABLE	(1UL<<18)	/* 965 or later */
+#define I915_VBLANK_INTERRUPT_ENABLE		(1UL<<17)
+#define I915_OVERLAY_UPDATED_ENABLE		(1UL<<16)
+#define I915_CRC_ERROR_INTERRUPT_STATUS		(1UL<<13)
+#define I915_CRC_DONE_INTERRUPT_STATUS		(1UL<<12)
+#define I915_GMBUS_INTERRUPT_STATUS		(1UL<<11)
+#define I915_VSYNC_INTERRUPT_STATUS		(1UL<<9)
+#define I915_DISPLAY_LINE_COMPARE_STATUS	(1UL<<8)
+#define I915_DPST_EVENT_STATUS			(1UL<<7)
+#define I915_LEGACY_BLC_EVENT_STATUS		(1UL<<6)
+#define I915_ODD_FIELD_INTERRUPT_STATUS		(1UL<<5)
+#define I915_EVEN_FIELD_INTERRUPT_STATUS	(1UL<<4)
+#define I915_START_VBLANK_INTERRUPT_STATUS	(1UL<<2)	/* 965 or later */
+#define I915_VBLANK_INTERRUPT_STATUS		(1UL<<1)
+#define I915_OVERLAY_UPDATED_STATUS		(1UL<<0)
 
 #define SRX_INDEX		0x3c4
 #define SRX_DATA		0x3c5
@@ -509,7 +600,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define HEAD_WRAP_ONE		0x00200000
 #define HEAD_ADDR		0x001FFFFC
 #define RING_START		0x08
-#define START_ADDR		0x0xFFFFF000
+#define START_ADDR		0xFFFFF000
 #define RING_LEN		0x0C
 #define RING_NR_PAGES		0x001FF000
 #define RING_REPORT_MASK	0x00000006
@@ -536,6 +627,10 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
  */
 #define DMA_FADD_S		0x20d4
 
+/* Memory Interface Arbitration State
+ */
+#define MI_ARB_STATE		0x20e4
+
 /* Cache mode 0 reg.
  *  - Manipulating render cache behaviour is central
  *    to the concept of zone rendering, tuning this reg can help avoid
@@ -546,6 +641,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
  * bit of interest either set or cleared.  EG: (BIT<<16) | BIT to set.
  */
 #define Cache_Mode_0		0x2120
+#define CACHE_MODE_0		0x2120
 #define CM0_MASK_SHIFT          16
 #define CM0_IZ_OPT_DISABLE      (1<<6)
 #define CM0_ZR_OPT_DISABLE      (1<<5)
@@ -639,6 +735,9 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define XY_SRC_COPY_BLT_CMD		((2<<29)|(0x53<<22)|6)
 #define XY_SRC_COPY_BLT_WRITE_ALPHA	(1<<21)
 #define XY_SRC_COPY_BLT_WRITE_RGB	(1<<20)
+#define XY_SRC_COPY_BLT_SRC_TILED	(1<<15)
+#define XY_SRC_COPY_BLT_DST_TILED	(1<<11)
+
 
 #define MI_BATCH_BUFFER		((0x30<<23)|1)
 #define MI_BATCH_BUFFER_START	(0x31<<23)
@@ -735,6 +834,10 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 /** P1 value is 2 greater than this field */
 # define VGA0_PD_P1_MASK	(0x1f << 0)
 
+/* PCI D state control register */
+#define D_STATE		0x6104
+#define DSPCLK_GATE_D	0x6200
+
 /* I830 CRTC registers */
 #define HTOTAL_A	0x60000
 #define HBLANK_A	0x60004
@@ -755,6 +858,14 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define PIPEBSRC	0x6101c
 #define BCLRPAT_B	0x61020
 #define VSYNCSHIFT_B	0x61028
+
+#define HACTIVE_MASK	0x00000fff
+#define VTOTAL_MASK	0x00001fff
+#define VTOTAL_SHIFT	16
+#define VACTIVE_MASK	0x00000fff
+#define VBLANK_END_MASK	0x00001fff
+#define VBLANK_END_SHIFT 16
+#define VBLANK_START_MASK 0x00001fff
 
 #define PP_STATUS	0x61200
 # define PP_ON					(1 << 31)
@@ -1043,6 +1154,12 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define PIPECONF_INTERLACE_W_FIELD_INDICATION	(6 << 21)
 #define PIPECONF_INTERLACE_FIELD_0_ONLY		(7 << 21)
 
+#define DSPARB	  0x70030
+#define DSPARB_CSTART_MASK	(0x7f << 7)
+#define DSPARB_CSTART_SHIFT	7
+#define DSPARB_BSTART_MASK	(0x7f)		 
+#define DSPARB_BSTART_SHIFT	0
+
 #define PIPEBCONF 0x71008
 #define PIPEBCONF_ENABLE	(1<<31)
 #define PIPEBCONF_DISABLE	0
@@ -1148,32 +1265,28 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define PALETTE_A		0x0a000
 #define PALETTE_B		0x0a800
 
-#define IS_I830(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82830_CGC)
-#define IS_845G(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82845G_IG)
-#define IS_I85X(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82855GM_IG)
-#define IS_I855(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82855GM_IG)
-#define IS_I865G(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82865_IG)
+#define IS_I830(dev) ((dev)->pci_device == 0x3577)
+#define IS_845G(dev) ((dev)->pci_device == 0x2562)
+#define IS_I85X(dev) ((dev)->pci_device == 0x3582)
+#define IS_I855(dev) ((dev)->pci_device == 0x3582)
+#define IS_I865G(dev) ((dev)->pci_device == 0x2572)
 
-#ifdef __OpenBSD__
-#define IS_I915G(dev) (dev->pci_device == PCI_PRODUCT_INTEL_82915G_IGD_1)/* || dev->pci_device == PCI_DEVICE_ID_INTELPCI_CHIP_E7221_G)*/
-#define IS_I915GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82915GM_IGD_1)
-#define IS_I945G(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82945G_IGD_1)
-#define IS_I945GM(dev) ((dev)->pci_device == PCI_PRODUCT_INTEL_82945GM_IGD_1)
-#else
-#define IS_I915G(dev) (dev->pci_device == PCI_DEVICE_ID_INTEL_82915G_IG)/* || dev->pci_device == PCI_DEVICE_ID_INTELPCI_CHIP_E7221_G)*/
-#define IS_I915GM(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82915GM_IG)
-#define IS_I945G(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82945G_IG)
-#define IS_I945GM(dev) ((dev)->pci_device == PCI_DEVICE_ID_INTEL_82945GM_IG)
-#endif
-
+#define IS_I915G(dev) ((dev)->pci_device == 0x2582 || (dev)->pci_device == 0x258a)
+#define IS_I915GM(dev) ((dev)->pci_device == 0x2592)
+#define IS_I945G(dev) ((dev)->pci_device == 0x2772)
+#define IS_I945GM(dev) ((dev)->pci_device == 0x27A2 ||\
+		        (dev)->pci_device == 0x27AE)
 #define IS_I965G(dev) ((dev)->pci_device == 0x2972 || \
 		       (dev)->pci_device == 0x2982 || \
 		       (dev)->pci_device == 0x2992 || \
 		       (dev)->pci_device == 0x29A2 || \
 		       (dev)->pci_device == 0x2A02 || \
-		       (dev)->pci_device == 0x2A12)
+		       (dev)->pci_device == 0x2A12 || \
+		       (dev)->pci_device == 0x2A42)
 
 #define IS_I965GM(dev) ((dev)->pci_device == 0x2A02)
+
+#define IS_IGD_GM(dev) ((dev)->pci_device == 0x2A42)
 
 #define IS_G33(dev)    ((dev)->pci_device == 0x29C2 ||	\
 			(dev)->pci_device == 0x29B2 ||	\
@@ -1183,7 +1296,9 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 		      IS_I945GM(dev) || IS_I965G(dev) || IS_G33(dev))
 
 #define IS_MOBILE(dev) (IS_I830(dev) || IS_I85X(dev) || IS_I915GM(dev) || \
-			IS_I945GM(dev) || IS_I965GM(dev))
+			IS_I945GM(dev) || IS_I965GM(dev) || IS_IGD_GM(dev))
+
+#define I915_NEED_GFX_HWS(dev) (IS_G33(dev) || IS_IGD_GM(dev))
 
 #define PRIMARY_RINGBUFFER_SIZE         (128*1024)
 

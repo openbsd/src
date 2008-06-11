@@ -49,7 +49,9 @@ via_configure(drm_device_t *dev)
 	dev->driver.unload		= via_driver_unload;
 	dev->driver.context_ctor	= via_init_context;
 	dev->driver.context_dtor	= via_final_context;
-	dev->driver.vblank_wait		= via_driver_vblank_wait;
+	dev->driver.get_vblank_counter	= via_get_vblank_counter;
+	dev->driver.enable_vblank	= via_enable_vblank;
+	dev->driver.disable_vblank	= via_disable_vblank;
 	dev->driver.irq_preinstall	= via_driver_irq_preinstall;
 	dev->driver.irq_postinstall	= via_driver_irq_postinstall;
 	dev->driver.irq_uninstall	= via_driver_irq_uninstall;

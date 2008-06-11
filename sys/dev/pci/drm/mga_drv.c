@@ -98,7 +98,9 @@ mga_configure(drm_device_t *dev)
 	dev->driver.load		= mga_driver_load;
 	dev->driver.unload		= mga_driver_unload;
 	dev->driver.lastclose		= mga_driver_lastclose;
-	dev->driver.vblank_wait		= mga_driver_vblank_wait;
+	dev->driver.enable_vblank	= mga_enable_vblank;
+	dev->driver.disable_vblank	= mga_disable_vblank;
+	dev->driver.get_vblank_counter	= mga_get_vblank_counter;
 	dev->driver.irq_preinstall	= mga_driver_irq_preinstall;
 	dev->driver.irq_postinstall	= mga_driver_irq_postinstall;
 	dev->driver.irq_uninstall	= mga_driver_irq_uninstall;

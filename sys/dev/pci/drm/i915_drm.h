@@ -43,7 +43,12 @@ typedef struct _drm_i915_init {
 	enum {
 		I915_INIT_DMA = 0x01,
 		I915_CLEANUP_DMA = 0x02,
-		I915_RESUME_DMA = 0x03
+		I915_RESUME_DMA = 0x03,
+
+		/* Since this struct isn't versioned, just used a new
+		 * 'func' code to indicate the presence of dri2 sarea
+		 * info. */
+		I915_INIT_DMA2 = 0x04
 	} func;
 	unsigned int mmio_offset;
 	int sarea_priv_offset;
@@ -61,9 +66,10 @@ typedef struct _drm_i915_init {
 	unsigned int depth_pitch;
 	unsigned int cpp;
 	unsigned int chipset;
+	unsigned int sarea_handle;
 } drm_i915_init_t;
 
-typedef struct _drm_i915_sarea {
+typedef struct drm_i915_sarea {
 	struct drm_tex_region texList[I915_NR_TEX_REGIONS + 1];
 	int last_upload;	/* last time texture was uploaded */
 	int last_enqueue;	/* last time a buffer was enqueued */
@@ -119,6 +125,15 @@ typedef struct _drm_i915_sarea {
 	int third_offset;
 	int third_size;
 	unsigned int third_tiled;
+
+	/* buffer object handles for the static buffers.  May change
+	 * over the lifetime of the client, though it doesn't in our current
+	 * implementation.
+	 */
+	unsigned int front_bo_handle;
+	unsigned int back_bo_handle;
+	unsigned int third_bo_handle;
+	unsigned int depth_bo_handle;
 } drm_i915_sarea_t;
 
 /* Driver specific fence types and classes.
@@ -178,6 +193,7 @@ typedef struct _drm_i915_sarea {
 #define DRM_IOCTL_I915_SET_VBLANK_PIPE	DRM_IOW( DRM_COMMAND_BASE + DRM_I915_SET_VBLANK_PIPE, drm_i915_vblank_pipe_t)
 #define DRM_IOCTL_I915_GET_VBLANK_PIPE	DRM_IOR( DRM_COMMAND_BASE + DRM_I915_GET_VBLANK_PIPE, drm_i915_vblank_pipe_t)
 #define DRM_IOCTL_I915_VBLANK_SWAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_VBLANK_SWAP, drm_i915_vblank_swap_t)
+#define DRM_IOCTL_I915_MMIO             DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_MMIO, drm_i915_mmio)
 #define DRM_IOCTL_I915_EXECBUFFER	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_EXECBUFFER, struct drm_i915_execbuffer)
 
 /* Asynchronous page flipping:
@@ -195,7 +211,7 @@ typedef struct drm_i915_flip {
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
  */
-typedef struct _drm_i915_batchbuffer {
+typedef struct drm_i915_batchbuffer {
 	int start;		/* agp offset */
 	int used;		/* nr bytes in use */
 	int DR1;		/* hw flags for GFX_OP_DRAWRECT_INFO */
@@ -231,6 +247,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_IRQ_ACTIVE            1
 #define I915_PARAM_ALLOW_BATCHBUFFER     2
 #define I915_PARAM_LAST_DISPATCH         3
+#define I915_PARAM_CHIPSET_ID            4
 
 typedef struct drm_i915_getparam {
 	int param;
@@ -274,7 +291,7 @@ typedef struct drm_i915_mem_init_heap {
  * rotate):
  */
 typedef struct drm_i915_mem_destroy_heap {
-	        int region;
+	int region;
 } drm_i915_mem_destroy_heap_t;
 
 /* Allow X server to configure which pipes to monitor for vblank signals
@@ -314,7 +331,7 @@ typedef struct drm_i915_mmio_entry {
 	unsigned int flag;
 	unsigned int offset;
 	unsigned int size;
-}drm_i915_mmio_entry_t;
+} drm_i915_mmio_entry_t;
 
 typedef struct drm_i915_mmio {
 	unsigned int read_write:1;
@@ -328,9 +345,9 @@ typedef struct drm_i915_hws_addr {
 
 /*
  * Relocation header is 4 uint32_ts
- * 0 - (16-bit relocation type << 16)| 16 bit reloc count
- * 1 - buffer handle for another list of relocs
- * 2-3 - spare.
+ * 0 - 32 bit reloc count
+ * 1 - 32-bit relocation type
+ * 2-3 - 64-bit user buffer handle ptr for another list of relocs.
  */
 #define I915_RELOC_HEADER 4
 
@@ -338,16 +355,31 @@ typedef struct drm_i915_hws_addr {
  * type 0 relocation has 4-uint32_t stride
  * 0 - offset into buffer
  * 1 - delta to add in
- * 2 - index into buffer list
+ * 2 - buffer handle
  * 3 - reserved (for optimisations later).
+ */
+/*
+ * type 1 relocation has 4-uint32_t stride.
+ * Hangs off the first item in the op list.
+ * Performed after all valiations are done.
+ * Try to group relocs into the same relocatee together for
+ * performance reasons.
+ * 0 - offset into buffer
+ * 1 - delta to add in
+ * 2 - buffer index in op list.
+ * 3 - relocatee index in op list.
  */
 #define I915_RELOC_TYPE_0 0
 #define I915_RELOC0_STRIDE 4
+#define I915_RELOC_TYPE_1 1
+#define I915_RELOC1_STRIDE 4
+
 
 struct drm_i915_op_arg {
 	uint64_t next;
-	uint32_t reloc_handle;
+	uint64_t reloc_ptr;
 	int handled;
+	unsigned int pad64;
 	union {
 		struct drm_bo_op_req req;
 		struct drm_bo_arg_rep rep;
@@ -358,7 +390,8 @@ struct drm_i915_op_arg {
 struct drm_i915_execbuffer {
 	uint64_t ops_list;
 	uint32_t num_buffers;
-	struct _drm_i915_batchbuffer batch;
+	struct drm_i915_batchbuffer batch;
+	drm_context_t context; /* for lockless use in the future */
 	struct drm_fence_arg fence_arg;
 };
 

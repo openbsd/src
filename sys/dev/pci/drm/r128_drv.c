@@ -50,7 +50,9 @@ r128_configure(drm_device_t *dev)
 	dev->driver.buf_priv_size	= sizeof(drm_r128_buf_priv_t);
 	dev->driver.preclose		= r128_driver_preclose;
 	dev->driver.lastclose		= r128_driver_lastclose;
-	dev->driver.vblank_wait		= r128_driver_vblank_wait;
+	dev->driver.get_vblank_counter	= r128_get_vblank_counter;
+	dev->driver.enable_vblank 	= r128_enable_vblank;
+	dev->driver.disable_vblank	= r128_disable_vblank;
 	dev->driver.irq_preinstall	= r128_driver_irq_preinstall;
 	dev->driver.irq_postinstall	= r128_driver_irq_postinstall;
 	dev->driver.irq_uninstall	= r128_driver_irq_uninstall;

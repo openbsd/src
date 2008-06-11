@@ -228,7 +228,7 @@ typedef enum {
 
 #define VIA_IRQ_FLAGS_MASK 0xF0000000
 
-enum drm_via_irqs{
+enum drm_via_irqs {
 	drm_via_irq_hqv0 = 0,
 	drm_via_irq_hqv1,
 	drm_via_irq_dma0_dd,
@@ -238,7 +238,7 @@ enum drm_via_irqs{
 	drm_via_irq_num
 };
 
-struct drm_via_wait_irq_request{
+struct drm_via_wait_irq_request {
 	unsigned irq;
 	via_irq_seq_type_t type;
 	uint32_t sequence;
@@ -270,9 +270,9 @@ typedef struct drm_via_dmablit {
 	uint32_t fb_stride;
 
 	unsigned char *mem_addr;
-	uint32_t  mem_stride;
+	uint32_t mem_stride;
 
-	uint32_t  flags;
+	uint32_t flags;
 	int to_fb;
 
 	drm_via_blitsync_t sync;

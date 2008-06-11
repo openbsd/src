@@ -76,8 +76,7 @@ static maskarray_t via_pro_group_a_irqs[] = {
 	{VIA_IRQ_DMA1_TD_ENABLE, VIA_IRQ_DMA1_TD_PENDING, VIA_PCI_DMA_CSR1,
 	 VIA_DMA_CSR_TA | VIA_DMA_CSR_TD, 0x00000008},
 };
-static int via_num_pro_group_a =
-    sizeof(via_pro_group_a_irqs)/sizeof(maskarray_t);
+static int via_num_pro_group_a = ARRAY_SIZE(via_pro_group_a_irqs);
 static int via_irqmap_pro_group_a[] = {0, 1, -1, 2, -1, 3};
 
 static maskarray_t via_unichrome_irqs[] = {
@@ -86,15 +85,24 @@ static maskarray_t via_unichrome_irqs[] = {
 	{VIA_IRQ_DMA1_TD_ENABLE, VIA_IRQ_DMA1_TD_PENDING, VIA_PCI_DMA_CSR1,
 	 VIA_DMA_CSR_TA | VIA_DMA_CSR_TD, 0x00000008}
 };
-static int via_num_unichrome = sizeof(via_unichrome_irqs)/sizeof(maskarray_t);
+static int via_num_unichrome = ARRAY_SIZE(via_unichrome_irqs);
 static int via_irqmap_unichrome[] = {-1, -1, -1, 0, -1, 1};
 
 
 static unsigned time_diff(struct timeval *now,struct timeval *then)
 {
-    return (now->tv_usec >= then->tv_usec) ?
-	now->tv_usec - then->tv_usec :
-	1000000 - (then->tv_usec - now->tv_usec);
+	return (now->tv_usec >= then->tv_usec) ?
+		now->tv_usec - then->tv_usec :
+		1000000 - (then->tv_usec - now->tv_usec);
+}
+
+u32 via_get_vblank_counter(struct drm_device *dev, int crtc)
+{
+	drm_via_private_t *dev_priv = dev->dev_private;
+	if (crtc != 0)
+		return 0;
+
+	return atomic_read(&dev_priv->vbl_received);
 }
 
 irqreturn_t via_driver_irq_handler(DRM_IRQ_ARGS)
@@ -109,8 +117,8 @@ irqreturn_t via_driver_irq_handler(DRM_IRQ_ARGS)
 
 	status = VIA_READ(VIA_REG_INTERRUPT);
 	if (status & VIA_IRQ_VBLANK_PENDING) {
-		atomic_inc(&dev->vbl_received);
-		if (!(atomic_read(&dev->vbl_received) & 0x0F)) {
+		atomic_inc(&dev_priv->vbl_received);
+		if (!(atomic_read(&dev_priv->vbl_received) & 0x0F)) {
 #ifdef __linux__
 			do_gettimeofday(&cur_vblank);
 #else
@@ -124,19 +132,18 @@ irqreturn_t via_driver_irq_handler(DRM_IRQ_ARGS)
 			dev_priv->last_vblank = cur_vblank;
 			dev_priv->last_vblank_valid = 1;
 		}
-		if (!(atomic_read(&dev->vbl_received) & 0xFF)) {
+		if (!(atomic_read(&dev_priv->vbl_received) & 0xFF)) {
 			DRM_DEBUG("US per vblank is: %u\n",
-				dev_priv->usec_per_vblank);
+				  dev_priv->usec_per_vblank);
 		}
-		DRM_WAKEUP(&dev->vbl_queue);
-		drm_vbl_send_signals(dev);
+		drm_handle_vblank(dev, 0);
 		handled = 1;
 	}
 
-	for (i=0; i<dev_priv->num_irqs; ++i) {
+	for (i = 0; i < dev_priv->num_irqs; ++i) {
 		if (status & cur_irq->pending_mask) {
-			atomic_inc( &cur_irq->irq_received );
-			DRM_WAKEUP( &cur_irq->irq_queue );
+			atomic_inc(&cur_irq->irq_received);
+			DRM_WAKEUP(&cur_irq->irq_queue);
 			handled = 1;
 #ifdef VIA_HAVE_DMABLIT
 			if (dev_priv->irq_map[drm_via_irq_dma0_td] == i) {
@@ -171,31 +178,34 @@ static __inline__ void viadrv_acknowledge_irqs(drm_via_private_t * dev_priv)
 	}
 }
 
-int via_driver_vblank_wait(struct drm_device * dev, unsigned int *sequence)
+int via_enable_vblank(struct drm_device *dev, int crtc)
 {
-	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
-	unsigned int cur_vblank;
-	int ret = 0;
+	drm_via_private_t *dev_priv = dev->dev_private;
+	u32 status;
 
-	DRM_DEBUG("viadrv_vblank_wait\n");
-	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+	if (crtc != 0) {
+		DRM_ERROR("%s:  bad crtc %d\n", __FUNCTION__, crtc);
 		return -EINVAL;
 	}
 
-	viadrv_acknowledge_irqs(dev_priv);
+	status = VIA_READ(VIA_REG_INTERRUPT);
+	VIA_WRITE(VIA_REG_INTERRUPT, status & VIA_IRQ_VBLANK_ENABLE);
 
-	/* Assume that the user has missed the current sequence number
-	 * by about a day rather than she wants to wait for years
-	 * using vertical blanks...
-	 */
+	VIA_WRITE8(0x83d4, 0x11);
+	VIA_WRITE8(0x83d5, VIA_READ8(0x83d5) | 0x30);
 
-	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
-		    (((cur_vblank = atomic_read(&dev->vbl_received)) -
-		      *sequence) <= (1 << 23)));
+	return 0;
+}
 
-	*sequence = cur_vblank;
-	return ret;
+void via_disable_vblank(struct drm_device *dev, int crtc)
+{
+	drm_via_private_t *dev_priv = dev->dev_private;
+
+	VIA_WRITE8(0x83d4, 0x11);
+	VIA_WRITE8(0x83d5, VIA_READ8(0x83d5) & ~0x30);
+
+	if (crtc != 0)
+		DRM_ERROR("%s:  bad crtc %d\n", __FUNCTION__, crtc);
 }
 
 static int
@@ -209,24 +219,23 @@ via_driver_irq_wait(struct drm_device * dev, unsigned int irq, int force_sequenc
 	maskarray_t *masks;
 	int real_irq;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
-	if (irq >= drm_via_irq_num ) {
-		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __FUNCTION__,
-			  irq);
+	if (irq >= drm_via_irq_num) {
+		DRM_ERROR("Trying to wait on unknown irq %d\n", irq);
 		return -EINVAL;
 	}
 
 	real_irq = dev_priv->irq_map[irq];
 
 	if (real_irq < 0) {
-		DRM_ERROR("%s Video IRQ %d not available on this hardware.\n",
-			  __FUNCTION__, irq);
+		DRM_ERROR("Video IRQ %d not available on this hardware.\n",
+			  irq);
 		return -EINVAL;
 	}
 
@@ -260,7 +269,7 @@ void via_driver_irq_preinstall(struct drm_device * dev)
 	drm_via_irq_t *cur_irq;
 	int i;
 
-	DRM_DEBUG("driver_irq_preinstall: dev_priv: %p\n", dev_priv);
+	DRM_DEBUG("dev_priv: %p\n", dev_priv);
 	if (dev_priv) {
 		cur_irq = dev_priv->via_irqs;
 
@@ -278,11 +287,11 @@ void via_driver_irq_preinstall(struct drm_device * dev)
 			dev_priv->irq_map = via_irqmap_unichrome;
 		}
 
-		for(i=0; i < dev_priv->num_irqs; ++i) {
+		for (i = 0; i < dev_priv->num_irqs; ++i) {
 			atomic_set(&cur_irq->irq_received, 0);
 			cur_irq->enable_mask = dev_priv->irq_masks[i][0];
 			cur_irq->pending_mask = dev_priv->irq_masks[i][1];
-			DRM_INIT_WAITQUEUE( &cur_irq->irq_queue );
+			DRM_INIT_WAITQUEUE(&cur_irq->irq_queue);
 			dev_priv->irq_enable_mask |= cur_irq->enable_mask;
 			dev_priv->irq_pending_mask |= cur_irq->pending_mask;
 			cur_irq++;
@@ -302,23 +311,25 @@ void via_driver_irq_preinstall(struct drm_device * dev)
 	}
 }
 
-void via_driver_irq_postinstall(struct drm_device * dev)
+int via_driver_irq_postinstall(struct drm_device * dev)
 {
 	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
 	u32 status;
 
 	DRM_DEBUG("via_driver_irq_postinstall\n");
-	if (dev_priv) {
-		status = VIA_READ(VIA_REG_INTERRUPT);
-		VIA_WRITE(VIA_REG_INTERRUPT, status | VIA_IRQ_GLOBAL
-			  | dev_priv->irq_enable_mask);
+	if (!dev_priv)
+		return -EINVAL;
 
-		/* Some magic, oh for some data sheets ! */
+	drm_vblank_init(dev, 1);
+	status = VIA_READ(VIA_REG_INTERRUPT);
+	VIA_WRITE(VIA_REG_INTERRUPT, status | VIA_IRQ_GLOBAL
+		  | dev_priv->irq_enable_mask);
 
-		VIA_WRITE8(0x83d4, 0x11);
-		VIA_WRITE8(0x83d5, VIA_READ8(0x83d5) | 0x30);
+	/* Some magic, oh for some data sheets ! */
+	VIA_WRITE8(0x83d4, 0x11);
+	VIA_WRITE8(0x83d5, VIA_READ8(0x83d5) | 0x30);
 
-	}
+	return 0;
 }
 
 void via_driver_irq_uninstall(struct drm_device * dev)
@@ -326,7 +337,7 @@ void via_driver_irq_uninstall(struct drm_device * dev)
 	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
 	u32 status;
 
-	DRM_DEBUG("driver_irq_uninstall)\n");
+	DRM_DEBUG("\n");
 	if (dev_priv) {
 
 		/* Some more magic, oh for some data sheets ! */
@@ -353,7 +364,7 @@ int via_wait_irq(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		return -EINVAL;
 
 	if (irqwait->request.irq >= dev_priv->num_irqs) {
-		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __FUNCTION__,
+		DRM_ERROR("Trying to wait on unknown irq %d\n",
 			  irqwait->request.irq);
 		return -EINVAL;
 	}
@@ -372,8 +383,7 @@ int via_wait_irq(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 
 	if (irqwait->request.type & VIA_IRQ_SIGNAL) {
-		DRM_ERROR("%s Signals on Via IRQs not implemented yet.\n",
-			  __FUNCTION__);
+		DRM_ERROR("Signals on Via IRQs not implemented yet.\n");
 		return -EINVAL;
 	}
 

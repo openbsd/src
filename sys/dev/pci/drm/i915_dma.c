@@ -51,8 +51,6 @@ int i915_wait_ring(struct drm_device * dev, int n, const char *caller)
 		if (ring->space >= n)
 			return 0;
 
-		dev_priv->sarea_priv->perf_boxes |= I915_BOX_WAIT;
-
 		if (ring->head != last_head)
 			i = 0;
 
@@ -73,9 +71,6 @@ void i915_kernel_lost_context(struct drm_device * dev)
 	ring->space = ring->head - (ring->tail + 8);
 	if (ring->space < 0)
 		ring->space += ring->Size;
-
-	if (ring->head == ring->tail)
-		dev_priv->sarea_priv->perf_boxes |= I915_BOX_RING_EMPTY;
 }
 
 static int i915_dma_cleanup(struct drm_device * dev)
@@ -111,10 +106,75 @@ static int i915_dma_cleanup(struct drm_device * dev)
 	return 0;
 }
 
-static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
+#if defined(I915_HAVE_BUFFER)
+#define DRI2_SAREA_BLOCK_TYPE(b) ((b) >> 16)
+#define DRI2_SAREA_BLOCK_SIZE(b) ((b) & 0xffff)
+#define DRI2_SAREA_BLOCK_NEXT(p)				\
+	((void *) ((unsigned char *) (p) +			\
+		   DRI2_SAREA_BLOCK_SIZE(*(unsigned int *) p)))
+
+#define DRI2_SAREA_BLOCK_END		0x0000
+#define DRI2_SAREA_BLOCK_LOCK		0x0001
+#define DRI2_SAREA_BLOCK_EVENT_BUFFER	0x0002
+
+static int
+setup_dri2_sarea(struct drm_device * dev,
+		 struct drm_file *file_priv,
+		 drm_i915_init_t * init)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
+	int ret;
+	unsigned int *p, *end, *next;
 
+	mutex_lock(&dev->struct_mutex);
+	dev_priv->sarea_bo =
+		drm_lookup_buffer_object(file_priv,
+					 init->sarea_handle, 1);
+	mutex_unlock(&dev->struct_mutex);
+
+	if (!dev_priv->sarea_bo) {
+		DRM_ERROR("did not find sarea bo\n");
+		return -EINVAL;
+	}
+
+	ret = drm_bo_kmap(dev_priv->sarea_bo, 0,
+			  dev_priv->sarea_bo->num_pages,
+			  &dev_priv->sarea_kmap);
+	if (ret) {
+		DRM_ERROR("could not map sarea bo\n");
+		return ret;
+	}
+
+	p = dev_priv->sarea_kmap.virtual;
+	end = (void *) p + (dev_priv->sarea_bo->num_pages << PAGE_SHIFT);
+	while (p < end && DRI2_SAREA_BLOCK_TYPE(*p) != DRI2_SAREA_BLOCK_END) {
+		switch (DRI2_SAREA_BLOCK_TYPE(*p)) {
+		case DRI2_SAREA_BLOCK_LOCK:
+			dev->lock.hw_lock = (void *) (p + 1);
+			dev->sigdata.lock = dev->lock.hw_lock;
+			break;
+		}
+		next = DRI2_SAREA_BLOCK_NEXT(p);
+		if (next <= p || end < next) {
+			DRM_ERROR("malformed dri2 sarea: next is %p should be within %p-%p\n",
+				  next, p, end);
+			return -EINVAL;
+		}
+		p = next;
+	}
+
+	return 0;
+}
+#endif
+
+static int i915_initialize(struct drm_device * dev,
+			   struct drm_file *file_priv,
+			   drm_i915_init_t * init)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+#if defined(I915_HAVE_BUFFER)
+	int ret;
+#endif
 	dev_priv->sarea = drm_getsarea(dev);
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
@@ -122,7 +182,8 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 		return -EINVAL;
 	}
 
-	dev_priv->mmio_map = drm_core_findmap(dev, init->mmio_offset);
+	if (init->mmio_offset != 0)
+		dev_priv->mmio_map = drm_core_findmap(dev, init->mmio_offset);
 	if (!dev_priv->mmio_map) {
 		i915_dma_cleanup(dev);
 		DRM_ERROR("can not find mmio map!\n");
@@ -133,8 +194,14 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	dev_priv->max_validate_buffers = I915_MAX_VALIDATE_BUFFERS;
 #endif
 
-	dev_priv->sarea_priv = (drm_i915_sarea_t *)
-	    ((u8 *) dev_priv->sarea->handle + init->sarea_priv_offset);
+	if (init->sarea_priv_offset)
+		dev_priv->sarea_priv = (drm_i915_sarea_t *)
+			((u8 *) dev_priv->sarea->handle +
+			 init->sarea_priv_offset);
+	else {
+		/* No sarea_priv for you! */
+		dev_priv->sarea_priv = NULL;
+	}
 
 	dev_priv->ring.Start = init->ring_start;
 	dev_priv->ring.End = init->ring_end;
@@ -159,12 +226,16 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	dev_priv->ring.virtual_start = dev_priv->ring.map.handle;
 
 	dev_priv->cpp = init->cpp;
-	dev_priv->sarea_priv->pf_current_page = 0;
+
+	if (dev_priv->sarea_priv)
+		dev_priv->sarea_priv->pf_current_page = 0;
 
 	/* We are using separate values as placeholders for mechanisms for
 	 * private backbuffer/depthbuffer usage.
 	 */
 	dev_priv->use_mi_batchbuffer_start = 0;
+	if (IS_I965G(dev)) /* 965 doesn't support older method */
+		dev_priv->use_mi_batchbuffer_start = 1;
 
 	/* Allow hardware batchbuffers unless told otherwise.
 	 */
@@ -175,7 +246,7 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	dev_priv->vblank_pipe = DRM_I915_VBLANK_PIPE_A;
 
 	/* Program Hardware Status Page */
-	if (!IS_G33(dev)) {
+	if (!I915_NEED_GFX_HWS(dev)) {
 		dev_priv->status_page_dmah =
 			drm_pci_alloc(dev, PAGE_SIZE, PAGE_SIZE, 0xffffffff);
 
@@ -193,8 +264,19 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	}
 	DRM_DEBUG("Enabled hardware status page\n");
 #ifdef I915_HAVE_BUFFER
-	DRM_SPININIT(&dev_priv->cmdbuf_mutex, "915_cmdbuf");
+	mutex_init(&dev_priv->cmdbuf_mutex);
 #endif
+#if defined(I915_HAVE_BUFFER)
+	if (init->func == I915_INIT_DMA2) {
+		ret = setup_dri2_sarea(dev, file_priv, init);
+		if (ret) {
+			i915_dma_cleanup(dev);
+			DRM_ERROR("could not set up dri2 sarea\n");
+			return ret;
+		}
+	}
+#endif
+
 	return 0;
 }
 
@@ -202,7 +284,7 @@ static int i915_dma_resume(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
@@ -244,7 +326,8 @@ static int i915_dma_init(struct drm_device *dev, void *data,
 
 	switch (init->func) {
 	case I915_INIT_DMA:
-		retcode = i915_initialize(dev, init);
+	case I915_INIT_DMA2:
+		retcode = i915_initialize(dev, file_priv, init);
 		break;
 	case I915_CLEANUP_DMA:
 		retcode = i915_dma_cleanup(dev);
@@ -336,7 +419,7 @@ static int validate_cmd(int cmd)
 	return ret;
 }
 
-static int i915_emit_cmds(struct drm_device * dev, int __user * buffer,
+static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 			  int dwords)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
@@ -416,7 +499,7 @@ static int i915_emit_box(struct drm_device * dev,
 }
 
 /* XXX: Emitting the counter should really be moved to part of the IRQ
- * emit.  For now, do it in both places:
+ * emit. For now, do it in both places:
  */
 
 void i915_emit_breadcrumb(struct drm_device *dev)
@@ -429,7 +512,8 @@ void i915_emit_breadcrumb(struct drm_device *dev)
 		 DRM_DEBUG("Breadcrumb counter wrapped around\n");
 	}
 
-	dev_priv->sarea_priv->last_enqueue = dev_priv->counter;
+	if (dev_priv->sarea_priv)
+		dev_priv->sarea_priv->last_enqueue = dev_priv->counter;
 
 	BEGIN_LP_RING(4);
 	OUT_RING(CMD_STORE_DWORD_IDX);
@@ -492,15 +576,16 @@ static int i915_dispatch_cmdbuffer(struct drm_device * dev,
 			return ret;
 	}
 
-	i915_emit_breadcrumb( dev );
+	i915_emit_breadcrumb(dev);
 #ifdef I915_HAVE_FENCE
-	drm_fence_flush_old(dev, 0, dev_priv->counter);
+	if (unlikely((dev_priv->counter & 0xFF) == 0))
+		drm_fence_flush_old(dev, 0, dev_priv->counter);
 #endif
 	return 0;
 }
 
-static int i915_dispatch_batchbuffer(struct drm_device * dev,
-				     drm_i915_batchbuffer_t * batch)
+int i915_dispatch_batchbuffer(struct drm_device * dev,
+			      drm_i915_batchbuffer_t * batch)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct drm_clip_rect __user *boxes = batch->cliprects;
@@ -546,9 +631,10 @@ static int i915_dispatch_batchbuffer(struct drm_device * dev,
 		}
 	}
 
-	i915_emit_breadcrumb( dev );
+	i915_emit_breadcrumb(dev);
 #ifdef I915_HAVE_FENCE
-	drm_fence_flush_old(dev, 0, dev_priv->counter);
+	if (unlikely((dev_priv->counter & 0xFF) == 0))
+		drm_fence_flush_old(dev, 0, dev_priv->counter);
 #endif
 	return 0;
 }
@@ -610,8 +696,7 @@ void i915_dispatch_flip(struct drm_device * dev, int planes, int sync)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int i;
 
-	DRM_DEBUG("%s: planes=0x%x pfCurrentPage=%d\n",
-		  __FUNCTION__,
+	DRM_DEBUG("planes=0x%x pfCurrentPage=%d\n",
 		  planes, dev_priv->sarea_priv->pf_current_page);
 
 	i915_emit_mi_flush(dev, MI_READ_FLUSH | MI_EXE_FLUSH);
@@ -622,12 +707,12 @@ void i915_dispatch_flip(struct drm_device * dev, int planes, int sync)
 
 	i915_emit_breadcrumb(dev);
 #ifdef I915_HAVE_FENCE
-	if (!sync)
+	if (unlikely(!sync && ((dev_priv->counter & 0xFF) == 0)))
 		drm_fence_flush_old(dev, 0, dev_priv->counter);
 #endif
 }
 
-static int i915_quiescent(struct drm_device * dev)
+int i915_quiescent(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -706,388 +791,10 @@ static int i915_cmdbuffer(struct drm_device *dev, void *data,
 	return 0;
 }
 
-#ifdef I915_HAVE_BUFFER
-struct i915_relocatee_info {
-	struct drm_buffer_object *buf;
-	unsigned long offset;
-	u32 *data_page;
-	unsigned page_offset;
-	struct drm_bo_kmap_obj kmap;
-	int is_iomem;
-};
-
-static void i915_dereference_buffers_locked(struct drm_buffer_object **buffers,
-					    unsigned num_buffers)
-{
-	while (num_buffers--)
-		drm_bo_usage_deref_locked(&buffers[num_buffers]);
-}
-
-int i915_apply_reloc(struct drm_file *file_priv, int num_buffers,
-		     struct drm_buffer_object **buffers,
-		     struct i915_relocatee_info *relocatee,
-		     uint32_t *reloc)
-{
-	unsigned index;
-	unsigned long new_cmd_offset;
-	u32 val;
-	int ret;
-
-	if (reloc[2] >= num_buffers) {
-		DRM_ERROR("Illegal relocation buffer %08X\n", reloc[2]);
-		return -EINVAL;
-	}
-
-	new_cmd_offset = reloc[0];
-	if (!relocatee->data_page ||
-	    !drm_bo_same_page(relocatee->offset, new_cmd_offset)) {
-		drm_bo_kunmap(&relocatee->kmap);
-		relocatee->offset = new_cmd_offset;
-		ret = drm_bo_kmap(relocatee->buf, new_cmd_offset >> PAGE_SHIFT,
-				  1, &relocatee->kmap);
-		if (ret) {
-			DRM_ERROR("Could not map command buffer to apply relocs\n %08lx", new_cmd_offset);
-			return ret;
-		}
-
-		relocatee->data_page = drm_bmo_virtual(&relocatee->kmap,
-						       &relocatee->is_iomem);
-		relocatee->page_offset = (relocatee->offset & PAGE_MASK);
-	}
-
-	val = buffers[reloc[2]]->offset;
-	index = (reloc[0] - relocatee->page_offset) >> 2;
-
-	/* add in validate */
-	val = val + reloc[1];
-
-	relocatee->data_page[index] = val;
-	return 0;
-}
-
-int i915_process_relocs(struct drm_file *file_priv,
-			uint32_t buf_handle,
-			uint32_t *reloc_buf_handle,
-			struct i915_relocatee_info *relocatee,
-			struct drm_buffer_object **buffers,
-			uint32_t num_buffers)
-{
-	struct drm_device *dev = file_priv->head->dev;
-	struct drm_buffer_object *reloc_list_object;
-	uint32_t cur_handle = *reloc_buf_handle;
-	uint32_t *reloc_page;
-	int ret, reloc_is_iomem, reloc_stride;
-	uint32_t num_relocs, reloc_offset, reloc_end, reloc_page_offset, next_offset, cur_offset;
-	struct drm_bo_kmap_obj reloc_kmap;
-
-	memset(&reloc_kmap, 0, sizeof(reloc_kmap));
-
-	mutex_lock(&dev->struct_mutex);
-	reloc_list_object = drm_lookup_buffer_object(file_priv, cur_handle, 1);
-	mutex_unlock(&dev->struct_mutex);
-	if (!reloc_list_object)
-		return -EINVAL;
-
-	ret = drm_bo_kmap(reloc_list_object, 0, 1, &reloc_kmap);
-	if (ret) {
-		DRM_ERROR("Could not map relocation buffer.\n");
-		goto out;
-	}
-
-	reloc_page = drm_bmo_virtual(&reloc_kmap, &reloc_is_iomem);
-	num_relocs = reloc_page[0] & 0xffff;
-
-	if ((reloc_page[0] >> 16) & 0xffff) {
-		DRM_ERROR("Unsupported relocation type requested\n");
-		goto out;
-	}
-
-	/* get next relocate buffer handle */
-	*reloc_buf_handle = reloc_page[1];
-	reloc_stride = I915_RELOC0_STRIDE * sizeof(uint32_t); /* may be different for other types of relocs */
-
-	DRM_DEBUG("num relocs is %d, next is %08X\n", num_relocs, reloc_page[1]);
-
-	reloc_page_offset = 0;
-	reloc_offset = I915_RELOC_HEADER * sizeof(uint32_t);
-	reloc_end = reloc_offset + (num_relocs * reloc_stride);
-
-	do {
-		next_offset = drm_bo_offset_end(reloc_offset, reloc_end);
-
-		do {
-			cur_offset = ((reloc_offset + reloc_page_offset) & ~PAGE_MASK) / sizeof(uint32_t);
-			ret = i915_apply_reloc(file_priv, num_buffers,
-					 buffers, relocatee, &reloc_page[cur_offset]);
-			if (ret)
-				goto out;
-
-			reloc_offset += reloc_stride;
-		} while (reloc_offset < next_offset);
-
-		drm_bo_kunmap(&reloc_kmap);
-
-		reloc_offset = next_offset;
-		if (reloc_offset != reloc_end) {
-			ret = drm_bo_kmap(reloc_list_object, reloc_offset >> PAGE_SHIFT, 1, &reloc_kmap);
-			if (ret) {
-				DRM_ERROR("Could not map relocation buffer.\n");
-				goto out;
-			}
-
-			reloc_page = drm_bmo_virtual(&reloc_kmap, &reloc_is_iomem);
-			reloc_page_offset = reloc_offset & ~PAGE_MASK;
-		}
-
-	} while (reloc_offset != reloc_end);
-out:
-	drm_bo_kunmap(&relocatee->kmap);
-	relocatee->data_page = NULL;
-
-	drm_bo_kunmap(&reloc_kmap);
-
-	mutex_lock(&dev->struct_mutex);
-	drm_bo_usage_deref_locked(&reloc_list_object);
-	mutex_unlock(&dev->struct_mutex);
-
-	return ret;
-}
-
-static int i915_exec_reloc(struct drm_file *file_priv, drm_handle_t buf_handle,
-			   drm_handle_t buf_reloc_handle,
-			   struct drm_buffer_object **buffers,
-			   uint32_t buf_count)
-{
-	struct drm_device *dev = file_priv->head->dev;
-	struct i915_relocatee_info relocatee;
-	int ret = 0;
-
-	memset(&relocatee, 0, sizeof(relocatee));
-
-	mutex_lock(&dev->struct_mutex);
-	relocatee.buf = drm_lookup_buffer_object(file_priv, buf_handle, 1);
-	mutex_unlock(&dev->struct_mutex);
-	if (!relocatee.buf) {
-		DRM_DEBUG("relocatee buffer invalid %08x\n", buf_handle);
-		ret = -EINVAL;
-		goto out_err;
-	}
-
-	while (buf_reloc_handle) {
-		ret = i915_process_relocs(file_priv, buf_handle, &buf_reloc_handle, &relocatee, buffers, buf_count);
-		if (ret) {
-			DRM_ERROR("process relocs failed\n");
-			break;
-		}
-	}
-
-	mutex_lock(&dev->struct_mutex);
-	drm_bo_usage_deref_locked(&relocatee.buf);
-	mutex_unlock(&dev->struct_mutex);
-
-out_err:
-	return ret;
-}
-
-/*
- * Validate, add fence and relocate a block of bos from a userspace list
- */
-int i915_validate_buffer_list(struct drm_file *file_priv,
-			      unsigned int fence_class, uint64_t data,
-			      struct drm_buffer_object **buffers,
-			      uint32_t *num_buffers)
-{
-	struct drm_i915_op_arg arg;
-	struct drm_bo_op_req *req = &arg.d.req;
-	struct drm_bo_arg_rep rep;
-	unsigned long next = 0;
-	int ret = 0;
-	unsigned buf_count = 0;
-	struct drm_device *dev = file_priv->head->dev;
-	uint32_t buf_reloc_handle, buf_handle;
-
-
-	do {
-		if (buf_count >= *num_buffers) {
-			DRM_ERROR("Buffer count exceeded %d\n.", *num_buffers);
-			ret = -EINVAL;
-			goto out_err;
-		}
-
-		buffers[buf_count] = NULL;
-
-		if (copy_from_user(&arg, (void __user *)(unsigned)data, sizeof(arg))) {
-			ret = -EFAULT;
-			goto out_err;
-		}
-
-		if (arg.handled) {
-			data = arg.next;
-			mutex_lock(&dev->struct_mutex);
-			buffers[buf_count] = drm_lookup_buffer_object(file_priv, req->arg_handle, 1);
-			mutex_unlock(&dev->struct_mutex);
-			buf_count++;
-			continue;
-		}
-
-		rep.ret = 0;
-		if (req->op != drm_bo_validate) {
-			DRM_ERROR
-			    ("Buffer object operation wasn't \"validate\".\n");
-			rep.ret = -EINVAL;
-			goto out_err;
-		}
-
-		buf_handle = req->bo_req.handle;
-		buf_reloc_handle = arg.reloc_handle;
-
-		if (buf_reloc_handle) {
-			ret = i915_exec_reloc(file_priv, buf_handle, buf_reloc_handle, buffers, buf_count);
-			if (ret)
-				goto out_err;
-			DRM_MEMORYBARRIER();
-		}
-
-		rep.ret = drm_bo_handle_validate(file_priv, req->bo_req.handle,
-						 req->bo_req.fence_class,
-						 req->bo_req.flags,
-						 req->bo_req.mask,
-						 req->bo_req.hint,
-						 0,
-						 &rep.bo_info,
-						 &buffers[buf_count]);
-
-		if (rep.ret) {
-			DRM_ERROR("error on handle validate %d\n", rep.ret);
-			goto out_err;
-		}
-
-
-		next = arg.next;
-		arg.handled = 1;
-		arg.d.rep = rep;
-
-		if (copy_to_user((void __user *)(unsigned)data, &arg, sizeof(arg)))
-			return -EFAULT;
-
-		data = next;
-		buf_count++;
-
-	} while (next != 0);
-	*num_buffers = buf_count;
-	return 0;
-out_err:
-	mutex_lock(&dev->struct_mutex);
-	i915_dereference_buffers_locked(buffers, buf_count);
-	mutex_unlock(&dev->struct_mutex);
-	*num_buffers = 0;
-	return (ret) ? ret : rep.ret;
-}
-
-static int i915_execbuffer(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	drm_i915_sarea_t *sarea_priv = (drm_i915_sarea_t *)
-		dev_priv->sarea_priv;
-	struct drm_i915_execbuffer *exec_buf = data;
-	struct _drm_i915_batchbuffer *batch = &exec_buf->batch;
-	struct drm_fence_arg *fence_arg = &exec_buf->fence_arg;
-	int num_buffers;
-	int ret;
-	struct drm_buffer_object **buffers;
-	struct drm_fence_object *fence;
-
-	if (!dev_priv->allow_batchbuffer) {
-		DRM_ERROR("Batchbuffer ioctl disabled\n");
-		return -EINVAL;
-	}
-
-
-	if (batch->num_cliprects && DRM_VERIFYAREA_READ(batch->cliprects,
-							batch->num_cliprects *
-							sizeof(struct drm_clip_rect)))
-		return -EFAULT;
-
-	if (exec_buf->num_buffers > dev_priv->max_validate_buffers)
-		return -EINVAL;
-
-
-	ret = drm_bo_read_lock(&dev->bm.bm_lock);
-	if (ret)
-		return ret;
-
-	/*
-	 * The cmdbuf_mutex makes sure the validate-submit-fence
-	 * operation is atomic.
-	 */
-
-	ret = mutex_lock_interruptible(&dev_priv->cmdbuf_mutex);
-	if (ret) {
-		drm_bo_read_unlock(&dev->bm.bm_lock);
-		return -EAGAIN;
-	}
-
-	num_buffers = exec_buf->num_buffers;
-
-	buffers = drm_calloc(num_buffers, sizeof(struct drm_buffer_object *), DRM_MEM_DRIVER);
-	if (!buffers) {
-	        drm_bo_read_unlock(&dev->bm.bm_lock);
-		mutex_unlock(&dev_priv->cmdbuf_mutex);
-		return -ENOMEM;
-        }
-
-	/* validate buffer list + fixup relocations */
-	ret = i915_validate_buffer_list(file_priv, 0, exec_buf->ops_list,
-					buffers, &num_buffers);
-	if (ret)
-		goto out_free;
-
-	/* make sure all previous memory operations have passed */
-	DRM_MEMORYBARRIER();
-	drm_agp_chipset_flush(dev);
-
-	/* submit buffer */
-	batch->start = buffers[num_buffers-1]->offset;
-
-	DRM_DEBUG("i915 exec batchbuffer, start %x used %d cliprects %d\n",
-		  batch->start, batch->used, batch->num_cliprects);
-
-	ret = i915_dispatch_batchbuffer(dev, batch);
-	if (ret)
-		goto out_err0;
-
-	sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
-
-	/* fence */
-	ret = drm_fence_buffer_objects(dev, NULL, 0, NULL, &fence);
-	if (ret)
-		goto out_err0;
-
-	if (!(fence_arg->flags & DRM_FENCE_FLAG_NO_USER)) {
-		ret = drm_fence_add_user_object(file_priv, fence, fence_arg->flags & DRM_FENCE_FLAG_SHAREABLE);
-		if (!ret) {
-			fence_arg->handle = fence->base.hash.key;
-			fence_arg->fence_class = fence->fence_class;
-			fence_arg->type = fence->type;
-			fence_arg->signaled = fence->signaled;
-		}
-	}
-	drm_fence_usage_deref_unlocked(&fence);
-out_err0:
-
-	/* handle errors */
-	mutex_lock(&dev->struct_mutex);
-	i915_dereference_buffers_locked(buffers, num_buffers);
-	mutex_unlock(&dev->struct_mutex);
-
-out_free:
-	drm_free(buffers, (exec_buf->num_buffers * sizeof(struct drm_buffer_object *)), DRM_MEM_DRIVER);
-
-	mutex_unlock(&dev_priv->cmdbuf_mutex);
-	drm_bo_read_unlock(&dev->bm.bm_lock);
-	return ret;
-}
+#if defined(DRM_DEBUG_CODE)
+#define DRM_DEBUG_RELOCATION	(drm_debug != 0)
+#else
+#define DRM_DEBUG_RELOCATION	0
 #endif
 
 static int i915_do_cleanup_pageflip(struct drm_device * dev)
@@ -1095,13 +802,13 @@ static int i915_do_cleanup_pageflip(struct drm_device * dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int i, planes, num_pages = dev_priv->sarea_priv->third_handle ? 3 : 2;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	for (i = 0, planes = 0; i < 2; i++)
 		if (dev_priv->sarea_priv->pf_current_page & (0x3 << (2 * i))) {
 			dev_priv->sarea_priv->pf_current_page =
 				(dev_priv->sarea_priv->pf_current_page &
-				 ~(0x3 << (2 * i))) | (num_pages - 1) << (2 * i);
+				 ~(0x3 << (2 * i))) | ((num_pages - 1) << (2 * i));
 
 			planes |= 1 << i;
 		}
@@ -1116,7 +823,7 @@ static int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *f
 {
 	drm_i915_flip_t *param = data;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1141,7 +848,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
@@ -1154,6 +861,9 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		break;
 	case I915_PARAM_LAST_DISPATCH:
 		value = READ_BREADCRUMB(dev_priv);
+		break;
+	case I915_PARAM_CHIPSET_ID:
+		value = dev->pci_device;
 		break;
 	default:
 		DRM_ERROR("Unknown parameter %d\n", param->param);
@@ -1175,13 +885,14 @@ static int i915_setparam(struct drm_device *dev, void *data,
 	drm_i915_setparam_t *param = data;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
 	switch (param->param) {
 	case I915_SETPARAM_USE_MI_BATCHBUFFER_START:
-		dev_priv->use_mi_batchbuffer_start = param->value;
+		if (!IS_I965G(dev))
+			dev_priv->use_mi_batchbuffer_start = param->value;
 		break;
 	case I915_SETPARAM_TEX_LRU_LOG_GRANULARITY:
 		dev_priv->tex_lru_log_granularity = param->value;
@@ -1218,7 +929,7 @@ static int i915_mmio(struct drm_device *dev, void *data,
 	int i;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
@@ -1229,27 +940,27 @@ static int i915_mmio(struct drm_device *dev, void *data,
 	base = (u8 *) dev_priv->mmio_map->handle + e->offset;
 
 	switch (mmio->read_write) {
-		case I915_MMIO_READ:
-			if (!(e->flag & I915_MMIO_MAY_READ))
-				return -EINVAL;
-			for (i = 0; i < e->size / 4; i++)
-				buf[i] = I915_READ(e->offset + i * 4);
-			if (DRM_COPY_TO_USER(mmio->data, buf, e->size)) {
-				DRM_ERROR("DRM_COPY_TO_USER failed\n");
-				return -EFAULT;
-			}
-			break;
-
-		case I915_MMIO_WRITE:
-			if (!(e->flag & I915_MMIO_MAY_WRITE))
-				return -EINVAL;
-			if(DRM_COPY_FROM_USER(buf, mmio->data, e->size)) {
-				DRM_ERROR("DRM_COPY_TO_USER failed\n");
-				return -EFAULT;
-			}
-			for (i = 0; i < e->size / 4; i++)
-				I915_WRITE(e->offset + i * 4, buf[i]);
-			break;
+	case I915_MMIO_READ:
+		if (!(e->flag & I915_MMIO_MAY_READ))
+			return -EINVAL;
+		for (i = 0; i < e->size / 4; i++)
+			buf[i] = I915_READ(e->offset + i * 4);
+		if (DRM_COPY_TO_USER(mmio->data, buf, e->size)) {
+			DRM_ERROR("DRM_COPY_TO_USER failed\n");
+			return -EFAULT;
+		}
+		break;
+		
+	case I915_MMIO_WRITE:
+		if (!(e->flag & I915_MMIO_MAY_WRITE))
+			return -EINVAL;
+		if (DRM_COPY_FROM_USER(buf, mmio->data, e->size)) {
+			DRM_ERROR("DRM_COPY_TO_USER failed\n");
+			return -EFAULT;
+		}
+		for (i = 0; i < e->size / 4; i++)
+			I915_WRITE(e->offset + i * 4, buf[i]);
+		break;
 	}
 	return 0;
 }
@@ -1260,8 +971,11 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_i915_hws_addr_t *hws = data;
 
+	if (!I915_NEED_GFX_HWS(dev))
+		return -EINVAL;
+
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 	DRM_DEBUG("set status page addr 0x%08x\n", (u32)hws->addr);
@@ -1317,12 +1031,15 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	base = drm_get_resource_start(dev, mmio_bar);
 	size = drm_get_resource_len(dev, mmio_bar);
 
-	ret = drm_addmap(dev, base, size, _DRM_REGISTERS, _DRM_KERNEL,
-			 &dev_priv->mmio_map);
+	ret = drm_addmap(dev, base, size, _DRM_REGISTERS,
+		_DRM_KERNEL | _DRM_DRIVER, &dev_priv->mmio_map);
 
+#ifdef __linux__
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
 	intel_init_chipset_flush_compat(dev);
 #endif
+#endif
+
 	return ret;
 }
 
@@ -1335,8 +1052,10 @@ int i915_driver_unload(struct drm_device *dev)
 
 	drm_free(dev->dev_private, sizeof(drm_i915_private_t),
 		 DRM_MEM_DRIVER);
+#ifdef __linux__
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
 	intel_fini_chipset_flush_compat(dev);
+#endif
 #endif
 	return 0;
 }
@@ -1345,11 +1064,36 @@ void i915_driver_lastclose(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
+	/* agp off can use this to get called before dev_priv */
+	if (!dev_priv)
+		return;
+
+#ifdef I915_HAVE_BUFFER
+	if (dev_priv->val_bufs) {
+		vfree(dev_priv->val_bufs);
+		dev_priv->val_bufs = NULL;
+	}
+#endif
+
 	if (drm_getsarea(dev) && dev_priv->sarea_priv)
 		i915_do_cleanup_pageflip(dev);
 	if (dev_priv->agp_heap)
 		i915_mem_takedown(&(dev_priv->agp_heap));
+#if defined(I915_HAVE_BUFFER)
+	if (dev_priv->sarea_kmap.virtual) {
+		drm_bo_kunmap(&dev_priv->sarea_kmap);
+		dev_priv->sarea_kmap.virtual = NULL;
+		dev->lock.hw_lock = NULL;
+		dev->sigdata.lock = NULL;
+	}
 
+	if (dev_priv->sarea_bo) {
+		mutex_lock(&dev->struct_mutex);
+		drm_bo_usage_deref_locked(&dev_priv->sarea_bo);
+		mutex_unlock(&dev->struct_mutex);
+		dev_priv->sarea_bo = NULL;
+	}
+#endif
 	i915_dma_cleanup(dev);
 }
 
@@ -1404,8 +1148,7 @@ int i915_driver_device_is_agp(struct drm_device * dev)
 int i915_driver_firstopen(struct drm_device *dev)
 {
 #ifdef I915_HAVE_BUFFER
-	if (IS_I9XX(dev))
-		drm_bo_driver_init(dev);
+	drm_bo_driver_init(dev);
 #endif
 	return 0;
 }

@@ -2,6 +2,7 @@
 /*
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Fremont, California.
+ * Copyright 2007 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -34,787 +35,103 @@
 #include "radeon_drv.h"
 #include "r300_reg.h"
 
-#define RADEON_FIFO_DEBUG	1
+#include "radeon_microcode.h"
+#define RADEON_FIFO_DEBUG	0
 
 static int radeon_do_cleanup_cp(struct drm_device * dev);
 
-/* CP microcode (from ATI) */
-static const u32 R200_cp_microcode[][2] = {
-	{0x21007000, 0000000000},
-	{0x20007000, 0000000000},
-	{0x000000ab, 0x00000004},
-	{0x000000af, 0x00000004},
-	{0x66544a49, 0000000000},
-	{0x49494174, 0000000000},
-	{0x54517d83, 0000000000},
-	{0x498d8b64, 0000000000},
-	{0x49494949, 0000000000},
-	{0x49da493c, 0000000000},
-	{0x49989898, 0000000000},
-	{0xd34949d5, 0000000000},
-	{0x9dc90e11, 0000000000},
-	{0xce9b9b9b, 0000000000},
-	{0x000f0000, 0x00000016},
-	{0x352e232c, 0000000000},
-	{0x00000013, 0x00000004},
-	{0x000f0000, 0x00000016},
-	{0x352e272c, 0000000000},
-	{0x000f0001, 0x00000016},
-	{0x3239362f, 0000000000},
-	{0x000077ef, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x00000020, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00061000, 0x00000002},
-	{0x00000020, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00061000, 0x00000002},
-	{0x00000020, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00000016, 0x00000004},
-	{0x0003802a, 0x00000002},
-	{0x040067e0, 0x00000002},
-	{0x00000016, 0x00000004},
-	{0x000077e0, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x000037e1, 0x00000002},
-	{0x040067e1, 0x00000006},
-	{0x000077e0, 0x00000002},
-	{0x000077e1, 0x00000002},
-	{0x000077e1, 0x00000006},
-	{0xffffffff, 0000000000},
-	{0x10000000, 0000000000},
-	{0x0003802a, 0x00000002},
-	{0x040067e0, 0x00000006},
-	{0x00007675, 0x00000002},
-	{0x00007676, 0x00000002},
-	{0x00007677, 0x00000002},
-	{0x00007678, 0x00000006},
-	{0x0003802b, 0x00000002},
-	{0x04002676, 0x00000002},
-	{0x00007677, 0x00000002},
-	{0x00007678, 0x00000006},
-	{0x0000002e, 0x00000018},
-	{0x0000002e, 0x00000018},
-	{0000000000, 0x00000006},
-	{0x0000002f, 0x00000018},
-	{0x0000002f, 0x00000018},
-	{0000000000, 0x00000006},
-	{0x01605000, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x00098000, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x64c0603d, 0x00000004},
-	{0x00080000, 0x00000016},
-	{0000000000, 0000000000},
-	{0x0400251d, 0x00000002},
-	{0x00007580, 0x00000002},
-	{0x00067581, 0x00000002},
-	{0x04002580, 0x00000002},
-	{0x00067581, 0x00000002},
-	{0x00000046, 0x00000004},
-	{0x00005000, 0000000000},
-	{0x00061000, 0x00000002},
-	{0x0000750e, 0x00000002},
-	{0x00019000, 0x00000002},
-	{0x00011055, 0x00000014},
-	{0x00000055, 0x00000012},
-	{0x0400250f, 0x00000002},
-	{0x0000504a, 0x00000004},
-	{0x00007565, 0x00000002},
-	{0x00007566, 0x00000002},
-	{0x00000051, 0x00000004},
-	{0x01e655b4, 0x00000002},
-	{0x4401b0dc, 0x00000002},
-	{0x01c110dc, 0x00000002},
-	{0x2666705d, 0x00000018},
-	{0x040c2565, 0x00000002},
-	{0x0000005d, 0x00000018},
-	{0x04002564, 0x00000002},
-	{0x00007566, 0x00000002},
-	{0x00000054, 0x00000004},
-	{0x00401060, 0x00000008},
-	{0x00101000, 0x00000002},
-	{0x000d80ff, 0x00000002},
-	{0x00800063, 0x00000008},
-	{0x000f9000, 0x00000002},
-	{0x000e00ff, 0x00000002},
-	{0000000000, 0x00000006},
-	{0x00000080, 0x00000018},
-	{0x00000054, 0x00000004},
-	{0x00007576, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x00009000, 0x00000002},
-	{0x00041000, 0x00000002},
-	{0x0c00350e, 0x00000002},
-	{0x00049000, 0x00000002},
-	{0x00051000, 0x00000002},
-	{0x01e785f8, 0x00000002},
-	{0x00200000, 0x00000002},
-	{0x00600073, 0x0000000c},
-	{0x00007563, 0x00000002},
-	{0x006075f0, 0x00000021},
-	{0x20007068, 0x00000004},
-	{0x00005068, 0x00000004},
-	{0x00007576, 0x00000002},
-	{0x00007577, 0x00000002},
-	{0x0000750e, 0x00000002},
-	{0x0000750f, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00600076, 0x0000000c},
-	{0x006075f0, 0x00000021},
-	{0x000075f8, 0x00000002},
-	{0x00000076, 0x00000004},
-	{0x000a750e, 0x00000002},
-	{0x0020750f, 0x00000002},
-	{0x00600079, 0x00000004},
-	{0x00007570, 0x00000002},
-	{0x00007571, 0x00000002},
-	{0x00007572, 0x00000006},
-	{0x00005000, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00007568, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x00000084, 0x0000000c},
-	{0x00058000, 0x00000002},
-	{0x0c607562, 0x00000002},
-	{0x00000086, 0x00000004},
-	{0x00600085, 0x00000004},
-	{0x400070dd, 0000000000},
-	{0x000380dd, 0x00000002},
-	{0x00000093, 0x0000001c},
-	{0x00065095, 0x00000018},
-	{0x040025bb, 0x00000002},
-	{0x00061096, 0x00000018},
-	{0x040075bc, 0000000000},
-	{0x000075bb, 0x00000002},
-	{0x000075bc, 0000000000},
-	{0x00090000, 0x00000006},
-	{0x00090000, 0x00000002},
-	{0x000d8002, 0x00000006},
-	{0x00005000, 0x00000002},
-	{0x00007821, 0x00000002},
-	{0x00007800, 0000000000},
-	{0x00007821, 0x00000002},
-	{0x00007800, 0000000000},
-	{0x01665000, 0x00000002},
-	{0x000a0000, 0x00000002},
-	{0x000671cc, 0x00000002},
-	{0x0286f1cd, 0x00000002},
-	{0x000000a3, 0x00000010},
-	{0x21007000, 0000000000},
-	{0x000000aa, 0x0000001c},
-	{0x00065000, 0x00000002},
-	{0x000a0000, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x000b0000, 0x00000002},
-	{0x38067000, 0x00000002},
-	{0x000a00a6, 0x00000004},
-	{0x20007000, 0000000000},
-	{0x01200000, 0x00000002},
-	{0x20077000, 0x00000002},
-	{0x01200000, 0x00000002},
-	{0x20007000, 0000000000},
-	{0x00061000, 0x00000002},
-	{0x0120751b, 0x00000002},
-	{0x8040750a, 0x00000002},
-	{0x8040750b, 0x00000002},
-	{0x00110000, 0x00000002},
-	{0x000380dd, 0x00000002},
-	{0x000000bd, 0x0000001c},
-	{0x00061096, 0x00000018},
-	{0x844075bd, 0x00000002},
-	{0x00061095, 0x00000018},
-	{0x840075bb, 0x00000002},
-	{0x00061096, 0x00000018},
-	{0x844075bc, 0x00000002},
-	{0x000000c0, 0x00000004},
-	{0x804075bd, 0x00000002},
-	{0x800075bb, 0x00000002},
-	{0x804075bc, 0x00000002},
-	{0x00108000, 0x00000002},
-	{0x01400000, 0x00000002},
-	{0x006000c4, 0x0000000c},
-	{0x20c07000, 0x00000020},
-	{0x000000c6, 0x00000012},
-	{0x00800000, 0x00000006},
-	{0x0080751d, 0x00000006},
-	{0x000025bb, 0x00000002},
-	{0x000040c0, 0x00000004},
-	{0x0000775c, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00661000, 0x00000002},
-	{0x0460275d, 0x00000020},
-	{0x00004000, 0000000000},
-	{0x00007999, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00661000, 0x00000002},
-	{0x0460299b, 0x00000020},
-	{0x00004000, 0000000000},
-	{0x01e00830, 0x00000002},
-	{0x21007000, 0000000000},
-	{0x00005000, 0x00000002},
-	{0x00038042, 0x00000002},
-	{0x040025e0, 0x00000002},
-	{0x000075e1, 0000000000},
-	{0x00000001, 0000000000},
-	{0x000380d9, 0x00000002},
-	{0x04007394, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-};
+static u32 R500_READ_MCIND(drm_radeon_private_t *dev_priv, int addr)
+{
+	u32 ret;
+	RADEON_WRITE(R520_MC_IND_INDEX, 0x7f0000 | (addr & 0xff));
+	ret = RADEON_READ(R520_MC_IND_DATA);
+	RADEON_WRITE(R520_MC_IND_INDEX, 0);
+	return ret;
+}
 
-static const u32 radeon_cp_microcode[][2] = {
-	{0x21007000, 0000000000},
-	{0x20007000, 0000000000},
-	{0x000000b4, 0x00000004},
-	{0x000000b8, 0x00000004},
-	{0x6f5b4d4c, 0000000000},
-	{0x4c4c427f, 0000000000},
-	{0x5b568a92, 0000000000},
-	{0x4ca09c6d, 0000000000},
-	{0xad4c4c4c, 0000000000},
-	{0x4ce1af3d, 0000000000},
-	{0xd8afafaf, 0000000000},
-	{0xd64c4cdc, 0000000000},
-	{0x4cd10d10, 0000000000},
-	{0x000f0000, 0x00000016},
-	{0x362f242d, 0000000000},
-	{0x00000012, 0x00000004},
-	{0x000f0000, 0x00000016},
-	{0x362f282d, 0000000000},
-	{0x000380e7, 0x00000002},
-	{0x04002c97, 0x00000002},
-	{0x000f0001, 0x00000016},
-	{0x333a3730, 0000000000},
-	{0x000077ef, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x00000021, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00061000, 0x00000002},
-	{0x00000021, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00061000, 0x00000002},
-	{0x00000021, 0x0000001a},
-	{0x00004000, 0x0000001e},
-	{0x00000017, 0x00000004},
-	{0x0003802b, 0x00000002},
-	{0x040067e0, 0x00000002},
-	{0x00000017, 0x00000004},
-	{0x000077e0, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x000037e1, 0x00000002},
-	{0x040067e1, 0x00000006},
-	{0x000077e0, 0x00000002},
-	{0x000077e1, 0x00000002},
-	{0x000077e1, 0x00000006},
-	{0xffffffff, 0000000000},
-	{0x10000000, 0000000000},
-	{0x0003802b, 0x00000002},
-	{0x040067e0, 0x00000006},
-	{0x00007675, 0x00000002},
-	{0x00007676, 0x00000002},
-	{0x00007677, 0x00000002},
-	{0x00007678, 0x00000006},
-	{0x0003802c, 0x00000002},
-	{0x04002676, 0x00000002},
-	{0x00007677, 0x00000002},
-	{0x00007678, 0x00000006},
-	{0x0000002f, 0x00000018},
-	{0x0000002f, 0x00000018},
-	{0000000000, 0x00000006},
-	{0x00000030, 0x00000018},
-	{0x00000030, 0x00000018},
-	{0000000000, 0x00000006},
-	{0x01605000, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x00098000, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x64c0603e, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00080000, 0x00000016},
-	{0000000000, 0000000000},
-	{0x0400251d, 0x00000002},
-	{0x00007580, 0x00000002},
-	{0x00067581, 0x00000002},
-	{0x04002580, 0x00000002},
-	{0x00067581, 0x00000002},
-	{0x00000049, 0x00000004},
-	{0x00005000, 0000000000},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x0000750e, 0x00000002},
-	{0x00019000, 0x00000002},
-	{0x00011055, 0x00000014},
-	{0x00000055, 0x00000012},
-	{0x0400250f, 0x00000002},
-	{0x0000504f, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00007565, 0x00000002},
-	{0x00007566, 0x00000002},
-	{0x00000058, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x01e655b4, 0x00000002},
-	{0x4401b0e4, 0x00000002},
-	{0x01c110e4, 0x00000002},
-	{0x26667066, 0x00000018},
-	{0x040c2565, 0x00000002},
-	{0x00000066, 0x00000018},
-	{0x04002564, 0x00000002},
-	{0x00007566, 0x00000002},
-	{0x0000005d, 0x00000004},
-	{0x00401069, 0x00000008},
-	{0x00101000, 0x00000002},
-	{0x000d80ff, 0x00000002},
-	{0x0080006c, 0x00000008},
-	{0x000f9000, 0x00000002},
-	{0x000e00ff, 0x00000002},
-	{0000000000, 0x00000006},
-	{0x0000008f, 0x00000018},
-	{0x0000005b, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00007576, 0x00000002},
-	{0x00065000, 0x00000002},
-	{0x00009000, 0x00000002},
-	{0x00041000, 0x00000002},
-	{0x0c00350e, 0x00000002},
-	{0x00049000, 0x00000002},
-	{0x00051000, 0x00000002},
-	{0x01e785f8, 0x00000002},
-	{0x00200000, 0x00000002},
-	{0x0060007e, 0x0000000c},
-	{0x00007563, 0x00000002},
-	{0x006075f0, 0x00000021},
-	{0x20007073, 0x00000004},
-	{0x00005073, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00007576, 0x00000002},
-	{0x00007577, 0x00000002},
-	{0x0000750e, 0x00000002},
-	{0x0000750f, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00600083, 0x0000000c},
-	{0x006075f0, 0x00000021},
-	{0x000075f8, 0x00000002},
-	{0x00000083, 0x00000004},
-	{0x000a750e, 0x00000002},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x0020750f, 0x00000002},
-	{0x00600086, 0x00000004},
-	{0x00007570, 0x00000002},
-	{0x00007571, 0x00000002},
-	{0x00007572, 0x00000006},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00005000, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00007568, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x00000095, 0x0000000c},
-	{0x00058000, 0x00000002},
-	{0x0c607562, 0x00000002},
-	{0x00000097, 0x00000004},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x00600096, 0x00000004},
-	{0x400070e5, 0000000000},
-	{0x000380e6, 0x00000002},
-	{0x040025c5, 0x00000002},
-	{0x000380e5, 0x00000002},
-	{0x000000a8, 0x0000001c},
-	{0x000650aa, 0x00000018},
-	{0x040025bb, 0x00000002},
-	{0x000610ab, 0x00000018},
-	{0x040075bc, 0000000000},
-	{0x000075bb, 0x00000002},
-	{0x000075bc, 0000000000},
-	{0x00090000, 0x00000006},
-	{0x00090000, 0x00000002},
-	{0x000d8002, 0x00000006},
-	{0x00007832, 0x00000002},
-	{0x00005000, 0x00000002},
-	{0x000380e7, 0x00000002},
-	{0x04002c97, 0x00000002},
-	{0x00007820, 0x00000002},
-	{0x00007821, 0x00000002},
-	{0x00007800, 0000000000},
-	{0x01200000, 0x00000002},
-	{0x20077000, 0x00000002},
-	{0x01200000, 0x00000002},
-	{0x20007000, 0x00000002},
-	{0x00061000, 0x00000002},
-	{0x0120751b, 0x00000002},
-	{0x8040750a, 0x00000002},
-	{0x8040750b, 0x00000002},
-	{0x00110000, 0x00000002},
-	{0x000380e5, 0x00000002},
-	{0x000000c6, 0x0000001c},
-	{0x000610ab, 0x00000018},
-	{0x844075bd, 0x00000002},
-	{0x000610aa, 0x00000018},
-	{0x840075bb, 0x00000002},
-	{0x000610ab, 0x00000018},
-	{0x844075bc, 0x00000002},
-	{0x000000c9, 0x00000004},
-	{0x804075bd, 0x00000002},
-	{0x800075bb, 0x00000002},
-	{0x804075bc, 0x00000002},
-	{0x00108000, 0x00000002},
-	{0x01400000, 0x00000002},
-	{0x006000cd, 0x0000000c},
-	{0x20c07000, 0x00000020},
-	{0x000000cf, 0x00000012},
-	{0x00800000, 0x00000006},
-	{0x0080751d, 0x00000006},
-	{0000000000, 0000000000},
-	{0x0000775c, 0x00000002},
-	{0x00a05000, 0x00000002},
-	{0x00661000, 0x00000002},
-	{0x0460275d, 0x00000020},
-	{0x00004000, 0000000000},
-	{0x01e00830, 0x00000002},
-	{0x21007000, 0000000000},
-	{0x6464614d, 0000000000},
-	{0x69687420, 0000000000},
-	{0x00000073, 0000000000},
-	{0000000000, 0000000000},
-	{0x00005000, 0x00000002},
-	{0x000380d0, 0x00000002},
-	{0x040025e0, 0x00000002},
-	{0x000075e1, 0000000000},
-	{0x00000001, 0000000000},
-	{0x000380e0, 0x00000002},
-	{0x04002394, 0x00000002},
-	{0x00005000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0x00000008, 0000000000},
-	{0x00000004, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-	{0000000000, 0000000000},
-};
+static u32 RS480_READ_MCIND(drm_radeon_private_t *dev_priv, int addr)
+{
+	u32 ret;
+	RADEON_WRITE(RS480_NB_MC_INDEX, addr & 0xff);
+	ret = RADEON_READ(RS480_NB_MC_DATA);
+	RADEON_WRITE(RS480_NB_MC_INDEX, 0xff);
+	return ret;
+}
 
-static const u32 R300_cp_microcode[][2] = {
-	{ 0x4200e000, 0000000000 },
-	{ 0x4000e000, 0000000000 },
-	{ 0x000000af, 0x00000008 },
-	{ 0x000000b3, 0x00000008 },
-	{ 0x6c5a504f, 0000000000 },
-	{ 0x4f4f497a, 0000000000 },
-	{ 0x5a578288, 0000000000 },
-	{ 0x4f91906a, 0000000000 },
-	{ 0x4f4f4f4f, 0000000000 },
-	{ 0x4fe24f44, 0000000000 },
-	{ 0x4f9c9c9c, 0000000000 },
-	{ 0xdc4f4fde, 0000000000 },
-	{ 0xa1cd4f4f, 0000000000 },
-	{ 0xd29d9d9d, 0000000000 },
-	{ 0x4f0f9fd7, 0000000000 },
-	{ 0x000ca000, 0x00000004 },
-	{ 0x000d0012, 0x00000038 },
-	{ 0x0000e8b4, 0x00000004 },
-	{ 0x000d0014, 0x00000038 },
-	{ 0x0000e8b6, 0x00000004 },
-	{ 0x000d0016, 0x00000038 },
-	{ 0x0000e854, 0x00000004 },
-	{ 0x000d0018, 0x00000038 },
-	{ 0x0000e855, 0x00000004 },
-	{ 0x000d001a, 0x00000038 },
-	{ 0x0000e856, 0x00000004 },
-	{ 0x000d001c, 0x00000038 },
-	{ 0x0000e857, 0x00000004 },
-	{ 0x000d001e, 0x00000038 },
-	{ 0x0000e824, 0x00000004 },
-	{ 0x000d0020, 0x00000038 },
-	{ 0x0000e825, 0x00000004 },
-	{ 0x000d0022, 0x00000038 },
-	{ 0x0000e830, 0x00000004 },
-	{ 0x000d0024, 0x00000038 },
-	{ 0x0000f0c0, 0x00000004 },
-	{ 0x000d0026, 0x00000038 },
-	{ 0x0000f0c1, 0x00000004 },
-	{ 0x000d0028, 0x00000038 },
-	{ 0x0000f041, 0x00000004 },
-	{ 0x000d002a, 0x00000038 },
-	{ 0x0000f184, 0x00000004 },
-	{ 0x000d002c, 0x00000038 },
-	{ 0x0000f185, 0x00000004 },
-	{ 0x000d002e, 0x00000038 },
-	{ 0x0000f186, 0x00000004 },
-	{ 0x000d0030, 0x00000038 },
-	{ 0x0000f187, 0x00000004 },
-	{ 0x000d0032, 0x00000038 },
-	{ 0x0000f180, 0x00000004 },
-	{ 0x000d0034, 0x00000038 },
-	{ 0x0000f393, 0x00000004 },
-	{ 0x000d0036, 0x00000038 },
-	{ 0x0000f38a, 0x00000004 },
-	{ 0x000d0038, 0x00000038 },
-	{ 0x0000f38e, 0x00000004 },
-	{ 0x0000e821, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x00000043, 0x00000018 },
-	{ 0x00cce800, 0x00000004 },
-	{ 0x001b0001, 0x00000004 },
-	{ 0x08004800, 0x00000004 },
-	{ 0x001b0001, 0x00000004 },
-	{ 0x08004800, 0x00000004 },
-	{ 0x001b0001, 0x00000004 },
-	{ 0x08004800, 0x00000004 },
-	{ 0x0000003a, 0x00000008 },
-	{ 0x0000a000, 0000000000 },
-	{ 0x02c0a000, 0x00000004 },
-	{ 0x000ca000, 0x00000004 },
-	{ 0x00130000, 0x00000004 },
-	{ 0x000c2000, 0x00000004 },
-	{ 0xc980c045, 0x00000008 },
-	{ 0x2000451d, 0x00000004 },
-	{ 0x0000e580, 0x00000004 },
-	{ 0x000ce581, 0x00000004 },
-	{ 0x08004580, 0x00000004 },
-	{ 0x000ce581, 0x00000004 },
-	{ 0x0000004c, 0x00000008 },
-	{ 0x0000a000, 0000000000 },
-	{ 0x000c2000, 0x00000004 },
-	{ 0x0000e50e, 0x00000004 },
-	{ 0x00032000, 0x00000004 },
-	{ 0x00022056, 0x00000028 },
-	{ 0x00000056, 0x00000024 },
-	{ 0x0800450f, 0x00000004 },
-	{ 0x0000a050, 0x00000008 },
-	{ 0x0000e565, 0x00000004 },
-	{ 0x0000e566, 0x00000004 },
-	{ 0x00000057, 0x00000008 },
-	{ 0x03cca5b4, 0x00000004 },
-	{ 0x05432000, 0x00000004 },
-	{ 0x00022000, 0x00000004 },
-	{ 0x4ccce063, 0x00000030 },
-	{ 0x08274565, 0x00000004 },
-	{ 0x00000063, 0x00000030 },
-	{ 0x08004564, 0x00000004 },
-	{ 0x0000e566, 0x00000004 },
-	{ 0x0000005a, 0x00000008 },
-	{ 0x00802066, 0x00000010 },
-	{ 0x00202000, 0x00000004 },
-	{ 0x001b00ff, 0x00000004 },
-	{ 0x01000069, 0x00000010 },
-	{ 0x001f2000, 0x00000004 },
-	{ 0x001c00ff, 0x00000004 },
-	{ 0000000000, 0x0000000c },
-	{ 0x00000085, 0x00000030 },
-	{ 0x0000005a, 0x00000008 },
-	{ 0x0000e576, 0x00000004 },
-	{ 0x000ca000, 0x00000004 },
-	{ 0x00012000, 0x00000004 },
-	{ 0x00082000, 0x00000004 },
-	{ 0x1800650e, 0x00000004 },
-	{ 0x00092000, 0x00000004 },
-	{ 0x000a2000, 0x00000004 },
-	{ 0x000f0000, 0x00000004 },
-	{ 0x00400000, 0x00000004 },
-	{ 0x00000079, 0x00000018 },
-	{ 0x0000e563, 0x00000004 },
-	{ 0x00c0e5f9, 0x000000c2 },
-	{ 0x0000006e, 0x00000008 },
-	{ 0x0000a06e, 0x00000008 },
-	{ 0x0000e576, 0x00000004 },
-	{ 0x0000e577, 0x00000004 },
-	{ 0x0000e50e, 0x00000004 },
-	{ 0x0000e50f, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x0000007c, 0x00000018 },
-	{ 0x00c0e5f9, 0x000000c2 },
-	{ 0x0000007c, 0x00000008 },
-	{ 0x0014e50e, 0x00000004 },
-	{ 0x0040e50f, 0x00000004 },
-	{ 0x00c0007f, 0x00000008 },
-	{ 0x0000e570, 0x00000004 },
-	{ 0x0000e571, 0x00000004 },
-	{ 0x0000e572, 0x0000000c },
-	{ 0x0000a000, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x0000e568, 0x00000004 },
-	{ 0x000c2000, 0x00000004 },
-	{ 0x00000089, 0x00000018 },
-	{ 0x000b0000, 0x00000004 },
-	{ 0x18c0e562, 0x00000004 },
-	{ 0x0000008b, 0x00000008 },
-	{ 0x00c0008a, 0x00000008 },
-	{ 0x000700e4, 0x00000004 },
-	{ 0x00000097, 0x00000038 },
-	{ 0x000ca099, 0x00000030 },
-	{ 0x080045bb, 0x00000004 },
-	{ 0x000c209a, 0x00000030 },
-	{ 0x0800e5bc, 0000000000 },
-	{ 0x0000e5bb, 0x00000004 },
-	{ 0x0000e5bc, 0000000000 },
-	{ 0x00120000, 0x0000000c },
-	{ 0x00120000, 0x00000004 },
-	{ 0x001b0002, 0x0000000c },
-	{ 0x0000a000, 0x00000004 },
-	{ 0x0000e821, 0x00000004 },
-	{ 0x0000e800, 0000000000 },
-	{ 0x0000e821, 0x00000004 },
-	{ 0x0000e82e, 0000000000 },
-	{ 0x02cca000, 0x00000004 },
-	{ 0x00140000, 0x00000004 },
-	{ 0x000ce1cc, 0x00000004 },
-	{ 0x050de1cd, 0x00000004 },
-	{ 0x000000a7, 0x00000020 },
-	{ 0x4200e000, 0000000000 },
-	{ 0x000000ae, 0x00000038 },
-	{ 0x000ca000, 0x00000004 },
-	{ 0x00140000, 0x00000004 },
-	{ 0x000c2000, 0x00000004 },
-	{ 0x00160000, 0x00000004 },
-	{ 0x700ce000, 0x00000004 },
-	{ 0x001400aa, 0x00000008 },
-	{ 0x4000e000, 0000000000 },
-	{ 0x02400000, 0x00000004 },
-	{ 0x400ee000, 0x00000004 },
-	{ 0x02400000, 0x00000004 },
-	{ 0x4000e000, 0000000000 },
-	{ 0x000c2000, 0x00000004 },
-	{ 0x0240e51b, 0x00000004 },
-	{ 0x0080e50a, 0x00000005 },
-	{ 0x0080e50b, 0x00000005 },
-	{ 0x00220000, 0x00000004 },
-	{ 0x000700e4, 0x00000004 },
-	{ 0x000000c1, 0x00000038 },
-	{ 0x000c209a, 0x00000030 },
-	{ 0x0880e5bd, 0x00000005 },
-	{ 0x000c2099, 0x00000030 },
-	{ 0x0800e5bb, 0x00000005 },
-	{ 0x000c209a, 0x00000030 },
-	{ 0x0880e5bc, 0x00000005 },
-	{ 0x000000c4, 0x00000008 },
-	{ 0x0080e5bd, 0x00000005 },
-	{ 0x0000e5bb, 0x00000005 },
-	{ 0x0080e5bc, 0x00000005 },
-	{ 0x00210000, 0x00000004 },
-	{ 0x02800000, 0x00000004 },
-	{ 0x00c000c8, 0x00000018 },
-	{ 0x4180e000, 0x00000040 },
-	{ 0x000000ca, 0x00000024 },
-	{ 0x01000000, 0x0000000c },
-	{ 0x0100e51d, 0x0000000c },
-	{ 0x000045bb, 0x00000004 },
-	{ 0x000080c4, 0x00000008 },
-	{ 0x0000f3ce, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x00cc2000, 0x00000004 },
-	{ 0x08c053cf, 0x00000040 },
-	{ 0x00008000, 0000000000 },
-	{ 0x0000f3d2, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x00cc2000, 0x00000004 },
-	{ 0x08c053d3, 0x00000040 },
-	{ 0x00008000, 0000000000 },
-	{ 0x0000f39d, 0x00000004 },
-	{ 0x0140a000, 0x00000004 },
-	{ 0x00cc2000, 0x00000004 },
-	{ 0x08c0539e, 0x00000040 },
-	{ 0x00008000, 0000000000 },
-	{ 0x03c00830, 0x00000004 },
-	{ 0x4200e000, 0000000000 },
-	{ 0x0000a000, 0x00000004 },
-	{ 0x200045e0, 0x00000004 },
-	{ 0x0000e5e1, 0000000000 },
-	{ 0x00000001, 0000000000 },
-	{ 0x000700e1, 0x00000004 },
-	{ 0x0800e394, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-	{ 0000000000, 0000000000 },
-};
+static u32 RS690_READ_MCIND(drm_radeon_private_t *dev_priv, int addr)
+{
+	u32 ret;
+	RADEON_WRITE(RS690_MC_INDEX, (addr & RS690_MC_INDEX_MASK));
+	ret = RADEON_READ(RS690_MC_DATA);
+	RADEON_WRITE(RS690_MC_INDEX, RS690_MC_INDEX_MASK);
+	return ret;
+}
+
+static u32 IGP_READ_MCIND(drm_radeon_private_t *dev_priv, int addr)
+{
+        if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690)
+	    return RS690_READ_MCIND(dev_priv, addr);
+	else
+	    return RS480_READ_MCIND(dev_priv, addr);
+}
+
+u32 radeon_read_fb_location(drm_radeon_private_t *dev_priv)
+{
+
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV515)
+		return R500_READ_MCIND(dev_priv, RV515_MC_FB_LOCATION);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690)
+		return RS690_READ_MCIND(dev_priv, RS690_MC_FB_LOCATION);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) > CHIP_RV515)
+		return R500_READ_MCIND(dev_priv, R520_MC_FB_LOCATION);
+	else
+		return RADEON_READ(RADEON_MC_FB_LOCATION);
+}
+
+static void radeon_write_fb_location(drm_radeon_private_t *dev_priv, u32 fb_loc)
+{
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV515)
+		R500_WRITE_MCIND(RV515_MC_FB_LOCATION, fb_loc);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690)
+		RS690_WRITE_MCIND(RS690_MC_FB_LOCATION, fb_loc);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) > CHIP_RV515)
+		R500_WRITE_MCIND(R520_MC_FB_LOCATION, fb_loc);
+	else
+		RADEON_WRITE(RADEON_MC_FB_LOCATION, fb_loc);
+}
+
+static void radeon_write_agp_location(drm_radeon_private_t *dev_priv, u32 agp_loc)
+{
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV515)
+		R500_WRITE_MCIND(RV515_MC_AGP_LOCATION, agp_loc);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690)
+		RS690_WRITE_MCIND(RS690_MC_AGP_LOCATION, agp_loc);
+	else if ((dev_priv->flags & RADEON_FAMILY_MASK) > CHIP_RV515)
+		R500_WRITE_MCIND(R520_MC_AGP_LOCATION, agp_loc);
+	else
+		RADEON_WRITE(RADEON_MC_AGP_LOCATION, agp_loc);
+}
+
+static void radeon_write_agp_base(drm_radeon_private_t *dev_priv, u64 agp_base)
+{
+	u32 agp_base_hi = upper_32_bits(agp_base);
+	u32 agp_base_lo = agp_base & 0xffffffff;
+
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV515) {
+		R500_WRITE_MCIND(RV515_MC_AGP_BASE, agp_base_lo);
+		R500_WRITE_MCIND(RV515_MC_AGP_BASE_2, agp_base_hi);
+	} else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690) {
+		RS690_WRITE_MCIND(RS690_MC_AGP_BASE, agp_base_lo);
+		RS690_WRITE_MCIND(RS690_MC_AGP_BASE_2, agp_base_hi);
+	} else if ((dev_priv->flags & RADEON_FAMILY_MASK) > CHIP_RV515) {
+		R500_WRITE_MCIND(R520_MC_AGP_BASE, agp_base_lo);
+		R500_WRITE_MCIND(R520_MC_AGP_BASE_2, agp_base_hi);
+	} else {
+		RADEON_WRITE(RADEON_AGP_BASE, agp_base_lo);
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R200)
+			RADEON_WRITE(RADEON_AGP_BASE_2, agp_base_hi);
+	}
+}
 
 static int RADEON_READ_PLL(struct drm_device * dev, int addr)
 {
@@ -828,15 +145,6 @@ static u32 RADEON_READ_PCIE(drm_radeon_private_t *dev_priv, int addr)
 {
 	RADEON_WRITE8(RADEON_PCIE_INDEX, addr & 0xff);
 	return RADEON_READ(RADEON_PCIE_DATA);
-}
-
-static u32 RADEON_READ_IGPGART(drm_radeon_private_t *dev_priv, int addr)
-{
-	u32 ret;
-	RADEON_WRITE(RADEON_IGPGART_INDEX, addr & 0x7f);
-	ret = RADEON_READ(RADEON_IGPGART_DATA);
-	RADEON_WRITE(RADEON_IGPGART_INDEX, 0x7f);
-	return ret;
 }
 
 #if RADEON_FIFO_DEBUG
@@ -873,16 +181,36 @@ static int radeon_do_pixcache_flush(drm_radeon_private_t * dev_priv)
 
 	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
 
-	tmp = RADEON_READ(RADEON_RB3D_DSTCACHE_CTLSTAT);
-	tmp |= RADEON_RB3D_DC_FLUSH_ALL;
-	RADEON_WRITE(RADEON_RB3D_DSTCACHE_CTLSTAT, tmp);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) <= CHIP_RV280) {
+		tmp = RADEON_READ(RADEON_RB3D_DSTCACHE_CTLSTAT);
+		tmp |= RADEON_RB3D_DC_FLUSH_ALL;
+		RADEON_WRITE(RADEON_RB3D_DSTCACHE_CTLSTAT, tmp);
 
-	for (i = 0; i < dev_priv->usec_timeout; i++) {
-		if (!(RADEON_READ(RADEON_RB3D_DSTCACHE_CTLSTAT)
-		      & RADEON_RB3D_DC_BUSY)) {
-			return 0;
+		for (i = 0; i < dev_priv->usec_timeout; i++) {
+			if (!(RADEON_READ(RADEON_RB3D_DSTCACHE_CTLSTAT)
+			      & RADEON_RB3D_DC_BUSY)) {
+				return 0;
+			}
+			DRM_UDELAY(1);
 		}
-		DRM_UDELAY(1);
+	} else {
+		/* 3D */
+		tmp = RADEON_READ(R300_RB3D_DSTCACHE_CTLSTAT);
+		tmp |= RADEON_RB3D_DC_FLUSH_ALL;
+		RADEON_WRITE(R300_RB3D_DSTCACHE_CTLSTAT, tmp);
+
+		/* 2D */
+		tmp = RADEON_READ(RADEON_RB2D_DSTCACHE_CTLSTAT);
+		tmp |= RADEON_RB3D_DC_FLUSH_ALL;
+		RADEON_WRITE(RADEON_RB3D_DSTCACHE_CTLSTAT, tmp);
+
+		for (i = 0; i < dev_priv->usec_timeout; i++) {
+			if (!(RADEON_READ(RADEON_RB2D_DSTCACHE_CTLSTAT)
+			  & RADEON_RB3D_DC_BUSY)) {
+				return 0;
+			}
+			DRM_UDELAY(1);
+		}
 	}
 
 #if RADEON_FIFO_DEBUG
@@ -939,6 +267,50 @@ static int radeon_do_wait_for_idle(drm_radeon_private_t * dev_priv)
 	return -EBUSY;
 }
 
+static void radeon_init_pipes(drm_radeon_private_t * dev_priv)
+{
+	uint32_t gb_tile_config, gb_pipe_sel = 0;
+
+	/* RS4xx/RS6xx/R4xx/R5xx */
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R420) {
+		gb_pipe_sel = RADEON_READ(R400_GB_PIPE_SELECT);
+		dev_priv->num_gb_pipes = ((gb_pipe_sel >> 12) & 0x3) + 1;
+	} else {
+		/* R3xx */
+		if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R300) ||
+		    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R350)) {
+			dev_priv->num_gb_pipes = 2;
+		} else {
+			/* R3Vxx */
+			dev_priv->num_gb_pipes = 1;
+		}
+	}
+	DRM_INFO("Num pipes: %d\n", dev_priv->num_gb_pipes);
+
+	gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16 /*| R300_SUBPIXEL_1_16*/);
+
+	switch(dev_priv->num_gb_pipes) {
+	case 2: gb_tile_config |= R300_PIPE_COUNT_R300; break;
+	case 3: gb_tile_config |= R300_PIPE_COUNT_R420_3P; break;
+	case 4: gb_tile_config |= R300_PIPE_COUNT_R420; break;
+	default:
+	case 1: gb_tile_config |= R300_PIPE_COUNT_RV350; break;
+	}
+
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RV515) {
+		RADEON_WRITE_PLL(R500_DYN_SCLK_PWMEM_PIPE, (1 | ((gb_pipe_sel >> 8) & 0xf) << 4));
+		RADEON_WRITE(R500_SU_REG_DEST, ((1 << dev_priv->num_gb_pipes) - 1));
+	}
+	RADEON_WRITE(R300_GB_TILE_CONFIG, gb_tile_config);
+	radeon_do_wait_for_idle(dev_priv);
+	RADEON_WRITE(R300_DST_PIPE_CONFIG, RADEON_READ(R300_DST_PIPE_CONFIG) | R300_PIPE_AUTO_CONFIG);
+	RADEON_WRITE(R300_RB2D_DSTCACHE_MODE, (RADEON_READ(R300_RB2D_DSTCACHE_MODE) |
+					       R300_DC_AUTOFLUSH_ENABLE |
+					       R300_DC_DC_DISABLE_IGNORE_PE));
+
+
+}
+
 /* ================================================================
  * CP control, initialization
  */
@@ -953,7 +325,22 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 
 	RADEON_WRITE(RADEON_CP_ME_RAM_ADDR, 0);
 
-	if (dev_priv->microcode_version == UCODE_R200) {
+	if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R100) ||
+	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV100) ||
+	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV200) ||
+	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS100) ||
+	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS200)) {
+		DRM_INFO("Loading R100 Microcode\n");
+		for (i = 0; i < 256; i++) {
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
+				     R100_cp_microcode[i][1]);
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
+				     R100_cp_microcode[i][0]);
+		}
+	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R200) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV250) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV280) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS300)) {
 		DRM_INFO("Loading R200 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
@@ -961,7 +348,11 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
 				     R200_cp_microcode[i][0]);
 		}
-	} else if (dev_priv->microcode_version == UCODE_R300) {
+	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R300) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R350) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV350) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV380) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS480)) {
 		DRM_INFO("Loading R300 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
@@ -969,12 +360,35 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
 				     R300_cp_microcode[i][0]);
 		}
-	} else {
+	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R420) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV410)) {
+		DRM_INFO("Loading R400 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
-				     radeon_cp_microcode[i][1]);
+				     R420_cp_microcode[i][1]);
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
-				     radeon_cp_microcode[i][0]);
+				     R420_cp_microcode[i][0]);
+		}
+	} else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690) {
+		DRM_INFO("Loading RS690 Microcode\n");
+		for (i = 0; i < 256; i++) {
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
+				     RS690_cp_microcode[i][1]);
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
+				     RS690_cp_microcode[i][0]);
+		}
+	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV515) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R520) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV530) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R580) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV560) ||
+		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV570)) {
+		DRM_INFO("Loading R500 Microcode\n");
+		for (i = 0; i < 256; i++) {
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
+				     R520_cp_microcode[i][1]);
+			RADEON_WRITE(RADEON_CP_ME_RAM_DATAL,
+				     R520_cp_microcode[i][0]);
 		}
 	}
 }
@@ -1069,21 +483,24 @@ static void radeon_do_cp_stop(drm_radeon_private_t * dev_priv)
 static int radeon_do_engine_reset(struct drm_device * dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	u32 clock_cntl_index, mclk_cntl, rbbm_soft_reset;
+	u32 clock_cntl_index = 0, mclk_cntl = 0, rbbm_soft_reset;
 	DRM_DEBUG("\n");
 
 	radeon_do_pixcache_flush(dev_priv);
 
-	clock_cntl_index = RADEON_READ(RADEON_CLOCK_CNTL_INDEX);
-	mclk_cntl = RADEON_READ_PLL(dev, RADEON_MCLK_CNTL);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) <= CHIP_RV410) {
+	        /* may need something similar for newer chips */
+		clock_cntl_index = RADEON_READ(RADEON_CLOCK_CNTL_INDEX);
+		mclk_cntl = RADEON_READ_PLL(dev, RADEON_MCLK_CNTL);
 
-	RADEON_WRITE_PLL(RADEON_MCLK_CNTL, (mclk_cntl |
-					    RADEON_FORCEON_MCLKA |
-					    RADEON_FORCEON_MCLKB |
-					    RADEON_FORCEON_YCLKA |
-					    RADEON_FORCEON_YCLKB |
-					    RADEON_FORCEON_MC |
-					    RADEON_FORCEON_AIC));
+		RADEON_WRITE_PLL(RADEON_MCLK_CNTL, (mclk_cntl |
+						    RADEON_FORCEON_MCLKA |
+						    RADEON_FORCEON_MCLKB |
+						    RADEON_FORCEON_YCLKA |
+						    RADEON_FORCEON_YCLKB |
+						    RADEON_FORCEON_MC |
+						    RADEON_FORCEON_AIC));
+	}
 
 	rbbm_soft_reset = RADEON_READ(RADEON_RBBM_SOFT_RESET);
 
@@ -1106,9 +523,15 @@ static int radeon_do_engine_reset(struct drm_device * dev)
 						RADEON_SOFT_RESET_RB)));
 	RADEON_READ(RADEON_RBBM_SOFT_RESET);
 
-	RADEON_WRITE_PLL(RADEON_MCLK_CNTL, mclk_cntl);
-	RADEON_WRITE(RADEON_CLOCK_CNTL_INDEX, clock_cntl_index);
-	RADEON_WRITE(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) <= CHIP_RV410) {
+		RADEON_WRITE_PLL(RADEON_MCLK_CNTL, mclk_cntl);
+		RADEON_WRITE(RADEON_CLOCK_CNTL_INDEX, clock_cntl_index);
+		RADEON_WRITE(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset);
+	}
+
+	/* setup the raster pipes */
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R300)
+	    radeon_init_pipes(dev_priv);
 
 	/* Reset the CP ring */
 	radeon_do_cp_reset(dev_priv);
@@ -1134,14 +557,15 @@ static void radeon_cp_init_ring_buffer(struct drm_device * dev,
 	 * always appended to the fb which is not necessarily the case
 	 */
 	if (!dev_priv->new_memmap)
-		RADEON_WRITE(RADEON_MC_FB_LOCATION,
+		radeon_write_fb_location(dev_priv,
 			     ((dev_priv->gart_vm_start - 1) & 0xffff0000)
 			     | (dev_priv->fb_location >> 16));
 
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
-		RADEON_WRITE(RADEON_AGP_BASE, (unsigned int)dev->agp->base);
-		RADEON_WRITE(RADEON_MC_AGP_LOCATION,
+		radeon_write_agp_base(dev_priv, dev->agp->base);
+
+		radeon_write_agp_location(dev_priv,
 			     (((dev_priv->gart_vm_start - 1 +
 				dev_priv->gart_size) & 0xffff0000) |
 			      (dev_priv->gart_vm_start >> 16)));
@@ -1284,40 +708,79 @@ static void radeon_test_writeback(drm_radeon_private_t * dev_priv)
 /* Enable or disable IGP GART on the chip */
 static void radeon_set_igpgart(drm_radeon_private_t * dev_priv, int on)
 {
-	u32 temp, tmp;
+	u32 temp;
 
-	tmp = RADEON_READ(RADEON_AIC_CNTL);
-	DRM_DEBUG("setting igpgart AIC CNTL is %08X\n", tmp);
 	if (on) {
-		DRM_DEBUG("programming igpgart %08X %08lX %08X\n",
+		DRM_DEBUG("programming igp gart %08X %08lX %08X\n",
 			 dev_priv->gart_vm_start,
 			 (long)dev_priv->gart_info.bus_addr,
 			 dev_priv->gart_size);
 
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_UNK_18, 0x1000);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_ENABLE, 0x1);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_CTRL, 0x42040800);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_BASE_ADDR,
-				     dev_priv->gart_info.bus_addr);
+		temp = IGP_READ_MCIND(dev_priv, RS480_MC_MISC_CNTL);
 
-		temp = RADEON_READ_IGPGART(dev_priv, RADEON_IGPGART_UNK_39);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_UNK_39, temp);
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690)
+			IGP_WRITE_MCIND(RS480_MC_MISC_CNTL, (RS480_GART_INDEX_REG_EN |
+							     RS690_BLOCK_GFX_D3_EN));
+		else
+			IGP_WRITE_MCIND(RS480_MC_MISC_CNTL, RS480_GART_INDEX_REG_EN);
 
-		RADEON_WRITE(RADEON_AGP_BASE, (unsigned int)dev_priv->gart_vm_start);
+		IGP_WRITE_MCIND(RS480_AGP_ADDRESS_SPACE_SIZE, (RS480_GART_EN |
+							       RS480_VA_SIZE_32MB));
+
+		temp = IGP_READ_MCIND(dev_priv, RS480_GART_FEATURE_ID);
+		IGP_WRITE_MCIND(RS480_GART_FEATURE_ID, (RS480_HANG_EN |
+							RS480_TLB_ENABLE |
+							RS480_GTW_LAC_EN |
+							RS480_1LEVEL_GART));
+
+		temp = dev_priv->gart_info.bus_addr & 0xfffff000;
+		temp |= (upper_32_bits(dev_priv->gart_info.bus_addr) & 0xff) << 4;
+		IGP_WRITE_MCIND(RS480_GART_BASE, temp);
+
+		temp = IGP_READ_MCIND(dev_priv, RS480_AGP_MODE_CNTL);
+		IGP_WRITE_MCIND(RS480_AGP_MODE_CNTL, ((1 << RS480_REQ_TYPE_SNOOP_SHIFT) |
+						      RS480_REQ_TYPE_SNOOP_DIS));
+
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690) {
+			IGP_WRITE_MCIND(RS690_MC_AGP_BASE,
+					(unsigned int)dev_priv->gart_vm_start);
+			IGP_WRITE_MCIND(RS690_MC_AGP_BASE_2, 0);
+		} else {
+			RADEON_WRITE(RADEON_AGP_BASE, (unsigned int)dev_priv->gart_vm_start);
+			RADEON_WRITE(RS480_AGP_BASE_2, 0);
+		}
+
 		dev_priv->gart_size = 32*1024*1024;
-		RADEON_WRITE(RADEON_MC_AGP_LOCATION,
-			     (((dev_priv->gart_vm_start - 1 +
-			       dev_priv->gart_size) & 0xffff0000) |
-			     (dev_priv->gart_vm_start >> 16)));
+		temp = (((dev_priv->gart_vm_start - 1 + dev_priv->gart_size) & 
+			0xffff0000) | (dev_priv->gart_vm_start >> 16));
 
-		temp = RADEON_READ_IGPGART(dev_priv, RADEON_IGPGART_ENABLE);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_ENABLE, temp);
+		radeon_write_agp_location(dev_priv, temp);
 
-		RADEON_READ_IGPGART(dev_priv, RADEON_IGPGART_FLUSH);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_FLUSH, 0x1);
-		RADEON_READ_IGPGART(dev_priv, RADEON_IGPGART_FLUSH);
-		RADEON_WRITE_IGPGART(RADEON_IGPGART_FLUSH, 0x0);
-       }
+		temp = IGP_READ_MCIND(dev_priv, RS480_AGP_ADDRESS_SPACE_SIZE);
+		IGP_WRITE_MCIND(RS480_AGP_ADDRESS_SPACE_SIZE, (RS480_GART_EN |
+							       RS480_VA_SIZE_32MB));
+
+		do {
+			temp = IGP_READ_MCIND(dev_priv, RS480_GART_CACHE_CNTRL);
+			if ((temp & RS480_GART_CACHE_INVALIDATE) == 0)
+				break;
+			DRM_UDELAY(1);
+		} while(1);
+
+		IGP_WRITE_MCIND(RS480_GART_CACHE_CNTRL,
+				RS480_GART_CACHE_INVALIDATE);
+
+		do {
+			temp = IGP_READ_MCIND(dev_priv, RS480_GART_CACHE_CNTRL);
+			if ((temp & RS480_GART_CACHE_INVALIDATE) == 0)
+				break;
+			DRM_UDELAY(1);
+		} while(1);
+
+		IGP_WRITE_MCIND(RS480_GART_CACHE_CNTRL, 0);
+	} else {
+		IGP_WRITE_MCIND(RS480_AGP_ADDRESS_SPACE_SIZE, 0);
+	}
 }
 
 static void radeon_set_pciegart(drm_radeon_private_t * dev_priv, int on)
@@ -1339,7 +802,7 @@ static void radeon_set_pciegart(drm_radeon_private_t * dev_priv, int on)
 				  dev_priv->gart_vm_start +
 				  dev_priv->gart_size - 1);
 
-		RADEON_WRITE(RADEON_MC_AGP_LOCATION, 0xffffffc0);	/* ?? */
+		radeon_write_agp_location(dev_priv, 0xffffffc0); /* ?? */
 
 		RADEON_WRITE_PCIE(RADEON_PCIE_TX_GART_CNTL,
 				  RADEON_PCIE_TX_GART_EN);
@@ -1354,7 +817,8 @@ static void radeon_set_pcigart(drm_radeon_private_t * dev_priv, int on)
 {
 	u32 tmp;
 
-	if (dev_priv->flags & RADEON_IS_IGPGART) {
+	if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690) ||
+	    (dev_priv->flags & RADEON_IS_IGPGART)) {
 		radeon_set_igpgart(dev_priv, on);
 		return;
 	}
@@ -1382,7 +846,7 @@ static void radeon_set_pcigart(drm_radeon_private_t * dev_priv, int on)
 
 		/* Turn off AGP aperture -- is this required for PCI GART?
 		 */
-		RADEON_WRITE(RADEON_MC_AGP_LOCATION, 0xffffffc0);	/* ?? */
+		radeon_write_agp_location(dev_priv, 0xffffffc0);
 		RADEON_WRITE(RADEON_AGP_COMMAND, 0);	/* clear AGP_COMMAND */
 	} else {
 		RADEON_WRITE(RADEON_AIC_CNTL,
@@ -1590,10 +1054,9 @@ static int radeon_do_init_cp(struct drm_device * dev, drm_radeon_init_t * init)
 			  dev->agp_buffer_map->handle);
 	}
 
-	dev_priv->fb_location = (RADEON_READ(RADEON_MC_FB_LOCATION)
-				 & 0xffff) << 16;
+	dev_priv->fb_location = (radeon_read_fb_location(dev_priv) & 0xffff) << 16;
 	dev_priv->fb_size =
-		((RADEON_READ(RADEON_MC_FB_LOCATION) & 0xffff0000u) + 0x10000)
+		((radeon_read_fb_location(dev_priv) & 0xffff0000u) + 0x10000)
 		- dev_priv->fb_location;
 
 	dev_priv->front_pitch_offset = (((dev_priv->front_pitch / 64) << 22) |
@@ -1689,6 +1152,7 @@ static int radeon_do_init_cp(struct drm_device * dev, drm_radeon_init_t * init)
 	} else
 #endif
 	{
+		dev_priv->gart_info.table_mask = DMA_BIT_MASK(32);
 		/* if we have an offset set from userspace */
 		if (dev_priv->pcigart_offset_set) {
 			dev_priv->gart_info.bus_addr =
@@ -1845,7 +1309,7 @@ int radeon_cp_init(struct drm_device *dev, void *data, struct drm_file *file_pri
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (init->func == RADEON_INIT_R300_CP)
-		r300_init_reg_flags();
+		r300_init_reg_flags(dev);
 
 	switch (init->func) {
 	case RADEON_INIT_CP:
@@ -1867,12 +1331,12 @@ int radeon_cp_start(struct drm_device *dev, void *data, struct drm_file *file_pr
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (dev_priv->cp_running) {
-		DRM_DEBUG("%s while CP running\n", __FUNCTION__);
+		DRM_DEBUG("while CP running\n");
 		return 0;
 	}
 	if (dev_priv->cp_mode == RADEON_CSQ_PRIDIS_INDDIS) {
-		DRM_DEBUG("%s called with bogus CP mode (%d)\n",
-			  __FUNCTION__, dev_priv->cp_mode);
+		DRM_DEBUG("called with bogus CP mode (%d)\n",
+			  dev_priv->cp_mode);
 		return 0;
 	}
 
@@ -1937,8 +1401,12 @@ void radeon_do_release(struct drm_device * dev)
 #ifdef __linux__
 				schedule();
 #else
-				DRM_SLEEPLOCK(&ret, &dev->dev_lock, PZERO, "rdnrel",
+#if defined(__FreeBSD__) && __FreeBSD_version > 500000
+				mtx_sleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
 				       1);
+#else
+				tsleep(&ret, PZERO, "rdnrel", 1);
+#endif
 #endif
 			}
 			radeon_do_cp_stop(dev_priv);
@@ -1978,7 +1446,7 @@ int radeon_cp_reset(struct drm_device *dev, void *data, struct drm_file *file_pr
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (!dev_priv) {
-		DRM_DEBUG("%s called before init done\n", __FUNCTION__);
+		DRM_DEBUG("called before init done\n");
 		return -EINVAL;
 	}
 
@@ -2255,6 +1723,10 @@ int radeon_driver_load(struct drm_device *dev, unsigned long flags)
 	case CHIP_R350:
 	case CHIP_R420:
 	case CHIP_RV410:
+	case CHIP_RV515:
+	case CHIP_R520:
+	case CHIP_RV570:
+	case CHIP_R580:
 		dev_priv->flags |= RADEON_HAS_HIERZ;
 		break;
 	default:

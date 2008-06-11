@@ -903,18 +903,15 @@ drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
-	DRM_SPINLOCK(&dev->dma_lock);
 
-	if (request->count < 0 || request->count > 4096) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (request->count < 0 || request->count > 4096)
 		return EINVAL;
-	}
 	
 	order = drm_order(request->size);
-	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return EINVAL;
-	}
+
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {
@@ -939,18 +936,15 @@ drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
-	DRM_SPINLOCK(&dev->dma_lock);
 
-	if (request->count < 0 || request->count > 4096) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (request->count < 0 || request->count > 4096)
 		return EINVAL;
-	}
 	
 	order = drm_order(request->size);
-	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return EINVAL;
-	}
+
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {
@@ -975,18 +969,14 @@ drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
-	DRM_SPINLOCK(&dev->dma_lock);
-
-	if (request->count < 0 || request->count > 4096) {
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (request->count < 0 || request->count > 4096)
 		return EINVAL;
-	}
 	
 	order = drm_order(request->size);
-	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER){
-		DRM_SPINUNLOCK(&dev->dma_lock);
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return EINVAL;
-	}
+
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {

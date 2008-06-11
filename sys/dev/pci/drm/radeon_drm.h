@@ -225,9 +225,22 @@ typedef union {
 #define R300_CMD_WAIT			7
 #	define R300_WAIT_2D		0x1
 #	define R300_WAIT_3D		0x2
+/* these two defines are DOING IT WRONG - however
+ * we have userspace which relies on using these.
+ * The wait interface is backwards compat new 
+ * code should use the NEW_WAIT defines below
+ * THESE ARE NOT BIT FIELDS
+ */
 #	define R300_WAIT_2D_CLEAN	0x3
 #	define R300_WAIT_3D_CLEAN	0x4
+
+#	define R300_NEW_WAIT_2D_3D	0x3
+#	define R300_NEW_WAIT_2D_2D_CLEAN	0x4
+#	define R300_NEW_WAIT_3D_3D_CLEAN	0x6
+#	define R300_NEW_WAIT_2D_2D_CLEAN_3D_3D_CLEAN	0x8
+
 #define R300_CMD_SCRATCH		8
+#define R300_CMD_R500FP                 9
 
 typedef union {
 	unsigned int u;
@@ -256,6 +269,9 @@ typedef union {
 	struct {
 		unsigned char cmd_type, reg, n_bufs, flags;
 	} scratch;
+	struct {
+		unsigned char cmd_type, count, adrlo, adrhi_flags;
+	} r500fp;
 } drm_r300_cmd_header_t;
 
 #define RADEON_FRONT			0x1
@@ -265,6 +281,9 @@ typedef union {
 #define RADEON_CLEAR_FASTZ		0x80000000
 #define RADEON_USE_HIERZ		0x40000000
 #define RADEON_USE_COMP_ZBUF		0x20000000
+
+#define R500FP_CONSTANT_TYPE  (1 << 1)
+#define R500FP_CONSTANT_CLAMP (1 << 2)
 
 /* Primitive types
  */
@@ -656,6 +675,8 @@ typedef struct drm_radeon_indirect {
 #define RADEON_PARAM_SCRATCH_OFFSET        11
 #define RADEON_PARAM_CARD_TYPE             12
 #define RADEON_PARAM_VBLANK_CRTC           13   /* VBLANK CRTC */
+#define RADEON_PARAM_FB_LOCATION           14   /* FB location */
+#define RADEON_PARAM_NUM_GB_PIPES          15   /* num GB pipes */
 
 typedef struct drm_radeon_getparam {
 	int param;

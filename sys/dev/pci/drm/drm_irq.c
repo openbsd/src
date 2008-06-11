@@ -36,11 +36,12 @@
 #include "drm.h"
 
 irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
+void		vblank_disable(void *);
 
 #ifdef __OpenBSD__
-void	drm_locked_task(void *context, void *pending);
+void		drm_locked_task(void *context, void *pending);
 #else
-void	drm_locked_task(void *context, int pending __unused);
+void		drm_locked_task(void *context, int pending __unused);
 #endif
 
 int
@@ -129,7 +130,7 @@ drm_irq_install(drm_device_t *dev)
 
 	dev->context_flag = 0;
 
-#ifdef __OpenBSD__ 
+#ifdef __OpenBSD__
 	mtx_init(&dev->irq_lock, IPL_BIO);
 #else
 	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
@@ -170,7 +171,7 @@ drm_irq_install(drm_device_t *dev)
 	    drm_irq_handler_wrap, dev,
 	    dev->device.dv_xname);
 #else
-	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
+	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_BIO,
 	    drm_irq_handler_wrap, dev);
 #endif
 	if (!dev->irqh) {
@@ -232,6 +233,7 @@ drm_irq_uninstall(drm_device_t *dev)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 #endif
+	drm_vblank_cleanup(dev);
 	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
@@ -266,24 +268,252 @@ drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	}
 }
 
+void
+vblank_disable(void *arg)
+{
+	struct drm_device *dev = (struct drm_device*)arg;
+	int i;
+
+	for (i=0; i < dev->num_crtcs; i++){
+		DRM_SPINLOCK(&dev->vbl_lock);
+		if (atomic_read(&dev->vblank_refcount[i]) == 0 &&
+		    dev->vblank_enabled[i]) {
+			dev->driver.disable_vblank(dev, i);
+			dev->vblank_enabled[i] = 0;
+		}
+		DRM_SPINUNLOCK(&dev->vbl_lock);
+	}
+}
+
+void
+drm_vblank_cleanup(struct drm_device *dev)
+{
+	if (dev->num_crtcs == 0)
+		return; /* not initialised */
+
+	timeout_del(&dev->vblank_disable_timer);
+
+	vblank_disable(dev);
+
+	if (dev->vbl_queue)
+		drm_free(dev->vbl_queue, sizeof(*dev->vbl_queue) *
+		    dev->num_crtcs, M_DRM);
+#if 0 /* disabled for now */
+	if (dev-vbl_sigs)
+		drm_free(dev->vbl_sigs, sizeof(*dev->vbl_sigs) * dev->num_crtcs,
+		    M_DRM);
+#endif
+	if (dev->_vblank_count)
+		drm_free(dev->_vblank_count, sizeof(*dev->_vblank_count) *
+		    dev->num_crtcs, M_DRM);
+	if (dev->vblank_refcount)
+		drm_free(dev->vblank_refcount, sizeof(*dev->vblank_refcount) *
+		    dev->num_crtcs, M_DRM);
+	if (dev->vblank_enabled)
+		drm_free(dev->vblank_enabled, sizeof(*dev->vblank_enabled) *
+		    dev->num_crtcs, M_DRM);
+	if (dev->last_vblank)
+		drm_free(dev->last_vblank, sizeof(*dev->last_vblank) *
+		    dev->num_crtcs, M_DRM);
+	if (dev->vblank_premodeset)
+		drm_free(dev->vblank_premodeset,
+		    sizeof(*dev->vblank_premodeset) * dev->num_crtcs, M_DRM);
+	if (dev->vblank_suspend)
+		drm_free(dev->vblank_suspend,
+		    sizeof(*dev->vblank_suspend) * dev->num_crtcs, M_DRM);
+
+	dev->num_crtcs = 0;
+	DRM_SPINUNINIT(&dev->vbl_lock);
+}
+
+int
+drm_vblank_init(struct drm_device *dev, int num_crtcs)
+{
+	int i;
+
+	timeout_set(&dev->vblank_disable_timer, vblank_disable, dev);
+	mtx_init(&dev->vbl_lock, IPL_BIO);
+	atomic_set(&dev->vbl_signal_pending, 0);
+	dev->num_crtcs = num_crtcs;
+
+	if ((dev->vbl_queue = drm_calloc(num_crtcs, sizeof(*dev->vbl_queue),
+	    M_DRM)) == NULL)
+		goto err;
+
+	if ((dev->_vblank_count = drm_calloc(num_crtcs,
+	    sizeof(*dev->_vblank_count), M_DRM)) == NULL)
+		goto err;
+
+	if ((dev->vblank_refcount = drm_calloc(num_crtcs,
+	    sizeof(*dev->vblank_refcount), M_DRM)) == NULL)
+		goto err;
+	if ((dev->vblank_enabled = drm_calloc(num_crtcs,
+	    sizeof(*dev->vblank_enabled), M_DRM)) == NULL)
+		goto err;
+	if ((dev->last_vblank = drm_calloc(num_crtcs, sizeof(*dev->last_vblank),
+	    M_DRM)) == NULL)
+		goto err;
+	if ((dev->vblank_premodeset = drm_calloc(num_crtcs,
+	    sizeof(*dev->vblank_premodeset), M_DRM)) == NULL)
+		goto err;
+	if ((dev->vblank_suspend = drm_calloc(num_crtcs,
+	    sizeof(*dev->vblank_suspend), M_DRM)) == NULL)
+		goto err;
+
+
+	/* Zero everything */
+	for (i = 0; i < num_crtcs; i++) {
+		atomic_set(&dev->_vblank_count[i], 0);
+		atomic_set(&dev->vblank_refcount[i], 0);
+	}
+
+	return (0);
+
+err:
+	drm_vblank_cleanup(dev);
+	return ENOMEM;
+}
+
+u_int32_t
+drm_vblank_count(struct drm_device *dev, int crtc)
+{
+	return atomic_read(&dev->_vblank_count[crtc]);
+}
+
+void
+drm_update_vblank_count(struct drm_device *dev, int crtc)
+{
+	u_int32_t cur_vblank, diff;
+
+	if (dev->vblank_suspend[crtc])
+		return;
+
+	/*
+	 * Deal with the possibility of lost vblanks due to disabled interrupts
+	 * counter overflow may have happened. 
+	 */
+	cur_vblank = dev->driver.get_vblank_counter(dev, crtc);
+	DRM_SPINLOCK(&dev->vbl_lock);
+	if (cur_vblank < dev->last_vblank[crtc]) {
+		if (cur_vblank == dev->last_vblank[crtc] -1)
+			diff = 0;
+		else {
+			diff = dev->max_vblank_count - dev->last_vblank[crtc];
+			diff += cur_vblank;
+		}
+	} else {
+		diff = cur_vblank - dev->last_vblank[crtc];
+	}
+	dev->last_vblank[crtc] = cur_vblank;
+	DRM_SPINUNLOCK(&dev->vbl_lock);
+
+	atomic_add(diff, &dev->_vblank_count[crtc]);
+}
+
+int
+drm_vblank_get(struct drm_device *dev, int crtc)
+{
+	int ret = 0;
+
+	DRM_SPINLOCK(&dev->vbl_lock);
+
+	atomic_add(1, &dev->vblank_refcount[crtc]);
+	if (dev->vblank_refcount[crtc] == 1 &&
+	    dev->vblank_enabled[crtc] == 0) {
+		ret = dev->driver.enable_vblank(dev, crtc);
+		if (ret)
+			atomic_dec(&dev->vblank_refcount[crtc]);
+		else
+			dev->vblank_enabled[crtc] = 1;
+	}
+	DRM_SPINUNLOCK(&dev->vbl_lock);
+
+	return ret;
+}
+
+void
+drm_vblank_put(struct drm_device *dev, int crtc)
+{
+	DRM_SPINLOCK(&dev->vbl_lock);
+	/* Last user schedules interrupt disable */
+	atomic_dec(&dev->vblank_refcount[crtc]);
+	if (&dev->vblank_refcount[crtc] == 0)
+		timeout_add(&dev->vblank_disable_timer, 5*DRM_HZ);
+	DRM_SPINUNLOCK(&dev->vbl_lock);
+}
+
+int
+drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_modeset_ctl *modeset = data;
+	int crtc, ret = 0;
+
+	crtc = modeset->crtc;
+	if (crtc >= dev->num_crtcs) {
+		ret = EINVAL;
+		goto out;
+	}
+
+	switch (modeset->cmd) {
+	case _DRM_PRE_MODESET:
+		dev->vblank_premodeset[crtc] =
+			dev->driver.get_vblank_counter(dev, crtc);
+		dev->vblank_suspend[crtc] = 1;
+		break;
+	case _DRM_POST_MODESET:
+		if (dev->vblank_suspend[crtc]) {
+			uint32_t new =
+			    dev->driver.get_vblank_counter(dev, crtc);
+			/* Compensate for spurious wraparound */
+			if (new < dev->vblank_premodeset[crtc])
+				atomic_sub(dev->max_vblank_count + new -
+				    dev->vblank_premodeset[crtc],
+				    &dev->_vblank_count[crtc]);
+		}
+		dev->vblank_suspend[crtc] = 0;
+		break;
+	default:
+		ret = EINVAL;
+	}
+
+out:
+	return ret;
+}
+
 int
 drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_wait_vblank_t *vblwait = data;
-	struct timeval now;
-	int ret, flags;
+	int ret, flags, crtc, seq;
 
 	if (!dev->irq_enabled)
 		return EINVAL;
 
+	flags = vblwait->request.type & _DRM_VBLANK_FLAGS_MASK;
+	crtc = flags & _DRM_VBLANK_SECONDARY ? 1 : 0;
+
+	if (crtc >= dev->num_crtcs)
+		return EINVAL;
+
+	drm_update_vblank_count(dev, crtc);
+	seq = drm_vblank_count(dev,crtc);
+
 	if (vblwait->request.type & _DRM_VBLANK_RELATIVE) {
-		vblwait->request.sequence += atomic_read(&dev->vbl_received);
+		vblwait->request.sequence += seq;
 		vblwait->request.type &= ~_DRM_VBLANK_RELATIVE;
 	}
 
 	flags = vblwait->request.type & _DRM_VBLANK_FLAGS_MASK;
+	if ((flags & _DRM_VBLANK_NEXTONMISS) &&
+	    (seq - vblwait->request.sequence) <= (1<<23)) {
+		vblwait->request.sequence = seq + 1;
+	}
+
 	if (flags & _DRM_VBLANK_SIGNAL) {
 #if 0 /* disabled */
+		if (dev->vblank_suspend[crtc])
+			return (EBUSY);
+
 		drm_vbl_sig_t *vbl_sig = malloc(sizeof(drm_vbl_sig_t), M_DRM,
 		    M_NOWAIT | M_ZERO);
 		if (vbl_sig == NULL)
@@ -294,36 +524,56 @@ drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 		vbl_sig->pid = DRM_CURRENTPID;
 
 		vblwait->reply.sequence = atomic_read(&dev->vbl_received);
+
 		
-		DRM_SPINLOCK(&dev->irq_lock);
+		DRM_SPINLOCK(&dev->vbl_lock);
 		TAILQ_INSERT_HEAD(&dev->vbl_sig_list, vbl_sig, link);
-		DRM_SPINUNLOCK(&dev->irq_lock);
+		DRM_SPINUNLOCK(&dev->vbl_lock);
 		ret = 0;
 #endif
 		ret = EINVAL;
 	} else {
-		DRM_LOCK();
-		/* shared code returns -errno */
-		ret = -dev->driver.vblank_wait(dev,
-		    &vblwait->request.sequence);
-		DRM_UNLOCK();
+		if (!dev->vblank_suspend[crtc]) {
+			unsigned long cur_vblank;
 
-		microtime(&now);
-		vblwait->reply.tval_sec = now.tv_sec;
-		vblwait->reply.tval_usec = now.tv_usec;
+			ret = drm_vblank_get(dev, crtc);
+			if (ret)
+				return ret;
+			while (ret == 0) {
+				DRM_SPINLOCK(&dev->vbl_lock);
+				if (((cur_vblank = drm_vblank_count(dev, crtc))
+				    - vblwait->request.sequence) <= (1 << 23)) {
+					DRM_SPINUNLOCK(&dev->vbl_lock);
+					break;
+				}
+				ret = msleep(&dev->vbl_queue[crtc],
+				    &dev->vbl_lock, PZERO | PCATCH,
+				    "drmvblq", 3 * DRM_HZ);
+				DRM_SPINUNLOCK(&dev->vbl_lock);
+			}
+		}
+		drm_vblank_put(dev, crtc);
+
+		if (ret != EINTR) {
+			struct timeval now;
+			microtime(&now);
+			vblwait->reply.tval_sec = now.tv_sec;
+			vblwait->reply.tval_usec = now.tv_usec;
+			vblwait->reply.sequence = drm_vblank_count(dev, crtc);
+		}
 	}
 
-	return ret;
+	return (ret);
 }
 
 void
-drm_vbl_send_signals(drm_device_t *dev)
+drm_vbl_send_signals(drm_device_t *dev, int crtc)
 {
 }
 
 #if 0 /* disabled */
 void
-drm_vbl_send_signals( drm_device_t *dev )
+drm_vbl_send_signals(drm_device_t *dev, int crtc)
 {
 	drm_vbl_sig_t *vbl_sig;
 	unsigned int vbl_seq = atomic_read( &dev->vbl_received );
@@ -345,6 +595,14 @@ drm_vbl_send_signals( drm_device_t *dev )
 	}
 }
 #endif
+
+void
+drm_handle_vblank(struct drm_device *dev, int crtc)
+{
+	drm_update_vblank_count(dev, crtc);
+	DRM_WAKEUP(&dev->vbl_queue[crtc]);
+	drm_vbl_send_signals(dev, crtc);
+}
 
 void
 #ifdef __OpenBSD__

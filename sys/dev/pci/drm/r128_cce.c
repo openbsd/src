@@ -558,6 +558,7 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 #if __OS_HAS_AGP
 	if (dev_priv->is_pci) {
 #endif
+		dev_priv->gart_info.table_mask = DMA_BIT_MASK(32);
 		dev_priv->gart_info.gart_table_location = DRM_ATI_GART_MAIN;
 		dev_priv->gart_info.table_size = R128_PCIGART_TABLE_SIZE;
 		dev_priv->gart_info.addr = NULL;
@@ -649,7 +650,7 @@ int r128_cce_start(struct drm_device *dev, void *data, struct drm_file *file_pri
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (dev_priv->cce_running || dev_priv->cce_mode == R128_PM4_NONPM4) {
-		DRM_DEBUG("%s while CCE running\n", __FUNCTION__);
+		DRM_DEBUG("while CCE running\n");
 		return 0;
 	}
 
@@ -708,7 +709,7 @@ int r128_cce_reset(struct drm_device *dev, void *data, struct drm_file *file_pri
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (!dev_priv) {
-		DRM_DEBUG("%s called before init done\n", __FUNCTION__);
+		DRM_DEBUG("called before init done\n");
 		return -EINVAL;
 	}
 
