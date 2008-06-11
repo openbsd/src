@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.44 2008/06/11 18:40:52 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.45 2008/06/11 21:21:50 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,7 @@ void		 report(time_t);
 void		 report_sdlim(struct sdlim_t *, time_t);
 static char	*print_sensor(enum sensor_type, int64_t);
 void		 parse_config(char *);
-void		 parse_config_sdlim(struct sdlim_t *, char **);
+void		 parse_config_sdlim(struct sdlim_t *, char *);
 int64_t		 get_val(char *, int, enum sensor_type);
 void		 reparse_cfg(int);
 
@@ -305,8 +305,7 @@ check(time_t this_check)
 			TAILQ_INSERT_TAIL(&sdlims, next, entries);
 		syslog(LOG_INFO, "%s has appeared", next->dxname);
 		sdlim = next;
-		parse_config(configfile);
-		syslog(LOG_INFO, "configuration reloaded");
+		parse_config_sdlim(sdlim, configfile);
 		check_sdlim(sdlim, this_check);
 	}
 
@@ -664,24 +663,21 @@ void
 parse_config(char *cf)
 {
 	struct sdlim_t	 *sdlim;
-	char		**cfa;
-
-	if ((cfa = calloc(2, sizeof(char *))) == NULL)
-		err(1, "calloc");
-	cfa[0] = cf;
-	cfa[1] = NULL;
 
 	TAILQ_FOREACH(sdlim, &sdlims, entries)
-		parse_config_sdlim(sdlim, cfa);
-	free(cfa);
+		parse_config_sdlim(sdlim, cf);
 }
 
 void
-parse_config_sdlim(struct sdlim_t *sdlim, char **cfa)
+parse_config_sdlim(struct sdlim_t *sdlim, char *cf)
 {
 	struct limits_t	 *p;
 	char		 *buf = NULL, *ebuf = NULL;
 	char		  node[48];
+	char		 *cfa[2];
+	
+	cfa[0] = cf;
+	cfa[1] = NULL;
 
 	TAILQ_FOREACH(p, &sdlim->limits, entries) {
 		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d",
