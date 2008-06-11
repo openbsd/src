@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.48 2008/06/07 18:14:41 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.49 2008/06/11 03:19:39 tobias Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -329,7 +329,10 @@ parse(int argc, char *argv[])
 	res.community.as = COMMUNITY_UNSET;
 	res.community.type = COMMUNITY_UNSET;
 	TAILQ_INIT(&res.set);
-	res.irr_outdir = getcwd(NULL, 0);
+	if ((res.irr_outdir = getcwd(NULL, 0)) == NULL) {
+		fprintf(stderr, "getcwd failed: %s", strerror(errno));
+		return (NULL);
+	}
 
 	while (argc >= 0) {
 		if ((match = match_token(&argc, &argv, table)) == NULL) {
