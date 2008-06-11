@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.146 2008/06/06 14:49:21 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.147 2008/06/11 09:42:13 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -248,6 +248,13 @@ sub realname
 		$name = $self->{tempname};
 	}
 	return $state->{destdir}.$name;
+}
+
+sub compute_md5
+{
+	my ($self, $filename) = @_;
+	require OpenBSD::md5;
+	return OpenBSD::md5::fromfile($filename);
 }
 
 # exec/unexec and friends
@@ -1312,22 +1319,25 @@ sub exec_on_delete { 0 }
 
 sub add_md5
 {
-	my ($self, $md5) = @_;
-	$self->{md5} = $md5;
+	&OpenBSD::PackingElement::FileBase::add_md5;
 }
 
 sub add_size
 {
-	my ($self, $sz) = @_;
-	$self->{size} = $sz;
+	&OpenBSD::PackingElement::FileBase::add_size;
 }
 
-sub needs_keyword { 0 }
+sub compute_md5
+{
+	&OpenBSD::PackingElement::FileObject::compute_md5;
+}
 
 sub write
 {
 	&OpenBSD::PackingElement::FileBase::write;
 }
+
+sub needs_keyword { 0 }
 
 sub add_object
 {
