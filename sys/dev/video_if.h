@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.11 2008/06/10 23:39:01 robert Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.12 2008/06/11 01:27:30 robert Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -44,6 +44,7 @@ struct video_hw_if {
 	int	(*qbuf)(void *, struct v4l2_buffer *);
 	int	(*dqbuf)(void *, struct v4l2_buffer *);
 	int	(*streamon)(void *, int);
+	int	(*streamoff)(void *, int);
 	int	(*try_fmt)(void *, struct v4l2_format *);
 	int	(*queryctrl)(void *, struct v4l2_queryctrl *);
 	caddr_t	(*mappage)(void *, off_t, int);

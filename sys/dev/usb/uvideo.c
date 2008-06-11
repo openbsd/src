@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.32 2008/06/11 00:00:37 robert Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.33 2008/06/11 01:27:31 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -145,6 +145,7 @@ int		uvideo_querybuf(void *, struct v4l2_buffer *);
 int		uvideo_qbuf(void *, struct v4l2_buffer *);
 int		uvideo_dqbuf(void *, struct v4l2_buffer *);
 int		uvideo_streamon(void *, int);
+int		uvideo_streamoff(void *, int);
 int		uvideo_try_fmt(void *, struct v4l2_format *);
 
 /*
@@ -188,6 +189,7 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_qbuf,		/* VIDIOC_QBUF */
 	uvideo_dqbuf,		/* VIDIOC_DQBUF */
 	uvideo_streamon,	/* VIDIOC_STREAMON */
+	uvideo_streamoff,	/* VIDIOC_STREAMOFF */
 	uvideo_try_fmt,		/* VIDIOC_TRY_FMT */
 	NULL,			/* VIDIOC_QUERYCTRL */
 	uvideo_mappage,		/* mmap */
@@ -806,12 +808,10 @@ uvideo_vs_negotation(struct uvideo_softc *sc)
 	/* set probe */
 	bzero(probe_data, sizeof(probe_data));
 	pc = (struct usb_video_probe_commit *)probe_data;
-#if 0
-	pc->bFormatIndex = 1;
-	pc->bFrameIndex = 1;
-#endif
+
 	pc->bFormatIndex = sc->sc_desc_format_mjpeg->bFormatIndex;
 	pc->bFrameIndex = sc->sc_desc_format_mjpeg->bDefaultFrameIndex;
+
 	error = uvideo_vs_set_probe(sc, probe_data);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
@@ -1239,7 +1239,6 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 		fb->fragment = 0;
 		fb->fid = 0;
-		//fb->offset = 0;
 	}
 
 	return (0);
@@ -1940,6 +1939,16 @@ uvideo_streamon(void *v, int type)
 	struct uvideo_softc *sc = v;
 
 	uvideo_vs_start(sc);
+
+	return (0);
+}
+
+int
+uvideo_streamoff(void *v, int type)
+{
+	struct uvideo_softc *sc = v;
+
+	uvideo_vs_close(sc);
 
 	return (0);
 }

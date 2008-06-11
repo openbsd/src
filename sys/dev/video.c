@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.11 2008/06/10 23:39:01 robert Exp $	*/
+/*	$OpenBSD: video.c,v 1.12 2008/06/11 01:27:30 robert Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  *
@@ -226,6 +226,11 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case VIDIOC_STREAMON:
 		if (sc->hw_if->streamon)
 			error = (sc->hw_if->streamon)(sc->hw_hdl,
+			    (int)*data);
+		break;
+	case VIDIOC_STREAMOFF:
+		if (sc->hw_if->streamoff)
+			error = (sc->hw_if->streamoff)(sc->hw_hdl,
 			    (int)*data);
 		break;
 	case VIDIOC_TRY_FMT:
