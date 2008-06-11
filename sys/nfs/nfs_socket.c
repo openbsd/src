@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.59 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.60 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/tprintf.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
+#include <sys/queue.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -725,8 +726,7 @@ nfsmout:
 		 * Loop through the request list to match up the reply
 		 * Iff no match, just drop the datagram
 		 */
-		for (rep = TAILQ_FIRST(&nfs_reqq); rep != NULL;
-		    rep = TAILQ_NEXT(rep, r_chain)) {
+		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
 				rep->r_mrep = mrep;

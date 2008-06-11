@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.86 2008/06/10 22:59:09 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.87 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/hash.h>
+#include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
 

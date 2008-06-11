@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.61 2008/06/11 00:44:53 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.62 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/kthread.h>
+#include <sys/queue.h>
 
 #include <sys/syscallargs.h>
 
@@ -321,8 +322,7 @@ nfssvc_nfsd(nsd, argp, p)
 			}
 			if (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
-				for (slp = TAILQ_FIRST(&nfssvc_sockhead);
-				    slp != 0; slp = TAILQ_NEXT(slp, ns_chain)) {
+				TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 				    if ((slp->ns_flag & (SLP_VALID | SLP_DOREC))
 					== (SLP_VALID | SLP_DOREC)) {
 					    slp->ns_flag &= ~SLP_DOREC;
@@ -741,8 +741,7 @@ nfssvc_iod(p)
 		     */
 		    vp = bp->b_vp;
 		    s = splbio();
-		    for (nbp = LIST_FIRST(&vp->v_dirtyblkhd); nbp != NULL;
-			nbp = LIST_NEXT(nbp, b_vnbufs)) {
+		    LIST_FOREACH(nbp, &vp->v_dirtyblkhd, b_vnbufs) {
 			if ((nbp->b_flags &
 			    (B_BUSY|B_DELWRI|B_NEEDCOMMIT|B_NOCACHE))!=B_DELWRI)
 			    continue;

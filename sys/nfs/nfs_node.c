@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.38 2008/06/10 22:59:09 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.39 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/pool.h>
 #include <sys/hash.h>
 #include <sys/rwlock.h>
+#include <sys/queue.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -103,7 +104,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 
 	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
 loop:
-	for (np = LIST_FIRST(nhpp); np != NULL; np = LIST_NEXT(np, n_hash)) {
+	LIST_FOREACH(np, nhpp, n_hash) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
 		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;

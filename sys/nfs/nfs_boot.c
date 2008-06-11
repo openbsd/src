@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.23 2008/05/27 04:30:50 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.24 2008/06/11 04:52:27 blambert Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -142,8 +143,7 @@ nfs_boot_init(nd, procp)
 	if (nfsbootdevname)
 		ifp = ifunit(nfsbootdevname);
 	else {
-		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-		    ifp = TAILQ_NEXT(ifp, if_list)) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;

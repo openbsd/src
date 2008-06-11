@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.72 2008/04/25 12:33:41 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.73 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -795,8 +796,7 @@ nfs_sync(mp, waitfor, cred, p)
 	 * Force stale buffer cache information to be flushed.
 	 */
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL;
-	     vp = LIST_NEXT(vp, v_mntvnodes)) {
+	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.

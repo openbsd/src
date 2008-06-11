@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.16 2008/04/14 10:39:19 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.17 2008/06/11 04:52:27 blambert Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
