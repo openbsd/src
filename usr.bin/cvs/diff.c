@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.139 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.140 2008/06/11 20:55:34 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -296,12 +296,12 @@ cvs_diff_local(struct cvs_file *cf)
 			}
 			break;
 		default:
-			if (cf->fd == -1) {
-				if (!cvs_server_active)
-					cvs_log(LP_ERR, "cannot find %s",
+			if (cvs_server_active != 1 && cf->fd == -1) {
+				cvs_log(LP_ERR, "cannot find %s",
 					    cf->file_path);
 				return;
 			}
+
 			if (cf->file_rcs == NULL) {
 				cvs_log(LP_ERR, "cannot find RCS file for %s",
 				    cf->file_path);
