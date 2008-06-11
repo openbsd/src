@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.91 2008/06/10 03:11:30 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.92 2008/06/11 19:38:00 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -314,10 +314,15 @@ int	rnd_debug = 0x0000;
  */
 
 /*
- * The pool is stirred with a primitive polynomial of degree 128
- * over GF(2), namely x^128 + x^99 + x^59 + x^31 + x^9 + x^7 + 1.
- * For a pool of size 64, try x^64+x^62+x^38+x^10+x^6+x+1.
- * XXX is this comment still accurate?
+ * Stirring polynomials over GF(2) for various pool sizes. Used in
+ * add_entropy_words() below.
+ * 
+ * The polynomial terms are chosen to be evenly spaced (minimum RMS
+ * distance from evenly spaced; except for the last tap, which is 1 to
+ * get the twisting happening as fast as possible.
+ *
+ * The reultant polynomial is:
+ *   2^POOLWORDS + 2^POOL_TAP1 + 2^POOL_TAP2 + 2^POOL_TAP3 + 2^POOL_TAP4 + 1
  */
 #define POOLBITS	(POOLWORDS*32)
 #define POOLBYTES	(POOLWORDS*4)
@@ -327,43 +332,36 @@ int	rnd_debug = 0x0000;
 #define	POOL_TAP2	1231
 #define	POOL_TAP3	819
 #define	POOL_TAP4	411
-#define	POOL_TAP5	1
 #elif POOLWORDS == 1024	/* also (819, 616, 410, 207, 2) */
 #define	POOL_TAP1	817
 #define	POOL_TAP2	615
 #define	POOL_TAP3	412
 #define	POOL_TAP4	204
-#define	POOL_TAP5	1
 #elif POOLWORDS == 512	/* also (409,307,206,102,2), (409,309,205,103,2) */
 #define	POOL_TAP1	411
 #define	POOL_TAP2	308
 #define	POOL_TAP3	208
 #define	POOL_TAP4	104
-#define	POOL_TAP5	1
 #elif POOLWORDS == 256
 #define	POOL_TAP1	205
 #define	POOL_TAP2	155
 #define	POOL_TAP3	101
 #define	POOL_TAP4	52
-#define	POOL_TAP5	1
 #elif POOLWORDS == 128	/* also (103, 78, 51, 27, 2) */
 #define	POOL_TAP1	103
 #define	POOL_TAP2	76
 #define	POOL_TAP3	51
 #define	POOL_TAP4	25
-#define	POOL_TAP5	1
 #elif POOLWORDS == 64
 #define	POOL_TAP1	52
 #define	POOL_TAP2	39
 #define	POOL_TAP3	26
 #define	POOL_TAP4	14
-#define	POOL_TAP5	1
 #elif POOLWORDS == 32
 #define	POOL_TAP1	26
 #define	POOL_TAP2	20
 #define	POOL_TAP3	14
 #define	POOL_TAP4	7
-#define	POOL_TAP5	1
 #else
 #error No primitive polynomial available for chosen POOLWORDS
 #endif
@@ -385,6 +383,7 @@ struct mutex rndlock;
 /* Rotate bits in word 'w' by 'i' positions */
 static __inline u_int32_t roll(u_int32_t w, int i)
 {
+	/* XXX amd64 too? */
 #ifdef i386
 	__asm ("roll %%cl, %0" : "+r" (w) : "c" (i));
 #else
@@ -397,20 +396,19 @@ static __inline u_int32_t roll(u_int32_t w, int i)
  * This function adds a byte into the entropy pool.  It does not
  * update the entropy estimate.  The caller must do this if appropriate.
  *
- * The pool is stirred with a primitive polynomial of degree 128
- * over GF(2), namely x^128 + x^99 + x^59 + x^31 + x^9 + x^7 + 1.
- * For a pool of size 64, try x^64+x^62+x^38+x^10+x^6+x+1.
- * XXX is this comment still accurate?
+ * The pool is stirred with a polynomial of degree POOLWORDS over GF(2);
+ * see POOL_TAP[1-4] above
  *
- * We rotate the input word by a changing number of bits, to help
- * assure that all bits in the entropy get toggled.  Otherwise, if we
- * consistently feed the entropy pool small numbers (like jiffies and
- * scancodes, for example), the upper bits of the entropy pool don't
- * get affected. --- TYT, 10/11/95
+ * Rotate the input word by a changing number of bits, to help assure
+ * that all bits in the entropy get toggled.  Otherwise, if the pool
+ * is consistently feed small numbers (such as keyboard scan codes)
+ * then the upper bits of the entropy pool will frequently remain
+ * untouched.
  */
 static void
 add_entropy_words(const u_int32_t *buf, u_int n)
 {
+	/* derived from IEEE 802.3 CRC-32 */
 	static const u_int32_t twist_table[8] = {
 		0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
 		0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278
@@ -429,13 +427,14 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 		random_state.input_rotate =
 		    (random_state.input_rotate + (i ? 7 : 14)) & 31;
 
-		/* XOR in the various POOL_TAPs */
+		/* XOR pool contents corresponding to polynomial terms */
 		w ^= random_state.pool[(i + POOL_TAP1) & POOLMASK] ^
 		     random_state.pool[(i + POOL_TAP2) & POOLMASK] ^
 		     random_state.pool[(i + POOL_TAP3) & POOLMASK] ^
 		     random_state.pool[(i + POOL_TAP4) & POOLMASK] ^
-		     random_state.pool[(i + POOL_TAP5) & POOLMASK] ^
-		     random_state.pool[i];
+		     random_state.pool[(i + 1) & POOLMASK] ^
+		     random_state.pool[i]; /* + 2^POOLWORDS */
+
 		random_state.pool[i] = (w >> 3) ^ twist_table[w & 7];
 	}
 }
