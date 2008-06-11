@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.9 2008/06/10 18:28:58 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.10 2008/06/11 23:12:15 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -304,6 +304,7 @@ main(int argc, char *argv[])
 			errx(1, "can't open a pty");
 		close(slave);
 		printf("%s\n", ptyn);
+		fflush(stdout);
 	}
 	if (nodaemon)
 		openlog("ldattach", LOG_PID | LOG_CONS | LOG_PERROR,
