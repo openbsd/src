@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.86 2008/06/10 23:12:36 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.87 2008/06/11 07:28:02 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2008 $
+.Dd $Mdocdate: June 11 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -430,13 +430,13 @@ The rdr rule can be optionally restricted to a given interface name.
 .Xc
 Like the
 .Ic forward to
-directive, but directly route the packets to the target host without
+directive, but directly routes the packets to the target host without
 modifying the target address.
 This can be used for
 .Dq direct server return
 to force the target host to respond via a different gateway.
-Note that the hosts have to accept sessions for the same address as
-the gateway, this is typically done by configuring a loopback
+Note that hosts have to accept sessions for the same address as
+the gateway, which is typically done by configuring a loopback
 interface on the host with this address.
 .It Ic session timeout Ar seconds
 Specify the inactivity timeout in seconds for established redirections.
