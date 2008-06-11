@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.11 2008/05/08 09:53:12 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.12 2008/06/11 05:30:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,19 @@
 #include "bgpd.h"
 #include "session.h"
 
+time_t	getmonotime(void);
+
+time_t
+getmonotime(void)
+{
+	struct timespec	ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		fatal("clock_gettime");
+
+	return (ts.tv_sec);
+}
+
 struct peer_timer *
 timer_get(struct peer *p, enum Timer timer)
 {
@@ -41,7 +54,7 @@ timer_nextisdue(struct peer *p)
 	struct peer_timer *pt;
 
 	pt = TAILQ_FIRST(&p->timers);
-	if (pt != NULL && pt->val > 0 && pt->val <= time(NULL))
+	if (pt != NULL && pt->val > 0 && pt->val <= getmonotime())
 		return (pt);
 	return (NULL);
 }
@@ -63,7 +76,7 @@ timer_running(struct peer *p, enum Timer timer, time_t *left)
 
 	if (pt != NULL && pt->val > 0) {
 		if (left != NULL)
-			*left = pt->val - time(NULL);
+			*left = pt->val - getmonotime();
 		return (1);
 	}
 	return (0);
@@ -79,12 +92,12 @@ timer_set(struct peer *p, enum Timer timer, u_int offset)
 			fatal("timer_set");
 		pt->type = timer;
 	} else {
-		if (pt->val == time(NULL) + (time_t)offset)
+		if (pt->val == getmonotime() + (time_t)offset)
 			return;
 		TAILQ_REMOVE(&p->timers, pt, entry);
 	}
 
-	pt->val = time(NULL) + offset;
+	pt->val = getmonotime() + offset;
 
 	TAILQ_FOREACH(t, &p->timers, entry)
 		if (t->val == 0 || t->val > pt->val)
