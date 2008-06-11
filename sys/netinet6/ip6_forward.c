@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.39 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.40 2008/06/11 19:00:50 mcbride Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -85,9 +85,7 @@ int	ip6_forward_rtableid;
  */
 
 void
-ip6_forward(m, srcrt)
-	struct mbuf *m;
-	int srcrt;
+ip6_forward(struct mbuf *m, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct sockaddr_in6 *dst;

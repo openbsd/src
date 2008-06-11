@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.46 2008/05/11 08:13:02 claudio Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.47 2008/06/11 19:00:50 mcbride Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -84,11 +84,11 @@ static int in6_ifattach_loopback(struct ifnet *);
  * The goal here is to get an interface identifier that is
  * (1) random enough and (2) does not change across reboot.
  * We currently use MD5(hostname) for it.
+ *
+ * in6 - upper 64bits are preserved
  */
 static int
-get_rand_ifid(ifp, in6)
-	struct ifnet *ifp;
-	struct in6_addr *in6;	/* upper 64bits are preserved */
+get_rand_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
@@ -121,11 +121,11 @@ get_rand_ifid(ifp, in6)
 /*
  * Get interface identifier for the specified interface.
  * XXX assumes single sockaddr_dl (AF_LINK address) per an interface
+ *
+ * in6 - upper 64bits are preserved
  */
 static int
-get_hw_ifid(ifp, in6)
-	struct ifnet *ifp;
-	struct in6_addr *in6;	/* upper 64bits are preserved */
+get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -238,12 +238,11 @@ found:
  * Get interface identifier for the specified interface.  If it is not
  * available on ifp0, borrow interface identifier from other information
  * sources.
+ *
+ * altifp - secondary EUI64 source
  */
 static int
-get_ifid(ifp0, altifp, in6)
-	struct ifnet *ifp0;
-	struct ifnet *altifp;	/* secondary EUI64 source */
-	struct in6_addr *in6;
+get_ifid(struct ifnet *ifp0, struct ifnet *altifp, struct in6_addr *in6)
 {
 	struct ifnet *ifp;
 
@@ -299,10 +298,12 @@ success:
 	return 0;
 }
 
+/*
+ * altifp - secondary EUI64 source
+ */
+
 int
-in6_ifattach_linklocal(ifp, altifp)
-	struct ifnet *ifp;
-	struct ifnet *altifp;	/*secondary EUI64 source*/
+in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 {
 	struct in6_ifaddr *ia;
 	struct in6_aliasreq ifra;
@@ -431,9 +432,12 @@ in6_ifattach_linklocal(ifp, altifp)
 	return 0;
 }
 
+/*
+ * ifp - must be IFT_LOOP
+ */
+
 static int
-in6_ifattach_loopback(ifp)
-	struct ifnet *ifp;	/* must be IFT_LOOP */
+in6_ifattach_loopback(struct ifnet *ifp)
 {
 	struct in6_aliasreq ifra;
 	int error;
@@ -490,11 +494,8 @@ in6_ifattach_loopback(ifp)
  * when ifp == NULL, the caller is responsible for filling scopeid.
  */
 int
-in6_nigroup(ifp, name, namelen, sa6)
-	struct ifnet *ifp;
-	const char *name;
-	int namelen;
-	struct sockaddr_in6 *sa6;
+in6_nigroup(struct ifnet *ifp, const char *name, int namelen, 
+	struct sockaddr_in6 *sa6)
 {
 	const char *p;
 	u_int8_t *q;
@@ -542,11 +543,11 @@ in6_nigroup(ifp, name, namelen, sa6)
  * XXX multiple loopback interface needs more care.  for instance,
  * nodelocal address needs to be configured onto only one of them.
  * XXX multiple link-local address case
+ *
+ * altifp - secondary EUI64 source
  */
 void
-in6_ifattach(ifp, altifp)
-	struct ifnet *ifp;
-	struct ifnet *altifp;	/* secondary EUI64 source */
+in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 {
 	struct in6_ifaddr *ia;
 	struct in6_addr in6;
@@ -627,8 +628,7 @@ in6_ifattach(ifp, altifp)
  * NOTE: in6_ifdetach() does not support loopback if at this moment.
  */
 void
-in6_ifdetach(ifp)
-	struct ifnet *ifp;
+in6_ifdetach(struct ifnet *ifp)
 {
 	struct in6_ifaddr *ia, *oia;
 	struct ifaddr *ifa, *next;

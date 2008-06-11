@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.25 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.26 2008/06/11 19:00:50 mcbride Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -68,14 +68,14 @@
 #define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
+/*
+ * family - family of the packet to be encapsulate.
+ */
 int
-in6_gif_output(ifp, family, m)
-	struct ifnet *ifp;
-	int family; /* family of the packet to be encapsulate. */
-	struct mbuf *m;
+in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-        struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+     struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct tdb tdb;
@@ -171,9 +171,7 @@ in6_gif_output(ifp, family, m)
 	return error;
 }
 
-int in6_gif_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;

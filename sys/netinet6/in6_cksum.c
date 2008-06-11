@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.14 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.15 2008/06/11 19:00:50 mcbride Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -85,10 +85,7 @@
  */
 
 int
-in6_cksum(m, nxt, off, len)
-	struct mbuf *m;
-	u_int8_t nxt;
-	u_int32_t off, len;
+in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 {
 	u_int16_t *w;
 	int sum = 0;
