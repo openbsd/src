@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.31 2008/06/10 23:39:01 robert Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.32 2008/06/11 00:00:37 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -641,17 +641,24 @@ int
 uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-        struct usb_video_frame_mjpeg_desc *d;
+	struct usb_video_frame_mjpeg_desc *d;
 
-        d = (struct usb_video_frame_mjpeg_desc *)(uint8_t *)desc;
+	d = (struct usb_video_frame_mjpeg_desc *)(uint8_t *)desc;
 
-	/* choose default frame index */
-        if (d->bFrameIndex != sc->sc_desc_format_mjpeg->bDefaultFrameIndex)
-                return (1);
+	/*
+	 * If bDefaultFrameIndex is not set by the device
+	 * use the first bFrameIndex available, otherwise
+	 * set it to the default one.
+	 */
+	if (!sc->sc_desc_format_mjpeg->bDefaultFrameIndex)
+		goto set;
+	else if (d->bFrameIndex != sc->sc_desc_format_mjpeg->bDefaultFrameIndex)
+		return (1);
 
-        sc->sc_desc_frame_mjpeg = d;
+set:
+	sc->sc_desc_frame_mjpeg = d;
 
-        return (0);
+	return (0);
 }
 
 int
