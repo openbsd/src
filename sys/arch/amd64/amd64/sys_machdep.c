@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.6 2008/05/23 15:39:43 jasper Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.7 2008/06/11 09:22:38 phessler Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -73,8 +73,6 @@ int amd64_get_ioperm(struct proc *, void *, register_t *);
 int amd64_set_ioperm(struct proc *, void *, register_t *);
 #endif
 int amd64_iopl(struct proc *, void *, register_t *);
-int amd64_get_mtrr(struct proc *, void *, register_t *);
-int amd64_set_mtrr(struct proc *, void *, register_t *);
 
 #ifdef APERTURE
 extern int allowaperture;
@@ -145,63 +143,6 @@ amd64_set_ioperm(struct proc *p, void *args, register_t *retval)
 
 #endif
 
-#ifdef MTRR
-
-int
-amd64_get_mtrr(struct proc *p, void *args, register_t *retval)
-{
-	struct amd64_get_mtrr_args ua;
-	int error, n;
-
-	if (mtrr_funcs == NULL)
-		return ENOSYS;
-
-	error = copyin(args, &ua, sizeof ua);
-	if (error != 0)
-		return error;
-
-	error = copyin(ua.n, &n, sizeof n);
-	if (error != 0)
-		return error;
-
-	error = mtrr_get(ua.mtrrp, &n, p, MTRR_GETSET_USER);
-
-	copyout(&n, ua.n, sizeof (int));
-
-	return error;
-}
-
-int
-amd64_set_mtrr(struct proc *p, void *args, register_t *retval)
-{
-	int error, n;
-	struct amd64_set_mtrr_args ua;
-
-	if (mtrr_funcs == NULL)
-		return ENOSYS;
-
-	error = suser(p, 0);
-	if (error != 0)
-		return error;
-
-	error = copyin(args, &ua, sizeof ua);
-	if (error != 0)
-		return error;
-
-	error = copyin(ua.n, &n, sizeof n);
-	if (error != 0)
-		return error;
-
-	error = mtrr_set(ua.mtrrp, &n, p, MTRR_GETSET_USER);
-	if (n != 0)
-		mtrr_commit();
-
-	copyout(&n, ua.n, sizeof n);
-
-	return error;
-}
-#endif
-
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
@@ -223,14 +164,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 
 	case AMD64_SET_IOPERM: 
 		error = amd64_set_ioperm(p, SCARG(uap, parms), retval);
-		break;
-#endif
-#ifdef MTRR
-	case AMD64_GET_MTRR:
-		error = amd64_get_mtrr(p, SCARG(uap, parms), retval);
-		break;
-	case AMD64_SET_MTRR:
-		error = amd64_set_mtrr(p, SCARG(uap, parms), retval);
 		break;
 #endif
 

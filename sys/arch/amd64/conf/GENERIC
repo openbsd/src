@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.232 2008/06/07 17:00:38 marco Exp $
+#	$OpenBSD: GENERIC,v 1.233 2008/06/11 09:22:39 phessler Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,7 +17,7 @@ option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
 option		APERTURE	# in-kernel aperture driver for XFree86
-#option		MTRR		# CPU memory range attributes control
+option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
@@ -561,6 +561,7 @@ pseudo-device	nvram		1
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	mtrr		1	# Memory range attributes control
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
