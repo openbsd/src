@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.29 2008/06/10 23:12:36 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.30 2008/06/11 18:21:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -351,11 +351,13 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		memset(&pio, 0, sizeof(pio));
 		(void)strlcpy(rio.anchor, anchor, sizeof(rio.anchor));
 
-		if ((t->conf.flags & F_ROUTE) == 0) {
+		switch (t->conf.fwdmode) {
+		case FWD_NORMAL:
 			/* traditional redirection in the rdr-anchor */
 			rs = PF_RULESET_RDR;
 			rio.rule.action = PF_RDR;
-		} else {
+			break;
+		case FWD_ROUTE:
 			/* re-route with pf for DSR (direct server return) */
 			rs = PF_RULESET_FILTER;
 			rio.rule.action = PF_PASS;
@@ -366,6 +368,10 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 			/* Use sloppy state handling for half connections */
 			rio.rule.keep_state = PF_STATE_NORMAL;
 			rio.rule.rule_flag = PFRULE_STATESLOPPY;
+			break;
+		default:
+			fatalx("sync_ruleset: invalid forward mode");
+			/* NOTREACHED */
 		}
 
 		rio.rule.timeout[PFTM_TCP_ESTABLISHED] =
@@ -425,7 +431,8 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");
 		log_debug("sync_ruleset: rule added to %sanchor \"%s\"",
-		    rdr->table->conf.flags & F_ROUTE ? "" : "rdr-", anchor);
+		    rdr->table->conf.fwdmode == FWD_ROUTE ?
+		    "" : "rdr-", anchor);
 	}
 	if (transaction_commit(env) == -1)
 		log_warn("sync_ruleset: add rules transaction failed");

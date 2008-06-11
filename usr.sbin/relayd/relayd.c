@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.76 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.77 2008/06/11 18:21:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@ int		 send_all(struct relayd *, enum imsg_type,
 		    void *, u_int16_t);
 void		 reconfigure(void);
 void		 purge_tree(struct proto_tree *);
+int		 bindany(struct ctl_bindany *);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
@@ -704,9 +705,12 @@ main_dispatch_hce(int fd, short event, void * ptr)
 void
 main_dispatch_relay(int fd, short event, void * ptr)
 {
+	struct relayd		*env = relayd_env;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct ctl_bindany	 bnd;
+	int			 s;
 
 	ibuf = ptr;
 	switch (event) {
@@ -736,6 +740,26 @@ main_dispatch_relay(int fd, short event, void * ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_BINDANY:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(bnd))
+				fatalx("invalid imsg header len");
+			bcopy(imsg.data, &bnd, sizeof(bnd));
+			if (bnd.bnd_proc > env->sc_prefork_relay)
+				fatalx("pfe_dispatch_relay: "
+				    "invalid relay proc");
+			switch (bnd.bnd_proto) {
+			case IPPROTO_TCP:
+			case IPPROTO_UDP:
+				break;
+			default:
+				fatalx("pfe_dispatch_relay: requested socket "
+				    "for invalid protocol");
+				/* NOTREACHED */
+			}
+			s = bindany(&bnd);
+			imsg_compose(&ibuf_relay[bnd.bnd_proc], IMSG_BINDANY,
+			    0, 0, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
+			break;
 		default:
 			log_debug("main_dispatch_relay: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -1145,4 +1169,32 @@ protonode_add(enum direction dir, struct protocol *proto,
 	}
 
 	return (0);
+}
+
+int
+bindany(struct ctl_bindany *bnd)
+{
+	int	s, v;
+
+	s = -1;
+	v = 1;
+
+	if (relay_socket_af(&bnd->bnd_ss, bnd->bnd_port) == -1)
+		goto fail;
+	if ((s = socket(bnd->bnd_ss.ss_family, SOCK_STREAM,
+	    bnd->bnd_proto)) == -1)
+		goto fail;
+	if (setsockopt(s, SOL_SOCKET, SO_BINDANY,
+	    &v, sizeof(v)) == -1)
+		goto fail;
+	if (bind(s, (struct sockaddr *)&bnd->bnd_ss,
+	    bnd->bnd_ss.ss_len) == -1)
+		goto fail;
+
+	return (s);
+
+ fail:
+	if (s != -1)
+		close(s);
+	return (-1);
 }

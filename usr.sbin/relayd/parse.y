@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2008/05/08 02:15:34 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.115 2008/06/11 18:21:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ typedef struct {
 %token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
 %token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
 %token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
-%token	VIRTUAL WITH ERROR ROUTE
+%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname table
@@ -380,17 +380,25 @@ rdropts_l	: rdropts_l rdroptsl nl
 		;
 
 rdroptsl	: forwardmode TO tablespec interface	{
+			switch ($1) {
+			case FWD_NORMAL:
+				if ($4 == NULL)
+					break;
+				yyerror("superfluous interface");
+				YYERROR;
+			case FWD_ROUTE:
+				if ($4 != NULL)
+					break;
+				yyerror("missing interface to route to");
+				YYERROR;
+			case FWD_TRANS:
+				yyerror("no transparent forward here");
+				YYERROR;
+			}
 			if ($4 != NULL) {
 				strlcpy($3->conf.ifname, $4,
 				    sizeof($3->conf.ifname));
 				free($4);
-				if (($1 & F_ROUTE) == 0) {
-					yyerror("superfluous interface");
-					YYERROR;
-				}
-			} else if ($1 & F_ROUTE) {
-				yyerror("missing interface to route to");
-				YYERROR;
 			}
 
 			if ($3->conf.check == CHECK_NOCHECK) {
@@ -410,6 +418,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 				rdr->table = $3;
 				rdr->conf.table_id = $3->conf.id;
 			}
+			$3->conf.fwdmode = $1;
 			$3->conf.rdrid = rdr->conf.id;
 			$3->conf.flags |= F_USED | $1;
 		}
@@ -449,8 +458,9 @@ rdroptsl	: forwardmode TO tablespec interface	{
 		| include
 		;
 
-forwardmode	: FORWARD		{ $$ = 0; }
-		| ROUTE			{ $$ = F_ROUTE; }
+forwardmode	: FORWARD		{ $$ = FWD_NORMAL; }
+		| ROUTE			{ $$ = FWD_ROUTE; }
+		| TRANSPARENT FORWARD	{ $$ = FWD_TRANS; }
 		;
 
 table		: '<' STRING '>'	{
@@ -1130,7 +1140,29 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 			tableport = h->port;
 		}
-		| FORWARD TO forwardspec
+		| forwardmode TO forwardspec interface		{
+			rlay->rl_conf.fwdmode = $1;
+			switch ($1) {
+			case FWD_NORMAL:
+				if ($4 == NULL)
+					break;
+				yyerror("superfluous interface");
+				YYERROR;
+			case FWD_ROUTE:
+				yyerror("no route for redirections");
+				YYERROR;
+			case FWD_TRANS:
+				if ($4 != NULL)
+					break;
+				yyerror("missing interface");
+				YYERROR;
+			}
+			if ($4 != NULL) {
+				strlcpy(rlay->rl_conf.ifname, $4,
+				    sizeof(rlay->rl_conf.ifname));
+				free($4);
+			}
+		}
 		| SESSION TIMEOUT NUMBER		{
 			if ((rlay->rl_conf.timeout.tv_sec = $3) < 0) {
 				yyerror("invalid timeout: %d", $3);
@@ -1383,6 +1415,7 @@ lookup(char *s)
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
 		{ "to",			TO },
+		{ "transparent",	TRANSPARENT },
 		{ "trap",		TRAP },
 		{ "updates",		UPDATES },
 		{ "url",		URL },

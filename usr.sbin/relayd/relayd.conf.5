@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.87 2008/06/11 07:28:02 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.88 2008/06/11 18:21:20 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -474,6 +474,7 @@ configuration directives are described below:
 .It Ic disable
 Start the relay but immediately close any accepted connections.
 .It Xo
+.Op Ic transparent
 .Ic forward to
 .Ar address
 .Op Ic port Ar port
@@ -485,6 +486,11 @@ If the
 option is not specified, the port from the
 .Ic listen on
 directive will be used.
+.Pp
+Use the
+.Ic transparent
+keyword to enable fully-transparent mode; the source address of the
+client will be retained in this case.
 .Pp
 The optional host retry option will be used as a tolerance for failed
 host connections; the connection will be retried for

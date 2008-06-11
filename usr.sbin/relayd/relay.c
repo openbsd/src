@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.89 2008/05/08 02:27:58 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.90 2008/06/11 18:21:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -60,17 +60,19 @@ void		 relay_protodebug(struct relay *);
 void		 relay_init(void);
 void		 relay_launch(void);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
-		    struct protocol *);
+		    struct protocol *, int);
 int		 relay_socket_listen(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
 int		 relay_socket_connect(struct sockaddr_storage *, in_port_t,
-		    struct protocol *);
+		    struct protocol *, int);
 
 void		 relay_accept(int, short, void *);
 void		 relay_input(struct session *);
 
 int		 relay_connect(struct session *);
 void		 relay_connected(int, short, void *);
+void		 relay_bindanyreq(struct session *, in_port_t, int);
+void		 relay_bindany(int, short, void *);
 
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 
@@ -601,7 +603,7 @@ relay_socket_af(struct sockaddr_storage *ss, in_port_t port)
 
 int
 relay_socket(struct sockaddr_storage *ss, in_port_t port,
-    struct protocol *proto)
+    struct protocol *proto, int fd)
 {
 	int s = -1, val;
 	struct linger lng;
@@ -609,7 +611,8 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (relay_socket_af(ss, port) == -1)
 		goto bad;
 
-	if ((s = socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	s = fd == -1 ? socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP) : fd;
+	if (s == -1)
 		goto bad;
 
 	/*
@@ -682,11 +685,11 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 
 int
 relay_socket_connect(struct sockaddr_storage *ss, in_port_t port,
-    struct protocol *proto)
+    struct protocol *proto, int fd)
 {
-	int s;
+	int	s;
 
-	if ((s = relay_socket(ss, port, proto)) == -1)
+	if ((s = relay_socket(ss, port, proto, fd)) == -1)
 		return (-1);
 
 	if (connect(s, (struct sockaddr *)ss, ss->ss_len) == -1) {
@@ -707,7 +710,7 @@ relay_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 {
 	int s;
 
-	if ((s = relay_socket(ss, port, proto)) == -1)
+	if ((s = relay_socket(ss, port, proto, -1)) == -1)
 		return (-1);
 
 	if (bind(s, (struct sockaddr *)ss, ss->ss_len) == -1)
@@ -1504,9 +1507,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		cre->chunked = 0;
 
 		if (cre->dir == RELAY_DIR_REQUEST &&
-		    proto->lateconnect && cre->dst->bev == NULL &&
-		    relay_connect(con) == -1) {
-			relay_close_http(con, 502, "session failed", 0);
+		    proto->lateconnect && cre->dst->bev == NULL) {
+			if (rlay->rl_conf.fwdmode == FWD_TRANS) {
+				relay_bindanyreq(con, 0, IPPROTO_TCP);
+				return;
+			}
+			if (relay_connect(con) == -1)
+				relay_close_http(con, 502, "session failed", 0);
 			return;
 		}
 	}
@@ -1908,6 +1915,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->se_in.dir = RELAY_DIR_REQUEST;
 	con->se_out.dir = RELAY_DIR_RESPONSE;
 	con->se_retry = rlay->rl_conf.dstretry;
+	con->se_bnds = -1;
 	if (gettimeofday(&con->se_tv_start, NULL))
 		goto err;
 	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
@@ -2109,18 +2117,57 @@ relay_session(struct session *con)
 		return;
 	}
 
-	if (!rlay->rl_proto->lateconnect && relay_connect(con) == -1) {
-		relay_close(con, "session failed");
-		return;
+	if (!rlay->rl_proto->lateconnect) {
+		if (rlay->rl_conf.fwdmode == FWD_TRANS)
+			relay_bindanyreq(con, 0, IPPROTO_TCP);
+		else if (relay_connect(con) == -1) {
+			relay_close(con, "session failed");
+			return;
+		}
 	}
 
 	relay_input(con);
+}
+
+void
+relay_bindanyreq(struct session *con, in_port_t port, int proto)
+{
+	struct relay		*rlay = (struct relay *)con->se_relay;
+	struct ctl_bindany	 bnd;
+	struct timeval		 tv;
+
+	bzero(&bnd, sizeof(bnd));
+	bnd.bnd_id = con->se_id;
+	bnd.bnd_proc = proc_id;
+	bnd.bnd_port = port;
+	bnd.bnd_proto = proto;
+	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
+	imsg_compose(ibuf_main, IMSG_BINDANY, 0, 0, -1, &bnd, sizeof(bnd));
+
+	/* Schedule timeout */
+	evtimer_set(&con->se_ev, relay_bindany, con);
+	bcopy(&rlay->rl_conf.timeout, &tv, sizeof(tv));
+	evtimer_add(&con->se_ev, &tv);
+}
+
+void
+relay_bindany(int fd, short event, void *arg)
+{
+	struct session	*con = (struct session *)arg;
+
+	if (con->se_bnds == -1) {
+		relay_close(con, "bindany failed, invalid socket");
+		return;
+	}
+
+	relay_connect((struct session *)con);
 }
 
 int
 relay_connect(struct session *con)
 {
 	struct relay	*rlay = (struct relay *)con->se_relay;
+	int		 bnds = -1;
 
 	if (gettimeofday(&con->se_tv_start, NULL))
 		return (-1);
@@ -2129,13 +2176,22 @@ relay_connect(struct session *con)
 		if (relay_from_table(con) != 0)
 			return (-1);
 	} else if (con->se_out.ss.ss_family == AF_UNSPEC) {
-		bcopy(&rlay->rl_conf.dstss, &con->se_out.ss, sizeof(con->se_out.ss));
+		bcopy(&rlay->rl_conf.dstss, &con->se_out.ss,
+		    sizeof(con->se_out.ss));
 		con->se_out.port = rlay->rl_conf.dstport;
 	}
 
+	if (rlay->rl_conf.fwdmode == FWD_TRANS) {
+		if (con->se_bnds == -1) {
+			log_debug("relay_connect: could not bind any sock");
+			return (-1);
+		}
+		bnds = con->se_bnds;
+	}
+
  retry:
-	if ((con->se_out.s = relay_socket_connect(&con->se_out.ss, con->se_out.port,
-	    rlay->rl_proto)) == -1) {
+	if ((con->se_out.s = relay_socket_connect(&con->se_out.ss,
+	    con->se_out.port, rlay->rl_proto, bnds)) == -1) {
 		if (con->se_retry) {
 			con->se_retry--;
 			log_debug("relay_connect: session %d: "
@@ -2367,9 +2423,12 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 void
 relay_dispatch_parent(int fd, short event, void * ptr)
 {
-	struct imsgbuf	*ibuf;
-	struct imsg	 imsg;
-	ssize_t		 n;
+	struct session		*con;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+	struct timeval		 tv;
+	objid_t			 id;
 
 	ibuf = ptr;
 	switch (event) {
@@ -2399,6 +2458,22 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_BINDANY:
+			bcopy(imsg.data, &id, sizeof(id));
+			if ((con = session_find(env, id)) == NULL) {
+				log_debug("relay_dispatch_parent: "
+				    "session expired");
+				break;
+			}
+
+			/* Will validate the result later */
+			con->se_bnds = imsg_get_fd(ibuf);
+
+			evtimer_del(&con->se_ev);
+			evtimer_set(&con->se_ev, relay_bindany, con);
+			bzero(&tv, sizeof(tv));
+			evtimer_add(&con->se_ev, &tv);
+			break;
 		default:
 			log_debug("relay_dispatch_parent: unexpected imsg %d",
 			    imsg.hdr.type);

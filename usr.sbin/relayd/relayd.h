@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.102 2008/05/08 02:27:58 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.103 2008/06/11 18:21:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -157,7 +157,8 @@ enum imsg_type {
 	IMSG_RECONF_RELAY,
 	IMSG_RECONF_END,
 	IMSG_SCRIPT,
-	IMSG_SNMPSOCK
+	IMSG_SNMPSOCK,
+	IMSG_BINDANY
 };
 
 struct imsg_hdr {
@@ -276,6 +277,15 @@ struct ctl_natlook {
 	int			 in;
 };
 
+struct ctl_bindany {
+	objid_t			 bnd_id;
+	int			 bnd_proc;
+
+	struct sockaddr_storage	 bnd_ss;
+	in_port_t		 bnd_port;
+	int			 bnd_proto;
+};
+
 struct ctl_stats {
 	objid_t			 id;
 	int			 proc;
@@ -319,7 +329,12 @@ TAILQ_HEAD(addresslist, address);
 #define F_RETURN		0x00020000
 #define F_TRAP			0x00040000
 #define F_NEEDPF		0x00080000
-#define F_ROUTE			0x00100000
+
+enum forwardmode {
+	FWD_NORMAL		= 0,
+	FWD_ROUTE,
+	FWD_TRANS
+};
 
 struct host_config {
 	objid_t			 id;
@@ -373,6 +388,7 @@ struct table_config {
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	u_int8_t		 digest_type;
+	enum forwardmode	 fwdmode;
 };
 
 struct table {
@@ -436,6 +452,7 @@ struct session {
 	struct evbuffer			*se_log;
 	struct relay			*se_relay;
 	struct ctl_natlook		*se_cnl;
+	int				 se_bnds;
 
 	SPLAY_ENTRY(session)		 se_nodes;
 };
@@ -555,6 +572,7 @@ struct relay_config {
 	u_int32_t		 flags;
 	objid_t			 proto;
 	char			 name[MAXHOSTNAMELEN];
+	char			 ifname[IFNAMSIZ];
 	in_port_t		 port;
 	in_port_t		 dstport;
 	int			 dstmode;
@@ -563,6 +581,7 @@ struct relay_config {
 	struct sockaddr_storage	 ss;
 	struct sockaddr_storage	 dstss;
 	struct timeval		 timeout;
+	enum forwardmode	 fwdmode;
 };
 
 struct relay {
