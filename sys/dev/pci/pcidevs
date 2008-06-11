@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1380 2008/06/11 19:43:50 jsg Exp $
+$OpenBSD: pcidevs,v 1.1381 2008/06/11 20:22:00 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1766,6 +1766,11 @@ product HP HPSA_9		0x3239	Smart Array
 product HP HPSA_10		0x323a	Smart Array
 product HP HPSA_11		0x323b	Smart Array
 product HP HPSA_12		0x323c	Smart Array
+product HP HPSAP212		0x3241	Smart Array P212
+product HP HPSAP410		0x3243	Smart Array P410
+product HP HPSAP410I		0x3245	Smart Array P410i
+product HP HPSAP411		0x3247	Smart Array P411
+product HP HPSAP812		0x3249	Smart Array P812
 product HP USB			0x3300	USB
 product HP IPMI			0x3302	IPMI
 
