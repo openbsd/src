@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.14 2006/07/12 07:26:07 brad Exp $	*/
+/*	$OpenBSD: math.h,v 1.15 2008/06/11 21:16:43 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -156,6 +156,7 @@ extern double j0(double);
 extern double j1(double);
 extern double jn(int, double);
 extern double lgamma(double);
+extern double tgamma(double);
 extern double y0(double);
 extern double y1(double);
 extern double yn(int, double);
@@ -251,6 +252,7 @@ extern float j0f(float);
 extern float j1f(float);
 extern float jnf(int, float);
 extern float lgammaf(float);
+extern float tgammaf(float);
 extern float y0f(float);
 extern float y1f(float);
 extern float ynf(int, float);
