@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.41 2006/09/25 20:25:41 kettenis Exp $
+#  $OpenBSD: Makefile,v 1.42 2008/06/11 14:35:33 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -134,7 +134,8 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_gamma.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
 	n_log__L.c n_pow.c n_sinh.c n_tanh.c n_atan2.c n_cabs.c n_cbrt.c \
-	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c
+	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c \
+	n_round.c
         
 
 # NetBSD's C library supplies these functions:
