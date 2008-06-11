@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.589 2008/06/10 22:59:13 reyk Exp $ */
+/*	$OpenBSD: pf.c,v 1.590 2008/06/11 02:46:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -200,7 +200,7 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 			    struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, u_short *);
 int			 pf_test_state_other(struct pf_state **, int,
-			    struct pfi_kif *, struct pf_pdesc *);
+			    struct pfi_kif *, struct mbuf *, struct pf_pdesc *);
 void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
 			    struct pf_rule **, struct pf_rule **,  int *);
 int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
@@ -238,7 +238,7 @@ void			 pf_print_state_parts(struct pf_state *,
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 struct pf_state		*pf_find_state(struct pfi_kif *,
-			    struct pf_state_key_cmp *, u_int);
+			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
 void			 pf_keyins_err(struct pf_state *, struct pf_state_key *,
 			    struct pf_state_key *, char *, u_int8_t);
@@ -255,9 +255,9 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT }
 };
 
-#define STATE_LOOKUP(i, k, d, s)					\
+#define STATE_LOOKUP(i, k, d, s, m)					\
 	do {								\
-		s = pf_find_state(i, k, d);			\
+		s = pf_find_state(i, k, d, m);			\
 		if (s == NULL || (s)->timeout == PFTM_PURGE)		\
 			return (PF_DROP);				\
 		if (d == PF_OUT &&					\
@@ -862,16 +862,25 @@ pf_find_state_byid(struct pf_state_cmp *key)
 }
 
 struct pf_state *
-pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir)
+pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
+    struct mbuf *m)
 {
 	struct pf_state_key	*sk;
 	struct pf_state_item	*si;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
-	    (struct pf_state_key *)key)) == NULL)
-		return (NULL);
+	if (m && m->m_pkthdr.pf.statekey &&
+	    ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
+		sk = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse;
+	else {
+		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
+		    (struct pf_state_key *)key)) == NULL)
+			return (NULL);
+		if (m && m->m_pkthdr.pf.statekey)
+			((struct pf_state_key *)
+			    m->m_pkthdr.pf.statekey)->reverse = sk;
+	}
 
 	/* list is sorted, if-bound states before floating ones */
 	TAILQ_FOREACH(si, &sk->states, entry)
@@ -4238,7 +4247,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		key.port[0] = uh->uh_dport;
 	}
 
-	STATE_LOOKUP(kif, &key, direction, *state);
+	STATE_LOOKUP(kif, &key, direction, *state, m);
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
@@ -4339,7 +4348,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			PF_ACPY(&key.addr[0], pd->dst, key.af);
 		}
 
-		STATE_LOOKUP(kif, &key, direction, *state);
+		STATE_LOOKUP(kif, &key, direction, *state, m);
 
 		(*state)->expire = time_second;
 		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
@@ -4536,7 +4545,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			key.port[pd2.sidx] = th.th_sport;
 			key.port[pd2.didx] = th.th_dport;
 
-			STATE_LOOKUP(kif, &key, direction, *state);
+			STATE_LOOKUP(kif, &key, direction, *state, m);
 
 			if (direction == (*state)->direction) {
 				src = &(*state)->dst;
@@ -4658,7 +4667,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			key.port[pd2.sidx] = uh.uh_sport;
 			key.port[pd2.didx] = uh.uh_dport;
 
-			STATE_LOOKUP(kif, &key, direction, *state);
+			STATE_LOOKUP(kif, &key, direction, *state, m);
 
 			/* translate source/destination address, if necessary */
 			if ((*state)->key[PF_SK_WIRE] !=
@@ -4726,7 +4735,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[0] = key.port[1] = iih.icmp_id;
 
-			STATE_LOOKUP(kif, &key, direction, *state);
+			STATE_LOOKUP(kif, &key, direction, *state, m);
 
 			/* translate source/destination address, if necessary */
 			if ((*state)->key[PF_SK_WIRE] !=
@@ -4779,7 +4788,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[0] = key.port[1] = iih.icmp6_id;
 
-			STATE_LOOKUP(kif, &key, direction, *state);
+			STATE_LOOKUP(kif, &key, direction, *state, m);
 
 			/* translate source/destination address, if necessary */
 			if ((*state)->key[PF_SK_WIRE] !=
@@ -4823,7 +4832,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[0] = key.port[1] = 0;
 
-			STATE_LOOKUP(kif, &key, direction, *state);
+			STATE_LOOKUP(kif, &key, direction, *state, m);
 
 			/* translate source/destination address, if necessary */
 			if ((*state)->key[PF_SK_WIRE] !=
@@ -4874,7 +4883,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 int
 pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
-    struct pf_pdesc *pd)
+    struct mbuf *m, struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
 	struct pf_state_key_cmp	 key;
@@ -4891,7 +4900,7 @@ pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
 		key.port[1] = key.port[0] = 0;
 	}
 
-	STATE_LOOKUP(kif, &key, direction, *state);
+	STATE_LOOKUP(kif, &key, direction, *state, m);
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
@@ -5725,7 +5734,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 	default:
-		action = pf_test_state_other(&s, dir, kif, &pd);
+		action = pf_test_state_other(&s, dir, kif, m, &pd);
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
@@ -5751,6 +5760,9 @@ done:
 
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
+
+	if (s && s->key[PF_SK_STACK])
+		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
@@ -6095,7 +6107,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 	default:
-		action = pf_test_state_other(&s, dir, kif, &pd);
+		action = pf_test_state_other(&s, dir, kif, m, &pd);
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
@@ -6127,6 +6139,9 @@ done:
 
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
+
+	if (s && s->key[PF_SK_STACK])
+		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
