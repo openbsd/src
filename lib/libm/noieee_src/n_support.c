@@ -32,37 +32,37 @@
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
-/* 
- * Some IEEE standard 754 recommended functions and remainder and sqrt for 
+/*
+ * Some IEEE standard 754 recommended functions and remainder and sqrt for
  * supporting the C elementary functions.
  ******************************************************************************
  * WARNING:
  *      These codes are developed (in double) to support the C elementary
  * functions temporarily. They are not universal, and some of them are very
- * slow (in particular, drem and sqrt is extremely inefficient). Each 
- * computer system should have its implementation of these functions using 
+ * slow (in particular, remainder and sqrt is extremely inefficient). Each
+ * computer system should have its implementation of these functions using
  * its own assembler.
  ******************************************************************************
  *
  * IEEE 754 required operations:
- *     drem(x,p) 
+ *     remainder(x,p)
  *              returns  x REM y  =  x - [x/y]*y , where [x/y] is the integer
  *              nearest x/y; in half way case, choose the even one.
- *     sqrt(x) 
- *              returns the square root of x correctly rounded according to 
+ *     sqrt(x)
+ *              returns the square root of x correctly rounded according to
  *		the rounding mod.
  *
  * IEEE 754 recommended functions:
- * (a) copysign(x,y) 
- *              returns x with the sign of y. 
- * (b) scalbn(x,N) 
+ * (a) copysign(x,y)
+ *              returns x with the sign of y.
+ * (b) scalbn(x,N)
  *              returns  x * (2**N), for integer values N.
- * (c) logb(x) 
- *              returns the unbiased exponent of x, a signed integer in 
- *              double precision, except that logb(0) is -INF, logb(INF) 
+ * (c) logb(x)
+ *              returns the unbiased exponent of x, a signed integer in
+ *              double precision, except that logb(0) is -INF, logb(INF)
  *              is +INF, and logb(NAN) is that NAN.
- * (d) finite(x) 
- *              returns the value TRUE if -INF < x < +INF and returns 
+ * (d) finite(x)
+ *              returns the value TRUE if -INF < x < +INF and returns
  *              FALSE otherwise.
  *
  *
@@ -74,8 +74,8 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
 
 #if defined(__vax__)||defined(tahoe)      /* VAX D format */
 #include <errno.h>
-    static const unsigned short msign=0x7fff , mexp =0x7f80 ;
-    static const short  prep1=57, gap=7, bias=129           ;   
+    static const unsigned short msign=0x7fff, mexp =0x7f80 ;
+    static const short  prep1=57, gap=7, bias=129           ;
     static const double novf=1.7E38, nunf=3.0E-39, zero=0.0 ;
 #else	/* defined(__vax__)||defined(tahoe) */
     static const unsigned short msign=0x7fff, mexp =0x7ff0  ;
@@ -83,8 +83,8 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
     static const double novf=1.7E308, nunf=3.0E-308,zero=0.0;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-double scalbn(x,N)
-double x; int N;
+double
+scalbn(double x, int N)
 {
         int k;
 
@@ -94,7 +94,7 @@ double x; int N;
         unsigned short *px=(unsigned short *) &x;
 #endif	/* national */
 
-        if( x == zero )  return(x); 
+        if( x == zero )  return(x);
 
 #if defined(__vax__)||defined(tahoe)
         if( (k= *px & mexp ) != ~msign ) {
@@ -114,7 +114,7 @@ double x; int N;
                 if( k < (mexp>>gap) ) *px = (*px&~mexp) | (k<<gap);
                 else x=novf+novf;               /* overflow */
             else
-                if( k > -prep1 ) 
+                if( k > -prep1 )
                                         /* gradual underflow */
                     {*px=(*px&~mexp)|(short)(1<<gap); x *= scalbn(1.0,k-1);}
                 else
@@ -124,8 +124,8 @@ double x; int N;
 }
 
 
-double copysign(x,y)
-double x,y;
+double
+copysign(double x, double y)
 {
 #ifdef national
         unsigned short  *px=(unsigned short *) &x+3,
@@ -167,8 +167,8 @@ __signbitl(long double x)
 	return (*px & ~msign);
 }
 
-double logb(x)
-double x; 
+double
+logb(double x)
 {
 
 #ifdef national
@@ -185,8 +185,8 @@ double x;
                 return ( (k>>gap) - bias );
             else if( x != zero)
                 return ( -1022.0 );
-            else        
-                return(-(1.0/zero));    
+            else
+                return(-(1.0/zero));
         else if(x != x)
             return(x);
         else
@@ -194,8 +194,8 @@ double x;
 #endif	/* defined(__vax__)||defined(tahoe) */
 }
 
-finite(x)
-double x;    
+int
+finite(double x)
 {
 #if defined(__vax__)||defined(tahoe)
         return(1);
@@ -208,21 +208,21 @@ double x;
 #endif	/* defined(__vax__)||defined(tahoe) */
 }
 
-double drem(x,p)
-double x,p;
+double
+remainder(double x, double p)
 {
         short sign;
-        double hp,dp,tmp;
-        unsigned short  k; 
+        double hp, dp, tmp;
+        unsigned short k;
 #ifdef national
         unsigned short
-              *px=(unsigned short *) &x  +3, 
+              *px=(unsigned short *) &x  +3,
               *pp=(unsigned short *) &p  +3,
               *pd=(unsigned short *) &dp +3,
               *pt=(unsigned short *) &tmp+3;
 #else	/* national */
         unsigned short
-              *px=(unsigned short *) &x  , 
+              *px=(unsigned short *) &x  ,
               *pp=(unsigned short *) &p  ,
               *pd=(unsigned short *) &dp ,
               *pt=(unsigned short *) &tmp;
@@ -251,13 +251,13 @@ double x,p;
 #endif	/* defined(__vax__)||defined(tahoe) */
 		{ if (p != p) return p; else return x;}
 
-        else  if ( ((*pp & mexp)>>gap) <= 1 ) 
+        else  if ( ((*pp & mexp)>>gap) <= 1 )
                 /* subnormal p, or almost subnormal p */
             { double b; b=scalbn(1.0,(int)prep1);
-              p *= b; x = drem(x,p); x *= b; return(drem(x,p)/b);}
+              p *= b; x = remainder(x,p); x *= b; return(remainder(x,p)/b);}
         else  if ( p >= novf/2)
-            { p /= 2 ; x /= 2; return(drem(x,p)*2);}
-        else 
+            { p /= 2 ; x /= 2; return(remainder(x,p)*2);}
+        else
             {
                 dp=p+p; hp=p/2;
                 sign= *px & ~msign ;
@@ -288,14 +288,21 @@ double x,p;
             }
 }
 
+/* The drem() function is a deprecated alias for remainder(). */
 
-double sqrt(x)
-double x;
+double
+drem(double x, double p)
 {
-        double q,s,b,r;
+	return remainder(x, p);
+}
+
+double
+sqrt(double x)
+{
+        double q, s, b, r;
         double t;
 	double const zero=0.0;
-        int m,n,i;
+        int m, n, i;
 #if defined(__vax__)||defined(tahoe)
         int k=54;
 #else	/* defined(__vax__)||defined(tahoe) */
@@ -315,13 +322,13 @@ double x;
 	}
 
     /* sqrt(INF) is INF */
-        if(!finite(x)) return(x);               
+        if(!finite(x)) return(x);
 
     /* scale x to [1,4) */
         n=logb(x);
         x=scalbn(x,-n);
         if((m=logb(x))!=0) x=scalbn(x,-m);       /* subnormal number */
-        m += n; 
+        m += n;
         n = m/2;
         if((n+n)!=m) {x *= 2; m -=1; n=m/2;}
 
@@ -334,28 +341,28 @@ double x;
                 else
                     s *= 2;
                 }
-            
+
     /* generate the last bit and determine the final rounding */
-            r/=2; x *= 4; 
+            r/=2; x *= 4;
             if(x==zero) goto end; 100+r; /* trigger inexact flag */
             if(s<x) {
                 q+=r; x -=s; s += 2; s *= 2; x *= 4;
-                t = (x-s)-5; 
+                t = (x-s)-5;
                 b=1.0+3*r/4; if(b==1.0) goto end; /* b==1 : Round-to-zero */
                 b=1.0+r/4;   if(b>1.0) t=1;	/* b>1 : Round-to-(+INF) */
                 if(t>=0) q+=r; }	      /* else: Round-to-nearest */
-            else { 
-                s *= 2; x *= 4; 
-                t = (x-s)-1; 
+            else {
+                s *= 2; x *= 4;
+                t = (x-s)-1;
                 b=1.0+3*r/4; if(b==1.0) goto end;
                 b=1.0+r/4;   if(b>1.0) t=1;
                 if(t>=0) q+=r; }
-            
+
 end:        return(scalbn(q,n));
 }
 
 #if 0
-/* DREM(X,Y)
+/* REMAINDER(X,Y)
  * RETURN X REM Y =X-N*Y, N=[X/Y] ROUNDED (ROUNDED TO EVEN IN THE HALF WAY CASE)
  * DOUBLE PRECISION (VAX D format 56 bits, IEEE DOUBLE 53 BITS)
  * INTENDED FOR ASSEMBLY LANGUAGE
@@ -363,29 +370,29 @@ end:        return(scalbn(q,n));
  *
  * Warning: this code should not get compiled in unless ALL of
  * the following machine-dependent routines are supplied.
- * 
+ *
  * Required machine dependent functions (not on a VAX):
  *     swapINX(i): save inexact flag and reset it to "i"
  *     swapENI(e): save inexact enable and reset it to "e"
  */
 
-double drem(x,y)	
-double x,y;
+double
+remainder(double x, double y)
 {
 
 #ifdef national		/* order of words in floating point number */
-	static const n0=3,n1=2,n2=1,n3=0;
+	static const n0=3, n1=2, n2=1, n3=0;
 #else /* VAX, SUN, ZILOG, TAHOE */
-	static const n0=0,n1=1,n2=2,n3=3;
+	static const n0=0, n1=1, n2=2, n3=3;
 #endif
 
     	static const unsigned short mexp =0x7ff0, m25 =0x0190, m57 =0x0390;
 	static const double zero=0.0;
-	double hy,y1,t,t1;
+	double hy, y1, t, t1;
 	short k;
 	long n;
-	int i,e; 
-	unsigned short xexp,yexp, *px  =(unsigned short *) &x  , 
+	int i, e;
+	unsigned short xexp,yexp, *px  =(unsigned short *) &x  ,
 	      		nx,nf,	  *py  =(unsigned short *) &y  ,
 	      		sign,	  *pt  =(unsigned short *) &t  ,
 	      			  *pt1 =(unsigned short *) &t1 ;
@@ -402,7 +409,7 @@ double x,y;
 /* save the inexact flag and inexact enable in i and e respectively
  * and reset them to zero
  */
-	i=swapINX(0);	e=swapENI(0);	
+	i=swapINX(0);	e=swapENI(0);
 
 /* subnormal number */
 	nx=0;
@@ -412,7 +419,7 @@ double x,y;
 	if( yexp <= m57 ) {py[n0]+=m57; nx+=m57; yexp+=m57;}
 
 	nf=nx;
-	py[n0] &= 0x7fff;	
+	py[n0] &= 0x7fff;
 	px[n0] &= 0x7fff;
 
 /* mask off the least significant 27 bits of y */
@@ -429,7 +436,7 @@ loop:
 	    if(k>0) 	/* if x/y >= 2**26, scale up y so that x/y < 2**26 */
 		{pt[n0]+=k;pt1[n0]+=k;}
 	    n=x/t; x=(x-n*t1)-n*(t-t1);
-	}	
+	}
     /* end while (x > y) */
 
 	if(nx!=0) {t=1.0; pt[n0]+=nx; x*=t; nx=0; goto loop;}
@@ -437,14 +444,14 @@ loop:
 /* final adjustment */
 
 	hy=y/2.0;
-	if(x>hy||((x==hy)&&n%2==1)) x-=y; 
+	if(x>hy||((x==hy)&&n%2==1)) x-=y;
 	px[n0] ^= sign;
 	if(nf!=0) { t=1.0; pt[n0]-=nf; x*=t;}
 
 /* restore inexact flag and inexact enable */
-	swapINX(i); swapENI(e);	
+	swapINX(i); swapENI(e);
 
-	return(x);	
+	return(x);
 }
 #endif
 
@@ -456,7 +463,7 @@ loop:
  *
  * Warning: this code should not get compiled in unless ALL of
  * the following machine-dependent routines are supplied.
- * 
+ *
  * Required machine dependent functions:
  *     swapINX(i)  ...return the status of INEXACT flag and reset it to "i"
  *     swapRM(r)   ...return the current Rounding Mode and reset it to "r"
@@ -470,28 +477,28 @@ static const unsigned long table[] = {
 58733, 67158, 75992, 85215, 83599, 71378, 60428, 50647, 41945, 34246, 27478,
 21581, 16499, 12183, 8588, 5674, 3403, 1742, 661, 130, };
 
-double newsqrt(x)
-double x;
+double
+newsqrt(double x)
 {
-        double y,z,t,addc(),subc()
+        double y, z, t, addc(), subc();
 	double const b54=134217728.*134217728.; /* b54=2**54 */
-        long mx,scalx;
+        long mx, scalx;
 	long const mexp=0x7ff00000;
-        int i,j,r,e,swapINX(),swapRM(),swapENI();       
+        int i, j, r, e, swapINX(), swapRM(), swapENI();
         unsigned long *py=(unsigned long *) &y   ,
                       *pt=(unsigned long *) &t   ,
                       *px=(unsigned long *) &x   ;
 #ifdef national         /* ordering of word in a floating point number */
-        const int n0=1, n1=0; 
+        const int n0=1, n1=0;
 #else
-        const int n0=0, n1=1; 
+        const int n0=0, n1=1;
 #endif
-/* Rounding Mode:  RN ...round-to-nearest 
+/* Rounding Mode:  RN ...round-to-nearest
  *                 RZ ...round-towards 0
  *                 RP ...round-towards +INF
  *		   RM ...round-towards -INF
  */
-        const int RN=0,RZ=1,RP=2,RM=3;
+        const int RN=0, RZ=1, RP=2, RM=3;
 				/* machine dependent: work on a Zilog Z8070
                                  * and a National 32081 & 16081
                                  */
@@ -523,10 +530,10 @@ double x;
         t=x/y; y=y+t; py[n0]=py[n0]-0x00100006; py[n1]=0;
 
 /* triple to almost 56 sig. bits; now y approx. sqrt(x) to within 1 ulp */
-        t=y*y; z=t;  pt[n0]+=0x00100000; t+=z; z=(x-z)*y; 
+        t=y*y; z=t;  pt[n0]+=0x00100000; t+=z; z=(x-z)*y;
         t=z/(t+x) ;  pt[n0]+=0x00100000; y+=t;
 
-/* twiddle last bit to force y correctly rounded */ 
+/* twiddle last bit to force y correctly rounded */
         swapRM(RZ);     /* ...set Rounding Mode to round-toward-zero */
         swapINX(0);     /* ...clear INEXACT flag */
         swapENI(e);     /* ...restore inexact enable status */

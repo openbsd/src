@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.7 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.8 2008/06/11 14:50:06 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
  * logb(x),
  * scalbn(x,N),
  * finite(x),
- * drem(x,y),
+ * remainder(x,y),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
  * Revised by K.C. Ng on 4/9/85.
  */
@@ -119,13 +119,16 @@ unfl:	movq	$0,r0
 ret1:	ret
 
 /*
- * DREM(X,Y)
+ * REMAINDER(X,Y)
  * RETURN X REM Y =X-N*Y, N=[X/Y] ROUNDED (ROUNDED TO EVEN IN THE HALF WAY CASE)
  * DOUBLE PRECISION (VAX D format 56 bits)
  * CODED IN VAX ASSEMBLY LANGUAGE BY K.C. NG, 4/8/85.
  */
 
-ENTRY(drem, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
+	.globl drem
+	drem = remainder
+
+ENTRY(remainder, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	subl2	$12,sp	
 	movq	4(ap),r0		#r0=x
 	movq	12(ap),r2		#r2=y
