@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.37 2008/06/10 16:32:35 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.38 2008/06/11 00:47:05 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -28,6 +28,8 @@
 #include "remote.h"
 
 void	cvs_history_local(struct cvs_file *);
+
+static void	history_compress(char *, const char *);
 
 struct cvs_cmd		cvs_cmd_history = {
 	CVS_OP_HISTORY, CVS_USE_WDIR, "history",
@@ -63,7 +65,9 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 {
 	BUF *buf;
 	FILE *fp;
-	char *cwd, *rev;
+	RCSNUM *hrev;
+	size_t len;
+	char *cwd, *p, *rev;
 	char revbuf[CVS_REV_BUFSZ], repo[MAXPATHLEN], fpath[MAXPATHLEN];
 	char timebuf[CVS_TIME_BUFSZ];
 	struct tm datetm;
@@ -80,19 +84,38 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	cvs_log(LP_TRACE, "cvs_history_add(`%c', `%s', `%s')",
 	    historytab[type], (cf != NULL) ? cf->file_name : "", argument);
 
-	if (cvs_server_active == 1) {
-		cwd = "<remote>";
-	} else {
-		if ((cwd = getcwd(NULL, MAXPATHLEN)) == NULL)
-			fatal("cvs_history_add: getcwd: %s", strerror(errno));
-	}
-
 	/* construct repository field */
 	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_EXPORT) {
 		cvs_get_repository_name((cf != NULL) ? cf->file_wd : ".",
 		    repo, sizeof(repo));
 	} else {
-		strlcpy(repo, argument, sizeof(repo));
+		cvs_get_repository_name(argument, repo, sizeof(repo));
+	}
+
+	if (cvs_server_active == 1) {
+		cwd = "<remote>";
+	} else {
+		if (getcwd(fpath, sizeof(fpath)) == NULL)
+			fatal("cvs_history_add: getcwd: %s", strerror(errno));
+		p = fpath;
+		if (cvs_cmdop == CVS_OP_CHECKOUT ||
+		    cvs_cmdop == CVS_OP_EXPORT) {
+			if (strlcat(fpath, "/", sizeof(fpath)) >=
+			    sizeof(fpath) || strlcat(fpath, argument,
+			    sizeof(fpath)) >= sizeof(fpath))
+				fatal("cvs_history_add: string truncation");
+		}
+		if (cvs_homedir != NULL && cvs_homedir[0] != '\0') {
+			len = strlen(cvs_homedir);
+			if (strncmp(cvs_homedir, fpath, len) == 0 &&
+			    fpath[len] == '/') {
+				p += len - 1;
+				*p = '~';
+			}
+		}
+
+		history_compress(p, repo);
+		cwd = xstrdup(p);
 	}
 
 	/* construct revision field */
@@ -129,8 +152,10 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	case CVS_HISTORY_COMMIT_ADDED:
 	case CVS_HISTORY_COMMIT_REMOVED:
 	case CVS_HISTORY_UPDATE_CO:
-		rcsnum_tostr(cf->file_rcs->rf_head,
-			revbuf, sizeof(revbuf));
+		if ((hrev = rcs_head_get(cf->file_rcs)) == NULL)
+			fatal("cvs_history_add: rcs_head_get failed");
+		rcsnum_tostr(hrev, revbuf, sizeof(revbuf));
+		rcsnum_free(hrev);
 		break;
 	}
 
@@ -151,6 +176,35 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 		xfree(rev);
 	if (cvs_server_active != 1)
 		xfree(cwd);
+}
+
+static void
+history_compress(char *wdir, const char *repo)
+{
+	char *p;
+	const char *q;
+	size_t repo_len, wdir_len;
+
+	repo_len = strlen(repo);
+	wdir_len = strlen(wdir);
+
+	p = wdir + wdir_len;
+	q = repo + repo_len;
+
+	while (p >= wdir && q >= repo) {
+		if (*p != *q)
+			break;
+		p--;
+		q--;
+	}
+	p++;
+	q++;
+
+	/* if it's not worth the effort, skip compression */
+	if (repo + repo_len - q < 3)
+		return;
+
+	(void)xsnprintf(p, strlen(p) + 1, "*%zx", q - repo);
 }
 
 int
