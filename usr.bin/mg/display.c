@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.35 2007/05/28 17:52:17 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.36 2008/06/11 19:35:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -836,7 +836,7 @@ modeline(struct mgwin *wp)
 
 	if (linenos) {
 		len = snprintf(sl, sizeof(sl), "--L%d--C%d", wp->w_dotline,
-		    wp->w_doto);
+		    getcolpos());
 		if (len < sizeof(sl) && len != -1)
 			n += vtputs(sl);
 	}
