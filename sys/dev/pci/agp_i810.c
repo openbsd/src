@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.36 2008/05/16 19:47:54 reyk Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.37 2008/06/11 17:21:46 matthieu Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -641,7 +641,9 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 		 * Bogus mapping of 1 or 4 pages for the hardware cursor.
 		 */
 		if (size != AGP_PAGE_SIZE && size != 4 * AGP_PAGE_SIZE) {
+#ifdef DEBUG
 			printf("agp: trying to map %lu for hw cursor\n", size);
+#endif
 			return (NULL);
 		}
 	}
