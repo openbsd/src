@@ -503,6 +503,7 @@
 ./usr/include/dev/pci/drm/drm.h
 ./usr/include/dev/pci/drm/drmP.h
 ./usr/include/dev/pci/drm/drm_atomic.h
+./usr/include/dev/pci/drm/drm_internal.h
 ./usr/include/dev/pci/drm/drm_linux_list.h
 ./usr/include/dev/pci/drm/drm_pciids.h
 ./usr/include/dev/pci/drm/drm_sarea.h
@@ -518,6 +519,7 @@
 ./usr/include/dev/pci/drm/r300_reg.h
 ./usr/include/dev/pci/drm/radeon_drm.h
 ./usr/include/dev/pci/drm/radeon_drv.h
+./usr/include/dev/pci/drm/radeon_microcode.h
 ./usr/include/dev/pci/drm/savage_drm.h
 ./usr/include/dev/pci/drm/savage_drv.h
 ./usr/include/dev/pci/drm/sis_drm.h
@@ -3283,6 +3285,8 @@
 ./usr/share/man/cat3/dn_expand.0
 ./usr/share/man/cat3/doupdate.0
 ./usr/share/man/cat3/drand48.0
+./usr/share/man/cat3/drem.0
+./usr/share/man/cat3/dremf.0
 ./usr/share/man/cat3/dsa.0
 ./usr/share/man/cat3/dup_field.0
 ./usr/share/man/cat3/dupwin.0
@@ -5291,6 +5295,8 @@
 ./usr/share/man/cat3/terminfo.0
 ./usr/share/man/cat3/termname.0
 ./usr/share/man/cat3/tfind.0
+./usr/share/man/cat3/tgamma.0
+./usr/share/man/cat3/tgammaf.0
 ./usr/share/man/cat3/tgetent.0
 ./usr/share/man/cat3/tgetflag.0
 ./usr/share/man/cat3/tgetnum.0

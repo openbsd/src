@@ -49,6 +49,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/idgen.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/podd.ph
@@ -483,6 +484,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drmP.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_atomic.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_internal.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_linux_list.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_pciids.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_sarea.ph
@@ -498,6 +500,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/r300_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/radeon_drm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/radeon_drv.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/radeon_microcode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/savage_drm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/savage_drv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/sis_drm.ph
@@ -2202,4 +2205,3 @@
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/vax-openbsd/crypto/idgen.ph

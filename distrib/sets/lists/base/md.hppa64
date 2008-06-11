@@ -92,7 +92,7 @@
 ./usr/lib/libkafs.so.16.0
 ./usr/lib/libkrb5.so.16.0
 ./usr/lib/libkvm.so.9.0
-./usr/lib/libm.so.2.3
+./usr/lib/libm.so.2.4
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.1
 ./usr/lib/libncurses.so.10.0
@@ -101,7 +101,7 @@
 ./usr/lib/libossaudio.so.3.1
 ./usr/lib/libotermcap.so.5.0
 ./usr/lib/libpanel.so.3.0
-./usr/lib/libpcap.so.5.0
+./usr/lib/libpcap.so.6.0
 ./usr/lib/libperl.so.10.1
 ./usr/lib/libpthread.so.10.0
 ./usr/lib/libreadline.so.3.0
@@ -667,6 +667,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/idgen.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/podd.ph
@@ -1101,6 +1102,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drmP.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm_atomic.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm_internal.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm_linux_list.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm_pciids.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/drm_sarea.ph
@@ -1116,6 +1118,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/r300_reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/radeon_drm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/radeon_drv.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/radeon_microcode.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/savage_drm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/savage_drv.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/drm/sis_drm.ph
@@ -2337,4 +2340,3 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/idgen.ph
